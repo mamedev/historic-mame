@@ -2,7 +2,6 @@
 #define _system1_H_
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 #define SPR_Y_TOP		0
 #define SPR_Y_BOTTOM	1
@@ -28,6 +27,7 @@ extern size_t system1_backgroundram_size;
 
 
 VIDEO_START( system1 );
+VIDEO_START( wbml );
 void system1_define_background_memory(int Mode);
 
 READ8_HANDLER( wbml_videoram_bank_latch_r );

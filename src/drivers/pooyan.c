@@ -63,7 +63,6 @@ standard NMI at 0x66
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sndhrdw/timeplt.h"
 
 

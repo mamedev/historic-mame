@@ -189,7 +189,7 @@ static void iop_latency_op(void)
 			break;
 		}
 
-		default:	osd_die("SHARC: add_iop_latency_op: unknown IOP register %02X\n", iop_latency_reg);
+		default:	fatalerror("SHARC: add_iop_latency_op: unknown IOP register %02X", iop_latency_reg);
 	}
 }
 
@@ -210,7 +210,7 @@ static UINT32 sharc_iop_r(UINT32 address)
 			}
 			return r;
 		}
-		default:		osd_die("sharc_iop_r: Unimplemented IOP reg %02X\n", address);
+		default:		fatalerror("sharc_iop_r: Unimplemented IOP reg %02X", address);
 	}
 	return 0;
 }
@@ -246,7 +246,7 @@ static void sharc_iop_w(UINT32 address, UINT32 data)
 		case 0x4e: sharc.dma[7].ext_modifier = data; return;
 		case 0x4f: sharc.dma[7].ext_count = data; return;
 
-		default:		osd_die("sharc_iop_w: Unimplemented IOP reg %02X, %08X\n", address, data);
+		default:		fatalerror("sharc_iop_w: Unimplemented IOP reg %02X, %08X", address, data);
 	}
 }
 
@@ -276,7 +276,7 @@ static UINT32 pm_read32(UINT32 address)
 					   (sharc.internal_ram_block1[((address-0x38000) * 3) + 1]);
 	}
 	else {
-		osd_die("SHARC: PM Bus Read %08X at %08X\n", address, sharc.pc);
+		fatalerror("SHARC: PM Bus Read %08X at %08X", address, sharc.pc);
 	}
 }
 
@@ -307,7 +307,7 @@ static void pm_write32(UINT32 address, UINT32 data)
 		return;
 	}
 	else {
-		osd_die("SHARC: PM Bus Write %08X, %08X at %08X\n", address, data, sharc.pc);
+		fatalerror("SHARC: PM Bus Write %08X, %08X at %08X", address, data, sharc.pc);
 	}
 }
 
@@ -338,7 +338,7 @@ static UINT64 pm_read48(UINT32 address)
 			   ((UINT64)(sharc.internal_ram_block1[((address-0x38000) * 3) + 2]) << 0);
 	}
 	else {
-		osd_die("SHARC: PM Bus Read %08X at %08X\n", address, sharc.pc);
+		fatalerror("SHARC: PM Bus Read %08X at %08X", address, sharc.pc);
 	}
 
 	return 0;
@@ -375,7 +375,7 @@ static void pm_write48(UINT32 address, UINT64 data)
 		return;
 	}
 	else {
-		osd_die("SHARC: PM Bus Write %08X, %04X%08X at %08X\n", address, (UINT16)(data >> 32),(UINT32)data, sharc.pc);
+		fatalerror("SHARC: PM Bus Write %08X, %04X%08X at %08X", address, (UINT16)(data >> 32),(UINT32)data, sharc.pc);
 	}
 }
 
@@ -537,7 +537,7 @@ static void schedule_chained_dma_op(int channel, UINT32 dma_chain_ptr, int chain
 
 	if (dmaop_cycles > 0)
 	{
-		osd_die("schedule_chained_dma_op: DMA operation already scheduled at %08X!\n", sharc.pc);
+		fatalerror("schedule_chained_dma_op: DMA operation already scheduled at %08X!", sharc.pc);
 	}
 
 	if (chained_direction)		// Transmit to external
@@ -570,7 +570,7 @@ static void schedule_dma_op(int channel, UINT32 src, UINT32 dst, int src_modifie
 {
 	if (dmaop_cycles > 0)
 	{
-		osd_die("schedule_dma_op: DMA operation already scheduled at %08X!\n", sharc.pc);
+		fatalerror("schedule_dma_op: DMA operation already scheduled at %08X!", sharc.pc);
 	}
 
 	dmaop_channel = channel;
@@ -649,9 +649,9 @@ static void sharc_dma_exec(int channel)
 	flsh = (sharc.dma[channel].control >> 13) & 0x1;
 
 	if (ishake)
-		osd_die("SHARC: dma_exec: handshake not supported\n");
+		fatalerror("SHARC: dma_exec: handshake not supported");
 	if (intio)
-		osd_die("SHARC: dma_exec: single-word interrupt enable not supported\n");
+		fatalerror("SHARC: dma_exec: single-word interrupt enable not supported");
 
 
 
@@ -729,7 +729,7 @@ static void sharc_set_flag_input(int flag_num, int state)
 		}
 		else
 		{
-			osd_die("sharc_set_flag_input: flag %d is set output!", flag_num);
+			fatalerror("sharc_set_flag_input: flag %d is set output!", flag_num);
 		}
 	}
 }
@@ -847,7 +847,7 @@ static void sharc_reset(void *param)
 			break;
 
 		default:
-			osd_die("SHARC: Unimplemented boot mode %d\n", config->boot_mode);
+			fatalerror("SHARC: Unimplemented boot mode %d", config->boot_mode);
 	}
 }
 

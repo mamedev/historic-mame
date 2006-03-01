@@ -5,7 +5,6 @@
 /*************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 UINT8 *s2636ram;
 static mame_bitmap *spritebitmap;

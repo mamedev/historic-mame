@@ -5,7 +5,7 @@
 
 static void ppc_unimplemented(UINT32 op)
 {
-	osd_die("ppc: Unimplemented opcode %08X at %08X", op, ppc.pc);
+	fatalerror("ppc: Unimplemented opcode %08X at %08X", op, ppc.pc);
 }
 
 static void ppc_addx(UINT32 op)
@@ -734,7 +734,7 @@ static void ppc_lswi(UINT32 op)
 
 static void ppc_lswx(UINT32 op)
 {
-	osd_die("ppc: lswx unimplemented at %08X\n", ppc.pc);
+	fatalerror("ppc: lswx unimplemented at %08X", ppc.pc);
 }
 
 static void ppc_lwarx(UINT32 op)
@@ -1264,7 +1264,7 @@ static void ppc_stswi(UINT32 op)
 
 static void ppc_stswx(UINT32 op)
 {
-	osd_die("ppc: stswx unimplemented\n");
+	fatalerror("ppc: stswx unimplemented");
 }
 
 static void ppc_stw(UINT32 op)
@@ -1562,7 +1562,7 @@ static void ppc_xoris(UINT32 op)
 
 static void ppc_invalid(UINT32 op)
 {
-	osd_die("ppc: Invalid opcode %08X PC : %X\n", op, ppc.pc);
+	fatalerror("ppc: Invalid opcode %08X PC : %X", op, ppc.pc);
 }
 
 
@@ -1891,7 +1891,7 @@ static void ppc_mftb(UINT32 op)
 	{
 		case 268:	REG(RT) = (UINT32)(ppc_read_timebase()); break;
 		case 269:	REG(RT) = (UINT32)(ppc_read_timebase() >> 32); break;
-		default:	osd_die("ppc: Invalid timebase register %d at %08X", x, ppc.pc); break;
+		default:	fatalerror("ppc: Invalid timebase register %d at %08X", x, ppc.pc); break;
 	}
 }
 

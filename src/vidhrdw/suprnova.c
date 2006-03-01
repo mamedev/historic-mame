@@ -15,7 +15,6 @@ Tilemap flip flags were reversed
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 extern UINT32 *skns_tilemapA_ram, *skns_tilemapB_ram, *skns_v3slc_ram;
 extern UINT32 *skns_palette_ram, *skns_v3t_ram, *skns_main_ram, *skns_cache_ram;

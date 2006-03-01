@@ -36,7 +36,6 @@ from 2.bin to 9.bin program eproms
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/m68000/m68kmame.h"
 #include "cps1.h"
 

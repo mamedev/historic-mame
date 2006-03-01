@@ -133,7 +133,6 @@ sounds.
 #include <math.h>
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 #include "cpu/z80/z80.h"
 #include "sndhrdw/taitosnd.h"

@@ -8,7 +8,6 @@
 *******************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/h6280/h6280.h"
 
 static int HuC6270_registers[20];

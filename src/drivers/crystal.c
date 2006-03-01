@@ -117,7 +117,6 @@ Notes:
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/se3208/se3208.h"
 #include "vidhrdw/vrender0.h"
 #include "machine/ds1302.h"

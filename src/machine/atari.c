@@ -1629,10 +1629,10 @@ DRIVER_INIT( atari )
 	memory_set_bankptr(2, mess_ram);
 
 	/* save states */
-	state_save_register_global_array(antic.r);
-	state_save_register_global_array(antic.w);
-	state_save_register_global_array(gtia.r);
-	state_save_register_global_array(gtia.w);
+	state_save_register_global_pointer(((UINT8 *) &antic.r), sizeof(antic.r));
+	state_save_register_global_pointer(((UINT8 *) &antic.w), sizeof(antic.w));
+	state_save_register_global_pointer(((UINT8 *) &gtia.r), sizeof(gtia.r));
+	state_save_register_global_pointer(((UINT8 *) &gtia.w), sizeof(gtia.w));
 }
 #endif
 

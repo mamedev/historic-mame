@@ -270,26 +270,16 @@ static z80sio_interface nflfoot_sio_intf =
 
 MACHINE_START( mcr )
 {
+	/* initialize the CTC */
+	ctc_intf.baseclock = Machine->drv->cpu[0].cpu_clock;
+	z80ctc_init(0, &ctc_intf);
+
 	state_save_register_global(mcr_cocktail_flip);
 	return 0;
 }
 
 
-MACHINE_RESET( mcr )
-{
-	/* initialize the CTC */
-	ctc_intf.baseclock = Machine->drv->cpu[0].cpu_clock;
-	z80ctc_init(0, &ctc_intf);
-
-	/* reset cocktail flip */
-	mcr_cocktail_flip = 0;
-
-	/* initialize the sound */
-	mcr_sound_reset();
-}
-
-
-MACHINE_RESET( nflfoot )
+MACHINE_START( nflfoot )
 {
 	/* initialize the CTC */
 	ctc_intf.baseclock = Machine->drv->cpu[0].cpu_clock;
@@ -306,7 +296,12 @@ MACHINE_RESET( nflfoot )
 
 	/* allocate a timer for the IPU watchdog */
 	ipu_watchdog_timer = timer_alloc(ipu_watchdog_reset);
+	return 0;
+}
 
+
+MACHINE_RESET( mcr )
+{
 	/* reset cocktail flip */
 	mcr_cocktail_flip = 0;
 
@@ -337,7 +332,7 @@ static void mcr68_common_init(void)
 		m6840->control = 0x00;
 		m6840->latch = 0xffff;
 		m6840->count = 0xffff;
-		m6840->timer = timer_alloc(counter_fired_callback);
+		timer_enable(m6840->timer, FALSE);
 		m6840->timer_active = 0;
 		m6840->period = m6840_counter_periods[i];
 	}
@@ -361,6 +356,8 @@ MACHINE_START( mcr68 )
 	for (i = 0; i < 3; i++)
 	{
 		struct counter_state *m6840 = &m6840_state[i];
+
+		m6840->timer = timer_alloc(counter_fired_callback);
 
 		state_save_register_item("m6840", i, m6840->control);
 		state_save_register_item("m6840", i, m6840->latch);

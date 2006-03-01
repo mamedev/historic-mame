@@ -21,7 +21,7 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "zlib.h"
+#include <zlib.h>
 
 
 
@@ -175,7 +175,7 @@ void state_init(void)
 void state_save_push_tag(int tag)
 {
 	if (ss_tag_stack_index == TAG_STACK_SIZE - 1)
-		osd_die("state_save tag stack overflow");
+		fatalerror("state_save tag stack overflow");
 	ss_tag_stack[ss_tag_stack_index++] = ss_current_tag;
 	ss_current_tag = tag;
 }
@@ -189,7 +189,7 @@ void state_save_push_tag(int tag)
 void state_save_pop_tag(void)
 {
 	if (ss_tag_stack_index == 0)
-		osd_die("state_save tag stack underflow");
+		fatalerror("state_save tag stack underflow");
 	ss_current_tag = ss_tag_stack[--ss_tag_stack_index];
 }
 
@@ -278,14 +278,14 @@ void state_save_register_memory(const char *module, UINT32 instance, const char 
 
 		/* error if we are equal */
 		if ((*entry)->tag == ss_current_tag && cmpval == 0)
-			osd_die("Duplicate save state registration entry (%d, %s)\n", ss_current_tag, totalname);
+			fatalerror("Duplicate save state registration entry (%d, %s)", ss_current_tag, totalname);
 	}
 
 	/* didn't find one; allocate a new one */
 	next = *entry;
 	*entry = malloc(sizeof(**entry));
 	if (!*entry)
-		osd_die("Out of memory allocating a new save state entry");
+		fatalerror("Out of memory allocating a new save state entry");
 	memset(*entry, 0, sizeof(**entry));
 
 	/* fill in the rest */
@@ -351,12 +351,12 @@ static void register_func_void(ss_func **root, void (*func)(void))
 	/* scan for duplicates and push through to the end */
 	for (cur = root; *cur; cur = &(*cur)->next)
 		if ((*cur)->func.voidf == func && (*cur)->tag == ss_current_tag)
-			osd_die("Duplicate save state function (%d, 0x%p)\n", ss_current_tag, func);
+			fatalerror("Duplicate save state function (%d, 0x%p)", ss_current_tag, func);
 
 	/* allocate a new entry */
 	*cur = malloc(sizeof(ss_func));
 	if (*cur == NULL)
-		osd_die("malloc failed in ss_register_func\n");
+		fatalerror("malloc failed in ss_register_func");
 
 	/* fill it in */
 	(*cur)->next       = NULL;
@@ -388,17 +388,17 @@ static void register_func_int(ss_func **root, void (*func)(int), int param)
 
 	/* check for invalid timing */
 	if (!ss_registration_allowed)
-		osd_die("Attempt to register callback function after state registration is closed!");
+		fatalerror("Attempt to register callback function after state registration is closed!");
 
 	/* scan for duplicates and push through to the end */
 	for (cur = root; *cur; cur = &(*cur)->next)
 		if ((*cur)->func.intf == func && (*cur)->param.intp == param && (*cur)->tag == ss_current_tag)
-			osd_die("Duplicate save state function (%d, %d, 0x%x)\n", ss_current_tag, param, (int)func);
+			fatalerror("Duplicate save state function (%d, %d, 0x%x)", ss_current_tag, param, (int)func);
 
 	/* allocate a new entry */
 	*cur = malloc(sizeof(ss_func));
 	if (*cur == NULL)
-		osd_die("malloc failed in ss_register_func\n");
+		fatalerror("malloc failed in ss_register_func");
 
 	/* fill it in */
 	(*cur)->next       = NULL;
@@ -431,17 +431,17 @@ static void register_func_ptr(ss_func **root, void (*func)(void *), void *param)
 
 	/* check for invalid timing */
 	if (!ss_registration_allowed)
-		osd_die("Attempt to register callback function after state registration is closed!");
+		fatalerror("Attempt to register callback function after state registration is closed!");
 
 	/* scan for duplicates and push through to the end */
 	for (cur = root; *cur; cur = &(*cur)->next)
 		if ((*cur)->func.ptrf == func && (*cur)->param.ptrp == param && (*cur)->tag == ss_current_tag)
-			osd_die("Duplicate save state function (%d, %p, 0x%x)\n", ss_current_tag, param, (int)func);
+			fatalerror("Duplicate save state function (%d, %p, 0x%x)", ss_current_tag, param, (int)func);
 
 	/* allocate a new entry */
 	*cur = malloc(sizeof(ss_func));
 	if (*cur == NULL)
-		osd_die("malloc failed in ss_register_func\n");
+		fatalerror("malloc failed in ss_register_func");
 
 	/* fill it in */
 	(*cur)->next       = NULL;

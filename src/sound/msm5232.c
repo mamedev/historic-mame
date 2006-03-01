@@ -4,6 +4,7 @@
 #include <math.h>
 
 #include "driver.h"
+#include "streams.h"
 
 #include "msm5232.h"
 
@@ -772,7 +773,7 @@ WRITE8_HANDLER ( MSM5232_1_w )
  * Generic get_info
  **************************************************************************/
 
-static void msm5232_set_info(void *token, UINT32 state, union sndinfo *info)
+static void msm5232_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -781,7 +782,7 @@ static void msm5232_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void msm5232_get_info(void *token, UINT32 state, union sndinfo *info)
+void msm5232_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

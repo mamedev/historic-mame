@@ -100,15 +100,15 @@ void ptm6840_unconfig(void)
   while ( i < PTM_6840_MAX )
   {
 	if ( ptm[i].timer1 );// mame_timer_remove( ptm[i].timer1 );
-	//timer_adjust(ptm[i].timer1, TIME_NEVER, 0, 0);
+	timer_adjust(ptm[i].timer1, TIME_NEVER, 0, 0);
 	ptm[i].timer1 = NULL;
 
 	if ( ptm[i].timer2 );// mame_timer_remove( ptm[i].timer2 );
-	//timer_adjust(ptm[i].timer2, TIME_NEVER, 0, 0);
+	timer_adjust(ptm[i].timer2, TIME_NEVER, 0, 0);
 	ptm[i].timer2 = NULL;
 
 	if ( ptm[i].timer3 );// mame_timer_remove( ptm[i].timer3 );
-	//timer_adjust(ptm[i].timer3, TIME_NEVER, 0, 0);
+	timer_adjust(ptm[i].timer3, TIME_NEVER, 0, 0);
 	ptm[i].timer3 = NULL;
 	i++;
   }

@@ -91,11 +91,11 @@
 
 ***************************************************************************/
 
+#include "osdepend.h"
 #include "driver.h"
 #include "config.h"
 #include "xmlfile.h"
 #include "profiler.h"
-#include "machine/generic.h"
 #include <math.h>
 
 #ifdef MESS
@@ -853,7 +853,8 @@ static const input_port_default_entry default_ports_builtin[] =
 	INPUT_PORT_DIGITAL_DEF( 0, IPG_UI,      UI_DEBUG_BREAK,		"Break in Debugger",	SEQ_DEF_1(KEYCODE_TILDE) )
 	INPUT_PORT_DIGITAL_DEF( 0, IPG_UI,      UI_CONFIGURE,		"Config Menu",			SEQ_DEF_1(KEYCODE_TAB) )
 	INPUT_PORT_DIGITAL_DEF( 0, IPG_UI,      UI_PAUSE,			"Pause",				SEQ_DEF_1(KEYCODE_P) )
-	INPUT_PORT_DIGITAL_DEF( 0, IPG_UI,      UI_RESET_MACHINE,	"Reset Game",			SEQ_DEF_1(KEYCODE_F3) )
+	INPUT_PORT_DIGITAL_DEF( 0, IPG_UI,      UI_RESET_MACHINE,	"Reset Game",			SEQ_DEF_2(KEYCODE_F3, KEYCODE_LSHIFT) )
+	INPUT_PORT_DIGITAL_DEF( 0, IPG_UI,      UI_SOFT_RESET,		"Soft Reset",			SEQ_DEF_3(KEYCODE_F3, CODE_NOT, KEYCODE_LSHIFT) )
 	INPUT_PORT_DIGITAL_DEF( 0, IPG_UI,      UI_SHOW_GFX,		"Show Gfx",				SEQ_DEF_1(KEYCODE_F4) )
 	INPUT_PORT_DIGITAL_DEF( 0, IPG_UI,      UI_FRAMESKIP_DEC,	"Frameskip Dec",		SEQ_DEF_1(KEYCODE_F8) )
 	INPUT_PORT_DIGITAL_DEF( 0, IPG_UI,      UI_FRAMESKIP_INC,	"Frameskip Inc",		SEQ_DEF_1(KEYCODE_F9) )
@@ -990,7 +991,7 @@ int input_port_init(void (*construct_ipt)(input_port_init_params *))
 			{
 				int tag = port_tag_to_index(port->condition.tag);
 				if (tag == -1)
-					osd_die("Conditional port references invalid tag '%s'", port->condition.tag);
+					fatalerror("Conditional port references invalid tag '%s'", port->condition.tag);
 				port->condition.portnum = tag;
 			}
 	}
@@ -1035,11 +1036,11 @@ static void input_port_postload(void)
 		{
 			/* fatal error if we didn't hit an IPT_PORT */
 			if (portnum < 0)
-				osd_die("Error in InputPort definition: expecting PORT_START\n");
+				fatalerror("Error in InputPort definition: expecting PORT_START");
 
 			/* fatal error if too many bits */
 			if (bitnum >= MAX_BITS_PER_PORT)
-				osd_die("Error in InputPort definition: too many bits for a port (%d max)\n", MAX_BITS_PER_PORT);
+				fatalerror("Error in InputPort definition: too many bits for a port (%d max)", MAX_BITS_PER_PORT);
 
 			/* fill in the bit info */
 			port_info[portnum].bit[bitnum].port = port;
@@ -1115,7 +1116,7 @@ static void input_port_postload(void)
 						break;
 
 					default:
-						osd_die("Unknown analog port type -- don't know if it is absolute or not\n");
+						fatalerror("Unknown analog port type -- don't know if it is absolute or not");
 						break;
 				}
 
@@ -1553,7 +1554,7 @@ input_port_entry *input_port_initialize(input_port_init_params *iip, UINT32 type
 			if (iip->ports[portnum].type == IPT_PORT && iip->ports[portnum].start.tag != NULL && !strcmp(iip->ports[portnum].start.tag, tag))
 				break;
 		if (portnum >= iip->current_port)
-			osd_die("Could not find port to modify: '%s'", tag);
+			fatalerror("Could not find port to modify: '%s'", tag);
 
 		/* nuke any matching masks */
 		for (portnum++, deleting = 0; portnum < iip->current_port && iip->ports[portnum].type != IPT_PORT; portnum++)
@@ -1569,7 +1570,7 @@ input_port_entry *input_port_initialize(input_port_init_params *iip, UINT32 type
 
 		/* allocate space for a new port at the end of this entry */
 		if (iip->current_port >= iip->max_ports)
-			osd_die("Too many input ports");
+			fatalerror("Too many input ports");
 		if (portnum < iip->current_port)
 		{
 			memmove(&iip->ports[portnum + 1], &iip->ports[portnum], (iip->current_port - portnum) * sizeof(iip->ports[0]));
@@ -1584,7 +1585,7 @@ input_port_entry *input_port_initialize(input_port_init_params *iip, UINT32 type
 	else
 	{
 		if (iip->current_port >= iip->max_ports)
-			osd_die("Too many input ports");
+			fatalerror("Too many input ports");
 		port = &iip->ports[iip->current_port++];
 	}
 
@@ -2508,7 +2509,7 @@ UINT32 readinputportbytag(const char *tag)
 		return readinputport(port);
 
 	/* otherwise fail horribly */
-	osd_die("Unable to locate input port '%s'", tag);
+	fatalerror("Unable to locate input port '%s'", tag);
 	return -1;
 }
 

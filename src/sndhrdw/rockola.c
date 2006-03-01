@@ -11,6 +11,7 @@
 
 
 #include "driver.h"
+#include "streams.h"
 #include "sound/custom.h"
 #include "sound/sn76477.h"
 #include "sound/samples.h"

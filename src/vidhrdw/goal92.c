@@ -5,7 +5,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 UINT16 *goal92_back_data,*goal92_fore_data,*goal92_textram,*goal92_scrollram16;
 

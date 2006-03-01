@@ -291,7 +291,6 @@ Any fixes for this driver should be forwarded to the AGEMAME forum at (http://ww
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
 #include "vidhrdw/crtc6845.h"
 #include "machine/6821pia.h"

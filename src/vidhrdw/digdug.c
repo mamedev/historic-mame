@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
 UINT8 *digdug_videoram,*digdug_objram, *digdug_posram, *digdug_flpram;

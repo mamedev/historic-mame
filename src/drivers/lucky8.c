@@ -25,7 +25,6 @@ Any fixes for this driver should be forwarded to AGEMAME forum at (http://www.ma
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
 
 /* vidhrdw */

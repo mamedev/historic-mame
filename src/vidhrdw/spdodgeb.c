@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
 
 

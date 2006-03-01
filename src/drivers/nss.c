@@ -293,7 +293,6 @@ Contra III   CONTRA_III_1   TC574000   CONTRA_III_0   TC574000    GAME1_NSSU    
 
 ***************************************************************************/
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "includes/snes.h"
 
 extern DRIVER_INIT( snes );

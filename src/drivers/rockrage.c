@@ -50,7 +50,6 @@ Notes:
 #include "driver.h"
 #include "cpu/m6809/m6809.h"
 #include "cpu/hd6309/hd6309.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
 #include "sound/2151intf.h"
 #include "sound/vlm5030.h"

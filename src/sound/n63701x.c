@@ -14,6 +14,7 @@ silence compression: '00 nn' must be replaced by nn+1 times '80'.
 ***************************************************************************/
 
 #include "driver.h"
+#include "streams.h"
 #include "n63701x.h"
 
 
@@ -160,7 +161,7 @@ void namco_63701x_write(int offset, int data)
  * Generic get_info
  **************************************************************************/
 
-static void namco_63701x_set_info(void *token, UINT32 state, union sndinfo *info)
+static void namco_63701x_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -169,7 +170,7 @@ static void namco_63701x_set_info(void *token, UINT32 state, union sndinfo *info
 }
 
 
-void namco_63701x_get_info(void *token, UINT32 state, union sndinfo *info)
+void namco_63701x_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

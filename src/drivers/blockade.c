@@ -29,7 +29,6 @@ Notes:  Support is complete with the exception of the noise generator.
 ****************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "includes/blockade.h"
 #include "sound/samples.h"
 #include "sound/discrete.h"

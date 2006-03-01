@@ -14,6 +14,8 @@
 #ifndef __AUDIT_H__
 #define __AUDIT_H__
 
+#include "mamecore.h"
+
 /* return values from audit_verify_roms and audit_verify_samples */
 #define CORRECT   		0
 #define NOTFOUND  		1

@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 int yiear_nmi_enable;
 

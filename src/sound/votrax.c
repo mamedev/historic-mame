@@ -17,6 +17,7 @@ the variable VotraxBaseFrequency, this is defaulted to 8000
 **************************************************************************/
 
 #include "driver.h"
+#include "streams.h"
 #include "samples.h"
 
 
@@ -157,7 +158,7 @@ int votrax_status_r(void)
  * Generic get_info
  **************************************************************************/
 
-static void votrax_set_info(void *token, UINT32 state, union sndinfo *info)
+static void votrax_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -166,7 +167,7 @@ static void votrax_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void votrax_get_info(void *token, UINT32 state, union sndinfo *info)
+void votrax_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

@@ -178,7 +178,6 @@ cpu #2 (PC=0000060E): unmapped memory word read from 0000683A & FFFF
 ****************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sndhrdw/taitosnd.h"
 #include "vidhrdw/taitoic.h"
 #include "cpu/tms32025/tms32025.h"

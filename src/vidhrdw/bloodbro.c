@@ -4,7 +4,7 @@
 
 ***************************************************************************/
 
-#include "vidhrdw/generic.h"
+#include "driver.h"
 
 UINT16 *bloodbro_txvideoram;
 UINT16 *bloodbro_bgvideoram,*bloodbro_fgvideoram;

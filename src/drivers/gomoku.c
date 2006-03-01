@@ -21,7 +21,6 @@ todo:
 
 #include "driver.h"
 #include "cpu/z80/z80.h"
-#include "vidhrdw/generic.h"
 #include "sound/custom.h"
 
 

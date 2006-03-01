@@ -4,7 +4,6 @@
 ************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "machine/random.h"
 
 UINT8 *st0016_charram,*st0016_spriteram,*st0016_paletteram;

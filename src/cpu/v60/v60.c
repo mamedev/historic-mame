@@ -3,12 +3,9 @@
 // Main hacking and coding by Farfetch'd
 // Portability fixes by Richter Belmont
 
-#include "driver.h"	// needed for hack below.
+#include "cpuintrf.h"
 #include "debugger.h"
-
-#include <assert.h>
-#include <stdio.h>
-#include <stdarg.h>
+#include "state.h"
 #include "v60.h"
 
 // memory accessors
@@ -294,8 +291,8 @@ INLINE UINT32 v60_update_psw_for_exception(int is_interrupt, int target_level)
 
 UINT32 opUNHANDLED(void)
 {
-	osd_die("Unhandled OpCode found : %02x at %08x\n", OpRead16(PC), PC);
-	return 0; /* never reached, osd_die won't return */
+	fatalerror("Unhandled OpCode found : %02x at %08x", OpRead16(PC), PC);
+	return 0; /* never reached, fatalerror won't return */
 }
 
 // Opcode jump table

@@ -220,7 +220,6 @@ Notes:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/arm/arm.h"
 #include "cpu/h6280/h6280.h"
 #include "cpu/m6809/m6809.h"

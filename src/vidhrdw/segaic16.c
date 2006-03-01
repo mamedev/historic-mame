@@ -1219,7 +1219,7 @@ int segaic16_tilemap_init(int which, int type, int colorbase, int xoffs, int num
 			break;
 
 		default:
-			osd_die("Invalid tilemap index specified in segaic16_tilemap_init\n");
+			fatalerror("Invalid tilemap index specified in segaic16_tilemap_init");
 	}
 
 	/* determine the parameters of the tilemaps */
@@ -1258,7 +1258,7 @@ int segaic16_tilemap_init(int which, int type, int colorbase, int xoffs, int num
 			break;
 
 		default:
-			osd_die("Invalid tilemap type specified in segaic16_tilemap_init\n");
+			fatalerror("Invalid tilemap type specified in segaic16_tilemap_init");
 	}
 
 	/* create the tilemap for the text layer */
@@ -2671,7 +2671,7 @@ int segaic16_sprites_init(int which, int type, int colorbase, int xoffs)
 			break;
 
 		default:
-			osd_die("Invalid sprite index specified in segaic16_sprites_init\n");
+			fatalerror("Invalid sprite index specified in segaic16_sprites_init");
 	}
 
 	/* determine the parameters of the sprites */
@@ -2715,7 +2715,7 @@ int segaic16_sprites_init(int which, int type, int colorbase, int xoffs)
 			break;
 
 		default:
-			osd_die("Invalid sprite system specified in segaic16_sprites_init\n");
+			fatalerror("Invalid sprite system specified in segaic16_sprites_init");
 	}
 
 	/* if the sprites need buffering, allocate memory for the buffer */
@@ -3423,7 +3423,7 @@ int segaic16_road_init(int which, int type, int colorbase1, int colorbase2, int 
 			break;
 
 		default:
-			osd_die("Invalid road index specified in segaic16_road_init\n");
+			fatalerror("Invalid road index specified in segaic16_road_init");
 	}
 
 	/* determine the parameters of the road */
@@ -3443,7 +3443,7 @@ int segaic16_road_init(int which, int type, int colorbase1, int colorbase2, int 
 			break;
 
 		default:
-			osd_die("Invalid road system specified in segaic16_road_init\n");
+			fatalerror("Invalid road system specified in segaic16_road_init");
 	}
 	return 0;
 }
@@ -3529,7 +3529,7 @@ int segaic16_rotate_init(int which, int type, int colorbase)
 			break;
 
 		default:
-			osd_die("Invalid rotate index specified in segaic16_rotate_init\n");
+			fatalerror("Invalid rotate index specified in segaic16_rotate_init");
 	}
 
 	/* determine the parameters of the rotate */
@@ -3540,7 +3540,7 @@ int segaic16_rotate_init(int which, int type, int colorbase)
 			break;
 
 		default:
-			osd_die("Invalid rotate system specified in segaic16_rotate_init\n");
+			fatalerror("Invalid rotate system specified in segaic16_rotate_init");
 	}
 
 	/* allocate a buffer for swapping */

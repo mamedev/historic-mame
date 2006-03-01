@@ -9,9 +9,11 @@
 
 ***************************************************************************/
 
+#include "osdepend.h"
 #include "driver.h"
 #include "profiler.h"
 #include <time.h>
+#include <ctype.h>
 
 
 
@@ -34,6 +36,7 @@
  *
  *************************************/
 
+typedef struct _input_code_info input_code_info;
 struct _input_code_info
 {
 	UINT8						analogtype;				/* analog type */
@@ -42,7 +45,6 @@ struct _input_code_info
 	const os_code_info *		osinfo;					/* pointer to the OS code info */
 	char						token[MAX_TOKEN_LEN];	/* token string */
 };
-typedef struct _input_code_info input_code_info;
 
 
 
@@ -508,7 +510,7 @@ static input_code_info *code_map;
 static input_code code_count;
 
 /* Static information used in key/joy recording */
-static input_code record_seq[SEQ_MAX];		/* buffer for key recording */
+static input_code record_seq[SEQ_MAX];			/* buffer for key recording */
 static int record_count;						/* number of key/joy press recorded */
 static clock_t record_last;						/* time of last key/joy press */
 static UINT8 record_analog;						/* are we recording an analog sequence? */

@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 static int homerun_gfx_ctrl;
 static int homerun_gc_up,homerun_gc_down;

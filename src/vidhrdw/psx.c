@@ -17,6 +17,7 @@
 
 ***************************************************************************/
 
+#include <stdarg.h>
 #include "driver.h"
 #include "includes/psx.h"
 #include "usrintrf.h"

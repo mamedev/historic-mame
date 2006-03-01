@@ -56,7 +56,8 @@ Note:   if MAME_DEBUG is defined, pressing Z with:
 
 
 **************************************************************************/
-#include "vidhrdw/generic.h"
+
+#include "driver.h"
 
 /* Variables only used here */
 static tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;

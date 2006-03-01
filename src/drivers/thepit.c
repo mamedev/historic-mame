@@ -115,7 +115,6 @@ HT-01B
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
 
 extern unsigned char *thepit_attributesram;

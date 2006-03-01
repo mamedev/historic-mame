@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "streams.h"
 #include "cpuintrf.h"
 #include "vrender0.h"
 
@@ -247,7 +248,7 @@ static void VR0_RenderAudio(struct _VR0Chip *VR0, int nsamples,stream_sample_t *
  * Generic get_info
  **************************************************************************/
 
-static void vrender0_set_info(void *token, UINT32 state, union sndinfo *info)
+static void vrender0_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -256,7 +257,7 @@ static void vrender0_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void vrender0_get_info(void *token, UINT32 state, union sndinfo *info)
+void vrender0_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

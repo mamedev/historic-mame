@@ -5,7 +5,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 UINT16 *zerozone_videoram;
 static UINT16 zerozone_tilebank;

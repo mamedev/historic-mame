@@ -67,16 +67,19 @@ the profiler handles a FILO list so calls may be nested.
 */
 
 #ifdef MAME_DEBUG
-#define profiler_mark(type) profiler__mark(type)
-#else
-#define profiler_mark(type)
-#endif
-
-void profiler__mark(int type);
+void profiler_mark(int type);
 
 /* functions called by usrintf.c */
 void profiler_start(void);
 void profiler_stop(void);
 const char *profiler_get_text(void);
+#else
+#define profiler_mark(type)
+
+#define profiler_start()
+#define profiler_stop()
+#define profiler_get_text() ""
+#endif
+
 
 #endif	/* __PROFILER_H__ */

@@ -16,7 +16,6 @@ Todo :
 
 #include "driver.h"
 #include "machine/8255ppi.h"
-#include "vidhrdw/generic.h"
 #include "sound/2203intf.h"
 
 extern int homerun_gc_up;

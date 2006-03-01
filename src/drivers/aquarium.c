@@ -50,7 +50,6 @@ Stephh's notes (based on the game M68000 code and some tests) :
 
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/2151intf.h"
 #include "sound/okim6295.h"
 

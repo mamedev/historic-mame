@@ -43,7 +43,6 @@
  *****************************************************************************/
 
 #include <stdio.h>
-#include "osd_cpu.h"
 #include "memory.h"
 
 /* 8080/8085A mnemonics were more irritation than information

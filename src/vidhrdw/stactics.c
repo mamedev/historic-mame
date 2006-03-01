@@ -59,7 +59,6 @@ bottom line of the screen
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 /* These are defined in machine/stactics.c */
 extern int stactics_vert_pos;

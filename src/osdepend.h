@@ -15,7 +15,7 @@
 #define __OSDEPEND_H__
 
 #include "mamecore.h"
-#include "inptport.h"
+#include <stdarg.h>
 
 int osd_init(void);
 
@@ -40,7 +40,7 @@ struct _osd_create_params
 	float fps;					/* frame rate */
 	int video_attributes;		/* video flags from driver */
 };
-typedef struct _osd_create_params osd_create_params;
+/* In mamecore.h: typedef struct _osd_create_params osd_create_params; */
 
 
 
@@ -167,6 +167,16 @@ void osd_sound_enable(int enable);
 
 ******************************************************************************/
 
+typedef UINT32 os_code;
+
+struct _os_code_info
+{
+	char *			name;			/* OS dependant name; 0 terminates the list */
+	os_code		oscode;			/* OS dependant code */
+	input_code	inputcode;		/* CODE_xxx equivalent from input.h, or one of CODE_OTHER_* if n/a */
+};
+typedef struct _os_code_info os_code_info;
+
 /*
   return a list of all available inputs (see input.h)
 */
@@ -242,7 +252,7 @@ enum
 };
 
 /* These values are returned as error codes by osd_fopen() */
-typedef enum
+enum _osd_file_error
 {
 	FILEERR_SUCCESS,
 	FILEERR_FAILURE,
@@ -251,8 +261,9 @@ typedef enum
 	FILEERR_ACCESS_DENIED,
 	FILEERR_ALREADY_OPEN,
 	FILEERR_TOO_MANY_FILES
-} osd_file_error;
+};
 
+typedef struct _osd_file osd_file;
 
 /* Return the number of paths for a given type */
 int osd_get_path_count(int pathtype);
@@ -319,17 +330,11 @@ void osd_free_executable(void *ptr);
 /* return non-zero to abort loading */
 int osd_display_loading_rom_message(const char *name,rom_load_data *romdata);
 
-/* called when the game is paused/unpaused, so the OS dependent code can do special */
-/* things like changing the title bar or darkening the display. */
-/* Note that the OS dependent code must NOT stop processing input, since the user */
-/* interface is still active while the game is paused. */
-void osd_pause(int paused);
-
 /* checks to see if a pointer is bad */
 int osd_is_bad_read_ptr(const void *ptr, size_t size);
 
-/* aborts the program in some unexpected fatal way */
-DECL_NORETURN void CLIB_DECL osd_die(const char *text,...) ATTR_PRINTF(1,2) ATTR_NORETURN;
+/* log an error */
+void osd_logerror(const char *text);
 
 
 
@@ -337,7 +342,5 @@ DECL_NORETURN void CLIB_DECL osd_die(const char *text,...) ATTR_PRINTF(1,2) ATTR
 /* this is here to follow the current mame file hierarchy style */
 #include "osd_mess.h"
 #endif
-
-void CLIB_DECL logerror(const char *text,...) ATTR_PRINTF(1,2);
 
 #endif	/* __OSDEPEND_H__ */

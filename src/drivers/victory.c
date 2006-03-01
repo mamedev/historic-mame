@@ -99,7 +99,6 @@
 #include "exidy.h"
 #include "machine/6821pia.h"
 #include "sound/5220intf.h"
-#include "vidhrdw/generic.h"
 
 
 #define LOG_SOUND		0

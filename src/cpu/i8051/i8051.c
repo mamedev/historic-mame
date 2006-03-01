@@ -526,7 +526,6 @@ void i8051_init(void)
 	state_save_register_item("i8051", cpu, i8051.ip);
 	//8052 Only registers
 	#if (HAS_I8052 || HAS_I8752)
-		state_save_register_item("i8051", cpu, i8051.tcon);
 		state_save_register_item("i8051", cpu, i8051.rcap2l);
 		state_save_register_item("i8051", cpu, i8051.rcap2h);
 		state_save_register_item("i8051", cpu, i8051.tl2);

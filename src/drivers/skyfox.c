@@ -14,7 +14,6 @@ To Do:  The background rendering is entirely guesswork
 
 ***************************************************************************/
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/2203intf.h"
 
 /* Variables defined in vidhrdw: */

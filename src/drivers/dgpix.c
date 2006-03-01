@@ -36,7 +36,6 @@
 *********************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 static UINT32 *vram;
 static int vbuffer = 0;

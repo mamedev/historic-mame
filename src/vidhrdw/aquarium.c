@@ -1,7 +1,6 @@
 /* Aquarium */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 extern UINT16 *aquarium_scroll;
 

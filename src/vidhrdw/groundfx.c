@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 
 #define TC0100SCN_GFX_NUM 2

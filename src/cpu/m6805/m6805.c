@@ -448,7 +448,7 @@ static void state_register(const char *type)
 	state_save_register_item(type, cpu, X);
 	state_save_register_item(type, cpu, CC);
 	state_save_register_item(type, cpu, m6805.pending_interrupts);
-	state_save_register_item(type, cpu, m6805.irq_state[0]);
+	state_save_register_item_array(type, cpu, m6805.irq_state);
 }
 
 static void m6805_init(void)
@@ -850,16 +850,7 @@ void m68705_set_irq_line(int irqline, int state)
 #if (HAS_HD63705)
 void hd63705_init(void)
 {
-	int cpu = cpu_getactivecpu();
 	state_register("hd63705");
-	state_save_register_item("hd63705", cpu, m6805.irq_state[0]);
-	state_save_register_item("hd63705", cpu, m6805.irq_state[1]);
-	state_save_register_item("hd63705", cpu, m6805.irq_state[2]);
-	state_save_register_item("hd63705", cpu, m6805.irq_state[3]);
-	state_save_register_item("hd63705", cpu, m6805.irq_state[4]);
-	state_save_register_item("hd63705", cpu, m6805.irq_state[5]);
-	state_save_register_item("hd63705", cpu, m6805.irq_state[6]);
-	state_save_register_item("hd63705", cpu, m6805.irq_state[7]);
 }
 
 void hd63705_reset(void *param)

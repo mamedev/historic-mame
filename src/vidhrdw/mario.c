@@ -7,9 +7,8 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
-static int gfx_bank, palette_bank;
+static UINT8 gfx_bank, palette_bank;
 
 static tilemap *bg_tilemap;
 
@@ -133,6 +132,9 @@ VIDEO_START( mario )
 
 	if ( !bg_tilemap )
 		return 1;
+
+	state_save_register_global(gfx_bank);
+	state_save_register_global(palette_bank);
 
 	return 0;
 }

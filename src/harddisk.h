@@ -14,7 +14,7 @@
 #ifndef __HARDDISK_H__
 #define __HARDDISK_H__
 
-#include "driver.h"
+#include "mamecore.h"
 #include "chd.h"
 
 

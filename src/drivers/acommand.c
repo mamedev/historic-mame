@@ -53,7 +53,6 @@ JALCF1   BIN     1,048,576  02-07-99  1:11a JALCF1.BIN
 *******************************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/okim6295.h"
 
 static tilemap *tx_tilemap,*bg_tilemap;

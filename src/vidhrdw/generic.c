@@ -1,47 +1,78 @@
-/***************************************************************************
+/*********************************************************************
 
-  vidhrdw/generic.c
+    generic.c
 
-  Some general purpose functions used by many video drivers.
+    Generic simple video functions.
 
-***************************************************************************/
+    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Visit http://mamedev.org for licensing and usage restrictions.
+
+*********************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
+
+
+/***************************************************************************
+
+    Global variables
+
+***************************************************************************/
 
 UINT8 *videoram;
 UINT16 *videoram16;
 UINT32 *videoram32;
 size_t videoram_size;
+
 UINT8 *colorram;
 UINT16 *colorram16;
 UINT32 *colorram32;
+
 UINT8 *spriteram;			/* not used in this module... */
 UINT16 *spriteram16;		/* ... */
 UINT32 *spriteram32;		/* ... */
+
 UINT8 *spriteram_2;
 UINT16 *spriteram16_2;
 UINT32 *spriteram32_2;
+
 UINT8 *spriteram_3;
 UINT16 *spriteram16_3;
 UINT32 *spriteram32_3;
+
 UINT8 *buffered_spriteram;
 UINT16 *buffered_spriteram16;
 UINT32 *buffered_spriteram32;
+
 UINT8 *buffered_spriteram_2;
 UINT16 *buffered_spriteram16_2;
 UINT32 *buffered_spriteram32_2;
+
 size_t spriteram_size;		/* ... here just for convenience */
 size_t spriteram_2_size;
 size_t spriteram_3_size;
+
 UINT8 *dirtybuffer;
 UINT16 *dirtybuffer16;
 UINT32 *dirtybuffer32;
-mame_bitmap *tmpbitmap;
 
+mame_bitmap *tmpbitmap;
 int flip_screen_x, flip_screen_y;
+
 static int global_attribute_changed;
+
+
+
+/***************************************************************************
+
+    Initialization
+
+***************************************************************************/
+
+/*-------------------------------------------------
+    generic_video_init - initialize globals and
+    register for save states
+-------------------------------------------------*/
 
 void generic_video_init(void)
 {
@@ -78,72 +109,92 @@ void generic_video_init(void)
 }
 
 
-void video_generic_postload(void)
-{
-	memset(dirtybuffer,1,videoram_size);
-}
 
 /***************************************************************************
 
-  Start the video hardware emulation.
+    Generic video start/update callbacks
 
 ***************************************************************************/
+
+/*-------------------------------------------------
+    video_generic_postload - post-load callback
+    that marks all videoram as dirty
+-------------------------------------------------*/
+
+static void video_generic_postload(void)
+{
+	memset(dirtybuffer, 1, videoram_size);
+}
+
+
+/*-------------------------------------------------
+    video_start_generic - general video system
+    with dirty buffer support
+-------------------------------------------------*/
+
 VIDEO_START( generic )
 {
-	dirtybuffer = 0;
-	tmpbitmap = 0;
+	assert_always(videoram_size != 0, "VIDEO_START(generic) requires non-zero videoram_size");
 
-	if (videoram_size == 0)
-	{
-		logerror("Error: video_start_generic() called but videoram_size not initialized\n");
-		return 1;
-	}
-
+	/* allocate memory for the dirty buffer */
 	dirtybuffer = auto_malloc(videoram_size);
-	memset(dirtybuffer,1,videoram_size);
+	memset(dirtybuffer, 1, videoram_size);
 
-	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	/* allocate the temporary bitmap */
+	tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
+	if (tmpbitmap == NULL)
 		return 1;
 
+	/* on a restore, we automatically zap the dirty buffer */
 	state_save_register_func_postload(video_generic_postload);
-
 	return 0;
 }
 
+
+/*-------------------------------------------------
+    video_start_generic_bitmapped - general video
+    system with a bitmap
+-------------------------------------------------*/
 
 VIDEO_START( generic_bitmapped )
 {
-	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	/* allocate the temporary bitmap */
+	tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
+	if (tmpbitmap == NULL)
 		return 1;
 
-	/* Generic_Bitmapped games (with no dirtybuffer) must store the current screen tmpbitmap
-       in a save state to insure the screen redraws properly upon load                    */
-	state_save_register_bitmap("video", 0, "tmpbitmap", tmpbitmap) ;
-
+	/* ensure the contents of the bitmap are saved */
+	state_save_register_bitmap("video", 0, "tmpbitmap", tmpbitmap);
 	return 0;
 }
 
 
-/***************************************************************************
+/*-------------------------------------------------
+    video_update_generic_bitmapped - blast the
+    generic bitmap to the screen
+-------------------------------------------------*/
 
-  Draw the game screen in the given mame_bitmap.
-  To be used by bitmapped games not using sprites.
-
-***************************************************************************/
 VIDEO_UPDATE( generic_bitmapped )
 {
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 }
 
+
+
+/***************************************************************************
+
+    Generic read/write handlers
+
+***************************************************************************/
+
+/*-------------------------------------------------
+    videoram_r/w - 8-bit access to videoram with
+    dirty buffer marking
+-------------------------------------------------*/
 
 READ8_HANDLER( videoram_r )
 {
 	return videoram[offset];
-}
-
-READ8_HANDLER( colorram_r )
-{
-	return colorram[offset];
 }
 
 WRITE8_HANDLER( videoram_w )
@@ -151,9 +202,19 @@ WRITE8_HANDLER( videoram_w )
 	if (videoram[offset] != data)
 	{
 		dirtybuffer[offset] = 1;
-
 		videoram[offset] = data;
 	}
+}
+
+
+/*-------------------------------------------------
+    colorram_r/w - 8-bit access to colorram with
+    dirty buffer marking
+-------------------------------------------------*/
+
+READ8_HANDLER( colorram_r )
+{
+	return colorram[offset];
 }
 
 WRITE8_HANDLER( colorram_w )
@@ -161,12 +222,14 @@ WRITE8_HANDLER( colorram_w )
 	if (colorram[offset] != data)
 	{
 		dirtybuffer[offset] = 1;
-
 		colorram[offset] = data;
 	}
 }
 
 
+/*-------------------------------------------------
+    spriteram_r/w - 8-bit access to spriteram
+-------------------------------------------------*/
 
 READ8_HANDLER( spriteram_r )
 {
@@ -178,6 +241,11 @@ WRITE8_HANDLER( spriteram_w )
 	spriteram[offset] = data;
 }
 
+
+/*-------------------------------------------------
+    spriteram16_r/w - 16-bit access to spriteram16
+-------------------------------------------------*/
+
 READ16_HANDLER( spriteram16_r )
 {
 	return spriteram16[offset];
@@ -188,6 +256,11 @@ WRITE16_HANDLER( spriteram16_w )
 	COMBINE_DATA(spriteram16+offset);
 }
 
+
+/*-------------------------------------------------
+    spriteram_r/w - 8-bit access to spriteram2
+-------------------------------------------------*/
+
 READ8_HANDLER( spriteram_2_r )
 {
 	return spriteram_2[offset];
@@ -197,6 +270,14 @@ WRITE8_HANDLER( spriteram_2_w )
 {
 	spriteram_2[offset] = data;
 }
+
+
+
+/***************************************************************************
+
+    Generic sprite buffering
+
+***************************************************************************/
 
 /* Mish:  171099
 
@@ -234,52 +315,71 @@ equal to the size of normal spriteram.
     Then the video driver must draw the sprites from the buffered_spriteram
 pointer.  The function buffer_spriteram_w() is used to simulate hardware
 which buffers the spriteram from a memory location write.  The function
-buffer_spriteram(unsigned char *ptr, int length) can be used where
+buffer_spriteram(UINT8 *ptr, int length) can be used where
 more control is needed over what is buffered.
 
     For examples see darkseal.c, contra.c, lastduel.c, bionicc.c etc.
 
 */
 
+
+/*-------------------------------------------------
+    buffer_spriteram_w - triggered writes to
+    buffer spriteram
+-------------------------------------------------*/
+
 WRITE8_HANDLER( buffer_spriteram_w )
 {
-	memcpy(buffered_spriteram,spriteram,spriteram_size);
+	memcpy(buffered_spriteram, spriteram, spriteram_size);
 }
 
 WRITE16_HANDLER( buffer_spriteram16_w )
 {
-	memcpy(buffered_spriteram16,spriteram16,spriteram_size);
+	memcpy(buffered_spriteram16, spriteram16, spriteram_size);
 }
 
 WRITE32_HANDLER( buffer_spriteram32_w )
 {
-	memcpy(buffered_spriteram32,spriteram32,spriteram_size);
+	memcpy(buffered_spriteram32, spriteram32, spriteram_size);
 }
+
+
+/*-------------------------------------------------
+    buffer_spriteram_2_w - triggered writes to
+    buffer spriteram_2
+-------------------------------------------------*/
 
 WRITE8_HANDLER( buffer_spriteram_2_w )
 {
-	memcpy(buffered_spriteram_2,spriteram_2,spriteram_2_size);
+	memcpy(buffered_spriteram_2, spriteram_2, spriteram_2_size);
 }
 
 WRITE16_HANDLER( buffer_spriteram16_2_w )
 {
-	memcpy(buffered_spriteram16_2,spriteram16_2,spriteram_2_size);
+	memcpy(buffered_spriteram16_2, spriteram16_2, spriteram_2_size);
 }
 
 WRITE32_HANDLER( buffer_spriteram32_2_w )
 {
-	memcpy(buffered_spriteram32_2,spriteram32_2,spriteram_2_size);
+	memcpy(buffered_spriteram32_2, spriteram32_2, spriteram_2_size);
 }
 
-void buffer_spriteram(unsigned char *ptr,int length)
+
+/*-------------------------------------------------
+    buffer_spriteram - for manually buffering
+    spriteram
+-------------------------------------------------*/
+
+void buffer_spriteram(UINT8 *ptr, int length)
 {
-	memcpy(buffered_spriteram,ptr,length);
+	memcpy(buffered_spriteram, ptr, length);
 }
 
-void buffer_spriteram_2(unsigned char *ptr,int length)
+void buffer_spriteram_2(UINT8 *ptr, int length)
 {
-	memcpy(buffered_spriteram_2,ptr,length);
+	memcpy(buffered_spriteram_2, ptr, length);
 }
+
 
 
 /***************************************************************************

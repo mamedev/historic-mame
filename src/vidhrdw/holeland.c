@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 static int palette_offset;
 static tilemap *bg_tilemap;

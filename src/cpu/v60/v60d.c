@@ -1,7 +1,5 @@
 
 #include "cpuintrf.h"
-#include "osd_cpu.h"
-#include "osdepend.h"
 #include "debugger.h"
 
 #include <stdio.h>

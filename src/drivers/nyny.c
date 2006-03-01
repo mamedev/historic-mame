@@ -34,7 +34,6 @@ fedcba98
 ****/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "machine/6821pia.h"
 #include "vidhrdw/crtc6845.h"
 #include "cpu/m6800/m6800.h"

@@ -1,15 +1,42 @@
 /*
     Namco (Super) System 23
+    Extremely preliminary driver by R. Belmont, thanks to Phil Stroffolino & Olivier Galibert
 
-    Hardware: R4650 (MIPS III) main CPU @ 166 MHz
+    Hardware: R4650 (MIPS III with IDT special instructions) main CPU @ 166 MHz
               H8/3002 MCU for sound/inputs
           Custom polygon hardware
       1 text tilemap
           Sprites?
 
-    Note: first 128k of main program ROM is BIOS.
-    After that is an ELF image.
-    Text layer is identical to System 22 & Super System 22.
+    NOTES:
+    - First 128k of main program ROM is the BIOS, and after that is a 64-bit MIPS ELF image.
+
+    - Text layer is (almost?) identical to System 22 & Super System 22.
+
+    TODO:
+    - Text layer does not refresh properly in all cases, in spite of forced all-dirty.
+      Why?
+
+    - Palette is not right.  Games always write 16 bits at a time where the top 8 bits of each 16
+      appear to always be 0 (some sort of gamma correct?).
+
+    - H8/3002 does not handshake.  Protocol should be the same as System 12 where the MIPS
+      writes 0x3163 to offset 0x3002 in the shared RAM and the H8/3002 notices and sets it to 0x7106.
+      The H8 currently never reads that location (core bug?).
+
+    - Hook up actual inputs via the 2 serial latches at d00004 and d00006.
+      Works like this: write to d00004, then read d00004 12 times.  Ditto at
+      d00006.  This gives 24 bits of inputs from the I/O board (?).
+
+    - The entire 3D subsystem.  Is there a DSP living down there?  If not, why the 300k
+      download on initial startup?
+
+    - There are currently no differences seen between System 23 (Time Crisis 2) and
+      Super System 23 (GP500, Final Furlong 2).  These will presumably appear when
+      the 3D hardware is emulated.
+
+    - Serial number data is at offset 0x201 in the BIOS.  Until the games are running
+      and displaying it I'm not going to meddle with it though.
 */
 
 /*
@@ -289,18 +316,22 @@ Notes:
 
                            MaskROM
             Game           Code     Keycus
-            ------------------------------
+            -------------------------------
             GP500          5GP1     KC029
             Time Crisis 2  TSS1     KC010
+        Final Furlong 2 ????     ?????
 */
 
 
 #include "driver.h"
 #include "cpu/mips/mips3.h"
+#include "cpu/h83002/h83002.h"
+#include "sound/c352.h"
+#include <time.h>
 
-static int ss23_vstat = 0;
+static int ss23_vstat = 0, hstat = 0, vstate = 0;
 static tilemap *bgtilemap;
-static UINT32 *namcos23_textram;
+static UINT32 *namcos23_textram, *namcos23_shared_ram;
 
 static UINT16 nthword( const UINT32 *pSource, int offs )
 {
@@ -332,8 +363,8 @@ READ32_HANDLER( namcos23_textram_r )
 WRITE32_HANDLER( namcos23_textram_w )
 {
 	COMBINE_DATA( &namcos23_textram[offset] );
-	tilemap_mark_tile_dirty( bgtilemap, offset*2 );
-	tilemap_mark_tile_dirty( bgtilemap, offset*2+1 );
+//  tilemap_mark_tile_dirty( bgtilemap, offset*2 );
+//  tilemap_mark_tile_dirty( bgtilemap, offset*2+1 );
 }
 
 VIDEO_START( ss23 )
@@ -441,6 +472,7 @@ VIDEO_UPDATE( ss23 )
 	fillbitmap(bitmap, get_black_pen(), cliprect);
 	fillbitmap(priority_bitmap, 0, cliprect);
 
+	tilemap_mark_all_tiles_dirty(bgtilemap);
 	tilemap_draw( bitmap, cliprect, bgtilemap, 0/*flags*/, 0x1/*priority*/ ); /* opaque */
 
 #if 0
@@ -507,7 +539,18 @@ static WRITE32_HANDLER( s23_txtchar_w )
 
 static READ32_HANDLER( ss23_vstat_r )
 {
+	if (offset == 1)
+	{
+		hstat ^= 0xffffffff;
+		return hstat;
+	}
+
+	vstate++;
+	if (vstate >= 2)
+	{
 	ss23_vstat ^= 0xffffffff;
+		vstate = 0;
+	}
 	return ss23_vstat;
 }
 
@@ -517,16 +560,16 @@ static UINT8 nthbyte( const UINT32 *pSource, int offs )
 	return (pSource[0]<<((offs&3)*8))>>24;
 }
 
-static void UpdatePalette( int entry )
+INLINE void UpdatePalette( int entry )
 {
          int j;
 
-	for( j=0; j<4; j++ )
+	for( j=0; j<1; j++ )
 	{
-		int which = entry*4+j;
-		int r = nthbyte(paletteram32,which+0x00000);
-		int g = nthbyte(paletteram32,which+0x08000);
-		int b = nthbyte(paletteram32,which+0x10000);
+		int which = (entry*2)+(j*2);
+		int r = nthbyte(paletteram32,which+0x00001);
+		int g = nthbyte(paletteram32,which+0x08001);
+		int b = nthbyte(paletteram32,which+0x18001);
 		palette_set_color( which,r,g,b );
 	}
 }
@@ -536,29 +579,220 @@ READ32_HANDLER( namcos23_paletteram_r )
 	return paletteram32[offset];
 }
 
+/* each LONGWORD is 2 colors.  each OFFSET is 2 colors */
+
 WRITE32_HANDLER( namcos23_paletteram_w )
 {
 	COMBINE_DATA( &paletteram32[offset] );
-	UpdatePalette(offset % (0x8000/4));
+
+	UpdatePalette((offset % (0x8000/4))*2);
 }
 
-static ADDRESS_MAP_START( s23_map, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x00000000, 0x003fffff) AM_RAM
-	AM_RANGE(0x04c3ff0c, 0x04c3ff0f) AM_RAM				// 3d FIFO
-	AM_RANGE(0x0fc00000, 0x0fc7ffff) AM_WRITENOP AM_ROM AM_REGION(REGION_USER1, 0)
-	AM_RANGE(0x1fc00000, 0x1ff7ffff) AM_WRITENOP AM_ROM AM_REGION(REGION_USER1, 0)
-ADDRESS_MAP_END
+// must return this magic number
+static READ32_HANDLER(s23_unk_r)
+{
+	return 0x008e008e;
+}
+
+// this & 8 and this & 4 are checked
+// offset = 1 for magic latch
+static READ32_HANDLER(sysctl_stat_r)
+{
+	if (offset == 1) return 0x0000ffff;	// all inputs in
+
+	return 0xffffffff;
+}
+
+// as with System 22, we need to halt the MCU while checking shared RAM
+static WRITE32_HANDLER( s23_mcuen_w )
+{
+	printf("mcuen_w: mask %08x, data %08x\n", mem_mask, data);
+	if (mem_mask == 0xffff0000)
+	{
+		if (data)
+		{
+			logerror("S23: booting H8/3002\n");
+			cpunum_resume(1, SUSPEND_REASON_HALT);
+			cpunum_reset(1, NULL, NULL);
+		}
+		else
+		{
+			logerror("S23: stopping H8/3002\n");
+			cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
+		}
+	}
+}
 
 static ADDRESS_MAP_START( ss23_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000000, 0x003fffff) AM_RAM
+	AM_RANGE(0x02000000, 0x02000003) AM_READ( s23_unk_r )
+	AM_RANGE(0x04400000, 0x0440ffff) AM_BASE(&namcos23_shared_ram)
+	AM_RANGE(0x04c3ff08, 0x04c3ff0b) AM_WRITE( s23_mcuen_w )
 	AM_RANGE(0x04c3ff0c, 0x04c3ff0f) AM_RAM				// 3d FIFO
 	AM_RANGE(0x06800000, 0x06800fff) AM_RAM 			// text layer palette
 	AM_RANGE(0x06800000, 0x06803fff) AM_WRITE( s23_txtchar_w )	// text layer characters
-	AM_RANGE(0x06820008, 0x0682000b) AM_READ( ss23_vstat_r )	// vblank status
+	AM_RANGE(0x06804000, 0x0681dfff) AM_RAM
 	AM_RANGE(0x0681e000, 0x0681ffff) AM_READ(namcos23_textram_r) AM_WRITE(namcos23_textram_w) AM_BASE(&namcos23_textram)
-	AM_RANGE(0x06a08000, 0x06a3ffff) AM_READ(namcos23_paletteram_r) AM_WRITE(namcos23_paletteram_w) AM_BASE(&paletteram32)
+	AM_RANGE(0x06a08000, 0x06a2ffff) AM_READ(namcos23_paletteram_r) AM_WRITE(namcos23_paletteram_w) AM_BASE(&paletteram32)
+	AM_RANGE(0x06a30000, 0x06a3ffff) AM_RAM
+	AM_RANGE(0x06820008, 0x0682000f) AM_READ( ss23_vstat_r )	// vblank status?
+	AM_RANGE(0x08000000, 0x08017fff) AM_RAM
+	AM_RANGE(0x0d000000, 0x0d000007) AM_READ(sysctl_stat_r)
 	AM_RANGE(0x0fc00000, 0x0fffffff) AM_WRITENOP AM_ROM AM_REGION(REGION_USER1, 0)
 	AM_RANGE(0x1fc00000, 0x1fffffff) AM_WRITENOP AM_ROM AM_REGION(REGION_USER1, 0)
+ADDRESS_MAP_END
+
+static WRITE16_HANDLER( sharedram_sub_w )
+{
+	UINT16 *shared16 = (UINT16 *)namcos23_shared_ram;
+
+	COMBINE_DATA(&shared16[BYTE_XOR_BE(offset)]);
+}
+
+static READ16_HANDLER( sharedram_sub_r )
+{
+	UINT16 *shared16 = (UINT16 *)namcos23_shared_ram;
+
+	return shared16[BYTE_XOR_BE(offset)];
+}
+
+/* H8/3002 MCU stuff */
+static ADDRESS_MAP_START( s23h8rwmap, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x080000, 0x08ffff) AM_READWRITE( sharedram_sub_r, sharedram_sub_w )
+	AM_RANGE(0x280000, 0x287fff) AM_READWRITE( c352_0_r, c352_0_w )
+	AM_RANGE(0x300000, 0x300001) AM_READNOP //( input_port_1_word_r )
+	AM_RANGE(0x300002, 0x300003) AM_READNOP //( input_port_2_word_r )
+	AM_RANGE(0x300010, 0x300011) AM_NOP
+	AM_RANGE(0x300030, 0x300031) AM_NOP
+ADDRESS_MAP_END
+
+static READ8_HANDLER( s23_mcu_p8_r )
+{
+	return 0x02;
+}
+
+// emulation of the Epson R4543 real time clock
+// in System 12, bit 0 of H8/3002 port A is connected to it's chip enable
+// the actual I/O takes place through the H8/3002's serial port B.
+
+static int s23_porta = 0, s23_rtcstate = 0;
+
+static READ8_HANDLER( s23_mcu_pa_r )
+{
+	return s23_porta;
+}
+
+static WRITE8_HANDLER( s23_mcu_pa_w )
+{
+	// bit 0 = chip enable for the RTC
+	// reset the state on the rising edge of the bit
+	if ((!(s23_porta & 1)) && (data & 1))
+	{
+		s23_rtcstate = 0;
+	}
+
+	s23_porta = data;
+}
+
+INLINE UINT8 make_bcd(UINT8 data)
+{
+	return ((data / 10) << 4) | (data % 10);
+}
+
+static READ8_HANDLER( s23_mcu_rtc_r )
+{
+	UINT8 ret = 0;
+	time_t curtime;
+	struct tm *exptime;
+	static int weekday[7] = { 7, 1, 2, 3, 4, 5, 6 };
+
+	time(&curtime);
+	exptime = localtime(&curtime);
+
+	switch (s23_rtcstate)
+	{
+		case 0:
+			ret = make_bcd(exptime->tm_sec);	// seconds (BCD, 0-59) in bits 0-6, bit 7 = battery low
+			break;
+		case 1:
+			ret = make_bcd(exptime->tm_min);	// minutes (BCD, 0-59)
+			break;
+		case 2:
+			ret = make_bcd(exptime->tm_hour);	// hour (BCD, 0-23)
+			break;
+		case 3:
+			ret = make_bcd(weekday[exptime->tm_wday]); // day of the week (1 = Monday, 7 = Sunday)
+			break;
+		case 4:
+			ret = make_bcd(exptime->tm_mday);	// day (BCD, 1-31)
+			break;
+		case 5:
+			ret = make_bcd(exptime->tm_mon + 1);	// month (BCD, 1-12)
+			break;
+		case 6:
+			ret = make_bcd(exptime->tm_year % 100);	// year (BCD, 0-99)
+			break;
+	}
+
+	s23_rtcstate++;
+
+	return ret;
+}
+
+static int s23_lastpB = 0x50, s23_setstate = 0, s23_setnum, s23_settings[8];
+
+static READ8_HANDLER( s23_mcu_portB_r )
+{
+	s23_lastpB ^= 0x80;
+	return s23_lastpB;
+}
+
+static WRITE8_HANDLER( s23_mcu_portB_w )
+{
+	// bit 7 = chip enable for the video settings controller
+	if (data & 0x80)
+	{
+		s23_setstate = 0;
+	}
+
+	s23_lastpB = data;
+}
+
+static WRITE8_HANDLER( s23_mcu_settings_w )
+{
+	if (s23_setstate)
+	{
+		// data
+		s23_settings[s23_setnum] = data;
+
+		if (s23_setnum == 7)
+		{
+			logerror("S23 video settings: Contrast: %02x  R: %02x  G: %02x  B: %02x\n",
+				BITSWAP8(s23_settings[0], 0, 1, 2, 3, 4, 5, 6, 7),
+				BITSWAP8(s23_settings[1], 0, 1, 2, 3, 4, 5, 6, 7),
+				BITSWAP8(s23_settings[2], 0, 1, 2, 3, 4, 5, 6, 7),
+				BITSWAP8(s23_settings[3], 0, 1, 2, 3, 4, 5, 6, 7));
+		}
+	}
+	else
+	{	// setting number
+		s23_setnum = (data >> 4)-1;
+	}
+
+	s23_setstate ^= 1;
+}
+
+static ADDRESS_MAP_START( s23h8iomap, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(H8_PORT7, H8_PORT7) AM_READ( input_port_0_r )
+	AM_RANGE(H8_PORT8, H8_PORT8) AM_READ( s23_mcu_p8_r ) AM_WRITENOP
+	AM_RANGE(H8_PORTA, H8_PORTA) AM_READWRITE( s23_mcu_pa_r, s23_mcu_pa_w )
+	AM_RANGE(H8_PORTB, H8_PORTB) AM_READWRITE( s23_mcu_portB_r, s23_mcu_portB_w )
+	AM_RANGE(H8_SERIAL_B, H8_SERIAL_B) AM_READ( s23_mcu_rtc_r ) AM_WRITE( s23_mcu_settings_w )
+	AM_RANGE(H8_ADC_0_H, H8_ADC_0_L) AM_NOP
+	AM_RANGE(H8_ADC_1_H, H8_ADC_1_L) AM_NOP
+	AM_RANGE(H8_ADC_2_H, H8_ADC_2_L) AM_NOP
+	AM_RANGE(H8_ADC_3_H, H8_ADC_3_L) AM_NOP
 ADDRESS_MAP_END
 
 INPUT_PORTS_START( ss23 )
@@ -567,17 +801,8 @@ INPUT_PORTS_END
 
 DRIVER_INIT(ss23)
 {
-/*
-    UINT32 * pSrc = (UINT32 *)memory_region(REGION_GFX4);
-    int i;
-    for( i=0; i<0x200000; i++ )
-    {
-        if( (i&0xf)==0 ) logerror( "\n%08x:", i );
-        logerror( " %08x", *pSrc++ );
     }
-*/
-}
-#if 1
+
 static const gfx_layout namcos23_cg_layout =
 {
 	16,16,
@@ -619,25 +844,33 @@ static const gfx_decode gfxdecodeinfo[] =
 	{ REGION_GFX5, 0, &namcos23_cg_layout,  0, 0x80 },
 	{ -1 },
 };
-#endif
 
 static struct mips3_config config =
 {
-	16384,				/* code cache size - guess */
-	16384				/* data cache size - guess */
+	8192,				/* code cache size - VERIFIED */
+	8192				/* data cache size - VERIFIED */
 };
 
 static INTERRUPT_GEN( namcos23_interrupt )
 {
-	cpunum_set_input_line(0, MIPS3_IRQ0, HOLD_LINE);
 }
+
+static struct C352interface c352_interface =
+{
+	REGION_SOUND1
+};
 
 MACHINE_DRIVER_START( s23 )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(R4600BE, 166000000)  /* actually R4650 */
+	MDRV_CPU_ADD(R4650BE, 166000000)
 	MDRV_CPU_CONFIG(config)
 	MDRV_CPU_PROGRAM_MAP(ss23_map, 0)
+
+	MDRV_CPU_ADD(H83002, 14745600 )
+	MDRV_CPU_PROGRAM_MAP( s23h8rwmap, 0 )
+	MDRV_CPU_IO_MAP( s23h8iomap, 0 )
+	MDRV_CPU_VBLANK_INT( irq1_line_pulse, 1 );
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -645,21 +878,36 @@ MACHINE_DRIVER_START( s23 )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(64*16, 30*16)
 	MDRV_VISIBLE_AREA(0, 64*16-1, 0, 30*16-1)
-	MDRV_PALETTE_LENGTH(0x2000)
+	MDRV_PALETTE_LENGTH(0x8000)
 
 	MDRV_GFXDECODE(gfxdecodeinfo)
 
 	MDRV_VIDEO_START(ss23)
 	MDRV_VIDEO_UPDATE(ss23)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(C352, 14745600)
+	MDRV_SOUND_CONFIG(c352_interface)
+	MDRV_SOUND_ROUTE(0, "right", 1.00)
+	MDRV_SOUND_ROUTE(1, "left", 1.00)
+	MDRV_SOUND_ROUTE(2, "right", 1.00)
+	MDRV_SOUND_ROUTE(3, "left", 1.00)
 MACHINE_DRIVER_END
 
 MACHINE_DRIVER_START( ss23 )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(R4600BE, 166000000)  /* actually R4650 */
+	MDRV_CPU_ADD(R4650BE, 166000000)
 	MDRV_CPU_CONFIG(config)
 	MDRV_CPU_PROGRAM_MAP(ss23_map, 0)
 	MDRV_CPU_VBLANK_INT(namcos23_interrupt, 1)
+
+	MDRV_CPU_ADD(H83002, 14745600 )
+	MDRV_CPU_PROGRAM_MAP( s23h8rwmap, 0 )
+	MDRV_CPU_IO_MAP( s23h8iomap, 0 )
+	MDRV_CPU_VBLANK_INT( irq1_line_pulse, 1 );
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -667,12 +915,22 @@ MACHINE_DRIVER_START( ss23 )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(48*16, 30*16)
 	MDRV_VISIBLE_AREA(0, 48*16-1, 0, 30*16-1)
-	MDRV_PALETTE_LENGTH(0x2000)
+	MDRV_PALETTE_LENGTH(0x8000)
 
 	MDRV_GFXDECODE(gfxdecodeinfo)
 
 	MDRV_VIDEO_START(ss23)
 	MDRV_VIDEO_UPDATE(ss23)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(C352, 14745600)
+	MDRV_SOUND_CONFIG(c352_interface)
+	MDRV_SOUND_ROUTE(0, "right", 1.00)
+	MDRV_SOUND_ROUTE(1, "left", 1.00)
+	MDRV_SOUND_ROUTE(2, "right", 1.00)
+	MDRV_SOUND_ROUTE(3, "left", 1.00)
 MACHINE_DRIVER_END
 
 ROM_START( timecrs2 )
@@ -767,6 +1025,94 @@ ROM_START( gp500 )
         ROM_LOAD( "5gp1waveh.2a", 0x800000, 0x800000, CRC(1e3523e8) SHA1(cb3d0d389fcbfb728fad29cfc36ef654d28d553a) )
 ROM_END
 
+ROM_START( finfurl2 )
+	ROM_REGION( 0x080000, REGION_CPU1, 0 )	/* dummy region for R4650 */
+
+	ROM_REGION32_BE( 0x400000, REGION_USER1, 0 ) /* 4 megs for main R4650 code */
+        ROM_LOAD16_BYTE( "29f016.ic2",   0x000000, 0x200000, CRC(13cbc545) SHA1(3e67a7bfbb1c1374e8e3996a0c09e4861b0dca14) )
+        ROM_LOAD16_BYTE( "29f016.ic1",   0x000001, 0x200000, CRC(5b04e4f2) SHA1(8099fc3deab9ed14a2484a774666fbd928330de8) )
+
+	ROM_REGION( 0x80000, REGION_CPU2, 0 )	/* Hitachi H8/3002 MCU code */
+        ROM_LOAD16_WORD_SWAP( "m29f400.ic3",  0x000000, 0x080000, CRC(9fd69bbd) SHA1(53a9bf505de70495dcccc43fdc722b3381aad97c) )
+
+	ROM_REGION( 0x2000000, REGION_GFX1, 0 )	/* sprite? tilemap? tiles */
+        ROM_LOAD16_BYTE( "ffs1mtal.2h",  0x0000000, 0x800000, CRC(98730ad5) SHA1(9ba276ad88ec8730edbacab80cdacc34a99593e4) )
+        ROM_LOAD16_BYTE( "ffs1mtah.2j",  0x0000001, 0x800000, CRC(f336d81d) SHA1(a9177091e1412dea1b6ea6c53530ae31361b32d0) )
+        ROM_LOAD16_BYTE( "ffs1mtbl.2f",  0x1000000, 0x800000, CRC(0abc9e50) SHA1(be5e5e2b637811c59804ef9442c6da5a5a1315e2) )
+        ROM_LOAD16_BYTE( "ffs1mtbh.2m",  0x1000001, 0x800000, CRC(0f42c93b) SHA1(26b313fc5c33afb0a1ee42243486e38f052c95c2) )
+
+	ROM_REGION( 0x2000000, REGION_GFX2, 0 )	/* texture tiles */
+        ROM_LOAD( "ffs1cguu.4f",  0x0000000, 0x800000, CRC(52c0a19f) SHA1(e6b4b90ff88da09cb2e653e450e7ae66942a719e) )
+        ROM_LOAD( "ffs1cgum.4j",  0x0800000, 0x800000, CRC(77447199) SHA1(1eeae30b3dd1ac467bdbbdfe4be36ca0f0816496) )
+        ROM_LOAD( "ffs1cgll.4m",  0x1000000, 0x800000, CRC(171bba76) SHA1(4a63a1f34de8f341a0ef9b499a21e8fec758e1cd) )
+        ROM_LOAD( "ffs1cglm.4k",  0x1800000, 0x800000, CRC(48acf207) SHA1(ea902efdd94aba34dadb20762219d2d25441d199) )
+
+	ROM_REGION( 0x600000, REGION_GFX3, 0 )	/* texture tilemap */
+        ROM_LOAD( "ffs1ccrl.7f",  0x000000, 0x200000, CRC(ffbcfec1) SHA1(9ab25f1543da4b72784eec93985abaa2e1dafc83) )
+        ROM_LOAD( "ffs1ccrh.7e",  0x200000, 0x200000, CRC(8be4aeb4) SHA1(ec344f6fba42092083e737e436451f5d7be12c15) )
+
+	ROM_REGION32_LE( 0x2000000, REGION_GFX4, 0 )	/* 3D model data */
+        ROM_LOAD32_WORD( "ffs1pt0l.7c",  0x0000000, 0x400000, CRC(383cbfba) SHA1(0784ac2d709bee6653c95f80fedf7f98ca79357f) )
+        ROM_LOAD32_WORD( "ffs1pt0h.7a",  0x0000002, 0x400000, CRC(79b9b019) SHA1(ca2bbabd949fec91001a30b63f7343520028cde0) )
+        ROM_LOAD32_WORD( "ffs1pt1l.5c",  0x0800000, 0x400000, CRC(ba0fff5b) SHA1(d5a6db4de60657d46228e85ed09ed7f0ecbc7975) )
+        ROM_LOAD32_WORD( "ffs1pt1h.5a",  0x0800002, 0x400000, CRC(2dba59d0) SHA1(34d4c415b5635338511ff3578eb3c00e2b6cd7d4) )
+        ROM_LOAD32_WORD( "ffs1pt2l.4c",  0x1000000, 0x400000, CRC(c5199c1b) SHA1(8f1a70c8edb2791a099b4911353af6250a5d0e8a) )
+        ROM_LOAD32_WORD( "ffs1pt2h.4a",  0x1000002, 0x400000, CRC(26ea01e8) SHA1(9af096c99e6835e21b1b78dfce07040f50f8c922) )
+        ROM_LOAD32_WORD( "ffs1pt3l.3c",  0x1800000, 0x400000, CRC(2381611a) SHA1(a3d948bf910dcfd9f47c65c56b9920f58c42fed5) )
+        ROM_LOAD32_WORD( "ffs1pt3h.3a",  0x1800002, 0x400000, CRC(48226e9f) SHA1(f099b2929d49903a33b4dab80972c3ce0ddb6ca2) )
+
+	ROM_REGION( 0x20000, REGION_GFX5, 0 )	/* text tilemap characters */
+
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* C352 PCM samples */
+        ROM_LOAD( "ffs1wavel.2c", 0x000000, 0x800000, CRC(67ba16cf) SHA1(00b38617c2185b9a3bf279962ad0c21a7287256f) )
+        ROM_LOAD( "ffs1waveh.2a", 0x800000, 0x800000, CRC(178e8bd3) SHA1(8ab1a97003914f70b09e96c5924f3a839fe634c7) )
+ROM_END
+
+ROM_START( finfrl2j )
+	ROM_REGION( 0x080000, REGION_CPU1, 0 )	/* dummy region for R4650 */
+
+	ROM_REGION32_BE( 0x400000, REGION_USER1, 0 ) /* 4 megs for main R4650 code */
+        ROM_LOAD16_BYTE( "29f016_jap1.ic2", 0x000000, 0x200000, CRC(0215125d) SHA1(a99f601441c152b0b00f4811e5752c71897b1ed4) )
+        ROM_LOAD16_BYTE( "29f016_jap1.ic1", 0x000001, 0x200000, CRC(38c9ae96) SHA1(b50afc7276662267ff6460f82d0e5e8b00b341ea) )
+
+	ROM_REGION( 0x80000, REGION_CPU2, 0 )	/* Hitachi H8/3002 MCU code */
+        ROM_LOAD16_WORD_SWAP( "m29f400.ic3",  0x000000, 0x080000, CRC(9fd69bbd) SHA1(53a9bf505de70495dcccc43fdc722b3381aad97c) )
+
+	ROM_REGION( 0x2000000, REGION_GFX1, 0 )	/* sprite? tilemap? tiles */
+        ROM_LOAD16_BYTE( "ffs1mtal.2h",  0x0000000, 0x800000, CRC(98730ad5) SHA1(9ba276ad88ec8730edbacab80cdacc34a99593e4) )
+        ROM_LOAD16_BYTE( "ffs1mtah.2j",  0x0000001, 0x800000, CRC(f336d81d) SHA1(a9177091e1412dea1b6ea6c53530ae31361b32d0) )
+        ROM_LOAD16_BYTE( "ffs1mtbl.2f",  0x1000000, 0x800000, CRC(0abc9e50) SHA1(be5e5e2b637811c59804ef9442c6da5a5a1315e2) )
+        ROM_LOAD16_BYTE( "ffs1mtbh.2m",  0x1000001, 0x800000, CRC(0f42c93b) SHA1(26b313fc5c33afb0a1ee42243486e38f052c95c2) )
+
+	ROM_REGION( 0x2000000, REGION_GFX2, 0 )	/* texture tiles */
+        ROM_LOAD( "ffs1cguu.4f",  0x0000000, 0x800000, CRC(52c0a19f) SHA1(e6b4b90ff88da09cb2e653e450e7ae66942a719e) )
+        ROM_LOAD( "ffs1cgum.4j",  0x0800000, 0x800000, CRC(77447199) SHA1(1eeae30b3dd1ac467bdbbdfe4be36ca0f0816496) )
+        ROM_LOAD( "ffs1cgll.4m",  0x1000000, 0x800000, CRC(171bba76) SHA1(4a63a1f34de8f341a0ef9b499a21e8fec758e1cd) )
+        ROM_LOAD( "ffs1cglm.4k",  0x1800000, 0x800000, CRC(48acf207) SHA1(ea902efdd94aba34dadb20762219d2d25441d199) )
+
+	ROM_REGION( 0x600000, REGION_GFX3, 0 )	/* texture tilemap */
+        ROM_LOAD( "ffs1ccrl.7f",  0x000000, 0x200000, CRC(ffbcfec1) SHA1(9ab25f1543da4b72784eec93985abaa2e1dafc83) )
+        ROM_LOAD( "ffs1ccrh.7e",  0x200000, 0x200000, CRC(8be4aeb4) SHA1(ec344f6fba42092083e737e436451f5d7be12c15) )
+
+	ROM_REGION32_LE( 0x2000000, REGION_GFX4, 0 )	/* 3D model data */
+        ROM_LOAD32_WORD( "ffs1pt0l.7c",  0x0000000, 0x400000, CRC(383cbfba) SHA1(0784ac2d709bee6653c95f80fedf7f98ca79357f) )
+        ROM_LOAD32_WORD( "ffs1pt0h.7a",  0x0000002, 0x400000, CRC(79b9b019) SHA1(ca2bbabd949fec91001a30b63f7343520028cde0) )
+        ROM_LOAD32_WORD( "ffs1pt1l.5c",  0x0800000, 0x400000, CRC(ba0fff5b) SHA1(d5a6db4de60657d46228e85ed09ed7f0ecbc7975) )
+        ROM_LOAD32_WORD( "ffs1pt1h.5a",  0x0800002, 0x400000, CRC(2dba59d0) SHA1(34d4c415b5635338511ff3578eb3c00e2b6cd7d4) )
+        ROM_LOAD32_WORD( "ffs1pt2l.4c",  0x1000000, 0x400000, CRC(c5199c1b) SHA1(8f1a70c8edb2791a099b4911353af6250a5d0e8a) )
+        ROM_LOAD32_WORD( "ffs1pt2h.4a",  0x1000002, 0x400000, CRC(26ea01e8) SHA1(9af096c99e6835e21b1b78dfce07040f50f8c922) )
+        ROM_LOAD32_WORD( "ffs1pt3l.3c",  0x1800000, 0x400000, CRC(2381611a) SHA1(a3d948bf910dcfd9f47c65c56b9920f58c42fed5) )
+        ROM_LOAD32_WORD( "ffs1pt3h.3a",  0x1800002, 0x400000, CRC(48226e9f) SHA1(f099b2929d49903a33b4dab80972c3ce0ddb6ca2) )
+
+	ROM_REGION( 0x20000, REGION_GFX5, 0 )	/* text tilemap characters */
+
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* C352 PCM samples */
+        ROM_LOAD( "ffs1wavel.2c", 0x000000, 0x800000, CRC(67ba16cf) SHA1(00b38617c2185b9a3bf279962ad0c21a7287256f) )
+        ROM_LOAD( "ffs1waveh.2a", 0x800000, 0x800000, CRC(178e8bd3) SHA1(8ab1a97003914f70b09e96c5924f3a839fe634c7) )
+ROM_END
+
 /* Games */
-GAME( 1997, timecrs2, 0,  s23, ss23, ss23, ROT0, "Namco", "Time Crisis 2", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
-GAME( 1999, gp500, 0,    ss23, ss23, ss23, ROT0, "Namco", "GP500", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND )
+GAME( 1997, timecrs2, 0,         s23, ss23, ss23, ROT0, "Namco", "Time Crisis 2", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND )
+GAME( 1999, gp500,    0,        ss23, ss23, ss23, ROT0, "Namco", "GP500", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND )
+GAME( 1999, finfurl2, 0,        ss23, ss23, ss23, ROT0, "Namco", "Final Furlong 2 (World)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND )
+GAME( 1999, finfrl2j, finfurl2, ss23, ss23, ss23, ROT0, "Namco", "Final Furlong 2 (Japan)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND )

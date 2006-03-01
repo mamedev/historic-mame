@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
 static pen_t (*map_color)(UINT8 x, UINT8 y);

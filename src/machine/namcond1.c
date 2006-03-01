@@ -16,7 +16,15 @@
 /* Perform basic machine initialisation */
 
 UINT8 namcond1_h8_irq5_enabled;
-int namcond1_gfxbank;
+UINT8 namcond1_gfxbank;
+
+MACHINE_START( namcond1 )
+{
+	state_save_register_global(namcond1_h8_irq5_enabled);
+	state_save_register_global(namcond1_gfxbank);
+
+	return 0;
+}
 
 MACHINE_RESET( namcond1 )
 {

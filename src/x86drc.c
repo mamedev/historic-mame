@@ -9,6 +9,7 @@
 
 ***************************************************************************/
 
+#include "osdepend.h"
 #include "driver.h"
 #include "x86drc.h"
 #include "debugger.h"
@@ -34,9 +35,9 @@ static void log_dispatch(drc_core *drc);
 #endif
 
 
-/*###################################################################################################
-**  EXTERNAL INTERFACES
-**#################################################################################################*/
+/***************************************************************************
+    EXTERNAL INTERFACES
+***************************************************************************/
 
 /*------------------------------------------------------------------
     drc_init
@@ -261,8 +262,7 @@ void drc_end_sequence(drc_core *drc)
 void drc_register_code_at_cache_top(drc_core *drc, UINT32 pc)
 {
 	pc_ptr_pair *pair = &drc->sequence_list[drc->sequence_count++];
-	if (drc->sequence_count > drc->sequence_count_max)
-		osd_die("drc_register_code_at_cache_top: too many instructions!\n");
+	assert_always(drc->sequence_count <= drc->sequence_count_max, "drc_register_code_at_cache_top: too many instructions!");
 
 	pair->target = drc->cache_top;
 	pair->pc = pc;
@@ -475,8 +475,7 @@ void drc_append_fixed_dispatcher(drc_core *drc, UINT32 newpc)
 void drc_append_tentative_fixed_dispatcher(drc_core *drc, UINT32 newpc)
 {
 	pc_ptr_pair *pair = &drc->tentative_list[drc->tentative_count++];
-	if (drc->tentative_count > drc->tentative_count_max)
-		osd_die("drc_append_tentative_fixed_dispatcher: too many tentative branches!\n");
+	assert_always(drc->tentative_count <= drc->tentative_count_max, "drc_append_tentative_fixed_dispatcher: too many tentative branches!");
 
 	pair->target = drc->cache_top;
 	pair->pc = newpc;
@@ -595,9 +594,9 @@ void drc_dasm(FILE *f, unsigned pc, void *begin, void *end)
 
 
 
-/*###################################################################################################
-**  INTERNAL CODEGEN
-**#################################################################################################*/
+/***************************************************************************
+    INTERNAL CODEGEN
+***************************************************************************/
 
 /*------------------------------------------------------------------
     append_entry_point

@@ -165,24 +165,23 @@ static unsigned short BFMcharset[]=
 
 static const int poslut1937[]=
 {
-	1,	// (0000)
-	2,	// (0001)
-	3,	// (0010)
-	4,	// (0011)
-	5,	// (0100)
-	6,	// (0101)
-	7,	// (0110)
-	8,	// (0111)
-	9,	// (1000)
-	10,	// (1001)
-	11,	// (1010)
-	12,	// (1011)
-	13,	// (1100)
-	14,	// (1101)
-	15,	// (1110)
-	0	// (1111)
+	14,
+	13,
+	12,
+	11,
+	10,
+	9,
+	8,
+	7,
+	6,
+	5,
+	4,
+	3,
+	2,
+	1,
+	0,
+	15
 };
-
 ///////////////////////////////////////////////////////////////////////////
 
 void vfd_init(int id, int type )
@@ -396,6 +395,7 @@ int vfd_newdata(int id, int data)
 			if ( (data & 0xF0) == 0xA0 ) // 1010 xxxx
 			{ // 1010 xxxx Buffer Pointer control
 				vfds[id].cursor_pos = poslut1937[data & 0x0F];
+				logerror("CUR%d\n", vfds[id].cursor_pos);
 			}
 			else if ( (data & 0xF0) == 0xC0 ) // 1100 xxxx
 				{ // 1100 xxxx Set number of digits

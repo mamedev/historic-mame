@@ -25,7 +25,6 @@ TODO:
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 READ8_HANDLER(darkmist_palette_r);
 WRITE8_HANDLER(darkmist_palette_w);

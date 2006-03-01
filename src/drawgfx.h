@@ -14,8 +14,7 @@
 #ifndef __DRAWGFX_H__
 #define __DRAWGFX_H__
 
-#include "osdepend.h"
-#include "palette.h"
+#include "mamecore.h"
 
 #define MAX_GFX_PLANES 8
 #define MAX_GFX_SIZE 256
@@ -79,7 +78,7 @@ struct _gfx_element
 	UINT32 flags;
 	gfx_layout layout;	/* references the original layout */
 };
-typedef struct _gfx_element gfx_element;
+/* In mamecore.h: typedef struct _gfx_element gfx_element; */
 
 #define GFX_PACKED				1	/* two 4bpp pixels are packed in one byte of gfxdata */
 #define GFX_SWAPXY				2	/* characters are mirrored along the top-left/bottom-right diagonal */

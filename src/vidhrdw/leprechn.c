@@ -8,7 +8,6 @@
 
 #include "driver.h"
 #include "machine/6522via.h"
-#include "vidhrdw/generic.h"
 
 
 static UINT8 x,y,color;

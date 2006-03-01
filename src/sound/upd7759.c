@@ -102,6 +102,7 @@
 #include <math.h>
 
 #include "driver.h"
+#include "streams.h"
 #include "upd7759.h"
 #include "streams.h"
 
@@ -727,7 +728,7 @@ READ8_HANDLER(upd7759_0_busy_r)
  * Generic get_info
  **************************************************************************/
 
-static void upd7759_set_info(void *token, UINT32 state, union sndinfo *info)
+static void upd7759_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -736,7 +737,7 @@ static void upd7759_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void upd7759_get_info(void *token, UINT32 state, union sndinfo *info)
+void upd7759_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

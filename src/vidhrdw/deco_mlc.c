@@ -9,7 +9,6 @@
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 extern int mlc_raster_table[9][256];
 extern UINT32 mlc_clipper[32];

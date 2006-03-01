@@ -1101,7 +1101,7 @@ static DRIVER_INIT( gaelco3d )
 	gaelco3d_mask_offset = memory_region_length(REGION_USER4);
 	gaelco3d_mask_size = memory_region_length(REGION_USER5) * 8;
 	if (memory_region_length(REGION_USER3) < gaelco3d_mask_offset + gaelco3d_mask_size)
-		osd_die("REGION_USER3 must be 0x%08X bytes or greater!\n", gaelco3d_mask_offset + gaelco3d_mask_size);
+		fatalerror("REGION_USER3 must be 0x%08X bytes or greater!", gaelco3d_mask_offset + gaelco3d_mask_size);
 
 	/* first expand the pixel data */
 	src = memory_region(REGION_USER4);

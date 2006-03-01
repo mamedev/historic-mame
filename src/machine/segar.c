@@ -5,7 +5,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "segar.h"
 
 void (*sega_decrypt)(int,unsigned int *);

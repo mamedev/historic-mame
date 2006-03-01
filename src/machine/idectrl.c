@@ -4,6 +4,7 @@
 
 ***************************************************************************/
 
+#include "driver.h"
 #include "idectrl.h"
 #include "debugger.h"
 
@@ -561,13 +562,13 @@ static void ide_build_features(struct ide_state *ide)
 	ide->features[ 2*2+0] = 0;							/*  2: reserved */
 	ide->features[ 2*2+1] = 0;
 	ide->features[ 3*2+0] = ide->num_heads & 0xff;		/*  3: logical heads */
-	ide->features[ 3*2+1] = ide->num_heads >> 8;
+	ide->features[ 3*2+1] = 0;/*ide->num_heads >> 8;*/
 	ide->features[ 4*2+0] = 0;							/*  4: vendor specific (obsolete) */
 	ide->features[ 4*2+1] = 0;
 	ide->features[ 5*2+0] = 0;							/*  5: vendor specific (obsolete) */
 	ide->features[ 5*2+1] = 0;
 	ide->features[ 6*2+0] = ide->num_sectors & 0xff;	/*  6: logical sectors per logical track */
-	ide->features[ 6*2+1] = ide->num_sectors >> 8;
+	ide->features[ 6*2+1] = 0;/*ide->num_sectors >> 8;*/
 	ide->features[ 7*2+0] = 0;							/*  7: vendor-specific */
 	ide->features[ 7*2+1] = 0;
 	ide->features[ 8*2+0] = 0;							/*  8: vendor-specific */
@@ -603,9 +604,9 @@ static void ide_build_features(struct ide_state *ide)
 	ide->features[54*2+0] = ide->num_cylinders & 0xff;	/* 54: number of current logical cylinders */
 	ide->features[54*2+1] = ide->num_cylinders >> 8;
 	ide->features[55*2+0] = ide->num_heads & 0xff;		/* 55: number of current logical heads */
-	ide->features[55*2+1] = ide->num_heads >> 8;
+	ide->features[55*2+1] = 0;/*ide->num_heads >> 8;*/
 	ide->features[56*2+0] = ide->num_sectors & 0xff;	/* 56: number of current logical sectors per track */
-	ide->features[56*2+1] = ide->num_sectors >> 8;
+	ide->features[56*2+1] = 0;/*ide->num_sectors >> 8;*/
 	ide->features[57*2+0] = sectors_per_track & 0xff;	/* 57-58: number of current logical sectors per track */
 	ide->features[57*2+1] = sectors_per_track >> 8;
 	ide->features[58*2+0] = sectors_per_track >> 16;

@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "streams.h"
 #include "tiaintf.h"
 #include "tiasound.h"
 
@@ -47,7 +48,7 @@ WRITE8_HANDLER( tia_sound_w )
  * Generic get_info
  **************************************************************************/
 
-static void tia_set_info(void *token, UINT32 state, union sndinfo *info)
+static void tia_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -56,7 +57,7 @@ static void tia_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void tia_get_info(void *token, UINT32 state, union sndinfo *info)
+void tia_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

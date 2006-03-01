@@ -9,7 +9,9 @@
 
 *********************************************************************/
 
+#include "osdepend.h"
 #include "driver.h"
+#include "hash.h"
 #include "png.h"
 #include "harddisk.h"
 #include "artwork.h"
@@ -380,14 +382,14 @@ static int display_rom_load_results(rom_load_data *romdata)
 	/* if we had errors, they are fatal */
 	if (romdata->errors)
 	{
-		strcat(romdata->errorbuf, "ERROR: required files are missing, the game cannot be run.\n");
-		fatalerror(romdata->errorbuf);
+		strcat(romdata->errorbuf, "ERROR: required files are missing, the game cannot be run.");
+		fatalerror("%s", romdata->errorbuf);
 	}
 
 	/* if we had warnings, output them, but continue */
 	if (romdata->warnings)
 	{
-		strcat(romdata->errorbuf, "WARNING: the game might not run correctly.\n");
+		strcat(romdata->errorbuf, "WARNING: the game might not run correctly.");
 		printf("%s\n", romdata->errorbuf);
 	}
 

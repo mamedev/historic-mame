@@ -8,7 +8,6 @@
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
 
 /* TTL text plane stuff */

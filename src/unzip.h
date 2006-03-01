@@ -14,9 +14,7 @@
 #ifndef __UNZIP_H__
 #define __UNZIP_H__
 
-#include "osd_cpu.h"
 #include "osdepend.h"
-#include <stdio.h>
 
 /***************************************************************************
  * Support for retrieving files from zipfiles

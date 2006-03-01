@@ -49,7 +49,6 @@ register. So what is controlling priority.
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 #include "sndhrdw/taitosnd.h"
 #include "sound/2151intf.h"
@@ -119,7 +118,7 @@ static READ8_HANDLER( z80_input2_r )
 
 static WRITE8_HANDLER( sound_bankswitch_w )
 {
-	memory_set_bankptr( 10, memory_region(REGION_CPU2) + ((data-1) & 0x03) * 0x4000 + 0x10000 );
+	memory_set_bank(10, (data-1) & 0x03);
 }
 
 /***********************************************************
@@ -225,7 +224,7 @@ static ADDRESS_MAP_START( z80_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 
-static int adpcm_pos[2],adpcm_end[2];
+static UINT32 adpcm_pos[2],adpcm_end[2];
 
 //static unsigned char adpcm_d[0x08];
 //0 - start ROM offset LSB
@@ -239,9 +238,11 @@ static int adpcm_pos[2],adpcm_end[2];
 
 static MACHINE_START( opwolf )
 {
-	/* (there are other sound vars that may need saving too) */
 	state_save_register_global_array(adpcm_b);
 	state_save_register_global_array(adpcm_c);
+	state_save_register_global_array(adpcm_pos);
+	state_save_register_global_array(adpcm_end);
+
 	return 0;
 }
 
@@ -716,6 +717,8 @@ static DRIVER_INIT( opwolf )
 	// World & US version have different gun offsets, presumably slightly different gun hardware
 	opwolf_gun_xoffs = 0xec - (rom[0x1ffd8]&0xff);
 	opwolf_gun_yoffs = 0x1c - (rom[0x1ffd7]&0xff);
+
+	memory_configure_bank(10, 0, 4, memory_region(REGION_CPU2) + 0x10000, 0x4000);
 }
 
 
@@ -724,11 +727,13 @@ static DRIVER_INIT( opwolfb )
 	/* bootleg needs different range of raw gun coords */
 	opwolf_gun_xoffs = -2;
 	opwolf_gun_yoffs = 17;
+
+	memory_configure_bank(10, 0, 4, memory_region(REGION_CPU2) + 0x10000, 0x4000);
 }
 
 
 
 /*    year  rom       parent    machine   inp       init */
-GAME( 1987, opwolf,   0,        opwolf,   opwolf,   opwolf,   ROT0, "Taito Corporation Japan", "Operation Wolf (World)", GAME_IMPERFECT_SOUND )
-GAME( 1987, opwolfu,  opwolf,   opwolf,   opwolf,   opwolf,   ROT0, "Taito America Corporation", "Operation Wolf (US)", GAME_IMPERFECT_SOUND )
-GAME( 1987, opwolfb,  opwolf,   opwolfb,  opwolf,   opwolfb,  ROT0, "bootleg", "Operation Bear", GAME_IMPERFECT_SOUND )
+GAME( 1987, opwolf,   0,        opwolf,   opwolf,   opwolf,   ROT0, "Taito Corporation Japan", "Operation Wolf (World)", GAME_IMPERFECT_SOUND | GAME_SUPPORTS_SAVE )
+GAME( 1987, opwolfu,  opwolf,   opwolf,   opwolf,   opwolf,   ROT0, "Taito America Corporation", "Operation Wolf (US)", GAME_IMPERFECT_SOUND | GAME_SUPPORTS_SAVE )
+GAME( 1987, opwolfb,  opwolf,   opwolfb,  opwolf,   opwolfb,  ROT0, "bootleg", "Operation Bear", GAME_IMPERFECT_SOUND | GAME_SUPPORTS_SAVE )

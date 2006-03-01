@@ -36,7 +36,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
 #include "taito_f3.h"
 #include "sound/es5506.h"

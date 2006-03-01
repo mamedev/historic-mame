@@ -14,6 +14,7 @@
 #ifndef __VIDEO_H__
 #define __VIDEO_H__
 
+#include "mamecore.h"
 
 
 /***************************************************************************
@@ -116,8 +117,10 @@ void update_video_and_audio(void);
 
 /* update the screen, handling frame skipping and rendering */
 /* (this calls draw_screen and update_video_and_audio) */
-int updatescreen(void);
+void updatescreen(void);
 
+/* can we skip this frame? */
+int skip_this_frame(void);
 
 /* return current performance data */
 const performance_info *mame_get_performance_info(void);

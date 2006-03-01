@@ -34,8 +34,8 @@
 
 struct _mame_timer
 {
-	struct _mame_timer *next;
-	struct _mame_timer *prev;
+	mame_timer *	next;
+	mame_timer *	prev;
 	void 			(*callback)(int);
 	void			(*callback_ptr)(void *);
 	int 			callback_param;
@@ -126,7 +126,7 @@ INLINE mame_timer *timer_new(void)
 	if (!timer_free_head)
 	{
 		timer_logtimers();
-		osd_die("Out of timers!\n");
+		fatalerror("Out of timers!");
 		return NULL;
 	}
 	timer = timer_free_head;
@@ -158,9 +158,9 @@ INLINE void timer_list_insert(mame_timer *timer)
 		for (t = timer_head; t; t = t->next, tnum++)
 		{
 			if (t == timer)
-				osd_die("This timer is already inserted in the list!\n");
+				fatalerror("This timer is already inserted in the list!");
 			if (tnum == MAX_TIMERS-1)
-				osd_die("Timer list is full!\n");
+				fatalerror("Timer list is full!");
 		}
 	}
 	#endif
@@ -211,7 +211,7 @@ INLINE void timer_list_remove(mame_timer *timer)
 		/* loop over the timer list */
 		for (t = timer_head; t && t != timer; t = t->next, tnum++) ;
 		if (t == NULL)
-			osd_die ("timer not found in list");
+			fatalerror ("timer not found in list");
 	}
 	#endif
 
@@ -280,7 +280,7 @@ void timer_init(void)
 	/* we need to wait until the first call to timer_cyclestorun before using real CPU times */
 	global_basetime = time_zero;
 	callback_timer = NULL;
-	callback_timer_modified = 0;
+	callback_timer_modified = FALSE;
 
 	/* register with the save state system */
 	state_save_push_tag(0);
@@ -342,7 +342,7 @@ int timer_count_anonymous(void)
 
 	logerror("timer_count_anonymous:\n");
 	for (t = timer_head; t; t = t->next)
-		if (t->temporary)
+		if (t->temporary && t != callback_timer)
 		{
 			count++;
 			logerror("  Temp. timer %p, file %s:%d[%s]\n", (void *) t, t->file, t->line, t->func);
@@ -391,7 +391,7 @@ void mame_timer_set_global_time(mame_time newbase)
 			timer->enabled = FALSE;
 
 		/* set the global state of which callback we're in */
-		callback_timer_modified = 0;
+		callback_timer_modified = FALSE;
 		callback_timer = timer;
 		callback_timer_expire_time = timer->expire;
 
@@ -546,7 +546,7 @@ INLINE void mame_timer_adjust_common(mame_timer *which, mame_time duration, INT3
 
 	/* if this is the callback timer, mark it modified */
 	if (which == callback_timer)
-		callback_timer_modified = 1;
+		callback_timer_modified = TRUE;
 
 	/* compute the time of the next firing and insert into the list */
 	which->callback_param = param;
@@ -574,14 +574,14 @@ INLINE void mame_timer_adjust_common(mame_timer *which, mame_time duration, INT3
 void mame_timer_adjust(mame_timer *which, mame_time duration, INT32 param, mame_time period)
 {
 	if (which->ptr)
-		osd_die("mame_timer_adjust called on a ptr timer!\n");
+		fatalerror("mame_timer_adjust called on a ptr timer!");
 	mame_timer_adjust_common(which, duration, param, period);
 }
 
 void mame_timer_adjust_ptr(mame_timer *which, mame_time duration, mame_time period)
 {
 	if (!which->ptr)
-		osd_die("mame_timer_adjust_ptr called on a non-ptr timer!\n");
+		fatalerror("mame_timer_adjust_ptr called on a non-ptr timer!");
 	mame_timer_adjust_common(which, duration, 0, period);
 }
 
@@ -686,6 +686,10 @@ static void mame_timer_remove(mame_timer *which)
 		logerror("timer_remove: removed an inactive timer!\n");
 		return;
 	}
+
+	/* if this is a callback timer, note that */
+	if (which == callback_timer)
+		callback_timer_modified = TRUE;
 
 	/* remove it from the list */
 	timer_list_remove(which);

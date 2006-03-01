@@ -8,7 +8,7 @@ Video hardware driver by Uki
 
 *******************************************************************************/
 
-#include "vidhrdw/generic.h"
+#include "driver.h"
 
 UINT8 *xxmissio_fgram;
 size_t xxmissio_fgram_size;

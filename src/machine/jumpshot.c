@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
 static unsigned char decrypt(int addr, unsigned char e)

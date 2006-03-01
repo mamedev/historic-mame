@@ -31,7 +31,6 @@
 
 #include <ctype.h>
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "namcond1.h"   // only while debugging
 #include "vidhrdw/ygv608.h"
 
@@ -51,6 +50,11 @@ static tilemap *tilemap_B_cache_16[3];
 static tilemap *tilemap_A = NULL;
 static tilemap *tilemap_B = NULL;
 static mame_bitmap *work_bitmap = NULL;
+
+static void HandleYGV608Reset( void );
+static void HandleRomTransfers( void );
+static void SetPreShortcuts( int reg, int data );
+static void SetPostShortcuts( int reg );
 
 #ifdef MAME_DEBUG
 static void ShowYGV608Registers( void );
@@ -471,6 +475,29 @@ static void get_tile_info_B_16( int offset )
 	}
 }
 
+static void ygv608_postload(void)
+{
+	int i;
+
+	ygv608.screen_resize = 1;
+	ygv608.tilemap_resize = 1;
+
+	for(i = 0; i < 50; i++)
+		SetPostShortcuts(i);
+}
+
+static void ygv608_register_state_save(void)
+{
+	state_save_register_item_array("ygv608", 0, ygv608.ports.b);
+	state_save_register_item_array("ygv608", 0, ygv608.regs.b);
+	state_save_register_item_array("ygv608", 0, ygv608.pattern_name_table);
+	state_save_register_item_array("ygv608", 0, ygv608.sprite_attribute_table.b);
+	state_save_register_item_2d_array("ygv608", 0, ygv608.scroll_data_table);
+	state_save_register_item_2d_array("ygv608", 0, ygv608.colour_palette);
+
+	state_save_register_func_postload(ygv608_postload);
+}
+
 VIDEO_START( ygv608 )
 {
 	memset( &ygv608, 0, sizeof(ygv608) );
@@ -499,6 +526,8 @@ VIDEO_START( ygv608 )
 
 	tilemap_A = NULL;
 	tilemap_B = NULL;
+
+	ygv608_register_state_save();
 
 	return 0;
 }
@@ -921,11 +950,6 @@ VIDEO_UPDATE( ygv608 )
   ui_draw_text( buffer, 0, 64 );
 #endif
 }
-
-static void HandleYGV608Reset( void );
-static void HandleRomTransfers( void );
-static void SetPreShortcuts( int reg, int data );
-static void SetPostShortcuts( int reg );
 
 READ16_HANDLER( ygv608_r )
 {

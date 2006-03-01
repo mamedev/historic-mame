@@ -67,7 +67,6 @@ Atomic Robokid  256x192(H)  512x512
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "tilemap.h"
 
 

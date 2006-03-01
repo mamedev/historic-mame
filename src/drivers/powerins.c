@@ -25,7 +25,6 @@ TODO:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "machine/nmk112.h"
 #include "sound/okim6295.h"
 #include "sound/2203intf.h"

@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
 unsigned char *mrdo_bgvideoram,*mrdo_fgvideoram;

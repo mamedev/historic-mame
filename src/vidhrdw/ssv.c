@@ -136,7 +136,6 @@ Note: press Z to show some info on each sprite (debug builds only)
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "seta.h"
 
 int shadow_pen_mask, shadow_pen_shift;

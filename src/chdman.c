@@ -7,7 +7,6 @@
 
 ***************************************************************************/
 
-#include "osd_cpu.h"
 #include "osd_tool.h"
 #include "driver.h"
 #include "harddisk.h"
@@ -96,6 +95,17 @@ static const char *error_strings[] =
 /***************************************************************************
     IMPLEMENTATION
 ***************************************************************************/
+
+int mame_stricmp(const char *s1, const char *s2)
+{
+	for (;;)
+ 	{
+		int c1 = tolower(*s1++);
+		int c2 = tolower(*s2++);
+		if (c1 == 0 || c1 != c2)
+			return c1 - c2;
+ 	}
+}
 
 /*-------------------------------------------------
     put_bigendian_uint32 - write a UINT32 in big-endian order to memory
@@ -205,10 +215,10 @@ static void error(void)
 
 
 /*-------------------------------------------------
-    osd_die - error hook for assertions
+    fatalerror - error hook for assertions
 -------------------------------------------------*/
 
-void CLIB_DECL osd_die(const char *text,...)
+void CLIB_DECL fatalerror(const char *text,...)
 {
 	va_list arg;
 

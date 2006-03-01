@@ -131,7 +131,6 @@ SNK/Eastern  1985 (ACT) Gekisoh          ????
 // Directives
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 #define HVOLTAGE_HACK	0
 #define EASY_TEST_MODE	1

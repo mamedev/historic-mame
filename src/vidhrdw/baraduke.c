@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "tilemap.h"
 
 UINT8 *baraduke_textram, *baraduke_videoram, *baraduke_spriteram;

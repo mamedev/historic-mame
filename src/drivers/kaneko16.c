@@ -66,7 +66,6 @@ To Do:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
 #include "machine/random.h"
 #include "machine/kaneko16.h"
@@ -2537,7 +2536,7 @@ void kaneko16_expand_sample_banks(int region)
 	int bank;
 
 	if (memory_region_length(region) < 0x40000 * 16)
-		osd_die("gtmr SOUND1 region too small");
+		fatalerror("gtmr SOUND1 region too small");
 
 	/* bank 0 maps to itself, so we just leave it alone */
 	for (bank = 15; bank > 0; bank--)

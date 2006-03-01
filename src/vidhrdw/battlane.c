@@ -5,7 +5,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 UINT8 *battlane_spriteram;
 UINT8 *battlane_tileram;

@@ -74,6 +74,7 @@ chirp 12-..: vokume   0   : silent
 
 */
 #include "driver.h"
+#include "streams.h"
 #include "vlm5030.h"
 
 /* interpolator per frame   */
@@ -688,7 +689,7 @@ static void *vlm5030_start(int sndindex, int clock, const void *config)
  * Generic get_info
  **************************************************************************/
 
-static void vlm5030_set_info(void *token, UINT32 state, union sndinfo *info)
+static void vlm5030_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -697,7 +698,7 @@ static void vlm5030_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void vlm5030_get_info(void *token, UINT32 state, union sndinfo *info)
+void vlm5030_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

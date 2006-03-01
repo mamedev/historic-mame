@@ -24,6 +24,7 @@ added external port callback, and functions to set the volume of the channels
 
 
 #include "driver.h"
+#include "streams.h"
 #include "k007232.h"
 #include <math.h>
 
@@ -478,7 +479,7 @@ void K007232_set_bank( int chip, int chABank, int chBBank )
  * Generic get_info
  **************************************************************************/
 
-static void k007232_set_info(void *token, UINT32 state, union sndinfo *info)
+static void k007232_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -487,7 +488,7 @@ static void k007232_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void k007232_get_info(void *token, UINT32 state, union sndinfo *info)
+void k007232_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

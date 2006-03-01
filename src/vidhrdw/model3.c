@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/poly.h"
 #include <math.h>
 
@@ -633,7 +632,7 @@ static void real3d_upload_texture(UINT32 header, UINT32 *data)
 		case 0x80:		/* Gamma-table ? */
 			break;
 		default:
-			osd_die("Unknown texture type: %02X: ", header >> 24);
+			fatalerror("Unknown texture type: %02X: ", header >> 24);
 			break;
 	}
 }
@@ -821,7 +820,7 @@ void push_matrix_stack(void)
 	matrix_stack_ptr++;
 	if (matrix_stack_ptr >= MATRIX_STACK_SIZE)
 	{
-		osd_die("push_matrix_stack: matrix stack overflow");
+		fatalerror("push_matrix_stack: matrix stack overflow");
 	}
 
 	memcpy( &matrix_stack[matrix_stack_ptr], &matrix_stack[matrix_stack_ptr-1], sizeof(MATRIX));
@@ -832,7 +831,7 @@ void pop_matrix_stack(void)
 	matrix_stack_ptr--;
 	if (matrix_stack_ptr < 0)
 	{
-		osd_die("pop_matrix_stack: matrix stack underflow");
+		fatalerror("pop_matrix_stack: matrix stack underflow");
 	}
 }
 
@@ -865,7 +864,7 @@ INLINE void push_triangle(int alpha, TRIANGLE *tri)
 
 		if (alpha_triangle_buffer_ptr >= MAX_TRIANGLES)
 		{
-			osd_die("push_triangle: triangle buffer overflow!\n");
+			fatalerror("push_triangle: triangle buffer overflow!");
 		}
 	}
 	else
@@ -875,7 +874,7 @@ INLINE void push_triangle(int alpha, TRIANGLE *tri)
 
 		if (triangle_buffer_ptr >= MAX_TRIANGLES)
 		{
-			osd_die("push_triangle: triangle buffer overflow!\n");
+			fatalerror("push_triangle: triangle buffer overflow!");
 		}
 	}
 }
@@ -1327,14 +1326,14 @@ static UINT32 *get_memory_pointer(UINT32 address)
 	if (address & 0x800000)
 	{
 		if (address >= 0x840000) {
-			osd_die("get_memory_pointer: invalid display list memory address %08X\n", address);
+			fatalerror("get_memory_pointer: invalid display list memory address %08X", address);
 		}
 		return &display_list_ram[address & 0x7fffff];
 	}
 	else
 	{
 		if (address >= 0x100000) {
-			osd_die("get_memory_pointer: invalid node ram address %08X\n", address);
+			fatalerror("get_memory_pointer: invalid node ram address %08X", address);
 		}
 		return &culling_ram[address];
 	}

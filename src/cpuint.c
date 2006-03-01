@@ -143,6 +143,9 @@ int cpuint_init(void)
 	state_save_register_item_2d_array("cpu", 0, input_line_vector);
 	state_save_pop_tag();
 
+	/* reset any driver hooks into the IRQ acknowledge callbacks */
+	drv_irq_callbacks[cpunum] = NULL;
+
 	return 0;
 }
 
@@ -166,9 +169,6 @@ void cpuint_reset_cpu(int cpunum)
 		interrupt_vector[cpunum][line] = cpunum_default_irq_vector(cpunum);
 		input_event_index[cpunum][line] = 0;
 	}
-
-	/* reset any driver hooks into the IRQ acknowledge callbacks */
-	drv_irq_callbacks[cpunum] = NULL;
 }
 
 

@@ -1,6 +1,5 @@
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 static tilemap *bg_layer,*fg_layer,*tx_layer;
 UINT8 *dynduke_back_data,*dynduke_fore_data,*dynduke_scroll_ram;

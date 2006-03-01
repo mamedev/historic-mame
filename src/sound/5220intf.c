@@ -14,6 +14,7 @@
 #include <math.h>
 
 #include "driver.h"
+#include "streams.h"
 #include "tms5220.h"
 #include "5220intf.h"
 
@@ -54,7 +55,7 @@ static void *tms5220_start(int sndindex, int clock, const void *config)
 	info->chip = tms5220_create(sndindex);
 	if (!info->chip)
 		return NULL;
-	sound_register_token(info);
+	sndintrf_register_token(info);
 
 	/* initialize a info->stream */
 	info->stream = stream_create(0, 1, clock / 80, info, tms5220_update);
@@ -229,7 +230,7 @@ void tms5220_set_frequency(int frequency)
  * Generic get_info
  **************************************************************************/
 
-static void tms5220_set_info(void *token, UINT32 state, union sndinfo *info)
+static void tms5220_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	struct tms5220_info *ti = token;
 
@@ -240,7 +241,7 @@ static void tms5220_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void tms5220_get_info(void *token, UINT32 state, union sndinfo *info)
+void tms5220_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

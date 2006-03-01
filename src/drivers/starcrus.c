@@ -10,7 +10,6 @@ palazzol@home.com
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/i8085/i8085.h"
 #include "sound/samples.h"
 

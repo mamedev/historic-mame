@@ -32,7 +32,6 @@ a000-a3ff   R/W X/Y scroll position of each character (can be scrolled up
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/i8085/i8085.h"
 #include "cpu/i8039/i8039.h"
 #include "sound/sn76496.h"

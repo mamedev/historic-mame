@@ -8,7 +8,6 @@
 
 #include "driver.h"
 #include "tilemap.h"
-#include "vidhrdw/generic.h"
 
 UINT16 *targeth_spriteram;
 UINT16 *targeth_vregs;

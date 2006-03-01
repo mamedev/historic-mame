@@ -30,7 +30,6 @@
 
 #include "driver.h"
 #include "artwork.h"
-#include "vidhrdw/generic.h"
 #include "sound/dac.h"
 
 extern WRITE8_HANDLER( sbrkout_serve_led_w );

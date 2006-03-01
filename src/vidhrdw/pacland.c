@@ -25,7 +25,6 @@ sprite color 0x7f will erase the tilemap and force it to be transparent.
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
 UINT8 *pacland_videoram,*pacland_videoram2,*pacland_spriteram;

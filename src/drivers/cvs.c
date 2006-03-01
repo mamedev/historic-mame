@@ -83,7 +83,6 @@ Hardware Info
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/s2650/s2650.h"
 #include "sound/dac.h"
 #include "sound/5110intf.h"

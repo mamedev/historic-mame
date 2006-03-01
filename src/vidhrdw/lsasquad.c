@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "generic.h"
 
 unsigned char *lsasquad_scrollram;
 

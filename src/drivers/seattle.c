@@ -183,7 +183,6 @@
 **************************************************************************/
 
 #include "driver.h"
-#include "debugcpu.h"
 #include "cpu/adsp2100/adsp2100.h"
 #include "cpu/mips/mips3.h"
 #include "sndhrdw/dcs.h"
@@ -1007,7 +1006,7 @@ static void galileo_perform_dma(int which)
 		if (dstaddr >= 0x08000000 && dstaddr < 0x09000000)
 		{
 			if (bytesleft % 4 != 0)
-				osd_die("Galileo DMA to voodoo: bytesleft = %d\n", bytesleft);
+				fatalerror("Galileo DMA to voodoo: bytesleft = %d", bytesleft);
 			srcinc *= 4;
 			dstinc *= 4;
 
@@ -1311,7 +1310,7 @@ static WRITE32_HANDLER( seattle_voodoo_w )
 
 	/* shouldn't get here if the CPU is already stalled */
 	if (cpu_stalled_on_voodoo)
-		osd_die("seattle_voodoo_w while CPU is stalled\n");
+		fatalerror("seattle_voodoo_w while CPU is stalled");
 
 	/* remember all the info about this access for later */
 	cpu_stalled_on_voodoo = TRUE;

@@ -54,7 +54,6 @@ discarded, this looks like game bug
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "includes/amiga.h"
 
 /**************************************************************************

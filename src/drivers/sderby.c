@@ -72,7 +72,6 @@ TO DO :
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/okim6295.h"
 
 UINT16 *sderby_fg_videoram;

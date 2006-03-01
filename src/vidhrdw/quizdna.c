@@ -9,7 +9,7 @@ Video hardware
 
 ******************************************************************************/
 
-#include "vidhrdw/generic.h"
+#include "driver.h"
 
 static UINT8 *quizdna_bg_ram;
 static UINT8 *quizdna_fg_ram;

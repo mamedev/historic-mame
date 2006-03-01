@@ -15,7 +15,6 @@
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sndhrdw/seibu.h"
 #include "sound/2203intf.h"
 #include "sound/msm5205.h"

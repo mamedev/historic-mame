@@ -9,8 +9,11 @@
 
 ***************************************************************************/
 
+#include "mame.h"
+#include "fileio.h"
 #include "xmlfile.h"
-#include "expat.h"
+#include <ctype.h>
+#include <expat.h>
 
 #define TEMP_BUFFER_SIZE		4096
 
@@ -487,8 +490,7 @@ static void xml_write_node_recursive(xml_data_node *node, int indent, mame_file 
 void xml_file_write(xml_data_node *node, mame_file *file)
 {
 	/* ensure this is a root node */
-	if (node->name)
-		osd_die("xml_file_write called with a non-root node");
+	assert_always(node->name == NULL, "xml_file_write called with a non-root node");
 
 	/* output a simple header */
 	mame_fprintf(file, "<?xml version=\"1.0\"?>\n");
@@ -555,8 +557,7 @@ static void xml_free_node_recursive(xml_data_node *node)
 void xml_file_free(xml_data_node *node)
 {
 	/* ensure this is a root node */
-	if (node->name)
-		osd_die("xml_file_free called with a non-root node");
+	assert_always(node->name == NULL, "xml_file_free called with a non-root node");
 
 	xml_free_node_recursive(node);
 }

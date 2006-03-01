@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 UINT16 *nmk_bgvideoram,*nmk_fgvideoram,*nmk_txvideoram;
 UINT16 *gunnail_scrollram;

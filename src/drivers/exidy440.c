@@ -214,7 +214,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "exidy440.h"
 
 

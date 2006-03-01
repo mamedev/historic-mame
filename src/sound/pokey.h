@@ -17,7 +17,7 @@
 #ifndef _POKEYSOUND_H
 #define _POKEYSOUND_H
 
-#include "osd_cpu.h"
+#include "memory.h"
 
 /* CONSTANT DEFINITIONS */
 

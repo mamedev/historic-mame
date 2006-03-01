@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
 #define TOP_MONITOR_ROWS 28

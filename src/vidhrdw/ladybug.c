@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 /* Use the Zero Hour star generator board */
 extern void redclash_set_stars_enable( UINT8 on );

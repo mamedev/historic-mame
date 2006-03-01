@@ -163,7 +163,6 @@ $F987 - Addresses table at $f98d containing four structs:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/crtc6845.h"
 #include "machine/6821pia.h"
 #include "spiders.h"

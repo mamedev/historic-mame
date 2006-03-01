@@ -27,7 +27,6 @@
 
 #include "driver.h"
 #include "machine/8255ppi.h"
-#include "vidhrdw/generic.h"
 #include "dribling.h"
 
 

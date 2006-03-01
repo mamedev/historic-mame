@@ -2120,5 +2120,5 @@ static void HC11OP(page4)(void)
 
 static void HC11OP(invalid)(void)
 {
-	osd_die("HC11: Invalid opcode 0x%02X at %04X\n", READ8(hc11.pc-1), hc11.pc-1);
+	fatalerror("HC11: Invalid opcode 0x%02X at %04X", READ8(hc11.pc-1), hc11.pc-1);
 }

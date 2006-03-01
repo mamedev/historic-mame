@@ -56,7 +56,6 @@ To do:
 
 #include "driver.h"
 #include "machine/eeprom.h"
-#include "vidhrdw/generic.h"
 #include "sound/okim6295.h"
 
 /***************************************************************************

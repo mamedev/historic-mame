@@ -25,7 +25,6 @@ TODO:
 
 **********************************************************************/
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/arm/arm.h"
 
 static UINT32 *ertictac_mainram;

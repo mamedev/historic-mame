@@ -218,7 +218,6 @@ Code at 505: waits for bit 1 to go low, writes command, waits for bit
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "sound/2203intf.h"
 #include "sound/okim6295.h"

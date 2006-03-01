@@ -103,7 +103,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "atarifb.h"
 #include "sound/discrete.h"
 

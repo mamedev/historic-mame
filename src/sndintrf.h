@@ -14,16 +14,14 @@
 #ifndef __SNDINTRF_H__
 #define __SNDINTRF_H__
 
-#include "streams.h"
 
+/***************************************************************************
 
+    Constants
 
-/*************************************
- *
- *  Enum listing all the sound chips
- *
- *************************************/
+***************************************************************************/
 
+/* Enum listing all the sound chips */
 enum
 {
 	SOUND_DUMMY,
@@ -120,19 +118,7 @@ enum
 };
 
 
-
-/*************************************
- *
- *  Sound information constants
- *
- *************************************/
-
-enum
-{
-	MAX_ROUTES = 16				/* maximum number of streams of any chip */
-};
-
-
+/* Sound information constants */
 enum
 {
 	/* --- the following bits of info are returned as 64-bit signed integers --- */
@@ -143,7 +129,7 @@ enum
 	/* --- the following bits of info are returned as pointers to data or functions --- */
 	SNDINFO_PTR_FIRST = 0x10000,
 
-	SNDINFO_PTR_SET_INFO = SNDINFO_PTR_FIRST,			/* R/O: void (*set_info)(void *token, UINT32 state, union sndinfo *info) */
+	SNDINFO_PTR_SET_INFO = SNDINFO_PTR_FIRST,			/* R/O: void (*set_info)(void *token, UINT32 state, sndinfo *info) */
 	SNDINFO_PTR_START,									/* R/O: void *(*start)(int index, int clock, const void *config) */
 	SNDINFO_PTR_STOP,									/* R/O: void (*stop)(void *token) */
 	SNDINFO_PTR_RESET,									/* R/O: void (*reset)(void *token) */
@@ -163,14 +149,22 @@ enum
 };
 
 
-union sndinfo
+
+/***************************************************************************
+
+    Type definitions
+
+***************************************************************************/
+
+typedef union _sndinfo sndinfo;
+union _sndinfo
 {
 	INT64	i;											/* generic integers */
 	void *	p;											/* generic pointers */
 	genf *  f;											/* generic function pointers */
 	const char *s;										/* generic strings */
 
-	void	(*set_info)(void *token, UINT32 state, union sndinfo *info);
+	void	(*set_info)(void *token, UINT32 state, sndinfo *info);
 	void *	(*start)(int index, int clock, const void *config);/* SNDINFO_PTR_START */
 	void	(*stop)(void *token);						/* SNDINFO_PTR_STOP */
 	void	(*reset)(void *token);						/* SNDINFO_PTR_RESET */
@@ -178,68 +172,11 @@ union sndinfo
 
 
 
-/*************************************
- *
- *  Core sound interface structure
- *
- *************************************/
+/***************************************************************************
 
-struct _sound_interface
-{
-	/* table of core functions */
-	void		(*get_info)(void *token, UINT32 state, union sndinfo *info);
-	void		(*set_info)(void *token, UINT32 state, union sndinfo *info);
-	void * 		(*start)(int index, int clock, const void *config);
-	void		(*stop)(void *token);
-	void		(*reset)(void *token);
-};
-typedef struct _sound_interface sound_interface;
+    Sound chip interfaces by index
 
-
-
-/*************************************
- *
- *  Per-chip info in the machine driver
- *
- *************************************/
-
-#define ALL_OUTPUTS 	(-1)							/* special value indicating all outputs for the current chip */
-
-struct _sound_route
-{
-	int			output;									/* output ID */
-	const char *target;									/* tag of the target */
-	float		gain;									/* gain */
-};
-typedef struct _sound_route sound_route;
-
-
-struct _sound_config
-{
-	int			sound_type;								/* what type of sound chip? */
-	int			clock;									/* clock speed */
-	const void *config;									/* configuration for this chip */
-	const char *tag;									/* tag for this chip */
-	int			routes;									/* number of routes we have */
-	sound_route route[MAX_ROUTES];			/* routes for the various streams */
-};
-typedef struct _sound_config sound_config;
-
-
-struct _speaker_config
-{
-	const char *tag;									/* tag for this speaker */
-	float		x, y, z;								/* positioning vector */
-};
-typedef struct _speaker_config speaker_config;
-
-
-
-/*************************************
- *
- *   Specific sound chip acccessors
- *
- *************************************/
+***************************************************************************/
 
 /* get info accessors */
 INT64 sndnum_get_info_int(int sndnum, UINT32 state);
@@ -259,16 +196,17 @@ void sndnum_set_info_fct(int sndnum, UINT32 state, genf *data);
 #define sndnum_core_credits(sndnum)				sndnum_get_info_string(sndnum, SNDINFO_STR_CORE_CREDITS)
 
 /* misc accessors */
+void sndnum_reset(int sndnum);
 int sndnum_clock(int sndnum);
 void *sndnum_token(int sndnum);
 
 
 
-/*************************************
- *
- *   Specific sound chip acccessors
- *
- *************************************/
+/***************************************************************************
+
+    Sound chip interfaces by (type,index) pair
+
+***************************************************************************/
 
 /* get info accessors */
 INT64 sndti_get_info_int(int sndtype, int sndindex, UINT32 state);
@@ -288,16 +226,17 @@ void sndti_set_info_fct(int sndtype, int sndindex, UINT32 state, genf *data);
 #define sndti_core_credits(sndtype, sndindex)	sndti_get_info_string(sndtype, sndindex, SNDINFO_STR_CORE_CREDITS)
 
 /* misc accessors */
+void sndti_reset(int type, int index);
 int sndti_clock(int sndtype, int sndindex);
 void *sndti_token(int sndtype, int sndindex);
 
 
 
-/*************************************
- *
- *   Sound type acccessors
- *
- *************************************/
+/***************************************************************************
+
+    Sound chip interfaces by type
+
+***************************************************************************/
 
 /* get info accessors */
 INT64 sndtype_get_info_int(int sndtype, UINT32 state);
@@ -313,83 +252,22 @@ const char *sndtype_get_info_string(int sndtype, UINT32 state);
 
 
 
-/*************************************
- *
- *   MAME core controls
- *
- *************************************/
+/***************************************************************************
 
+    Sound chip interfaces by (type,index) pair
+
+***************************************************************************/
+
+/* Initialization/Tear down */
 void sndintrf_init(void);
-int sound_init(void);
-void sound_exit(void);
-void sound_reset(void);
-void sound_frame_update(void);
-void sound_register_token(void *token);
-int sound_scalebufferpos(int value);
+int sndintrf_init_sound(int sndnum, int sndtype, int clock, const void *config);
+void sndintrf_exit_sound(int sndnum);
+void sndintrf_register_token(void *token);
 
-
-
-/*************************************
- *
- *   Misc helpers
- *
- *************************************/
-
+/* Misc helpers */
+int sndti_exists(int type, int index);
 int sndti_to_sndnum(int type, int index);
-
-/* global sound enable/disable */
-void sound_global_enable(int enable);
-
-/* sound chip resetting */
-void sndti_reset(int type, int index);
-
-/* driver gain controls on chip outputs */
-void sndti_set_output_gain(int type, int index, int output, float gain);
-
-/* user gain controls on speaker inputs for mixing */
-int sound_get_user_gain_count(void);
-void sound_set_user_gain(int index, float gain);
-float sound_get_user_gain(int index);
-float sound_get_default_gain(int index);
-const char *sound_get_user_gain_name(int index);
-
-
-
-
-/*************************************
- *
- *   Sound latch helpers
- *
- *************************************/
-
-READ8_HANDLER( soundlatch_r );
-READ8_HANDLER( soundlatch2_r );
-READ8_HANDLER( soundlatch3_r );
-READ8_HANDLER( soundlatch4_r );
-READ16_HANDLER( soundlatch_word_r );
-READ16_HANDLER( soundlatch2_word_r );
-READ16_HANDLER( soundlatch3_word_r );
-READ16_HANDLER( soundlatch4_word_r );
-
-WRITE8_HANDLER( soundlatch_w );
-WRITE8_HANDLER( soundlatch2_w );
-WRITE8_HANDLER( soundlatch3_w );
-WRITE8_HANDLER( soundlatch4_w );
-WRITE16_HANDLER( soundlatch_word_w );
-WRITE16_HANDLER( soundlatch2_word_w );
-WRITE16_HANDLER( soundlatch3_word_w );
-WRITE16_HANDLER( soundlatch4_word_w );
-
-WRITE8_HANDLER( soundlatch_clear_w );
-WRITE8_HANDLER( soundlatch2_clear_w );
-WRITE8_HANDLER( soundlatch3_clear_w );
-WRITE8_HANDLER( soundlatch4_clear_w );
-
-
-/* If you're going to use soundlatchX_clear_w, and the cleared value is
-   something other than 0x00, use this function from machine_init. Note
-   that this one call effects all 4 latches */
-void soundlatch_setclearedvalue(int value);
+int sndnum_to_sndti(int sndnum, int *index);
 
 
 #endif	/* __SNDINTRF_H__ */

@@ -588,7 +588,7 @@ INLINE void ppc_set_spr(int spr, UINT32 value)
 	}
 #endif
 
-	osd_die("ppc: set_spr: unknown spr %d (%03X) !\n", spr, spr);
+	fatalerror("ppc: set_spr: unknown spr %d (%03X) !", spr, spr);
 }
 
 INLINE UINT32 ppc_get_spr(int spr)
@@ -652,11 +652,11 @@ INLINE UINT32 ppc_get_spr(int spr)
 		switch (spr)
 		{
 			case SPR603E_TBL_R:
-				osd_die("ppc: get_spr: TBL_R \n");
+				fatalerror("ppc: get_spr: TBL_R ");
 				break;
 
 			case SPR603E_TBU_R:
-				osd_die("ppc: get_spr: TBU_R \n");
+				fatalerror("ppc: get_spr: TBU_R ");
 				break;
 
 			case SPR603E_TBL_W:		return (UINT32)(ppc_read_timebase());
@@ -688,7 +688,7 @@ INLINE UINT32 ppc_get_spr(int spr)
 	}
 #endif
 
-	osd_die("ppc: get_spr: unknown spr %d (%03X) !\n", spr, spr);
+	fatalerror("ppc: get_spr: unknown spr %d (%03X) !", spr, spr);
 	return 0;
 }
 
@@ -704,7 +704,7 @@ static void ppc_write64_translated(offs_t address, UINT64 data);
 INLINE void ppc_set_msr(UINT32 value)
 {
 	if( value & (MSR_ILE | MSR_LE) )
-		osd_die("ppc: set_msr: little_endian mode not supported !\n");
+		fatalerror("ppc: set_msr: little_endian mode not supported !");
 
 	MSR = value;
 

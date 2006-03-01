@@ -6,7 +6,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 size_t gsword_spritexy_size;
 

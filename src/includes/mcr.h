@@ -34,7 +34,7 @@ extern UINT32 mcr_ssio_board;
 
 MACHINE_START( mcr );
 MACHINE_RESET( mcr );
-MACHINE_RESET( nflfoot );
+MACHINE_START( nflfoot );
 MACHINE_START( mcr68 );
 MACHINE_RESET( mcr68 );
 MACHINE_RESET( zwackery );

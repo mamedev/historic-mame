@@ -5,7 +5,6 @@
 *******************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 static unsigned char *dirty_f;
 static mame_bitmap *bitmap_f;

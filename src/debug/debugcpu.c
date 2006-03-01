@@ -9,9 +9,11 @@
 
 *********************************************************************/
 
+#include "osdepend.h"
 #include "driver.h"
 #include "debugcpu.h"
 #include "debugcmd.h"
+#include "debugcmt.h"
 #include "debugcon.h"
 #include "express.h"
 #include "debugvw.h"
@@ -19,23 +21,23 @@
 
 
 
-/*###################################################################################################
-**  CONSTANTS
-**#################################################################################################*/
+/***************************************************************************
+    CONSTANTS
+***************************************************************************/
 
 #define NUM_TEMP_VARIABLES	10
 
 
 
-/*###################################################################################################
-**  TYPE DEFINITIONS
-**#################################################################################################*/
+/***************************************************************************
+    TYPE DEFINITIONS
+***************************************************************************/
 
 
 
-/*###################################################################################################
-**  LOCAL VARIABLES
-**#################################################################################################*/
+/***************************************************************************
+    LOCAL VARIABLES
+***************************************************************************/
 
 FILE *debug_source_file;
 symbol_table *global_symtable;
@@ -71,9 +73,9 @@ static UINT64 tempvar[NUM_TEMP_VARIABLES];
 
 
 
-/*###################################################################################################
-**  PROTOTYPES
-**#################################################################################################*/
+/***************************************************************************
+    PROTOTYPES
+***************************************************************************/
 
 static void perform_trace(debug_cpu_info *info);
 static void prepare_for_step_overout(void);
@@ -91,9 +93,9 @@ static void check_hotspots(int cpunum, int spacenum, offs_t address);
 
 
 
-/*###################################################################################################
-**  FRONTENDS FOR OLDER FUNCTIONS
-**#################################################################################################*/
+/***************************************************************************
+    FRONTENDS FOR OLDER FUNCTIONS
+***************************************************************************/
 
 /*-------------------------------------------------
     mame_debug_init - start up all subsections
@@ -106,6 +108,7 @@ void mame_debug_init(void)
 	debug_command_init();
 	debug_console_init();
 	debug_view_init();
+	debug_comment_init();
 	atexit(debug_flush_traces);
 }
 
@@ -121,9 +124,9 @@ void mame_debug_break(void)
 
 
 
-/*###################################################################################################
-**  INITIALIZATION
-**#################################################################################################*/
+/***************************************************************************
+    INITIALIZATION
+***************************************************************************/
 
 /*-------------------------------------------------
     debug_cpu_init - initialize the CPU
@@ -297,9 +300,9 @@ void debug_cpu_exit(void)
 
 
 
-/*###################################################################################################
-**  EXECUTION CONTROL
-**#################################################################################################*/
+/***************************************************************************
+    EXECUTION CONTROL
+***************************************************************************/
 
 /*-------------------------------------------------
     debug_cpu_single_step - single step past the
@@ -468,9 +471,9 @@ void debug_cpu_trace(int cpunum, FILE *file, int trace_over, const char *action)
 
 
 
-/*###################################################################################################
-**  UTILITIES
-**#################################################################################################*/
+/***************************************************************************
+    UTILITIES
+***************************************************************************/
 
 /*-------------------------------------------------
     debug_get_cpu_info - returns the cpu info
@@ -618,9 +621,9 @@ static void set_cpu_reg(UINT32 ref, UINT64 value)
 
 
 
-/*###################################################################################################
-**  MAIN CPU CALLBACK
-**#################################################################################################*/
+/***************************************************************************
+    MAIN CPU CALLBACK
+***************************************************************************/
 
 /*-------------------------------------------------
     mame_debug_hook - called by the CPU cores
@@ -750,6 +753,10 @@ void mame_debug_hook(void)
 
 			/* check for commands in the source file */
 			process_source_file();
+
+			/* if an event got scheduled, resume */
+			if (mame_is_scheduled_event_pending())
+				execution_state = EXECUTION_STATE_RUNNING;
 		}
 		osd_sound_enable(1);
 
@@ -1028,9 +1035,9 @@ void debug_get_memory_hooks(int cpunum, debug_hook_read_ptr *read, debug_hook_wr
 
 
 
-/*###################################################################################################
-**  BREAKPOINTS
-**#################################################################################################*/
+/***************************************************************************
+    BREAKPOINTS
+***************************************************************************/
 
 /*-------------------------------------------------
     debug_check_breakpoints - check the
@@ -1181,9 +1188,9 @@ int debug_breakpoint_enable(int bpnum, int enable)
 
 
 
-/*###################################################################################################
-**  WATCHPOINTS
-**#################################################################################################*/
+/***************************************************************************
+    WATCHPOINTS
+***************************************************************************/
 
 /*-------------------------------------------------
     check_watchpoints - check the
@@ -1239,7 +1246,7 @@ static void check_watchpoints(int cpunum, int spacenum, int type, offs_t address
 					}
 					else
 						sprintf(buffer, "Stopped at watchpoint %X reading %s from %08X", wp->index, sizes[size], address);
-					debug_console_write_line(buffer);
+					debug_console_printf("%s\n", buffer);
 				}
 				break;
 			}
@@ -1377,9 +1384,9 @@ int debug_watchpoint_enable(int wpnum, int enable)
 
 
 
-/*###################################################################################################
-**  HOTSPOTS
-**#################################################################################################*/
+/***************************************************************************
+    HOTSPOTS
+***************************************************************************/
 
 /*-------------------------------------------------
     debug_hotspot_track - enable/disable tracking
@@ -1401,7 +1408,7 @@ int debug_hotspot_track(int cpunum, int numspots, int threshhold)
 		/* allocate memory for hotspots */
 		info->hotspots = malloc(sizeof(*info->hotspots) * numspots);
 		if (!info->hotspots)
-			osd_die("Out of memory allocating hotspot info");
+			fatalerror("Out of memory allocating hotspot info");
 		memset(info->hotspots, 0xff, sizeof(*info->hotspots) * numspots);
 
 		/* fill in the info */
@@ -1459,9 +1466,9 @@ static void check_hotspots(int cpunum, int spacenum, offs_t address)
 }
 
 
-/*###################################################################################################
-**  MEMORY ACCESSORS
-**#################################################################################################*/
+/***************************************************************************
+    MEMORY ACCESSORS
+***************************************************************************/
 
 /*-------------------------------------------------
     debug_read_byte - return a byte from the
@@ -1919,7 +1926,7 @@ UINT64 debug_read_opcode(offs_t address, int size, int arg)
 			break;
 
 		default:
-			osd_die("debug_read_opcode: unknown type = %d\n", info->space[ADDRESS_SPACE_PROGRAM].databytes * 10 + size);
+			fatalerror("debug_read_opcode: unknown type = %d", info->space[ADDRESS_SPACE_PROGRAM].databytes * 10 + size);
 			break;
 	}
 
@@ -1930,7 +1937,7 @@ UINT64 debug_read_opcode(offs_t address, int size, int arg)
 
 	/* gross! */
 //  if (osd_is_bad_read_ptr(ptr, size))
-//      osd_die("debug_read_opcode: cpu %d address %x mapped to invalid memory %p\n", cpu_getactivecpu(), address, ptr);
+//      fatalerror("debug_read_opcode: cpu %d address %x mapped to invalid memory %p", cpu_getactivecpu(), address, ptr);
 
 	/* return based on the size */
 	switch (size)
@@ -2036,7 +2043,7 @@ void debug_source_script(const char *file)
 
 /*-------------------------------------------------
     debug_flush_traces - flushes all traces; this is
-    useful if a trace is going on when we osd_die
+    useful if a trace is going on when we fatalerror
 -------------------------------------------------*/
 
 void debug_flush_traces(void)

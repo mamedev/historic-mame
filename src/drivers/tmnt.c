@@ -65,7 +65,6 @@ Updates:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
 #include "machine/eeprom.h"
 #include "cpu/m68000/m68000.h"
@@ -4116,7 +4115,7 @@ static void shuffle(UINT8 *buf,int len)
 
 	if (len == 2) return;
 
-	if (len % 4) osd_die("shuffle() - not modulo 4\n");	/* must not happen */
+	if (len % 4) fatalerror("shuffle() - not modulo 4");	/* must not happen */
 
 	len /= 2;
 

@@ -190,7 +190,7 @@ endif
 # compile and linking flags
 #-------------------------------------------------
 
-CFLAGS = -std=gnu89 -Isrc -Isrc/includes -Isrc/debug -Isrc/$(MAMEOS) -I$(OBJ)/cpu/m68000 -Isrc/cpu/m68000
+CFLAGS = -std=gnu89 -Isrc -Isrc/includes -Isrc/debug -Isrc/$(MAMEOS)
 
 ifdef SYMBOLS
 CFLAGS += -O0 -Wall -Wno-unused -g
@@ -309,11 +309,14 @@ all: maketree emulator extra
 # include the various .mak files
 #-------------------------------------------------
 
+# include OS-specific rules first
+include src/$(MAMEOS)/$(MAMEOS).mak
+
+# then the various core pieces
 include src/core.mak
 include src/$(TARGET).mak
 include src/cpu/cpu.mak
 include src/sound/sound.mak
-include src/$(MAMEOS)/$(MAMEOS).mak
 
 # combine the various definitions to one
 CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS) $(ASMDEFS)
@@ -389,27 +392,6 @@ $(OBJ)/libexpat.a: $(OBJ)/expat/xmlparse.o $(OBJ)/expat/xmlrole.o $(OBJ)/expat/x
 $(OBJ)/libz.a: $(OBJ)/zlib/adler32.o $(OBJ)/zlib/compress.o $(OBJ)/zlib/crc32.o $(OBJ)/zlib/deflate.o \
 				$(OBJ)/zlib/gzio.o $(OBJ)/zlib/inffast.o $(OBJ)/zlib/inflate.o $(OBJ)/zlib/infback.o \
 				$(OBJ)/zlib/inftrees.o $(OBJ)/zlib/trees.o $(OBJ)/zlib/uncompr.o $(OBJ)/zlib/zutil.o
-
-
-
-#-------------------------------------------------
-# special rules
-#-------------------------------------------------
-
-# compile generated C files for the 68000 emulator
-$(M68000_GENERATED_OBJS): $(OBJ)/cpu/m68000/m68kmake$(EXE)
-	@echo Compiling $(subst .o,.c,$@)...
-	$(CC) $(CDEFS) $(CFLAGS) -c $*.c -o $@
-
-# additional rule, because m68kcpu.c includes the generated m68kops.h :-/
-$(OBJ)/cpu/m68000/m68kcpu.o: $(OBJ)/cpu/m68000/m68kmake$(EXE)
-
-# generate C source files for the 68000 emulator
-$(OBJ)/cpu/m68000/m68kmake$(EXE): $(OBJ)/cpu/m68000/m68kmake.o $(OSDBGOBJS)
-	@echo M68K make $<...
-	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ -o $@
-	@echo Generating M68K source files...
-	$(OBJ)/cpu/m68000/m68kmake$(EXE) $(OBJ)/cpu/m68000 src/cpu/m68000/m68k_in.c
 
 
 

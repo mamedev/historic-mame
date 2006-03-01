@@ -191,7 +191,6 @@ Points to note, known and proven information deleted from this map:
 
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "machine/pd4990a.h"
 #include "cpu/z80/z80.h"
 #include "neogeo.h"

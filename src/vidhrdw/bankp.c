@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 UINT8 *bankp_videoram2;
 UINT8 *bankp_colorram2;

@@ -13,6 +13,7 @@
 #include <conio.h>
 #include <winioctl.h>
 #include <ctype.h>
+#include <stddef.h>
 
 // undef WINNT for dinput.h to prevent duplicate definition
 #undef WINNT
@@ -20,6 +21,7 @@
 #include <dinput.h>
 
 // MAME headers
+#include "osdepend.h"
 #include "driver.h"
 #include "window.h"
 #include "rc.h"
@@ -114,7 +116,6 @@ struct _axis_history
 //  GLOBAL VARIABLES
 //============================================================
 
-UINT8						win_trying_to_quit;
 int							win_use_mouse;
 
 
@@ -1359,13 +1360,6 @@ static int is_key_pressed(os_code keycode)
 	// make sure we've polled recently
 	if (osd_cycles() > last_poll + osd_cycles_per_second()/4)
 		win_poll_input();
-
-	// special case: if we're trying to quit, fake up/down/up/down
-	if (dik == DIK_ESCAPE && win_trying_to_quit)
-	{
-		static int dummy_state = 1;
-		return dummy_state ^= 1;
-	}
 
 	// if the video window isn't visible, we have to get our events from the console
 	if (!win_video_window || !IsWindowVisible(win_video_window))

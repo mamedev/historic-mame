@@ -39,7 +39,6 @@ The second CPU plays speech
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
 #include "sound/dac.h"
 

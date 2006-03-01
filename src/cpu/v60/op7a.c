@@ -984,32 +984,32 @@ UINT32 opCVTDZP(void)
 
 UINT32 op58UNHANDLED(void)
 {
-	osd_die("Unhandled 58 opcode at PC: /%06x\n", PC);
-	return 0; /* never reached, osd_die won't return */
+	fatalerror("Unhandled 58 opcode at PC: /%06x", PC);
+	return 0; /* never reached, fatalerror won't return */
 }
 
 UINT32 op5AUNHANDLED(void)
 {
-	osd_die("Unhandled 5A opcode at PC: /%06x\n", PC);
-	return 0; /* never reached, osd_die won't return */
+	fatalerror("Unhandled 5A opcode at PC: /%06x", PC);
+	return 0; /* never reached, fatalerror won't return */
 }
 
 UINT32 op5BUNHANDLED(void)
 {
-	osd_die("Unhandled 5B opcode at PC: /%06x\n", PC);
-	return 0; /* never reached, osd_die won't return */
+	fatalerror("Unhandled 5B opcode at PC: /%06x", PC);
+	return 0; /* never reached, fatalerror won't return */
 }
 
 UINT32 op5DUNHANDLED(void)
 {
-	osd_die("Unhandled 5D opcode at PC: /%06x\n", PC);
-	return 0; /* never reached, osd_die won't return */
+	fatalerror("Unhandled 5D opcode at PC: /%06x", PC);
+	return 0; /* never reached, fatalerror won't return */
 }
 
 UINT32 op59UNHANDLED(void)
 {
-	osd_die("Unhandled 59 opcode at PC: /%06x\n", PC);
-	return 0; /* never reached, osd_die won't return */
+	fatalerror("Unhandled 59 opcode at PC: /%06x", PC);
+	return 0; /* never reached, fatalerror won't return */
 }
 
 UINT32 (*Op59Table[32])(void) =

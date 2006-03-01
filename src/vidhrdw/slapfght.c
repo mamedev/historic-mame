@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 unsigned char *slapfight_videoram;
 unsigned char *slapfight_colorram;

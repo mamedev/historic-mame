@@ -12,7 +12,6 @@
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 static tilemap *bg_layer,*fg_layer;
 UINT16 *crospang_bg_videoram,*crospang_fg_videoram;

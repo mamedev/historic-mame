@@ -42,7 +42,6 @@
 // 0x3E7                    round point/passing point control?
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
 
 

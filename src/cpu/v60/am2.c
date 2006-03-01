@@ -94,7 +94,7 @@ UINT32 bam2Autoincrement(void)
 		v60.reg[modVal&0x1F]+=4;
 		break;
 	default:
-		osd_die("CPU - AM2 - 7 (t0 PC=%x)\n", PC);
+		fatalerror("CPU - AM2 - 7 (t0 PC=%x)", PC);
 		break;
 	}
 
@@ -139,7 +139,7 @@ UINT32 bam2Autodecrement(void)
 		v60.reg[modVal&0x1F]-=4;
 		break;
 	default:
-		osd_die("CPU - BAM2 - 7 (PC=%06x)\n", PC);
+		fatalerror("CPU - BAM2 - 7 (PC=%06x)", PC);
 		break;
 	}
 
@@ -956,68 +956,68 @@ UINT32 am2ImmediateQuick(void)
 
 UINT32 am2Error1(void)
 {
-	osd_die("CPU - AM2 - 1 (PC=%06x)\n", PC);
-	return 0; /* never reached, osd_die won't return */
+	fatalerror("CPU - AM2 - 1 (PC=%06x)", PC);
+	return 0; /* never reached, fatalerror won't return */
 }
 
 UINT32 am2Error2(void)
 {
-	osd_die("CPU - AM2 - 2 (PC=%06x)\n", PC);
-	return 0; /* never reached, osd_die won't return */
+	fatalerror("CPU - AM2 - 2 (PC=%06x)", PC);
+	return 0; /* never reached, fatalerror won't return */
 }
 
 UINT32 am2Error3(void)
 {
-	osd_die("CPU - AM2 - 3 (PC=%06x)\n", PC);
-	return 0; /* never reached, osd_die won't return */
+	fatalerror("CPU - AM2 - 3 (PC=%06x)", PC);
+	return 0; /* never reached, fatalerror won't return */
 }
 
 UINT32 am2Error4(void)
 {
-	osd_die("CPU - AM2 - 4 (PC=%06x)\n", PC);
-	return 0; /* never reached, osd_die won't return */
+	fatalerror("CPU - AM2 - 4 (PC=%06x)", PC);
+	return 0; /* never reached, fatalerror won't return */
 }
 
 UINT32 am2Error5(void)
 {
-	osd_die("CPU - AM2 - 5 (PC=%06x)\n", PC);
-	return 0; /* never reached, osd_die won't return */
+	fatalerror("CPU - AM2 - 5 (PC=%06x)", PC);
+	return 0; /* never reached, fatalerror won't return */
 }
 
 UINT32 bam2Error1(void)
 {
-	osd_die("CPU - BAM2 - 1 (PC=%06x)\n", PC);
-	return 0; /* never reached, osd_die won't return */
+	fatalerror("CPU - BAM2 - 1 (PC=%06x)", PC);
+	return 0; /* never reached, fatalerror won't return */
 }
 
 UINT32 bam2Error2(void)
 {
-	osd_die("CPU - BAM2 - 2 (PC=%06x)\n", PC);
-	return 0; /* never reached, osd_die won't return */
+	fatalerror("CPU - BAM2 - 2 (PC=%06x)", PC);
+	return 0; /* never reached, fatalerror won't return */
 }
 
 UINT32 bam2Error3(void)
 {
-	osd_die("CPU - BAM2 - 3 (PC=%06x)\n", PC);
-	return 0; /* never reached, osd_die won't return */
+	fatalerror("CPU - BAM2 - 3 (PC=%06x)", PC);
+	return 0; /* never reached, fatalerror won't return */
 }
 
 UINT32 bam2Error4(void)
 {
-	osd_die("CPU - BAM2 - 4 (PC=%06x)\n", PC);
-	return 0; /* never reached, osd_die won't return */
+	fatalerror("CPU - BAM2 - 4 (PC=%06x)", PC);
+	return 0; /* never reached, fatalerror won't return */
 }
 
 UINT32 bam2Error5(void)
 {
-	osd_die("CPU - BAM2 - 5 (PC=%06x)\n", PC);
-	return 0; /* never reached, osd_die won't return */
+	fatalerror("CPU - BAM2 - 5 (PC=%06x)", PC);
+	return 0; /* never reached, fatalerror won't return */
 }
 
 UINT32 bam2Error6(void)
 {
-	osd_die("CPU - BAM2 - 6 (PC=%06x)\n", PC);
-	return 0; /* never reached, osd_die won't return */
+	fatalerror("CPU - BAM2 - 6 (PC=%06x)", PC);
+	return 0; /* never reached, fatalerror won't return */
 }
 
 

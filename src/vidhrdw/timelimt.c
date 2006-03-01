@@ -1,4 +1,4 @@
-#include "vidhrdw/generic.h"
+#include "driver.h"
 
 /* globals */
 UINT8 *timelimt_bg_videoram;

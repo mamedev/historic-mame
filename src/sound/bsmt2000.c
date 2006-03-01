@@ -11,6 +11,7 @@
 #include <math.h>
 
 #include "driver.h"
+#include "streams.h"
 #include "bsmt2000.h"
 
 
@@ -56,7 +57,8 @@
 ***********************************************************************************************/
 
 /* struct describing a single playing voice */
-struct BSMT2000Voice
+typedef struct _bsmt2000_voice bsmt2000_voice;
+struct _bsmt2000_voice
 {
 	/* external state */
 	UINT16		reg[REG_TOTAL];			/* 9 registers */
@@ -66,7 +68,8 @@ struct BSMT2000Voice
 	UINT32		adjusted_rate;			/* adjusted rate */
 };
 
-struct BSMT2000Chip
+typedef struct _bsmt2000_chip bsmt2000_chip;
+struct _bsmt2000_chip
 {
 	sound_stream *stream;				/* which stream are we using */
 	int			sample_rate;			/* output sample rate */
@@ -74,8 +77,8 @@ struct BSMT2000Chip
 	int			total_banks;			/* number of total banks in the region */
 	int			voices;					/* number of voices */
 
-	struct BSMT2000Voice *voice;		/* the voices */
-	struct BSMT2000Voice compressed;	/* the compressed voice */
+	bsmt2000_voice *voice;				/* the voices */
+	bsmt2000_voice compressed;			/* the compressed voice */
 
 	INT32 *		scratch;
 
@@ -109,9 +112,9 @@ struct BSMT2000Chip
 
 ***********************************************************************************************/
 
-static void generate_samples(struct BSMT2000Chip *chip, INT32 *left, INT32 *right, int samples)
+static void generate_samples(bsmt2000_chip *chip, INT32 *left, INT32 *right, int samples)
 {
-	struct BSMT2000Voice *voice;
+	bsmt2000_voice *voice;
 	int v;
 
 	/* skip if nothing to do */
@@ -206,7 +209,7 @@ static void generate_samples(struct BSMT2000Chip *chip, INT32 *left, INT32 *righ
 
 static void bsmt2000_update(void *param, stream_sample_t **inputs, stream_sample_t **buffer, int length)
 {
-	struct BSMT2000Chip *chip = param;
+	bsmt2000_chip *chip = param;
 	INT32 *lsrc = chip->scratch, *rsrc = chip->scratch;
 	stream_sample_t *ldest = buffer[0];
 	stream_sample_t *rdest = buffer[1];
@@ -254,7 +257,7 @@ static void bsmt2000_update(void *param, stream_sample_t **inputs, stream_sample
 
 ***********************************************************************************************/
 
-INLINE void init_voice(struct BSMT2000Voice *voice)
+INLINE void init_voice(bsmt2000_voice *voice)
 {
 	memset(&voice->reg, 0, sizeof(voice->reg));
 	voice->position = 0;
@@ -264,7 +267,7 @@ INLINE void init_voice(struct BSMT2000Voice *voice)
 }
 
 
-INLINE void init_all_voices(struct BSMT2000Chip *chip)
+INLINE void init_all_voices(bsmt2000_chip *chip)
 {
 	int i;
 
@@ -278,17 +281,28 @@ INLINE void init_all_voices(struct BSMT2000Chip *chip)
 }
 
 
+static void register_voice_for_save(bsmt2000_voice *voice, int index)
+{
+	state_save_register_item_array("bsmt2000", index, voice->reg);
+	state_save_register_item("bsmt2000", index, voice->position);
+	state_save_register_item("bsmt2000", index, voice->loop_start_position);
+	state_save_register_item("bsmt2000", index, voice->loop_stop_position);
+	state_save_register_item("bsmt2000", index, voice->adjusted_rate);
+}
+
+
 static void *bsmt2000_start(int sndindex, int clock, const void *config)
 {
 	const struct BSMT2000interface *intf = config;
-	struct BSMT2000Chip *chip;
+	bsmt2000_chip *chip;
+	int i;
 
 	chip = auto_malloc(sizeof(*chip));
 	memset(chip, 0, sizeof(*chip));
 
 	/* allocate the voices */
 	chip->voices = intf->voices;
-	chip->voice = auto_malloc(chip->voices * sizeof(struct BSMT2000Voice));
+	chip->voice = auto_malloc(chip->voices * sizeof(bsmt2000_voice));
 
 	/* create the stream */
 	chip->sample_rate = clock / 1024;
@@ -304,6 +318,11 @@ static void *bsmt2000_start(int sndindex, int clock, const void *config)
 	/* allocate memory */
 	chip->scratch = auto_malloc(sizeof(chip->scratch[0]) * 2 * MAX_SAMPLE_CHUNK);
 
+	/* register for save states */
+	for (i = 0; i < chip->voices; i++)
+		register_voice_for_save(&chip->voice[i], sndindex * 32 + i);
+	register_voice_for_save(&chip->compressed, sndindex * 32 + 31);
+
 	/* success */
 	return chip;
 }
@@ -318,7 +337,7 @@ static void *bsmt2000_start(int sndindex, int clock, const void *config)
 
 static void bsmt2000_reset(void *_chip)
 {
-	struct BSMT2000Chip *chip = _chip;
+	bsmt2000_chip *chip = _chip;
 	init_all_voices(chip);
 }
 
@@ -330,9 +349,9 @@ static void bsmt2000_reset(void *_chip)
 
 ***********************************************************************************************/
 
-static void bsmt2000_reg_write(struct BSMT2000Chip *chip, offs_t offset, UINT16 data, UINT16 mem_mask)
+static void bsmt2000_reg_write(bsmt2000_chip *chip, offs_t offset, UINT16 data, UINT16 mem_mask)
 {
-	struct BSMT2000Voice *voice = &chip->voice[offset % chip->voices];
+	bsmt2000_voice *voice = &chip->voice[offset % chip->voices];
 	int regindex = offset / chip->voices;
 
 #if LOG_COMMANDS
@@ -422,7 +441,7 @@ WRITE16_HANDLER( BSMT2000_data_0_w )
  * Generic get_info
  **************************************************************************/
 
-static void bsmt2000_set_info(void *token, UINT32 state, union sndinfo *info)
+static void bsmt2000_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -431,7 +450,7 @@ static void bsmt2000_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void bsmt2000_get_info(void *token, UINT32 state, union sndinfo *info)
+void bsmt2000_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

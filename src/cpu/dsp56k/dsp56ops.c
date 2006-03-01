@@ -1,12 +1,10 @@
-/*###################################################################################################
-**
-**
-**      dsp56kops.c
-**      Core implementation for the portable Motorola/Freescale DSP56k emulator.
-**      Written by Andrew Gardner
-**
-**
-**#################################################################################################*/
+/***************************************************************************
+
+    dsp56kops.c
+    Core implementation for the portable Motorola/Freescale DSP56k emulator.
+    Written by Andrew Gardner
+
+***************************************************************************/
 
 // Helper functions and macros
 #define BITS(CUR,MASK) (Dsp56kOpMask(CUR,MASK))
@@ -98,13 +96,13 @@ static UINT16 AssembleAddressFromIOShortAddress(UINT16 pp) ;
 static UINT16 AssembleAddressFrom6BitSignedRelativeShortAddress(UINT16 srs) ;
 
 
-/*###################################################################################################
-**  IMPLEMENTATION
-**#################################################################################################*/
+/***************************************************************************
+    IMPLEMENTATION
+***************************************************************************/
 
 static void unimplemented(void)
 {
-	osd_die("Unimplemented OP @ %04X: %04X\n", PC-2, OP) ;
+	fatalerror("Unimplemented OP @ %04X: %04X", PC-2, OP) ;
 }
 
 
@@ -1569,7 +1567,7 @@ int AndiOperation(void)
 			break ;
 
 		default:
-			osd_die("DSP56k - BAD EE value in andi operation\n") ;
+			fatalerror("DSP56k - BAD EE value in andi operation") ;
 	}
 
 

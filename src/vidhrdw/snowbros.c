@@ -6,7 +6,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
 WRITE16_HANDLER( snowbros_flipscreen_w )

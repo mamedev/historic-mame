@@ -69,7 +69,6 @@ SEGA CUSTOM IC :
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 /* video */
 

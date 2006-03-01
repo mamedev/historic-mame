@@ -126,7 +126,6 @@ more sprite tiles, it also has a MSM5205 chip for sample playback.
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/msm5205.h"
 #include "sound/sn76496.h"
 

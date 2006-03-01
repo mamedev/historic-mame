@@ -1,14 +1,12 @@
-/*###################################################################################################
-**
-**
-**      ccpudasm.c
-**      Core implementation for the portable Cinematronics CPU disassembler.
-**
-**      Written by Aaron Giles
-**      Special thanks to Zonn Moore for his detailed documentation.
-**
-**
-**#################################################################################################*/
+/***************************************************************************
+
+    ccpudasm.c
+    Core implementation for the portable Cinematronics CPU disassembler.
+
+    Written by Aaron Giles
+    Special thanks to Zonn Moore for his detailed documentation.
+
+***************************************************************************/
 
 #include <stdio.h>
 #include <string.h>

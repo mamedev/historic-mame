@@ -37,7 +37,6 @@ TODO:
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "machine/8255ppi.h"
 #include "sound/sn76496.h"
 

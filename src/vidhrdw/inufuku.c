@@ -12,7 +12,6 @@
 ******************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
 extern UINT16 *inufuku_spriteram1;

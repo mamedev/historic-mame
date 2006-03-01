@@ -92,7 +92,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "res_net.h"
 #include "williams.h"
 

@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "appoooh.h"
 
 unsigned char *appoooh_fg_videoram,*appoooh_fg_colorram;

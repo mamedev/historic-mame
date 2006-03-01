@@ -161,7 +161,6 @@ To Do:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
 #include "machine/random.h"
 #include "sound/es5506.h"

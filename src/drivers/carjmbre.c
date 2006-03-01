@@ -40,7 +40,7 @@ Notes:
 - background colour calculation is a guess
 */
 
-#include "vidhrdw/generic.h"
+#include "driver.h"
 #include "sound/ay8910.h"
 
 WRITE8_HANDLER( carjmbre_flipscreen_w );

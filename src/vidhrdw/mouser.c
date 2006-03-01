@@ -13,7 +13,7 @@
 
 *******************************************************************************/
 
-#include "vidhrdw/generic.h"
+#include "driver.h"
 
 PALETTE_INIT( mouser )
 {

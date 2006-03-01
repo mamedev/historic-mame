@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 static tilemap *text_layer;
 static tilemap *back_layer;

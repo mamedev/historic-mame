@@ -3,7 +3,6 @@
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
 #include "system16.h"
 #include "vidhrdw/segaic24.h"

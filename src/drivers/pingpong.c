@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/sn76496.h"
 
 extern WRITE8_HANDLER( pingpong_videoram_w );

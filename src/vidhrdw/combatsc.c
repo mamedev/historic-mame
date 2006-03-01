@@ -8,7 +8,6 @@
 
 #include "driver.h"
 #include "vidhrdw/konamiic.h"
-#include "vidhrdw/generic.h"
 
 static tilemap *bg_tilemap[2];
 static tilemap *textlayer;

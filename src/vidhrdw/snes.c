@@ -76,7 +76,6 @@
 
 #include "driver.h"
 #include "profiler.h"
-#include "vidhrdw/generic.h"
 #include "includes/snes.h"
 
 #define MAINSCREEN      0

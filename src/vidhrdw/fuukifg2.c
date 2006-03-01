@@ -24,7 +24,7 @@
 
 ***************************************************************************/
 
-#include "vidhrdw/generic.h"
+#include "driver.h"
 
 /* Variables that driver has access to: */
 

@@ -77,7 +77,6 @@ lev 7 : 0x7c : 0000 11d0 - just rte
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/2151intf.h"
 #include "sound/okim6295.h"
 
@@ -96,7 +95,6 @@ WRITE16_HANDLER( shadfrce_fgvideoram_w );
 WRITE16_HANDLER( shadfrce_bg0videoram_w );
 WRITE16_HANDLER( shadfrce_bg1videoram_w );
 
-#include "vidhrdw/generic.h"
 
 WRITE16_HANDLER( shadfrce_flip_screen )
 {

@@ -33,6 +33,7 @@
 
 #include <math.h>
 #include "driver.h"
+#include "streams.h"
 #include "qsound.h"
 
 /*
@@ -525,7 +526,7 @@ void qsound_update(void *param,void **buffer,int length)
  * Generic get_info
  **************************************************************************/
 
-static void qsound_set_info(void *token, UINT32 state, union sndinfo *info)
+static void qsound_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -534,7 +535,7 @@ static void qsound_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void qsound_get_info(void *token, UINT32 state, union sndinfo *info)
+void qsound_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

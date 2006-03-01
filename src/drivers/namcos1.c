@@ -342,7 +342,6 @@ C - uses sub board with support for player 3 and 4 controls
 ***********************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
 #include "cpu/m6800/m6800.h"
 #include "sound/2151intf.h"

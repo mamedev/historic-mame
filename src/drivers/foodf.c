@@ -75,7 +75,6 @@
 
 #include "driver.h"
 #include "machine/atarigen.h"
-#include "vidhrdw/generic.h"
 #include "sound/pokey.h"
 #include "foodf.h"
 

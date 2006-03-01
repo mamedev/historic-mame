@@ -9,7 +9,6 @@ driver by Nicola Salmoria
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "machine/8255ppi.h"
 #include "sound/dac.h"
 

@@ -51,6 +51,7 @@ Hardcoded Values:
 ***************************************************************************/
 
 #include "driver.h"
+#include "streams.h"
 #include "seta.h"
 #include "x1_010.h"
 
@@ -296,7 +297,7 @@ WRITE16_HANDLER( seta_sound_word_w )
  * Generic get_info
  **************************************************************************/
 
-static void x1_010_set_info(void *token, UINT32 state, union sndinfo *info)
+static void x1_010_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -305,7 +306,7 @@ static void x1_010_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void x1_010_get_info(void *token, UINT32 state, union sndinfo *info)
+void x1_010_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

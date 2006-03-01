@@ -5,7 +5,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sndhrdw/williams.h"
 #include "cpu/m6800/m6800.h"
 #include "cpu/m6809/m6809.h"

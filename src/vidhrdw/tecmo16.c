@@ -8,8 +8,7 @@
 
 ******************************************************************************/
 
-#include "vidhrdw/generic.h"
-
+#include "driver.h"
 
 UINT16 *tecmo16_videoram;
 UINT16 *tecmo16_colorram;

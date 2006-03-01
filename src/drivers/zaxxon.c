@@ -155,7 +155,6 @@ NMI causes a ROM/RAM test.
 
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "machine/segacrpt.h"
 #include "sound/sn76496.h"
 #include "sound/samples.h"

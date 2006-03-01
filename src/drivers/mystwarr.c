@@ -23,7 +23,6 @@
 
 #include "driver.h"
 
-#include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
 #include "machine/konamigx.h"
 #include "cpu/m68000/m68000.h"

@@ -7,11 +7,10 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
-static int spritectrl[3];
+static UINT8 spritectrl[3];
 
-int crbaloon_collision;
+INT8 crbaloon_collision;
 
 static tilemap *bg_tilemap;
 
@@ -107,6 +106,9 @@ VIDEO_START( crbaloon )
 
 	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
+
+	state_save_register_global_array(spritectrl);
+	state_save_register_global(crbaloon_collision);
 
 	return 0;
 }

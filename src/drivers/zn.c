@@ -8,6 +8,7 @@
 
 ***************************************************************************/
 
+#include <stdarg.h>
 #include "driver.h"
 #include "cpu/mips/psx.h"
 #include "cpu/z80/z80.h"

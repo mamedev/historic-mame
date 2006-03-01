@@ -19,8 +19,6 @@
 #include "cpuintrf.h"
 #include "debugger.h"
 #include "state.h"
-
-#include <assert.h>
 #include "v810.h"
 
 #define clkIF 3

@@ -9,7 +9,6 @@
 
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
 
 static tilemap *dbz2_bg_tilemap, *dbz2_bg2_tilemap;

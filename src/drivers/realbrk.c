@@ -40,7 +40,6 @@ To Do:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "machine/tmp68301.h"
 #include "realbrk.h"
 #include "sound/2413intf.h"

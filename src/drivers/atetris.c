@@ -49,7 +49,6 @@
 
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
-#include "vidhrdw/generic.h"
 #include "slapstic.h"
 #include "atetris.h"
 #include "sound/sn76496.h"

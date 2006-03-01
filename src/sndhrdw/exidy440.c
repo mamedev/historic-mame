@@ -8,6 +8,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "streams.h"
 #include "exidy440.h"
 #include <math.h>
 

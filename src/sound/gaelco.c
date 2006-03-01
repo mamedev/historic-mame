@@ -34,6 +34,7 @@ Registers per channel:
 ***************************************************************************/
 
 #include "driver.h"
+#include "streams.h"
 #include "gaelco.h"
 #include "wavwrite.h"
 
@@ -308,7 +309,7 @@ static void gaelco_stop(void *chip)
  * Generic get_info
  **************************************************************************/
 
-static void gaelco_gae1_set_info(void *token, UINT32 state, union sndinfo *info)
+static void gaelco_gae1_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -317,7 +318,7 @@ static void gaelco_gae1_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void gaelco_gae1_get_info(void *token, UINT32 state, union sndinfo *info)
+void gaelco_gae1_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -344,7 +345,7 @@ void gaelco_gae1_get_info(void *token, UINT32 state, union sndinfo *info)
  * Generic get_info
  **************************************************************************/
 
-static void gaelco_cg1v_set_info(void *token, UINT32 state, union sndinfo *info)
+static void gaelco_cg1v_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -353,7 +354,7 @@ static void gaelco_cg1v_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void gaelco_cg1v_get_info(void *token, UINT32 state, union sndinfo *info)
+void gaelco_cg1v_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

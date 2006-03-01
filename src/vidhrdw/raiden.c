@@ -1,6 +1,5 @@
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 static tilemap *bg_layer,*fg_layer,*tx_layer;
 unsigned char *raiden_back_data,*raiden_fore_data,*raiden_scroll_ram;

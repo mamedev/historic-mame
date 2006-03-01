@@ -5,7 +5,6 @@
 ****************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "machine/atarigen.h"
 #include "foodf.h"
 

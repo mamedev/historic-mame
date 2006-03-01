@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 extern int ddrible_int_enable_0;
 extern int ddrible_int_enable_1;

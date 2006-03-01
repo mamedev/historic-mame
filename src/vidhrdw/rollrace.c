@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
 static int ra_charbank[2] = { 0,0 };

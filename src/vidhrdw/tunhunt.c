@@ -5,7 +5,6 @@
 *************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 extern UINT8 tunhunt_control;
 extern UINT8 *tunhunt_ram;

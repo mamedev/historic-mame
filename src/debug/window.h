@@ -12,7 +12,6 @@
 #ifndef _WINDOW_H_
 #define	_WINDOW_H_
 
-#include "osd_cpu.h"
 #include "mamedbg.h"
 
 #ifndef DECL_SPEC

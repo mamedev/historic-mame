@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "streams.h"
 #include "hc55516.h"
 #include <math.h>
 
@@ -206,7 +207,7 @@ WRITE8_HANDLER( hc55516_1_digit_clock_clear_w ) { hc55516_digit_clock_clear_w(1,
  * Generic get_info
  **************************************************************************/
 
-static void hc55516_set_info(void *token, UINT32 state, union sndinfo *info)
+static void hc55516_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -215,7 +216,7 @@ static void hc55516_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void hc55516_get_info(void *token, UINT32 state, union sndinfo *info)
+void hc55516_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

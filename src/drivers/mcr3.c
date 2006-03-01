@@ -85,7 +85,6 @@
 #include "driver.h"
 #include "machine/z80ctc.h"
 #include "sndhrdw/mcr.h"
-#include "vidhrdw/generic.h"
 #include "artwork.h"
 #include "mcr.h"
 

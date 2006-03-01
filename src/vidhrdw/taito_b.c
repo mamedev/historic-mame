@@ -1,6 +1,5 @@
 #include "driver.h"
 #include "profiler.h"
-#include "vidhrdw/generic.h"
 
 UINT16 *taitob_scroll;
 UINT16 *TC0180VCU_ram;
@@ -8,15 +7,14 @@ UINT16 *taitob_spriteram;
 UINT16 *taitob_pixelram;
 
 static tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;
-static int bg_rambank[2],fg_rambank[2],tx_rambank;
+static UINT16 bg_rambank[2],fg_rambank[2],tx_rambank;
 
 /* framebuffer is a raw bitmap, remapped as a last step */
 static mame_bitmap *framebuffer[2],*pixel_bitmap;
 
 static UINT16 pixel_scroll[2];
-static int pixel_init;
 
-static int framebuffer_page;
+static UINT8 framebuffer_page;
 
 static int b_bg_color_base = 0;
 static int b_fg_color_base = 0;
@@ -138,8 +136,37 @@ WRITE16_HANDLER( taitob_v_control_w )
 	}
 }
 
+WRITE16_HANDLER( hitice_pixelram_w )
+{
+  int sy = offset >> 9;
+  int sx = offset & 0x1ff;
 
+  COMBINE_DATA(&taitob_pixelram[offset]);
 
+  if (ACCESSING_LSB)
+  {
+    /* bit 15 of pixel_scroll[0] is probably flip screen */
+
+    /* I always draw flipped because the driver doesn't support flip screen yet */
+    //plot_pixel(pixel_bitmap,1023-2*sx,  511-sy,Machine->pens[b_fg_color_base * 16 + (data & 0xff)]);
+    //plot_pixel(pixel_bitmap,1023-2*sx-1,511-sy,Machine->pens[b_fg_color_base * 16 + (data & 0xff)]);
+    plot_pixel(pixel_bitmap,2*sx,  sy,Machine->pens[b_fg_color_base * 16 + (data & 0xff)]);
+    plot_pixel(pixel_bitmap,2*sx+1,sy,Machine->pens[b_fg_color_base * 16 + (data & 0xff)]);
+  }
+}
+
+WRITE16_HANDLER( hitice_pixel_scroll_w )
+{
+	COMBINE_DATA(&pixel_scroll[offset]);
+}
+
+static void hitice_clear_pixel_bitmap(void)
+{
+	int i;
+
+    for (i = 0;i < 0x40000;i++)
+		hitice_pixelram_w(i,0,0);
+}
 
 static void get_bg_tile_info(int tile_index)
 {
@@ -197,6 +224,20 @@ static VIDEO_START( taitob_core )
 	tilemap_set_scrolldx(fg_tilemap,0,24*8);
 	tilemap_set_scrolldx(tx_tilemap,0,24*8);
 
+
+	state_save_register_global_array(bg_rambank);
+	state_save_register_global_array(fg_rambank);
+	state_save_register_global(tx_rambank);
+
+	state_save_register_global_array(pixel_scroll);
+	state_save_register_global(framebuffer_page);
+
+	state_save_register_global(video_control);
+	state_save_register_global_array(TC0180VCU_ctrl);
+
+	state_save_register_global_bitmap(framebuffer[0]);
+	state_save_register_global_bitmap(framebuffer[1]);
+
 	return 0;
 }
 
@@ -250,11 +291,16 @@ VIDEO_START( hitice )
   if (!pixel_bitmap)
     return 1;
 
-  pixel_init = 1;
+  state_save_register_global_bitmap(pixel_bitmap);
 
   return 0;
 }
 
+VIDEO_RESET( hitice )
+{
+	/* kludge: clear the bitmap on startup */
+	hitice_clear_pixel_bitmap();
+}
 
 
 READ16_HANDLER( TC0180VCU_word_r )
@@ -297,31 +343,6 @@ WRITE16_HANDLER( TC0180VCU_framebuffer_word_w )
     plot_pixel(framebuffer[sy >> 8],sx,  sy & 0xff,data >> 8);
   if (ACCESSING_LSB)
     plot_pixel(framebuffer[sy >> 8],sx+1,sy & 0xff,data & 0xff);
-}
-
-
-WRITE16_HANDLER( hitice_pixelram_w )
-{
-  int sy = offset >> 9;
-  int sx = offset & 0x1ff;
-
-  COMBINE_DATA(&taitob_pixelram[offset]);
-
-  if (ACCESSING_LSB)
-  {
-    /* bit 15 of pixel_scroll[0] is probably flip screen */
-
-    /* I always draw flipped because the driver doesn't support flip screen yet */
-    //plot_pixel(pixel_bitmap,1023-2*sx,  511-sy,Machine->pens[b_fg_color_base * 16 + (data & 0xff)]);
-    //plot_pixel(pixel_bitmap,1023-2*sx-1,511-sy,Machine->pens[b_fg_color_base * 16 + (data & 0xff)]);
-    plot_pixel(pixel_bitmap,2*sx,  sy,Machine->pens[b_fg_color_base * 16 + (data & 0xff)]);
-    plot_pixel(pixel_bitmap,2*sx+1,sy,Machine->pens[b_fg_color_base * 16 + (data & 0xff)]);
-  }
-}
-
-WRITE16_HANDLER( hitice_pixel_scroll_w )
-{
-	COMBINE_DATA(&pixel_scroll[offset]);
 }
 
 
@@ -608,17 +629,6 @@ VIDEO_UPDATE( taitob )
     int scrollx = -2*pixel_scroll[0]; //+320;
     int scrolly = -pixel_scroll[1]; //+240;
     /* bit 15 of pixel_scroll[0] is probably flip screen */
-
-    if (pixel_init)
-    {
-      int i;
-
-      /* kludge: clear the bitmap on startup */
-      pixel_init = 0;
-
-      for (i = 0;i < 0x40000;i++)
-        hitice_pixelram_w(i,0,0);
-    }
 
     copyscrollbitmap(bitmap,pixel_bitmap,1,&scrollx,1,&scrolly,cliprect,TRANSPARENCY_COLOR,b_fg_color_base * 16);
   }

@@ -165,7 +165,6 @@ maybe some priority issues / sprite placement issues..
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
 #include "cpu/m6809/m6809.h"
 #include "cpu/hd6309/hd6309.h"

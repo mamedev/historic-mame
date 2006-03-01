@@ -5,7 +5,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 UINT8 *renegade_videoram2;
 INT32 renegade_scrollx;

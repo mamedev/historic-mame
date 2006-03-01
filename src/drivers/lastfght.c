@@ -64,7 +64,6 @@ Notes:
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/h83002/h83002.h"
 
 INPUT_PORTS_START( lastfght )

@@ -17,7 +17,6 @@ Could be bad dump ('final' romset is made of two sets marked as 'bad' )
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "snk.h"
 #include "sound/ay8910.h"

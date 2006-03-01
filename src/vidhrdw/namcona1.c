@@ -1,6 +1,6 @@
 /*  Namco System NA1/2 Video Hardware */
 
-#include "vidhrdw/generic.h"
+#include "driver.h"
 #include "namcona1.h"
 
 #define NAMCONA1_NUM_TILEMAPS 4

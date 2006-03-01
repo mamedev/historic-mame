@@ -8,7 +8,7 @@ Video hardware driver by Uki
 
 ******************************************************************************/
 
-#include "vidhrdw/generic.h"
+#include "driver.h"
 
 static UINT8 markham_xscroll[2];
 

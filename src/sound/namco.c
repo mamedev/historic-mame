@@ -12,6 +12,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "streams.h"
 #include "namco.h"
 
 
@@ -809,7 +810,7 @@ WRITE8_HANDLER( snkwave_w )
  * Generic get_info
  **************************************************************************/
 
-static void namco_set_info(void *token, UINT32 state, union sndinfo *info)
+static void namco_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -818,7 +819,7 @@ static void namco_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void namco_get_info(void *token, UINT32 state, union sndinfo *info)
+void namco_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -843,7 +844,7 @@ void namco_get_info(void *token, UINT32 state, union sndinfo *info)
  * Generic get_info
  **************************************************************************/
 
-static void namco_15xx_set_info(void *token, UINT32 state, union sndinfo *info)
+static void namco_15xx_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -852,7 +853,7 @@ static void namco_15xx_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void namco_15xx_get_info(void *token, UINT32 state, union sndinfo *info)
+void namco_15xx_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -877,7 +878,7 @@ void namco_15xx_get_info(void *token, UINT32 state, union sndinfo *info)
  * Generic get_info
  **************************************************************************/
 
-static void namco_cus30_set_info(void *token, UINT32 state, union sndinfo *info)
+static void namco_cus30_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -886,7 +887,7 @@ static void namco_cus30_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void namco_cus30_get_info(void *token, UINT32 state, union sndinfo *info)
+void namco_cus30_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

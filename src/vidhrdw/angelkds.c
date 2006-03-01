@@ -7,7 +7,6 @@ enable / disable tilemap bits might be wrong
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
 static tilemap *tx_tilemap,*bgbot_tilemap ,*bgtop_tilemap;

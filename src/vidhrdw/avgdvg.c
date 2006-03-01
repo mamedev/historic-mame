@@ -90,7 +90,7 @@
 static UINT8 vector_engine;
 static UINT8 flipword;
 static UINT8 busy;
-static rgb_t colorram[32];
+static rgb_t vcolorram[32];
 
 static int width, height;
 static int xcenter, ycenter;
@@ -315,7 +315,7 @@ static int dvg_generate_vector_list(void)
 				total_length += dvg_vector_timer(temp);
 
 				/* add the new point */
-				vector_add_point(currentx, currenty, colorram[1], z);
+				vector_add_point(currentx, currenty, vcolorram[1], z);
 				break;
 
 			/* DSVEC: draw a short vector */
@@ -352,7 +352,7 @@ static int dvg_generate_vector_list(void)
 				total_length += dvg_vector_timer(temp);
 
 				/* add the new point */
-				vector_add_point(currentx, currenty, colorram[1], z);
+				vector_add_point(currentx, currenty, vcolorram[1], z);
 				break;
 
 			/* DLABS: move to an absolute location */
@@ -656,7 +656,7 @@ static int avg_generate_vector_list(void)
 				if (sparkle)
 					avg_add_point_callback(currentx, currenty, sparkle_callback, z);
 				else
-					avg_add_point(currentx, currenty, colorram[color], z);
+					avg_add_point(currentx, currenty, vcolorram[color], z);
 				VGLOG(("VCTR x:%d y:%d z:%d statz:%d", x, y, z, statz));
 				break;
 
@@ -689,7 +689,7 @@ static int avg_generate_vector_list(void)
 				if (sparkle)
 					avg_add_point_callback(currentx, currenty, sparkle_callback, z);
 				else
-					avg_add_point(currentx, currenty, colorram[color], z);
+					avg_add_point(currentx, currenty, vcolorram[color], z);
 				VGLOG(("SVEC x:%d y:%d z:%d statz:%d", x, y, z, statz));
 				break;
 
@@ -1091,7 +1091,7 @@ PALETTE_INIT( avg_white )
 {
 	int i;
 	for (i = 0; i < 32; i++)
-		colorram[i] = MAKE_RGB(0xff, 0xff, 0xff);
+		vcolorram[i] = MAKE_RGB(0xff, 0xff, 0xff);
 }
 
 
@@ -1100,7 +1100,7 @@ PALETTE_INIT( avg_multi )
 {
 	int i;
 	for (i = 0; i < 32; i++)
-		colorram[i] = VECTOR_COLOR111(i);
+		vcolorram[i] = VECTOR_COLOR111(i);
 }
 
 
@@ -1121,7 +1121,7 @@ WRITE8_HANDLER( tempest_colorram_w )
 	int g = bit3 * 0xee;
 	int b = bit2 * 0xee;
 
-	colorram[offset] = MAKE_RGB(r, g, b);
+	vcolorram[offset] = MAKE_RGB(r, g, b);
 }
 
 
@@ -1135,7 +1135,7 @@ WRITE8_HANDLER( mhavoc_colorram_w )
 	int g = bit1 * 0xee;
 	int b = bit0 * 0xee;
 
-	colorram[offset] = MAKE_RGB(r, g, b);
+	vcolorram[offset] = MAKE_RGB(r, g, b);
 }
 
 
@@ -1151,12 +1151,12 @@ WRITE16_HANDLER( quantum_colorram_w )
 		int g = bit1 * 0xee + bit0 * 0x11;
 		int b = bit2 * 0xee;
 
-		colorram[offset & 0x0f] = MAKE_RGB(r, g, b);
+		vcolorram[offset & 0x0f] = MAKE_RGB(r, g, b);
 	}
 }
 
 
 static rgb_t sparkle_callback(void)
 {
-	return colorram[16 + ((rand() >> 8) & 15)];
+	return vcolorram[16 + ((rand() >> 8) & 15)];
 }

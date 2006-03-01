@@ -9,7 +9,6 @@
 ******************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
 static int gomoku_flipscreen;

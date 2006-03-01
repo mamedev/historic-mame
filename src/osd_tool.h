@@ -14,6 +14,8 @@
 #ifndef __OSD_TOOL_H__
 #define __OSD_TOOL_H__
 
+#include "osd_cpu.h"
+
 typedef struct _osd_tool_file osd_tool_file;
 
 /* optional physical drive support */

@@ -5,7 +5,6 @@ Taxi Driver  (c) 1984 Graphic Techno
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "machine/8255ppi.h"
 #include "taxidrvr.h"
 #include "sound/ay8910.h"

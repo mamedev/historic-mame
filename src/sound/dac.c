@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "streams.h"
 #include "dac.h"
 #include <math.h>
 
@@ -139,7 +140,7 @@ WRITE8_HANDLER( DAC_1_signed_data_w )
  * Generic get_info
  **************************************************************************/
 
-static void dac_set_info(void *token, UINT32 state, union sndinfo *info)
+static void dac_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -148,7 +149,7 @@ static void dac_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void dac_get_info(void *token, UINT32 state, union sndinfo *info)
+void dac_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

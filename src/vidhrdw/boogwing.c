@@ -1,4 +1,4 @@
-#include "vidhrdw/generic.h"
+#include "driver.h"
 #include "deco16ic.h"
 
 static void boogie_drawsprites(mame_bitmap *bitmap,const rectangle *cliprect, UINT16* spriteram_base, int gfx_region)

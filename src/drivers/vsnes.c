@@ -130,7 +130,6 @@ Changes:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/ppu2c03b.h"
 #include "machine/rp5h01.h"
 #include "sound/dac.h"

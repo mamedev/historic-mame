@@ -934,7 +934,7 @@ INLINE uint EA_SIY(void)   {return MAKE_UINT_16(read_16_SIY(REG_S + OPER_8_IMM()
 #undef OP_BRK
 #define OP_BRK()															\
 			REG_PC++;													\
-			osd_die("BRK at PC=%06x\n", REG_PB|REG_PC);									\
+			fatalerror("BRK at PC=%06x", REG_PB|REG_PC);									\
 			m37710i_interrupt_software(0xfffa)
 
 /* M37710  Branch Always */
@@ -2275,7 +2275,7 @@ INLINE uint EA_SIY(void)   {return MAKE_UINT_16(read_16_SIY(REG_S + OPER_8_IMM()
 /* M37710 unimplemented opcode */
 #undef OP_UNIMP
 #define OP_UNIMP()															\
-	osd_die("M37710: UNIMPLEMENTED OPCODE!  K=%x PC=%x\n", REG_PB, REG_PPC);
+	fatalerror("M37710: UNIMPLEMENTED OPCODE!  K=%x PC=%x", REG_PB, REG_PPC);
 
 /* M37710 load data bank register */
 #undef OP_LDTAAA

@@ -43,7 +43,6 @@ Note : there is an ingame typo bug that doesn't display the bonus life values
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/2203intf.h"
 
 extern UINT8 *commando_videoram2, *commando_colorram2;

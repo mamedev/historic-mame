@@ -40,7 +40,6 @@ c001      YM2203 #2 write
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
 
 

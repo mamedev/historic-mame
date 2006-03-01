@@ -17,7 +17,6 @@ Flipped screen looks wrong, but it is correct.
 *****************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/2203intf.h"
 
 extern UINT8 *momoko_bg_scrollx;

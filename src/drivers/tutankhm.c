@@ -178,7 +178,6 @@ Sound board: uses the same board as Pooyan.
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
 #include "sndhrdw/timeplt.h"
 

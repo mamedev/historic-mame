@@ -32,7 +32,6 @@
 *******************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
 
 /* From vidhrdw/nova2001.c */

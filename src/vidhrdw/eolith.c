@@ -1,4 +1,4 @@
-#include "vidhrdw/generic.h"
+#include "driver.h"
 
 int eolith_buffer = 0;
 static mame_bitmap *bitmaps[2];

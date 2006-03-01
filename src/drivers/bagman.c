@@ -57,7 +57,6 @@ I/O C  ;AY-3-8910 Data Read Reg.
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
 #include "sound/5110intf.h"
 #include "sound/tms5110.h"

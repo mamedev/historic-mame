@@ -42,7 +42,7 @@ Note:   if MAME_DEBUG is defined, pressing:
 
 **************************************************************************/
 
-#include "vidhrdw/generic.h"
+#include "driver.h"
 #include "kaneko16.h"
 
 

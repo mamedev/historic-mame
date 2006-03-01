@@ -54,7 +54,6 @@ JP4: /
 
 #include "driver.h"
 #include "sndhrdw/irem.h"
-#include "vidhrdw/generic.h"
 
 
 PALETTE_INIT( irem );

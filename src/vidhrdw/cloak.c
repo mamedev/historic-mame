@@ -5,7 +5,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cloak.h"
 
 static mame_bitmap *tmpbitmap2;
@@ -168,6 +167,20 @@ static void get_bg_tile_info(int tile_index)
 	SET_TILE_INFO(0, code, 0, 0)
 }
 
+static void refresh_bitmaps(void)
+{
+	int lx,ly;
+
+	for (ly = 0; ly < 256; ly++)
+	{
+		for (lx = 0; lx < 256; lx++)
+		{
+			plot_pixel(tmpbitmap,  (lx-6)&0xff, ly, Machine->pens[16 + tmpvideoram[ly*256+lx]]);
+			plot_pixel(tmpbitmap2, (lx-6)&0xff, ly, Machine->pens[16 + tmpvideoram2[ly*256+lx]]);
+		}
+	}
+}
+
 VIDEO_START( cloak )
 {
 	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
@@ -185,24 +198,15 @@ VIDEO_START( cloak )
 	tmpvideoram = auto_malloc(256*256);
 	tmpvideoram2 = auto_malloc(256*256);
 
+	state_save_register_global(x);
+	state_save_register_global(y);
+	state_save_register_global(bmap);
+	state_save_register_global_pointer(tmpvideoram, 256*256);
+	state_save_register_global_pointer(tmpvideoram2, 256*256);
+	state_save_register_func_postload(refresh_bitmaps);
+
 	return 0;
 }
-
-#if 0
-static void refresh_bitmaps(void)
-{
-	int lx,ly;
-
-	for (ly = 0; ly < 256; ly++)
-	{
-		for (lx = 0; lx < 256; lx++)
-		{
-			plot_pixel(tmpbitmap,  (lx-6)&0xff, ly, Machine->pens[16 + tmpvideoram[ly*256+lx]]);
-			plot_pixel(tmpbitmap2, (lx-6)&0xff, ly, Machine->pens[16 + tmpvideoram2[ly*256+lx]]);
-		}
-	}
-}
-#endif
 
 static void cloak_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {

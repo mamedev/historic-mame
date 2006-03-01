@@ -14,6 +14,8 @@
 #ifndef __USRINTRF_H__
 #define __USRINTRF_H__
 
+#include "mamecore.h"
+
 
 /*************************************
  *
@@ -111,7 +113,7 @@ int ui_init(int show_disclaimer, int show_warnings, int show_gameinfo);
 void ui_exit(void);
 
 /* once-per-frame update and render */
-int ui_update_and_render(mame_bitmap *bitmap);
+void ui_update_and_render(mame_bitmap *bitmap);
 
 /* returns non-zero if the UI has been drawn recently */
 int ui_is_dirty(void);

@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 static int battlex_scroll_lsb;
 static int battlex_scroll_msb;

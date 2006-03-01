@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
 UINT16 *deniam_videoram,*deniam_textram;

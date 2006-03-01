@@ -4453,7 +4453,7 @@ void hyperstone_extend(void)
 
 void hyperstone_do(void)
 {
-	osd_die("Executed hyperstone_do instruction. PC = %08X\n", PPC);
+	fatalerror("Executed hyperstone_do instruction. PC = %08X", PPC);
 }
 
 void hyperstone_ldwr(void)

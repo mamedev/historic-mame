@@ -14,7 +14,6 @@ Space Intruder emulation by Lee Taylor (lee@defender.demon.co.uk),
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/samples.h"
 
 

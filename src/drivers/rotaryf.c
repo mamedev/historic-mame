@@ -12,7 +12,6 @@ driver by Barry Rodewald
 
 #include "driver.h"
 #include "8080bw.h"
-#include "vidhrdw/generic.h"
 #include "cpu/i8085/i8085.h"
 
 

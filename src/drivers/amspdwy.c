@@ -14,7 +14,6 @@ Sound:  YM2151
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/2151intf.h"
 
 /* Variables & functions defined in vidhrdw: */

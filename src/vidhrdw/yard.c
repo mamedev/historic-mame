@@ -12,7 +12,6 @@ J Clegg
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 UINT8 *yard_scroll_x_low;
 UINT8 *yard_scroll_x_high;

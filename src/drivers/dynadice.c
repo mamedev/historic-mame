@@ -32,7 +32,6 @@ dy_6.bin (near Z80)
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
 
 static tilemap *bg_tilemap,*top_tilemap;

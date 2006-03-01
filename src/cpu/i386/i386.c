@@ -17,7 +17,6 @@
 
 #if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
 #include "debug/debugcpu.h"
-#include "debug/express.h"
 #endif
 
 int parity_table[256];
@@ -154,7 +153,7 @@ static void modrm_to_EA(UINT8 mod_rm, UINT32* out_ea, UINT8* out_segment)
 	UINT8 segment;
 
 	if( mod_rm >= 0xc0 )
-		osd_die("i386: Called modrm_to_EA with modrm value %02X !\n",mod_rm);
+		fatalerror("i386: Called modrm_to_EA with modrm value %02X !",mod_rm);
 
 	if( I.address_size ) {
 		switch( rm )
@@ -269,7 +268,7 @@ static void i386_trap(int irq, int irq_gate)
 
 	/* Check if IRQ is out of IDTR's bounds */
 	if( entry > I.idtr.limit ) {
-		osd_die("I386 Interrupt: IRQ out of IDTR bounds (IRQ: %d, IDTR Limit: %d)\n", irq, I.idtr.limit);
+		fatalerror("I386 Interrupt: IRQ out of IDTR bounds (IRQ: %d, IDTR Limit: %d)", irq, I.idtr.limit);
 	}
 
 	if( !I.sreg[CS].d )

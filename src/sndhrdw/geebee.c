@@ -9,6 +9,7 @@
 
 #include <math.h>
 #include "driver.h"
+#include "streams.h"
 #include "sound/custom.h"
 
 static void *volume_timer = NULL;

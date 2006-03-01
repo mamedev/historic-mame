@@ -80,7 +80,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "suprridr.h"
 #include "sound/ay8910.h"
 

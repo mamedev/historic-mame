@@ -45,7 +45,6 @@ starfira has one less rom in total than starfire but everything passes as
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
 /* In vidhrdw/starfire.c */

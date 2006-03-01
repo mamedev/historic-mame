@@ -10,6 +10,7 @@
 
 #include <math.h>
 #include "driver.h"
+#include "streams.h"
 #include "sound/custom.h"
 #include "sound/tms36xx.h"
 #include "phoenix.h"

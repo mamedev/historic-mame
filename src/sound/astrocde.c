@@ -19,6 +19,7 @@
 #include <math.h>
 
 #include "driver.h"
+#include "streams.h"
 #include "astrocde.h"
 //#include "cpu/z80/z80.h"
 
@@ -319,7 +320,7 @@ WRITE8_HANDLER( astrocade_sound2_w )
  * Generic get_info
  **************************************************************************/
 
-static void astrocade_set_info(void *token, UINT32 state, union sndinfo *info)
+static void astrocade_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -328,7 +329,7 @@ static void astrocade_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void astrocade_get_info(void *token, UINT32 state, union sndinfo *info)
+void astrocade_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 static tilemap *background_layer,*foreground_layer,*text_layer;
 

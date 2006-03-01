@@ -10,7 +10,6 @@ press F1+F3 to see ROM/RAM tests and the final animation
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
 #include "cpu/z80/z80.h"
 #include "sound/2608intf.h"

@@ -6,7 +6,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 int portrait_scroll;
 UINT8 *portrait_bgvideoram, *portrait_fgvideoram;

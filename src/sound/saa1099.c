@@ -64,6 +64,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "streams.h"
 #include "saa1099.h"
 #include <math.h>
 
@@ -485,7 +486,7 @@ WRITE16_HANDLER( saa1099_write_port_1_lsb_w )
  * Generic get_info
  **************************************************************************/
 
-static void saa1099_set_info(void *token, UINT32 state, union sndinfo *info)
+static void saa1099_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -494,7 +495,7 @@ static void saa1099_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void saa1099_get_info(void *token, UINT32 state, union sndinfo *info)
+void saa1099_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

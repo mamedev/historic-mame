@@ -35,6 +35,3 @@ WRITE8_HANDLER(at_page8_w);
 
 READ32_HANDLER(at_page32_r);
 WRITE32_HANDLER(at_page32_w);
-
-int pc_turbo_setup(int cpunum, int port, int mask, double off_speed, double on_speed);
-

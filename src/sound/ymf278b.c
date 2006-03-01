@@ -28,6 +28,7 @@
 
 #include <math.h>
 #include "driver.h"
+#include "streams.h"
 #include "cpuintrf.h"
 #include "ymf278b.h"
 
@@ -761,7 +762,7 @@ WRITE8_HANDLER( YMF278B_data_port_1_C_w )
  * Generic get_info
  **************************************************************************/
 
-static void ymf278b_set_info(void *token, UINT32 state, union sndinfo *info)
+static void ymf278b_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -770,7 +771,7 @@ static void ymf278b_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void ymf278b_get_info(void *token, UINT32 state, union sndinfo *info)
+void ymf278b_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

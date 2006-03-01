@@ -21,6 +21,7 @@ CHANNEL_DEBUG enables the following keys:
 *********************************************************/
 
 #include "driver.h"
+#include "streams.h"
 #include "k054539.h"
 #include <math.h>
 
@@ -711,7 +712,7 @@ READ8_HANDLER( K054539_1_r )
  * Generic get_info
  **************************************************************************/
 
-static void k054539_set_info(void *token, UINT32 state, union sndinfo *info)
+static void k054539_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -720,7 +721,7 @@ static void k054539_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void k054539_get_info(void *token, UINT32 state, union sndinfo *info)
+void k054539_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

@@ -332,13 +332,11 @@ Notes:
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/m68000/m68k.h"
 #include "system24.h"
 #include "system16.h"
 #include "vidhrdw/segaic24.h"
 #include "sound/ym2151.h"
-#include "debug/debugcpu.h"
 #include "sound/dac.h"
 #include "sound/2151intf.h"
 

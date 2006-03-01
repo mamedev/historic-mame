@@ -167,7 +167,7 @@ void ppc603_exception(int exception)
 			break;
 
 		default:
-			osd_die("ppc: Unhandled exception %d\n", exception);
+			fatalerror("ppc: Unhandled exception %d", exception);
 			break;
 	}
 }
@@ -234,7 +234,7 @@ static void ppc603_reset(void *param)
 
 	if (pll_config == -1)
 	{
-		osd_die("PPC: Invalid bus/multiplier combination (bus frequency = %d, multiplier = %1.1f)", config->bus_frequency, multiplier);
+		fatalerror("PPC: Invalid bus/multiplier combination (bus frequency = %d, multiplier = %1.1f)", config->bus_frequency, multiplier);
 	}
 
 	ppc.hid1 = pll_config << 28;

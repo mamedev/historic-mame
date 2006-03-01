@@ -87,7 +87,6 @@ Notes:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 extern UINT8* iremm15_chargen;
 

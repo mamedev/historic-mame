@@ -7,7 +7,6 @@ driver by Mirko Buffoni
 Is this a Konami board?
 ***************************************************************************/
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
 #include "sound/okim6295.h"
 

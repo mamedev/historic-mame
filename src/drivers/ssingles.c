@@ -10,7 +10,6 @@
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 VIDEO_START(ssingles)
 {

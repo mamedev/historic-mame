@@ -346,7 +346,7 @@ static UINT8 rtc_get_reg(int reg)
 			return 0;
 
 		default:
-			osd_die("RTC-72421: Unknown reg %02X\n", reg);
+			fatalerror("RTC-72421: Unknown reg %02X", reg);
 			return 0;
 	}
 }

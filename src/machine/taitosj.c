@@ -14,13 +14,38 @@
 #define DEBUG_MCU	1
 
 
-static unsigned char fromz80,toz80;
-static int zaccept,zready,busreq;
+static UINT8 fromz80,toz80;
+static UINT8 zaccept,zready,busreq;
+static UINT8 portA_in,portA_out;
 
-static int spacecr_prot_value;
+static UINT8 spacecr_prot_value;
+static UINT8 protection_value;
+static UINT32 address;
 
+void taitosj_register_main_savestate(void);
 WRITE8_HANDLER( taitosj_bankswitch_w );
 
+MACHINE_START( taitosj )
+{
+	memory_configure_bank(1, 0, 1, memory_region(REGION_CPU1) + 0x6000, 0);
+	memory_configure_bank(1, 1, 1, memory_region(REGION_CPU1) + 0x10000, 0);
+
+	taitosj_register_main_savestate();
+
+	state_save_register_global(fromz80);
+	state_save_register_global(toz80);
+	state_save_register_global(zaccept);
+	state_save_register_global(zready);
+	state_save_register_global(busreq);
+
+	state_save_register_global(portA_in);
+	state_save_register_global(portA_out);
+	state_save_register_global(address);
+	state_save_register_global(spacecr_prot_value);
+	state_save_register_global(protection_value);
+
+	return 0;
+}
 
 MACHINE_RESET( taitosj )
 {
@@ -41,11 +66,10 @@ MACHINE_RESET( taitosj )
 
 WRITE8_HANDLER( taitosj_bankswitch_w )
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
 	coin_lockout_global_w(~data & 1);
 
-	memory_set_bankptr(1,&RAM[(data & 0x80) ? 0x10000 : 0x6000]);
+	if(data & 0x80) memory_set_bank(1, 1);
+	else memory_set_bank(1, 0);
 }
 
 
@@ -125,8 +149,6 @@ READ8_HANDLER( taitosj_mcu_status_r )
 	return ~((zready << 0) | (zaccept << 1));
 }
 
-static unsigned char portA_in,portA_out;
-
 READ8_HANDLER( taitosj_68705_portA_r )
 {
 #if DEBUG_MCU
@@ -169,8 +191,6 @@ READ8_HANDLER( taitosj_68705_portB_r )
 {
 	return 0xff;
 }
-
-static int address;
 
 /* timer callback : 68705 is going to read data from the Z80 */
 void taitosj_mcu_data_real_r(int param)
@@ -294,8 +314,6 @@ READ8_HANDLER( spacecr_prot_r )
 
 
 /* Alpine Ski protection crack routines */
-
-static int protection_value;
 
 WRITE8_HANDLER( alpine_protection_w )
 {

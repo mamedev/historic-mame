@@ -185,7 +185,6 @@ $8609 - $860f    High score characters to display to screen for highest score
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
 
 /* VIDHRDW */

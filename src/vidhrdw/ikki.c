@@ -8,7 +8,7 @@ Video hardware driver by Uki
 
 ******************************************************************************/
 
-#include "vidhrdw/generic.h"
+#include "driver.h"
 
 static UINT8 ikki_flipscreen, ikki_scroll[2];
 

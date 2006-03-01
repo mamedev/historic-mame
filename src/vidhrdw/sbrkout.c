@@ -5,7 +5,6 @@
 *************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "artwork.h"
 
 UINT8 *sbrkout_horiz_ram;

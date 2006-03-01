@@ -30,7 +30,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/vector.h"
 #include "cpu/ccpu/ccpu.h"
 #include "cinemat.h"

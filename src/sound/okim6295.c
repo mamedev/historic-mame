@@ -26,6 +26,7 @@
 #include <math.h>
 
 #include "driver.h"
+#include "streams.h"
 #include "okim6295.h"
 
 #define MAX_SAMPLE_CHUNK	10000
@@ -635,7 +636,7 @@ WRITE16_HANDLER( OKIM6295_data_2_msb_w )
  * Generic get_info
  **************************************************************************/
 
-static void okim6295_set_info(void *token, UINT32 state, union sndinfo *info)
+static void okim6295_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -644,7 +645,7 @@ static void okim6295_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void okim6295_get_info(void *token, UINT32 state, union sndinfo *info)
+void okim6295_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

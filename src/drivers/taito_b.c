@@ -169,7 +169,6 @@ Notes:
 
 #include "driver.h"
 #include "cpu/m68000/m68000.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 #include "machine/eeprom.h"
 #include "machine/mb87078.h"
@@ -183,12 +182,13 @@ extern UINT16 *TC0180VCU_ram;
 extern UINT16 *taitob_spriteram;
 extern UINT16 *taitob_pixelram;
 
-
 VIDEO_START( taitob_color_order0 );
 VIDEO_START( taitob_color_order1 );
 VIDEO_START( taitob_color_order2 );
 VIDEO_START( hitice );
 VIDEO_EOF( taitob );
+
+VIDEO_RESET( hitice );
 
 VIDEO_UPDATE( taitob );
 
@@ -206,13 +206,8 @@ WRITE16_HANDLER( hitice_pixel_scroll_w );
 
 static WRITE8_HANDLER( bankswitch_w )
 {
-	unsigned char *RAM = memory_region(REGION_CPU2);
-	int banknum = (data - 1) & 3;
-
-	memory_set_bankptr (1, &RAM [0x10000 + (banknum * 0x4000)]);
+	memory_set_bank(1, (data - 1) & 3);
 }
-
-
 
 void rsaga2_interrupt2(int x)
 {
@@ -2856,6 +2851,7 @@ static MACHINE_DRIVER_START( hitice )
 	MDRV_PALETTE_LENGTH(4096)
 
 	MDRV_VIDEO_START(hitice)
+	MDRV_VIDEO_RESET(hitice)
 	MDRV_VIDEO_EOF(taitob)
 	MDRV_VIDEO_UPDATE(taitob)
 
@@ -3938,34 +3934,38 @@ ROM_START( sbm )
 	ROM_LOAD( "c69-03.36", 0x00000, 0x80000, CRC(63e6b6e7) SHA1(72574ca7505eee15fabc4996f253505d9dd65898) )
 ROM_END
 
+static DRIVER_INIT( taito_b )
+{
+	memory_configure_bank(1, 0, 4, memory_region(REGION_CPU2) + 0x10000, 0x4000);
+}
 
-GAME( 1989, masterw,  0,       masterw,  masterw,  0, ROT270, "Taito Corporation Japan", "Master of Weapon (World)", 0 )
-GAME( 1989, masterwu, masterw, masterw,  masterw,  0, ROT270, "Taito America Corporation", "Master of Weapon (US)", 0 )
-GAME( 1988, nastar,   0,       rastsag2, nastar,   0, ROT0,   "Taito Corporation Japan", "Nastar (World)", 0 )
-GAME( 1988, nastarw,  nastar,  rastsag2, nastarw,  0, ROT0,   "Taito America Corporation", "Nastar Warrior (US)", 0 )
-GAME( 1988, rastsag2, nastar,  rastsag2, rastsag2, 0, ROT0,   "Taito Corporation", "Rastan Saga 2 (Japan)", 0 )
-GAME( 1989, rambo3,   0,       rambo3,   rambo3,   0, ROT0,   "Taito Europe Corporation", "Rambo III (Europe set 1)", 0 )
-GAME( 1989, rambo3ae, rambo3,  rambo3a,  rambo3a,  0, ROT0,   "Taito Europe Corporation", "Rambo III (Europe set 2)", 0 )
-GAME( 1989, rambo3a,  rambo3,  rambo3a,  rambo3a,  0, ROT0,   "Taito America Corporation", "Rambo III (US)", 0 )
-GAME( 1989, crimec,   0,       crimec,   crimec,   0, ROT0,   "Taito Corporation Japan", "Crime City (World)", 0 )
-GAME( 1989, crimecu,  crimec,  crimec,   crimecu,  0, ROT0,   "Taito America Corporation", "Crime City (US)", 0 )
-GAME( 1989, crimecj,  crimec,  crimec,   crimecj,  0, ROT0,   "Taito Corporation", "Crime City (Japan)", 0 )
-GAME( 1989, tetrist,  tetris,  tetrist,  tetrist,  0, ROT0,   "Sega", "Tetris (Japan, B-System, YM2610)", 0 )
-GAME( 1989, tetrista, tetris,  tetrista, tetrist,  0, ROT0,   "Sega", "Tetris (Japan, B-System, YM2203)", 0 )
-GAME( 1989, viofight, 0,       viofight, viofight, 0, ROT0,   "Taito Corporation Japan", "Violence Fight (World)", 0 )
-GAME( 1989, viofighu, viofight,viofight, viofight, 0, ROT0,   "Taito America Corporation", "Violence Fight (US)", 0 )
-GAME( 1990, ashura,   0,       ashura,   ashura,   0, ROT270, "Taito Corporation", "Ashura Blaster (Japan)", 0 )
-GAME( 1990, ashurau,  ashura,  ashura,   ashurau,  0, ROT270, "Taito America Corporation", "Ashura Blaster (US)", 0 )
-GAME( 1990, hitice,   0,       hitice,   hitice,   0, ROT0,   "Williams", "Hit the Ice (US)", 0 )
-GAME( 1991, selfeena, 0,       selfeena, selfeena, 0, ROT0,   "East Technology", "Sel Feena", 0 )
-GAME( 1992, silentd,  0,       silentd,  silentd,  0, ROT0,   "Taito Corporation Japan", "Silent Dragon (World)", 0 )
-GAME( 1992, silentdj, silentd, silentd,  silentdj, 0, ROT0,   "Taito Corporation", "Silent Dragon (Japan)", 0 )
-GAME( 1993, ryujin,   0,       ryujin,   ryujin,   0, ROT270, "Taito Corporation", "Ryu Jin (Japan)", 0 )
-GAME( 1993, qzshowby, 0,       qzshowby, qzshowby, 0, ROT0,   "Taito Corporation", "Quiz Sekai wa SHOW by shobai (Japan)", 0 )
-GAME( 1994, pbobble,  0,       pbobble,  pbobble,  0, ROT0,   "Taito Corporation", "Puzzle Bobble (Japan, B-System)", 0 )
-GAME( 1994, spacedx,  0,       spacedx,  pbobble,  0, ROT0,   "Taito Corporation", "Space Invaders DX (US) v2.1", 0 )
-GAME( 1994, spacedxj, spacedx, spacedx,  pbobble,  0, ROT0,   "Taito Corporation", "Space Invaders DX (Japan) v2.1", 0 )
-GAME( 1994, spacedxo, spacedx, spacedxo, spacedxo, 0, ROT0,   "Taito Corporation", "Space Invaders DX (Japan) v2.0", 0 )
+GAME( 1989, masterw,  0,       masterw,  masterw,  taito_b, ROT270, "Taito Corporation Japan", "Master of Weapon (World)", GAME_SUPPORTS_SAVE )
+GAME( 1989, masterwu, masterw, masterw,  masterw,  taito_b, ROT270, "Taito America Corporation", "Master of Weapon (US)", GAME_SUPPORTS_SAVE )
+GAME( 1988, nastar,   0,       rastsag2, nastar,   taito_b, ROT0,   "Taito Corporation Japan", "Nastar (World)", GAME_SUPPORTS_SAVE )
+GAME( 1988, nastarw,  nastar,  rastsag2, nastarw,  taito_b, ROT0,   "Taito America Corporation", "Nastar Warrior (US)", GAME_SUPPORTS_SAVE )
+GAME( 1988, rastsag2, nastar,  rastsag2, rastsag2, taito_b, ROT0,   "Taito Corporation", "Rastan Saga 2 (Japan)", GAME_SUPPORTS_SAVE )
+GAME( 1989, rambo3,   0,       rambo3,   rambo3,   taito_b, ROT0,   "Taito Europe Corporation", "Rambo III (Europe set 1)", GAME_SUPPORTS_SAVE )
+GAME( 1989, rambo3ae, rambo3,  rambo3a,  rambo3a,  taito_b, ROT0,   "Taito Europe Corporation", "Rambo III (Europe set 2)", GAME_SUPPORTS_SAVE )
+GAME( 1989, rambo3a,  rambo3,  rambo3a,  rambo3a,  taito_b, ROT0,   "Taito America Corporation", "Rambo III (US)", GAME_SUPPORTS_SAVE )
+GAME( 1989, crimec,   0,       crimec,   crimec,   taito_b, ROT0,   "Taito Corporation Japan", "Crime City (World)", GAME_SUPPORTS_SAVE )
+GAME( 1989, crimecu,  crimec,  crimec,   crimecu,  taito_b, ROT0,   "Taito America Corporation", "Crime City (US)", GAME_SUPPORTS_SAVE )
+GAME( 1989, crimecj,  crimec,  crimec,   crimecj,  taito_b, ROT0,   "Taito Corporation", "Crime City (Japan)", GAME_SUPPORTS_SAVE )
+GAME( 1989, tetrist,  tetris,  tetrist,  tetrist,  taito_b, ROT0,   "Sega", "Tetris (Japan, B-System, YM2610)", GAME_SUPPORTS_SAVE )
+GAME( 1989, tetrista, tetris,  tetrista, tetrist,  taito_b, ROT0,   "Sega", "Tetris (Japan, B-System, YM2203)", GAME_SUPPORTS_SAVE )
+GAME( 1989, viofight, 0,       viofight, viofight, taito_b, ROT0,   "Taito Corporation Japan", "Violence Fight (World)", GAME_SUPPORTS_SAVE )
+GAME( 1989, viofighu, viofight,viofight, viofight, taito_b, ROT0,   "Taito America Corporation", "Violence Fight (US)", GAME_SUPPORTS_SAVE )
+GAME( 1990, ashura,   0,       ashura,   ashura,   taito_b, ROT270, "Taito Corporation", "Ashura Blaster (Japan)", GAME_SUPPORTS_SAVE )
+GAME( 1990, ashurau,  ashura,  ashura,   ashurau,  taito_b, ROT270, "Taito America Corporation", "Ashura Blaster (US)", GAME_SUPPORTS_SAVE )
+GAME( 1990, hitice,   0,       hitice,   hitice,   taito_b, ROT0,   "Williams", "Hit the Ice (US)", GAME_SUPPORTS_SAVE )
+GAME( 1991, selfeena, 0,       selfeena, selfeena, taito_b, ROT0,   "East Technology", "Sel Feena", GAME_SUPPORTS_SAVE )
+GAME( 1992, silentd,  0,       silentd,  silentd,  taito_b, ROT0,   "Taito Corporation Japan", "Silent Dragon (World)", GAME_SUPPORTS_SAVE )
+GAME( 1992, silentdj, silentd, silentd,  silentdj, taito_b, ROT0,   "Taito Corporation", "Silent Dragon (Japan)", GAME_SUPPORTS_SAVE )
+GAME( 1993, ryujin,   0,       ryujin,   ryujin,   taito_b, ROT270, "Taito Corporation", "Ryu Jin (Japan)", GAME_SUPPORTS_SAVE )
+GAME( 1993, qzshowby, 0,       qzshowby, qzshowby, taito_b, ROT0,   "Taito Corporation", "Quiz Sekai wa SHOW by shobai (Japan)", GAME_SUPPORTS_SAVE )
+GAME( 1994, pbobble,  0,       pbobble,  pbobble,  taito_b, ROT0,   "Taito Corporation", "Puzzle Bobble (Japan, B-System)", GAME_SUPPORTS_SAVE )
+GAME( 1994, spacedx,  0,       spacedx,  pbobble,  taito_b, ROT0,   "Taito Corporation", "Space Invaders DX (US) v2.1", GAME_SUPPORTS_SAVE )
+GAME( 1994, spacedxj, spacedx, spacedx,  pbobble,  taito_b, ROT0,   "Taito Corporation", "Space Invaders DX (Japan) v2.1", GAME_SUPPORTS_SAVE )
+GAME( 1994, spacedxo, spacedx, spacedxo, spacedxo, taito_b, ROT0,   "Taito Corporation", "Space Invaders DX (Japan) v2.0", GAME_SUPPORTS_SAVE )
 /*
     Sonic Blast Man is a ticket dispensing game.
     (Japanese version however does not dispense them, only US does - try the "sbm_patch" in the machine_config).
@@ -3973,4 +3973,4 @@ GAME( 1994, spacedxo, spacedx, spacedxo, spacedxo, 0, ROT0,   "Taito Corporation
     in that it has a punching pad that player needs to punch to hit
     the enemy.
 */
-GAME(  1990, sbm,      0,       sbm,      sbm,      0, ROT0,   "Taito Corporation", "Sonic Blast Man (Japan)", 0 )
+GAME(  1990, sbm,      0,       sbm,      sbm,      0, ROT0,   "Taito Corporation", "Sonic Blast Man (Japan)", GAME_SUPPORTS_SAVE )

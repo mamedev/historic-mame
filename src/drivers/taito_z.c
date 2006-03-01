@@ -773,7 +773,6 @@ J1100256A VIDEO PCB
 #include "driver.h"
 #include "cpu/m68000/m68000.h"
 #include "machine/eeprom.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 #include "sndhrdw/taitosnd.h"
 #include "sound/2610intf.h"
@@ -4485,7 +4484,6 @@ static DRIVER_INIT( taitoz )
 static DRIVER_INIT( bshark )
 {
 	cpua_ctrl = 0xff;
-	state_save_register_global(cpua_ctrl);
 	state_save_register_func_postload(parse_control_noz80);
 
 	state_save_register_global(eep_latch);

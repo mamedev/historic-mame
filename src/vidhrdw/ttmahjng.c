@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 unsigned char *ttmahjng_sharedram;
 unsigned char *ttmahjng_videoram1;

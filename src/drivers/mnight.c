@@ -9,7 +9,6 @@ TODO:
 
 ***************************************************************************/
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/2203intf.h"
 
 WRITE8_HANDLER( mnight_bgvideoram_w );

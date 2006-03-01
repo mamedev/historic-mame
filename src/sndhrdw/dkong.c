@@ -2,7 +2,46 @@
 #include "cpu/i8039/i8039.h"
 #include "sound/samples.h"
 
-static int walk = 0; /* used to determine if dkongjr is walking or climbing? */
+static UINT8 sh1_state[8];
+static UINT8 sh1_count = 0;
+static UINT8 walk = 0; /* used to determine if dkongjr is walking or climbing? */
+static UINT8 death = 0;
+static UINT8 drop = 0;
+static UINT8 roar = 0;
+static UINT8 land = 0;
+static UINT8 climb = 0;
+static UINT8 sh_climb_count;
+static UINT8 snapjaw = 0;
+
+
+SOUND_START( dkong )
+{
+	state_save_register_global_array(sh1_state);
+	state_save_register_global(sh1_count);
+	state_save_register_global(walk);
+	state_save_register_global(death);
+	state_save_register_global(drop);
+	state_save_register_global(roar);
+	state_save_register_global(land);
+	state_save_register_global(climb);
+	state_save_register_global(sh_climb_count);
+	state_save_register_global(snapjaw);
+
+	memset(sh1_state, 0, sizeof(sh1_state));
+	sh1_count = 0;
+	walk = 0;
+	death = 0;
+	drop = 0;
+	roar = 0;
+	land = 0;
+	climb = 0;
+	sh_climb_count = 0;
+	snapjaw = 0;
+
+	return 0;
+}
+
+
 
 WRITE8_HANDLER( dkong_sh_w )
 {
@@ -14,11 +53,9 @@ WRITE8_HANDLER( dkong_sh_w )
 
 WRITE8_HANDLER( dkong_sh1_w )
 {
-	static int state[8];
-	static int count = 0;
 	static const int sample_order[7] = {1,2,1,2,0,1,0};
 
-	if (state[offset] != data)
+	if (sh1_state[offset] != data)
 	{
 		if (data)
 			{
@@ -26,20 +63,18 @@ WRITE8_HANDLER( dkong_sh1_w )
 					sample_start (offset, offset + 2, 0);
 				else
 				{
-					sample_start (offset, sample_order[count], 0);
-					count++;
-					if (count == 7)
-						count = 0;
+					sample_start (offset, sample_order[sh1_count], 0);
+					sh1_count++;
+					if (sh1_count == 7)
+						sh1_count = 0;
 				}
 			}
-		state[offset] = data;
+		sh1_state[offset] = data;
 	}
 }
 
 WRITE8_HANDLER( dkongjr_sh_death_w )
 {
-	static int death = 0;
-
 	if (death != data)
 	{
 		if (data)
@@ -51,8 +86,6 @@ WRITE8_HANDLER( dkongjr_sh_death_w )
 
 WRITE8_HANDLER( dkongjr_sh_drop_w )
 {
-	static int drop = 0;
-
 	if (drop != data)
 	{
 		if (data)
@@ -63,8 +96,6 @@ WRITE8_HANDLER( dkongjr_sh_drop_w )
 
 WRITE8_HANDLER( dkongjr_sh_roar_w )
 {
-	static int roar = 0;
-
 	if (roar != data)
 	{
 		if (data)
@@ -87,8 +118,6 @@ WRITE8_HANDLER( dkongjr_sh_jump_w )
 
 WRITE8_HANDLER( dkongjr_sh_land_w )
 {
-	static int land = 0;
-
 	if (land != data)
 	{
 		if (data)
@@ -100,23 +129,21 @@ WRITE8_HANDLER( dkongjr_sh_land_w )
 
 WRITE8_HANDLER( dkongjr_sh_climb_w )
 {
-	static int climb = 0;
-	static int count;
 	static const int sample_order[7] = {1,2,1,2,0,1,0};
 
 	if (climb != data)
 	{
 		if (data && walk == 0)
 		{
-			sample_start (3,sample_order[count]+3,0);
-			count++;
-			if (count == 7) count = 0;
+			sample_start (3,sample_order[sh_climb_count]+3,0);
+			sh_climb_count++;
+			if (sh_climb_count == 7) sh_climb_count = 0;
 		}
 		else if (data && walk == 1)
 		{
-			sample_start (3,sample_order[count]+8,0);
-			count++;
-			if (count == 7) count = 0;
+			sample_start (3,sample_order[sh_climb_count]+8,0);
+			sh_climb_count++;
+			if (sh_climb_count == 7) sh_climb_count = 0;
 		}
 		climb = data;
 	}
@@ -124,8 +151,6 @@ WRITE8_HANDLER( dkongjr_sh_climb_w )
 
 WRITE8_HANDLER( dkongjr_sh_snapjaw_w )
 {
-	static int snapjaw = 0;
-
 	if (snapjaw != data)
 	{
 		if (data)

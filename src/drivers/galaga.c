@@ -660,7 +660,6 @@ TODO:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "machine/atari_vg.h"
 #include "machine/namcoio.h"
 #include "includes/galaga.h"

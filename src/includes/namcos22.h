@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 #define USE_NAMCOS22_SPEED_HACK
 

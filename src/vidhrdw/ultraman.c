@@ -1,6 +1,5 @@
 #include "driver.h"
 #include "tilemap.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
 
 #define SPRITEROM_MEM_REGION REGION_GFX1

@@ -17,7 +17,6 @@ TODO:
 #include "cpu/m6809/m6809.h"
 #include "cpu/z80/z80.h"
 #include "cpu/i8039/i8039.h"
-#include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
 #include "sound/dac.h"
 

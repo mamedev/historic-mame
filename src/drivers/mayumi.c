@@ -7,7 +7,6 @@ Kikiippatsu Mayumi-chan (c) 1988 Victory L.L.C.
 *****************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/2203intf.h"
 
 #define MCLK 10000000

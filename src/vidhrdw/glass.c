@@ -8,7 +8,6 @@
 
 #include "driver.h"
 #include "tilemap.h"
-#include "vidhrdw/generic.h"
 
 UINT16 *glass_spriteram;
 UINT16 *glass_vregs;

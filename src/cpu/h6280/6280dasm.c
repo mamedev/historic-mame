@@ -18,7 +18,6 @@
 
 #include <stdio.h>
 #include "memory.h"
-#include "osd_cpu.h"
 
 #ifdef MAME_DEBUG
 

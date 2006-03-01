@@ -22,7 +22,6 @@ To Do:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
 #include "kaneko16.h"
 #include "sound/okim6295.h"

@@ -1689,7 +1689,7 @@ static int upd7810_execute (int cycles)
 					PC += op74[OP2].oplen - 2;
 					break;
 				default:
-					osd_die("uPD7810 internal error: check cycle counts for main\n");
+					fatalerror("uPD7810 internal error: check cycle counts for main");
 				}
 			}
 			PSW &= ~SK;

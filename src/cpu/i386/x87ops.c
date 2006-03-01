@@ -59,7 +59,7 @@ INLINE X87_REG FPU_POP(void)
 static void I386OP(fpu_group_d8)(void)		// Opcode 0xd8
 {
 	UINT8 modrm = FETCH();
-	osd_die("I386: FPU Op D8 %02X at %08X\n", modrm, I.pc-2);
+	fatalerror("I386: FPU Op D8 %02X at %08X", modrm, I.pc-2);
 }
 
 static void I386OP(fpu_group_d9)(void)		// Opcode 0xd9
@@ -87,7 +87,7 @@ static void I386OP(fpu_group_d9)(void)		// Opcode 0xd9
 			}
 
 			default:
-				osd_die("I386: FPU Op D9 %02X at %08X\n", modrm, I.pc-2);
+				fatalerror("I386: FPU Op D9 %02X at %08X", modrm, I.pc-2);
 		}
 	}
 	else
@@ -128,7 +128,7 @@ static void I386OP(fpu_group_d9)(void)		// Opcode 0xd9
 				break;
 			}
 			default:
-				osd_die("I386: FPU Op D9 %02X at %08X\n", modrm, I.pc-2);
+				fatalerror("I386: FPU Op D9 %02X at %08X", modrm, I.pc-2);
 		}
 	}
 }
@@ -136,7 +136,7 @@ static void I386OP(fpu_group_d9)(void)		// Opcode 0xd9
 static void I386OP(fpu_group_da)(void)		// Opcode 0xda
 {
 	UINT8 modrm = FETCH();
-	osd_die("I386: FPU Op DA %02X at %08X\n", modrm, I.pc-2);
+	fatalerror("I386: FPU Op DA %02X at %08X", modrm, I.pc-2);
 }
 
 static void I386OP(fpu_group_db)(void)		// Opcode 0xdb
@@ -145,7 +145,7 @@ static void I386OP(fpu_group_db)(void)		// Opcode 0xdb
 
 	if (modrm < 0xc0)
 	{
-		osd_die("I386: FPU Op DB %02X at %08X\n", modrm, I.pc-2);
+		fatalerror("I386: FPU Op DB %02X at %08X", modrm, I.pc-2);
 	}
 	else
 	{
@@ -171,7 +171,7 @@ static void I386OP(fpu_group_db)(void)		// Opcode 0xdb
 			}
 
 			default:
-				osd_die("I386: FPU Op DB %02X at %08X\n", modrm, I.pc-2);
+				fatalerror("I386: FPU Op DB %02X at %08X", modrm, I.pc-2);
 		}
 	}
 }
@@ -187,7 +187,7 @@ static void I386OP(fpu_group_dc)(void)		// Opcode 0xdc
 		switch ((modrm >> 3) & 0x7)
 		{
 			default:
-				osd_die("I386: FPU Op DC %02X at %08X\n", modrm, I.pc-2);
+				fatalerror("I386: FPU Op DC %02X at %08X", modrm, I.pc-2);
 		}
 	}
 	else
@@ -214,7 +214,7 @@ static void I386OP(fpu_group_dc)(void)		// Opcode 0xdc
 			}
 
 			default:
-				osd_die("I386: FPU Op DC %02X at %08X\n", modrm, I.pc-2);
+				fatalerror("I386: FPU Op DC %02X at %08X", modrm, I.pc-2);
 		}
 	}
 }
@@ -237,7 +237,7 @@ static void I386OP(fpu_group_dd)(void)		// Opcode 0xdd
 			}
 
 			default:
-				osd_die("I386: FPU Op DD %02X at %08X\n", modrm, I.pc-2);
+				fatalerror("I386: FPU Op DD %02X at %08X", modrm, I.pc-2);
 		}
 	}
 	else
@@ -245,7 +245,7 @@ static void I386OP(fpu_group_dd)(void)		// Opcode 0xdd
 		switch (modrm & 0x3f)
 		{
 			default:
-				osd_die("I386: FPU Op DD %02X at %08X\n", modrm, I.pc-2);
+				fatalerror("I386: FPU Op DD %02X at %08X", modrm, I.pc-2);
 		}
 	}
 }
@@ -261,7 +261,7 @@ static void I386OP(fpu_group_de)(void)		// Opcode 0xde
 		switch ((modrm >> 3) & 0x7)
 		{
 			default:
-				osd_die("I386: FPU Op DE %02X at %08X\n", modrm, I.pc-2);
+				fatalerror("I386: FPU Op DE %02X at %08X", modrm, I.pc-2);
 		}
 	}
 	else
@@ -315,7 +315,7 @@ static void I386OP(fpu_group_de)(void)		// Opcode 0xde
 			}
 
 			default:
-				osd_die("I386: FPU Op DE %02X at %08X\n", modrm, I.pc-2);
+				fatalerror("I386: FPU Op DE %02X at %08X", modrm, I.pc-2);
 		}
 	}
 }
@@ -331,7 +331,7 @@ static void I386OP(fpu_group_df)(void)		// Opcode 0xdf
 		switch ((modrm >> 3) & 0x7)
 		{
 			default:
-				osd_die("I386: FPU Op DF %02X at %08X\n", modrm, I.pc-2);
+				fatalerror("I386: FPU Op DF %02X at %08X", modrm, I.pc-2);
 		}
 	}
 	else
@@ -346,7 +346,7 @@ static void I386OP(fpu_group_df)(void)		// Opcode 0xdf
 			}
 
 			default:
-				osd_die("I386: FPU Op DF %02X at %08X\n", modrm, I.pc-2);
+				fatalerror("I386: FPU Op DF %02X at %08X", modrm, I.pc-2);
 		}
 	}
 }

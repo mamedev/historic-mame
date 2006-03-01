@@ -1,6 +1,5 @@
 #include "driver.h"
 #include "vidhrdw/konamiic.h"
-#include "vidhrdw/generic.h"
 
 unsigned char *fastlane_k007121_regs,*fastlane_videoram1,*fastlane_videoram2;
 static tilemap *layer0, *layer1;

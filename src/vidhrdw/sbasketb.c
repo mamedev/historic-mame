@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 UINT8 *sbasketb_scroll;
 UINT8 *sbasketb_palettebank;

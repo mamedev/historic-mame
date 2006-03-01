@@ -13,7 +13,7 @@ to switch between 8*8 tiles and 16*16 tiles.
 
 ***************************************************************************/
 
-#include "vidhrdw/generic.h"
+#include "driver.h"
 #include "deco16ic.h"
 
 static void tumblepop_drawsprites(mame_bitmap *bitmap,const rectangle *cliprect)

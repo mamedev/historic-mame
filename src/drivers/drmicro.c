@@ -9,7 +9,6 @@ Quite similar to Appoooh
 *****************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/msm5205.h"
 #include "sound/sn76496.h"
 

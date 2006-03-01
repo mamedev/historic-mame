@@ -11,7 +11,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 extern WRITE8_HANDLER( n8080_video_control_w );
 

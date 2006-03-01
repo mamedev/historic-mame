@@ -40,9 +40,9 @@ COREOBJS = \
 	$(OBJ)/memory.o \
 	$(OBJ)/palette.o \
 	$(OBJ)/png.o \
-	$(OBJ)/profiler.o \
 	$(OBJ)/romload.o \
 	$(OBJ)/sha1.o \
+	$(OBJ)/sound.o \
 	$(OBJ)/sndintrf.o \
 	$(OBJ)/state.o \
 	$(OBJ)/streams.o \
@@ -61,6 +61,7 @@ COREOBJS = \
 	$(OBJ)/sound/wavwrite.o \
 	$(OBJ)/machine/eeprom.o \
 	$(OBJ)/machine/generic.o \
+	$(OBJ)/sndhrdw/generic.o \
 	$(OBJ)/vidhrdw/generic.o \
 	$(OBJ)/vidhrdw/vector.o \
 
@@ -78,14 +79,19 @@ endif
 #-------------------------------------------------
 
 ifdef DEBUG
+COREOBJS += \
+	$(OBJ)/profiler.o
+
 ifdef NEW_DEBUGGER
 COREOBJS += \
 	$(OBJ)/debug/debugcmd.o \
+	$(OBJ)/debug/debugcmt.o \
+	$(OBJ)/debug/debugcon.o \
 	$(OBJ)/debug/debugcpu.o \
-	$(OBJ)/debug/express.o \
-	$(OBJ)/debug/debugvw.o \
 	$(OBJ)/debug/debughlp.o \
-	$(OBJ)/debug/debugcon.o
+	$(OBJ)/debug/debugvw.o \
+	$(OBJ)/debug/express.o \
+	$(OBJ)/debug/textbuf.o
 else
 COREOBJS += \
 	$(OBJ)/debug/mamedbg.o \

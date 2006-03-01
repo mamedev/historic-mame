@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 UINT8 *blueprnt_scrollram;
 static int gfx_bank;

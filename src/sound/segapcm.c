@@ -3,6 +3,7 @@
 /*********************************************************/
 
 #include "driver.h"
+#include "streams.h"
 #include "segapcm.h"
 
 struct segapcm
@@ -128,7 +129,7 @@ READ8_HANDLER( SegaPCM_r )
  * Generic get_info
  **************************************************************************/
 
-static void segapcm_set_info(void *token, UINT32 state, union sndinfo *info)
+static void segapcm_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -137,7 +138,7 @@ static void segapcm_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void segapcm_get_info(void *token, UINT32 state, union sndinfo *info)
+void segapcm_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

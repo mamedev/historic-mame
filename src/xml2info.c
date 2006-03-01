@@ -11,9 +11,7 @@
 /****************************************************************************/
 /* libexpat */
 
-/* Use the system libexpat library */
-#include "expat.h"
-
+#include <expat.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>

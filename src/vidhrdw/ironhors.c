@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 UINT8 *ironhors_scroll;
 static int palettebank, charbank, spriterambank;

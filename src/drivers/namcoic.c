@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "namcos2.h" /* for game-specific hacks */
 #include "namcoic.h"
 

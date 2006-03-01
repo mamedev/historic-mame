@@ -48,7 +48,6 @@ Thanks to HIGHWAYMAN for providing info on how to get to these epoxies
 ****************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/res_net.h"
 #include "sound/ay8910.h"
 

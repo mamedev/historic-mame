@@ -162,7 +162,6 @@ Changes:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/i8039/i8039.h"
 #include "cpu/s2650/s2650.h"
 #include "cpu/m6502/m6502.h"
@@ -210,6 +209,7 @@ extern WRITE8_HANDLER( dkongjr_sh_climb_w );
 extern WRITE8_HANDLER( dkongjr_sh_land_w );
 extern WRITE8_HANDLER( dkongjr_sh_snapjaw_w );
 
+extern SOUND_START( dkong );
 extern WRITE8_HANDLER( dkong_sh1_w );
 
 #define ACTIVELOW_PORT_BIT(P,A,D)   ((P & (~(1 << A))) | ((D ^ 1) << A))
@@ -286,6 +286,13 @@ static MACHINE_START( dkong )
 	state_save_register_global(decay);
 	state_save_register_global(counter);
 	state_save_register_global(hunchloopback);
+
+	mcustatus = 0;
+	envelope = 0;
+	tt = 0;
+	decay = 0;
+	hunchloopback = 0;
+
 	return 0;
 }
 
@@ -300,7 +307,7 @@ static MACHINE_RESET( dkong )
 
 static MACHINE_RESET( strtheat )
 {
-	unsigned char *ROM = memory_region(REGION_CPU1);
+	UINT8 *ROM = memory_region(REGION_CPU1);
 
 	machine_reset_dkong();
 
@@ -312,7 +319,7 @@ static MACHINE_RESET( strtheat )
 
 static MACHINE_RESET( drakton )
 {
-	unsigned char *ROM = memory_region(REGION_CPU1);
+	UINT8 *ROM = memory_region(REGION_CPU1);
 
 	machine_reset_dkong();
 
@@ -1651,6 +1658,8 @@ static MACHINE_DRIVER_START( dkong )
 	MDRV_VIDEO_UPDATE(dkong)
 
 	/* sound hardware */
+	MDRV_SOUND_START(dkong)
+
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 	MDRV_SOUND_ADD(DAC, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.55)
@@ -1770,6 +1779,8 @@ static MACHINE_DRIVER_START( dkongjr )
 	MDRV_VIDEO_UPDATE(dkong)
 
 	/* sound hardware */
+	MDRV_SOUND_START(dkong)
+
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 	MDRV_SOUND_ADD(DAC, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.55)

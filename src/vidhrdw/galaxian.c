@@ -44,8 +44,8 @@ static tilemap *rockclim_tilemap;
 static int mooncrst_gfxextend;
 static int spriteram2_present;
 static UINT8 gfxbank[5];
-static UINT8 flip_screen_x;
-static UINT8 flip_screen_y;
+static UINT8 flipscreen_x;
+static UINT8 flipscreen_y;
 static UINT8 color_mask;
 static void (*modify_charcode)(UINT16 *code,UINT8 x);		/* function to call to do character banking */
 static void  gmgalax_modify_charcode(UINT16 *code,UINT8 x);
@@ -457,8 +457,8 @@ PALETTE_INIT( mariner )
 static void state_save_register(void)
 {
 	state_save_register_global_array(gfxbank);
-	state_save_register_global(flip_screen_x);
-	state_save_register_global(flip_screen_y);
+	state_save_register_global(flipscreen_x);
+	state_save_register_global(flipscreen_y);
 
 	state_save_register_global(galaxian_stars_on);
 	state_save_register_global(stars_scrollpos);
@@ -499,8 +499,8 @@ static int video_start_common(UINT32 (*get_memory_offset)(UINT32,UINT32,UINT32,U
 
 	draw_stars = noop_draw_stars;
 
-	flip_screen_x = 0;
-	flip_screen_y = 0;
+	flipscreen_x = 0;
+	flipscreen_y = 0;
 
 	spriteram2_present = 0;
 
@@ -884,8 +884,8 @@ VIDEO_START( drivfrcg )
 
 	draw_stars = noop_draw_stars;
 
-	flip_screen_x = 0;
-	flip_screen_y = 0;
+	flipscreen_x = 0;
+	flipscreen_y = 0;
 
 	spriteram2_present = 0;
 
@@ -926,8 +926,8 @@ VIDEO_START( ad2083 )
 
 	draw_stars = noop_draw_stars;
 
-	flip_screen_x = 0;
-	flip_screen_y = 0;
+	flipscreen_x = 0;
+	flipscreen_y = 0;
 
 	spriteram2_present = 0;
 
@@ -988,8 +988,8 @@ VIDEO_START( racknrol )
 
 	draw_stars = noop_draw_stars;
 
-	flip_screen_x = 0;
-	flip_screen_y = 0;
+	flipscreen_x = 0;
+	flipscreen_y = 0;
 
 	spriteram2_present = 0;
 
@@ -1056,21 +1056,21 @@ WRITE8_HANDLER( galaxian_attributesram_w )
 
 WRITE8_HANDLER( galaxian_flip_screen_x_w )
 {
-	if (flip_screen_x != (data & 0x01))
+	if (flipscreen_x != (data & 0x01))
 	{
-		flip_screen_x = data & 0x01;
+		flipscreen_x = data & 0x01;
 
-		tilemap_set_flip(bg_tilemap, (flip_screen_x ? TILEMAP_FLIPX : 0) | (flip_screen_y ? TILEMAP_FLIPY : 0));
+		tilemap_set_flip(bg_tilemap, (flipscreen_x ? TILEMAP_FLIPX : 0) | (flipscreen_y ? TILEMAP_FLIPY : 0));
 	}
 }
 
 WRITE8_HANDLER( galaxian_flip_screen_y_w )
 {
-	if (flip_screen_y != (data & 0x01))
+	if (flipscreen_y != (data & 0x01))
 	{
-		flip_screen_y = data & 0x01;
+		flipscreen_y = data & 0x01;
 
-		tilemap_set_flip(bg_tilemap, (flip_screen_x ? TILEMAP_FLIPX : 0) | (flip_screen_y ? TILEMAP_FLIPY : 0));
+		tilemap_set_flip(bg_tilemap, (flipscreen_x ? TILEMAP_FLIPX : 0) | (flipscreen_y ? TILEMAP_FLIPY : 0));
 	}
 }
 
@@ -1385,7 +1385,7 @@ static void gteikob2_draw_bullets(mame_bitmap *bitmap, int offs, int x, int y)
 
 static void scramble_draw_bullets(mame_bitmap *bitmap, int offs, int x, int y)
 {
-	if (flip_screen_x)  x++;
+	if (flipscreen_x)  x++;
 
 	x = x - 6;
 
@@ -1399,7 +1399,7 @@ static void scramble_draw_bullets(mame_bitmap *bitmap, int offs, int x, int y)
 
 static void darkplnt_draw_bullets(mame_bitmap *bitmap, int offs, int x, int y)
 {
-	if (flip_screen_x)  x++;
+	if (flipscreen_x)  x++;
 
 	x = x - 6;
 
@@ -1459,7 +1459,7 @@ static void turtles_draw_background(mame_bitmap *bitmap)
 static void frogger_draw_background(mame_bitmap *bitmap)
 {
 	/* color split point verified on real machine */
-	if (flip_screen_x)
+	if (flipscreen_x)
 	{
 		plot_box(bitmap,   0, 0, 128, 256, Machine->pens[0]);
 		plot_box(bitmap, 128, 0, 128, 256, Machine->pens[BACKGROUND_COLOR_BASE]);
@@ -1497,7 +1497,7 @@ static void stratgyx_draw_background(mame_bitmap *bitmap)
 		if ((~prom[x] & 0x02) && background_green) color |= 0x02;
 		if ((~prom[x] & 0x01) && background_blue)  color |= 0x04;
 
-		if (flip_screen_x)
+		if (flipscreen_x)
 		{
 			sx = 8 * (31 - x);
 		}
@@ -1572,7 +1572,7 @@ static void mariner_draw_background(mame_bitmap *bitmap)
 
 	prom = memory_region(REGION_USER1);
 
-	if (flip_screen_x)
+	if (flipscreen_x)
 	{
 		for (x = 0; x < 32; x++)
 		{
@@ -1674,7 +1674,7 @@ void galaxian_init_stars(int colors_offset)
 
 	if (total_stars != STAR_COUNT)
 	{
-		osd_die("total_stars = %d, STAR_COUNT = %d\n",total_stars,STAR_COUNT);
+		fatalerror("total_stars = %d, STAR_COUNT = %d",total_stars,STAR_COUNT);
 	}
 }
 
@@ -1687,11 +1687,11 @@ static void plot_star(mame_bitmap *bitmap, int x, int y, int color)
 		return;
 
 
-	if (flip_screen_x)
+	if (flipscreen_x)
 	{
 		x = 255 - x;
 	}
-	if (flip_screen_y)
+	if (flipscreen_y)
 	{
 		y = 255 - y;
 	}
@@ -1986,7 +1986,7 @@ static void draw_bullets_common(mame_bitmap *bitmap)
 			sy > Machine->visible_area.max_y)
 			continue;
 
-		if (flip_screen_y)  sy = 255 - sy;
+		if (flipscreen_y)  sy = 255 - sy;
 
 		draw_bullets(bitmap, offs, sx, sy);
 	}
@@ -2026,13 +2026,13 @@ static void draw_sprites(mame_bitmap *bitmap, UINT8 *spriteram, size_t spriteram
 			modify_ypos(&sy);
 		}
 
-		if (flip_screen_x)
+		if (flipscreen_x)
 		{
 			sx = 240 - sx;
 			flipx = !flipx;
 		}
 
-		if (flip_screen_y)
+		if (flipscreen_y)
 		{
 			flipy = !flipy;
 		}
@@ -2054,7 +2054,7 @@ static void draw_sprites(mame_bitmap *bitmap, UINT8 *spriteram, size_t spriteram
 				code,color,
 				flipx,flipy,
 				sx,sy,
-				flip_screen_x ? spritevisibleareaflipx : spritevisiblearea,TRANSPARENCY_PEN,0);
+				flipscreen_x ? spritevisibleareaflipx : spritevisiblearea,TRANSPARENCY_PEN,0);
 	}
 }
 

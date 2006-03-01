@@ -3,6 +3,7 @@
 /*********************************************************/
 
 #include "driver.h"
+#include "streams.h"
 #include "rf5c68.h"
 #include <math.h>
 
@@ -225,7 +226,7 @@ WRITE8_HANDLER( RF5C68_w )
  * Generic get_info
  **************************************************************************/
 
-static void rf5c68_set_info(void *token, UINT32 state, union sndinfo *info)
+static void rf5c68_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -234,7 +235,7 @@ static void rf5c68_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void rf5c68_get_info(void *token, UINT32 state, union sndinfo *info)
+void rf5c68_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

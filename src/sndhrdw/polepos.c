@@ -3,6 +3,7 @@
     Sound handler
 ****************************************************************************/
 #include "driver.h"
+#include "streams.h"
 #include "sound/filter.h"
 #include "rescap.h"
 #include "sound/custom.h"

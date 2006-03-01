@@ -35,7 +35,6 @@
 *****************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 static tilemap *pf4_layer,*pf3_layer,*pf2_layer,*pf1_layer;
 static int m107_control[0x20];

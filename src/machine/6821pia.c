@@ -105,9 +105,9 @@ void pia_unconfig(void)
 void pia_config(int which, int addressing, const struct pia6821_interface *intf)
 {
 	if (which >= MAX_PIA)
-		osd_die("pia_config called on an invalid PIA!");
+		fatalerror("pia_config called on an invalid PIA!");
 	if (!intf)
-		osd_die("pia_config called with an invalid interface!");
+		fatalerror("pia_config called with an invalid interface!");
 
 	memset(&pia[which], 0, sizeof(pia[0]));
 

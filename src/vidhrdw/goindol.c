@@ -6,7 +6,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "generic.h"
 
 UINT8 *goindol_bg_videoram;
 UINT8 *goindol_fg_videoram;

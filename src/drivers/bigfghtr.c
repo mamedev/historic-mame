@@ -109,7 +109,6 @@ Notes:
 
 **********************************************************************/
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/dac.h"
 #include "sound/okim6295.h"
 #include "sound/3812intf.h"

@@ -9,7 +9,6 @@ someone@secureshell.com
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/konami/konami.h" /* for the callback and the firq irq definition */
 #include "cpu/z80/z80.h"
 #include "vidhrdw/konamiic.h"

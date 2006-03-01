@@ -5,7 +5,6 @@ Knuckle Joe - (c) 1985 Taito Corporation
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 static tilemap *bg_tilemap;
 static int tile_bank,sprite_bank;

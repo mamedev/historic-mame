@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
 
 static int bg_colorbase,sprite_colorbase,layer_colorbase[3];

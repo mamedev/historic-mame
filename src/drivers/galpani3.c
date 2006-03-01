@@ -87,7 +87,6 @@ INTERRUPT_GEN( galpani3_vblank ) // 2, 3, 5 ?
 }
 
 
-#include "vidhrdw/generic.h"
 
 VIDEO_START(galpani3)
 {

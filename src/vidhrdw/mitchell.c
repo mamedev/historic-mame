@@ -4,8 +4,7 @@
 
 ***************************************************************************/
 
-#include "vidhrdw/generic.h"
-#include "palette.h"
+#include "driver.h"
 #include "sound/okim6295.h"
 
 

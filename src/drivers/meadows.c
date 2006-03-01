@@ -117,7 +117,6 @@
 
 #include "driver.h"
 #include "artwork.h"
-#include "vidhrdw/generic.h"
 #include "cpu/s2650/s2650.h"
 #include "meadows.h"
 #include "sound/dac.h"

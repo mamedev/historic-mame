@@ -58,7 +58,6 @@ To Do:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/tms32010/tms32010.h"
 #include "toaplan1.h"
 #include "sound/3812intf.h"

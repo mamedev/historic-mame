@@ -8,7 +8,7 @@ Video hardware driver by Uki
 
 ******************************************************************************/
 
-#include "vidhrdw/generic.h"
+#include "driver.h"
 
 static UINT8 strnskil_scrl_ctrl;
 static UINT8 strnskil_xscroll[2];

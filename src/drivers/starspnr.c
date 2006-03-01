@@ -88,7 +88,6 @@ h12.h12         2732 (4K)       /
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 static UINT8 *nvram;
 static size_t nvram_size;

@@ -14,6 +14,8 @@
 #ifndef __INFO_H__
 #define __INFO_H__
 
+#include "mamecore.h"
+
 /* Print the MAME database in XML format */
 void print_mame_xml(FILE* out, const game_driver* games[]);
 

@@ -751,7 +751,7 @@ WRITE32_HANDLER( hng64_3d_1_w )
 	COMBINE_DATA (&hng64_3d_1[offset]) ;
 	COMBINE_DATA (&hng64_3d_2[offset]) ;
 
-	osd_die("WRITE32_HANDLER( hng64_3d_1_w )\n");
+	fatalerror("WRITE32_HANDLER( hng64_3d_1_w )");
 }
 
 WRITE32_HANDLER( hng64_3d_2_w )

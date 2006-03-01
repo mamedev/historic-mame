@@ -17,6 +17,7 @@
 #include <math.h>
 
 #include "driver.h"
+#include "streams.h"
 #include "es8712.h"
 
 #define MAX_SAMPLE_CHUNK	10000
@@ -522,7 +523,7 @@ WRITE16_HANDLER( ES8712_data_2_msb_w )
  * Generic get_info
  **************************************************************************/
 
-static void es8712_set_info(void *token, UINT32 state, union sndinfo *info)
+static void es8712_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -531,7 +532,7 @@ static void es8712_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void es8712_get_info(void *token, UINT32 state, union sndinfo *info)
+void es8712_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

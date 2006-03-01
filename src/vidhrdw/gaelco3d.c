@@ -411,7 +411,7 @@ void gaelco3d_render(void)
 	int i;
 
 	/* if frameskip is engaged, skip it */
-	if (!osd_skip_this_frame())
+	if (!skip_this_frame())
 		for (i = 0; i < polydata_count; )
 			i += render_poly(&polydata_buffer[i]);
 
@@ -441,7 +441,7 @@ WRITE32_HANDLER( gaelco3d_render_w )
 
 	polydata_buffer[polydata_count++] = data;
 	if (polydata_count >= MAX_POLYDATA)
-		osd_die("Out of polygon buffer space!\n");
+		fatalerror("Out of polygon buffer space!");
 #if DISPLAY_STATS
 	lastscan = cpu_getscanline();
 #endif

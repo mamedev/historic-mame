@@ -7,7 +7,6 @@
 ******************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
 static int fromanc2_dispvram, fromanc2_dispvram_old;

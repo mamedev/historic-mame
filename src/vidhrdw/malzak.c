@@ -13,7 +13,6 @@
 
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/s2636.h"
 
 extern unsigned char* s2636_1_ram;

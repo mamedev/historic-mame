@@ -219,7 +219,6 @@ The first sprite data is located at fa0b,then fa1b and so on.
 
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/2203intf.h"
 #include "sound/samples.h"
 

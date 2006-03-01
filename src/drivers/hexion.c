@@ -79,7 +79,6 @@ Notes:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/okim6295.h"
 #include "sound/k051649.h"
 

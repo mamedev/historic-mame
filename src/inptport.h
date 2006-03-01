@@ -217,6 +217,7 @@ enum
 	IPT_UI_DEBUG_BREAK,
 	IPT_UI_PAUSE,
 	IPT_UI_RESET_MACHINE,
+	IPT_UI_SOFT_RESET,
 	IPT_UI_SHOW_GFX,
 	IPT_UI_FRAMESKIP_DEC,
 	IPT_UI_FRAMESKIP_INC,
@@ -415,7 +416,7 @@ struct _input_port_default_entry
 	input_seq	defaultincseq;	/* default input sequence to increment (analog ports only) */
 	input_seq	defaultdecseq;	/* default input sequence to decrement (analog ports only) */
 };
-typedef struct _input_port_default_entry input_port_default_entry;
+/* In mamecore.h: typedef struct _input_port_default_entry input_port_default_entry; */
 
 
 struct _input_port_entry
@@ -446,9 +447,9 @@ struct _input_port_entry
 								/* the same time. 4WAY prevents diagonal directions. */
 								/* 2WAY should be used for joysticks wich move only */
 								/* on one axis (e.g. Battle Zone) */
+	UINT16		category;		/* (MESS-specific) category */
 	const char *name;			/* user-friendly name to display */
 	input_seq	seq;			/* input sequence affecting the input bits */
-	UINT16		category;		/* (MESS-specific) category */
 
 	/* valid if type is between __ipt_analog_start and __ipt_analog_end */
 	struct
@@ -488,7 +489,7 @@ struct _input_port_entry
 	} keyboard;
 #endif
 };
-typedef struct _input_port_entry input_port_entry;
+/* In mamecore.h: typedef struct _input_port_entry input_port_entry; */
 
 
 

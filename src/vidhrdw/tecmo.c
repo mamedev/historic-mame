@@ -5,7 +5,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "generic.h"
 
 unsigned char *tecmo_txvideoram,*tecmo_fgvideoram,*tecmo_bgvideoram;
 

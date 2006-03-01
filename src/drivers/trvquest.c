@@ -40,7 +40,6 @@ Graphics hardware is the same used in gameplan.c
 
 #include "driver.h"
 #include "machine/6522via.h"
-#include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
 
 static int cmd,portA;

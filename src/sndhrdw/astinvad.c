@@ -15,7 +15,6 @@
  */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/samples.h"
 
 extern void astinvad_set_flash(int flag);

@@ -1,7 +1,6 @@
 /* the way I hooked up the CTC is most likely completely wrong */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "machine/z80ctc.h"
 #include "cpu/z80/z80daisy.h"
 

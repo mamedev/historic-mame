@@ -71,7 +71,6 @@ Recordbr: loads of unmapped IOC reads and writes.
 
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sndhrdw/taitosnd.h"
 #include "vidhrdw/taitoic.h"
 #include "sound/2610intf.h"

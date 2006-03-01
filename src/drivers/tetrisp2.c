@@ -34,7 +34,6 @@ Notes:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/ymz280b.h"
 
 UINT16 tetrisp2_systemregs[0x10];
@@ -44,8 +43,8 @@ UINT16 rockn_protectdata;
 UINT16 rockn_adpcmbank;
 UINT16 rockn_soundvolume;
 
-static void *rockn_timer_l4;
-static void *rockn_timer_sub_l4;
+static mame_timer *rockn_timer_l4;
+static mame_timer *rockn_timer_sub_l4;
 
 /* Variables defined in vidhrdw: */
 
@@ -1030,6 +1029,12 @@ DRIVER_INIT( rockn_timer )
 {
 	timer_pulse(TIME_IN_MSEC(32), 0, rockn_timer_level1_callback);
 	rockn_timer_l4 = timer_alloc(rockn_timer_level4_callback);
+
+	state_save_register_global_array(tetrisp2_systemregs);
+	state_save_register_global_array(rocknms_sub_systemregs);
+	state_save_register_global(rockn_protectdata);
+	state_save_register_global(rockn_adpcmbank);
+	state_save_register_global(rockn_soundvolume);
 }
 
 DRIVER_INIT( rockn )
@@ -1611,12 +1616,12 @@ ROM_END
 
 ***************************************************************************/
 
-GAME( 1997, tetrisp2, 0,        tetrisp2, tetrisp2, 0,       ROT0,   "Jaleco / The Tetris Company", "Tetris Plus 2 (World?)", 0 )
-GAME( 1997, teplus2j, tetrisp2, tetrisp2, teplus2j, 0,       ROT0,   "Jaleco / The Tetris Company", "Tetris Plus 2 (Japan)", 0 )
+GAME( 1997, tetrisp2, 0,        tetrisp2, tetrisp2, 0,       ROT0,   "Jaleco / The Tetris Company", "Tetris Plus 2 (World?)", GAME_SUPPORTS_SAVE )
+GAME( 1997, teplus2j, tetrisp2, tetrisp2, teplus2j, 0,       ROT0,   "Jaleco / The Tetris Company", "Tetris Plus 2 (Japan)", GAME_SUPPORTS_SAVE )
 
-GAME( 1999, rockn,    0,        rockn,    rockn,   rockn,    ROT270, "Jaleco", "Rock'n Tread (Japan)", 0)
-GAME( 1999, rockna,   rockn,    rockn,    rockn,   rockn1,   ROT270, "Jaleco", "Rock'n Tread (Japan, alternate)", 0)
-GAME( 1999, rockn2,   0,        rockn2,   rockn,   rockn2,   ROT270, "Jaleco", "Rock'n Tread 2 (Japan)", 0)
-GAME( 1999, rocknms,  0,        rocknms,  rocknms, rocknms,  ROT0,   "Jaleco", "Rock'n MegaSession (Japan)", GAME_IMPERFECT_GRAPHICS )
-GAME( 1999, rockn3,   0,        rockn2,   rockn,   rockn3,   ROT270, "Jaleco", "Rock'n 3 (Japan)", 0)
-GAME( 2000, rockn4,   0,        rockn2,   rockn,   rockn3,   ROT270, "Jaleco (PCCWJ)", "Rock'n 4 (Japan, prototype)", 0)
+GAME( 1999, rockn,    0,        rockn,    rockn,   rockn,    ROT270, "Jaleco", "Rock'n Tread (Japan)", GAME_SUPPORTS_SAVE)
+GAME( 1999, rockna,   rockn,    rockn,    rockn,   rockn1,   ROT270, "Jaleco", "Rock'n Tread (Japan, alternate)", GAME_SUPPORTS_SAVE)
+GAME( 1999, rockn2,   0,        rockn2,   rockn,   rockn2,   ROT270, "Jaleco", "Rock'n Tread 2 (Japan)", GAME_SUPPORTS_SAVE)
+GAME( 1999, rocknms,  0,        rocknms,  rocknms, rocknms,  ROT0,   "Jaleco", "Rock'n MegaSession (Japan)", GAME_IMPERFECT_GRAPHICS | GAME_SUPPORTS_SAVE )
+GAME( 1999, rockn3,   0,        rockn2,   rockn,   rockn3,   ROT270, "Jaleco", "Rock'n 3 (Japan)", GAME_SUPPORTS_SAVE)
+GAME( 2000, rockn4,   0,        rockn2,   rockn,   rockn3,   ROT270, "Jaleco (PCCWJ)", "Rock'n 4 (Japan, prototype)", GAME_SUPPORTS_SAVE)

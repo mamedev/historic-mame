@@ -127,7 +127,6 @@ Dumped by Chackn
 
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "machine/segacrpt.h"
 #include "sound/2203intf.h"

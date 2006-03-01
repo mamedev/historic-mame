@@ -12,7 +12,6 @@ driver by David Haywood and few bits by Pierpaolo Prazzoli
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/2203intf.h"
 
 static int out = 0;

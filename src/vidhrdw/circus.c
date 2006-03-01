@@ -11,7 +11,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "artwork.h"
 #include "sound/samples.h"
 #include "circus.h"

@@ -5,6 +5,7 @@
 
 #include <math.h>
 #include "driver.h"
+#include "streams.h"
 #include "cpuintrf.h"
 #include "st0016.h"
 
@@ -15,7 +16,7 @@ UINT8 *st0016_sound_regs;
 struct st0016_info
 {
 	sound_stream * stream;
-	UINT8 *sound_ram;
+	UINT8 **sound_ram;
 	int vpos[8], frac[8], lponce[8];
 };
 
@@ -53,6 +54,7 @@ WRITE8_HANDLER(st0016_snd_w)
 static void st0016_update(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int length)
 {
 	struct st0016_info *info = param;
+	UINT8 *sound_ram = *info->sound_ram;
 	int v, i, snum;
 	unsigned char *slot;
 	INT32 mix[48000*2];
@@ -78,7 +80,7 @@ static void st0016_update(void *param, stream_sample_t **inputs, stream_sample_t
 
 			for (snum = 0; snum < length; snum++)
 			{
-				sample = info->sound_ram[(sptr + info->vpos[v])&0x1fffff]<<8;
+				sample = sound_ram[(sptr + info->vpos[v])&0x1fffff]<<8;
 
 				*mixp++ += (sample * (char)slot[0x14]) >> 8;
 				*mixp++ += (sample * (char)slot[0x15]) >> 8;
@@ -133,7 +135,7 @@ static void *st0016_start(int sndindex, int clock, const void *config)
 	info = auto_malloc(sizeof(*info));
 	memset(info, 0, sizeof(*info));
 
-	info->sound_ram = *(intf->p_soundram);
+	info->sound_ram = intf->p_soundram;
 
 	info->stream = stream_create(0, 2, 44100, info, st0016_update);
 
@@ -146,7 +148,7 @@ static void *st0016_start(int sndindex, int clock, const void *config)
  * Generic get_info
  **************************************************************************/
 
-static void st0016_set_info(void *token, UINT32 state, union sndinfo *info)
+static void st0016_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -155,7 +157,7 @@ static void st0016_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void st0016_get_info(void *token, UINT32 state, union sndinfo *info)
+void st0016_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

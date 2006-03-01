@@ -14,7 +14,6 @@ TODO: add depth cueing support (palette bank selection using most significant bi
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "namcos2.h"
 #include "namcoic.h"
 #include "namcos21.h"

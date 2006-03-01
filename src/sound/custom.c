@@ -51,7 +51,7 @@ static void custom_reset(void *token)
  * Generic get_info
  **************************************************************************/
 
-static void custom_set_info(void *token, UINT32 state, union sndinfo *info)
+static void custom_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -60,7 +60,7 @@ static void custom_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void custom_get_info(void *token, UINT32 state, union sndinfo *info)
+void custom_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

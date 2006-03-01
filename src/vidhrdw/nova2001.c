@@ -32,7 +32,7 @@
 
 *******************************************************************************/
 
-#include "vidhrdw/generic.h"
+#include "driver.h"
 
 UINT8 *nova2001_videoram2, *nova2001_colorram2;
 

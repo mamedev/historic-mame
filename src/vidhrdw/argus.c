@@ -116,7 +116,6 @@ BG0 palette intensity ( $C47F, $C4FF )
 
 #include "driver.h"
 #include "tilemap.h"
-#include "vidhrdw/generic.h"
 
 
 #define BUTASAN_TEXT_RAMSIZE		0x0800

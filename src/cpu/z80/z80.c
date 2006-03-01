@@ -3757,7 +3757,7 @@ static void z80_init(void)
 		SZHVC_sub = (UINT8 *)malloc(2*256*256);
 		if( !SZHVC_add || !SZHVC_sub )
 		{
-			osd_die("Z80: failed to allocate 2 * 128K flags arrays!!!\n");
+			fatalerror("Z80: failed to allocate 2 * 128K flags arrays!!!");
 		}
 		padd = &SZHVC_add[	0*256];
 		padc = &SZHVC_add[256*256];

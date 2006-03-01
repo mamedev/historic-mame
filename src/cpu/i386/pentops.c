@@ -30,7 +30,7 @@ static void PENTIUMOP(cmpxchg8b_m64)(void)	// Opcode 0x0f c7
 {
 	UINT8 modm = FETCH();
 	if( modm >= 0xc0 ) {
-		osd_die("invalid modm");
+		fatalerror("invalid modm");
 	} else {
 		UINT32 ea = GetEA(modm);
 		UINT64 value = READ64(ea);

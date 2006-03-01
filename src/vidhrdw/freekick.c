@@ -1,7 +1,6 @@
 /* Free Kick Video Hardware */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 tilemap *freek_tilemap;
 UINT8 *freek_videoram;

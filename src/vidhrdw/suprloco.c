@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "generic.h"
 
 unsigned char *suprloco_videoram;
 

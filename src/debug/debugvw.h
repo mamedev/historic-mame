@@ -13,17 +13,18 @@
 #define __DEBUGVIEW_H__
 
 
-/*###################################################################################################
-**  CONSTANTS
-**#################################################################################################*/
+/***************************************************************************
+    CONSTANTS
+***************************************************************************/
 
 /* types passed to debug_view_alloc */
 #define DVT_CONSOLE							(1)
 #define DVT_REGISTERS						(2)
 #define DVT_DISASSEMBLY						(3)
 #define DVT_MEMORY							(4)
-#define DVT_TIMERS							(5)
-#define DVT_ALLOCS							(6)
+#define DVT_LOG								(5)
+#define DVT_TIMERS							(6)
+#define DVT_ALLOCS							(7)
 
 /* properties available for all views */
 #define DVP_VISIBLE_ROWS					(1)		/* r/w - UINT32 */
@@ -48,19 +49,25 @@
 #define DVP_DASM_CPUNUM						(100)	/* r/w - UINT32 */
 #define DVP_DASM_EXPRESSION					(101)	/* r/w - const char * */
 #define DVP_DASM_TRACK_LIVE					(102)	/* r/w - UINT32 */
-#define DVP_DASM_DISPLAY_RAW				(103)	/* r/w - UINT32 */
-#define DVP_DASM_DISPLAY_ENCRYPTED			(104)	/* r/w - UINT32 */
-#define DVP_DASM_BACKWARD_STEPS				(105)	/* r/w - UINT32 */
-#define DVP_DASM_WIDTH						(106)	/* r/w - UINT32 */
+#define DVP_DASM_RIGHT_COLUMN				(103)	/* r/w - UINT32 */
+#define   DVP_DASM_RIGHTCOL_NONE			(0)
+#define   DVP_DASM_RIGHTCOL_RAW				(1)
+#define   DVP_DASM_RIGHTCOL_ENCRYPTED		(2)
+#define   DVP_DASM_RIGHTCOL_COMMENTS		(3)
+#define DVP_DASM_BACKWARD_STEPS				(104)	/* r/w - UINT32 */
+#define DVP_DASM_WIDTH						(105)	/* r/w - UINT32 */
 
 /* properties available for memory views */
 #define DVP_MEM_CPUNUM						(100)	/* r/w - UINT32 */
-#define DVP_MEM_EXPRESSION					(101)	/* const char * */
-#define DVP_MEM_TRACK_LIVE					(102)	/* UINT32 */
-#define DVP_MEM_SPACENUM					(103)	/* UINT32 */
-#define DVP_MEM_BYTES_PER_CHUNK				(104)	/* UINT32 */
-#define DVP_MEM_REVERSE_VIEW				(105)	/* UINT32 */
-#define DVP_MEM_ASCII_VIEW					(106)	/* UINT32 */
+#define DVP_MEM_EXPRESSION					(101)	/* r/w - const char * */
+#define DVP_MEM_TRACK_LIVE					(102)	/* r/w - UINT32 */
+#define DVP_MEM_SPACENUM					(103)	/* r/w - UINT32 */
+#define DVP_MEM_BYTES_PER_CHUNK				(104)	/* r/w - UINT32 */
+#define DVP_MEM_REVERSE_VIEW				(105)	/* r/w - UINT32 */
+#define DVP_MEM_ASCII_VIEW					(106)	/* r/w - UINT32 */
+
+/* properties available for textbuffer views */
+#define DVP_TEXTBUF_LINE_LOCK				(100)	/* r/w - UINT32 */
 
 /* attribute bits for debug_view_char.attrib */
 #define DCA_NORMAL							(0x00)	/* in Windows: black on white */
@@ -70,6 +77,7 @@
 #define DCA_DISABLED						(0x08)	/* in Windows: darker foreground */
 #define DCA_ANCILLARY						(0x10)	/* in Windows: grey background */
 #define DCA_CURRENT							(0x20)	/* in Windows: yellow background */
+#define DCA_COMMENT							(0x40)	/* in Windows: green foreground */
 
 /* special characters that can be passed as a DVP_CHARACTER */
 #define DCH_UP								(1)		/* up arrow */
@@ -79,15 +87,15 @@
 
 
 
-/*###################################################################################################
-**  MACROS
-**#################################################################################################*/
+/***************************************************************************
+    MACROS
+***************************************************************************/
 
 
 
-/*###################################################################################################
-**  TYPE DEFINITIONS
-**#################################################################################################*/
+/***************************************************************************
+    TYPE DEFINITIONS
+***************************************************************************/
 
 /* opaque structure representing a debug view */
 typedef struct _debug_view debug_view;
@@ -113,9 +121,9 @@ typedef union _debug_property_info debug_property_info;
 
 
 
-/*###################################################################################################
-**  FUNCTION PROTOTYPES
-**#################################################################################################*/
+/***************************************************************************
+    FUNCTION PROTOTYPES
+***************************************************************************/
 
 /* initialization */
 void				debug_view_init(void);
@@ -135,11 +143,14 @@ void				debug_view_end_update(debug_view *view);
 void				debug_view_update_all(void);
 void				debug_view_update_type(int type);
 
+/* misc stuff */
+void				debug_view_add_to_errorlog(const char *text);
 
 
-/*###################################################################################################
-**  INLINE HELPERS
-**#################################################################################################*/
+
+/***************************************************************************
+    INLINE HELPERS
+***************************************************************************/
 
 INLINE UINT32 debug_view_get_property_UINT32(debug_view *view, int property)
 {

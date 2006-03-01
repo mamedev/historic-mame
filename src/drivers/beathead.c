@@ -101,7 +101,6 @@
 #include "cpu/asap/asap.h"
 #include "machine/atarigen.h"
 #include "sndhrdw/atarijsa.h"
-#include "vidhrdw/generic.h"
 #include "beathead.h"
 
 

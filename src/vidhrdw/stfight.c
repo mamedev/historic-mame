@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 // Real stuff
 unsigned char *stfight_text_char_ram;

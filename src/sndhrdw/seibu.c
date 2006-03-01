@@ -33,6 +33,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "streams.h"
 #include "sndhrdw/seibu.h"
 #include "sound/3812intf.h"
 #include "sound/2151intf.h"

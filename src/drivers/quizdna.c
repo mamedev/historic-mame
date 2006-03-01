@@ -9,7 +9,6 @@ Quiz Gekiretsu Scramble (Gakuen Paradise 2) (c) 1993 Face
 *****************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/2203intf.h"
 #include "sound/okim6295.h"
 

@@ -30,7 +30,6 @@ RAM: 6117on ROM board and (24) MCM4517s on main board
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "machine/8255ppi.h"
 #include "sound/dac.h"
 

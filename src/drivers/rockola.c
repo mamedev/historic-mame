@@ -122,7 +122,6 @@ Interrupts: VBlank causes an IRQ. Coin insertion causes a NMI.
 
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/crtc6845.h"
 #include "machine/random.h"
 #include "sound/sn76477.h"

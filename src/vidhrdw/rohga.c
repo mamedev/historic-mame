@@ -5,7 +5,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "deco16ic.h"
 
 static UINT16 * rohga_spriteram;

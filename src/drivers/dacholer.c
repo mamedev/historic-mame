@@ -12,7 +12,6 @@
 ******************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 static UINT8 *bgvideoram,*fgvideoram;
 static int bg_bank = 0;

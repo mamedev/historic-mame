@@ -16,7 +16,6 @@
 
 #include "driver.h"
 #include "cpu/z80/z80.h"
-#include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
 
 

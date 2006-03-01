@@ -10,6 +10,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "streams.h"
 #include <math.h>
 
 #define VERBOSE			(0)
@@ -224,6 +225,8 @@ void streams_frame_update(void)
 
 							/* first remove any samples */
 							str->input[inputnum].source_frac -= samples_to_remove << FRAC_BITS;
+							if ((INT32)str->input[inputnum].source_frac < 0)
+								str->input[inputnum].source_frac = 0;
 
 							/* if this input is further behind, note it */
 							if (str->input[inputnum].source_frac < min_source_frac)
@@ -354,11 +357,11 @@ void stream_set_input(sound_stream *stream, int index, sound_stream *input_strea
 
 	/* make sure it's a valid input */
 	if (index >= stream->inputs)
-		osd_die("Fatal error: stream_set_input attempted to configure non-existant input %d (%d max)\n", index, stream->inputs);
+		fatalerror("Fatal error: stream_set_input attempted to configure non-existant input %d (%d max)", index, stream->inputs);
 
 	/* make sure it's a valid output */
 	if (input_stream && output_index >= input_stream->outputs)
-		osd_die("Fatal error: stream_set_input attempted to use a non-existant output %d (%d max)\n", output_index, input_stream->outputs);
+		fatalerror("Fatal error: stream_set_input attempted to use a non-existant output %d (%d max)", output_index, input_stream->outputs);
 
 	/* if this input is already wired, update the dependent info */
 	input = &stream->input[index];

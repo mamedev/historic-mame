@@ -175,7 +175,6 @@ NEP-16
 
 #include "driver.h"
 #include "machine/random.h"
-#include "vidhrdw/generic.h"
 #include "sound/ymz280b.h"
 #include <time.h>
 

@@ -15,7 +15,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/2203intf.h"
 
 static tilemap *suprgolf_tilemap;

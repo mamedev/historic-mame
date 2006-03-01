@@ -224,7 +224,6 @@ Interrupts:
 #include "driver.h"
 #include "qix.h"
 #include "machine/6821pia.h"
-#include "vidhrdw/generic.h"
 #include "sound/sn76496.h"
 #include "sound/discrete.h"
 

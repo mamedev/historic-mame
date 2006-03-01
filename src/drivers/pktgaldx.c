@@ -57,7 +57,6 @@ bootleg todo:
 #include "decocrpt.h"
 #include "decoprot.h"
 #include "deco16ic.h"
-#include "vidhrdw/generic.h"
 #include "sound/okim6295.h"
 
 VIDEO_START(pktgaldx);

@@ -122,7 +122,6 @@ OSC3: 48.384MHz
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
 #include "namconb1.h"
 #include "namcos2.h"

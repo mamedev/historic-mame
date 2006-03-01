@@ -261,6 +261,7 @@ Notes:
 
 ***************************************************************************/
 
+#include <stdarg.h>
 #include "driver.h"
 #include "cpu/mips/psx.h"
 #include "includes/psx.h"

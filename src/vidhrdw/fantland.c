@@ -56,7 +56,7 @@
 
 ***************************************************************************/
 
-#include "vidhrdw/generic.h"
+#include "driver.h"
 
 static void fantland_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {

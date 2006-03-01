@@ -36,7 +36,6 @@ lev 7 : 0x7c : 0000 0000 - x
 
 #include "driver.h"
 #include "cpu/pic16c5x/pic16c5x.h"
-#include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
 #include "sound/okim6295.h"
 

@@ -43,7 +43,6 @@ ROMs 6A, 7A, 8A, 9A: 2764
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/sn76496.h"
 
 

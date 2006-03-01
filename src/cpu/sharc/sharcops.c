@@ -111,13 +111,13 @@ static void systemreg_latency_op(void)
 				sharc.mode1 = data;
 
 				if (data & 0x1) {
-					osd_die("SHARC: systemreg_latency_op: enable I8 bit-reversing");
+					fatalerror("SHARC: systemreg_latency_op: enable I8 bit-reversing");
 				}
 				if (data & 0x2) {
-					osd_die("SHARC: systemreg_latency_op: enable I0 bit-reversing");
+					fatalerror("SHARC: systemreg_latency_op: enable I0 bit-reversing");
 				}
 				if (data & 0x4) {
-					osd_die("SHARC: systemreg_latency_op: enable MR alternate");
+					fatalerror("SHARC: systemreg_latency_op: enable MR alternate");
 				}
 
 				if ((data & 0x8) != (oldreg & 0x8))			/* Switch DAG1 7-4 */
@@ -224,7 +224,7 @@ static void systemreg_latency_op(void)
 			case 0xc:	sharc.astat = data; break;		/* ASTAT */
 			case 0xd:	sharc.imask = data; break;		/* IMASK */
 			case 0xe:	sharc.stky = data; break;		/* STKY */
-			default:	osd_die("SHARC: systemreg_latency_op: unknown register %02X at %08X\n", systemreg_latency_reg, sharc.pc);
+			default:	fatalerror("SHARC: systemreg_latency_op: unknown register %02X at %08X", systemreg_latency_reg, sharc.pc);
 		}
 
 		systemreg_latency_reg = -1;
@@ -294,7 +294,7 @@ static UINT32 GET_UREG(int ureg)
 			switch(reg)
 			{
 				case 0x4:	return sharc.pcstack[sharc.pcstkp];		/* PCSTK */
-				default:	osd_die("SHARC: GET_UREG: unknown register %08X at %08X\n", ureg, sharc.pc);
+				default:	fatalerror("SHARC: GET_UREG: unknown register %08X at %08X", ureg, sharc.pc);
 			}
 			break;
 		}
@@ -320,7 +320,7 @@ static UINT32 GET_UREG(int ureg)
 					case 0xe:	return systemreg_latency_data;		/* STKY */
 
 					// TODO: IMASKP has a read latency of one cycle
-					default:	osd_die("SHARC: GET_UREG: unknown register %08X at %08X\n", ureg, sharc.pc);
+					default:	fatalerror("SHARC: GET_UREG: unknown register %08X at %08X", ureg, sharc.pc);
 				}
 			}
 			else		// the register is not the same we wrote on the last cycle
@@ -335,7 +335,7 @@ static UINT32 GET_UREG(int ureg)
 					case 0xc:	return sharc.astat;			/* ASTAT */
 					case 0xd:	return sharc.imask;			/* IMASK */
 					case 0xe:	return sharc.stky;			/* STKY */
-					default:	osd_die("SHARC: GET_UREG: unknown register %08X at %08X\n", ureg, sharc.pc);
+					default:	fatalerror("SHARC: GET_UREG: unknown register %08X at %08X", ureg, sharc.pc);
 				}
 			}
 			break;
@@ -349,12 +349,12 @@ static UINT32 GET_UREG(int ureg)
 				case 0xb:	return (UINT32)(sharc.px);			/* PX */
 				case 0xc:	return (UINT16)(sharc.px);			/* PX1 */
 				case 0xd:	return (UINT32)(sharc.px >> 16);	/* PX2 */
-				default:	osd_die("SHARC: GET_UREG: unknown register %08X at %08X\n", ureg, sharc.pc);
+				default:	fatalerror("SHARC: GET_UREG: unknown register %08X at %08X", ureg, sharc.pc);
 			}
 			break;
 		}
 
-		default:			osd_die("SHARC: GET_UREG: unknown register %08X at %08X\n", ureg, sharc.pc);
+		default:			fatalerror("SHARC: GET_UREG: unknown register %08X at %08X", ureg, sharc.pc);
 	}
 }
 
@@ -415,7 +415,7 @@ static void SET_UREG(int ureg, UINT32 data)
 			switch (reg)
 			{
 				case 0x5:	sharc.pcstkp = data; break;		/* PCSTKP */
-				default:	osd_die("SHARC: SET_UREG: unknown register %08X at %08X\n", ureg, sharc.pc);
+				default:	fatalerror("SHARC: SET_UREG: unknown register %08X at %08X", ureg, sharc.pc);
 			}
 			break;
 
@@ -433,7 +433,7 @@ static void SET_UREG(int ureg, UINT32 data)
 				case 0xc:	add_systemreg_write(reg, data); break;		/* ASTAT */
 				case 0xd:	add_systemreg_write(reg, data); break;		/* IMASK */
 				case 0xe:	add_systemreg_write(reg, data); break;		/* STKY */
-				default:	osd_die("SHARC: SET_UREG: unknown register %08X at %08X\n", ureg, sharc.pc);
+				default:	fatalerror("SHARC: SET_UREG: unknown register %08X at %08X", ureg, sharc.pc);
 			}
 			break;
 
@@ -442,11 +442,11 @@ static void SET_UREG(int ureg, UINT32 data)
 			{
 				case 0xc:	sharc.px &= U64(0xffffffffffff0000); sharc.px |= (data & 0xffff); break;		/* PX1 */
 				case 0xd:	sharc.px &= U64(0x000000000000ffff); sharc.px |= (UINT64)data << 16; break;		/* PX2 */
-				default:	osd_die("SHARC: SET_UREG: unknown register %08X at %08X\n", ureg, sharc.pc);
+				default:	fatalerror("SHARC: SET_UREG: unknown register %08X at %08X", ureg, sharc.pc);
 			}
 			break;
 
-		default:			osd_die("SHARC: SET_UREG: unknown register %08X at %08X\n", ureg, sharc.pc);
+		default:			fatalerror("SHARC: SET_UREG: unknown register %08X at %08X", ureg, sharc.pc);
 	}
 }
 
@@ -638,7 +638,7 @@ static void SHIFT_OPERATION_IMM(int shiftop, int data, int rn, int rx)
 			break;
 		}
 
-		default:	osd_die("SHARC: unimplemented shift operation %02X at %08X\n", shiftop, sharc.pc);
+		default:	fatalerror("SHARC: unimplemented shift operation %02X at %08X", shiftop, sharc.pc);
 	}
 }
 
@@ -729,7 +729,7 @@ static void COMPUTE(UINT32 opcode)
 			}
 
 			default:
-				osd_die("SHARC: compute: multi-function opcode %02X not implemented ! (%08X, %08X)", multiop, sharc.pc, opcode);
+				fatalerror("SHARC: compute: multi-function opcode %02X not implemented ! (%08X, %08X)", multiop, sharc.pc, opcode);
 				break;
 		}
 	}
@@ -791,7 +791,7 @@ static void COMPUTE(UINT32 opcode)
 						break;
 					}
 
-					default:		osd_die("SHARC: compute: unimplemented ALU operation %02X (%08X, %08X)", op, sharc.pc, opcode);
+					default:		fatalerror("SHARC: compute: unimplemented ALU operation %02X (%08X, %08X)", op, sharc.pc, opcode);
 				}
 				break;
 			}
@@ -813,7 +813,7 @@ static void COMPUTE(UINT32 opcode)
 					case 0xb2:		REG(rn) = compute_mrb_plus_mul_ssin(rx, ry); break;
 
 					default:
-						osd_die("SHARC: compute: multiplier operation %02X not implemented ! (%08X, %08X)", op, sharc.pc, opcode);
+						fatalerror("SHARC: compute: multiplier operation %02X not implemented ! (%08X, %08X)", op, sharc.pc, opcode);
 						break;
 				}
 				break;
@@ -984,13 +984,13 @@ static void COMPUTE(UINT32 opcode)
 					}
 
 					default:
-						osd_die("SHARC: compute: shift operation %02X not implemented ! (%08X, %08X)", op, sharc.pc, opcode);
+						fatalerror("SHARC: compute: shift operation %02X not implemented ! (%08X, %08X)", op, sharc.pc, opcode);
 				}
 				break;
 			}
 
 			default:
-				osd_die("SHARC: compute: invalid single-function operation %02X", cu);
+				fatalerror("SHARC: compute: invalid single-function operation %02X", cu);
 		}
 	}
 }
@@ -999,7 +999,7 @@ INLINE void PUSH_PC(UINT32 pc)
 {
 	sharc.pcstkp++;
 	if(sharc.pcstkp >= 32) {
-		osd_die("SHARC: PC Stack overflow !\n");
+		fatalerror("SHARC: PC Stack overflow !");
 	}
 
 	if (sharc.pcstkp == 0)
@@ -1020,7 +1020,7 @@ INLINE UINT32 POP_PC(void)
 	sharc.pcstk = sharc.pcstack[sharc.pcstkp];
 	sharc.pcstkp--;
 	if(sharc.pcstkp < 0) {
-		osd_die("SHARC: PC Stack underflow !\n");
+		fatalerror("SHARC: PC Stack underflow !");
 	}
 
 	if (sharc.pcstkp == 0)
@@ -1044,7 +1044,7 @@ INLINE void PUSH_LOOP(UINT32 pc, UINT32 count)
 {
 	sharc.lstkp++;
 	if(sharc.lstkp >= 6) {
-		osd_die("SHARC: Loop Stack overflow !\n");
+		fatalerror("SHARC: Loop Stack overflow !");
 	}
 
 	if (sharc.lstkp == 0)
@@ -1066,7 +1066,7 @@ INLINE void POP_LOOP(void)
 {
 	sharc.lstkp--;
 	if(sharc.lstkp < 0) {
-		osd_die("SHARC: Loop Stack underflow !\n");
+		fatalerror("SHARC: Loop Stack underflow !");
 	}
 
 	if (sharc.lstkp == 0)
@@ -1086,7 +1086,7 @@ INLINE void PUSH_STATUS_REG(UINT32 value)
 {
 	sharc.status_stkp++;
 	if (sharc.status_stkp >= 8) {
-		osd_die("SHARC: Status stack overflow !\n");
+		fatalerror("SHARC: Status stack overflow !");
 	}
 	if (sharc.status_stkp == 0)
 	{
@@ -1103,7 +1103,7 @@ INLINE UINT32 POP_STATUS_REG(void)
 {
 	sharc.status_stkp--;
 	if (sharc.status_stkp < 0) {
-		osd_die("SHARC: Status stack underflow !\n");
+		fatalerror("SHARC: Status stack underflow !");
 	}
 	if (sharc.status_stkp == 0)
 	{
@@ -1254,7 +1254,7 @@ static void sharcop_sysreg_bitop(void)
 			}
 			break;
 		default:
-			osd_die("SHARC: sysreg_bitop: invalid bitop %d\n", bop);
+			fatalerror("SHARC: sysreg_bitop: invalid bitop %d", bop);
 			break;
 	}
 
@@ -2131,7 +2131,7 @@ static void sharcop_rts(void)
 	int compute = sharc.opcode & 0x7fffff;
 
 	//if(lr)
-	//  osd_die("SHARC: rts: loop reentry not implemented !\n");
+	//  fatalerror("SHARC: rts: loop reentry not implemented !");
 
 	if(e) {		/* IF...ELSE */
 		if(IF_CONDITION_CODE(cond)) {
@@ -2277,19 +2277,19 @@ static void sharcop_push_pop_stacks(void)
 {
 	if (sharc.opcode & U64(0x008000000000))
 	{
-		osd_die("sharcop_push_pop_stacks: push loop not implemented\n");
+		fatalerror("sharcop_push_pop_stacks: push loop not implemented");
 	}
 	if (sharc.opcode & U64(0x004000000000))
 	{
-		osd_die("sharcop_push_pop_stacks: pop loop not implemented\n");
+		fatalerror("sharcop_push_pop_stacks: pop loop not implemented");
 	}
 	if (sharc.opcode & U64(0x002000000000))
 	{
-		osd_die("sharcop_push_pop_stacks: push sts not implemented\n");
+		fatalerror("sharcop_push_pop_stacks: push sts not implemented");
 	}
 	if (sharc.opcode & U64(0x001000000000))
 	{
-		osd_die("sharcop_push_pop_stacks: pop sts not implemented\n");
+		fatalerror("sharcop_push_pop_stacks: pop sts not implemented");
 	}
 	if (sharc.opcode & U64(0x000800000000))
 	{
@@ -2317,8 +2317,8 @@ static void sharcop_unimplemented(void)
 	char dasm[1000];
 	sharc_dasm(dasm, sharc.pc);
 	printf("SHARC: %08X: %s\n", sharc.pc, dasm);
-	osd_die("SHARC: Unimplemented opcode %04X%08X at %08X\n", (UINT16)(sharc.opcode >> 32), (UINT32)(sharc.opcode), sharc.pc);
+	fatalerror("SHARC: Unimplemented opcode %04X%08X at %08X", (UINT16)(sharc.opcode >> 32), (UINT32)(sharc.opcode), sharc.pc);
 #else
-	osd_die("SHARC: Unimplemented opcode %04X%08X at %08X\n", (UINT16)(sharc.opcode >> 32), (UINT32)(sharc.opcode), sharc.pc);
+	fatalerror("SHARC: Unimplemented opcode %04X%08X at %08X", (UINT16)(sharc.opcode >> 32), (UINT32)(sharc.opcode), sharc.pc);
 #endif
 }

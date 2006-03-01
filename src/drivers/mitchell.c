@@ -82,7 +82,6 @@ mw-9.rom = ST M27C1001 / GFX
 
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
 #include "sound/okim6295.h"
 #include "sound/3812intf.h"

@@ -9,7 +9,6 @@ drivers by Acho A. Tang
 // Directives
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 #define BW_DEBUG 0
 

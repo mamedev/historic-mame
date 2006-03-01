@@ -5,6 +5,7 @@
 ****************************************************************/
 
 #include "driver.h"
+#include "streams.h"
 #include "ym2413.h"
 #include "2413intf.h"
 
@@ -156,7 +157,7 @@ WRITE16_HANDLER( YM2413_data_port_3_lsb_w ) { if (ACCESSING_LSB) YM2413_data_por
  * Generic get_info
  **************************************************************************/
 
-static void ym2413_set_info(void *token, UINT32 state, union sndinfo *info)
+static void ym2413_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -165,7 +166,7 @@ static void ym2413_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void ym2413_get_info(void *token, UINT32 state, union sndinfo *info)
+void ym2413_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

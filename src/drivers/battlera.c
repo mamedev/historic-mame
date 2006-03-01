@@ -21,7 +21,6 @@
 **********************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/h6280/h6280.h"
 #include "sound/2203intf.h"
 #include "sound/msm5205.h"

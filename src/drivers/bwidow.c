@@ -214,7 +214,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/vector.h"
 #include "vidhrdw/avgdvg.h"
 #include "machine/atari_vg.h"

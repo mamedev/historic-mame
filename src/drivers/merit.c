@@ -33,7 +33,6 @@ Notes: it's important that REGION_USER1 is 0xa0000 bytes with empty space filled
 
 #include "driver.h"
 #include "machine/8255ppi.h"
-#include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
 
 static tilemap *bg_tilemap;
@@ -891,7 +890,7 @@ ROM_START( phrcrazs )
 	ROM_LOAD( "std3.bin",     0x20000, 0x8000, CRC(5c79a653) SHA1(85a904465b347564e937074e2b18159604c83e51) )
 	ROM_LOAD( "std4.bin",     0x30000, 0x8000, CRC(9837f757) SHA1(01106114b6997fe6432e519101f95c83a1f7cc1e) )
 	ROM_LOAD( "std5.bin",     0x40000, 0x8000, CRC(dc9d8682) SHA1(46973da4298d0ed149c651498527c91b8ba57e0a) )
-	ROM_LOAD( "std6.bin",     0x50000, 0x8000, CRC(011ffca6) SHA1(5188431849b4613152fd7bdba6a3ff0a4fd6424b) )
+	ROM_LOAD( "std6.bin",     0x50000, 0x8000, CRC(48e24f17) SHA1(f50c85505f6ab2360f0885494001f174224f8575) )
 	/* empty space as per instructions for other "sex" category roms */
 	//"Sex" questions revision A
 	ROM_LOAD( "sex1_2a.bin",  0x80000, 0x8000, CRC(7ef3bca7) SHA1(f25cd01f996882a500e1a800d924759cd1de255d) )

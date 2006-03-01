@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
 UINT8 *wc90_fgvideoram,*wc90_bgvideoram,*wc90_txvideoram;

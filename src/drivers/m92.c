@@ -195,7 +195,6 @@ Notes:
 *****************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "m92.h"
 #include "machine/irem_cpu.h"
 #include "sound/2151intf.h"

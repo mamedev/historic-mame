@@ -166,7 +166,6 @@ Notes:  pzlbowl PCB with extra parts:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "machine/tmp68301.h"
 #include "machine/eeprom.h"
 #include "sound/x1_010.h"

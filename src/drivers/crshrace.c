@@ -124,7 +124,6 @@ TODO:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
 #include "sound/2610intf.h"
 #include "crshrace.h"

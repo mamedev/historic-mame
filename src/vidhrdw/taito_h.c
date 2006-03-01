@@ -47,7 +47,6 @@ sprite RAM
 
 #include "driver.h"
 #include "tilemap.h"
-#include "vidhrdw/generic.h"
 #include "taitoic.h"
 
 

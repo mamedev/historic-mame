@@ -46,7 +46,6 @@
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "tms9928a.h"
 
 
@@ -511,7 +510,7 @@ int TMS9928A_interrupt () {
     int b;
 
     /* when skipping frames, calculate sprite collision */
-    if (osd_skip_this_frame() ) {
+    if (skip_this_frame() ) {
         if (tms.Change) {
             if (TMS_SPRITES_ENABLED) {
                 _TMS9928A_sprites (NULL);

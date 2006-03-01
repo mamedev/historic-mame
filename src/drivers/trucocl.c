@@ -33,7 +33,6 @@ Daughterboard: Custom made, plugged in the 2 roms and Z80 mainboard sockets.
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/dac.h"
 
 /* from vidhrdw */

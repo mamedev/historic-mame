@@ -1165,7 +1165,7 @@ static void shuffle(UINT16 *buf,int len)
 
 	if (len == 2) return;
 
-	if (len % 4) osd_die("shuffle() - not modulo 4\n");   /* must not happen */
+	if (len % 4) fatalerror("shuffle() - not modulo 4");   /* must not happen */
 
 	len /= 2;
 

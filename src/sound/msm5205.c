@@ -19,6 +19,7 @@
 #include <math.h>
 
 #include "driver.h"
+#include "streams.h"
 #include "msm5205.h"
 
 /*
@@ -173,7 +174,7 @@ static void *msm5205_start(int sndindex, int clock, const void *config)
 
 	voice = auto_malloc(sizeof(*voice));
 	memset(voice, 0, sizeof(*voice));
-	sound_register_token(voice);
+	sndintrf_register_token(voice);
 
 	/* save a global pointer to our interface */
 	voice->intf = config;
@@ -299,7 +300,7 @@ void MSM5205_set_volume(int num,int volume)
  * Generic get_info
  **************************************************************************/
 
-static void msm5205_set_info(void *token, UINT32 state, union sndinfo *info)
+static void msm5205_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -308,7 +309,7 @@ static void msm5205_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void msm5205_get_info(void *token, UINT32 state, union sndinfo *info)
+void msm5205_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

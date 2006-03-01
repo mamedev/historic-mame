@@ -140,7 +140,6 @@ Rowscroll style:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 UINT16 *deco16_pf1_data,*deco16_pf2_data;
 UINT16 *deco16_pf3_data,*deco16_pf4_data;
@@ -541,22 +540,22 @@ static int deco16_video_init(int pf12_only, int split, int full_width)
 	dirty_palette = auto_malloc(4096);
 	deco16_raster_display_list=auto_malloc(20 * 256);
 
-	if (!dirty_palette || !pf1_tilemap_8x8 || !pf2_tilemap_8x8 || !pf1_tilemap_16x16 || !pf2_tilemap_16x16 || !deco16_raster_display_list || !sprite_priority_bitmap)
+	if (!pf1_tilemap_8x8 || !pf2_tilemap_8x8 || !pf1_tilemap_16x16 || !pf2_tilemap_16x16 || !sprite_priority_bitmap)
 		return 1;
 
 	if (!pf12_only)
 	{
 		pf4_tilemap_16x16 =	tilemap_create(get_pf4_tile_info,   deco16_scan_rows, TILEMAP_TRANSPARENT,16,16,full_width ? 64 : 32,32);
 		pf3_tilemap_16x16 =	tilemap_create(get_pf3_tile_info,   deco16_scan_rows, TILEMAP_TRANSPARENT,16,16,full_width ? 64 : 32,32);
+
+		if (!pf3_tilemap_16x16 || !pf4_tilemap_16x16)
+			return 1;
 	}
 	else
 	{
 		pf3_tilemap_16x16=0;
 		pf4_tilemap_16x16=0;
 	}
-
-	if (!pf3_tilemap_16x16 || !pf4_tilemap_16x16)
-		return 1;
 
 	tilemap_set_transparent_pen(pf1_tilemap_8x8,0);
 	tilemap_set_transparent_pen(pf2_tilemap_8x8,0);

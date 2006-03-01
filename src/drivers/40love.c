@@ -219,7 +219,6 @@ Notes - Has jumper setting for 122HZ or 61HZ)
 #include <math.h>
 #include "driver.h"
 #include "cpu/z80/z80.h"
-#include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
 #include "sound/dac.h"
 #include "sound/msm5232.h"

@@ -19,7 +19,6 @@
 #include "memory.h"
 #include "state.h"
 #include "psx.h"
-#include "usrintrf.h"
 
 #define LOG_BIOSCALL ( 0 )
 

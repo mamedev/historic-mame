@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 UINT16 *madmotor_pf1_rowscroll;
 UINT16 *madmotor_pf1_data,*madmotor_pf2_data,*madmotor_pf3_data;

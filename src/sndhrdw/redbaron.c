@@ -16,6 +16,7 @@
 
 #include <math.h>
 #include "driver.h"
+#include "streams.h"
 #include "bzone.h"
 #include "sound/custom.h"
 #include "sound/pokey.h"

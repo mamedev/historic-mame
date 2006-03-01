@@ -18,14 +18,10 @@
     big, hanging out of the screen etc.)
 
 ****************************************************************************/
-#include <stdio.h>
 
 #ifdef MAME_DEBUG
 
-#include <stdlib.h>
-#include <string.h>
 #include <stdarg.h>
-#include <assert.h>
 #include "window.h"
 
 /*

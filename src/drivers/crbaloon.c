@@ -50,7 +50,6 @@ write:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/sn76477.h"
 #include "sound/custom.h"
 #include "crbaloon.h"
@@ -66,8 +65,16 @@ extern VIDEO_START( crbaloon );
 extern VIDEO_UPDATE( crbaloon );
 
 
-static int val06,val08,val0a;
+static UINT8 val06,val08,val0a;
 
+static MACHINE_START( crbaloon )
+{
+	state_save_register_global(val06);
+	state_save_register_global(val08);
+	state_save_register_global(val0a);
+
+	return 0;
+}
 
 static MACHINE_RESET( crbaloon )
 {
@@ -358,6 +365,7 @@ static MACHINE_DRIVER_START( crbaloon )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
+	MDRV_MACHINE_START(crbaloon)
 	MDRV_MACHINE_RESET(crbaloon)
 
 	/* video hardware */
@@ -426,5 +434,5 @@ ROM_END
 
 
 
-GAME( 1980, crbaloon, 0,		crbaloon, crbaloon, 0, ROT90, "Taito Corporation", "Crazy Balloon (set 1)", GAME_IMPERFECT_SOUND )
-GAME( 1980, crbalon2, crbaloon, crbaloon, crbaloon, 0, ROT90, "Taito Corporation", "Crazy Balloon (set 2)", GAME_IMPERFECT_SOUND )
+GAME( 1980, crbaloon, 0,		crbaloon, crbaloon, 0, ROT90, "Taito Corporation", "Crazy Balloon (set 1)", GAME_IMPERFECT_SOUND | GAME_SUPPORTS_SAVE )
+GAME( 1980, crbalon2, crbaloon, crbaloon, crbaloon, 0, ROT90, "Taito Corporation", "Crazy Balloon (set 2)", GAME_IMPERFECT_SOUND | GAME_SUPPORTS_SAVE )

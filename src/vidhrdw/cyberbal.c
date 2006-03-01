@@ -6,7 +6,6 @@
 
 #include "driver.h"
 #include "machine/atarigen.h"
-#include "vidhrdw/generic.h"
 #include "cyberbal.h"
 
 

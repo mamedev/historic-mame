@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include "driver.h"
+#include "streams.h"
 #include "multipcm.h"
 
 #define MULTIPCM_CLOCKDIV    	(360.0)
@@ -520,7 +521,7 @@ void multipcm_set_bank(int which, UINT32 leftoffs, UINT32 rightoffs)
  * Generic get_info
  **************************************************************************/
 
-static void multipcm_set_info(void *token, UINT32 state, union sndinfo *info)
+static void multipcm_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -529,7 +530,7 @@ static void multipcm_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void multipcm_get_info(void *token, UINT32 state, union sndinfo *info)
+void multipcm_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

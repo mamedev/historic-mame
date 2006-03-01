@@ -564,11 +564,11 @@ static void ad1847_reg_write(int reg, UINT8 data)
 
 			if (data & 0x20)
 			{
-				osd_die("AD1847: Companded data not supported\n");
+				fatalerror("AD1847: Companded data not supported");
 			}
 			if ((data & 0x40) == 0)
 			{
-				osd_die("AD1847: 8-bit data not supported\n");
+				fatalerror("AD1847: 8-bit data not supported");
 			}
 			break;
 		}

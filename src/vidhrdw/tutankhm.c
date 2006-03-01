@@ -11,7 +11,6 @@
  */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
 unsigned char *tutankhm_scrollx;

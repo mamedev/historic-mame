@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 static tilemap *sderby_tilemap;
 extern UINT16 *sderby_videoram;

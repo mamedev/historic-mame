@@ -4,6 +4,7 @@
 */
 
 #include "driver.h"
+#include "streams.h"
 #include "cpuintrf.h"
 #include "cdrom.h"
 #include "cdda.h"
@@ -50,7 +51,7 @@ void CDDA_set_cdrom(int num, void *file)
  * Generic get_info
  **************************************************************************/
 
-static void cdda_set_info(void *token, UINT32 state, union sndinfo *info)
+static void cdda_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -59,7 +60,7 @@ static void cdda_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void cdda_get_info(void *token, UINT32 state, union sndinfo *info)
+void cdda_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

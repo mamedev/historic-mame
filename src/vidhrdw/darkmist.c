@@ -1,4 +1,4 @@
-#include "vidhrdw/generic.h"
+#include "driver.h"
 
 /*defined in drivers/darkmist.c */
 

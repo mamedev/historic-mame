@@ -7,7 +7,6 @@ driver by Phil Stroffolino
 ****************************************************************************/
 #include "driver.h"
 #include "sndhrdw/irem.h"
-#include "vidhrdw/generic.h"
 
 extern unsigned char *troangel_scroll;
 WRITE8_HANDLER( troangel_flipscreen_w );

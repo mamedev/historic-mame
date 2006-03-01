@@ -26,7 +26,7 @@
 #ifndef NETTLE_SHA1_H_INCLUDED
 #define NETTLE_SHA1_H_INCLUDED
 
-#include "osdepend.h"
+#include "mamecore.h"
 
 #define SHA1_DIGEST_SIZE 20
 #define SHA1_DATA_SIZE 64

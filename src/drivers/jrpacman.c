@@ -99,7 +99,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "pacman.h"
 #include "sound/namco.h"
 

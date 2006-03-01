@@ -1,6 +1,5 @@
 #include "driver.h"
 #include "sndhrdw/m72.h"
-#include "vidhrdw/generic.h"
 
 
 

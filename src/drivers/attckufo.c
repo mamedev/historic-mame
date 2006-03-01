@@ -43,7 +43,6 @@ LOIPOIO-B
 ****************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
 extern VIDEO_START( attckufo );

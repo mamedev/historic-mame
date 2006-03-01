@@ -41,7 +41,6 @@ same as Pooyan
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sndhrdw/timeplt.h"
 
 

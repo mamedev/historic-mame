@@ -8,7 +8,6 @@ Driver by Takahiro Nogi (nogi@kt.rim.or.jp) 1999/12/15 -
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
 

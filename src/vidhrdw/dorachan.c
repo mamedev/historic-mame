@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 const static int fakecols[]= /* fake color map , based on screenshots */
 {

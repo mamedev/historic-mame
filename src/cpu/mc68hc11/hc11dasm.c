@@ -5,6 +5,7 @@
 */
 
 #include "driver.h"
+#include <stdarg.h>
 
 enum {
 	EA_IMM8 = 1,

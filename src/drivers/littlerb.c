@@ -10,7 +10,6 @@ David Haywood
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 static UINT16 *data_type38;
 

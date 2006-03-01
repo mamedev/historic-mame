@@ -10,6 +10,7 @@
 #include <math.h>
 
 #include "driver.h"
+#include "streams.h"
 #include "ym2151.h"
 
 

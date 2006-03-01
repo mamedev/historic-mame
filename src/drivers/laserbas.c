@@ -17,7 +17,6 @@
 ********************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 static UINT8 *vram1,*vram2;
 static int vrambank=0;

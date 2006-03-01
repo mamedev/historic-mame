@@ -30,7 +30,6 @@ background: 0x4000 bytes of ROM:    76543210    tile code low bits
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 static unsigned char scrollx[2], scrolly[2];
 

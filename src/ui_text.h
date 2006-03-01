@@ -15,7 +15,7 @@
 #ifndef __UI_TEXT_H__
 #define __UI_TEXT_H__
 
-#include "driver.h"
+#include "mamecore.h"
 
 /* Important: this must match the default_text list in ui_text.c! */
 enum

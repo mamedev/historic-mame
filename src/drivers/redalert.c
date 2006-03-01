@@ -10,7 +10,6 @@ ask.  - Mike Balfour (mab22@po.cwru.edu)
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "machine/6821pia.h"
 #include "sound/ay8910.h"
 

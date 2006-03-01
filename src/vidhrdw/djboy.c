@@ -4,7 +4,6 @@
  * video hardware for DJ Boy
  */
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 static UINT8 djboy_videoreg, djboy_scrollx, djboy_scrolly;
 static tilemap *background;

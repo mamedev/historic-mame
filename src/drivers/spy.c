@@ -18,7 +18,6 @@ Revisions:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
 #include "vidhrdw/konamiic.h"
 #include "sound/3812intf.h"

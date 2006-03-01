@@ -29,7 +29,6 @@ D000      Paddle Position and Interrupt Reset
 
 #include "driver.h"
 #include "artwork.h"
-#include "vidhrdw/generic.h"
 #include "sound/samples.h"
 #include "circus.h"
 

@@ -1,7 +1,6 @@
 /* video hardware for Namco System II */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "namcos2.h"
 #include "namcoic.h"
 

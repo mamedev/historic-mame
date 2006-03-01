@@ -32,7 +32,7 @@ CHIP #  POSITION   TYPE
 14       19E         "       "
 */
 
-#include "vidhrdw/generic.h"
+#include "driver.h"
 #include "sound/custom.h"
 
 extern UINT8 *flower_textram, *flower_bg0ram, *flower_bg1ram, *flower_bg0_scroll, *flower_bg1_scroll;

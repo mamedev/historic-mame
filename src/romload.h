@@ -14,8 +14,7 @@
 #ifndef __ROMLOAD_H__
 #define __ROMLOAD_H__
 
-#include "hash.h"
-#include "chd.h"
+#include "mamecore.h"
 
 
 

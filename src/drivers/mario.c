@@ -69,7 +69,6 @@ write:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/i8039/i8039.h"
 #include "sound/dac.h"
 #include "sound/ay8910.h"
@@ -560,6 +559,6 @@ ROM_END
 
 
 
-GAME( 1983, mario,   0,     mario, mario,   0, ROT180, "Nintendo of America", "Mario Bros. (US)", 0 )
-GAME( 1983, mariojp, mario, mario, mariojp, 0, ROT180, "Nintendo", "Mario Bros. (Japan)", 0 )
-GAME( 1983, masao,   mario, masao, mario,   0, ROT180, "bootleg", "Masao", 0 )
+GAME( 1983, mario,   0,     mario, mario,   0, ROT180, "Nintendo of America", "Mario Bros. (US)", GAME_SUPPORTS_SAVE )
+GAME( 1983, mariojp, mario, mario, mariojp, 0, ROT180, "Nintendo", "Mario Bros. (Japan)", GAME_SUPPORTS_SAVE )
+GAME( 1983, masao,   mario, masao, mario,   0, ROT180, "bootleg", "Masao", GAME_SUPPORTS_SAVE )

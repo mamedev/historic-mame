@@ -13,7 +13,6 @@
 #include "cpu/h6280/h6280.h"
 #include "sound/2151intf.h"
 #include "sound/okim6295.h"
-#include "vidhrdw/generic.h"
 #include "decocrpt.h"
 #include "deco16ic.h"
 

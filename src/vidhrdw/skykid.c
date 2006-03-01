@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "tilemap.h"
 
 UINT8 *skykid_textram, *skykid_videoram, *skykid_spriteram;

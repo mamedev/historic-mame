@@ -106,7 +106,6 @@
 
 #include "driver.h"
 #include "cpu/m6809/m6809.h"
-#include "vidhrdw/generic.h"
 #include "sound/2151intf.h"
 #include "sound/upd7759.h"
 #include <math.h>

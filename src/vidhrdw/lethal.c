@@ -8,7 +8,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
 
 #define GUNX( a ) ( ( readinputport( a ) * 287 ) / 0xff )

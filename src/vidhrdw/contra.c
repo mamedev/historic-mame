@@ -6,7 +6,6 @@
 
 #include "driver.h"
 #include "vidhrdw/konamiic.h"
-#include "vidhrdw/generic.h"
 
 //static int spriteram_offset;
 static unsigned char *private_spriteram_2,*private_spriteram;

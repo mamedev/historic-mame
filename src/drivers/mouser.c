@@ -13,7 +13,6 @@
 *******************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
 
 unsigned char mouser_sound_byte;

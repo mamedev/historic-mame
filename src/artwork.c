@@ -304,6 +304,7 @@
 *********************************************************************/
 
 
+#include "osdepend.h"
 #include "driver.h"
 #include "png.h"
 #include "artwork.h"

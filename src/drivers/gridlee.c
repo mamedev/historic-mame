@@ -79,7 +79,6 @@
 
 #include "driver.h"
 #include "cpu/m6809/m6809.h"
-#include "vidhrdw/generic.h"
 #include "gridlee.h"
 #include "sound/custom.h"
 #include "sound/samples.h"

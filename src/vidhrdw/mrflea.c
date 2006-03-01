@@ -6,7 +6,6 @@ Mr. F. Lea
 ******************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 static int mrflea_gfx_bank;
 

@@ -14,9 +14,7 @@
 #ifndef __CPUINTRF_H__
 #define __CPUINTRF_H__
 
-#include "osd_cpu.h"
 #include "memory.h"
-#include "timer.h"
 
 
 
@@ -661,6 +659,7 @@ const char *cputype_get_info_string(int cputype, UINT32 state);
 
 /* dump the states of all CPUs */
 void cpu_dump_states(void);
+
 
 
 /*************************************

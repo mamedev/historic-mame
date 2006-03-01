@@ -58,21 +58,25 @@
 ***************************************************************************/
 
 #include "mamecore.h"
-#include "osdepend.h"
 #include "memory.h"
 #include "mame.h"
+#include "fileio.h"
 #include "drawgfx.h"
+#include "video.h"
 #include "palette.h"
 #include "cpuintrf.h"
 #include "cpuexec.h"
 #include "cpuint.h"
 #include "sndintrf.h"
+#include "sound.h"
 #include "input.h"
 #include "inptport.h"
 #include "usrintrf.h"
 #include "tilemap.h"
 #include "state.h"
 #include "machine/generic.h"
+#include "sndhrdw/generic.h"
+#include "vidhrdw/generic.h"
 
 #ifdef MESS
 #include "messdrv.h"

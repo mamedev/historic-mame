@@ -7,7 +7,6 @@
 *******************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 static tilemap *fg0_tilemap, *bg0_tilemap, *bg1_tilemap;
 int wwfwfest_pri;

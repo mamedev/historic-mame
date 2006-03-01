@@ -10,7 +10,6 @@ Todo:
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 extern int dorachan_ctrl;
 
 WRITE8_HANDLER( dorachan_videoram_w );

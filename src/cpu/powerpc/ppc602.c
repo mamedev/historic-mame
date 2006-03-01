@@ -94,7 +94,7 @@ void ppc602_exception(int exception)
 
 
 		default:
-			osd_die("ppc: Unhandled exception %d\n", exception);
+			fatalerror("ppc: Unhandled exception %d", exception);
 			break;
 	}
 }

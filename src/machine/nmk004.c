@@ -269,7 +269,7 @@ static void effects_update(int channel)
 							return;
 
 						default:
-							osd_die("effects channel %d unsupported token %02x\n",channel,token);
+							fatalerror("effects channel %d unsupported token %02x",channel,token);
 					}
 				}
 			} while (token == 0xef || (token & 0xf0) == 0xf0);
@@ -449,7 +449,7 @@ static void fm_update(int channel)
 							return;
 
 						default:
-							osd_die("fm channel %d unsupported token %02x\n",channel,token);
+							fatalerror("fm channel %d unsupported token %02x",channel,token);
 					}
 				}
 			} while (token == 0xef || (token & 0xf0) == 0xf0);
@@ -800,7 +800,7 @@ static void psg_update(int channel)
 			psg->note = token;
 			if ((psg->note & 0x0f) > NOTE_PAUSE)
 			{
-				osd_die("PSG channel %d invalid note %02x\n",channel,psg->note);
+				fatalerror("PSG channel %d invalid note %02x",channel,psg->note);
 			}
 
 			// optional note length (otherwise use the same length as the previous one)
@@ -964,7 +964,7 @@ static void get_command(void)
 						channel -= PSG_CHANNELS;
 						if (channel >= EFFECTS_CHANNELS)
 						{
-							osd_die("too many effects channels\n");
+							fatalerror("too many effects channels");
 						}
 						NMK004_state.effects_control[channel].current = table_start;
 						NMK004_state.effects_control[channel].return_address_depth = 0;

@@ -19,7 +19,6 @@ Changes 29/03/2005 - Pierpaolo Prazzoli
 
 #include "driver.h"
 #include "sound/okim6295.h"
-#include "vidhrdw/generic.h"
 
 /* Video Handling */
 

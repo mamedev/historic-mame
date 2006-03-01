@@ -224,7 +224,6 @@ its place. The East Technology games on this hardware follow Daisenpu.
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sndhrdw/taitosnd.h"
 #include "seta.h"
 #include "sound/2610intf.h"

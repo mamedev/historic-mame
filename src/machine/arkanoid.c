@@ -11,12 +11,30 @@
 
 
 
-int arkanoid_paddle_select;
+UINT8 arkanoid_paddle_select;
 
-static int z80write,fromz80,m68705write,toz80;
+static UINT8 z80write,fromz80,m68705write,toz80;
 
-static unsigned char portA_in,portA_out,ddrA;
-static unsigned char portC_out,ddrC;
+static UINT8 portA_in,portA_out,ddrA;
+static UINT8 portC_out,ddrC;
+
+MACHINE_START( arkanoid )
+{
+	state_save_register_global(arkanoid_paddle_select);
+	state_save_register_global(z80write);
+	state_save_register_global(fromz80);
+	state_save_register_global(m68705write);
+	state_save_register_global(toz80);
+
+	state_save_register_global(portA_in);
+	state_save_register_global(portA_out);
+	state_save_register_global(ddrA);
+
+	state_save_register_global(portC_out);
+	state_save_register_global(ddrC);
+
+	return 0;
+}
 
 MACHINE_RESET( arkanoid )
 {

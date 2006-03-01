@@ -11,6 +11,7 @@
 
 #include "driver.h"
 #include "debugcmd.h"
+#include "debugcmt.h"
 #include "debugcon.h"
 #include "debugcpu.h"
 #include "express.h"
@@ -18,12 +19,15 @@
 #include "debugvw.h"
 #include "artwork.h"
 #include <stdarg.h>
+#include <ctype.h>
 
 
 
-/*###################################################################################################
-**  PROTOTYPES
-**#################################################################################################*/
+/***************************************************************************
+    PROTOTYPES
+***************************************************************************/
+
+static void debug_command_exit(void);
 
 static UINT64 execute_min(UINT32 ref, UINT32 params, UINT64 *param);
 static UINT64 execute_max(UINT32 ref, UINT32 params, UINT64 *param);
@@ -46,6 +50,9 @@ static void execute_focus(int ref, int params, const char **param);
 static void execute_ignore(int ref, int params, const char **param);
 static void execute_observe(int ref, int params, const char **param);
 static void execute_next(int ref, int params, const char **param);
+static void execute_comment(int ref, int params, const char **param);
+static void execute_comment_del(int ref, int params, const char **param);
+static void execute_comment_save(int ref, int params, const char **param);
 static void execute_bpset(int ref, int params, const char **param);
 static void execute_bpclear(int ref, int params, const char **param);
 static void execute_bpdisenable(int ref, int params, const char **param);
@@ -69,9 +76,11 @@ static void execute_memdump(int ref, int params, const char **param);
 
 
 
-/*###################################################################################################
-**  CODE
-**#################################################################################################*/
+/***************************************************************************
+
+    Initialization
+
+***************************************************************************/
 
 /*-------------------------------------------------
     debug_command_init - initializes the command
@@ -112,6 +121,11 @@ void debug_command_init(void)
 	debug_console_register_command("focus",     CMDFLAG_NONE, 0, 1, 1, execute_focus);
 	debug_console_register_command("ignore",    CMDFLAG_NONE, 0, 0, MAX_COMMAND_PARAMS, execute_ignore);
 	debug_console_register_command("observe",   CMDFLAG_NONE, 0, 0, MAX_COMMAND_PARAMS, execute_observe);
+
+	debug_console_register_command("comadd",	CMDFLAG_NONE, 0, 1, 2, execute_comment);
+	debug_console_register_command("//",        CMDFLAG_NONE, 0, 1, 2, execute_comment);
+	debug_console_register_command("comdelete",	CMDFLAG_NONE, 0, 1, 1, execute_comment_del);
+	debug_console_register_command("comsave", 	CMDFLAG_NONE, 0, 0, 0, execute_comment_save);
 
 	debug_console_register_command("bpset",     CMDFLAG_NONE, 0, 1, 3, execute_bpset);
 	debug_console_register_command("bp",        CMDFLAG_NONE, 0, 1, 3, execute_bpset);
@@ -170,13 +184,31 @@ void debug_command_init(void)
 		if (setup_commands)
 			setup_commands();
 	}
+
+	add_exit_callback(debug_command_exit);
+}
+
+
+/*-------------------------------------------------
+    debug_command_exit - exit-time cleanup
+-------------------------------------------------*/
+
+static void debug_command_exit(void)
+{
+	int cpunum;
+
+	/* turn off all traces */
+	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
+		debug_cpu_trace(cpunum, NULL, 0, NULL);
 }
 
 
 
-/*###################################################################################################
-**  SIMPLE GLOBAL FUNCTIONS
-**#################################################################################################*/
+/***************************************************************************
+
+    Simple Global Functions
+
+***************************************************************************/
 
 /*-------------------------------------------------
     execute_min - return the minimum of two values
@@ -209,9 +241,11 @@ static UINT64 execute_if(UINT32 ref, UINT32 params, UINT64 *param)
 
 
 
-/*###################################################################################################
-**  PARAMETER VALIDATION HELPERS
-**#################################################################################################*/
+/***************************************************************************
+
+    Parameter Validation Helpers
+
+***************************************************************************/
 
 /*-------------------------------------------------
     validate_parameter_number - validates a
@@ -265,9 +299,11 @@ static int validate_parameter_command(const char *param)
 
 
 
-/*###################################################################################################
-**  COMMAND HANDLERS
-**#################################################################################################*/
+/***************************************************************************
+
+    Command Helpers
+
+***************************************************************************/
 
 /*-------------------------------------------------
     execute_help - execute the help command
@@ -276,9 +312,9 @@ static int validate_parameter_command(const char *param)
 static void execute_help(int ref, int params, const char *param[])
 {
 	if (params == 0)
-		debug_console_write_line(debug_get_help(""));
+		debug_console_printf_wrap(80, "%s\n", debug_get_help(""));
 	else
-		debug_console_write_line(debug_get_help(param[0]));
+		debug_console_printf_wrap(80, "%s\n", debug_get_help(param[0]));
 }
 
 
@@ -339,7 +375,7 @@ static int mini_printf(char *buffer, const char *format, int params, UINT64 *par
 				case 'x':
 					if (params == 0)
 					{
-						debug_console_write_line("Not enough parameters for format!");
+						debug_console_printf("Not enough parameters for format!\n");
 						return 0;
 					}
 					if ((UINT32)(*param >> 32) != 0)
@@ -355,7 +391,7 @@ static int mini_printf(char *buffer, const char *format, int params, UINT64 *par
 				case 'd':
 					if (params == 0)
 					{
-						debug_console_write_line("Not enough parameters for format!");
+						debug_console_printf("Not enough parameters for format!\n");
 						return 0;
 					}
 					p += sprintf(p, zerofill ? "%0*d" : "%*d", width, (UINT32)*param);
@@ -393,7 +429,7 @@ static void execute_printf(int ref, int params, const char *param[])
 
 	/* then do a printf */
 	if (mini_printf(buffer, param[0], params - 1, &values[1]))
-		debug_console_write_line(buffer);
+		debug_console_printf("%s\n", buffer);
 }
 
 
@@ -450,13 +486,7 @@ static void execute_tracelog(int ref, int params, const char *param[])
 
 static void execute_quit(int ref, int params, const char *param[])
 {
-	int cpunum;
-
-	/* turn off all traces */
-	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
-		debug_cpu_trace(cpunum, NULL, 0, NULL);
-
-	osd_die("Exited via the debugger\n");
+	fatalerror("Exited via the debugger");
 }
 
 
@@ -596,7 +626,7 @@ static void execute_focus(int ref, int params, const char *param[])
 		return;
 	if (cpuwhich >= cpu_gettotalcpu())
 	{
-		debug_console_printf("Invalid CPU number!");
+		debug_console_printf("Invalid CPU number!\n");
 		return;
 	}
 
@@ -610,7 +640,7 @@ static void execute_focus(int ref, int params, const char *param[])
 		if (info && info->valid && cpunum != cpuwhich)
 			debug_cpu_ignore_cpu(cpunum, 1);
 	}
-	debug_console_printf("Now focused on CPU %d", (int)cpuwhich);
+	debug_console_printf("Now focused on CPU %d\n", (int)cpuwhich);
 }
 
 
@@ -644,7 +674,7 @@ static void execute_ignore(int ref, int params, const char *param[])
 		/* special message for none */
 		if (buflen == 0)
 			sprintf(&buffer[buflen], "Not currently ignoring any CPUs");
-		debug_console_write_line(buffer);
+		debug_console_printf("%s\n", buffer);
 	}
 
 	/* otherwise clear the ignore flag on all requested CPUs */
@@ -657,7 +687,7 @@ static void execute_ignore(int ref, int params, const char *param[])
 				return;
 			if (cpuwhich[paramnum] >= cpu_gettotalcpu())
 			{
-				debug_console_printf("Invalid CPU number! (%d)", (int)cpuwhich[paramnum]);
+				debug_console_printf("Invalid CPU number! (%d)\n", (int)cpuwhich[paramnum]);
 				return;
 			}
 		}
@@ -679,7 +709,7 @@ static void execute_ignore(int ref, int params, const char *param[])
 			}
 
 			debug_cpu_ignore_cpu(cpuwhich[paramnum], 1);
-			debug_console_printf("Now ignoring CPU %d", (int)cpuwhich[paramnum]);
+			debug_console_printf("Now ignoring CPU %d\n", (int)cpuwhich[paramnum]);
 		}
 	}
 }
@@ -715,7 +745,7 @@ static void execute_observe(int ref, int params, const char *param[])
 		/* special message for none */
 		if (buflen == 0)
 			buflen += sprintf(&buffer[buflen], "Not currently observing any CPUs");
-		debug_console_write_line(buffer);
+		debug_console_printf("%s\n", buffer);
 	}
 
 	/* otherwise set the ignore flag on all requested CPUs */
@@ -728,7 +758,7 @@ static void execute_observe(int ref, int params, const char *param[])
 				return;
 			if (cpuwhich[paramnum] >= cpu_gettotalcpu())
 			{
-				debug_console_printf("Invalid CPU number! (%d)", (int)cpuwhich[paramnum]);
+				debug_console_printf("Invalid CPU number! (%d)\n", (int)cpuwhich[paramnum]);
 				return;
 			}
 		}
@@ -737,9 +767,57 @@ static void execute_observe(int ref, int params, const char *param[])
 		for (paramnum = 0; paramnum < params; paramnum++)
 		{
 			debug_cpu_ignore_cpu(cpuwhich[paramnum], 0);
-			debug_console_printf("Now observing CPU %d", (int)cpuwhich[paramnum]);
+			debug_console_printf("Now observing CPU %d\n", (int)cpuwhich[paramnum]);
 		}
 	}
+}
+
+
+/*-------------------------------------------------
+    execute_comment - add a comment to a line
+-------------------------------------------------*/
+
+static void execute_comment(int ref, int params, const char *param[])
+{
+	UINT64 address;
+
+	/* param 1 is the address for the comment */
+	if (!validate_parameter_number(param[0], &address))
+		return;
+
+	/* Now try adding the comment */
+	debug_comment_add(cpu_getactivecpu(), address, param[1], 0x00ff0000, debug_comment_get_opcode_crc32(address));
+	debug_view_update_type(DVT_DISASSEMBLY);
+}
+
+
+/*------------------------------------------------------
+    execute_comment_del - remove a comment from an addr
+--------------------------------------------------------*/
+
+static void execute_comment_del(int ref, int params, const char *param[])
+{
+	UINT64 address;
+
+	/* param 1 can either be a command or the address for the comment */
+	if (!validate_parameter_number(param[0], &address))
+		return;
+
+	/* If it's a number, it must be an address */
+	/* The bankoff and cbn will be pulled from what's currently active */
+	debug_comment_remove(cpu_getactivecpu(), address, debug_comment_get_opcode_crc32(address));
+	debug_view_update_type(DVT_DISASSEMBLY);
+}
+
+
+/*-------------------------------------------------
+    execute_comment - add a comment to a line
+-------------------------------------------------*/
+
+static void execute_comment_save(int ref, int params, const char *param[])
+{
+	if (debug_comment_save())
+		debug_console_printf("Comments successfully saved\n");
 }
 
 
@@ -797,7 +875,7 @@ static void execute_bpclear(int ref, int params, const char *param[])
 					debug_breakpoint_clear(bp->index);
 			}
 		}
-		debug_console_write_line("Cleared all breakpoints");
+		debug_console_printf("Cleared all breakpoints\n");
 	}
 
 	/* otherwise, clear the specific one */
@@ -807,9 +885,9 @@ static void execute_bpclear(int ref, int params, const char *param[])
 	{
 		int found = debug_breakpoint_clear(bpindex);
 		if (found)
-			debug_console_printf("Breakpoint %X cleared", (UINT32)bpindex);
+			debug_console_printf("Breakpoint %X cleared\n", (UINT32)bpindex);
 		else
-			debug_console_printf("Invalid breakpoint number %X", (UINT32)bpindex);
+			debug_console_printf("Invalid breakpoint number %X\n", (UINT32)bpindex);
 	}
 }
 
@@ -839,9 +917,9 @@ static void execute_bpdisenable(int ref, int params, const char *param[])
 			}
 		}
 		if (ref == 0)
-			debug_console_write_line("Disabled all breakpoints");
+			debug_console_printf("Disabled all breakpoints\n");
 		else
-			debug_console_write_line("Enabled all breakpoints");
+			debug_console_printf("Enabled all breakpoints\n");
 	}
 
 	/* otherwise, clear the specific one */
@@ -851,9 +929,9 @@ static void execute_bpdisenable(int ref, int params, const char *param[])
 	{
 		int found = debug_breakpoint_enable(bpindex, ref);
 		if (found)
-			debug_console_printf("Breakpoint %X %s", (UINT32)bpindex, ref ? "enabled" : "disabled");
+			debug_console_printf("Breakpoint %X %s\n", (UINT32)bpindex, ref ? "enabled" : "disabled");
 		else
-			debug_console_printf("Invalid breakpoint number %X", (UINT32)bpindex);
+			debug_console_printf("Invalid breakpoint number %X\n", (UINT32)bpindex);
 	}
 }
 
@@ -877,7 +955,7 @@ static void execute_bplist(int ref, int params, const char *param[])
 		{
 			debug_cpu_breakpoint *bp;
 
-			debug_console_printf("CPU %d breakpoints:", cpunum);
+			debug_console_printf("CPU %d breakpoints:\n", cpunum);
 
 			/* loop over the breakpoints */
 			for (bp = cpuinfo->first_bp; bp; bp = bp->next)
@@ -888,14 +966,14 @@ static void execute_bplist(int ref, int params, const char *param[])
 					buflen += sprintf(&buffer[buflen], " if %s", expression_original_string(bp->condition));
 				if (bp->action)
 					buflen += sprintf(&buffer[buflen], " do %s", bp->action);
-				debug_console_write_line(buffer);
+				debug_console_printf("%s\n", buffer);
 				printed++;
 			}
 		}
 	}
 
 	if (!printed)
-		debug_console_write_line("No breakpoints currently installed");
+		debug_console_printf("No breakpoints currently installed\n");
 }
 
 
@@ -976,7 +1054,7 @@ static void execute_wpclear(int ref, int params, const char *param[])
 				}
 			}
 		}
-		debug_console_write_line("Cleared all watchpoints");
+		debug_console_printf("Cleared all watchpoints\n");
 	}
 
 	/* otherwise, clear the specific one */
@@ -986,9 +1064,9 @@ static void execute_wpclear(int ref, int params, const char *param[])
 	{
 		int found = debug_watchpoint_clear(wpindex);
 		if (found)
-			debug_console_printf("Watchpoint %X cleared", (UINT32)wpindex);
+			debug_console_printf("Watchpoint %X cleared\n", (UINT32)wpindex);
 		else
-			debug_console_printf("Invalid watchpoint number %X", (UINT32)wpindex);
+			debug_console_printf("Invalid watchpoint number %X\n", (UINT32)wpindex);
 	}
 }
 
@@ -1023,9 +1101,9 @@ static void execute_wpdisenable(int ref, int params, const char *param[])
 			}
 		}
 		if (ref == 0)
-			debug_console_write_line("Disabled all watchpoints");
+			debug_console_printf("Disabled all watchpoints\n");
 		else
-			debug_console_write_line("Enabled all watchpoints");
+			debug_console_printf("Enabled all watchpoints\n");
 	}
 
 	/* otherwise, clear the specific one */
@@ -1035,9 +1113,9 @@ static void execute_wpdisenable(int ref, int params, const char *param[])
 	{
 		int found = debug_watchpoint_enable(wpindex, ref);
 		if (found)
-			debug_console_printf("Watchpoint %X %s", (UINT32)wpindex, ref ? "enabled" : "disabled");
+			debug_console_printf("Watchpoint %X %s\n", (UINT32)wpindex, ref ? "enabled" : "disabled");
 		else
-			debug_console_printf("Invalid watchpoint number %X", (UINT32)wpindex);
+			debug_console_printf("Invalid watchpoint number %X\n", (UINT32)wpindex);
 	}
 }
 
@@ -1069,7 +1147,7 @@ static void execute_wplist(int ref, int params, const char *param[])
 					static const char *types[] = { "unkn ", "read ", "write", "r/w  " };
 					debug_cpu_watchpoint *wp;
 
-					debug_console_printf("CPU %d %s space watchpoints:", cpunum, spacenames[spacenum]);
+					debug_console_printf("CPU %d %s space watchpoints:\n", cpunum, spacenames[spacenum]);
 
 					/* loop over the watchpoints */
 					for (wp = cpuinfo->space[spacenum].first_wp; wp; wp = wp->next)
@@ -1080,7 +1158,7 @@ static void execute_wplist(int ref, int params, const char *param[])
 							buflen += sprintf(&buffer[buflen], " if %s", expression_original_string(wp->condition));
 						if (wp->action)
 							buflen += sprintf(&buffer[buflen], " do %s", wp->action);
-						debug_console_write_line(buffer);
+						debug_console_printf("%s\n", buffer);
 						printed++;
 					}
 				}
@@ -1089,7 +1167,7 @@ static void execute_wplist(int ref, int params, const char *param[])
 	}
 
 	if (!printed)
-		debug_console_write_line("No watchpoints currently installed");
+		debug_console_printf("No watchpoints currently installed\n");
 }
 
 
@@ -1175,7 +1253,7 @@ static void execute_save(int ref, int params, const char *param[])
 	f = fopen(param[0], "wb");
 	if (!f)
 	{
-		debug_console_printf("Error opening file '%s'", param[0]);
+		debug_console_printf("Error opening file '%s'\n", param[0]);
 		return;
 	}
 
@@ -1190,7 +1268,7 @@ static void execute_save(int ref, int params, const char *param[])
 
 	/* close the file */
 	fclose(f);
-	debug_console_write_line("Data saved successfully");
+	debug_console_printf("Data saved successfully\n");
 }
 
 
@@ -1221,7 +1299,7 @@ static void execute_dump(int ref, int params, const char *param[])
 	/* further validation */
 	if (cpunum >= cpu_gettotalcpu())
 	{
-		debug_console_printf("Invalid CPU number!");
+		debug_console_printf("Invalid CPU number!\n");
 		return;
 	}
 	info = debug_get_cpu_info(cpunum);
@@ -1231,7 +1309,7 @@ static void execute_dump(int ref, int params, const char *param[])
 		width = ADDR2BYTE(1, info, spacenum);
 	if (width != 1 && width != 2 && width != 4 && width != 8)
 	{
-		debug_console_printf("Invalid width! (must be 1,2,4 or 8)");
+		debug_console_printf("Invalid width! (must be 1,2,4 or 8)\n");
 		return;
 	}
 	offset = ADDR2BYTE_MASKED(offset, info, spacenum);
@@ -1241,7 +1319,7 @@ static void execute_dump(int ref, int params, const char *param[])
 	f = fopen(param[0], "w");
 	if (!f)
 	{
-		debug_console_printf("Error opening file '%s'", param[0]);
+		debug_console_printf("Error opening file '%s'\n", param[0]);
 		return;
 	}
 
@@ -1359,7 +1437,7 @@ static void execute_dump(int ref, int params, const char *param[])
 
 	/* close the file */
 	fclose(f);
-	debug_console_write_line("Data dumped successfully");
+	debug_console_printf("Data dumped successfully\n");
 }
 
 
@@ -1388,7 +1466,7 @@ static void execute_find(int ref, int params, const char *param[])
 	/* further validation */
 	if (cpunum >= cpu_gettotalcpu())
 	{
-		debug_console_printf("Invalid CPU number!");
+		debug_console_printf("Invalid CPU number!\n");
 		return;
 	}
 	info = debug_get_cpu_info(cpunum);
@@ -1495,7 +1573,7 @@ static void execute_dasm(int ref, int params, const char *param[])
 	/* further validation */
 	if (cpunum >= cpu_gettotalcpu())
 	{
-		debug_console_write_line("Invalid CPU number!");
+		debug_console_printf("Invalid CPU number!\n");
 		return;
 	}
 	info = debug_get_cpu_info(cpunum);
@@ -1514,7 +1592,7 @@ static void execute_dasm(int ref, int params, const char *param[])
 	f = fopen(param[0], "w");
 	if (!f)
 	{
-		debug_console_printf("Error opening file '%s'", param[0]);
+		debug_console_printf("Error opening file '%s'\n", param[0]);
 		return;
 	}
 
@@ -1615,7 +1693,7 @@ static void execute_dasm(int ref, int params, const char *param[])
 
 	/* close the file */
 	fclose(f);
-	debug_console_write_line("Data dumped successfully");
+	debug_console_printf("Data dumped successfully\n");
 }
 
 
@@ -1644,7 +1722,7 @@ static void execute_trace_internal(int ref, int params, const char *param[], int
 		filename = NULL;
 	if (cpunum >= cpu_gettotalcpu())
 	{
-		debug_console_printf("Invalid CPU number!");
+		debug_console_printf("Invalid CPU number!\n");
 		return;
 	}
 
@@ -1663,7 +1741,7 @@ static void execute_trace_internal(int ref, int params, const char *param[], int
 		f = fopen(filename, mode);
 		if (!f)
 		{
-			debug_console_printf("Error opening file '%s'", param[0]);
+			debug_console_printf("Error opening file '%s'\n", param[0]);
 			return;
 		}
 	}

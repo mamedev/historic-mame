@@ -64,7 +64,6 @@ K1000233A
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
 
 WRITE8_HANDLER (pitnrun_68705_portA_w);

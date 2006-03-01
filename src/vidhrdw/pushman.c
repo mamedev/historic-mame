@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 static tilemap *bg_tilemap,*tx_tilemap;
 static UINT16 control[2];

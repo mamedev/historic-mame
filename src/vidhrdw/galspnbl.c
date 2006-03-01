@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
 UINT16 *galspnbl_bgvideoram,*galspnbl_videoram,*galspnbl_colorram;

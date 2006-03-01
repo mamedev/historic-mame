@@ -103,7 +103,6 @@ TODO:
  ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/custom.h"
 #include "sound/tms36xx.h"
 

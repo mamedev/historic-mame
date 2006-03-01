@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
 UINT16 *gotcha_fgvideoram,*gotcha_bgvideoram;

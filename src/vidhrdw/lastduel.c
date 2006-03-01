@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 UINT16 *lastduel_vram,*lastduel_scroll2,*lastduel_scroll1;
 

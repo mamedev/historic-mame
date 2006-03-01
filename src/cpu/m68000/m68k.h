@@ -349,6 +349,11 @@ unsigned int m68k_is_valid_instruction(unsigned int instruction, unsigned int cp
  */
 unsigned int m68k_disassemble(char* str_buff, unsigned int pc, unsigned int cpu_type);
 
+/* Same as above but accepts raw opcode data directly rather than fetching
+ * via the read/write interfaces.
+ */
+unsigned int m68k_disassemble_raw(char* str_buff, unsigned int pc, unsigned char* opdata, unsigned char* argdata, int length, unsigned int cpu_type);
+
 
 /* ======================================================================== */
 /* ============================== MAME STUFF ============================== */

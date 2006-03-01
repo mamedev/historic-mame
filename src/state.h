@@ -14,8 +14,7 @@
 #ifndef __STATE_H__
 #define __STATE_H__
 
-#include "osd_cpu.h"
-#include "fileio.h"
+#include "mamecore.h"
 
 void state_init(void);
 

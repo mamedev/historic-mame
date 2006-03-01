@@ -25,7 +25,6 @@
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
 #include "machine/6522via.h"
-#include "vidhrdw/generic.h"
 #include "leprechn.h"
 #include "sound/ay8910.h"
 

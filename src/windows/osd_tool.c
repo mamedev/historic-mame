@@ -115,6 +115,8 @@ osd_tool_file *osd_tool_fopen(const char *filename, const char *mode)
 		disposition = OPEN_EXISTING, access = GENERIC_READ | GENERIC_WRITE;
 	else if (!strcmp(mode, "wb"))
 		disposition = CREATE_ALWAYS, access = GENERIC_WRITE;
+	else if (!strcmp(mode, "wb+"))
+		disposition = CREATE_ALWAYS, access = GENERIC_READ | GENERIC_WRITE;
 	else
 		return NULL;
 

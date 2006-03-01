@@ -1,12 +1,10 @@
-/*###################################################################################################
-**
-**
-**      dsp56kdasm.c
-**      Disassembler for the portable Motorola/Freescale dsp56k emulator.
-**      Written by Andrew Gardner
-**
-**
-**#################################################################################################*/
+/***************************************************************************
+
+    dsp56kdasm.c
+    Disassembler for the portable Motorola/Freescale dsp56k emulator.
+    Written by Andrew Gardner
+
+***************************************************************************/
 
 #include <stdio.h>
 #include <string.h>

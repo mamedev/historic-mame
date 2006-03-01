@@ -14,7 +14,6 @@
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 UINT8 *zaxxon_char_color_bank;
 UINT8 *zaxxon_background_position;

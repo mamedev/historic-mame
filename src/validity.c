@@ -9,11 +9,13 @@
 
 ***************************************************************************/
 
+#include "osdepend.h"
 #include "driver.h"
+#include "hash.h"
 #include <ctype.h>
 #include <stdarg.h>
 #include "ui_text.h"
-#include "zlib.h"
+#include <zlib.h>
 
 
 /*************************************

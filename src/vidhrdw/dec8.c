@@ -41,7 +41,6 @@ sprites.
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 static int scroll1[4],scroll2[4];
 static tilemap *dec8_pf0_tilemap,*dec8_pf1_tilemap,*dec8_fix_tilemap;

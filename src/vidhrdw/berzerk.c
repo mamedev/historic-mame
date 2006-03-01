@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "includes/berzerk.h"
 #include "machine/74181.h"
 #include "machine/74153.h"

@@ -204,6 +204,9 @@ static uint g_cpu_pc;        /* program counter */
 static uint g_cpu_ir;        /* instruction register */
 static uint g_cpu_type;
 static uint g_opcode_type;
+static unsigned char* g_rawop;
+static uint g_rawbasepc;
+static uint g_rawlength;
 
 /* used by ops like asr, ror, addq, etc */
 static uint g_3bit_qdata_table[8] = {8, 1, 2, 3, 4, 5, 6, 7};
@@ -243,13 +246,50 @@ static const char* g_cpcc[64] =
 		return;								\
 	}
 
-#define read_imm_8()  (m68k_read_disassembler_16(((g_cpu_pc+=2)-2)&g_address_mask)&0xff)
-#define read_imm_16() m68k_read_disassembler_16(((g_cpu_pc+=2)-2)&g_address_mask)
-#define read_imm_32() m68k_read_disassembler_32(((g_cpu_pc+=4)-4)&g_address_mask)
+static uint dasm_read_imm_8(uint advance)
+{
+	uint result;
+	if (g_rawop)
+		result = g_rawop[g_cpu_pc + 1 - g_rawbasepc];
+	else
+		result = m68k_read_disassembler_16(g_cpu_pc & g_address_mask) & 0xff;
+	g_cpu_pc += advance;
+	return result;
+}
 
-#define peek_imm_8()  (m68k_read_disassembler_16(g_cpu_pc & g_address_mask)&0xff)
-#define peek_imm_16() m68k_read_disassembler_16(g_cpu_pc & g_address_mask)
-#define peek_imm_32() m68k_read_disassembler_32(g_cpu_pc & g_address_mask)
+static uint dasm_read_imm_16(uint advance)
+{
+	uint result;
+	if (g_rawop)
+		result = (g_rawop[g_cpu_pc + 0 - g_rawbasepc] << 8) |
+		          g_rawop[g_cpu_pc + 1 - g_rawbasepc];
+	else
+		result = m68k_read_disassembler_16(g_cpu_pc & g_address_mask) & 0xff;
+	g_cpu_pc += advance;
+	return result;
+}
+
+static uint dasm_read_imm_32(uint advance)
+{
+	uint result;
+	if (g_rawop)
+		result = (g_rawop[g_cpu_pc + 0 - g_rawbasepc] << 24) |
+		         (g_rawop[g_cpu_pc + 1 - g_rawbasepc] << 16) |
+		         (g_rawop[g_cpu_pc + 2 - g_rawbasepc] << 8) |
+		          g_rawop[g_cpu_pc + 3 - g_rawbasepc];
+	else
+		result = m68k_read_disassembler_32(g_cpu_pc & g_address_mask) & 0xff;
+	g_cpu_pc += advance;
+	return result;
+}
+
+#define read_imm_8()  dasm_read_imm_8(2)
+#define read_imm_16() dasm_read_imm_16(2)
+#define read_imm_32() dasm_read_imm_32(4)
+
+#define peek_imm_8()  dasm_read_imm_8(0)
+#define peek_imm_16() dasm_read_imm_16(0)
+#define peek_imm_32() dasm_read_imm_32(0)
 
 /* Fake a split interface */
 #define get_ea_mode_str_8(instruction) get_ea_mode_str(instruction, 0)
@@ -3363,6 +3403,18 @@ char* m68ki_disassemble_quick(unsigned int pc, unsigned int cpu_type)
 	buff[0] = 0;
 	m68k_disassemble(buff, pc, cpu_type);
 	return buff;
+}
+
+unsigned int m68k_disassemble_raw(char* str_buff, unsigned int pc, unsigned char* opdata, unsigned char* argdata, int length, unsigned int cpu_type)
+{
+	unsigned int result;
+
+	g_rawop = opdata;
+	g_rawbasepc = pc;
+	g_rawlength = length;
+	result = m68k_disassemble(str_buff, pc, cpu_type);
+	g_rawop = NULL;
+	return result;
 }
 
 /* Check if the instruction is a valid one */

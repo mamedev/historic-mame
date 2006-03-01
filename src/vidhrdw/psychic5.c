@@ -6,7 +6,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
 #define	BG_SCROLLX_LSB		0x308

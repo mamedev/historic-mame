@@ -31,7 +31,6 @@
 
 **************************************************************************/
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 UINT8 *airbustr_videoram2, *airbustr_colorram2;
 int airbustr_clear_sprites;

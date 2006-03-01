@@ -62,7 +62,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "machine/segacrpt.h"
 #include "pacman.h"
 #include "sound/namco.h"

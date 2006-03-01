@@ -20,11 +20,9 @@
 
 ***************************************************************************/
 
-#include <assert.h>
 #include "driver.h"
 #include "memconv.h"
 #include "machine/8255ppi.h"
-#include "vidhrdw/generic.h"
 
 #include "machine/pic8259.h"
 #include "machine/pit8253.h"

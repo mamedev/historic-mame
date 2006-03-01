@@ -85,7 +85,6 @@ Input port 2, mapped to memory address $9002:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
 
 static tilemap *fg_tilemap, *bg_tilemap_l, *bg_tilemap_r;

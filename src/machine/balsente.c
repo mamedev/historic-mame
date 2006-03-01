@@ -8,7 +8,6 @@
 
 #include "driver.h"
 #include "cpu/m6809/m6809.h"
-#include "vidhrdw/generic.h"
 #include "balsente.h"
 #include "sound/cem3394.h"
 #include <math.h>

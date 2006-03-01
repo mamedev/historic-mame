@@ -1,9 +1,7 @@
 #include "filter.h"
 #include "driver.h"
 
-#include <assert.h>
 #include <math.h>
-#include <stdlib.h>
 
 static filter* filter_alloc(void) {
 	filter* f = malloc(sizeof(filter));

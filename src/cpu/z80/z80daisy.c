@@ -7,7 +7,7 @@
 ***************************************************************************/
 
 #include "cpuintrf.h"
-#include "osdepend.h"
+#include "mame.h"
 #include "z80daisy.h"
 
 

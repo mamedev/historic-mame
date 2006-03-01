@@ -6,7 +6,6 @@
 
 ***************************************************************************/
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 #ifdef MAME_DEBUG
  int nycaptor_mask=0;

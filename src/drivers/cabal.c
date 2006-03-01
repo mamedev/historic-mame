@@ -41,7 +41,7 @@ COLORRAM (Colors)
 ******************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
+#include "streams.h"
 #include "cpu/z80/z80.h"
 #include "sndhrdw/seibu.h"
 #include "sound/2151intf.h"

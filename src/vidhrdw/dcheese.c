@@ -7,7 +7,6 @@
 
 #include "driver.h"
 #include "dcheese.h"
-#include "vidhrdw/generic.h"
 
 
 /*************************************
@@ -116,6 +115,14 @@ VIDEO_START( dcheese )
 
 	/* create a timer */
 	blitter_timer = timer_alloc(blitter_scanline_callback);
+
+	/* register for saving */
+	state_save_register_global_array(blitter_color);
+	state_save_register_global_array(blitter_xparam);
+	state_save_register_global_array(blitter_yparam);
+	state_save_register_global_array(blitter_vidparam);
+	state_save_register_global_bitmap(dstbitmap);
+
 	return 0;
 }
 
@@ -176,12 +183,14 @@ static void do_blit(void)
 	INT32 dydx = (INT32)(((blitter_yparam[4] & 0x0fff) | ((blitter_yparam[5] & 0x0fff) << 12)) << 12) >> 12;
 	INT32 dydy = (INT32)(((blitter_yparam[6] & 0x0fff) | ((blitter_yparam[7] & 0x0fff) << 12)) << 12) >> 12;
 	UINT8 *src = memory_region(REGION_GFX1);
+	UINT32 pagemask = (memory_region_length(REGION_GFX1) - 1) / 0x40000;
 	int xstart = blitter_xparam[14];
 	int xend = blitter_xparam[15] + 1;
 	int ystart = blitter_yparam[14];
 	int yend = blitter_yparam[15];
 	int color = (blitter_color[0] << 8) & 0xff00;
 	int mask = (blitter_color[0] >> 8) & 0x00ff;
+	int opaque = (dxdx | dxdy | dydx | dydy) == 0;	/* bit of a hack for fredmem */
 	int x, y;
 
 	/* loop over target rows */
@@ -200,11 +209,11 @@ static void do_blit(void)
 			if (sx >= srcminx && sx <= srcmaxx && sy >= srcminy && sy <= srcmaxy)
 			{
 				/* page comes from bit 22 of Y and bit 21 of X */
-				int page = ((sy >> 21) & 2) | ((sx >> 21) & 1);
+				int page = (((sy >> 21) & 2) | ((sx >> 21) & 1) | ((sx >> 20) & 4)) & pagemask;
 				int pix = src[0x40000 * page + ((sy >> 12) & 0x1ff) * 512 + ((sx >> 12) & 0x1ff)];
 
 				/* only non-zero pixels get written */
-				if (pix)
+				if (pix | opaque)
 					dst[x % DSTBITMAP_WIDTH] = (pix & mask) | color;
 			}
 		}
@@ -304,7 +313,7 @@ WRITE16_HANDLER( madmax_blitter_vidparam_w )
 WRITE16_HANDLER( madmax_blitter_unknown_w )
 {
 	/* written to just before the blitter command register is written */
-//  logerror("%06X:write to %06X = %04X & %04X\n", activecpu_get_pc(), 0x300000 + 2 * offset, data, mem_mask ^ 0xffff);
+  logerror("%06X:write to %06X = %04X & %04X\n", activecpu_get_pc(), 0x300000 + 2 * offset, data, mem_mask ^ 0xffff);
 }
 
 

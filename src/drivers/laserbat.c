@@ -19,7 +19,6 @@ TODO:
 #include "driver.h"
 #include "cpu/s2650/s2650.h"
 #include "machine/6821pia.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/s2636.h"
 #include "sound/ay8910.h"
 #include "sound/sn76477.h"

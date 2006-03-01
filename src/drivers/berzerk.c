@@ -6,7 +6,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "includes/berzerk.h"
 #include "sound/samples.h"
 

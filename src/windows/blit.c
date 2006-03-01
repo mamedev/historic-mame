@@ -1495,8 +1495,7 @@ static void generate_blitter(const win_blit_params *blit)
 		active_fast_blitter = osd_alloc_executable(MAX_BLITTER_SIZE);
 	if (!active_update_blitter)
 		active_update_blitter = osd_alloc_executable(MAX_BLITTER_SIZE);
-	if (!active_fast_blitter || !active_update_blitter)
-		osd_die("Out of memory for blitters!");
+	assert_always(active_fast_blitter != NULL && active_update_blitter != NULL, "Out of memory for blitters!");
 	fastptr = active_fast_blitter;
 	updateptr = active_update_blitter;
 

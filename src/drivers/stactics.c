@@ -43,7 +43,6 @@ Verify Bar graph displays
 ****************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 /* Defined in machine/stactics.c */
 READ8_HANDLER( stactics_port_0_r );

@@ -3,7 +3,7 @@ Car Jamboree
 Omori Electric CAD (OEC) 1981
 */
 
-#include "vidhrdw/generic.h"
+#include "driver.h"
 
 static tilemap *carjmbre_tilemap;
 

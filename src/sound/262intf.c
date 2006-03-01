@@ -6,6 +6,7 @@
 
 ***************************************************************************/
 #include "driver.h"
+#include "streams.h"
 #include "262intf.h"
 #include "ymf262.h"
 
@@ -160,7 +161,7 @@ WRITE8_HANDLER( YMF262_data_B_1_w ) {
  * Generic get_info
  **************************************************************************/
 
-static void ymf262_set_info(void *token, UINT32 state, union sndinfo *info)
+static void ymf262_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -169,7 +170,7 @@ static void ymf262_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void ymf262_get_info(void *token, UINT32 state, union sndinfo *info)
+void ymf262_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

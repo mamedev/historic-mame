@@ -34,7 +34,7 @@ INLINE void compute_add(int rn, int rx, int ry)
 	UINT32 r = REG(rx) + REG(ry);
 
 	if(sharc.mode1 & ALUSAT)
-		osd_die("SHARC: compute_add: ALU saturation not implemented !\n");
+		fatalerror("SHARC: compute_add: ALU saturation not implemented !");
 
 	CLEAR_ALU_FLAGS();
 	SET_FLAG_AN(r);
@@ -50,7 +50,7 @@ INLINE void compute_sub(int rn, int rx, int ry)
 	UINT32 r = REG(rx) - REG(ry);
 
 	if(sharc.mode1 & ALUSAT)
-		osd_die("SHARC: compute_sub: ALU saturation not implemented !\n");
+		fatalerror("SHARC: compute_sub: ALU saturation not implemented !");
 
 	CLEAR_ALU_FLAGS();
 	SET_FLAG_AN(r);
@@ -67,7 +67,7 @@ INLINE void compute_add_ci(int rn, int rx, int ry)
 	UINT32 r = REG(rx) + REG(ry) + c;
 
 	if(sharc.mode1 & ALUSAT)
-		osd_die("SHARC: compute_add_ci: ALU saturation not implemented !\n");
+		fatalerror("SHARC: compute_add_ci: ALU saturation not implemented !");
 
 	CLEAR_ALU_FLAGS();
 	SET_FLAG_AN(r);
@@ -84,7 +84,7 @@ INLINE void compute_sub_ci(int rn, int rx, int ry)
 	UINT32 r = REG(rx) - REG(ry) + c - 1;
 
 	if(sharc.mode1 & ALUSAT)
-		osd_die("SHARC: compute_sub_ci: ALU saturation not implemented !\n");
+		fatalerror("SHARC: compute_sub_ci: ALU saturation not implemented !");
 
 	CLEAR_ALU_FLAGS();
 	SET_FLAG_AN(r);
@@ -651,11 +651,11 @@ INLINE void compute_multi_mr_to_reg(int ai, int rk)
 	{
 		case 0:		SET_UREG(rk, (UINT32)(sharc.mrf)); break;
 		case 1:		SET_UREG(rk, (UINT32)(sharc.mrf >> 32)); break;
-		case 2:		osd_die("SHARC: tried to load MR2F"); break;
+		case 2:		fatalerror("SHARC: tried to load MR2F"); break;
 		case 4:		SET_UREG(rk, (UINT32)(sharc.mrb)); break;
 		case 5:		SET_UREG(rk, (UINT32)(sharc.mrb >> 32)); break;
-		case 6:		osd_die("SHARC: tried to load MR2B"); break;
-		default:	osd_die("SHARC: unknown ai %d in mr_to_reg\n", ai);
+		case 6:		fatalerror("SHARC: tried to load MR2B"); break;
+		default:	fatalerror("SHARC: unknown ai %d in mr_to_reg", ai);
 	}
 
 	CLEAR_MULTIPLIER_FLAGS();
@@ -667,11 +667,11 @@ INLINE void compute_multi_reg_to_mr(int ai, int rk)
 	{
 		case 0:		sharc.mrf &= ~0xffffffff; sharc.mrf |= GET_UREG(rk); break;
 		case 1:		sharc.mrf &= 0xffffffff; sharc.mrf |= (UINT64)(GET_UREG(rk)) << 32; break;
-		case 2:		osd_die("SHARC: tried to write MR2F"); break;
+		case 2:		fatalerror("SHARC: tried to write MR2F"); break;
 		case 4:		sharc.mrb &= ~0xffffffff; sharc.mrb |= GET_UREG(rk); break;
 		case 5:		sharc.mrb &= 0xffffffff; sharc.mrb |= (UINT64)(GET_UREG(rk)) << 32; break;
-		case 6:		osd_die("SHARC: tried to write MR2B"); break;
-		default:	osd_die("SHARC: unknown ai %d in reg_to_mr\n", ai);
+		case 6:		fatalerror("SHARC: tried to write MR2B"); break;
+		default:	fatalerror("SHARC: unknown ai %d in reg_to_mr", ai);
 	}
 
 	CLEAR_MULTIPLIER_FLAGS();

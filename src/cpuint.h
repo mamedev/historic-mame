@@ -14,9 +14,7 @@
 #ifndef __CPUINT_H__
 #define __CPUINT_H__
 
-#include "osd_cpu.h"
 #include "memory.h"
-#include "timer.h"
 
 
 /*************************************

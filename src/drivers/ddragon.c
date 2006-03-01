@@ -68,7 +68,6 @@ conversion kit which could be applied to a bootleg double dragon :-p?
 #include "cpu/m6800/m6800.h"
 #include "cpu/m6809/m6809.h"
 #include "cpu/z80/z80.h"
-#include "vidhrdw/generic.h"
 #include "sound/2151intf.h"
 #include "sound/okim6295.h"
 #include "sound/msm5205.h"

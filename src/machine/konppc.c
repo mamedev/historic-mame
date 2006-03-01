@@ -160,7 +160,7 @@ WRITE32_HANDLER( cgboard_dsp_comm_w_sharc )
 {
 	if (offset >= 2)
 	{
-		osd_die("dsp_comm_w: %08X, %08X\n", data, offset);
+		fatalerror("dsp_comm_w: %08X, %08X", data, offset);
 	}
 
 	if (offset == 1)

@@ -53,7 +53,6 @@ Code disassembling
 *******************************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
 #include "sound/ay8910.h"
 

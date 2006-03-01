@@ -66,7 +66,6 @@ L00-L03 & U00-U03 are 29F1610ML Flash roms
 #include "machine/eeprom.h"
 #include "sound/2151intf.h"
 #include "sound/okim6295.h"
-#include "vidhrdw/generic.h"
 
 static UINT32 *vram;
 

@@ -7,7 +7,6 @@
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
 static ADDRESS_MAP_START( wink_map, ADDRESS_SPACE_PROGRAM, 8 )

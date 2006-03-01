@@ -25,7 +25,6 @@ Updates:
 #include "driver.h"
 #include "sndhrdw/irem.h"
 #include "cpu/m6800/m6800.h"
-#include "vidhrdw/generic.h"
 
 
 /* from vidhrdw */

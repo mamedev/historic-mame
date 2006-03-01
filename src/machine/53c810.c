@@ -79,7 +79,7 @@ static UINT32 sign_extend24(UINT32 val)
 
 static void dmaop_invalid(void)
 {
-	osd_die("LSI53C810: Invalid SCRIPTS DMA opcode %08X at %08X\n", lsi810.dcmd, lsi810.dsp);
+	fatalerror("LSI53C810: Invalid SCRIPTS DMA opcode %08X at %08X", lsi810.dcmd, lsi810.dsp);
 }
 
 static void dmaop_move_memory(void)
@@ -97,7 +97,7 @@ static void dmaop_move_memory(void)
 static void dmaop_interrupt(void)
 {
 	if(lsi810.dcmd & 0x100000) {
-		osd_die("LSI53C810: INTFLY opcode not implemented\n");
+		fatalerror("LSI53C810: INTFLY opcode not implemented");
 	}
 	lsi810.dsps = FETCH();
 
@@ -146,7 +146,7 @@ static void dmaop_block_move(void)
 	if (lsi810.scntl0 & 0x01)
 	{
 		/* target mode */
-		osd_die("LSI53C810: dmaop_block_move not implemented in target mode\n");
+		fatalerror("LSI53C810: dmaop_block_move not implemented in target mode");
 	}
 	else
 	{
@@ -189,12 +189,12 @@ static void dmaop_wait_disconnect(void)
 	if (lsi810.scntl0 & 0x01)
 	{
 		/* target mode */
-		osd_die("LSI53C810: dmaop_wait_disconnect not implemented in target mode\n");
+		fatalerror("LSI53C810: dmaop_wait_disconnect not implemented in target mode");
 	}
 	else
 	{
 		/* initiator mode */
-		osd_die("LSI53C810: dmaop_wait_disconnect not implemented\n");
+		fatalerror("LSI53C810: dmaop_wait_disconnect not implemented");
 	}
 }
 
@@ -207,12 +207,12 @@ static void dmaop_wait_reselect(void)
 	if (lsi810.scntl0 & 0x01)
 	{
 		/* target mode */
-		osd_die("LSI53C810: dmaop_wait_reselect not implemented in target mode\n");
+		fatalerror("LSI53C810: dmaop_wait_reselect not implemented in target mode");
 	}
 	else
 	{
 		/* initiator mode */
-		osd_die("LSI53C810: dmaop_wait_reselect not implemented\n");
+		fatalerror("LSI53C810: dmaop_wait_reselect not implemented");
 	}
 }
 
@@ -276,17 +276,17 @@ static void dmaop_clear(void)
 
 static void dmaop_move_from_sfbr(void)
 {
-	osd_die("LSI53C810: dmaop_move_from_sfbr not implemented in target mode\n");
+	fatalerror("LSI53C810: dmaop_move_from_sfbr not implemented in target mode");
 }
 
 static void dmaop_move_to_sfbr(void)
 {
-	osd_die("LSI53C810: dmaop_move_to_sfbr not implemented\n");
+	fatalerror("LSI53C810: dmaop_move_to_sfbr not implemented");
 }
 
 static void dmaop_read_modify_write(void)
 {
-	osd_die("LSI53C810: dmaop_read_modify_write not implemented\n");
+	fatalerror("LSI53C810: dmaop_read_modify_write not implemented");
 }
 
 static int scripts_compute_branch(void)
@@ -302,12 +302,12 @@ static int scripts_compute_branch(void)
 
 	if (lsi810.dcmd & 0x00200000)
 	{
-		osd_die("LSI53C810: jump with carry test not implemented\n");
+		fatalerror("LSI53C810: jump with carry test not implemented");
 	}
 
 	if (lsi810.dcmd & 0x00100000)
 	{
-		osd_die("LSI53C810: jump with interrupt on the fly not implemented\n");
+		fatalerror("LSI53C810: jump with interrupt on the fly not implemented");
 	}
 
 	// set desired result to take jump
@@ -420,12 +420,12 @@ static void dmaop_return(void)
 
 static void dmaop_store(void)
 {
-	osd_die("LSI53C810: dmaop_store not implemented\n");
+	fatalerror("LSI53C810: dmaop_store not implemented");
 }
 
 static void dmaop_load(void)
 {
-	osd_die("LSI53C810: dmaop_load not implemented\n");
+	fatalerror("LSI53C810: dmaop_load not implemented");
 }
 
 
@@ -523,7 +523,7 @@ UINT8 lsi53c810_reg_r(int reg)
 			return lsi810.scratch_b[reg % 4];
 
 		default:
-			osd_die("LSI53C810: reg_r: Unknown reg %02X\n", reg);
+			fatalerror("LSI53C810: reg_r: Unknown reg %02X", reg);
 	}
 
 	return 0;
@@ -656,7 +656,7 @@ void lsi53c810_reg_w(int reg, UINT8 value)
 			break;
 
 		default:
-			osd_die("LSI53C810: reg_w: Unknown reg %02X, %02X\n", reg, value);
+			fatalerror("LSI53C810: reg_w: Unknown reg %02X, %02X", reg, value);
 	}
 }
 
@@ -874,7 +874,7 @@ unsigned lsi53c810_dasm(char *buf, UINT32 pc)
 				break;
 
 			default:
-				osd_die("unknown op 0x%08X", op);
+				fatalerror("unknown op 0x%08X", op);
 				break;
 		}
 		result = 8;
@@ -901,7 +901,7 @@ unsigned lsi53c810_dasm(char *buf, UINT32 pc)
 	}
 	else
 	{
-		osd_die("unknown op 0x%08X", op);
+		fatalerror("unknown op 0x%08X", op);
 	}
 	return result;
 }

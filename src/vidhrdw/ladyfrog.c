@@ -6,7 +6,6 @@
 
 ***************************************************************************/
 #include "driver.h"
-#include "vidhrdw/generic.h"
 static int tilebank=0;
 
 static tilemap *bg_tilemap;

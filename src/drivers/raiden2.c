@@ -21,7 +21,6 @@ it will crash shortly afterwards tho
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "sndhrdw/seibu.h"
 
@@ -1151,23 +1150,22 @@ static const gfx_layout raiden2_tilelayout =
 	128*8
 };
 
-static const gfx_layout r2_t2 =
+static const gfx_layout raiden2_spritelayout =
 {
 	16, 16,
 	0x10000,
 	4,
-	{ 8, 0, 24, 16 },
-
-	{ 0, 1, 2, 3, 4, 5, 6, 7, 32, 33, 34, 35, 36, 37, 38, 39 },
+	{ 0, 1, 2, 3 },
+	{ 4, 0, 12, 8, 20, 16, 28, 24, 36, 32, 44, 40, 52, 48, 60, 56 },
 	{ 0, 64, 128, 192, 256, 320, 384, 448, 512, 576, 640, 704, 768, 832, 896, 960 },
 	16*16*4
 };
 
 static const gfx_decode raiden2_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x00000, &raiden2_charlayout, 1792, 128 },
-	{ REGION_GFX2, 0x00000, &raiden2_tilelayout, 0x400, 128 },
-	{ REGION_GFX3, 0x00000, &r2_t2, 0x000, 128 },
+	{ REGION_GFX1, 0x00000, &raiden2_charlayout,   0x700, 128 },
+	{ REGION_GFX2, 0x00000, &raiden2_tilelayout,   0x400, 128 },
+	{ REGION_GFX3, 0x00000, &raiden2_spritelayout, 0x000, 128 },
 	{ -1 } /* end of array */
 };
 
@@ -1987,10 +1985,10 @@ ROM_END
 /* INIT */
 
 static const int swx[32] = {
-  26,  5,  4, 23, 22,  2,  3, 15,
-  21, 12, 10,  9, 17, 30, 24, 19,
-   8, 13, 27, 31, 16, 11,  6, 25,
-  29, 20, 18, 14,  7,  1,  0, 28,
+  25, 28, 15, 19,  6,  0,  3, 24,
+  11,  1,  2, 30, 16,  7, 22, 17,
+  31, 14, 23,  9, 27, 18,  4, 10,
+  13, 20,  5, 12,  8, 29, 26, 21,
 };
 
 static unsigned int sw(unsigned int v)
@@ -2131,64 +2129,64 @@ static unsigned int gm(int i)
   i1 = idx & 0xff;
   i2 = (i >> 8) & 0xff;
 
-  x    = 0x55425200;
+  x    = 0x41135012;
 
   if(bt(xmap_low_01, i1))
-    x ^= 0x00000a02;
+    x ^= 0x00c01000;
   if(bt(xmap_low_03, i1))
-    x ^= 0x09000008;
+    x ^= 0x03000800;
   if(bt(xmap_low_07, i1))
-    x ^= 0x00004080;
+    x ^= 0x00044000;
   if(bt(xmap_low_23, i1))
-    x ^= 0x40800000;
+    x ^= 0x00102000;
   if(bt(xmap_low_31, i1))
-    x ^= 0x80000000;
+    x ^= 0x00008000;
 
   if(bt(xmap_high_00, i2))
-    x ^= 0x00040000;
+    x ^= 0x00000400;
   if(bt(xmap_high_02, i2))
-    x ^= 0x00000024;
+    x ^= 0x00200020;
   if(bt(xmap_high_03, i2))
-    x ^= 0x00000108;
+    x ^= 0x02000008;
   if(bt(xmap_high_04, i2))
-    x ^= 0x00080010;
+    x ^= 0x10000200;
   if(bt(xmap_high_06, i2))
-    x ^= 0x20000000;
+    x ^= 0x00000004;
   if(bt(xmap_high_21, i2))
-    x ^= 0x02200000;
+    x ^= 0x80000001;
   if(bt(xmap_high_20, i2))
-    x ^= 0x40100000;
+    x ^= 0x00100040;
   if(bt(xmap_high_10, i2))
-    x ^= 0x10000400;
+    x ^= 0x40000100;
   if(bt(xmap_high_11, i2))
-    x ^= 0x00001800;
+    x ^= 0x00800010;
   if(bt(xmap_high_13, i2))
-    x ^= 0x00402000;
+    x ^= 0x00020080;
   if(bt(xmap_high_15, i2))
-    x ^= 0x04008000;
+    x ^= 0x20000002;
   if(bt(xmap_high_16, i2))
-    x ^= 0x00010000;
+    x ^= 0x00080000;
 
   if(i & 0x010000)
-    x ^= 0x26208108;
+    x ^= 0xa200000f;
   if(i & 0x020000)
-    x ^= 0x40513824;
+    x ^= 0x00ba00f0;
   if(i & 0x040000)
-    x ^= 0x190c0418;
+    x ^= 0x53000f00;
   if(i & 0x080000)
-    x ^= 0xc0804a82;
+    x ^= 0x00d4f000;
 
   if(bt(zmap_2, idx2) && bt(xmap_low_03, i1))
-    x ^= 0x00000040;
+    x ^= 0x08000000;
 
   if(bt(zmap_3, idx2))
-    x ^= 0x00000040;
+    x ^= 0x08000000;
 
   if(bt(zmap_4, idx2&0x1ff) && bt(xmap_low_03, i1))
-    x ^= 0x00000001;
+    x ^= 0x04000000;
 
   if(bt(zmap_5, idx2))
-    x ^= 0x00000001;
+    x ^= 0x04000000;
 
   return x;
 }
@@ -2197,32 +2195,32 @@ static unsigned int trans(unsigned int v, unsigned int x)
 {
   unsigned int R = v^x, r = R;
 
-  if((R & (1<<3)) && (v & (1<<8)))
-    r ^= 1<<0;
+  if((R & (1<<8)) && (v & (1<<30)))
+    r ^= 1<<9;
 
-  if((R & (1<<24)) && (x & (1<<24)))
-    r ^= 1<<3;
+  if((R & (1<<12)) && (v & (1<<22)))
+    r ^= 1<<13;
 
-  if((R & (1<<10)) && (v & (1<<28)))
-    r ^= 1<<4;
+  if((v & (1<<18)) && (x & (1<<14)))
+    r ^= 1<<19;
 
-  if((R & (1<<0)) && (x & (1<<0)))
-    r ^= 1<<6;
+  if((v & (1<<19)) && (x & (1<<6)))
+    r ^= 1<<20;
 
-  if((R & (1<<1)) && (x & (1<<1)))
-    r ^= 1<<11;
-
-  if((R & (1<<19)) && (v & (1<<19)))
-    r ^= 1<<15;
-
-  if((v & (1<<7)) && (x & (1<<14)))
-    r ^= 1<<16;
-
-  if((v & (1<<1)) && (R & (1<<9)))
+  if((R & (1<<22)) && (x & (1<<22)))
     r ^= 1<<23;
 
-  if((v & (1<<16)) && (x & (1<<20)))
-    r ^= 1<<30;
+  if((R & (1<<24)) && (x & (1<<24)))
+    r ^= 1<<25;
+
+  if((R & (1<<25)) && (v & (1<<3)))
+    r ^= 1<<26;
+
+  if((R & (1<<26)) && (x & (1<<26)))
+    r ^= 1<<27;
+
+  if((R & (1<<28)) && (v & (1<<28)))
+    r ^= 1<<29;
 
   return r;
 }
@@ -2246,13 +2244,13 @@ static void decrypt_sprites(void)
 
     i2 = i >> 8;
 
-    v1 = yrot(data[i], gr(i));
+    v1 = sw(yrot(data[i], gr(i)));
 
     x1 = gm(i);
 
-    y1 = sw(trans(v1, x1));
+    y1 = ~trans(v1, x1);
 
-    data[i] = ~y1;
+    data[i] = y1;
   }
 }
 

@@ -360,7 +360,6 @@ ALL VROM ROMs are 16M MASK
 
 #include "driver.h"
 #include "cpu/powerpc/ppc.h"
-#include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
 #include "machine/53c810.h"
 
@@ -423,7 +422,7 @@ static UINT32 pci_device_get_reg(int device, int reg)
 			{
 				case 0x14:	return 0;		/* ??? */
 				default:
-					osd_die("pci_device_get_reg: Device 11, unknown reg %02X", reg);
+					fatalerror("pci_device_get_reg: Device 11, unknown reg %02X", reg);
 					break;
 			}
 
@@ -432,7 +431,7 @@ static UINT32 pci_device_get_reg(int device, int reg)
 			{
 				case 0:		return real3d_device_id;	/* PCI Vendor ID & Device ID */
 				default:
-					osd_die("pci_device_get_reg: Real3D controller, unknown reg %02X", reg);
+					fatalerror("pci_device_get_reg: Real3D controller, unknown reg %02X", reg);
 					break;
 			}
 			break;
@@ -442,7 +441,7 @@ static UINT32 pci_device_get_reg(int device, int reg)
 			{
 				case 0:		return 0x00011000;		/* PCI Vendor ID (0x1000 = LSI Logic) */
 				default:
-					osd_die("pci_device_get_reg: SCSI Controller, unknown reg %02X", reg);
+					fatalerror("pci_device_get_reg: SCSI Controller, unknown reg %02X", reg);
 					break;
 			}
 			break;
@@ -451,13 +450,13 @@ static UINT32 pci_device_get_reg(int device, int reg)
 			{
 				case 0:		return 0x182711db;		/* PCI Vendor ID & Device ID, 315-6183 ??? */
 				default:
-					osd_die("pci_device_get_reg: Device 16, unknown reg %02X", reg);
+					fatalerror("pci_device_get_reg: Device 16, unknown reg %02X", reg);
 					break;
 			}
 			break;
 
 		default:
-			osd_die("pci_device_get_reg: Unknown device %d, reg %02X\n", device, reg);
+			fatalerror("pci_device_get_reg: Unknown device %d, reg %02X", device, reg);
 			break;
 	}
 
@@ -482,7 +481,7 @@ static void pci_device_set_reg(int device, int reg, UINT32 value)
 				case 0x14:		/* ??? */
 					break;
 				default:
-					osd_die("pci_device_set_reg: Unknown device (11), unknown reg %02X %08X", reg, value);
+					fatalerror("pci_device_set_reg: Unknown device (11), unknown reg %02X %08X", reg, value);
 					break;
 			}
 			break;
@@ -497,7 +496,7 @@ static void pci_device_set_reg(int device, int reg, UINT32 value)
 				case 0x04:		/* ??? */
 					break;
 				default:
-					osd_die("pci_device_set_reg: Real3D controller, unknown reg %02X %08X", reg, value);
+					fatalerror("pci_device_set_reg: Real3D controller, unknown reg %02X %08X", reg, value);
 					break;
 			}
 			break;
@@ -512,7 +511,7 @@ static void pci_device_set_reg(int device, int reg, UINT32 value)
 				case 0x14/4:	/* Base Address One (Memory) */
 					break;
 				default:
-					osd_die("pci_device_set_reg: SCSI Controller, unknown reg %02X, %08X", reg, value);
+					fatalerror("pci_device_set_reg: SCSI Controller, unknown reg %02X, %08X", reg, value);
 					break;
 			}
 			break;
@@ -523,13 +522,13 @@ static void pci_device_set_reg(int device, int reg, UINT32 value)
 				case 4:			/* Base address ? (set to 0xC3000000) */
 					break;
 				default:
-					osd_die("pci_device_set_reg: Device 16, unknown reg %02X, %08X", reg, value);
+					fatalerror("pci_device_set_reg: Device 16, unknown reg %02X, %08X", reg, value);
 					break;
 			}
 			break;
 
 		default:
-			osd_die("pci_device_set_reg: Unknown device %d, reg %02X, %08X\n", device, reg, value);
+			fatalerror("pci_device_set_reg: Unknown device %d, reg %02X, %08X", device, reg, value);
 			break;
 	}
 }
@@ -878,7 +877,7 @@ static WRITE64_HANDLER( real3d_dma_w )
 			return;
 			break;
 	}
-	osd_die("real3d_dma_w: %08X, %08X%08X, %08X%08X\n", offset, (UINT32)(data >> 32), (UINT32)(data), (UINT32)(mem_mask >> 32), (UINT32)(mem_mask));
+	fatalerror("real3d_dma_w: %08X, %08X%08X, %08X%08X", offset, (UINT32)(data >> 32), (UINT32)(data), (UINT32)(mem_mask >> 32), (UINT32)(mem_mask));
 }
 
 static void real3d_dma_callback(UINT32 src, UINT32 dst, int length, int byteswap)
@@ -906,7 +905,7 @@ static void real3d_dma_callback(UINT32 src, UINT32 dst, int length, int byteswap
 		case 0x9c:		/* Unknown */
 			break;
 		default:
-			osd_die("dma_callback: %08X, %08X, %d at %08X\n", src, dst, length, activecpu_get_pc());
+			fatalerror("dma_callback: %08X, %08X, %d at %08X", src, dst, length, activecpu_get_pc());
 			break;
 	}
 }
@@ -1091,7 +1090,7 @@ static READ64_HANDLER( model3_ctrl_r )
 			break;
 	}
 
-	osd_die("ctrl_r: %02X, %08X%08X\n", offset, (UINT32)(mem_mask >> 32), (UINT32)(mem_mask));
+	fatalerror("ctrl_r: %02X, %08X%08X", offset, (UINT32)(mem_mask >> 32), (UINT32)(mem_mask));
 	return 0;
 }
 
@@ -1189,7 +1188,7 @@ static WRITE64_HANDLER( model3_ctrl_w )
 			return;
 	}
 
-	osd_die("ctrl_w: %02X, %08X%08X, %08X%08X\n", offset, (UINT32)(data >> 32), (UINT32)(data), (UINT32)(mem_mask >> 32), (UINT32)(mem_mask));
+	fatalerror("ctrl_w: %02X, %08X%08X, %08X%08X", offset, (UINT32)(data >> 32), (UINT32)(data), (UINT32)(mem_mask >> 32), (UINT32)(mem_mask));
 }
 
 static READ64_HANDLER( model3_sys_r )

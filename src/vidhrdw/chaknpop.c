@@ -5,7 +5,6 @@
 
 #include "driver.h"
 #include "tilemap.h"
-#include "vidhrdw/generic.h"
 
 #define GFX_FLIP_X	0x01
 #define GFX_FLIP_Y	0x02

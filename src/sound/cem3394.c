@@ -12,6 +12,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "streams.h"
 #include "cem3394.h"
 #include <math.h>
 
@@ -560,7 +561,7 @@ double cem3394_get_parameter(int chipnum, int input)
  * Generic get_info
  **************************************************************************/
 
-static void cem3394_set_info(void *token, UINT32 state, union sndinfo *info)
+static void cem3394_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -569,7 +570,7 @@ static void cem3394_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void cem3394_get_info(void *token, UINT32 state, union sndinfo *info)
+void cem3394_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

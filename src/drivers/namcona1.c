@@ -168,7 +168,6 @@ Notes:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "namcona1.h"
 #include "sound/c140.h"
 #include "sound/namcona.h"

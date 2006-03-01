@@ -18,7 +18,6 @@ Probably missing sound board.
 
 **********************************/
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
 static UINT8 *vram1;

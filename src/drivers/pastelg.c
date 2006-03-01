@@ -21,7 +21,6 @@ Memo:
 ******************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "nb1413m3.h"
 #include "sound/ay8910.h"
 #include "sound/dac.h"

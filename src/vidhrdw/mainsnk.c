@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 static UINT8 bg_color,  old_bg_color;
 #define mainsnk_offset 8

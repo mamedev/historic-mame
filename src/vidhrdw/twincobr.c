@@ -14,7 +14,6 @@
 
 #include "driver.h"
 #include "tilemap.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/crtc6845.h"
 #include "twincobr.h"
 

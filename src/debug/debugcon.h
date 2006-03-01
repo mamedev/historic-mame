@@ -12,13 +12,15 @@
 #ifndef __DEBUGCON_H__
 #define __DEBUGCON_H__
 
+#include "textbuf.h"
 
-/*###################################################################################################
-**  CONSTANTS
-**#################################################################################################*/
 
-#define MAX_COMMAND_LENGTH		512
-#define MAX_COMMAND_PARAMS		16
+/***************************************************************************
+    CONSTANTS
+***************************************************************************/
+
+#define MAX_COMMAND_LENGTH					512
+#define MAX_COMMAND_PARAMS					16
 
 /* flags for command parsing */
 #define CMDFLAG_NONE						(0x0000)
@@ -32,12 +34,17 @@
 #define CMDERR_UNBALANCED_QUOTES			(4)
 #define CMDERR_NOT_ENOUGH_PARAMS			(5)
 #define CMDERR_TOO_MANY_PARAMS				(6)
+#define CMDERR_EXPRESSION_ERROR				(7)
+
+/* parameter separator macros */
+#define CMDPARAM_SEPARATOR					"\0"
+#define CMDPARAM_TERMINATOR					"\0\0"
 
 
 
-/*###################################################################################################
-**  MACROS
-**#################################################################################################*/
+/***************************************************************************
+    MACROS
+***************************************************************************/
 
 /* command error assembly/disassembly macros */
 #define CMDERR_ERROR_CLASS(x)				((x) >> 16)
@@ -51,21 +58,22 @@
 #define MAKE_CMDERR_UNBALANCED_QUOTES(x)	MAKE_CMDERR(CMDERR_UNBALANCED_QUOTES, (x))
 #define MAKE_CMDERR_NOT_ENOUGH_PARAMS(x)	MAKE_CMDERR(CMDERR_NOT_ENOUGH_PARAMS, (x))
 #define MAKE_CMDERR_TOO_MANY_PARAMS(x)		MAKE_CMDERR(CMDERR_TOO_MANY_PARAMS, (x))
+#define MAKE_CMDERR_EXPRESSION_ERROR(x)		MAKE_CMDERR(CMDERR_EXPRESSION_ERROR, (x))
 
 
 
-/*###################################################################################################
-**  TYPE DEFINITIONS
-**#################################################################################################*/
+/***************************************************************************
+    TYPE DEFINITIONS
+***************************************************************************/
 
-/* EXPRERR is an error code for command evaluation */
+/* CMDERR is an error code for command evaluation */
 typedef UINT32 CMDERR;
 
 
 
-/*###################################################################################################
-**  FUNCTION PROTOTYPES
-**#################################################################################################*/
+/***************************************************************************
+    FUNCTION PROTOTYPES
+***************************************************************************/
 
 /* initialization */
 void				debug_console_init(void);
@@ -78,10 +86,12 @@ void				debug_console_register_command(const char *command, UINT32 flags, int re
 const char *		debug_cmderr_to_string(CMDERR error);
 
 /* console management */
-void 				debug_console_clear(void);
-void 				debug_console_write_line(const char *line);
 void CLIB_DECL		debug_console_printf(const char *format, ...) ATTR_PRINTF(1,2);
-const char *		debug_console_get_line(int index);
-void				debug_console_get_size(int *rows, int *cols);
+void CLIB_DECL		debug_console_printf_wrap(int wrapcol, const char *format, ...) ATTR_PRINTF(2,3);
+text_buffer *		debug_console_get_textbuf(void);
+
+/* errorlog management */
+void				debug_errorlog_write_line(const char *line);
+text_buffer *		debug_errorlog_get_textbuf(void);
 
 #endif

@@ -25,7 +25,6 @@
 *****************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 static unsigned char *m90_spriteram;
 unsigned char *m90_video_data;

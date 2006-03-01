@@ -420,7 +420,7 @@ static void cd_writeWord(UINT32 addr, UINT16 data)
 					break;
 
 				default:
-					osd_die("CD: Unknown request to Get Session Info %x\n", cr1 & 0xff);
+					fatalerror("CD: Unknown request to Get Session Info %x", cr1 & 0xff);
 					break;
 			}
 			cd_stat = CD_STAT_PAUSE;
@@ -479,7 +479,7 @@ static void cd_writeWord(UINT32 addr, UINT16 data)
 			else
 			{
 				// track mode
-				osd_die("CD: Play Disk track mode, not yet implemented\n");
+				fatalerror("CD: Play Disk track mode, not yet implemented");
 			}
 
 			logerror("CD: Play Disk: start %x length %x\n", cd_curfad, fadstoplay);
@@ -872,7 +872,7 @@ READ32_HANDLER( stvcd_r )
 			}
 			else
 			{
-				osd_die("CD: Unknown data buffer read @ mask = %08x\n", mem_mask);
+				fatalerror("CD: Unknown data buffer read @ mask = %08x", mem_mask);
 			}
 
 			break;
@@ -967,7 +967,7 @@ static void read_new_dir(unsigned long fileno)
 			// easy to fix, but make sure we *need* to first
 			if (curroot.length > 14336)
 			{
-				osd_die("ERROR: root directory too big (%ld)\n", curroot.length);
+				fatalerror("ERROR: root directory too big (%ld)", curroot.length);
 			}
 
 			// done with all that, read the root directory now
@@ -978,7 +978,7 @@ static void read_new_dir(unsigned long fileno)
 	{
 		if (curdir[fileno].length > 14336)
 		{
-			osd_die("ERROR: new directory too big (%ld)!\n", curdir[fileno].length);
+			fatalerror("ERROR: new directory too big (%ld)!", curdir[fileno].length);
 		}
 		make_dir_current(curdir[fileno].firstfad);
 	}

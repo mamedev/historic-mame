@@ -26,6 +26,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "streams.h"
 #include "k005289.h"
 
 #define FREQBASEBITS	16
@@ -252,7 +253,7 @@ WRITE8_HANDLER( k005289_keylatch_B_w )
  * Generic get_info
  **************************************************************************/
 
-static void k005289_set_info(void *token, UINT32 state, union sndinfo *info)
+static void k005289_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -261,7 +262,7 @@ static void k005289_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void k005289_get_info(void *token, UINT32 state, union sndinfo *info)
+void k005289_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

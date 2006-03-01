@@ -3,7 +3,6 @@
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 mame_bitmap *thief_page0;
 mame_bitmap *thief_page1;

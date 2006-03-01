@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "streams.h"
 #include "flt_vol.h"
 
 
@@ -47,7 +48,7 @@ void flt_volume_set_volume(int num, float volume)
  * Generic get_info
  **************************************************************************/
 
-static void filter_volume_set_info(void *token, UINT32 state, union sndinfo *info)
+static void filter_volume_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -56,7 +57,7 @@ static void filter_volume_set_info(void *token, UINT32 state, union sndinfo *inf
 }
 
 
-void filter_volume_get_info(void *token, UINT32 state, union sndinfo *info)
+void filter_volume_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

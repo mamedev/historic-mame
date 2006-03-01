@@ -51,7 +51,6 @@ c1  ??
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/3812intf.h"
 
 

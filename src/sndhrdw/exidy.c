@@ -5,6 +5,7 @@
 *************************************************************************/
 
 #include "driver.h"
+#include "streams.h"
 #include "cpu/m6502/m6502.h"
 #include "machine/6821pia.h"
 #include "sound/hc55516.h"

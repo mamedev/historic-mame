@@ -35,7 +35,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/discrete.h"
 #include "nitedrvr.h"
 

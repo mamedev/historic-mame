@@ -45,6 +45,7 @@ Unmapped registers:
 
 #include <math.h>
 #include "driver.h"
+#include "streams.h"
 #include "c140.h"
 
 #define MAX_VOICE 24
@@ -480,7 +481,7 @@ static void *c140_start(int sndindex, int clock, const void *config)
  * Generic get_info
  **************************************************************************/
 
-static void c140_set_info(void *token, UINT32 state, union sndinfo *info)
+static void c140_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -489,7 +490,7 @@ static void c140_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void c140_get_info(void *token, UINT32 state, union sndinfo *info)
+void c140_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

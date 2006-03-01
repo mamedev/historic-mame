@@ -10,7 +10,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 UINT16 *stadhero_pf1_data,*stadhero_pf2_data;
 static tilemap *pf1_tilemap,*pf2_tilemap;

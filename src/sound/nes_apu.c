@@ -45,6 +45,7 @@
  *****************************************************************************/
 
 #include "driver.h"
+#include "streams.h"
 #include "nes_apu.h"
 #include "cpu/m6502/m6502.h"
 
@@ -755,7 +756,7 @@ static void *nesapu_start(int sndindex, int clock, const void *config)
  * Generic get_info
  **************************************************************************/
 
-static void nesapu_set_info(void *token, UINT32 state, union sndinfo *info)
+static void nesapu_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -764,7 +765,7 @@ static void nesapu_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void nesapu_get_info(void *token, UINT32 state, union sndinfo *info)
+void nesapu_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

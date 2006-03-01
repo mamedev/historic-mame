@@ -9,7 +9,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 static tilemap *bg_tilemap, *fg_tilemap;
 

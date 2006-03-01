@@ -174,7 +174,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "machine/mathbox.h"
 #include "vidhrdw/avgdvg.h"
 #include "vidhrdw/vector.h"

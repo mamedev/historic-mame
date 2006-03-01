@@ -12,9 +12,7 @@
 #ifndef __MAME_H__
 #define __MAME_H__
 
-#include "drawgfx.h"
-#include "fileio.h"
-#include "video.h"
+#include "mamecore.h"
 
 #ifdef MESS
 #include "device.h"
@@ -137,10 +135,12 @@ struct _running_machine
 
 	/* debugger-related information */
 	int						debug_mode;			/* was debug mode enabled? */
+#if defined(MAME_DEBUG) && !defined(NEW_DEBUGGER)
 	mame_bitmap *			debug_bitmap;		/* bitmap where the debugger is rendered */
 	pen_t *					debug_pens;			/* pen array for the debugger, analagous to the pens above */
 	pen_t *					debug_remapped_colortable;/* colortable mapped through the pens, as for the game */
 	gfx_element *			debugger_font;		/* font used by the debugger */
+#endif
 
 	/* MESS-specific information */
 #ifdef MESS
@@ -238,6 +238,7 @@ struct _global_options
 extern global_options options;
 extern running_machine *Machine;
 extern const char *mame_disclaimer;
+extern char giant_string_buffer[];
 
 extern char build_version[];
 
@@ -253,11 +254,36 @@ extern char build_version[];
 /* execute a given game by index in the drivers[] array */
 int run_game(int game);
 
-/* log a fatal error during initialization */
-void fatalerror(const char *message);
-
 /* request callback on termination */
 void add_exit_callback(void (*callback)(void));
+
+/* request callback on reset */
+void add_reset_callback(void (*callback)(void));
+
+/* request callback on pause */
+void add_pause_callback(void (*callback)(int));
+
+
+
+/* ----- global system states ----- */
+
+/* schedule an exit */
+void mame_schedule_exit(void);
+
+/* schedule a hard reset */
+void mame_schedule_hard_reset(void);
+
+/* schedule a soft reset */
+void mame_schedule_soft_reset(void);
+
+/* schedule a save */
+void mame_schedule_save(const char *filename);
+
+/* schedule a load */
+void mame_schedule_load(const char *filename);
+
+/* is a scheduled event pending? */
+int mame_is_scheduled_event_pending(void);
 
 /* pause the system */
 void mame_pause(int pause);
@@ -283,7 +309,7 @@ size_t memory_region_length(int num);
 
 
 
-/* ----- automatic resource management ----- */
+/* ----- resource management ----- */
 
 /* begin tracking resources */
 void begin_resource_tracking(void);
@@ -298,8 +324,13 @@ INLINE int get_resource_tag(void)
 	return resource_tracking_tag;
 }
 
+/* allocate memory and fatalerror if there's a problem */
+#define malloc_or_die(s)	_malloc_or_die(s, __FILE__, __LINE__)
+void *_malloc_or_die(size_t size, const char *file, int line) ATTR_MALLOC;
+
 /* allocate memory that will be freed at the next end_resource_tracking */
-void *auto_malloc(size_t size) ATTR_MALLOC;
+#define auto_malloc(s)		_auto_malloc(s, __FILE__, __LINE__)
+void *_auto_malloc(size_t size, const char *file, int line) ATTR_MALLOC;
 
 /* allocate memory and duplicate a string that will be freed at the next end_resource_tracking */
 char *auto_strdup(const char *str) ATTR_MALLOC;
@@ -308,11 +339,13 @@ char *auto_strdup(const char *str) ATTR_MALLOC;
 
 /* ----- miscellaneous bits & pieces ----- */
 
-/* mame_fopen() must use this to know if high score files can be used */
-int mame_highscore_enabled(void);
+/* log to the standard error.log file */
+void CLIB_DECL logerror(const char *text,...) ATTR_PRINTF(1,2);
 
 /* return the index of the given CPU, or -1 if not found */
 int mame_find_cpu_index(const char *tag);
+
+
 
 #ifdef MESS
 #include "mess.h"

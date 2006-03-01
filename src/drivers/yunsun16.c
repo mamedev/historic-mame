@@ -7,7 +7,7 @@
 
 Main  CPU    :  MC68000
 Sound CPU    :  Z80 [Optional]
-Video Chips  :  ?
+Video Chips  :  Actel A1020B PL84C
 Sound Chips  :  OKI M6295 + YM3812 [Optional]
 
 
@@ -15,7 +15,7 @@ Sound Chips  :  OKI M6295 + YM3812 [Optional]
 Year + Game         Board#
 ---------------------------------------------------------------------------
 19?? Magic Bubble     YS-1302
-1997 Shocking         ?
+1997 Shocking         YS-0211?
 1998 Bomb Kick        YS-0211
 ---------------------------------------------------------------------------
 
@@ -32,7 +32,6 @@ Year + Game         Board#
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/okim6295.h"
 #include "sound/3812intf.h"
 
@@ -573,26 +572,29 @@ MACHINE_DRIVER_END
 
                                 Magic Bubble
 
-by Yung Sung YS102
+by Yun Sung YS102
 
-U143 ---27c512
-U23, 21, 22, 20, 131 ----27c010
+U143 -------------------27c512
+U23, 21, 22, 20, 131 ---27c010
 U67, 68, 69, 70 --------27c040
-U32, 33   ------------27c020
+U32, 33 ----------------27c020
 
-U143, 131  .........most likely sound
-U32, 33 .............most likely program
-U20-23........most likely sprites
+U143, 131 .......most likely sound
+U32, 33 .........most likely program
+U20-23 ..........most likely sprites
 U67-70 ..........most likely BG
 
-A1020b is close to U67-70
+Actel A1020b is close to U67-70
 
 68HC000 p16 is close to  U32,33
 
 16.000000 MHz
 
-Sound section uses "KS8001" and "KS8002" and SMD --> Z80
-and SMD "AD-65"
+Sound section:
+ SMD Z80
+  "KS8001" (YM3812)
+  "KS8002" (YM3014)
+  "AD-65"  (OKI M6295 and is SMD)
 
 ***************************************************************************/
 
@@ -687,6 +689,13 @@ ROM_END
 /***************************************************************************
 
                                 Bomb Kick
+
+YunSung YS-0211
+
+  CPU: 68HC000 P16
+Video: Actel A1020B PL84C
+  OSC: 16.000000 MHz
+Sound: Unmarked OKI M6295
 
 ***************************************************************************/
 

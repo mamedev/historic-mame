@@ -70,7 +70,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 #define TILEMAPS 0
 

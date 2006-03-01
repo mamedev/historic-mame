@@ -48,6 +48,7 @@
  *****************************************************************************/
 
 #include "driver.h"
+#include "streams.h"
 #include "pokey.h"
 
 /* clear this to use Machine->sample_rate instead of the native rate */
@@ -1569,7 +1570,7 @@ void pokey4_kbcode_w(int kbcode, int make)
  * Generic get_info
  **************************************************************************/
 
-static void pokey_set_info(void *token, UINT32 state, union sndinfo *info)
+static void pokey_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -1578,7 +1579,7 @@ static void pokey_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void pokey_get_info(void *token, UINT32 state, union sndinfo *info)
+void pokey_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

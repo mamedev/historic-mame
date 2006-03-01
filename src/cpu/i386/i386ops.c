@@ -663,7 +663,7 @@ static void I386OP(mov_cr_r32)(void)		// Opcode 0x0f 22
 		case 2: CYCLES(CYCLES_MOV_REG_CR2); break;
 		case 3: CYCLES(CYCLES_MOV_REG_CR3); break;
 		default:
-			osd_die("i386: mov_cr_r32 CR%d !\n", cr);
+			fatalerror("i386: mov_cr_r32 CR%d !", cr);
 			break;
 	}
 }
@@ -687,7 +687,7 @@ static void I386OP(mov_dr_r32)(void)		// Opcode 0x0f 23
 			CYCLES(CYCLES_MOV_DR6_7_REG);
 			break;
 		default:
-			osd_die("i386: mov_dr_r32 DR%d !\n", dr);
+			fatalerror("i386: mov_dr_r32 DR%d !", dr);
 			break;
 	}
 }
@@ -1080,7 +1080,7 @@ static void I386OP(repeat)(int invert_flag)
 			break;
 
 		default:
-			osd_die("i386: Invalid REP/opcode %02X combination\n",opcode);
+			fatalerror("i386: Invalid REP/opcode %02X combination",opcode);
 			break;
 	}
 
@@ -2061,7 +2061,7 @@ static void I386OP(groupFE_8)(void)			// Opcode 0xfe
 			}
 			break;
 		default:
-			osd_die("i386: groupFE_8 /%d unimplemented\n", (modrm >> 3) & 0x7);
+			fatalerror("i386: groupFE_8 /%d unimplemented", (modrm >> 3) & 0x7);
 			break;
 	}
 }
@@ -2297,11 +2297,11 @@ static void I386OP(mov_tr_r32)(void)		// Opcode 0x0f 26
 
 static void I386OP(unimplemented)(void)
 {
-	osd_die("i386: Unimplemented opcode %02X at %08X\n", I.opcode, I.pc - 1 );
+	fatalerror("i386: Unimplemented opcode %02X at %08X", I.opcode, I.pc - 1 );
 }
 
 static void I386OP(invalid)(void)
 {
 	//i386_trap(6);
-	osd_die("i386: Invalid opcode %02X at %08X\n", I.opcode, I.pc - 1);
+	fatalerror("i386: Invalid opcode %02X at %08X", I.opcode, I.pc - 1);
 }

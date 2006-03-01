@@ -8,7 +8,6 @@
 
 #include "driver.h"
 #include "usrintrf.h"
-#include "vidhrdw/generic.h"
 
 
 static int flipscreen[2];

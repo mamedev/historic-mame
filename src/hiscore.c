@@ -11,6 +11,7 @@
 
 #include "driver.h"
 #include "hiscore.h"
+#include "cheat.h"
 
 #define MAX_CONFIG_LINE_SIZE 48
 
@@ -40,6 +41,22 @@ static struct
 	int hiscores_have_been_loaded;
 	memory_range *mem_range;
 } state;
+
+
+static int is_highscore_enabled(void)
+{
+	/* disable high score when record/playback is on */
+	if (Machine->record_file != NULL || Machine->playback_file != NULL)
+		return FALSE;
+
+	/* disable high score when cheats are used */
+	if (he_did_cheat != 0)
+		return FALSE;
+
+	return TRUE;
+}
+
+
 
 /*****************************************************************************/
 
@@ -177,56 +194,62 @@ static void hiscore_free (void)
 
 static void hiscore_load (void)
 {
-	mame_file *f = mame_fopen (Machine->gamedrv->name, 0, FILETYPE_HIGHSCORE, 0);
-	state.hiscores_have_been_loaded = 1;
-	LOG(("hiscore_load\n"));
-	if (f)
+	if (is_highscore_enabled())
 	{
-		memory_range *mem_range = state.mem_range;
-		LOG(("loading...\n"));
-		while (mem_range)
+		mame_file *f = mame_fopen (Machine->gamedrv->name, 0, FILETYPE_HIGHSCORE, 0);
+		state.hiscores_have_been_loaded = 1;
+		LOG(("hiscore_load\n"));
+		if (f)
 		{
-			UINT8 *data = malloc (mem_range->num_bytes);
-			if (data)
+			memory_range *mem_range = state.mem_range;
+			LOG(("loading...\n"));
+			while (mem_range)
 			{
-				/*  this buffer will almost certainly be small
-                    enough to be dynamically allocated, but let's
-                    avoid memory trashing just in case
-                */
-				mame_fread (f, data, mem_range->num_bytes);
-				copy_to_memory (mem_range->cpu, mem_range->addr, data, mem_range->num_bytes);
-				free (data);
+				UINT8 *data = malloc (mem_range->num_bytes);
+				if (data)
+				{
+					/*  this buffer will almost certainly be small
+                        enough to be dynamically allocated, but let's
+                        avoid memory trashing just in case
+                    */
+					mame_fread (f, data, mem_range->num_bytes);
+					copy_to_memory (mem_range->cpu, mem_range->addr, data, mem_range->num_bytes);
+					free (data);
+				}
+				mem_range = mem_range->next;
 			}
-			mem_range = mem_range->next;
+			mame_fclose (f);
 		}
-		mame_fclose (f);
 	}
 }
 
 static void hiscore_save (void)
 {
-	mame_file *f = mame_fopen (Machine->gamedrv->name, 0, FILETYPE_HIGHSCORE, 1);
-	LOG(("hiscore_save\n"));
-	if (f)
+	if (is_highscore_enabled())
 	{
-		memory_range *mem_range = state.mem_range;
-		LOG(("saving...\n"));
-		while (mem_range)
+		mame_file *f = mame_fopen (Machine->gamedrv->name, 0, FILETYPE_HIGHSCORE, 1);
+		LOG(("hiscore_save\n"));
+		if (f)
 		{
-			UINT8 *data = malloc (mem_range->num_bytes);
-			if (data)
+			memory_range *mem_range = state.mem_range;
+			LOG(("saving...\n"));
+			while (mem_range)
 			{
-				/*  this buffer will almost certainly be small
-                    enough to be dynamically allocated, but let's
-                    avoid memory trashing just in case
-                */
-				copy_from_memory (mem_range->cpu, mem_range->addr, data, mem_range->num_bytes);
-				mame_fwrite(f, data, mem_range->num_bytes);
-				free (data);
+				UINT8 *data = malloc (mem_range->num_bytes);
+				if (data)
+				{
+					/*  this buffer will almost certainly be small
+                        enough to be dynamically allocated, but let's
+                        avoid memory trashing just in case
+                    */
+					copy_from_memory (mem_range->cpu, mem_range->addr, data, mem_range->num_bytes);
+					mame_fwrite(f, data, mem_range->num_bytes);
+					free (data);
+				}
+				mem_range = mem_range->next;
 			}
-			mem_range = mem_range->next;
+			mame_fclose(f);
 		}
-		mame_fclose(f);
 	}
 }
 

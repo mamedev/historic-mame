@@ -35,7 +35,6 @@
 
 #include "driver.h"
 #include "cpu/m68000/m68000.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/taitoic.h"
 #include "sndhrdw/taitosnd.h"
 #include "machine/eeprom.h"

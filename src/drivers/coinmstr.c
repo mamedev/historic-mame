@@ -25,7 +25,6 @@
 #include "driver.h"
 #include "machine/6821pia.h"
 #include "vidhrdw/crtc6845.h"
-#include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
 
 

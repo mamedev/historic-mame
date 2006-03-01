@@ -1,11 +1,11 @@
-/*###################################################################################################
-**
-**  TMS34010: Portable Texas Instruments TMS34010 emulator
-**
-**  Copyright (C) Alex Pasadyn/Zsolt Vasvari 1998
-**   Parts based on code by Aaron Giles
-**
-**#################################################################################################*/
+/***************************************************************************
+
+    TMS34010: Portable Texas Instruments TMS34010 emulator
+
+    Copyright (C) Alex Pasadyn/Zsolt Vasvari 1998
+    Parts based on code by Aaron Giles
+
+***************************************************************************/
 
 #ifndef RECURSIVE_INCLUDE
 

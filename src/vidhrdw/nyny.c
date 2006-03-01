@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 extern unsigned char *nyny_videoram ;
 extern unsigned char *nyny_colourram ;

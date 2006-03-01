@@ -7,7 +7,6 @@
 ****************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
 #define BITMAP_WIDTH	304

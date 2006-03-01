@@ -2771,22 +2771,22 @@ static void TC0100SCN_tilemap_draw_fg(mame_bitmap *bitmap,const rectangle *clipr
 
 	// Row offsets are 'screen space' 0-255 regardless of Y scroll
 	for (y=0; y<=cliprect->max_y; y++) {
-		src_x=(TC0100SCN_fgscrollx[chip] - TC0100SCN_fgscroll_ram[chip][(y + scrolly_delta)&0x1ff] + scrollx_delta)&width_mask;
+		src_x=(TC0100SCN_fgscrollx[chip] - TC0100SCN_fgscroll_ram[chip][(y + scrolly_delta)&0x1ff] + scrollx_delta + cliprect->min_x)&width_mask;
 		if (TC0100SCN_ctrl[chip][0x7]&1) // Flipscreen
 			src_x=256 - 64 - src_x;
 
 		// Col offsets are 'tilemap' space 0-511, and apply to blocks of 8 pixels at once
-		for (x=0; x<=cliprect->max_x; x++) {
+		for (x=0; x<=(cliprect->max_x - cliprect->min_x); x++) {
 			column_offset=TC0100SCN_colscroll_ram[chip][(src_x&0x3ff) / 8];
 			p=(((UINT16*)src_bitmap->line[(src_y - column_offset)&height_mask])[src_x]);
 
 			if ((p&0xf)!=0)
 			{
-				plot_pixel(bitmap, x, y, Machine->pens[p]);
+				plot_pixel(bitmap, x + cliprect->min_x, y, Machine->pens[p]);
 				if (priority_bitmap)
 				{
 					UINT8 *pri = priority_bitmap->line[y];
-					pri[x]|=priority;
+					pri[x + cliprect->min_x]|=priority;
 				}
 			}
 			src_x=(src_x+1)&width_mask;

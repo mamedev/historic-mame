@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 #ifndef MIN
 #define MIN(x,y) (x)<(y)?(x):(y)
@@ -22,18 +21,18 @@ unsigned char *taitosj_gfxpointer;
 unsigned char *taitosj_colorbank,*taitosj_video_priority;
 unsigned char *kikstart_scrollram;
 unsigned char *taitosj_spritebank;
-static unsigned char taitosj_collision_reg[4];
-static unsigned char *dirtybuffer2,*dirtybuffer3;
+static UINT8 taitosj_collision_reg[4];
+static UINT8 *dirtybuffer2,*dirtybuffer3;
 static mame_bitmap *taitosj_tmpbitmap[3];
 static mame_bitmap *sprite_sprite_collbitmap1,*sprite_sprite_collbitmap2;
 static mame_bitmap *sprite_plane_collbitmap1;
 static mame_bitmap *sprite_plane_collbitmap2[3];
-static unsigned char dirtycharacter1[256],dirtycharacter2[256];
-static unsigned char dirtysprite1[64],dirtysprite2[64];
-static int taitosj_video_enable;
-static int flipscreen[2];
+static UINT8 dirtycharacter1[256],dirtycharacter2[256];
+static UINT8 dirtysprite1[64],dirtysprite2[64];
+static UINT8 taitosj_video_enable;
+static UINT8 flipscreen[2];
 static rectangle spritearea[32]; /*areas on bitmap (sprite locations)*/
-static int spriteon[32]; /* 1 if sprite is active */
+static UINT8 spriteon[32]; /* 1 if sprite is active */
 
 static int playfield_enable_mask[3] = { 0x10, 0x20, 0x40 };
 
@@ -180,7 +179,16 @@ WRITE8_HANDLER( taitosj_paletteram_w )
 	palette_set_color(offset / 2,r,g,b);
 }
 
-
+static void taitosj_postload(void)
+{
+	memset(dirtybuffer, 1, videoram_size);
+	memset(dirtybuffer2, 1, videoram_size);
+	memset(dirtybuffer3, 1, videoram_size);
+	memset(dirtycharacter1, 1, sizeof(dirtycharacter1));
+	memset(dirtycharacter2, 1, sizeof(dirtycharacter2));
+	memset(dirtysprite1, 1, sizeof(dirtysprite1));
+	memset(dirtysprite2, 1, sizeof(dirtysprite2));
+}
 
 /***************************************************************************
 
@@ -229,6 +237,11 @@ VIDEO_START( taitosj )
 	flipscreen[0] = flipscreen[1] = 0;
 
 	taitosj_spritebank = spriteram;
+
+	state_save_register_func_postload(taitosj_postload);
+	state_save_register_global_array(taitosj_collision_reg);
+	state_save_register_global(taitosj_video_enable);
+	state_save_register_global_array(flipscreen);
 
 	return 0;
 }

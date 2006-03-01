@@ -119,7 +119,6 @@ tests done with a real chip so there must be something odd going on on this hard
 #include "driver.h"
 #include "machine/kaneko16.h"
 #include "machine/random.h"
-#include "vidhrdw/generic.h"
 #include "sound/okim6295.h"
 
 

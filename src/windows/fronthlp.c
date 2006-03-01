@@ -9,8 +9,10 @@
 
 #include <windows.h>
 #include "driver.h"
+#include "hash.h"
 #include "info.h"
 #include "audit.h"
+#include "unzip.h"
 #include "rc.h"
 #include <stdio.h>
 #include <errno.h>

@@ -5,7 +5,6 @@
 *******************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
 static UINT8 actfancr_control_1[0x20],actfancr_control_2[0x20];

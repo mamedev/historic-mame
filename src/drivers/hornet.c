@@ -731,7 +731,7 @@ READ32_HANDLER(pci_3dfx_r)
 		case 0x0f:		return pci_3dfx_reg[0x0f];		// interrupt_line, interrupt_pin, min_gnt, max_lat
 
 		default:
-			osd_die("pci_3dfx_r: %08X at %08X\n", offset, activecpu_get_pc());
+			fatalerror("pci_3dfx_r: %08X at %08X", offset, activecpu_get_pc());
 	}
 	return 0;
 }
@@ -779,7 +779,7 @@ WRITE32_HANDLER(pci_3dfx_w)
 			break;
 
 		default:
-			osd_die("pci_3dfx_w: %08X, %08X at %08X\n", data, offset, activecpu_get_pc());
+			fatalerror("pci_3dfx_w: %08X, %08X at %08X", data, offset, activecpu_get_pc());
 	}
 }
 

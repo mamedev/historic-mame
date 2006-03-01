@@ -10,7 +10,6 @@
 *********************************************************************/
 
 #include "driver.h"
-#include "generic.h"
 #include "config.h"
 #include <stdarg.h>
 #include <ctype.h>
@@ -55,6 +54,11 @@ static void counters_save(int config_type, xml_data_node *parentnode);
     Initialization
 
 ***************************************************************************/
+
+/*-------------------------------------------------
+    generic_machine_init - initialize globals and
+    register for save states
+-------------------------------------------------*/
 
 void generic_machine_init(void)
 {
@@ -102,6 +106,11 @@ void set_led_status(int num, int on)
 
 ***************************************************************************/
 
+/*-------------------------------------------------
+    counters_load - load the state of the counters
+    and tickets
+-------------------------------------------------*/
+
 static void counters_load(int config_type, xml_data_node *parentnode)
 {
 	xml_data_node *coinnode, *ticketnode;
@@ -135,6 +144,11 @@ static void counters_load(int config_type, xml_data_node *parentnode)
 		dispensed_tickets = xml_get_attribute_int(ticketnode, "number", 0);
 }
 
+
+/*-------------------------------------------------
+    counters_save - save the state of the counters
+    and tickets
+-------------------------------------------------*/
 
 static void counters_save(int config_type, xml_data_node *parentnode)
 {
@@ -225,7 +239,7 @@ void *nvram_select(void)
 		return generic_nvram16;
 	if (generic_nvram32)
 		return generic_nvram32;
-	osd_die("generic nvram handler called without nvram in the memory map\n");
+	fatalerror("generic nvram handler called without nvram in the memory map");
 	return 0;
 }
 

@@ -14,6 +14,7 @@
 
 #include <math.h>
 #include "driver.h"
+#include "streams.h"
 #include "ymf271.h"
 
 #define VERBOSE		(1)
@@ -501,7 +502,7 @@ static void update_pcm(YMF271Chip *chip, int slotnum, INT32 *mixp, int length)
 
 	if (slot->waveform != 7)
 	{
-		osd_die("Waveform %d in update_pcm !!!\n", slot->waveform);
+		fatalerror("Waveform %d in update_pcm !!!", slot->waveform);
 	}
 
 	for (i = 0; i < length; i++)
@@ -1797,7 +1798,7 @@ static void ymf271_reset(void *token)
  * Generic get_info
  **************************************************************************/
 
-static void ymf271_set_info(void *token, UINT32 state, union sndinfo *info)
+static void ymf271_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -1806,7 +1807,7 @@ static void ymf271_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void ymf271_get_info(void *token, UINT32 state, union sndinfo *info)
+void ymf271_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

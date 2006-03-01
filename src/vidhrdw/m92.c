@@ -40,7 +40,6 @@
 *****************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 static tilemap *pf3_wide_layer,*pf3_layer,*pf2_layer,*pf1_wide_layer,*pf1_layer;
 static INT32 pf1_control[8],pf2_control[8],pf3_control[8],pf4_control[8];

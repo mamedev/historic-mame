@@ -8,7 +8,6 @@
 
 #include "driver.h"
 #include "spiders.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/crtc6845.h"
 
 extern int spiders_video_flip;

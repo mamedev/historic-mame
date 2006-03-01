@@ -22,7 +22,7 @@ TODO:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
+#include "streams.h"
 #include "sound/sn76496.h"
 #include "sound/okim6295.h"
 #include "sound/custom.h"

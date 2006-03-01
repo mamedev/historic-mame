@@ -13,7 +13,7 @@ static UINT8 ck = 0;
 
 static void watchdog_timeout( int unused )
 {
-	machine_reset();
+	mame_schedule_soft_reset();
 }
 
 static void reset_timer( void )

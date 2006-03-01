@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "lwings.h"
 
 unsigned char *lwings_fgvideoram;

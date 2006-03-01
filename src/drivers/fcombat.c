@@ -30,7 +30,6 @@ inputs + notes by stephh
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
 PALETTE_INIT( fcombat );
 VIDEO_START( fcombat );

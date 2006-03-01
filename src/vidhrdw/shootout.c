@@ -4,7 +4,6 @@
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 static tilemap *background, *foreground;
 extern unsigned char *shootout_textram;

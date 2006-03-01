@@ -317,7 +317,7 @@ int voodoo_start(int which, int type, int fbmem_in_mb, int tmem0_in_mb, int tmem
 			break;
 
 		default:
-			osd_die("Unsupported voodoo card in voodoo_start!\n");
+			fatalerror("Unsupported voodoo card in voodoo_start!");
 			break;
 	}
 
@@ -1413,7 +1413,7 @@ static void recompute_texture_params(tmu_state *t)
 
 	/* check for separate RGBA filtering */
 	if (TEXDETAIL_SEPARATE_RGBA_FILTER(t->reg[tDetail].u))
-		osd_die("Separate RGBA filters!\n");
+		fatalerror("Separate RGBA filters!");
 }
 
 
@@ -1645,7 +1645,7 @@ static UINT32 cmdfifo_execute(voodoo_state *v, cmdfifo_info *f)
 
 				case 2:		/* RET */
 					if (LOG_CMDFIFO) logerror("  RET $%06X\n", target);
-					osd_die("RET in CMDFIFO!\n");
+					fatalerror("RET in CMDFIFO!");
 					break;
 
 				case 3:		/* JMP LOCAL FRAME BUFFER */
@@ -1655,13 +1655,13 @@ static UINT32 cmdfifo_execute(voodoo_state *v, cmdfifo_info *f)
 
 				case 4:		/* JMP AGP */
 					if (LOG_CMDFIFO) logerror("  JMP AGP $%06X\n", target);
-					osd_die("JMP AGP in CMDFIFO!\n");
+					fatalerror("JMP AGP in CMDFIFO!");
 					src = &fifobase[target / 4];
 					break;
 
 				default:
 					printf("INVALID JUMP COMMAND!\n");
-					osd_die("  INVALID JUMP COMMAND\n");
+					fatalerror("  INVALID JUMP COMMAND");
 					break;
 			}
 			break;
@@ -2079,7 +2079,7 @@ static void check_stalled_cpu(voodoo_state *v, mame_time current_time)
 static void stall_cpu(voodoo_state *v, int state, mame_time current_time)
 {
 	/* sanity check */
-	if (!v->pci.op_pending) osd_die("FIFOs not empty, no op pending!");
+	if (!v->pci.op_pending) fatalerror("FIFOs not empty, no op pending!");
 
 	/* set the state and update statistics */
 	v->pci.stall_state = state;
@@ -2431,7 +2431,7 @@ static INT32 register_w(voodoo_state *v, offs_t offset, UINT32 data)
 			break;
 
 		case userIntrCMD:
-			osd_die("userIntrCMD\n");
+			fatalerror("userIntrCMD");
 			break;
 
 		/* gamma table access -- Voodoo/Voodoo2 only */
@@ -2566,7 +2566,7 @@ static INT32 register_w(voodoo_state *v, offs_t offset, UINT32 data)
 
 		case cmdFifoBump:
 			if (v->type == VOODOO_2 && (chips & 1))
-				osd_die("cmdFifoBump\n");
+				fatalerror("cmdFifoBump");
 			break;
 
 		case cmdFifoRdPtr:
@@ -2622,7 +2622,7 @@ static INT32 register_w(voodoo_state *v, offs_t offset, UINT32 data)
 				else
 					rowpixels = (data & 0x3fff) >> 1;
 				if (v->fbi.rowpixels != rowpixels)
-					osd_die("aux buffer stride differs from color buffer stride\n");
+					fatalerror("aux buffer stride differs from color buffer stride");
 			}
 			break;
 
@@ -3105,7 +3105,7 @@ static INT32 texture_w(voodoo_state *v, offs_t offset, UINT32 data)
 	t = &v->tmu[tmunum];
 
 	if (TEXLOD_TDIRECT_WRITE(t->reg[tLOD].u))
-		osd_die("Texture direct write!\n");
+		fatalerror("Texture direct write!");
 
 	/* update texture info if dirty */
 	if (t->regdirty)
@@ -3222,7 +3222,7 @@ static void flush_fifos(voodoo_state *v, mame_time current_time)
 		return;
 	in_flush = TRUE;
 
-	if (!v->pci.op_pending) osd_die("flush_fifos called with no pending operation");
+	if (!v->pci.op_pending) fatalerror("flush_fifos called with no pending operation");
 
 	if (LOG_FIFO_VERBOSE) logerror("VOODOO.%d.FIFO:flush_fifos start -- pending=%d.%08X%08X cur=%d.%08X%08X\n", v->index,
 		v->pci.op_end_time.seconds, (UINT32)(v->pci.op_end_time.subseconds >> 32), (UINT32)v->pci.op_end_time.subseconds,
@@ -3461,7 +3461,7 @@ static void voodoo_w(voodoo_state *v, offs_t offset, UINT32 data, UINT32 mem_mas
 		fifo_add(&v->pci.fifo, data);
 	}
 	else
-		osd_die("PCI FIFO full");
+		fatalerror("PCI FIFO full");
 
 	/* handle flushing to the memory FIFO */
 	if (FBIINIT0_ENABLE_MEMORY_FIFO(v->reg[fbiInit0].u) &&
@@ -4073,7 +4073,7 @@ static void banshee_agp_w(voodoo_state *v, offs_t offset, UINT32 data, UINT32 me
 			break;
 
 		case cmdBump0:
-			osd_die("cmdBump0\n");
+			fatalerror("cmdBump0");
 			break;
 
 		case cmdRdPtrL0:
@@ -4110,7 +4110,7 @@ static void banshee_agp_w(voodoo_state *v, offs_t offset, UINT32 data, UINT32 me
 			break;
 
 		case cmdBump1:
-			osd_die("cmdBump1\n");
+			fatalerror("cmdBump1");
 			break;
 
 		case cmdRdPtrL1:
@@ -4763,8 +4763,7 @@ static raster_info *add_rasterizer(voodoo_state *v, const raster_info *cinfo)
 	raster_info *info = &v->rasterizer[v->next_rasterizer++];
 	int hash = compute_raster_hash(cinfo);
 
-	if (v->next_rasterizer > MAX_RASTERIZERS)
-		osd_die("Out of space for new rasterizers!");
+	assert_always(v->next_rasterizer <= MAX_RASTERIZERS, "Out of space for new rasterizers!");
 
 	/* make a copy of the info */
 	*info = *cinfo;

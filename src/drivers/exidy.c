@@ -125,7 +125,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "machine/6821pia.h"
 #include "exidy.h"
 #include "sound/custom.h"

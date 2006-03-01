@@ -78,7 +78,6 @@ cleanup
 #include "driver.h"
 #include "sound/okim6295.h"
 #include "sound/es8712.h"
-#include "vidhrdw/generic.h"
 
 UINT16 *vmetal_texttileram;
 UINT16 *vmetal_mid1tileram;

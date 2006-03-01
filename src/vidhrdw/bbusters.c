@@ -22,7 +22,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 static tilemap *fix_tilemap,*pf1_tilemap,*pf2_tilemap;
 static const UINT8 *scale_table_ptr;

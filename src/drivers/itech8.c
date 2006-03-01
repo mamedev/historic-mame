@@ -457,7 +457,6 @@
 #include "machine/6821pia.h"
 #include "machine/6522via.h"
 #include "machine/ticket.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/tms34061.h"
 #include "vidhrdw/tlc34076.h"
 #include "itech8.h"

@@ -3,7 +3,6 @@
 /* updated by Hans Andersson, dec 2005     */
 #include "math.h"
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 #define FOG_SIZE 70
 

@@ -13,7 +13,6 @@
 ****************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/2203intf.h"
 
 extern UINT8 *tryout_gfx_control;

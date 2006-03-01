@@ -31,7 +31,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 unsigned char *xain_charram, *xain_bgram0, *xain_bgram1, xain_pri;
 

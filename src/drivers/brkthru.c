@@ -46,7 +46,6 @@ Sound: YM2203 and YM3526 driven by 6809.  Sound added by Bryan McPhail, 1/4/98.
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
 #include "sound/2203intf.h"
 #include "sound/3812intf.h"

@@ -9,7 +9,6 @@
 ****************************************************************************/
 
 #include "driver.h"
-#include "osd_cpu.h"
 #include "debugger.h"
 #include "h83002.h"
 

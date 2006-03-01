@@ -14,7 +14,7 @@
 
 ***************************************************************************/
 
-#include "vidhrdw/generic.h"
+#include "driver.h"
 #include "vidhrdw/s2636.h"
 #include "cpu/s2650/s2650.h"
 

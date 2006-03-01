@@ -1,7 +1,6 @@
 #include "driver.h"
 #include "cpu/m6809/m6809.h"
 #include "machine/6522via.h"
-#include "vidhrdw/generic.h"
 
 static int scanline=0;
 

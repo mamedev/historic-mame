@@ -20,7 +20,6 @@ Year + Game                 By      Hardware
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/dac.h"
 #include "sound/2151intf.h"
 

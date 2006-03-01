@@ -1,6 +1,7 @@
 /* This program is based on DIS68k by Aaron Giles */
 
-#include "osd_cpu.h"
+#include "mamecore.h"
+
 static UINT8 *filebuf;
 static UINT32 offset;
 

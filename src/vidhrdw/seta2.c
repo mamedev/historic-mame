@@ -71,7 +71,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "seta.h"
 
 UINT16 *seta2_vregs;

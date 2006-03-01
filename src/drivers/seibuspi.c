@@ -553,7 +553,6 @@ RFJ-09 - PRG3   27C040
 
 #include "driver.h"
 #include "cpuintrf.h"
-#include "vidhrdw/generic.h"
 #include "machine/ds2404.h"
 #include "machine/eeprom.h"
 #include "machine/intelfsh.h"
@@ -639,7 +638,7 @@ static void z80_fifoout_push(UINT8 data)
 	}
 	if(fifoout_wpos == fifoout_rpos)
 	{
-		osd_die("Sound FIFOOUT overflow at %08X\n", activecpu_get_pc());
+		fatalerror("Sound FIFOOUT overflow at %08X", activecpu_get_pc());
 	}
 
 	fifoout_read_request = 1;
@@ -650,7 +649,7 @@ static UINT8 z80_fifoin_pop(void)
 	UINT8 r;
 	if (fifoin_wpos == fifoin_rpos)
 	{
-		osd_die("Sound FIFOIN underflow at %08X\n", activecpu_get_pc());
+		fatalerror("Sound FIFOIN underflow at %08X", activecpu_get_pc());
 	}
 	r = fifoin_data[fifoin_rpos++];
 	if(fifoin_rpos == FIFO_SIZE)
@@ -675,7 +674,7 @@ static void z80_fifoin_push(UINT8 data)
 	}
 	if(fifoin_wpos == fifoin_rpos)
 	{
-		osd_die("Sound FIFOIN overflow at %08X\n", activecpu_get_pc());
+		fatalerror("Sound FIFOIN overflow at %08X", activecpu_get_pc());
 	}
 
 	fifoin_read_request = 1;
@@ -893,7 +892,7 @@ static READ32_HANDLER( soundrom_r )
 	}
 
 
-	osd_die("soundrom_r: %08X, %08X\n", offset, mem_mask);
+	fatalerror("soundrom_r: %08X, %08X", offset, mem_mask);
 }
 
 /********************************************************************/

@@ -12,7 +12,8 @@
 #ifndef STREAMS_H
 #define STREAMS_H
 
-typedef INT32 stream_sample_t;
+#include "mamecore.h"
+
 typedef struct _sound_stream sound_stream;
 
 typedef void (*stream_callback)(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int samples);

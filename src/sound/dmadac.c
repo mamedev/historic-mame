@@ -6,6 +6,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "streams.h"
 #include "dmadac.h"
 
 
@@ -404,7 +405,7 @@ void dmadac_set_volume(UINT8 first_channel, UINT8 num_channels, UINT16 volume)
  * Generic get_info
  **************************************************************************/
 
-static void dmadac_set_info(void *token, UINT32 state, union sndinfo *info)
+static void dmadac_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -413,7 +414,7 @@ static void dmadac_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void dmadac_get_info(void *token, UINT32 state, union sndinfo *info)
+void dmadac_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

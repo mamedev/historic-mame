@@ -48,7 +48,6 @@ and 2764 eprom (swapped D3/D4 and D5/D6 data lines)
 ****************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sndhrdw/irem.h"
 
 extern unsigned char *travrusa_videoram;

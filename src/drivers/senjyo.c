@@ -69,7 +69,6 @@ I/O read/write
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "machine/z80ctc.h"
 #include "machine/z80pio.h"
 #include "sound/sn76496.h"

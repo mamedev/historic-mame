@@ -8,7 +8,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "osd_cpu.h"
 #include "driver.h"
 
 #ifdef STANDALONE

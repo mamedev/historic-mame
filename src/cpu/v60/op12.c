@@ -463,7 +463,7 @@ UINT32 opCHLVL(void)
 
 	if (f12Op1>3)
 	{
-		osd_die("Illegal data field on opCHLVL, PC=%x\n", PC);
+		fatalerror("Illegal data field on opCHLVL, PC=%x", PC);
 	}
 
 	oldPSW = v60_update_psw_for_exception(0, f12Op1);
@@ -749,7 +749,7 @@ UINT32 opLDPR(void)
 	}
 	else
 	{
-		osd_die("Invalid operand on LDPR PC=%x\n", PC);
+		fatalerror("Invalid operand on LDPR PC=%x", PC);
 	}
 	F12END();
 }
@@ -2087,7 +2087,7 @@ UINT32 opSTPR(void)
 		modWriteValW = v60.reg[f12Op1 + 36];
 	else
 	{
-		osd_die("Invalid operand on STPR PC=%x\n", PC);
+		fatalerror("Invalid operand on STPR PC=%x", PC);
 	}
 	F12WriteSecondOperand(2);
 	F12END();

@@ -12,7 +12,6 @@ the most protected of the DE102 games?
 #include "driver.h"
 #include "cpu/m68000/m68000.h"
 #include "decocrpt.h"
-#include "vidhrdw/generic.h"
 #include "deco16ic.h"
 #include "sound/2151intf.h"
 #include "sound/okim6295.h"

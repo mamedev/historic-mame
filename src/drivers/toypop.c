@@ -30,7 +30,6 @@ TODO:
 ****************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "machine/namcoio.h"
 #include "sound/namco.h"
 

@@ -82,7 +82,6 @@ extern void decrypt156(void);
 #include "deco32.h"
 #include "cpu/arm/arm.h"
 #include "machine/eeprom.h"
-#include "vidhrdw/generic.h"
 #include "machine/random.h"
 #include "sound/okim6295.h"
 #include "deco16ic.h"

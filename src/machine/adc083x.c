@@ -5,6 +5,7 @@
  *
  */
 
+#include <stdarg.h>
 #include "driver.h"
 #include "machine/adc083x.h"
 

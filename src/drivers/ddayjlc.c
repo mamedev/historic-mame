@@ -52,7 +52,6 @@ $842f = lives
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
 
 static INT32 char_bank = 0;

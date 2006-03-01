@@ -14,7 +14,6 @@ i8751 protection simluation and other fixes by Bryan McPhail, 15/10/00.
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
 #include "cpu/m6502/m6502.h"
 #include "sound/2203intf.h"

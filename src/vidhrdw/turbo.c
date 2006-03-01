@@ -6,7 +6,6 @@
 
 #include "driver.h"
 #include "turbo.h"
-#include "vidhrdw/generic.h"
 
 
 /* constants */

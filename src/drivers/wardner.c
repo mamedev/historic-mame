@@ -124,7 +124,6 @@ out:
 
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/crtc6845.h"
 #include "cpu/tms32010/tms32010.h"
 #include "twincobr.h"

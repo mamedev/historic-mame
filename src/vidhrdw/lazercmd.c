@@ -6,7 +6,6 @@
 
 #include "driver.h"
 #include "artwork.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/lazercmd.h"
 
 extern int marker_x, marker_y;

@@ -5,6 +5,7 @@
 *********************************************************/
 
 #include "driver.h"
+#include "streams.h"
 #include "k053260.h"
 
 /* 2004-02-28: Fixed ppcm decoding. Games sound much better now.*/
@@ -452,7 +453,7 @@ READ16_HANDLER( K053260_1_lsb_r )
  * Generic get_info
  **************************************************************************/
 
-static void k053260_set_info(void *token, UINT32 state, union sndinfo *info)
+static void k053260_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -461,7 +462,7 @@ static void k053260_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void k053260_get_info(void *token, UINT32 state, union sndinfo *info)
+void k053260_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

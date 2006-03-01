@@ -1197,7 +1197,6 @@ Notes:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "seta.h"
 #include "sound/2203intf.h"
 #include "sound/2612intf.h"
@@ -2736,6 +2735,39 @@ static ADDRESS_MAP_START( utoukond_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xe00000, 0xe00001) AM_WRITE(MWA16_NOP						)	// ? ack
 ADDRESS_MAP_END
 
+/***************************************************************************
+                            Crazy Fight
+***************************************************************************/
+
+static READ16_HANDLER( crazyfgt_r )
+{
+	return ~0;
+}
+
+static ADDRESS_MAP_START( crazyfgt_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_ROM
+	AM_RANGE(0x400000, 0x40ffff) AM_RAM
+	AM_RANGE(0x610000, 0x610001) AM_READ(crazyfgt_r) //coins, buttons, ..
+	AM_RANGE(0x610002, 0x610003) AM_READ(crazyfgt_r) //?
+	AM_RANGE(0x610004, 0x610005) AM_READ(crazyfgt_r) //ticket
+	AM_RANGE(0x610006, 0x610007) AM_WRITENOP
+	AM_RANGE(0x620000, 0x620003) AM_WRITENOP
+	AM_RANGE(0x630000, 0x630001) AM_READ(crazyfgt_r) //dip1
+	AM_RANGE(0x630002, 0x630003) AM_READ(crazyfgt_r) //dip2
+	//AM_RANGE(0x630000, 0x630003) AM_READ(seta_dsw_r)
+	AM_RANGE(0x640400, 0x640fff) AM_RAM AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)	// Palette
+	AM_RANGE(0x650000, 0x650003) AM_WRITENOP
+	AM_RANGE(0x658000, 0x658001) AM_WRITE(OKIM6295_data_0_lsb_w)
+	AM_RANGE(0x670000, 0x670001) AM_READ(crazyfgt_r) //?
+	AM_RANGE(0x680000, 0x680001) AM_READ(crazyfgt_r) //?
+	AM_RANGE(0x800000, 0x803fff) AM_RAM //AM_WRITE(seta_vram_0_w) AM_BASE(&seta_vram_0) // VRAM 0
+	AM_RANGE(0x880000, 0x883fff) AM_RAM //AM_WRITE(seta_vram_2_w) AM_BASE(&seta_vram_2) // VRAM 2
+	AM_RANGE(0x900000, 0x900005) AM_RAM AM_BASE(&seta_vctrl_0)	// VRAM 0&1 Ctrl
+	AM_RANGE(0x980000, 0x980005) AM_RAM AM_BASE(&seta_vctrl_2)	// VRAM 2&3 Ctrl
+	AM_RANGE(0xa00000, 0xa00607) AM_RAM AM_BASE(&spriteram16)	// Sprites Y
+	AM_RANGE(0xa80000, 0xa80001) AM_WRITENOP	// ? 0x4000
+	AM_RANGE(0xb00000, 0xb03fff) AM_RAM AM_BASE(&spriteram16_2)	// Sprites Code + X + Attr
+ADDRESS_MAP_END
 
 
 /***************************************************************************
@@ -6001,7 +6033,12 @@ INPUT_PORTS_START( pairlove )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 INPUT_PORTS_END
 
+/***************************************************************************
+                                Crazy Fight
+***************************************************************************/
 
+INPUT_PORTS_START( crazyfgt )
+INPUT_PORTS_END
 
 /***************************************************************************
 
@@ -6222,7 +6259,30 @@ static const gfx_decode zingzip_gfxdecodeinfo[] =
 };
 
 
+/***************************************************************************
+                                Crazy Fight
+***************************************************************************/
 
+static const gfx_layout crazyfgt_layout =
+{
+	16,16,
+	RGN_FRAC(1,4),
+	4,
+	{ RGN_FRAC(0,4),RGN_FRAC(1,4),RGN_FRAC(2,4),RGN_FRAC(3,4) },
+	{ 0,1,2,3,4,5,6,7,
+		64,65,66,67,68,69,70,71},
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+		16*8,17*8,18*8,19*8,20*8,21*8,22*8,23*8 },
+	16*16
+};
+
+static const gfx_decode crazyfgt_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &crazyfgt_layout,           0,           32 }, // [0] Sprites
+	{ REGION_GFX2, 0, &layout_packed_6bits_3roms, 16*32+64*32, 32 }, // [1] Layer 1
+	{ REGION_GFX3, 0, &layout_packed_6bits_3roms, 16*32,       32 }, // [2] Layer 2
+	{ -1 }
+};
 
 
 
@@ -7584,6 +7644,52 @@ static MACHINE_DRIVER_START( pairlove )
 MACHINE_DRIVER_END
 
 
+static INTERRUPT_GEN( crazyfgt_interrupt )
+{
+	switch (cpu_getiloops())
+	{
+		case 0:		cpunum_set_input_line(0, 1, HOLD_LINE);	break;
+		case 1:		cpunum_set_input_line(0, 2, HOLD_LINE);	break;
+		case 2:		cpunum_set_input_line(0, 4, HOLD_LINE);	break;
+	}
+}
+
+static MACHINE_DRIVER_START( crazyfgt )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_PROGRAM_MAP(crazyfgt_map,0)
+	//MDRV_CPU_VBLANK_INT(seta_interrupt_2_and_4,SETA_INTERRUPTS_NUM)
+	//MDRV_CPU_VBLANK_INT(seta_interrupt_1_and_2,SETA_INTERRUPTS_NUM)
+	MDRV_CPU_VBLANK_INT(crazyfgt_interrupt,3)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 48*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(crazyfgt_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(16*32+16*32+16*32)
+	MDRV_COLORTABLE_LENGTH(16*32+64*32+64*32)	/* sprites, layer1, layer2 */
+
+	MDRV_PALETTE_INIT(blandia)				/* layers 1&2 are 6 planes deep */
+	//MDRV_VIDEO_START(seta_2_layers)
+	MDRV_VIDEO_START(seta_no_layers)
+	MDRV_VIDEO_EOF(seta_buffer_sprites)
+	//MDRV_VIDEO_UPDATE(seta)
+	MDRV_VIDEO_UPDATE(seta_no_layers)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 1000000/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.5)
+MACHINE_DRIVER_END
+
+
 /***************************************************************************
 
                                 ROMs Loading
@@ -8590,6 +8696,28 @@ ROM_START( pairlove )
 	ROM_RELOAD(                0x080000, 0x080000             )
 ROM_END
 
+ROM_START( crazyfgt )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "rom.u3", 0x00000, 0x40000, CRC(bf333e75) SHA1(be124558ca49963cc56d3255c546587558b61926) )
+	ROM_LOAD16_BYTE( "rom.u4", 0x00001, 0x40000, CRC(505e9d47) SHA1(3797d396a24e46b891de4c40aafe960d1cf5f161) )
+
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE ) 	/* Sprites */
+	ROM_LOAD( "rom.u225",     0x000000, 0x80000, CRC(451b4419) SHA1(ab32b3c452b566ddfc64c0a80a257c3baadd8f41) )
+	ROM_LOAD( "rom.u226",     0x080000, 0x80000, CRC(ef210e34) SHA1(99241ffcbc8af889c8ab6f0bc67eedef27d455f0) )
+	ROM_LOAD( "rom.u227",     0x100000, 0x80000, CRC(7905b5f2) SHA1(633f86bf2be620afbe8012ade5d1e59c359a25d4) )
+	ROM_LOAD( "rom.u228",     0x180000, 0x80000, CRC(7181618e) SHA1(57c5aced95b0a11a43dc9bd532290f067113e65a) )
+
+	ROM_REGION( 0xc0000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_LOAD( "rom.u65",      0x000000, 0x40000, CRC(58448231) SHA1(711f24831777719f6a7b143f4f1bfd14f5a9ed4c) )
+	ROM_LOAD( "rom.u66",      0x040000, 0x80000, CRC(c6f7735b) SHA1(0e77045f82d0bf659be5dbfe21cfc8f223faeee9) )
+
+	ROM_REGION( 0xc0000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 2 */
+	ROM_LOAD( "rom.u67",      0x000000, 0x40000, CRC(ec8c6831) SHA1(e0ef1c2e539c1780fc5816ec950d33cb2a69d55e) )
+	ROM_LOAD( "rom.u68",      0x040000, 0x80000, CRC(2124312e) SHA1(1c6053c87a975bfdf910e75bd3e38d0898806ea0) )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 ) /* OKI samples */
+	ROM_LOAD( "rom.u85",      0x00000, 0x40000, CRC(7b95d0bb) SHA1(f16dfd639eed6856e3ab93704caef592a07ba367) )
+ROM_END
 
 
 READ16_HANDLER( twineagl_debug_r )
@@ -8871,4 +8999,4 @@ GAME( 1995, extdwnhl, 0,        extdwnhl, extdwnhl, 0,        ROT0,   "Sammy Ind
 GAME( 1995, gundhara, 0,        gundhara, gundhara, 0,        ROT270, "Banpresto",              "Gundhara", 0 )
 GAME( 1995, sokonuke, 0,        extdwnhl, sokonuke, 0,        ROT0,   "Sammy Industries",       "Sokonuke Taisen Game (Japan)", GAME_IMPERFECT_SOUND )
 GAME( 1995, zombraid, 0,        gundhara, zombraid, zombraid, ROT0,   "American Sammy",   "Zombie Raid (US)", GAME_NO_COCKTAIL )
-
+GAME( 1998, crazyfgt, 0,        crazyfgt, crazyfgt, blandia,  ROT0,   "Subsino",                "Crazy Fight", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )

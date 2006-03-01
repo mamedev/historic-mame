@@ -7,7 +7,7 @@ Video hardware
 
 *****************************************************************************/
 
-#include "vidhrdw/generic.h"
+#include "driver.h"
 
 int mjsister_screen_redraw;
 int mjsister_flip_screen;

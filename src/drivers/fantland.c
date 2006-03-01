@@ -38,7 +38,6 @@ Year + Game             Main CPU    Sound CPU    Sound            Video
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/2151intf.h"
 #include "sound/dac.h"
 #include "sound/msm5205.h"

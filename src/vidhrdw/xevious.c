@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
 UINT8 *xevious_fg_videoram,*xevious_fg_colorram;

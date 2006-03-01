@@ -121,7 +121,6 @@ Notes:
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/arm7/arm7core.h"
 #include "machine/random.h"
 

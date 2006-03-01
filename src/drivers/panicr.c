@@ -58,7 +58,6 @@ D.9B         [f99cac4b] /
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 static tilemap *bgtilemap, *txttilemap;
 static unsigned char *scrollram;

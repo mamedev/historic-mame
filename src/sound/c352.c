@@ -17,6 +17,7 @@
 #include <stdio.h>
 #include <math.h>
 #include "driver.h"
+#include "streams.h"
 #include "c352.h"
 
 #define VERBOSE (0)
@@ -661,7 +662,7 @@ WRITE16_HANDLER( c352_0_w )
  * Generic get_info
  **************************************************************************/
 
-static void c352_set_info(void *token, UINT32 state, union sndinfo *info)
+static void c352_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -670,7 +671,7 @@ static void c352_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void c352_get_info(void *token, UINT32 state, union sndinfo *info)
+void c352_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

@@ -77,7 +77,6 @@ Palette related:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/m68000/m68000.h"
 #include "sound/okim6295.h"
 

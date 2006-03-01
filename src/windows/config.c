@@ -34,6 +34,7 @@
 #include <ctype.h>
 #include <time.h>
 #include <windows.h>
+#include "osdepend.h"
 #include "driver.h"
 #include "rc.h"
 #include "misc.h"
@@ -42,6 +43,7 @@
 
 #ifdef NEW_DEBUGGER
 #include "debug/debugcpu.h"
+#include "debug/debugcon.h"
 #endif
 
 extern struct rc_option frontend_opts[];
@@ -398,37 +400,29 @@ int cli_frontend_init (int argc, char **argv)
 	machine_config drv;
 	char buffer[128];
 	char *cmd_name;
-	int i;
+	int i, result;
 
 	gamename = NULL;
 	gamepath = NULL;
 	game_index = -1;
 
 	/* clear all core options */
-	memset(&options,0,sizeof(options));
+	memset(&options, 0, sizeof(options));
 
 	/* create the rc object */
 	rc = cli_rc_create();
-	if (!rc)
-	{
-		osd_die ("error on rc creation\n");
-	}
+	assert_always(rc != NULL, "Error on rc creation");
 
 	/* parse the commandline */
 	got_gamename = FALSE;
 	prompt_driver_name = FALSE;
 
-	if (rc_parse_commandline(rc, argc, argv, 2, config_handle_arg))
-	{
-		osd_die ("error while parsing cmdline\n");
-	}
+	result = rc_parse_commandline(rc, argc, argv, 2, config_handle_arg);
+	assert_always(result == 0, "Error while parsing cmdline");
 
 	/* determine global configfile name */
 	cmd_name = win_strip_extension(win_basename(argv[0]));
-	if (!cmd_name)
-	{
-		osd_die ("who am I? cannot determine the name I was called with\n");
-	}
+	assert_always(cmd_name != NULL, "Who am I? cannot determine the name I was called with");
 
 	sprintf (buffer, "%s.ini", cmd_name);
 
@@ -478,10 +472,7 @@ int cli_frontend_init (int argc, char **argv)
 	if (playbackname != NULL)
 	{
         options.playback = mame_fopen(playbackname,0,FILETYPE_INPUTLOG,0);
-		if (!options.playback)
-		{
-			osd_die("failed to open %s for playback\n", playbackname);
-		}
+		assert_always(options.playback != NULL, "Failed to open file for playback");
 	}
 
 	/* check for game name embedded in .inp header */
@@ -576,10 +567,7 @@ int cli_frontend_init (int argc, char **argv)
 	if (recordname)
 	{
 		options.record = mame_fopen(recordname,0,FILETYPE_INPUTLOG,1);
-		if (!options.record)
-		{
-			osd_die("failed to open %s for recording\n", recordname);
-		}
+		assert_always(options.record != NULL, "Failed to open file for recording");
 	}
 
 	if (options.record)
@@ -802,7 +790,7 @@ static int config_handle_arg(char *arg)
 		gamename = arg;
 		gamename = win_basename(gamename);
 		gamename = win_strip_extension(gamename);
-		gamepath = strdup(arg);
+		gamepath = mame_strdup(arg);
 
 		/* do we have a driver for this? */
 		for (i = 0; drivers[i]; i++)
@@ -826,54 +814,16 @@ static int config_handle_arg(char *arg)
 
 
 //============================================================
-//  vlogerror
+//  osd_logerror
 //============================================================
 
-static void vlogerror(const char *text, va_list arg)
+void osd_logerror(const char *text)
 {
 	if (errorlog && logfile)
-		curlogsize += vfprintf(logfile, text, arg);
+		curlogsize += fprintf(logfile, "%s", text);
 
 	if (erroroslog)
-	{
-		//extern int vsnprintf(char *s, size_t maxlen, const char *fmt, va_list _arg);
-		char buffer[2048];
-		_vsnprintf(buffer, sizeof(buffer) / sizeof(buffer[0]), text, arg);
-		OutputDebugString(buffer);
-	}
-}
-
-
-//============================================================
-//  logerror
-//============================================================
-
-void CLIB_DECL logerror(const char *text,...)
-{
-	va_list arg;
-
-	/* standard vfprintf stuff here */
-	va_start(arg, text);
-	vlogerror(text, arg);
-	va_end(arg);
-}
-
-
-//============================================================
-//  osd_die
-//============================================================
-
-void CLIB_DECL osd_die(const char *text,...)
-{
-	va_list arg;
-
-	/* standard vfprintf stuff here */
-	va_start(arg, text);
-	vlogerror(text, arg);
-	vprintf(text, arg);
-	va_end(arg);
-
-	exit(-1);
+		OutputDebugString(text);
 }
 
 

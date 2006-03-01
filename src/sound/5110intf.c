@@ -15,6 +15,7 @@
 #include <math.h>
 
 #include "driver.h"
+#include "streams.h"
 #include "tms5110.h"
 #include "5110intf.h"
 
@@ -54,7 +55,7 @@ static void *tms5110_start(int sndindex, int clock, const void *config)
 	info->chip = tms5110_create(sndindex);
 	if (!info->chip)
 		return NULL;
-	sound_register_token(info);
+	sndintrf_register_token(info);
 
 	/* initialize a stream */
 	info->stream = stream_create(0, 1, clock / 80, info, tms5110_update);
@@ -212,7 +213,7 @@ void tms5110_set_frequency(int frequency)
  * Generic get_info
  **************************************************************************/
 
-static void tms5110_set_info(void *token, UINT32 state, union sndinfo *info)
+static void tms5110_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -221,7 +222,7 @@ static void tms5110_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void tms5110_get_info(void *token, UINT32 state, union sndinfo *info)
+void tms5110_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

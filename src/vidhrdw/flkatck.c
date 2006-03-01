@@ -6,7 +6,6 @@
 
 #include "driver.h"
 #include "vidhrdw/konamiic.h"
-#include "vidhrdw/generic.h"
 
 static tilemap *k007121_tilemap[2];
 static rectangle k007121_clip[2];

@@ -45,7 +45,6 @@ NOTE :
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/2203intf.h"
 
 

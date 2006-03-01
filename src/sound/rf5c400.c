@@ -5,6 +5,7 @@
 */
 
 #include "driver.h"
+#include "streams.h"
 #include "rf5c400.h"
 #include <math.h>
 
@@ -304,7 +305,7 @@ WRITE16_HANDLER( RF5C400_0_w )
  * Generic get_info
  **************************************************************************/
 
-static void rf5c400_set_info(void *token, UINT32 state, union sndinfo *info)
+static void rf5c400_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -313,7 +314,7 @@ static void rf5c400_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void rf5c400_get_info(void *token, UINT32 state, union sndinfo *info)
+void rf5c400_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

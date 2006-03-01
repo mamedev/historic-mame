@@ -5,7 +5,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 UINT16 *ddragon3_bg_videoram16;
 UINT16 *ddragon3_fg_videoram16;

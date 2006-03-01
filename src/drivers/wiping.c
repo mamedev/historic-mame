@@ -34,7 +34,6 @@ dip: 6.7 7.7
 
 ***************************************************************************/
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 #include "sound/custom.h"
 

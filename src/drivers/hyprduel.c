@@ -18,12 +18,18 @@ spthx to kikur,Cha,teioh,kokkyu,teruchu,aya,sgo
 Note:
 sub68k is performing not only processing of sound but assistance of main68k.
 
+---
+
+Magical Error
+different sized sound / shared region (or the mem map needs more alterations?)
+fix comms so it boots, it's a bit of a hack for hyperduel at the moment ;-)
+
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/2151intf.h"
 #include "sound/okim6295.h"
+#include "sound/2413intf.h"
 
 #define RASTER_LINES 262
 #define FIRST_VISIBLE_LINE 0
@@ -505,6 +511,75 @@ static ADDRESS_MAP_START( hyprduel_writemem2, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xfe0000, 0xffffff) AM_WRITE(MWA16_RAM) AM_BASE(&hypr_sub_sharedram2_1	)
 ADDRESS_MAP_END
 
+/* Magical Error - video is at 8x now */
+
+static ADDRESS_MAP_START( magerror_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x800000, 0x81ffff) AM_READ(MRA16_RAM				)	// Layer 0
+	AM_RANGE(0x820000, 0x83ffff) AM_READ(MRA16_RAM				)	// Layer 1
+	AM_RANGE(0x840000, 0x85ffff) AM_READ(MRA16_RAM				)	// Layer 2
+	AM_RANGE(0x860000, 0x86ffff) AM_READ(hyprduel_bankedrom_r	)	// Banked ROM
+	AM_RANGE(0x870000, 0x873fff) AM_READ(MRA16_RAM				)	// Palette
+	AM_RANGE(0x874000, 0x874fff) AM_READ(MRA16_RAM				)	// Sprites
+	AM_RANGE(0x875000, 0x877fff) AM_READ(MRA16_RAM				)	// (only used memory test)
+	AM_RANGE(0x878000, 0x8787ff) AM_READ(MRA16_RAM				)	// Tiles Set
+	AM_RANGE(0x8788a2, 0x8788a3) AM_READ(hyprduel_irq_cause_r	)	// IRQ Cause
+	AM_RANGE(0xc00000, 0xc1ffff) AM_READ(MRA16_RAM				)	// (sound driver controls) ?
+	AM_RANGE(0xe00000, 0xe00001) AM_READ(input_port_0_word_r	)	// Inputs
+	AM_RANGE(0xe00002, 0xe00003) AM_READ(input_port_1_word_r	)	//
+	AM_RANGE(0xe00004, 0xe00005) AM_READ(input_port_2_word_r	)	//
+	AM_RANGE(0xe00006, 0xe00007) AM_READ(input_port_3_word_r	)	//
+	AM_RANGE(0xfe0000, 0xffffff) AM_READ(MRA16_RAM				)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( magerror_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM 					)
+	AM_RANGE(0x800000, 0x81ffff) AM_WRITE(hyprduel_vram_0_w) AM_BASE(&hyprduel_vram_0	)	// Layer 0
+	AM_RANGE(0x820000, 0x83ffff) AM_WRITE(hyprduel_vram_1_w) AM_BASE(&hyprduel_vram_1	)	// Layer 1
+	AM_RANGE(0x840000, 0x85ffff) AM_WRITE(hyprduel_vram_2_w) AM_BASE(&hyprduel_vram_2	)	// Layer 2
+	AM_RANGE(0x870000, 0x873fff) AM_WRITE(hyprduel_paletteram_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0x874000, 0x874fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size	)	// Sprites
+	AM_RANGE(0x875000, 0x877fff) AM_WRITE(MWA16_RAM 					)
+	AM_RANGE(0x878000, 0x8787ff) AM_WRITE(MWA16_RAM) AM_BASE(&hyprduel_tiletable) AM_SIZE(&hyprduel_tiletable_size	)	// Tiles Set
+	AM_RANGE(0x878840, 0x87884d) AM_WRITE(hyprduel_blitter_w) AM_BASE(&hyprduel_blitter_regs	)	// Tiles Blitter
+	AM_RANGE(0x878860, 0x87886b) AM_WRITE(hyprduel_window_w) AM_BASE(&hyprduel_window	)	// Tilemap Window
+	AM_RANGE(0x878870, 0x87887b) AM_WRITE(hypr_scrollreg_w				)	// Scroll Regs
+	AM_RANGE(0x87887c, 0x87887d) AM_WRITE(hypr_scrollreg_init_w			)	// scroll regs all sets
+	AM_RANGE(0x878880, 0x878881) AM_WRITE(MWA16_NOP						)
+	AM_RANGE(0x878890, 0x878891) AM_WRITE(MWA16_NOP						)
+	AM_RANGE(0x8788a0, 0x8788a1) AM_WRITE(MWA16_NOP						)
+	AM_RANGE(0x8788a2, 0x8788a3) AM_WRITE(hyprduel_irq_cause_w			)	// IRQ Acknowledge
+	AM_RANGE(0x8788a4, 0x8788a5) AM_WRITE(MWA16_RAM) AM_BASE(&hypr_irq_enable	)	// IRQ Enable
+	AM_RANGE(0x8788aa, 0x8788ab) AM_WRITE(MWA16_RAM) AM_BASE(&hyprduel_rombank		)	// Rom Bank
+	AM_RANGE(0x8788ac, 0x8788ad) AM_WRITE(MWA16_RAM) AM_BASE(&hyprduel_screenctrl	)	// Screen Control
+	AM_RANGE(0x879700, 0x879713) AM_WRITE(MWA16_RAM) AM_BASE(&hyprduel_videoregs	)	// Video Registers
+	AM_RANGE(0x400000, 0x400001) AM_WRITE(hypr_subcpu_control_w			)
+	AM_RANGE(0xc00000, 0xc1ffff) AM_WRITE(MWA16_RAM) AM_BASE(&hypr_sharedram1	) //?
+	AM_RANGE(0xe00000, 0xe00001) AM_WRITE(MWA16_NOP						)
+	AM_RANGE(0xfe0000, 0xffffff) AM_WRITE(MWA16_RAM) AM_BASE(&hypr_sharedram2	)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( magerror_readmem2, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x003fff) AM_READ(MRA16_RAM						)
+	AM_RANGE(0x004000, 0x007fff) AM_READ(MRA16_RAM						)
+//  AM_RANGE(0x400002, 0x400003) AM_READ(YM2151_status_port_0_lsb_r )
+	AM_RANGE(0x400004, 0x400005) AM_READ(OKIM6295_status_0_lsb_r		)
+	AM_RANGE(0xc00000, 0xc07fff) AM_READ(MRA16_RAM						)
+	AM_RANGE(0xfe0000, 0xffffff) AM_READ(MRA16_RAM						)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( magerror_writemem2, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x003fff) AM_WRITE(MWA16_RAM) AM_BASE(&hypr_sub_sharedram1_2	)	// shadow ($c00000 - $c03fff : vector, write ok)
+	AM_RANGE(0x004000, 0x007fff) AM_WRITE(MWA16_RAM) AM_BASE(&hypr_sub_sharedram2_2	)	// shadow ($fe4000 - $fe7fff : read only)
+//  AM_RANGE(0x400000, 0x400001) AM_WRITE(YM2151_register_port_0_lsb_w  )
+//  AM_RANGE(0x400002, 0x400003) AM_WRITE(YM2151_data_port_0_lsb_w      )
+	AM_RANGE(0x400004, 0x400005) AM_WRITE(OKIM6295_data_0_lsb_w			)
+	AM_RANGE(0x800000, 0x800001) AM_WRITE(MWA16_NOP						)
+	AM_RANGE(0xc00000, 0xc07fff) AM_WRITE(MWA16_RAM) AM_BASE(&hypr_sub_sharedram1_1	)	// (sound driver)
+	AM_RANGE(0xfe0000, 0xffffff) AM_WRITE(MWA16_RAM) AM_BASE(&hypr_sub_sharedram2_1	)
+ADDRESS_MAP_END
+
+
 /***************************************************************************
                                 Input Ports
 ***************************************************************************/
@@ -686,6 +761,44 @@ static MACHINE_DRIVER_START( hyprduel )
 MACHINE_DRIVER_END
 
 
+static MACHINE_DRIVER_START( magerror )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000,20000000/2)		/* 10MHz */
+	MDRV_CPU_PROGRAM_MAP(magerror_readmem,magerror_writemem)
+	MDRV_CPU_VBLANK_INT(hyprduel_interrupt,RASTER_LINES)
+
+	MDRV_CPU_ADD(M68000,20000000/2)		/* 10MHz */
+	MDRV_CPU_PROGRAM_MAP(magerror_readmem2,magerror_writemem2)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_RESET(hyprduel)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 224)
+	MDRV_VISIBLE_AREA(0, 320-1, FIRST_VISIBLE_LINE, LAST_VISIBLE_LINE)
+	MDRV_GFXDECODE(gfxdecodeinfo_14220)
+	MDRV_PALETTE_LENGTH(8192)
+
+	MDRV_VIDEO_START(hyprduel_14220)
+	MDRV_VIDEO_UPDATE(hyprduel)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2413, 3579545)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.57)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.57)
+
+	MDRV_SOUND_ADD(OKIM6295, 4000000/16/16)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.57)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.57)
+MACHINE_DRIVER_END
+
 /***************************************************************************
                                 ROMs Loading
 ***************************************************************************/
@@ -754,7 +867,24 @@ ROM_START( hyprdelj )
 	ROM_LOAD( "97.11", 0x00000, 0x40000, CRC(bf3f8574) SHA1(9e743f05e53256c886d43e1f0c43d7417134b9b3) )
 ROM_END
 
+ROM_START( magerror )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "u24.10", 0x000000, 0x40000, CRC(5e78027f) SHA1(053374942bc545a92cc6f6ab6784c4626e4ec9e1) )
+	ROM_LOAD16_BYTE( "u23.9",  0x000001, 0x40000, CRC(7271ec70) SHA1(bd7666390b70821f90ba976a3afe3194fb119478) )
+
+	ROM_REGION( 0x8000, REGION_CPU2, 0 )
+
+	ROM_REGION( 0x400000, REGION_GFX1, 0 )	/* Gfx + Prg + Data (Addressable by CPU & Blitter) */
+	ROMX_LOAD( "mr01.u76", 0x000004, 0x100000, CRC(6cc3b928) SHA1(f19d0add314867bfb7dcefe8e7a2d50a84530df7) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "mr03.u77", 0x000006, 0x100000, CRC(6b1eb0ea) SHA1(6167a61562ef28147a7917c692f181f3fc2d5be6) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "mr02.u74", 0x000000, 0x100000, CRC(f7ba06fb) SHA1(e1407b0d03863f434b68183c01e8547612e5c5fd) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "mr04.u75", 0x000002, 0x100000, CRC(8c114d15) SHA1(4eb1f82e7992deb126633287cb4fd2a6d215346c) , ROM_GROUPWORD | ROM_SKIP(6) )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "u97.11", 0x00000, 0x40000, CRC(2e62bca8) SHA1(191fff11186dbbc1d9d9f3ba1b6e17c38a7d2d1d) )
+ROM_END
 
 GAME( 1993, hyprduel, 0,        hyprduel, hyprduel, hyprduel, ROT0, "Technosoft", "Hyper Duel (Japan set 1)", 0 )
 GAME( 1993, hyprdelj, hyprduel, hyprduel, hyprduel, hyprduel, ROT0, "Technosoft", "Hyper Duel (Japan set 2)", 0 )
 
+GAME( 199?, magerror, 0,        magerror, hyprduel, hyprduel, ROT0, "Technosoft / Jaleco", "Search for the Magical Error", GAME_NOT_WORKING )

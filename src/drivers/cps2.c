@@ -2130,7 +2130,7 @@ ROM_START( choko )
 	ROM_LOAD16_WORD_SWAP( "tkoj.04", 0x080000, 0x80000, CRC(68655378) SHA1(a2d82996394cc28622e93f6c338f9b78aa798775) )
 
 	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
-	ROM_LOAD16_WORD_SWAP( "choko-opcodes.bin", 0x000000, 0x400000, CRC(d5348dd4) SHA1(a3d03424b278acf7608d7da994dafb5ef5045df9) )
+    ROM_LOAD16_WORD_SWAP( "tkojx.bin", 0x000000, 0x400000, CRC(4e4efee1) SHA1(52340439ef1be7ddd4582fbaf72e3c3dd968d0b1) )
 
 	ROM_REGION( 0x1000000, REGION_GFX1, 0 )
 	ROMX_LOAD( "tko-simm.01c",   0x0000000, 0x200000, NO_DUMP, ROM_GROUPBYTE | ROM_SKIP(7) ) // ROM on a simm
@@ -7850,7 +7850,7 @@ GAME( 2000, mmatrixj, mmatrix, cps2, 19xx,    cps2, ROT0,   "Capcom, supported b
 
 GAME( 2000, mpangj,   0,       cps2, ssf2,    cps2, ROT0,   "Mitchell, distributed by Capcom", "Mighty! Pang (Japan 001011)", 0 )
 GAME( 2001, pzloop2j, 0,       cps2, puzloop2, puzloop2, ROT0,   "Mitchell, distributed by Capcom", "Puzz Loop 2 (Japan 010205)", 0 )
-GAME( 2001, choko,    0,       cps2, cps2,    cps2_noxor, ROT0,   "Mitchell, distributed by Capcom", "Choko (Japan 010820)", GAME_IMPERFECT_GRAPHICS )
+GAME( 2001, choko,    0,       cps2, cps2,    cps2, ROT0,   "Mitchell, distributed by Capcom", "Choko (Japan 010820)", GAME_IMPERFECT_GRAPHICS )
 
 /* Games released on CPS-2 hardware by Eighting/Raizing */
 

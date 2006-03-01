@@ -95,7 +95,6 @@ Todo:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 static tilemap *pf1_tilemap_0,*pf1_tilemap_1,*pf1_tilemap_2;
 static tilemap *pf2_tilemap_0,*pf2_tilemap_1,*pf2_tilemap_2;

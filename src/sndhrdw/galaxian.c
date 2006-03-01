@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "streams.h"
 #include "sound/samples.h"
 #include <math.h>
 

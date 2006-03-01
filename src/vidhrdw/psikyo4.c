@@ -27,7 +27,6 @@ HgKairak: 86010000 1f201918 a0000000 Large Screen
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 #define DUAL_SCREEN 1 /* Display both screens simultaneously if 1, change in driver too */
 

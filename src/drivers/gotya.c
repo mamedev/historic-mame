@@ -28,7 +28,6 @@ TODO: Emulated sound
 ****************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/samples.h"
 
 

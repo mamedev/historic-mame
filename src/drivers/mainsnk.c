@@ -73,7 +73,6 @@ cc_p14.j2 8192 0xedc6a1eb M5L2764k
 #include "driver.h"
 #include "sound/ay8910.h"
 #include "sound/namco.h"
-#include "vidhrdw/generic.h"
 
 WRITE8_HANDLER( snkwave_w );
 

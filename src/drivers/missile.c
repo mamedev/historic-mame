@@ -153,7 +153,6 @@
 #include "driver.h"
 #include "missile.h"
 #include "sound/pokey.h"
-#include "vidhrdw/generic.h"
 
 
 UINT8 *missile_ram;

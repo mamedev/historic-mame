@@ -7,6 +7,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "streams.h"
 #include "sound/custom.h"
 
 

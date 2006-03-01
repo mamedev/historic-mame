@@ -55,7 +55,6 @@ Note:   if MAME_DEBUG is defined, pressing Z or X with:
 
 #include "driver.h"
 #include "megasys1.h"
-#include "vidhrdw/generic.h"
 
 /* Variables only used here: */
 

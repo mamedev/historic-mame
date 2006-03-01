@@ -48,7 +48,6 @@ TODO:
  */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/sn76496.h"
 
 

@@ -1,4 +1,4 @@
-#include "vidhrdw/generic.h"
+#include "driver.h"
 #include "deco16ic.h"
 
 UINT16* pcktgaldb_fgram;

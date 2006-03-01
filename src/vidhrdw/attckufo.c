@@ -13,7 +13,6 @@
 
 #include "driver.h"
 #include "sound/custom.h"
-#include "generic.h"
 
 void *attckufo_custom_start(int, const struct CustomSound_interface*);
 void attckufo_soundport_w (int, int);

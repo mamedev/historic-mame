@@ -12,7 +12,6 @@ J Clegg
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 extern unsigned char *spriteram;
 extern size_t spriteram_size;

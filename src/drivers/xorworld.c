@@ -32,7 +32,6 @@ EEPROM chip: 93C46
 
 #include "driver.h"
 #include "machine/eeprom.h"
-#include "vidhrdw/generic.h"
 #include "cpu/m68000/m68000.h"
 #include "sound/saa1099.h"
 

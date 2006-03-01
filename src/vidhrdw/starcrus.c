@@ -2,7 +2,6 @@
 /* Ramtek - Star Cruiser */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/samples.h"
 
 static mame_bitmap *ship1_vid;

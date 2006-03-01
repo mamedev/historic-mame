@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "streams.h"
 #include "flt_rc.h"
 #include <math.h>
 
@@ -78,7 +79,7 @@ void filter_rc_set_RC(int num, int R1, int R2, int R3, int C)
  * Generic get_info
  **************************************************************************/
 
-static void filter_rc_set_info(void *token, UINT32 state, union sndinfo *info)
+static void filter_rc_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -87,7 +88,7 @@ static void filter_rc_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void filter_rc_get_info(void *token, UINT32 state, union sndinfo *info)
+void filter_rc_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

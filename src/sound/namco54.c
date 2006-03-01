@@ -71,6 +71,7 @@ TODO:
 ***************************************************************************/
 
 #include "driver.h"
+#include "streams.h"
 #include "filter.h"
 #include "namco54.h"
 #include "samples.h"
@@ -757,7 +758,7 @@ altogether which corresponds to 1254 chip clock cycles. 13 samples = 543 cycles,
  * Generic get_info
  **************************************************************************/
 
-static void namco_54xx_set_info(void *token, UINT32 state, union sndinfo *info)
+static void namco_54xx_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -766,7 +767,7 @@ static void namco_54xx_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void namco_54xx_get_info(void *token, UINT32 state, union sndinfo *info)
+void namco_54xx_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

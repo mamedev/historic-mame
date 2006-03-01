@@ -8,7 +8,9 @@
 
 ***************************************************************************/
 
+#include <stdarg.h>
 #include "driver.h"
+#include "streams.h"
 #include "psx.h"
 
 #define VERBOSE_LEVEL ( 0 )
@@ -660,7 +662,7 @@ WRITE32_HANDLER( psx_spu_w )
  * Generic get_info
  **************************************************************************/
 
-static void psxspu_set_info(void *token, UINT32 state, union sndinfo *info)
+static void psxspu_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -669,7 +671,7 @@ static void psxspu_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void psxspu_get_info(void *token, UINT32 state, union sndinfo *info)
+void psxspu_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

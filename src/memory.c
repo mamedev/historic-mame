@@ -657,12 +657,12 @@ void memory_set_decrypted_region(int cpunum, offs_t start, offs_t end, void *bas
 					memory_set_opbase(activecpu_get_physical_pc_byte());
 			}
 			else if (bdata->base < end && bdata->end > start)
-				osd_die("memory_set_decrypted_region found straddled region %08X-%08X for CPU %d\n", start, end, cpunum);
+				fatalerror("memory_set_decrypted_region found straddled region %08X-%08X for CPU %d", start, end, cpunum);
 		}
 	}
 
 	if (!found)
-		osd_die("memory_set_decrypted_region unable to find matching region %08X-%08X for CPU %d\n", start, end, cpunum);
+		fatalerror("memory_set_decrypted_region unable to find matching region %08X-%08X for CPU %d", start, end, cpunum);
 }
 
 
@@ -790,11 +790,11 @@ void memory_configure_bank(int banknum, int startentry, int numentries, void *ba
 
 	/* validation checks */
 	if (banknum < STATIC_BANK1 || banknum > MAX_EXPLICIT_BANKS || !bankdata[banknum].used)
-		osd_die("memory_configure_bank called with invalid bank %d\n", banknum);
+		fatalerror("memory_configure_bank called with invalid bank %d", banknum);
 	if (bankdata[banknum].dynamic)
-		osd_die("memory_configure_bank called with dynamic bank %d\n", banknum);
+		fatalerror("memory_configure_bank called with dynamic bank %d", banknum);
 	if (startentry < 0 || startentry + numentries > MAX_BANK_ENTRIES)
-		osd_die("memory_configure_bank called with out-of-range entries %d-%d\n", startentry, startentry + numentries - 1);
+		fatalerror("memory_configure_bank called with out-of-range entries %d-%d", startentry, startentry + numentries - 1);
 
 	/* fill in the requested bank entries */
 	for (entrynum = startentry; entrynum < startentry + numentries; entrynum++)
@@ -814,11 +814,11 @@ void memory_configure_bank_decrypted(int banknum, int startentry, int numentries
 
 	/* validation checks */
 	if (banknum < STATIC_BANK1 || banknum > MAX_EXPLICIT_BANKS || !bankdata[banknum].used)
-		osd_die("memory_configure_bank called with invalid bank %d\n", banknum);
+		fatalerror("memory_configure_bank called with invalid bank %d", banknum);
 	if (bankdata[banknum].dynamic)
-		osd_die("memory_configure_bank called with dynamic bank %d\n", banknum);
+		fatalerror("memory_configure_bank called with dynamic bank %d", banknum);
 	if (startentry < 0 || startentry + numentries > MAX_BANK_ENTRIES)
-		osd_die("memory_configure_bank called with out-of-range entries %d-%d\n", startentry, startentry + numentries - 1);
+		fatalerror("memory_configure_bank called with out-of-range entries %d-%d", startentry, startentry + numentries - 1);
 
 	/* fill in the requested bank entries */
 	for (entrynum = startentry; entrynum < startentry + numentries; entrynum++)
@@ -835,13 +835,13 @@ void memory_set_bank(int banknum, int entrynum)
 {
 	/* validation checks */
 	if (banknum < STATIC_BANK1 || banknum > MAX_EXPLICIT_BANKS || !bankdata[banknum].used)
-		osd_die("memory_set_bank called with invalid bank %d\n", banknum);
+		fatalerror("memory_set_bank called with invalid bank %d", banknum);
 	if (bankdata[banknum].dynamic)
-		osd_die("memory_set_bank called with dynamic bank %d\n", banknum);
+		fatalerror("memory_set_bank called with dynamic bank %d", banknum);
 	if (entrynum < 0 || entrynum > MAX_BANK_ENTRIES)
-		osd_die("memory_set_bank called with out-of-range entry %d\n", entrynum);
+		fatalerror("memory_set_bank called with out-of-range entry %d", entrynum);
 	if (!bankdata[banknum].entry[entrynum])
-		osd_die("memory_set_bank called for bank %d with invalid bank entry %d\n", banknum, entrynum);
+		fatalerror("memory_set_bank called for bank %d with invalid bank entry %d", banknum, entrynum);
 
 	/* set the base */
 	bankdata[banknum].curentry = entrynum;
@@ -866,9 +866,9 @@ void memory_set_bankptr(int banknum, void *base)
 {
 	/* validation checks */
 	if (banknum < STATIC_BANK1 || banknum > MAX_EXPLICIT_BANKS || !bankdata[banknum].used)
-		osd_die("memory_set_bankptr called with invalid bank %d\n", banknum);
+		fatalerror("memory_set_bankptr called with invalid bank %d", banknum);
 	if (bankdata[banknum].dynamic)
-		osd_die("memory_set_bankptr called with dynamic bank %d\n", banknum);
+		fatalerror("memory_set_bankptr called with dynamic bank %d", banknum);
 
 	/* set the base */
 	bank_ptr[banknum] = base;
@@ -901,7 +901,7 @@ void *_memory_install_read_handler(int cpunum, int spacenum, offs_t start, offs_
 {
 	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	if ((handler < 0) || (handler >= STATIC_COUNT))
-		osd_die("fatal: can only use static banks with memory_install_read_handler()\n");
+		fatalerror("fatal: can only use static banks with memory_install_read_handler()");
 	install_mem_handler(space, 0, space->dbits, 0, start, end, mask, mirror, (genf *)handler, 0, handler_name);
 	mem_dump();
 	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, start));
@@ -949,7 +949,7 @@ void *_memory_install_write_handler(int cpunum, int spacenum, offs_t start, offs
 {
 	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	if ((handler < 0) || (handler >= STATIC_COUNT))
-		osd_die("fatal: can only use static banks with memory_install_write_handler()\n");
+		fatalerror("fatal: can only use static banks with memory_install_write_handler()");
 	install_mem_handler(space, 1, space->dbits, 0, start, end, mask, mirror, (genf *)handler, 0, handler_name);
 	mem_dump();
 	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, start));
@@ -998,7 +998,7 @@ void *_memory_install_read_matchmask_handler(int cpunum, int spacenum, offs_t ma
 {
 	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	if ((handler < 0) || (handler >= STATIC_COUNT))
-		osd_die("fatal: can only use static banks with memory_install_read_matchmask_handler()\n");
+		fatalerror("fatal: can only use static banks with memory_install_read_matchmask_handler()");
 	install_mem_handler(space, 0, space->dbits, 1, matchval, maskval, mask, mirror, (genf *)handler, 0, handler_name);
 	mem_dump();
 	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, matchval));
@@ -1047,7 +1047,7 @@ void *_memory_install_write_matchmask_handler(int cpunum, int spacenum, offs_t m
 {
 	addrspace_data *space = &cpudata[cpunum].space[spacenum];
 	if ((handler < 0) || (handler >= STATIC_COUNT))
-		osd_die("fatal: can only use static banks with memory_install_write_matchmask_handler()\n");
+		fatalerror("fatal: can only use static banks with memory_install_write_matchmask_handler()");
 	install_mem_handler(space, 1, space->dbits, 1, matchval, maskval, mask, mirror, (genf *)handler, 0, handler_name);
 	mem_dump();
 	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, matchval));
@@ -1235,9 +1235,9 @@ static int init_addrspace(UINT8 cpunum, UINT8 spacenum)
 
 				/* validate the region */
 				if (!base)
-					osd_die("Error: CPU %d space %d memory map entry %X-%X references non-existant region %d", cpunum, spacenum, map->start, map->end, map->region);
+					fatalerror("Error: CPU %d space %d memory map entry %X-%X references non-existant region %d", cpunum, spacenum, map->start, map->end, map->region);
 				if (map->region_offs + (map->end - map->start + 1) > length)
-					osd_die("Error: CPU %d space %d memory map entry %X-%X extends beyond region %d size (%X)", cpunum, spacenum, map->start, map->end, map->region, length);
+					fatalerror("Error: CPU %d space %d memory map entry %X-%X extends beyond region %d size (%X)", cpunum, spacenum, map->start, map->end, map->region, length);
 			}
 	}
 
@@ -1253,12 +1253,8 @@ static int init_addrspace(UINT8 cpunum, UINT8 spacenum)
 	}
 
 	/* allocate memory */
-	space->read.table = malloc(1 << LEVEL1_BITS);
-	space->write.table = malloc(1 << LEVEL1_BITS);
-	if (!space->read.table)
-		osd_die("cpu #%d couldn't allocate read table\n", cpunum);
-	if (!space->write.table)
-		osd_die("cpu #%d couldn't allocate write table\n", cpunum);
+	space->read.table = malloc_or_die(1 << LEVEL1_BITS);
+	space->write.table = malloc_or_die(1 << LEVEL1_BITS);
 
 	/* initialize everything to unmapped */
 	memset(space->read.table, STATIC_UNMAP, 1 << LEVEL1_BITS);
@@ -1302,7 +1298,7 @@ static int preflight_memory(void)
 							val = (flags & AMEF_SPACE_MASK) >> AMEF_SPACE_SHIFT;
 							if (val != spacenum)
 							{
-								osd_die("cpu #%d has address space %d handlers in place of address space %d handlers!\n", cpunum, val, spacenum);
+								fatalerror("cpu #%d has address space %d handlers in place of address space %d handlers!", cpunum, val, spacenum);
 								return -1;
 							}
 						}
@@ -1314,7 +1310,7 @@ static int preflight_memory(void)
 							val = (val + 1) * 8;
 							if (val != space->dbits)
 							{
-								osd_die("cpu #%d uses wrong %d-bit handlers for address space %d (should be %d-bit)!\n", cpunum, val, spacenum, space->dbits);
+								fatalerror("cpu #%d uses wrong %d-bit handlers for address space %d (should be %d-bit)!", cpunum, val, spacenum, space->dbits);
 								return -1;
 							}
 						}
@@ -1435,9 +1431,9 @@ static void install_mem_handler(addrspace_data *space, int iswrite, int databits
 
 	/* sanity check */
 	if (space->dbits != databits)
-		osd_die("fatal: install_mem_handler called with a %d-bit handler for a %d-bit address space\n", databits, space->dbits);
+		fatalerror("fatal: install_mem_handler called with a %d-bit handler for a %d-bit address space", databits, space->dbits);
 	if (start > end)
-		osd_die("fatal: install_mem_handler called with start greater than end\n");
+		fatalerror("fatal: install_mem_handler called with start greater than end");
 
 	/* if we're installing a new bank, make sure we mark it */
 	if (HANDLER_IS_BANK(handler))
@@ -1584,7 +1580,7 @@ static genf *assign_dynamic_bank(int cpunum, int spacenum, offs_t start, offs_t 
 		}
 
 	/* if we got here, we failed */
-	osd_die("cpu #%d: ran out of banks for RAM/ROM regions!\n", cpunum);
+	fatalerror("cpu #%d: ran out of banks for RAM/ROM regions!", cpunum);
 	return NULL;
 }
 
@@ -1775,7 +1771,7 @@ static UINT8 allocate_subtable(table_data *tabledata)
 					tabledata->subtable_alloc += SUBTABLE_ALLOC;
 					tabledata->table = realloc(tabledata->table, (1 << LEVEL1_BITS) + (tabledata->subtable_alloc << LEVEL2_BITS));
 					if (!tabledata->table)
-						osd_die("error: ran out of memory allocating memory subtable\n");
+						fatalerror("error: ran out of memory allocating memory subtable");
 				}
 
 				/* bump the usecount and return */
@@ -1785,7 +1781,7 @@ static UINT8 allocate_subtable(table_data *tabledata)
 
 		/* merge any subtables we can */
 		if (!merge_subtables(tabledata))
-			osd_die("Ran out of subtables!\n");
+			fatalerror("Ran out of subtables!");
 	}
 
 	/* hopefully this never happens */
@@ -1804,7 +1800,7 @@ static void reallocate_subtable(table_data *tabledata, UINT8 subentry)
 
 	/* sanity check */
 	if (tabledata->subtable[subindex].usecount <= 0)
-		osd_die("Called reallocate_subtable on a table with a usecount of 0\n");
+		fatalerror("Called reallocate_subtable on a table with a usecount of 0");
 
 	/* increment the usecount */
 	tabledata->subtable[subindex].usecount++;
@@ -1882,7 +1878,7 @@ static void release_subtable(table_data *tabledata, UINT8 subentry)
 
 	/* sanity check */
 	if (tabledata->subtable[subindex].usecount <= 0)
-		osd_die("Called release_subtable on a table with a usecount of 0\n");
+		fatalerror("Called release_subtable on a table with a usecount of 0");
 
 	/* decrement the usecount and clear the checksum if we're at 0 */
 	tabledata->subtable[subindex].usecount--;

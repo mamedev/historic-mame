@@ -40,7 +40,7 @@ static void ds2404_rom_cmd(UINT8 cmd)
 			break;
 
 		default:
-			osd_die("DS2404: Unknown ROM command %02X\n", cmd);
+			fatalerror("DS2404: Unknown ROM command %02X", cmd);
 			break;
 	}
 }
@@ -75,7 +75,7 @@ static void ds2404_cmd(UINT8 cmd)
 			break;
 
 		default:
-			osd_die("DS2404: Unknown command %02X\n", cmd);
+			fatalerror("DS2404: Unknown command %02X", cmd);
 			break;
 	}
 }

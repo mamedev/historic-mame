@@ -1,80 +1,76 @@
-/*###################################################################################################
-**
-**
-**      ADSP2100.c
-**      Core implementation for the portable Analog ADSP-2100 emulator.
-**      Written by Aaron Giles
-**
-**
-**###################################################################################################
-**
-**
-**  For ADSP-2101, ADSP-2111
-**  ------------------------
-**
-**      MMAP = 0                                        MMAP = 1
-**
-**      Automatic boot loading                          No auto boot loading
-**
-**      Program Space:                                  Program Space:
-**          0000-07ff = 2k Internal RAM (booted)            0000-37ff = 14k External access
-**          0800-3fff = 14k External access                 3800-3fff = 2k Internal RAM
-**
-**      Data Space:                                     Data Space:
-**          0000-03ff = 1k External DWAIT0                  0000-03ff = 1k External DWAIT0
-**          0400-07ff = 1k External DWAIT1                  0400-07ff = 1k External DWAIT1
-**          0800-2fff = 10k External DWAIT2                 0800-2fff = 10k External DWAIT2
-**          3000-33ff = 1k External DWAIT3                  3000-33ff = 1k External DWAIT3
-**          3400-37ff = 1k External DWAIT4                  3400-37ff = 1k External DWAIT4
-**          3800-3bff = 1k Internal RAM                     3800-3bff = 1k Internal RAM
-**          3c00-3fff = 1k Internal Control regs            3c00-3fff = 1k Internal Control regs
-**
-**
-**  For ADSP-2105, ADSP-2115, ADSP-2104
-**  -----------------------------------
-**
-**      MMAP = 0                                        MMAP = 1
-**
-**      Automatic boot loading                          No auto boot loading
-**
-**      Program Space:                                  Program Space:
-**          0000-03ff = 1k Internal RAM (booted)            0000-37ff = 14k External access
-**          0400-07ff = 1k Reserved                         3800-3bff = 1k Internal RAM
-**          0800-3fff = 14k External access                 3c00-3fff = 1k Reserved
-**
-**      Data Space:                                     Data Space:
-**          0000-03ff = 1k External DWAIT0                  0000-03ff = 1k External DWAIT0
-**          0400-07ff = 1k External DWAIT1                  0400-07ff = 1k External DWAIT1
-**          0800-2fff = 10k External DWAIT2                 0800-2fff = 10k External DWAIT2
-**          3000-33ff = 1k External DWAIT3                  3000-33ff = 1k External DWAIT3
-**          3400-37ff = 1k External DWAIT4                  3400-37ff = 1k External DWAIT4
-**          3800-39ff = 512 Internal RAM                    3800-39ff = 512 Internal RAM
-**          3a00-3bff = 512 Reserved                        3a00-3bff = 512 Reserved
-**          3c00-3fff = 1k Internal Control regs            3c00-3fff = 1k Internal Control regs
-**
-**
-**  For ADSP-2181
-**  -------------
-**
-**      MMAP = 0                                        MMAP = 1
-**
-**      Program Space:                                  Program Space:
-**          0000-1fff = 8k Internal RAM                     0000-1fff = 8k External access
-**          2000-3fff = 8k Internal RAM or Overlay          2000-3fff = 8k Internal
-**
-**      Data Space:                                     Data Space:
-**          0000-1fff = 8k Internal RAM or Overlay          0000-1fff = 8k Internal RAM or Overlay
-**          2000-3fdf = 8k-32 Internal RAM                  2000-3fdf = 8k-32 Internal RAM
-**          3fe0-3fff = 32 Internal Control regs            3fe0-3fff = 32 Internal Control regs
-**
-**      I/O Space:                                      I/O Space:
-**          0000-01ff = 512 External IOWAIT0                0000-01ff = 512 External IOWAIT0
-**          0200-03ff = 512 External IOWAIT1                0200-03ff = 512 External IOWAIT1
-**          0400-05ff = 512 External IOWAIT2                0400-05ff = 512 External IOWAIT2
-**          0600-07ff = 512 External IOWAIT3                0600-07ff = 512 External IOWAIT3
-**
-**
-**#################################################################################################*/
+/***************************************************************************
+
+        ADSP2100.c
+        Core implementation for the portable Analog ADSP-2100 emulator.
+        Written by Aaron Giles
+
+****************************************************************************
+
+    For ADSP-2101, ADSP-2111
+    ------------------------
+
+        MMAP = 0                                        MMAP = 1
+
+        Automatic boot loading                          No auto boot loading
+
+        Program Space:                                  Program Space:
+            0000-07ff = 2k Internal RAM (booted)            0000-37ff = 14k External access
+            0800-3fff = 14k External access                 3800-3fff = 2k Internal RAM
+
+        Data Space:                                     Data Space:
+            0000-03ff = 1k External DWAIT0                  0000-03ff = 1k External DWAIT0
+            0400-07ff = 1k External DWAIT1                  0400-07ff = 1k External DWAIT1
+            0800-2fff = 10k External DWAIT2                 0800-2fff = 10k External DWAIT2
+            3000-33ff = 1k External DWAIT3                  3000-33ff = 1k External DWAIT3
+            3400-37ff = 1k External DWAIT4                  3400-37ff = 1k External DWAIT4
+            3800-3bff = 1k Internal RAM                     3800-3bff = 1k Internal RAM
+            3c00-3fff = 1k Internal Control regs            3c00-3fff = 1k Internal Control regs
+
+
+    For ADSP-2105, ADSP-2115, ADSP-2104
+    -----------------------------------
+
+        MMAP = 0                                        MMAP = 1
+
+        Automatic boot loading                          No auto boot loading
+
+        Program Space:                                  Program Space:
+            0000-03ff = 1k Internal RAM (booted)            0000-37ff = 14k External access
+            0400-07ff = 1k Reserved                         3800-3bff = 1k Internal RAM
+            0800-3fff = 14k External access                 3c00-3fff = 1k Reserved
+
+        Data Space:                                     Data Space:
+            0000-03ff = 1k External DWAIT0                  0000-03ff = 1k External DWAIT0
+            0400-07ff = 1k External DWAIT1                  0400-07ff = 1k External DWAIT1
+            0800-2fff = 10k External DWAIT2                 0800-2fff = 10k External DWAIT2
+            3000-33ff = 1k External DWAIT3                  3000-33ff = 1k External DWAIT3
+            3400-37ff = 1k External DWAIT4                  3400-37ff = 1k External DWAIT4
+            3800-39ff = 512 Internal RAM                    3800-39ff = 512 Internal RAM
+            3a00-3bff = 512 Reserved                        3a00-3bff = 512 Reserved
+            3c00-3fff = 1k Internal Control regs            3c00-3fff = 1k Internal Control regs
+
+
+    For ADSP-2181
+    -------------
+
+        MMAP = 0                                        MMAP = 1
+
+        Program Space:                                  Program Space:
+            0000-1fff = 8k Internal RAM                     0000-1fff = 8k External access
+            2000-3fff = 8k Internal RAM or Overlay          2000-3fff = 8k Internal
+
+        Data Space:                                     Data Space:
+            0000-1fff = 8k Internal RAM or Overlay          0000-1fff = 8k Internal RAM or Overlay
+            2000-3fdf = 8k-32 Internal RAM                  2000-3fdf = 8k-32 Internal RAM
+            3fe0-3fff = 32 Internal Control regs            3fe0-3fff = 32 Internal Control regs
+
+        I/O Space:                                      I/O Space:
+            0000-01ff = 512 External IOWAIT0                0000-01ff = 512 External IOWAIT0
+            0200-03ff = 512 External IOWAIT1                0200-03ff = 512 External IOWAIT1
+            0400-05ff = 512 External IOWAIT2                0400-05ff = 512 External IOWAIT2
+            0600-07ff = 512 External IOWAIT3                0600-07ff = 512 External IOWAIT3
+
+***************************************************************************/
 
 #include <stdio.h>
 #include <stddef.h>
@@ -85,9 +81,10 @@
 #include "state.h"
 #include "adsp2100.h"
 
-/*###################################################################################################
-**  CONSTANTS
-**#################################################################################################*/
+
+/***************************************************************************
+    CONSTANTS
+***************************************************************************/
 
 #define TRACK_HOTSPOTS		0
 
@@ -106,9 +103,10 @@
 #define CHIP_TYPE_ADSP2181	5
 
 
-/*###################################################################################################
-**  STRUCTURES & TYPEDEFS
-**#################################################################################################*/
+
+/***************************************************************************
+    STRUCTURES & TYPEDEFS
+***************************************************************************/
 
 /* 16-bit registers that can be loaded signed or unsigned */
 typedef union
@@ -235,16 +233,16 @@ typedef struct
 
 
 
-/*###################################################################################################
-**  PUBLIC GLOBAL VARIABLES
-**#################################################################################################*/
+/***************************************************************************
+    PUBLIC GLOBAL VARIABLES
+***************************************************************************/
 
 static int	adsp2100_icount;
 
 
-/*###################################################################################################
-**  PRIVATE GLOBAL VARIABLES
-**#################################################################################################*/
+/***************************************************************************
+    PRIVATE GLOBAL VARIABLES
+***************************************************************************/
 
 static adsp2100_Regs adsp2100;
 
@@ -261,17 +259,17 @@ static UINT32 pcbucket[0x4000];
 #endif
 
 
-/*###################################################################################################
-**  PRIVATE FUNCTION PROTOTYPES
-**#################################################################################################*/
+/***************************************************************************
+    PRIVATE FUNCTION PROTOTYPES
+***************************************************************************/
 
 static int create_tables(void);
 static void check_irqs(void);
 
 
-/*###################################################################################################
-**  MEMORY ACCESSORS
-**#################################################################################################*/
+/***************************************************************************
+    MEMORY ACCESSORS
+***************************************************************************/
 
 INLINE UINT16 RWORD_DATA(UINT32 addr)
 {
@@ -308,9 +306,9 @@ INLINE void WWORD_PGM(UINT32 addr, UINT32 data)
 #define CHANGEPC() change_pc(adsp2100.pc << 2)
 
 
-/*###################################################################################################
-**  OTHER INLINES
-**#################################################################################################*/
+/***************************************************************************
+    OTHER INLINES
+***************************************************************************/
 
 #if (HAS_ADSP2100)
 INLINE void set_core_2100(void)
@@ -367,17 +365,17 @@ INLINE void set_core_2181(void)
 #endif
 
 
-/*###################################################################################################
-**  IMPORT CORE UTILITIES
-**#################################################################################################*/
+/***************************************************************************
+    IMPORT CORE UTILITIES
+***************************************************************************/
 
 #include "2100ops.c"
 
 
 
-/*###################################################################################################
-**  IRQ HANDLING
-**#################################################################################################*/
+/***************************************************************************
+    IRQ HANDLING
+***************************************************************************/
 
 INLINE int adsp2100_generate_irq(int which)
 {
@@ -583,9 +581,9 @@ static void set_irq_line(int irqline, int state)
 
 
 
-/*###################################################################################################
-**  CONTEXT SWITCHING
-**#################################################################################################*/
+/***************************************************************************
+    CONTEXT SWITCHING
+***************************************************************************/
 
 static void adsp2100_get_context(void *dst)
 {
@@ -613,9 +611,9 @@ static void adsp2100_set_context(void *src)
 
 
 
-/*###################################################################################################
-**  INITIALIZATION AND SHUTDOWN
-**#################################################################################################*/
+/***************************************************************************
+    INITIALIZATION AND SHUTDOWN
+***************************************************************************/
 
 static void adsp2100_init(void)
 {
@@ -623,7 +621,7 @@ static void adsp2100_init(void)
 
 	/* create the tables */
 	if (!create_tables())
-		osd_die("creating adsp2100 tables failed\n");
+		fatalerror("creating adsp2100 tables failed");
 
    /* "core" */
    state_save_register_item("adsp2100", cpu, adsp2100.core.ax0.u);
@@ -907,9 +905,9 @@ static void adsp2100_exit(void)
 
 
 
-/*###################################################################################################
-**  CORE EXECUTION LOOP
-**#################################################################################################*/
+/***************************************************************************
+    CORE EXECUTION LOOP
+***************************************************************************/
 
 /* execute instructions on this CPU until icount expires */
 static int adsp2100_execute(int cycles)
@@ -1683,9 +1681,9 @@ static int adsp2100_execute(int cycles)
 
 
 
-/*###################################################################################################
-**  DEBUGGER DEFINITIONS
-**#################################################################################################*/
+/***************************************************************************
+    DEBUGGER DEFINITIONS
+***************************************************************************/
 
 static UINT8 adsp21xx_reg_layout[] =
 {

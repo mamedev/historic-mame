@@ -21,7 +21,6 @@ TODO:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
 extern WRITE8_HANDLER( redclash_videoram_w );

@@ -38,7 +38,6 @@ are supported. What should really be filled in for each mode?
 
 #include "driver.h"
 #include "sndhrdw/irem.h"
-#include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 
 

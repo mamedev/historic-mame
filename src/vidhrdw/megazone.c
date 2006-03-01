@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 unsigned char *megazone_scrollx;
 unsigned char *megazone_scrolly;

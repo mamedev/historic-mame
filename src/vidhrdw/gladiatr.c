@@ -5,7 +5,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 UINT8 *gladiatr_videoram, *gladiatr_colorram, *gladiatr_textram;
 

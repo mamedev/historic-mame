@@ -7,6 +7,7 @@
 
 #include <math.h>
 #include "driver.h"
+#include "streams.h"
 #include "cpuintrf.h"
 #include "ics2115.h"
 #include "cpu/z80/z80.h"
@@ -543,7 +544,7 @@ void ics2115_reset(void *_chip)
  * Generic get_info
  **************************************************************************/
 
-static void ics2115_set_info(void *token, UINT32 state, union sndinfo *info)
+static void ics2115_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -552,7 +553,7 @@ static void ics2115_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void ics2115_get_info(void *token, UINT32 state, union sndinfo *info)
+void ics2115_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

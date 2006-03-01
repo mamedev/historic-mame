@@ -40,17 +40,14 @@
 
 ****************************************************************************/
 
-#include <stdio.h>
-#include <string.h>
-#include "osd_cpu.h"
+#include "driver.h"
+#include "debugger.h"
 
 typedef UINT8 BOOLEAN;
 typedef UINT8 BYTE;
 typedef UINT16 WORD;
 typedef UINT32 DWORD;
 
-#include "driver.h"
-#include "debugger.h"
 #include "nec.h"
 #include "necintrf.h"
 

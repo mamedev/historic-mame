@@ -8,7 +8,7 @@ Video hardware driver by Uki
 
 *******************************************************************************/
 
-#include "vidhrdw/generic.h"
+#include "driver.h"
 
 UINT8 *raiders5_fgram;
 size_t raiders5_fgram_size;

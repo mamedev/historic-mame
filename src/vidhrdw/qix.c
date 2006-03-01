@@ -8,7 +8,6 @@
 
 #include "driver.h"
 #include "qix.h"
-#include "vidhrdw/generic.h"
 
 
 /* Constants */

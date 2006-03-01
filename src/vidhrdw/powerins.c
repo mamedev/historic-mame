@@ -36,7 +36,8 @@ Note:   if MAME_DEBUG is defined, pressing Z with:
 
 
 **************************************************************************/
-#include "vidhrdw/generic.h"
+
+#include "driver.h"
 
 /* Variables that driver has access to: */
 UINT16 *powerins_vram_0, *powerins_vctrl_0;

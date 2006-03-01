@@ -35,7 +35,6 @@ Caveman Ninja Issues:
 
 #include "driver.h"
 #include "cninja.h"
-#include "vidhrdw/generic.h"
 #include "cpu/h6280/h6280.h"
 #include "deco16ic.h"
 #include "decocrpt.h"

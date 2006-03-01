@@ -54,7 +54,6 @@
 
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
-#include "vidhrdw/generic.h"
 #include "machine/decocass.h"
 #include "sound/ay8910.h"
 

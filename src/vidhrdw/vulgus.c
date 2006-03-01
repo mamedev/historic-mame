@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 unsigned char *vulgus_fgvideoram,*vulgus_bgvideoram;
 unsigned char *vulgus_scroll_low,*vulgus_scroll_high;

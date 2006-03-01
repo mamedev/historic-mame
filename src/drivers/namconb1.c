@@ -270,7 +270,6 @@ GFX:                Custom 145     ( 80 pin PQFP)
                     Custom 169     (120 pin PQFP)
 */
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "namconb1.h"
 #include "namcos2.h"
 #include "namcoic.h"

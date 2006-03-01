@@ -70,7 +70,6 @@ Based on sketch made by Tormod
 
 ***************************************************************************/
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sndhrdw/seibu.h"
 
 WRITE8_HANDLER( mustache_videoram_w );

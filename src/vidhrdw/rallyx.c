@@ -28,7 +28,6 @@ needs more color combination to render its graphics.
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
 

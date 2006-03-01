@@ -455,7 +455,7 @@ static void I386OP(call_abs32)(void)		// Opcode 0x9a
 
 	if( PROTECTED_MODE ) {
 		/* TODO */
-		osd_die("i386: call_abs32 in protected mode unimplemented\n");
+		fatalerror("i386: call_abs32 in protected mode unimplemented");
 	} else {
 		PUSH32( I.sreg[CS].selector );
 		PUSH32( I.eip );
@@ -2556,7 +2556,7 @@ static void I386OP(groupFF_32)(void)		// Opcode 0xff
 				UINT16 selector;
 				UINT32 address;
 				if( modrm >= 0xc0 ) {
-					osd_die("NYI");
+					fatalerror("NYI");
 				} else {
 					UINT32 ea = GetEA(modrm);
 					address = READ32(ea + 0);
@@ -2592,7 +2592,7 @@ static void I386OP(groupFF_32)(void)		// Opcode 0xff
 				UINT16 selector;
 				UINT32 address;
 				if( modrm >= 0xc0 ) {
-					osd_die("NYI");
+					fatalerror("NYI");
 				} else {
 					UINT32 ea = GetEA(modrm);
 					address = READ32(ea + 0);
@@ -2620,7 +2620,7 @@ static void I386OP(groupFF_32)(void)		// Opcode 0xff
 			}
 			break;
 		default:
-			osd_die("i386: groupFF_32 /%d unimplemented at %08X\n", (modrm >> 3) & 0x7, I.pc-2);
+			fatalerror("i386: groupFF_32 /%d unimplemented at %08X", (modrm >> 3) & 0x7, I.pc-2);
 			break;
 	}
 }
@@ -2671,7 +2671,7 @@ static void I386OP(group0F00_32)(void)			// Opcode 0x0f 00
 			break;
 
 		default:
-			osd_die("i386: group0F00_32 /%d unimplemented\n", (modrm >> 3) & 0x7);
+			fatalerror("i386: group0F00_32 /%d unimplemented", (modrm >> 3) & 0x7);
 			break;
 	}
 }
@@ -2739,7 +2739,7 @@ static void I386OP(group0F01_32)(void)		// Opcode 0x0f 01
 				break;
 			}
 		default:
-			osd_die("i386: unimplemented opcode 0x0f 01 /%d at %08X\n", (modrm >> 3) & 0x7, I.eip - 2);
+			fatalerror("i386: unimplemented opcode 0x0f 01 /%d at %08X", (modrm >> 3) & 0x7, I.eip - 2);
 			break;
 	}
 }
@@ -2859,7 +2859,7 @@ static void I386OP(group0FBA_32)(void)		// Opcode 0x0f ba
 			}
 			break;
 		default:
-			osd_die("i386: group0FBA_32 /%d unknown\n", (modrm >> 3) & 0x7);
+			fatalerror("i386: group0FBA_32 /%d unknown", (modrm >> 3) & 0x7);
 			break;
 	}
 }
@@ -2934,7 +2934,7 @@ static void I386OP(load_far_pointer32)(int s)
 	UINT8 modrm = FETCH();
 
 	if( modrm >= 0xc0 ) {
-		osd_die("NYI");
+		fatalerror("NYI");
 	} else {
 		UINT32 ea = GetEA(modrm);
 		STORE_REG32(modrm, READ32(ea + 0));

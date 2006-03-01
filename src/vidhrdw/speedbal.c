@@ -7,7 +7,6 @@
  ****************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 UINT8 *speedbal_background_videoram;
 UINT8 *speedbal_foreground_videoram;

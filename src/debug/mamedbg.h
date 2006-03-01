@@ -10,8 +10,12 @@
 
 ****************************************************************************/
 
+#pragma once
+
 #ifndef _MAMEDBG_H
 #define _MAMEDBG_H
+
+#include "mamecore.h"
 
 #define DEBUGGER_TOTAL_COLORS 16
 

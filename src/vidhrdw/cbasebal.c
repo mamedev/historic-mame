@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
 static UINT8 *cbasebal_textram,*cbasebal_scrollram;

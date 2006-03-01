@@ -8,7 +8,6 @@
 
 #include "driver.h"
 #include "machine/segacrpt.h"
-#include "vidhrdw/generic.h"
 
 
 

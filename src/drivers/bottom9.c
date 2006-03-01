@@ -9,7 +9,6 @@ driver by Nicola Salmoria
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
 #include "vidhrdw/konamiic.h"
 #include "sound/k007232.h"

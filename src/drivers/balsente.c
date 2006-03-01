@@ -215,7 +215,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "balsente.h"
 #include "sound/cem3394.h"
 

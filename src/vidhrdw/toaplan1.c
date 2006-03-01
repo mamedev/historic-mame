@@ -122,7 +122,6 @@ Abnormalities:
 #include "toaplan1.h"
 #include "tilemap.h"
 #include "palette.h"
-#include "vidhrdw/generic.h"
 #include "cpu/m68000/m68000.h"
 
 

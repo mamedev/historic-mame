@@ -26,6 +26,7 @@
  *****************************************************************************/
 
 #include "driver.h"
+#include "streams.h"
 #include "sn76477.h"
 
 #define VERBOSE 1
@@ -63,43 +64,43 @@ struct SN76477 {
 	int	index;
 
 	int samplerate; 		/* from Machine->sample_rate */
-	int vol;				/* current volume (attack/decay) */
-	int vol_count;			/* volume adjustment counter */
-	int vol_rate;			/* volume adjustment rate - dervied from attack/decay */
-	int vol_step;			/* volume adjustment step */
+	INT32 vol;				/* current volume (attack/decay) */
+	INT32 vol_count;			/* volume adjustment counter */
+	INT32 vol_rate;			/* volume adjustment rate - dervied from attack/decay */
+	INT32 vol_step;			/* volume adjustment step */
 
 	double slf_count;		/* SLF emulation */
 	double slf_freq;		/* frequency - derived */
 	double slf_level;		/* triangular wave level */
-    int slf_dir;            /* triangular wave direction */
-	int slf_out;			/* rectangular output signal state */
+    INT32 slf_dir;            /* triangular wave direction */
+	INT32 slf_out;			/* rectangular output signal state */
 
 	double vco_count;		/* VCO emulation */
 	double vco_freq;		/* frequency - derived */
 	double vco_step;		/* modulated frequency - derived */
-	int vco_out;			/* rectangular output signal state */
+	INT32 vco_out;			/* rectangular output signal state */
 
-	int noise_count;		/* NOISE emulation */
-	int noise_clock;		/* external clock signal */
-	int noise_freq; 		/* filter frequency - derived */
-	int noise_poly; 		/* polynome */
-	int noise_out;			/* rectangular output signal state */
+	INT32 noise_count;		/* NOISE emulation */
+	INT32 noise_clock;		/* external clock signal */
+	INT32 noise_freq; 		/* filter frequency - derived */
+	INT32 noise_poly; 		/* polynome */
+	INT32 noise_out;			/* rectangular output signal state */
 
 	void *envelope_timer;	/* ENVELOPE timer */
-	int envelope_state; 	/* attack / decay toggle */
+	INT32 envelope_state; 	/* attack / decay toggle */
 
 	double attack_time; 	/* ATTACK time (time until vol reaches 100%) */
 	double decay_time;		/* DECAY time (time until vol reaches 0%) */
 	double oneshot_time;	/* ONE-SHOT time */
 	void *oneshot_timer;	/* ONE-SHOT timer */
 
-	int envelope;			/* pin  1, pin 28 */
+	INT32 envelope;			/* pin  1, pin 28 */
 	double noise_res;		/* pin  4 */
 	double filter_res;		/* pin  5 */
 	double filter_cap;		/* pin  6 */
 	double decay_res;		/* pin  7 */
 	double attack_decay_cap;/* pin  8 */
-	int enable; 			/* pin  9 */
+	INT32 enable; 			/* pin  9 */
 	double attack_res;		/* pin 10 */
 	double amplitude_res;	/* pin 11 */
 	double feedback_res;	/* pin 12 */
@@ -109,10 +110,10 @@ struct SN76477 {
 	double pitch_voltage;	/* pin 19 */
 	double slf_res; 		/* pin 20 */
 	double slf_cap; 		/* pin 21 */
-	int vco_select; 		/* pin 22 */
+	INT32 vco_select; 		/* pin 22 */
 	double oneshot_cap; 	/* pin 23 */
 	double oneshot_res; 	/* pin 24 */
-	int mixer;				/* pin 25,26,27 */
+	INT32 mixer;				/* pin 25,26,27 */
 
 	INT16 vol_lookup[VMAX+1-VMIN];	/* volume lookup table */
 	const struct SN76477interface *intf;
@@ -954,6 +955,57 @@ static void SN76477_sound_update(void *param, stream_sample_t **inputs, stream_s
 	}
 }
 
+static void sn76477_state_save_register(struct SN76477 *chip, int sndindex)
+{
+	state_save_register_item("sn76744", sndindex, chip->vol);
+	state_save_register_item("sn76744", sndindex, chip->vol_count);
+	state_save_register_item("sn76744", sndindex, chip->vol_rate);
+	state_save_register_item("sn76744", sndindex, chip->vol_step);
+
+	state_save_register_item("sn76744", sndindex, chip->slf_count);
+	state_save_register_item("sn76744", sndindex, chip->slf_freq);
+	state_save_register_item("sn76744", sndindex, chip->slf_level);
+	state_save_register_item("sn76744", sndindex, chip->slf_dir);
+	state_save_register_item("sn76744", sndindex, chip->slf_out);
+
+	state_save_register_item("sn76744", sndindex, chip->vco_count);
+	state_save_register_item("sn76744", sndindex, chip->vco_freq);
+	state_save_register_item("sn76744", sndindex, chip->vco_step);
+	state_save_register_item("sn76744", sndindex, chip->vco_out);
+
+	state_save_register_item("sn76744", sndindex, chip->noise_count);
+	state_save_register_item("sn76744", sndindex, chip->noise_clock);
+	state_save_register_item("sn76744", sndindex, chip->noise_freq);
+	state_save_register_item("sn76744", sndindex, chip->noise_poly);
+	state_save_register_item("sn76744", sndindex, chip->noise_out);
+
+	state_save_register_item("sn76744", sndindex, chip->envelope_state);
+	state_save_register_item("sn76744", sndindex, chip->attack_time);
+	state_save_register_item("sn76744", sndindex, chip->decay_time);
+	state_save_register_item("sn76744", sndindex, chip->oneshot_time);
+
+	state_save_register_item("sn76744", sndindex, chip->envelope);
+	state_save_register_item("sn76744", sndindex, chip->noise_res);
+	state_save_register_item("sn76744", sndindex, chip->filter_res);
+	state_save_register_item("sn76744", sndindex, chip->filter_cap);
+	state_save_register_item("sn76744", sndindex, chip->decay_res);
+	state_save_register_item("sn76744", sndindex, chip->attack_decay_cap);
+	state_save_register_item("sn76744", sndindex, chip->enable);
+	state_save_register_item("sn76744", sndindex, chip->attack_res);
+	state_save_register_item("sn76744", sndindex, chip->amplitude_res);
+	state_save_register_item("sn76744", sndindex, chip->feedback_res);
+	state_save_register_item("sn76744", sndindex, chip->vco_voltage);
+	state_save_register_item("sn76744", sndindex, chip->vco_cap);
+	state_save_register_item("sn76744", sndindex, chip->vco_res);
+	state_save_register_item("sn76744", sndindex, chip->pitch_voltage);
+	state_save_register_item("sn76744", sndindex, chip->slf_res);
+	state_save_register_item("sn76744", sndindex, chip->slf_cap);
+	state_save_register_item("sn76744", sndindex, chip->vco_select);
+	state_save_register_item("sn76744", sndindex, chip->oneshot_cap);
+	state_save_register_item("sn76744", sndindex, chip->oneshot_res);
+	state_save_register_item("sn76744", sndindex, chip->mixer);
+}
+
 static void *sn76477_start(int sndindex, int clock, const void *config)
 {
 	struct SN76477 *sn;
@@ -971,7 +1023,7 @@ static void *sn76477_start(int sndindex, int clock, const void *config)
 	sn->oneshot_timer = timer_alloc(oneshot_envelope_cb);
 
 	/* set up interface (default) values */
-	sound_register_token(sn);
+	sndintrf_register_token(sn);
 	SN76477_set_noise_res(0, sn->intf->noise_res);
 	SN76477_set_filter_res(0, sn->intf->filter_res);
 	SN76477_set_filter_cap(0, sn->intf->filter_cap);
@@ -992,6 +1044,8 @@ static void *sn76477_start(int sndindex, int clock, const void *config)
 	SN76477_envelope_w(0, 0x03);	/* envelope inputs open */
 	SN76477_enable_w(0, 0x01);		/* enable input open */
 
+	sn76477_state_save_register(sn, sndindex);
+
 	return sn;
 }
 
@@ -1001,7 +1055,7 @@ static void *sn76477_start(int sndindex, int clock, const void *config)
  * Generic get_info
  **************************************************************************/
 
-static void sn76477_set_info(void *token, UINT32 state, union sndinfo *info)
+static void sn76477_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -1010,7 +1064,7 @@ static void sn76477_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void sn76477_get_info(void *token, UINT32 state, union sndinfo *info)
+void sn76477_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

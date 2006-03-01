@@ -467,7 +467,7 @@ INLINE void ppc_exception(int exception_type)
 			exception_code = ppc.generate_isi_exception;
 			break;
 		default:
-			osd_die("Unknown exception %d\n", exception_type);
+			fatalerror("Unknown exception %d", exception_type);
 			break;
 	}
 
@@ -611,7 +611,7 @@ INLINE void ppc_set_spr(int spr, UINT32 value)
 	}
 #endif
 
-	osd_die("ppc: set_spr: unknown spr %d (%03X) !\n", spr, spr);
+	fatalerror("ppc: set_spr: unknown spr %d (%03X) !", spr, spr);
 }
 
 INLINE UINT32 ppc_get_spr(int spr)
@@ -675,11 +675,11 @@ INLINE UINT32 ppc_get_spr(int spr)
 		switch (spr)
 		{
 			case SPR603E_TBL_R:
-				osd_die("ppc: get_spr: TBL_R \n");
+				fatalerror("ppc: get_spr: TBL_R ");
 				break;
 
 			case SPR603E_TBU_R:
-				osd_die("ppc: get_spr: TBU_R \n");
+				fatalerror("ppc: get_spr: TBU_R ");
 				break;
 
 			case SPR603E_TBL_W:		return (UINT32)(ppc_read_timebase());
@@ -711,7 +711,7 @@ INLINE UINT32 ppc_get_spr(int spr)
 	}
 #endif
 
-	osd_die("ppc: get_spr: unknown spr %d (%03X) !\n", spr, spr);
+	fatalerror("ppc: get_spr: unknown spr %d (%03X) !", spr, spr);
 	return 0;
 }
 
@@ -727,7 +727,7 @@ static void ppc_write64_translated(offs_t address, UINT64 data);
 INLINE void ppc_set_msr(UINT32 value)
 {
 	if( value & (MSR_ILE | MSR_LE) )
-		osd_die("ppc: set_msr: little_endian mode not supported !\n");
+		fatalerror("ppc: set_msr: little_endian mode not supported !");
 
 	MSR = value;
 
@@ -978,7 +978,7 @@ static void ppcdrc403_set_irq_line(int irqline, int state)
 	}
 	else
 	{
-		osd_die("PPC: Unknown IRQ line %d\n", irqline);
+		fatalerror("PPC: Unknown IRQ line %d", irqline);
 	}
 }
 #endif
@@ -1123,7 +1123,7 @@ static void ppcdrc603_reset(void *param)
 
 	if (pll_config == -1)
 	{
-		osd_die("PPC: Invalid bus/multiplier combination (bus frequency = %d, multiplier = %1.1f)", config->bus_frequency, multiplier);
+		fatalerror("PPC: Invalid bus/multiplier combination (bus frequency = %d, multiplier = %1.1f)", config->bus_frequency, multiplier);
 	}
 
 	ppc.hid1 = pll_config << 28;

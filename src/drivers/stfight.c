@@ -229,7 +229,6 @@ DONE? (check on real board)
 *****************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/2203intf.h"
 #include "sound/msm5205.h"
 

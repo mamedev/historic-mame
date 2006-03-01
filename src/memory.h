@@ -15,8 +15,6 @@
 #define __MEMORY_H__
 
 #include "mamecore.h"
-#include <stddef.h>
-#include <stdio.h>
 
 
 

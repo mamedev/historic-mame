@@ -204,7 +204,6 @@ Playfield tile info:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "taito_f3.h"
 
 #define DARIUSG_KLUDGE
@@ -228,7 +227,7 @@ UINT32 *f3_pf_data,*f3_pivot_ram;
 
 extern int f3_game;
 
-static int skip_this_frame;
+static int f3_skip_this_frame;
 
 /* Game specific data, some of this can be
 removed when the software values are figured out */
@@ -527,7 +526,7 @@ VIDEO_EOF( f3 )
 {
 	if (sprite_lag==2)
 	{
-		if (osd_skip_this_frame() == 0)
+		if (skip_this_frame() == 0)
 		{
 			get_sprite_info(spriteram32_buffered);
 		}
@@ -535,7 +534,7 @@ VIDEO_EOF( f3 )
 	}
 	else if (sprite_lag==1)
 	{
-		if (osd_skip_this_frame() == 0)
+		if (skip_this_frame() == 0)
 		{
 			get_sprite_info(spriteram32);
 		}
@@ -635,7 +634,7 @@ VIDEO_START( f3 )
 	for (tile = 0;tile < 2048;tile++)
 		pivot_dirty[tile]=1;
 
-	skip_this_frame=0;
+	f3_skip_this_frame=0;
 
 	sprite_lag=f3_game_config->sprite_lag;
 
@@ -759,10 +758,10 @@ WRITE32_HANDLER( f3_lineram_w )
     the trashing of priority ram.  If anyone has information on what the real machine does,
     please let me know! */
 	if (f3_game==DARIUSG) {
-		if (skip_this_frame)
+		if (f3_skip_this_frame)
 			return;
 		if (offset==0xb000/4 && data==0x003f0000) {
-			skip_this_frame=1;
+			f3_skip_this_frame=1;
 			return;
 		}
 	}
@@ -3245,7 +3244,7 @@ VIDEO_UPDATE( f3 )
 	unsigned int sy_fix[5],sx_fix[5];
 	int tile;
 
-	skip_this_frame=0;
+	f3_skip_this_frame=0;
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 
 	/* Dynamically decode VRAM chars if dirty */

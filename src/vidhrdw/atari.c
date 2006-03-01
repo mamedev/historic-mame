@@ -8,7 +8,6 @@
 
 #include "driver.h"
 #include "includes/atari.h"
-#include "vidhrdw/generic.h"
 
 #ifdef	LSB_FIRST
 #define BYTE_XOR(n) (n)

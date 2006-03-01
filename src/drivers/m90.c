@@ -25,7 +25,6 @@ Notes:
 *****************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "m92.h"
 #include "machine/irem_cpu.h"
 #include "sndhrdw/m72.h"

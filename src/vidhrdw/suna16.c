@@ -57,7 +57,7 @@
 
 ***************************************************************************/
 
-#include "vidhrdw/generic.h"
+#include "driver.h"
 
 static int color_bank;
 

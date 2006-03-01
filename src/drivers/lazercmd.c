@@ -222,7 +222,6 @@
 
 #include "driver.h"
 #include "artwork.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/lazercmd.h"
 #include "cpu/s2650/s2650.h"
 #include "sound/dac.h"

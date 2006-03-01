@@ -69,7 +69,6 @@ OUT:
 ****************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "includes/astrocde.h"
 #include "sound/samples.h"
 #include "sound/astrocde.h"

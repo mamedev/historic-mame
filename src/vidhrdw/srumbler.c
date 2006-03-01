@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
 unsigned char *srumbler_backgroundram,*srumbler_foregroundram;

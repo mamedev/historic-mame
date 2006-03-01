@@ -46,7 +46,6 @@ and hardware.
 
 #include "driver.h"
 #include "cpu/m6809/m6809.h"
-#include "vidhrdw/generic.h"
 
 /* Set to 1 to display test results and skip on errors */
 #define ROM_PATCHES 1

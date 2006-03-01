@@ -23,7 +23,6 @@
 #include "driver.h"
 #include "cpu/m6809/m6809.h"
 //#include "machine/atari_vg.h"
-//#include "vidhrdw/generic.h"
 #include "vidhrdw/vector.h"
 #include "vidhrdw/avgdvg.h"
 #include "sound/5220intf.h"

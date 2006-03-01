@@ -29,7 +29,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "thedeep.h"
 
 /* Variables only used here: */

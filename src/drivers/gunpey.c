@@ -46,7 +46,6 @@ Notes:
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 static unsigned char *unkram;
 static unsigned char *mainram;

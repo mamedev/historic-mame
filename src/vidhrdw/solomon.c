@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 UINT8 *solomon_videoram2;
 UINT8 *solomon_colorram2;

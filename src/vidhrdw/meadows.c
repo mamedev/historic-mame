@@ -4,7 +4,7 @@
 
 ****************************************************************************/
 
-#include "vidhrdw/generic.h"
+#include "driver.h"
 #include "artwork.h"
 #include "meadows.h"
 

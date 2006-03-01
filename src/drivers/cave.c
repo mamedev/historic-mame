@@ -43,7 +43,6 @@ To Do:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
 #include "machine/nmk112.h"
 #include "cpu/z80/z80.h"

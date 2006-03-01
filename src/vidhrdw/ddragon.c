@@ -41,7 +41,6 @@ Sprite layout.
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
 unsigned char *ddragon_bgvideoram,*ddragon_fgvideoram;

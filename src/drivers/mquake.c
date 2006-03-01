@@ -9,7 +9,6 @@
 
 #include "driver.h"
 #include "includes/amiga.h"
-#include "vidhrdw/generic.h"
 
 UINT16 *qchip_ram;
 

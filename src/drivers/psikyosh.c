@@ -270,7 +270,6 @@ Notes:
 
 #include "driver.h"
 
-#include "vidhrdw/generic.h"
 #include "cpu/sh2/sh2.h"
 #include "machine/eeprom.h"
 #include "sound/ymf278b.h"

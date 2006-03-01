@@ -51,7 +51,6 @@
 #include "driver.h"
 #include "sndhrdw/mcr.h"
 #include "sndhrdw/williams.h"
-#include "vidhrdw/generic.h"
 #include "mcr.h"
 
 

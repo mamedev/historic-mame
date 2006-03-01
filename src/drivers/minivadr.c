@@ -11,7 +11,6 @@ Japan). It has no sound.
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/z80/z80.h"
 
 

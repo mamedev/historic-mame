@@ -11,6 +11,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "streams.h"
 #include "ay8910.h"
 
 #define MAX_OUTPUT 0x7fff
@@ -801,7 +802,7 @@ static void ay8910_stop(void *chip)
  * Generic get_info
  **************************************************************************/
 
-static void ay8910_set_info(void *token, UINT32 state, union sndinfo *info)
+static void ay8910_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -810,7 +811,7 @@ static void ay8910_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void ay8910_get_info(void *token, UINT32 state, union sndinfo *info)
+void ay8910_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

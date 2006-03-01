@@ -166,10 +166,6 @@ typedef struct _cpuexec_data cpuexec_data;
 
 static cpuexec_data cpu[MAX_CPU];
 
-static int time_to_reset;
-static int time_to_quit;
-static int is_paused;
-
 static UINT8 vblank;
 static UINT32 current_frame;
 static INT32 watchdog_counter;
@@ -210,25 +206,13 @@ static mame_timer *watchdog_timer;
 
 /*************************************
  *
- *  Save/load variables
- *
- *************************************/
-
-static UINT8 loadsave_allowed;
-static int loadsave_schedule;
-static mame_time loadsave_schedule_time;
-static char *loadsave_schedule_name;
-
-
-
-/*************************************
- *
  *  Static prototypes
  *
  *************************************/
 
+static void cpu_exit(void);
+static void cpu_reset(void);
 static void cpu_init_refresh_timer(void);
-static void cpu_timeslice(void);
 static void cpu_inittimers(void);
 static void cpu_vblankreset(void);
 static void cpu_vblankcallback(int param);
@@ -236,8 +220,6 @@ static void cpu_updatecallback(int param);
 static void end_interleave_boost(int param);
 static void compute_perfect_interleave(void);
 static void watchdog_setup(int alloc_new);
-
-static void handle_loadsave(void);
 
 
 
@@ -271,9 +253,6 @@ int cpu_init(void)
 
 	/* initialize the refresh timer */
 	cpu_init_refresh_timer();
-
-	/* by default, saves/loads are allowed */
-	loadsave_allowed = TRUE;
 
 	/* loop over all our CPUs */
 	for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
@@ -328,9 +307,10 @@ int cpu_init(void)
 		{
 			logerror("CPU #%d (%s) did not register any state to save!\n", cpunum, cputype_name(cputype));
 			if (Machine->gamedrv->flags & GAME_SUPPORTS_SAVE)
-				osd_die("CPU #%d (%s) did not register any state to save!\n", cpunum, cputype_name(cputype));
+				fatalerror("CPU #%d (%s) did not register any state to save!", cpunum, cputype_name(cputype));
 		}
 	}
+	add_reset_callback(cpu_reset);
 	add_exit_callback(cpu_exit);
 
 	/* compute the perfect interleave factor */
@@ -359,22 +339,14 @@ int cpu_init(void)
  *
  *************************************/
 
-static void cpu_pre_run(void)
+static void cpu_reset(void)
 {
 	int cpunum;
-
-	logerror("Machine reset\n");
-
-	/* allow save state registrations starting here */
-	state_save_allow_registration(TRUE);
 
 	/* initialize the various timers (suspends all CPUs at startup) */
 	cpu_inittimers();
 	watchdog_counter = WATCHDOG_IS_INVALID;
 	watchdog_setup(TRUE);
-
-	/* reset sound chips */
-	sound_reset();
 
 	/* first pass over CPUs */
 	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
@@ -390,86 +362,15 @@ static void cpu_pre_run(void)
 
 		/* reset the total number of cycles */
 		cpu[cpunum].totalcycles = 0;
-	}
 
-	vblank = 0;
-
-	/* call the driver's _RESET callbacks */
-	/* do this AFTER the above so machine_reset() can use cpu_halt() to hold the */
-	/* execution of some CPUs, or disable interrupts */
-	if (Machine->drv->machine_reset != NULL)
-		(*Machine->drv->machine_reset)();
-	if (Machine->drv->sound_reset != NULL)
-		(*Machine->drv->sound_reset)();
-	if (Machine->drv->video_reset != NULL)
-		(*Machine->drv->video_reset)();
-
-	/* now reset each CPU */
-	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
+		/* then reset the CPU directly */
 		cpunum_reset(cpunum, Machine->drv->cpu[cpunum].reset_param, cpu_irq_callbacks[cpunum]);
+	}
 
 	/* reset the globals */
 	cpu_vblankreset();
+	vblank = 0;
 	current_frame = 0;
-
-	/* disallow save state registrations starting here */
-	state_save_allow_registration(FALSE);
-	state_save_dump_registry();
-}
-
-
-
-/*************************************
- *
- *  Execute until done
- *
- *************************************/
-
-void cpu_run(void)
-{
-	/* loop over multiple resets, until the user quits */
-	time_to_quit = FALSE;
-	while (!time_to_quit)
-	{
-		/* prepare everything to run */
-		begin_resource_tracking();
-		cpu_pre_run();
-
-		/* loop until the user quits or resets */
-		time_to_reset = FALSE;
-		is_paused = FALSE;
-		while (!time_to_quit && !time_to_reset)
-		{
-			profiler_mark(PROFILER_EXTRA);
-
-			/* if we have a load/save scheduled, handle it */
-			if (loadsave_schedule != LOADSAVE_NONE)
-				handle_loadsave();
-
-			/* execute CPUs if not paused */
-			if (!is_paused)
-				cpu_timeslice();
-
-			/* otherwise, just pump video updates through */
-			else
-			{
-				time_to_quit |= updatescreen();
-				reset_partial_updates();
-			}
-
-			/* if we're autosaving on exit, and it's time to quit, schedule the save */
-			if (time_to_quit && options.auto_save && (Machine->gamedrv->flags & GAME_SUPPORTS_SAVE))
-			{
-				cpu_loadsave_schedule_file(LOADSAVE_SAVE_AND_EXIT, Machine->gamedrv->name);
-				time_to_quit = FALSE;
-			}
-
-			profiler_mark(PROFILER_END);
-		}
-
-		/* finish up this iteration */
-		end_resource_tracking();
-	}
 }
 
 
@@ -480,7 +381,7 @@ void cpu_run(void)
  *
  *************************************/
 
-void cpu_exit(void)
+static void cpu_exit(void)
 {
 	int cpunum;
 
@@ -489,311 +390,6 @@ void cpu_exit(void)
 		cpuintrf_exit_cpu(cpunum);
 }
 
-
-
-/*************************************
- *
- *  Pause/resume execution of CPUs
- *
- *************************************/
-
-void cpu_pause(int pause)
-{
-	is_paused = pause;
-}
-
-
-
-/*************************************
- *
- *  Force a reset at the end of this
- *  timeslice
- *
- *************************************/
-
-void machine_reset(void)
-{
-	time_to_reset = TRUE;
-}
-
-
-
-
-#if 0
-#pragma mark -
-#pragma mark SAVE/RESTORE
-#endif
-
-/*************************************
- *
- *  Handle saves at runtime
- *
- *************************************/
-
-static void handle_save(void)
-{
-	mame_file *file;
-	int cpunum;
-
-	/* if there are anonymous timers, we can't save just yet */
-	if (timer_count_anonymous() > 0)
-	{
-		/* if more than a second has passed, we're probably screwed */
-		if (sub_mame_times(mame_timer_get_time(), loadsave_schedule_time).seconds > 0)
-		{
-			ui_popup("Unable to save due to pending anonymous timers. See error.log for details.");
-			cpu_loadsave_reset();
-		}
-		return;
-	}
-
-	/* open the file */
-	file = mame_fopen(Machine->gamedrv->name, loadsave_schedule_name, FILETYPE_STATE, 1);
-	if (file)
-	{
-		/* write the save state */
-		if (state_save_save_begin(file))
-		{
-			ui_popup("Error: Unable to save state due to illegal registrations. See error.log for details.");
-			cpu_loadsave_reset();
-			mame_fclose(file);
-			return;
-		}
-
-		/* write the default tag */
-		state_save_push_tag(0);
-		state_save_save_continue();
-		state_save_pop_tag();
-
-		/* loop over CPUs */
-		for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
-		{
-			cpuintrf_push_context(cpunum);
-
-			/* make sure banking is set */
-			activecpu_reset_banking();
-
-			/* save the CPU data */
-			state_save_push_tag(cpunum + 1);
-			state_save_save_continue();
-			state_save_pop_tag();
-
-			cpuintrf_pop_context();
-		}
-
-		/* finish and close */
-		state_save_save_finish();
-		mame_fclose(file);
-
-		/* pop a warning if the game doesn't support saves */
-		if (!(Machine->gamedrv->flags & GAME_SUPPORTS_SAVE))
-			ui_popup("State successfully saved.\nWarning: Save states are not officially supported for this game.");
-	}
-	else
-		ui_popup("Error: Failed to save state");
-
-	/* unschedule the save */
-	cpu_loadsave_reset();
-}
-
-
-
-/*************************************
- *
- *  Handle loads at runtime
- *
- *************************************/
-
-static void handle_load(void)
-{
-	mame_file *file;
-	int cpunum;
-
-	/* if there are anonymous timers, we can't load just yet because the timers might */
-	/* overwrite data we have loaded */
-	if (timer_count_anonymous() > 0)
-	{
-		/* if more than a second has passed, we're probably screwed */
-		if (sub_mame_times(mame_timer_get_time(), loadsave_schedule_time).seconds > 0)
-		{
-			ui_popup("Unable to load due to pending anonymous timers. See error.log for details.");
-			cpu_loadsave_reset();
-		}
-		return;
-	}
-
-	/* open the file */
-	file = mame_fopen(Machine->gamedrv->name, loadsave_schedule_name, FILETYPE_STATE, 0);
-
-	/* if successful, load it */
-	if (file)
-	{
-		/* start loading */
-		if (!state_save_load_begin(file))
-		{
-			/* read tag 0 */
-			state_save_push_tag(0);
-			state_save_load_continue();
-			state_save_pop_tag();
-
-			/* loop over CPUs */
-			for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
-			{
-				cpuintrf_push_context(cpunum);
-
-				/* make sure banking is set */
-				activecpu_reset_banking();
-
-				/* load the CPU data */
-				state_save_push_tag(cpunum + 1);
-				state_save_load_continue();
-				state_save_pop_tag();
-
-				/* make sure banking is set */
-				activecpu_reset_banking();
-
-				cpuintrf_pop_context();
-			}
-
-			/* finish and close */
-			state_save_load_finish();
-		}
-		mame_fclose(file);
-	}
-	else
-		ui_popup("Error: Failed to load state");
-
-	/* unschedule the load */
-	cpu_loadsave_reset();
-}
-
-
-
-/*************************************
- *
- *  Handle saves & loads at runtime
- *
- *************************************/
-
-static void handle_loadsave(void)
-{
-	mame_file *file;
-
-	/* if we're not allowed, say so */
-	if (!loadsave_allowed)
-	{
-		ui_popup("Save/load capability not implemented for this game. See error.log for details.");
-		cpu_loadsave_reset();
-	}
-
-	switch (loadsave_schedule)
-	{
-		case LOADSAVE_SAVE:
-			handle_save();
-			break;
-
-		case LOADSAVE_SAVE_AND_EXIT:
-			handle_save();
-			if (loadsave_schedule == LOADSAVE_NONE)
-			{
-				time_to_quit = TRUE;
-				options.auto_save = FALSE;
-			}
-			break;
-
-		case LOADSAVE_LOAD:
-			file = mame_fopen(Machine->gamedrv->name, loadsave_schedule_name, FILETYPE_STATE, 0);
-			if (file)
-			{
-				if (state_save_check_file(file, Machine->gamedrv->name, TRUE, ui_popup) == 0)
-				{
-					mame_fclose(file);
-					machine_reset();
-					loadsave_schedule = LOADSAVE_LOAD_POSTRESET;
-					break;
-				}
-				mame_fclose(file);
-			}
-			cpu_loadsave_reset();
-			break;
-
-		case LOADSAVE_LOAD_POSTRESET:
-			handle_load();
-			break;
-	}
-}
-
-
-
-/*************************************
- *
- *  Schedules a save/load for later
- *
- *************************************/
-
-void cpu_loadsave_schedule_file(int type, const char *name)
-{
-	cpu_loadsave_reset();
-
-	/* allocate memory for the name */
-	loadsave_schedule_name = malloc(strlen(name) + 1);
-	if (loadsave_schedule_name)
-	{
-		/* copy it in and set the scheduled action */
-		strcpy(loadsave_schedule_name, name);
-		loadsave_schedule = type;
-
-		/* remember the time we asked to start */
-		loadsave_schedule_time = mame_timer_get_time();
-	}
-}
-
-
-
-/*************************************
- *
- *  Schedules a save/load for later
- *
- *************************************/
-
-void cpu_loadsave_schedule(int type, char id)
-{
-	char name[256];
-	sprintf(name, "%s-%c", Machine->gamedrv->name, id);
-	cpu_loadsave_schedule_file(type, name);
-}
-
-
-
-/*************************************
- *
- *  Unschedules any saves or loads
- *
- *************************************/
-
-void cpu_loadsave_reset(void)
-{
-	loadsave_schedule = LOADSAVE_NONE;
-	if (loadsave_schedule_name)
-	{
-		free(loadsave_schedule_name);
-		loadsave_schedule_name = NULL;
-	}
-}
-
-
-
-/*************************************
- *
- *  Disallows save/loads for this
- *  game
- *
- *************************************/
-
-void cpu_loadsave_disallow(void)
-{
-	loadsave_allowed = FALSE;
-}
 
 
 
@@ -811,7 +407,7 @@ void cpu_loadsave_disallow(void)
 static void watchdog_callback(int param)
 {
 	logerror("reset caused by the (time) watchdog\n");
-	machine_reset();
+	mame_schedule_soft_reset();
 }
 
 
@@ -974,7 +570,7 @@ READ32_HANDLER( watchdog_reset32_r )
  *
  *************************************/
 
-static void cpu_timeslice(void)
+void cpu_timeslice(void)
 {
 	mame_time target = mame_timer_next_fire_time();
 	mame_time base = mame_timer_get_time();
@@ -1011,7 +607,7 @@ static void cpu_timeslice(void)
 
 #ifdef MAME_DEBUG
 				if (ran < cycles_stolen)
-					osd_die("Negative CPU cycle count!");
+					fatalerror("Negative CPU cycle count!");
 #endif /* MAME_DEBUG */
 
 				ran -= cycles_stolen;
@@ -1833,7 +1429,7 @@ static void cpu_vblankreset(void)
 		if (--watchdog_counter == 0)
 		{
 			logerror("reset caused by the (vblank) watchdog\n");
-			machine_reset();
+			mame_schedule_soft_reset();
 		}
 	}
 
@@ -1919,7 +1515,7 @@ static void cpu_vblankcallback(int param)
 	{
 		/* do we update the screen now? */
 		if (!(Machine->drv->video_attributes & VIDEO_UPDATE_AFTER_VBLANK))
-			time_to_quit |= updatescreen();
+			updatescreen();
 
 		/* Set the timer to update the screen */
 		mame_timer_adjust(update_timer, double_to_mame_time(TIME_IN_USEC(Machine->drv->vblank_duration)), 0, time_zero);
@@ -1949,7 +1545,7 @@ static void cpu_updatecallback(int param)
 {
 	/* update the screen if we didn't before */
 	if (Machine->drv->video_attributes & VIDEO_UPDATE_AFTER_VBLANK)
-		time_to_quit |= updatescreen();
+		updatescreen();
 	vblank = 0;
 
 	/* update IPT_VBLANK input ports */

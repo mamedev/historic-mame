@@ -24,7 +24,6 @@ The output selects the active layer, it can be:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 UINT16 *bionicc_fgvideoram;
 UINT16 *bionicc_bgvideoram;

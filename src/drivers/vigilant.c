@@ -15,7 +15,6 @@ Buccaneers has a 5.6888 Mhz and a 18.432 Mhz OSC
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sndhrdw/m72.h"
 #include "sound/dac.h"
 #include "sound/2203intf.h"

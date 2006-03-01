@@ -7,7 +7,6 @@ To enter service mode, keep 1&2 pressed on reset
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
 #include "cpu/i8039/i8039.h"
 #include "cpu/z80/z80.h"

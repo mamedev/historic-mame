@@ -91,7 +91,6 @@ sol divide doesn't seem to make much use of tilemaps at all, it uses them to fad
 
 #include "driver.h"
 #include "profiler.h"
-#include "vidhrdw/generic.h"
 #include "psikyosh.h"
 
 /* Needed for psikyosh_drawgfxzoom */

@@ -46,6 +46,7 @@ Jan 12, 2005.  The 555 is probably an external playback frequency.
 ***************************************************************************/
 
 #include "driver.h"
+#include "streams.h"
 #include "filter.h"
 #include "namco52.h"
 
@@ -187,7 +188,7 @@ void namcoio_52XX_write(int data)
  * Generic get_info
  **************************************************************************/
 
-static void namco_52xx_set_info(void *token, UINT32 state, union sndinfo *info)
+static void namco_52xx_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -196,7 +197,7 @@ static void namco_52xx_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void namco_52xx_get_info(void *token, UINT32 state, union sndinfo *info)
+void namco_52xx_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

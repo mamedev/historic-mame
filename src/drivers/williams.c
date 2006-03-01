@@ -494,7 +494,6 @@
 #include "driver.h"
 #include "machine/6821pia.h"
 #include "sndhrdw/williams.h"
-#include "vidhrdw/generic.h"
 #include "williams.h"
 #include "sound/dac.h"
 

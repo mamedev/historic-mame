@@ -13,7 +13,6 @@ Notes:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 static int sprite_flip, pow_charbase=0; //*
 static tilemap *fix_tilemap;

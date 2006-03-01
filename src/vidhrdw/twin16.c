@@ -14,7 +14,6 @@
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 extern UINT16 twin16_custom_vidhrdw;
 extern UINT16 *twin16_gfx_rom;

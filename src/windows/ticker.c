@@ -13,6 +13,7 @@
 #include <mmsystem.h>
 
 // MAME headers
+#include "osdepend.h"
 #include "driver.h"
 #include "x86drc.h"
 

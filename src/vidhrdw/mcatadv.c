@@ -13,7 +13,6 @@ ToDo: Fix Sprites for Cocktail
 
 #include "driver.h"
 #include "profiler.h"
-#include "vidhrdw/generic.h"
 
 /* Defined in driver */
 extern UINT16 *mcatadv_videoram1, *mcatadv_videoram2;

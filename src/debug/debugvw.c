@@ -12,16 +12,18 @@
 #include "driver.h"
 #include "debugvw.h"
 #include "debugcmd.h"
+#include "debugcmt.h"
 #include "debugcpu.h"
 #include "debugcon.h"
 #include "express.h"
+#include "textbuf.h"
 #include <ctype.h>
 
 
 
-/*###################################################################################################
-**  CONSTANTS
-**#################################################################################################*/
+/***************************************************************************
+    CONSTANTS
+***************************************************************************/
 
 #define DEFAULT_DASM_LINES	(1000)
 #define DEFAULT_DASM_WIDTH	(50)
@@ -29,11 +31,12 @@
 
 
 
-/*###################################################################################################
-**  TYPE DEFINITIONS
-**#################################################################################################*/
+/***************************************************************************
+    TYPE DEFINITIONS
+***************************************************************************/
 
 /* debug_view_callbacks contains calbacks specific to a given view */
+typedef struct _debug_view_callbacks debug_view_callbacks;
 struct _debug_view_callbacks
 {
 	int				(*alloc)(debug_view *);		/* allocate memory */
@@ -42,10 +45,10 @@ struct _debug_view_callbacks
 	void			(*getprop)(debug_view *, UINT32, debug_property_info *value); /* get property */
 	void			(*setprop)(debug_view *, UINT32, debug_property_info value); /* set property */
 };
-typedef struct _debug_view_callbacks debug_view_callbacks;
 
 
 /* debug_view describes a single text-based view */
+/* typedef struct _debug_view debug_view -- defined in debugvw.h */
 struct _debug_view
 {
 	debug_view *	next;						/* link to the next view */
@@ -73,10 +76,10 @@ struct _debug_view
 	debug_view_char *viewdata;					/* current array of view data */
 	int				viewdata_size;				/* number of elements of the viewdata array */
 };
-/* typedef struct _debug_view debug_view -- defined in debugvw.h */
 
 
 /* debug_view_registers contains data specific to a register view */
+typedef struct _debug_view_register debug_view_register;
 struct _debug_view_register
 {
 	UINT64			lastval;					/* last value */
@@ -87,9 +90,9 @@ struct _debug_view_register
 	UINT8			valstart;					/* starting value char */
 	UINT8			vallen;						/* number of value chars */
 };
-typedef struct _debug_view_register debug_view_register;
 
 
+typedef struct _debug_view_registers debug_view_registers;
 struct _debug_view_registers
 {
 	UINT8			recompute;					/* do we need to recompute the layout the next change? */
@@ -98,21 +101,22 @@ struct _debug_view_registers
 	UINT32			last_update;				/* execution counter at last update */
 	debug_view_register reg[MAX_REGS];			/* register data */
 };
-typedef struct _debug_view_registers debug_view_registers;
 
 
 /* debug_view_disasm contains data specific to a disassembly view */
+typedef struct _debug_view_disasm debug_view_disasm;
 struct _debug_view_disasm
 {
 	UINT8			recompute;					/* do we need to recompute the layout the next change? */
 	UINT8			cpunum;						/* target CPU number */
-	UINT8			display_raw;				/* display raw opcodes? */
-	UINT8			display_raw_encrypted;		/* display encrypted opcodes? */
+	UINT8			right_column;				/* right column? */
 	UINT32			backwards_steps;			/* number of backwards steps */
 	UINT32			dasm_width;					/* width of the disassembly area */
 	UINT8 *			last_opcode_base;			/* last opcode base */
 	UINT8 *			last_opcode_arg_base;		/* last opcode arg base */
+	UINT32			last_change_count;			/* last comment change count */
 	int				divider1, divider2;			/* left and right divider columns */
+	int				divider3;					/* comment divider column */
 	UINT8			live_tracking;				/* track the value of the live expression? */
 	UINT64			last_result;				/* last result from the expression */
 	parsed_expression *expression;				/* expression to compute */
@@ -123,10 +127,10 @@ struct _debug_view_disasm
 	offs_t *		address;					/* addresses of the instructions */
 	char *			dasm;						/* disassembled instructions */
 };
-typedef struct _debug_view_disasm debug_view_disasm;
 
 
 /* debug_view_memory contains data specific to a memory view */
+typedef struct _debug_view_memory debug_view_memory;
 struct _debug_view_memory
 {
 	UINT8			cpunum;						/* target CPU number */
@@ -142,29 +146,34 @@ struct _debug_view_memory
 	char *			expression_string;			/* copy of the expression string */
 	UINT8			expression_dirty;			/* true if the expression needs to be re-evaluated */
 };
-typedef struct _debug_view_memory debug_view_memory;
+
+
+/* debug_view_textbuf contains data specific to a textbuffer view */
+typedef struct _debug_view_textbuf debug_view_textbuf;
+struct _debug_view_textbuf
+{
+	text_buffer *	textbuf;					/* pointer to the text buffer */
+	UINT8			at_bottom;					/* are we tracking new stuff being added? */
+	UINT32			topseq;						/* sequence number of the top line */
+};
 
 
 
-/*###################################################################################################
-**  LOCAL VARIABLES
-**#################################################################################################*/
+/***************************************************************************
+    LOCAL VARIABLES
+***************************************************************************/
 
 static debug_view *first_view;
 
 
 
-/*###################################################################################################
-**  MACROS
-**#################################################################################################*/
+/***************************************************************************
+    PROTOTYPES
+***************************************************************************/
 
+static int console_alloc(debug_view *view);
 
-
-/*###################################################################################################
-**  PROTOTYPES
-**#################################################################################################*/
-
-static void console_update(debug_view *view);
+static int log_alloc(debug_view *view);
 
 static int registers_alloc(debug_view *view);
 static void registers_free(debug_view *view);
@@ -184,20 +193,29 @@ static void memory_update(debug_view *view);
 static void	memory_getprop(debug_view *view, UINT32 property, debug_property_info *value);
 static void	memory_setprop(debug_view *view, UINT32 property, debug_property_info value);
 
+static int textbuf_alloc(debug_view *view, text_buffer *textbuf);
+static void textbuf_free(debug_view *view);
+static void textbuf_update(debug_view *view);
+static void	textbuf_getprop(debug_view *view, UINT32 property, debug_property_info *value);
+static void	textbuf_setprop(debug_view *view, UINT32 property, debug_property_info value);
+
 static const debug_view_callbacks callback_table[] =
 {
 	{	NULL,				NULL,				NULL,				NULL,				NULL },
-	{	NULL,				NULL,				console_update,		NULL,				NULL },
+	{	console_alloc,		textbuf_free,		textbuf_update,		textbuf_getprop,	textbuf_setprop },
 	{	registers_alloc,	registers_free,		registers_update,	registers_getprop,	registers_setprop },
 	{	disasm_alloc,		disasm_free,		disasm_update,		disasm_getprop,		disasm_setprop },
-	{	memory_alloc,		memory_free,		memory_update,		memory_getprop,		memory_setprop }
+	{	memory_alloc,		memory_free,		memory_update,		memory_getprop,		memory_setprop },
+	{	log_alloc,			textbuf_free,		textbuf_update,		textbuf_getprop,	textbuf_setprop }
 };
 
 
 
-/*###################################################################################################
-**  INITIALIZATION
-**#################################################################################################*/
+/***************************************************************************
+
+    Initialization and shutdown
+
+***************************************************************************/
 
 /*-------------------------------------------------
     debug_view_init - initializes the view system
@@ -224,9 +242,11 @@ void debug_view_exit(void)
 
 
 
-/*###################################################################################################
-**  VIEW CREATION/DELETION
-**#################################################################################################*/
+/***************************************************************************
+
+    View creation/deletion
+
+***************************************************************************/
 
 /*-------------------------------------------------
     debug_view_alloc - allocate a new debug
@@ -308,9 +328,11 @@ void debug_view_free(debug_view *view)
 
 
 
-/*###################################################################################################
-**  PROPERTY MANAGEMENT
-**#################################################################################################*/
+/***************************************************************************
+
+    Property management
+
+***************************************************************************/
 
 /*-------------------------------------------------
     debug_view_get_property - return the value
@@ -377,7 +399,7 @@ void debug_view_get_property(debug_view *view, int property, debug_property_info
 			if (view->cb.getprop)
 				(*view->cb.getprop)(view, property, value);
 			else
-				osd_die("Attempt to get invalid property %d on debug view type %d\n", property, view->type);
+				fatalerror("Attempt to get invalid property %d on debug view type %d", property, view->type);
 			break;
 	}
 }
@@ -505,16 +527,18 @@ void debug_view_set_property(debug_view *view, int property, debug_property_info
 			if (view->cb.setprop)
 				(*view->cb.setprop)(view, property, value);
 			else
-				osd_die("Attempt to set invalid property %d on debug view type %d\n", property, view->type);
+				fatalerror("Attempt to set invalid property %d on debug view type %d", property, view->type);
 			break;
 	}
 }
 
 
 
-/*###################################################################################################
-**  UPDATE MANAGEMENT
-**#################################################################################################*/
+/***************************************************************************
+
+    Update management
+
+***************************************************************************/
 
 /*-------------------------------------------------
     debug_view_begin_update - bracket a sequence
@@ -608,42 +632,135 @@ void debug_view_update_type(int type)
 
 
 
-/*###################################################################################################
-**  CONSOLE VIEW
-**#################################################################################################*/
+/***************************************************************************
+
+    Console view
+
+***************************************************************************/
 
 /*-------------------------------------------------
-    console_update - update the console view
+    console_alloc - allocate memory for the log view
 -------------------------------------------------*/
 
-static void console_update(debug_view *view)
+static int console_alloc(debug_view *view)
 {
+	return textbuf_alloc(view, debug_console_get_textbuf());
+}
+
+
+
+/***************************************************************************
+
+    Log view
+
+***************************************************************************/
+
+/*-------------------------------------------------
+    log_alloc - allocate memory for the log view
+-------------------------------------------------*/
+
+static int log_alloc(debug_view *view)
+{
+	return textbuf_alloc(view, debug_errorlog_get_textbuf());
+}
+
+
+
+/***************************************************************************
+
+    Generic text buffer view
+
+***************************************************************************/
+
+/*-------------------------------------------------
+    textbuf_alloc - allocate memory for a text
+    buffer view
+-------------------------------------------------*/
+
+static int textbuf_alloc(debug_view *view, text_buffer *textbuf)
+{
+	debug_view_textbuf *textdata;
+
+	/* allocate memory */
+	textdata = malloc(sizeof(*textdata));
+	if (!textdata)
+		return 0;
+	memset(textdata, 0, sizeof(*textdata));
+
+	/* by default we track live */
+	textdata->textbuf = textbuf;
+	textdata->at_bottom = TRUE;
+
+	/* stash the extra data pointer */
+	view->extra_data = textdata;
+	return 1;
+}
+
+
+/*-------------------------------------------------
+    textbuf_free - free memory for the log view
+-------------------------------------------------*/
+
+static void textbuf_free(debug_view *view)
+{
+	debug_view_textbuf *textdata = view->extra_data;
+
+	/* free any memory we callocated */
+	if (textdata)
+		free(textdata);
+	view->extra_data = NULL;
+}
+
+
+/*-------------------------------------------------
+    textbuf_update - update the log view
+-------------------------------------------------*/
+
+static void textbuf_update(debug_view *view)
+{
+	debug_view_textbuf *textdata = view->extra_data;
 	debug_view_char *dest = view->viewdata;
-	int total_rows, total_cols;
-	UINT32 row;
+	UINT32 curseq, row;
 
 	/* update the console info */
-	debug_console_get_size(&total_rows, &total_cols);
-	view->total_rows = total_rows;
-	view->total_cols = total_cols;
+	view->total_rows = text_buffer_num_lines(textdata->textbuf);
+	view->total_cols = text_buffer_max_width(textdata->textbuf);
+	if (view->total_cols < 80)
+		view->total_cols = 80;
+
+	/* determine the starting sequence number */
+	if (!textdata->at_bottom)
+	{
+		curseq = textdata->topseq;
+		if (!text_buffer_get_seqnum_line(textdata->textbuf, curseq))
+			textdata->at_bottom = TRUE;
+	}
+	if (textdata->at_bottom)
+	{
+		curseq = text_buffer_line_index_to_seqnum(textdata->textbuf, view->total_rows - 1);
+		if (view->total_rows < view->visible_rows)
+			curseq -= view->total_rows - 1;
+		else
+			curseq -= view->visible_rows - 1;
+	}
+	view->top_row = curseq - text_buffer_line_index_to_seqnum(textdata->textbuf, 0);
 
 	/* loop over visible rows */
 	for (row = 0; row < view->visible_rows; row++)
 	{
-		UINT32 effrow = view->top_row + row;
+		const char *line = text_buffer_get_seqnum_line(textdata->textbuf, curseq++);
 		UINT32 col = 0;
 
 		/* if this visible row is valid, add it to the buffer */
-		if (effrow < view->total_rows)
+		if (line != NULL)
 		{
-			const char *data = debug_console_get_line(effrow);
-			UINT32 len = strlen(data);
+			UINT32 len = strlen(line);
 			UINT32 effcol = view->left_col;
 
 			/* copy data */
 			while (col < view->visible_cols && effcol < len)
 			{
-				dest->byte = data[effcol++];
+				dest->byte = line[effcol++];
 				dest->attrib = DCA_NORMAL;
 				dest++;
 				col++;
@@ -662,10 +779,77 @@ static void console_update(debug_view *view)
 }
 
 
+/*-------------------------------------------------
+    textbuf_getprop - return the value
+    of a given property
+-------------------------------------------------*/
 
-/*###################################################################################################
-**  REGISTERS VIEW
-**#################################################################################################*/
+static void	textbuf_getprop(debug_view *view, UINT32 property, debug_property_info *value)
+{
+	debug_view_textbuf *textdata = view->extra_data;
+
+	switch (property)
+	{
+		case DVP_TEXTBUF_LINE_LOCK:
+			value->i = textdata->at_bottom ? (UINT32)-1 : textdata->topseq - text_buffer_line_index_to_seqnum(textdata->textbuf, 0);
+			break;
+
+		default:
+			fatalerror("Attempt to get invalid property %d on debug view type %d", property, view->type);
+			break;
+	}
+}
+
+
+/*-------------------------------------------------
+    textbuf_setprop - set the value
+    of a given property
+-------------------------------------------------*/
+
+static void	textbuf_setprop(debug_view *view, UINT32 property, debug_property_info value)
+{
+	debug_view_textbuf *textdata = view->extra_data;
+
+	switch (property)
+	{
+		case DVP_TEXTBUF_LINE_LOCK:
+			if (value.i == (UINT32)-1)
+			{
+				if (!textdata->at_bottom)
+				{
+					debug_view_begin_update(view);
+					textdata->at_bottom = TRUE;
+					view->update_pending = TRUE;
+					debug_view_end_update(view);
+				}
+			}
+			else
+			{
+				UINT32 seq = text_buffer_line_index_to_seqnum(textdata->textbuf, value.i);
+				if (seq != textdata->topseq || textdata->at_bottom)
+				{
+					debug_view_begin_update(view);
+					textdata->topseq = seq;
+					textdata->at_bottom = FALSE;
+					view->update_pending = TRUE;
+					debug_view_end_update(view);
+				}
+			}
+			break;
+
+		default:
+			fatalerror("Attempt to set invalid property %d on debug view type %d", property, view->type);
+			break;
+	}
+}
+
+
+
+/***************************************************************************
+
+    Registers view
+
+***************************************************************************/
 
 /*-------------------------------------------------
     registers_alloc - allocate memory for the
@@ -1001,7 +1185,7 @@ static void	registers_getprop(debug_view *view, UINT32 property, debug_property_
 			break;
 
 		default:
-			osd_die("Attempt to get invalid property %d on debug view type %d\n", property, view->type);
+			fatalerror("Attempt to get invalid property %d on debug view type %d", property, view->type);
 			break;
 	}
 }
@@ -1030,16 +1214,18 @@ static void	registers_setprop(debug_view *view, UINT32 property, debug_property_
 			break;
 
 		default:
-			osd_die("Attempt to set invalid property %d on debug view type %d\n", property, view->type);
+			fatalerror("Attempt to set invalid property %d on debug view type %d", property, view->type);
 			break;
 	}
 }
 
 
 
-/*###################################################################################################
-**  DISASSEMBLY VIEW
-**#################################################################################################*/
+/***************************************************************************
+
+    Disassembly view
+
+***************************************************************************/
 
 /*-------------------------------------------------
     disasm_alloc - allocate disasm for the
@@ -1049,6 +1235,8 @@ static void	registers_setprop(debug_view *view, UINT32 property, debug_property_
 static int disasm_alloc(debug_view *view)
 {
 	debug_view_disasm *dasmdata;
+	int total_comments = 0;
+	int i;
 
 	/* allocate disasm */
 	dasmdata = malloc(sizeof(*dasmdata));
@@ -1056,9 +1244,13 @@ static int disasm_alloc(debug_view *view)
 		return 0;
 	memset(dasmdata, 0, sizeof(*dasmdata));
 
+	/* count the number of comments */
+	for (i = 0; i < cpu_gettotalcpu(); i++)
+		total_comments += debug_comment_get_count(i);
+
 	/* initialize */
 	dasmdata->recompute = TRUE;
-	dasmdata->display_raw = TRUE;
+	dasmdata->right_column = (total_comments > 0) ? DVP_DASM_RIGHTCOL_COMMENTS : DVP_DASM_RIGHTCOL_RAW;
 	dasmdata->backwards_steps = 3;
 	dasmdata->dasm_width = DEFAULT_DASM_WIDTH;
 
@@ -1232,7 +1424,7 @@ static void disasm_generate_bytes(offs_t pcbyte, int numbytes, const debug_cpu_i
 			break;
 
 		default:
-			osd_die("disasm_generate_bytes: unknown size = %d\n", minbytes);
+			fatalerror("disasm_generate_bytes: unknown size = %d", minbytes);
 			break;
 	}
 
@@ -1270,7 +1462,9 @@ static void disasm_recompute(debug_view *view, offs_t pc, int startline, int lin
 	/* determine how many bytes we might need to display */
 	minbytes = activecpu_min_instruction_bytes();
 	maxbytes = activecpu_max_instruction_bytes();
-	if (dasmdata->display_raw)
+
+	/* set the width of the third column according to display mode */
+	if (dasmdata->right_column == DVP_DASM_RIGHTCOL_RAW || dasmdata->right_column == DVP_DASM_RIGHTCOL_ENCRYPTED)
 	{
 		chunksize = activecpu_databus_width(ADDRESS_SPACE_PROGRAM) / 8;
 		maxbytes_clamped = maxbytes;
@@ -1278,6 +1472,8 @@ static void disasm_recompute(debug_view *view, offs_t pc, int startline, int lin
 			maxbytes_clamped = DASM_MAX_BYTES;
 		view->total_cols = dasmdata->divider2 + 1 + 2 * maxbytes_clamped + (maxbytes_clamped / minbytes - 1) + 1;
 	}
+	else if (dasmdata->right_column == DVP_DASM_RIGHTCOL_COMMENTS)
+		view->total_cols = dasmdata->divider2 + 1 + 50;		/* DEBUG_COMMENT_MAX_LINE_LENGTH */
 	else
 		view->total_cols = dasmdata->divider2 + 1;
 
@@ -1357,21 +1553,30 @@ static void disasm_recompute(debug_view *view, offs_t pc, int startline, int lin
 			sprintf(buffer, "<unmapped>");
 		sprintf(&destbuf[dasmdata->divider1 + 1], "%-*s  ", dasmdata->dasm_width, buffer);
 
-		/* get the bytes */
-		if (dasmdata->display_raw)
+		if (dasmdata->right_column == DVP_DASM_RIGHTCOL_RAW || dasmdata->right_column == DVP_DASM_RIGHTCOL_ENCRYPTED)
 		{
+			/* get the bytes */
 			numbytes = ADDR2BYTE(numbytes, cpuinfo, ADDRESS_SPACE_PROGRAM);
-			disasm_generate_bytes(pcbyte, numbytes, cpuinfo, minbytes, &destbuf[dasmdata->divider2], dasmdata->allocated_cols - dasmdata->divider2, dasmdata->display_raw_encrypted);
+			disasm_generate_bytes(pcbyte, numbytes, cpuinfo, minbytes, &destbuf[dasmdata->divider2], dasmdata->allocated_cols - dasmdata->divider2, dasmdata->right_column == DVP_DASM_RIGHTCOL_ENCRYPTED);
+		}
+		else if (dasmdata->right_column == DVP_DASM_RIGHTCOL_COMMENTS)
+		{
+			/* get the comment */
+			if (debug_comment_get_text(cpu_getactivecpu(),BYTE2ADDR(dasmdata->address[instr], cpuinfo, ADDRESS_SPACE_PROGRAM), debug_comment_get_opcode_crc32(pcbyte)) != 0x00)
+				sprintf(&destbuf[dasmdata->divider2], "// %s", debug_comment_get_text(cpu_getactivecpu(), BYTE2ADDR(dasmdata->address[instr], cpuinfo, ADDRESS_SPACE_PROGRAM), debug_comment_get_opcode_crc32(pcbyte)));
+			else
+				sprintf(&destbuf[dasmdata->divider2], " ");
 		}
 	}
-
-	/* update opcode base information */
-	dasmdata->last_opcode_base = opcode_base;
-	dasmdata->last_opcode_arg_base = opcode_arg_base;
 
 	/* reset the opcode base */
 	if (dasmdata->cpunum == original_cpunum)
 		memory_set_opbase(activecpu_get_physical_pc_byte());
+
+	/* update opcode base information */
+	dasmdata->last_opcode_base = opcode_base;
+	dasmdata->last_opcode_arg_base = opcode_arg_base;
+	dasmdata->last_change_count = debug_comment_get_change_count(dasmdata->cpunum);
 
 	/* now longer need to recompute */
 	dasmdata->recompute = FALSE;
@@ -1450,6 +1655,10 @@ static void disasm_update(debug_view *view)
 	if (opcode_base != dasmdata->last_opcode_base || opcode_arg_base != dasmdata->last_opcode_arg_base)
 		dasmdata->recompute = TRUE;
 
+	/* if the comments have changed, redo it */
+	if (dasmdata->last_change_count != debug_comment_get_change_count(dasmdata->cpunum))
+		dasmdata->recompute = TRUE;
+
 	/* if we need to recompute, do it */
 	if (dasmdata->recompute)
 	{
@@ -1502,6 +1711,10 @@ static void disasm_update(debug_view *view)
 			{
 				dest->byte = data[effcol++];
 				dest->attrib = (effcol <= dasmdata->divider1 || effcol >= dasmdata->divider2) ? (attrib | DCA_ANCILLARY) : attrib;
+
+				/* comments are just green for now - maybe they shouldn't even be this? */
+				if (effcol >= dasmdata->divider2 && dasmdata->right_column == DVP_DASM_RIGHTCOL_COMMENTS) attrib |= DCA_COMMENT;
+
 				dest++;
 				col++;
 			}
@@ -1545,12 +1758,8 @@ static void	disasm_getprop(debug_view *view, UINT32 property, debug_property_inf
 			value->i = dasmdata->live_tracking;
 			break;
 
-		case DVP_DASM_DISPLAY_RAW:
-			value->i = dasmdata->display_raw;
-			break;
-
-		case DVP_DASM_DISPLAY_ENCRYPTED:
-			value->i = dasmdata->display_raw_encrypted;
+		case DVP_DASM_RIGHT_COLUMN:
+			value->i = dasmdata->right_column;
 			break;
 
 		case DVP_DASM_BACKWARD_STEPS:
@@ -1562,7 +1771,7 @@ static void	disasm_getprop(debug_view *view, UINT32 property, debug_property_inf
 			break;
 
 		default:
-			osd_die("Attempt to get invalid property %d on debug view type %d\n", property, view->type);
+			fatalerror("Attempt to get invalid property %d on debug view type %d", property, view->type);
 			break;
 	}
 }
@@ -1620,22 +1829,11 @@ static void	disasm_setprop(debug_view *view, UINT32 property, debug_property_inf
 			}
 			break;
 
-		case DVP_DASM_DISPLAY_RAW:
-			if (value.i != dasmdata->display_raw)
+		case DVP_DASM_RIGHT_COLUMN:
+			if (value.i != dasmdata->right_column && value.i >= DVP_DASM_RIGHTCOL_NONE && value.i <= DVP_DASM_RIGHTCOL_COMMENTS)
 			{
 				debug_view_begin_update(view);
-				dasmdata->display_raw = value.i;
-				dasmdata->recompute = TRUE;
-				view->update_pending = TRUE;
-				debug_view_end_update(view);
-			}
-			break;
-
-		case DVP_DASM_DISPLAY_ENCRYPTED:
-			if (value.i != dasmdata->display_raw_encrypted)
-			{
-				debug_view_begin_update(view);
-				dasmdata->display_raw_encrypted = value.i;
+				dasmdata->right_column = value.i;
 				dasmdata->recompute = TRUE;
 				view->update_pending = TRUE;
 				debug_view_end_update(view);
@@ -1665,16 +1863,18 @@ static void	disasm_setprop(debug_view *view, UINT32 property, debug_property_inf
 			break;
 
 		default:
-			osd_die("Attempt to set invalid property %d on debug view type %d\n", property, view->type);
+			fatalerror("Attempt to set invalid property %d on debug view type %d", property, view->type);
 			break;
 	}
 }
 
 
 
-/*###################################################################################################
-**  MEMORY VIEW
-**#################################################################################################*/
+/***************************************************************************
+
+    Memory view
+
+***************************************************************************/
 
 /*
 00000000  00 11 22 33 44 55 66 77-88 99 aa bb cc dd ee ff  0123456789abcdef
@@ -2241,14 +2441,14 @@ static void	memory_getprop(debug_view *view, UINT32 property, debug_property_inf
 			break;
 
 		default:
-			osd_die("Attempt to get invalid property %d on debug view type %d\n", property, view->type);
+			fatalerror("Attempt to get invalid property %d on debug view type %d", property, view->type);
 			break;
 	}
 }
 
 
 /*-------------------------------------------------
-    memory_getprop - set the value
+    memory_setprop - set the value
     of a given property
 -------------------------------------------------*/
 
@@ -2341,9 +2541,7 @@ static void	memory_setprop(debug_view *view, UINT32 property, debug_property_inf
 			break;
 
 		default:
-			osd_die("Attempt to set invalid property %d on debug view type %d\n", property, view->type);
+			fatalerror("Attempt to set invalid property %d on debug view type %d", property, view->type);
 			break;
 	}
 }
-
-

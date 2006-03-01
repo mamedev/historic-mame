@@ -96,7 +96,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "machine/eeprom.h"
 #include "sound/ymz280b.h"
 #include "decoprot.h"
@@ -243,6 +242,8 @@ static WRITE32_HANDLER( mlc_irq_w )
 	case 0x30:
 	case 0x34:
 	case 0x38:
+		if (scanline > 255)
+			scanline = 255;
 		/* Update scanlines up to present line */
 		while (lastScanline[offset-6]<scanline)
 		{

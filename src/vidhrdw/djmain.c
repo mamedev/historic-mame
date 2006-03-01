@@ -4,7 +4,6 @@
  */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/konamiic.h"
 
 #define NUM_SPRITES	(0x800 / 16)

@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 UINT8 *retofinv_bg_videoram;
 UINT8 *retofinv_fg_videoram;

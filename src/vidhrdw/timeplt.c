@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 extern unsigned char *spriteram,*spriteram_2;
 extern size_t spriteram_size;

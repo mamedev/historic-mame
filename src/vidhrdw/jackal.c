@@ -9,7 +9,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 UINT8 *jackal_scrollram, *jackal_videoctrl;
 

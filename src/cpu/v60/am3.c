@@ -718,14 +718,14 @@ UINT32 am3DirectAddressDeferredIndexed(void)
 
 UINT32 am3Immediate(void)
 {
-	osd_die("CPU - AM3 - IMM (PC=%06x)\n", PC);
-	return 0; /* never reached, osd_die won't return */
+	fatalerror("CPU - AM3 - IMM (PC=%06x)", PC);
+	return 0; /* never reached, fatalerror won't return */
 }
 
 UINT32 am3ImmediateQuick(void)
 {
-	osd_die("CPU - AM3 - IMMQ (PC=%06x)\n", PC);
-	return 0; /* never reached, osd_die won't return */
+	fatalerror("CPU - AM3 - IMMQ (PC=%06x)", PC);
+	return 0; /* never reached, fatalerror won't return */
 }
 
 
@@ -735,32 +735,32 @@ UINT32 am3ImmediateQuick(void)
 
 UINT32 am3Error1(void)
 {
-	osd_die("CPU - AM3 - 1 (PC=%06x)\n", PC);
-	return 0; /* never reached, osd_die won't return */
+	fatalerror("CPU - AM3 - 1 (PC=%06x)", PC);
+	return 0; /* never reached, fatalerror won't return */
 }
 
 UINT32 am3Error2(void)
 {
-	osd_die("CPU - AM3 - 2 (PC=%06x)\n", PC);
-	return 0; /* never reached, osd_die won't return */
+	fatalerror("CPU - AM3 - 2 (PC=%06x)", PC);
+	return 0; /* never reached, fatalerror won't return */
 }
 
 UINT32 am3Error3(void)
 {
-	osd_die("CPU - AM3 - 3 (PC=%06x)\n", PC);
-	return 0; /* never reached, osd_die won't return */
+	fatalerror("CPU - AM3 - 3 (PC=%06x)", PC);
+	return 0; /* never reached, fatalerror won't return */
 }
 
 UINT32 am3Error4(void)
 {
-	osd_die("CPU - AM3 - 4 (PC=%06x)\n", PC);
-	return 0; /* never reached, osd_die won't return */
+	fatalerror("CPU - AM3 - 4 (PC=%06x)", PC);
+	return 0; /* never reached, fatalerror won't return */
 }
 
 UINT32 am3Error5(void)
 {
-	osd_die("CPU - AM3 - 5 (PC=%06x)\n", PC);
-	return 0; /* never reached, osd_die won't return */
+	fatalerror("CPU - AM3 - 5 (PC=%06x)", PC);
+	return 0; /* never reached, fatalerror won't return */
 }
 
 UINT32 (*AMTable3_G7a[16])(void) =

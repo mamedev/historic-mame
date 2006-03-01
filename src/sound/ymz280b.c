@@ -11,6 +11,7 @@
 #include <math.h>
 
 #include "driver.h"
+#include "streams.h"
 #include "ymz280b.h"
 
 
@@ -1079,7 +1080,7 @@ READ8_HANDLER( YMZ280B_data_1_r )
  * Generic get_info
  **************************************************************************/
 
-static void ymz280b_set_info(void *token, UINT32 state, union sndinfo *info)
+static void ymz280b_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -1088,7 +1089,7 @@ static void ymz280b_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void ymz280b_get_info(void *token, UINT32 state, union sndinfo *info)
+void ymz280b_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

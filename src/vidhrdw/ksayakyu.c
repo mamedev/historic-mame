@@ -1,4 +1,4 @@
-#include "vidhrdw/generic.h"
+#include "driver.h"
 
 tilemap *ksayakyu_tilemap;
 tilemap *ksayakyu_textmap;

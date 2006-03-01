@@ -37,7 +37,6 @@ Note:   if MAME_DEBUG is defined, pressing Z with:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "unico.h"
 
 /* Variables defined in drivers: */

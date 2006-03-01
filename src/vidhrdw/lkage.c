@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 static tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;
 static unsigned char bg_tile_bank, fg_tile_bank;

@@ -288,7 +288,6 @@
 #include "machine/z80sio.h"
 #include "sndhrdw/mcr.h"
 #include "sound/samples.h"
-#include "vidhrdw/generic.h"
 #include "artwork.h"
 #include "mcr.h"
 
@@ -1575,7 +1574,7 @@ static MACHINE_DRIVER_START( mcr_91490_ipu )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(mcr_91490_snt)
-	MDRV_MACHINE_RESET(nflfoot)
+	MDRV_MACHINE_START(nflfoot)
 
 	MDRV_CPU_ADD_TAG("ipu", Z80, 7372800/2)
 	MDRV_CPU_CONFIG(mcr_ipu_daisy_chain)

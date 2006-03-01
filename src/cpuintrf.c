@@ -163,7 +163,6 @@ void mc68hc11_get_info(UINT32 state, union cpuinfo *info);
 void adsp21062_get_info(UINT32 state, union cpuinfo *info);
 void dsp56k_get_info(UINT32 state, union cpuinfo *info);
 
-
 #ifdef MESS
 void apexc_get_info(UINT32 state, union cpuinfo *info);
 void cdp1802_get_info(UINT32 state, union cpuinfo *info);
@@ -180,6 +179,7 @@ void tms7000_get_info(UINT32 state, union cpuinfo *info);
 void tms7000_exl_get_info(UINT32 state, union cpuinfo *info);
 void cop411_get_info(UINT32 state, union cpuinfo *info);
 #endif
+
 
 
 /*************************************
@@ -289,7 +289,7 @@ typedef struct _cpuintrf_data cpuintrf_data;
 
 cpu_interface cpuintrf[CPU_COUNT];
 
-const struct
+static const struct
 {
 	int		cputype;
 	void	(*get_info)(UINT32 state, union cpuinfo *info);

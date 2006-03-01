@@ -167,7 +167,6 @@ struct _chd_header
 typedef struct _chd_header chd_header;
 
 
-typedef struct _chd_file chd_file;
 typedef struct _chd_exfile chd_exfile;
 typedef struct _chd_interface_file chd_interface_file;
 

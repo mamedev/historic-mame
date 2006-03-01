@@ -9,6 +9,7 @@
 
 #include <math.h>
 #include "driver.h"
+#include "streams.h"
 #include "sound/custom.h"
 
 #define CLOCK_16H	(18432000/3/2/16)

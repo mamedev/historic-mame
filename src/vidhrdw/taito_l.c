@@ -12,7 +12,7 @@ static int horshoes_gfxbank = 0;
 static int bankc[4];
 static int flipscreen;
 #define SPRITERAM_SIZE 0x400
-static unsigned char buffered_spriteram[SPRITERAM_SIZE];
+static unsigned char buff_spriteram[SPRITERAM_SIZE];
 
 
 /***************************************************************************
@@ -278,16 +278,16 @@ static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 	{
 		int code,color,sx,sy,flipx,flipy;
 
-		color = buffered_spriteram[offs + 2] & 0x0f;
-		code = buffered_spriteram[offs] | (buffered_spriteram[offs + 1] << 8);
+		color = buff_spriteram[offs + 2] & 0x0f;
+		code = buff_spriteram[offs] | (buff_spriteram[offs + 1] << 8);
 
 		code |= (horshoes_gfxbank & 0x03) << 10;
 
-		sx = buffered_spriteram[offs + 4] | ((buffered_spriteram[offs + 5] & 1) << 8);
-		sy = buffered_spriteram[offs + 6];
+		sx = buff_spriteram[offs + 4] | ((buff_spriteram[offs + 5] & 1) << 8);
+		sy = buff_spriteram[offs + 6];
 		if (sx >= 320) sx -= 512;
-		flipx = buffered_spriteram[offs + 3] & 0x01;
-		flipy = buffered_spriteram[offs + 3] & 0x02;
+		flipx = buff_spriteram[offs + 3] & 0x01;
+		flipy = buff_spriteram[offs + 3] & 0x02;
 
 		if (flipscreen)
 		{
@@ -352,5 +352,5 @@ VIDEO_EOF( taitol )
 {
 	unsigned char *spriteram = taitol_rambanks + 0x7000;
 
-	memcpy(buffered_spriteram,spriteram,SPRITERAM_SIZE);
+	memcpy(buff_spriteram,spriteram,SPRITERAM_SIZE);
 }

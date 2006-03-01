@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/ym2151.h"
 #include "machine/random.h"
 #include "sound/namco.h"

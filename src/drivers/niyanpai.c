@@ -35,7 +35,6 @@ Memo:
 #include "driver.h"
 #include "machine/m68kfmly.h"
 #include "machine/z80ctc.h"
-#include "vidhrdw/generic.h"
 #include "nb1413m3.h"
 #include "sound/dac.h"
 #include "sound/3812intf.h"

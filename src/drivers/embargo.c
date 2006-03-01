@@ -6,7 +6,6 @@ Cinematronics Embargo driver
 
 #include "driver.h"
 #include "cpu/s2650/s2650.h"
-#include "vidhrdw/generic.h"
 
 static int dial_enable_1;
 static int dial_enable_2;

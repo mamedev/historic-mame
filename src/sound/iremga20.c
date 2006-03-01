@@ -24,6 +24,7 @@ Revisions:
 *********************************************************/
 #include <math.h>
 #include "driver.h"
+#include "streams.h"
 #include "iremga20.h"
 
 //AT
@@ -262,7 +263,7 @@ static void *iremga20_start(int sndindex, int clock, const void *config)
  * Generic get_info
  **************************************************************************/
 
-static void iremga20_set_info(void *token, UINT32 state, union sndinfo *info)
+static void iremga20_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -271,7 +272,7 @@ static void iremga20_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void iremga20_get_info(void *token, UINT32 state, union sndinfo *info)
+void iremga20_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

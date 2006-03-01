@@ -35,6 +35,7 @@
  ************************************************************************/
 
 #include "driver.h"
+#include "streams.h"
 #include "wavwrite.h"
 #include "discrete.h"
 #include <stdio.h>
@@ -307,15 +308,15 @@ static void *discrete_start(int sndindex, int clock, const void *config)
 	{
 		/* make sure we don't have too many nodes overall */
 		if (info->node_count > DISCRETE_MAX_NODES)
-			osd_die("discrete_start() - Upper limit of %d nodes exceeded, have you terminated the interface block.", DISCRETE_MAX_NODES);
+			fatalerror("discrete_start() - Upper limit of %d nodes exceeded, have you terminated the interface block.", DISCRETE_MAX_NODES);
 
 		/* make sure the node number is in range */
 		if (intf[info->node_count].node < NODE_START || intf[info->node_count].node > NODE_END)
-			osd_die("discrete_start() - Invalid node number on node %02d descriptor\n", info->node_count);
+			fatalerror("discrete_start() - Invalid node number on node %02d descriptor", info->node_count);
 
 		/* make sure the node type is valid */
 		if (intf[info->node_count].type > DSO_OUTPUT)
-			osd_die("discrete_start() - Invalid function type on NODE_%02d\n", intf[info->node_count].node - NODE_START);
+			fatalerror("discrete_start() - Invalid function type on NODE_%02d", intf[info->node_count].node - NODE_START);
 	}
 	info->node_count++;
 	discrete_log("discrete_start() - Sanity check counted %d nodes", info->node_count);
@@ -528,26 +529,26 @@ static void init_nodes(struct discrete_info *info, struct discrete_sound_block *
 				/* Output Node */
 				case DSO_OUTPUT:
 					if (info->discrete_outputs == DISCRETE_MAX_OUTPUTS)
-						osd_die("init_nodes() - There can not be more then %d output nodes", DISCRETE_MAX_OUTPUTS);
+						fatalerror("init_nodes() - There can not be more then %d output nodes", DISCRETE_MAX_OUTPUTS);
 					info->output_node[info->discrete_outputs++] = node;
 					break;
 
 				/* CSVlog Node for debugging */
 				case DSO_CSVLOG:
 					if (info->num_csvlogs == DISCRETE_MAX_CSVLOGS)
-						osd_die("init_nodes() - There can not be more then %d discrete CSV logs.", DISCRETE_MAX_WAVELOGS);
+						fatalerror("init_nodes() - There can not be more then %d discrete CSV logs.", DISCRETE_MAX_WAVELOGS);
 					info->csvlog_node[info->num_csvlogs++] = node;
 					break;
 
 				/* Wavelog Node for debugging */
 				case DSO_WAVELOG:
 					if (info->num_wavelogs == DISCRETE_MAX_WAVELOGS)
-						osd_die("init_nodes() - There can not be more then %d discrete wave logs.", DISCRETE_MAX_WAVELOGS);
+						fatalerror("init_nodes() - There can not be more then %d discrete wave logs.", DISCRETE_MAX_WAVELOGS);
 					info->wavelog_node[info->num_wavelogs++] = node;
 					break;
 
 				default:
-					osd_die("init_nodes() - Failed, trying to create unknown special discrete node.");
+					fatalerror("init_nodes() - Failed, trying to create unknown special discrete node.");
 			}
 		}
 
@@ -555,7 +556,7 @@ static void init_nodes(struct discrete_info *info, struct discrete_sound_block *
 		else
 		{
 			if (info->indexed_node[block->node - NODE_START])
-				osd_die("init_nodes() - Duplicate entries for NODE_%02d\n", block->node - NODE_START);
+				fatalerror("init_nodes() - Duplicate entries for NODE_%02d", block->node - NODE_START);
 			info->indexed_node[block->node - NODE_START] = node;
 		}
 
@@ -564,7 +565,7 @@ static void init_nodes(struct discrete_info *info, struct discrete_sound_block *
 			if (module_list[modulenum].type == block->type)
 				break;
 		if (module_list[modulenum].type != block->type)
-			osd_die("init_nodes() - Unable to find discrete module type %d for NODE_%02d\n", block->type, block->node - NODE_START);
+			fatalerror("init_nodes() - Unable to find discrete module type %d for NODE_%02d", block->type, block->node - NODE_START);
 
 		/* static inits */
 		node->node = block->node;
@@ -593,14 +594,14 @@ static void init_nodes(struct discrete_info *info, struct discrete_sound_block *
 		if (block->type == DSS_INPUT_STREAM)
 		{
 			if (info->discrete_input_streams == DISCRETE_MAX_OUTPUTS)
-				osd_die("init_nodes() - There can not be more then %d input stream nodes", DISCRETE_MAX_OUTPUTS);
+				fatalerror("init_nodes() - There can not be more then %d input stream nodes", DISCRETE_MAX_OUTPUTS);
 			info->input_stream_data[info->discrete_input_streams++] = node->context;
 		}
 	}
 
 	/* if no outputs, give an error */
 	if (info->discrete_outputs == 0)
-		osd_die("init_nodes() - Couldn't find an output node");
+		fatalerror("init_nodes() - Couldn't find an output node");
 }
 
 
@@ -631,7 +632,7 @@ static void find_input_nodes(struct discrete_info *info, struct discrete_sound_b
 			{
 				struct node_description *node_ref = info->indexed_node[inputnode - NODE_START];
 				if (!node_ref)
-					osd_die("discrete_start - Node NODE_%02d referenced a non existent node NODE_%02d\n", node->node - NODE_START, inputnode - NODE_START);
+					fatalerror("discrete_start - Node NODE_%02d referenced a non existent node NODE_%02d", node->node - NODE_START, inputnode - NODE_START);
 
 				node->input[inputnum] = &(node_ref->output);	// Link referenced node out to input
 				node->input_is_node |= 1 << inputnum;			// Bit flag if input is node
@@ -697,7 +698,7 @@ static void setup_disc_logs(struct discrete_info *info)
  * Generic get_info
  **************************************************************************/
 
-static void discrete_set_info(void *token, UINT32 state, union sndinfo *info)
+static void discrete_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -706,7 +707,7 @@ static void discrete_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void discrete_get_info(void *token, UINT32 state, union sndinfo *info)
+void discrete_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

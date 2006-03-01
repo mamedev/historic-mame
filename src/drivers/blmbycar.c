@@ -24,7 +24,6 @@ Check game speed, it depends on a bit we toggle..
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/okim6295.h"
 
 /* Variables defined in vidhrdw: */

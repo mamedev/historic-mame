@@ -5,7 +5,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include <math.h>
 
 UINT16 *nemesis_videoram1b;

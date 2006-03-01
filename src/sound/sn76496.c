@@ -17,6 +17,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "streams.h"
 #include "sn76496.h"
 
 
@@ -53,14 +54,14 @@ struct SN76496
 	int SampleRate;
 	unsigned int UpdateStep;
 	int VolTable[16];	/* volume table         */
-	int Register[8];	/* registers */
-	int LastRegister;	/* last register written */
-	int Volume[4];		/* volume of voice 0-2 and noise */
-	unsigned int RNG;		/* noise generator      */
-	int NoiseFB;		/* noise feedback mask */
-	int Period[4];
-	int Count[4];
-	int Output[4];
+	INT32 Register[8];	/* registers */
+	INT32 LastRegister;	/* last register written */
+	INT32 Volume[4];		/* volume of voice 0-2 and noise */
+	UINT32 RNG;		/* noise generator      */
+	INT32 NoiseFB;		/* noise feedback mask */
+	INT32 Period[4];
+	INT32 Count[4];
+	INT32 Output[4];
 };
 
 
@@ -349,6 +350,15 @@ static void *sn76496_start(int sndindex, int clock, const void *config)
 		return NULL;
 	SN76496_set_gain(chip, 0);
 
+	state_save_register_item_array("sn76496", sndindex, chip->Register);
+	state_save_register_item("sn76496", sndindex, chip->LastRegister);
+	state_save_register_item_array("sn76496", sndindex, chip->Volume);
+	state_save_register_item("sn76496", sndindex, chip->RNG);
+	state_save_register_item("sn76496", sndindex, chip->NoiseFB);
+	state_save_register_item_array("sn76496", sndindex, chip->Period);
+	state_save_register_item_array("sn76496", sndindex, chip->Count);
+	state_save_register_item_array("sn76496", sndindex, chip->Output);
+
 	return chip;
 }
 
@@ -359,7 +369,7 @@ static void *sn76496_start(int sndindex, int clock, const void *config)
  * Generic get_info
  **************************************************************************/
 
-static void sn76496_set_info(void *token, UINT32 state, union sndinfo *info)
+static void sn76496_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -368,7 +378,7 @@ static void sn76496_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void sn76496_get_info(void *token, UINT32 state, union sndinfo *info)
+void sn76496_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

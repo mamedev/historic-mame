@@ -59,7 +59,6 @@ SOFT  PSG & VOICE  BY M.C & S.H
 
 */
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/res_net.h"
 #include "sound/ay8910.h"
 

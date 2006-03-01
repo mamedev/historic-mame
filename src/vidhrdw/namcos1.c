@@ -5,7 +5,6 @@ Namco System 1 Video Hardware
 *******************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
 /*

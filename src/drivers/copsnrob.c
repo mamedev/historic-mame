@@ -53,7 +53,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "artwork.h"
 #include "copsnrob.h"
 

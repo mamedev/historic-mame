@@ -49,7 +49,6 @@ RSSENGO2.72   chr.
 *******************************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sndhrdw/seibu.h"
 #include "sound/3812intf.h"
 

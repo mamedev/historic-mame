@@ -9,7 +9,6 @@ Strength & Skill (c) 1984 Sun Electronics
 *****************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/sn76496.h"
 
 static UINT8 *strnskil_sharedram;

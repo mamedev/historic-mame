@@ -1,7 +1,6 @@
 /* Flower Video Hardware */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 static tilemap *flower_bg0_tilemap, *flower_bg1_tilemap, *flower_text_tilemap, *flower_text_right_tilemap;
 UINT8 *flower_textram, *flower_bg0ram, *flower_bg1ram, *flower_bg0_scroll, *flower_bg1_scroll;

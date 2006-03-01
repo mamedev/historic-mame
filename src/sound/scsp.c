@@ -24,6 +24,7 @@
 #include <math.h>
 #include <string.h>
 #include "driver.h"
+#include "streams.h"
 #include "cpuintrf.h"
 #include "scsp.h"
 
@@ -1171,7 +1172,7 @@ READ16_HANDLER( SCSP_MidiOutR )
  * Generic get_info
  **************************************************************************/
 
-static void scsp_set_info(void *token, UINT32 state, union sndinfo *info)
+static void scsp_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -1180,7 +1181,7 @@ static void scsp_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void scsp_get_info(void *token, UINT32 state, union sndinfo *info)
+void scsp_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

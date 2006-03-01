@@ -12,7 +12,6 @@ drivers by Acho A. Tang
 // Directives
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 #define BMPAD 8
 #define BMW_l2 9

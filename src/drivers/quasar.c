@@ -59,7 +59,6 @@ Sound Board 1b11107
 
 #include "driver.h"
 #include "cpu/s2650/s2650.h"
-#include "vidhrdw/generic.h"
 #include "cpu/i8039/i8039.h"
 #include "sound/dac.h"
 

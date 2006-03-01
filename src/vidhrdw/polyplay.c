@@ -10,7 +10,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 unsigned char *polyplay_characterram;
 static unsigned char dirtycharacter[256];

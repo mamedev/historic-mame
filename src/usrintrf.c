@@ -13,12 +13,14 @@ To do:
 
 *********************************************************************/
 
+#include "osdepend.h"
 #include "driver.h"
 #include "info.h"
 #include "vidhrdw/vector.h"
 #include "ui_text.h"
 #include "profiler.h"
 #include "cheat.h"
+#include <ctype.h>
 #include <stdarg.h>
 #include <math.h>
 
@@ -55,6 +57,13 @@ enum
 	ANALOG_ITEM_REVERSE,
 	ANALOG_ITEM_SENSITIVITY,
 	ANALOG_ITEM_COUNT
+};
+
+enum
+{
+	LOADSAVE_NONE,
+	LOADSAVE_LOAD,
+	LOADSAVE_SAVE
 };
 
 
@@ -315,7 +324,7 @@ static void draw_multiline_text_box(const char *text, int justify, float xpos, f
 static void create_font(void);
 static void onscrd_init(void);
 
-static int handle_keys(mame_bitmap *bitmap);
+static void handle_keys(mame_bitmap *bitmap);
 static void ui_display_profiler(void);
 static void ui_display_popup(void);
 static int setup_menu(int selected);
@@ -466,7 +475,7 @@ void ui_set_visible_area(int xmin, int ymin, int xmax, int ymax)
  *
  *************************************/
 
-int ui_update_and_render(mame_bitmap *bitmap)
+void ui_update_and_render(mame_bitmap *bitmap)
 {
 	/* if we're single-stepping, pause now */
 	if (single_step)
@@ -497,8 +506,7 @@ int ui_update_and_render(mame_bitmap *bitmap)
 	{
 		if (therm_state)
 			therm_state = on_screen_display(therm_state);
-		if (handle_keys(bitmap))
-			return 1;
+		handle_keys(bitmap);
 	}
 
 	/* then let the cheat engine display its stuff */
@@ -519,8 +527,6 @@ int ui_update_and_render(mame_bitmap *bitmap)
 	/* decrement the dirty count */
 	if (ui_dirty)
 		ui_dirty--;
-
-	return 0;
 }
 
 
@@ -1037,7 +1043,7 @@ void ui_menu_stack_reset(void)
 UINT32 ui_menu_stack_push(ui_menu_handler new_handler, UINT32 new_state)
 {
 	if (menu_stack_index >= MENU_STACK_DEPTH)
-		osd_die("Menu stack overflow!");
+		fatalerror("Menu stack overflow!");
 
 	/* save the old state/handler */
 	menu_stack_handler[menu_stack_index] = menu_handler;
@@ -1057,7 +1063,7 @@ UINT32 ui_menu_stack_push(ui_menu_handler new_handler, UINT32 new_state)
 UINT32 ui_menu_stack_pop(void)
 {
 	if (menu_stack_index <= 0)
-		osd_die("Menu stack underflow!");
+		fatalerror("Menu stack underflow!");
 
 	/* restore the old state/handler */
 	menu_stack_index--;
@@ -1218,7 +1224,7 @@ static void create_font(void)
 	/* decode rotated font */
 	uirotfont = allocgfx(&layout);
 	if (!uirotfont)
-		osd_die("Fatal error: could not allocate memory for UI font!");
+		fatalerror("Fatal error: could not allocate memory for UI font!");
 	decodegfx(uirotfont, uifontdata, 0, uirotfont->total_elements);
 
 	/* set the raw and rotated character width/height */
@@ -1242,18 +1248,18 @@ static void create_font(void)
  *
  *************************************/
 
-static int handle_keys(mame_bitmap *bitmap)
+static void handle_keys(mame_bitmap *bitmap)
 {
 #ifdef MESS
 	if (osd_trying_to_quit())
-		return 1;
+		mame_schedule_exit();
 	if (options.disable_normal_ui || ((Machine->gamedrv->flags & GAME_COMPUTER) && !mess_ui_active()))
-		return 0;
+		return;
 #endif
 
 	/* if the user pressed ESC, stop the emulation as long as menus aren't up */
 	if (menu_handler == NULL && input_ui_pressed(IPT_UI_CANCEL))
-		return 1;
+		mame_schedule_exit();
 
 	/* if menus aren't up and the user has toggled them, turn them on */
 	if (menu_handler == NULL && input_ui_pressed(IPT_UI_CONFIGURE))
@@ -1279,7 +1285,9 @@ static int handle_keys(mame_bitmap *bitmap)
 
 	/* handle a reset request */
 	if (input_ui_pressed(IPT_UI_RESET_MACHINE))
-		machine_reset();
+		mame_schedule_hard_reset();
+	if (input_ui_pressed(IPT_UI_SOFT_RESET))
+		mame_schedule_soft_reset();
 
 	/* handle a request to display graphics/palette (note that this loops internally) */
 	if (input_ui_pressed(IPT_UI_SHOW_GFX))
@@ -1332,8 +1340,6 @@ static int handle_keys(mame_bitmap *bitmap)
 	/* toggle crosshair display */
 	if (input_ui_pressed(IPT_UI_TOGGLE_CROSSHAIR))
 		drawgfx_toggle_crosshair();
-
-	return 0;
 }
 
 
@@ -2323,7 +2329,7 @@ static UINT32 menu_memory_card(UINT32 state)
 static UINT32 menu_reset_game(UINT32 state)
 {
 	/* request a reset */
-	machine_reset();
+	mame_schedule_soft_reset();
 
 	/* reset the menu stack */
 	ui_menu_stack_reset();
@@ -3054,7 +3060,8 @@ static void showcharset(mame_bitmap *bitmap)
 			save_screen_snapshot(bitmap);
 
 	} while (!input_ui_pressed(IPT_UI_SHOW_GFX) &&
-			!input_ui_pressed(IPT_UI_CANCEL));
+			!input_ui_pressed(IPT_UI_CANCEL) &&
+			!mame_is_scheduled_event_pending());
 
 	schedule_full_refresh();
 
@@ -3111,7 +3118,7 @@ int ui_display_copyright(mame_bitmap *bitmap)
 			done = 1;
 		if (done == 1 && (code_pressed_memory(KEYCODE_K) || input_ui_pressed(IPT_UI_RIGHT)))
 			done = 2;
-	} while (done < 2);
+	} while (done < 2 && !mame_is_scheduled_event_pending());
 
 	menu_state = 0;
 	erase_screen(bitmap);
@@ -3222,7 +3229,7 @@ int ui_display_game_warnings(mame_bitmap *bitmap)
 				done = 1;
 			if (done == 1 && (code_pressed_memory(KEYCODE_K) || input_ui_pressed(IPT_UI_RIGHT)))
 				done = 2;
-		} while (done < 2);
+		} while (done < 2 && !mame_is_scheduled_event_pending());
 	}
 
 	erase_screen(bitmap);
@@ -3240,7 +3247,7 @@ int ui_display_game_info(mame_bitmap *bitmap)
 	/* clear the input memory */
 	while (code_read_async() != CODE_NONE) ;
 
-	while (code_read_async() == CODE_NONE)
+	while (code_read_async() == CODE_NONE && !mame_is_scheduled_event_pending())
 	{
 		char *bufptr = buf;
 
@@ -3260,6 +3267,10 @@ int ui_display_game_info(mame_bitmap *bitmap)
 		/* render and update */
 		render_ui(bitmap);
 		update_video_and_audio();
+
+		/* allow cancelling */
+		if (input_ui_pressed(IPT_UI_CANCEL))
+			return 1;
 	}
 
 #ifdef MESS
@@ -3270,7 +3281,7 @@ int ui_display_game_info(mame_bitmap *bitmap)
 	update_video_and_audio();
 	update_video_and_audio();
 
-	while (code_read_async() == CODE_NONE)
+	while (code_read_async() == CODE_NONE && !mame_is_scheduled_event_pending())
 	{
 		char *bufptr = buf;
 
@@ -3287,6 +3298,10 @@ int ui_display_game_info(mame_bitmap *bitmap)
 		/* render and update */
 		render_ui(bitmap);
 		update_video_and_audio();
+
+		/* allow cancelling */
+		if (input_ui_pressed(IPT_UI_CANCEL))
+			return 1;
 	}
 #endif
 
@@ -3757,6 +3772,7 @@ static void initiate_load_save(int type)
 
 static int update_load_save(void)
 {
+	char filename[20];
 	input_code code;
 	char file = 0;
 
@@ -3801,11 +3817,17 @@ static int update_load_save(void)
 		return 1;
 
 	/* display a popup indicating that the save will proceed */
+	sprintf(filename, "%s-%c", Machine->gamedrv->name, file);
 	if (load_save_state == LOADSAVE_SAVE)
+	{
 		ui_popup("Save to position %c", file);
+		mame_schedule_save(filename);
+	}
 	else
+	{
 		ui_popup("Load from position %c", file);
-	cpu_loadsave_schedule(load_save_state, file);
+		mame_schedule_load(filename);
+	}
 
 	/* remove the pause and reset the state */
 	load_save_state = LOADSAVE_NONE;

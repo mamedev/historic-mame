@@ -51,7 +51,6 @@ struct _memory_entry
 {
 	UINT32			size;
 	void *			base;
-	void *			vbase;
 	int				id;
 	const char *	file;
 	int				line;
@@ -65,6 +64,7 @@ struct _memory_entry
 
 static memory_entry memory_list[MAX_ALLOCS];
 static int current_id;
+UINT8 track_mallocs = FALSE;
 
 
 //============================================================
@@ -78,7 +78,7 @@ INLINE memory_entry *allocate_entry(void)
 	// find an empty entry
 	for (i = 0; i < MAX_ALLOCS; i++)
 	{
-		if (memory_list[i].vbase == NULL)
+		if (memory_list[i].base == NULL)
 		{
 			memory_list[i].id = current_id++;
 			return &memory_list[i];
@@ -110,7 +110,6 @@ INLINE void free_entry(memory_entry *entry)
 {
 	entry->size = 0;
 	entry->base = NULL;
-	entry->vbase = NULL;
 	entry->file = NULL;
 	entry->line = 0;
 }
@@ -147,18 +146,21 @@ void* malloc_file_line(size_t size, const char *file, int line)
 	block_base = page_base + rounded_size - size;
 #endif
 
-	// fill in the entry
-	entry->size = size;
-	entry->base = block_base;
-	entry->vbase = page_base - PAGE_SIZE;
-	entry->file = file;
-	entry->line = line;
+	// fill in the entry, but only if we're tracking
+	if (track_mallocs)
+	{
+		entry->size = size;
+		entry->base = block_base;
+		entry->file = file;
+		entry->line = line;
 #if LOG_CALLS
-	if (entry->file)
-		logerror("malloc #%06d size = %d (%s:%d)\n",entry->id,entry->size,entry->file,entry->line);
-	else
-		logerror("malloc #%06d size = %d\n",entry->id,entry->size);
+		if (entry->file)
+			logerror("malloc #%06d size = %d (%s:%d)\n",entry->id,entry->size,entry->file,entry->line);
+		else
+			logerror("malloc #%06d size = %d\n",entry->id,entry->size);
 #endif
+	}
+
 	return block_base;
 }
 
@@ -227,25 +229,27 @@ void * CLIB_DECL realloc(void *memory, size_t size)
 
 void CLIB_DECL free(void *memory)
 {
-	memory_entry *entry = find_entry(memory);
-
 	// allow NULL frees
 	if (memory == NULL)
 		return;
 
 	// error if no entry found
-	if (entry == NULL)
+	if (track_mallocs)
 	{
-		fprintf(stderr, "Error: free a non-existant block\n");
-		return;
+		memory_entry *entry = find_entry(memory);
+		if (entry == NULL)
+		{
+			fprintf(stderr, "Error: free a non-existant block\n");
+			return;
+		}
+		free_entry(entry);
 	}
 
 	// free the memory
-	VirtualFree(entry->vbase, 0, MEM_RELEASE);
+	VirtualFree((UINT8 *)memory - ((UINT32)memory & (PAGE_SIZE-1)) - PAGE_SIZE, 0, MEM_RELEASE);
 #if LOG_CALLS
 	logerror("free #%06d size = %d\n",entry->id,entry->size);
 #endif
-	free_entry(entry);
 }
 
 size_t CLIB_DECL _msize(void *memory)

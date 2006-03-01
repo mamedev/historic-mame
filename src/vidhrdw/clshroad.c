@@ -31,7 +31,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 /* Variables only used here: */
 

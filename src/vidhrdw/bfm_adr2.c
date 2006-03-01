@@ -112,7 +112,6 @@ int adder2_show_alpha_display;	  // flag, set if alpha display need to be displa
 
 
 
-static int adder2_selected_rom_bank;	  //
 static int adder2_screen_page_reg;		  // access/display select
 static int adder2_c101;
 static int adder2_rx;
@@ -124,12 +123,6 @@ static UINT8 adder_screen_ram[2][0x1180];	// paged  display RAM
 
 static tilemap *tilemap0;  // tilemap screen0
 static tilemap *tilemap1;  // timemap screen1
-
-static int adder2_rompages[] =
-{
-	0x00000,0x08000,0x10000,0x18000,
-};
-
 
 ///////////////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////
@@ -269,7 +262,6 @@ PALETTE_INIT( adder2 )
 
 static void on_adder2_reset(void)
 {
-	adder2_selected_rom_bank = 0;
 	adder2_screen_page_reg   = 0;
 	adder2_c101              = 0;
 	adder2_rx                = 0;
@@ -281,9 +273,9 @@ static void on_adder2_reset(void)
 	{
 		UINT8 *rom = memory_region(REGION_CPU2);
 
-		adder2_selected_rom_bank = 0;
+		memory_configure_bank(2, 0, 4, &rom[0x00000], 0x8000);
 
-		memory_set_bankptr(2,&rom[ adder2_rompages[ adder2_selected_rom_bank & 0x03]  ]);
+		memory_set_bank(2,0);
 	}
 }
 
@@ -368,14 +360,9 @@ static WRITE8_HANDLER( normal_ram_w )
 
 ///////////////////////////////////////////////////////////////////////////
 
-
 static WRITE8_HANDLER( adder2_rom_page_w )
 {
-	UINT8 *rom = memory_region(REGION_CPU2);
-
-	adder2_selected_rom_bank = data;
-
-	memory_set_bankptr(2,&rom[ adder2_rompages[ adder2_selected_rom_bank & 0x03]  ]);
+	memory_set_bank(2,data & 0x03);
 }
 
 ///////////////////////////////////////////////////////////////////////////

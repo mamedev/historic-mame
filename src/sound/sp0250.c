@@ -18,6 +18,7 @@
 
 #include <math.h>
 #include "driver.h"
+#include "streams.h"
 #include "cpuintrf.h"
 #include "sp0250.h"
 
@@ -224,7 +225,7 @@ WRITE8_HANDLER( sp0250_w )
  * Generic get_info
  **************************************************************************/
 
-static void sp0250_set_info(void *token, UINT32 state, union sndinfo *info)
+static void sp0250_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -233,7 +234,7 @@ static void sp0250_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void sp0250_get_info(void *token, UINT32 state, union sndinfo *info)
+void sp0250_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

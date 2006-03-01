@@ -6,7 +6,6 @@
 ****************************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 UINT8 *compgolf_bg_ram;
 static tilemap *text_tilemap, *background_tilemap;

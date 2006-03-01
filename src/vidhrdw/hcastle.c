@@ -6,7 +6,6 @@
 
 #include "driver.h"
 #include "vidhrdw/konamiic.h"
-#include "vidhrdw/generic.h"
 
 UINT8 *hcastle_pf1_videoram,*hcastle_pf2_videoram;
 static int gfx_bank;

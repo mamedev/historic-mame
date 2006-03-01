@@ -14,6 +14,7 @@
 #include <tchar.h>
 
 // MAME headers
+#include "osdepend.h"
 #include "driver.h"
 #include "unzip.h"
 #include "rc.h"
@@ -118,6 +119,7 @@ struct rc_option fileio_opts[] =
 	{ "snapshot_directory", NULL, rc_string, &pathlist[FILETYPE_SCREENSHOT].rawpath, "snap", 0, 0, NULL, "directory for screenshots (.png format)" },
 	{ "diff_directory", NULL, rc_string, &pathlist[FILETYPE_IMAGE_DIFF].rawpath, "diff", 0, 0, NULL, "directory for hard drive image difference files" },
 	{ "ctrlr_directory", NULL, rc_string, &pathlist[FILETYPE_CTRLR].rawpath, "ctrlr", 0, 0, NULL, "directory to save controller definitions" },
+	{ "comment_directory", NULL, rc_string, &pathlist[FILETYPE_COMMENT].rawpath, "comment", 0, 0, NULL, "directory to save comment files" },
 	{ "cheat_file", NULL, rc_string, &cheatfile, "cheat.dat", 0, 0, NULL, "cheat filename" },
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
@@ -240,8 +242,7 @@ static char *copy_and_expand_variables(const char *path, int len)
 
 	/* allocate a string of the appropriate length */
 	result = malloc(length + 1);
-	if (!result)
-		goto out_of_memory;
+	assert_always(result != NULL, "Out of memory in variable expansion!");
 
 	/* now actually generate the string */
 	for (src = path, dst = result; src < path + len; )
@@ -256,9 +257,6 @@ static char *copy_and_expand_variables(const char *path, int len)
 	/* NULL terminate and return */
 	*dst = 0;
 	return result;
-
-out_of_memory:
-	osd_die("Out of memory in variable expansion!\n");
 }
 
 
@@ -300,8 +298,7 @@ static void expand_pathlist(pathdata *list)
 	{
 		// allocate space for the new pointer
 		list->path = realloc((void *)list->path, (list->pathcount + 1) * sizeof(char *));
-		if (!list->path)
-			goto out_of_memory;
+		assert_always(list->path != NULL, "Out of memory!");
 
 		// copy the path in
 		list->path[list->pathcount++] = copy_and_expand_variables(rawpath, token - rawpath);
@@ -324,10 +321,6 @@ static void expand_pathlist(pathdata *list)
 	// cause us to get called again
 	free((void *)list->rawpath);
 	list->rawpath = NULL;
-	return;
-
-out_of_memory:
-	osd_die("Out of memory!\n");
 }
 
 

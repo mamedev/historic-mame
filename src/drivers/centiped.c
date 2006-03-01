@@ -275,7 +275,6 @@
 
 #include "driver.h"
 #include "cpu/s2650/s2650.h"
-#include "vidhrdw/generic.h"
 #include "machine/atari_vg.h"
 #include "centiped.h"
 #include "machine/random.h"

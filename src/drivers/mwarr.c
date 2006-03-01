@@ -42,7 +42,7 @@ Notes:
 #include "sound/okim6295.h"
 
 static tilemap *bg_tilemap, *mlow_tilemap, *mhigh_tilemap, *tx_tilemap;
-static UINT16 *bg_videoram, *mlow_videoram, *mhigh_videoram, *tx_videoram, *spriteram, *sprites_buffer;
+static UINT16 *bg_videoram, *mlow_videoram, *mhigh_videoram, *tx_videoram, *sprites_buffer;
 static UINT16 *bg_scrollram, *mlow_scrollram, *mhigh_scrollram, *vidattrram;
 static UINT16 *mwarr_ram;
 
@@ -108,7 +108,7 @@ static WRITE16_HANDLER( sprites_commands_w )
 			/* refresh sprites on screen */
 			for( i = 0; i < 0x800; i++)
 			{
-				sprites_buffer[i] = spriteram[i];
+				sprites_buffer[i] = spriteram16[i];
 			}
 			break;
 
@@ -147,7 +147,7 @@ static ADDRESS_MAP_START( mwarr_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x103800, 0x103bff) AM_RAM AM_BASE(&mhigh_scrollram)
 	AM_RANGE(0x103c00, 0x103fff) AM_RAM AM_BASE(&vidattrram)
 	AM_RANGE(0x104000, 0x104fff) AM_RAM AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
-	AM_RANGE(0x108000, 0x108fff) AM_RAM AM_BASE(&spriteram)
+	AM_RANGE(0x108000, 0x108fff) AM_RAM AM_BASE(&spriteram16)
 	AM_RANGE(0x110000, 0x110001) AM_READ(input_port_0_word_r)
 	AM_RANGE(0x110002, 0x110003) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x110004, 0x110005) AM_READ(input_port_2_word_r)

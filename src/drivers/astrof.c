@@ -42,7 +42,6 @@ Also....
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "machine/random.h"
 #include "sound/samples.h"
 

@@ -18,7 +18,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "subs.h"
 #include "sound/discrete.h"
 

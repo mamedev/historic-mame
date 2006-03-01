@@ -61,7 +61,6 @@ This was pointed out by Bart Puype
 *****/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sound/2610intf.h"
 #include "sound/ymf278b.h"
 

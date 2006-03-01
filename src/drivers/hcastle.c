@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/konami/konami.h"
 #include "cpu/z80/z80.h"
 #include "sound/3812intf.h"

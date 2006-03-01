@@ -1912,7 +1912,7 @@ WRITE16_HANDLER( K055550_word_w )
 				// be tied with another 13x128-byte table at 0x205080.
 				// Both tables appear "check-only" and have little effect on gameplay.
 				count =(prot_data[0] & 0xff) + 1;          // unknown ( byte 0x00)
-				i     = prot_data[1] >> 16;                // unknown ( byte 0x1f)
+				i     = prot_data[1];                      // unknown ( byte 0x1f)
 				adr   = prot_data[7]<<16 | prot_data[8];   // address (dword 0x210e00)
 				lim   = prot_data[9];                      // unknown ( word 0x0010)
 				src   = prot_data[10]<<16 | prot_data[11]; // unknown (dword zero)

@@ -7,10 +7,9 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
-static int gfxbank, palettebank;
-extern int arkanoid_paddle_select;
+static UINT8 gfxbank, palettebank;
+extern UINT8 arkanoid_paddle_select;
 
 static tilemap *bg_tilemap;
 
@@ -79,6 +78,9 @@ VIDEO_START( arkanoid )
 {
 	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
 		TILEMAP_OPAQUE, 8, 8, 32, 32);
+
+	state_save_register_global(gfxbank);
+	state_save_register_global(palettebank);
 
 	if ( !bg_tilemap )
 		return 1;

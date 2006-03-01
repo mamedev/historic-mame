@@ -56,7 +56,6 @@ and 1 SFX channel controlled by an 8039:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/i8039/i8039.h"
 #include "sound/ay8910.h"
 #include "sound/dac.h"

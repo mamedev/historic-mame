@@ -16,6 +16,7 @@
 #include <math.h>
 
 // MAME headers
+#include "osdepend.h"
 #include "driver.h"
 #include "vidhrdw/vector.h"
 #include "blit.h"
@@ -40,7 +41,6 @@
 // from input.c
 extern void win_poll_input(void);
 extern void win_pause_input(int pause);
-extern UINT8 win_trying_to_quit;
 extern int verbose;
 
 // from sound.c
@@ -960,7 +960,7 @@ static void render_frame(mame_bitmap *bitmap, const rectangle *bounds, void *vec
 				save_screen_snapshot_as(fp, artwork_get_ui_bitmap());
 				mame_fclose(fp);
 			}
-			win_trying_to_quit = 1;
+			mame_schedule_exit();
 		}
 		end_time = curr;
 	}
@@ -1145,10 +1145,10 @@ mame_bitmap *osd_override_snapshot(mame_bitmap *bitmap, rectangle *bounds)
 
 
 //============================================================
-//  osd_pause
+//  win_pause
 //============================================================
 
-void osd_pause(int paused)
+void win_pause(int paused)
 {
 	// note that we were paused during this autoframeskip cycle
 	game_is_paused = paused;

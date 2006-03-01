@@ -14,6 +14,8 @@
 #ifndef __TILEMAP_H__
 #define __TILEMAP_H__
 
+#include "mamecore.h"
+
 typedef struct _tilemap tilemap;
 
 #define ALL_TILEMAPS	0

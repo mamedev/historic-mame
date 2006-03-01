@@ -28,7 +28,6 @@ TODO:
 ****************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "sndhrdw/taitosnd.h"
 #include "sound/2151intf.h"
 

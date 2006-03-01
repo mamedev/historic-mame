@@ -29,6 +29,7 @@ extern int dump_flag;
 
 #include <math.h>
 #include "driver.h"
+#include "streams.h"
 #include "includes/snes.h"
 
 static struct

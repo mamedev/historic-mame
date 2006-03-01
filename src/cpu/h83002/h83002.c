@@ -577,7 +577,7 @@ static int h8_execute(int cycles)
 
 	if (h8.h8err)
 	{
-		osd_die("H8/3002: Unknown opcode (PC=%x)\n", h8.ppc);
+		fatalerror("H8/3002: Unknown opcode (PC=%x)", h8.ppc);
 
 	}
 
@@ -3428,7 +3428,7 @@ static void h8_set_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_INT_INPUT_STATE + H8_IRQ5: if (info->i) h8_3002_InterruptRequest(17);      break;
 
 	default:
-		osd_die("h8_set_info unknown request %x\n", state);
+		fatalerror("h8_set_info unknown request %x", state);
 	}
 }
 

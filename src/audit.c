@@ -10,6 +10,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "hash.h"
 #include <stdarg.h>
 #include <string.h>
 #include "audit.h"

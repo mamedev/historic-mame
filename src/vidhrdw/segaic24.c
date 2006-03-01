@@ -23,9 +23,7 @@ System 24      68000x2  315-5292   315-5293  315-5294  315-5242        ym2151 da
 */
 
 #include "driver.h"
-#include "generic.h"
 #include "drawgfx.h"
-#include "osdepend.h"
 #include "segaic24.h"
 
 #include <math.h>

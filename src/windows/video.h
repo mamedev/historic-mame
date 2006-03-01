@@ -48,6 +48,7 @@ extern UINT8		blit_swapxy;
 //  PROTOTYPES
 //============================================================
 
+void win_pause(int pause);
 void win_orient_rect(rectangle *rect);
 void win_disorient_rect(rectangle *rect);
 

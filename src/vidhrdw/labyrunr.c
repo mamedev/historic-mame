@@ -1,6 +1,5 @@
 #include "driver.h"
 #include "vidhrdw/konamiic.h"
-#include "vidhrdw/generic.h"
 
 unsigned char *labyrunr_videoram1,*labyrunr_videoram2,*labyrunr_scrollram;
 static tilemap *layer0, *layer1;

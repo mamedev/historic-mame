@@ -8,7 +8,6 @@ Driver by Manuel Abadia <manu@teleline.es>
 
 #include "driver.h"
 #include "cpu/m6809/m6809.h"
-#include "vidhrdw/generic.h"
 #include "sound/2203intf.h"
 #include "sound/vlm5030.h"
 #include "sound/flt_rc.h"

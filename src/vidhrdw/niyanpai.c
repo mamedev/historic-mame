@@ -7,7 +7,6 @@
 ******************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 
 #define	VRAM_MAX	3

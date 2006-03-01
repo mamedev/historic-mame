@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "streams.h"
 #include "samples.h"
 
 
@@ -464,7 +465,7 @@ static void *samples_start(int sndindex, int clock, const void *config)
 
 	info = auto_malloc(sizeof(*info));
 	memset(info, 0, sizeof(*info));
-	sound_register_token(info);
+	sndintrf_register_token(info);
 
 	/* read audio samples */
 	if (intf->samplenames)
@@ -507,7 +508,7 @@ static void *samples_start(int sndindex, int clock, const void *config)
  * Generic get_info
  **************************************************************************/
 
-static void samples_set_info(void *token, UINT32 state, union sndinfo *info)
+static void samples_set_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{
@@ -516,7 +517,7 @@ static void samples_set_info(void *token, UINT32 state, union sndinfo *info)
 }
 
 
-void samples_get_info(void *token, UINT32 state, union sndinfo *info)
+void samples_get_info(void *token, UINT32 state, sndinfo *info)
 {
 	switch (state)
 	{

@@ -31,7 +31,6 @@
 #include "driver.h"
 #include "cpu/i8039/i8039.h"
 #include "machine/74123.h"
-#include "vidhrdw/generic.h"
 #include "8080bw.h"
 #include "sound/samples.h"
 #include "sound/sn76477.h"

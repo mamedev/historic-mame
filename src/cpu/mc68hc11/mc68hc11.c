@@ -7,7 +7,6 @@
 #include "driver.h"
 #include "cpuintrf.h"
 #include "debugger.h"
-#include "osd_cpu.h"
 #include "mc68hc11.h"
 
 enum {
@@ -119,7 +118,7 @@ static UINT8 hc11_regs_r(UINT32 address)
 			return 0;
 	}
 
-	osd_die("HC11: regs_r %02X\n", reg);
+	fatalerror("HC11: regs_r %02X", reg);
 	return 0; // Dummy
 }
 
@@ -206,7 +205,7 @@ static void hc11_regs_w(UINT32 address, UINT8 value)
 			return;
 
 	}
-	osd_die("HC11: regs_w %02X, %02X\n", reg, value);
+	fatalerror("HC11: regs_w %02X, %02X", reg, value);
 }
 
 /*****************************************************************************/

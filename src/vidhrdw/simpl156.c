@@ -3,7 +3,6 @@
 */
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "deco16ic.h"
 
 /*

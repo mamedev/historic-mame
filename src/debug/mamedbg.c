@@ -27,9 +27,9 @@
 #include <stdarg.h>
 #include <ctype.h>
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "mamedbg.h"
 #include "debugger.h"
+#include "eainfo.h"
 #include "window.h"
 
 

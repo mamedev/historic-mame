@@ -770,6 +770,7 @@ Notes:
       Ghoul Panic (OB2/VER.A)
  */
 
+#include <stdarg.h>
 #include "driver.h"
 #include "cpu/mips/psx.h"
 #include "cpu/h83002/h83002.h"

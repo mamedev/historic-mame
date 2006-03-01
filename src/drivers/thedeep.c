@@ -25,7 +25,6 @@ Notes:
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "thedeep.h"
 #include "sound/2203intf.h"
 

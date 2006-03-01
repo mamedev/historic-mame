@@ -3,7 +3,6 @@
 // layer priority register not fully understood
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 
 extern UINT16 *drgnmst_vidregs;
 

@@ -176,7 +176,6 @@ TODO:
 *******************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "cpu/m6800/m6800.h"
 #include "sound/2151intf.h"
 #include "sound/namco.h"

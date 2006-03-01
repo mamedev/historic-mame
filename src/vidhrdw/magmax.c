@@ -8,7 +8,6 @@ Additional tweaking by Jarek Burczynski
 ***************************************************************************/
 
 #include "driver.h"
-#include "generic.h"
 
 UINT16 *magmax_scroll_x;
 UINT16 *magmax_scroll_y;

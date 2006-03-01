@@ -10,7 +10,6 @@ Loosely based on the Kung Fu Master driver.
 
 #include "driver.h"
 #include "sndhrdw/irem.h"
-#include "vidhrdw/generic.h"
 
 extern UINT8 *yard_scroll_x_low;
 extern UINT8 *yard_scroll_x_high;

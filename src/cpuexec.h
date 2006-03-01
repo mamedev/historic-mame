@@ -14,7 +14,6 @@
 #ifndef __CPUEXEC_H__
 #define __CPUEXEC_H__
 
-#include "osd_cpu.h"
 #include "memory.h"
 #include "timer.h"
 
@@ -68,39 +67,8 @@ enum
 /* Prepare CPUs for execution */
 int cpu_init(void);
 
-/* Run CPUs until the user quits */
-void cpu_run(void);
-
-/* Clean up after quitting */
-void cpu_exit(void);
-
-/* Pause/resume all the CPUs */
-void cpu_pause(int pause);
-
-/* Force a reset after the current timeslice */
-void machine_reset(void);
-
-
-
-/*************************************
- *
- *  Save/restore
- *
- *************************************/
-
-/* Load or save the game state */
-enum
-{
-	LOADSAVE_NONE,
-	LOADSAVE_SAVE,
-	LOADSAVE_SAVE_AND_EXIT,
-	LOADSAVE_LOAD,
-	LOADSAVE_LOAD_POSTRESET
-};
-void cpu_loadsave_schedule(int type, char id);
-void cpu_loadsave_schedule_file(int type, const char *name);
-void cpu_loadsave_reset(void);
-void cpu_loadsave_warn(const char *msg);
+/* Execute for a single timeslice */
+void cpu_timeslice(void);
 
 
 
