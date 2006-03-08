@@ -4,7 +4,7 @@
    Written by Ville Linde for use in MAME
 */
 
-#include "driver.h"
+#include "cpuintrf.h"
 #include "sharcdsm.h"
 #include <stdarg.h>
 

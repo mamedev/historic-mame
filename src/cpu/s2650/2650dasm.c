@@ -7,7 +7,6 @@
  *
  **************************************************************************/
 
-#include <stdio.h>
 #include "memory.h"
 
 /* Set this to 1 to disassemble using Z80 style mnemonics */

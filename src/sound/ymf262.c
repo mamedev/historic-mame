@@ -39,11 +39,9 @@ differences between OPL2 and OPL3 shown in datasheets:
 
 */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <math.h>
 
-#include "driver.h"		/* use M.A.M.E. */
+#include "sndintrf.h"		/* use M.A.M.E. */
 #include "ymf262.h"
 
 

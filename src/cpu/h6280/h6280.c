@@ -87,14 +87,8 @@
         Added emulation of the T flag, fixes PCE Ankuku Densetsu title screen
 
 ******************************************************************************/
-#include "memory.h"
-#include "cpuintrf.h"
 #include "debugger.h"
-#include "state.h"
 #include "h6280.h"
-
-#include <stdio.h>
-#include <string.h>
 
 extern FILE * errorlog;
 
@@ -166,43 +160,46 @@ static void set_irq_line(int irqline, int state);
 #include "tblh6280.c"
 
 /*****************************************************************************/
-static void h6280_init(void)
+static void h6280_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
-   int cpu = cpu_getactivecpu();
+	state_save_register_item("h6280", index, h6280.ppc.w.l);
+	state_save_register_item("h6280", index, h6280.pc.w.l);
+	state_save_register_item("h6280", index, h6280.sp.w.l);
+	state_save_register_item("h6280", index, h6280.zp.w.l);
+	state_save_register_item("h6280", index, h6280.ea.w.l);
+	state_save_register_item("h6280", index, h6280.a);
+	state_save_register_item("h6280", index, h6280.x);
+	state_save_register_item("h6280", index, h6280.y);
+	state_save_register_item("h6280", index, h6280.p);
+	state_save_register_item_array("h6280", index, h6280.mmr);
+	state_save_register_item("h6280", index, h6280.irq_mask);
+	state_save_register_item("h6280", index, h6280.timer_status);
+	state_save_register_item("h6280", index, h6280.timer_ack);
+	state_save_register_item("h6280", index, h6280.timer_value);
+	state_save_register_item("h6280", index, h6280.timer_load);
+	state_save_register_item("h6280", index, h6280.extra_cycles);
+	state_save_register_item("h6280", index, h6280.nmi_state);
+	state_save_register_item("h6280", index, h6280.irq_state[0]);
+	state_save_register_item("h6280", index, h6280.irq_state[1]);
+	state_save_register_item("h6280", index, h6280.irq_state[2]);
 
-   state_save_register_item("h6280", cpu, h6280.ppc.w.l);
-   state_save_register_item("h6280", cpu, h6280.pc.w.l);
-   state_save_register_item("h6280", cpu, h6280.sp.w.l);
-   state_save_register_item("h6280", cpu, h6280.zp.w.l);
-   state_save_register_item("h6280", cpu, h6280.ea.w.l);
-   state_save_register_item("h6280", cpu, h6280.a);
-   state_save_register_item("h6280", cpu, h6280.x);
-   state_save_register_item("h6280", cpu, h6280.y);
-   state_save_register_item("h6280", cpu, h6280.p);
-   state_save_register_item_array("h6280", cpu, h6280.mmr);
-   state_save_register_item("h6280", cpu, h6280.irq_mask);
-   state_save_register_item("h6280", cpu, h6280.timer_status);
-   state_save_register_item("h6280", cpu, h6280.timer_ack);
-   state_save_register_item("h6280", cpu, h6280.timer_value);
-   state_save_register_item("h6280", cpu, h6280.timer_load);
-   state_save_register_item("h6280", cpu, h6280.extra_cycles);
-   state_save_register_item("h6280", cpu, h6280.nmi_state);
-   state_save_register_item("h6280", cpu, h6280.irq_state[0]);
-   state_save_register_item("h6280", cpu, h6280.irq_state[1]);
-   state_save_register_item("h6280", cpu, h6280.irq_state[2]);
+	#if LAZY_FLAGS
+	state_save_register_item("h6280", index, h6280.NZ);
+	#endif
+	state_save_register_item("h6280", index, h6280.io_buffer);
 
-#if LAZY_FLAGS
-   state_save_register_item("h6280", cpu, h6280.NZ);
-#endif
-   state_save_register_item("h6280", cpu, h6280.io_buffer);
+	h6280.irq_callback = irqcallback;
 }
 
-static void h6280_reset(void *param)
+static void h6280_reset(void)
 {
+	int (*save_irqcallback)(int);
 	int i;
 
 	/* wipe out the h6280 structure */
+	save_irqcallback = h6280.irq_callback;
 	memset(&h6280, 0, sizeof(h6280_Regs));
+	h6280.irq_callback = save_irqcallback;
 
 	/* set I and B flags */
 	P = _fI | _fB;
@@ -463,8 +460,6 @@ static void h6280_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + H6280_M7:		h6280.mmr[6] = info->i;						break;
 		case CPUINFO_INT_REGISTER + H6280_M8:		h6280.mmr[7] = info->i;						break;
 #endif
-		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_IRQ_CALLBACK:				h6280.irq_callback = info->irqcallback;		break;
 	}
 }
 
@@ -542,7 +537,6 @@ void h6280_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = h6280_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = h6280_dasm;			break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = h6280.irq_callback;	break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &h6280_ICount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = reg_layout;					break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = win_layout;					break;

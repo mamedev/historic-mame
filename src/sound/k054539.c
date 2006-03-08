@@ -20,7 +20,7 @@ CHANNEL_DEBUG enables the following keys:
 
 *********************************************************/
 
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
 #include "k054539.h"
 #include <math.h>

@@ -21,7 +21,6 @@
 
 #include "driver.h"
 #include "cpu/i8051/i8051.h"
-#include "machine/random.h"
 
 static tilemap *bgtilemap  = NULL;
 static tilemap *fgtilemap  = NULL;

@@ -21,9 +21,9 @@
 
 #define DRIVER_INIT(name)		void init_##name(void)
 
-#define INTERRUPT_GEN(func)		void func(void)
-
 #define NVRAM_HANDLER(name)		void nvram_handler_##name(mame_file *file, int read_or_write)
+
+#define MEMCARD_HANDLER(name)	void memcard_handler_##name(mame_file *file, int action)
 
 #define MACHINE_START(name)		int machine_start_##name(void)
 #define MACHINE_RESET(name)		void machine_reset_##name(void)
@@ -41,6 +41,7 @@
 /* NULL versions */
 #define init_NULL				NULL
 #define nvram_handler_NULL 		NULL
+#define memcard_handler_NULL	NULL
 #define machine_start_NULL 		NULL
 #define machine_reset_NULL 		NULL
 #define sound_start_NULL 		NULL
@@ -65,8 +66,6 @@
 #include "video.h"
 #include "palette.h"
 #include "cpuintrf.h"
-#include "cpuexec.h"
-#include "cpuint.h"
 #include "sndintrf.h"
 #include "sound.h"
 #include "input.h"
@@ -74,6 +73,7 @@
 #include "usrintrf.h"
 #include "tilemap.h"
 #include "state.h"
+#include "romload.h"
 #include "machine/generic.h"
 #include "sndhrdw/generic.h"
 #include "vidhrdw/generic.h"
@@ -88,15 +88,176 @@
     CONSTANTS
 ***************************************************************************/
 
-#define MAX_CPU 8		/* MAX_CPU is the maximum number of CPUs which cpuintrf.c */
-						/* can run at the same time. Currently, 8 is enough. */
+/* maxima */
+#define MAX_CPU			8
+#define MAX_SOUND		32
+#define MAX_SPEAKER 	4
 
-#define MAX_SOUND 32	/* MAX_SOUND is the maximum number of sound subsystems */
-						/* which can run at the same time. Currently, 32 is enough. */
+/* watchdog constants */
+#define DEFAULT_60HZ_3S_VBLANK_WATCHDOG	180
+#define DEFAULT_30HZ_3S_VBLANK_WATCHDOG	90
 
-#define MAX_SPEAKER 4	/* MAX_SPEAKER is the maximum number of speakers */
 
 
+/* ----- VBLANK constants ----- */
+
+/*
+    VBLANK is the period when the video beam is outside of the visible area
+    and returns from the bottom-right to the top-left of the screen to
+    prepare for a new video frame. The duration of VBLANK is an important
+    factor in how the game renders itself. In many cases, the game does
+    video-related operations during this time, such as swapping buffers or
+    updating sprite lists.
+
+    Below are some predefined, TOTALLY ARBITRARY values for vblank_duration,
+    which should be OK for most cases. I have NO IDEA how accurate they are
+    compared to the real hardware, they could be completely wrong.
+*/
+
+/* The default is to have no VBLANK timing -- this is historical, and a bad idea */
+#define DEFAULT_60HZ_VBLANK_DURATION		0
+#define DEFAULT_30HZ_VBLANK_DURATION		0
+
+/* If you use IPT_VBLANK, you need a duration different from 0 */
+#define DEFAULT_REAL_60HZ_VBLANK_DURATION	2500
+#define DEFAULT_REAL_30HZ_VBLANK_DURATION	2500
+
+
+
+/* ----- flags for video_attributes ----- */
+
+/* is the video hardware raser or vector base? */
+#define	VIDEO_TYPE_RASTER				0x0000
+#define	VIDEO_TYPE_VECTOR				0x0001
+
+/* should VIDEO_UPDATE by called at the start of VBLANK or at the end? */
+#define	VIDEO_UPDATE_BEFORE_VBLANK		0x0000
+#define	VIDEO_UPDATE_AFTER_VBLANK		0x0002
+
+/* set this to use a direct RGB bitmap rather than a palettized bitmap */
+#define VIDEO_RGB_DIRECT	 			0x0004
+
+/* set this if the color resolution of *any* component is 6 bits or more */
+#define VIDEO_NEEDS_6BITS_PER_GUN		0x0008
+
+/* automatically extend the palette creating a darker copy for shadows */
+#define VIDEO_HAS_SHADOWS				0x0010
+
+/* automatically extend the palette creating a brighter copy for highlights */
+#define VIDEO_HAS_HIGHLIGHTS			0x0020
+
+/* Mish 181099:  See comments in vidhrdw/generic.c for details */
+#define VIDEO_BUFFERS_SPRITERAM			0x0040
+
+/* In most cases we assume pixels are square (1:1 aspect ratio) but some games need */
+/* different proportions, e.g. 1:2 for Blasteroids */
+#define VIDEO_PIXEL_ASPECT_RATIO_MASK	0x0300
+#define VIDEO_PIXEL_ASPECT_RATIO_1_1	0x0000
+#define VIDEO_PIXEL_ASPECT_RATIO_1_2	0x0100
+#define VIDEO_PIXEL_ASPECT_RATIO_2_1	0x0200
+
+
+
+/* ----- flags for game drivers ----- */
+
+#define ORIENTATION_MASK        		0x0007
+#define	ORIENTATION_FLIP_X				0x0001	/* mirror everything in the X direction */
+#define	ORIENTATION_FLIP_Y				0x0002	/* mirror everything in the Y direction */
+#define ORIENTATION_SWAP_XY				0x0004	/* mirror along the top-left/bottom-right diagonal */
+
+#define	ROT0							0
+#define	ROT90							(ORIENTATION_SWAP_XY | ORIENTATION_FLIP_X)	/* rotate clockwise 90 degrees */
+#define	ROT180							(ORIENTATION_FLIP_X | ORIENTATION_FLIP_Y)	/* rotate 180 degrees */
+#define	ROT270							(ORIENTATION_SWAP_XY | ORIENTATION_FLIP_Y)	/* rotate counter-clockwise 90 degrees */
+
+#define GAME_NOT_WORKING				0x0008
+#define GAME_UNEMULATED_PROTECTION		0x0010	/* game's protection not fully emulated */
+#define GAME_WRONG_COLORS				0x0020	/* colors are totally wrong */
+#define GAME_IMPERFECT_COLORS			0x0040	/* colors are not 100% accurate, but close */
+#define GAME_IMPERFECT_GRAPHICS			0x0080	/* graphics are wrong/incomplete */
+#define GAME_NO_COCKTAIL				0x0100	/* screen flip support is missing */
+#define GAME_NO_SOUND					0x0200	/* sound is missing */
+#define GAME_IMPERFECT_SOUND			0x0400	/* sound is known to be wrong */
+#define GAME_SUPPORTS_SAVE				0x0800	/* game supports save states */
+#define NOT_A_DRIVER					0x4000	/* set by the fake "root" driver_0 and by "containers" */
+
+#ifdef MESS
+#define GAME_COMPUTER               	0x8000  /* Driver is a computer (needs full keyboard) */
+#define GAME_COMPUTER_MODIFIED      	0x0800	/* Official? Hack */
+#endif
+
+
+
+/***************************************************************************
+    TYPE DEFINITIONS
+***************************************************************************/
+
+/* In mamecore.h: typedef struct _machine_config machine_config; */
+struct _machine_config
+{
+	cpu_config			cpu[MAX_CPU];				/* array of CPUs in the system */
+	float				frames_per_second;			/* number of frames per second */
+	int					vblank_duration;			/* duration of a VBLANK, in msec/usec */
+	UINT32				cpu_slices_per_frame;		/* number of times to interleave execution per frame */
+	INT32				watchdog_vblank_count;		/* number of VBLANKs until the watchdog kills us */
+	double				watchdog_time;				/* length of time until the watchdog kills us */
+
+	int 				(*machine_start)(void);		/* one-time machine start callback */
+	void 				(*machine_reset)(void);		/* machine reset callback */
+
+	void 				(*nvram_handler)(mame_file *file, int read_or_write); /* NVRAM save/load callback  */
+	void 				(*memcard_handler)(mame_file *file, int action); /* memory card save/load callback  */
+
+	UINT32				video_attributes;			/* flags describing the video system */
+	UINT32				aspect_x, aspect_y;			/* aspect ratio of the video screen */
+	int					screen_width, screen_height;/* size of the video screen (in pixels) */
+	rectangle			default_visible_area;		/* default visible area of the screen */
+	const gfx_decode *	gfxdecodeinfo;				/* pointer to graphics decoding information */
+	UINT32				total_colors;				/* total number of colors in the palette */
+	UINT32				color_table_len;			/* length of the color indirection table */
+
+	void 				(*init_palette)(UINT16 *colortable, const UINT8 *color_prom); /* one-time palette init callback  */
+	int					(*video_start)(void);		/* one-time video start callback */
+	void				(*video_reset)(void);		/* video reset callback */
+	void				(*video_eof)(void);			/* end-of-frame video callback */
+	void				(*video_update)(int screen, mame_bitmap *bitmap, const rectangle *cliprect); /* video update callback */
+
+	sound_config		sound[MAX_SOUND];			/* array of sound chips in the system */
+	speaker_config		speaker[MAX_SPEAKER];		/* array of speakers in the system */
+
+	int					(*sound_start)(void);		/* one-time sound start callback */
+	void				(*sound_reset)(void);		/* sound reset callback */
+};
+
+
+/* In mamecore.h: typedef struct _game_driver game_driver; */
+struct _game_driver
+{
+	const char *		source_file;				/* set this to __FILE__ */
+	const game_driver *	clone_of;					/* if this is a clone, point to the main version of the game */
+	const char *		name;						/* short (8-character) name of the game */
+	const bios_entry *	bios;						/* list of names and ROM_BIOSFLAGS */
+	const char *		description;				/* full name of the game */
+	const char *		year;						/* year the game was released */
+	const char *		manufacturer;				/* manufacturer of the game */
+	void 				(*drv)(machine_config *);	/* machine driver constructor */
+	void 				(*construct_ipt)(input_port_init_params *param); /* input port constructor */
+	void				(*driver_init)(void);		/* DRIVER_INIT callback */
+	const rom_entry *	rom;						/* pointer to list of ROMs for the game */
+
+#ifdef MESS
+	void (*sysconfig_ctor)(struct SystemConfigurationParamBlock *cfg);
+	const game_driver *	compatible_with;
+#endif
+
+	UINT32				flags;						/* orientation and other flags; see defines below */
+};
+
+
+
+/***************************************************************************
+    MACROS
+***************************************************************************/
 
 /***************************************************************************
 
@@ -222,6 +383,9 @@
 #define MDRV_NVRAM_HANDLER(name)										\
 	machine->nvram_handler = nvram_handler_##name;						\
 
+#define MDRV_MEMCARD_HANDLER(name)										\
+	machine->memcard_handler = memcard_handler_##name;					\
+
 
 /* core video parameters */
 #define MDRV_VIDEO_ATTRIBUTES(flags)									\
@@ -333,180 +497,6 @@
 
 /***************************************************************************
 
-    Internal representation of a machine driver, built by the constructor
-
-***************************************************************************/
-
-/* In mamecore.h: typedef struct _machine_config machine_config; */
-struct _machine_config
-{
-	cpu_config			cpu[MAX_CPU];				/* array of CPUs in the system */
-	float				frames_per_second;			/* number of frames per second */
-	int					vblank_duration;			/* duration of a VBLANK, in msec/usec */
-	UINT32				cpu_slices_per_frame;		/* number of times to interleave execution per frame */
-	INT32				watchdog_vblank_count;		/* number of VBLANKs until the watchdog kills us */
-	double				watchdog_time;				/* length of time until the watchdog kills us */
-
-	int 				(*machine_start)(void);		/* one-time machine start callback */
-	void 				(*machine_reset)(void);		/* machine reset callback */
-
-	void 				(*nvram_handler)(mame_file *file, int read_or_write); /* NVRAM save/load callback  */
-
-	UINT32				video_attributes;			/* flags describing the video system */
-	UINT32				aspect_x, aspect_y;			/* aspect ratio of the video screen */
-	int					screen_width, screen_height;/* size of the video screen (in pixels) */
-	rectangle			default_visible_area;		/* default visible area of the screen */
-	const gfx_decode *	gfxdecodeinfo;				/* pointer to graphics decoding information */
-	UINT32				total_colors;				/* total number of colors in the palette */
-	UINT32				color_table_len;			/* length of the color indirection table */
-
-	void 				(*init_palette)(UINT16 *colortable, const UINT8 *color_prom); /* one-time palette init callback  */
-	int					(*video_start)(void);		/* one-time video start callback */
-	void				(*video_reset)(void);		/* video reset callback */
-	void				(*video_eof)(void);			/* end-of-frame video callback */
-	void				(*video_update)(int screen, mame_bitmap *bitmap, const rectangle *cliprect); /* video update callback */
-
-	sound_config		sound[MAX_SOUND];			/* array of sound chips in the system */
-	speaker_config		speaker[MAX_SPEAKER];		/* array of speakers in the system */
-
-	int					(*sound_start)(void);		/* one-time sound start callback */
-	void				(*sound_reset)(void);		/* sound reset callback */
-};
-
-
-
-/***************************************************************************
-
-    Machine driver constants and flags
-
-***************************************************************************/
-
-/*
-    VBLANK is the period when the video beam is outside of the visible area
-    and returns from the bottom-right to the top-left of the screen to
-    prepare for a new video frame. The duration of VBLANK is an important
-    factor in how the game renders itself. In many cases, the game does
-    video-related operations during this time, such as swapping buffers or
-    updating sprite lists.
-
-    Below are some predefined, TOTALLY ARBITRARY values for vblank_duration,
-    which should be OK for most cases. I have NO IDEA how accurate they are
-    compared to the real hardware, they could be completely wrong.
-*/
-
-/* The default is to have no VBLANK timing -- this is historical, and a bad idea */
-#define DEFAULT_60HZ_VBLANK_DURATION		0
-#define DEFAULT_30HZ_VBLANK_DURATION		0
-
-/* If you use IPT_VBLANK, you need a duration different from 0 */
-#define DEFAULT_REAL_60HZ_VBLANK_DURATION	2500
-#define DEFAULT_REAL_30HZ_VBLANK_DURATION	2500
-
-
-/* -----    defaults for watchdog   ----- */
-#define DEFAULT_60HZ_3S_VBLANK_WATCHDOG	180
-#define DEFAULT_30HZ_3S_VBLANK_WATCHDOG	90
-
-
-
-/* ----- flags for video_attributes ----- */
-
-/* is the video hardware raser or vector base? */
-#define	VIDEO_TYPE_RASTER				0x0000
-#define	VIDEO_TYPE_VECTOR				0x0001
-
-/* should VIDEO_UPDATE by called at the start of VBLANK or at the end? */
-#define	VIDEO_UPDATE_BEFORE_VBLANK		0x0000
-#define	VIDEO_UPDATE_AFTER_VBLANK		0x0002
-
-/* set this to use a direct RGB bitmap rather than a palettized bitmap */
-#define VIDEO_RGB_DIRECT	 			0x0004
-
-/* set this if the color resolution of *any* component is 6 bits or more */
-#define VIDEO_NEEDS_6BITS_PER_GUN		0x0008
-
-/* automatically extend the palette creating a darker copy for shadows */
-#define VIDEO_HAS_SHADOWS				0x0010
-
-/* automatically extend the palette creating a brighter copy for highlights */
-#define VIDEO_HAS_HIGHLIGHTS			0x0020
-
-/* Mish 181099:  See comments in vidhrdw/generic.c for details */
-#define VIDEO_BUFFERS_SPRITERAM			0x0040
-
-/* In most cases we assume pixels are square (1:1 aspect ratio) but some games need */
-/* different proportions, e.g. 1:2 for Blasteroids */
-#define VIDEO_PIXEL_ASPECT_RATIO_MASK	0x0300
-#define VIDEO_PIXEL_ASPECT_RATIO_1_1	0x0000
-#define VIDEO_PIXEL_ASPECT_RATIO_1_2	0x0100
-#define VIDEO_PIXEL_ASPECT_RATIO_2_1	0x0200
-
-
-
-/***************************************************************************
-
-    Game driver structure
-
-***************************************************************************/
-
-/* In mamecore.h: typedef struct _game_driver game_driver; */
-struct _game_driver
-{
-	const char *		source_file;				/* set this to __FILE__ */
-	const game_driver *	clone_of;					/* if this is a clone, point to the main version of the game */
-	const char *		name;						/* short (8-character) name of the game */
-	const bios_entry *	bios;						/* list of names and ROM_BIOSFLAGS */
-	const char *		description;				/* full name of the game */
-	const char *		year;						/* year the game was released */
-	const char *		manufacturer;				/* manufacturer of the game */
-	void 				(*drv)(machine_config *);	/* machine driver constructor */
-	void 				(*construct_ipt)(input_port_init_params *param); /* input port constructor */
-	void				(*driver_init)(void);		/* DRIVER_INIT callback */
-	const rom_entry *	rom;						/* pointer to list of ROMs for the game */
-
-#ifdef MESS
-	void (*sysconfig_ctor)(struct SystemConfigurationParamBlock *cfg);
-	const game_driver *	compatible_with;
-#endif
-
-	UINT32				flags;						/* orientation and other flags; see defines below */
-};
-
-
-
-/***************************************************************************
-
-    Game driver flags
-
-***************************************************************************/
-
-/* ----- values for the flags field ----- */
-
-#define ORIENTATION_MASK        	0x0007
-#define	ORIENTATION_FLIP_X			0x0001	/* mirror everything in the X direction */
-#define	ORIENTATION_FLIP_Y			0x0002	/* mirror everything in the Y direction */
-#define ORIENTATION_SWAP_XY			0x0004	/* mirror along the top-left/bottom-right diagonal */
-
-#define GAME_NOT_WORKING			0x0008
-#define GAME_UNEMULATED_PROTECTION	0x0010	/* game's protection not fully emulated */
-#define GAME_WRONG_COLORS			0x0020	/* colors are totally wrong */
-#define GAME_IMPERFECT_COLORS		0x0040	/* colors are not 100% accurate, but close */
-#define GAME_IMPERFECT_GRAPHICS		0x0080	/* graphics are wrong/incomplete */
-#define GAME_NO_COCKTAIL			0x0100	/* screen flip support is missing */
-#define GAME_NO_SOUND				0x0200	/* sound is missing */
-#define GAME_IMPERFECT_SOUND		0x0400	/* sound is known to be wrong */
-#define GAME_SUPPORTS_SAVE			0x0800	/* game supports save states */
-#define NOT_A_DRIVER				0x4000	/* set by the fake "root" driver_0 and by "containers" */
-											/* e.g. driver_neogeo. */
-#ifdef MESS
-#define GAME_COMPUTER               0x8000  /* Driver is a computer (needs full keyboard) */
-#define GAME_COMPUTER_MODIFIED      0x0800	/* Official? Hack */
-#endif
-
-
-
-/***************************************************************************
-
     Macros for building game drivers
 
 ***************************************************************************/
@@ -547,12 +537,6 @@ const game_driver driver_##NAME =			\
 	(MONITOR)|(FLAGS)						\
 };
 
-/* monitor parameters to be used with the GAME() macro */
-#define	ROT0	0
-#define	ROT90	(ORIENTATION_SWAP_XY|ORIENTATION_FLIP_X)	/* rotate clockwise 90 degrees */
-#define	ROT180	(ORIENTATION_FLIP_X|ORIENTATION_FLIP_Y)		/* rotate 180 degrees */
-#define	ROT270	(ORIENTATION_SWAP_XY|ORIENTATION_FLIP_Y)	/* rotate counter-clockwise 90 degrees */
-
 /* this allows to leave the INIT field empty in the GAME() macro call */
 #define init_0 0
 
@@ -562,9 +546,7 @@ const game_driver driver_##NAME =			\
 
 
 /***************************************************************************
-
-    Global variables
-
+    GLOBAL VARIABLES
 ***************************************************************************/
 
 extern const game_driver *drivers[];
@@ -572,9 +554,7 @@ extern const game_driver *drivers[];
 
 
 /***************************************************************************
-
-    Function prototypes
-
+    FUNCTION PROTOTYPES
 ***************************************************************************/
 
 void expand_machine_driver(void (*constructor)(machine_config *), machine_config *output);

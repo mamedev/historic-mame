@@ -1,6 +1,8 @@
 #ifndef _PPC_H
 #define _PPC_H
 
+#include "cpuintrf.h"
+
 #define SPR_XER				1		/* Fixed Point Exception Register               Read / Write */
 #define SPR_LR				8		/* Link Register                                Read / Write */
 #define SPR_CTR				9		/* Count Register                               Read / Write */

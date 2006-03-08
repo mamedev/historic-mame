@@ -1,7 +1,7 @@
 #ifndef ARM_H
 #define ARM_H
 
-#include "driver.h"
+#include "cpuintrf.h"
 
 /****************************************************************************************************
  *  INTERRUPT CONSTANTS

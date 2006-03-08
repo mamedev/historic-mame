@@ -22,6 +22,7 @@ INTERRUPT_GEN( adder2_vbl );
 ADDRESS_MAP_EXTERN( adder2_memmap );
 
 VIDEO_START(  adder2 );
+VIDEO_RESET(  adder2 );
 VIDEO_UPDATE( adder2 );
 PALETTE_INIT( adder2 );
 

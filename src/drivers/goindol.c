@@ -29,8 +29,6 @@ extern UINT8 *goindol_fg_scrollx;
 extern UINT8 *goindol_fg_scrolly;
 extern UINT8 *goindol_fg_videoram;
 extern UINT8 *goindol_bg_videoram;
-extern UINT8 *spriteram_1;
-extern UINT8 *spriteram_2;
 extern size_t goindol_fg_videoram_size;
 extern size_t goindol_bg_videoram_size;
 extern int goindol_char_bank;

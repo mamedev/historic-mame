@@ -9,11 +9,9 @@
 
 ***********************************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <math.h>
 
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
 #include "tms5220.h"
 #include "5220intf.h"

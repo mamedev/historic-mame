@@ -102,7 +102,6 @@ OSC:    12.000MHz
 
 #include "driver.h"
 #include "cpu/m68000/m68000.h"
-#include "machine/random.h"
 #include "sound/okim6295.h"
 
 static tilemap *sc3_tilemap, *sc0_tilemap,*sc1_tilemap,*sc2_tilemap;

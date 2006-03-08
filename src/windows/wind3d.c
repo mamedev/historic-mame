@@ -25,9 +25,10 @@
 
 // MAME headers
 #include "driver.h"
+#include "profiler.h"
+
 #include "window.h"
 #include "video.h"
-#include "profiler.h"
 #include "blit.h"
 #include "wind3dfx.h"
 #include "winddraw.h"

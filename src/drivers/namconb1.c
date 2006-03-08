@@ -273,7 +273,6 @@ GFX:                Custom 145     ( 80 pin PQFP)
 #include "namconb1.h"
 #include "namcos2.h"
 #include "namcoic.h"
-#include "machine/random.h"
 #include "sndhrdw/namcoc7x.h"
 
 #define NB1_NVMEM_SIZE (0x800)

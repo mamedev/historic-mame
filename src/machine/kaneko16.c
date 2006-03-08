@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "machine/random.h"
 
 #include "kanekotb.h"	// TOYBOX MCU trojaning results
 

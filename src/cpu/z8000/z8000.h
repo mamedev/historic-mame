@@ -1,6 +1,6 @@
 #ifndef Z8K_H
 
-#include "driver.h"
+#include "cpuintrf.h"
 
 enum {
 	Z8000_PC=1, Z8000_NSP, Z8000_FCW, Z8000_PSAP, Z8000_REFRESH,

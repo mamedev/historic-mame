@@ -31,6 +31,7 @@
 #include "debugger.h"
 #include "eainfo.h"
 #include "window.h"
+#include "osdepend.h"
 
 
 #ifndef INVALID
@@ -1415,7 +1416,7 @@ static unsigned get_register_id( char **parg, int *size )
 	for( i = 0; i < DBGREGS.count; i++ )
 	{
 		l = strlen( DBGREGS.name[i] );
-		if( l > 0 && !strnicmp( *parg, DBGREGS.name[i], l ) )
+		if( l > 0 && !mame_strnicmp( *parg, DBGREGS.name[i], l ) )
 		{
 			if( !isalnum( (*parg)[l] ) )
 			{
@@ -5106,6 +5107,8 @@ void CLIB_DECL mame_debug_trace_write (int cpunum, const char *fmt, ...)
  *  This function is called from cpu_run to startup the debugger
  **************************************************************************/
 #ifndef NEW_DEBUGGER
+void mame_debug_exit(void);
+
 void mame_debug_init(void)
 {
 	char filename[127+1];

@@ -190,6 +190,11 @@ static void system18_generic_init(int _rom_board)
  *
  *************************************/
 
+static void boost_interleave(int param)
+{
+	cpu_boost_interleave(0, TIME_IN_MSEC(10));
+}
+
 MACHINE_RESET( system18 )
 {
 	segaic16_memory_mapper_reset();
@@ -198,7 +203,7 @@ MACHINE_RESET( system18 )
 
 	/* if we are running with a real live 8751, we need to boost the interleave at startup */
 	if (Machine->drv->cpu[2].cpu_type == CPU_I8751)
-		cpu_boost_interleave(0, TIME_IN_MSEC(10));
+		timer_set(TIME_NOW, 0, boost_interleave);
 }
 
 

@@ -186,7 +186,6 @@ static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 /* Honey Dolls */
-#include "machine/random.h"
 
 
 static ADDRESS_MAP_START( honeydol_readmem, ADDRESS_SPACE_PROGRAM, 16 )

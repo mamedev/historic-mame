@@ -70,35 +70,13 @@ enum
 
 typedef UINT32 (*ui_menu_handler)(UINT32 state);
 
+typedef struct _ui_menu_item ui_menu_item;
 struct _ui_menu_item
 {
    const char *text;
    const char *subtext;
    UINT32 flags;
 };
-typedef struct _ui_menu_item ui_menu_item;
-
-
-struct _memcard_interface
-{
-	int (*create)(int);
-	int (*load)(int);
-	void (*save)(void);
-	void (*eject)(void);
-};
-typedef struct _memcard_interface memcard_interface;
-
-
-
-/*************************************
- *
- *  Global variables
- *
- *************************************/
-
-extern memcard_interface memcard_intf;
-
-#define memcard_init() memset(&memcard_intf, 0, sizeof(memcard_interface))
 
 
 

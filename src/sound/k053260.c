@@ -4,8 +4,9 @@
 
 *********************************************************/
 
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
+#include "cpuintrf.h"
 #include "k053260.h"
 
 /* 2004-02-28: Fixed ppcm decoding. Games sound much better now.*/

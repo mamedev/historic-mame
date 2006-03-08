@@ -5334,11 +5334,8 @@ INLINE void K054157_get_tile_info(int tile_index,int layer)
 	UINT16 *addr;
 	int attr, code;
 	UINT16 *lbase = K054157_rambase + 0x2000*layer;
-	if(tile_index < 64*32)
-		addr = lbase + (tile_index<<1);
-	else
-		addr = lbase + (tile_index<<1) + 0x1000 - 64*32*2;
 
+	addr = lbase + (tile_index<<1);
 	attr = addr[0];
 	code = addr[1];
 	tile_info.flags = 0;
@@ -5354,7 +5351,6 @@ static void K054157_get_tile_info0(int tile_index) { K054157_get_tile_info(tile_
 static void K054157_get_tile_info1(int tile_index) { K054157_get_tile_info(tile_index,1); }
 static void K054157_get_tile_info2(int tile_index) { K054157_get_tile_info(tile_index,2); }
 static void K054157_get_tile_info3(int tile_index) { K054157_get_tile_info(tile_index,3); }
-
 
 static void K054157_lsu_1_256(int layer)
 {
@@ -6060,6 +6056,9 @@ static void K056832_change_rambank(void)
 		K056832_SelectedPage = ((bank>>1)&0xc)|(bank&3);
 	}
 	K056832_SelectedPagex4096 = K056832_SelectedPage << 12;
+
+	// refresh associated tilemaps
+	K056832_MarkAllTilemapsDirty();
 }
 
 int K056832_get_current_rambank(void)

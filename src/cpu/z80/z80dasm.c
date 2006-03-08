@@ -19,12 +19,8 @@
  *
  *****************************************************************************/
 
-#include <stdio.h>
-#include <string.h>
-#ifdef	MAME_DEBUG
-#include "driver.h"
 #include "debugger.h"
-#include "eainfo.h"
+#include "debug/eainfo.h"
 #include "z80.h"
 
 enum e_mnemonics {
@@ -610,6 +606,3 @@ unsigned z80_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes
 
     return pos | s_flags[d->mnemonic] | DASMFLAG_SUPPORTED;
 }
-
-#endif
-

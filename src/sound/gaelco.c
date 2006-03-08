@@ -33,7 +33,7 @@ Registers per channel:
 
 ***************************************************************************/
 
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
 #include "gaelco.h"
 #include "wavwrite.h"

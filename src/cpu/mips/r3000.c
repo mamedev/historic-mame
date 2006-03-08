@@ -6,11 +6,6 @@
 
 ***************************************************************************/
 
-#include <stdio.h>
-#include <stddef.h>
-#include <stdlib.h>
-#include <string.h>
-#include "cpuintrf.h"
 #include "debugger.h"
 #include "r3000.h"
 
@@ -349,21 +344,24 @@ static void r3000_set_context(void *src)
     INITIALIZATION AND SHUTDOWN
 ***************************************************************************/
 
-static void r3000_init(void)
+static void r3000_init(int index, int clock, const void *_config, int (*irqcallback)(int))
 {
+	const struct r3000_config *config = _config;
+
+	/* allocate memory */
+	r3000.icache = auto_malloc(config->icache);
+	r3000.dcache = auto_malloc(config->dcache);
+
+	r3000.icache_size = config->icache;
+	r3000.dcache_size = config->dcache;
+	r3000.hasfpu = config->hasfpu;
+
+	r3000.irq_callback = irqcallback;
 }
 
 
-static void r3000_reset(void *param, int bigendian)
+static void r3000_reset(int bigendian)
 {
-	struct r3000_config *config = param;
-
-	/* allocate memory */
-	r3000.icache = malloc(config->icache);
-	r3000.dcache = malloc(config->dcache);
-	if (!r3000.icache || !r3000.dcache)
-		fatalerror("error: couldn't allocate cache for r3000!");
-
 	/* set up the endianness */
 	r3000.bigendian = bigendian;
 	if (r3000.bigendian)
@@ -386,9 +384,6 @@ static void r3000_reset(void *param, int bigendian)
 	}
 
 	/* initialize the rest of the config */
-	r3000.hasfpu = config->hasfpu;
-	r3000.icache_size = config->icache;
-	r3000.dcache_size = config->dcache;
 	r3000.cur = *r3000.memory_hand;
 	r3000.cache = r3000.dcache;
 	r3000.cache_size = r3000.dcache_size;
@@ -401,27 +396,19 @@ static void r3000_reset(void *param, int bigendian)
 	change_pc(r3000.pc);
 }
 
-static void r3000be_reset(void *param)
+static void r3000be_reset(void)
 {
-	r3000_reset(param, 1);
+	r3000_reset(1);
 }
 
-static void r3000le_reset(void *param)
+static void r3000le_reset(void)
 {
-	r3000_reset(param, 0);
+	r3000_reset(0);
 }
 
 
 static void r3000_exit(void)
 {
-	/* free cache memory */
-	if (r3000.icache)
-		free(r3000.icache);
-	r3000.icache = NULL;
-
-	if (r3000.dcache)
-		free(r3000.dcache);
-	r3000.dcache = NULL;
 }
 
 
@@ -1247,9 +1234,6 @@ static void r3000_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + R3000_R30:			r3000.r[30] = info->i;					break;
 		case CPUINFO_INT_SP:
 		case CPUINFO_INT_REGISTER + R3000_R31:			r3000.r[31] = info->i;					break;
-
-		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_IRQ_CALLBACK:					r3000.irq_callback = info->irqcallback;	break;
 	}
 }
 
@@ -1341,7 +1325,6 @@ static void r3000_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = r3000_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = r3000_dasm;		break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = r3000.irq_callback;	break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &r3000_icount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = r3000_reg_layout;				break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = r3000_win_layout;				break;

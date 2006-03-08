@@ -1451,7 +1451,7 @@ static MACHINE_RESET( mazerbla )
 {
 	game_id = MAZERBLA;
 	zpu_int_vector = 0xff;
-	cpu_set_irq_callback(0, irq_callback);
+	cpunum_set_irq_callback(0, irq_callback);
 }
 
 
@@ -1459,7 +1459,7 @@ static MACHINE_RESET( greatgun )
 {
 	game_id = GREATGUN;
 	zpu_int_vector = 0xff;
-	cpu_set_irq_callback(0, irq_callback);
+	cpunum_set_irq_callback(0, irq_callback);
 
 
 //patch VCU test

@@ -1,6 +1,8 @@
 #ifndef _SHARC_H
 #define _SHARC_H
 
+#include "cpuintrf.h"
+
 #define SHARC_INPUT_FLAG0		3
 #define SHARC_INPUT_FLAG1		4
 #define SHARC_INPUT_FLAG2		5

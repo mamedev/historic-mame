@@ -18,44 +18,33 @@
 #include "mamecore.h"
 
 
-/*-------------------------------------------------
-    mame_time definitions
--------------------------------------------------*/
+/***************************************************************************
+    CONSTANTS
+***************************************************************************/
 
+/* subseconds are tracked in attosecond (10^-18) increments */
 #define MAX_SUBSECONDS				((subseconds_t)1000000000 * (subseconds_t)1000000000)
 #define MAX_SECONDS					((seconds_t)1000000000)
 
+/* effective now/never values as doubles */
+#define TIME_NOW             		(0.0)
+#define TIME_NEVER            		(1.0e30)
+
+
+
+/***************************************************************************
+    MACROS
+***************************************************************************/
+
+/* convert between a double and subseconds */
 #define SUBSECONDS_TO_DOUBLE(x)		((double)(x) * (1.0 / (double)MAX_SUBSECONDS))
 #define DOUBLE_TO_SUBSECONDS(x)		((subseconds_t)((x) * (double)MAX_SUBSECONDS))
 
-typedef INT64 subseconds_t;
-typedef INT32 seconds_t;
+/* convert cycles on a given CPU to/from mame_time */
+#define MAME_TIME_TO_CYCLES(cpu,t)	((t).seconds * cycles_per_second[cpu] + (t).subseconds / subseconds_per_cycle[cpu])
+#define MAME_TIME_IN_CYCLES(c,cpu)	(make_mame_time((c) / cycles_per_second[cpu], (c) * subseconds_per_cycle[cpu]))
 
-struct _mame_time
-{
-	seconds_t		seconds;
-	subseconds_t	subseconds;
-};
-typedef struct _mame_time mame_time;
-
-extern mame_time time_zero;
-extern mame_time time_never;
-
-extern subseconds_t subseconds_per_cycle[];
-extern UINT32 cycles_per_second[];
-
-#define MAME_TIME_TO_CYCLES(cpu,t) ((t).seconds * cycles_per_second[cpu] + (t).subseconds / subseconds_per_cycle[cpu])
-#define MAME_TIME_IN_CYCLES(c,cpu) (make_mame_time((c) / cycles_per_second[cpu], (c) * subseconds_per_cycle[cpu]))
-
-
-
-/*-------------------------------------------------
-    timing macros
--------------------------------------------------*/
-
-extern double cycles_to_sec[];
-extern double sec_to_cycles[];
-
+/* useful macros for describing time using doubles */
 #define TIME_IN_HZ(hz)        (1.0 / (double)(hz))
 #define TIME_IN_CYCLES(c,cpu) ((double)(c) * cycles_to_sec[cpu])
 #define TIME_IN_SEC(s)        ((double)(s))
@@ -63,22 +52,79 @@ extern double sec_to_cycles[];
 #define TIME_IN_USEC(us)      ((double)(us) * (1.0 / 1000000.0))
 #define TIME_IN_NSEC(us)      ((double)(us) * (1.0 / 1000000000.0))
 
-// c must be greater then 1000pF to use this function
-// r is in Ohms.  c is in Farads.
-#define TIME_OF_74LS123(r,c)	(0.45 * (double)(r) * ((double)(c))
-
-#define TIME_NOW              (0.0)
-#define TIME_NEVER            (1.0e30)
-
+/* convert a double time to the number of cycles on a given CPU */
 #define TIME_TO_CYCLES(cpu,t) ((int)((t) * sec_to_cycles[cpu]))
 
+/* macro for the RC time constant on a 74LS123 with C > 1000pF */
+/* R is in ohms, C is in farads */
+#define TIME_OF_74LS123(r,c)	(0.45 * (double)(r) * ((double)(c))
+
+/* macros that map all allocations to provide file/line/functions to the callee */
+#define mame_timer_alloc(c)				_mame_timer_alloc(c, __FILE__, __LINE__, #c)
+#define mame_timer_alloc_ptr(c,p)		_mame_timer_alloc_ptr(c, p, __FILE__, __LINE__, #c)
+#define mame_timer_pulse(e,p,c)			_mame_timer_pulse(e, p, c, __FILE__, __LINE__, #c)
+#define mame_timer_pulse_ptr(e,p,c)		_mame_timer_pulse_ptr(e, p, c, __FILE__, __LINE__, #c)
+#define mame_timer_set(d,p,c)			_mame_timer_set(d, p, c, __FILE__, __LINE__, #c)
+#define mame_timer_set_ptr(d,p,c)		_mame_timer_set_ptr(d, p, c, __FILE__, __LINE__, #c)
+
+/* macros that map double time functions to mame_time functions */
+#define timer_alloc(c)					mame_timer_alloc(c)
+#define timer_alloc_ptr(c,p)			mame_timer_alloc_ptr(c,p)
+#define timer_adjust(w,d,p,e)			mame_timer_adjust(w, double_to_mame_time(d), p, double_to_mame_time(e))
+#define timer_adjust_ptr(w,d,e)			mame_timer_adjust_ptr(w, double_to_mame_time(d), double_to_mame_time(e))
+#define timer_pulse(e,p,c)				mame_timer_pulse(double_to_mame_time(e), p, c)
+#define timer_pulse_ptr(e,p,c)			mame_timer_pulse_ptr(double_to_mame_time(e), p, c)
+#define timer_set(d,p,c)				mame_timer_set(double_to_mame_time(d), p, c)
+#define timer_set_ptr(d,p,c)			mame_timer_set_ptr(double_to_mame_time(d), p, c)
+#define timer_reset(w,d)				mame_timer_reset(w, double_to_mame_time(d))
+#define timer_enable(w,e)				mame_timer_enable(w,e)
+#define timer_timeelapsed(w)			mame_time_to_double(mame_timer_timeelapsed(w))
+#define timer_timeleft(w)				mame_time_to_double(mame_timer_timeleft(w))
+#define timer_get_time()				mame_time_to_double(mame_timer_get_time())
+#define timer_starttime(w)				mame_time_to_double(mame_timer_starttime(w))
+#define timer_firetime(w)				mame_time_to_double(mame_timer_firetime(w))
+
+
+
+/***************************************************************************
+    TYPE DEFINITIONS
+***************************************************************************/
+
+/* opaque type for representing a timer */
 typedef struct _mame_timer mame_timer;
 
+/* these core types describe a 96-bit time value */
+typedef INT64 subseconds_t;
+typedef INT32 seconds_t;
+
+typedef struct _mame_time mame_time;
+struct _mame_time
+{
+	seconds_t		seconds;
+	subseconds_t	subseconds;
+};
 
 
-/*-------------------------------------------------
-    core functions
--------------------------------------------------*/
+
+/***************************************************************************
+    GLOBAL VARIABLES
+***************************************************************************/
+
+/* constant times for zero and never */
+extern mame_time time_zero;
+extern mame_time time_never;
+
+/* arrays containing mappings between CPU cycle times and timer values */
+extern subseconds_t subseconds_per_cycle[];
+extern UINT32 cycles_per_second[];
+extern double cycles_to_sec[];
+extern double sec_to_cycles[];
+
+
+
+/***************************************************************************
+    PROTOTYPES
+***************************************************************************/
 
 void timer_init(void);
 void timer_free(void);
@@ -104,43 +150,13 @@ mame_time mame_timer_firetime(mame_timer *which);
 
 
 
-/*-------------------------------------------------
-    macros to pass debugging information
--------------------------------------------------*/
-
-#define mame_timer_alloc(c)				_mame_timer_alloc(c, __FILE__, __LINE__, #c)
-#define mame_timer_alloc_ptr(c,p)		_mame_timer_alloc_ptr(c, p, __FILE__, __LINE__, #c)
-#define mame_timer_pulse(e,p,c)			_mame_timer_pulse(e, p, c, __FILE__, __LINE__, #c)
-#define mame_timer_pulse_ptr(e,p,c)		_mame_timer_pulse_ptr(e, p, c, __FILE__, __LINE__, #c)
-#define mame_timer_set(d,p,c)			_mame_timer_set(d, p, c, __FILE__, __LINE__, #c)
-#define mame_timer_set_ptr(d,p,c)		_mame_timer_set_ptr(d, p, c, __FILE__, __LINE__, #c)
-
-
+/***************************************************************************
+    INLINES
+***************************************************************************/
 
 /*-------------------------------------------------
-    old functions mapped to new ones
--------------------------------------------------*/
-
-#define timer_alloc(c)					mame_timer_alloc(c)
-#define timer_alloc_ptr(c,p)			mame_timer_alloc_ptr(c,p)
-#define timer_adjust(w,d,p,e)			mame_timer_adjust(w, double_to_mame_time(d), p, double_to_mame_time(e))
-#define timer_adjust_ptr(w,d,e)			mame_timer_adjust_ptr(w, double_to_mame_time(d), double_to_mame_time(e))
-#define timer_pulse(e,p,c)				mame_timer_pulse(double_to_mame_time(e), p, c)
-#define timer_pulse_ptr(e,p,c)			mame_timer_pulse_ptr(double_to_mame_time(e), p, c)
-#define timer_set(d,p,c)				mame_timer_set(double_to_mame_time(d), p, c)
-#define timer_set_ptr(d,p,c)			mame_timer_set_ptr(double_to_mame_time(d), p, c)
-#define timer_reset(w,d)				mame_timer_reset(w, double_to_mame_time(d))
-#define timer_enable(w,e)				mame_timer_enable(w,e)
-#define timer_timeelapsed(w)			mame_time_to_double(mame_timer_timeelapsed(w))
-#define timer_timeleft(w)				mame_time_to_double(mame_timer_timeleft(w))
-#define timer_get_time()				mame_time_to_double(mame_timer_get_time())
-#define timer_starttime(w)				mame_time_to_double(mame_timer_starttime(w))
-#define timer_firetime(w)				mame_time_to_double(mame_timer_firetime(w))
-
-
-
-/*-------------------------------------------------
-    make a MAME time
+    make_mame_time - assemble a mame_time from
+    seconds and subseconds components
 -------------------------------------------------*/
 
 INLINE mame_time make_mame_time(seconds_t _secs, subseconds_t _subsecs)
@@ -153,7 +169,8 @@ INLINE mame_time make_mame_time(seconds_t _secs, subseconds_t _subsecs)
 
 
 /*-------------------------------------------------
-    convert from mame_time to double
+    mame_time_to_double - convert from mame_time
+    to double
 -------------------------------------------------*/
 
 INLINE double mame_time_to_double(mame_time _time)
@@ -163,7 +180,8 @@ INLINE double mame_time_to_double(mame_time _time)
 
 
 /*-------------------------------------------------
-    convert from double to mame_time
+    double_to_mame_time - convert from double to
+    mame_time
 -------------------------------------------------*/
 
 INLINE mame_time double_to_mame_time(double _time)
@@ -185,7 +203,7 @@ INLINE mame_time double_to_mame_time(double _time)
 
 
 /*-------------------------------------------------
-    add two mame_times
+    add_mame_times - add two mame_times
 -------------------------------------------------*/
 
 INLINE mame_time add_mame_times(mame_time _time1, mame_time _time2)
@@ -211,7 +229,8 @@ INLINE mame_time add_mame_times(mame_time _time1, mame_time _time2)
 
 
 /*-------------------------------------------------
-    add subseconds to a mame_time
+    add_subseconds_to_mame_time - add subseconds
+    to a mame_time
 -------------------------------------------------*/
 
 INLINE mame_time add_subseconds_to_mame_time(mame_time _time1, subseconds_t _subseconds)
@@ -237,7 +256,7 @@ INLINE mame_time add_subseconds_to_mame_time(mame_time _time1, subseconds_t _sub
 
 
 /*-------------------------------------------------
-    subtract two mame_times
+    sub_mame_times - subtract two mame_times
 -------------------------------------------------*/
 
 INLINE mame_time sub_mame_times(mame_time _time1, mame_time _time2)
@@ -263,7 +282,8 @@ INLINE mame_time sub_mame_times(mame_time _time1, mame_time _time2)
 
 
 /*-------------------------------------------------
-    subtract subseconds from a mame_time
+    sub_subseconds_from_mame_time - subtract
+    subseconds from a mame_time
 -------------------------------------------------*/
 
 INLINE mame_time sub_subseconds_from_mame_time(mame_time _time1, subseconds_t _subseconds)
@@ -289,7 +309,7 @@ INLINE mame_time sub_subseconds_from_mame_time(mame_time _time1, subseconds_t _s
 
 
 /*-------------------------------------------------
-    compare two mame_times
+    compare_mame_times - compare two mame_times
 -------------------------------------------------*/
 
 INLINE int compare_mame_times(mame_time _time1, mame_time _time2)

@@ -12,7 +12,6 @@
 #include "driver.h"
 #include "vidhrdw/konamiic.h"
 #include "machine/konamigx.h"
-#include "machine/random.h"
 #include "math.h"
 
 

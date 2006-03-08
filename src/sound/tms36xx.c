@@ -1,4 +1,4 @@
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
 #include "tms36xx.h"
 

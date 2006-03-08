@@ -194,7 +194,7 @@ int (*g65816i_execute[5])(int cycles) =
 /* ======================================================================== */
 
 
-static void g65816_reset(void* param)
+static void g65816_reset(void)
 {
 		/* Start the CPU */
 		CPU_STOPPED = 0;
@@ -336,7 +336,10 @@ static unsigned g65816_dasm(char *buffer, unsigned pc)
 }
 
 
-static void g65816_init(void){ return; }
+static void g65816_init(int index, int clock, const void *config, int (*irqcallback)(int))
+{
+	g65816_set_irq_callback(irqcallback);
+}
 
 
 /**************************************************************************
@@ -372,7 +375,6 @@ static void g65816_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + G65816_IRQ_STATE:	g65816_set_reg(G65816_IRQ_STATE, info->i); break;
 
 		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_IRQ_CALLBACK:					g65816_set_irq_callback(info->irqcallback); break;
 		case CPUINFO_PTR_G65816_READVECTOR_CALLBACK:	READ_VECTOR = (read8_handler) info->f;		break;
 	}
 }
@@ -443,7 +445,6 @@ void g65816_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = g65816_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = g65816_dasm;		break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = INT_ACK;			break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &g65816_ICount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = g65816i_register_layout;		break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = g65816i_window_layout;		break;

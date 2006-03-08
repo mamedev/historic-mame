@@ -67,11 +67,9 @@ Revision History:
         verify volume of the FM part on the Y8950
 */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <math.h>
 
-#include "driver.h"		/* use M.A.M.E. */
+#include "sndintrf.h"		/* use M.A.M.E. */
 
 #include "ymdeltat.h"
 

@@ -8,7 +8,6 @@
 
 ****************************************************************************/
 
-#include "driver.h"
 #include "debugger.h"
 #include "h83002.h"
 #include "h8priv.h"

@@ -101,7 +101,7 @@ static int irq_callback(int irqline)
 static void irq_init(void)
 {
 	cpunum_set_input_line(0, 0, CLEAR_LINE);
-	cpu_set_irq_callback(0, irq_callback);
+	cpunum_set_irq_callback(0, irq_callback);
 }
 
 extern void tgp_tick(void);

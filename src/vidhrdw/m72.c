@@ -11,8 +11,6 @@ static int xadjust;
 static int bgadjust;
 static INT32 scrollx1,scrolly1,scrollx2,scrolly2;
 static INT32 video_off;
-extern UINT8 *spriteram,*spriteram_2;
-extern size_t spriteram_size;
 
 static int irqbase;
 

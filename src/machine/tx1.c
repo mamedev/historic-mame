@@ -6,7 +6,6 @@
 
 #include <stdio.h>
 #include "driver.h"
-#include "machine/random.h"
 
 static INT16 AU_DATA;
 static INT16 *AU_PTR = &AU_DATA;

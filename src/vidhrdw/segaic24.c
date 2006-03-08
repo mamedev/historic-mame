@@ -186,8 +186,8 @@ int sys24_tile_vh_start(UINT16 tile_mask)
 		Machine->gfx[sys24_char_gfx_index]->total_colors = Machine->drv->total_colors / 16;
 	}
 
-	state_save_register_global_pointer(sys24_tile_ram, 0x8000);
-	state_save_register_global_pointer(sys24_char_ram, 0x40000);
+	state_save_register_global_pointer(sys24_tile_ram, 0x10000/2);
+	state_save_register_global_pointer(sys24_char_ram, 0x80000/2);
 	state_save_register_func_postload(sys24_tile_dirtyall);
 
 	return 0;
@@ -653,7 +653,7 @@ int sys24_sprite_vh_start(void)
 {
 	sys24_sprite_ram = auto_malloc(0x40000);
 
-	state_save_register_global_pointer(sys24_sprite_ram, 0x20000);
+	state_save_register_global_pointer(sys24_sprite_ram, 0x40000/2);
 	//  kc = 0;
 	return 0;
 }

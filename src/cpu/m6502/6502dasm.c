@@ -25,11 +25,8 @@
 /* 4. February 2000 PeT fixed relative word operand */
 /* 9. May 2000 PeT added m4510 */
 
-#include <stdio.h>
-#ifdef MAME_DEBUG
-#include "driver.h"
 #include "debugger.h"
-#include "eainfo.h"
+#include "debug/eainfo.h"
 #include "m6502.h"
 #if (HAS_M65CE02)
 #include "m65ce02.h"
@@ -905,7 +902,3 @@ unsigned m4510_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int byt
 	return internal_m6502_dasm(op4510, buffer, pc, oprom, opram, bytes);
 }
 #endif
-
-#endif	/* MAME_DEBUG */
-
-

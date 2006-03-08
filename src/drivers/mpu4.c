@@ -203,7 +203,6 @@ Datasheets are available for the main components, The AGEMAME site mirrors a few
 
 #include "driver.h"
 #include "cpu/m68000/m68000.h"
-#include "machine/random.h"
 #include "machine/6821pia.h"
 #include "machine/6840ptm.h"
 #include "machine/6850acia.h"

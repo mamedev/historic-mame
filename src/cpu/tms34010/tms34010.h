@@ -10,7 +10,7 @@
 #ifndef _TMS34010_H
 #define _TMS34010_H
 
-#include "osd_cpu.h"
+#include "cpuintrf.h"
 
 
 /* the TMS34010 input clock is divided by 8; the 34020 by 4 */

@@ -128,7 +128,6 @@ int stvvdp1_local_y;
 /**/
 
 
-#include "machine/random.h"
 
 void stv_vdp1_process_list(mame_bitmap *bitmap, const rectangle *cliprect);
 

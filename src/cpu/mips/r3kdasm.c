@@ -6,9 +6,7 @@
 
 ***************************************************************************/
 
-#include <stdio.h>
-
-#include "driver.h"
+#include "cpuintrf.h"
 
 
 static const char *reg[32] =

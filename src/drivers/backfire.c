@@ -20,7 +20,6 @@ extern void decrypt156(void);
 #include "sound/okim6295.h"
 #include "sound/ymz280b.h"
 #include "cpu/arm/arm.h"
-#include "machine/random.h"
 #include "deco16ic.h"
 
 UINT32 *backfire_spriteram32_1;

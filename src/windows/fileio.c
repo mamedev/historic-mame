@@ -119,7 +119,7 @@ struct rc_option fileio_opts[] =
 	{ "snapshot_directory", NULL, rc_string, &pathlist[FILETYPE_SCREENSHOT].rawpath, "snap", 0, 0, NULL, "directory for screenshots (.png format)" },
 	{ "diff_directory", NULL, rc_string, &pathlist[FILETYPE_IMAGE_DIFF].rawpath, "diff", 0, 0, NULL, "directory for hard drive image difference files" },
 	{ "ctrlr_directory", NULL, rc_string, &pathlist[FILETYPE_CTRLR].rawpath, "ctrlr", 0, 0, NULL, "directory to save controller definitions" },
-	{ "comment_directory", NULL, rc_string, &pathlist[FILETYPE_COMMENT].rawpath, "comment", 0, 0, NULL, "directory to save comment files" },
+	{ "comment_directory", NULL, rc_string, &pathlist[FILETYPE_COMMENT].rawpath, "comments", 0, 0, NULL, "directory to save comment files" },
 	{ "cheat_file", NULL, rc_string, &cheatfile, "cheat.dat", 0, 0, NULL, "cheat filename" },
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
@@ -155,30 +155,33 @@ static TCHAR *find_reverse_path_sep(TCHAR *name)
 //  create_path
 //============================================================
 
-static void create_path(TCHAR *path, int has_filename)
+static int create_path(TCHAR *path, int has_filename)
 {
 	TCHAR *sep = find_reverse_path_sep(path);
 	DWORD attributes;
+
+printf("create_path(%s)\n", path);
 
 	/* if there's still a separator, and it's not the root, nuke it and recurse */
 	if (sep && sep > path && !is_pathsep(sep[-1]))
 	{
 		*sep = 0;
-		create_path(path, 0);
+		if (!create_path(path, FALSE))
+			return 0;
 		*sep = '\\';
 	}
 
 	/* if we have a filename, we're done */
 	if (has_filename)
-		return;
+		return 1;
 
 	/* if the path already exists, we're done */
 	attributes = GetFileAttributes(path);
 	if (attributes != INVALID_FILE_ATTRIBUTES)
-		return;
+		return 1;
 
 	/* create the path */
-	CreateDirectory(path, NULL);
+	return CreateDirectory(path, NULL);
 }
 
 
@@ -587,7 +590,7 @@ osd_file *osd_fopen(int pathtype, int pathindex, const char *filename, const cha
 			goto error;
 
 		/* create the path and try again */
-		create_path(fullpath, 1);
+		create_path(fullpath, TRUE);
 		file->handle = CreateFile(fullpath, access, sharemode, NULL, disposition, flags, NULL);
 
 		/* if that doesn't work, we give up */
@@ -776,7 +779,6 @@ void osd_fclose(osd_file *file)
 
 
 
-#ifdef MESS
 //============================================================
 //  osd_create_directory
 //============================================================
@@ -787,10 +789,10 @@ int osd_create_directory(int pathtype, int pathindex, const char *dirname)
 
 	/* compose the full path */
 	compose_path(fullpath, pathtype, pathindex, dirname);
-
-	return CreateDirectory(fullpath, NULL) ? 0 : 1;
+	return create_path(fullpath, FALSE);
 }
-#endif
+
+
 
 //============================================================
 //  osd_display_loading_rom_message

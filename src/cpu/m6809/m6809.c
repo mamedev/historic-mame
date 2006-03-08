@@ -70,11 +70,7 @@
 
 *****************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include "cpuintrf.h"
 #include "debugger.h"
-#include "state.h"
 #include "m6809.h"
 
 /* Enable big switch statement for the main opcodes */
@@ -437,24 +433,25 @@ static void m6809_set_context(void *src)
 /****************************************************************************/
 /* Reset registers to their initial values                                  */
 /****************************************************************************/
-static void m6809_init(void)
+static void m6809_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
-	int cpu = cpu_getactivecpu();
-	state_save_register_item("m6809", cpu, PC);
-	state_save_register_item("m6809", cpu, PPC);
-	state_save_register_item("m6809", cpu, D);
-	state_save_register_item("m6809", cpu, DP);
-	state_save_register_item("m6809", cpu, U);
-	state_save_register_item("m6809", cpu, S);
-	state_save_register_item("m6809", cpu, X);
-	state_save_register_item("m6809", cpu, Y);
-	state_save_register_item("m6809", cpu, CC);
-	state_save_register_item_array("m6809", cpu, m6809.irq_state);
-	state_save_register_item("m6809", cpu, m6809.int_state);
-	state_save_register_item("m6809", cpu, m6809.nmi_state);
+	state_save_register_item("m6809", index, PC);
+	state_save_register_item("m6809", index, PPC);
+	state_save_register_item("m6809", index, D);
+	state_save_register_item("m6809", index, DP);
+	state_save_register_item("m6809", index, U);
+	state_save_register_item("m6809", index, S);
+	state_save_register_item("m6809", index, X);
+	state_save_register_item("m6809", index, Y);
+	state_save_register_item("m6809", index, CC);
+	state_save_register_item_array("m6809", index, m6809.irq_state);
+	state_save_register_item("m6809", index, m6809.int_state);
+	state_save_register_item("m6809", index, m6809.nmi_state);
+
+	m6809.irq_callback = irqcallback;
 }
 
-static void m6809_reset(void *param)
+static void m6809_reset(void)
 {
 	m6809.int_state = 0;
 	m6809.nmi_state = CLEAR_LINE;
@@ -1131,9 +1128,6 @@ static void m6809_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + M6809_X:			X = info->i;							break;
 		case CPUINFO_INT_REGISTER + M6809_Y:			Y = info->i;							break;
 		case CPUINFO_INT_REGISTER + M6809_DP:			DP = info->i;							break;
-
-		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_IRQ_CALLBACK:					m6809.irq_callback = info->irqcallback;			break;
 	}
 }
 
@@ -1198,7 +1192,6 @@ void m6809_get_info(UINT32 state, union cpuinfo *info)
 #ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = m6809_dasm;					break;
 #endif /* MAME_DEBUG */
-		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = m6809.irq_callback;			break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m6809_ICount;				break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m6809_reg_layout;				break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = m6809_win_layout;				break;

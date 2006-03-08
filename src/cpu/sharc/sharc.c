@@ -6,7 +6,6 @@
    Portions based on ElSemi's SHARC emulator
 */
 
-#include "driver.h"
 #include "sharc.h"
 #include "debugger.h"
 
@@ -123,6 +122,8 @@ typedef struct {
 	int idle;
 	int irq_active;
 	int irq_active_num;
+
+	SHARC_BOOT_MODE boot_mode;
 } SHARC_REGS;
 
 static SHARC_REGS sharc;
@@ -808,8 +809,13 @@ static void check_interrupts(void)
 	}
 }
 
-static void sharc_init(void)
+static void sharc_init(int index, int clock, const void *_config, int (*irqcallback)(int))
 {
+	const sharc_config *config = _config;
+	sharc.boot_mode = config->boot_mode;
+
+	sharc.irq_callback = irqcallback;
+
 	sharc.opcode_table = sharc_op;
 
 	sharc.internal_ram = auto_malloc(2 * 0x20000);
@@ -817,15 +823,14 @@ static void sharc_init(void)
 	sharc.internal_ram_block1 = &sharc.internal_ram[0x20000/2];
 }
 
-static void sharc_reset(void *param)
+static void sharc_reset(void)
 {
-	sharc_config *config = param;
 	sharc.pc = 0x20004;
 	sharc.npc = sharc.pc + 1;
 	sharc.idle = 0;
 	sharc.stky = 0x5400000;
 
-	switch(config->boot_mode)
+	switch(sharc.boot_mode)
 	{
 		case BOOT_MODE_EPROM:
 		{
@@ -847,7 +852,7 @@ static void sharc_reset(void *param)
 			break;
 
 		default:
-			fatalerror("SHARC: Unimplemented boot mode %d", config->boot_mode);
+			fatalerror("SHARC: Unimplemented boot mode %d", sharc.boot_mode);
 	}
 }
 
@@ -1034,9 +1039,6 @@ static void sharc_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + SHARC_M13:			sharc.dag2.m[5] = info->i;					break;
 		case CPUINFO_INT_REGISTER + SHARC_M14:			sharc.dag2.m[6] = info->i;					break;
 		case CPUINFO_INT_REGISTER + SHARC_M15:			sharc.dag2.m[7] = info->i;					break;
-
-		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_IRQ_CALLBACK:					sharc.irq_callback = info->irqcallback;	break;
 	}
 }
 
@@ -1210,7 +1212,6 @@ void sharc_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = sharc_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = sharc_dasm;			break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = sharc.irq_callback;	break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &sharc_icount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = sharc_reg_layout;				break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = sharc_win_layout;				break;

@@ -125,7 +125,9 @@ void neogeo_set_lower_resolution( void )
 		!strcmp(Machine->gamedrv->name,"kof95a") ||
 		!strcmp(Machine->gamedrv->name,"samsho3") ||
 		!strcmp(Machine->gamedrv->name,"samsho3a") ||
+		!strcmp(Machine->gamedrv->name,"fswords") ||
 		!strcmp(Machine->gamedrv->name,"aof3") ||
+		!strcmp(Machine->gamedrv->name,"aof3k") ||
 		!strcmp(Machine->gamedrv->name,"kof96") ||
 		!strcmp(Machine->gamedrv->name,"kof96h") ||
 		!strcmp(Machine->gamedrv->name,"kizuna") ||

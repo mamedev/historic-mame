@@ -887,7 +887,6 @@ static void gground_generate_kludge_irq(int param)
 }
 
 
-#include "machine/random.h"
 static READ16_HANDLER(irq_r)
 {
 	/* These hacks are for Gain Ground */

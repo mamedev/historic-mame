@@ -340,7 +340,6 @@ Notes:
 */
 
 #include "driver.h"
-#include "machine/random.h"
 #include "taito_f3.h"
 #include "sound/es5506.h"
 

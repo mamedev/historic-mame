@@ -174,7 +174,6 @@ NEP-16
 */
 
 #include "driver.h"
-#include "machine/random.h"
 #include "sound/ymz280b.h"
 #include <time.h>
 

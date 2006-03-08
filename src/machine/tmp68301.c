@@ -116,7 +116,7 @@ MACHINE_RESET( tmp68301 )
 	for (i = 0; i < 3; i++)
 		tmp68301_IE[i] = 0;
 
-	cpu_set_irq_callback(0, tmp68301_irq_callback);
+	cpunum_set_irq_callback(0, tmp68301_irq_callback);
 }
 
 /* Update the IRQ state based on all possible causes */

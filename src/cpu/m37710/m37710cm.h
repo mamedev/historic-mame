@@ -10,7 +10,7 @@
 /* ======================================================================== */
 
 #include <limits.h>
-#include "driver.h"
+#include "cpuintrf.h"
 #include "debugger.h"
 #include "m37710.h"
 

@@ -171,7 +171,6 @@ Notes:
 #include "namcona1.h"
 #include "sound/c140.h"
 #include "sound/namcona.h"
-#include "machine/random.h"
 #include "cpu/m37710/m37710.h"
 
 static UINT16 *mpBank0, *mpBank1;
@@ -1210,8 +1209,7 @@ static WRITE8_HANDLER( port4_w )
 		logerror("launching 68k, PC=%x\n", activecpu_get_pc());
 
 		// reset and launch the 68k
-		cpunum_reset(0, NULL, NULL);
-		cpunum_resume(0, SUSPEND_REASON_HALT);
+		cpunum_set_input_line(0, INPUT_LINE_RESET, CLEAR_LINE);
 	}
 
 	mcu_port4 = data;
@@ -1284,7 +1282,7 @@ static WRITE8_HANDLER( port8_w )
 // for games with the MCU emulated, the MCU boots the 68000.  don't allow it before that.
 static MACHINE_RESET( namcona1_mcu )
 {
-	cpunum_suspend(0, SUSPEND_REASON_HALT, 1);
+	cpunum_set_input_line(0, INPUT_LINE_RESET, ASSERT_LINE);
 
 	mcu_port5 = 1;
 }

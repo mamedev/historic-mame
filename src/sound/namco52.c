@@ -45,7 +45,7 @@ Jan 12, 2005.  The 555 is probably an external playback frequency.
 
 ***************************************************************************/
 
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
 #include "filter.h"
 #include "namco52.h"

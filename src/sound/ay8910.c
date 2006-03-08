@@ -10,8 +10,9 @@
 
 ***************************************************************************/
 
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
+#include "cpuintrf.h"
 #include "ay8910.h"
 
 #define MAX_OUTPUT 0x7fff

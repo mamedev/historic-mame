@@ -18,7 +18,7 @@ This document covers all the known Namco System 10 games, including....
 *Drum Master 7                                   (C) Namco, 2005
 *GAHAHA Ippatsu-dou                              (C) Namco/Metro, 2000
 *GAHAHA Ippatsu-dou 2                            (C) Namco/Metro, 2001
-*Gamshara (10021 Ver.A)                          (C) Mitchell, 2003
+Gamshara (10021 Ver.A)                           (C) Mitchell, 2003
 Gekitoride-Jong Space (10011 Ver.A)              (C) Namco/Metro, 2001
 *Golgo-13 3 : Juusei no Chinkonka                (C) Namco/8ing/Raizing, 2001
 *Hard Puncher Hajime no Ippo 2 Ouja e no Chousen (C) Namco/Taito, 2002
@@ -364,6 +364,12 @@ static DRIVER_INIT( startrgn )
 	decrypt_bios( 0x6, 0x5, 0x4, 0x7, 0x1, 0x3, 0x0, 0x2, 0xc, 0xd, 0xe, 0xf, 0x8, 0xb, 0xa, 0x9 );
 }
 
+static DRIVER_INIT( gamshara )
+{
+	memn_driver_init();
+	decrypt_bios( 0x5, 0x4, 0x7, 0x6, 0x0, 0x1, 0x3, 0x2, 0xd, 0xf, 0xc, 0xe, 0x8, 0x9, 0xa, 0xb );
+}
+
 MACHINE_RESET( namcos10 )
 {
 	psx_machine_init();
@@ -491,8 +497,18 @@ ROM_START( startrgn )
 	ROM_LOAD( "stt1a_1.bin",  0x1000000, 0x1000000, CRC(f6e8e641) SHA1(37c8c1482d652b46a744252721299448b15e1027) )
 ROM_END
 
+ROM_START( gamshara )
+	ROM_REGION32_LE( 0x400000, REGION_USER1, 0 ) /* bios */
+	ROM_FILL( 0x0000000, 0x400000, 0x55 )
+
+	ROM_REGION( 0x2000000, REGION_USER2, 0 ) /* main prg */
+	ROM_LOAD( "10021a.8e",    0x0000000, 0x1000000, CRC(db0a3687) SHA1(757360c43fba247e6c0c0fc66bb089575e19d646) )
+	ROM_LOAD( "10021a.8d",    0x1000000, 0x1000000, CRC(bebafef6) SHA1(6c965c09f3186523d27c50894a15b9c1dd02a794) )
+ROM_END
+
 GAME( 2000, mrdrilr2,  0,        namcos10, namcos10, mrdrilr2, ROT0, "Namco", "Mr Driller 2 (DR21 Ver.A)", GAME_NOT_WORKING | GAME_NO_SOUND )
 GAME( 2001, gjspace,   0,        namcos10, namcos10, gjspace,  ROT0, "Namco/Metro", "Gekitoride-Jong Space (10011 Ver.A)", GAME_NOT_WORKING | GAME_NO_SOUND )
 GAME( 2001, mrdrilrg,  0,        namcos10, namcos10, mrdrilrg, ROT0, "Namco", "Mr. Driller G (DRG1 Ver.A)", GAME_NOT_WORKING | GAME_NO_SOUND )
 GAME( 2001, knpuzzle,  0,        namcos10, namcos10, knpuzzle, ROT0, "Namco", "Kotoba no Puzzle Mojipittan (KPM1 Ver.A)", GAME_NOT_WORKING | GAME_NO_SOUND )
 GAME( 2002, startrgn,  0,        namcos10, namcos10, startrgn, ROT0, "Namco", "Star Trigon (STT1 Ver.A)", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAME( 2003, gamshara,  0,        namcos10, namcos10, gamshara, ROT0, "Mitchell", "Gamshara (10021 Ver.A)", GAME_NOT_WORKING | GAME_NO_SOUND )

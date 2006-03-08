@@ -13,9 +13,12 @@
 #include "driver.h"
 
 #if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
-#include "debugcpu.h"
+#include "debug/debugcpu.h"
 #endif
 
+
+// temporary
+#define OUT_OF_BOUNDS_IS_FATAL		1
 
 
 /*************************************
@@ -40,6 +43,15 @@
  *
  *************************************/
 
+#if OUT_OF_BOUNDS_IS_FATAL
+#define VERIFY_ACTIVECPU(retval, name)						\
+	int activecpu = cpu_getactivecpu();						\
+	assert_always(activecpu >= 0, #name "() called with no active cpu!")
+
+#define VERIFY_ACTIVECPU_VOID(name)							\
+	int activecpu = cpu_getactivecpu();						\
+	assert_always(activecpu >= 0, #name "() called with no active cpu!")
+#else
 #define VERIFY_ACTIVECPU(retval, name)						\
 	int activecpu = cpu_getactivecpu();						\
 	if (activecpu < 0)										\
@@ -55,6 +67,7 @@
 		logerror(#name "() called with no active cpu!\n");	\
 		return;												\
 	}
+#endif
 
 
 
@@ -127,6 +140,11 @@ int cpuint_init(void)
 
 	/* loop over all CPUs and input lines */
 	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
+	{
+		/* reset any driver hooks into the IRQ acknowledge callbacks */
+		drv_irq_callbacks[cpunum] = NULL;
+
+		/* clear out all the CPU states */
 		for (line = 0; line < MAX_INPUT_LINES; line++)
 		{
 			input_line_state[cpunum][line] = CLEAR_LINE;
@@ -134,6 +152,7 @@ int cpuint_init(void)
 			input_line_vector[cpunum][line] = cputype_default_irq_vector(Machine->drv->cpu[cpunum].cpu_type);
 			input_event_index[cpunum][line] = 0;
 		}
+	}
 
 	/* set up some stuff to save */
 	state_save_push_tag(0);
@@ -142,9 +161,6 @@ int cpuint_init(void)
 	state_save_register_item_2d_array("cpu", 0, input_line_state);
 	state_save_register_item_2d_array("cpu", 0, input_line_vector);
 	state_save_pop_tag();
-
-	/* reset any driver hooks into the IRQ acknowledge callbacks */
-	drv_irq_callbacks[cpunum] = NULL;
 
 	return 0;
 }
@@ -157,17 +173,21 @@ int cpuint_init(void)
  *
  *************************************/
 
-void cpuint_reset_cpu(int cpunum)
+void cpuint_reset(void)
 {
-	int line;
+	int cpunum, line;
 
-	/* start with interrupts enabled, so the generic routine will work even if */
-	/* the machine doesn't have an interrupt enable port */
-	interrupt_enable[cpunum] = 1;
-	for (line = 0; line < MAX_INPUT_LINES; line++)
+	/* loop over CPUs */
+	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
 	{
-		interrupt_vector[cpunum][line] = cpunum_default_irq_vector(cpunum);
-		input_event_index[cpunum][line] = 0;
+		/* start with interrupts enabled, so the generic routine will work even if */
+		/* the machine doesn't have an interrupt enable port */
+		interrupt_enable[cpunum] = 1;
+		for (line = 0; line < MAX_INPUT_LINES; line++)
+		{
+			interrupt_vector[cpunum][line] = cpunum_default_irq_vector(cpunum);
+			input_event_index[cpunum][line] = 0;
+		}
 	}
 }
 
@@ -219,7 +239,7 @@ static void cpunum_empty_event_queue(int cpu_and_inputline)
 				/* if we're clearing the line that was previously asserted, or if we're just */
 				/* pulsing the line, reset the CPU */
 				if ((state == CLEAR_LINE && cpunum_is_suspended(cpunum, SUSPEND_REASON_RESET)) || state == PULSE_LINE)
-					cpunum_reset(cpunum, Machine->drv->cpu[cpunum].reset_param, cpu_irq_callbacks[cpunum]);
+					cpunum_reset(cpunum);
 
 				/* if we're clearing the line, make sure the CPU is not halted */
 				cpunum_resume(cpunum, SUSPEND_REASON_RESET);
@@ -347,7 +367,7 @@ void cpunum_set_input_line_and_vector(int cpunum, int line, int state, int vecto
  *
  *************************************/
 
-void cpu_set_irq_callback(int cpunum, int (*callback)(int))
+void cpunum_set_irq_callback(int cpunum, int (*callback)(int))
 {
 	drv_irq_callbacks[cpunum] = callback;
 }

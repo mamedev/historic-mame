@@ -4,9 +4,6 @@
     By Farfetch'd and R. Belmont
 */
 
-#include <stdio.h>
-#include <string.h>
-#include "driver.h"
 #include "i960.h"
 #include "i960dis.h"
 

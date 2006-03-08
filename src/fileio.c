@@ -54,12 +54,12 @@
 #define FILEFLAG_VERIFY_ONLY	0x0400
 #define FILEFLAG_NOZIP			0x0800
 #define FILEFLAG_MUST_EXIST		0x1000
+#define FILEFLAG_CREATE_GAMEDIR	0x8000
 
 #ifdef MESS
 #define FILEFLAG_GHOST			0x0004
 #define FILEFLAG_ALLOW_ABSOLUTE	0x2000
 #define FILEFLAG_ZIP_PATHS		0x4000
-#define FILEFLAG_CREATE_GAMEDIR	0x8000
 #endif
 
 #ifdef MAME_DEBUG
@@ -129,7 +129,6 @@ static chd_interface mame_chd_interface =
 };
 
 
-
 /*-------------------------------------------------
     fileio_init - open a file for access and
     return an error code
@@ -146,7 +145,6 @@ void fileio_exit(void)
 {
 	unzip_cache_clear();
 }
-
 
 
 /*-------------------------------------------------
@@ -271,7 +269,7 @@ mame_file *mame_fopen_error(const char *gamename, const char *filename, int file
 
 		/* memory card files */
 		case FILETYPE_MEMCARD:
-			return generic_fopen(filetype, NULL, filename, 0, openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD, error);
+			return generic_fopen(filetype, gamename, filename, 0, openforwrite ? FILEFLAG_OPENWRITE | FILEFLAG_CREATE_GAMEDIR : FILEFLAG_OPENREAD, error);
 
 		/* screenshot files */
 		case FILETYPE_SCREENSHOT:
@@ -328,7 +326,6 @@ mame_file *mame_fopen_error(const char *gamename, const char *filename, int file
 }
 
 
-
 /*-------------------------------------------------
     mame_fopen - open a file without returning
     any error codes
@@ -340,7 +337,6 @@ mame_file *mame_fopen(const char *gamename, const char *filename, int filetype, 
 }
 
 
-
 /*-------------------------------------------------
     mame_fopen_rom - similar to mame_fopen, but
     lets you specify an expected checksum
@@ -350,7 +346,6 @@ mame_file *mame_fopen_rom(const char *gamename, const char *filename, const char
 {
 	return generic_fopen(FILETYPE_ROM, gamename, filename, exphash, FILEFLAG_OPENREAD | FILEFLAG_HASH, NULL);
 }
-
 
 
 /*-------------------------------------------------
@@ -381,7 +376,6 @@ void mame_fclose(mame_file *file)
 	/* free the file data */
 	free(file);
 }
-
 
 
 /*-------------------------------------------------
@@ -443,7 +437,6 @@ int mame_faccess(const char *filename, int filetype)
 }
 
 
-
 /*-------------------------------------------------
     mame_fread - read from a file
 -------------------------------------------------*/
@@ -479,7 +472,6 @@ UINT32 mame_fread(mame_file *file, void *buffer, UINT32 length)
 }
 
 
-
 /*-------------------------------------------------
     mame_fwrite - write to a file
 -------------------------------------------------*/
@@ -498,7 +490,6 @@ UINT32 mame_fwrite(mame_file *file, const void *buffer, UINT32 length)
 
 	return 0;
 }
-
 
 
 /*-------------------------------------------------
@@ -540,7 +531,6 @@ int mame_fseek(mame_file *file, INT64 offset, int whence)
 }
 
 
-
 /*-------------------------------------------------
     mame_fchecksum - verify the existence and
     length of a file given a hash checksum
@@ -564,7 +554,6 @@ int mame_fchecksum(const char *gamename, const char *filename, unsigned int *len
 	mame_fclose(file);
 	return 0;
 }
-
 
 
 /*-------------------------------------------------
@@ -595,7 +584,6 @@ UINT64 mame_fsize(mame_file *file)
 }
 
 
-
 /*-------------------------------------------------
     mame_fhash - returns the hash for a file
 -------------------------------------------------*/
@@ -604,7 +592,6 @@ const char *mame_fhash(mame_file *file)
 {
 	return file->hash;
 }
-
 
 
 /*-------------------------------------------------
@@ -643,7 +630,6 @@ int mame_fgetc(mame_file *file)
 }
 
 
-
 /*-------------------------------------------------
     mame_ungetc - put back a character read from
     a file
@@ -655,7 +641,6 @@ int mame_ungetc(int c, mame_file *file)
 
 	return c;
 }
-
 
 
 /*-------------------------------------------------
@@ -708,7 +693,6 @@ char *mame_fgets(char *s, int n, mame_file *file)
 }
 
 
-
 /*-------------------------------------------------
     mame_feof - return 1 if we're at the end
     of file
@@ -735,7 +719,6 @@ int mame_feof(mame_file *file)
 }
 
 
-
 /*-------------------------------------------------
     mame_ftell - return the current file position
 -------------------------------------------------*/
@@ -755,7 +738,6 @@ UINT64 mame_ftell(mame_file *file)
 
 	return -1L;
 }
-
 
 
 /*-------------------------------------------------
@@ -783,7 +765,6 @@ UINT32 mame_fread_swap(mame_file *file, void *buffer, UINT32 length)
 
 	return res;
 }
-
 
 
 /*-------------------------------------------------
@@ -819,7 +800,6 @@ UINT32 mame_fwrite_swap(mame_file *file, const void *buffer, UINT32 length)
 
 	return res;
 }
-
 
 
 /*-------------------------------------------------
@@ -858,7 +838,6 @@ int mame_fputs(mame_file *f, const char *s)
 }
 
 
-
 /*-------------------------------------------------
     mame_vfprintf - vfprintf to a text file
 -------------------------------------------------*/
@@ -869,7 +848,6 @@ static int mame_vfprintf(mame_file *f, const char *fmt, va_list va)
 	vsnprintf(buf, sizeof(buf), fmt, va);
 	return mame_fputs(f, buf);
 }
-
 
 
 /*-------------------------------------------------
@@ -885,7 +863,6 @@ int CLIB_DECL mame_fprintf(mame_file *f, const char *fmt, ...)
 	va_end(va);
 	return rc;
 }
-
 
 
 /*-------------------------------------------------
@@ -929,7 +906,6 @@ INLINE void compose_path(char *output, size_t outputlen, const char *gamename, c
 		strncat(output, extension, outputlen - strlen(output) - 1);
 	}
 }
-
 
 
 /*-------------------------------------------------
@@ -1023,7 +999,6 @@ static const char *get_extension_for_filetype(int filetype)
 }
 
 
-
 /*-------------------------------------------------
     generic_fopen - master logic for finding and
     opening a file
@@ -1053,7 +1028,7 @@ static mame_file *generic_fopen(int pathtype, const char *gamename, const char *
 		error = &dummy;
 	*error = FILEERR_SUCCESS;
 
-	VPRINTF(("generic_fopen(%d, %s, %s, %s, %X)\n", pathc, gamename, filename, extension, flags));
+	VPRINTF(("generic_fopen(%d, %s, %s, %s, %X)\n", pathcount, gamename, filename, extension, flags));
 
 	/* reset the file handle */
 	memset(&file, 0, sizeof(file));
@@ -1094,12 +1069,12 @@ static mame_file *generic_fopen(int pathtype, const char *gamename, const char *
 		{
 			*name = 0;
 		}
-		else if (flags & FILEFLAG_CREATE_GAMEDIR)
+#endif
+		if (flags & FILEFLAG_CREATE_GAMEDIR)
 		{
 			if (osd_get_path_info(pathtype, pathindex, name) == PATH_NOT_FOUND)
 				osd_create_directory(pathtype, pathindex, name);
 		}
-#endif
 
 		/* if the directory exists, proceed */
 		if (*name == 0 || osd_get_path_info(pathtype, pathindex, name) == PATH_IS_DIRECTORY)
@@ -1309,7 +1284,6 @@ static mame_file *generic_fopen(int pathtype, const char *gamename, const char *
 }
 
 
-
 /*-------------------------------------------------
     checksum_file - load and checksum a file
 -------------------------------------------------*/
@@ -1384,7 +1358,6 @@ static int checksum_file(int pathtype, int pathindex, const char *file, UINT8 **
 }
 
 
-
 /*-------------------------------------------------
     chd_open_cb - interface for opening
     a hard disk image
@@ -1412,7 +1385,6 @@ chd_interface_file *chd_open_cb(const char *filename, const char *mode)
 }
 
 
-
 /*-------------------------------------------------
     chd_close_cb - interface for closing
     a hard disk image
@@ -1422,7 +1394,6 @@ void chd_close_cb(chd_interface_file *file)
 {
 	mame_fclose((mame_file *)file);
 }
-
 
 
 /*-------------------------------------------------
@@ -1437,7 +1408,6 @@ UINT32 chd_read_cb(chd_interface_file *file, UINT64 offset, UINT32 count, void *
 }
 
 
-
 /*-------------------------------------------------
     chd_write_cb - interface for writing
     to a hard disk image
@@ -1448,7 +1418,6 @@ UINT32 chd_write_cb(chd_interface_file *file, UINT64 offset, UINT32 count, const
 	mame_fseek((mame_file *)file, offset, SEEK_SET);
 	return mame_fwrite((mame_file *)file, buffer, count);
 }
-
 
 
 /*-------------------------------------------------

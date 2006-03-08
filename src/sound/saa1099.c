@@ -63,8 +63,9 @@
 
 ***************************************************************************/
 
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
+#include "cpuintrf.h"
 #include "saa1099.h"
 #include <math.h>
 

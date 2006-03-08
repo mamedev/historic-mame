@@ -81,12 +81,14 @@ extern VIDEO_UPDATE( exprraid );
 /* Emulate Protection ( only for original express raider, code is cracked on the bootleg */
 /*****************************************************************************************/
 
+static UINT8 *main_ram;
+
 static READ8_HANDLER( exprraid_protection_r )
 {
 	switch (offset)
 	{
 	case 0:
-		return memory_region(REGION_CPU1)[0x02a9];
+		return main_ram[0x02a9];
 	case 1:
 		return 0x02;
 	}
@@ -112,7 +114,7 @@ static READ8_HANDLER( vblank_r )
 
 static ADDRESS_MAP_START( master_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x00ff, 0x00ff) AM_READ(vblank_r) /* HACK!!!! see init_exprraid below */
-    AM_RANGE(0x0000, 0x05ff) AM_RAM
+    AM_RANGE(0x0000, 0x05ff) AM_RAM AM_BASE(&main_ram)
     AM_RANGE(0x0600, 0x07ff) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
     AM_RANGE(0x0800, 0x0bff) AM_RAM AM_WRITE(exprraid_videoram_w) AM_BASE(&videoram)
     AM_RANGE(0x0c00, 0x0fff) AM_RAM AM_WRITE(exprraid_colorram_w) AM_BASE(&colorram)

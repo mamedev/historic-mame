@@ -14,6 +14,10 @@
 #ifndef __SNDINTRF_H__
 #define __SNDINTRF_H__
 
+#include "memory.h"
+#include "mame.h"
+#include "state.h"
+#include "timer.h"
 
 /***************************************************************************
 

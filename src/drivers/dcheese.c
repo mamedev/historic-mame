@@ -7,21 +7,15 @@
     Games supported:
         * Double Cheese
         * Lotto Fun 2
-
-    Other games on this hardware:
-        * Flintstones Memory Match?
+        * Fred Flintstones' Memory Match
 
     Known bugs:
         * Test/tilt buttons seem to be swapped compared to test mode
         * Don't know what the opto switches do
 
     [fredmem]
-    * ROM allocations are most likely wrong.
-    * Sprite display is broken. They work when U127 is allocated in
-       place of U123, but then backgrounds obviously don't display.
-    * Graphic ROM dump in test mode is broken, showing U125 as mirroring
-       U123, and U129 as mirroring U127. They aren't supposed to be.
-    * Sounds are broken, white noise is the only output.
+    * Controls are set up as a 3 x 3 matrix of buttons that match the 9
+      positions on the screen.
 
 **************************************************************************/
 
@@ -106,7 +100,7 @@ static INTERRUPT_GEN( dcheese_vblank )
 
 static MACHINE_START( dcheese )
 {
-	cpu_set_irq_callback(0, irq_callback);
+	cpunum_set_irq_callback(0, irq_callback);
 
 	state_save_register_global_array(irq_state);
 	state_save_register_global(soundlatch_full);
@@ -616,4 +610,4 @@ static DRIVER_INIT( dcheese )
 
 GAME( 1993, dcheese, 0, dcheese, dcheese, dcheese, ROT90, "HAR", "Double Cheese", GAME_SUPPORTS_SAVE )
 GAME( 1993, lottof2, 0, dcheese, lottof2, dcheese, ROT0,  "HAR", "Lotto Fun 2", GAME_SUPPORTS_SAVE )
-GAME( 1993, fredmem, 0, fredmem, fredmem, dcheese, ROT0,  "Coastal Amusements", "Fred Flintstones' Memory Match", GAME_SUPPORTS_SAVE )
+GAME( 1994, fredmem, 0, fredmem, fredmem, dcheese, ROT0,  "Coastal Amusements", "Fred Flintstones' Memory Match", GAME_SUPPORTS_SAVE )

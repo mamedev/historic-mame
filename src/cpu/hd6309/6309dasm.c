@@ -19,15 +19,9 @@
 /* Please send all bug reports, update ideas and data files to: */
 /* tlindner@ix.netcom.com */
 
-#include <stdio.h>
-
-#ifdef MAME_DEBUG
-
-#include <string.h>
-#include "cpuintrf.h"
 #include "debugger.h"
 #include "hd6309.h"
-#include "eainfo.h"
+#include "debug/eainfo.h"
 
 typedef struct {				/* opcode structure */
    UINT8	opcode; 			/* 8-bit opcode value */
@@ -1037,6 +1031,3 @@ offs_t hd6309_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int byte
 
 	return p | flags | DASMFLAG_SUPPORTED;
 }
-
-#endif
-

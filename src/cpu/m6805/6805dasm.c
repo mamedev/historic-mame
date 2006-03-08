@@ -8,14 +8,8 @@
  *
  */
 
-#include <string.h>
-
-#ifdef MAME_DEBUG
-
-#include <stdio.h>
-#include "cpuintrf.h"
 #include "debugger.h"
-#include "eainfo.h"
+#include "debug/eainfo.h"
 #include "m6805.h"
 
 enum addr_mode {
@@ -246,5 +240,3 @@ unsigned Dasm6805 (char *buf, unsigned pc)
 		return 1;
     }
 }
-
-#endif

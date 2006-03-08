@@ -19,14 +19,9 @@
  *
  */
 
-#include <string.h>
-#include <stdio.h>
-#include "driver.h"
 #include "debugger.h"
-#include "eainfo.h"
+#include "debug/eainfo.h"
 #include "m6800.h"
-
-#ifdef MAME_DEBUG
 
 enum addr_mode {
 	inh,	/* inherent */
@@ -275,5 +270,3 @@ unsigned Dasm680x (int subtype, char *buf, unsigned pc)
 			return 1;
 	}
 }
-
-#endif

@@ -3,8 +3,7 @@
 #ifndef _M6809_H
 #define _M6809_H
 
-#include "memory.h"
-#include "osd_cpu.h"
+#include "cpuintrf.h"
 
 enum {
 	M6809_PC=1, M6809_S, M6809_CC ,M6809_A, M6809_B, M6809_U, M6809_X, M6809_Y,

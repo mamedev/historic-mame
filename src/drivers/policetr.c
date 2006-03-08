@@ -578,7 +578,7 @@ Note: If you set the dipswitch to service mode and reset the game within Mame.
       All 4 program ROMs fail the checksum code... IE: they show in red
       instead of green.  But, the listed checksums on the screen match the
       checksums printed on the ROM labels... this seems wierd to me.
-      This is has been be verified to happen on a real PCB
+      However, this has been verified to happen on a real PCB
 */
 	ROM_LOAD32_BYTE( "ptb-u113.v13", 0x00000, 0x20000, CRC(d636c00d) SHA1(ef989eb85b51a64ca640297c1286514c8d7f8f76) )
 	ROM_LOAD32_BYTE( "ptb-u112.v13", 0x00001, 0x20000, CRC(86f0497e) SHA1(d177023f7cb2e01de60ef072212836dc94759c1a) )

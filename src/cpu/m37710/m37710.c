@@ -51,7 +51,6 @@
         added save state support.
 */
 
-#include "driver.h"
 #include "debugger.h"
 #include "m37710cm.h"
 
@@ -880,7 +879,7 @@ void m37710i_update_irqs(void)
 
 /* external functions */
 
-void m37710_reset(void* param)
+void m37710_reset(void)
 {
 	/* Start the CPU */
 	CPU_STOPPED = 0;
@@ -1045,9 +1044,9 @@ static void m37710_restore_state(void)
 	m37710i_jumping(REG_PB | REG_PC);
 }
 
-void m37710_init(void)
+void m37710_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
-	int cpu = cpu_getactivecpu();
+	INT_ACK = irqcallback;
 
 	m37710i_cpu.timers[0] = timer_alloc(m37710_timer_a0_cb);
 	m37710i_cpu.timers[1] = timer_alloc(m37710_timer_a1_cb);
@@ -1058,39 +1057,39 @@ void m37710_init(void)
 	m37710i_cpu.timers[6] = timer_alloc(m37710_timer_b1_cb);
 	m37710i_cpu.timers[7] = timer_alloc(m37710_timer_b2_cb);
 
-	state_save_register_item("M377xx", cpu, m37710i_cpu.a);
-	state_save_register_item("M377xx", cpu, m37710i_cpu.b);
-	state_save_register_item("M377xx", cpu, m37710i_cpu.ba);
-	state_save_register_item("M377xx", cpu, m37710i_cpu.bb);
-	state_save_register_item("M377xx", cpu, m37710i_cpu.x);
-	state_save_register_item("M377xx", cpu, m37710i_cpu.y);
-	state_save_register_item("M377xx", cpu, m37710i_cpu.s);
-	state_save_register_item("M377xx", cpu, m37710i_cpu.pc);
-	state_save_register_item("M377xx", cpu, m37710i_cpu.ppc);
-	state_save_register_item("M377xx", cpu, m37710i_cpu.pb);
-	state_save_register_item("M377xx", cpu, m37710i_cpu.db);
-	state_save_register_item("M377xx", cpu, m37710i_cpu.d);
-	state_save_register_item("M377xx", cpu, m37710i_cpu.flag_e);
-	state_save_register_item("M377xx", cpu, m37710i_cpu.flag_m);
-	state_save_register_item("M377xx", cpu, m37710i_cpu.flag_x);
-	state_save_register_item("M377xx", cpu, m37710i_cpu.flag_n);
-	state_save_register_item("M377xx", cpu, m37710i_cpu.flag_v);
-	state_save_register_item("M377xx", cpu, m37710i_cpu.flag_d);
-	state_save_register_item("M377xx", cpu, m37710i_cpu.flag_i);
-	state_save_register_item("M377xx", cpu, m37710i_cpu.flag_z);
-	state_save_register_item("M377xx", cpu, m37710i_cpu.flag_c);
-	state_save_register_item("M377xx", cpu, m37710i_cpu.line_irq);
-	state_save_register_item("M377xx", cpu, m37710i_cpu.ipl);
-	state_save_register_item("M377xx", cpu, m37710i_cpu.ir);
-	state_save_register_item("M377xx", cpu, m37710i_cpu.im);
-	state_save_register_item("M377xx", cpu, m37710i_cpu.im2);
-	state_save_register_item("M377xx", cpu, m37710i_cpu.im3);
-	state_save_register_item("M377xx", cpu, m37710i_cpu.im4);
-	state_save_register_item("M377xx", cpu, m37710i_cpu.irq_delay);
-	state_save_register_item("M377xx", cpu, m37710i_cpu.irq_level);
-	state_save_register_item("M377xx", cpu, m37710i_cpu.stopped);
-	state_save_register_item_array("M377xx", cpu, m37710i_cpu.m37710_regs);
-	state_save_register_item_array("M377xx", cpu, m37710i_cpu.reload);
+	state_save_register_item("M377xx", index, m37710i_cpu.a);
+	state_save_register_item("M377xx", index, m37710i_cpu.b);
+	state_save_register_item("M377xx", index, m37710i_cpu.ba);
+	state_save_register_item("M377xx", index, m37710i_cpu.bb);
+	state_save_register_item("M377xx", index, m37710i_cpu.x);
+	state_save_register_item("M377xx", index, m37710i_cpu.y);
+	state_save_register_item("M377xx", index, m37710i_cpu.s);
+	state_save_register_item("M377xx", index, m37710i_cpu.pc);
+	state_save_register_item("M377xx", index, m37710i_cpu.ppc);
+	state_save_register_item("M377xx", index, m37710i_cpu.pb);
+	state_save_register_item("M377xx", index, m37710i_cpu.db);
+	state_save_register_item("M377xx", index, m37710i_cpu.d);
+	state_save_register_item("M377xx", index, m37710i_cpu.flag_e);
+	state_save_register_item("M377xx", index, m37710i_cpu.flag_m);
+	state_save_register_item("M377xx", index, m37710i_cpu.flag_x);
+	state_save_register_item("M377xx", index, m37710i_cpu.flag_n);
+	state_save_register_item("M377xx", index, m37710i_cpu.flag_v);
+	state_save_register_item("M377xx", index, m37710i_cpu.flag_d);
+	state_save_register_item("M377xx", index, m37710i_cpu.flag_i);
+	state_save_register_item("M377xx", index, m37710i_cpu.flag_z);
+	state_save_register_item("M377xx", index, m37710i_cpu.flag_c);
+	state_save_register_item("M377xx", index, m37710i_cpu.line_irq);
+	state_save_register_item("M377xx", index, m37710i_cpu.ipl);
+	state_save_register_item("M377xx", index, m37710i_cpu.ir);
+	state_save_register_item("M377xx", index, m37710i_cpu.im);
+	state_save_register_item("M377xx", index, m37710i_cpu.im2);
+	state_save_register_item("M377xx", index, m37710i_cpu.im3);
+	state_save_register_item("M377xx", index, m37710i_cpu.im4);
+	state_save_register_item("M377xx", index, m37710i_cpu.irq_delay);
+	state_save_register_item("M377xx", index, m37710i_cpu.irq_level);
+	state_save_register_item("M377xx", index, m37710i_cpu.stopped);
+	state_save_register_item_array("M377xx", index, m37710i_cpu.m37710_regs);
+	state_save_register_item_array("M377xx", index, m37710i_cpu.reload);
 
 	state_save_register_func_postload(m37710_restore_state);
 }
@@ -1133,9 +1132,6 @@ static void m37710_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + M37710_E:			m37710_set_reg(M37710_E, info->i);		break;
 		case CPUINFO_INT_REGISTER + M37710_NMI_STATE:		m37710_set_reg(M37710_NMI_STATE, info->i); break;
 		case CPUINFO_INT_REGISTER + M37710_IRQ_STATE:		m37710_set_reg(M37710_IRQ_STATE, info->i); break;
-
-		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_IRQ_CALLBACK:					INT_ACK = info->irqcallback; break;
 	}
 }
 
@@ -1207,7 +1203,6 @@ void m37710_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = m37710_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m37710_dasm;		break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = INT_ACK;			break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m37710_ICount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m37710i_register_layout;		break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = m37710i_window_layout;		break;

@@ -1200,7 +1200,7 @@ INPUT_PORTS_START( outzone )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( outzonea )
+INPUT_PORTS_START( outzoneb )
 	TOAPLAN1_VBLANK_INPUT
 
 	TOAPLAN1_PLAYER_INPUT( 1, IPT_BUTTON3, )
@@ -1270,7 +1270,7 @@ INPUT_PORTS_START( outzonea )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( outzoneb )
+INPUT_PORTS_START( outzonec )
 	TOAPLAN1_VBLANK_INPUT
 
 	TOAPLAN1_PLAYER_INPUT( 1, IPT_BUTTON3, )
@@ -2186,7 +2186,39 @@ ROM_START( fireshrk )
 	ROM_LOAD( "tp017_14.bpr",  0x20, 0x20, CRC(a1e17492) SHA1(9ddec4c97f2d541f69f3c32c47aaa21fd9699ae2) )	/* ??? */
 ROM_END
 
+/*
+Out Zone - Seems to be a later version, Differences:
+
+. This version is a lot harder.
+. Attract mode differs, player 1 dies early in "Demonstration 2"
+. Special pick up is Super Ball instead of Shield in attract mode.
+. Test mode can be entered and exited without any crash.
+*/
+
 ROM_START( outzone )
+	ROM_REGION( 0x040000, REGION_CPU1, 0 )	/* Main 68K code */
+	ROM_LOAD16_BYTE( "tp018_7.bin",  0x000000, 0x20000, CRC(0c2ac02d) SHA1(78fda906ef7e0bb8e4ad44f34a8ac934b75d4bd8) )
+	ROM_LOAD16_BYTE( "tp018_8.bin",  0x000001, 0x20000, CRC(ca7e48aa) SHA1(c5073e6c124d74f16d01e67949965fdca929a886) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound Z80 code */
+	ROM_LOAD( "rom9.bin",  0x0000, 0x8000, CRC(73d8e235) SHA1(f37ad497259a467cdf2ec8b3e6e7d3e873087e6c) )
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "rom5.bin",  0x00000, 0x80000, CRC(c64ec7b6) SHA1(e73b51c3713c2ea7a572a02531c15d1261ddeaa0) )
+	ROM_LOAD( "rom6.bin",  0x80000, 0x80000, CRC(64b6c5ac) SHA1(07fa20115f603445c0d51af3465c0471c09d76b1) )
+
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "rom2.bin",  0x00000, 0x20000, CRC(6bb72d16) SHA1(a127b10d9c255542bd09fcb5df057c12fd28c0d1) )
+	ROM_LOAD( "rom1.bin",  0x20000, 0x20000, CRC(0934782d) SHA1(e4a775ead23227d7d6e76aea23aa3103b511d031) )
+	ROM_LOAD( "rom3.bin",  0x40000, 0x20000, CRC(ec903c07) SHA1(75906f31200877fc8f6e78c2606ad5be49778165) )
+	ROM_LOAD( "rom4.bin",  0x60000, 0x20000, CRC(50cbf1a8) SHA1(cfab1504746654b4a61912155e9aeca746c65321) )
+
+	ROM_REGION( 0x40, REGION_PROMS, 0 )		/* nibble bproms, lo/hi order to be determined */
+	ROM_LOAD( "tp018_10.bpr",  0x00, 0x20, CRC(bc88cced) SHA1(5055362710c0f58823c05fb4c0e0eec638b91e3d) )	/* sprite attribute (flip/position) ?? */
+	ROM_LOAD( "tp018_11.bpr",  0x20, 0x20, CRC(a1e17492) SHA1(9ddec4c97f2d541f69f3c32c47aaa21fd9699ae2) )	/* ??? */
+ROM_END
+
+ROM_START( outzonea )
 	ROM_REGION( 0x040000, REGION_CPU1, 0 )	/* Main 68K code */
 	ROM_LOAD16_BYTE( "18.bin",  0x000000, 0x20000, CRC(31a171bb) SHA1(4ee707e758ab21d2809b65daf0081f86bd9328d9) )
 	ROM_LOAD16_BYTE( "19.bin",  0x000001, 0x20000, CRC(804ecfd1) SHA1(7dead8064445c6d44ebd0889583deb5e17b1954a) )
@@ -2228,7 +2260,7 @@ ROM_START( outzone )
 ROM_END
 
 /* is this a prototype? */
-ROM_START( outzonea )					/* From board serial number 2122 */
+ROM_START( outzoneb )					/* From board serial number 2122 */
 	ROM_REGION( 0x040000, REGION_CPU1, 0 )	/* Main 68K code */
 	ROM_LOAD16_BYTE( "rom7.bin",  0x000000, 0x20000, CRC(936e25d8) SHA1(ffb7990ea1539d868a9ad2fb711b0febd90f098d) )
 	ROM_LOAD16_BYTE( "rom8.bin",  0x000001, 0x20000, CRC(d19b3ecf) SHA1(b406999b9f1e2104d958b42cc745bf79dbfe50b3) )
@@ -2252,7 +2284,7 @@ ROM_START( outzonea )					/* From board serial number 2122 */
 ROM_END
 
 /* from a bootleg board, but probably an alt original set with different licenses */
-ROM_START( outzoneb )
+ROM_START( outzonec )
 	ROM_REGION( 0x040000, REGION_CPU1, 0 )	/* Main 68K code */
 	ROM_LOAD16_BYTE( "prg2.bin",  0x000001, 0x20000, CRC(9704db16) SHA1(12b43a6961a7f63f29563eb77aaacb70d3c368dd) )
 	ROM_LOAD16_BYTE( "prg1.bin",  0x000000, 0x20000, CRC(127a38d7) SHA1(d7f1ed91ff7d4de9e8215aa3b5cb65693145e433) )
@@ -2379,9 +2411,10 @@ GAME( 1989, demonwl2, demonwld, demonwld, demonwl1, demonwld, ROT0,   "Toaplan",
 GAME( 1990, fireshrk, 0,        samesame, fireshrk, toaplan1, ROT270, "Toaplan", "Fire Shark", GAME_NO_SOUND )
 GAME( 1989, samesame, fireshrk, samesame, samesame, toaplan1, ROT270, "Toaplan", "Same! Same! Same!", GAME_NO_SOUND )
 GAME( 1989, samesam2, fireshrk, samesame, samesam2, toaplan1, ROT270, "Toaplan", "Same! Same! Same! (2P Ver.)", GAME_NO_SOUND )
-GAME( 1990, outzone,  0,        outzone,  outzone,  toaplan1, ROT270, "Toaplan", "Out Zone (set 1)", 0 )
-GAME( 1990, outzonea, outzone,  outzone,  outzonea, toaplan1, ROT270, "Toaplan", "Out Zone (set 2, prototype?)", 0 ) // early revision at least
-GAME( 1990, outzoneb, outzone,  outzone,  outzoneb, toaplan1, ROT270, "Toaplan", "Out Zone (set 3)", 0 )
+GAME( 1990, outzone,  0,        outzone,  outzone,  toaplan1, ROT270, "Toaplan", "Out Zone (set 1)", 0 ) // later fixed version
+GAME( 1990, outzonea, outzone,  outzone,  outzone,  toaplan1, ROT270, "Toaplan", "Out Zone (set 2)", 0 )
+GAME( 1990, outzoneb, outzone,  outzone,  outzoneb, toaplan1, ROT270, "Toaplan", "Out Zone (set 3, prototype?)", 0 ) // early revision at least
+GAME( 1990, outzonec, outzone,  outzone,  outzonec, toaplan1, ROT270, "Toaplan", "Out Zone (set 4)", 0 )
 GAME( 1991, vimana,   0,        vimana,   vimana,   vimana,   ROT270, "Toaplan", "Vimana", GAME_NO_SOUND )
 GAME( 1991, vimana1,  vimana,   vimana,   vimana,   vimana,   ROT270, "Toaplan", "Vimana (old set)", GAME_NO_SOUND )
 GAME( 1991, vimanan,  vimana,   vimana,   vimanan,  vimana,   ROT270, "Toaplan (Nova Apparate GMBH & Co license)", "Vimana (Nova Apparate GMBH & Co)", GAME_NO_SOUND )

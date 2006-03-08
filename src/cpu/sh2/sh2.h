@@ -29,7 +29,6 @@
 #define _SH2_H
 
 #include "cpuintrf.h"
-#include "osd_cpu.h"
 
 #define SH2_INT_NONE	-1
 #define SH2_INT_VBLIN	0

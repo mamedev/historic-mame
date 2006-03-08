@@ -371,9 +371,9 @@ InitDSP( int bSuperSystem22 )
 {
 	mbSuperSystem22 = bSuperSystem22;
 	mpPointRAM = auto_malloc(0x20000*sizeof(*mpPointRAM));
-	cpunum_set_input_line(1,INPUT_LINE_HALT,ASSERT_LINE); /* master DSP */
-	cpunum_set_input_line(2,INPUT_LINE_HALT,ASSERT_LINE); /* slave DSP */
-	cpunum_set_input_line(3,INPUT_LINE_HALT,ASSERT_LINE); /* MCU */
+	cpunum_set_input_line(1,INPUT_LINE_RESET,ASSERT_LINE); /* master DSP */
+	cpunum_set_input_line(2,INPUT_LINE_RESET,ASSERT_LINE); /* slave DSP */
+	cpunum_set_input_line(3,INPUT_LINE_RESET,ASSERT_LINE); /* MCU */
 } /* InitDSP */
 
 static READ16_HANDLER( pdp_status_r )
@@ -553,13 +553,12 @@ static WRITE16_HANDLER( slave_external_ram_w )
 
 static void HaltSlaveDSP( void )
 {
-	cpunum_suspend(2, SUSPEND_REASON_HALT, 1);
+	cpunum_set_input_line(2, INPUT_LINE_RESET, ASSERT_LINE);
 }
 
 static void EnableSlaveDSP( void )
 {
-//  cpunum_reset(2,NULL,NULL); /* immediate */
-//  cpunum_resume(2, SUSPEND_REASON_HALT);
+//  cpunum_set_input_line(2, INPUT_LINE_RESET, CLEAR_LINE);
 }
 
 static READ16_HANDLER( dsp_HOLD_signal_r )
@@ -1168,12 +1167,11 @@ static WRITE32_HANDLER( namcos22_system_controller_w )
 		{ /* SUBCPU enable for Super System 22 */
 			if (data)
 			{
-				cpunum_resume(3, SUSPEND_REASON_HALT);
-				cpunum_reset(3, NULL, NULL);
+				cpunum_set_input_line(3, INPUT_LINE_RESET, CLEAR_LINE);
 			}
 			else
 			{
-				cpunum_set_input_line(3,INPUT_LINE_HALT,ASSERT_LINE); /* M37710 MCU */
+				cpunum_set_input_line(3,INPUT_LINE_RESET,ASSERT_LINE); /* M37710 MCU */
 			}
 		}
 	}
@@ -1183,8 +1181,7 @@ static WRITE32_HANDLER( namcos22_system_controller_w )
 		{ /* SUBCPU enable on System 22 (guessed, but too early crashes Rave Racer so it's a good test) */
 			if (data == 0xff00)
 			{
-				cpunum_resume(3, SUSPEND_REASON_HALT);
-				cpunum_reset(3, NULL, NULL);
+				cpunum_set_input_line(3, INPUT_LINE_RESET, CLEAR_LINE);
 			}
 		}
 	}
@@ -1196,21 +1193,19 @@ static WRITE32_HANDLER( namcos22_system_controller_w )
 	{
 		if( newReg == 0 )
 		{ /* disable DSPs */
-			cpunum_set_input_line(1,INPUT_LINE_HALT,ASSERT_LINE); /* master DSP */
-			cpunum_set_input_line(2,INPUT_LINE_HALT,ASSERT_LINE); /* slave DSP */
+			cpunum_set_input_line(1,INPUT_LINE_RESET,ASSERT_LINE); /* master DSP */
+			cpunum_set_input_line(2,INPUT_LINE_RESET,ASSERT_LINE); /* slave DSP */
 			mbEnableDspIrqs = 0;
 		}
 		else if( newReg==1 )
 		{ /*enable dsp and rendering subsystem */
-			cpunum_reset(1,NULL,NULL);
-			cpunum_resume(1, SUSPEND_REASON_HALT);
+			cpunum_set_input_line(1, INPUT_LINE_RESET, CLEAR_LINE);
 			namcos22_enable_slave_simulation();
 			mbEnableDspIrqs = 1;
 		}
 		else if( newReg==0xff )
 		{ /* used to upload game-specific code to master/slave dsps */
-			cpunum_reset(1,NULL,NULL);
-			cpunum_resume(1, SUSPEND_REASON_HALT);
+			cpunum_set_input_line(1, INPUT_LINE_RESET, CLEAR_LINE);
 			mbEnableDspIrqs = 0;
 		}
 	}

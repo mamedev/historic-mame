@@ -137,7 +137,7 @@ int K001604_vh_start(void)
 	if(K001604_gfx_index[0] == MAX_GFX_ELEMENTS)
 		return 1;
 
-	for(K001604_gfx_index[1] = 0; K001604_gfx_index[1] < MAX_GFX_ELEMENTS; K001604_gfx_index[1]++)
+	for(K001604_gfx_index[1] = K001604_gfx_index[0] + 1; K001604_gfx_index[1] < MAX_GFX_ELEMENTS; K001604_gfx_index[1]++)
 		if (Machine->gfx[K001604_gfx_index[1]] == 0)
 			break;
 	if(K001604_gfx_index[1] == MAX_GFX_ELEMENTS)

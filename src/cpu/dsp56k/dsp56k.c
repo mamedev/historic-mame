@@ -18,7 +18,6 @@
 
 ***************************************************************************/
 
-#include "cpuintrf.h"
 #include "debugger.h"
 #include "dsp56k.h"
 
@@ -253,14 +252,14 @@ typedef struct
 	UINT16 dataRAM[2048] ;						// 2048 x 16-bit on-chip data RAM
 	UINT16 bootstrapROM[64] ;					// 64   x 16-bit bootstrap ROM
 
-
+	const void *	config;
 } dsp56k_regs;
 
 /***************************************************************************
     PROTOTYPES
 ***************************************************************************/
 
-static void dsp56k_reset(void *param);
+static void dsp56k_reset(void);
 
 
 
@@ -321,14 +320,15 @@ static void dsp56k_set_context(void *src)
     INITIALIZATION AND SHUTDOWN
 ***************************************************************************/
 
-static void dsp56k_init(void)
+static void dsp56k_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
+	dsp56k.config = config;
 }
 
 // Page 101 (7-25) in the Family Manual
-static void dsp56k_reset(void *param)
+static void dsp56k_reset(void)
 {
-	if (param == NULL)
+	if (dsp56k.config == NULL)
 	{
 		LINE_RESET = 1 ;
 
@@ -403,7 +403,7 @@ static void dsp56k_reset(void *param)
 	}
 	else
 	{
-		PC = *((UINT16*)param) ;
+		PC = *((UINT16*)dsp56k.config) ;
 	}
 }
 
@@ -653,7 +653,6 @@ void dsp56k_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = dsp56k_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = dsp56k_dasm;		break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					break ;									// not implemented
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &dsp56k_icount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = dsp56k_reg_layout;			break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = dsp56k_win_layout;			break;

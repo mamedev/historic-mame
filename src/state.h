@@ -16,6 +16,50 @@
 
 #include "mamecore.h"
 
+
+
+/***************************************************************************
+    MACROS
+***************************************************************************/
+
+#define state_save_register_generic(_mod, _inst, _name, _val, _valsize, _count) 	\
+do {																				\
+	state_save_register_memory(_mod, _inst, _name, _val, sizeof(_valsize), _count);	\
+} while (0)
+
+#define state_save_register_item(_mod, _inst, _val)	\
+	state_save_register_generic(_mod, _inst, #_val, &_val, _val, 1);
+
+#define state_save_register_item_pointer(_mod, _inst, _val, _count) \
+	state_save_register_generic(_mod, _inst, #_val, &_val[0], _val[0], _count)
+
+#define state_save_register_item_array(_mod, _inst, _val) \
+	state_save_register_item_pointer(_mod, _inst, _val, sizeof(_val)/sizeof(_val[0]))
+
+#define state_save_register_item_2d_array(_mod, _inst, _val) \
+	state_save_register_item_pointer(_mod, _inst, _val[0], sizeof(_val)/sizeof(_val[0][0]))
+
+#define state_save_register_global(_val) \
+	state_save_register_item("globals", 0, _val)
+
+#define state_save_register_global_pointer(_val, _count) \
+	state_save_register_item_pointer("globals", 0, _val, _count)
+
+#define state_save_register_global_array(_val) \
+	state_save_register_item_array("globals", 0, _val)
+
+#define state_save_register_global_2d_array(_val) \
+	state_save_register_item_2d_array("globals", 0, _val)
+
+#define state_save_register_global_bitmap(_val) \
+	state_save_register_bitmap("globals", 0, #_val, _val)
+
+
+
+/***************************************************************************
+    FUNCTION PROTOTYPES
+***************************************************************************/
+
 void state_init(void);
 
 /* Initializes the save state registrations */
@@ -55,40 +99,9 @@ void state_save_load_finish(void);
 /* Display function */
 void state_save_dump_registry(void);
 
+const char *state_save_get_indexed_item(int index, void **base, UINT32 *valsize, UINT32 *valcount);
+
 /* Verification function; can be called from front ends */
 int state_save_check_file(mame_file *file, const char *gamename, int validate_signature, void (CLIB_DECL *errormsg)(const char *fmt, ...));
-
-/* Macros */
-#define state_save_register_generic(_mod, _inst, _name, _val, _valsize, _count) 	\
-do {																				\
-	state_save_register_memory(_mod, _inst, _name, _val, sizeof(_valsize), _count);	\
-} while (0)
-
-#define state_save_register_item(_mod, _inst, _val)	\
-	state_save_register_generic(_mod, _inst, #_val, &_val, _val, 1);
-
-#define state_save_register_item_pointer(_mod, _inst, _val, _count) \
-	state_save_register_generic(_mod, _inst, #_val, &_val[0], _val[0], _count)
-
-#define state_save_register_item_array(_mod, _inst, _val) \
-	state_save_register_item_pointer(_mod, _inst, _val, sizeof(_val)/sizeof(_val[0]))
-
-#define state_save_register_item_2d_array(_mod, _inst, _val) \
-	state_save_register_item_pointer(_mod, _inst, _val[0], sizeof(_val)/sizeof(_val[0][0]))
-
-#define state_save_register_global(_val) \
-	state_save_register_item("globals", 0, _val)
-
-#define state_save_register_global_pointer(_val, _count) \
-	state_save_register_item_pointer("globals", 0, _val, _count)
-
-#define state_save_register_global_array(_val) \
-	state_save_register_item_array("globals", 0, _val)
-
-#define state_save_register_global_2d_array(_val) \
-	state_save_register_item_2d_array("globals", 0, _val)
-
-#define state_save_register_global_bitmap(_val) \
-	state_save_register_bitmap("globals", 0, #_val, _val)
 
 #endif	/* __STATE_H__ */

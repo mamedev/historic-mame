@@ -9,11 +9,6 @@
 
 ***************************************************************************/
 
-#include <stdio.h>
-#include <stddef.h>
-#include <stdlib.h>
-#include <string.h>
-#include "cpuintrf.h"
 #include "debugger.h"
 #include "asap.h"
 
@@ -437,7 +432,7 @@ static void init_tables(void)
 {
 	/* allocate opcode table */
 	if (!opcode)
-		opcode = malloc(32 * 32 * 2 * sizeof(void *));
+		opcode = auto_malloc(32 * 32 * 2 * sizeof(void *));
 
 	/* fill opcode table */
 	if (opcode)
@@ -461,7 +456,7 @@ static void init_tables(void)
 
 	/* allocate src2 table */
 	if (!src2val)
-		src2val = malloc(65536 * sizeof(UINT32));
+		src2val = auto_malloc(65536 * sizeof(UINT32));
 
 	/* fill scr2 table */
 	if (src2val)
@@ -474,12 +469,13 @@ static void init_tables(void)
 	}
 }
 
-static void asap_init(void)
+static void asap_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
 	init_tables();
+	asap.irq_callback = irqcallback;
 }
 
-static void asap_reset(void *param)
+static void asap_reset(void)
 {
 	/* initialize the state */
 	src2val[REGBASE + 0] = 0;
@@ -498,6 +494,8 @@ static void asap_reset(void *param)
 
 static void asap_exit(void)
 {
+	opcode = NULL;
+	src2val = NULL;
 }
 
 
@@ -1766,9 +1764,6 @@ static void asap_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + ASAP_R30:	src2val[REGBASE + 30] = info->i;				break;
 		case CPUINFO_INT_SP:
 		case CPUINFO_INT_REGISTER + ASAP_R31:	src2val[REGBASE + 31] = info->i;				break;
-
-		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_IRQ_CALLBACK:			asap.irq_callback = info->irqcallback;			break;
 	}
 }
 
@@ -1854,7 +1849,6 @@ void asap_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = asap_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = asap_dasm;			break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = asap.irq_callback;	break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &asap_icount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = asap_reg_layout;				break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = asap_win_layout;				break;

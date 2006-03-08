@@ -7,6 +7,8 @@
 #ifndef _H83002_H_
 #define _H83002_H_
 
+#include "cpuintrf.h"
+
 #define IFLAG  0x80
 #define UIFLAG 0x40
 #define HFLAG  0x20

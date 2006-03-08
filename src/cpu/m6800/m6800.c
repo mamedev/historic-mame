@@ -52,12 +52,7 @@ TODO:
 *****************************************************************************/
 
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "cpuintrf.h"
 #include "debugger.h"
-#include "state.h"
 #include "m6800.h"
 
 #define VERBOSE 0
@@ -566,45 +561,44 @@ static void check_timer_event(void)
 /****************************************************************************
  * Reset registers to their initial values
  ****************************************************************************/
-static void state_register(const char *type)
+static void state_register(const char *type, int index)
 {
-	int cpu = cpu_getactivecpu();
+	state_save_register_item(type, index, m6800.ppc.w.l);
+	state_save_register_item(type, index, m6800.pc.w.l);
+	state_save_register_item(type, index, m6800.s.w.l);
+	state_save_register_item(type, index, m6800.x.w.l);
+	state_save_register_item(type, index, m6800.d.w.l);
+	state_save_register_item(type, index, m6800.cc);
+	state_save_register_item(type, index, m6800.wai_state);
+	state_save_register_item(type, index, m6800.nmi_state);
+	state_save_register_item_array(type, index, m6800.irq_state);
+	state_save_register_item(type, index, m6800.ic_eddge);
 
-	state_save_register_item(type, cpu, m6800.ppc.w.l);
-	state_save_register_item(type, cpu, m6800.pc.w.l);
-	state_save_register_item(type, cpu, m6800.s.w.l);
-	state_save_register_item(type, cpu, m6800.x.w.l);
-	state_save_register_item(type, cpu, m6800.d.w.l);
-	state_save_register_item(type, cpu, m6800.cc);
-	state_save_register_item(type, cpu, m6800.wai_state);
-	state_save_register_item(type, cpu, m6800.nmi_state);
-	state_save_register_item_array(type, cpu, m6800.irq_state);
-	state_save_register_item(type, cpu, m6800.ic_eddge);
+	state_save_register_item(type, index, m6800.port1_ddr);
+	state_save_register_item(type, index, m6800.port2_ddr);
+	state_save_register_item(type, index, m6800.port1_data);
+	state_save_register_item(type, index, m6800.port2_data);
+	state_save_register_item(type, index, m6800.tcsr);
+	state_save_register_item(type, index, m6800.pending_tcsr);
+	state_save_register_item(type, index, m6800.irq2);
+	state_save_register_item(type, index, m6800.ram_ctrl);
 
-	state_save_register_item(type, cpu, m6800.port1_ddr);
-	state_save_register_item(type, cpu, m6800.port2_ddr);
-	state_save_register_item(type, cpu, m6800.port1_data);
-	state_save_register_item(type, cpu, m6800.port2_data);
-	state_save_register_item(type, cpu, m6800.tcsr);
-	state_save_register_item(type, cpu, m6800.pending_tcsr);
-	state_save_register_item(type, cpu, m6800.irq2);
-	state_save_register_item(type, cpu, m6800.ram_ctrl);
-
-	state_save_register_item(type, cpu, m6800.counter.d);
-	state_save_register_item(type, cpu, m6800.output_compare.d);
-	state_save_register_item(type, cpu, m6800.input_capture);
-	state_save_register_item(type, cpu, m6800.timer_over.d);
+	state_save_register_item(type, index, m6800.counter.d);
+	state_save_register_item(type, index, m6800.output_compare.d);
+	state_save_register_item(type, index, m6800.input_capture);
+	state_save_register_item(type, index, m6800.timer_over.d);
 }
 
-static void m6800_init(void)
+static void m6800_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
 //  m6800.subtype   = SUBTYPE_M6800;
 	m6800.insn = m6800_insn;
 	m6800.cycles = cycles_6800;
-	state_register("m6800");
+	m6800.irq_callback = irqcallback;
+	state_register("m6800", index);
 }
 
-static void m6800_reset(void *param)
+static void m6800_reset(void)
 {
 	SEI;				/* IRQ disabled */
 	PCD = RM16( 0xfffe );
@@ -1010,12 +1004,12 @@ static offs_t m6800_dasm(char *buffer, offs_t pc)
  * M6801 almost (fully?) equal to the M6803
  ****************************************************************************/
 #if (HAS_M6801)
-static void m6801_init(void)
+static void m6801_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
 //  m6800.subtype = SUBTYPE_M6801;
 	m6800.insn = m6803_insn;
 	m6800.cycles = cycles_6803;
-	state_register("m6801");
+	state_register("m6801", index);
 }
 
 static offs_t m6801_dasm(char *buffer, offs_t pc)
@@ -1034,12 +1028,12 @@ static offs_t m6801_dasm(char *buffer, offs_t pc)
  * M6802 almost (fully?) equal to the M6800
  ****************************************************************************/
 #if (HAS_M6802)
-static void m6802_init(void)
+static void m6802_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
 //  m6800.subtype   = SUBTYPE_M6802;
 	m6800.insn = m6800_insn;
 	m6800.cycles = cycles_6800;
-	state_register("m6802");
+	state_register("m6802", index);
 }
 
 static offs_t m6802_dasm(char *buffer, offs_t pc)
@@ -1058,12 +1052,12 @@ static offs_t m6802_dasm(char *buffer, offs_t pc)
  * M6803 almost (fully?) equal to the M6801
  ****************************************************************************/
 #if (HAS_M6803)
-void m6803_init(void)
+void m6803_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
 //  m6800.subtype = SUBTYPE_M6803;
 	m6800.insn = m6803_insn;
 	m6800.cycles = cycles_6803;
-	state_register("m6803");
+	state_register("m6803", index);
 }
 #endif
 
@@ -1392,12 +1386,12 @@ ADDRESS_MAP_END
  * M6808 almost (fully?) equal to the M6800
  ****************************************************************************/
 #if (HAS_M6808)
-static void m6808_init(void)
+static void m6808_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
 //  m6800.subtype = SUBTYPE_M6808;
 	m6800.insn = m6800_insn;
 	m6800.cycles = cycles_6800;
-	state_register("m6808");
+	state_register("m6808", index);
 }
 
 static offs_t m6808_dasm(char *buffer, offs_t pc)
@@ -1415,12 +1409,12 @@ static offs_t m6808_dasm(char *buffer, offs_t pc)
  * HD63701 similiar to the M6800
  ****************************************************************************/
 #if (HAS_HD63701)
-static void hd63701_init(void)
+static void hd63701_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
 //  m6800.subtype = SUBTYPE_HD63701;
 	m6800.insn = hd63701_insn;
 	m6800.cycles = cycles_63701;
-	state_register("hd63701");
+	state_register("hd63701", index);
 }
 /****************************************************************************
  * Execute cycles CPU cycles. Return number of cycles really executed
@@ -1754,12 +1748,12 @@ static offs_t hd63701_dasm(char *buffer, offs_t pc)
  * is at least one new opcode ($fc)
  ****************************************************************************/
 #if (HAS_NSC8105)
-static void nsc8105_init(void)
+static void nsc8105_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
 //  m6800.subtype = SUBTYPE_NSC8105;
 	m6800.insn = nsc8105_insn;
 	m6800.cycles = cycles_nsc8105;
-	state_register("nsc8105");
+	state_register("nsc8105", index);
 }
 /****************************************************************************
  * Execute cycles CPU cycles. Return number of cycles really executed
@@ -2294,9 +2288,6 @@ static void m6800_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + M6800_A:			m6800.d.b.h = info->i;					break;
 		case CPUINFO_INT_REGISTER + M6800_B:			m6800.d.b.l = info->i;					break;
 		case CPUINFO_INT_REGISTER + M6800_X:			m6800.x.w.l = info->i;					break;
-
-		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_IRQ_CALLBACK:					m6800.irq_callback = info->irqcallback;	break;
 	}
 }
 
@@ -2357,7 +2348,6 @@ void m6800_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = m6800_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m6800_dasm;			break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = m6800.irq_callback;	break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m6800_ICount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m6800_reg_layout;				break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = m6800_win_layout;				break;

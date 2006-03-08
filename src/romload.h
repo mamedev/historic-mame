@@ -19,55 +19,7 @@
 
 
 /***************************************************************************
-
-    Type definitions
-
-***************************************************************************/
-
-struct _rom_entry
-{
-	const char *	_name;				/* name of the file to load */
-	UINT32			_offset;			/* offset to load it to */
-	UINT32			_length;			/* length of the file */
-	UINT32			_flags;				/* flags */
-	const char *	_hashdata;			/* hashing informations (checksums) */
-};
-typedef struct _rom_entry rom_entry;
-
-
-struct _bios_entry
-{
-	int				value;				/* value of mask to apply to ROM_BIOSFLAGS is chosen */
-	const char *	_name;				/* name of the bios, e.g "default","japan" */
-	const char *	_description;		/* long name of the bios, e.g "Europe MVS (Ver. 2)" */
-};
-typedef struct _bios_entry bios_entry;
-
-
-struct _rom_load_data
-{
-	int				warnings;			/* warning count during processing */
-	int				errors;				/* error count during processing */
-
-	int				romsloaded;			/* current ROMs loaded count */
-	int				romstotal;			/* total number of ROMs to read */
-
-	void *			file;				/* current file */
-
-	UINT8 *			regionbase;			/* base of current region */
-	UINT32			regionlength;		/* length of current region */
-
-	char			errorbuf[4096];		/* accumulated errors */
-	UINT8			tempbuf[65536];		/* temporary buffer */
-};
-/* In mamecore.h: typedef struct _rom_load_data rom_load_data; */
-
-
-
-/***************************************************************************
-
-    Core macros for the ROM loading system
-
+    CONSTANTS
 ***************************************************************************/
 
 /* ----- per-entry constants ----- */
@@ -79,26 +31,6 @@ struct _rom_load_data
 #define ROMENTRYTYPE_COPY			6					/* this entry copies data from another region/offset */
 #define ROMENTRYTYPE_CARTRIDGE		7					/* this entry specifies a cartridge (MESS) */
 #define ROMENTRYTYPE_COUNT			8
-
-#define ROMENTRY_REGION				((const char *)ROMENTRYTYPE_REGION)
-#define ROMENTRY_END				((const char *)ROMENTRYTYPE_END)
-#define ROMENTRY_RELOAD				((const char *)ROMENTRYTYPE_RELOAD)
-#define ROMENTRY_CONTINUE			((const char *)ROMENTRYTYPE_CONTINUE)
-#define ROMENTRY_FILL				((const char *)ROMENTRYTYPE_FILL)
-#define ROMENTRY_COPY				((const char *)ROMENTRYTYPE_COPY)
-#define ROMENTRY_CARTRIDGE			((const char *)ROMENTRYTYPE_CARTRIDGE)
-
-/* ----- per-entry macros ----- */
-#define ROMENTRY_GETTYPE(r)			((FPTR)(r)->_name)
-#define ROMENTRY_ISSPECIAL(r)		(ROMENTRY_GETTYPE(r) < ROMENTRYTYPE_COUNT)
-#define ROMENTRY_ISFILE(r)			(!ROMENTRY_ISSPECIAL(r))
-#define ROMENTRY_ISREGION(r)		((r)->_name == ROMENTRY_REGION)
-#define ROMENTRY_ISEND(r)			((r)->_name == ROMENTRY_END)
-#define ROMENTRY_ISRELOAD(r)		((r)->_name == ROMENTRY_RELOAD)
-#define ROMENTRY_ISCONTINUE(r)		((r)->_name == ROMENTRY_CONTINUE)
-#define ROMENTRY_ISFILL(r)			((r)->_name == ROMENTRY_FILL)
-#define ROMENTRY_ISCOPY(r)			((r)->_name == ROMENTRY_COPY)
-#define ROMENTRY_ISREGIONEND(r)		(ROMENTRY_ISREGION(r) || ROMENTRY_ISEND(r))
 
 
 /* ----- per-region constants ----- */
@@ -136,22 +68,6 @@ struct _rom_load_data
 #define ROMREGION_DATATYPEMASK		0x00010000			/* inherit all flags from previous definition */
 #define		ROMREGION_DATATYPEROM	0x00000000
 #define		ROMREGION_DATATYPEDISK	0x00010000
-
-/* ----- per-region macros ----- */
-#define ROMREGION_GETTYPE(r)		((UINT32)(r)->_hashdata)
-#define ROMREGION_GETLENGTH(r)		((r)->_length)
-#define ROMREGION_GETFLAGS(r)		((r)->_flags)
-#define ROMREGION_GETWIDTH(r)		(8 << (ROMREGION_GETFLAGS(r) & ROMREGION_WIDTHMASK))
-#define ROMREGION_ISLITTLEENDIAN(r)	((ROMREGION_GETFLAGS(r) & ROMREGION_ENDIANMASK) == ROMREGION_LE)
-#define ROMREGION_ISBIGENDIAN(r)	((ROMREGION_GETFLAGS(r) & ROMREGION_ENDIANMASK) == ROMREGION_BE)
-#define ROMREGION_ISINVERTED(r)		((ROMREGION_GETFLAGS(r) & ROMREGION_INVERTMASK) == ROMREGION_INVERT)
-#define ROMREGION_ISDISPOSE(r)		((ROMREGION_GETFLAGS(r) & ROMREGION_DISPOSEMASK) == ROMREGION_DISPOSE)
-#define ROMREGION_ISLOADUPPER(r)	((ROMREGION_GETFLAGS(r) & ROMREGION_LOADUPPERMASK) == ROMREGION_LOADUPPER)
-#define ROMREGION_ISERASE(r)		((ROMREGION_GETFLAGS(r) & ROMREGION_ERASEMASK) == ROMREGION_ERASE)
-#define ROMREGION_GETERASEVAL(r)	((ROMREGION_GETFLAGS(r) & ROMREGION_ERASEVALMASK) >> 8)
-#define ROMREGION_GETDATATYPE(r)	(ROMREGION_GETFLAGS(r) & ROMREGION_DATATYPEMASK)
-#define ROMREGION_ISROMDATA(r)		(ROMREGION_GETDATATYPE(r) == ROMREGION_DATATYPEROM)
-#define ROMREGION_ISDISKDATA(r)		(ROMREGION_GETDATATYPE(r) == ROMREGION_DATATYPEDISK)
 
 
 /* ----- per-ROM constants ----- */
@@ -196,6 +112,96 @@ struct _rom_load_data
 
 #define ROM_INHERITEDFLAGS			(ROM_GROUPMASK | ROM_SKIPMASK | ROM_REVERSEMASK | ROM_BITWIDTHMASK | ROM_BITSHIFTMASK | ROM_BIOSFLAGSMASK)
 
+
+
+/***************************************************************************
+    TYPE DEFINITIONS
+***************************************************************************/
+
+typedef struct _rom_entry rom_entry;
+struct _rom_entry
+{
+	const char *	_name;				/* name of the file to load */
+	UINT32			_offset;			/* offset to load it to */
+	UINT32			_length;			/* length of the file */
+	UINT32			_flags;				/* flags */
+	const char *	_hashdata;			/* hashing informations (checksums) */
+};
+
+
+typedef struct _bios_entry bios_entry;
+struct _bios_entry
+{
+	int				value;				/* value of mask to apply to ROM_BIOSFLAGS is chosen */
+	const char *	_name;				/* name of the bios, e.g "default","japan" */
+	const char *	_description;		/* long name of the bios, e.g "Europe MVS (Ver. 2)" */
+};
+
+
+/* In mamecore.h: typedef struct _rom_load_data rom_load_data; */
+struct _rom_load_data
+{
+	int				warnings;			/* warning count during processing */
+	int				errors;				/* error count during processing */
+
+	int				romsloaded;			/* current ROMs loaded count */
+	int				romstotal;			/* total number of ROMs to read */
+
+	void *			file;				/* current file */
+
+	UINT8 *			regionbase;			/* base of current region */
+	UINT32			regionlength;		/* length of current region */
+
+	char			errorbuf[4096];		/* accumulated errors */
+	UINT8			tempbuf[65536];		/* temporary buffer */
+};
+
+
+
+/***************************************************************************
+    MACROS
+***************************************************************************/
+
+/* ----- per-entry macros ----- */
+#define ROMENTRY_REGION				((const char *)ROMENTRYTYPE_REGION)
+#define ROMENTRY_END				((const char *)ROMENTRYTYPE_END)
+#define ROMENTRY_RELOAD				((const char *)ROMENTRYTYPE_RELOAD)
+#define ROMENTRY_CONTINUE			((const char *)ROMENTRYTYPE_CONTINUE)
+#define ROMENTRY_FILL				((const char *)ROMENTRYTYPE_FILL)
+#define ROMENTRY_COPY				((const char *)ROMENTRYTYPE_COPY)
+#define ROMENTRY_CARTRIDGE			((const char *)ROMENTRYTYPE_CARTRIDGE)
+
+#define ROMENTRY_GETTYPE(r)			((FPTR)(r)->_name)
+#define ROMENTRY_ISSPECIAL(r)		(ROMENTRY_GETTYPE(r) < ROMENTRYTYPE_COUNT)
+#define ROMENTRY_ISFILE(r)			(!ROMENTRY_ISSPECIAL(r))
+#define ROMENTRY_ISREGION(r)		((r)->_name == ROMENTRY_REGION)
+#define ROMENTRY_ISEND(r)			((r)->_name == ROMENTRY_END)
+#define ROMENTRY_ISRELOAD(r)		((r)->_name == ROMENTRY_RELOAD)
+#define ROMENTRY_ISCONTINUE(r)		((r)->_name == ROMENTRY_CONTINUE)
+#define ROMENTRY_ISFILL(r)			((r)->_name == ROMENTRY_FILL)
+#define ROMENTRY_ISCOPY(r)			((r)->_name == ROMENTRY_COPY)
+#define ROMENTRY_ISREGIONEND(r)		(ROMENTRY_ISREGION(r) || ROMENTRY_ISEND(r))
+
+#define BIOSENTRY_ISEND(b)			((b)->_name == NULL)
+
+
+/* ----- per-region macros ----- */
+#define ROMREGION_GETTYPE(r)		((UINT32)(r)->_hashdata)
+#define ROMREGION_GETLENGTH(r)		((r)->_length)
+#define ROMREGION_GETFLAGS(r)		((r)->_flags)
+#define ROMREGION_GETWIDTH(r)		(8 << (ROMREGION_GETFLAGS(r) & ROMREGION_WIDTHMASK))
+#define ROMREGION_ISLITTLEENDIAN(r)	((ROMREGION_GETFLAGS(r) & ROMREGION_ENDIANMASK) == ROMREGION_LE)
+#define ROMREGION_ISBIGENDIAN(r)	((ROMREGION_GETFLAGS(r) & ROMREGION_ENDIANMASK) == ROMREGION_BE)
+#define ROMREGION_ISINVERTED(r)		((ROMREGION_GETFLAGS(r) & ROMREGION_INVERTMASK) == ROMREGION_INVERT)
+#define ROMREGION_ISDISPOSE(r)		((ROMREGION_GETFLAGS(r) & ROMREGION_DISPOSEMASK) == ROMREGION_DISPOSE)
+#define ROMREGION_ISLOADUPPER(r)	((ROMREGION_GETFLAGS(r) & ROMREGION_LOADUPPERMASK) == ROMREGION_LOADUPPER)
+#define ROMREGION_ISERASE(r)		((ROMREGION_GETFLAGS(r) & ROMREGION_ERASEMASK) == ROMREGION_ERASE)
+#define ROMREGION_GETERASEVAL(r)	((ROMREGION_GETFLAGS(r) & ROMREGION_ERASEVALMASK) >> 8)
+#define ROMREGION_GETDATATYPE(r)	(ROMREGION_GETFLAGS(r) & ROMREGION_DATATYPEMASK)
+#define ROMREGION_ISROMDATA(r)		(ROMREGION_GETDATATYPE(r) == ROMREGION_DATATYPEROM)
+#define ROMREGION_ISDISKDATA(r)		(ROMREGION_GETDATATYPE(r) == ROMREGION_DATATYPEDISK)
+
+
 /* ----- per-ROM macros ----- */
 #define ROM_GETNAME(r)				((r)->_name)
 #define ROM_SAFEGETNAME(r)			(ROMENTRY_ISFILL(r) ? "fill" : ROMENTRY_ISCOPY(r) ? "copy" : ROM_GETNAME(r))
@@ -213,21 +219,18 @@ struct _rom_load_data
 #define ROM_GETBIOSFLAGS(r)			((ROM_GETFLAGS(r) & ROM_BIOSFLAGSMASK) >> 28)
 #define ROM_NOGOODDUMP(r)			(hash_data_has_info((r)->_hashdata, HASH_INFO_NO_DUMP))
 
+
 /* ----- per-disk macros ----- */
 #define DISK_GETINDEX(r)			((r)->_offset)
 #define DISK_ISREADONLY(r)			((ROM_GETFLAGS(r) & DISK_READONLYMASK) == DISK_READONLY)
 
 
-
-/***************************************************************************
-
-    Derived macros for the ROM loading system
-
-***************************************************************************/
-
 /* ----- start/stop macros ----- */
 #define ROM_START(name)								static const rom_entry rom_##name[] = {
 #define ROM_END										{ ROMENTRY_END, 0, 0, 0, NULL } };
+#define SYSTEM_BIOS_START(name)						static const bios_entry system_bios_##name[] = {
+#define SYSTEM_BIOS_END								{ 0, NULL } };
+
 
 /* ----- ROM region macros ----- */
 #define ROM_REGION(length,type,flags)				{ ROMENTRY_REGION, 0, length, flags, (const char*)type },
@@ -237,6 +240,7 @@ struct _rom_load_data
 #define ROM_REGION32_BE(length,type,flags)			ROM_REGION(length, type, (flags) | ROMREGION_32BIT | ROMREGION_BE)
 #define ROM_REGION64_LE(length,type,flags)			ROM_REGION(length, type, (flags) | ROMREGION_64BIT | ROMREGION_LE)
 #define ROM_REGION64_BE(length,type,flags)			ROM_REGION(length, type, (flags) | ROMREGION_64BIT | ROMREGION_BE)
+
 
 /* ----- core ROM loading macros ----- */
 #define ROMMD5_LOAD(name,offset,length,hash,flags)	{ name, offset, length, flags, hash },
@@ -248,25 +252,29 @@ struct _rom_load_data
 #define ROM_FILL(offset,length,value)				ROM_LOAD(ROMENTRY_FILL, offset, length, (const char*)value)
 #define ROM_COPY(rgn,srcoffset,offset,length)		ROMX_LOAD(ROMENTRY_COPY, offset, length, (const char*)srcoffset, (rgn) << 24)
 
-/* ----- nibble loading macros ----- */
+
+/* ----- specialized loading macros ----- */
 #define ROM_LOAD_NIB_HIGH(name,offset,length,hash)	ROMX_LOAD(name, offset, length, hash, ROM_NIBBLE | ROM_SHIFT_NIBBLE_HI)
 #define ROM_LOAD_NIB_LOW(name,offset,length,hash)	ROMX_LOAD(name, offset, length, hash, ROM_NIBBLE | ROM_SHIFT_NIBBLE_LO)
-
-/* ----- new-style 16-bit loading macros ----- */
 #define ROM_LOAD16_BYTE(name,offset,length,hash)	ROMX_LOAD(name, offset, length, hash, ROM_SKIP(1))
 #define ROM_LOAD16_WORD(name,offset,length,hash)	ROM_LOAD(name, offset, length, hash)
 #define ROM_LOAD16_WORD_SWAP(name,offset,length,hash) ROMX_LOAD(name, offset, length, hash, ROM_GROUPWORD | ROM_REVERSE)
-
-/* ----- new-style 32-bit loading macros ----- */
 #define ROM_LOAD32_BYTE(name,offset,length,hash)	ROMX_LOAD(name, offset, length, hash, ROM_SKIP(3))
 #define ROM_LOAD32_WORD(name,offset,length,hash)	ROMX_LOAD(name, offset, length, hash, ROM_GROUPWORD | ROM_SKIP(2))
 #define ROM_LOAD32_WORD_SWAP(name,offset,length,hash) ROMX_LOAD(name, offset, length, hash, ROM_GROUPWORD | ROM_REVERSE | ROM_SKIP(2))
 #define ROM_LOAD32_DWORD(name,offset,length,hash)	ROMX_LOAD(name, offset, length, hash, ROM_GROUPDWORD)
 
+
+/* ----- system BIOS macros ----- */
+#define SYSTEM_BIOS_ADD(value,name,description)		{ (int)value, (const char*)name, (const char*)description },
+#define BIOS_DEFAULT								"default"
+
+
 /* ----- disk loading macros ----- */
 #define DISK_REGION(type)							ROM_REGION(1, type, ROMREGION_DATATYPEDISK)
 #define DISK_IMAGE(name,idx,hash)					ROMMD5_LOAD(name, idx, 0, hash, DISK_READWRITE)
 #define DISK_IMAGE_READONLY(name,idx,hash)			ROMMD5_LOAD(name, idx, 0, hash, DISK_READONLY)
+
 
 /* ----- hash macros ----- */
 #define CRC(x)										"c:" #x "#"
@@ -278,27 +286,7 @@ struct _rom_load_data
 
 
 /***************************************************************************
-
-    Derived macros for the alternate BIOS loading system
-
-***************************************************************************/
-
-#define BIOSENTRY_ISEND(b)				((b)->_name == NULL)
-
-/* ----- start/stop macros ----- */
-#define SYSTEM_BIOS_START(name)			static const bios_entry system_bios_##name[] = {
-#define SYSTEM_BIOS_END					{ 0, NULL } };
-
-/* ----- ROM region macros ----- */
-#define SYSTEM_BIOS_ADD(value,name,description)		{ (int)value, (const char*)name, (const char*)description },
-#define BIOS_DEFAULT					"default"
-
-
-
-/***************************************************************************
-
-    Function prototypes
-
+    FUNCTION PROTOTYPES
 ***************************************************************************/
 
 /* disk handling */

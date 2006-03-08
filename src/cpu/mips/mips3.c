@@ -9,15 +9,10 @@
 
 ***************************************************************************/
 
-#include <stdio.h>
-#include <stddef.h>
-#include <stdlib.h>
-#include <string.h>
 #include <math.h>
 #include "driver.h"
 #include "debugger.h"
 #include "mips3.h"
-#include "debugcpu.h"
 
 
 #define ENABLE_OVERFLOWS	0
@@ -220,6 +215,8 @@ typedef struct
 	UINT8		is_mips4;
 	UINT32		ll_value;
 	UINT64		lld_value;
+	UINT32		system_clock;
+	UINT32		cpu_clock;
 
 	/* endian-dependent load/store */
 	void		(*lwl)(UINT32 op);
@@ -452,24 +449,30 @@ static void compare_int_callback(int cpu)
 }
 
 
-static void mips3_init(void)
+static void mips3_init(int index, int clock, const void *_config, int (*irqcallback)(int))
 {
+	const struct mips3_config *config = _config;
+
+	mips3.irq_callback = irqcallback;
 	mips3.compare_int_timer = timer_alloc(compare_int_callback);
+
+	/* allocate memory */
+	mips3.icache = auto_malloc(config->icache);
+	mips3.dcache = auto_malloc(config->dcache);
+	mips3.tlb_table = auto_malloc(sizeof(mips3.tlb_table[0]) * (1 << (32 - 12)));
+
+	/* initialize the rest of the config */
+	mips3.icache_size = config->icache;
+	mips3.dcache_size = config->dcache;
+	mips3.system_clock = config->system_clock;
+	mips3.cpu_clock = clock;
 }
 
 
-static void mips3_reset(void *param, int bigendian, int mips4, UINT32 prid)
+static void mips3_reset(int bigendian, int mips4, UINT32 prid)
 {
-	struct mips3_config *config = param;
 	UINT32 configreg;
 	int divisor;
-
-	/* allocate memory */
-	mips3.icache = malloc(config->icache);
-	mips3.dcache = malloc(config->dcache);
-	mips3.tlb_table = malloc(sizeof(mips3.tlb_table[0]) * (1 << (32 - 12)));
-	if (!mips3.icache || !mips3.dcache || !mips3.tlb_table)
-		fatalerror("error: couldn't allocate cache for mips3!");
 
 	/* set up the endianness */
 	mips3.bigendian = bigendian;
@@ -498,10 +501,6 @@ static void mips3_reset(void *param, int bigendian, int mips4, UINT32 prid)
 		mips3.sdr = sdr_le;
 	}
 
-	/* initialize the rest of the config */
-	mips3.icache_size = config->icache;
-	mips3.dcache_size = config->dcache;
-
 	/* initialize the state */
 	mips3.pc = 0xbfc00000;
 	mips3.ppc = ~mips3.pc;
@@ -515,37 +514,37 @@ static void mips3_reset(void *param, int bigendian, int mips4, UINT32 prid)
 	configreg = 0x00026030;
 
 	/* config register: set the data cache size */
-	     if (config->icache <= 0x01000) configreg |= 0 << 6;
-	else if (config->icache <= 0x02000) configreg |= 1 << 6;
-	else if (config->icache <= 0x04000) configreg |= 2 << 6;
-	else if (config->icache <= 0x08000) configreg |= 3 << 6;
-	else if (config->icache <= 0x10000) configreg |= 4 << 6;
-	else if (config->icache <= 0x20000) configreg |= 5 << 6;
-	else if (config->icache <= 0x40000) configreg |= 6 << 6;
-	else                                configreg |= 7 << 6;
+	     if (mips3.icache_size <= 0x01000) configreg |= 0 << 6;
+	else if (mips3.icache_size <= 0x02000) configreg |= 1 << 6;
+	else if (mips3.icache_size <= 0x04000) configreg |= 2 << 6;
+	else if (mips3.icache_size <= 0x08000) configreg |= 3 << 6;
+	else if (mips3.icache_size <= 0x10000) configreg |= 4 << 6;
+	else if (mips3.icache_size <= 0x20000) configreg |= 5 << 6;
+	else if (mips3.icache_size <= 0x40000) configreg |= 6 << 6;
+	else                                   configreg |= 7 << 6;
 
 	/* config register: set the instruction cache size */
-	     if (config->icache <= 0x01000) configreg |= 0 << 9;
-	else if (config->icache <= 0x02000) configreg |= 1 << 9;
-	else if (config->icache <= 0x04000) configreg |= 2 << 9;
-	else if (config->icache <= 0x08000) configreg |= 3 << 9;
-	else if (config->icache <= 0x10000) configreg |= 4 << 9;
-	else if (config->icache <= 0x20000) configreg |= 5 << 9;
-	else if (config->icache <= 0x40000) configreg |= 6 << 9;
-	else                                configreg |= 7 << 9;
+	     if (mips3.icache_size <= 0x01000) configreg |= 0 << 9;
+	else if (mips3.icache_size <= 0x02000) configreg |= 1 << 9;
+	else if (mips3.icache_size <= 0x04000) configreg |= 2 << 9;
+	else if (mips3.icache_size <= 0x08000) configreg |= 3 << 9;
+	else if (mips3.icache_size <= 0x10000) configreg |= 4 << 9;
+	else if (mips3.icache_size <= 0x20000) configreg |= 5 << 9;
+	else if (mips3.icache_size <= 0x40000) configreg |= 6 << 9;
+	else                                   configreg |= 7 << 9;
 
 	/* config register: set the endianness bit */
 	if (bigendian) configreg |= 0x00008000;
 
 	/* config register: set the system clock divider */
 	divisor = 2;
-	if (config->system_clock != 0)
+	if (mips3.system_clock != 0)
 	{
-		divisor = Machine->drv->cpu[cpu_getactivecpu()].cpu_clock / config->system_clock;
-		if (config->system_clock * divisor != Machine->drv->cpu[cpu_getactivecpu()].cpu_clock)
+		divisor = mips3.cpu_clock / mips3.system_clock;
+		if (mips3.system_clock * divisor != mips3.cpu_clock)
 		{
 			configreg |= 0x80000000;
-			divisor = Machine->drv->cpu[cpu_getactivecpu()].cpu_clock * 2 / config->system_clock;
+			divisor = mips3.cpu_clock * 2 / mips3.system_clock;
 		}
 	}
 	configreg |= (((divisor < 2) ? 2 : (divisor > 8) ? 8 : divisor) - 2) << 28;
@@ -561,84 +560,72 @@ static void mips3_reset(void *param, int bigendian, int mips4, UINT32 prid)
 
 
 #if (HAS_R4600)
-static void r4600be_reset(void *param)
+static void r4600be_reset(void)
 {
-	mips3_reset(param, 1, 0, 0x2000);
+	mips3_reset(1, 0, 0x2000);
 }
 
-static void r4600le_reset(void *param)
+static void r4600le_reset(void)
 {
-	mips3_reset(param, 0, 0, 0x2000);
+	mips3_reset(0, 0, 0x2000);
 }
 #endif
 
 
 #if (HAS_R4700)
-static void r4700be_reset(void *param)
+static void r4700be_reset(void)
 {
-	mips3_reset(param, 1, 0, 0x2100);
+	mips3_reset(1, 0, 0x2100);
 }
 
-static void r4700le_reset(void *param)
+static void r4700le_reset(void)
 {
-	mips3_reset(param, 0, 0, 0x2100);
+	mips3_reset(0, 0, 0x2100);
 }
 #endif
 
 
 #if (HAS_R5000)
-static void r5000be_reset(void *param)
+static void r5000be_reset(void)
 {
-	mips3_reset(param, 1, 1, 0x2300);
+	mips3_reset(1, 1, 0x2300);
 }
 
-static void r5000le_reset(void *param)
+static void r5000le_reset(void)
 {
-	mips3_reset(param, 0, 1, 0x2300);
+	mips3_reset(0, 1, 0x2300);
 }
 #endif
 
 
 #if (HAS_QED5271)
-static void qed5271be_reset(void *param)
+static void qed5271be_reset(void)
 {
-	mips3_reset(param, 1, 1, 0x2300);
+	mips3_reset(1, 1, 0x2300);
 }
 
-static void qed5271le_reset(void *param)
+static void qed5271le_reset(void)
 {
-	mips3_reset(param, 1, 0, 0x2300);
+	mips3_reset(1, 0, 0x2300);
 }
 #endif
 
 
 #if (HAS_RM7000)
-static void rm7000be_reset(void *param)
+static void rm7000be_reset(void)
 {
-	mips3_reset(param, 1, 1, 0x2700);
+	mips3_reset(1, 1, 0x2700);
 }
 
-static void rm7000le_reset(void *param)
+static void rm7000le_reset(void)
 {
-	mips3_reset(param, 0, 1, 0x2700);
+	mips3_reset(0, 1, 0x2700);
 }
 #endif
 
 
 static void mips3_exit(void)
 {
-	/* free cache memory */
-	if (mips3.icache)
-		free(mips3.icache);
-	mips3.icache = NULL;
-
-	if (mips3.dcache)
-		free(mips3.dcache);
-	mips3.dcache = NULL;
-
-	if (mips3.tlb_table)
-		free(mips3.tlb_table);
-	mips3.tlb_table = NULL;
 }
 
 
@@ -2844,9 +2831,6 @@ static void mips3_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + MIPS3_R31:			mips3.r[31] = info->i;					break;
 		case CPUINFO_INT_REGISTER + MIPS3_HI:			mips3.hi = info->i;						break;
 		case CPUINFO_INT_REGISTER + MIPS3_LO:			mips3.lo = info->i;						break;
-
-		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_IRQ_CALLBACK:					mips3.irq_callback = info->irqcallback;	break;
 	}
 }
 
@@ -2950,7 +2934,6 @@ void mips3_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = mips3_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = mips3_dasm;		break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = mips3.irq_callback;	break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &mips3_icount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = mips3_reg_layout;				break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = mips3_win_layout;				break;

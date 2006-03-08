@@ -34,12 +34,8 @@
  * Jeffery L. Post
  *****************************************************************************/
 
-#include <stdio.h>
-
-#ifdef MAME_DEBUG
-#include "driver.h"
 #include "debugger.h"
-#include "eainfo.h"
+#include "debug/eainfo.h"
 #include "i8051.h"
 
 #define SHOW_MEMORY_NAMES	1
@@ -1152,5 +1148,3 @@ unsigned Dasm8051(char *dst, unsigned pc)
     }
 	return PC - pc;
 }
-
-#endif

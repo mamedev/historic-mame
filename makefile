@@ -190,7 +190,7 @@ endif
 # compile and linking flags
 #-------------------------------------------------
 
-CFLAGS = -std=gnu89 -Isrc -Isrc/includes -Isrc/debug -Isrc/$(MAMEOS)
+CFLAGS = -std=gnu89 -Isrc -Isrc/includes -Isrc/$(MAMEOS)
 
 ifdef SYMBOLS
 CFLAGS += -O0 -Wall -Wno-unused -g

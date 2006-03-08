@@ -1,8 +1,7 @@
 #ifndef _MIPS_H
 #define _MIPS_H
 
-#include "osd_cpu.h"
-#include "driver.h"
+#include "cpuintrf.h"
 
 enum
 {

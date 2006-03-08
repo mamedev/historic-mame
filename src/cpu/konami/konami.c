@@ -34,11 +34,7 @@
 
 *****************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include "cpuintrf.h"
 #include "debugger.h"
-#include "state.h"
 #include "konami.h"
 
 #define VERBOSE 0
@@ -407,11 +403,12 @@ static void konami_set_context(void *src)
 /****************************************************************************/
 /* Reset registers to their initial values                                  */
 /****************************************************************************/
-static void konami_init(void)
+static void konami_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
+	konami.irq_callback = irqcallback;
 }
 
-static void konami_reset(void *param)
+static void konami_reset(void)
 {
 	konami.int_state = 0;
 	konami.nmi_state = CLEAR_LINE;
@@ -578,8 +575,7 @@ static void konami_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + KONAMI_DP:			DP = info->i;							break;
 
 		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_IRQ_CALLBACK:					konami.irq_callback = info->irqcallback; break;
-	case CPUINFO_PTR_KONAMI_SETLINES_CALLBACK:		konami.setlines_callback = (void (*)(int))info->f; break;
+		case CPUINFO_PTR_KONAMI_SETLINES_CALLBACK:		konami.setlines_callback = (void (*)(int))info->f; break;
 	}
 }
 
@@ -642,7 +638,6 @@ void konami_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = konami_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = konami_dasm;	break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = konami.irq_callback; break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &konami_ICount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = konami_reg_layout;			break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = konami_win_layout;			break;

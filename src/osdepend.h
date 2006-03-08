@@ -31,6 +31,7 @@ void osd_wait_for_debugger(void);
 ******************************************************************************/
 
 /* these are the parameters passed into osd_create_display */
+/* In mamecore.h: typedef struct _osd_create_params osd_create_params; */
 struct _osd_create_params
 {
 	int width, height;			/* width and height */
@@ -40,7 +41,6 @@ struct _osd_create_params
 	float fps;					/* frame rate */
 	int video_attributes;		/* video flags from driver */
 };
-/* In mamecore.h: typedef struct _osd_create_params osd_create_params; */
 
 
 
@@ -169,13 +169,13 @@ void osd_sound_enable(int enable);
 
 typedef UINT32 os_code;
 
+typedef struct _os_code_info os_code_info;
 struct _os_code_info
 {
 	char *			name;			/* OS dependant name; 0 terminates the list */
 	os_code		oscode;			/* OS dependant code */
 	input_code	inputcode;		/* CODE_xxx equivalent from input.h, or one of CODE_OTHER_* if n/a */
 };
-typedef struct _os_code_info os_code_info;
 
 /*
   return a list of all available inputs (see input.h)
@@ -234,13 +234,13 @@ void osd_joystick_end_calibration(void);
 ******************************************************************************/
 
 /* inp header */
+typedef struct _inp_header inp_header;
 struct _inp_header
 {
 	char name[9];      /* 8 bytes for game->name + NUL */
 	char version[3];   /* byte[0] = 0, byte[1] = version byte[2] = beta_version */
 	char reserved[20]; /* for future use, possible store game options? */
 };
-typedef struct _inp_header inp_header;
 
 
 /* These values are returned by osd_get_path_info */
@@ -270,6 +270,9 @@ int osd_get_path_count(int pathtype);
 
 /* Get information on the existence of a file */
 int osd_get_path_info(int pathtype, int pathindex, const char *filename);
+
+/* Create a directory if it doesn't already exist */
+int osd_create_directory(int pathtype, int pathindex, const char *dirname);
 
 /* Attempt to open a file with the given name and mode using the specified path type */
 osd_file *osd_fopen(int pathtype, int pathindex, const char *filename, const char *mode, osd_file_error *error);

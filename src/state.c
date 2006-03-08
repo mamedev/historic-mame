@@ -29,7 +29,7 @@
     DEBUGGING
 ***************************************************************************/
 
-//#define VERBOSE
+#define VERBOSE
 
 #ifdef VERBOSE
 #define TRACE(x) do {x;} while (0)
@@ -960,6 +960,31 @@ void state_save_load_finish(void)
     Debugging
 
 ***************************************************************************/
+
+/*-------------------------------------------------
+    state_save_get_indexed_item - return an item
+    with the given index
+-------------------------------------------------*/
+
+const char *state_save_get_indexed_item(int index, void **base, UINT32 *valsize, UINT32 *valcount)
+{
+	ss_entry *ss;
+
+	for (ss = ss_registry; ss != NULL; ss = ss->next)
+		if (index-- == 0)
+		{
+			if (base != NULL)
+				*base = ss->data;
+			if (valsize != NULL)
+				*valsize = ss->typesize;
+			if (valcount != NULL)
+				*valcount = ss->typecount;
+			return ss->name;
+		}
+
+	return NULL;
+}
+
 
 /*-------------------------------------------------
     state_save_dump_registry - dump the registry

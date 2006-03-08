@@ -23,7 +23,7 @@ added external port callback, and functions to set the volume of the channels
 */
 
 
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
 #include "k007232.h"
 #include <math.h>

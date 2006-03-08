@@ -97,14 +97,11 @@
 
 *************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <math.h>
 
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
 #include "upd7759.h"
-#include "streams.h"
 
 
 #define DEBUG_STATES	(0)

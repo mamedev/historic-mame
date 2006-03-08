@@ -99,6 +99,9 @@ extern int			win_color32_rdst_shift;
 extern int			win_color32_gdst_shift;
 extern int			win_color32_bdst_shift;
 
+// raw mouse support
+extern int			win_use_raw_mouse;
+
 
 
 //============================================================
@@ -154,6 +157,8 @@ UINT32 *win_prepare_palette(win_blit_params *params);
 int win_lookup_effect(const char *arg);
 int win_determine_effect(const win_blit_params *params);
 void win_compute_multipliers(const RECT *rect, int *xmult, int *ymult);
+
+BOOL win_raw_mouse_update(HANDLE in_device_handle);
 
 LRESULT CALLBACK win_video_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam);
 

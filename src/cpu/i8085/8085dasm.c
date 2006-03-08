@@ -42,7 +42,6 @@
  *
  *****************************************************************************/
 
-#include <stdio.h>
 #include "memory.h"
 
 /* 8080/8085A mnemonics were more irritation than information

@@ -33,7 +33,6 @@
                 - calls drawgfx_init() [drawgfx.c] to initialize rendering globals
                 - calls generic_machine_init() [machine/generic.c] to initialize generic machine structures
                 - calls generic_video_init() [vidhrdw/generic.c] to initialize generic video structures
-                - calls memcard_init() [usrintrf.c] to initialize memory card state
                 - calls osd_init() [osdepend.h] to do platform-specific initialization
                 - calls code_init() [input.c] to initialize the input system
                 - calls input_port_init() [inptport.c] to set up the input ports
@@ -41,7 +40,8 @@
                 - calls state_save_allow_registration() [state.c] to allow registrations
                 - calls timer_init() [timer.c] to reset the timer system
                 - calls memory_init() [memory.c] to process the game's memory maps
-                - calls cpu_init() [cpuexec.c] to initialize the CPUs
+                - calls cpuexec_init() [cpuexec.c] to initialize the CPUs
+                - calls cpuint_init() [cpuint.c] to initialize the CPU interrupts
                 - calls hiscore_init() [hiscore.c] to initialize the hiscores
                 - calls saveload_init() [mame.c] to set up for save/load
                 - calls the driver's DRIVER_INIT callback
@@ -60,7 +60,7 @@
 
                 -------------------( at this point, we're up and running )----------------------
 
-            - calls cpu_timeslice() [cpuexec.c] over and over until we exit
+            - calls cpuexec_timeslice() [cpuexec.c] over and over until we exit
             - ends resource tracking (level 2), freeing all auto_mallocs and timers
             - calls the nvram_save() [machine/generic.c] to save NVRAM
             - calls config_save_settings() [config.c] to save the game's configuration
@@ -131,7 +131,7 @@ struct _callback_item
 
 /* the active machine */
 static running_machine active_machine;
-running_machine *Machine = &active_machine;
+running_machine *Machine;
 
 /* the active game driver */
 static machine_config internal_drv;
@@ -139,11 +139,13 @@ static machine_config internal_drv;
 /* various game options filled in by the OSD */
 global_options options;
 
-/* misc other statics */
+/* system state statics */
+static int current_phase;
 static UINT8 mame_paused;
 static UINT8 hard_reset_pending;
 static UINT8 exit_pending;
 static char *saveload_pending_file;
+static mame_timer *soft_reset_timer;
 
 /* load/save statics */
 static mame_timer *saveload_timer;
@@ -166,6 +168,9 @@ int resource_tracking_tag = 0;
 /* array of memory regions */
 static region_info mem_region[MAX_MEMORY_REGIONS];
 
+/* random number seed */
+static UINT32 rand_seed;
+
 /* a giant string buffer for temporary strings */
 char giant_string_buffer[65536];
 
@@ -186,9 +191,10 @@ const char *mame_disclaimer =
     PROTOTYPES
 ***************************************************************************/
 
-extern int mame_validitychecks(void);
+extern int mame_validitychecks(int game);
 
 static void create_machine(int game);
+static void destroy_machine(void);
 static void init_machine(void);
 static void soft_reset(int param);
 static void free_callback_list(callback_item **cb);
@@ -215,8 +221,11 @@ int run_game(int game)
 	callback_item *cb;
 	int error = 0;
 
+	/* start in the "pre-init phase" */
+	current_phase = MAME_PHASE_PREINIT;
+
 	/* perform validity checks before anything else */
-	if (mame_validitychecks() != 0)
+	if (mame_validitychecks(game) != 0)
 		return 1;
 
 	/* loop across multiple hard resets */
@@ -228,6 +237,9 @@ int run_game(int game)
 		if (error == 0)
 		{
 			int settingsloaded;
+
+			/* move to the init phase */
+			current_phase = MAME_PHASE_INIT;
 
 			/* start tracking resources for real */
 			begin_resource_tracking();
@@ -254,7 +266,7 @@ int run_game(int game)
 			/* to clear out resources allocated between resets */
 			begin_resource_tracking();
 
-			/* perform a soft reset */
+			/* perform a soft reset -- this takes us to the running phase */
 			soft_reset(0);
 
 			/* run the CPUs until a reset or exit */
@@ -265,7 +277,7 @@ int run_game(int game)
 
 				/* execute CPUs if not paused */
 				if (!mame_paused)
-					cpu_timeslice();
+					cpuexec_timeslice();
 
 				/* otherwise, just pump video updates through */
 				else
@@ -276,6 +288,9 @@ int run_game(int game)
 
 				profiler_mark(PROFILER_END);
 			}
+
+			/* and out via the exit phase */
+			current_phase = MAME_PHASE_EXIT;
 
 			/* stop tracking resources at this level */
 			end_resource_tracking();
@@ -305,6 +320,17 @@ int run_game(int game)
 
 
 /*-------------------------------------------------
+    mame_get_phase - return the current program
+    phase
+-------------------------------------------------*/
+
+int mame_get_phase(void)
+{
+	return current_phase;
+}
+
+
+/*-------------------------------------------------
     add_exit_callback - request a callback on
     termination
 -------------------------------------------------*/
@@ -312,6 +338,8 @@ int run_game(int game)
 void add_exit_callback(void (*callback)(void))
 {
 	callback_item *cb;
+
+	assert_always(mame_get_phase() == MAME_PHASE_INIT, "Can only call add_exit_callback at init time!");
 
 	/* allocate memory */
 	cb = malloc_or_die(sizeof(*cb));
@@ -332,6 +360,8 @@ void add_reset_callback(void (*callback)(void))
 {
 	callback_item *cb, **cur;
 
+	assert_always(mame_get_phase() == MAME_PHASE_INIT, "Can only call add_reset_callback at init time!");
+
 	/* allocate memory */
 	cb = malloc_or_die(sizeof(*cb));
 
@@ -351,6 +381,8 @@ void add_reset_callback(void (*callback)(void))
 void add_pause_callback(void (*callback)(int))
 {
 	callback_item *cb, **cur;
+
+	assert_always(mame_get_phase() == MAME_PHASE_INIT, "Can only call add_pause_callback at init time!");
 
 	/* allocate memory */
 	cb = malloc_or_die(sizeof(*cb));
@@ -402,7 +434,10 @@ void mame_schedule_hard_reset(void)
 
 void mame_schedule_soft_reset(void)
 {
-	mame_timer_set(time_zero, 0, soft_reset);
+	mame_timer_adjust(soft_reset_timer, time_zero, 0, time_zero);
+
+	/* we can't be paused since the timer needs to fire */
+	mame_pause(FALSE);
 }
 
 
@@ -598,6 +633,32 @@ size_t memory_region_length(int num)
 }
 
 
+/*-------------------------------------------------
+    memory_region_type - returns the type of a
+    memory region
+-------------------------------------------------*/
+
+UINT32 memory_region_type(int num)
+{
+	/* convert to an index and return the result */
+	num = memory_region_to_index(num);
+	return (num >= 0) ? mem_region[num].type : 0;
+}
+
+
+/*-------------------------------------------------
+    memory_region_flags - returns flags for a
+    memory region
+-------------------------------------------------*/
+
+UINT32 memory_region_flags(int num)
+{
+	/* convert to an index and return the result */
+	num = memory_region_to_index(num);
+	return (num >= 0) ? mem_region[num].flags : 0;
+}
+
+
 
 /***************************************************************************
 
@@ -747,7 +808,7 @@ void CLIB_DECL logerror(const char *text, ...)
 {
 	va_list arg;
 
-	/* dump to the buffer; assume no one writes >2k lines to error.log */
+	/* dump to the buffer */
 	va_start(arg, text);
 	vsnprintf(giant_string_buffer, sizeof(giant_string_buffer), text, arg);
 	va_end(arg);
@@ -804,6 +865,17 @@ int mame_find_cpu_index(const char *tag)
 
 
 /*-------------------------------------------------
+    mame_rand - standardized random numbers
+-------------------------------------------------*/
+
+UINT32 mame_rand(void)
+{
+	rand_seed = 1664525 * rand_seed + 1013904223;
+	return rand_seed;
+}
+
+
+/*-------------------------------------------------
     mame_stricmp - case-insensitive string compare
 -------------------------------------------------*/
 
@@ -816,6 +888,25 @@ int mame_stricmp(const char *s1, const char *s2)
 		if (c1 == 0 || c1 != c2)
 			return c1 - c2;
  	}
+}
+
+
+/*-------------------------------------------------
+    mame_strnicmp - case-insensitive string compare
+-------------------------------------------------*/
+
+int mame_strnicmp(const char *s1, const char *s2, size_t n)
+{
+	size_t i;
+	for (i = 0; i < n; i++)
+ 	{
+		int c1 = tolower(*s1++);
+		int c2 = tolower(*s2++);
+		if (c1 == 0 || c1 != c2)
+			return c1 - c2;
+ 	}
+
+	return 0;
 }
 
 
@@ -851,6 +942,7 @@ char *mame_strdup(const char *str)
 static void create_machine(int game)
 {
 	/* first give the machine a good cleaning */
+	Machine = &active_machine;
 	memset(Machine, 0, sizeof(*Machine));
 
 	/* initialize the driver-related variables in the Machine */
@@ -880,6 +972,20 @@ static void create_machine(int game)
 
 	/* get orientation right */
 	Machine->ui_orientation = options.ui_orientation;
+
+	/* add an exit callback to clear out the Machine on the way out */
+	add_exit_callback(destroy_machine);
+}
+
+
+/*-------------------------------------------------
+    destroy_machine - "destroy" the Machine by
+    NULLing it out
+-------------------------------------------------*/
+
+static void destroy_machine(void)
+{
+	Machine = NULL;
 }
 
 
@@ -900,7 +1006,7 @@ static void init_machine(void)
 	drawgfx_init();
 	generic_machine_init();
 	generic_video_init();
-	memcard_init();
+	rand_seed = 0x9d14abd7;
 
 	/* init the osd layer */
 	if (osd_init() != 0)
@@ -925,9 +1031,10 @@ static void init_machine(void)
 	/* allow save state registrations starting here */
 	state_save_allow_registration(TRUE);
 
-	/* initialize the timers */
+	/* initialize the timers and allocate a soft_reset timer */
 	/* this must be done before cpu_init so that CPU's can allocate timers */
 	timer_init();
+	soft_reset_timer = timer_alloc(soft_reset);
 
 	/* initialize the memory system for this game */
 	/* this must be done before cpu_init so that set_context can look up the opcode base */
@@ -935,8 +1042,10 @@ static void init_machine(void)
 		fatalerror("memory_init failed");
 
 	/* now set up all the CPUs */
-	if (cpu_init() != 0)
-		fatalerror("cpu_init failed");
+	if (cpuexec_init() != 0)
+		fatalerror("cpuexec_init failed");
+	if (cpuint_init() != 0)
+		fatalerror("cpuint_init failed");
 
 #ifdef MESS
 	/* initialize the devices */
@@ -1000,6 +1109,9 @@ static void soft_reset(int param)
 
 	logerror("Soft reset\n");
 
+	/* temporarily in the reset phase */
+	current_phase = MAME_PHASE_RESET;
+
 	/* a bit gross -- back off of the resource tracking, and put it back at the end */
 	assert(resource_tracking_tag == 2);
 	end_resource_tracking();
@@ -1008,9 +1120,10 @@ static void soft_reset(int param)
 	/* allow save state registrations during the reset */
 	state_save_allow_registration(TRUE);
 
-	/* call all registered reset callbacks */
-	for (cb = reset_callback_list; cb; cb = cb->next)
-		(*cb->func.reset)();
+	/* unfortunately, we can't rely on callbacks to reset the interrupt */
+	/* structures, as these need to happen before we call the reset */
+	/* functions registered by the drivers */
+	cpuint_reset();
 
 	/* run the driver's reset callbacks */
 	if (Machine->drv->machine_reset != NULL)
@@ -1020,8 +1133,15 @@ static void soft_reset(int param)
 	if (Machine->drv->video_reset != NULL)
 		(*Machine->drv->video_reset)();
 
+	/* call all registered reset callbacks */
+	for (cb = reset_callback_list; cb; cb = cb->next)
+		(*cb->func.reset)();
+
 	/* disallow save state registrations starting here */
 	state_save_allow_registration(FALSE);
+
+	/* now we're running */
+	current_phase = MAME_PHASE_RUNNING;
 
 	/* set the global time to the current time */
 	/* this allows 0-time queued callbacks to run before any CPUs execute */

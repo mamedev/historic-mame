@@ -979,29 +979,27 @@ static void m68k_post_load(void)
 	m68ki_jump(REG_PC);
 }
 
-void m68k_state_register(const char *type)
+void m68k_state_register(const char *type, int index)
 {
-	int cpu = cpu_getactivecpu();
-
-	state_save_register_item_array(type, cpu, REG_D);
-	state_save_register_item_array(type, cpu, REG_A);
-	state_save_register_item(type, cpu, REG_PPC);
-	state_save_register_item(type, cpu, REG_PC);
-	state_save_register_item(type, cpu, REG_USP);
-	state_save_register_item(type, cpu, REG_ISP);
-	state_save_register_item(type, cpu, REG_MSP);
-	state_save_register_item(type, cpu, REG_VBR);
-	state_save_register_item(type, cpu, REG_SFC);
-	state_save_register_item(type, cpu, REG_DFC);
-	state_save_register_item(type, cpu, REG_CACR);
-	state_save_register_item(type, cpu, REG_CAAR);
-	state_save_register_item(type, cpu, m68k_substate.sr);
-	state_save_register_item(type, cpu, CPU_INT_LEVEL);
-	state_save_register_item(type, cpu, CPU_INT_CYCLES);
-	state_save_register_item(type, cpu, m68k_substate.stopped);
-	state_save_register_item(type, cpu, m68k_substate.halted);
-	state_save_register_item(type, cpu, CPU_PREF_ADDR);
-	state_save_register_item(type, cpu, CPU_PREF_DATA);
+	state_save_register_item_array(type, index, REG_D);
+	state_save_register_item_array(type, index, REG_A);
+	state_save_register_item(type, index, REG_PPC);
+	state_save_register_item(type, index, REG_PC);
+	state_save_register_item(type, index, REG_USP);
+	state_save_register_item(type, index, REG_ISP);
+	state_save_register_item(type, index, REG_MSP);
+	state_save_register_item(type, index, REG_VBR);
+	state_save_register_item(type, index, REG_SFC);
+	state_save_register_item(type, index, REG_DFC);
+	state_save_register_item(type, index, REG_CACR);
+	state_save_register_item(type, index, REG_CAAR);
+	state_save_register_item(type, index, m68k_substate.sr);
+	state_save_register_item(type, index, CPU_INT_LEVEL);
+	state_save_register_item(type, index, CPU_INT_CYCLES);
+	state_save_register_item(type, index, m68k_substate.stopped);
+	state_save_register_item(type, index, m68k_substate.halted);
+	state_save_register_item(type, index, CPU_PREF_ADDR);
+	state_save_register_item(type, index, CPU_PREF_DATA);
 	state_save_register_func_presave(m68k_prepare_substate);
 	state_save_register_func_postload(m68k_post_load);
 }

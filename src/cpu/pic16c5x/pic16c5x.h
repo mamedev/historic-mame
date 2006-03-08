@@ -13,9 +13,7 @@
 #define _PIC16C5X_H
 
 
-#include "osd_cpu.h"
 #include "cpuintrf.h"
-#include "memory.h"
 
 
 /**************************************************************************

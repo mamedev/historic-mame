@@ -3,7 +3,7 @@
     Relies on the actual CD logic and reading in cdrom.c.
 */
 
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
 #include "cpuintrf.h"
 #include "cdrom.h"

@@ -5,7 +5,7 @@
    NEC V-Series support by Bryan McPhail (currently incomplete)
 */
 
-#include "driver.h"
+#include "cpuintrf.h"
 
 enum {
 	PARAM_REG = 1,		/* 16 or 32-bit register */

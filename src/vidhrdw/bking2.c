@@ -28,7 +28,6 @@ static int crow_flip;
 static int palette_bank;
 static int controller;
 static int hit;
-static int flip_screen;
 
 static mame_bitmap* helper0;
 static mame_bitmap* helper1;

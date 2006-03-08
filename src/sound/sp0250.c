@@ -17,7 +17,7 @@
 */
 
 #include <math.h>
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
 #include "cpuintrf.h"
 #include "sp0250.h"

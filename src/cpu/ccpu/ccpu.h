@@ -11,6 +11,7 @@
 #ifndef _CCPU_H_
 #define	_CCPU_H_
 
+#include "cpuintrf.h"
 
 /***************************************************************************
     REGISTER ENUMERATION

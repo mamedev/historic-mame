@@ -224,15 +224,16 @@ static UINT8 m68000_win_layout[] = {
 	 0,23,80, 1 	/* command line window (bottom rows) */
 };
 
-static void m68000_init(void)
+static void m68000_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
 	m68k_init();
 	m68k_set_cpu_type(M68K_CPU_TYPE_68000);
 	m68k_memory_intf = interface_d16;
-	m68k_state_register("m68000");
+	m68k_state_register("m68000", index);
+	m68k_set_int_ack_callback(irqcallback);
 }
 
-static void m68000_reset(void* param)
+static void m68000_reset(void)
 {
 	m68k_pulse_reset();
 }
@@ -275,15 +276,16 @@ static offs_t m68000_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, i
  ****************************************************************************/
 #if HAS_M68008
 
-static void m68008_init(void)
+static void m68008_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
 	m68k_init();
 	m68k_set_cpu_type(M68K_CPU_TYPE_68008);
 	m68k_memory_intf = interface_d8;
-	m68k_state_register("m68008");
+	m68k_state_register("m68008", index);
+	m68k_set_int_ack_callback(irqcallback);
 }
 
-static void m68008_reset(void* param)
+static void m68008_reset(void)
 {
 	m68k_pulse_reset();
 }
@@ -343,12 +345,13 @@ static UINT8 m68010_reg_layout[] = {
 	M68K_D7,  M68K_A7, 0
 };
 
-void m68010_init(void)
+void m68010_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
 	m68k_init();
 	m68k_set_cpu_type(M68K_CPU_TYPE_68010);
 	m68k_memory_intf = interface_d16;
-	m68k_state_register("m68010");
+	m68k_state_register("m68010", index);
+	m68k_set_int_ack_callback(irqcallback);
 }
 
 static offs_t m68010_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
@@ -398,15 +401,16 @@ static UINT8 m68020_win_layout[] = {
 };
 
 
-static void m68020_init(void)
+static void m68020_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
 	m68k_init();
 	m68k_set_cpu_type(M68K_CPU_TYPE_68020);
 	m68k_memory_intf = interface_d32;
-	m68k_state_register("m68020");
+	m68k_state_register("m68020", index);
+	m68k_set_int_ack_callback(irqcallback);
 }
 
-static void m68020_reset(void* param)
+static void m68020_reset(void)
 {
 	m68k_pulse_reset();
 }
@@ -451,12 +455,13 @@ static offs_t m68020_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, i
 
 #if HAS_M68EC020
 
-static void m68ec020_init(void)
+static void m68ec020_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
 	m68k_init();
 	m68k_set_cpu_type(M68K_CPU_TYPE_68EC020);
 	m68k_memory_intf = interface_d32;
-	m68k_state_register("m68ec020");
+	m68k_state_register("m68ec020", index);
+	m68k_set_int_ack_callback(irqcallback);
 }
 
 static offs_t m68ec020_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
@@ -503,15 +508,16 @@ static UINT8 m68040_win_layout[] = {
 };
 
 
-static void m68040_init(void)
+static void m68040_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
 	m68k_init();
 	m68k_set_cpu_type(M68K_CPU_TYPE_68040);
 	m68k_memory_intf = interface_d32;
-	m68k_state_register("m68040");
+	m68k_state_register("m68040", index);
+	m68k_set_int_ack_callback(irqcallback);
 }
 
-static void m68040_reset(void* param)
+static void m68040_reset(void)
 {
 	m68k_pulse_reset();
 }
@@ -598,7 +604,6 @@ static void m68000_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + M68K_PREF_ADDR:	m68k_set_reg(M68K_REG_PREF_ADDR, info->i);	break;
 
 		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_IRQ_CALLBACK:				m68k_set_int_ack_callback(info->irqcallback); break;
 		case CPUINFO_PTR_M68K_RESET_CALLBACK:		m68k_set_reset_instr_callback(info->f);		break;
 		case CPUINFO_PTR_M68K_CMPILD_CALLBACK:		m68k_set_cmpild_instr_callback((void (*)(unsigned int,int))(info->f));		break;
 		case CPUINFO_PTR_M68K_RTE_CALLBACK:			m68k_set_rte_instr_callback(info->f);		break;
@@ -684,7 +689,6 @@ void m68000_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = m68000_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = m68000_dasm;	break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					/* fix me */							break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m68k_ICount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m68000_reg_layout;			break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = m68000_win_layout;			break;
@@ -784,7 +788,6 @@ static void m68008_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + M68K_A7:  		m68k_set_reg(M68K_REG_A7, info->i);			break;
 
 		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_IRQ_CALLBACK:				m68k_set_int_ack_callback(info->irqcallback); break;
 		case CPUINFO_PTR_M68K_RESET_CALLBACK:		m68k_set_reset_instr_callback(info->f);		break;
 		case CPUINFO_PTR_M68K_CMPILD_CALLBACK:		m68k_set_cmpild_instr_callback((void (*)(unsigned int,int))(info->f));		break;
 		case CPUINFO_PTR_M68K_RTE_CALLBACK:			m68k_set_rte_instr_callback(info->f);		break;
@@ -865,7 +868,6 @@ void m68008_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = m68008_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = m68008_dasm;	break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					/* fix me */							break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m68k_ICount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m68000_reg_layout;			break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = m68000_win_layout;			break;
@@ -1031,7 +1033,6 @@ static void m68020_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + M68K_DFC:		m68k_set_reg(M68K_REG_DFC, info->i);		break; /* 68010+ */
 
 		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_IRQ_CALLBACK:				m68k_set_int_ack_callback(info->irqcallback); break;
 		case CPUINFO_PTR_M68K_RESET_CALLBACK:		m68k_set_reset_instr_callback(info->f);		break;
 		case CPUINFO_PTR_M68K_CMPILD_CALLBACK:		m68k_set_cmpild_instr_callback((void (*)(unsigned int,int))(info->f));		break;
 		case CPUINFO_PTR_M68K_RTE_CALLBACK:			m68k_set_rte_instr_callback(info->f);		break;
@@ -1118,7 +1119,6 @@ void m68020_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = m68020_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = m68020_dasm;	break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					/* fix me */							break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m68k_ICount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m68020_reg_layout;			break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = m68020_win_layout;			break;
@@ -1276,7 +1276,6 @@ static void m68040_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + M68K_DFC:		m68k_set_reg(M68K_REG_DFC, info->i);		break; /* 68010+ */
 
 		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_IRQ_CALLBACK:				m68k_set_int_ack_callback(info->irqcallback); break;
 		case CPUINFO_PTR_M68K_RESET_CALLBACK:		m68k_set_reset_instr_callback(info->f);		break;
 		case CPUINFO_PTR_M68K_CMPILD_CALLBACK:		m68k_set_cmpild_instr_callback((void (*)(unsigned int,int))(info->f));		break;
 		case CPUINFO_PTR_M68K_RTE_CALLBACK:			m68k_set_rte_instr_callback(info->f);		break;
@@ -1366,7 +1365,6 @@ void m68040_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = m68040_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = m68040_dasm;	break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					/* fix me */							break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m68k_ICount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m68040_reg_layout;			break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = m68040_win_layout;			break;

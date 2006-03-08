@@ -175,7 +175,7 @@ WRITE16_HANDLER( twincobr_dsp_bio_w )
 #if LOG_DSP_CALLS
 			logerror("Turning the main CPU on\n");
 #endif
-			cpunum_resume(0, SUSPEND_REASON_HALT);
+			cpunum_set_input_line(0, INPUT_LINE_HALT, CLEAR_LINE);
 			dsp_execute = 0;
 		}
 		twincobr_dsp_BIO = ASSERT_LINE;
@@ -216,16 +216,16 @@ static void twincobr_dsp(int enable)
 #if LOG_DSP_CALLS
 		logerror("Turning DSP on and main CPU off\n");
 #endif
-		cpunum_resume(2, SUSPEND_REASON_HALT);
+		cpunum_set_input_line(2, INPUT_LINE_HALT, CLEAR_LINE);
 		cpunum_set_input_line(2, 0, ASSERT_LINE); /* TMS32010 INT */
-		cpunum_suspend(0, SUSPEND_REASON_HALT, 1);
+		cpunum_set_input_line(0, INPUT_LINE_HALT, ASSERT_LINE);
 	}
 	else {
 #if LOG_DSP_CALLS
 		logerror("Turning DSP off\n");
 #endif
 		cpunum_set_input_line(2, 0, CLEAR_LINE); /* TMS32010 INT */
-		cpunum_suspend(2, SUSPEND_REASON_HALT, 1);
+		cpunum_set_input_line(2, INPUT_LINE_HALT, ASSERT_LINE);
 	}
 }
 
@@ -310,16 +310,16 @@ static void toaplan0_coin_dsp_w(int offset, int data)
 #if LOG_DSP_CALLS
 					logerror("Turning DSP on and main CPU off\n");
 #endif
-					cpunum_resume(2, SUSPEND_REASON_HALT);
+					cpunum_set_input_line(2, INPUT_LINE_HALT, CLEAR_LINE);
 					cpunum_set_input_line(2, 0, ASSERT_LINE); /* TMS32010 INT */
-					cpunum_suspend(0, SUSPEND_REASON_HALT, 1);
+					cpunum_set_input_line(0, INPUT_LINE_HALT, ASSERT_LINE);
 					break;
 		case 0x01:	/* This means inhibit the INT line to the DSP */
 #if LOG_DSP_CALLS
 					logerror("Turning DSP off\n");
 #endif
 					cpunum_set_input_line(2, 0, CLEAR_LINE); /* TMS32010 INT */
-					cpunum_suspend(2, SUSPEND_REASON_HALT, 1);
+					cpunum_set_input_line(2, INPUT_LINE_HALT, ASSERT_LINE);
 					break;
 	}
 }

@@ -16,8 +16,9 @@
 * NOTES
 *
 ******************************************************************************/
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
+#include "cpuintrf.h"
 #include "3812intf.h"
 #include "fm.h"
 #include "sound/fmopl.h"

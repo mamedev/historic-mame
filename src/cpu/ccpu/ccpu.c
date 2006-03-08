@@ -8,7 +8,6 @@
 
 ***************************************************************************/
 
-#include "driver.h"
 #include "debugger.h"
 #include "ccpu.h"
 
@@ -138,31 +137,30 @@ static UINT8 read_jmi(void)
 }
 
 
-static void ccpu_init(void)
+static void ccpu_init(int index, int clock, const void *_config, int (*irqcallback)(int))
 {
-	int cpu = cpu_getactivecpu();
-	ccpu.external_input = read_jmi;
-
-	state_save_register_item("ccpu", cpu, ccpu.PC);
-	state_save_register_item("ccpu", cpu, ccpu.A);
-	state_save_register_item("ccpu", cpu, ccpu.B);
-	state_save_register_item("ccpu", cpu, ccpu.I);
-	state_save_register_item("ccpu", cpu, ccpu.J);
-	state_save_register_item("ccpu", cpu, ccpu.P);
-	state_save_register_item("ccpu", cpu, ccpu.X);
-	state_save_register_item("ccpu", cpu, ccpu.Y);
-	state_save_register_item("ccpu", cpu, ccpu.T);
-}
-
-
-static void ccpu_reset(void *param)
-{
-	struct CCPUConfig *config = param;
+	const struct CCPUConfig *config = _config;
 
 	/* copy input params */
 	ccpu.external_input = config->external_input ? config->external_input : read_jmi;
 	ccpu.vector_callback = config->vector_callback;
 
+	ccpu.external_input = read_jmi;
+
+	state_save_register_item("ccpu", clock, ccpu.PC);
+	state_save_register_item("ccpu", clock, ccpu.A);
+	state_save_register_item("ccpu", clock, ccpu.B);
+	state_save_register_item("ccpu", clock, ccpu.I);
+	state_save_register_item("ccpu", clock, ccpu.J);
+	state_save_register_item("ccpu", clock, ccpu.P);
+	state_save_register_item("ccpu", clock, ccpu.X);
+	state_save_register_item("ccpu", clock, ccpu.Y);
+	state_save_register_item("ccpu", clock, ccpu.T);
+}
+
+
+static void ccpu_reset(void)
+{
 	/* zero registers */
 	ccpu.PC = 0;
 	ccpu.A = 0;

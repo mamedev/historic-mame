@@ -2,8 +2,7 @@
 #ifndef __NEC_H_
 #define __NEC_H_
 
-#include "memory.h"
-#include "osd_cpu.h"
+#include "cpuintrf.h"
 
 enum {
 	NEC_PC=0,

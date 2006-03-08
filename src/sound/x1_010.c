@@ -50,9 +50,8 @@ Hardcoded Values:
 
 ***************************************************************************/
 
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
-#include "seta.h"
 #include "x1_010.h"
 
 

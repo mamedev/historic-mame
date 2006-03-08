@@ -25,7 +25,7 @@
 
  *****************************************************************************/
 
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
 #include "sn76477.h"
 

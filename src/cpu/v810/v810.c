@@ -16,9 +16,7 @@
 
 ********************************************/
 
-#include "cpuintrf.h"
 #include "debugger.h"
-#include "state.h"
 #include "v810.h"
 
 #define clkIF 3
@@ -948,21 +946,20 @@ static UINT32 (*OpCodeTable[64])(void) =
 	/* 0x3f */ opOUTW  	// out.w reg2, disp16[reg1]     6b
 };
 
-void v810_init(void)
+void v810_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
-	int cpu = cpu_getactivecpu();
-
 	v810.irq_line = CLEAR_LINE;
 	v810.nmi_line = CLEAR_LINE;
+	v810.irq_cb = irqcallback;
 
-	state_save_register_item_array("v810", cpu, v810.reg);
-	state_save_register_item("v810", cpu, v810.irq_line);
-	state_save_register_item("v810", cpu, v810.nmi_line);
-	state_save_register_item("v810", cpu, PPC);
+	state_save_register_item_array("v810", index, v810.reg);
+	state_save_register_item("v810", index, v810.irq_line);
+	state_save_register_item("v810", index, v810.nmi_line);
+	state_save_register_item("v810", index, PPC);
 
 }
 
-void v810_reset(void *param)
+void v810_reset(void)
 {
 	int i;
 	for(i=0;i<64;i++)	v810.reg[i]=0;
@@ -1114,9 +1111,6 @@ static void v810_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + V810_TKCW:		TKCW = info->i;							break;
 		case CPUINFO_INT_REGISTER + V810_CHCW:		CHCW = info->i;							break;
 		case CPUINFO_INT_REGISTER + V810_ADTRE:		ADTRE = info->i;						break;
-
-		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_IRQ_CALLBACK:					v810.irq_cb = info->irqcallback;			break;
 	}
 }
 
@@ -1228,7 +1222,6 @@ void v810_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = v810_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = v810_dasm;			break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = v810.irq_cb;			break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &v810_ICount;				break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = v810_reg_layout;				break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = v810_win_layout;				break;

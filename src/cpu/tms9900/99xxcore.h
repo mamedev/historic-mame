@@ -98,7 +98,8 @@ Other references can be found on spies.com:
 #endif
 
 
-#include "memory.h"
+#include "cpuintrf.h"
+#include "timer.h"
 #include "debugger.h"
 #include "tms9900.h"
 #include <math.h>
@@ -1255,19 +1256,15 @@ static void set_flag1(int val);
 
 /**************************************************************************/
 
-static void tms99xx_init(void)
+static void tms99xx_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
+	const TMS99XX_RESET_PARAM *param = (const TMS99XX_RESET_PARAM *) config;
+
+	I.irq_callback = irqcallback;
+
 #if (TMS99XX_MODEL == TMS9995_ID)
 	I.timer = timer_alloc(decrementer_callback);
 #endif
-}
-
-/*
-    TMS9900 hard reset
-*/
-static void tms99xx_reset(void *p)
-{
-	TMS99XX_RESET_PARAM *param = (TMS99XX_RESET_PARAM *) p;
 
 	I.idle_callback = param ? param->idle_callback : NULL;
 	#if (TMS99XX_MODEL == TI990_10_ID)
@@ -1278,7 +1275,29 @@ static void tms99xx_reset(void *p)
 		I.error_interrupt_callback = param ? param->error_interrupt_callback : NULL;
 	#endif
 
+#if (TMS99XX_MODEL == TMS9995_ID)
+	/* we can ask at reset time that the CPU always generates one wait state automatically */
+	if (param == NULL)
+	{	/* if no param, the default is currently "wait state added" */
+		I.memory_wait_states_byte = 4;
+		I.memory_wait_states_word = 12;
+			I.is_mp9537 = 0;
+	}
+	else
+	{
+			I.memory_wait_states_byte = (param->auto_wait_state) ? 4 : 0;
+			I.memory_wait_states_word = (param->auto_wait_state) ? 12 : 4;
+			I.is_mp9537 = param->is_mp9537;
+	}
+#endif
 
+}
+
+/*
+    TMS9900 hard reset
+*/
+static void tms99xx_reset(void)
+{
 	I.STATUS = 0; /* TMS9980 and TMS9995 Data Books say so */
 	getstat();
 
@@ -1311,20 +1330,6 @@ static void tms99xx_reset(void *p)
 	}
 
 #if (TMS99XX_MODEL == TMS9995_ID)
-	/* we can ask at reset time that the CPU always generates one wait state automatically */
-	if (param == NULL)
-	{	/* if no param, the default is currently "wait state added" */
-		I.memory_wait_states_byte = 4;
-		I.memory_wait_states_word = 12;
-			I.is_mp9537 = 0;
-	}
-	else
-	{
-			I.memory_wait_states_byte = (param->auto_wait_state) ? 4 : 0;
-			I.memory_wait_states_word = (param->auto_wait_state) ? 12 : 4;
-			I.is_mp9537 = param->is_mp9537;
-	}
-
 	I.MID_flag = 0;
 
 	/* Clear flag bits 0 & 1 */
@@ -1776,7 +1781,7 @@ static void tms99xx_set_irq_line(int irqline, int state)
 			I.load_state = 0;
 			I.irq_state = 0;
 			I.irq_level = 16;
-			tms99xx_reset(NULL);
+			tms99xx_reset();
 			break;
 		case 2:
 			I.load_state = 1;
@@ -4709,8 +4714,6 @@ static void tms99xx_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + TMS9900_R14:		I.FR[14]= info->i;						break;
 		case CPUINFO_INT_REGISTER + TMS9900_R15:		I.FR[15]= info->i;						break;
 #endif
-		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_IRQ_CALLBACK:					I.irq_callback = info->irqcallback;		break;
 	}
 }
 
@@ -4853,7 +4856,6 @@ void TMS99XX_GET_INFO(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = tms99xx_execute;		break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = tms99xx_dasm;		break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = I.irq_callback;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &TMS99XX_ICOUNT;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = tms9900_reg_layout;			break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = tms9900_win_layout;			break;

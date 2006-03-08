@@ -32,10 +32,7 @@
  *  implement the ARM7TDMI guideline format is used
  ******************************************************************************/
 
-#include <stdio.h>
 #include "arm7core.h"
-
-#ifdef MAME_DEBUG
 
 static char *WritePadding( char *pBuf, const char *pBuf0 )
 {
@@ -619,5 +616,3 @@ void arm7_disasm( char *pBuf, UINT32 pc, UINT32 opcode )
 		pBuf += sprintf( pBuf, "Undefined" );
 	}
 }
-
-#endif	//MAME_DEBUG

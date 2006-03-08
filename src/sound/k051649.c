@@ -22,7 +22,7 @@
 
 ***************************************************************************/
 
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
 #include "k051649.h"
 

@@ -77,6 +77,8 @@ static help_item static_help_list[] =
 		"\n"
 		"  help [<topic>] -- get help on a particular topic\n"
 		"  do <expression> -- evaluates the given expression\n"
+		"  symlist [<cpunum>] -- lists registered symbols\n"
+		"  print <item>[,...] -- prints one or more <item>s to the console\n"
 		"  printf <format>[,<item>[,...]] -- prints one or more <item>s to the console using <format>\n"
 		"  logerror <format>[,<item>[,...]] -- outputs one or more <item>s to the error.log\n"
 		"  tracelog <format>[,<item>[,...]] -- outputs one or more <item>s to the trace file using <format>\n"
@@ -206,6 +208,39 @@ static help_item static_help_list[] =
 		"\n"
 		"do pc = 0\n"
 		"  Sets the register 'pc' to 0.\n"
+	},
+	{
+		"symlist",
+		"\n"
+		"  symlist [<cpunum>]\n"
+		"\n"
+		"Lists registered symbols. If <cpunum> is not specified, then symbols in the global symbol table are "
+		"displayed; otherwise, the symbols for <cpunum>'s specific CPU are displayed. Symbols are listed "
+		"alphabetically. Read-only symbols are flagged with an asterisk.\n"
+		"\n"
+		"Examples:\n"
+		"\n"
+		"symlist\n"
+		"  Displays the global symbol table.\n"
+		"\n"
+		"symlist 2\n"
+		"  Displays the symbols specific to CPU #2.\n"
+	},
+	{
+		"print",
+		"\n"
+		"  print <item>[,...]\n"
+		"\n"
+		"The print command prints the results of one or more expressions to the debugger console as hexadecimal "
+		"values.\n"
+		"\n"
+		"Examples:\n"
+		"\n"
+		"print pc\n"
+		"  Prints the value of 'pc' to the console as a hex number.\n"
+		"\n"
+		"print a,b,a+b\n"
+		"  Prints a, b, and the value of a+b to the console as hex numbers.\n"
 	},
 	{
 		"printf",

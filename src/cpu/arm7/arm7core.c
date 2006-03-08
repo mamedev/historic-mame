@@ -20,6 +20,7 @@
  *  This work is based on:
  *  #1) 'Atmel Corporation ARM7TDMI (Thumb) Datasheet - January 1999'
  *  #2) Arm 2/3/6 emulator By Bryan McPhail (bmcphail@tendril.co.uk) and Phil Stroffolino (MAME CORE 0.76)
+ *  #3) Thumb support by Ryan Holtz
  *
  *****************************************************************************/
 
@@ -46,7 +47,7 @@
     output to be tailored to the co-proc implementation details.
 
     Todo:
-    Thumb mode support not yet implemented. 26 bit compatibility mode not implemented.
+    26 bit compatibility mode not implemented.
     Data Processing opcodes need cycle count adjustments (see page 194 of ARM7TDMI manual for instruction timing summary)
     Multi-emulated cpu support untested, but probably will not work too well, as no effort was made to code for more than 1.
     Could not find info on what the TEQP opcode is from page 44..
@@ -55,6 +56,7 @@
 
 
     Differences from Arm 2/3 (6 also?)
+    -Thumb instruction support
     -Full 32 bit address support
     -PC no longer contains CPSR information, CPSR is own register now
     -New register SPSR to store previous contents of CPSR (this register is banked in many modes)
@@ -80,6 +82,8 @@
 #else
 #define LOG(x) logerror x
 #endif
+
+#define VERBOSELOG(...)
 
 /* Prototypes */
 
@@ -212,6 +216,15 @@ INLINE UINT8 arm7_cpu_read8( offs_t addr )
       | HandleALUNZFlags(rd))); \
   R15 += 4;
 
+#define HandleThumbALUAddFlags(rd, rn, op2) \
+    SET_CPSR( \
+      ((GET_CPSR &~ (N_MASK | Z_MASK | V_MASK | C_MASK)) \
+      | (((!THUMB_SIGN_BITS_DIFFER(rn, op2)) && THUMB_SIGN_BITS_DIFFER(rn, rd)) \
+          << V_BIT) \
+      | (((~(rn)) < (op2)) << C_BIT) \
+      | HandleALUNZFlags(rd))); \
+  	R15 += 2;
+
 #define HandleALUSubFlags(rd, rn, op2) \
   if (insn & INSN_S) \
     SET_CPSR( \
@@ -221,6 +234,15 @@ INLINE UINT8 arm7_cpu_read8( offs_t addr )
       | (((op2) <= (rn)) << C_BIT) \
       | HandleALUNZFlags(rd))); \
   R15 += 4;
+
+#define HandleThumbALUSubFlags(rd, rn, op2) \
+    SET_CPSR( \
+      ((GET_CPSR &~ (N_MASK | Z_MASK | V_MASK | C_MASK)) \
+      | ((THUMB_SIGN_BITS_DIFFER(rn, op2) && THUMB_SIGN_BITS_DIFFER(rn, rd)) \
+          << V_BIT) \
+      | (((op2) <= (rn)) << C_BIT) \
+      | HandleALUNZFlags(rd))); \
+	R15 += 2;
 
 /* Set NZC flags for logical operations. */
 
@@ -483,23 +505,23 @@ static int storeDec( UINT32 pat, UINT32 rbv)
  ***************************************************************************/
 
 //CPU INIT
-static void arm7_core_init(const char *cpuname)
+static void arm7_core_init(const char *cpuname, int index)
 {
-    int cpu = cpu_getactivecpu();
-
-    state_save_register_item_array(cpuname, cpu, ARM7.sArmRegister);
-    state_save_register_item(cpuname, cpu, ARM7.pendingIrq);
-    state_save_register_item(cpuname, cpu, ARM7.pendingFiq);
-    state_save_register_item(cpuname, cpu, ARM7.pendingAbtD);
-    state_save_register_item(cpuname, cpu, ARM7.pendingAbtP);
-    state_save_register_item(cpuname, cpu, ARM7.pendingUnd);
-    state_save_register_item(cpuname, cpu, ARM7.pendingSwi);
+    state_save_register_item_array(cpuname, index, ARM7.sArmRegister);
+    state_save_register_item(cpuname, index, ARM7.pendingIrq);
+    state_save_register_item(cpuname, index, ARM7.pendingFiq);
+    state_save_register_item(cpuname, index, ARM7.pendingAbtD);
+    state_save_register_item(cpuname, index, ARM7.pendingAbtP);
+    state_save_register_item(cpuname, index, ARM7.pendingUnd);
+    state_save_register_item(cpuname, index, ARM7.pendingSwi);
 }
 
 //CPU RESET
-static void arm7_core_reset(void *param)
+static void arm7_core_reset(void)
 {
+	int (*save_irqcallback)(int) = ARM7.irq_callback;
     memset(&ARM7, 0, sizeof(ARM7));
+    ARM7.irq_callback = save_irqcallback;
 
     /* start up in SVC mode with interrupts disabled. */
     SwitchMode(eARM7_MODE_SVC);
@@ -533,6 +555,7 @@ static void arm7_check_irq_state(void)
         SwitchMode(eARM7_MODE_ABT);             /* Set ABT mode so PC is saved to correct R14 bank */
         SET_REGISTER( 14, pc );                 /* save PC to R14 */
         SET_REGISTER( SPSR, cpsr );             /* Save current CPSR */
+        SET_CPSR(GET_CPSR & ~T_MASK);
         R15 = 0x10;                             /* IRQ Vector address */
         ARM7.pendingAbtD = 0;
         return;
@@ -544,6 +567,7 @@ static void arm7_check_irq_state(void)
         SET_REGISTER( 14, pc );                 /* save PC to R14 */
         SET_REGISTER( SPSR, cpsr );             /* Save current CPSR */
         SET_CPSR(GET_CPSR | I_MASK | F_MASK);   /* Mask both IRQ & FIRQ*/
+        SET_CPSR(GET_CPSR & ~T_MASK);
         R15 = 0x1c;                             /* IRQ Vector address */
         return;
     }
@@ -554,6 +578,7 @@ static void arm7_check_irq_state(void)
         SET_REGISTER( 14, pc );                 /* save PC to R14 */
         SET_REGISTER( SPSR, cpsr );             /* Save current CPSR */
         SET_CPSR(GET_CPSR | I_MASK);            /* Mask IRQ */
+        SET_CPSR(GET_CPSR & ~T_MASK);
         R15 = 0x18;                             /* IRQ Vector address */
         return;
     }
@@ -563,6 +588,7 @@ static void arm7_check_irq_state(void)
         SwitchMode(eARM7_MODE_ABT);             /* Set ABT mode so PC is saved to correct R14 bank */
         SET_REGISTER( 14, pc );                 /* save PC to R14 */
         SET_REGISTER( SPSR, cpsr );             /* Save current CPSR */
+        SET_CPSR(GET_CPSR & ~T_MASK);
         R15 = 0x0c;                             /* IRQ Vector address */
         ARM7.pendingAbtP = 0;
         return;
@@ -573,6 +599,7 @@ static void arm7_check_irq_state(void)
         SwitchMode(eARM7_MODE_UND);             /* Set UND mode so PC is saved to correct R14 bank */
         SET_REGISTER( 14, pc );                 /* save PC to R14 */
         SET_REGISTER( SPSR, cpsr );             /* Save current CPSR */
+        SET_CPSR(GET_CPSR & ~T_MASK);
         R15 = 0x04;                             /* IRQ Vector address */
         ARM7.pendingUnd = 0;
         return;
@@ -583,6 +610,7 @@ static void arm7_check_irq_state(void)
         SwitchMode(eARM7_MODE_SVC);             /* Set SVC mode so PC is saved to correct R14 bank */
         SET_REGISTER( 14, pc );                 /* save PC to R14 */
         SET_REGISTER( SPSR, cpsr );             /* Save current CPSR */
+        SET_CPSR(GET_CPSR & ~T_MASK);
         R15 = 0x08;                             /* IRQ Vector address */
         ARM7.pendingSwi = 0;
         return;

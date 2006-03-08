@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "machine/random.h"
 
 #include <math.h>
 

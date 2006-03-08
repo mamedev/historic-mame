@@ -62,8 +62,6 @@ extern unsigned char s2636_2_dirty[4];
 
 VIDEO_START( malzak )
 {
-	video_start_generic();
-
 	if ((collision_bitmap = auto_bitmap_alloc_depth(Machine->drv->screen_width,Machine->drv->screen_height,8)) == 0)
 		return 1;
 

@@ -100,8 +100,6 @@ z:      xxxx address bits a19 .. a16 for memory accesses with a15 1 ?
       1      map 8000-9fff
  */
 
-#include <stdio.h>
-#include "driver.h"
 #include "debugger.h"
 #include "m6502.h"
 #include "m4510.h"
@@ -199,13 +197,14 @@ INLINE int m4510_cpu_readop_arg(void)
 #define M4510
 #include "t65ce02.c"
 
-static void m4510_init(void)
+static void m4510_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
 	m4510.rdmem_id = program_read_byte_8;
 	m4510.wrmem_id = program_write_byte_8;
+	m4510.irq_callback = irqcallback;
 }
 
-static void m4510_reset (void *param)
+static void m4510_reset (void)
 {
 	m4510.insn = insn4510;
 
@@ -437,7 +436,6 @@ static void m4510_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + M4510_MEM7:			m4510.mem[7] = info->i;					break;
 
 		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_IRQ_CALLBACK:					m4510.irq_callback = info->irqcallback;	break;
 		case CPUINFO_PTR_M6502_READINDEXED_CALLBACK:	m4510.rdmem_id = (read8_handler) info->f;	break;
 		case CPUINFO_PTR_M6502_WRITEINDEXED_CALLBACK:	m4510.wrmem_id = (write8_handler) info->f;	break;
 		case CPUINFO_PTR_M6510_PORTREAD:	m4510.port_read = (UINT8 (*)(void)) info->f;	break;
@@ -519,7 +517,6 @@ void m4510_get_info(UINT32 state, union cpuinfo *info)
 #ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = m4510_dasm;			break;
 #endif
-		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = m4510.irq_callback;	break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m4510_ICount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m4510_reg_layout;				break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = m4510_win_layout;				break;

@@ -81,16 +81,6 @@ enum
 
 /*************************************
  *
- *  Global variables (yuck, remove)
- *
- *************************************/
-
-memcard_interface memcard_intf;
-
-
-
-/*************************************
- *
  *  Local variables
  *
  *************************************/
@@ -1251,8 +1241,6 @@ static void create_font(void)
 static void handle_keys(mame_bitmap *bitmap)
 {
 #ifdef MESS
-	if (osd_trying_to_quit())
-		mame_schedule_exit();
 	if (options.disable_normal_ui || ((Machine->gamedrv->flags & GAME_COMPUTER) && !mess_ui_active()))
 		return;
 #endif
@@ -1440,7 +1428,7 @@ do { \
 		ADD_MENU(UI_cheat, menu_cheat, 1);
 
 	/* add memory card menu */
-	if (memcard_intf.create != NULL && memcard_intf.load != NULL && memcard_intf.save != NULL && memcard_intf.eject != NULL)
+	if (Machine->drv->memcard_handler != NULL)
 		ADD_MENU(UI_memorycard, menu_memory_card, 0);
 
 	/* add reset and exit menus */
@@ -2249,6 +2237,7 @@ static UINT32 menu_memory_card(UINT32 state)
 	int menu_items = 0;
 	int cardnum = state >> 16;
 	int selected = state & 0xffff;
+	int insertindex = -1, ejectindex = -1, createindex = -1;
 
 	/* reset the menu and string pool */
 	memset(item_list, 0, sizeof(item_list));
@@ -2265,9 +2254,10 @@ static UINT32 menu_memory_card(UINT32 state)
 	menu_items++;
 
 	/* add the remaining items */
-	item_list[menu_items++].text = ui_getstring(UI_loadcard);
-	item_list[menu_items++].text = ui_getstring(UI_ejectcard);
-	item_list[menu_items++].text = ui_getstring(UI_createcard);
+	item_list[insertindex = menu_items++].text = ui_getstring(UI_loadcard);
+	if (memcard_present() != -1)
+		item_list[ejectindex = menu_items++].text = ui_getstring(UI_ejectcard);
+	item_list[createindex = menu_items++].text = ui_getstring(UI_createcard);
 
 	/* add an item for the return */
 	item_list[menu_items++].text = ui_getstring(UI_returntomain);
@@ -2285,35 +2275,36 @@ static UINT32 menu_memory_card(UINT32 state)
 
 	/* handle actions */
 	if (input_ui_pressed(IPT_UI_SELECT))
-		switch (selected)
+	{
+		/* handle load */
+		if (selected == insertindex)
 		{
-			/* handle load */
-			case 1:
-				memcard_intf.eject();
-				if (memcard_intf.load(cardnum))
-				{
-					ui_popup("%s", ui_getstring(UI_loadok));
-					ui_menu_stack_reset();
-					return 0;
-				}
-				else
-					ui_popup("%s", ui_getstring(UI_loadfailed));
-				break;
-
-			/* handle eject */
-			case 2:
-				memcard_intf.eject();
-				ui_popup("%s", ui_getstring(UI_cardejected));
-				break;
-
-			/* handle create */
-			case 3:
-				if (memcard_intf.create(cardnum))
-					ui_popup("%s", ui_getstring(UI_cardcreated));
-				else
-					ui_popup("%s\n%s", ui_getstring(UI_cardcreatedfailed), ui_getstring(UI_cardcreatedfailed2));
-				break;
+			if (memcard_insert(cardnum) == 0)
+			{
+				ui_popup("%s", ui_getstring(UI_loadok));
+				ui_menu_stack_reset();
+				return 0;
+			}
+			else
+				ui_popup("%s", ui_getstring(UI_loadfailed));
 		}
+
+		/* handle eject */
+		else if (selected == ejectindex)
+		{
+			memcard_eject();
+			ui_popup("%s", ui_getstring(UI_cardejected));
+		}
+
+		/* handle create */
+		else if (selected == createindex)
+		{
+			if (memcard_create(cardnum, FALSE) == 0)
+				ui_popup("%s", ui_getstring(UI_cardcreated));
+			else
+				ui_popup("%s\n%s", ui_getstring(UI_cardcreatedfailed), ui_getstring(UI_cardcreatedfailed2));
+		}
+	}
 
 	return selected | (cardnum << 16);
 }

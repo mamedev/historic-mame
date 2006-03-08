@@ -19,6 +19,10 @@
 #include "driver.h"
 
 
+// temporary
+#define OUT_OF_BOUNDS_IS_FATAL		1
+
+
 
 /***************************************************************************
 
@@ -434,6 +438,13 @@ static const struct
 
 ***************************************************************************/
 
+#if OUT_OF_BOUNDS_IS_FATAL
+#define VERIFY_SNDNUM(retval, name)						\
+	assert_always(sndnum >= 0 && sndnum < totalsnd, #name "() called with invalid sound num!")
+
+#define VERIFY_SNDNUM_VOID(name)							\
+	assert_always(sndnum >= 0 && sndnum < totalsnd, #name "() called with invalid sound num!")
+#else
 #define VERIFY_SNDNUM(retval, name)							\
 	if (sndnum < 0 || sndnum >= totalsnd)					\
 	{														\
@@ -447,8 +458,18 @@ static const struct
 		logerror(#name "() called for invalid sound num!\n");\
 		return;												\
 	}
+#endif
 
 
+#if OUT_OF_BOUNDS_IS_FATAL
+#define VERIFY_SNDTI(retval, name)						\
+	assert_always(sndtype >= 0 && sndtype < SOUND_COUNT, #name "() called with invalid sound type!"); \
+	assert_always(sndindex >= 0 && sndindex < totalsnd && sound_matrix[sndtype][sndindex] != 0, #name "() called with invalid (type,index) pair!")
+
+#define VERIFY_SNDTI_VOID(name)							\
+	assert_always(sndtype >= 0 && sndtype < SOUND_COUNT, #name "() called with invalid sound type!"); \
+	assert_always(sndindex >= 0 && sndindex < totalsnd && sound_matrix[sndtype][sndindex] != 0, #name "() called with invalid (type,index) pair!")
+#else
 #define VERIFY_SNDTI(retval, name)							\
 	if (sndtype < 0 || sndtype >= SOUND_COUNT)				\
 	{														\
@@ -472,8 +493,16 @@ static const struct
 		logerror(#name "() called for invalid sound index!\n");\
 		return;												\
 	}
+#endif
 
 
+#if OUT_OF_BOUNDS_IS_FATAL
+#define VERIFY_SNDTYPE(retval, name)						\
+	assert_always(sndtype >= 0 && sndtype < SOUND_COUNT, #name "() called with invalid sound type!")
+
+#define VERIFY_SNDTYPE_VOID(name)							\
+	assert_always(sndtype >= 0 && sndtype < SOUND_COUNT, #name "() called with invalid sound type!")
+#else
 #define VERIFY_SNDTYPE(retval, name)						\
 	if (sndtype < 0 || sndtype >= SOUND_COUNT)				\
 	{														\
@@ -487,6 +516,7 @@ static const struct
 		logerror(#name "() called for invalid sound type!\n");\
 		return;												\
 	}
+#endif
 
 
 

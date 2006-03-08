@@ -1614,7 +1614,7 @@ static MACHINE_RESET( spi )
 	UINT8 flash_data = rombase[0x1ffffc];
 
 	cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE );
-	cpu_set_irq_callback(0, spi_irq_callback);
+	cpunum_set_irq_callback(0, spi_irq_callback);
 
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00000680, 0x00000683, 0, 0, sound_fifo_r);
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00000688, 0x0000068b, 0, 0, z80_prg_fifo_w);
@@ -1689,7 +1689,7 @@ static MACHINE_RESET( sxx2f )
 	memcpy(z80_rom, rom, 0x40000);
 
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000068c, 0x0000068f, 0, 0, eeprom_w);
-	cpu_set_irq_callback(0, spi_irq_callback);
+	cpunum_set_irq_callback(0, spi_irq_callback);
 }
 
 static MACHINE_DRIVER_START( sxx2f )
@@ -1919,7 +1919,7 @@ static DRIVER_INIT( rdft22kc )
 
 static MACHINE_RESET( seibu386 )
 {
-	cpu_set_irq_callback(0, spi_irq_callback);
+	cpunum_set_irq_callback(0, spi_irq_callback);
 }
 
 static MACHINE_DRIVER_START( seibu386 )

@@ -19,7 +19,6 @@
 #include "cpu/tms34010/tms34010.h"
 #include "vidhrdw/tlc34076.h"
 #include "artmagic.h"
-#include "machine/random.h"
 #include "sound/okim6295.h"
 
 

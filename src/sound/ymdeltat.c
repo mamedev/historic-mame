@@ -62,7 +62,7 @@
 **
 */
 
-#include "driver.h"
+#include "sndintrf.h"
 #include "ymdeltat.h"
 
 #define YM_DELTAT_DELTA_MAX (24576)

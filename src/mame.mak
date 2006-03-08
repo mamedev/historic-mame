@@ -363,7 +363,6 @@ $(OBJ)/shared.a: \
 	$(OBJ)/machine/pcshare.o \
 	$(OBJ)/machine/pic8259.o \
 	$(OBJ)/machine/pit8253.o \
-	$(OBJ)/machine/random.o \
 	$(OBJ)/machine/scsicd.o \
 	$(OBJ)/machine/scsihd.o \
 	$(OBJ)/machine/segacrpt.o \

@@ -9,8 +9,7 @@
 #ifndef _ASAP_H
 #define _ASAP_H
 
-#include "memory.h"
-#include "osd_cpu.h"
+#include "cpuintrf.h"
 
 
 /***************************************************************************

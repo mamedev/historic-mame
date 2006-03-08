@@ -118,12 +118,8 @@ Table 3-2.  TMS32025/26 Memory Blocks
 
 
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include "driver.h"
-#include "debugger.h"
 #include "tms32025.h"
+#include "debugger.h"
 
 
 #define CLK 4	/* 1 cycle equals 4 clock ticks */		/* PE/DI */
@@ -1746,50 +1742,49 @@ static opcode_fn opcode_CE_subset[256]=
 /****************************************************************************
  *  Inits CPU emulation
  ****************************************************************************/
-static void tms32025_init (void)
+static void tms32025_init (int index, int clock, const void *config, int (*irqcallback)(int))
 {
-	int cpu = cpu_getactivecpu();
+	R.intRAM = auto_malloc(0x800*2);
+	R.irq_callback = irqcallback;
 
-	R.intRAM = malloc(0x800*2);
+	state_save_register_item("tms32025", index, R.PC);
+	state_save_register_item("tms32025", index, R.STR0);
+	state_save_register_item("tms32025", index, R.STR1);
+	state_save_register_item("tms32025", index, R.PFC);
+	state_save_register_item("tms32025", index, R.IFR);
+	state_save_register_item("tms32025", index, R.RPTC);
+	state_save_register_item("tms32025", index, R.ACC.d);
+	state_save_register_item("tms32025", index, R.ALU.d);
+	state_save_register_item("tms32025", index, R.Preg.d);
+	state_save_register_item("tms32025", index, R.Treg);
+	state_save_register_item("tms32025", index, R.AR[0]);
+	state_save_register_item("tms32025", index, R.AR[1]);
+	state_save_register_item("tms32025", index, R.AR[2]);
+	state_save_register_item("tms32025", index, R.AR[3]);
+	state_save_register_item("tms32025", index, R.AR[4]);
+	state_save_register_item("tms32025", index, R.AR[5]);
+	state_save_register_item("tms32025", index, R.AR[6]);
+	state_save_register_item("tms32025", index, R.AR[7]);
+	state_save_register_item("tms32025", index, R.STACK[0]);
+	state_save_register_item("tms32025", index, R.STACK[1]);
+	state_save_register_item("tms32025", index, R.STACK[2]);
+	state_save_register_item("tms32025", index, R.STACK[3]);
+	state_save_register_item("tms32025", index, R.STACK[4]);
+	state_save_register_item("tms32025", index, R.STACK[5]);
+	state_save_register_item("tms32025", index, R.STACK[6]);
+	state_save_register_item("tms32025", index, R.STACK[7]);
 
-	state_save_register_item("tms32025", cpu, R.PC);
-	state_save_register_item("tms32025", cpu, R.STR0);
-	state_save_register_item("tms32025", cpu, R.STR1);
-	state_save_register_item("tms32025", cpu, R.PFC);
-	state_save_register_item("tms32025", cpu, R.IFR);
-	state_save_register_item("tms32025", cpu, R.RPTC);
-	state_save_register_item("tms32025", cpu, R.ACC.d);
-	state_save_register_item("tms32025", cpu, R.ALU.d);
-	state_save_register_item("tms32025", cpu, R.Preg.d);
-	state_save_register_item("tms32025", cpu, R.Treg);
-	state_save_register_item("tms32025", cpu, R.AR[0]);
-	state_save_register_item("tms32025", cpu, R.AR[1]);
-	state_save_register_item("tms32025", cpu, R.AR[2]);
-	state_save_register_item("tms32025", cpu, R.AR[3]);
-	state_save_register_item("tms32025", cpu, R.AR[4]);
-	state_save_register_item("tms32025", cpu, R.AR[5]);
-	state_save_register_item("tms32025", cpu, R.AR[6]);
-	state_save_register_item("tms32025", cpu, R.AR[7]);
-	state_save_register_item("tms32025", cpu, R.STACK[0]);
-	state_save_register_item("tms32025", cpu, R.STACK[1]);
-	state_save_register_item("tms32025", cpu, R.STACK[2]);
-	state_save_register_item("tms32025", cpu, R.STACK[3]);
-	state_save_register_item("tms32025", cpu, R.STACK[4]);
-	state_save_register_item("tms32025", cpu, R.STACK[5]);
-	state_save_register_item("tms32025", cpu, R.STACK[6]);
-	state_save_register_item("tms32025", cpu, R.STACK[7]);
-
-	state_save_register_item("tms32025", cpu, R.idle);
-	state_save_register_item("tms32025", cpu, R.hold);
-	state_save_register_item("tms32025", cpu, R.external_mem_access);
-	state_save_register_item("tms32025", cpu, R.init_load_addr);
-	state_save_register_item("tms32025", cpu, R.PREVPC);
+	state_save_register_item("tms32025", index, R.idle);
+	state_save_register_item("tms32025", index, R.hold);
+	state_save_register_item("tms32025", index, R.external_mem_access);
+	state_save_register_item("tms32025", index, R.init_load_addr);
+	state_save_register_item("tms32025", index, R.PREVPC);
 }
 
 /****************************************************************************
  *  Reset registers to their initial values
  ****************************************************************************/
-static void tms32025_reset (void *param)
+static void tms32025_reset (void)
 {
 	SET_PC(0);			/* Starting address on a reset */
 	R.STR0 |= 0x0600;	/* INTM and unused bit set to 1 */
@@ -1822,9 +1817,9 @@ static void tms32025_reset (void *param)
 	tms32025_datamap[7] = &R.intRAM[0x380];			/* B1 */
 }
 
-static void tms32026_reset (void *param)
+static void tms32026_reset (void)
 {
-	tms32025_reset(param);
+	tms32025_reset();
 
 	/* Reset the Data/Program address banks */
 	memset(tms32025_pgmmap, 0, sizeof(tms32025_pgmmap));
@@ -1851,9 +1846,6 @@ static void tms32026_reset (void *param)
  ****************************************************************************/
 static void tms32025_exit (void)
 {
-	if (R.intRAM)
-		free(R.intRAM);
-	R.intRAM = NULL;
 }
 
 
@@ -2340,9 +2332,6 @@ static void tms32025_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + TMS32025_PRD:		M_WRTRAM(3,info->i);					break;
 		case CPUINFO_INT_REGISTER + TMS32025_IMR:		M_WRTRAM(4,info->i);					break;
 		case CPUINFO_INT_REGISTER + TMS32025_GREG:		M_WRTRAM(5,info->i);					break;
-
-		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_IRQ_CALLBACK:					R.irq_callback = info->irqcallback;		break;
 	}
 }
 
@@ -2433,7 +2422,6 @@ void tms32025_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_READ:							info->read = tms32025_read;				break;
 		case CPUINFO_PTR_WRITE:							info->write = tms32025_write;			break;
 		case CPUINFO_PTR_READOP:						info->readop = tms32025_readop;			break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = R.irq_callback;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &tms32025_icount;		break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = tms32025_reg_layout;			break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = tms32025_win_layout;			break;

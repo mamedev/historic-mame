@@ -13,7 +13,7 @@
 #ifndef _H6280_H
 #define _H6280_H
 
-#include "osd_cpu.h"
+#include "cpuintrf.h"
 
 enum {
 	H6280_PC=1, H6280_S, H6280_P, H6280_A, H6280_X, H6280_Y,

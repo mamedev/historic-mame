@@ -9,8 +9,7 @@
 #ifndef _DSP32_H
 #define _DSP32_H
 
-#include "memory.h"
-#include "osd_cpu.h"
+#include "cpuintrf.h"
 
 
 

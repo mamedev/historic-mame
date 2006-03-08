@@ -70,8 +70,9 @@ TODO:
 
 ***************************************************************************/
 
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
+#include "cpuintrf.h"
 #include "filter.h"
 #include "namco54.h"
 #include "samples.h"

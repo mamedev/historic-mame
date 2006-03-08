@@ -10,8 +10,7 @@
 #ifndef _DSP56K_H
 #define _DSP56K_H
 
-#include "memory.h"
-#include "osd_cpu.h"
+#include "cpuintrf.h"
 
 /***************************************************************************
     REGISTER ENUMERATION

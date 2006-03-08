@@ -15,7 +15,6 @@ the most protected of the DE102 games?
 #include "deco16ic.h"
 #include "sound/2151intf.h"
 #include "sound/okim6295.h"
-#include "machine/random.h"
 
 extern void deco102_decrypt(int region, int address_xor, int data_select_xor, int opcode_select_xor);
 

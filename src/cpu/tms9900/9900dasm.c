@@ -20,10 +20,7 @@
  *****************************************************************************/
 
 
-#include <stdio.h>
-#include <string.h>
-#include "memory.h"
-
+#include "debugger.h"
 #include "tms9900.h"
 
 #define	MASK	0x0000ffff

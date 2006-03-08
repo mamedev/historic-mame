@@ -3,7 +3,7 @@
 
 #define BIGCASE
 
-#include "osd_cpu.h"
+#include "mamecore.h"
 
 typedef char BOOLEAN;
 

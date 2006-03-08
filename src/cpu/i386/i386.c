@@ -10,7 +10,6 @@
         Cyrix MediaGX
 */
 
-#include "driver.h"
 #include "debugger.h"
 #include "i386.h"
 #include "i386intf.h"
@@ -462,13 +461,12 @@ static void i386_postload(void)
 	CHANGE_PC(I.eip);
 }
 
-void i386_init(void)
+void i386_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
 	int i, j;
 	int regs8[8] = {AL,CL,DL,BL,AH,CH,DH,BH};
 	int regs16[8] = {AX,CX,DX,BX,SP,BP,SI,DI};
 	int regs32[8] = {EAX,ECX,EDX,EBX,ESP,EBP,ESI,EDI};
-	int cpu = cpu_getactivecpu();
 	const char *state_type = "I386";
 
 	build_cycle_table();
@@ -492,33 +490,35 @@ void i386_init(void)
 		MODRM_table[i].rm.d = regs32[i & 0x7];
 	}
 
-	state_save_register_item_array(state_type, cpu,	I.reg.d);
-	state_save_register_item(state_type, cpu, I.sreg[ES].selector);
-	state_save_register_item(state_type, cpu, I.sreg[CS].selector);
-	state_save_register_item(state_type, cpu, I.sreg[SS].selector);
-	state_save_register_item(state_type, cpu, I.sreg[DS].selector);
-	state_save_register_item(state_type, cpu, I.sreg[FS].selector);
-	state_save_register_item(state_type, cpu, I.sreg[GS].selector);
-	state_save_register_item(state_type, cpu, I.eip);
-	state_save_register_item(state_type, cpu, I.prev_eip);
-	state_save_register_item(state_type, cpu, I.CF);
-	state_save_register_item(state_type, cpu, I.DF);
-	state_save_register_item(state_type, cpu, I.SF);
-	state_save_register_item(state_type, cpu, I.OF);
-	state_save_register_item(state_type, cpu, I.ZF);
-	state_save_register_item(state_type, cpu, I.PF);
-	state_save_register_item(state_type, cpu, I.AF);
-	state_save_register_item(state_type, cpu, I.IF);
-	state_save_register_item(state_type, cpu, I.TF);
-	state_save_register_item_array(state_type, cpu,	I.cr);
-	state_save_register_item_array(state_type, cpu,	I.dr);
-	state_save_register_item_array(state_type, cpu,	I.tr);
-	state_save_register_item(state_type, cpu, I.idtr.base);
-	state_save_register_item(state_type, cpu, I.idtr.limit);
-	state_save_register_item(state_type, cpu, I.gdtr.base);
-	state_save_register_item(state_type, cpu, I.gdtr.limit);
-	state_save_register_item(state_type, cpu,  I.irq_line);
-	state_save_register_item(state_type, cpu, I.performed_intersegment_jump);
+	I.irq_callback = irqcallback;
+
+	state_save_register_item_array(state_type, index,	I.reg.d);
+	state_save_register_item(state_type, index, I.sreg[ES].selector);
+	state_save_register_item(state_type, index, I.sreg[CS].selector);
+	state_save_register_item(state_type, index, I.sreg[SS].selector);
+	state_save_register_item(state_type, index, I.sreg[DS].selector);
+	state_save_register_item(state_type, index, I.sreg[FS].selector);
+	state_save_register_item(state_type, index, I.sreg[GS].selector);
+	state_save_register_item(state_type, index, I.eip);
+	state_save_register_item(state_type, index, I.prev_eip);
+	state_save_register_item(state_type, index, I.CF);
+	state_save_register_item(state_type, index, I.DF);
+	state_save_register_item(state_type, index, I.SF);
+	state_save_register_item(state_type, index, I.OF);
+	state_save_register_item(state_type, index, I.ZF);
+	state_save_register_item(state_type, index, I.PF);
+	state_save_register_item(state_type, index, I.AF);
+	state_save_register_item(state_type, index, I.IF);
+	state_save_register_item(state_type, index, I.TF);
+	state_save_register_item_array(state_type, index,	I.cr);
+	state_save_register_item_array(state_type, index,	I.dr);
+	state_save_register_item_array(state_type, index,	I.tr);
+	state_save_register_item(state_type, index, I.idtr.base);
+	state_save_register_item(state_type, index, I.idtr.limit);
+	state_save_register_item(state_type, index, I.gdtr.base);
+	state_save_register_item(state_type, index, I.gdtr.limit);
+	state_save_register_item(state_type, index,  I.irq_line);
+	state_save_register_item(state_type, index, I.performed_intersegment_jump);
 	state_save_register_func_postload(i386_postload);
 }
 
@@ -553,9 +553,13 @@ static void build_opcode_table(UINT32 features)
 	}
 }
 
-void i386_reset(void *param)
+void i386_reset(void)
 {
+	int (*save_irqcallback)(int);
+
+	save_irqcallback = I.irq_callback;
 	memset( &I, 0, sizeof(I386_REGS) );
+	I.irq_callback = save_irqcallback;
 
 	I.sreg[CS].selector = 0xf000;
 	I.sreg[CS].base		= 0xffff0000;
@@ -776,9 +780,6 @@ static void i386_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + I386_DR7:			I.dr[7] = info->i; break;
 		case CPUINFO_INT_REGISTER + I386_TR6:			I.tr[6] = info->i; break;
 		case CPUINFO_INT_REGISTER + I386_TR7:			I.tr[7] = info->i; break;
-
-		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_IRQ_CALLBACK:					I.irq_callback = info->irqcallback; break;
 	}
 }
 
@@ -872,7 +873,6 @@ void i386_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:	      				info->execute = i386_execute;		break;
 		case CPUINFO_PTR_BURN:		      				info->burn = NULL;			break;
 		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = i386_dasm;		break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = I.irq_callback;	break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER: 			info->icount = &I.cycles;		break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = i386_reg_layout;		break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = i386_win_layout;		break;
@@ -979,14 +979,18 @@ static UINT8 i486_win_layout[] =
 	 0,23,80, 1,	/* command line window (bottom rows) */
 };
 
-void i486_init(void)
+void i486_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
-	i386_init();
+	i386_init(index, clock, config, irqcallback);
 }
 
-static void i486_reset(void *param)
+static void i486_reset(void)
 {
+	int (*save_irqcallback)(int);
+
+	save_irqcallback = I.irq_callback;
 	memset( &I, 0, sizeof(I386_REGS) );
+	I.irq_callback = save_irqcallback;
 	I.sreg[CS].selector = 0xf000;
 	I.sreg[CS].base		= 0xffff0000;
 	I.sreg[CS].limit	= 0xffff;
@@ -1112,12 +1116,12 @@ static UINT8 pentium_win_layout[] =
 	 0,23,80, 1,	/* command line window (bottom rows) */
 };
 
-void pentium_init(void)
+void pentium_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
-	i386_init();
+	i386_init(index, clock, config, irqcallback);
 }
 
-static void pentium_reset(void *param)
+static void pentium_reset(void)
 {
 	memset( &I, 0, sizeof(I386_REGS) );
 	I.sreg[CS].selector = 0xf000;
@@ -1265,12 +1269,12 @@ static UINT8 mediagx_win_layout[] =
 	 0,23,80, 1,	/* command line window (bottom rows) */
 };
 
-void mediagx_init(void)
+void mediagx_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
-	i386_init();
+	i386_init(index, clock, config, irqcallback);
 }
 
-static void mediagx_reset(void *param)
+static void mediagx_reset(void)
 {
 	memset( &I, 0, sizeof(I386_REGS) );
 	I.sreg[CS].selector = 0xf000;

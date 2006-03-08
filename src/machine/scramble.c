@@ -8,6 +8,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "cpu/z80/z80.h"
 #include "machine/7474.h"
 #include "machine/8255ppi.h"
 #include "galaxian.h"
@@ -1492,7 +1493,7 @@ DRIVER_INIT( gmgalax )
 static READ8_HANDLER( scorpion_prot_r )
 {
 	/* HACK! return register C */
-	return activecpu_get_reg(4) & 0xff;
+	return activecpu_get_reg(Z80_C) & 0xff;
 }
 
 static READ8_HANDLER( scorpion_sound_status_r )

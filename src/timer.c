@@ -15,23 +15,33 @@
 #include <math.h>
 
 
-#define MAX_TIMERS 256
-
+/***************************************************************************
+    DEBUGGING
+***************************************************************************/
 
 #define VERBOSE 0
 
 #if VERBOSE
-#define LOG(x)	do { logerror x; } while (0)
+#define LOG(x)			do { logerror x; } while (0)
 #else
 #define LOG(x)
 #endif
 
 
 
-/*-------------------------------------------------
-    internal timer structure
--------------------------------------------------*/
+/***************************************************************************
+    CONSTANTS
+***************************************************************************/
 
+#define MAX_TIMERS		256
+
+
+
+/***************************************************************************
+    TYPE DEFINITIONS
+***************************************************************************/
+
+/* in timer.h: typedef struct _mame_timer mame_timer; */
 struct _mame_timer
 {
 	mame_timer *	next;
@@ -54,18 +64,9 @@ struct _mame_timer
 
 
 
-/*-------------------------------------------------
-    prototypes
--------------------------------------------------*/
-
-static void timer_logtimers(void);
-static void mame_timer_remove(mame_timer *which);
-
-
-
-/*-------------------------------------------------
-    global variables
--------------------------------------------------*/
+/***************************************************************************
+    GLOBALS
+***************************************************************************/
 
 /* conversion constants */
 subseconds_t subseconds_per_cycle[MAX_CPU];
@@ -91,6 +92,22 @@ mame_time time_never;
 
 
 
+/***************************************************************************
+    PROTOTYPES
+***************************************************************************/
+
+static void timer_postload(void);
+static void timer_logtimers(void);
+static void mame_timer_remove(mame_timer *which);
+
+
+
+/***************************************************************************
+
+    Inlines
+
+***************************************************************************/
+
 /*-------------------------------------------------
     get_current_time - return the current time
 -------------------------------------------------*/
@@ -111,7 +128,6 @@ INLINE mame_time get_current_time(void)
 	/* otherwise, return the current global base time */
 	return global_basetime;
 }
-
 
 
 /*-------------------------------------------------
@@ -136,7 +152,6 @@ INLINE mame_timer *timer_new(void)
 
 	return timer;
 }
-
 
 
 /*-------------------------------------------------
@@ -194,7 +209,6 @@ INLINE void timer_list_insert(mame_timer *timer)
 }
 
 
-
 /*-------------------------------------------------
     timer_list_remove - remove a timer from the
     linked list
@@ -206,12 +220,11 @@ INLINE void timer_list_remove(mame_timer *timer)
 	#ifdef MAME_DEBUG
 	{
 		mame_timer *t;
-		int tnum = 0;
 
 		/* loop over the timer list */
-		for (t = timer_head; t && t != timer; t = t->next, tnum++) ;
+		for (t = timer_head; t && t != timer; t = t->next) ;
 		if (t == NULL)
-			fatalerror ("timer not found in list");
+			fatalerror("timer (%s from %s:%d) not found in list", timer->func, timer->file, timer->line);
 	}
 	#endif
 
@@ -226,43 +239,11 @@ INLINE void timer_list_remove(mame_timer *timer)
 
 
 
-/*-------------------------------------------------
-    timer_postload - after loading a save state
--------------------------------------------------*/
+/***************************************************************************
 
-static void timer_postload(void)
-{
-	mame_timer *privlist = NULL;
-	mame_timer *t;
+    Initialization
 
-	/* remove all timers and make a private list */
-	while (timer_head)
-	{
-		t = timer_head;
-
-		/* temporary timers go away entirely */
-		if (t->temporary)
-			mame_timer_remove(t);
-
-		/* permanent ones get added to our private list */
-		else
-		{
-			timer_list_remove(t);
-			t->next = privlist;
-			privlist = t;
-		}
-	}
-
-	/* now add them all back in; this effectively re-sorts them by time */
-	while (privlist)
-	{
-		t = privlist;
-		privlist = t->next;
-		timer_list_insert(t);
-	}
-}
-
-
+***************************************************************************/
 
 /*-------------------------------------------------
     timer_init - initialize the timer system
@@ -305,7 +286,6 @@ void timer_init(void)
 }
 
 
-
 /*-------------------------------------------------
     timer_free - remove all timers on the current
     resource tag
@@ -330,29 +310,11 @@ void timer_free(void)
 
 
 
-/*-------------------------------------------------
-    timer_count_anonymous - count the number of
-    anonymous (non-saveable) timers
--------------------------------------------------*/
+/***************************************************************************
 
-int timer_count_anonymous(void)
-{
-	mame_timer *t;
-	int count = 0;
+    Scheduling helpers
 
-	logerror("timer_count_anonymous:\n");
-	for (t = timer_head; t; t = t->next)
-		if (t->temporary && t != callback_timer)
-		{
-			count++;
-			logerror("  Temp. timer %p, file %s:%d[%s]\n", (void *) t, t->file, t->line, t->func);
-		}
-	logerror("%d temporary timers found\n", count);
-
-	return count;
-}
-
-
+***************************************************************************/
 
 /*-------------------------------------------------
     mame_timer_next_fire_time - return the
@@ -363,7 +325,6 @@ mame_time mame_timer_next_fire_time(void)
 {
 	return timer_head->expire;
 }
-
 
 
 /*-------------------------------------------------
@@ -439,6 +400,12 @@ void mame_timer_set_global_time(mame_time newbase)
 
 
 
+/***************************************************************************
+
+    Save/restore helpers
+
+***************************************************************************/
+
 /*-------------------------------------------------
     timer_register_save - register ourself with
     the save state system
@@ -472,6 +439,72 @@ static void timer_register_save(mame_timer *timer)
 }
 
 
+/*-------------------------------------------------
+    timer_postload - after loading a save state
+-------------------------------------------------*/
+
+static void timer_postload(void)
+{
+	mame_timer *privlist = NULL;
+	mame_timer *t;
+
+	/* remove all timers and make a private list */
+	while (timer_head)
+	{
+		t = timer_head;
+
+		/* temporary timers go away entirely */
+		if (t->temporary)
+			mame_timer_remove(t);
+
+		/* permanent ones get added to our private list */
+		else
+		{
+			timer_list_remove(t);
+			t->next = privlist;
+			privlist = t;
+		}
+	}
+
+	/* now add them all back in; this effectively re-sorts them by time */
+	while (privlist)
+	{
+		t = privlist;
+		privlist = t->next;
+		timer_list_insert(t);
+	}
+}
+
+
+/*-------------------------------------------------
+    timer_count_anonymous - count the number of
+    anonymous (non-saveable) timers
+-------------------------------------------------*/
+
+int timer_count_anonymous(void)
+{
+	mame_timer *t;
+	int count = 0;
+
+	logerror("timer_count_anonymous:\n");
+	for (t = timer_head; t; t = t->next)
+		if (t->temporary && t != callback_timer)
+		{
+			count++;
+			logerror("  Temp. timer %p, file %s:%d[%s]\n", (void *) t, t->file, t->line, t->func);
+		}
+	logerror("%d temporary timers found\n", count);
+
+	return count;
+}
+
+
+
+/***************************************************************************
+
+    Core timer allocation and deallocation
+
+***************************************************************************/
 
 /*-------------------------------------------------
     timer_alloc - allocate a permament timer that
@@ -525,6 +558,47 @@ mame_timer *_mame_timer_alloc_ptr(void (*callback_ptr)(void *), void *param, con
 }
 
 
+/*-------------------------------------------------
+    mame_timer_remove - remove a timer from the
+    system
+-------------------------------------------------*/
+
+static void mame_timer_remove(mame_timer *which)
+{
+	/* error if this is an inactive timer */
+	if (which->tag == -1)
+	{
+		printf("timer_remove: removing an inactive timer! (%s from %s:%d)\n", which->func, which->file, which->line);
+		logerror("timer_remove: removed an inactive timer!\n");
+		return;
+	}
+
+	/* if this is a callback timer, note that */
+	if (which == callback_timer)
+		callback_timer_modified = TRUE;
+
+	/* remove it from the list */
+	timer_list_remove(which);
+
+	/* mark it as dead */
+	which->tag = -1;
+
+	/* free it up by adding it back to the free list */
+	if (timer_free_tail)
+		timer_free_tail->next = which;
+	else
+		timer_free_head = which;
+	which->next = NULL;
+	timer_free_tail = which;
+}
+
+
+
+/***************************************************************************
+
+    Core timer adjustment
+
+***************************************************************************/
 
 /*-------------------------------------------------
     timer_adjust - adjust the time when this
@@ -587,6 +661,12 @@ void mame_timer_adjust_ptr(mame_timer *which, mame_time duration, mame_time peri
 
 
 
+/***************************************************************************
+
+    Simplified anonymous timer management
+
+***************************************************************************/
+
 /*-------------------------------------------------
     timer_pulse - allocate a pulse timer, which
     repeatedly calls the callback using the given
@@ -616,7 +696,6 @@ void _mame_timer_pulse_ptr(mame_time period, void *param, void (*callback)(void 
 	/* adjust to our liking */
 	mame_timer_adjust_ptr(timer, period, period);
 }
-
 
 
 /*-------------------------------------------------
@@ -650,6 +729,12 @@ void _mame_timer_set_ptr(mame_time duration, void *param, void (*callback)(void 
 
 
 
+/***************************************************************************
+
+    Miscellaneous other timer controls
+
+***************************************************************************/
+
 /*-------------------------------------------------
     timer_reset - reset the timing on a timer
 -------------------------------------------------*/
@@ -670,42 +755,6 @@ void mame_timer_reset(mame_timer *which, mame_time duration)
 	else
 		mame_timer_adjust_ptr(which, duration, which->period);
 }
-
-
-
-/*-------------------------------------------------
-    timer_remove - remove a timer from the system
--------------------------------------------------*/
-
-static void mame_timer_remove(mame_timer *which)
-{
-	/* error if this is an inactive timer */
-	if (which->tag == -1)
-	{
-		printf("timer_remove: removing an inactive timer!\n");
-		logerror("timer_remove: removed an inactive timer!\n");
-		return;
-	}
-
-	/* if this is a callback timer, note that */
-	if (which == callback_timer)
-		callback_timer_modified = TRUE;
-
-	/* remove it from the list */
-	timer_list_remove(which);
-
-	/* mark it as dead */
-	which->tag = -1;
-
-	/* free it up by adding it back to the free list */
-	if (timer_free_tail)
-		timer_free_tail->next = which;
-	else
-		timer_free_head = which;
-	which->next = NULL;
-	timer_free_tail = which;
-}
-
 
 
 /*-------------------------------------------------
@@ -729,6 +778,12 @@ int mame_timer_enable(mame_timer *which, int enable)
 
 
 
+/***************************************************************************
+
+    Timing functions
+
+***************************************************************************/
+
 /*-------------------------------------------------
     timer_timeelapsed - return the time since the
     last trigger
@@ -738,7 +793,6 @@ mame_time mame_timer_timeelapsed(mame_timer *which)
 {
 	return sub_mame_times(get_current_time(), which->start);
 }
-
 
 
 /*-------------------------------------------------
@@ -752,7 +806,6 @@ mame_time mame_timer_timeleft(mame_timer *which)
 }
 
 
-
 /*-------------------------------------------------
     timer_get_time - return the current time
 -------------------------------------------------*/
@@ -761,7 +814,6 @@ mame_time mame_timer_get_time(void)
 {
 	return get_current_time();
 }
-
 
 
 /*-------------------------------------------------
@@ -775,7 +827,6 @@ mame_time mame_timer_starttime(mame_timer *which)
 }
 
 
-
 /*-------------------------------------------------
     timer_firetime - return the time when this
     timer will fire next
@@ -787,6 +838,12 @@ mame_time mame_timer_firetime(mame_timer *which)
 }
 
 
+
+/***************************************************************************
+
+    Debugging
+
+***************************************************************************/
 
 /*-------------------------------------------------
     timer_logtimers - log all the timers

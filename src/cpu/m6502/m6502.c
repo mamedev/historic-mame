@@ -24,8 +24,6 @@
 /* 10.March   2000 PeT added 6502 set overflow input line */
 /* 13.September 2000 PeT N2A03 jmp indirect */
 
-#include <stdio.h>
-#include "driver.h"
 #include "debugger.h"
 #include "m6502.h"
 #include "ops02.h"
@@ -138,43 +136,42 @@ static m6502_Regs m6502;
  *
  *****************************************************************************/
 
-static void m6502_common_init(UINT8 subtype, void (**insn)(void), const char *type)
+static void m6502_common_init(int index, int clock, const void *config, int (*irqcallback)(int), UINT8 subtype, void (**insn)(void), const char *type)
 {
-	int cpu = cpu_getactivecpu();
-
 	memset(&m6502, 0, sizeof(m6502));
+	m6502.irq_callback = irqcallback;
 	m6502.subtype = subtype;
 	m6502.insn = insn;
 	m6502.rdmem_id = program_read_byte_8;
 	m6502.wrmem_id = program_write_byte_8;
 
-	state_save_register_item(type, cpu, m6502.pc.w.l);
-	state_save_register_item(type, cpu, m6502.sp.w.l);
-	state_save_register_item(type, cpu, m6502.p);
-	state_save_register_item(type, cpu, m6502.a);
-	state_save_register_item(type, cpu, m6502.x);
-	state_save_register_item(type, cpu, m6502.y);
-	state_save_register_item(type, cpu, m6502.pending_irq);
-	state_save_register_item(type, cpu, m6502.after_cli);
-	state_save_register_item(type, cpu, m6502.nmi_state);
-	state_save_register_item(type, cpu, m6502.irq_state);
-	state_save_register_item(type, cpu, m6502.so_state);
+	state_save_register_item(type, index, m6502.pc.w.l);
+	state_save_register_item(type, index, m6502.sp.w.l);
+	state_save_register_item(type, index, m6502.p);
+	state_save_register_item(type, index, m6502.a);
+	state_save_register_item(type, index, m6502.x);
+	state_save_register_item(type, index, m6502.y);
+	state_save_register_item(type, index, m6502.pending_irq);
+	state_save_register_item(type, index, m6502.after_cli);
+	state_save_register_item(type, index, m6502.nmi_state);
+	state_save_register_item(type, index, m6502.irq_state);
+	state_save_register_item(type, index, m6502.so_state);
 
 #if (HAS_M6510) || (HAS_M6510T) || (HAS_M8502) || (HAS_M7501)
 	if (subtype == SUBTYPE_6510)
 	{
-		state_save_register_item(type, cpu, m6502.port);
-		state_save_register_item(type, cpu, m6502.ddr);
+		state_save_register_item(type, index, m6502.port);
+		state_save_register_item(type, index, m6502.ddr);
 	}
 #endif
 }
 
-static void m6502_init(void)
+static void m6502_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
-	m6502_common_init(SUBTYPE_6502, insn6502, "m6502");
+	m6502_common_init(index, clock, config, irqcallback, SUBTYPE_6502, insn6502, "m6502");
 }
 
-static void m6502_reset(void *param)
+static void m6502_reset(void)
 {
 	/* wipe out the rest of the m6502 structure */
 	/* read the reset vector into PC */
@@ -185,7 +182,6 @@ static void m6502_reset(void *param)
 	m6502.p = F_T|F_I|F_Z|F_B|(P&F_D);	/* set T, I and Z flags */
 	m6502.pending_irq = 0;	/* nonzero if an IRQ is pending */
 	m6502.after_cli = 0;	/* pending IRQ and last insn cleared I */
-	m6502.irq_callback = NULL;
 	m6502.irq_state = 0;
 	m6502.nmi_state = 0;
 
@@ -342,9 +338,9 @@ static UINT8 n2a03_reg_layout[] = {
 	N2A03_EA,N2A03_ZP, 0
 };
 
-static void n2a03_init(void)
+static void n2a03_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
-	m6502_common_init(SUBTYPE_2A03, insn2a03, "n2a03");
+	m6502_common_init(index, clock, config, irqcallback, SUBTYPE_2A03, insn2a03, "n2a03");
 }
 
 /* The N2A03 is integrally tied to its PSG (they're on the same die).
@@ -368,14 +364,14 @@ static UINT8 m6510_reg_layout[] = {
 	M6510_EA,M6510_ZP, 0
 };
 
-static void m6510_init (void)
+static void m6510_init (int index, int clock, const void *config, int (*irqcallback)(int))
 {
-	m6502_common_init(SUBTYPE_6510, insn6510, "m6510");
+	m6502_common_init(index, clock, config, irqcallback, SUBTYPE_6510, insn6510, "m6510");
 }
 
-static void m6510_reset (void *param)
+static void m6510_reset (void)
 {
-	m6502_reset(param);
+	m6502_reset();
 	m6502.port = 0xff;
 	m6502.ddr = 0x00;
 }
@@ -437,14 +433,14 @@ static UINT8 m65c02_reg_layout[] = {
 	M65C02_EA,M65C02_ZP, 0
 };
 
-static void m65c02_init(void)
+static void m65c02_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
-	m6502_common_init(SUBTYPE_65C02, insn65c02, "m65c02");
+	m6502_common_init(index, clock, config, irqcallback, SUBTYPE_65C02, insn65c02, "m65c02");
 }
 
-static void m65c02_reset (void *param)
+static void m65c02_reset (void)
 {
-	m6502_reset(param);
+	m6502_reset();
 	P &=~F_D;
 }
 
@@ -543,9 +539,9 @@ static void m65c02_set_irq_line(int irqline, int state)
  * 65SC02 section
  ****************************************************************************/
 #if (HAS_M65SC02)
-static void m65sc02_init(void)
+static void m65sc02_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
-	m6502_common_init(SUBTYPE_65SC02, insn65sc02, "m65sc02");
+	m6502_common_init(index, clock, config, irqcallback, SUBTYPE_65SC02, insn65sc02, "m65sc02");
 }
 #endif
 
@@ -559,15 +555,15 @@ static UINT8 deco16_reg_layout[] = {
 	DECO16_EA,DECO16_ZP, 0
 };
 
-static void deco16_init(void)
+static void deco16_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
-	m6502_common_init(SUBTYPE_DECO16, insndeco16, "deco16");
+	m6502_common_init(index, clock, config, irqcallback, SUBTYPE_DECO16, insndeco16, "deco16");
 }
 
 
-static void deco16_reset (void *param)
+static void deco16_reset (void)
 {
-	m6502_reset(param);
+	m6502_reset();
 	m6502.subtype = SUBTYPE_DECO16;
 	m6502.insn = insndeco16;
 
@@ -578,7 +574,6 @@ static void deco16_reset (void *param)
 	m6502.p = F_T|F_I|F_Z|F_B|(P&F_D);	/* set T, I and Z flags */
 	m6502.pending_irq = 0;	/* nonzero if an IRQ is pending */
 	m6502.after_cli = 0;	/* pending IRQ and last insn cleared I */
-	m6502.irq_callback = NULL;
 
 	change_pc(PCD);
 }
@@ -719,7 +714,6 @@ static void m6502_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + M6502_ZP:			m6502.zp.w.l = info->i;					break;
 
 		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_IRQ_CALLBACK:					m6502.irq_callback = info->irqcallback;	break;
 		case CPUINFO_PTR_M6502_READINDEXED_CALLBACK:	m6502.rdmem_id = (read8_handler) info->f;	break;
 		case CPUINFO_PTR_M6502_WRITEINDEXED_CALLBACK:	m6502.wrmem_id = (write8_handler) info->f;	break;
 	}
@@ -786,7 +780,6 @@ void m6502_get_info(UINT32 state, union cpuinfo *info)
 #ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = m6502_dasm;			break;
 #endif
-		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = m6502.irq_callback;	break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m6502_ICount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m6502_reg_layout;				break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = m6502_win_layout;				break;

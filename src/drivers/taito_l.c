@@ -270,7 +270,7 @@ static int irq_callback(int irqline)
 
 static INTERRUPT_GEN( vbl_interrupt )
 {
-	cpu_set_irq_callback(0, irq_callback);
+	cpunum_set_irq_callback(0, irq_callback);
 
 	/* kludge to make plgirls boot */
 	if (cpunum_get_reg(0,Z80_IM) != 2) return;

@@ -2,7 +2,7 @@
 /*    ricoh RF5C68(or clone) PCM controller              */
 /*********************************************************/
 
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
 #include "rf5c68.h"
 #include <math.h>

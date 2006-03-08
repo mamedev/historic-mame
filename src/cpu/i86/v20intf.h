@@ -2,9 +2,6 @@
 #ifndef __V20INTRF_H_
 #define __V20INTRF_H_
 
-#include "memory.h"
-#include "osd_cpu.h"
-
 #include "i86intrf.h"
 #include "v30intrf.h"
 

@@ -1,6 +1,8 @@
 #ifndef __I386_H_
 #define __I386_H_
 
+#include "cpuintrf.h"
+
 #define I386OP(XX)		i386_##XX
 #define I486OP(XX)		i486_##XX
 #define PENTIUMOP(XX)	pentium_##XX

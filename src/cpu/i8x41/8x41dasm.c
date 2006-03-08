@@ -1,9 +1,5 @@
-#include <stdio.h>
-
-#ifdef MAME_DEBUG
-#include "driver.h"
 #include "debugger.h"
-#include "eainfo.h"
+#include "debug/eainfo.h"
 #include "i8x41.h"
 
 unsigned Dasm8x41(char *dst, unsigned pc)
@@ -565,5 +561,3 @@ unsigned Dasm8x41(char *dst, unsigned pc)
 	}
 	return PC - pc;
 }
-
-#endif

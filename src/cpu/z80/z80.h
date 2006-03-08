@@ -2,7 +2,6 @@
 #define _Z80_H_
 
 #include "cpuintrf.h"
-#include "osd_cpu.h"
 
 enum {
 	Z80_PC=1, Z80_SP,

@@ -24,6 +24,14 @@
     CONSTANTS
 ***************************************************************************/
 
+/* program phases */
+#define MAME_PHASE_PREINIT		0
+#define MAME_PHASE_INIT			1
+#define MAME_PHASE_RESET		2
+#define MAME_PHASE_RUNNING		3
+#define MAME_PHASE_EXIT			4
+
+
 /* maxima */
 #define MAX_GFX_ELEMENTS		32
 #define MAX_MEMORY_REGIONS		32
@@ -32,6 +40,7 @@
 /* MESS vs. MAME abstractions */
 #ifndef MESS
 #define APPNAME					"MAME"
+#define CONFIGNAME				"mame"
 #define APPLONGNAME				"M.A.M.E."
 #define CAPGAMENOUN				"GAME"
 #define CAPSTARTGAMENOUN		"Game"
@@ -40,6 +49,7 @@
 #define HISTORYNAME				"History"
 #else
 #define APPNAME					"MESS"
+#define CONFIGNAME				"mess"
 #define APPLONGNAME				"M.E.S.S."
 #define CAPGAMENOUN				"SYSTEM"
 #define CAPSTARTGAMENOUN		"System"
@@ -254,6 +264,9 @@ extern char build_version[];
 /* execute a given game by index in the drivers[] array */
 int run_game(int game);
 
+/* return the current phase */
+int mame_get_phase(void);
+
 /* request callback on termination */
 void add_exit_callback(void (*callback)(void));
 
@@ -307,6 +320,12 @@ UINT8 *memory_region(int num);
 /* return the size (in bytes) of a specified memory region */
 size_t memory_region_length(int num);
 
+/* return the type of a specified memory region */
+UINT32 memory_region_type(int num);
+
+/* return the flags (defined in romload.h) for a specified memory region */
+UINT32 memory_region_flags(int num);
+
 
 
 /* ----- resource management ----- */
@@ -341,6 +360,9 @@ char *auto_strdup(const char *str) ATTR_MALLOC;
 
 /* log to the standard error.log file */
 void CLIB_DECL logerror(const char *text,...) ATTR_PRINTF(1,2);
+
+/* standardized random number generator */
+UINT32 mame_rand(void);
 
 /* return the index of the given CPU, or -1 if not found */
 int mame_find_cpu_index(const char *tag);

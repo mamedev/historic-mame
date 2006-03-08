@@ -57,7 +57,6 @@ Buggy Boy Error Codes             TX-1 Error Codes
 
 #include <stdio.h>
 #include "driver.h"
-#include "machine/random.h"
 #include "machine/8255ppi.h"
 #include "sound/ay8910.h"
 #include "cpu/i86/i86.h"

@@ -67,7 +67,6 @@ To Do:
 
 #include "driver.h"
 #include "machine/eeprom.h"
-#include "machine/random.h"
 #include "machine/kaneko16.h"
 #include "kaneko16.h"
 #include "sound/2203intf.h"

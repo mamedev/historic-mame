@@ -939,6 +939,8 @@ void		memory_set_bankptr(int banknum, void *base);
 
 /* ----- debugging ----- */
 void		memory_set_debugger_access(int debugger);
+void		memory_set_log_unmap(int spacenum, int log);
+int			memory_get_log_unmap(int spacenum);
 
 /* ----- dynamic address space mapping ----- */
 void *		_memory_install_read_handler   (int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, int handler, const char *handler_name);

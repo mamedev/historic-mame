@@ -2,7 +2,6 @@
 #define Z180_H
 
 #include "cpuintrf.h"
-#include "osd_cpu.h"
 
 enum {
 	Z180_PC=1,

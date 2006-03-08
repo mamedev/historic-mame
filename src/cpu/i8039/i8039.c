@@ -34,13 +34,7 @@
  ****************************************************************************/
 
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-
-#include "cpuintrf.h"
 #include "debugger.h"
-#include "state.h"
 #include "i8039.h"
 
 
@@ -610,40 +604,40 @@ static s_opcode opcode_main[256]=
 /****************************************************************************
  * Initialize emulation
  ****************************************************************************/
-static void i8039_init (void)
+static void i8039_init (int index, int clock, const void *config, int (*irqcallback)(int))
 {
-	int cpu = cpu_getactivecpu();
+	R.irq_callback = irqcallback;
 
-	state_save_register_item("i8039", cpu, R.PC.w.l);
-	state_save_register_item("i8039", cpu, R.PREVPC.w.l);
-	state_save_register_item("i8039", cpu, R.A);
-	state_save_register_item("i8039", cpu, R.SP);
-	state_save_register_item("i8039", cpu, R.PSW);
-	state_save_register_item_array("i8039", cpu, R.RAM);
-	state_save_register_item("i8039", cpu, R.bus);
-	state_save_register_item("i8039", cpu, R.f1);
-	state_save_register_item("i8039", cpu, R.P1);
-	state_save_register_item("i8039", cpu, R.P2);
-	state_save_register_item("i8039", cpu, R.pending_irq);
-	state_save_register_item("i8039", cpu, R.irq_executing);
-	state_save_register_item("i8039", cpu, R.masterClock);
-	state_save_register_item("i8039", cpu, R.regPtr);
-	state_save_register_item("i8039", cpu, R.t_flag);
-	state_save_register_item("i8039", cpu, R.timer);
-	state_save_register_item("i8039", cpu, R.timerON);
-	state_save_register_item("i8039", cpu, R.countON);
-	state_save_register_item("i8039", cpu, R.xirq_en);
-	state_save_register_item("i8039", cpu, R.tirq_en);
-	state_save_register_item("i8039", cpu, R.A11);
-	state_save_register_item("i8039", cpu, R.A11ff);
-	state_save_register_item("i8039", cpu, R.irq_state);
-	state_save_register_item("i8039", cpu, R.irq_extra_cycles);
+	state_save_register_item("i8039", index, R.PC.w.l);
+	state_save_register_item("i8039", index, R.PREVPC.w.l);
+	state_save_register_item("i8039", index, R.A);
+	state_save_register_item("i8039", index, R.SP);
+	state_save_register_item("i8039", index, R.PSW);
+	state_save_register_item_array("i8039", index, R.RAM);
+	state_save_register_item("i8039", index, R.bus);
+	state_save_register_item("i8039", index, R.f1);
+	state_save_register_item("i8039", index, R.P1);
+	state_save_register_item("i8039", index, R.P2);
+	state_save_register_item("i8039", index, R.pending_irq);
+	state_save_register_item("i8039", index, R.irq_executing);
+	state_save_register_item("i8039", index, R.masterClock);
+	state_save_register_item("i8039", index, R.regPtr);
+	state_save_register_item("i8039", index, R.t_flag);
+	state_save_register_item("i8039", index, R.timer);
+	state_save_register_item("i8039", index, R.timerON);
+	state_save_register_item("i8039", index, R.countON);
+	state_save_register_item("i8039", index, R.xirq_en);
+	state_save_register_item("i8039", index, R.tirq_en);
+	state_save_register_item("i8039", index, R.A11);
+	state_save_register_item("i8039", index, R.A11ff);
+	state_save_register_item("i8039", index, R.irq_state);
+	state_save_register_item("i8039", index, R.irq_extra_cycles);
 }
 
 /****************************************************************************
  * Reset registers to their initial values
  ****************************************************************************/
-static void i8039_reset (void *param)
+static void i8039_reset (void)
 {
 	R.PC.w.l = 0;
 	R.SP  = 0;
@@ -886,9 +880,6 @@ static void i8039_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + I8039_R5:			R5 = info->i;							break;
 		case CPUINFO_INT_REGISTER + I8039_R6:			R6 = info->i;							break;
 		case CPUINFO_INT_REGISTER + I8039_R7:			R7 = info->i;							break;
-
-		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_IRQ_CALLBACK:					R.irq_callback = info->irqcallback;		break;
 	}
 }
 
@@ -955,7 +946,6 @@ void i8039_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = i8039_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = i8039_dasm;			break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = R.irq_callback;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &i8039_ICount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = i8039_reg_layout;				break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = i8039_win_layout;				break;

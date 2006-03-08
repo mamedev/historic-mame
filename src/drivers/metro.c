@@ -194,7 +194,7 @@ int metro_irq_callback(int int_level)
 MACHINE_RESET( metro )
 {
 	if (irq_line == -1)
-		cpu_set_irq_callback(0, metro_irq_callback);
+		cpunum_set_irq_callback(0, metro_irq_callback);
 }
 
 

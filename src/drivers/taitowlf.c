@@ -411,7 +411,7 @@ static MACHINE_RESET(taitowlf)
 	memory_set_bankptr(1, memory_region(REGION_USER1) + 0x30000);
 
 	dma8237_reset();
-	cpu_set_irq_callback(0, irq_callback);
+	cpunum_set_irq_callback(0, irq_callback);
 }
 
 static MACHINE_DRIVER_START(taitowlf)

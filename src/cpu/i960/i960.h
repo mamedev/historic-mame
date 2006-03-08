@@ -1,6 +1,8 @@
 #ifndef __I960_H
 #define __I960_H
 
+#include "cpuintrf.h"
+
 enum {
   I960_PFP = 0,
   I960_SP  = 1,

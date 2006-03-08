@@ -3,8 +3,7 @@
 #ifndef _T11_H
 #define _T11_H
 
-#include "memory.h"
-#include "osd_cpu.h"
+#include "cpuintrf.h"
 
 enum {
 	T11_R0=1, T11_R1, T11_R2, T11_R3, T11_R4, T11_R5, T11_SP, T11_PC, T11_PSW };

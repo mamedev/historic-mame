@@ -1,10 +1,6 @@
-
-
-#include "driver.h"
-#ifdef	MAME_DEBUG
 #include "debugger.h"
-#include "eainfo.h"
 #include "sh2.h"
+#include "debug/eainfo.h"
 
 #define SIGNX8(x)	(((INT32)(x) << 24) >> 24)
 #define SIGNX12(x)	(((INT32)(x) << 20) >> 20)
@@ -693,6 +689,3 @@ unsigned DasmSH2(char *buffer, unsigned pc)
 	}
 	return 2;
 }
-
-#endif
-

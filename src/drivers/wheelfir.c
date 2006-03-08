@@ -47,7 +47,6 @@ something is missing, currently needs a hack to boot
 
 
 #include "driver.h"
-#include "machine/random.h"
 
 
 READ16_HANDLER( wheelfir_rand1 )

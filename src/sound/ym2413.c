@@ -26,11 +26,9 @@ to do:
 
 */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <math.h>
 
-#include "driver.h"		/* use M.A.M.E. */
+#include "sndintrf.h"		/* use M.A.M.E. */
 #include "ym2413.h"
 
 

@@ -1396,7 +1396,7 @@ void dcs_reset_w(int state)
 	/* going high halts the CPU */
 	if (state)
 	{
-		logerror("%08x: DCS reset = %d\n", activecpu_get_pc(), state);
+		logerror("%08x: DCS reset = %d\n", safe_activecpu_get_pc(), state);
 
 		/* just run through the init code again */
 		timer_set(TIME_NOW, 0, dcs_reset);

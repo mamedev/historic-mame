@@ -18,12 +18,14 @@
 // MAME headers
 #include "osdepend.h"
 #include "driver.h"
+#include "profiler.h"
 #include "vidhrdw/vector.h"
+
+// MAMEOS headers
 #include "blit.h"
 #include "video.h"
 #include "window.h"
 #include "rc.h"
-#include "profiler.h"
 
 #ifndef NEW_DEBUGGER
 #include "debugwin.h"

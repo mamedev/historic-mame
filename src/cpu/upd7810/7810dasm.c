@@ -7,12 +7,8 @@
  *
  *****************************************************************************/
 
-#include <stdio.h>
-
-#ifdef MAME_DEBUG
-#include "driver.h"
 #include "debugger.h"
-#include "eainfo.h"
+#include "debug/eainfo.h"
 #include "upd7810.h"
 
 struct dasm_s {
@@ -4064,6 +4060,3 @@ unsigned Dasm7807( char *buffer, unsigned pc )
 {
 	return Dasm( buffer, pc, dasmXX_7807 );
 }
-
-#endif	/* MAME_DEBUG */
-

@@ -212,8 +212,7 @@
 
 *********************************************************************/
 
-#include <math.h>
-#include "driver.h"
+#include "usrintrf.h"
 #include "debugger.h"
 #include "e132xs.h"
 
@@ -1768,29 +1767,29 @@ static void set_irq_line(int irqline, int state)
 	}
 }
 
-static void hyperstone_init(void)
+static void hyperstone_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
-	int cpu = cpu_getactivecpu();
-
-	state_save_register_item_array("E132XS", cpu, hyperstone.global_regs);
-	state_save_register_item_array("E132XS", cpu, hyperstone.local_regs);
-	state_save_register_item("E132XS", cpu, hyperstone.ppc);
-	state_save_register_item("E132XS", cpu, hyperstone.trap_entry);
-	state_save_register_item("E132XS", cpu, hyperstone.delay.delay_pc);
-	state_save_register_item("E132XS", cpu, hyperstone.op);
-	state_save_register_item("E132XS", cpu, hyperstone.n);
-	state_save_register_item("E132XS", cpu, hyperstone.h_clear);
-	state_save_register_item("E132XS", cpu, hyperstone.instruction_length);
-	state_save_register_item("E132XS", cpu, hyperstone.intblock);
-	state_save_register_item("E132XS", cpu, hyperstone.delay_timer);
-	state_save_register_item("E132XS", cpu, hyperstone.delay.delay_cmd);
-	state_save_register_item("E132XS", cpu, hyperstone.time);
+	state_save_register_item_array("E132XS", index, hyperstone.global_regs);
+	state_save_register_item_array("E132XS", index, hyperstone.local_regs);
+	state_save_register_item("E132XS", index, hyperstone.ppc);
+	state_save_register_item("E132XS", index, hyperstone.trap_entry);
+	state_save_register_item("E132XS", index, hyperstone.delay.delay_pc);
+	state_save_register_item("E132XS", index, hyperstone.op);
+	state_save_register_item("E132XS", index, hyperstone.n);
+	state_save_register_item("E132XS", index, hyperstone.h_clear);
+	state_save_register_item("E132XS", index, hyperstone.instruction_length);
+	state_save_register_item("E132XS", index, hyperstone.intblock);
+	state_save_register_item("E132XS", index, hyperstone.delay_timer);
+	state_save_register_item("E132XS", index, hyperstone.delay.delay_cmd);
+	state_save_register_item("E132XS", index, hyperstone.time);
 
 	hyperstone.timer = timer_alloc(hyperstone_timer);
 	timer_adjust(hyperstone.timer, TIME_NEVER, 0, 0);
+
+	hyperstone.irq_callback = irqcallback;
 }
 
-static void e116_init(void)
+static void e116_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
 	hyp_cpu_read_byte      = program_read_byte_16be;
 	hyp_cpu_read_half_word = program_read_word_16be;
@@ -1804,10 +1803,10 @@ static void e116_init(void)
 
 	hyp_type_16bit = 1;
 
-	hyperstone_init();
+	hyperstone_init(index, clock, config, irqcallback);
 }
 
-static void e132_init(void)
+static void e132_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
 	hyp_cpu_read_byte      = program_read_byte_32be;
 	hyp_cpu_read_half_word = program_read_word_32be;
@@ -1821,18 +1820,21 @@ static void e132_init(void)
 
 	hyp_type_16bit = 0;
 
-	hyperstone_init();
+	hyperstone_init(index, clock, config, irqcallback);
 }
 
-static void hyperstone_reset(void *param)
+static void hyperstone_reset(void)
 {
 	//TODO: Add different reset initializations for BCR, MCR, FCR, TPR
 
+	int (*save_irqcallback)(int);
 	void *hyp_timer;
 
+	save_irqcallback = hyperstone.irq_callback;
 	hyp_timer = hyperstone.timer;
 	memset(&hyperstone, 0, sizeof(hyperstone_regs));
 	hyperstone.timer = hyp_timer;
+	hyperstone.irq_callback = save_irqcallback;
 
 	hyperstone.h_clear = 0;
 	hyperstone.instruction_length = 0;
@@ -5039,9 +5041,6 @@ static void hyperstone_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + E132XS_L62:			hyperstone.local_regs[62] = info->i;		break;
 		case CPUINFO_INT_REGISTER + E132XS_L63:			hyperstone.local_regs[63] = info->i;		break;
 
-		/* --- the following bits of info are set as pointers to info->i or functions --- */
-		case CPUINFO_PTR_IRQ_CALLBACK:					hyperstone.irq_callback = info->irqcallback;	break;
-
 		case CPUINFO_INT_INPUT_STATE + 0:				set_irq_line(0, info->i);					break;
 		case CPUINFO_INT_INPUT_STATE + 1:				set_irq_line(1, info->i);					break;
 		case CPUINFO_INT_INPUT_STATE + 2:				set_irq_line(2, info->i);					break;
@@ -5209,7 +5208,6 @@ void hyperstone_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = hyperstone_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						    break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = hyperstone_dasm;		break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = hyperstone.irq_callback;break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &hyperstone_ICount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = hyperstone_reg_layout;			break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = hyperstone_win_layout;			break;

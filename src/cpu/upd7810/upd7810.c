@@ -397,8 +397,6 @@ STOP            01001000  10111011          12  stop
 */
 
 
-#include <stdio.h>
-#include "driver.h"
 #include "debugger.h"
 #include "upd7810.h"
 
@@ -1518,82 +1516,90 @@ static void upd7810_timers(int cycles)
 	}
 }
 
-void upd7810_init(void)
+void upd7810_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
-	int cpu = cpu_getactivecpu();
+	upd7810.config = *(const UPD7810_CONFIG*) config;
+	upd7810.irq_callback = irqcallback;
 
-	state_save_register_item("upd7810", cpu, upd7810.ppc.w.l);
-	state_save_register_item("upd7810", cpu, upd7810.pc.w.l);
-	state_save_register_item("upd7810", cpu, upd7810.sp.w.l);
-	state_save_register_item("upd7810", cpu, upd7810.psw);
-	state_save_register_item("upd7810", cpu, upd7810.op);
-	state_save_register_item("upd7810", cpu, upd7810.op2);
-	state_save_register_item("upd7810", cpu, upd7810.iff);
-	state_save_register_item("upd7810", cpu, upd7810.ea.w.l);
-	state_save_register_item("upd7810", cpu, upd7810.va.w.l);
-	state_save_register_item("upd7810", cpu, upd7810.bc.w.l);
-	state_save_register_item("upd7810", cpu, upd7810.de.w.l);
-	state_save_register_item("upd7810", cpu, upd7810.hl.w.l);
-	state_save_register_item("upd7810", cpu, upd7810.ea2.w.l);
-	state_save_register_item("upd7810", cpu, upd7810.va2.w.l);
-	state_save_register_item("upd7810", cpu, upd7810.bc2.w.l);
-	state_save_register_item("upd7810", cpu, upd7810.de2.w.l);
-	state_save_register_item("upd7810", cpu, upd7810.hl2.w.l);
-	state_save_register_item("upd7810", cpu, upd7810.cnt.d);
-	state_save_register_item("upd7810", cpu, upd7810.tm.d);
-	state_save_register_item("upd7810", cpu, upd7810.ecnt.d);
-	state_save_register_item("upd7810", cpu, upd7810.etm.d);
-	state_save_register_item("upd7810", cpu, upd7810.ma);
-	state_save_register_item("upd7810", cpu, upd7810.mb);
-	state_save_register_item("upd7810", cpu, upd7810.mcc);
-	state_save_register_item("upd7810", cpu, upd7810.mc);
-	state_save_register_item("upd7810", cpu, upd7810.mm);
-	state_save_register_item("upd7810", cpu, upd7810.mf);
-	state_save_register_item("upd7810", cpu, upd7810.tmm);
-	state_save_register_item("upd7810", cpu, upd7810.etmm);
-	state_save_register_item("upd7810", cpu, upd7810.eom);
-	state_save_register_item("upd7810", cpu, upd7810.sml);
-	state_save_register_item("upd7810", cpu, upd7810.smh);
-	state_save_register_item("upd7810", cpu, upd7810.anm);
-	state_save_register_item("upd7810", cpu, upd7810.mkl);
-	state_save_register_item("upd7810", cpu, upd7810.mkh);
-	state_save_register_item("upd7810", cpu, upd7810.zcm);
-	state_save_register_item("upd7810", cpu, upd7810.pa_out);
-	state_save_register_item("upd7810", cpu, upd7810.pb_out);
-	state_save_register_item("upd7810", cpu, upd7810.pc_out);
-	state_save_register_item("upd7810", cpu, upd7810.pd_out);
-	state_save_register_item("upd7810", cpu, upd7810.pf_out);
-	state_save_register_item("upd7810", cpu, upd7810.cr0);
-	state_save_register_item("upd7810", cpu, upd7810.cr1);
-	state_save_register_item("upd7810", cpu, upd7810.cr2);
-	state_save_register_item("upd7810", cpu, upd7810.cr3);
-	state_save_register_item("upd7810", cpu, upd7810.txb);
-	state_save_register_item("upd7810", cpu, upd7810.rxb);
-	state_save_register_item("upd7810", cpu, upd7810.txd);
-	state_save_register_item("upd7810", cpu, upd7810.rxd);
-	state_save_register_item("upd7810", cpu, upd7810.sck);
-	state_save_register_item("upd7810", cpu, upd7810.ti);
-	state_save_register_item("upd7810", cpu, upd7810.to);
-	state_save_register_item("upd7810", cpu, upd7810.ci);
-	state_save_register_item("upd7810", cpu, upd7810.co0);
-	state_save_register_item("upd7810", cpu, upd7810.co1);
-	state_save_register_item("upd7810", cpu, upd7810.irr);
-	state_save_register_item("upd7810", cpu, upd7810.itf);
-	state_save_register_item("upd7810", cpu, upd7810.ovc0);
-	state_save_register_item("upd7810", cpu, upd7810.ovc1);
-	state_save_register_item("upd7810", cpu, upd7810.ovcf);
-	state_save_register_item("upd7810", cpu, upd7810.ovcs);
-	state_save_register_item("upd7810", cpu, upd7810.edges);
+	state_save_register_item("upd7810", index, upd7810.ppc.w.l);
+	state_save_register_item("upd7810", index, upd7810.pc.w.l);
+	state_save_register_item("upd7810", index, upd7810.sp.w.l);
+	state_save_register_item("upd7810", index, upd7810.psw);
+	state_save_register_item("upd7810", index, upd7810.op);
+	state_save_register_item("upd7810", index, upd7810.op2);
+	state_save_register_item("upd7810", index, upd7810.iff);
+	state_save_register_item("upd7810", index, upd7810.ea.w.l);
+	state_save_register_item("upd7810", index, upd7810.va.w.l);
+	state_save_register_item("upd7810", index, upd7810.bc.w.l);
+	state_save_register_item("upd7810", index, upd7810.de.w.l);
+	state_save_register_item("upd7810", index, upd7810.hl.w.l);
+	state_save_register_item("upd7810", index, upd7810.ea2.w.l);
+	state_save_register_item("upd7810", index, upd7810.va2.w.l);
+	state_save_register_item("upd7810", index, upd7810.bc2.w.l);
+	state_save_register_item("upd7810", index, upd7810.de2.w.l);
+	state_save_register_item("upd7810", index, upd7810.hl2.w.l);
+	state_save_register_item("upd7810", index, upd7810.cnt.d);
+	state_save_register_item("upd7810", index, upd7810.tm.d);
+	state_save_register_item("upd7810", index, upd7810.ecnt.d);
+	state_save_register_item("upd7810", index, upd7810.etm.d);
+	state_save_register_item("upd7810", index, upd7810.ma);
+	state_save_register_item("upd7810", index, upd7810.mb);
+	state_save_register_item("upd7810", index, upd7810.mcc);
+	state_save_register_item("upd7810", index, upd7810.mc);
+	state_save_register_item("upd7810", index, upd7810.mm);
+	state_save_register_item("upd7810", index, upd7810.mf);
+	state_save_register_item("upd7810", index, upd7810.tmm);
+	state_save_register_item("upd7810", index, upd7810.etmm);
+	state_save_register_item("upd7810", index, upd7810.eom);
+	state_save_register_item("upd7810", index, upd7810.sml);
+	state_save_register_item("upd7810", index, upd7810.smh);
+	state_save_register_item("upd7810", index, upd7810.anm);
+	state_save_register_item("upd7810", index, upd7810.mkl);
+	state_save_register_item("upd7810", index, upd7810.mkh);
+	state_save_register_item("upd7810", index, upd7810.zcm);
+	state_save_register_item("upd7810", index, upd7810.pa_out);
+	state_save_register_item("upd7810", index, upd7810.pb_out);
+	state_save_register_item("upd7810", index, upd7810.pc_out);
+	state_save_register_item("upd7810", index, upd7810.pd_out);
+	state_save_register_item("upd7810", index, upd7810.pf_out);
+	state_save_register_item("upd7810", index, upd7810.cr0);
+	state_save_register_item("upd7810", index, upd7810.cr1);
+	state_save_register_item("upd7810", index, upd7810.cr2);
+	state_save_register_item("upd7810", index, upd7810.cr3);
+	state_save_register_item("upd7810", index, upd7810.txb);
+	state_save_register_item("upd7810", index, upd7810.rxb);
+	state_save_register_item("upd7810", index, upd7810.txd);
+	state_save_register_item("upd7810", index, upd7810.rxd);
+	state_save_register_item("upd7810", index, upd7810.sck);
+	state_save_register_item("upd7810", index, upd7810.ti);
+	state_save_register_item("upd7810", index, upd7810.to);
+	state_save_register_item("upd7810", index, upd7810.ci);
+	state_save_register_item("upd7810", index, upd7810.co0);
+	state_save_register_item("upd7810", index, upd7810.co1);
+	state_save_register_item("upd7810", index, upd7810.irr);
+	state_save_register_item("upd7810", index, upd7810.itf);
+	state_save_register_item("upd7810", index, upd7810.ovc0);
+	state_save_register_item("upd7810", index, upd7810.ovc1);
+	state_save_register_item("upd7810", index, upd7810.ovcf);
+	state_save_register_item("upd7810", index, upd7810.ovcs);
+	state_save_register_item("upd7810", index, upd7810.edges);
 }
 
 #include "7810tbl.c"
 #include "7810ops.c"
 
-static void upd7810_reset (void *param)
+static void upd7810_reset (void)
 {
+	UPD7810_CONFIG save_config;
+	int (*save_irqcallback)(int);
+
+	save_config = upd7810.config;
+	save_irqcallback = upd7810.irq_callback;
 	memset(&upd7810, 0, sizeof(upd7810));
+	upd7810.config = save_config;
+	upd7810.irq_callback = save_irqcallback;
+
 	upd7810.opXX = opXX_7810;
-	upd7810.config = *(UPD7810_CONFIG*) param;
 	ETMM = 0xff;
 	TMM = 0xff;
 	MA = 0xff;
@@ -1615,9 +1621,9 @@ static void upd7810_reset (void *param)
 	MKH = 0xff; //?
 }
 
-static void upd7807_reset (void *param)
+static void upd7807_reset (void)
 {
-	upd7810_reset(param);
+	upd7810_reset();
 	upd7810.opXX = opXX_7807;
 }
 
@@ -1853,9 +1859,6 @@ static void upd7810_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + UPD7810_CI:			CI	= info->i; 							break;
 		case CPUINFO_INT_REGISTER + UPD7810_CO0:		CO0 = info->i; 							break;
 		case CPUINFO_INT_REGISTER + UPD7810_CO1:		CO1 = info->i; 							break;
-
-		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_IRQ_CALLBACK:					upd7810.irq_callback = info->irqcallback; break;
 	}
 }
 
@@ -1960,7 +1963,6 @@ void upd7810_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = upd7810_execute;		break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = upd7810_dasm;		break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = upd7810.irq_callback; break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &upd7810_icount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = upd7810_reg_layout;			break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = upd7810_win_layout;			break;

@@ -3,17 +3,6 @@
 Asterix
 
 TODO:
-on the highscore screen in attract mode, the stars are slightly off screen on
-the left side. the stars on the right should touch the edge of the visible area.
-needs to move right say 4 or 5 pixels? in the original there is no gap on either
-side, the stars touch the edge on both sides.
-
-on the attract screen with the slides (just before the konami logo), the right
-spacing of the last slide is too large. it should be about half of what it is in
-the emulation, about 8mm (or 5/16 inch for you US guys ;-) the left border of
-the first slide is too small. it should be about 3mm (or 1/8th inch) from the
-edge of the screen.
-
 the konami logo: in the original the outline is drawn, then there's a slight
 delay of 1 or 2 seconds, then it fills from the top to the bottom with the
 colour, including the word "Konami"
@@ -112,14 +101,16 @@ static WRITE16_HANDLER( control2_w )
 		EEPROM_set_clock_line((data & 0x04) ? ASSERT_LINE : CLEAR_LINE);
 
 		/* bit 5 is select tile bank */
-		K054157_set_tile_bank((data & 0x20) >> 5);
+		K056832_set_tile_bank((data & 0x20) >> 5);
 	}
 }
 
 static INTERRUPT_GEN( asterix_interrupt )
 {
-	if (K054157_is_IRQ_enabled())
-		cpunum_set_input_line(0, 5, HOLD_LINE); /* ??? All irqs have the same vector, and the
+	// global interrupt masking
+	if (!K056832_is_IRQ_enabled(0)) return;
+
+	cpunum_set_input_line(0, 5, HOLD_LINE); /* ??? All irqs have the same vector, and the
                                               mask used is 0 or 7 */
 }
 
@@ -203,8 +194,8 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x380002, 0x380003) AM_READ(control1_r)
 	AM_RANGE(0x380200, 0x380203) AM_READ(asterix_sound_r)	// 053260
 	AM_RANGE(0x380600, 0x380601) AM_READ(MRA16_NOP)			// Watchdog
-	AM_RANGE(0x400000, 0x400fff) AM_READ(K054157_ram_half_word_r)	// Graphic planes
-	AM_RANGE(0x420000, 0x421fff) AM_READ(K054157_rom_word_r)		// Passthrough to tile roms
+	AM_RANGE(0x400000, 0x400fff) AM_READ(K056832_ram_half_word_r)	// Graphic planes
+	AM_RANGE(0x420000, 0x421fff) AM_READ(K056832_old_rom_word_r)	// Passthrough to tile roms
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -221,10 +212,10 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x380400, 0x380401) AM_WRITE(asterix_spritebank_w)
 	AM_RANGE(0x380500, 0x38051f) AM_WRITE(K053251_lsb_w)
 	AM_RANGE(0x380600, 0x380601) AM_WRITE(MWA16_NOP)			// Watchdog
-	AM_RANGE(0x380700, 0x380707) AM_WRITE(K054157_b_word_w)
+	AM_RANGE(0x380700, 0x380707) AM_WRITE(K056832_b_word_w)
 	AM_RANGE(0x380800, 0x380803) AM_WRITE(protection_w)
-	AM_RANGE(0x400000, 0x400fff) AM_WRITE(K054157_ram_half_word_w)
-	AM_RANGE(0x440000, 0x44003f) AM_WRITE(K054157_word_w)
+	AM_RANGE(0x400000, 0x400fff) AM_WRITE(K056832_ram_half_word_w)
+	AM_RANGE(0x440000, 0x44003f) AM_WRITE(K056832_word_w)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )

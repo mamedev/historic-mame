@@ -42,7 +42,6 @@ Also....
 */
 
 #include "driver.h"
-#include "machine/random.h"
 #include "sound/samples.h"
 
 extern unsigned char *astrof_color;

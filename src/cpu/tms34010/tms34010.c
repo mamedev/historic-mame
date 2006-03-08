@@ -112,7 +112,7 @@ typedef struct tms34010_regs
 	UINT8  ext_irq_lines;
 	int (*irq_callback)(int irqline);
 	INT32 last_update_vcount;
-	struct tms34010_config *config;
+	const struct tms34010_config *config;
 
 	/* for the 34010, we only copy 32 of these into the new state */
 	UINT16 IOregs[64];
@@ -832,9 +832,9 @@ static void check_interrupt(void)
     Reset the CPU emulation
 ***************************************************************************/
 
-static void tms34010_init(void)
+static void tms34010_init(int index, int clock, const void *_config, int (*irqcallback)(int))
 {
-	int cpunum;
+	const struct tms34010_config *config = _config ? _config : &default_config;
 	int i;
 
 	external_host_access = 0;
@@ -845,51 +845,56 @@ static void tms34010_init(void)
 		vsblnk_timer[i] = timer_alloc(vsblnk_callback);
 	}
 
+	state.config = config;
+	state.irq_callback = irqcallback;
 
 	/* allocate the shiftreg */
 	state.shiftreg = auto_malloc(SHIFTREG_SIZE);
 
-	cpunum = cpu_getactivecpu();
-	state_save_register_item("tms34010", cpunum, state.op);
-	state_save_register_item("tms34010", cpunum, state.pc);
-	state_save_register_item("tms34010", cpunum, state.st);
-	state_save_register_item_array("tms34010", cpunum, state.flat_aregs);
-	state_save_register_item_array("tms34010", cpunum, state.flat_bregs);
-	state_save_register_item("tms34010", cpunum, state.nflag);
-	state_save_register_item("tms34010", cpunum, state.cflag);
-	state_save_register_item("tms34010", cpunum, state.notzflag);
-	state_save_register_item("tms34010", cpunum, state.vflag);
-	state_save_register_item("tms34010", cpunum, state.pflag);
-	state_save_register_item("tms34010", cpunum, state.ieflag);
-	state_save_register_item("tms34010", cpunum, state.fe0flag);
-	state_save_register_item("tms34010", cpunum, state.fe1flag);
-	state_save_register_item_array("tms34010", cpunum, state.fw);
-	state_save_register_item_array("tms34010", cpunum, state.fw_inc);
-	state_save_register_item("tms34010", cpunum, state.reset_deferred);
-	state_save_register_item_array("tms34010", cpunum, state.shiftreg);
-	state_save_register_item_array("tms34010", cpunum, state.IOregs);
-	state_save_register_item("tms34010", cpunum, state.transparency);
-	state_save_register_item("tms34010", cpunum, state.window_checking);
-	state_save_register_item("tms34010", cpunum, state.convsp);
-	state_save_register_item("tms34010", cpunum, state.convdp);
-	state_save_register_item("tms34010", cpunum, state.convmp);
-	state_save_register_item("tms34010", cpunum, state.pixelshift);
-	state_save_register_item("tms34010", cpunum, state.gfxcycles);
-	state_save_register_item("tms34010", cpunum, state.last_update_vcount);
+	state_save_register_item("tms34010", index, state.op);
+	state_save_register_item("tms34010", index, state.pc);
+	state_save_register_item("tms34010", index, state.st);
+	state_save_register_item_array("tms34010", index, state.flat_aregs);
+	state_save_register_item_array("tms34010", index, state.flat_bregs);
+	state_save_register_item("tms34010", index, state.nflag);
+	state_save_register_item("tms34010", index, state.cflag);
+	state_save_register_item("tms34010", index, state.notzflag);
+	state_save_register_item("tms34010", index, state.vflag);
+	state_save_register_item("tms34010", index, state.pflag);
+	state_save_register_item("tms34010", index, state.ieflag);
+	state_save_register_item("tms34010", index, state.fe0flag);
+	state_save_register_item("tms34010", index, state.fe1flag);
+	state_save_register_item_array("tms34010", index, state.fw);
+	state_save_register_item_array("tms34010", index, state.fw_inc);
+	state_save_register_item("tms34010", index, state.reset_deferred);
+	state_save_register_item_array("tms34010", index, state.shiftreg);
+	state_save_register_item_array("tms34010", index, state.IOregs);
+	state_save_register_item("tms34010", index, state.transparency);
+	state_save_register_item("tms34010", index, state.window_checking);
+	state_save_register_item("tms34010", index, state.convsp);
+	state_save_register_item("tms34010", index, state.convdp);
+	state_save_register_item("tms34010", index, state.convmp);
+	state_save_register_item("tms34010", index, state.pixelshift);
+	state_save_register_item("tms34010", index, state.gfxcycles);
+	state_save_register_item("tms34010", index, state.last_update_vcount);
 	state_save_register_func_presave(tms34010_state_presave);
 	state_save_register_func_postload(tms34010_state_postload);
 }
 
-static void tms34010_reset(void *param)
+static void tms34010_reset(void)
 {
-	struct tms34010_config *config = param ? param : &default_config;
+	const struct tms34010_config *config;
+	int (*save_irqcallback)(int);
 	UINT16 *shiftreg;
 
 	/* zap the state and copy in the config pointer */
+	config = state.config;
 	shiftreg = state.shiftreg;
+	save_irqcallback = state.irq_callback;
 	memset(&state, 0, sizeof(state));
-	state.config = config;
 	state.shiftreg = shiftreg;
+	state.config = config;
+	state.irq_callback = save_irqcallback;
 
 	/* fetch the initial PC and reset the state */
 	PC = RLONG(0xffffffe0) & 0xfffffff0;
@@ -898,14 +903,14 @@ static void tms34010_reset(void *param)
 
 	/* HALT the CPU if requested, and remember to re-read the starting PC */
 	/* the first time we are run */
-	state.reset_deferred = config->halt_on_reset;
-	if (config->halt_on_reset)
+	state.reset_deferred = state.config->halt_on_reset;
+	if (state.config->halt_on_reset)
 		tms34010_io_register_w(REG_HSTCTLH, 0x8000, 0);
 }
 
-static void tms34020_reset(void *param)
+static void tms34020_reset(void)
 {
-	tms34010_reset(param);
+	tms34010_reset();
 	state.is_34020 = 1;
 }
 
@@ -2053,9 +2058,6 @@ static void tms34010_set_info(UINT32 _state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + TMS34010_B12:		BREG(BINDEX(12)) = info->i;				break;
 		case CPUINFO_INT_REGISTER + TMS34010_B13:		BREG(BINDEX(13)) = info->i;				break;
 		case CPUINFO_INT_REGISTER + TMS34010_B14:		BREG(BINDEX(14)) = info->i;				break;
-
-		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_IRQ_CALLBACK:					state.irq_callback = info->irqcallback;	break;
 	}
 }
 
@@ -2141,7 +2143,6 @@ void tms34010_get_info(UINT32 _state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = tms34010_execute;		break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = tms34010_dasm;		break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = state.irq_callback;	break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &tms34010_ICount;		break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = tms34010_reg_layout;			break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = tms34010_win_layout;			break;

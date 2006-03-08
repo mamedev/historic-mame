@@ -2,7 +2,7 @@
 /*    SEGA 16ch 8bit PCM                                 */
 /*********************************************************/
 
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
 #include "segapcm.h"
 

@@ -507,7 +507,6 @@ void dec0_i8751_reset(void)
 
 static WRITE16_HANDLER( sprite_mirror_w )
 {
-	extern UINT16 *spriteram16;
 	COMBINE_DATA(&spriteram16[offset]);
 }
 

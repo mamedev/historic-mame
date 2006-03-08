@@ -6,8 +6,6 @@
 /* ======================================================================== */
 
 #include "driver.h"
-#include "cpuintrf.h"
-#include "memory.h"
 #include "debugger.h"
 #include "m68000.h"
 

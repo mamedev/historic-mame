@@ -138,6 +138,13 @@ Notes:
   is not written to. If we buffered spriteram to an external buffer, this would
   cause dangling sprites because the buffer would not be updated.
 
+- spriteram buffering fixes sprite lag, but causes a glitch in rthunder when
+  entering a door. The *closed* door is made of tiles, but the *moving* door is
+  made of sprites. Since sprites are delayed by 1 frame, when you enter a door
+  there is one frame where neither the tile-based closed door nor the
+  sprite-based moving door is shown, so it flickers. This behavior has been
+  confirmed on a real PCB.
+
 TODO:
 ----
 - In wndrmomo, enemies coming out from the ground cut "holes" from the crowd in
@@ -153,14 +160,6 @@ TODO:
   stop receiving interrupts.
 
 - rthundro crashes often after you die; I've seen this happen only in area 5, though.
-
-- spriteram buffering fixes sprite lag, but causes a glitch in rthunder when
-  entering a door. The *closed* door is made of tiles, but the *moving* door is
-  made of sprites. Since sprites are delayed by 1 frame, when you enter a door
-  there is one frame where neither the tile-based closed door nor the
-  sprite-based moving door is shown, so it flickers. Given the experience with
-  Baraduke, where a glitch like this is apparent in the floor 6 boss, this could
-  very well be a bug in the original; if it isn't, I wouldn't know how to fix it.
 
 - In wndrmomo, nothing happens when setting the service mode dip switch while
   the game is running. This is unusual for Namco.

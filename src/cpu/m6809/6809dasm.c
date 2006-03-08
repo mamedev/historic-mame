@@ -13,14 +13,9 @@
 
 /* Please send all bug reports, update ideas and data files to: */
 /* sriddle@ionet.net */
-#include <stdio.h>
 
-#ifdef MAME_DEBUG
-
-#include <string.h>
-#include "cpuintrf.h"
 #include "debugger.h"
-#include "eainfo.h"
+#include "debug/eainfo.h"
 #include "m6809.h"
 
 typedef struct {                /* opcode structure */
@@ -750,6 +745,3 @@ offs_t m6809_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes
 
 	return p | flags | DASMFLAG_SUPPORTED;
 }
-
-#endif
-

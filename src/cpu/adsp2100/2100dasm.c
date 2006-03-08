@@ -1,6 +1,3 @@
-#include <stdio.h>
-
-#include "driver.h"
 #include "adsp2100.h"
 
 static const char *flag_change[] = { "", "TOGGLE %s ", "RESET %s ", "SET %s " };

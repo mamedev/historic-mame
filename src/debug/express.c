@@ -1889,6 +1889,30 @@ const symbol_entry *symtable_find(const symbol_table *table, const char *name)
 
 
 /*-------------------------------------------------
+    symtable_find_indexed - find an indexed symbol
+    in a symbol table
+-------------------------------------------------*/
+
+const char *symtable_find_indexed(const symbol_table *table, int index, const symbol_entry **entry)
+{
+	const internal_symbol_entry *symbol;
+	int hash_index;
+
+	/* loop over hash entries, then over entries within each bucket */
+	for (hash_index = 0; hash_index < SYM_TABLE_HASH_SIZE; hash_index++)
+		for (symbol = table->hash[hash_index]; symbol; symbol = symbol->next)
+			if (index-- == 0)
+			{
+				if (entry)
+					*entry = &symbol->entry;
+				return symbol->name;
+			}
+
+	return NULL;
+}
+
+
+/*-------------------------------------------------
     symtable_free - free a symbol table
 -------------------------------------------------*/
 

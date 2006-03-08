@@ -612,13 +612,12 @@ static WRITE32_HANDLER( s23_mcuen_w )
 		if (data)
 		{
 			logerror("S23: booting H8/3002\n");
-			cpunum_resume(1, SUSPEND_REASON_HALT);
-			cpunum_reset(1, NULL, NULL);
+			cpunum_set_input_line(1, INPUT_LINE_RESET, CLEAR_LINE);
 		}
 		else
 		{
 			logerror("S23: stopping H8/3002\n");
-			cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
+			cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
 		}
 	}
 }

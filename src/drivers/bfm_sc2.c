@@ -2,6 +2,7 @@
 
   Bellfruit scorpion2/3 driver, (under heavy construction !!!)
 
+  07-03-2006: El Condor: Recoded to more accurately represent the hardware setup.
   18-01-2006: Cleaned up for MAME inclusion
   19-08-2005: Re-Animator
 
@@ -862,9 +863,9 @@ static WRITE8_HANDLER( nec_latch_w )
 	//logerror("start sound %d bank %d\n", data, bank);
 	upd7759_set_bank_base(0, bank*0x20000);
 
-	upd7759_port_w(0, data&0x3F);	  // setup sample
+	upd7759_port_w(0, data&0x3F);	// setup sample
 	upd7759_start_w(0, 0);
-	upd7759_start_w(0, 1);	  // start
+	upd7759_start_w(0, 1);			// start
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -1565,7 +1566,6 @@ static const UINT8 DataDecode[]=
 static UINT8 codec_data[256];
 
 ///////////////////////////////////////////////////////////////////////////
-
 static void decode_mainrom(int rom_region)
 {
 	UINT8 *tmp, *rom;
@@ -2627,15 +2627,15 @@ INPUT_PORTS_END
 
 static MACHINE_DRIVER_START( scorpion2_vid )
 
-  MDRV_MACHINE_RESET( adder2_init_vid )				  // main scorpion2 board initialisation
+  MDRV_MACHINE_RESET( adder2_init_vid )					// main scorpion2 board initialisation
 
-  MDRV_INTERLEAVE(16)						  // needed for serial communication !!
+  MDRV_INTERLEAVE(16)									// needed for serial communication !!
 
-  MDRV_CPU_ADD_TAG("main", M6809, 2000000L )  // 6809 CPU at 2 Mhz
+  MDRV_CPU_ADD_TAG("main", M6809, 2000000 )				// 6809 CPU at 2 Mhz
 
-  MDRV_CPU_PROGRAM_MAP(memmap_vid,0)		  // setup scorpion2 board memorymap
+  MDRV_CPU_PROGRAM_MAP(memmap_vid,0)					// setup scorpion2 board memorymap
 
-  MDRV_CPU_PERIODIC_INT(timer_irq, TIME_IN_HZ(1000) )	  // generate 1000 IRQ's per second
+  MDRV_CPU_PERIODIC_INT(timer_irq, TIME_IN_HZ(1000) )	// generate 1000 IRQ's per second
 
   MDRV_NVRAM_HANDLER(nvram)
 
@@ -2644,6 +2644,7 @@ static MACHINE_DRIVER_START( scorpion2_vid )
   MDRV_VISIBLE_AREA(  0, 400-1, 0, 300-1)
   MDRV_FRAMES_PER_SECOND(50)
   MDRV_VIDEO_START( adder2)
+  MDRV_VIDEO_RESET( adder2)
   MDRV_VIDEO_UPDATE(adder2)
 
   MDRV_PALETTE_LENGTH(16)
@@ -2651,9 +2652,9 @@ static MACHINE_DRIVER_START( scorpion2_vid )
   MDRV_PALETTE_INIT(adder2)
   MDRV_GFXDECODE(adder2_gfxdecodeinfo)
 
-  MDRV_CPU_ADD_TAG("adder2", M6809, 2000000L )  // adder2 board 6809 CPU at 2 Mhz
-  MDRV_CPU_PROGRAM_MAP(adder2_memmap,0)			// setup adder2 board memorymap
-  MDRV_CPU_VBLANK_INT(adder2_vbl, 1);			// board has a VBL IRQ
+  MDRV_CPU_ADD_TAG("adder2", M6809, 2000000 )			// adder2 board 6809 CPU at 2 Mhz
+  MDRV_CPU_PROGRAM_MAP(adder2_memmap,0)					// setup adder2 board memorymap
+  MDRV_CPU_VBLANK_INT(adder2_vbl, 1);					// board has a VBL IRQ
 
   MDRV_SPEAKER_STANDARD_MONO("mono")
   MDRV_SOUND_ADD(UPD7759, UPD7759_STANDARD_CLOCK)

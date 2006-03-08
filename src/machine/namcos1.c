@@ -1,6 +1,5 @@
 #include "driver.h"
 #include "sound/ym2151.h"
-#include "machine/random.h"
 #include "sound/namco.h"
 
 #define NAMCOS1_MAX_BANK 0x400

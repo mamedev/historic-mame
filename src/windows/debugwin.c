@@ -17,13 +17,18 @@
 
 // MAME headers
 #include "driver.h"
-#include "debugvw.h"
-#include "debugcon.h"
-#include "debugcpu.h"
+
+#ifdef NEW_DEBUGGER
+#include "debug/debugvw.h"
+#include "debug/debugcon.h"
+#include "debug/debugcpu.h"
+#endif
+
+// MAMEOS headers
 #include "debugwin.h"
 #include "window.h"
 #include "video.h"
-#include "windows/config.h"
+#include "config.h"
 
 
 
@@ -75,6 +80,9 @@ enum
 	ID_STEP,
 	ID_STEP_OVER,
 	ID_STEP_OUT,
+	ID_HARD_RESET,
+	ID_SOFT_RESET,
+	ID_EXIT,
 
 	ID_1_BYTE_CHUNKS,
 	ID_2_BYTE_CHUNKS,
@@ -136,6 +144,20 @@ struct _debugwin_info
 };
 
 
+typedef struct _memorycombo_item memorycombo_item;
+struct _memorycombo_item
+{
+	memorycombo_item *		next;
+	char					name[256];
+	UINT8					cpunum;
+	UINT8					spacenum;
+	void *					base;
+	UINT32					length;
+	UINT8					offset_xor;
+	UINT8					little_endian;
+	UINT8					prefsize;
+};
+
 
 //============================================================
 //  GLOBAL VARIABLES
@@ -150,6 +172,8 @@ struct _debugwin_info
 static debugwin_info *window_list;
 static debugwin_info *main_console;
 
+static memorycombo_item *memorycombo;
+
 static UINT8 debugger_active_countdown;
 static UINT8 waiting_for_debugger;
 
@@ -161,11 +185,48 @@ static UINT32 debug_font_ascent;
 static UINT32 hscroll_height;
 static UINT32 vscroll_width;
 
-//static UINT32 console_left_pane_width;
-
 static int temporarily_fake_that_we_are_not_visible;
 
 static const char *address_space_name[ADDRESS_SPACES] = { "program", "data", "I/O" };
+
+static const char *memory_region_names[] =
+{
+	"REGION_INVALID",
+	"REGION_CPU1",
+	"REGION_CPU2",
+	"REGION_CPU3",
+	"REGION_CPU4",
+	"REGION_CPU5",
+	"REGION_CPU6",
+	"REGION_CPU7",
+	"REGION_CPU8",
+	"REGION_GFX1",
+	"REGION_GFX2",
+	"REGION_GFX3",
+	"REGION_GFX4",
+	"REGION_GFX5",
+	"REGION_GFX6",
+	"REGION_GFX7",
+	"REGION_GFX8",
+	"REGION_PROMS",
+	"REGION_SOUND1",
+	"REGION_SOUND2",
+	"REGION_SOUND3",
+	"REGION_SOUND4",
+	"REGION_SOUND5",
+	"REGION_SOUND6",
+	"REGION_SOUND7",
+	"REGION_SOUND8",
+	"REGION_USER1",
+	"REGION_USER2",
+	"REGION_USER3",
+	"REGION_USER4",
+	"REGION_USER5",
+	"REGION_USER6",
+	"REGION_USER7",
+	"REGION_USER8",
+	"REGION_DISKS"
+};
 
 
 
@@ -194,7 +255,6 @@ static void memory_process_string(debugwin_info *info, const char *string);
 static void memory_update_checkmarks(debugwin_info *info);
 static int memory_handle_command(debugwin_info *info, WPARAM wparam, LPARAM lparam);
 static int memory_handle_key(debugwin_info *info, WPARAM wparam, LPARAM lparam);
-static void memory_update_caption(HWND wnd);
 
 static void disasm_create_window(void);
 static void disasm_recompute_children(debugwin_info *info);
@@ -357,6 +417,16 @@ void debugwin_destroy_windows(void)
 	// loop over windows and free them
 	while (window_list)
 		DestroyWindow(window_list->wnd);
+
+	// free the combobox info
+	while (memorycombo)
+	{
+		void *temp = memorycombo;
+		memorycombo = memorycombo->next;
+		free(temp);
+	}
+
+	main_console = NULL;
 }
 
 
@@ -1622,13 +1692,121 @@ static void log_create_window(void)
 
 
 //============================================================
+//  memory_determine_combo_items
+//============================================================
+
+static void memory_determine_combo_items(void)
+{
+	memorycombo_item **tail = &memorycombo;
+	UINT32 cpunum, spacenum;
+	int rgnnum, itemnum;
+
+	// first add all the CPUs' address spaces
+	for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
+	{
+		const debug_cpu_info *cpuinfo = debug_get_cpu_info(cpunum);
+		if (cpuinfo->valid)
+			for (spacenum = 0; spacenum < ADDRESS_SPACES; spacenum++)
+				if (cpuinfo->space[spacenum].databytes)
+				{
+					memorycombo_item *ci = malloc_or_die(sizeof(*ci));
+					memset(ci, 0, sizeof(*ci));
+					ci->cpunum = cpunum;
+					ci->spacenum = spacenum;
+					ci->prefsize = MIN(cpuinfo->space[spacenum].databytes, 4);
+					sprintf(ci->name, "CPU #%d (%s) %s memory", cpunum, cpunum_name(cpunum), address_space_name[spacenum]);
+					*tail = ci;
+					tail = &ci->next;
+				}
+	}
+
+	// then add all the memory regions
+	for (rgnnum = 0; rgnnum < MAX_MEMORY_REGIONS; rgnnum++)
+	{
+		UINT8 *base = memory_region(rgnnum);
+		UINT32 type = memory_region_type(rgnnum);
+		if (base != NULL && type > REGION_INVALID && (type - REGION_INVALID) < ARRAY_LENGTH(memory_region_names))
+		{
+			memorycombo_item *ci = malloc_or_die(sizeof(*ci));
+			UINT32 flags = memory_region_flags(rgnnum);
+			UINT8 width, little_endian;
+			memset(ci, 0, sizeof(*ci));
+			ci->base = base;
+			ci->length = memory_region_length(rgnnum);
+			width = 1 << (flags & ROMREGION_WIDTHMASK);
+			little_endian = ((flags & ROMREGION_ENDIANMASK) == ROMREGION_LE);
+			if (type >= REGION_CPU1 && type <= REGION_CPU8)
+			{
+				const debug_cpu_info *cpuinfo = debug_get_cpu_info(type - REGION_CPU1);
+				if (cpuinfo)
+				{
+					width = cpuinfo->space[ADDRESS_SPACE_PROGRAM].databytes;
+					little_endian = (cpuinfo->endianness == CPU_IS_LE);
+				}
+			}
+			ci->prefsize = MIN(width, 4);
+			ci->offset_xor = width - 1;
+			ci->little_endian = little_endian;
+			strcpy(ci->name, memory_region_names[type - REGION_INVALID]);
+			*tail = ci;
+			tail = &ci->next;
+		}
+	}
+
+	// finally add all global array symbols
+	for (itemnum = 0; itemnum < 10000; itemnum++)
+	{
+		UINT32 valsize, valcount;
+		const char *name;
+		void *base;
+
+		/* stop when we run out of items */
+		name = state_save_get_indexed_item(itemnum, &base, &valsize, &valcount);
+		if (name == NULL)
+			break;
+
+		/* if this is a single-entry global, add it */
+		if (valcount > 1 && strstr(name, "/globals/"))
+		{
+			memorycombo_item *ci = malloc_or_die(sizeof(*ci));
+			memset(ci, 0, sizeof(*ci));
+			ci->base = base;
+			ci->length = valcount * valsize;
+			ci->prefsize = MIN(valsize, 4);
+			ci->little_endian = TRUE;
+			strcpy(ci->name, strrchr(name, '/') + 1);
+			*tail = ci;
+			tail = &ci->next;
+		}
+	}
+}
+
+
+//============================================================
+//  memory_update_selection
+//============================================================
+
+static void memory_update_selection(debugwin_info *info, memorycombo_item *ci)
+{
+	debug_view_set_property_UINT32(info->view[0].view, DVP_MEM_CPUNUM, ci->cpunum);
+	debug_view_set_property_UINT32(info->view[0].view, DVP_MEM_SPACENUM, ci->spacenum);
+	debug_view_set_property_ptr(info->view[0].view, DVP_MEM_RAW_BASE, ci->base);
+	debug_view_set_property_UINT32(info->view[0].view, DVP_MEM_RAW_LENGTH, ci->length);
+	debug_view_set_property_UINT32(info->view[0].view, DVP_MEM_RAW_OFFSET_XOR, ci->offset_xor);
+	debug_view_set_property_UINT32(info->view[0].view, DVP_MEM_RAW_LITTLE_ENDIAN, ci->little_endian);
+	debug_view_set_property_UINT32(info->view[0].view, DVP_MEM_BYTES_PER_CHUNK, ci->prefsize);
+	SetWindowText(info->wnd, ci->name);
+}
+
+
+//============================================================
 //  memory_create_window
 //============================================================
 
 static void memory_create_window(void)
 {
 	int curcpu = cpu_getactivecpu(), cursel = 0;
-	UINT32 cpunum, spacenum;
+	memorycombo_item *ci, *selci = NULL;
 	debugwin_info *info;
 	HMENU optionsmenu;
 
@@ -1676,20 +1854,16 @@ static void memory_create_window(void)
 	SendMessage(info->otherwnd[0], WM_SETFONT, (WPARAM)debug_font, (LPARAM)FALSE);
 
 	// populate the combobox
-	for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
+	if (!memorycombo)
+		memory_determine_combo_items();
+	for (ci = memorycombo; ci; ci = ci->next)
 	{
-		const debug_cpu_info *cpuinfo = debug_get_cpu_info(cpunum);
-		if (cpuinfo->valid)
-			for (spacenum = 0; spacenum < ADDRESS_SPACES; spacenum++)
-				if (cpuinfo->space[spacenum].databytes)
-				{
-					char name[100];
-					int item;
-					sprintf(name, "CPU #%d (%s) %s memory", cpunum, cpunum_name(cpunum), address_space_name[spacenum]);
-					item = SendMessage(info->otherwnd[0], CB_ADDSTRING, 0, (LPARAM)name);
-					if (cpunum == curcpu && spacenum == ADDRESS_SPACE_PROGRAM)
-						cursel = item;
-				}
+		int item = SendMessage(info->otherwnd[0], CB_ADDSTRING, 0, (LPARAM)ci->name);
+		if (ci->base == NULL && ci->cpunum == curcpu && ci->spacenum == ADDRESS_SPACE_PROGRAM)
+		{
+			cursel = item;
+			selci = ci;
+		}
 	}
 	SendMessage(info->otherwnd[0], CB_SETCURSEL, cursel, 0);
 
@@ -1698,11 +1872,9 @@ static void memory_create_window(void)
 	info->process_string = memory_process_string;
 
 	// set the CPUnum and spacenum properties
-	debug_view_set_property_UINT32(info->view[0].view, DVP_MEM_CPUNUM, (curcpu == -1) ? 0 : curcpu);
-	debug_view_set_property_UINT32(info->view[0].view, DVP_MEM_SPACENUM, ADDRESS_SPACE_PROGRAM);
-
-	// set the caption
-	memory_update_caption(info->wnd);
+	if (selci == NULL)
+		selci = memorycombo;
+	memory_update_selection(info, selci);
 
 	// recompute the children once to get the maxwidth
 	memory_recompute_children(info);
@@ -1816,22 +1988,14 @@ static int memory_handle_command(debugwin_info *info, WPARAM wparam, LPARAM lpar
 			if (sel != CB_ERR)
 			{
 				// find the matching entry
-				UINT32 cpunum, spacenum;
-				for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
-				{
-					const debug_cpu_info *cpuinfo = debug_get_cpu_info(cpunum);
-					if (cpuinfo->valid)
-						for (spacenum = 0; spacenum < ADDRESS_SPACES; spacenum++)
-							if (cpuinfo->space[spacenum].databytes)
-								if (sel-- == 0)
-								{
-									debug_view_begin_update(info->view[0].view);
-									debug_view_set_property_UINT32(info->view[0].view, DVP_MEM_CPUNUM, cpunum);
-									debug_view_set_property_UINT32(info->view[0].view, DVP_MEM_SPACENUM, spacenum);
-									debug_view_end_update(info->view[0].view);
-									memory_update_caption(info->wnd);
-								}
-				}
+				memorycombo_item *ci;
+				for (ci = memorycombo; ci; ci = ci->next)
+					if (sel-- == 0)
+					{
+						debug_view_begin_update(info->view[0].view);
+						memory_update_selection(info, ci);
+						debug_view_end_update(info->view[0].view);
+					}
 
 				// reset the focus
 				SetFocus(info->focuswnd);
@@ -1907,27 +2071,6 @@ static int memory_handle_key(debugwin_info *info, WPARAM wparam, LPARAM lparam)
 		}
 	}
 	return global_handle_key(info, wparam, lparam);
-}
-
-
-
-//============================================================
-//  memory_update_caption
-//============================================================
-
-static void memory_update_caption(HWND wnd)
-{
-	debugwin_info *info = (debugwin_info *)(UINT32)GetWindowLongPtr(wnd, GWLP_USERDATA);
-	UINT32 cpunum, spacenum;
-	char title[100];
-
-	// get the properties
-	cpunum = debug_view_get_property_UINT32(info->view[0].view, DVP_MEM_CPUNUM);
-	spacenum = debug_view_get_property_UINT32(info->view[0].view, DVP_MEM_SPACENUM);
-
-	// then update the caption
-	sprintf(title, "Memory: %s (%d) %s memory", cpunum_name(cpunum), cpunum, address_space_name[spacenum]);
-	SetWindowText(wnd, title);
 }
 
 
@@ -2474,8 +2617,12 @@ static HMENU create_standard_menubar(void)
 	AppendMenu(debugmenu, MF_ENABLED, ID_RUN_VBLANK, "Run until Next VBLANK\tF8");
 	AppendMenu(debugmenu, MF_DISABLED | MF_SEPARATOR, 0, "");
 	AppendMenu(debugmenu, MF_ENABLED, ID_STEP, "Step Into\tF11");
-	AppendMenu(debugmenu, MF_ENABLED, ID_STEP, "Step Over\tF10");
-	AppendMenu(debugmenu, MF_ENABLED, ID_STEP, "Step Out\tShift+F11");
+	AppendMenu(debugmenu, MF_ENABLED, ID_STEP_OVER, "Step Over\tF10");
+	AppendMenu(debugmenu, MF_ENABLED, ID_STEP_OUT, "Step Out\tShift+F11");
+	AppendMenu(debugmenu, MF_DISABLED | MF_SEPARATOR, 0, "");
+	AppendMenu(debugmenu, MF_ENABLED, ID_SOFT_RESET, "Soft Reset\tF3");
+	AppendMenu(debugmenu, MF_ENABLED, ID_HARD_RESET, "Hard Reset\tShift+F3");
+	AppendMenu(debugmenu, MF_ENABLED, ID_EXIT, "Exit");
 
 	// create the menu bar
 	menubar = CreateMenu();
@@ -2541,6 +2688,19 @@ static int global_handle_command(debugwin_info *info, WPARAM wparam, LPARAM lpar
 			case ID_STEP_OUT:
 				debug_cpu_single_step_out();
 				return 1;
+
+			case ID_HARD_RESET:
+				mame_schedule_hard_reset();
+				return 1;
+
+			case ID_SOFT_RESET:
+				mame_schedule_soft_reset();
+				debug_cpu_go(~0);
+				return 1;
+
+			case ID_EXIT:
+				mame_schedule_exit();
+				return 1;
 		}
 
 	return 0;
@@ -2563,23 +2723,23 @@ static int global_handle_key(debugwin_info *info, WPARAM wparam, LPARAM lparam)
 
 	switch (wparam)
 	{
+		case VK_F3:
+			if (GetAsyncKeyState(VK_SHIFT) & 0x8000)
+				SendMessage(info->wnd, WM_COMMAND, ID_HARD_RESET, 0);
+			else
+				SendMessage(info->wnd, WM_COMMAND, ID_SOFT_RESET, 0);
+			return 1;
+
+		case VK_F4:
+			if (GetAsyncKeyState(VK_MENU) & 0x8000)
+			{
+				SendMessage(info->wnd, WM_COMMAND, ID_EXIT, 0);
+				return 1;
+			}
+			break;
+
 		case VK_F5:
 			SendMessage(info->wnd, WM_COMMAND, ID_RUN, 0);
-			return 1;
-
-		case VK_F12:
-			SendMessage(info->wnd, WM_COMMAND, ID_RUN_AND_HIDE, 0);
-			return 1;
-
-		case VK_F11:
-			if (GetAsyncKeyState(VK_SHIFT) & 0x8000)
-				SendMessage(info->wnd, WM_COMMAND, ID_STEP_OUT, 0);
-			else
-				SendMessage(info->wnd, WM_COMMAND, ID_STEP, 0);
-			return 1;
-
-		case VK_F10:
-			SendMessage(info->wnd, WM_COMMAND, ID_STEP_OVER, 0);
 			return 1;
 
 		case VK_F6:
@@ -2592,6 +2752,21 @@ static int global_handle_key(debugwin_info *info, WPARAM wparam, LPARAM lparam)
 
 		case VK_F8:
 			SendMessage(info->wnd, WM_COMMAND, ID_RUN_VBLANK, 0);
+			return 1;
+
+		case VK_F10:
+			SendMessage(info->wnd, WM_COMMAND, ID_STEP_OVER, 0);
+			return 1;
+
+		case VK_F11:
+			if (GetAsyncKeyState(VK_SHIFT) & 0x8000)
+				SendMessage(info->wnd, WM_COMMAND, ID_STEP_OUT, 0);
+			else
+				SendMessage(info->wnd, WM_COMMAND, ID_STEP, 0);
+			return 1;
+
+		case VK_F12:
+			SendMessage(info->wnd, WM_COMMAND, ID_RUN_AND_HIDE, 0);
 			return 1;
 
 		case 'M':

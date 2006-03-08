@@ -42,18 +42,22 @@ static void asterix_tile_callback(int layer, int *code, int *color)
 	*code = (*code & 0x03ff) | tilebanks[(*code >> 10) & 3];
 }
 
-static int scrolld[2][4][2] = {
- 	{{ 23-112, 0 }, { 23-112, 0}, { 23-112, 0}, { 23-112, 0}},
- 	{{-73-112, 0 }, {-73-112, 0}, {-73-112, 0}, {-73-112, 0}}
-};
-
 VIDEO_START( asterix )
 {
 	K053251_vh_start();
 
-	K054157_vh_start(REGION_GFX1, 0, scrolld, NORMAL_PLANE_ORDER, asterix_tile_callback);
+	if (K056832_vh_start(REGION_GFX1, K056832_BPP_4, 1, NULL, asterix_tile_callback, 1))
+		return 1;
 	if (K053245_vh_start(0, REGION_GFX2,NORMAL_PLANE_ORDER, asterix_sprite_callback))
 		return 1;
+
+	K056832_set_LayerOffset(0, 89, 0);
+	K056832_set_LayerOffset(1, 91, 0);
+	K056832_set_LayerOffset(2, 89, 0);
+	K056832_set_LayerOffset(3, 95, 0);
+
+	K053245_set_SpriteOffset(0,-3,-1);
+
 	return 0;
 }
 
@@ -75,20 +79,26 @@ static void sortlayers(int *layer,int *pri)
 
 VIDEO_UPDATE( asterix )
 {
-	int layer[3];
+	static const int K053251_CI[4] = { K053251_CI0, K053251_CI2, K053251_CI3, K053251_CI4 };
+	int layer[3], plane, new_colorbase;
 
-	tilebanks[0] = (K054157_get_lookup(0) << 10);
-	tilebanks[1] = (K054157_get_lookup(1) << 10);
-	tilebanks[2] = (K054157_get_lookup(2) << 10);
-	tilebanks[3] = (K054157_get_lookup(3) << 10);
+	tilebanks[0] = (K056832_get_lookup(0) << 10);
+	tilebanks[1] = (K056832_get_lookup(1) << 10);
+	tilebanks[2] = (K056832_get_lookup(2) << 10);
+	tilebanks[3] = (K056832_get_lookup(3) << 10);
 
-	layer_colorbase[0] = K053251_get_palette_index(K053251_CI0);
-	layer_colorbase[1] = K053251_get_palette_index(K053251_CI2);
-	layer_colorbase[2] = K053251_get_palette_index(K053251_CI3);
-	layer_colorbase[3] = K053251_get_palette_index(K053251_CI4);
-	sprite_colorbase   = K053251_get_palette_index(K053251_CI1);
+	// update color info and refresh tilemaps
+	sprite_colorbase = K053251_get_palette_index(K053251_CI1);
 
-	K054157_tilemap_update();
+	for (plane=0; plane<4; plane++)
+	{
+		new_colorbase = K053251_get_palette_index(K053251_CI[plane]);
+		if (layer_colorbase[plane] != new_colorbase)
+		{
+			layer_colorbase[plane] = new_colorbase;
+			K056832_mark_plane_dirty(plane);
+		}
+	}
 
 	layer[0] = 0;
 	layerpri[0] = K053251_get_priority(K053251_CI0);
@@ -102,12 +112,12 @@ VIDEO_UPDATE( asterix )
 	fillbitmap(priority_bitmap, 0, cliprect);
 	fillbitmap(bitmap, Machine->pens[0], cliprect);
 
-	K054157_tilemap_draw(bitmap, cliprect, layer[0], 0, 1);
-	K054157_tilemap_draw(bitmap, cliprect, layer[1], 0, 2);
-	K054157_tilemap_draw(bitmap, cliprect, layer[2], 0, 4);
+	K056832_tilemap_draw(bitmap, cliprect, layer[0], 0, 1);
+	K056832_tilemap_draw(bitmap, cliprect, layer[1], 0, 2);
+	K056832_tilemap_draw(bitmap, cliprect, layer[2], 0, 4);
 
 	pdrawgfx_shadow_lowpri = 1;	/* fix shadows in front of feet */
 	K053245_sprites_draw(0, bitmap, cliprect);
 
-	K054157_tilemap_draw(bitmap, cliprect, 2, 0, 0);
+	K056832_tilemap_draw(bitmap, cliprect, 2, 0, 0);
 }

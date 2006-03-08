@@ -212,32 +212,9 @@ INLINE void ppc603_check_interrupts(void)
 	}
 }
 
-static void ppc603_reset(void *param)
+static void ppc603_reset(void)
 {
-	int pll_config = 0;
-	float multiplier;
-	ppc_config *config = param;
 	ppc.pc = ppc.npc = 0xfff00100;
-	ppc.pvr = config->pvr;
-
-	multiplier = (float)((config->bus_frequency_multiplier >> 4) & 0xf) +
-				 (float)(config->bus_frequency_multiplier & 0xf) / 10.0f;
-	bus_freq_multiplier = (int)(multiplier * 2);
-
-	switch(config->pvr)
-	{
-		case PPC_MODEL_603E:	pll_config = mpc603e_pll_config[bus_freq_multiplier-1][config->bus_frequency]; break;
-		case PPC_MODEL_603EV:	pll_config = mpc603ev_pll_config[bus_freq_multiplier-1][config->bus_frequency]; break;
-		case PPC_MODEL_603R:	pll_config = mpc603r_pll_config[bus_freq_multiplier-1][config->bus_frequency]; break;
-		default: break;
-	}
-
-	if (pll_config == -1)
-	{
-		fatalerror("PPC: Invalid bus/multiplier combination (bus frequency = %d, multiplier = %1.1f)", config->bus_frequency, multiplier);
-	}
-
-	ppc.hid1 = pll_config << 28;
 
 	ppc_set_msr(0x40);
 	change_pc(ppc.pc);

@@ -40,7 +40,6 @@
 
 ****************************************************************************/
 
-#include "driver.h"
 #include "debugger.h"
 
 typedef UINT8 BOOLEAN;
@@ -120,12 +119,15 @@ static UINT8 parity_table[256];
 
 /***************************************************************************/
 
-static void nec_reset (void *param)
+static void nec_reset (void)
 {
     unsigned int i,j,c;
     BREGS reg_name[8]={ AL, CL, DL, BL, AH, CH, DH, BH };
+    int (*save_irqcallback)(int);
 
+	save_irqcallback = I.irq_callback;
 	memset( &I, 0, sizeof(I) );
+	I.irq_callback = save_irqcallback;
 
 	I.sregs[CS] = 0xffff;
 
@@ -936,34 +938,35 @@ static offs_t nec_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int 
 #endif
 }
 
-static void nec_init(int type)
+static void nec_init(int index, int clock, const void *config, int (*irqcallback)(int), int type)
 {
 	const char *names[]={"V20","V30","V33"};
-	int cpu = cpu_getactivecpu();
 
-	state_save_register_item_array(names[type], cpu, I.regs.w);
-	state_save_register_item_array(names[type], cpu, I.sregs);
+	state_save_register_item_array(names[type], index, I.regs.w);
+	state_save_register_item_array(names[type], index, I.sregs);
 
-	state_save_register_item(names[type], cpu, I.ip);
-	state_save_register_item(names[type], cpu, I.TF);
-	state_save_register_item(names[type], cpu, I.IF);
-	state_save_register_item(names[type], cpu, I.DF);
-	state_save_register_item(names[type], cpu, I.MF);
-	state_save_register_item(names[type], cpu, I.SignVal);
-	state_save_register_item(names[type], cpu, I.int_vector);
-	state_save_register_item(names[type], cpu, I.pending_irq);
-	state_save_register_item(names[type], cpu, I.nmi_state);
-	state_save_register_item(names[type], cpu, I.irq_state);
-	state_save_register_item(names[type], cpu, I.AuxVal);
-	state_save_register_item(names[type], cpu, I.OverVal);
-	state_save_register_item(names[type], cpu, I.ZeroVal);
-	state_save_register_item(names[type], cpu, I.CarryVal);
-	state_save_register_item(names[type], cpu, I.ParityVal);
+	state_save_register_item(names[type], index, I.ip);
+	state_save_register_item(names[type], index, I.TF);
+	state_save_register_item(names[type], index, I.IF);
+	state_save_register_item(names[type], index, I.DF);
+	state_save_register_item(names[type], index, I.MF);
+	state_save_register_item(names[type], index, I.SignVal);
+	state_save_register_item(names[type], index, I.int_vector);
+	state_save_register_item(names[type], index, I.pending_irq);
+	state_save_register_item(names[type], index, I.nmi_state);
+	state_save_register_item(names[type], index, I.irq_state);
+	state_save_register_item(names[type], index, I.AuxVal);
+	state_save_register_item(names[type], index, I.OverVal);
+	state_save_register_item(names[type], index, I.ZeroVal);
+	state_save_register_item(names[type], index, I.CarryVal);
+	state_save_register_item(names[type], index, I.ParityVal);
+
+	I.irq_callback = irqcallback;
 }
 
 /* Wrappers for the different CPU types */
 #if (HAS_V20)
-void v20_init(void) { nec_init(0); }
+void v20_init(int index, int clock, const void *config, int (*irqcallback)(int)) { nec_init(index, clock, config, irqcallback, 0); }
 int v20_execute(int cycles)
 {
 	nec_ICount=cycles;
@@ -991,7 +994,7 @@ int v20_execute(int cycles)
 #endif
 
 #if (HAS_V30)
-void v30_init(void) { nec_init(1); }
+void v30_init(int index, int clock, const void *config, int (*irqcallback)(int)) { nec_init(index, clock, config, irqcallback, 1); }
 int v30_execute(int cycles) {
 	nec_ICount=cycles;
 	cpu_type=V30;
@@ -1018,7 +1021,7 @@ int v30_execute(int cycles) {
 #endif
 
 #if (HAS_V33)
-void v33_init(void) { nec_init(2); }
+void v33_init(int index, int clock, const void *config, int (*irqcallback)(int)) { nec_init(index, clock, config, irqcallback, 2); }
 int v33_execute(int cycles)
 {
 	nec_ICount=cycles;
@@ -1098,9 +1101,6 @@ static void nec_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + NEC_SS:				I.sregs[SS] = info->i;					break;
 		case CPUINFO_INT_REGISTER + NEC_DS:				I.sregs[DS] = info->i;					break;
 		case CPUINFO_INT_REGISTER + NEC_VECTOR:			I.int_vector = info->i;					break;
-
-		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_IRQ_CALLBACK:					I.irq_callback = info->irqcallback;		break;
 	}
 }
 
@@ -1172,7 +1172,6 @@ void nec_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						/* set per-CPU */						break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = nec_dasm;			break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = I.irq_callback;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &nec_ICount;				break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = nec_reg_layout;				break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = nec_win_layout;				break;

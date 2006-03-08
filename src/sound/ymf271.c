@@ -13,7 +13,7 @@
 */
 
 #include <math.h>
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
 #include "ymf271.h"
 

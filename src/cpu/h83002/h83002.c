@@ -25,7 +25,6 @@
 
 ****************************************************************************/
 
-#include "driver.h"
 #include "debugger.h"
 #include "h83002.h"
 #include "h8priv.h"
@@ -319,36 +318,35 @@ static void h8_onstateload(void)
 	h8_set_ccr(h8.ccr);
 }
 
-static void h8_init(void)
+static void h8_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
-	int cpu = cpu_getactivecpu();
 	memset(&h8, 0, sizeof(h8));
 	h8.h8iflag = 1;
 
-	h8.irq_cb = h8_default_irq_callback;
+	h8.irq_cb = irqcallback;
 
-	state_save_register_item("H8/3002", cpu, h8.h8err);
-	state_save_register_item_array("H8/3002", cpu, h8.regs);
-	state_save_register_item("H8/3002", cpu, h8.pc);
-	state_save_register_item("H8/3002", cpu, h8.ppc);
-	state_save_register_item("H8/3002", cpu, h8.h8_IRQrequestH);
-	state_save_register_item("H8/3002", cpu, h8.h8_IRQrequestL);
-	state_save_register_item("H8/3002", cpu, h8.ccr);
+	state_save_register_item("H8/3002", index, h8.h8err);
+	state_save_register_item_array("H8/3002", index, h8.regs);
+	state_save_register_item("H8/3002", index, h8.pc);
+	state_save_register_item("H8/3002", index, h8.ppc);
+	state_save_register_item("H8/3002", index, h8.h8_IRQrequestH);
+	state_save_register_item("H8/3002", index, h8.h8_IRQrequestL);
+	state_save_register_item("H8/3002", index, h8.ccr);
 
-	state_save_register_item_array("H8/3002", cpu, h8.per_regs);
-	state_save_register_item("H8/3002", cpu, h8.h8TSTR);
-	state_save_register_item("H8/3002", cpu, h8.h8TCNT0);
-	state_save_register_item("H8/3002", cpu, h8.h8TCNT1);
-	state_save_register_item("H8/3002", cpu, h8.h8TCNT2);
-	state_save_register_item("H8/3002", cpu, h8.h8TCNT3);
-	state_save_register_item("H8/3002", cpu, h8.h8TCNT4);
+	state_save_register_item_array("H8/3002", index, h8.per_regs);
+	state_save_register_item("H8/3002", index, h8.h8TSTR);
+	state_save_register_item("H8/3002", index, h8.h8TCNT0);
+	state_save_register_item("H8/3002", index, h8.h8TCNT1);
+	state_save_register_item("H8/3002", index, h8.h8TCNT2);
+	state_save_register_item("H8/3002", index, h8.h8TCNT3);
+	state_save_register_item("H8/3002", index, h8.h8TCNT4);
 
 	state_save_register_func_postload(h8_onstateload);
 
 	h8_itu_init();
 }
 
-static void h8_reset(void *param)
+static void h8_reset(void)
 {
 	h8.h8err = 0;
 	h8.pc = h8_mem_read32(0) & 0xffffff;
@@ -3405,8 +3403,6 @@ static void h8_set_context(void *context)
 static void h8_set_info(UINT32 state, union cpuinfo *info)
 {
 	switch(state) {
-	case CPUINFO_PTR_IRQ_CALLBACK:       h8.irq_cb = info->irqcallback;        	break;
-
 	case CPUINFO_INT_PC:		     h8.pc = info->i; change_pc(h8.pc);		break;
 	case CPUINFO_INT_REGISTER + H8_PC:   h8.pc = info->i; change_pc(h8.pc);		break;
 	case CPUINFO_INT_REGISTER + H8_CCR:  h8_set_ccr(info->i);			break;
@@ -3507,7 +3503,6 @@ void h8_3002_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_PTR_EXECUTE:             info->execute     = h8_execute;       break;
 	case CPUINFO_PTR_BURN:                info->burn        = 0;                break;
 	case CPUINFO_PTR_DISASSEMBLE:         info->disassemble = h8_disasm;        break;
-	case CPUINFO_PTR_IRQ_CALLBACK:        info->irqcallback = h8.irq_cb;        break;
 	case CPUINFO_PTR_INSTRUCTION_COUNTER: info->icount      = &h8_cyccnt;       break;
 	case CPUINFO_INT_CONTEXT_SIZE:        info->i           = sizeof(h83002_state); break;
 	case CPUINFO_PTR_REGISTER_LAYOUT:     info->p = h8_reg_layout;		    break;

@@ -6,11 +6,10 @@
 */
 
 #include <math.h>
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
 #include "cpuintrf.h"
 #include "ics2115.h"
-#include "cpu/z80/z80.h"
 
 // a:401ae90.000 l:1c23c.0 e:1e1d8.0  09  tone
 // a:4023c40.000 l:25d60.0 e:266cb.0  08  tone

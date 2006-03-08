@@ -1,4 +1,4 @@
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
 #include "dac.h"
 #include <math.h>

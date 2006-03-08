@@ -3,9 +3,6 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "psx.h"
 
 static char *make_signed_hex_str_16( UINT32 value )

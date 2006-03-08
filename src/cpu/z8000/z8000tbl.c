@@ -535,7 +535,7 @@ static Z8000_init table[] = {
 {0, 	0,	   0,	0,	0,0,									 0},
 };
 
-void z8000_init(void)
+void z8000_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
     int i;
 	Z8000_init *init;
@@ -581,6 +581,8 @@ void z8000_init(void)
 			z8000_exec[i].dasm	 = init->dasm;
 		}
 	}
+
+	Z.irq_callback = irqcallback;
 }
 
 void z8000_deinit(void)

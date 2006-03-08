@@ -499,7 +499,7 @@ void set_visible_area(int min_x, int max_x, int min_y, int max_y)
 	visible_area_changed = 1;
 
 	/* bounds check */
-	if (!(Machine->drv->video_attributes & VIDEO_TYPE_VECTOR))
+	if (!(Machine->drv->video_attributes & VIDEO_TYPE_VECTOR) && scrbitmap[0])
 		if ((min_x < 0) || (min_y < 0) || (max_x >= scrbitmap[0]->width) || (max_y >= scrbitmap[0]->height))
 		{
 			fatalerror("set_visible_area(%d,%d,%d,%d) out of bounds; bitmap dimensions are (%d,%d)",

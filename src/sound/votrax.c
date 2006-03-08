@@ -16,7 +16,7 @@ the variable VotraxBaseFrequency, this is defaulted to 8000
 
 **************************************************************************/
 
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
 #include "samples.h"
 

@@ -27,10 +27,8 @@
  *
  */
 
-#include <string.h>
-#include <stdlib.h>
 #include <math.h>
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
 #include "multipcm.h"
 

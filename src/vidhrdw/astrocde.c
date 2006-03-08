@@ -22,8 +22,8 @@ static UINT8 interrupt_enable;
 static UINT8 interrupt_vector;
 
 UINT8 *wow_videoram;
-static int magic_expand_color, magic_control, magic_expand_count, magic_shift_leftover;
-static int collision;
+static UINT8 magic_expand_color, magic_control, magic_expand_count, magic_shift_leftover;
+static UINT8 collision;
 
 /* This value affects the star layout, the value is correct since
    it is mentioned in the docs and perfectly matches screen shots.
@@ -41,11 +41,11 @@ static int *rng;
 static int *star;
 
 
-static int colors[MAX_INT_PER_FRAME][8];
-static int colorsplit[MAX_INT_PER_FRAME];
-static int BackgroundData,VerticalBlank;
+static UINT8 colors[MAX_INT_PER_FRAME][8];
+static UINT8 colorsplit[MAX_INT_PER_FRAME];
+static UINT8 BackgroundData,VerticalBlank;
 
-static int sparkle[MAX_INT_PER_FRAME][4];	/* sparkle[line][0] is star enable */
+static UINT8 sparkle[MAX_INT_PER_FRAME][4];	/* sparkle[line][0] is star enable */
 
 static void wow_update_line(mame_bitmap *bitmap,int line);
 static void profpac_update_line(mame_bitmap *bitmap,int line);
@@ -126,11 +126,11 @@ PALETTE_INIT( astrocde )
  * Scanline Interrupt System
  ****************************************************************************/
 
-static int NextScanInt=0;			/* Normal */
-static int CurrentScan=0;
-static int InterruptFlag=0;
+static UINT8 NextScanInt=0;			/* Normal */
+static UINT8 CurrentScan=0;
+static UINT8 InterruptFlag=0;
 
-static int GorfDelay;				/* Gorf */
+static UINT8 GorfDelay;				/* Gorf */
 
 WRITE8_HANDLER( astrocde_interrupt_vector_w )
 {
@@ -583,20 +583,20 @@ WRITE8_HANDLER( wow_magicram_w )
 }
 
 
+static int src;
+static int mode;	/*  bit 0 = direction
+                        bit 1 = expand mode
+                        bit 2 = constant
+                        bit 3 = flush
+                        bit 4 = flip
+                        bit 5 = flop */
+static int skip;	/* bytes to skip after row copy */
+static int dest;
+static int length;	/* row length */
+static int loops;	/* rows to copy - 1 */
+
 WRITE8_HANDLER( astrocde_pattern_board_w )
 {
-	static int src;
-	static int mode;	/*  bit 0 = direction
-                            bit 1 = expand mode
-                            bit 2 = constant
-                            bit 3 = flush
-                            bit 4 = flip
-                            bit 5 = flop */
-	static int skip;	/* bytes to skip after row copy */
-	static int dest;
-	static int length;	/* row length */
-	static int loops;	/* rows to copy - 1 */
-
 	switch (offset)
 	{
 		case 0:
@@ -876,6 +876,33 @@ READ8_HANDLER( wow_io_r )
 	return 0;
 }
 
+void astrocade_state_save_register(void)
+{
+	state_save_register_global(interrupt_enable);
+	state_save_register_global(interrupt_vector);
+	state_save_register_global(magic_expand_color);
+	state_save_register_global(magic_control);
+	state_save_register_global(magic_expand_count);
+	state_save_register_global(magic_shift_leftover);
+	state_save_register_global_2d_array(colors);
+	state_save_register_global_array(colorsplit);
+	state_save_register_global(BackgroundData);
+	state_save_register_global(VerticalBlank);
+	state_save_register_global_2d_array(sparkle);
+
+	state_save_register_global(NextScanInt);
+	state_save_register_global(CurrentScan);
+	state_save_register_global(InterruptFlag);
+	state_save_register_global(GorfDelay);
+
+	state_save_register_global(src);
+	state_save_register_global(mode);
+	state_save_register_global(skip);
+	state_save_register_global(dest);
+	state_save_register_global(length);
+	state_save_register_global(loops);
+}
+
 /****************************************************************************/
 
 VIDEO_START( astrocde )
@@ -887,6 +914,8 @@ VIDEO_START( astrocde )
 
 	memset(sparkle,0,sizeof(sparkle));
 	CurrentScan = 0;
+
+	astrocade_state_save_register();
 
 	return 0;
 }
@@ -977,6 +1006,19 @@ VIDEO_START( profpac )
 	astrocde_videoram_r = profpac_videoram_r;
 
 	CurrentScan = 0;
+
+	astrocade_state_save_register();
+
+	state_save_register_global_array(profpac_color_mapping);
+	state_save_register_global(profpac_read_page);
+	state_save_register_global(profpac_write_page);
+	state_save_register_global(profpac_visible_page);
+	state_save_register_global(profpac_read_half);
+	state_save_register_global(profpac_write_mode);
+	state_save_register_global(profpac_intercept);
+	state_save_register_global_pointer(profpac_videoram, 0x4000 * 4);
+	state_save_register_global(profpac_vw);
+	state_save_register_global(profpac_cw);
 
 	return 0;
 }

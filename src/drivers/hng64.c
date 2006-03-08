@@ -445,7 +445,6 @@ or fatal fury for example)
 #define MASTER_CLOCK	50000000
 #include "driver.h"
 #include "cpu/mips/mips3.h"
-#include "machine/random.h"
 
 static UINT32 *rombase;
 static UINT32 *hng_mainram;

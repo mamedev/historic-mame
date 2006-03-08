@@ -109,8 +109,7 @@ void EEPROM_init(struct EEPROM_interface *interface)
 
 	if ((1 << intf->address_bits) * intf->data_bits / 8 > MEMORY_SIZE)
 	{
-		ui_popup("EEPROM larger than eeprom.c allows");
-		return;
+		fatalerror("EEPROM larger than eeprom.c allows");
 	}
 
 	memset(eeprom_data,0xff,(1 << intf->address_bits) * intf->data_bits / 8);

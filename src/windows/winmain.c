@@ -117,13 +117,6 @@ int main(int argc, char **argv)
 	int res = 0;
 	extern void free_pathlists(void);
 
-#ifdef MALLOC_DEBUG
-	{
-		extern UINT8 track_mallocs;
-		track_mallocs = TRUE;
-	}
-#endif
-
 	// set up exception handling
 	pass_thru_filter = SetUnhandledExceptionFilter(exception_filter);
 

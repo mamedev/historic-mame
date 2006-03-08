@@ -1,7 +1,7 @@
 #ifndef I8085_H
 #define I8085_H
 
-#include "osd_cpu.h"
+#include "cpuintrf.h"
 
 enum {
 	I8085_PC=1, I8085_SP, I8085_AF ,I8085_BC, I8085_DE, I8085_HL,

@@ -9,7 +9,7 @@
 #ifndef _ADSP2100_H
 #define _ADSP2100_H
 
-#include "osd_cpu.h"
+#include "cpuintrf.h"
 
 
 /***************************************************************************

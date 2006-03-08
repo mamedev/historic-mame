@@ -77,6 +77,7 @@ static UINT64 tempvar[NUM_TEMP_VARIABLES];
     PROTOTYPES
 ***************************************************************************/
 
+static void debug_cpu_exit(void);
 static void perform_trace(debug_cpu_info *info);
 static void prepare_for_step_overout(void);
 static void process_source_file(void);
@@ -85,7 +86,9 @@ static UINT64 get_wpdata(UINT32 ref);
 static UINT64 get_cycles(UINT32 ref);
 static UINT64 get_cpunum(UINT32 ref);
 static UINT64 get_tempvar(UINT32 ref);
+static UINT64 get_logunmap(UINT32 ref);
 static void set_tempvar(UINT32 ref, UINT64 value);
+static void set_logunmap(UINT32 ref, UINT64 value);
 static UINT64 get_cpu_reg(UINT32 ref);
 static void set_cpu_reg(UINT32 ref, UINT64 value);
 static void check_watchpoints(int cpunum, int spacenum, int type, offs_t address, offs_t size, UINT64 value_to_write);
@@ -152,11 +155,14 @@ void debug_cpu_init(void)
 	/* create a global symbol table */
 	global_symtable = symtable_alloc(NULL);
 
-	/* add "wpaddr", "wpdata", "cycles", "cpunum" to the global symbol table */
+	/* add "wpaddr", "wpdata", "cycles", "cpunum", "logunmap" to the global symbol table */
 	symtable_add_register(global_symtable, "wpaddr", 0, get_wpaddr, NULL);
 	symtable_add_register(global_symtable, "wpdata", 0, get_wpdata, NULL);
 	symtable_add_register(global_symtable, "cycles", 0, get_cycles, NULL);
 	symtable_add_register(global_symtable, "cpunum", 0, get_cpunum, NULL);
+	symtable_add_register(global_symtable, "logunmap", ADDRESS_SPACE_PROGRAM, get_logunmap, set_logunmap);
+	symtable_add_register(global_symtable, "logunmapd", ADDRESS_SPACE_DATA, get_logunmap, set_logunmap);
+	symtable_add_register(global_symtable, "logunmapi", ADDRESS_SPACE_IO, get_logunmap, set_logunmap);
 
 	/* add the temporary variables to the global symbol table */
 	for (regnum = 0; regnum < NUM_TEMP_VARIABLES; regnum++)
@@ -263,7 +269,7 @@ void debug_cpu_init(void)
     debug_cpu_exit - free all memory
 -------------------------------------------------*/
 
-void debug_cpu_exit(void)
+static void debug_cpu_exit(void)
 {
 	int cpunum, spacenum;
 
@@ -595,6 +601,28 @@ static UINT64 get_tempvar(UINT32 ref)
 static void set_tempvar(UINT32 ref, UINT64 value)
 {
 	tempvar[ref] = value;
+}
+
+
+/*-------------------------------------------------
+    get_logunmap - getter callback for the logumap
+    symbols
+-------------------------------------------------*/
+
+static UINT64 get_logunmap(UINT32 ref)
+{
+	return memory_get_log_unmap(ref);
+}
+
+
+/*-------------------------------------------------
+    set_logunmap - setter callback for the logumap
+    symbols
+-------------------------------------------------*/
+
+static void set_logunmap(UINT32 ref, UINT64 value)
+{
+	memory_set_log_unmap(ref, value ? 1 : 0);
 }
 
 

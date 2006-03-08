@@ -19,9 +19,7 @@
 #define _TMS32025_H
 
 
-#include "osd_cpu.h"
 #include "cpuintrf.h"
-#include "memory.h"
 
 
 

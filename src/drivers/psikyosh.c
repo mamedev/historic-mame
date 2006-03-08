@@ -32,6 +32,7 @@ There appear to be multiple revisions of this board
  Tetris The Grand Master 2 (c)2000
  Tetris The Grand Master 2 Plus (c)2000 (Confirmed by Japump to be a Dragon Blaze upgraded board)
  GunBarich (c)2001 (Appears to be a Dragon Blaze upgraded board, easily replaced chips have been swapped)
+ Mahjong G-Taste (c)2002
 
  The PS5v2 board is only different physically.
 
@@ -805,6 +806,23 @@ INPUT_PORTS_START( gnbarich ) /* Same as S1945iii except only one button */
 	PORT_DIPSETTING(    0x01, "International Ver B." )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( mjgtaste ) /* This will need the Mahjong inputs */
+	PORT_START_TAG("IN0")
+	PSIKYOSH_PORT_PLAYER( 1, IPT_START1, 3 )
+	PORT_START_TAG("IN1")
+	PSIKYOSH_PORT_PLAYER( 2, IPT_START2, 3 )
+
+	UNUSED_PORT
+	PORT_COIN( 0 )
+
+	PORT_START_TAG("IN4")/* jumper pads on the PCB */
+//  PORT_DIPNAME( 0x03, 0x01, DEF_STR( Region ) )
+//  PORT_DIPSETTING(    0x00, DEF_STR( Japan ) )
+//  PORT_DIPSETTING(    0x02, "International Ver A." )
+//  PORT_DIPSETTING(    0x01, "International Ver B." )
+INPUT_PORTS_END
+
+
 #if ROMTEST
 #define ROMTEST_GFX 0
 #else
@@ -1013,7 +1031,37 @@ ROM_START( gnbarich )
 	ROM_LOAD( "snd0.u52", 0x000000, 0x200000, CRC(7b10436b) SHA1(c731fcce024e286a677ca10a91761c1ee06094a5) )
 ROM_END
 
+ROM_START( mjgtaste )
+	ROM_REGION( 0x100000, REGION_CPU1, 0)
+	ROM_LOAD32_WORD_SWAP( "2.u21",   0x000000, 0x080000, CRC(5f2041dc) SHA1(f3862ffdb8df0cf921ce1cb0236935731e7729a7) )
+	ROM_LOAD32_WORD_SWAP( "1.u22",   0x000002, 0x080000, CRC(f5ff7876) SHA1(4c909db9c97f29fd79df6dacd29762688701b973) )
 
+	/* exact number of gfx / sound roms may be incorrect */
+	ROM_REGION( 0x2c00000, REGION_GFX1, ROMTEST_GFX )	/* Sprites */
+	ROM_LOAD32_WORD( "1l.u4",  0x0400000, 0x200000, NO_DUMP )
+	ROM_LOAD32_WORD( "1h.u12", 0x0400002, 0x200000, NO_DUMP )
+	ROM_LOAD32_WORD( "2l.u5",  0x0800000, 0x200000, NO_DUMP )
+	ROM_LOAD32_WORD( "2h.u13", 0x0800002, 0x200000, NO_DUMP )
+	ROM_LOAD32_WORD( "3l.u6",  0x0c00000, 0x200000, NO_DUMP )
+	ROM_LOAD32_WORD( "3h.u14", 0x0c00002, 0x200000, NO_DUMP )
+	ROM_LOAD32_WORD( "4l.u7",  0x1000000, 0x200000, NO_DUMP )
+	ROM_LOAD32_WORD( "4h.u15", 0x1000002, 0x200000, NO_DUMP )
+	ROM_LOAD32_WORD( "5l.u8",  0x1400000, 0x200000, NO_DUMP )
+	ROM_LOAD32_WORD( "5h.u16", 0x1400002, 0x200000, NO_DUMP )
+	ROM_LOAD32_WORD( "6l.u1",  0x1800000, 0x200000, NO_DUMP )
+	ROM_LOAD32_WORD( "6h.u2",  0x1800002, 0x200000, NO_DUMP )
+	ROM_LOAD32_WORD( "7l.u19", 0x1c00000, 0x200000, NO_DUMP )
+	ROM_LOAD32_WORD( "7h.u20", 0x1c00002, 0x200000, NO_DUMP )
+	ROM_LOAD32_WORD( "8l.u28", 0x2000000, 0x200000, NO_DUMP )
+	ROM_LOAD32_WORD( "8h.u29", 0x2000002, 0x200000, NO_DUMP )
+	ROM_LOAD32_WORD( "9l.u41", 0x2400000, 0x200000, NO_DUMP )
+	ROM_LOAD32_WORD( "9h.u42", 0x2400002, 0x200000, NO_DUMP )
+	ROM_LOAD32_WORD( "10l.u58",0x2800000, 0x200000, NO_DUMP )
+	ROM_LOAD32_WORD( "10h.u59",0x2800002, 0x200000, NO_DUMP )
+
+	ROM_REGION( 0x800000, REGION_SOUND1, 0 ) /* Samples - Not Dumped */
+	ROM_LOAD( "snd0.u52", 0x000000, 0x200000, NO_DUMP )
+ROM_END
 
 /* are these right? should i fake the counter return?
    'speedups / idle skipping isn't needed for 'hotgmck, hgkairak'
@@ -1150,6 +1198,17 @@ PC  :0602CAF2: BT      $0602CAE6
 	return psh_ram[0x006000C/4];
 }
 
+static READ32_HANDLER( mjgtaste_speedup_r )
+{
+
+	if (activecpu_get_pc()==0x6031f04) {cpu_spinuntil_int();return psh_ram[0x006000C/4];} // title logos
+	if (activecpu_get_pc()==0x603214c) {cpu_spinuntil_int();return psh_ram[0x006000C/4];} // attract game
+
+//  printf("at %08x\n",activecpu_get_pc());
+
+	return psh_ram[0x006000C/4];
+}
+
 
 
 static DRIVER_INIT( soldivid )
@@ -1206,6 +1265,14 @@ static DRIVER_INIT( gnbarich )
 	use_factory_eeprom=EEPROM_GNBARICH;
 }
 
+static DRIVER_INIT( mjgtaste )
+{
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x606000c, 0x606000f, 0, 0, mjgtaste_speedup_r );
+	use_factory_eeprom=EEPROM_DEFAULT;
+	/* needs to install mahjong controls too (can select joystick in test mode tho) */
+}
+
+
 /*     YEAR  NAME      PARENT    MACHINE    INPUT     INIT      MONITOR COMPANY   FULLNAME FLAGS */
 
 /* ps3-v1 */
@@ -1221,3 +1288,4 @@ GAME( 1999, s1945iii, 0,        psikyo5,     s1945iii, s1945iii, ROT270, "Psikyo
 /* ps5v2 */
 GAME( 2000, dragnblz, 0,        psikyo5,     dragnblz, dragnblz, ROT270, "Psikyo", "Dragon Blaze", 0 )
 GAME( 2001, gnbarich, 0,        psikyo5,     gnbarich, gnbarich, ROT270, "Psikyo", "Gunbarich", 0 )
+GAME( 2002, mjgtaste, 0,        psikyo5,     mjgtaste, mjgtaste, ROT0,   "Psikyo", "Mahjong G-Taste", GAME_NOT_WORKING )

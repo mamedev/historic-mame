@@ -274,10 +274,28 @@ INLINE void signal_delayed_interrupt(struct ide_state *ide, double time, int buf
  *
  *************************************/
 
+static void ide_controller_exit(void)
+{
+	int i;
+
+	/* close all open hard disks */
+	for (i = 0; i < MAX_IDE_CONTROLLERS; i++)
+		if (idestate[i].disk)
+		{
+			hard_disk_close(idestate[i].disk);
+			idestate[i].disk = NULL;
+		}
+}
+
+
 int ide_controller_init_custom(int which, struct ide_interface *intf, chd_file *diskhandle)
 {
 	struct ide_state *ide = &idestate[which];
 	const hard_disk_info *hdinfo;
+
+	/* must be called during init phase */
+	assert_always(mame_get_phase() == MAME_PHASE_INIT, "ide_controller_init can only be called at init time");
+	add_exit_callback(ide_controller_exit);
 
 	/* NULL interface is immediate failure */
 	if (!intf)

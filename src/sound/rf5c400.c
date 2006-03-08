@@ -4,7 +4,7 @@
     Written by Ville Linde
 */
 
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
 #include "rf5c400.h"
 #include <math.h>

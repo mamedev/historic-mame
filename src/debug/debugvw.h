@@ -65,6 +65,10 @@
 #define DVP_MEM_BYTES_PER_CHUNK				(104)	/* r/w - UINT32 */
 #define DVP_MEM_REVERSE_VIEW				(105)	/* r/w - UINT32 */
 #define DVP_MEM_ASCII_VIEW					(106)	/* r/w - UINT32 */
+#define DVP_MEM_RAW_BASE					(107)	/* r/w - void * */
+#define DVP_MEM_RAW_LENGTH					(108)	/* r/w - UINT32 */
+#define DVP_MEM_RAW_OFFSET_XOR				(109)	/* r/w - UINT32 */
+#define DVP_MEM_RAW_LITTLE_ENDIAN			(110)	/* r/w - UINT32 */
 
 /* properties available for textbuffer views */
 #define DVP_TEXTBUF_LINE_LOCK				(100)	/* r/w - UINT32 */

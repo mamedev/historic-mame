@@ -6,6 +6,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
 #include "dmadac.h"
 
@@ -118,9 +119,13 @@ static void adjust_freqmult(void)
 	/* first, sum up the data for all channels */
 	for (i = 0; i < MAX_SOUND; i++)
 	{
-		struct dmadac_channel_data *info = sndti_token(SOUND_DMADAC, i);
-		if (!info)
+		struct dmadac_channel_data *info;
+
+		/* stop when we run out of instances */
+		if (!sndti_exists(SOUND_DMADAC, i))
 			break;
+		info = sndti_token(SOUND_DMADAC, i);
+		assert(info != NULL);
 		if (info->outsamples)
 		{
 			shortages += info->shortages;
@@ -163,7 +168,12 @@ static void adjust_freqmult(void)
 	/* now recompute the step value for each channel */
 	for (i = 0; i < MAX_SOUND; i++)
 	{
-		struct dmadac_channel_data *info = sndti_token(SOUND_DMADAC, i);
+		struct dmadac_channel_data *info;
+
+		/* stop when we run out of instances */
+		if (!sndti_exists(SOUND_DMADAC, i))
+			break;
+		info = sndti_token(SOUND_DMADAC, i);
 		if (!info)
 			break;
 		compute_step(info);

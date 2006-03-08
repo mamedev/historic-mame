@@ -140,11 +140,9 @@ INLINE void ppc403_check_interrupts(void)
 	}
 }
 
-static void ppc403_reset(void *param)
+static void ppc403_reset(void)
 {
-	ppc_config *config = param;
 	ppc.pc = ppc.npc = 0xfffffffc;
-	ppc.pvr = config->pvr;
 
 	ppc_set_msr(0);
 	change_pc(ppc.pc);

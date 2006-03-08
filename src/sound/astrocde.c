@@ -14,14 +14,11 @@
 
 ***********************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <math.h>
 
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
 #include "astrocde.h"
-//#include "cpu/z80/z80.h"
 
 
 struct astrocade_info
@@ -30,40 +27,40 @@ struct astrocade_info
 
 	int div_by_N_factor;
 
-	int current_count_A;
-	int current_count_B;
-	int current_count_C;
-	int current_count_V;
-	int current_count_N;
+	INT32 current_count_A;
+	INT32 current_count_B;
+	INT32 current_count_C;
+	INT32 current_count_V;
+	INT32 current_count_N;
 
-	int current_state_A;
-	int current_state_B;
-	int current_state_C;
-	int current_state_V;
+	INT32 current_state_A;
+	INT32 current_state_B;
+	INT32 current_state_C;
+	INT32 current_state_V;
 
-	int current_size_A;
-	int current_size_B;
-	int current_size_C;
-	int current_size_V;
-	int current_size_N;
+	INT32 current_size_A;
+	INT32 current_size_B;
+	INT32 current_size_C;
+	INT32 current_size_V;
+	INT32 current_size_N;
 
 	sound_stream *stream;
 
 	/* Registers */
 
-	int master_osc;
-	int freq_A;
-	int freq_B;
-	int freq_C;
-	int vol_A;
-	int vol_B;
-	int vol_C;
-	int vibrato;
-	int vibrato_speed;
-	int mux;
-	int noise_am;
-	int vol_noise4;
-	int vol_noise8;
+	UINT8 master_osc;
+	UINT8 freq_A;
+	UINT8 freq_B;
+	UINT8 freq_C;
+	UINT8 vol_A;
+	UINT8 vol_B;
+	UINT8 vol_C;
+	UINT8 vibrato;
+	UINT8 vibrato_speed;
+	UINT8 mux;
+	UINT8 noise_am;
+	UINT8 vol_noise4;
+	UINT8 vol_noise8;
 
 	int randbyte;
 	int randbit;
@@ -188,6 +185,39 @@ static void astrocade_reset(void *_chip)
 	chip->randbit = 1;
 }
 
+static void astrocade_state_save_register(struct astrocade_info *chip, int sndindex)
+{
+	state_save_register_item("astrocade", sndindex, chip->current_count_A);
+	state_save_register_item("astrocade", sndindex, chip->current_count_B);
+	state_save_register_item("astrocade", sndindex, chip->current_count_C);
+	state_save_register_item("astrocade", sndindex, chip->current_count_V);
+	state_save_register_item("astrocade", sndindex, chip->current_count_N);
+
+	state_save_register_item("astrocade", sndindex, chip->current_state_A);
+	state_save_register_item("astrocade", sndindex, chip->current_state_B);
+	state_save_register_item("astrocade", sndindex, chip->current_state_C);
+	state_save_register_item("astrocade", sndindex, chip->current_state_V);
+
+	state_save_register_item("astrocade", sndindex, chip->current_size_A);
+	state_save_register_item("astrocade", sndindex, chip->current_size_B);
+	state_save_register_item("astrocade", sndindex, chip->current_size_C);
+	state_save_register_item("astrocade", sndindex, chip->current_size_V);
+	state_save_register_item("astrocade", sndindex, chip->current_size_N);
+
+	state_save_register_item("astrocade", sndindex, chip->master_osc);
+	state_save_register_item("astrocade", sndindex, chip->freq_A);
+	state_save_register_item("astrocade", sndindex, chip->freq_B);
+	state_save_register_item("astrocade", sndindex, chip->freq_C);
+	state_save_register_item("astrocade", sndindex, chip->vol_A);
+	state_save_register_item("astrocade", sndindex, chip->vol_B);
+	state_save_register_item("astrocade", sndindex, chip->vol_C);
+	state_save_register_item("astrocade", sndindex, chip->vibrato);
+	state_save_register_item("astrocade", sndindex, chip->vibrato_speed);
+	state_save_register_item("astrocade", sndindex, chip->mux);
+	state_save_register_item("astrocade", sndindex, chip->noise_am);
+	state_save_register_item("astrocade", sndindex, chip->vol_noise4);
+	state_save_register_item("astrocade", sndindex, chip->vol_noise8);
+}
 
 static void *astrocade_start(int sndindex, int clock, const void *config)
 {
@@ -205,15 +235,15 @@ static void *astrocade_start(int sndindex, int clock, const void *config)
 	/* reset state */
 	astrocade_reset(chip);
 
+	astrocade_state_save_register(chip, sndindex);
+
 	return chip;
 }
 
-
-
-void astrocade_sound_w(int num, int offset, int data)
+void astrocade_sound_w(UINT8 num, offs_t offset, UINT8 data)
 {
 	struct astrocade_info *chip = sndti_token(SOUND_ASTROCADE, num);
-	int i, temp_vib;
+	int temp_vib;
 
 	/* update */
 	stream_update(chip->stream,0);
@@ -256,9 +286,7 @@ void astrocade_sound_w(int num, int offset, int data)
 			chip->vibrato = data & 0x3f;
 
 			temp_vib = (data>>6) & 0x03;
-			chip->vibrato_speed = 1;
-			for(i=0;i<temp_vib;i++)
-				chip->vibrato_speed <<= 1;
+			chip->vibrato_speed = (1 << temp_vib);
 
 		break;
 

@@ -37,8 +37,6 @@
 
 */
 
-#include <stdio.h>
-#include "driver.h"
 #include "debugger.h"
 #include "m65ce02.h"
 

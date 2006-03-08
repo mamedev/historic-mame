@@ -656,252 +656,384 @@ static int lastpc=0;
 static int lastword=0;
 static int lastoffset=0;
 
-// Nicola's decrypt routines for high word
 
-static int add_7_13_8_4_15(int val, int inc)
+#define CARRY(bit) {carry[bit] = (dst[bit]>>1); dst[bit]&=1;}
+
+static int decrypt(int game, int key, int high_word, int low_word)
 {
-	if (inc > 0)
+	int swaps[4][16] =
 	{
-		while (inc-- > 0)
-		{
-			val ^= 0x0080;	// BIT 7
-			if ((val & 0x0080) == 0)	// BIT 7 carries to...
-			{
-				val ^= 0x2000;	// BIT 13
-				if ((val & 0x2000) == 0)	// BIT 13 carries to...
-				{
-					val ^= 0x0100;	// BIT 8
-					if ((val & 0x0100) == 0)	// BIT 8 carries to...
-					{
-						val ^= 0x0010;	// BIT 4
-						if ((val & 0x0010) == 0)	// BIT 4 carries to...
-							val ^= 0x8000;	// BIT 15
-					}
-				}
-			}
-		}
+		{ 5,7,9,12,2,14,13,15,3,6,8,11,4,10,0,1 },
+		{ 11,2,5,14,8,13,10,4,7,12,0,6,15,9,1,3 },
+		{ 7,0,11,12,13,1,6,8,9,5,4,10,14,3,15,2 },
+		{ 3,0,2,1,10,15,8,6,9,13,11,7,12,5,4,14 },
+	};
+
+	int dst[16],carry[16];
+	int i;
+	int *s = swaps[key & 3];
+	int flag1 = BIT(high_word, 9) ^ BIT(high_word, 12) ^ 1;
+	int flag2 = game ? BIT(high_word, 10) : (BIT(high_word, 9) ^ BIT(high_word, 10));
+
+	if (game)
+		flag2 = -flag2;
+
+	for (i = 0; i < 16; i++)
+		dst[i] = BIT(low_word, s[15-i]);
+	for (i = 0; i < 16; i++)
+		carry[i] = 0;
+
+	if (flag1 && flag2)
+	{
+		dst[13] += game ? 0 : 1;											CARRY(13)
+		dst[2]  +=               carry[13];									CARRY(2)
+		dst[15] += 1           + carry[2];									CARRY(15)
+		dst[4]  +=             - carry[15];									CARRY(4)
+		dst[6]  += 1           - carry[4];									CARRY(6)
+		dst[7]  +=               carry[6];									CARRY(7)
+
+		dst[14] += game ? BIT(low_word, 9) : BIT(~low_word, 9);				CARRY(14)
+		dst[12] += game ? BIT(low_word, 9) : BIT(~low_word, 9);				CARRY(12)
+
+		dst[9]  += dst[15]     + carry[14];									CARRY(9)
+		dst[10] += dst[15]     + carry[12];									CARRY(10)
+
+		dst[5]  += BIT(~low_word, 5) + carry[9];							CARRY(5)
+		dst[1]  += BIT(~low_word, 5) + carry[10];							CARRY(1)
+
+		dst[3]  += 1           + dst[7]  - carry[5];						CARRY(3)
+		dst[11] += 1           + dst[7]  - carry[1];						CARRY(11)
+
+		dst[8]  += 1           + dst[6]  + carry[3];
+		dst[0]  += 1           + dst[6]  + carry[11];
 	}
-	else if (inc < 0)
+	else
 	{
-		while (inc++ < 0)
-		{
-			val ^= 0x0080;	// BIT 7
-			if ((val & 0x0080) != 0)	// BIT 7 carries to...
-			{
-				val ^= 0x2000;	// BIT 13
-				if ((val & 0x2000) != 0)	// BIT 13 carries to...
-				{
-					val ^= 0x0100;	// BIT 8
-					if ((val & 0x0100) != 0)	// BIT 8 carries to...
-					{
-						val ^= 0x0010;	// BIT 4
-						if ((val & 0x0010) != 0)	// BIT 4 carries to...
-							val ^= 0x8000;	// BIT 15
-					}
-				}
-			}
-		}
+		dst[13] += BIT(key,2);												CARRY(13)
+		dst[2]  += BIT(key,3)  + carry[13];									CARRY(2)
+		dst[15] += BIT(key,4)  + carry[2];									CARRY(15)
+		dst[4]  += BIT(key,5)  - carry[15];									CARRY(4)
+		dst[6]  += BIT(key,6)  - carry[4];									CARRY(6)
+		dst[7]  += BIT(key,7)  + carry[6];									CARRY(7)
+
+		dst[14] += BIT(key,8);												CARRY(14)
+		dst[12] += BIT(key,8);												CARRY(12)
+
+		dst[9]  += BIT(key,9)  + carry[14];									CARRY(9)
+		dst[10] += BIT(key,9)  + carry[12];									CARRY(10)
+
+		dst[5]  += BIT(key,10) + carry[9];									CARRY(5)
+		dst[1]  += BIT(key,10) + carry[10];									CARRY(1)
+
+		dst[3]  += BIT(key,11) - flag1*dst[2]  - flag2*dst[13] - carry[5];	CARRY(3)
+		dst[11] += BIT(key,11) - flag1*dst[2]  - flag2*dst[13] - carry[1];	CARRY(11)
+
+		dst[8]  += BIT(key,12) + carry[3];
+		dst[0]  += BIT(key,12) + carry[11];
 	}
 
-	return val;
+	low_word = 0;
+	for (i = 0; i < 16; i++)
+		low_word |= (dst[i] & 1) << i;
+
+	switch (game)
+	{
+		default:
+		case 0:
+			return low_word ^ 0xf626;
+		case 1:
+			return low_word ^ 0x8626;
+	}
 }
 
 
-static int add_12_14_0_2_1(int val, int inc)
+static int get_key(int game, int high_word)
 {
-	if (inc > 0)
+	int src[16],dst[16],carry[16];
+	int i;
+	int flag1 = BIT(high_word, 9) ^ BIT(high_word, 12) ^ 1;
+	int flag2 = game ? BIT(high_word, 10) : (BIT(high_word, 9) ^ BIT(high_word, 10));
+	int temp;
+
+	for (i = 0; i < 16; i++)
 	{
-		while (inc-- > 0)
-		{
-			val ^= 0x1000;	// BIT 12
-			if ((val & 0x1000) == 0)	// BIT 12 carries to...
-			{
-				val ^= 0x4000;	// BIT 14
-				if ((val & 0x4000) == 0)	// BIT 14 carries to...
-				{
-					val ^= 0x0001;	// BIT 0
-					if ((val & 0x0001) == 0)	// BIT 0 carries to...
-					{
-						val ^= 0x0004;	// BIT 2
-						if ((val & 0x0004) == 0)	// BIT 2 carries to...
-							val ^= 0x0002;	// BIT 1
-					}
-				}
-			}
-		}
-	}
-	else if (inc < 0)
-	{
-		while (inc++ < 0)
-		{
-			val ^= 0x1000;	// BIT 12
-			if ((val & 0x1000) != 0)	// BIT 12 carries to...
-			{
-				val ^= 0x4000;	// BIT 14
-				if ((val & 0x4000) != 0)	// BIT 14 carries to...
-				{
-					val ^= 0x0001;	// BIT 0
-					if ((val & 0x0001) != 0)	// BIT 0 carries to...
-					{
-						val ^= 0x0004;	// BIT 2
-						if ((val & 0x0004) != 0)	// BIT 2 carries to...
-							val ^= 0x0002;	// BIT 1
-					}
-				}
-			}
-		}
+		src[i] = BIT(high_word,i);
+		dst[i] = 0;
+		carry[i] = 0;
 	}
 
-	return val;
+
+	dst[10] = flag1 ? (src[7] ^ src[12]) : src[5];
+
+	dst[8]  = flag2 ? (1 ^ src[6]) : 0;
+
+	dst[5]  = (flag1 ^ flag2) ? (1 ^ src[3]) : (1 ^ (src[5] | src[10]) ^ src[11]);
+
+	if (flag1 == 0 && flag2 == 0)
+		dst[6]  = dst[5] + src[2];									CARRY(6);
+	if (flag1 == 1 && flag2 == 0)
+		dst[6]  = dst[5] + src[8];									CARRY(6);
+	if (flag1 == 0 && flag2 == 1)
+		dst[6]  = dst[5] + src[13];									CARRY(6);
+
+	if (game == 0)
+	{
+		if (flag1 == 0 && flag2 == 0)
+		{
+			dst[7] = src[3];
+			dst[7] ^= (1^src[12]) & (1^src[5]) & src[0];
+			dst[7] ^= src[14] & src[5] & src[0];
+			dst[7] ^= ((1^src[12]) ^ src[11]) & (1^src[2]);
+			dst[7] ^= src[11] & src[6];
+			dst[7] ^= src[12] & src[5] & (1^src[2]);
+			dst[7] ^= src[12] & (1^src[11]) & (1^src[5]) & (1^src[6]);
+		}
+		if (flag1 == 1 && flag2 == 0)
+			dst[7] = 1 ^ src[15] ^ carry[6] ^ (src[8] & (1^src[3]));
+		if (flag1 == 0 && flag2 == 1)
+			dst[7] = 1 ^ src[14] ^ carry[6];
+	}
+	else
+	{
+		if (flag1 == 0 && flag2 == 0)
+		{
+			dst[7] = src[3];
+			dst[7] ^= ((1^src[14]) & (1^src[5])) & src[0];
+			dst[7] ^= src[6] ^ (src[14] & (1^src[11]));
+			dst[7] ^= src[5] & (1^src[6]^src[14]) & (1^src[11]);
+			dst[7] ^= (src[11] ^ src[5]) & src[2];
+			dst[7] ^= src[14] & (src[11] & (1^src[5]));
+		}
+		if (flag1 == 1 && flag2 == 0)
+			dst[7] = 1 ^ src[15] ^ carry[6] ^ (src[8] & (1^src[3]));
+		if (flag1 == 0 && flag2 == 1)
+			dst[7] = 1 ^ src[14] ^ carry[6];
+	}
+
+	if (game == 0)
+	{
+		temp = (src[5] | (src[9] & src[10]));
+	}
+	else
+	{
+		temp = src[5];
+	}
+
+	dst[0]  = src[3] ^ (src[6] | ((1^src[11]) & temp));
+
+	if (game == 0)
+	{
+		dst[1]  = src[15]
+				^ (temp & src[4] & src[3])
+				^ (temp & (src[11] ? (src[6] | src[4]) : (1^src[6])))
+				^ (src[13] ?
+					(src[6] & (1^temp) & src[4]) ^ ((1^temp) & (1^src[4]) & src[3])
+					^ (src[7] & src[8] & (1^src[9]) & temp & (src[6] ^ src[4] ^ src[3]))
+					^ ((1^src[11]) & (1^src[6]) & temp & src[7] & src[8] & (1^src[9]))
+				^ (src[10] & src[9] & src[8] & (1 ^ src[4] ^ src[3]))
+				^ (src[11] & src[10] & src[9] & src[8] & (1^src[6]))
+					:
+					(src[6] & (1^temp) & (1 ^ src[4] ^ src[8]))
+					^ ((1^temp) & (src[4] ? ((1^src[3]) & (1^src[8])) : (src[3] & src[8])))
+					^ (src[7] & (1^src[8]) & (1^src[9]) & (1^temp) & (src[6] ^ src[4] ^ src[3]))
+				^ (src[10] & src[9] & src[8] & (1 ^ src[4] ^ src[3]) & (1^src[5]))
+				^ (src[11] & src[10] & src[9] & src[8] & (1^src[6]) & (1^src[5]))
+				  )
+				 ;
+	}
+	else
+	{
+		dst[1]  = src[15]
+				^ (temp & src[4] & src[3])
+				^ (temp & (src[11] ? (src[6] | src[4]) : (1^src[6])))
+				^ (src[13] ?
+					(src[6] & (1^temp) & src[4]) ^ ((1^temp) & (1^src[4]) & src[3])
+					^ (src[7] & src[8] & src[9] & temp & (src[6] ^ src[4] ^ src[3]))
+					^ ((1^src[11]) & (1^src[6]) & temp & src[7] & src[8] & src[9])
+					:
+					(src[6] & (1^temp) & (1 ^ src[4] ^ src[8]))
+					^ ((1^temp) & (src[4] ? ((1^src[3]) & (1^src[8])) : (src[3] & src[8])))
+					^ (src[7] & (1^src[8]) & src[9] & (1^temp) & (src[6] ^ src[4] ^ src[3]))
+				  );
+	}
+
+	if (game == 0)
+	{
+		if (flag1 == 0 && flag2 == 0)
+			dst[11] = src[0] ^ (src[5] ? src[14] : src[10]);
+		if (flag1 == 1 && flag2 == 0)
+			dst[11] = 0;
+		if (flag1 == 0 && flag2 == 1)
+			dst[11] = 0;
+	}
+	else
+	{
+		if (flag1 == 0 && flag2 == 0)
+			dst[11] = src[0] ^ (src[5] ? src[10] : (1^src[14]));	// note src[10] == 0
+		if (flag1 == 1 && flag2 == 0)
+			dst[11] = 0;
+		if (flag1 == 0 && flag2 == 1)
+			dst[11] = 1;
+	}
+
+	dst[12] = dst[11];
+	if (flag1 == 0 && flag2 == 0)
+		dst[12] ^= src[10];
+	if (flag1 == 1 && flag2 == 0)
+		dst[12] ^= 0;
+	if (flag1 == 0 && flag2 == 1)
+		dst[12] ^= src[3] ^ (src[11] ? src[6] : (src[6] | src[5]));
+
+	if (game == 0)
+	{
+		if (flag1 == 0 && flag2 == 0)
+			dst[4]  = src[6];
+		if (flag1 == 1 && flag2 == 0)
+			dst[4]  = src[0] ^ (src[14] ? (1^src[12]) : src[5]);
+		if (flag1 == 0 && flag2 == 1)
+			dst[4]  = src[7];
+	}
+	else
+	{
+		if (flag1 == 0 && flag2 == 0)
+			dst[4]  = src[6];
+		if (flag1 == 1 && flag2 == 0)
+			dst[4]  = src[0] ^ (src[14] ? ((1^src[12]) | (1^src[5])) : (src[12] | src[5]));
+		if (flag1 == 0 && flag2 == 1)
+			dst[4]  = src[7];
+	}
+
+	if (game == 0)
+	{
+		if (flag1 == 0 && flag2 == 0)
+			dst[9] = src[5] ^ (src[12] & (1^src[7])) ^ src[13];
+		if (flag1 == 1 && flag2 == 0)
+			dst[9] = 1 ^ src[4];
+		if (flag1 == 0 && flag2 == 1)
+			dst[9] = src[6] ^ ((1^src[11]) & src[5]);
+	}
+	else
+	{
+		if (flag1 == 0 && flag2 == 0)
+			dst[9] = 1 ^ src[5] ^ ((1^src[12]) & src[7]) ^ src[13];
+		if (flag1 == 1 && flag2 == 0)
+			dst[9] = 1 ^ src[4];
+		if (flag1 == 0 && flag2 == 1)
+			dst[9] = src[6] ^ ((1^src[11]) & src[5]);
+	}
+
+	if (game == 0)
+	{
+		if (flag1 == 0 && flag2 == 0)
+			dst[3] = src[12];
+		if (flag1 == 1 && flag2 == 0)
+			dst[3] = src[0] ^ (src[14] ? src[12] : (1^src[5]));
+		if (flag1 == 0 && flag2 == 1)
+			dst[3] = src[8] ^ ((1^src[13]) & (1^src[12]) & (1^src[5])) ^ (src[12] & (src[13] ? (src[7] & src[5]) : ((1^src[7]) & (1^src[5]))));
+	}
+	else
+	{
+		if (flag1 == 0 && flag2 == 0)
+			dst[3] = src[12];
+		if (flag1 == 1 && flag2 == 0)
+			dst[3] = src[0] ^ (src[14] ? (src[5] & src[12]) : ((1^src[5]) & (1^src[12])));
+		if (flag1 == 0 && flag2 == 1)
+			dst[3] = src[8] ^ ((1^src[13]) & (src[12]) & (1^src[5])) ^ ((1^src[12]) & (src[13] ? (src[7] & src[5]) : ((1^src[7]) & (1^src[5]))));
+	}
+
+	if (game == 0)
+	{
+		if (flag1 == 0 && flag2 == 0)
+			dst[2] = src[0];
+		if (flag1 == 1 && flag2 == 0)
+			dst[2] = src[1]
+					^ (src[3] & (1^src[2]))
+					^ ((1^src[11]) & src[6] & src[5])
+					^ ((1^src[12]) & (1^src[5]) & src[0] & (1^src[14]) & (src[6] ^ src[2] ^ src[3]))
+					^ (src[12] & (1^src[6]) & (1^src[5]) & src[3])
+					^ (src[2] & (1^src[5]) & (1^src[6]) & (1^src[12]))
+					^ (src[2] & src[5] & (1^src[6]) & src[11])
+					^ ((1 ^ src[2] ^ src[3]) & (1^src[5]) & src[6] & src[12])
+					^ (src[14] & (1^src[12]) & (src[2] ^ src[3] ^ src[6]) & (1^src[5]))
+					^ (src[14] & src[12] & src[5] & (1 ^ src[3] ^ src[2] ^ src[11]) & src[0])
+					^ (src[14] & src[12] & src[11] & src[6] & src[5] & src[0])
+				^ (src[12] & (1^src[5]) & src[3])
+				^ (src[12] & (1^src[5]) & src[0] & (1 ^ src[3] ^ src[2] ^ (src[11] & (1^src[6]))))
+				^ (src[12] & (1^src[5]) & (1^src[11]) & src[6] & src[2])
+				^ (src[12] & (1^src[5]) & src[11] & (src[6] ^ src[2]))
+					;
+		if (flag1 == 0 && flag2 == 1)
+			dst[2] = src[5];
+	}
+	else
+	{
+		if (flag1 == 0 && flag2 == 0)
+			dst[2] = src[0];
+		if (flag1 == 1 && flag2 == 0)
+			dst[2] = src[1]
+					^ (src[3] & (1^src[2]))
+					^ ((1^src[11]) & src[6] & src[5])
+					^ ((1^src[12]) & (1^src[5]) & src[0] & (1^src[14]) & (src[6] ^ src[2] ^ src[3]))
+					^ (src[12] & (1^src[6]) & (1^src[5]) & src[3])
+					^ (src[2] & (1^src[5]) & (1^src[6]) & (1^src[12]))
+					^ (src[2] & src[5] & (1^src[6]) & src[11])
+					^ ((1 ^ src[2] ^ src[3]) & (1^src[5]) & src[6] & src[12])
+					^ (src[14] & (1^src[12]) & (src[2] ^ src[3] ^ src[6]) & (1^src[5]))
+					^ (src[14] & src[12] & src[5] & (1 ^ src[3] ^ src[2] ^ src[11]) & src[0])
+					^ (src[14] & src[12] & src[11] & src[6] & src[5] & src[0]);
+		if (flag1 == 0 && flag2 == 1)
+			dst[2] = src[5];
+	}
+
+	if (game == 0)
+	{
+		dst[10] ^= 1;
+		dst[4]  ^= 1;
+		dst[2]  ^= 1;
+	}
+	else
+	{
+		dst[10] ^= 1;
+		dst[8]  ^= 1;
+		dst[4]  ^= 1;
+	}
+
+
+	high_word = 0;
+	for (i = 0; i < 16; i++)
+		high_word |= (dst[i] & 1) << i;
+
+	if (flag1 == 1 && flag2 == 1)
+		high_word &= 3;
+
+	return high_word;
 }
 
 
-static int add_9_10_5_11_6_3(int val, int inc)
+static UINT16 squash_encrypt(int offset, int data, int game)
 {
-	if (inc > 0)
+	int thispc = activecpu_get_pc();
+	int savedata = data;
+
+	/* check if 2nd half of 32 bit */
+	if(lastpc == thispc && offset == lastoffset + 1)
 	{
-		while (inc-- > 0)
-		{
-			val ^= 0x0200;	// BIT 9
-			if ((val & 0x0200) == 0)	// BIT 9 carries to...
-			{
-				val ^= 0x0400;	// BIT 10
-				if ((val & 0x0400) == 0)	// BIT 10 carries to...
-				{
-					val ^= 0x0020;	// BIT 5
-					if ((val & 0x0020) == 0)	// BIT 5 carries to...
-					{
-						val ^= 0x0800;	// BIT 11
-						if ((val & 0x0800) == 0)	// BIT 11 carries to...
-						{
-							val ^= 0x0040;	// BIT 6
-							if ((val & 0x0040) == 0)	// BIT 6 carries to...
-								val ^= 0x0008;	// BIT 3
-						}
-					}
-				}
-			}
-		}
+		lastpc = 0;
+		data = decrypt(game, get_key(game, lastword), lastword, data);
 	}
-	else if (inc < 0)
+	else
 	{
-		while (inc++ < 0)
-		{
-			val ^= 0x0200;	// BIT 9
-			if ((val & 0x0200) != 0)	// BIT 9 carries to...
-			{
-				val ^= 0x0400;	// BIT 10
-				if ((val & 0x0400) != 0)	// BIT 10 carries to...
-				{
-					val ^= 0x0020;	// BIT 5
-					if ((val & 0x0020) != 0)	// BIT 5 carries to...
-					{
-						val ^= 0x0800;	// BIT 11
-						if ((val & 0x0800) != 0)	// BIT 11 carries to...
-						{
-							val ^= 0x0040;	// BIT 6
-							if ((val & 0x0040) != 0)	// BIT 6 carries to...
-								val ^= 0x0008;	// BIT 3
-						}
-					}
-				}
-			}
-		}
+		/* code as 1st word */
+		lastword = data;
+		lastpc = thispc;
+		lastoffset = offset;
+
+		/* high word returned */
+		data = decrypt(game, 0x0000, 0x0400, lastword);
+
+		logerror("%8x : data1 = %4x > %4x @ %8x\n",activecpu_get_pc(),savedata,data,lastoffset);
 	}
-
-	return val;
-}
-
-
-static int decrypt_high_word(int high_word)
-{
-	int src = high_word;
-	int dst = src;
-
-
-	// invert some bits...
-	dst ^= 0x0800;	// BIT 11
-	dst ^= 0x0004;	// BIT 2
-	dst ^= 0x0010;	// BIT 4
-
-
-	if (BIT(dst,5) == 0)
-	{
-		dst = add_12_14_0_2_1( dst, 4 );
-		dst = add_7_13_8_4_15( dst, 4 );
-	}
-
-	dst = add_9_10_5_11_6_3( dst, -1 );
-
-	if (BIT(dst,9) != 0)
-	{
-		dst = add_12_14_0_2_1( dst, 1 );
-		dst = add_7_13_8_4_15( dst, 1 );
-	}
-
-	dst = add_9_10_5_11_6_3( dst, -2 );
-
-	if (BIT(dst,5) != 0)
-	{
-		dst = add_12_14_0_2_1( dst, 2 );
-		dst = add_7_13_8_4_15( dst, 2 );
-	}
-
-	dst = add_9_10_5_11_6_3( dst, -8 );
-
-	if (BIT(dst,3) != 0)
-	{
-		dst = add_12_14_0_2_1( dst, 8 );
-		dst = add_7_13_8_4_15( dst, 8 );
-	}
-
-	dst ^= 0x0040;	// BIT 6
-
-	if (BIT(dst,6) != 0)
-	{
-		dst = add_12_14_0_2_1( dst, 16 );
-		dst = add_7_13_8_4_15( dst, 16 );
-	}
-
-
-	dst ^= 0xffff;
-
-	dst = BITSWAP16(dst,5,7,9,12,2,14,13,15,3,6,8,11,4,10,0,1);
-
-	return dst;
-}
-
-static UINT16 squash_encrypt(int offset, int data)
-{
-        UINT16 *RAM = (UINT16 *)memory_region(REGION_USER1);
-
-		int thispc = activecpu_get_pc();
-        int savedata = data;
-		int whichfile;
-        int foffset;
-
-        /* check if 2nd half of 32 bit */
-        if(lastpc == thispc && offset == lastoffset + 1)
-        {
-                lastpc = 0;
-                whichfile = RAM[lastword];
- 		        foffset = data;
-				data = RAM[(whichfile*0x10000)+foffset];
-                logerror("%8x : data2 = %4x > %4x\n",activecpu_get_pc(),savedata,data);
-        }
-        else
-        {
-                /* code as 1st word */
-                lastword = data;
-                lastpc = thispc;
-                lastoffset = offset;
-
-                /* high word returned */
-                data = decrypt_high_word(lastword);
-
-                logerror("%8x : data1 = %4x > %4x @ %8x\n",activecpu_get_pc(),savedata,data,lastoffset);
-        }
-        return data;
+	return data;
 }
 
 WRITE16_HANDLER( gaelco_vram_encrypted_w )
@@ -909,20 +1041,42 @@ WRITE16_HANDLER( gaelco_vram_encrypted_w )
 	int oldword = gaelco_videoram[offset];
 //  printf("gaelco_vram_encrypted_w!!\n");
 
-	data = squash_encrypt(offset,data);
+	data = squash_encrypt(offset,data,0);
 	COMBINE_DATA(&gaelco_videoram[offset]);
 
 	if (oldword != gaelco_videoram[offset])
 		tilemap_mark_tile_dirty(pant[offset >> 11],((offset << 1) & 0x0fff) >> 2);
 }
 
+
 WRITE16_HANDLER(gaelco_encrypted_w)
 {
 //  printf("gaelco_encrypted_w!!\n");
 
-	 data = squash_encrypt(offset,data);
+	 data = squash_encrypt(offset,data,0);
         COMBINE_DATA(&gaelco_screen[offset]);
 }
+
+WRITE16_HANDLER( thoop_vram_encrypted_w )
+{
+	int oldword = gaelco_videoram[offset];
+//  printf("gaelco_vram_encrypted_w!!\n");
+
+	data = squash_encrypt(offset,data,1);
+	COMBINE_DATA(&gaelco_videoram[offset]);
+
+	if (oldword != gaelco_videoram[offset])
+		tilemap_mark_tile_dirty(pant[offset >> 11],((offset << 1) & 0x0fff) >> 2);
+}
+
+WRITE16_HANDLER(thoop_encrypted_w)
+{
+//  printf("gaelco_encrypted_w!!\n");
+
+	 data = squash_encrypt(offset,data,1);
+     COMBINE_DATA(&gaelco_screen[offset]);
+}
+
 
 static ADDRESS_MAP_START( squash_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)			/* ROM */
@@ -985,11 +1139,6 @@ ROM_START( squash )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )	/* 68000 code */
 	ROM_LOAD16_BYTE( "squash.d18", 0x000000, 0x20000, CRC(ce7aae96) SHA1(4fe8666ae571bffc5a08fa68346c0623282989eb) )
 	ROM_LOAD16_BYTE( "squash.d16", 0x000001, 0x20000, CRC(8ffaedd7) SHA1(f4aada17ba67dd8b6c5a395e832bcbba2764c59d) )
-
-	/* Decryption table */
-
-	ROM_REGION16_LE( 0x20000*1800, REGION_USER1, ROMREGION_ERASEFF)
-	ROM_LOAD( "squash.ec2", 0x000000, 210894848, BAD_DUMP CRC(162aa9a3) SHA1(9c31daecc180e2438e0bf9457a5529e9dab016f4) )
 
 	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "squash.c09", 0x300000, 0x80000, CRC(0bb91c69) SHA1(8be945049ab411a4d49bd64bd3937542ec9ef9fb) )
@@ -1107,60 +1256,6 @@ INPUT_PORTS_START( thoop )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-static UINT16 thoop_encrypt(int offset, int data)
-{
-        UINT16 *RAM = (UINT16 *)memory_region(REGION_USER1);
-
-		int thispc = activecpu_get_pc();
-        int savedata = data;
-		int whichfile;
-        int foffset;
-
-        /* check if 2nd half of 32 bit */
-        if(lastpc == thispc && offset == lastoffset + 1)
-        {
-                lastpc = 0;
-                whichfile = RAM[lastword];
- 		        foffset = data;
-				data = RAM[(whichfile*0x10000)+foffset];
-                logerror("%8x : data2 = %4x > %4x\n",activecpu_get_pc(),savedata,data);
-        }
-        else
-        {
-                /* code as 1st word */
-                lastword = data;
-                lastpc = thispc;
-                lastoffset = offset;
-				savedata = data;
-
-                /* high word returned - first table is high word */
-                data = RAM[(0x10000)+savedata];
-				//data = decrypt_high_word(lastword);
-
-                logerror("%8x : data1 = %4x > %4x @ %8x\n",activecpu_get_pc(),savedata,data,lastoffset);
-        }
-        return data;
-}
-
-WRITE16_HANDLER( thoop_vram_encrypted_w )
-{
-	int oldword = gaelco_videoram[offset];
-//  printf("gaelco_vram_encrypted_w!!\n");
-
-	data = thoop_encrypt(offset,data);
-	COMBINE_DATA(&gaelco_videoram[offset]);
-
-	if (oldword != gaelco_videoram[offset])
-		tilemap_mark_tile_dirty(pant[offset >> 11],((offset << 1) & 0x0fff) >> 2);
-}
-
-WRITE16_HANDLER(thoop_encrypted_w)
-{
-//  printf("gaelco_encrypted_w!!\n");
-
-	 data = thoop_encrypt(offset,data);
-     COMBINE_DATA(&gaelco_screen[offset]);
-}
 
 
 static ADDRESS_MAP_START( thoop_writemem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -1210,9 +1305,6 @@ ROM_START( thoop )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )	/* 68000 code */
 	ROM_LOAD16_BYTE( "th18dea1.040", 0x000000, 0x80000, CRC(59bad625) SHA1(28e058b2290bc5f7130b801014d026432f9e7fd5) )
 	ROM_LOAD16_BYTE( "th161eb4.020", 0x000001, 0x40000, CRC(6add61ed) SHA1(0e789d9a0ac19b6143044fbc04ab2227735b2a8f) )
-
-	ROM_REGION16_LE( 0x20000*1605, REGION_USER1, ROMREGION_ERASEFF)
-	ROM_LOAD( "t-hoop.ec2", 0x000000, 210370560, BAD_DUMP CRC(88d800ff) SHA1(4b4b7e49fba173abe8c7b08c451e559ecadcf05f) )
 
 	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "c09", 0x300000, 0x040000, CRC(06f0edbf) SHA1(3cf2e5c29cd00b43d49a106084076f2ac0dbad98) )

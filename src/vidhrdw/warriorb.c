@@ -112,7 +112,7 @@ static void warriorb_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect,
 
 VIDEO_UPDATE( warriorb )
 {
-	UINT8 layer[3];
+	UINT8 layer[3], nodraw;
 
 	TC0100SCN_tilemap_update();
 
@@ -120,14 +120,16 @@ VIDEO_UPDATE( warriorb )
 	layer[1] = layer[0]^1;
 	layer[2] = 2;
 
-	/* Ensure screen blanked */
-	fillbitmap(bitmap, get_black_pen(), cliprect);
+	/* Clear priority bitmap */
 	fillbitmap(priority_bitmap, 0, cliprect);
 
 	/* chip 0 does tilemaps on the left, chip 1 does the ones on the right */
 	// draw bottom layer
-	TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);	/* left */
-	TC0100SCN_tilemap_draw(bitmap,cliprect,1,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);	/* right */
+	nodraw  = TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);	/* left */
+	nodraw |= TC0100SCN_tilemap_draw(bitmap,cliprect,1,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);	/* right */
+
+	/* Ensure screen blanked even when bottom layers not drawn due to disable bit */
+	if(nodraw) fillbitmap(bitmap, get_black_pen(), cliprect);
 
 	// draw middle layer
 	TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[1],0,1);

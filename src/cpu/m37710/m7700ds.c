@@ -7,8 +7,6 @@ Based on G65C816 CPU Emulator by Karl Stenerud
 
 */
 
-#include <stdio.h>
-#include <string.h>
 #include "cpuintrf.h"
 #include "m7700ds.h"
 

@@ -1,6 +1,8 @@
 #ifndef _UPD7810_H_
 #define _UPD7810_H_
 
+#include "cpuintrf.h"
+
 /*
   all types have internal ram at 0xff00-0xffff
   7810

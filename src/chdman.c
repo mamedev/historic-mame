@@ -8,9 +8,6 @@
 ***************************************************************************/
 
 #include "osd_tool.h"
-#include "driver.h"
-#include "harddisk.h"
-#include "cdrom.h"
 #include "chdcd.h"
 #include "md5.h"
 #include "sha1.h"
@@ -18,6 +15,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <ctype.h>
+
 
 /***************************************************************************
     CONSTANTS & DEFINES
@@ -96,17 +94,6 @@ static const char *error_strings[] =
     IMPLEMENTATION
 ***************************************************************************/
 
-int mame_stricmp(const char *s1, const char *s2)
-{
-	for (;;)
- 	{
-		int c1 = tolower(*s1++);
-		int c2 = tolower(*s2++);
-		if (c1 == 0 || c1 != c2)
-			return c1 - c2;
- 	}
-}
-
 /*-------------------------------------------------
     put_bigendian_uint32 - write a UINT32 in big-endian order to memory
 -------------------------------------------------*/
@@ -118,6 +105,7 @@ INLINE void put_bigendian_uint32(UINT8 *base, UINT32 value)
 	base[2] = value >> 8;
 	base[3] = value;
 }
+
 
 /*-------------------------------------------------
     print_big_int - 64-bit int printing with commas
@@ -140,7 +128,6 @@ void print_big_int(UINT64 intvalue, char *output)
 }
 
 
-
 /*-------------------------------------------------
     big_int_string - return a string for a big int
 -------------------------------------------------*/
@@ -152,7 +139,6 @@ char *big_int_string(UINT64 intvalue)
 	print_big_int(intvalue, buffer);
 	return buffer;
 }
-
 
 
 /*-------------------------------------------------
@@ -171,7 +157,6 @@ static void progress(const char *fmt, ...)
 }
 
 
-
 /*-------------------------------------------------
     error_string - return an error sting
 -------------------------------------------------*/
@@ -186,7 +171,6 @@ static const char *error_string(int err)
 	sprintf(temp_buffer, "unknown error %d", err);
 	return temp_buffer;
 }
-
 
 
 /*-------------------------------------------------
@@ -213,7 +197,6 @@ static void error(void)
 }
 
 
-
 /*-------------------------------------------------
     fatalerror - error hook for assertions
 -------------------------------------------------*/
@@ -229,7 +212,6 @@ void CLIB_DECL fatalerror(const char *text,...)
 
 	exit(-1);
 }
-
 
 
 /*-------------------------------------------------
@@ -250,7 +232,6 @@ static void special_chd_init(chd_file *chd, UINT64 logicalbytes)
 	MD5Init(&special_md5);
 	sha1_init(&special_sha1);
 }
-
 
 
 /*-------------------------------------------------
@@ -1412,7 +1393,7 @@ static int handle_custom_chomp(const char *name, chd_file *chd, UINT32 *maxhunk)
 		return CHDERR_OUT_OF_MEMORY;
 
 	/* check for midway */
-	if (!mame_stricmp(name, "midway"))
+	if (!strcmp(name, "midway"))
 	{
 		UINT32 maxsector = 0;
 		UINT32 numparts;
@@ -1443,7 +1424,7 @@ static int handle_custom_chomp(const char *name, chd_file *chd, UINT32 *maxhunk)
 	}
 
 	/* check for atari */
-	if (!mame_stricmp(name, "atari"))
+	if (!strcmp(name, "atari"))
 	{
 		UINT32 sectors[4];
 		UINT8 *data;
@@ -1983,33 +1964,33 @@ int main(int argc, char **argv)
 	chd_set_interface(&chdman_interface);
 
 	/* handle the appropriate command */
-	if (!mame_stricmp(argv[1], "-createhd"))
+	if (!strcmp(argv[1], "-createhd"))
 		do_createhd(argc, argv);
-	else if (!mame_stricmp(argv[1], "-createblankhd"))
+	else if (!strcmp(argv[1], "-createblankhd"))
 		do_createblankhd(argc, argv);
-	else if (!mame_stricmp(argv[1], "-copydata"))
+	else if (!strcmp(argv[1], "-copydata"))
 		do_copydata(argc, argv);
-	else if (!mame_stricmp(argv[1], "-createcd"))
+	else if (!strcmp(argv[1], "-createcd"))
 		do_createcd(argc, argv);
-	else if (!mame_stricmp(argv[1], "-extract"))
+	else if (!strcmp(argv[1], "-extract"))
 		do_extract(argc, argv);
-	else if (!mame_stricmp(argv[1], "-extractcd"))
+	else if (!strcmp(argv[1], "-extractcd"))
 		do_extractcd(argc, argv);
-	else if (!mame_stricmp(argv[1], "-verify"))
+	else if (!strcmp(argv[1], "-verify"))
 		do_verify(argc, argv, 0);
-	else if (!mame_stricmp(argv[1], "-verifyfix"))
+	else if (!strcmp(argv[1], "-verifyfix"))
 		do_verify(argc, argv, 1);
-	else if (!mame_stricmp(argv[1], "-update"))
+	else if (!strcmp(argv[1], "-update"))
 		do_merge_update_chomp(argc, argv, OPERATION_UPDATE);
-	else if (!mame_stricmp(argv[1], "-chomp"))
+	else if (!strcmp(argv[1], "-chomp"))
 		do_merge_update_chomp(argc, argv, OPERATION_CHOMP);
-	else if (!mame_stricmp(argv[1], "-info"))
+	else if (!strcmp(argv[1], "-info"))
 		do_info(argc, argv);
-	else if (!mame_stricmp(argv[1], "-merge"))
+	else if (!strcmp(argv[1], "-merge"))
 		do_merge_update_chomp(argc, argv, OPERATION_MERGE);
-	else if (!mame_stricmp(argv[1], "-diff"))
+	else if (!strcmp(argv[1], "-diff"))
 		do_diff(argc, argv);
-	else if (!mame_stricmp(argv[1], "-setchs"))
+	else if (!strcmp(argv[1], "-setchs"))
 		do_setchs(argc, argv);
 	else
 		error();

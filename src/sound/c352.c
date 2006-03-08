@@ -13,10 +13,8 @@
     Output sample rate is the input clock / 384.
  */
 
-#include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
 #include "c352.h"
 

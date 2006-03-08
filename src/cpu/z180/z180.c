@@ -45,7 +45,6 @@
  *
  *****************************************************************************/
 
-#include "driver.h"
 #include "debugger.h"
 #include "z180.h"
 #include "cpu/z80/z80daisy.h"
@@ -106,7 +105,7 @@ typedef struct {
 	UINT8	tmdr[2];			/* latched TMDR0H and TMDR1H values */
 	UINT8	nmi_state;			/* nmi line state */
 	UINT8	irq_state[3];		/* irq line states (INT0,INT1,INT2) */
-	struct z80_irq_daisy_chain *daisy;
+	const struct z80_irq_daisy_chain *daisy;
 	int 	(*irq_callback)(int irqline);
 	int 	extra_cycles;		/* extra cycles for interrupts */
 }	Z180_Regs;
@@ -1815,40 +1814,43 @@ static void z180_write_iolines(UINT32 data)
 }
 
 
-static void z180_init(void)
+static void z180_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
-	int cpu = cpu_getactivecpu();
+	Z180.daisy = config;
+	Z180.irq_callback = irqcallback;
 
-	state_save_register_item("z180", cpu, Z180.AF.w.l);
-	state_save_register_item("z180", cpu, Z180.BC.w.l);
-	state_save_register_item("z180", cpu, Z180.DE.w.l);
-	state_save_register_item("z180", cpu, Z180.HL.w.l);
-	state_save_register_item("z180", cpu, Z180.IX.w.l);
-	state_save_register_item("z180", cpu, Z180.IY.w.l);
-	state_save_register_item("z180", cpu, Z180.PC.w.l);
-	state_save_register_item("z180", cpu, Z180.SP.w.l);
-	state_save_register_item("z180", cpu, Z180.AF2.w.l);
-	state_save_register_item("z180", cpu, Z180.BC2.w.l);
-	state_save_register_item("z180", cpu, Z180.DE2.w.l);
-	state_save_register_item("z180", cpu, Z180.HL2.w.l);
-	state_save_register_item("z180", cpu, Z180.R);
-	state_save_register_item("z180", cpu, Z180.R2);
-	state_save_register_item("z180", cpu, Z180.IFF1);
-	state_save_register_item("z180", cpu, Z180.IFF2);
-	state_save_register_item("z180", cpu, Z180.HALT);
-	state_save_register_item("z180", cpu, Z180.IM);
-	state_save_register_item("z180", cpu, Z180.I);
-	state_save_register_item("z180", cpu, Z180.nmi_state);
-	state_save_register_item("z180", cpu, Z180.irq_state[0]);
-	state_save_register_item("z180", cpu, Z180.irq_state[1]);
-	state_save_register_item("z180", cpu, Z180.irq_state[2]);
+	state_save_register_item("z180", index, Z180.AF.w.l);
+	state_save_register_item("z180", index, Z180.BC.w.l);
+	state_save_register_item("z180", index, Z180.DE.w.l);
+	state_save_register_item("z180", index, Z180.HL.w.l);
+	state_save_register_item("z180", index, Z180.IX.w.l);
+	state_save_register_item("z180", index, Z180.IY.w.l);
+	state_save_register_item("z180", index, Z180.PC.w.l);
+	state_save_register_item("z180", index, Z180.SP.w.l);
+	state_save_register_item("z180", index, Z180.AF2.w.l);
+	state_save_register_item("z180", index, Z180.BC2.w.l);
+	state_save_register_item("z180", index, Z180.DE2.w.l);
+	state_save_register_item("z180", index, Z180.HL2.w.l);
+	state_save_register_item("z180", index, Z180.R);
+	state_save_register_item("z180", index, Z180.R2);
+	state_save_register_item("z180", index, Z180.IFF1);
+	state_save_register_item("z180", index, Z180.IFF2);
+	state_save_register_item("z180", index, Z180.HALT);
+	state_save_register_item("z180", index, Z180.IM);
+	state_save_register_item("z180", index, Z180.I);
+	state_save_register_item("z180", index, Z180.nmi_state);
+	state_save_register_item("z180", index, Z180.irq_state[0]);
+	state_save_register_item("z180", index, Z180.irq_state[1]);
+	state_save_register_item("z180", index, Z180.irq_state[2]);
 }
 
 /****************************************************************************
  * Reset registers to their initial values
  ****************************************************************************/
-static void z180_reset(void *param)
+static void z180_reset(void)
 {
+	const struct z80_irq_daisy_chain *save_daisy;
+	int (*save_irqcallback)(int);
 	int i, p;
 #if BIG_FLAGS_ARRAY
 	if( !SZHVC_add || !SZHVC_sub )
@@ -1946,14 +1948,17 @@ static void z180_reset(void *param)
 		if( (i & 0x0f) == 0x0f ) SZHV_dec[i] |= HF;
 	}
 
+	save_daisy = Z180.daisy;
+	save_irqcallback = Z180.irq_callback;
 	memset(&Z180, 0, sizeof(Z180));
+	Z180.daisy = save_daisy;
+	Z180.irq_callback = save_irqcallback;
 	_IX = _IY = 0xffff; /* IX and IY are FFFF after a reset! */
 	_F = ZF;			/* Zero flag is set */
 	Z180.nmi_state = CLEAR_LINE;
 	Z180.irq_state[0] = CLEAR_LINE;
 	Z180.irq_state[1] = CLEAR_LINE;
 	Z180.irq_state[2] = CLEAR_LINE;
-	Z180.daisy = param;
 
 	/* reset io registers */
 	IO_CNTLA0  = Z180_CNTLA0_RESET;
@@ -2299,7 +2304,6 @@ static void z180_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + Z180_IOLINES:		z180_write_iolines(info->i);			break;
 
 		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_IRQ_CALLBACK:					Z180.irq_callback = info->irqcallback;	break;
 		case CPUINFO_PTR_Z180_CYCLE_TABLE + Z180_TABLE_op: cc[Z180_TABLE_op] = info->p;			break;
 		case CPUINFO_PTR_Z180_CYCLE_TABLE + Z180_TABLE_cb: cc[Z180_TABLE_cb] = info->p;			break;
 		case CPUINFO_PTR_Z180_CYCLE_TABLE + Z180_TABLE_ed: cc[Z180_TABLE_ed] = info->p;			break;
@@ -2442,7 +2446,6 @@ void z180_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = z180_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = z180_burn;					break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = z180_dasm;			break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = Z180.irq_callback;	break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &z180_icount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = z180_reg_layout;				break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = z180_win_layout;				break;

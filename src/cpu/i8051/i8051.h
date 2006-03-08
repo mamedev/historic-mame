@@ -34,7 +34,6 @@
 #define _I8051_H
 
 #include "cpuintrf.h"
-#include "osd_cpu.h"
 
 enum {
 	I8051_PC=1, I8051_SP, I8051_PSW, I8051_ACC, I8051_B, I8051_DPH, I8051_DPL, I8051_IE,
@@ -96,8 +95,8 @@ enum {
 
 extern int i8051_icount;						/* cycle count */
 
-extern void i8051_init (void);					/* Initialize save states */
-extern void i8051_reset (void *param);			/* Reset registers to the initial values */
+extern void i8051_init (int index, int clock, const void *config, int (*irqcallback)(int));					/* Initialize save states */
+extern void i8051_reset (void);			/* Reset registers to the initial values */
 extern void i8051_exit	(void); 				/* Shut down CPU core */
 extern int  i8051_execute(int cycles);			/* Execute cycles - returns number of cycles actually run */
 extern void i8051_get_context (void *dst);	/* Get registers, return context size */
@@ -128,8 +127,8 @@ extern unsigned Dasm8051( char *dst, unsigned pc );
 #if (HAS_I8752)
 #define i8752_icount							i8051_icount
 
-extern void i8752_init (void);					/* Initialize save states */
-extern void i8752_reset (void *param);			/* Reset registers to the initial values */
+extern void i8752_init (int index, int clock, const void *config, int (*irqcallback)(int));					/* Initialize save states */
+extern void i8752_reset (void);			/* Reset registers to the initial values */
 extern void i8752_exit	(void); 				/* Shut down CPU core */
 extern int	i8752_execute(int cycles);			/* Execute cycles - returns number of cycles actually run */
 extern void i8752_get_context (void *dst);	/* Get registers, return context size */

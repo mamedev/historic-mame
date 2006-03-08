@@ -33,7 +33,7 @@
 #ifndef ARM7CORE_H
 #define ARM7CORE_H
 
-#include "driver.h"
+#include "cpuintrf.h"
 
 /****************************************************************************************************
  *  INTERRUPT LINES/EXCEPTIONS
@@ -192,6 +192,7 @@ static const int sRegisterTable[ARM7_NUM_MODES][18] =
 #define V_IS_SET(pc)    ((pc) & V_MASK)
 #define I_IS_SET(pc)    ((pc) & I_MASK)
 #define F_IS_SET(pc)    ((pc) & F_MASK)
+#define T_IS_SET(pc)    ((pc) & T_MASK)
 
 #define N_IS_CLEAR(pc)  (!N_IS_SET(pc))
 #define Z_IS_CLEAR(pc)  (!Z_IS_SET(pc))
@@ -199,6 +200,7 @@ static const int sRegisterTable[ARM7_NUM_MODES][18] =
 #define V_IS_CLEAR(pc)  (!V_IS_SET(pc))
 #define I_IS_CLEAR(pc)  (!I_IS_SET(pc))
 #define F_IS_CLEAR(pc)  (!F_IS_SET(pc))
+#define T_IS_CLEAR(pc)  (!T_IS_SET(pc))
 
 /* Deconstructing an instruction */
 //todo: use these in all places (including dasm file)
@@ -244,6 +246,68 @@ static const int sRegisterTable[ARM7_NUM_MODES][18] =
 #define INSN_RN_SHIFT               16
 #define INSN_RD_SHIFT               12
 #define INSN_COND_SHIFT             28
+
+#define THUMB_INSN_TYPE		((UINT16) 0xf000)
+#define THUMB_COND_TYPE		((UINT16) 0x0f00)
+#define THUMB_GROUP4_TYPE	((UINT16) 0x0c00)
+#define THUMB_GROUP5_TYPE	((UINT16) 0x0e00)
+#define THUMB_GROUP5_RM		((UINT16) 0x01c0)
+#define THUMB_GROUP5_RN		((UINT16) 0x0038)
+#define THUMB_GROUP5_RD		((UINT16) 0x0007)
+#define THUMB_ADDSUB_RNIMM	((UINT16) 0x01c0)
+#define THUMB_ADDSUB_RS		((UINT16) 0x0038)
+#define THUMB_ADDSUB_RD		((UINT16) 0x0007)
+#define THUMB_INSN_ADDSUB	((UINT16) 0x0800)
+#define THUMB_INSN_CMP		((UINT16) 0x0800)
+#define THUMB_INSN_SUB		((UINT16) 0x0800)
+#define THUMB_INSN_IMM_RD	((UINT16) 0x0700)
+#define THUMB_INSN_IMM_S	((UINT16) 0x0080)
+#define THUMB_INSN_IMM		((UINT16) 0x00ff)
+#define THUMB_ADDSUB_TYPE	((UINT16) 0x0600)
+#define THUMB_HIREG_OP		((UINT16) 0x0300)
+#define THUMB_HIREG_H		((UINT16) 0x00c0)
+#define THUMB_HIREG_RS		((UINT16) 0x0038)
+#define THUMB_HIREG_RD		((UINT16) 0x0007)
+#define THUMB_STACKOP_TYPE	((UINT16) 0x0f00)
+#define THUMB_STACKOP_L		((UINT16) 0x0800)
+#define THUMB_STACKOP_RD	((UINT16) 0x0700)
+#define THUMB_ALUOP_TYPE	((UINT16) 0x03c0)
+#define THUMB_BLOP_LO		((UINT16) 0x0800)
+#define THUMB_BLOP_OFFS		((UINT16) 0x07ff)
+#define THUMB_SHIFT_R		((UINT16) 0x0800)
+#define THUMB_SHIFT_AMT		((UINT16) 0x07c0)
+#define THUMB_HALFOP_L		((UINT16) 0x0800)
+#define THUMB_HALFOP_OFFS	((UINT16) 0x07c0)
+#define THUMB_BRANCH_OFFS	((UINT16) 0x07ff)
+#define THUMB_LSOP_L		((UINT16) 0x0800)
+#define THUMB_LSOP_OFFS		((UINT16) 0x07c0)
+#define THUMB_MULTLS		((UINT16) 0x0800)
+#define THUMB_MULTLS_BASE	((UINT16) 0x0700)
+#define THUMB_RELADDR_SP	((UINT16) 0x0800)
+#define THUMB_RELADDR_RD	((UINT16) 0x0700)
+#define THUMB_INSN_TYPE_SHIFT		12
+#define THUMB_COND_TYPE_SHIFT		8
+#define THUMB_GROUP4_TYPE_SHIFT		10
+#define THUMB_GROUP5_TYPE_SHIFT		9
+#define THUMB_ADDSUB_TYPE_SHIFT		9
+#define THUMB_INSN_IMM_RD_SHIFT		8
+#define THUMB_STACKOP_TYPE_SHIFT	8
+#define THUMB_HIREG_OP_SHIFT		8
+#define THUMB_STACKOP_RD_SHIFT		8
+#define THUMB_MULTLS_BASE_SHIFT		8
+#define THUMB_RELADDR_RD_SHIFT		8
+#define THUMB_HIREG_H_SHIFT			6
+#define THUMB_HIREG_RS_SHIFT		3
+#define THUMB_ALUOP_TYPE_SHIFT		6
+#define THUMB_SHIFT_AMT_SHIFT		6
+#define THUMB_HALFOP_OFFS_SHIFT		6
+#define THUMB_LSOP_OFFS_SHIFT		6
+#define THUMB_GROUP5_RM_SHIFT		6
+#define THUMB_GROUP5_RN_SHIFT		3
+#define THUMB_GROUP5_RD_SHIFT		0
+#define THUMB_ADDSUB_RNIMM_SHIFT	6
+#define THUMB_ADDSUB_RS_SHIFT		3
+#define THUMB_ADDSUB_RD_SHIFT		0
 
 enum
 {
@@ -299,6 +363,8 @@ enum
 #define GET_MODE                (GET_CPSR & MODE_FLAG)
 #define SIGN_BIT                ((UINT32)(1<<31))
 #define SIGN_BITS_DIFFER(a,b)   (((a)^(b)) >> 31)
+#define THUMB_SIGN_BIT				((UINT16)(1<<15))
+#define THUMB_SIGN_BITS_DIFFER(a,b)	(((a)^(b)) >> 15)
 
 /* At one point I thought these needed to be cpu implementation specific, but they don't.. */
 #define GET_REGISTER(reg)       GetRegister(reg)

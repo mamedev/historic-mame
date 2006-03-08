@@ -12,12 +12,14 @@
 #include <windows.h>
 
 // MAME headers
+#include "osdepend.h"
 #include "driver.h"
+#include "vidhrdw/vector.h"
+
+// MAMEOS headers
 #include "blit.h"
 #include "video.h"
 #include "window.h"
-#include "osdepend.h"
-#include "vidhrdw/vector.h"
 
 
 

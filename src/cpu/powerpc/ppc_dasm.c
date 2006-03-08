@@ -13,7 +13,7 @@
  * PowerPC 403 opcodes and MAME conversion by Ville Linde
  */
 
-#include "driver.h"
+#include "cpuintrf.h"
 #include "debugger.h"
 
 /*

@@ -67,7 +67,7 @@ typedef struct {
 } ppu2c03b_chip;
 
 /* our local copy of the interface */
-static struct ppu2c03b_interface *intf;
+static ppu2c03b_interface *intf;
 
 /* chips state - allocated at init time */
 static ppu2c03b_chip *chips = 0;
@@ -189,16 +189,16 @@ static gfx_layout ppu_charlayout =
  *  PPU Initialization and Disposal
  *
  *************************************/
-int ppu2c03b_init( struct ppu2c03b_interface *interface )
+void ppu2c03b_init( const ppu2c03b_interface *interface )
 {
 	int i;
 
 	/* keep a local copy of the interface */
-	intf = interface;
+	intf = auto_malloc(sizeof(*interface));
+	memcpy(intf, interface, sizeof(*interface));
 
 	/* safety check */
-	if ( intf->num <= 0 )
-		return -1;
+	assert_always(intf->num >= 1, "Invalid PPU count\n");
 
 	chips = auto_malloc( intf->num * sizeof( ppu2c03b_chip ) );
 
@@ -218,8 +218,7 @@ int ppu2c03b_init( struct ppu2c03b_interface *interface )
 		chips[i].colortable_mono = auto_malloc( sizeof( default_colortable_mono ) );
 
 		/* see if it failed */
-		if ( !chips[i].bitmap )
-			return -1;
+		assert_always(chips[i].bitmap, "auto_bitmap_alloc() failed\n");
 
 		/* clear videoram & spriteram */
 		memset( chips[i].videoram, 0, VIDEORAM_SIZE );
@@ -254,8 +253,7 @@ int ppu2c03b_init( struct ppu2c03b_interface *interface )
 			Machine->gfx[intf->gfx_layout_number[i]] = allocgfx( &ppu_charlayout );
 			decodegfx( Machine->gfx[intf->gfx_layout_number[i]], src, 0, Machine->gfx[intf->gfx_layout_number[i]]->total_elements );
 
-			if ( Machine->gfx[intf->gfx_layout_number[i]] == 0 )
-				return -1;
+			assert_always( Machine->gfx[intf->gfx_layout_number[i]] != 0, "Invalid GFX\n" );
 
 			if ( Machine->remapped_colortable )
 				Machine->gfx[intf->gfx_layout_number[i]]->colortable = &Machine->remapped_colortable[intf->color_base[i]];
@@ -266,9 +264,6 @@ int ppu2c03b_init( struct ppu2c03b_interface *interface )
 		/* setup our videoram handlers based on mirroring */
 		ppu2c03b_set_mirroring( i, intf->mirroring[i] );
 	}
-
-	/* success */
-	return 0;
 }
 
 static void draw_background( const int num, UINT8 *line_priority )

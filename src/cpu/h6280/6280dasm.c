@@ -16,10 +16,7 @@
 
 ******************************************************************************/
 
-#include <stdio.h>
 #include "memory.h"
-
-#ifdef MAME_DEBUG
 
 extern UINT8 H6280_debug_mmr[8];
 
@@ -246,5 +243,3 @@ int Dasm6280(char *buffer, int pc)
 	}
 	return PC - pc;
 }
-
-#endif

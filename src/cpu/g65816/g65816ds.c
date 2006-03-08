@@ -16,8 +16,8 @@ author (Karl Stenerud) at karl@higashiyama-unet.ocn.ne.jp.
 */
 
 
+#include "cpuintrf.h"
 #include "g65816ds.h"
-#include <stdio.h>
 
 #ifdef SEC
 #undef SEC

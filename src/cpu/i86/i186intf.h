@@ -2,9 +2,6 @@
 #ifndef __I186INTR_H_
 #define __I186INTR_H_
 
-#include "memory.h"
-#include "osd_cpu.h"
-
 #include "i86intf.h"
 
 /* Public functions */

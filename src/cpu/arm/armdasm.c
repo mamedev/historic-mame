@@ -4,7 +4,6 @@
     (c) 2002-2006 Bryan McPhail (bmcphail@tendril.co.uk) and Phil Stroffolino
 */
 
-#include <stdio.h>
 #include "arm.h"
 
 static char *WriteImmediateOperand( char *pBuf, UINT32 opcode )

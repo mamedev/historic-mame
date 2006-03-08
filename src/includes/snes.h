@@ -479,17 +479,6 @@ typedef struct                      /* Source directory entry       */
     unsigned short  lptr;           /* Loop pointer in sample data  */
     } src_dir_type;
 
-/*========== CONSTANTS ==========*/
-
-extern const int    TS_CYC;
-
-/*========== VARIABLES ==========*/
-
-extern int          keyed_on;
-extern int          keys;           /* 8-bits for 8 voices          */
-extern voice_state_type
-                    voice_state[ 8 ];
-
 /*========== MACROS ==========*/
 
 /* The functions to actually read and write to the DSP registers must be

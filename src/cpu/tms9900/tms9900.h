@@ -7,9 +7,7 @@
 #ifndef TMS9900_H
 #define TMS9900_H
 
-#include <stdio.h>
-#include "driver.h"
-#include "osd_cpu.h"
+#include "cpuintrf.h"
 
 /*#define TI990_9_ID    0*//* early implementation, used in a few real-world applications, 1974 */
                           /* very similar to mapper-less 990/10 and tms9900, but the Load process */

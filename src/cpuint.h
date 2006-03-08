@@ -25,7 +25,7 @@
 
 int cpuint_init(void);
 
-void cpuint_reset_cpu(int cpunum);
+void cpuint_reset(void);
 
 extern int (*cpu_irq_callbacks[])(int);
 
@@ -53,7 +53,7 @@ void cpunum_set_input_line_vector(int cpunum, int irqline, int vector);
 void cpunum_set_input_line_and_vector(int cpunum, int line, int state, int vector);
 
 /* Install a driver callback for IRQ acknowledge */
-void cpu_set_irq_callback(int cpunum, int (*callback)(int irqline));
+void cpunum_set_irq_callback(int cpunum, int (*callback)(int irqline));
 
 
 
@@ -62,6 +62,8 @@ void cpu_set_irq_callback(int cpunum, int (*callback)(int irqline));
  *  Preferred interrupt callbacks
  *
  *************************************/
+
+#define INTERRUPT_GEN(func)		void func(void)
 
 INTERRUPT_GEN( nmi_line_pulse );
 INTERRUPT_GEN( nmi_line_assert );

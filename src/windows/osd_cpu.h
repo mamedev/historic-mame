@@ -34,11 +34,6 @@
 #ifndef OSD_CPU_H
 #define OSD_CPU_H
 
-#ifdef __MWERKS__
-#define INLINE static inline
-#define __extension__
-#endif
-
 /* The Win32 port requires this constant for variable arg routines. */
 #ifndef CLIB_DECL
 #define CLIB_DECL

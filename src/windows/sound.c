@@ -21,10 +21,11 @@
 // MAME headers
 #include "driver.h"
 #include "osdepend.h"
+#include "sound/wavwrite.h"
+
 #include "window.h"
 #include "video.h"
 #include "rc.h"
-#include "sound/wavwrite.h"
 
 
 //============================================================

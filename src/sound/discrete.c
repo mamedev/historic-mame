@@ -34,11 +34,11 @@
  *
  ************************************************************************/
 
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
+#include "inptport.h"
 #include "wavwrite.h"
 #include "discrete.h"
-#include <stdio.h>
 #include <stdarg.h>
 #include <math.h>
 

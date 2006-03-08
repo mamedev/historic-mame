@@ -1,7 +1,6 @@
 /* IBM/Motorola PowerPC 4xx/6xx Emulator */
 
 #include <setjmp.h>
-#include "driver.h"
 #include "ppc.h"
 #include "debugger.h"
 
@@ -848,8 +847,10 @@ void ppc_init(void)
 
 // !!! probably should move this stuff elsewhere !!!
 #if HAS_PPC403
-static void ppc403_init(void)
+static void ppc403_init(int index, int clock, const void *_config, int (*irqcallback)(int))
 {
+	const ppc_config *config = _config;
+
 	ppc_init();
 
 	/* PPC403 specific opcodes */
@@ -879,6 +880,10 @@ static void ppc403_init(void)
 	ppc.read32_unaligned = ppc403_read32_unaligned;
 	ppc.write16_unaligned = ppc403_write16_unaligned;
 	ppc.write32_unaligned = ppc403_write32_unaligned;
+
+	ppc.irq_callback = irqcallback;
+
+	ppc.pvr = config->pvr;
 }
 
 static void ppc403_exit(void)
@@ -889,8 +894,11 @@ static void ppc403_exit(void)
 
 
 #if (HAS_PPC603)
-static void ppc603_init(void)
+static void ppc603_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
+	const ppc_config *config = _config;
+	int pll_config = 0;
+	float multiplier;
 	int i ;
 
 	ppc_init() ;
@@ -996,6 +1004,29 @@ static void ppc603_init(void)
 	ppc.write16_unaligned = ppc_write16_unaligned;
 	ppc.write32_unaligned = ppc_write32_unaligned;
 	ppc.write64_unaligned = ppc_write64_unaligned;
+
+	ppc.irq_callback = irqcallback;
+
+	ppc.pvr = config->pvr;
+
+	multiplier = (float)((config->bus_frequency_multiplier >> 4) & 0xf) +
+				 (float)(config->bus_frequency_multiplier & 0xf) / 10.0f;
+	bus_freq_multiplier = (int)(multiplier * 2);
+
+	switch(config->pvr)
+	{
+		case PPC_MODEL_603E:	pll_config = mpc603e_pll_config[bus_freq_multiplier-1][config->bus_frequency]; break;
+		case PPC_MODEL_603EV:	pll_config = mpc603ev_pll_config[bus_freq_multiplier-1][config->bus_frequency]; break;
+		case PPC_MODEL_603R:	pll_config = mpc603r_pll_config[bus_freq_multiplier-1][config->bus_frequency]; break;
+		default: break;
+	}
+
+	if (pll_config == -1)
+	{
+		fatalerror("PPC: Invalid bus/multiplier combination (bus frequency = %d, multiplier = %1.1f)", config->bus_frequency, multiplier);
+	}
+
+	ppc.hid1 = pll_config << 28;
 }
 
 static void ppc603_exit(void)
@@ -1005,8 +1036,11 @@ static void ppc603_exit(void)
 #endif
 
 #if (HAS_PPC602)
-static void ppc602_init(void)
+static void ppc602_init(int index, int clock, const void *_config, int (*irqcallback)(int))
 {
+	float multiplier;
+	const ppc_config *config = _config;
+
 	int i ;
 
 	ppc_init() ;
@@ -1112,6 +1146,14 @@ static void ppc602_init(void)
 	ppc.write16_unaligned = ppc_write16_unaligned;
 	ppc.write32_unaligned = ppc_write32_unaligned;
 	ppc.write64_unaligned = ppc_write64_unaligned;
+
+	ppc.irq_callback = irqcallback;
+
+	ppc.pvr = config->pvr;
+
+	multiplier = (float)((config->bus_frequency_multiplier >> 4) & 0xf) +
+				 (float)(config->bus_frequency_multiplier & 0xf) / 10.0f;
+	bus_freq_multiplier = (int)(multiplier * 2);
 }
 
 static void ppc602_exit(void)
@@ -1249,9 +1291,6 @@ static void ppc_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + PPC_R29:			ppc.r[29] = info->i;					break;
 		case CPUINFO_INT_REGISTER + PPC_R30:			ppc.r[30] = info->i;					break;
 		case CPUINFO_INT_REGISTER + PPC_R31:			ppc.r[31] = info->i;					break;
-
-		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_IRQ_CALLBACK:					ppc.irq_callback = info->irqcallback;	break;
 	}
 }
 
@@ -1366,7 +1405,6 @@ void ppc_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = ppc_set_context;		break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = ppc_dasm;		break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = ppc.irq_callback;	break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &ppc_icount;				break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = ppc_reg_layout;				break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = ppc_win_layout;				break;

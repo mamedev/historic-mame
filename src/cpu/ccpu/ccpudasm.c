@@ -8,9 +8,6 @@
 
 ***************************************************************************/
 
-#include <stdio.h>
-#include <string.h>
-#include "driver.h"
 #include "ccpu.h"
 
 

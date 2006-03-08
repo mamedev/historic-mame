@@ -45,12 +45,8 @@
  *
  *****************************************************************************/
 
-#include <stdio.h>
-#include <string.h>
-#ifdef	MAME_DEBUG
-#include "driver.h"
 #include "debugger.h"
-#include "eainfo.h"
+#include "debug/eainfo.h"
 #include "z180.h"
 
 enum e_mnemonics {
@@ -761,6 +757,3 @@ unsigned DasmZ180( char *buffer, unsigned pc )
 
 	return pc - PC;
 }
-
-#endif
-

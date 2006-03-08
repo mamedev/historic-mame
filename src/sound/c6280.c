@@ -53,11 +53,9 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 */
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <math.h>
 
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
 #include "c6280.h"
 

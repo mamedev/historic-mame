@@ -212,10 +212,8 @@ static UINT32 compile_one(drc_core *drc, UINT32 pc)
 
 	/* handle the results */
 	if (!(result & RECOMPILE_SUCCESSFUL))
-	{
-		drc_exit(ppc.drc);
 		fatalerror("Unimplemented op %08X", *opptr);
-	}
+
 	pcdelta = (INT8)(result >> 24);
 	cycles = (INT8)(result >> 16);
 

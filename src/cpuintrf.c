@@ -12,6 +12,9 @@
 #include "driver.h"
 
 
+// temporary
+#define OUT_OF_BOUNDS_IS_FATAL		1
+
 
 /*************************************
  *
@@ -204,6 +207,13 @@ void cop411_get_info(UINT32 state, union cpuinfo *info);
  *
  *************************************/
 
+#if OUT_OF_BOUNDS_IS_FATAL
+#define VERIFY_ACTIVECPU(retval, name)						\
+	assert_always(activecpu >= 0, #name "() called with no active cpu!")
+
+#define VERIFY_ACTIVECPU_VOID(name)							\
+	assert_always(activecpu >= 0, #name "() called with no active cpu!")
+#else
 #define VERIFY_ACTIVECPU(retval, name)						\
 	if (activecpu < 0)										\
 	{														\
@@ -217,6 +227,7 @@ void cop411_get_info(UINT32 state, union cpuinfo *info);
 		logerror(#name "() called with no active cpu!\n");	\
 		return;												\
 	}
+#endif
 
 
 
@@ -226,6 +237,13 @@ void cop411_get_info(UINT32 state, union cpuinfo *info);
  *
  *************************************/
 
+#if OUT_OF_BOUNDS_IS_FATAL
+#define VERIFY_CPUNUM(retval, name)						\
+	assert_always(cpunum >= 0 && cpunum < totalcpu, #name "() called for invalid cpu num!")
+
+#define VERIFY_CPUNUM_VOID(name)							\
+	assert_always(cpunum >= 0 && cpunum < totalcpu, #name "() called for invalid cpu num!")
+#else
 #define VERIFY_CPUNUM(retval, name)							\
 	if (cpunum < 0 || cpunum >= totalcpu)					\
 	{														\
@@ -239,6 +257,7 @@ void cop411_get_info(UINT32 state, union cpuinfo *info);
 		logerror(#name "() called for invalid cpu num!\n");	\
 		return;												\
 	}
+#endif
 
 
 
@@ -248,6 +267,13 @@ void cop411_get_info(UINT32 state, union cpuinfo *info);
  *
  *************************************/
 
+#if OUT_OF_BOUNDS_IS_FATAL
+#define VERIFY_CPUTYPE(retval, name)						\
+	assert_always(cputype >= 0 && cputype < CPU_COUNT, #name "() called for invalid cpu type!")
+
+#define VERIFY_CPUTYPE_VOID(name)							\
+	assert_always(cputype >= 0 && cputype < CPU_COUNT, #name "() called for invalid cpu type!")
+#else
 #define VERIFY_CPUTYPE(retval, name)						\
 	if (cputype < 0 || cputype >= CPU_COUNT)				\
 	{														\
@@ -261,6 +287,7 @@ void cop411_get_info(UINT32 state, union cpuinfo *info);
 		logerror(#name "() called for invalid cpu type!\n");\
 		return;												\
 	}
+#endif
 
 
 
@@ -270,6 +297,7 @@ void cop411_get_info(UINT32 state, union cpuinfo *info);
  *
  *************************************/
 
+typedef struct _cpuintrf_data cpuintrf_data;
 struct _cpuintrf_data
 {
 	cpu_interface intf;		 		/* copy of the interface data */
@@ -277,7 +305,6 @@ struct _cpuintrf_data
 	int family; 					/* family index of this CPU */
 	void *context;					/* dynamically allocated context buffer */
 };
-typedef struct _cpuintrf_data cpuintrf_data;
 
 
 
@@ -972,6 +999,36 @@ void cpuintrf_init(void)
 	/* nothing active, nothing executing */
 	activecpu = -1;
 	executingcpu = -1;
+	totalcpu = 0;
+
+	/* compute information about the CPUs now if we have a machine */
+	if (Machine != NULL)
+	{
+		/* loop over all defined CPUs */
+		for (totalcpu = 0; totalcpu < CPU_COUNT; totalcpu++)
+		{
+			int cputype = Machine->drv->cpu[totalcpu].cpu_type;
+			char familyname[256];
+			int j;
+
+			/* stop when we hit a dummy */
+			if (cputype == CPU_DUMMY)
+				break;
+
+			/* fill in the type and interface */
+			cpu[totalcpu].intf = cpuintrf[cputype];
+			cpu[totalcpu].cputype = cputype;
+
+			/* determine the family index */
+			strcpy(familyname, cputype_core_file(cputype));
+			for (j = 0; j < CPU_COUNT; j++)
+				if (!strcmp(familyname, cputype_core_file(j)))
+				{
+					cpu[totalcpu].family = j;
+					break;
+				}
+		}
+	}
 }
 
 
@@ -995,48 +1052,20 @@ void cpuintrf_set_dasm_override(unsigned (*dasm_override)(int cpunum, char *buff
  *
  *************************************/
 
-int cpuintrf_init_cpu(int cpunum, int cputype)
+int cpuintrf_init_cpu(int cpunum, int cputype, int clock, const void *config, int (*irqcallback)(int))
 {
-	char familyname[256];
-	int j;
-
-	/* fill in the type and interface */
-	cpu[cpunum].intf = cpuintrf[cputype];
-	cpu[cpunum].cputype = cputype;
-
-	/* determine the family index */
-	strcpy(familyname, cputype_core_file(cputype));
-	for (j = 0; j < CPU_COUNT; j++)
-		if (!strcmp(familyname, cputype_core_file(j)))
-		{
-			cpu[cpunum].family = j;
-			break;
-		}
-
 	/* allocate a context buffer for the CPU */
-	cpu[cpunum].context = malloc(cpu[cpunum].intf.context_size);
-	if (cpu[cpunum].context == NULL)
-	{
-		/* that's really bad :( */
-		logerror("CPU #%d failed to allocate context buffer (%d bytes)!\n", cpunum, (int)cpu[cpunum].intf.context_size);
-		return 1;
-	}
-
-	/* zap the context buffer */
+	cpu[cpunum].context = auto_malloc(cpu[cpunum].intf.context_size);
 	memset(cpu[cpunum].context, 0, cpu[cpunum].intf.context_size);
 
 	/* initialize the CPU and stash the context */
 	activecpu = cpunum;
-	(*cpu[cpunum].intf.init)();
+	(*cpu[cpunum].intf.init)(cpunum, clock, config, irqcallback);
 	(*cpu[cpunum].intf.get_context)(cpu[cpunum].context);
 	activecpu = -1;
 
 	/* clear out the registered CPU for this family */
 	cpu_active_context[cpu[cpunum].family] = -1;
-
-	/* make sure the total includes us */
-	totalcpu = cpunum + 1;
-
 	return 0;
 }
 
@@ -1058,11 +1087,6 @@ void cpuintrf_exit_cpu(int cpunum)
 		(*cpu[cpunum].intf.exit)();
 		cpuintrf_pop_context();
 	}
-
-	/* free the context buffer for that CPU */
-	if (cpu[cpunum].context)
-		free(cpu[cpunum].context);
-	cpu[cpunum].context = NULL;
 }
 
 
@@ -1493,14 +1517,12 @@ int cpunum_execute(int cpunum, int cycles)
     Reset and set IRQ ack
 --------------------------*/
 
-void cpunum_reset(int cpunum, void *param, int (*irqack)(int))
+void cpunum_reset(int cpunum)
 {
 	VERIFY_CPUNUM_VOID(cpunum_reset);
 	cpuintrf_push_context(cpunum);
 	memory_set_opbase(0);
-	(*cpu[cpunum].intf.reset)(param);
-	if (irqack)
-		activecpu_set_info_fct(CPUINFO_PTR_IRQ_CALLBACK, (genf *)irqack);
+	(*cpu[cpunum].intf.reset)();
 	cpuintrf_pop_context();
 }
 
@@ -1703,8 +1725,8 @@ struct dummy_context
 static struct dummy_context dummy_state;
 static int dummy_icount;
 
-static void dummy_init(void) { }
-static void dummy_reset(void *param) { }
+static void dummy_init(int index, int clock, const void *config, int (*irqcallback)(int)) { }
+static void dummy_reset(void) { }
 static void dummy_exit(void) { }
 static int dummy_execute(int cycles) { return cycles; }
 static void dummy_get_context(void *regs) { }
@@ -1761,7 +1783,6 @@ void dummy_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = dummy_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = dummy_dasm;			break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = NULL;				break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &dummy_icount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = NULL;							break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = default_win_layout;			break;

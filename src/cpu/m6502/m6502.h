@@ -26,8 +26,6 @@
 #define _M6502_H
 
 #include "cpuintrf.h"
-#include "osd_cpu.h"
-
 
 /* set to 1 to test cur_mrhard/cur_wmhard to avoid calls */
 #define FAST_MEMORY 0

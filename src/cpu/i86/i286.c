@@ -3,13 +3,8 @@
 *               (initial work based on David Hedley's pcemu)                *
 ****************************************************************************/
 
-#include <stdio.h>
-#include <string.h>
 #include "host.h"
-#include "cpuintrf.h"
 #include "debugger.h"
-#include "memory.h"
-#include "state.h"
 
 
 /* All post-i286 CPUs have a 16MB address space */
@@ -178,24 +173,15 @@ static void i286_set_a20_line(int state)
 	I.amask = state ? 0x00ffffff : 0x000fffff;
 }
 
-static void i286_reset (void *param)
+static void i286_reset (void)
 {
 	static int urinit=1;
 
 	/* in my docu not all registers are initialized! */
-	//memset( &I, 0, sizeof(I) );
-
 	if (urinit) {
 		i286_urinit();
 		urinit=0;
 
-		/* this function seams to be called as a result of
-           cpu_set_reset_line */
-		/* If a reset parameter is given, take it as pointer to an address mask */
-		if( param )
-			I.amask = *(unsigned*)param;
-		else
-			I.amask = 0x00ffff;
 	}
 
 	I.sregs[CS] = 0xf000;
@@ -311,44 +297,51 @@ static offs_t i286_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int
 #endif
 }
 
-static void i286_init(void)
+static void i286_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
-	int cpu = cpu_getactivecpu();
 	const char *type = "I286";
-	state_save_register_item_array(type, cpu, I.regs.w);
-	state_save_register_item(type, cpu, I.amask);
-	state_save_register_item(type, cpu, I.pc);
-	state_save_register_item(type, cpu, I.prevpc);
-	state_save_register_item(type, cpu, I.msw);
-	state_save_register_item_array(type, cpu, I.base);
-	state_save_register_item_array(type, cpu, I.sregs);
-	state_save_register_item_array(type, cpu, I.limit);
-	state_save_register_item_array(type, cpu, I.rights);
-	state_save_register_item(type, cpu, I.gdtr.base);
-	state_save_register_item(type, cpu, I.gdtr.limit);
-	state_save_register_item(type, cpu, I.idtr.base);
-	state_save_register_item(type, cpu, I.idtr.limit);
-	state_save_register_item(type, cpu, I.ldtr.sel);
-	state_save_register_item(type, cpu, I.ldtr.base);
-	state_save_register_item(type, cpu, I.ldtr.limit);
-	state_save_register_item(type, cpu, I.ldtr.rights);
-	state_save_register_item(type, cpu, I.tr.sel);
-	state_save_register_item(type, cpu, I.tr.base);
-	state_save_register_item(type, cpu, I.tr.limit);
-	state_save_register_item(type, cpu, I.tr.rights);
-	state_save_register_item(type, cpu, I.AuxVal);
-	state_save_register_item(type, cpu, I.OverVal);
-	state_save_register_item(type, cpu, I.SignVal);
-	state_save_register_item(type, cpu, I.ZeroVal);
-	state_save_register_item(type, cpu, I.CarryVal);
-	state_save_register_item(type, cpu, I.DirVal);
-	state_save_register_item(type, cpu, I.ParityVal);
-	state_save_register_item(type, cpu, I.TF);
-	state_save_register_item(type, cpu, I.IF);
-	state_save_register_item(type, cpu, I.int_vector);
-	state_save_register_item(type, cpu, I.nmi_state);
-	state_save_register_item(type, cpu, I.irq_state);
-	state_save_register_item(type, cpu, I.extra_cycles);
+	state_save_register_item_array(type, index, I.regs.w);
+	state_save_register_item(type, index, I.amask);
+	state_save_register_item(type, index, I.pc);
+	state_save_register_item(type, index, I.prevpc);
+	state_save_register_item(type, index, I.msw);
+	state_save_register_item_array(type, index, I.base);
+	state_save_register_item_array(type, index, I.sregs);
+	state_save_register_item_array(type, index, I.limit);
+	state_save_register_item_array(type, index, I.rights);
+	state_save_register_item(type, index, I.gdtr.base);
+	state_save_register_item(type, index, I.gdtr.limit);
+	state_save_register_item(type, index, I.idtr.base);
+	state_save_register_item(type, index, I.idtr.limit);
+	state_save_register_item(type, index, I.ldtr.sel);
+	state_save_register_item(type, index, I.ldtr.base);
+	state_save_register_item(type, index, I.ldtr.limit);
+	state_save_register_item(type, index, I.ldtr.rights);
+	state_save_register_item(type, index, I.tr.sel);
+	state_save_register_item(type, index, I.tr.base);
+	state_save_register_item(type, index, I.tr.limit);
+	state_save_register_item(type, index, I.tr.rights);
+	state_save_register_item(type, index, I.AuxVal);
+	state_save_register_item(type, index, I.OverVal);
+	state_save_register_item(type, index, I.SignVal);
+	state_save_register_item(type, index, I.ZeroVal);
+	state_save_register_item(type, index, I.CarryVal);
+	state_save_register_item(type, index, I.DirVal);
+	state_save_register_item(type, index, I.ParityVal);
+	state_save_register_item(type, index, I.TF);
+	state_save_register_item(type, index, I.IF);
+	state_save_register_item(type, index, I.int_vector);
+	state_save_register_item(type, index, I.nmi_state);
+	state_save_register_item(type, index, I.irq_state);
+	state_save_register_item(type, index, I.extra_cycles);
+
+	I.irq_callback = info->irqcallback;
+
+	/* If a reset parameter is given, take it as pointer to an address mask */
+	if( config )
+		I.amask = *(unsigned*)config;
+	else
+		I.amask = 0x00ffff;
 }
 
 
@@ -421,9 +414,6 @@ static void i286_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + I286_SS:			I.sregs[SS] = info->i;	I.base[SS] = SegBase(SS); break;
 		case CPUINFO_INT_REGISTER + I286_DS:			I.sregs[DS] = info->i;	I.base[DS] = SegBase(DS); break;
 		case CPUINFO_INT_REGISTER + I286_VECTOR:		I.int_vector = info->i; 				break;
-
-		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_IRQ_CALLBACK:					I.irq_callback = info->irqcallback;		break;
 	}
 }
 
@@ -501,7 +491,6 @@ void i286_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = i286_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = i286_dasm;		break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = I.irq_callback;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &i286_ICount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = i286_reg_layout;				break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = i286_win_layout;				break;

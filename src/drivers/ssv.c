@@ -162,7 +162,6 @@ To Do:
 
 #include "driver.h"
 #include "machine/eeprom.h"
-#include "machine/random.h"
 #include "sound/es5506.h"
 #include "seta.h"
 
@@ -320,7 +319,7 @@ static WRITE16_HANDLER( ssv_lockout_inv_w )
 MACHINE_RESET( ssv )
 {
 	requested_int = 0;
-	cpu_set_irq_callback(0, ssv_irq_callback);
+	cpunum_set_irq_callback(0, ssv_irq_callback);
 	memory_set_bankptr(1, memory_region(REGION_USER1));
 }
 

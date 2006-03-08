@@ -22,8 +22,6 @@
 #ifndef _M65CE02_H
 #define _M65CE02_H
 
-#include "cpuintrf.h"
-#include "osd_cpu.h"
 #include "m6502.h"
 
 enum {

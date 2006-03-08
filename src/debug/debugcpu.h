@@ -112,7 +112,7 @@ struct _debug_cpu_info
 	offs_t			temp_breakpoint_pc;			/* temporary breakpoint PC */
 	int				read_watchpoints;			/* total read watchpoints on this CPU */
 	int				write_watchpoints;			/* total write watchpoints on this CPU */
-	symbol_table *symtable;				/* symbol table for expression evaluation */
+	symbol_table *	symtable;					/* symbol table for expression evaluation */
 	debug_trace_info trace;						/* trace info */
 	debug_cpu_breakpoint *first_bp;				/* first breakpoint */
 	debug_space_info space[ADDRESS_SPACES];		/* per-address space info */
@@ -166,7 +166,6 @@ extern symbol_table *global_symtable;
 
 /* initialization */
 void				debug_cpu_init(void);
-void				debug_cpu_exit(void);
 
 /* utilities */
 const debug_cpu_info *debug_get_cpu_info(int cpunum);

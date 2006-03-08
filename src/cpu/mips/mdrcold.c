@@ -329,10 +329,8 @@ static UINT32 compile_one(drc_core *drc, UINT32 pc, UINT32 physpc)
 
 	/* handle the results */
 	if (!(result & RECOMPILE_SUCCESSFUL))
-	{
-		mips3_exit();
 		fatalerror("Unimplemented op %08X (%02X,%02X)", *opptr, *opptr >> 26, *opptr & 0x3f);
-	}
+
 	pcdelta = (INT32)result >> 20;
 	cycles = (result >> 8) & 0xfff;
 

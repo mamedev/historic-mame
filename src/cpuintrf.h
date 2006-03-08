@@ -15,6 +15,9 @@
 #define __CPUINTRF_H__
 
 #include "memory.h"
+#include "cpuint.h"
+#include "cpuexec.h"
+#include "state.h"
 
 
 
@@ -291,8 +294,8 @@ enum
 	CPUINFO_PTR_SET_INFO = CPUINFO_PTR_FIRST,			/* R/O: void (*set_info)(UINT32 state, INT64 data, void *ptr) */
 	CPUINFO_PTR_GET_CONTEXT,							/* R/O: void (*get_context)(void *buffer) */
 	CPUINFO_PTR_SET_CONTEXT,							/* R/O: void (*set_context)(void *buffer) */
-	CPUINFO_PTR_INIT,									/* R/O: void (*init)(void) */
-	CPUINFO_PTR_RESET,									/* R/O: void (*reset)(void *param) */
+	CPUINFO_PTR_INIT,									/* R/O: void (*init)(int index, int clock, const void *config, int (*irqcallback)(int)) */
+	CPUINFO_PTR_RESET,									/* R/O: void (*reset)(void) */
 	CPUINFO_PTR_EXIT,									/* R/O: void (*exit)(void) */
 	CPUINFO_PTR_EXECUTE,								/* R/O: int (*execute)(int cycles) */
 	CPUINFO_PTR_BURN,									/* R/O: void (*burn)(int cycles) */
@@ -303,7 +306,6 @@ enum
 	CPUINFO_PTR_WRITE,									/* R/O: int (*write)(int space, UINT32 offset, int size, UINT64 value) */
 	CPUINFO_PTR_READOP,									/* R/O: int (*readop)(UINT32 offset, int size, UINT64 *value) */
 	CPUINFO_PTR_DEBUG_SETUP_COMMANDS,					/* R/O: void (*setup_commands)(void) */
-	CPUINFO_PTR_IRQ_CALLBACK,							/* R/W: int (*irqcallback)(int state) */
 	CPUINFO_PTR_INSTRUCTION_COUNTER,					/* R/O: int *icount */
 	CPUINFO_PTR_REGISTER_LAYOUT,						/* R/O: struct debug_register_layout *layout */
 	CPUINFO_PTR_WINDOW_LAYOUT,							/* R/O: struct debug_window_layout *layout */
@@ -339,14 +341,13 @@ union cpuinfo
 	void	(*setinfo)(UINT32 state, union cpuinfo *info);/* CPUINFO_PTR_SET_INFO */
 	void	(*getcontext)(void *context);				/* CPUINFO_PTR_GET_CONTEXT */
 	void	(*setcontext)(void *context);				/* CPUINFO_PTR_SET_CONTEXT */
-	void	(*init)(void);								/* CPUINFO_PTR_INIT */
-	void	(*reset)(void *param);						/* CPUINFO_PTR_RESET */
+	void	(*init)(int index, int clock, const void *config, int (*irqcallback)(int));/* CPUINFO_PTR_INIT */
+	void	(*reset)(void);								/* CPUINFO_PTR_RESET */
 	void	(*exit)(void);								/* CPUINFO_PTR_EXIT */
 	int		(*execute)(int cycles);						/* CPUINFO_PTR_EXECUTE */
 	void	(*burn)(int cycles);						/* CPUINFO_PTR_BURN */
 	offs_t	(*disassemble)(char *buffer, offs_t pc);	/* CPUINFO_PTR_DISASSEMBLE */
 	offs_t	(*disassemble_new)(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes);/* CPUINFO_PTR_DISASSEMBLE_NEW */
-	int		(*irqcallback)(int state);					/* CPUINFO_PTR_IRQ_CALLBACK */
 	int 	(*translate)(int space, offs_t *address);	/* CPUINFO_PTR_TRANSLATE */
 	int		(*read)(int space, UINT32 offset, int size, UINT64 *value);/* CPUINFO_PTR_READ */
 	int		(*write)(int space, UINT32 offset, int size, UINT64 value);/* CPUINFO_PTR_WRITE */
@@ -407,8 +408,8 @@ struct _cpu_interface
 	void		(*set_info)(UINT32 state, union cpuinfo *info);
 	void		(*get_context)(void *buffer);
 	void		(*set_context)(void *buffer);
-	void		(*init)(void);
-	void		(*reset)(void *param);
+	void		(*init)(int index, int clock, const void *config, int (*irqcallback)(int));
+	void		(*reset)(void);
 	void		(*exit)(void);
 	int			(*execute)(int cycles);
 	void		(*burn)(int cycles);
@@ -435,7 +436,7 @@ typedef struct _cpu_interface cpu_interface;
 void cpuintrf_init(void);
 
 /* set up the interface for one CPU of a given type */
-int	cpuintrf_init_cpu(int cpunum, int cputype);
+int	cpuintrf_init_cpu(int cpunum, int cputype, int clock, const void *config, int (*irqcallback)(int));
 
 /* clean up the interface for one CPU */
 void cpuintrf_exit_cpu(int cpunum);
@@ -515,7 +516,6 @@ const char *activecpu_dump_state(void);
 #define activecpu_logaddr_width(space)			activecpu_get_info_int(CPUINFO_INT_LOGADDR_WIDTH + (space))
 #define activecpu_page_shift(space)				activecpu_get_info_int(CPUINFO_INT_PAGE_SHIFT + (space))
 #define activecpu_get_reg(reg)					activecpu_get_info_int(CPUINFO_INT_REGISTER + (reg))
-#define activecpu_irq_callback()				activecpu_get_info_fct(CPUINFO_PTR_IRQ_CALLBACK)
 #define activecpu_register_layout()				activecpu_get_info_ptr(CPUINFO_PTR_REGISTER_LAYOUT)
 #define activecpu_window_layout()				activecpu_get_info_ptr(CPUINFO_PTR_WINDOW_LAYOUT)
 #define activecpu_debug_register_list()			activecpu_get_info_ptr(CPUINFO_PTR_DEBUG_REGISTER_LIST)
@@ -529,7 +529,6 @@ const char *activecpu_dump_state(void);
 #define activecpu_reg_string(reg)				activecpu_get_info_string(CPUINFO_STR_REGISTER + (reg))
 
 #define activecpu_set_reg(reg, val)				activecpu_set_info_int(CPUINFO_INT_REGISTER + (reg), (val))
-#define activecpu_set_irq_callback(val)			activecpu_set_info_fct(CPUINFO_PTR_IRQ_CALLBACK, (genf *) (val))
 
 
 
@@ -553,8 +552,8 @@ void cpunum_set_info_fct(int cpunum, UINT32 state, genf *data);
 /* execute the requested cycles on a given CPU */
 int cpunum_execute(int cpunum, int cycles);
 
-/* signal a reset and set the IRQ ack callback for a given CPU */
-void cpunum_reset(int cpunum, void *param, int (*irqack)(int));
+/* signal a reset for a given CPU */
+void cpunum_reset(int cpunum);
 
 /* read a byte from another CPU's memory space */
 UINT8 cpunum_read_byte(int cpunum, offs_t address);
@@ -595,7 +594,6 @@ const char *cpunum_dump_state(int cpunum);
 #define cpunum_logaddr_width(cpunum, space)		cpunum_get_info_int(cpunum, CPUINFO_INT_LOGADDR_WIDTH + (space))
 #define cpunum_page_shift(cpunum, space)		cpunum_get_info_int(cpunum, CPUINFO_INT_PAGE_SHIFT + (space))
 #define cpunum_get_reg(cpunum, reg)				cpunum_get_info_int(cpunum, CPUINFO_INT_REGISTER + (reg))
-#define cpunum_irq_callback(cpunum)				cpunum_get_info_fct(cpunum, CPUINFO_PTR_IRQ_CALLBACK)
 #define cpunum_register_layout(cpunum)			cpunum_get_info_ptr(cpunum, CPUINFO_PTR_REGISTER_LAYOUT)
 #define cpunum_window_layout(cpunum)			cpunum_get_info_ptr(cpunum, CPUINFO_PTR_WINDOW_LAYOUT)
 #define cpunum_debug_register_list(cpunum)		cpunum_get_info_ptr(cpunum, CPUINFO_PTR_DEBUG_REGISTER_LIST)
@@ -609,7 +607,6 @@ const char *cpunum_dump_state(int cpunum);
 #define cpunum_reg_string(cpunum, reg)			cpunum_get_info_string(cpunum, CPUINFO_STR_REGISTER + (reg))
 
 #define cpunum_set_reg(cpunum, reg, val)		cpunum_set_info_int(cpunum, CPUINFO_INT_REGISTER + (reg), (val))
-#define cpunum_set_irq_callback(cpunum, val)	cpunum_set_info_fct(cpunum, CPUINFO_PTR_IRQ_CALLBACK, (val)
 
 
 
@@ -639,7 +636,6 @@ const char *cputype_get_info_string(int cputype, UINT32 state);
 #define cputype_addrbus_width(cputype, space)	cputype_get_info_int(cputype, CPUINFO_INT_ADDRBUS_WIDTH + (space))
 #define cputype_addrbus_shift(cputype, space)	cputype_get_info_int(cputype, CPUINFO_INT_ADDRBUS_SHIFT + (space))
 #define cputype_page_shift(cputype, space)		cputype_get_info_int(cputype, CPUINFO_INT_PAGE_SHIFT + (space))
-#define cputype_irq_callback(cputype)			cputype_get_info_fct(cputype, CPUINFO_PTR_IRQ_CALLBACK)
 #define cputype_register_layout(cputype)		cputype_get_info_ptr(cputype, CPUINFO_PTR_REGISTER_LAYOUT)
 #define cputype_window_layout(cputype)			cputype_get_info_ptr(cputype, CPUINFO_PTR_WINDOW_LAYOUT)
 #define cputype_debug_register_list(cputype)	cputype_get_info_ptr(cputype, CPUINFO_PTR_DEBUG_REGISTER_LIST)
@@ -709,6 +705,13 @@ INLINE int cpu_gettotalcpu(void)
 {
 	extern int totalcpu;
 	return totalcpu;
+}
+
+
+/* return the current PC or ~0 if no CPU is active */
+INLINE offs_t safe_activecpu_get_pc(void)
+{
+	return (cpu_getactivecpu() >= 0) ? activecpu_get_pc() : ~0;
 }
 
 

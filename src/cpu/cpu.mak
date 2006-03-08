@@ -28,7 +28,7 @@ ifneq ($(filter ARM7,$(CPUS)),)
 OBJDIRS += $(OBJ)/cpu/arm7
 CPUOBJS += $(OBJ)/cpu/arm7/arm7.o
 DBGOBJS += $(OBJ)/cpu/arm7/arm7dasm.o
-$(OBJ)/cpu/arm7/arm7.o: arm7.c arm7.h
+$(OBJ)/cpu/arm7/arm7.o: arm7.c arm7.h arm7exec.c
 endif
 
 

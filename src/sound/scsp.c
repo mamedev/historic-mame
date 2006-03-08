@@ -22,8 +22,7 @@
 */
 
 #include <math.h>
-#include <string.h>
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
 #include "cpuintrf.h"
 #include "scsp.h"

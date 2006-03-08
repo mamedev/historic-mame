@@ -5,7 +5,7 @@
   MAME interface for YMF262 (OPL3) emulator
 
 ***************************************************************************/
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
 #include "262intf.h"
 #include "ymf262.h"

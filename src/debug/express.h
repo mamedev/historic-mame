@@ -154,6 +154,7 @@ int 						symtable_add_register(symbol_table *table, const char *name, UINT32 re
 int 						symtable_add_function(symbol_table *table, const char *name, UINT32 ref, UINT16 minparams, UINT16 maxparams, UINT64 (*execute)(UINT32, UINT32, UINT64 *));
 int							symtable_add_value(symbol_table *table, const char *name, UINT64 value);
 const symbol_entry *		symtable_find(const symbol_table *table, const char *name);
+const char *				symtable_find_indexed(const symbol_table *table, int index, const symbol_entry **entry);
 void 						symtable_free(symbol_table *table);
 
 #endif

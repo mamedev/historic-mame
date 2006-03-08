@@ -1,8 +1,7 @@
 #ifndef __I386INTF_H
 #define __I386INTF_H
 
-#include "memory.h"
-#include "osd_cpu.h"
+#include "cpuintrf.h"
 
 void i386_get_info(UINT32, union cpuinfo*);
 void i486_get_info(UINT32, union cpuinfo*);

@@ -1,9 +1,6 @@
 #ifndef __V30INTRF_H_
 #define __V30INTRF_H_
 
-#include "memory.h"
-#include "osd_cpu.h"
-
 #include "i86intf.h"
 
 /* Public functions */

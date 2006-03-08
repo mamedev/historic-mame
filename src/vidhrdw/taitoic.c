@@ -2780,7 +2780,7 @@ static void TC0100SCN_tilemap_draw_fg(mame_bitmap *bitmap,const rectangle *clipr
 			column_offset=TC0100SCN_colscroll_ram[chip][(src_x&0x3ff) / 8];
 			p=(((UINT16*)src_bitmap->line[(src_y - column_offset)&height_mask])[src_x]);
 
-			if ((p&0xf)!=0)
+			if ((p&0xf)!=0 || (flags & TILEMAP_IGNORE_TRANSPARENCY))
 			{
 				plot_pixel(bitmap, x + cliprect->min_x, y, Machine->pens[p]);
 				if (priority_bitmap)

@@ -21,8 +21,8 @@ int spc700_disassemble(char* buff, unsigned int pc);
 
 unsigned int spc700_read_8_disassembler(unsigned int address);
 
-#include "driver.h"
-#include "debugger.h"
+#include "cpuintrf.h"
+
 #define spc700_read_8_disassembler(addr)				program_read_byte_8(addr)
 
 

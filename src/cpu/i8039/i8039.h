@@ -14,7 +14,7 @@
 #define INLINE static inline
 #endif
 
-#include "osd_cpu.h"
+#include "cpuintrf.h"
 
 
 /**************************************************************************
@@ -128,8 +128,6 @@ extern void i8048_get_info(UINT32 state, union cpuinfo *info);
 
 extern void n7751_get_info(UINT32 state, union cpuinfo *info);
 #endif
-
-#include "memory.h"
 
 /*
  *   Input a UINT8 from given I/O port

@@ -24,6 +24,26 @@
 
 
 /***************************************************************************
+    CONSTANTS
+***************************************************************************/
+
+#define MAX_GLOBALS		1000
+
+
+
+/***************************************************************************
+    GLOBAL VARIABLES
+***************************************************************************/
+
+static struct
+{
+	void *		base;
+	UINT32		size;
+} global_array[MAX_GLOBALS];
+
+
+
+/***************************************************************************
     PROTOTYPES
 ***************************************************************************/
 
@@ -33,7 +53,11 @@ static UINT64 execute_min(UINT32 ref, UINT32 params, UINT64 *param);
 static UINT64 execute_max(UINT32 ref, UINT32 params, UINT64 *param);
 static UINT64 execute_if(UINT32 ref, UINT32 params, UINT64 *param);
 
+static UINT64 global_get(UINT32 ref);
+static void global_set(UINT32 ref, UINT64 value);
+
 static void execute_help(int ref, int params, const char **param);
+static void execute_print(int ref, int params, const char **param);
 static void execute_printf(int ref, int params, const char **param);
 static void execute_logerror(int ref, int params, const char **param);
 static void execute_tracelog(int ref, int params, const char **param);
@@ -73,6 +97,7 @@ static void execute_snap(int ref, int params, const char **param);
 static void execute_source(int ref, int params, const char **param);
 static void execute_map(int ref, int params, const char **param);
 static void execute_memdump(int ref, int params, const char **param);
+static void execute_symlist(int ref, int params, const char **param);
 
 
 
@@ -89,15 +114,39 @@ static void execute_memdump(int ref, int params, const char **param);
 
 void debug_command_init(void)
 {
-	int cpunum;
+	int cpunum, itemnum;
+	const char *name;
 
 	/* add a few simple global functions */
 	symtable_add_function(global_symtable, "min", 0, 2, 2, execute_min);
 	symtable_add_function(global_symtable, "max", 0, 2, 2, execute_max);
 	symtable_add_function(global_symtable, "if", 0, 3, 3, execute_if);
 
+	/* add all single-entry save state globals */
+	for (itemnum = 0; itemnum < MAX_GLOBALS; itemnum++)
+	{
+		UINT32 valsize, valcount;
+		void *base;
+
+		/* stop when we run out of items */
+		name = state_save_get_indexed_item(itemnum, &base, &valsize, &valcount);
+		if (name == NULL)
+			break;
+
+		/* if this is a single-entry global, add it */
+		if (valcount == 1 && strstr(name, "/globals/"))
+		{
+			char symname[100];
+			sprintf(symname, ".%s", strrchr(name, '/') + 1);
+			global_array[itemnum].base = base;
+			global_array[itemnum].size = valsize;
+			symtable_add_register(global_symtable, symname, itemnum, global_get, global_set);
+		}
+	}
+
 	/* add all the commands */
 	debug_console_register_command("help",      CMDFLAG_NONE, 0, 0, 1, execute_help);
+	debug_console_register_command("print",     CMDFLAG_NONE, 0, 1, MAX_COMMAND_PARAMS, execute_print);
 	debug_console_register_command("printf",    CMDFLAG_NONE, 0, 1, MAX_COMMAND_PARAMS, execute_printf);
 	debug_console_register_command("logerror",  CMDFLAG_NONE, 0, 1, MAX_COMMAND_PARAMS, execute_logerror);
 	debug_console_register_command("tracelog",  CMDFLAG_NONE, 0, 1, MAX_COMMAND_PARAMS, execute_tracelog);
@@ -177,6 +226,9 @@ void debug_command_init(void)
 	debug_console_register_command("mapi",		CMDFLAG_NONE, ADDRESS_SPACE_IO, 1, 1, execute_map);
 	debug_console_register_command("memdump",	CMDFLAG_NONE, 0, 0, 1, execute_memdump);
 
+	debug_console_register_command("symlist",	CMDFLAG_NONE, 0, 0, 1, execute_symlist);
+
+	/* ask all the CPUs if they would like to register functions or symbols */
 	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
 	{
 		void (*setup_commands)(void);
@@ -237,6 +289,48 @@ static UINT64 execute_max(UINT32 ref, UINT32 params, UINT64 *param)
 static UINT64 execute_if(UINT32 ref, UINT32 params, UINT64 *param)
 {
 	return param[0] ? param[1] : param[2];
+}
+
+
+
+/***************************************************************************
+
+    Global accessors
+
+***************************************************************************/
+
+/*-------------------------------------------------
+    global_get - symbol table getter for globals
+-------------------------------------------------*/
+
+static UINT64 global_get(UINT32 ref)
+{
+	assert(ref < MAX_GLOBALS);
+	switch (global_array[ref].size)
+	{
+		case 1:		return *(UINT8 *)global_array[ref].base;
+		case 2:		return *(UINT16 *)global_array[ref].base;
+		case 4:		return *(UINT32 *)global_array[ref].base;
+		case 8:		return *(UINT64 *)global_array[ref].base;
+	}
+	return ~0;
+}
+
+
+/*-------------------------------------------------
+    global_set - symbol table setter for globals
+-------------------------------------------------*/
+
+static void global_set(UINT32 ref, UINT64 value)
+{
+	assert(ref < MAX_GLOBALS);
+	switch (global_array[ref].size)
+	{
+		case 1:		*(UINT8 *)global_array[ref].base = value;	break;
+		case 2:		*(UINT16 *)global_array[ref].base = value;	break;
+		case 4:		*(UINT32 *)global_array[ref].base = value;	break;
+		case 8:		*(UINT64 *)global_array[ref].base = value;	break;
+	}
 }
 
 
@@ -315,6 +409,32 @@ static void execute_help(int ref, int params, const char *param[])
 		debug_console_printf_wrap(80, "%s\n", debug_get_help(""));
 	else
 		debug_console_printf_wrap(80, "%s\n", debug_get_help(param[0]));
+}
+
+
+/*-------------------------------------------------
+    execute_print - execute the print command
+-------------------------------------------------*/
+
+static void execute_print(int ref, int params, const char *param[])
+{
+	UINT64 values[MAX_COMMAND_PARAMS];
+	int i;
+
+	/* validate the other parameters */
+	for (i = 0; i < params; i++)
+		if (!validate_parameter_number(param[i], &values[i]))
+			return;
+
+	/* then print each one */
+	for (i = 0; i < params; i++)
+	{
+		if ((values[i] >> 32) != 0)
+			debug_console_printf("%X%08X ", (UINT32)(values[i] >> 32), (UINT32)values[i]);
+		else
+			debug_console_printf("%X ", (UINT32)values[i]);
+	}
+	debug_console_printf("\n");
 }
 
 
@@ -784,6 +904,13 @@ static void execute_comment(int ref, int params, const char *param[])
 	/* param 1 is the address for the comment */
 	if (!validate_parameter_number(param[0], &address))
 		return;
+
+	/* make sure param 2 exists */
+	if (strlen(param[1]) == 0)
+	{
+		debug_console_printf("Error : comment text empty\n");
+		return;
+	}
 
 	/* Now try adding the comment */
 	debug_comment_add(cpu_getactivecpu(), address, param[1], 0x00ff0000, debug_comment_get_opcode_crc32(address));
@@ -1602,7 +1729,8 @@ static void execute_dasm(int ref, int params, const char *param[])
 	for (i = 0; i < length; )
 	{
 		int pcbyte = ADDR2BYTE_MASKED(offset + i, info, ADDRESS_SPACE_PROGRAM);
-		char output[200], disasm[200];
+		char output[200+DEBUG_COMMENT_MAX_LINE_LENGTH], disasm[200];
+		const char *comment;
 		UINT64 dummyreadop;
 		offs_t tempaddr;
 		int outdex = 0;
@@ -1685,6 +1813,24 @@ static void execute_dasm(int ref, int params, const char *param[])
 
 		/* add the disassembly */
 		sprintf(&output[outdex], "%s", disasm);
+
+		/* attempt to add the comment */
+		comment = debug_comment_get_text(cpunum, tempaddr, debug_comment_get_opcode_crc32(tempaddr));
+		if (comment != NULL)
+		{
+			/* somewhat arbitrary guess as to how long most disassembly lines will be [column 60] */
+			if (strlen(output) < 60)
+			{
+				/* pad the comment space out to 60 characters and null-terminate */
+				for (outdex = strlen(output); outdex < 60; outdex++)
+					output[outdex] = ' ' ;
+				output[outdex] = 0 ;
+
+				sprintf(&output[strlen(output)], "// %s", comment) ;
+			}
+			else
+				sprintf(&output[strlen(output)], "\t// %s", comment) ;
+		}
 
 		/* output the result */
 		fprintf(f, "%s\n", output);
@@ -1879,6 +2025,82 @@ static void execute_memdump(int ref, int params, const char **param)
 	{
 		memory_dump(file);
 		fclose(file);
+	}
+}
+
+
+/*-------------------------------------------------
+    execute_symlist - execute the symlist command
+-------------------------------------------------*/
+
+static int CLIB_DECL symbol_sort_compare(const void *item1, const void *item2)
+{
+	const char *str1 = *(const char **)item1;
+	const char *str2 = *(const char **)item2;
+	return strcmp(str1, str2);
+}
+
+static void execute_symlist(int ref, int params, const char **param)
+{
+	const char *namelist[1000];
+	symbol_table *symtable;
+	UINT64 cpunum = 100000;
+	int symnum, count = 0;
+
+	/* validate parameters */
+	if (params > 0 && !validate_parameter_number(param[0], &cpunum))
+		return;
+	if (cpunum != 100000 && cpunum >= cpu_gettotalcpu())
+	{
+		debug_console_printf("Invalid CPU number!\n");
+		return;
+	}
+	symtable = (cpunum == 100000) ? global_symtable : debug_get_cpu_info(cpunum)->symtable;
+
+	if (symtable == global_symtable)
+		debug_console_printf("Global symbols:\n");
+	else
+		debug_console_printf("CPU #%d symbols:\n", (UINT32)cpunum);
+
+	/* gather names for all symbols */
+	for (symnum = 0; symnum < 100000; symnum++)
+	{
+		const symbol_entry *entry;
+		const char *name = symtable_find_indexed(symtable, symnum, &entry);
+
+		/* if we didn't get anything, we're done */
+		if (name == NULL)
+			break;
+
+		/* only display "register" type symbols */
+		if (entry->type == SMT_REGISTER)
+		{
+			namelist[count++] = name;
+			if (count >= ARRAY_LENGTH(namelist))
+				break;
+		}
+	}
+
+	/* sort the symbols */
+	if (count > 1)
+		qsort(namelist, count, sizeof(namelist[0]), symbol_sort_compare);
+
+	/* iterate over symbols and print out relevant ones */
+	for (symnum = 0; symnum < count; symnum++)
+	{
+		const symbol_entry *entry = symtable_find(symtable, namelist[symnum]);
+		UINT64 value = (*entry->info.reg.getter)(entry->ref);
+		assert(entry != NULL);
+
+		/* only display "register" type symbols */
+		debug_console_printf("%s = ", namelist[symnum]);
+		if ((value >> 32) != 0)
+			debug_console_printf("%X%08X", (UINT32)(value >> 32), (UINT32)value);
+		else
+			debug_console_printf("%X", (UINT32)value);
+		if (entry->info.reg.setter == NULL)
+			debug_console_printf("  (read-only)");
+		debug_console_printf("\n");
 	}
 }
 

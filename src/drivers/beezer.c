@@ -12,7 +12,6 @@
 #include "sound/dac.h"
 
 /* from vidhrdw/beezer.c */
-extern UINT8 *videoram;
 INTERRUPT_GEN( beezer_interrupt );
 VIDEO_UPDATE( beezer );
 WRITE8_HANDLER( beezer_ram_w );

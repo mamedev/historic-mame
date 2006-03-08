@@ -61,9 +61,8 @@ Address  Function Register  R/W  When Reset          Remarks
 /* ======================================================================== */
 
 #include <limits.h>
-#include <stdio.h>
 #include "spc700.h"
-
+#include "debugger.h"
 
 /* ======================================================================== */
 /* ==================== ARCHITECTURE-DEPENDANT DEFINES ==================== */
@@ -1265,10 +1264,13 @@ INLINE void SET_FLAG_I(uint value)
 /* ================================= API ================================== */
 /* ======================================================================== */
 
-void spc700_init(void) {}
+void spc700_init(int index, int clock, const void *config, int (*irqcallback)(int))
+{
+	INT_ACK = irqcallback;
+}
 
 
-void spc700_reset(void* param)
+void spc700_reset(void)
 {
 	CPU_STOPPED = 0;
 #if !SPC700_OPTIMIZE_SNES
@@ -1759,9 +1761,6 @@ static void spc700_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + SPC700_A:			REG_A = MAKE_UINT_8(info->i);			break;
 		case CPUINFO_INT_REGISTER + SPC700_X:			REG_X = MAKE_UINT_8(info->i);			break;
 		case CPUINFO_INT_REGISTER + SPC700_Y:			REG_Y = MAKE_UINT_8(info->i);			break;
-
-		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_IRQ_CALLBACK:					INT_ACK = info->irqcallback;			break;
 	}
 }
 
@@ -1828,7 +1827,6 @@ void spc700_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = spc700_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = mame_spc700_dasm;	break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = INT_ACK;			break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &spc700_ICount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = spc700_register_layout;		break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = spc700_window_layout;			break;

@@ -130,14 +130,7 @@ INLINE void ppc602_check_interrupts(void)
 
 static void ppc602_reset(void *param)
 {
-	float multiplier;
-	ppc_config *config = param;
 	ppc.pc = ppc.npc = 0xfff00100;
-	ppc.pvr = config->pvr;
-
-	multiplier = (float)((config->bus_frequency_multiplier >> 4) & 0xf) +
-				 (float)(config->bus_frequency_multiplier & 0xf) / 10.0f;
-	bus_freq_multiplier = (int)(multiplier * 2);
 
 	ppc_set_msr(0x40);
 	change_pc(ppc.pc);

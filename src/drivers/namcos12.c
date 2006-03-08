@@ -13,30 +13,33 @@
     - day, date, and year from the RTC appear to be ignored (hour/min/sec are fine). H8 core bug or BIOS doesn't care?
     - golgo13 assumes the test switch is a switch, not a button - must hold down F2 to stay in test mode
 
+
 Game & software revision                 Company/Year            CPU board   Mother board        Daughter board   Keycus
 ------------------------------------------------------------------------------------------------------------------------
 *Aerosmith - Quest for Fame              (C) Namco,        2001
 Aqua Rush (AQ1/VER.A1)                   (C) Namco,        1999  COH-700     SYSTEM12 MOTHER(C)  SYSTEM12 M5F2    KC053
-*Attack Pla-Rail                         (C) Tomy/Namco    199?
+*Attack Pla-Rail                         (C) Tomy/Namco,   199?
 Derby Quiz My Dream Horse (MDH1/VER.A2)  (C) Namco,        1998  COH-700     SYSTEM12 MOTHER(B)  SYSTEM12 M10X64  KC035
 Ehrgeiz (EG2/VER.A)                      (C) Square/Namco, 1998  COH-700     SYSTEM12 MOTHER(B)  SYSTEM12 M4F6    KC021
 Ehrgeiz (EG3/VER.A)                      (C) Square/Namco, 1998  COH-700     SYSTEM12 MOTHER(B)  SYSTEM12 M4F6    KC021
 Fighting Layer (FTL0/VER.A)              (C) Arika/Namco,  1998  COH-700     SYSTEM12 MOTHER(B)  SYSTEM12 M5F4    KC037
 *Fighting Spirit Biography 3             (C) Namco,        1997
-Ghoul Panic (OB2/VER.A)                  (C) Namco/Raizing 1999  COH-700     SYSTEM12 MOTHER(B)  SYSTEM12 M4F6    KC045
+Ghoul Panic (OB2/VER.A)                  (C) Namco/Raizing,1999  COH-700     SYSTEM12 MOTHER(B)  SYSTEM12 M4F6    KC045
 Golgo 13 (GLG1/VER.A)                    (C) Raizing/Namco,1999  COH-700     SYSTEM12 MOTHER(C)  SYSTEM12 M8F6    KC054
+Golgo 13 Kiseki no Dandou (GLS1/VER.A)   (C) Raizing/Namco,2000  COH-700     SYSTEM12 MOTHER(C)  SYSTEM12 M8F6    KC059
 *Kaiun Quiz                              (C) Namco,        199?
 *Kart Duel                               (C) Namco,        2000
 Libero Grande (LG2/VER.A)                (C) Namco,        1997  COH-700     SYSTEM12 MOTHER(B)  SYSTEM12 M8F2F   KC014
 Mr Driller (DRI1/VER.A2)                 (C) Namco,        1999  COH-700     SYSTEM12 MOTHER(C)  SYSTEM12 M8F2F   KC048
-*Oh Bakyuuun                             (C) Namco/Raizing 1999
-*Over Kuhn                               (C) Namco         1999
+*Oh Bakyuuun                             (C) Namco/Raizing,1999
+*Over Kuhn                               (C) Namco,        1999
 Paca Paca Passion (PPP1/VER.A2)          (C) Produce/Namco,1999  COH-700     SYSTEM12 MOTHER(B)  SYSTEM12 M8F2F   KC038
 Paca Paca Passion Special (PSP1/VER.A)   (C) Produce/Namco,1999  COH-700     SYSTEM12 MOTHER(C)  SYSTEM12 M5F2    KC052
 Paca Paca Passion 2 (PKS1/VER.A)         (C) Produce/Namco,1999  COH-700     SYSTEM12 MOTHER(B)  SYSTEM12 M5F2    KC046
+Point Blank 2 (GNB5/VER.A)               (C) Namco,        1999  COH-700     SYSTEM12 MOTHER(B)  SYSTEM12 M4F0    KC042
 Soul Calibur (SOC11/VER.A2)              (C) Namco,        1998  COH-700     SYSTEM12 MOTHER(B)  SYSTEM12 M5F2    KC020
 Soul Calibur (SOC11/VER.B)               (C) Namco,        1998  COH-700     SYSTEM12 MOTHER(B)  SYSTEM12 M5F2    KC020
-*Soul Calibur (SOC11/VER.C)               (C) Namco,        1998  COH-700     SYSTEM12 MOTHER(B)  SYSTEM12 M5F4    KC020
+Soul Calibur (SOC11/VER.C)               (C) Namco,        1998  COH-700     SYSTEM12 MOTHER(B)  SYSTEM12 M5F4    KC020
 Soul Calibur (SOC14/VER.C)               (C) Namco,        1998  COH-700     SYSTEM12 MOTHER     JO 11-04-98      none
 *Soul Calibur Ver.B                      (C) Namco,        199?
 *Submarines                              (C) Namco,        199?
@@ -51,9 +54,9 @@ Tenkomori Shooting (TKM2/VER.A1)         (C) Namco,        1998  COH-700     SYS
 Tekken 3 (TET1/VER.E1)                   (C) Namco,        1996  COH-700     SYSTEM12 MOTHER(B)  SYSTEM12 M8F2F   KC006
 Tekken 3 (TET2/VER.A)                    (C) Namco,        1996  COH-700     SYSTEM12 MOTHER     SYSTEM12 M8F2F   KC006
 Tekken 3 (TET3/VER.A)                    (C) Namco,        1996  COH-700     SYSTEM12 MOTHER     SYSTEM12 M8F2F   KC006
-Tekken Tag Tournament (TEG3/VER.C1)      (C) Namco,        1999  COH-700     SYSTEM12 MOTHER(B)  SYSTEM12 M8F4    KC044
 Tekken Tag Tournament (TEG3/VER.B)       (C) Namco,        1999  COH-700     SYSTEM12 MOTHER(B)  SYSTEM12 M8F4    KC044
-*Toukon Retsuden 3                       (C) Namco,        199?
+Tekken Tag Tournament (TEG3/VER.C1)      (C) Namco,        1999  COH-700     SYSTEM12 MOTHER(B)  SYSTEM12 M8F4    KC044
+*Toukon Retsuden 3                       (C) Namco,        1997
 *Truck Kyosokyoku                        (C) Namco,        2000
 *Um Jammer Lammy                         (C) Namco,        1999
 
@@ -78,16 +81,17 @@ NETWORK PCB - Used to connect 2 PCBs together using standard USB cables. The boa
               Libero Grande, Tekken 3 and Ehrgeiz (so far?)
 GUN I/F PCB - Used to connect and control the light guns. The board plugs in where the CPU board would
               normally be, and the CPU board plugs into another connector on the GUN I/F PCB. The guns plug into this
-              PCB directly, no extra gun hardware is needed. Seems to be used only on Ghoul Panic so far.
+              PCB directly, no extra gun hardware is needed. Used only on Ghoul Panic and Point Blank 2 so far.
 
 Each game has a 3 or 4 digit letter code assigned to it which is printed on a small sticker and placed on the underside
 of the main PCB.
 The 4 digit code is then proceeded by a number (generally 1, 2 or 3), then 'Rev.' then A/B/C/D/E which denotes the software
 revision, and in some cases a sub-revision such as 1 or 2 (usually only listed in the test mode).
 The first 1 denotes a Japanese version. 2 (and maybe 3) denotes a World version. So far there are no other numbers used
-other than 1, 2, or 3.
-For World versions, usually only the main program uses a '2' or '3', the rest of the ROMs use the Japanese region code '1'.
-See the Main PCB and ROM Daughterboard PCB texts below for more details.
+other than 1, 2, or 3. There is one exception so far. Point Blank 2 was first produced on System 11 hardware. To solve a
+naming conflict, the System 12 version uses a '4' to denote a Japanese version and a '5' to denote a World version.
+For World versions, usually only the main program is changed, the rest of the ROMs are the Japanese region code '1' ROMs.
+See the Main PCB and ROM Daughterboard PCB texts below for more details on ROM naming specifics.
 
 Main PCB
 --------
@@ -141,22 +145,28 @@ Notes:
       *            : These parts only on MOTHER (C) PCB
       %            : These parts not on MOTHER (C) PCB
       J103         : Custom Namco connector for plug-in ROM PCB
-      J104         : JAMMA2 power connector (only 5V/12V/0V used)
-      J105/J106    : JAMMA2 15 PIN VGA D-Type connector (x2) for video output (sync can be 15kHz or 31kHz)
-      J107         : JAMMA2 RCA connectors (x4) for twin stereo audio output
-      J108         : JAMMA2 USB connector for controls
+      J104         : JAMMA2 Power Connector (only 5V/12V/0V used). Note! This has common connections and is
+                     powered by the JAMMA connector as well. It's presence is purely for convenience when
+                     connecting to a JVS-only cabinet.
+      J105/J106    : JAMMA2 15 PIN VGA D-Type connector (x2) for video output (output sync can be 15kHz or 31kHz)
+                     To enable this feature, ensure a VGA cable is connected to this port when the PCB is booted.
+                     The PCB will detect it and output the video using this connector. If there is an option in test
+                     mode in the 'DISPLAY TEST' option, enabling 'Non-Interlace' mode will give much sharper graphics.
+      J107         : JAMMA2 RCA Connectors (x4) for twin stereo audio output
+      J108         : JAMMA2 USB Connector for Controls. Note! To enable JVS/JAMMA2 controls, a Namco JVS adapter
+                     module must be connected to this port. This port is NOT compatible with common PC USB controls.
       J109         : 3-pin connector (populated only on MOTHER (C) PCB, labelled on PCB 'AUDIO OUT')
       J110         : 4-pin connector (purpose unknown, 2 outer pins labelled on PCB 'VCC' & 'GND')
       J111         : Custom Namco connector for plug-in CPU PCB
-      MB88347      : Fujitsu MB88347 8-bit 8-channel D/A converter with OP AMP output buffers (SOIC16)
+      MB88347      : Fujitsu MB88347 8-bit 8-Channel D/A Converter with OP AMP Output Buffers (SOIC16)
       6358         : Toshiba TD6358N Frequency Synthesizer for TV/CATV (SOIC8)
       6734         : MAX734 +12V 120mA Flash Memory Programming Supply Switching Regulator (SOIC8)
       3414A        : NJM3414A 70mA Dual Op Amp (SOIC8)
       LC78832M     : Sanyo LM78832M 2-Channel 16-Bit D/A Converter LSI with 2 On-Chip Digital Filters (SOIC20)
-      2061ASC-1    : IC Designs 2061ASC-1 programmable clock generator (SOIC16)
+      2061ASC-1    : IC Designs 2061ASC-1 Programmable Clock Generator (SOIC16)
       R4543        : EPSON Real Time Clock Module (SOIC14)
-      DSW(2)       : 2 position DIP Switch (All OFF)
-      N341256      : NKK N341256 32K x8 SRAM (x2, SOJ28)
+      DSW(2)       : 2-Position DIP Switch (All OFF)
+      N341256      : NKK N341256 32k x8 SRAM (x2, SOJ28)
       H8/3002      : Sound CPU, Hitachi H8/3002 HD6413002F17 (QFP100), clocked at 14.7456MHz.
       C416         : Namco custom C416 (QFP176)
       C352         : Namco custom C352 PCM sound chip (QFP100)
@@ -170,14 +180,14 @@ Notes:
       MOT5         : PALCE 22V10H (PLCC28, labelled 'S12MOT5A')
       MOT6         : PALCE 22V10H (PLCC28, labelled 'S12MOT6A')
       MOT7         : PALCE 16V8H  (PLCC20, labelled 'S12MOT7A')
-      AT28C16      : Atmel AT28C16 2K x8 EEPROM (SOIC24)
+      AT28C16      : Atmel AT28C16 2k x8 EEPROM (SOIC24)
       ADM485       : Analog Devices ADM485JR 5V Low Power EIA RS-485 Transceiver (SOIC8)
-      CXA1179P     : Sony CXA1779P TV/Video circuit RGB Pre-Driver (DIP28)
+      CXA1179P     : Sony CXA1779P TV/Video Circuit RGB Pre-Driver (DIP28)
       LA4705       : Sanyo LA4705 15W 2-Channel Power Amplifier (SIP18)
-      VOL          : Master volume potentiometer
+      VOL          : Master Volume Potentiometer
       PQ30RV21     : Sharp PQ30RV21 5V to 3.3V Voltage Regulator
-      3V_BATT      : Sony CR2032 3 volt coin battery
-      D6345        : NEC uPD6345 Serial 8-bit shift register IC (SOIC16)
+      3V_BATT      : Sony CR2032 3 Volt Coin Battery
+      D6345        : NEC uPD6345 Serial 8-bit Shift Register IC (SOIC16)
 
       PRG.2L/PRG.2P: Main program ROMs, Intel 28F016S5 2M x8 FLASHROM (both TSOP40)
                      These ROMs are populated on the following games....
@@ -189,14 +199,17 @@ Notes:
                      Derby Quiz My Dream Horse MDH1 Ver.A   MDH1/VER.A2      MOTHER(B)
                      Ehrgeiz                   EG3 Ver.A    EG3/VER.A        MOTHER(B)
                      Golgo 13                  GLG1 Ver.A   GLG1/VER.A       MOTHER(C) (ROMs serialised)
+                     Golgo 13 Kiseki no Dandou GLS1 Ver.A   GLS1/VER.A       MOTHER(C) (ROMs serialised)
                      Libero Grande             LG2 Ver.A    LG2/VER.A        MOTHER(B)
                      Mr Driller                DRI1 Ver.A   DRI1/VER.A2      MOTHER(C) (ROMs serialised)
                      Paca Paca Passion         PPP1 Ver.A   PPP1/VER.A2      MOTHER(B)
                      Paca Paca Passion 2       PKS1 Ver.A   PKS1/VER.A       MOTHER(B)
                      Paca Paca Passion SP      PSP1 Ver.A   PSP1/VER.A       MOTHER(C) (ROMs serialised)
+                     Point Blank 2             GNB5 Ver.A   none             MOTHER(B)
                      Soul Calibur              SOC1 Ver.A   SOC11/VER.A2     MOTHER(B)
                      Soul Calibur              SOC1 Ver.C   SOC11/VER.C      MOTHER(B)
                      Tekken Tag Tournament     TEG3 Ver.B   TEG3/VER.B       MOTHER(B)
+                     Tekken Tag Tournament     TEG3 Ver.B   TEG3/VER.C1      MOTHER(B)
 
       PRG.2N/PRG.2R: Main program ROMs \ Intel 28F016S5 2M x8 FLASHROM (for 2N, TSOP40)
                                        / Intel 28F008SA 1M x8 FLASHROM (for 2R, TSOP40)
@@ -224,7 +237,7 @@ Notes:
                      Tenkomori Shooting        TKM1 Ver.A   TKM1/VER.A1      MOTHER(B)
                      Tenkomori Shooting        TKM2 Ver.A   TKM2/VER.A1      MOTHER(B)
 
-      SOUND.11S    : Fujitsu 29F400TA-90 512K x8 EEPROM (holds H8/3002 program, SOP44)
+      SOUND.11S    : Fujitsu 29F400TA-90 512k x8 EEPROM (holds H8/3002 program, SOP44)
                      This ROM is not labelled with any other markings except the manufacturer and chip type. The ROM labels
                      in the archives are simply made up for convenience.
 
@@ -294,9 +307,14 @@ Shooting                                                                        
                                                                                    TKM1 FL1U, TKM1 FL1L, TKM1 FL2U
                                                                                    TKM1 FL2L, TKM1 FL3U, TKM1 FL3L
 
-Ghoul Panic   OB2/VER.A    Same PCB but sticker says....                  KC045    OB1 WAVE0
-                           'SYSTEM 12 M4F0 PCB 8661962000'                         OB1 ROM0U, OB1 ROM0L
+Ghoul Panic   OB2/VER.A    Same PCB but sticker says....                  KC045    OB1 WAVEB.IC2
+                           'SYSTEM 12 M4F0 PCB 8661962000'                         OB1 PRG0U.IC11, OB1 PRG0L.IC12
                            (i.e no FlashROMs)
+
+Point Blank 2 GNB5/VER.A   Same PCB but sticker says....                  KC042    GNB1 WAVEB.IC2
+                           'SYSTEM 12 M4F0 PCB 8661962000'                         GNB1 PRG0U.IC11, GNB1 PRG0L.IC12
+                           (i.e no FlashROMs)                                      (note these ROMs contains the same data as)
+                                                                                   (the ones used on System 11 Point Blank 2)
 
 ********
 *Type 2*
@@ -510,17 +528,24 @@ Notes:
       ROMx : 64M SOP44 MASKROM (size fixed at 64M, no configure options)
       IC2  : MACH211 CPLD (PLCC44, labelled 'KEYCUS' and stamped with 'KC' & a 3-digit number which is different per game.)
       IC3  : PALCE 22V10H (PLCC28, labelled 'S12M840A')
-      IC8  : ALTERA MAX EPM7128STC100-10 (TQFP100, labelled 'S12M841')
+      IC8  : ALTERA MAX EPM7128STC100-10 FPGA (TQFP100, labelled 'S12M841')
 
 This PCB is used on:
 
                Software
-Game           Revision      PCB                                            KEYCUS   ROMs Populated           Jumper
----------------------------------------------------------------------------------------------------------------------
-Tekken Tag     TEG3/VER.B    SYSTEM 12 M8F4 PCB 8661961901 (8661971901)     KC044    TEG1 WAVE0, TEG1 WAVE1   R3
+Game           Revision      PCB                                            KEYCUS   ROMs Populated           Jumper   Notes
+-----------------------------------------------------------------------------------------------------------------------------------
+Tekken Tag     TEG3/VER.C1   SYSTEM 12 M8F4 PCB 8661961901 (8661971901)     KC044    TEG1 WAVE0, TEG1 WAVE1   R3
 Tournament                                                                           TEG1 ROM0E, TEG1 ROM1E
                                                                                      TEG1 ROM2E, TEG1 ROM0O
                                                                                      TEG1 ROM1O, TEG1 ROM2O
+                                                                                     TEG1 FLEL, TEG1 FLEU
+                                                                                     TEG1 FLOL, TEG1 FLOU
+
+Tekken Tag     TEG3/VER.B    SYSTEM 12 M8F4 PCB 8661961901 (8661971901)     KC044    TEG1 WAVE0, TEG1 WAVE1   R3       IC8 labelled 'S12M841A'
+Tournament                                                                           TEG1 ROM0E, TEG1 ROM1E            ROM board can not be
+                                                                                     TEG1 ROM2E, TEG1 ROM0O            swapped to a different
+                                                                                     TEG1 ROM1O, TEG1 ROM2O            TEG3 revision
                                                                                      TEG1 FLEL, TEG1 FLEU
                                                                                      TEG1 FLOL, TEG1 FLOU
 
@@ -569,6 +594,15 @@ Golgo 13       GLG1/VER.A    SYSTEM 12 M8F6 PCB 8661961800 (8661971800)     KC05
                                                                                      GLG1 FL4L, GLG1 FL4U
                                                                                      GLG1 FL5L, GLG1 FL5U
 
+Golgo 13       GLS1/VER.A    SYSTEM 12 M8F6 PCB 8661961800 (8661971800)     KC059    GLS1 WAVE0, GLS1 WAVE1   R3
+Kiseki no Dandou                                                                     GLS1 ROM0L, GLS1 ROM1L
+                                                                                     GLS1 ROM2L, GLS1 ROM0U
+                                                                                     GLS1 ROM1U, GLS1 ROM2U
+                                                                                     GLS1 FL3L, GLS1 FL3U
+                                                                                     GLS1 FL4L, GLS1 FL4U
+                                                                                     GLS1 FL5L, GLS1 FL5U
+
+
 ********
 *Type 7*
 ********
@@ -584,11 +618,11 @@ SYSTEM 12 M10X64 PCB ?????????? (??????????)
 |                  |-------------------|                   |
 |----------------------------------------------------------|
 Notes:
-      This PCB probably has zero Ohm resistor jumpers to set the ROM sizes,
-      however that information was not documented by the dumper. The locations
-      of the ROMs and KEYCUS are also unknown, for the same reason. The PCB number
-      is also unknown for the same reason. The presence or absence of a PAL is also
-      unknown for the same reason.
+      Due to the lack of documentation, the follow is unknown.....
+      - The presence or absence of zero Ohm resistor jumpers to set the ROM sizes.
+      - The locations of the ROMs and KEYCUS.
+      - The PCB number.
+      - The presence or absence of a PAL.
 
       WAVEx : 64M SOP44 MASKROM
       ROMx  : 64M SOP44 MASKROM
@@ -671,12 +705,12 @@ COH-700 GP-15
 |                                           |
 |-------------------------------------------|
 Notes:
-      KM4132G271Q: Samsung Electronics 128K x 32Bit x 2 Banks SGRAM (x2, QFP100)
+      KM4132G271Q: Samsung Electronics 128k x 32-bit x 2 Banks SGRAM (x2, QFP100)
       KM416V1204 : Samsung Electronics 1M x16 EDO DRAM (x2, TSOP44(40))
       *          : Unpopulated positions for KM416V1204 EDO DRAM
       CXD8654Q   : Sony CXD8654Q GPU (QFP208)
       CXD8661R   : Sony CXD8661R R3000A-based CPU (QFP208)
-      MC44200FT  : Motorola MC44200FT Triple 8-bit Video DAC
+      MC44200FT  : Motorola MC44200FT Triple 8-bit Video DAC (QFP44)
 
 
 NETWORK PCB
@@ -713,7 +747,7 @@ Notes:
       C446     : Namco Custom C446 (QFP160)
       C422     : Namco Custom C422 (QFP64)
       2061ASC-1: IC Designs 2061ASC-1 programmable clock generator (SOIC16)
-      N341256  : NKK N341256 32K x8 SRAM (x4, SOJ28)
+      N341256  : NKK N341256 32k x8 SRAM (x4, SOJ28)
       H8/3002  : Hitachi H8/3002 HD6413002F17 Microcontroller (QFP100), clocked at 14.7456MHz.
       S12HSC1A : PALCE 16V8H  (PLCC20, labelled 'S12HSC1A')
       S12HSC2A : PALCE 22V10H (PLCC28, labelled 'S12HSC2A')
@@ -726,7 +760,7 @@ Notes:
       Tekken 3      (TET2/VER.A)
       Ehrgeiz       (EG2/VER.A)
 
-      Note that the games will also work without this PCB.
+      Note that the games will also work without this PCB, minus the network functionality.
 
 
 Gun Board (This is the same Gun Board used with Point Blank 2 on System 11 hardware)
@@ -766,9 +800,9 @@ Notes:
       AV9170  - Integrated Circuit Systems Inc. AV9170 Clock Synchronizer and Multiplier, Voltage Controlled Oscillator (SOIC8)
 
       This PCB was found on the following games (so far)....
-
       Ghoul Panic (OB2/VER.A)
- */
+      Point Blank 2 (GNB5/VER.A)
+*/
 
 #include <stdarg.h>
 #include "driver.h"
@@ -778,10 +812,6 @@ Notes:
 #include "machine/at28c16.h"
 #include "sound/c352.h"
 #include <time.h>
-
-#define GUNX( a ) ( ( readinputport( a ) * 511 ) / 0x1ff )	// display and game want 512
-#define GUNY( a ) ( ( readinputport( a ) * 479 ) / 0x1ff )	// display needs 480
-#define GUNY2( a ) ( ( readinputport( a ) * 447 ) / 0x1ff )	// game wants 448
 
 #define VERBOSE_LEVEL ( 0 )
 
@@ -831,7 +861,8 @@ static UINT32 m_n_bankoffset, m_n_bankoffseth;
 // called after a state load to properly set things up again
 static void s12_resetbank(void)
 {
-	if (!strcmp( Machine->gamedrv->name, "golgo13" ))
+	if( strcmp( Machine->gamedrv->name, "golgo13" ) == 0 ||
+		strcmp( Machine->gamedrv->name, "g13knd" ) == 0 )
 	{
 		memory_set_bankptr( 1, memory_region( REGION_USER2 ) + ((m_n_bankoffseth << 23) | (m_n_bankoffset << 21)) );
 	}
@@ -844,7 +875,8 @@ static void s12_resetbank(void)
 static WRITE32_HANDLER( bankoffset_w )
 {
 	// Golgo 13 has different banking (maybe the keycus controls it?)
-	if (!strcmp( Machine->gamedrv->name, "golgo13" ))
+	if( strcmp( Machine->gamedrv->name, "golgo13" ) == 0 ||
+		strcmp( Machine->gamedrv->name, "g13knd" ) == 0 )
 	{
 		if (data & 8)
 		{
@@ -866,7 +898,9 @@ static WRITE32_HANDLER( bankoffset_w )
 	verboselog( 1, "bankoffset_w( %08x, %08x, %08x ) %08x\n", offset, data, mem_mask, m_n_bankoffset );
 }
 
-static UINT32 m_n_dmaoffset, m_n_dmabias;
+static UINT32 m_n_dmaoffset;
+static UINT32 m_n_dmabias;
+static UINT32 m_n_tektagdmaoffset = 0xffffffff;
 
 static WRITE32_HANDLER( dmaoffset_w )
 {
@@ -889,14 +923,23 @@ static void namcos12_rom_read( UINT32 n_address, INT32 n_size )
 
 	verboselog( 1, "namcos12_rom_read( %08x, %08x )\n", n_address, n_size );
 
-	if (( m_n_dmaoffset >= 0x80000000 ) || ( m_n_dmabias == 0x1f300000 ))
+	if( ( m_n_dmaoffset >= 0x80000000 ) || ( m_n_dmabias == 0x1f300000 ) )
 	{
 		p_n_src = (UINT32 *)( memory_region( REGION_USER1 ) + ( m_n_dmaoffset & 0x003fffff ) );
+	}
+	else if( m_n_tektagdmaoffset >= 0x00000000 && m_n_tektagdmaoffset <= 0x03800000 )
+	{
+		p_n_src = (UINT32 *)( memory_region( REGION_USER2 ) + ( m_n_tektagdmaoffset & 0x7fffffff ) );
+	}
+	else if( m_n_tektagdmaoffset >= 0x04000000 && m_n_tektagdmaoffset <= 0x04400000 )
+	{
+		p_n_src = (UINT32 *)( memory_region( REGION_USER1 ) + ( m_n_tektagdmaoffset & 0x003fffff ) );
 	}
 	else
 	{
 		p_n_src = (UINT32 *)( memory_region( REGION_USER2 ) + ( m_n_dmaoffset & 0x7fffffff ) );
 	}
+
 
 	p_n_dst = &g_p_n_psxram[ n_address / 4 ];
 
@@ -950,11 +993,52 @@ static ADDRESS_MAP_START( namcos12_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0xfffe0130, 0xfffe0133) AM_WRITENOP
 ADDRESS_MAP_END
 
-static DRIVER_INIT( namcos12 )
+static WRITE32_HANDLER( system11gun_w )
 {
-	psx_driver_init();
+	if( ACCESSING_LSW32 )
+	{
+		/* start 1 */
+		set_led_status(0, !(data & 0x08));
+		/* start 2 */
+		set_led_status(1, !(data & 0x04));
+		/* blowback 1 */
+		/* !(data & 0x02) */
+		/* blowback 2 */
+		/* !(data & 0x01) */
+		verboselog( 1, "system11gun_w: outputs (%08x %08x)\n", data, mem_mask );
+	}
+	if( ACCESSING_MSW32 )
+	{
+		verboselog( 2, "system11gun_w: start reading (%08x %08x)\n", data, mem_mask );
+	}
+}
 
-	psx_dma_install_read_handler( 5, namcos12_rom_read );
+static READ32_HANDLER( system11gun_r )
+{
+	UINT32 data = 0;
+	switch( offset )
+	{
+	case 0:
+		data = readinputport( 3 );
+		break;
+	case 1:
+		data = ( readinputport( 4 ) ) | ( ( readinputport( 4 ) + 1 ) << 16 );
+		break;
+	case 2:
+		data = readinputport( 5 );
+		break;
+	case 3:
+		data = ( readinputport( 6 ) ) | ( ( readinputport( 6 ) + 1 ) << 16 );
+		break;
+	}
+	verboselog( 2, "system11gun_r( %08x, %08x ) %08x\n", offset, mem_mask, data );
+	return data;
+}
+
+static void system11gun_install( void )
+{
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f788000, 0x1f788003, 0, 0, system11gun_w );
+	memory_install_read32_handler (0, ADDRESS_SPACE_PROGRAM, 0x1f780000, 0x1f78000f, 0, 0, system11gun_r );
 }
 
 static MACHINE_START( namcos12 )
@@ -979,6 +1063,31 @@ static WRITE32_HANDLER( kcon_w )
 	memory_set_bankptr( 2, kcram );
 }
 
+static WRITE32_HANDLER( tektagt_protection_1_w )
+{
+	m_n_tektagdmaoffset = data;
+	verboselog( 1, "tektagt_protection_1_w( %08x, %08x, %08x)\n", offset, mem_mask, data );
+}
+
+static READ32_HANDLER( tektagt_protection_1_r )
+{
+	UINT32 data = 0x8000;
+	verboselog( 1, "tektagt_protection_1_r( %08x, %08x, %08x)\n", offset, mem_mask, data );
+	return data;
+}
+
+static WRITE32_HANDLER( tektagt_protection_2_w )
+{
+	verboselog( 1, "tektagt_protection_2_w( %08x, %08x, %08x)\n", offset, mem_mask, data );
+}
+
+static READ32_HANDLER( tektagt_protection_2_r )
+{
+	UINT32 data = 0x36e2;
+	verboselog( 1, "tektagt_protection_2_r( %08x, %08x, %08x)\n", offset, mem_mask, data );
+	return data;
+}
+
 MACHINE_RESET( namcos12 )
 {
 	psx_machine_init();
@@ -986,14 +1095,29 @@ MACHINE_RESET( namcos12 )
 
 	if( strcmp( Machine->gamedrv->name, "tektagt" ) == 0 ||
 		strcmp( Machine->gamedrv->name, "tektagta" ) == 0 ||
+		strcmp( Machine->gamedrv->name, "tektagtb" ) == 0 ||
+		strcmp( Machine->gamedrv->name, "tektagtc" ) == 0 )
+	{
+		memory_install_read32_handler (0, ADDRESS_SPACE_PROGRAM, 0x1fb00000, 0x1fb00003, 0, 0, tektagt_protection_1_r );
+		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1fb00000, 0x1fb00003, 0, 0, tektagt_protection_1_w );
+		memory_install_read32_handler (0, ADDRESS_SPACE_PROGRAM, 0x1fb80000, 0x1fb80003, 0, 0, tektagt_protection_2_r );
+		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1fb80000, 0x1fb80003, 0, 0, tektagt_protection_2_w );
+	}
+
+	if( strcmp( Machine->gamedrv->name, "tektagt" ) == 0 ||
+		strcmp( Machine->gamedrv->name, "tektagta" ) == 0 ||
+		strcmp( Machine->gamedrv->name, "tektagtb" ) == 0 ||
+		strcmp( Machine->gamedrv->name, "tektagtc" ) == 0 ||
 		strcmp( Machine->gamedrv->name, "fgtlayer" ) == 0 ||
 		strcmp( Machine->gamedrv->name, "golgo13" ) == 0 ||
+		strcmp( Machine->gamedrv->name, "g13knd" ) == 0 ||
 		strcmp( Machine->gamedrv->name, "mrdrillr" ) == 0 ||
 		strcmp( Machine->gamedrv->name, "pacapp" ) == 0 ||
 		strcmp( Machine->gamedrv->name, "pacappsp" ) == 0 ||
 		strcmp( Machine->gamedrv->name, "pacapp2" ) == 0 ||
 		strcmp( Machine->gamedrv->name, "tenkomoj" ) == 0 ||
 		strcmp( Machine->gamedrv->name, "tenkomor" ) == 0 ||
+		strcmp( Machine->gamedrv->name, "ptblank2" ) == 0 ||
 		strcmp( Machine->gamedrv->name, "ghlpanic" ) == 0 )
 	{
 		/* this is based on guesswork, it might not even be keycus. */
@@ -1145,42 +1269,40 @@ static WRITE8_HANDLER( s12_mcu_settings_w )
 
 static READ8_HANDLER( s12_mcu_gun_h_r )
 {
-	int rv;
+	int index = port_tag_to_index("IN3");
+	if( index != -1 )
+	{
+		int rv = readinputport( index );
+
+		if( ( offset & 1 ) != 0 )
+		{
+			return ( rv & 0x3 ) << 6;
+		}
+
+		return ( rv & 0x3fc ) >> 2;
+	}
 
 	// if game has no lightgun ports, return 0
-	if (port_tag_to_index("IN3") == -1)
-	{
-		return 0;
-	}
-
-	rv = GUNX(3) + 156;
-
-	if (offset & 1)
-	{
-		return (rv&0x3)<<6;
-	}
-
-	return (rv&0x3fc)>>2;
+	return 0;
 }
 
 static READ8_HANDLER( s12_mcu_gun_v_r )
 {
-	int rv;
+	int index = port_tag_to_index("IN4");
+	if( index != -1 )
+	{
+		int rv = readinputport( index );
+
+		if( ( offset & 1 ) != 0 )
+		{
+			return ( rv & 0x3 ) << 6;
+		}
+
+		return ( rv & 0x3fc ) >> 2;
+	}
 
 	// if game has no lightgun ports, return 0
-	if (port_tag_to_index("IN4") == -1)
-	{
-		return 0;
-	}
-
-	rv = 0x1de - (GUNY2(4));	// + 0x1e = way on top
-
-	if (offset & 1)
-	{
-		return (rv&0x3)<<6;
-	}
-
-	return (rv&0x3fc)>>2;
+	return 0;
 }
 
 static ADDRESS_MAP_START( s12h8iomap, ADDRESS_SPACE_IO, 8 )
@@ -1200,11 +1322,114 @@ static struct C352interface c352_interface =
 	REGION_SOUND1
 };
 
-static VIDEO_UPDATE( golgo13 )
+static int gunxmin;
+static int gunxmax;
+static int gunxflip;
+static int gunymin;
+static int gunymax;
+static int gunyflip;
+
+static int gunx( int port )
+{
+	int x = readinputport( port );
+	if( gunxflip )
+	{
+		x = gunxmax - x;
+	}
+	else
+	{
+		x = x - gunxmin;
+	}
+	x *= ( Machine->visible_area.max_x - Machine->visible_area.min_x );
+	x /= ( gunxmax - gunxmin );
+	return Machine->visible_area.min_x + x;
+}
+
+static int guny( int port )
+{
+	int y = readinputport( port );
+	if( gunyflip )
+	{
+		y = gunymax - y;
+	}
+	else
+	{
+		y = y - gunymin;
+	}
+	y *= ( Machine->visible_area.max_y - Machine->visible_area.min_y );
+	y /= ( gunymax - gunymin );
+	return Machine->visible_area.min_y + y;
+}
+
+static void s12_draw_crosshair( mame_bitmap *bitmap, const char *xtag, const char *ytag, const rectangle *cliprect, int player )
+{
+	int xindex = port_tag_to_index( xtag );
+	int yindex = port_tag_to_index( ytag );
+	if( xindex != -1 && yindex != -1 )
+	{
+		draw_crosshair( bitmap, gunx( xindex ), guny( yindex ), cliprect, player );
+	}
+}
+
+static VIDEO_UPDATE( coh700g )
 {
 	video_update_psx( screen, bitmap, cliprect );
 
-	draw_crosshair(bitmap, GUNX(3), GUNY(4), cliprect, 0);
+	s12_draw_crosshair( bitmap, "IN3", "IN4", cliprect, 0 );
+	s12_draw_crosshair( bitmap, "IN5", "IN6", cliprect, 1 );
+}
+
+static DRIVER_INIT( namcos12 )
+{
+	psx_driver_init();
+
+	psx_dma_install_read_handler( 5, namcos12_rom_read );
+}
+
+static DRIVER_INIT( ptblank2 )
+{
+	init_namcos12();
+
+	/* patch out wait for dma 5 to complete */
+	*( (UINT32 *)( memory_region( REGION_USER1 ) + 0x331c4 ) ) = 0;
+
+	system11gun_install();
+
+	gunxmin = 0xd8;
+	gunxmax = 0x387;
+	gunxflip = 0;
+
+	gunymin = 0x2c;
+	gunymax = 0x11b;
+	gunyflip = 0;
+}
+
+static DRIVER_INIT( ghlpanic )
+{
+	init_namcos12();
+
+	system11gun_install();
+
+	gunxmin = 0xc0;
+	gunxmax = 0x35f;
+	gunxflip = 0;
+
+	gunymin = 0x1a;
+	gunymax = 0x109;
+	gunyflip = 0;
+}
+
+static DRIVER_INIT( golgo13 )
+{
+	init_namcos12();
+
+	gunxmin = 0x9c;
+	gunxmax = 0x29b;
+	gunxflip = 0;
+
+	gunymin = 0x1f;
+	gunymax = 0x1de;
+	gunyflip = 1;
 }
 
 static MACHINE_DRIVER_START( coh700 )
@@ -1246,14 +1471,13 @@ static MACHINE_DRIVER_START( coh700 )
 	MDRV_SOUND_ROUTE(3, "left", 1.00)
 MACHINE_DRIVER_END
 
-static MACHINE_DRIVER_START( golgo13 )
+static MACHINE_DRIVER_START( coh700g )
 	MDRV_IMPORT_FROM( coh700 )
 
-	MDRV_VIDEO_UPDATE( golgo13 )
+	MDRV_VIDEO_UPDATE( coh700g )
 MACHINE_DRIVER_END
 
 INPUT_PORTS_START( namcos12 )
-	/* IN 0 */
 	PORT_START_TAG("IN0")
 	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR(Service_Mode) )
 	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
@@ -1263,15 +1487,14 @@ INPUT_PORTS_START( namcos12 )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_BIT( 0xff3f, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	/* IN 1 */
 	PORT_START_TAG("IN1")
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
@@ -1282,12 +1505,11 @@ INPUT_PORTS_START( namcos12 )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START2 )
 
-	/* IN 2 */
 	PORT_START_TAG("IN2")
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON4 )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON5 )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON6 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON6 ) PORT_PLAYER(1)
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(2)
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_PLAYER(2)
@@ -1302,62 +1524,67 @@ INPUT_PORTS_START( namcos12 )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_SERVICE1 )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( golgo13 )
-	/* IN 0 */
-	PORT_START_TAG("IN0")
-	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR(Service_Mode) )
-	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0040, 0x0040, "Freeze" )
-	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_BIT( 0xff3f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_START( ptblank2 )
+	PORT_INCLUDE( namcos12 )
 
-	/* IN 1 */
-	PORT_START_TAG("IN1")
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
+	PORT_MODIFY("IN1")
+	PORT_BIT( 0x6f6f, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_MODIFY("IN2")
+	PORT_BIT( 0x00ee, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("IN3")
+	PORT_BIT( 0xffff, 0x022f, IPT_LIGHTGUN_X ) PORT_MINMAX(0xd8,0x387) PORT_SENSITIVITY(100) PORT_KEYDELTA(15) PORT_PLAYER(1)
+
+	PORT_START_TAG("IN4")
+	PORT_BIT( 0xffff, 0x00a8, IPT_LIGHTGUN_Y ) PORT_MINMAX(0x2c,0x11b) PORT_SENSITIVITY(50) PORT_KEYDELTA(15) PORT_PLAYER(1)
+
+	PORT_START_TAG("IN5")
+	PORT_BIT( 0xffff, 0x022f, IPT_LIGHTGUN_X ) PORT_MINMAX(0xd8,0x387) PORT_SENSITIVITY(100) PORT_KEYDELTA(15) PORT_PLAYER(2)
+
+	PORT_START_TAG("IN6")
+	PORT_BIT( 0xffff, 0x00a8, IPT_LIGHTGUN_Y ) PORT_MINMAX(0x2c,0x11b) PORT_SENSITIVITY(50) PORT_KEYDELTA(15) PORT_PLAYER(2)
+INPUT_PORTS_END
+
+INPUT_PORTS_START( ghlpanic )
+	PORT_INCLUDE( namcos12 )
+
+	PORT_MODIFY("IN1")
+	PORT_BIT( 0x6f6f, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_MODIFY("IN2")
+	PORT_BIT( 0x00ee, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START_TAG("IN3")
+	PORT_BIT( 0xffff, 0x0210, IPT_LIGHTGUN_X ) PORT_MINMAX(0xc0,0x35f) PORT_SENSITIVITY(100) PORT_KEYDELTA(15) PORT_PLAYER(1)
+
+	PORT_START_TAG("IN4")
+	PORT_BIT( 0xffff, 0x0091, IPT_LIGHTGUN_Y ) PORT_MINMAX(0x1a,0x109) PORT_SENSITIVITY(50) PORT_KEYDELTA(15) PORT_PLAYER(1)
+
+	PORT_START_TAG("IN5")
+	PORT_BIT( 0xffff, 0x0210, IPT_LIGHTGUN_X ) PORT_MINMAX(0xc0,0x35f) PORT_SENSITIVITY(100) PORT_KEYDELTA(15) PORT_PLAYER(2)
+
+	PORT_START_TAG("IN6")
+	PORT_BIT( 0xffff, 0x0091, IPT_LIGHTGUN_Y ) PORT_MINMAX(0x1a,0x109) PORT_SENSITIVITY(50) PORT_KEYDELTA(15) PORT_PLAYER(2)
+INPUT_PORTS_END
+
+INPUT_PORTS_START( golgo13 )
+	PORT_INCLUDE( namcos12 )
+
+	PORT_MODIFY("IN1")
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0xff43, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	/* IN 2 */
-	PORT_START_TAG("IN2")
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_MODIFY("IN2")
 	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("Test Switch") PORT_CODE(KEYCODE_F2) PORT_TOGGLE //That should help with test mode
-	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x10ee, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	/* IN 3 */
 	PORT_START_TAG("IN3")
-	PORT_BIT( 0x1ff, 0x80, IPT_LIGHTGUN_X ) PORT_MINMAX(0,0x1ff) PORT_SENSITIVITY(25) PORT_KEYDELTA(15) PORT_PLAYER(1)
+	PORT_BIT( 0xffff, 0x019b, IPT_LIGHTGUN_X ) PORT_MINMAX(0x9c,0x29b) PORT_SENSITIVITY(100) PORT_KEYDELTA(15) PORT_PLAYER(1)
 
-	/* IN 4 */
 	PORT_START_TAG("IN4")
-	PORT_BIT( 0x1ff, 0x80, IPT_LIGHTGUN_Y ) PORT_MINMAX(0,0x1ff) PORT_SENSITIVITY(25) PORT_KEYDELTA(15) PORT_PLAYER(1)
+	PORT_BIT( 0xffff, 0x00fe, IPT_LIGHTGUN_Y ) PORT_MINMAX(0x1f,0x1de) PORT_SENSITIVITY(100) PORT_KEYDELTA(15) PORT_PLAYER(1) PORT_REVERSE
 INPUT_PORTS_END
 
 ROM_START( aquarush )
@@ -1469,20 +1696,47 @@ ROM_START( golgo13 )
 	ROM_LOAD( "glg1wave1.13",        0x0800000, 0x800000, CRC(480b0a1a) SHA1(341d5ec8ad0f3c0a121eeeec9466aaeec2bd1c74) )
 ROM_END
 
-ROM_START( ghlpanic )
+ROM_START( g13knd )
 	ROM_REGION32_LE( 0x00400000, REGION_USER1, 0 ) /* main prg */
-	ROM_LOAD16_BYTE( "ob2vera.2e",   0x0000000, 0x200000, CRC(77162ae0) SHA1(cdc0833756037562b49bb2ae02931b3b24d27329) )
-	ROM_LOAD16_BYTE( "ob2vera.2j",   0x0000001, 0x200000, CRC(628f0830) SHA1(a547880674d95b84acc9c05413cba4fd3a81e0cf) )
+	ROM_LOAD16_BYTE( "gls1vera.2e",    0x0000000, 0x200000, CRC(904c39a7) SHA1(e62a518657b639d31e390b8d1a36eee8a46ab179) )
+	ROM_LOAD16_BYTE( "gls1vera.2j",    0x0000001, 0x200000, CRC(f8f9d6d2) SHA1(ec02192f3874fea289d123fd6d828148c77fbf6d) )
 
-	ROM_REGION32_LE( 0x00800000, REGION_USER2, 0 ) /* main data */
-	ROM_LOAD16_BYTE( "ob1rom0l.ic12", 0x0000000, 0x400000, CRC(13245464) SHA1(a18d361c9137bab2c6b3fc0262524754f2284dd2) )
-	ROM_LOAD16_BYTE( "ob1rom0u.ic11", 0x0000001, 0x400000, CRC(d1300108) SHA1(db459bc0f7e568b71c33862b1e54abaf80ef82ac) )
+	ROM_REGION32_LE( 0x3c00000, REGION_USER2, 0 ) /* main data */
+	ROM_LOAD16_BYTE( "gls1rom0l.ic10", 0x0000000, 0x800000, CRC(91e04e7e) SHA1(70603ec5c17d9074f7176e7214f7507a3e408578) )
+	ROM_LOAD16_BYTE( "gls1rom0u.ic14", 0x0000001, 0x800000, CRC(29f67094) SHA1(d17baa723bca5cadb483cd777d0ef25c29367426) )
+	ROM_LOAD16_BYTE( "gls1rom1l.ic11", 0x1000000, 0x800000, CRC(fc69578f) SHA1(20bcd687aeb3741893588b492f93531e58405c3e) )
+	ROM_LOAD16_BYTE( "gls1rom1u.ic15", 0x1000001, 0x800000, CRC(db46d626) SHA1(a623097fd17e99ee31c22ed62cb88aa9dc25721c) )
+	ROM_LOAD16_BYTE( "gls1rom2l.ic12", 0x2000000, 0x800000, CRC(707cec76) SHA1(59257acc0b5a7f86a895873fc679ea184d2c0a50) )
+	ROM_LOAD16_BYTE( "gls1rom2u.ic16", 0x2000001, 0x800000, CRC(970abad0) SHA1(fb41c379d28df2115baee967cc9645da869d2e2d) )
+	ROM_LOAD16_BYTE( "gls1fl3l.ic4",   0x3000000, 0x200000, CRC(3a0ffd17) SHA1(03c704012040b9b9c24453baa8dbfbb3aec82854) )
+	ROM_LOAD16_BYTE( "gls1fl3u.ic5",   0x3000001, 0x200000, CRC(565567ff) SHA1(36a26ed8fbba95dccbde6300363acb45d9c029b3) )
+	ROM_LOAD16_BYTE( "gls1fl4l.ic6",   0x3400000, 0x200000, CRC(b4591cc0) SHA1(8da1defb74957bd02324d5b2d3af406dc1f7061b) )
+	ROM_LOAD16_BYTE( "gls1fl4u.ic7",   0x3400001, 0x200000, CRC(679d545c) SHA1(b0e04cb123b4a15d935d773856e9cc954e81ba21) )
+	ROM_LOAD16_BYTE( "gls1fl5l.ic8",   0x3800000, 0x200000, CRC(a5581533) SHA1(58721d3acc1a740e616b721b400c6912f21d516f) )
+	ROM_LOAD16_BYTE( "gls1fl5u.ic9",   0x3800001, 0x200000, CRC(a8b6832a) SHA1(c0e392b7aa51dfcfce602fb0a46ccbc18074385c) )
 
 	ROM_REGION( 0x0080000, REGION_CPU2, 0 ) /* sound prg */
-	ROM_LOAD16_WORD_SWAP( "ob2vera.11s",  0x0000000, 0x080000, CRC(f8c459f2) SHA1(681520c891f5c8a0f321652d8834910310c88d1a) )
+	ROM_LOAD16_WORD_SWAP( "gls1vera.11s", 0x0000000, 0x080000, CRC(a1e68d02) SHA1(bcacea12531539776d5ad5d34b64f7f4a10a0b97) )
 
-	ROM_REGION( 0x08000000, REGION_SOUND1, 0 ) /* samples */
-	ROM_LOAD( "ob1wave.ic2",  0x000000, 0x800000, CRC(223313ce) SHA1(38b7ebb12565e254fa498ba660ad45de24bb8ec0) )
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* samples */
+	ROM_LOAD( "gls1wave0.ic1",         0x0090000, 0x800000, CRC(9de10ef5) SHA1(c391998ed3d882d49d6dbe7079414a2bfd180b49) )
+	ROM_LOAD( "gls1wave1.ic13",        0x0800000, 0x800000, CRC(4c92b6bf) SHA1(a463b5825f635efe402a6ea6c1ed8ecdc3d466e0) )
+ROM_END
+
+ROM_START( ghlpanic )
+	ROM_REGION32_LE( 0x00400000, REGION_USER1, 0 ) /* main prg */
+	ROM_LOAD16_BYTE( "ob2vera.2e",     0x0000000, 0x200000, CRC(77162ae0) SHA1(cdc0833756037562b49bb2ae02931b3b24d27329) )
+	ROM_LOAD16_BYTE( "ob2vera.2j",     0x0000001, 0x200000, CRC(628f0830) SHA1(a547880674d95b84acc9c05413cba4fd3a81e0cf) )
+
+	ROM_REGION32_LE( 0x00800000, REGION_USER2, 0 ) /* main data */
+	ROM_LOAD16_BYTE( "ob1rom0l.ic12",  0x0000000, 0x400000, CRC(f8b6a599) SHA1(2af3186242a8cbf14ab7532496a91041300527e9) )
+	ROM_LOAD16_BYTE( "ob1rom0u.ic11",  0x0000001, 0x400000, CRC(0625db92) SHA1(b63be6e41b2c6e2194f02f0c31da1f30c4e08232) )
+
+	ROM_REGION( 0x0080000, REGION_CPU2, 0 ) /* sound prg */
+	ROM_LOAD16_WORD_SWAP( "ob2vera.11s", 0x0000000, 0x080000, CRC(f8c459f2) SHA1(681520c891f5c8a0f321652d8834910310c88d1a) )
+
+	ROM_REGION( 0x0800000, REGION_SOUND1, 0 ) /* samples */
+	ROM_LOAD( "ob1wave.ic2",           0x000000, 0x800000, CRC(e7bc7202) SHA1(f0f598304866ebe62642eaac6b7d8709baa14fe1) )
 ROM_END
 
 ROM_START( lbgrande )
@@ -1596,6 +1850,23 @@ ROM_START( pacapp2 )
 	ROM_LOAD( "pks1wave1.ic1",       0x0800000, 0x800000, CRC(07e426b7) SHA1(6dd038d4f2c95470f1ca09cfead83802e9480d02) )
 ROM_END
 
+ROM_START( ptblank2 )
+	ROM_REGION32_LE( 0x00400000, REGION_USER1, 0 ) /* main prg */
+	ROM_LOAD16_BYTE( "gnb5vera.2l",  0x0000000, 0x200000, CRC(4d0ef3b7) SHA1(6c4077316fa90b734c4a4e0aa3eadd26e97bd6ce) )
+	ROM_LOAD16_BYTE( "gnb5vera.2p",  0x0000001, 0x200000, CRC(5d1d19ff) SHA1(4aa8ba7233d7f9bac759c98f53e637c1f3659c3f) )
+
+	ROM_REGION32_LE( 0x1000000, REGION_USER2, 0 ) /* main data */
+	ROM_LOAD16_BYTE( "gnb1prg0l.ic12", 0x000000, 0x800000, CRC(78746037) SHA1(d130ca1153a730e3c967945248f00662f9fab304) )
+	ROM_LOAD16_BYTE( "gnb1prg0u.ic11", 0x000001, 0x800000, CRC(697d3279) SHA1(40302780f7494d9413888b2d1da38bd14a9a444f) )
+
+	ROM_REGION( 0x0080000, REGION_CPU2, 0 ) /* sound prg */
+	ROM_LOAD16_WORD_SWAP( "gnb5vera.11s", 0x000000, 0x080000, CRC(d45a53eb) SHA1(01eb4f659b29671d417c5d3684f15a5876f76009) )
+
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* samples */
+	ROM_LOAD( "gnb1wave.ic2",  0x0000000, 0x400000, CRC(4e19d9d6) SHA1(0a92c987536999a789663a30c787950ab6995128) )
+	ROM_RELOAD( 0x800000, 0x400000 )
+ROM_END
+
 ROM_START( soulclbr )
 	ROM_REGION32_LE( 0x00400000, REGION_USER1, 0 ) /* main prg */
 	ROM_LOAD16_BYTE( "soc14verc.2e", 0x0000000, 0x200000, CRC(c40e9614) SHA1(dc20469f0d657423e472fdf5897852ab9fb8bb73) )
@@ -1617,6 +1888,25 @@ ROM_END
 
 ROM_START( soulclba )
 	ROM_REGION32_LE( 0x00400000, REGION_USER1, 0 ) /* main prg */
+	ROM_LOAD16_BYTE( "soc11verc.2l", 0x0000000, 0x200000, CRC(f5e3679c) SHA1(b426cfc7707a6772e6aabbaf4a19b7f008324d55) )
+	ROM_LOAD16_BYTE( "soc11verc.2p", 0x0000001, 0x200000, CRC(7537719c) SHA1(d83d4c762fa7fcfd5d84de550568e92999e5bdfb) )
+
+	ROM_REGION32_LE( 0x2000000, REGION_USER2, 0 ) /* main data */
+	ROM_LOAD(        "soc1rom0.7",   0x0000000, 0x800000, CRC(cdc47b55) SHA1(315ea6b819de5c4883aa400f1b9f4172637757bf) )
+	ROM_LOAD(        "soc1rom1.8",   0x0800000, 0x800000, CRC(30d2dd5a) SHA1(1c0c467ba339e0241efb8d5c3b025a046b2ca676) )
+	ROM_LOAD(        "soc1rom2.9",   0x1000000, 0x800000, CRC(dbb93955) SHA1(624cd8ad94e8ae53206f798bff81784afe95e5f1) )
+	ROM_LOAD(        "soc1fl3.6",    0x1800000, 0x400000, CRC(24d94c38) SHA1(0f9b9ab11dd4e02086d7b9104ce2f5d4e93cd696) )
+	ROM_LOAD(        "soc1fl4.5",    0x1c00000, 0x400000, CRC(6212090e) SHA1(ed5e50771180935a0c2e760e7369673098722201) )
+
+	ROM_REGION( 0x0080000, REGION_CPU2, 0 ) /* sound prg */
+	ROM_LOAD16_WORD_SWAP( "soc1vera.11s", 0x0000000, 0x080000, CRC(52aa206a) SHA1(5abe9d6f800fa1b9623aa08b16e9b959b840e50b) )
+
+	ROM_REGION( 0x0800000, REGION_SOUND1, 0 ) /* samples */
+	ROM_LOAD( "soc1wave0.2",         0x0000000, 0x800000, CRC(c100618d) SHA1(b87f88ee42ad9c5affa674e5f816d902143fed99) )
+ROM_END
+
+ROM_START( soulclbb )
+	ROM_REGION32_LE( 0x00400000, REGION_USER1, 0 ) /* main prg */
 	ROM_LOAD16_BYTE( "soc11verb.2e", 0x0000000, 0x200000, CRC(9660d996) SHA1(6361abfd8b0d29848aabad6a5c517ba0d336359a) )
 	ROM_LOAD16_BYTE( "soc11verb.2j", 0x0000001, 0x200000, CRC(49939880) SHA1(a53fb8ecd71c8d59b0e08d6233ea658ae083bc6d) )
 
@@ -1634,7 +1924,7 @@ ROM_START( soulclba )
 	ROM_LOAD( "soc1wave0.2",         0x0000000, 0x800000, CRC(c100618d) SHA1(b87f88ee42ad9c5affa674e5f816d902143fed99) )
 ROM_END
 
-ROM_START( soulclbb )
+ROM_START( soulclbc )
 	ROM_REGION32_LE( 0x00400000, REGION_USER1, 0 ) /* main prg */
 	ROM_LOAD16_BYTE( "soc1vera.2l",  0x0000000, 0x200000, CRC(37e0a203) SHA1(3915b5e530c8e70a07aa8ccedeb66633ae5f670e) )
 	ROM_LOAD16_BYTE( "soc1vera.2p",  0x0000001, 0x200000, CRC(7cd87a35) SHA1(5a4837b6f6a49c88126a0ddbb8059a4da77127bc) )
@@ -1699,6 +1989,29 @@ ROM_START( tekken3 )
 ROM_END
 
 ROM_START( tekken3a )
+	ROM_REGION32_LE( 0x00400000, REGION_USER1, 0 ) /* main prg */
+	ROM_LOAD16_BYTE( "tet2verb.2e",  0x0000000, 0x200000, CRC(a6cbc434) SHA1(859d84e6e9a52c2cdd54a2a0bb8104169eb19c07) )
+	ROM_LOAD16_BYTE( "tet2verb.2j",  0x0000001, 0x200000, CRC(c8f95ec5) SHA1(7f34c42e1fbc35118e8476cdb78fbdb9564001de) )
+
+	ROM_REGION32_LE( 0x1c00000, REGION_USER2, 0 ) /* main data */
+	ROM_LOAD16_BYTE( "tet1rom0l.6",  0x0000000, 0x400000, CRC(2886bb32) SHA1(08ad9da2df25ad8c933a812ac238c81135072929) )
+	ROM_LOAD16_BYTE( "tet1rom0u.9",  0x0000001, 0x400000, CRC(c5705b92) SHA1(20df20c8d18eb4712d565a3df9a8d9270dee6aaa) )
+	ROM_LOAD16_BYTE( "tet1rom1l.7",  0x0800000, 0x400000, CRC(0397d283) SHA1(ebafcd14cdb2601214129a84fc6830846f5cd274) )
+	ROM_LOAD16_BYTE( "tet1rom1u.10", 0x0800001, 0x400000, CRC(502ba5cd) SHA1(19c1282245c6dbfc945c0bd0f3918968c3e5c3ed) )
+	ROM_LOAD16_BYTE( "tet1rom2l.8",  0x1000000, 0x400000, CRC(e03b1c24) SHA1(8579b95a8fd06b7d2893ff88b228fd794162dff1) )
+	ROM_LOAD16_BYTE( "tet1rom2u.11", 0x1000001, 0x400000, CRC(75eb2ab3) SHA1(dee43884e542391903f6aaae2c166e7921a86fb4) )
+	ROM_LOAD16_BYTE( "tet1fl3l.12",  0x1800000, 0x200000, CRC(45513073) SHA1(8a36f58ee2d292b50e00c6bf275f9def358032d8) )
+	ROM_LOAD16_BYTE( "tet1fl3u.13",  0x1800001, 0x200000, CRC(1917d993) SHA1(cabc44514a3e62a18a7f8f883603241447d6948b) )
+
+	ROM_REGION( 0x0080000, REGION_CPU2, 0 ) /* sound prg */
+	ROM_LOAD16_WORD_SWAP( "tet1vera.11s", 0x0000000, 0x080000, CRC(c92b98d1) SHA1(8ae6fba8c5b6b9a2ab9541eac8553b282f35750d) )
+
+	ROM_REGION( 0x0800000, REGION_SOUND1, 0 ) /* samples */
+	ROM_LOAD( "tet1wave0.5",         0x0000000, 0x400000, CRC(77ba7975) SHA1(fe9434dcf0fb232c85efaaae1b4b13d36099620a) )
+	ROM_LOAD( "tet1wave1.4",         0x0400000, 0x400000, CRC(ffeba79f) SHA1(941412bbe9d0305d9a23c224c1bb774c4321f6df) )
+ROM_END
+
+ROM_START( tekken3b )
 	ROM_REGION32_LE( 0x00400000, REGION_USER1, 0 ) /* main prg */
 	ROM_LOAD16_BYTE( "tet2vera.2e",  0x0000000, 0x200000, CRC(7270f157) SHA1(e73c5970e58f9e8c5696f4e3b15908fbec6c21ce) )
 	ROM_LOAD16_BYTE( "tet2vera.2j",  0x0000001, 0x200000, CRC(94ceb446) SHA1(c730eb5c770991ae3ae0b9ba63681ce037e46746) )
@@ -1771,6 +2084,56 @@ ROM_START( tektagta )
 	ROM_LOAD( "teg3wave1.12",        0x0800000, 0x800000, CRC(dbc74fff) SHA1(601b7e7361ea744b34e3fa1fc39d88641de7f4c6) )
 ROM_END
 
+ROM_START( tektagtb )
+	ROM_REGION32_LE( 0x00400000, REGION_USER1, 0 ) /* main prg */
+	ROM_LOAD16_BYTE( "teg1verb.2e",  0x0000000, 0x200000, CRC(ca6c305f) SHA1(264a85566b74f544fe63a01332d92c65d23b6608) )
+	ROM_LOAD16_BYTE( "teg1verb.2j",  0x0000001, 0x200000, CRC(5413e2ed) SHA1(d453f7932654d8258c67eb7fe3639d71db7e414c) )
+
+	ROM_REGION32_LE( 0x3800000, REGION_USER2, 0 ) /* main data */
+	ROM_LOAD32_WORD( "teg3rom0e.9",  0x0000000, 0x800000, CRC(c962a373) SHA1(d662dbd89ef62c5ac3150a018fc2d35ef2ee94ac) )
+	ROM_LOAD32_WORD( "teg3rom0o.13", 0x0000002, 0x800000, CRC(badb7dcf) SHA1(8c0bf7f6351c5a2a0996df371a901cf90c68cd8c) )
+	ROM_LOAD32_WORD( "teg3rom1e.10", 0x1000000, 0x800000, CRC(b3d56124) SHA1(4df20c74ba63f7362caf15e9b8949fab655704fb) )
+	ROM_LOAD32_WORD( "teg3rom1o.14", 0x1000002, 0x800000, CRC(2434ceb6) SHA1(f19f1599acbd6fd48793a2ee5a500ca817d9df56) )
+	ROM_LOAD32_WORD( "teg3rom2e.11", 0x2000000, 0x800000, CRC(6e5c3428) SHA1(e3cdb60a4445406877b2e273385f34bfb0974220) )
+	ROM_LOAD32_WORD( "teg3rom2o.15", 0x2000002, 0x800000, CRC(21ce9dfa) SHA1(f27e8210ee236c327aa3e1ce4dd408abc6580a1b) )
+	ROM_LOAD16_BYTE( "teg3flel.4",   0x3000000, 0x200000, CRC(88b3823c) SHA1(6f31acb642c57daccbfdb87b790037e261c8c73c) )
+	ROM_LOAD16_BYTE( "teg3fleu.5",   0x3000001, 0x200000, CRC(36df0867) SHA1(6bec8560ad4c122dc909daa83aa9089ba5b281f7) )
+	ROM_LOAD16_BYTE( "teg3flol.6",   0x3400000, 0x200000, CRC(03a76765) SHA1(ae35ae28375f2a3e52d72b77ec09750c326cc269) )
+	ROM_LOAD16_BYTE( "teg3flou.7",   0x3400001, 0x200000, CRC(6d6947d1) SHA1(2f307bc4070fadb510c0473bc91d917b2d845ca5) )
+
+	ROM_REGION( 0x0080000, REGION_CPU2, 0 ) /* sound prg */
+	ROM_LOAD16_WORD_SWAP( "teg3verb.11s", 0x0000000, 0x080000, CRC(67d0c469) SHA1(da164702fc21b9f46a9e32c89e7b1d36070ddf79) )
+
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* samples */
+	ROM_LOAD( "teg3wave0.1",         0x0000000, 0x800000, CRC(4bd99104) SHA1(f76b0576cc28fe49d3c1c402988b933933e52e15) )
+	ROM_LOAD( "teg3wave1.12",        0x0800000, 0x800000, CRC(dbc74fff) SHA1(601b7e7361ea744b34e3fa1fc39d88641de7f4c6) )
+ROM_END
+
+ROM_START( tektagtc )
+	ROM_REGION32_LE( 0x00400000, REGION_USER1, 0 ) /* main prg */
+	ROM_LOAD16_BYTE( "teg1vera.2e",  0x0000000, 0x200000, CRC(17c4bf36) SHA1(abf2dfb3e35344cf4449ade6e63b36c590d9c131) )
+	ROM_LOAD16_BYTE( "teg1vera.2j",  0x0000001, 0x200000, CRC(97cd9524) SHA1(8031cb465db378a6d9db9b132cf1169b94cba7dc) )
+
+	ROM_REGION32_LE( 0x3800000, REGION_USER2, 0 ) /* main data */
+	ROM_LOAD32_WORD( "teg3rom0e.9",  0x0000000, 0x800000, CRC(c962a373) SHA1(d662dbd89ef62c5ac3150a018fc2d35ef2ee94ac) )
+	ROM_LOAD32_WORD( "teg3rom0o.13", 0x0000002, 0x800000, CRC(badb7dcf) SHA1(8c0bf7f6351c5a2a0996df371a901cf90c68cd8c) )
+	ROM_LOAD32_WORD( "teg3rom1e.10", 0x1000000, 0x800000, CRC(b3d56124) SHA1(4df20c74ba63f7362caf15e9b8949fab655704fb) )
+	ROM_LOAD32_WORD( "teg3rom1o.14", 0x1000002, 0x800000, CRC(2434ceb6) SHA1(f19f1599acbd6fd48793a2ee5a500ca817d9df56) )
+	ROM_LOAD32_WORD( "teg3rom2e.11", 0x2000000, 0x800000, CRC(6e5c3428) SHA1(e3cdb60a4445406877b2e273385f34bfb0974220) )
+	ROM_LOAD32_WORD( "teg3rom2o.15", 0x2000002, 0x800000, CRC(21ce9dfa) SHA1(f27e8210ee236c327aa3e1ce4dd408abc6580a1b) )
+	ROM_LOAD16_BYTE( "teg3flel.4",   0x3000000, 0x200000, CRC(88b3823c) SHA1(6f31acb642c57daccbfdb87b790037e261c8c73c) )
+	ROM_LOAD16_BYTE( "teg3fleu.5",   0x3000001, 0x200000, CRC(36df0867) SHA1(6bec8560ad4c122dc909daa83aa9089ba5b281f7) )
+	ROM_LOAD16_BYTE( "teg3flol.6",   0x3400000, 0x200000, CRC(03a76765) SHA1(ae35ae28375f2a3e52d72b77ec09750c326cc269) )
+	ROM_LOAD16_BYTE( "teg3flou.7",   0x3400001, 0x200000, CRC(6d6947d1) SHA1(2f307bc4070fadb510c0473bc91d917b2d845ca5) )
+
+	ROM_REGION( 0x0080000, REGION_CPU2, 0 ) /* sound prg */
+	ROM_LOAD16_WORD_SWAP( "teg3verb.11s", 0x0000000, 0x080000, CRC(67d0c469) SHA1(da164702fc21b9f46a9e32c89e7b1d36070ddf79) )
+
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* samples */
+	ROM_LOAD( "teg3wave0.1",         0x0000000, 0x800000, CRC(4bd99104) SHA1(f76b0576cc28fe49d3c1c402988b933933e52e15) )
+	ROM_LOAD( "teg3wave1.12",        0x0800000, 0x800000, CRC(dbc74fff) SHA1(601b7e7361ea744b34e3fa1fc39d88641de7f4c6) )
+ROM_END
+
 ROM_START( tenkomor )
 	ROM_REGION32_LE( 0x00400000, REGION_USER1, 0 ) /* main prg */
 	ROM_LOAD16_BYTE( "tkm2vera.2e",  0x0000000, 0x200000, CRC(a9b81653) SHA1(9199505019234140b0d89e199f0db307d5bcca02) )
@@ -1796,8 +2159,8 @@ ROM_END
 
 ROM_START( tenkomoj )
 	ROM_REGION32_LE( 0x00400000, REGION_USER1, 0 ) /* main prg */
-        ROM_LOAD16_BYTE( "tkm1vera.2e",  0x000000, 0x200000, CRC(d4c89229) SHA1(aba6686eef924868b3bd2142fd073303fe9c4042) )
-        ROM_LOAD16_BYTE( "tkm1vera.2j",  0x000001, 0x200000, CRC(a6bfcaf4) SHA1(55dfa65e07a63a413f6eb47084e60b4fc32bcde5) )
+	ROM_LOAD16_BYTE( "tkm1vera.2e",  0x000000, 0x200000, CRC(d4c89229) SHA1(aba6686eef924868b3bd2142fd073303fe9c4042) )
+	ROM_LOAD16_BYTE( "tkm1vera.2j",  0x000001, 0x200000, CRC(a6bfcaf4) SHA1(55dfa65e07a63a413f6eb47084e60b4fc32bcde5) )
 
 	ROM_REGION32_LE( 0x1c00000, REGION_USER2, 0 ) /* main data */
 	ROM_LOAD16_BYTE( "tkm1rom0l.12", 0x0000000, 0x800000, CRC(dddebb39) SHA1(44169b0c6be4d387e7b6087ce723476ee96b09b4) )
@@ -1817,25 +2180,31 @@ ROM_START( tenkomoj )
 	ROM_LOAD( "tkm1wave1.1",  0x0800000, 0x800000, CRC(7567796b) SHA1(99e4b867477da2ccddfa9bebc4be84adc5cba53c) )
 ROM_END
 
-GAME( 1996, tekken3,   0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Tekken 3 (TET1/VER.E1)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC006 */
-GAME( 1996, tekken3a,  tekken3,  coh700, namcos12, namcos12, ROT0, "Namco",         "Tekken 3 (TET2/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC006 */
-GAME( 1997, lbgrande,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Libero Grande (LG2/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC006 */
-GAME( 1998, soulclbr,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Soul Calibur (SOC14/VER.C)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND )
-GAME( 1998, soulclba,  soulclbr, coh700, namcos12, namcos12, ROT0, "Namco",         "Soul Calibur (SOC11/VER.B)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND ) /* KC020 */
-GAME( 1998, soulclbb,  soulclbr, coh700, namcos12, namcos12, ROT0, "Namco",         "Soul Calibur (SOC11/VER.A2)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND ) /* KC020 */
-GAME( 1998, ehrgeiz,   0,        coh700, namcos12, namcos12, ROT0, "Square/Namco",  "Ehrgeiz (EG3/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC021 */
-GAME( 1998, ehrgeiza,  ehrgeiz,  coh700, namcos12, namcos12, ROT0, "Square/Namco",  "Ehrgeiz (EG2/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC021 */
-GAME( 1998, mdhorse,   0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Derby Quiz My Dream Horse (MDH1/VER.A2)", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC035 */
-GAME( 1998, tenkomor,  0,        coh700, namcos12, namcos12, ROT90, "Namco",        "Tenkomori Shooting (TKM2/VER.A1)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC036 */
-GAME( 1998, tenkomoj,  tenkomor, coh700, namcos12, namcos12, ROT90, "Namco",        "Tenkomori Shooting (TKM1/VER.A1)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC036 */
-GAME( 1998, fgtlayer,  0,        coh700, namcos12, namcos12, ROT0, "Arika/Namco",   "Fighting Layer (FTL0/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC037 */
-GAME( 1999, pacapp,    0,        coh700, namcos12, namcos12, ROT0, "Produce/Namco", "Paca Paca Passion (PPP1/VER.A2)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC038 */
-GAME( 1999, sws99,     0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Super World Stadium '99 (SS91/VER.A3)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC043 */
-GAME( 1999, tektagt,   0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Tekken Tag Tournament (TEG3/VER.C1)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND ) /* KC044 */
-GAME( 1999, tektagta,  tektagt,  coh700, namcos12, namcos12, ROT0, "Namco",         "Tekken Tag Tournament (TEG3/VER.B)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND ) /* KC044 */
-GAME( 1999, ghlpanic,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Ghoul Panic (OB2/VER.A)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND ) /* KC045 */
-GAME( 1999, pacapp2,   0,        coh700, namcos12, namcos12, ROT0, "Produce/Namco", "Paca Paca Passion 2 (PKS1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC046 */
-GAME( 1999, mrdrillr,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Mr Driller (DRI1/VER.A2)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC048 */
-GAME( 1999, pacappsp,  0,        coh700, namcos12, namcos12, ROT0, "Produce/Namco", "Paca Paca Passion Special (PSP1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC052 */
-GAME( 1999, aquarush,  0,        coh700, namcos12, namcos12, ROT0, "Namco",         "Aqua Rush (AQ1/VER.A1)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC053 */
-GAME( 1999, golgo13,   0,        golgo13,golgo13,  namcos12, ROT0, "Raizing/Namco", "Golgo 13 (GLG1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC054 */
+GAME( 1996, tekken3,   0,        coh700,   namcos12, namcos12, ROT0, "Namco",         "Tekken 3 (TET1/VER.E1)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC006 */
+GAME( 1996, tekken3a,  tekken3,  coh700,   namcos12, namcos12, ROT0, "Namco",         "Tekken 3 (TET2/VER.B)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC006 */
+GAME( 1996, tekken3b,  tekken3,  coh700,   namcos12, namcos12, ROT0, "Namco",         "Tekken 3 (TET2/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC006 */
+GAME( 1997, lbgrande,  0,        coh700,   namcos12, namcos12, ROT0, "Namco",         "Libero Grande (LG2/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC006 */
+GAME( 1998, soulclbr,  0,        coh700,   namcos12, namcos12, ROT0, "Namco",         "Soul Calibur (SOC14/VER.C)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND )
+GAME( 1998, soulclba,  soulclbr, coh700,   namcos12, namcos12, ROT0, "Namco",         "Soul Calibur (SOC11/VER.C)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND ) /* KC020 */
+GAME( 1998, soulclbb,  soulclbr, coh700,   namcos12, namcos12, ROT0, "Namco",         "Soul Calibur (SOC11/VER.B)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND ) /* KC020 */
+GAME( 1998, soulclbc,  soulclbr, coh700,   namcos12, namcos12, ROT0, "Namco",         "Soul Calibur (SOC11/VER.A2)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND ) /* KC020 */
+GAME( 1998, ehrgeiz,   0,        coh700,   namcos12, namcos12, ROT0, "Square/Namco",  "Ehrgeiz (EG3/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC021 */
+GAME( 1998, ehrgeiza,  ehrgeiz,  coh700,   namcos12, namcos12, ROT0, "Square/Namco",  "Ehrgeiz (EG2/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC021 */
+GAME( 1998, mdhorse,   0,        coh700,   namcos12, namcos12, ROT0, "Namco",         "Derby Quiz My Dream Horse (MDH1/VER.A2)", GAME_NOT_WORKING | GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC035 */
+GAME( 1998, tenkomor,  0,        coh700,   namcos12, namcos12, ROT90, "Namco",        "Tenkomori Shooting (TKM2/VER.A1)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC036 */
+GAME( 1998, tenkomoj,  tenkomor, coh700,   namcos12, namcos12, ROT90, "Namco",        "Tenkomori Shooting (TKM1/VER.A1)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC036 */
+GAME( 1998, fgtlayer,  0,        coh700,   namcos12, namcos12, ROT0, "Arika/Namco",   "Fighting Layer (FTL0/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC037 */
+GAME( 1999, pacapp,    0,        coh700,   namcos12, namcos12, ROT0, "Produce/Namco", "Paca Paca Passion (PPP1/VER.A2)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC038 */
+GAME( 1999, ptblank2,  0,        coh700g,  ptblank2, ptblank2, ROT0, "Namco",         "Point Blank 2 (GNB5/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC042 */
+GAME( 1999, sws99,     0,        coh700,   namcos12, namcos12, ROT0, "Namco",         "Super World Stadium '99 (SS91/VER.A3)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC043 */
+GAME( 1999, tektagt,   0,        coh700,   namcos12, namcos12, ROT0, "Namco",         "Tekken Tag Tournament (TEG3/VER.C1)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND ) /* KC044 */
+GAME( 1999, tektagta,  tektagt,  coh700,   namcos12, namcos12, ROT0, "Namco",         "Tekken Tag Tournament (TEG3/VER.B)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND ) /* KC044 */
+GAME( 1999, tektagtb,  tektagt,  coh700,   namcos12, namcos12, ROT0, "Namco",         "Tekken Tag Tournament (TEG1/VER.B)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND ) /* KC044 */
+GAME( 1999, tektagtc,  tektagt,  coh700,   namcos12, namcos12, ROT0, "Namco",         "Tekken Tag Tournament (TEG1/VER.A3)", GAME_NOT_WORKING | GAME_IMPERFECT_SOUND ) /* KC044 */
+GAME( 1999, ghlpanic,  0,        coh700g,  ghlpanic, ghlpanic, ROT0, "Namco",         "Ghoul Panic (OB2/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC045 */
+GAME( 1999, pacapp2,   0,        coh700,   namcos12, namcos12, ROT0, "Produce/Namco", "Paca Paca Passion 2 (PKS1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC046 */
+GAME( 1999, mrdrillr,  0,        coh700,   namcos12, namcos12, ROT0, "Namco",         "Mr Driller (DRI1/VER.A2)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC048 */
+GAME( 1999, pacappsp,  0,        coh700,   namcos12, namcos12, ROT0, "Produce/Namco", "Paca Paca Passion Special (PSP1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC052 */
+GAME( 1999, aquarush,  0,        coh700,   namcos12, namcos12, ROT0, "Namco",         "Aqua Rush (AQ1/VER.A1)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC053 */
+GAME( 1999, golgo13,   0,        coh700g,  golgo13,  golgo13,  ROT0, "Raizing/Namco", "Golgo 13 (GLG1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC054 */
+GAME( 1999, g13knd,    0,        coh700g,  golgo13,  golgo13,  ROT0, "Raizing/Namco", "Golgo 13 Kiseki no Dandou (GLS1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* KC059 */

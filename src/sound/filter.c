@@ -1,5 +1,5 @@
 #include "filter.h"
-#include "driver.h"
+#include "sndintrf.h"
 
 #include <math.h>
 

@@ -114,15 +114,12 @@
 
 #define VERBOSE 0
 
-#include "driver.h"
 #include "debugger.h"
 #include "i8085.h"
 #include "i8085cpu.h"
 #include "i8085daa.h"
 
 #if VERBOSE
-#include <stdio.h>
-#include "driver.h"
 #define LOG(x) logerror x
 #else
 #define LOG(x)
@@ -397,8 +394,15 @@ INLINE void execute_one(int opcode)
 			M_MVI(I.HL.b.l);
 			break;
 		case 0x2f: i8085_ICount -= 4;	/* CMA  */
-			I.AF.b.h ^= 0xff;
-			I.AF.b.l |= HF + NF;
+			if( I.cputype )
+			{
+				I.AF.b.h ^= 0xff;
+				I.AF.b.l |= HF + NF;
+			}
+			else
+			{
+				I.AF.b.h ^= 0xff;	/* 8080 */
+			}
 			break;
 
 		case 0x30:
@@ -1316,41 +1320,44 @@ static void init_tables (void)
 /****************************************************************************
  * Init the 8085 emulation
  ****************************************************************************/
-static void i8085_init(void)
+static void i8085_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
-	int cpu = cpu_getactivecpu();
 	init_tables();
 	I.cputype = 1;
+	I.irq_callback = irqcallback;
 
-	state_save_register_item("i8085", cpu, I.AF.w.l);
-	state_save_register_item("i8085", cpu, I.BC.w.l);
-	state_save_register_item("i8085", cpu, I.DE.w.l);
-	state_save_register_item("i8085", cpu, I.HL.w.l);
-	state_save_register_item("i8085", cpu, I.SP.w.l);
-	state_save_register_item("i8085", cpu, I.PC.w.l);
-	state_save_register_item("i8085", cpu, I.HALT);
-	state_save_register_item("i8085", cpu, I.IM);
-	state_save_register_item("i8085", cpu, I.IREQ);
-	state_save_register_item("i8085", cpu, I.ISRV);
-	state_save_register_item("i8085", cpu, I.INTR);
-	state_save_register_item("i8085", cpu, I.IRQ2);
-	state_save_register_item("i8085", cpu, I.IRQ1);
-	state_save_register_item("i8085", cpu, I.nmi_state);
-	state_save_register_item_array("i8085", cpu, I.irq_state);
+	state_save_register_item("i8085", index, I.AF.w.l);
+	state_save_register_item("i8085", index, I.BC.w.l);
+	state_save_register_item("i8085", index, I.DE.w.l);
+	state_save_register_item("i8085", index, I.HL.w.l);
+	state_save_register_item("i8085", index, I.SP.w.l);
+	state_save_register_item("i8085", index, I.PC.w.l);
+	state_save_register_item("i8085", index, I.HALT);
+	state_save_register_item("i8085", index, I.IM);
+	state_save_register_item("i8085", index, I.IREQ);
+	state_save_register_item("i8085", index, I.ISRV);
+	state_save_register_item("i8085", index, I.INTR);
+	state_save_register_item("i8085", index, I.IRQ2);
+	state_save_register_item("i8085", index, I.IRQ1);
+	state_save_register_item("i8085", index, I.nmi_state);
+	state_save_register_item_array("i8085", index, I.irq_state);
 }
 
 /****************************************************************************
  * Reset the 8085 emulation
  ****************************************************************************/
-static void i8085_reset(void *param)
+static void i8085_reset(void)
 {
-	int cputype_bak = I.cputype; //AT: backup cputype(0=8080, 1=8085)
+	int (*save_irqcallback)(int);
+	int cputype_bak = I.cputype;
 
 	init_tables();
-	memset(&I, 0, sizeof(i8085_Regs)); //AT: this also resets I.cputype so 8085 features were never ever used!
+	save_irqcallback = I.irq_callback;
+	memset(&I, 0, sizeof(i8085_Regs));
+	I.irq_callback = save_irqcallback;
 	change_pc(I.PC.d);
 
-	I.cputype = cputype_bak; //AT: restore cputype
+	I.cputype = cputype_bak;
 }
 
 /****************************************************************************
@@ -1560,26 +1567,26 @@ static UINT8 i8080_win_layout[] = {
 	 0,23,80, 1,	/* command line window (bottom rows) */
 };
 
-void i8080_init(void)
+void i8080_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
-	int cpu = cpu_getactivecpu();
 	init_tables();
 	I.cputype = 0;
+	I.irq_callback = irqcallback;
 
-	state_save_register_item("i8080", cpu, I.AF.w.l);
-	state_save_register_item("i8080", cpu, I.BC.w.l);
-	state_save_register_item("i8080", cpu, I.DE.w.l);
-	state_save_register_item("i8080", cpu, I.HL.w.l);
-	state_save_register_item("i8080", cpu, I.SP.w.l);
-	state_save_register_item("i8080", cpu, I.PC.w.l);
-	state_save_register_item("i8080", cpu, I.HALT);
-	state_save_register_item("i8080", cpu, I.IREQ);
-	state_save_register_item("i8080", cpu, I.ISRV);
-	state_save_register_item("i8080", cpu, I.INTR);
-	state_save_register_item("i8080", cpu, I.IRQ2);
-	state_save_register_item("i8080", cpu, I.IRQ1);
-	state_save_register_item("i8080", cpu, I.nmi_state);
-	state_save_register_item("i8080", cpu, I.irq_state);
+	state_save_register_item("i8080", index, I.AF.w.l);
+	state_save_register_item("i8080", index, I.BC.w.l);
+	state_save_register_item("i8080", index, I.DE.w.l);
+	state_save_register_item("i8080", index, I.HL.w.l);
+	state_save_register_item("i8080", index, I.SP.w.l);
+	state_save_register_item("i8080", index, I.PC.w.l);
+	state_save_register_item("i8080", index, I.HALT);
+	state_save_register_item("i8080", index, I.IREQ);
+	state_save_register_item("i8080", index, I.ISRV);
+	state_save_register_item("i8080", index, I.INTR);
+	state_save_register_item("i8080", index, I.IRQ2);
+	state_save_register_item("i8080", index, I.IRQ1);
+	state_save_register_item("i8080", index, I.nmi_state);
+	state_save_register_item("i8080", index, I.irq_state);
 }
 
 void i8080_set_irq_line(int irqline, int state)
@@ -1638,7 +1645,6 @@ static void i8085_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_I8085_SID:						if (info->i) I.IM |= IM_SID; else I.IM &= ~IM_SID; break;
 
 		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_IRQ_CALLBACK:					I.irq_callback = info->irqcallback;		break;
 		case CPUINFO_PTR_I8085_SOD_CALLBACK:			I.sod_callback = (void (*)(int))info->f;break;
 	}
 }
@@ -1706,7 +1712,6 @@ void i8085_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = i8085_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = i8085_dasm;			break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = I.irq_callback;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &i8085_ICount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = i8085_reg_layout;				break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = i8085_win_layout;				break;

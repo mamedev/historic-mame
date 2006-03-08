@@ -4,7 +4,7 @@
 ************************************/
 
 #include <math.h>
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
 #include "cpuintrf.h"
 #include "st0016.h"

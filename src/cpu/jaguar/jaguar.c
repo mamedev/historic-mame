@@ -6,11 +6,6 @@
 
 ***************************************************************************/
 
-#include <stdio.h>
-#include <stddef.h>
-#include <stdlib.h>
-#include <string.h>
-#include "driver.h"
 #include "debugger.h"
 #include "jaguar.h"
 
@@ -421,33 +416,41 @@ static void init_tables(void)
 			}
 }
 
-static void jaguar_state_register(const char *type)
+static void jaguar_state_register(int index, const char *type)
 {
-	int cpu = cpu_getactivecpu();
-	state_save_register_item_array(type, cpu, jaguar.r);
-	state_save_register_item_array(type, cpu, jaguar.a);
-	state_save_register_item_array(type, cpu, jaguar.ctrl);
-	state_save_register_item(type, cpu, jaguar.ppc);
+	state_save_register_item_array(type, index, jaguar.r);
+	state_save_register_item_array(type, index, jaguar.a);
+	state_save_register_item_array(type, index, jaguar.ctrl);
+	state_save_register_item(type, index, jaguar.ppc);
 	state_save_register_func_postload(update_register_banks);
 	state_save_register_func_postload(check_irqs);
 }
 
-static void jaguargpu_init(void)
+static void jaguargpu_init(int index, int clock, const void *_config, int (*irqcallback)(int))
 {
-	jaguar_state_register("jaguargpu");
-}
+	const struct jaguar_config *config = _config;
 
-static void jaguardsp_init(void)
-{
-	jaguar_state_register("jaguardsp");
-}
+	jaguar_state_register(index, "jaguargpu");
 
-INLINE void common_reset(struct jaguar_config *config)
-{
-	init_tables();
-
+	jaguar.irq_callback = irqcallback;
 	if (config)
 		jaguar.cpu_interrupt = config->cpu_int_callback;
+}
+
+static void jaguardsp_init(int index, int clock, const void *_config, int (*irqcallback)(int))
+{
+	const struct jaguar_config *config = _config;
+
+	jaguar_state_register(index, "jaguardsp");
+
+	jaguar.irq_callback = irqcallback;
+	if (config)
+		jaguar.cpu_interrupt = config->cpu_int_callback;
+}
+
+INLINE void common_reset(void)
+{
+	init_tables();
 
 	jaguar.b0 = jaguar.r;
 	jaguar.b1 = jaguar.a;
@@ -455,16 +458,16 @@ INLINE void common_reset(struct jaguar_config *config)
 	change_pc(jaguar.PC);
 }
 
-static void jaguargpu_reset(void *param)
+static void jaguargpu_reset(void)
 {
-	common_reset(param);
+	common_reset();
 	jaguar.table = gpu_op_table;
 	jaguar.isdsp = 0;
 }
 
-static void jaguardsp_reset(void *param)
+static void jaguardsp_reset(void)
 {
-	common_reset(param);
+	common_reset();
 	jaguar.table = dsp_op_table;
 	jaguar.isdsp = 1;
 }
@@ -1600,9 +1603,6 @@ static void jaguargpu_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + JAGUAR_R30:		jaguar.r[30] = info->i;						break;
 		case CPUINFO_INT_REGISTER + JAGUAR_R31:		jaguar.r[31] = info->i;						break;
 		case CPUINFO_INT_SP:						jaguar.b0[31] = info->i; 					break;
-
-		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_IRQ_CALLBACK:				jaguar.irq_callback = info->irqcallback;	break;
 	}
 }
 
@@ -1693,7 +1693,6 @@ void jaguargpu_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = jaguargpu_execute;		break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = jaguargpu_dasm;		break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = jaguar.irq_callback; break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &jaguar_icount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = jaguar_reg_layout;			break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = jaguar_win_layout;			break;

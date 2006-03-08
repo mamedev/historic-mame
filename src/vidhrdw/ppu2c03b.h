@@ -58,7 +58,8 @@ typedef void (*ppu2c03b_scanline_cb)( int num, int scanline, int vblank, int bla
 typedef void (*ppu2c03b_nmi_cb)( int num, int *ppu_regs );
 typedef int  (*ppu2c03b_vidaccess_cb)( int num, int address, int data );
 
-struct ppu2c03b_interface
+typedef struct _ppu2c03b_interface ppu2c03b_interface;
+struct _ppu2c03b_interface
 {
 	int				num;							/* number of chips ( 1 to MAX_PPU ) */
 	int				vrom_region[MAX_PPU];			/* region id of gfx vrom (or REGION_INVALID if none) */
@@ -70,7 +71,7 @@ struct ppu2c03b_interface
 
 /* routines */
 void ppu2c03b_init_palette( int first_entry );
-int ppu2c03b_init( struct ppu2c03b_interface *interface );
+void ppu2c03b_init( const ppu2c03b_interface *interface );
 
 void ppu2c03b_reset( int num, int scan_scale );
 void ppu2c03b_set_videorom_bank( int num, int start_page, int num_pages, int bank, int bank_size );

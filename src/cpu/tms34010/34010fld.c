@@ -7,8 +7,6 @@
 
 ***************************************************************************/
 
-#include <stdio.h>
-#include "driver.h"
 #include "debugger.h"
 #include "tms34010.h"
 #include "34010ops.h"

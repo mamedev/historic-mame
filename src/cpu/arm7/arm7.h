@@ -31,7 +31,7 @@
 #ifndef ARM7_H
 #define ARM7_H
 
-#include "driver.h"
+#include "cpuintrf.h"
 
 /****************************************************************************************************
  *  PUBLIC FUNCTIONS

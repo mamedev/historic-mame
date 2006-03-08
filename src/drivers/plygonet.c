@@ -188,7 +188,6 @@ static WRITE32_HANDLER( sound_irq_w )
 
 static int dsp_state;
 
-/* DSP communications */
 static READ32_HANDLER( dsp_r )
 {
 	// My guess is this is Host Receive Data / Host Transfer Data Register
@@ -310,7 +309,7 @@ static WRITE32_HANDLER( dsp_w )
 
 		logerror("RESET (%04x) sent\n", irqVector);
 
-		cpunum_reset(1, &irqVector, NULL) ;
+		cpunum_reset(1) ;
 	}
 }
 
@@ -464,6 +463,9 @@ static WRITE16_HANDLER( dsp56k_com_port_w )
 }
 
 
+/**********************************************************************************/
+
+
 static ADDRESS_MAP_START( polygonet_readmem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x000000, 0x1fffff) AM_READ(MRA32_ROM)
 	AM_RANGE(0x200000, 0x21ffff) AM_READ(MRA32_RAM)
@@ -608,12 +610,12 @@ MACHINE_DRIVER_START( plygonet )
 	MDRV_CPU_PROGRAM_MAP(polygonet_readmem,polygonet_writemem)
 	MDRV_CPU_VBLANK_INT(polygonet_interrupt, 2)
 
-	MDRV_CPU_ADD(DSP56156,40000000)
+	MDRV_CPU_ADD(DSP56156,10000000)
 	MDRV_CPU_PROGRAM_MAP(dsp56156_p_readmem, dsp56156_p_writemem)
 	MDRV_CPU_DATA_MAP(dsp56156_d_readmem,dsp56156_d_writemem)
 
 
-	MDRV_CPU_ADD(Z80, 8000000)
+	MDRV_CPU_ADD_TAG( "sound", Z80, 8000000 )
 	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_PERIODIC_INT(audio_interrupt, TIME_IN_HZ(480))
@@ -636,6 +638,11 @@ MACHINE_DRIVER_START( plygonet )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(K054539, 48000)
+	MDRV_SOUND_CONFIG(k054539_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.75)
+	MDRV_SOUND_ROUTE(1, "right", 0.75)
 
 	MDRV_SOUND_ADD(K054539, 48000)
 	MDRV_SOUND_CONFIG(k054539_interface)
@@ -732,4 +739,4 @@ ROM_START( plygonet )
 ROM_END
 
 /*          ROM        parent   machine    inp        init */
-GAME( 1993, plygonet, 0,       plygonet, polygonet, polygonet, ROT90, "Konami", "Polygonet Commanders (ver UAA)", GAME_NOT_WORKING )
+GAME( 1993, plygonet, 0,       plygonet, polygonet, polygonet, ROT90, "Konami", "Polygonet Commanders (ver UAA)", GAME_NOT_WORKING | GAME_NO_SOUND )

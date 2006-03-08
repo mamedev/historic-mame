@@ -278,10 +278,13 @@ Notes:
 
 #include "driver.h"
 #include "sound/ics2115.h"
+#include "cpu/arm7/arm7core.h"
 #include <time.h>
 
 UINT16 *pgm_mainram, *pgm_bg_videoram, *pgm_tx_videoram, *pgm_videoregs, *pgm_rowscrollram;
 static UINT8 *z80_mainram;
+static UINT32 *arm7_shareram;
+static UINT32 arm7_latch;
 WRITE16_HANDLER( pgm_tx_videoram_w );
 WRITE16_HANDLER( pgm_bg_videoram_w );
 VIDEO_START( pgm );
@@ -289,6 +292,7 @@ VIDEO_EOF( pgm );
 VIDEO_UPDATE( pgm );
 void pgm_kov_decrypt(void);
 void pgm_kovsh_decrypt(void);
+void pgm_kov2_decrypt(void);
 void pgm_dw2_decrypt(void);
 void pgm_djlzz_decrypt(void);
 void pgm_dw3_decrypt(void);
@@ -310,6 +314,60 @@ READ16_HANDLER (dw2_d80000_r );
 static READ16_HANDLER ( z80_ram_r )
 {
 	return (z80_mainram[offset*2] << 8)|z80_mainram[offset*2+1];
+}
+
+static READ32_HANDLER( arm7_latch_arm_r )
+{
+	logerror("ARM7: Latch read: %08x (%08x) (%06x)\n", arm7_latch, mem_mask, activecpu_get_pc() );
+	return arm7_latch;
+}
+
+static WRITE32_HANDLER( arm7_latch_arm_w )
+{
+	if (activecpu_get_pc() == 0x80008a4 && data == 0xfe) data = 0x02;
+	logerror("ARM7: Latch write: %08x (%08x) (%06x)\n", data, mem_mask, activecpu_get_pc() );
+	COMBINE_DATA(&arm7_latch);
+}
+
+static READ32_HANDLER( arm7_shareram_r )
+{
+	logerror("ARM7: ARM7 Shared RAM Read: %04x = %08x (%08x) (%06x)\n", offset << 2, arm7_shareram[offset], mem_mask, activecpu_get_pc() );
+	return arm7_shareram[offset];
+}
+
+static WRITE32_HANDLER( arm7_shareram_w )
+{
+	logerror("ARM7: ARM7 Shared RAM Write: %04x = %08x (%08x) (%06x)\n", offset << 2, data, mem_mask, activecpu_get_pc() );
+	COMBINE_DATA(&arm7_shareram[offset]);
+}
+
+static READ16_HANDLER( arm7_latch_68k_r )
+{
+	logerror("M68K: Latch read: %04x (%04x) (%06x)\n", arm7_latch & 0x0000ffff, mem_mask, activecpu_get_pc() );
+	return arm7_latch;
+}
+
+static WRITE16_HANDLER( arm7_latch_68k_w )
+{
+	logerror("M68K: Latch write: %04x (%04x) (%06x)\n", data & 0x0000ffff, mem_mask, activecpu_get_pc() );
+	COMBINE_DATA(&arm7_latch);
+	cpunum_set_input_line(2, ARM7_FIRQ_LINE, PULSE_LINE);
+	cpu_spinuntil_time(TIME_IN_CYCLES(500, 2));
+}
+
+static READ16_HANDLER( arm7_ram_r )
+{
+	UINT16 *share16 = (UINT16 *)arm7_shareram;
+	logerror("M68K: ARM7 Shared RAM Read: %04x = %04x (%08x) (%06x)\n", BYTE_XOR_LE(offset), share16[BYTE_XOR_LE(offset)], mem_mask, activecpu_get_pc() );
+	return share16[BYTE_XOR_LE(offset)];
+}
+
+static WRITE16_HANDLER( arm7_ram_w )
+{
+	UINT16 *share16 = (UINT16 *)arm7_shareram;
+	logerror("M68K: ARM7 Shared RAM Write: %04x = %04x (%04x) (%06x)\n", BYTE_XOR_LE(offset), data, mem_mask, activecpu_get_pc() );
+
+	COMBINE_DATA(&share16[BYTE_XOR_LE(offset)]);
 }
 
 static WRITE16_HANDLER ( z80_ram_w )
@@ -485,6 +543,37 @@ static ADDRESS_MAP_START( pgm_mem, ADDRESS_SPACE_PROGRAM, 16)
 	AM_RANGE(0xc10000, 0xc1ffff) AM_READWRITE(z80_ram_r, z80_ram_w) /* Z80 Program */
 ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( kov2_mem, ADDRESS_SPACE_PROGRAM, 16)
+	AM_RANGE(0x000000, 0x01ffff) AM_ROM   /* BIOS ROM */
+	AM_RANGE(0x100000, 0x5fffff) AM_ROMBANK(1) /* Game ROM */
+
+	AM_RANGE(0x700006, 0x700007) AM_WRITENOP // Watchdog?
+
+	AM_RANGE(0x800000, 0x81ffff) AM_RAM AM_MIRROR(0x0e0000) AM_BASE(&pgm_mainram) /* Main Ram */
+
+	AM_RANGE(0x900000, 0x903fff) AM_READWRITE(MRA16_RAM, pgm_bg_videoram_w) AM_BASE(&pgm_bg_videoram) /* Backgrounds */
+	AM_RANGE(0x904000, 0x905fff) AM_READWRITE(MRA16_RAM, pgm_tx_videoram_w) AM_BASE(&pgm_tx_videoram) /* Text Layer */
+	AM_RANGE(0x907000, 0x9077ff) AM_RAM AM_BASE(&pgm_rowscrollram)
+	AM_RANGE(0xa00000, 0xa011ff) AM_READWRITE(MRA16_RAM, paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0xb00000, 0xb0ffff) AM_RAM AM_BASE(&pgm_videoregs) /* Video Regs inc. Zoom Table */
+
+	AM_RANGE(0xc00002, 0xc00003) AM_READWRITE(soundlatch_word_r, m68k_l1_w)
+	AM_RANGE(0xc00004, 0xc00005) AM_READWRITE(soundlatch2_word_r, soundlatch2_word_w)
+	AM_RANGE(0xc00006, 0xc00007) AM_READWRITE(pgm_calendar_r, pgm_calendar_w)
+	AM_RANGE(0xc00008, 0xc00009) AM_WRITE(z80_reset_w)
+	AM_RANGE(0xc0000a, 0xc0000b) AM_WRITE(z80_ctrl_w)
+	AM_RANGE(0xc0000c, 0xc0000d) AM_READWRITE(soundlatch3_word_r, soundlatch3_word_w)
+
+	AM_RANGE(0xc08000, 0xc08001) AM_READ(input_port_0_word_r) // p1+p2 controls
+	AM_RANGE(0xc08002, 0xc08003) AM_READ(input_port_1_word_r) // p3+p4 controls
+	AM_RANGE(0xc08004, 0xc08005) AM_READ(input_port_2_word_r) // extra controls
+	AM_RANGE(0xc08006, 0xc08007) AM_READ(input_port_3_word_r) // dipswitches
+
+	AM_RANGE(0xc10000, 0xc1ffff) AM_READWRITE(z80_ram_r, z80_ram_w) /* Z80 Program */
+	AM_RANGE(0xd00000, 0xd0ffff) AM_READWRITE(arm7_ram_r, arm7_ram_w) /* ARM7 Shared RAM */
+	AM_RANGE(0xd10000, 0xd10001) AM_READWRITE(arm7_latch_68k_r, arm7_latch_68k_w) /* ARM7 Latch */
+ADDRESS_MAP_END
+
 static ADDRESS_MAP_START( z80_mem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0xffff) AM_RAM AM_BASE(&z80_mainram)
 ADDRESS_MAP_END
@@ -496,6 +585,15 @@ static ADDRESS_MAP_START( z80_io, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x8400, 0x84ff) AM_READWRITE(soundlatch2_r, soundlatch2_w)
 ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( arm7_map, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x00003fff) AM_ROM
+	AM_RANGE(0x08000000, 0x083fffff) AM_ROM AM_REGION(REGION_USER1, 0)
+	AM_RANGE(0x10000000, 0x100003ff) AM_RAM
+	AM_RANGE(0x18000000, 0x1800ffff) AM_RAM
+	AM_RANGE(0x38000000, 0x38000003) AM_READWRITE(arm7_latch_arm_r, arm7_latch_arm_w) /* 68k Latch */
+	AM_RANGE(0x48000000, 0x4800ffff) AM_READWRITE(arm7_shareram_r, arm7_shareram_w) AM_BASE(&arm7_shareram)
+	AM_RANGE(0x50000000, 0x500003ff) AM_RAM
+ADDRESS_MAP_END
 
 /*** Input Ports *************************************************************/
 
@@ -938,11 +1036,11 @@ static MACHINE_RESET ( pgm )
 static MACHINE_DRIVER_START( pgm )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 20000000) /* 20 mhz! verified on real board */
+	MDRV_CPU_ADD_TAG("main", M68000, 20000000) /* 20 mhz! verified on real board */
 	MDRV_CPU_PROGRAM_MAP(pgm_mem,0)
 	MDRV_CPU_VBLANK_INT(pgm_interrupt,2)
 
-	MDRV_CPU_ADD(Z80, 8468000)
+	MDRV_CPU_ADD_TAG("sound", Z80, 8468000)
 	MDRV_CPU_PROGRAM_MAP(z80_mem, 0)
 	MDRV_CPU_IO_MAP(z80_io, 0)
 	/* audio CPU */
@@ -966,6 +1064,17 @@ static MACHINE_DRIVER_START( pgm )
 	MDRV_VIDEO_START(pgm)
 	MDRV_VIDEO_EOF(pgm)
 	MDRV_VIDEO_UPDATE(pgm)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( kov2 )
+	MDRV_IMPORT_FROM(pgm)
+
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(kov2_mem,0)
+
+	/* protection CPU */
+	MDRV_CPU_ADD_TAG("prot", ARM7, 20000000)	// ???
+	MDRV_CPU_PROGRAM_MAP(arm7_map, 0)
 MACHINE_DRIVER_END
 
 /*** Init Stuff **************************************************************/
@@ -1039,7 +1148,6 @@ static DRIVER_INIT( pgm )
 {
 	pgm_basic_init();
 }
-
 
 /* Oriental Legend INIT */
 
@@ -1117,6 +1225,12 @@ static DRIVER_INIT( kov )
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x4f0000, 0x4fffff, 0, 0, sango_protram_r);
 
  	pgm_kov_decrypt();
+}
+
+static DRIVER_INIT( kov2 )
+{
+	pgm_basic_init();
+	pgm_kov2_decrypt();
 }
 
 static DRIVER_INIT( pstar )
@@ -2945,7 +3059,7 @@ GAME( 1999, puzlstar, pgm,        pgm, sango,    pstar,      ROT0,   "IGS", "Puz
 GAME( 1999, olds,     pgm,        pgm, pgm,      orlegend,   ROT0,   "IGS", "Oriental Legend Super (Korea 101)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION|GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
 GAME( 1999, olds100,  olds,       pgm, pgm,      orlegend,   ROT0,   "IGS", "Oriental Legend Super (100)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION|GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
 GAME( 1999, olds100a, olds,       pgm, pgm,      orlegend,   ROT0,   "IGS", "Oriental Legend Super (100 alt)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION|GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
-GAME( 2000, kov2,     pgm,        pgm, sango,    pgm,        ROT0,   "IGS", "Knights of Valour 2", GAME_NOT_WORKING )
+GAME( 2000, kov2,     pgm,       kov2, sango,    kov2,       ROT0,   "IGS", "Knights of Valour 2", GAME_NOT_WORKING )
 GAME( 2000, kov2106,  kov2,       pgm, sango,    pgm,        ROT0,   "IGS", "Knights of Valour 2 (106)", GAME_NOT_WORKING )
 GAME( 2000, kov2p,    kov2,       pgm, sango,    pgm,        ROT0,   "IGS", "Knights of Valour 2 Plus - Nine Dragons", GAME_NOT_WORKING )
 GAME( 2001, ddp2,     pgm,        pgm, ddp2,     ddp2,       ROT270, "IGS", "Bee Storm - DoDonPachi II", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )

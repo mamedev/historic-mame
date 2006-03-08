@@ -1,9 +1,13 @@
-#include "cpuintrf.h"
 #include "debugger.h"
-#include "state.h"
 #include "i960.h"
 #include "i960dis.h"
 #include <math.h>
+
+#ifdef _MSC_VER
+/* logb prototype is different for MS Visual C */
+#include <float.h>
+#define logb _logb
+#endif
 
 
 // Warning, IP = Instruction Pointer, called PC outside of Intel
@@ -2039,7 +2043,6 @@ static void i960_set_info(UINT32 state, union cpuinfo *info)
 	switch(state) {
 		// Interfacing
 	case CPUINFO_INT_REGISTER+I960_IP: i960.IP = info->i; change_pc(i960.IP); 	break;
-	case CPUINFO_PTR_IRQ_CALLBACK:          i960.irq_cb = info->irqcallback;        break;
 	case CPUINFO_INT_INPUT_STATE + I960_IRQ0:set_irq_line(I960_IRQ0, info->i);		break;
 	case CPUINFO_INT_INPUT_STATE + I960_IRQ1:set_irq_line(I960_IRQ1, info->i);		break;
 	case CPUINFO_INT_INPUT_STATE + I960_IRQ2:set_irq_line(I960_IRQ2, info->i);		break;
@@ -2050,22 +2053,21 @@ static void i960_set_info(UINT32 state, union cpuinfo *info)
 	}
 }
 
-static void i960_init(void)
+static void i960_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
-	int cpu = cpu_getactivecpu();
 	memset(&i960, 0, sizeof(i960));
-	i960.irq_cb = i960_default_irq_callback;
+	i960.irq_cb = irqcallback;
 
-	state_save_register_item("i960", cpu, i960.PIP);
-	state_save_register_item("i960", cpu, i960.SAT);
-	state_save_register_item("i960", cpu, i960.PRCB);
-	state_save_register_item("i960", cpu, i960.PC);
-	state_save_register_item("i960", cpu, i960.AC);
-	state_save_register_item("i960", cpu, i960.ICR);
-	state_save_register_item_array("i960", cpu, i960.r);
- 	state_save_register_item_array("i960", cpu, i960.fp);
-	state_save_register_item_2d_array("i960", cpu, i960.rcache);
-	state_save_register_item_array("i960", cpu, i960.rcache_frame_addr);
+	state_save_register_item("i960", index, i960.PIP);
+	state_save_register_item("i960", index, i960.SAT);
+	state_save_register_item("i960", index, i960.PRCB);
+	state_save_register_item("i960", index, i960.PC);
+	state_save_register_item("i960", index, i960.AC);
+	state_save_register_item("i960", index, i960.ICR);
+	state_save_register_item_array("i960", index, i960.r);
+ 	state_save_register_item_array("i960", index, i960.fp);
+	state_save_register_item_2d_array("i960", index, i960.rcache);
+	state_save_register_item_array("i960", index, i960.rcache_frame_addr);
 }
 
 static offs_t i960_disasm(char *buffer, offs_t pc)
@@ -2084,7 +2086,7 @@ static offs_t i960_disasm(char *buffer, offs_t pc)
 #endif
 }
 
-static void i960_reset(void *param)
+static void i960_reset(void)
 {
 	i960.SAT        = program_read_dword_32le(0);
 	i960.PRCB       = program_read_dword_32le(4);
@@ -2152,7 +2154,6 @@ void i960_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_PTR_BURN:                info->burn        = 0;                  break;
 	case CPUINFO_PTR_DISASSEMBLE:         info->disassemble = i960_disasm;        break;
 	case CPUINFO_PTR_DISASSEMBLE_NEW:     info->disassemble_new = NULL;           break;
-	case CPUINFO_PTR_IRQ_CALLBACK:        info->irqcallback = i960.irq_cb;        break;
 	case CPUINFO_PTR_INSTRUCTION_COUNTER: info->icount      = &i960_icount;       break;
 	case CPUINFO_INT_CONTEXT_SIZE:        info->i           = sizeof(i960_state); break;
 	case CPUINFO_PTR_REGISTER_LAYOUT:     info->p = i960_reg_layout;			  break;

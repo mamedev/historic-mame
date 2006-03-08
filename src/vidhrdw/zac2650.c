@@ -9,7 +9,7 @@
 UINT8 *s2636ram;
 static mame_bitmap *spritebitmap;
 
-static int dirtychar[16];
+static UINT8 dirtychar[256>>3];
 static int CollisionBackground;
 static int CollisionSprite;
 

@@ -43,7 +43,6 @@
  *
  *****************************************************************************/
 
-#include "driver.h"
 #include "debugger.h"
 #include "z8000.h"
 #include "z8000cpu.h"
@@ -473,9 +472,11 @@ INLINE void Interrupt(void)
 }
 
 
-static void z8000_reset(void *param)
+static void z8000_reset(void)
 {
+	int (*save_irqcallback)(int) = Z.irq_callback;
 	memset(&Z, 0, sizeof(z8000_Regs));
+	Z.irq_callback = save_irqcallback;
 	FCW = RDMEM_W( 2 ); /* get reset FCW */
 	PC	= RDMEM_W( 4 ); /* get reset PC  */
 	change_pc(PC);
@@ -639,9 +640,6 @@ static void z8000_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + Z8000_R13:			RW(13) = info->i;						break;
 		case CPUINFO_INT_REGISTER + Z8000_R14:			RW(14) = info->i;						break;
 		case CPUINFO_INT_REGISTER + Z8000_R15:			RW(15) = info->i;						break;
-
-		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_IRQ_CALLBACK:					Z.irq_callback = info->irqcallback;		break;
 	}
 }
 
@@ -719,7 +717,6 @@ void z8000_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = z8000_execute;				break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = z8000_dasm;					break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = Z.irq_callback;			break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &z8000_ICount;				break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = z8000_reg_layout;				break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = z8000_win_layout;				break;

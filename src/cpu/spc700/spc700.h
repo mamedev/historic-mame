@@ -36,10 +36,10 @@ enum
 /* implementation APIs below.                                       */
 
 
-void spc700_init(void);
+void spc700_init(int index, int clock, const void *config, int (*irqcallback)(int));
 
 /* Pulse the RESET pin on the CPU */
-void spc700_reset(void* param);
+void spc700_reset(void);
 
 /* Set the RESET line on the CPU */
 void spc700_set_reset_line(int state, void* param);
@@ -132,8 +132,6 @@ void spc700_branching(unsigned int new_pc);
 /* ======================================================================== */
 
 #include "cpuintrf.h"
-#include "memory.h"
-#include "debugger.h"
 
 extern void spc700_get_info(UINT32 state, union cpuinfo *info);
 

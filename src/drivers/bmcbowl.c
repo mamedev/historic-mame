@@ -104,7 +104,6 @@ Main board:
 */
 
 #include "driver.h"
-#include "machine/random.h"
 #include "cpu/m68000/m68000.h"
 #include "machine/6522via.h"
 #include "sound/ay8910.h"
@@ -113,7 +112,6 @@ Main board:
 UINT16 *bmcbowl_vid1;
 UINT16 *bmcbowl_vid2;
 
-static UINT8 *colorram;
 static UINT8 *stats_ram;
 static size_t	stats_ram_size;
 static int clr_offset=0;

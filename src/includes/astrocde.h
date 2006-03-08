@@ -1,5 +1,9 @@
 #include "sound/custom.h"
 
+/* defined in drivers/astrocde.c */
+
+void astrocade_state_save_register_main(void);
+
 /* defined in machine/astrocde.c */
 
 extern UINT8 *wow_protected_ram;
@@ -28,6 +32,9 @@ WRITE8_HANDLER( profpac_page_select_w );
 WRITE8_HANDLER( profpac_screenram_ctrl_w );
 READ8_HANDLER( profpac_nvram_r );
 WRITE8_HANDLER( profpac_nvram_w );
+
+MACHINE_START( astrocde );
+MACHINE_START( profpac );
 
 /* defined in vidrhdw/astrocde.c */
 

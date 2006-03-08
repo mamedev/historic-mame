@@ -3,9 +3,7 @@
 // Main hacking and coding by Farfetch'd
 // Portability fixes by Richter Belmont
 
-#include "cpuintrf.h"
 #include "debugger.h"
-#include "state.h"
 #include "v60.h"
 
 // memory accessors
@@ -303,9 +301,8 @@ static int v60_default_irq_cb(int irqline)
 	return 0;
 }
 
-static void base_init(const char *type)
+static void base_init(const char *type, int index, int (*irqcallback)(int))
 {
-	int cpu = cpu_getactivecpu();
 	static int opt_init = 0;
 	if(!opt_init) {
 		InitTables();	// set up opcode tables
@@ -315,39 +312,39 @@ static void base_init(const char *type)
 		opt_init = 1;
 	}
 
-	v60.irq_cb = v60_default_irq_cb;
+	v60.irq_cb = irqcallback;
 	v60.irq_line = CLEAR_LINE;
 	v60.nmi_line = CLEAR_LINE;
 
-	state_save_register_item_array(type, cpu, v60.reg);
-	state_save_register_item(type, cpu, v60.irq_line);
-	state_save_register_item(type, cpu, v60.nmi_line);
-	state_save_register_item(type, cpu, PPC);
-	state_save_register_item(type, cpu, _CY);
-	state_save_register_item(type, cpu, _OV);
-	state_save_register_item(type, cpu, _S);
-	state_save_register_item(type, cpu, _Z);
+	state_save_register_item_array(type, index, v60.reg);
+	state_save_register_item(type, index, v60.irq_line);
+	state_save_register_item(type, index, v60.nmi_line);
+	state_save_register_item(type, index, PPC);
+	state_save_register_item(type, index, _CY);
+	state_save_register_item(type, index, _OV);
+	state_save_register_item(type, index, _S);
+	state_save_register_item(type, index, _Z);
 }
 
-void v60_init(void)
+void v60_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
-	base_init("v60");
+	base_init("v60", index, irqcallback);
 	// Set PIR (Processor ID) for NEC v60. LSB is reserved to NEC,
 	// so I don't know what it contains.
 	PIR = 0x00006000;
 	v60.info = v60_i;
 }
 
-void v70_init(void)
+void v70_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
-	base_init("v70");
+	base_init("v70", index, irqcallback);
 	// Set PIR (Processor ID) for NEC v70. LSB is reserved to NEC,
 	// so I don't know what it contains.
 	PIR = 0x00007000;
 	v60.info = v70_i;
 }
 
-void v60_reset(void *param)
+void v60_reset(void)
 {
 	PSW		= 0x10000000;
 	PC		= v60.info.start_pc;
@@ -584,9 +581,6 @@ static void v60_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + V60_ADTR1:			ADTR1 = info->i;						break;
 		case CPUINFO_INT_REGISTER + V60_ADTMR0:			ADTMR0 = info->i;						break;
 		case CPUINFO_INT_REGISTER + V60_ADTMR1:			ADTMR1 = info->i;						break;
-
-		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_IRQ_CALLBACK:					v60.irq_cb = info->irqcallback;			break;
 	}
 }
 
@@ -697,7 +691,6 @@ void v60_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = v60_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = v60_dasm;			break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = v60.irq_cb;			break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &v60_ICount;				break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = v60_reg_layout;				break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = v60_win_layout;				break;

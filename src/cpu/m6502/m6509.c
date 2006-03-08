@@ -37,10 +37,7 @@ addresses take place.
 
 */
 
-#include <stdio.h>
-#include "driver.h"
 #include "debugger.h"
-#include "m6509.h"
 #include "m6509.h"
 
 #include "ops02.h"
@@ -141,13 +138,14 @@ static ADDRESS_MAP_START(m6509_mem, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0x00001, 0x00001) AM_MIRROR(0xF0000) AM_READWRITE(m6509_read_00001, m6509_write_00001)
 ADDRESS_MAP_END
 
-static void m6509_init(void)
+static void m6509_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
 	m6509.rdmem_id = program_read_byte_8;
 	m6509.wrmem_id = program_write_byte_8;
+	m6509.irq_callback = irqcallback;
 }
 
-static void m6509_reset (void *param)
+static void m6509_reset (void)
 {
 	m6509.insn = insn6509;
 
@@ -325,7 +323,6 @@ static void m6509_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + M6509_ZP:			m6509.zp.w.l = info->i;					break;
 
 		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_IRQ_CALLBACK:					m6509.irq_callback = info->irqcallback;	break;
 		case CPUINFO_PTR_M6502_READINDEXED_CALLBACK:	m6509.rdmem_id = (read8_handler) info->f;	break;
 		case CPUINFO_PTR_M6502_WRITEINDEXED_CALLBACK:	m6509.wrmem_id = (write8_handler) info->f;	break;
 	}
@@ -393,7 +390,6 @@ void m6509_get_info(UINT32 state, union cpuinfo *info)
 #ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = m6510_dasm;			break;
 #endif
-		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = m6509.irq_callback;	break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m6509_ICount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m6509_reg_layout;				break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = m6509_win_layout;				break;

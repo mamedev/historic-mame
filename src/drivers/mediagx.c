@@ -702,7 +702,7 @@ static MACHINE_RESET(mediagx)
 	UINT8 *rom = memory_region(REGION_USER1);
 
 	dma8237_reset();
-	cpu_set_irq_callback(0, irq_callback);
+	cpunum_set_irq_callback(0, irq_callback);
 
 	memcpy(bios_ram, rom, 0x40000);
 

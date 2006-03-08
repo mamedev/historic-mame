@@ -3973,4 +3973,4 @@ GAME( 1994, spacedxo, spacedx, spacedxo, spacedxo, taito_b, ROT0,   "Taito Corpo
     in that it has a punching pad that player needs to punch to hit
     the enemy.
 */
-GAME(  1990, sbm,      0,       sbm,      sbm,      0, ROT0,   "Taito Corporation", "Sonic Blast Man (Japan)", GAME_SUPPORTS_SAVE )
+GAME(  1990, sbm,      0,       sbm,      sbm,      taito_b, ROT0,   "Taito Corporation", "Sonic Blast Man (Japan)", GAME_SUPPORTS_SAVE )

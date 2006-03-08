@@ -1,5 +1,4 @@
 #include "cpuintrf.h"
-#include "osd_cpu.h"
 
 enum {
 	SE3208_PC=1, SE3208_SR, SE3208_ER, SE3208_SP,SE3208_PPC,

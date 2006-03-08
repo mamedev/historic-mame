@@ -2,8 +2,7 @@
 #ifndef __I86INTRF_H_
 #define __I86INTRF_H_
 
-#include "memory.h"
-#include "osd_cpu.h"
+#include "cpuintrf.h"
 
 enum {
 	I86_PC=0,

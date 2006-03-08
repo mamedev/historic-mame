@@ -1,6 +1,8 @@
 #ifndef __V60_H
 #define __V60_H
 
+#include "cpuintrf.h"
+
 enum {
 	V60_R0 = 1,
 	V60_R1,

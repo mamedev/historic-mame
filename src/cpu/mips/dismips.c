@@ -5,10 +5,8 @@
  *
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "psx.h"
+
 extern unsigned dasmr3k(char *,unsigned, UINT32);
 extern unsigned dasmmips3(char *,unsigned, UINT32);
 

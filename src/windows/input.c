@@ -7,6 +7,9 @@
 //
 //============================================================
 
+// Needed for RAW Input
+#define _WIN32_WINNT 0x501
+
 // standard windows headers
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -17,7 +20,7 @@
 
 // undef WINNT for dinput.h to prevent duplicate definition
 #undef WINNT
-#define DIRECTINPUT_VERSION 0x0500
+#define DIRECTINPUT_VERSION 0x0700
 #include <dinput.h>
 
 // MAME headers
@@ -103,13 +106,25 @@ enum
 //============================================================
 
 typedef struct _axis_history axis_history;
-
 struct _axis_history
 {
 	LONG		value;
 	INT32		count;
 };
 
+typedef struct _raw_mouse raw_mouse;
+struct _raw_mouse
+{
+	// Identifier for the mouse.
+	// WM_INPUT passes the device HANDLE as lparam when registering a mousemove
+	HANDLE			device_handle;
+
+	// Current mouse axis and button info
+	DIMOUSESTATE	mouse_state;
+
+	// Used to determine if the HID is using absolute mode or relative mode
+	USHORT			flags;
+};
 
 
 //============================================================
@@ -162,8 +177,9 @@ static INT8					currkey[MAX_KEYS];
 // mouse states
 static int					mouse_active;
 static int					mouse_count;
-static LPDIRECTINPUTDEVICE	mouse_device[MAX_MICE];
-static LPDIRECTINPUTDEVICE2	mouse_device2[MAX_MICE];
+static LPDIRECTINPUTDEVICE	mouse_device[MAX_MICE+1];
+static LPDIRECTINPUTDEVICE2	mouse_device2[MAX_MICE+1];
+static raw_mouse			raw_mouse_device[MAX_MICE];
 static DIDEVCAPS			mouse_caps[MAX_MICE];
 static DIMOUSESTATE			mouse_state[MAX_MICE];
 static int					lightgun_count;
@@ -240,6 +256,27 @@ static void update_joystick_axes(void);
 static void init_keycodes(void);
 static void init_joycodes(void);
 static void poll_lightguns(void);
+static BOOL is_rm_rdp_mouse(const char *device_string);
+static void process_raw_input(PRAWINPUT raw);
+static BOOL register_raw_mouse(void);
+static BOOL init_raw_mouse(void);
+static void win_read_raw_mouse(void);
+
+
+
+//============================================================
+//  Dynamically linked functions from rawinput
+//============================================================
+
+typedef WINUSERAPI INT (WINAPI *pGetRawInputDeviceList)(OUT PRAWINPUTDEVICELIST pRawInputDeviceList, IN OUT PINT puiNumDevices, IN UINT cbSize);
+typedef WINUSERAPI INT (WINAPI *pGetRawInputData)(IN HRAWINPUT hRawInput, IN UINT uiCommand, OUT LPVOID pData, IN OUT PINT pcbSize, IN UINT cbSizeHeader);
+typedef WINUSERAPI INT (WINAPI *pGetRawInputDeviceInfoA)(IN HANDLE hDevice, IN UINT uiCommand, OUT LPVOID pData, IN OUT PINT pcbSize);
+typedef WINUSERAPI BOOL (WINAPI *pRegisterRawInputDevices)(IN PCRAWINPUTDEVICE pRawInputDevices, IN UINT uiNumDevices, IN UINT cbSize);
+
+static pGetRawInputDeviceList _GetRawInputDeviceList;
+static pGetRawInputData _GetRawInputData;
+static pGetRawInputDeviceInfoA _GetRawInputDeviceInfoA;
+static pRegisterRawInputDevices _RegisterRawInputDevices;
 
 
 
@@ -919,6 +956,34 @@ out_of_mice:
 
 
 //============================================================
+//  remove_dx_system_mouse
+//============================================================
+
+static void remove_dx_system_mouse(void)
+{
+	int i;
+
+	if (mouse_count < 2) return;
+
+	// release system mouse
+	if (mouse_device2[0])
+		IDirectInputDevice_Release(mouse_device2[0]);
+	IDirectInputDevice_Release(mouse_device[0]);
+	mouse_count--;
+
+	// shift mouse list
+	for (i = 0; i < mouse_count; i++)
+	{
+		if (mouse_device2[i+1])
+			mouse_device2[i] = mouse_device2[i+1];
+		mouse_device[i] = mouse_device[i+1];
+	}
+	return;
+}
+
+
+
+//============================================================
 //  enum_joystick_callback
 //============================================================
 
@@ -1046,9 +1111,15 @@ int win_init_input(void)
 	{
 		lightgun_dual_player_state[0] = lightgun_dual_player_state[1] = 0;
 		lightgun_dual_player_state[2] = lightgun_dual_player_state[3] = 0;
-		result = IDirectInput_EnumDevices(dinput, DIDEVTYPE_MOUSE, enum_mouse_callback, 0, DIEDFL_ATTACHEDONLY);
-		if (result != DI_OK)
-			goto cant_init_mouse;
+		win_use_raw_mouse = init_raw_mouse();
+		if (!win_use_raw_mouse)
+		{
+			result = IDirectInput_EnumDevices(dinput, DIDEVTYPE_MOUSE, enum_mouse_callback, 0, DIEDFL_ATTACHEDONLY);
+			if (result != DI_OK)
+				goto cant_init_mouse;
+			// remove system mouse on multi-mouse systems
+			remove_dx_system_mouse();
+		}
 
 		// if we have at least one mouse, and the "Dual" option is selected,
 		//  then the lightgun_count is 2 (The two guns are read as a single
@@ -1124,13 +1195,14 @@ void win_shutdown_input(void)
 	}
 
 	// release all our mice
-	for (i = 0; i < mouse_count; i++)
-	{
-		IDirectInputDevice_Release(mouse_device[i]);
-		if (mouse_device2[i])
-			IDirectInputDevice_Release(mouse_device2[i]);
-		mouse_device2[i]=0;
-	}
+	if (!win_use_raw_mouse)
+		for (i = 0; i < mouse_count; i++)
+		{
+			IDirectInputDevice_Release(mouse_device[i]);
+			if (mouse_device2[i])
+				IDirectInputDevice_Release(mouse_device2[i]);
+			mouse_device2[i]=0;
+		}
 
 	// free allocated strings
 	for (i = 0; i < total_codes; i++)
@@ -1163,8 +1235,9 @@ void win_pause_input(int paused)
 			IDirectInputDevice_Unacquire(keyboard_device[i]);
 
 		// unacquire all our mice
-		for (i = 0; i < mouse_count; i++)
-			IDirectInputDevice_Unacquire(mouse_device[i]);
+		if (!win_use_raw_mouse)
+			for (i = 0; i < mouse_count; i++)
+				IDirectInputDevice_Unacquire(mouse_device[i]);
 	}
 
 	// otherwise, reacquire all devices
@@ -1175,9 +1248,10 @@ void win_pause_input(int paused)
 			IDirectInputDevice_Acquire(keyboard_device[i]);
 
 		// acquire all our mice if active
-		if (mouse_active && !win_has_menu())
-			for (i = 0; i < mouse_count && (win_use_mouse || use_lightgun); i++)
-				IDirectInputDevice_Acquire(mouse_device[i]);
+		if (!win_use_raw_mouse)
+			if (mouse_active && !win_has_menu())
+				for (i = 0; i < mouse_count && (win_use_mouse || use_lightgun); i++)
+					IDirectInputDevice_Acquire(mouse_device[i]);
 	}
 
 	// set the paused state
@@ -1280,27 +1354,32 @@ void win_poll_input(void)
 	update_joystick_axes();
 
 	// poll all our mice if active
-	if (mouse_active && !win_has_menu())
-		for (i = 0; i < mouse_count && (win_use_mouse||use_lightgun); i++)
-		{
-			// first poll the device
-			if (mouse_device2[i])
-				IDirectInputDevice2_Poll(mouse_device2[i]);
-
-			// get the state
-			result = IDirectInputDevice_GetDeviceState(mouse_device[i], sizeof(mouse_state[i]), &mouse_state[i]);
-
-			// handle lost inputs here
-			if ((result == DIERR_INPUTLOST || result == DIERR_NOTACQUIRED) && !input_paused)
+	if (win_use_raw_mouse)
+		win_read_raw_mouse();
+	else
+	{
+		if (mouse_active && !win_has_menu())
+			for (i = 0; i < mouse_count && (win_use_mouse||use_lightgun); i++)
 			{
-				result = IDirectInputDevice_Acquire(mouse_device[i]);
-				if (result == DI_OK)
-					result = IDirectInputDevice_GetDeviceState(mouse_device[i], sizeof(mouse_state[i]), &mouse_state[i]);
-			}
-		}
+				// first poll the device
+				if (mouse_device2[i])
+					IDirectInputDevice2_Poll(mouse_device2[i]);
 
-	// poll the lightguns
-	poll_lightguns();
+				// get the state
+				result = IDirectInputDevice_GetDeviceState(mouse_device[i], sizeof(mouse_state[i]), &mouse_state[i]);
+
+				// handle lost inputs here
+				if ((result == DIERR_INPUTLOST || result == DIERR_NOTACQUIRED) && !input_paused)
+				{
+					result = IDirectInputDevice_Acquire(mouse_device[i]);
+					if (result == DI_OK)
+						result = IDirectInputDevice_GetDeviceState(mouse_device[i], sizeof(mouse_state[i]), &mouse_state[i]);
+				}
+			}
+
+		// poll the lightguns
+		poll_lightguns();
+	}
 }
 
 
@@ -1571,35 +1650,48 @@ static void init_joycodes(void)
 {
 	int mouse, gun, stick, axis, button, pov;
 	char tempname[MAX_PATH];
+	char mousename[10];
 
 	// map mice first
 	for (mouse = 0; mouse < mouse_count; mouse++)
 	{
+		if (mouse_count > 1)
+			sprintf(mousename, "Mouse %d ", mouse + 1);
+		else
+			sprintf(mousename, "Mouse ");
 		// add analog axes (fix me -- should enumerate these)
-		sprintf(tempname, "Mouse %d X", mouse + 1);
+		sprintf(tempname, "%sX", mousename);
 		add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEAXIS, 0), CODE_OTHER_ANALOG_RELATIVE);
-		sprintf(tempname, "Mouse %d Y", mouse + 1);
+		sprintf(tempname, "%sY", mousename);
 		add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEAXIS, 1), CODE_OTHER_ANALOG_RELATIVE);
-		sprintf(tempname, "Mouse %d Z", mouse + 1);
+		sprintf(tempname, "%sZ", mousename);
 		add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEAXIS, 2), CODE_OTHER_ANALOG_RELATIVE);
 
 		// add mouse buttons
 		for (button = 0; button < 4; button++)
 		{
-			DIDEVICEOBJECTINSTANCE instance = { 0 };
-			HRESULT result;
-
-			// attempt to get the object info
-			instance.dwSize = STRUCTSIZE(DIDEVICEOBJECTINSTANCE);
-			result = IDirectInputDevice_GetObjectInfo(mouse_device[mouse], &instance, offsetof(DIMOUSESTATE, rgbButtons[button]), DIPH_BYOFFSET);
-			if (result == DI_OK)
+			if (win_use_raw_mouse)
 			{
-				// add mouse number to the name
-				if (mouse_count > 1)
-					sprintf(tempname, "Mouse %d %s", mouse + 1, instance.tszName);
-				else
-					sprintf(tempname, "Mouse %s", instance.tszName);
+				sprintf(tempname, "Mouse %d Button %d", mouse + 1, button + 1);
 				add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEBUTTON, button), CODE_OTHER_DIGITAL);
+			}
+			else
+			{
+				DIDEVICEOBJECTINSTANCE instance = { 0 };
+				HRESULT result;
+
+				// attempt to get the object info
+				instance.dwSize = STRUCTSIZE(DIDEVICEOBJECTINSTANCE);
+				result = IDirectInputDevice_GetObjectInfo(mouse_device[mouse], &instance, offsetof(DIMOUSESTATE, rgbButtons[button]), DIPH_BYOFFSET);
+				if (result == DI_OK)
+				{
+					// add mouse number to the name
+					if (mouse_count > 1)
+						sprintf(tempname, "Mouse %d %s", mouse + 1, instance.tszName);
+					else
+						sprintf(tempname, "Mouse %s", instance.tszName);
+					add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEBUTTON, button), CODE_OTHER_DIGITAL);
+				}
 			}
 		}
 	}
@@ -2345,4 +2437,278 @@ void stop_led(void)
 	}
 
 	return;
+}
+
+
+
+//============================================================
+//  is_rm_rdp_mouse
+//============================================================
+// returns TRUE if it is a remote desktop mouse
+
+// A weak solution to weeding out the Terminal Services virtual mouse from the
+// list of devices. I read somewhere that you shouldn't trust the device name's format.
+// In other words, you shouldn't do what I'm doing.
+// Here's the quote from http://www.jsiinc.com/SUBJ/tip4600/rh4628.htm:
+//   "Note that you should not make any programmatic assumption about how an instance ID
+//    is formatted. To determine root devices, you can check device status bits."
+//  So tell me, what are these (how you say) "status bits" and where can I get some?
+
+static BOOL is_rm_rdp_mouse(const char *device_string)
+{
+	const char *rdp_string = "\\??\\Root#RDP_MOU#0000#";
+	int i;
+
+	if (strlen(device_string) < 22)
+	{
+		return 0;
+	}
+
+	for (i = 0; i < 22; i++)
+	{
+		if (rdp_string[i] != device_string[i])
+		{
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
+
+
+//============================================================
+//  register_raw_mouse
+//============================================================
+// returns TRUE if registration succeeds
+
+static BOOL register_raw_mouse(void)
+{
+	// This function registers to receive the WM_INPUT messages
+	RAWINPUTDEVICE rid[1]; // Register only for mouse messages from wm_input.
+
+	//register to get wm_input messages
+	rid[0].usUsagePage = 0x01;
+	rid[0].usUsage = 0x02;
+	rid[0].dwFlags = 0;// RIDEV_NOLEGACY;   // adds HID mouse and also ignores legacy mouse messages
+	rid[0].hwndTarget = NULL;
+
+	// Register to receive the WM_INPUT message for any change in mouse
+	// (buttons, wheel, and movement will all generate the same message)
+	return (/* RegisterRawInputDevices*/ (*_RegisterRawInputDevices)(rid, 1, sizeof (rid[0])));
+}
+
+
+
+//============================================================
+//  init_raw_mouse
+//============================================================
+// returns TRUE if initialization succeeds
+
+static BOOL init_raw_mouse(void)
+{
+	PRAWINPUTDEVICELIST raw_input_device_list;
+//  static BOOL bHasBeenInitialized = 0;
+	char *ps_name = NULL;
+	HMODULE user32;
+	int input_devices, size, i;
+
+//  if (bHasBeenInitialized)
+//      return 1;
+
+	/* For now we will not use raw support for lightguns */
+	if (use_lightgun) goto dont_use_raw_input;
+
+	/* Check to see if OS is raw input capable */
+	user32 = LoadLibrary("user32.dll");
+	if (!user32) goto cant_use_raw_input;
+	_RegisterRawInputDevices = (pRegisterRawInputDevices)GetProcAddress(user32,"RegisterRawInputDevices");
+	if (!_RegisterRawInputDevices) goto cant_use_raw_input;
+	_GetRawInputDeviceList = (pGetRawInputDeviceList)GetProcAddress(user32,"GetRawInputDeviceList");
+	if (!_GetRawInputDeviceList) goto cant_use_raw_input;
+	_GetRawInputDeviceInfoA = (pGetRawInputDeviceInfoA)GetProcAddress(user32,"GetRawInputDeviceInfoA");
+	if (!_GetRawInputDeviceInfoA) goto cant_use_raw_input;
+	_GetRawInputData = (pGetRawInputData)GetProcAddress(user32,"GetRawInputData");
+	if (!_GetRawInputData) goto cant_use_raw_input;
+
+	// 1st call to GetRawInputDeviceList: Pass NULL to get the number of devices.
+	if (/* GetRawInputDeviceList */ (*_GetRawInputDeviceList)(NULL, &input_devices, sizeof(RAWINPUTDEVICELIST)) != 0)
+		goto cant_use_raw_input;
+
+	// Allocate the array to hold the DeviceList
+	if ((raw_input_device_list = malloc(sizeof(RAWINPUTDEVICELIST) * input_devices)) == NULL)
+		goto cant_use_raw_input;
+
+	// 2nd call to GetRawInputDeviceList: Pass the pointer to our DeviceList and GetRawInputDeviceList() will fill the array
+	if (/* GetRawInputDeviceList */ (*_GetRawInputDeviceList)(raw_input_device_list, &input_devices, sizeof(RAWINPUTDEVICELIST)) == -1)
+		goto cant_create_raw_input;
+
+	// Loop through all devices and setup the mice
+	for (i = 0; (i < input_devices) && (mouse_count < MAX_MICE); i++)
+	{
+		if (raw_input_device_list[i].dwType == RIM_TYPEMOUSE)
+		{
+			/* Get the device name and use it to determine if it's the RDP Terminal Services virtual device. */
+
+			// 1st call to GetRawInputDeviceInfo: Pass NULL to get the size of the device name
+			if (/* GetRawInputDeviceInfo */ (*_GetRawInputDeviceInfoA)(raw_input_device_list[i].hDevice, RIDI_DEVICENAME, NULL, &size) != 0)
+				goto cant_create_raw_input;
+
+			// Allocate the array to hold the name
+			if ((ps_name = (char *)malloc(sizeof(TCHAR) * size)) == NULL)
+				goto cant_create_raw_input;
+
+			// 2nd call to GetRawInputDeviceInfo: Pass our pointer to get the device name
+			if ((int)/* GetRawInputDeviceInfo */ (*_GetRawInputDeviceInfoA)(raw_input_device_list[i].hDevice, RIDI_DEVICENAME, ps_name, &size) < 0)
+				goto cant_create_raw_input;
+
+			// Use this mouse if it's not an RDP mouse
+			if (!is_rm_rdp_mouse(ps_name))
+			{
+				raw_mouse_device[mouse_count].device_handle = raw_input_device_list[i].hDevice;
+				mouse_count++;
+			}
+
+			free(ps_name);
+		}
+	}
+
+	free(raw_input_device_list);
+
+	// only use raw mouse support for multiple mice
+	if (mouse_count < 2)
+	{
+		mouse_count = 0;
+		goto dont_use_raw_input;
+	}
+
+	// finally, register to recieve raw input WM_INPUT messages
+	if (!register_raw_mouse())
+		goto cant_init_raw_input;
+
+	if (verbose)
+		fprintf(stderr, "Using RAWMOUSE for input\n");
+//  bHasBeenInitialized = 1;
+	return 1;
+
+cant_create_raw_input:
+	free(raw_input_device_list);
+	free(ps_name);
+dont_use_raw_input:
+cant_use_raw_input:
+cant_init_raw_input:
+	return 0;
+}
+
+
+
+//============================================================
+//  process_raw_input
+//============================================================
+
+static void process_raw_input(PRAWINPUT raw)
+{
+	int i;
+	LONG z;
+	USHORT button_flags;
+	BYTE *buttons;
+
+	for ( i=0; i < mouse_count; i++)
+	{
+		if (raw_mouse_device[i].device_handle == raw->header.hDevice)
+		{
+			// Z axis on a mouse is incremeted 120 for each change.
+			// It uses a signed SHORT value stored in a unsigned USHORT.
+			// We will convert it to reflect +/- 1 increments.
+			z = (LONG)((SHORT)raw->data.mouse.usButtonData / 120);
+
+			// Update the axis values for the specified mouse
+			if (raw_mouse_device[i].flags == MOUSE_MOVE_RELATIVE)
+			{
+				raw_mouse_device[i].mouse_state.lX += raw->data.mouse.lLastX;
+				raw_mouse_device[i].mouse_state.lY += raw->data.mouse.lLastY;
+				raw_mouse_device[i].mouse_state.lZ += z;
+			}
+			else
+			{
+				raw_mouse_device[i].mouse_state.lX = raw->data.mouse.lLastX;
+				raw_mouse_device[i].mouse_state.lY = raw->data.mouse.lLastY;
+				raw_mouse_device[i].mouse_state.lZ = z;
+			}
+
+			// The following 2 lines are just to avoid a lot of pointer re-direction
+			button_flags = raw->data.mouse.usButtonFlags;
+			buttons = raw_mouse_device[i].mouse_state.rgbButtons;
+
+			// Update the button values for the specified mouse
+			if (button_flags & RI_MOUSE_BUTTON_1_DOWN) buttons[0] = 0x80;
+			if (button_flags & RI_MOUSE_BUTTON_1_UP)   buttons[0] = 0;
+			if (button_flags & RI_MOUSE_BUTTON_2_DOWN) buttons[1] = 0x80;
+			if (button_flags & RI_MOUSE_BUTTON_2_UP)   buttons[1] = 0;
+			if (button_flags & RI_MOUSE_BUTTON_3_DOWN) buttons[2] = 0x80;
+			if (button_flags & RI_MOUSE_BUTTON_3_UP)   buttons[2] = 0;
+			if (button_flags & RI_MOUSE_BUTTON_4_DOWN) buttons[3] = 0x80;
+			if (button_flags & RI_MOUSE_BUTTON_4_UP)   buttons[3] = 0;
+
+			raw_mouse_device[i].flags = raw->data.mouse.usFlags;
+		}
+	}
+
+	return;
+}
+
+
+
+//============================================================
+//  win_raw_mouse_update
+//============================================================
+// returns TRUE if raw mouse info successfully updated
+
+BOOL win_raw_mouse_update(HANDLE in_device_handle)
+{
+	//  When the WM_INPUT message is received, the lparam must be passed to this
+	//  function to keep a running tally of all mouse moves.
+
+	LPBYTE data;
+	int size;
+
+	if (/* GetRawInputData */(*_GetRawInputData)((HRAWINPUT)in_device_handle, RID_INPUT, NULL, &size, sizeof(RAWINPUTHEADER)) == -1)
+		goto cant_find_raw_data;
+
+	data = (LPBYTE)malloc(sizeof(LPBYTE) * size);
+	if (data == NULL)
+		goto cant_find_raw_data;
+
+	if (/* GetRawInputData */(*_GetRawInputData)((HRAWINPUT)in_device_handle, RID_INPUT, data, &size, sizeof(RAWINPUTHEADER)) != size )
+		goto cant_read_raw_data;
+
+	process_raw_input((RAWINPUT*)data);
+
+	free(data);
+	return 1;
+
+cant_read_raw_data:
+	free(data);
+cant_find_raw_data:
+	return 0;
+}
+
+
+
+//============================================================
+//  win_read_raw_mouse
+//============================================================
+// use this to poll and reset the current mouse info
+
+static void win_read_raw_mouse(void)
+{
+	int i;
+
+	for ( i=0; i < mouse_count; i++)
+	{
+		mouse_state[i] = raw_mouse_device[i].mouse_state;
+		raw_mouse_device[i].mouse_state.lX = 0;
+		raw_mouse_device[i].mouse_state.lY = 0;
+		raw_mouse_device[i].mouse_state.lZ = 0;
+	}
 }

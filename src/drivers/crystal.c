@@ -580,7 +580,7 @@ static MACHINE_RESET(crystal)
 	memset(vidregs,0,0x10000);
 	FlipCount=0;
 	IntHigh=0;
-	cpu_set_irq_callback(0,icallback);
+	cpunum_set_irq_callback(0,icallback);
 	Bank=0;
 	memory_set_bankptr(1,memory_region(REGION_USER1)+0);
 	FlashCmd=0xff;

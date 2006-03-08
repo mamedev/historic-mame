@@ -9,8 +9,7 @@
 #ifndef _R3000_H
 #define _R3000_H
 
-#include "memory.h"
-#include "osd_cpu.h"
+#include "cpuintrf.h"
 
 
 /***************************************************************************

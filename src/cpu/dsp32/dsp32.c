@@ -27,12 +27,7 @@
 
 ***************************************************************************/
 
-#include <stdio.h>
-#include <stddef.h>
-#include <stdlib.h>
-#include <string.h>
 #include <math.h>
-#include "cpuintrf.h"
 #include "debugger.h"
 #include "dsp32.h"
 
@@ -198,7 +193,7 @@ typedef struct
     PROTOTYPES
 ***************************************************************************/
 
-static void dsp32c_reset(void *param);
+static void dsp32c_reset(void);
 
 
 
@@ -304,7 +299,7 @@ static void update_pcr(UINT16 newval)
 
 	/* reset the chip if we get a reset */
 	if ((oldval & PCR_RESET) == 0 && (newval & PCR_RESET) != 0)
-		dsp32c_reset(0);
+		dsp32c_reset();
 
 	/* track the state of the output pins */
 	if (dsp32.output_pins_changed)
@@ -349,19 +344,18 @@ static void dsp32c_set_context(void *src)
     INITIALIZATION AND SHUTDOWN
 ***************************************************************************/
 
-static void dsp32c_init(void)
+static void dsp32c_init(int index, int clock, const void *_config, int (*irqcallback)(int))
 {
-}
-
-
-static void dsp32c_reset(void *param)
-{
-	struct dsp32_config *config = param;
+	const struct dsp32_config *config = _config;
 
 	/* copy in config data */
 	if (config)
 		dsp32.output_pins_changed = config->output_pins_changed;
+}
 
+
+static void dsp32c_reset(void)
+{
 	/* reset goes to 0 */
 	dsp32.PC = 0;
 	memory_set_opbase(dsp32.PC);
@@ -918,7 +912,6 @@ void dsp32c_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = dsp32c_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = dsp32c_dasm;		break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					/* not implemented */					break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &dsp32_icount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = dsp32c_reg_layout;			break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = dsp32c_win_layout;			break;

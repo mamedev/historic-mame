@@ -47,8 +47,9 @@
  *
  *****************************************************************************/
 
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
+#include "cpuintrf.h"
 #include "pokey.h"
 
 /* clear this to use Machine->sample_rate instead of the native rate */

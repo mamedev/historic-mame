@@ -3,10 +3,7 @@
    driver by David Haywood (+ Paul Priest)
 ------------------------------------------------------------------
 
-Moving on from the 68020 based system used for the first Strikers
-1945 game Psikyo introduced a system using Hitachi's SH-2 CPU
-
-This driver is for the dual-screen PS4 boards
+This driver is for the dual-screen PS4 boards using an SH-2 processor
 
  Board PS4 (Custom Chip PS6807)
  ------------------------------
@@ -16,7 +13,7 @@ This driver is for the dual-screen PS4 boards
  Lode Runner - The Dig Fight (c)2000
  Quiz de Idol! Hot Debut (c)2000
 
-Not dumped yet:
+ Incomplete Dumps
  Taisen Hot Gimmick 4 Ever (c)2000 (confirmed by Japump)
  Taisen Hot Gimmick Integral (c)2001 (confirmed by Yahoo! Japan auction)
 
@@ -52,15 +49,12 @@ Quiz de Idol! Hot Debut:       PL1 Start (passes)
 
 5-0-8-2-0 Maintenance Mode
 
-You can switch the game to English temporarily.
-
-Or use these cheats:
-:loderndf:00000000:0600A533:00000001:FFFFFFFF:Language = English
-:loderdfa:00000000:0600A473:00000001:FFFFFFFF:Language = English
-
 --- Quiz de Idol! Hot Debut ---
 
 9-2-3-0-1 Maintenance Mode
+
+NOTE: The version number (A/B) on Lode Runner: The Dig Fight is ONLY displayed when the game is set
+      to Japanese.  The same is true for Space Bomber in psikyosh.c
 
 ----------------------------------------------------------------*/
 
@@ -157,9 +151,9 @@ static READ32_HANDLER( ps4_eeprom_r )
 		return ((EEPROM_read_bit() << 20)); /* EEPROM */
 	}
 
-	logerror("Unk EEPROM read mask %x\n", mem_mask);
+//  logerror("Unk EEPROM read mask %x\n", mem_mask);
 
-	return 0;
+	return readinputportbytag("JP4")<<16;
 }
 
 static INTERRUPT_GEN(psikyosh_interrupt)
@@ -592,6 +586,9 @@ INPUT_PORTS_START( hotgmck )
 	PORT_BIT(  0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_NAME("Select PL2 Screen") PORT_CODE(KEYCODE_EQUALS)
 	PORT_BIT(   0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
 #endif
+
+	PORT_START_TAG("JP4")/* jumper pads 'JP4' on the PCB */
+	UNUSED_PORT
 INPUT_PORTS_END
 
 INPUT_PORTS_START( loderndf )
@@ -668,6 +665,13 @@ INPUT_PORTS_START( loderndf )
 	PORT_BIT(  0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_NAME("Select PL3+PL4 Screen") PORT_CODE(KEYCODE_EQUALS)
 	PORT_BIT(   0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
 #endif
+
+	PORT_START_TAG("JP4")/* jumper pads 'JP4' on the PCB */
+//  1-ON,2-ON,3-ON,4-ON  --> Japanese
+//  1-ON,2-ON,3-ON,4-OFF --> English
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Region ) )
+	PORT_DIPSETTING(    0x00, "Japan (Shows Version Number)" )
+	PORT_DIPSETTING(    0x01, "World (Does Not Show Version Number)" )
 INPUT_PORTS_END
 
 /* unused inputs also act as duplicate buttons */
@@ -745,6 +749,9 @@ INPUT_PORTS_START( hotdebut )
 	PORT_BIT(  0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_NAME("Select PL3+PL4 Screen") PORT_CODE(KEYCODE_EQUALS)
 	PORT_BIT(   0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
 #endif
+
+	PORT_START_TAG("JP4")/* jumper pads 'JP4' on the PCB */
+	UNUSED_PORT
 INPUT_PORTS_END
 
 #if ROMTEST
@@ -835,6 +842,82 @@ ROM_START( hotgmck3 )
 	ROM_LOAD( "snd0.u10", 0x000000, 0x400000, CRC(d62a0dba) SHA1(d81e2e1251b62eca8cd4d8eec2515b2cf7d7ff0a) )
 	ROM_LOAD( "snd1.u19", 0x400000, 0x400000, CRC(1df91fb4) SHA1(f0f2d2d717fbd16a67da9f0e21f288ceedef839f) )
 ROM_END
+
+ROM_START( hotgm4ev )
+	/* main program */
+	ROM_REGION( 0x300000, REGION_CPU1, 0)
+	ROM_LOAD32_WORD_SWAP( "2.u22",   0x000000, 0x080000, CRC(3334c21e) SHA1(8d825448e40bc50d670ab8587a40df6b27ac918e) )
+	ROM_LOAD32_WORD_SWAP( "1.u23",   0x000002, 0x080000, CRC(b1a1c643) SHA1(1912a2d231e97ffbe9b668ca7f25cf406664f3ba) )
+	/* not dumped yet
+    ROM_LOAD16_WORD_SWAP( "prog.u1", 0x100000, 0x100000, CRC(1) SHA1(1) )
+    */
+	ROM_REGION( 0x4000000, REGION_GFX1, ROMTEST_GFX )	/* Sprites */
+	/* not dumped yet
+    ROM_LOAD32_WORD( "0l.u2",  0x0000000, 0x400000, CRC(1) SHA1(1) )
+    ROM_LOAD32_WORD( "0h.u11", 0x0000002, 0x400000, CRC(1) SHA1(1) )
+    ROM_LOAD32_WORD( "1l.u3",  0x0800000, 0x400000, CRC(1) SHA1(1) )
+    ROM_LOAD32_WORD( "1h.u12", 0x0800002, 0x400000, CRC(1) SHA1(1) )
+    ROM_LOAD32_WORD( "2l.u4",  0x1000000, 0x400000, CRC(1) SHA1(1) )
+    ROM_LOAD32_WORD( "2h.u13", 0x1000002, 0x400000, CRC(1) SHA1(1) )
+    ROM_LOAD32_WORD( "3l.u5",  0x1800000, 0x400000, CRC(1) SHA1(1) )
+    ROM_LOAD32_WORD( "3h.u14", 0x1800002, 0x400000, CRC(1) SHA1(1) )
+    ROM_LOAD32_WORD( "4l.u6",  0x2000000, 0x400000, CRC(1) SHA1(1) )
+    ROM_LOAD32_WORD( "4h.u15", 0x2000002, 0x400000, CRC(1) SHA1(1) )
+    ROM_LOAD32_WORD( "5l.u7",  0x2800000, 0x400000, CRC(1) SHA1(1) )
+    ROM_LOAD32_WORD( "5h.u16", 0x2800002, 0x400000, CRC(1) SHA1(1) )
+    ROM_LOAD32_WORD( "6l.u8",  0x3000000, 0x400000, CRC(1) SHA1(1) )
+    ROM_LOAD32_WORD( "6h.u17", 0x3000002, 0x400000, CRC(1) SHA1(1) )
+    ROM_LOAD32_WORD( "7l.u9",  0x3800000, 0x400000, CRC(1) SHA1(1) )
+    ROM_LOAD32_WORD( "7h.u18", 0x3800002, 0x400000, CRC(1) SHA1(1) )
+    */
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )
+
+	ROM_REGION( 0x800000, REGION_SOUND2, 0 )
+	/* not dumped yet
+    ROM_LOAD( "snd0.u10", 0x000000, 0x400000, CRC(1) SHA1(1) )
+    ROM_LOAD( "snd1.u19", 0x400000, 0x400000, CRC(1) SHA1(1) )
+    */
+ROM_END
+
+ROM_START( hotgmcki )
+	/* main program */
+	ROM_REGION( 0x300000, REGION_CPU1, 0)
+	ROM_LOAD32_WORD_SWAP( "2.u22",   0x000000, 0x080000, CRC(abc192dd) SHA1(674c2b8814319605c1b6221bbe18588a98dda093) )
+	ROM_LOAD32_WORD_SWAP( "1.u23",   0x000002, 0x080000, CRC(8be896d0) SHA1(5d677dede4ec18cbfc54acae95fe0f10bfc4d566) )
+	/* not dumped yet
+    ROM_LOAD16_WORD_SWAP( "prog.u1", 0x100000, 0x100000, CRC(1) SHA1(1) )
+    */
+
+	/* exact number & size of gfx / sound roms may be incorrect */
+	ROM_REGION( 0x4000000, REGION_GFX1, ROMTEST_GFX )	/* Sprites */
+	/* not dumped yet
+    ROM_LOAD32_WORD( "0l.u2",  0x0000000, 0x400000, CRC(1) SHA1(1) )
+    ROM_LOAD32_WORD( "0h.u11", 0x0000002, 0x400000, CRC(1) SHA1(1) )
+    ROM_LOAD32_WORD( "1l.u3",  0x0800000, 0x400000, CRC(1) SHA1(1) )
+    ROM_LOAD32_WORD( "1h.u12", 0x0800002, 0x400000, CRC(1) SHA1(1) )
+    ROM_LOAD32_WORD( "2l.u4",  0x1000000, 0x400000, CRC(1) SHA1(1) )
+    ROM_LOAD32_WORD( "2h.u13", 0x1000002, 0x400000, CRC(1) SHA1(1) )
+    ROM_LOAD32_WORD( "3l.u5",  0x1800000, 0x400000, CRC(1) SHA1(1) )
+    ROM_LOAD32_WORD( "3h.u14", 0x1800002, 0x400000, CRC(1) SHA1(1) )
+    ROM_LOAD32_WORD( "4l.u6",  0x2000000, 0x400000, CRC(1) SHA1(1) )
+    ROM_LOAD32_WORD( "4h.u15", 0x2000002, 0x400000, CRC(1) SHA1(1) )
+    ROM_LOAD32_WORD( "5l.u7",  0x2800000, 0x400000, CRC(1) SHA1(1) )
+    ROM_LOAD32_WORD( "5h.u16", 0x2800002, 0x400000, CRC(1) SHA1(1) )
+    ROM_LOAD32_WORD( "6l.u8",  0x3000000, 0x400000, CRC(1) SHA1(1) )
+    ROM_LOAD32_WORD( "6h.u17", 0x3000002, 0x400000, CRC(1) SHA1(1) )
+    ROM_LOAD32_WORD( "7l.u9",  0x3800000, 0x400000, CRC(1) SHA1(1) )
+    ROM_LOAD32_WORD( "7h.u18", 0x3800002, 0x400000, CRC(1) SHA1(1) )
+    */
+
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )
+
+	ROM_REGION( 0x800000, REGION_SOUND2, 0 )
+	/* not dumped yet
+    ROM_LOAD( "snd0.u10", 0x000000, 0x400000, CRC(1) SHA1(1) )
+    ROM_LOAD( "snd1.u19", 0x400000, 0x400000, CRC(1) SHA1(1) )
+    */
+ROM_END
+
 
 ROM_START( loderndf )
 	ROM_REGION( 0x100000, REGION_CPU1, 0)
@@ -981,6 +1064,8 @@ static DRIVER_INIT( hotdebut )
 GAME( 1997, hotgmck,  0,        ps4big,    hotgmck,  hotgmck,  ROT0,   "Psikyo", "Taisen Hot Gimmick (Japan)", 0 )
 GAME( 1998, hgkairak, 0,        ps4big,    hotgmck,  hotgmck,  ROT0,   "Psikyo", "Taisen Hot Gimmick Kairakuten (Japan)", 0 )
 GAME( 1999, hotgmck3, 0,        ps4big,    hotgmck,  hotgmck,  ROT0,   "Psikyo", "Taisen Hot Gimmick 3 Digital Surfing (Japan)", 0 )
-GAME( 2000, loderndf, 0,        ps4small,  loderndf, loderndf, ROT0,   "Psikyo", "Lode Runner - The Dig Fight (ver. B) (Japan)", 0 )
-GAME( 2000, loderdfa, loderndf, ps4small,  loderndf, loderdfa, ROT0,   "Psikyo", "Lode Runner - The Dig Fight (ver. A) (Japan)", 0 )
+GAME( 2000, hotgm4ev, 0,        ps4big,    hotgmck,  hotgmck,  ROT0,   "Psikyo", "Taisen Hot Gimmick 4 Ever (Japan)", GAME_NOT_WORKING )
+GAME( 2001, hotgmcki, 0,        ps4big,    hotgmck,  hotgmck,  ROT0,   "Psikyo", "Taisen Hot Gimmick Integral (Japan)", GAME_NOT_WORKING )
+GAME( 2000, loderndf, 0,        ps4small,  loderndf, loderndf, ROT0,   "Psikyo", "Lode Runner - The Dig Fight (ver. B)", 0 )
+GAME( 2000, loderdfa, loderndf, ps4small,  loderndf, loderdfa, ROT0,   "Psikyo", "Lode Runner - The Dig Fight (ver. A)", 0 )
 GAME( 2000, hotdebut, 0,        ps4small,  hotdebut, hotdebut, ROT0,   "Psikyo / Moss", "Quiz de Idol! Hot Debut (Japan)", 0 )

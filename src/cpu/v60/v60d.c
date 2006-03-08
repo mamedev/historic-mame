@@ -1,8 +1,5 @@
 
-#include "cpuintrf.h"
 #include "debugger.h"
-
-#include <stdio.h>
 #include "v60.h"
 
 static UINT8 (*readop)(offs_t adr);

@@ -10,7 +10,6 @@ Copyright (C) 1992 HI-TECH Software..Brisbane, QLD Australia
 
 #include "driver.h"
 #include "sound/okim6295.h"
-#include "machine/random.h"
 
 
 static tilemap *jackpool_layer0_tilemap;

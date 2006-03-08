@@ -167,7 +167,6 @@ Notes:
 #include "sound/2151intf.h"
 #include "sound/3812intf.h"
 #include "sound/okim6295.h"
-#include "machine/random.h"
 
 #define TUMBLEP_HACK	0
 #define FNCYWLD_HACK	0

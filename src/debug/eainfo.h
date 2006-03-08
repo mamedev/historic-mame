@@ -10,6 +10,8 @@
 
 ****************************************************************************/
 
+#include "cpuintrf.h"
+
 /* What EA address to set with debug_ea_info (origin) */
 enum {
     EA_DST,

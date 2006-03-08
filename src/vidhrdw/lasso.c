@@ -42,8 +42,6 @@ UINT8 *wwjgtin_track_scroll;
 static tilemap *bg_tilemap, *track_tilemap;
 static int gfxbank;
 static int wwjgtin_track_enable;
-static int flip_screen_x;
-static int flip_screen_y;
 
 
 /***************************************************************************

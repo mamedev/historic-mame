@@ -5,8 +5,7 @@
 #ifndef __m68000defs__
 #define __m68000defs__
 
-#include <stdlib.h>
-#include "memory.h"
+#include "cpuintrf.h"
 
 #ifndef INLINE
 #define INLINE static inline

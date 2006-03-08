@@ -9,8 +9,7 @@
 #ifndef _MIPS3_H
 #define _MIPS3_H
 
-#include "memory.h"
-#include "osd_cpu.h"
+#include "cpuintrf.h"
 
 
 /***************************************************************************

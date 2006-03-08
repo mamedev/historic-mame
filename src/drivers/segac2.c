@@ -79,7 +79,6 @@
 
 #include "driver.h"
 #include "cpu/m68000/m68000.h"
-#include "machine/random.h"
 #include "genesis.h"
 
 #define XL1_CLOCK			640000

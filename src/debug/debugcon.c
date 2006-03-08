@@ -454,14 +454,13 @@ const char *debug_cmderr_to_string(CMDERR error)
 
 void CLIB_DECL debug_console_printf(const char *format, ...)
 {
-	char buffer[2048];
 	va_list arg;
 
 	va_start(arg, format);
-	vsprintf(buffer, format, arg);
+	vsprintf(giant_string_buffer, format, arg);
 	va_end(arg);
 
-	text_buffer_print(console_textbuf, buffer);
+	text_buffer_print(console_textbuf, giant_string_buffer);
 
 	/* force an update of any console views */
 	debug_view_update_type(DVT_CONSOLE);
@@ -476,14 +475,13 @@ void CLIB_DECL debug_console_printf(const char *format, ...)
 
 void CLIB_DECL debug_console_printf_wrap(int wrapcol, const char *format, ...)
 {
-	char buffer[2048];
 	va_list arg;
 
 	va_start(arg, format);
-	vsprintf(buffer, format, arg);
+	vsprintf(giant_string_buffer, format, arg);
 	va_end(arg);
 
-	text_buffer_print_wrap(console_textbuf, buffer, wrapcol);
+	text_buffer_print_wrap(console_textbuf, giant_string_buffer, wrapcol);
 
 	/* force an update of any console views */
 	debug_view_update_type(DVT_CONSOLE);

@@ -1,6 +1,4 @@
-#include "driver.h"
-#include <stdio.h>
-#include <stdlib.h>
+#include "mamecore.h"
 #include "sound/wavwrite.h"
 
 struct _wav_file

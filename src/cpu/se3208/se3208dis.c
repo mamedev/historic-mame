@@ -1,6 +1,3 @@
-#include <stdio.h>
-#include <string.h>
-#include "driver.h"
 #include "debugger.h"
 #include "se3208.h"
 

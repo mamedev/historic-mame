@@ -1952,6 +1952,7 @@ const game_driver *drivers[] =
 	DRIVER( outzone )	/* TP-018 (c) 1990 Toaplan */
 	DRIVER( outzonea )	/* TP-018 (c) 1990 Toaplan */
 	DRIVER( outzoneb )	/* TP-018 (c) 1990 Toaplan */
+	DRIVER( outzonec )	/* TP-018 (c) 1990 Toaplan */
 	DRIVER( vimana )	/* TP-019 (c) 1991 Toaplan (+ Tecmo license when set to Japan) */
 	DRIVER( vimana1 )	/* TP-019 (c) 1991 Toaplan (+ Tecmo license when set to Japan)  */
 	DRIVER( vimanan )	/* TP-019 (c) 1991 Toaplan (+ Nova Apparate GMBH & Co license) */
@@ -2136,6 +2137,7 @@ V-V                           TP-027
 	DRIVER( blastkit )	/* (c) 1983 */
 	DRIVER( spdball )	/* (c) 1985 */
 	DRIVER( alienar )	/* (c) 1985 Duncan Brown */
+	DRIVER( alienaru )	/* (c) 1985 Duncan Brown */
 	DRIVER( mysticm )	/* (c) 1983 */
 	DRIVER( tshoot )	/* (c) 1984 */
 	DRIVER( inferno )	/* (c) 1984 */
@@ -2659,15 +2661,17 @@ V-V                           TP-027
 	DRIVER( danceyes )	/* Dancing Eyes (DC1/VER.A) */
 	DRIVER( starswep )	/* Star Sweep (STP1/VER.A) */
 	DRIVER( myangel3 )	/* Kosodate Quiz My Angel 3 (KQT1/VER.A) */
-	DRIVER( ptblank2 )	/* Point Blank 2 (GNB3/VER.A) */
+	DRIVER( ptblnk2a )	/* Point Blank 2 (GNB3/VER.A) */
 
 	/* Namco System 12 */
 	DRIVER( tekken3 )	/* Tekken 3 (TET1/VER.E1) */
-	DRIVER( tekken3a )	/* Tekken 3 (TET2/VER.A) */
+	DRIVER( tekken3a )	/* Tekken 3 (TET2/VER.B) */
+	DRIVER( tekken3b )	/* Tekken 3 (TET2/VER.A) */
 	DRIVER( lbgrande )	/* Libero Grande (LG2/VER.A) */
 	DRIVER( soulclbr )	/* Soul Calibur (SOC14/VER.C) */
-	DRIVER( soulclba )	/* Soul Calibur (SOC11/VER.B) */
-	DRIVER( soulclbb )	/* Soul Calibur (SOC11/VER.A2) */
+	DRIVER( soulclba )	/* Soul Calibur (SOC11/VER.C) */
+	DRIVER( soulclbb )	/* Soul Calibur (SOC11/VER.B) */
+	DRIVER( soulclbc )	/* Soul Calibur (SOC11/VER.A2) */
 	DRIVER( ehrgeiz )	/* Ehrgeiz (EG3/VER.A) */
 	DRIVER( ehrgeiza )	/* Ehrgeiz (EG2/VER.A) */
 	DRIVER( mdhorse )	/* Derby Quiz My Dream Horse (MDH1/VER.A2) */
@@ -2675,15 +2679,19 @@ V-V                           TP-027
 	DRIVER( tenkomoj )	/* Tenkomori Shooting (TKM1/VER.A1) */
 	DRIVER( fgtlayer )	/* Fighting Layer (FTL0/VER.A) */
 	DRIVER( pacapp )	/* Paca Paca Passion (PPP1/VER.A2) */
+	DRIVER( ptblank2 )	/* Point Blank 2 (GNB5/VER.A) */
 	DRIVER( sws99 )		/* Super World Stadium '99 (SS91/VER.A3) */
 	DRIVER( tektagt )	/* Tekken Tag Tournament (TEG3/VER.C1) */
 	DRIVER( tektagta )	/* Tekken Tag Tournament (TEG3/VER.B) */
+	DRIVER( tektagtb )	/* Tekken Tag Tournament (TEG1/VER.B) */
+	DRIVER( tektagtc )	/* Tekken Tag Tournament (TEG1/VER.A) */
 	DRIVER( ghlpanic )	/* Ghoul Panic (OB2/VER.A) */
 	DRIVER( pacapp2 )	/* Paca Paca Passion 2 (PKS1/VER.A) */
 	DRIVER( mrdrillr )	/* Mr Driller (DRI1/VER.A2) */
 	DRIVER( aquarush )	/* Aqua Rush (AQ1/VER.A1) */
 	DRIVER( pacappsp )	/* Paca Paca Passion Special (PSP1/VER.A) */
 	DRIVER( golgo13 )	/* Golgo 13 (GLG1/VER.A) */
+	DRIVER( g13knd )	/* Golgo 13 Kiseki no Dandou (GLS1/VER.A) */
 
 	/* Namco System 10 */
 	DRIVER( mrdrilr2 )	/* Mr Driller 2 (DR21 Ver.A) */
@@ -2691,6 +2699,7 @@ V-V                           TP-027
 	DRIVER( mrdrilrg )	/* Mr. Driller G (DRG1 Ver.A) */
 	DRIVER( knpuzzle )	/* Kotoba no Puzzle Mojipittan (KPM1 Ver.A) */
 	DRIVER( startrgn )	/* Star Trigon (STT1 Ver.A) */
+	DRIVER( gamshara )	/* Gamshara (10021 Ver.A) */
 
 	/* Konami GQ */
 	DRIVER( cryptklr )	/* Crypt Killer (GQ420 UAA) */
@@ -5031,6 +5040,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( tws96 )		/* 0086 (c) 1996 Tecmo */
 	DRIVER( samsho3 )	/* 0087 (c) 1995 SNK */
 	DRIVER( samsho3a )	/* 0087 (c) 1995 SNK */
+	DRIVER( fswords )	/* Korean hack of samsho3 */
 	DRIVER( stakwin )	/* 0088 (c) 1995 Saurus */
 	DRIVER( pulstar )	/* 0089 (c) 1995 Aicom */
 	DRIVER( whp )		/* 0090 (c) 1995 ADK / SNK */
@@ -5040,6 +5050,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( gowcaizr )	/* 0094 (c) 1995 Technos */
 	DRIVER( rbff1 )		/* 0095 (c) 1995 SNK */
 	DRIVER( aof3 )		/* 0096 (c) 1996 SNK */
+	DRIVER( aof3k )		/* Korean hack of aof3 */
 	DRIVER( sonicwi3 )	/* 0097 (c) 1995 Video System Co. */
 				/* 0098 Idol Mahjong - final romance 2 (CD only? not confirmed, MVS might exist) */
 				/* 0099 Neo Pool Masters */
@@ -5084,6 +5095,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( magdrop3 )	/* 0233 (c) 1997 Data East Corporation */
 	DRIVER( lastblad )	/* 0234 (c) 1997 SNK */
 	DRIVER( lastblda )	/* 0234 (c) 1997 SNK */
+	DRIVER( lastsold )	/* Korean hack of lastblad */
 	DRIVER( puzzldpr )	/* 0235 (c) 1997 Taito (Visco license) */
 	DRIVER( irrmaze )	/* 0236 (c) 1997 SNK / Saurus */
 	DRIVER( popbounc )	/* 0237 (c) 1997 Video System Co. */
@@ -5092,6 +5104,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( blazstar )	/* 0239 (c) 1998 Yumekobo */
 	DRIVER( rbff2 )		/* 0240 (c) 1998 SNK */
 	DRIVER( rbff2a )	/* 0240 (c) 1998 SNK */
+	DRIVER( rbff2k )	/* Korean hack of rbff2 */
 	DRIVER( mslug2 )	/* 0241 (c) 1998 SNK */
 	DRIVER( kof98 )		/* 0242 (c) 1998 SNK */
 	DRIVER( kof98k )	/* 0242 (c) 1998 SNK */
@@ -5860,9 +5873,12 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	/* tgm2  (c) 2000 -- removed at Arika's request */
 	/* tgm2p (c) 2000 -- removed at Arika's request */
 	DRIVER( gnbarich )	/* (c) 2001 */
+	DRIVER( mjgtaste )	/* (c) 2002 */
 	DRIVER( hotgmck )	/* (c) 1997 */
 	DRIVER( hgkairak )	/* (c) 1998 */
 	DRIVER( hotgmck3 )	/* (c) 1999 */
+	DRIVER( hotgm4ev )	/* (c) 2000 */
+	DRIVER( hotgmcki )	/* (c) 2001 */
 	DRIVER( loderndf )	/* (c) 2000 */
 	DRIVER( loderdfa )	/* (c) 2000 */
 	DRIVER( hotdebut )	/* (c) 2000 */
@@ -6211,6 +6227,7 @@ Other Sun games
 	DRIVER( gulfstr2 )	/* (c) 1991 Dooyong + distributed by Media Shoji */
 	DRIVER( pollux )	/* (c) 1991 Dooyong */
 	DRIVER( polluxa )	/* (c) 1991 Dooyong */
+	DRIVER( polluxa2 )	/* (c) 1991 Dooyong */
 	DRIVER( flytiger )	/* (c) 1992 Dooyong */
 	DRIVER( bluehawk )	/* (c) 1993 Dooyong */
 	DRIVER( bluehawn )	/* (c) 1993 NTC */

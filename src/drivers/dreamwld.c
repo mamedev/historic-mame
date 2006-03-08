@@ -15,7 +15,6 @@ main ram, the interrupt is pointed to the data in ram.
 */
 
 #include "driver.h"
-#include "machine/random.h"
 
 UINT32*dreamwld_bg_videoram;
 UINT32*dreamwld_bg2_videoram;

@@ -11,7 +11,7 @@
 
 ***************************************************************************/
 
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
 #include "ay8910.h"
 #include "2610intf.h"

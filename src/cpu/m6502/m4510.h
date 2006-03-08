@@ -22,8 +22,6 @@
 #ifndef _M4510_H
 #define _M4510_H
 
-#include "cpuintrf.h"
-#include "osd_cpu.h"
 #include "m6502.h"
 
 

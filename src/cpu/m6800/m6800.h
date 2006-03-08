@@ -3,8 +3,6 @@
 #ifndef _M6800_H
 #define _M6800_H
 
-#include "osd_cpu.h"
-#include "memory.h"
 #include "cpuintrf.h"
 
 enum {

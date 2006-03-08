@@ -43,7 +43,6 @@
  *********************************************************************/
 
 #include "driver.h"
-#include "machine/random.h"
 #include "machine/eeprom.h"
 
 READ32_HANDLER(eolith_vram_r);

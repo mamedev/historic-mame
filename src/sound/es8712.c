@@ -12,11 +12,9 @@
  **********************************************************************************************/
 
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <math.h>
 
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
 #include "es8712.h"
 

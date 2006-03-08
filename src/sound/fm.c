@@ -106,7 +106,7 @@
 #include <math.h>
 
 #ifndef __RAINE__
-#include "driver.h"		/* use M.A.M.E. */
+#include "sndintrf.h"		/* use M.A.M.E. */
 #else
 #include "deftypes.h"		/* use RAINE */
 #include "support.h"		/* use RAINE */

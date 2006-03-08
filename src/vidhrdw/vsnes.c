@@ -22,7 +22,7 @@ static void ppu_irq( int num, int *ppu_regs )
 }
 
 /* our ppu interface                                            */
-static struct ppu2c03b_interface ppu_interface =
+static const ppu2c03b_interface ppu_interface =
 {
 	1,						/* num */
 	{ REGION_GFX1 },		/* vrom gfx region */
@@ -33,7 +33,7 @@ static struct ppu2c03b_interface ppu_interface =
 };
 
 /* our ppu interface for dual games                             */
-static struct ppu2c03b_interface ppu_dual_interface =
+static const ppu2c03b_interface ppu_dual_interface =
 {
 	2,										/* num */
 	{ REGION_GFX1, REGION_GFX2 },			/* vrom gfx region */
@@ -45,12 +45,14 @@ static struct ppu2c03b_interface ppu_dual_interface =
 
 VIDEO_START( vsnes )
 {
-	return ppu2c03b_init( &ppu_interface );
+	ppu2c03b_init( &ppu_interface );
+	return 0;
 }
 
 VIDEO_START( vsdual )
 {
-	return ppu2c03b_init( &ppu_dual_interface );
+	ppu2c03b_init( &ppu_dual_interface );
+	return 0;
 }
 
 /***************************************************************************

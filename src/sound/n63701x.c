@@ -13,7 +13,7 @@ silence compression: '00 nn' must be replaced by nn+1 times '80'.
 
 ***************************************************************************/
 
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
 #include "n63701x.h"
 

@@ -329,7 +329,7 @@ unsigned int m68k_get_context(void* dst);
 void m68k_set_context(void* dst);
 
 /* Register the CPU state information */
-void m68k_state_register(const char *type);
+void m68k_state_register(const char *type, int index);
 
 
 /* Peek at the internals of a CPU context.  This can either be a context

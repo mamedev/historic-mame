@@ -88,7 +88,6 @@ TODO:
 #include "sound/ay8910.h"
 #include "sound/okim6295.h"
 #include "sound/2413intf.h"
-#include "machine/random.h"
 #include "profiler.h"
 #include <time.h>
 

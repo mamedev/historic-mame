@@ -16,7 +16,7 @@
    the function is similar than update with 0x80 set to 1
 ***************************************************************************/
 
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
 #include "sn76496.h"
 

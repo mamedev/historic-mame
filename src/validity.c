@@ -44,14 +44,15 @@
  *
  *************************************/
 
+typedef struct _quark_entry quark_entry;
 struct _quark_entry
 {
 	UINT32 crc;
 	struct _quark_entry *next;
 };
-typedef struct _quark_entry quark_entry;
 
 
+typedef struct _quark_table quark_table;
 struct _quark_table
 {
 	UINT32 entries;
@@ -59,7 +60,6 @@ struct _quark_table
 	quark_entry *entry;
 	quark_entry **hash;
 };
-typedef struct _quark_table quark_table;
 
 
 
@@ -534,6 +534,49 @@ static int validate_cpu(int drivnum, const machine_config *drv, const UINT32 *re
 
 /*************************************
  *
+ *  Validate display
+ *
+ *************************************/
+
+static int validate_display(int drivnum, const machine_config *drv)
+{
+	const game_driver *driver = drivers[drivnum];
+	int error = FALSE;
+
+	/* check for empty palette */
+	if (drv->total_colors == 0 && !(drv->video_attributes & VIDEO_RGB_DIRECT))
+	{
+		printf("%s: %s has zero palette entries\n", driver->source_file, driver->name);
+		error = TRUE;
+	}
+
+	/* sanity check dimensions */
+	if ((drv->screen_width <= 0) || (drv->screen_height <= 0))
+	{
+		printf("%s: %s has invalid display dimensions\n", driver->source_file, driver->name);
+		error = TRUE;
+	}
+
+	/* sanity check display area */
+	if (!(drv->video_attributes & VIDEO_TYPE_VECTOR))
+	{
+		if ((drv->default_visible_area.max_x < drv->default_visible_area.min_x)
+			|| (drv->default_visible_area.max_y < drv->default_visible_area.min_y)
+			|| (drv->default_visible_area.max_x >= drv->screen_width)
+			|| (drv->default_visible_area.max_y >= drv->screen_height))
+		{
+			printf("%s: %s has an invalid display area\n", driver->source_file, driver->name);
+			error = TRUE;
+		}
+	}
+
+	return error;
+}
+
+
+
+/*************************************
+ *
  *  Validate graphics
  *
  *************************************/
@@ -844,7 +887,7 @@ static int validate_sound(int drivnum, const machine_config *drv)
  *
  *************************************/
 
-int mame_validitychecks(void)
+int mame_validitychecks(int game)
 {
 	cycles_t prep = 0;
 	cycles_t expansion = 0;
@@ -852,6 +895,7 @@ int mame_validitychecks(void)
 	cycles_t rom_checks = 0;
 	cycles_t cpu_checks = 0;
 	cycles_t gfx_checks = 0;
+	cycles_t display_checks = 0;
 	cycles_t input_checks = 0;
 	cycles_t sound_checks = 0;
 #ifdef MESS
@@ -894,7 +938,7 @@ int mame_validitychecks(void)
 
 #ifndef MAME_DEBUG
 		/* non-debug builds only care about games in the same driver */
-		if (Machine->gamedrv && strcmp(Machine->gamedrv->source_file, driver->source_file) != 0)
+		if (game != -1 && strcmp(drivers[game]->source_file, driver->source_file) != 0)
 			continue;
 #endif
 
@@ -917,6 +961,11 @@ int mame_validitychecks(void)
 		cpu_checks -= osd_profiling_ticks();
 		error = validate_cpu(drivnum, &drv, region_length) || error;
 		cpu_checks += osd_profiling_ticks();
+
+		/* validate the display */
+		display_checks -= osd_profiling_ticks();
+		error = validate_display(drivnum, &drv) || error;
+		display_checks += osd_profiling_ticks();
 
 		/* validate the graphics decoding */
 		gfx_checks -= osd_profiling_ticks();
@@ -947,6 +996,7 @@ int mame_validitychecks(void)
 	printf("Driver:    %8dm\n", (int)(driver_checks / 1000000));
 	printf("ROM:       %8dm\n", (int)(rom_checks / 1000000));
 	printf("CPU:       %8dm\n", (int)(cpu_checks / 1000000));
+	printf("Display:   %8dm\n", (int)(display_checks / 1000000));
 	printf("Graphics:  %8dm\n", (int)(gfx_checks / 1000000));
 	printf("Input:     %8dm\n", (int)(input_checks / 1000000));
 	printf("Sound:     %8dm\n", (int)(sound_checks / 1000000));

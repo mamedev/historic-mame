@@ -57,7 +57,6 @@ PIC16F84
 
 #include "driver.h"
 #include "sound/okim6295.h"
-#include "machine/random.h"
 #include "machine/eeprom.h"
 
 static UINT16 *gms_vidram;

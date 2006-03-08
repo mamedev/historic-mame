@@ -12,13 +12,16 @@
     Debugger comment file format:
 
     (from comment struct - assuming (MAX_COMMENT_LINE_LENGTH == 128))
-    0:4         - address
-    5:132       - comment
-    133:135     - color
+    0           - valid byte
+    1:4         - address
+    5:133       - comment
+    134:138     - color
+    139:142     - instruction crc
 
 ***************************************************************************/
 
 #include "driver.h"
+#include "xmlfile.h"
 #include "debugcmt.h"
 #include "debugcpu.h"
 #include "debugvw.h"

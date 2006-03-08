@@ -6,13 +6,6 @@
 
 ***************************************************************************/
 
-#include <stdio.h>
-#include <stddef.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
-#define exp _exp
-#include "cpuintrf.h"
 #include "debugger.h"
 #include "tms32031.h"
 
@@ -109,6 +102,7 @@ typedef struct
 	UINT8			is_idling;
 	int				interrupt_cycles;
 
+	UINT32			bootoffset;
 	void			(*xf0_w)(UINT8 val);
 	void			(*xf1_w)(UINT8 val);
 	void			(*iack_w)(UINT8 val, offs_t addr);
@@ -357,32 +351,34 @@ static void tms32031_set_context(void *src)
     INITIALIZATION AND SHUTDOWN
 ***************************************************************************/
 
-static void tms32031_init(void)
+static void tms32031_init(int index, int clock, const void *_config, int (*irqcallback)(int))
 {
-}
+	const struct tms32031_config *config = _config;
 
-static void tms32031_reset(void *param)
-{
-	struct tms32031_config *config = param;
-
-	/* if we have a config struct, get the boot ROM address */
-	if (config && config->bootoffset)
-	{
-		tms32031.mcu_mode = 1;
-		tms32031.pc = boot_loader(config->bootoffset);
-	}
-	else
-	{
-		tms32031.mcu_mode = 0;
-		tms32031.pc = RMEM(0);
-	}
+	tms32031.irq_callback = irqcallback;
 
 	/* copy in the xf write routines */
+	tms32031.bootoffset = config ? config->bootoffset : 0;
 	if (config)
 	{
 		tms32031.xf0_w = config->xf0_w;
 		tms32031.xf1_w = config->xf1_w;
 		tms32031.iack_w = config->iack_w;
+	}
+}
+
+static void tms32031_reset(void)
+{
+	/* if we have a config struct, get the boot ROM address */
+	if (tms32031.bootoffset)
+	{
+		tms32031.mcu_mode = 1;
+		tms32031.pc = boot_loader(tms32031.bootoffset);
+	}
+	else
+	{
+		tms32031.mcu_mode = 0;
+		tms32031.pc = RMEM(0);
 	}
 
 	/* reset some registers */
@@ -658,9 +654,6 @@ static void tms32031_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + TMS32031_RS:		IREG(TMR_RS) = info->i; 				break;
 		case CPUINFO_INT_REGISTER + TMS32031_RE:		IREG(TMR_RE) = info->i; 				break;
 		case CPUINFO_INT_REGISTER + TMS32031_RC:		IREG(TMR_RC) = info->i; 				break;
-
-		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_IRQ_CALLBACK:					tms32031.irq_callback = info->irqcallback; break;
 	}
 }
 
@@ -770,7 +763,6 @@ void tms32031_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = tms32031_execute;		break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = tms32031_dasm;		break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = tms32031.irq_callback; break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &tms32031_icount;		break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = tms32031_reg_layout;			break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = tms32031_win_layout;			break;

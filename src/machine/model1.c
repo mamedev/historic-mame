@@ -3,7 +3,6 @@
 */
 
 #include "driver.h"
-#include "machine/random.h"
 #include <math.h>
 
 enum {FIFO_SIZE = 256};

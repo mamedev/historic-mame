@@ -11,7 +11,7 @@
 
 ***************************************************************************/
 
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
 #include "cem3394.h"
 #include <math.h>

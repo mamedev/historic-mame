@@ -6,10 +6,6 @@
 
 ***************************************************************************/
 
-#include <stdio.h>
-#include <string.h>
-
-#include "driver.h"
 #include "dsp56k.h"
 
 #define ROPCODE(pc)   cpu_readop16(pc)

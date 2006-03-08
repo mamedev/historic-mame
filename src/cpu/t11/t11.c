@@ -11,12 +11,7 @@
 
 *****************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "cpuintrf.h"
 #include "debugger.h"
-#include "state.h"
 #include "t11.h"
 
 
@@ -56,6 +51,7 @@ typedef struct
     PAIR	reg[8];
     PAIR	psw;
     UINT16	op;
+    UINT16	initial_pc;
     UINT8	wait_state;
     UINT8	irq_state;
     INT32	interrupt_cycles;
@@ -314,24 +310,32 @@ static void t11_set_context(void *src)
  *
  *************************************/
 
-static void t11_init(void)
+static void t11_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
-	int cpu = cpu_getactivecpu();
+	static const UINT16 initial_pc[] =
+	{
+		0xc000, 0x8000, 0x4000, 0x2000,
+		0x1000, 0x0000, 0xf600, 0xf400
+	};
+	const struct t11_setup *setup = config;
 
-	state_save_register_item("t11", cpu, t11.ppc.w.l);
-	state_save_register_item("t11", cpu, t11.reg[0].w.l);
-	state_save_register_item("t11", cpu, t11.reg[1].w.l);
-	state_save_register_item("t11", cpu, t11.reg[2].w.l);
-	state_save_register_item("t11", cpu, t11.reg[3].w.l);
-	state_save_register_item("t11", cpu, t11.reg[4].w.l);
-	state_save_register_item("t11", cpu, t11.reg[5].w.l);
-	state_save_register_item("t11", cpu, t11.reg[6].w.l);
-	state_save_register_item("t11", cpu, t11.reg[7].w.l);
-	state_save_register_item("t11", cpu, t11.psw.w.l);
-	state_save_register_item("t11", cpu, t11.op);
-	state_save_register_item("t11", cpu, t11.wait_state);
-	state_save_register_item("t11", cpu, t11.irq_state);
-	state_save_register_item("t11", cpu, t11.interrupt_cycles);
+	t11.initial_pc = initial_pc[setup->mode >> 13];
+	t11.irq_callback = irqcallback;
+
+	state_save_register_item("t11", index, t11.ppc.w.l);
+	state_save_register_item("t11", index, t11.reg[0].w.l);
+	state_save_register_item("t11", index, t11.reg[1].w.l);
+	state_save_register_item("t11", index, t11.reg[2].w.l);
+	state_save_register_item("t11", index, t11.reg[3].w.l);
+	state_save_register_item("t11", index, t11.reg[4].w.l);
+	state_save_register_item("t11", index, t11.reg[5].w.l);
+	state_save_register_item("t11", index, t11.reg[6].w.l);
+	state_save_register_item("t11", index, t11.reg[7].w.l);
+	state_save_register_item("t11", index, t11.psw.w.l);
+	state_save_register_item("t11", index, t11.op);
+	state_save_register_item("t11", index, t11.wait_state);
+	state_save_register_item("t11", index, t11.irq_state);
+	state_save_register_item("t11", index, t11.interrupt_cycles);
 }
 
 
@@ -348,23 +352,13 @@ static void t11_exit(void)
  *
  *************************************/
 
-static void t11_reset(void *param)
+static void t11_reset(void)
 {
-	static const UINT16 initial_pc[] =
-	{
-		0xc000, 0x8000, 0x4000, 0x2000,
-		0x1000, 0x0000, 0xf600, 0xf400
-	};
-	struct t11_setup *setup = param;
-
-	/* reset the state */
-	memset(&t11, 0, sizeof(t11));
-
 	/* initial SP is 376 octal, or 0xfe */
 	SP = 0x00fe;
 
 	/* initial PC comes from the setup word */
-	PC = initial_pc[setup->mode >> 13];
+	PC = t11.initial_pc;
 	change_pc(PC);
 
 	/* PSW starts off at highest priority */
@@ -372,6 +366,17 @@ static void t11_reset(void *param)
 
 	/* initialize the IRQ state */
 	t11.irq_state = 0;
+
+	/* reset the remaining state */
+	REGD(0) = 0;
+	REGD(1) = 0;
+	REGD(2) = 0;
+	REGD(3) = 0;
+	REGD(4) = 0;
+	REGD(5) = 0;
+	t11.ppc.d = 0;
+	t11.wait_state = 0;
+	t11.interrupt_cycles = 0;
 }
 
 
@@ -478,9 +483,6 @@ static void t11_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + T11_R3:				REGW(3) = info->i;						break;
 		case CPUINFO_INT_REGISTER + T11_R4:				REGW(4) = info->i;						break;
 		case CPUINFO_INT_REGISTER + T11_R5:				REGW(5) = info->i;						break;
-
-		/* --- the following bits of info are set as pointers to data or functions --- */
-		case CPUINFO_PTR_IRQ_CALLBACK:					t11.irq_callback = info->irqcallback;	break;
 	}
 }
 
@@ -544,7 +546,6 @@ void t11_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = t11_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = t11_dasm;			break;
-		case CPUINFO_PTR_IRQ_CALLBACK:					info->irqcallback = t11.irq_callback;	break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &t11_ICount;				break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = t11_reg_layout;				break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = t11_win_layout;				break;

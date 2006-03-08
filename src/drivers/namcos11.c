@@ -34,7 +34,7 @@ primglex   Prime Goal EX (PG1/VER.A)               COH 100 / COH 110   SYSTEM11 
 danceyes   Dancing Eyes (DC1/VER.A)                COH 100 / COH 110   SYSTEM11 MOTHER PCB      SYSTEM11 ROM8 PCB       C431     5
 starswep   Star Sweep (STP1/VER.A)                 COH 100 / COH 110   SYSTEM11 MOTHER(B) PCB                           C442     -
 myangel3   Kosodate Quiz My Angel 3 (KQT1/VER.A)   COH 110             SYSTEM11 MOTHER(B) PCB   SYSTEM11 ROM8(64) PCB   C443     2
-ptblank2   Point Blank 2 (GNB3/VER.A)              COH 110 / COH 110   SYSTEM11 MOTHER PCB      SYSTEM11 ROM8(64) PCB   C443     2
+ptblnk2a   Point Blank 2 (GNB3/VER.A)              COH 110 / COH 110   SYSTEM11 MOTHER PCB      SYSTEM11 ROM8(64) PCB   C443     2
 
 Not Dumped Yet
 --------------
@@ -504,7 +504,7 @@ static READ32_HANDLER( keycus_c443_r )
 		{
 			data = ( data & 0x0000ffff ) | 0x56580000;
 		}
-		if( ( data & 0xffff0000 ) == 0xa9880000 ) /* ptblank2 */
+		if( ( data & 0xffff0000 ) == 0xa9880000 ) /* ptblnk2a */
 		{
 			data = ( data & 0x0000ffff ) | 0xc4430000;
 		}
@@ -750,7 +750,7 @@ static struct
 	{ "danceyes", keycus_c431_r, 32 },
 	{ "starswep", keycus_c442_r, 0 },
 	{ "myangel3", keycus_c443_r, 64 },
-	{ "ptblank2", keycus_c443_r, 64 },
+	{ "ptblnk2a", keycus_c443_r, 64 },
 	{ NULL, NULL }
 };
 
@@ -805,7 +805,7 @@ static DRIVER_INIT( namcos11 )
 		n_game++;
 	}
 
-	if( strcmp( Machine->gamedrv->name, "ptblank2" ) == 0 )
+	if( strcmp( Machine->gamedrv->name, "ptblnk2a" ) == 0 )
 	{
 		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f788000, 0x1f788003, 0, 0, lightgun_w );
 		memory_install_read32_handler (0, ADDRESS_SPACE_PROGRAM, 0x1f780000, 0x1f78000f, 0, 0, lightgun_r );
@@ -1157,7 +1157,7 @@ INPUT_PORTS_START( myangel3 )
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( ptblank2 )
+INPUT_PORTS_START( ptblnk2a )
 	/* IN 0 */
 	PORT_START
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -1371,7 +1371,7 @@ ROM_START( primglex )
 	ROM_RELOAD( 0x800000, 0x400000 )
 ROM_END
 
-ROM_START( ptblank2 )
+ROM_START( ptblnk2a )
 	ROM_REGION32_LE( 0x0400000, REGION_USER1, 0 ) /* main prg */
 	ROM_LOAD16_BYTE( "gnb3vera.2l",  0x0000000, 0x100000, CRC(57ad719a) SHA1(f22a02d33c7c23cccffb8ce2e3aca26b07ecac0a) )
 	ROM_LOAD16_BYTE( "gnb3vera.2j",  0x0000001, 0x100000, CRC(0378af98) SHA1(601444b5a0935a4b69b5ada618aaf1bc6bb12a3b) )
@@ -1389,7 +1389,7 @@ ROM_START( ptblank2 )
 	NAMCO_C7X_BIOS
 
 	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* samples */
-	ROM_LOAD( "gnb3wave.8k",  0x0000000, 0x400000, CRC(4e19d9d6) SHA1(0a92c987536999a789663a30c787950ab6995128) )
+	ROM_LOAD( "gnb1wave.8k",  0x0000000, 0x400000, CRC(4e19d9d6) SHA1(0a92c987536999a789663a30c787950ab6995128) )
 	ROM_RELOAD( 0x800000, 0x400000 )
 ROM_END
 
@@ -1747,4 +1747,4 @@ GAME( 1996, primglex,  0,        coh110, tekken,   namcos11, ROT0, "Namco", "Pri
 GAME( 1996, danceyes,  0,        coh110, namcos11, namcos11, ROT0, "Namco", "Dancing Eyes (DC1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAME( 1997, starswep,  0,        coh110, namcos11, namcos11, ROT0, "Axela/Namco", "Star Sweep (STP1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAME( 1998, myangel3,  0,        coh110, myangel3, namcos11, ROT0, "Namco", "Kosodate Quiz My Angel 3 (KQT1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAME( 1999, ptblank2,  0,        coh110g, ptblank2, namcos11, ROT0, "Namco", "Point Blank 2 (GNB3/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAME( 1999, ptblnk2a,  ptblank2, coh110g, ptblnk2a, namcos11, ROT0, "Namco", "Point Blank 2 (GNB3/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )

@@ -4,12 +4,9 @@
 *
 ******************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <math.h>
 
-#include "driver.h"
+#include "sndintrf.h"
 #include "streams.h"
 #include "ym2151.h"
 

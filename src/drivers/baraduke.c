@@ -105,7 +105,7 @@ TODO:
 #include "cpu/m6800/m6800.h"
 #include "sound/namco.h"
 
-extern UINT8 *baraduke_textram, *spriteram, *baraduke_videoram, *baraduke_spriteram;
+extern UINT8 *baraduke_textram, *baraduke_videoram, *baraduke_spriteram;
 
 /* from vidhrdw/baraduke.c */
 VIDEO_START( baraduke );

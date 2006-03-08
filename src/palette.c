@@ -12,7 +12,7 @@
 #include "driver.h"
 #include <math.h>
 #if defined(MAME_DEBUG) && !defined(NEW_DEBUGGER)
-#include "mamedbg.h"
+#include "debug/mamedbg.h"
 #endif
 
 #define VERBOSE 0
@@ -531,14 +531,23 @@ static int palette_alloc(void)
 		mark_pen_dirty(i);
 
 	/* allocate memory for the pen table */
-	Machine->pens = auto_malloc(total_colors * sizeof(Machine->pens[0]));
-	for (i = 0; i < total_colors; i++)
-		Machine->pens[i] = i;
+	if (total_colors > 0)
+	{
+		Machine->pens = auto_malloc(total_colors * sizeof(Machine->pens[0]));
+		for (i = 0; i < total_colors; i++)
+			Machine->pens[i] = i;
 
-	/* allocate memory for the per-entry brightness table */
-	pen_brightness = auto_malloc(Machine->drv->total_colors * sizeof(pen_brightness[0]));
-	for (i = 0; i < Machine->drv->total_colors; i++)
-		pen_brightness[i] = 1 << PEN_BRIGHTNESS_BITS;
+		/* allocate memory for the per-entry brightness table */
+		pen_brightness = auto_malloc(Machine->drv->total_colors * sizeof(pen_brightness[0]));
+		for (i = 0; i < Machine->drv->total_colors; i++)
+			pen_brightness[i] = 1 << PEN_BRIGHTNESS_BITS;
+	}
+	else
+	{
+		/* this driver does not use a palette */
+		Machine->pens = NULL;
+		pen_brightness = NULL;
+	}
 
 	/* allocate memory for the colortables, if needed */
 	if (Machine->drv->color_table_len)
