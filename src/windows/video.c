@@ -71,8 +71,8 @@ HMONITOR monitor;
 GUID *screen_guid_ptr;
 
 // current frameskip/autoframeskip settings
-int frameskip;
-int autoframeskip;
+static int frameskip;
+static int autoframeskip;
 
 // speed throttling
 int throttle = 1;

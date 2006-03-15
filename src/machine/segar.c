@@ -7,7 +7,7 @@
 #include "driver.h"
 #include "segar.h"
 
-void (*sega_decrypt)(int,unsigned int *);
+UINT8 (*sega_decrypt)(offs_t,UINT8);
 
 UINT8 *segar_miscram1;
 UINT8 *segar_miscram2;
@@ -35,7 +35,7 @@ WRITE8_HANDLER( segar_w )
 		{
 			bad  = offset & 0x00FF;
 			page = offset & 0xFF00;
-			(*sega_decrypt)(pc,&bad);
+			bad = (*sega_decrypt)(pc,bad);
 			off=page | bad;
 		}
 	}
@@ -91,10 +91,10 @@ WRITE8_HANDLER( segar_w )
 /****************************************************************************/
 /* MB 971025 - Emulate Sega G80 security chip 315-0062                      */
 /****************************************************************************/
-static void sega_decrypt62(int pc,unsigned int *lo)
+static UINT8 sega_decrypt62(offs_t pc, UINT8 lo)
 {
 	unsigned int i = 0;
-	unsigned int b = *lo;
+	unsigned int b = lo;
 
 	switch (pc & 0x03)
 	{
@@ -134,16 +134,16 @@ static void sega_decrypt62(int pc,unsigned int *lo)
 			break;
 	}
 
-	*lo=i;
+	return i;
 }
 
 /****************************************************************************/
 /* MB 971025 - Emulate Sega G80 security chip 315-0063                      */
 /****************************************************************************/
-static void sega_decrypt63(int pc,unsigned int *lo)
+static UINT8 sega_decrypt63(offs_t pc, UINT8 lo)
 {
 	unsigned int i = 0;
-	unsigned int b = *lo;
+	unsigned int b = lo;
 
 	switch (pc & 0x09)
 	{
@@ -183,16 +183,16 @@ static void sega_decrypt63(int pc,unsigned int *lo)
 			break;
 	}
 
-	*lo=i;
+	return i;
 }
 
 /****************************************************************************/
 /* MB 971025 - Emulate Sega G80 security chip 315-0064                      */
 /****************************************************************************/
-static void sega_decrypt64(int pc,unsigned int *lo)
+static UINT8 sega_decrypt64(offs_t pc, UINT8 lo)
 {
 	unsigned int i = 0;
-	unsigned int b = *lo;
+	unsigned int b = lo;
 
 	switch (pc & 0x03)
 	{
@@ -232,17 +232,17 @@ static void sega_decrypt64(int pc,unsigned int *lo)
 			break;
 	}
 
-	*lo=i;
+	return i;
 }
 
 
 /****************************************************************************/
 /* MB 971025 - Emulate Sega G80 security chip 315-0070                      */
 /****************************************************************************/
-static void sega_decrypt70(int pc,unsigned int *lo)
+static UINT8 sega_decrypt70(offs_t pc, UINT8 lo)
 {
 	unsigned int i = 0;
-	unsigned int b = *lo;
+	unsigned int b = lo;
 
 	switch (pc & 0x09)
 	{
@@ -282,16 +282,16 @@ static void sega_decrypt70(int pc,unsigned int *lo)
 			break;
 	}
 
-	*lo=i;
+	return i;
 }
 
 /****************************************************************************/
 /* MB 971025 - Emulate Sega G80 security chip 315-0076                      */
 /****************************************************************************/
-static void sega_decrypt76(int pc,unsigned int *lo)
+static UINT8 sega_decrypt76(offs_t pc, UINT8 lo)
 {
 	unsigned int i = 0;
-	unsigned int b = *lo;
+	unsigned int b = lo;
 
 	switch (pc & 0x09)
 	{
@@ -331,16 +331,16 @@ static void sega_decrypt76(int pc,unsigned int *lo)
 			break;
 	}
 
-	*lo=i;
+	return i;
 }
 
 /****************************************************************************/
 /* MB 971025 - Emulate Sega G80 security chip 315-0082                      */
 /****************************************************************************/
-static void sega_decrypt82(int pc,unsigned int *lo)
+static UINT8 sega_decrypt82(offs_t pc, UINT8 lo)
 {
 	unsigned int i = 0;
-	unsigned int b = *lo;
+	unsigned int b = lo;
 
 	switch (pc & 0x11)
 	{
@@ -380,15 +380,15 @@ static void sega_decrypt82(int pc,unsigned int *lo)
 			break;
 	}
 
-	*lo=i;
+	return i;
 }
 
 /****************************************************************************/
 /* MB 971031 - Emulate no Sega G80 security chip                            */
 /****************************************************************************/
-static void sega_decrypt0(int pc,unsigned int *lo)
+static UINT8 sega_decrypt0(offs_t pc, UINT8 lo)
 {
-        return;
+        return lo;
 }
 
 /****************************************************************************/

@@ -4,12 +4,18 @@
 
 *************************************************************************/
 
-WRITE8_HANDLER( sega_sh_speechboard_w );
+MACHINE_DRIVER_EXTERN( sega_speech_board );
 
-ADDRESS_MAP_EXTERN(sega_speechboard_readmem);
-ADDRESS_MAP_EXTERN(sega_speechboard_writemem);
-ADDRESS_MAP_EXTERN(sega_speechboard_readport);
-ADDRESS_MAP_EXTERN(sega_speechboard_writeport);
+WRITE8_HANDLER( sega_speech_data_w );
+WRITE8_HANDLER( sega_speech_control_w );
 
-extern struct sp0250_interface sega_sp0250_interface;
 
+
+MACHINE_DRIVER_EXTERN( sega_universal_sound_board );
+
+void sega_usb_reset(UINT8 t0_clock_mask);
+
+READ8_HANDLER( sega_usb_status_r );
+WRITE8_HANDLER( sega_usb_data_w );
+READ8_HANDLER( sega_usb_ram_r );
+WRITE8_HANDLER( sega_usb_ram_w );

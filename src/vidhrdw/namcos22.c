@@ -293,7 +293,7 @@ renderscanline_uvi_full( mame_bitmap *bitmap, const rectangle *clip, const edge 
 				if( !fogDisable )
 				{
 					int cz = flags>>8;
-	            const int cztype_remap[4] = { 3,1,2,0 };
+					static const int cztype_remap[4] = { 3,1,2,0 };
 	            int cztype = flags&3;
 	            if( nthword(namcos22_czattr,4)&(0x4000>>(cztype*4)) )
 	            {

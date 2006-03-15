@@ -404,9 +404,9 @@ static void m37710_recalc_timer(int timer)
 {
 	int cpunum = cpu_getactivecpu();
 	int tval;
-	int tcr[8] = { 0x56, 0x57, 0x58, 0x59, 0x5a, 0x5b, 0x5c, 0x5d };
+	static const int tcr[8] = { 0x56, 0x57, 0x58, 0x59, 0x5a, 0x5b, 0x5c, 0x5d };
 	double time;
-	static double tscales[4] = { 2.0, 16.0, 64.0, 512.0 };
+	static const double tscales[4] = { 2.0, 16.0, 64.0, 512.0 };
 
 	// check if enabled
 	if (m37710i_cpu.m37710_regs[0x40] & (1<<timer))

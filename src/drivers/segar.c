@@ -1082,19 +1082,13 @@ static MACHINE_DRIVER_START( astrob )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(segar)
 
-	MDRV_CPU_ADD(I8035, 3120000)
-	/* audio CPU */
-	MDRV_CPU_PROGRAM_MAP(sega_speechboard_readmem, sega_speechboard_writemem)
-	MDRV_CPU_IO_MAP (sega_speechboard_readport,sega_speechboard_writeport)
-
 	/* sound hardware */
 	MDRV_SOUND_ADD(SAMPLES, 0)
 	MDRV_SOUND_CONFIG(astrob_samples_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 
-	MDRV_SOUND_ADD(SP0250, 3120000)
-	MDRV_SOUND_CONFIG(sega_sp0250_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	/* speech board */
+	MDRV_IMPORT_FROM(sega_speech_board)
 MACHINE_DRIVER_END
 
 
@@ -1617,7 +1611,8 @@ static DRIVER_INIT( astrob )
 	/* This game uses the 315-0062 security chip */
 	sega_security(62);
 
-	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x38, 0x38, 0, 0, sega_sh_speechboard_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x38, 0x38, 0, 0, sega_speech_data_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3b, 0x3b, 0, 0, sega_speech_control_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3e, 0x3f, 0, 0, astrob_audio_ports_w);
 }
 

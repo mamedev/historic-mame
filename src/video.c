@@ -1036,9 +1036,13 @@ void record_movie_frame(mame_bitmap *bitmap)
 {
 	if (movie_file != NULL && bitmap != NULL)
 	{
+		profiler_mark(PROFILER_MOVIE_REC);
+
 		if (movie_frame++ == 0)
 			save_frame_with(movie_file, bitmap, mng_capture_start);
 		save_frame_with(movie_file, bitmap, mng_capture_frame);
+
+		profiler_mark(PROFILER_END);
 	}
 }
 

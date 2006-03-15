@@ -17,20 +17,20 @@
 
 
 // Main opcode categories
-unsigned DecodeDataALUOpcode(char *buffer, UINT16 op, unsigned pc, int parallelType) ;
-unsigned DecodeDXMDROpcode(char *buffer, UINT16 op, unsigned pc) ;
-unsigned DecodeNPMOpcode(char *buffer, UINT16 op, unsigned pc) ;
-unsigned DecodeMisfitOpcode(char *buffer, UINT16 op, unsigned pc) ;
-unsigned DecodeSpecialOpcode(char *buffer, UINT16 op, unsigned pc) ;
+static unsigned DecodeDataALUOpcode(char *buffer, UINT16 op, unsigned pc, int parallelType) ;
+static unsigned DecodeDXMDROpcode(char *buffer, UINT16 op, unsigned pc) ;
+static unsigned DecodeNPMOpcode(char *buffer, UINT16 op, unsigned pc) ;
+static unsigned DecodeMisfitOpcode(char *buffer, UINT16 op, unsigned pc) ;
+static unsigned DecodeSpecialOpcode(char *buffer, UINT16 op, unsigned pc) ;
 
 
 // Parallel memory operation decoding
-void AppendXMDM(char *buffer, UINT16 op) ;
-void AppendXMDMSpecial(char *buffer, UINT16 op, char *working) ;
-void AppendARU(char *buffer, UINT16 op) ;
-void AppendRRDM(char *buffer, UINT16 op, char *working) ;
+static void AppendXMDM(char *buffer, UINT16 op) ;
+static void AppendXMDMSpecial(char *buffer, UINT16 op, char *working) ;
+static void AppendARU(char *buffer, UINT16 op) ;
+static void AppendRRDM(char *buffer, UINT16 op, char *working) ;
 
-void AppendDXMDR(char *buffer, UINT16 op) ;
+static void AppendDXMDR(char *buffer, UINT16 op) ;
 
 
 // Helper functions
@@ -41,12 +41,12 @@ static UINT16 Dsp56kOpMask(UINT16 op, UINT16 mask) ;
 enum bbbType  { BBB_UPPER, BBB_MIDDLE, BBB_LOWER } ;
 
 // Table decoder functions...
-int  DecodeBBBTable  (UINT16 BBB             ) ;
+static int  DecodeBBBTable  (UINT16 BBB             ) ;
 static void DecodeccccTable (UINT16 cccc,           char *mnemonic) ;
 static void DecodeDDDDDTable(UINT16 DDDDD,          char *SD) ;
 static void DecodeDDTable   (UINT16 DD,             char *SD) ;
-void DecodeDDFTable  (UINT16 DD,   UINT16 F, char *S, char *D) ;
-void DecodeEETable   (UINT16 EE,             char *D) ;
+static void DecodeDDFTable  (UINT16 DD,   UINT16 F, char *S, char *D) ;
+static void DecodeEETable   (UINT16 EE,             char *D) ;
 static void DecodeFTable    (UINT16 F,              char *SD) ;
 static void Decodeh0hFTable (UINT16 h0h,  UINT16 F, char *S, char *D) ;
 static void DecodeHHTable   (UINT16 HH,             char *SD) ;
@@ -54,31 +54,31 @@ static void DecodeHHHTable  (UINT16 HHH,            char *SD) ;
 static void DecodeIIIITable (UINT16 IIII,           char *S, char *D) ;
 static void DecodeJJJFTable (UINT16 JJJ,  UINT16 F, char *S, char *D) ;
 static void DecodeJJFTable  (UINT16 JJ,   UINT16 F, char *S, char *D) ;
-void DecodeJFTable   (UINT16 J,    UINT16 F, char *S, char *D) ;
-void DecodekTable    (UINT16 k,              char *Dnot) ;
-void DecodekSignTable(UINT16 k,              char *plusMinus) ;
-void DecodeKKKTable  (UINT16 KKK,            char *D1, char *D2) ;
-int  DecodeNNTable   (UINT16 NN) ;
-void DecodeQQFTable  (UINT16 QQ,   UINT16 F, char *S1, char *S2, char *D) ;
+static void DecodeJFTable   (UINT16 J,    UINT16 F, char *S, char *D) ;
+static void DecodekTable    (UINT16 k,              char *Dnot) ;
+static void DecodekSignTable(UINT16 k,              char *plusMinus) ;
+static void DecodeKKKTable  (UINT16 KKK,            char *D1, char *D2) ;
+static int  DecodeNNTable   (UINT16 NN) ;
+static void DecodeQQFTable  (UINT16 QQ,   UINT16 F, char *S1, char *S2, char *D) ;
 static void DecodeQQFTableSp(UINT16 QQ,   UINT16 F, char *S1, char *S2, char *D) ;
-void DecodeQQQFTable (UINT16 QQQ,  UINT16 F, char *S1, char *S2, char *D) ;
+static void DecodeQQQFTable (UINT16 QQQ,  UINT16 F, char *S1, char *S2, char *D) ;
 static int  DecodeRRTable   (UINT16 RR) ;
-void DecodesTable    (UINT16 s,              char *arithmetic) ;
-void DecodessTable   (UINT16 ss,             char *arithmetic) ;
-void DecodeuuuuFTable(UINT16 uuuu, UINT16 F, char *arg, char *S, char *D) ;
-void DecodeZTable    (UINT16 Z,              char *ea) ;
+static void DecodesTable    (UINT16 s,              char *arithmetic) ;
+static void DecodessTable   (UINT16 ss,             char *arithmetic) ;
+static void DecodeuuuuFTable(UINT16 uuuu, UINT16 F, char *arg, char *S, char *D) ;
+static void DecodeZTable    (UINT16 Z,              char *ea) ;
 
 
-void AssembleeaFrommTable (UINT16 m,  int n,          char *ea) ;
-void AssembleeaFrommmTable(UINT16 mm, int n1, int n2, char *ea1, char *ea2) ;
-void AssembleeaFromMMTable(UINT16 MM, int n,          char *ea) ;
-void AssembleeaFromtTable (UINT16 t,  UINT16 val,     char *ea) ;
-void AssembleeaFromqTable (UINT16 q,  int n,          char *ea) ;
-void AssembleeaFromzTable (UINT16 z,  int n,          char *ea) ;
+static void AssembleeaFrommTable (UINT16 m,  int n,          char *ea) ;
+static void AssembleeaFrommmTable(UINT16 mm, int n1, int n2, char *ea1, char *ea2) ;
+static void AssembleeaFromMMTable(UINT16 MM, int n,          char *ea) ;
+static void AssembleeaFromtTable (UINT16 t,  UINT16 val,     char *ea) ;
+static void AssembleeaFromqTable (UINT16 q,  int n,          char *ea) ;
+static void AssembleeaFromzTable (UINT16 z,  int n,          char *ea) ;
 
 static void AssembleDFromPTable(UINT16 P, UINT16 ppppp, char *D) ;
-void AssembleArgumentsFromWTable(UINT16 W, char *args, char ma, char *SD, char *ea) ;
-void AssembleRegFromWTable(UINT16 W, char *args, char ma, char *SD, UINT8 xx) ;
+static void AssembleArgumentsFromWTable(UINT16 W, char *args, char ma, char *SD, char *ea) ;
+static void AssembleRegFromWTable(UINT16 W, char *args, char ma, char *SD, UINT8 xx) ;
 
 static void AssembleAddressFromIOShortAddress(UINT16 pp, char *ea) ;
 static void AssembleAddressFrom6BitSignedRelativeShortAddress(UINT16 srs, char *ea) ;
@@ -86,7 +86,7 @@ static void AssembleAddressFrom6BitSignedRelativeShortAddress(UINT16 srs, char *
 // Main disassembly function
 unsigned dasm_dsp56k(char *buffer, unsigned pc)
 {
-	UINT16 op = ROPCODE(pc);
+	UINT16 op = ROPCODE(pc<<1);
 	unsigned size = 0 ;
 
 	pc <<= 1 ;
@@ -141,7 +141,7 @@ unsigned dasm_dsp56k(char *buffer, unsigned pc)
 }
 
 
-unsigned DecodeDataALUOpcode(char *buffer, UINT16 op, unsigned pc, int parallelType)
+static unsigned DecodeDataALUOpcode(char *buffer, UINT16 op, unsigned pc, int parallelType)
 {
 	unsigned retSize = 0 ;
 
@@ -433,7 +433,7 @@ unsigned DecodeDataALUOpcode(char *buffer, UINT16 op, unsigned pc, int parallelT
 }
 
 
-unsigned DecodeDXMDROpcode(char *buffer, UINT16 op, unsigned pc)
+static unsigned DecodeDXMDROpcode(char *buffer, UINT16 op, unsigned pc)
 {
 	unsigned retSize = 0 ;
 
@@ -505,7 +505,7 @@ unsigned DecodeDXMDROpcode(char *buffer, UINT16 op, unsigned pc)
 }
 
 
-unsigned DecodeNPMOpcode(char *buffer, UINT16 op, unsigned pc)
+static unsigned DecodeNPMOpcode(char *buffer, UINT16 op, unsigned pc)
 {
 	unsigned retSize = 0 ;
 
@@ -918,7 +918,7 @@ unsigned DecodeMisfitOpcode(char *buffer, UINT16 op, unsigned pc)
 }
 
 
-unsigned DecodeSpecialOpcode(char *buffer, UINT16 op, unsigned pc)
+static unsigned DecodeSpecialOpcode(char *buffer, UINT16 op, unsigned pc)
 {
 	unsigned retSize = 0 ;
 
@@ -1329,7 +1329,7 @@ unsigned DecodeSpecialOpcode(char *buffer, UINT16 op, unsigned pc)
 // PARALLEL MEMORY OPERATION DECODING //
 ////////////////////////////////////////
 
-void AppendXMDM(char *buffer, UINT16 op)
+static void AppendXMDM(char *buffer, UINT16 op)
 {
 	int Rnum ;
 	char SD[32] ;
@@ -1347,7 +1347,7 @@ void AppendXMDM(char *buffer, UINT16 op)
 }
 
 // !!! NOT FULLY IMPLEMENTED !!!
-void AppendXMDMSpecial(char *buffer, UINT16 op, char *working)
+static void AppendXMDMSpecial(char *buffer, UINT16 op, char *working)
 {
 	// This is actually a little tricky 'cuz X:(F1) comes from the 'Data ALU' operation...
 	// (page 326 of the family manual)
@@ -1374,7 +1374,7 @@ void AppendXMDMSpecial(char *buffer, UINT16 op, char *working)
 	strcat(buffer, args) ;
 }
 
-void AppendARU(char *buffer, UINT16 op)
+static void AppendARU(char *buffer, UINT16 op)
 {
 	char ea[32] ;
 	int rr = DecodeRRTable(BITS(op,0x0300)) ;
@@ -1384,7 +1384,7 @@ void AppendARU(char *buffer, UINT16 op)
 	strcat(buffer, ea) ;
 }
 
-void AppendRRDM(char *buffer, UINT16 op, char *working)
+static void AppendRRDM(char *buffer, UINT16 op, char *working)
 {
 	char S[32], D[32] ;
 	char final[128] ;
@@ -1412,7 +1412,7 @@ void AppendRRDM(char *buffer, UINT16 op, char *working)
 	strcat(buffer, final) ;
 }
 
-void AppendDXMDR(char *buffer, UINT16 op)
+static void AppendDXMDR(char *buffer, UINT16 op)
 {
 	char D1[32] ;
 	char D2[32] ;
@@ -1437,7 +1437,7 @@ void AppendDXMDR(char *buffer, UINT16 op)
 // TABLE DECODER FUNCTIONS //
 /////////////////////////////
 
-int DecodeBBBTable(UINT16 BBB)
+static int DecodeBBBTable(UINT16 BBB)
 {
 	switch(BBB)
 	{
@@ -1523,7 +1523,7 @@ static void DecodeDDTable(UINT16 DD, char *SD)
 	}
 }
 
-void DecodeDDFTable(UINT16 DD, UINT16 F, char *S, char *D)
+static void DecodeDDFTable(UINT16 DD, UINT16 F, char *S, char *D)
 {
 	UINT16 switchVal = (DD << 1) | F ;
 
@@ -1540,7 +1540,7 @@ void DecodeDDFTable(UINT16 DD, UINT16 F, char *S, char *D)
 	}
 }
 
-void DecodeEETable(UINT16 EE, char *D)
+static void DecodeEETable(UINT16 EE, char *D)
 {
 	switch(EE)
 	{
@@ -1664,7 +1664,7 @@ static void DecodeJJFTable(UINT16 JJ, UINT16 F, char *S, char *D)
 	}
 }
 
-void DecodeJFTable(UINT16 J, UINT16 F, char *S, char *D)
+static void DecodeJFTable(UINT16 J, UINT16 F, char *S, char *D)
 {
 	UINT16 switchVal = (J << 1) | F ;
 
@@ -1677,7 +1677,7 @@ void DecodeJFTable(UINT16 J, UINT16 F, char *S, char *D)
 	}
 }
 
-void DecodekTable(UINT16 k, char *Dnot)
+static void DecodekTable(UINT16 k, char *Dnot)
 {
 	switch(k)
 	{
@@ -1686,7 +1686,7 @@ void DecodekTable(UINT16 k, char *Dnot)
 	}
 }
 
-void DecodekSignTable(UINT16 k, char *plusMinus)
+static void DecodekSignTable(UINT16 k, char *plusMinus)
 {
 	switch(k)
 	{
@@ -1695,7 +1695,7 @@ void DecodekSignTable(UINT16 k, char *plusMinus)
 	}
 }
 
-void DecodeKKKTable  (UINT16 KKK, char *D1, char *D2)
+static void DecodeKKKTable  (UINT16 KKK, char *D1, char *D2)
 {
 	switch(KKK)
 	{
@@ -1710,12 +1710,12 @@ void DecodeKKKTable  (UINT16 KKK, char *D1, char *D2)
 	}
 }
 
-int DecodeNNTable(UINT16 NN)
+static int DecodeNNTable(UINT16 NN)
 {
 	return NN ;
 }
 
-void DecodeQQFTable(UINT16 QQ, UINT16 F, char *S1, char *S2, char *D)
+static void DecodeQQFTable(UINT16 QQ, UINT16 F, char *S1, char *S2, char *D)
 {
 	UINT16 switchVal = (QQ << 1) | F ;
 
@@ -1749,7 +1749,7 @@ static void DecodeQQFTableSp(UINT16 QQ, UINT16 F, char *S1, char *S2, char *D)
 	}
 }
 
-void DecodeQQQFTable(UINT16 QQQ, UINT16 F, char *S1, char *S2, char *D)
+static void DecodeQQQFTable(UINT16 QQQ, UINT16 F, char *S1, char *S2, char *D)
 {
 	UINT16 switchVal = (QQQ << 1) | F ;
 
@@ -1779,7 +1779,7 @@ static int DecodeRRTable(UINT16 RR)
 	return RR ;
 }
 
-void DecodesTable(UINT16 s, char *arithmetic)
+static void DecodesTable(UINT16 s, char *arithmetic)
 {
 	switch(s)
 	{
@@ -1788,7 +1788,7 @@ void DecodesTable(UINT16 s, char *arithmetic)
 	}
 }
 
-void DecodessTable(UINT16 ss, char *arithmetic)
+static void DecodessTable(UINT16 ss, char *arithmetic)
 {
 	switch(ss)
 	{
@@ -1799,7 +1799,7 @@ void DecodessTable(UINT16 ss, char *arithmetic)
 	}
 }
 
-void DecodeuuuuFTable(UINT16 uuuu, UINT16 F, char *arg, char *S, char *D)
+static void DecodeuuuuFTable(UINT16 uuuu, UINT16 F, char *arg, char *S, char *D)
 {
 	UINT16 switchVal = (uuuu << 1) | F ;
 
@@ -1819,7 +1819,7 @@ void DecodeuuuuFTable(UINT16 uuuu, UINT16 F, char *arg, char *S, char *D)
 	}
 }
 
-void DecodeZTable(UINT16 Z, char *ea)
+static void DecodeZTable(UINT16 Z, char *ea)
 {
 	// This is fixed as per the Family Manual addendum
 	switch(Z)
@@ -1830,7 +1830,7 @@ void DecodeZTable(UINT16 Z, char *ea)
 }
 
 
-void AssembleeaFrommTable(UINT16 m, int n, char *ea)
+static void AssembleeaFrommTable(UINT16 m, int n, char *ea)
 {
 	switch(m)
 	{
@@ -1839,7 +1839,7 @@ void AssembleeaFrommTable(UINT16 m, int n, char *ea)
 	}
 }
 
-void AssembleeaFrommmTable(UINT16 mm, int n1, int n2, char *ea1, char *ea2)
+static void AssembleeaFrommmTable(UINT16 mm, int n1, int n2, char *ea1, char *ea2)
 {
 	switch(mm)
 	{
@@ -1854,7 +1854,7 @@ void AssembleeaFrommmTable(UINT16 mm, int n1, int n2, char *ea1, char *ea2)
 	}
 }
 
-void AssembleeaFromMMTable(UINT16 MM, int n, char *ea)
+static void AssembleeaFromMMTable(UINT16 MM, int n, char *ea)
 {
 	switch(MM)
 	{
@@ -1865,7 +1865,7 @@ void AssembleeaFromMMTable(UINT16 MM, int n, char *ea)
 	}
 }
 
-void AssembleeaFromqTable(UINT16 q, int n, char *ea)
+static void AssembleeaFromqTable(UINT16 q, int n, char *ea)
 {
 	switch(q)
 	{
@@ -1874,7 +1874,7 @@ void AssembleeaFromqTable(UINT16 q, int n, char *ea)
 	}
 }
 
-void AssembleeaFromtTable(UINT16 t,  UINT16 val, char *ea)
+static void AssembleeaFromtTable(UINT16 t,  UINT16 val, char *ea)
 {
 	switch(t)
 	{
@@ -1885,7 +1885,7 @@ void AssembleeaFromtTable(UINT16 t,  UINT16 val, char *ea)
 }
 
 // Not sure if this one is even used?
-void AssembleeaFromzTable(UINT16 z, int n, char *ea)
+static void AssembleeaFromzTable(UINT16 z, int n, char *ea)
 {
 	switch(z)
 	{
@@ -1908,7 +1908,7 @@ static void AssembleDFromPTable(UINT16 P, UINT16 ppppp, char *D)
 	}
 }
 
-void AssembleArgumentsFromWTable(UINT16 W, char *args, char ma, char *SD, char *ea)
+static void AssembleArgumentsFromWTable(UINT16 W, char *args, char ma, char *SD, char *ea)
 {
 	switch(W)
 	{
@@ -1917,7 +1917,7 @@ void AssembleArgumentsFromWTable(UINT16 W, char *args, char ma, char *SD, char *
 	}
 }
 
-void AssembleRegFromWTable(UINT16 W, char *args, char ma, char *SD, UINT8 xx)
+static void AssembleRegFromWTable(UINT16 W, char *args, char ma, char *SD, UINT8 xx)
 {
 	switch(W)
 	{

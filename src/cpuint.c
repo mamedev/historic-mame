@@ -17,10 +17,6 @@
 #endif
 
 
-// temporary
-#define OUT_OF_BOUNDS_IS_FATAL		1
-
-
 /*************************************
  *
  *  Debug logging
@@ -43,7 +39,6 @@
  *
  *************************************/
 
-#if OUT_OF_BOUNDS_IS_FATAL
 #define VERIFY_ACTIVECPU(retval, name)						\
 	int activecpu = cpu_getactivecpu();						\
 	assert_always(activecpu >= 0, #name "() called with no active cpu!")
@@ -51,23 +46,6 @@
 #define VERIFY_ACTIVECPU_VOID(name)							\
 	int activecpu = cpu_getactivecpu();						\
 	assert_always(activecpu >= 0, #name "() called with no active cpu!")
-#else
-#define VERIFY_ACTIVECPU(retval, name)						\
-	int activecpu = cpu_getactivecpu();						\
-	if (activecpu < 0)										\
-	{														\
-		logerror(#name "() called with no active cpu!\n");	\
-		return retval;										\
-	}
-
-#define VERIFY_ACTIVECPU_VOID(name)							\
-	int activecpu = cpu_getactivecpu();						\
-	if (activecpu < 0)										\
-	{														\
-		logerror(#name "() called with no active cpu!\n");	\
-		return;												\
-	}
-#endif
 
 
 

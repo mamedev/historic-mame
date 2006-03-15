@@ -147,7 +147,7 @@ static const UINT16 VolCtrlSpeedTable[0x80] =
  * ---------x------ 1 if the main CPU has written a new sound command
  * ----------xxxxxx unknown/unused
  */
-UINT16 *
+static UINT16 *
 GetSequenceStatusAddr( struct namcona *chip, struct sequence *pSeq )
 {
 	int offs = pSeq - chip->mSequence;

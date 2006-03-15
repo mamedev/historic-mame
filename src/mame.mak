@@ -156,6 +156,7 @@ CPUS += SE3208
 CPUS += MC68HC11
 CPUS += ADSP21062
 CPUS += DSP56156
+CPUS += RSP
 
 
 
@@ -1063,7 +1064,7 @@ $(OBJ)/sega.a: \
 	$(OBJ)/drivers/model2.o \
 	$(OBJ)/drivers/model3.o $(OBJ)/vidhrdw/model3.o $(OBJ)/machine/model3.o \
 	$(OBJ)/drivers/puckpkmn.o \
-	$(OBJ)/drivers/sega.o $(OBJ)/machine/sega.o $(OBJ)/sndhrdw/sega.o $(OBJ)/vidhrdw/sega.o \
+	$(OBJ)/drivers/sega.o $(OBJ)/sndhrdw/sega.o $(OBJ)/vidhrdw/sega.o \
 	$(OBJ)/drivers/segac2.o \
 	$(OBJ)/drivers/segahang.o $(OBJ)/vidhrdw/segahang.o \
 	$(OBJ)/drivers/segaorun.o $(OBJ)/vidhrdw/segaorun.o \
@@ -1124,7 +1125,7 @@ $(OBJ)/seibu.a: \
 	$(OBJ)/sndhrdw/seibu.o \
 
 $(OBJ)/seta.a: \
-	$(OBJ)/drivers/aleck64.o \
+	$(OBJ)/drivers/aleck64.o $(OBJ)/vidhrdw/n64.o \
 	$(OBJ)/drivers/darkhors.o \
 	$(OBJ)/drivers/hanaawas.o $(OBJ)/vidhrdw/hanaawas.o \
 	$(OBJ)/drivers/macs.o \

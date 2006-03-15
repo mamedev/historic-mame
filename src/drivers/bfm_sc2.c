@@ -3128,7 +3128,7 @@ GAME ( 1995, paradice, 0,		  scorpion2_vid, paradice,  pokio,      0,       "BFM
 GAME ( 1996, pyramid,  0,		  scorpion2_vid, pyramid,   pyramid,    0,       "BFM/ELAM", "Pyramid (Dutch, Game Card 95-750-898)",0)
 
 GAME ( 1996, sltblgtk, 0,		  scorpion2_vid, sltblgtk,  sltsbelg,   0,       "BFM/ELAM", "Slots (Belgian Token, Game Card 95-750-943)",0)
-GAME ( 1996, sltblgpo, 0, 		  scorpion2_vid, sltblgpo,  sltsbelg,   0,       "BFM/ELAM", "Slots (Belgian Cash, Game Card 95-770-938)",0)
+GAME ( 1996, sltblgpo, 0, 		  scorpion2_vid, sltblgpo,  sltsbelg,   0,       "BFM/ELAM", "Slots (Belgian Cash, Game Card 95-750-938)",0)
 GAME ( 1996, sltblgp1, sltblgpo,  scorpion2_vid, sltblgpo,  sltsbelg,   0,       "BFM/ELAM", "Slots (Belgian Cash, Game Card 95-752-008)",0)
 GAME ( 1997, gldncrwn, 0,		  scorpion2_vid, gldncrwn,  gldncrwn,   0,       "BFM/ELAM", "Golden Crown (Dutch, Game Card 95-752-011)",0)
 

@@ -1009,8 +1009,8 @@ static void do_extractcd(int argc, char *argv[])
 	FILE *outfile = NULL, *outfile2 = NULL;
 	int track, m, s, f, frame;
 	long trkoffs, trklen;
-	const char *typenames[8] = { "MODE1", "MODE1_RAW", "MODE2", "MODE2_FORM1", "MODE2_FORM2", "MODE2_FORM_MIX", "MODE2_RAW", "AUDIO" };
-	const char *subnames[2] = { "RW", "RW_RAW" };
+	static const char *typenames[8] = { "MODE1", "MODE1_RAW", "MODE2", "MODE2_FORM1", "MODE2_FORM2", "MODE2_FORM_MIX", "MODE2_RAW", "AUDIO" };
+	static const char *subnames[2] = { "RW", "RW_RAW" };
 	UINT8 sector[CD_MAX_SECTOR_DATA + CD_MAX_SUBCODE_DATA];
 
 	/* require 5 args total */

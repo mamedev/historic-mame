@@ -88,7 +88,6 @@ WRITE8_HANDLER( irobot_sharedmem_w )
 static void irvg_done_callback (int param)
 {
 	logerror("vg done. ");
-	IR_CPU_STATE;
 	irvg_running = 0;
 }
 
@@ -456,7 +455,6 @@ DRIVER_INIT( irobot )
 static void irmb_done_callback (int param)
 {
     logerror("mb done. ");
-	IR_CPU_STATE;
 	irmb_running = 0;
 	cpunum_set_input_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
 }

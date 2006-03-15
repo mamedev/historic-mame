@@ -29,11 +29,11 @@
         * Trivial Pursuit (All Sports Edition)
         * Trivial Pursuit (Young Player's Edition)
         * Trivial Pursuit (Baby Boomer Series)
+        * Trivial Pursuit (Spanish)
 
     Looking for ROMs for these:
         * Euro Stocker
         * Team Hat Trick
-        * Trivial Pursuit (Spanish)
 
     Known bugs:
         * CEM3394 emulation is not perfect
@@ -796,6 +796,60 @@ INPUT_PORTS_ALIAS(triviag2, triviag1)
 INPUT_PORTS_ALIAS(triviasp, triviag1)
 INPUT_PORTS_ALIAS(triviayp, triviag1)
 INPUT_PORTS_ALIAS(triviabb, triviag1)
+
+INPUT_PORTS_START( triviaes )
+	PORT_START	/* IN0 */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+	PORT_BIT( 0x1c, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x20, 0x00, "Sound" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, "Sound Test" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "High Scores" )
+	PORT_DIPSETTING(    0x00, "Keep Top 5" )
+	PORT_DIPSETTING(    0x80, "Keep Top 10" )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x03, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x0c, 0x04, "Guesses" )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x04, "3" )
+	PORT_DIPSETTING(    0x08, "4" )
+	PORT_DIPSETTING(    0x0c, "5" )
+	PORT_BIT( 0x70, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_PLAYER(1)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_PLAYER(1)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(1)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(1)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+
+	PORT_START	/* IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START4 )
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_NAME("Red Button")
+	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_NAME("Green Button")
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
+
+	/* analog ports */
+	UNUSED_ANALOG_X4
+INPUT_PORTS_END
 
 
 INPUT_PORTS_START( gimeabrk )
@@ -1962,6 +2016,26 @@ ROM_START( triviabb )
 	ROM_LOAD( "gr45.bin", 0x08000, 0x4000, CRC(92fb6fb1) SHA1(1a322bd3cfacdf82d4fcc4b4d47f78a701411919) )
 ROM_END
 
+ROM_START( triviaes )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
+	ROM_LOAD( "tp_a2.bin",  0x10000, 0x04000, CRC(b4d69463) SHA1(8d6b2024600ab0a5d76d2b8ec53cf4c6c6618901) )
+	ROM_LOAD( "tp_a7.bin",  0x14000, 0x04000, CRC(d78bd4b6) SHA1(0542fc4ef2501c7649b9fd257340c4392a19d7ad) )
+	ROM_LOAD( "tp_a4.bin",  0x18000, 0x04000, CRC(0de9e14d) SHA1(3d5fdf8531cb10a41e3f604165fce682e7e019d5) )
+	ROM_LOAD( "tp_a5.bin",  0x1c000, 0x04000, CRC(e749adac) SHA1(426665249a57ba6f4a890808a1c84edeade149bb) )
+	ROM_LOAD( "tp_a8.bin",  0x20000, 0x04000, CRC(168ef5ed) SHA1(677a83dfcb12af7e13f00213e2eec48fa2fa63c8) )
+	ROM_LOAD( "tp_a1.bin",  0x24000, 0x04000, CRC(1f6ef37f) SHA1(c399404e05d817ffb361eb8ef274a86f07085940) )
+	ROM_LOAD( "tp_a6.bin",  0x28000, 0x04000, CRC(421c1a29) SHA1(3e0de8734a39fb887aff40e89cb0936d4cacf9a5) )
+	ROM_LOAD( "tp_a3.bin",  0x2c000, 0x04000, CRC(c6254f46) SHA1(47f3d05d0c31983ed1576f91fa193fe58e80bb60) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* 64k for Z80 */
+	ROM_LOAD( "tpsonido.bin",  0x00000, 0x2000, CRC(4dd0a525) SHA1(f0c447adc5b67917851a9df978df851247e75c43) )
+
+	ROM_REGION( 0x10000, REGION_GFX1, 0 )		/* up to 64k of sprites */
+	ROM_LOAD( "tp_gr3.bin", 0x00000, 0x4000, CRC(6829de8e) SHA1(4ec494883ba358f2ac7ce8d5a623a2f34b5bc843) )
+	ROM_LOAD( "tp_gr2.bin", 0x04000, 0x4000, CRC(89398700) SHA1(771ee04baa9a31d435a6234490105878713e7845) )
+	ROM_LOAD( "tp_gr1.bin", 0x08000, 0x4000, CRC(1242033e) SHA1(1a3fe186bb261e2c7d9fbbb2a3103b39bf029b35) )
+ROM_END
+
 
 ROM_START( gimeabrk )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
@@ -2317,6 +2391,10 @@ static DRIVER_INIT( triviag2 )
 	memcpy(&memory_region(REGION_CPU1)[0x24000], &memory_region(REGION_CPU1)[0x28000], 0x4000);
 	expand_roms(EXPAND_NONE); balsente_shooter = 0; /* noanalog */
 }
+static DRIVER_INIT( triviaes )
+{
+	expand_roms(EXPAND_NONE | SWAP_HALVES); balsente_shooter = 0; /* noanalog */
+}
 static DRIVER_INIT( gimeabrk ) { expand_roms(EXPAND_ALL);  balsente_shooter = 0; balsente_adc_shift = 1; }
 static DRIVER_INIT( minigolf ) { expand_roms(EXPAND_NONE); balsente_shooter = 0; balsente_adc_shift = 2; }
 static DRIVER_INIT( minigol2 ) { expand_roms(0x0c);        balsente_shooter = 0; balsente_adc_shift = 2; }
@@ -2387,6 +2465,7 @@ GAME( 1984, triviag2, 0,        balsente, triviag2, triviag2, ROT0, "Bally/Sente
 GAME( 1984, triviasp, 0,        balsente, triviasp, triviag2, ROT0, "Bally/Sente", "Trivial Pursuit (All Star Sports Edition)", GAME_SUPPORTS_SAVE )
 GAME( 1984, triviayp, 0,        balsente, triviayp, triviag2, ROT0, "Bally/Sente", "Trivial Pursuit (Young Players Edition)", GAME_SUPPORTS_SAVE )
 GAME( 1984, triviabb, 0,        balsente, triviabb, triviag2, ROT0, "Bally/Sente", "Trivial Pursuit (Baby Boomer Edition)", GAME_SUPPORTS_SAVE )
+GAME( 1987, triviaes, 0,        balsente, triviaes, triviaes, ROT0, "Bally/Sente", "Trivial Pursuit (Spanish Edition)", 0 )
 GAME( 1985, gimeabrk, 0,        balsente, gimeabrk, gimeabrk, ROT0, "Bally/Sente", "Gimme A Break", GAME_SUPPORTS_SAVE )
 GAME( 1985, minigolf, 0,        balsente, minigolf, minigolf, ROT0, "Bally/Sente", "Mini Golf (set 1)", GAME_SUPPORTS_SAVE )
 GAME( 1985, minigol2, minigolf, balsente, minigol2, minigol2, ROT0, "Bally/Sente", "Mini Golf (set 2)", GAME_SUPPORTS_SAVE )

@@ -7,23 +7,23 @@
 
 
 // Output variables for ReadAMAddress()
-UINT8 amFlag;
-UINT32 amOut;
-UINT32 bamOffset;
+static UINT8 amFlag;
+static UINT32 amOut;
+static UINT32 bamOffset;
 
 // Appo temp var
-UINT32 amLength1,amLength2,amLength3,amLength4;
+static UINT32 amLength1,amLength2;
 
 
 // Global vars used by AM functions
-UINT32 modAdd;
-UINT8 modM;
-UINT8 modVal;
-UINT8 modVal2;
-UINT8 modWriteValB;
-UINT16 modWriteValH;
-UINT32 modWriteValW;
-UINT8 modDim;
+static UINT32 modAdd;
+static UINT8 modM;
+static UINT8 modVal;
+static UINT8 modVal2;
+static UINT8 modWriteValB;
+static UINT16 modWriteValH;
+static UINT32 modWriteValW;
+static UINT8 modDim;
 
 // Addressing mode functions and tables
 #include "am1.c" // ReadAM
@@ -40,14 +40,14 @@ UINT8 modDim;
     amLength
 */
 
-UINT32 ReadAM(void)
+static UINT32 ReadAM(void)
 {
 	modM=modM?1:0;
 	modVal=OpRead8(modAdd);
 	return AMTable1[modM][modVal>>5]();
 }
 
-UINT32 BitReadAM(void)
+static UINT32 BitReadAM(void)
 {
 	modM=modM?1:0;
 	modVal=OpRead8(modAdd);
@@ -67,14 +67,14 @@ UINT32 BitReadAM(void)
     amLength
 */
 
-UINT32 ReadAMAddress(void)
+static UINT32 ReadAMAddress(void)
 {
 	modM=modM?1:0;
 	modVal=OpRead8(modAdd);
 	return AMTable2[modM][modVal>>5]();
 }
 
-UINT32 BitReadAMAddress(void)
+static UINT32 BitReadAMAddress(void)
 {
 	modM=modM?1:0;
 	modVal=OpRead8(modAdd);
@@ -92,7 +92,7 @@ UINT32 BitReadAMAddress(void)
     amLength
 */
 
-UINT32 WriteAM(void)
+static UINT32 WriteAM(void)
 {
 	modM=modM?1:0;
 	modVal=OpRead8(modAdd);

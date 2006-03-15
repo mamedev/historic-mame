@@ -102,7 +102,7 @@ static nec_Regs I;
 
 static UINT32 cpu_type;
 static UINT32 prefix_base;	/* base address of the latest prefix segment */
-char seg_prefix;		/* prefix segment indicator */
+static char seg_prefix;		/* prefix segment indicator */
 
 
 /* The interrupt number of a pending external interrupt pending NMI is 2.   */
@@ -122,7 +122,7 @@ static UINT8 parity_table[256];
 static void nec_reset (void)
 {
     unsigned int i,j,c;
-    BREGS reg_name[8]={ AL, CL, DL, BL, AH, CH, DH, BH };
+    static const BREGS reg_name[8]={ AL, CL, DL, BL, AH, CH, DH, BH };
     int (*save_irqcallback)(int);
 
 	save_irqcallback = I.irq_callback;
@@ -940,7 +940,7 @@ static offs_t nec_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int 
 
 static void nec_init(int index, int clock, const void *config, int (*irqcallback)(int), int type)
 {
-	const char *names[]={"V20","V30","V33"};
+	static const char *names[]={"V20","V30","V33"};
 
 	state_save_register_item_array(names[type], index, I.regs.w);
 	state_save_register_item_array(names[type], index, I.sregs);

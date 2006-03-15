@@ -2024,7 +2024,7 @@ static void blmove(void)
 		}
 		if (bits != 0 && tms34010_ICount > 0)
 		{
-			(*wfield_functions[bits])(dst, (*rfield_functions_z[bits])(src));
+			(*tms34010_wfield_functions[bits])(dst, (*tms34010_rfield_functions_z[bits])(src));
 			dst += bits;
 			src += bits;
 			bits = 0;

@@ -98,7 +98,7 @@ static struct i86_timing cycles;
 /***************************************************************************/
 static void i86_state_register(int index)
 {
-	const char *type = "I86";
+	static const char type[] = "I86";
 	state_save_register_item_array(type, index, I.regs.w);
 	state_save_register_item(type, index, I.pc);
 	state_save_register_item(type, index, I.prevpc);
@@ -125,7 +125,7 @@ static void i86_state_register(int index)
 static void i86_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
 	unsigned int i, j, c;
-	BREGS reg_name[8] = {AL, CL, DL, BL, AH, CH, DH, BH};
+	static const BREGS reg_name[8] = {AL, CL, DL, BL, AH, CH, DH, BH};
 	for (i = 0; i < 256; i++)
 	{
 		for (j = i, c = 0; j > 0; j >>= 1)

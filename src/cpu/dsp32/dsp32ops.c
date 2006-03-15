@@ -96,7 +96,7 @@
     FORWARD DECLARATIONS
 ***************************************************************************/
 
-void (*dsp32ops[])(void);
+extern void (*dsp32ops[])(void);
 
 
 

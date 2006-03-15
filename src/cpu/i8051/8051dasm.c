@@ -164,7 +164,7 @@ static const char regbank[][6] = {
     "rb3r4",  "rb3r5",  "rb3r6",  "rb3r7"
 };
 
-const char *get_data_address( UINT8 arg )
+static const char *get_data_address( UINT8 arg )
 {
 	const char *sym;
 	static char buffer[8][63+1];
@@ -186,7 +186,7 @@ const char *get_data_address( UINT8 arg )
 	return buffer[which];
 }
 
-const char *get_bit_address( UINT8 arg )
+static const char *get_bit_address( UINT8 arg )
 {
 	const char *sym;
 	static char buffer[8][63+1];
@@ -212,7 +212,7 @@ const char *get_bit_address( UINT8 arg )
 
 /*Just display the actual memory address for data & bit address access*/
 
-const char *get_data_address( UINT8 arg )
+static const char *get_data_address( UINT8 arg )
 {
 	const char *sym;
 	static char buffer[8][63+1];
@@ -223,7 +223,7 @@ const char *get_data_address( UINT8 arg )
 	return buffer[which];
 }
 
-const char *get_bit_address( UINT8 arg )
+static const char *get_bit_address( UINT8 arg )
 {
 	const char *sym;
 	static char buffer[8][63+1];

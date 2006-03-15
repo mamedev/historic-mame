@@ -108,7 +108,7 @@ extern offs_t hd6309_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, i
 
 /*#define BIG_SWITCH*/
 
-void CHECK_IRQ_LINES( void );
+static void CHECK_IRQ_LINES( void );
 static void IIError(void);
 static void DZError(void);
 
@@ -386,8 +386,7 @@ INLINE void WM32( UINT32 mAddr, PAIR *p )
 	WM( (mAddr+3)&0xffff, p->b.l );
 }
 
-void UpdateState( void );
-void UpdateState( void )
+static void UpdateState( void )
 {
 	if ( hd6309.md & MD_EM )
 	{
@@ -405,7 +404,7 @@ void UpdateState( void )
 	}
 }
 
-void CHECK_IRQ_LINES( void )
+static void CHECK_IRQ_LINES( void )
 {
 	if( hd6309.irq_state[HD6309_IRQ_LINE] != CLEAR_LINE ||
 		hd6309.irq_state[HD6309_FIRQ_LINE] != CLEAR_LINE )

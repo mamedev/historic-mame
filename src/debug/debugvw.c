@@ -1566,9 +1566,11 @@ static void disasm_recompute(debug_view *view, offs_t pc, int startline, int lin
 		}
 		else if (dasmdata->right_column == DVP_DASM_RIGHTCOL_COMMENTS)
 		{
+			offs_t comment_address = BYTE2ADDR(dasmdata->address[instr], cpuinfo, ADDRESS_SPACE_PROGRAM) ;
+
 			/* get the comment */
-			if (debug_comment_get_text(cpu_getactivecpu(),BYTE2ADDR(dasmdata->address[instr], cpuinfo, ADDRESS_SPACE_PROGRAM), debug_comment_get_opcode_crc32(pcbyte)) != 0x00)
-				sprintf(&destbuf[dasmdata->divider2], "// %s", debug_comment_get_text(cpu_getactivecpu(), BYTE2ADDR(dasmdata->address[instr], cpuinfo, ADDRESS_SPACE_PROGRAM), debug_comment_get_opcode_crc32(pcbyte)));
+			if (debug_comment_get_text(cpu_getactivecpu(), comment_address, debug_comment_get_opcode_crc32(comment_address)) != 0x00)
+				sprintf(&destbuf[dasmdata->divider2], "// %s", debug_comment_get_text(cpu_getactivecpu(), comment_address, debug_comment_get_opcode_crc32(comment_address)));
 			else
 				sprintf(&destbuf[dasmdata->divider2], " ");
 		}
@@ -2279,7 +2281,7 @@ static void memory_handle_char(debug_view *view, char chval)
 {
 	debug_view_memory *memdata = view->extra_data;
 	const debug_cpu_info *cpuinfo = debug_get_cpu_info(memdata->cpunum);
-	static const char *hexvals = "0123456789abcdef";
+	static const char hexvals[] = "0123456789abcdef";
 	char *hexchar = strchr(hexvals, tolower(chval));
 	offs_t maxaddr;
 	offs_t address;

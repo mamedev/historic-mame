@@ -1070,7 +1070,7 @@ INST(MVFC)
 	sprintf(dst,"MVFC  %%CR0%d,%%R0",Imm);
 }
 
-_OP DecodeOp(UINT16 Opcode)
+static _OP DecodeOp(UINT16 Opcode)
 {
 	switch(EXTRACT(Opcode,14,15))
 	{

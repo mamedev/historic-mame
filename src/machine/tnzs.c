@@ -218,7 +218,7 @@ static void mcu_handle_coins(int coin)
 
 static READ8_HANDLER( mcu_arknoid2_r )
 {
-	const char *mcu_startup = "\x55\xaa\x5a";
+	static const char mcu_startup[] = "\x55\xaa\x5a";
 
 //  logerror("PC %04x: read mcu %04x\n", activecpu_get_pc(), 0xc000 + offset);
 
@@ -323,7 +323,7 @@ static WRITE8_HANDLER( mcu_arknoid2_w )
 
 static READ8_HANDLER( mcu_extrmatn_r )
 {
-	const char *mcu_startup = "\x5a\xa5\x55";
+	static const char mcu_startup[] = "\x5a\xa5\x55";
 
 //  logerror("PC %04x: read mcu %04x\n", activecpu_get_pc(), 0xc000 + offset);
 

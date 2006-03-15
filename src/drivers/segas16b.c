@@ -4960,40 +4960,6 @@ ROM_START( ryukyu )
 	ROM_LOAD( "opr13350.a11", 0x10000, 0x20000, CRC(3c59a658) SHA1(2cef13ee9e666bb850fe6c6e6954d7b75df665a9) )
 ROM_END
 
-
-/**************************************************************************************************************************
- **************************************************************************************************************************
- **************************************************************************************************************************
-    SDI, Sega System 16B
-    CPU: 68000
-    ROM Board: 171-5358
-*/
-ROM_START( sdib )
-	ROM_REGION( 0x040000, REGION_CPU1, 0 ) /* 68000 code */
-	ROM_LOAD16_BYTE( "a4.rom", 0x000000, 0x8000, CRC(f2c41dd6) SHA1(7fdbf819e42c7af0efe3976ffd919ee142efe1bc) )
-	ROM_LOAD16_BYTE( "a1.rom", 0x000001, 0x8000, CRC(a9f816ef) SHA1(5ccab14b088d2249f83ff5e80591eccb4afb6e20) )
-	ROM_LOAD16_BYTE( "a5.rom", 0x010000, 0x8000, CRC(7952e27e) SHA1(caead75724a6744fc6fc7fbbc9894932a7a22eed) )
-	ROM_LOAD16_BYTE( "a2.rom", 0x010001, 0x8000, CRC(369af326) SHA1(d6517c38f3a386e8f23b058fe8fa0607918ba215) )
-	ROM_LOAD16_BYTE( "a6.rom", 0x020000, 0x8000, CRC(8ee2c287) SHA1(8ed98334dab51c2eab8e1ff0724abc1f819dc8c2) )
-	ROM_LOAD16_BYTE( "a3.rom", 0x020001, 0x8000, CRC(193e4231) SHA1(14fecfab010641b83e5b24d0e8003bc0de35e1c8) )
-
-	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
-	ROM_LOAD( "b9.rom",  0x00000, 0x10000, CRC(182b6301) SHA1(bb6f1174f82611c801d2b4b7d3596bf71619e8a1) )
-	ROM_LOAD( "b10.rom", 0x10000, 0x10000, CRC(8f7129a2) SHA1(094a4065597d8d51fb2232546df1de9043fea731) )
-	ROM_LOAD( "b11.rom", 0x20000, 0x10000, CRC(4409411f) SHA1(84fd7128e8440d96b0384ae3c391a59bd37ecf9d) )
-
-	ROM_REGION16_BE( 0x60000, REGION_GFX2, 0 ) /* sprites */
-	ROM_LOAD16_BYTE( "b1.rom",   0x00001, 0x010000, CRC(30e2c50a) SHA1(1fb9e69d4cb97fdcb0f98c2a7ede246aaa4ac382) )
-	ROM_LOAD16_BYTE( "b5.rom",   0x00000, 0x010000, CRC(794e3e8b) SHA1(91ca1cb9aabf99adc8426feed4494a992afb8c4a) )
-	ROM_LOAD16_BYTE( "b2.rom",   0x20001, 0x010000, CRC(6a8b3fd0) SHA1(a122d3cb0b3263714f026e57d85b0dbf6cb110d7) )
-	ROM_LOAD16_BYTE( "10764.b6", 0x20000, 0x010000, CRC(602da5d5) SHA1(d32cdde7d86c4561e7bfa547d7d7995ce9a43c24) )
-	ROM_LOAD16_BYTE( "b3.rom",   0x40001, 0x010000, CRC(b9de3aeb) SHA1(2f7a55a8377e831338a884f8962d6ab2757e8c9b) )
-	ROM_LOAD16_BYTE( "10765.b7", 0x40000, 0x010000, CRC(0a73a057) SHA1(7f31124c67541a245e069e5b6aac59935d99a9a9) )
-
-	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* sound CPU */
-	ROM_LOAD( "a7.rom", 0x0000, 0x8000, CRC(793f9f7f) SHA1(9e4fde376db9e99a83eb2fc734c6721c122ba9af) )
-ROM_END
-
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
@@ -5026,6 +4992,75 @@ ROM_START( defense )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* sound CPU */
 	ROM_LOAD( "10775.a7", 0x0000, 0x8000, CRC(4cbd55a8) SHA1(8af2c52ab61338c8a9f1a74a05470dd3d5e0c42f) )
+ROM_END
+
+/**************************************************************************************************************************
+ **************************************************************************************************************************
+ **************************************************************************************************************************
+    SDI, Sega System 16B
+    CPU: FD1089A 317-0028
+    ROM Board: 171-5358
+*/
+
+ROM_START( sdib )
+	ROM_REGION( 0x040000, REGION_CPU1, 0 ) /* 68000 code */
+	/* the ic positions given (at the end of the line) can't be right?? */
+	ROM_LOAD16_BYTE( "epr10986a.a4", 0x000000, 0x8000, CRC(3e136215) SHA1(e90b55d03c515752cc2c647cb30f6f23a0a91b01) ) // .a3??
+	ROM_LOAD16_BYTE( "epr10984a.a1", 0x000001, 0x8000, CRC(44bf3cf5) SHA1(fd7bcb25fbbfb01da49892c8b39c1f98e5acf9e6) )
+	ROM_LOAD16_BYTE( "epr10987a.a5", 0x010000, 0x8000, CRC(cfd79404) SHA1(5dec1d31cb0fe14a0dbe00df13322f8e2676774b) ) // .a4??
+	ROM_LOAD16_BYTE( "epr10985a.a2", 0x010001, 0x8000, CRC(1c21a03f) SHA1(61d99ba59be2d97a91fa0e02c4a377e880cfbe13) )
+	ROM_LOAD16_BYTE( "epr10829.a6",  0x020000, 0x8000, CRC(a431ab08) SHA1(95888af6fae598c40e7fefffbfd1f0b551e9f1be) )
+	ROM_LOAD16_BYTE( "epr10826.a3",  0x020001, 0x8000, CRC(2ed8e4b7) SHA1(23da16e29a475d6ec7ccec8cdd18a1dc78ae69cd) )
+
+	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD( "epr10772.b9",  0x00000, 0x10000, CRC(182b6301) SHA1(bb6f1174f82611c801d2b4b7d3596bf71619e8a1) )
+	ROM_LOAD( "epr10773.b10", 0x10000, 0x10000, CRC(8f7129a2) SHA1(094a4065597d8d51fb2232546df1de9043fea731) )
+	ROM_LOAD( "epr10774.b11", 0x20000, 0x10000, CRC(4409411f) SHA1(84fd7128e8440d96b0384ae3c391a59bd37ecf9d) )
+
+	ROM_REGION16_BE( 0x60000, REGION_GFX2, 0 ) /* sprites */
+	ROM_LOAD16_BYTE( "10760.b1", 0x00001, 0x010000, CRC(70de327b) SHA1(11dde9cefd993f5fb02baf5809fae6c1176a58a1) )
+	ROM_LOAD16_BYTE( "10763.b5", 0x00000, 0x010000, CRC(99ec5cb5) SHA1(933a2216a2c772fc82499c739457865b1c75cdb8) )
+	ROM_LOAD16_BYTE( "10761.b2", 0x20001, 0x010000, CRC(4e80f80d) SHA1(d168235bdf09317545c999676a4adf015df32366) )
+	ROM_LOAD16_BYTE( "10764.b6", 0x20000, 0x010000, CRC(602da5d5) SHA1(d32cdde7d86c4561e7bfa547d7d7995ce9a43c24) )
+	ROM_LOAD16_BYTE( "10762.b3", 0x40001, 0x010000, CRC(464b5f78) SHA1(b730964a54e6a63fa5b7cc2cbf9ec0ab650626d5) )
+	ROM_LOAD16_BYTE( "10765.b7", 0x40000, 0x010000, CRC(0a73a057) SHA1(7f31124c67541a245e069e5b6aac59935d99a9a9) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* sound CPU */
+	ROM_LOAD( "10775.a7", 0x0000, 0x8000, CRC(4cbd55a8) SHA1(8af2c52ab61338c8a9f1a74a05470dd3d5e0c42f) )
+ROM_END
+
+/**************************************************************************************************************************
+ **************************************************************************************************************************
+ **************************************************************************************************************************
+    SDI, Sega System 16B
+    CPU: 68000
+    ROM Board: 171-5358
+    Note: decrypted bootleg
+*/
+ROM_START( sdibl )
+	ROM_REGION( 0x040000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "a4.rom", 0x000000, 0x8000, CRC(f2c41dd6) SHA1(7fdbf819e42c7af0efe3976ffd919ee142efe1bc) )
+	ROM_LOAD16_BYTE( "a1.rom", 0x000001, 0x8000, CRC(a9f816ef) SHA1(5ccab14b088d2249f83ff5e80591eccb4afb6e20) )
+	ROM_LOAD16_BYTE( "a5.rom", 0x010000, 0x8000, CRC(7952e27e) SHA1(caead75724a6744fc6fc7fbbc9894932a7a22eed) )
+	ROM_LOAD16_BYTE( "a2.rom", 0x010001, 0x8000, CRC(369af326) SHA1(d6517c38f3a386e8f23b058fe8fa0607918ba215) )
+	ROM_LOAD16_BYTE( "a6.rom", 0x020000, 0x8000, CRC(8ee2c287) SHA1(8ed98334dab51c2eab8e1ff0724abc1f819dc8c2) )
+	ROM_LOAD16_BYTE( "a3.rom", 0x020001, 0x8000, CRC(193e4231) SHA1(14fecfab010641b83e5b24d0e8003bc0de35e1c8) )
+
+	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD( "epr10772.b9",  0x00000, 0x10000, CRC(182b6301) SHA1(bb6f1174f82611c801d2b4b7d3596bf71619e8a1) )
+	ROM_LOAD( "epr10773.b10", 0x10000, 0x10000, CRC(8f7129a2) SHA1(094a4065597d8d51fb2232546df1de9043fea731) )
+	ROM_LOAD( "epr10774.b11", 0x20000, 0x10000, CRC(4409411f) SHA1(84fd7128e8440d96b0384ae3c391a59bd37ecf9d) )
+
+	ROM_REGION16_BE( 0x60000, REGION_GFX2, 0 ) /* sprites */
+	ROM_LOAD16_BYTE( "b1.rom",   0x00001, 0x010000, CRC(30e2c50a) SHA1(1fb9e69d4cb97fdcb0f98c2a7ede246aaa4ac382) )
+	ROM_LOAD16_BYTE( "b5.rom",   0x00000, 0x010000, CRC(794e3e8b) SHA1(91ca1cb9aabf99adc8426feed4494a992afb8c4a) )
+	ROM_LOAD16_BYTE( "b2.rom",   0x20001, 0x010000, CRC(6a8b3fd0) SHA1(a122d3cb0b3263714f026e57d85b0dbf6cb110d7) )
+	ROM_LOAD16_BYTE( "10764.b6", 0x20000, 0x010000, CRC(602da5d5) SHA1(d32cdde7d86c4561e7bfa547d7d7995ce9a43c24) )
+	ROM_LOAD16_BYTE( "b3.rom",   0x40001, 0x010000, CRC(b9de3aeb) SHA1(2f7a55a8377e831338a884f8962d6ab2757e8c9b) )
+	ROM_LOAD16_BYTE( "10765.b7", 0x40000, 0x010000, CRC(0a73a057) SHA1(7f31124c67541a245e069e5b6aac59935d99a9a9) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* sound CPU */
+	ROM_LOAD( "a7.rom", 0x0000, 0x8000, CRC(793f9f7f) SHA1(9e4fde376db9e99a83eb2fc734c6721c122ba9af) )
 ROM_END
 
 
@@ -6036,8 +6071,9 @@ GAME( 1988, passshta, passsht,  system16b,      passshtj, passshtj_5358, ROT270,
 GAME( 1988, passshtj, passsht,  system16b,      passshtj, passshtj_5358, ROT270, "Sega",           "Passing Shot (Japan, 4 Players, FD1094 317-0070)", 0 )
 GAME( 1991, riotcity, 0,        system16b,      riotcity, generic_5704,  ROT0,   "Sega / Westone", "Riot City (Japan)", 0 )
 GAME( 1990, ryukyu,   0,        system16b,      ryukyu,   generic_5704,  ROT0,   "Success / Sega", "RyuKyu (Japan, FD1094 317-5023)", 0 )
-GAME( 1987, sdib,     sdi,      system16b,      sdi,      sdi_5358,      ROT0,   "bootleg",        "SDI - Strategic Defense Initiative (bootleg)", 0 )
 GAME( 1987, defense,  sdi,      system16b,      sdi,      defense_5358,  ROT0,   "Sega",           "Defense (System 16B, FD1089A 317-0028)", 0 )
+GAME( 1987, sdib,     sdi,      system16b,      sdi,      defense_5358,  ROT0,   "Sega",           "SDI - Strategic Defense Initiative (System 16B, FD1089A 317-0028)", 0 )
+GAME( 1987, sdibl,    sdi,      system16b,      sdi,      sdi_5358,      ROT0,   "bootleg",        "SDI - Strategic Defense Initiative (bootleg)", 0 )
 GAME( 1987, shinobi4, shinobi,  system16b,      shinobi,  generic_5521,  ROT0,   "Sega",           "Shinobi (set 4, System 16B, unprotected)", 0 )
 GAME( 1987, shinobi3, shinobi,  system16b,      shinobi,  generic_5358,  ROT0,   "Sega",           "Shinobi (set 3, System 16B, unprotected)", 0 )
 GAME( 1987, shinobi2, shinobi,  system16b,      shinobi,  generic_5358,  ROT0,   "Sega",           "Shinobi (set 2, System 16B, FD1094 317-0049)", 0 )

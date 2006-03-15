@@ -1,4 +1,4 @@
-UINT32 opINCB(void) /* TRUSTED */
+static UINT32 opINCB(void) /* TRUSTED */
 {
 	UINT8 appb;
 	modAdd=PC+1;
@@ -21,7 +21,7 @@ UINT32 opINCB(void) /* TRUSTED */
 	return amLength1+1;
 }
 
-UINT32 opINCH(void) /* TRUSTED */
+static UINT32 opINCH(void) /* TRUSTED */
 {
 	UINT16 apph;
 	modAdd=PC+1;
@@ -44,7 +44,7 @@ UINT32 opINCH(void) /* TRUSTED */
 	return amLength1+1;
 }
 
-UINT32 opINCW(void) /* TRUSTED */
+static UINT32 opINCW(void) /* TRUSTED */
 {
 	UINT32 appw;
 	modAdd=PC+1;
@@ -67,7 +67,7 @@ UINT32 opINCW(void) /* TRUSTED */
 	return amLength1+1;
 }
 
-UINT32 opDECB(void) /* TRUSTED */
+static UINT32 opDECB(void) /* TRUSTED */
 {
 	UINT8 appb;
 	modAdd=PC+1;
@@ -90,7 +90,7 @@ UINT32 opDECB(void) /* TRUSTED */
 	return amLength1+1;
 }
 
-UINT32 opDECH(void) /* TRUSTED */
+static UINT32 opDECH(void) /* TRUSTED */
 {
 	UINT16 apph;
 	modAdd=PC+1;
@@ -113,7 +113,7 @@ UINT32 opDECH(void) /* TRUSTED */
 	return amLength1+1;
 }
 
-UINT32 opDECW(void) /* TRUSTED */
+static UINT32 opDECW(void) /* TRUSTED */
 {
 	UINT32 appw;
 	modAdd=PC+1;
@@ -136,7 +136,7 @@ UINT32 opDECW(void) /* TRUSTED */
 	return amLength1+1;
 }
 
-UINT32 opJMP(void) /* TRUSTED */
+static UINT32 opJMP(void) /* TRUSTED */
 {
 	modAdd=PC+1;
 	modDim=0;
@@ -154,7 +154,7 @@ UINT32 opJMP(void) /* TRUSTED */
 	return 0;
 }
 
-UINT32 opJSR(void) /* TRUSTED */
+static UINT32 opJSR(void) /* TRUSTED */
 {
 	modAdd=PC + 1;
 	modDim=0;
@@ -176,7 +176,7 @@ UINT32 opJSR(void) /* TRUSTED */
 	return 0;
 }
 
-UINT32 opPREPARE(void)	/* somewhat TRUSTED */
+static UINT32 opPREPARE(void)	/* somewhat TRUSTED */
 {
 	modAdd=PC+1;
 	modDim=2;
@@ -197,7 +197,7 @@ UINT32 opPREPARE(void)	/* somewhat TRUSTED */
 	return amLength1 + 1;
 }
 
-UINT32 opRET(void) /* TRUSTED */
+static UINT32 opRET(void) /* TRUSTED */
 {
 	modAdd=PC + 1;
 	modDim=2;
@@ -220,7 +220,7 @@ UINT32 opRET(void) /* TRUSTED */
 	return 0;
 }
 
-UINT32 opTRAP(void)
+static UINT32 opTRAP(void)
 {
 	UINT32 oldPSW;
 
@@ -301,7 +301,7 @@ UINT32 opTRAP(void)
 	return 0;
 }
 
-UINT32 opRETIU(void) /* TRUSTED */
+static UINT32 opRETIU(void) /* TRUSTED */
 {
 	UINT32 newPSW;
 	modAdd=PC + 1;
@@ -326,7 +326,7 @@ UINT32 opRETIU(void) /* TRUSTED */
 	return 0;
 }
 
-UINT32 opRETIS(void)
+static UINT32 opRETIS(void)
 {
 	UINT32 newPSW;
 
@@ -352,7 +352,7 @@ UINT32 opRETIS(void)
 	return 0;
 }
 
-UINT32 opSTTASK(void)
+static UINT32 opSTTASK(void)
 {
 	int i;
 	UINT32 adr;
@@ -398,7 +398,7 @@ UINT32 opSTTASK(void)
 	return amLength1 + 1;
 }
 
-UINT32 opGETPSW(void)
+static UINT32 opGETPSW(void)
 {
 	modAdd=PC + 1;
 	modDim=2;
@@ -410,7 +410,7 @@ UINT32 opGETPSW(void)
 	return amLength1 + 1;
 }
 
-UINT32 opTASI(void)
+static UINT32 opTASI(void)
 {
 	UINT8 appb;
 	modAdd=PC + 1;
@@ -437,7 +437,7 @@ UINT32 opTASI(void)
 	return amLength1 + 1;
 }
 
-UINT32 opCLRTLB(void)
+static UINT32 opCLRTLB(void)
 {
 	modAdd=PC+1;
 	modDim=2;
@@ -450,7 +450,7 @@ UINT32 opCLRTLB(void)
 	return amLength1 + 1;
 }
 
-UINT32 opPOPM(void)
+static UINT32 opPOPM(void)
 {
 	int i;
 
@@ -476,7 +476,7 @@ UINT32 opPOPM(void)
 	return amLength1 + 1;
 }
 
-UINT32 opPUSHM(void)
+static UINT32 opPUSHM(void)
 {
 	int i;
 
@@ -503,7 +503,7 @@ UINT32 opPUSHM(void)
 	return amLength1 + 1;
 }
 
-UINT32 opTESTB(void) /* TRUSTED */
+static UINT32 opTESTB(void) /* TRUSTED */
 {
 	modAdd=PC+1;
 	modDim=0;
@@ -519,7 +519,7 @@ UINT32 opTESTB(void) /* TRUSTED */
 	return amLength1 + 1;
 }
 
-UINT32 opTESTH(void) /* TRUSTED */
+static UINT32 opTESTH(void) /* TRUSTED */
 {
 	modAdd=PC+1;
 	modDim=1;
@@ -535,7 +535,7 @@ UINT32 opTESTH(void) /* TRUSTED */
 	return amLength1 + 1;
 }
 
-UINT32 opTESTW(void) /* TRUSTED */
+static UINT32 opTESTW(void) /* TRUSTED */
 {
 	modAdd=PC+1;
 	modDim=2;
@@ -551,7 +551,7 @@ UINT32 opTESTW(void) /* TRUSTED */
 	return amLength1 + 1;
 }
 
-UINT32 opPUSH(void)
+static UINT32 opPUSH(void)
 {
 	modAdd=PC+1;
 	modDim=2;
@@ -564,7 +564,7 @@ UINT32 opPUSH(void)
 	return amLength1 + 1;
 }
 
-UINT32 opPOP(void)
+static UINT32 opPOP(void)
 {
 	modAdd=PC+1;
 	modDim=2;
@@ -576,70 +576,70 @@ UINT32 opPOP(void)
 }
 
 
-UINT32 opINCB_0(void) { modM=0; return opINCB(); }
-UINT32 opINCB_1(void) { modM=1; return opINCB(); }
-UINT32 opINCH_0(void) { modM=0; return opINCH(); }
-UINT32 opINCH_1(void) { modM=1; return opINCH(); }
-UINT32 opINCW_0(void) { modM=0; return opINCW(); }
-UINT32 opINCW_1(void) { modM=1; return opINCW(); }
+static UINT32 opINCB_0(void) { modM=0; return opINCB(); }
+static UINT32 opINCB_1(void) { modM=1; return opINCB(); }
+static UINT32 opINCH_0(void) { modM=0; return opINCH(); }
+static UINT32 opINCH_1(void) { modM=1; return opINCH(); }
+static UINT32 opINCW_0(void) { modM=0; return opINCW(); }
+static UINT32 opINCW_1(void) { modM=1; return opINCW(); }
 
-UINT32 opDECB_0(void) { modM=0; return opDECB(); }
-UINT32 opDECB_1(void) { modM=1; return opDECB(); }
-UINT32 opDECH_0(void) { modM=0; return opDECH(); }
-UINT32 opDECH_1(void) { modM=1; return opDECH(); }
-UINT32 opDECW_0(void) { modM=0; return opDECW(); }
-UINT32 opDECW_1(void) { modM=1; return opDECW(); }
+static UINT32 opDECB_0(void) { modM=0; return opDECB(); }
+static UINT32 opDECB_1(void) { modM=1; return opDECB(); }
+static UINT32 opDECH_0(void) { modM=0; return opDECH(); }
+static UINT32 opDECH_1(void) { modM=1; return opDECH(); }
+static UINT32 opDECW_0(void) { modM=0; return opDECW(); }
+static UINT32 opDECW_1(void) { modM=1; return opDECW(); }
 
-UINT32 opJMP_0(void) { modM=0; return opJMP(); }
-UINT32 opJMP_1(void) { modM=1; return opJMP(); }
+static UINT32 opJMP_0(void) { modM=0; return opJMP(); }
+static UINT32 opJMP_1(void) { modM=1; return opJMP(); }
 
-UINT32 opJSR_0(void) { modM=0; return opJSR(); }
-UINT32 opJSR_1(void) { modM=1; return opJSR(); }
+static UINT32 opJSR_0(void) { modM=0; return opJSR(); }
+static UINT32 opJSR_1(void) { modM=1; return opJSR(); }
 
-UINT32 opPREPARE_0(void) { modM=0; return opPREPARE(); }
-UINT32 opPREPARE_1(void) { modM=1; return opPREPARE(); }
+static UINT32 opPREPARE_0(void) { modM=0; return opPREPARE(); }
+static UINT32 opPREPARE_1(void) { modM=1; return opPREPARE(); }
 
-UINT32 opRET_0(void) { modM=0; return opRET(); }
-UINT32 opRET_1(void) { modM=1; return opRET(); }
+static UINT32 opRET_0(void) { modM=0; return opRET(); }
+static UINT32 opRET_1(void) { modM=1; return opRET(); }
 
-UINT32 opTRAP_0(void) { modM=0; return opTRAP(); }
-UINT32 opTRAP_1(void) { modM=1; return opTRAP(); }
+static UINT32 opTRAP_0(void) { modM=0; return opTRAP(); }
+static UINT32 opTRAP_1(void) { modM=1; return opTRAP(); }
 
-UINT32 opRETIU_0(void) { modM=0; return opRETIU(); }
-UINT32 opRETIU_1(void) { modM=1; return opRETIU(); }
+static UINT32 opRETIU_0(void) { modM=0; return opRETIU(); }
+static UINT32 opRETIU_1(void) { modM=1; return opRETIU(); }
 
-UINT32 opRETIS_0(void) { modM=0; return opRETIS(); }
-UINT32 opRETIS_1(void) { modM=1; return opRETIS(); }
+static UINT32 opRETIS_0(void) { modM=0; return opRETIS(); }
+static UINT32 opRETIS_1(void) { modM=1; return opRETIS(); }
 
-UINT32 opGETPSW_0(void) { modM=0; return opGETPSW(); }
-UINT32 opGETPSW_1(void) { modM=1; return opGETPSW(); }
+static UINT32 opGETPSW_0(void) { modM=0; return opGETPSW(); }
+static UINT32 opGETPSW_1(void) { modM=1; return opGETPSW(); }
 
-UINT32 opTASI_0(void) { modM=0; return opTASI(); }
-UINT32 opTASI_1(void) { modM=1; return opTASI(); }
+static UINT32 opTASI_0(void) { modM=0; return opTASI(); }
+static UINT32 opTASI_1(void) { modM=1; return opTASI(); }
 
-UINT32 opCLRTLB_0(void) { modM=0; return opCLRTLB(); }
-UINT32 opCLRTLB_1(void) { modM=1; return opCLRTLB(); }
+static UINT32 opCLRTLB_0(void) { modM=0; return opCLRTLB(); }
+static UINT32 opCLRTLB_1(void) { modM=1; return opCLRTLB(); }
 
-UINT32 opPOPM_0(void) { modM=0; return opPOPM(); }
-UINT32 opPOPM_1(void) { modM=1; return opPOPM(); }
+static UINT32 opPOPM_0(void) { modM=0; return opPOPM(); }
+static UINT32 opPOPM_1(void) { modM=1; return opPOPM(); }
 
-UINT32 opPUSHM_0(void) { modM=0; return opPUSHM(); }
-UINT32 opPUSHM_1(void) { modM=1; return opPUSHM(); }
+static UINT32 opPUSHM_0(void) { modM=0; return opPUSHM(); }
+static UINT32 opPUSHM_1(void) { modM=1; return opPUSHM(); }
 
-UINT32 opTESTB_0(void) { modM=0; return opTESTB(); }
-UINT32 opTESTB_1(void) { modM=1; return opTESTB(); }
+static UINT32 opTESTB_0(void) { modM=0; return opTESTB(); }
+static UINT32 opTESTB_1(void) { modM=1; return opTESTB(); }
 
-UINT32 opTESTH_0(void) { modM=0; return opTESTH(); }
-UINT32 opTESTH_1(void) { modM=1; return opTESTH(); }
+static UINT32 opTESTH_0(void) { modM=0; return opTESTH(); }
+static UINT32 opTESTH_1(void) { modM=1; return opTESTH(); }
 
-UINT32 opTESTW_0(void) { modM=0; return opTESTW(); }
-UINT32 opTESTW_1(void) { modM=1; return opTESTW(); }
+static UINT32 opTESTW_0(void) { modM=0; return opTESTW(); }
+static UINT32 opTESTW_1(void) { modM=1; return opTESTW(); }
 
-UINT32 opPUSH_0(void) { modM=0; return opPUSH(); }
-UINT32 opPUSH_1(void) { modM=1; return opPUSH(); }
+static UINT32 opPUSH_0(void) { modM=0; return opPUSH(); }
+static UINT32 opPUSH_1(void) { modM=1; return opPUSH(); }
 
-UINT32 opPOP_0(void) { modM=0; return opPOP(); }
-UINT32 opPOP_1(void) { modM=1; return opPOP(); }
+static UINT32 opPOP_0(void) { modM=0; return opPOP(); }
+static UINT32 opPOP_1(void) { modM=1; return opPOP(); }
 
-UINT32 opSTTASK_0(void) { modM=0; return opSTTASK(); }
-UINT32 opSTTASK_1(void) { modM=1; return opSTTASK(); }
+static UINT32 opSTTASK_0(void) { modM=0; return opSTTASK(); }
+static UINT32 opSTTASK_1(void) { modM=1; return opSTTASK(); }

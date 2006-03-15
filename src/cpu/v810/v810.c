@@ -106,13 +106,13 @@ int v810_ICount;
 
 
 
-void SETREG(UINT32 reg,UINT32 val)
+static void SETREG(UINT32 reg,UINT32 val)
 {
 	if(reg)
 		v810.reg[reg]=val;
 }
 
-UINT32 GETREG(UINT32 reg)
+static UINT32 GETREG(UINT32 reg)
 {
 	if(reg)
 		return v810.reg[reg];
@@ -1029,10 +1029,8 @@ unsigned v810_dasm(char *buffer, unsigned int pc)
 #endif
 }
 
-void 			set_irq_line(int irqline, int state)
+static void set_irq_line(int irqline, int state)
 {
-
-
 }
 
 /**************************************************************************

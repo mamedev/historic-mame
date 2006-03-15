@@ -894,7 +894,7 @@ static void ppc403_exit(void)
 
 
 #if (HAS_PPC603)
-static void ppc603_init(int index, int clock, const void *config, int (*irqcallback)(int))
+static void ppc603_init(int index, int clock, const void *_config, int (*irqcallback)(int))
 {
 	const ppc_config *config = _config;
 	int pll_config = 0;

@@ -308,8 +308,7 @@ static WRITE32_HANDLER( dsp_w )
 		UINT16 irqVector = (((data>>8) & 0x1f)) << 1 ;
 
 		logerror("RESET (%04x) sent\n", irqVector);
-
-		cpunum_reset(1) ;
+		cpunum_set_input_line_and_vector(1, 3, ASSERT_LINE, irqVector) ;
 	}
 }
 
@@ -610,7 +609,7 @@ MACHINE_DRIVER_START( plygonet )
 	MDRV_CPU_PROGRAM_MAP(polygonet_readmem,polygonet_writemem)
 	MDRV_CPU_VBLANK_INT(polygonet_interrupt, 2)
 
-	MDRV_CPU_ADD(DSP56156,10000000)
+	MDRV_CPU_ADD(DSP56156,10000000)		/* no idea */
 	MDRV_CPU_PROGRAM_MAP(dsp56156_p_readmem, dsp56156_p_writemem)
 	MDRV_CPU_DATA_MAP(dsp56156_d_readmem,dsp56156_d_writemem)
 

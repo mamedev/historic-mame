@@ -619,6 +619,16 @@ void pia_set_input_a(int which, int data)
 
 
 
+/******************* interface setting PIA port A input *******************/
+
+int pia_get_output_a(int which)
+{
+	struct pia6821 *p = pia + which;
+	return (p->out_a & p->ddr_a) + (p->in_a & ~p->ddr_a);
+}
+
+
+
 /******************* interface setting PIA port CA1 input *******************/
 
 void pia_set_input_ca1(int which, int data)
@@ -703,6 +713,16 @@ void pia_set_input_b(int which, int data)
 	/* set the input, what could be easier? */
 	p->in_b = data;
     p->in_set |= PIA_IN_SET_B;
+}
+
+
+
+/******************* interface setting PIA port A input *******************/
+
+int pia_get_output_b(int which)
+{
+	struct pia6821 *p = pia + which;
+	return (p->out_b & p->ddr_b) + (p->in_b & ~p->ddr_b);
 }
 
 

@@ -236,6 +236,8 @@ typedef struct
 	UINT8           irq_modC ;					//  just modC :)
 	UINT8           irq_reset ;					//  Always level-sensitive
 
+	int		(*irq_callback)(int irqline) ;
+
 	// Host Interface (HI) port - page 94 of DSP56156UM
 
 
@@ -286,6 +288,15 @@ static void set_irq_line(int irqline, int state)
 	if (irqline == 3)
 	{
 		LINE_RESET = state ;
+
+		if(LINE_RESET != CLEAR_LINE)
+		{
+			int irq_vector = (*dsp56k.irq_callback)(3);
+
+			PC = irq_vector ;
+
+			LINE_RESET = CLEAR_LINE ;
+		}
 	}
 }
 
@@ -320,9 +331,10 @@ static void dsp56k_set_context(void *src)
     INITIALIZATION AND SHUTDOWN
 ***************************************************************************/
 
-static void dsp56k_init(int index, int clock, const void *config, int (*irqcallback)(int))
+static void dsp56k_init(int index, int clock, const void *_config, int (*irqcallback)(int))
 {
-	dsp56k.config = config;
+	dsp56k.config = _config;
+	dsp56k.irq_callback = irqcallback;
 }
 
 // Page 101 (7-25) in the Family Manual
@@ -330,7 +342,8 @@ static void dsp56k_reset(void)
 {
 	if (dsp56k.config == NULL)
 	{
-		LINE_RESET = 1 ;
+		LINE_RESET = 1 ;			/* hack - hold the CPU reset at startup */
+		memory_set_opbase(PC);
 
 		// Handle internal stuff
 		dsp56k.interrupt_cycles = 0 ;

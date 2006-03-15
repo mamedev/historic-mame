@@ -25,6 +25,10 @@ enum
 	FM_READAMDID1,	// part 1 of alt ID sequence
 	FM_READAMDID2,	// part 2 of alt ID sequence
 	FM_READAMDID3,	// part 3 of alt ID sequence
+	FM_ERASEAMD1,	// part 1 of AMD erase sequence
+	FM_ERASEAMD2,	// part 2 of AMD erase sequence
+	FM_ERASEAMD3,	// part 3 of AMD erase sequence
+	FM_BYTEPROGRAM,
 };
 
 struct flash_chip
@@ -69,8 +73,8 @@ void intelflash_init(int chip, int type, void *data)
 	case FLASH_FUJITSU_29F016A:
 		c->bits = 8;
 		c->size = 0x200000;
-		c->maker_id = 0x89;
-		c->device_id = 0xaa;
+		c->maker_id = 0x04;
+		c->device_id = 0xad;
 		break;
 	case FLASH_INTEL_E28F008SA:
 		c->bits = 8;
@@ -137,13 +141,19 @@ UINT32 intelflash_read(int chip, UINT32 address)
 		break;
 	case FM_READAMDID3:
 		// DDR and baseball require Intel 29F016, fishing requires 280F16
-		if( ( address & 1 ) != 0 )
+		/*if( ( address & 1 ) != 0 )
+        {
+            data = c->device_id;
+        }
+        else
+        {
+            data = c->maker_id;
+        }*/
+		switch (address)
 		{
-			data = c->device_id;
-		}
-		else
-		{
-			data = c->maker_id;
+			case 0:	data = c->maker_id; break;
+			case 1: data = c->device_id; break;
+			case 2: data = 0; break;
 		}
 		break;
 	case FM_READID:
@@ -197,6 +207,7 @@ void intelflash_write(int chip, UINT32 address, UINT32 data)
 	case FM_READAMDID3:
 		switch( data & 0xff )
 		{
+		case 0xf0:
 		case 0xff:	// reset chip mode
 			c->flash_mode = FM_NORMAL;
 			break;
@@ -245,10 +256,75 @@ void intelflash_write(int chip, UINT32 address, UINT32 data)
 		{
 			c->flash_mode = FM_READAMDID3;
 		}
+		else if (address == 0x555 && (data & 0xff) == 0x80)
+		{
+			c->flash_mode = FM_ERASEAMD1;
+		}
+		else if (address == 0x555 && (data & 0xff) == 0xa0)
+		{
+			c->flash_mode = FM_BYTEPROGRAM;
+		}
+		else if (address == 0x555 && (data & 0xff) == 0xf0)
+		{
+			c->flash_mode = FM_NORMAL;
+		}
 		else
 		{
 			c->flash_mode = FM_NORMAL;
 		}
+		break;
+	case FM_ERASEAMD1:
+		if (address == 0x555 && (data & 0xff) == 0xaa)
+		{
+			c->flash_mode = FM_ERASEAMD2;
+		}
+		break;
+	case FM_ERASEAMD2:
+		if (address == 0x2aa && (data & 0xff) == 0x55)
+		{
+			c->flash_mode = FM_ERASEAMD3;
+		}
+		break;
+	case FM_ERASEAMD3:
+		if (address == 0x555 && (data & 0xff) == 0x10)
+		{
+			// chip erase
+			memset( c->flash_memory, 0xff, c->size);
+			c->flash_mode = FM_NORMAL;
+		}
+		else if ((data & 0xff) == 0x30)
+		{
+			// sector erase
+			// clear the 64k block containing the current address to all 0xffs
+			switch( c->bits )
+			{
+			case 8:
+				{
+					UINT8 *flash_memory = c->flash_memory;
+					memset( &flash_memory[ address & ~0xffff ], 0xff, 64 * 1024 );
+				}
+				break;
+			case 16:
+				{
+					UINT16 *flash_memory = c->flash_memory;
+					memset( &flash_memory[ address & ~0x7fff ], 0xff, 64 * 1024 );
+				}
+				break;
+			}
+			c->flash_mode = FM_NORMAL;
+		}
+		break;
+	case FM_BYTEPROGRAM:
+		switch( c->bits )
+		{
+		case 8:
+			{
+				UINT8 *flash_memory = c->flash_memory;
+				flash_memory[ address ] = data;
+			}
+			break;
+		}
+		c->flash_mode = FM_NORMAL;
 		break;
 	case FM_WRITEPART1:
 		switch( c->bits )

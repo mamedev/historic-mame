@@ -307,6 +307,21 @@ static void eeprom_handler(mame_file *file,int read_or_write)
 		{
 			EEPROM_load(file);
 		}
+		else
+		{
+			// set default eeprom
+			UINT8 eepdata[0x200];
+			memset(eepdata, 0xff, 0x200);
+
+			if (mame_stricmp(Machine->gamedrv->name, "slrasslt") == 0)
+			{
+				// magic number
+				eepdata[0x4] = 0x96;
+				eepdata[0x5] = 0x72;
+			}
+
+			EEPROM_set_data(eepdata, 0x200);
+		}
 	}
 }
 
@@ -494,6 +509,7 @@ static ADDRESS_MAP_START( gticlub_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x7e008000, 0x7e009fff) AM_MIRROR(0x80000000) AM_READWRITE(lanc_r, lanc_w)
 	AM_RANGE(0x7e00a000, 0x7e00bfff) AM_MIRROR(0x80000000) AM_RAM		// LANC RAM
 	AM_RANGE(0x7e00c000, 0x7e00c007) AM_MIRROR(0x80000000) AM_WRITE(ppc_sound_w)
+	AM_RANGE(0x7e00c000, 0x7e00c007) AM_MIRROR(0x80000000) AM_READ(ppc_sound_r)
 	AM_RANGE(0x7e00c008, 0x7e00c00f) AM_MIRROR(0x80000000) AM_READ(ppc_sound_r)
 	AM_RANGE(0x7f000000, 0x7f3fffff) AM_MIRROR(0x80000000) AM_ROM AM_REGION(REGION_USER2, 0)	/* Data ROM */
 	AM_RANGE(0x7f800000, 0x7f9fffff) AM_MIRROR(0x80000000) AM_ROM AM_SHARE(2)
@@ -1289,6 +1305,33 @@ ROM_START( thunderh )
         ROM_LOAD64_WORD( "680a16.4d",    0x000006, 0x200000, CRC(ea388143) SHA1(3de5314a009d702186d5e285c8edefdd48139eab) )
 ROM_END
 
+ROM_START( slrasslt )
+	ROM_REGION(0x200000, REGION_USER1, 0)	/* PowerPC program roms */
+        ROM_LOAD32_BYTE( "792uaa01.21u", 0x000003, 0x080000, CRC(c73bf7fb) SHA1(ffe0fea155473827929339a9261a158287ce30a8) )
+        ROM_LOAD32_BYTE( "792uaa02.19u", 0x000002, 0x080000, CRC(a940bb9b) SHA1(65a60157697a21cc2485c02c689c9addb3ac91f1) )
+        ROM_LOAD32_BYTE( "792uaa03.21r", 0x000001, 0x080000, CRC(363e8411) SHA1(b9c70033d8e3de4b339b61a66172bfecb7c2b3ab) )
+        ROM_LOAD32_BYTE( "792uaa04.19r", 0x000000, 0x080000, CRC(7910d99c) SHA1(e2114d369060528998b58331d590c086d306f541) )
+
+	ROM_REGION32_BE(0x400000, REGION_USER2, 0)	/* data roms */
+        ROM_LOAD32_WORD_SWAP( "792a05.14u",   0x000000, 0x200000, CRC(9a27edfc) SHA1(c028b6440eb1b0c814c4db45918e580662ac2d9a) )
+        ROM_LOAD32_WORD_SWAP( "792a06.12u",   0x000002, 0x200000, CRC(c272f171) SHA1(df492287eadc5e8668fe46cfa3ed3ca77c57feca) )
+
+	ROM_REGION(0x80000, REGION_CPU2, 0)		/* 68k program */
+        ROM_LOAD16_WORD_SWAP( "792a07.10k",   0x000000, 0x080000, CRC(89a65ad1) SHA1(d814ef0b560c8e68da57ad5c6096e4fc05e9913e) )
+
+	ROM_REGION(0x800000, REGION_SOUND1, 0)	/* sound roms */
+        ROM_LOAD( "792a09.9s",    0x000000, 0x200000, CRC(7d7ea427) SHA1(a9a311a7c17223cc87140fe2890e20a321464831) )
+        ROM_LOAD( "792a10.7s",    0x200000, 0x200000, CRC(e585e5d9) SHA1(ec44ad324a66eeea4c45933dda5a8a9a4398879d) )
+        ROM_LOAD( "792a11.5s",    0x400000, 0x200000, CRC(c9c3a04c) SHA1(f834659f67712c9fcd93b7407669d7f35517b790) )
+        ROM_LOAD( "792a12.2s",    0x600000, 0x200000, CRC(da8fcdd5) SHA1(daa7b3a086ada69e93c3d7cd9130befc79e422dc) )
+
+    ROM_REGION(0x800000, REGION_GFX1, 0)	/* texture roms */
+        ROM_LOAD64_WORD( "792a13.18d",   0x000000, 0x200000, CRC(16d6a134) SHA1(3f53f3c6759d7c5f40aa25a598df899fbac35a60) )
+        ROM_LOAD64_WORD( "792a14.13d",   0x000002, 0x200000, CRC(cf57e830) SHA1(607b4dec3b8180a63e29d9dab1ca28d7226dda1e) )
+        ROM_LOAD64_WORD( "792a15.9d",    0x000004, 0x200000, CRC(1c5531cb) SHA1(1b514f181c92e16d07bfe4719604f1e4caf15377) )
+        ROM_LOAD64_WORD( "792a16.4d",    0x000006, 0x200000, CRC(df89e392) SHA1(af37c5460d43bf8d8a1ab4213c4528083a7363c2) )
+ROM_END
+
 ROM_START( hangplt )
 	ROM_REGION(0x200000, REGION_USER1, 0)	/* PowerPC program roms */
         ROM_LOAD32_BYTE( "685jab01.21u", 0x000003, 0x080000, CRC(f98a3e82) SHA1(94ebaa172b0e98c5cd08efaea5f56e707e5032b4) )
@@ -1329,4 +1372,5 @@ static DRIVER_INIT(hangplt)
 GAME( 1996, gticlub,	0,		 gticlub, gticlub, gticlub,	ROT0,	"Konami",	"GTI Club (ver AAA)", GAME_NOT_WORKING|GAME_NO_SOUND )
 GAME( 1996, gticlubj,	gticlub, gticlub, gticlub, gticlub,	ROT0,	"Konami",	"GTI Club (ver JAA)", GAME_NOT_WORKING|GAME_NO_SOUND )
 GAME( 1996, thunderh,	0,		 gticlub, gticlub, gticlub,	ROT0,	"Konami",	"Thunder Hurricane (ver UAA)", GAME_NOT_WORKING|GAME_NO_SOUND )
+GAME( 1997, slrasslt,	0,		 gticlub, gticlub, gticlub,	ROT0,	"Konami",	"Solar Assault DR2 (ver UAA)", GAME_NOT_WORKING|GAME_NO_SOUND )
 GAME( 1997, hangplt,	0,		 hangplt, gticlub, hangplt, ROT0,	"Konami",	"Hang Pilot", GAME_NOT_WORKING|GAME_NO_SOUND )

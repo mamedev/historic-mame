@@ -410,11 +410,11 @@ static int h6280_translate(int space, offs_t *addr)
 	return 1;
 }
 
-UINT8 get_h6280io_buffer()
+UINT8 h6280io_get_buffer()
 {
 	return h6280.io_buffer;
 }
-void set_h6280io_buffer(UINT8 data)
+void h6280io_set_buffer(UINT8 data)
 {
 	h6280.io_buffer=data;
 }

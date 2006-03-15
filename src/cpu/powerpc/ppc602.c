@@ -128,7 +128,7 @@ INLINE void ppc602_check_interrupts(void)
 	}
 }
 
-static void ppc602_reset(void *param)
+static void ppc602_reset(void)
 {
 	ppc.pc = ppc.npc = 0xfff00100;
 

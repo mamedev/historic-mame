@@ -1016,7 +1016,7 @@ void NMK004_irq(int irq)
 }
 
 
-void NMK004_init(void)
+static void real_nmk004_init(int param)
 {
 	static UINT8 ym2203_init[] =
 	{
@@ -1044,6 +1044,12 @@ void NMK004_init(void)
 	oki_play_sample(0);
 
 	NMK004_state.protection_check = 0;
+}
+
+void NMK004_init(void)
+{
+	/* we have to do this via a timer because we get called before the sound reset */
+	timer_set(TIME_NOW, 0, real_nmk004_init);
 }
 
 

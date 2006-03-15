@@ -69,7 +69,7 @@ INLINE void z180_mmu( void )
  * Read a byte from given memory location
  ***************************************************************/
 #define RM(addr)	program_read_byte_8(MMU_REMAP_ADDR(addr))
-UINT8 cpu_readmemz180(offs_t offset)
+UINT8 z180_readmem(offs_t offset)
 {
 	return RM(offset);
 }
@@ -78,10 +78,11 @@ UINT8 cpu_readmemz180(offs_t offset)
  * Write a byte to given memory location
  ***************************************************************/
 #define WM(addr,value) program_write_byte_8(MMU_REMAP_ADDR(addr),value)
-void cpu_writememz180(offs_t offset, UINT8 data)
+void z180_writemem(offs_t offset, UINT8 data)
 {
 	WM(offset, data);
 }
+
 
 /***************************************************************
  * Read a word from given memory location
@@ -137,7 +138,7 @@ INLINE UINT32 ARG16(void)
  * Change program counter - MMU lookup
  ****************************************************************************/
 #define z180_change_pc(addr) change_pc(MMU_REMAP_ADDR(addr))
-void cpu_setOPbasez180(int pc)
+void z180_setOPbase(int pc)
 {
 	z180_change_pc(pc);
 }

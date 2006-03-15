@@ -1009,6 +1009,7 @@ static void m6801_init(int index, int clock, const void *config, int (*irqcallba
 //  m6800.subtype = SUBTYPE_M6801;
 	m6800.insn = m6803_insn;
 	m6800.cycles = cycles_6803;
+	m6800.irq_callback = irqcallback;
 	state_register("m6801", index);
 }
 
@@ -1033,6 +1034,7 @@ static void m6802_init(int index, int clock, const void *config, int (*irqcallba
 //  m6800.subtype   = SUBTYPE_M6802;
 	m6800.insn = m6800_insn;
 	m6800.cycles = cycles_6800;
+	m6800.irq_callback = irqcallback;
 	state_register("m6802", index);
 }
 
@@ -1057,6 +1059,7 @@ void m6803_init(int index, int clock, const void *config, int (*irqcallback)(int
 //  m6800.subtype = SUBTYPE_M6803;
 	m6800.insn = m6803_insn;
 	m6800.cycles = cycles_6803;
+	m6800.irq_callback = irqcallback;
 	state_register("m6803", index);
 }
 #endif
@@ -1391,6 +1394,7 @@ static void m6808_init(int index, int clock, const void *config, int (*irqcallba
 //  m6800.subtype = SUBTYPE_M6808;
 	m6800.insn = m6800_insn;
 	m6800.cycles = cycles_6800;
+	m6800.irq_callback = irqcallback;
 	state_register("m6808", index);
 }
 
@@ -1414,6 +1418,7 @@ static void hd63701_init(int index, int clock, const void *config, int (*irqcall
 //  m6800.subtype = SUBTYPE_HD63701;
 	m6800.insn = hd63701_insn;
 	m6800.cycles = cycles_63701;
+	m6800.irq_callback = irqcallback;
 	state_register("hd63701", index);
 }
 /****************************************************************************

@@ -232,7 +232,7 @@ static void setcp2cr( int n_reg, UINT32 n_value );
 static void docop2( int gteop );
 static void mips_exception( int exception );
 
-void mips_stop( void )
+static void mips_stop( void )
 {
 #ifdef MAME_DEBUG
 	DEBUGGER_BREAK;

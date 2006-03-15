@@ -73,8 +73,8 @@
 
 /*****************************************************************************/
 
-int systemreg_latency_reg = -1;
-UINT32 systemreg_latency_data = 0;
+static int systemreg_latency_reg = -1;
+static UINT32 systemreg_latency_data = 0;
 
 static void add_systemreg_write(int sysreg, UINT32 data)
 {

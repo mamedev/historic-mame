@@ -21,10 +21,6 @@
 
 
 
-// temporary
-#define OUT_OF_BOUNDS_IS_FATAL		1
-
-
 /*************************************
  *
  *  Debug logging
@@ -47,95 +43,16 @@
  *
  *************************************/
 
-#if OUT_OF_BOUNDS_IS_FATAL
-#define VERIFY_ACTIVECPU(retval, name)						\
-	int activecpu = cpu_getactivecpu();						\
+#define VERIFY_ACTIVECPU(name) \
+	int activecpu = cpu_getactivecpu(); \
 	assert_always(activecpu >= 0, #name "() called with no active cpu!")
 
-#define VERIFY_ACTIVECPU_VOID(name)							\
-	int activecpu = cpu_getactivecpu();						\
-	assert_always(activecpu >= 0, #name "() called with no active cpu!")
-#else
-#define VERIFY_ACTIVECPU(retval, name)						\
-	int activecpu = cpu_getactivecpu();						\
-	if (activecpu < 0)										\
-	{														\
-		logerror(#name "() called with no active cpu!\n");	\
-		return retval;										\
-	}
-
-#define VERIFY_ACTIVECPU_VOID(name)							\
-	int activecpu = cpu_getactivecpu();						\
-	if (activecpu < 0)										\
-	{														\
-		logerror(#name "() called with no active cpu!\n");	\
-		return;												\
-	}
-#endif
-
-
-
-/*************************************
- *
- *  Macros to help verify executing CPU
- *
- *************************************/
-
-#if OUT_OF_BOUNDS_IS_FATAL
-#define VERIFY_EXECUTINGCPU(retval, name)						\
-	int activecpu = cpu_getexecutingcpu();					\
+#define VERIFY_EXECUTINGCPU(name) \
+	int activecpu = cpu_getexecutingcpu(); \
 	assert_always(activecpu >= 0, #name "() called with no executing cpu!")
 
-#define VERIFY_EXECUTINGCPU_VOID(name)							\
-	int activecpu = cpu_getexecutingcpu();					\
-	assert_always(activecpu >= 0, #name "() called with no executing cpu!")
-#else
-#define VERIFY_EXECUTINGCPU(retval, name)					\
-	int activecpu = cpu_getexecutingcpu();					\
-	if (activecpu < 0)										\
-	{														\
-		logerror(#name "() called with no executing cpu!\n");\
-		return retval;										\
-	}
-
-#define VERIFY_EXECUTINGCPU_VOID(name)						\
-	int activecpu = cpu_getexecutingcpu();					\
-	if (activecpu < 0)										\
-	{														\
-		logerror(#name "() called with no executing cpu!\n");\
-		return;												\
-	}
-#endif
-
-
-
-/*************************************
- *
- *  Macros to help verify CPU index
- *
- *************************************/
-
-#if OUT_OF_BOUNDS_IS_FATAL
-#define VERIFY_CPUNUM(retval, name)						\
+#define VERIFY_CPUNUM(name) \
 	assert_always(cpunum >= 0 && cpunum < cpu_gettotalcpu(), #name "() called for invalid cpu num!")
-
-#define VERIFY_CPUNUM_VOID(name)							\
-	assert_always(cpunum >= 0 && cpunum < cpu_gettotalcpu(), #name "() called for invalid cpu num!")
-#else
-#define VERIFY_CPUNUM(retval, name)							\
-	if (cpunum < 0 || cpunum >= cpu_gettotalcpu())			\
-	{														\
-		logerror(#name "() called for invalid cpu num!\n");	\
-		return retval;										\
-	}
-
-#define VERIFY_CPUNUM_VOID(name)							\
-	if (cpunum < 0 || cpunum >= cpu_gettotalcpu())			\
-	{														\
-		logerror(#name "() called for invalid cpu num!\n");	\
-		return;												\
-	}
-#endif
 
 
 
@@ -703,7 +620,7 @@ void activecpu_abort_timeslice(void)
 {
 	int current_icount;
 
-	VERIFY_EXECUTINGCPU_VOID(activecpu_abort_timeslice);
+	VERIFY_EXECUTINGCPU(activecpu_abort_timeslice);
 	LOG(("activecpu_abort_timeslice (CPU=%d, cycles_left=%d)\n", cpu_getexecutingcpu(), activecpu_get_icount() + 1));
 
 	/* swallow the remaining cycles */
@@ -727,7 +644,7 @@ mame_time cpunum_get_localtime(int cpunum)
 {
 	mame_time result;
 
-	VERIFY_CPUNUM(time_zero, cpunum_get_localtime);
+	VERIFY_CPUNUM(cpunum_get_localtime);
 
 	/* if we're active, add in the time from the current slice */
 	result = cpu[cpunum].localtime;
@@ -750,7 +667,7 @@ mame_time cpunum_get_localtime(int cpunum)
 
 void cpunum_suspend(int cpunum, int reason, int eatcycles)
 {
-	VERIFY_CPUNUM_VOID(cpunum_suspend);
+	VERIFY_CPUNUM(cpunum_suspend);
 	LOG(("cpunum_suspend (CPU=%d, r=%X, eat=%d)\n", cpunum, reason, eatcycles));
 
 	/* set the pending suspend bits, and force a resync */
@@ -771,7 +688,7 @@ void cpunum_suspend(int cpunum, int reason, int eatcycles)
 
 void cpunum_resume(int cpunum, int reason)
 {
-	VERIFY_CPUNUM_VOID(cpunum_resume);
+	VERIFY_CPUNUM(cpunum_resume);
 	LOG(("cpunum_resume (CPU=%d, r=%X)\n", cpunum, reason));
 
 	/* clear the pending suspend bits, and force a resync */
@@ -791,7 +708,7 @@ void cpunum_resume(int cpunum, int reason)
 
 int cpunum_is_suspended(int cpunum, int reason)
 {
-	VERIFY_CPUNUM(0, cpunum_suspend);
+	VERIFY_CPUNUM(cpunum_suspend);
 	return ((cpu[cpunum].nextsuspend & reason) != 0);
 }
 
@@ -805,7 +722,7 @@ int cpunum_is_suspended(int cpunum, int reason)
 
 int cpunum_get_clock(int cpunum)
 {
-	VERIFY_CPUNUM(1.0, cpunum_get_clock);
+	VERIFY_CPUNUM(cpunum_get_clock);
 	return cpu[cpunum].clock;
 }
 
@@ -819,7 +736,7 @@ int cpunum_get_clock(int cpunum)
 
 void cpunum_set_clock(int cpunum, int clock)
 {
-	VERIFY_CPUNUM_VOID(cpunum_set_clock);
+	VERIFY_CPUNUM(cpunum_set_clock);
 
 	cpu[cpunum].clock = clock;
 	sec_to_cycles[cpunum] = (double)clock * cpu[cpunum].clockscale;
@@ -842,7 +759,7 @@ void cpunum_set_clock(int cpunum, int clock)
 
 double cpunum_get_clockscale(int cpunum)
 {
-	VERIFY_CPUNUM(1.0, cpunum_get_clockscale);
+	VERIFY_CPUNUM(cpunum_get_clockscale);
 	return cpu[cpunum].clockscale;
 }
 
@@ -857,7 +774,7 @@ double cpunum_get_clockscale(int cpunum)
 
 void cpunum_set_clockscale(int cpunum, double clockscale)
 {
-	VERIFY_CPUNUM_VOID(cpunum_set_clockscale);
+	VERIFY_CPUNUM(cpunum_set_clockscale);
 
 	cpu[cpunum].clockscale = clockscale;
 	sec_to_cycles[cpunum] = (double)cpu[cpunum].clock * clockscale;
@@ -911,7 +828,7 @@ void cpu_boost_interleave(double _timeslice_time, double _boost_duration)
 
 int cycles_currently_ran(void)
 {
-	VERIFY_EXECUTINGCPU(0, cycles_currently_ran);
+	VERIFY_EXECUTINGCPU(cycles_currently_ran);
 	return cycles_running - activecpu_get_icount();
 }
 
@@ -926,7 +843,7 @@ int cycles_currently_ran(void)
 
 int cycles_left_to_run(void)
 {
-	VERIFY_EXECUTINGCPU(0, cycles_left_to_run);
+	VERIFY_EXECUTINGCPU(cycles_left_to_run);
 	return activecpu_get_icount();
 }
 
@@ -955,7 +872,7 @@ int cycles_left_to_run(void)
 
 UINT32 activecpu_gettotalcycles(void)
 {
-	VERIFY_ACTIVECPU(0, activecpu_gettotalcycles);
+	VERIFY_ACTIVECPU(activecpu_gettotalcycles);
 	if (activecpu == cpu_getexecutingcpu())
 		return cpu[activecpu].totalcycles + cycles_currently_ran();
 	else
@@ -964,7 +881,7 @@ UINT32 activecpu_gettotalcycles(void)
 
 UINT32 cpunum_gettotalcycles(int cpunum)
 {
-	VERIFY_CPUNUM(0, cpunum_gettotalcycles);
+	VERIFY_CPUNUM(cpunum_gettotalcycles);
 	if (cpunum == cpu_getexecutingcpu())
 		return cpu[cpunum].totalcycles + cycles_currently_ran();
 	else
@@ -974,7 +891,7 @@ UINT32 cpunum_gettotalcycles(int cpunum)
 
 UINT64 activecpu_gettotalcycles64(void)
 {
-	VERIFY_ACTIVECPU(0, activecpu_gettotalcycles64);
+	VERIFY_ACTIVECPU(activecpu_gettotalcycles64);
 	if (activecpu == cpu_getexecutingcpu())
 		return cpu[activecpu].totalcycles + cycles_currently_ran();
 	else
@@ -983,7 +900,7 @@ UINT64 activecpu_gettotalcycles64(void)
 
 UINT64 cpunum_gettotalcycles64(int cpunum)
 {
-	VERIFY_CPUNUM(0, cpunum_gettotalcycles64);
+	VERIFY_CPUNUM(cpunum_gettotalcycles64);
 	if (cpunum == cpu_getexecutingcpu())
 		return cpu[cpunum].totalcycles + cycles_currently_ran();
 	else
@@ -1004,7 +921,7 @@ int activecpu_geticount(void)
 	int result;
 
 /* remove me - only used by mamedbg, m92 */
-	VERIFY_EXECUTINGCPU(0, cpu_geticount);
+	VERIFY_EXECUTINGCPU(cpu_geticount);
 	result = MAME_TIME_TO_CYCLES(activecpu, sub_mame_times(cpu[activecpu].vblankint_period, mame_timer_timeelapsed(cpu[activecpu].vblankint_timer)));
 	return (result < 0) ? 0 : result;
 }
@@ -1304,7 +1221,7 @@ void cpu_spinuntil_trigger(int trigger)
 {
 	int cpunum = cpu_getexecutingcpu();
 
-	VERIFY_EXECUTINGCPU_VOID(cpu_spinuntil_trigger);
+	VERIFY_EXECUTINGCPU(cpu_spinuntil_trigger);
 
 	/* suspend the CPU immediately if it's not already */
 	cpunum_suspend(cpunum, SUSPEND_REASON_TRIGGER, 1);
@@ -1315,7 +1232,7 @@ void cpu_spinuntil_trigger(int trigger)
 
 void cpunum_spinuntil_trigger( int cpunum, int trigger )
 {
-	VERIFY_CPUNUM_VOID(cpunum_spinuntil_trigger);
+	VERIFY_CPUNUM(cpunum_spinuntil_trigger);
 
 	/* suspend the CPU immediately if it's not already */
 	cpunum_suspend(cpunum, SUSPEND_REASON_TRIGGER, 1);
@@ -1328,7 +1245,7 @@ void cpu_yielduntil_trigger(int trigger)
 {
 	int cpunum = cpu_getexecutingcpu();
 
-	VERIFY_EXECUTINGCPU_VOID(cpu_yielduntil_trigger);
+	VERIFY_EXECUTINGCPU(cpu_yielduntil_trigger);
 
 	/* suspend the CPU immediately if it's not already */
 	cpunum_suspend(cpunum, SUSPEND_REASON_TRIGGER, 0);
@@ -1348,14 +1265,14 @@ void cpu_yielduntil_trigger(int trigger)
 
 void cpu_spinuntil_int(void)
 {
-	VERIFY_EXECUTINGCPU_VOID(cpu_spinuntil_int);
+	VERIFY_EXECUTINGCPU(cpu_spinuntil_int);
 	cpu_spinuntil_trigger(TRIGGER_INT + activecpu);
 }
 
 
 void cpu_yielduntil_int(void)
 {
-	VERIFY_EXECUTINGCPU_VOID(cpu_yielduntil_int);
+	VERIFY_EXECUTINGCPU(cpu_yielduntil_int);
 	cpu_yielduntil_trigger(TRIGGER_INT + activecpu);
 }
 
@@ -1434,7 +1351,7 @@ void cpu_yielduntil_time(double duration)
 
 int cpu_getiloops(void)
 {
-	VERIFY_ACTIVECPU(0, cpu_getiloops);
+	VERIFY_ACTIVECPU(cpu_getiloops);
 	return cpu[activecpu].iloops;
 }
 

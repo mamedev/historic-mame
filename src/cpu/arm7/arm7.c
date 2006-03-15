@@ -49,9 +49,9 @@ static WRITE32_HANDLER(test_rt_w_callback);
 static void test_dt_r_callback (UINT32 insn, UINT32* prn, UINT32 (*read32)(int addr));
 static void test_dt_w_callback (UINT32 insn, UINT32* prn, void (*write32)(int addr, UINT32 data));
 #ifdef MAME_DEBUG
-char *Spec_RT( char *pBuf, UINT32 opcode, char *pConditionCode, char *pBuf0);
-char *Spec_DT( char *pBuf, UINT32 opcode, char *pConditionCode, char *pBuf0);
-char *Spec_DO( char *pBuf, UINT32 opcode, char *pConditionCode, char *pBuf0);
+static char *Spec_RT( char *pBuf, UINT32 opcode, char *pConditionCode, char *pBuf0);
+static char *Spec_DT( char *pBuf, UINT32 opcode, char *pConditionCode, char *pBuf0);
+static char *Spec_DO( char *pBuf, UINT32 opcode, char *pConditionCode, char *pBuf0);
 #endif
 #endif
 
@@ -475,17 +475,17 @@ static void test_dt_w_callback (UINT32 insn, UINT32* prn, void (*write32)(int ad
 
 /* Custom Co-proc DASM handlers */
 #ifdef MAME_DEBUG
-char *Spec_RT( char *pBuf, UINT32 opcode, char *pConditionCode, char *pBuf0)
+static char *Spec_RT( char *pBuf, UINT32 opcode, char *pConditionCode, char *pBuf0)
 {
     pBuf += sprintf( pBuf, "SPECRT");
     return pBuf;
 }
-char *Spec_DT( char *pBuf, UINT32 opcode, char *pConditionCode, char *pBuf0)
+static char *Spec_DT( char *pBuf, UINT32 opcode, char *pConditionCode, char *pBuf0)
 {
     pBuf += sprintf( pBuf, "SPECDT");
     return pBuf;
 }
-char *Spec_DO( char *pBuf, UINT32 opcode, char *pConditionCode, char *pBuf0)
+static char *Spec_DO( char *pBuf, UINT32 opcode, char *pConditionCode, char *pBuf0)
 {
     pBuf += sprintf( pBuf, "SPECDO");
     return pBuf;

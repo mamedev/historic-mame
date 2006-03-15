@@ -446,7 +446,8 @@ static void check_irqs(void)
 	int cpu_pri = (i960.PC>>16)&0x1f;
 	int pending_pri;
 	int lvl, irq, take = -1;
-	int vword, lvlmask[4] = { 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 };
+	int vword;
+	static const UINT32 lvlmask[4] = { 0x000000ff, 0x0000ff00, 0x00ff0000, 0xff000000 };
 
 	pending_pri = program_read_dword_32le(int_tab);		// read pending priorities
 

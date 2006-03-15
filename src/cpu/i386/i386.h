@@ -245,7 +245,7 @@ static void I386OP(decode_opcode)(void);
 static void I386OP(decode_two_byte)(void);
 
 
-extern int parity_table[256];
+extern int i386_parity_table[256];
 
 #define PROTECTED_MODE		(I.cr[0] & 0x1)
 #define STACK_32BIT			(I.sreg[SS].d)
@@ -266,11 +266,11 @@ extern int parity_table[256];
 #define SetSF(x)			(I.SF = (x))
 #define SetZF(x)			(I.ZF = (x))
 #define SetAF(x,y,z)		(I.AF = (((x) ^ ((y) ^ (z))) & 0x10) ? 1 : 0)
-#define SetPF(x)			(I.PF = parity_table[(x) & 0xFF])
+#define SetPF(x)			(I.PF = i386_parity_table[(x) & 0xFF])
 
-#define SetSZPF8(x)			{I.ZF = ((UINT8)(x)==0);  I.SF = ((x)&0x80) ? 1 : 0; I.PF = parity_table[x & 0xFF]; }
-#define SetSZPF16(x)		{I.ZF = ((UINT16)(x)==0);  I.SF = ((x)&0x8000) ? 1 : 0; I.PF = parity_table[x & 0xFF]; }
-#define SetSZPF32(x)		{I.ZF = ((UINT32)(x)==0);  I.SF = ((x)&0x80000000) ? 1 : 0; I.PF = parity_table[x & 0xFF]; }
+#define SetSZPF8(x)			{I.ZF = ((UINT8)(x)==0);  I.SF = ((x)&0x80) ? 1 : 0; I.PF = i386_parity_table[x & 0xFF]; }
+#define SetSZPF16(x)		{I.ZF = ((UINT16)(x)==0);  I.SF = ((x)&0x8000) ? 1 : 0; I.PF = i386_parity_table[x & 0xFF]; }
+#define SetSZPF32(x)		{I.ZF = ((UINT32)(x)==0);  I.SF = ((x)&0x80000000) ? 1 : 0; I.PF = i386_parity_table[x & 0xFF]; }
 
 /***********************************************************************************/
 
@@ -287,25 +287,25 @@ typedef struct {
 	} rm;
 } MODRM_TABLE;
 
-extern MODRM_TABLE MODRM_table[256];
+extern MODRM_TABLE i386_MODRM_table[256];
 
 #define REG8(x)			(I.reg.b[x])
 #define REG16(x)		(I.reg.w[x])
 #define REG32(x)		(I.reg.d[x])
 
-#define LOAD_REG8(x)	(REG8(MODRM_table[x].reg.b))
-#define LOAD_REG16(x)	(REG16(MODRM_table[x].reg.w))
-#define LOAD_REG32(x)	(REG32(MODRM_table[x].reg.d))
-#define LOAD_RM8(x)		(REG8(MODRM_table[x].rm.b))
-#define LOAD_RM16(x)	(REG16(MODRM_table[x].rm.w))
-#define LOAD_RM32(x)	(REG32(MODRM_table[x].rm.d))
+#define LOAD_REG8(x)	(REG8(i386_MODRM_table[x].reg.b))
+#define LOAD_REG16(x)	(REG16(i386_MODRM_table[x].reg.w))
+#define LOAD_REG32(x)	(REG32(i386_MODRM_table[x].reg.d))
+#define LOAD_RM8(x)		(REG8(i386_MODRM_table[x].rm.b))
+#define LOAD_RM16(x)	(REG16(i386_MODRM_table[x].rm.w))
+#define LOAD_RM32(x)	(REG32(i386_MODRM_table[x].rm.d))
 
-#define STORE_REG8(x, value)	(REG8(MODRM_table[x].reg.b) = value)
-#define STORE_REG16(x, value)	(REG16(MODRM_table[x].reg.w) = value)
-#define STORE_REG32(x, value)	(REG32(MODRM_table[x].reg.d) = value)
-#define STORE_RM8(x, value)		(REG8(MODRM_table[x].rm.b) = value)
-#define STORE_RM16(x, value)	(REG16(MODRM_table[x].rm.w) = value)
-#define STORE_RM32(x, value)	(REG32(MODRM_table[x].rm.d) = value)
+#define STORE_REG8(x, value)	(REG8(i386_MODRM_table[x].reg.b) = value)
+#define STORE_REG16(x, value)	(REG16(i386_MODRM_table[x].reg.w) = value)
+#define STORE_REG32(x, value)	(REG32(i386_MODRM_table[x].reg.d) = value)
+#define STORE_RM8(x, value)		(REG8(i386_MODRM_table[x].rm.b) = value)
+#define STORE_RM16(x, value)	(REG16(i386_MODRM_table[x].rm.w) = value)
+#define STORE_RM32(x, value)	(REG32(i386_MODRM_table[x].rm.d) = value)
 
 /***********************************************************************************/
 

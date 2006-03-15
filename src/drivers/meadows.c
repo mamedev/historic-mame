@@ -130,7 +130,7 @@
  *
  *************************************/
 
-static int cycles_at_vsync;
+static UINT32 cycles_at_vsync;
 static UINT8 main_sense_state;
 static UINT8 sound_sense_state;
 static UINT8 coin1_state;
@@ -147,7 +147,7 @@ static UINT8 minferno_sense;
 static READ8_HANDLER( hsync_chain_r )
 {
 	/* horizontal sync divider chain */
-	UINT8 val = (cycles_currently_ran() - cycles_at_vsync) & 0xff;
+	UINT8 val = (activecpu_gettotalcycles() - cycles_at_vsync) & 0xff;
 	return BITSWAP8(val,0,1,2,3,4,5,6,7);
 }
 
@@ -211,7 +211,7 @@ static WRITE8_HANDLER( meadows_sound_w )
 static INTERRUPT_GEN( meadows_interrupt )
 {
 	/* preserve the actual cycle count */
-    cycles_at_vsync = cycles_currently_ran();
+    cycles_at_vsync = cpunum_gettotalcycles(0);
 
     /* fake something toggling the sense input line of the S2650 */
 	main_sense_state ^= 1;
@@ -241,7 +241,7 @@ static INTERRUPT_GEN( meadows_interrupt )
 static INTERRUPT_GEN( minferno_interrupt )
 {
 	/* preserve the actual cycle count */
-	cycles_at_vsync = cycles_currently_ran();
+	cycles_at_vsync = cpunum_gettotalcycles(0);
 	minferno_sense++;
 	cpunum_set_input_line(0, 1, (minferno_sense & 0x40) ? ASSERT_LINE : CLEAR_LINE );
 }

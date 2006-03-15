@@ -757,7 +757,7 @@ static const void *shift_xregs[8] =
     ALU operations (result in AR)
 ===========================================================================*/
 
-void alu_op_ar(int op)
+static void alu_op_ar(int op)
 {
 	INT32 xop = (op >> 8) & 7;
 	INT32 yop = (op >> 11) & 3;
@@ -895,7 +895,7 @@ void alu_op_ar(int op)
     ALU operations (result in AR, constant yop)
 ===========================================================================*/
 
-void alu_op_ar_const(int op)
+static void alu_op_ar_const(int op)
 {
 	INT32 xop = (op >> 8) & 7;
 	INT32 yop = constants[((op >> 5) & 0x07) | ((op >> 8) & 0x18)];
@@ -1021,7 +1021,7 @@ void alu_op_ar_const(int op)
     ALU operations (result in AF)
 ===========================================================================*/
 
-void alu_op_af(int op)
+static void alu_op_af(int op)
 {
 	INT32 xop = (op >> 8) & 7;
 	INT32 yop = (op >> 11) & 3;
@@ -1156,7 +1156,7 @@ void alu_op_af(int op)
     ALU operations (result in AF, constant yop)
 ===========================================================================*/
 
-void alu_op_af_const(int op)
+static void alu_op_af_const(int op)
 {
 	INT32 xop = (op >> 8) & 7;
 	INT32 yop = constants[((op >> 5) & 0x07) | ((op >> 8) & 0x18)];
@@ -1279,7 +1279,7 @@ void alu_op_af_const(int op)
     ALU operations (no result)
 ===========================================================================*/
 
-void alu_op_none(int op)
+static void alu_op_none(int op)
 {
 	INT32 xop = (op >> 8) & 7;
 	INT32 yop = (op >> 11) & 3;
@@ -1408,7 +1408,7 @@ void alu_op_none(int op)
     MAC operations (result in MR)
 ===========================================================================*/
 
-void mac_op_mr(int op)
+static void mac_op_mr(int op)
 {
 	INT8 shift = ((adsp2100.mstat & MSTAT_INTEGER) >> 4) ^ 1;
 	INT32 xop = (op >> 8) & 7;
@@ -1571,7 +1571,7 @@ void mac_op_mr(int op)
     MAC operations (result in MR, yop == xop)
 ===========================================================================*/
 
-void mac_op_mr_xop(int op)
+static void mac_op_mr_xop(int op)
 {
 	INT8 shift = ((adsp2100.mstat & MSTAT_INTEGER) >> 4) ^ 1;
 	INT32 xop = (op >> 8) & 7;
@@ -1718,7 +1718,7 @@ void mac_op_mr_xop(int op)
     MAC operations (result in MF)
 ===========================================================================*/
 
-void mac_op_mf(int op)
+static void mac_op_mf(int op)
 {
 	INT8 shift = ((adsp2100.mstat & MSTAT_INTEGER) >> 4) ^ 1;
 	INT32 xop = (op >> 8) & 7;
@@ -1878,7 +1878,7 @@ void mac_op_mf(int op)
     MAC operations (result in MF, yop == xop)
 ===========================================================================*/
 
-void mac_op_mf_xop(int op)
+static void mac_op_mf_xop(int op)
 {
 	INT8 shift = ((adsp2100.mstat & MSTAT_INTEGER) >> 4) ^ 1;
 	INT32 xop = (op >> 8) & 7;
@@ -2022,7 +2022,7 @@ void mac_op_mf_xop(int op)
     SHIFT operations (result in SR/SE/SB)
 ===========================================================================*/
 
-void shift_op(int op)
+static void shift_op(int op)
 {
 	INT8 sc = adsp2100.core.se.s;
 	INT32 xop = (op >> 8) & 7;
@@ -2204,7 +2204,7 @@ void shift_op(int op)
     Immediate SHIFT operations (result in SR/SE/SB)
 ===========================================================================*/
 
-void shift_op_imm(int op)
+static void shift_op_imm(int op)
 {
 	INT8 sc = (INT8)op;
 	INT32 xop = (op >> 8) & 7;

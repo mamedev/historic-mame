@@ -627,7 +627,7 @@ void install_ms5plus_protection(void)
 
 void svcboot_px_decrypt( void )
 {
-	const unsigned char sec[] = {
+	static const unsigned char sec[] = {
 		0x06, 0x07, 0x01, 0x02, 0x03, 0x04, 0x05, 0x00
 	};
 	int i;
@@ -650,10 +650,10 @@ void svcboot_px_decrypt( void )
 
 void svcboot_cx_decrypt( void )
 {
-	const unsigned char idx_tbl[ 0x10 ] = {
+	static const unsigned char idx_tbl[ 0x10 ] = {
 		0, 1, 0, 1, 2, 3, 2, 3, 3, 4, 3, 4, 4, 5, 4, 5,
 	};
-	const unsigned char bitswap4_tbl[ 6 ][ 4 ] = {
+	static const unsigned char bitswap4_tbl[ 6 ][ 4 ] = {
 		{ 3, 0, 1, 2 },
 		{ 2, 3, 0, 1 },
 		{ 1, 2, 3, 0 },
@@ -684,7 +684,7 @@ void svcboot_cx_decrypt( void )
 
 void svcplus_px_decrypt( void )
 {
-	int sec[] = {
+	static const int sec[] = {
 		0x00, 0x03, 0x02, 0x05, 0x04, 0x01
 	};
 	int size = memory_region_length( REGION_CPU1 );
@@ -727,7 +727,7 @@ void svcplus_px_hack( void )
 void svcplusa_px_decrypt( void )
 {
 	int i;
-	int sec[] = {
+	static const int sec[] = {
 		0x01, 0x02, 0x03, 0x04, 0x05, 0x00
 	};
 	int size = memory_region_length( REGION_CPU1 );
@@ -744,7 +744,7 @@ void svcplusa_px_decrypt( void )
 
 void svcsplus_px_decrypt( void )
 {
-	int sec[] = {
+	static const int sec[] = {
 		0x06, 0x07, 0x01, 0x02, 0x03, 0x04, 0x05, 0x00
 	};
 	int size = memory_region_length( REGION_CPU1 );
@@ -843,9 +843,9 @@ WRITE16_HANDLER( kof2003p_w )
 void kof2003b_px_decrypt( void )
 {
 	int i;
-    const unsigned char sec[] = {
-        0x07, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06
-    };
+	static const unsigned char sec[] = {
+		0x07, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06
+	};
 
     int rom_size = 0x800000;
     UINT8 *rom = memory_region( REGION_CPU1 );

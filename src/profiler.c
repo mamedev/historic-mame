@@ -139,6 +139,7 @@ const char *profiler_get_text(void)
 		"Callbck",
 		"Hiscore",
 		"Input  ",
+		"Movie  ",
 		"Extra  ",
 		"User1  ",
 		"User2  ",

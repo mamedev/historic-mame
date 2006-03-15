@@ -22,7 +22,7 @@ static char *WriteImmediateOperand( char *pBuf, UINT32 opcode )
 static char *WriteDataProcessingOperand( char *pBuf, UINT32 opcode, int printOp0, int printOp1, int printOp2 )
 {
 	/* ccccctttmmmm */
-	const char *pRegOp[4] = { "LSL","LSR","ASR","ROR" };
+	static const char *pRegOp[4] = { "LSL","LSR","ASR","ROR" };
 
 	if (printOp0)
 		pBuf += sprintf(pBuf,"R%d, ", (opcode>>12)&0xf);
@@ -55,7 +55,7 @@ static char *WriteDataProcessingOperand( char *pBuf, UINT32 opcode, int printOp0
 static char *WriteRegisterOperand1( char *pBuf, UINT32 opcode )
 {
 	/* ccccctttmmmm */
-	const char *pRegOp[4] = { "LSL","LSR","ASR","ROR" };
+	static const char *pRegOp[4] = { "LSL","LSR","ASR","ROR" };
 
 	pBuf += sprintf(
 		pBuf,

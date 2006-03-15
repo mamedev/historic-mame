@@ -216,14 +216,14 @@
 #include "debugger.h"
 #include "e132xs.h"
 
-UINT8  (*hyp_cpu_read_byte)(offs_t address);
-UINT16 (*hyp_cpu_read_half_word)(offs_t address);
-UINT32 (*hyp_cpu_read_word)(offs_t address);
-UINT32 (*hyp_cpu_read_io_word)(offs_t address);
-void (*hyp_cpu_write_byte)(offs_t address, UINT8 data);
-void (*hyp_cpu_write_half_word)(offs_t address, UINT16 data);
-void (*hyp_cpu_write_word)(offs_t address, UINT32 data);
-void (*hyp_cpu_write_io_word)(offs_t address, UINT32 data);
+static UINT8  (*hyp_cpu_read_byte)(offs_t address);
+static UINT16 (*hyp_cpu_read_half_word)(offs_t address);
+static UINT32 (*hyp_cpu_read_word)(offs_t address);
+static UINT32 (*hyp_cpu_read_io_word)(offs_t address);
+static void (*hyp_cpu_write_byte)(offs_t address, UINT8 data);
+static void (*hyp_cpu_write_half_word)(offs_t address, UINT16 data);
+static void (*hyp_cpu_write_word)(offs_t address, UINT32 data);
+static void (*hyp_cpu_write_io_word)(offs_t address, UINT32 data);
 int hyp_type_16bit;
 
 // set C in adds/addsi/subs/sums
@@ -232,114 +232,114 @@ int hyp_type_16bit;
 
 static int hyperstone_ICount;
 
-void hyperstone_chk(void);
-void hyperstone_movd(void);
-void hyperstone_divu(void);
-void hyperstone_divs(void);
-void hyperstone_xm(void);
-void hyperstone_mask(void);
-void hyperstone_sum(void);
-void hyperstone_sums(void);
-void hyperstone_cmp(void);
-void hyperstone_mov(void);
-void hyperstone_add(void);
-void hyperstone_adds(void);
-void hyperstone_cmpb(void);
-void hyperstone_andn(void);
-void hyperstone_or(void);
-void hyperstone_xor(void);
-void hyperstone_subc(void);
-void hyperstone_not(void);
-void hyperstone_sub(void);
-void hyperstone_subs(void);
-void hyperstone_addc(void);
-void hyperstone_and(void);
-void hyperstone_neg(void);
-void hyperstone_negs(void);
-void hyperstone_cmpi(void);
-void hyperstone_movi(void);
-void hyperstone_addi(void);
-void hyperstone_addsi(void);
-void hyperstone_cmpbi(void);
-void hyperstone_andni(void);
-void hyperstone_ori(void);
-void hyperstone_xori(void);
-void hyperstone_shrdi(void);
-void hyperstone_shrd(void);
-void hyperstone_shr(void);
-void hyperstone_sardi(void);
-void hyperstone_sard(void);
-void hyperstone_sar(void);
-void hyperstone_shldi(void);
-void hyperstone_shld(void);
-void hyperstone_shl(void);
-void reserved(void);
-void hyperstone_testlz(void);
-void hyperstone_rol(void);
-void hyperstone_ldxx1(void);
-void hyperstone_ldxx2(void);
-void hyperstone_stxx1(void);
-void hyperstone_stxx2(void);
-void hyperstone_shri(void);
-void hyperstone_sari(void);
-void hyperstone_shli(void);
-void hyperstone_mulu(void);
-void hyperstone_muls(void);
-void hyperstone_set(void);
-void hyperstone_mul(void);
-void hyperstone_fadd(void);
-void hyperstone_faddd(void);
-void hyperstone_fsub(void);
-void hyperstone_fsubd(void);
-void hyperstone_fmul(void);
-void hyperstone_fmuld(void);
-void hyperstone_fdiv(void);
-void hyperstone_fdivd(void);
-void hyperstone_fcmp(void);
-void hyperstone_fcmpd(void);
-void hyperstone_fcmpu(void);
-void hyperstone_fcmpud(void);
-void hyperstone_fcvt(void);
-void hyperstone_fcvtd(void);
-void hyperstone_extend(void);
-void hyperstone_do(void);
-void hyperstone_ldwr(void);
-void hyperstone_lddr(void);
-void hyperstone_ldwp(void);
-void hyperstone_lddp(void);
-void hyperstone_stwr(void);
-void hyperstone_stdr(void);
-void hyperstone_stwp(void);
-void hyperstone_stdp(void);
-void hyperstone_dbv(void);
-void hyperstone_dbnv(void);
-void hyperstone_dbe(void);
-void hyperstone_dbne(void);
-void hyperstone_dbc(void);
-void hyperstone_dbnc(void);
-void hyperstone_dbse(void);
-void hyperstone_dbht(void);
-void hyperstone_dbn(void);
-void hyperstone_dbnn(void);
-void hyperstone_dble(void);
-void hyperstone_dbgt(void);
-void hyperstone_dbr(void);
-void hyperstone_frame(void);
-void hyperstone_call(void);
-void hyperstone_bv(void);
-void hyperstone_bnv(void);
-void hyperstone_be(void);
-void hyperstone_bne(void);
-void hyperstone_bc(void);
-void hyperstone_bnc(void);
-void hyperstone_bse(void);
-void hyperstone_bht(void);
-void hyperstone_bn(void);
-void hyperstone_bnn(void);
-void hyperstone_ble(void);
-void hyperstone_bgt(void);
-void hyperstone_br(void);
-void hyperstone_trap(void);
+static void hyperstone_chk(void);
+static void hyperstone_movd(void);
+static void hyperstone_divu(void);
+static void hyperstone_divs(void);
+static void hyperstone_xm(void);
+static void hyperstone_mask(void);
+static void hyperstone_sum(void);
+static void hyperstone_sums(void);
+static void hyperstone_cmp(void);
+static void hyperstone_mov(void);
+static void hyperstone_add(void);
+static void hyperstone_adds(void);
+static void hyperstone_cmpb(void);
+static void hyperstone_andn(void);
+static void hyperstone_or(void);
+static void hyperstone_xor(void);
+static void hyperstone_subc(void);
+static void hyperstone_not(void);
+static void hyperstone_sub(void);
+static void hyperstone_subs(void);
+static void hyperstone_addc(void);
+static void hyperstone_and(void);
+static void hyperstone_neg(void);
+static void hyperstone_negs(void);
+static void hyperstone_cmpi(void);
+static void hyperstone_movi(void);
+static void hyperstone_addi(void);
+static void hyperstone_addsi(void);
+static void hyperstone_cmpbi(void);
+static void hyperstone_andni(void);
+static void hyperstone_ori(void);
+static void hyperstone_xori(void);
+static void hyperstone_shrdi(void);
+static void hyperstone_shrd(void);
+static void hyperstone_shr(void);
+static void hyperstone_sardi(void);
+static void hyperstone_sard(void);
+static void hyperstone_sar(void);
+static void hyperstone_shldi(void);
+static void hyperstone_shld(void);
+static void hyperstone_shl(void);
+static void reserved(void);
+static void hyperstone_testlz(void);
+static void hyperstone_rol(void);
+static void hyperstone_ldxx1(void);
+static void hyperstone_ldxx2(void);
+static void hyperstone_stxx1(void);
+static void hyperstone_stxx2(void);
+static void hyperstone_shri(void);
+static void hyperstone_sari(void);
+static void hyperstone_shli(void);
+static void hyperstone_mulu(void);
+static void hyperstone_muls(void);
+static void hyperstone_set(void);
+static void hyperstone_mul(void);
+static void hyperstone_fadd(void);
+static void hyperstone_faddd(void);
+static void hyperstone_fsub(void);
+static void hyperstone_fsubd(void);
+static void hyperstone_fmul(void);
+static void hyperstone_fmuld(void);
+static void hyperstone_fdiv(void);
+static void hyperstone_fdivd(void);
+static void hyperstone_fcmp(void);
+static void hyperstone_fcmpd(void);
+static void hyperstone_fcmpu(void);
+static void hyperstone_fcmpud(void);
+static void hyperstone_fcvt(void);
+static void hyperstone_fcvtd(void);
+static void hyperstone_extend(void);
+static void hyperstone_do(void);
+static void hyperstone_ldwr(void);
+static void hyperstone_lddr(void);
+static void hyperstone_ldwp(void);
+static void hyperstone_lddp(void);
+static void hyperstone_stwr(void);
+static void hyperstone_stdr(void);
+static void hyperstone_stwp(void);
+static void hyperstone_stdp(void);
+static void hyperstone_dbv(void);
+static void hyperstone_dbnv(void);
+static void hyperstone_dbe(void);
+static void hyperstone_dbne(void);
+static void hyperstone_dbc(void);
+static void hyperstone_dbnc(void);
+static void hyperstone_dbse(void);
+static void hyperstone_dbht(void);
+static void hyperstone_dbn(void);
+static void hyperstone_dbnn(void);
+static void hyperstone_dble(void);
+static void hyperstone_dbgt(void);
+static void hyperstone_dbr(void);
+static void hyperstone_frame(void);
+static void hyperstone_call(void);
+static void hyperstone_bv(void);
+static void hyperstone_bnv(void);
+static void hyperstone_be(void);
+static void hyperstone_bne(void);
+static void hyperstone_bc(void);
+static void hyperstone_bnc(void);
+static void hyperstone_bse(void);
+static void hyperstone_bht(void);
+static void hyperstone_bn(void);
+static void hyperstone_bnn(void);
+static void hyperstone_ble(void);
+static void hyperstone_bgt(void);
+static void hyperstone_br(void);
+static void hyperstone_trap(void);
 
 /* Registers */
 
@@ -476,7 +476,7 @@ typedef struct
 
 static hyperstone_regs hyperstone;
 
-struct regs_decode
+static struct regs_decode
 {
 	UINT8	src, dst;	    // destination and source register code
 	UINT32	src_value;      // current source register value
@@ -664,7 +664,7 @@ ADDRESS_MAP_END
 #endif
 
 /* Return the entry point for a determinated trap */
-UINT32 get_trap_addr(UINT8 trapno)
+static UINT32 get_trap_addr(UINT8 trapno)
 {
 	UINT32 addr;
 	if( hyperstone.trap_entry == 0xffffff00 ) /* @ MEM3 */
@@ -681,7 +681,7 @@ UINT32 get_trap_addr(UINT8 trapno)
 }
 
 /* Return the entry point for a determinated emulated code (the one for "extend" opcode is reserved) */
-UINT32 get_emu_code_addr(UINT8 num) /* num is OP */
+static UINT32 get_emu_code_addr(UINT8 num) /* num is OP */
 {
 	UINT32 addr;
 	if( hyperstone.trap_entry == 0xffffff00 ) /* @ MEM3 */
@@ -695,7 +695,7 @@ UINT32 get_emu_code_addr(UINT8 num) /* num is OP */
 	return addr;
 }
 
-void hyperstone_set_trap_entry(int which)
+static void hyperstone_set_trap_entry(int which)
 {
 	switch( which )
 	{
@@ -813,7 +813,7 @@ static void hyperstone_timer(int num)
 	}
 }
 
-UINT32 get_global_register(UINT8 code)
+static UINT32 get_global_register(UINT8 code)
 {
 /*
     if( code >= 16 )
@@ -850,7 +850,7 @@ UINT32 get_global_register(UINT8 code)
 	return hyperstone.global_regs[code];
 }
 
-void set_global_register(UINT8 code, UINT32 val)
+static void set_global_register(UINT8 code, UINT32 val)
 {
 	//TODO: add correct FER set instruction
 
@@ -958,7 +958,7 @@ void set_global_register(UINT8 code, UINT32 val)
 	}
 }
 
-void set_local_register(UINT8 code, UINT32 val)
+static void set_local_register(UINT8 code, UINT32 val)
 {
 	UINT8 new_code = (code + GET_FP) % 64;
 
@@ -1576,7 +1576,7 @@ INLINE void execute_dbr(void)
 }
 
 
-void execute_trap(UINT32 addr)
+static void execute_trap(UINT32 addr)
 {
 	UINT8 reg;
 	UINT32 oldSR;
@@ -1605,7 +1605,7 @@ void execute_trap(UINT32 addr)
 }
 
 
-void execute_int(UINT32 addr)
+static void execute_int(UINT32 addr)
 {
 	UINT8 reg;
 	UINT32 oldSR;
@@ -1635,7 +1635,7 @@ void execute_int(UINT32 addr)
 }
 
 /* TODO: mask Parity Error and Extended Overflow exceptions */
-void execute_exception(UINT32 addr)
+static void execute_exception(UINT32 addr)
 {
 	UINT8 reg;
 	UINT32 oldSR;
@@ -1664,7 +1664,7 @@ void execute_exception(UINT32 addr)
 	hyperstone_ICount -= 2;
 }
 
-void execute_software(void)
+static void execute_software(void)
 {
 	UINT8 reg;
 	UINT32 oldSR;
@@ -1956,7 +1956,7 @@ static offs_t hyperstone_dasm(char *buffer, offs_t pc)
 
 /* Opcodes */
 
-void hyperstone_chk(void)
+static void hyperstone_chk(void)
 {
 	UINT32 addr = get_trap_addr(RANGE_ERROR);
 
@@ -1982,7 +1982,7 @@ void hyperstone_chk(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_movd(void)
+static void hyperstone_movd(void)
 {
 	if( DST_IS_PC ) // Rd denotes PC
 	{
@@ -2060,7 +2060,7 @@ void hyperstone_movd(void)
 	}
 }
 
-void hyperstone_divu(void)
+static void hyperstone_divu(void)
 {
 	if( SAME_SRC_DST || SAME_SRC_DSTF )
 	{
@@ -2109,7 +2109,7 @@ void hyperstone_divu(void)
 	hyperstone_ICount -= 36;
 }
 
-void hyperstone_divs(void)
+static void hyperstone_divs(void)
 {
 	if( SAME_SRC_DST || SAME_SRC_DSTF )
 	{
@@ -2158,7 +2158,7 @@ void hyperstone_divs(void)
 	hyperstone_ICount -= 36;
 }
 
-void hyperstone_xm(void)
+static void hyperstone_xm(void)
 {
 	if( SRC_IS_SR || DST_IS_SR || DST_IS_PC )
 	{
@@ -2205,7 +2205,7 @@ void hyperstone_xm(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_mask(void)
+static void hyperstone_mask(void)
 {
 	DREG = SREG & EXTRA_U;
 
@@ -2215,7 +2215,7 @@ void hyperstone_mask(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_sum(void)
+static void hyperstone_sum(void)
 {
 	UINT64 tmp;
 
@@ -2239,7 +2239,7 @@ void hyperstone_sum(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_sums(void)
+static void hyperstone_sums(void)
 {
 	INT32 res;
 	INT64 tmp;
@@ -2270,7 +2270,7 @@ void hyperstone_sums(void)
 	}
 }
 
-void hyperstone_cmp(void)
+static void hyperstone_cmp(void)
 {
 	UINT64 tmp;
 
@@ -2298,7 +2298,7 @@ void hyperstone_cmp(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_mov(void)
+static void hyperstone_mov(void)
 {
 	if( !GET_S && current_regs.dst >= 16 )
 	{
@@ -2318,7 +2318,7 @@ void hyperstone_mov(void)
 }
 
 
-void hyperstone_add(void)
+static void hyperstone_add(void)
 {
 	UINT64 tmp;
 
@@ -2341,7 +2341,7 @@ void hyperstone_add(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_adds(void)
+static void hyperstone_adds(void)
 {
 	INT32 res;
 	INT64 tmp;
@@ -2372,14 +2372,14 @@ void hyperstone_adds(void)
 	}
 }
 
-void hyperstone_cmpb(void)
+static void hyperstone_cmpb(void)
 {
 	SET_Z( (DREG & SREG) == 0 ? 1 : 0 );
 
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_andn(void)
+static void hyperstone_andn(void)
 {
 	DREG = DREG & ~SREG;
 
@@ -2389,7 +2389,7 @@ void hyperstone_andn(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_or(void)
+static void hyperstone_or(void)
 {
 	DREG = DREG | SREG;
 
@@ -2399,7 +2399,7 @@ void hyperstone_or(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_xor(void)
+static void hyperstone_xor(void)
 {
 	DREG = DREG ^ SREG;
 
@@ -2409,7 +2409,7 @@ void hyperstone_xor(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_subc(void)
+static void hyperstone_subc(void)
 {
 	UINT64 tmp;
 
@@ -2445,7 +2445,7 @@ void hyperstone_subc(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_not(void)
+static void hyperstone_not(void)
 {
 	SET_DREG(~SREG);
 	SET_Z( ~SREG == 0 ? 1 : 0 );
@@ -2453,7 +2453,7 @@ void hyperstone_not(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_sub(void)
+static void hyperstone_sub(void)
 {
 	UINT64 tmp;
 
@@ -2476,7 +2476,7 @@ void hyperstone_sub(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_subs(void)
+static void hyperstone_subs(void)
 {
 	INT32 res;
 	INT64 tmp;
@@ -2508,7 +2508,7 @@ void hyperstone_subs(void)
 	}
 }
 
-void hyperstone_addc(void)
+static void hyperstone_addc(void)
 {
 	UINT64 tmp;
 
@@ -2549,7 +2549,7 @@ void hyperstone_addc(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_and(void)
+static void hyperstone_and(void)
 {
 	DREG = DREG & SREG;
 
@@ -2559,7 +2559,7 @@ void hyperstone_and(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_neg(void)
+static void hyperstone_neg(void)
 {
 	UINT64 tmp;
 
@@ -2580,7 +2580,7 @@ void hyperstone_neg(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_negs(void)
+static void hyperstone_negs(void)
 {
 	INT32 res;
 	INT64 tmp;
@@ -2612,7 +2612,7 @@ void hyperstone_negs(void)
 	}
 }
 
-void hyperstone_cmpi(void)
+static void hyperstone_cmpi(void)
 {
 	UINT64 tmp;
 
@@ -2637,7 +2637,7 @@ void hyperstone_cmpi(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_movi(void)
+static void hyperstone_movi(void)
 {
 	if( !GET_S && current_regs.dst >= 16 )
 	{
@@ -2660,7 +2660,7 @@ void hyperstone_movi(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_addi(void)
+static void hyperstone_addi(void)
 {
 	UINT32 imm;
 	UINT64 tmp;
@@ -2687,7 +2687,7 @@ void hyperstone_addi(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_addsi(void)
+static void hyperstone_addsi(void)
 {
 	INT32 imm, res;
 	INT64 tmp;
@@ -2720,7 +2720,7 @@ void hyperstone_addsi(void)
 	}
 }
 
-void hyperstone_cmpbi(void)
+static void hyperstone_cmpbi(void)
 {
 	UINT32 imm;
 
@@ -2749,7 +2749,7 @@ void hyperstone_cmpbi(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_andni(void)
+static void hyperstone_andni(void)
 {
 	UINT32 imm;
 
@@ -2766,7 +2766,7 @@ void hyperstone_andni(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_ori(void)
+static void hyperstone_ori(void)
 {
 	DREG = DREG | EXTRA_U;
 
@@ -2776,7 +2776,7 @@ void hyperstone_ori(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_xori(void)
+static void hyperstone_xori(void)
 {
 	DREG = DREG ^ EXTRA_U;
 
@@ -2786,7 +2786,7 @@ void hyperstone_xori(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_shrdi(void)
+static void hyperstone_shrdi(void)
 {
 	UINT32 low_order, high_order;
 	UINT64 val;
@@ -2814,7 +2814,7 @@ void hyperstone_shrdi(void)
 	hyperstone_ICount -= 2;
 }
 
-void hyperstone_shrd(void)
+static void hyperstone_shrd(void)
 {
 	UINT32 low_order, high_order;
 	UINT64 val;
@@ -2852,7 +2852,7 @@ void hyperstone_shrd(void)
 	hyperstone_ICount -= 2;
 }
 
-void hyperstone_shr(void)
+static void hyperstone_shr(void)
 {
 	UINT32 ret;
 	UINT8 n;
@@ -2874,7 +2874,7 @@ void hyperstone_shr(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_sardi(void)
+static void hyperstone_sardi(void)
 {
 	UINT32 low_order, high_order;
 	UINT64 val;
@@ -2914,7 +2914,7 @@ void hyperstone_sardi(void)
 	hyperstone_ICount -= 2;
 }
 
-void hyperstone_sard(void)
+static void hyperstone_sard(void)
 {
 	UINT32 low_order, high_order;
 	UINT64 val;
@@ -2964,7 +2964,7 @@ void hyperstone_sard(void)
 	hyperstone_ICount -= 2;
 }
 
-void hyperstone_sar(void)
+static void hyperstone_sar(void)
 {
 	UINT32 ret;
 	UINT8 n, sign_bit;
@@ -2996,7 +2996,7 @@ void hyperstone_sar(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_shldi(void)
+static void hyperstone_shldi(void)
 {
 	UINT32 low_order, high_order, tmp;
 	UINT64 val, mask;
@@ -3029,7 +3029,7 @@ void hyperstone_shldi(void)
 	hyperstone_ICount -= 2;
 }
 
-void hyperstone_shld(void)
+static void hyperstone_shld(void)
 {
 	UINT32 low_order, high_order, tmp, n;
 	UINT64 val, mask;
@@ -3073,7 +3073,7 @@ void hyperstone_shld(void)
 	hyperstone_ICount -= 2;
 }
 
-void hyperstone_shl(void)
+static void hyperstone_shl(void)
 {
 	UINT32 base, ret, n;
 	UINT64 mask;
@@ -3097,12 +3097,12 @@ void hyperstone_shl(void)
 	hyperstone_ICount -= 1;
 }
 
-void reserved(void)
+static void reserved(void)
 {
 	logerror("Executed Reserved opcode. PC = %08X OP = %04X\n", PC, OP);
 }
 
-void hyperstone_testlz(void)
+static void hyperstone_testlz(void)
 {
 	UINT8 zeros = 0;
 	UINT32 mask;
@@ -3123,7 +3123,7 @@ void hyperstone_testlz(void)
 	hyperstone_ICount -= 2;
 }
 
-void hyperstone_rol(void)
+static void hyperstone_rol(void)
 {
 	UINT32 val, base;
 	UINT8 n;
@@ -3160,7 +3160,7 @@ void hyperstone_rol(void)
 }
 
 //TODO: add trap error
-void hyperstone_ldxx1(void)
+static void hyperstone_ldxx1(void)
 {
 	UINT32 load;
 
@@ -3316,7 +3316,7 @@ void hyperstone_ldxx1(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_ldxx2(void)
+static void hyperstone_ldxx2(void)
 {
 	UINT32 load;
 
@@ -3437,7 +3437,7 @@ void hyperstone_ldxx2(void)
 }
 
 //TODO: add trap error
-void hyperstone_stxx1(void)
+static void hyperstone_stxx1(void)
 {
 	if( SRC_IS_SR )
 		SREG = SREGF = 0;
@@ -3570,7 +3570,7 @@ void hyperstone_stxx1(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_stxx2(void)
+static void hyperstone_stxx2(void)
 {
 	if( SRC_IS_SR )
 		SREG = SREGF = 0;
@@ -3664,7 +3664,7 @@ void hyperstone_stxx2(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_shri(void)
+static void hyperstone_shri(void)
 {
 	UINT32 val;
 
@@ -3684,7 +3684,7 @@ void hyperstone_shri(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_sari(void)
+static void hyperstone_sari(void)
 {
 	UINT32 val;
 	UINT8 sign_bit;
@@ -3715,7 +3715,7 @@ void hyperstone_sari(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_shli(void)
+static void hyperstone_shli(void)
 {
 	UINT32 val, val2;
 	UINT64 mask;
@@ -3738,7 +3738,7 @@ void hyperstone_shli(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_mulu(void)
+static void hyperstone_mulu(void)
 {
 	UINT32 low_order, high_order;
 	UINT64 double_word;
@@ -3768,7 +3768,7 @@ void hyperstone_mulu(void)
 		hyperstone_ICount -= 6;
 }
 
-void hyperstone_muls(void)
+static void hyperstone_muls(void)
 {
 	UINT32 low_order, high_order;
 	INT64 double_word;
@@ -3797,7 +3797,7 @@ void hyperstone_muls(void)
 		hyperstone_ICount -= 6;
 }
 
-void hyperstone_set(void)
+static void hyperstone_set(void)
 {
 	int n = N_VALUE;
 
@@ -4143,7 +4143,7 @@ void hyperstone_set(void)
 	}
 }
 
-void hyperstone_mul(void)
+static void hyperstone_mul(void)
 {
 	UINT32 single_word;
 
@@ -4168,91 +4168,91 @@ void hyperstone_mul(void)
 		hyperstone_ICount -= 5;
 }
 
-void hyperstone_fadd(void)
+static void hyperstone_fadd(void)
 {
 	execute_software();
 	hyperstone_ICount -= 6;
 }
 
-void hyperstone_faddd(void)
+static void hyperstone_faddd(void)
 {
 	execute_software();
 	hyperstone_ICount -= 6;
 }
 
-void hyperstone_fsub(void)
+static void hyperstone_fsub(void)
 {
 	execute_software();
 	hyperstone_ICount -= 6;
 }
 
-void hyperstone_fsubd(void)
+static void hyperstone_fsubd(void)
 {
 	execute_software();
 	hyperstone_ICount -= 6;
 }
 
-void hyperstone_fmul(void)
+static void hyperstone_fmul(void)
 {
 	execute_software();
 	hyperstone_ICount -= 6;
 }
 
-void hyperstone_fmuld(void)
+static void hyperstone_fmuld(void)
 {
 	execute_software();
 	hyperstone_ICount -= 6;
 }
 
-void hyperstone_fdiv(void)
+static void hyperstone_fdiv(void)
 {
 	execute_software();
 	hyperstone_ICount -= 6;
 }
 
-void hyperstone_fdivd(void)
+static void hyperstone_fdivd(void)
 {
 	execute_software();
 	hyperstone_ICount -= 6;
 }
 
-void hyperstone_fcmp(void)
+static void hyperstone_fcmp(void)
 {
 	execute_software();
 	hyperstone_ICount -= 6;
 }
 
-void hyperstone_fcmpd(void)
+static void hyperstone_fcmpd(void)
 {
 	execute_software();
 	hyperstone_ICount -= 6;
 }
 
-void hyperstone_fcmpu(void)
+static void hyperstone_fcmpu(void)
 {
 	execute_software();
 	hyperstone_ICount -= 6;
 }
 
-void hyperstone_fcmpud(void)
+static void hyperstone_fcmpud(void)
 {
 	execute_software();
 	hyperstone_ICount -= 6;
 }
 
-void hyperstone_fcvt(void)
+static void hyperstone_fcvt(void)
 {
 	execute_software();
 	hyperstone_ICount -= 6;
 }
 
-void hyperstone_fcvtd(void)
+static void hyperstone_fcvtd(void)
 {
 	execute_software();
 	hyperstone_ICount -= 6;
 }
 
-void hyperstone_extend(void)
+static void hyperstone_extend(void)
 {
 	//TODO: add locks, overflow error and other things
 	UINT32 vals, vald;
@@ -4453,19 +4453,19 @@ void hyperstone_extend(void)
 	hyperstone_ICount -= 1; //TODO: with the latency it can change
 }
 
-void hyperstone_do(void)
+static void hyperstone_do(void)
 {
 	fatalerror("Executed hyperstone_do instruction. PC = %08X", PPC);
 }
 
-void hyperstone_ldwr(void)
+static void hyperstone_ldwr(void)
 {
 	SET_SREG(READ_W(DREG));
 
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_lddr(void)
+static void hyperstone_lddr(void)
 {
 	SET_SREG(READ_W(DREG));
 	SET_SREGF(READ_W(DREG + 4));
@@ -4473,7 +4473,7 @@ void hyperstone_lddr(void)
 	hyperstone_ICount -= 2;
 }
 
-void hyperstone_ldwp(void)
+static void hyperstone_ldwp(void)
 {
 	SET_SREG(READ_W(DREG));
 
@@ -4485,7 +4485,7 @@ void hyperstone_ldwp(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_lddp(void)
+static void hyperstone_lddp(void)
 {
 	SET_SREG(READ_W(DREG));
 	SET_SREGF(READ_W(DREG + 4));
@@ -4504,7 +4504,7 @@ void hyperstone_lddp(void)
 	hyperstone_ICount -= 2;
 }
 
-void hyperstone_stwr(void)
+static void hyperstone_stwr(void)
 {
 	if( SRC_IS_SR )
 		SREG = 0;
@@ -4514,7 +4514,7 @@ void hyperstone_stwr(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_stdr(void)
+static void hyperstone_stdr(void)
 {
 	if( SRC_IS_SR )
 		SREG = SREGF = 0;
@@ -4525,7 +4525,7 @@ void hyperstone_stdr(void)
 	hyperstone_ICount -= 2;
 }
 
-void hyperstone_stwp(void)
+static void hyperstone_stwp(void)
 {
 	if( SRC_IS_SR )
 		SREG = 0;
@@ -4536,7 +4536,7 @@ void hyperstone_stwp(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_stdp(void)
+static void hyperstone_stdp(void)
 {
 	if( SRC_IS_SR )
 		SREG = SREGF = 0;
@@ -4552,7 +4552,7 @@ void hyperstone_stdp(void)
 	hyperstone_ICount -= 2;
 }
 
-void hyperstone_dbv(void)
+static void hyperstone_dbv(void)
 {
 	if( GET_V )
 		execute_dbr();
@@ -4560,7 +4560,7 @@ void hyperstone_dbv(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_dbnv(void)
+static void hyperstone_dbnv(void)
 {
 	if( !GET_V )
 		execute_dbr();
@@ -4568,7 +4568,7 @@ void hyperstone_dbnv(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_dbe(void) //or DBZ
+static void hyperstone_dbe(void) //or DBZ
 {
 	if( GET_Z )
 		execute_dbr();
@@ -4576,7 +4576,7 @@ void hyperstone_dbe(void) //or DBZ
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_dbne(void) //or DBNZ
+static void hyperstone_dbne(void) //or DBNZ
 {
 	if( !GET_Z )
 		execute_dbr();
@@ -4584,7 +4584,7 @@ void hyperstone_dbne(void) //or DBNZ
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_dbc(void) //or DBST
+static void hyperstone_dbc(void) //or DBST
 {
 	if( GET_C )
 		execute_dbr();
@@ -4592,7 +4592,7 @@ void hyperstone_dbc(void) //or DBST
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_dbnc(void) //or DBHE
+static void hyperstone_dbnc(void) //or DBHE
 {
 	if( !GET_C )
 		execute_dbr();
@@ -4600,7 +4600,7 @@ void hyperstone_dbnc(void) //or DBHE
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_dbse(void)
+static void hyperstone_dbse(void)
 {
 	if( GET_C || GET_Z )
 		execute_dbr();
@@ -4608,7 +4608,7 @@ void hyperstone_dbse(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_dbht(void)
+static void hyperstone_dbht(void)
 {
 	if( !GET_C && !GET_Z )
 		execute_dbr();
@@ -4616,7 +4616,7 @@ void hyperstone_dbht(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_dbn(void) //or DBLT
+static void hyperstone_dbn(void) //or DBLT
 {
 	if( GET_N )
 		execute_dbr();
@@ -4624,7 +4624,7 @@ void hyperstone_dbn(void) //or DBLT
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_dbnn(void) //or DBGE
+static void hyperstone_dbnn(void) //or DBGE
 {
 	if( !GET_N )
 		execute_dbr();
@@ -4632,7 +4632,7 @@ void hyperstone_dbnn(void) //or DBGE
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_dble(void)
+static void hyperstone_dble(void)
 {
 	if( GET_N || GET_Z )
 		execute_dbr();
@@ -4640,7 +4640,7 @@ void hyperstone_dble(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_dbgt(void)
+static void hyperstone_dbgt(void)
 {
 	if( !GET_N && !GET_Z )
 		execute_dbr();
@@ -4648,12 +4648,12 @@ void hyperstone_dbgt(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_dbr(void)
+static void hyperstone_dbr(void)
 {
 	execute_dbr();
 }
 
-void hyperstone_frame(void)
+static void hyperstone_frame(void)
 {
 	INT8 difference; // really it's 7 bits
 	UINT8 realfp = GET_FP - SRC_CODE;
@@ -4695,7 +4695,7 @@ void hyperstone_frame(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_call(void)
+static void hyperstone_call(void)
 {
 	if( SRC_IS_SR )
 		SREG = 0;
@@ -4727,7 +4727,7 @@ void hyperstone_call(void)
 	hyperstone_ICount -= 1;
 }
 
-void hyperstone_bv(void)
+static void hyperstone_bv(void)
 {
 	if( GET_V )
 		execute_br();
@@ -4735,7 +4735,7 @@ void hyperstone_bv(void)
 		hyperstone_ICount -= 1;
 }
 
-void hyperstone_bnv(void)
+static void hyperstone_bnv(void)
 {
 	if( !GET_V )
 		execute_br();
@@ -4743,7 +4743,7 @@ void hyperstone_bnv(void)
 		hyperstone_ICount -= 1;
 }
 
-void hyperstone_be(void) //or BZ
+static void hyperstone_be(void) //or BZ
 {
 	if( GET_Z )
 		execute_br();
@@ -4751,7 +4751,7 @@ void hyperstone_be(void) //or BZ
 		hyperstone_ICount -= 1;
 }
 
-void hyperstone_bne(void) //or BNZ
+static void hyperstone_bne(void) //or BNZ
 {
 	if( !GET_Z )
 		execute_br();
@@ -4759,7 +4759,7 @@ void hyperstone_bne(void) //or BNZ
 		hyperstone_ICount -= 1;
 }
 
-void hyperstone_bc(void) //or BST
+static void hyperstone_bc(void) //or BST
 {
 	if( GET_C )
 		execute_br();
@@ -4767,7 +4767,7 @@ void hyperstone_bc(void) //or BST
 		hyperstone_ICount -= 1;
 }
 
-void hyperstone_bnc(void) //or BHE
+static void hyperstone_bnc(void) //or BHE
 {
 	if( !GET_C )
 		execute_br();
@@ -4775,7 +4775,7 @@ void hyperstone_bnc(void) //or BHE
 		hyperstone_ICount -= 1;
 }
 
-void hyperstone_bse(void)
+static void hyperstone_bse(void)
 {
 	if( GET_C || GET_Z )
 		execute_br();
@@ -4783,7 +4783,7 @@ void hyperstone_bse(void)
 		hyperstone_ICount -= 1;
 }
 
-void hyperstone_bht(void)
+static void hyperstone_bht(void)
 {
 	if( !GET_C && !GET_Z )
 		execute_br();
@@ -4791,7 +4791,7 @@ void hyperstone_bht(void)
 		hyperstone_ICount -= 1;
 }
 
-void hyperstone_bn(void) //or BLT
+static void hyperstone_bn(void) //or BLT
 {
 	if( GET_N )
 		execute_br();
@@ -4799,7 +4799,7 @@ void hyperstone_bn(void) //or BLT
 		hyperstone_ICount -= 1;
 }
 
-void hyperstone_bnn(void) //or BGE
+static void hyperstone_bnn(void) //or BGE
 {
 	if( !GET_N )
 		execute_br();
@@ -4807,7 +4807,7 @@ void hyperstone_bnn(void) //or BGE
 		hyperstone_ICount -= 1;
 }
 
-void hyperstone_ble(void)
+static void hyperstone_ble(void)
 {
 	if( GET_N || GET_Z )
 		execute_br();
@@ -4815,7 +4815,7 @@ void hyperstone_ble(void)
 		hyperstone_ICount -= 1;
 }
 
-void hyperstone_bgt(void)
+static void hyperstone_bgt(void)
 {
 	if( !GET_N && !GET_Z )
 		execute_br();
@@ -4823,12 +4823,12 @@ void hyperstone_bgt(void)
 		hyperstone_ICount -= 1;
 }
 
-void hyperstone_br(void)
+static void hyperstone_br(void)
 {
 	execute_br();
 }
 
-void hyperstone_trap(void)
+static void hyperstone_trap(void)
 {
 	UINT8 code, trapno;
 	UINT32 addr;

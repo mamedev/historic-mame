@@ -233,7 +233,7 @@ static unsigned char DecodeSCI(struct _SCSP *SCSP,unsigned char irq)
 	return SCI;
 }
 
-void CheckPendingIRQ(struct _SCSP *SCSP)
+static void CheckPendingIRQ(struct _SCSP *SCSP)
 {
 	UINT32 pend=SCSP->udata.data[0x20/2];
 	UINT32 en=SCSP->udata.data[0x1e/2];
@@ -290,7 +290,7 @@ static int Get_RR(struct _SCSP *SCSP,int base,int R)
 	return SCSP->ARTABLE[63-Rate];
 }
 
-void Compute_EG(struct _SCSP *SCSP,struct _SLOT *slot)
+static void Compute_EG(struct _SCSP *SCSP,struct _SLOT *slot)
 {
 	int octave=OCT(slot);
 	int rate;

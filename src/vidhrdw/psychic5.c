@@ -6,7 +6,7 @@
 ***************************************************************************/
 
 #include "driver.h"
-
+#include "jalblend.c"
 
 #define	BG_SCROLLX_LSB		0x308
 #define	BG_SCROLLX_MSB		0x309
@@ -31,7 +31,6 @@ static UINT8 *psychic5_fg_videoram;
 
 static tilemap *bg_tilemap, *fg_tilemap;
 
-
 MACHINE_RESET( psychic5 )
 {
 	bg_clip_mode = -10;
@@ -55,34 +54,27 @@ WRITE8_HANDLER( psychic5_title_screen_w )
 
 void psychic5_paletteram_w(int color_offs, int offset, int data)
 {
-	int bit0,bit1,bit2,bit3;
-	int r,g,b,val;
+	int r,g,b,a,val;
 
 	ps5_palette_ram[offset] = data;
 
 	/* red component */
-	val  = ps5_palette_ram[offset & ~1] >> 4;
-	bit0 = (val >> 0) & 0x01;
-	bit1 = (val >> 1) & 0x01;
-	bit2 = (val >> 2) & 0x01;
-	bit3 = (val >> 3) & 0x01;
-	r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+	val  = (ps5_palette_ram[offset & ~1] >> 4) & 0x0f ;
+	r = (val << 4) | val ;
 
 	/* green component */
-	val = ps5_palette_ram[offset & ~1];
-	bit0 = (val >> 0) & 0x01;
-	bit1 = (val >> 1) & 0x01;
-	bit2 = (val >> 2) & 0x01;
-	bit3 = (val >> 3) & 0x01;
-	g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+	val  = (ps5_palette_ram[offset & ~1]) & 0x0f ;
+	g = (val << 4) | val ;
 
 	/* blue component */
-	val = ps5_palette_ram[offset | 1] >> 4;
-	bit0 = (val >> 0) & 0x01;
-	bit1 = (val >> 1) & 0x01;
-	bit2 = (val >> 2) & 0x01;
-	bit3 = (val >> 3) & 0x01;
-	b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+	val  = (ps5_palette_ram[offset | 1] >> 4) & 0x0f ;
+	b = (val << 4) | val ;
+
+	/* "alpha" component */
+	val  = (ps5_palette_ram[offset | 1] & 0x0f) & 0x0f ;
+	a = (val << 4) | val ;
+
+	jal_blend_table[(offset / 2)-color_offs] = a ;
 
 	palette_set_color((offset / 2)-color_offs,r,g,b);
 }
@@ -90,69 +82,61 @@ void psychic5_paletteram_w(int color_offs, int offset, int data)
 static void set_background_palette_intensity(void)
 {
 	int i,r,g,b,val,lo,hi,ir,ig,ib,ix;
-	int bit0,bit1,bit2,bit3;
 
 	/* red,green,blue intensites */
-	ir = 15 - (ps5_palette_ram[BG_PAL_INTENSITY_RG] >> 4);
-	ig = 15 - (ps5_palette_ram[BG_PAL_INTENSITY_RG] & 15);
-	ib = 15 - (ps5_palette_ram[BG_PAL_INTENSITY_BU] >> 4);
-	/* unknow but assumes value 2 during the ride on the witches' broom */
-	ix = ps5_palette_ram[0x1ff] & 15;
+	ir = ps5_palette_ram[BG_PAL_INTENSITY_RG] >> 4 ;  ir = (ir << 4) | ir ;
+	ig = ps5_palette_ram[BG_PAL_INTENSITY_RG] & 15 ;  ig = (ig << 4) | ig ;
+	ib = ps5_palette_ram[BG_PAL_INTENSITY_BU] >> 4 ;  ib = (ib << 4) | ib ;
+	ix = ps5_palette_ram[0x1ff] & 0x0f ;
 
-	for (i=0; i<256; i++)
+	/* for all of the background palette */
+	for (i = 0; i < 0x100; i++)
 	{
 		lo = ps5_palette_ram[0x400+i*2];
 		hi = ps5_palette_ram[0x400+i*2+1];
 
-		val  =  lo >> 4;
-		bit0 = (val >> 0) & 0x01;
-		bit1 = (val >> 1) & 0x01;
-		bit2 = (val >> 2) & 0x01;
-		bit3 = (val >> 3) & 0x01;
-
-		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		/* red component */
+		val  = (lo  >> 4) & 0x0f;
+		r = (val << 4) | val ;
 
 		/* green component */
-		val = lo & 15;
-		bit0 = (val >> 0) & 0x01;
-		bit1 = (val >> 1) & 0x01;
-		bit2 = (val >> 2) & 0x01;
-		bit3 = (val >> 3) & 0x01;
-
-		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		val  = (lo  & 15) & 0x0f;
+		g = (val << 4) | val ;
 
 		/* blue component */
-		val = hi >> 4;
-		bit0 = (val >> 0) & 0x01;
-		bit1 = (val >> 1) & 0x01;
-		bit2 = (val >> 2) & 0x01;
-		bit3 = (val >> 3) & 0x01;
+		val =  (hi  >> 4) & 0x0f;
+		b = (val << 4) | val ;
 
-		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-
-		/* grey background enable */
-
-		if (ps5_io_ram[BG_SCREEN_MODE] & 2)
+		/* Grey background enable */
+		if (ps5_io_ram[BG_SCREEN_MODE] & 0x02)
 		{
-			val = (UINT8)(0.299*r + 0.587*g + 0.114*b);
+			val = (UINT8)((r + g + b) / 3);		/* Grey */
 
- 			if (ix==2)		/* purple background enable */
-			 palette_set_color(256+i,val*0.6,0,val*0.8);
-			else			/* grey bg */
-			 palette_set_color(256+i,val,val,val);
+			if (ix != 0x0)						/* Tint the grey */
+			{
+				UINT32 result = jal_blend_func(MAKE_RGB(val,val,val), MAKE_RGB(ir, ig, ib), jal_blend_table[0xff]) ;
+				palette_set_color(0x100+i, RGB_RED(result), RGB_GREEN(result), RGB_BLUE(result)) ;
+			}
+			else								/* Just leave plain grey */
+			{
+				palette_set_color(0x100+i,val,val,val);
+			}
 		}
 		else
 		{
-
-			/* background intensity enable  TO DO BETTER !!! */
-
+			/* Seems fishy, but the title screen would be black otherwise... */
 			if (!title_screen)
 			{
-				r = (r>>4) * ir;
-	 		  	g = (g>>4) * ig;
- 			  	b = (b>>4) * ib;
+				if (ix != 0x0)		/* Tint the world */
+				{
+					UINT32 result = jal_blend_func(MAKE_RGB(r, g, b), MAKE_RGB(ir, ig, ib), jal_blend_table[0xff]) ;
+					palette_set_color(0x100+i, RGB_RED(result), RGB_GREEN(result), RGB_BLUE(result)) ;
+				}
+				else				/* Leave the world as-is */
+				{
+					palette_set_color(0x100+i,r,g,b) ;
+				}
 			}
-			palette_set_color(256+i,r,g,b);
 		}
 	}
 }
@@ -297,12 +281,14 @@ VIDEO_START( psychic5 )
 	ps5_dummy_bg_ram = auto_malloc(0x1000);
 	ps5_io_ram = auto_malloc(0x400);
 	ps5_palette_ram = auto_malloc(0xc00);
+	jal_blend_table = auto_malloc(0xc00);
 
 	memset(psychic5_bg_videoram, 0,0x1000);
 	memset(psychic5_fg_videoram,0,0x1000);
 	memset(ps5_dummy_bg_ram,0,0x1000);
 	memset(ps5_io_ram,0,0x400);
 	memset(ps5_palette_ram,0,0xc00);
+	memset(jal_blend_table,0,0xc00) ;
 
 	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_cols,
 		TILEMAP_OPAQUE, 16, 16, 64, 32);
@@ -321,7 +307,8 @@ VIDEO_START( psychic5 )
     return 0;
 }
 
-#define DRAW_SPRITE(code, sx, sy) drawgfx(bitmap, Machine->gfx[0], code, color, flipx, flipy, sx, sy, cliprect, TRANSPARENCY_PEN, 15);
+#define DRAW_SPRITE(code, sx, sy) jal_blend_drawgfx(bitmap, Machine->gfx[0], code, color, flipx, flipy, sx, sy, cliprect, TRANSPARENCY_PEN, 15);
+/* #define DRAW_SPRITE(code, sx, sy) drawgfx(bitmap, Machine->gfx[0], code, color, flipx, flipy, sx, sy, cliprect, TRANSPARENCY_PEN, 15); */
 
 void psychic5_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {

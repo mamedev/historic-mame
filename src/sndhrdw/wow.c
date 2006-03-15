@@ -16,9 +16,6 @@ wow_sh_status - Return busy status (-1 = busy)
 wow_port_2_r  - Returns status of voice port
 wow_sh_ update- Null
 
-If you need to alter the base frequency (i.e. Qbert) then just alter
-the variable wowBaseFrequency, this is defaulted to 8000
-
 **************************************************************************/
 
 #include "driver.h"
@@ -27,9 +24,6 @@ the variable wowBaseFrequency, this is defaulted to 8000
 #include "sound/custom.h"
 
 
-int	wowBaseFrequency;		/* Some games (Qbert) change this */
-int 	wowBaseVolume;
-int 	wowChannel = 0;
 struct  GameSamples *wowSamples;
 
 /****************************************************************************
@@ -109,20 +103,10 @@ const char *wow_sample_names[] =
 
 
 /* Total word to join the phonemes together - Global to make it easier to use */
-/* Note the definitions for these are global and defined in src/sndhrdw/gorf.c
-   (not great I know, but it will have to do for the moment ;) ) */
 
-extern char totalword[256], *totalword_ptr;
-extern char oldword[256];
-extern int plural;
-
-void *wow_sh_start(int clock, const struct CustomSound_interface *config)
-{
-	wowBaseFrequency = 11025;
-	wowBaseVolume = 230;
-	wowChannel = 0;
-	return auto_malloc(1);
-}
+static char totalword[256], *totalword_ptr;
+static char oldword[256];
+static int plural;
 
 READ8_HANDLER( wow_speech_r )
 {
@@ -140,7 +124,7 @@ READ8_HANDLER( wow_speech_r )
 //  logerror("Data : %d Speech : %s at intonation %d\n",Phoneme, PhonemeTable[Phoneme],Intonation);
 
 	if(Phoneme==63) {
-   		sample_stop(wowChannel);
+   		sample_stop(0);
 //              logerror("Clearing sample %s\n",totalword);
 				totalword[0] = 0;				   /* Clear the total word stack */
 				return data;
@@ -155,8 +139,8 @@ READ8_HANDLER( wow_speech_r )
 	   if (plural != 0) {
 //        logerror("found a possible plural at %d\n",plural-1);
 		  if (!strcmp("S",totalword)) {		   /* Plural check */
-			 sample_start(wowChannel, num_samples-2, 0);	   /* play the sample at position of word */
-			 sample_set_freq(wowChannel, wowBaseFrequency);    /* play at correct rate */
+			 sample_start(0, num_samples-2, 0);	   /* play the sample at position of word */
+			 sample_set_freq(0, 11025);    /* play at correct rate */
 			 totalword[0] = 0;				   /* Clear the total word stack */
 			 oldword[0] = 0;				   /* Clear the total word stack */
 			 return data;
@@ -179,8 +163,8 @@ READ8_HANDLER( wow_speech_r )
 		  } else {
 			 plural=0;
 		  }
-		  sample_start(wowChannel, i, 0);	                   /* play the sample at position of word */
-		  sample_set_freq(wowChannel, wowBaseFrequency);         /* play at correct rate */
+		  sample_start(0, i, 0);	                   /* play the sample at position of word */
+		  sample_set_freq(0, 11025);         /* play at correct rate */
 //        logerror("Playing sample %d\n",i);
 		  totalword[0] = 0;				   /* Clear the total word stack */
 		  return data;
@@ -193,8 +177,8 @@ READ8_HANDLER( wow_speech_r )
 
 int wow_status_r(void)
 {
-//  logerror("asked for samples status %d\n",wowChannel);
-	return !sample_playing(wowChannel);
+//  logerror("asked for samples status %d\n",0);
+	return !sample_playing(0);
 }
 
 /* Read from port 2 (0x12) returns speech status as 0x80 */

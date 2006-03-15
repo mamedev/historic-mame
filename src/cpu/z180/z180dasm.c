@@ -574,6 +574,8 @@ static int offs(INT8 offset)
 	return offset;
 }
 
+#define cpu_readmemz180 z180_readmem
+
 static unsigned z180_get_reg(int reg) { union cpuinfo info; z180_get_info(CPUINFO_INT_REGISTER + (reg), &info); return info.i; }
 
 /****************************************************************************

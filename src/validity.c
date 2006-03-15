@@ -423,6 +423,17 @@ static int validate_cpu(int drivnum, const machine_config *drv, const UINT32 *re
 			continue;
 		}
 
+		/* check the CPU for incompleteness */
+		if (!cputype_get_info_fct(cpu->cpu_type, CPUINFO_PTR_GET_CONTEXT)
+			|| !cputype_get_info_fct(cpu->cpu_type, CPUINFO_PTR_SET_CONTEXT)
+			|| !cputype_get_info_fct(cpu->cpu_type, CPUINFO_PTR_RESET)
+			|| !cputype_get_info_fct(cpu->cpu_type, CPUINFO_PTR_EXECUTE))
+		{
+			printf("%s: %s uses an incomplete CPU\n", driver->source_file, driver->name);
+			error = TRUE;
+			continue;
+		}
+
 		/* loop over all address spaces */
 		for (spacenum = 0; spacenum < ADDRESS_SPACES; spacenum++)
 		{

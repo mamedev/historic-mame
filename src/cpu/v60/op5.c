@@ -3,7 +3,7 @@
  *  HALT: must add log
  */
 
-UINT32 opBRK(void)
+static UINT32 opBRK(void)
 {
 /*
     UINT32 oldPSW = v60_update_psw_for_exception(0, 0);
@@ -22,7 +22,7 @@ UINT32 opBRK(void)
 	return 1;
 }
 
-UINT32 opBRKV(void)
+static UINT32 opBRKV(void)
 {
 	UINT32 oldPSW = v60_update_psw_for_exception(0, 0);
 
@@ -40,14 +40,14 @@ UINT32 opBRKV(void)
 	return 0;
 }
 
-UINT32 opCLRTLBA(void)
+static UINT32 opCLRTLBA(void)
 {
 	// @@@ TLB not yet supported
 	logerror("Skipping CLRTLBA opcode! PC=%x\n", PC);
 	return 1;
 }
 
-UINT32 opDISPOSE(void)
+static UINT32 opDISPOSE(void)
 {
 	SP = FP;
 	FP = MemRead32(SP);
@@ -56,19 +56,19 @@ UINT32 opDISPOSE(void)
 	return 1;
 }
 
-UINT32 opHALT(void)
+static UINT32 opHALT(void)
 {
 	// @@@ It should wait for an interrupt to occur
 	//logerror("HALT found: skipping");
 	return 1;
 }
 
-UINT32 opNOP(void) /* TRUSTED */
+static UINT32 opNOP(void) /* TRUSTED */
 {
 	return 1;
 }
 
-UINT32 opRSR(void)
+static UINT32 opRSR(void)
 {
 	PC = MemRead32(SP);
 	SP +=4;
@@ -77,7 +77,7 @@ UINT32 opRSR(void)
 	return 0;
 }
 
-UINT32 opTRAPFL(void)
+static UINT32 opTRAPFL(void)
 {
 	if ((TKCW & 0x1F0) & ((v60ReadPSW() & 0x1F00) >> 4))
 	{

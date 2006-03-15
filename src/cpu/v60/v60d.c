@@ -544,18 +544,6 @@ static int decode_F7c(const char *opnm, int opsize1, int opsize2, unsigned ipc, 
 	return ret+3;
 }
 
-static int (*dasm_optable[256])(unsigned ipc, unsigned pc, char *out);
-static int (*dasm_optable_58[64])(unsigned ipc, unsigned pc, char *out);
-static int (*dasm_optable_59[64])(unsigned ipc, unsigned pc, char *out);
-static int (*dasm_optable_5A[64])(unsigned ipc, unsigned pc, char *out);
-static int (*dasm_optable_5B[64])(unsigned ipc, unsigned pc, char *out);
-static int (*dasm_optable_5C[64])(unsigned ipc, unsigned pc, char *out);
-static int (*dasm_optable_5D[64])(unsigned ipc, unsigned pc, char *out);
-static int (*dasm_optable_5E[64])(unsigned ipc, unsigned pc, char *out);
-static int (*dasm_optable_5F[64])(unsigned ipc, unsigned pc, char *out);
-static int (*dasm_optable_C6[64])(unsigned ipc, unsigned pc, char *out);
-static int (*dasm_optable_C7[64])(unsigned ipc, unsigned pc, char *out);
-
 static int dopUNHANDLED(unsigned ipc, unsigned pc, char *out)
 {
 	sprintf(out, "$%02X", readop(pc));
@@ -565,6 +553,12 @@ static int dopUNHANDLED(unsigned ipc, unsigned pc, char *out)
 static int dop58UNHANDLED(unsigned ipc, unsigned pc, char *out)
 {
 	sprintf(out, "$58");
+	return 1;
+}
+
+static int dop59UNHANDLED(unsigned ipc, unsigned pc, char *out)
+{
+	sprintf(out, "$59");
 	return 1;
 }
 
@@ -602,68 +596,6 @@ static int dop5FUNHANDLED(unsigned ipc, unsigned pc, char *out)
 {
 	sprintf(out, "$5F");
 	return 1;
-}
-
-static int dopC6UNHANDLED(unsigned ipc, unsigned pc, char *out)
-{
-	sprintf(out, "$C6");
-	return 1;
-}
-
-static int dopC7UNHANDLED(unsigned ipc, unsigned pc, char *out)
-{
-	sprintf(out, "$C7");
-	return 1;
-}
-
-static int dop58(unsigned ipc, unsigned pc, char *out)
-{
-	return dasm_optable_58[readop(pc) & 0x1f](ipc, pc, out);
-}
-
-static int dop59(unsigned ipc, unsigned pc, char *out)
-{
-	return dasm_optable_59[readop(pc) & 0x1f](ipc, pc, out);
-}
-
-static int dop5A(unsigned ipc, unsigned pc, char *out)
-{
-	return dasm_optable_5A[readop(pc) & 0x1f](ipc, pc, out);
-}
-
-static int dop5B(unsigned ipc, unsigned pc, char *out)
-{
-	return dasm_optable_5B[readop(pc) & 0x1f](ipc, pc, out);
-}
-
-static int dop5C(unsigned ipc, unsigned pc, char *out)
-{
-	return dasm_optable_5C[readop(pc) & 0x1f](ipc, pc, out);
-}
-
-static int dop5D(unsigned ipc, unsigned pc, char *out)
-{
-	return dasm_optable_5D[readop(pc) & 0x1f](ipc, pc, out);
-}
-
-static int dop5E(unsigned ipc, unsigned pc, char *out)
-{
-	return dasm_optable_5E[readop(pc) & 0x1f](ipc, pc, out);
-}
-
-static int dop5F(unsigned ipc, unsigned pc, char *out)
-{
-	return dasm_optable_5F[readop(pc) & 0x1f](ipc, pc, out);
-}
-
-static int dopC6(unsigned ipc, unsigned pc, char *out)
-{
-	return dasm_optable_C6[readop(pc) >> 5](ipc, pc, out);
-}
-
-static int dopC7(unsigned ipc, unsigned pc, char *out)
-{
-	return dasm_optable_C7[readop(pc) >> 5](ipc, pc, out);
 }
 
 #define DEFINE_EASY_OPCODE(name, opnm, ftype, opsize1, opsize2) \
@@ -903,340 +835,627 @@ DEFINE_EASY_OPCODE(XORBSD, "xorbsd", F7b, 0x80, 0x80)
 DEFINE_EASY_OPCODE(XORNBSU, "xornbsu", F7b, 0x80, 0x80)
 DEFINE_EASY_OPCODE(XORNBSD, "xornbsd", F7b, 0x80, 0x80)
 
-void v60_dasm_init(void)
+static int (*const dasm_optable_58[32])(unsigned ipc, unsigned pc, char *out) =
 {
-	int i;
-	for (i=0;i<256;i++)
-		dasm_optable[i] = dopUNHANDLED;
+	/* 0x00 */ dopCMPCB,
+	/* 0x01 */ dopCMPCFB,
+	/* 0x02 */ dopCMPCSB,
+	/* 0x03 */ dop58UNHANDLED,
+	/* 0x04 */ dop58UNHANDLED,
+	/* 0x05 */ dop58UNHANDLED,
+	/* 0x06 */ dop58UNHANDLED,
+	/* 0x07 */ dop58UNHANDLED,
+	/* 0x08 */ dopMOVCUB,
+	/* 0x09 */ dopMOVCDB,
+	/* 0x0A */ dopMOVCFUB,
+	/* 0x0B */ dopMOVCFDB,
+	/* 0x0C */ dopMOVCSB,
+	/* 0x0D */ dop58UNHANDLED,
+	/* 0x0E */ dop58UNHANDLED,
+	/* 0x0F */ dop58UNHANDLED,
+	/* 0x10 */ dop58UNHANDLED,
+	/* 0x11 */ dop58UNHANDLED,
+	/* 0x12 */ dop58UNHANDLED,
+	/* 0x13 */ dop58UNHANDLED,
+	/* 0x14 */ dop58UNHANDLED,
+	/* 0x15 */ dop58UNHANDLED,
+	/* 0x16 */ dop58UNHANDLED,
+	/* 0x17 */ dop58UNHANDLED,
+	/* 0x18 */ dopSCHCUB,
+	/* 0x19 */ dopSCHCDB,
+	/* 0x1A */ dopSKPCUB,
+	/* 0x1B */ dopSKPCDB,
+	/* 0x1C */ dop58UNHANDLED,
+	/* 0x1D */ dop58UNHANDLED,
+	/* 0x1E */ dop58UNHANDLED,
+	/* 0x1F */ dop58UNHANDLED
+};
 
-	for (i=0; i<64; i++)
-	{
-		dasm_optable_58[i] = dop58UNHANDLED;
-		dasm_optable_59[i] = dop58UNHANDLED;
-		dasm_optable_5A[i] = dop5AUNHANDLED;
-		dasm_optable_5B[i] = dop5BUNHANDLED;
-		dasm_optable_5C[i] = dop5CUNHANDLED;
-		dasm_optable_5D[i] = dop5DUNHANDLED;
-		dasm_optable_5E[i] = dop5EUNHANDLED;
-		dasm_optable_5F[i] = dop5FUNHANDLED;
-		dasm_optable_C6[i] = dopC6UNHANDLED;
-		dasm_optable_C7[i] = dopC7UNHANDLED;
-	}
+static int (*const dasm_optable_59[32])(unsigned ipc, unsigned pc, char *out) =
+{
+	/* 0x00 */ dopADDDC,
+	/* 0x01 */ dopSUBDC,
+	/* 0x02 */ dopSUBRDC,
+	/* 0x03 */ dop59UNHANDLED,
+	/* 0x04 */ dop59UNHANDLED,
+	/* 0x05 */ dop59UNHANDLED,
+	/* 0x06 */ dop59UNHANDLED,
+	/* 0x07 */ dop59UNHANDLED,
+	/* 0x08 */ dop59UNHANDLED,
+	/* 0x09 */ dop59UNHANDLED,
+	/* 0x0A */ dop59UNHANDLED,
+	/* 0x0B */ dop59UNHANDLED,
+	/* 0x0C */ dop59UNHANDLED,
+	/* 0x0D */ dop59UNHANDLED,
+	/* 0x0E */ dop59UNHANDLED,
+	/* 0x0F */ dop59UNHANDLED,
+	/* 0x10 */ dopCVTDPZ,
+	/* 0x11 */ dop59UNHANDLED,
+	/* 0x12 */ dop59UNHANDLED,
+	/* 0x13 */ dop59UNHANDLED,
+	/* 0x14 */ dop59UNHANDLED,
+	/* 0x15 */ dop59UNHANDLED,
+	/* 0x16 */ dop59UNHANDLED,
+	/* 0x17 */ dop59UNHANDLED,
+	/* 0x18 */ dopCVTDZP,
+	/* 0x19 */ dop59UNHANDLED,
+	/* 0x1A */ dop59UNHANDLED,
+	/* 0x1B */ dop59UNHANDLED,
+	/* 0x1C */ dop59UNHANDLED,
+	/* 0x1D */ dop59UNHANDLED,
+	/* 0x1E */ dop59UNHANDLED,
+	/* 0x1F */ dop59UNHANDLED
+};
 
-	dasm_optable_58[0x00] = dopCMPCB;
-	dasm_optable_5A[0x00] = dopCMPCH;
-	dasm_optable_58[0x01] = dopCMPCFB;
-	dasm_optable_5A[0x01] = dopCMPCFH;
-	dasm_optable_58[0x02] = dopCMPCSB;
-	dasm_optable_5A[0x02] = dopCMPCSH;
-	dasm_optable_58[0x08] = dopMOVCUB;
-	dasm_optable_5A[0x08] = dopMOVCUH;
-	dasm_optable_58[0x09] = dopMOVCDB;
-	dasm_optable_5A[0x09] = dopMOVCDH;
-	dasm_optable_58[0x0A] = dopMOVCFUB;
-	dasm_optable_5A[0x0A] = dopMOVCFUH;
-	dasm_optable_58[0x0B] = dopMOVCFDB;
-	dasm_optable_5A[0x0B] = dopMOVCFDH;
-	dasm_optable_58[0x0C] = dopMOVCSB;
-	dasm_optable_5A[0x0C] = dopMOVCSH;
-	dasm_optable_58[0x18] = dopSCHCUB;
-	dasm_optable_5A[0x18] = dopSCHCUH;
-	dasm_optable_58[0x19] = dopSCHCDB;
-	dasm_optable_5A[0x19] = dopSCHCDH;
-	dasm_optable_58[0x1A] = dopSKPCUB;
-	dasm_optable_5A[0x1A] = dopSKPCUH;
-	dasm_optable_58[0x1B] = dopSKPCDB;
-	dasm_optable_5A[0x1B] = dopSKPCDH;
+static int (*const dasm_optable_5A[32])(unsigned ipc, unsigned pc, char *out) =
+{
+	/* 0x00 */ dopCMPCH,
+	/* 0x01 */ dopCMPCFH,
+	/* 0x02 */ dopCMPCSH,
+	/* 0x03 */ dop5AUNHANDLED,
+	/* 0x04 */ dop5AUNHANDLED,
+	/* 0x05 */ dop5AUNHANDLED,
+	/* 0x06 */ dop5AUNHANDLED,
+	/* 0x07 */ dop5AUNHANDLED,
+	/* 0x08 */ dopMOVCUH,
+	/* 0x09 */ dopMOVCDH,
+	/* 0x0A */ dopMOVCFUH,
+	/* 0x0B */ dopMOVCFDH,
+	/* 0x0C */ dopMOVCSH,
+	/* 0x0D */ dop5AUNHANDLED,
+	/* 0x0E */ dop5AUNHANDLED,
+	/* 0x0F */ dop5AUNHANDLED,
+	/* 0x10 */ dop5AUNHANDLED,
+	/* 0x11 */ dop5AUNHANDLED,
+	/* 0x12 */ dop5AUNHANDLED,
+	/* 0x13 */ dop5AUNHANDLED,
+	/* 0x14 */ dop5AUNHANDLED,
+	/* 0x15 */ dop5AUNHANDLED,
+	/* 0x16 */ dop5AUNHANDLED,
+	/* 0x17 */ dop5AUNHANDLED,
+	/* 0x18 */ dopSCHCUH,
+	/* 0x19 */ dopSCHCDH,
+	/* 0x1A */ dopSKPCUH,
+	/* 0x1B */ dopSKPCDH,
+	/* 0x1C */ dop5AUNHANDLED,
+	/* 0x1D */ dop5AUNHANDLED,
+	/* 0x1E */ dop5AUNHANDLED,
+	/* 0x1F */ dop5AUNHANDLED
+};
 
-	dasm_optable_5C[0x00] = dopCMPFS;
-	dasm_optable_5E[0x00] = dopCMPFL;
-	dasm_optable_5C[0x08] = dopMOVFS;
-	dasm_optable_5E[0x08] = dopMOVFL;
-	dasm_optable_5C[0x09] = dopNEGFS;
-	dasm_optable_5E[0x09] = dopNEGFL;
-	dasm_optable_5C[0x0A] = dopABSFS;
-	dasm_optable_5E[0x0A] = dopABSFL;
-	dasm_optable_5C[0x10] = dopSCLFS;
-	dasm_optable_5E[0x10] = dopSCLFL;
-	dasm_optable_5C[0x18] = dopADDFS;
-	dasm_optable_5E[0x18] = dopADDFL;
-	dasm_optable_5C[0x19] = dopSUBFS;
-	dasm_optable_5E[0x19] = dopSUBFL;
-	dasm_optable_5C[0x1A] = dopMULFS;
-	dasm_optable_5E[0x1A] = dopMULFL;
-	dasm_optable_5C[0x1B] = dopDIVFS;
-	dasm_optable_5E[0x1B] = dopDIVFL;
+static int (*const dasm_optable_5B[32])(unsigned ipc, unsigned pc, char *out) =
+{
+	/* 0x00 */ dopSCH0BSU,
+	/* 0x01 */ dopSCH0BSD,
+	/* 0x02 */ dopSCH1BSU,
+	/* 0x03 */ dopSCH1BSD,
+	/* 0x04 */ dop5BUNHANDLED,
+	/* 0x05 */ dop5BUNHANDLED,
+	/* 0x06 */ dop5BUNHANDLED,
+	/* 0x07 */ dop5BUNHANDLED,
+	/* 0x08 */ dopMOVBSU,
+	/* 0x09 */ dopMOVBSD,
+	/* 0x0A */ dopNOTBSU,
+	/* 0x0B */ dopNOTBSD,
+	/* 0x0C */ dop5BUNHANDLED,
+	/* 0x0D */ dop5BUNHANDLED,
+	/* 0x0E */ dop5BUNHANDLED,
+	/* 0x0F */ dop5BUNHANDLED,
+	/* 0x10 */ dopANDBSU,
+	/* 0x11 */ dopANDBSD,
+	/* 0x12 */ dopANDNBSU,
+	/* 0x13 */ dopANDNBSD,
+	/* 0x14 */ dopORBSU,
+	/* 0x15 */ dopORBSD,
+	/* 0x16 */ dopORNBSU,
+	/* 0x17 */ dopORNBSD,
+	/* 0x18 */ dopXORBSU,
+	/* 0x19 */ dopXORBSD,
+	/* 0x1A */ dopXORNBSU,
+	/* 0x1B */ dopXORNBSD,
+	/* 0x1C */ dop5BUNHANDLED,
+	/* 0x1D */ dop5BUNHANDLED,
+	/* 0x1E */ dop5BUNHANDLED,
+	/* 0x1F */ dop5BUNHANDLED
+};
 
-	dasm_optable_59[0x00] = dopADDDC;
-	dasm_optable_59[0x01] = dopSUBDC;
-	dasm_optable_59[0x02] = dopSUBRDC;
-	dasm_optable_59[0x10] = dopCVTDPZ;
-	dasm_optable_59[0x18] = dopCVTDZP;
+static int (*const dasm_optable_5C[32])(unsigned ipc, unsigned pc, char *out) =
+{
+	/* 0x00 */ dopCMPFS,
+	/* 0x01 */ dop5CUNHANDLED,
+	/* 0x02 */ dop5CUNHANDLED,
+	/* 0x03 */ dop5CUNHANDLED,
+	/* 0x04 */ dop5CUNHANDLED,
+	/* 0x05 */ dop5CUNHANDLED,
+	/* 0x06 */ dop5CUNHANDLED,
+	/* 0x07 */ dop5CUNHANDLED,
+	/* 0x08 */ dopMOVFS,
+	/* 0x09 */ dopNEGFS,
+	/* 0x0A */ dopABSFS,
+	/* 0x0B */ dop5CUNHANDLED,
+	/* 0x0C */ dop5CUNHANDLED,
+	/* 0x0D */ dop5CUNHANDLED,
+	/* 0x0E */ dop5CUNHANDLED,
+	/* 0x0F */ dop5CUNHANDLED,
+	/* 0x10 */ dopSCLFS,
+	/* 0x11 */ dop5CUNHANDLED,
+	/* 0x12 */ dop5CUNHANDLED,
+	/* 0x13 */ dop5CUNHANDLED,
+	/* 0x14 */ dop5CUNHANDLED,
+	/* 0x15 */ dop5CUNHANDLED,
+	/* 0x16 */ dop5CUNHANDLED,
+	/* 0x17 */ dop5CUNHANDLED,
+	/* 0x18 */ dopADDFS,
+	/* 0x19 */ dopSUBFS,
+	/* 0x1A */ dopMULFS,
+	/* 0x1B */ dopDIVFS,
+	/* 0x1C */ dop5CUNHANDLED,
+	/* 0x1D */ dop5CUNHANDLED,
+	/* 0x1E */ dop5CUNHANDLED,
+	/* 0x1F */ dop5CUNHANDLED
+};
 
-	dasm_optable_5F[0x00] = dopCVTWS;
-	dasm_optable_5F[0x01] = dopCVTSW;
-	dasm_optable_5F[0x08] = dopCVTLS;
-	dasm_optable_5F[0x09] = dopCVTLW;
-	dasm_optable_5F[0x10] = dopCVTSL;
-	dasm_optable_5F[0x11] = dopCVTWL;
+static int (*const dasm_optable_5D[32])(unsigned ipc, unsigned pc, char *out) =
+{
+	/* 0x00 */ dopCMPBFS,
+	/* 0x01 */ dopCMPBFZ,
+	/* 0x02 */ dopCMPBFL,
+	/* 0x03 */ dop5DUNHANDLED,
+	/* 0x04 */ dop5DUNHANDLED,
+	/* 0x05 */ dop5DUNHANDLED,
+	/* 0x06 */ dop5DUNHANDLED,
+	/* 0x07 */ dop5DUNHANDLED,
+	/* 0x08 */ dopEXTBFS,
+	/* 0x09 */ dopEXTBFZ,
+	/* 0x0A */ dopEXTBFL,
+	/* 0x0B */ dop5DUNHANDLED,
+	/* 0x0C */ dop5DUNHANDLED,
+	/* 0x0D */ dop5DUNHANDLED,
+	/* 0x0E */ dop5DUNHANDLED,
+	/* 0x0F */ dop5DUNHANDLED,
+	/* 0x10 */ dop5DUNHANDLED,
+	/* 0x11 */ dop5DUNHANDLED,
+	/* 0x12 */ dop5DUNHANDLED,
+	/* 0x13 */ dop5DUNHANDLED,
+	/* 0x14 */ dop5DUNHANDLED,
+	/* 0x15 */ dop5DUNHANDLED,
+	/* 0x16 */ dop5DUNHANDLED,
+	/* 0x17 */ dop5DUNHANDLED,
+	/* 0x18 */ dopINSBFR,
+	/* 0x19 */ dopINSBFL,
+	/* 0x1A */ dop5DUNHANDLED,
+	/* 0x1B */ dop5DUNHANDLED,
+	/* 0x1C */ dop5DUNHANDLED,
+	/* 0x1D */ dop5DUNHANDLED,
+	/* 0x1E */ dop5DUNHANDLED,
+	/* 0x1F */ dop5DUNHANDLED
+};
 
-	dasm_optable_5B[0x00] = dopSCH0BSU;
-	dasm_optable_5B[0x01] = dopSCH0BSD;
-	dasm_optable_5B[0x02] = dopSCH1BSU;
-	dasm_optable_5B[0x03] = dopSCH1BSD;
-	dasm_optable_5B[0x08] = dopMOVBSU;
-	dasm_optable_5B[0x09] = dopMOVBSD;
-	dasm_optable_5B[0x0A] = dopNOTBSU;
-	dasm_optable_5B[0x0B] = dopNOTBSD;
-	dasm_optable_5B[0x10] = dopANDBSU;
-	dasm_optable_5B[0x11] = dopANDBSD;
-	dasm_optable_5B[0x12] = dopANDNBSU;
-	dasm_optable_5B[0x13] = dopANDNBSD;
-	dasm_optable_5B[0x14] = dopORBSU;
-	dasm_optable_5B[0x15] = dopORBSD;
-	dasm_optable_5B[0x16] = dopORNBSU;
-	dasm_optable_5B[0x17] = dopORNBSD;
-	dasm_optable_5B[0x18] = dopXORBSU;
-	dasm_optable_5B[0x19] = dopXORBSD;
-	dasm_optable_5B[0x1A] = dopXORNBSU;
-	dasm_optable_5B[0x1B] = dopXORNBSD;
+static int (*const dasm_optable_5E[32])(unsigned ipc, unsigned pc, char *out) =
+{
+	/* 0x00 */ dopCMPFL,
+	/* 0x01 */ dop5EUNHANDLED,
+	/* 0x02 */ dop5EUNHANDLED,
+	/* 0x03 */ dop5EUNHANDLED,
+	/* 0x04 */ dop5EUNHANDLED,
+	/* 0x05 */ dop5EUNHANDLED,
+	/* 0x06 */ dop5EUNHANDLED,
+	/* 0x07 */ dop5EUNHANDLED,
+	/* 0x08 */ dopMOVFL,
+	/* 0x09 */ dopNEGFL,
+	/* 0x0A */ dopABSFL,
+	/* 0x0B */ dop5EUNHANDLED,
+	/* 0x0C */ dop5EUNHANDLED,
+	/* 0x0D */ dop5EUNHANDLED,
+	/* 0x0E */ dop5EUNHANDLED,
+	/* 0x0F */ dop5EUNHANDLED,
+	/* 0x10 */ dopSCLFL,
+	/* 0x11 */ dop5EUNHANDLED,
+	/* 0x12 */ dop5EUNHANDLED,
+	/* 0x13 */ dop5EUNHANDLED,
+	/* 0x14 */ dop5EUNHANDLED,
+	/* 0x15 */ dop5EUNHANDLED,
+	/* 0x16 */ dop5EUNHANDLED,
+	/* 0x17 */ dop5EUNHANDLED,
+	/* 0x18 */ dopADDFL,
+	/* 0x19 */ dopSUBFL,
+	/* 0x1A */ dopMULFL,
+	/* 0x1B */ dopDIVFL,
+	/* 0x1C */ dop5EUNHANDLED,
+	/* 0x1D */ dop5EUNHANDLED,
+	/* 0x1E */ dop5EUNHANDLED,
+	/* 0x1F */ dop5EUNHANDLED
+};
 
-	dasm_optable_5D[0x00] = dopCMPBFS;
-	dasm_optable_5D[0x01] = dopCMPBFZ;
-	dasm_optable_5D[0x02] = dopCMPBFL;
-	dasm_optable_5D[0x08] = dopEXTBFS;
-	dasm_optable_5D[0x09] = dopEXTBFZ;
-	dasm_optable_5D[0x0A] = dopEXTBFL;
-	dasm_optable_5D[0x18] = dopINSBFR;
-	dasm_optable_5D[0x19] = dopINSBFL;
+static int (*const dasm_optable_5F[32])(unsigned ipc, unsigned pc, char *out) =
+{
+	/* 0x00 */ dopCVTWS,
+	/* 0x01 */ dopCVTSW,
+	/* 0x02 */ dop5FUNHANDLED,
+	/* 0x03 */ dop5FUNHANDLED,
+	/* 0x04 */ dop5FUNHANDLED,
+	/* 0x05 */ dop5FUNHANDLED,
+	/* 0x06 */ dop5FUNHANDLED,
+	/* 0x07 */ dop5FUNHANDLED,
+	/* 0x08 */ dopCVTLS,
+	/* 0x09 */ dopCVTLW,
+	/* 0x0A */ dop5FUNHANDLED,
+	/* 0x0B */ dop5FUNHANDLED,
+	/* 0x0C */ dop5FUNHANDLED,
+	/* 0x0D */ dop5FUNHANDLED,
+	/* 0x0E */ dop5FUNHANDLED,
+	/* 0x0F */ dop5FUNHANDLED,
+	/* 0x10 */ dopCVTSL,
+	/* 0x11 */ dopCVTWL,
+	/* 0x12 */ dop5FUNHANDLED,
+	/* 0x13 */ dop5FUNHANDLED,
+	/* 0x14 */ dop5FUNHANDLED,
+	/* 0x15 */ dop5FUNHANDLED,
+	/* 0x16 */ dop5FUNHANDLED,
+	/* 0x17 */ dop5FUNHANDLED,
+	/* 0x18 */ dop5FUNHANDLED,
+	/* 0x19 */ dop5FUNHANDLED,
+	/* 0x1A */ dop5FUNHANDLED,
+	/* 0x1B */ dop5FUNHANDLED,
+	/* 0x1C */ dop5FUNHANDLED,
+	/* 0x1D */ dop5FUNHANDLED,
+	/* 0x1E */ dop5FUNHANDLED,
+	/* 0x1F */ dop5FUNHANDLED
+};
 
-	dasm_optable_C7[0x7] = dopDBGT;
-	dasm_optable_C7[0x6] = dopDBGE;
-	dasm_optable_C6[0x6] = dopDBLT;
-	dasm_optable_C6[0x7] = dopDBLE;
-	dasm_optable_C7[0x3] = dopDBH;
-	dasm_optable_C7[0x1] = dopDBNL;
-	dasm_optable_C6[0x1] = dopDBL;
-	dasm_optable_C6[0x3] = dopDBNH;
-	dasm_optable_C6[0x2] = dopDBE;
-	dasm_optable_C7[0x2] = dopDBNE;
-	dasm_optable_C6[0x0] = dopDBV;
-	dasm_optable_C7[0x0] = dopDBNV;
-	dasm_optable_C6[0x4] = dopDBN;
-	dasm_optable_C7[0x4] = dopDBP;
-	dasm_optable_C6[0x5] = dopDBR;
-	dasm_optable_C7[0x5] = dopTB;
+static int (*const dasm_optable_C6[8])(unsigned ipc, unsigned pc, char *out) =
+{
+	/* 0x0 */ dopDBV,
+	/* 0x1 */ dopDBL,
+	/* 0x2 */ dopDBE,
+	/* 0x3 */ dopDBNH,
+	/* 0x4 */ dopDBN,
+	/* 0x5 */ dopDBR,
+	/* 0x6 */ dopDBLT,
+	/* 0x7 */ dopDBLE
+};
 
-	dasm_optable[0x00] = dopHALT;
-	dasm_optable[0x01] = dopLDTASK;
-	dasm_optable[0x02] = dopSTPR;
-	dasm_optable[0x03] = dopGETRA;
-	dasm_optable[0x04] = dopGETPTE;
-	dasm_optable[0x05] = dopGETATE;
-	dasm_optable[0x08] = dopRVBIT;
-	dasm_optable[0x09] = dopMOVB;
-	dasm_optable[0x0A] = dopMOVSBH;
-	dasm_optable[0x0B] = dopMOVZBH;
-	dasm_optable[0x0C] = dopMOVSBW;
-	dasm_optable[0x0D] = dopMOVZBW;
-	dasm_optable[0x10] = dopCLRTLBA;
-	dasm_optable[0x12] = dopLDPR;
-	dasm_optable[0x13] = dopUPDPSWW;
-	dasm_optable[0x14] = dopUPDPTE;
-	dasm_optable[0x15] = dopUPDATE;
-	dasm_optable[0x19] = dopMOVTHB;
-	dasm_optable[0x1B] = dopMOVH;
-	dasm_optable[0x1C] = dopMOVSHW;
-	dasm_optable[0x1D] = dopMOVZHW;
-	dasm_optable[0x20] = dopINB;
-	dasm_optable[0x21] = dopOUTB;
-	dasm_optable[0x22] = dopINH;
-	dasm_optable[0x23] = dopOUTH;
-	dasm_optable[0x24] = dopINW;
-	dasm_optable[0x25] = dopOUTW;
-	dasm_optable[0x29] = dopMOVTWB;
-	dasm_optable[0x2B] = dopMOVTWH;
-	dasm_optable[0x2C] = dopRVBYT;
-	dasm_optable[0x2D] = dopMOVW;
-	dasm_optable[0x38] = dopNOTB;
-	dasm_optable[0x39] = dopNEGB;
-	dasm_optable[0x3A] = dopNOTH;
-	dasm_optable[0x3B] = dopNEGH;
-	dasm_optable[0x3C] = dopNOTW;
-	dasm_optable[0x3D] = dopNEGW;
-	dasm_optable[0x3F] = dopMOVD;
-	dasm_optable[0x40] = dopMOVEAB;
-	dasm_optable[0x41] = dopXCHB;
-	dasm_optable[0x42] = dopMOVEAH;
-	dasm_optable[0x43] = dopXCHH;
-	dasm_optable[0x44] = dopMOVEAW;
-	dasm_optable[0x45] = dopXCHW;
-	dasm_optable[0x47] = dopSETF;
-	dasm_optable[0x48] = dopBSR;
-	dasm_optable[0x49] = dopCALL;
-	dasm_optable[0x4A] = dopUPDPSWH;
-	dasm_optable[0x4B] = dopCHLVL;
-	dasm_optable[0x4C] = dopCAXI;
-	dasm_optable[0x4D] = dopCHKAR;
-	dasm_optable[0x4E] = dopCHKAW;
-	dasm_optable[0x4F] = dopCHKAE;
-	dasm_optable[0x50] = dopREMB;
-	dasm_optable[0x51] = dopREMUB;
-	dasm_optable[0x52] = dopREMH;
-	dasm_optable[0x53] = dopREMUH;
-	dasm_optable[0x54] = dopREMW;
-	dasm_optable[0x55] = dopREMUW;
-	dasm_optable[0x58] = dop58;
-	dasm_optable[0x59] = dop59;
-	dasm_optable[0x5A] = dop5A;
-	dasm_optable[0x5B] = dop5B;
-	dasm_optable[0x5C] = dop5C;
-	dasm_optable[0x5D] = dop5D;
-	dasm_optable[0x5E] = dop5E;
-	dasm_optable[0x5F] = dop5F;
-	dasm_optable[0x60] = dopBV8;
-	dasm_optable[0x61] = dopBNV8;
-	dasm_optable[0x62] = dopBL8;
-	dasm_optable[0x63] = dopBNL8;
-	dasm_optable[0x64] = dopBE8;
-	dasm_optable[0x65] = dopBNE8;
-	dasm_optable[0x66] = dopBNH8;
-	dasm_optable[0x67] = dopBH8;
-	dasm_optable[0x68] = dopBN8;
-	dasm_optable[0x69] = dopBP8;
-	dasm_optable[0x6A] = dopBR8;
-	dasm_optable[0x6C] = dopBLT8;
-	dasm_optable[0x6D] = dopBGE8;
-	dasm_optable[0x6E] = dopBLE8;
-	dasm_optable[0x6F] = dopBGT8;
-	dasm_optable[0x70] = dopBV16;
-	dasm_optable[0x71] = dopBNV16;
-	dasm_optable[0x72] = dopBL16;
-	dasm_optable[0x73] = dopBNL16;
-	dasm_optable[0x74] = dopBE16;
-	dasm_optable[0x75] = dopBNE16;
-	dasm_optable[0x76] = dopBNH16;
-	dasm_optable[0x77] = dopBH16;
-	dasm_optable[0x78] = dopBN16;
-	dasm_optable[0x79] = dopBP16;
-	dasm_optable[0x7A] = dopBR16;
-	dasm_optable[0x7C] = dopBLT16;
-	dasm_optable[0x7D] = dopBGE16;
-	dasm_optable[0x7E] = dopBLE16;
-	dasm_optable[0x7F] = dopBGT16;
-	dasm_optable[0x80] = dopADDB;
-	dasm_optable[0x81] = dopMULB;
-	dasm_optable[0x82] = dopADDH;
-	dasm_optable[0x83] = dopMULH;
-	dasm_optable[0x84] = dopADDW;
-	dasm_optable[0x85] = dopMULW;
-	dasm_optable[0x86] = dopMULX;
-	dasm_optable[0x87] = dopTEST1;
-	dasm_optable[0x88] = dopORB;
-	dasm_optable[0x89] = dopROTB;
-	dasm_optable[0x8A] = dopORH;
-	dasm_optable[0x8B] = dopROTH;
-	dasm_optable[0x8C] = dopORW;
-	dasm_optable[0x8D] = dopROTW;
-	dasm_optable[0x90] = dopADDCB;
-	dasm_optable[0x91] = dopMULUB;
-	dasm_optable[0x92] = dopADDCH;
-	dasm_optable[0x93] = dopMULUH;
-	dasm_optable[0x94] = dopADDCW;
-	dasm_optable[0x95] = dopMULUW;
-	dasm_optable[0x96] = dopMULUX;
-	dasm_optable[0x97] = dopSET1;
-	dasm_optable[0x98] = dopSUBCB;
-	dasm_optable[0x99] = dopROTCB;
-	dasm_optable[0x9A] = dopSUBCH;
-	dasm_optable[0x9B] = dopROTCH;
-	dasm_optable[0x9C] = dopSUBCW;
-	dasm_optable[0x9D] = dopROTCW;
-	dasm_optable[0xA0] = dopANDB;
-	dasm_optable[0xA1] = dopDIVB;
-	dasm_optable[0xA2] = dopANDH;
-	dasm_optable[0xA3] = dopDIVH;
-	dasm_optable[0xA4] = dopANDW;
-	dasm_optable[0xA5] = dopDIVW;
-	dasm_optable[0xA6] = dopDIVX;
-	dasm_optable[0xA7] = dopCLR1;
-	dasm_optable[0xA8] = dopSUBB;
-	dasm_optable[0xA9] = dopSHLB;
-	dasm_optable[0xAA] = dopSUBH;
-	dasm_optable[0xAB] = dopSHLH;
-	dasm_optable[0xAC] = dopSUBW;
-	dasm_optable[0xAD] = dopSHLW;
-	dasm_optable[0xB0] = dopXORB;
-	dasm_optable[0xB1] = dopDIVUB;
-	dasm_optable[0xB2] = dopXORH;
-	dasm_optable[0xB3] = dopDIVUH;
-	dasm_optable[0xB4] = dopXORW;
-	dasm_optable[0xB5] = dopDIVUW;
-	dasm_optable[0xB6] = dopDIVUX;
-	dasm_optable[0xB7] = dopNOT1;
-	dasm_optable[0xB8] = dopCMPB;
-	dasm_optable[0xB9] = dopSHAB;
-	dasm_optable[0xBA] = dopCMPH;
-	dasm_optable[0xBB] = dopSHAH;
-	dasm_optable[0xBC] = dopCMPW;
-	dasm_optable[0xBD] = dopSHAW;
-	dasm_optable[0xC6] = dopC6;
-	dasm_optable[0xC7] = dopC7;
-	dasm_optable[0xC8] = dopBRK;
-	dasm_optable[0xC9] = dopBRKV;
-	dasm_optable[0xCA] = dopRSR;
-	dasm_optable[0xCB] = dopTRAPFL;
-	dasm_optable[0xCC] = dopDISPOSE;
-	dasm_optable[0xCD] = dopNOP;
-	dasm_optable[0xD0] = dopDECB;
-	dasm_optable[0xD1] = dopDECB;
-	dasm_optable[0xD2] = dopDECH;
-	dasm_optable[0xD3] = dopDECH;
-	dasm_optable[0xD4] = dopDECW;
-	dasm_optable[0xD5] = dopDECW;
-	dasm_optable[0xD6] = dopJMP;
-	dasm_optable[0xD7] = dopJMP;
-	dasm_optable[0xD8] = dopINCB;
-	dasm_optable[0xD9] = dopINCB;
-	dasm_optable[0xDA] = dopINCH;
-	dasm_optable[0xDB] = dopINCH;
-	dasm_optable[0xDC] = dopINCW;
-	dasm_optable[0xDD] = dopINCW;
-	dasm_optable[0xDE] = dopPREPARE;
-	dasm_optable[0xDF] = dopPREPARE;
-	dasm_optable[0xE0] = dopTASI;
-	dasm_optable[0xE1] = dopTASI;
-	dasm_optable[0xE2] = dopRET;
-	dasm_optable[0xE3] = dopRET;
-	dasm_optable[0xE4] = dopPOPM;
-	dasm_optable[0xE5] = dopPOPM;
-	dasm_optable[0xE6] = dopPOP;
-	dasm_optable[0xE7] = dopPOP;
-	dasm_optable[0xE8] = dopJSR;
-	dasm_optable[0xE9] = dopJSR;
-	dasm_optable[0xEA] = dopRETIU;
-	dasm_optable[0xEB] = dopRETIU;
-	dasm_optable[0xEC] = dopPUSHM;
-	dasm_optable[0xED] = dopPUSHM;
-	dasm_optable[0xEE] = dopPUSH;
-	dasm_optable[0xEF] = dopPUSH;
-	dasm_optable[0xF0] = dopTESTB;
-	dasm_optable[0xF1] = dopTESTB;
-	dasm_optable[0xF2] = dopTESTH;
-	dasm_optable[0xF3] = dopTESTH;
-	dasm_optable[0xF4] = dopTESTW;
-	dasm_optable[0xF5] = dopTESTW;
-	dasm_optable[0xFA] = dopRETIS;
-	dasm_optable[0xFB] = dopRETIS;
-	dasm_optable[0xF6] = dopGETPSW;
-	dasm_optable[0xF7] = dopGETPSW;
-	dasm_optable[0xF8] = dopTRAP;
-	dasm_optable[0xF9] = dopTRAP;
-	dasm_optable[0xFC] = dopSTTASK;
-	dasm_optable[0xFD] = dopSTTASK;
-	dasm_optable[0xFE] = dopCLRTLB;
-	dasm_optable[0xFF] = dopCLRTLB;
+static int (*const dasm_optable_C7[8])(unsigned ipc, unsigned pc, char *out) =
+{
+	/* 0x0 */ dopDBNV,
+	/* 0x1 */ dopDBNL,
+	/* 0x2 */ dopDBNE,
+	/* 0x3 */ dopDBH,
+	/* 0x4 */ dopDBP,
+	/* 0x5 */ dopTB,
+	/* 0x6 */ dopDBGE,
+	/* 0x7 */ dopDBGT
+};
+
+static int dop58(unsigned ipc, unsigned pc, char *out)
+{
+	return dasm_optable_58[readop(pc) & 0x1f](ipc, pc, out);
 }
+
+static int dop59(unsigned ipc, unsigned pc, char *out)
+{
+	return dasm_optable_59[readop(pc) & 0x1f](ipc, pc, out);
+}
+
+static int dop5A(unsigned ipc, unsigned pc, char *out)
+{
+	return dasm_optable_5A[readop(pc) & 0x1f](ipc, pc, out);
+}
+
+static int dop5B(unsigned ipc, unsigned pc, char *out)
+{
+	return dasm_optable_5B[readop(pc) & 0x1f](ipc, pc, out);
+}
+
+static int dop5C(unsigned ipc, unsigned pc, char *out)
+{
+	return dasm_optable_5C[readop(pc) & 0x1f](ipc, pc, out);
+}
+
+static int dop5D(unsigned ipc, unsigned pc, char *out)
+{
+	return dasm_optable_5D[readop(pc) & 0x1f](ipc, pc, out);
+}
+
+static int dop5E(unsigned ipc, unsigned pc, char *out)
+{
+	return dasm_optable_5E[readop(pc) & 0x1f](ipc, pc, out);
+}
+
+static int dop5F(unsigned ipc, unsigned pc, char *out)
+{
+	return dasm_optable_5F[readop(pc) & 0x1f](ipc, pc, out);
+}
+
+static int dopC6(unsigned ipc, unsigned pc, char *out)
+{
+	return dasm_optable_C6[readop(pc) >> 5](ipc, pc, out);
+}
+
+static int dopC7(unsigned ipc, unsigned pc, char *out)
+{
+	return dasm_optable_C7[readop(pc) >> 5](ipc, pc, out);
+}
+
+static int (*const dasm_optable[256])(unsigned ipc, unsigned pc, char *out) =
+{
+	/* 0x00 */ dopHALT,
+	/* 0x01 */ dopLDTASK,
+	/* 0x02 */ dopSTPR,
+	/* 0x03 */ dopGETRA,
+	/* 0x04 */ dopGETPTE,
+	/* 0x05 */ dopGETATE,
+	/* 0x06 */ dopUNHANDLED,
+	/* 0x07 */ dopUNHANDLED,
+	/* 0x08 */ dopRVBIT,
+	/* 0x09 */ dopMOVB,
+	/* 0x0A */ dopMOVSBH,
+	/* 0x0B */ dopMOVZBH,
+	/* 0x0C */ dopMOVSBW,
+	/* 0x0D */ dopMOVZBW,
+	/* 0x0E */ dopUNHANDLED,
+	/* 0x0F */ dopUNHANDLED,
+	/* 0x10 */ dopCLRTLBA,
+	/* 0x11 */ dopUNHANDLED,
+	/* 0x12 */ dopLDPR,
+	/* 0x13 */ dopUPDPSWW,
+	/* 0x14 */ dopUPDPTE,
+	/* 0x15 */ dopUPDATE,
+	/* 0x16 */ dopUNHANDLED,
+	/* 0x17 */ dopUNHANDLED,
+	/* 0x18 */ dopUNHANDLED,
+	/* 0x19 */ dopMOVTHB,
+	/* 0x1A */ dopUNHANDLED,
+	/* 0x1B */ dopMOVH,
+	/* 0x1C */ dopMOVSHW,
+	/* 0x1D */ dopMOVZHW,
+	/* 0x1E */ dopUNHANDLED,
+	/* 0x1F */ dopUNHANDLED,
+	/* 0x20 */ dopINB,
+	/* 0x21 */ dopOUTB,
+	/* 0x22 */ dopINH,
+	/* 0x23 */ dopOUTH,
+	/* 0x24 */ dopINW,
+	/* 0x25 */ dopOUTW,
+	/* 0x26 */ dopUNHANDLED,
+	/* 0x27 */ dopUNHANDLED,
+	/* 0x28 */ dopUNHANDLED,
+	/* 0x29 */ dopMOVTWB,
+	/* 0x2A */ dopUNHANDLED,
+	/* 0x2B */ dopMOVTWH,
+	/* 0x2C */ dopRVBYT,
+	/* 0x2D */ dopMOVW,
+	/* 0x2E */ dopUNHANDLED,
+	/* 0x2F */ dopUNHANDLED,
+	/* 0x30 */ dopUNHANDLED,
+	/* 0x31 */ dopUNHANDLED,
+	/* 0x32 */ dopUNHANDLED,
+	/* 0x33 */ dopUNHANDLED,
+	/* 0x34 */ dopUNHANDLED,
+	/* 0x35 */ dopUNHANDLED,
+	/* 0x36 */ dopUNHANDLED,
+	/* 0x37 */ dopUNHANDLED,
+	/* 0x38 */ dopNOTB,
+	/* 0x39 */ dopNEGB,
+	/* 0x3A */ dopNOTH,
+	/* 0x3B */ dopNEGH,
+	/* 0x3C */ dopNOTW,
+	/* 0x3D */ dopNEGW,
+	/* 0x3E */ dopUNHANDLED,
+	/* 0x3F */ dopMOVD,
+	/* 0x40 */ dopMOVEAB,
+	/* 0x41 */ dopXCHB,
+	/* 0x42 */ dopMOVEAH,
+	/* 0x43 */ dopXCHH,
+	/* 0x44 */ dopMOVEAW,
+	/* 0x45 */ dopXCHW,
+	/* 0x46 */ dopUNHANDLED,
+	/* 0x47 */ dopSETF,
+	/* 0x48 */ dopBSR,
+	/* 0x49 */ dopCALL,
+	/* 0x4A */ dopUPDPSWH,
+	/* 0x4B */ dopCHLVL,
+	/* 0x4C */ dopCAXI,
+	/* 0x4D */ dopCHKAR,
+	/* 0x4E */ dopCHKAW,
+	/* 0x4F */ dopCHKAE,
+	/* 0x50 */ dopREMB,
+	/* 0x51 */ dopREMUB,
+	/* 0x52 */ dopREMH,
+	/* 0x53 */ dopREMUH,
+	/* 0x54 */ dopREMW,
+	/* 0x55 */ dopREMUW,
+	/* 0x56 */ dopUNHANDLED,
+	/* 0x57 */ dopUNHANDLED,
+	/* 0x58 */ dop58,
+	/* 0x59 */ dop59,
+	/* 0x5A */ dop5A,
+	/* 0x5B */ dop5B,
+	/* 0x5C */ dop5C,
+	/* 0x5D */ dop5D,
+	/* 0x5E */ dop5E,
+	/* 0x5F */ dop5F,
+	/* 0x60 */ dopBV8,
+	/* 0x61 */ dopBNV8,
+	/* 0x62 */ dopBL8,
+	/* 0x63 */ dopBNL8,
+	/* 0x64 */ dopBE8,
+	/* 0x65 */ dopBNE8,
+	/* 0x66 */ dopBNH8,
+	/* 0x67 */ dopBH8,
+	/* 0x68 */ dopBN8,
+	/* 0x69 */ dopBP8,
+	/* 0x6A */ dopBR8,
+	/* 0x6B */ dopUNHANDLED,
+	/* 0x6C */ dopBLT8,
+	/* 0x6D */ dopBGE8,
+	/* 0x6E */ dopBLE8,
+	/* 0x6F */ dopBGT8,
+	/* 0x70 */ dopBV16,
+	/* 0x71 */ dopBNV16,
+	/* 0x72 */ dopBL16,
+	/* 0x73 */ dopBNL16,
+	/* 0x74 */ dopBE16,
+	/* 0x75 */ dopBNE16,
+	/* 0x76 */ dopBNH16,
+	/* 0x77 */ dopBH16,
+	/* 0x78 */ dopBN16,
+	/* 0x79 */ dopBP16,
+	/* 0x7A */ dopBR16,
+	/* 0x7B */ dopUNHANDLED,
+	/* 0x7C */ dopBLT16,
+	/* 0x7D */ dopBGE16,
+	/* 0x7E */ dopBLE16,
+	/* 0x7F */ dopBGT16,
+	/* 0x80 */ dopADDB,
+	/* 0x81 */ dopMULB,
+	/* 0x82 */ dopADDH,
+	/* 0x83 */ dopMULH,
+	/* 0x84 */ dopADDW,
+	/* 0x85 */ dopMULW,
+	/* 0x86 */ dopMULX,
+	/* 0x87 */ dopTEST1,
+	/* 0x88 */ dopORB,
+	/* 0x89 */ dopROTB,
+	/* 0x8A */ dopORH,
+	/* 0x8B */ dopROTH,
+	/* 0x8C */ dopORW,
+	/* 0x8D */ dopROTW,
+	/* 0x8E */ dopUNHANDLED,
+	/* 0x8F */ dopUNHANDLED,
+	/* 0x90 */ dopADDCB,
+	/* 0x91 */ dopMULUB,
+	/* 0x92 */ dopADDCH,
+	/* 0x93 */ dopMULUH,
+	/* 0x94 */ dopADDCW,
+	/* 0x95 */ dopMULUW,
+	/* 0x96 */ dopMULUX,
+	/* 0x97 */ dopSET1,
+	/* 0x98 */ dopSUBCB,
+	/* 0x99 */ dopROTCB,
+	/* 0x9A */ dopSUBCH,
+	/* 0x9B */ dopROTCH,
+	/* 0x9C */ dopSUBCW,
+	/* 0x9D */ dopROTCW,
+	/* 0x9E */ dopUNHANDLED,
+	/* 0x9F */ dopUNHANDLED,
+	/* 0xA0 */ dopANDB,
+	/* 0xA1 */ dopDIVB,
+	/* 0xA2 */ dopANDH,
+	/* 0xA3 */ dopDIVH,
+	/* 0xA4 */ dopANDW,
+	/* 0xA5 */ dopDIVW,
+	/* 0xA6 */ dopDIVX,
+	/* 0xA7 */ dopCLR1,
+	/* 0xA8 */ dopSUBB,
+	/* 0xA9 */ dopSHLB,
+	/* 0xAA */ dopSUBH,
+	/* 0xAB */ dopSHLH,
+	/* 0xAC */ dopSUBW,
+	/* 0xAD */ dopSHLW,
+	/* 0xAE */ dopUNHANDLED,
+	/* 0xAF */ dopUNHANDLED,
+	/* 0xB0 */ dopXORB,
+	/* 0xB1 */ dopDIVUB,
+	/* 0xB2 */ dopXORH,
+	/* 0xB3 */ dopDIVUH,
+	/* 0xB4 */ dopXORW,
+	/* 0xB5 */ dopDIVUW,
+	/* 0xB6 */ dopDIVUX,
+	/* 0xB7 */ dopNOT1,
+	/* 0xB8 */ dopCMPB,
+	/* 0xB9 */ dopSHAB,
+	/* 0xBA */ dopCMPH,
+	/* 0xBB */ dopSHAH,
+	/* 0xBC */ dopCMPW,
+	/* 0xBD */ dopSHAW,
+	/* 0xBE */ dopUNHANDLED,
+	/* 0xBF */ dopUNHANDLED,
+	/* 0xC0 */ dopUNHANDLED,
+	/* 0xC1 */ dopUNHANDLED,
+	/* 0xC2 */ dopUNHANDLED,
+	/* 0xC3 */ dopUNHANDLED,
+	/* 0xC4 */ dopUNHANDLED,
+	/* 0xC5 */ dopUNHANDLED,
+	/* 0xC6 */ dopC6,
+	/* 0xC7 */ dopC7,
+	/* 0xC8 */ dopBRK,
+	/* 0xC9 */ dopBRKV,
+	/* 0xCA */ dopRSR,
+	/* 0xCB */ dopTRAPFL,
+	/* 0xCC */ dopDISPOSE,
+	/* 0xCD */ dopNOP,
+	/* 0xCE */ dopUNHANDLED,
+	/* 0xCF */ dopUNHANDLED,
+	/* 0xD0 */ dopDECB,
+	/* 0xD1 */ dopDECB,
+	/* 0xD2 */ dopDECH,
+	/* 0xD3 */ dopDECH,
+	/* 0xD4 */ dopDECW,
+	/* 0xD5 */ dopDECW,
+	/* 0xD6 */ dopJMP,
+	/* 0xD7 */ dopJMP,
+	/* 0xD8 */ dopINCB,
+	/* 0xD9 */ dopINCB,
+	/* 0xDA */ dopINCH,
+	/* 0xDB */ dopINCH,
+	/* 0xDC */ dopINCW,
+	/* 0xDD */ dopINCW,
+	/* 0xDE */ dopPREPARE,
+	/* 0xDF */ dopPREPARE,
+	/* 0xE0 */ dopTASI,
+	/* 0xE1 */ dopTASI,
+	/* 0xE2 */ dopRET,
+	/* 0xE3 */ dopRET,
+	/* 0xE4 */ dopPOPM,
+	/* 0xE5 */ dopPOPM,
+	/* 0xE6 */ dopPOP,
+	/* 0xE7 */ dopPOP,
+	/* 0xE8 */ dopJSR,
+	/* 0xE9 */ dopJSR,
+	/* 0xEA */ dopRETIU,
+	/* 0xEB */ dopRETIU,
+	/* 0xEC */ dopPUSHM,
+	/* 0xED */ dopPUSHM,
+	/* 0xEE */ dopPUSH,
+	/* 0xEF */ dopPUSH,
+	/* 0xF0 */ dopTESTB,
+	/* 0xF1 */ dopTESTB,
+	/* 0xF2 */ dopTESTH,
+	/* 0xF3 */ dopTESTH,
+	/* 0xF4 */ dopTESTW,
+	/* 0xF5 */ dopTESTW,
+	/* 0xF6 */ dopGETPSW,
+	/* 0xF7 */ dopGETPSW,
+	/* 0xF8 */ dopTRAP,
+	/* 0xF9 */ dopTRAP,
+	/* 0xFA */ dopRETIS,
+	/* 0xFB */ dopRETIS,
+	/* 0xFC */ dopSTTASK,
+	/* 0xFD */ dopSTTASK,
+	/* 0xFE */ dopCLRTLB,
+	/* 0xFF */ dopCLRTLB
+};
 
 #ifdef MAME_DEBUG
 offs_t v60_dasm(char *buffer, offs_t pc)

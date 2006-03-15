@@ -77,7 +77,6 @@ READ8_HANDLER( profpac_io_2_r );
 
 extern const char *wow_sample_names[];
 
-void *wow_sh_start(int clock, const struct CustomSound_interface *config);
 READ8_HANDLER( wow_speech_r );
 READ8_HANDLER( wow_port_2_r );
 READ8_HANDLER( wow_io_r );
@@ -86,7 +85,6 @@ READ8_HANDLER( wow_io_r );
 
 extern const char *gorf_sample_names[];
 
-void *gorf_sh_start(int clock, const struct CustomSound_interface *config);
 READ8_HANDLER( gorf_speech_r );
 READ8_HANDLER( gorf_port_2_r );
 WRITE8_HANDLER( gorf_sound_control_a_w );

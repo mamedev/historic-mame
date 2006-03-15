@@ -88,6 +88,20 @@ static UINT32 K001604_scan_layer_8x8_1( UINT32 col, UINT32 row, UINT32 num_cols,
 	return (row * width) + col + 64;
 }
 
+static UINT32 K001604_scan_layer_8x8_2( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
+{
+	/* logical (col,row) -> memory offset */
+	int width = K001604_layer_size ? 256 : 128;
+	return 16384 + (row*width) + col;
+}
+
+static UINT32 K001604_scan_layer_8x8_3( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
+{
+	/* logical (col,row) -> memory offset */
+	int width = K001604_layer_size ? 256 : 128;
+	return 16384 + (row*width) + col + 64;
+}
+
 static UINT32 K001604_scan_layer_16x16_0( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
 {
 	/* logical (col,row) -> memory offset */
@@ -122,7 +136,7 @@ int K001604_vh_start(void)
 
 	/* HACK !!! To be removed */
 	if (mame_stricmp(gamename, "racingj") == 0 || mame_stricmp(gamename, "racingj2") == 0
-		|| mame_stricmp(gamename, "hangplt") == 0)
+		|| mame_stricmp(gamename, "hangplt") == 0 || mame_stricmp(gamename, "slrasslt") == 0)
 	{
 		K001604_layer_size = 0;		// width = 128 tiles
 	}
@@ -150,8 +164,17 @@ int K001604_vh_start(void)
 	K001604_dirty_map[0] = auto_malloc(K001604_NUM_TILES_LAYER0);
 	K001604_dirty_map[1] = auto_malloc(K001604_NUM_TILES_LAYER1);
 
-	K001604_layer_8x8[0] = tilemap_create(K001604_tile_info_layer_8x8, K001604_scan_layer_8x8_0, TILEMAP_TRANSPARENT, 8, 8, 64, 64);
-	K001604_layer_8x8[1] = tilemap_create(K001604_tile_info_layer_8x8, K001604_scan_layer_8x8_1, TILEMAP_TRANSPARENT, 8, 8, 64, 64);
+	if (mame_stricmp(gamename, "slrasslt") == 0)
+	{
+		// this is a hack, there's probably a bit to select the tilemap location
+		K001604_layer_8x8[0] = tilemap_create(K001604_tile_info_layer_8x8, K001604_scan_layer_8x8_2, TILEMAP_TRANSPARENT, 8, 8, 64, 64);
+		K001604_layer_8x8[1] = tilemap_create(K001604_tile_info_layer_8x8, K001604_scan_layer_8x8_3, TILEMAP_TRANSPARENT, 8, 8, 64, 64);
+	}
+	else
+	{
+		K001604_layer_8x8[0] = tilemap_create(K001604_tile_info_layer_8x8, K001604_scan_layer_8x8_0, TILEMAP_TRANSPARENT, 8, 8, 64, 64);
+		K001604_layer_8x8[1] = tilemap_create(K001604_tile_info_layer_8x8, K001604_scan_layer_8x8_1, TILEMAP_TRANSPARENT, 8, 8, 64, 64);
+	}
 	K001604_layer_16x16[0] = tilemap_create(K001604_tile_info_layer_16x16, K001604_scan_layer_16x16_0, TILEMAP_OPAQUE, 16, 16, 64, 64);
 	K001604_layer_16x16[1] = tilemap_create(K001604_tile_info_layer_16x16, K001604_scan_layer_16x16_1, TILEMAP_OPAQUE, 16, 16, 64, 64);
 

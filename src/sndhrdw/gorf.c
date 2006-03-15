@@ -10,14 +10,10 @@
 
 **************************************************************************
 
-gorf_sh_start  - Start emulation, load samples from Votrax subdirectory
 gorf_sh_w      - Write data to votrax port
 gorf_sh_status - Return busy status (-1 = busy)
 gorf_port_2_r  - Returns status of voice port
 gorf_sh_ update- Null
-
-If you need to alter the base frequency (i.e. Qbert) then just alter
-the variable GorfBaseFrequency, this is defaulted to 8000
 
 **************************************************************************/
 
@@ -27,9 +23,6 @@ the variable GorfBaseFrequency, this is defaulted to 8000
 #include "sound/samples.h"
 
 
-int	GorfBaseFrequency;		/* Some games (Qbert) change this */
-int 	GorfBaseVolume;
-int 	GorfChannel = 0;
 struct  GameSamples *GorfSamples;
 
 /****************************************************************************
@@ -119,17 +112,9 @@ const char *gorf_sample_names[] =
 
 
 /* Total word to join the phonemes together - Global to make it easier to use */
-char totalword[256], *totalword_ptr;
-char oldword[256];
-int plural = 0;
-
-void *gorf_sh_start(int clock, const struct CustomSound_interface *config)
-{
-    GorfBaseFrequency = 11025;
-    GorfBaseVolume = 230;
-    GorfChannel = 0;
-    return auto_malloc(1);
-}
+static char totalword[256], *totalword_ptr;
+static char oldword[256];
+static int plural = 0;
 
 READ8_HANDLER( gorf_speech_r )
 {
@@ -147,7 +132,7 @@ READ8_HANDLER( gorf_speech_r )
     logerror("Date : %d Speech : %s at intonation %d\n",Phoneme, PhonemeTable[Phoneme],Intonation);
 
 	 if(Phoneme==63) {
-   		sample_stop(GorfChannel);
+   		sample_stop(0);
                 if (strlen(totalword)>2) logerror("Clearing sample %s\n",totalword);
                 totalword[0] = 0;				   /* Clear the total word stack */
 					 return data;
@@ -160,8 +145,8 @@ READ8_HANDLER( gorf_speech_r )
 		 if (plural != 0) {
 			 logerror("found a possible plural at %d\n",plural-1);
 			 if (!strcmp("S",totalword)) {		   /* Plural check */
-				 sample_start(GorfChannel, num_samples-2, 0);	   /* play the sample at position of word */
-				 sample_set_freq(GorfChannel, GorfBaseFrequency);    /* play at correct rate */
+				 sample_start(0, num_samples-2, 0);	   /* play the sample at position of word */
+				 sample_set_freq(0, 11025);    /* play at correct rate */
 				 totalword[0] = 0;				   /* Clear the total word stack */
 				 oldword[0] = 0;				   /* Clear the total word stack */
 				 return data;
@@ -183,8 +168,8 @@ READ8_HANDLER( gorf_speech_r )
 			 } else {
              plural=0;
           }
-          sample_start(GorfChannel, i, 0);	                   /* play the sample at position of word */
-          sample_set_freq(GorfChannel, GorfBaseFrequency);       /* play at correct rate */
+          sample_start(0, i, 0);	                   /* play the sample at position of word */
+          sample_set_freq(0, 11025);       /* play at correct rate */
           logerror("Playing sample %d",i);
           totalword[0] = 0;				   /* Clear the total word stack */
           return data;
@@ -197,7 +182,7 @@ READ8_HANDLER( gorf_speech_r )
 
 int gorf_status_r(void)
 {
-    return !sample_playing(GorfChannel);
+    return !sample_playing(0);
 }
 
 /* Read from port 2 (0x12) returns speech status as 0x80 */

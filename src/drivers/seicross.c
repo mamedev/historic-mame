@@ -97,7 +97,7 @@ static WRITE8_HANDLER( friskyt_portB_w )
 {
 //logerror("PC %04x: 8910 port B = %02x\n",activecpu_get_pc(),data);
 	/* bit 0 is IRQ enable */
-	interrupt_enable_w(0,data & 1);
+	cpu_interrupt_enable(0,data & 1);
 
 	/* bit 1 flips screen */
 

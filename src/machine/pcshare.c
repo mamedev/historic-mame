@@ -215,9 +215,15 @@ WRITE32_HANDLER(at_page32_w)
 
 static UINT8 pc_dma_read_byte(int channel, offs_t offset)
 {
+	UINT8 result;
 	offs_t page_offset = (((offs_t) dma_offset[0][channel]) << 16)
 		& pc_page_offset_mask;
-	return program_read_byte(page_offset + offset);
+
+	cpuintrf_push_context(0);
+	result = program_read_byte(page_offset + offset);
+	cpuintrf_pop_context();
+
+	return result;
 }
 
 
@@ -226,7 +232,10 @@ static void pc_dma_write_byte(int channel, offs_t offset, UINT8 data)
 {
 	offs_t page_offset = (((offs_t) dma_offset[0][channel]) << 16)
 		& pc_page_offset_mask;
+
+	cpuintrf_push_context(0);
 	program_write_byte(page_offset + offset, data);
+	cpuintrf_pop_context();
 }
 
 

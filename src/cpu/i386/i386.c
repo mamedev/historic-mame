@@ -18,8 +18,8 @@
 #include "debug/debugcpu.h"
 #endif
 
-int parity_table[256];
-MODRM_TABLE MODRM_table[256];
+int i386_parity_table[256];
+MODRM_TABLE i386_MODRM_table[256];
 
 /*************************************************************************/
 
@@ -66,7 +66,7 @@ void i386_load_segment_descriptor( int segment )
 	}
 }
 
-UINT32 get_flags(void)
+static UINT32 get_flags(void)
 {
 	UINT32 f = 0x2;
 	f |= I.CF;
@@ -81,7 +81,7 @@ UINT32 get_flags(void)
 	return (I.eflags & 0xFFFF0000) | (f & 0xFFFF);
 }
 
-void set_flags( UINT32 f )
+static void set_flags( UINT32 f )
 {
 	I.CF = (f & 0x1) ? 1 : 0;
 	I.PF = (f & 0x4) ? 1 : 0;
@@ -316,8 +316,8 @@ static void i386_check_irq_line(void)
 
 #include "cycles.h"
 
-UINT8 *cycle_table_rm[X86_NUM_CPUS];
-UINT8 *cycle_table_pm[X86_NUM_CPUS];
+static UINT8 *cycle_table_rm[X86_NUM_CPUS];
+static UINT8 *cycle_table_pm[X86_NUM_CPUS];
 
 #define CYCLES_NUM(x)	(I.cycles -= (x))
 
@@ -464,10 +464,10 @@ static void i386_postload(void)
 void i386_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
 	int i, j;
-	int regs8[8] = {AL,CL,DL,BL,AH,CH,DH,BH};
-	int regs16[8] = {AX,CX,DX,BX,SP,BP,SI,DI};
-	int regs32[8] = {EAX,ECX,EDX,EBX,ESP,EBP,ESI,EDI};
-	const char *state_type = "I386";
+	static const int regs8[8] = {AL,CL,DL,BL,AH,CH,DH,BH};
+	static const int regs16[8] = {AX,CX,DX,BX,SP,BP,SI,DI};
+	static const int regs32[8] = {EAX,ECX,EDX,EBX,ESP,EBP,ESI,EDI};
+	static const char state_type[] = "I386";
 
 	build_cycle_table();
 
@@ -477,17 +477,17 @@ void i386_init(int index, int clock, const void *config, int (*irqcallback)(int)
 			if( i & (1 << j) )
 				c++;
 		}
-		parity_table[i] = ~(c & 0x1) & 0x1;
+		i386_parity_table[i] = ~(c & 0x1) & 0x1;
 	}
 
 	for( i=0; i < 256; i++ ) {
-		MODRM_table[i].reg.b = regs8[(i >> 3) & 0x7];
-		MODRM_table[i].reg.w = regs16[(i >> 3) & 0x7];
-		MODRM_table[i].reg.d = regs32[(i >> 3) & 0x7];
+		i386_MODRM_table[i].reg.b = regs8[(i >> 3) & 0x7];
+		i386_MODRM_table[i].reg.w = regs16[(i >> 3) & 0x7];
+		i386_MODRM_table[i].reg.d = regs32[(i >> 3) & 0x7];
 
-		MODRM_table[i].rm.b = regs8[i & 0x7];
-		MODRM_table[i].rm.w = regs16[i & 0x7];
-		MODRM_table[i].rm.d = regs32[i & 0x7];
+		i386_MODRM_table[i].rm.b = regs8[i & 0x7];
+		i386_MODRM_table[i].rm.w = regs16[i & 0x7];
+		i386_MODRM_table[i].rm.d = regs32[i & 0x7];
 	}
 
 	I.irq_callback = irqcallback;
@@ -1123,7 +1123,11 @@ void pentium_init(int index, int clock, const void *config, int (*irqcallback)(i
 
 static void pentium_reset(void)
 {
+	int (*save_irqcallback)(int);
+
+	save_irqcallback = I.irq_callback;
 	memset( &I, 0, sizeof(I386_REGS) );
+	I.irq_callback = save_irqcallback;
 	I.sreg[CS].selector = 0xf000;
 	I.sreg[CS].base		= 0xffff0000;
 	I.sreg[CS].limit	= 0xffff;
@@ -1276,7 +1280,11 @@ void mediagx_init(int index, int clock, const void *config, int (*irqcallback)(i
 
 static void mediagx_reset(void)
 {
+	int (*save_irqcallback)(int);
+
+	save_irqcallback = I.irq_callback;
 	memset( &I, 0, sizeof(I386_REGS) );
+	I.irq_callback = save_irqcallback;
 	I.sreg[CS].selector = 0xf000;
 	I.sreg[CS].base		= 0xffff0000;
 	I.sreg[CS].limit	= 0xffff;

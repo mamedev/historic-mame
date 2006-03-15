@@ -342,7 +342,7 @@ INLINE void calculate_step(YMF271Slot *slot)
 	}
 }
 
-void update_envelope(YMF271Slot *slot)
+static void update_envelope(YMF271Slot *slot)
 {
 	switch (slot->env_state)
 	{

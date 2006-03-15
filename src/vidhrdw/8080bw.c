@@ -642,8 +642,8 @@ static VIDEO_UPDATE( bowler )
 /*
     int x,y,i;
 
-    char score_line_1[] = "Bonus 200 400 500 700 500 400 200";
-    char score_line_2[] = "      110 220 330 550 330 220 110";
+    static const char score_line_1[] = "Bonus 200 400 500 700 500 400 200";
+    static const char score_line_2[] = "      110 220 330 550 330 220 110";
 
 
     fix me -- this should be done with artwork

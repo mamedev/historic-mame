@@ -512,7 +512,7 @@ static void set_irq_line(int irqline, int state)
 
 
 /* execute instructions on this CPU until icount expires */
-int m6805_execute(int cycles)
+static int m6805_execute(int cycles)
 {
 	UINT8 ireg;
 	m6805_ICount = cycles;
@@ -820,12 +820,13 @@ static offs_t m6805_dasm(char *buffer, offs_t pc)
  * M68705 section
  ****************************************************************************/
 #if (HAS_M68705)
-void m68705_init(int index, int clock, const void *config, int (*irqcallback)(int))
+static void m68705_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
 	state_register("m68705", index);
+	m6805.irq_callback = irqcallback;
 }
 
-void m68705_reset(void)
+static void m68705_reset(void)
 {
 	m6805_reset();
 	/* Overide default 6805 type */
@@ -833,7 +834,7 @@ void m68705_reset(void)
 	RM16( 0xfffe, &m6805.pc );
 }
 
-void m68705_set_irq_line(int irqline, int state)
+static void m68705_set_irq_line(int irqline, int state)
 {
 	if (m6805.irq_state[irqline] == state ) return;
 	m6805.irq_state[irqline] = state;
@@ -846,12 +847,13 @@ void m68705_set_irq_line(int irqline, int state)
  * HD63705 section
  ****************************************************************************/
 #if (HAS_HD63705)
-void hd63705_init(int index, int clock, const void *config, int (*irqcallback)(int))
+static void hd63705_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
 	state_register("hd63705", index);
+	m6805.irq_callback = irqcallback;
 }
 
-void hd63705_reset(void)
+static void hd63705_reset(void)
 {
 	m6805_reset();
 
@@ -863,7 +865,7 @@ void hd63705_reset(void)
 	S = 0x17f;
 }
 
-void hd63705_set_irq_line(int irqline, int state)
+static void hd63705_set_irq_line(int irqline, int state)
 {
 	if (irqline == INPUT_LINE_NMI)
 	{

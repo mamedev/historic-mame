@@ -14,12 +14,6 @@ reverb
 interrupts
 *************/
 
-UINT16 ENDIANCORRECT16(UINT16 v)
-{
-	return (((v>>0)&0xff)<<8)|(((v>>8)&0xff)<<0);
-}
-//#define ENDIANCORRECT16(v) (((v>>0)&0xff)<<8)|(((v>>8)&0xff)<<0)
-
 struct _VR0Chip
 {
 	UINT32 *TexBase;

@@ -58,9 +58,6 @@
 #define SETREG8(a, b)  (a) = ((a) & ~0xff) | ((b) & 0xff)
 #define SETREG16(a, b) (a) = ((a) & ~0xffff) | ((b) & 0xffff)
 
-// Ultra Function Tables
-static UINT32 (*OpCodeTable[256])(void);
-
 typedef struct
 {
 	UINT8 CY;
@@ -70,7 +67,7 @@ typedef struct
 } Flags;
 
 // v60 Register Inside (Hm... It's not a pentium inside :-))) )
-struct v60info {
+static struct v60info {
 	struct cpu_info info;
 	UINT32 reg[68];
 	Flags flags;
@@ -287,7 +284,7 @@ INLINE UINT32 v60_update_psw_for_exception(int is_interrupt, int target_level)
 #include "op6.c"
 #include "op7a.c"
 
-UINT32 opUNHANDLED(void)
+static UINT32 opUNHANDLED(void)
 {
 	fatalerror("Unhandled OpCode found : %02x at %08x", OpRead16(PC), PC);
 	return 0; /* never reached, fatalerror won't return */
@@ -303,15 +300,6 @@ static int v60_default_irq_cb(int irqline)
 
 static void base_init(const char *type, int index, int (*irqcallback)(int))
 {
-	static int opt_init = 0;
-	if(!opt_init) {
-		InitTables();	// set up opcode tables
-#ifdef MAME_DEBUG
-		v60_dasm_init();
-#endif
-		opt_init = 1;
-	}
-
 	v60.irq_cb = irqcallback;
 	v60.irq_line = CLEAR_LINE;
 	v60.nmi_line = CLEAR_LINE;
@@ -326,7 +314,7 @@ static void base_init(const char *type, int index, int (*irqcallback)(int))
 	state_save_register_item(type, index, _Z);
 }
 
-void v60_init(int index, int clock, const void *config, int (*irqcallback)(int))
+static void v60_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
 	base_init("v60", index, irqcallback);
 	// Set PIR (Processor ID) for NEC v60. LSB is reserved to NEC,
@@ -335,7 +323,7 @@ void v60_init(int index, int clock, const void *config, int (*irqcallback)(int))
 	v60.info = v60_i;
 }
 
-void v70_init(int index, int clock, const void *config, int (*irqcallback)(int))
+static void v70_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
 	base_init("v70", index, irqcallback);
 	// Set PIR (Processor ID) for NEC v70. LSB is reserved to NEC,
@@ -344,7 +332,7 @@ void v70_init(int index, int clock, const void *config, int (*irqcallback)(int))
 	v60.info = v70_i;
 }
 
-void v60_reset(void)
+static void v60_reset(void)
 {
 	PSW		= 0x10000000;
 	PC		= v60.info.start_pc;
@@ -360,7 +348,7 @@ void v60_reset(void)
 	_Z	= 0;
 }
 
-void v60_exit(void)
+static void v60_exit(void)
 {
 }
 

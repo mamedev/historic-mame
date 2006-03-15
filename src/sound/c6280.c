@@ -327,9 +327,9 @@ static void *c6280_start(int sndindex, int clock, const void *config)
     return info;
 }
 
-READ8_HANDLER(  C6280_r) { return get_h6280io_buffer();}
-WRITE8_HANDLER( C6280_0_w ) {  set_h6280io_buffer(data); c6280_write(sndti_token(SOUND_C6280, 0),offset,data); }
-WRITE8_HANDLER( C6280_1_w ) {  set_h6280io_buffer(data); c6280_write(sndti_token(SOUND_C6280, 1),offset,data); }
+READ8_HANDLER(  C6280_r) { return h6280io_get_buffer();}
+WRITE8_HANDLER( C6280_0_w ) {  h6280io_set_buffer(data); c6280_write(sndti_token(SOUND_C6280, 0),offset,data); }
+WRITE8_HANDLER( C6280_1_w ) {  h6280io_set_buffer(data); c6280_write(sndti_token(SOUND_C6280, 1),offset,data); }
 
 
 

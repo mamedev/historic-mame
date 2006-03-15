@@ -1253,6 +1253,7 @@ const game_driver *drivers[] =
 	DRIVER( triviasp )	/* (c) 1984 */
 	DRIVER( triviayp )	/* (c) 1984 */
 	DRIVER( triviabb )	/* (c) 1984 */
+	DRIVER( triviaes )	/* (c) 1984 */
 	DRIVER( gimeabrk )	/* (c) 1985 */
 	DRIVER( minigolf )	/* (c) 1985 */
 	DRIVER( minigol2 )	/* (c) 1985 */
@@ -3132,7 +3133,8 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( passshtj )	/* (c) 1988 (FD1094, decrypted) */
 	DRIVER( riotcity )	/* (c) 1991 Sega / Westone */
 	DRIVER( ryukyu )	/* (c) 1990 (FD1094, decrypted) */
-	DRIVER( sdib )		/* (c) 1987 bootleg */
+	DRIVER( sdib )		/* (c) 1987 (FD1089A, decrypted) */
+	DRIVER( sdibl )		/* (c) 1987 bootleg */
 	DRIVER( defense )	/* (c) 1987 (FD1094, decrypted) */
 	DRIVER( shinobi4 )	/* (c) 1987 */
 	DRIVER( shinobi3 )	/* (c) 1987 */
@@ -4361,6 +4363,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 
 	/* PowerPC based Konami games */
 	DRIVER( thunderh )	/* GX680 (c)1996 */
+	DRIVER( slrasslt )	/* GX792 (c)1996 */
 	DRIVER( gticlub )	/* GX688 (c)1996 */
 	DRIVER( gticlubj )	/* GX688 (c)1996 */
 	DRIVER( hangplt )	/* GX685 (c)1997 */
@@ -6393,7 +6396,8 @@ Other Sun games
 
 	/* ESD games */
 	/* http://www.esdgame.co.kr/english/ */
-	DRIVER( multchmp )	/* (c) 1998 (Korea) */
+	DRIVER( multchmp )	/* (c) 1998 (World) */
+	DRIVER( multchmk )	/* (c) 1998 (Korea) */
 	DRIVER( mchampdx )	/* (c) 1999 ESD */
 	DRIVER( mchampda )	/* (c) 1999 ESD */
 	DRIVER( hedpanic )	/* (c) 2000 ESD */

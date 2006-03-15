@@ -46,13 +46,13 @@ static const char *SETxx[] =
 
 static int size, global_fp;
 
-void LL_format(char *source, char *dest, UINT16 op)
+static void LL_format(char *source, char *dest, UINT16 op)
 {
 	strcpy(source, L_REG[(SOURCECODE(op)+global_fp)%64]);
 	strcpy(dest, L_REG[(DESTCODE(op)+global_fp)%64]);
 }
 
-void LR_format(char *source, char *dest, UINT16 op)
+static void LR_format(char *source, char *dest, UINT16 op)
 {
 	if( SOURCEBIT(op) )
 	{
@@ -66,7 +66,7 @@ void LR_format(char *source, char *dest, UINT16 op)
 	strcpy(dest, L_REG[(DESTCODE(op)+global_fp)%64]);
 }
 
-void RR_format(char *source, char *dest, UINT16 op, unsigned h_flag)
+static void RR_format(char *source, char *dest, UINT16 op, unsigned h_flag)
 {
 	if( SOURCEBIT(op) )
 	{
@@ -87,7 +87,7 @@ void RR_format(char *source, char *dest, UINT16 op, unsigned h_flag)
 	}
 }
 
-UINT32 LRconst_format(char *source, char *dest, UINT16 op, unsigned *pc)
+static UINT32 LRconst_format(char *source, char *dest, UINT16 op, unsigned *pc)
 {
 	UINT16 next_op;
 	UINT32 const_val;
@@ -137,7 +137,7 @@ UINT32 LRconst_format(char *source, char *dest, UINT16 op, unsigned *pc)
 	return const_val;
 }
 
-UINT32 RRconst_format(char *source, char *dest, UINT16 op, unsigned *pc)
+static UINT32 RRconst_format(char *source, char *dest, UINT16 op, unsigned *pc)
 {
 	UINT16 next_op;
 	UINT32 const_val;
@@ -194,7 +194,7 @@ UINT32 RRconst_format(char *source, char *dest, UINT16 op, unsigned *pc)
 	return const_val;
 }
 
-INT32 Rimm_format(char *dest, UINT16 op, unsigned *pc, unsigned h_flag)
+static INT32 Rimm_format(char *dest, UINT16 op, unsigned *pc, unsigned h_flag)
 {
 	UINT16 imm1, imm2;
 	INT32 ret;
@@ -282,14 +282,14 @@ INT32 Rimm_format(char *dest, UINT16 op, unsigned *pc, unsigned h_flag)
 	}
 }
 
-UINT8 Ln_format(char *dest, UINT16 op)
+static UINT8 Ln_format(char *dest, UINT16 op)
 {
 	strcpy(dest, L_REG[(DESTCODE(op)+global_fp)%64]);
 
 	return N_VALUE(op);
 }
 
-UINT8 Rn_format(char *dest, UINT16 op)
+static UINT8 Rn_format(char *dest, UINT16 op)
 {
 	if( DESTBIT(op) )
 	{
@@ -303,7 +303,7 @@ UINT8 Rn_format(char *dest, UINT16 op)
 	return N_VALUE(op);
 }
 
-INT32 PCrel_format(UINT16 op, unsigned pc)
+static INT32 PCrel_format(UINT16 op, unsigned pc)
 {
 	INT32 ret;
 
@@ -335,7 +335,7 @@ INT32 PCrel_format(UINT16 op, unsigned pc)
 	return (pc + ret);
 }
 
-UINT32 RRdis_format(char *source, char *dest, UINT16 op, UINT16 next_op, unsigned pc)
+static UINT32 RRdis_format(char *source, char *dest, UINT16 op, UINT16 next_op, unsigned pc)
 {
 	UINT32 ret;
 

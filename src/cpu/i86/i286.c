@@ -145,7 +145,7 @@ static struct i86_timing cycles;
 static void i286_urinit(void)
 {
 	unsigned int i,j,c;
-	BREGS reg_name[8]={ AL, CL, DL, BL, AH, CH, DH, BH };
+	static const BREGS reg_name[8]={ AL, CL, DL, BL, AH, CH, DH, BH };
 
 	for (i = 0;i < 256; i++)
 	{
@@ -299,7 +299,7 @@ static offs_t i286_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int
 
 static void i286_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
-	const char *type = "I286";
+	static const char type[] = "I286";
 	state_save_register_item_array(type, index, I.regs.w);
 	state_save_register_item(type, index, I.amask);
 	state_save_register_item(type, index, I.pc);
@@ -335,7 +335,7 @@ static void i286_init(int index, int clock, const void *config, int (*irqcallbac
 	state_save_register_item(type, index, I.irq_state);
 	state_save_register_item(type, index, I.extra_cycles);
 
-	I.irq_callback = info->irqcallback;
+	I.irq_callback = irqcallback;
 
 	/* If a reset parameter is given, take it as pointer to an address mask */
 	if( config )

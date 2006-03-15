@@ -66,6 +66,8 @@ static int subcpu_resetline;
 
 static int rastersplit;
 
+static int int_num;
+
 static UINT16 *hypr_sharedram1;
 static UINT16 *hypr_sharedram2;
 static UINT16 *hypr_sub_sharedram1_1;
@@ -94,7 +96,7 @@ static void update_irq_state(void)
 {
 	int irq = requested_int & ~*hypr_irq_enable;
 
-	cpunum_set_input_line(0, 3, (irq & 0x02) ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(0, 3, (irq & int_num) ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static READ16_HANDLER( hyprduel_irq_cause_r )
@@ -106,8 +108,8 @@ static WRITE16_HANDLER( hyprduel_irq_cause_w )
 {
 	if (ACCESSING_LSB)
 	{
-		if (data == 0x02)
-			requested_int &= ~(0x02 & ~*hypr_irq_enable);
+		if (data == int_num)
+			requested_int &= ~(int_num & ~*hypr_irq_enable);
 		else
 			requested_int &= ~(data & *hypr_irq_enable);
 
@@ -571,8 +573,8 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( magerror_writemem2, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x003fff) AM_WRITE(MWA16_RAM) AM_BASE(&hypr_sub_sharedram1_2	)	// shadow ($c00000 - $c03fff : vector, write ok)
 	AM_RANGE(0x004000, 0x007fff) AM_WRITE(MWA16_RAM) AM_BASE(&hypr_sub_sharedram2_2	)	// shadow ($fe4000 - $fe7fff : read only)
-//  AM_RANGE(0x400000, 0x400001) AM_WRITE(YM2151_register_port_0_lsb_w  )
-//  AM_RANGE(0x400002, 0x400003) AM_WRITE(YM2151_data_port_0_lsb_w      )
+  	AM_RANGE(0x400000, 0x400001) AM_WRITE(YM2413_register_port_0_lsb_w  )
+  	AM_RANGE(0x400002, 0x400003) AM_WRITE(YM2413_data_port_0_lsb_w      )
 	AM_RANGE(0x400004, 0x400005) AM_WRITE(OKIM6295_data_0_lsb_w			)
 	AM_RANGE(0x800000, 0x800001) AM_WRITE(MWA16_NOP						)
 	AM_RANGE(0xc00000, 0xc07fff) AM_WRITE(MWA16_RAM) AM_BASE(&hypr_sub_sharedram1_1	)	// (sound driver)
@@ -830,6 +832,8 @@ static DRIVER_INIT( hyprduel )
 	requested_int = 0x00;
 	blitter_bit = 2;
 	*hypr_irq_enable = 0xff;
+
+	int_num = strcmp(Machine->gamedrv->name, "magerror")?2:1;
 }
 
 

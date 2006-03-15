@@ -375,6 +375,7 @@ static void riot_interrupt(int parm);
 
 static void *common_start(void)
 {
+	int sample_rate = SH8253_CLOCK;
 	int i;
 
 	/* determine which sound hardware is installed */
@@ -389,7 +390,7 @@ static void *common_start(void)
 	}
 
 	/* allocate the stream */
-	exidy_stream = stream_create(0, 1, Machine->sample_rate, NULL, exidy_stream_update);
+	exidy_stream = stream_create(0, 1, sample_rate, NULL, exidy_stream_update);
 
 	/* Init PIA */
 	pia_reset();
@@ -405,13 +406,13 @@ static void *common_start(void)
 
 	/* Init 6840 */
 	memset(sh6840_timer, 0, sizeof(sh6840_timer));
-	sh6840_clocks_per_sample = (int)((double)SH6840_CLOCK / (double)Machine->sample_rate * (double)(1 << 24));
+	sh6840_clocks_per_sample = (int)((double)SH6840_CLOCK / (double)sample_rate * (double)(1 << 24));
 	sh6840_MSB = 0;
 	exidy_sfxctrl = 0;
 
 	/* Init 8253 */
 	memset(sh8253_timer, 0, sizeof(sh8253_timer));
-	freq_to_step = (double)(1 << 24) / (double)Machine->sample_rate;
+	freq_to_step = (double)(1 << 24) / (double)sample_rate;
 
 	return auto_malloc(1);
 }

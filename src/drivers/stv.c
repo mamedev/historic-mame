@@ -563,14 +563,13 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 		if(!(smpc_ram[0x77] & 0x10))
 		{
 			if(LOG_SMPC) logerror("SMPC: M68k on\n");
-			cpunum_set_input_line(2, INPUT_LINE_RESET, PULSE_LINE);
-			cpunum_set_input_line(2, INPUT_LINE_HALT, CLEAR_LINE);
+			cpunum_set_input_line(2, INPUT_LINE_RESET, CLEAR_LINE);
 			en_68k = 1;
 		}
 		else
 		{
 			if(LOG_SMPC) logerror("SMPC: M68k off\n");
-			cpunum_set_input_line(2, INPUT_LINE_HALT, ASSERT_LINE);
+			cpunum_set_input_line(2, INPUT_LINE_RESET, ASSERT_LINE);
 			en_68k = 0;
 		}
 		//if(LOG_SMPC) logerror("SMPC: ram [0x77] = %02x\n",smpc_ram[0x77]);
@@ -617,8 +616,7 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 				smpc_ram[0x5f]=0x02;
 				#if USE_SLAVE
 				stv_enable_slave_sh2 = 1;
-				cpunum_set_input_line(1, INPUT_LINE_RESET, PULSE_LINE);
-				cpunum_set_input_line(1, INPUT_LINE_HALT, CLEAR_LINE);
+				cpunum_set_input_line(1, INPUT_LINE_RESET, CLEAR_LINE);
 				#endif
 				break;
 			case 0x03:
@@ -626,14 +624,13 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 				smpc_ram[0x5f]=0x03;
 				stv_enable_slave_sh2 = 0;
 				cpu_trigger(1000);
-				cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
+				cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
 				break;
 			case 0x06:
 				if(LOG_SMPC) logerror ("SMPC: Sound ON\n");
 				/* wrong? */
 				smpc_ram[0x5f]=0x06;
-				cpunum_set_input_line(2, INPUT_LINE_RESET, PULSE_LINE);
-				cpunum_set_input_line(2, INPUT_LINE_HALT, CLEAR_LINE);
+				cpunum_set_input_line(2, INPUT_LINE_RESET, CLEAR_LINE);
 				break;
 			case 0x07:
 				if(LOG_SMPC) logerror ("SMPC: Sound OFF\n");
@@ -2893,9 +2890,9 @@ MACHINE_RESET( stv )
 	memory_set_bankptr(1,memory_region(REGION_USER1));
 
 	// don't let the slave cpu and the 68k go anywhere
-	cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
 	stv_enable_slave_sh2 = 0;
-	cpunum_set_input_line(2, INPUT_LINE_HALT, ASSERT_LINE);
+	cpunum_set_input_line(2, INPUT_LINE_RESET, ASSERT_LINE);
 
 	timer_0 = 0;
 	timer_1 = 0;

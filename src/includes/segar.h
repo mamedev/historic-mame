@@ -9,7 +9,7 @@
 extern UINT8 *segar_miscram1;
 extern UINT8 *segar_miscram2;
 extern UINT8 *segar_monsterbram;
-extern void (*sega_decrypt)(int,unsigned int *);
+extern UINT8 (*sega_decrypt)(offs_t, UINT8);
 
 void sega_security(int chip);
 WRITE8_HANDLER( segar_w );

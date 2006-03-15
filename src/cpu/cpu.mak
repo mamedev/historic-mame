@@ -760,6 +760,21 @@ endif
 
 
 #-------------------------------------------------
+# Nintendo/SGI RSP (R3000-based + vector processing)
+#-------------------------------------------------
+
+CPUDEFS += -DHAS_RSP=$(if $(filter RSP,$(CPUS)),1,0)
+
+ifneq ($(filter RSP,$(CPUS)),)
+OBJDIRS += $(OBJ)/cpu/rsp
+CPUOBJS += $(OBJ)/cpu/rsp/rsp.o
+DBGOBJS += $(OBJ)/cpu/rsp/rsp_dasm.o
+$(OBJ)/cpu/rsp/rsp.o: rsp.c rsp.h
+endif
+
+
+
+#-------------------------------------------------
 # Signetics 2650
 #-------------------------------------------------
 

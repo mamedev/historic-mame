@@ -34,6 +34,8 @@
  *
  *************************************/
 
+#define DEFAULT_SAMPLE_RATE			(44100 * 4)
+
 #define FRAC_BITS					24
 #define FRAC_ONE					(1 << FRAC_BITS)
 #define FRAC_INT(a)					((a) >> FRAC_BITS)
@@ -55,6 +57,7 @@ struct dmadac_channel_data
 {
 	/* sound stream and buffers */
 	sound_stream *channel;
+	UINT32	sample_rate;
 	INT16 *	buffer;
 	INT16	last;
 
@@ -98,7 +101,7 @@ static UINT32 consecutive_overruns;
 
 INLINE void compute_step(struct dmadac_channel_data *ch)
 {
-	ch->step = (UINT32)(((ch->frequency * freqmult) / (double)Machine->sample_rate) * (double)FRAC_ONE);
+	ch->step = (UINT32)(((ch->frequency * freqmult) / (double)ch->sample_rate) * (double)FRAC_ONE);
 }
 
 
@@ -132,7 +135,7 @@ static void adjust_freqmult(void)
 			overruns += info->overruns;
 			info->shortages = 0;
 			info->overruns = 0;
-			info->outsamples -= Machine->sample_rate * SECONDS_BETWEEN_ADJUSTS;
+			info->outsamples -= info->sample_rate * SECONDS_BETWEEN_ADJUSTS;
 		}
 	}
 
@@ -199,7 +202,7 @@ static void dmadac_update(void *param, stream_sample_t **inputs, stream_sample_t
 
 	/* track how many samples we've been asked to output; every second, consider adjusting */
 	ch->outsamples += length;
-	if (ch->outsamples >= Machine->sample_rate * SECONDS_BETWEEN_ADJUSTS)
+	if (ch->outsamples >= ch->sample_rate * SECONDS_BETWEEN_ADJUSTS)
 		adjust_freqmult();
 
 	/* if we're not enabled, just fill with silence */
@@ -210,7 +213,7 @@ static void dmadac_update(void *param, stream_sample_t **inputs, stream_sample_t
 		return;
 	}
 
-	LOG(("dmadac_update(%d) - %d to consume, %d effective, %d in buffer, ", num, length, (int)(length * ch->frequency / (double)Machine->sample_rate), ch->curinpos - ch->curoutpos));
+	LOG(("dmadac_update(%d) - %d to consume, %d effective, %d in buffer, ", num, length, (int)(length * ch->frequency / (double)ch->sample_rate), ch->curinpos - ch->curoutpos));
 
 	/* fill with data while we can */
 	while (length > 0 && out < ch->curinpos)
@@ -284,7 +287,8 @@ static void *dmadac_start(int sndindex, int clock, const void *config)
 	info->curinpos = 0;
 
 	/* allocate a stream channel */
-	info->channel = stream_create(0, 1, Machine->sample_rate, info, dmadac_update);
+	info->sample_rate = DEFAULT_SAMPLE_RATE;
+	info->channel = stream_create(0, 1, info->sample_rate, info, dmadac_update);
 
 	return info;
 }
@@ -340,7 +344,7 @@ void dmadac_transfer(UINT8 first_channel, UINT8 num_channels, offs_t channel_spa
 		}
 	}
 
-	LOG(("dmadac_transfer - %d samples, %d effective, %d in buffer\n", total_frames, (int)(total_frames * (double)Machine->sample_rate / dmadac[first_channel].frequency), dmadac[first_channel].curinpos - dmadac[first_channel].curoutpos));
+	LOG(("dmadac_transfer - %d samples, %d effective, %d in buffer\n", total_frames, (int)(total_frames * (double)DEFAULT_SAMPLE_RATE / dmadac[first_channel].frequency), dmadac[first_channel].curinpos - dmadac[first_channel].curoutpos));
 }
 
 

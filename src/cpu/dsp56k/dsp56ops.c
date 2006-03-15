@@ -13,63 +13,63 @@ static UINT16 Dsp56kOpMask(UINT16 op, UINT16 mask) ;
 enum dataType { DT_BYTE, DT_WORD, DT_DOUBLE_WORD, DT_LONG_WORD } ;
 
 // This function's areguments are written source->destination to fall in line with the processor's paradigm...
-void SetDestinationValue(void *sourcePointer, unsigned char sourceType,
+static void SetDestinationValue(void *sourcePointer, unsigned char sourceType,
 						 void *destinationPointer, unsigned char destinationType) ;
-void SetDataMemoryValue(void *sourcePointer, unsigned char sourceType, UINT32 destinationAddr) ;
-void SetProgramMemoryValue(void *sourcePointer, unsigned char sourceType, UINT32 destinationAddr) ;
+static void SetDataMemoryValue(void *sourcePointer, unsigned char sourceType, UINT32 destinationAddr) ;
+static void SetProgramMemoryValue(void *sourcePointer, unsigned char sourceType, UINT32 destinationAddr) ;
 
 
 // Main opcode categories
-unsigned ExecuteDataALUOpcode(int parallelType) ;
-unsigned ExecuteDXMDROpcode(void) ;
-unsigned ExecuteNPMOpcode(void) ;
-unsigned ExecuteMisfitOpcode(void) ;
-unsigned ExecuteSpecialOpcode(void) ;
+static unsigned ExecuteDataALUOpcode(int parallelType) ;
+static unsigned ExecuteDXMDROpcode(void) ;
+static unsigned ExecuteNPMOpcode(void) ;
+static unsigned ExecuteMisfitOpcode(void) ;
+static unsigned ExecuteSpecialOpcode(void) ;
 
 
 // Actual opcode implementations
 
 // Data ALU Ops
-int ClrOperation(void **wd, UINT64 *pa) ;
-int AddOperation(void **wd, UINT64 *pa) ;
-int NotOperation(void **wd, UINT64 *pa) ;
-int LsrOperation(void **wd, UINT64 *pa) ;
-int AsrOperation(void **wd, UINT64 *pa) ;
-int TfrDataALUOperation(void **wd, UINT64 *pa) ;
-int EorOperation(void **wd, UINT64 *pa) ;
-int CmpOperation(void **wd, UINT64 *pa) ;
-int Dec24Operation(void **wd, UINT64 *pa) ;
-int AndOperation(void **wd, UINT64 *pa) ;
-int OrOperation(void **wd, UINT64 *pa) ;
+static int ClrOperation(void **wd, UINT64 *pa) ;
+static int AddOperation(void **wd, UINT64 *pa) ;
+static int NotOperation(void **wd, UINT64 *pa) ;
+static int LsrOperation(void **wd, UINT64 *pa) ;
+static int AsrOperation(void **wd, UINT64 *pa) ;
+static int TfrDataALUOperation(void **wd, UINT64 *pa) ;
+static int EorOperation(void **wd, UINT64 *pa) ;
+static int CmpOperation(void **wd, UINT64 *pa) ;
+static int Dec24Operation(void **wd, UINT64 *pa) ;
+static int AndOperation(void **wd, UINT64 *pa) ;
+static int OrOperation(void **wd, UINT64 *pa) ;
 
-int MoveCOperation(void) ;
-int MoveMOperation(void) ;
-int MoveIOperation(void) ;
-int MovePOperation(void) ;
+static int MoveCOperation(void) ;
+static int MoveMOperation(void) ;
+static int MoveIOperation(void) ;
+static int MovePOperation(void) ;
 
-int AndiOperation(void) ;
-int OriOperation(void) ;
+static int AndiOperation(void) ;
+static int OriOperation(void) ;
 
-int BitfieldOperation(void) ;
-int JmpOperation(void) ;
-int BsrOperation(void) ;
-int DoOperation(void) ;
-int TccOperation(void) ;
-int BraOperation(void) ;
-int BsccOperation(void) ;
-int BccOperation(void) ;
-int Tst2Operation(void) ;
-int MACsuuuOperation(void) ;
-int RepOperation(void) ;
+static int BitfieldOperation(void) ;
+static int JmpOperation(void) ;
+static int BsrOperation(void) ;
+static int DoOperation(void) ;
+static int TccOperation(void) ;
+static int BraOperation(void) ;
+static int BsccOperation(void) ;
+static int BccOperation(void) ;
+static int Tst2Operation(void) ;
+static int MACsuuuOperation(void) ;
+static int RepOperation(void) ;
 
-void EndOfLoopProcessing(void) ;
-void EndOfRepProcessing(void) ;
+static void EndOfLoopProcessing(void) ;
+static void EndOfRepProcessing(void) ;
 
 // Parallel memory data moves
-void XMDMOperation(UINT16 parameters, void *working, UINT64 *pa) ;
-void XMDMSpecialOperation(UINT16 parameters, void *working) ;
-void ARUOperation(UINT16 parameters) ;
-void RRDMOperation(UINT16 parameters, void *working,  UINT64 *pa) ;
+static void XMDMOperation(UINT16 parameters, void *working, UINT64 *pa) ;
+static void XMDMSpecialOperation(UINT16 parameters, void *working) ;
+static void ARUOperation(UINT16 parameters) ;
+static void RRDMOperation(UINT16 parameters, void *working,  UINT64 *pa) ;
 
 // For decoding the different types of tables...
 static void *DecodeDDDDDTable(UINT16 DDDDD, unsigned char *dt) ;
@@ -77,7 +77,7 @@ static void *DecodeRRTable(UINT16 RR, unsigned char *dt) ;
 static void *DecodeDDTable(UINT16 DD, unsigned char *dt) ;
 static void *DecodeHHHTable(UINT16 HHH, unsigned char *dt) ;
 static void *DecodeHHTable(UINT16 HH, unsigned char *dt) ;
-UINT16 DecodeBBBBitMask(UINT16 BBB, UINT16 *iVal) ;
+static UINT16 DecodeBBBBitMask(UINT16 BBB, UINT16 *iVal) ;
 static int DecodeccccTable(UINT16 cccc) ;
 static void Decodeh0hFTable(UINT16 h0h, UINT16 F, void **source, unsigned char *st, void **dest, unsigned char *dt) ;
 static void *DecodeFTable(UINT16 F, unsigned char *dt) ;
@@ -86,9 +86,9 @@ static void DecodeJJFTable(UINT16 JJ, UINT16 F, void **source, unsigned char *st
 static void DecodeQQFTableSp(UINT16 QQ, UINT16 F, void **S1, void **S2, void **D) ;
 static void DecodeIIIITable(UINT16 IIII, void **source, unsigned char *st, void **dest, unsigned char *dt, void *working) ;
 
-void ExecuteMMTable(int x, UINT16 MM) ;
-void ExecutemTable(int x, UINT16 m) ;
-void ExecutezTable(int x, UINT16 z) ;
+static void ExecuteMMTable(int x, UINT16 MM) ;
+static void ExecutemTable(int x, UINT16 m) ;
+static void ExecutezTable(int x, UINT16 z) ;
 
 static UINT16 AssembleDFromPTable(UINT16 P, UINT16 ppppp) ;
 
@@ -106,7 +106,7 @@ static void unimplemented(void)
 }
 
 
-void execute_one(void)
+static void execute_one(void)
 {
 	unsigned size = 666 ;
 
@@ -200,7 +200,7 @@ void execute_one(void)
 }
 
 
-unsigned ExecuteDataALUOpcode(int parallelType)
+static unsigned ExecuteDataALUOpcode(int parallelType)
 {
 	unsigned retSize = 666 ;
 
@@ -421,14 +421,14 @@ unsigned ExecuteDataALUOpcode(int parallelType)
 	return retSize ;
 }
 
-unsigned ExecuteDXMDROpcode(void)
+static unsigned ExecuteDXMDROpcode(void)
 {
 	unsigned retSize = 666 ;
 
 	return retSize ;
 }
 
-unsigned ExecuteNPMOpcode(void)
+static unsigned ExecuteNPMOpcode(void)
 {
 	unsigned retSize = 666 ;
 
@@ -575,7 +575,7 @@ unsigned ExecuteNPMOpcode(void)
 	return retSize ;
 }
 
-unsigned ExecuteMisfitOpcode(void)
+static unsigned ExecuteMisfitOpcode(void)
 {
 	unsigned retSize = 666 ;
 
@@ -616,7 +616,7 @@ unsigned ExecuteMisfitOpcode(void)
 	return retSize ;
 }
 
-unsigned ExecuteSpecialOpcode(void)
+static unsigned ExecuteSpecialOpcode(void)
 {
 	unsigned retSize = 666 ;
 
@@ -754,7 +754,7 @@ unsigned ExecuteSpecialOpcode(void)
 IMPLEMENTATIONS
 */
 
-int BitfieldOperation(void)
+static int BitfieldOperation(void)
 {
 	int retSize = 0 ;
 
@@ -849,7 +849,7 @@ int BitfieldOperation(void)
 	return retSize ;
 }
 
-int MoveCOperation(void)
+static int MoveCOperation(void)
 {
 	int retSize = 0 ;
 
@@ -958,7 +958,7 @@ int MoveCOperation(void)
 	return retSize ;
 }
 
-int MoveMOperation(void)
+static int MoveMOperation(void)
 {
 	int retSize = 0 ;
 
@@ -1039,7 +1039,7 @@ int MoveMOperation(void)
 	return retSize ;
 }
 
-int MoveIOperation(void)
+static int MoveIOperation(void)
 {
 	int retSize = 1 ;
 
@@ -1126,7 +1126,7 @@ int MovePOperation(void)
 }
 
 
-int JmpOperation(void)
+static int JmpOperation(void)
 {
 	int retSize = 0 ;
 
@@ -1137,7 +1137,7 @@ int JmpOperation(void)
 	return retSize ;
 }
 
-int BsrOperation(void)
+static int BsrOperation(void)
 {
 	int retSize = 0 ;
 
@@ -1162,7 +1162,7 @@ int BsrOperation(void)
 	return retSize ;
 }
 
-int BraOperation(void)
+static int BraOperation(void)
 {
 	int retSize = 0 ;
 
@@ -1195,7 +1195,7 @@ int BraOperation(void)
 }
 
 
-int DoOperation(void)
+static int DoOperation(void)
 {
 	int retSize = 0 ;
 
@@ -1247,7 +1247,7 @@ int DoOperation(void)
 	return retSize ;
 }
 
-void EndOfLoopProcessing(void)
+static void EndOfLoopProcessing(void)
 {
 	SR = SSL ;
 	SP-- ;
@@ -1256,7 +1256,7 @@ void EndOfLoopProcessing(void)
 	SP-- ;
 }
 
-int Dec24Operation(void **wd, UINT64 *pa)
+static int Dec24Operation(void **wd, UINT64 *pa)
 {
 	int retSize = 1 ;
 
@@ -1325,7 +1325,7 @@ int Dec24Operation(void **wd, UINT64 *pa)
 	return retSize ;
 }
 
-int AddOperation(void **wd, UINT64 *pa)
+static int AddOperation(void **wd, UINT64 *pa)
 {
 	UINT64 addVal = 0x00;
 
@@ -1350,7 +1350,7 @@ int AddOperation(void **wd, UINT64 *pa)
     return 1 ;
 }
 
-int LsrOperation(void **wd, UINT64 *pa)
+static int LsrOperation(void **wd, UINT64 *pa)
 {
 	int retSize = 1 ;
 
@@ -1372,7 +1372,7 @@ int LsrOperation(void **wd, UINT64 *pa)
 	return retSize ;
 }
 
-int AsrOperation(void **wd, UINT64 *pa)
+static int AsrOperation(void **wd, UINT64 *pa)
 {
 	int retSize = 1 ;
 
@@ -1391,7 +1391,7 @@ int AsrOperation(void **wd, UINT64 *pa)
 	return retSize ;
 }
 
-int NotOperation(void **wd, UINT64 *pa)
+static int NotOperation(void **wd, UINT64 *pa)
 {
 	int retSize = 1 ;
 
@@ -1430,7 +1430,7 @@ int EorOperation(void **wd, UINT64 *pa)
 	return retSize ;
 }
 
-int TfrDataALUOperation(void **wd, UINT64 *pa)
+static int TfrDataALUOperation(void **wd, UINT64 *pa)
 {
 	int retSize = 1 ;
 
@@ -1468,7 +1468,7 @@ int AndOperation(void **wd, UINT64 *pa)
 	return retSize ;
 }
 
-int OrOperation(void **wd, UINT64 *pa)
+static int OrOperation(void **wd, UINT64 *pa)
 {
 	int retSize = 1 ;
 
@@ -1490,7 +1490,7 @@ int OrOperation(void **wd, UINT64 *pa)
 }
 
 
-int TccOperation(void)
+static int TccOperation(void)
 {
 	int retSize = 1 ;
 
@@ -1522,7 +1522,7 @@ int TccOperation(void)
 	return retSize ;
 }
 
-int ClrOperation(void **wd, UINT64 *pa)
+static int ClrOperation(void **wd, UINT64 *pa)
 {
 	int retSize = 1 ;
 
@@ -1575,7 +1575,7 @@ int AndiOperation(void)
 }
 
 // !!! NOT IMPLEMENTED YET - JUST PUT HERE TO BE NEXT TO ANDI SOMEDAY !!!
-int OriOperation(void)
+static int OriOperation(void)
 {
 	int retSize = 1 ;
 
@@ -1615,7 +1615,7 @@ int CmpOperation(void **wd, UINT64 *pa)
 	return retSize ;
 }
 
-int BsccOperation(void)
+static int BsccOperation(void)
 {
 	int retSize = 0 ;
 
@@ -1661,7 +1661,7 @@ int BsccOperation(void)
 	return retSize ;
 }
 
-int BccOperation(void)
+static int BccOperation(void)
 {
 	int retSize = 0 ;
 
@@ -1742,7 +1742,7 @@ int Tst2Operation(void)
 	return retSize ;
 }
 
-int MACsuuuOperation(void)
+static int MACsuuuOperation(void)
 {
 	int retSize = 1 ;
 
@@ -1772,7 +1772,7 @@ int MACsuuuOperation(void)
 	return retSize ;
 }
 
-int RepOperation(void)
+static int RepOperation(void)
 {
 	int retSize = 1 ;
 
@@ -1801,7 +1801,7 @@ int RepOperation(void)
 	return retSize ;
 }
 
-void EndOfRepProcessing(void)
+static void EndOfRepProcessing(void)
 {
 	LC = TEMP ;
 
@@ -1922,7 +1922,7 @@ static void *DecodeHHTable(UINT16 HH, unsigned char *dt)
 }
 
 
-UINT16 DecodeBBBBitMask(UINT16 BBB, UINT16 *iVal)
+static UINT16 DecodeBBBBitMask(UINT16 BBB, UINT16 *iVal)
 {
 	UINT16 retVal = 0x00 ;
 
@@ -1936,7 +1936,7 @@ UINT16 DecodeBBBBitMask(UINT16 BBB, UINT16 *iVal)
 	return retVal ;
 }
 
-void ExecuteMMTable(int x, UINT16 MM)
+static void ExecuteMMTable(int x, UINT16 MM)
 {
 	UINT16 *rX = 0x00 ;
 	UINT16 *nX = 0x00 ;
@@ -1958,7 +1958,7 @@ void ExecuteMMTable(int x, UINT16 MM)
 	}
 }
 
-void ExecutemTable(int x, UINT16 m)
+static void ExecutemTable(int x, UINT16 m)
 {
 	UINT16 *rX = 0x00 ;
 	UINT16 *nX = 0x00 ;
@@ -1978,7 +1978,7 @@ void ExecutemTable(int x, UINT16 m)
 	}
 }
 
-void ExecutezTable(int x, UINT16 z)
+static void ExecutezTable(int x, UINT16 z)
 {
 	UINT16 *rX = 0x00 ;
 	UINT16 *nX = 0x00 ;
@@ -2186,7 +2186,7 @@ static void DecodeIIIITable(UINT16 IIII,
 MEMORY OPS
 */
 
-void XMDMOperation(UINT16 parameters, void *working, UINT64 *pa)
+static void XMDMOperation(UINT16 parameters, void *working, UINT64 *pa)
 {
 	UINT16 W ;
 	unsigned char rdt = 0x00 ;
@@ -2232,7 +2232,7 @@ void XMDMOperation(UINT16 parameters, void *working, UINT64 *pa)
 	ExecutemTable(BITS(parameters,0x0030), BITS(parameters,0x0040)) ;
 }
 
-void RRDMOperation(UINT16 parameters, void *working, UINT64 *pa)
+static void RRDMOperation(UINT16 parameters, void *working, UINT64 *pa)
 {
 	unsigned char st = 0x00, dt = 0x00 ;
 	void *S = 0x00, *D = 0x00;
@@ -2247,7 +2247,7 @@ void RRDMOperation(UINT16 parameters, void *working, UINT64 *pa)
 }
 
 
-void XMDMSpecialOperation(UINT16 parameters, void *working)
+static void XMDMSpecialOperation(UINT16 parameters, void *working)
 {
     UINT16 W ;
 	UINT16 *dest = 0x00 ;
@@ -2285,7 +2285,7 @@ void XMDMSpecialOperation(UINT16 parameters, void *working)
 	}
 }
 
-void ARUOperation(UINT16 parameters)
+static void ARUOperation(UINT16 parameters)
 {
 	ExecutezTable(BITS(parameters, 0x0003), BITS(parameters, 0x0004)) ;
 }
@@ -2316,7 +2316,7 @@ static UINT16 Dsp56kOpMask(UINT16 cur, UINT16 mask)
 }
 
 
-void SetDestinationValue(void *sourcePointer, unsigned char sourceType,
+static void SetDestinationValue(void *sourcePointer, unsigned char sourceType,
 						 void *destinationPointer, unsigned char destinationType)
 {
 	UINT64 destinationValue = 0 ;
@@ -2373,7 +2373,7 @@ void SetDestinationValue(void *sourcePointer, unsigned char sourceType,
 }
 
 // !! redundant functions (data and memory) can be handled with function pointers !!
-void SetDataMemoryValue(void *sourcePointer, unsigned char sourceType, UINT32 destinationAddr)
+static void SetDataMemoryValue(void *sourcePointer, unsigned char sourceType, UINT32 destinationAddr)
 {
 	// printf("%x\n", destinationAddr) ;
 
@@ -2390,7 +2390,7 @@ void SetDataMemoryValue(void *sourcePointer, unsigned char sourceType, UINT32 de
 	}
 }
 
-void SetProgramMemoryValue(void *sourcePointer, unsigned char sourceType, UINT32 destinationAddr)
+static void SetProgramMemoryValue(void *sourcePointer, unsigned char sourceType, UINT32 destinationAddr)
 {
 	// I wonder if this is how this should be done???
 	switch(sourceType)

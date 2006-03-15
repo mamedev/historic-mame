@@ -1123,10 +1123,10 @@ static const char *congo_sample_names[] =
 {
 	"*congo",
 	"gorilla.wav",
-	"bass.wav",
-	"congaa.wav",
-	"congab.wav",
 	"rim.wav",
+	"congah.wav",
+	"congal.wav",
+	"bass.wav",
 	0
 };
 

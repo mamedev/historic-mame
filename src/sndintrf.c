@@ -19,10 +19,6 @@
 #include "driver.h"
 
 
-// temporary
-#define OUT_OF_BOUNDS_IS_FATAL		1
-
-
 
 /***************************************************************************
 
@@ -438,85 +434,15 @@ static const struct
 
 ***************************************************************************/
 
-#if OUT_OF_BOUNDS_IS_FATAL
-#define VERIFY_SNDNUM(retval, name)						\
+#define VERIFY_SNDNUM(name) \
 	assert_always(sndnum >= 0 && sndnum < totalsnd, #name "() called with invalid sound num!")
 
-#define VERIFY_SNDNUM_VOID(name)							\
-	assert_always(sndnum >= 0 && sndnum < totalsnd, #name "() called with invalid sound num!")
-#else
-#define VERIFY_SNDNUM(retval, name)							\
-	if (sndnum < 0 || sndnum >= totalsnd)					\
-	{														\
-		logerror(#name "() called for invalid sound num!\n");\
-		return retval;										\
-	}
-
-#define VERIFY_SNDNUM_VOID(name)							\
-	if (sndnum < 0 || sndnum >= totalsnd)					\
-	{														\
-		logerror(#name "() called for invalid sound num!\n");\
-		return;												\
-	}
-#endif
-
-
-#if OUT_OF_BOUNDS_IS_FATAL
-#define VERIFY_SNDTI(retval, name)						\
+#define VERIFY_SNDTI(name) \
 	assert_always(sndtype >= 0 && sndtype < SOUND_COUNT, #name "() called with invalid sound type!"); \
 	assert_always(sndindex >= 0 && sndindex < totalsnd && sound_matrix[sndtype][sndindex] != 0, #name "() called with invalid (type,index) pair!")
 
-#define VERIFY_SNDTI_VOID(name)							\
-	assert_always(sndtype >= 0 && sndtype < SOUND_COUNT, #name "() called with invalid sound type!"); \
-	assert_always(sndindex >= 0 && sndindex < totalsnd && sound_matrix[sndtype][sndindex] != 0, #name "() called with invalid (type,index) pair!")
-#else
-#define VERIFY_SNDTI(retval, name)							\
-	if (sndtype < 0 || sndtype >= SOUND_COUNT)				\
-	{														\
-		logerror(#name "() called for invalid sound type!\n");\
-		return retval;										\
-	} \
-	if (sndindex < 0 || sndindex >= totalsnd || !sound_matrix[sndtype][sndindex]) \
-	{														\
-		logerror(#name "() called for invalid sound index!\n");\
-		return retval;										\
-	}
-
-#define VERIFY_SNDTI_VOID(name)								\
-	if (sndtype < 0 || sndtype >= SOUND_COUNT)				\
-	{														\
-		logerror(#name "() called for invalid sound type!\n");\
-		return;												\
-	} \
-	if (sndindex < 0 || sndindex >= totalsnd || !sound_matrix[sndtype][sndindex]) \
-	{														\
-		logerror(#name "() called for invalid sound index!\n");\
-		return;												\
-	}
-#endif
-
-
-#if OUT_OF_BOUNDS_IS_FATAL
-#define VERIFY_SNDTYPE(retval, name)						\
+#define VERIFY_SNDTYPE(name) \
 	assert_always(sndtype >= 0 && sndtype < SOUND_COUNT, #name "() called with invalid sound type!")
-
-#define VERIFY_SNDTYPE_VOID(name)							\
-	assert_always(sndtype >= 0 && sndtype < SOUND_COUNT, #name "() called with invalid sound type!")
-#else
-#define VERIFY_SNDTYPE(retval, name)						\
-	if (sndtype < 0 || sndtype >= SOUND_COUNT)				\
-	{														\
-		logerror(#name "() called for invalid sound type!\n");\
-		return retval;										\
-	}
-
-#define VERIFY_SNDTYPE_VOID(name)							\
-	if (sndtype < 0 || sndtype >= SOUND_COUNT)				\
-	{														\
-		logerror(#name "() called for invalid sound type!\n");\
-		return;												\
-	}
-#endif
 
 
 
@@ -715,7 +641,7 @@ INT64 sndnum_get_info_int(int sndnum, UINT32 state)
 {
 	sndinfo info;
 
-	VERIFY_SNDNUM(0, sndnum_get_info_int);
+	VERIFY_SNDNUM(sndnum_get_info_int);
 	info.i = 0;
 	(*sound[sndnum].intf.get_info)(sound[sndnum].token, state, &info);
 	return info.i;
@@ -725,7 +651,7 @@ void *sndnum_get_info_ptr(int sndnum, UINT32 state)
 {
 	sndinfo info;
 
-	VERIFY_SNDNUM(0, sndnum_get_info_ptr);
+	VERIFY_SNDNUM(sndnum_get_info_ptr);
 	info.p = NULL;
 	(*sound[sndnum].intf.get_info)(sound[sndnum].token, state, &info);
 	return info.p;
@@ -735,7 +661,7 @@ genf *sndnum_get_info_fct(int sndnum, UINT32 state)
 {
 	sndinfo info;
 
-	VERIFY_SNDNUM(0, sndnum_get_info_fct);
+	VERIFY_SNDNUM(sndnum_get_info_fct);
 	info.f = NULL;
 	(*sound[sndnum].intf.get_info)(sound[sndnum].token, state, &info);
 	return info.f;
@@ -745,7 +671,7 @@ const char *sndnum_get_info_string(int sndnum, UINT32 state)
 {
 	sndinfo info;
 
-	VERIFY_SNDNUM(0, sndnum_get_info_string);
+	VERIFY_SNDNUM(sndnum_get_info_string);
 	info.s = NULL;
 	(*sound[sndnum].intf.get_info)(sound[sndnum].token, state, &info);
 	return info.s;
@@ -759,7 +685,7 @@ const char *sndnum_get_info_string(int sndnum, UINT32 state)
 void sndnum_set_info_int(int sndnum, UINT32 state, INT64 data)
 {
 	sndinfo info;
-	VERIFY_SNDNUM_VOID(sndnum_set_info_int);
+	VERIFY_SNDNUM(sndnum_set_info_int);
 	info.i = data;
 	(*sound[sndnum].intf.set_info)(sound[sndnum].token, state, &info);
 }
@@ -767,7 +693,7 @@ void sndnum_set_info_int(int sndnum, UINT32 state, INT64 data)
 void sndnum_set_info_ptr(int sndnum, UINT32 state, void *data)
 {
 	sndinfo info;
-	VERIFY_SNDNUM_VOID(sndnum_set_info_ptr);
+	VERIFY_SNDNUM(sndnum_set_info_ptr);
 	info.p = data;
 	(*sound[sndnum].intf.set_info)(sound[sndnum].token, state, &info);
 }
@@ -775,7 +701,7 @@ void sndnum_set_info_ptr(int sndnum, UINT32 state, void *data)
 void sndnum_set_info_fct(int sndnum, UINT32 state, genf *data)
 {
 	sndinfo info;
-	VERIFY_SNDNUM_VOID(sndnum_set_info_ptr);
+	VERIFY_SNDNUM(sndnum_set_info_ptr);
 	info.f = data;
 	(*sound[sndnum].intf.set_info)(sound[sndnum].token, state, &info);
 }
@@ -787,20 +713,20 @@ void sndnum_set_info_fct(int sndnum, UINT32 state, genf *data)
 
 void sndnum_reset(int sndnum)
 {
-	VERIFY_SNDNUM_VOID(sndnum_reset);
+	VERIFY_SNDNUM(sndnum_reset);
 	if (sound[sndnum].intf.reset)
 		(*sound[sndnum].intf.reset)(sound[sndnum].token);
 }
 
 int sndnum_clock(int sndnum)
 {
-	VERIFY_SNDNUM(0, sndnum_clock);
+	VERIFY_SNDNUM(sndnum_clock);
 	return sound[sndnum].clock;
 }
 
 void *sndnum_token(int sndnum)
 {
-	VERIFY_SNDNUM(NULL, sndnum_token);
+	VERIFY_SNDNUM(sndnum_token);
 	return sound[sndnum].token;
 }
 
@@ -821,7 +747,7 @@ INT64 sndti_get_info_int(int sndtype, int sndindex, UINT32 state)
 	sndinfo info;
 	int sndnum;
 
-	VERIFY_SNDTI(0, sndti_get_info_int);
+	VERIFY_SNDTI(sndti_get_info_int);
 	sndnum = sound_matrix[sndtype][sndindex] - 1;
 	info.i = 0;
 	(*sound[sndnum].intf.get_info)(sound[sndnum].token, state, &info);
@@ -833,7 +759,7 @@ void *sndti_get_info_ptr(int sndtype, int sndindex, UINT32 state)
 	sndinfo info;
 	int sndnum;
 
-	VERIFY_SNDTI(0, sndti_get_info_ptr);
+	VERIFY_SNDTI(sndti_get_info_ptr);
 	sndnum = sound_matrix[sndtype][sndindex] - 1;
 	info.p = NULL;
 	(*sound[sndnum].intf.get_info)(sound[sndnum].token, state, &info);
@@ -845,7 +771,7 @@ genf *sndti_get_info_fct(int sndtype, int sndindex, UINT32 state)
 	sndinfo info;
 	int sndnum;
 
-	VERIFY_SNDTI(0, sndti_get_info_fct);
+	VERIFY_SNDTI(sndti_get_info_fct);
 	sndnum = sound_matrix[sndtype][sndindex] - 1;
 	info.f = NULL;
 	(*sound[sndnum].intf.get_info)(sound[sndnum].token, state, &info);
@@ -857,7 +783,7 @@ const char *sndti_get_info_string(int sndtype, int sndindex, UINT32 state)
 	sndinfo info;
 	int sndnum;
 
-	VERIFY_SNDTI(0, sndti_get_info_string);
+	VERIFY_SNDTI(sndti_get_info_string);
 	sndnum = sound_matrix[sndtype][sndindex] - 1;
 	info.s = NULL;
 	(*sound[sndnum].intf.get_info)(sound[sndnum].token, state, &info);
@@ -874,7 +800,7 @@ void sndti_set_info_int(int sndtype, int sndindex, UINT32 state, INT64 data)
 	sndinfo info;
 	int sndnum;
 
-	VERIFY_SNDTI_VOID(sndti_set_info_int);
+	VERIFY_SNDTI(sndti_set_info_int);
 	sndnum = sound_matrix[sndtype][sndindex] - 1;
 	info.i = data;
 	(*sound[sndnum].intf.set_info)(sound[sndnum].token, state, &info);
@@ -885,7 +811,7 @@ void sndti_set_info_ptr(int sndtype, int sndindex, UINT32 state, void *data)
 	sndinfo info;
 	int sndnum;
 
-	VERIFY_SNDTI_VOID(sndti_set_info_ptr);
+	VERIFY_SNDTI(sndti_set_info_ptr);
 	sndnum = sound_matrix[sndtype][sndindex] - 1;
 	info.p = data;
 	(*sound[sndnum].intf.set_info)(sound[sndnum].token, state, &info);
@@ -896,7 +822,7 @@ void sndti_set_info_fct(int sndtype, int sndindex, UINT32 state, genf *data)
 	sndinfo info;
 	int sndnum;
 
-	VERIFY_SNDTI_VOID(sndti_set_info_ptr);
+	VERIFY_SNDTI(sndti_set_info_ptr);
 	sndnum = sound_matrix[sndtype][sndindex] - 1;
 	info.f = data;
 	(*sound[sndnum].intf.set_info)(sound[sndnum].token, state, &info);
@@ -911,7 +837,7 @@ void sndti_reset(int sndtype, int sndindex)
 {
 	int sndnum;
 
-	VERIFY_SNDTI_VOID(sndti_reset);
+	VERIFY_SNDTI(sndti_reset);
 	sndnum = sound_matrix[sndtype][sndindex] - 1;
 	if (sound[sndnum].intf.reset)
 		(*sound[sndnum].intf.reset)(sound[sndnum].token);
@@ -920,7 +846,7 @@ void sndti_reset(int sndtype, int sndindex)
 int sndti_clock(int sndtype, int sndindex)
 {
 	int sndnum;
-	VERIFY_SNDTI(0, sndti_clock);
+	VERIFY_SNDTI(sndti_clock);
 	sndnum = sound_matrix[sndtype][sndindex] - 1;
 	return sound[sndnum].clock;
 }
@@ -928,7 +854,7 @@ int sndti_clock(int sndtype, int sndindex)
 void *sndti_token(int sndtype, int sndindex)
 {
 	int sndnum;
-	VERIFY_SNDTI(0, sndti_token);
+	VERIFY_SNDTI(sndti_token);
 	sndnum = sound_matrix[sndtype][sndindex] - 1;
 	return sound[sndnum].token;
 }
@@ -949,7 +875,7 @@ INT64 sndtype_get_info_int(int sndtype, UINT32 state)
 {
 	sndinfo info;
 
-	VERIFY_SNDTYPE(0, sndtype_get_info_int);
+	VERIFY_SNDTYPE(sndtype_get_info_int);
 	info.i = 0;
 	(*sndintrf[sndtype].get_info)(NULL, state, &info);
 	return info.i;
@@ -959,7 +885,7 @@ void *sndtype_get_info_ptr(int sndtype, UINT32 state)
 {
 	sndinfo info;
 
-	VERIFY_SNDTYPE(0, sndtype_get_info_ptr);
+	VERIFY_SNDTYPE(sndtype_get_info_ptr);
 	info.p = NULL;
 	(*sndintrf[sndtype].get_info)(NULL, state, &info);
 	return info.p;
@@ -969,7 +895,7 @@ genf *sndtype_get_info_fct(int sndtype, UINT32 state)
 {
 	sndinfo info;
 
-	VERIFY_SNDTYPE(0, sndtype_get_info_fct);
+	VERIFY_SNDTYPE(sndtype_get_info_fct);
 	info.f = NULL;
 	(*sndintrf[sndtype].get_info)(NULL, state, &info);
 	return info.f;
@@ -979,7 +905,7 @@ const char *sndtype_get_info_string(int sndtype, UINT32 state)
 {
 	sndinfo info;
 
-	VERIFY_SNDTYPE(0, sndtype_get_info_string);
+	VERIFY_SNDTYPE(sndtype_get_info_string);
 	info.s = NULL;
 	(*sndintrf[sndtype].get_info)(NULL, state, &info);
 	return info.s;

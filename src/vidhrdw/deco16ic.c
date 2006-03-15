@@ -1008,6 +1008,8 @@ static void custom_tilemap_draw(
 		else
 			src_x=scrollx;
 
+		src_x &= width_mask;
+
 		for (x=0; x<320; x++) {
 			if (rowscroll_ptr && (control1&0x20))
 				column_offset=rowscroll_ptr[0x200 + ((src_x&0x1ff) / col_type)];

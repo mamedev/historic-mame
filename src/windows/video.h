@@ -25,10 +25,6 @@
 //  GLOBAL VARIABLES
 //============================================================
 
-// current frameskip/autoframeskip settings
-extern int			frameskip;
-extern int			autoframeskip;
-
 // speed throttling
 extern int			throttle;
 

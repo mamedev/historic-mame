@@ -22,7 +22,7 @@ extern int scontra_priority;
 VIDEO_START( scontra );
 VIDEO_UPDATE( scontra );
 
-static int unknown_enable = 0;
+static UINT8 thunderx_1f98_data = 0;
 
 /***************************************************************************/
 
@@ -287,6 +287,11 @@ static void calculate_collisions( void )
 	run_collisions(X0,Y0,X1,Y1,CM,HM);
 }
 
+static READ8_HANDLER( thunderx_1f98_r )
+{
+	return thunderx_1f98_data;
+}
+
 static WRITE8_HANDLER( thunderx_1f98_w )
 {
 // logerror("%04x: 1f98_w %02x\n",activecpu_get_pc(),data);
@@ -298,7 +303,7 @@ static WRITE8_HANDLER( thunderx_1f98_w )
 	pmcbank = (data & 0x02) >> 1;
 
 	/* bit 2 = do collision detection when 0->1 */
-	if ((data & 4) && !(unknown_enable & 4))
+	if ((data & 4) && !(thunderx_1f98_data & 4))
 	{
 		calculate_collisions();
 
@@ -306,7 +311,7 @@ static WRITE8_HANDLER( thunderx_1f98_w )
 		timer_set(TIME_IN_CYCLES(100,0),0, thunderx_firq_callback);
 	}
 
-	unknown_enable = data;
+	thunderx_1f98_data = data;
 }
 
 WRITE8_HANDLER( scontra_bankswitch_w )
@@ -386,6 +391,7 @@ static ADDRESS_MAP_START( thunderx_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x1f93, 0x1f93) AM_READ(input_port_5_r) /* Dip 3 */
 	AM_RANGE(0x1f94, 0x1f94) AM_READ(input_port_3_r) /* Dip 1 */
 	AM_RANGE(0x1f95, 0x1f95) AM_READ(input_port_4_r) /* Dip 2 */
+	AM_RANGE(0x1f98, 0x1f98) AM_READ(thunderx_1f98_r) /* registers */
 
 	AM_RANGE(0x0000, 0x3fff) AM_READ(K052109_051960_r)
 	AM_RANGE(0x4000, 0x57ff) AM_READ(MRA8_RAM)

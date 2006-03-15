@@ -251,7 +251,7 @@ static void compute(UINT32 opcode)
 	}
 }
 
-void get_if_condition(int cond)
+static void get_if_condition(int cond)
 {
 	if( cond != 31 ) {
 		print("IF %s, ", condition_codes_if[cond]);

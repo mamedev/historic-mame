@@ -161,7 +161,7 @@ void CLIB_DECL discrete_log(const char *text, ...)
  *
  *************************************/
 
-struct discrete_module module_list[] =
+static struct discrete_module module_list[] =
 {
 	{ DSO_OUTPUT      ,"DSO_OUTPUT"      ,0                                      ,NULL                  ,NULL                 },
 	{ DSO_CSVLOG      ,"DSO_CSVLOG"      ,0                                      ,NULL                  ,NULL                 },

@@ -228,7 +228,7 @@ static WRITE8_HANDLER( cvsd_protection_w )
 	/* go to the proper location (i.e., bank 0); currently bank 0 always lives */
 	/* in the 0x10000-0x17fff space, so we just need to add 0x8000 to get the  */
 	/* proper offset */
-	cvsd_protection_base[0x8000 + offset] = data;
+	cvsd_protection_base[offset] = data;
 }
 
 
@@ -288,7 +288,8 @@ static void init_generic(int bpp, int sound, int prot_start, int prot_end)
 	{
 		case SOUND_CVSD_SMALL:
 			williams_cvsd_init(0);
-			cvsd_protection_base = memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, prot_start, prot_end, 0, 0, cvsd_protection_w);
+			memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, prot_start, prot_end, 0, 0, cvsd_protection_w);
+			cvsd_protection_base = memory_region(REGION_CPU2) + 0x10000 + (prot_start - 0x8000);
 			break;
 
 		case SOUND_CVSD:

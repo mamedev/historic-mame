@@ -121,7 +121,7 @@ static const char *regnames[32] =
 #define COBRSRC1 ((iCode >> 19) & 0x1f)
 #define COBRSRC2 ((iCode >> 14) & 0x1f)
 
-char *dis_decode_reg(unsigned long iCode, char* tmpStr,unsigned char cnt)
+static char *dis_decode_reg(unsigned long iCode, char* tmpStr,unsigned char cnt)
 {
 	char src1[10];
 	char src2[10];

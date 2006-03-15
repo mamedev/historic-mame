@@ -59,6 +59,9 @@ static int bitno=0;
 static char reading=0;
 static char writting=0;
 
+static int clock_line=0;
+static int command_line=0;	//??
+
 #define DATA_BIT	0x1
 #define CLOCK_BIT	0x2
 #define END_BIT		0x4
@@ -300,9 +303,6 @@ static void pd4990a_process_command(void)
 
 void pd4990a_serial_control(unsigned char data)
 {
-	static int clock_line=0;
-	static int command_line=0;	//??
-
 	//Check for command end
 	if(command_line && !(data&END_BIT)) //end of command
 	{
@@ -324,3 +324,29 @@ WRITE16_HANDLER( pd4990a_control_16_w )
 	pd4990a_serial_control(data&0x7);
 }
 
+void pd4990a_init(void)
+{
+	state_save_register_item("pd4990a", 0, pd4990a.seconds);
+	state_save_register_item("pd4990a", 0, pd4990a.minutes);
+	state_save_register_item("pd4990a", 0, pd4990a.hours);
+	state_save_register_item("pd4990a", 0, pd4990a.days);
+	state_save_register_item("pd4990a", 0, pd4990a.month);
+	state_save_register_item("pd4990a", 0, pd4990a.year);
+	state_save_register_item("pd4990a", 0, pd4990a.weekday);
+
+	state_save_register_item("pd4990a", 0, shiftlo);
+	state_save_register_item("pd4990a", 0, shifthi);
+
+	state_save_register_item("pd4990a", 0, retraces);
+	state_save_register_item("pd4990a", 0, testwaits);
+	state_save_register_item("pd4990a", 0, maxwaits);
+	state_save_register_item("pd4990a", 0, testbit);
+
+	state_save_register_item("pd4990a", 0, outputbit);
+	state_save_register_item("pd4990a", 0, bitno);
+	state_save_register_item("pd4990a", 0, reading);
+	state_save_register_item("pd4990a", 0, writting);
+
+	state_save_register_item("pd4990a", 0, clock_line);
+	state_save_register_item("pd4990a", 0, command_line);
+}

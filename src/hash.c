@@ -187,13 +187,13 @@ static const hash_function_desc hash_descs[HASH_NUM_FUNCTIONS] =
 	},
 };
 
-const char* info_strings[] =
+static const char* info_strings[] =
 {
 	"$ND$",       // No dump
 	"$BD$"        // Bad dump
 };
 
-static const char* binToStr = "0123456789abcdef";
+static const char binToStr[] = "0123456789abcdef";
 
 
 static const hash_function_desc* hash_get_function_desc(unsigned int function)

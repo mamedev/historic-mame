@@ -120,7 +120,7 @@ static const char *condition[32] =
 //  19 = LUF (LUF)
 //  20 = ZUF (Z | UF)
 
-void append_indirect(UINT8 ma, INT8 disp, char *buffer)
+static void append_indirect(UINT8 ma, INT8 disp, char *buffer)
 {
 	char *dst = &buffer[strlen(buffer)];
 	char dispstr[20];

@@ -1104,14 +1104,14 @@ static const UINT32 kPrefillValueTable[] =
 	0x01
 };
 
-const char *	kWatchLabelStringList[] =
+static const char * kWatchLabelStringList[] =
 {
 	"None",
 	"Address",
 	"String"
 };
 
-const char *	kWatchDisplayTypeStringList[] =
+static const char * kWatchDisplayTypeStringList[] =
 {
 	"Hex",
 	"Decimal",
@@ -6067,7 +6067,7 @@ static int EditWatch(WatchInfo * entry, int selection)
 		kMenu_Return
 	};
 
-	const char *	kWatchSizeStringList[] =
+	static const char * kWatchSizeStringList[] =
 	{
 		"8 Bit",
 		"16 Bit",
@@ -8266,7 +8266,7 @@ static int ConvertOldCode(int code, int cpu, int * data, int * extendData)
 		UINT8	customField;
 	};
 
-	struct ConversionTable	kConversionTable[] =
+	static struct ConversionTable kConversionTable[] =
 	{
 		{	0,		0x00000000,	kCustomField_None },
 		{	1,		0x00000001,	kCustomField_None },

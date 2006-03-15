@@ -488,13 +488,13 @@ INST(STSP)
 	CLRFLAG(FLAG_E);
 }
 
-void PushVal(UINT32 Val)
+static void PushVal(UINT32 Val)
 {
 	Context.SP-=4;
 	SE3208_Write32(Context.SP,Val);
 }
 
-UINT32 PopVal(void)
+static UINT32 PopVal(void)
 {
 	UINT32 Val=SE3208_Read32(Context.SP);
 	Context.SP+=4;
