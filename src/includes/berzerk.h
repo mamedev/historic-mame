@@ -1,4 +1,4 @@
-/* defined in machine/berzerk.c */
+/*----------- defined in machine/berzerk.c -----------*/
 
 MACHINE_RESET( berzerk );
 INTERRUPT_GEN( berzerk_interrupt );
@@ -11,7 +11,7 @@ READ8_HANDLER( berzerk_led_on_r );
 READ8_HANDLER( berzerk_led_off_r );
 
 
-/* defined in vidrhdw/berzerk.c */
+/*----------- defined in vidrhdw/berzerk.c -----------*/
 
 PALETTE_INIT( berzerk );
 VIDEO_START( berzerk );
@@ -22,7 +22,7 @@ WRITE8_HANDLER( berzerk_magicram_control_w );
 READ8_HANDLER( berzerk_port_4e_r );
 
 
-/* defined in sndhrdw/berzerk.c */
+/*----------- defined in sndhrdw/berzerk.c -----------*/
 
 extern struct Samplesinterface berzerk_samples_interface;
 WRITE8_HANDLER( berzerk_sound_w );

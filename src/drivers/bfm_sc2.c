@@ -166,7 +166,7 @@ static void e2ram_reset(void);
 
 // global vars ////////////////////////////////////////////////////////////
 
-int sc2gui_update_mmtr;	// bit pattern which mechanical meter needs updating
+static int sc2gui_update_mmtr;	// bit pattern which mechanical meter needs updating
 
 // local vars /////////////////////////////////////////////////////////////
 
@@ -223,7 +223,7 @@ static int watchdog_kicked;
 // user interface stuff ///////////////////////////////////////////////////
 
 static UINT8 Lamps[256];		  // 256 multiplexed lamps
-UINT8 sc2_Inputs[64];			  // ??  multiplexed inputs,
+static UINT8 sc2_Inputs[64];			  // ??  multiplexed inputs,
 								  // need to be hooked to buttons
 
 static UINT8 input_override[64];  // bit pattern, bit set means this input is overriden and cannot be changed with switches
@@ -247,7 +247,7 @@ static UINT8 input_override[64];  // bit pattern, bit set means this input is ov
 */
 ///////////////////////////////////////////////////////////////////////////
 
-void send_to_adder(int data)
+static void send_to_adder(int data)
 {
 	adder2_data_from_sc2 = 1;		// set flag, data from scorpion2 board available
 	adder2_sc2data       = data;	// store data
@@ -277,7 +277,7 @@ int read_from_sc2(void)
 
 ///////////////////////////////////////////////////////////////////////////
 
-int  receive_from_adder(void)
+static int receive_from_adder(void)
 {
 	int data = sc2_adderdata;
 
@@ -407,7 +407,7 @@ void on_scorpion2_reset(void)
 
 ///////////////////////////////////////////////////////////////////////////
 
-void Scorpion2_SetSwitchState(int strobe, int data, int state)
+static void Scorpion2_SetSwitchState(int strobe, int data, int state)
 {
 	//logerror("setstate(%0x:%0x, %d) ", strobe, data, state);
 	if ( strobe < 11 && data < 8 )

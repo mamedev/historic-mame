@@ -20,8 +20,7 @@
 #ifndef __RC_H
 #define __RC_H
 
-#include <stdio.h>
-#include "fileio.h"
+#include "mamecore.h"
 
 struct rc_struct;
 struct rc_option;

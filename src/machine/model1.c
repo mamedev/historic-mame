@@ -5,6 +5,15 @@
 #include "driver.h"
 #include <math.h>
 
+//#define VERBOSE 1
+
+#ifdef VERBOSE
+#define LOG(x)	logerror x
+#else
+#define LOG(x)
+#endif
+
+
 enum {FIFO_SIZE = 256};
 enum {MAT_STACK_SIZE = 32};
 
@@ -49,21 +58,21 @@ static int puuu = 0;
 static void fifoout_push(UINT32 data)
 {
 	if(!puuu)
-		logerror("TGP: Push %d\n", data);
+		LOG(("TGP: Push %d\n", data));
 	else
 		puuu = 0;
 	fifoout_data[fifoout_wpos++] = data;
 	if(fifoout_wpos == FIFO_SIZE)
 		fifoout_wpos = 0;
 	if(fifoout_wpos == fifoout_rpos)
-		logerror("TGP FIFOOUT overflow\n");
+		LOG(("TGP FIFOOUT overflow\n"));
 }
 
 static void fifoout_push_f(float data)
 {
 	puuu = 1;
 
-	logerror("TGP: Push %f\n", data);
+	LOG(("TGP: Push %f\n", data));
 	fifoout_push(f2u(data));
 }
 
@@ -71,7 +80,7 @@ static UINT32 fifoin_pop(void)
 {
 	UINT32 v;
 	if(fifoin_wpos == fifoin_rpos)
-		logerror("TGP FIFOIN underflow\n");
+		LOG(("TGP FIFOIN underflow\n"));
 	v = fifoin_data[fifoin_rpos++];
 	if(fifoin_rpos == FIFO_SIZE)
 		fifoin_rpos = 0;
@@ -80,12 +89,12 @@ static UINT32 fifoin_pop(void)
 
 static void fifoin_push(UINT32 data)
 {
-	//  logerror("TGP FIFOIN write %08x (%x)\n", data, activecpu_get_pc());
+	//  LOG(("TGP FIFOIN write %08x (%x)\n", data, activecpu_get_pc()));
 	fifoin_data[fifoin_wpos++] = data;
 	if(fifoin_wpos == FIFO_SIZE)
 		fifoin_wpos = 0;
 	if(fifoin_wpos == fifoin_rpos)
-		logerror("TGP FIFOIN overflow\n");
+		LOG(("TGP FIFOIN overflow\n"));
 	fifoin_cbcount--;
 	if(!fifoin_cbcount)
 		fifoin_cb();
@@ -144,7 +153,7 @@ static void fadd(void)
 	float a = fifoin_pop_f();
 	float b = fifoin_pop_f();
 	float r = a+b;
-	logerror("TGP fadd %f+%f=%f (%x)\n", a, b, r, activecpu_get_pc());
+	LOG(("TGP fadd %f+%f=%f (%x)\n", a, b, r, activecpu_get_pc()));
 	fifoout_push_f(r);
 	next_fn();
 }
@@ -155,7 +164,7 @@ static void fsub(void)
 	float b = fifoin_pop_f();
 	float r = a-b;
 	model1_dump = 1;
-	logerror("TGP fsub %f-%f=%f (%x)\n", a, b, r, activecpu_get_pc());
+	LOG(("TGP fsub %f-%f=%f (%x)\n", a, b, r, activecpu_get_pc()));
 	fifoout_push_f(r);
 	next_fn();
 }
@@ -165,7 +174,7 @@ static void fmul(void)
 	float a = fifoin_pop_f();
 	float b = fifoin_pop_f();
 	float r = a*b;
-	logerror("TGP fmul %f*%f=%f (%x)\n", a, b, r, activecpu_get_pc());
+	LOG(("TGP fmul %f*%f=%f (%x)\n", a, b, r, activecpu_get_pc()));
 	fifoout_push_f(r);
 	next_fn();
 }
@@ -175,7 +184,7 @@ static void fdiv(void)
 	float a = fifoin_pop_f();
 	float b = fifoin_pop_f();
 	float r = !b ? 1e39 : a/b;
-	logerror("TGP fdiv %f/%f=%f (%x)\n", a, b, r, activecpu_get_pc());
+	LOG(("TGP fdiv %f/%f=%f (%x)\n", a, b, r, activecpu_get_pc()));
 	fifoout_push_f(r);
 	next_fn();
 }
@@ -186,7 +195,7 @@ static void matrix_push(void)
 		memcpy(mat_stack[mat_stack_pos], cmat, sizeof(cmat));
 		mat_stack_pos++;
 	}
-	logerror("TGP matrix_push (depth=%d, pc=%x)\n", mat_stack_pos, activecpu_get_pc());
+	LOG(("TGP matrix_push (depth=%d, pc=%x)\n", mat_stack_pos, activecpu_get_pc()));
 	next_fn();
 }
 
@@ -196,7 +205,7 @@ static void matrix_pop(void)
 		mat_stack_pos--;
 		memcpy(cmat, mat_stack[mat_stack_pos], sizeof(cmat));
 	}
-	logerror("TGP matrix_pop (depth=%d, pc=%x)\n", mat_stack_pos, activecpu_get_pc());
+	LOG(("TGP matrix_pop (depth=%d, pc=%x)\n", mat_stack_pos, activecpu_get_pc()));
 	next_fn();
 }
 
@@ -205,15 +214,15 @@ static void matrix_write(void)
 	int i;
 	for(i=0; i<12; i++)
 		cmat[i] = fifoin_pop_f();
-	logerror("TGP matrix_write %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f) (%x)\n",
+	LOG(("TGP matrix_write %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f) (%x)\n",
 			 cmat[0], cmat[1], cmat[2], cmat[3], cmat[4], cmat[5], cmat[6], cmat[7], cmat[8], cmat[9], cmat[10], cmat[11],
-			 activecpu_get_pc());
+			 activecpu_get_pc()));
 	next_fn();
 }
 
 static void clear_stack(void)
 {
-	logerror("TGP clear_stack (%x)\n", activecpu_get_pc());
+	LOG(("TGP clear_stack (%x)\n", activecpu_get_pc()));
 	mat_stack_pos = 0;
 	next_fn();
 }
@@ -233,7 +242,7 @@ static void matrix_mul(void)
 	float j = fifoin_pop_f();
 	float k = fifoin_pop_f();
 	float l = fifoin_pop_f();
-	logerror("TGP matrix_mul %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f (%x)\n", a, b, c, d, e, f, g, h, i, j, k, l, activecpu_get_pc());
+	LOG(("TGP matrix_mul %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f (%x)\n", a, b, c, d, e, f, g, h, i, j, k, l, activecpu_get_pc()));
 	m[0]  = a*cmat[0] + b*cmat[3] + c*cmat[6];
 	m[1]  = a*cmat[1] + b*cmat[4] + c*cmat[7];
 	m[2]  = a*cmat[2] + b*cmat[5] + c*cmat[8];
@@ -255,7 +264,7 @@ static void anglev(void)
 {
 	float a = fifoin_pop_f();
 	float b = fifoin_pop_f();
-	logerror("TGP anglev %f, %f (%x)\n", a, b, activecpu_get_pc());
+	LOG(("TGP anglev %f, %f (%x)\n", a, b, activecpu_get_pc()));
 	if(!b) {
 		if(a>=0)
 			fifoout_push(0);
@@ -282,7 +291,16 @@ static void f11(void)
 	float g = fifoin_pop_f();
 	float h = fifoin_pop_f();
 	float i = fifoin_pop_f();
-	logerror("TGP f11 %f, %f, %f, %f, %f, %f, %f, %f, %f (%x)\n", a, b, c, d, e, f, g, h, i, activecpu_get_pc());
+	(void)a;
+	(void)b;
+	(void)c;
+	(void)d;
+	(void)e;
+	(void)f;
+	(void)g;
+	(void)h;
+	(void)i;
+	LOG(("TGP f11 %f, %f, %f, %f, %f, %f, %f, %f, %f (%x)\n", a, b, c, d, e, f, g, h, i, activecpu_get_pc()));
 	fifoout_push_f(0);
 	fifoout_push_f(0);
 	fifoout_push_f(0);
@@ -295,7 +313,7 @@ static void normalize(void)
 	float b = fifoin_pop_f();
 	float c = fifoin_pop_f();
 	float n = sqrt(a*a+b*b+c*c);
-	logerror("TGP normalize %f, %f, %f (%x)\n", a, b, c, activecpu_get_pc());
+	LOG(("TGP normalize %f, %f, %f (%x)\n", a, b, c, activecpu_get_pc()));
 	fifoout_push_f(a/n);
 	fifoout_push_f(b/n);
 	fifoout_push_f(c/n);
@@ -306,7 +324,7 @@ static void acc_seti(void)
 {
 	INT32 a = fifoin_pop();
 	model1_dump = 1;
-	logerror("TGP acc_seti %d (%x)\n", a, activecpu_get_pc());
+	LOG(("TGP acc_seti %d (%x)\n", a, activecpu_get_pc()));
 	acc = a;
 	next_fn();
 }
@@ -314,7 +332,7 @@ static void acc_seti(void)
 static void track_select(void)
 {
 	INT32 a = fifoin_pop();
-	logerror("TGP track_select %d (%x)\n", a, activecpu_get_pc());
+	LOG(("TGP track_select %d (%x)\n", a, activecpu_get_pc()));
 	tgp_vr_select = a;
 	next_fn();
 }
@@ -326,7 +344,11 @@ static void f14(void)
 	float c = fifoin_pop_f();
 	float d = fifoin_pop_f();
 	int r = 0;
-	logerror("TGP f14 %f, %f, %f, %f (%x)\n", a, b, c, d, activecpu_get_pc());
+	(void)a;
+	(void)b;
+	(void)c;
+	(void)d;
+	LOG(("TGP f14 %f, %f, %f, %f (%x)\n", a, b, c, d, activecpu_get_pc()));
 	//  fprintf(stderr, "TGP f14 %f, %f, %f, %f (%x)\n", a, b, c, d, activecpu_get_pc());
 
 	switch(activecpu_get_pc()) {
@@ -347,7 +369,7 @@ static void f14(void)
 
 static void f15_swa(void)
 {
-	logerror("TGP f15_swa (%x)\n", activecpu_get_pc());
+	LOG(("TGP f15_swa (%x)\n", activecpu_get_pc()));
 	//  fprintf(stderr, "TGP f15_swa (%x)\n", activecpu_get_pc());
 
 	next_fn();
@@ -359,7 +381,7 @@ static void anglep(void)
 	float b = fifoin_pop_f();
 	float c = fifoin_pop_f();
 	float d = fifoin_pop_f();
-	logerror("TGP anglep %f, %f, %f, %f (%x)\n", a, b, c, d, activecpu_get_pc());
+	LOG(("TGP anglep %f, %f, %f, %f (%x)\n", a, b, c, d, activecpu_get_pc()));
 	c = a - c;
 	d = b - d;
 	if(!d) {
@@ -379,7 +401,7 @@ static void anglep(void)
 
 static void matrix_ident(void)
 {
-	logerror("TGP matrix_ident (%x)\n", activecpu_get_pc());
+	LOG(("TGP matrix_ident (%x)\n", activecpu_get_pc()));
 	memset(cmat, 0, sizeof(cmat));
 	cmat[0] = 1.0;
 	cmat[4] = 1.0;
@@ -390,8 +412,8 @@ static void matrix_ident(void)
 static void matrix_read(void)
 {
 	int i;
-	logerror("TGP matrix_read (%f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f) (%x)\n",
-			 cmat[0], cmat[1], cmat[2], cmat[3], cmat[4], cmat[5], cmat[6], cmat[7], cmat[8], cmat[9], cmat[10], cmat[11], activecpu_get_pc());
+	LOG(("TGP matrix_read (%f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f) (%x)\n",
+			 cmat[0], cmat[1], cmat[2], cmat[3], cmat[4], cmat[5], cmat[6], cmat[7], cmat[8], cmat[9], cmat[10], cmat[11], activecpu_get_pc()));
 	for(i=0; i<12; i++)
 		fifoout_push_f(cmat[i]);
 	next_fn();
@@ -403,7 +425,7 @@ static void matrix_trans(void)
 	float b = fifoin_pop_f();
 	float c = fifoin_pop_f();
 
-	logerror("TGP matrix_trans (%f, %f, %f) (%x)\n", a, b, c, activecpu_get_pc());
+	LOG(("TGP matrix_trans (%f, %f, %f) (%x)\n", a, b, c, activecpu_get_pc()));
 	if(0 && activecpu_get_pc() == 0xfeeaa5)
 		//      fprintf(stderr, "TGP matrix_trans (%f, %f, %f) (%x)\n", a, b, c, activecpu_get_pc());
 		a = 0;
@@ -424,7 +446,7 @@ static void matrix_scale(void)
 	float a = fifoin_pop_f();
 	float b = fifoin_pop_f();
 	float c = fifoin_pop_f();
-	logerror("TGP matrix_scale %f, %f, %f (%x)\n", a, b, c, activecpu_get_pc());
+	LOG(("TGP matrix_scale %f, %f, %f (%x)\n", a, b, c, activecpu_get_pc()));
 	cmat[0] *= a;
 	cmat[1] *= a;
 	cmat[2] *= a;
@@ -443,7 +465,7 @@ static void matrix_rotx(void)
 	double s = tsin(a);
 	double c = tcos(a);
 	double t1, t2;
-	logerror("TGP matrix_rotx %d (%x)\n", a, activecpu_get_pc());
+	LOG(("TGP matrix_rotx %d (%x)\n", a, activecpu_get_pc()));
 	t1 = cmat[3];
 	t2 = cmat[6];
 	cmat[3] = c*t1-s*t2;
@@ -466,7 +488,7 @@ static void matrix_roty(void)
 	double c = tcos(a);
 	double t1, t2;
 
-	logerror("TGP matrix_roty %d (%x)\n", a, activecpu_get_pc());
+	LOG(("TGP matrix_roty %d (%x)\n", a, activecpu_get_pc()));
 	t1 = cmat[6];
 	t2 = cmat[0];
 	cmat[6] = c*t1-s*t2;
@@ -489,7 +511,7 @@ static void matrix_rotz(void)
 	double c = tcos(a);
 	double t1, t2;
 
-	logerror("TGP matrix_rotz %d (%x)\n", a, activecpu_get_pc());
+	LOG(("TGP matrix_rotz %d (%x)\n", a, activecpu_get_pc()));
 	t1 = cmat[0];
 	t2 = cmat[3];
 	cmat[0] = c*t1-s*t2;
@@ -508,7 +530,8 @@ static void matrix_rotz(void)
 static void f24(void)
 {
 	UINT32 a = fifoin_pop();
-	logerror("TGP f24 %d (%x)\n", a, activecpu_get_pc());
+	(void)a;
+	LOG(("TGP f24 %d (%x)\n", a, activecpu_get_pc()));
 	fifoout_push_f(1);
 	fifoout_push_f(0);
 	fifoout_push_f(0);
@@ -533,7 +556,14 @@ static void f24_swa(void)
 	float e = fifoin_pop_f();
 	float f = fifoin_pop_f();
 	UINT32 g = fifoin_pop();
-	logerror("TGP f24_swa %f, %f, %f, %f, %f, %f, %x (%x)\n", a, b, c, d, e, f, g, activecpu_get_pc());
+	(void)a;
+	(void)b;
+	(void)c;
+	(void)d;
+	(void)e;
+	(void)f;
+	(void)g;
+	LOG(("TGP f24_swa %f, %f, %f, %f, %f, %f, %x (%x)\n", a, b, c, d, e, f, g, activecpu_get_pc()));
 	fifoout_push_f(0);
 	next_fn();
 }
@@ -543,7 +573,7 @@ static void transform_point(void)
 	float x = fifoin_pop_f();
 	float y = fifoin_pop_f();
 	float z = fifoin_pop_f();
-	logerror("TGP transform_point %f, %f, %f (%x)\n", x, y, z, activecpu_get_pc());
+	LOG(("TGP transform_point %f, %f, %f (%x)\n", x, y, z, activecpu_get_pc()));
 	fifoout_push_f(cmat[0]*x+cmat[3]*y+cmat[6]*z+cmat[9]);
 	fifoout_push_f(cmat[1]*x+cmat[4]*y+cmat[7]*z+cmat[10]);
 	fifoout_push_f(cmat[2]*x+cmat[5]*y+cmat[8]*z+cmat[11]);
@@ -553,7 +583,7 @@ static void transform_point(void)
 static void fcos_m1(void)
 {
     INT16 a = fifoin_pop();
-	logerror("TGP fcos %d (%x)\n", a, activecpu_get_pc());
+	LOG(("TGP fcos %d (%x)\n", a, activecpu_get_pc()));
 	fifoout_push_f(tcos(a));
 	next_fn();
 }
@@ -561,7 +591,7 @@ static void fcos_m1(void)
 static void fsin_m1(void)
 {
     INT16 a = fifoin_pop();
-	logerror("TGP fsin %d (%x)\n", a, activecpu_get_pc());
+	LOG(("TGP fsin %d (%x)\n", a, activecpu_get_pc()));
 	fifoout_push_f(tsin(a));
 	next_fn();
 }
@@ -570,7 +600,7 @@ static void fcosm_m1(void)
 {
     INT16 a = fifoin_pop();
 	float b = fifoin_pop_f();
-	logerror("TGP fcosm %d, %f (%x)\n", a, b, activecpu_get_pc());
+	LOG(("TGP fcosm %d, %f (%x)\n", a, b, activecpu_get_pc()));
 	fifoout_push_f(b*tcos(a));
 	next_fn();
 }
@@ -580,7 +610,7 @@ static void fsinm_m1(void)
     INT16 a = fifoin_pop();
 	float b = fifoin_pop_f();
 	model1_dump = 1;
-	logerror("TGP fsinm %d, %f (%x)\n", a, b, activecpu_get_pc());
+	LOG(("TGP fsinm %d, %f (%x)\n", a, b, activecpu_get_pc()));
 	fifoout_push_f(b*tsin(a));
 	next_fn();
 }
@@ -593,7 +623,7 @@ static void distance3(void)
 	float d = fifoin_pop_f();
 	float e = fifoin_pop_f();
 	float f = fifoin_pop_f();
-	logerror("TGP distance3 (%f, %f, %f), (%f, %f, %f) (%x)\n", a, b, c, d, e, f, activecpu_get_pc());
+	LOG(("TGP distance3 (%f, %f, %f), (%f, %f, %f) (%x)\n", a, b, c, d, e, f, activecpu_get_pc()));
 	a -= d;
 	b -= e;
 	c -= f;
@@ -604,7 +634,7 @@ static void distance3(void)
 static void ftoi(void)
 {
 	float a = fifoin_pop_f();
-	logerror("TGP ftoi %f (%x)\n", a, activecpu_get_pc());
+	LOG(("TGP ftoi %f (%x)\n", a, activecpu_get_pc()));
 	fifoout_push((int)a);
 	next_fn();
 }
@@ -612,7 +642,7 @@ static void ftoi(void)
 static void itof(void)
 {
 	INT32 a = fifoin_pop();
-	logerror("TGP itof %d (%x)\n", a, activecpu_get_pc());
+	LOG(("TGP itof %d (%x)\n", a, activecpu_get_pc()));
 	fifoout_push_f(a);
 	next_fn();
 }
@@ -620,14 +650,14 @@ static void itof(void)
 static void acc_set(void)
 {
 	float a = fifoin_pop_f();
-	logerror("TGP acc_set %f (%x)\n", a, activecpu_get_pc());
+	LOG(("TGP acc_set %f (%x)\n", a, activecpu_get_pc()));
 	acc = a;
 	next_fn();
 }
 
 static void acc_get(void)
 {
-	logerror("TGP acc_get (%x)\n", activecpu_get_pc());
+	LOG(("TGP acc_get (%x)\n", activecpu_get_pc()));
 	fifoout_push_f(acc);
 	next_fn();
 }
@@ -635,7 +665,7 @@ static void acc_get(void)
 static void acc_add(void)
 {
 	float a = fifoin_pop_f();
-	logerror("TGP acc_add %f (%x)\n", a, activecpu_get_pc());
+	LOG(("TGP acc_add %f (%x)\n", a, activecpu_get_pc()));
 	acc += a;
 	next_fn();
 }
@@ -643,7 +673,7 @@ static void acc_add(void)
 static void acc_sub(void)
 {
 	float a = fifoin_pop_f();
-	logerror("TGP acc_sub %f (%x)\n", a, activecpu_get_pc());
+	LOG(("TGP acc_sub %f (%x)\n", a, activecpu_get_pc()));
 	acc -= a;
 	next_fn();
 }
@@ -651,7 +681,7 @@ static void acc_sub(void)
 static void acc_mul(void)
 {
 	float a = fifoin_pop_f();
-	logerror("TGP acc_mul %f (%x)\n", a, activecpu_get_pc());
+	LOG(("TGP acc_mul %f (%x)\n", a, activecpu_get_pc()));
 	acc *= a;
 	next_fn();
 }
@@ -659,7 +689,7 @@ static void acc_mul(void)
 static void acc_div(void)
 {
 	float a = fifoin_pop_f();
-	logerror("TGP acc_div %f (%x)\n", a, activecpu_get_pc());
+	LOG(("TGP acc_div %f (%x)\n", a, activecpu_get_pc()));
 	acc /= a;
 	next_fn();
 }
@@ -669,7 +699,10 @@ static void f42(void)
 	float a = fifoin_pop_f();
 	float b = fifoin_pop_f();
 	float c = fifoin_pop_f();
-	logerror("TGP f42 %f, %f, %f (%x)\n", a, b, c, activecpu_get_pc());
+	(void)a;
+	(void)b;
+	(void)c;
+	LOG(("TGP f42 %f, %f, %f (%x)\n", a, b, c, activecpu_get_pc()));
 	//  fifoout_push_f((mame_rand() % 1000) - 500);
 	fifoout_push_f(0);
 	fifoout_push_f(0);
@@ -689,7 +722,10 @@ static void xyz2rqf(void)
 	float b = fifoin_pop_f();
 	float c = fifoin_pop_f();
 	float norm;
-	logerror("TGP xyz2rqf %f, %f, %f (%x)\n", a, b, c, activecpu_get_pc());
+	(void)a;
+	(void)b;
+	(void)c;
+	LOG(("TGP xyz2rqf %f, %f, %f (%x)\n", a, b, c, activecpu_get_pc()));
 	fifoout_push_f(sqrt(a*a+b*b+c*c));
 	norm = sqrt(a*a+c*c);
 	if(!c) {
@@ -726,7 +762,13 @@ static void f43(void)
 	float d = fifoin_pop_f();
 	float e = fifoin_pop_f();
 	float f = fifoin_pop_f();
-	logerror("TGP f43 %f, %f, %f, %f, %f, %f (%x)\n", a, b, c, d, e, f, activecpu_get_pc());
+	(void)a;
+	(void)b;
+	(void)c;
+	(void)d;
+	(void)e;
+	(void)f;
+	LOG(("TGP f43 %f, %f, %f, %f, %f, %f (%x)\n", a, b, c, d, e, f, activecpu_get_pc()));
 	fifoout_push_f(0);
 	fifoout_push_f(0);
 	fifoout_push_f(0);
@@ -739,7 +781,10 @@ static void f43_swa(void)
 	float a = fifoin_pop_f();
 	int b = fifoin_pop();
 	int c = fifoin_pop();
-	logerror("TGP f43_swa %f, %d, %d (%x)\n", a, b, c, activecpu_get_pc());
+	(void)a;
+	(void)b;
+	(void)c;
+	LOG(("TGP f43_swa %f, %d, %d (%x)\n", a, b, c, activecpu_get_pc()));
 	fifoout_push_f(0);
 	fifoout_push_f(0);
 	fifoout_push_f(0);
@@ -749,7 +794,8 @@ static void f43_swa(void)
 static void f44(void)
 {
 	float a = fifoin_pop_f();
-	logerror("TGP f44 %f (%x)\n", a, activecpu_get_pc());
+	(void)a;
+	LOG(("TGP f44 %f (%x)\n", a, activecpu_get_pc()));
 	fifoout_push_f(0);
 	fifoout_push_f(0);
 	fifoout_push_f(0);
@@ -763,7 +809,7 @@ static void matrix_sdir(void)
 	float c = fifoin_pop_f();
 	float norm = sqrt(a*a+b*b+c*c);
 	float t[9], m[9];
-	logerror("TGP matrix_sdir %f, %f, %f (%x)\n", a, b, c, activecpu_get_pc());
+	LOG(("TGP matrix_sdir %f, %f, %f (%x)\n", a, b, c, activecpu_get_pc()));
 
 	memset(t, 0, sizeof(t));
 
@@ -809,7 +855,8 @@ static void matrix_sdir(void)
 static void f45(void)
 {
 	float a = fifoin_pop_f();
-	logerror("TGP f45 %f (%x)\n", a, activecpu_get_pc());
+	(void)a;
+	LOG(("TGP f45 %f (%x)\n", a, activecpu_get_pc()));
 	fifoout_push_f(0);
 	next_fn();
 }
@@ -819,7 +866,7 @@ static void vlength(void)
 	float a = fifoin_pop_f();
 	float b = fifoin_pop_f();
 	float c = fifoin_pop_f();
-	logerror("TGP vlength %f, %f, %f (%x)\n", a, b, c, activecpu_get_pc());
+	LOG(("TGP vlength %f, %f, %f (%x)\n", a, b, c, activecpu_get_pc()));
 	fifoout_push_f(sqrt(a*a+b*b+c*c));
 	next_fn();
 }
@@ -829,7 +876,7 @@ static void f47(void)
 	float a = fifoin_pop_f();
 	float b = fifoin_pop_f();
 	float c = fifoin_pop_f();
-	logerror("TGP f47 %f, %f, %f (%x)\n", a, b, c, activecpu_get_pc());
+	LOG(("TGP f47 %f, %f, %f (%x)\n", a, b, c, activecpu_get_pc()));
 	fifoout_push_f(a+c);
 	fifoout_push_f(b+c);
 	next_fn();
@@ -838,7 +885,7 @@ static void f47(void)
 static void f48(void)
 {
     INT16 a = fifoin_pop();
-	logerror("TGP f48 %d (%x)\n", a, activecpu_get_pc());
+	LOG(("TGP f48 %d (%x)\n", a, activecpu_get_pc()));
 	fifoout_push(1000+a);
 	next_fn();
 }
@@ -857,7 +904,7 @@ static void colbox_set(void)
 	float j = fifoin_pop_f();
 	float k = fifoin_pop_f();
 	float l = fifoin_pop_f();
-	logerror("TGP colbox_set %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f (%x)\n", a, b, c, d, e, f, g, h, i, j, k, l, activecpu_get_pc());
+	LOG(("TGP colbox_set %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f (%x)\n", a, b, c, d, e, f, g, h, i, j, k, l, activecpu_get_pc()));
 	tgp_vr_cbox[ 0] = a;
 	tgp_vr_cbox[ 1] = b;
 	tgp_vr_cbox[ 2] = c;
@@ -878,7 +925,10 @@ static void colbox_test(void)
 	float a = fifoin_pop_f();
 	float b = fifoin_pop_f();
 	float c = fifoin_pop_f();
-	logerror("TGP colbox_test %f, %f, %f (%x)\n", a, b, c, activecpu_get_pc());
+	(void)a;
+	(void)b;
+	(void)c;
+	LOG(("TGP colbox_test %f, %f, %f (%x)\n", a, b, c, activecpu_get_pc()));
 
 	// #### Wrong, need to check with the tgp_vr_cbox coordinates
 	// Game only test sign, negative = collision
@@ -894,7 +944,13 @@ static void f49_swa(void)
 	float d = fifoin_pop_f();
 	float e = fifoin_pop_f();
 	float f = fifoin_pop_f();
-	logerror("TGP f49_swa %f, %f, %f, %f, %f, %f (%x)\n", a, b, c, d, e, f, activecpu_get_pc());
+	(void)a;
+	(void)b;
+	(void)c;
+	(void)d;
+	(void)e;
+	(void)f;
+	LOG(("TGP f49_swa %f, %f, %f, %f, %f, %f (%x)\n", a, b, c, d, e, f, activecpu_get_pc()));
 	next_fn();
 }
 
@@ -904,14 +960,18 @@ static void f50_swa(void)
 	float b = fifoin_pop_f();
 	float c = fifoin_pop_f();
 	float d = fifoin_pop_f();
-	logerror("TGP f50_swa %f, %f, %f, %f (%x)\n", a, b, c, d, activecpu_get_pc());
+	(void)a;
+	(void)b;
+	(void)c;
+	(void)d;
+	LOG(("TGP f50_swa %f, %f, %f, %f (%x)\n", a, b, c, d, activecpu_get_pc()));
 	fifoout_push_f(d);
 	next_fn();
 }
 
 static void f52(void)
 {
-	logerror("TGP f52 (%x)\n", activecpu_get_pc());
+	LOG(("TGP f52 (%x)\n", activecpu_get_pc()));
 	next_fn();
 }
 
@@ -922,8 +982,9 @@ static void matrix_rdir(void)
 	float c = fifoin_pop_f();
 	float norm = sqrt(a*a+c*c);
 	float t1, t2;
+	(void)b;
 
-	logerror("TGP matrix_rdir %f, %f, %f (%x)\n", a, b, c, activecpu_get_pc());
+	LOG(("TGP matrix_rdir %f, %f, %f (%x)\n", a, b, c, activecpu_get_pc()));
 
 	if(!norm) {
 		c = 1;
@@ -961,7 +1022,7 @@ static void track_lookup(void)
 	unsigned int behaviour;
 	float height;
 
-	logerror("TGP track_lookup %f, 0x%x, %f, %f (%x)\n", a, b, c, d, activecpu_get_pc());
+	LOG(("TGP track_lookup %f, 0x%x, %f, %f (%x)\n", a, b, c, d, activecpu_get_pc()));
 
 	offi = tgp_data[0x10+tgp_vr_select] + b;
 	offd = tgp_data[0x20+tgp_vr_select];
@@ -1014,15 +1075,22 @@ static void f56(void)
 	float e = fifoin_pop_f();
 	float f = fifoin_pop_f();
 	UINT32 g = fifoin_pop();
+	(void)a;
+	(void)b;
+	(void)c;
+	(void)d;
+	(void)e;
+	(void)f;
+	(void)g;
 
-	logerror("TGP f56 %f, %f, %f, %f, %f, %f, %d (%x)\n", a, b, c, d, e, f, g, activecpu_get_pc());
+	LOG(("TGP f56 %f, %f, %f, %f, %f, %f, %d (%x)\n", a, b, c, d, e, f, g, activecpu_get_pc()));
 	fifoout_push(0);
 	next_fn();
 }
 
 static void f57(void)
 {
-	logerror("TGP f57 (%x)\n", activecpu_get_pc());
+	LOG(("TGP f57 (%x)\n", activecpu_get_pc()));
 	fifoout_push_f(0);
 	fifoout_push_f(0);
 	fifoout_push_f(0);
@@ -1031,7 +1099,7 @@ static void f57(void)
 
 static void matrix_readt(void)
 {
-	logerror("TGP matrix_readt (%x)\n", activecpu_get_pc());
+	LOG(("TGP matrix_readt (%x)\n", activecpu_get_pc()));
 	fifoout_push_f(cmat[9]);
 	fifoout_push_f(cmat[10]);
 	fifoout_push_f(cmat[11]);
@@ -1040,14 +1108,14 @@ static void matrix_readt(void)
 
 static void acc_geti(void)
 {
-	logerror("TGP acc_geti (%x)\n", activecpu_get_pc());
+	LOG(("TGP acc_geti (%x)\n", activecpu_get_pc()));
 	fifoout_push((int)acc);
 	next_fn();
 }
 
 static void f60(void)
 {
-	logerror("TGP f60 (%x)\n", activecpu_get_pc());
+	LOG(("TGP f60 (%x)\n", activecpu_get_pc()));
 	fifoout_push_f(0);
 	fifoout_push_f(0);
 	fifoout_push_f(0);
@@ -1059,7 +1127,7 @@ static void col_setcirc(void)
 	float a = fifoin_pop_f();
 	float b = fifoin_pop_f();
 	float c = fifoin_pop_f();
-	logerror("TGP col_setcirc %f, %f, %f (%x)\n", a, b, c, activecpu_get_pc());
+	LOG(("TGP col_setcirc %f, %f, %f (%x)\n", a, b, c, activecpu_get_pc()));
 	tgp_vr_circx = a;
 	tgp_vr_circy = b;
 	tgp_vr_circrad = c;
@@ -1071,7 +1139,7 @@ static void col_testpt(void)
 	float x, y;
 	float a = fifoin_pop_f();
 	float b = fifoin_pop_f();
-	logerror("TGP col_testpt %f, %f (%x)\n", a, b, activecpu_get_pc());
+	LOG(("TGP col_testpt %f, %f (%x)\n", a, b, activecpu_get_pc()));
 	x = a - tgp_vr_circx;
 	y = b - tgp_vr_circy;
 	fifoout_push_f(sqrt(x*x+y*y) - tgp_vr_circrad);
@@ -1084,7 +1152,7 @@ static void push_and_ident(void)
 		memcpy(mat_stack[mat_stack_pos], cmat, sizeof(cmat));
 		mat_stack_pos++;
 	}
-	logerror("TGP push_and_ident (depth=%d, pc=%x)\n", mat_stack_pos, activecpu_get_pc());
+	LOG(("TGP push_and_ident (depth=%d, pc=%x)\n", mat_stack_pos, activecpu_get_pc()));
 	memset(cmat, 0, sizeof(cmat));
 	cmat[0] = 1.0;
 	cmat[4] = 1.0;
@@ -1114,7 +1182,7 @@ static void catmull_rom(void)
 	float m2, m3;
 	float w1, w2, w3, w4;
 
-	logerror("TGP catmull_rom %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f (%x)\n", a, b, c, d, e, f, g, h, i, j, k, l, m, activecpu_get_pc());
+	LOG(("TGP catmull_rom %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f (%x)\n", a, b, c, d, e, f, g, h, i, j, k, l, m, activecpu_get_pc()));
 
 	m2 = m*m;
 	m3 = m*m*m;
@@ -1136,7 +1204,7 @@ static void distance(void)
 	float b = fifoin_pop_f();
 	float c = fifoin_pop_f();
 	float d = fifoin_pop_f();
-	logerror("TGP distance (%f, %f), (%f, %f) (%x)\n", a, b, c, d, activecpu_get_pc());
+	LOG(("TGP distance (%f, %f), (%f, %f) (%x)\n", a, b, c, d, activecpu_get_pc()));
 	c -= a;
 	d -= b;
 	fifoout_push_f(sqrt(c*c+d*d));
@@ -1150,7 +1218,7 @@ static void car_move(void)
 	float c = fifoin_pop_f();
 	float d = fifoin_pop_f();
 	float dx, dy;
-	logerror("TGP car_move (%d, %f), (%f, %f) (%x)\n", a, b, c, d, activecpu_get_pc());
+	LOG(("TGP car_move (%d, %f), (%f, %f) (%x)\n", a, b, c, d, activecpu_get_pc()));
 
 	dx = b*tsin(a);
 	dy = b*tcos(a);
@@ -1178,7 +1246,7 @@ static void cpa(void)
 	float j = fifoin_pop_f();
 	float k = fifoin_pop_f();
 	float l = fifoin_pop_f();
-	logerror("TGP cpa %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f (%x)\n", a, b, c, d, e, f, g, h, i, j, k, l, activecpu_get_pc());
+	LOG(("TGP cpa %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f, %f (%x)\n", a, b, c, d, e, f, g, h, i, j, k, l, activecpu_get_pc()));
 
 	dv_x = (b-a) - (d-c);
 	dv_y = (f-e) - (h-g);
@@ -1212,8 +1280,8 @@ static void vmat_store(void)
 	if(a<21)
 		memcpy(mat_vector[a], cmat, sizeof(cmat));
 	else
-		logerror("TGP ERROR bad vector index\n");
-	logerror("TGP vmat_store %d (%x)\n", a, activecpu_get_pc());
+		LOG(("TGP ERROR bad vector index\n"));
+	LOG(("TGP vmat_store %d (%x)\n", a, activecpu_get_pc()));
 	next_fn();
 }
 
@@ -1223,8 +1291,8 @@ static void vmat_restore(void)
 	if(a<21)
 		memcpy(cmat, mat_vector[a], sizeof(cmat));
 	else
-		logerror("TGP ERROR bad vector index\n");
-	logerror("TGP vmat_restore %d (%x)\n", a, activecpu_get_pc());
+		LOG(("TGP ERROR bad vector index\n"));
+	LOG(("TGP vmat_restore %d (%x)\n", a, activecpu_get_pc()));
 	next_fn();
 }
 
@@ -1246,22 +1314,22 @@ static void vmat_mul(void)
 		mat_vector[b][10] = mat_vector[a][ 9]*cmat[1] + mat_vector[a][10]*cmat[4] + mat_vector[a][11]*cmat[7] + cmat[10];
 		mat_vector[b][11] = mat_vector[a][ 9]*cmat[2] + mat_vector[a][10]*cmat[5] + mat_vector[a][11]*cmat[8] + cmat[11];
 	} else
-		logerror("TGP ERROR bad vector index\n");
-	logerror("TGP vmat_mul %d, %d (%x)\n", a, b, activecpu_get_pc());
+		LOG(("TGP ERROR bad vector index\n"));
+	LOG(("TGP vmat_mul %d, %d (%x)\n", a, b, activecpu_get_pc()));
 	next_fn();
 }
 
 static void vmat_read(void)
 {
 	UINT32 a = fifoin_pop();
-	logerror("TGP vmat_read %d (%x)\n", a, activecpu_get_pc());
+	LOG(("TGP vmat_read %d (%x)\n", a, activecpu_get_pc()));
 	if(a<21) {
 		int i;
 		for(i=0; i<12; i++)
 			fifoout_push_f(mat_vector[a][i]);
 	} else {
 		int i;
-		logerror("TGP ERROR bad vector index\n");
+		LOG(("TGP ERROR bad vector index\n"));
 		for(i=0; i<12; i++)
 			fifoout_push_f(0);
 	}
@@ -1270,7 +1338,7 @@ static void vmat_read(void)
 
 static void matrix_rtrans(void)
 {
-	logerror("TGP matrix_rtrans (%x)\n", activecpu_get_pc());
+	LOG(("TGP matrix_rtrans (%x)\n", activecpu_get_pc()));
 	fifoout_push_f(cmat[ 9]);
 	fifoout_push_f(cmat[10]);
 	fifoout_push_f(cmat[11]);
@@ -1279,7 +1347,7 @@ static void matrix_rtrans(void)
 
 static void matrix_unrot(void)
 {
-	logerror("TGP matrix_unrot (%x)\n", activecpu_get_pc());
+	LOG(("TGP matrix_unrot (%x)\n", activecpu_get_pc()));
 	memset(cmat, 0, 9*sizeof(cmat[0]));
 	cmat[0] = 1.0;
 	cmat[4] = 1.0;
@@ -1289,7 +1357,7 @@ static void matrix_unrot(void)
 
 static void f80(void)
 {
-	logerror("TGP f80 (%x)\n", activecpu_get_pc());
+	LOG(("TGP f80 (%x)\n", activecpu_get_pc()));
 	//  cmat[9] = cmat[10] = cmat[11] = 0;
 	next_fn();
 }
@@ -1298,7 +1366,7 @@ static void vmat_save(void)
 {
 	UINT32 a = fifoin_pop();
 	int i;
-	logerror("TGP vmat_save 0x%x (%x)\n", a, activecpu_get_pc());
+	LOG(("TGP vmat_save 0x%x (%x)\n", a, activecpu_get_pc()));
 	for(i=0; i<16; i++)
 		memcpy(ram_data+a+0x10*i, mat_vector[i], sizeof(cmat));
 	next_fn();
@@ -1308,7 +1376,7 @@ static void vmat_load(void)
 {
 	UINT32 a = fifoin_pop();
 	int i;
-	logerror("TGP vmat_load 0x%x (%x)\n", a, activecpu_get_pc());
+	LOG(("TGP vmat_load 0x%x (%x)\n", a, activecpu_get_pc()));
 	for(i=0; i<16; i++)
 		memcpy(mat_vector[i], ram_data+a+0x10*i, sizeof(cmat));
 	next_fn();
@@ -1317,7 +1385,7 @@ static void vmat_load(void)
 static void ram_setadr(void)
 {
     ram_scanadr = fifoin_pop() - 0x8000;
-	logerror("TGP f0 ram_setadr 0x%x (%x)\n", ram_scanadr+0x8000, activecpu_get_pc());
+	LOG(("TGP f0 ram_setadr 0x%x (%x)\n", ram_scanadr+0x8000, activecpu_get_pc()));
 	next_fn();
 }
 
@@ -1329,7 +1397,7 @@ static void groundbox_test(void)
 	float b = fifoin_pop_f();
 	float c = fifoin_pop_f();
 
-	logerror("TGP groundbox_test %f, %f, %f (%x)\n", a, b, c, activecpu_get_pc());
+	LOG(("TGP groundbox_test %f, %f, %f (%x)\n", a, b, c, activecpu_get_pc()));
 	x = cmat[0]*a+cmat[3]*b+cmat[6]*c+cmat[9];
 	y = cmat[1]*a+cmat[4]*b+cmat[7]*c+cmat[10];
 	z = cmat[2]*a+cmat[5]*b+cmat[8]*c+cmat[11];
@@ -1350,7 +1418,10 @@ static void f89(void)
 	UINT32 b = fifoin_pop();
     UINT32 c = fifoin_pop();
 	UINT32 d = fifoin_pop();
-	logerror("TGP list set base 0x%x, 0x%x, %d, length=%d (%x)\n", a, b, c, d, activecpu_get_pc());
+	(void)a;
+	(void)b;
+	(void)c;
+	LOG(("TGP list set base 0x%x, 0x%x, %d, length=%d (%x)\n", a, b, c, d, activecpu_get_pc()));
 	list_length = d;
 	next_fn();
 }
@@ -1361,21 +1432,27 @@ static void f92(void)
 	float b = fifoin_pop_f();
 	float c = fifoin_pop_f();
 	float d = fifoin_pop_f();
-	logerror("TGP f92 %f, %f, %f, %f (%x)\n", a, b, c, d, activecpu_get_pc());
+	(void)a;
+	(void)b;
+	(void)c;
+	(void)d;
+	LOG(("TGP f92 %f, %f, %f, %f (%x)\n", a, b, c, d, activecpu_get_pc()));
 	next_fn();
 }
 
 static void f93(void)
 {
 	float a = fifoin_pop_f();
-	logerror("TGP f93 %f (%x)\n", a, activecpu_get_pc());
+	(void)a;
+	LOG(("TGP f93 %f (%x)\n", a, activecpu_get_pc()));
 	next_fn();
 }
 
 static void f94(void)
 {
 	UINT32 a = fifoin_pop();
-	logerror("TGP f94 %d (%x)\n", a, activecpu_get_pc());
+	(void)a;
+	LOG(("TGP f94 %d (%x)\n", a, activecpu_get_pc()));
 	next_fn();
 }
 
@@ -1383,7 +1460,7 @@ static void vmat_flatten(void)
 {
 	int i;
 	float m[12];
-	logerror("TGP vmat_flatten (%x)\n", activecpu_get_pc());
+	LOG(("TGP vmat_flatten (%x)\n", activecpu_get_pc()));
 
 	for(i=0; i<16; i++) {
 		memcpy(m, mat_vector[i], sizeof(cmat));
@@ -1408,7 +1485,7 @@ static void vmat_flatten(void)
 static void vmat_load1(void)
 {
 	UINT32 a = fifoin_pop();
-	logerror("TGP vmat_load1 0x%x (%x)\n", a, activecpu_get_pc());
+	LOG(("TGP vmat_load1 0x%x (%x)\n", a, activecpu_get_pc()));
 	memcpy(cmat, ram_data+a, sizeof(cmat));
 	next_fn();
 }
@@ -1418,7 +1495,7 @@ static void ram_trans(void)
 	float a = ram_get_f();
 	float b = ram_get_f();
 	float c = ram_get_f();
-	logerror("TGP ram_trans (%x)\n", activecpu_get_pc());
+	LOG(("TGP ram_trans (%x)\n", activecpu_get_pc()));
 	cmat[ 9] += cmat[0]*a+cmat[3]*b+cmat[6]*c;
 	cmat[10] += cmat[1]*a+cmat[4]*b+cmat[7]*c;
 	cmat[11] += cmat[2]*a+cmat[5]*b+cmat[8]*c;
@@ -1430,7 +1507,8 @@ static void f98_load(void)
 	int i;
 	for(i=0; i<list_length; i++) {
 		float f = fifoin_pop_f();
-		logerror("TGP load list (%2d/%2d) %f (%x)\n", i, list_length, f, activecpu_get_pc());
+		(void)f;
+		LOG(("TGP load list (%2d/%2d) %f (%x)\n", i, list_length, f, activecpu_get_pc()));
 	}
 	next_fn();
 }
@@ -1438,21 +1516,22 @@ static void f98_load(void)
 static void f98(void)
 {
     UINT32 a = fifoin_pop();
-	logerror("TGP load list start %d (%x)\n", a, activecpu_get_pc());
+	(void)a;
+	LOG(("TGP load list start %d (%x)\n", a, activecpu_get_pc()));
 	fifoin_cbcount = list_length;
 	fifoin_cb = f98_load;
 }
 
 static void f99(void)
 {
-	logerror("TGP f99 (%x)\n", activecpu_get_pc());
+	LOG(("TGP f99 (%x)\n", activecpu_get_pc()));
 	next_fn();
 }
 
 static void f100(void)
 {
 	int i;
-	logerror("TGP f100 get list (%x)\n", activecpu_get_pc());
+	LOG(("TGP f100 get list (%x)\n", activecpu_get_pc()));
 	for(i=0; i<list_length; i++)
 		fifoout_push_f((mame_rand() % 1000)/100.0);
 	next_fn();
@@ -1467,7 +1546,7 @@ static void groundbox_set(void)
 	float e = fifoin_pop_f();
 	float f = fifoin_pop_f();
 	float g = fifoin_pop_f();
-	logerror("TGP groundbox_set %f, %f, %f, %f, %f, %f, %f (%x)\n", a, b, c, d, e, f, g, activecpu_get_pc());
+	LOG(("TGP groundbox_set %f, %f, %f, %f, %f, %f, %f (%x)\n", a, b, c, d, e, f, g, activecpu_get_pc()));
 	tgp_vf_xmin = e;
 	tgp_vf_xmax = d;
 	tgp_vf_zmin = g;
@@ -1494,7 +1573,7 @@ static void f102(void)
 
 	ccount++;
 
-	logerror("TGP f0 mve_calc %f, %f, %f, %f, %f, %d, %d, %d (%d) (%x)\n", a, b, c, d, e, f, g, h, ccount, activecpu_get_pc());
+	LOG(("TGP f0 mve_calc %f, %f, %f, %f, %f, %d, %d, %d (%d) (%x)\n", a, b, c, d, e, f, g, h, ccount, activecpu_get_pc()));
 
 	px = u2f(ram_data[ram_scanadr+0x16]);
 	py = u2f(ram_data[ram_scanadr+0x17]);
@@ -1519,7 +1598,7 @@ static void f102(void)
 	cmat[11] += pz;
 #endif
 
-	logerror("    f0 mve_calc %f, %f, %f\n", px, py, pz);
+	LOG(("    f0 mve_calc %f, %f, %f\n", px, py, pz));
 
 	fifoout_push_f(c);
 	fifoout_push_f(d);
@@ -1535,7 +1614,7 @@ static void f102(void)
 static void f103(void)
 {
     ram_scanadr = fifoin_pop() - 0x8000;
-	logerror("TGP f0 mve_setadr 0x%x (%x)\n", ram_scanadr, activecpu_get_pc());
+	LOG(("TGP f0 mve_setadr 0x%x (%x)\n", ram_scanadr, activecpu_get_pc()));
 	ram_get_i();
 	next_fn();
 }
@@ -1685,7 +1764,7 @@ static struct function ftab_swa[] = {
 
 static void dump(void)
 {
-	logerror("TGP FIFOIN write %08x (%x)\n", fifoin_pop(), activecpu_get_pc());
+	LOG(("TGP FIFOIN write %08x (%x)\n", fifoin_pop(), activecpu_get_pc()));
 	fifoin_cbcount = 1;
 	fifoin_cb = dump;
 }
@@ -1701,16 +1780,16 @@ static void function_get_vf(void)
 		int count = fifoout_wpos - fifoout_rpos;
 		if(count < 0)
 			count += FIFO_SIZE;
-		logerror("TGP function called with sizeout = %d\n", count);
+		LOG(("TGP function called with sizeout = %d\n", count));
 	}
 	if(fct->cb) {
 		fifoin_cbcount = fct->count;
 		fifoin_cb = fct->cb;
-		//      logerror("TGP function %d request, %d parameters\n", f, fifoin_cbcount);
+		//      LOG(("TGP function %d request, %d parameters\n", f, fifoin_cbcount));
 		if(!fifoin_cbcount)
 			fifoin_cb();
 	} else {
-		logerror("TGP function %d unimplemented (%x)\n", f, activecpu_get_pc());
+		LOG(("TGP function %d unimplemented (%x)\n", f, activecpu_get_pc()));
 		fifoin_cbcount = 1;
 		fifoin_cb = dump;
 	}
@@ -1727,16 +1806,16 @@ static void function_get_swa(void)
 		int count = fifoout_wpos - fifoout_rpos;
 		if(count < 0)
 			count += FIFO_SIZE;
-		logerror("TGP function called with sizeout = %d\n", count);
+		LOG(("TGP function called with sizeout = %d\n", count));
 	}
 	if(fct->cb) {
 		fifoin_cbcount = fct->count;
 		fifoin_cb = fct->cb;
-		//      logerror("TGP function %d request, %d parameters\n", f, fifoin_cbcount);
+		//      LOG(("TGP function %d request, %d parameters\n", f, fifoin_cbcount));
 		if(!fifoin_cbcount)
 			fifoin_cb();
 	} else {
-		logerror("TGP function %d unimplemented (%x)\n", f, activecpu_get_pc());
+		LOG(("TGP function %d unimplemented (%x)\n", f, activecpu_get_pc()));
 		fifoin_cbcount = 1;
 		fifoin_cb = dump;
 	}
@@ -1775,7 +1854,7 @@ WRITE16_HANDLER( model1_tgp_copro_adr_w )
 READ16_HANDLER( model1_tgp_copro_ram_r )
 {
 	if(!offset) {
-		logerror("TGP f0 ram read %04x, %08x (%f) (%x)\n", ram_adr, ram_data[ram_adr], u2f(ram_data[ram_adr]), activecpu_get_pc());
+		LOG(("TGP f0 ram read %04x, %08x (%f) (%x)\n", ram_adr, ram_data[ram_adr], u2f(ram_data[ram_adr]), activecpu_get_pc()));
 		return ram_data[ram_adr];
 	} else
 		return ram_data[ram_adr++] >> 16;
@@ -1786,7 +1865,7 @@ WRITE16_HANDLER( model1_tgp_copro_ram_w )
 	COMBINE_DATA(ram_latch+offset);
 	if(offset) {
 		UINT32 v = ram_latch[0]|(ram_latch[1]<<16);
-		logerror("TGP f0 ram write %04x, %08x (%f) (%x)\n", ram_adr, v, u2f(v), activecpu_get_pc());
+		LOG(("TGP f0 ram write %04x, %08x (%f) (%x)\n", ram_adr, v, u2f(v), activecpu_get_pc()));
 		ram_data[ram_adr] = v;
 		ram_adr++;
 	}

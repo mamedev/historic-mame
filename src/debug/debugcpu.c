@@ -87,6 +87,8 @@ static UINT64 get_cycles(UINT32 ref);
 static UINT64 get_cpunum(UINT32 ref);
 static UINT64 get_tempvar(UINT32 ref);
 static UINT64 get_logunmap(UINT32 ref);
+static UINT64 get_beamx(UINT32 ref);
+static UINT64 get_beamy(UINT32 ref);
 static void set_tempvar(UINT32 ref, UINT64 value);
 static void set_logunmap(UINT32 ref, UINT64 value);
 static UINT64 get_cpu_reg(UINT32 ref);
@@ -163,6 +165,8 @@ void debug_cpu_init(void)
 	symtable_add_register(global_symtable, "logunmap", ADDRESS_SPACE_PROGRAM, get_logunmap, set_logunmap);
 	symtable_add_register(global_symtable, "logunmapd", ADDRESS_SPACE_DATA, get_logunmap, set_logunmap);
 	symtable_add_register(global_symtable, "logunmapi", ADDRESS_SPACE_IO, get_logunmap, set_logunmap);
+	symtable_add_register(global_symtable, "beamx", 0, get_beamx, NULL);
+	symtable_add_register(global_symtable, "beamy", 0, get_beamy, NULL);
 
 	/* add the temporary variables to the global symbol table */
 	for (regnum = 0; regnum < NUM_TEMP_VARIABLES; regnum++)
@@ -612,6 +616,26 @@ static void set_tempvar(UINT32 ref, UINT64 value)
 static UINT64 get_logunmap(UINT32 ref)
 {
 	return memory_get_log_unmap(ref);
+}
+
+
+/*-------------------------------------------------
+    get_beamx - get beam horizontal position
+-------------------------------------------------*/
+
+static UINT64 get_beamx(UINT32 ref)
+{
+	return cpu_gethorzbeampos();
+}
+
+
+/*-------------------------------------------------
+    get_beamy - get beam vertical position
+-------------------------------------------------*/
+
+static UINT64 get_beamy(UINT32 ref)
+{
+	return cpu_getscanline();
 }
 
 
@@ -1136,7 +1160,12 @@ debug_cpu_breakpoint *debug_breakpoint_first(int cpunum)
 
 int debug_breakpoint_set(int cpunum, offs_t address, parsed_expression *condition, const char *action)
 {
-	debug_cpu_breakpoint *bp = malloc(sizeof(*bp));
+	debug_cpu_breakpoint *bp;
+
+	assert_always((cpunum >= 0) && (cpunum < cpu_gettotalcpu()), "debug_breakpoint_set() called with invalid cpunum!");
+
+	/* allocate breakpoint */
+	bp = malloc(sizeof(*bp));
 
 	/* if we can't allocate, return failure */
 	if (!bp)

@@ -1,24 +1,19 @@
 /*
-  Dragonball Z
-  Banpresto, 1993
+  Dragonball Z                  (c) 1993 Banpresto
+  Dragonball Z 2 - Super Battle (c) 1994 Banpresto
 
-  Dragonball Z 2 Super Battle
-  (c) 1994 Banpresto
-
-  Driver by David Haywood and R. Belmont
+  Driver by David Haywood, R. Belmont and Pierpaolo Prazzoli
 
   MC68000 + Konami Xexex-era video hardware and system controller ICs
   Z80 + YM2151 + OKIM6295 for sound
-
-  Status: DBZ2 is playable with music and sound and proper controls/dips.
 
   Note: game has an extremely complete test mode, it's beautiful for emulation.
         flip the DIP and check it out!
 
   TODO:
-    - Gfx priorities (note that it has two 053251)
     - Self Test Fails
-    - Some offsets/colours in DBZ1
+    - Banpresto logo in DBZ has bad colors after 1 run of the attract mode because
+      it's associated to the wrong logical tilemap (it should be a bug in K056832 emulation)
 
 PCB Layout:
 
@@ -64,20 +59,18 @@ Notes:
 
 /* BG LAYER */
 
-UINT16* dbz2_bg_videoram;
-UINT16* dbz2_bg2_videoram;
+extern UINT16 *dbz_bg1_videoram;
+extern UINT16 *dbz_bg2_videoram;
 
-WRITE16_HANDLER(dbz2_bg_videoram_w);
-WRITE16_HANDLER(dbz2_bg2_videoram_w);
+WRITE16_HANDLER(dbz_bg1_videoram_w);
+WRITE16_HANDLER(dbz_bg2_videoram_w);
 
-static int dbz2_control;
+static int dbz_control;
 
 VIDEO_START(dbz);
-VIDEO_START(dbz2);
 VIDEO_UPDATE(dbz);
-VIDEO_UPDATE(dbz2);
 
-static INTERRUPT_GEN(dbz2_interrupt)
+static INTERRUPT_GEN( dbz_interrupt )
 {
 	switch (cpu_getiloops())
 	{
@@ -93,17 +86,17 @@ static INTERRUPT_GEN(dbz2_interrupt)
 }
 
 #if 0
-static READ16_HANDLER(dbzcontrol_r)
+static READ16_HANDLER( dbzcontrol_r )
 {
-	return dbz2_control;
+	return dbz_control;
 }
 #endif
 
-static WRITE16_HANDLER(dbzcontrol_w)
+static WRITE16_HANDLER( dbzcontrol_w )
 {
 	/* bit 10 = enable '246 readback */
 
-	COMBINE_DATA(&dbz2_control);
+	COMBINE_DATA(&dbz_control);
 
 	if (data & 0x400)
 	{
@@ -113,34 +106,37 @@ static WRITE16_HANDLER(dbzcontrol_w)
 	{
 		K053246_set_OBJCHA_line(CLEAR_LINE);
 	}
+
+	coin_counter_w(0, data & 1);
+	coin_counter_w(1, data & 2);
 }
 
-static READ16_HANDLER(dbz2_inp0_r)
+static READ16_HANDLER( dbz_inp0_r )
 {
 	return readinputportbytag("IN0") | (readinputportbytag("IN1")<<8);
 }
 
-static READ16_HANDLER(dbz2_inp1_r)
+static READ16_HANDLER( dbz_inp1_r )
 {
 	return readinputportbytag("IN3") | (readinputportbytag("DSW1")<<8);
 }
 
-static READ16_HANDLER(dbz2_inp2_r)
+static READ16_HANDLER( dbz_inp2_r )
 {
 	return readinputportbytag("DSW2") | (readinputportbytag("DSW2")<<8);
 }
 
-static WRITE16_HANDLER( dbz2_sound_command_w )
+static WRITE16_HANDLER( dbz_sound_command_w )
 {
 	soundlatch_w(0, data>>8);
 }
 
-static WRITE16_HANDLER( dbz2_sound_cause_nmi )
+static WRITE16_HANDLER( dbz_sound_cause_nmi )
 {
 	cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 }
 
-static void dbz2_sound_irq(int irq)
+static void dbz_sound_irq(int irq)
 {
 	if (irq)
 		cpunum_set_input_line(1, 0, ASSERT_LINE);
@@ -148,19 +144,19 @@ static void dbz2_sound_irq(int irq)
 		cpunum_set_input_line(1, 0, CLEAR_LINE);
 }
 
-static ADDRESS_MAP_START( dbz2readmem, ADDRESS_SPACE_PROGRAM, 16 )
+static ADDRESS_MAP_START( dbz_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
 	AM_RANGE(0x480000, 0x48ffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x490000, 0x491fff) AM_READ(K054157_ram_word_r)	// '157 RAM is mirrored twice
-	AM_RANGE(0x492000, 0x493fff) AM_READ(K054157_ram_word_r)
-	AM_RANGE(0x498000, 0x49ffff) AM_READ(K054157_rom_word_8000_r)	// code near a60 in dbz2, subroutine at 730 in dbz
+	AM_RANGE(0x490000, 0x491fff) AM_READ(K056832_ram_word_r)	// '157 RAM is mirrored twice
+	AM_RANGE(0x492000, 0x493fff) AM_READ(K056832_ram_word_r)
+	AM_RANGE(0x498000, 0x49ffff) AM_READ(K056832_rom_word_8000_r)	// code near a60 in dbz2, subroutine at 730 in dbz
 	AM_RANGE(0x4a0000, 0x4a0fff) AM_READ(K053247_word_r)
 	AM_RANGE(0x4a1000, 0x4a3fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x4a8000, 0x4abfff) AM_READ(MRA16_RAM)			// palette
 	AM_RANGE(0x4c0000, 0x4c0001) AM_READ(K053246_word_r)
-	AM_RANGE(0x4e0000, 0x4e0001) AM_READ(dbz2_inp0_r)
-	AM_RANGE(0x4e0002, 0x4e0003) AM_READ(dbz2_inp1_r)
-	AM_RANGE(0x4e4000, 0x4e4001) AM_READ(dbz2_inp2_r)
+	AM_RANGE(0x4e0000, 0x4e0001) AM_READ(dbz_inp0_r)
+	AM_RANGE(0x4e0002, 0x4e0003) AM_READ(dbz_inp1_r)
+	AM_RANGE(0x4e4000, 0x4e4001) AM_READ(dbz_inp2_r)
 	AM_RANGE(0x500000, 0x501fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x508000, 0x509fff) AM_READ(MRA16_RAM)
 	AM_RANGE(0x510000, 0x513fff) AM_READ(MRA16_RAM)
@@ -169,35 +165,35 @@ static ADDRESS_MAP_START( dbz2readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x700000, 0x7fffff) AM_READ(MRA16_NOP) 			// PSAC 2 ROM readback window
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( dbz2writemem, ADDRESS_SPACE_PROGRAM, 16 )
+static ADDRESS_MAP_START( dbz_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x480000, 0x48ffff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x490000, 0x491fff) AM_WRITE(K054157_ram_word_w)
-	AM_RANGE(0x492000, 0x493fff) AM_WRITE(K054157_ram_word_w)
+	AM_RANGE(0x490000, 0x491fff) AM_WRITE(K056832_ram_word_w)
+	AM_RANGE(0x492000, 0x493fff) AM_WRITE(K056832_ram_word_w)
 	AM_RANGE(0x4a0000, 0x4a0fff) AM_WRITE(K053247_word_w)
 	AM_RANGE(0x4a1000, 0x4a3fff) AM_WRITE(MWA16_RAM)
 	AM_RANGE(0x4a8000, 0x4abfff) AM_WRITE(paletteram16_xRRRRRGGGGGBBBBB_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x4c0000, 0x4c0007) AM_WRITE(K053246_word_w)
 	AM_RANGE(0x4c4000, 0x4c4007) AM_WRITE(K053246_word_w)
-	AM_RANGE(0x4c8000, 0x4c8007) AM_WRITE(K054157_b_word_w)
-	AM_RANGE(0x4cc000, 0x4cc03f) AM_WRITE(K054157_word_w)
+	AM_RANGE(0x4c8000, 0x4c8007) AM_WRITE(K056832_b_word_w)
+	AM_RANGE(0x4cc000, 0x4cc03f) AM_WRITE(K056832_word_w)
 	AM_RANGE(0x4ec000, 0x4ec001) AM_WRITE(dbzcontrol_w)
 	AM_RANGE(0x4d0000, 0x4d001f) AM_WRITE(MWA16_RAM) AM_BASE(&K053936_0_ctrl)
 	AM_RANGE(0x4d4000, 0x4d401f) AM_WRITE(MWA16_RAM) AM_BASE(&K053936_1_ctrl)
 	AM_RANGE(0x4e8000, 0x4e8001) AM_WRITE(MWA16_NOP)
-	AM_RANGE(0x4f0000, 0x4f0001) AM_WRITE(dbz2_sound_command_w)
-	AM_RANGE(0x4f4000, 0x4f4001) AM_WRITE(dbz2_sound_cause_nmi)
-	AM_RANGE(0x4f8000, 0x4f801f) AM_WRITE(MWA16_NOP)			// 251 #1
-	AM_RANGE(0x4fc000, 0x4fc01f) AM_WRITE(K053251_lsb_w)		// 251 #2
-	AM_RANGE(0x500000, 0x501fff) AM_WRITE(dbz2_bg2_videoram_w) AM_BASE(&dbz2_bg2_videoram)
-	AM_RANGE(0x508000, 0x509fff) AM_WRITE(dbz2_bg_videoram_w) AM_BASE(&dbz2_bg_videoram)
+	AM_RANGE(0x4f0000, 0x4f0001) AM_WRITE(dbz_sound_command_w)
+	AM_RANGE(0x4f4000, 0x4f4001) AM_WRITE(dbz_sound_cause_nmi)
+	AM_RANGE(0x4f8000, 0x4f801f) AM_WRITE(MWA16_NOP)		// 251 #1
+	AM_RANGE(0x4fc000, 0x4fc01f) AM_WRITE(K053251_lsb_w)	// 251 #2
+	AM_RANGE(0x500000, 0x501fff) AM_WRITE(dbz_bg2_videoram_w) AM_BASE(&dbz_bg2_videoram)
+	AM_RANGE(0x508000, 0x509fff) AM_WRITE(dbz_bg1_videoram_w) AM_BASE(&dbz_bg1_videoram)
 	AM_RANGE(0x510000, 0x513fff) AM_WRITE(MWA16_RAM) AM_BASE(&K053936_0_linectrl) // ?? guess, it might not be
 	AM_RANGE(0x518000, 0x51bfff) AM_WRITE(MWA16_RAM) AM_BASE(&K053936_1_linectrl) // ?? guess, it might not be
 ADDRESS_MAP_END
 
-/* dbz2 sound */
+/* dbz sound */
 /* IRQ: from YM2151.  NMI: from 68000.  Port 0: write to ack NMI */
 
-static ADDRESS_MAP_START( dbz2sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+static ADDRESS_MAP_START( dbz_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_RAM)
 	AM_RANGE(0xc000, 0xc001) AM_READ(YM2151_status_port_0_r)
@@ -205,7 +201,7 @@ static ADDRESS_MAP_START( dbz2sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xe000, 0xe001) AM_READ(soundlatch_r)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( dbz2sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+static ADDRESS_MAP_START( dbz_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0x8000, 0xbfff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0xc000, 0xc000) AM_WRITE(YM2151_register_port_0_w)
@@ -213,11 +209,7 @@ static ADDRESS_MAP_START( dbz2sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xd000, 0xd001) AM_WRITE(OKIM6295_data_0_w)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( dbz2sound_readport, ADDRESS_SPACE_IO, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( dbz2sound_writeport, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( dbz_sound_writeport, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(MWA8_NOP)
 ADDRESS_MAP_END
@@ -415,7 +407,7 @@ INPUT_PORTS_END
 
 static struct YM2151interface ym2151_interface =
 {
-	dbz2_sound_irq
+	dbz_sound_irq
 };
 
 /**********************************************************************************/
@@ -435,24 +427,24 @@ static const gfx_layout bglayout =
 
 static const gfx_decode gfxdecodeinfo[] =
 {
-	{ REGION_GFX3, 0, &bglayout,     0x400, 64 },
-	{ REGION_GFX4, 0, &bglayout,	 0x800, 64 },
+	{ REGION_GFX3, 0, &bglayout, 0, 512 },
+	{ REGION_GFX4, 0, &bglayout, 0, 512 },
 	{ -1 } /* end of array */
 };
 
 /**********************************************************************************/
 
-static MACHINE_DRIVER_START( dbz2 )
+static MACHINE_DRIVER_START( dbz )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD_TAG("main", M68000, 16000000)
-	MDRV_CPU_PROGRAM_MAP(dbz2readmem,dbz2writemem)
-	MDRV_CPU_VBLANK_INT(dbz2_interrupt,2)
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_PROGRAM_MAP(dbz_readmem,dbz_writemem)
+	MDRV_CPU_VBLANK_INT(dbz_interrupt,2)
 
-	MDRV_CPU_ADD_TAG("sound", Z80, 4000000)
+	MDRV_CPU_ADD(Z80, 4000000)
 	/* audio CPU */
-	MDRV_CPU_PROGRAM_MAP(dbz2sound_readmem, dbz2sound_writemem)
-	MDRV_CPU_IO_MAP(dbz2sound_readport,dbz2sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(dbz_sound_readmem, dbz_sound_writemem)
+	MDRV_CPU_IO_MAP(0,dbz_sound_writeport)
 
 	MDRV_FRAMES_PER_SECOND(55)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -460,11 +452,11 @@ static MACHINE_DRIVER_START( dbz2 )
 	MDRV_GFXDECODE(gfxdecodeinfo)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_HAS_SHADOWS )
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_HAS_SHADOWS)
 	MDRV_SCREEN_SIZE(64*8, 32*8)
-	MDRV_VISIBLE_AREA(0, 48*8-1, 0, 32*8-1 )
-	MDRV_VIDEO_START(dbz2)
-	MDRV_VIDEO_UPDATE(dbz2)
+	MDRV_VISIBLE_AREA(0, 48*8-1, 0, 32*8-1)
+	MDRV_VIDEO_START(dbz)
+	MDRV_VIDEO_UPDATE(dbz)
 	MDRV_PALETTE_LENGTH(0x4000/2)
 
 	/* sound hardware */
@@ -479,14 +471,6 @@ static MACHINE_DRIVER_START( dbz2 )
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
-MACHINE_DRIVER_END
-
-static MACHINE_DRIVER_START( dbz )
-	MDRV_IMPORT_FROM(dbz2)
-
-	MDRV_VIDEO_START(dbz)
-	MDRV_VIDEO_UPDATE(dbz)
-	MDRV_VISIBLE_AREA(34, 34+48*8-1, 0, 32*8-1 )
 MACHINE_DRIVER_END
 
 /**********************************************************************************/
@@ -569,13 +553,7 @@ ROM_START( dbz2 )
 	ROM_LOAD( "pcm.7c", 0x000000, 0x40000, CRC(b58c884a) SHA1(0e2a7267e9dff29c9af25558081ec9d56629bc43) )
 ROM_END
 
-
-static DRIVER_INIT(dbz2)
-{
-	konami_rom_deinterleave_2(REGION_GFX1);
-}
-
-static DRIVER_INIT(dbz)
+static DRIVER_INIT( dbz )
 {
 	UINT16 *ROM;
 
@@ -598,5 +576,10 @@ static DRIVER_INIT(dbz)
 	ROM[0x990/2] = 0x4e71;
 }
 
-GAME( 1993, dbz,  0, dbz,  dbz, dbz, ROT0, "Banpresto", "Dragonball Z" , GAME_IMPERFECT_GRAPHICS )
-GAME( 1994, dbz2, 0, dbz2, dbz2, dbz2, ROT0, "Banpresto", "Dragonball Z 2 Super Battle" , GAME_IMPERFECT_GRAPHICS )
+static DRIVER_INIT( dbz2 )
+{
+	konami_rom_deinterleave_2(REGION_GFX1);
+}
+
+GAME( 1993, dbz,  0, dbz, dbz,  dbz,  ROT0, "Banpresto", "Dragonball Z", GAME_IMPERFECT_GRAPHICS )
+GAME( 1994, dbz2, 0, dbz, dbz2, dbz2, ROT0, "Banpresto", "Dragonball Z 2 - Super Battle", 0 )

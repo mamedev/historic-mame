@@ -1,6 +1,6 @@
 /***************************************************************************
 
-    generic.c
+    generic.h
 
     Generic simple sound functions.
 

@@ -10,6 +10,8 @@
     Juergen Buchmueller, June 1998
 ******************************************************************************/
 
+/*----------- defined in machine/atari.c -----------*/
+
 typedef struct {
 	int  serout_count;
 	int  serout_offs;
@@ -64,23 +66,21 @@ DEVICE_LOAD( a5200_cart );
 DEVICE_UNLOAD( a5200_cart );
 #endif
 
- READ8_HANDLER ( atari_gtia_r );
  READ8_HANDLER ( atari_pia_r );
- READ8_HANDLER ( atari_antic_r );
-
-WRITE8_HANDLER ( atari_gtia_w );
 WRITE8_HANDLER ( atari_pia_w  );
-WRITE8_HANDLER ( atari_antic_w );
 
  READ8_HANDLER ( atari_serin_r );
 WRITE8_HANDLER ( atari_serout_w );
 void atari_interrupt_cb(int mask);
 
+#define PORT_CONFIGURATION	0
+#define PORT_JOY_1_2		1
+#define PORT_JOY_2_3		2
+#define PORT_JOY_BUTTONS	3
+#define PORT_KEYBOARD_BASE	4
+
 void a800_handle_keyboard(void);
 void a5200_handle_keypads(void);
-
-void gtia_reset(void);
-void antic_reset(void);
 
 DRIVER_INIT( atari );
 
@@ -353,7 +353,6 @@ typedef struct {
 	GTIA_H	h;			/* helper variables */
 }   GTIA;
 
-extern	GTIA	gtia;
 
 typedef struct {
 	UINT8	antic00;	/* 00 nothing */
@@ -444,16 +443,6 @@ typedef struct {
 	UINT8   *uc_g2;				/* used colors for gfx GTIA 2 */
 	UINT8   *uc_g3;				/* used colors for gfx GTIA 3 */
 }   ANTIC;
-
-extern ANTIC antic;
-
-extern VIDEO_START( atari );
-extern VIDEO_UPDATE( atari );
-
-void a400_interrupt(void);
-void a800_interrupt(void);
-void a800xl_interrupt(void);
-void a5200_interrupt(void);
 
 #if ACCURATE_ANTIC_READMEM
 #define RDANTIC()	cpunum_read_byte(0, antic.dpage+antic.doffs)
@@ -731,6 +720,15 @@ void a5200_interrupt(void);
 
 typedef void (*renderer_function)(VIDEO *video);
 
+/*----------- defined in vidhrdw/antic.c -----------*/
+
+extern ANTIC antic;
+
+void antic_reset(void);
+
+ READ8_HANDLER ( atari_antic_r );
+WRITE8_HANDLER ( atari_antic_w );
+
 void antic_mode_0_xx(VIDEO *video);
 void antic_mode_1_xx(VIDEO *video);
 void antic_mode_2_32(VIDEO *video);
@@ -776,6 +774,14 @@ void antic_mode_f_32(VIDEO *video);
 void antic_mode_f_40(VIDEO *video);
 void antic_mode_f_48(VIDEO *video);
 
+/*----------- defined in vidhrdw/gtia.c -----------*/
+
+extern GTIA gtia;
+
+void gtia_reset(void);
+ READ8_HANDLER ( atari_gtia_r );
+WRITE8_HANDLER ( atari_gtia_w );
+
 void gtia_mode_1_32(VIDEO *video);
 void gtia_mode_1_40(VIDEO *video);
 void gtia_mode_1_48(VIDEO *video);
@@ -787,14 +793,20 @@ void gtia_mode_3_40(VIDEO *video);
 void gtia_mode_3_48(VIDEO *video);
 void gtia_render(VIDEO *video);
 
+/*----------- defined in vidhrdw/atari.c -----------*/
+
 extern char atari_frame_message[64+1];
 extern int atari_frame_counter;
 
-#define PORT_CONFIGURATION	0
-#define PORT_JOY_1_2		1
-#define PORT_JOY_2_3		2
-#define PORT_JOY_BUTTONS	3
-#define PORT_KEYBOARD_BASE	4
+extern VIDEO_START( atari );
+extern VIDEO_UPDATE( atari );
+
+void a400_interrupt(void);
+void a800_interrupt(void);
+void a800xl_interrupt(void);
+void a5200_interrupt(void);
+
+/*----------- defined in drivers/maxaflex.c -----------*/
 
 int atari_readinputport(int port);
 

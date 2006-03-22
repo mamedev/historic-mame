@@ -33,10 +33,6 @@ static MACHINE_RESET( ohmygod )
 {
 	unsigned char *rom = memory_region(REGION_SOUND1);
 
-	/* the game requires the watchdog to fire during boot, so we have
-       to initialize it */
-	watchdog_reset_r(0);
-
 	sndbank = 0;
 	memcpy(rom + 0x20000,rom + 0x40000 + 0x20000 * sndbank,0x20000);
 
@@ -344,6 +340,7 @@ static MACHINE_DRIVER_START( ohmygod )
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_MACHINE_RESET(ohmygod)
+	MDRV_WATCHDOG_VBLANK_INIT(DEFAULT_60HZ_3S_VBLANK_WATCHDOG)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

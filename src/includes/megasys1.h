@@ -165,6 +165,8 @@
 
 ***************************************************************************/
 
+/*----------- defined in vidhrdw/megasys.c -----------*/
+
 /* Variables */
 extern tilemap *megasys1_tmap[3];
 
@@ -185,6 +187,8 @@ WRITE16_HANDLER( megasys1_scrollram_1_w );
 WRITE16_HANDLER( megasys1_scrollram_2_w );
 
 void megasys1_set_vreg_flag(int which, int data);
+
+/*----------- defined in drivers/megasys1.c -----------*/
 
 void astyanax_rom_decode(int cpu);
 void phantasm_rom_decode(int cpu);

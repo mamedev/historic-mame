@@ -124,7 +124,7 @@ static ADDRESS_MAP_START( bladestl_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x1fff) AM_WRITE(K007342_w)				/* Color RAM + Video RAM */
 	AM_RANGE(0x2000, 0x21ff) AM_WRITE(K007420_w)				/* Sprite RAM */
 	AM_RANGE(0x2200, 0x23ff) AM_WRITE(K007342_scroll_w)		/* Scroll RAM */
-	AM_RANGE(0x2400, 0x245f) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_swap_w) AM_BASE(&paletteram)/* palette */
+	AM_RANGE(0x2400, 0x245f) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_be_w) AM_BASE(&paletteram)/* palette */
 	AM_RANGE(0x2600, 0x2607) AM_WRITE(K007342_vreg_w)			/* Video Registers */
 	AM_RANGE(0x2e80, 0x2e80) AM_WRITE(bladestl_sh_irqtrigger_w)/* cause interrupt on audio CPU */
 	AM_RANGE(0x2ec0, 0x2ec0) AM_WRITE(watchdog_reset_w)		/* watchdog reset */

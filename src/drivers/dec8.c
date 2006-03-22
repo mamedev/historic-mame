@@ -556,7 +556,7 @@ static ADDRESS_MAP_START( cobra_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x1800, 0x1fff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x2000, 0x27ff) AM_WRITE(dec8_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
 	AM_RANGE(0x2800, 0x2fff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x3000, 0x31ff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_swap_w) AM_BASE(&paletteram)
+	AM_RANGE(0x3000, 0x31ff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_be_w) AM_BASE(&paletteram)
 	AM_RANGE(0x3200, 0x37ff) AM_WRITE(MWA8_RAM) /* Unused */
 	AM_RANGE(0x3800, 0x381f) AM_WRITE(dec8_bac06_0_w)
 	AM_RANGE(0x3a00, 0x3a1f) AM_WRITE(dec8_bac06_1_w)
@@ -687,7 +687,7 @@ static ADDRESS_MAP_START( oscar_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x2000, 0x27ff) AM_WRITE(dec8_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
 	AM_RANGE(0x2800, 0x2fff) AM_WRITE(dec8_pf0_data_w) AM_BASE(&dec8_pf0_data)
 	AM_RANGE(0x3000, 0x37ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x3800, 0x3bff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_swap_w) AM_BASE(&paletteram)
+	AM_RANGE(0x3800, 0x3bff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_be_w) AM_BASE(&paletteram)
 	AM_RANGE(0x3c00, 0x3c1f) AM_WRITE(dec8_bac06_0_w)
 	AM_RANGE(0x3c80, 0x3c80) AM_WRITE(buffer_spriteram_w)	/* DMA */
 	AM_RANGE(0x3d00, 0x3d00) AM_WRITE(dec8_bank_w)   		/* BNKS */

@@ -139,11 +139,27 @@
 #include "vidhrdw/vector.h"
 #include "sega.h"
 
+
+/*************************************
+ *
+ *  Constants
+ *
+ *************************************/
+
+#define CPU_CLOCK			8000000
+
+
+
+/*************************************
+ *
+ *  Global variables
+ *
+ *************************************/
+
 extern UINT8 (*sega_decrypt)(offs_t, UINT8);
 
 static UINT8 *mainram;
 static UINT8 has_usb;
-static UINT8 last_service;
 
 static UINT8 mult_data[2];
 static UINT16 mult_result;
@@ -152,70 +168,43 @@ static UINT8 spinner_select;
 static UINT8 spinner_sign;
 static UINT8 spinner_count;
 
-static mame_timer *watchdog_timer;
-static UINT8 watchdog_enabled;
 
 
+/*************************************
+ *
+ *  Machine setup and config
+ *
+ *************************************/
 
-#define CPU_CLOCK			8000000
-#define WATCHDOG_TIMEOUT	TIME_IN_HZ(10)
-
-
-
-static void watchdog_timeout(int param)
+static void service_switch(void *param, UINT32 oldval, UINT32 newval)
 {
-	logerror("Watchdog fired\n");
-//  mame_schedule_soft_reset();
+	/* pressing the service switch sends an NMI */
+	if (newval)
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 
 static MACHINE_START( g80v )
 {
-	watchdog_timer = timer_alloc(watchdog_timeout);
+	/* request a callback if the service switch is pressed */
+	input_port_set_changed_callback(port_tag_to_index("SERVICESW"), 0x01, service_switch, NULL);
+
+	/* register for save states */
+	state_save_register_global_array(mult_data);
+	state_save_register_global(mult_result);
+	state_save_register_global(spinner_select);
+	state_save_register_global(spinner_sign);
+	state_save_register_global(spinner_count);
+
 	return 0;
 }
 
 
 static MACHINE_RESET( g80v )
 {
-	watchdog_enabled = FALSE;
-	timer_enable(watchdog_timer, FALSE);
+	/* if we have a Universal Sound Board, reset it here */
 	if (has_usb)
 		sega_usb_reset(0x10);
-}
-
-
-
-/*************************************
- *
- *  Interrupt handling
- *
- *************************************/
-
-static INTERRUPT_GEN( sega_interrupt )
-{
-	UINT8 service;
-
-	logerror("-- IRQ ---\n");
-
-	/* There are three sources of interrupts: */
-	/*   EDGINT is latched at 40Hz by the X/Y board, cleared by the CLRINT signal */
-	/*   XINT is latched whenever a coin is dropped, cleared by the CLRINT signal */
-	/*   INT is from an unknown source */
-
-	/* Since the IRQ routine always checks for coins, we will simply signal the */
-	/* EDGINT signal and ignore the rest. */
-	cpunum_set_input_line(0, 0, HOLD_LINE);
-
-	/* pulse the NMI line if we see the service switch go down */
-	service = readinputportbytag("SERVICESW") & 0x01;
-	if (service && service != last_service)
-	{
-		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
-		watchdog_enabled = FALSE;
-		timer_enable(watchdog_timer, FALSE);
-	}
-	last_service = service;
 }
 
 
@@ -279,6 +268,13 @@ static READ8_HANDLER( mangled_ports_r )
 }
 
 
+
+/*************************************
+ *
+ *  Spinner control emulation
+ *
+ *************************************/
+
 static WRITE8_HANDLER( spinner_select_w )
 {
 	spinner_select = data;
@@ -310,13 +306,16 @@ static READ8_HANDLER( spinner_input_r )
 }
 
 
-static READ8_HANDLER( elim4_mangled_port0_r )
+
+/*************************************
+ *
+ *  Eliminator 4-player controls
+ *
+ *************************************/
+
+static UINT32 elim4_joint_coin_r(void *param)
 {
-	UINT8 result = sega_ports_demangle(offset);
-	UINT8 coins = readinputportbytag("COINS");
-	if ((coins & 0xf) != 0xf)
-		result ^= 0x80;
-	return result;
+	return (readinputportbytag("COINS") & 0xf) != 0xf;
 }
 
 
@@ -347,14 +346,11 @@ static READ8_HANDLER( elim4_input_r )
 
 
 
-
-
-static WRITE8_HANDLER( coin_count_w )
-{
-	coin_counter_w(0, (data >> 7) & 1);
-	coin_counter_w(1, (data >> 6) & 1);
-}
-
+/*************************************
+ *
+ *  Multiplier
+ *
+ *************************************/
 
 static WRITE8_HANDLER( multiply_w )
 {
@@ -372,20 +368,26 @@ static READ8_HANDLER( multiply_r )
 }
 
 
+
+/*************************************
+ *
+ *  Misc other I/O
+ *
+ *************************************/
+
+static WRITE8_HANDLER( coin_count_w )
+{
+	coin_counter_w(0, (data >> 7) & 1);
+	coin_counter_w(1, (data >> 6) & 1);
+}
+
+
 static WRITE8_HANDLER( unknown_w )
 {
-	/* all games seem to write 04 at startup, and then periodically */
-	/* write 00/01 in quick succession. Looks like a watchdog timer */
-	/* except it is not run during service mode? */
+	/* writing an 0x04 here enables interrupts */
+	/* some games write 0x00/0x01 here as well */
 	if (data != 0x00 && data != 0x01 && data != 0x04)
-		logerror("%04X:unknown_w = %02X\n", activecpu_get_pc(), data);
-	if (data == 0x04)
-	{
-		logerror("Watchdog armed\n");
-		watchdog_enabled = TRUE;
-	}
-	if (data == 0x01 && watchdog_enabled)
-		timer_adjust(watchdog_timer, WATCHDOG_TIMEOUT, 0, 0);
+		printf("%04X:unknown_w = %02X\n", activecpu_get_pc(), data);
 }
 
 
@@ -447,35 +449,35 @@ INPUT_PORTS_START( segaxy_generic )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START_TAG("D3")
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ))
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown )) PORT_DIPLOCATION("SW1:1")
 	PORT_DIPSETTING(	0x01, DEF_STR( Off ))
 	PORT_DIPSETTING(	0x00, DEF_STR( On ))
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ))
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown )) PORT_DIPLOCATION("SW1:2")
 	PORT_DIPSETTING(	0x02, DEF_STR( Off ))
 	PORT_DIPSETTING(	0x00, DEF_STR( On ))
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ))
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown )) PORT_DIPLOCATION("SW1:3")
 	PORT_DIPSETTING(	0x04, DEF_STR( Off ))
 	PORT_DIPSETTING(	0x00, DEF_STR( On ))
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ))
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown )) PORT_DIPLOCATION("SW1:4")
 	PORT_DIPSETTING(	0x08, DEF_STR( Off ))
 	PORT_DIPSETTING(	0x00, DEF_STR( On ))
 
 	PORT_START_TAG("D2")
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ))
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown )) PORT_DIPLOCATION("SW1:5")
 	PORT_DIPSETTING(	0x01, DEF_STR( Off ))
 	PORT_DIPSETTING(	0x00, DEF_STR( On ))
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ))
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown )) PORT_DIPLOCATION("SW1:6")
 	PORT_DIPSETTING(	0x02, DEF_STR( Off ))
 	PORT_DIPSETTING(	0x00, DEF_STR( On ))
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ))
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown )) PORT_DIPLOCATION("SW1:7")
 	PORT_DIPSETTING(	0x04, DEF_STR( Off ))
 	PORT_DIPSETTING(	0x00, DEF_STR( On ))
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ))
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown )) PORT_DIPLOCATION("SW1:8")
 	PORT_DIPSETTING(	0x08, DEF_STR( Off ))
 	PORT_DIPSETTING(	0x00, DEF_STR( On ))
 
 	PORT_START_TAG("D1")
-	PORT_DIPNAME( 0x0f, 0x03, DEF_STR ( Coin_A ))
+	PORT_DIPNAME( 0x0f, 0x03, DEF_STR ( Coin_A )) PORT_DIPLOCATION("SW2:4,3,2,1")
 	PORT_DIPSETTING(	0x00, DEF_STR ( 4C_1C ))
 	PORT_DIPSETTING(	0x01, DEF_STR ( 3C_1C ))
 	PORT_DIPSETTING(	0x09, "2 Coins/1 Credit 5/3 6/4" )
@@ -494,7 +496,7 @@ INPUT_PORTS_START( segaxy_generic )
 	PORT_DIPSETTING(	0x08, DEF_STR ( 1C_6C ))
 
 	PORT_START_TAG("D0")
-	PORT_DIPNAME( 0x0f, 0x03, DEF_STR ( Coin_B ))
+	PORT_DIPNAME( 0x0f, 0x03, DEF_STR ( Coin_B )) PORT_DIPLOCATION("SW2:8,7,6,5")
 	PORT_DIPSETTING(	0x00, DEF_STR ( 4C_1C ))
 	PORT_DIPSETTING(	0x01, DEF_STR ( 3C_1C ))
 	PORT_DIPSETTING(	0x09, "2 Coins/1 Credit 5/3 6/4" )
@@ -541,21 +543,21 @@ INPUT_PORTS_START( elim2 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(2)
 
 	PORT_MODIFY("D3")
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ))
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet )) PORT_DIPLOCATION("SW1:1")
 	PORT_DIPSETTING(	0x01, DEF_STR( Upright ))
 	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ))
-	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Lives ))
+	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Lives )) PORT_DIPLOCATION("SW1:4,3")
 	PORT_DIPSETTING(	0x04, "3" )
 	PORT_DIPSETTING(	0x08, "4" )
 	PORT_DIPSETTING(	0x0c, "5" )
 
 	PORT_MODIFY("D2")
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ))
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty )) PORT_DIPLOCATION("SW1:6,5")
 	PORT_DIPSETTING(	0x00, DEF_STR( Easy ))
 	PORT_DIPSETTING(	0x01, DEF_STR( Normal ))
 	PORT_DIPSETTING(	0x02, DEF_STR( Hard ))
 	PORT_DIPSETTING(	0x03, DEF_STR( Very_Hard ))
-	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Bonus_Life ))
+	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Bonus_Life )) PORT_DIPLOCATION("SW1:8,7")
 	PORT_DIPSETTING(	0x0c, DEF_STR( None ))
 	PORT_DIPSETTING(	0x08, "10000" )
 	PORT_DIPSETTING(	0x04, "20000" )
@@ -595,7 +597,7 @@ INPUT_PORTS_START( elim4 )
 	PORT_INCLUDE( segaxy_generic )
 
 	PORT_MODIFY("D7")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SPECIAL )	/* combination of all four coin inputs */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SPECIAL ) PORT_CUSTOM(elim4_joint_coin_r, 0)	/* combination of all four coin inputs */
 
 	PORT_MODIFY("D6")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -613,63 +615,63 @@ INPUT_PORTS_START( elim4 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
 
 	PORT_MODIFY("D3")
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ))
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet )) PORT_DIPLOCATION("SW1:1")
 	PORT_DIPSETTING(	0x01, DEF_STR( Upright ))
 	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ))
-	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Lives ))
+	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Lives )) PORT_DIPLOCATION("SW1:4,3")
 	PORT_DIPSETTING(	0x04, "3" )
 	PORT_DIPSETTING(	0x08, "4" )
 	PORT_DIPSETTING(	0x0c, "5" )
 
 	PORT_MODIFY("D2")
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ))
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty )) PORT_DIPLOCATION("SW1:6,5")
 	PORT_DIPSETTING(	0x00, DEF_STR( Easy ))
 	PORT_DIPSETTING(	0x01, DEF_STR( Normal ))
 	PORT_DIPSETTING(	0x02, DEF_STR( Hard ))
 	PORT_DIPSETTING(	0x03, DEF_STR( Very_Hard ))
-	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Bonus_Life ))
+	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Bonus_Life )) PORT_DIPLOCATION("SW1:8,7")
 	PORT_DIPSETTING(	0x0c, DEF_STR( None ))
 	PORT_DIPSETTING(	0x08, "10000" )
 	PORT_DIPSETTING(	0x04, "20000" )
 	PORT_DIPSETTING(	0x00, "30000" )
 
 	PORT_MODIFY("D1")
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ))
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown )) PORT_DIPLOCATION("SW2:1")
 	PORT_DIPSETTING(	0x01, DEF_STR( Off ))
 	PORT_DIPSETTING(	0x00, DEF_STR( On ))
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ))
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown )) PORT_DIPLOCATION("SW2:2")
 	PORT_DIPSETTING(	0x02, DEF_STR( Off ))
 	PORT_DIPSETTING(	0x00, DEF_STR( On ))
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ))
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown )) PORT_DIPLOCATION("SW2:3")
 	PORT_DIPSETTING(	0x04, DEF_STR( Off ))
 	PORT_DIPSETTING(	0x00, DEF_STR( On ))
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ))
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown )) PORT_DIPLOCATION("SW2:4")
 	PORT_DIPSETTING(	0x08, DEF_STR( Off ))
 	PORT_DIPSETTING(	0x00, DEF_STR( On ))
 
 	PORT_MODIFY("D0")
-	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Coin_A ))
-	PORT_DIPSETTING(	0x07, DEF_STR( 8C_1C ))
-	PORT_DIPSETTING(	0x03, DEF_STR( 7C_1C ))
-	PORT_DIPSETTING(	0x05, DEF_STR( 6C_1C ))
-	PORT_DIPSETTING(	0x01, DEF_STR( 5C_1C ))
-	PORT_DIPSETTING(	0x06, DEF_STR( 4C_1C ))
-	PORT_DIPSETTING(	0x02, DEF_STR( 3C_1C ))
-	PORT_DIPSETTING(	0x04, DEF_STR( 2C_1C ))
-	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ))
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ))
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown )) PORT_DIPLOCATION("SW2:5")
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ))
-	PORT_DIPSETTING(    0x08, DEF_STR( On ))
+	PORT_DIPSETTING(    0x01, DEF_STR( On ))
+	PORT_DIPNAME( 0x0e, 0x00, DEF_STR( Coin_A )) PORT_DIPLOCATION("SW2:8,7,6")
+	PORT_DIPSETTING(	0x0e, DEF_STR( 8C_1C ))
+	PORT_DIPSETTING(	0x0c, DEF_STR( 7C_1C ))
+	PORT_DIPSETTING(	0x0a, DEF_STR( 6C_1C ))
+	PORT_DIPSETTING(	0x08, DEF_STR( 5C_1C ))
+	PORT_DIPSETTING(	0x06, DEF_STR( 4C_1C ))
+	PORT_DIPSETTING(	0x04, DEF_STR( 3C_1C ))
+	PORT_DIPSETTING(	0x02, DEF_STR( 2C_1C ))
+	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ))
 
 	PORT_START_TAG("IN8")
-	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(4)
-	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(4)
-	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(4)
-	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(4)
-	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(3)
-	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(3)
-	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(3)
-	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(3)
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(4)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(4)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(4)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(4)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(3)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(3)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(3)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(3)
 
 	PORT_START_TAG("COINS")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(1)
@@ -694,35 +696,35 @@ INPUT_PORTS_START( spacfury )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON2 )
 
 	PORT_MODIFY("D3")
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ))
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet )) PORT_DIPLOCATION("SW1:1")
 	PORT_DIPSETTING(	0x01, DEF_STR( Upright ))
 	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ))
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ))
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds )) PORT_DIPLOCATION("SW1:2")
 	PORT_DIPSETTING(	0x02, DEF_STR( Off ))
 	PORT_DIPSETTING(	0x00, DEF_STR( On ))
-	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ))
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives )) PORT_DIPLOCATION("SW1:4,3")
 	PORT_DIPSETTING(	0x00, "2" )
 	PORT_DIPSETTING(	0x04, "3" )
 	PORT_DIPSETTING(	0x08, "4" )
 	PORT_DIPSETTING(	0x0c, "5" )
 
 	PORT_MODIFY("D2")
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ))
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty )) PORT_DIPLOCATION("SW1:6,5")
 	PORT_DIPSETTING(	0x00, DEF_STR( Easy ))
 	PORT_DIPSETTING(	0x01, DEF_STR( Normal ))
 	PORT_DIPSETTING(	0x02, DEF_STR( Hard ))
 	PORT_DIPSETTING(	0x03, DEF_STR( Very_Hard ))
-	PORT_DIPNAME( 0x0c, 0x08, DEF_STR( Bonus_Life ))
+	PORT_DIPNAME( 0x0c, 0x08, DEF_STR( Bonus_Life )) PORT_DIPLOCATION("SW1:8,7")
 	PORT_DIPSETTING(	0x00, "10000" )
 	PORT_DIPSETTING(	0x04, "20000" )
 	PORT_DIPSETTING(	0x08, "30000" )
 	PORT_DIPSETTING(	0x0c, "40000" )
 
 	PORT_START_TAG("IN8")
-	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER(2)
-	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
-	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(2)
-	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2)
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(2)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2)
 INPUT_PORTS_END
 
 
@@ -730,25 +732,25 @@ INPUT_PORTS_START( zektor )
 	PORT_INCLUDE( segaxy_generic )
 
 	PORT_MODIFY("D3")
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ))
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet )) PORT_DIPLOCATION("SW1:1")
 	PORT_DIPSETTING(	0x01, DEF_STR( Upright ))
 	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ))
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ))
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds )) PORT_DIPLOCATION("SW1:2")
 	PORT_DIPSETTING(	0x02, DEF_STR( Off ))
 	PORT_DIPSETTING(	0x00, DEF_STR( On ))
-	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ))
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives )) PORT_DIPLOCATION("SW1:4,3")
 	PORT_DIPSETTING(	0x00, "2" )
 	PORT_DIPSETTING(	0x04, "3" )
 	PORT_DIPSETTING(	0x08, "4" )
 	PORT_DIPSETTING(	0x0c, "5" )
 
 	PORT_MODIFY("D2")
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ))
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty )) PORT_DIPLOCATION("SW1:6,5")
 	PORT_DIPSETTING(	0x00, DEF_STR( Easy ))
 	PORT_DIPSETTING(	0x01, DEF_STR( Normal ))
 	PORT_DIPSETTING(	0x02, DEF_STR( Hard ))
 	PORT_DIPSETTING(	0x03, DEF_STR( Very_Hard ))
-	PORT_DIPNAME( 0x0c, 0x08, DEF_STR( Bonus_Life ))
+	PORT_DIPNAME( 0x0c, 0x08, DEF_STR( Bonus_Life )) PORT_DIPLOCATION("SW1:8,7")
 	PORT_DIPSETTING(	0x00, DEF_STR( None ))
 	PORT_DIPSETTING(	0x0c, "10000" )
 	PORT_DIPSETTING(	0x08, "20000" )
@@ -770,36 +772,36 @@ INPUT_PORTS_START( tacscan )
 	PORT_INCLUDE( segaxy_generic )
 
 	PORT_MODIFY("D3")
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ))
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet )) PORT_DIPLOCATION("SW1:1")
 	PORT_DIPSETTING(	0x01, DEF_STR( Upright ))
 	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ))
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ))
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds )) PORT_DIPLOCATION("SW1:2")
 	PORT_DIPSETTING(	0x02, DEF_STR( Off ))
 	PORT_DIPSETTING(	0x00, DEF_STR( On ))
-	PORT_DIPNAME( 0x0c, 0x0c, "Number of Ships" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Number of Ships" ) PORT_DIPLOCATION("SW1:4,3")
 	PORT_DIPSETTING(	0x00, "2" )
 	PORT_DIPSETTING(	0x04, "4" )
 	PORT_DIPSETTING(	0x08, "6" )
 	PORT_DIPSETTING(	0x0c, "8" )
 
 	PORT_MODIFY("D2")
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ))
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty )) PORT_DIPLOCATION("SW1:6,5")
 	PORT_DIPSETTING(	0x00, DEF_STR( Easy ))
 	PORT_DIPSETTING(	0x01, DEF_STR( Normal ))
 	PORT_DIPSETTING(	0x02, DEF_STR( Hard ))
 	PORT_DIPSETTING(	0x03, DEF_STR( Very_Hard ))
-	PORT_DIPNAME( 0x0c, 0x08, DEF_STR( Bonus_Life ))
+	PORT_DIPNAME( 0x0c, 0x08, DEF_STR( Bonus_Life )) PORT_DIPLOCATION("SW1:8,7")
 	PORT_DIPSETTING(	0x00, DEF_STR( None ))
 	PORT_DIPSETTING(	0x0c, "10000" )
 	PORT_DIPSETTING(	0x08, "20000" )
 	PORT_DIPSETTING(	0x04, "30000" )
 
 	PORT_START_TAG("IN8")
-	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-	PORT_BIT ( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START_TAG("SPINNER")
 	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_RESET
@@ -810,38 +812,38 @@ INPUT_PORTS_START( startrek )
 	PORT_INCLUDE( segaxy_generic )
 
 	PORT_MODIFY("D3")
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ))
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet )) PORT_DIPLOCATION("SW1:1")
 	PORT_DIPSETTING(	0x01, DEF_STR( Upright ))
 	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ))
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ))
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds )) PORT_DIPLOCATION("SW1:2")
 	PORT_DIPSETTING(	0x02, DEF_STR( Off ))
 	PORT_DIPSETTING(	0x00, DEF_STR( On ))
-	PORT_DIPNAME( 0x0c, 0x0c, "Photon Torpedoes" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Photon Torpedoes" ) PORT_DIPLOCATION("SW1:4,3")
 	PORT_DIPSETTING(	0x00, "1" )
 	PORT_DIPSETTING(	0x04, "2" )
 	PORT_DIPSETTING(	0x08, "3" )
 	PORT_DIPSETTING(	0x0c, "4" )
 
 	PORT_MODIFY("D2")
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty ))
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Difficulty )) PORT_DIPLOCATION("SW1:6,5")
 	PORT_DIPSETTING(	0x00, DEF_STR( Easy ))
 	PORT_DIPSETTING(	0x01, DEF_STR( Normal ))
 	PORT_DIPSETTING(	0x02, DEF_STR( Hard ))
 	PORT_DIPSETTING(	0x03, "Tournament" )
-	PORT_DIPNAME( 0x0c, 0x08, DEF_STR( Bonus_Life ))
+	PORT_DIPNAME( 0x0c, 0x08, DEF_STR( Bonus_Life )) PORT_DIPLOCATION("SW1:8,7")
 	PORT_DIPSETTING(	0x00, "10000" )
 	PORT_DIPSETTING(	0x04, "20000" )
 	PORT_DIPSETTING(	0x08, "30000" )
 	PORT_DIPSETTING(	0x0c, "40000" )
 
 	PORT_START_TAG("IN8")
-	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3 )
-	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON4 )
-	PORT_BIT ( 0xc0, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON4 )
+	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START_TAG("SPINNER")
 	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(100) PORT_KEYDELTA(10) PORT_RESET
@@ -956,7 +958,7 @@ static MACHINE_DRIVER_START( g80v_base )
 	MDRV_CPU_ADD(Z80, CPU_CLOCK/2)
 	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	MDRV_CPU_IO_MAP(main_portmap,0)
-	MDRV_CPU_VBLANK_INT(sega_interrupt,1)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_MACHINE_START(g80v)
 	MDRV_MACHINE_RESET(g80v)
@@ -1347,7 +1349,6 @@ DRIVER_INIT( elim4 )
 
 	/* configure inputs */
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xf8, 0xf8, 0, 0, spinner_select_w);
-	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xf8, 0xf8, 0, 0, elim4_mangled_port0_r);
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xfc, 0xfc, 0, 0, elim4_input_r);
 }
 

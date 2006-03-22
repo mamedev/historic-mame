@@ -249,25 +249,6 @@ READ16_HANDLER( K054000_lsb_r );
 WRITE8_HANDLER( K051733_w );
 READ8_HANDLER( K051733_r );
 
-int K054157_vh_start(int gfx_memory_region, int big, int (*scrolld)[4][2],
-			int plane0,int plane1,int plane2,int plane3,
-			void (*callback)(int, int *, int *));
-READ16_HANDLER( K054157_ram_word_r );
-WRITE16_HANDLER( K054157_ram_word_w );
-READ16_HANDLER( K054157_ram_half_word_r );
-WRITE16_HANDLER( K054157_ram_half_word_w );
-READ16_HANDLER( K054157_rom_word_r );
-READ16_HANDLER( K054157_rom_word_8000_r );
-WRITE16_HANDLER( K054157_word_w );
-WRITE16_HANDLER( K054157_b_word_w );
-
-void K054157_tilemap_update(void);
-void K054157_tilemap_draw(mame_bitmap *bitmap, const rectangle *cliprect, int num, int flags, UINT32 priority);
-void K054157_tilemap_draw_alpha(mame_bitmap *bitmap, const rectangle *cliprect, int num, int flags, int alpha);
-int K054157_is_IRQ_enabled(void);
-int K054157_get_lookup(int bits);
-void K054157_set_tile_bank(int bank);	/* Asterix */
-int K054157_get_current_rambank(void);
 void K056832_SetExtLinescroll(void);	/* Lethal Enforcers */
 
 int K056832_vh_start(int gfx_memory_region, int bpp, int big,
@@ -285,6 +266,7 @@ READ16_HANDLER( K056832_rom_word_r );
 READ16_HANDLER( K056832_mw_rom_word_r );
 READ16_HANDLER( K056832_bishi_rom_word_r );
 READ16_HANDLER( K056832_old_rom_word_r );
+READ16_HANDLER( K056832_rom_word_8000_r );
 WRITE16_HANDLER( K056832_word_w ); // "VRAM" registers
 WRITE16_HANDLER( K056832_b_word_w );
 READ8_HANDLER( K056832_ram_code_lo_r );
@@ -457,7 +439,6 @@ WRITE32_HANDLER( K053252_long_w );
 
 
 // debug handlers
-READ16_HANDLER( K054157_word_r );		// VACSET (legacy)
 READ16_HANDLER( K056832_word_r );		// VACSET
 READ16_HANDLER( K056832_b_word_r );		// VSCCS  (board dependent)
 READ16_HANDLER( K053246_reg_word_r );	// OBJSET1

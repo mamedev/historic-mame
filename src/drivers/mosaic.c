@@ -108,7 +108,7 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x20000, 0x21fff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x22000, 0x22fff) AM_WRITE(mosaic_bgvideoram_w) AM_BASE(&mosaic_bgvideoram)
 	AM_RANGE(0x23000, 0x23fff) AM_WRITE(mosaic_fgvideoram_w) AM_BASE(&mosaic_fgvideoram)
-	AM_RANGE(0x24000, 0x241ff) AM_WRITE(paletteram_xRRRRRGGGGGBBBBB_w) AM_BASE(&paletteram)
+	AM_RANGE(0x24000, 0x241ff) AM_WRITE(paletteram_xRRRRRGGGGGBBBBB_le_w) AM_BASE(&paletteram)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( gfire2_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -123,7 +123,7 @@ static ADDRESS_MAP_START( gfire2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x10000, 0x17fff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x22000, 0x22fff) AM_WRITE(mosaic_bgvideoram_w) AM_BASE(&mosaic_bgvideoram)
 	AM_RANGE(0x23000, 0x23fff) AM_WRITE(mosaic_fgvideoram_w) AM_BASE(&mosaic_fgvideoram)
-	AM_RANGE(0x24000, 0x241ff) AM_WRITE(paletteram_xRRRRRGGGGGBBBBB_w) AM_BASE(&paletteram)
+	AM_RANGE(0x24000, 0x241ff) AM_WRITE(paletteram_xRRRRRGGGGGBBBBB_le_w) AM_BASE(&paletteram)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )

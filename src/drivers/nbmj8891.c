@@ -3477,6 +3477,37 @@ ROM_START( hanamomo )
 	ROM_LOAD( "hmog_20.bin", 0x130000, 0x10000, CRC(f3edc9d3) SHA1(9a6ff08cbc1630e40bdb233bab436bfe18eafb23) )
 ROM_END
 
+ROM_START( hanamomb )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
+	ROM_LOAD( "21.bin",      0x00000, 0x10000, CRC(d75920b9) SHA1(7504c5d1774c8c98513ada881472145e4dd23a98) )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* voice */
+	ROM_LOAD( "hmog_22.bin", 0x00000, 0x10000, CRC(ccc15b78) SHA1(f2ca6e8ad4f44aedbfe328273fa106852b8463f4) )
+	ROM_LOAD( "hmog_23.bin", 0x10000, 0x10000, CRC(3b166358) SHA1(50967d3202407f9964224807ac474da7da179c41) )
+
+	ROM_REGION( 0x140000, REGION_GFX1, 0 ) /* gfx */
+	ROM_LOAD( "hmog_01.bin", 0x000000, 0x10000, CRC(52e7bf1f) SHA1(055c4906534bf50c7b387a018932c8056ea1b9ed) )
+	ROM_LOAD( "hmog_02.bin", 0x010000, 0x10000, CRC(bfe11acc) SHA1(2ab240d6565f3687023a9495a8bdb721a90195d4) )
+	ROM_LOAD( "hmog_03.bin", 0x020000, 0x10000, CRC(3b28db4c) SHA1(fc4f6557ba92d92ae5a9e1a3e121a723c01d61df) )
+	ROM_LOAD( "hmog_04.bin", 0x030000, 0x10000, CRC(ab0c088d) SHA1(efdbd1a551edb9171c40b57cd0f83a6724dc89f6) )
+	ROM_LOAD( "hmog_05.bin", 0x040000, 0x10000, CRC(e42aa74b) SHA1(d36c00c39ffea520dc9dbf51469951b2c1fabb9e) )
+	ROM_LOAD( "hmog_06.bin", 0x050000, 0x10000, CRC(8926bfee) SHA1(7b1fb06570c96f987f7ff9fe1e28975e5428b721) )
+	ROM_LOAD( "hmog_07.bin", 0x060000, 0x10000, CRC(2a85e88b) SHA1(a77552dd4949bd2437c67e423c74482958a6932d) )
+	ROM_LOAD( "hmog_08.bin", 0x070000, 0x10000, CRC(ae0c59ab) SHA1(0bfdb7af5af0daeba9f25ab940c7506dbd63da79) )
+	ROM_LOAD( "hmog_09.bin", 0x080000, 0x10000, CRC(15fc1179) SHA1(c1ed99502c67f92e6af5d4fb096060663def943d) )
+	ROM_LOAD( "hmog_10.bin", 0x090000, 0x10000, CRC(e289b7c3) SHA1(1065d9048b842ccb38c320c8333c444fe8074078) )
+	ROM_LOAD( "hmog_11.bin", 0x0a0000, 0x10000, CRC(87eb1e10) SHA1(49b2ff66c7fcc9df3066bed32ce49d835e86ea0d) )
+	ROM_LOAD( "hmog_12.bin", 0x0b0000, 0x10000, CRC(f1abaffb) SHA1(51bc2adec84625ce6049bd2abacf9b13adb84002) )
+	ROM_LOAD( "hmog_13.bin", 0x0c0000, 0x10000, CRC(fa38d953) SHA1(edd640719f9376870c2ece1295879b13f927594d) )
+	ROM_LOAD( "hmog_14.bin", 0x0d0000, 0x10000, CRC(3f231850) SHA1(78159686ee109262858df8604dd5bf541cbf2d1b) )
+	ROM_LOAD( "hmog_15.bin", 0x0e0000, 0x10000, CRC(42baaf57) SHA1(1c1f2e1291f051e8454cc09b921d6685edd84531) )
+	ROM_LOAD( "hmog_16.bin", 0x0f0000, 0x10000, CRC(1daf3342) SHA1(13a7972122aa654f49266244e685bb5defbc79ae) )
+	ROM_LOAD( "hmog_17.bin", 0x100000, 0x10000, CRC(f1932dc1) SHA1(39eba6592515f6eef309c352affa2616c5c76f56) )
+	ROM_LOAD( "hmog_18.bin", 0x110000, 0x10000, CRC(44062920) SHA1(ec27af882da301a3873aa6c0bfb08152b01e95f5) )
+	ROM_LOAD( "hmog_19.bin", 0x120000, 0x10000, CRC(81414383) SHA1(8520dcfb26234544d0318de086d249e12a233e32) )
+	ROM_LOAD( "hmog_20.bin", 0x130000, 0x10000, CRC(f3edc9d3) SHA1(9a6ff08cbc1630e40bdb233bab436bfe18eafb23) )
+ROM_END
+
 ROM_START( msjiken )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
 	ROM_LOAD( "msjn_11.bin",  0x00000, 0x10000, CRC(723499ef) SHA1(ae709e992372c00791e50932ba59456d3dcbc84b) )
@@ -4156,6 +4187,7 @@ ROM_END
 //     YEAR,     NAME,   PARENT,  MACHINE,    INPUT,     INIT, MONITOR,COMPANY,FULLNAME,FLAGS)
 GAME( 1988, msjiken,   0,        msjiken,  msjiken,  msjiken,  ROT270, "Nichibutsu", "Mahjong Satsujin Jiken (Japan 881017)", 0 )
 GAME( 1988, hanamomo,  0,        hanamomo, hanamomo, hanamomo, ROT0,   "Nichibutsu", "Mahjong Hana no Momoko gumi (Japan 881201)", 0 )
+GAME( 1988, hanamomb,  hanamomo, hanamomo, hanamomo, hanamomo, ROT0,   "Nichibutsu", "Mahjong Hana no Momoko gumi (Japan 881125)", 0 )
 GAME( 1988, telmahjn,  0,        telmahjn, telmahjn, telmahjn, ROT270, "Nichibutsu", "Telephone Mahjong (Japan 890111)", 0 )
 GAME( 1989, gionbana,  0,        gionbana, gionbana, gionbana, ROT0,   "Nichibutsu", "Gionbana (Japan 890120)", 0 )
 GAME( 1989, mgion,     0,        mgion,    mgion,    mgion,    ROT0,   "Nichibutsu", "Gionbana [BET] (Japan 890207)", 0 )

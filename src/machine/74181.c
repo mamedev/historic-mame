@@ -5,7 +5,6 @@
  *
  */
 
-#include <stdio.h>
 #include "driver.h"
 #include "74181.h"
 

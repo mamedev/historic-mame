@@ -118,8 +118,6 @@
 
 #include <stddef.h>
 #include <ctype.h>
-#include <string.h>
-#include <stdlib.h>
 #include <zlib.h>
 #include "hash.h"
 #include "md5.h"

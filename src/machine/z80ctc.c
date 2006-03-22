@@ -9,7 +9,6 @@
 
 ***************************************************************************/
 
-#include <stdio.h>
 #include "driver.h"
 #include "z80ctc.h"
 #include "cpu/z80/z80.h"

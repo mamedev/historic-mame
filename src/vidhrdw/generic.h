@@ -2,7 +2,7 @@
 
     generic.h
 
-    Generic simple machine functions.
+    Generic simple video functions.
 
     Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
     Visit http://mamedev.org for licensing and usage restrictions.
@@ -59,6 +59,13 @@ extern UINT8 *dirtybuffer;
 extern UINT16 *dirtybuffer16;
 extern UINT32 *dirtybuffer32;
 
+extern UINT8 *paletteram;
+extern UINT16 *paletteram16;
+extern UINT32 *paletteram32;
+
+extern UINT8 *paletteram_2;	/* use when palette RAM is split in two parts */
+extern UINT16 *paletteram16_2;
+
 extern mame_bitmap *tmpbitmap;
 extern int flip_screen_x, flip_screen_y;
 
@@ -68,42 +75,61 @@ extern int flip_screen_x, flip_screen_y;
     FUNCTION PROTOTYPES
 ***************************************************************************/
 
+/* ----- initialization ----- */
+
+/* set up all the common systems */
 void generic_video_init(void);
 
-/* Generic video start/update callbacks */
+/* generic video start with dirty buffers */
 VIDEO_START( generic );
+
+/* generic video start with a temporary bitmap */
 VIDEO_START( generic_bitmapped );
+
+/* generic video update to blit a temporary bitmap */
 VIDEO_UPDATE( generic_bitmapped );
 
-/* Generic read/write handlers */
+
+
+/* ----- core video/color/spriteram access ----- */
+
+/* video RAM read/write handlers */
 READ8_HANDLER( videoram_r );
 WRITE8_HANDLER( videoram_w );
 
+/* color RAM read/write handlers */
 READ8_HANDLER( colorram_r );
 WRITE8_HANDLER( colorram_w );
 
+/* sprite RAM read/write handlers */
 READ8_HANDLER( spriteram_r );
 WRITE8_HANDLER( spriteram_w );
-
 READ16_HANDLER( spriteram16_r );
 WRITE16_HANDLER( spriteram16_w );
-
 READ8_HANDLER( spriteram_2_r );
 WRITE8_HANDLER( spriteram_2_w );
 
-/* Generic sprite buffering */
+
+
+/* ----- sprite buffering ----- */
+
+/* buffered sprite RAM write handlers */
 WRITE8_HANDLER( buffer_spriteram_w );
 WRITE16_HANDLER( buffer_spriteram16_w );
 WRITE32_HANDLER( buffer_spriteram32_w );
-
 WRITE8_HANDLER( buffer_spriteram_2_w );
 WRITE16_HANDLER( buffer_spriteram16_2_w );
 WRITE32_HANDLER( buffer_spriteram32_2_w );
 
-void buffer_spriteram(UINT8 *ptr,int length);
-void buffer_spriteram_2(UINT8 *ptr,int length);
+/* perform the actual buffering */
+void buffer_spriteram(UINT8 *ptr, int length);
+void buffer_spriteram_2(UINT8 *ptr, int length);
 
-/* Global video attribute handling code */
+
+
+/* ----- global attributes ----- */
+
+/* set global attributes */
 void flip_screen_set(int on);
 void flip_screen_x_set(int on);
 void flip_screen_y_set(int on);
@@ -112,6 +138,81 @@ void flip_screen_y_set(int on);
 /* sets a variable and schedules a full screen refresh if it changed */
 void set_vh_global_attribute(int *addr, int data);
 int get_vh_global_attribute_changed(void);
+
+
+
+/* ----- generic palette init routines ----- */
+
+void palette_init_black_and_white(UINT16 *colortable, const UINT8 *color_prom);
+void palette_init_RRRR_GGGG_BBBB(UINT16 *colortable, const UINT8 *color_prom);
+
+
+
+/* ----- generic palette RAM read/write handlers ----- */
+
+/* read handlers */
+READ8_HANDLER( paletteram_r );
+READ8_HANDLER( paletteram_2_r );
+READ16_HANDLER( paletteram16_word_r );
+READ16_HANDLER( paletteram16_2_word_r );
+READ32_HANDLER( paletteram32_r );
+
+/* 3-3-2 RGB palette write handlers */
+WRITE8_HANDLER( paletteram_BBGGGRRR_w );
+WRITE8_HANDLER( paletteram_RRRGGGBB_w );
+WRITE8_HANDLER( paletteram_BBGGRRII_w );
+
+/* 4-4-4 RGB palette write handlers */
+WRITE8_HANDLER( paletteram_xxxxBBBBGGGGRRRR_le_w );
+WRITE8_HANDLER( paletteram_xxxxBBBBGGGGRRRR_be_w );
+WRITE8_HANDLER( paletteram_xxxxBBBBGGGGRRRR_split1_w );	/* uses paletteram[] */
+WRITE8_HANDLER( paletteram_xxxxBBBBGGGGRRRR_split2_w );	/* uses paletteram_2[] */
+WRITE16_HANDLER( paletteram16_xxxxBBBBGGGGRRRR_word_w );
+
+WRITE8_HANDLER( paletteram_xxxxBBBBRRRRGGGG_le_w );
+WRITE8_HANDLER( paletteram_xxxxBBBBRRRRGGGG_be_w );
+WRITE8_HANDLER( paletteram_xxxxBBBBRRRRGGGG_split1_w );	/* uses paletteram[] */
+WRITE8_HANDLER( paletteram_xxxxBBBBRRRRGGGG_split2_w );	/* uses paletteram_2[] */
+WRITE16_HANDLER( paletteram16_xxxxBBBBRRRRGGGG_word_w );
+
+WRITE8_HANDLER( paletteram_xxxxRRRRBBBBGGGG_split1_w );	/* uses paletteram[] */
+WRITE8_HANDLER( paletteram_xxxxRRRRBBBBGGGG_split2_w );	/* uses paletteram_2[] */
+
+WRITE8_HANDLER( paletteram_xxxxRRRRGGGGBBBB_le_w );
+WRITE8_HANDLER( paletteram_xxxxRRRRGGGGBBBB_be_w );
+WRITE16_HANDLER( paletteram16_xxxxRRRRGGGGBBBB_word_w );
+
+WRITE8_HANDLER( paletteram_RRRRGGGGBBBBxxxx_be_w );
+WRITE8_HANDLER( paletteram_RRRRGGGGBBBBxxxx_split1_w );	/* uses paletteram[] */
+WRITE8_HANDLER( paletteram_RRRRGGGGBBBBxxxx_split2_w );	/* uses paletteram_2[] */
+WRITE16_HANDLER( paletteram16_RRRRGGGGBBBBxxxx_word_w );
+
+/* 4-4-4-4 IRGB palette write handlers */
+WRITE16_HANDLER( paletteram16_IIIIRRRRGGGGBBBB_word_w );
+WRITE16_HANDLER( paletteram16_RRRRGGGGBBBBIIII_word_w );
+
+/* 5-5-5 RGB palette write handlers */
+WRITE8_HANDLER( paletteram_xBBBBBGGGGGRRRRR_le_w );
+WRITE8_HANDLER( paletteram_xBBBBBGGGGGRRRRR_be_w );
+WRITE8_HANDLER( paletteram_xBBBBBGGGGGRRRRR_split1_w );	/* uses paletteram[] */
+WRITE8_HANDLER( paletteram_xBBBBBGGGGGRRRRR_split2_w );	/* uses paletteram_2[] */
+WRITE16_HANDLER( paletteram16_xBBBBBGGGGGRRRRR_word_w );
+
+WRITE8_HANDLER( paletteram_xBBBBBRRRRRGGGGG_split1_w );  /* uses paletteram[] */
+WRITE8_HANDLER( paletteram_xBBBBBRRRRRGGGGG_split2_w );  /* uses paletteram_2[] */
+
+WRITE8_HANDLER( paletteram_xRRRRRGGGGGBBBBB_le_w );
+WRITE16_HANDLER( paletteram16_xRRRRRGGGGGBBBBB_word_w );
+
+WRITE16_HANDLER( paletteram16_xGGGGGRRRRRBBBBB_word_w );
+WRITE16_HANDLER( paletteram16_xGGGGGBBBBBRRRRR_word_w );
+
+WRITE16_HANDLER( paletteram16_RRRRRGGGGGBBBBBx_word_w );
+WRITE16_HANDLER( paletteram16_RRRRGGGGBBBBRGBx_word_w );
+
+/* 8-8-8 RGB palette write handlers */
+WRITE16_HANDLER( paletteram16_xrgb_word_be_w );
+WRITE16_HANDLER( paletteram16_xbgr_word_be_w );
 
 
 #endif	/* __VIDEO_GENERIC_H__ */

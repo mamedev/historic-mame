@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "tilemap.h"
 
 UINT16 *gaelco_vregs;
 UINT16 *gaelco_videoram;

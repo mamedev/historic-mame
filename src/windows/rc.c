@@ -29,12 +29,10 @@ Version 0.3, Februari 2000
 -Reworked and cleaned up the interface, broke backward compatibility (Hans
  de Goede)
 */
-#include <stdlib.h>
-#include <string.h>
-//#include <pwd.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include "fileio.h"
 #include "rc.h"
 #include "misc.h"
 

@@ -4,7 +4,6 @@
 /*                       VERY PRELIMINARY!                           */
 /*===================================================================*/
 
-#include <stdio.h>
 #include "driver.h"
 
 static INT16 AU_DATA;

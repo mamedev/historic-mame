@@ -1064,6 +1064,8 @@ INPUT_PORTS_START( spelunk2 )
 	PORT_START_TAG("IN2")
 	IN2_PORT
 
+	/* Factory shipment setting is all OFF */
+
 	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x03, 0x03, "Energy Decrease" )
 	PORT_DIPSETTING(    0x03, "Slow" )
@@ -1091,9 +1093,9 @@ INPUT_PORTS_START( spelunk2 )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
 	/* In freeze mode, press 2 to stop and 1 to restart */
 	PORT_DIPNAME( 0x20, 0x20, "Freeze (Cheat)")
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )

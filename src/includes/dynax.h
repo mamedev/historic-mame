@@ -1,31 +1,19 @@
 /***************************************************************************
 
-
-                    Interrupts
-
+      Dynax hardware
 
 ***************************************************************************/
 
-/* Variables defined in drivers: */
+/*----------- defined in drivers/dynax.c -----------*/
 
 extern UINT8 dynax_blitter_irq,	dynax_blitter2_irq;
-
-/* Functions defined in drivers: */
 
 void sprtmtch_update_irq(void);
 void jantouki_update_irq(void);
 void mjelctrn_update_irq(void);
 void neruton_update_irq(void);
 
-/***************************************************************************
-
-
-                    Video Blitter(s)
-
-
-***************************************************************************/
-
-/* Functions defined in vidhrdw: */
+/*----------- defined in vidhrdw/dynax.c -----------*/
 
 WRITE8_HANDLER( dynax_blitter_rev2_w );
 WRITE8_HANDLER( jantouki_blitter_rev2_w );

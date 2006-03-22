@@ -2,21 +2,25 @@
 
 #include "vidhrdw/segaic16.h"
 
-/* from vidhrdw/segahang.c */
+/*----------- defined in vidhrdw/segahang.c -----------*/
+
 VIDEO_START( hangon );
 VIDEO_START( sharrier );
 VIDEO_UPDATE( hangon );
 
-/* from vidhrdw/segas16a.c */
+/*----------- defined in vidhrdw/segas16a.c -----------*/
+
 VIDEO_START( system16a );
 VIDEO_UPDATE( system16a );
 
-/* from vidhrdw/segas16b.c */
+/*----------- defined in vidhrdw/segas16b.c -----------*/
+
 VIDEO_START( system16b );
 VIDEO_START( timscanr );
 VIDEO_UPDATE( system16b );
 
-/* from vidhrdw/segas18.c */
+/*----------- defined in vidhrdw/segas18.c -----------*/
+
 VIDEO_START( system18 );
 VIDEO_UPDATE( system18 );
 
@@ -24,18 +28,21 @@ void system18_set_grayscale(int enable);
 void system18_set_vdp_enable(int eanble);
 void system18_set_vdp_mixing(int mixing);
 
-/* from vidhrdw/segaorun.c */
+/*----------- defined in vidhrdw/segaorun.c -----------*/
+
 VIDEO_START( outrun );
 VIDEO_START( shangon );
 VIDEO_UPDATE( outrun );
 VIDEO_UPDATE( shangon );
 
-/* from vidhrdw/segaxbd.c */
+/*----------- defined in vidhrdw/segaxbd.c -----------*/
+
 VIDEO_START( xboard );
 VIDEO_UPDATE( xboard );
 void xboard_set_road_priority(int priority);
 
-/* from vidhrdw/segaybd.c */
+/*----------- defined in vidhrdw/segaybd.c -----------*/
+
 VIDEO_START( yboard );
 VIDEO_UPDATE( yboard );
 
@@ -65,6 +72,8 @@ extern int (*sys16_spritesystem)(
 	const UINT16 *source,
 	int bJustGetColor );
 
+/*----------- defined in vidhrdw/sys16spr.c -----------*/
+
 extern int sys16_sprite_shinobi( struct sys16_sprite_attributes *sprite, const UINT16 *source, int bJustGetColor );
 extern int sys16_sprite_passshot( struct sys16_sprite_attributes *sprite, const UINT16 *source, int bJustGetColor );
 extern int sys16_sprite_quartet2( struct sys16_sprite_attributes *sprite, const UINT16 *source, int bJustGetColor );
@@ -72,19 +81,18 @@ extern int sys16_sprite_quartet2( struct sys16_sprite_attributes *sprite, const 
 #define NumOfShadowColors 32
 #define ShadowColorsMultiplier 2
 
-extern int sys16_sh_shadowpal;
-extern int sys16_MaxShadowColors;
+/*----------- defined in machine/system16.c -----------*/
 
-extern UINT16 *sys16_tileram;
-extern UINT16 *sys16_textram;
-extern UINT16 *sys16_spriteram;
-
-/* machine hardware */
 extern UINT16 *sys16_workingram;
 extern UINT16 *sys16_workingram2;
 extern UINT16 *sys16_extraram;
 extern UINT16 *sys16_extraram2;
 extern UINT16 *sys16_extraram3;
+
+/* sound */
+extern struct upd7759_interface sys16_upd7759_interface;
+
+extern int sys18_sound_info[4*2];
 
 extern void sys16_patch_code( int offset, int data );
 
@@ -193,6 +201,8 @@ extern gfx_decode sys16_gfxdecodeinfo[];
 	PORT_DIPSETTING(    0x00, "Free Play (if Coin A too) or 1/1" )
 
 
+/*----------- defined in vidhrdw/system16.c -----------*/
+
 /* video hardware */
 extern READ16_HANDLER( sys16_tileram_r );
 extern WRITE16_HANDLER( sys16_tileram_w );
@@ -207,6 +217,16 @@ extern VIDEO_UPDATE( system16 );
 /* system18 video hardware */
 extern VIDEO_START( system18old );
 extern VIDEO_UPDATE( system18old );
+
+/* callback to poll video registers */
+extern void (* sys16_update_proc)( void );
+
+extern UINT16 *sys16_tileram;
+extern UINT16 *sys16_textram;
+extern UINT16 *sys16_spriteram;
+
+extern int sys16_sh_shadowpal;
+extern int sys16_MaxShadowColors;
 
 /* video driver constants (vary with game) */
 extern int sys16_gr_bitmap_width;
@@ -225,7 +245,6 @@ extern int sys16_bg_priority_value;
 extern int sys16_fg_priority_value;
 extern int sys16_tilebank_switch;
 extern int sys16_rowscroll_scroll;
-extern void (* sys16_update_proc)( void );
 
 /* video driver registers */
 extern int sys16_refreshenable;
@@ -256,14 +275,4 @@ extern int sys16_gr_palette;
 extern int sys16_gr_palette_default;
 extern unsigned char sys16_gr_colorflip[2][4];
 extern UINT16 *sys16_gr_second_road;
-
-extern UINT16 *sys16_tileram;
-extern UINT16 *sys16_textram;
-extern UINT16 *sys16_spriteram;
-
-/* sound */
-extern struct upd7759_interface sys16_upd7759_interface;
-extern struct upd7759_interface aliensyn_upd7759_interface;
-
-extern int sys18_sound_info[4*2];
 

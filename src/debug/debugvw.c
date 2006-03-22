@@ -1065,6 +1065,10 @@ static void registers_update(debug_view *view)
 	debug_view_char *dest = view->viewdata;
 	UINT32 row, i;
 
+	/* cannot update if no active CPU */
+	if (cpu_getactivecpu() < 0)
+		return;
+
 	/* if our assumptions changed, revisit them */
 	if (regdata->recompute)
 		registers_recompute(view);

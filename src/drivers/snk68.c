@@ -1204,5 +1204,5 @@ GAME( 1989, streets1, streetsm, searchar, streetsm, 0,        ROT0,  "SNK", "Str
 GAME( 1989, streetsw, streetsm, searchar, streetsj, 0,        ROT0,  "SNK", "Street Smart (World version 1)", 0 )
 GAME( 1989, streetsj, streetsm, searchar, streetsj, 0,        ROT0,  "SNK", "Street Smart (Japan version 1)", 0 )
 GAME( 1989, ikari3,   0,        ikari3,   ikari3,   searchar, ROT0,  "SNK", "Ikari III - The Rescue (Rotary Joystick)", 0 )
-GAME( 1989, ikari3nr, ikari3,   ikari3,   ikari3,   searchar, ROT0,  "SNK", "Ikari III - The Rescue (Normal Joystick)", 0 )
+GAME( 1989, ikari3nr, ikari3,   ikari3,   ikari3,   searchar, ROT0,  "SNK", "Ikari III - The Rescue (8-Way Joystick)", 0 )
 

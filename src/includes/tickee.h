@@ -4,7 +4,7 @@
 
 **************************************************************************/
 
-/*----------- defined in driver/tickee.c -----------*/
+/*----------- defined in drivers/tickee.c -----------*/
 
 extern UINT16 *tickee_control;
 

@@ -8,10 +8,7 @@
 #include <math.h>
 #include "driver.h"
 #include "streams.h"
-
 #include "sound/custom.h"
-
-#include "mame.h"
 
 extern UINT8 attckufo_regs[16];
 

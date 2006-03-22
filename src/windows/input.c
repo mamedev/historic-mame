@@ -49,12 +49,14 @@ extern int win_window_mode;
 #define MAX_KEYBOARDS		1
 #define MAX_MICE			8
 #define MAX_JOYSTICKS		8
-#define MAX_LIGHTGUNS		2
+#define MAX_LIGHTGUNS		8
+#define MAX_DX_LIGHTGUNS	2
 
 #define MAX_KEYS			256
 
 #define MAX_JOY				512
 #define MAX_AXES			8
+#define MAX_LIGHTGUN_AXIS	2
 #define MAX_BUTTONS			32
 #define MAX_POV				4
 
@@ -180,8 +182,9 @@ static int					mouse_count;
 static LPDIRECTINPUTDEVICE	mouse_device[MAX_MICE+1];
 static LPDIRECTINPUTDEVICE2	mouse_device2[MAX_MICE+1];
 static raw_mouse			raw_mouse_device[MAX_MICE];
-static DIDEVCAPS			mouse_caps[MAX_MICE];
+static DIDEVCAPS			mouse_caps[MAX_MICE+1];
 static DIMOUSESTATE			mouse_state[MAX_MICE];
+static char					mouse_name[MAX_MICE+1][MAX_PATH];
 static int					lightgun_count;
 static POINT				lightgun_dual_player_pos[4];
 static int					lightgun_dual_player_state[4];
@@ -199,7 +202,7 @@ static axis_history			joystick_history[MAX_JOYSTICKS][MAX_AXES][HISTORY_LENGTH];
 static UINT8				joystick_type[MAX_JOYSTICKS][MAX_AXES];
 
 // gun states
-static INT32				gun_axis[MAX_LIGHTGUNS][2];
+static INT32				gun_axis[MAX_DX_LIGHTGUNS][2];
 
 // led states
 static int					original_leds;
@@ -890,7 +893,7 @@ static BOOL CALLBACK enum_mouse_callback(LPCDIDEVICEINSTANCE instance, LPVOID re
 	HRESULT result;
 
 	// if we're not out of mice, log this one
-	if (mouse_count >= MAX_MICE)
+	if (mouse_count > MAX_MICE)
 		goto out_of_mice;
 
 	// attempt to create a device
@@ -902,6 +905,9 @@ static BOOL CALLBACK enum_mouse_callback(LPCDIDEVICEINSTANCE instance, LPVOID re
 	result = IDirectInputDevice_QueryInterface(mouse_device[mouse_count], &IID_IDirectInputDevice2, (void **)&mouse_device2[mouse_count]);
 	if (result != DI_OK)
 		mouse_device2[mouse_count] = NULL;
+
+	// remember the name
+	strcpy(mouse_name[mouse_count], instance->tszInstanceName);
 
 	// get the caps
 	mouse_caps[mouse_count].dwSize = STRUCTSIZE(DIDEVCAPS);
@@ -962,13 +968,18 @@ out_of_mice:
 static void remove_dx_system_mouse(void)
 {
 	int i;
+	LPDIRECTINPUTDEVICE  sys_mouse_device;
+	LPDIRECTINPUTDEVICE2 sys_mouse_device2;
+	DIDEVCAPS sys_mouse_caps;
+	char sys_mouse_name[MAX_PATH];
 
-	if (mouse_count < 2) return;
+	// store system mouse info so it does not get lost
+	sys_mouse_device  = mouse_device[0];
+	sys_mouse_device2 = mouse_device2[0];
+	sys_mouse_caps = mouse_caps[0];
 
-	// release system mouse
-	if (mouse_device2[0])
-		IDirectInputDevice_Release(mouse_device2[0]);
-	IDirectInputDevice_Release(mouse_device[0]);
+	if (mouse_count < 2) goto setup_sys_mouse;
+
 	mouse_count--;
 
 	// shift mouse list
@@ -977,7 +988,17 @@ static void remove_dx_system_mouse(void)
 		if (mouse_device2[i+1])
 			mouse_device2[i] = mouse_device2[i+1];
 		mouse_device[i] = mouse_device[i+1];
+		mouse_caps[i] = mouse_caps[i+1];
+		strcpy(mouse_name[i], mouse_name[i+1]);
 	}
+
+setup_sys_mouse:
+	// system mouse will be stored at the end of the list
+	mouse_device[MAX_MICE]  = sys_mouse_device;
+	mouse_device2[MAX_MICE] = sys_mouse_device2;
+	mouse_caps[MAX_MICE] = sys_mouse_caps;
+	strcpy(mouse_name[MAX_MICE], sys_mouse_name);
+
 	return;
 }
 
@@ -1073,10 +1094,15 @@ int win_init_input(void)
 	result = DirectInputCreate(GetModuleHandle(NULL), dinput_version, &dinput, NULL);
 	if (result != DI_OK)
 	{
-		dinput_version = 0x0300;
+		dinput_version = 0x0500;
 		result = DirectInputCreate(GetModuleHandle(NULL), dinput_version, &dinput, NULL);
 		if (result != DI_OK)
-			goto cant_create_dinput;
+		{
+			dinput_version = 0x0300;
+			result = DirectInputCreate(GetModuleHandle(NULL), dinput_version, &dinput, NULL);
+			if (result != DI_OK)
+				goto cant_create_dinput;
+		}
 	}
 	if (verbose)
 		fprintf(stderr, "Using DirectInput %d\n", dinput_version >> 8);
@@ -1196,6 +1222,13 @@ void win_shutdown_input(void)
 
 	// release all our mice
 	if (!win_use_raw_mouse)
+	{
+		if (mouse_count > 1)
+		{
+			IDirectInputDevice_Release(mouse_device[MAX_MICE]);
+			if (mouse_device2[MAX_MICE])
+				IDirectInputDevice_Release(mouse_device2[MAX_MICE]);
+		}
 		for (i = 0; i < mouse_count; i++)
 		{
 			IDirectInputDevice_Release(mouse_device[i]);
@@ -1203,6 +1236,7 @@ void win_shutdown_input(void)
 				IDirectInputDevice_Release(mouse_device2[i]);
 			mouse_device2[i]=0;
 		}
+	}
 
 	// free allocated strings
 	for (i = 0; i < total_codes; i++)
@@ -1236,8 +1270,12 @@ void win_pause_input(int paused)
 
 		// unacquire all our mice
 		if (!win_use_raw_mouse)
+		{
+			if (mouse_count > 1)
+				IDirectInputDevice_Unacquire(mouse_device[MAX_MICE]);
 			for (i = 0; i < mouse_count; i++)
 				IDirectInputDevice_Unacquire(mouse_device[i]);
+		}
 	}
 
 	// otherwise, reacquire all devices
@@ -1249,9 +1287,13 @@ void win_pause_input(int paused)
 
 		// acquire all our mice if active
 		if (!win_use_raw_mouse)
+		{
+			if (mouse_count > 1)
+			IDirectInputDevice_Acquire(mouse_device[MAX_MICE]);
 			if (mouse_active && !win_has_menu())
 				for (i = 0; i < mouse_count && (win_use_mouse || use_lightgun); i++)
 					IDirectInputDevice_Acquire(mouse_device[i]);
+		}
 	}
 
 	// set the paused state
@@ -1659,12 +1701,17 @@ static void init_joycodes(void)
 			sprintf(mousename, "Mouse %d ", mouse + 1);
 		else
 			sprintf(mousename, "Mouse ");
+
+		// log the info
+		if (verbose)
+			fprintf(stderr, "%s: %s\n", mousename, mouse_name[mouse]);
+
 		// add analog axes (fix me -- should enumerate these)
-		sprintf(tempname, "%sX", mousename);
+		sprintf(tempname, "%s X", mousename);
 		add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEAXIS, 0), CODE_OTHER_ANALOG_RELATIVE);
-		sprintf(tempname, "%sY", mousename);
+		sprintf(tempname, "%s Y", mousename);
 		add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEAXIS, 1), CODE_OTHER_ANALOG_RELATIVE);
-		sprintf(tempname, "%sZ", mousename);
+		sprintf(tempname, "%s Z", mousename);
 		add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEAXIS, 2), CODE_OTHER_ANALOG_RELATIVE);
 
 		// add mouse buttons
@@ -1672,7 +1719,7 @@ static void init_joycodes(void)
 		{
 			if (win_use_raw_mouse)
 			{
-				sprintf(tempname, "Mouse %d Button %d", mouse + 1, button + 1);
+				sprintf(tempname, "%s Button %d", mousename, button + 1);
 				add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEBUTTON, button), CODE_OTHER_DIGITAL);
 			}
 			else
@@ -1685,11 +1732,7 @@ static void init_joycodes(void)
 				result = IDirectInputDevice_GetObjectInfo(mouse_device[mouse], &instance, offsetof(DIMOUSESTATE, rgbButtons[button]), DIPH_BYOFFSET);
 				if (result == DI_OK)
 				{
-					// add mouse number to the name
-					if (mouse_count > 1)
-						sprintf(tempname, "Mouse %d %s", mouse + 1, instance.tszName);
-					else
-						sprintf(tempname, "Mouse %s", instance.tszName);
+					sprintf(tempname, "%s %s", mousename, instance.tszName);
 					add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEBUTTON, button), CODE_OTHER_DIGITAL);
 				}
 			}
@@ -1819,27 +1862,29 @@ static INT32 get_joycode_value(os_code joycode)
 	switch (codetype)
 	{
 		case CODETYPE_MOUSEBUTTON:
-			/* ActLabs lightgun - remap button 2 (shot off-screen) as button 1 */
-			if (use_lightgun_dual && joyindex<4) {
-				if (use_lightgun_reload && joynum==0) {
-					if (joyindex==0 && lightgun_dual_player_state[1])
-						return 1;
-					if (joyindex==1 && lightgun_dual_player_state[1])
-						return 0;
-					if (joyindex==2 && lightgun_dual_player_state[3])
-						return 1;
-					if (joyindex==3 && lightgun_dual_player_state[3])
-						return 0;
+			if (!win_use_raw_mouse) {
+				/* ActLabs lightgun - remap button 2 (shot off-screen) as button 1 */
+				if (use_lightgun_dual && joyindex<4) {
+					if (use_lightgun_reload && joynum==0) {
+						if (joyindex==0 && lightgun_dual_player_state[1])
+							return 1;
+						if (joyindex==1 && lightgun_dual_player_state[1])
+							return 0;
+						if (joyindex==2 && lightgun_dual_player_state[3])
+							return 1;
+						if (joyindex==3 && lightgun_dual_player_state[3])
+							return 0;
+					}
+					return lightgun_dual_player_state[joyindex];
 				}
-				return lightgun_dual_player_state[joyindex];
-			}
 
-			if (use_lightgun) {
-				if (use_lightgun_reload && joynum==0) {
-					if (joyindex==0 && (mouse_state[0].rgbButtons[1]&0x80))
-						return 1;
-					if (joyindex==1 && (mouse_state[0].rgbButtons[1]&0x80))
-						return 0;
+				if (use_lightgun) {
+					if (use_lightgun_reload && joynum==0) {
+						if (joyindex==0 && (mouse_state[0].rgbButtons[1]&0x80))
+							return 1;
+						if (joyindex==1 && (mouse_state[0].rgbButtons[1]&0x80))
+							return 0;
+					}
 				}
 			}
 			return mouse_state[joynum].rgbButtons[joyindex] >> 7;
@@ -1913,6 +1958,9 @@ static INT32 get_joycode_value(os_code joycode)
 				win_pause_input(0);
 			}
 
+			if (win_use_raw_mouse && (raw_mouse_device[joynum].flags != MOUSE_MOVE_RELATIVE))
+				return 0;
+
 			// return the latest mouse info
 			if (joyindex == 0)
 				return mouse_state[joynum].lX * 512;
@@ -1924,10 +1972,18 @@ static INT32 get_joycode_value(os_code joycode)
 
 		// analog gun axis
 		case CODETYPE_GUNAXIS:
-			// return the latest gun info
-			if (joynum >= MAX_LIGHTGUNS)
+			if (joyindex >= MAX_LIGHTGUN_AXIS)
 				return 0;
-			if (joyindex >= 2)
+
+			if (win_use_raw_mouse) {
+				if (raw_mouse_device[joynum].flags == MOUSE_MOVE_RELATIVE)
+					return 0;
+				// convert absolute mouse data to the range we need
+				return (INT64)((joyindex ? mouse_state[joynum].lY : mouse_state[joynum].lX) + 1) * (INT64)(ANALOG_VALUE_MAX - ANALOG_VALUE_MIN + 1) / 65536 - 1 + ANALOG_VALUE_MIN;
+			}
+
+			// return the latest gun info
+			if (joynum >= MAX_DX_LIGHTGUNS)
 				return 0;
 			return gun_axis[joynum][joyindex];
 	}
@@ -2008,7 +2064,7 @@ static void poll_lightguns(void)
 		ui_popup("Lightgun not supported in windowed mode");
 
 	// loop over players
-	for (player = 0; player < MAX_LIGHTGUNS; player++)
+	for (player = 0; player < MAX_DX_LIGHTGUNS; player++)
 	{
 		// Hack - if button 2 is pressed on lightgun, then return 0,0 (off-screen) to simulate reload
 		if (use_lightgun_reload)
@@ -2055,10 +2111,6 @@ static void poll_lightguns(void)
 			{
 				point.x=point.y=0;
 			}
-
-			// Map absolute pixel values into -128 -> 128 range
-			gun_axis[player][0] = (point.x * (ANALOG_VALUE_MAX - ANALOG_VALUE_MIN) + win_physical_width/2) / (win_physical_width-1) + ANALOG_VALUE_MIN;
-			gun_axis[player][1] = (point.y * (ANALOG_VALUE_MAX - ANALOG_VALUE_MIN) + win_physical_height/2) / (win_physical_height-1) + ANALOG_VALUE_MIN;
 		}
 		else
 		{
@@ -2071,11 +2123,11 @@ static void poll_lightguns(void)
 			// which requires the application have non-exclusive access to the mouse device
 			//
 			GetCursorPos(&point);
-
-			// Map absolute pixel values into ANALOG_VALUE_MIN -> ANALOG_VALUE_MAX range
-			gun_axis[player][0] = (point.x * (ANALOG_VALUE_MAX - ANALOG_VALUE_MIN) + win_physical_width/2) / (win_physical_width-1) + ANALOG_VALUE_MIN;
-			gun_axis[player][1] = (point.y * (ANALOG_VALUE_MAX - ANALOG_VALUE_MIN) + win_physical_height/2) / (win_physical_height-1) + ANALOG_VALUE_MIN;
 		}
+
+		// Map absolute pixel values into ANALOG_VALUE_MIN -> ANALOG_VALUE_MAX range
+		gun_axis[player][0] = (point.x * (ANALOG_VALUE_MAX - ANALOG_VALUE_MIN) + win_physical_width/2) / (win_physical_width-1) + ANALOG_VALUE_MIN;
+		gun_axis[player][1] = (point.y * (ANALOG_VALUE_MAX - ANALOG_VALUE_MIN) + win_physical_height/2) / (win_physical_height-1) + ANALOG_VALUE_MIN;
 
 		if (gun_axis[player][0] < ANALOG_VALUE_MIN) gun_axis[player][0] = ANALOG_VALUE_MIN;
 		if (gun_axis[player][0] > ANALOG_VALUE_MAX) gun_axis[player][0] = ANALOG_VALUE_MAX;
@@ -2442,6 +2494,177 @@ void stop_led(void)
 
 
 //============================================================
+//  set_rawmouse_device_name
+//============================================================
+static void set_rawmouse_device_name(const char *raw_string, unsigned int mouse_num)
+{
+	// This routine is used to get the mouse name.  This will give
+	// us the same name that DX will report on non-XP systems.
+	// It is a total mess to find the real name of a USB device from
+	// the RAW name.  The mouse is named as the HID device, but
+	// the actual physical name that the mouse reports is in the USB
+	// device.
+	// If the mouse is not HID, we use the name pointed to by the raw_string key.
+	// If the mouse is HID, we try to get the LocationInformation value
+	// from the parent USB device.  If this is not available we default
+	// to the name pointed to by the raw_string key.  Fun, eh?
+	// The raw_string as passed is formatted as:
+	//   \??\type-id#hardware-id#instance-id#{DeviceClasses-id}
+
+	char reg_string[MAX_PATH] = "SYSTEM\\CurrentControlSet\\Enum\\";
+	TCHAR t_reg_string[2 * MAX_PATH];		// final reg string
+	char parent_id_prefix[MAX_PATH];		// the id we are looking for
+	char test_parent_id_prefix[MAX_PATH];	// the id we are testing
+	char *test_pos;							// general purpose test pointer for positioning
+	DWORD name_length = MAX_PATH;
+	DWORD instance, hardware;
+	HKEY hardware_key, reg_key, sub_key;
+	int key_pos, hardware_key_pos;		// used to keep track of where the keys are added.
+	LONG hardware_result, instance_result;
+
+	// too many mice?
+	if (mouse_num > MAX_MICE) return;
+	mouse_name[mouse_num][0] = 0;
+
+	// is string formated in RAW format?
+	if (strncmp(raw_string, "\\??\\", 4)) return;
+	key_pos = strlen(reg_string);
+
+	// remove \??\ from start and add this onto the end of the key string
+	strcat(reg_string, raw_string + 4);
+	// then remove the final DeviceClasses string
+	*(strrchr(reg_string, '#')) = 0;
+
+	// convert the remaining 2 '#' to '\'
+	test_pos = strchr(reg_string, '#');
+	*test_pos = '\\';
+	*(strchr(test_pos, '#')) = '\\';
+	// finialize registry key
+	lstrcpy (t_reg_string, reg_string);
+
+	// Open the key.  If we can't and we're HID then try USB
+	instance_result = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
+							t_reg_string,
+							0, KEY_READ, &reg_key);
+	if (instance_result == ERROR_SUCCESS)
+	{
+		// first check for the name in LocationInformation (slim chance)
+		// if it is not found then default to the name in DeviceDesc
+		instance_result = RegQueryValueEx(reg_key,
+								"LocationInformation",
+								NULL, NULL,
+								mouse_name[mouse_num],
+								&name_length)
+				&& RegQueryValueEx(reg_key,
+								"DeviceDesc",
+								NULL, NULL,
+								mouse_name[mouse_num],
+								&name_length);
+		RegCloseKey(reg_key);
+	}
+
+	// give up if not HID
+	if (strncmp(raw_string + 4, "HID", 3)) return;
+
+	// Try and track down the parent USB device.
+	// The raw name we are passed contains the HID Hardware ID, and USB Parent ID.
+	// Some times the HID Hardware ID is the same as the USB Hardware ID.  But not always.
+	// We need to look in the device instances of the each USB hardware instance for the parent-id.
+	strncpy(reg_string + key_pos, "USB", 3);
+	test_pos = strrchr(reg_string, '\\');
+	strcpy(parent_id_prefix, test_pos + 1);
+	key_pos += 4;
+	*(reg_string + key_pos) = 0;
+	hardware_key_pos = strlen(reg_string);
+	// reg_string now contains the key name for the USB hardware.
+	// parent_id_prefix is the value we will be looking to match.
+	lstrcpy (t_reg_string, reg_string);
+	hardware_result = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
+						t_reg_string,
+						0, KEY_READ, &hardware_key);
+	if (hardware_result != ERROR_SUCCESS) return;
+
+	// Start checking each peice of USB hardware
+	for (hardware = 0; hardware_result == ERROR_SUCCESS; hardware++)
+	{
+		name_length = MAX_PATH - hardware_key_pos;
+		// get hardware key name
+		hardware_result = RegEnumKeyEx(hardware_key, hardware,
+								reg_string + hardware_key_pos,
+								&name_length, NULL, NULL, NULL, NULL);
+		if (hardware_result == ERROR_SUCCESS)
+		{
+			strcat(reg_string, "\\");
+			key_pos = strlen(reg_string);
+			// open hardware key
+			lstrcpy (t_reg_string, reg_string);
+			hardware_result = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
+											t_reg_string,
+											0, KEY_READ, &reg_key);
+			if (hardware_result == ERROR_SUCCESS)
+			{
+				// We now have to enumerate the keys in Hardware key.  You may have
+				// more then one of the same device.
+				instance_result = ERROR_SUCCESS;
+				for (instance = 0; instance_result == ERROR_SUCCESS; instance++)
+				{
+					name_length = MAX_PATH - key_pos;
+					// get sub key name
+					instance_result = RegEnumKeyEx(reg_key, instance,
+											reg_string + key_pos,
+											&name_length, NULL, NULL, NULL, NULL);
+					if (instance_result == ERROR_SUCCESS)
+					{
+						// open sub_key
+						lstrcpy (t_reg_string, reg_string);
+						instance_result = RegOpenKeyEx(HKEY_LOCAL_MACHINE,
+												t_reg_string,
+												0, KEY_READ, &sub_key);
+						if (instance_result == ERROR_SUCCESS)
+						{
+							// get the ParentIdPrefix of this instance of the hardware
+							name_length = MAX_PATH;
+							if (RegQueryValueEx(sub_key,
+													"ParentIdPrefix",
+													NULL, NULL,
+													test_parent_id_prefix,
+													&name_length) == ERROR_SUCCESS)
+							{
+								// is this the ParentIdPrefix that we are looking for?
+								if (!strncmp(test_parent_id_prefix, parent_id_prefix, strlen(test_parent_id_prefix)))
+									break;
+							} // keep looking
+							RegCloseKey(sub_key);
+						} // next - can't open sub-key
+					} // next - can't enumerate or we are out of instances of the hardware
+				} // check next hardware instance
+				RegCloseKey(reg_key);
+				if (instance_result == ERROR_SUCCESS) break;
+			} // done - can't open Hardware key
+		} // done - can't enumerate or we are out of USB devices
+	} // check next USB instance
+
+	RegCloseKey(hardware_key);
+
+	if (instance_result == ERROR_SUCCESS)
+	{
+		// We should now be at the USB parent device.  Get the real mouse name.
+		name_length = MAX_PATH;
+		instance_result = RegQueryValueEx(sub_key,
+								"LocationInformation",
+								NULL, NULL,
+								mouse_name[mouse_num],
+								&name_length);
+		RegCloseKey(sub_key);
+		RegCloseKey(reg_key);
+	}
+
+	return;
+}
+
+
+
+//============================================================
 //  is_rm_rdp_mouse
 //============================================================
 // returns TRUE if it is a remote desktop mouse
@@ -2456,23 +2679,7 @@ void stop_led(void)
 
 static BOOL is_rm_rdp_mouse(const char *device_string)
 {
-	const char *rdp_string = "\\??\\Root#RDP_MOU#0000#";
-	int i;
-
-	if (strlen(device_string) < 22)
-	{
-		return 0;
-	}
-
-	for (i = 0; i < 22; i++)
-	{
-		if (rdp_string[i] != device_string[i])
-		{
-			return 0;
-		}
-	}
-
-	return 1;
+	return !(strncmp(device_string, "\\??\\Root#RDP_MOU#0000#", 22));
 }
 
 
@@ -2495,7 +2702,7 @@ static BOOL register_raw_mouse(void)
 
 	// Register to receive the WM_INPUT message for any change in mouse
 	// (buttons, wheel, and movement will all generate the same message)
-	return (/* RegisterRawInputDevices*/ (*_RegisterRawInputDevices)(rid, 1, sizeof (rid[0])));
+	return ((*_RegisterRawInputDevices)(rid, 1, sizeof (rid[0])));
 }
 
 
@@ -2508,16 +2715,9 @@ static BOOL register_raw_mouse(void)
 static BOOL init_raw_mouse(void)
 {
 	PRAWINPUTDEVICELIST raw_input_device_list;
-//  static BOOL bHasBeenInitialized = 0;
 	char *ps_name = NULL;
 	HMODULE user32;
 	int input_devices, size, i;
-
-//  if (bHasBeenInitialized)
-//      return 1;
-
-	/* For now we will not use raw support for lightguns */
-	if (use_lightgun) goto dont_use_raw_input;
 
 	/* Check to see if OS is raw input capable */
 	user32 = LoadLibrary("user32.dll");
@@ -2532,7 +2732,7 @@ static BOOL init_raw_mouse(void)
 	if (!_GetRawInputData) goto cant_use_raw_input;
 
 	// 1st call to GetRawInputDeviceList: Pass NULL to get the number of devices.
-	if (/* GetRawInputDeviceList */ (*_GetRawInputDeviceList)(NULL, &input_devices, sizeof(RAWINPUTDEVICELIST)) != 0)
+	if ((*_GetRawInputDeviceList)(NULL, &input_devices, sizeof(RAWINPUTDEVICELIST)) != 0)
 		goto cant_use_raw_input;
 
 	// Allocate the array to hold the DeviceList
@@ -2540,18 +2740,21 @@ static BOOL init_raw_mouse(void)
 		goto cant_use_raw_input;
 
 	// 2nd call to GetRawInputDeviceList: Pass the pointer to our DeviceList and GetRawInputDeviceList() will fill the array
-	if (/* GetRawInputDeviceList */ (*_GetRawInputDeviceList)(raw_input_device_list, &input_devices, sizeof(RAWINPUTDEVICELIST)) == -1)
+	if ((*_GetRawInputDeviceList)(raw_input_device_list, &input_devices, sizeof(RAWINPUTDEVICELIST)) == -1)
 		goto cant_create_raw_input;
 
-	// Loop through all devices and setup the mice
-	for (i = 0; (i < input_devices) && (mouse_count < MAX_MICE); i++)
+	// Loop through all devices and setup the mice.
+	// RAWMOUSE reports the list last mouse to first,
+	//  so we will read from the end of the list first.
+	// Otherwise every new mouse plugged in becomes mouse 1.
+	for (i = input_devices - 1; (i >= 0) && (mouse_count < MAX_MICE); i--)
 	{
 		if (raw_input_device_list[i].dwType == RIM_TYPEMOUSE)
 		{
 			/* Get the device name and use it to determine if it's the RDP Terminal Services virtual device. */
 
 			// 1st call to GetRawInputDeviceInfo: Pass NULL to get the size of the device name
-			if (/* GetRawInputDeviceInfo */ (*_GetRawInputDeviceInfoA)(raw_input_device_list[i].hDevice, RIDI_DEVICENAME, NULL, &size) != 0)
+			if ((*_GetRawInputDeviceInfoA)(raw_input_device_list[i].hDevice, RIDI_DEVICENAME, NULL, &size) != 0)
 				goto cant_create_raw_input;
 
 			// Allocate the array to hold the name
@@ -2559,13 +2762,14 @@ static BOOL init_raw_mouse(void)
 				goto cant_create_raw_input;
 
 			// 2nd call to GetRawInputDeviceInfo: Pass our pointer to get the device name
-			if ((int)/* GetRawInputDeviceInfo */ (*_GetRawInputDeviceInfoA)(raw_input_device_list[i].hDevice, RIDI_DEVICENAME, ps_name, &size) < 0)
+			if ((int)(*_GetRawInputDeviceInfoA)(raw_input_device_list[i].hDevice, RIDI_DEVICENAME, ps_name, &size) < 0)
 				goto cant_create_raw_input;
 
 			// Use this mouse if it's not an RDP mouse
 			if (!is_rm_rdp_mouse(ps_name))
 			{
 				raw_mouse_device[mouse_count].device_handle = raw_input_device_list[i].hDevice;
+				set_rawmouse_device_name(ps_name, mouse_count);
 				mouse_count++;
 			}
 
@@ -2587,8 +2791,19 @@ static BOOL init_raw_mouse(void)
 		goto cant_init_raw_input;
 
 	if (verbose)
-		fprintf(stderr, "Using RAWMOUSE for input\n");
-//  bHasBeenInitialized = 1;
+		fprintf(stderr, "Using RAWMOUSE for Mouse input\n");
+
+	// override lightgun settings.  Not needed with RAWinput.
+	use_lightgun = 0;
+	use_lightgun_dual = 0;
+	// There is no way to know if a mouse is a lightgun or mouse at init.
+	// Treat every mouse as a possible lightgun.
+	// When the data is received from the device,
+	//   it will update the mouse data if relative,
+	//   else it will update the lightgun data if absolute.
+	// The only way I can think of to tell if a mouse is a lightgun is to
+	//  use the device id.  And keep a list of known lightguns.
+	lightgun_count = mouse_count;
 	return 1;
 
 cant_create_raw_input:
@@ -2672,14 +2887,14 @@ BOOL win_raw_mouse_update(HANDLE in_device_handle)
 	LPBYTE data;
 	int size;
 
-	if (/* GetRawInputData */(*_GetRawInputData)((HRAWINPUT)in_device_handle, RID_INPUT, NULL, &size, sizeof(RAWINPUTHEADER)) == -1)
+	if ((*_GetRawInputData)((HRAWINPUT)in_device_handle, RID_INPUT, NULL, &size, sizeof(RAWINPUTHEADER)) == -1)
 		goto cant_find_raw_data;
 
 	data = (LPBYTE)malloc(sizeof(LPBYTE) * size);
 	if (data == NULL)
 		goto cant_find_raw_data;
 
-	if (/* GetRawInputData */(*_GetRawInputData)((HRAWINPUT)in_device_handle, RID_INPUT, data, &size, sizeof(RAWINPUTHEADER)) != size )
+	if ((*_GetRawInputData)((HRAWINPUT)in_device_handle, RID_INPUT, data, &size, sizeof(RAWINPUTHEADER)) != size )
 		goto cant_read_raw_data;
 
 	process_raw_input((RAWINPUT*)data);
@@ -2704,11 +2919,24 @@ static void win_read_raw_mouse(void)
 {
 	int i;
 
-	for ( i=0; i < mouse_count; i++)
+	for ( i = 0; i < mouse_count; i++)
 	{
 		mouse_state[i] = raw_mouse_device[i].mouse_state;
-		raw_mouse_device[i].mouse_state.lX = 0;
-		raw_mouse_device[i].mouse_state.lY = 0;
-		raw_mouse_device[i].mouse_state.lZ = 0;
+
+		// set X,Y to MIN values if offscreen reload is used and fire
+		if (use_lightgun_reload && mouse_state[i].rgbButtons[1] & 0x80)
+		{
+			mouse_state[i].lX = ANALOG_VALUE_MIN;
+			mouse_state[i].lY = ANALOG_VALUE_MIN;
+			mouse_state[i].rgbButtons[0] = 0x80;
+		}
+
+		// do not clear if absolute
+		if (raw_mouse_device[i].flags == MOUSE_MOVE_RELATIVE)
+		{
+			raw_mouse_device[i].mouse_state.lX = 0;
+			raw_mouse_device[i].mouse_state.lY = 0;
+			raw_mouse_device[i].mouse_state.lZ = 0;
+		}
 	}
 }

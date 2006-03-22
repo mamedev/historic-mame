@@ -8,7 +8,6 @@
 #include "driver.h"
 #include "cpu/tms34010/tms34010.h"
 #include "cpu/tms34010/34010ops.h"
-#include "palette.h"
 
 
 extern UINT16 *micro3d_sprite_vram;

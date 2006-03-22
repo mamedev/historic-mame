@@ -67,7 +67,7 @@ static WRITE8_HANDLER( spy_bankedram1_w )
 {
 	if (rambank & 1)
 	{
-		paletteram_xBBBBBGGGGGRRRRR_swap_w(offset,data);
+		paletteram_xBBBBBGGGGGRRRRR_be_w(offset,data);
 	}
 	else if (rambank & 2)
 	{

@@ -28,6 +28,9 @@
 #define PAGE_SIZE		4096
 #define COOKIE_VAL		0x11335577
 
+// set this to 0 to not use guard pages
+#define USE_GUARD_PAGES	1
+
 // set this to 1 to align memory blocks to the start of a page;
 // otherwise, they are aligned to the end, thus catching array
 // overruns
@@ -151,25 +154,31 @@ void *malloc_file_line(size_t size, const char *file, int line)
 	size_t rounded_size;
 	memory_entry *entry;
 
-	// round the size up to a page boundary
-	rounded_size = ((size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
+	if (USE_GUARD_PAGES)
+	{
+		// round the size up to a page boundary
+		rounded_size = ((size + PAGE_SIZE - 1) / PAGE_SIZE) * PAGE_SIZE;
 
-	// reserve that much memory, plus two guard pages
-	page_base = VirtualAlloc(NULL, rounded_size + 2 * PAGE_SIZE, MEM_RESERVE, PAGE_NOACCESS);
-	if (page_base == NULL)
-		return NULL;
+		// reserve that much memory, plus two guard pages
+		page_base = VirtualAlloc(NULL, rounded_size + 2 * PAGE_SIZE, MEM_RESERVE, PAGE_NOACCESS);
+		if (page_base == NULL)
+			return NULL;
 
-	// now allow access to everything but the first and last pages
-	page_base = VirtualAlloc(page_base + PAGE_SIZE, rounded_size, MEM_COMMIT, PAGE_READWRITE);
-	if (page_base == NULL)
-		return NULL;
+		// now allow access to everything but the first and last pages
+		page_base = VirtualAlloc(page_base + PAGE_SIZE, rounded_size, MEM_COMMIT, PAGE_READWRITE);
+		if (page_base == NULL)
+			return NULL;
 
-	// work backwards from the page base to get to the block base
-#if ALIGN_START
-	block_base = page_base;
-#else
-	block_base = page_base + rounded_size - size;
-#endif
+		// work backwards from the page base to get to the block base
+		if (ALIGN_START)
+			block_base = page_base;
+		else
+			block_base = page_base + rounded_size - size;
+	}
+	else
+	{
+		block_base = (UINT8 *)GlobalAlloc(GMEM_FIXED, size);
+	}
 
 	// fill in the entry
 	entry = allocate_entry();
@@ -271,7 +280,11 @@ void CLIB_DECL free(void *memory)
 	free_entry(entry);
 
 	// free the memory
-	VirtualFree((UINT8 *)memory - ((UINT32)memory & (PAGE_SIZE-1)) - PAGE_SIZE, 0, MEM_RELEASE);
+	if (USE_GUARD_PAGES)
+		VirtualFree((UINT8 *)memory - ((UINT32)memory & (PAGE_SIZE-1)) - PAGE_SIZE, 0, MEM_RELEASE);
+	else
+		GlobalFree(memory);
+
 #if LOG_CALLS
 	logerror("free #%06d size = %d\n", entry->id, entry->size);
 #endif

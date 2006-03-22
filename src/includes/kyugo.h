@@ -4,7 +4,8 @@
 
 ***************************************************************************/
 
-/* defined in machine/kyugo.c */
+/*----------- defined in machine/kyugo.c -----------*/
+
 extern UINT8 *kyugo_sharedram;
 
 MACHINE_RESET( kyugo );
@@ -14,7 +15,8 @@ READ8_HANDLER( kyugo_sharedram_r );
 WRITE8_HANDLER( kyugo_sharedram_w );
 WRITE8_HANDLER( kyugo_sub_cpu_control_w );
 
-/* defined in vidhrdw/kyugo.c */
+/*----------- defined in vidhrdw/kyugo.c -----------*/
+
 extern UINT8 *kyugo_fgvideoram;
 extern UINT8 *kyugo_bgvideoram;
 extern UINT8 *kyugo_bgattribram;

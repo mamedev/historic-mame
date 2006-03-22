@@ -76,6 +76,7 @@ struct _ui_menu_item
    const char *text;
    const char *subtext;
    UINT32 flags;
+   void *ref;
 };
 
 

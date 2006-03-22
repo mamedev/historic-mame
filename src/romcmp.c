@@ -9,9 +9,6 @@
 
 ***************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "unzip.h"
 #include "osdepend.h"	/* for CLIB_DECL */
 #include "fileio.h"

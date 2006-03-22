@@ -61,7 +61,6 @@ CD: End data transfer (PC=4232)
 #endif
 #include "cdrom.h"
 #include "stvcd.h"
-#include <stdio.h>
 
 static cdrom_file *cdrom = (cdrom_file *)NULL;
 

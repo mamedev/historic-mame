@@ -94,8 +94,6 @@ E000-FFFF  | R | D D D D D D D D | 8K ROM
 #include "vidhrdw/bfm_adr2.h"
 #include "bfm_sc2.h"
 
-extern int Scorpion2_GetSwitchState(int strobe, int data);
-
 int adder2_show_alpha_display;	  // flag, set if alpha display need to be displayed
 
 //#define LOG_CTRL // show UART information

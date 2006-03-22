@@ -20,7 +20,7 @@
 
 #include <ctype.h>
 
-#include "memory.h"
+#include "cpuintrf.h"
 
 typedef unsigned char byte;
 
@@ -41,7 +41,7 @@ static const char *Formats[] = {
 	FMT("10011001dddddddd", "anl  p1,#$%X"),
 	FMT("10011010dddddddd", "anl  p2,#$%X"),
 	FMT("100111pp", "anld %P,a"),
-	FMT("aaa10100aaaaaaaa", "call %A"),
+	FMT("aaa10100aaaaaaaa", "!call %A"),
 	FMT("00100111", "clr  a"),
 	FMT("10010111", "clr  c"),
 	FMT("10100101", "clr  f1"),
@@ -55,7 +55,7 @@ static const char *Formats[] = {
 	FMT("11001rrr", "dec  %R"),
 	FMT("00010101", "dis  i"),
 	FMT("00110101", "dis  tcnti"),
-	FMT("11101rrraaaaaaaa", "djnz %R,%J"),
+	FMT("11101rrraaaaaaaa", "!djnz %R,%J"),
 	FMT("00000101", "en   i"),
 	FMT("00100101", "en   tcnti"),
 	FMT("01110101", "ent0 clk"),
@@ -106,8 +106,8 @@ static const char *Formats[] = {
 	FMT("1000 11pp", "orld %P,a"),
 	FMT("00000010", "outl bus,a"),
 	FMT("001110pp", "outl %P,a"),
-	FMT("10000011", "ret"),
-	FMT("10010011", "retr"),
+	FMT("10000011", "^ret"),
+	FMT("10010011", "^retr"),
 	FMT("11100111", "rl   a"),
 	FMT("11110111", "rlc  a"),
 	FMT("01110111", "rr   a"),
@@ -138,6 +138,7 @@ typedef struct opcode {
 	char extcode;	/* value that gets extension code */
 	const char *parse;	/* how to parse bits */
 	const char *fmt;	/* instruction format */
+	unsigned long flags;
 } M48Opcode;
 
 static M48Opcode Op[MAX_OPS+1];
@@ -152,6 +153,7 @@ static void InitDasm8039(void)
 
 	ops = Formats; i = 0;
 	while (*ops) {
+	unsigned long flags = 0;
 	p = *ops;
 	mask = 0; bits = 0; bit = 7;
 	while (*p && bit >= 0) {
@@ -179,6 +181,18 @@ static void InitDasm8039(void)
 	Op[i].fmt = ops[1];
 	Op[i].parse = ops[0];
 
+	if (Op[i].fmt[0] == '!')
+	{
+		flags |= DASMFLAG_STEP_OVER;
+		Op[i].fmt++;
+	}
+	if (Op[i].fmt[0] == '^')
+	{
+		flags |= DASMFLAG_STEP_OUT;
+		Op[i].fmt++;
+	}
+	Op[i].flags = flags;
+
 	ops += PTRS_PER_FORMAT;
 	i++;
 	}
@@ -186,7 +200,7 @@ static void InitDasm8039(void)
 	OpInizialized = 1;
 }
 
-int Dasm8039(char *buffer, unsigned pc)
+unsigned Dasm8039(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
 {
 	int b, a, d, r, p;	/* these can all be filled in by parsing an instruction */
 	int i;
@@ -197,7 +211,7 @@ int Dasm8039(char *buffer, unsigned pc)
 
 	if (!OpInizialized) InitDasm8039();
 
-	code = cpu_readop(pc);
+	code = oprom[0];
 	op = -1;	/* no matching opcode */
 	for ( i = 0; i < MAX_OPS; i++)
 	{
@@ -222,7 +236,7 @@ int Dasm8039(char *buffer, unsigned pc)
 	{
 		cnt++;
 		code <<= 8;
-		code |= cpu_readop_arg((pc+1)&0xffff);
+		code |= opram[1];
 		bit = 15;
 	}
 	else
@@ -282,5 +296,5 @@ int Dasm8039(char *buffer, unsigned pc)
 		}
 	}
 
-	return cnt;
+	return cnt | Op[op].flags | DASMFLAG_SUPPORTED;
 }

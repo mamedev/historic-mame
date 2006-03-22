@@ -20,7 +20,6 @@
 #define VERBOSE 0
 
 #if VERBOSE
-#include <stdio.h>
 #define LOG(x) logerror x
 #else
 #define LOG(x)

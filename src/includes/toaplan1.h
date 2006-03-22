@@ -4,7 +4,8 @@
 ****************************************************************************/
 
 
-/************* Machine stuff ****** machine/toaplan1.c *************/
+/*----------- defined in machine/toaplan1.c -----------*/
+
 INTERRUPT_GEN( toaplan1_interrupt );
 WRITE16_HANDLER( toaplan1_intenable_w );
 READ16_HANDLER ( toaplan1_shared_r );
@@ -41,7 +42,7 @@ extern UINT8 *toaplan1_sharedram;
 
 
 
-/************* Video stuff ****** vidhrdw/toaplan1.c *************/
+/*----------- defined in vidhrdw/toaplan1.c -----------*/
 
 READ16_HANDLER ( toaplan1_frame_done_r );
 WRITE16_HANDLER( toaplan1_bcu_control_w );

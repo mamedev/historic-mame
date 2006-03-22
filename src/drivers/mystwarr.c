@@ -432,7 +432,7 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x49e000, 0x49e007) AM_WRITE(irq_ack_w)	// VSCCS (custom)
 	AM_RANGE(0x600000, 0x601fff) AM_WRITE(K056832_ram_word_w)
 	AM_RANGE(0x602000, 0x603fff) AM_WRITE(K056832_ram_word_w)	// tilemap RAM mirror write(essential)
-	AM_RANGE(0x700000, 0x701fff) AM_WRITE(paletteram16_xrgb_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x700000, 0x701fff) AM_WRITE(paletteram16_xrgb_word_be_w) AM_BASE(&paletteram16)
 ADDRESS_MAP_END
 
 /* Metamorphic Force */
@@ -487,7 +487,7 @@ static ADDRESS_MAP_START( mmwritemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x27C000, 0x27C001) AM_WRITE(mmeeprom_w)
 	AM_RANGE(0x300000, 0x301fff) AM_WRITE(K056832_ram_word_w)
 	AM_RANGE(0x302000, 0x303fff) AM_WRITE(K056832_ram_word_w)	// tilemap RAM mirror write(essential)
-	AM_RANGE(0x330000, 0x331fff) AM_WRITE(paletteram16_xrgb_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x330000, 0x331fff) AM_WRITE(paletteram16_xrgb_word_be_w) AM_BASE(&paletteram16)
 ADDRESS_MAP_END
 
 /* Violent Storm */
@@ -545,7 +545,7 @@ static ADDRESS_MAP_START( vswritemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x300000, 0x301fff) AM_WRITE(K056832_ram_word_w)
 	AM_RANGE(0x302000, 0x303fff) AM_WRITE(K056832_ram_word_w) // tilemap RAM mirror write(essential)
 	AM_RANGE(0x304000, 0x3041ff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x330000, 0x331fff) AM_WRITE(paletteram16_xrgb_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x330000, 0x331fff) AM_WRITE(paletteram16_xrgb_word_be_w) AM_BASE(&paletteram16)
 ADDRESS_MAP_END
 
 // Martial Champion specific interfaces
@@ -644,7 +644,7 @@ static ADDRESS_MAP_START( mcwritemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x418000, 0x41801f) AM_WRITE(MWA16_RAM)			// sound regs fall through
 	AM_RANGE(0x41a000, 0x41a001) AM_WRITE(sound_irq_w)
 	AM_RANGE(0x480000, 0x483fff) AM_WRITE(K053247_martchmp_word_w) AM_BASE(&spriteram16)
-	AM_RANGE(0x600000, 0x601fff) AM_WRITE(paletteram16_xrgb_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x600000, 0x601fff) AM_WRITE(paletteram16_xrgb_word_be_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x680000, 0x681fff) AM_WRITE(K056832_ram_word_w)
 	AM_RANGE(0x682000, 0x683fff) AM_WRITE(K056832_ram_word_w)	// tilemap RAM mirror write(essential)
 ADDRESS_MAP_END
@@ -683,7 +683,7 @@ static ADDRESS_MAP_START( dddwritemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x400000, 0x40ffff) AM_WRITE(K053247_scattered_word_w) AM_BASE(&spriteram16)
 	AM_RANGE(0x410000, 0x411fff) AM_WRITE(K056832_ram_word_w)
 	AM_RANGE(0x412000, 0x413fff) AM_WRITE(K056832_ram_word_w)	// tile RAM mirror write(essential)
-	AM_RANGE(0x420000, 0x421fff) AM_WRITE(paletteram16_xrgb_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x420000, 0x421fff) AM_WRITE(paletteram16_xrgb_word_be_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x430000, 0x430007) AM_WRITE(K053246_word_w)
 	AM_RANGE(0x450010, 0x45001f) AM_WRITE(K053247_reg_word_w)
 	AM_RANGE(0x460000, 0x46001f) AM_WRITE(MWA16_RAM) AM_BASE(&K053936_0_ctrl)
@@ -743,7 +743,7 @@ static ADDRESS_MAP_START( gaiawritemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x410000, 0x411fff) AM_WRITE(K056832_ram_word_w)
 	AM_RANGE(0x412000, 0x413fff) AM_WRITE(K056832_ram_word_w)	// tilemap RAM mirror write(essential)
 	AM_RANGE(0x412000, 0x4120ff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x420000, 0x421fff) AM_WRITE(paletteram16_xrgb_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x420000, 0x421fff) AM_WRITE(paletteram16_xrgb_word_be_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x430000, 0x430007) AM_WRITE(K053246_word_w)
 	AM_RANGE(0x450010, 0x45001f) AM_WRITE(K053247_reg_word_w)
 	AM_RANGE(0x460000, 0x46001f) AM_WRITE(MWA16_RAM) AM_BASE(&K053936_0_ctrl)

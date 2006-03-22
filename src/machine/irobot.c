@@ -6,7 +6,6 @@
 
 #include "driver.h"
 #include "profiler.h"
-#include "cpuintrf.h"
 #include "cpu/m6809/m6809.h"
 #include "irobot.h"
 

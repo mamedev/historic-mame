@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "state.h"
 
 static UINT8 background_image;
 

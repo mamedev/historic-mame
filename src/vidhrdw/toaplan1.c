@@ -120,8 +120,6 @@ Abnormalities:
 
 #include "driver.h"
 #include "toaplan1.h"
-#include "tilemap.h"
-#include "palette.h"
 #include "cpu/m68000/m68000.h"
 
 

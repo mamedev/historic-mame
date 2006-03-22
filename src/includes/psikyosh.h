@@ -1,9 +1,11 @@
-/* defined in drivers/psikyosh.c */
+/*----------- defined in drivers/psikyosh.c -----------*/
+
 #define MASTER_CLOCK 57272700	// main oscillator frequency
 
 extern UINT32 *psikyosh_bgram, *psikyosh_zoomram, *psikyosh_vidregs, *psh_ram;
 
-/* defined in vidhrdw/psiykosh.c */
+/*----------- defined in vidhrdw/psiykosh.c -----------*/
+
 VIDEO_START( psikyosh );
 VIDEO_UPDATE( psikyosh );
 VIDEO_EOF( psikyosh );

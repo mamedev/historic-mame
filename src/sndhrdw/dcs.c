@@ -1613,7 +1613,7 @@ static void update_timer_count(void)
 
 static void internal_timer_callback(int param)
 {
-	UINT64 target_cycles;
+	INT64 target_cycles;
 
 	/* compute the absolute cycle when the next one should fire */
 	/* we do this to avoid drifting */

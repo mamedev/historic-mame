@@ -441,6 +441,7 @@ const game_driver *drivers[] =
 
 	DRIVER( msjiken )	/* (c) 1988 */
 	DRIVER( hanamomo )	/* (c) 1988 */
+	DRIVER( hanamomb )	/* (c) 1988 */
 	DRIVER( telmahjn )	/* (c) 1988 */
 	DRIVER( taiwanmb )	/* (c) 1988 */
 	DRIVER( gionbana )	/* (c) 1989 */
@@ -4036,6 +4037,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( rocnropk )	/* GX364 (c) 1983 + Kosuka */
 	DRIVER( circusc )	/* GX380 (c) 1984 */
 	DRIVER( circusc2 )	/* GX380 (c) 1984 */
+	DRIVER( circusc3 )	/* GX380 (c) 1984 */
 	DRIVER( circuscc )	/* GX380 (c) 1984 + Centuri license */
 	DRIVER( circusce )	/* GX380 (c) 1984 + Centuri license */
 	DRIVER( tp84 )		/* GX388 (c) 1984 */
@@ -6735,6 +6737,7 @@ Other Sun games
 	DRIVER( mosaica )	/* (c) 1990 Space + Fuuki license */
 	DRIVER( gfire2 )	/* (c) 1992 Topis Corp */
 	DRIVER( tx1 )		/* (c) 1983 Tatsumi */
+	DRIVER( tx1a )		/* (c) 1983 Tatsumi */
 	DRIVER( buggyboy )	/* (c) 1985 Tatsumi */
 	DRIVER( buggyb1 )	/* (c) 1985 Tatsumi */
 	DRIVER( sprcros2 )	/* (c) 1986 GM Shoji */

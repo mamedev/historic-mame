@@ -1,10 +1,10 @@
 #include "sound/custom.h"
 
-/* defined in drivers/astrocde.c */
+/*----------- defined in drivers/astrocde.c -----------*/
 
 void astrocade_state_save_register_main(void);
 
-/* defined in machine/astrocde.c */
+/*----------- defined in machine/astrocde.c -----------*/
 
 extern UINT8 *wow_protected_ram;
 
@@ -36,7 +36,7 @@ WRITE8_HANDLER( profpac_nvram_w );
 MACHINE_START( astrocde );
 MACHINE_START( profpac );
 
-/* defined in vidrhdw/astrocde.c */
+/*----------- defined in vidrhdw/astrocde.c -----------*/
 
 extern UINT8 *wow_videoram;
 extern read8_handler astrocde_videoram_r;
@@ -73,7 +73,7 @@ VIDEO_START( profpac );
 READ8_HANDLER( profpac_io_1_r );
 READ8_HANDLER( profpac_io_2_r );
 
-/* defined in sndhrdw/wow.c */
+/*----------- defined in sndhrdw/wow.c -----------*/
 
 extern const char *wow_sample_names[];
 
@@ -81,7 +81,7 @@ READ8_HANDLER( wow_speech_r );
 READ8_HANDLER( wow_port_2_r );
 READ8_HANDLER( wow_io_r );
 
-/* defined in sndhrdw/gorf.c */
+/*----------- defined in sndhrdw/gorf.c -----------*/
 
 extern const char *gorf_sample_names[];
 

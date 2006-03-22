@@ -128,7 +128,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x8000, 0x87ff) AM_WRITE(paletteram_xxxxRRRRGGGGBBBB_w) AM_BASE(&paletteram)	/* RAM COLOUR */
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(paletteram_xxxxRRRRGGGGBBBB_le_w) AM_BASE(&paletteram)	/* RAM COLOUR */
 	AM_RANGE(0x8800, 0x8fff) AM_WRITE(speedspn_attram_w) AM_BASE(&speedspn_attram)
 	AM_RANGE(0x9000, 0x9fff) AM_WRITE(speedspn_vidram_w)	/* RAM FIX / RAM OBJECTS (selected by bit 0 of port 17) */
 	AM_RANGE(0xa000, 0xa7ff) AM_WRITE(MWA8_RAM)

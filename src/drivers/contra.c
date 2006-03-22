@@ -87,7 +87,7 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x001c, 0x001c) AM_WRITE(cpu_sound_command_w)
 	AM_RANGE(0x001e, 0x001e) AM_WRITE(MWA8_NOP)	/* ? */
 	AM_RANGE(0x0060, 0x0067) AM_WRITE(contra_K007121_ctrl_1_w)
-	AM_RANGE(0x0c00, 0x0cff) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_w) AM_BASE(&paletteram)
+	AM_RANGE(0x0c00, 0x0cff) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_le_w) AM_BASE(&paletteram)
 	AM_RANGE(0x1000, 0x1fff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x2000, 0x23ff) AM_WRITE(contra_fg_cram_w) AM_BASE(&contra_fg_cram)
 	AM_RANGE(0x2400, 0x27ff) AM_WRITE(contra_fg_vram_w) AM_BASE(&contra_fg_vram)

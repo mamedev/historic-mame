@@ -17,7 +17,6 @@ DRVLIBS = \
 	$(OBJ)/sndhrdw/wow.o $(OBJ)/sndhrdw/gorf.o $(OBJ)/drivers/astrocde.o \
 	$(OBJ)/vidhrdw/gridlee.o $(OBJ)/sndhrdw/gridlee.o $(OBJ)/drivers/gridlee.o \
 	$(OBJ)/vidhrdw/polyplay.o $(OBJ)/sndhrdw/polyplay.o $(OBJ)/drivers/polyplay.o \
-	$(OBJ)/machine/random.o \
 
 # MAME specific core objs
 COREOBJS += $(OBJ)/tiny.o $(OBJ)/cheat.o

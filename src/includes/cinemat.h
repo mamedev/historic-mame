@@ -5,7 +5,7 @@
 *************************************************************************/
 
 
-/*----------- defined in driver/cinemat.c -----------*/
+/*----------- defined in drivers/cinemat.c -----------*/
 
 MACHINE_RESET( cinemat );
 

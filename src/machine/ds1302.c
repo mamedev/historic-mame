@@ -1,6 +1,7 @@
 #include "driver.h"
 #include "ds1302.h"
-#include "time.h"
+#include <time.h>
+
 /********************
     DALLAS
     DS1302

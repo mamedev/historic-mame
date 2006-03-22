@@ -1172,8 +1172,8 @@ static void mdec_yuv2_to_rgb15( void )
 		n_stp = 0x0000;
 	}
 
-	p_n_cb = &m_p_n_mdec_unpacked[ 0 ];
-	p_n_cr = &m_p_n_mdec_unpacked[ DCTSIZE2 ];
+	p_n_cr = &m_p_n_mdec_unpacked[ 0 ];
+	p_n_cb = &m_p_n_mdec_unpacked[ DCTSIZE2 ];
 	p_n_y = &m_p_n_mdec_unpacked[ DCTSIZE2 * 2 ];
 
 	for( n_z = 0; n_z < 2; n_z++ )
@@ -1252,8 +1252,8 @@ static void mdec_yuv2_to_rgb24( void )
 		n_stp = 0x00000000;
 	}
 
-	p_n_cb = &m_p_n_mdec_unpacked[ 0 ];
-	p_n_cr = &m_p_n_mdec_unpacked[ DCTSIZE2 ];
+	p_n_cr = &m_p_n_mdec_unpacked[ 0 ];
+	p_n_cb = &m_p_n_mdec_unpacked[ DCTSIZE2 ];
 	p_n_y = &m_p_n_mdec_unpacked[ DCTSIZE2 * 2 ];
 
 	for( n_z = 0; n_z < 2; n_z++ )
@@ -1545,16 +1545,16 @@ void psx_driver_init( void )
 		m_p_n_mdec_clamp8[ n + 512 ] = 255;
 
 		m_p_n_mdec_r5[ n ] = 0;
-		m_p_n_mdec_r5[ n + 256 ] = ( n >> 3 ) << 10;
-		m_p_n_mdec_r5[ n + 512 ] = ( 255 >> 3 ) << 10;
+		m_p_n_mdec_r5[ n + 256 ] = ( n >> 3 );
+		m_p_n_mdec_r5[ n + 512 ] = ( 255 >> 3 );
 
 		m_p_n_mdec_g5[ n ] = 0;
 		m_p_n_mdec_g5[ n + 256 ] = ( n >> 3 ) << 5;
 		m_p_n_mdec_g5[ n + 512 ] = ( 255 >> 3 ) << 5;
 
 		m_p_n_mdec_b5[ n ] = 0;
-		m_p_n_mdec_b5[ n + 256 ] = ( n >> 3 );
-		m_p_n_mdec_b5[ n + 512 ] = ( 255 >> 3 );
+		m_p_n_mdec_b5[ n + 256 ] = ( n >> 3 ) << 10;
+		m_p_n_mdec_b5[ n + 512 ] = ( 255 >> 3 ) << 10;
 	}
 
 	for( n = 0; n < 2; n++ )

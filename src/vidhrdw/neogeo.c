@@ -50,7 +50,6 @@ Notes:
 ***************************************************************************/
 
 #include "driver.h"
-#include "usrintrf.h"
 #include "neogeo.h"
 
 static UINT16 *neogeo_vidram16;

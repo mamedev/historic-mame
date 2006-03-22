@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "tilemap.h"
 
 UINT16 *splash_vregs;
 UINT16 *splash_videoram;

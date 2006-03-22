@@ -6,14 +6,14 @@
 
 ****************************************************************************/
 
-/* defined in machine/clayshoo.c */
+/*----------- defined in machine/clayshoo.c -----------*/
 
 MACHINE_RESET( clayshoo );
 WRITE8_HANDLER( clayshoo_analog_reset_w );
 READ8_HANDLER( clayshoo_analog_r );
 
 
-/* defined in vidhrdw/clayshoo.c */
+/*----------- defined in vidhrdw/clayshoo.c -----------*/
 
 PALETTE_INIT( clayshoo );
 WRITE8_HANDLER( clayshoo_videoram_w );

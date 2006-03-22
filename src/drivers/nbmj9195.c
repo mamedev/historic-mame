@@ -203,7 +203,7 @@ static int tmpz84c011_pio_r(int offset)
 						portdata = readinputport(7);
 						break;
 					default:
-						portdata = 0xff;
+						portdata = (readinputport(3) & readinputport(4) & readinputport(5) & readinputport(6) & readinputport(7));
 						break;
 				}
 				break;
@@ -227,7 +227,7 @@ static int tmpz84c011_pio_r(int offset)
 						portdata = readinputport(12);
 						break;
 					default:
-						portdata = 0xff;
+						portdata = (readinputport(8) & readinputport(9) & readinputport(10) & readinputport(11) & readinputport(12));
 						break;
 				}
 				break;
@@ -288,7 +288,7 @@ static int tmpz84c011_pio_r(int offset)
 						portdata = ((readinputport(7) & 0x7f) | (nbmj9195_dipsw_r() << 7));
 						break;
 					default:
-						portdata = 0xff;
+						portdata = (readinputport(3) & readinputport(4) & readinputport(5) & readinputport(6) & (readinputport(12) & 0x7f));
 						break;
 				}
 				break;
@@ -312,7 +312,7 @@ static int tmpz84c011_pio_r(int offset)
 						portdata = readinputport(12) & 0x7f;
 						break;
 					default:
-						portdata = 0xff;
+						portdata = (readinputport(8) & readinputport(9) & readinputport(10) & readinputport(11) & (readinputport(12) & 0x7f));
 						break;
 				}
 				break;

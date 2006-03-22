@@ -342,6 +342,7 @@ DRVLIBS = \
 #-------------------------------------------------
 
 $(OBJ)/shared.a: \
+	$(OBJ)/machine/53c810.o \
 	$(OBJ)/machine/6532riot.o \
 	$(OBJ)/machine/6522via.o \
 	$(OBJ)/machine/6821pia.o \
@@ -356,12 +357,16 @@ $(OBJ)/shared.a: \
 	$(OBJ)/machine/8237dma.o \
 	$(OBJ)/machine/8255ppi.o \
 	$(OBJ)/machine/adc083x.o \
-	$(OBJ)/machine/idectrl.o \
+ 	$(OBJ)/machine/am53cf96.o \
+	$(OBJ)/machine/ds2404.o \
+ 	$(OBJ)/machine/idectrl.o \
+ 	$(OBJ)/machine/intelfsh.o \
 	$(OBJ)/machine/mc146818.o \
 	$(OBJ)/machine/nmk112.o \
 	$(OBJ)/machine/pci.o \
 	$(OBJ)/machine/pckeybrd.o \
 	$(OBJ)/machine/pcshare.o \
+	$(OBJ)/machine/pd4990a.o \
 	$(OBJ)/machine/pic8259.o \
 	$(OBJ)/machine/pit8253.o \
 	$(OBJ)/machine/scsicd.o \
@@ -369,6 +374,7 @@ $(OBJ)/shared.a: \
 	$(OBJ)/machine/segacrpt.o \
  	$(OBJ)/machine/smc91c9x.o \
 	$(OBJ)/machine/ticket.o \
+	$(OBJ)/machine/timekpr.o \
 	$(OBJ)/machine/tmp68301.o \
 	$(OBJ)/machine/z80ctc.o \
 	$(OBJ)/machine/z80pio.o \
@@ -770,7 +776,7 @@ $(OBJ)/konami.a: \
 	$(OBJ)/drivers/combatsc.o $(OBJ)/vidhrdw/combatsc.o \
 	$(OBJ)/drivers/contra.o $(OBJ)/vidhrdw/contra.o \
 	$(OBJ)/drivers/crimfght.o $(OBJ)/vidhrdw/crimfght.o \
-	$(OBJ)/drivers/dbz2.o $(OBJ)/vidhrdw/dbz2.o \
+	$(OBJ)/drivers/dbz.o $(OBJ)/vidhrdw/dbz.o \
 	$(OBJ)/drivers/ddrible.o $(OBJ)/vidhrdw/ddrible.o \
 	$(OBJ)/drivers/djmain.o $(OBJ)/vidhrdw/djmain.o \
 	$(OBJ)/drivers/fastfred.o $(OBJ)/vidhrdw/fastfred.o \
@@ -786,14 +792,14 @@ $(OBJ)/konami.a: \
 	$(OBJ)/drivers/gyruss.o $(OBJ)/sndhrdw/gyruss.o $(OBJ)/vidhrdw/gyruss.o \
 	$(OBJ)/drivers/hcastle.o $(OBJ)/vidhrdw/hcastle.o \
 	$(OBJ)/drivers/hexion.o $(OBJ)/vidhrdw/hexion.o \
-	$(OBJ)/drivers/hornet.o $(OBJ)/machine/konppc.o $(OBJ)/machine/timekpr.o \
+	$(OBJ)/drivers/hornet.o $(OBJ)/machine/konppc.o \
 	$(OBJ)/drivers/hyperspt.o $(OBJ)/vidhrdw/hyperspt.o \
 	$(OBJ)/drivers/ironhors.o $(OBJ)/vidhrdw/ironhors.o \
 	$(OBJ)/drivers/jackal.o $(OBJ)/machine/jackal.o $(OBJ)/vidhrdw/jackal.o \
 	$(OBJ)/drivers/jailbrek.o $(OBJ)/vidhrdw/jailbrek.o \
 	$(OBJ)/drivers/junofrst.o \
-	$(OBJ)/drivers/konamigq.o $(OBJ)/machine/am53cf96.o \
-	$(OBJ)/drivers/konamigv.o $(OBJ)/machine/intelfsh.o \
+	$(OBJ)/drivers/konamigq.o \
+	$(OBJ)/drivers/konamigv.o \
 	$(OBJ)/drivers/konamigx.o $(OBJ)/machine/konamigx.o $(OBJ)/vidhrdw/konamigx.o \
 	$(OBJ)/drivers/labyrunr.o $(OBJ)/vidhrdw/labyrunr.o \
 	$(OBJ)/drivers/lethal.o $(OBJ)/vidhrdw/lethal.o \
@@ -930,7 +936,6 @@ $(OBJ)/neogeo.a: \
 	$(OBJ)/machine/neoboot.o \
 	$(OBJ)/machine/neocrypt.o \
 	$(OBJ)/machine/neoprot.o \
-	$(OBJ)/machine/pd4990a.o \
 
 $(OBJ)/nichibut.a: \
 	$(OBJ)/drivers/armedf.o $(OBJ)/vidhrdw/armedf.o \
@@ -1089,7 +1094,6 @@ $(OBJ)/sega.a: \
 	$(OBJ)/drivers/turbo.o $(OBJ)/machine/turbo.o $(OBJ)/sndhrdw/turbo.o $(OBJ)/vidhrdw/turbo.o \
 	$(OBJ)/drivers/vicdual.o $(OBJ)/sndhrdw/vicdual.o $(OBJ)/vidhrdw/vicdual.o \
 	$(OBJ)/drivers/zaxxon.o $(OBJ)/sndhrdw/zaxxon.o $(OBJ)/vidhrdw/zaxxon.o \
-	$(OBJ)/machine/53c810.o \
 	$(OBJ)/machine/fd1089.o \
 	$(OBJ)/machine/fd1094.o \
 	$(OBJ)/machine/mc8123.o \
@@ -1120,7 +1124,6 @@ $(OBJ)/seibu.a: \
 	$(OBJ)/drivers/sengokmj.o $(OBJ)/vidhrdw/sengokmj.o \
 	$(OBJ)/drivers/stfight.o $(OBJ)/machine/stfight.o $(OBJ)/vidhrdw/stfight.o \
 	$(OBJ)/drivers/wiz.o $(OBJ)/vidhrdw/wiz.o \
-	$(OBJ)/machine/ds2404.o \
 	$(OBJ)/machine/spisprit.o \
 	$(OBJ)/sndhrdw/seibu.o \
 

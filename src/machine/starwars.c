@@ -8,7 +8,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "cpuintrf.h"
 #include "starwars.h"
 #include "vidhrdw/avgdvg.h"
 

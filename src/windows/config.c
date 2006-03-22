@@ -420,7 +420,8 @@ int cli_frontend_init (int argc, char **argv)
 	prompt_driver_name = FALSE;
 
 	result = rc_parse_commandline(rc, argc, argv, 2, config_handle_arg);
-	assert_always(result == 0, "Error while parsing cmdline");
+	if (result != 0)
+		exit(1);
 
 	/* determine global configfile name */
 	cmd_name = win_strip_extension(win_basename(argv[0]));

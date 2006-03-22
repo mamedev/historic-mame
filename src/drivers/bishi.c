@@ -144,7 +144,7 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x870000, 0x8700ff) AM_WRITE(K055555_word_w)		// PCU2
 	AM_RANGE(0x880000, 0x880003) AM_WRITE(bishi_sound_w)
 	AM_RANGE(0xa00000, 0xa01fff) AM_WRITE(K056832_ram_word_w)	/* Graphic planes */
-	AM_RANGE(0xb00000, 0xb03fff) AM_WRITE(paletteram16_xbgr_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0xb00000, 0xb03fff) AM_WRITE(paletteram16_xbgr_word_be_w) AM_BASE(&paletteram16)
 ADDRESS_MAP_END
 
 INPUT_PORTS_START( bishi )

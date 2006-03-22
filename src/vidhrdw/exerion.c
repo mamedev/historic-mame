@@ -19,7 +19,6 @@
 
 
 #ifdef DEBUG_SPRITES
-#include <stdio.h>
 FILE	*sprite_log;
 #endif
 

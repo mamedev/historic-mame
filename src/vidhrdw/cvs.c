@@ -239,8 +239,11 @@ WRITE8_HANDLER( cvs_bullet_w )
     else
     {
     	// Pallette Ram - Inverted ?
+		offset &= 0x0f;
+		data ^= 0xff;
 
-		paletteram_BBBGGGRR_w((offset & 0x0f),(data ^ 0xff));
+		paletteram[offset] = data;
+		palette_set_color(offset, pal2bit(data >> 0), pal3bit(data >> 2), pal3bit(data >> 5));
     }
 }
 

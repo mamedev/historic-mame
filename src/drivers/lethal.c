@@ -358,7 +358,7 @@ static WRITE8_HANDLER( le_4800_w )
 {
 	if (cur_control2 & 0x10)	// RAM enable
 	{
-		paletteram_xBBBBBGGGGGRRRRR_swap_w(offset,data);
+		paletteram_xBBBBBGGGGGRRRRR_be_w(offset,data);
 	}
 	else
 	{
@@ -443,7 +443,7 @@ static WRITE8_HANDLER( le_4800_w )
 // use one more palette entry for the BG color
 static WRITE8_HANDLER(le_bgcolor_w)
 {
-	paletteram_xBBBBBGGGGGRRRRR_swap_w(0x3800+offset, data);
+	paletteram_xBBBBBGGGGGRRRRR_be_w(0x3800+offset, data);
 }
 
 static READ8_HANDLER(guns_r)

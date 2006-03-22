@@ -4,5 +4,6 @@
 
 ***************************************************************************/
 
-/* defined in vidhrdw/beaminv.c */
+/*----------- defined in vidhrdw/beaminv.c -----------*/
+
 WRITE8_HANDLER( beaminv_videoram_w );

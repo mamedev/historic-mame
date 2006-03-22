@@ -234,8 +234,8 @@ logerror("PC %04x: pang_gfxctrl_w %02x\n",activecpu_get_pc(),data);
 
 WRITE8_HANDLER( pang_paletteram_w )
 {
-	if (paletteram_bank) paletteram_xxxxRRRRGGGGBBBB_w(offset + 0x800,data);
-	else paletteram_xxxxRRRRGGGGBBBB_w(offset,data);
+	if (paletteram_bank) paletteram_xxxxRRRRGGGGBBBB_le_w(offset + 0x800,data);
+	else paletteram_xxxxRRRRGGGGBBBB_le_w(offset,data);
 }
 
 READ8_HANDLER( pang_paletteram_r )
@@ -246,7 +246,7 @@ READ8_HANDLER( pang_paletteram_r )
 
 WRITE8_HANDLER( mgakuen_paletteram_w )
 {
-	paletteram_xxxxRRRRGGGGBBBB_w(offset,data);
+	paletteram_xxxxRRRRGGGGBBBB_le_w(offset,data);
 }
 
 READ8_HANDLER( mgakuen_paletteram_r )

@@ -77,9 +77,10 @@
 
 #include "memory.h"
 
-/*-------------------------------------------------
+
+/***************************************************************************
     CONSTANTS
--------------------------------------------------*/
+***************************************************************************/
 
 #define PALETTE_DEFAULT_SHADOW_FACTOR (0.6)
 #define PALETTE_DEFAULT_HIGHLIGHT_FACTOR (1/PALETTE_DEFAULT_SHADOW_FACTOR)
@@ -89,9 +90,9 @@
 
 
 
-/*-------------------------------------------------
+/***************************************************************************
     MACROS
--------------------------------------------------*/
+***************************************************************************/
 
 #define MAKE_RGB(r,g,b) 	((((r) & 0xff) << 16) | (((g) & 0xff) << 8) | ((b) & 0xff))
 #define MAKE_ARGB(a,r,g,b)	(MAKE_RGB(r,g,b) | (((a) & 0xff) << 24))
@@ -105,24 +106,18 @@
 
 
 
-/*-------------------------------------------------
+/***************************************************************************
     GLOBAL VARIABLES
--------------------------------------------------*/
+***************************************************************************/
 
 extern UINT32 direct_rgb_components[3];
 extern UINT16 *palette_shadow_table;
 
-extern UINT8 *paletteram;
-extern UINT8 *paletteram_2;	/* use when palette RAM is split in two parts */
-extern UINT16 *paletteram16;
-extern UINT16 *paletteram16_2;
-extern UINT32 *paletteram32;
 
 
-
-/*-------------------------------------------------
-    PROTOTYPES
--------------------------------------------------*/
+/***************************************************************************
+    FUNCTION PROTOTYPES
+***************************************************************************/
 
 int palette_start(void);
 int palette_init(void);
@@ -174,77 +169,85 @@ pen_t get_black_pen(void);
 pen_t get_white_pen(void);
 
 
-/* here are some functions to handle commonly used palette layouts, so you don't
-   have to write your own paletteram_w() function. */
 
-READ8_HANDLER( paletteram_r );
-READ8_HANDLER( paletteram_2_r );
-READ16_HANDLER( paletteram16_word_r );
-READ16_HANDLER( paletteram16_2_word_r );
-READ32_HANDLER( paletteram32_r );
+/***************************************************************************
+    INLINE FUNCTIONS
+***************************************************************************/
 
-WRITE8_HANDLER( paletteram_BBGGGRRR_w );
-WRITE8_HANDLER( paletteram_RRRGGGBB_w );
-WRITE8_HANDLER( paletteram_BBBGGGRR_w );
-WRITE8_HANDLER( paletteram_IIBBGGRR_w );
-WRITE8_HANDLER( paletteram_BBGGRRII_w );
+/*-------------------------------------------------
+    pal1bit - convert a 1-bit value to 8 bits
+-------------------------------------------------*/
 
-/* _w       least significant byte first */
-/* _swap_w  most significant byte first */
-/* _split_w least and most significant bytes are not consecutive */
-/* _word_w  use with 16 bit CPU */
-/* R, G, B are bits, r, g, b are bytes */
-/*                        MSB          LSB */
-WRITE8_HANDLER( paletteram_xxxxBBBBGGGGRRRR_w );
-WRITE8_HANDLER( paletteram_xxxxBBBBGGGGRRRR_swap_w );
-WRITE8_HANDLER( paletteram_xxxxBBBBGGGGRRRR_split1_w );	/* uses paletteram[] */
-WRITE8_HANDLER( paletteram_xxxxBBBBGGGGRRRR_split2_w );	/* uses paletteram_2[] */
-WRITE16_HANDLER( paletteram16_xxxxBBBBGGGGRRRR_word_w );
-WRITE8_HANDLER( paletteram_xxxxBBBBRRRRGGGG_w );
-WRITE8_HANDLER( paletteram_xxxxBBBBRRRRGGGG_swap_w );
-WRITE8_HANDLER( paletteram_xxxxBBBBRRRRGGGG_split1_w );	/* uses paletteram[] */
-WRITE8_HANDLER( paletteram_xxxxBBBBRRRRGGGG_split2_w );	/* uses paletteram_2[] */
-WRITE16_HANDLER( paletteram16_xxxxBBBBRRRRGGGG_word_w );
-WRITE8_HANDLER( paletteram_xxxxRRRRBBBBGGGG_split1_w );	/* uses paletteram[] */
-WRITE8_HANDLER( paletteram_xxxxRRRRBBBBGGGG_split2_w );	/* uses paletteram_2[] */
-WRITE8_HANDLER( paletteram_xxxxRRRRGGGGBBBB_w );
-WRITE8_HANDLER( paletteram_xxxxRRRRGGGGBBBB_swap_w );
-WRITE16_HANDLER( paletteram16_xxxxRRRRGGGGBBBB_word_w );
-WRITE8_HANDLER( paletteram_RRRRGGGGBBBBxxxx_swap_w );
-WRITE8_HANDLER( paletteram_RRRRGGGGBBBBxxxx_split1_w );	/* uses paletteram[] */
-WRITE8_HANDLER( paletteram_RRRRGGGGBBBBxxxx_split2_w );	/* uses paletteram_2[] */
-WRITE16_HANDLER( paletteram16_RRRRGGGGBBBBxxxx_word_w );
-WRITE8_HANDLER( paletteram_BBBBGGGGRRRRxxxx_swap_w );
-WRITE8_HANDLER( paletteram_BBBBGGGGRRRRxxxx_split1_w );	/* uses paletteram[] */
-WRITE8_HANDLER( paletteram_BBBBGGGGRRRRxxxx_split2_w );	/* uses paletteram_2[] */
-WRITE16_HANDLER( paletteram16_BBBBGGGGRRRRxxxx_word_w );
-WRITE8_HANDLER( paletteram_xBBBBBGGGGGRRRRR_w );
-WRITE8_HANDLER( paletteram_xBBBBBGGGGGRRRRR_swap_w );
-WRITE8_HANDLER( paletteram_xBBBBBGGGGGRRRRR_split1_w );	/* uses paletteram[] */
-WRITE8_HANDLER( paletteram_xBBBBBGGGGGRRRRR_split2_w );	/* uses paletteram_2[] */
-WRITE16_HANDLER( paletteram16_xBBBBBGGGGGRRRRR_word_w );
-WRITE8_HANDLER( paletteram_xBBBBBRRRRRGGGGG_split1_w );  /* uses paletteram[] */
-WRITE8_HANDLER( paletteram_xBBBBBRRRRRGGGGG_split2_w );  /* uses paletteram_2[] */
-WRITE8_HANDLER( paletteram_xRRRRRGGGGGBBBBB_w );
-WRITE16_HANDLER( paletteram16_xRRRRRGGGGGBBBBB_word_w );
-WRITE16_HANDLER( paletteram16_xGGGGGRRRRRBBBBB_word_w );
-WRITE16_HANDLER( paletteram16_xGGGGGBBBBBRRRRR_word_w );
-WRITE8_HANDLER( paletteram_RRRRRGGGGGBBBBBx_w );
-WRITE16_HANDLER( paletteram16_RRRRRGGGGGBBBBBx_word_w );
-WRITE16_HANDLER( paletteram16_IIIIRRRRGGGGBBBB_word_w );
-WRITE16_HANDLER( paletteram16_RRRRGGGGBBBBIIII_word_w );
-WRITE16_HANDLER( paletteram16_xrgb_word_w );
-WRITE16_HANDLER( paletteram16_xbgr_word_w );
-WRITE16_HANDLER( paletteram16_RRRRGGGGBBBBRGBx_word_w );
+INLINE UINT8 pal1bit(UINT8 bits)
+{
+	return bits ? 0xff : 0x00;
+}
 
 
-/******************************************************************************
+/*-------------------------------------------------
+    pal2bit - convert a 2-bit value to 8 bits
+-------------------------------------------------*/
 
- Commonly used color PROM handling functions
+INLINE UINT8 pal2bit(UINT8 bits)
+{
+	bits &= 3;
+	return (bits << 6) | (bits << 4) | (bits << 2) | bits;
+}
 
-******************************************************************************/
 
-void palette_init_black_and_white(UINT16 *colortable, const UINT8 *color_prom);
-void palette_init_RRRR_GGGG_BBBB(UINT16 *colortable, const UINT8 *color_prom);
+/*-------------------------------------------------
+    pal3bit - convert a 3-bit value to 8 bits
+-------------------------------------------------*/
+
+INLINE UINT8 pal3bit(UINT8 bits)
+{
+	bits &= 7;
+	return (bits << 5) | (bits << 2) | (bits >> 1);
+}
+
+
+/*-------------------------------------------------
+    pal4bit - convert a 4-bit value to 8 bits
+-------------------------------------------------*/
+
+INLINE UINT8 pal4bit(UINT8 bits)
+{
+	bits &= 0xf;
+	return (bits << 4) | bits;
+}
+
+
+/*-------------------------------------------------
+    pal5bit - convert a 5-bit value to 8 bits
+-------------------------------------------------*/
+
+INLINE UINT8 pal5bit(UINT8 bits)
+{
+	bits &= 0x1f;
+	return (bits << 3) | (bits >> 2);
+}
+
+
+/*-------------------------------------------------
+    pal6bit - convert a 6-bit value to 8 bits
+-------------------------------------------------*/
+
+INLINE UINT8 pal6bit(UINT8 bits)
+{
+	bits &= 0x3f;
+	return (bits << 2) | (bits >> 4);
+}
+
+
+/*-------------------------------------------------
+    pal7bit - convert a 7-bit value to 8 bits
+-------------------------------------------------*/
+
+INLINE UINT8 pal7bit(UINT8 bits)
+{
+	bits &= 0x7f;
+	return (bits << 1) | (bits >> 6);
+}
+
 
 #endif	/* __PALETTE_H__ */

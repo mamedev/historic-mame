@@ -700,10 +700,48 @@ void win_destroy_window(void)
 
 void win_update_cursor_state(void)
 {
+	static POINT last_cursor_pos = {-1,-1};
+	RECT bounds;	// actual screen area of game video
+	POINT video_ul;	// client area upper left corner
+	POINT video_lr;	// client area lower right corner
+
+	// store the cursor if just initialized
+	if (win_use_raw_mouse && last_cursor_pos.x == -1 && last_cursor_pos.y == -1) GetCursorPos(&last_cursor_pos);
+
 	if ((win_window_mode || win_has_menu()) && !win_is_mouse_captured())
+	{
+		// show cursor
 		while (ShowCursor(TRUE) < 0) ;
+
+		if (win_use_raw_mouse)
+		{
+			// allow cursor to move freely
+			ClipCursor(NULL);
+			// restore cursor to last position
+			SetCursorPos(last_cursor_pos.x, last_cursor_pos.y);
+		}
+	}
 	else
+	{
+		// hide cursor
 		while (ShowCursor(FALSE) >= 0) ;
+
+		if (win_use_raw_mouse)
+		{
+			// store the cursor position
+			GetCursorPos(&last_cursor_pos);
+			// clip cursor to game video window
+			GetClientRect(win_video_window, &bounds);
+			video_ul.x = bounds.left;
+			video_ul.y = bounds.top;
+			video_lr.x = bounds.right;
+			video_lr.y = bounds.bottom;
+			ClientToScreen(win_video_window, &video_ul);
+			ClientToScreen(win_video_window, &video_lr);
+			SetRect(&bounds, video_ul.x, video_ul.y, video_lr.x, video_lr.y);
+			ClipCursor(&bounds);
+		}
+	}
 }
 
 
@@ -1143,7 +1181,7 @@ void win_adjust_window_for_visible(int min_x, int max_x, int min_y, int max_y)
 
  		GetWindowRect(win_video_window, &r);
  		r.right += (win_visible_width - old_visible_width) * xmult;
- 		r.left += (win_visible_height - old_visible_height) * ymult;
+ 		r.bottom += (win_visible_height - old_visible_height) * ymult;
  		set_aligned_window_pos(win_video_window, NULL, r.left, r.top,
  				r.right - r.left,
  				r.bottom - r.top,

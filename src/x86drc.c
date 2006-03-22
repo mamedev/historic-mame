@@ -697,15 +697,17 @@ UINT32 drc_x86_get_features(void)
 #else /* !_MSC_VER */
 	__asm__
 	(
+	        "pushl %%ebx         ; "
 		"movl $1,%%eax       ; "
 		"xorl %%ebx,%%ebx    ; "
 		"xorl %%ecx,%%ecx    ; "
 		"xorl %%edx,%%edx    ; "
 		"cpuid               ; "
 		"movl %%edx,%0       ; "
+                "popl %%ebx          ; "
 	: "=&a" (features)		/* result has to go in eax */
 	: 				/* no inputs */
-	: "%ebx", "%ecx", "%edx"	/* clobbers ebx, ecx and edx */
+	: "%ecx", "%edx"	/* clobbers ebx, ecx and edx */
 	);
 #endif /* MSC_VER */
 	return features;

@@ -109,7 +109,7 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x400e, 0x400e) AM_WRITE(soundlatch_w)
 	AM_RANGE(0x5000, 0x5fff) AM_WRITE(srumbler_foreground_w) AM_BASE(&srumbler_foregroundram)
 	AM_RANGE(0x6000, 0x6fff) AM_WRITE(MWA8_RAM) /* Video RAM 2 ??? (not used) */
-	AM_RANGE(0x7000, 0x73ff) AM_WRITE(paletteram_RRRRGGGGBBBBxxxx_swap_w) AM_BASE(&paletteram)
+	AM_RANGE(0x7000, 0x73ff) AM_WRITE(paletteram_RRRRGGGGBBBBxxxx_be_w) AM_BASE(&paletteram)
 	AM_RANGE(0x7400, 0xffff) AM_WRITE(MWA8_ROM)
 ADDRESS_MAP_END
 

@@ -48,7 +48,7 @@ static tilemap *bg_tilemap;
 static WRITE8_HANDLER(vroulet_paletteram_w)
 {
 	/*
-     paletteram_xxxxBBBBGGGGRRRR_swap_w
+     paletteram_xxxxBBBBGGGGRRRR_be_w
      but... each palette has 8 colors only, not 16 as expected...
     */
 

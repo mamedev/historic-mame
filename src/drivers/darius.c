@@ -126,12 +126,8 @@ sounds.
 
 ***************************************************************************/
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include <stdarg.h>
 #include <math.h>
-
 #include "driver.h"
 #include "vidhrdw/taitoic.h"
 #include "cpu/z80/z80.h"

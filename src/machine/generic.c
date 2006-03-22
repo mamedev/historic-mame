@@ -11,6 +11,7 @@
 
 #include "driver.h"
 #include "config.h"
+#include "generic.h"
 #include <stdarg.h>
 #include <ctype.h>
 
@@ -38,6 +39,10 @@ static int memcard_inserted;
 /* LED status */
 static UINT32 leds_status;
 
+/* interrupt status */
+static UINT8 interrupt_enable[MAX_CPU];
+
+
 
 
 /***************************************************************************
@@ -46,6 +51,7 @@ static UINT32 leds_status;
 
 static void counters_load(int config_type, xml_data_node *parentnode);
 static void counters_save(int config_type, xml_data_node *parentnode);
+static void interrupt_reset(void);
 
 
 
@@ -79,6 +85,10 @@ void generic_machine_init(void)
 
 	/* reset memory card info */
 	memcard_inserted = -1;
+
+	/* register a reset callback and save state for interrupt enable */
+	add_reset_callback(interrupt_reset);
+	state_save_register_item_array("cpu", 0, interrupt_enable);
 
 	/* register for configuration */
 	config_register("counters", counters_load, counters_save);
@@ -485,3 +495,298 @@ void set_led_status(int num, int on)
 	else
 		leds_status &= ~(1 << num);
 }
+
+
+
+/***************************************************************************
+
+    Interrupt enable and vector helpers
+
+***************************************************************************/
+
+/*-------------------------------------------------
+    interrupt_reset - reset the interrupt enable
+    states on a reset
+-------------------------------------------------*/
+
+static void interrupt_reset(void)
+{
+	int cpunum;
+
+	/* on a reset, enable all interrupts */
+	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
+		interrupt_enable[cpunum] = 1;
+}
+
+
+/*-------------------------------------------------
+    clear_all_lines - sets the state of all input
+    lines and the NMI line to clear
+-------------------------------------------------*/
+
+static void clear_all_lines(int cpunum)
+{
+	int inputcount = cpunum_input_lines(cpunum);
+	int line;
+
+	/* clear NMI and all inputs */
+	cpunum_set_input_line(cpunum, INPUT_LINE_NMI, CLEAR_LINE);
+	for (line = 0; line < inputcount; line++)
+		cpunum_set_input_line(cpunum, line, CLEAR_LINE);
+}
+
+
+/*-------------------------------------------------
+    cpu_interrupt_enable - controls the enable/
+    disable value for global interrupts
+-------------------------------------------------*/
+
+void cpu_interrupt_enable(int cpunum, int enabled)
+{
+	assert_always(cpunum >= 0 && cpunum < cpu_gettotalcpu(), "cpu_interrupt_enable() called for invalid cpu num!");
+
+	/* set the new state */
+	interrupt_enable[cpunum] = enabled;
+
+	/* make sure there are no queued interrupts */
+	if (enabled == 0)
+		mame_timer_set(time_zero, cpunum, clear_all_lines);
+}
+
+
+/*-------------------------------------------------
+    interrupt_enable_w - set the global interrupt
+    enable
+-------------------------------------------------*/
+
+WRITE8_HANDLER( interrupt_enable_w )
+{
+	int activecpu = cpu_getactivecpu();
+	assert_always(activecpu >= 0, "interrupt_enable_w() called with no active cpu!");
+	cpu_interrupt_enable(activecpu, data);
+}
+
+
+/*-------------------------------------------------
+    interrupt_enable_r - read the global interrupt
+    enable
+-------------------------------------------------*/
+
+READ8_HANDLER( interrupt_enable_r )
+{
+	int activecpu = cpu_getactivecpu();
+	assert_always(activecpu >= 0, "interrupt_enable_r() called with no active cpu!");
+	return interrupt_enable[activecpu];
+}
+
+
+
+/***************************************************************************
+
+    Interrupt generation callback helpers
+
+***************************************************************************/
+
+/*-------------------------------------------------
+    irqn_line_set - set the given IRQ line to the
+    specified state on the active CPU
+-------------------------------------------------*/
+
+INLINE void irqn_line_set(int line, int state)
+{
+	int cpunum = cpu_getactivecpu();
+	if (interrupt_enable[cpunum])
+		cpunum_set_input_line(cpunum, line, state);
+}
+
+
+/*-------------------------------------------------
+    NMI callbacks
+-------------------------------------------------*/
+
+INTERRUPT_GEN( nmi_line_pulse )		{ irqn_line_set(INPUT_LINE_NMI, PULSE_LINE); }
+INTERRUPT_GEN( nmi_line_assert )	{ irqn_line_set(INPUT_LINE_NMI, ASSERT_LINE); }
+
+
+/*-------------------------------------------------
+    IRQn callbacks
+-------------------------------------------------*/
+
+INTERRUPT_GEN( irq0_line_hold )		{ irqn_line_set(0, HOLD_LINE); }
+INTERRUPT_GEN( irq0_line_pulse )	{ irqn_line_set(0, PULSE_LINE); }
+INTERRUPT_GEN( irq0_line_assert )	{ irqn_line_set(0, ASSERT_LINE); }
+
+INTERRUPT_GEN( irq1_line_hold )		{ irqn_line_set(1, HOLD_LINE); }
+INTERRUPT_GEN( irq1_line_pulse )	{ irqn_line_set(1, PULSE_LINE); }
+INTERRUPT_GEN( irq1_line_assert )	{ irqn_line_set(1, ASSERT_LINE); }
+
+INTERRUPT_GEN( irq2_line_hold )		{ irqn_line_set(2, HOLD_LINE); }
+INTERRUPT_GEN( irq2_line_pulse )	{ irqn_line_set(2, PULSE_LINE); }
+INTERRUPT_GEN( irq2_line_assert )	{ irqn_line_set(2, ASSERT_LINE); }
+
+INTERRUPT_GEN( irq3_line_hold )		{ irqn_line_set(3, HOLD_LINE); }
+INTERRUPT_GEN( irq3_line_pulse )	{ irqn_line_set(3, PULSE_LINE); }
+INTERRUPT_GEN( irq3_line_assert )	{ irqn_line_set(3, ASSERT_LINE); }
+
+INTERRUPT_GEN( irq4_line_hold )		{ irqn_line_set(4, HOLD_LINE); }
+INTERRUPT_GEN( irq4_line_pulse )	{ irqn_line_set(4, PULSE_LINE); }
+INTERRUPT_GEN( irq4_line_assert )	{ irqn_line_set(4, ASSERT_LINE); }
+
+INTERRUPT_GEN( irq5_line_hold )		{ irqn_line_set(5, HOLD_LINE); }
+INTERRUPT_GEN( irq5_line_pulse )	{ irqn_line_set(5, PULSE_LINE); }
+INTERRUPT_GEN( irq5_line_assert )	{ irqn_line_set(5, ASSERT_LINE); }
+
+INTERRUPT_GEN( irq6_line_hold )		{ irqn_line_set(6, HOLD_LINE); }
+INTERRUPT_GEN( irq6_line_pulse )	{ irqn_line_set(6, PULSE_LINE); }
+INTERRUPT_GEN( irq6_line_assert )	{ irqn_line_set(6, ASSERT_LINE); }
+
+INTERRUPT_GEN( irq7_line_hold )		{ irqn_line_set(7, HOLD_LINE); }
+INTERRUPT_GEN( irq7_line_pulse )	{ irqn_line_set(7, PULSE_LINE); }
+INTERRUPT_GEN( irq7_line_assert )	{ irqn_line_set(7, ASSERT_LINE); }
+
+
+
+/***************************************************************************
+
+    Watchdog read/write helpers
+
+***************************************************************************/
+
+/*-------------------------------------------------
+    8-bit reset read/write handlers
+-------------------------------------------------*/
+
+WRITE8_HANDLER( watchdog_reset_w ) { watchdog_reset(); }
+READ8_HANDLER( watchdog_reset_r ) { watchdog_reset(); return 0xff; }
+
+
+/*-------------------------------------------------
+    16-bit reset read/write handlers
+-------------------------------------------------*/
+
+WRITE16_HANDLER( watchdog_reset16_w ) {	watchdog_reset(); }
+READ16_HANDLER( watchdog_reset16_r ) { watchdog_reset(); return 0xffff; }
+
+
+/*-------------------------------------------------
+    32-bit reset read/write handlers
+-------------------------------------------------*/
+
+WRITE32_HANDLER( watchdog_reset32_w ) {	watchdog_reset(); }
+READ32_HANDLER( watchdog_reset32_r ) { watchdog_reset(); return 0xffffffff; }
+
+
+
+/***************************************************************************
+
+    Port reading helpers
+
+***************************************************************************/
+
+/*-------------------------------------------------
+    8-bit read handlers
+-------------------------------------------------*/
+
+READ8_HANDLER( input_port_0_r ) { return readinputport(0); }
+READ8_HANDLER( input_port_1_r ) { return readinputport(1); }
+READ8_HANDLER( input_port_2_r ) { return readinputport(2); }
+READ8_HANDLER( input_port_3_r ) { return readinputport(3); }
+READ8_HANDLER( input_port_4_r ) { return readinputport(4); }
+READ8_HANDLER( input_port_5_r ) { return readinputport(5); }
+READ8_HANDLER( input_port_6_r ) { return readinputport(6); }
+READ8_HANDLER( input_port_7_r ) { return readinputport(7); }
+READ8_HANDLER( input_port_8_r ) { return readinputport(8); }
+READ8_HANDLER( input_port_9_r ) { return readinputport(9); }
+READ8_HANDLER( input_port_10_r ) { return readinputport(10); }
+READ8_HANDLER( input_port_11_r ) { return readinputport(11); }
+READ8_HANDLER( input_port_12_r ) { return readinputport(12); }
+READ8_HANDLER( input_port_13_r ) { return readinputport(13); }
+READ8_HANDLER( input_port_14_r ) { return readinputport(14); }
+READ8_HANDLER( input_port_15_r ) { return readinputport(15); }
+READ8_HANDLER( input_port_16_r ) { return readinputport(16); }
+READ8_HANDLER( input_port_17_r ) { return readinputport(17); }
+READ8_HANDLER( input_port_18_r ) { return readinputport(18); }
+READ8_HANDLER( input_port_19_r ) { return readinputport(19); }
+READ8_HANDLER( input_port_20_r ) { return readinputport(20); }
+READ8_HANDLER( input_port_21_r ) { return readinputport(21); }
+READ8_HANDLER( input_port_22_r ) { return readinputport(22); }
+READ8_HANDLER( input_port_23_r ) { return readinputport(23); }
+READ8_HANDLER( input_port_24_r ) { return readinputport(24); }
+READ8_HANDLER( input_port_25_r ) { return readinputport(25); }
+READ8_HANDLER( input_port_26_r ) { return readinputport(26); }
+READ8_HANDLER( input_port_27_r ) { return readinputport(27); }
+READ8_HANDLER( input_port_28_r ) { return readinputport(28); }
+READ8_HANDLER( input_port_29_r ) { return readinputport(29); }
+
+
+/*-------------------------------------------------
+    16-bit read handlers
+-------------------------------------------------*/
+
+READ16_HANDLER( input_port_0_word_r ) { return readinputport(0); }
+READ16_HANDLER( input_port_1_word_r ) { return readinputport(1); }
+READ16_HANDLER( input_port_2_word_r ) { return readinputport(2); }
+READ16_HANDLER( input_port_3_word_r ) { return readinputport(3); }
+READ16_HANDLER( input_port_4_word_r ) { return readinputport(4); }
+READ16_HANDLER( input_port_5_word_r ) { return readinputport(5); }
+READ16_HANDLER( input_port_6_word_r ) { return readinputport(6); }
+READ16_HANDLER( input_port_7_word_r ) { return readinputport(7); }
+READ16_HANDLER( input_port_8_word_r ) { return readinputport(8); }
+READ16_HANDLER( input_port_9_word_r ) { return readinputport(9); }
+READ16_HANDLER( input_port_10_word_r ) { return readinputport(10); }
+READ16_HANDLER( input_port_11_word_r ) { return readinputport(11); }
+READ16_HANDLER( input_port_12_word_r ) { return readinputport(12); }
+READ16_HANDLER( input_port_13_word_r ) { return readinputport(13); }
+READ16_HANDLER( input_port_14_word_r ) { return readinputport(14); }
+READ16_HANDLER( input_port_15_word_r ) { return readinputport(15); }
+READ16_HANDLER( input_port_16_word_r ) { return readinputport(16); }
+READ16_HANDLER( input_port_17_word_r ) { return readinputport(17); }
+READ16_HANDLER( input_port_18_word_r ) { return readinputport(18); }
+READ16_HANDLER( input_port_19_word_r ) { return readinputport(19); }
+READ16_HANDLER( input_port_20_word_r ) { return readinputport(20); }
+READ16_HANDLER( input_port_21_word_r ) { return readinputport(21); }
+READ16_HANDLER( input_port_22_word_r ) { return readinputport(22); }
+READ16_HANDLER( input_port_23_word_r ) { return readinputport(23); }
+READ16_HANDLER( input_port_24_word_r ) { return readinputport(24); }
+READ16_HANDLER( input_port_25_word_r ) { return readinputport(25); }
+READ16_HANDLER( input_port_26_word_r ) { return readinputport(26); }
+READ16_HANDLER( input_port_27_word_r ) { return readinputport(27); }
+READ16_HANDLER( input_port_28_word_r ) { return readinputport(28); }
+READ16_HANDLER( input_port_29_word_r ) { return readinputport(29); }
+
+
+/*-------------------------------------------------
+    32-bit read handlers
+-------------------------------------------------*/
+
+READ32_HANDLER( input_port_0_dword_r ) { return readinputport(0); }
+READ32_HANDLER( input_port_1_dword_r ) { return readinputport(1); }
+READ32_HANDLER( input_port_2_dword_r ) { return readinputport(2); }
+READ32_HANDLER( input_port_3_dword_r ) { return readinputport(3); }
+READ32_HANDLER( input_port_4_dword_r ) { return readinputport(4); }
+READ32_HANDLER( input_port_5_dword_r ) { return readinputport(5); }
+READ32_HANDLER( input_port_6_dword_r ) { return readinputport(6); }
+READ32_HANDLER( input_port_7_dword_r ) { return readinputport(7); }
+READ32_HANDLER( input_port_8_dword_r ) { return readinputport(8); }
+READ32_HANDLER( input_port_9_dword_r ) { return readinputport(9); }
+READ32_HANDLER( input_port_10_dword_r ) { return readinputport(10); }
+READ32_HANDLER( input_port_11_dword_r ) { return readinputport(11); }
+READ32_HANDLER( input_port_12_dword_r ) { return readinputport(12); }
+READ32_HANDLER( input_port_13_dword_r ) { return readinputport(13); }
+READ32_HANDLER( input_port_14_dword_r ) { return readinputport(14); }
+READ32_HANDLER( input_port_15_dword_r ) { return readinputport(15); }
+READ32_HANDLER( input_port_16_dword_r ) { return readinputport(16); }
+READ32_HANDLER( input_port_17_dword_r ) { return readinputport(17); }
+READ32_HANDLER( input_port_18_dword_r ) { return readinputport(18); }
+READ32_HANDLER( input_port_19_dword_r ) { return readinputport(19); }
+READ32_HANDLER( input_port_20_dword_r ) { return readinputport(20); }
+READ32_HANDLER( input_port_21_dword_r ) { return readinputport(21); }
+READ32_HANDLER( input_port_22_dword_r ) { return readinputport(22); }
+READ32_HANDLER( input_port_23_dword_r ) { return readinputport(23); }
+READ32_HANDLER( input_port_24_dword_r ) { return readinputport(24); }
+READ32_HANDLER( input_port_25_dword_r ) { return readinputport(25); }
+READ32_HANDLER( input_port_26_dword_r ) { return readinputport(26); }
+READ32_HANDLER( input_port_27_dword_r ) { return readinputport(27); }
+READ32_HANDLER( input_port_28_dword_r ) { return readinputport(28); }
+READ32_HANDLER( input_port_29_dword_r ) { return readinputport(29); }
+

@@ -17,7 +17,6 @@ author (Karl Stenerud) at karl@higashiyama-unet.ocn.ne.jp.
 
 
 #include "spc700ds.h"
-#include <stdio.h>
 
 
 #ifndef INLINE

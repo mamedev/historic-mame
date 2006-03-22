@@ -111,7 +111,7 @@
 #define BUSY_LOOP_HACKS		1
 
 /* check for delay loops counting down BC */
-#define TIME_LOOP_HACKS		1
+#define TIME_LOOP_HACKS		0
 
 #ifdef X86_ASM
 #undef	BIG_FLAGS_ARRAY

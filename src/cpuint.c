@@ -56,7 +56,6 @@
  *************************************/
 
 /* current states for each CPU */
-static UINT8 interrupt_enable[MAX_CPU];
 static INT32 interrupt_vector[MAX_CPU][MAX_INPUT_LINES];
 
 /* deferred states written in callbacks */
@@ -134,7 +133,6 @@ int cpuint_init(void)
 
 	/* set up some stuff to save */
 	state_save_push_tag(0);
-	state_save_register_item_array("cpu", 0, interrupt_enable);
 	state_save_register_item_2d_array("cpu", 0, interrupt_vector);
 	state_save_register_item_2d_array("cpu", 0, input_line_state);
 	state_save_register_item_2d_array("cpu", 0, input_line_vector);
@@ -157,16 +155,11 @@ void cpuint_reset(void)
 
 	/* loop over CPUs */
 	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
-	{
-		/* start with interrupts enabled, so the generic routine will work even if */
-		/* the machine doesn't have an interrupt enable port */
-		interrupt_enable[cpunum] = 1;
 		for (line = 0; line < MAX_INPUT_LINES; line++)
 		{
 			interrupt_vector[cpunum][line] = cpunum_default_irq_vector(cpunum);
 			input_event_index[cpunum][line] = 0;
 		}
-	}
 }
 
 
@@ -396,168 +389,3 @@ static int cpu_7_irq_callback(int line) { return cpu_irq_callback(7, line); }
 
 
 
-/*************************************
- *
- *  NMI interrupt generation
- *
- *************************************/
-
-INTERRUPT_GEN( nmi_line_pulse )
-{
-	int cpunum = cpu_getactivecpu();
-	if (interrupt_enable[cpunum])
-		cpunum_set_input_line(cpunum, INPUT_LINE_NMI, PULSE_LINE);
-}
-
-INTERRUPT_GEN( nmi_line_assert )
-{
-	int cpunum = cpu_getactivecpu();
-	if (interrupt_enable[cpunum])
-		cpunum_set_input_line(cpunum, INPUT_LINE_NMI, ASSERT_LINE);
-}
-
-
-
-/*************************************
- *
- *  IRQ n interrupt generation
- *
- *************************************/
-
-INLINE void irqn_line_hold(int line)
-{
-	int cpunum = cpu_getactivecpu();
-	if (interrupt_enable[cpunum])
-	{
-		int vector = (line >= 0 && line < MAX_INPUT_LINES) ? interrupt_vector[cpunum][line] : 0xff;
-		cpunum_set_input_line_and_vector(cpunum, line, HOLD_LINE, vector);
-	}
-}
-
-INLINE void irqn_line_pulse(int line)
-{
-	int cpunum = cpu_getactivecpu();
-	if (interrupt_enable[cpunum])
-	{
-		int vector = (line >= 0 && line < MAX_INPUT_LINES) ? interrupt_vector[cpunum][line] : 0xff;
-		cpunum_set_input_line_and_vector(cpunum, line, PULSE_LINE, vector);
-	}
-}
-
-INLINE void irqn_line_assert(int line)
-{
-	int cpunum = cpu_getactivecpu();
-	if (interrupt_enable[cpunum])
-	{
-		int vector = (line >= 0 && line < MAX_INPUT_LINES) ? interrupt_vector[cpunum][line] : 0xff;
-		cpunum_set_input_line_and_vector(cpunum, line, ASSERT_LINE, vector);
-	}
-}
-
-
-
-/*************************************
- *
- *  IRQ interrupt generation
- *
- *************************************/
-
-INTERRUPT_GEN( irq0_line_hold )		{ irqn_line_hold(0); }
-INTERRUPT_GEN( irq0_line_pulse )	{ irqn_line_pulse(0); }
-INTERRUPT_GEN( irq0_line_assert )	{ irqn_line_assert(0); }
-
-INTERRUPT_GEN( irq1_line_hold )		{ irqn_line_hold(1); }
-INTERRUPT_GEN( irq1_line_pulse )	{ irqn_line_pulse(1); }
-INTERRUPT_GEN( irq1_line_assert )	{ irqn_line_assert(1); }
-
-INTERRUPT_GEN( irq2_line_hold )		{ irqn_line_hold(2); }
-INTERRUPT_GEN( irq2_line_pulse )	{ irqn_line_pulse(2); }
-INTERRUPT_GEN( irq2_line_assert )	{ irqn_line_assert(2); }
-
-INTERRUPT_GEN( irq3_line_hold )		{ irqn_line_hold(3); }
-INTERRUPT_GEN( irq3_line_pulse )	{ irqn_line_pulse(3); }
-INTERRUPT_GEN( irq3_line_assert )	{ irqn_line_assert(3); }
-
-INTERRUPT_GEN( irq4_line_hold )		{ irqn_line_hold(4); }
-INTERRUPT_GEN( irq4_line_pulse )	{ irqn_line_pulse(4); }
-INTERRUPT_GEN( irq4_line_assert )	{ irqn_line_assert(4); }
-
-INTERRUPT_GEN( irq5_line_hold )		{ irqn_line_hold(5); }
-INTERRUPT_GEN( irq5_line_pulse )	{ irqn_line_pulse(5); }
-INTERRUPT_GEN( irq5_line_assert )	{ irqn_line_assert(5); }
-
-INTERRUPT_GEN( irq6_line_hold )		{ irqn_line_hold(6); }
-INTERRUPT_GEN( irq6_line_pulse )	{ irqn_line_pulse(6); }
-INTERRUPT_GEN( irq6_line_assert )	{ irqn_line_assert(6); }
-
-INTERRUPT_GEN( irq7_line_hold )		{ irqn_line_hold(7); }
-INTERRUPT_GEN( irq7_line_pulse )	{ irqn_line_pulse(7); }
-INTERRUPT_GEN( irq7_line_assert )	{ irqn_line_assert(7); }
-
-
-
-#if 0
-#pragma mark -
-#pragma mark OBSOLETE INTERRUPT HANDLING
-#endif
-
-/*************************************
- *
- *  Interrupt enabling
- *
- *************************************/
-
-static void cpu_clearintcallback(int cpunum)
-{
-	int inputcount = cpunum_input_lines(cpunum);
-	int line;
-
-	cpuintrf_push_context(cpunum);
-
-	/* clear NMI and all inputs */
-	activecpu_set_input_line(INPUT_LINE_NMI, INTERNAL_CLEAR_LINE);
-	for (line = 0; line < inputcount; line++)
-		activecpu_set_input_line(line, INTERNAL_CLEAR_LINE);
-
-	cpuintrf_pop_context();
-}
-
-
-void cpu_interrupt_enable(int cpunum,int enabled)
-{
-	interrupt_enable[cpunum] = enabled;
-
-LOG(("CPU#%d interrupt_enable=%d\n", cpunum, enabled));
-
-	/* make sure there are no queued interrupts */
-	if (enabled == 0)
-		mame_timer_set(time_zero, cpunum, cpu_clearintcallback);
-}
-
-
-WRITE8_HANDLER( interrupt_enable_w )
-{
-	VERIFY_ACTIVECPU_VOID(interrupt_enable_w);
-	cpu_interrupt_enable(activecpu, data);
-}
-
-
-READ8_HANDLER( interrupt_enable_r )
-{
-	VERIFY_ACTIVECPU(1, interrupt_enable_r);
-	return interrupt_enable[activecpu];
-}
-
-
-WRITE8_HANDLER( interrupt_vector_w )
-{
-	VERIFY_ACTIVECPU_VOID(interrupt_vector_w);
-	if (interrupt_vector[activecpu][0] != data)
-	{
-		LOG(("CPU#%d interrupt_vector_w $%02x\n", activecpu, data));
-		interrupt_vector[activecpu][0] = data;
-
-		/* make sure there are no queued interrupts */
-		mame_timer_set(time_zero, activecpu, cpu_clearintcallback);
-	}
-}

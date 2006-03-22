@@ -679,14 +679,9 @@ static void	update(struct pit8253_timer	*timer)
        years of time. Should be enough for now. */
 	mame_time now =	mame_timer_get_time();
 	mame_time elapsed_time = sub_mame_times(now,timer->last_updated);
-	UINT64 elapsed_cycles =	mame_time_to_double(elapsed_time) *	timer->clockin;
+	INT64 elapsed_cycles =	mame_time_to_double(elapsed_time) *	timer->clockin;
 
-#if defined(_MSC_VER) && (_MSC_VER <= 1200)
-	/* casting unsigned __int64 to double is not supported on VC6 or before */
-	timer->last_updated	= add_mame_times(timer->last_updated,double_to_mame_time(((INT64) elapsed_cycles)/timer->clockin));
-#else
 	timer->last_updated	= add_mame_times(timer->last_updated,double_to_mame_time(elapsed_cycles/timer->clockin));
-#endif
 
 	simulate(timer,elapsed_cycles);
 }
@@ -727,19 +722,14 @@ void pit8253_reset(int which)
 static void freqcallback(int param)
 {
 	struct pit8253_timer *timer = get_timer(get_pit(param &	0x0F),(param >>	4) & 0x0F);
-	UINT64 cycles =	timer->cycles_to_freq;
+	INT64 cycles =	timer->cycles_to_freq;
 	double t;
 
 	LOG2(("pit8253: freqcallback(): pit %d, timer %d, %d cycles\n",param & 0xf,(param >> 4) & 0xf,(UINT32)cycles));
 
 	simulate(timer,cycles);
 
-#if defined(_MSC_VER) && (_MSC_VER <= 1200)
-	/* casting unsigned __int64 to double is not supported on VC6 or before */
-	t = ((INT64) cycles) / timer->clockin;
-#else
 	t = cycles / timer->clockin;
-#endif
 
 	timer->last_updated	= add_mame_times(timer->last_updated, double_to_mame_time(t));
 }
@@ -748,19 +738,14 @@ static void freqcallback(int param)
 static void outputcallback(int param)
 {
 	struct pit8253_timer *timer = get_timer(get_pit(param &	0x0F),(param >>	4) & 0x0F);
-	UINT64 cycles =	timer->cycles_to_output;
+	INT64 cycles =	timer->cycles_to_output;
 	double t;
 
 	LOG2(("pit8253: outputcallback(): pit %d, timer %d, %d cycles\n",param & 0xf,(param >> 4) & 0xf,(UINT32)cycles));
 
 	simulate(timer,cycles);
 
-#if defined(_MSC_VER) && (_MSC_VER <= 1200)
-	/* casting unsigned __int64 to double is not supported on VC6 or before */
-	t = ((INT64) cycles) / timer->clockin;
-#else
 	t = cycles / timer->clockin;
-#endif
 
 	timer->last_updated	= add_mame_times(timer->last_updated, double_to_mame_time(t));
 }

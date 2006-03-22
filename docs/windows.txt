@@ -562,6 +562,9 @@ Input device options
 	you will need to pause the game, or quit. The default is OFF
 	(-nomouse).
 
+	WinXP: -mouse is also used to enable lightguns.  This allows for multiple
+	independently tracking lightguns.
+
 -[no]joystick / -[no]joy
 
 	Controls whether or not MAME looks for joystick/gamepad controllers.
@@ -575,18 +578,28 @@ Input device options
 	-mouse together may produce strange results. The default is OFF
 	(-nolightgun).
 
+	WinXP: -lightgun is ignored.  Use -mouse instead.
+
 -[no]dual_lightgun / -[no]dual
 
 	Controls whether or not MAME attempts to track two lightguns connected
 	at the same time. This option requires -lightgun. The default is OFF
 	(-nodual_lightgun).
 
+	WinXP: -dual_lightgun is ignored.  Using -mouse will enable 2 or more
+	lightguns.
+
 -[no]offscreen_reload / -[no]reload
 
 	Controls whether or not MAME treats a second button input from a
 	lightgun as a reload signal. In this case, MAME will report the gun's
 	position as (0,0) with the trigger held, which is equivalent to an
-	offscreen reload. The default is OFF (-nooffscreen_reload).
+	offscreen reload. This is not needed for all lightgun games. Only
+	games that required you to shoot off screen need this.  And then only
+	if your gun does not support off screen reloads.
+	The default is OFF (-nooffscreen_reload).
+
+	WinXP: -offscreen_reload is valid to use.
 
 -[no]steadykey / -[no]steady
 

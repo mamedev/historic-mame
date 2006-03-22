@@ -552,7 +552,6 @@ RFJ-09 - PRG3   27C040
 */
 
 #include "driver.h"
-#include "cpuintrf.h"
 #include "machine/ds2404.h"
 #include "machine/eeprom.h"
 #include "machine/intelfsh.h"

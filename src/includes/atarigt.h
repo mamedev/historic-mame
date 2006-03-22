@@ -4,7 +4,7 @@
 
 *************************************************************************/
 
-/*----------- defined in vidhrdw/atarigt.c -----------*/
+/*----------- defined in drivers/atarigt.c -----------*/
 
 extern UINT8 atarigt_is_primrage;
 

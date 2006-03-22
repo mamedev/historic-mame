@@ -7,8 +7,6 @@
 
 **********************************************************************/
 
-#include <string.h>
-#include <stdio.h>
 #include "driver.h"
 #include "6821pia.h"
 

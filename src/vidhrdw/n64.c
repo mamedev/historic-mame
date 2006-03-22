@@ -233,7 +233,8 @@ static void texture_rectangle_16bit(TEX_RECTANGLE *rect)
 	UINT32 tb = tile[rect->tilenum].tmem;
 	UINT32 twidth = tile[rect->tilenum].line;
 
-	INT32 s, t;
+	INT32 s = 0;
+	INT32 t = 0;
 
 	x1 = rect->xh / 4;
 	x2 = rect->xl / 4;
@@ -568,7 +569,8 @@ static void texture_rectangle_32bit(TEX_RECTANGLE *rect)
 	UINT32 tb = tile[rect->tilenum].tmem;
 	UINT32 twidth = tile[rect->tilenum].line;
 
-	UINT32 s, t;
+	UINT32 s = 0;
+	UINT32 t = 0;
 
 	x1 = rect->xh / 4;
 	x2 = rect->xl / 4;

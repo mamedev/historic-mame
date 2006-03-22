@@ -6,8 +6,6 @@
 
 ***************************************************************************/
 
-#include <stdio.h>
-
 #include "driver.h"
 #include "sndhrdw/mcr.h"
 #include "sndhrdw/williams.h"

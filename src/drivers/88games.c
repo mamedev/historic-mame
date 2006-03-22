@@ -136,7 +136,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_RAM)	/* banked ROM */
-	AM_RANGE(0x1000, 0x1fff) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_swap_w) AM_BASE(&paletteram_1000)	/* banked ROM + palette RAM */
+	AM_RANGE(0x1000, 0x1fff) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_be_w) AM_BASE(&paletteram_1000)	/* banked ROM + palette RAM */
 	AM_RANGE(0x2000, 0x2fff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x3000, 0x37ff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
 	AM_RANGE(0x3800, 0x3fff) AM_WRITE(bankedram_w) AM_BASE(&ram)

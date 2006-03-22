@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "state.h"
 
 unsigned char *blktiger_txvideoram;
 

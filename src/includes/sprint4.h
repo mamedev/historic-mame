@@ -18,5 +18,6 @@ Atari Sprint 4 + Ultra Tank driver
 #define SPRINT4_CRASH_DATA      NODE_09
 #define SPRINT4_ATTRACT_EN      NODE_10
 
+/*----------- defined in sndhrdw/sprint4.c -----------*/
 
 extern struct discrete_sound_block sprint4_discrete_interface[];

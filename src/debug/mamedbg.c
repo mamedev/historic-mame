@@ -19,19 +19,14 @@
 
 ****************************************************************************/
 
-#include <stdio.h>
-
-#ifdef MAME_DEBUG
-#include <stdlib.h>
-#include <string.h>
 #include <stdarg.h>
 #include <ctype.h>
 #include "driver.h"
+#include "osdepend.h"
 #include "mamedbg.h"
 #include "debugger.h"
 #include "eainfo.h"
 #include "window.h"
-#include "osdepend.h"
 
 
 #ifndef INVALID
@@ -5405,5 +5400,3 @@ void mame_debug_hook(void)
 	}
 }
 #endif /* NEW_DEBUGGER */
-#endif /* MAME_DEBUG */
-

@@ -1,7 +1,7 @@
 /*
 Parallel Turn
 (c) Jaleco, 1984
-driver by Tomasz Slanina
+driver by Tomasz Slanina and Tatsuyuki Satoh
 
 Custom Jaleco chip is some kind of state machine
 used for calculate jump offsets.
@@ -168,17 +168,19 @@ VIDEO_UPDATE(pturn)
 	tilemap_draw(bitmap,cliprect,pturn_fgmap,0,0);
 }
 
+/*
 READ8_HANDLER (pturn_protection_r)
 {
-	return 0x66;
+    return 0x66;
 }
 
 READ8_HANDLER (pturn_protection2_r)
 {
-	return 0xfe;
+    return 0xfe;
 }
+*/
 
-WRITE8_HANDLER( pturn_videoram_w )
+static WRITE8_HANDLER( pturn_videoram_w )
 {
 	videoram[offset]=data;
 	tilemap_mark_tile_dirty(pturn_fgmap,offset);
@@ -242,10 +244,37 @@ static WRITE8_HANDLER(flip_w)
 	flip_screen_set(data);
 }
 
+
+static READ8_HANDLER (pturn_custom_r)
+{
+	int addr = (int)offset + 0xc800;
+
+	switch(addr)
+	{
+		case 0xc803:
+			// pc=4a4,4a7 : dummy read?
+			return 0x00;
+
+		case 0xCA73:
+			// pc=0x0123 , bit6 must be 0
+			// pc=0x0545 , +40 must be 0xfe (check at 0577)
+			return 0xbe;
+
+		//case 0xca00:
+		//  return 0x00; // pc=0x0131 for protect reset?
+
+		case 0xca74:
+			// pc=0x04db ,must be 66 (check at 016A)
+			return 0x66;
+	}
+	return 0x00;
+}
+
+
 static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_ROM
 	AM_RANGE(0xc000, 0xc7ff) AM_RAM
-	AM_RANGE(0xc800, 0xcfff) AM_NOP /* Custom jaleco chip */
+	AM_RANGE(0xc800, 0xcfff) AM_WRITENOP AM_READ(pturn_custom_r)
 
 	AM_RANGE(0xdfe0, 0xdfe0) AM_NOP
 
@@ -490,8 +519,10 @@ ROM_END
 
 static DRIVER_INIT(pturn)
 {
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc0dd, 0xc0dd, 0, 0, pturn_protection_r);
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc0db, 0xc0db, 0, 0, pturn_protection2_r);
+	/*
+    memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc0dd, 0xc0dd, 0, 0, pturn_protection_r);
+    memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc0db, 0xc0db, 0, 0, pturn_protection2_r);
+    */
 }
 
 GAME( 1984, pturn,  0, pturn,  pturn,  pturn, ROT90,   "Jaleco", "Parallel Turn",	GAME_IMPERFECT_COLORS )

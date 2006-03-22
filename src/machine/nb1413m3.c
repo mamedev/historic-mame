@@ -142,7 +142,7 @@ MACHINE_RESET( nb1413m3 )
 	nb1413m3_gfxradr_h = 0;
 	nb1413m3_gfxrombank = 0;
 	nb1413m3_inputport = 0xff;
-	nb1413m3_outcoin_flag = 1;
+	nb1413m3_outcoin_flag = 0;
 
 	nb1413m3_74ls193_counter = 0;
 
@@ -153,7 +153,6 @@ WRITE8_HANDLER( nb1413m3_nmi_clock_w )
 {
 	nb1413m3_nmi_clock = data;
 
-#if 1
 	switch (nb1413m3_type)
 	{
 		case NB1413M3_APPAREL:
@@ -182,21 +181,19 @@ WRITE8_HANDLER( nb1413m3_nmi_clock_w )
 		case NB1413M3_KYUHITO:
 			nb1413m3_nmi_clock -= 1;
 			break;
-	}
+#if 1
+		case NB1413M3_NIGHTLOV:
+			nb1413m3_nmi_enable = ((data & 0x08) >> 3);
+			nb1413m3_nmi_enable |= ((data & 0x01) ^ 0x01);
+			nb1413m3_nmi_clock -= 1;
+
+			nb1413m3_sndrombank1 = 1;
+			break;
 #endif
+	}
 
 	nb1413m3_74ls193_counter = ((nb1413m3_nmi_clock & 0xf0) >> 4);
 
-#if 0
-	// NightLove?p?cNMI???~?E???????T?E???hROM?o???N??????????????????(??)
-	if (nb1413m3_type == NB1413M3_NIGHTLOV)
-	{
-		nb1413m3_nmi_enable = ((data & 0x08) >> 3);
-		nb1413m3_nmi_enable |= ((data & 0x01) ^ 0x01);
-
-		nb1413m3_sndrombank1 = 1;
-	}
-#endif
 }
 
 INTERRUPT_GEN( nb1413m3_interrupt )
@@ -222,13 +219,13 @@ INTERRUPT_GEN( nb1413m3_interrupt )
 	cpunum_set_input_line(0, 0, HOLD_LINE);
 
 #if NB1413M3_DEBUG
-	ui_popup("NMI SW:%01X CLOCK:%02X COUNT:%03d", nb1413m3_nmi_enable, nb1413m3_nmi_clock, nb1413m3_nmi_count);
+	ui_popup("NMI SW:%01X CLOCK:%02X COUNT:%02X", nb1413m3_nmi_enable, nb1413m3_nmi_clock, nb1413m3_nmi_count);
 	nb1413m3_nmi_count = 0;
 #endif
 
-#if NB1413M3_CHEAT
-#include "nbmjchet.inc"
-#endif
+	#if NB1413M3_CHEAT
+	#include "nbmjchet.inc"
+	#endif
 #endif
 }
 
@@ -402,6 +399,7 @@ READ8_HANDLER( nb1413m3_inputport1_r )
 	switch (nb1413m3_type)
 	{
 		case NB1413M3_PASTELG:
+		case NB1413M3_THREEDS:
 		case NB1413M3_TAIWANMB:
 			switch ((nb1413m3_inputport ^ 0xff) & 0x1f)
 			{
@@ -410,7 +408,7 @@ READ8_HANDLER( nb1413m3_inputport1_r )
 				case 0x04:	return readinputport(6);
 				case 0x08:	return readinputport(7);
 				case 0x10:	return readinputport(8);
-				default:	return 0xff;
+				default:	return (readinputport(4) & readinputport(5) & readinputport(6) & readinputport(7) & readinputport(8));
 			}
 			break;
 		case NB1413M3_HYHOO:
@@ -434,7 +432,7 @@ READ8_HANDLER( nb1413m3_inputport1_r )
 					case 0x04:	return readinputport(5);
 					case 0x08:	return readinputport(6);
 					case 0x10:	return readinputport(7);
-					default:	return 0xff;
+					default:	return (readinputport(3) & readinputport(4) & readinputport(5) & readinputport(6) & readinputport(7));
 				}
 			}
 			else return readinputport(14);
@@ -451,7 +449,7 @@ READ8_HANDLER( nb1413m3_inputport1_r )
 				case 0x04:	return readinputport(5);
 				case 0x08:	return readinputport(6);
 				case 0x10:	return readinputport(7);
-				default:	return 0xff;
+				default:	return (readinputport(3) & readinputport(4) & readinputport(5) & readinputport(6) & readinputport(7));
 			}
 			break;
 	}
@@ -462,6 +460,7 @@ READ8_HANDLER( nb1413m3_inputport2_r )
 	switch (nb1413m3_type)
 	{
 		case NB1413M3_PASTELG:
+		case NB1413M3_THREEDS:
 		case NB1413M3_TAIWANMB:
 			switch ((nb1413m3_inputport ^ 0xff) & 0x1f)
 			{
@@ -470,7 +469,7 @@ READ8_HANDLER( nb1413m3_inputport2_r )
 				case 0x04:	return readinputport(11);
 				case 0x08:	return readinputport(12);
 				case 0x10:	return readinputport(13);
-				default:	return 0xff;
+				default:	return (readinputport(9) & readinputport(10) & readinputport(11) & readinputport(12) & readinputport(13));
 			}
 			break;
 		case NB1413M3_HYHOO:
@@ -494,7 +493,7 @@ READ8_HANDLER( nb1413m3_inputport2_r )
 					case 0x04:	return readinputport(10);
 					case 0x08:	return readinputport(11);
 					case 0x10:	return readinputport(12);
-					default:	return 0xff;
+					default:	return (readinputport(8) & readinputport(9) & readinputport(10) & readinputport(11) & readinputport(12));
 				}
 			}
 			else return readinputport(13);
@@ -511,7 +510,7 @@ READ8_HANDLER( nb1413m3_inputport2_r )
 				case 0x04:	return readinputport(10);
 				case 0x08:	return readinputport(11);
 				case 0x10:	return readinputport(12);
-				default:	return 0xff;
+				default:	return (readinputport(8) & readinputport(9) & readinputport(10) & readinputport(11) & readinputport(12));
 			}
 			break;
 	}
@@ -562,6 +561,7 @@ READ8_HANDLER( nb1413m3_dipsw1_r )
 		case NB1413M3_OTONANO:
 		case NB1413M3_MJCAMERA:
 		case NB1413M3_IDHIMITU:
+		case NB1413M3_KAGUYA2:
 			return (((readinputport(0) & 0x0f) << 4) | (readinputport(1) & 0x0f));
 			break;
 		case NB1413M3_SCANDAL:
@@ -610,6 +610,7 @@ READ8_HANDLER( nb1413m3_dipsw2_r )
 		case NB1413M3_OTONANO:
 		case NB1413M3_MJCAMERA:
 		case NB1413M3_IDHIMITU:
+		case NB1413M3_KAGUYA2:
 			return ((readinputport(0) & 0xf0) | ((readinputport(1) & 0xf0) >> 4));
 			break;
 		case NB1413M3_SCANDAL:
@@ -656,6 +657,8 @@ READ8_HANDLER( nb1413m3_dipsw3_h_r )
 
 WRITE8_HANDLER( nb1413m3_outcoin_w )
 {
+	static int counter = 0;
+
 	nb1413m3_outcoin_enable = (data & 0x04) >> 2;
 
 	switch (nb1413m3_type)
@@ -677,14 +680,20 @@ WRITE8_HANDLER( nb1413m3_outcoin_w )
 		case NB1413M3_FINALBNY:
 		case NB1413M3_LOVEHOUS:
 		case NB1413M3_MMAIKO:
-			if (nb1413m3_outcoin_enable) nb1413m3_outcoin_flag ^= 1;
-			else nb1413m3_outcoin_flag = 1;
+			if (nb1413m3_outcoin_enable)
+			{
+				if (counter++ == 2)
+				{
+					nb1413m3_outcoin_flag ^= 1;
+					counter = 0;
+				}
+			}
 			break;
 		default:
 			break;
 	}
 
-	set_led_status(2, (nb1413m3_outcoin_flag ^ 1));		// out coin
+	set_led_status(2, nb1413m3_outcoin_flag);		// out coin
 }
 
 WRITE8_HANDLER( nb1413m3_vcrctrl_w )

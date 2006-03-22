@@ -71,7 +71,7 @@ static WRITE8_HANDLER( bankedram_w )
 	else if (rambank == 1)
 	{
 		if (offset < 0x800)
-			paletteram_xxxxBBBBRRRRGGGG_w(offset,data);
+			paletteram_xxxxBBBBRRRRGGGG_le_w(offset,data);
 	}
 	else
 		cbasebal_scrollram_w(offset,data);

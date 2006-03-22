@@ -397,7 +397,7 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	/* arknoid2, extrmatn, plumppop and drtoppel have PROMs instead of RAM */
 	/* drtoppel writes here anyway! (maybe leftover from tests during development) */
 	/* so the handler is patched out in init_drtopple() */
-	AM_RANGE(0xf800, 0xfbff) AM_WRITE(paletteram_xRRRRRGGGGGBBBBB_w) AM_BASE(&paletteram)
+	AM_RANGE(0xf800, 0xfbff) AM_WRITE(paletteram_xRRRRRGGGGGBBBBB_le_w) AM_BASE(&paletteram)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( cpu0_type2, ADDRESS_SPACE_PROGRAM, 8 )
@@ -480,7 +480,7 @@ static ADDRESS_MAP_START( tnzsb_cpu1_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xd000, 0xdfff) AM_RAM
 	AM_RANGE(0xe000, 0xefff) AM_READWRITE(tnzs_sharedram_r, tnzs_sharedram_w)
 	AM_RANGE(0xf000, 0xf003) AM_READ(MRA8_RAM)
-	AM_RANGE(0xf000, 0xf3ff) AM_WRITE(paletteram_xRRRRRGGGGGBBBBB_w) AM_BASE(&paletteram)
+	AM_RANGE(0xf000, 0xf3ff) AM_WRITE(paletteram_xRRRRRGGGGGBBBBB_le_w) AM_BASE(&paletteram)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( kabukiz_cpu1_map, ADDRESS_SPACE_PROGRAM, 8 )
@@ -495,7 +495,7 @@ static ADDRESS_MAP_START( kabukiz_cpu1_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xc002, 0xc002) AM_READ(input_port_4_r)
 	AM_RANGE(0xd000, 0xdfff) AM_RAM
 	AM_RANGE(0xe000, 0xefff) AM_READWRITE(tnzs_sharedram_r, tnzs_sharedram_w)
-	AM_RANGE(0xf800, 0xfbff) AM_WRITE(paletteram_xRRRRRGGGGGBBBBB_w) AM_BASE(&paletteram)
+	AM_RANGE(0xf800, 0xfbff) AM_WRITE(paletteram_xRRRRRGGGGGBBBBB_le_w) AM_BASE(&paletteram)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( tnzsb_cpu2_map, ADDRESS_SPACE_PROGRAM, 8 )

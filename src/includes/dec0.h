@@ -1,3 +1,10 @@
+/*----------- defined in drivers/dec0.c -----------*/
+
+extern UINT16 *dec0_ram;
+extern UINT8 *robocop_shared_ram;
+
+/*----------- defined in vidhrdw/dec0.c -----------*/
+
 /* Video emulation definitions */
 VIDEO_START( dec0 );
 VIDEO_START( dec0_nodma );
@@ -32,7 +39,8 @@ READ8_HANDLER( dec0_pf3_data_8bit_r );
 WRITE8_HANDLER( dec0_pf3_data_8bit_w );
 WRITE8_HANDLER( dec0_pf3_control_8bit_w );
 
-/* Machine prototypes */
+/*----------- defined in machine/dec0.c -----------*/
+
 READ16_HANDLER( dec0_controls_r );
 READ16_HANDLER( dec0_rotary_r );
 READ16_HANDLER( midres_controls_r );
@@ -64,5 +72,3 @@ WRITE8_HANDLER( hippodrm_prot_w );
 READ8_HANDLER( hippodrm_shared_r );
 WRITE8_HANDLER( hippodrm_shared_w );
 
-extern UINT16 *dec0_ram;
-extern UINT8 *robocop_shared_ram;

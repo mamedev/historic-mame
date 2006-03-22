@@ -12,7 +12,7 @@
 #include "driver.h"
 #include "vidhrdw/konamiic.h"
 #include "machine/konamigx.h"
-#include "math.h"
+#include <math.h>
 
 
 static struct

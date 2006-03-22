@@ -13,7 +13,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "tilemap.h"
 #include "vidhrdw/crtc6845.h"
 #include "twincobr.h"
 

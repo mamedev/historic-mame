@@ -130,9 +130,10 @@
  *
  *************************************/
 
+typedef struct _analog_port_info analog_port_info;
 struct _analog_port_info
 {
-	struct _analog_port_info *next;	/* linked list */
+	analog_port_info *	next;		/* linked list */
 	input_port_entry *	port;		/* pointer to the input port referenced */
 	INT32				accum;		/* accumulated value (including relative adjustments) */
 	INT32				previous;	/* previous adjusted value */
@@ -149,18 +150,37 @@ struct _analog_port_info
 	UINT8				interpolate;/* should we do linear interpolation for mid-frame reads? */
 	UINT8				lastdigital;/* was the last modification caused by a digital form? */
 };
-typedef struct _analog_port_info analog_port_info;
 
 
+typedef struct _custom_port_info custom_port_info;
+struct _custom_port_info
+{
+	custom_port_info *	next;		/* linked list */
+	input_port_entry *	port;		/* pointer to the input port referenced */
+	UINT8				shift;		/* left shift to apply to the final result */
+};
+
+
+typedef struct _input_bit_info input_bit_info;
 struct _input_bit_info
 {
 	input_port_entry *	port;		/* port for this input */
 	UINT8				impulse;	/* counter for impulse controls */
 	UINT8				last;		/* were we pressed last time? */
 };
-typedef struct _input_bit_info input_bit_info;
 
 
+typedef struct _changed_callback_info changed_callback_info;
+struct _changed_callback_info
+{
+	changed_callback_info *next;	/* linked list */
+	UINT32				mask;		/* mask we care about */
+	void				(*callback)(void *, UINT32, UINT32); /* callback */
+	void *				param;		/* parameter */
+};
+
+
+typedef struct _input_port_info input_port_info;
 struct _input_port_info
 {
 	const char *		tag;		/* tag for this port */
@@ -170,12 +190,16 @@ struct _input_port_info
 	UINT32				digital;	/* value from digital inputs */
 	UINT32				vblank;		/* value of all IPT_VBLANK bits */
 	UINT32				playback;	/* current playback override */
+	UINT8				has_custom;	/* do we have any custom ports? */
 	input_bit_info 		bit[MAX_BITS_PER_PORT]; /* info about each bit in the port */
 	analog_port_info *	analoginfo;	/* pointer to linked list of analog port info */
+	custom_port_info *	custominfo;	/* pointer to linked list of custom port info */
+	changed_callback_info *change_notify;/* list of people to notify if things change */
+	UINT32				changed_last_value;
 };
-typedef struct _input_port_info input_port_info;
 
 
+typedef struct _digital_joystick_info digital_joystick_info;
 struct _digital_joystick_info
 {
 	input_port_entry *	port[4];	/* port for up,down,left,right respectively */
@@ -184,7 +208,6 @@ struct _digital_joystick_info
 	UINT8				current4way;/* current 4-way value */
 	UINT8				previous;	/* previous value */
 };
-typedef struct _digital_joystick_info digital_joystick_info;
 
 
 struct _input_port_init_params
@@ -1047,8 +1070,27 @@ static void input_port_postload(void)
 			port_info[portnum].bit[bitnum].impulse = 0;
 			port_info[portnum].bit[bitnum++].last = 0;
 
+			/* if this is a custom input, add it to the list */
+			if (port->custom != NULL)
+			{
+				custom_port_info *info;
+
+				/* allocate memory */
+				info = auto_malloc(sizeof(*info));
+				memset(info, 0, sizeof(*info));
+
+				/* fill in the data */
+				info->port = port;
+				for (mask = port->mask; !(mask & 1); mask >>= 1)
+					info->shift++;
+
+				/* hook in the list */
+				info->next = port_info[portnum].custominfo;
+				port_info[portnum].custominfo = info;
+			}
+
 			/* if this is an analog port, create an info struct for it */
-			if (IS_ANALOG(port))
+			else if (IS_ANALOG(port))
 			{
 				analog_port_info *info;
 
@@ -1647,6 +1689,69 @@ input_port_entry *input_port_allocate(void (*construct_ipt)(input_port_init_para
 }
 
 
+void input_port_parse_diplocation(input_port_entry *in, const char *location)
+{
+	char *curname = NULL, tempbuf[100];
+	const char *entry;
+	int index, val, bits;
+	UINT32 temp;
+
+	/* if nothing present, bail */
+	if (!location)
+		return;
+	memset(in->diploc, 0, sizeof(in->diploc));
+
+	/* parse the string */
+	for (index = 0, entry = location; *entry && index < ARRAY_LENGTH(in->diploc); index++)
+	{
+		const char *comma, *colon, *number;
+
+		/* find the end of this entry */
+		comma = strchr(entry, ',');
+		if (comma == NULL)
+			comma = entry + strlen(entry);
+
+		/* extract it to tempbuf */
+		strncpy(tempbuf, entry, comma - entry);
+		tempbuf[comma - entry] = 0;
+
+		/* first extract the switch name if present */
+		number = tempbuf;
+		colon = strchr(tempbuf, ':');
+		if (colon != NULL)
+		{
+			curname = auto_malloc(colon - tempbuf + 1);
+			strncpy(curname, tempbuf, colon - tempbuf);
+			tempbuf[colon - tempbuf] = 0;
+			number = colon + 1;
+		}
+
+		/* if we don't have a name by now, we're screwed */
+		if (curname == NULL)
+			fatalerror("Switch location '%s' missing switch name!", location);
+
+		/* now scan the switch number */
+		if (sscanf(number, "%d", &val) != 1)
+			fatalerror("Switch location '%s' has invalid format!", location);
+
+		/* fill the entry and bump the index */
+		in->diploc[index].swname = curname;
+		in->diploc[index].swnum = val;
+
+		/* advance to the next item */
+		entry = comma;
+		if (*entry)
+			entry++;
+	}
+
+	/* then verify the number of bits in the mask matches */
+	for (bits = 0, temp = in->mask; temp && bits < 32; bits++)
+		temp &= temp - 1;
+	if (bits != index)
+		fatalerror("Switch location '%s' does not describe enough bits for mask %X\n", location, in->mask);
+}
+
+
 
 /*************************************
  *
@@ -2152,6 +2257,23 @@ profiler_mark(PROFILER_INPUT);
 	inputx_update();
 #endif
 
+	/* call changed handlers */
+	for (portnum = 0; portnum < MAX_INPUT_PORTS; portnum++)
+		if (port_info[portnum].change_notify != NULL)
+		{
+			changed_callback_info *cbinfo;
+			UINT32 newvalue = readinputport(portnum);
+			UINT32 oldvalue = port_info[portnum].changed_last_value;
+			UINT32 delta = newvalue ^ oldvalue;
+
+			/* call all the callbacks whose mask matches the requested mask */
+			for (cbinfo = port_info[portnum].change_notify; cbinfo; cbinfo = cbinfo->next)
+				if (delta & cbinfo->mask)
+					(*cbinfo->callback)(cbinfo->param, oldvalue & cbinfo->mask, newvalue & cbinfo->mask);
+
+			port_info[portnum].changed_last_value = newvalue;
+		}
+
 	/* handle playback/record */
 	for (portnum = 0; portnum < MAX_INPUT_PORTS; portnum++)
 	{
@@ -2472,10 +2594,21 @@ profiler_mark(PROFILER_END);
 UINT32 readinputport(int port)
 {
 	input_port_info *portinfo = &port_info[port];
+	custom_port_info *custom;
 	UINT32 result;
 
 	/* interpolate analog values */
 	interpolate_analog_port(port);
+
+	/* update custom values */
+	for (custom = portinfo->custominfo; custom; custom = custom->next)
+		if (input_port_condition(custom->port))
+		{
+			/* replace the bits with bits from the custom routine */
+			input_port_entry *port = custom->port;
+			portinfo->digital &= ~port->mask;
+			portinfo->digital |= ((*port->custom)(port->custom_param) << custom->shift) & port->mask;
+		}
 
 	/* compute the current result: default value XOR the digital, merged with the analog */
 	result = ((portinfo->defvalue ^ portinfo->digital) & ~portinfo->analogmask) | portinfo->analog;
@@ -2541,100 +2674,23 @@ void input_port_set_digital_value(int portnum, UINT32 value, UINT32 mask)
 
 /*************************************
  *
- *  Port reading helpers
+ *  Input port callbacks
  *
  *************************************/
 
-READ8_HANDLER( input_port_0_r ) { return readinputport(0); }
-READ8_HANDLER( input_port_1_r ) { return readinputport(1); }
-READ8_HANDLER( input_port_2_r ) { return readinputport(2); }
-READ8_HANDLER( input_port_3_r ) { return readinputport(3); }
-READ8_HANDLER( input_port_4_r ) { return readinputport(4); }
-READ8_HANDLER( input_port_5_r ) { return readinputport(5); }
-READ8_HANDLER( input_port_6_r ) { return readinputport(6); }
-READ8_HANDLER( input_port_7_r ) { return readinputport(7); }
-READ8_HANDLER( input_port_8_r ) { return readinputport(8); }
-READ8_HANDLER( input_port_9_r ) { return readinputport(9); }
-READ8_HANDLER( input_port_10_r ) { return readinputport(10); }
-READ8_HANDLER( input_port_11_r ) { return readinputport(11); }
-READ8_HANDLER( input_port_12_r ) { return readinputport(12); }
-READ8_HANDLER( input_port_13_r ) { return readinputport(13); }
-READ8_HANDLER( input_port_14_r ) { return readinputport(14); }
-READ8_HANDLER( input_port_15_r ) { return readinputport(15); }
-READ8_HANDLER( input_port_16_r ) { return readinputport(16); }
-READ8_HANDLER( input_port_17_r ) { return readinputport(17); }
-READ8_HANDLER( input_port_18_r ) { return readinputport(18); }
-READ8_HANDLER( input_port_19_r ) { return readinputport(19); }
-READ8_HANDLER( input_port_20_r ) { return readinputport(20); }
-READ8_HANDLER( input_port_21_r ) { return readinputport(21); }
-READ8_HANDLER( input_port_22_r ) { return readinputport(22); }
-READ8_HANDLER( input_port_23_r ) { return readinputport(23); }
-READ8_HANDLER( input_port_24_r ) { return readinputport(24); }
-READ8_HANDLER( input_port_25_r ) { return readinputport(25); }
-READ8_HANDLER( input_port_26_r ) { return readinputport(26); }
-READ8_HANDLER( input_port_27_r ) { return readinputport(27); }
-READ8_HANDLER( input_port_28_r ) { return readinputport(28); }
-READ8_HANDLER( input_port_29_r ) { return readinputport(29); }
+void input_port_set_changed_callback(int port, UINT32 mask, void (*callback)(void *, UINT32, UINT32), void *param)
+{
+	input_port_info *portinfo = &port_info[port];
+	changed_callback_info *cbinfo;
 
-READ16_HANDLER( input_port_0_word_r ) { return readinputport(0); }
-READ16_HANDLER( input_port_1_word_r ) { return readinputport(1); }
-READ16_HANDLER( input_port_2_word_r ) { return readinputport(2); }
-READ16_HANDLER( input_port_3_word_r ) { return readinputport(3); }
-READ16_HANDLER( input_port_4_word_r ) { return readinputport(4); }
-READ16_HANDLER( input_port_5_word_r ) { return readinputport(5); }
-READ16_HANDLER( input_port_6_word_r ) { return readinputport(6); }
-READ16_HANDLER( input_port_7_word_r ) { return readinputport(7); }
-READ16_HANDLER( input_port_8_word_r ) { return readinputport(8); }
-READ16_HANDLER( input_port_9_word_r ) { return readinputport(9); }
-READ16_HANDLER( input_port_10_word_r ) { return readinputport(10); }
-READ16_HANDLER( input_port_11_word_r ) { return readinputport(11); }
-READ16_HANDLER( input_port_12_word_r ) { return readinputport(12); }
-READ16_HANDLER( input_port_13_word_r ) { return readinputport(13); }
-READ16_HANDLER( input_port_14_word_r ) { return readinputport(14); }
-READ16_HANDLER( input_port_15_word_r ) { return readinputport(15); }
-READ16_HANDLER( input_port_16_word_r ) { return readinputport(16); }
-READ16_HANDLER( input_port_17_word_r ) { return readinputport(17); }
-READ16_HANDLER( input_port_18_word_r ) { return readinputport(18); }
-READ16_HANDLER( input_port_19_word_r ) { return readinputport(19); }
-READ16_HANDLER( input_port_20_word_r ) { return readinputport(20); }
-READ16_HANDLER( input_port_21_word_r ) { return readinputport(21); }
-READ16_HANDLER( input_port_22_word_r ) { return readinputport(22); }
-READ16_HANDLER( input_port_23_word_r ) { return readinputport(23); }
-READ16_HANDLER( input_port_24_word_r ) { return readinputport(24); }
-READ16_HANDLER( input_port_25_word_r ) { return readinputport(25); }
-READ16_HANDLER( input_port_26_word_r ) { return readinputport(26); }
-READ16_HANDLER( input_port_27_word_r ) { return readinputport(27); }
-READ16_HANDLER( input_port_28_word_r ) { return readinputport(28); }
-READ16_HANDLER( input_port_29_word_r ) { return readinputport(29); }
+	assert_always(mame_get_phase() == MAME_PHASE_INIT, "Can only call input_port_set_changed_callback() at init time!");
+	assert_always((port >= 0) && (port < MAX_INPUT_PORTS), "Invalid port number passed to input_port_set_changed_callback()!");
 
-READ32_HANDLER( input_port_0_dword_r ) { return readinputport(0); }
-READ32_HANDLER( input_port_1_dword_r ) { return readinputport(1); }
-READ32_HANDLER( input_port_2_dword_r ) { return readinputport(2); }
-READ32_HANDLER( input_port_3_dword_r ) { return readinputport(3); }
-READ32_HANDLER( input_port_4_dword_r ) { return readinputport(4); }
-READ32_HANDLER( input_port_5_dword_r ) { return readinputport(5); }
-READ32_HANDLER( input_port_6_dword_r ) { return readinputport(6); }
-READ32_HANDLER( input_port_7_dword_r ) { return readinputport(7); }
-READ32_HANDLER( input_port_8_dword_r ) { return readinputport(8); }
-READ32_HANDLER( input_port_9_dword_r ) { return readinputport(9); }
-READ32_HANDLER( input_port_10_dword_r ) { return readinputport(10); }
-READ32_HANDLER( input_port_11_dword_r ) { return readinputport(11); }
-READ32_HANDLER( input_port_12_dword_r ) { return readinputport(12); }
-READ32_HANDLER( input_port_13_dword_r ) { return readinputport(13); }
-READ32_HANDLER( input_port_14_dword_r ) { return readinputport(14); }
-READ32_HANDLER( input_port_15_dword_r ) { return readinputport(15); }
-READ32_HANDLER( input_port_16_dword_r ) { return readinputport(16); }
-READ32_HANDLER( input_port_17_dword_r ) { return readinputport(17); }
-READ32_HANDLER( input_port_18_dword_r ) { return readinputport(18); }
-READ32_HANDLER( input_port_19_dword_r ) { return readinputport(19); }
-READ32_HANDLER( input_port_20_dword_r ) { return readinputport(20); }
-READ32_HANDLER( input_port_21_dword_r ) { return readinputport(21); }
-READ32_HANDLER( input_port_22_dword_r ) { return readinputport(22); }
-READ32_HANDLER( input_port_23_dword_r ) { return readinputport(23); }
-READ32_HANDLER( input_port_24_dword_r ) { return readinputport(24); }
-READ32_HANDLER( input_port_25_dword_r ) { return readinputport(25); }
-READ32_HANDLER( input_port_26_dword_r ) { return readinputport(26); }
-READ32_HANDLER( input_port_27_dword_r ) { return readinputport(27); }
-READ32_HANDLER( input_port_28_dword_r ) { return readinputport(28); }
-READ32_HANDLER( input_port_29_dword_r ) { return readinputport(29); }
+	cbinfo = auto_malloc(sizeof(*cbinfo));
+	cbinfo->next = portinfo->change_notify;
+	cbinfo->mask = mask;
+	cbinfo->callback = callback;
+	cbinfo->param = param;
 
+	portinfo->change_notify = cbinfo;
+}

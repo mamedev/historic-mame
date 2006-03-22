@@ -1889,9 +1889,9 @@ static int draw_one_sprite(UINT16 *data, int xoffs, int yoffs, const rectangle *
 		yacc &= 0xffff;
 	}
 
-	/* if we had an inline indirect palette, we skip two entries */
+	/* if we had an enabled inline indirect palette, we skip two entries */
 bail:
-	return indlocal ? 2 : 0;
+	return (indirect && indlocal) ? 2 : 0;
 }
 
 

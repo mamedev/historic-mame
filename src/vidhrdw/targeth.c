@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "tilemap.h"
 
 UINT16 *targeth_spriteram;
 UINT16 *targeth_vregs;

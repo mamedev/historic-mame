@@ -1,9 +1,10 @@
 /***************************************************************************
 
+    Cave hardware
 
 ***************************************************************************/
 
-/* Variables defined in vidhrdw */
+/*----------- defined in vidhrdw/cave.c -----------*/
 
 extern int cave_spritetype;
 extern int cave_kludge;
@@ -14,8 +15,6 @@ extern UINT16 *cave_vram_0, *cave_vctrl_0;
 extern UINT16 *cave_vram_1, *cave_vctrl_1;
 extern UINT16 *cave_vram_2, *cave_vctrl_2;
 extern UINT16 *cave_vram_3, *cave_vctrl_3;
-
-/* Functions defined in vidhrdw */
 
 WRITE16_HANDLER( cave_vram_0_w );
 WRITE16_HANDLER( cave_vram_1_w );

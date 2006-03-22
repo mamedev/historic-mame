@@ -10,7 +10,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "tilemap.h"
 
 UINT16 *thoop2_vregs;
 UINT16 *thoop2_videoram;

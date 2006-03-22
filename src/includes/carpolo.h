@@ -6,7 +6,7 @@
 
 ****************************************************************************/
 
-/* defined in machine/carpolo.c */
+/*----------- defined in machine/carpolo.c -----------*/
 
 MACHINE_RESET( carpolo );
 
@@ -36,7 +36,7 @@ void carpolo_generate_car_ball_interrupt(int car, int car_x, int car_y);
 void carpolo_generate_car_border_interrupt(int car, int horizontal_border);
 
 
-/* defined in vidhrdw/carpolo.c */
+/*----------- defined in vidhrdw/carpolo.c -----------*/
 
 extern UINT8 *carpolo_alpharam;
 extern UINT8 *carpolo_spriteram;

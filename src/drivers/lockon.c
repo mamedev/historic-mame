@@ -20,9 +20,7 @@ o Layer mixing
 =====================================================================*/
 
 #include "driver.h"
-#include "inptport.h"
 #include "sound/2203intf.h"
-#include <stdio.h>
 
 static UINT8 *lockon_vram0;
 static UINT8 *lockon_vram1;

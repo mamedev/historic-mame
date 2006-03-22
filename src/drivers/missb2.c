@@ -143,7 +143,7 @@ INLINE void bg_changecolor_RRRRGGGGBBBBxxxx(pen_t color,int data)
 	palette_set_color(color+256,r,g,b);
 }
 
-static WRITE8_HANDLER( bg_paletteram_RRRRGGGGBBBBxxxx_swap_w )
+static WRITE8_HANDLER( bg_paletteram_RRRRGGGGBBBBxxxx_be_w )
 {
 	bg_paletteram[offset] = data;
 	bg_changecolor_RRRRGGGGBBBBxxxx(offset / 2,bg_paletteram[offset | 1] | (bg_paletteram[offset & ~1] << 8));
@@ -167,7 +167,7 @@ static ADDRESS_MAP_START( master_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xc000, 0xdcff) AM_RAM AM_BASE(&videoram) AM_SIZE(&videoram_size)
 	AM_RANGE(0xdd00, 0xdfff) AM_RAM AM_BASE(&bublbobl_objectram) AM_SIZE(&bublbobl_objectram_size)
 	AM_RANGE(0xe000, 0xf7ff) AM_RAM AM_SHARE(1)
-	AM_RANGE(0xf800, 0xf9ff) AM_RAM AM_WRITE(paletteram_RRRRGGGGBBBBxxxx_swap_w) AM_BASE(&paletteram)
+	AM_RANGE(0xf800, 0xf9ff) AM_RAM AM_WRITE(paletteram_RRRRGGGGBBBBxxxx_be_w) AM_BASE(&paletteram)
 	AM_RANGE(0xfa00, 0xfa00) AM_WRITE(bublbobl_sound_command_w)
 	AM_RANGE(0xfa03, 0xfa03) AM_WRITENOP // sound cpu reset
 	AM_RANGE(0xfa80, 0xfa80) AM_WRITENOP
@@ -188,7 +188,7 @@ static ADDRESS_MAP_START( slave_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_ROM
 	AM_RANGE(0x9000, 0xafff) AM_ROMBANK(2)	// ROM data for the background palette ram
 	AM_RANGE(0xb000, 0xb1ff) AM_ROM			// banked ???
-	AM_RANGE(0xc000, 0xc1ff) AM_RAM AM_WRITE(bg_paletteram_RRRRGGGGBBBBxxxx_swap_w) AM_BASE(&bg_paletteram)
+	AM_RANGE(0xc000, 0xc1ff) AM_RAM AM_WRITE(bg_paletteram_RRRRGGGGBBBBxxxx_be_w) AM_BASE(&bg_paletteram)
 	AM_RANGE(0xc800, 0xcfff) AM_RAM			// main ???
 	AM_RANGE(0xd000, 0xd000) AM_WRITE(missb2_bg_bank_w)
 	AM_RANGE(0xd002, 0xd002) AM_WRITENOP

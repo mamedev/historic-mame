@@ -235,7 +235,7 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0xdfff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(MWA8_RAM)
 
-	AM_RANGE(0xe800, 0xefff) AM_WRITE(paletteram_xxxxRRRRGGGGBBBB_w) AM_BASE(&paletteram)
+	AM_RANGE(0xe800, 0xefff) AM_WRITE(paletteram_xxxxRRRRGGGGBBBB_le_w) AM_BASE(&paletteram)
 
 //AM_RANGE(0xf400, 0xf43f) AM_WRITE(msisaac_fg_colorram_w) AM_BASE(&colorram)
 

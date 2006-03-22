@@ -1,15 +1,13 @@
-/* Variables needed by vidhrdw: */
+/*----------- defined in drivers/unico.c -----------*/
 
 extern int unico_has_lightgun;
 
-/* Variables defined in vidhrdw: */
+/*----------- defined in vidhrdw/unico.c -----------*/
 
 extern UINT16 *unico_vram_0,   *unico_scrollx_0, *unico_scrolly_0;
 extern UINT16 *unico_vram_1,   *unico_scrollx_1, *unico_scrolly_1;
 extern UINT16 *unico_vram_2,   *unico_scrollx_2, *unico_scrolly_2;
 extern UINT32 *unico_vram32_0, *unico_vram32_1, *unico_vram32_2, *unico_scroll32;
-
-/* Functions defined in vidhrdw: */
 
 WRITE16_HANDLER( unico_vram_0_w );
 WRITE16_HANDLER( unico_vram_1_w );

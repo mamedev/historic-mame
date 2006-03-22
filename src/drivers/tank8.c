@@ -4,9 +4,9 @@ Atari Tank 8 driver
 
 ***************************************************************************/
 
+#include <time.h>
 #include "driver.h"
 #include "tank8.h"
-#include "time.h"
 #include "sound/discrete.h"
 
 extern VIDEO_EOF( tank8 );

@@ -140,6 +140,7 @@ Rowscroll style:
 ***************************************************************************/
 
 #include "driver.h"
+#include "deco16ic.h"
 
 UINT16 *deco16_pf1_data,*deco16_pf2_data;
 UINT16 *deco16_pf3_data,*deco16_pf4_data;

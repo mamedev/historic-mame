@@ -50,7 +50,7 @@ static ADDRESS_MAP_START( ajax_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x01c0) AM_WRITE(ajax_ls138_f10_w)			/* bankswitch + sound command + FIRQ command */
 	AM_RANGE(0x0800, 0x0807) AM_WRITE(K051937_w)					/* sprite control registers */
 	AM_RANGE(0x0c00, 0x0fff) AM_WRITE(K051960_w)					/* sprite RAM 2128SL at J7 */
-	AM_RANGE(0x1000, 0x1fff) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_swap_w) AM_BASE(&paletteram)/* palette */
+	AM_RANGE(0x1000, 0x1fff) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_be_w) AM_BASE(&paletteram)/* palette */
 	AM_RANGE(0x2000, 0x3fff) AM_WRITE(ajax_sharedram_w)			/* shared RAM with the 6809 */
 	AM_RANGE(0x4000, 0x5fff) AM_WRITE(MWA8_RAM)					/* RAM 6264L at K10 */
 	AM_RANGE(0x6000, 0x7fff) AM_WRITE(MWA8_ROM)					/* banked ROM */

@@ -1,7 +1,5 @@
 #include "driver.h"
 #include "vidhrdw/segaic24.h"
-
-#include <stdlib.h>
 #include <math.h>
 
 

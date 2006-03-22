@@ -117,7 +117,7 @@ static ADDRESS_MAP_START( sengokmj_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0c800, 0x0cfff) AM_RAM AM_WRITE(sengokmj_fgvram_w) AM_BASE(&sengokmj_fgvram)
 	AM_RANGE(0x0d000, 0x0d7ff) AM_RAM AM_WRITE(sengokmj_mdvram_w) AM_BASE(&sengokmj_mdvram)
 	AM_RANGE(0x0d800, 0x0e7ff) AM_RAM AM_WRITE(sengokmj_txvram_w) AM_BASE(&sengokmj_txvram)
-	AM_RANGE(0x0e800, 0x0f7ff) AM_RAM AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_w) AM_BASE(&paletteram)
+	AM_RANGE(0x0e800, 0x0f7ff) AM_RAM AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_le_w) AM_BASE(&paletteram)
 	AM_RANGE(0x0f800, 0x0ffff) AM_RAM AM_BASE(&spriteram)
 	AM_RANGE(0xc0000, 0xfffff) AM_ROM
 ADDRESS_MAP_END

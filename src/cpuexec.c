@@ -78,6 +78,7 @@ enum
  *
  *************************************/
 
+typedef struct _cpuexec_data cpuexec_data;
 struct _cpuexec_data
 {
 	UINT8	saveable;				/* true if saveable */
@@ -103,7 +104,6 @@ struct _cpuexec_data
 	void *	timedint_timer;			/* reference to this CPU's timer */
 	mame_time timedint_period; 		/* timing period of the timed interrupt */
 };
-typedef struct _cpuexec_data cpuexec_data;
 
 
 
@@ -408,7 +408,7 @@ static void watchdog_setup(int alloc_new)
  *
  *************************************/
 
-static void watchdog_reset(void)
+void watchdog_reset(void)
 {
 	if (watchdog_counter == WATCHDOG_IS_TIMER_BASED)
 	{
@@ -449,53 +449,6 @@ void watchdog_enable(int enable)
 		watchdog_counter = WATCHDOG_IS_BEING_STARTED;
 		watchdog_setup(FALSE);
 	}
-}
-
-
-
-/*************************************
- *
- *  Read/write handlers for watchdog
- *  reset
- *
- *************************************/
-
-WRITE8_HANDLER( watchdog_reset_w )
-{
-	watchdog_reset();
-}
-
-
-READ8_HANDLER( watchdog_reset_r )
-{
-	watchdog_reset();
-	return 0xff;
-}
-
-
-WRITE16_HANDLER( watchdog_reset16_w )
-{
-	watchdog_reset();
-}
-
-
-READ16_HANDLER( watchdog_reset16_r )
-{
-	watchdog_reset();
-	return 0xffff;
-}
-
-
-WRITE32_HANDLER( watchdog_reset32_w )
-{
-	watchdog_reset();
-}
-
-
-READ32_HANDLER( watchdog_reset32_r )
-{
-	watchdog_reset();
-	return 0xffffffff;
 }
 
 

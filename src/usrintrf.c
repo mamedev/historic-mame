@@ -70,6 +70,22 @@ enum
 
 /*************************************
  *
+ *  Type definitions
+ *
+ *************************************/
+
+typedef struct _input_item_data input_item_data;
+struct _input_item_data
+{
+	input_seq *		seq;
+	UINT16 			sortorder;
+	UINT8 			digital;
+};
+
+
+
+/*************************************
+ *
  *  Macros
  *
  *************************************/
@@ -1683,7 +1699,7 @@ static UINT32 menu_default_input(UINT32 state)
  *
  *************************************/
 
-INLINE void game_input_menu_add_item(ui_menu_item *item, const char *format, input_port_entry *in, int which)
+INLINE void game_input_menu_add_item(ui_menu_item *item, const char *format, input_port_entry *in, void *ref, int which)
 {
 	/* set the item text using the formatting string provided */
 	item->text = &menu_string_pool[menu_string_pool_offset];
@@ -1697,6 +1713,27 @@ INLINE void game_input_menu_add_item(ui_menu_item *item, const char *format, inp
 	/* invert if different from the default */
 	if (seq_cmp(input_port_seq(in, which), input_port_default_seq(in->type, in->player, which)))
 		item->flags |= MENU_FLAG_INVERT;
+
+	/* keep the sequence pointer as a ref and OR in our extra flags */
+	item->ref = ref;
+}
+
+
+INLINE UINT16 compute_port_sort_order(const input_port_entry *in)
+{
+	if (in->type >= IPT_START1 && in->type <= __ipt_analog_end)
+		return (in->type << 2) | (in->player << 12);
+	return in->type | 0xf000;
+}
+
+
+static int compare_game_inputs(const void *i1, const void *i2)
+{
+	const ui_menu_item *item1 = i1;
+	const ui_menu_item *item2 = i2;
+	const input_item_data *data1 = item1->ref;
+	const input_item_data *data2 = item2->ref;
+	return (data1->sortorder < data2->sortorder) ? -1 : (data1->sortorder > data2->sortorder) ? 1 : 0;
 }
 
 
@@ -1704,9 +1741,9 @@ static UINT32 menu_game_input(UINT32 state)
 {
 	static const input_seq default_seq = SEQ_DEF_1(CODE_DEFAULT);
 
-	ui_menu_item item_list[MAX_INPUT_PORTS * MAX_BITS_PER_PORT];
-	input_seq *selected_seq = NULL;
-	UINT8 selected_is_analog = FALSE;
+	ui_menu_item item_list[MAX_INPUT_PORTS * MAX_BITS_PER_PORT / 2];
+	input_item_data item_data[MAX_INPUT_PORTS * MAX_BITS_PER_PORT / 2];
+	input_item_data *selected_item_data;
 	int selected = state & 0x3fff;
 	int record_next = (state >> 14) & 1;
 	int polling = (state >> 15) & 1;
@@ -1730,30 +1767,38 @@ static UINT32 menu_game_input(UINT32 state)
 			/* if not analog, just add a standard entry for this item */
 			if (!port_type_is_analog(in->type))
 			{
-				if (menu_items == selected)
-					selected_seq = &in->seq;
-				game_input_menu_add_item(&item_list[menu_items++], "%s", in, SEQ_TYPE_STANDARD);
+				item_data[menu_items].seq = &in->seq;
+				item_data[menu_items].sortorder = compute_port_sort_order(in);
+				item_data[menu_items].digital = TRUE;
+				game_input_menu_add_item(&item_list[menu_items], "%s", in, &item_data[menu_items], SEQ_TYPE_STANDARD);
+				menu_items++;
 			}
 
 			/* if we are analog, add three items */
 			else
 			{
-				if (menu_items == selected)
-				{
-					selected_seq = &in->seq;
-					selected_is_analog = TRUE;
-				}
-				game_input_menu_add_item(&item_list[menu_items++], "%s Analog", in, SEQ_TYPE_STANDARD);
+				item_data[menu_items].seq = &in->seq;
+				item_data[menu_items].sortorder = compute_port_sort_order(in);
+				item_data[menu_items].digital = FALSE;
+				game_input_menu_add_item(&item_list[menu_items], "%s Analog", in, &item_data[menu_items], SEQ_TYPE_STANDARD);
+				menu_items++;
 
-				if (menu_items == selected)
-					selected_seq = &in->analog.decseq;
-				game_input_menu_add_item(&item_list[menu_items++], "%s Dec", in, SEQ_TYPE_DECREMENT);
+				item_data[menu_items].seq = &in->analog.decseq;
+				item_data[menu_items].sortorder = compute_port_sort_order(in) | 1;
+				item_data[menu_items].digital = TRUE;
+				game_input_menu_add_item(&item_list[menu_items], "%s Dec", in, &item_data[menu_items], SEQ_TYPE_DECREMENT);
+				menu_items++;
 
-				if (menu_items == selected)
-					selected_seq = &in->analog.incseq;
-				game_input_menu_add_item(&item_list[menu_items++], "%s Inc", in, SEQ_TYPE_INCREMENT);
+				item_data[menu_items].seq = &in->analog.incseq;
+				item_data[menu_items].sortorder = compute_port_sort_order(in) | 2;
+				item_data[menu_items].digital = TRUE;
+				game_input_menu_add_item(&item_list[menu_items], "%s Inc", in, &item_data[menu_items], SEQ_TYPE_INCREMENT);
+				menu_items++;
 			}
 		}
+
+	/* sort the list canonically */
+	qsort(item_list, menu_items, sizeof(item_list[0]), compare_game_inputs);
 
 	/* if we're polling, just put an empty entry and arrows for the subitem */
 	if (polling)
@@ -1769,10 +1814,11 @@ static UINT32 menu_game_input(UINT32 state)
 	ui_draw_menu(item_list, menu_items, selected);
 
 	/* if we're polling, read the sequence */
+	selected_item_data = item_list[selected].ref;
 	if (polling)
 	{
-		if (input_menu_update_polling(selected_seq, &record_next, &polling))
-			input_menu_toggle_none_default(selected_seq, &starting_seq, &default_seq);
+		if (input_menu_update_polling(selected_item_data->seq, &record_next, &polling))
+			input_menu_toggle_none_default(selected_item_data->seq, &starting_seq, &default_seq);
 	}
 
 	/* otherwise, handle the keys */
@@ -1787,15 +1833,15 @@ static UINT32 menu_game_input(UINT32 state)
 		/* if an item was selected, start polling on it */
 		if (input_ui_pressed(IPT_UI_SELECT))
 		{
-			seq_read_async_start(selected_is_analog);
-			seq_copy(&starting_seq, selected_seq);
+			seq_read_async_start(!selected_item_data->digital);
+			seq_copy(&starting_seq, selected_item_data->seq);
 			polling = TRUE;
 		}
 
 		/* if the clear key was pressed, reset the selected item */
 		if (input_ui_pressed(IPT_UI_CLEAR))
 		{
-			input_menu_toggle_none_default(selected_seq, selected_seq, &default_seq);
+			input_menu_toggle_none_default(selected_item_data->seq, selected_item_data->seq, &default_seq);
 			record_next = FALSE;
 		}
 
@@ -1816,7 +1862,7 @@ static UINT32 menu_game_input(UINT32 state)
  *
  *************************************/
 
-INLINE void switch_menu_add_item(ui_menu_item *item, const input_port_entry *in, int switch_entry)
+INLINE void switch_menu_add_item(ui_menu_item *item, const input_port_entry *in, int switch_entry, void *ref)
 {
 	const input_port_entry *tin;
 
@@ -1844,6 +1890,9 @@ INLINE void switch_menu_add_item(ui_menu_item *item, const input_port_entry *in,
 	/* if no matches, we're invalid */
 	if (!item->subtext)
 		item->subtext = ui_getstring(UI_INVALID);
+
+	/* stash our reference */
+	item->ref = ref;
 }
 
 
@@ -1893,9 +1942,21 @@ static void switch_menu_pick_next(input_port_entry *in, int switch_entry)
 }
 
 
+/*
+static int compare_switch_inputs(const void *i1, const void *i2)
+{
+    const ui_menu_item *item1 = i1;
+    const ui_menu_item *item2 = i2;
+    const input_port_entry *data1 = item1->ref;
+    const input_port_entry *data2 = item2->ref;
+    return strcmp(input_port_name(data1), input_port_name(data2));
+}
+*/
+
+
 static UINT32 menu_switches(UINT32 state)
 {
-	ui_menu_item item_list[MAX_INPUT_PORTS * MAX_BITS_PER_PORT];
+	ui_menu_item item_list[MAX_INPUT_PORTS * MAX_BITS_PER_PORT / 2];
 	int switch_entry = (state >> 24) & 0xff;
 	int switch_name = (state >> 16) & 0xff;
 	int selected = state & 0xffff;
@@ -1910,11 +1971,11 @@ static UINT32 menu_switches(UINT32 state)
 	/* loop over input ports and set up the current values */
 	for (in = Machine->input_ports; in->type != IPT_END; in++)
 		if (in->type == switch_name && input_port_active(in) && input_port_condition(in))
-		{
-			if (menu_items == selected)
-				selected_in = in;
-			switch_menu_add_item(&item_list[menu_items++], in, switch_entry);
-		}
+			switch_menu_add_item(&item_list[menu_items++], in, switch_entry, in);
+
+	/* sort the list */
+//  qsort(item_list, menu_items, sizeof(item_list[0]), compare_switch_inputs);
+	selected_in = item_list[selected].ref;
 
 	/* add an item to return */
 	item_list[menu_items++].text = ui_getstring(UI_returntomain);

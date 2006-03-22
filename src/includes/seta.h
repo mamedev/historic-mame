@@ -4,12 +4,12 @@
 
 ***************************************************************************/
 
-/* Variables and functions defined in drivers/seta.c */
+/*----------- defined in drivers/seta.c -----------*/
 
 void seta_coin_lockout_w(int data);
 
 
-/* Variables and functions defined in vidhrdw/seta.c */
+/*----------- defined in vidhrdw/seta.c -----------*/
 
 extern UINT16 *seta_vram_0, *seta_vctrl_0;
 extern UINT16 *seta_vram_2, *seta_vctrl_2;
@@ -41,7 +41,7 @@ VIDEO_UPDATE( seta );
 VIDEO_UPDATE( seta_no_layers );
 
 
-/* Variables and functions defined in vidhrdw/seta2.c */
+/*----------- defined in vidhrdw/seta2.c -----------*/
 
 extern UINT16 *seta2_vregs;
 
@@ -53,11 +53,12 @@ VIDEO_UPDATE( seta2 );
 VIDEO_EOF( seta2 );
 
 
-/* Variables and functions defined in sndhrdw/seta.c */
+/*----------- defined in sndhrdw/seta.c -----------*/
+
 #define	__uPD71054_TIMER	1
 
 
-/* Variables and functions defined in vidhrdw/ssv.c */
+/*----------- defined in vidhrdw/ssv.c -----------*/
 
 extern UINT16 *ssv_scroll;
 

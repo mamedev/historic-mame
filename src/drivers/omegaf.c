@@ -429,7 +429,7 @@ static ADDRESS_MAP_START( omegaf_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xc800, 0xcbff) AM_WRITE(omegaf_bg1_videoram_w)				/* BG1 video RAM */
 	AM_RANGE(0xcc00, 0xcfff) AM_WRITE(omegaf_bg2_videoram_w)				/* BG2 video RAM */
 	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(omegaf_fgvideoram_w) AM_BASE(&omegaf_fg_videoram)
-	AM_RANGE(0xd800, 0xdfff) AM_WRITE(paletteram_RRRRGGGGBBBBxxxx_swap_w) AM_BASE(&paletteram)
+	AM_RANGE(0xd800, 0xdfff) AM_WRITE(paletteram_RRRRGGGGBBBBxxxx_be_w) AM_BASE(&paletteram)
 	AM_RANGE(0xe000, 0xf9ff) AM_WRITE(MWA8_RAM)							/* RAM */
 	AM_RANGE(0xfa00, 0xffff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
 ADDRESS_MAP_END
@@ -456,7 +456,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( robokid_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(paletteram_RRRRGGGGBBBBxxxx_swap_w) AM_BASE(&paletteram)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(paletteram_RRRRGGGGBBBBxxxx_be_w) AM_BASE(&paletteram)
 	AM_RANGE(0xc800, 0xcfff) AM_WRITE(omegaf_fgvideoram_w) AM_BASE(&omegaf_fg_videoram)
 	AM_RANGE(0xd000, 0xd3ff) AM_WRITE(robokid_bg2_videoram_w)				/* BG2 video RAM */
 	AM_RANGE(0xd400, 0xd7ff) AM_WRITE(robokid_bg1_videoram_w)				/* BG1 video RAM */

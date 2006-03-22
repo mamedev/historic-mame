@@ -111,7 +111,7 @@ static ADDRESS_MAP_START( fastlane_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0d00, 0x0d0d) AM_WRITE(fastlane_K007232_write_port_0_w)	/* 007232 registers (chip 1) */
 	AM_RANGE(0x0e00, 0x0e0d) AM_WRITE(fastlane_K007232_write_port_1_w)	/* 007232 registers (chip 2) */
 	AM_RANGE(0x0f00, 0x0f1f) AM_WRITE(K051733_w)				/* 051733 (protection) */
-	AM_RANGE(0x1000, 0x17ff) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_swap_w) AM_BASE(&paletteram)/* palette RAM */
+	AM_RANGE(0x1000, 0x17ff) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_be_w) AM_BASE(&paletteram)/* palette RAM */
 	AM_RANGE(0x1800, 0x1fff) AM_WRITE(MWA8_RAM)				/* Work RAM */
 	AM_RANGE(0x2000, 0x27ff) AM_WRITE(fastlane_vram1_w) AM_BASE(&fastlane_videoram1)
 	AM_RANGE(0x2800, 0x2fff) AM_WRITE(fastlane_vram2_w) AM_BASE(&fastlane_videoram2)

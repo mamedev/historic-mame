@@ -1160,3 +1160,35 @@ void win_pause(int paused)
 	// tell the input system
 	win_pause_input(paused);
 }
+
+
+
+//============================================================
+//  win_set_frameskip
+//============================================================
+
+void win_set_frameskip(int value)
+{
+	if (value >= 0)
+	{
+		frameskip = value;
+		autoframeskip = 0;
+	}
+	else
+	{
+		frameskip = 0;
+		autoframeskip = 1;
+	}
+}
+
+
+
+//============================================================
+//  win_get_frameskip
+//============================================================
+
+int win_get_frameskip(void)
+{
+	return autoframeskip ? -1 : frameskip;
+}
+

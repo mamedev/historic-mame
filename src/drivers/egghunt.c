@@ -197,7 +197,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(paletteram_xRRRRRGGGGGBBBBB_w) AM_BASE(&paletteram)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(paletteram_xRRRRRGGGGGBBBBB_le_w) AM_BASE(&paletteram)
 	AM_RANGE(0xc800, 0xcfff) AM_WRITE(egghunt_atram_w) AM_BASE(&egghunt_atram)
 	AM_RANGE(0xd000, 0xdfff) AM_WRITE(egghunt_bgram_w)
 	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_RAM)

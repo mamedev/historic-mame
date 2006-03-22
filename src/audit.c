@@ -9,10 +9,9 @@
 
 ***************************************************************************/
 
+#include <stdarg.h>
 #include "driver.h"
 #include "hash.h"
-#include <stdarg.h>
-#include <string.h>
 #include "audit.h"
 #include "harddisk.h"
 #include "sound/samples.h"

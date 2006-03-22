@@ -25,6 +25,7 @@
  *
  *************************************/
 
+typedef struct _cpu_config cpu_config;
 struct _cpu_config
 {
 	int			cpu_type;					/* index for the CPU type */
@@ -38,7 +39,6 @@ struct _cpu_config
 	void *		reset_param;				/* parameter for cpu_reset */
 	const char *tag;
 };
-typedef struct _cpu_config cpu_config;
 
 
 
@@ -78,17 +78,8 @@ void cpuexec_timeslice(void);
  *
  *************************************/
 
-/* 8-bit watchdog read/write handlers */
-WRITE8_HANDLER( watchdog_reset_w );
-READ8_HANDLER( watchdog_reset_r );
-
-/* 16-bit watchdog read/write handlers */
-WRITE16_HANDLER( watchdog_reset16_w );
-READ16_HANDLER( watchdog_reset16_r );
-
-/* 32-bit watchdog read/write handlers */
-WRITE32_HANDLER( watchdog_reset32_w );
-READ32_HANDLER( watchdog_reset32_r );
+/* bang on the watchdog */
+void watchdog_reset(void);
 
 /* watchdog enabled when TRUE */
 /* timer is set to reset state when going from disable to enable */

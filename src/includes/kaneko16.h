@@ -4,6 +4,12 @@
 
 ***************************************************************************/
 
+/*----------- defined in drivers/kaneko16.c -----------*/
+
+MACHINE_RESET( kaneko16 );
+
+/*----------- defined in vidhrdw/kaneko16.c -----------*/
+
 WRITE16_HANDLER( kaneko16_display_enable );
 
 /* Tile Layers: */
@@ -69,14 +75,12 @@ VIDEO_START( sandscrp_1xVIEW2 );
 
 VIDEO_UPDATE( kaneko16 );
 
-MACHINE_RESET( kaneko16 );
 
-
-/* in drivers/galpani2.c */
+/*----------- defined in drivers/galpani2.c -----------*/
 
 void galpani2_mcu_run(void);
 
-/* in vidhrdw/galpani2.c */
+/*----------- defined in vidhrdw/galpani2.c -----------*/
 
 extern UINT16 *galpani2_bg8_0,         *galpani2_bg8_1;
 extern UINT16 *galpani2_palette_0,     *galpani2_palette_1;

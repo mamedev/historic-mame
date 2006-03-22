@@ -10,6 +10,7 @@
 *********************************************************************/
 
 #include "driver.h"
+#include "generic.h"
 
 
 
@@ -54,10 +55,129 @@ UINT8 *dirtybuffer;
 UINT16 *dirtybuffer16;
 UINT32 *dirtybuffer32;
 
+UINT8 *paletteram;
+UINT16 *paletteram16;
+UINT32 *paletteram32;
+
+UINT8 *paletteram_2;	/* use when palette RAM is split in two parts */
+UINT16 *paletteram16_2;
+
 mame_bitmap *tmpbitmap;
 int flip_screen_x, flip_screen_y;
 
 static int global_attribute_changed;
+
+
+
+/***************************************************************************
+
+    Inline Helpers
+
+***************************************************************************/
+
+/*-------------------------------------------------
+    paletteram16_le - return a 16-bit value
+    assembled from the two bytes of little-endian
+    palette RAM referenced by offset
+-------------------------------------------------*/
+
+INLINE UINT16 paletteram16_le(offs_t offset)
+{
+	return paletteram[offset & ~1] | (paletteram[offset | 1] << 8);
+}
+
+
+/*-------------------------------------------------
+    paletteram16_be - return a 16-bit value
+    assembled from the two bytes of big-endian
+    palette RAM referenced by offset
+-------------------------------------------------*/
+
+INLINE UINT16 paletteram16_be(offs_t offset)
+{
+	return paletteram[offset | 1] | (paletteram[offset & ~1] << 8);
+}
+
+
+/*-------------------------------------------------
+    paletteram16_split - return a 16-bit value
+    assembled from the two bytes of split palette
+    RAM referenced by offset
+-------------------------------------------------*/
+
+INLINE UINT16 paletteram16_split(offs_t offset)
+{
+	return paletteram[offset] | (paletteram_2[offset] << 8);
+}
+
+
+/*-------------------------------------------------
+    paletteram32_be - return a 32-bit value
+    assembled from the two words of big-endian
+    palette RAM referenced by offset
+-------------------------------------------------*/
+
+INLINE UINT32 paletteram32_be(offs_t offset)
+{
+	return paletteram16[offset | 1] | (paletteram16[offset & ~1] << 16);
+}
+
+
+/*-------------------------------------------------
+    set_color_444 - set a 4-4-4 RGB color using
+    the 16-bit data provided and the specified
+    shift values
+-------------------------------------------------*/
+
+INLINE void set_color_444(pen_t color, int rshift, int gshift, int bshift, UINT16 data)
+{
+	palette_set_color(color, pal4bit(data >> rshift), pal4bit(data >> gshift), pal4bit(data >> bshift));
+}
+
+
+/*-------------------------------------------------
+    set_color_4444 - set a 4-4-4-4 IRGB color using
+    the 16-bit data provided and the specified
+    shift values
+-------------------------------------------------*/
+
+INLINE void set_color_4444(pen_t color, int ishift, int rshift, int gshift, int bshift, UINT16 data)
+{
+	static const UINT8 ztable[16] =
+		{ 0x0, 0x3, 0x4, 0x5, 0x6, 0x7, 0x8, 0x9, 0xa, 0xb, 0xc, 0xd, 0xe, 0xf, 0x10, 0x11 };
+	int i, r, g, b;
+
+	i = ztable[(data >> ishift) & 15];
+	r = ((data >> rshift) & 15) * i;
+	g = ((data >> gshift) & 15) * i;
+	b = ((data >> bshift) & 15) * i;
+
+	palette_set_color(color, r, g, b);
+}
+
+
+/*-------------------------------------------------
+    set_color_555 - set a 5-5-5 RGB color using
+    the 16-bit data provided and the specified
+    shift values
+-------------------------------------------------*/
+
+INLINE void set_color_555(pen_t color, int rshift, int gshift, int bshift, UINT16 data)
+{
+	palette_set_color(color, pal5bit(data >> rshift), pal5bit(data >> gshift), pal5bit(data >> bshift));
+}
+
+
+/*-------------------------------------------------
+    set_color_8888 - set a 8-8-8 RGB color using
+    the 32-bit data provided and the specified
+    shift values
+-------------------------------------------------*/
+
+INLINE void set_color_888(pen_t color, int rshift, int gshift, int bshift, UINT32 data)
+{
+	palette_set_color(color, (data >> rshift) & 0xff, (data >> gshift) & 0xff, (data >> bshift) & 0xff);
+}
 
 
 
@@ -489,4 +609,484 @@ int get_vh_global_attribute_changed(void)
 	int result = global_attribute_changed;
 	global_attribute_changed = 0;
 	return result;
+}
+
+
+
+/***************************************************************************
+
+    Common palette initialization functions
+
+***************************************************************************/
+
+/*-------------------------------------------------
+    black_and_white - basic 2-color black & white
+-------------------------------------------------*/
+
+PALETTE_INIT( black_and_white )
+{
+	palette_set_color(0,0x00,0x00,0x00); /* black */
+	palette_set_color(1,0xff,0xff,0xff); /* white */
+}
+
+
+/*-------------------------------------------------
+    RRRR_GGGG_BBBB - standard 4-4-4 palette,
+    assuming the commonly used resistor values:
+
+    bit 3 -- 220 ohm resistor  -- RED/GREEN/BLUE
+          -- 470 ohm resistor  -- RED/GREEN/BLUE
+          -- 1  kohm resistor  -- RED/GREEN/BLUE
+    bit 0 -- 2.2kohm resistor  -- RED/GREEN/BLUE
+-------------------------------------------------*/
+
+PALETTE_INIT( RRRR_GGGG_BBBB )
+{
+	int i;
+
+	for (i = 0; i < Machine->drv->total_colors; i++)
+	{
+		int bit0,bit1,bit2,bit3,r,g,b;
+
+		/* red component */
+		bit0 = (color_prom[i] >> 0) & 0x01;
+		bit1 = (color_prom[i] >> 1) & 0x01;
+		bit2 = (color_prom[i] >> 2) & 0x01;
+		bit3 = (color_prom[i] >> 3) & 0x01;
+		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+		/* green component */
+		bit0 = (color_prom[i + Machine->drv->total_colors] >> 0) & 0x01;
+		bit1 = (color_prom[i + Machine->drv->total_colors] >> 1) & 0x01;
+		bit2 = (color_prom[i + Machine->drv->total_colors] >> 2) & 0x01;
+		bit3 = (color_prom[i + Machine->drv->total_colors] >> 3) & 0x01;
+		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+		/* blue component */
+		bit0 = (color_prom[i + 2*Machine->drv->total_colors] >> 0) & 0x01;
+		bit1 = (color_prom[i + 2*Machine->drv->total_colors] >> 1) & 0x01;
+		bit2 = (color_prom[i + 2*Machine->drv->total_colors] >> 2) & 0x01;
+		bit3 = (color_prom[i + 2*Machine->drv->total_colors] >> 3) & 0x01;
+		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+
+		palette_set_color(i,r,g,b);
+	}
+}
+
+
+
+/***************************************************************************
+
+    Generic palette read handlers
+
+***************************************************************************/
+
+/*-------------------------------------------------
+    8-bit read handlers
+-------------------------------------------------*/
+
+READ8_HANDLER( paletteram_r )
+{
+	return paletteram[offset];
+}
+
+READ8_HANDLER( paletteram_2_r )
+{
+	return paletteram_2[offset];
+}
+
+
+/*-------------------------------------------------
+    16-bit read handlers
+-------------------------------------------------*/
+
+READ16_HANDLER( paletteram16_word_r )
+{
+	return paletteram16[offset];
+}
+
+READ16_HANDLER( paletteram16_2_word_r )
+{
+	return paletteram16_2[offset];
+}
+
+
+/*-------------------------------------------------
+    32-bit read handlers
+-------------------------------------------------*/
+
+READ32_HANDLER( paletteram32_r )
+{
+	return paletteram32[offset];
+}
+
+
+
+/***************************************************************************
+
+    3-3-2 RGB palette write handlers
+
+***************************************************************************/
+
+/*-------------------------------------------------
+    RRR-GGG-BB writes
+-------------------------------------------------*/
+
+WRITE8_HANDLER( paletteram_RRRGGGBB_w )
+{
+	paletteram[offset] = data;
+	palette_set_color(offset, pal3bit(data >> 5), pal3bit(data >> 2), pal2bit(data >> 0));
+}
+
+
+/*-------------------------------------------------
+    BB-GGG-RR writes
+-------------------------------------------------*/
+
+WRITE8_HANDLER( paletteram_BBGGGRRR_w )
+{
+	paletteram[offset] = data;
+	palette_set_color(offset, pal3bit(data >> 0), pal3bit(data >> 3), pal2bit(data >> 6));
+}
+
+
+/*-------------------------------------------------
+    BB-GG-RR-II writes
+-------------------------------------------------*/
+
+WRITE8_HANDLER( paletteram_BBGGRRII_w )
+{
+	int i = (data >> 0) & 3;
+
+	paletteram[offset] = data;
+	palette_set_color(offset, pal4bit((data >> 0) & 0x0c) | i,
+	                          pal4bit((data >> 2) & 0x0c) | i,
+	                          pal4bit((data >> 4) & 0x0c) | i);
+}
+
+
+
+/***************************************************************************
+
+    4-4-4 RGB palette write handlers
+
+***************************************************************************/
+
+/*-------------------------------------------------
+    xxxx-BBBB-GGGG-RRRR writes
+-------------------------------------------------*/
+
+WRITE8_HANDLER( paletteram_xxxxBBBBGGGGRRRR_le_w )
+{
+	paletteram[offset] = data;
+	set_color_444(offset / 2, 0, 4, 8, paletteram16_le(offset));
+}
+
+WRITE8_HANDLER( paletteram_xxxxBBBBGGGGRRRR_be_w )
+{
+	paletteram[offset] = data;
+	set_color_444(offset / 2, 0, 4, 8, paletteram16_be(offset));
+}
+
+WRITE8_HANDLER( paletteram_xxxxBBBBGGGGRRRR_split1_w )
+{
+	paletteram[offset] = data;
+	set_color_444(offset, 0, 4, 8, paletteram16_split(offset));
+}
+
+WRITE8_HANDLER( paletteram_xxxxBBBBGGGGRRRR_split2_w )
+{
+	paletteram_2[offset] = data;
+	set_color_444(offset, 0, 4, 8, paletteram16_split(offset));
+}
+
+WRITE16_HANDLER( paletteram16_xxxxBBBBGGGGRRRR_word_w )
+{
+	COMBINE_DATA(&paletteram16[offset]);
+	set_color_444(offset, 0, 4, 8, paletteram16[offset]);
+}
+
+
+/*-------------------------------------------------
+    xxxx-BBBB-RRRR-GGGG writes
+-------------------------------------------------*/
+
+WRITE8_HANDLER( paletteram_xxxxBBBBRRRRGGGG_le_w )
+{
+	paletteram[offset] = data;
+	set_color_444(offset / 2, 4, 0, 8, paletteram16_le(offset));
+}
+
+WRITE8_HANDLER( paletteram_xxxxBBBBRRRRGGGG_be_w )
+{
+	paletteram[offset] = data;
+	set_color_444(offset / 2, 4, 0, 8, paletteram16_be(offset));
+}
+
+WRITE8_HANDLER( paletteram_xxxxBBBBRRRRGGGG_split1_w )
+{
+	paletteram[offset] = data;
+	set_color_444(offset, 4, 0, 8, paletteram16_split(offset));
+}
+
+WRITE8_HANDLER( paletteram_xxxxBBBBRRRRGGGG_split2_w )
+{
+	paletteram_2[offset] = data;
+	set_color_444(offset, 4, 0, 8, paletteram16_split(offset));
+}
+
+WRITE16_HANDLER( paletteram16_xxxxBBBBRRRRGGGG_word_w )
+{
+	COMBINE_DATA(&paletteram16[offset]);
+	set_color_444(offset, 4, 0, 8, paletteram16[offset]);
+}
+
+
+/*-------------------------------------------------
+    xxxx-RRRR-BBBB-GGGG writes
+-------------------------------------------------*/
+
+WRITE8_HANDLER( paletteram_xxxxRRRRBBBBGGGG_split1_w )
+{
+	paletteram[offset] = data;
+	set_color_444(offset, 8, 0, 4, paletteram16_split(offset));
+}
+
+WRITE8_HANDLER( paletteram_xxxxRRRRBBBBGGGG_split2_w )
+{
+	paletteram_2[offset] = data;
+	set_color_444(offset, 8, 0, 4, paletteram16_split(offset));
+}
+
+
+/*-------------------------------------------------
+    xxxx-RRRR-GGGG-BBBB writes
+-------------------------------------------------*/
+
+WRITE8_HANDLER( paletteram_xxxxRRRRGGGGBBBB_le_w )
+{
+	paletteram[offset] = data;
+	set_color_444(offset / 2, 8, 4, 0, paletteram16_le(offset));
+}
+
+WRITE8_HANDLER( paletteram_xxxxRRRRGGGGBBBB_be_w )
+{
+	paletteram[offset] = data;
+	set_color_444(offset / 2, 8, 4, 0, paletteram16_be(offset));
+}
+
+WRITE16_HANDLER( paletteram16_xxxxRRRRGGGGBBBB_word_w )
+{
+	COMBINE_DATA(&paletteram16[offset]);
+	set_color_444(offset, 8, 4, 0, paletteram16[offset]);
+}
+
+
+/*-------------------------------------------------
+    RRRR-GGGG-BBBB-xxxx writes
+-------------------------------------------------*/
+
+WRITE8_HANDLER( paletteram_RRRRGGGGBBBBxxxx_be_w )
+{
+	paletteram[offset] = data;
+	set_color_444(offset / 2, 12, 8, 4, paletteram16_be(offset));
+}
+
+WRITE8_HANDLER( paletteram_RRRRGGGGBBBBxxxx_split1_w )
+{
+	paletteram[offset] = data;
+	set_color_444(offset, 12, 8, 4, paletteram16_split(offset));
+}
+
+WRITE8_HANDLER( paletteram_RRRRGGGGBBBBxxxx_split2_w )
+{
+	paletteram_2[offset] = data;
+	set_color_444(offset, 12, 8, 4, paletteram16_split(offset));
+}
+
+WRITE16_HANDLER( paletteram16_RRRRGGGGBBBBxxxx_word_w )
+{
+	COMBINE_DATA(&paletteram16[offset]);
+	set_color_444(offset, 12, 8, 4, paletteram16[offset]);
+}
+
+
+
+/***************************************************************************
+
+    5-5-5 RGB palette write handlers
+
+***************************************************************************/
+
+/*-------------------------------------------------
+    x-BBBBB-GGGGG-RRRRR writes
+-------------------------------------------------*/
+
+WRITE8_HANDLER( paletteram_xBBBBBGGGGGRRRRR_le_w )
+{
+	paletteram[offset] = data;
+	set_color_555(offset / 2, 0, 5, 10, paletteram16_le(offset));
+}
+
+WRITE8_HANDLER( paletteram_xBBBBBGGGGGRRRRR_be_w )
+{
+	paletteram[offset] = data;
+	set_color_555(offset / 2, 0, 5, 10, paletteram16_be(offset));
+}
+
+WRITE8_HANDLER( paletteram_xBBBBBGGGGGRRRRR_split1_w )
+{
+	paletteram[offset] = data;
+	set_color_555(offset, 0, 5, 10, paletteram16_split(offset));
+}
+
+WRITE8_HANDLER( paletteram_xBBBBBGGGGGRRRRR_split2_w )
+{
+	paletteram_2[offset] = data;
+	set_color_555(offset, 0, 5, 10, paletteram16_split(offset));
+}
+
+WRITE16_HANDLER( paletteram16_xBBBBBGGGGGRRRRR_word_w )
+{
+	COMBINE_DATA(&paletteram16[offset]);
+	set_color_555(offset, 0, 5, 10, paletteram16[offset]);
+}
+
+
+/*-------------------------------------------------
+    x-BBBBB-RRRRR-GGGGG writes
+-------------------------------------------------*/
+
+WRITE8_HANDLER( paletteram_xBBBBBRRRRRGGGGG_split1_w )
+{
+	paletteram[offset] = data;
+	set_color_555(offset, 5, 0, 10, paletteram16_split(offset));
+}
+
+WRITE8_HANDLER( paletteram_xBBBBBRRRRRGGGGG_split2_w )
+{
+	paletteram_2[offset] = data;
+	set_color_555(offset, 5, 0, 10, paletteram16_split(offset));
+}
+
+
+/*-------------------------------------------------
+    x-RRRRR-GGGGG-BBBBB writes
+-------------------------------------------------*/
+
+WRITE8_HANDLER( paletteram_xRRRRRGGGGGBBBBB_le_w )
+{
+	paletteram[offset] = data;
+	set_color_555(offset / 2, 10, 5, 0, paletteram16_le(offset));
+}
+
+WRITE16_HANDLER( paletteram16_xRRRRRGGGGGBBBBB_word_w )
+{
+	COMBINE_DATA(&paletteram16[offset]);
+	set_color_555(offset, 10, 5, 0, paletteram16[offset]);
+}
+
+
+/*-------------------------------------------------
+    x-GGGGG-RRRRR-BBBBB writes
+-------------------------------------------------*/
+
+WRITE16_HANDLER( paletteram16_xGGGGGRRRRRBBBBB_word_w )
+{
+	COMBINE_DATA(&paletteram16[offset]);
+	set_color_555(offset, 5, 10, 0, paletteram16[offset]);
+}
+
+
+/*-------------------------------------------------
+    x-GGGGG-BBBBB-RRRRR writes
+-------------------------------------------------*/
+
+WRITE16_HANDLER( paletteram16_xGGGGGBBBBBRRRRR_word_w )
+{
+	COMBINE_DATA(&paletteram16[offset]);
+	set_color_555(offset, 0, 10, 5, paletteram16[offset]);
+}
+
+
+/*-------------------------------------------------
+    RRRRR-GGGGG-BBBBB-x writes
+-------------------------------------------------*/
+
+WRITE16_HANDLER( paletteram16_RRRRRGGGGGBBBBBx_word_w )
+{
+	COMBINE_DATA(&paletteram16[offset]);
+	set_color_555(offset, 11, 6, 1, paletteram16[offset]);
+}
+
+
+/*-------------------------------------------------
+    RRRR-GGGG-BBBB-RGBx writes
+-------------------------------------------------*/
+
+WRITE16_HANDLER( paletteram16_RRRRGGGGBBBBRGBx_word_w )
+{
+	COMBINE_DATA(&paletteram16[offset]);
+	data = paletteram16[offset];
+	palette_set_color(offset, pal5bit(((data >> 11) & 0x1e) | ((data >> 3) & 0x01)),
+	                          pal5bit(((data >>  7) & 0x1e) | ((data >> 2) & 0x01)),
+	                          pal5bit(((data >>  3) & 0x1e) | ((data >> 1) & 0x01)));
+}
+
+
+
+/***************************************************************************
+
+    4-4-4-4 RGBI palette write handlers
+
+***************************************************************************/
+
+/*-------------------------------------------------
+    IIII-RRRR-GGGG-BBBB writes
+-------------------------------------------------*/
+
+WRITE16_HANDLER( paletteram16_IIIIRRRRGGGGBBBB_word_w )
+{
+	COMBINE_DATA(&paletteram16[offset]);
+	set_color_4444(offset, 12, 8, 4, 0, paletteram16[offset]);
+}
+
+
+/*-------------------------------------------------
+    RRRR-GGGG-BBBB-IIII writes
+-------------------------------------------------*/
+
+WRITE16_HANDLER( paletteram16_RRRRGGGGBBBBIIII_word_w )
+{
+	COMBINE_DATA(&paletteram16[offset]);
+	set_color_4444(offset, 0, 12, 8, 4, paletteram16[offset]);
+}
+
+
+
+/***************************************************************************
+
+    8-8-8 RGB palette write handlers
+
+***************************************************************************/
+
+/*-------------------------------------------------
+    xxxxxxxx-RRRRRRRR-GGGGGGGG-BBBBBBBB writes
+-------------------------------------------------*/
+
+WRITE16_HANDLER( paletteram16_xrgb_word_be_w )
+{
+	COMBINE_DATA(&paletteram16[offset]);
+	set_color_888(offset / 2, 16, 8, 0, paletteram32_be(offset));
+}
+
+
+/*-------------------------------------------------
+    xxxxxxxx-BBBBBBBB-GGGGGGGG-RRRRRRRR writes
+-------------------------------------------------*/
+
+WRITE16_HANDLER( paletteram16_xbgr_word_be_w )
+{
+	COMBINE_DATA(&paletteram16[offset]);
+	set_color_888(offset / 2, 0, 8, 16, paletteram32_be(offset));
 }

@@ -4,8 +4,6 @@
 
 ***************************************************************************/
 
-#include <stdio.h>
-
 #include "driver.h"
 #include "machine/z80ctc.h"
 #include "machine/z80pio.h"
@@ -18,7 +16,7 @@
 #include "mcr.h"
 
 
-#define LOG(x)
+#define LOG(x) logerror x
 
 
 /*************************************
@@ -67,7 +65,7 @@ static void (*v493_callback)(int param);
 
 static UINT8 zwackery_sound_data;
 
-static const double m6840_counter_periods[3] = { 1.0 / 30.0, 1000000.0, 1.0 / (512.0 * 30.0) };
+static const double m6840_counter_periods[3] = { 1.0 / 30.0, 1000.0, 1.0 / (512.0 * 30.0) };
 static double m6840_internal_counter_period;	/* 68000 CLK / 10 */
 
 static mame_timer *ipu_watchdog_timer;
@@ -317,6 +315,36 @@ MACHINE_RESET( mcr )
  *
  *************************************/
 
+MACHINE_START( mcr68 )
+{
+	int i;
+
+	for (i = 0; i < 3; i++)
+	{
+		struct counter_state *m6840 = &m6840_state[i];
+
+		m6840->timer = timer_alloc(counter_fired_callback);
+
+		state_save_register_item("m6840", i, m6840->control);
+		state_save_register_item("m6840", i, m6840->latch);
+		state_save_register_item("m6840", i, m6840->count);
+		state_save_register_item("m6840", i, m6840->timer_active);
+		state_save_register_item("m6840", i, m6840->period);
+	}
+
+	state_save_register_global(m6840_status);
+	state_save_register_global(m6840_status_read_since_int);
+	state_save_register_global(m6840_msb_buffer);
+	state_save_register_global(m6840_lsb_buffer);
+	state_save_register_global(m6840_irq_state);
+	state_save_register_global(v493_irq_state);
+	state_save_register_global(zwackery_sound_data);
+
+	state_save_register_global(mcr_cocktail_flip);
+	return 0;
+}
+
+
 static void mcr68_common_init(void)
 {
 	int i;
@@ -342,38 +370,9 @@ static void mcr68_common_init(void)
 
 	/* reset cocktail flip */
 	mcr_cocktail_flip = 0;
-	state_save_register_global(mcr_cocktail_flip);
 
 	/* initialize the sound */
 	mcr_sound_reset();
-}
-
-
-MACHINE_START( mcr68 )
-{
-	int i;
-
-	for (i = 0; i < 3; i++)
-	{
-		struct counter_state *m6840 = &m6840_state[i];
-
-		m6840->timer = timer_alloc(counter_fired_callback);
-
-		state_save_register_item("m6840", i, m6840->control);
-		state_save_register_item("m6840", i, m6840->latch);
-		state_save_register_item("m6840", i, m6840->count);
-		state_save_register_item("m6840", i, m6840->timer_active);
-		state_save_register_item("m6840", i, m6840->period);
-	}
-
-	state_save_register_global(m6840_status);
-	state_save_register_global(m6840_status_read_since_int);
-	state_save_register_global(m6840_msb_buffer);
-	state_save_register_global(m6840_lsb_buffer);
-	state_save_register_global(m6840_irq_state);
-	state_save_register_global(v493_irq_state);
-	state_save_register_global(zwackery_sound_data);
-	return 0;
 }
 
 
@@ -742,6 +741,7 @@ static void reload_count(int counter)
 		count = count + 1;
 
 	/* set the timer */
+LOG(("reload_count(%d): period = %f  count = %d\n", counter, period, count));
 	timer_adjust(m6840_state[counter].timer, period * (double)count, (count << 2) + counter, 0);
 	m6840_state[counter].timer_active = 1;
 }

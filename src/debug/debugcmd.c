@@ -960,6 +960,13 @@ static void execute_bpset(int ref, int params, const char *param[])
 	UINT64 address;
 	int bpnum;
 
+	/* make sure that there is an active CPU */
+	if (cpu_getactivecpu() < 0)
+	{
+		debug_console_printf("No active CPU!\n");
+		return;
+	}
+
 	/* param 1 is the address */
 	if (!validate_parameter_number(param[0], &address))
 		return;

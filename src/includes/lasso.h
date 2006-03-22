@@ -4,7 +4,8 @@
 
 ***************************************************************************/
 
-/* defined in vidhrdw/ */
+/*----------- defined in vidhrdw/lasso.c -----------*/
+
 extern UINT8 *lasso_videoram;
 extern UINT8 *lasso_colorram;
 extern UINT8 *lasso_spriteram;

@@ -44,7 +44,7 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x3001, 0x3001) AM_WRITE(soundlatch_w)
 	AM_RANGE(0x3002, 0x3002) AM_WRITE(soundlatch2_w)
 	AM_RANGE(0x3004, 0x3005) AM_WRITE(MWA8_RAM) AM_BASE(&citycon_scroll)
-	AM_RANGE(0x3800, 0x3cff) AM_WRITE(paletteram_RRRRGGGGBBBBxxxx_swap_w) AM_BASE(&paletteram)
+	AM_RANGE(0x3800, 0x3cff) AM_WRITE(paletteram_RRRRGGGGBBBBxxxx_be_w) AM_BASE(&paletteram)
 	AM_RANGE(0x4000, 0xffff) AM_WRITE(MWA8_ROM)
 ADDRESS_MAP_END
 

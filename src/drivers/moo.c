@@ -351,7 +351,7 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x190000, 0x19ffff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16)
 	AM_RANGE(0x1a0000, 0x1a1fff) AM_WRITE(K056832_ram_word_w)	/* Graphic planes */
 	AM_RANGE(0x1a2000, 0x1a3fff) AM_WRITE(K056832_ram_word_w)	/* Graphic planes mirror */
-	AM_RANGE(0x1c0000, 0x1c1fff) AM_WRITE(paletteram16_xrgb_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x1c0000, 0x1c1fff) AM_WRITE(paletteram16_xrgb_word_be_w) AM_BASE(&paletteram16)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( readmembl, ADDRESS_SPACE_PROGRAM, 16 )
@@ -389,7 +389,7 @@ static ADDRESS_MAP_START( writemembl, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x190000, 0x19ffff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16)
 	AM_RANGE(0x1a0000, 0x1a1fff) AM_WRITE(K056832_ram_word_w)	/* Graphic planes */
 	AM_RANGE(0x1a2000, 0x1a3fff) AM_WRITE(K056832_ram_word_w)	/* Graphic planes mirror */
-	AM_RANGE(0x1c0000, 0x1c1fff) AM_WRITE(paletteram16_xrgb_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x1c0000, 0x1c1fff) AM_WRITE(paletteram16_xrgb_word_be_w) AM_BASE(&paletteram16)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( buckyreadmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -443,7 +443,7 @@ static ADDRESS_MAP_START( buckywritemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x180000, 0x181fff) AM_WRITE(K056832_ram_word_w)	/* Graphic planes */
 	AM_RANGE(0x182000, 0x183fff) AM_WRITE(K056832_ram_word_w)	/* Graphic planes mirror */
 	AM_RANGE(0x184000, 0x187fff) AM_WRITE(MWA16_RAM)			/* extra tile RAM? */
-	AM_RANGE(0x1b0000, 0x1b3fff) AM_WRITE(paletteram16_xrgb_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x1b0000, 0x1b3fff) AM_WRITE(paletteram16_xrgb_word_be_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x200000, 0x23ffff) AM_WRITE(MWA16_ROM)
 ADDRESS_MAP_END
 

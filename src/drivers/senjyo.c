@@ -136,6 +136,30 @@ static WRITE8_HANDLER( flip_screen_w )
 	flip_screen_set(data);
 }
 
+static WRITE8_HANDLER( paletteram_IIBBGGRR_w )
+{
+	int r,g,b,i;
+
+
+	paletteram[offset] = data;
+
+	i = (data >> 6) & 0x03;
+	/* red component */
+	r = (data << 2) & 0x0c;
+	if (r) r |= i;
+	r *= 0x11;
+	/* green component */
+	g = (data >> 0) & 0x0c;
+	if (g) g |= i;
+	g *= 0x11;
+	/* blue component */
+	b = (data >> 2) & 0x0c;
+	if (b) b |= i;
+	b *= 0x11;
+
+	palette_set_color(offset,r,g,b);
+}
+
 
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )

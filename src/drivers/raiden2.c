@@ -901,7 +901,7 @@ static ADDRESS_MAP_START( raiden2_mem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0f800, 0x0ffff) AM_RAM /* Stack area */
 
 	AM_RANGE(0x10000, 0x1efff) AM_READWRITE(MRA8_RAM, w1x) AM_BASE(&w1ram)
-	AM_RANGE(0x1f000, 0x1ffff) AM_READWRITE(MRA8_RAM, paletteram_xBBBBBGGGGGRRRRR_w) AM_BASE(&paletteram)
+	AM_RANGE(0x1f000, 0x1ffff) AM_READWRITE(MRA8_RAM, paletteram_xBBBBBGGGGGRRRRR_le_w) AM_BASE(&paletteram)
 
 //  AM_RANGE(0x20000, 0x3ffff) AM_READ(rb_r)
 	AM_RANGE(0x20000, 0x3ffff) AM_ROMBANK(1)

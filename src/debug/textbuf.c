@@ -10,9 +10,7 @@
 ***************************************************************************/
 
 #include "mamecore.h"
-#include "osdepend.h"
 #include "textbuf.h"
-#include <string.h>
 
 
 

@@ -5,21 +5,25 @@
 #include "sound/2612intf.h"
 #include "sound/upd7759.h"
 
-/* In src/drivers/megaplay.c */
+/*----------- defined in drivers/megaplay.c -----------*/
+
 extern UINT16 *ic36_ram;
 extern unsigned char bios_6204;
 extern unsigned char bios_ctrl[6];
 
-/* In src/drivers/megatech.c */
+/*----------- defined in drivers/megatech.c -----------*/
+
 extern unsigned int bios_ctrl_inputs;
 extern READ8_HANDLER (megatech_bios_port_be_bf_r);
 extern WRITE8_HANDLER (megatech_bios_port_be_bf_w);
 extern INTERRUPT_GEN (megatech_irq);
 
-/* In src/drivers/segac2.c */
+/*----------- defined in drivers/segac2.c -----------*/
+
 extern WRITE16_HANDLER( sn76489_w );
 
-/* In src/drivers/genesis.c */
+/*----------- defined in drivers/genesis.c -----------*/
+
 extern unsigned char *genesis_z80_ram;
 extern UINT16 *genesis_68k_ram;
 extern MACHINE_START( genesis );
@@ -39,7 +43,8 @@ extern READ16_HANDLER ( genesis_68k_to_z80_r );
 extern INTERRUPT_GEN( genesis_vblank_interrupt );
 extern void genesis_irq2_interrupt(int state);
 
-/* In src/vidhrdw/genesis.c */
+/*----------- defined in vidhrdw/genesis.c -----------*/
+
 extern UINT8		genesis_vdp_regs[];
 extern UINT16		genesis_bg_pal_lookup[];
 extern UINT16		genesis_sp_pal_lookup[];

@@ -56,6 +56,7 @@
 
 #include "driver.h"
 #include "machine/eeprom.h"
+#include "decoprot.h"
 
 READ16_HANDLER( deco16_104_rohga_prot_r ); // todo
 

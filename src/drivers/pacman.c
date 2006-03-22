@@ -361,6 +361,13 @@ MACHINE_RESET( mschamp )
  *
  *************************************/
 
+static WRITE8_HANDLER( pacman_interrupt_vector_w )
+{
+	cpunum_set_input_line_vector(0, 0, data);
+	cpunum_set_input_line(0, 0, CLEAR_LINE);
+}
+
+
 static INTERRUPT_GEN( pacman_interrupt )
 {
 	/* always signal a normal VBLANK */
@@ -1067,7 +1074,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x00, 0x00) AM_WRITE(interrupt_vector_w)	/* Pac-Man only */
+	AM_RANGE(0x00, 0x00) AM_WRITE(pacman_interrupt_vector_w)	/* Pac-Man only */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( vanvan_writeport, ADDRESS_SPACE_IO, 8 )

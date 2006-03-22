@@ -399,7 +399,7 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x180000, 0x181fff) AM_WRITE(K056832_ram_word_w) 		// tilemap RAM
 	AM_RANGE(0x182000, 0x183fff) AM_WRITE(K056832_ram_word_w) 		// tilemap RAM mirror
 	AM_RANGE(0x190000, 0x191fff) AM_WRITE(MWA16_ROM)					// tile ROM
-	AM_RANGE(0x1b0000, 0x1b1fff) AM_WRITE(paletteram16_xrgb_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x1b0000, 0x1b1fff) AM_WRITE(paletteram16_xrgb_word_be_w) AM_BASE(&paletteram16)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )

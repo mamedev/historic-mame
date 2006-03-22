@@ -81,7 +81,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( slave_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x2000, 0x2000) AM_WRITE(YM2151_register_port_0_w)
 	AM_RANGE(0x2001, 0x2001) AM_READWRITE(YM2151_status_port_0_r, YM2151_data_port_0_w)
-	AM_RANGE(0x4000, 0x43ff) AM_RAM AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_w) AM_BASE(&paletteram)	// COLOR RAM (Self test only check 0x4000-0x423f)
+	AM_RANGE(0x4000, 0x43ff) AM_RAM AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_le_w) AM_BASE(&paletteram)	// COLOR RAM (Self test only check 0x4000-0x423f)
 	AM_RANGE(0x6000, 0x605f) AM_RAM																	// SOUND RAM (Self test check 0x6000-605f, 0x7c00-0x7fff)
 	AM_RANGE(0x6060, 0x7fff) AM_RAM AM_SHARE(1)
 	AM_RANGE(0x8000, 0xffff) AM_ROM

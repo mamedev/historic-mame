@@ -169,7 +169,7 @@ extern void n7751_get_info(UINT32 state, union cpuinfo *info);
 #define I8039_RDOP_ARG(A) ((unsigned)cpu_readop_arg(A))
 
 #ifdef  MAME_DEBUG
-int 	Dasm8039(char *dst, unsigned pc);
+unsigned Dasm8039(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes);
 #endif
 
 #endif  /* _I8039_H */

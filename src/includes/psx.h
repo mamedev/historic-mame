@@ -6,7 +6,8 @@
 
 #if !defined( PSX_H )
 
-/* vidhrdw */
+/*----------- defined in vidhrdw/psx.c -----------*/
+
 PALETTE_INIT( psx );
 VIDEO_START( psx_type1 );
 VIDEO_START( psx_type2 );
@@ -19,7 +20,8 @@ READ32_HANDLER( psx_gpu_r );
 WRITE32_HANDLER( psx_gpu_w );
 extern void psx_lightgun_set( int, int );
 
-/* machine */
+/*----------- defined in machine/psx.c -----------*/
+
 extern UINT32 *g_p_n_psxram;
 extern size_t g_n_psxramsize;
 typedef void ( *psx_dma_read_handler )( UINT32, INT32 );

@@ -25,8 +25,6 @@
 
 ***************************************************************************/
 
-extern int dump_flag;
-
 #include <math.h>
 #include "driver.h"
 #include "streams.h"

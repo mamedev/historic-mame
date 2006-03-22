@@ -1,9 +1,7 @@
-/* Variables defined in vidhrdw: */
+/*----------- defined in vidhrdw/thedeep.c -----------*/
 
 extern UINT8 *thedeep_vram_0, *thedeep_vram_1;
 extern UINT8 *thedeep_scroll, *thedeep_scroll2;
-
-/* Functions defined in vidhrdw: */
 
 WRITE8_HANDLER( thedeep_vram_0_w );
 WRITE8_HANDLER( thedeep_vram_1_w );

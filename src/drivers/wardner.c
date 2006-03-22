@@ -183,7 +183,7 @@ static ADDRESS_MAP_START( main_program_map, ADDRESS_SPACE_PROGRAM, 8 )
 
 	AM_RANGE(0x8000, 0x8fff) AM_WRITE(wardner_sprite_w) AM_BASE((void *)&spriteram16) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x9000, 0x9fff) AM_ROM
-	AM_RANGE(0xa000, 0xadff) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_w) AM_BASE(&paletteram)
+	AM_RANGE(0xa000, 0xadff) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_le_w) AM_BASE(&paletteram)
 	AM_RANGE(0xae00, 0xafff) AM_RAM
 	AM_RANGE(0xb000, 0xbfff) AM_ROM
 	AM_RANGE(0xc000, 0xc7ff) AM_RAM AM_SHARE(1)	/* Shared RAM with Sound Z80 */

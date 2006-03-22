@@ -35,7 +35,7 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)	/* 4000-7fff is written to during startup, probably leftover code */
 	AM_RANGE(0x8000, 0x87ff) AM_WRITE(news_fgram_w) AM_BASE(&news_fgram)
 	AM_RANGE(0x8800, 0x8fff) AM_WRITE(news_bgram_w) AM_BASE(&news_bgram)
-	AM_RANGE(0x9000, 0x91ff) AM_WRITE(paletteram_xxxxRRRRGGGGBBBB_swap_w) AM_BASE(&paletteram)
+	AM_RANGE(0x9000, 0x91ff) AM_WRITE(paletteram_xxxxRRRRGGGGBBBB_be_w) AM_BASE(&paletteram)
 	AM_RANGE(0xc002, 0xc002) AM_WRITE(OKIM6295_data_0_w) /* ?? */
 	AM_RANGE(0xc003, 0xc003) AM_WRITE(news_bgpic_w)
 	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_RAM)

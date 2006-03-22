@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "vrender0.h"
 
 /***********************************
         VRENDER ZERO

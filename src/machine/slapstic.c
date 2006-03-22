@@ -178,7 +178,6 @@
 
 *************************************************************************/
 
-#include <stdio.h>
 #include "driver.h"
 #include "slapstic.h"
 #include "cpu/m68000/m68000.h"

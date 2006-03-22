@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "tilemap.h"
 
 UINT16 *wrally_spriteram;
 UINT16 *wrally_vregs;

@@ -11,12 +11,14 @@
 
 ***************************************************************************/
 
-/* defined in drivers/galaxian.c */
+/*----------- defined in drivers/galaxian.c -----------*/
+
 extern gfx_decode galaxian_gfxdecodeinfo[];
 MACHINE_DRIVER_EXTERN(galaxian_base);
 
 
-/* defined in drivers/scobra.c */
+/*----------- defined in drivers/scobra.c -----------*/
+
 extern struct AY8910interface scobra_ay8910_interface_2;
 ADDRESS_MAP_EXTERN(scobra_sound_readmem);
 ADDRESS_MAP_EXTERN(scobra_sound_writemem);
@@ -24,7 +26,8 @@ ADDRESS_MAP_EXTERN(scobra_sound_readport);
 ADDRESS_MAP_EXTERN(scobra_sound_writeport);
 
 
-/* defined in drivers/frogger.c */
+/*----------- defined in drivers/frogger.c -----------*/
+
 extern struct AY8910interface frogger_ay8910_interface;
 ADDRESS_MAP_EXTERN(frogger_sound_readmem);
 ADDRESS_MAP_EXTERN(frogger_sound_writemem);
@@ -32,7 +35,8 @@ ADDRESS_MAP_EXTERN(frogger_sound_readport);
 ADDRESS_MAP_EXTERN(frogger_sound_writeport);
 
 
-/* defined in vidhrdw/galaxian.c */
+/*----------- defined in vidhrdw/galaxian.c -----------*/
+
 extern UINT8 *galaxian_videoram;
 extern UINT8 *galaxian_spriteram;
 extern UINT8 *galaxian_spriteram2;
@@ -121,7 +125,8 @@ WRITE8_HANDLER( gteikob2_flip_screen_x_w );
 WRITE8_HANDLER( gteikob2_flip_screen_y_w );
 
 
-/* defined in machine/scramble.c */
+/*----------- defined in machine/scramble.c -----------*/
+
 DRIVER_INIT( pisces );
 DRIVER_INIT( checkmaj );
 DRIVER_INIT( dingo );
@@ -241,7 +246,8 @@ READ8_HANDLER( gmgalax_input_port_1_r );
 READ8_HANDLER( gmgalax_input_port_2_r );
 
 
-/* defined in sndhrdw/galaxian.c */
+/*----------- defined in sndhrdw/galaxian.c -----------*/
+
 extern struct Samplesinterface galaxian_custom_interface;
 WRITE8_HANDLER( galaxian_pitch_w );
 WRITE8_HANDLER( galaxian_vol_w );
@@ -251,7 +257,8 @@ WRITE8_HANDLER( galaxian_shoot_enable_w );
 WRITE8_HANDLER( galaxian_lfo_freq_w );
 
 
-/* defined in sndhrdw/scramble.c */
+/*----------- defined in sndhrdw/scramble.c -----------*/
+
 void scramble_sh_init(void);
 void sfx_sh_init(void);
 

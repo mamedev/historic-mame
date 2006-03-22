@@ -287,7 +287,7 @@ static READ16_HANDLER( musobana_inputport_0_r )
 		case 0x04:	portdata = ((readinputport(5) << 8) | (readinputport(10))); break;
 		case 0x08:	portdata = ((readinputport(6) << 8) | (readinputport(11))); break;
 		case 0x10:	portdata = ((readinputport(7) << 8) | (readinputport(12))); break;
-		default:	portdata = 0xffff; break;
+		default:	portdata = (((readinputport(3) << 8) | (readinputport(8)))) & (((readinputport(4) << 8) | (readinputport(9)))) & (((readinputport(5) << 8) | (readinputport(10)))) & (((readinputport(6) << 8) | (readinputport(11)))) & (((readinputport(7) << 8) | (readinputport(12)))); break;
 	}
 
 	return (portdata);

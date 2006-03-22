@@ -85,7 +85,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( fantland_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x00000, 0x07fff) AM_WRITE(MWA8_RAM					)
-	AM_RANGE(0xa2000, 0xa21ff) AM_WRITE(paletteram_xRRRRRGGGGGBBBBB_w) AM_BASE(&paletteram	)
+	AM_RANGE(0xa2000, 0xa21ff) AM_WRITE(paletteram_xRRRRRGGGGGBBBBB_le_w) AM_BASE(&paletteram	)
 	AM_RANGE(0xa3000, 0xa3000) AM_WRITE(fantland_nmi_enable_w	)
 	AM_RANGE(0xa3002, 0xa3002) AM_WRITE(fantland_soundlatch_w	)
 	AM_RANGE(0xa4000, 0xa67ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram		)
@@ -113,7 +113,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( galaxygn_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x00000, 0x07fff) AM_WRITE(MWA8_RAM					)
-	AM_RANGE(0x52000, 0x521ff) AM_WRITE(paletteram_xRRRRRGGGGGBBBBB_w) AM_BASE(&paletteram	)
+	AM_RANGE(0x52000, 0x521ff) AM_WRITE(paletteram_xRRRRRGGGGGBBBBB_le_w) AM_BASE(&paletteram	)
 	AM_RANGE(0x53000, 0x53000) AM_WRITE(fantland_nmi_enable_w	)
 	AM_RANGE(0x53002, 0x53002) AM_WRITE(fantland_soundlatch_w	)
 	AM_RANGE(0x54000, 0x567ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram	)
@@ -200,7 +200,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( borntofi_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x00000, 0x07fff) AM_WRITE( MWA8_RAM						)
-	AM_RANGE(0x52000, 0x521ff) AM_WRITE( paletteram_xRRRRRGGGGGBBBBB_w	) AM_BASE(&paletteram	)
+	AM_RANGE(0x52000, 0x521ff) AM_WRITE( paletteram_xRRRRRGGGGGBBBBB_le_w	) AM_BASE(&paletteram	)
 	AM_RANGE(0x53000, 0x53000) AM_WRITE( borntofi_nmi_enable_w			)
 	AM_RANGE(0x53002, 0x53002) AM_WRITE( fantland_soundlatch_w			)
 	AM_RANGE(0x54000, 0x567ff) AM_WRITE( MWA8_RAM						) AM_BASE(&spriteram	)

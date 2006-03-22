@@ -4,6 +4,8 @@
 
 *************************************************************************/
 
+/*----------- defined in machine/vertigo.c -----------*/
+
 READ16_HANDLER( vertigo_io_convert );
 READ16_HANDLER( vertigo_io_adc );
 READ16_HANDLER( vertigo_coin_r );
@@ -14,6 +16,8 @@ WRITE16_HANDLER( vertigo_wsot_w );
 
 INTERRUPT_GEN( vertigo_interrupt );
 MACHINE_RESET( vertigo );
+
+/*----------- defined in vidhrdw/vertigo.c -----------*/
 
 extern UINT16 *vertigo_vectorram;
 

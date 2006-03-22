@@ -110,7 +110,9 @@ typedef struct {
 #define BPLCON0_HIRES	0x8000
 
 /* prototypes */
-/* machine */
+
+/*----------- defined in machine/amiga.c -----------*/
+
 extern void amiga_machine_config(const struct amiga_machine_interface *intf);
 extern void copper_setpc( unsigned long pc );
 extern WRITE16_HANDLER(amiga_custom_w);
@@ -125,7 +127,8 @@ extern void amiga_cia_issue_index( void );
 extern UINT16 *amiga_expansion_ram;
 extern UINT16 *amiga_autoconfig_mem;
 
-/* vidhrdw */
+/*----------- defined in vidhrdw/amiga.c -----------*/
+
 extern INTERRUPT_GEN(amiga_vblank_irq);
 extern INTERRUPT_GEN(amiga_irq);
 extern VIDEO_UPDATE(amiga);

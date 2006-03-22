@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "usrintrf.h"
 
 
 static int flipscreen[2];

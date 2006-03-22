@@ -1966,7 +1966,7 @@
  *
  *  Example config line
  *
- *     DISCRETE_RCDISC(NODE_9,NODE_10,10.0,100,0.0,100,CAP_U(1))
+ *     DISCRETE_RCDISC2(NODE_9,NODE_10,10.0,100,0.0,100,CAP_U(1))
  *
  *  When switched by NODE_10, C charges/discharges from 10v/0v
  *  as dictated by R0/C & R1/C combos respectively

@@ -22,16 +22,29 @@
     CONSTANTS
 ***************************************************************************/
 
-#define USB_2MHZ_CLOCK		2000000
+#define SPEECH_MASTER_CLOCK	3120000
+
+#define USB_MASTER_CLOCK	6000000
+#define USB_2MHZ_CLOCK		(USB_MASTER_CLOCK/3)
 #define USB_PCS_CLOCK		(USB_2MHZ_CLOCK/2)
-#define USB_GOS_CLOCK		(USB_2MHZ_CLOCK/4)
+#define USB_GOS_CLOCK		(USB_2MHZ_CLOCK/16/4)
 #define MM5837_CLOCK		100000
+
+#define SAMPLE_RATE			(USB_2MHZ_CLOCK/8)
 
 
 
 /***************************************************************************
     TYPE DEFINITIONS
 ***************************************************************************/
+
+typedef struct _filter_state filter_state;
+struct _filter_state
+{
+	double				capval;				/* current capacitor value */
+	double				exponent;			/* constant exponent */
+};
+
 
 typedef struct _timer8253_channel timer8253_channel;
 struct _timer8253_channel
@@ -44,16 +57,46 @@ struct _timer8253_channel
 	UINT8				output;				/* current output value */
 	UINT8				lastgate;			/* previous gate value */
 	UINT8				gate;				/* current gate value */
-	UINT8				env;				/* envelope value */
 	UINT8				subcount;			/* subcount (2MHz clocks per input clock) */
 	UINT16				count;				/* initial count */
 	UINT16				remain;				/* current down counter value */
 };
 
+
 typedef struct _timer8253 timer8253;
 struct _timer8253
 {
-	timer8253_channel	chan[3];
+	timer8253_channel	chan[3];			/* three channels' worth of information */
+	double				env[3];				/* envelope value for each channel */
+	filter_state		chan_filter[2];		/* filter states for the first two channels */
+	filter_state		gate1;				/* first RC filter state */
+	filter_state		gate2;				/* second RC filter state */
+	UINT8				config;				/* configuration for this timer */
+};
+
+
+typedef struct _usb_state usb_state;
+struct _usb_state
+{
+	sound_stream *		stream;				/* output stream */
+	UINT8				cpunum;				/* CPU index of the 8035 */
+	UINT8				in_latch;			/* input latch */
+	UINT8				out_latch;			/* output latch */
+	UINT8				last_p2_value;		/* current P2 output value */
+	UINT8 *				program_ram;		/* pointer to program RAM */
+	UINT8 *				work_ram;			/* pointer to work RAM */
+	UINT8				work_ram_bank;		/* currently selected work RAM bank */
+	UINT8				t1_clock;			/* T1 clock value */
+	UINT8				t1_clock_mask;		/* T1 clock mask (configured via jumpers) */
+	timer8253			timer_group[3];		/* 3 groups of timers */
+	UINT8				timer_mode[3];		/* mode control for each group */
+	UINT32				noise_shift;
+	UINT8				noise_state;
+	UINT8				noise_subcount;
+	double				gate_rc1_exp[2];
+	double				gate_rc2_exp[2];
+	filter_state		final_filter;
+	filter_state		noise_filters[5];
 };
 
 
@@ -66,27 +109,34 @@ struct _timer8253
 static UINT8 speech_latch, speech_t0, speech_p2, speech_drq;
 
 /* Universal sound board */
-static sound_stream *usb_stream;
-static UINT8 usb_cpunum;
-static UINT8 usb_in_latch;
-static UINT8 usb_out_latch;
-static UINT8 usb_last_p2_value;
-static UINT8 *usb_program_ram;
-static UINT8 *usb_work_ram;
-static UINT8 usb_work_ram_bank;
-static UINT8 usb_t1_clock;
-static UINT8 usb_t1_clock_mask;
-static timer8253 usb_timer_group[3];
-static UINT8 usb_timer_mode[3];
-static UINT32 usb_noise_shift;
-static UINT8 usb_noise_state;
-static UINT8 usb_noise_subcount;
-static double usb_cr_cap, usb_cr_exp;
-static double usb_noise_rc1_cap, usb_noise_rc1_exp;
-static double usb_noise_rc2_cap, usb_noise_rc2_exp;
-static double usb_noise_rc3_cap, usb_noise_rc3_exp;
-static double usb_noise_rc4_cap, usb_noise_rc4_exp;
-static double usb_noise_cr_cap, usb_noise_cr_exp;
+static usb_state usb;
+
+
+
+/***************************************************************************
+    INLINES
+***************************************************************************/
+
+INLINE void configure_filter(filter_state *state, double r, double c)
+{
+	state->capval = 0;
+	state->exponent = 1.0 - exp(-1.0 / (r * c * SAMPLE_RATE));
+}
+
+
+INLINE double step_rc_filter(filter_state *state, double input)
+{
+	state->capval += (input - state->capval) * state->exponent;
+	return state->capval;
+}
+
+
+INLINE double step_cr_filter(filter_state *state, double input)
+{
+	double result = (input - state->capval);
+	state->capval += (input - state->capval) * state->exponent;
+	return result;
+}
 
 
 
@@ -226,12 +276,12 @@ static struct sp0250_interface sp0250_interface =
 MACHINE_DRIVER_START( sega_speech_board )
 
 	/* CPU for the speech board */
-	MDRV_CPU_ADD(I8035, 3120000/15)		/* divide by 15 in CPU */
+	MDRV_CPU_ADD(I8035, SPEECH_MASTER_CLOCK/15)		/* divide by 15 in CPU */
 	MDRV_CPU_PROGRAM_MAP(speech_map, 0)
 	MDRV_CPU_IO_MAP(speech_portmap, 0)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(SP0250, 3120000)
+	MDRV_SOUND_ADD(SP0250, SPEECH_MASTER_CLOCK)
 	MDRV_SOUND_CONFIG(sp0250_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
@@ -241,30 +291,6 @@ MACHINE_DRIVER_END
 /***************************************************************************
     UNIVERSAL SOUND BOARD
 ***************************************************************************/
-
-/*
-
-ENV1.Y3 = 0 (X)
-
-
-NOISE--+--
-
-
-
-                              +-----+
-                              | OUT2|---+--|\
-                     100k     |     |   |  |+\       33k     100k
-                  +--vvvv--+  |     |   v  |  >--+--vvvv--+--vvvv--+
-       100k       |        |  |     |  gnd |-/   |        |        |
-   +---vvvv--+----+--|\    |  | OUT1|---+--|/    |        +--|\    |
-             |       |-\   |  |     |   |        |           |-\   |  100k
-             |       |  >--+--|Vref |  ===100p   |           |  >--+--vvvv---> mix with output
-       100k  |       |+/      |     |   |        |           |+/
-NOISE--vvvv--+    +--|/       |  Rfb|---+--------+        +--|/
-                  |           +-----+                     |
-                  v                                       v
-                 gnd                                     gnd
-*/
 
 
 /*************************************
@@ -276,19 +302,19 @@ NOISE--vvvv--+    +--|/       |  Rfb|---+--------+        +--|/
 static void increment_t1_clock(int param)
 {
 	/* only increment if it is not being forced clear */
-	if (!(usb_last_p2_value & 0x80))
-		usb_t1_clock++;
+	if (!(usb.last_p2_value & 0x80))
+		usb.t1_clock++;
 }
 
 
 void sega_usb_reset(UINT8 t1_clock_mask)
 {
 	/* halt the USB CPU at reset time */
-	cpunum_set_input_line(usb_cpunum, INPUT_LINE_RESET, ASSERT_LINE);
+	cpunum_set_input_line(usb.cpunum, INPUT_LINE_RESET, ASSERT_LINE);
 
 	/* start the clock timer */
 	timer_pulse(TIME_IN_HZ(USB_2MHZ_CLOCK / 256), 0, increment_t1_clock);
-	usb_t1_clock_mask = t1_clock_mask;
+	usb.t1_clock_mask = t1_clock_mask;
 }
 
 
@@ -301,25 +327,27 @@ void sega_usb_reset(UINT8 t1_clock_mask)
 
 READ8_HANDLER( sega_usb_status_r )
 {
-	logerror("%04X:usb_data_r = %02X\n", activecpu_get_pc(), usb_out_latch);
+	logerror("%04X:usb_data_r = %02X\n", activecpu_get_pc(), (usb.out_latch & 0x81) | (usb.in_latch & 0x7e));
+
+	activecpu_adjust_icount(-200);
 
 	/* only bits 0 and 7 are controlled by the I8035; the remaining */
 	/* bits 1-6 reflect the current input latch values */
-	return (usb_out_latch & 0x81) | (usb_in_latch & 0x7e);
+	return (usb.out_latch & 0x81) | (usb.in_latch & 0x7e);
 }
 
 
 static void delayed_usb_data_w(int data)
 {
 	/* look for rising/falling edges of bit 7 to control the RESET line */
-	cpunum_set_input_line(usb_cpunum, INPUT_LINE_RESET, (data & 0x80) ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(usb.cpunum, INPUT_LINE_RESET, (data & 0x80) ? ASSERT_LINE : CLEAR_LINE);
 
 	/* if the CLEAR line is set, the low 7 bits of the input are ignored */
-	if ((usb_last_p2_value & 0x40) == 0)
+	if ((usb.last_p2_value & 0x40) == 0)
 		data &= ~0x7f;
 
 	/* update the effective input latch */
-	usb_in_latch = data;
+	usb.in_latch = data;
 }
 
 
@@ -327,19 +355,22 @@ WRITE8_HANDLER( sega_usb_data_w )
 {
 	logerror("%04X:usb_data_w = %02X\n", activecpu_get_pc(), data);
 	timer_set(TIME_NOW, data, delayed_usb_data_w);
+
+	/* boost the interleave so that sequences can be sent */
+	cpu_boost_interleave(0, TIME_IN_USEC(250));
 }
 
 
 READ8_HANDLER( sega_usb_ram_r )
 {
-	return usb_program_ram[offset];
+	return usb.program_ram[offset];
 }
 
 
 WRITE8_HANDLER( sega_usb_ram_w )
 {
-	if (usb_in_latch & 0x80)
-		usb_program_ram[offset] = data;
+	if (usb.in_latch & 0x80)
+		usb.program_ram[offset] = data;
 	else
 		logerror("%04X:sega_usb_ram_w(%03X) = %02X while /LOAD disabled\n", activecpu_get_pc(), offset, data);
 }
@@ -355,47 +386,39 @@ WRITE8_HANDLER( sega_usb_ram_w )
 static READ8_HANDLER( usb_p1_r )
 {
 	/* bits 0-6 are inputs and map to bits 0-6 of the input latch */
-	if ((usb_in_latch & 0x7f) != 0)
-		logerror("%03X: P1 read = %02X\n", activecpu_get_pc(), usb_in_latch & 0x7f);
-	return usb_in_latch & 0x7f;
+	if ((usb.in_latch & 0x7f) != 0)
+		logerror("%03X: P1 read = %02X\n", activecpu_get_pc(), usb.in_latch & 0x7f);
+	return usb.in_latch & 0x7f;
 }
 
 
 static WRITE8_HANDLER( usb_p1_w )
 {
 	/* bit 7 maps to bit 0 on the output latch */
-	usb_out_latch = (usb_out_latch & 0xfe) | (data >> 7);
+	usb.out_latch = (usb.out_latch & 0xfe) | (data >> 7);
 	logerror("%03X: P1 write = %02X\n", activecpu_get_pc(), data);
 }
 
 
 static WRITE8_HANDLER( usb_p2_w )
 {
-	UINT8 old = usb_last_p2_value;
-	usb_last_p2_value = data;
+	UINT8 old = usb.last_p2_value;
+	usb.last_p2_value = data;
 
 	/* low 2 bits control the bank of work RAM we are addressing */
-	usb_work_ram_bank = data & 3;
+	usb.work_ram_bank = data & 3;
 
 	/* bit 6 controls the "ready" bit output to the host */
 	/* it also clears the input latch from the host (active low) */
-	usb_out_latch = ((data & 0x40) << 1) | (usb_out_latch & 0x7f);
+	usb.out_latch = ((data & 0x40) << 1) | (usb.out_latch & 0x7f);
 	if ((data & 0x40) == 0)
-		usb_in_latch = 0;
+		usb.in_latch = 0;
 
 	/* bit 7 controls the reset on the upper counter at U33 */
 	if ((old & 0x80) && !(data & 0x80))
-		usb_t1_clock = 0;
+		usb.t1_clock = 0;
 
 	logerror("%03X: P2 write -> bank=%d ready=%d clock=%d\n", activecpu_get_pc(), data & 3, (data >> 6) & 1, (data >> 7) & 1);
-}
-
-
-static READ8_HANDLER( usb_t0_r )
-{
-	/* T0 returns the raw 2MHz clock */
-	mame_time curtime = mame_timer_get_time();
-	return (curtime.subseconds / (MAX_SUBSECONDS / (2 * USB_2MHZ_CLOCK))) & 1;
 }
 
 
@@ -403,7 +426,7 @@ static READ8_HANDLER( usb_t1_r )
 {
 	/* T1 returns 1 based on the value of the T1 clock; the exact */
 	/* pattern is determined by one or more jumpers on the board. */
-	return (usb_t1_clock & usb_t1_clock_mask) != 0;
+	return (usb.t1_clock & usb.t1_clock_mask) != 0;
 }
 
 
@@ -437,7 +460,7 @@ INLINE void clock_channel(timer8253_channel *ch)
 			}
 			else
 			{
-				if (ch->remain-- == 0)
+				if (--ch->remain == 0)
 					ch->output = 1;
 			}
 			break;
@@ -462,143 +485,200 @@ static void usb_stream_update(void *param, stream_sample_t **inputs, stream_samp
 	/* iterate over samples */
 	while (length--)
 	{
-		int noiseval;
-		int sample = 0;
+		double noiseval;
+		double sample = 0;
 		int group;
+		int step;
+
+
+		/*----------------
+            Noise Source
+          ----------------
+
+                         RC
+           MM5837 ---> FILTER ---> CR FILTER ---> 3.2x AMP ---> NOISE
+                       LADDER
+       */
 
 		/* update the noise source */
-		if (usb_noise_subcount-- == 0)
+		for (step = USB_2MHZ_CLOCK / SAMPLE_RATE; step >= usb.noise_subcount; step -= usb.noise_subcount)
 		{
-			usb_noise_shift = (usb_noise_shift << 1) | (((usb_noise_shift >> 13) ^ (usb_noise_shift >> 16)) & 1);
-			usb_noise_state = (usb_noise_shift >> 16) & 1;
-			usb_noise_subcount = USB_2MHZ_CLOCK / MM5837_CLOCK - 1;
-
-#if 0
-{
-	static FILE *f;
-	if (!f)
-	{
-		f = fopen("noise.log", "w");
-		fprintf(f, "rc1_exp = %.10f\nrc2_exp = %.10f\nrc3_exp = %.10f\ncr_exp = %.10f\n",
-			usb_noise_rc1_exp,
-			usb_noise_rc2_exp,
-			usb_noise_rc3_exp,
-			usb_noise_cr_exp);
-	}
-	fprintf(f, "nv=%d  c1=%.10f  c2=%.10f  c3=%.10f  cr=%.10f  res=%d\n", usb_noise_state,
-			usb_noise_rc1_cap,
-			usb_noise_rc2_cap,
-			usb_noise_rc3_cap,
-			usb_noise_cr_cap,
-			noiseval);
-}
-#endif
+			usb.noise_shift = (usb.noise_shift << 1) | (((usb.noise_shift >> 13) ^ (usb.noise_shift >> 16)) & 1);
+			usb.noise_state = (usb.noise_shift >> 16) & 1;
+			usb.noise_subcount = USB_2MHZ_CLOCK / MM5837_CLOCK;
 		}
+		usb.noise_subcount -= step;
 
-		usb_noise_rc1_cap += ((double)usb_noise_state - usb_noise_rc1_cap) * usb_noise_rc1_exp;
-		usb_noise_rc2_cap += (usb_noise_rc1_cap - usb_noise_rc2_cap) * usb_noise_rc2_exp;
-		usb_noise_rc3_cap += (usb_noise_rc2_cap - usb_noise_rc3_cap) * usb_noise_rc3_exp;
-		usb_noise_rc4_cap += (usb_noise_rc3_cap - usb_noise_rc4_cap) * usb_noise_rc4_exp;
-		noiseval = (usb_noise_rc4_cap - usb_noise_cr_cap) * 30 * 3.2 * 150;
-		usb_noise_cr_cap += (usb_noise_rc4_cap - usb_noise_cr_cap) * usb_noise_cr_exp;
+		/* update the filtered noise value -- this is just an approximation to the pink noise filter */
+		/* being applied on the PCB, but it sounds pretty close */
+		usb.noise_filters[0].capval = 0.99765 * usb.noise_filters[0].capval + usb.noise_state * 0.0990460;
+		usb.noise_filters[1].capval = 0.96300 * usb.noise_filters[1].capval + usb.noise_state * 0.2965164;
+		usb.noise_filters[2].capval = 0.57000 * usb.noise_filters[2].capval + usb.noise_state * 1.0526913;
+		noiseval = usb.noise_filters[0].capval + usb.noise_filters[1].capval + usb.noise_filters[2].capval + usb.noise_state * 0.1848;
 
-		/* there are 3 nearly identical groups of circuits, each with its own 8253 */
+		/* final output goes through a CR filter; the scaling factor is arbitrary to get the noise to the */
+		/* correct relative volume */
+		noiseval = step_cr_filter(&usb.noise_filters[4], noiseval);
+		noiseval *= 0.075;
+
+		/* there are 3 identical groups of circuits, each with its own 8253 */
 		for (group = 0; group < 3; group++)
 		{
-			timer8253 *g = &usb_timer_group[group];
-			stream_sample_t timerval = 0;
+			timer8253 *g = &usb.timer_group[group];
+			double chan0, chan1, chan2, mix;
 
-			/*
-                8253        CR         UNITY      AD7524
-                OUT0 ---> FILTER ---->  GAIN  -->  VRef  ---> 100k -> mix
-                                      FOLLOWER
+
+			/*-------------
+                Channel 0
+              -------------
+
+                8253        CR                   AD7524
+                OUT0 ---> FILTER ---> BUFFER--->  VRef  ---> 100k ---> mix
             */
 
 			/* channel 0 clocks with the PCS clock */
-			if (g->chan[0].subcount-- == 0)
+			for (step = USB_2MHZ_CLOCK / SAMPLE_RATE; step >= g->chan[0].subcount; step -= g->chan[0].subcount)
 			{
-				g->chan[0].subcount = USB_2MHZ_CLOCK / USB_PCS_CLOCK - 1;
+				g->chan[0].subcount = USB_2MHZ_CLOCK / USB_PCS_CLOCK;
 				g->chan[0].gate = 1;
 				clock_channel(&g->chan[0]);
 			}
+			g->chan[0].subcount -= step;
 
 			/* channel 0 is mixed in with a resistance of 100k */
-			timerval += 50 * g->chan[0].output * g->chan[0].env;
+			chan0 = step_cr_filter(&g->chan_filter[0], g->chan[0].output) * g->env[0] * (1.0/100.0);
+
+
+			/*-------------
+                Channel 1
+              -------------
+
+                8253        CR                   AD7524
+                OUT1 ---> FILTER ---> BUFFER--->  VRef  ---> 100k ---> mix
+            */
 
 			/* channel 1 clocks with the PCS clock */
-			if (g->chan[1].subcount-- == 0)
+			for (step = USB_2MHZ_CLOCK / SAMPLE_RATE; step >= g->chan[1].subcount; step -= g->chan[1].subcount)
 			{
-				g->chan[1].subcount = USB_2MHZ_CLOCK / USB_PCS_CLOCK - 1;
+				g->chan[1].subcount = USB_2MHZ_CLOCK / USB_PCS_CLOCK;
 				g->chan[1].gate = 1;
 				clock_channel(&g->chan[1]);
 			}
+			g->chan[1].subcount -= step;
 
 			/* channel 1 is mixed in with a resistance of 100k */
-			timerval += 50 * g->chan[1].output * g->chan[1].env;
+			chan1 = step_cr_filter(&g->chan_filter[1], g->chan[1].output) * g->env[1] * (1.0/100.0);
+
+
+			/*-------------
+                Channel 2
+              -------------
+
+              If timer_mode == 0:
+
+                           SWITCHED                                  AD7524
+                NOISE --->    RC   ---> 1.56x AMP ---> INVERTER --->  VRef ---> 33k ---> mix
+                            FILTERS
+
+              If timer mode == 1:
+
+                                         AD7524                                    SWITCHED
+                NOISE ---> INVERTER --->  VRef ---> 33k ---> mix ---> INVERTER --->   RC   ---> 1.56x AMP ---> finalmix
+                                                                                    FILTERS
+            */
 
 			/* channel 2 clocks with the 2MHZ clock and triggers with the GOS clock */
-			if (g->chan[2].subcount-- == 0)
+			for (step = 0; step < USB_2MHZ_CLOCK / SAMPLE_RATE; step++)
 			{
-				g->chan[2].subcount = USB_2MHZ_CLOCK / USB_GOS_CLOCK / 2 - 1;
-				g->chan[2].gate = !g->chan[2].gate;
+				if (g->chan[2].subcount-- == 0)
+				{
+					g->chan[2].subcount = USB_2MHZ_CLOCK / USB_GOS_CLOCK / 2 - 1;
+					g->chan[2].gate = !g->chan[2].gate;
+				}
+				clock_channel(&g->chan[2]);
 			}
-			clock_channel(&g->chan[2]);
+
+			/* the exponents for the gate filters are determined by channel 2's output */
+			g->gate1.exponent = usb.gate_rc1_exp[g->chan[2].output];
+			g->gate2.exponent = usb.gate_rc2_exp[g->chan[2].output];
 
 			/* based on the envelope mode, we do one of two things with source 2 */
-			if (usb_timer_mode[group] == 0)
+			if (g->config == 0)
 			{
-				/* the raw noise source is gated by the output of channel 2 and then */
-				/* used as the Vref for the channel 2 envelope DAC; the output of */
-				/* that is mixed in with a resistance of 33k */
-				timerval += noiseval * g->chan[2].env;
+				chan2 = step_rc_filter(&g->gate2, step_rc_filter(&g->gate1, noiseval)) * -1.56 * g->env[2] * (1.0/33.0);
+				mix = chan0 + chan1 + chan2;
 			}
 			else
 			{
-				/* the raw noise source is used as the Vref for the channel 2 envelope */
-				/* DAC, which is mixed in with a resistance of 33k; the final mixed result */
-				/* is then gated by the output of channel 2 */
-				timerval += noiseval * g->chan[2].env;
+				chan2 = -noiseval * g->env[2] * (1.0/33.0);
+				mix = chan0 + chan1 + chan2;
+				mix = step_rc_filter(&g->gate2, step_rc_filter(&g->gate1, -mix)) * 1.56;
 			}
 
 			/* accumulate the sample */
-			sample += timerval;
+			sample += mix;
 		}
 
-		*dest++ = sample - (stream_sample_t)usb_cr_cap;
-		usb_cr_cap += ((double)sample - usb_cr_cap) * usb_cr_exp;
+
+		/*-------------
+            Final mix
+          -------------
+
+          INPUTS
+          EQUAL ---> 1.2x INVERTER ---> CR FILTER ---> out
+          WEIGHT
+
+       */
+       *dest++ = 4000 * step_cr_filter(&usb.final_filter, sample);
 	}
 }
 
 
 void *usb_start(int clock, const struct CustomSound_interface *config)
 {
+	filter_state temp;
+	int group;
+
 	/* find the CPU we are associated with */
-	usb_cpunum = mame_find_cpu_index("usb");
-	assert(usb_cpunum != (UINT8)-1);
+	usb.cpunum = mame_find_cpu_index("usb");
+	assert(usb.cpunum != (UINT8)-1);
 
 	/* allocate work RAM */
-	usb_work_ram = auto_malloc(0x400);
+	usb.work_ram = auto_malloc(0x400);
 
 	/* create a sound stream */
-	usb_stream = stream_create(0, 1, USB_2MHZ_CLOCK, NULL, usb_stream_update);
+	usb.stream = stream_create(0, 1, SAMPLE_RATE, NULL, usb_stream_update);
 
 	/* initialize state */
-	usb_noise_shift = 0x15555;
-	usb_cr_cap = 0;
-	usb_cr_exp = 1.0 - exp(-1.0 / (100e3 * 4.7e-6 * USB_2MHZ_CLOCK));
+	usb.noise_shift = 0x15555;
 
-	usb_noise_rc1_cap = 0;
-	usb_noise_rc1_exp = 1.0 - exp(-1.0 / ((2.7e3 + 2.7e3) * 1.0e-6 * USB_2MHZ_CLOCK));
-	usb_noise_rc2_cap = 0;
-	usb_noise_rc2_exp = 1.0 - exp(-1.0 / ((2.7e3 + 1e3) * 0.30e-6 * USB_2MHZ_CLOCK));
-	usb_noise_rc3_cap = 0;
-	usb_noise_rc3_exp = 1.0 - exp(-1.0 / ((2.7e3 + 270) * 0.15e-6 * USB_2MHZ_CLOCK));
-	usb_noise_rc4_cap = 0;
-	usb_noise_rc4_exp = 1.0 - exp(-1.0 / ((2.7e3 + 0) * 0.082e-6 * USB_2MHZ_CLOCK));
-	usb_noise_cr_cap = 0;
-	usb_noise_cr_exp = 1.0 - exp(-1.0 / (33e3 * 0.1e-6 * USB_2MHZ_CLOCK));
+	for (group = 0; group < 3; group++)
+	{
+		timer8253 *g = &usb.timer_group[group];
+		configure_filter(&g->chan_filter[0], 10e3, 1e-6);
+		configure_filter(&g->chan_filter[1], 10e3, 1e-6);
+		configure_filter(&g->gate1, 100e3, 0.01e-6);
+		configure_filter(&g->gate2, 2 * 100e3, 0.01e-6);
+	}
 
-	return usb_stream;
+	configure_filter(&temp, 100e3, 0.01e-6);
+	usb.gate_rc1_exp[0] = temp.exponent;
+	configure_filter(&temp, 1e3, 0.01e-6);
+	usb.gate_rc1_exp[1] = temp.exponent;
+	configure_filter(&temp, 2 * 100e3, 0.01e-6);
+	usb.gate_rc2_exp[0] = temp.exponent;
+	configure_filter(&temp, 2 * 1e3, 0.01e-6);
+	usb.gate_rc2_exp[1] = temp.exponent;
+
+	configure_filter(&usb.noise_filters[0], 2.7e3 + 2.7e3, 1.0e-6);
+	configure_filter(&usb.noise_filters[1], 2.7e3 + 1e3, 0.30e-6);
+	configure_filter(&usb.noise_filters[2], 2.7e3 + 270, 0.15e-6);
+	configure_filter(&usb.noise_filters[3], 2.7e3 + 0, 0.082e-6);
+	configure_filter(&usb.noise_filters[4], 33e3, 0.1e-6);
+
+	configure_filter(&usb.final_filter, 100e3, 4.7e-6);
+
+	return usb.stream;
 }
 
 
@@ -611,11 +691,11 @@ void *usb_start(int clock, const struct CustomSound_interface *config)
 
 static void timer_w(int which, UINT8 offset, UINT8 data)
 {
-	timer8253 *g = &usb_timer_group[which];
+	timer8253 *g = &usb.timer_group[which];
 	timer8253_channel *ch;
 	int was_holding;
 
-	stream_update(usb_stream, 0);
+	stream_update(usb.stream, 0);
 
 	/* switch off the offset */
 	switch (offset)
@@ -672,31 +752,22 @@ static void timer_w(int which, UINT8 offset, UINT8 data)
 				ch->bcdmode = (data >> 0) & 1;
 				ch->latchtoggle = 0;
 				ch->output = (ch->clockmode == 1);
-
-				/* we don't support BCD mode */
-//              assert(ch->bcdmode == 0);
-//              assert(ch->latchmode != 0);
-//              assert(ch->clockmode == 1 || ch->clockmode == 3);
 			}
 			break;
 	}
-
-	logerror("timer%d_w(%d) = %02X\n", which, offset, data);
 }
 
 
 static void env_w(int which, UINT8 offset, UINT8 data)
 {
-	timer8253 *g = &usb_timer_group[which];
+	timer8253 *g = &usb.timer_group[which];
 
-	stream_update(usb_stream, 0);
+	stream_update(usb.stream, 0);
 
 	if (offset < 3)
-		g->chan[offset].env = data;
+		g->env[offset] = (double)data;
 	else
-		usb_timer_mode[which] = data & 1;
-
-	logerror("env%d_w(%d) = %02X\n", which, offset, data);
+		g->config = data & 1;
 }
 
 
@@ -709,15 +780,15 @@ static void env_w(int which, UINT8 offset, UINT8 data)
 
 static READ8_HANDLER( usb_workram_r )
 {
-	offset += 256 * usb_work_ram_bank;
-	return usb_work_ram[offset];
+	offset += 256 * usb.work_ram_bank;
+	return usb.work_ram[offset];
 }
 
 
 static WRITE8_HANDLER( usb_workram_w )
 {
-	offset += 256 * usb_work_ram_bank;
-	usb_work_ram[offset] = data;
+	offset += 256 * usb.work_ram_bank;
+	usb.work_ram[offset] = data;
 
 	/* writes to the low 32 bytes go to various controls */
 	switch (offset & ~3)
@@ -757,7 +828,7 @@ static WRITE8_HANDLER( usb_workram_w )
  *************************************/
 
 static ADDRESS_MAP_START( usb_map, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0fff) AM_RAM AM_BASE(&usb_program_ram)
+	AM_RANGE(0x0000, 0x0fff) AM_RAM AM_BASE(&usb.program_ram)
 ADDRESS_MAP_END
 
 
@@ -765,7 +836,6 @@ static ADDRESS_MAP_START( usb_portmap, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x00, 0xff) AM_READWRITE(usb_workram_r, usb_workram_w)
 	AM_RANGE(I8039_p1, I8039_p1) AM_READWRITE(usb_p1_r, usb_p1_w)
 	AM_RANGE(I8039_p2, I8039_p2) AM_WRITE(usb_p2_w)
-	AM_RANGE(I8039_t0, I8039_t0) AM_READ(usb_t0_r)
 	AM_RANGE(I8039_t1, I8039_t1) AM_READ(usb_t1_r)
 ADDRESS_MAP_END
 
@@ -793,7 +863,7 @@ static struct CustomSound_interface usb_custom_interface =
 MACHINE_DRIVER_START( sega_universal_sound_board )
 
 	/* CPU for the usb board */
-	MDRV_CPU_ADD_TAG("usb", I8035, 6000000/15)		/* divide by 15 in CPU */
+	MDRV_CPU_ADD_TAG("usb", I8035, USB_MASTER_CLOCK/15)		/* divide by 15 in CPU */
 	MDRV_CPU_PROGRAM_MAP(usb_map, 0)
 	MDRV_CPU_IO_MAP(usb_portmap, 0)
 

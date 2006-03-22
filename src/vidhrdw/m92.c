@@ -135,7 +135,7 @@ READ8_HANDLER( m92_paletteram_r )
 
 WRITE8_HANDLER( m92_paletteram_w )
 {
-	paletteram_xBBBBBGGGGGRRRRR_w(offset + 0x800*m92_palette_bank,data);
+	paletteram_xBBBBBGGGGGRRRRR_le_w(offset + 0x800*m92_palette_bank,data);
 }
 
 /*****************************************************************************/

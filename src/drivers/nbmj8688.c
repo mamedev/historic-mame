@@ -481,8 +481,8 @@ static ADDRESS_MAP_START( readport_kaguya, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0xa0, 0xa0) AM_READ(nb1413m3_inputport1_r)
 	AM_RANGE(0xb0, 0xb0) AM_READ(nb1413m3_inputport2_r)
 	AM_RANGE(0xd0, 0xd0) AM_READ(ff_r)	// irq ack? watchdog?
-//  AM_RANGE(0xf0, 0xf0) AM_READ(nb1413m3_dipsw1_r)
-//  AM_RANGE(0xf1, 0xf1) AM_READ(nb1413m3_dipsw2_r)
+    AM_RANGE(0xf0, 0xf0) AM_READ(nb1413m3_dipsw1_r)
+	AM_RANGE(0xf1, 0xf1) AM_READ(nb1413m3_dipsw2_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport_kaguya, ADDRESS_SPACE_IO, 8 )
@@ -1157,7 +1157,7 @@ INPUT_PORTS_START( kanatuen )
 	PORT_DIPNAME( 0x40, 0x40, "DIPSW 2-7" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, "DIPSW 2-7" )
+	PORT_DIPNAME( 0x80, 0x80, "DIPSW 2-8" )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -1234,7 +1234,7 @@ INPUT_PORTS_START( kyuhito )
 	PORT_DIPNAME( 0x40, 0x40, "DIPSW 2-7" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, "DIPSW 2-7" )
+	PORT_DIPNAME( 0x80, 0x80, "DIPSW 2-8" )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -1311,7 +1311,7 @@ INPUT_PORTS_START( idhimitu )
 	PORT_DIPNAME( 0x40, 0x40, "DIPSW 2-7" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, "DIPSW 2-7" )
+	PORT_DIPNAME( 0x80, 0x80, "DIPSW 2-8" )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -3491,8 +3491,6 @@ ROM_START( nightlov )
 	ROM_REGION( 0x10000, REGION_SOUND1, 0 ) /* voice */
 	ROM_LOAD( "9.ic5",  0x00000, 0x08000, CRC(634c2831) SHA1(02009b0bdf4e9502bcb4cf95614b7ca2e2b2f232) )
 	ROM_LOAD( "10.ic6", 0x08000, 0x08000, CRC(7705ca10) SHA1(569e403dc9c7055e4ac5c4a3aa067eae37de2b12) )
-//  ROM_LOAD( "9.ic5",  0x08000, 0x08000, CRC(634c2831) SHA1(02009b0bdf4e9502bcb4cf95614b7ca2e2b2f232) )
-//  ROM_LOAD( "10.ic6", 0x00000, 0x08000, CRC(7705ca10) SHA1(569e403dc9c7055e4ac5c4a3aa067eae37de2b12) )
 
 	ROM_REGION( 0x060000, REGION_GFX1, 0 ) /* gfx */
 	ROM_LOAD( "5.6h",   0x00000, 0x10000, CRC(c4d5ce04) SHA1(78aef48edfd7c8f4fcdc93a5522781c4c70da2df) )
@@ -4205,8 +4203,8 @@ ROM_END
 
 
 /* 8-bit palette */
-GAME( 1986, crystalg, 0,        crystalg,        crystalg, crystalg, ROT0, "Nichibutsu", "Crystal Gal (Japan 860512)", GAME_NOT_WORKING )
-GAME( 1986, crystal2, 0,        crystalg,        crystal2, crystal2, ROT0, "Nichibutsu", "Crystal Gal 2 (Japan 860620)", GAME_NOT_WORKING )
+GAME( 1986, crystalg, 0,        crystalg,        crystalg, crystalg, ROT0, "Nichibutsu", "Crystal Gal (Japan 860512)", 0 )
+GAME( 1986, crystal2, 0,        crystalg,        crystal2, crystal2, ROT0, "Nichibutsu", "Crystal Gal 2 (Japan 860620)", 0 )
 GAME( 1986, nightlov, 0,        crystalg,        nightlov, nightlov, ROT0, "Central Denshi", "Night Love (Japan 860705)", GAME_NOT_WORKING )
 GAME( 1986, apparel,  0,        apparel,         apparel,  apparel,  ROT0, "Central Denshi", "Apparel Night (Japan 860929)", 0 )
 

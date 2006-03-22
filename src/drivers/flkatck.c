@@ -105,7 +105,7 @@ static ADDRESS_MAP_START( flkatck_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x0007) AM_WRITE(flkatck_k007121_regs_w) 	/* 007121 registers */
 	AM_RANGE(0x0000, 0x03ff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x0400, 0x041f) AM_WRITE(flkatck_ls138_w)			/* bankswitch + counters + sound command */
-	AM_RANGE(0x0800, 0x0bff) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_w) AM_BASE(&paletteram)/* palette */
+	AM_RANGE(0x0800, 0x0bff) AM_WRITE(paletteram_xBBBBBGGGGGRRRRR_le_w) AM_BASE(&paletteram)/* palette */
 	AM_RANGE(0x1000, 0x1fff) AM_WRITE(MWA8_RAM)					/* RAM */
 	AM_RANGE(0x2000, 0x3fff) AM_WRITE(flkatck_k007121_w) AM_BASE(&k007121_ram)			/* Video RAM (007121) */
 	AM_RANGE(0x4000, 0x5fff) AM_WRITE(MWA8_BANK1)					/* banked ROM */

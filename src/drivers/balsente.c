@@ -2465,7 +2465,7 @@ GAME( 1984, triviag2, 0,        balsente, triviag2, triviag2, ROT0, "Bally/Sente
 GAME( 1984, triviasp, 0,        balsente, triviasp, triviag2, ROT0, "Bally/Sente", "Trivial Pursuit (All Star Sports Edition)", GAME_SUPPORTS_SAVE )
 GAME( 1984, triviayp, 0,        balsente, triviayp, triviag2, ROT0, "Bally/Sente", "Trivial Pursuit (Young Players Edition)", GAME_SUPPORTS_SAVE )
 GAME( 1984, triviabb, 0,        balsente, triviabb, triviag2, ROT0, "Bally/Sente", "Trivial Pursuit (Baby Boomer Edition)", GAME_SUPPORTS_SAVE )
-GAME( 1987, triviaes, 0,        balsente, triviaes, triviaes, ROT0, "Bally/Sente", "Trivial Pursuit (Spanish Edition)", 0 )
+GAME( 1987, triviaes, 0,        balsente, triviaes, triviaes, ROT0, "Bally/Sente", "Trivial Pursuit (Spanish Edition)", GAME_SUPPORTS_SAVE )
 GAME( 1985, gimeabrk, 0,        balsente, gimeabrk, gimeabrk, ROT0, "Bally/Sente", "Gimme A Break", GAME_SUPPORTS_SAVE )
 GAME( 1985, minigolf, 0,        balsente, minigolf, minigolf, ROT0, "Bally/Sente", "Mini Golf (set 1)", GAME_SUPPORTS_SAVE )
 GAME( 1985, minigol2, minigolf, balsente, minigol2, minigol2, ROT0, "Bally/Sente", "Mini Golf (set 2)", GAME_SUPPORTS_SAVE )

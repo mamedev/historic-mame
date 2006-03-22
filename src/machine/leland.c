@@ -1295,7 +1295,7 @@ READ8_HANDLER( leland_gated_paletteram_r )
 WRITE8_HANDLER( ataxx_paletteram_and_misc_w )
 {
 	if (wcol_enable)
-		paletteram_xxxxRRRRGGGGBBBB_w(offset, data);
+		paletteram_xxxxRRRRGGGGBBBB_le_w(offset, data);
 	else if (offset == 0x7f8 || offset == 0x7f9)
 		leland_master_video_addr_w(offset - 0x7f8, data);
 	else if (offset == 0x7fc)

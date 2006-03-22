@@ -85,43 +85,10 @@ enum
 	IPT_DIPSWITCH_NAME,
 	IPT_DIPSWITCH_SETTING,
 	IPT_VBLANK,
-	IPT_KEYBOARD,				/* MESS only */
 	IPT_CONFIG_NAME,			/* MESS only */
 	IPT_CONFIG_SETTING,			/* MESS only */
-	IPT_START,					/* MESS only */
-	IPT_SELECT,					/* MESS only */
 	IPT_CATEGORY_NAME,			/* MESS only */
 	IPT_CATEGORY_SETTING,		/* MESS only */
-
-#define __ipt_digital_joystick_start IPT_JOYSTICK_UP
-	/* use IPT_JOYSTICK for panels where the player has one single joystick */
-	IPT_JOYSTICK_UP,
-	IPT_JOYSTICK_DOWN,
-	IPT_JOYSTICK_LEFT,
-	IPT_JOYSTICK_RIGHT,
-
-	/* use IPT_JOYSTICKLEFT and IPT_JOYSTICKRIGHT for dual joystick panels */
-	IPT_JOYSTICKRIGHT_UP,
-	IPT_JOYSTICKRIGHT_DOWN,
-	IPT_JOYSTICKRIGHT_LEFT,
-	IPT_JOYSTICKRIGHT_RIGHT,
-	IPT_JOYSTICKLEFT_UP,
-	IPT_JOYSTICKLEFT_DOWN,
-	IPT_JOYSTICKLEFT_LEFT,
-	IPT_JOYSTICKLEFT_RIGHT,
-#define __ipt_digital_joystick_end IPT_JOYSTICKLEFT_RIGHT
-
-	/* action buttons */
-	IPT_BUTTON1,
-	IPT_BUTTON2,
-	IPT_BUTTON3,
-	IPT_BUTTON4,
-	IPT_BUTTON5,
-	IPT_BUTTON6,
-	IPT_BUTTON7,
-	IPT_BUTTON8,
-	IPT_BUTTON9,
-	IPT_BUTTON10,
 
 	/* start buttons */
 	IPT_START1,
@@ -156,6 +123,39 @@ enum
 	IPT_INTERLOCK,
 	IPT_VOLUME_UP,
 	IPT_VOLUME_DOWN,
+	IPT_START,					/* MESS only */
+	IPT_SELECT,					/* MESS only */
+	IPT_KEYBOARD,				/* MESS only */
+
+#define __ipt_digital_joystick_start IPT_JOYSTICK_UP
+	/* use IPT_JOYSTICK for panels where the player has one single joystick */
+	IPT_JOYSTICK_UP,
+	IPT_JOYSTICK_DOWN,
+	IPT_JOYSTICK_LEFT,
+	IPT_JOYSTICK_RIGHT,
+
+	/* use IPT_JOYSTICKLEFT and IPT_JOYSTICKRIGHT for dual joystick panels */
+	IPT_JOYSTICKRIGHT_UP,
+	IPT_JOYSTICKRIGHT_DOWN,
+	IPT_JOYSTICKRIGHT_LEFT,
+	IPT_JOYSTICKRIGHT_RIGHT,
+	IPT_JOYSTICKLEFT_UP,
+	IPT_JOYSTICKLEFT_DOWN,
+	IPT_JOYSTICKLEFT_LEFT,
+	IPT_JOYSTICKLEFT_RIGHT,
+#define __ipt_digital_joystick_end IPT_JOYSTICKLEFT_RIGHT
+
+	/* action buttons */
+	IPT_BUTTON1,
+	IPT_BUTTON2,
+	IPT_BUTTON3,
+	IPT_BUTTON4,
+	IPT_BUTTON5,
+	IPT_BUTTON6,
+	IPT_BUTTON7,
+	IPT_BUTTON8,
+	IPT_BUTTON9,
+	IPT_BUTTON10,
 
 	/* mahjong inputs */
 	IPT_MAHJONG_A,
@@ -208,7 +208,7 @@ enum
 	IPT_MOUSE_Y,		/* relative */
 #define __ipt_analog_end IPT_MOUSE_Y
 
-	/* Analog adjuster support */
+	/* analog adjuster support */
 	IPT_ADJUSTER,
 
 	/* the following are special codes for user interface handling - not to be used by drivers! */
@@ -405,6 +405,7 @@ enum
 typedef struct _input_port_init_params input_port_init_params;
 
 
+/* In mamecore.h: typedef struct _input_port_default_entry input_port_default_entry; */
 struct _input_port_default_entry
 {
 	UINT32		type;			/* type of port; see enum above */
@@ -416,9 +417,9 @@ struct _input_port_default_entry
 	input_seq	defaultincseq;	/* default input sequence to increment (analog ports only) */
 	input_seq	defaultdecseq;	/* default input sequence to decrement (analog ports only) */
 };
-/* In mamecore.h: typedef struct _input_port_default_entry input_port_default_entry; */
 
 
+/* In mamecore.h: typedef struct _input_port_entry input_port_entry; */
 struct _input_port_entry
 {
 	UINT32		mask;			/* bits affected */
@@ -450,6 +451,8 @@ struct _input_port_entry
 	UINT16		category;		/* (MESS-specific) category */
 	const char *name;			/* user-friendly name to display */
 	input_seq	seq;			/* input sequence affecting the input bits */
+	UINT32		(*custom)(void *);/* custom callback routine */
+	void *		custom_param;	/* parameter for callback routine */
 
 	/* valid if type is between __ipt_analog_start and __ipt_analog_end */
 	struct
@@ -481,6 +484,13 @@ struct _input_port_entry
 		UINT32	value;			/* value to compare against */
 	} condition;
 
+	/* valid for IPT_DIPNAME */
+	struct
+	{
+		const char *swname;		/* name of the physical DIP switch */
+		UINT8	swnum;			/* physical switch number */
+	} diploc[8];
+
 	/* valid if type is IPT_KEYBOARD */
 #ifdef MESS
 	struct
@@ -489,7 +499,6 @@ struct _input_port_entry
 	} keyboard;
 #endif
 };
-/* In mamecore.h: typedef struct _input_port_entry input_port_entry; */
 
 
 
@@ -503,7 +512,7 @@ struct _input_port_entry
 
 /* start of table */
 #define INPUT_PORTS_START(name)										\
- 	void construct_ipt_##name(input_port_init_params *param)			\
+ 	void construct_ipt_##name(input_port_init_params *param)		\
 	{																\
  		const char *modify_tag = NULL;								\
  		input_port_entry *port;										\
@@ -517,7 +526,7 @@ struct _input_port_entry
 
 /* aliasing */
 #define INPUT_PORTS_ALIAS(name, base)								\
- 	void construct_ipt_##name(input_port_init_params *param)			\
+ 	void construct_ipt_##name(input_port_init_params *param)		\
 	{																\
  		construct_ipt_##base(param);								\
 	}																\
@@ -564,23 +573,23 @@ struct _input_port_entry
 #define PORT_CODE_INC(code)	PORT_CODE_SEQ(code,analog.incseq,2)
 
 #define PORT_2WAY													\
-	port->four_way = 0;												\
+	port->four_way = FALSE;											\
 
 #define PORT_4WAY													\
-	port->four_way = 1;												\
+	port->four_way = TRUE;											\
 
 #define PORT_8WAY													\
-	port->four_way = 0;												\
+	port->four_way = FALSE;											\
 
 #define PORT_PLAYER(player_)										\
 	port->player = (player_) - 1;									\
 
 #define PORT_COCKTAIL												\
-	port->cocktail = 1;												\
-	port->player = 1;												\
+	port->cocktail = TRUE;											\
+	port->player = TRUE;											\
 
 #define PORT_TOGGLE													\
-	port->toggle = 1;												\
+	port->toggle = TRUE;											\
 
 #define PORT_NAME(name_)											\
 	port->name = (name_);											\
@@ -589,10 +598,10 @@ struct _input_port_entry
 	port->impulse = (duration_);									\
 
 #define PORT_REVERSE												\
-	port->analog.reverse = 1;										\
+	port->analog.reverse = TRUE;									\
 
 #define PORT_RESET													\
-	port->analog.reset = 1;											\
+	port->analog.reset = TRUE;										\
 
 #define PORT_MINMAX(min_,max_)										\
 	port->analog.min = (min_);										\
@@ -609,7 +618,11 @@ struct _input_port_entry
 	port->analog.centerdelta = (delta_);							\
 
 #define PORT_UNUSED													\
-	port->unused = 1;												\
+	port->unused = TRUE;											\
+
+#define PORT_CUSTOM(callback_, param_)								\
+	port->custom = callback_;										\
+	port->custom_param = (void *)(param_);							\
 
 
 /* dip switch definition */
@@ -618,6 +631,10 @@ struct _input_port_entry
 
 #define PORT_DIPSETTING(default,name)								\
 	PORT_BIT(0, default, IPT_DIPSWITCH_SETTING) PORT_NAME(name)		\
+
+/* physical location, of the form: name:sw,[name:]sw,... */
+#define PORT_DIPLOCATION(location_)									\
+	input_port_parse_diplocation(port, location_);					\
 
 /* conditionals for dip switch settings */
 #define PORT_CONDITION(tag_,mask_,condition_,value_)				\
@@ -670,6 +687,7 @@ int input_port_init(void (*construct_ipt)(input_port_init_params *));
 
 input_port_entry *input_port_initialize(input_port_init_params *params, UINT32 type, const char *tag, UINT32 mask);
 input_port_entry *input_port_allocate(void (*construct_ipt)(input_port_init_params *), input_port_entry *memory);
+void input_port_parse_diplocation(input_port_entry *in, const char *location);
 
 input_port_default_entry *get_input_port_list(void);
 const input_port_default_entry *get_input_port_list_defaults(void);
@@ -686,6 +704,7 @@ const char *input_port_name(const input_port_entry *in);
 input_seq *input_port_seq(input_port_entry *in, int seqtype);
 input_seq *input_port_default_seq(int type, int player, int seqtype);
 int input_port_condition(const input_port_entry *in);
+void input_port_set_changed_callback(int port, UINT32 mask, void (*callback)(void *, UINT32, UINT32), void *param);
 
 const char *port_type_to_token(int type, int player);
 int token_to_port_type(const char *string, int *player);
@@ -703,99 +722,5 @@ void input_port_set_digital_value(int port, UINT32 value, UINT32 mask);
 UINT32 readinputport(int port);
 UINT32 readinputportbytag(const char *tag);
 UINT32 readinputportbytag_safe(const char *tag, UINT32 defvalue);
-
-READ8_HANDLER( input_port_0_r );
-READ8_HANDLER( input_port_1_r );
-READ8_HANDLER( input_port_2_r );
-READ8_HANDLER( input_port_3_r );
-READ8_HANDLER( input_port_4_r );
-READ8_HANDLER( input_port_5_r );
-READ8_HANDLER( input_port_6_r );
-READ8_HANDLER( input_port_7_r );
-READ8_HANDLER( input_port_8_r );
-READ8_HANDLER( input_port_9_r );
-READ8_HANDLER( input_port_10_r );
-READ8_HANDLER( input_port_11_r );
-READ8_HANDLER( input_port_12_r );
-READ8_HANDLER( input_port_13_r );
-READ8_HANDLER( input_port_14_r );
-READ8_HANDLER( input_port_15_r );
-READ8_HANDLER( input_port_16_r );
-READ8_HANDLER( input_port_17_r );
-READ8_HANDLER( input_port_18_r );
-READ8_HANDLER( input_port_19_r );
-READ8_HANDLER( input_port_20_r );
-READ8_HANDLER( input_port_21_r );
-READ8_HANDLER( input_port_22_r );
-READ8_HANDLER( input_port_23_r );
-READ8_HANDLER( input_port_24_r );
-READ8_HANDLER( input_port_25_r );
-READ8_HANDLER( input_port_26_r );
-READ8_HANDLER( input_port_27_r );
-READ8_HANDLER( input_port_28_r );
-READ8_HANDLER( input_port_29_r );
-
-READ16_HANDLER( input_port_0_word_r );
-READ16_HANDLER( input_port_1_word_r );
-READ16_HANDLER( input_port_2_word_r );
-READ16_HANDLER( input_port_3_word_r );
-READ16_HANDLER( input_port_4_word_r );
-READ16_HANDLER( input_port_5_word_r );
-READ16_HANDLER( input_port_6_word_r );
-READ16_HANDLER( input_port_7_word_r );
-READ16_HANDLER( input_port_8_word_r );
-READ16_HANDLER( input_port_9_word_r );
-READ16_HANDLER( input_port_10_word_r );
-READ16_HANDLER( input_port_11_word_r );
-READ16_HANDLER( input_port_12_word_r );
-READ16_HANDLER( input_port_13_word_r );
-READ16_HANDLER( input_port_14_word_r );
-READ16_HANDLER( input_port_15_word_r );
-READ16_HANDLER( input_port_16_word_r );
-READ16_HANDLER( input_port_17_word_r );
-READ16_HANDLER( input_port_18_word_r );
-READ16_HANDLER( input_port_19_word_r );
-READ16_HANDLER( input_port_20_word_r );
-READ16_HANDLER( input_port_21_word_r );
-READ16_HANDLER( input_port_22_word_r );
-READ16_HANDLER( input_port_23_word_r );
-READ16_HANDLER( input_port_24_word_r );
-READ16_HANDLER( input_port_25_word_r );
-READ16_HANDLER( input_port_26_word_r );
-READ16_HANDLER( input_port_27_word_r );
-READ16_HANDLER( input_port_28_word_r );
-READ16_HANDLER( input_port_29_word_r );
-
-READ32_HANDLER( input_port_0_dword_r );
-READ32_HANDLER( input_port_1_dword_r );
-READ32_HANDLER( input_port_2_dword_r );
-READ32_HANDLER( input_port_3_dword_r );
-READ32_HANDLER( input_port_4_dword_r );
-READ32_HANDLER( input_port_5_dword_r );
-READ32_HANDLER( input_port_6_dword_r );
-READ32_HANDLER( input_port_7_dword_r );
-READ32_HANDLER( input_port_8_dword_r );
-READ32_HANDLER( input_port_9_dword_r );
-READ32_HANDLER( input_port_10_dword_r );
-READ32_HANDLER( input_port_11_dword_r );
-READ32_HANDLER( input_port_12_dword_r );
-READ32_HANDLER( input_port_13_dword_r );
-READ32_HANDLER( input_port_14_dword_r );
-READ32_HANDLER( input_port_15_dword_r );
-READ32_HANDLER( input_port_16_dword_r );
-READ32_HANDLER( input_port_17_dword_r );
-READ32_HANDLER( input_port_18_dword_r );
-READ32_HANDLER( input_port_19_dword_r );
-READ32_HANDLER( input_port_20_dword_r );
-READ32_HANDLER( input_port_21_dword_r );
-READ32_HANDLER( input_port_22_dword_r );
-READ32_HANDLER( input_port_23_dword_r );
-READ32_HANDLER( input_port_24_dword_r );
-READ32_HANDLER( input_port_25_dword_r );
-READ32_HANDLER( input_port_26_dword_r );
-READ32_HANDLER( input_port_27_dword_r );
-READ32_HANDLER( input_port_28_dword_r );
-READ32_HANDLER( input_port_29_dword_r );
-
 
 #endif	/* __INPTPORT_H__ */

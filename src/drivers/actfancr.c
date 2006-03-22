@@ -108,7 +108,7 @@ static ADDRESS_MAP_START( actfan_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x072000, 0x0727ff) AM_WRITE(actfancr_pf2_data_w) AM_BASE(&actfancr_pf2_data)
 	AM_RANGE(0x100000, 0x1007ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x110000, 0x110001) AM_WRITE(buffer_spriteram_w)
-	AM_RANGE(0x120000, 0x1205ff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_w) AM_BASE(&paletteram)
+	AM_RANGE(0x120000, 0x1205ff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_le_w) AM_BASE(&paletteram)
 	AM_RANGE(0x150000, 0x150001) AM_WRITE(actfancr_sound_w)
 	AM_RANGE(0x1f0000, 0x1f3fff) AM_WRITE(MWA8_RAM) AM_BASE(&actfancr_ram) /* Main ram */
 ADDRESS_MAP_END
@@ -135,7 +135,7 @@ static ADDRESS_MAP_START( triothep_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x100000, 0x100001) AM_WRITE(actfancr_sound_w)
 	AM_RANGE(0x110000, 0x110001) AM_WRITE(buffer_spriteram_w)
 	AM_RANGE(0x120000, 0x1207ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x130000, 0x1305ff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_w) AM_BASE(&paletteram)
+	AM_RANGE(0x130000, 0x1305ff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_le_w) AM_BASE(&paletteram)
 	AM_RANGE(0x1f0000, 0x1f3fff) AM_WRITE(MWA8_RAM) AM_BASE(&actfancr_ram) /* Main ram */
 	AM_RANGE(0x1ff000, 0x1ff001) AM_WRITE(triothep_control_select_w)
 	AM_RANGE(0x1ff400, 0x1ff403) AM_WRITE(H6280_irq_status_w)
