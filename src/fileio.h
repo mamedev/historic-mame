@@ -41,10 +41,9 @@ enum
 	FILETYPE_CTRLR,
 	FILETYPE_INI,
 	FILETYPE_COMMENT,
-#ifdef MESS
-	FILETYPE_HASH,
-#endif
-	FILETYPE_end /* dummy last entry */
+	FILETYPE_DEBUGLOG,
+	FILETYPE_HASH,	/* MESS-specific */
+	FILETYPE_end 	/* dummy last entry */
 };
 
 

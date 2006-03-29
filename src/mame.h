@@ -189,6 +189,7 @@ struct _global_options
 	mame_file *	record;			/* handle to file to record input to */
 	mame_file *	playback;		/* handle to file to playback input from */
 	mame_file *	language_file;	/* handle to file for localization */
+	mame_file *	logfile;		/* handle to file for debug logging */
 
 	int		mame_debug;		/* 1 to enable debugging */
 	int		cheat;			/* 1 to enable cheating */

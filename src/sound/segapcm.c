@@ -105,6 +105,9 @@ static void *segapcm_start(int sndindex, int clock, const void *config)
 
 	spcm->stream = stream_create(0, 2, clock / 128, spcm, SEGAPCM_update);
 
+	state_save_register_item_array("segapcm", sndindex, spcm->low);
+	state_save_register_item_pointer("segapcm", sndindex, spcm->ram, 0x800);
+
 	return spcm;
 }
 

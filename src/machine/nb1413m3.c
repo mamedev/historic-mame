@@ -142,7 +142,7 @@ MACHINE_RESET( nb1413m3 )
 	nb1413m3_gfxradr_h = 0;
 	nb1413m3_gfxrombank = 0;
 	nb1413m3_inputport = 0xff;
-	nb1413m3_outcoin_flag = 0;
+	nb1413m3_outcoin_flag = 1;
 
 	nb1413m3_74ls193_counter = 0;
 
@@ -389,6 +389,9 @@ READ8_HANDLER( nb1413m3_inputport0_r )
 			return ((input_port_3_r(0) & 0xfe) | (nb1413m3_busyflag & 0x01));
 		case NB1413M3_TAIWANMB:
 			return ((input_port_3_r(0) & 0xfc) | ((nb1413m3_outcoin_flag & 0x01) << 1) | (nb1413m3_busyflag & 0x01));
+		case NB1413M3_HYHOO:
+		case NB1413M3_HYHOO2:
+			return ((input_port_2_r(0) & 0xfe) | (nb1413m3_busyflag & 0x01));
 		default:
 			return ((input_port_2_r(0) & 0xfc) | ((nb1413m3_outcoin_flag & 0x01) << 1) | (nb1413m3_busyflag & 0x01));
 	}

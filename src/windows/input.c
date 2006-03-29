@@ -1692,7 +1692,7 @@ static void init_joycodes(void)
 {
 	int mouse, gun, stick, axis, button, pov;
 	char tempname[MAX_PATH];
-	char mousename[10];
+	char mousename[30];
 
 	// map mice first
 	for (mouse = 0; mouse < mouse_count; mouse++)
@@ -1707,11 +1707,11 @@ static void init_joycodes(void)
 			fprintf(stderr, "%s: %s\n", mousename, mouse_name[mouse]);
 
 		// add analog axes (fix me -- should enumerate these)
-		sprintf(tempname, "%s X", mousename);
+		sprintf(tempname, "%sX", mousename);
 		add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEAXIS, 0), CODE_OTHER_ANALOG_RELATIVE);
-		sprintf(tempname, "%s Y", mousename);
+		sprintf(tempname, "%sY", mousename);
 		add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEAXIS, 1), CODE_OTHER_ANALOG_RELATIVE);
-		sprintf(tempname, "%s Z", mousename);
+		sprintf(tempname, "%sZ", mousename);
 		add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEAXIS, 2), CODE_OTHER_ANALOG_RELATIVE);
 
 		// add mouse buttons
@@ -1719,7 +1719,7 @@ static void init_joycodes(void)
 		{
 			if (win_use_raw_mouse)
 			{
-				sprintf(tempname, "%s Button %d", mousename, button + 1);
+				sprintf(tempname, "%sButton %d", mousename, button + 1);
 				add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEBUTTON, button), CODE_OTHER_DIGITAL);
 			}
 			else
@@ -1732,7 +1732,7 @@ static void init_joycodes(void)
 				result = IDirectInputDevice_GetObjectInfo(mouse_device[mouse], &instance, offsetof(DIMOUSESTATE, rgbButtons[button]), DIPH_BYOFFSET);
 				if (result == DI_OK)
 				{
-					sprintf(tempname, "%s %s", mousename, instance.tszName);
+					sprintf(tempname, "%s%s", mousename, instance.tszName);
 					add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEBUTTON, button), CODE_OTHER_DIGITAL);
 				}
 			}
@@ -1742,10 +1742,14 @@ static void init_joycodes(void)
 	// map lightguns second
 	for (gun = 0; gun < lightgun_count; gun++)
 	{
+		if (win_use_raw_mouse)
+			sprintf(mousename, "Lightgun on Mouse %d ", mouse + 1);
+		else
+			sprintf(mousename, "Lightgun %d ", mouse + 1);
 		// add lightgun axes (fix me -- should enumerate these)
-		sprintf(tempname, "Lightgun %d X", gun + 1);
+		sprintf(tempname, "%sX", mousename);
 		add_joylist_entry(tempname, JOYCODE(gun, CODETYPE_GUNAXIS, 0), CODE_OTHER_ANALOG_ABSOLUTE);
-		sprintf(tempname, "Lightgun %d Y", gun + 1);
+		sprintf(tempname, "%sY", mousename);
 		add_joylist_entry(tempname, JOYCODE(gun, CODETYPE_GUNAXIS, 1), CODE_OTHER_ANALOG_ABSOLUTE);
 	}
 

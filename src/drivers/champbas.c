@@ -3,15 +3,18 @@
 Championship Baseball
 
 driver by Nicola Salmoria
+ALPHA 8201 MCU handling by Tatsuyuki satoh
 
 TODO:
-champbbj and champbb2 don't work due to protection - a custom mcu probably.
-The protection involves locations a006-a007 and 6000-63ff.  It pulls
-addresses to routines from there.
+  champbb2 , sometime mcu err and ACCESS VIOLATION trap.
 
+champbbj and champbb2 has Alpha8201 mcu for protection.
 champbja is a patched version of champbbj with different protection.
 
+main CPU
+
 0000-5fff ROM
+6000-63ff MCU shared RAM
 7800-7fff ROM (Champion Baseball 2 only)
 8000-83ff Video RAM
 8400-87ff Color RAM
@@ -21,7 +24,7 @@ read:
 a000      IN0
 a040      IN1
 a080      DSW
-a0a0      ?
+a0a0      ?(same as DSW)
 a0c0      COIN
 
 write:
@@ -29,12 +32,25 @@ write:
 7001      8910 control
 8ff0-8fff sprites
 a000      ?
+a006      MCU HALT controll
+a007      NOP (MCU shared RAM switch)
 a060-a06f sprites
 a080      command for the sound CPU
-a0c0      watchdog reset???
+a0c0      watchdog reset (watchdog time = 16xvblank)
 
+sub CPU (speech DAC)
 
-The second CPU plays speech
+read:
+0000-5fff   ROM
+6000(-7fff) sound latch
+e000-e3ff   RAM
+
+write:
+
+8000(-9fff) 4bit status for main CPU
+a000(-bfff) clear sound latch
+c000(-dfff) DAC
+e000-e3ff   RAM
 
 ***************************************************************************/
 
@@ -52,58 +68,95 @@ extern PALETTE_INIT( champbas );
 extern VIDEO_START( champbas );
 extern VIDEO_UPDATE( champbas );
 
-
-
 WRITE8_HANDLER( champbas_dac_w )
 {
 	DAC_signed_data_w(0,data<<2);
 }
 
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x7800, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xa000, 0xa000) AM_READ(input_port_0_r)
-	AM_RANGE(0xa040, 0xa040) AM_READ(input_port_1_r)
-	AM_RANGE(0xa080, 0xa080) AM_READ(input_port_2_r)
-/*  AM_RANGE(0xa0a0, 0xa0a0)    ???? */
-	AM_RANGE(0xa0c0, 0xa0c0) AM_READ(input_port_3_r)
-ADDRESS_MAP_END
+///////////////////////////////////////////////////////////////////////////
+// protection handling
+///////////////////////////////////////////////////////////////////////////
 
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
-	//AM_RANGE(0x6000, 0x63ff) AM_WRITE(champbas_protection_w)
+static WRITE8_HANDLER( champbas_mcu_halt_w )
+{
+	data &= 1;
+	cpunum_set_input_line(2, INPUT_LINE_HALT, data ? ASSERT_LINE : CLEAR_LINE);
+}
+
+/* champbja another protection */
+READ8_HANDLER( champbja_alt_protection_r )
+{
+	UINT8 data = 0;
+/*
+(68BA) & 0x99 == 0x00
+(6867) & 0x99 == 0x99
+(68AB) & 0x80 == 0x80
+(6854) & 0x99 == 0x19
+
+BA 1011_1010
+00 0--0_0--0
+
+54 0101_0100
+19 0--1_1--1
+
+67 0110_0111
+99 1--1_1--1
+
+AB 1010_1011
+80 1--0_0--0
+*/
+	/* bit7 =  bit0 */
+	if(  (offset&0x01) ) data |= 0x80;
+	/* bit4,3,0 =  bit6 */
+	if(  (offset&0x40) ) data |= 0x19;
+
+	return data;
+}
+
+static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_ROM
 	AM_RANGE(0x7000, 0x7000) AM_WRITE(AY8910_write_port_0_w)
 	AM_RANGE(0x7001, 0x7001) AM_WRITE(AY8910_control_port_0_w)
-	AM_RANGE(0x7800, 0x7fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x8000, 0x83ff) AM_WRITE(champbas_videoram_w) AM_BASE(&videoram)
-	AM_RANGE(0x8400, 0x87ff) AM_WRITE(champbas_colorram_w) AM_BASE(&colorram)
-	AM_RANGE(0x8800, 0x8fef) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x8ff0, 0x8fff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
-	AM_RANGE(0xa000, 0xa000) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0x7800, 0x7fff) AM_ROM
+
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(champbas_videoram_w) AM_READ(MRA8_RAM) AM_BASE(&videoram)
+	AM_RANGE(0x8400, 0x87ff) AM_WRITE(champbas_colorram_w) AM_READ(MRA8_RAM) AM_BASE(&colorram)
+	AM_RANGE(0x8800, 0x8fef) AM_RAM
+	AM_RANGE(0x8ff0, 0x8fff) AM_WRITE(MWA8_RAM) AM_READ(MRA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(interrupt_enable_w) AM_READ(input_port_0_r)
 	AM_RANGE(0xa002, 0xa002) AM_WRITE(champbas_gfxbank_w)
 	AM_RANGE(0xa003, 0xa003) AM_WRITE(champbas_flipscreen_w)
-	//AM_RANGE(0xa006, 0xa007) AM_WRITE(champbas_protection_w)
-	AM_RANGE(0xa060, 0xa06f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2)
-	AM_RANGE(0xa080, 0xa080) AM_WRITE(soundlatch_w)
-	AM_RANGE(0xa0c0, 0xa0c0) AM_WRITE(watchdog_reset_w)
+	AM_RANGE(0xa005, 0xa005) AM_NOP
+
+	AM_RANGE(0xa040, 0xa040)                            AM_READ(input_port_1_r)
+	AM_RANGE(0xa060, 0xa06f) AM_WRITE(MWA8_RAM)                                   AM_BASE(&spriteram_2)
+	AM_RANGE(0xa080, 0xa080) AM_WRITE(soundlatch_w)     AM_READ(input_port_2_r)
+/*  AM_RANGE(0xa0a0, 0xa0a0)    ???? */
+	AM_RANGE(0xa0c0, 0xa0c0) AM_WRITE(watchdog_reset_w) AM_READ(input_port_3_r)
+
+	/* has MCU pcb only */
+	AM_RANGE(0x6000, 0x63ff) AM_RAM AM_SHARE(1)
+/*  AM_RANGE(0xa006, 0xa006) AM_WRITE(champbas_mcu_halt_w) */
+	AM_RANGE(0xa007, 0xa007) AM_NOP /* MCU shared RAM switch , but no-hawdrare */
+
+	/* champbja only */
+	AM_RANGE(0x6800, 0x68ff) AM_READ(champbja_alt_protection_r)
+
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( readmem2, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
+static ADDRESS_MAP_START( sub_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_ROM
 	AM_RANGE(0x6000, 0x6000) AM_READ(soundlatch_r)
 	AM_RANGE(0xe000, 0xe3ff) AM_READ(MRA8_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writemem2, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
-/*  AM_RANGE(0x8000, 0x8000) AM_WRITE(MWA8_NOP) unknown - maybe DAC enable */
-	AM_RANGE(0xa000, 0xa000) AM_WRITE(soundlatch_w)	/* probably. The sound latch has to be cleared some way */
+/*  AM_RANGE(0x8000, 0x8000) AM_WRITE(MWA8_NOP) return low 4bit to main CPU */
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(soundlatch_clear_w)
 	AM_RANGE(0xc000, 0xc000) AM_WRITE(champbas_dac_w)
 	AM_RANGE(0xe000, 0xe3ff) AM_WRITE(MWA8_RAM)
 ADDRESS_MAP_END
 
-
+static ADDRESS_MAP_START( mcu_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_RAM AM_SHARE(1) /* main CPU shared RAM */
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( champbas )
 	PORT_START	/* IN0 */
@@ -147,7 +200,7 @@ INPUT_PORTS_START( champbas )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) ) /* The game won't boot if set to ON */
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) ) /* watchdog half over : The game won't boot if set to ON */
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ))
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
@@ -207,18 +260,18 @@ static struct AY8910interface ay8910_interface =
 	input_port_1_r
 };
 
-
-
 static MACHINE_DRIVER_START( champbas )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz (?) */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+
+	/* main cpu */
+	MDRV_CPU_ADD(Z80, 18432000/6)
+	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_CPU_ADD(Z80, 3072000)
-	/* audio CPU */	/* 3.072 MHz ? */
-	MDRV_CPU_PROGRAM_MAP(readmem2,writemem2)
+	/* audio CPU */
+	MDRV_CPU_ADD(Z80, 18432000/6)
+	MDRV_CPU_PROGRAM_MAP(sub_map,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -238,7 +291,7 @@ static MACHINE_DRIVER_START( champbas )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
-	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ADD(AY8910, 18432000/12)
 	MDRV_SOUND_CONFIG(ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.30)
 
@@ -247,6 +300,29 @@ static MACHINE_DRIVER_START( champbas )
 MACHINE_DRIVER_END
 
 
+static MACHINE_RESET( champbb2 )
+{
+}
+
+static MACHINE_DRIVER_START( champbb2 )
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(champbas)
+
+	/* MCU */
+	MDRV_CPU_ADD(ALPHA8201, 18432000/6/8)
+	MDRV_CPU_PROGRAM_MAP(mcu_map,0)
+
+	/* to MCU timeout champbbj */
+	MDRV_INTERLEAVE(50)
+
+//  MDRV_MACHINE_RESET(champbb2)
+MACHINE_DRIVER_END
+
+/* MCU handling */
+static DRIVER_INIT(champbb2)
+{
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa006, 0xa006, 0, 0, champbas_mcu_halt_w);
+}
 
 /***************************************************************************
 
@@ -368,7 +444,10 @@ ROM_START( champb2a )
 ROM_END
 
 GAME( 1983, champbas, 0,        champbas, champbas, 0, ROT0, "Sega",			 "Champion Baseball", 0 )
-GAME( 1983, champbbj, champbas, champbas, champbas, 0, ROT0, "Alpha Denshi Co.", "Champion Baseball (Japan set 1)", GAME_NOT_WORKING )
-GAME( 1983, champbja, champbas, champbas, champbas, 0, ROT0, "Alpha Denshi Co.", "Champion Baseball (Japan set 2)", GAME_NOT_WORKING )
-GAME( 1983, champbb2, 0,        champbas, champbas, 0, ROT0, "Sega",			 "Champion Baseball II (set 1)", GAME_NOT_WORKING )
-GAME( 1983, champb2a, champbb2, champbas, champbas, 0, ROT0, "Alpha Denshi Co.", "Champion Baseball II (set 2)", GAME_NOT_WORKING )
+GAME( 1983, champbbj, champbas, champbb2, champbas, champbb2, ROT0, "Alpha Denshi Co.", "Champion Baseball (Japan set 1)", 0 )
+GAME( 1983, champbja, champbas, champbb2, champbas, champbb2, ROT0, "Alpha Denshi Co.", "Champion Baseball (Japan set 2)", 0 )
+GAME( 1983, champbb2, 0,        champbb2, champbas, champbb2, ROT0, "Sega",			 "Champion Baseball II (set 1)", 0 )
+
+/* NO DUMP */
+GAME( 1983, champb2a, champbb2, champbb2, champbas, champbb2, ROT0, "Alpha Denshi Co.", "Champion Baseball II (set 2)", GAME_NOT_WORKING)
+

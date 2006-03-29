@@ -145,8 +145,6 @@ static void ccpu_init(int index, int clock, const void *_config, int (*irqcallba
 	ccpu.external_input = config->external_input ? config->external_input : read_jmi;
 	ccpu.vector_callback = config->vector_callback;
 
-	ccpu.external_input = read_jmi;
-
 	state_save_register_item("ccpu", clock, ccpu.PC);
 	state_save_register_item("ccpu", clock, ccpu.A);
 	state_save_register_item("ccpu", clock, ccpu.B);

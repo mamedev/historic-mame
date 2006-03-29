@@ -1,20 +1,16 @@
 /*
     Talbot (c) 1982 Volt Electronics
 
-    TODO:
-    - finish the simulation of the protection
+ALPHA 8201 MCU handling by Tatsuyuki satoh
 
+    TODO:
+        verify CPU and MCU clock frequency.
 */
 
 #include "driver.h"
 #include "sound/ay8910.h"
 
 static tilemap *bg_tilemap;
-
-static UINT8 *workram;
-static UINT8 *talbot_mcu_ram;
-static int mcu_control_1 = -1;
-static int mcu_control_2 = -1;
 
 static WRITE8_HANDLER( talbot_videoram_w )
 {
@@ -34,129 +30,40 @@ static WRITE8_HANDLER( talbot_colorram_w )
 	}
 }
 
-/*
-
-mcu_write
-
-PC: 0x00DD -> writes values from 0x8C30 to 0x63C0
-              and another similar one some offsets below
-
-others:
-
-PC: 0x00EE -> checks 0x03 from 0x8C16 -> some mcu status ?
-
-*/
-
-static READ8_HANDLER( talbot_mcu_r )
+static WRITE8_HANDLER( talbot_mcu_halt_w )
 {
-	int pc = activecpu_get_pc();
-	static int count = 0;
-
-	if(
-		pc != 0x1D11 && /* check values written in talbot_mcu_ram */
-		pc != 0x1D84 && /* check 0x08 at 0x6003 */
-		pc != 0x1D8C && /* get the value to jump (= 0x010F) from 0x60C0 and bytes sum MUST be 0x10 */
-		pc != 0x00E4 && /* reads from 0x63D0 to 0x63E0 and stores them to 0x8C40 to 0x8C50 */
-		pc != 0x00EE &&	/* reads from 0x6000 to 0x6020 and stores them to 0x8C60 to 0x8C80 */
-		pc != 0x4782	/* check 0x04 at 0x6003 */ //can it fail?
-	  )
-	{
-		logerror("mcu reads @ %04X\n",pc);
-	}
-
-	if ( pc == 0x1D84 )
-		return 0x08;
-
-	if ( pc == 0x4782 )
-		return 0x04;
-
-	if ( pc == 0x1D8C )
-	{
-		if(!count)
-		{
-			count = 1;
-			return 0x0f;
-		}
-		else
-		{
-			count = 0;
-			return 0x01;
-		}
-	}
-
-	return talbot_mcu_ram[offset];
+	data &= 1;
+	cpunum_set_input_line(1, INPUT_LINE_HALT, data ? ASSERT_LINE : CLEAR_LINE);
 }
 
-static WRITE8_HANDLER( talbot_mcu_w )
+static WRITE8_HANDLER( talbot_mcu_switch_w )
 {
-	int pc = activecpu_get_pc();
-
-	if(
-		pc != 0x1CF3 &&
-		pc != 0x1D3E &&
-		pc != 0x1D40 &&
-		pc != 0x1D49 &&
-		pc != 0x0019 &&
-		pc != 0x1E08 &&
-		pc != 0x0149 &&
-		pc != 0x00DF &&
-		pc != 0x479D &&
-		pc != 0x47A2 &&
-		pc != 0x254D &&
-		pc != 0x2552
-	  )
-		logerror("mcu writes @ %04X\n",pc);
-
-	talbot_mcu_ram[offset] = data;
-}
-
-static WRITE8_HANDLER( talbot_mcu_control_1_w )
-{
-	if( data != mcu_control_1 )
-	{
-		mcu_control_1 = data;
-//      logerror("MCU Control 1 = %02X PC = %04X\n",data,activecpu_get_pc());
-	}
-}
-
-static WRITE8_HANDLER( talbot_mcu_control_2_w )
-{
-	if( data != mcu_control_2 )
-	{
-		mcu_control_2 = data;
-//      logerror("MCU Control 2 = %02X PC = %04X\n",data,activecpu_get_pc());
-	}
-}
-
-static READ8_HANDLER( talbot_ram_r )
-{
-	return workram[offset];
-}
-
-static WRITE8_HANDLER( talbot_ram_w )
-{
-	workram[offset] = data;
 }
 
 static ADDRESS_MAP_START( cpu_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x5fff) AM_ROM
-	AM_RANGE(0x6000, 0x63ff) AM_READWRITE(talbot_mcu_r, talbot_mcu_w) AM_BASE(&talbot_mcu_ram) /* Alpha mcu (protection) */
+	AM_RANGE(0x6000, 0x63ff) AM_RAM AM_SHARE(1) /* MCU shared RAM */
+
 	AM_RANGE(0x7000, 0x7000) AM_WRITE(AY8910_write_port_0_w)
 	AM_RANGE(0x7001, 0x7001) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x8000, 0x83ff) AM_READWRITE(MRA8_RAM, talbot_videoram_w) AM_BASE(&videoram)
 	AM_RANGE(0x8400, 0x87ff) AM_READWRITE(MRA8_RAM, talbot_colorram_w) AM_BASE(&colorram)
-	AM_RANGE(0x8800, 0x8fef) AM_READWRITE(talbot_ram_r, talbot_ram_w) AM_BASE(&workram) //AM_RAM
+	AM_RANGE(0x8800, 0x8fef) AM_RAM
 	AM_RANGE(0x8ff0, 0x8fff) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
 	AM_RANGE(0xa000, 0xa000) AM_WRITE(interrupt_enable_w)
 	AM_RANGE(0xa001, 0xa001) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0xa003, 0xa003) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xa006, 0xa006) AM_WRITE(talbot_mcu_control_1_w)
-	AM_RANGE(0xa007, 0xa007) AM_WRITE(talbot_mcu_control_2_w)
+	AM_RANGE(0xa006, 0xa006) AM_WRITE(talbot_mcu_halt_w)
+	AM_RANGE(0xa007, 0xa007) AM_WRITE(talbot_mcu_switch_w)
 	AM_RANGE(0xa000, 0xa000) AM_READ(input_port_0_r)
 	AM_RANGE(0xa040, 0xa040) AM_READ(input_port_1_r)
 	AM_RANGE(0xa060, 0xa06f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2)
 	AM_RANGE(0xa080, 0xa080) AM_READ(input_port_2_r)
 	AM_RANGE(0xa0c0, 0xa0c0) AM_READWRITE(input_port_3_r,MWA8_NOP /*watchdog_reset_w*/)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( mcu_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_RAM AM_SHARE(1) /* main CPU shared RAM */
 ADDRESS_MAP_END
 
 INPUT_PORTS_START( talbot )
@@ -330,9 +237,14 @@ PALETTE_INIT( talbot )
 
 static MACHINE_DRIVER_START( talbot )
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */
+	MDRV_CPU_ADD(Z80, 18432000/6)	/* (?) */
 	MDRV_CPU_PROGRAM_MAP(cpu_map, 0)
 	MDRV_CPU_VBLANK_INT(irq0_line_pulse, 1)
+
+	/* MCU */
+//  MDRV_CPU_ADD(ALPHA8201, 18432000/6/8/2) /* (?) */
+	MDRV_CPU_ADD(ALPHA8201, 18432000/6/8)
+	MDRV_CPU_PROGRAM_MAP(mcu_map,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -351,7 +263,7 @@ static MACHINE_DRIVER_START( talbot )
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
-	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ADD(AY8910, 18432000/12)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
@@ -376,4 +288,4 @@ ROM_START( talbot )
 	ROM_LOAD( "mb7052.5e", 0x0020, 0x0100, CRC(a3189986) SHA1(f113c1253ba2f8f213c600e93a39c0957a933306) )
 ROM_END
 
-GAME( 1982, talbot, 0, talbot, talbot, 0, ROT90, "Volt Electronics (Alpha license)", "Talbot", GAME_NOT_WORKING )
+GAME( 1982, talbot, 0, talbot, talbot, 0, ROT90, "Volt Electronics (Alpha license)", "Talbot", 0 )

@@ -258,7 +258,7 @@ void state_save_register_memory(const char *module, UINT32 instance, const char 
 	/* check for invalid timing */
 	if (!ss_registration_allowed)
 	{
-		logerror("Attempt to register save state entry after state registration is closed!");
+		logerror("Attempt to register save state entry after state registration is closed! module %s name %s\n",module,name);
 		ss_illegal_regs++;
 		return;
 	}

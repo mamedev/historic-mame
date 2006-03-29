@@ -30,6 +30,7 @@
                 - calls fileio_init() [fileio.c] to initialize file I/O info
                 - calls config_init() [config.c] to initialize configuration system
                 - calls state_init() [state.c] to initialize save state system
+                - calls state_save_allow_registration() [state.c] to allow registrations
                 - calls drawgfx_init() [drawgfx.c] to initialize rendering globals
                 - calls generic_machine_init() [machine/generic.c] to initialize generic machine structures
                 - calls generic_video_init() [vidhrdw/generic.c] to initialize generic video structures
@@ -37,7 +38,6 @@
                 - calls code_init() [input.c] to initialize the input system
                 - calls input_port_init() [inptport.c] to set up the input ports
                 - calls rom_init() [romload.c] to load the game's ROMs
-                - calls state_save_allow_registration() [state.c] to allow registrations
                 - calls timer_init() [timer.c] to reset the timer system
                 - calls memory_init() [memory.c] to process the game's memory maps
                 - calls cpuexec_init() [cpuexec.c] to initialize the CPUs
@@ -83,7 +83,6 @@
 #include "debug/debugcon.h"
 #endif
 
-#include <ctype.h>
 #include <stdarg.h>
 #include <setjmp.h>
 
@@ -812,21 +811,32 @@ void CLIB_DECL fatalerror(const char *text, ...)
 
 void CLIB_DECL logerror(const char *text, ...)
 {
-	va_list arg;
-
-	/* dump to the buffer */
-	va_start(arg, text);
-	vsnprintf(giant_string_buffer, sizeof(giant_string_buffer), text, arg);
-	va_end(arg);
-
 #if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
-	/* output to the debugger if running */
-	if (Machine && Machine->debug_mode)
-		debug_errorlog_write_line(giant_string_buffer);
+	int log_to_debugger = Machine && Machine->debug_mode;
+#else
+	int log_to_debugger = FALSE;
 #endif
 
-	/* let the OSD layer do its own logging if it wants */
-	osd_logerror(giant_string_buffer);
+	/* process only if there is a target */
+	if (options.logfile || log_to_debugger)
+	{
+		va_list arg;
+
+		/* dump to the buffer */
+		va_start(arg, text);
+		vsnprintf(giant_string_buffer, sizeof(giant_string_buffer), text, arg);
+		va_end(arg);
+
+#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+		/* output to the debugger if running */
+		if (log_to_debugger)
+			debug_errorlog_write_line(giant_string_buffer);
+#endif
+
+		/* log to the logfile */
+		if (options.logfile)
+			mame_fputs(options.logfile, giant_string_buffer);
+	}
 }
 
 
@@ -878,58 +888,6 @@ UINT32 mame_rand(void)
 {
 	rand_seed = 1664525 * rand_seed + 1013904223;
 	return rand_seed;
-}
-
-
-/*-------------------------------------------------
-    mame_stricmp - case-insensitive string compare
--------------------------------------------------*/
-
-int mame_stricmp(const char *s1, const char *s2)
-{
-	for (;;)
- 	{
-		int c1 = tolower(*s1++);
-		int c2 = tolower(*s2++);
-		if (c1 == 0 || c1 != c2)
-			return c1 - c2;
- 	}
-}
-
-
-/*-------------------------------------------------
-    mame_strnicmp - case-insensitive string compare
--------------------------------------------------*/
-
-int mame_strnicmp(const char *s1, const char *s2, size_t n)
-{
-	size_t i;
-	for (i = 0; i < n; i++)
- 	{
-		int c1 = tolower(*s1++);
-		int c2 = tolower(*s2++);
-		if (c1 == 0 || c1 != c2)
-			return c1 - c2;
- 	}
-
-	return 0;
-}
-
-
-/*-------------------------------------------------
-    mame_strdup - string duplication via malloc
--------------------------------------------------*/
-
-char *mame_strdup(const char *str)
-{
-	char *cpy = NULL;
-	if (str != NULL)
-	{
-		cpy = malloc(strlen(str) + 1);
-		if (cpy != NULL)
-			strcpy(cpy, str);
-	}
-	return cpy;
 }
 
 
@@ -1009,6 +967,7 @@ static void init_machine(void)
 	fileio_init();
 	config_init();
 	state_init();
+	state_save_allow_registration(TRUE);
 	drawgfx_init();
 	generic_machine_init();
 	generic_video_init();
@@ -1033,9 +992,6 @@ static void init_machine(void)
 	/* this must be done before memory_init in order to allocate memory regions */
 	if (rom_init(Machine->gamedrv->rom) != 0)
 		fatalerror("rom_init failed");
-
-	/* allow save state registrations starting here */
-	state_save_allow_registration(TRUE);
 
 	/* initialize the timers and allocate a soft_reset timer */
 	/* this must be done before cpu_init so that CPU's can allocate timers */

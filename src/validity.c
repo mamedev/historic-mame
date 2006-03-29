@@ -947,7 +947,8 @@ int mame_validitychecks(int game)
 		UINT32 region_length[REGION_MAX];
 		machine_config drv;
 
-#ifndef MAME_DEBUG
+/* ASG -- trying this for a while to see if submission failures increase */
+#if 1
 		/* non-debug builds only care about games in the same driver */
 		if (game != -1 && strcmp(drivers[game]->source_file, driver->source_file) != 0)
 			continue;

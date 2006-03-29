@@ -370,7 +370,7 @@ Quick review of the system16 hardware:
 
 struct palette_info
 {
-	int				entries;						/* number of entries (not counting shadows) */
+	INT32			entries;						/* number of entries (not counting shadows) */
 	UINT8			normal[32];						/* RGB translations for normal pixels */
 	UINT8			shadow[32];						/* RGB translations for shadowed pixels */
 	UINT8			hilight[32];					/* RGB translations for hilighted pixels */
@@ -397,7 +397,7 @@ struct tilemap_info
 	UINT16			latched_xscroll[4];				/* latched X scroll values */
 	UINT16			latched_yscroll[4];				/* latched Y scroll values */
 	UINT16			latched_pageselect[4];			/* latched page select values */
-	int				xoffs;							/* X scroll offset */
+	INT32			xoffs;							/* X scroll offset */
 	tilemap *tilemaps[16];					/* up to 16 tilemap pages */
 	tilemap *textmap;						/* a single text tilemap */
 	struct tilemap_callback_info tilemap_info[16];	/* callback info for 16 tilemap pages */
@@ -417,8 +417,8 @@ struct sprite_info
 	UINT8			shadow;							/* shadow or hilight? */
 	UINT8			bank[16];						/* banking redirection */
 	UINT16			colorbase;						/* base color index */
-	int				ramsize;						/* size of sprite RAM */
-	int				xoffs;							/* X scroll offset */
+	INT32			ramsize;						/* size of sprite RAM */
+	INT32			xoffs;							/* X scroll offset */
 	void			(*draw)(struct sprite_info *info, mame_bitmap *bitmap, const rectangle *cliprect);
 	UINT16 *		spriteram;						/* pointer to spriteram pointer */
 	UINT16 *		buffer;							/* buffered spriteram for those that use it */
@@ -433,7 +433,7 @@ struct road_info
 	UINT16			colorbase1;						/* color base for road ROM data */
 	UINT16			colorbase2;						/* color base for road background data */
 	UINT16			colorbase3;						/* color base for sky data */
-	int				xoffs;							/* X scroll offset */
+	INT32			xoffs;							/* X scroll offset */
 	void			(*draw)(struct road_info *info, mame_bitmap *bitmap, const rectangle *cliprect, int priority);
 	UINT16 *		roadram;						/* pointer to roadram pointer */
 	UINT16 *		buffer;							/* buffered roadram pointer */
@@ -446,7 +446,7 @@ struct rotate_info
 	UINT8			index;							/* index of this structure */
 	UINT8			type;							/* type of rotate system (see segaic16.h for details) */
 	UINT16			colorbase;						/* base color index */
-	int				ramsize;						/* size of rotate RAM */
+	INT32			ramsize;						/* size of rotate RAM */
 	UINT16 *		rotateram;						/* pointer to rotateram pointer */
 	UINT16 *		buffer;							/* buffered data */
 };
@@ -480,7 +480,6 @@ static struct tilemap_info bg_tilemap[SEGAIC16_MAX_TILEMAPS];
 static struct sprite_info sprites[SEGAIC16_MAX_SPRITES];
 static struct road_info road[SEGAIC16_MAX_ROADS];
 static struct rotate_info rotate[SEGAIC16_MAX_ROTATE];
-
 
 
 /*************************************
@@ -559,6 +558,7 @@ void segaic16_palette_init(int entries)
 		palette.shadow[i] = combine_6_weights(weights[1], i0, i1, i2, i3, i4, 0);
 		palette.hilight[i] = combine_6_weights(weights[1], i0, i1, i2, i3, i4, 1);
 	}
+	state_save_register_global(palette);
 }
 
 
@@ -2722,6 +2722,14 @@ int segaic16_sprites_init(int which, int type, int colorbase, int xoffs)
 	if (buffer)
 		info->buffer = auto_malloc(info->ramsize);
 
+	state_save_register_item("segaic16_sp", which, info->flip);
+	state_save_register_item("segaic16_sp", which, info->shadow);
+	state_save_register_item_array("segaic16_sp", which, info->bank);
+	state_save_register_item("segaic16_sp", which, info->colorbase);
+	state_save_register_item("segaic16_sp", which, info->xoffs);
+	if (buffer)
+		state_save_register_item_pointer("segaic16_sp", which, ((UINT8 *) info->buffer), info->ramsize);
+
 	return 0;
 }
 
@@ -3545,6 +3553,9 @@ int segaic16_rotate_init(int which, int type, int colorbase)
 
 	/* allocate a buffer for swapping */
 	info->buffer = auto_malloc(info->ramsize);
+
+	state_save_register_item("segaic16_rot", which, info->colorbase);
+	state_save_register_item_pointer("segaic16_rot", which, ((UINT8 *) info->buffer), info->ramsize);
 
 	return 0;
 }

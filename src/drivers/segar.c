@@ -59,6 +59,49 @@
 #include "sound/sp0250.h"
 
 
+
+
+/*************************************
+ *
+ *  Machine setup and config
+ *
+ *************************************/
+
+static void service_switch(void *param, UINT32 oldval, UINT32 newval)
+{
+	/* pressing the service switch sends an NMI */
+	if (newval)
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
+}
+
+
+static MACHINE_RESET( pignewt )
+{
+	sega_usb_reset(0x10);
+}
+
+
+static offs_t decrypt_offset(offs_t offset)
+{
+	offs_t pc;
+
+	/* if no active CPU, don't do anything */
+	if (cpu_getactivecpu() == -1)
+		return offset;
+
+	/* ignore anything but accesses via opcode $32 (LD $(XXYY),A) */
+	pc = activecpu_get_previouspc();
+	if ((UINT16)pc == 0xffff || program_read_byte(pc) != 0x32)
+		return offset;
+
+	/* fetch the low byte of the address and munge it */
+	return (offset & 0xff00) | (*sega_decrypt)(pc, program_read_byte(pc + 1));
+}
+
+static WRITE8_HANDLER( usb_ram_w ) { sega_usb_ram_w(decrypt_offset(offset), data); }
+
+
+
 /*************************************
  *
  *  Interrupt handling
@@ -294,7 +337,6 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-//AM_RANGE(0x3f, 0x3f) AM_READ(MRA8_NOP) /* Pig Newton - read from 1D87 */
 	AM_RANGE(0x0e, 0x0e) AM_READ(monsterb_audio_8255_r)
 	AM_RANGE(0x81, 0x81) AM_READ(input_port_8_r)     /* only used by Sindbad Mystery */
 	AM_RANGE(0xf8, 0xfc) AM_READ(segar_ports_r)
@@ -1053,7 +1095,7 @@ static struct TMS36XXinterface monsterb_tms3617_interface =
 static MACHINE_DRIVER_START( segar )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD_TAG("main", Z80, 3867120)
+	MDRV_CPU_ADD_TAG("main", Z80, 4000000)
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(segar_interrupt,1)
@@ -1163,6 +1205,8 @@ static MACHINE_DRIVER_START( pignewt )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(segar)
 
+	MDRV_MACHINE_RESET(pignewt)
+
 	/* video hardware */
 	MDRV_GFXDECODE(monsterb_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(16*4*2+1)
@@ -1170,6 +1214,9 @@ static MACHINE_DRIVER_START( pignewt )
 
 	MDRV_VIDEO_START(monsterb)
 	MDRV_VIDEO_UPDATE(sindbadm)
+
+	/* universal sound board */
+	MDRV_IMPORT_FROM(sega_universal_sound_board)
 MACHINE_DRIVER_END
 
 
@@ -1530,8 +1577,6 @@ ROM_START( pignewt )
 	ROM_LOAD( "1906c.bg",  0x0000, 0x1000, CRC(c79d33ce) SHA1(8a5332a801d0db6e5f33c0d39d165819f9914e65) ) /* ??? */
 	ROM_LOAD( "1907c.bg",  0x1000, 0x1000, CRC(bc839d3c) SHA1(80b1c96cac7c51e49ca40a1c5fbc156b12529d2f) ) /* ??? */
 	ROM_LOAD( "1908c.bg",  0x2000, 0x1000, CRC(92cb14da) SHA1(257db7bb2758d579bcf171cda410acff1877122c) ) /* ??? */
-
-	/* SOUND ROMS ARE PROBABLY MISSING! */
 ROM_END
 
 
@@ -1570,8 +1615,6 @@ ROM_START( pignewta )
 	ROM_LOAD( "1906a.bg",  0x0000, 0x1000, BAD_DUMP CRC(c79d33ce) SHA1(8a5332a801d0db6e5f33c0d39d165819f9914e65)  ) /* ??? */
 	ROM_LOAD( "1907a.bg",  0x1000, 0x1000, BAD_DUMP CRC(bc839d3c) SHA1(80b1c96cac7c51e49ca40a1c5fbc156b12529d2f)  ) /* ??? */
 	ROM_LOAD( "1908a.bg",  0x2000, 0x1000, BAD_DUMP CRC(92cb14da) SHA1(257db7bb2758d579bcf171cda410acff1877122c)  ) /* ??? */
-
-	/* SOUND ROMS ARE PROBABLY MISSING! */
 ROM_END
 
 
@@ -1700,6 +1743,11 @@ static DRIVER_INIT( pignewt )
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xb4, 0xb5, 0, 0, pignewt_back_color_w);  /* Just guessing */
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xb8, 0xbc, 0, 0, pignewt_back_ports_w);   /* Just guessing */
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xbe, 0xbe, 0, 0, MWA8_NOP);
+
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x3f, 0x3f, 0, 0, sega_usb_status_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3f, 0x3f, 0, 0, sega_usb_data_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd000, 0xdfff, 0, 0, sega_usb_ram_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd000, 0xdfff, 0, 0, usb_ram_w);
 }
 
 
@@ -1725,6 +1773,6 @@ GAME( 1981, 005,      0,       005,      005,      005,      ROT270, "Sega", "00
 GAME( 1982, monsterb, 0,       monsterb, monsterb, monsterb, ROT270, "Sega", "Monster Bash", 0 )
 GAME( 1982, monster2, monsterb,monsterb, monsterb, monster2, ROT270, "Sega", "Monster Bash (2 board version)",GAME_IMPERFECT_GRAPHICS )
 GAME( 1981, spaceod,  0,       spaceod,  spaceod,  spaceod,  ROT270, "Sega", "Space Odyssey", 0 )
-GAME( 1983, pignewt,  0,       pignewt,  pignewt,  pignewt,  ROT270, "Sega", "Pig Newton (version C)", GAME_NO_SOUND )
-GAME( 1983, pignewta, pignewt, pignewt,  pignewta, pignewt,  ROT270, "Sega", "Pig Newton (version A)", GAME_NO_SOUND )
+GAME( 1983, pignewt,  0,       pignewt,  pignewt,  pignewt,  ROT270, "Sega", "Pig Newton (version C)", GAME_IMPERFECT_SOUND )
+GAME( 1983, pignewta, pignewt, pignewt,  pignewta, pignewt,  ROT270, "Sega", "Pig Newton (version A)", GAME_IMPERFECT_SOUND )
 GAME( 1983, sindbadm, 0,       sindbadm, sindbadm, sindbadm, ROT270, "Sega", "Sindbad Mystery", 0 )

@@ -1319,7 +1319,7 @@ static WRITE32_HANDLER( seattle_voodoo_w )
 	cpu_stalled_mem_mask = mem_mask;
 
 	/* spin until we send the magic trigger */
-	cpu_spinuntil_trigger(45678);
+	cpunum_spinuntil_trigger(0, 45678);
 	if (LOG_DMA) logerror("%08X:Stalling CPU on voodoo (already stalled)\n", activecpu_get_pc());
 }
 
@@ -1340,7 +1340,7 @@ static void voodoo_stall(int stall)
 		else
 		{
 			if (LOG_DMA) logerror("%08X:Stalling CPU on voodoo\n", activecpu_get_pc());
-			cpu_spinuntil_trigger(45678);
+			cpunum_spinuntil_trigger(0, 45678);
 		}
 	}
 

@@ -49,6 +49,22 @@ endif
 
 
 #-------------------------------------------------
+# Alpha 8201
+#-------------------------------------------------
+
+CPUDEFS += -DHAS_ALPHA8201=$(if $(filter ALPHA8201,$(CPUS)),1,0)
+CPUDEFS += -DHAS_ALPHA8301=$(if $(filter ALPHA8301,$(CPUS)),1,0)
+
+ifneq ($(filter ALPHA8201 ALPHA8301,$(CPUS)),)
+OBJDIRS += $(OBJ)/cpu/alph8201
+CPUOBJS += $(OBJ)/cpu/alph8201/alph8201.o
+DBGOBJS += $(OBJ)/cpu/alph8201/8201dasm.o
+$(OBJ)/cpu/alph8201/alph8201.o: alph8201.c alph8201.h
+endif
+
+
+
+#-------------------------------------------------
 # Analog Devices ADSP21xx series
 #-------------------------------------------------
 

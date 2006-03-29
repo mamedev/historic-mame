@@ -92,42 +92,42 @@ TODO:
 
 struct namco_54xx
 {
-	int fetch;
-	int fetchmode;
-	int type_A_active;
-	int type_B_active;
-	int type_C_active;
+	INT32 fetch;
+	INT32 fetchmode;
+	INT32 type_A_active;
+	INT32 type_B_active;
+	INT32 type_C_active;
 
-	int type_A_state;	/* current envelope state */
-	int type_B_state;	/* current envelope state */
-	int type_C_state;	/* current envelope state */
-
-
-	int type_A_pos;		/* type A 'position' in time within the envelope state */
-	int type_A_add;		/* type A 'position' delta (step per one sample at the target frequency)*/
-	int type_A_curr_vol;	/* type A current volume */
-	int type_A_rel_pos;	/* type A index in release volume table */
+	INT32 type_A_state;	/* current envelope state */
+	INT32 type_B_state;	/* current envelope state */
+	INT32 type_C_state;	/* current envelope state */
 
 
-	int type_B_pos;		/* type B 'position' in time */
-	int type_B_add;		/* type B 'position' delta (step per one sample at the target frequency)*/
-	int type_B_curr_vol;	/* type B current volume */
-	int type_B_rel_pos;	/* type B index in release volume table */
+	INT32 type_A_pos;		/* type A 'position' in time within the envelope state */
+	INT32 type_A_add;		/* type A 'position' delta (step per one sample at the target frequency)*/
+	INT32 type_A_curr_vol;	/* type A current volume */
+	INT32 type_A_rel_pos;	/* type A index in release volume table */
+
+
+	INT32 type_B_pos;		/* type B 'position' in time */
+	INT32 type_B_add;		/* type B 'position' delta (step per one sample at the target frequency)*/
+	INT32 type_B_curr_vol;	/* type B current volume */
+	INT32 type_B_rel_pos;	/* type B index in release volume table */
 
 
 
 
 	/* noise generators */
-	int RNG;			/* shift register */
-	int RNG_p;		/* shift register 'position' in time */
-	int RNG_f_0;		/* shift register 'speed' per one sample at the target frequency at the zero level */
-	int RNG_f_1;		/* shift register 'speed' per one sample at the target frequency at the one level */
-	int RNG_delay;		/* delay between the type A output change and the following type B output change */
-	int out_prev;		/* work variable (previous noise output state) */
-	int noise_out_A;		/* noise output used in type A */
-	int noise_out_B;		/* noise output used in type B */
-	int noise_B_will_change;	/* in order to implement the delay between the RNG output in type A and the type B */
-	int RNG_p_delay_B;	/* in order to implement the delay between the RNG output in type A and the type B */
+	INT32 RNG;			/* shift register */
+	INT32 RNG_p;		/* shift register 'position' in time */
+	INT32 RNG_f_0;		/* shift register 'speed' per one sample at the target frequency at the zero level */
+	INT32 RNG_f_1;		/* shift register 'speed' per one sample at the target frequency at the one level */
+	INT32 RNG_delay;		/* delay between the type A output change and the following type B output change */
+	INT32 out_prev;		/* work variable (previous noise output state) */
+	INT32 noise_out_A;		/* noise output used in type A */
+	INT32 noise_out_B;		/* noise output used in type B */
+	INT32 noise_B_will_change;	/* in order to implement the delay between the RNG output in type A and the type B */
+	INT32 RNG_p_delay_B;	/* in order to implement the delay between the RNG output in type A and the type B */
 
 
 	/* parameters */
@@ -750,6 +750,39 @@ altogether which corresponds to 1254 chip clock cycles. 13 samples = 543 cycles,
 
 
 	namco_54xx_reset(chip);
+
+	state_save_register_item("namco54xx", sndindex, chip->fetch);
+	state_save_register_item("namco54xx", sndindex, chip->fetchmode);
+	state_save_register_item("namco54xx", sndindex, chip->type_A_active);
+	state_save_register_item("namco54xx", sndindex, chip->type_B_active);
+	state_save_register_item("namco54xx", sndindex, chip->type_C_active);
+	state_save_register_item("namco54xx", sndindex, chip->type_A_state);
+	state_save_register_item("namco54xx", sndindex, chip->type_B_state);
+	state_save_register_item("namco54xx", sndindex, chip->type_C_state);
+	state_save_register_item("namco54xx", sndindex, chip->type_A_pos);
+	state_save_register_item("namco54xx", sndindex, chip->type_A_add);
+	state_save_register_item("namco54xx", sndindex, chip->type_A_curr_vol);
+	state_save_register_item("namco54xx", sndindex, chip->type_A_rel_pos);
+	state_save_register_item("namco54xx", sndindex, chip->type_B_pos);
+	state_save_register_item("namco54xx", sndindex, chip-> type_B_add);
+	state_save_register_item("namco54xx", sndindex, chip->type_B_curr_vol);
+	state_save_register_item("namco54xx", sndindex, chip->type_B_rel_pos);
+	state_save_register_item("namco54xx", sndindex, chip->RNG);
+	state_save_register_item("namco54xx", sndindex, chip->RNG_p);
+	state_save_register_item("namco54xx", sndindex, chip->RNG_f_0);
+	state_save_register_item("namco54xx", sndindex, chip->RNG_f_1);
+	state_save_register_item("namco54xx", sndindex, chip->RNG_delay);
+	state_save_register_item("namco54xx", sndindex, chip->out_prev);
+	state_save_register_item("namco54xx", sndindex, chip->noise_out_A);
+	state_save_register_item("namco54xx", sndindex, chip->noise_out_B);
+	state_save_register_item("namco54xx", sndindex, chip->noise_B_will_change);
+	state_save_register_item("namco54xx", sndindex, chip->RNG_p_delay_B);
+	state_save_register_item_array("namco54xx", sndindex, chip->type_A_par);
+	state_save_register_item_array("namco54xx", sndindex, chip->type_B_par);
+	state_save_register_item_array("namco54xx", sndindex, chip-> type_C_par);
+	state_save_register_item("namco54xx", sndindex, chip->chip_clock);
+	state_save_register_item("namco54xx", sndindex, chip->chip_sampfreq);
+
 	return chip;
 }
 

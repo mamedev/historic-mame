@@ -299,6 +299,22 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xf800, 0xffff) AM_WRITE(slapfight_fixcol_w) AM_BASE(&slapfight_colorram)
 ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( slapbtuk_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc800, 0xc80f) AM_READ(slapfight_dpram_r)
+	AM_RANGE(0xc810, 0xcfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd000, 0xd7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd800, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe803, 0xe803) AM_READ(getstar_e803_r)
+	AM_RANGE(0xec00, 0xefff) AM_READ(MRA8_ROM) // it reads a copy of the logo from here!
+	AM_RANGE(0xf000, 0xf7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
+
+
 static ADDRESS_MAP_START( slapbtuk_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
@@ -938,7 +954,7 @@ static MACHINE_DRIVER_START( slapbtuk )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(slapfigh)
 	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(readmem,slapbtuk_writemem)
+	MDRV_CPU_PROGRAM_MAP(slapbtuk_readmem,slapbtuk_writemem)
 MACHINE_DRIVER_END
 
 
@@ -1260,6 +1276,39 @@ ROM_START( slapbtuk )
 	ROM_LOAD( "sf_col19.bin", 0x0200,  0x0100, CRC(5cbf9fbf) SHA1(abfa58fa4e44ebc56f2e0fac9bcc36164c845fa3) )
 ROM_END
 
+/* very similar to slapbtuk, is slapbtuk missing the logo rom? */
+ROM_START( slapfgtr )
+	ROM_REGION( 0x18000, REGION_CPU1, 0 )
+	ROM_LOAD( "k1-10.u90", 0x00000, 0x4000, CRC(2efe47af) SHA1(69ce3e83a0d8fa5ee4737c741d31cf32db6b9919) )
+	ROM_LOAD( "k1-09.u89", 0x04000, 0x4000, CRC(17c187c5) SHA1(6e1fd651f56036d1c6c830de8479df25fc182c10) )
+	ROM_LOAD( "k1-08.u88", 0x0e000, 0x2000, CRC(945af97f) SHA1(4d901be477b6101338eb1d86497e1bdc57f9c1b4) ) // contains another copy of the logo tilemap read at ec00!
+	ROM_LOAD( "k1-07.u87",    0x10000, 0x8000, CRC(3c42e4a7) SHA1(8e4da1e6e73603e484ba4f5609ac9ea92999a526) )	/* banked at 8000 */
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the audio CPU */
+	ROM_LOAD( "k1-11.u89",   0x0000,  0x2000, CRC(87f4705a) SHA1(a90d5644ce268f3321047a4f96df96ac294d2f1b) )
+
+	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "k1-02.u57",   0x00000, 0x2000, CRC(2ac7b943) SHA1(d0c3560bb1f0c2647aeff807cb4b09450237b955) )  /* Chars */
+	ROM_LOAD( "k1-03.u58",   0x02000, 0x2000, CRC(33cadc93) SHA1(59ffc206c62a651d2ac0ef52f519dd56edf2c021) )
+
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "k1-01.u49",   0x00000, 0x8000, CRC(b6358305) SHA1(c7bb4236a75ec6b88f011bc30f8fb9a718e2ca3e) )  /* Tiles */
+	ROM_LOAD( "k1-04.u62",   0x08000, 0x8000, CRC(e92d9d60) SHA1(2554617e0e6615ca8c85a49299a4a0e762478339) )
+	ROM_LOAD( "k1-05.u63",   0x10000, 0x8000, CRC(5faeeea3) SHA1(696fba24bcf1f3a7e914a4403854da5eededaf7f) )
+	ROM_LOAD( "k1-06.u64",   0x18000, 0x8000, CRC(974e2ea9) SHA1(3840550fc3a833828dad8f3e300d2ea583d69ce7) )
+
+	ROM_REGION( 0x20000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "k1-15.u60",   0x00000, 0x8000, CRC(8545d397) SHA1(9a1fd5bfd8fb830b8e46643c08eef32ba968fc23) )  /* Sprites */
+	ROM_LOAD( "k1-13.u50",   0x08000, 0x8000, CRC(b1b7b925) SHA1(199b0b52bbeb384211171eca5c50a1c0ebf6826f) )
+	ROM_LOAD( "k1-14.u59",   0x10000, 0x8000, CRC(422d946b) SHA1(c251ef9597a11ec8de39be4fcbddaba84e649ef2) )
+	ROM_LOAD( "k1-12.u49",   0x18000, 0x8000, CRC(587113ae) SHA1(90abe961494a1af7c87693a419fbabf7a58a5dee) )
+
+	ROM_REGION( 0x0300, REGION_PROMS, 0 )
+	ROM_LOAD( "sf_col21.bin", 0x0000,  0x0100, CRC(a0efaf99) SHA1(5df01663480acad1f89abab8662d437617a66d1c) )
+	ROM_LOAD( "sf_col20.bin", 0x0100,  0x0100, CRC(a56d57e5) SHA1(bfbd0db52b23fe1b4994e05103be3d412c1c013e) )
+	ROM_LOAD( "sf_col19.bin", 0x0200,  0x0100, CRC(5cbf9fbf) SHA1(abfa58fa4e44ebc56f2e0fac9bcc36164c845fa3) )
+ROM_END
+
 ROM_START( alcon )
 	ROM_REGION( 0x18000, REGION_CPU1, 0 )
 	ROM_LOAD( "00",           0x00000, 0x8000, CRC(2ba82d60) SHA1(b37659aa18a3f96a3cc7fa93db2439f36487b8c8) )
@@ -1412,7 +1461,10 @@ GAME( 1985, tigerhb2, tigerh, 	 tigerhb,  tigerh,   0,      ROT270, "bootleg",  
 GAME( 1986, slapfigh, 0,        slapfigh, slapfigh, 0,      ROT270, "Taito",    "Slap Fight", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAME( 1986, slapbtjp, slapfigh, slapfigh, slapfigh, 0,      ROT270, "bootleg",  "Slap Fight (Japan bootleg)", GAME_NO_COCKTAIL )
 GAME( 1986, slapbtuk, slapfigh, slapbtuk, slapfigh, 0,      ROT270, "bootleg",  "Slap Fight (English bootleg)", GAME_NO_COCKTAIL )
+GAME( 1986, slapfgtr, slapfigh, slapbtuk, slapfigh, 0,      ROT270, "bootleg",  "Slap Fight (bootleg)", GAME_NO_COCKTAIL ) // PCB labeled 'slap fighter'
 GAME( 1986, alcon,    slapfigh, slapfigh, slapfigh, 0,      ROT270, "Taito America Corp.","Alcon", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAME( 1986, getstar,  0,        slapfigh, getstar,  0,      ROT0,   "Taito",  "Guardian", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAME( 1986, getstarj, getstar,  slapfigh, getstar,  0,      ROT0,   "Taito",  "Get Star (Japan)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAME( 1986, getstarb, getstar,  slapfigh, getstar,  0,      ROT0,   "bootleg","Get Star (bootleg)", GAME_NO_COCKTAIL )
+
+

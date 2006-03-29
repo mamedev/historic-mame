@@ -72,6 +72,7 @@
     TYPE DEFINITIONS
 ***************************************************************************/
 
+/* typedef struct _mame_file mame_file -- declared in fileio.h */
 struct _mame_file
 {
 #ifdef DEBUG_COOKIE
@@ -86,7 +87,6 @@ struct _mame_file
 	char		hash[HASH_BUF_SIZE];
 	int			back_char; /* Buffered char for unget. EOF for empty. */
 };
-/* typedef struct _mame_file mame_file -- declared in fileio.h */
 
 
 
@@ -130,8 +130,9 @@ static chd_interface mame_chd_interface =
 
 
 /*-------------------------------------------------
-    fileio_init - open a file for access and
-    return an error code
+    fileio_init - initialize the internal file
+    I/O system; note that the OS layer is free to
+    call mame_fopen before fileio_init
 -------------------------------------------------*/
 
 void fileio_init(void)
@@ -140,6 +141,10 @@ void fileio_init(void)
 	add_exit_callback(fileio_exit);
 }
 
+
+/*-------------------------------------------------
+    fileio_exit - clean up behind ourselves
+-------------------------------------------------*/
 
 void fileio_exit(void)
 {
@@ -179,6 +184,7 @@ mame_file *mame_fopen_error(const char *gamename, const char *filename, int file
 		/* write-only cases */
 		case FILETYPE_SCREENSHOT:
 		case FILETYPE_MOVIE:
+		case FILETYPE_DEBUGLOG:
 			if (!openforwrite)
 			{
 				logerror("mame_fopen: type %02x read not supported\n", filetype);
@@ -190,11 +196,37 @@ mame_file *mame_fopen_error(const char *gamename, const char *filename, int file
 	/* now open the file appropriately */
 	switch (filetype)
 	{
+		/* generic files that live in a single directory */
+		case FILETYPE_HIGHSCORE:
+		case FILETYPE_CONFIG:
+		case FILETYPE_INPUTLOG:
+		case FILETYPE_COMMENT:
+		case FILETYPE_LANGUAGE:
+		case FILETYPE_CTRLR:
+		case FILETYPE_HIGHSCORE_DB:
+		case FILETYPE_INI:
+		case FILETYPE_DEBUGLOG:
+		case FILETYPE_HASH:		/* MESS-specific */
+			return generic_fopen(filetype, NULL, gamename, 0, openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD, error);
+
+		/* generic multi-directory files */
+		case FILETYPE_SAMPLE:
+		case FILETYPE_ARTWORK:
+			return generic_fopen(filetype, gamename, filename, 0, openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD, error);
+
 		/* ROM files */
 		case FILETYPE_ROM:
 			return generic_fopen(filetype, gamename, filename, 0, FILEFLAG_OPENREAD | FILEFLAG_HASH, error);
 
-		/* read-only disk images */
+		/* memory card files */
+		case FILETYPE_MEMCARD:
+			return generic_fopen(filetype, gamename, filename, 0, openforwrite ? FILEFLAG_OPENWRITE | FILEFLAG_CREATE_GAMEDIR : FILEFLAG_OPENREAD, error);
+
+		/* cheat file */
+		case FILETYPE_CHEAT:
+			return generic_fopen(filetype, NULL, filename, 0, FILEFLAG_OPENREAD | (openforwrite ? FILEFLAG_OPENWRITE : 0), error);
+
+		/* disk images */
 		case FILETYPE_IMAGE:
 #ifndef MESS
 			return generic_fopen(filetype, gamename, filename, 0, FILEFLAG_OPENREAD | FILEFLAG_NOZIP, error);
@@ -227,36 +259,12 @@ mame_file *mame_fopen_error(const char *gamename, const char *filename, int file
 		case FILETYPE_IMAGE_DIFF:
 			return generic_fopen(filetype, gamename, filename, 0, FILEFLAG_OPENREAD | FILEFLAG_OPENWRITE, error);
 
-		/* samples */
-		case FILETYPE_SAMPLE:
-			return generic_fopen(filetype, gamename, filename, 0, FILEFLAG_OPENREAD, error);
-
-		/* artwork files */
-		case FILETYPE_ARTWORK:
-			return generic_fopen(filetype, gamename, filename, 0, FILEFLAG_OPENREAD, error);
-
 		/* NVRAM files */
 		case FILETYPE_NVRAM:
 #ifdef MESS
 			if (filename)
 				return generic_fopen(filetype, gamename, filename, 0, openforwrite ? FILEFLAG_OPENWRITE | FILEFLAG_CREATE_GAMEDIR : FILEFLAG_OPENREAD, error);
 #endif
-			return generic_fopen(filetype, NULL, gamename, 0, openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD, error);
-
-		/* high score files */
-		case FILETYPE_HIGHSCORE:
-			return generic_fopen(filetype, NULL, gamename, 0, openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD, error);
-
-		/* highscore database */
-		case FILETYPE_HIGHSCORE_DB:
-			return generic_fopen(filetype, NULL, filename, 0, FILEFLAG_OPENREAD, error);
-
-		/* config files */
-		case FILETYPE_CONFIG:
-			return generic_fopen(filetype, NULL, gamename, 0, openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD, error);
-
-		/* input logs */
-		case FILETYPE_INPUTLOG:
 			return generic_fopen(filetype, NULL, gamename, 0, openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD, error);
 
 		/* save state files */
@@ -266,10 +274,6 @@ mame_file *mame_fopen_error(const char *gamename, const char *filename, int file
 #else
 			return generic_fopen(filetype, NULL, filename, 0, FILEFLAG_ALLOW_ABSOLUTE | (openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD), error);
 #endif
-
-		/* memory card files */
-		case FILETYPE_MEMCARD:
-			return generic_fopen(filetype, gamename, filename, 0, openforwrite ? FILEFLAG_OPENWRITE | FILEFLAG_CREATE_GAMEDIR : FILEFLAG_OPENREAD, error);
 
 		/* screenshot files */
 		case FILETYPE_SCREENSHOT:
@@ -286,35 +290,6 @@ mame_file *mame_fopen_error(const char *gamename, const char *filename, int file
 			return generic_fopen(filetype, NULL, filename, 0, FILEFLAG_OPENREAD, error);
 #else
 			return generic_fopen(filetype, NULL, filename, 0, FILEFLAG_ALLOW_ABSOLUTE | FILEFLAG_OPENREAD, error);
-#endif
-
-		/* cheat file */
-		case FILETYPE_CHEAT:
-			return generic_fopen(filetype, NULL, filename, 0, FILEFLAG_OPENREAD | (openforwrite ? FILEFLAG_OPENWRITE : 0), error);
-
-		/* language file */
-		case FILETYPE_LANGUAGE:
-			return generic_fopen(filetype, NULL, filename, 0, FILEFLAG_OPENREAD, error);
-
-		/* ctrlr files */
-		case FILETYPE_CTRLR:
-			return generic_fopen(filetype, NULL, filename, 0, FILEFLAG_OPENREAD, error);
-
-		/* game specific ini files */
-		case FILETYPE_INI:
-#ifndef MESS
-			return generic_fopen(filetype, NULL, gamename, 0, FILEFLAG_OPENREAD, error);
-#else
-			return generic_fopen(filetype, NULL, gamename, 0, openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD, error);
-#endif
-
-		case FILETYPE_COMMENT:
-			return generic_fopen(filetype, NULL, gamename, 0, openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD, error);
-
-#ifdef MESS
-		/* CRC files */
-		case FILETYPE_HASH:
-			return generic_fopen(filetype, NULL, gamename, 0, openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD, error);
 #endif
 
 		/* anything else */

@@ -1,8 +1,8 @@
 /***************************************************************************
 
 Driver by Jarek Burczynski, started by Tomasz Slanina  dox@space.pl
+ALPHA 8201 MCU handling by Tatsuyuki satoh
 Lots of hardware info from Guru
-
 
 memory map :
 0000 - 3fff rom
@@ -33,16 +33,13 @@ c000 - ffff videoram
 
 
 TO DO:
+
 ------
 Both games use custom MCU: ALPHA 8201 (42 pin DIP).
 It's connected to the RAM that is shared with the first CPU.
 CPU controls MCU (probably to run and stop it).
-1 player game doesn't work at all.
 
 note: ALPHA 8302 is the MCU used in Exciting Soccer.
-
-
-
 
 Shougi
 Alpha Electronics Co. Ltd., 198x
@@ -55,7 +52,7 @@ RAM   :
  2114 (x6), one RAM: 0x400 x 4bits = 0x400 bytes (x 3)
 mapped at:
 1: 0x4000 - 0x43ff (main CPU - stack also here, so it is work RAM)
-2: 0x7000 - 0x73ff (main CPU - shared with ??? ALPHA-8201 chip ???)
+2: 0x7000 - 0x73ff (main CPU - shared with ALPHA-8201)
 3: 0x6000 - 0x63ff (sub CPU)
 
 
@@ -192,8 +189,7 @@ int offs;
 	//copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 }
 
-
-
+#if 0
 
 static UINT8 *cpu_sharedram;
 static UINT8 cpu_sharedram_control_val = 0;
@@ -218,21 +214,35 @@ static READ8_HANDLER ( cpu_sharedram_r )
 	return cpu_sharedram[offset];
 }
 
+#endif
+
 static WRITE8_HANDLER ( cpu_shared_ctrl_sub_w )
 {
-	cpu_sharedram_control_val = 0;
-logerror("cpu_sharedram_ctrl=SUB");
+//  cpu_sharedram_control_val = 0;
+//logerror("cpu_sharedram_ctrl=SUB");
 }
 
 static WRITE8_HANDLER ( cpu_shared_ctrl_main_w )
 {
-	cpu_sharedram_control_val = 1;
-logerror("cpu_sharedram_ctrl=MAIN");
+//  cpu_sharedram_control_val = 1;
+//logerror("cpu_sharedram_ctrl=MAIN");
 }
 
 static WRITE8_HANDLER( shougi_watchdog_reset_w )
 {
 	watchdog_reset_w(0,data);
+}
+
+static WRITE8_HANDLER( shougi_mcu_halt_off_w )
+{
+	/* logerror("mcu HALT OFF"); */
+	cpunum_set_input_line(2, INPUT_LINE_HALT, CLEAR_LINE);
+}
+
+static WRITE8_HANDLER( shougi_mcu_halt_on_w )
+{
+	/* logerror("mcu HALT ON"); */
+	cpunum_set_input_line(2, INPUT_LINE_HALT,ASSERT_LINE);
 }
 
 
@@ -263,22 +273,12 @@ static INTERRUPT_GEN( shougi_vblank_nmi )
 }
 
 
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)		/* 2114 x 2 (0x400 x 4bit each) */
-	AM_RANGE(0x4800, 0x4800) AM_READ(input_port_2_r)
-	AM_RANGE(0x5000, 0x5000) AM_READ(input_port_0_r)
-	AM_RANGE(0x5800, 0x5800) AM_READ(input_port_0_r)
-	AM_RANGE(0x7000, 0x73ff) AM_READ(MRA8_RAM)		/* 2114 x 2 (0x400 x 4bit each) */
-	AM_RANGE(0x7800, 0x7bff) AM_READ(cpu_sharedram_r)/* 2114 x 2 (0x400 x 4bit each) */
-	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_RAM)		/* 4116 x 16 (32K) */
-ADDRESS_MAP_END
+static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_ROM
+	AM_RANGE(0x4000, 0x43ff) AM_RAM		/* 2114 x 2 (0x400 x 4bit each) */
 
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x4000, 0x43ff) AM_WRITE(MWA8_RAM)		/* main RAM */
 	/* 4800-480f connected to the 74LS259, A3 is data line so 4800-4807 write 0, and 4808-480f write 1 */
-	AM_RANGE(0x4800, 0x4800) AM_WRITE(cpu_shared_ctrl_sub_w)
+	AM_RANGE(0x4800, 0x4800) AM_WRITE(cpu_shared_ctrl_sub_w)  AM_READ(input_port_2_r)
 	AM_RANGE(0x4808, 0x4808) AM_WRITE(cpu_shared_ctrl_main_w)
 	AM_RANGE(0x4801, 0x4801) AM_WRITE(nmi_disable_and_clear_line_w)
 	AM_RANGE(0x4809, 0x4809) AM_WRITE(nmi_enable_w)
@@ -286,21 +286,22 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x480a, 0x480a) AM_WRITE(MWA8_NOP)
 	AM_RANGE(0x4803, 0x4803) AM_WRITE(MWA8_NOP)
 	AM_RANGE(0x480b, 0x480b) AM_WRITE(MWA8_NOP)
-	AM_RANGE(0x4804, 0x4804) AM_WRITE(MWA8_NOP)//halt/run MCU
-	AM_RANGE(0x480c, 0x480c) AM_WRITE(MWA8_NOP)//halt/run MCU
-
+	AM_RANGE(0x4804, 0x4804) AM_WRITE(shougi_mcu_halt_off_w)
+	AM_RANGE(0x480c, 0x480c) AM_WRITE(shougi_mcu_halt_on_w)
 	AM_RANGE(0x4807, 0x4807) AM_WRITE(MWA8_NOP)//?????? connected to +5v via resistor
 	AM_RANGE(0x480f, 0x480f) AM_WRITE(MWA8_NOP)
 
-	AM_RANGE(0x5800, 0x5800) AM_WRITE(shougi_watchdog_reset_w)		/* game won't boot if watchdog doesn't work */
+	AM_RANGE(0x5000, 0x5000) AM_READ(input_port_0_r)
+	AM_RANGE(0x5800, 0x5800) AM_WRITE(shougi_watchdog_reset_w) AM_READ(input_port_0_r) /* game won't boot if watchdog doesn't work */
 	AM_RANGE(0x6000, 0x6000) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x6800, 0x6800) AM_WRITE(AY8910_write_port_0_w)
-	AM_RANGE(0x7000, 0x73ff) AM_WRITE(MWA8_RAM)						/* sharedram main/MCU */
-	AM_RANGE(0x7800, 0x7bff) AM_WRITE(cpu_sharedram_main_w) AM_BASE(&cpu_sharedram)/* sharedram main/sub */
-	AM_RANGE(0x8000, 0xffff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)	/* 4116 x 16 (32K) */
+	AM_RANGE(0x7000, 0x73ff) AM_RAM AM_SHARE(1) /* 2114 x 2 (0x400 x 4bit each) */
+	AM_RANGE(0x7800, 0x7bff) AM_RAM AM_SHARE(2) /* 2114 x 2 (0x400 x 4bit each) */
+//  AM_RANGE(0x7800, 0x78ff) AM_WRITE(cpu_sharedram_main_w) AM_BASE(&cpu_sharedram)/* sharedram main/sub */
+//  AM_RANGE(0x7800, 0x7bff) AM_READ(cpu_sharedram_r)/* 2114 x 2 (0x400 x 4bit each) */
+
+	AM_RANGE(0x8000, 0xffff) AM_WRITE(videoram_w) AM_READ(MRA8_RAM) AM_BASE(&videoram) AM_SIZE(&videoram_size)	/* 4116 x 16 (32K) */
 ADDRESS_MAP_END
-
-
 
 /* sub */
 static int r=0;
@@ -318,17 +319,14 @@ static ADDRESS_MAP_START( readport_sub, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x00, 0x00) AM_READ(dummy_r)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( readmem_sub, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x6000, 0x63ff) AM_READ(cpu_sharedram_r)	/* sharedram main/sub */
+static ADDRESS_MAP_START( sub_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_ROM
+	AM_RANGE(0x6000, 0x63ff) AM_RAM AM_SHARE(2) /* 2114 x 2 (0x400 x 4bit each) */
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( writemem_sub, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x6000, 0x63ff) AM_WRITE(cpu_sharedram_sub_w)	/* sharedram main/sub */
+static ADDRESS_MAP_START( mcu_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_RAM AM_SHARE(1)
 ADDRESS_MAP_END
-
-
 
 INPUT_PORTS_START( shougi )
 	PORT_START	/* Player 1 controls */
@@ -367,13 +365,17 @@ INPUT_PORTS_END
 static MACHINE_DRIVER_START( shougi )
 
 	MDRV_CPU_ADD(Z80,10000000/4)
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	MDRV_CPU_VBLANK_INT(shougi_vblank_nmi,1)
 
 	MDRV_CPU_ADD(Z80,10000000/4)
-	MDRV_CPU_PROGRAM_MAP(readmem_sub,writemem_sub)
+	MDRV_CPU_PROGRAM_MAP(sub_map,0)
 	MDRV_CPU_IO_MAP(readport_sub,0)
 	/* NMIs triggered in shougi_vblank_nmi() */
+
+	/* MCU */
+	MDRV_CPU_ADD(ALPHA8201, 10000000/4/8)
+	MDRV_CPU_PROGRAM_MAP(mcu_map,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -436,5 +438,5 @@ ROM_START( shougi2 )
 	ROM_LOAD( "pr.2l",   0x0000, 0x0020, CRC(cd3559ff) SHA1(a1291b06a8a337943660b2ef62c94c49d58a6fb5) )
 ROM_END
 
-GAME( 198?, shougi,  0,        shougi,  shougi,  0, ROT0, "Alpha Denshi", "Shougi", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAME( 198?, shougi2, shougi,   shougi,  shougi,  0, ROT0, "Alpha Denshi", "Shougi 2", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 198?, shougi,  0,        shougi,  shougi,  0, ROT0, "Alpha Denshi", "Shougi", GAME_UNEMULATED_PROTECTION )
+GAME( 198?, shougi2, shougi,   shougi,  shougi,  0, ROT0, "Alpha Denshi", "Shougi 2", GAME_UNEMULATED_PROTECTION )

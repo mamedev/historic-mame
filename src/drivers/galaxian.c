@@ -4423,6 +4423,27 @@ ROM_START( zerotime )
 	ROM_LOAD( "6l.bpr",       0x0000, 0x0020, CRC(c3ac9467) SHA1(f382ad5a34d282056c78a5ec00c30ec43772bae2) )
 ROM_END
 
+ROM_START( starfght )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
+	ROM_LOAD( "ja.1",         0x0000, 0x0400, CRC(c6ab558b) SHA1(2b707e332c57b9ec6a61220ab2b79ed5076d0628) )
+	ROM_LOAD( "jb.2",         0x0400, 0x0400, CRC(34b99fed) SHA1(03d12b19c9aee75313cae6af602c93205d2fd4a8) )
+	ROM_LOAD( "jc.3",         0x0800, 0x0400, CRC(30e28016) SHA1(07a621e5061d85a9559a920d76716ea4db61b674) )
+	ROM_LOAD( "jd.4",         0x0c00, 0x0400, CRC(de7e7770) SHA1(b06043a1d898eb323ddabffd3d2a3b1f63df0e5e) )
+	ROM_LOAD( "je.5",         0x1000, 0x0400, CRC(a916c919) SHA1(b3e264ff92687022a0f2f551d5df36db848b48eb) )
+	ROM_LOAD( "jf.6",         0x1400, 0x0400, CRC(9175882b) SHA1(d9943efcb9245af7f01aecc533a699bdefc7d283) )
+	ROM_LOAD( "jg.7",         0x1800, 0x0400, CRC(707c0f02) SHA1(4cfb18b8161ec6a74663b54120bdc6371ee9dbff) )
+	ROM_LOAD( "jh.8",         0x1c00, 0x0400, CRC(5dd26461) SHA1(173b939287d0261ff069c277a1afd724133f4c88) )
+	ROM_LOAD( "ji.9",         0x2000, 0x0400, CRC(6651fe93) SHA1(eb1d9466090ef723ae20003e5be27059f5bea57b) )
+	ROM_LOAD( "jj.10",        0x2400, 0x0400, CRC(12c721b9) SHA1(1944cd5129115d245ced44da7f1eb4574561c457) )
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "k1.7a",        0x0000, 0x0800, CRC(977e37cf) SHA1(88ff1e4edadf5cfc83413a1fe999aecf4ba72232) )
+	ROM_LOAD( "k2.9a",        0x0800, 0x0800, CRC(15e387ce) SHA1(d804b1391de5a15c336aa53c812b4a885f830191) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "mmi6331.7f",   0x0000, 0x0020, CRC(24652bc4) SHA1(d89575f3749c75dc963317fe451ffeffd9856e4d) )
+ROM_END
+
 ROM_START( tst_galx )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "test.u",    0x0000, 0x0800, CRC(0614cd7f) SHA1(12440678be8a27a6c3032b6e43c45e27905ffa83) )   /*  The Test ROM */
@@ -6029,6 +6050,7 @@ GAME( 1979, galap4,   galaxian, galaxian, superg,   0,        ROT90,  "hack", "G
 GAME( 1979, galturbo, galaxian, galaxian, superg,   0,        ROT90,  "hack", "Galaxian Turbo", GAME_SUPPORTS_SAVE )
 GAME( 1979, swarm,    galaxian, galaxian, swarm,    0,        ROT90,  "hack", "Swarm", GAME_SUPPORTS_SAVE )
 GAME( 1979, zerotime, galaxian, galaxian, zerotime, 0,        ROT90,  "Petaco S.A.", "Zero Time", GAME_SUPPORTS_SAVE )
+GAME( 1979, starfght, galaxian, galaxian, swarm,    0,        ROT90,  "Jeutel", "Star Fighter", GAME_SUPPORTS_SAVE )
 GAME( 19??, tst_galx, galaxian, galaxian, galaxian, 0,        ROT90,  "Test ROM", "Galaxian Test ROM", GAME_SUPPORTS_SAVE )
 GAME( 1981, gmgalax,  0,        gmgalax,  gmgalax,  gmgalax,  ROT90,  "bootleg", "Ghostmuncher Galaxian (bootleg)", GAME_SUPPORTS_SAVE )
 GAME( 19??, pisces,   0,        pisces,   pisces,   pisces,	  ROT90,  "Subelectro", "Pisces", GAME_SUPPORTS_SAVE )

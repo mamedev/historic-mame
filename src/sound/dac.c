@@ -28,7 +28,7 @@ static void DAC_update(void *param,stream_sample_t **inputs, stream_sample_t **_
 }
 
 
-void DAC_data_w(int num,int data)
+void DAC_data_w(int num,UINT8 data)
 {
 	struct dac_info *info = sndti_token(SOUND_DAC, num);
 	int out = info->UnsignedVolTable[data];
@@ -42,7 +42,7 @@ void DAC_data_w(int num,int data)
 }
 
 
-void DAC_signed_data_w(int num,int data)
+void DAC_signed_data_w(int num,UINT8 data)
 {
 	struct dac_info *info = sndti_token(SOUND_DAC, num);
 	int out = info->SignedVolTable[data];
@@ -56,7 +56,7 @@ void DAC_signed_data_w(int num,int data)
 }
 
 
-void DAC_data_16_w(int num,int data)
+void DAC_data_16_w(int num,UINT16 data)
 {
 	struct dac_info *info = sndti_token(SOUND_DAC, num);
 	int out = data >> 1;		/* range      0..32767 */
@@ -70,7 +70,7 @@ void DAC_data_16_w(int num,int data)
 }
 
 
-void DAC_signed_data_16_w(int num,int data)
+void DAC_signed_data_16_w(int num,UINT16 data)
 {
 	struct dac_info *info = sndti_token(SOUND_DAC, num);
 	int out = data - 0x8000;	/* range -32768..32767 */

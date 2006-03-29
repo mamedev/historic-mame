@@ -14,8 +14,7 @@ UINT8 *xevious_bg_videoram,*xevious_bg_colorram;
 UINT8 *xevious_sr1,*xevious_sr2,*xevious_sr3;
 
 static tilemap *fg_tilemap,*bg_tilemap;
-
-
+static INT32 xevious_bs[2];
 
 /***************************************************************************
 
@@ -236,6 +235,8 @@ VIDEO_START( xevious )
 	spriteram_3 = xevious_sr2 + 0x780;
 	spriteram   = xevious_sr3 + 0x780;
 
+	state_save_register_global_array(xevious_bs);
+
 	return 0;
 }
 
@@ -333,8 +334,6 @@ WRITE8_HANDLER( xevious_vh_latch_w )
 	}
 }
 
-
-static int xevious_bs[2];
 
 /* emulation for schematic 9B */
 WRITE8_HANDLER( xevious_bs_w )

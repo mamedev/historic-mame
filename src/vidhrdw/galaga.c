@@ -16,14 +16,14 @@
 UINT8 *galaga_videoram;
 UINT8 *galaga_ram1,*galaga_ram2,*galaga_ram3;
 UINT8 galaga_starcontrol[6];
-static unsigned int stars_scrollx,stars_scrolly;
+static UINT32 stars_scrollx,stars_scrolly;
 
 struct star
 {
 	int x,y,col,set;
 };
 
-static int galaga_gfxbank; // used by catsbee
+static INT32 galaga_gfxbank; // used by catsbee
 
 static tilemap *tx_tilemap;
 
@@ -453,6 +453,11 @@ VIDEO_START( galaga )
 	spriteram_2 = galaga_ram2 + 0x380;
 	spriteram_3 = galaga_ram3 + 0x380;
 
+
+	state_save_register_global_array(galaga_starcontrol);
+	state_save_register_global(stars_scrollx);
+	state_save_register_global(stars_scrolly);
+	state_save_register_global(galaga_gfxbank);
 
 	return 0;
 }

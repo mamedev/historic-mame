@@ -1117,7 +1117,7 @@ void debug_check_breakpoints(int cpunum, offs_t pc)
 
 				/* print a notification, unless the action made us go again */
 				if (execution_state == EXECUTION_STATE_STOPPED)
-					debug_console_printf("Stopped at breakpoint %X", bp->index);
+					debug_console_printf("Stopped at breakpoint %X\n", bp->index);
 				break;
 			}
 }

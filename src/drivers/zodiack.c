@@ -41,6 +41,8 @@ extern MACHINE_RESET( espial );
 extern WRITE8_HANDLER( zodiac_master_interrupt_enable_w );
 extern INTERRUPT_GEN( zodiac_master_interrupt );
 extern WRITE8_HANDLER( zodiac_master_soundlatch_w );
+extern WRITE8_HANDLER( espial_sound_nmi_enable_w );
+extern INTERRUPT_GEN( espial_sound_nmi_gen );
 
 
 static MACHINE_RESET( zodiack )
@@ -107,7 +109,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0x2000, 0x23ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x4000, 0x4000) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(espial_sound_nmi_enable_w)
 	AM_RANGE(0x6000, 0x6000) AM_WRITE(soundlatch_w)
 ADDRESS_MAP_END
 
@@ -500,7 +502,7 @@ static MACHINE_DRIVER_START( zodiack )
 	MDRV_CPU_ADD(Z80, 14318000/8)	/* 1.78975 MHz??? */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_IO_MAP(0,sound_writeport)
-	MDRV_CPU_VBLANK_INT(nmi_line_pulse,8)	/* IRQs are triggered by the main CPU */
+	MDRV_CPU_VBLANK_INT(espial_sound_nmi_gen,8)	/* IRQs are triggered by the main CPU */
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)  /* frames per second, vblank duration */

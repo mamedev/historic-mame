@@ -34,6 +34,7 @@
  *
  *************************************/
 
+typedef struct _config_type config_type;
 struct _config_type
 {
 	struct _config_type *	next;				/* next in line */
@@ -41,7 +42,6 @@ struct _config_type
 	config_callback			load;				/* load callback */
 	config_callback			save;				/* save callback */
 };
-typedef struct _config_type config_type;
 
 
 

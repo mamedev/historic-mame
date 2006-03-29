@@ -336,9 +336,6 @@ int osd_display_loading_rom_message(const char *name,rom_load_data *romdata);
 /* checks to see if a pointer is bad */
 int osd_is_bad_read_ptr(const void *ptr, size_t size);
 
-/* log an error */
-void osd_logerror(const char *text);
-
 
 
 #ifdef MESS

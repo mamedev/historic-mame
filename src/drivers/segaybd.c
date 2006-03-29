@@ -39,7 +39,7 @@ static UINT8 timer_irq_state;
 
 static UINT16 *backupram;
 
-
+static mame_timer *interrupt_timer;
 
 /*************************************
  *
@@ -159,7 +159,8 @@ static void scanline_callback(int scanline)
 	update_main_irqs();
 
 	/* come back at the next appropriate scanline */
-	timer_set(cpu_getscanlinetime(scanline), scanline, scanline_callback);
+	//timer_set(cpu_getscanlinetime(scanline), scanline, scanline_callback);
+	timer_adjust(interrupt_timer,cpu_getscanlinetime(scanline), scanline, 0);
 
 #if TWEAK_IRQ2_SCANLINE
 	if (scanline == 223)
@@ -180,7 +181,12 @@ static void scanline_callback(int scanline)
 
 MACHINE_RESET( yboard )
 {
-	timer_set(cpu_getscanlinetime(223), 223, scanline_callback);
+    interrupt_timer = timer_alloc(scanline_callback);
+    timer_adjust(interrupt_timer,cpu_getscanlinetime(223), 223, 0);
+	state_save_register_global_array(misc_io_data);
+	state_save_register_global_array(analog_data);
+	state_save_register_global(vblank_irq_state);
+	state_save_register_global(timer_irq_state);
 }
 
 
@@ -1551,11 +1557,11 @@ static DRIVER_INIT( generic_yboard )
  *
  *************************************/
 
-GAME( 1988, gforce2,  0,       yboard, gforce2,  generic_yboard, ROT0, "Sega", "Galaxy Force 2" , 0 )
-GAME( 1988, gforce2j, gforce2, yboard, gforce2,  generic_yboard, ROT0, "Sega", "Galaxy Force 2 (Japan)" , 0 )
-GAME( 1990, gloc,     0,       yboard, gloc,     generic_yboard, ROT0, "Sega", "G-LOC Air Battle (US)" , 0 )
-GAME( 1990, glocr360, gloc,    yboard, glocr360, generic_yboard, ROT0, "Sega", "G-LOC R360", 0 )
-GAME( 1988, pdrift,   0,       yboard, pdrift,   generic_yboard, ROT0, "Sega", "Power Drift" , 0 )
-GAME( 1988, pdriftj,  pdrift,  yboard, pdrift,   generic_yboard, ROT0, "Sega", "Power Drift (Japan)", 0 )
-GAME( 1991, rchase,   0,       rchase, rchase,   generic_yboard, ROT0, "Sega", "Rail Chase (Japan)", 0 )
-GAME( 1991, strkfgtr, 0,       yboard, strkfgtr, generic_yboard, ROT0, "Sega", "Strike Fighter (Japan)", 0 )
+GAME( 1988, gforce2,  0,       yboard, gforce2,  generic_yboard, ROT0, "Sega", "Galaxy Force 2" , GAME_SUPPORTS_SAVE )
+GAME( 1988, gforce2j, gforce2, yboard, gforce2,  generic_yboard, ROT0, "Sega", "Galaxy Force 2 (Japan)" , GAME_SUPPORTS_SAVE )
+GAME( 1990, gloc,     0,       yboard, gloc,     generic_yboard, ROT0, "Sega", "G-LOC Air Battle (US)" , GAME_SUPPORTS_SAVE )
+GAME( 1990, glocr360, gloc,    yboard, glocr360, generic_yboard, ROT0, "Sega", "G-LOC R360", GAME_SUPPORTS_SAVE )
+GAME( 1988, pdrift,   0,       yboard, pdrift,   generic_yboard, ROT0, "Sega", "Power Drift" , GAME_SUPPORTS_SAVE )
+GAME( 1988, pdriftj,  pdrift,  yboard, pdrift,   generic_yboard, ROT0, "Sega", "Power Drift (Japan)", GAME_SUPPORTS_SAVE )
+GAME( 1991, rchase,   0,       rchase, rchase,   generic_yboard, ROT0, "Sega", "Rail Chase (Japan)", GAME_SUPPORTS_SAVE )
+GAME( 1991, strkfgtr, 0,       yboard, strkfgtr, generic_yboard, ROT0, "Sega", "Strike Fighter (Japan)", GAME_SUPPORTS_SAVE )

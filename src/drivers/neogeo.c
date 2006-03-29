@@ -7879,7 +7879,7 @@ GAMEB( 1997, kof97pls, kof97,    neogeo, neogeo, neogeo,  neogeo,   ROT0, "bootl
 GAMEB( 1997, kog,      kof97,    neogeo, neogeo, kog,     kog,      ROT0, "bootleg", "King of Gladiator (The King of Fighters '97 bootleg)", GAME_NOT_WORKING ) // protected bootleg
 GAMEB( 1997, lastblad, neogeo,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "SNK", "Last Blade / Bakumatsu Roman - Gekka no Kenshi, The (set 1)", 0 )
 GAMEB( 1997, lastblda, lastblad, neogeo, neogeo, neogeo,  neogeo,   ROT0, "SNK", "Last Blade / Bakumatsu Roman - Gekka no Kenshi, The (set 2)", 0 )
-GAMEB( 1997, lastsold, lastblad, neogeo, neogeo, neogeo,  neogeo,   ROT0, "SNK", "The Last Solider (Korean release of The Last Blade)", 0 )
+GAMEB( 1997, lastsold, lastblad, neogeo, neogeo, neogeo,  neogeo,   ROT0, "SNK", "The Last Soldier (Korean release of The Last Blade)", 0 )
 GAMEB( 1997, irrmaze,  neogeo,   neogeo, neogeo, irrmaze, neogeo,   ROT0, "SNK / Saurus", "The Irritating Maze / Ultra Denryu Iraira Bou", 0 )
 GAMEB( 1998, rbff2,    neogeo,   neogeo, neogeo, neogeo,  neogeo,   ROT0, "SNK", "Real Bout Fatal Fury 2 - The Newcomers / Real Bout Garou Densetsu 2 - the newcomers (set 1)", 0 )
 GAMEB( 1998, rbff2a,   rbff2,    neogeo, neogeo, neogeo,  neogeo,   ROT0, "SNK", "Real Bout Fatal Fury 2 - The Newcomers / Real Bout Garou Densetsu 2 - the newcomers (set 2)", 0 )

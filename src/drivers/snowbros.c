@@ -1615,6 +1615,30 @@ ROM_START( twinkle )
 	ROM_LOAD( "ua4.bin", 0x000000, 0x80000, CRC(6b64bb09) SHA1(547eac1ad931a6b937dff0b922d06af92cc7ab73) )
 ROM_END
 
+ROM_START( tappyrap )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_BYTE( "uh12.bin", 0x00001, 0x40000, CRC(6f5ad699) SHA1(42f7201d6274ff8338a7d4627af99001f473e841) )
+	ROM_LOAD16_BYTE( "ui12.bin", 0x00000, 0x40000, CRC(caf5a7e1) SHA1(b521b2f06a804a52dad1b07657db2a29e1411844) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 Code */
+	ROM_LOAD( "u1.bin", 0x00000, 0x10000 , CRC(07f50947) SHA1(83740655ab5f677bd009191bb0de60e237aaa11c) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Intel 87C52 MCU Code */
+	ROM_LOAD( "87c52.mcu", 0x00000, 0x10000 , NO_DUMP ) /* can't be dumped */
+
+	ROM_REGION16_BE( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
+	//ROM_LOAD16_WORD( "protdata.bin", 0x00000, 0x200, CRC(1) SHA1(1) )
+
+	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_LOAD( "uj15.bin", 0x00000, 0x20000, CRC(a3bacfd7) SHA1(d015d8bd26d0189fc13d09fefcb9b8baaaacec8a) )
+
+	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* Sprites */
+	ROM_LOAD( "ua4.bin", 0x000000, 0x80000, CRC(a9577bcf) SHA1(9918d982ebee1c88bd203fa2b3ce2468c160fb95) )
+	ROM_LOAD( "ua5.bin", 0x080000, 0x80000, CRC(7179d32d) SHA1(dae7126401b5bb7f99689587e05a8bf5033ec06e) )
+	ROM_LOAD( "ua6.bin", 0x100000, 0x80000, CRC(4834e5b1) SHA1(cd8a4c329b2bfe1a9c2dea9d72ca09b71366c60a) )
+	ROM_LOAD( "ua7.bin", 0x180000, 0x80000, CRC(663dd099) SHA1(84b52af54ac49e8b4bae23995e3cf94494be2bb3) )
+ROM_END
+
 ROM_START( moremore )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 Code */
 	ROM_LOAD16_BYTE( "u52.bin",  0x00001, 0x40000, CRC(cea4b246) SHA1(5febcb5dda6581caccfe9079b28c2366dfc1db2b) )
@@ -2285,6 +2309,7 @@ GAME( 1996, cookbib2, 0,        semiprot, cookbib2, cookbib2, ROT0, "SemiCom", "
 GAME( 1997, cookbib3, 0,        semiprot, cookbib2, cookbib3, ROT0, "SemiCom", "Cookie & Bibi 3", 0 )
 GAME( 1997, 3in1semi, 0,        semiprot, moremore, 3in1semi, ROT0, "SemiCom", "XESS - The New Revolution (SemiCom 3-in-1)", 0 )
 GAME( 1997, twinkle,  0,        semiprot, moremore, 0,        ROT0, "SemiCom", "Twinkle", 0 )
+GAME( 1996, tappyrap, 0,        semiprot, moremore, 0,        ROT0, "SemiCom", "Tappy & Rappy", GAME_NOT_WORKING )
 GAME( 1999, moremore, 0,        semiprot, moremore, moremorp, ROT0, "SemiCom / Exit", "More More", 0 )
 GAME( 1999, moremorp, 0,        semiprot, moremore, moremorp, ROT0, "SemiCom / Exit", "More More Plus", 0 )
 GAME( 1999, 4in1boot, 0,        _4in1,    4in1boot, 4in1boot, ROT0, "bootleg", "Puzzle King (bootleg)" , 0) // original is 1999, bootleg 2002?

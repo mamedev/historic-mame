@@ -61,6 +61,12 @@ Configuration options
 	information. It can be very helpful in tracking down problems. The
 	default is off (-noverbose)
 
+-validate / -valid
+
+	Performs internal validation on every driver in the system. Run this
+	before submitting changes to ensure that you haven't violated any of
+	the core system "rules".
+
 
 Windows path and directory options
 ----------------------------------

@@ -6,7 +6,7 @@ UINT8 *digdug_videoram,*digdug_objram, *digdug_posram, *digdug_flpram;
 static tilemap *bg_tilemap,*tx_tilemap;
 
 
-static int bg_select, tx_color_mode, bg_disable, bg_color_bank;
+static INT32 bg_select, tx_color_mode, bg_disable, bg_color_bank;
 
 
 
@@ -157,6 +157,11 @@ VIDEO_START( digdug )
 	spriteram   = digdug_objram + 0x380;
 	spriteram_2 = digdug_posram + 0x380;
 	spriteram_3 = digdug_flpram + 0x380;
+
+	state_save_register_global(bg_select);
+	state_save_register_global(tx_color_mode);
+	state_save_register_global(bg_disable);
+	state_save_register_global(bg_color_bank);
 
 	return 0;
 }

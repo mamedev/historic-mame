@@ -158,12 +158,20 @@ static WRITE8_HANDLER( flip_screen_y_w )
 }
 
 
-static MACHINE_RESET( cclimber )
+static void disable_interrupts(int param)
 {
-	/* Disable interrupts, River Patrol / Silver Land needs this */
 	cpu_interrupt_enable(0,0);
 }
 
+
+static MACHINE_RESET( cclimber )
+{
+	/* Disable interrupts, River Patrol / Silver Land needs this */
+
+	/* we must do this on a timer in order to have it take effect */
+	/* otherwise, the reset process will override our changes */
+	timer_set(TIME_NOW, 0, disable_interrupts);
+}
 
 static WRITE8_HANDLER( cannonb_spritewrite )
 {

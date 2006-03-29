@@ -10,17 +10,38 @@
 #include "sound/ay8910.h"
 
 
+static UINT8 sound_nmi_enabled;
+
+static void interrupt_disable(int param)
+{
+	//interrupt_enable = 0;
+	cpu_interrupt_enable(0,0);
+}
+
 MACHINE_RESET( espial )
 {
 	/* we must start with NMI interrupts disabled */
-	//interrupt_enable = 0;
-	cpu_interrupt_enable(0,0);
+	timer_set(TIME_NOW, 0, interrupt_disable);
+	sound_nmi_enabled = FALSE;
 }
 
 
 WRITE8_HANDLER( zodiac_master_interrupt_enable_w )
 {
 	interrupt_enable_w(offset,~data & 1);
+}
+
+
+WRITE8_HANDLER( espial_sound_nmi_enable_w )
+{
+	sound_nmi_enabled = data & 1;
+}
+
+
+INTERRUPT_GEN( espial_sound_nmi_gen )
+{
+	if (sound_nmi_enabled)
+		nmi_line_pulse();
 }
 
 
@@ -115,7 +136,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0x2000, 0x23ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x4000, 0x4000) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(espial_sound_nmi_enable_w)
 	AM_RANGE(0x6000, 0x6000) AM_WRITE(soundlatch_w)
 ADDRESS_MAP_END
 
@@ -297,7 +318,7 @@ static MACHINE_DRIVER_START( espial )
 	MDRV_CPU_ADD(Z80, 3072000)	/* 2 MHz?????? */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_IO_MAP(0,sound_writeport)
-	MDRV_CPU_VBLANK_INT(nmi_line_pulse,4)
+	MDRV_CPU_VBLANK_INT(espial_sound_nmi_gen,4)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)

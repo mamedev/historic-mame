@@ -1612,43 +1612,36 @@ ROM_END
 
 ROM_START( kungfud )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "a-4e-d",       0x0000, 0x4000, CRC(fc330a46) SHA1(50edbd6131310afa17d476e278a7098ab1cfae73) )
-	ROM_LOAD( "a-4d-d",       0x4000, 0x4000, CRC(1b2fd32f) SHA1(34487dacf2ec9fbf55148953a9f248fae9442568) )
+	ROM_LOAD( "snx_a-4e-d", 0x0000, 0x4000, CRC(fc330a46) SHA1(50edbd6131310afa17d476e278a7098ab1cfae73) )
+	ROM_LOAD( "snx_a-4d-d", 0x4000, 0x4000, CRC(1b2fd32f) SHA1(34487dacf2ec9fbf55148953a9f248fae9442568) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU (6803) */
-	ROM_LOAD( "a-3e-.bin",    0xa000, 0x2000, CRC(58e87ab0) SHA1(3b03c101fec58eac13fc309a78df9a2cd44f7604) )	/* samples (ADPCM 4-bit) */
-	ROM_LOAD( "a-3f-.bin",    0xc000, 0x2000, CRC(c81e31ea) SHA1(f0fc58b929188c8802cd85549bdf9f4566e6a677) )	/* samples (ADPCM 4-bit) */
-	ROM_LOAD( "a-3h-.bin",    0xe000, 0x2000, CRC(d99fb995) SHA1(caa6acdbc3b02d248fd123be95ea6fdcb4f35b59) )
+	ROM_LOAD( "snx_a-3d-b", 0x8000, 0x4000, CRC(85ca7956) SHA1(f97f744520770766cf9633c8762013d77b0e7a61) )	/* samples (ADPCM 4-bit) */
+	ROM_LOAD( "snx_a-3f-b", 0xc000, 0x4000, CRC(3ef1100a) SHA1(901c40477b4c6fbc984446fa7171006d67b48652) )	/* samples (ADPCM 4-bit) */
 
 	ROM_REGION( 0x06000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "g-4c-a.bin",   0x00000, 0x2000, CRC(6b2cc9c8) SHA1(ba7c902d08c21a1e33f450406bfbfa35abde3b3f) )	/* characters */
-	ROM_LOAD( "g-4d-a.bin",   0x02000, 0x2000, CRC(c648f558) SHA1(7cc085d8dc4a770d2828e39859b7b18e80148a00) )
-	ROM_LOAD( "g-4e-a.bin",   0x04000, 0x2000, CRC(fbe9276e) SHA1(84181c8da79e2c92af04aef3ab5d23f70969dad8) )
+	ROM_LOAD( "g-4c-a.bin", 0x00000, 0x2000, CRC(6b2cc9c8) SHA1(ba7c902d08c21a1e33f450406bfbfa35abde3b3f) )	/* characters */
+	ROM_LOAD( "g-4d-a.bin", 0x02000, 0x2000, CRC(c648f558) SHA1(7cc085d8dc4a770d2828e39859b7b18e80148a00) )
+	ROM_LOAD( "g-4e-a.bin", 0x04000, 0x2000, CRC(fbe9276e) SHA1(84181c8da79e2c92af04aef3ab5d23f70969dad8) )
 
 	ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "b-4k-.bin",    0x00000, 0x2000, CRC(16fb5150) SHA1(a49faf617f948d3ccec2bc6ef97bd399f0958f65) )	/* sprites */
-	ROM_LOAD( "b-4f-.bin",    0x02000, 0x2000, CRC(67745a33) SHA1(fcc642fb1b932676c84c1a0901b989673c57c0e5) )
-	ROM_LOAD( "b-4l-.bin",    0x04000, 0x2000, CRC(bd1c2261) SHA1(7155789a01801a9e1a55d4e68c94a3a3ee7d1b2e) )
-	ROM_LOAD( "b-4h-.bin",    0x06000, 0x2000, CRC(8ac5ed3a) SHA1(9c88e8c82420428b43923cdee7eb4504882bec69) )
-	ROM_LOAD( "b-3n-.bin",    0x08000, 0x2000, CRC(28a213aa) SHA1(0d6d668490bdf4394bc9fed2f3cdc72f2fea46f9) )
-	ROM_LOAD( "b-4n-.bin",    0x0a000, 0x2000, CRC(d5228df3) SHA1(836c4f95f873fbf07f9bec63a72c20a14651117c) )
-	ROM_LOAD( "b-4m-.bin",    0x0c000, 0x2000, CRC(b16de4f2) SHA1(512260e76c9cd21b8add771de53fbd27c2719213) )
-	ROM_LOAD( "b-3m-.bin",    0x0e000, 0x2000, CRC(eba0d66b) SHA1(028f82fc1853b86a3201b24871f41091c3e0b542) )
-	ROM_LOAD( "b-4c-.bin",    0x10000, 0x2000, CRC(01298885) SHA1(d4edf5fe707c5b7231ba72b731b96120064a7ecd) )
-	ROM_LOAD( "b-4e-.bin",    0x12000, 0x2000, CRC(c77b87d4) SHA1(c0f66f0130f6a290a58a3d77bba1d06f16016901) )
-	ROM_LOAD( "b-4d-.bin",    0x14000, 0x2000, CRC(6a70615f) SHA1(f4683dc0a566567e95e85268612bcf0e6297d955) )
-	ROM_LOAD( "b-4a-.bin",    0x16000, 0x2000, CRC(6189d626) SHA1(ce8e5e95c2684c685481e9c8d921380b20ac0460) )
+	ROM_LOAD( "snx_b-4k-b", 0x00000, 0x4000, CRC(85591db2) SHA1(5962445a3a3172893cf0f617701966aebb522c61) )	/* sprites */
+	ROM_LOAD( "snx_b-4f-b", 0x04000, 0x4000, CRC(ed719d7b) SHA1(34c7d9fc762b3f113b6115910898fde9713ae24f) )
+	ROM_LOAD( "snx_b-3n-b", 0x08000, 0x4000, CRC(05fcce8b) SHA1(5116cd65c53aa09a1c1d84df883606883e565464) )
+	ROM_LOAD( "snx_b-4n-b", 0x0c000, 0x4000, CRC(dc675003) SHA1(df9b6055b4a4c537504658e62e96f826d498b39c) )
+	ROM_LOAD( "snx_b-4c-b", 0x10000, 0x4000, CRC(1df11d81) SHA1(5055f0c8046f57d4c899ecf90a9bfcf0c1a58f59) )
+	ROM_LOAD( "snx_b-4e-b", 0x14000, 0x4000, CRC(2d3b69dd) SHA1(472e1c06fd3184b91d9b718bb590d45702ed84cd) )
 
 	ROM_REGION( 0x0720, REGION_PROMS, 0 )
-	ROM_LOAD( "g-1j-.bin",    0x0000, 0x0100, CRC(668e6bca) SHA1(cd5262b1310821ba7b12873e4db35f081d6b9df4) )	/* character palette red component */
-	ROM_LOAD( "b-1m-.bin",    0x0100, 0x0100, CRC(76c05a9c) SHA1(1f46f436a17f8c883bdd6d9804b828a81a76f880) )	/* sprite palette red component */
-	ROM_LOAD( "g-1f-.bin",    0x0200, 0x0100, CRC(964b6495) SHA1(76f30a65a0ded14babad2006221aa40621fb7ea1) )	/* character palette green component */
-	ROM_LOAD( "b-1n-.bin",    0x0300, 0x0100, CRC(23f06b99) SHA1(6b3d6349f019aeab33838ae392bc3f3f89906326) )	/* sprite palette green component */
-	ROM_LOAD( "g-1h-.bin",    0x0400, 0x0100, CRC(550563e1) SHA1(11edb45acba8b28a462c49956ebb1ba0a8b2ff26) )	/* character palette blue component */
-	ROM_LOAD( "b-1l-.bin",    0x0500, 0x0100, CRC(35e45021) SHA1(511b94507f41b377f38184ed9a85f34949b28d26) )	/* sprite palette blue component */
-	ROM_LOAD( "b-5f-.bin",    0x0600, 0x0020, CRC(7a601c3d) SHA1(5c5cdf51b2c9fdb2b05402d9c260208ae73fe245) )	/* sprite height, one entry per 32 */
-															/* sprites. Used at run time! */
-	ROM_LOAD( "b-6f-.bin",    0x0620, 0x0100, CRC(82c20d12) SHA1(268903f7d9be58a70d030b02bf31a2d6b5b6e249) )	/* video timing - same as battroad */
+	ROM_LOAD( "g-1j-.bin", 0x0000, 0x0100, CRC(668e6bca) SHA1(cd5262b1310821ba7b12873e4db35f081d6b9df4) )	/* character palette red component */
+	ROM_LOAD( "b-1m-.bin", 0x0100, 0x0100, CRC(76c05a9c) SHA1(1f46f436a17f8c883bdd6d9804b828a81a76f880) )	/* sprite palette red component */
+	ROM_LOAD( "g-1f-.bin", 0x0200, 0x0100, CRC(964b6495) SHA1(76f30a65a0ded14babad2006221aa40621fb7ea1) )	/* character palette green component */
+	ROM_LOAD( "b-1n-.bin", 0x0300, 0x0100, CRC(23f06b99) SHA1(6b3d6349f019aeab33838ae392bc3f3f89906326) )	/* sprite palette green component */
+	ROM_LOAD( "g-1h-.bin", 0x0400, 0x0100, CRC(550563e1) SHA1(11edb45acba8b28a462c49956ebb1ba0a8b2ff26) )	/* character palette blue component */
+	ROM_LOAD( "b-1l-.bin", 0x0500, 0x0100, CRC(35e45021) SHA1(511b94507f41b377f38184ed9a85f34949b28d26) )	/* sprite palette blue component */
+	ROM_LOAD( "b-5f-.bin", 0x0600, 0x0020, CRC(7a601c3d) SHA1(5c5cdf51b2c9fdb2b05402d9c260208ae73fe245) )	/* sprite height, one entry per 32 */
+														/* sprites. Used at run time! */
+	ROM_LOAD( "b-6f-.bin", 0x0620, 0x0100, CRC(82c20d12) SHA1(268903f7d9be58a70d030b02bf31a2d6b5b6e249) )	/* video timing - same as battroad */
 ROM_END
 
 ROM_START( spartanx )

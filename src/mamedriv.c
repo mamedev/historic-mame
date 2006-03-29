@@ -164,6 +164,7 @@ const game_driver *drivers[] =
 	DRIVER( galturbo )	/* hack */
 	DRIVER( swarm )		/* hack */
 	DRIVER( zerotime )	/* hack */
+	DRIVER( starfght )	/* hack */
 	DRIVER( tst_galx )
 	DRIVER( gmgalax )	/* bootleg */
 	DRIVER( pisces )	/* Subelectro */
@@ -756,6 +757,7 @@ const game_driver *drivers[] =
 	/* Namco FL games */
 	DRIVER( speedrcr )	/* (c) 1995 */
 	DRIVER( finalapr )	/* (c) 1995 */
+	DRIVER( finalapo )	/* (c) 1995 */
 
 	/* Namco NA-1 / NA-2 System games */
 	DRIVER( bkrtmaq )	/* (c) 1992 (Japan) */
@@ -821,6 +823,7 @@ const game_driver *drivers[] =
 	DRIVER( ridger2b )	/* (c) 1994 */
 	DRIVER( raveracw )	/* (c) 1995 */
 	DRIVER( raveracj )	/* (c) 1995 */
+	DRIVER( raveraja )	/* (c) 1995 */
 	DRIVER( airco22b )	/* (c) 1995 */
 	DRIVER( alpinr2b )	/* (c) 1995 */
 	DRIVER( cybrcomm )	/* (c) 1995 */
@@ -880,6 +883,7 @@ const game_driver *drivers[] =
 	DRIVER( dorunrun )	/* (c) 1984 */
 	DRIVER( dorunru2 )	/* (c) 1984 */
 	DRIVER( dorunruc )	/* (c) 1984 */
+	DRIVER( dorunrca )	/* (c) 1984 */
 	DRIVER( spiero )	/* (c) 1987 */
 	DRIVER( dowild )	/* (c) 1984 */
 	DRIVER( jjack )		/* (c) 1984 */
@@ -1922,6 +1926,7 @@ const game_driver *drivers[] =
 	DRIVER( slapfigh )	/* TP-??? */
 	DRIVER( slapbtjp )	/* bootleg but (c) 1986 Taito Corporation */
 	DRIVER( slapbtuk )	/* bootleg but (c) 1986 Taito Corporation */
+	DRIVER( slapfgtr )	/* bootleg */
 	DRIVER( alcon )		/* TP-??? */
 	DRIVER( getstar )	/* A68 (c) 1986 Taito Corporation */
 	DRIVER( getstarj )	/* A68 (c) 1986 Taito Corporation */
@@ -1969,6 +1974,7 @@ const game_driver *drivers[] =
 	DRIVER( hyperpac )	/* (c) 1995 SemiCom */
 	DRIVER( hyperpcb )	/* bootleg */
 	DRIVER( twinkle )	/* (c) 1997 SemiCom */
+	DRIVER( tappyrap )	/* (c) 1996 SemiCom */
 	DRIVER( cookbib2 )	/* (c) 1996 SemiCom */
 	DRIVER( cookbib3 )	/* (c) 1997 SemiCom */
 	DRIVER( 3in1semi )	/* (c) 1998 SemiCom */
@@ -2636,6 +2642,7 @@ V-V                           TP-027
 	/* Taito FX1b */
 	DRIVER( raystorm )	/* Ray Storm (Ver 2.06A) */
 	DRIVER( raystorj )	/* Ray Storm (Ver 2.05J) */
+	DRIVER( ftimpact )	/* Fighters' Impact (Ver 2.02O) */
 	DRIVER( ftimpcta )	/* Fighters' Impact A (Ver 2.00J) */
 	DRIVER( gdarius )	/* G-Darius (Ver 2.01J) */
 	DRIVER( gdariusb )	/* G-Darius (Ver 2.02A) */
@@ -3332,7 +3339,8 @@ Sep.1994 Quiz Ghost Hunter
 	DRIVER( slipstrm )	/* (c) 1995 Capcom */
 
 	/* Sega Multi System 32 games */
-	DRIVER( orunners )	/* (c) 1992 (US) */
+	DRIVER( orunners )	/* (c) 1992 (World) */
+	DRIVER( orunneru )	/* (c) 1992 (US) */
 	DRIVER( harddunk )	/* (c) 1994 (World) */
 	DRIVER( harddunj )	/* (c) 1994 (Japan) */
 	DRIVER( titlef )	/* (c) 1992 (World) */
@@ -4266,6 +4274,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( qgakumon )	/* GX248 (c) 1993 (Japan) */
 	DRIVER( moo )		/* GX151 (c) 1992 (World) */
 	DRIVER( mooua )		/* GX151 (c) 1992 (US) */
+	DRIVER( mooaa )		/* GX151 (c) 1992 (US) */
 	DRIVER( moobl )		/* bootleg */
 	DRIVER( bucky )		/* GX173 (c) 1992 (World) */
 	DRIVER( buckyua )	/* GX173 (c) 1992 (US) */
@@ -4372,6 +4381,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( nbapbp )	/* GX778 (c)1998 */
 	DRIVER( gradius4 )	/* GX837 (c)1999 */
 	DRIVER( sscope )	/* GX830 (c)1999 */
+	DRIVER( sscopea )	/* GX830 (c)1999 */
 	DRIVER( sscope2 )	/* GX931 (c)2000 */
 	DRIVER( racingj )	/* GX676 (c)1998 */
 	DRIVER( racingj2 )	/* GX888 (c)1999 */
@@ -6346,6 +6356,7 @@ Other Sun games
 
 	/* Yun Sung games */
 	DRIVER( paradise )	/* (c) >1994 Yun Sung */
+	DRIVER( paradlx )	/* (c) >1994 Yun Sung */
 	DRIVER( tgtball )	/* (c) 1995 Yun Sung */
 	DRIVER( tgtballa )	/* (c) 1995 Yun Sung */
 	DRIVER( torus )		/* (c) 1996 Yun Sung */
@@ -6429,6 +6440,7 @@ Other Sun games
 	DRIVER( mcnpshnt )	/* "33" Mahjong Campus Hunting 1990 Dynax */
 	DRIVER( 7jigen )	/* "37" 7jigen no Youseitachi 1990 Dynax */
 	DRIVER( neruton )	/* "45" Neruton Haikujiradan 1990 Dynax */
+	DRIVER( shpeng )	/* (c) 1995 WSAC Systems */
 	DRIVER( mjdialq2 )	/* "52" (c) 1991 Dynax */
 	DRIVER( yarunara )	/* "55" Mahjong Yarunara 1991 Dynax */
 	DRIVER( mjangels )	/* "61" Mahjong Angels 1991 Dynax */
@@ -6755,6 +6767,7 @@ Other Sun games
 	DRIVER( sshoot11 )	/* (c) 1998 P&P Marketing */
 	DRIVER( pass )		/* (c) 1992 Oksan */
 	DRIVER( news )		/* "Virus"??? ((c) 1993 Poby in ROM VIRUS.4) */
+	DRIVER( newsa )		/* "Virus"??? ((c) 1993 Poby in ROM VIRUS.4) */
 	DRIVER( taxidrvr )	/* [1984 Graphic Techno] */
 	DRIVER( xyonix )	/* [1989 Philko] */
 	DRIVER( gt507uk )	/* (c) 1986 Grayhound Electronics */
@@ -6836,6 +6849,7 @@ Other Sun games
 	DRIVER( wallc )		/* (c) 1984 Midcoin */
 	DRIVER( wallca )	/* (c) 1984 Midcoin */
 	DRIVER( wink )		/* (c) 1985 Midcoin */
+	DRIVER( winka )		/* (c) 1985 Midcoin */
 	DRIVER( skyarmy )	/* (c) 1982 Shoei */
 	DRIVER( lethalj )	/* (c) 1996 The Game Room */
 	DRIVER( eggventr )	/* (c) 1997 The Game Room */

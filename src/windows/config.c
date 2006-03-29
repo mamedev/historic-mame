@@ -61,7 +61,6 @@ extern struct rc_option video_opts[];
 extern int frontend_help (const char *gamename, const char *filename);
 static int config_handle_arg(char *arg);
 
-static FILE *logfile;
 static int curlogsize;
 static int errorlog;
 static int erroroslog;
@@ -69,6 +68,7 @@ static int showconfig;
 static int showusage;
 static int readconfig;
 static int createconfig;
+static int validate;
 extern int verbose;
 
 static struct rc_struct *rc;
@@ -146,14 +146,14 @@ static int video_set_intensity(struct rc_option *option, const char *arg, int pr
 static int init_errorlog(struct rc_option *option, const char *arg, int priority)
 {
 	/* provide errorlog from here on */
-	if (errorlog && !logfile)
+	if (errorlog)
 	{
-		logfile = fopen("error.log","w");
+		options.logfile = mame_fopen("error.log", NULL, FILETYPE_DEBUGLOG, TRUE);
 		curlogsize = 0;
-		if (!logfile)
+		if (!options.logfile)
 		{
 			perror("unable to open log file\n");
-			exit (1);
+			exit(1);
 		}
 	}
 	option->priority = priority;
@@ -204,6 +204,7 @@ static struct rc_option opts[] = {
 
 	/* misc */
 	{ "Mame CORE misc options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
+	{ "validate", "valid", rc_bool, &validate, "0", 0, 0, NULL, "validate all game drivers" },
 	{ "artwork", "art", rc_bool, &use_artwork, "1", 0, 0, NULL, "use additional " GAMENOUN " artwork (sets default for specific options below)" },
 	{ "use_backdrops", "backdrop", rc_bool, &use_backdrops, "1", 0, 0, NULL, "use backdrop artwork" },
 	{ "use_overlays", "overlay", rc_bool, &use_overlays, "1", 0, 0, NULL, "use overlay artwork" },
@@ -466,6 +467,14 @@ int cli_frontend_init (int argc, char **argv)
 		/* actual help message */
 		rc_print_help(rc, stdout);
 		exit(0);
+	}
+
+	if (validate)
+	{
+		extern int mame_validitychecks(int game);
+		cpuintrf_init();
+		sndintrf_init();
+		exit(mame_validitychecks(-1));
 	}
 
 	/* no longer needed */
@@ -731,10 +740,10 @@ void cli_frontend_exit(void)
 	rc = NULL;
 
 	/* close open files */
-	if (logfile)
+	if (options.logfile)
 	{
-		fclose(logfile);
-		logfile = NULL;
+		mame_fclose(options.logfile);
+		options.logfile = NULL;
 	}
 
 	if (options.playback)
@@ -813,31 +822,6 @@ static int config_handle_arg(char *arg)
 
 	got_gamename = TRUE;
 	return 0;
-}
-
-
-//============================================================
-//  osd_logerror
-//============================================================
-
-void osd_logerror(const char *text)
-{
-	if (errorlog && logfile)
-		curlogsize += fprintf(logfile, "%s", text);
-
-	if (erroroslog)
-		OutputDebugString(text);
-}
-
-
-//============================================================
-//  win_flush_logfile
-//============================================================
-
-void win_flush_logfile(void)
-{
-	if (logfile)
-		fflush(logfile);
 }
 
 

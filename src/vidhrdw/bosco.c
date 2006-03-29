@@ -12,10 +12,10 @@
 #define MAX_STARS 252
 #define STARS_COLOR_BASE 32
 
-static unsigned int stars_scrollx;
-static unsigned int stars_scrolly;
+static UINT32 stars_scrollx;
+static UINT32 stars_scrolly;
 
-static int bosco_starcontrol,bosco_starblink[2];
+static INT32 bosco_starcontrol,bosco_starblink[2];
 
 static tilemap *bg_tilemap,*fg_tilemap;
 
@@ -159,6 +159,11 @@ VIDEO_START( bosco )
 	bosco_radarx = bosco_videoram + 0x03f0;
 	bosco_radary = bosco_radarx + 0x0800;
 
+
+	state_save_register_global(stars_scrollx);
+	state_save_register_global(stars_scrolly);
+	state_save_register_global(bosco_starcontrol);
+	state_save_register_global_array(bosco_starblink);
 
 	return 0;
 }

@@ -15,7 +15,7 @@ ernesto@imagina.com
 
 Jarek Parchanski
 jpdev@friko6.onet.pl
-
+ALPHA 8301 MCU handling by Tatsuyuki satoh
 
 NOTES:
 The game supports Coin 2, but the dip switches used for it are the same
@@ -27,6 +27,11 @@ based on wich Coin input was connected.
 #include "driver.h"
 #include "sound/ay8910.h"
 #include "sound/dac.h"
+
+/* MCU hacking switch */
+/*  when set 1, old raw patch */
+/*  when set 0, uses MCU core emulation and some MCU patch */
+#define MCU_HACK 0
 
 /* from vidhrdw */
 extern WRITE8_HANDLER( exctsccr_videoram_w );
@@ -50,6 +55,82 @@ WRITE8_HANDLER( exctsccr_DAC_data_w )
 	DAC_signed_data_w(offset,data << 2);
 }
 
+/*
+exctsccr MCU program patch data
+*/
+static const int exctsccr_mcu_patch_data[] =
+{
+/*
+bypass ROM sum error because some opcodes are unknown yet
+3B7: F6      db   f6
+3BA: F6      db   f6
+3BC: F9      db   f9
+3BD: F6      db   f6
+3C1: F6      db   f6
+3C7: F8      db   f8 ; check SUM to ZF
+*/
+  (0x3c8<<16) | (0xd1<<8) | 0xd2, // JZ -> JMP
+  -1
+};
+
+/*
+exctscc2 MCU program patch data
+*/
+static const int exctscc2_mcu_patch_data[] =
+{
+/*
+bypass initislize check
+
+307: D5 01 unknown
+309: D4 00 unknown
+A reg 2 to 5
+
+30F: D4 01 unknown
+A reg 5 to 2
+
+*/
+  (0x30d<<16) | (0xcf<<8) | 0xda, // JNZ -> CMP
+  (0x313<<16) | (0xcf<<8) | 0xda, // JNZ -> CMP
+/*
+bypass ROM check sum
+3B7: F6      db   f6
+3BA: F6      db   f6
+3BC: F9      db   f9
+3BD: F6      db   f6
+3C1: F6      db   f6
+3C7: F8      db   f8
+*/
+  (0x3C8<<16) | (0xd1<<8) | 0xd2, // JZ -> JMP
+  -1
+};
+
+static const int *mcu_patch_data = NULL;
+static unsigned char *mcu_shared_ram;
+static WRITE8_HANDLER( cexctsccr_mcu_halt_w )
+{
+	const int *p;
+
+	data &= 1;
+#if MCU_HACK
+	exctsccr_mcu_control_w(offset,data);
+extern UINT8 *exctsccr_mcu_ram;
+#else
+	cpunum_set_input_line(2, INPUT_LINE_HALT, data ? ASSERT_LINE : CLEAR_LINE);
+	if( (p=mcu_patch_data) != NULL)
+	{
+		/* patch MCU program */
+		while(*p != -1)
+		{
+			int a = (*p)>>16;
+			int c = ((*p)>>8) & 0xff;
+			int d = (*p)&0xff;
+			if(mcu_shared_ram[a] == c)
+				mcu_shared_ram[a] = d;
+			p++;
+		}
+	}
+}
+#endif
 
 /***************************************************************************
 
@@ -57,48 +138,39 @@ WRITE8_HANDLER( exctsccr_DAC_data_w )
 
 ***************************************************************************/
 
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x6000, 0x63ff) AM_READ(MRA8_RAM) /* Alpha mcu (protection) */
-	AM_RANGE(0x7c00, 0x7fff) AM_READ(MRA8_RAM) /* work ram */
-	AM_RANGE(0x8000, 0x83ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x8400, 0x87ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x8800, 0x8bff) AM_READ(MRA8_RAM) /* ??? */
-	AM_RANGE(0xa000, 0xa000) AM_READ(input_port_0_r)
+static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_ROM
+#if MCU_HACK
+	AM_RANGE(0x6000, 0x63ff) AM_WRITE(exctsccr_mcu_w) AM_READ(MRA8_RAM) AM_BASE(&exctsccr_mcu_ram) /* Alpha mcu (protection) */
+#else
+	AM_RANGE(0x6000, 0x63ff) AM_RAM AM_SHARE(1) AM_BASE(&mcu_shared_ram)
+#endif
+	AM_RANGE(0x7c00, 0x7fff) AM_RAM
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(exctsccr_videoram_w) AM_READ(MRA8_RAM) AM_BASE(&videoram)
+	AM_RANGE(0x8400, 0x87ff) AM_WRITE(exctsccr_colorram_w) AM_READ(MRA8_RAM) AM_BASE(&colorram)
+	AM_RANGE(0x8800, 0x8bff) AM_WRITE(MWA8_RAM) AM_READ(MRA8_RAM) AM_BASE(&spriteram_2) /* ??? */
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(MWA8_NOP) AM_READ(input_port_0_r)
+	AM_RANGE(0xa001, 0xa001) AM_WRITE(MWA8_NOP) /* ??? */
+	AM_RANGE(0xa002, 0xa002) AM_WRITE(exctsccr_gfx_bank_w)
+	AM_RANGE(0xa003, 0xa003) AM_WRITE(exctsccr_flipscreen_w) /* Cocktail mode ( 0xff = flip screen, 0x00 = normal ) */
+	/* 0xa006 MCU control */
+	AM_RANGE(0xa006, 0xa006) AM_WRITE(cexctsccr_mcu_halt_w)
+	AM_RANGE(0xa007, 0xa007) AM_WRITE(MWA8_NOP) /* This is also MCU control, but i dont need it */
+	AM_RANGE(0xa040, 0xa06f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) /* Sprite pos */
+	AM_RANGE(0xa080, 0xa080) AM_WRITE(soundlatch_w)
+	AM_RANGE(0xa0c0, 0xa0c0) AM_WRITE(watchdog_reset_w)
+
 	AM_RANGE(0xa040, 0xa040) AM_READ(input_port_1_r)
 	AM_RANGE(0xa080, 0xa080) AM_READ(input_port_3_r)
 	AM_RANGE(0xa0c0, 0xa0c0) AM_READ(input_port_2_r)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x6000, 0x63ff) AM_WRITE(exctsccr_mcu_w) AM_BASE(&exctsccr_mcu_ram) /* Alpha mcu (protection) */
-	AM_RANGE(0x7c00, 0x7fff) AM_WRITE(MWA8_RAM) /* work ram */
-	AM_RANGE(0x8000, 0x83ff) AM_WRITE(exctsccr_videoram_w) AM_BASE(&videoram)
-	AM_RANGE(0x8400, 0x87ff) AM_WRITE(exctsccr_colorram_w) AM_BASE(&colorram)
-	AM_RANGE(0x8800, 0x8bff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2) /* ??? */
-	AM_RANGE(0xa000, 0xa000) AM_WRITE(MWA8_NOP) /* ??? */
-	AM_RANGE(0xa001, 0xa001) AM_WRITE(MWA8_NOP) /* ??? */
-	AM_RANGE(0xa002, 0xa002) AM_WRITE(exctsccr_gfx_bank_w)
-	AM_RANGE(0xa003, 0xa003) AM_WRITE(exctsccr_flipscreen_w) /* Cocktail mode ( 0xff = flip screen, 0x00 = normal ) */
-	/* 0xa006 MCU control */
-	AM_RANGE(0xa007, 0xa007) AM_WRITE(MWA8_NOP) /* This is also MCU control, but i dont need it */
-	AM_RANGE(0xa040, 0xa06f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) /* Sprite pos */
-	AM_RANGE(0xa080, 0xa080) AM_WRITE(soundlatch_w)
-	AM_RANGE(0xa0c0, 0xa0c0) AM_WRITE(watchdog_reset_w)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x8fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xa000, 0xa7ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xc00d, 0xc00d) AM_READ(soundlatch_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x8fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xa000, 0xa7ff) AM_WRITE(MWA8_RAM)
+static ADDRESS_MAP_START( sub_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x8fff) AM_ROM
+	AM_RANGE(0xa000, 0xa7ff) AM_RAM
 	AM_RANGE(0xc008, 0xc009) AM_WRITE(exctsccr_DAC_data_w)
 	AM_RANGE(0xc00c, 0xc00c) AM_WRITE(soundlatch_w) /* used to clear the latch */
+	AM_RANGE(0xc00d, 0xc00d) AM_READ(soundlatch_r)
 	AM_RANGE(0xc00f, 0xc00f) AM_WRITE(MWA8_NOP) /* ??? */
 ADDRESS_MAP_END
 
@@ -156,6 +228,10 @@ static ADDRESS_MAP_START( bl_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xa000, 0xa000) AM_WRITE(soundlatch_w) /* used to clear the latch */
 	AM_RANGE(0xc000, 0xc000) AM_WRITE(exctsccr_DAC_data_w)
 	AM_RANGE(0xe000, 0xe3ff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( mcu_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x03ff) AM_RAM AM_SHARE(1) /* main CPU shared RAM */
 ADDRESS_MAP_END
 
 /***************************************************************************
@@ -306,13 +382,20 @@ static MACHINE_DRIVER_START( exctsccr )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?) */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 4123456)	/* ??? with 4 MHz, nested NMIs might happen */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sub_map,0)
 	MDRV_CPU_IO_MAP(0,sound_writeport)
 	MDRV_CPU_PERIODIC_INT(nmi_line_pulse,TIME_IN_HZ(4000)) /* 4 kHz, updates the dac */
+
+	/* MCU */
+#if MCU_HACK
+#else
+	MDRV_CPU_ADD(ALPHA8301, 4000000/8)
+	MDRV_CPU_PROGRAM_MAP(mcu_map,0)
+#endif
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -509,15 +592,23 @@ ROM_END
 
 DRIVER_INIT( exctsccr )
 {
+#if MCU_HACK
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa006, 0xa006, 0, 0, exctsccr_mcu_control_w);
+#else
+	mcu_patch_data = exctsccr_mcu_patch_data;
+#endif
 }
 
 DRIVER_INIT( exctscc2 )
 {
+#if MCU_HACK
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa006, 0xa006, 0, 0, exctscc2_mcu_control_w);
+#else
+	mcu_patch_data = exctscc2_mcu_patch_data;
+#endif
 }
 
 GAME( 1983, exctsccr, 0,        exctsccr, exctsccr, exctsccr, ROT90, "Alpha Denshi Co.", "Exciting Soccer", 0 )
 GAME( 1983, exctscca, exctsccr, exctsccr, exctsccr, exctsccr, ROT90, "Alpha Denshi Co.", "Exciting Soccer (alternate music)", 0 )
 GAME( 1983, exctsccb, exctsccr, exctsccb, exctsccr, 0,        ROT90, "bootleg",          "Exciting Soccer (bootleg)", 0 )
-GAME( 1984, exctscc2, 0,		exctsccr, exctsccr, exctscc2, ROT90, "Alpha Denshi Co.", "Exciting Soccer II", GAME_NOT_WORKING )
+GAME( 1984, exctscc2, 0       , exctsccr, exctsccr, exctscc2, ROT90, "Alpha Denshi Co.", "Exciting Soccer II", GAME_IMPERFECT_GRAPHICS )

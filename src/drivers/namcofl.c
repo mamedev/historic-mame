@@ -428,6 +428,45 @@ ROM_START( finalapr )
 	ROM_LOAD("flr1voi.23s",   0x000000, 0x200000, CRC(ff6077cd) SHA1(73c289125ddeae3e43153e4c570549ca04501262) )
 ROM_END
 
+ROM_START( finalapo )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 ) // i960 program
+	ROM_LOAD32_WORD("flr2mpe.19a",   0x000000, 0x080000, CRC(cc8961ae) SHA1(08ce4d27a723101370d1c536b26256ce0d8a1b6c) )
+	ROM_LOAD32_WORD("flr2mpo.18a",   0x000002, 0x080000, CRC(8118f465) SHA1(c4b79878a82fd36b5707e92aa893f69c2b942d57) )
+
+	ROM_REGION( 0x200000, REGION_USER1, 0 ) // Data
+
+	ROM_REGION( 0x200000, NAMCONB1_ROTGFXREGION, 0 )	// "RCHAR" (roz characters)
+	ROM_LOAD("flr1rch0.19j",   0x000000, 0x100000, CRC(f413f50d) SHA1(cdd8073dda4feaea78e3b94520cf20a9799fd04d) )
+	ROM_LOAD("flr1rch1.18j",   0x100000, 0x100000, CRC(4654d519) SHA1(f8bb473013cdca48dd98df0de2f78c300c156e91) )
+
+	ROM_REGION( 0x400000, NAMCONB1_TILEGFXREGION, 0 ) // "SCHAR" (regular BG characters)
+	ROM_LOAD("flr1sch0.21p",   0x000000, 0x100000, CRC(7169efca) SHA1(66c7aa1b50b236b4700b07be0dca7aebdabedb8c) )
+	ROM_LOAD("flr1sch1.20p",   0x100000, 0x100000, CRC(aa233a02) SHA1(0011329f585658d90f820daf0ba08ce2735bddfc) )
+	ROM_LOAD("flr1sch2.19p",   0x200000, 0x100000, CRC(9b6b7abd) SHA1(5cdec70db1b46bc5d0866ca155b520157fef3adf) )
+	ROM_LOAD("flr1sch3.18p",   0x300000, 0x100000, CRC(50a14f54) SHA1(ab9c2f2e11f006a9dc7e5aedd5788d7d67166d36) )
+
+	ROM_REGION( 0x800000, NAMCONB1_SPRITEGFXREGION, 0 )	// OBJ
+	ROM_LOAD16_BYTE("flr1obj0l.ic1", 0x000001, 0x200000, CRC(364a902c) SHA1(4a1ea48eee86d410e36096cc100b4c9a5a645034) )
+	ROM_LOAD16_BYTE("flr1obj0u.ic2", 0x000000, 0x200000, CRC(a5c7b80e) SHA1(4e0e863cfdd8c051c3c4594bb21e11fb93c28f0c) )
+	ROM_LOAD16_BYTE("flr1obj1l.ic3", 0x400001, 0x200000, CRC(51fd8de7) SHA1(b1571c45e8c33d746716fd790c704a3361d02bdc) )
+	ROM_LOAD16_BYTE("flr1obj1u.ic4", 0x400000, 0x200000, CRC(1737aa3c) SHA1(8eaf0dc5d60a270d2c1626f54f5edbddbb0a59c8) )
+
+	ROM_REGION( 0x80000, NAMCONB1_ROTMASKREGION, 0 ) // "RSHAPE" (roz mask like NB-1?)
+	ROM_LOAD("flr1rsh.14k",    0x000000, 0x080000, CRC(037c0983) SHA1(c48574a8ad125cedfaf2538c5ff824e121204629) )
+
+	ROM_REGION( 0x80000, NAMCONB1_TILEMASKREGION, 0 ) // "SSHAPE" (mask for other tiles?)
+	ROM_LOAD("flr1ssh.18u",    0x000000, 0x080000, CRC(f70cb2bf) SHA1(dbddda822287783a43415172b81d0382a8ac43d8) )
+
+	ROM_REGION( 0x20000, REGION_CPU2, 0 ) // Sound data for M37702 MCU
+
+	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_LOAD("flr1spr.21l",   0x000000,  0x20000, CRC(69bb0f5e) SHA1(6831d618de42a165e508ad37db594d3aa290c530) )
+	NAMCO_C7X_BIOS
+
+	ROM_REGION( 0x200000, REGION_SOUND1, 0 ) // Samples
+	ROM_LOAD("flr1voi.23s",   0x000000, 0x200000, CRC(ff6077cd) SHA1(73c289125ddeae3e43153e4c570549ca04501262) )
+ROM_END
+
 static void namcofl_common_init(void)
 {
 	namcofl_workram = auto_malloc(0x100000);
@@ -451,5 +490,6 @@ static DRIVER_INIT(finalapr)
 	namcos2_gametype = NAMCOFL_FINAL_LAP_R;
 }
 
-GAME( 1995, speedrcr,         0, sysfl, sysfl, speedrcr, ROT0, "Namco", "Speed Racer", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAME( 1995, finalapr,         0, sysfl, sysfl, finalapr, ROT0, "Namco", "Final Lap R", GAME_IMPERFECT_SOUND )
+GAME( 1995, speedrcr,        0, sysfl, sysfl, speedrcr, ROT0, "Namco", "Speed Racer", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAME( 1995, finalapr,        0, sysfl, sysfl, finalapr, ROT0, "Namco", "Final Lap R (Rev B)", GAME_IMPERFECT_SOUND )
+GAME( 1995, finalapo, finalapr, sysfl, sysfl, finalapr, ROT0, "Namco", "Final Lap R", GAME_IMPERFECT_SOUND )

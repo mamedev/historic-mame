@@ -163,6 +163,8 @@ void mc68hc11_get_info(UINT32 state, union cpuinfo *info);
 void adsp21062_get_info(UINT32 state, union cpuinfo *info);
 void dsp56k_get_info(UINT32 state, union cpuinfo *info);
 void rsp_get_info(UINT32 state, union cpuinfo *info);
+void alpha8201_get_info(UINT32 state, union cpuinfo *info);
+void alpha8301_get_info(UINT32 state, union cpuinfo *info);
 
 #ifdef MESS
 void apexc_get_info(UINT32 state, union cpuinfo *info);
@@ -661,6 +663,12 @@ static const struct
 #if (HAS_RSP)
 	{ CPU_RSP, rsp_get_info },
 #endif
+#if (HAS_ALPHA8201)
+	{ CPU_ALPHA8201, alpha8201_get_info },
+#endif
+#if (HAS_ALPHA8301)
+	{ CPU_ALPHA8301, alpha8301_get_info },
+#endif
 
 #ifdef MESS
 #if (HAS_APEXC)
@@ -706,7 +714,6 @@ static const struct
 	{ CPU_COP411, cop411_get_info },
 #endif
 #endif /* MESS */
-
 };
 
 

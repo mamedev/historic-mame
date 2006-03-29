@@ -3688,6 +3688,51 @@ ROM_START( mjelct3a )
 	ROM_CONTINUE(          0x100000, 0x040000 )
 ROM_END
 
+/*
+
+Sea Hunter Pengiun
+
+CPU
+1x Z8400A (main)
+1x YM2203C (sound)
+1x blank DIP40 with GND on pin 1,22 and +5 on pin 20
+1x oscillator 22.1184MHz
+ROMs
+
+2x 27512 (u43,u45)
+6x 27C010
+
+ROM u43.8d contains
+
+MODEL:SEA HUNTER(EXT)
+PROGRAM BY:WSAC SYSTEMS,.
+
+DATE:1995/02/20
+
+VER:1.30
+
+*/
+
+ROM_START( shpeng )
+	ROM_REGION( 0x90000, REGION_CPU1, 0 )	/* Z80 Code */
+	ROM_LOAD( "u43.8d", 0x00000, 0x10000, CRC(6b993f68) SHA1(4d3ad750e23be93342c61c454498d432e40587bb) )
+	ROM_LOAD( "u45.9d", 0x28000, 0x10000, CRC(6e79a1d1) SHA1(a72706425bcbd0faee4cf0220942fdcf510d4e89) )
+
+	ROM_REGION( 0xc0000, REGION_GFX1, 0 )	/* blitter data */
+	ROM_LOAD( "u110.1j", 0x00000, 0x20000, CRC(31abac75) SHA1(20e91496ccb379d9449925b5aaca3532caaf9522) ) // ok! - main sprites etc.
+	ROM_LOAD( "u111.0j", 0x20000, 0x20000, CRC(0672bfc9) SHA1(ea35af45cdfa72ae1e7dc13a09ed1db09c0062ec) ) // ok?
+	ROM_LOAD( "u84.1h",  0x40000, 0x20000, CRC(7b476fac) SHA1(6b61b675fbfcc17a77b9757ea330f8d3e8751633) )
+	ROM_LOAD( "u804.0h", 0x60000, 0x20000, CRC(abb2f1c3) SHA1(9faccbba26c0540d9edbd76ca8bf67069db0bb53) )
+	ROM_LOAD( "u74.1g",  0x80000, 0x20000, CRC(2ac46b6e) SHA1(0046ee7ede1acff45e64c85a9fca8fc8efa31026) )
+	ROM_LOAD( "u704.0g", 0xa0000, 0x20000, CRC(b062c928) SHA1(8c43689a1b8c444f91acbc7371eda744874eb538) )
+
+	ROM_REGION( 0x400, REGION_PROMS, ROMREGION_DISPOSE )	/* Color PROMs */
+	/* there were no proms in the dump? I assume they're missing? */
+	ROM_LOAD( "prom0", 0x000, 0x200, NO_DUMP )
+	ROM_LOAD( "prom1", 0x200, 0x200, NO_DUMP )
+ROM_END
+
+
 // Decrypted by yong
 static DRIVER_INIT( mjelct3 )
 {
@@ -3850,3 +3895,5 @@ GAME( 1993, mjelctrn, 0,        mjelctrn, mjelctrn, mjelct3,  ROT180, "Dynax",  
 GAME( 1990, mjelct3,  mjelctrn, mjelctrn, mjelct3,  mjelct3,  ROT180, "Dynax",                   "Mahjong Electron Base (parts 2 & 3, Japan)"           , 0 )
 GAME( 1990, mjelct3a, mjelctrn, mjelctrn, mjelct3,  mjelct3a, ROT180, "Dynax",                   "Mahjong Electron Base (parts 2 & 3, alt., Japan)"     , 0 )
 GAME( 1990, neruton,  0,        neruton,  neruton,  mjelct3,  ROT180, "Dynax / Yukiyoshi Tokoro","Mahjong Neruton Haikujirada (Japan)",                         GAME_IMPERFECT_GRAPHICS )	// e.g. dynax logo
+/* not a dynax board */
+GAME( 1995, shpeng,   0,        sprtmtch, sprtmtch, 0,        ROT0,   "WSAC Systems?",                   "Sea Hunter Pengiun"                                 , GAME_WRONG_COLORS ) // proms?

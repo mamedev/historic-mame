@@ -297,7 +297,6 @@ void osd_wait_for_debugger(void)
 	// make sure the debug windows are visible
 	waiting_for_debugger = TRUE;
 	smart_show_all(TRUE);
-	win_flush_logfile();
 
 	// get and process messages
 	GetMessage(&message, NULL, 0, 0);

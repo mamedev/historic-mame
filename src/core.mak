@@ -36,6 +36,7 @@ COREOBJS = \
 	$(OBJ)/input.o \
 	$(OBJ)/inptport.o \
 	$(OBJ)/mame.o \
+	$(OBJ)/mamecore.o \
 	$(OBJ)/md5.o \
 	$(OBJ)/memory.o \
 	$(OBJ)/palette.o \

@@ -703,6 +703,22 @@ void cpunum_set_clock(int cpunum, int clock)
 
 
 
+void cpunum_set_clock_period(int cpunum, subseconds_t clock_period)
+{
+	VERIFY_CPUNUM(cpunum_set_clock);
+
+	cpu[cpunum].clock = MAX_SUBSECONDS / clock_period;
+	sec_to_cycles[cpunum] = (double) (MAX_SUBSECONDS / clock_period) * cpu[cpunum].clockscale;
+	cycles_to_sec[cpunum] = 1.0 / sec_to_cycles[cpunum];
+	cycles_per_second[cpunum] = sec_to_cycles[cpunum];
+	subseconds_per_cycle[cpunum] = clock_period;
+
+	/* re-compute the perfect interleave factor */
+	compute_perfect_interleave();
+}
+
+
+
 /*************************************
  *
  *  Returns the current scaling factor

@@ -210,13 +210,20 @@ WRITE8_HANDLER( toypop_m68000_assert_w )
 	cpunum_set_input_line(2, INPUT_LINE_RESET, ASSERT_LINE);
 }
 
-MACHINE_RESET( toypop )
+static void disable_interrupts(int param)
 {
 	cpu_interrupt_enable(0,0);
 	cpunum_set_input_line(0, 0, CLEAR_LINE);
 	cpu_interrupt_enable(1,0);
 	cpunum_set_input_line(1, 0, CLEAR_LINE);
 	interrupt_enable_68k = 0;
+}
+
+MACHINE_RESET( toypop )
+{
+	/* we must do this on a timer in order to have it take effect */
+	/* otherwise, the reset process will override our changes */
+	timer_set(TIME_NOW, 0, disable_interrupts);
 }
 
 INTERRUPT_GEN( toypop_m68000_interrupt )
