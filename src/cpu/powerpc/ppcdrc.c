@@ -1318,7 +1318,7 @@ static void ppcdrc602_reset(void)
 {
 	ppc.pc = ppc.npc = 0xfff00100;
 
-	ppc_set_msr(0);
+	ppc_set_msr(0x40);
 	change_pc(ppc.pc);
 
 	ppc.hid0 = 1;
@@ -1752,6 +1752,8 @@ void ppc602_get_info(UINT32 state, union cpuinfo *info)
 
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 64;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32;					break;
+		case CPUINFO_INT_LOGADDR_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32;					break;
+		case CPUINFO_INT_PAGE_SHIFT + ADDRESS_SPACE_PROGRAM: 	info->i = 17;					break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_SET_INFO:					info->setinfo = ppc602_set_info;		break;
@@ -1762,6 +1764,8 @@ void ppc602_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_READ:							info->read = ppc_read;					break;
 		case CPUINFO_PTR_WRITE:							info->write = ppc_write;				break;
 		case CPUINFO_PTR_READOP:						info->readop = ppc_readop;				break;
+		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = ppc603_reg_layout;				break;
+		case CPUINFO_PTR_TRANSLATE:						info->translate = ppc_translate_address_cb;	break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "PPC602"); break;

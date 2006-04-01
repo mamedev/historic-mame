@@ -16,6 +16,7 @@ Year + Game                         System      Protection
     P-47  (Japan)                   A
     Kick Off (Japan)                A
     Takeda Shingen (Japan)          A                 Encryption (key 1)
+    Ninja Kazan (World) /           A           Yes + Encryption (key 1)
     Iga Ninjyutsuden (Japan)        A           Yes + Encryption (key 1)
 89  Astyanax          (World) /     A           Yes + Encryption (key 2)
     The Lord of King  (Japan)       A           Yes + Encryption (key 2)
@@ -1843,7 +1844,7 @@ INPUT_PORTS_END
 
 /***************************************************************************
 
-                            [ Iga Ninjyutsuden ]
+                    [ Ninja Kazan ] \ [ Iga Ninjyutsuden ]
 
 interrupts: 1] 420(does nothing)
             2] 500
@@ -1854,10 +1855,50 @@ f000c.l     *** score (BCD) ***
 f002a.w     *** lives ***
 f010c.w     credits
 
-English version called "Kazan" not dumped yet.
 
 ***************************************************************************/
 
+ROM_START( kazan )
+	ROM_REGION( 0x60000, REGION_CPU1, 0 )		/* Main CPU Code */
+	ROM_LOAD16_BYTE( "kazan.2",    0x000000, 0x020000, CRC(072aa3d6) SHA1(49fd03d72f647dcda140d0a507f23a80911427e1) )
+	ROM_LOAD16_BYTE( "kazan.1",    0x000001, 0x020000, CRC(b9801e2d) SHA1(72f0ca6da5177625073ee2687ddba3647af5e9e8) )
+	ROM_LOAD16_BYTE( "iga_03.bin", 0x040000, 0x010000, CRC(de5937ad) SHA1(d3039e5391feb925ea10f33a1363bf3ffc1ebb3d) )
+	ROM_LOAD16_BYTE( "iga_04.bin", 0x040001, 0x010000, CRC(afaf0480) SHA1(b8d0ec859a94941650bdd2b01e98d054d49fef67) )
+
+	ROM_REGION( 0x20000, REGION_CPU2, 0 )		/* Sound CPU Code */
+	ROM_LOAD16_BYTE( "iga_05.bin", 0x000000, 0x010000, CRC(13580868) SHA1(bfcd11b294b64af81a0403a3e9370c42a9859b6b) )
+	ROM_LOAD16_BYTE( "iga_06.bin", 0x000001, 0x010000, CRC(7904d5dd) SHA1(4cd9fdab601a90c997a041a9f7966a9a233e897b) )
+
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE ) /* Scroll 0 */
+	ROM_LOAD( "kazan.11", 0x000000, 0x020000, CRC(08e54137) SHA1(1e3298a896ae0de64f0fc2dab6b32c8bf875f50b) )
+	ROM_LOAD( "kazan.12", 0x020000, 0x020000, CRC(e89d58bd) SHA1(a4f2530fb544af48f66b3402c5162639745ab11d) )
+
+	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE ) /* Scroll 1 */
+	ROM_LOAD( "kazan.15", 0x000000, 0x020000, CRC(48b28aa9) SHA1(9430f5dd8c6b75e59f0a5ae933c645a07a56d183) )
+	ROM_LOAD( "kazan.16", 0x020000, 0x020000, CRC(07eab526) SHA1(97f6898a7992e9606c78c01a09102b3080146013) )
+	ROM_LOAD( "kazan.17", 0x040000, 0x020000, CRC(617269ea) SHA1(93c62d4ce01add4eec1d392a0b25ab6d60d9788d) )
+	ROM_LOAD( "kazan.18", 0x060000, 0x020000, CRC(52fc1b4b) SHA1(42d1971d35e8d91631a2b6b883dcee975cf9fbca) )
+
+	ROM_REGION( 0x020000, REGION_GFX3, ROMREGION_DISPOSE ) /* Scroll 2 */
+	ROM_LOAD( "kazan.19", 0x000000, 0x010000, CRC(b3a9a4ae) SHA1(bccef0f6ea17c2f0f8d61da4d174389084252d13) )
+
+	ROM_REGION( 0x080000, REGION_GFX4, ROMREGION_DISPOSE ) /* Sprites */
+	ROM_LOAD( "kazan.20", 0x000000, 0x020000, CRC(ee5819d8) SHA1(44be00a64c42d724e3c3c5e48cbb5144b7c7c13f) )
+	ROM_LOAD( "kazan.21", 0x020000, 0x020000, CRC(abf14d39) SHA1(6c84498e7ace56947b04b46341b2ab9b4aea5bb8) )
+	ROM_LOAD( "kazan.22", 0x040000, 0x020000, CRC(646933c4) SHA1(583094c6969de95f70f88901f3ef2c279b467334) )
+	ROM_LOAD( "kazan.23", 0x060000, 0x020000, CRC(0b531aee) SHA1(7aa97ada48e8a99bd2345efe41c45b82cb2d48e2) )
+
+	ROM_REGION( 0x040000, REGION_SOUND1, 0 )		/* Samples */
+	ROM_LOAD( "kazan.9",  0x000000, 0x020000, CRC(5c28bd2d) SHA1(95d70a30118dfd2649f8d1f726a89e61233b4ae1) )
+	ROM_LOAD( "kazan.10", 0x020000, 0x010000, CRC(cd6c7978) SHA1(efbf20eebeea67e8ace385b508372bf70b6ac8bc) )
+
+	ROM_REGION( 0x040000, REGION_SOUND2, 0 )		/* Samples */
+	ROM_LOAD( "kazan.7",  0x000000, 0x020000, CRC(42f228f8) SHA1(6bef1269da5f4bdc56f6a37fff423f71450ac49c) )
+	ROM_LOAD( "kazan.8",  0x020000, 0x020000, CRC(ebd1c883) SHA1(36cb08b7ce29326ae1694d8c7088408cdf399f27) )
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 )		/* Priority PROM */
+	ROM_LOAD( "kazan.14m",    0x0000, 0x0200, CRC(85b30ac4) SHA1(b03f577ceb0f26b67453ffa52ef61fea76a93184) )
+ROM_END
 
 ROM_START( iganinju )
 	ROM_REGION( 0x60000, REGION_CPU1, 0 )		/* Main CPU Code */
@@ -1889,11 +1930,11 @@ ROM_START( iganinju )
 	ROM_LOAD( "iga_08.bin", 0x000000, 0x040000, CRC(857dbf60) SHA1(e700b307aa481a57180a4529e2ce4326574e128e) )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )		/* Priority PROM */
-	ROM_LOAD( "kazan.131",    0x0000, 0x0200, CRC(1d877538) SHA1(a5be0dc65dcfc36fbba10d1fddbe155e24b6122f) )
+	ROM_LOAD( "iga.131",    0x0000, 0x0200, CRC(1d877538) SHA1(a5be0dc65dcfc36fbba10d1fddbe155e24b6122f) )
 ROM_END
 
 
-INPUT_PORTS_START( iganinju )
+INPUT_PORTS_START( kazan )
 
 	COINS						/* IN0 0x80001.b */
 //  fire    jump
@@ -3640,7 +3681,8 @@ GAME( 1988, p47j,     p47,      system_A,          p47,      0,        ROT0,   "
 GAME( 1988, kickoff,  0,        system_A,          kickoff,  0,        ROT0,   "Jaleco", "Kick Off (Japan)", 0 )
 GAME( 1988, tshingen, 0,        system_A,          tshingen, phantasm, ROT0,   "Jaleco", "Takeda Shingen (Japan, Japanese)", 0 )
 GAME( 1988, tshingna, tshingen, system_A,          tshingen, phantasm, ROT0,   "Jaleco", "Shingen Samurai-Fighter (Japan, English)", 0 )
-GAME( 1988, iganinju, 0,        system_A_iganinju, iganinju, iganinju, ROT0,   "Jaleco", "Iga Ninjyutsuden (Japan)", 0 )
+GAME( 1988, kazan,    0,        system_A_iganinju, kazan,    iganinju, ROT0,   "Jaleco", "Ninja Kazan (World)", 0 )
+GAME( 1988, iganinju, kazan,    system_A_iganinju, kazan,    iganinju, ROT0,   "Jaleco", "Iga Ninjyutsuden (Japan)", 0 )
 GAME( 1989, astyanax, 0,        system_A,          astyanax, astyanax, ROT0,   "Jaleco", "The Astyanax", 0 )
 GAME( 1989, lordofk,  astyanax, system_A,          astyanax, astyanax, ROT0,   "Jaleco", "The Lord of King (Japan)", 0 )
 GAME( 1989, hachoo,   0,        system_A_hachoo,   hachoo,   hachoo,   ROT0,   "Jaleco", "Hachoo!", 0 )

@@ -115,6 +115,7 @@ void mame_debug_init(void)
 	debug_view_init();
 	debug_comment_init();
 	atexit(debug_flush_traces);
+	add_logerror_callback(debug_errorlog_write_line);
 }
 
 
@@ -983,8 +984,8 @@ static void process_source_file(void)
 		memset(buf, 0, sizeof(buf));
 		fgets(buf, sizeof(buf), debug_source_file);
 
-		/* strip out comments (text after '#') */
-		s = strchr(buf, '#');
+		/* strip out comments (text after '//') */
+		s = strstr(buf, "//");
 		if (s)
 			*s = '\0';
 

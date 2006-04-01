@@ -321,6 +321,13 @@ static CMDERR internal_parse_command(const char *original_command, int execute)
 		/* process the command */
 		command_start = params[0];
 
+		/* allow for "do" commands */
+		if (tolower(command_start[0] == 'd') && tolower(command_start[1] == 'o') && isspace(command_start[2]))
+		{
+			isexpr = TRUE;
+			command_start += 3;
+		}
+
 		/* if it smells like an assignment expression, treat it as such */
 		if (isexpr && paramcount == 1)
 		{

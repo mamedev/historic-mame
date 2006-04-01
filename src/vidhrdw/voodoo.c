@@ -3134,7 +3134,7 @@ static INT32 texture_w(voodoo_state *v, offs_t offset, UINT32 data)
 			if (TEXMODE_SEQ_8_DOWNLD(v->tmu[0].reg/*t->reg*/[textureMode].u))
 				ts = (offset << 2) & 0xfc;
 			else
-				ts = (offset << 1) & 0xfe;
+				ts = (offset << 1) & 0xfc;
 
 			/* validate parameters */
 			if (lod > 8)

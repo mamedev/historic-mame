@@ -197,15 +197,18 @@ mame_file *mame_fopen_error(const char *gamename, const char *filename, int file
 	switch (filetype)
 	{
 		/* generic files that live in a single directory */
+		case FILETYPE_DEBUGLOG:
+		case FILETYPE_CTRLR:
+		case FILETYPE_LANGUAGE:
+		case FILETYPE_HIGHSCORE_DB:
+			return generic_fopen(filetype, NULL, filename, 0, openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD, error);
+
+		/* game-specific files that live in a single directory */
 		case FILETYPE_HIGHSCORE:
 		case FILETYPE_CONFIG:
 		case FILETYPE_INPUTLOG:
 		case FILETYPE_COMMENT:
-		case FILETYPE_LANGUAGE:
-		case FILETYPE_CTRLR:
-		case FILETYPE_HIGHSCORE_DB:
 		case FILETYPE_INI:
-		case FILETYPE_DEBUGLOG:
 		case FILETYPE_HASH:		/* MESS-specific */
 			return generic_fopen(filetype, NULL, gamename, 0, openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD, error);
 
@@ -990,12 +993,16 @@ static mame_file *generic_fopen(int pathtype, const char *gamename, const char *
 	osd_file_error dummy;
 
 #ifdef MESS
-	int is_absolute_path = osd_is_absolute_path(filename);
+	int is_absolute_path = FALSE;
+	if (filename)
+	{
+		is_absolute_path = osd_is_absolute_path(filename);
 	if (is_absolute_path)
 	{
 		if ((flags & FILEFLAG_ALLOW_ABSOLUTE) == 0)
 			return NULL;
 		pathcount = 1;
+	}
 	}
 #endif /* MESS */
 

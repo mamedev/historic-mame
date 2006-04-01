@@ -56,13 +56,13 @@ void kof2002_decrypt_68k(void);
 void matrim_decrypt_68k(void);
 void mslug5_decrypt_68k(void);
 void svcchaos_px_decrypt(void);
-void svcchaos_gfx_decrypt(void);
-void svcchaos_s1data_decrypt(void);
-void decode_kf2k3pcb_croms(void);
+void svcpcb_gfx_decrypt(void);
+void svcpcb_s1data_decrypt(void);
 void samsho5_decrypt_68k(void);
+void kf2k3pcb_gfx_decrypt(void);
+void kf2k3pcb_decrypt_68k(void);
+void kf2k3pcb_decrypt_s1data(void);
 void kof2003_decrypt_68k(void);
-void kof2003_decrypt_s1data(void);
-void kof2003a_px_decrypt(void);
 void kof2003biosdecode(void);
 void samsh5p_decrypt_68k(void);
 

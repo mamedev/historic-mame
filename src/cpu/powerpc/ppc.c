@@ -179,12 +179,21 @@ typedef struct {
 	UINT32 srr3;
 	UINT32 hid0;
 	UINT32 hid1;
+	UINT32 hid2;
 	UINT32 sdr1;
 	UINT32 sprg[4];
 
 	UINT32 dsisr;
 	UINT32 dar;
 	UINT32 ear;
+	UINT32 dmiss;
+	UINT32 dcmp;
+	UINT32 hash1;
+	UINT32 hash2;
+	UINT32 imiss;
+	UINT32 icmp;
+	UINT32 rpa;
+
 
 	BATENT ibat[4];
 	BATENT dbat[4];
@@ -493,13 +502,20 @@ INLINE void ppc_set_spr(int spr, UINT32 value)
 				ppc_write_timebase_h(value);
 				return;
 
-			case SPR603E_HID0:
-				ppc.hid0 = value;
-				return;
+			case SPR603E_HID0:			ppc.hid0 = value; return;
+			case SPR603E_HID1:			ppc.hid1 = value; return;
+			case SPR603E_HID2:			ppc.hid2 = value; return;
 
-			case SPR603E_HID1:
-				ppc.hid1 = value;
-				return;
+			case SPR603E_DSISR:			ppc.dsisr = value; return;
+			case SPR603E_DAR:			ppc.dar = value; return;
+			case SPR603E_EAR:			ppc.ear = value; return;
+			case SPR603E_DMISS:			ppc.dmiss = value; return;
+			case SPR603E_DCMP:			ppc.dcmp = value; return;
+			case SPR603E_HASH1:			ppc.hash1 = value; return;
+			case SPR603E_HASH2:			ppc.hash2 = value; return;
+			case SPR603E_IMISS:			ppc.imiss = value; return;
+			case SPR603E_ICMP:			ppc.icmp = value; return;
+			case SPR603E_RPA:			ppc.rpa = value; return;
 
 			case SPR603E_IBAT0L:		ppc.ibat[0].l = value; return;
 			case SPR603E_IBAT0U:		ppc.ibat[0].u = value; return;
@@ -662,11 +678,19 @@ INLINE UINT32 ppc_get_spr(int spr)
 			case SPR603E_TBU_W:		return (UINT32)(ppc_read_timebase() >> 32);
 			case SPR603E_HID0:		return ppc.hid0;
 			case SPR603E_HID1:		return ppc.hid1;
+			case SPR603E_HID2:		return ppc.hid2;
 			case SPR603E_DEC:		return read_decrementer();
 			case SPR603E_SDR1:		return ppc.sdr1;
 			case SPR603E_DSISR:		return ppc.dsisr;
 			case SPR603E_DAR:		return ppc.dar;
 			case SPR603E_EAR:		return ppc.ear;
+			case SPR603E_DMISS:		return ppc.dmiss;
+			case SPR603E_DCMP:		return ppc.dcmp;
+			case SPR603E_HASH1:		return ppc.hash1;
+			case SPR603E_HASH2:		return ppc.hash2;
+			case SPR603E_IMISS:		return ppc.imiss;
+			case SPR603E_ICMP:		return ppc.icmp;
+			case SPR603E_RPA:		return ppc.rpa;
 			case SPR603E_IBAT0L:	return ppc.ibat[0].l;
 			case SPR603E_IBAT0U:	return ppc.ibat[0].u;
 			case SPR603E_IBAT1L:	return ppc.ibat[1].l;

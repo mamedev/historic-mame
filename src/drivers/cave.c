@@ -19,19 +19,20 @@ Other        :  93C46 EEPROM
 Year + Game         License     PCB         Tilemaps        Sprites         Other
 -----------------------------------------------------------------------------------
 94  Mazinger Z      Banpresto   ?           038 9335EX706   013 9341E7009   Z80
-94  PowerInstinct 2 Atlus       ATG02?      038 9429WX709?  ?               Z80 NMK 112
+94  PowerInstinct 2 Atlus       ATG02?      038 9429WX709?  013             Z80 NMK 112
+95  P.I. Legends    Atlus       AT047G2-B   038 9429WX709   013 9341E7009   Z80 NMK 112
 95  Metamoqester    Banpresto   BP947A      038 9437WX711   013 9346E7002   Z80
 95  Sailor Moon     Banpresto   BP945A      038 9437WX711   013 9346E7002   Z80
 95  Donpachi        Atlus       AT-C01DP-2  038 9429WX727   013 8647-01     NMK 112
 96  Air Gallet      Banpresto   BP962A      038 9437WX711   013 9346E7002   Z80
 96  Hotdog Storm    Marble      ?           ?                               Z80
 97  Dodonpachi      Atlus       ATC03D2     ?
-98  Dangun Feveron  Nihon Sys.  CV01        ?
+98  Dangun Feveron  Nihon Sys.  CV01        038 9808WX003   013 9807EX004
 98  ESP Ra.De.      Atlus       ATC04       ?
-98  Uo Poko         Jaleco      CV02        ?
+98  Uo Poko         Jaleco      CV02        038 9749WX001   013 9749EX004
 99  Guwange         Atlus       ATC05       ?
-99  Gaia Crusaders  Noise Factory ?         ?
-99  Koro Koro Quest Takumi      TUG-01B     9838WX004       9838EX004
+99  Gaia Crusaders  Noise Factory ?         038 9838WX003   013 9918EX008
+99  Koro Koro Quest Takumi      TUG-01B     038 9838WX004   013 9838EX004
 -----------------------------------------------------------------------------------
 
 To Do:
@@ -3995,6 +3996,21 @@ OSC:    28.0, 16.0, 16.9 MHz
 
 ROM_START( uopoko )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "u26.bin", 0x000000, 0x080000, CRC(b445c9ac) SHA1(4dda1c6e19de629ea4d9061560c32a9f0deabd53) )
+	ROM_LOAD16_BYTE( "u25.bin", 0x000001, 0x080000, CRC(a1258482) SHA1(7f4adc4a6d069032aaf3d93eb60fde16b59483f8) )
+
+	ROM_REGION( 0x400000 * 2, REGION_GFX1, 0 )		/* Sprites: * 2 , do not dispose */
+	ROM_LOAD( "u33.bin", 0x000000, 0x400000, CRC(5d142ad2) SHA1(f26abcf7a625a322b83df44fbd6e852bfb03663c) )
+
+	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 */
+	ROM_LOAD( "u49.bin", 0x000000, 0x400000, CRC(12fb11bb) SHA1(953df1b16b5c9a6c3eb2fdebec4669a879270e73) )
+
+	ROM_REGION( 0x200000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "u4.bin", 0x000000, 0x200000, CRC(a2d0d755) SHA1(f8493ef7f367f3dc2a229ba785ac67bc5c2c54c0) )
+ROM_END
+
+ROM_START( uopokoj )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
 	ROM_LOAD16_BYTE( "u26j.bin", 0x000000, 0x080000, CRC(e7eec050) SHA1(cf3a77741029f96dbbec5ca7217a1723e4233cff) )
 	ROM_LOAD16_BYTE( "u25j.bin", 0x000001, 0x080000, CRC(68cb6211) SHA1(a6db0bc2e3e54b6992a44b7d52395917e66db49b) )
 
@@ -4326,19 +4342,19 @@ DRIVER_INIT( korokoro )
 
 ***************************************************************************/
 
-GAME( 1994, pwrinst2, 0,        pwrinst2, metmqstr, pwrinst2, ROT0,   "Atlus/Cave",                           "Power Instinct 2 (USA)", 0 ) /* 94.04.08 */
-GAME( 1994, pwrins2j, pwrinst2, pwrinst2, metmqstr, pwrins2j, ROT0,   "Atlus/Cave",                           "Gouketsuji Ichizoku 2 (Japan)", 0 ) /* 94.04.08 */
-GAME( 1994, mazinger, 0,        mazinger, mazinger, mazinger, ROT90,  "Banpresto/Dynamic Pl. Toei Animation", "Mazinger Z"                               , 0) // region in eeprom
+GAME( 1994, pwrinst2, 0,        pwrinst2, metmqstr, pwrinst2, ROT0,   "Atlus/Cave",                           "Power Instinct 2 (USA)"                  , 0 ) /* 94.04.08 */
+GAME( 1994, pwrins2j, pwrinst2, pwrinst2, metmqstr, pwrins2j, ROT0,   "Atlus/Cave",                           "Gouketsuji Ichizoku 2 (Japan)"           , 0 ) /* 94.04.08 */
+GAME( 1994, mazinger, 0,        mazinger, mazinger, mazinger, ROT90,  "Banpresto/Dynamic Pl. Toei Animation", "Mazinger Z"                              , 0 ) // region in eeprom
 GAME( 1995, donpachi, 0,        donpachi, cave,     donpachi, ROT270, "Atlus/Cave",                           "DonPachi (US)"                           , 0 )
 GAME( 1995, donpachj, donpachi, donpachi, cave,     donpachi, ROT270, "Atlus/Cave",                           "DonPachi (Japan)"                        , 0 )
 GAME( 1995, donpachk, donpachi, donpachi, cave,     donpachi, ROT270, "Atlus/Cave",                           "DonPachi (Korea)"                        , 0 )
 GAME( 1995, metmqstr, 0,        metmqstr, metmqstr, metmqstr, ROT0,   "Banpresto/Pandorabox",                 "Metamoqester"                            , 0 )
 GAME( 1995, nmaster,  metmqstr, metmqstr, metmqstr, metmqstr, ROT0,   "Banpresto/Pandorabox",                 "Oni - The Ninja Master (Japan)"          , 0 )
-GAME( 1995, plegends, 0,        pwrinst2, metmqstr, pwrins2j, ROT0,   "Atlus/Cave",                           "Power Instinct Legends (USA)", 0 ) /* 95.06.20 */
+GAME( 1995, plegends, 0,        pwrinst2, metmqstr, pwrins2j, ROT0,   "Atlus/Cave",                           "Power Instinct Legends (USA)"            , 0 ) /* 95.06.20 */
 GAME( 1995, plegendj, plegends, pwrinst2, metmqstr, pwrins2j, ROT0,   "Atlus/Cave",                           "Gouketsuji Ichizoku Saikyou Densetsu (Japan)", 0 ) /* 95.06.20 */
-GAME( 1995, sailormn, 0,        sailormn, sailormn, sailormn, ROT0,   "Banpresto",                            "Pretty Soldier Sailor Moon (95/03/22B)"   , 0) // region in eeprom
-GAME( 1995, sailormo, sailormn, sailormn, sailormn, sailormn, ROT0,   "Banpresto",                            "Pretty Soldier Sailor Moon (95/03/22)"    , 0) // region in eeprom
-GAME( 1996, agallet,  0,        sailormn, sailormn, agallet,  ROT270, "Banpresto / Gazelle",                  "Air Gallet"                               , 0) // board was taiwan, region in eeprom
+GAME( 1995, sailormn, 0,        sailormn, sailormn, sailormn, ROT0,   "Banpresto",                            "Pretty Soldier Sailor Moon (95/03/22B)"  , 0 ) // region in eeprom
+GAME( 1995, sailormo, sailormn, sailormn, sailormn, sailormn, ROT0,   "Banpresto",                            "Pretty Soldier Sailor Moon (95/03/22)"   , 0 ) // region in eeprom
+GAME( 1996, agallet,  0,        sailormn, sailormn, agallet,  ROT270, "Banpresto / Gazelle",                  "Air Gallet"                              , 0 ) // board was taiwan, region in eeprom
 GAME( 1996, hotdogst, 0,        hotdogst, cave,     hotdogst, ROT90,  "Marble",                               "Hotdog Storm"                            , 0 )
 GAME( 1997, ddonpach, 0,        ddonpach, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DoDonPachi (International)"              , 0 )
 GAME( 1997, ddonpchj, ddonpach, ddonpach, cave,     ddonpach, ROT270, "Atlus/Cave",                           "DoDonPachi (Japan)"                      , 0 )
@@ -4347,7 +4363,8 @@ GAME( 1998, feversos, dfeveron, dfeveron, cave,     feversos, ROT270, "Cave (Nih
 GAME( 1998, esprade,  0,        esprade,  cave,     esprade,  ROT270, "Atlus/Cave",                           "ESP Ra.De. (International Ver 1998 4/22)", 0 )
 GAME( 1998, espradej, esprade,  esprade,  cave,     esprade,  ROT270, "Atlus/Cave",                           "ESP Ra.De. (Japan Ver 1998 4/21)"        , 0 )
 GAME( 1998, espradeo, esprade,  esprade,  cave,     esprade,  ROT270, "Atlus/Cave",                           "ESP Ra.De. (Japan Ver 1998 4/14)"        , 0 )
-GAME( 1998, uopoko,   0,        uopoko,   cave,     uopoko,   ROT0,   "Cave (Jaleco license)",                "Uo Poko (Japan)"                         , 0 )
+GAME( 1998, uopoko,   0,        uopoko,   cave,     uopoko,   ROT0,   "Cave (Jaleco license)",                "Puzzle Uo Poko (International)"          , 0 )
+GAME( 1998, uopokoj,  uopoko,   uopoko,   cave,     uopoko,   ROT0,   "Cave (Jaleco license)",                "Puzzle Uo Poko (Japan)"                  , 0 )
 GAME( 1999, guwange,  0,        guwange,  guwange,  guwange,  ROT270, "Atlus/Cave",                           "Guwange (Japan)"                         , 0 )
-GAME( 1999, gaia,     0,        gaia,     gaia,     gaia,     ROT0,   "Noise Factory",                        "Gaia Crusaders",                          GAME_IMPERFECT_SOUND ) // cuts out occasionally
+GAME( 1999, gaia,     0,        gaia,     gaia,     gaia,     ROT0,   "Noise Factory",                        "Gaia Crusaders",        GAME_IMPERFECT_SOUND ) // cuts out occasionally
 GAME( 1999, korokoro, 0,        korokoro, korokoro, korokoro, ROT0,   "Takumi",                               "Koro Koro Quest (Japan)"                 , 0 )

@@ -13,6 +13,7 @@ Sound Chips  :  2 x AR17961 (OKI M6295) (only 1 in Torus)
 Year + Game          Board#
 ---------------------------------------------------------------------------
 94+ Paradise         YS-1600
+94+ Paradise Deluxe  YS-1604
 95  Target Ball      YS-2002
 96  Torus            ?
 98  Mad Ball         YS-0402
@@ -651,14 +652,43 @@ MACHINE_DRIVER_END
 
 /***************************************************************************
 
-                                    Paradise
+                          Paradise / Paradise Deluxe
 
-(c) yun sung  year ??
-another porn qix alike game
-1 main cpu tpc1024afn-084c  ??
-1 sound z8400b ps
-2 ar17961  (oki?)
-1 12.000 oscillator cristal
+(c) Yun Sung  year unkown
+
+Another porn qix like game
+
+YS-1600 / YS-1604
+  CPU: Z8400B PS (Z80 6Mhz)
+Sound: 2 x AR17961 or AD-65 (OKI M6295)
+Video: TPC1020AFN-084C
+  OSC: 12.000MHz & 4.000MHz
+
+YS-1604
+|---------------------------------------------------------|
+|  AD-65  AD-65   Z80              4MHz       YUNSUNG.110 |
+| YUNSUNG.113   YUNSUNG.128                   YUNSUNG.111 |
+| YUNSUNG.85     6264                                     |
+|                                             YUNSUNG.92  |
+|                                             YUNSUNG.93  |
+|                                             YUNSUNG.94  |
+|                6116                                     |
+|                6116              6116                   |
+|J               6116                                     |
+|A                                                        |
+|M                                            6116        |
+|M                                            6116        |
+|A                            |-------|       6116        |
+|                             | TI    |                   |
+|                             |TPC1020|                   |
+|DSW1(8)                      | 084C  |                   |
+|         12MHz               |-------|                   |
+|                           4464                          |
+|                           4464     YUNSUNG.114          |
+|                           4464     YUNSUNG.115          |
+|DSW2(8)                    4464                          |
+|                                                         |
+|---------------------------------------------------------|
 
 The year is not shown but must be >= 1994, since the development system
 (cross compiler?) they used left a "1994.8-1989" in the rom
@@ -717,6 +747,7 @@ ROM_START( paradlx )
 	ROM_LOAD( "10.u85", 0x00000, 0x40000, CRC(ed20133e) SHA1(a6ab1ab3ca075a3b03fe96cd32a5c186ee26d095) )
 
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Samples (banked) */
+	/* wrong size? */
 	ROM_LOAD( "9.u113", 0x00000, 0x40000, CRC(2e31117d) SHA1(bbd952e268948819a0783fece07cfdb4f289c954) )
 ROM_END
 
@@ -824,7 +855,7 @@ s.u28 ST M27C4001    - Sound (next to AD-65)
 5.u105 TI 27C040
 6.u106 TI 27C040
 
-All roms with manufacturer's IDs and routines
+All roms read with manufacturer's IDs and routines
 
 */
 

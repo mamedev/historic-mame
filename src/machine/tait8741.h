@@ -1,6 +1,10 @@
 #ifndef __TAITO8741__
 #define __TAITO8741__
 
+/****************************************************************************
+  gladiatr and Great Swordsman set.
+****************************************************************************/
+
 #define MAX_TAITO8741 4
 
 /* NEC 8741 program mode */
@@ -31,5 +35,17 @@ READ8_HANDLER( TAITO8741_0_r );
 READ8_HANDLER( TAITO8741_1_r );
 READ8_HANDLER( TAITO8741_2_r );
 READ8_HANDLER( TAITO8741_3_r );
+
+/****************************************************************************
+  joshi Vollyball set.
+****************************************************************************/
+
+extern int josvolly_nmi_enable;
+
+void josvolly_8741_reset(void);
+WRITE8_HANDLER( josvolly_8741_0_w );
+WRITE8_HANDLER( josvolly_8741_1_w );
+READ8_HANDLER( josvolly_8741_0_r );
+READ8_HANDLER( josvolly_8741_1_r );
 
 #endif

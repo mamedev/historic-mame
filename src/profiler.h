@@ -42,6 +42,7 @@ enum
 	PROFILER_HISCORE,	/* high score load can slow things down if incorrectly written */
 	PROFILER_INPUT,		/* input.c and inptport.c */
 	PROFILER_MOVIE_REC,	/* movie recording */
+	PROFILER_LOGERROR,	/* logerror */
 	PROFILER_EXTRA,		/* everything else */
 
 	/* the USER types are available to driver writers to profile */

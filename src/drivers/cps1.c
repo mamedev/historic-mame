@@ -4342,6 +4342,39 @@ ROM_START( ffightu )
 	ROM_LOAD( "ff19-19.bin",  0x20000, 0x20000, CRC(1ef137f9) SHA1(974b5e72aa28b87ebfa7438efbdfeda769dedf5e) )
 ROM_END
 
+ROM_START( ffightua )
+	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
+	ROM_LOAD16_BYTE( "30_2da0.010",  0x00000, 0x20000, CRC(ed988977) SHA1(c718e989206bd2b68832c8fcb5667397d500ebac) )
+	ROM_LOAD16_BYTE( "35_46ff.010",  0x00001, 0x20000, CRC(07bf1c21) SHA1(f21a939fd92607c7f54816dedbcb3c5818cf4183) )
+	ROM_LOAD16_BYTE( "31_c933.010",  0x40000, 0x20000, CRC(dba5a476) SHA1(2f0176dd050f9630b914f1c1ca5d96215bcf567f) )
+	ROM_LOAD16_BYTE( "36_0ace.010",  0x40001, 0x20000, CRC(4d89f542) SHA1(0b7d483a2c5759715f99f287cbd8a36165b59de7) )
+	ROM_LOAD16_WORD_SWAP( "ff32-32m.bin", 0x80000, 0x80000, CRC(c747696e) SHA1(d3362dadded31ccb7eaf71ef282d698d18edd722) )
+
+	ROM_REGION( 0x200000, REGION_GFX1, 0 )
+	ROMX_LOAD( "ff05-05m.bin", 0x000000, 0x80000, CRC(9c284108) SHA1(7868f5801347340867720255f8380548ad1a65a7) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "ff07-07m.bin", 0x000002, 0x80000, CRC(a7584dfb) SHA1(f7b00a3ca8cb85264ab293089f9f540a8292b49c) , ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "20_44ee.010",     0x000004, 0x20000, CRC(a1ab607a) SHA1(56784c028b82d9e2affd9610f56fde57063e4c28) , ROM_SKIP(7) ) // == ff24.bin
+	ROMX_LOAD( "10_f4d8.010",     0x000005, 0x20000, CRC(2dc18cf4) SHA1(5e3bd895600cd30d561a75a2fcb6cc8bc84f4bd1) , ROM_SKIP(7) ) // == ff17.bin
+	ROMX_LOAD( "22_91be.010",     0x000006, 0x20000, CRC(6535a57f) SHA1(f4da9ec13cad7e3287e34dcceb0eb2d20107bad6) , ROM_SKIP(7) ) // == ff38.bin
+	ROMX_LOAD( "12_b59f.010",     0x000007, 0x20000, CRC(c8bc4a57) SHA1(3eaf2b4e910fe1f79154020122d786d23a2e594a) , ROM_SKIP(7) ) // == ff32.bin
+	ROMX_LOAD( "21_cc37.010",     0x100004, 0x20000, CRC(6e8181ea) SHA1(2c32bc0364650ee6ca0d24754a7a3401295ffcd5) , ROM_SKIP(7) ) // == ff25.bin
+	ROMX_LOAD( "11_2268.010",     0x100005, 0x20000, CRC(b19ede59) SHA1(7e79ad9f17b36e042d774bef3bbb44018332ca01) , ROM_SKIP(7) ) // == ff18.bin
+	ROMX_LOAD( "23_0b85.010",     0x100006, 0x20000, CRC(9416b477) SHA1(f2310dfcfe960e8b822c07849b594d54dfc2b2ca) , ROM_SKIP(7) ) // == ff39.bin
+	ROMX_LOAD( "13_3346.010",     0x100007, 0x20000, CRC(7369fa07) SHA1(3b2750fe33729395217c96909b4b6c5f3d6e9943) , ROM_SKIP(7) ) // == ff33.bin
+
+	ROM_REGION( 0x8000, REGION_GFX2, 0 )
+	ROM_COPY( REGION_GFX1, 0x000000, 0x000000, 0x8000 )	/* stars */
+
+	ROM_REGION( 0x18000, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "23_ceb1.512",   0x00000, 0x08000, CRC(b8367eb5) SHA1(ec3db29fdd6200e9a8f4f8073a7e34aef731354f) ) // == ff09-09.bin
+	ROM_CONTINUE(              0x10000, 0x08000 )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "18_ccb5.010",  0x00000, 0x20000, CRC(375c66e7) SHA1(36189e23209ce4ae5d9cbabd1574540d0591e7b3) ) // == ff18-18.bin
+	ROM_LOAD( "19_476d.010",  0x20000, 0x20000, CRC(1ef137f9) SHA1(974b5e72aa28b87ebfa7438efbdfeda769dedf5e) ) // == ff19-19.bin
+ROM_END
+
+
 ROM_START( ffightj )
 	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
 	ROM_LOAD16_BYTE( "ff30-36.bin",  0x00000, 0x20000, CRC(f9a5ce83) SHA1(0756ae576a1f6d5b8b22f8630dca40ef38567ea6) )
@@ -7455,6 +7488,7 @@ GAME( 1989, unsquad,  0,        cps1,     unsquad,  cps1,     ROT0,   "Capcom", 
 GAME( 1989, area88,   unsquad,  cps1,     unsquad,  cps1,     ROT0,   "Capcom", "Area 88 (Japan)", 0 )
 GAME( 1989, ffight,   0,        cps1,     ffight,   cps1,     ROT0,   "Capcom", "Final Fight (World)", 0 )
 GAME( 1989, ffightu,  ffight,   cps1,     ffight,   cps1,     ROT0,   "Capcom", "Final Fight (US 900112)", 0 )
+GAME( 1989, ffightua, ffight,   cps1,     ffight,   cps1,     ROT0,   "Capcom", "Final Fight (US 900613)", 0 )
 GAME( 1989, ffightj,  ffight,   cps1,     ffight,   cps1,     ROT0,   "Capcom", "Final Fight (Japan)", 0 )
 GAME( 1989, ffightj1, ffight,   cps1,     ffight,   cps1,     ROT0,   "Capcom", "Final Fight (Japan 900305)", 0 )
 GAME( 1990, 1941,     0,        cps1,     1941,     cps1,     ROT270, "Capcom", "1941 - Counter Attack (World)", 0 )

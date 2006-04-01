@@ -279,7 +279,7 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xd000, 0xd7ff) AM_READ(MRA8_RAM)
 	AM_RANGE(0xd800, 0xdfff) AM_READ(MRA8_RAM)
 	AM_RANGE(0xe000, 0xe7ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xe803, 0xe803) AM_READ(getstar_e803_r)
+//  AM_RANGE(0xe803, 0xe803) AM_READ(mcu_r) // MCU lives here
 	AM_RANGE(0xf000, 0xf7ff) AM_READ(MRA8_RAM)
 	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_RAM)
 ADDRESS_MAP_END
@@ -308,7 +308,7 @@ static ADDRESS_MAP_START( slapbtuk_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xd000, 0xd7ff) AM_READ(MRA8_RAM)
 	AM_RANGE(0xd800, 0xdfff) AM_READ(MRA8_RAM)
 	AM_RANGE(0xe000, 0xe7ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xe803, 0xe803) AM_READ(getstar_e803_r)
+//  AM_RANGE(0xe803, 0xe803) AM_READ(getstar_e803_r)
 	AM_RANGE(0xec00, 0xefff) AM_READ(MRA8_ROM) // it reads a copy of the logo from here!
 	AM_RANGE(0xf000, 0xf7ff) AM_READ(MRA8_RAM)
 	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_RAM)
@@ -618,6 +618,77 @@ INPUT_PORTS_START( getstar )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_COCKTAIL
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_COCKTAIL
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_COCKTAIL
+	PORT_START_TAG("IN1")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_COCKTAIL
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START_TAG("DSW1")
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 3C_1C ) )
+//  PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT(    0x40, 0x40, IPT_DIPSWITCH_NAME ) PORT_NAME("Dipswitch Test") PORT_CODE(KEYCODE_F2) PORT_TOGGLE
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START_TAG("DSW2")
+	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x02, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPSETTING(    0x03, "240 (Cheat)")
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x10, "30000 100000" )
+	PORT_DIPSETTING(    0x00, "50000 150000" )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( gtstarba )
+	PORT_START_TAG("IN0")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_COCKTAIL
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_COCKTAIL
 	PORT_START_TAG("IN1")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -1215,6 +1286,41 @@ ROM_START( slapfigh )
 	ROM_LOAD( "sf_col19.bin", 0x0200,  0x0100, CRC(5cbf9fbf) SHA1(abfa58fa4e44ebc56f2e0fac9bcc36164c845fa3) )
 ROM_END
 
+/* dump labeled Alcon, but GFX in tile roms clearly read Slap Fight */
+ROM_START( slapfiga )
+	ROM_REGION( 0x18000, REGION_CPU1, 0 )
+	ROM_LOAD( "a76-00.bin", 0x00000, 0x4000, CRC(ac22bb86) SHA1(3ecff006fc487d494f21adb7bff6f8c56eb5d707) )
+	ROM_LOAD( "a76-01.bin", 0x04000, 0x4000, CRC(d6b4f02e) SHA1(37f840c444ba7dcc75810580c9da83289670d5cc) )
+	ROM_LOAD( "a76-02.bin", 0x10000, 0x8000, CRC(9dd0971f) SHA1(92bd0b54635bf5c4118a53e0f897c65f5eb2984a) )	/* banked at 8000 */
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the audio CPU */
+	ROM_LOAD( "a76-03.bin",   0x0000,  0x2000, CRC(87f4705a) SHA1(a90d5644ce268f3321047a4f96df96ac294d2f1b) )
+
+	ROM_REGION( 0x0800, REGION_CPU3, 0 )	/* 2k for the microcontroller */
+	ROM_LOAD( "68705.bin",    0x0000,  0x0800, NO_DUMP )
+
+	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "a76-05.bin",   0x00000, 0x2000, CRC(be9a1bc5) SHA1(2fabfd42cd49db67654eac824c9852ed368a6e50) )  /* Chars */
+	ROM_LOAD( "a76-04.bin",   0x02000, 0x2000, CRC(3519daa4) SHA1(ab77cc1bfe7c394d1a90a4c50d5d4a98158eb86d) )
+
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "a76-09.bin",   0x00000, 0x8000, CRC(b6358305) SHA1(c7bb4236a75ec6b88f011bc30f8fb9a718e2ca3e) )  /* Tiles */
+	ROM_LOAD( "a76-08.bin",   0x08000, 0x8000, CRC(e92d9d60) SHA1(2554617e0e6615ca8c85a49299a4a0e762478339) )
+	ROM_LOAD( "a76-07.bin",   0x10000, 0x8000, CRC(5faeeea3) SHA1(696fba24bcf1f3a7e914a4403854da5eededaf7f) )
+	ROM_LOAD( "a76-06.bin",   0x18000, 0x8000, CRC(974e2ea9) SHA1(3840550fc3a833828dad8f3e300d2ea583d69ce7) )
+
+	ROM_REGION( 0x20000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "a76-13.bin",   0x00000, 0x8000, CRC(8545d397) SHA1(9a1fd5bfd8fb830b8e46643c08eef32ba968fc23) )  /* Sprites */
+	ROM_LOAD( "a76-12.bin",   0x08000, 0x8000, CRC(b1b7b925) SHA1(199b0b52bbeb384211171eca5c50a1c0ebf6826f) )
+	ROM_LOAD( "a76-11.bin",   0x10000, 0x8000, CRC(422d946b) SHA1(c251ef9597a11ec8de39be4fcbddaba84e649ef2) )
+	ROM_LOAD( "a76-10.bin",   0x18000, 0x8000, CRC(587113ae) SHA1(90abe961494a1af7c87693a419fbabf7a58a5dee) )
+
+	ROM_REGION( 0x0300, REGION_PROMS, 0 )
+	ROM_LOAD( "sf_col21.bin", 0x0000,  0x0100, CRC(a0efaf99) SHA1(5df01663480acad1f89abab8662d437617a66d1c) )
+	ROM_LOAD( "sf_col20.bin", 0x0100,  0x0100, CRC(a56d57e5) SHA1(bfbd0db52b23fe1b4994e05103be3d412c1c013e) )
+	ROM_LOAD( "sf_col19.bin", 0x0200,  0x0100, CRC(5cbf9fbf) SHA1(abfa58fa4e44ebc56f2e0fac9bcc36164c845fa3) )
+ROM_END
+
 ROM_START( slapbtjp )
 	ROM_REGION( 0x18000, REGION_CPU1, 0 )
 	ROM_LOAD( "sf_r19jb.bin", 0x00000, 0x8000, CRC(9a7ac8b3) SHA1(01fbad9b4fc80f2406eff18db20e196e212d0c17) )
@@ -1441,6 +1547,45 @@ ROM_START( getstarb )
 	ROM_LOAD( "rom19",        0x0200, 0x0100, CRC(513224f0) SHA1(15b34612206138f6fc5f7478925b1fff2ed56aa8) )
 ROM_END
 
+ROM_START( gtstarba )
+	ROM_REGION( 0x18000, REGION_CPU1, 0 )		/* Region 0 - main cpu code */
+	ROM_LOAD( "gs_rb_1.bin",   0x00000, 0x4000, CRC(9afad7e0) SHA1(6b2e82a6b7fcbfed5f4d250959ecc571fdf0cbc2) )
+	ROM_LOAD( "gs_rb_2.bin",   0x04000, 0x4000, CRC(5feb0a60) SHA1(b1300055180ddf6ca96475eb3a27a17722273fc6) )
+	ROM_LOAD( "gs_rb_3.bin",   0x10000, 0x8000, CRC(e3cfb1ba) SHA1(bd21655c82a14e18ff9df4539c4d0bb2484c73f1) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* Region 3 - sound cpu code */
+	ROM_LOAD( "a68-03",       0x00000, 0x2000, CRC(18daa44c) SHA1(1a3d22a186c591321d1b836ee30d89fba4771122) )
+
+	ROM_REGION( 0x0800, REGION_CPU3, 0 )	/* 2k for the microcontroller */
+	/* its a bootleg, it has it's own protection instead */
+
+	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )	/* Region 1 - temporary for gfx */
+	/* these roms were in the set, but they're corrupt */
+//  ROM_LOAD( "gs_rb_8.bin",   0x00000, 0x2000, CRC(a30aaf04) SHA1(2509554c3851a68eaec1cadc01f4d69c7aa2c09d) )  /* Chars */
+//  ROM_LOAD( "gs_rb_7.bin",   0x02000, 0x2000, CRC(f47a93c6) SHA1(441fee1fb195bb2583d220f30dfcff617a31742a) )
+	/* use the original roms instead */
+	ROM_LOAD( "a68_05.bin",   0x00000, 0x2000, CRC(e3d409e7) SHA1(0b6be4767f110729f4dd1a472ef8d9a0c718b684) )  /* Chars */
+	ROM_LOAD( "a68_04.bin",   0x02000, 0x2000, CRC(6e5ac9d4) SHA1(74f90b7a1ceb3b1c2fd92dff100d92dea0155530) )
+
+
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )	/* Region 1 - temporary for gfx */
+	ROM_LOAD( "a68_09",       0x00000, 0x8000, CRC(a293cc2e) SHA1(a2c2598e92982d13b51cbb6efb4b963142233433) )  /* Tiles */
+	ROM_LOAD( "a68_08",       0x08000, 0x8000, CRC(37662375) SHA1(46ba8a3f0b553d476ecf431d0d20556896b4ca43) )
+	ROM_LOAD( "a68_07",       0x10000, 0x8000, CRC(cf1a964c) SHA1(e9223c8d4f3bdafed193a1ded63e377f16f45e17) )
+	ROM_LOAD( "a68_06",       0x18000, 0x8000, CRC(05f9eb9a) SHA1(a71640a63b259799086d361ef293aa26cec46a0c) )
+
+	ROM_REGION( 0x20000, REGION_GFX3, ROMREGION_DISPOSE )	/* Region 1 - temporary for gfx */
+	ROM_LOAD( "a68-13",       0x00000, 0x8000, CRC(643fb282) SHA1(d904d3c27c2b56341929c5eed4ea97e948c53c34) )  /* Sprites */
+	ROM_LOAD( "a68-12",       0x08000, 0x8000, CRC(11f74e32) SHA1(02d8b4cc679f45a02c4989f2b62cde91b7418235) )
+	ROM_LOAD( "a68-11",       0x10000, 0x8000, CRC(f24158cf) SHA1(db4c6b68a488b0798ea5f793ac8ced283a8ecab2) )
+	ROM_LOAD( "a68-10",       0x18000, 0x8000, CRC(83161ed0) SHA1(a6aa28f22f487dc3a2ec07935e6d42bcdd1eff81) )
+
+	ROM_REGION( 0x0300, REGION_PROMS, 0 )
+	ROM_LOAD( "rom21",        0x0000, 0x0100, CRC(d6360b4d) SHA1(3e64548c82a3378fc091e104cdc2b0c7e592fc44) )
+	ROM_LOAD( "rom20",        0x0100, 0x0100, CRC(4ca01887) SHA1(2892c89d5e60f1d10593adffff55c1a9654e8209) )
+	ROM_LOAD( "rom19",        0x0200, 0x0100, CRC(513224f0) SHA1(15b34612206138f6fc5f7478925b1fff2ed56aa8) )
+ROM_END
+
 static DRIVER_INIT( tigerh )
 {
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe803, 0xe803, 0, 0, tigerh_mcu_r );
@@ -1448,23 +1593,100 @@ static DRIVER_INIT( tigerh )
 
 }
 
+READ8_HANDLER( getstar_mcu_r )
+{
+	/* pass the first check only */
+	return 0x76;
+}
+
+static DRIVER_INIT( getstar )
+{
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe803, 0xe803, 0, 0, getstar_mcu_r );
+//  memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe803, 0xe803, 0, 0, getstar_mcu_w  );
+}
+
+static DRIVER_INIT( getstarb )
+{
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe803, 0xe803, 0, 0, getstar_e803_r );
+}
+
+READ8_HANDLER( gtstarba_port_0_read )
+{
+	/* the bootleg has it's own 'protection' on startup? */
+	if (activecpu_get_pc()==0x6d1e) return 0;
+	if (activecpu_get_pc()==0x6d24) return 6;
+	if (activecpu_get_pc()==0x6d2c) return 2;
+	if (activecpu_get_pc()==0x6d34) return 4;
+
+	logerror("Port Read PC=%04x\n",activecpu_get_pc());
+
+	return 0;
+}
+
+READ8_HANDLER( gtstarba_dpram_r )
+{
+	/* requires this or it gets stuck with 'rom test' on screen */
+	/* it is possible the program roms are slighly corrupt like the gfx roms, or
+       that the bootleg simply shouldn't execute the code due to the modified
+       roms */
+	if (activecpu_get_pc()==0x6d54) return 0xff;
+	return slapfight_dpram[offset];
+}
+
+static DRIVER_INIT( gtstarba )
+{
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x0, 0x0, 0, 0, gtstarba_port_0_read );
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc800, 0xc80f, 0, 0, gtstarba_dpram_r );
+}
+
+
+static int slapfigh_prot_pos;
+
+READ8_HANDLER( slapfigh_mcu_r )
+{
+	/* pass initial checks */
+	int protvalues[] = { 0xc7, 0x55, -1 };
+
+	if ((activecpu_get_pc()==0x1369) || // slapfigh
+		(activecpu_get_pc()==0x136d)) // slapfiga
+	{
+		int retdat = protvalues[slapfigh_prot_pos];
+		if (retdat == -1)
+		{
+			slapfigh_prot_pos = 0;
+			retdat = protvalues[slapfigh_prot_pos];
+		}
+
+		slapfigh_prot_pos++;
+		return retdat;
+	}
+	logerror("MCU Read PC=%04x\n",activecpu_get_pc());
+	return 0;
+}
+
+static DRIVER_INIT( slapfigh )
+{
+	slapfigh_prot_pos = 0;
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe803, 0xe803, 0, 0, slapfigh_mcu_r );
+//  memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe803, 0xe803, 0, 0, getstar_mcu_w  );
+}
 
 
 /*   ( YEAR  NAME      PARENT    MACHINE   INPUT     INIT    MONITOR COMPANY    FULLNAME     FLAGS ) */
-GAME( 1985, perfrman, 0,        perfrman, perfrman, 0,      ROT270, "[Toaplan] Data East Corporation","Performan (Japan)", 0 )
-GAME( 1985, perfrmau, perfrman, perfrman, perfrman, 0,      ROT270, "[Toaplan] Data East USA",        "Performan (US)", 0 )
-GAME( 1985, tigerh,   0,        tigerh,   tigerh,   tigerh, ROT270, "Taito America Corp.", "Tiger Heli (US)", GAME_NO_COCKTAIL )
-GAME( 1985, tigerh2,  tigerh,   tigerh,   tigerh,   tigerh, ROT270, "Taito Corp.",         "Tiger Heli (Japan set 1)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAME( 1985, tigerhj,  tigerh,   tigerh,   tigerh,   tigerh, ROT270, "Taito Corp.",         "Tiger Heli (Japan set 2)", GAME_NO_COCKTAIL )
-GAME( 1985, tigerhb1, tigerh,	 tigerhb,  tigerh,   0,      ROT270, "bootleg",             "Tiger Heli (bootleg set 1)", 0 )
-GAME( 1985, tigerhb2, tigerh, 	 tigerhb,  tigerh,   0,      ROT270, "bootleg",             "Tiger Heli (bootleg set 2)", GAME_NO_COCKTAIL )
-GAME( 1986, slapfigh, 0,        slapfigh, slapfigh, 0,      ROT270, "Taito",    "Slap Fight", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAME( 1986, slapbtjp, slapfigh, slapfigh, slapfigh, 0,      ROT270, "bootleg",  "Slap Fight (Japan bootleg)", GAME_NO_COCKTAIL )
-GAME( 1986, slapbtuk, slapfigh, slapbtuk, slapfigh, 0,      ROT270, "bootleg",  "Slap Fight (English bootleg)", GAME_NO_COCKTAIL )
-GAME( 1986, slapfgtr, slapfigh, slapbtuk, slapfigh, 0,      ROT270, "bootleg",  "Slap Fight (bootleg)", GAME_NO_COCKTAIL ) // PCB labeled 'slap fighter'
-GAME( 1986, alcon,    slapfigh, slapfigh, slapfigh, 0,      ROT270, "Taito America Corp.","Alcon", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAME( 1986, getstar,  0,        slapfigh, getstar,  0,      ROT0,   "Taito",  "Guardian", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAME( 1986, getstarj, getstar,  slapfigh, getstar,  0,      ROT0,   "Taito",  "Get Star (Japan)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAME( 1986, getstarb, getstar,  slapfigh, getstar,  0,      ROT0,   "bootleg","Get Star (bootleg)", GAME_NO_COCKTAIL )
-
-
+GAME( 1985, perfrman, 0,        perfrman, perfrman, 0,        ROT270, "[Toaplan] Data East Corporation","Performan (Japan)", 0 )
+GAME( 1985, perfrmau, perfrman, perfrman, perfrman, 0,        ROT270, "[Toaplan] Data East USA",        "Performan (US)", 0 )
+GAME( 1985, tigerh,   0,        tigerh,   tigerh,   tigerh,   ROT270, "Taito America Corp.", "Tiger Heli (US)", GAME_NO_COCKTAIL )
+GAME( 1985, tigerh2,  tigerh,   tigerh,   tigerh,   tigerh,   ROT270, "Taito Corp.",         "Tiger Heli (Japan set 1)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAME( 1985, tigerhj,  tigerh,   tigerh,   tigerh,   tigerh,   ROT270, "Taito Corp.",         "Tiger Heli (Japan set 2)", GAME_NO_COCKTAIL )
+GAME( 1985, tigerhb1, tigerh,	tigerhb,  tigerh,   0,        ROT270, "bootleg",             "Tiger Heli (bootleg set 1)", 0 )
+GAME( 1985, tigerhb2, tigerh, 	tigerhb,  tigerh,   0,        ROT270, "bootleg",             "Tiger Heli (bootleg set 2)", GAME_NO_COCKTAIL )
+GAME( 1986, slapfigh, 0,        slapfigh, slapfigh, slapfigh, ROT270, "Taito",    "Slap Fight (set 1)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAME( 1986, slapfiga, slapfigh, slapfigh, slapfigh, slapfigh,  ROT270, "Taito",    "Slap Fight (set 2)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAME( 1986, slapbtjp, slapfigh, slapfigh, slapfigh, 0,        ROT270, "bootleg",  "Slap Fight (Japan bootleg)", GAME_NO_COCKTAIL )
+GAME( 1986, slapbtuk, slapfigh, slapbtuk, slapfigh, 0,        ROT270, "bootleg",  "Slap Fight (English bootleg)", GAME_NO_COCKTAIL )
+GAME( 1986, slapfgtr, slapfigh, slapbtuk, slapfigh, 0,        ROT270, "bootleg",  "Slap Fight (bootleg)", GAME_NO_COCKTAIL ) // PCB labeled 'slap fighter'
+GAME( 1986, alcon,    slapfigh, slapfigh, slapfigh, slapfigh, ROT270, "Taito America Corp.","Alcon", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAME( 1986, getstar,  0,        slapfigh, getstar,  getstar,  ROT0,   "Taito",  "Guardian", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAME( 1986, getstarj, getstar,  slapfigh, getstar,  getstar,  ROT0,   "Taito",  "Get Star (Japan)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAME( 1986, getstarb, getstar,  slapfigh, getstar,  getstarb, ROT0,   "bootleg","Get Star (bootleg, set 1)", GAME_NO_COCKTAIL )
+GAME( 1986, gtstarba, getstar,  slapfigh, gtstarba, gtstarba, ROT0,   "bootleg","Get Star (bootleg, set 2)", GAME_NO_COCKTAIL )

@@ -119,6 +119,7 @@ struct _callback_item
 		void		(*exit)(void);
 		void		(*reset)(void);
 		void		(*pause)(int);
+		void		(*log)(const char *);
 	} func;
 };
 
@@ -147,7 +148,7 @@ static char *saveload_pending_file;
 static mame_timer *soft_reset_timer;
 
 /* load/save statics */
-static mame_timer *saveload_timer;
+static void (*saveload_schedule_callback)(void);
 static mame_time saveload_schedule_time;
 
 /* error recovery and exiting */
@@ -170,6 +171,9 @@ static region_info mem_region[MAX_MEMORY_REGIONS];
 
 /* random number seed */
 static UINT32 rand_seed;
+
+/* logerror calback info */
+static callback_item *logerror_callback_list;
 
 /* a giant string buffer for temporary strings */
 char giant_string_buffer[65536];
@@ -200,10 +204,11 @@ static void soft_reset(int param);
 static void free_callback_list(callback_item **cb);
 
 static void saveload_init(void);
-static void saveload_attempt(int is_save);
-static int handle_save(void);
-static int handle_load(void);
+static void handle_save(void);
+static void handle_load(void);
 
+
+static void logfile_callback(const char *buffer);
 
 
 /***************************************************************************
@@ -244,6 +249,11 @@ int run_game(int game)
 
 			/* start tracking resources for real */
 			begin_resource_tracking();
+
+			/* if we have a logfile, set up the callback */
+			logerror_callback_list = NULL;
+			if (options.logfile)
+				add_logerror_callback(logfile_callback);
 
 			/* create the Machine structure and driver */
 			create_machine(game);
@@ -286,6 +296,10 @@ int run_game(int game)
 					updatescreen();
 					reset_partial_updates();
 				}
+
+				/* handle save/load */
+				if (saveload_schedule_callback)
+					(*saveload_schedule_callback)();
 
 				profiler_mark(PROFILER_END);
 			}
@@ -450,18 +464,14 @@ void mame_schedule_soft_reset(void)
 
 void mame_schedule_save(const char *filename)
 {
-	/* can't do it if we don't yet have a timer */
-	if (saveload_timer == NULL)
-		return;
-
 	/* free any existing request and allocate a copy of the requested name */
 	if (saveload_pending_file != NULL)
 		free(saveload_pending_file);
 	saveload_pending_file = mame_strdup(filename);
 
 	/* note the start time and set a timer for the next timeslice to actually schedule it */
+	saveload_schedule_callback = handle_save;
 	saveload_schedule_time = mame_timer_get_time();
-	mame_timer_adjust(saveload_timer, time_zero, TRUE, time_zero);
 
 	/* we can't be paused since we need to clear out anonymous timers */
 	mame_pause(FALSE);
@@ -475,18 +485,14 @@ void mame_schedule_save(const char *filename)
 
 void mame_schedule_load(const char *filename)
 {
-	/* can't do it if we don't yet have a timer */
-	if (saveload_timer == NULL)
-		return;
-
 	/* free any existing request and allocate a copy of the requested name */
 	if (saveload_pending_file != NULL)
 		free(saveload_pending_file);
 	saveload_pending_file = mame_strdup(filename);
 
 	/* note the start time and set a timer for the next timeslice to actually schedule it */
+	saveload_schedule_callback = handle_load;
 	saveload_schedule_time = mame_timer_get_time();
-	mame_timer_adjust(saveload_timer, time_zero, FALSE, time_zero);
 
 	/* we can't be paused since we need to clear out anonymous timers */
 	mame_pause(FALSE);
@@ -811,32 +817,58 @@ void CLIB_DECL fatalerror(const char *text, ...)
 
 void CLIB_DECL logerror(const char *text, ...)
 {
-#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
-	int log_to_debugger = Machine && Machine->debug_mode;
-#else
-	int log_to_debugger = FALSE;
-#endif
+	callback_item *cb;
 
 	/* process only if there is a target */
-	if (options.logfile || log_to_debugger)
+	if (logerror_callback_list)
 	{
 		va_list arg;
+
+		profiler_mark(PROFILER_LOGERROR);
 
 		/* dump to the buffer */
 		va_start(arg, text);
 		vsnprintf(giant_string_buffer, sizeof(giant_string_buffer), text, arg);
 		va_end(arg);
 
-#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
-		/* output to the debugger if running */
-		if (log_to_debugger)
-			debug_errorlog_write_line(giant_string_buffer);
-#endif
+		/* log to all callbacks */
+		for (cb = logerror_callback_list; cb; cb = cb->next)
+			cb->func.log(giant_string_buffer);
 
-		/* log to the logfile */
-		if (options.logfile)
-			mame_fputs(options.logfile, giant_string_buffer);
+		profiler_mark(PROFILER_END);
 	}
+}
+
+
+/*-------------------------------------------------
+    add_logerror_callback - adds a callback to be
+    called on logerror()
+-------------------------------------------------*/
+
+void add_logerror_callback(void (*callback)(const char *))
+{
+	callback_item *cb, **cur;
+
+	assert_always(mame_get_phase() == MAME_PHASE_INIT, "Can only call add_logerror_callback at init time!");
+
+	cb = auto_malloc(sizeof(*cb));
+	cb->func.log = callback;
+	cb->next = NULL;
+
+	for (cur = &logerror_callback_list; *cur; cur = &(*cur)->next) ;
+	*cur = cb;
+}
+
+
+/*-------------------------------------------------
+    logfile_callback - callback for logging to
+    logfile
+-------------------------------------------------*/
+
+static void logfile_callback(const char *buffer)
+{
+	if (options.logfile)
+		mame_fputs(options.logfile, buffer);
 }
 
 
@@ -1139,9 +1171,6 @@ static void free_callback_list(callback_item **cb)
 
 static void saveload_init(void)
 {
-	/* allocate a timer */
-	saveload_timer = timer_alloc(saveload_attempt);
-
 	/* if we're coming in with a savegame request, process it now */
 	if (options.savegame)
 	{
@@ -1166,33 +1195,16 @@ static void saveload_init(void)
     handle_save - attempt to perform a save
 -------------------------------------------------*/
 
-static void saveload_attempt(int is_save)
-{
-	int try_again;
-
-	/* handle either save or load */
-	if (is_save)
-		try_again = handle_save();
-	else
-		try_again = handle_load();
-
-	/* try again after the next timer fires */
-	if (try_again)
-		mame_timer_adjust(saveload_timer, make_mame_time(0, MAX_SUBSECONDS / 1000), is_save, time_zero);
-}
-
-
-/*-------------------------------------------------
-    handle_save - attempt to perform a save
--------------------------------------------------*/
-
-static int handle_save(void)
+static void handle_save(void)
 {
 	mame_file *file;
 
 	/* if no name, bail */
 	if (saveload_pending_file == NULL)
-		return FALSE;
+	{
+		saveload_schedule_callback = NULL;
+		return;
+	}
 
 	/* if there are anonymous timers, we can't save just yet */
 	if (timer_count_anonymous() > 0)
@@ -1203,7 +1215,7 @@ static int handle_save(void)
 			ui_popup("Unable to save due to pending anonymous timers. See error.log for details.");
 			goto cancel;
 		}
-		return TRUE;
+		return;
 	}
 
 	/* open the file */
@@ -1258,7 +1270,7 @@ cancel:
 	/* unschedule the save */
 	free(saveload_pending_file);
 	saveload_pending_file = NULL;
-	return FALSE;
+	saveload_schedule_callback = NULL;
 }
 
 
@@ -1266,13 +1278,16 @@ cancel:
     handle_load - attempt to perform a load
 -------------------------------------------------*/
 
-static int handle_load(void)
+static void handle_load(void)
 {
 	mame_file *file;
 
 	/* if no name, bail */
 	if (saveload_pending_file == NULL)
-		return FALSE;
+	{
+		saveload_schedule_callback = NULL;
+		return;
+	}
 
 	/* if there are anonymous timers, we can't load just yet because the timers might */
 	/* overwrite data we have loaded */
@@ -1284,7 +1299,7 @@ static int handle_load(void)
 			ui_popup("Unable to load due to pending anonymous timers. See error.log for details.");
 			goto cancel;
 		}
-		return TRUE;
+		return;
 	}
 
 	/* open the file */
@@ -1335,5 +1350,5 @@ cancel:
 	/* unschedule the load */
 	free(saveload_pending_file);
 	saveload_pending_file = NULL;
-	return FALSE;
+	saveload_schedule_callback = NULL;
 }

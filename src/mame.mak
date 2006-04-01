@@ -749,6 +749,7 @@ $(OBJ)/jaleco.a: \
 	$(OBJ)/drivers/psychic5.o $(OBJ)/vidhrdw/psychic5.o \
 	$(OBJ)/drivers/pturn.o \
 	$(OBJ)/drivers/skyfox.o $(OBJ)/vidhrdw/skyfox.o \
+	$(OBJ)/drivers/stepstag.o \
 	$(OBJ)/drivers/tetrisp2.o $(OBJ)/vidhrdw/tetrisp2.o \
 
 $(OBJ)/kaneko.a: \
@@ -802,6 +803,7 @@ $(OBJ)/konami.a: \
 	$(OBJ)/drivers/konamigq.o \
 	$(OBJ)/drivers/konamigv.o \
 	$(OBJ)/drivers/konamigx.o $(OBJ)/machine/konamigx.o $(OBJ)/vidhrdw/konamigx.o \
+	$(OBJ)/drivers/konamim2.o \
 	$(OBJ)/drivers/labyrunr.o $(OBJ)/vidhrdw/labyrunr.o \
 	$(OBJ)/drivers/lethal.o $(OBJ)/vidhrdw/lethal.o \
 	$(OBJ)/drivers/mainevt.o $(OBJ)/vidhrdw/mainevt.o \

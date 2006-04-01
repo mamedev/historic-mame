@@ -1182,6 +1182,7 @@ static WRITE32_HANDLER( namcos22_system_controller_w )
 			if (data == 0xff00)
 			{
 				cpunum_set_input_line(3, INPUT_LINE_RESET, CLEAR_LINE);
+				cpu_boost_interleave(0, TIME_IN_MSEC(1));
 			}
 		}
 	}

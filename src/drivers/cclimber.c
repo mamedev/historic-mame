@@ -1093,6 +1093,63 @@ ROM_START( silvland )
 	/* no samples */
 ROM_END
 
+/* This set came from a 'Silver Land' board with Silver Land GFX roms, however, the program roms are nearly
+   the same as River Patrol but appear to have an original ORCA copyright
+
+   I think the board was a half-converted board as 'Water Gage' and 'Bon Voyage' don't really fit the theme
+   of Silver Land so I'm loading the River Patrol GFX instead as they fit better
+*/
+ROM_START( rpatrolo )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_LOAD( "sci1.bin",       0x0000, 0x1000, CRC(33b01c90) SHA1(9c8da6dd963bfb0544ef99b8fdedcf86c32cdb6b) )
+	ROM_LOAD( "sci2.bin",       0x1000, 0x1000, CRC(03f53340) SHA1(35336945f4b634fc4c7791ac9c9e6643c8cd8006) )
+	ROM_LOAD( "sci3.bin",       0x2000, 0x1000, CRC(8fa300df) SHA1(5c3ba1ef6c1ce8df437b4fa464293208630b5e8d) )
+	ROM_LOAD( "sci4.bin",       0x3000, 0x1000, CRC(74a8f1f4) SHA1(6bbc4944e4b31425a6b82f370b6760e5a4b36f56) )
+	ROM_LOAD( "sci5.bin",       0x4000, 0x1000, CRC(d7ef6c87) SHA1(38e3b44b355907824919acc4f5064dcb98ebb1d0) )
+
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "rp6.6n",       0x0000, 0x0800, CRC(19f18e9e) SHA1(a5500ac36bcda772f3ba79d9e9d37b1eec7bfd13) )
+	/* 0800-0fff empty */
+	ROM_LOAD( "rp8.6k",       0x1000, 0x0800, CRC(008738c7) SHA1(a66d9daf31b0d9cf087b591c74f0aaee3d7607b5) )
+	/* 1800-1fff empty */
+	ROM_LOAD( "rp7.6l",       0x2000, 0x0800, CRC(07f2070d) SHA1(39df286fda9e48eba6e770fe23a603b5e10d88b6) )
+	/* 2800-2fff empty */
+	ROM_LOAD( "rp9.6h",       0x3000, 0x0800, CRC(ea5aafca) SHA1(d8f8fe270680ae261d63bd4702107961cd904699) )
+	/* 3800-3fff empty */
+
+	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "rp10.6a",      0x0000, 0x0800, CRC(59747c31) SHA1(92acf07489f3e17f0c1769a0df15b6ddb117830f) )
+	ROM_LOAD( "rp11.6c",      0x0800, 0x0800, CRC(065651a5) SHA1(5c2f9b44d8819d2f792525c06b5c341fe07329c0) )
+
+	ROM_REGION( 0x0060, REGION_PROMS, 0 )
+	ROM_LOAD( "bprom1.9n",    0x0000, 0x0020, CRC(f9a2383b) SHA1(4d88c177740efdb27708474c9ee0fcdca5a78c36) )
+	ROM_LOAD( "bprom2.9p",    0x0020, 0x0020, CRC(1743bd26) SHA1(9bb50f6e24a7ac3c9ddf3923e57c5532603009e5) )
+	ROM_LOAD( "bprom3.9c",    0x0040, 0x0020, CRC(ee03bc96) SHA1(45e33e750a536a904f30136d84dd7993d97e8e54) )
+
+	// these are the GFX Roms found on the board, from Silver Land, but IMO not correct for this program
+#if 0
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "sci46.bin",         0x0000, 0x0800, CRC(affb804f) SHA1(9fc77804690e91773787e06f3329accef075f9f3) )
+	/* 0800-0fff empty */
+	ROM_LOAD( "sci44.bin",         0x1000, 0x0800, CRC(e487579d) SHA1(aed59f15dbc904d73e19d914ccd0a86fda859085) )
+	/* 1800-1fff empty */
+	ROM_LOAD( "sci45.bin",         0x2000, 0x0800, CRC(ad4642e5) SHA1(f4de2d9ed0e69c002be07f47247e95167a3ffffb) )
+	/* 2800-2fff empty */
+	ROM_LOAD( "sci43.bin",         0x3000, 0x0800, CRC(59125a1a) SHA1(37638fb690d6b4f11585f6a13586271c2f0e3743) )
+	/* 3800-3fff empty */
+
+	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "sci42.bin",         0x0000, 0x0800, CRC(c8d32b8e) SHA1(7d655d243ed13cf2537f3fdfde5bf34229f7cb84) )
+	ROM_LOAD( "sci41.bin",         0x0800, 0x0800, CRC(ee333daf) SHA1(b02998dccec9a4f841838874221caabae8380fcc) )
+
+	ROM_REGION( 0x0060, REGION_PROMS, 0 )
+	ROM_LOAD( "mb7051.1v",    0x0000, 0x0020, CRC(1d2343b1) SHA1(294f22178af4532abf767c1ffe2dc831bbe683bf) )
+	ROM_LOAD( "mb7051.1u",    0x0020, 0x0020, CRC(c174753c) SHA1(303bfb1f470b525ccaeafa81a38a4bc3a7de5dbb) )
+	ROM_LOAD( "mb7051.1t",    0x0040, 0x0020, CRC(04a1be01) SHA1(9c270c04d374d46752ec99bd4e79fed1e2896bc0) )
+#endif
+	/* no samples */
+ROM_END
+
 
 /*This dump is a mess.  11n and 11k seem to be bad dumps, the second half should probably be sprite data
   Comparing to set 2 11l and 11h are unnecessary, and are actually from Le Bagnard(set1), as is 5m.
@@ -1738,8 +1795,11 @@ GAME( 1981, ckongo,   ckong,    cclimber, ckong,    0,        ROT270, "bootleg",
 GAME( 1981, ckongalc, ckong,    cclimber, ckong,    0,        ROT270, "bootleg", "Crazy Kong (Alca bootleg)", 0 )
 GAME( 198?, bigkong,  ckong,    cclimber, ckong,    0,        ROT270, "bootleg", "Big Kong", 0 )
 GAME( 1981, monkeyd,  ckong,    cclimber, ckong,    0,        ROT270, "bootleg", "Monkey Donkey", 0 )
-GAME( 1982?,rpatrolb, 0,        cclimber, rpatrolb, 0,        ROT0,   "bootleg", "River Patrol (bootleg)", 0 )
-GAME( 1982?,silvland, rpatrolb, cclimber, rpatrolb, 0,        ROT0,   "Falcon", "Silver Land", 0 )
+
+GAME( 1981,rpatrolb, 0,        cclimber, rpatrolb, 0,         ROT0,   "bootleg", "River Patrol (bootleg)", 0 )
+GAME( 1981,rpatrolo, rpatrolb, cclimber, rpatrolb, 0,         ROT0,   "Orca",  "River Patrol (Orca)", 0 )
+GAME( 1981,silvland, rpatrolb, cclimber, rpatrolb, 0,         ROT0,   "Falcon", "Silver Land", 0 )
+
 GAME( 1985, cannonb,  0,        cannonb,  cannonb,  cannonb,  ROT90,  "Soft", "Cannon Ball (Crazy Climber hardware)" , GAME_IMPERFECT_GRAPHICS )
 GAME( 1985, cannonb2,  cannonb, cannonb,  cannonb,  0,        ROT90, "TV Game Gruenberg", "Cannonball (set 2)", 0 )
 GAME( 198?, ckongb  , ckong,    cclimber, ckongb,    ckongb,   ROT270, "bootleg", "Crazy Kong (Alternative levels)", 0 )

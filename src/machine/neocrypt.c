@@ -24,7 +24,6 @@
         - some basic block / bank swapping
       svcchaos, kof2003, mslug5
         - different scrambling with additional xor
-        - p3 on kof2003: NOT DECRYPTED
 
     NeoGeo 'V' Rom encryption
       NEO-PCM2 chip used on various games
@@ -655,7 +654,7 @@ void cmc50_neogeo_gfx_decrypt(int extra_xor)
 
 /* svcchaos has an additional scramble on top of the standard CMC scrambling */
 
-void svcchaos_gfx_decrypt( void )
+void svcpcb_gfx_decrypt( void )
 {
 	static const unsigned char xor[ 4 ] = { 0x34, 0x21, 0xc4, 0xe9 };
 	int i;
@@ -685,12 +684,11 @@ void svcchaos_gfx_decrypt( void )
 }
 
 /* and a further swap on the s1 data */
-void svcchaos_s1data_decrypt( void )
+void svcpcb_s1data_decrypt( void )
 {
 	int i;
 	UINT8 *s1 = memory_region( REGION_GFX1 );
 	size_t s1_size = memory_region_length( REGION_GFX1 );
-
 
 	for( i = 0; i < s1_size; i++ ) // Decrypt S
 	{
@@ -699,7 +697,7 @@ void svcchaos_s1data_decrypt( void )
 }
 
 /* Razoola & Halrin */
-void decode_kf2k3pcb_croms( void )
+void kf2k3pcb_gfx_decrypt( void )
 {
 	static const unsigned char xor[ 4 ] = { 0x34, 0x21, 0xc4, 0xe9 };
 	int i;
@@ -1028,7 +1026,7 @@ void mslug5_decrypt_68k(void)
 	UINT8 *rom = memory_region( REGION_CPU1 );
 	UINT8 *buf = malloc( rom_size );
 
-	for( i = 0; i < 0x100000; i++ ) // Decrypt P
+	for( i = 0; i < 0x100000; i++ )
 	{
 		rom[ i ] ^= xor1[ (i % 0x20) ];
 	}
@@ -1098,7 +1096,7 @@ void svcchaos_px_decrypt(void)
 	free( buf );
 }
 
-void kof2003_decrypt_s1data( void )
+void kf2k3pcb_decrypt_s1data( void )
 {
 	UINT8 *src;
 	UINT8 *dst;
@@ -1130,7 +1128,7 @@ void kof2003_decrypt_s1data( void )
 	}
 }
 
-void kof2003_decrypt_68k( void )
+void kf2k3pcb_decrypt_68k( void )
 {
 	static const unsigned char xor2[ 0x20 ] = { 0xb4, 0x0f, 0x40, 0x6c, 0x38, 0x07, 0xd0, 0x3f, 0x53, 0x08, 0x80, 0xaa, 0xbe, 0x07, 0xc0, 0xfa, 0xd0, 0x08, 0x10, 0xd2, 0xf1, 0x03, 0x70, 0x7e, 0x87, 0x0b, 0x40, 0xf6, 0x2a, 0x0a, 0xe0, 0xf9 };
 	int i;
@@ -1139,7 +1137,11 @@ void kof2003_decrypt_68k( void )
 	UINT8 *rom = memory_region( REGION_CPU1 );
 	UINT8 *buf = malloc( rom_size );
 
-	for( i = 0x100000; i < 0x800000; i++ ) // Decrypt P
+	for (i = 0; i < 0x100000; i++)
+	{
+		rom[ 0x800000 + i ] ^= rom[ 0x100002 | i ];
+	}
+	for( i = 0x100000; i < 0x800000; i++ )
 	{
 		rom[ i ] ^= xor2[ (i % 0x20) ];
 	}
@@ -1148,59 +1150,65 @@ void kof2003_decrypt_68k( void )
 		UINT16 *rom16 = (UINT16*)&rom[ i + 1 ];
 		*rom16 = BITSWAP16( *rom16, 15, 14, 13, 12, 4, 5, 6, 7, 8, 9, 10, 11, 3, 2, 1, 0 );
 	}
-	memcpy( buf, rom, 0x800000 );
 	for( i = 0; i < 0x0100000 / 0x10000; i++ )
 	{
 		ofst = (i & 0xf0) + BITSWAP8( (i & 0x0f), 7, 6, 5, 4, 1, 0, 3, 2 );
-		memcpy( &rom[ i * 0x10000 ], &buf[ ofst * 0x10000 ], 0x10000 );
+		memcpy( &buf[ i * 0x10000 ], &rom[ ofst * 0x10000 ], 0x10000 );
 	}
-	for( i = 0x100000; i < 0x800000; i += 0x100 )
+	for( i = 0x100000; i < 0x900000; i += 0x100 )
 	{
 		ofst = (i & 0xf000ff) + ((i & 0x000f00) ^ 0x00300) + (BITSWAP8( ((i & 0x0ff000) >> 12), 4, 5, 6, 7, 1, 0, 3, 2 ) << 12);
-		memcpy( &rom[ i ], &buf[ ofst ], 0x100 );
+		memcpy( &buf[ i ], &rom[ ofst ], 0x100 );
 	}
-	memcpy( buf, rom, rom_size );
-	memcpy( &rom[ 0x100000 ], &buf[ 0x800000 ], 0x100000 );
-	memcpy( &rom[ 0x200000 ], &buf[ 0x100000 ], 0x700000 );
+	memcpy (&rom[0x000000], &buf[0x000000], 0x100000);
+	memcpy (&rom[0x100000], &buf[0x800000], 0x100000);
+	memcpy (&rom[0x200000], &buf[0x100000], 0x700000);
 	free( buf );
 }
 
 
 
-void kof2003a_px_decrypt( void )
+void kof2003_decrypt_68k( void )
 {
-	int i,j;
-	UINT8 *src = memory_region( REGION_CPU1 );
-	UINT8 *dst = malloc(0x900000);
+	static const unsigned char xor1[0x20] = { 0x3B, 0x6A, 0xF7, 0xB7, 0xE8, 0xA9, 0x20, 0x99, 0x9F, 0x39, 0x34, 0x0C, 0xC3, 0x9A, 0xA5, 0xC8, 0xB8, 0x18, 0xCE, 0x56, 0x94, 0x44, 0xE3, 0x7A, 0xF7, 0xDD, 0x42, 0xF0, 0x18, 0x60, 0x92, 0x9F };
+	static const unsigned char xor2[0x20] = { 0x2F, 0x02, 0x60, 0xBB, 0x77, 0x01, 0x30, 0x08, 0xD8, 0x01, 0xA0, 0xDF, 0x37, 0x0A, 0xF0, 0x65, 0x28, 0x03, 0xD0, 0x23, 0xD3, 0x03, 0x70, 0x42, 0xBB, 0x06, 0xF0, 0x28, 0xBA, 0x0F, 0xF0, 0x7A };
+	int i;
+	int ofst;
+	int rom_size = 0x900000;
+	UINT8 *rom = memory_region( REGION_CPU1 );
+	UINT8 *buf = malloc( rom_size );
 
-	for(i = 0; i < 0x100000; i++)
-		dst[i] = src[i] ^ 0xFF ^ src[ 0x0FFFE0 + (i % 0x20)];
-
-	for(i = 0x100000; i < 0x800000; i++)
-		dst[i] = src[i] ^ 0xFF ^ src[ 0x7FFFE0 + (i % 0x20)];
-
-	for(i = 0x100000; i < 0x800000; i += 4)
+	for (i = 0; i < 0x100000; i++)
 	{
-		UINT16 *rom16 = (UINT16*)&dst[i + 1];
-		*rom16 = (*rom16&0xF00F) | BITSWAP8((*rom16>>4)&0xFF, 1, 0, 3, 2, 5, 4, 7, 6)<<4;
+		rom[ 0x800000 + i ] ^= rom[ 0x100002 | i ];
 	}
-
-	for(i = 0; i < 0x10; i++)
+	for( i = 0; i < 0x100000; i++)
 	{
-		j = (i & 0xf0) + BITSWAP8((i & 0x0f), 7, 6, 5, 4, 0, 1, 2, 3);
-		memcpy(src + i * 0x10000, dst + j * 0x10000, 0x10000);
+		rom[ i ] ^= xor1[ (i % 0x20) ];
 	}
-
-	memcpy(src + 0x100000, src + 0x800000, 0x100000);
-
-	for(i = 0x100000; i < 0x800000; i += 0x100)
+	for( i = 0x100000; i < 0x800000; i++)
 	{
-		j = (i & 0xf000ff) + ((i & 0x000f00) ^ 0x00800)
-			+ (BITSWAP8(((i & 0x0ff000) >> 12), 4, 5, 6, 7, 1, 0, 3, 2) << 12);
-		memcpy(src + i + 0x100000, dst + j, 0x100);
+		rom[ i ] ^= xor2[ (i % 0x20) ];
 	}
-
-	free(dst);
+	for( i = 0x100000; i < 0x800000; i += 4)
+	{
+		UINT16 *rom16 = (UINT16*)&rom[i + 1];
+		*rom16 = BITSWAP16( *rom16, 15, 14, 13, 12, 5, 4, 7, 6, 9, 8, 11, 10, 3, 2, 1, 0 );
+	}
+	for( i = 0; i < 0x0100000 / 0x10000; i++ )
+	{
+		ofst = (i & 0xf0) + BITSWAP8((i & 0x0f), 7, 6, 5, 4, 0, 1, 2, 3);
+		memcpy( &buf[ i * 0x10000 ], &rom[ ofst * 0x10000 ], 0x10000 );
+	}
+	for( i = 0x100000; i < 0x900000; i += 0x100)
+	{
+		ofst = (i & 0xf000ff) + ((i & 0x000f00) ^ 0x00800) + (BITSWAP8( ((i & 0x0ff000) >> 12), 4, 5, 6, 7, 1, 0, 3, 2 ) << 12);
+		memcpy( &buf[ i ], &rom[ ofst ], 0x100 );
+	}
+	memcpy (&rom[0x000000], &buf[0x000000], 0x100000);
+	memcpy (&rom[0x100000], &buf[0x800000], 0x100000);
+	memcpy (&rom[0x200000], &buf[0x100000], 0x700000);
+	free( buf );
 }
 
 void kof2003biosdecode(void)

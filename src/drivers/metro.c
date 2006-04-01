@@ -5583,6 +5583,24 @@ ROM_START( toride2g )
 	ROM_LOAD( "tr2aja-7.3g", 0x000000, 0x020000, CRC(630c6193) SHA1(ddb63724e0b0f7264cb02904e49b24b87beb35a9) )
 ROM_END
 
+ROM_START( torid2gg )
+	ROM_REGION( 0x080000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "trii_ge_5", 0x000000, 0x040000, CRC(5e0815a8) SHA1(574c1bf1149b7e98222876b402b20d824f207c79) )
+	ROM_LOAD16_BYTE( "trii_ge_6", 0x000001, 0x040000, CRC(55eba67d) SHA1(c12a11a98d49baf3643404a594d2b87b434acb01) )
+
+	ROM_REGION( 0x02c000, REGION_CPU2, 0 )		/* NEC78C10 Code */
+	ROM_LOAD( "trii_jb_8", 0x000000, 0x004000, CRC(0168f46f) SHA1(01bf4cc425d72936897c3c572f6c0b1366fe4041) )
+	ROM_CONTINUE(            0x010000, 0x01c000 )
+
+	ROM_REGION( 0x200000, REGION_GFX1, 0 )	/* Gfx + Data (Addressable by CPU & Blitter) */
+	ROMX_LOAD( "trii_gb_2", 0x000000, 0x080000, CRC(5949e65f) SHA1(f51ff9590904e691b9ec91b22d3c52bf579deaff) , ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "trii_gb_4", 0x000002, 0x080000, CRC(adc84c7b) SHA1(fe0f2b6e3c586c427701e43fdd4827c8b183b42a) , ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "trii_gb_1", 0x000004, 0x080000, CRC(bcf30944) SHA1(c36fbffa6062a2443a47d8faf83baa903529ee97) , ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "trii_gb_3", 0x000006, 0x080000, CRC(138e68d0) SHA1(5a9655f31e2f2e2f16a5bdc334efa78b2cfc37d2) , ROM_GROUPWORD | ROM_SKIP(6))
+
+	ROM_REGION( 0x020000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "trii_ja_7", 0x000000, 0x020000, CRC(6ee32315) SHA1(ef4d59576929deab0aa459a67be21d97c2803dea) )
+ROM_END
 
 /***************************************************************************
 
@@ -5605,6 +5623,7 @@ GAME( 1994, lastfort, 0,        lastfort, lastfort, metro,    ROT0,   "Metro",  
 GAME( 1994, lastfero, lastfort, lastfort, lastfero, metro,    ROT0,   "Metro",                      "Last Fortress - Toride (Erotic)"    , 0 )
 GAME( 1994, lastforg, lastfort, lastforg, ladykill, metro,    ROT0,   "Metro",                      "Last Fortress - Toride (German)"    , 0 )
 GAME( 1994, toride2g, 0,        toride2g, toride2g, metro,    ROT0,   "Metro",                      "Toride II Adauchi Gaiden",        GAME_IMPERFECT_GRAPHICS )
+GAME( 1994, torid2gg, toride2g, toride2g, toride2g, metro,    ROT0,   "Metro",                      "Toride II Adauchi Gaiden (German)", GAME_IMPERFECT_GRAPHICS )
 GAME( 1994, gunmast,  0,        pururun,  gunmast,  daitorid, ROT0,   "Metro",                      "Gun Master"                      , 0 )
 GAME( 1995, daitorid, 0,        daitorid, daitorid, daitorid, ROT0,   "Metro",                      "Daitoride",                       GAME_IMPERFECT_GRAPHICS )
 GAME( 1995, dokyusei, 0,        dokyusei, dokyusei, gakusai,  ROT0,   "Make Software / Elf / Media Trading", "Mahjong Doukyuusei"        , 0 )

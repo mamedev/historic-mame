@@ -197,12 +197,26 @@ int main(int argc, char **argv)
 
 
 //============================================================
+//  output_oslog
+//============================================================
+
+static void output_oslog(const char *buffer)
+{
+	extern int win_erroroslog;
+	if (win_erroroslog)
+		OutputDebugString(buffer);
+}
+
+
+
+//============================================================
 //  osd_init
 //============================================================
 
 int osd_init(void)
 {
 	extern int win_init_input(void);
+	extern int win_erroroslog;
 	int result;
 
 	result = win_init_window();
@@ -211,6 +225,10 @@ int osd_init(void)
 
 	add_pause_callback(win_pause);
 	add_exit_callback(osd_exit);
+
+	if (win_erroroslog)
+		add_logerror_callback(output_oslog);
+
 	return result;
 }
 

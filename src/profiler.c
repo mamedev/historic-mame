@@ -140,6 +140,7 @@ const char *profiler_get_text(void)
 		"Hiscore",
 		"Input  ",
 		"Movie  ",
+		"Logerr ",
 		"Extra  ",
 		"User1  ",
 		"User2  ",

@@ -160,8 +160,6 @@ static int create_path(TCHAR *path, int has_filename)
 	TCHAR *sep = find_reverse_path_sep(path);
 	DWORD attributes;
 
-printf("create_path(%s)\n", path);
-
 	/* if there's still a separator, and it's not the root, nuke it and recurse */
 	if (sep && sep > path && !is_pathsep(sep[-1]))
 	{

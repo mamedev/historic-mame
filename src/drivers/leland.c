@@ -2015,6 +2015,7 @@ static DRIVER_INIT( cerberus )
 	leland_update_master_bank = cerberus_bankswitch;
 	memory_set_bankptr(1, memory_region(REGION_CPU1) + 0x2000);
 	memory_set_bankptr(2, memory_region(REGION_CPU1) + 0xa000);
+	memory_set_bankptr(3, memory_region(REGION_CPU2) + 0x2000);
 
 	/* set up the master CPU I/O ports */
 	init_master_ports(0x40, 0x80);

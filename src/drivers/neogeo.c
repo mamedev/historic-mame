@@ -6613,8 +6613,6 @@ ROM_START( kf2k3pcb ) /* Encrypted Set, Decrypted C - JAMMA board */
 	ROM_LOAD32_WORD_SWAP( "271-p1.bin", 0x000000, 0x400000, CRC(b9da070c) SHA1(1a26325af142a4dd221c336061761468598c4634) )
 	ROM_LOAD32_WORD_SWAP( "271-p2.bin", 0x000002, 0x400000, CRC(da3118c4) SHA1(582e4f44f03276adecb7b2848d3b96bf6da57f1e) )
 	ROM_LOAD16_WORD_SWAP( "271-p3.bin", 0x800000, 0x100000, CRC(5cefd0d2) SHA1(cddc3164629fed4b6f715e12b109ad35d1009355) )
-	/* Decrypted */
-	ROM_LOAD16_WORD_SWAP( "271-p3_decrypted.bin", 0x800000, 0x100000, CRC(59d376da) SHA1(3c3ad0b79e8b37e838893a8f7b87e11d7eeee8f2) )
 
 	ROM_REGION( 0x100000, REGION_GFX1, 0 ) /* larger char set */
 	ROM_FILL( 0x000000, 0x100000, 0 )
@@ -6654,7 +6652,6 @@ ROM_START( kof2003 ) /* Encrypted Code + Sound + GFX Roms */
 	ROM_LOAD32_WORD_SWAP( "271-p1c.bin", 0x000000, 0x400000, CRC(530ecc14) SHA1(812cf7e9902af3f5e9e330b7c05c2171b139ad2b) )
 	ROM_LOAD32_WORD_SWAP( "271-p2c.bin", 0x000002, 0x400000, CRC(fd568da9) SHA1(46364906a1e81dc251117e91a1a7b43af1373ada) )
 	ROM_LOAD16_WORD_SWAP( "271-p3c.bin", 0x800000, 0x100000, CRC(aec5b4a9) SHA1(74087f785590eda5898ce146029818f86ced42b6) ) // Encrypted
-	ROM_LOAD16_WORD_SWAP( "271-p3_decrypted.bin", 0x800000, 0x100000, CRC(59d376da) SHA1(3c3ad0b79e8b37e838893a8f7b87e11d7eeee8f2) ) // Decrypted
 
 	/* The Encrypted Boards do _not_ have an s1 rom, data for it comes from the Cx ROMs */
 	ROM_REGION( 0x80000, REGION_GFX1, 0 ) /* larger char set */
@@ -7455,7 +7452,6 @@ DRIVER_INIT( mslug5 ) /* By HalRIN */
 	install_pvc_protection();
 }
 
-
 DRIVER_INIT( ms5plus )
 {
 	cmc50_neogeo_gfx_decrypt(0x19);
@@ -7467,14 +7463,12 @@ DRIVER_INIT( ms5plus )
 	install_ms5plus_protection();
 }
 
-
-
 DRIVER_INIT( svcpcb )
 {
 	svcchaos_px_decrypt();
-	svcchaos_gfx_decrypt();
+	svcpcb_gfx_decrypt();
 	kof2000_neogeo_gfx_decrypt(0x57);
-	svcchaos_s1data_decrypt();
+	svcpcb_s1data_decrypt();
 	neo_pcm2_swap(3);
 	neogeo_fix_bank_type = 2;
 	init_neogeo();
@@ -7490,7 +7484,6 @@ DRIVER_INIT( svchaosa ) /* By HalRIN */
 	init_neogeo();
 	install_pvc_protection();
 }
-
 
 DRIVER_INIT( svcboot )
 {
@@ -7549,10 +7542,10 @@ DRIVER_INIT( samsho5b )
 
 DRIVER_INIT( kf2k3pcb ) /* Jamama, Single Board */
 {
-	kof2003_decrypt_68k();
-	decode_kf2k3pcb_croms();
+	kf2k3pcb_decrypt_68k();
+	kf2k3pcb_gfx_decrypt();
 	kof2000_neogeo_gfx_decrypt(0x9d);
-	kof2003_decrypt_s1data();
+	kf2k3pcb_decrypt_s1data();
 	kof2003biosdecode();
 	/* rom[i] = BITSWAP8(rom[i], 5, 6, 1, 4, 3, 0, 7, 2) -- extra encrypted m1 swap? not confirmed */
 	neo_pcm2_swap(5);
@@ -7565,7 +7558,7 @@ DRIVER_INIT( kf2k3pcb ) /* Jamama, Single Board */
 
 DRIVER_INIT( kof2003 )
 {
-	kof2003a_px_decrypt();
+	kof2003_decrypt_68k();
 	neo_pcm2_swap(5);
 	neogeo_fix_bank_type = 2;
 	kof2000_neogeo_gfx_decrypt(0x9d);

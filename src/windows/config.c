@@ -61,9 +61,10 @@ extern struct rc_option video_opts[];
 extern int frontend_help (const char *gamename, const char *filename);
 static int config_handle_arg(char *arg);
 
+int win_erroroslog;
+
 static int curlogsize;
 static int errorlog;
-static int erroroslog;
 static int showconfig;
 static int showusage;
 static int readconfig;
@@ -148,7 +149,7 @@ static int init_errorlog(struct rc_option *option, const char *arg, int priority
 	/* provide errorlog from here on */
 	if (errorlog)
 	{
-		options.logfile = mame_fopen("error.log", NULL, FILETYPE_DEBUGLOG, TRUE);
+		options.logfile = mame_fopen(NULL, "error.log", FILETYPE_DEBUGLOG, TRUE);
 		curlogsize = 0;
 		if (!options.logfile)
 		{
@@ -217,7 +218,7 @@ static struct rc_option opts[] = {
 	{ "playback", "pb", rc_string, &playbackname, NULL, 0, 0, NULL, "playback an input file" },
 	{ "record", "rec", rc_string, &recordname, NULL, 0, 0, NULL, "record an input file" },
 	{ "log", NULL, rc_bool, &errorlog, "0", 0, 0, init_errorlog, "generate error.log" },
-	{ "oslog", NULL, rc_bool, &erroroslog, "0", 0, 0, NULL, "output error log to debugger" },
+	{ "oslog", NULL, rc_bool, &win_erroroslog, "0", 0, 0, NULL, "output error log to debugger" },
 	{ "skip_gameinfo", NULL, rc_bool, &options.skip_gameinfo, "0", 0, 0, NULL, "skip displaying the " GAMENOUN " info screen" },
 	{ "bios", NULL, rc_string, &options.bios, "default", 0, 14, NULL, "change system bios" },
 	{ "state", NULL, rc_string, &statename, NULL, 0, 0, NULL, "state to load" },

@@ -362,6 +362,9 @@ char *auto_strdup(const char *str) ATTR_MALLOC;
 /* log to the standard error.log file */
 void CLIB_DECL logerror(const char *text,...) ATTR_PRINTF(1,2);
 
+/* adds a callback to be called on logerror() */
+void add_logerror_callback(void (*callback)(const char *));
+
 /* standardized random number generator */
 UINT32 mame_rand(void);
 

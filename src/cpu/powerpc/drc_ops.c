@@ -286,7 +286,14 @@ static void append_generate_exception(drc_core *drc, UINT8 exception)
 	}
 	else if (ppc.is602)
 	{
-
+		_mov_r32_imm(REG_EDI, exception_vector[exception]);		// first move the exception handler offset
+		_test_r32_imm(REG_EDX, MSR_IP);							// test if the base should be 0xfff0 or IBR
+		_jcc_short_link(COND_NZ, &link2);						// if Z == 0, bit == 1 means base == 0xfff00000
+		_or_r32_m32abs(REG_EDI, &ppc.ibr);						// else base == IBR
+		_jmp_short_link(&link3);
+		_resolve_link(&link2);
+		_or_r32_imm(REG_EDI, 0xfff00000);
+		_resolve_link(&link3);
 	}
 	else
 	{
@@ -2239,25 +2246,35 @@ static UINT32 recompile_subfx(drc_core *drc, UINT32 op)
 
 static UINT32 recompile_subfcx(drc_core *drc, UINT32 op)
 {
-	_xor_r32_r32(REG_EAX, REG_EAX);
-	_mov_r32_m32abs(REG_EBX, &XER);
-	_and_r32_imm(REG_EBX, ~0x20000000);		// clear carry
-	_mov_r32_m32abs(REG_EDX, &REG(RB));
-	_sub_r32_m32abs(REG_EDX, &REG(RA));
-	_mov_m32abs_r32(&REG(RT), REG_EDX);
-	_setcc_r8(COND_NC, REG_AL);				// subtract carry is inverse
-	_shl_r32_imm(REG_EAX, 29);				// move carry to correct location in XER
-	_or_r32_r32(REG_EBX, REG_EAX);			// insert carry to XER
-	_mov_m32abs_r32(&XER, REG_EBX);
-
-	if (OEBIT) {
-		printf("recompile_subfcx: OEBIT set !\n");
-		return RECOMPILE_UNIMPLEMENTED;
+	if (OEBIT)
+	{
+		_mov_m32abs_r32(&ppc_icount, REG_EBP);
+		_push_imm(op);
+		_call((genf *)ppc_subfcx);
+		_add_r32_imm(REG_ESP, 4);
+		_mov_r32_m32abs(REG_EBP, &ppc_icount);
 	}
-	if (RCBIT) {
-		append_set_cr0(drc);
-	}
+	else
+	{
+		_xor_r32_r32(REG_EAX, REG_EAX);
+		_mov_r32_m32abs(REG_EBX, &XER);
+		_and_r32_imm(REG_EBX, ~0x20000000);		// clear carry
+		_mov_r32_m32abs(REG_EDX, &REG(RB));
+		_sub_r32_m32abs(REG_EDX, &REG(RA));
+		_mov_m32abs_r32(&REG(RT), REG_EDX);
+		_setcc_r8(COND_NC, REG_AL);				// subtract carry is inverse
+		_shl_r32_imm(REG_EAX, 29);				// move carry to correct location in XER
+		_or_r32_r32(REG_EBX, REG_EAX);			// insert carry to XER
+		_mov_m32abs_r32(&XER, REG_EBX);
 
+		//if (OEBIT) {
+		//  printf("recompile_subfcx: OEBIT set !\n");
+		//  return RECOMPILE_UNIMPLEMENTED;
+		//}
+		if (RCBIT) {
+			append_set_cr0(drc);
+		}
+	}
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
 

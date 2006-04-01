@@ -1008,6 +1008,80 @@ INPUT_PORTS_START( moremore )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( toppyrap )
+	PORT_START	/* 500000.w */
+	PORT_DIPNAME( 0x0001, 0x0000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x001c, 0x001c, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x000c, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x001c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0014, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0x0018, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x0060, 0x0060, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x0060, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Hardest ) )
+	PORT_SERVICE( 0x0080, IP_ACTIVE_LOW )
+	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(1)	// jump
+	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER(1)	// fire
+	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_PLAYER(1)	// test mode only?
+	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* 500002.w */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x01, "5" )
+	PORT_DIPNAME( 0x000c, 0x000c, "Time" )
+	PORT_DIPSETTING(      0x0004, "40 Seconds" )
+	PORT_DIPSETTING(      0x0008, "50 Seconds" )
+	PORT_DIPSETTING(      0x000c, "60 Seconds" )
+	PORT_DIPSETTING(      0x0000, "70 Seconds" )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, "God Mode" )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, "Internal Test" )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(2)	// jump
+	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER(2)	// fire
+	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_PLAYER(2)	// test mode only?
+	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* 500004.w */
+	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
 
 INPUT_PORTS_START( finalttr )
 	PORT_START	/* 500001 */
@@ -1615,7 +1689,8 @@ ROM_START( twinkle )
 	ROM_LOAD( "ua4.bin", 0x000000, 0x80000, CRC(6b64bb09) SHA1(547eac1ad931a6b937dff0b922d06af92cc7ab73) )
 ROM_END
 
-ROM_START( tappyrap )
+
+ROM_START( toppyrap )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* 68000 Code */
 	ROM_LOAD16_BYTE( "uh12.bin", 0x00001, 0x40000, CRC(6f5ad699) SHA1(42f7201d6274ff8338a7d4627af99001f473e841) )
 	ROM_LOAD16_BYTE( "ui12.bin", 0x00000, 0x40000, CRC(caf5a7e1) SHA1(b521b2f06a804a52dad1b07657db2a29e1411844) )
@@ -1627,7 +1702,10 @@ ROM_START( tappyrap )
 	ROM_LOAD( "87c52.mcu", 0x00000, 0x10000 , NO_DUMP ) /* can't be dumped */
 
 	ROM_REGION16_BE( 0x200, REGION_USER1, 0 ) /* Data from Shared RAM */
-	//ROM_LOAD16_WORD( "protdata.bin", 0x00000, 0x200, CRC(1) SHA1(1) )
+	/* this contains the code for 2 of the IRQ functions, but the game only uses one of them, the other is
+       executed from ROM.  The version in ROM is slightly patched version so maybe there is an earlier revision
+       which uses the code provided by the MCU instead */
+	ROM_LOAD16_WORD( "protdata.bin", 0x00000, 0x200, CRC(0704e6c7) SHA1(22387257db569990378c304af9677e6dc1436207) )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
 	ROM_LOAD( "uj15.bin", 0x00000, 0x20000, CRC(a3bacfd7) SHA1(d015d8bd26d0189fc13d09fefcb9b8baaaacec8a) )
@@ -2306,10 +2384,10 @@ GAME( 1995, honeydol, 0,        honeydol, honeydol, 0, ROT0, "Barko Corp.", "Hon
 GAME( 1995, hyperpac, 0,        semicom, hyperpac, hyperpac, ROT0, "SemiCom", "Hyper Pacman", 0 )
 GAME( 1995, hyperpcb, hyperpac, semicom, hyperpac, 0,        ROT0, "bootleg", "Hyper Pacman (bootleg)", 0 )
 GAME( 1996, cookbib2, 0,        semiprot, cookbib2, cookbib2, ROT0, "SemiCom", "Cookie & Bibi 2", 0 )
+GAME( 1996, toppyrap, 0,        semiprot, toppyrap, 0,        ROT0, "SemiCom", "Toppy & Rappy", 0 )
 GAME( 1997, cookbib3, 0,        semiprot, cookbib2, cookbib3, ROT0, "SemiCom", "Cookie & Bibi 3", 0 )
 GAME( 1997, 3in1semi, 0,        semiprot, moremore, 3in1semi, ROT0, "SemiCom", "XESS - The New Revolution (SemiCom 3-in-1)", 0 )
 GAME( 1997, twinkle,  0,        semiprot, moremore, 0,        ROT0, "SemiCom", "Twinkle", 0 )
-GAME( 1996, tappyrap, 0,        semiprot, moremore, 0,        ROT0, "SemiCom", "Tappy & Rappy", GAME_NOT_WORKING )
 GAME( 1999, moremore, 0,        semiprot, moremore, moremorp, ROT0, "SemiCom / Exit", "More More", 0 )
 GAME( 1999, moremorp, 0,        semiprot, moremore, moremorp, ROT0, "SemiCom / Exit", "More More Plus", 0 )
 GAME( 1999, 4in1boot, 0,        _4in1,    4in1boot, 4in1boot, ROT0, "bootleg", "Puzzle King (bootleg)" , 0) // original is 1999, bootleg 2002?
