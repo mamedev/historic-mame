@@ -1133,6 +1133,11 @@ GetDspControlRegister( void )
 0x1b: 0x01
 0x1c: dsp control
 */
+static void start_subcpu(int param)
+{
+	cpunum_set_input_line(3, INPUT_LINE_RESET, CLEAR_LINE);
+}
+
 static WRITE32_HANDLER( namcos22_system_controller_w )
 {
 	int oldReg = GetDspControlRegister();
@@ -1181,8 +1186,7 @@ static WRITE32_HANDLER( namcos22_system_controller_w )
 		{ /* SUBCPU enable on System 22 (guessed, but too early crashes Rave Racer so it's a good test) */
 			if (data == 0xff00)
 			{
-				cpunum_set_input_line(3, INPUT_LINE_RESET, CLEAR_LINE);
-				cpu_boost_interleave(0, TIME_IN_MSEC(1));
+				timer_set(TIME_IN_MSEC(50), 0, start_subcpu);
 			}
 		}
 	}

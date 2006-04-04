@@ -1409,7 +1409,8 @@ void jaguargpu_ctrl_w(int cpunum, offs_t offset, UINT32 data, UINT32 mem_mask)
 			if ((oldval ^ newval) & 0x01)
 			{
 				cpunum_set_input_line(cpunum, INPUT_LINE_HALT, (newval & 1) ? CLEAR_LINE : ASSERT_LINE);
-				cpu_yield();
+				if (cpu_getexecutingcpu() >= 0)
+					cpu_yield();
 			}
 			if (newval & 0x02)
 			{
@@ -1523,7 +1524,8 @@ void jaguardsp_ctrl_w(int cpunum, offs_t offset, UINT32 data, UINT32 mem_mask)
 			if ((oldval ^ newval) & 0x01)
 			{
 				cpunum_set_input_line(cpunum, INPUT_LINE_HALT, (newval & 1) ? CLEAR_LINE : ASSERT_LINE);
-				cpu_yield();
+				if (cpu_getexecutingcpu() >= 0)
+					cpu_yield();
 			}
 			if (newval & 0x02)
 			{

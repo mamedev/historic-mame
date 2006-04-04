@@ -558,7 +558,6 @@ void segaic16_palette_init(int entries)
 		palette.shadow[i] = combine_6_weights(weights[1], i0, i1, i2, i3, i4, 0);
 		palette.hilight[i] = combine_6_weights(weights[1], i0, i1, i2, i3, i4, 1);
 	}
-	state_save_register_global(palette);
 }
 
 

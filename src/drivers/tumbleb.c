@@ -21,6 +21,7 @@
   [2] test mode crashes the same way on the real board
 
   Bootleg sound is not quite correct yet (Nothing on bootleg 2).
+  ** at least one of the bootlegs uses a protected PIC to drive the OKI **
 
   If you reset the game while pressing START1 and START2, "VER 0.00 JAPAN"
   is put into tile ram then MAME crashes !
@@ -517,9 +518,19 @@ static ADDRESS_MAP_START( jumpkids_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x342400, 0x34247f) AM_WRITE(MWA16_NOP)
 ADDRESS_MAP_END
 
+WRITE8_HANDLER( jumpkids_oki_bank_w )
+{
+	UINT8* sound1 = memory_region(REGION_SOUND1);
+	UINT8* sound2 = memory_region(REGION_SOUND2);
+	int bank = data & 0x03;
+
+	memcpy (sound1+0x20000, sound2+bank*0x20000, 0x20000);
+}
+
 static ADDRESS_MAP_START( jumpkids_sound_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x0fff) AM_ROM
 	AM_RANGE(0x8000, 0x87ff) AM_RAM
+	AM_RANGE(0x9000, 0x9000) AM_WRITE(jumpkids_oki_bank_w)
 	AM_RANGE(0x9800, 0x9800) AM_READWRITE(OKIM6295_status_0_r, OKIM6295_data_0_w)
 	AM_RANGE(0xa000, 0xa000) AM_READ(soundlatch_r)
 ADDRESS_MAP_END
@@ -1599,7 +1610,7 @@ static MACHINE_DRIVER_START( jumpkids )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
-	MDRV_SOUND_ADD(OKIM6295, 8000000/2/132)
+	MDRV_SOUND_ADD(OKIM6295, 8000000/8/132)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.70)
 MACHINE_DRIVER_END
@@ -1882,7 +1893,7 @@ ROM_START( jumpkids )
 	ROM_LOAD( "21-ic17.1c", 0x00000, 0x80000, CRC(e5094f75) SHA1(578f32d4e4212c6cfdef186c2a6dc1d9408e8dfc) )
 
 	ROM_REGION( 0x40000, REGION_SOUND1, 0 ) /* Samples */
-	ROM_LOAD( "ic18.2c", 0x00000, 0x20000, BAD_DUMP CRC(fae44fbf) SHA1(142215ccca9e405232afbfc95527e13cc5b8296e) )
+	ROM_LOAD( "ic18.2c", 0x00000, 0x20000, CRC(a63736c3) SHA1(fca413c04026ecb60a6025a117fea2b5404ac058) )
 ROM_END
 
 ROM_START( fncywld )
@@ -2759,7 +2770,7 @@ DRIVER_INIT( chokchok )
 
 GAME( 1991, tumbleb,  tumblep, tumblepb,  tumblepb, tumblepb, ROT0, "bootleg", "Tumble Pop (bootleg set 1)", GAME_IMPERFECT_SOUND )
 GAME( 1991, tumbleb2, tumblep, tumblepb,  tumblepb, tumblepb, ROT0, "bootleg", "Tumble Pop (bootleg set 2)", GAME_IMPERFECT_SOUND )
-GAME( 1993, jumpkids, 0,       jumpkids,  tumblepb, jumpkids, ROT0, "Comad", "Jump Kids", GAME_NO_SOUND )
+GAME( 1993, jumpkids, 0,       jumpkids,  tumblepb, jumpkids, ROT0, "Comad", "Jump Kids", 0 )
 GAME( 1994, metlsavr, 0,       metlsavr,  metlsavr, chokchok, ROT0, "First Amusement", "Metal Saver", 0 )
 GAME( 1994, suprtrio, 0,       suprtrio,  suprtrio, suprtrio, ROT0, "Gameace", "Super Trio", 0 )
 GAME( 1995, htchctch, 0,       htchctch,  htchctch, htchctch, ROT0, "SemiCom", "Hatch Catch" , 0 ) // not 100% sure about gfx offsets

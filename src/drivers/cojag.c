@@ -182,16 +182,6 @@ static MACHINE_RESET( cojag )
 	if (!cojag_is_r3000)
 		memcpy(jaguar_shared_ram, rom_base, 0x10);
 
-#if 0
-	/* set up main CPU RAM/ROM banks */
-	memory_set_bankptr(3, jaguar_gpu_ram);
-
-	/* set up DSP RAM/ROM banks */
-	memory_set_bankptr(10, jaguar_shared_ram);
-	memory_set_bankptr(11, jaguar_gpu_clut);
-	memory_set_bankptr(12, jaguar_gpu_ram);
-	memory_set_bankptr(13, jaguar_dsp_ram);
-#endif
 	/* clear any spinuntil stuff */
 	jaguar_gpu_resume();
 	jaguar_dsp_resume();

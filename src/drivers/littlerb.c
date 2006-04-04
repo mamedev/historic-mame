@@ -5,330 +5,143 @@ Pierpaolo Prazzoli
 David Haywood
 */
 
-/* little robin uses some kind of vdp device
-  gfx data (and other data, spriteram content etc.?) is written to offset 3
+/*
+
+strange vdp/memory access chip..
+at the moment gfx / palettes etc. get drawn then erased
+
+maybe it needs read commands working so it knows how many sprites are in
+the list?
+
+maybe the vdp 'commands' can be used to store and get back
+write addresses?
+
 */
 
 #include "driver.h"
 
-static UINT16 *data_type38;
+UINT16 littlerb_vdp_address_low;
+UINT16 littlerb_vdp_address_high;
+UINT16 littlerb_vdp_writemode;
+UINT32 littlerb_write_address;
 
-static UINT16 *blitter_regs;
-static mame_bitmap *littlerb_bitmap;
-
-static READ16_HANDLER( blitter_r )
+void littlerb_recalc_regs(void)
 {
-	/* not understood either */
-
-	if(offset == 2)
-		return 0;
-	else
-		return blitter_regs[offset];
+	littlerb_vdp_address_low = littlerb_write_address&0xffff;
+	littlerb_vdp_address_high = (littlerb_write_address>>16)&0xffff;
 }
 
-static int littlerb_pos = 0;
-
-//static FILE *fp_0, *fp_1, *fp_2, *fp_3, *fp_4;
-
-//static int count[4] = {0,0,0,0};
-//static int old_offset = -1;
-
-//static int pal_pos=0;
-
-/*
-
-offset 3:
-    - 0x0000
-    - 0x2000
-    - 0x3800
-    - 0xe000 -> only twice?
-    - 0xf800 -> only once?
+UINT16* littlerb_region1;
+UINT16* littlerb_region2;
+UINT16* littlerb_region3;
+UINT16* littlerb_region4;
 
 
-*/
-
-static WRITE16_HANDLER( blitter_w )
+void littlerb_data_write(UINT16 data)
 {
-	/* messy.. this is just a record of what it writes to the command ports.. */
+	UINT32 addr = littlerb_write_address>>4; // is this right? should we shift?
 
-	if (offset==3)  // some kind of command / mode?
+	if (addr>=0x00000000 && addr<=0x0003ffff)
 	{
-	//  if(
-	//      (data!=0x0000) &&
-	//      (data!=0x2000) &&
-	//      (data!=0x3800)
-	//      )
-			//  printf("offset3 %06x, %04x\n",activecpu_get_pc(), data);
+		addr &= 0x0003ffff;
+
+	//  littlerb_region1[addr] = data;
+		littlerb_region4[addr] = data; // it writes the 'slime' gfx you cover the enemy in with here
+		                               // it might be a mirror, or just another area of ram it can
+		                               // access but isn't because of the sprite drawing..
 	}
-
-	if (offset==0)
+	else if (addr>=0x00400000 && addr<=0x004007ff)
 	{
-		if( // lets see what it writes here too..  some kind of offsets?
-			(data!=0x0000) &&
-			(data!=0x0010) &&
-			(data!=0x0020) &&
-			(data!=0x0030) &&
-			(data!=0x0040) &&
-			(data!=0x0050) &&
-			(data!=0x0060) &&
-			(data!=0x0070) &&
-			(data!=0x0080) &&
-			(data!=0x0090) &&
-			(data!=0x00a0) && // often
-			(data!=0x00b0) &&
-			(data!=0x0150) &&
-			(data!=0x0160) &&
-			(data!=0x01b0) &&
-			(data!=0x01e0) &&
-			(data!=0x0740) &&
-			(data!=0x1cc0) &&
-			(data!=0x2180) &&
-			(data!=0x2900) &&
-			(data!=0x3140) &&
-			(data!=0x3400) &&
-			(data!=0x36e0) &&
-			(data!=0x3bc0) &&
-			(data!=0x4000) &&
-			(data!=0x4010) &&
-			(data!=0x4020) && // often
-			(data!=0x4030) && // often
-			(data!=0x44c0) &&
-			(data!=0x4c80) &&
-			(data!=0x5120) &&
-			(data!=0x52c0) &&
-			(data!=0x54c0) &&
-			(data!=0x5c00) &&
-			(data!=0x5e00) &&
-			(data!=0x6000) &&
-			(data!=0x65a0) &&
-			(data!=0x7880) &&
-			(data!=0x7d40) &&
-			(data!=0x8480) &&
-			(data!=0x8ba0) &&
-			(data!=0x9100) &&
-			(data!=0x9680) &&
-			(data!=0x9a00) &&
-			(data!=0xa480) &&
-			(data!=0xa600) &&
-			(data!=0xaa40) &&
-			(data!=0xaac0) &&
-			(data!=0xb300) &&
-			(data!=0xbbc0) &&
-			(data!=0xde00) &&
-			(data!=0xdec0) &&
-			(data!=0xe840) &&
-			(data!=0xebc0) &&
-			(data!=0xed00) &&
-			(data!=0xf300) &&
-			(data!=0xf580) &&
-			(data!=0xfcc0) &&
-			(data!=0xffe0)
-			)
-		printf("offset0 %06x, %04x\n",activecpu_get_pc(), data);
-	}
+		int x;
+		addr &= 0x7ff;
+		littlerb_region2[addr] = data;
 
-	if (offset==1)
-	{
-		if( // i don't know if these are somehow related to the upload width? probably not.. but i'm just checking to see how many values it writes for now
-			(data!=0x0000) &&
-
-			(data!=0x0038) &&
-			(data!=0x0039) &&
-			(data!=0x003a) &&
-			(data!=0x003b) &&
-			(data!=0x003c) &&
-
-			(data!=0x0400) &&
-			(data!=0xc000) &&
-
-			(data!=0xffc0) &&
-			(data!=0xffc1) &&  // uploads some font gfx 16 pixels wide?  -- not if test mode is on, some other gfx?
-
-			(data!=0xffc2) &&
-			(data!=0xffc4) &&
-			(data!=0xffc6) &&
-			(data!=0xffc8) &&
-			(data!=0xffc9) &&
-
-			(data!=0xffcc) &&
-			(data!=0xffcd) &&
-			(data!=0xffce) &&
-			(data!=0xffcf) &&
-
-
-			(data!=0xffd0) &&
-			(data!=0xffd1) &&  // uploads some gfx 32 pixels wide?
-
-			(data!=0xffd4) &&
-
-			(data!=0xffd7) &&
-			(data!=0xffd8) &&
-			(data!=0xffd9) &&
-
-			(data!=0xffda) &&
-			(data!=0xffdc) &&
-			(data!=0xffdd) &&
-
-			(data!=0xffe0) &&
-			(data!=0xffe1) &&  // uploads some gfx 96 pixels wide?.. hmm
-
-			(data!=0xffe4) &&
-			(data!=0xffe6) &&
-			(data!=0xffe8) &&
-
-			(data!=0xffff)
-			)
-			printf("offset1 %06x, %04x\n",activecpu_get_pc(), data);
-
-	}
-
-	COMBINE_DATA(&blitter_regs[offset]);
-
-//  if(offset == 2 && blitter_regs[1] == 0xffe1)
-//  if(offset == 2 && blitter_regs[1] == 0xffd1)
-	if(offset == 2 && blitter_regs[1] == 0xffc1)
-	{
-		//printf("data_write %04x\n",data);
-
-		int x,y;
-
-		x = littlerb_pos % 8; // game mode, font?
-		y = (littlerb_pos&0x7ff) / 8;
-		x += ((littlerb_pos &0xff00)>>11)*16;
-
-		// ffd1 -- clouds??  -- ffc1 test mode, player 1, on, off etc.?
-//      x = littlerb_pos % 16;
-//      y = (littlerb_pos&0xfff) / 16;
-//      x += ((littlerb_pos &0xff00)>>12)*24;
-
-		// ffe1
-//      x = littlerb_pos % 48;
-//      y = (littlerb_pos&0x3fff) / 48;
-//      x += ((littlerb_pos &0xff00)>>12)*64;
-
-		littlerb_pos++;
-		littlerb_pos &= 0x3fff;
-
-		plot_pixel(littlerb_bitmap,(x*2+0)&0xff,(y&0xff),Machine->pens[data & 0xff]);
-		plot_pixel(littlerb_bitmap,(x*2+1)&0xff,(y&0xff),Machine->pens[(data>>8) & 0xff]);
-
-
-
-	}
-
-
-
-
-}
-
-VIDEO_START(littlerb)
-{
-	littlerb_bitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
-#if 0
-	fp_0 = fopen("log_0000.txt","w+");
-	fp_1 = fopen("log_2000.txt","w+");
-	fp_2 = fopen("log_3800.txt","w+");
-	fp_3 = fopen("log_E000.txt","w+");
-	fp_4 = fopen("log_F800.txt","w+");
-#endif
-	return 0;
-}
-
-VIDEO_UPDATE(littlerb)
-{
-#if 0
-if(code_pressed_memory(KEYCODE_Q))
-{
-fclose(fp_0);
-fclose(fp_1);
-fclose(fp_2);
-fclose(fp_3);
-fclose(fp_4);
-}
-#endif
-
-//  copybitmap(bitmap, littlerb_bitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0);
-
-	int x,y,offs, code;
-	fillbitmap(bitmap, get_black_pen(), cliprect);
-
-	/* the spriteram format is something like this .. */
-	for (offs=2;offs<0x100;offs+=6)
-	{
-		x = data_type38[offs+4] & 0x01ff;
-		y = (data_type38[offs+5] & 0x01ff);
-		code =  (data_type38[offs+2] & 0xff00)>>8;
-
-		/* well.. these might be co-ordinates in a texture page.. or just sprite numbers,
-           i don't know, it depends how it actually stores the characters it writes.. for
-           now i just use the ui font to show the 'rom check' 'rom ok' message */
-		switch (code&0xf8)
+		for (x=0;x<0x100;x+=3)
 		{
-		case 0x00: ui_draw_text("A", x, y);break;
-		case 0x08: ui_draw_text("B", x, y);break;
-		case 0x10: ui_draw_text("C", x, y);break;
-		case 0x18: ui_draw_text("D", x, y);break;
-		case 0x20: ui_draw_text("E", x, y);break;
-		case 0x28: ui_draw_text("F", x, y);break;
-		case 0x30: ui_draw_text("G", x, y);break;
-		case 0x38: ui_draw_text("H", x, y);break;
-		case 0x40: ui_draw_text("I", x, y);break;
-		case 0x48: ui_draw_text("J", x, y);break;
-		case 0x50: ui_draw_text("K", x, y);break;
-		case 0x58: ui_draw_text("L", x, y);break;
-		case 0x60: ui_draw_text("M", x, y);break;
-		case 0x68: ui_draw_text("N", x, y);break;
-		case 0x70: ui_draw_text("O", x, y);break;
-		case 0x78: ui_draw_text("P", x, y);break;
-		case 0x80: ui_draw_text("Q", x, y);break;
-		case 0x88: ui_draw_text("R", x, y);break;
-		case 0x90: ui_draw_text("S", x, y);break;
-		case 0x98: ui_draw_text("T", x, y);break;
-		case 0xa0: ui_draw_text("U", x, y);break;
-		case 0xa8: ui_draw_text("V", x, y);break;
-		case 0xb0: ui_draw_text("W", x, y);break;
-		case 0xb8: ui_draw_text("X", x, y);break;
-		case 0xc0: ui_draw_text("Y", x, y);break;
-		case 0xc8: ui_draw_text("Z", x, y);break;
+			int r,g,b;
 
-		default: ui_draw_text("0", x, y); break;
+			b = littlerb_region2[x];
+			r = littlerb_region2[x+1];
+			g = littlerb_region2[x+2];
+
+			palette_set_color(x/3,r,g,b);
 		}
 
+
 	}
+	else if (addr>=0x0c000000 && addr<=0x0c00001f)
+	{
+		addr &= 0x1f;
+		littlerb_region3[addr] = data;
+	}
+	else if (addr>=0x0ffc0000 && addr<=0x0fffffff)
+	{
+		addr &=0x3ffff;
+		littlerb_region4[addr] = data;
+
+	}
+	else
+	{
+		printf("write data %04x to %08x\n",data,addr);
+	}
+
+	littlerb_write_address+=0x10;
+	littlerb_recalc_regs();
+
 }
 
-static UINT16 offset_high;
-static UINT16 offset_low;
-static UINT32 complete_offset;
-static int words_written;
-static UINT16 write_mode;
 
-WRITE16_HANDLER( newblitter_w )
+
+
+void littlerb_recalc_address(void)
+{
+	littlerb_write_address = littlerb_vdp_address_low | littlerb_vdp_address_high<<16;
+}
+
+READ16_HANDLER( littlerb_vdp_r )
 {
 	switch (offset)
 	{
-		case 0/2:
-			offset_high = data;
-			break;
-		case 2/2:
-			offset_low = data;
-			complete_offset = offset_high<<16|data;
-	//      printf("offset set to %08x after %08x words written\n",complete_offset,words_written);
-			words_written = 0;
-			break;
-		case 4/2:
-			/* data write */
-			if (write_mode==0x3800)	data_type38[words_written] = data;
-			words_written ++;
-			break;
-		case 6/2:
-			write_mode = data;
-		//  printf("writemode set to %04x after %08x words written\n",data, words_written);
-			words_written = 0;
-			break;
+		case 0:
+		return littlerb_vdp_address_low;
+
+		case 1:
+		return littlerb_vdp_address_high;
+
+		case 2:
+		return 0; // data read? -- startup check expects 0 for something..
+
+		case 3:
+		return littlerb_vdp_writemode;
 	}
 
+	return -1;
+}
 
+WRITE16_HANDLER( littlerb_vdp_w )
+{
+	switch (offset)
+	{
+		case 0:
+		littlerb_vdp_address_low = data;
+		littlerb_recalc_address();
+		break;
+
+		case 1:
+		littlerb_vdp_address_high = data;
+		littlerb_recalc_address();
+		break;
+
+
+		case 2:
+		littlerb_data_write(data);
+		break;
+
+		case 3:
+		littlerb_vdp_writemode = data;
+		break;
+
+	}
 
 }
 
@@ -337,27 +150,22 @@ static ADDRESS_MAP_START( littlerb_main, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000020, 0x00002f) AM_WRITENOP
 	AM_RANGE(0x000070, 0x000073) AM_WRITENOP
 	AM_RANGE(0x060004, 0x060007) AM_WRITENOP
-
 	AM_RANGE(0x000000, 0x0fffff) AM_ROM
-	AM_RANGE(0x200000, 0x203fff) AM_RAM
-
+	AM_RANGE(0x200000, 0x203fff) AM_RAM // main ram?
 	AM_RANGE(0x7c0000, 0x7c0001) AM_READ(input_port_0_word_r)
 	AM_RANGE(0x7e0000, 0x7e0001) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x7e0002, 0x7e0003) AM_READ(input_port_2_word_r)
-
-	AM_RANGE(0xf00000, 0xffffff) AM_READ(MRA16_RAM) AM_BASE(&data_type38) /* fake! */
-
-
-
-	//AM_RANGE(0x700000, 0x700007) AM_WRITE(blitter_w) AM_READ(blitter_r) AM_BASE(&blitter_regs)
-
-	AM_RANGE(0x700000, 0x700007) AM_WRITE(newblitter_w) AM_READ(blitter_r) AM_BASE(&blitter_regs)
-
-//  AM_RANGE(0x740000, 0x740001) AM_WRITE(MWA16_NOP)
-//  AM_RANGE(0x760000, 0x760001) AM_WRITE(MWA16_NOP)
-//  AM_RANGE(0x740000, 0x740001) AM_WRITE(MWA16_NOP)
-//  AM_RANGE(0x7a0000, 0x7a0001) AM_WRITE(MWA16_NOP)
+	AM_RANGE(0x700000, 0x700007) AM_READ(littlerb_vdp_r) AM_WRITE(littlerb_vdp_w)
 	AM_RANGE(0x780000, 0x780001) AM_WRITE(MWA16_NOP)
+
+	/* below are fake.. just to see the data */
+	AM_RANGE(0xc00000, 0xc7ffff) AM_RAM AM_BASE(&littlerb_region1)
+	AM_RANGE(0xd00000, 0xd00fff) AM_RAM AM_BASE(&littlerb_region2)
+	AM_RANGE(0xe00000, 0xe0003f) AM_RAM AM_BASE(&littlerb_region3)
+	AM_RANGE(0xf00000, 0xf7ffff) AM_RAM AM_BASE(&littlerb_region4)
+
+
+
 
 ADDRESS_MAP_END
 
@@ -452,6 +260,73 @@ PALETTE_INIT( littlerb )
 		palette_set_color(i,i,i,i);
 }
 
+VIDEO_START(littlerb)
+{
+
+//  littlerb_region1 = auto_malloc(0x40000*2);
+//  littlerb_region2 = auto_malloc(0x800*2);
+//  littlerb_region3 = auto_malloc(0x20*2);
+//  littlerb_region4 = auto_malloc(0x40000*2);
+
+	return 0;
+}
+
+void littlerb_drawsprite(mame_bitmap *bitmap, int xsize,int ysize, int offset, int xpos, int ypos )
+{
+	UINT16* spritegfx = littlerb_region4;
+	int x,y;
+
+	for (y=0;y<ysize;y++)
+	{
+		for (x=0;x<xsize;x++)
+		{
+			int drawxpos, drawypos;
+			UINT8 pix1 = spritegfx[offset]&0x0f;
+			UINT8 pix2 = (spritegfx[offset]>>8)&0x0f;
+			drawxpos = xpos+x*2;
+			drawypos = ypos+y;
+
+			if ((drawxpos < 320) && (drawypos < 256) && (drawxpos >= 0) && (drawypos >=0))
+			{
+				if(pix1&0xf) plot_pixel(bitmap,drawxpos,  drawypos, pix1);
+			}
+			drawxpos++;
+			if ((drawxpos < 320) && (drawypos < 256) && (drawxpos >= 0) && (drawypos >=0))
+			{
+				if(pix2&0xf) plot_pixel(bitmap,drawxpos,  drawypos, pix2);
+			}
+
+			offset++;
+
+			offset&=0x3ffff;
+		}
+	}
+}
+
+VIDEO_UPDATE(littlerb)
+{
+	int x,y,offs, code;
+	int xsize,ysize;
+	UINT16* spriteregion = &littlerb_region4[0x400];
+	fillbitmap(bitmap, get_black_pen(), cliprect);
+
+	/* the spriteram format is something like this .. */
+	for (offs=0x26/2;offs<0xc00;offs+=6) // start at 00x26?
+	{
+		x = spriteregion[offs+2] & 0x01ff;
+		ysize = (spriteregion[offs+5] & 0x007f);
+		y = (spriteregion[offs+3] & 0x01ff); // 1?
+		xsize = (spriteregion[offs+4] & 0x007f)/2;
+
+		// the code seems to be the same address as the blitter writes
+		// e.g  ffc010000
+		code =  (spriteregion[offs+0] & 0xfff0)>>4;
+		code |=  (spriteregion[offs+1] & 0x003f)<<12;
+		littlerb_drawsprite(bitmap,xsize,ysize,code,x-8,y-16);
+	}
+
+}
+
 static MACHINE_DRIVER_START( littlerb )
 	MDRV_CPU_ADD(M68000, 12000000)
 	MDRV_CPU_PROGRAM_MAP(littlerb_main, 0)
@@ -460,20 +335,20 @@ static MACHINE_DRIVER_START( littlerb )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_RGB_DIRECT)
-	MDRV_SCREEN_SIZE(256*8, 256*8)
-	MDRV_VISIBLE_AREA(0*8, 540-1, 0*8, 540-1)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(512, 256)
+	MDRV_VISIBLE_AREA(0*8, 320-1, 0*8, 256-1)
 
 	MDRV_PALETTE_LENGTH(256)
 
 //  MDRV_PALETTE_INIT(littlerb)
-	MDRV_VIDEO_START(littlerb)
+	MDRV_VIDEO_START(generic_bitmapped)
 	MDRV_VIDEO_UPDATE(littlerb)
 MACHINE_DRIVER_END
 
 DRIVER_INIT ( littlerb )
 {
-	data_type38 = auto_malloc(0x100000);
+//  data_type38 = auto_malloc(0x100000);
 
 }
 

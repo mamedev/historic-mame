@@ -997,12 +997,12 @@ static mame_file *generic_fopen(int pathtype, const char *gamename, const char *
 	if (filename)
 	{
 		is_absolute_path = osd_is_absolute_path(filename);
-	if (is_absolute_path)
-	{
-		if ((flags & FILEFLAG_ALLOW_ABSOLUTE) == 0)
-			return NULL;
-		pathcount = 1;
-	}
+		if (is_absolute_path)
+		{
+			if ((flags & FILEFLAG_ALLOW_ABSOLUTE) == 0)
+				return NULL;
+			pathcount = 1;
+		}
 	}
 #endif /* MESS */
 
