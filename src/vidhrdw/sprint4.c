@@ -7,7 +7,7 @@ Atari Sprint 4 + Ultra Tank video emulation
 #include "driver.h"
 #include "sprint4.h"
 
-extern UINT8* sprint4_videoram;
+UINT8* sprint4_videoram;
 
 static tilemap* playfield;
 

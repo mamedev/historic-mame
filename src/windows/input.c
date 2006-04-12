@@ -20,6 +20,9 @@
 
 // undef WINNT for dinput.h to prevent duplicate definition
 #undef WINNT
+#ifdef DIRECTINPUT_VERSION
+#undef DIRECTINPUT_VERSION
+#endif
 #define DIRECTINPUT_VERSION 0x0700
 #include <dinput.h>
 

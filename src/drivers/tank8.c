@@ -9,17 +9,6 @@ Atari Tank 8 driver
 #include "tank8.h"
 #include "sound/discrete.h"
 
-extern VIDEO_EOF( tank8 );
-extern VIDEO_START( tank8 );
-extern VIDEO_UPDATE( tank8 );
-
-extern WRITE8_HANDLER( tank8_video_ram_w );
-
-extern UINT8* tank8_video_ram;
-extern UINT8* tank8_pos_h_ram;
-extern UINT8* tank8_pos_v_ram;
-extern UINT8* tank8_pos_d_ram;
-
 static int collision_index;
 
 

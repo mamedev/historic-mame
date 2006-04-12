@@ -44,6 +44,7 @@ Year + Game                     PCB         Video Chip  Issues / Notes
 97  Mahjong Gakuensai           VG340-A     14300       No sound CPU
 98  Mahjong Gakuensai 2         VG340-A     14300       No sound CPU
 96  Mouja                       VG410-B     14300       No sound CPU
+99  Battle Bubble v2.00         LM2D-Y      14220       No sound CPU
 ---------------------------------------------------------------------------
 
 Not dumped yet:
@@ -1020,6 +1021,54 @@ static ADDRESS_MAP_START( bangball_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xe788aa, 0xe788ab) AM_WRITE(MWA16_RAM) AM_BASE(&metro_rombank		)	// Rom Bank
 	AM_RANGE(0xe788ac, 0xe788ad) AM_WRITE(MWA16_RAM) AM_BASE(&metro_screenctrl	)	// Screen Control
 	AM_RANGE(0xe79700, 0xe79713) AM_WRITE(MWA16_RAM) AM_BASE(&metro_videoregs	)	// Video Registers
+ADDRESS_MAP_END
+
+/***************************************************************************
+                                Battle Bubble
+***************************************************************************/
+
+static ADDRESS_MAP_START( batlbubl_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM				)	// ROM
+	AM_RANGE(0x100000, 0x11ffff) AM_READ(MRA16_RAM				)	// Layer 0
+	AM_RANGE(0x120000, 0x13ffff) AM_READ(MRA16_RAM				)	// Layer 1
+	AM_RANGE(0x140000, 0x15ffff) AM_READ(MRA16_RAM				)	// Layer 2
+	AM_RANGE(0x160000, 0x16ffff) AM_READ(metro_bankedrom_r		)	// Banked ROM
+	AM_RANGE(0x170000, 0x173fff) AM_READ(MRA16_RAM				)	// Palette
+	AM_RANGE(0x174000, 0x174fff) AM_READ(MRA16_RAM				)	// Sprites
+	AM_RANGE(0x178000, 0x1787ff) AM_READ(MRA16_RAM				)	// Tiles Set
+	AM_RANGE(0x1788a2, 0x1788a3) AM_READ(metro_irq_cause_r		)	// IRQ Cause
+	AM_RANGE(0x200000, 0x200001) AM_READ(input_port_0_word_r	)
+	AM_RANGE(0x200002, 0x200003) AM_READ(input_port_1_word_r	)
+	AM_RANGE(0x200004, 0x200005) AM_READ(input_port_2_word_r	)
+	AM_RANGE(0x200006, 0x200007) AM_READ(input_port_3_word_r	)
+	AM_RANGE(0x300000, 0x31ffff) AM_READ(balcube_dsw_r			)	// read but ignored?
+	AM_RANGE(0x400000, 0x400001) AM_READ(ymf278b_r				)	// Sound
+	AM_RANGE(0xf00000, 0xf0ffff) AM_READ(MRA16_RAM				)	// RAM
+	AM_RANGE(0xf10000, 0xf10fff) AM_READ(MRA16_RAM				)	// RAM (bug in the ram test routine)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( batlbubl_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM						)	// ROM
+	AM_RANGE(0x100000, 0x11ffff) AM_WRITE(metro_vram_0_w) AM_BASE(&metro_vram_0	)	// Layer 0
+	AM_RANGE(0x120000, 0x13ffff) AM_WRITE(metro_vram_1_w) AM_BASE(&metro_vram_1	)	// Layer 1
+	AM_RANGE(0x140000, 0x15ffff) AM_WRITE(metro_vram_2_w) AM_BASE(&metro_vram_2	)	// Layer 2
+	AM_RANGE(0x170000, 0x173fff) AM_WRITE(metro_paletteram_w) AM_BASE(&paletteram16	)	// Palette
+	AM_RANGE(0x174000, 0x174fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size				)	// Sprites
+	AM_RANGE(0x178000, 0x1787ff) AM_WRITE(MWA16_RAM) AM_BASE(&metro_tiletable) AM_SIZE(&metro_tiletable_size		)	// Tiles Set
+	AM_RANGE(0x178840, 0x17884d) AM_WRITE(metro_blitter_w) AM_BASE(&metro_blitter_regs		)	// Tiles Blitter
+	AM_RANGE(0x178860, 0x17886b) AM_WRITE(metro_window_w) AM_BASE(&metro_window				)	// Tilemap Window
+	AM_RANGE(0x178870, 0x17887b) AM_WRITE(MWA16_RAM) AM_BASE(&metro_scroll		)	// Scroll
+	AM_RANGE(0x178880, 0x178881) AM_WRITE(MWA16_NOP						)	// ? increasing
+	AM_RANGE(0x178890, 0x178891) AM_WRITE(MWA16_NOP						)	// ? increasing
+	AM_RANGE(0x1788a2, 0x1788a3) AM_WRITE(metro_irq_cause_w				)	// IRQ Acknowledge
+	AM_RANGE(0x1788a4, 0x1788a5) AM_WRITE(MWA16_RAM) AM_BASE(&metro_irq_enable	)	// IRQ Enable
+	AM_RANGE(0x1788aa, 0x1788ab) AM_WRITE(MWA16_RAM) AM_BASE(&metro_rombank		)	// Rom Bank
+	AM_RANGE(0x1788ac, 0x1788ad) AM_WRITE(MWA16_RAM) AM_BASE(&metro_screenctrl	)	// Screen Control
+	AM_RANGE(0x179700, 0x179713) AM_WRITE(MWA16_RAM) AM_BASE(&metro_videoregs	)	// Video Registers
+	AM_RANGE(0x200002, 0x200009) AM_WRITE(metro_coin_lockout_4words_w	)	// Coin Lockout
+	AM_RANGE(0x400000, 0x40000b) AM_WRITE(ymf278b_w						)	// Sound
+	AM_RANGE(0xf00000, 0xf0ffff) AM_WRITE(MWA16_RAM						)	// RAM
+	AM_RANGE(0xf10000, 0xf10fff) AM_WRITE(MWA16_RAM						)	// RAM
 ADDRESS_MAP_END
 
 
@@ -2183,14 +2232,122 @@ INPUT_PORTS_START( bangball )
 	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x0000, DEF_STR( Language ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Japanese ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( English ) )
 
 	PORT_START_TAG("IN3")	// Strangely mapped in the 0xc00000-0xc1ffff range
 	PORT_BIT(  0x00ff, IP_ACTIVE_LOW, IPT_UNKNOWN )	// used for debug
 INPUT_PORTS_END
 
+/***************************************************************************
+                                Battle Bubble
+***************************************************************************/
+
+INPUT_PORTS_START( batlbubl )
+	PORT_START_TAG("IN0")
+	JOY_LSB(1, BUTTON1, UNKNOWN, UNKNOWN, UNKNOWN)
+	JOY_MSB(2, BUTTON1, UNKNOWN, UNKNOWN, UNKNOWN)
+
+	PORT_START_TAG("IN2")	// Strangely mapped in the 0xc00000-0xc1ffff range
+	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Easy )    )
+	PORT_DIPSETTING(      0x0003, DEF_STR( Normal )  )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Hard )    )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
+	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0008, "2" )
+	PORT_DIPSETTING(      0x0004, "3" )
+	PORT_DIPSETTING(      0x000c, "4" )
+	PORT_DIPSETTING(      0x0000, "5" )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Allow_Continue ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0700, 0x0700, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0300, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0700, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0600, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0500, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x3800, 0x3800, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x1800, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x3800, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x3000, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x2800, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_SERVICE( 0x8000, IP_ACTIVE_LOW )
+
+	PORT_START_TAG("IN0")	// $d00000
+	COINS
+
+	PORT_START_TAG("IN3")	// Strangely mapped in the 0xc00000-0xc1ffff range
+    PORT_DIPNAME( 0x0001, 0x0001, "0" )
+    PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, "Debug Mode?" )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+INPUT_PORTS_END
 
 /***************************************************************************
                             Blazing Tornado
@@ -2562,24 +2719,23 @@ INPUT_PORTS_START( gunmast )
 	PORT_START_TAG("IN2") //$400004
 	COINAGE_DSW
 
-	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0300, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Harder ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Allow_Continue ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x2000, "1" )
+	PORT_DIPSETTING(      0x0000, "2" )
 	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
@@ -3604,6 +3760,37 @@ static MACHINE_DRIVER_START( bangball )
 MACHINE_DRIVER_END
 
 
+static MACHINE_DRIVER_START( batlbubl )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)
+	MDRV_CPU_PROGRAM_MAP(batlbubl_readmem,batlbubl_writemem)
+	MDRV_CPU_VBLANK_INT(bangball_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_RESET(metro)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320, 224)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 224-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_14220)
+	MDRV_PALETTE_LENGTH(8192)
+
+	MDRV_VIDEO_START(metro_14220)
+	MDRV_VIDEO_UPDATE(metro)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YMF278B, YMF278B_STD_CLOCK)
+	MDRV_SOUND_CONFIG(ymf278b_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
+MACHINE_DRIVER_END
+
 static MACHINE_DRIVER_START( daitorid )
 
 	/* basic machine hardware */
@@ -4525,6 +4712,23 @@ ALTERA EPM7032LC44-15T D9522
 Custom chip:
 Imagetek, Inc. I4220 071 9403EK701
 
+**********************************
+
+Battle Bubble
+(c)1999 Limenko
+
+  Listed on Limenko's Web site as kit LM2DY00
+
+PCB -
+ REV: LM2D-Y
+ SEL: 00-200-004
+
+Same basic componets as those listed for Bang Bang Ball, except
+PCB uses a Xlinix XC9536 istead of the Altera EMP7032LC44 PLD.
+
+Did Limenko license this or bootleg it?  The board doesn't look like a
+bootleg and has all original parts on it..
+
 ***************************************************************************/
 
 ROM_START( bangball )
@@ -4543,6 +4747,21 @@ ROM_START( bangball )
 	ROM_LOAD( "rom#007.u49", 0x200000, 0x080000, CRC(04cc91a9) SHA1(e5cf6055a0803f4ad44919090cd147702e805d88) )
 ROM_END
 
+ROM_START( batlbubl )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_WORD_SWAP( "lm-01.u11", 0x000000, 0x080000, CRC(1d562807) SHA1(3e5dbe6f4b04aa9e01b7b8938d0b46d4862054bf) )
+	ROM_LOAD16_WORD_SWAP( "lm-02.u12", 0x080000, 0x080000, CRC(852e4750) SHA1(d8b703ba65d0f267eba07f160b13dbe0f5ac40c2) )
+
+	ROM_REGION( 0x800000, REGION_GFX1, 0 )	/* Gfx + Data (Addressable by CPU & Blitter) */
+	ROMX_LOAD( "lm-07.u30", 0x000000, 0x200000, CRC(03d9dfd8) SHA1(33c96f1b0fa28c6e46b2d2c0a62dfe0306139e09) , ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "lm-06.u29", 0x000002, 0x200000, CRC(5efb905b) SHA1(c3f5d781941225c17d37473e2e0ed84875cebace) , ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "lm-05.u28", 0x000004, 0x200000, CRC(e53ba59f) SHA1(d82749c04d776fbf9e5cc44a23d2bfafe073fafa) , ROM_GROUPWORD | ROM_SKIP(6))
+	ROMX_LOAD( "lm-04.u27", 0x000006, 0x200000, CRC(2e687cfb) SHA1(4766ddc882c3e330e948b64e4e44a08846bf2046) , ROM_GROUPWORD | ROM_SKIP(6))
+
+	ROM_REGION( 0x280000, REGION_SOUND1, 0 )
+	ROM_LOAD( "lm-08.u40", 0x000000, 0x200000, CRC(2a9d8d43) SHA1(32760893ce06dbe3930627755ba065cc3d8ec6ca) ) /* PCB labeled YRM801, Sticker said lm-08 */
+	ROM_LOAD( "lm-03.u42", 0x200000, 0x080000, CRC(04cc91a9) SHA1(e5cf6055a0803f4ad44919090cd147702e805d88) ) // not dumped
+ROM_END
 
 /***************************************************************************
 
@@ -5633,6 +5852,7 @@ GAME( 1995, puzzli,   0,        daitorid, puzzli,   daitorid, ROT0,   "Metro / B
 GAME( 1996, 3kokushi, 0,        3kokushi, 3kokushi, karatour, ROT0,   "Mitchell",                   "Sankokushi (Japan)",              GAME_IMPERFECT_GRAPHICS )
 GAME( 1996, balcube,  0,        balcube,  balcube,  balcube,  ROT0,   "Metro",                      "Bal Cube"                           , 0 )
 GAME( 1996, bangball, 0,        bangball, bangball, balcube,  ROT0,   "Banpresto / Kunihiko Tashiro+Goodhouse", "Bang Bang Ball (v1.05)" , 0 )
+GAME( 1999, batlbubl, bangball, batlbubl, batlbubl, balcube,  ROT0,   "Limenko",                    "Battle Bubble (v2.00)" , 0 )
 GAME( 1996, mouja,    0,        mouja,    mouja,    mouja,    ROT0,   "Etona",                      "Mouja (Japan)",                   GAME_NO_COCKTAIL )
 GAME( 1997, gakusai,  0,        gakusai,  gakusai,  gakusai,  ROT0,   "MakeSoft",                   "Mahjong Gakuensai (Japan)",       GAME_IMPERFECT_GRAPHICS )
 GAME( 1998, gakusai2, 0,        gakusai2, gakusai,  gakusai,  ROT0,   "MakeSoft",                   "Mahjong Gakuensai 2 (Japan)"        , 0 )

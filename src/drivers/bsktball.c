@@ -25,23 +25,6 @@
 #include "bsktball.h"
 #include "sound/discrete.h"
 
-extern UINT8 *bsktball_motion;
-
-extern WRITE8_HANDLER( bsktball_videoram_w );
-
-extern VIDEO_START( bsktball );
-extern VIDEO_UPDATE( bsktball );
-
-extern WRITE8_HANDLER( bsktball_nmion_w );
-extern INTERRUPT_GEN( bsktball_interrupt );
-extern WRITE8_HANDLER( bsktball_ld1_w );
-extern WRITE8_HANDLER( bsktball_ld2_w );
-extern READ8_HANDLER( bsktball_in0_r );
-extern WRITE8_HANDLER( bsktball_led1_w );
-extern WRITE8_HANDLER( bsktball_led2_w );
-extern WRITE8_HANDLER( bsktball_bounce_w );
-extern WRITE8_HANDLER( bsktball_note_w );
-extern WRITE8_HANDLER( bsktball_noise_reset_w );
 
 /*************************************
  *

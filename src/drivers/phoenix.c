@@ -44,27 +44,6 @@ Pleiads:
 #include "phoenix.h"
 
 
-READ8_HANDLER( phoenix_videoram_r );
-WRITE8_HANDLER( phoenix_videoram_w );
-WRITE8_HANDLER( phoenix_videoreg_w );
-WRITE8_HANDLER( pleiads_videoreg_w );
-WRITE8_HANDLER( phoenix_scroll_w );
-READ8_HANDLER( phoenix_input_port_0_r );
-READ8_HANDLER( pleiads_input_port_0_r );
-READ8_HANDLER( survival_input_port_0_r );
-READ8_HANDLER( survival_protection_r );
-PALETTE_INIT( phoenix );
-PALETTE_INIT( pleiads );
-VIDEO_START( phoenix );
-VIDEO_UPDATE( phoenix );
-
-void *phoenix_sh_start(int clock, const struct CustomSound_interface *config);
-
-WRITE8_HANDLER( pleiads_sound_control_a_w );
-WRITE8_HANDLER( pleiads_sound_control_b_w );
-void *pleiads_sh_start(int clock, const struct CustomSound_interface *config);
-
-
 static ADDRESS_MAP_START( phoenix_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0x4000, 0x4fff) AM_READ(MRA8_BANK1)			/* 2 pages selected by bit 0 of the video register */

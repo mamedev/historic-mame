@@ -5,6 +5,7 @@ Atari Drag Race video emulation
 ***************************************************************************/
 
 #include "driver.h"
+#include "includes/dragrace.h"
 
 UINT8* dragrace_playfield_ram;
 UINT8* dragrace_position_ram;

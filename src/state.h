@@ -22,13 +22,24 @@
     MACROS
 ***************************************************************************/
 
-#define state_save_register_generic(_mod, _inst, _name, _val, _valsize, _count) 	\
-do {																				\
-	state_save_register_memory(_mod, _inst, _name, _val, sizeof(_valsize), _count);	\
+#define IS_COMPATIBLE_TYPE(_valtype, _checktype)										\
+	(sizeof(_valtype) == sizeof(_checktype) && TYPES_COMPATIBLE(typeof(_valtype), _checktype))
+
+#define IS_VALID_SAVE_TYPE(_valtype)													\
+	(IS_COMPATIBLE_TYPE(_valtype, double) || IS_COMPATIBLE_TYPE(_valtype, float)  ||	\
+	 IS_COMPATIBLE_TYPE(_valtype, INT64)  || IS_COMPATIBLE_TYPE(_valtype, UINT64) ||	\
+	 IS_COMPATIBLE_TYPE(_valtype, INT32)  || IS_COMPATIBLE_TYPE(_valtype, UINT32) ||	\
+	 IS_COMPATIBLE_TYPE(_valtype, INT16)  || IS_COMPATIBLE_TYPE(_valtype, UINT16) ||	\
+	 IS_COMPATIBLE_TYPE(_valtype, INT8)   || IS_COMPATIBLE_TYPE(_valtype, UINT8))
+
+#define state_save_register_generic(_mod, _inst, _name, _val, _valsize, _count) 		\
+do {																					\
+	assert_always(IS_VALID_SAVE_TYPE(_valsize), "Invalid data type supplied for state saving.");\
+	state_save_register_memory(_mod, _inst, _name, _val, sizeof(_valsize), _count);		\
 } while (0)
 
 #define state_save_register_item(_mod, _inst, _val)	\
-	state_save_register_generic(_mod, _inst, #_val, &_val, _val, 1);
+	state_save_register_generic(_mod, _inst, #_val, &_val, _val, 1)
 
 #define state_save_register_item_pointer(_mod, _inst, _val, _count) \
 	state_save_register_generic(_mod, _inst, #_val, &_val[0], _val[0], _count)

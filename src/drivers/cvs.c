@@ -87,6 +87,7 @@ Hardware Info
 #include "sound/dac.h"
 #include "sound/5110intf.h"
 #include "sound/tms5110.h"
+#include "vidhrdw/s2636.h"
 
 INTERRUPT_GEN( cvs_interrupt );
 PALETTE_INIT( cvs );
@@ -94,9 +95,6 @@ VIDEO_UPDATE( cvs );
 VIDEO_START( cvs );
 
 extern unsigned char *bullet_ram;
-extern unsigned char *s2636_1_ram;
-extern unsigned char *s2636_2_ram;
-extern unsigned char *s2636_3_ram;
 
 WRITE8_HANDLER( cvs_videoram_w );
 WRITE8_HANDLER( cvs_bullet_w );
@@ -426,6 +424,9 @@ ROM_START( cvs )
 	ROM_REGION( 0x0820, REGION_PROMS, 0 )
     ROM_LOAD( "82s185.10h",        0x0000, 0x0800, CRC(c205bca6) SHA1(ec9bd220e75f7b067ede6139763ef8aca0fb7a29) )
 	ROM_LOAD( "82s123.10k",        0x0800, 0x0020, CRC(b5221cec) SHA1(71d9830b33b1a8140b0fe1a2ba8024ba8e6e48e0) )
+
+	ROM_REGION( 0x1800, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_FILL(0x000000, 0x1800, 0 )
 ROM_END
 
 

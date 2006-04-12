@@ -159,6 +159,25 @@ Notes:
  Jumping Pop is a complete rip-off of Tumble Pop, not even the levels have
  been changed, it simply has different hardware and new 8bpp backgrounds!
 
+ Pang Pang
+ ---------
+
+ You can't select anything except the first stage on the 'select a stage'
+ screen.
+
+ If you get a high score then your entry in the high-score table will be
+ corrupt.
+
+ There is a chance that both of these are bugs of the original game, it is
+ just a cheap hack of Tumble Pop afterall.  The board doesn't work so it's
+ impossible to test.
+
+ The sound is driven by a read-protected PIC, as is the case with the
+ tumblepb2 bootleg.  I've simulated the sound in tumbleb2 and am using
+ the same simulation code in pangpang, although pangpang has a few extra
+ sounds which are not mapped.  As the board does not work the accuracy
+ of the sound simulation cannot be verified.
+
 
 ***************************************************************************/
 
@@ -186,6 +205,8 @@ VIDEO_UPDATE( bcstory );
 VIDEO_UPDATE(semibase );
 VIDEO_START( suprtrio );
 VIDEO_UPDATE( suprtrio );
+VIDEO_START( pangpang );
+VIDEO_UPDATE( pangpang );
 
 WRITE16_HANDLER( tumblepb_pf1_data_w );
 WRITE16_HANDLER( tumblepb_pf2_data_w );
@@ -193,6 +214,8 @@ WRITE16_HANDLER( fncywld_pf1_data_w );
 WRITE16_HANDLER( fncywld_pf2_data_w );
 WRITE16_HANDLER( tumblepb_control_0_w );
 WRITE16_HANDLER( semicom_soundcmd_w );
+WRITE16_HANDLER( pangpang_pf1_data_w );
+WRITE16_HANDLER( pangpang_pf2_data_w );
 
 extern WRITE16_HANDLER( bcstory_tilebank_w );
 extern WRITE16_HANDLER( suprtrio_tilebank_w );
@@ -246,6 +269,282 @@ static READ16_HANDLER( tumblepopb_controls_r )
 	}
 
 	return -0;
+}
+
+/******************************************************************************/
+
+/*  Tumble Pop Bootleg Sound Simulation + Notes
+  tumblepb2 uses a PIC for the sound cpu, this is read protected, so we have to simulate it
+
+1-11 are instruments
+12 - enemy bounce off sides
+13 - collect coin/item
+14 - ??
+15 - suck clown
+16 - suck man
+17 - power up item
+18 - general suck
+19 - another suck? or unused?
+1a - world 1 clown boss bomb explode (maybe)..
+1b - brazil boss, fire from ground
+1c - pop?
+1d - world 1 clown boss hit
+1e - america, turtle spit
+1f - man spitting fire
+20 - france boss die (maybe) / antartica boss land
+21 - france boss being hit
+22 - taken too long
+23 - used for brazil music?
+24 - used for brazil music?
+25 - egypt world genie boss sound
+26 - final boss
+27 - bag explode warning
+28 - Let's Clean Up
+29 - Tumble Pop! (between levels..)
+2a - You Did It!
+2b - Death
+2c - france world boss arms / snowman fire in antartica
+2d - space enemy fire
+2e - egypt world genie appear
+2f - coin
+30 - france cannon fire
+31 - giant vacuum? (i got this once on antartica..)
+32 - world 1 clown boss bomb bounce
+33 - end level
+34 - end world?
+
+*/
+
+/* music
+
+command 1 - stop?
+
+        4 - map screen
+        5 - america
+        6 - asia
+        7 - egypt
+        8 - antartica
+        9 - brazil
+        a - japan
+        b - australia
+        c - france
+        d - how to play
+
+
+        f - stage clear
+        10 - boss stage
+        12 - between levels
+
+        -- there are more tunes than we have music banks..
+           i guess some get repeated
+*/
+
+
+
+int tumblep_music_command;
+int tumblep_music_bank;
+int tumbleb2_music_is_playing;
+
+void tumbleb2_playmusic(void)
+{
+	int status = OKIM6295_status_0_r(0);
+
+	if (tumbleb2_music_is_playing)
+	{
+		if ((status&0x08)==0x00)
+		{
+			OKIM6295_data_0_w(0,0x80|tumblep_music_command);
+			OKIM6295_data_0_w(0,0x00|0x82);
+		}
+	}
+}
+
+
+INTERRUPT_GEN( tumbleb2_interrupt )
+{
+	cpunum_set_input_line(0, 6, HOLD_LINE);
+	tumbleb2_playmusic();
+}
+
+static int tumbleb_sound_lookup[256] = {
+	/*0     1     2     3     4     5     6     7     8     9     a     b     c     d     e    f*/
+	0x00,  -2,  0x00, 0x00,   -2,   -2,   -2,   -2,   -2,   -2,   -2,   -2,   -2,   -2, 0x00,   -2, /* 0 */
+	  -2, 0x00,   -2, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 1 */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, /* 2 */
+	0x19, 0x00, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, /* 3 */
+	0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x00, 0x00, 0x00, 0x00, 0x00, /* 4 */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 5 */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 6 */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 7 */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 8 */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* 9 */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* a */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* b */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* c */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* d */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /* e */
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00  /* f */
+};
+
+/* we use channels 1,2,3 for sound effects, and channel 4 for music */
+void tumbleb2_set_music_bank(int bank)
+{
+	UINT8 *oki = memory_region(REGION_SOUND1);
+	memcpy(&oki[0x38000], &oki[0x80000+0x38000+0x8000*bank],0x8000);
+}
+
+void tumbleb2_play_sound (int data)
+{
+	int status = OKIM6295_status_0_r(0);
+
+	if ((status&0x01)==0x00)
+	{
+		OKIM6295_data_0_w(0,0x80|data);
+		OKIM6295_data_0_w(0,0x00|0x12);
+	}
+	else if ((status&0x02)==0x00)
+	{
+		OKIM6295_data_0_w(0,0x80|data);
+		OKIM6295_data_0_w(0,0x00|0x22);
+	}
+	else if ((status&0x04)==0x00)
+	{
+		OKIM6295_data_0_w(0,0x80|data);
+		OKIM6295_data_0_w(0,0x00|0x42);
+	}
+}
+
+/* yay for terrible looped music .. there aren't even enough songs for all the levels */
+// bank 0 - tune 1 = end of level
+// bank 0 - tune 2 = end of stage?
+// bank 1 = map screen
+// bank 2 = asia
+// bank 3 = antartica?
+// bank 4 = south america
+// bank 5 = australia
+// bank 6 = america?? or europe?
+// bank 7 = how to play?
+// bank 8 = boss???
+
+void process_tumbleb2_music_command(int data)
+{
+	int status = OKIM6295_status_0_r(0);
+
+	if (data == 1) // stop?
+	{
+		if ((status&0x08)==0x08)
+		{
+			OKIM6295_data_0_w(0,0x40);		/* Stop playing music */
+			tumbleb2_music_is_playing = 0;
+		}
+	}
+	else
+	{
+		if (tumbleb2_music_is_playing != data)
+		{
+			tumbleb2_music_is_playing = data;
+			OKIM6295_data_0_w(0,0x40); // stop the current music
+			switch (data)
+			{
+				case 0x04: // map screen
+					tumblep_music_bank = 1;
+					tumblep_music_command = 0x38;
+					break;
+
+				case 0x05: // america
+					tumblep_music_bank = 6;
+					tumblep_music_command = 0x38;
+					break;
+
+				case 0x06: // asia
+					tumblep_music_bank = 2;
+					tumblep_music_command = 0x38;
+					break;
+
+				case 0x07: // africa/egypt -- don't seem to have a tune for this one
+					tumblep_music_bank = 4;
+					tumblep_music_command = 0x38;
+					break;
+
+				case 0x08: // antartica
+					tumblep_music_bank = 3;
+					tumblep_music_command = 0x38;
+					break;
+
+				case 0x09: // brazil / south america
+					tumblep_music_bank = 4;
+					tumblep_music_command = 0x38;
+					break;
+
+				case 0x0a: // japan -- don't seem to have a tune
+					tumblep_music_bank = 2;
+					tumblep_music_command = 0x38;
+					break;
+
+				case 0x0b: // australia
+					tumblep_music_bank = 5;
+					tumblep_music_command = 0x38;
+					break;
+
+				case 0x0c: // france/europe
+					tumblep_music_bank = 6;
+					tumblep_music_command = 0x38;
+					break;
+
+				case 0x0d: // how to play
+					tumblep_music_bank = 7;
+					tumblep_music_command = 0x38;
+					break;
+
+				case 0x0f: // stage clear
+					tumblep_music_bank = 0;
+					tumblep_music_command = 0x33;
+					break;
+
+				case 0x10: // boss stage
+					tumblep_music_bank = 8;
+					tumblep_music_command = 0x38;
+					break;
+
+				case 0x12: // world clear
+					tumblep_music_bank = 0;
+					tumblep_music_command = 0x34;
+					break;
+
+				default: // anything else..
+					tumblep_music_bank = 8;
+					tumblep_music_command = 0x38;
+					break;
+			}
+			tumbleb2_set_music_bank(tumblep_music_bank);
+			tumbleb2_playmusic();
+
+		}
+
+
+	}
+}
+
+
+WRITE16_HANDLER(tumbleb2_soundmcu_w)
+{
+	int sound;
+
+	sound = tumbleb_sound_lookup[data&0xff];
+
+	if (sound == 0x00)
+	{
+		/* pangpang has more commands than tumbleb2, extra sounds */
+		//printf("Command %04x\n",data);
+	}
+	else if (sound == -2)
+	{
+		process_tumbleb2_music_command(data);
+	}
+	else
+	{
+		tumbleb2_play_sound(sound);
+	}
 }
 
 /******************************************************************************/
@@ -409,6 +708,28 @@ static ADDRESS_MAP_START( suprtrio_main_cpu, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xf00000, 0xf07fff) AM_RAM
 ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( pangpang_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x120000, 0x123fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x140000, 0x1407ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x160000, 0x1607ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x180000, 0x18000f) AM_READ(tumblepopb_controls_r)
+	AM_RANGE(0x1a0000, 0x1a07ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x320000, 0x321fff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x340000, 0x341fff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( pangpang_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x120000, 0x123fff) AM_WRITE(MWA16_RAM) AM_BASE(&tumblepb_mainram)
+	AM_RANGE(0x140000, 0x1407ff) AM_WRITE(paletteram16_xxxxBBBBGGGGRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x160000, 0x1607ff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size) /* Bootleg sprite buffer */
+	AM_RANGE(0x160800, 0x160807) AM_WRITE(MWA16_RAM) // writes past the end of spriteram
+	AM_RANGE(0x1a0000, 0x1a07ff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x300000, 0x30000f) AM_WRITE(tumblepb_control_0_w)
+	AM_RANGE(0x320000, 0x321fff) AM_WRITE(pangpang_pf1_data_w) AM_BASE(&tumblepb_pf1_data)
+	AM_RANGE(0x340000, 0x341fff) AM_WRITE(pangpang_pf2_data_w) AM_BASE(&tumblepb_pf2_data)
+ADDRESS_MAP_END
 
 
 /******************************************************************************/
@@ -1578,7 +1899,36 @@ static MACHINE_DRIVER_START( tumblepb )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
-	MDRV_SOUND_ADD(OKIM6295, 7757)
+	MDRV_SOUND_ADD(OKIM6295,  8000000/10/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.70)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( tumbleb2 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 14000000)
+	MDRV_CPU_PROGRAM_MAP(tumblepopb_readmem,tumblepopb_writemem)
+	MDRV_CPU_VBLANK_INT(tumbleb2_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(58)
+	MDRV_VBLANK_DURATION(529)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
+
+	MDRV_VIDEO_START(tumblepb)
+	MDRV_VIDEO_UPDATE(tumblepb)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295,  8000000/10/132)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.70)
 MACHINE_DRIVER_END
@@ -1811,6 +2161,33 @@ static MACHINE_DRIVER_START( suprtrio )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( pangpang )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 14000000)
+	MDRV_CPU_PROGRAM_MAP(pangpang_readmem,pangpang_writemem)
+	MDRV_CPU_VBLANK_INT(tumbleb2_interrupt,1)
+
+	MDRV_FRAMES_PER_SECOND(58)
+	MDRV_VBLANK_DURATION(1529)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8, 31*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
+
+	MDRV_VIDEO_START(pangpang)
+	MDRV_VIDEO_UPDATE(pangpang)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 8000000/10/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.70)
+MACHINE_DRIVER_END
 
 /******************************************************************************/
 
@@ -1836,6 +2213,9 @@ ROM_START( tumbleb2 )
 	ROM_LOAD16_BYTE ("thumbpop.2", 0x00000, 0x40000, CRC(34b016e1) SHA1(b4c496358d48469d170a69e8bba58e0ea919b418) )
 	ROM_LOAD16_BYTE( "thumbpop.3", 0x00001, 0x40000, CRC(89501c71) SHA1(2c202218934b845fdf7c99eaf280dccad90767f2) )
 
+	ROM_REGION( 0x2d4c, REGION_CPU2, 0 ) /* PIC16c57 */
+	ROM_LOAD( "pic_16c57", 0x00000, 0x2d4c, NO_DUMP ) // protected
+
 	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD16_BYTE( "thumbpop.19",  0x00000, 0x40000, CRC(0795aab4) SHA1(85b38804446f6b0b4d8c3a59a8958d520c567a4e) )
 	ROM_LOAD16_BYTE( "thumbpop.18",  0x00001, 0x40000, CRC(ad58df43) SHA1(2e562bfffb42543af767dd9e82a1d2465dfcd8b8) )
@@ -1844,8 +2224,9 @@ ROM_START( tumbleb2 )
 	ROM_LOAD( "map-01.rom",   0x00000, 0x80000, CRC(e81ffa09) SHA1(01ada9557ead91eb76cf00db118d6c432104a398) )
 	ROM_LOAD( "map-00.rom",   0x80000, 0x80000, CRC(8c879cfe) SHA1(a53ef7811f14a8b105749b1cf29fe8a3a33bab5e) )
 
-	ROM_REGION( 0x80000, REGION_SOUND1, 0 ) /* Oki samples */
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 ) /* Oki samples */
 	ROM_LOAD( "thumbpop.snd", 0x00000, 0x80000, CRC(fabbf15d) SHA1(de60be43a5cd1d4b93c142bde6cbfc48a25545a3) )
+	ROM_RELOAD(0x80000,0x80000)
 ROM_END
 
 /*
@@ -2374,6 +2755,45 @@ ROM_START( suprtrio )
 	ROM_LOAD( "rom3l", 0x90000, 0x20000, CRC(1b73233b) SHA1(5d82bbdc31d99f8d77bdb5c2f6e5e23037b4bca0) )
 ROM_END
 
+/*
+
+1x MC68000P10 (main)
+1x PIC16C57
+1x OKI M6295
+1x oscillator 8.000MHz (close to OKI)
+1x oscillator 14.000MHz
+1x oscillator 12.000000MHz
+
+*/
+
+ROM_START( pangpang )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE ("2.bin", 0x00000, 0x40000, CRC(45436666) SHA1(a319d27320d74266b5e5af7eb1452ecc0b158318) )
+	ROM_LOAD16_BYTE( "3.bin", 0x00001, 0x40000, CRC(2725cbe7) SHA1(3ce2d8b1460a26ac0d982103d8796cdc296a64e1) )
+
+	ROM_REGION( 0x2d4c, REGION_CPU2, 0 ) /* PIC16c57 */
+	ROM_LOAD( "pic_16c57", 0x00000, 0x2d4c, BAD_DUMP CRC(1ca515b4) SHA1(b2d302a7e45ac5b783d408584b93b534eaee6523) ) // protected :-(
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE ) // PF1 tilemap
+	ROM_LOAD16_BYTE( "11.bin", 0x00000, 0x20000, CRC(a2b9fec8) SHA1(121771466c288e132cdcf6abdc3bbe2578de9260) )
+	ROM_CONTINUE(0x80000,0x20000)
+	ROM_LOAD16_BYTE( "10.bin", 0x00001, 0x20000, CRC(4f59d7b9) SHA1(a0eabb44ecb6922f656a5032c0ab757813b9cc13) )
+	ROM_CONTINUE(0x80001,0x20000)
+	ROM_LOAD16_BYTE( "6.bin", 0x40000, 0x20000, CRC(1ebbc4f1) SHA1(6fb745ebe7ee8ecf5036ac0c4a5dda71cbb40063) )
+	ROM_CONTINUE(0xc0000,0x20000)
+	ROM_LOAD16_BYTE( "7.bin", 0x40001, 0x20000, CRC(cd544173) SHA1(b929d771040a48356b449458d3125142b9bfc365) )
+	ROM_CONTINUE(0xc0001,0x20000)
+
+ 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "8.bin",   0x00000, 0x40000, CRC(ea0fa1e0) SHA1(1f2f6264097d15339782c2e399d125c3835fd852) )
+	ROM_LOAD16_BYTE( "9.bin",   0x00001, 0x40000, CRC(1da5fe49) SHA1(338be1a9f8c42e685e1cefb12b2d169b7560e5f7) )
+	ROM_LOAD16_BYTE( "4.bin",   0x80000, 0x40000, CRC(4f282eb1) SHA1(3731045a500082d37588edf7cbb0c0ebae566aab) )
+	ROM_LOAD16_BYTE( "5.bin",   0x80001, 0x40000, CRC(00694df9) SHA1(f07373c7ef379daa4e788c169579e23a1133d884) )
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 ) /* Oki samples */
+	ROM_LOAD( "1.bin", 0x00000, 0x80000, CRC(e722bb02) SHA1(ebb8c87d32dccbebf6d8a47703ac12be984f4a3d) )
+	ROM_RELOAD(0x80000,0x80000)
+ROM_END
 
 /******************************************************************************/
 
@@ -2414,6 +2834,18 @@ static DRIVER_INIT( tumblepb )
 	#if TUMBLEP_HACK
 	tumblepb_patch_code(0x000132);
 	#endif
+}
+
+static DRIVER_INIT( tumbleb2 )
+{
+	tumblepb_gfx1_rearrange();
+
+	#if TUMBLEP_HACK
+	tumblepb_patch_code(0x000132);
+	#endif
+
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x100000, 0x100001, 0, 0, tumbleb2_soundmcu_w );
+
 }
 
 static DRIVER_INIT( jumpkids )
@@ -2769,7 +3201,7 @@ DRIVER_INIT( chokchok )
 /******************************************************************************/
 
 GAME( 1991, tumbleb,  tumblep, tumblepb,  tumblepb, tumblepb, ROT0, "bootleg", "Tumble Pop (bootleg set 1)", GAME_IMPERFECT_SOUND )
-GAME( 1991, tumbleb2, tumblep, tumblepb,  tumblepb, tumblepb, ROT0, "bootleg", "Tumble Pop (bootleg set 2)", GAME_IMPERFECT_SOUND )
+GAME( 1991, tumbleb2, tumblep, tumbleb2,  tumblepb, tumbleb2, ROT0, "bootleg", "Tumble Pop (bootleg set 2)", GAME_IMPERFECT_SOUND ) // PIC is protected, sound simulation not 100%
 GAME( 1993, jumpkids, 0,       jumpkids,  tumblepb, jumpkids, ROT0, "Comad", "Jump Kids", 0 )
 GAME( 1994, metlsavr, 0,       metlsavr,  metlsavr, chokchok, ROT0, "First Amusement", "Metal Saver", 0 )
 GAME( 1994, suprtrio, 0,       suprtrio,  suprtrio, suprtrio, ROT0, "Gameace", "Super Trio", 0 )
@@ -2781,3 +3213,4 @@ GAME( 1997, bcstry,   0,       bcstory,   bcstory,  bcstory,  ROT0, "SemiCom", "
 GAME( 1997, bcstrya,  bcstry,  bcstory,   bcstory,  bcstory,  ROT0, "SemiCom", "B.C. Story (set 2)", GAME_IMPERFECT_GRAPHICS) // gfx offsets?
 GAME( 1997, semibase, 0,       semibase,  semibase, bcstory,  ROT0, "SemiCom", "MuHanSeungBu (SemiCom Baseball)", GAME_IMPERFECT_GRAPHICS)// sprite offsets..
 GAME( 2001, jumppop,  0,       jumppop,   jumppop,  0, ORIENTATION_FLIP_X, "ESD", "Jumping Pop", 0 )
+GAME( 1994, pangpang, 0,       pangpang,  tumblepb, tumbleb2, ROT0, "Dong Gue La Mi Ltd.", "Pang Pang", GAME_IMPERFECT_SOUND ) // PIC is protected, sound simulation not 100%

@@ -4,15 +4,10 @@
 
 ***************************************************************************/
 
-/*----------- defined in machine/kyugo.c -----------*/
-
-extern UINT8 *kyugo_sharedram;
+/*----------- defined in drivers/kyugo.c -----------*/
 
 MACHINE_RESET( kyugo );
 
-READ8_HANDLER( kyugo_sharedram_r );
-
-WRITE8_HANDLER( kyugo_sharedram_w );
 WRITE8_HANDLER( kyugo_sub_cpu_control_w );
 
 /*----------- defined in vidhrdw/kyugo.c -----------*/

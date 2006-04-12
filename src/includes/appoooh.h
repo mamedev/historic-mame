@@ -1,4 +1,4 @@
-/* ----------- defined in vidhrdw/apoooh.c -----------*/
+/* ----------- defined in vidhrdw/appoooh.c -----------*/
 
 extern unsigned char *appoooh_fg_videoram,*appoooh_fg_colorram;
 extern unsigned char *appoooh_bg_videoram,*appoooh_bg_colorram;

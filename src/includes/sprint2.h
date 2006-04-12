@@ -26,3 +26,19 @@
 extern struct discrete_sound_block sprint2_discrete_interface[];
 extern struct discrete_sound_block sprint1_discrete_interface[];
 extern struct discrete_sound_block dominos_discrete_interface[];
+
+
+/*----------- defined in vidhrdw/sprint2.c -----------*/
+
+extern READ8_HANDLER( sprint2_collision1_r );
+extern READ8_HANDLER( sprint2_collision2_r );
+
+extern WRITE8_HANDLER( sprint2_collision_reset1_w );
+extern WRITE8_HANDLER( sprint2_collision_reset2_w );
+extern WRITE8_HANDLER( sprint2_video_ram_w );
+
+extern VIDEO_UPDATE( sprint2 );
+extern VIDEO_START( sprint2 );
+extern VIDEO_EOF( sprint2 );
+
+extern UINT8* sprint2_video_ram;

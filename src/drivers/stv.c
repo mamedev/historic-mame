@@ -2335,7 +2335,7 @@ static ADDRESS_MAP_START( stv_mem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x01406f40, 0x01406f43) AM_WRITE(minit_w) // prikura seems to write here ..
 //  AM_RANGE(0x01000000, 0x01000003) AM_WRITE(minit_w) AM_MIRROR(0x00080000)
 	AM_RANGE(0x01800000, 0x01800003) AM_WRITE(sinit_w)
-	AM_RANGE(0x02000000, 0x04ffffef) AM_ROM AM_ROMBANK(1)// cartridge
+	AM_RANGE(0x02000000, 0x04ffffef) AM_ROM AM_ROMBANK(1) AM_REGION(REGION_USER1, 0) // cartridge
 	AM_RANGE(0x04fffff0, 0x04ffffff) AM_READWRITE(a_bus_ctrl_r,a_bus_ctrl_w)
 	AM_RANGE(0x05800000, 0x0589ffff) AM_READWRITE(stvcd_r, stvcd_w)
 	/* Sound */
@@ -2358,7 +2358,7 @@ static ADDRESS_MAP_START( stv_mem, ADDRESS_SPACE_PROGRAM, 32 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_mem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_RAM AM_REGION(REGION_CPU3, 0) AM_BASE(&sound_ram)
+	AM_RANGE(0x000000, 0x07ffff) AM_RAM AM_BASE(&sound_ram)
 	AM_RANGE(0x100000, 0x100fff) AM_READWRITE(SCSP_0_r, SCSP_0_w)
 ADDRESS_MAP_END
 
@@ -2804,14 +2804,10 @@ static void print_game_info(void);
 
 DRIVER_INIT ( stv )
 {
-	unsigned char *ROM = memory_region(REGION_USER1);
-
 	time_t ltime;
 	struct tm *today;
 	time(&ltime);
 	today = localtime(&ltime);
-
-	memory_set_bankptr(1,&ROM[0x000000]);
 
 	/* amount of time to boost interleave for on MINIT / SINIT, needed for communication to work */
 	minit_boost = 400;
@@ -2885,10 +2881,14 @@ static void print_game_info(void)
 	print_file = NULL;
 }
 
+MACHINE_START( stv )
+{
+	SCSP_set_ram_base(0, sound_ram);
+	return 0;
+}
+
 MACHINE_RESET( stv )
 {
-	memory_set_bankptr(1,memory_region(REGION_USER1));
-
 	// don't let the slave cpu and the 68k go anywhere
 	cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
 	stv_enable_slave_sh2 = 0;
@@ -2967,16 +2967,16 @@ static const gfx_layout tiles16x16x8_layout =
 
 static const gfx_decode gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &tiles8x8x4_layout,   0x00, (0x80*(2+1))  },
-	{ REGION_GFX1, 0, &tiles16x16x4_layout, 0x00, (0x80*(2+1))  },
-	{ REGION_GFX1, 0, &tiles8x8x8_layout,   0x00, (0x08*(2+1))  },
-	{ REGION_GFX1, 0, &tiles16x16x8_layout, 0x00, (0x08*(2+1))  },
+	{ 0, 0, &tiles8x8x4_layout,   0x00, (0x80*(2+1))  },
+	{ 0, 0, &tiles16x16x4_layout, 0x00, (0x80*(2+1))  },
+	{ 0, 0, &tiles8x8x8_layout,   0x00, (0x08*(2+1))  },
+	{ 0, 0, &tiles16x16x8_layout, 0x00, (0x08*(2+1))  },
 
 	/* vdp1 .. pointless for drawing but can help us debug */
-	{ REGION_GFX2, 0, &tiles8x8x4_layout,   0x00, 0x100  },
-	{ REGION_GFX2, 0, &tiles16x16x4_layout, 0x00, 0x100  },
-	{ REGION_GFX2, 0, &tiles8x8x8_layout,   0x00, 0x20  },
-	{ REGION_GFX2, 0, &tiles16x16x8_layout, 0x00, 0x20  },
+	{ 0, 0, &tiles8x8x4_layout,   0x00, 0x100  },
+	{ 0, 0, &tiles16x16x4_layout, 0x00, 0x100  },
+	{ 0, 0, &tiles8x8x8_layout,   0x00, 0x20  },
+	{ 0, 0, &tiles16x16x8_layout, 0x00, 0x20  },
 
 	{ -1 } /* end of array */
 };
@@ -3007,7 +3007,7 @@ static void scsp_irq(int irq)
 
 static struct SCSPinterface scsp_interface =
 {
-	REGION_CPU3,
+	0,
 	0,
 	scsp_irq
 };
@@ -3044,6 +3044,7 @@ static MACHINE_DRIVER_START( stv )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(192);	// guess, needed to force video update after V-Blank OUT interrupt
 
+	MDRV_MACHINE_START(stv)
 	MDRV_MACHINE_RESET(stv)
 	MDRV_NVRAM_HANDLER(stv) /* Actually 93c45 */
 
@@ -3087,9 +3088,6 @@ MACHINE_DRIVER_END
 	/*ROM_LOAD16_WORD_SWAP_BIOS( 9, "saturn.bin",       0x000000, 0x080000, CRC(653ff2d8) SHA1(20994ae7ee177ddaf3a430b010c7620dca000fb4) )*/ /* Saturn Eu Bios */ \
 	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* SH2 code */ \
 	ROM_COPY( REGION_CPU1,0,0,0x080000) \
-	ROM_REGION( 0x100000, REGION_CPU3, 0 ) /* 68000 code */ \
-	ROM_REGION( 0x100000, REGION_GFX1, 0 ) /* VDP2 GFX */ \
-	ROM_REGION( 0x100000, REGION_GFX2, 0 ) /* VDP1 GFX */ \
 
 ROM_START( stvbios )
 	STV_BIOS
@@ -3152,7 +3150,7 @@ Update:Issue fixed,see stvhacks.c for more details (TODO: Clean-up that)
 ROM_START( astrass )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x2400000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_LOAD( "epr20825.13",                0x0000000, 0x0100000, CRC(94a9ad8f) SHA1(861311c14cfa9f560752aa5b023c147a539cf135) ) // ic13 bad?! (was .24)
 	ROM_RELOAD ( 0x0100000, 0x0100000 )
 	ROM_RELOAD ( 0x0200000, 0x0100000 )
@@ -3170,7 +3168,7 @@ ROM_END
 ROM_START( bakubaku )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x1400000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_LOAD( "fpr17969.13",               0x0000000, 0x0100000, CRC(bee327e5) SHA1(1d226db72d6ef68fd294f60659df7f882b25def6) ) // ic13 bad?!
 	ROM_RELOAD ( 0x0100000, 0x0100000 )
 	ROM_RELOAD ( 0x0200000, 0x0100000 )
@@ -3184,7 +3182,7 @@ ROM_END
 ROM_START( colmns97 )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0xc00000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	/* it tests .13 at 0x000000 - 0x1fffff but reports as bad even if we put the rom there */
 	ROM_LOAD( "fpr19553.13",    0x000000, 0x100000, CRC(d4fb6a5e) SHA1(bd3cfb4f451b6c9612e42af5ddcbffa14f057329) ) // ic13 bad?!
 	ROM_RELOAD ( 0x0100000, 0x0100000 )
@@ -3197,7 +3195,7 @@ ROM_END
 ROM_START( cotton2 )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x2000000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_FILL(                              0x0000000, 0x0200000, 0x00 )
 	ROM_LOAD16_WORD_SWAP( "mpr20122.7",    0x0200000, 0x0200000, CRC(d616f78a) SHA1(8039dcdfdafb8327a19a1da46a67c0b3f7eee53a) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr20117.2",    0x0400000, 0x0400000, CRC(893656ea) SHA1(11e3160083ba018fbd588f07061a4e55c1efbebb) ) // good
@@ -3212,7 +3210,7 @@ ROM_END
 ROM_START( cottonbm )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x1c00000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_FILL(                              0x0000000, 0x0200000, 0x00 )
 	ROM_LOAD16_WORD_SWAP( "mpr21075.7",    0x0200000, 0x0200000, CRC(200b58ba) SHA1(6daad6d70a3a41172e8d9402af775c03e191232d) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr21070.2",    0x0400000, 0x0400000, CRC(56c0bf1d) SHA1(c2b564ce536c637bb723ed96683b27596e87ebe7) ) // good
@@ -3226,7 +3224,7 @@ ROM_END
 ROM_START( decathlt )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x1800000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_LOAD( "epr18967.13",               0x0000000, 0x0100000, CRC(c0446674) SHA1(4917089d95613c9d2a936ed9fe3ebd22f461aa4f) ) // ic13 bad?!
 	ROM_RELOAD ( 0x0100000, 0x0100000 )
 	ROM_RELOAD ( 0x0200000, 0x0100000 )
@@ -3240,7 +3238,7 @@ ROM_END
 
 ROM_START( diehard )
  	STV_BIOS // must use USA
-	ROM_REGION32_BE( 0x1800000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_LOAD( "fpr19119.13",               0x0000000, 0x0100000, CRC(de5c4f7c) SHA1(35f670a15e9c86edbe2fe718470f5a75b5b096ac) ) // ic13 bad?!
 	ROM_RELOAD ( 0x0100000, 0x0100000 )
 	ROM_RELOAD ( 0x0200000, 0x0100000 )
@@ -3254,7 +3252,7 @@ ROM_END
 ROM_START( dnmtdeka )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x1800000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_LOAD( "fpr19114.13",               0x0000000, 0x0100000, CRC(1fd22a5f) SHA1(c3d9653b12354a73a3e15f23a2ab7992ffb83e46) ) // ic13 bad?!
 	ROM_RELOAD ( 0x0100000, 0x0100000 )
 	ROM_RELOAD ( 0x0200000, 0x0100000 )
@@ -3268,7 +3266,7 @@ ROM_END
 ROM_START( ejihon )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x1800000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_LOAD( "epr18137.13",               0x0000000, 0x0080000, CRC(151aa9bc) SHA1(0959c60f31634816825acb57413838dcddb17d31) ) // ic13 bad?!
 	ROM_RELOAD ( 0x0080000, 0x0080000 )
 	ROM_RELOAD ( 0x0100000, 0x0080000 )
@@ -3287,7 +3285,7 @@ ROM_END
 ROM_START( elandore )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x2000000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_FILL(                              0x0000000, 0x0200000, 0x00 )
 	ROM_LOAD16_WORD_SWAP( "mpr21307.7",    0x0200000, 0x0200000, CRC(966ad472) SHA1(d6db41d1c40d08eb6bce8a8a2f491e7533daf670) ) // good (was .11s)
 	ROM_LOAD16_WORD_SWAP( "mpr21301.2",    0x0400000, 0x0400000, CRC(1a23b0a0) SHA1(f9dbc7ba96dadfb00e5827622b557080449acd83) ) // good (was .12)
@@ -3302,7 +3300,7 @@ ROM_END
 ROM_START( ffreveng )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x1c00000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_FILL(                             0x0000000, 0x0200000, 0x00 )
 	ROM_LOAD16_WORD_SWAP( "opr21872.7",   0x0200000, 0x0200000, CRC(32d36fee) SHA1(441c4254ef2e9301e1006d69462a850ce339314b) ) // good (was .11s)
 	ROM_LOAD16_WORD_SWAP( "mpr21873.2",   0x0400000, 0x0400000, CRC(dac5bd98) SHA1(6102035ce9eb2f83d7d9b20f989a151f45087c67) ) // good (was .12)
@@ -3317,7 +3315,7 @@ ROM_END
 ROM_START( fhboxers )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x2400000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_LOAD( "fr18541a.13",               0x0000000, 0x0100000, CRC(8c61a17c) SHA1(a8aef27b53482923a506f7daa4b7a38653b4d8a4) ) // ic13 bad?! (header is read from here, not ic7 even if both are populated on this board)
 	ROM_RELOAD ( 0x0100000, 0x0100000 )
 	ROM_RELOAD ( 0x0200000, 0x0100000 )
@@ -3361,7 +3359,7 @@ ROM_END
 ROM_START( finlarch )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x2400000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_LOAD( "finlarch.13",               0x0000000, 0x0100000, CRC(4505fa9e) SHA1(96c6399146cf9c8f1d27a8fb6a265f937258004a) ) // ic13 bad?!
 	ROM_RELOAD ( 0x0100000, 0x0100000 )
 	ROM_RELOAD ( 0x0200000, 0x0100000 )
@@ -3380,7 +3378,7 @@ ROM_END
 ROM_START( gaxeduel )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x2000000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_LOAD( "epr17766.13",               0x0000000, 0x0080000, CRC(a83fcd62) SHA1(4ce77ebaa0e93c6553ad8f7fb87cbdc32433402b) ) // ic13 bad?!
 	ROM_RELOAD ( 0x0080000, 0x0080000 )
 	ROM_RELOAD ( 0x0100000, 0x0080000 )
@@ -3400,7 +3398,7 @@ ROM_END
 ROM_START( grdforce )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x1800000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_FILL(                              0x0000000, 0x0200000, 0x00 )
 	ROM_LOAD16_WORD_SWAP( "mpr20844.7",    0x0200000, 0x0200000, CRC(283e7587) SHA1(477fabc27cfe149ad17757e31f10665dcf8c0860) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr20839.2",    0x0400000, 0x0400000, CRC(facd4dd8) SHA1(2582894c98b31ab719f1865d4623dad6736dc877) ) // good
@@ -3413,7 +3411,7 @@ ROM_END
 ROM_START( groovef )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x2400000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_FILL(                              0x0000000, 0x0200000, 0x00 )
 	ROM_LOAD16_WORD_SWAP( "mpr19820.7",    0x0200000, 0x0100000, CRC(e93c4513) SHA1(f9636529224880c49bd2cc5572bd5bf41dbf911a) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr19815.2",    0x0400000, 0x0400000, CRC(1b9b14e6) SHA1(b1828c520cb108e2927a23273ebd2939dca52304) ) // good
@@ -3448,7 +3446,7 @@ ROM_END
 ROM_START( introdon )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x1c00000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_LOAD( "epr18937.13",               0x0000000, 0x0080000, CRC(1f40d766) SHA1(35d9751c1b23cfbf448f2a9e9cf3b121929368ae) ) // ic13 bad
 	ROM_RELOAD ( 0x0100000, 0x0100000 )
 	ROM_RELOAD ( 0x0200000, 0x0100000 )
@@ -3466,7 +3464,7 @@ ROM_END
 ROM_START( kiwames )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x2000000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_LOAD( "epr18737.13",               0x0000000, 0x0080000, CRC(cfad6c49) SHA1(fc69980a351ed13307706db506c79c774eabeb66) ) // bad
 	ROM_RELOAD ( 0x0100000, 0x0100000 )
 	ROM_RELOAD ( 0x0200000, 0x0100000 )
@@ -3479,7 +3477,7 @@ ROM_END
 ROM_START( maruchan )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x2400000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_LOAD( "epr20416.13",               0x0000000, 0x0100000, CRC(8bf0176d) SHA1(5bd468e2ffed042ee84e2ceb8712ff5883a1d824) ) // bad
 	ROM_RELOAD ( 0x0100000, 0x0100000 )
 	ROM_RELOAD ( 0x0200000, 0x0100000 )
@@ -3498,7 +3496,7 @@ ROM_END
 ROM_START( myfairld )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x2000000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_FILL(                              0x0000000, 0x0200000, 0x00 )
 	ROM_LOAD16_WORD_SWAP( "mpr21000.7",    0x0200000, 0x0200000, CRC(2581c560) SHA1(5fb64f0e09583d50dfea7ad613d45aad30b677a5) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr20995.2",    0x0400000, 0x0400000, CRC(1bb73f24) SHA1(8773654810de760c5dffbb561f43e259b074a61b) ) // good
@@ -3513,7 +3511,7 @@ ROM_END
 ROM_START( othellos )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x1400000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_FILL(                              0x0000000, 0x0200000, 0x00 )
 	ROM_LOAD16_WORD_SWAP( "mpr20967.7",    0x0200000, 0x0200000, CRC(efc05b97) SHA1(a533366c3aaba90dcac8f3654db9ad902efca258) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr20963.2",    0x0400000, 0x0400000, CRC(2cc4f141) SHA1(8bd1998aff8615b34d119fab3637a08ed6e8e1e4) ) // good
@@ -3525,7 +3523,7 @@ ROM_END
 ROM_START( pblbeach )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x1400000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_LOAD( "epr18852.13",               0x0000000, 0x0080000, CRC(d12414ec) SHA1(0f42ec9e41983781b6892622b00398a102072aa7) ) // bad
 	ROM_RELOAD ( 0x0080000, 0x0080000 )
 	ROM_RELOAD ( 0x0100000, 0x0080000 )
@@ -3543,7 +3541,7 @@ ROM_END
 ROM_START( prikura )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x1400000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_FILL(                              0x0000000, 0x0200000, 0x00 )
 	ROM_LOAD16_WORD_SWAP( "mpr19337.7",    0x0200000, 0x0200000, CRC(76f69ff3) SHA1(5af2e1eb3288d70c2a1c71d0b6370125d65c7757) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr19333.2",    0x0400000, 0x0400000, CRC(eb57a6a6) SHA1(cdacaa7a2fb1a343195e2ac5fd02eabf27f89ccd) ) // good
@@ -3555,7 +3553,7 @@ ROM_END
 ROM_START( puyosun )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x2400000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_LOAD( "epr19531.13",               0x0000000, 0x0080000, CRC(ac81024f) SHA1(b22c7c1798fade7ae992ff83b138dd23e6292d3f) ) // bad
 	ROM_RELOAD ( 0x0080000, 0x0080000 )
 	ROM_RELOAD ( 0x0100000, 0x0080000 )
@@ -3577,7 +3575,7 @@ ROM_END
 ROM_START( rsgun )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x2000000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_FILL(                             0x0000000, 0x0200000, 0x00 )
 	ROM_LOAD16_WORD_SWAP( "mpr20958.7",   0x0200000, 0x0200000, CRC(cbe5a449) SHA1(b4744ab71ccbadda1921ba43dd1148e57c0f84c5) ) // good (was .11s)
 	ROM_LOAD16_WORD_SWAP( "mpr20959.2",   0x0400000, 0x0400000, CRC(a953330b) SHA1(965274a7297cb88e281fcbdd3ec5025c6463cc7b) ) // good (was .12)
@@ -3591,7 +3589,7 @@ ROM_END
 ROM_START( sandor )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x2c00000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_LOAD( "sando-r.13",               0x0000000, 0x0100000, CRC(fe63a239) SHA1(01502d4494f968443581cd2c74f25967d41f775e) ) // ic13 bad
 	ROM_RELOAD ( 0x0100000, 0x0100000 )
 	ROM_RELOAD ( 0x0200000, 0x0100000 )
@@ -3609,7 +3607,7 @@ ROM_END
 ROM_START( thunt )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x2c00000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_FILL(                             0x0000000, 0x0200000, 0x00 )
 	ROM_LOAD16_BYTE( "th-ic7_2.stv",    0x0200000, 0x0080000, CRC(c4e993de) SHA1(7aa433bc2623cb19a09d4ef4c8233a2d29901020) )
 	ROM_LOAD16_BYTE( "th-ic7_1.stv",    0x0200001, 0x0080000, CRC(1355cc18) SHA1(a9b731228a807b2b01f933fe0f7dcdbadaf89b7e) )
@@ -3623,7 +3621,7 @@ ROM_END
 ROM_START( sassisu )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x1c00000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_LOAD( "epr20542.13",               0x0000000, 0x0100000, CRC(0e632db5) SHA1(9bc52794892eec22d381387d13a0388042e30714) ) // ic13 bad
 	ROM_RELOAD ( 0x0100000, 0x0100000 )
 	ROM_RELOAD ( 0x0200000, 0x0100000 )
@@ -3640,7 +3638,7 @@ ROM_END
 ROM_START( seabass )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x2400000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_LOAD( "seabassf.13",               0x0000000, 0x0100000, CRC(6d7c39cc) SHA1(d9d1663134420b75c65ee07d7d547254785f2f83) ) // ic13 bad
 	ROM_RELOAD ( 0x0100000, 0x0100000 )
 	ROM_RELOAD ( 0x0200000, 0x0100000 )
@@ -3658,7 +3656,7 @@ ROM_END
 ROM_START( shanhigw )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x0800000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_FILL(                              0x0000000, 0x0200000, 0x00 )
 	ROM_LOAD16_WORD_SWAP( "mpr18341.7",    0x0200000, 0x0200000, CRC(cc5e8646) SHA1(a733616c118140ff3887d30d595533f9a1beae06) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr18340.2",    0x0400000, 0x0200000, CRC(8db23212) SHA1(85d604a5c6ab97188716dbcd77d365af12a238fe) ) // good
@@ -3667,7 +3665,7 @@ ROM_END
 ROM_START( shienryu )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x0c00000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_FILL(                              0x0000000, 0x0200000, 0x00 )
 	ROM_LOAD16_WORD_SWAP( "mpr19631.7",    0x0200000, 0x0200000, CRC(3a4b1abc) SHA1(3b14b7fdebd4817da32ea374c15a38c695ffeff1) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr19632.2",    0x0400000, 0x0400000, CRC(985fae46) SHA1(f953bde91805b97b60d2ab9270f9d2933e064d95) ) // good
@@ -3695,7 +3693,7 @@ ROM_END
 ROM_START( sokyugrt )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x1400000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_LOAD( "fpr19188.13",               0x0000000, 0x0100000, CRC(45a27e32) SHA1(96e1bab8bdadf7071afac2a0a6dd8fd8989f12a6) ) // ic13 bad
 	ROM_RELOAD ( 0x0100000, 0x0100000 )
 	ROM_RELOAD ( 0x0200000, 0x0100000 )
@@ -3710,7 +3708,7 @@ ROM_END
 ROM_START( sss )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x1800000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_LOAD( "epr21488.13",               0x0000000, 0x0080000, CRC(71c9def1) SHA1(a544a0b4046307172d2c1bf426ed24845f87d894) ) // ic13 bad (was .24)
 	ROM_RELOAD ( 0x0080000, 0x0080000 )
 	ROM_RELOAD ( 0x0100000, 0x0080000 )
@@ -3729,7 +3727,7 @@ ROM_END
 ROM_START( suikoenb )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x2400000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_LOAD( "fpr17834.13",               0x0000000, 0x0100000, CRC(746ef686) SHA1(e31c317991a687662a8a2a45aed411001e5f1941) ) // ic13 bad
 	ROM_RELOAD ( 0x0100000, 0x0100000 )
 	ROM_RELOAD ( 0x0200000, 0x0100000 )
@@ -3747,7 +3745,7 @@ ROM_END
 ROM_START( twcup98 )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x1400000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_LOAD( "epr20819.13",    0x0000000, 0x0100000, CRC(d930dfc8) SHA1(f66cc955181720661a0334fe67fa5750ddf9758b) ) // ic13 bad (was .24)
 	ROM_RELOAD ( 0x0100000, 0x0100000 )
 	ROM_RELOAD ( 0x0200000, 0x0100000 )
@@ -3780,7 +3778,7 @@ ROM_END
 ROM_START( vfremix )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x1c00000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_LOAD( "epr17944.13",               0x0000000, 0x0100000, CRC(a5bdc560) SHA1(d3830480a611b7d88760c672ce46a2ea74076487) ) // ic13 bad
 	ROM_RELOAD ( 0x0100000, 0x0100000 )
 	ROM_RELOAD ( 0x0200000, 0x0100000 )
@@ -3797,7 +3795,7 @@ ROM_END
 ROM_START( vmahjong )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x2000000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_FILL(                              0x0000000, 0x0200000, 0x00 )
 	ROM_LOAD16_WORD_SWAP( "mpr19620.7",    0x0200000, 0x0200000, CRC(c98de7e5) SHA1(5346f884793bcb080aa01967e91b54ced4a9802f) ) // good
 	ROM_LOAD16_WORD_SWAP( "mpr19615.2",    0x0400000, 0x0400000, CRC(c62896da) SHA1(52a5b10ca8af31295d2d700349eca038c418b522) ) // good
@@ -3812,7 +3810,7 @@ ROM_END
 ROM_START( winterht )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x2000000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_LOAD( "fpr20108.13",    0x0000000, 0x0100000, CRC(1ef9ced0) SHA1(abc90ce341cd17bb77349d611d6879389611f0bf) ) // bad
 	ROM_RELOAD ( 0x0100000, 0x0100000 )
 	ROM_RELOAD ( 0x0200000, 0x0100000 )
@@ -3829,7 +3827,7 @@ ROM_END
 ROM_START( znpwfv )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x2800000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_LOAD( "epr20398.13",    0x0000000, 0x0100000, CRC(3fb56a0b) SHA1(13c2fa2d94b106d39e46f71d15fbce3607a5965a) ) // bad
 	ROM_RELOAD ( 0x0100000, 0x0100000 )
 	ROM_RELOAD ( 0x0200000, 0x0100000 )
@@ -3848,7 +3846,7 @@ ROM_END
 ROM_START( danchih )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x1400000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_FILL(                              0x0000000, 0x0200000, 0x00 )
 	ROM_LOAD16_WORD_SWAP( "mpr21974.7",    0x0200000, 0x0200000, CRC(e7472793) SHA1(11b7b11cf492eb9cf69b50e7cfac46a5b86849ac) )// good
 	ROM_LOAD16_WORD_SWAP( "mpr21970.2",    0x0400000, 0x0400000, CRC(34dd7f4d) SHA1(d5c45da94ec5b6584049caf09516f1ad4ba3adb5) )// good
@@ -3860,7 +3858,7 @@ ROM_END
 ROM_START( mausuke )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x2000000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_LOAD(             "ic13.bin",      0x0000000, 0x0100000, CRC(b456f4cd) SHA1(91cbe703ec7c1dd45eb3b05bdfeb06e3570599d1) )
 	/* mirroring is essential on this one */
 	ROM_RELOAD ( 0x0100000, 0x0100000 )
@@ -3924,7 +3922,7 @@ On the other side of the PCB are 2 more maskROMs, MPR-18788 @ IC9 and MPR-18789 
 ROM_START( critcrsh )
 	STV_BIOS
 
-	ROM_REGION32_BE( 0x2400000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_LOAD( "epr-18821.ic13",  0x0000000, 0x0080000, CRC(9a6658e2) SHA1(16dbae3d9ab584713afcb403f89fe71049609245) )
 	ROM_RELOAD ( 0x0080000, 0x0080000 )
 	ROM_RELOAD ( 0x0100000, 0x0080000 )
@@ -3950,11 +3948,8 @@ ROM_START( sfish2 )
 	ROM_LOAD16_WORD_SWAP( "epr18343.bin",   0x000000, 0x080000, CRC(48e2eecf) SHA1(a38bfbd5f279525e413b18b5ed3f37f6e9e31cdc) ) /* sport fishing 2 bios */
 	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* SH2 code */
 	ROM_COPY( REGION_CPU1,0,0,0x080000)
-	ROM_REGION( 0x100000, REGION_CPU3, 0 ) /* 68000 code */
-	ROM_REGION( 0x100000, REGION_GFX1, 0 ) /* VDP2 GFX */
-	ROM_REGION( 0x100000, REGION_GFX2, 0 ) /* VDP1 GFX */
 
-	ROM_REGION32_BE( 0x0f00000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_LOAD(             "epr18427.bin",      0x0000000, 0x0100000, CRC(3f25bec8) SHA1(43a5342b882d5aec0f35a8777cb475659f43b1c4) )
 	ROM_LOAD16_WORD_SWAP( "mpr18273.ic2",	   0x0400000, 0x0200000, NO_DUMP )
 	ROM_LOAD16_WORD_SWAP( "mpr18274.ic3",      0x0800000, 0x0200000, NO_DUMP )
@@ -3971,11 +3966,8 @@ ROM_START( sfish2j )
 	ROM_LOAD16_WORD_SWAP( "epr18343.bin",   0x000000, 0x080000, CRC(48e2eecf) SHA1(a38bfbd5f279525e413b18b5ed3f37f6e9e31cdc) ) /* sport fishing 2 bios */
 	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* SH2 code */
 	ROM_COPY( REGION_CPU1,0,0,0x080000)
-	ROM_REGION( 0x100000, REGION_CPU3, 0 ) /* 68000 code */
-	ROM_REGION( 0x100000, REGION_GFX1, 0 ) /* VDP2 GFX */
-	ROM_REGION( 0x100000, REGION_GFX2, 0 ) /* VDP1 GFX */
 
-	ROM_REGION32_BE( 0x2000000, REGION_USER1, 0 ) /* SH2 code */
+	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
 	ROM_LOAD(             "epr18344.a",      0x0000000, 0x0100000,  CRC(5a7de018) SHA1(88e0c2a9a9d4ebf699878c0aa9737af85f95ccf8) )
 	ROM_RELOAD ( 0x0100000, 0x0100000 )
 	ROM_RELOAD ( 0x0200000, 0x0100000 )
@@ -4045,11 +4037,11 @@ GAMEB( 1996, diehard,   stvbios, stvbios, stv, stv,  diehard,   ROT0,   "Sega", 
 GAMEB( 1996, dnmtdeka,  diehard, stvbios, stv, stv,  dnmtdeka,  ROT0,   "Sega", 	 				  "Dynamite Deka (J 960515 V1.000)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS  )
 GAMEB( 1995, ejihon,    stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 				  "Ejihon Tantei Jimusyo (J 950613 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1995, fhboxers,  stvbios, stvbios, stv, stv,  fhboxers,  ROT0,   "Sega", 	 				  "Funky Head Boxers (JUETBKAL 951218 V1.000)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEB( 1994, gaxeduel,  stvbios, stvbios, stv, stv,  gaxeduel,	 ROT0,   "Sega", 	     			  "Golden Axe - The Duel (JUETL 950117 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEB( 1994, gaxeduel,  stvbios, stvbios, stv, stv,  gaxeduel,	ROT0,   "Sega", 	     			  "Golden Axe - The Duel (JUETL 950117 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1998, grdforce,  stvbios, stvbios, stv, stv,  grdforce,  ROT0,   "Success",  				  "Guardian Force (JUET 980318 V0.105)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1996, groovef,   stvbios, stvbios, stv, stv,  groovef,   ROT0,   "Atlus",    				  "Power Instinct 3 - Groove On Fight (J 970416 V1.001)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1998, hanagumi,  stvbios, stvbios, stv, stv,  hanagumi,  ROT0,   "Sega",     				  "Hanagumi Taisen Columns - Sakura Wars (J 971007 V1.010)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEB( 1996, introdon,  stvbios, stvbios, stv, stv,  ic13,		 ROT0,   "Sunsoft / Success", 		  "Karaoke Quiz Intro Don Don! (J 960213 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEB( 1996, introdon,  stvbios, stvbios, stv, stv,  ic13,		ROT0,   "Sunsoft / Success", 		  "Karaoke Quiz Intro Don Don! (J 960213 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1995, kiwames,   stvbios, stvbios, stv, stvmp,ic13,      ROT0,   "Athena",   				  "Pro Mahjong Kiwame S (J 951020 V1.208)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1997, maruchan,  stvbios, stvbios, stv, stv,  maruchan,  ROT0,   "Sega / Toyosuisan", 	      "Maru-Chan de Goo! (J 971216 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1995, mausuke,   stvbios, stvbios, stv, stv,  mausuke,   ROT0,   "Data East",				  "Mausuke no Ojama the World (J 960314 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )

@@ -1135,9 +1135,6 @@ void *snes_sh_start(int clock, const struct CustomSound_interface *config)
 {
 	UINT8 ii;
 
-	/* Set up the SPC RAM pointer */
-	spc_ram = (UINT8 *)memory_region( REGION_CPU2 );
-
 	/* put IPL image at the top of RAM */
 	memcpy(ipl_region, memory_region(REGION_USER5), 64);
 

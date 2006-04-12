@@ -22,6 +22,7 @@ int vdp1_sprite_log = 0;
 
 UINT32 *stv_vdp1_vram;
 UINT32 *stv_vdp1_regs;
+UINT8* stv_vdp1_gfx_decode;
 
 extern UINT32 *stv_scu;
 extern int stv_vblank;
@@ -153,6 +154,7 @@ int stv_vdp1_start ( void )
 {
 	stv_vdp1_regs = auto_malloc ( 0x040000 );
 	stv_vdp1_vram = auto_malloc ( 0x100000 );
+	stv_vdp1_gfx_decode = auto_malloc ( 0x100000 );
 
 	memset(stv_vdp1_regs, 0, 0x040000);
 	memset(stv_vdp1_vram, 0, 0x100000);
@@ -317,7 +319,7 @@ READ32_HANDLER ( stv_vdp1_vram_r )
 
 WRITE32_HANDLER ( stv_vdp1_vram_w )
 {
-	UINT8 *vdp1 = memory_region(REGION_GFX2);
+	UINT8 *vdp1 = stv_vdp1_gfx_decode;
 
 	COMBINE_DATA (&stv_vdp1_vram[offset]);
 
@@ -609,7 +611,7 @@ extern UINT32* stv_vdp2_cram;
 INLINE void drawpixel(UINT16 *dest, int patterndata, int offsetcnt)
 {
 	int pix,mode,transmask,spd = stv2_current_sprite.CMDPMOD & 0x40;
-	UINT8* gfxdata = memory_region(REGION_GFX2);
+	UINT8* gfxdata = stv_vdp1_gfx_decode;
 	int pix2;
 
 	if ( stv2_current_sprite.ispoly )

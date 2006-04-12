@@ -2468,7 +2468,7 @@ ROM_START( finallap )
 	ROM_REGION( 0x080000, REGION_GFX4, 0 ) /* Mask shape */
 	NAMCOS2_GFXROM_LOAD_128K( "fl2-sha",  0x000000, CRC(5fda0b6d) SHA1(92c0410e159977ea73a8e8c0cb1321c3056f6c2f) )
 
-	ROM_REGION16_BE( 0x200000, REGION_USER1, 0 ) /* Shared data roms */
+	ROM_REGION16_BE( 0x200000, REGION_USER1, ROMREGION_ERASEFF ) /* Shared data roms */
 	/* No DAT files present in ZIP archive */
 
 	ROM_REGION( 0x100, REGION_USER3, 0 ) /* prom for road colors */
@@ -2523,7 +2523,7 @@ ROM_START( finalapd )
 	ROM_REGION( 0x080000, REGION_GFX4, 0 ) 				  /* Mask shape */
 	NAMCOS2_GFXROM_LOAD_128K( "fl2-sha",  0x000000, CRC(5fda0b6d) SHA1(92c0410e159977ea73a8e8c0cb1321c3056f6c2f) )
 
-	ROM_REGION16_BE( 0x200000, REGION_USER1, 0 ) /* Shared data roms */
+	ROM_REGION16_BE( 0x200000, REGION_USER1, ROMREGION_ERASEFF ) /* Shared data roms */
 	/* No DAT files present in ZIP archive */
 
 	ROM_REGION( 0x100, REGION_USER3, 0 ) /* prom for road colors */
@@ -2578,7 +2578,7 @@ ROM_START( finalapc )
 	ROM_REGION( 0x080000, REGION_GFX4, 0 ) /* Mask shape */
 	NAMCOS2_GFXROM_LOAD_128K( "fl2-sha",  0x000000, CRC(5fda0b6d) SHA1(92c0410e159977ea73a8e8c0cb1321c3056f6c2f) )
 
-	ROM_REGION16_BE( 0x200000, REGION_USER1, 0 ) /* Shared data roms */
+	ROM_REGION16_BE( 0x200000, REGION_USER1, ROMREGION_ERASEFF ) /* Shared data roms */
 	/* No DAT files present in ZIP archive */
 
 	ROM_REGION( 0x100, REGION_USER3, 0 ) /* prom for road colors */
@@ -2633,7 +2633,7 @@ ROM_START( finlapjc )
 	ROM_REGION( 0x080000, REGION_GFX4, 0 ) /* Mask shape */
 	NAMCOS2_GFXROM_LOAD_128K( "fl2-sha",  0x000000, CRC(5fda0b6d) SHA1(92c0410e159977ea73a8e8c0cb1321c3056f6c2f) )
 
-	ROM_REGION16_BE( 0x200000, REGION_USER1, 0 ) /* Shared data roms */
+	ROM_REGION16_BE( 0x200000, REGION_USER1, ROMREGION_ERASEFF ) /* Shared data roms */
 	/* No DAT files present in ZIP archive */
 
 	ROM_REGION( 0x100, REGION_USER3, 0 ) /* prom for road colors */
@@ -2688,7 +2688,7 @@ ROM_START( finlapjb )
 	ROM_REGION( 0x080000, REGION_GFX4, 0 ) /* Mask shape */
 	NAMCOS2_GFXROM_LOAD_128K( "fl1_sha.bin",  0x000000, CRC(b7e1c7a3) SHA1(b82f9b340d95b80a12286647adba8c139b4d081a) )
 
-	ROM_REGION16_BE( 0x200000, REGION_USER1, 0 ) /* Shared data roms */
+	ROM_REGION16_BE( 0x200000, REGION_USER1, ROMREGION_ERASEFF ) /* Shared data roms */
 	/* No DAT files present in ZIP archive */
 
 	ROM_REGION( 0x100, REGION_USER3, 0 ) /* prom for road colors */
@@ -3027,7 +3027,7 @@ ROM_START( fourtrax )
 	NAMCOS2_GFXROM_LOAD_128K( "fxchr6",  0x300000, CRC(c3dba42e) SHA1(2b5a8fabec11ccd44156ecfccf86fc713845d262) )
 	NAMCOS2_GFXROM_LOAD_128K( "fxchr7",  0x380000, CRC(c009f3ae) SHA1(394beed29bda97f4f5ba532bc0bd22177154746b) )
 
-	ROM_REGION( 0x400000, REGION_GFX3, 0 ) /* ROZ Tiles */
+	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_ERASEFF ) /* ROZ Tiles */
 	/* No ROZ files in zip */
 
 	ROM_REGION( 0x080000, REGION_GFX4, 0 ) /* Mask shape */
@@ -3623,7 +3623,7 @@ ROM_START( sgunner )
 	ROM_LOAD( "sn_chr0.11n",  0x000000, 0x80000, CRC(b433c37b) SHA1(514dcffd0f20faae0f5297b68d8946cfbc54e493) )
 	ROM_LOAD( "sn_chr1.11p",  0x080000, 0x80000, CRC(b7dd41f9) SHA1(2119bca16cdb55df2416222b66272f681abd0359) )
 
-	ROM_REGION( 0x400000, REGION_GFX3, 0 ) /* ROZ Tiles */
+	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_ERASEFF ) /* ROZ Tiles */
 	/* NO ROZ ROMS PRESENT */
 
 	ROM_REGION( 0x080000, REGION_GFX4, 0 ) /* Mask shape */
@@ -3671,7 +3671,7 @@ ROM_START( sgunnerj )
 	ROM_LOAD( "sn_chr0.11n",  0x000000, 0x80000, CRC(b433c37b) SHA1(514dcffd0f20faae0f5297b68d8946cfbc54e493) )
 	ROM_LOAD( "sn_chr1.11p",  0x080000, 0x80000, CRC(b7dd41f9) SHA1(2119bca16cdb55df2416222b66272f681abd0359) )
 
-	ROM_REGION( 0x400000, REGION_GFX3, 0 ) /* ROZ Tiles */
+	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_ERASEFF ) /* ROZ Tiles */
 	/* NO ROZ ROMS PRESENT */
 
 	ROM_REGION( 0x080000, REGION_GFX4, 0 ) /* Mask shape */
@@ -3721,7 +3721,7 @@ ROM_START( sgunner2)
 	ROM_LOAD( "sns_chr2.bin",  0x100000, 0x80000, CRC(7dbaa14e) SHA1(6df4fbe85560d2c1624ac2d6c80d6f7827954775) )
 	ROM_LOAD( "sns_chr3.bin",  0x180000, 0x80000, CRC(b562ff72) SHA1(6b74bca0555e51d7b15fc5d8fe865900646acbc6) )
 
-	ROM_REGION( 0x400000, REGION_GFX3, 0 ) /* ROZ Tiles */
+	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_ERASEFF ) /* ROZ Tiles */
 	/* NO ROZ ROMS PRESENT IN ZIP */
 
 	ROM_REGION( 0x080000, REGION_GFX4, 0 ) /* Mask shape */
@@ -3773,7 +3773,7 @@ ROM_START( sgunnr2j)
 	ROM_LOAD( "sns_chr2.bin",  0x100000, 0x80000, CRC(7dbaa14e) SHA1(6df4fbe85560d2c1624ac2d6c80d6f7827954775) )
 	ROM_LOAD( "sns_chr3.bin",  0x180000, 0x80000, CRC(b562ff72) SHA1(6b74bca0555e51d7b15fc5d8fe865900646acbc6) )
 
-	ROM_REGION( 0x400000, REGION_GFX3, 0 ) /* ROZ Tiles */
+	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_ERASEFF ) /* ROZ Tiles */
 	/* NO ROZ ROMS PRESENT IN ZIP */
 
 	ROM_REGION( 0x080000, REGION_GFX4, 0 ) /* Mask shape */
@@ -4114,7 +4114,7 @@ ROM_START( suzuk8h2 )
 	ROM_LOAD( "ehs1-chr6.9r", 0x300000, 0x80000, CRC(2d1c01ad) SHA1(1ed79e22b964fe648d22e43b78c1c3b5a7d5f8c8) )
 	ROM_LOAD( "ehs1-chr7.9s", 0x380000, 0x80000, CRC(18dd8676) SHA1(59b9a07f4a980fd920a29b8a90ef54c8c3b53e97) )
 
-	ROM_REGION( 0x400000, REGION_GFX3, 0 ) /* ROZ Tiles */
+	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_ERASEFF ) /* ROZ Tiles */
 	/* No ROZ hardware on PCB */
 
 	ROM_REGION( 0x080000, REGION_GFX4, 0 ) /* Mask shape */
@@ -4323,13 +4323,13 @@ ROM_START( gollygho )
 	ROM_LOAD( "gl1chr1.11p",  0x20000, 0x20000, CRC(36aa0fbc) SHA1(47dc10e689843962b51097c6ca27e00a221d2b48) )
 	ROM_LOAD( "gl1chr2.11r",  0x40000, 0x10000, CRC(6c1964ba) SHA1(1aec2ce598751f4f0ba575f4a944647e831f6a87) )
 
-	ROM_REGION( 0x400000, REGION_GFX3, 0 ) /* ROZ Tiles */
+	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_ERASEFF ) /* ROZ Tiles */
 	/* All ROZ ROM sockets unpopulated on PCB */
 
 	ROM_REGION( 0x080000, REGION_GFX4, 0 ) /* Mask shape */
 	NAMCOS2_GFXROM_LOAD_128K( "gl1sha0.7n",	0x000000, CRC(8886f6f5) SHA1(3b311c5061449e1bbde1a1006fd967a6154326b8) )
 
-	ROM_REGION16_BE( 0x200000, REGION_USER1, 0 ) /* Shared data roms */
+	ROM_REGION16_BE( 0x200000, REGION_USER1, ROMREGION_ERASEFF ) /* Shared data roms */
 	/* All DAT ROM sockets unpopulated on PCB */
 
 	ROM_REGION16_BE( 0x2000, REGION_USER2, 0 ) /* sprite zoom */
@@ -4370,13 +4370,13 @@ ROM_START( bubbletr )
 	ROM_LOAD( "bt1-chr0.bin",  0x00000, 0x80000,  CRC(11574c30) SHA1(6e85dd1448961b89a13e8cf905b24a69d182edd8) )
 	/* no chr1, chr2 missing or just not needed? probably just not needed as I see no tile glitches */
 
-	ROM_REGION( 0x400000, REGION_GFX3, 0 ) /* ROZ Tiles */
+	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_ERASEFF ) /* ROZ Tiles */
 	/* All ROZ ROM sockets unpopulated on PCB */
 
 	ROM_REGION( 0x080000, REGION_GFX4, 0 ) /* Mask shape */
 	ROM_LOAD( "bt1-sha0.bin",	0x000000, 0x80000, CRC(dc4664df) SHA1(59818b14e74ee9b15a66e850658e4697d78b28d9) )
 
-	ROM_REGION16_BE( 0x200000, REGION_USER1, 0 ) /* Shared data roms */
+	ROM_REGION16_BE( 0x200000, REGION_USER1, ROMREGION_ERASEFF ) /* Shared data roms */
 	/* All DAT ROM sockets unpopulated on PCB */
 
 	ROM_REGION16_BE( 0x2000, REGION_USER2, 0 ) /* sprite zoom */

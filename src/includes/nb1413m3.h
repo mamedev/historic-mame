@@ -227,6 +227,8 @@ enum {
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
+/*----------- defined in machine/nb1413m3.c -----------*/
+
 DRIVER_INIT( nb1413m3 );
 MACHINE_RESET( nb1413m3 );
 WRITE8_HANDLER( nb1413m3_nmi_clock_w );

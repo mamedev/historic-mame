@@ -1,5 +1,6 @@
 #include "driver.h"
 #include "vidhrdw/taitoic.h"
+#include "includes/taito_f2.h"
 
 #define TC0100SCN_GFX_NUM 1
 #define TC0480SCP_GFX_NUM 1

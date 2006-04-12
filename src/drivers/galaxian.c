@@ -121,15 +121,7 @@ TO DO :
 #include "sound/ay8910.h"
 #include "sound/sn76496.h"
 #include "sound/dac.h"
-
-
-DRIVER_INIT( cclimbrj );
-
-extern struct AY8910interface cclimber_ay8910_interface;
-extern struct Samplesinterface cclimber_custom_interface;
-WRITE8_HANDLER( cclimber_sample_trigger_w );
-WRITE8_HANDLER( cclimber_sample_rate_w );
-WRITE8_HANDLER( cclimber_sample_volume_w );
+#include "includes/cclimber.h"
 
 
 /* Send sound data to the sound cpu and cause an nmi */
@@ -3574,14 +3566,14 @@ static const gfx_decode rockclim_gfxdecodeinfo[] =
 
 
 
-gfx_decode galaxian_gfxdecodeinfo[] =
+static gfx_decode galaxian_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &galaxian_charlayout,   0, 8 },
 	{ REGION_GFX1, 0x0000, &galaxian_spritelayout, 0, 8 },
 	{ -1 } /* end of array */
 };
 
-gfx_decode gmgalax_gfxdecodeinfo[] =
+static gfx_decode gmgalax_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &galaxian_charlayout,   0, 16 },
 	{ REGION_GFX1, 0x0000, &galaxian_spritelayout, 0, 16 },

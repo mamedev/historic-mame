@@ -7,7 +7,7 @@
 ***************************************************************************/
 
 #include "driver.h"
-
+#include "includes/galaga.h"
 
 
 #define MAX_STARS 252
@@ -17,11 +17,6 @@ UINT8 *galaga_videoram;
 UINT8 *galaga_ram1,*galaga_ram2,*galaga_ram3;
 UINT8 galaga_starcontrol[6];
 static UINT32 stars_scrollx,stars_scrolly;
-
-struct star
-{
-	int x,y,col,set;
-};
 
 static INT32 galaga_gfxbank; // used by catsbee
 

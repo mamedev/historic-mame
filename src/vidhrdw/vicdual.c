@@ -7,6 +7,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "includes/vicdual.h"
 
 
 
@@ -83,19 +84,14 @@ PALETTE_INIT( vicdual )
 	palette_bank = 0;
 
 	{
-		extern game_driver driver_heiankyo;
-		extern game_driver driver_invinco;
-		extern game_driver driver_digger;
-		extern game_driver driver_tranqgun;
-
 		/* Heiankyo Alien doesn't write to port 0x40, it expects it to default to 3 */
-		if (Machine->gamedrv == &driver_heiankyo)
+		if (strcmp(Machine->gamedrv->name, "heiankyo") == 0)
 			palette_bank = 3;
 
 		/* and many others expect it to default to 1 */
-		if (Machine->gamedrv == &driver_invinco ||
-				Machine->gamedrv == &driver_digger ||
-				Machine->gamedrv == &driver_tranqgun)
+		if (strcmp(Machine->gamedrv->name, "invinco") == 0 ||
+				strcmp(Machine->gamedrv->name, "digger") == 0 ||
+				strcmp(Machine->gamedrv->name, "tranqgun") == 0)
 			palette_bank = 1;
 	}
 }

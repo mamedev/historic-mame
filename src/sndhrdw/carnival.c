@@ -37,6 +37,7 @@
 #include "driver.h"
 #include "sound/ay8910.h"
 #include "sound/samples.h"
+#include "includes/vicdual.h"
 
 #define CPU_MUSIC_ID            1       /* music CPU id number */
 

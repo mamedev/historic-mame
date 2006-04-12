@@ -6,9 +6,6 @@
 
 ***************************************************************************/
 
-#include "driver.h"
-
-
 /*----------- defined in vidhrdw/arabian.c -----------*/
 
 extern UINT8 arabian_video_control;

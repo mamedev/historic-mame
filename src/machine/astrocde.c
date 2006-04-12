@@ -9,7 +9,7 @@
 #include "driver.h"
 #include "includes/astrocde.h"
 
-UINT8 *gorf_timer_ram;
+static UINT8 *gorf_timer_ram;
 
 READ8_HANDLER( gorf_timer_r )
 {
@@ -49,7 +49,7 @@ READ8_HANDLER( gorf_timer_r )
  * so I use a table to translate my simple counter into it!
  */
 
-static const int ControllerTable[64] = {
+static const UINT8 ControllerTable[64] = {
 	0  , 1  , 3  , 2  , 6  , 7  , 5  , 4  ,
 	12 , 13 , 15 , 14 , 10 , 11 , 9  , 8  ,
 	24 , 25 , 27 , 26 , 30 , 31 , 29 , 28 ,

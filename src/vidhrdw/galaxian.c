@@ -5,6 +5,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "includes/galaxian.h"
 
 static rectangle _spritevisiblearea =
 {

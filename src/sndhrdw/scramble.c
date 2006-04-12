@@ -17,6 +17,7 @@
 #include "machine/7474.h"
 #include "sound/ay8910.h"
 #include "sound/flt_rc.h"
+#include "includes/galaxian.h"
 
 
 /* The timer clock in Scramble which feeds the upper 4 bits of          */

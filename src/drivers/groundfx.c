@@ -67,21 +67,10 @@
 #include "vidhrdw/taitoic.h"
 #include "machine/eeprom.h"
 #include "sound/es5506.h"
+#include "includes/taito_f3.h"
 
 VIDEO_START( groundfx );
 VIDEO_UPDATE( groundfx );
-
-/* F3 sound */
-READ16_HANDLER(f3_68000_share_r);
-WRITE16_HANDLER(f3_68000_share_w);
-READ16_HANDLER(f3_68681_r);
-WRITE16_HANDLER(f3_68681_w);
-READ16_HANDLER(es5510_dsp_r);
-WRITE16_HANDLER(es5510_dsp_w);
-WRITE16_HANDLER(f3_volume_w);
-WRITE16_HANDLER(f3_es5505_bank_w);
-void f3_68681_reset(void);
-extern UINT32 *f3_shared_ram;
 
 static UINT16 coin_word, frame_counter=0;
 static UINT16 port_sel = 0;

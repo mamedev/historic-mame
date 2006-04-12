@@ -18,3 +18,15 @@
 /*----------- defined in sndhrdw/videopin.c -----------*/
 
 extern struct discrete_sound_block videopin_discrete_interface[];
+
+
+/*----------- defined in vidhrdw/videopin.c -----------*/
+
+extern UINT8* videopin_video_ram;
+
+WRITE8_HANDLER( videopin_video_ram_w );
+WRITE8_HANDLER( videopin_ball_w );
+
+VIDEO_START( videopin );
+VIDEO_UPDATE( videopin );
+

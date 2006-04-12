@@ -1,3 +1,5 @@
+/*----------- defined in vidhrdw/lemmings.c -----------*/
+
 VIDEO_START( lemmings );
 VIDEO_EOF( lemmings );
 VIDEO_UPDATE( lemmings );

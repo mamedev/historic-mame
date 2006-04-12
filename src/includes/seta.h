@@ -6,6 +6,8 @@
 
 /*----------- defined in drivers/seta.c -----------*/
 
+#define	__uPD71054_TIMER	1
+
 void seta_coin_lockout_w(int data);
 
 
@@ -51,11 +53,6 @@ VIDEO_START( seta2 );
 VIDEO_START( seta2_offset );
 VIDEO_UPDATE( seta2 );
 VIDEO_EOF( seta2 );
-
-
-/*----------- defined in sndhrdw/seta.c -----------*/
-
-#define	__uPD71054_TIMER	1
 
 
 /*----------- defined in vidhrdw/ssv.c -----------*/

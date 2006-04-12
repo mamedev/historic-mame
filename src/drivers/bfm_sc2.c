@@ -247,7 +247,7 @@ static UINT8 input_override[64];  // bit pattern, bit set means this input is ov
 */
 ///////////////////////////////////////////////////////////////////////////
 
-static void send_to_adder(int data)
+void send_to_adder(int data)
 {
 	adder2_data_from_sc2 = 1;		// set flag, data from scorpion2 board available
 	adder2_sc2data       = data;	// store data
@@ -277,7 +277,7 @@ int read_from_sc2(void)
 
 ///////////////////////////////////////////////////////////////////////////
 
-static int receive_from_adder(void)
+int receive_from_adder(void)
 {
 	int data = sc2_adderdata;
 
@@ -407,7 +407,7 @@ void on_scorpion2_reset(void)
 
 ///////////////////////////////////////////////////////////////////////////
 
-static void Scorpion2_SetSwitchState(int strobe, int data, int state)
+extern void Scorpion2_SetSwitchState(int strobe, int data, int state)
 {
 	//logerror("setstate(%0x:%0x, %d) ", strobe, data, state);
 	if ( strobe < 11 && data < 8 )
@@ -615,8 +615,6 @@ static WRITE8_HANDLER( reel12_vid_w )  // in a video cabinet this is used to dri
 		{
 			hopper_coin_sense = 0;
 			oldhop = hopper_running;
-			if ( hopper_running ) set_led_status(1,0);//logerror("hopper ** running **\n");
-			else                  set_led_status(1,0);//logerror("hopper stopped !!\n");
 		}
 	}
 }
@@ -1745,46 +1743,46 @@ ADDRESS_MAP_END
 
 	PORT_START_TAG("STROBE9")
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_SERVICE) PORT_NAME("Test Switch") PORT_CODE(KEYCODE_Y)
-	PORT_DIPNAME( 0x02, 0x00, "Coin 1 Inhibit?" )
+	PORT_DIPNAME( 0x02, 0x00, "Coin 1 Inhibit?" ) PORT_DIPLOCATION("DIL:02")
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x04, 0x00, "Coin 2 Inhibit?" )
+	PORT_DIPNAME( 0x04, 0x00, "Coin 2 Inhibit?" ) PORT_DIPLOCATION("DIL:03")
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x08, 0x00, "Coin 3 Inhibit?" )
+	PORT_DIPNAME( 0x08, 0x00, "Coin 3 Inhibit?" ) PORT_DIPLOCATION("DIL:04")
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x10, 0x00, "Coin 4 Inhibit?" )
+	PORT_DIPNAME( 0x10, 0x00, "Coin 4 Inhibit?" ) PORT_DIPLOCATION("DIL:05")
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
 
 	PORT_START_TAG("STROBE10")
-	PORT_DIPNAME( 0x01, 0x00, "DIL06" )
+	PORT_DIPNAME( 0x01, 0x00, "DIL06" ) PORT_DIPLOCATION("DIL:06")
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On  ) )
-	PORT_DIPNAME( 0x02, 0x02, "Attract mode language" )
+	PORT_DIPNAME( 0x02, 0x02, "Attract mode language" ) PORT_DIPLOCATION("DIL:07")
 	PORT_DIPSETTING(    0x00, DEF_STR( English ) )
 	PORT_DIPSETTING(    0x02, "Dutch"       )
-	PORT_DIPNAME( 0x0C, 0x00, "Skill Level" )
+	PORT_DIPNAME( 0x0C, 0x00, "Skill Level" ) PORT_DIPLOCATION("DIL:08,10")
 	PORT_DIPSETTING(    0x00, DEF_STR( Low ) )
 	PORT_DIPSETTING(    0x04, "Medium-Low" )
 	PORT_DIPSETTING(    0x08, "Medium-High")
 	PORT_DIPSETTING(    0x0C, DEF_STR( High ) )
-	PORT_DIPNAME( 0x10, 0x00, "DIL11" )
+	PORT_DIPNAME( 0x10, 0x00, "DIL11" ) PORT_DIPLOCATION("DIL:11")
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( On  ) )
 
 	PORT_START_TAG("STROBE11")
-	PORT_DIPNAME( 0x01, 0x00, "DIL12" )
+	PORT_DIPNAME( 0x01, 0x00, "DIL12" ) PORT_DIPLOCATION("DIL:12")
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On  ) )
-	PORT_DIPNAME( 0x02, 0x00, "DIL13" )
+	PORT_DIPNAME( 0x02, 0x00, "DIL13" ) PORT_DIPLOCATION("DIL:13")
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( On  ) )
-	PORT_DIPNAME( 0x04, 0x04, "Attract mode" )
+	PORT_DIPNAME( 0x04, 0x04, "Attract mode" ) PORT_DIPLOCATION("DIL:14")
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( On  ) )
-	PORT_DIPNAME( 0x18, 0x00, "Stake" )
+	PORT_DIPNAME( 0x18, 0x00, "Stake" ) PORT_DIPLOCATION("DIL:15,16")
 	PORT_DIPSETTING(    0x00, "4 credits per game"  )
 	PORT_DIPSETTING(    0x08, "1 credit  per round" )
 	PORT_DIPSETTING(    0x10, "2 credit  per round" )

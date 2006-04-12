@@ -14,7 +14,6 @@
 #define CPU_MCU 	3
 #define CPU_GPU 	4
 
-/* VIDHRDW */
 
 /*********************************************/
 /* IF GAME SPECIFIC HACKS ARE REQUIRED THEN  */
@@ -85,9 +84,7 @@ enum
 	NAMCOFL_FINAL_LAP_R
 };
 
-extern int namcos2_gametype;
-
-extern UINT16 *namcos21_dspram16;
+/*----------- defined in vidhrdw/namcos2.c -----------*/
 
 #define NAMCOS21_NUM_COLORS 0x8000
 
@@ -110,7 +107,32 @@ VIDEO_UPDATE( metlhawk );
 VIDEO_START( sgunner );
 VIDEO_UPDATE( sgunner );
 
-/* MACHINE */
+int namcos2_GetPosIrqScanline( void );
+
+/**************************************************************/
+/*  Shared video palette function handlers                    */
+/**************************************************************/
+READ16_HANDLER( namcos2_68k_video_palette_r );
+WRITE16_HANDLER( namcos2_68k_video_palette_w );
+
+#define VIRTUAL_PALETTE_BANKS 30
+extern UINT16 *namcos2_68k_palette_ram;
+extern size_t namcos2_68k_palette_size;
+
+/**************************************************************/
+/*  ROZ - Rotate & Zoom memory function handlers              */
+/**************************************************************/
+
+WRITE16_HANDLER( namcos2_68k_roz_ctrl_w );
+READ16_HANDLER( namcos2_68k_roz_ctrl_r );
+
+WRITE16_HANDLER( namcos2_68k_roz_ram_w );
+READ16_HANDLER( namcos2_68k_roz_ram_r );
+extern UINT16 *namcos2_68k_roz_ram;
+
+/*----------- defined in machine/namcos2.c -----------*/
+
+extern int namcos2_gametype;
 
 MACHINE_RESET( namcos2 );
 
@@ -133,16 +155,6 @@ WRITE16_HANDLER( namcos2_68k_eeprom_w );
 READ16_HANDLER( namcos2_68k_eeprom_r );
 extern UINT16 *namcos2_eeprom;
 extern size_t namcos2_eeprom_size;
-
-/**************************************************************/
-/*  Shared video palette function handlers                    */
-/**************************************************************/
-READ16_HANDLER( namcos2_68k_video_palette_r );
-WRITE16_HANDLER( namcos2_68k_video_palette_w );
-
-#define VIRTUAL_PALETTE_BANKS 30
-extern UINT16 *namcos2_68k_palette_ram;
-extern size_t namcos2_68k_palette_size;
 
 /**************************************************************/
 /*  Shared data ROM memory handlerhandlers                    */
@@ -207,17 +219,6 @@ void namcos2_68k_slave_posirq( int moog );
 #define NAMCOS2_68K_SLAVE_RAM_R 	MRA16_BANK4
 
 /**************************************************************/
-/*  ROZ - Rotate & Zoom memory function handlers              */
-/**************************************************************/
-
-WRITE16_HANDLER( namcos2_68k_roz_ctrl_w );
-READ16_HANDLER( namcos2_68k_roz_ctrl_r );
-
-WRITE16_HANDLER( namcos2_68k_roz_ram_w );
-READ16_HANDLER( namcos2_68k_roz_ram_r );
-extern UINT16 *namcos2_68k_roz_ram;
-
-/**************************************************************/
 /*                                                            */
 /**************************************************************/
 #define BANKED_SOUND_ROM_R		MRA8_BANK6
@@ -246,4 +247,3 @@ READ8_HANDLER( namcos2_input_port_0_r );
 READ8_HANDLER( namcos2_input_port_10_r );
 READ8_HANDLER( namcos2_input_port_12_r );
 
-int namcos2_GetPosIrqScanline( void );

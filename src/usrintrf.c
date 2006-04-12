@@ -3229,6 +3229,7 @@ int ui_display_game_warnings(mame_bitmap *bitmap)
 			if (Machine->gamedrv->flags & (GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION))
 			{
 				const game_driver *maindrv;
+				const game_driver *clone_of;
 				int foundworking;
 
 				if (Machine->gamedrv->flags & GAME_NOT_WORKING)
@@ -3236,8 +3237,9 @@ int ui_display_game_warnings(mame_bitmap *bitmap)
 				if (Machine->gamedrv->flags & GAME_UNEMULATED_PROTECTION)
 					bufptr += sprintf(bufptr, "%s\n", ui_getstring(UI_brokenprotection));
 
-				if (Machine->gamedrv->clone_of && !(Machine->gamedrv->clone_of->flags & NOT_A_DRIVER))
-					maindrv = Machine->gamedrv->clone_of;
+				clone_of = driver_get_clone(Machine->gamedrv);
+				if (clone_of != NULL && !(clone_of->flags & NOT_A_DRIVER))
+	 				maindrv = clone_of;
 				else
 					maindrv = Machine->gamedrv;
 
@@ -3245,7 +3247,7 @@ int ui_display_game_warnings(mame_bitmap *bitmap)
 				i = 0;
 				while (drivers[i])
 				{
-					if (drivers[i] == maindrv || drivers[i]->clone_of == maindrv)
+					if (drivers[i] == maindrv || driver_get_clone(drivers[i]) == maindrv)
 					{
 						if ((drivers[i]->flags & (GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION)) == 0)
 						{

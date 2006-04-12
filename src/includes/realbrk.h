@@ -1,3 +1,5 @@
+/*----------- defined in vidhrdw/realbrk.c -----------*/
+
 #ifndef REALBRK_H
 #define REALBRK_H
 

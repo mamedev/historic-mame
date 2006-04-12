@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "includes/gcpinbal.h"
 
 
 static tilemap *gcpinbal_tilemap[3];

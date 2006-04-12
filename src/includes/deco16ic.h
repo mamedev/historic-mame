@@ -1,3 +1,5 @@
+/*----------- defined in vidhrdw/deco16ic.c -----------*/
+
 extern UINT16 *deco16_pf1_data,*deco16_pf2_data;
 extern UINT16 *deco16_pf3_data,*deco16_pf4_data;
 extern UINT16 *deco16_pf1_rowscroll,*deco16_pf2_rowscroll;
@@ -8,6 +10,8 @@ extern UINT16 deco16_priority;
 
 extern UINT16 *deco16_raster_display_list;
 extern int deco16_raster_display_position;
+
+extern int deco16_pf1_colour_bank,deco16_pf2_colour_bank,deco16_pf3_colour_bank,deco16_pf4_colour_bank;
 
 int deco16_1_video_init(void);
 int deco16_2_video_init(int split);

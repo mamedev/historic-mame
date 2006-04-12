@@ -1,3 +1,5 @@
+/*----------- defined in vidhrdw/cninja.c -----------*/
+
 VIDEO_START( cninja );
 VIDEO_START( edrandy );
 VIDEO_START( robocop2 );

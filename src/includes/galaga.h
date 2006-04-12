@@ -16,8 +16,17 @@ VIDEO_EOF( bosco );	/* update starfield */
 
 /*----------- defined in vidhrdw/galaga.c -----------*/
 
+struct star
+{
+	UINT16 x,y;
+	UINT8 col,set;
+};
+
 extern UINT8 *galaga_videoram;
 extern UINT8 *galaga_ram1,*galaga_ram2,*galaga_ram3;
+extern UINT8 galaga_starcontrol[];
+extern struct star star_seed_tab[];
+
 PALETTE_INIT( galaga );
 READ8_HANDLER( galaga_videoram_r );
 WRITE8_HANDLER( galaga_videoram_w );
@@ -32,6 +41,7 @@ VIDEO_EOF( galaga );	/* update starfield */
 extern UINT8 *xevious_fg_videoram,*xevious_fg_colorram;
 extern UINT8 *xevious_bg_videoram,*xevious_bg_colorram;
 extern UINT8 *xevious_sr1,*xevious_sr2,*xevious_sr3;
+
 READ8_HANDLER( xevious_fg_videoram_r );
 READ8_HANDLER( xevious_fg_colorram_r );
 READ8_HANDLER( xevious_bg_videoram_r );
@@ -71,6 +81,7 @@ INTERRUPT_GEN( battles_interrupt_4 );
 /*----------- defined in vidhrdw/digdug.c -----------*/
 
 extern UINT8 *digdug_videoram,*digdug_objram, *digdug_posram, *digdug_flpram;
+
 READ8_HANDLER( digdug_videoram_r );
 WRITE8_HANDLER( digdug_videoram_w );
 WRITE8_HANDLER( digdug_PORT_w );

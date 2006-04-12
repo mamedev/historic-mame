@@ -137,6 +137,7 @@
 #include "sound/samples.h"
 #include "sndhrdw/segasnd.h"
 #include "vidhrdw/vector.h"
+#include "includes/segar.h"
 #include "sega.h"
 
 

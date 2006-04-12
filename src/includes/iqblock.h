@@ -1,3 +1,5 @@
+/*----------- defined in vidhrdw/iqblock.c -----------*/
+
 extern UINT8 *iqblock_bgvideoram;
 extern UINT8 *iqblock_fgvideoram;
 extern int iqblock_videoenable;

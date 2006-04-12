@@ -9,8 +9,7 @@
 #include "driver.h"
 #include "streams.h"
 #include "sound/custom.h"
-
-extern UINT8 attckufo_regs[16];
+#include "includes/attckufo.h"
 
 /*
  * assumed model:

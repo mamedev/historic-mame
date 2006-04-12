@@ -79,36 +79,6 @@ write:
 
 #define	PSG_CLOCK_CARNIVAL	( 3579545 / 3 )	/* Hz */
 
-
-extern unsigned char *vicdual_characterram;
-PALETTE_INIT( vicdual );
-WRITE8_HANDLER( vicdual_characterram_w );
-READ8_HANDLER( vicdual_characterram_r );
-WRITE8_HANDLER( vicdual_palette_bank_w );
-VIDEO_UPDATE( vicdual );
-
-/* Carnival sound handlers */
-extern const char *carnival_sample_names[];
-WRITE8_HANDLER( carnival_sh_port1_w );
-WRITE8_HANDLER( carnival_sh_port2_w );
-READ8_HANDLER( carnival_music_port_t1_r );
-WRITE8_HANDLER( carnival_music_port_1_w );
-WRITE8_HANDLER( carnival_music_port_2_w );
-
-/* Depth Charge sound handlers */
-extern const char *depthch_sample_names[];
-WRITE8_HANDLER( depthch_sh_port1_w );
-
-/* Invinco sound handlers */
-extern const char *invinco_sample_names[];
-WRITE8_HANDLER( invinco_sh_port2_w );
-
-/* Pulsar sound handlers */
-extern const char *pulsar_sample_names[];
-WRITE8_HANDLER( pulsar_sh_port1_w );
-WRITE8_HANDLER( pulsar_sh_port2_w );
-
-
 /* all the games reset the main CPU when a coin is dropped */
 static int coin_port;
 static UINT8 coin_bit;

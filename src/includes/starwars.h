@@ -4,9 +4,6 @@
 
 ***************************************************************************/
 
-#include "driver.h"
-
-
 /*----------- defined in drivers/starwars.c -----------*/
 
 extern UINT8 starwars_is_esb;

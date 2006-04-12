@@ -6,9 +6,6 @@
 
 ***************************************************************************/
 
-#include "driver.h"
-
-
 /*----------- defined in machine/balsente.c -----------*/
 
 extern UINT8 balsente_shooter;

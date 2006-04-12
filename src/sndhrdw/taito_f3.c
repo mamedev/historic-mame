@@ -1,12 +1,12 @@
 #include "driver.h"
 #include "sound/es5506.h"
+#include "includes/taito_f3.h"
 
 static int counter,vector_reg,imr_status;
 static UINT16 es5510_dsp_ram[0x200];
 static UINT32	es5510_gpr[0xc0];
 static UINT32	es5510_gpr_latch;
 static void *timer_68681=NULL;
-extern UINT32 *f3_shared_ram;
 static int timer_mode,m68681_imr;
 
 static int es_tmp=1;

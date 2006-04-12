@@ -13,6 +13,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "includes/lemmings.h"
 
 UINT16 *lemmings_pixel_0_data,*lemmings_pixel_1_data,*lemmings_vram_data,*lemmings_control_data;
 static UINT16 *sprite_triple_buffer_0,*sprite_triple_buffer_1;

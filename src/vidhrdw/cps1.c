@@ -1019,26 +1019,26 @@ static void get_tile0_info(int tile_index)
 	int base = cps1_game_config->bank_scroll1 * 0x08000;
 	int code = cps1_scroll1[2*tile_index];
 	int attr = cps1_scroll1[2*tile_index+1];
+	int gfxset;
 
+	/* allows us to reproduce a problem seen with a ffight board where USA and Japanese
+       roms have been mixed to be reproduced (ffightua) -- it looks like each column
+       should alternate between the left and right side of the 16x16 tiles */
+	if (tile_index&0x20) gfxset = 1;
+	else gfxset = 0;
 
 	/* knights & msword */
 	if (cps1_game_config->kludge == 3)
-		if (code == 0xf020) code = 0x0020;
+		if (code == 0xf020) { gfxset = 4; code = 0; } // use a blank tile (see startup text..)
+
+	/* 0x0020 appears to never be drawn for CPS1 games (it is drawn for CPS2 games though, see gigawing '0' in score for example) */
+	if (cps_version == 1 && code == 0x0020) { gfxset = 4; code = 0; tile_info.pen_usage = 0x8000; }
 
 	SET_TILE_INFO(
-			0,
+			gfxset,
 			code + base,
 			(attr & 0x1f) + palette_basecolor[1],
 			TILE_FLIPYX((attr & 0x60) >> 5) | TILE_SPLIT((attr & 0x0180) >> 7))
-	tile_info.skip = 8;
-
-	/* 0x0020 appears to never be drawn for CPS1 games (it is drawn for CPS2 games though, see gigawing '0' in score for example) */
-
-	if (cps_version == 1 && code == 0x0020)
-	{
-		tile_info.pen_data = empty_tile;
-		tile_info.pen_usage = 0x8000;
-	}
 }
 
 static void get_tile1_info(int tile_index)
@@ -1050,7 +1050,7 @@ static void get_tile1_info(int tile_index)
 	int attr = cps1_scroll2[2*tile_index+1];
 
 	SET_TILE_INFO(
-			1,
+			2,
 			code + base,
 			(attr & 0x1f) + palette_basecolor[2],
 			TILE_FLIPYX((attr & 0x60) >> 5) | TILE_SPLIT((attr & 0x0180) >> 7))
@@ -1089,7 +1089,7 @@ static void get_tile2_info(int tile_index)
 	}
 
 	SET_TILE_INFO(
-			2,
+			3,
 			code + base,
 			(attr & 0x1f) + palette_basecolor[3],
 			TILE_FLIPYX((attr & 0x60) >> 5) | TILE_SPLIT((attr & 0x0180) >> 7))
@@ -1122,6 +1122,27 @@ void cps1_update_transmasks(void)
 	}
 }
 
+void cps1_create_empty_8x8_tile(void)
+{
+	/* for the 8x8 layer we can't use GFX_RAW so we need to create an empty tile
+       so that the 'don't draw tile' kludges work */
+	static const gfx_layout empty_layout8x8 =
+	{
+		8,8,
+		1,
+		4,
+		{ 0, 1, 2, 3 },
+		{ 1*4, 0*4, 3*4, 2*4, 5*4, 4*4, 7*4, 6*4 },
+		{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64 },
+		64*8
+	};
+
+	Machine->gfx[4] = allocgfx(&empty_layout8x8);
+	decodechar(Machine->gfx[4], 0, (UINT8 *)empty_tile, &empty_layout8x8);
+	Machine->gfx[4]->total_colors = 0x100;
+
+}
+
 VIDEO_START( cps )
 {
 	int i;
@@ -1138,6 +1159,8 @@ VIDEO_START( cps )
 	/* front masks will change at runtime to handle sprite occluding */
 	cps1_update_transmasks();
 	memset(empty_tile,0xff,sizeof(empty_tile));
+
+	cps1_create_empty_8x8_tile();
 
 	cps1_old_palette=auto_malloc(cps1_palette_size);
 	memset(cps1_old_palette, 0x00, cps1_palette_size);
@@ -1313,14 +1336,14 @@ void cps1_render_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 #define DRAWSPRITE(CODE,COLOR,FLIPX,FLIPY,SX,SY)					\
 {																	\
 	if (flip_screen)												\
-		pdrawgfx(bitmap,Machine->gfx[1],							\
+		pdrawgfx(bitmap,Machine->gfx[2],							\
 				CODE,												\
 				COLOR,												\
 				!(FLIPX),!(FLIPY),									\
 				511-16-(SX),255-16-(SY),							\
 				cliprect,TRANSPARENCY_PEN,15,0x02);					\
 	else															\
-		pdrawgfx(bitmap,Machine->gfx[1],							\
+		pdrawgfx(bitmap,Machine->gfx[2],							\
 				CODE,												\
 				COLOR,												\
 				FLIPX,FLIPY,										\
@@ -1556,14 +1579,14 @@ void cps2_render_sprites(mame_bitmap *bitmap,const rectangle *cliprect,int *prim
 #define DRAWSPRITE(CODE,COLOR,FLIPX,FLIPY,SX,SY)									\
 {																					\
 	if (flip_screen)																\
-		pdrawgfx(bitmap,Machine->gfx[1],											\
+		pdrawgfx(bitmap,Machine->gfx[2],											\
 				CODE,																\
 				COLOR,																\
 				!(FLIPX),!(FLIPY),													\
 				511-16-(SX),255-16-(SY),											\
 				cliprect,TRANSPARENCY_PEN,15,primasks[priority]);					\
 	else																			\
-		pdrawgfx(bitmap,Machine->gfx[1],											\
+		pdrawgfx(bitmap,Machine->gfx[2],											\
 				CODE,																\
 				COLOR,																\
 				FLIPX,FLIPY,														\

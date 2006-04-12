@@ -259,6 +259,8 @@ XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
 M68KMAKE_OPCODE_HANDLER_HEADER
 
 #include "m68kcpu.h"
+extern void m68040_fpu_op0(void);
+extern void m68040_fpu_op1(void);
 
 /* ======================================================================== */
 /* ========================= INSTRUCTION HANDLERS ========================= */
@@ -354,6 +356,8 @@ name    size  proc   ea   bit pattern       A+-DXWLdxI  0 1 2 4  000 010 020 040
 M68KMAKE_TABLE_START
 1010       0  .     .     1010............  ..........  U U U U   4   4   4   4
 1111       0  .     .     1111............  ..........  U U U U   4   4   4   4
+040fpu0   32  .     .     11110010........  ..........  . . . U   .   .   .   0
+040fpu1   32  .     .     11110011........  ..........  . . . U   .   .   .   0
 abcd       8  rr    .     1100...100000...  ..........  U U U U   6   6   4   4
 abcd       8  mm    ax7   1100111100001...  ..........  U U U U  18  18  16  16
 abcd       8  mm    ay7   1100...100001111  ..........  U U U U  18  18  16  16
@@ -883,6 +887,19 @@ M68KMAKE_OP(1111, 0, ., .)
 {
 	m68ki_exception_1111();
 }
+
+
+M68KMAKE_OP(040fpu0, 32, ., .)
+{
+	m68040_fpu_op0();
+}
+
+
+M68KMAKE_OP(040fpu1, 32, ., .)
+{
+	m68040_fpu_op1();
+}
+
 
 
 M68KMAKE_OP(abcd, 8, rr, .)

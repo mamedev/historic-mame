@@ -7,26 +7,10 @@ Atari Sprint 4 + Ultra Tank driver
 #include "driver.h"
 #include "sprint4.h"
 
-extern PALETTE_INIT( sprint4 );
-extern PALETTE_INIT( ultratnk );
-
-extern VIDEO_EOF( sprint4 );
-extern VIDEO_EOF( ultratnk );
-extern VIDEO_START( sprint4 );
-extern VIDEO_START( ultratnk );
-extern VIDEO_UPDATE( sprint4 );
-extern VIDEO_UPDATE( ultratnk );
-
-extern WRITE8_HANDLER( sprint4_video_ram_w );
-
-extern int sprint4_collision[4];
-
 static int da_latch;
 static int steer_dir[4];
 static int steer_flag[4];
 static int gear[4];
-
-UINT8* sprint4_videoram;
 
 
 static void input_callback(int dummy)

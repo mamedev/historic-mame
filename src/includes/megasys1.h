@@ -165,7 +165,7 @@
 
 ***************************************************************************/
 
-/*----------- defined in vidhrdw/megasys.c -----------*/
+/*----------- defined in vidhrdw/megasys1.c -----------*/
 
 /* Variables */
 extern tilemap *megasys1_tmap[3];

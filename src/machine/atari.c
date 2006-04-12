@@ -41,10 +41,6 @@ typedef struct {
 
 static DRIVE drv[4] = {{0}, };
 
-extern void a800_serial_command(void);
-extern void a800_serial_write(void);
-extern void a800_serial_read(void);
-
 static int atari = 0;
 #define ATARI_5200	0
 #define ATARI_400	1

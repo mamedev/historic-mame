@@ -316,6 +316,11 @@
 #define REG_CAAR         m68ki_cpu.caar
 #define REG_IR           m68ki_cpu.ir
 
+#define REG_FP           m68ki_cpu.fpr
+#define REG_FPCR         m68ki_cpu.fpcr
+#define REG_FPSR         m68ki_cpu.fpsr
+#define REG_FPIAR        m68ki_cpu.fpiar
+
 #define FLAG_T1          m68ki_cpu.t1_flag
 #define FLAG_T0          m68ki_cpu.t0_flag
 #define FLAG_S           m68ki_cpu.s_flag
@@ -823,6 +828,12 @@
 /* =============================== PROTOTYPES ============================= */
 /* ======================================================================== */
 
+typedef union
+{
+	UINT64 i;
+	double f;
+} fp_reg;
+
 typedef struct
 {
 	uint cpu_type;     /* CPU Type: 68000, 68008, 68010, 68EC020, or 68020 */
@@ -836,6 +847,10 @@ typedef struct
 	uint cacr;         /* Cache Control Register (m68020, unemulated) */
 	uint caar;         /* Cache Address Register (m68020, unemulated) */
 	uint ir;           /* Instruction Register */
+    fp_reg fpr[8];     /* FPU Data Register (m68040) */
+	uint fpiar;        /* FPU Instruction Address Register (m68040) */
+	uint fpsr;         /* FPU Status Register (m68040) */
+	uint fpcr;         /* FPU Control Register (m68040) */
 	uint t1_flag;      /* Trace 1 */
 	uint t0_flag;      /* Trace 0 */
 	uint s_flag;       /* Supervisor */

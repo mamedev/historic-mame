@@ -5,8 +5,8 @@ Atari Tank 8 video emulation
 ***************************************************************************/
 
 #include "driver.h"
+#include "includes/tank8.h"
 
-extern void tank8_collision_callback(int index);
 
 UINT8* tank8_video_ram;
 UINT8* tank8_pos_h_ram;

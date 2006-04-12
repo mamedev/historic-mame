@@ -1,3 +1,4 @@
+/*----------- defined in vidhrdw/deco32.c -----------*/
 
 VIDEO_START( captaven );
 VIDEO_START( fghthist );

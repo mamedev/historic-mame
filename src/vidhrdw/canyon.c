@@ -5,6 +5,7 @@ Atari Canyon Bomber video emulation
 ***************************************************************************/
 
 #include "driver.h"
+#include "includes/canyon.h"
 
 static tilemap *bg_tilemap;
 

@@ -8,6 +8,7 @@
 
 #include "driver.h"
 #include "machine/8255ppi.h"
+#include "includes/clayshoo.h"
 
 
 static UINT8 input_port_select;

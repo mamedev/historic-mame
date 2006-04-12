@@ -33,7 +33,7 @@ HgKairak: 86010000 1f201918 a0000000 Large Screen
 static UINT32 screen; /* for PS4 games when DUAL_SCREEN=0 */
 
 /* defined in drivers/psikyo4.c */
-extern UINT32 *bgpen_1, *bgpen_2, *ps4_io_select, *psikyo4_vidregs;
+extern UINT32 *psikyo4_vidregs;
 
 /* --- SPRITES --- */
 static void psikyo4_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect, UINT32 scr )

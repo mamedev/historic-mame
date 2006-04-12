@@ -37,12 +37,6 @@
 #include "sound/discrete.h"
 
 
-extern WRITE8_HANDLER( canyon_videoram_w );
-
-extern VIDEO_START( canyon );
-extern VIDEO_UPDATE( canyon );
-
-extern UINT8* canyon_videoram;
 
 
 /*************************************

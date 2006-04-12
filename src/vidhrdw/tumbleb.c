@@ -401,6 +401,83 @@ static void get_jumppop_fg_tile_info(int tile_index)
 			0)
 }
 
+
+WRITE16_HANDLER( pangpang_pf1_data_w )
+{
+	COMBINE_DATA(&tumblepb_pf1_data[offset]);
+	tilemap_mark_tile_dirty(pf1_tilemap,offset/2);
+	tilemap_mark_tile_dirty(pf1_alt_tilemap,offset/2);
+}
+
+WRITE16_HANDLER( pangpang_pf2_data_w )
+{
+	COMBINE_DATA(&tumblepb_pf2_data[offset]);
+	tilemap_mark_tile_dirty(pf2_tilemap,offset/2);
+
+	if (pf2_alt_tilemap)
+		tilemap_mark_tile_dirty(pf2_alt_tilemap,offset/2);
+}
+
+
+
+INLINE void pangpang_get_bg_tile_info(int tile_index,int gfx_bank,UINT16 *gfx_base)
+{
+	int data = gfx_base[tile_index*2+1];
+	int attr = gfx_base[tile_index*2];
+
+	SET_TILE_INFO(
+			gfx_bank,
+			data & 0x1fff,
+			(attr >>12) & 0xf,
+			0)
+}
+
+INLINE void pangpang_get_bg2x_tile_info(int tile_index,int gfx_bank,UINT16 *gfx_base)
+{
+	int data = gfx_base[tile_index*2+1];
+	int attr = gfx_base[tile_index*2];
+
+	SET_TILE_INFO(
+			gfx_bank,
+			(data & 0xfff)+0x1000,
+			(attr >>12) & 0xf,
+			0)
+}
+
+
+static void pangpang_get_bg1_tile_info(int tile_index) { pangpang_get_bg_tile_info(tile_index,2,tumblepb_pf1_data); }
+static void pangpang_get_bg2_tile_info(int tile_index) { pangpang_get_bg2x_tile_info(tile_index,1,tumblepb_pf2_data); }
+
+static void pangpang_get_fg_tile_info(int tile_index)
+{
+	int data = tumblepb_pf1_data[tile_index*2+1];
+	int attr = tumblepb_pf1_data[tile_index*2];
+
+	SET_TILE_INFO(
+			0,
+			data & 0x1fff,
+			(attr >> 12)& 0x1f,
+			0)
+}
+
+
+VIDEO_START( pangpang )
+{
+	pf1_tilemap =     tilemap_create(pangpang_get_fg_tile_info, tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
+	pf1_alt_tilemap = tilemap_create(pangpang_get_bg1_tile_info,tumblep_scan,TILEMAP_TRANSPARENT,16,16,64,32);
+	pf2_tilemap =     tilemap_create(pangpang_get_bg2_tile_info,tumblep_scan,TILEMAP_OPAQUE,     16,16,64,32);
+
+	if (!pf1_tilemap || !pf1_alt_tilemap || !pf2_tilemap)
+		return 1;
+
+	tilemap_set_transparent_pen(pf1_tilemap,0);
+	tilemap_set_transparent_pen(pf1_alt_tilemap,0);
+	bcstory_tilebank = 0;
+
+	return 0;
+}
+
+
 VIDEO_START( tumblepb )
 {
 	pf1_tilemap =     tilemap_create(get_fg_tile_info, tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
@@ -685,7 +762,29 @@ ui_popup("%04x %04x %04x %04x %04x %04x %04x %04x",
 
 }
 
+VIDEO_UPDATE( pangpang )
+{
+	int offs,offs2;
 
+	flipscreen=tumblepb_control_0[0]&0x80;
+	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+	if (flipscreen) offs=1; else offs=-1;
+	if (flipscreen) offs2=-3; else offs2=-5;
+
+	tilemap_set_scrollx( pf1_tilemap,0, tumblepb_control_0[1]+offs2 );
+	tilemap_set_scrolly( pf1_tilemap,0, tumblepb_control_0[2] );
+	tilemap_set_scrollx( pf1_alt_tilemap,0, tumblepb_control_0[1]+offs2 );
+	tilemap_set_scrolly( pf1_alt_tilemap,0, tumblepb_control_0[2] );
+	tilemap_set_scrollx( pf2_tilemap,0, tumblepb_control_0[3]+offs );
+	tilemap_set_scrolly( pf2_tilemap,0, tumblepb_control_0[4] );
+
+	tilemap_draw(bitmap,cliprect,pf2_tilemap,0,0);
+	if (tumblepb_control_0[6]&0x80)
+		tilemap_draw(bitmap,cliprect,pf1_tilemap,0,0);
+	else
+		tilemap_draw(bitmap,cliprect,pf1_alt_tilemap,0,0);
+	jumpkids_drawsprites(bitmap,cliprect);
+}
 
 VIDEO_START( suprtrio )
 {

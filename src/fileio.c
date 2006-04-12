@@ -1353,7 +1353,7 @@ chd_interface_file *chd_open_cb(const char *filename, const char *mode)
 		const game_driver *drv;
 
 		/* attempt reading up the chain through the parents */
-		for (drv = Machine->gamedrv; drv != NULL; drv = drv->clone_of)
+		for (drv = Machine->gamedrv; drv != NULL; drv = driver_get_clone(drv))
 		{
 			void *file = mame_fopen(drv->name, filename, FILETYPE_IMAGE, 0);
 			if (file != NULL)

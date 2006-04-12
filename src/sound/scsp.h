@@ -13,6 +13,8 @@ struct SCSPinterface
 	void (*irq_callback)(int state);	/* irq callback */
 };
 
+void SCSP_set_ram_base(int which, void *base);
+
 // SCSP register access
 READ16_HANDLER( SCSP_0_r );
 WRITE16_HANDLER( SCSP_0_w );

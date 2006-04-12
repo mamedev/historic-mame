@@ -35,6 +35,7 @@ static UINT8 *wbml_paged_videoram;
 static UINT8 wbml_videoram_bank=0,wbml_videoram_bank_latch=0;
 
 static int blockgal_kludgeoffset;
+static int system1_sprite_xoffset = 0;
 
 /***************************************************************************
 
@@ -132,6 +133,8 @@ VIDEO_START( system1 )
 	state_save_register_global(system1_background_memory);
 	state_save_register_global(system1_video_mode);
 
+	system1_sprite_xoffset = 1;
+
 	return 0;
 }
 
@@ -147,6 +150,8 @@ VIDEO_START( wbml )
 
 	if ((tmp_bitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
+
+	system1_sprite_xoffset = 1+7*2;
 
 	state_save_register_func_postload(system1_postload);
 	state_save_register_global(system1_background_memory);
@@ -257,11 +262,6 @@ WRITE8_HANDLER( system1_sprites_collisionram_w )
 	system1_sprites_collisionram[offset] = 0x7e;
 }
 
-
-
-extern game_driver driver_wbml;
-extern game_driver driver_ufosensi;
-
 static void draw_sprite(mame_bitmap *bitmap,int spr_number)
 {
 	int sy,row,height,src,bank;
@@ -294,13 +294,7 @@ static void draw_sprite(mame_bitmap *bitmap,int spr_number)
 
 		src = src2 = src + skip;
 
-		/* the +1 prevents sprite lag in Wonder Boy */
-		x = sprite_base[SPR_X_LO] + ((sprite_base[SPR_X_HI] & 0x01) << 8) + 1;
-		if (Machine->gamedrv == &driver_wbml || Machine->gamedrv->clone_of == &driver_wbml ||
-			Machine->gamedrv == &driver_ufosensi || Machine->gamedrv->clone_of == &driver_ufosensi)
-		{
-			x += 7*2;
-		}
+		x = sprite_base[SPR_X_LO] + ((sprite_base[SPR_X_HI] & 0x01) << 8) + system1_sprite_xoffset;
 		x_flipped = x;
 		y = y_flipped = sy+row;
 

@@ -17,6 +17,7 @@
 **************************************************************************/
 
 #include "driver.h"
+#include "includes/pacman.h"
 
 static tilemap *bg_tilemap;
 static UINT8 charbank;
@@ -124,7 +125,7 @@ PALETTE_INIT( pacman )
 	}
 }
 
-UINT32 pacman_scan_rows( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
+static UINT32 pacman_scan_rows( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
 {
 	int offs;
 
@@ -478,7 +479,7 @@ Jr. Pac-Man
 2018 - 2045 = column 1 attr (28 rows)
 */
 
-UINT32 jrpacman_scan_rows( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
+static UINT32 jrpacman_scan_rows( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
 {
 	int offs;
 

@@ -8,12 +8,10 @@
 #include "driver.h"
 #include "cpu/tms34010/tms34010.h"
 #include "cpu/tms34010/34010ops.h"
+#include "includes/micro3d.h"
 
 
-extern UINT16 *micro3d_sprite_vram;
 UINT16 dpytap, dudate, dumask;
-extern UINT16 dpyadr;
-extern int dpyadrscan;
 //extern UINT16 *m68681_base;
 
 #if 0

@@ -290,7 +290,7 @@ static void captaven_drawsprites(mame_bitmap *bitmap, const UINT32 *spritedata, 
 	}
 }
 
-static void tattass_drawsprites(mame_bitmap *bitmap, const UINT32 *spritedata, int gfxbank, int mask, int colourmask)
+static void fghthist_drawsprites(mame_bitmap *bitmap, const UINT32 *spritedata, int gfxbank, int mask, int colourmask)
 {
 	int offs;
 
@@ -309,24 +309,10 @@ static void tattass_drawsprites(mame_bitmap *bitmap, const UINT32 *spritedata, i
 		x = spritedata[offs+2];
 		colour = (x >>9) & colourmask;
 
-		if (gfxbank==4) {
-			if ((y&0x8000)!=mask) /* Defer alpha until last (seperate pass) */
-				continue;
-
-			if (y&0x8000)
-				trans=TRANSPARENCY_ALPHA;
-
-			if (x&0x4000)
-				pri=32; /* Behind other sprites, above all playfields */
-			else
-				pri=128; /* Above other sprites, above all playfields */
-		}
-		else {
-			if (x&0x4000)
-				pri=64; /* Above top playfield */
-			else
-				pri=8; /* Behind top playfield */
-		}
+		if ((y&0x8000))
+			pri=8;
+		else
+			pri=128;
 
 		fx = y & 0x2000;
 		fy = y & 0x4000;
@@ -346,7 +332,7 @@ static void tattass_drawsprites(mame_bitmap *bitmap, const UINT32 *spritedata, i
 			inc = 1;
 		}
 
-		mult=+16;//todo
+		mult=+16;
 
 		if (fx) fx=0; else fx=1;
 		if (fy) fy=0; else fy=1;
@@ -1011,6 +997,7 @@ VIDEO_START( fghthist )
 	tilemap_set_transparent_pen(pf1_tilemap,0);
 	tilemap_set_transparent_pen(pf2_tilemap,0);
 	tilemap_set_transparent_pen(pf3_tilemap,0);
+	tilemap_set_transparent_pen(pf4_tilemap,0);
 
 	deco32_raster_display_list=0;
 	deco32_pf2_colourbank=deco32_pf4_colourbank=0;
@@ -1440,16 +1427,12 @@ VIDEO_UPDATE( fghthist )
 	/* Draw screen */
 	deco16_clear_sprite_priority_bitmap();
 	fillbitmap(priority_bitmap,0,cliprect);
-	if ((deco32_pf34_control[5]&0x8000)==0)
-		fillbitmap(bitmap,Machine->pens[0x200],cliprect); //TODO - pf4 palette entry 0 is shown
-	else
-		tilemap_draw(bitmap,cliprect,pf4_tilemap,0,1);
-	tilemap_draw(bitmap,cliprect,pf3_tilemap,0,2);
+	fillbitmap(bitmap,Machine->pens[0x000],cliprect); // Palette index not confirmed
+	tilemap_draw(bitmap,cliprect,pf4_tilemap,0,1);
+	tilemap_draw(bitmap,cliprect,pf3_tilemap,0,4);
 	tilemap_draw(bitmap,cliprect,pf2_tilemap,0,16);
-	tattass_drawsprites(bitmap,buffered_spriteram32,3,0, 0xf);
+	fghthist_drawsprites(bitmap, buffered_spriteram32,3,0, 0xf);
 	tilemap_draw(bitmap,cliprect,pf1_tilemap,0,0);
-
-//  print_debug_info(bitmap);
 }
 
 /*

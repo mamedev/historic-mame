@@ -1359,16 +1359,26 @@ static DRIVER_INIT ( puzloop2 )
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x804000, 0x804001, 0, 0, pl2_port_0_word_r);
 }
 
-static const gfx_layout layout8x8 =
+static const gfx_layout cps1_layout8x8 =
 {
 	8,8,
 	RGN_FRAC(1,1),
 	4,
-	{ GFX_RAW },
-	{ 4*8 },	/* org displacement - 8x8 tiles are taken from the RIGHT side of the 16x16 tile
-                   (fixes cawing which uses character 0x0002 as space, typo instead of 0x20?) */
-	{ 8*8 },	/* line modulo */
-	64*8		/* char modulo */
+	{ 0, 1, 2, 3 },
+	{ 1*4, 0*4, 3*4, 2*4, 5*4, 4*4, 7*4, 6*4 },
+	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64 },
+	64*8
+};
+
+static const gfx_layout cps1_layout8x8_2 =
+{
+	8,8,
+	RGN_FRAC(1,1),
+	4,
+	{ 0, 1, 2, 3 },
+	{ 9*4, 8*4, 11*4, 10*4, 13*4, 12*4, 15*4, 14*4 },
+	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64 },
+	64*8
 };
 
 static const gfx_layout layout16x16 =
@@ -1395,7 +1405,8 @@ static const gfx_layout layout32x32 =
 
 static const gfx_decode gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &layout8x8,   0, 0x100 },
+	{ REGION_GFX1, 0, &cps1_layout8x8,   0, 0x100 },
+	{ REGION_GFX1, 0, &cps1_layout8x8_2, 0, 0x100 },
 	{ REGION_GFX1, 0, &layout16x16, 0, 0x100 },
 	{ REGION_GFX1, 0, &layout32x32, 0, 0x100 },
 	{ -1 }

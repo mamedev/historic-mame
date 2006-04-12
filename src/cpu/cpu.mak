@@ -944,6 +944,21 @@ endif
 
 
 #-------------------------------------------------
+# Texas Instruments TMS3205x DSP
+#-------------------------------------------------
+
+CPUDEFS += -DHAS_TMS32051=$(if $(filter TMS32051,$(CPUS)),1,0)
+
+ifneq ($(filter TMS32051,$(CPUS)),)
+OBJDIRS += $(OBJ)/cpu/tms32051
+CPUOBJS += $(OBJ)/cpu/tms32051/tms32051.o
+DBGOBJS += $(OBJ)/cpu/tms32051/dis32051.o
+$(OBJ)/cpu/tms32051/tms32051.o: tms32051.c tms32051.h
+endif
+
+
+
+#-------------------------------------------------
 # Zilog Z80
 #-------------------------------------------------
 

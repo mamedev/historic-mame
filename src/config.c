@@ -259,14 +259,17 @@ static int config_load_xml(mame_file *file, int which_type)
 				break;
 
 			case CONFIG_TYPE_CONTROLLER:
+			{
+				const game_driver *clone_of;
 				/* match on: default, game name, source file name, parent name, grandparent name */
 				if (strcmp(name, "default") != 0 &&
 					strcmp(name, Machine->gamedrv->name) != 0 &&
 					strcmp(name, srcfile) != 0 &&
-					(!Machine->gamedrv->clone_of || strcmp(name, Machine->gamedrv->clone_of->name) != 0) &&
-					(!Machine->gamedrv->clone_of || !Machine->gamedrv->clone_of->clone_of || strcmp(name, Machine->gamedrv->clone_of->clone_of->name) != 0))
+					((clone_of = driver_get_clone(Machine->gamedrv)) == NULL || strcmp(name, clone_of->name) != 0) &&
+					(clone_of == NULL || ((clone_of = driver_get_clone(clone_of)) == NULL) || strcmp(name, clone_of->name) != 0))
 					continue;
 				break;
+			}
 		}
 
 		/* log that we are processing this entry */

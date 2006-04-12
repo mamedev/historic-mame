@@ -7,6 +7,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "includes/crbaloon.h"
 
 static UINT8 spritectrl[3];
 

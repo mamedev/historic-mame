@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "includes/galaga.h"
 
 
 UINT8 *digdug_videoram,*digdug_objram, *digdug_posram, *digdug_flpram;

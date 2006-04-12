@@ -16,9 +16,6 @@
 #include "info.h"
 #include "hash.h"
 
-/* The size of our hardcoded BIOS ROM array */
-#define MAX_BIOS 32
-
 /* MESS/MAME configuration */
 #ifdef MESS
 #define XML_ROOT "mess"
@@ -32,8 +29,6 @@
 void print_game_device(FILE* out, const game_driver* game);
 void print_game_ramoptions(FILE* out, const game_driver* game);
 #endif /* MESS */
-
-extern game_driver driver_0;
 
 /* Print a free format string */
 static const char *normalize_string(const char* s)
@@ -356,10 +351,12 @@ static void print_game_rom(FILE* out, const game_driver* game)
 {
 	const rom_entry *region, *rom, *chunk;
 	const rom_entry *pregion, *prom, *fprom=NULL;
+	const game_driver *clone_of;
 
 	if (!game->rom)
 		return;
 
+	clone_of = driver_get_clone(game);
 	for (region = rom_first_region(game); region; region = rom_next_region(region))
 		for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
 		{
@@ -376,10 +373,10 @@ static void print_game_rom(FILE* out, const game_driver* game)
 			for (chunk = rom_first_chunk(rom); chunk; chunk = rom_next_chunk(chunk))
 				length += ROM_GETLENGTH(chunk);
 
-			if (!ROM_NOGOODDUMP(rom) && game->clone_of)
+			if (!ROM_NOGOODDUMP(rom) && clone_of)
 			{
 				fprom=NULL;
-				for (pregion = rom_first_region(game->clone_of); pregion; pregion = rom_next_region(pregion))
+				for (pregion = rom_first_region(clone_of); pregion; pregion = rom_next_region(pregion))
 					for (prom = rom_first_file(pregion); prom; prom = rom_next_file(prom))
 						if (hash_data_is_equal(ROM_GETHASHDATA(rom), ROM_GETHASHDATA(prom), 0))
 						{
@@ -770,6 +767,11 @@ static void print_game_driver(FILE* out, const game_driver* game)
 static void print_game_info(FILE* out, const game_driver* game)
 {
 	const char *start;
+	const game_driver *clone_of;
+
+	/* No action if not a game */
+	if (game->flags & NOT_A_DRIVER)
+		return;
 
 	fprintf(out, "\t<" XML_TOP);
 
@@ -782,11 +784,12 @@ static void print_game_info(FILE* out, const game_driver* game)
 		start = game->source_file - 1;
 	fprintf(out, " sourcefile=\"%s\"", normalize_string(start + 1));
 
-	if (game->clone_of && !(game->clone_of->flags & NOT_A_DRIVER))
-		fprintf(out, " cloneof=\"%s\"", normalize_string(game->clone_of->name));
+	clone_of = driver_get_clone(game);
+	if (clone_of && !(clone_of->flags & NOT_A_DRIVER))
+		fprintf(out, " cloneof=\"%s\"", normalize_string(clone_of->name));
 
-	if (game->clone_of && game->clone_of != &driver_0)
-		fprintf(out, " romof=\"%s\"", normalize_string(game->clone_of->name));
+	if (clone_of)
+		fprintf(out, " romof=\"%s\"", normalize_string(clone_of->name));
 
 	print_game_sampleof(out, game);
 
@@ -825,6 +828,11 @@ static void print_resource_info(FILE* out, const game_driver* game)
 {
 	const char *start;
 
+ 	/* No action if not a resource */
+ 	if ((game->flags & NOT_A_DRIVER) == 0)
+ 		return;
+
+
 	/* The runnable entry is an hint for frontend authors */
 	/* to easily know which game can be started. */
 	/* Games marked as runnable=yes can be started putting */
@@ -859,46 +867,9 @@ static void print_resource_info(FILE* out, const game_driver* game)
 
 	fprintf(out, "\t</" XML_TOP ">\n");
 }
-
-/* Print resource info for all games */
-static void print_resources_data(FILE* out, const game_driver* games[])
-{
-	int i, j;
-	int total_bios=0;
-	game_driver *resources[MAX_BIOS];
-
-	/* Build a driver list containing all the NOT_A_DRIVER entries */
-	/* This won't catch clones of games with bioses, but the parent should be in games[] anyway */
-	for (i=0;drivers[i];++i)
-	{
-		if (drivers[i]->clone_of &&
-		   (drivers[i]->clone_of->flags & NOT_A_DRIVER) &&
-		   (drivers[i]->clone_of != &driver_0))
-		{
-			for (j=0;j<total_bios;++j)
-			{
-				if (resources[j] == drivers[i]->clone_of)
-					break;
-			}
-
-			if (j == total_bios)
-				resources[total_bios++] = (game_driver *)drivers[i]->clone_of;
-
-			if (total_bios == MAX_BIOS)
-			{
-				fprintf(stderr, "Too many BIOS files found. Increase size of MAX_BIOS.");
-				break;
-			}
-		}
-	}
-
-	/* print resources */
-	for(i=0;i<total_bios;++i)
-		print_resource_info(out, resources[i]);
-}
 #endif
 
-static void print_mame_data(FILE* out, const game_driver* games[])
+static void print_mame_data(FILE* out, const game_driver* const games[])
 {
 	int j;
 
@@ -908,12 +879,13 @@ static void print_mame_data(FILE* out, const game_driver* games[])
 
 #if !defined(MESS)
 	/* print resources */
-	print_resources_data(out, games);
+ 	for (j=0;games[j];++j)
+ 		print_resource_info(out, games[j]);
 #endif
 }
 
 /* Print the MAME database in XML format */
-void print_mame_xml(FILE* out, const game_driver* games[])
+void print_mame_xml(FILE* out, const game_driver* const games[])
 {
 	fprintf(out,
 		"<?xml version=\"1.0\"?>\n"

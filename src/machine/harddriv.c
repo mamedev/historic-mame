@@ -162,6 +162,18 @@ static void duart_callback(int param);
  *
  *************************************/
 
+MACHINE_START( harddriv )
+{
+	/* predetermine memory regions */
+	sim_memory = (UINT16 *)memory_region(REGION_USER1);
+	som_memory = (UINT16 *)auto_malloc(0x8000);
+	sim_memory_size = memory_region_length(REGION_USER1) / 2;
+	adsp_pgm_memory_word = (UINT16 *)((UINT8 *)hdadsp_pgm_memory + 1);
+
+	return 0;
+}
+
+
 MACHINE_RESET( harddriv )
 {
 	/* generic reset */
@@ -177,12 +189,6 @@ MACHINE_RESET( harddriv )
 	/* if we found a 6502, reset the JSA board */
 	if (hdcpu_jsa != -1)
 		atarijsa_reset();
-
-	/* predetermine memory regions */
-	sim_memory = (UINT16 *)memory_region(REGION_USER1);
-	som_memory = (UINT16 *)memory_region(REGION_USER2);
-	sim_memory_size = memory_region_length(REGION_USER1) / 2;
-	adsp_pgm_memory_word = (UINT16 *)((UINT8 *)hdadsp_pgm_memory + 1);
 
 	last_gsp_shiftreg = 0;
 

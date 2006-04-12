@@ -176,7 +176,6 @@ static NVRAM_HANDLER( mitchell )
 static READ8_HANDLER( pang_port5_r )
 {
 	int bit;
-	extern const game_driver driver_mgakuen2;
 
 	bit = EEPROM_read_bit() << 7;
 
@@ -187,8 +186,23 @@ static READ8_HANDLER( pang_port5_r )
 	/* otherwise music doesn't work. */
 	if (cpu_getiloops() & 1) bit |= 0x01;
 	else bit |= 0x08;
-if (Machine->gamedrv == &driver_mgakuen2)	/* hack... music doesn't work otherwise */
-	bit ^= 0x08;
+
+	{
+		static const game_driver *mitchell_driver = NULL;
+		static int pang_port5_kludge = 0;
+
+		/* Only compute pang_port5_kludge when confronted with a new gamedrv */
+		if (mitchell_driver != Machine->gamedrv)
+		{
+			mitchell_driver = Machine->gamedrv;
+			if (strcmp(mitchell_driver->name, "mgakuen2") == 0)
+				pang_port5_kludge = 0;
+			else
+				pang_port5_kludge = 1;
+		}
+		if (pang_port5_kludge)	/* hack... music doesn't work otherwise */
+			bit ^= 0x08;
+	}
 
 	return (input_port_0_r(0) & 0x76) | bit;
 }

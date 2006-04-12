@@ -88,6 +88,8 @@ C102 - Controls CPU access to ROZ Memory Area.
 
 /***********************************************************************************/
 
+/*----------- defined in drivers/namcoic.c -----------*/
+
 int namco_tilemap_init(
 		int gfxbank, void *pMaskROM,
 		void (*cb)( UINT16 code, int *gfx, int *mask) );

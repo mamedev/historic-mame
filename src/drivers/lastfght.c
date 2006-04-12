@@ -66,6 +66,8 @@ Notes:
 #include "driver.h"
 #include "cpu/h83002/h83002.h"
 
+static int clr_offset=0;
+
 INPUT_PORTS_START( lastfght )
 INPUT_PORTS_END
 
@@ -83,10 +85,10 @@ static VIDEO_UPDATE( lastfght )
 	fillbitmap( bitmap, get_black_pen(), cliprect );
 	fillbitmap( priority_bitmap, 0, cliprect );
 
-	if ( code_pressed_memory(KEYCODE_W) )
+	if ( code_pressed_memory(KEYCODE_Z) )
 		base += 512*512;
 
-	if ( code_pressed_memory(KEYCODE_Q) )
+	if ( code_pressed_memory(KEYCODE_X) )
 		base -= 512*512;
 
 	count = base;
@@ -102,6 +104,62 @@ static VIDEO_UPDATE( lastfght )
 			plot_pixel(bitmap,x,y,data);
 		}
 	}
+
+	if(code_pressed(KEYCODE_Q))
+	{
+		cpunum_set_input_line(0, 0, PULSE_LINE);
+	}
+
+	if(code_pressed(KEYCODE_W))
+	{
+		cpunum_set_input_line(0, 1, PULSE_LINE);
+	}
+
+	if(code_pressed(KEYCODE_E))
+	{
+		cpunum_set_input_line(0, 2, PULSE_LINE);
+	}
+
+	if(code_pressed(KEYCODE_R))
+	{
+		cpunum_set_input_line(0, 3, PULSE_LINE);
+	}
+
+	if(code_pressed(KEYCODE_T))
+	{
+		cpunum_set_input_line(0, 4, PULSE_LINE);
+	}
+
+	if(code_pressed(KEYCODE_Y))
+	{
+		cpunum_set_input_line(0, 5, PULSE_LINE);
+	}
+
+	if(code_pressed(KEYCODE_U))
+	{
+		cpunum_set_input_line(0, 6, PULSE_LINE);
+	}
+
+	if(code_pressed(KEYCODE_I))
+	{
+		cpunum_set_input_line(0, 7, PULSE_LINE);
+	}
+
+}
+
+static WRITE16_HANDLER(colordac_w)
+{
+	if(ACCESSING_LSB)
+	{
+		colorram[clr_offset]=data;
+		palette_set_color(clr_offset/3,colorram[(clr_offset/3)*3]*4,colorram[(clr_offset/3)*3+1]*4,colorram[(clr_offset/3)*3+2]*4);
+		clr_offset=(clr_offset+1)%768;
+	}
+
+	if(ACCESSING_MSB)
+	{
+		clr_offset=(data>>8)*3;
+	}
 }
 
 static ADDRESS_MAP_START( lastfght_map, ADDRESS_SPACE_PROGRAM, 16 )
@@ -109,19 +167,22 @@ static ADDRESS_MAP_START( lastfght_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_ROM AM_REGION(REGION_CPU1, 0)
 	AM_RANGE(0x080000, 0x0fffff) AM_ROM AM_REGION(REGION_CPU1, 0)
 	AM_RANGE(0x200000, 0x20ffff) AM_RAM
+	AM_RANGE(0x600008, 0x600009) AM_WRITE(colordac_w)
+	AM_RANGE(0x800000, 0x80001f) AM_RAM // blitter regs ?
+	AM_RANGE(0xc00000, 0xc0001f) AM_RAM // protection ?
 	AM_RANGE(0xff0000, 0xffffff) AM_RAM
 ADDRESS_MAP_END
 
 static INTERRUPT_GEN( unknown_interrupt )
 {
-	cpunum_set_input_line(0, cpu_getiloops(), HOLD_LINE);
+	cpunum_set_input_line(0, cpu_getiloops(), PULSE_LINE);
 }
 
 
 static MACHINE_DRIVER_START( lastfght )
 	MDRV_CPU_ADD(H83002, 16000000)
 	MDRV_CPU_PROGRAM_MAP( lastfght_map, 0 )
-	MDRV_CPU_VBLANK_INT(unknown_interrupt,6)
+//  MDRV_CPU_VBLANK_INT(unknown_interrupt,6)
 
 	MDRV_FRAMES_PER_SECOND( 60 )
 	MDRV_VBLANK_DURATION( 0 )
@@ -154,4 +215,12 @@ ROM_START( lastfght )
 	ROM_LOAD( "v100.u7",      0x000000, 0x100000, CRC(c134378c) SHA1(999c75f3a7890421cfd904a926ca377ee43a6825) )
 ROM_END
 
-GAME(2000, lastfght, 0, lastfght, lastfght, 0, ROT0, "Subsino", "Last Fighting", GAME_NOT_WORKING|GAME_NO_SOUND)
+static DRIVER_INIT(lastfght)
+{
+	colorram=auto_malloc(768);
+
+	// remove comment to pass initial check (protection ? hw?)
+	// memory_region(REGION_CPU1)[0x00355]=0x40;
+}
+
+GAME(2000, lastfght, 0, lastfght, lastfght, lastfght, ROT0, "Subsino", "Last Fighting", GAME_NOT_WORKING|GAME_NO_SOUND)

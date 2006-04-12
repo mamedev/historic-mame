@@ -407,7 +407,7 @@ static void SCSP_Init(struct _SCSP *SCSP, const struct SCSPinterface *intf)
 
 	// get SCSP RAM
 	{
-		memset(SCSP,0,sizeof(SCSP));
+		memset(SCSP,0,sizeof(*SCSP));
 
 		if (!i)
 		{
@@ -418,8 +418,11 @@ static void SCSP_Init(struct _SCSP *SCSP, const struct SCSPinterface *intf)
 			SCSP->Master=0;
 		}
 
-		SCSP->SCSPRAM = memory_region(intf->region);
-		SCSP->SCSPRAM += intf->roffset;
+		if (intf->region)
+		{
+			SCSP->SCSPRAM = memory_region(intf->region);
+			SCSP->SCSPRAM += intf->roffset;
+		}
 	}
 
 	for(i=0;i<0x400;++i)
@@ -1059,6 +1062,14 @@ static void *scsp_start(int sndindex, int clock, const void *config)
 	}
 
 	return SCSP;
+}
+
+
+void SCSP_set_ram_base(int which, void *base)
+{
+	struct _SCSP *SCSP = sndti_token(SOUND_SCSP, which);
+	if (SCSP)
+		SCSP->SCSPRAM = base;
 }
 
 

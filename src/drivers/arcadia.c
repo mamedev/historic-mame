@@ -54,6 +54,7 @@ discarded, this looks like game bug
 ***************************************************************************/
 
 #include "driver.h"
+#include "sound/custom.h"
 #include "includes/amiga.h"
 
 /**************************************************************************
@@ -127,29 +128,19 @@ static void autoconfig_init( UINT32 rom_boot_vector )
 }
 
 
-static ADDRESS_MAP_START(readmem, ADDRESS_SPACE_PROGRAM, 16)
-	AM_RANGE( 0x000000, 0x07ffff) AM_READ( MRA16_BANK1 ) AM_REGION(REGION_CPU1, 0) /* Chip Ram - 512k or System ROM mirror*/
-	AM_RANGE( 0x200000, 0x201fff) AM_READ( MRA16_RAM ) AM_BASE(&amiga_expansion_ram)
-	AM_RANGE( 0x800000, 0x97ffff) AM_READ( MRA16_BANK2 )
-	AM_RANGE( 0x980000, 0x9fbfff) AM_READ( MRA16_ROM ) AM_REGION(REGION_USER2, 0)
-	AM_RANGE( 0x9fc000, 0x9fffff) AM_READ( MRA16_RAM ) AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
-	AM_RANGE( 0xbfd000, 0xbfefff) AM_READ( amiga_cia_r )        /* 8510's CIA A and CIA B */
-	AM_RANGE( 0xe80000, 0xe8ffff) AM_READ( MRA16_RAM ) AM_BASE(&amiga_autoconfig_mem)
-	AM_RANGE( 0xdbf000, 0xdfffff) AM_READ( amiga_custom_r )     /* Custom Chips */
+static ADDRESS_MAP_START( amiga_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE( 0x000000, 0x07ffff) AM_RAMBANK(1) AM_BASE(&amiga_chip_ram)	/* Chip Ram - 512k or System ROM mirror */
+	AM_RANGE( 0x200000, 0x201fff) AM_RAM AM_BASE(&amiga_expansion_ram)
+	AM_RANGE( 0x800000, 0x97ffff) AM_ROMBANK(2) 							/* Game cartridge and bios */
+	AM_RANGE( 0x980000, 0x9fbfff) AM_ROM AM_REGION(REGION_USER2, 0)			/* Game BIOS */
+	AM_RANGE( 0x9fc000, 0x9fffff) AM_RAM AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
+	AM_RANGE( 0xbfd000, 0xbfefff) AM_READWRITE( amiga_cia_r, amiga_cia_w )	/* 8510's CIA A and CIA B */
+	AM_RANGE( 0xe80000, 0xe8ffff) AM_RAM AM_BASE(&amiga_autoconfig_mem)
+	AM_RANGE( 0xdbf000, 0xdfffff) AM_READWRITE( amiga_custom_r, amiga_custom_w ) /* Custom Chips */
 	AM_RANGE( 0xf00000, 0xf7ffff) AM_NOP
-	AM_RANGE( 0xf80000, 0xffffff) AM_READ( MRA16_ROM ) AM_REGION(REGION_USER1, 0)  /* System ROM */
+	AM_RANGE( 0xf80000, 0xffffff) AM_ROM AM_REGION(REGION_USER1, 0)			/* System ROM */
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START(writemem, ADDRESS_SPACE_PROGRAM, 16)
-	AM_RANGE( 0x000000, 0x07ffff) AM_WRITE( MWA16_ROM ) /* Chip Ram - 512k or System ROM mirror*/
-	AM_RANGE( 0x200000, 0x201fff) AM_WRITE( MWA16_RAM ) AM_BASE(&amiga_expansion_ram)
-	AM_RANGE( 0x800000, 0x9fbfff) AM_WRITE( MWA16_ROM )	/* Game cartridge and bios*/
-	AM_RANGE( 0x9fc000, 0x9fffff) AM_WRITE( MWA16_RAM ) AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
-	AM_RANGE( 0xbfd000, 0xbfefff) AM_WRITE( amiga_cia_w )        /* 8510's CIA A and CIA B */
-	AM_RANGE( 0xe80000, 0xe8ffff) AM_WRITE( MWA16_RAM ) AM_BASE(&amiga_autoconfig_mem)
-	AM_RANGE( 0xdbf000, 0xdfffff) AM_WRITE( amiga_custom_w )     /* Custom Chips */
-	AM_RANGE( 0xf80000, 0xffffff) AM_WRITE( MWA16_ROM )            /* System ROM */
-ADDRESS_MAP_END
 
 /**************************************************************************
 ***************************************************************************/
@@ -185,35 +176,45 @@ INPUT_PORTS_START( arcadia )
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_COCKTAIL
 INPUT_PORTS_END
 
-static const gfx_decode gfxdecodeinfo[] =
+
+static struct CustomSound_interface amiga_custom_interface =
 {
-	{ -1 } /* end of array */
+	amiga_sh_start
 };
 
+
 static MACHINE_DRIVER_START( arcadia )
+
 	/* basic machine hardware */
-	MDRV_CPU_ADD( M68000, 7159090)        /* 7.15909 Mhz (NTSC) */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_ADD(M68000, 7159090)        /* 7.15909 Mhz (NTSC) */
+	MDRV_CPU_PROGRAM_MAP(amiga_map,0)
 	MDRV_CPU_VBLANK_INT(amiga_irq, 262)
-	MDRV_FRAMES_PER_SECOND(60)
+
+	MDRV_FRAMES_PER_SECOND(59.997)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(1)
 
 	MDRV_MACHINE_RESET( amiga )
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
-
-  /* video hardware */
+	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
-	MDRV_SCREEN_SIZE(456, 262)
-	MDRV_VISIBLE_AREA(120, 456-1, 32, 262-1)
-	MDRV_GFXDECODE( gfxdecodeinfo )
+	MDRV_SCREEN_SIZE(512*2, 262)
+	MDRV_VISIBLE_AREA((129-8)*2, (449+8-1)*2, 44-8, 244+8-1)
 	MDRV_PALETTE_LENGTH(4096)
-	MDRV_COLORTABLE_LENGTH(4096)
-	MDRV_PALETTE_INIT( amiga )
+	MDRV_PALETTE_INIT(amiga)
 
-	MDRV_VIDEO_START( amiga )
-	MDRV_VIDEO_UPDATE( generic_bitmapped )
+	MDRV_VIDEO_START(amiga)
+	MDRV_VIDEO_UPDATE(generic_bitmapped)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(CUSTOM, 3579545)
+	MDRV_SOUND_CONFIG(amiga_custom_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.50)
+	MDRV_SOUND_ROUTE(1, "left", 0.50)
+	MDRV_SOUND_ROUTE(2, "right", 0.50)
+	MDRV_SOUND_ROUTE(3, "right", 0.50)
 MACHINE_DRIVER_END
 
 
@@ -225,7 +226,6 @@ ROMs definitions
 #define ROM_LOAD16_BYTE_BIOS(bios,name,offset,length,hash)     ROMX_LOAD(name, offset, length, hash, ROM_SKIP(1) | ROM_BIOS(bios+1))
 
 #define ARCADIA_BIOS \
-	ROM_REGION(0x80000, REGION_CPU1, 0) /* RAM */ \
 	ROM_REGION16_BE(0x80000, REGION_USER1, 0 ) \
 	ROM_LOAD16_WORD( "kick13.rom", 0x000000, 0x040000, CRC(c4f0f55f) SHA1(891e9a547772fe0c6c19b610baf8bc4ea7fcb785) ) \
 	ROM_COPY( REGION_USER1, 0x000000, 0x040000, 0x040000 ) \
@@ -780,18 +780,17 @@ static int arcadia_cia_0_portB_r( void )
 
 static void arcadia_cia_0_portA_w( int data )
 {
-	if ( (data & 1) == 1)
-	{
-		/* overlay enabled, map Amiga system ROM on 0x000000 */
-		memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, 0, 0, MRA16_BANK1 );
-		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, 0, 0, MWA16_ROM );
-	}
-	else if ( ((data & 1) == 0))
-	{
+	/* switch banks as appropriate */
+	memory_set_bank(1, data & 1);
+
+	/* swap the write handlers between ROM and bank 1 based on the bit */
+	if ((data & 1) == 0)
 		/* overlay disabled, map RAM on 0x000000 */
-		memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, 0, 0, MRA16_RAM );
-		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, 0, 0, MWA16_RAM );
-	}
+		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, 0, 0, MWA16_BANK1);
+
+	else
+		/* overlay enabled, map Amiga system ROM on 0x000000 */
+		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, 0, 0, MWA16_ROM);
 
 	set_led_status( 0, ( data & 2 ) ? 0 : 1 ); /* bit 2 = Power Led on Amiga*/
 }
@@ -918,13 +917,11 @@ WRITE16_HANDLER(arcadia_multibios_change_game)
 {
 	if (data == 0)
 	{
-		memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x800000, 0x97ffff, 0, 0, MRA16_BANK2 );
-		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x800000, 0x97ffff, 0, 0, MWA16_NOP );
+		memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x800000, 0x97ffff, 0, 0, MRA16_BANK2);
 	}
 	else
 	{
-		memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x800000, 0x97ffff, 0, 0, MRA16_NOP );
-		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x800000, 0x97ffff, 0, 0, MWA16_NOP );
+		memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x800000, 0x97ffff, 0, 0, MRA16_NOP);
 	}
 }
 
@@ -938,7 +935,9 @@ DRIVER_INIT(arcadia)
 	amiga_machine_config(&arcadia_intf);
 
 	/* set up memory */
-	memory_set_bankptr(1, memory_region(REGION_USER1));
+	memory_configure_bank(1, 0, 1, amiga_chip_ram, 0);
+	memory_configure_bank(1, 1, 1, memory_region(REGION_USER1), 0);
+
 	memory_set_bankptr(2, memory_region(REGION_USER3));
 
 	RAM = (UINT16*)memory_region(REGION_USER2);
@@ -977,39 +976,20 @@ DRIVER_INIT(arcadia)
 }
 
 
-/* This kludge should be gone after sound and sound irqs are emulated */
-READ16_HANDLER( dart_kludge2 )
-{
-	return 0;
-}
-
-READ16_HANDLER( dart_kludge1 )
-{
-	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x02a804, 0x02a805, 0, 0, dart_kludge2 );
-	return ((UINT16*)generic_nvram16)[0];
-}
-
-DRIVER_INIT( ar_dart )
-{
-	init_arcadia();
-	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x9fc000, 0x9fc001, 0, 0, dart_kludge1 );
-}
-
-
 /* BIOS */
 GAMEB( 1988, ar_bios,	0,		 ar_bios, arcadia, arcadia, 0,		 0, "Arcadia Systems", "Arcadia System BIOS", NOT_A_DRIVER )
 
 /* working */
-GAMEB( 1988, ar_airh,	ar_bios, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "SportTime Table Hockey (Arcadia, V 2.1)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEB( 1988, ar_bowl,	ar_bios, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "SportTime Bowling (Arcadia, V 2.1)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEB( 1987, ar_dart,	ar_bios, ar_bios, arcadia, arcadia, ar_dart, 0, "Arcadia Systems", "World Darts (Arcadia, V 2.1)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEB( 1988, ar_fast,	ar_bios, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "Magic Johnson's Fast Break (Arcadia, V 2.8)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEB( 1988, ar_ldrb,	ar_bios, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "Leader Board (Arcadia, V 2.4?)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEB( 1988, ar_ldrba,	ar_ldrb, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "Leader Board (Arcadia, V 2.5)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEB( 1987, ar_ninj,	ar_bios, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "Ninja Mission (Arcadia, V 2.5)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEB( 1988, ar_rdwr,	ar_bios, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "RoadWars (Arcadia, V 2.3)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND  )
-GAMEB( 1988, ar_sdwr,	ar_bios, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "Sidewinder (Arcadia, V 2.1)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEB( 1989, ar_socc,	ar_bios, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "World Trophy Soccer (Arcadia, V 3.0)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEB( 1990, ar_spot,	ar_bios, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "Spot (Arcadia)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEB( 1987, ar_sprg,	ar_bios, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "Space Ranger (Arcadia, V 2.0)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEB( 1988, ar_xeon,	ar_bios, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "Xenon (Arcadia, V 2.3)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEB( 1988, ar_airh,	ar_bios, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "SportTime Table Hockey (Arcadia, V 2.1)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEB( 1988, ar_bowl,	ar_bios, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "SportTime Bowling (Arcadia, V 2.1)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEB( 1987, ar_dart,	ar_bios, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "World Darts (Arcadia, V 2.1)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEB( 1988, ar_fast,	ar_bios, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "Magic Johnson's Fast Break (Arcadia, V 2.8)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEB( 1988, ar_ldrb,	ar_bios, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "Leader Board (Arcadia, V 2.4?)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEB( 1988, ar_ldrba,	ar_ldrb, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "Leader Board (Arcadia, V 2.5)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEB( 1987, ar_ninj,	ar_bios, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "Ninja Mission (Arcadia, V 2.5)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEB( 1988, ar_rdwr,	ar_bios, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "RoadWars (Arcadia, V 2.3)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
+GAMEB( 1988, ar_sdwr,	ar_bios, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "Sidewinder (Arcadia, V 2.1)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEB( 1989, ar_socc,	ar_bios, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "World Trophy Soccer (Arcadia, V 3.0)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEB( 1990, ar_spot,	ar_bios, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "Spot (Arcadia)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEB( 1987, ar_sprg,	ar_bios, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "Space Ranger (Arcadia, V 2.0)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEB( 1988, ar_xeon,	ar_bios, ar_bios, arcadia, arcadia, arcadia, 0, "Arcadia Systems", "Xenon (Arcadia, V 2.3)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )

@@ -8,13 +8,11 @@
 
 #include "driver.h"
 #include "res_net.h"
-
-/* from sndhrdw/pleiads.c */
-WRITE8_HANDLER( pleiads_sound_control_c_w );
+#include "includes/phoenix.h"
 
 unsigned char *naughtyb_videoram2;
 
-int videoreg;
+static int videoreg;
 
 /* use these to draw charset B */
 unsigned char *naughtyb_scrollreg;

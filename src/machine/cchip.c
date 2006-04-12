@@ -38,6 +38,7 @@ original board.
 ***************************************************************************/
 
 #include "driver.h"
+#include "includes/taito_f2.h"
 
 static UINT16 current_bank = 0;
 

@@ -7,6 +7,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "includes/galaga.h"
 
 
 #define MAX_STARS 252
@@ -19,22 +20,11 @@ static INT32 bosco_starcontrol,bosco_starblink[2];
 
 static tilemap *bg_tilemap,*fg_tilemap;
 
-
-struct star
-{
-	int x,y,col,set;
-};
-
-
 #define VIDEO_RAM_SIZE 0x400
 
 UINT8 *bosco_videoram;
 UINT8 *bosco_radarattr;
 static UINT8 *bosco_radarx,*bosco_radary;
-
-/* see Galaga.c for starfield locations data */
-
-extern struct star star_seed_tab[];
 
 
 PALETTE_INIT( bosco )

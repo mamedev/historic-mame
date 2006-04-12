@@ -7,6 +7,7 @@
 
 #include "driver.h"
 #include "sound/samples.h"
+#include "includes/vicdual.h"
 
 
 /* output port 0x01 definitions - sound effect drive outputs */

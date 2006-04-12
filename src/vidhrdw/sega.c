@@ -7,6 +7,7 @@
 #include "driver.h"
 #include "avgdvg.h"
 #include "vector.h"
+#include "includes/sega.h"
 #include <math.h>
 
 #define VECTOR_CLOCK		15468480			/* master clock */

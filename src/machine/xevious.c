@@ -9,6 +9,7 @@
 
 #include "driver.h"
 #include "sound/samples.h"
+#include "includes/galaga.h"
 
 /***************************************************************************
 

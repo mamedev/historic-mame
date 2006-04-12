@@ -22,9 +22,8 @@ wow_sh_ update- Null
 #include "cpu/z80/z80.h"
 #include "sound/samples.h"
 #include "sound/custom.h"
+#include "includes/astrocde.h"
 
-
-struct  GameSamples *wowSamples;
 
 /****************************************************************************
  * 64 Phonemes - currently 1 sample per phoneme, will be combined sometime!

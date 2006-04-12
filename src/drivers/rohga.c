@@ -1406,7 +1406,8 @@ static DRIVER_INIT( rohga )
 {
 	deco56_decrypt(REGION_GFX1);
 	deco56_decrypt(REGION_GFX2);
-	deco16_104_rohga_reset();
+
+	decoprot_reset();
 }
 
 static DRIVER_INIT( wizdfire )
@@ -1421,6 +1422,8 @@ static DRIVER_INIT( nitrobal )
 	deco56_decrypt(REGION_GFX1);
 	deco56_decrypt(REGION_GFX2);
 	deco74_decrypt(REGION_GFX3);
+
+	decoprot_reset();
 }
 
 static DRIVER_INIT( schmeisr )
@@ -1434,7 +1437,7 @@ static DRIVER_INIT( schmeisr )
 	deco74_decrypt(REGION_GFX1);
 	deco74_decrypt(REGION_GFX2);
 
-	deco16_104_rohga_reset();
+	decoprot_reset();
 }
 
 GAME( 1991, rohga,    0,       rohga,    rohga,    rohga,    ROT0,   "Data East Corporation", "Rohga Armor Force (Asia/Europe v5.0)" , 0 )

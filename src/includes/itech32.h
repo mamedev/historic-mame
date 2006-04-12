@@ -10,11 +10,6 @@
 void itech32_update_interrupts(int vint, int xint, int qint);
 
 
-/*----------- defined in drivers/drivedge.c -----------*/
-
-void drivedge_update_interrupts(int vint, int xint, int qint);
-
-
 /*----------- defined in vidhrdw/itech32.c -----------*/
 
 extern UINT16 *itech32_video;

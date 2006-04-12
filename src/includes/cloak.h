@@ -4,7 +4,7 @@
 
 *************************************************************************/
 
-/*----------- defined in vidhrdw/ccastles.c -----------*/
+/*----------- defined in vidhrdw/cloak.c -----------*/
 
 WRITE8_HANDLER( cloak_paletteram_w );
 READ8_HANDLER( graph_processor_r );

@@ -62,6 +62,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "includes/pacman.h"
 
 static INT8 counter=0;
 

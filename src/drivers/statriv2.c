@@ -550,6 +550,34 @@ INPUT_PORTS_START( hangman )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( sextriv )
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_SERVICE3 ) PORT_NAME("Play All")
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_SERVICE2 ) PORT_NAME("Play 10000")
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_NAME("Button A")
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_NAME("Button B")
+	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_NAME("Button C")
+	PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_NAME("Button D")
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+ 	PORT_START
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_SERVICE1 ) PORT_NAME("Play 1000")
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_SERVICE( 0x10, IP_ACTIVE_HIGH )
+	PORT_DIPNAME( 0x20, 0x20, "Show Correct Answer" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+INPUT_PORTS_END
+
 static const gfx_layout statriv2_tiles8x16_layout =
 {
 	8,16,
@@ -621,6 +649,16 @@ static MACHINE_DRIVER_START( trivquiz )
 
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_IO_MAP(trivquiz_readport,trivquiz_writeport)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( sextriv )
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(statriv2)
+
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_IO_MAP(trivquiz_readport,trivquiz_writeport)
+
+	MDRV_VISIBLE_AREA(2*8, 36*8-1, 0, 32*8-1)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( supertr2 )
@@ -814,10 +852,31 @@ ROM_START( hangman )
 	ROM_LOAD( "main_74s288.u17", 0x0000, 0x0020, CRC(63b8a63e) SHA1(d59ad84edd583f7befce73b79e12dfb58a204c4f) )
 ROM_END
 
+ROM_START( sextriv )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "sex.u7",       0x00000, 0x1000, CRC(f587bd69) SHA1(47ddc70c3cc75a22ba67833531aeeb409f8d8dc1) )
+	ROM_LOAD( "sex.u8",       0x01000, 0x1000, CRC(2718c26d) SHA1(b614b4a102ae664c4a3be1e30e515454442de052) )
+	ROM_LOAD( "sex.u9",       0x02000, 0x1000, CRC(f4f5a651) SHA1(a1e1fa96f7631b2274ef7fbe7e6e1aae1ee540c5) )
+
+	ROM_REGION( 0x1000,  REGION_GFX1, ROMREGION_INVERT )
+	ROM_LOAD( "sex.u36",      0x00000, 0x1000, CRC(fe3fa087) SHA1(356b3fe62b4c600ff5a625bc3e1c53d8143f55df) )
+
+	ROM_REGION( 0x10000, REGION_USER1, 0 ) /* question data */
+	ROM_LOAD( "sex1.bin",     0x00000, 0x2000, CRC(7b55360b) SHA1(c38b1be8cb7c6c40e167c449c75b9ca0596affe9) )
+	ROM_LOAD( "sex2.bin",     0x02000, 0x2000, CRC(a88563c8) SHA1(23cb169268ded6c81494197cfb9b34180667fc8c) )
+	ROM_LOAD( "sex3.bin",     0x04000, 0x2000, CRC(da1e00a5) SHA1(d70b0a1ecaf7913cfbf3d218ff05e8511be6ab26) )
+	ROM_LOAD( "sex4.bin",     0x06000, 0x2000, CRC(fcff262c) SHA1(b5c17c0285db4b5a6a19aa2d487a98df519bd1b9) )
+	ROM_LOAD( "sex5.bin",     0x08000, 0x2000, CRC(b0b9cd9a) SHA1(b233d7522eab6fd4454209f8bdd91e6c7392d779) )
+	ROM_LOAD( "sex6.bin",     0x0a000, 0x2000, CRC(02653058) SHA1(e830562d9b720f49fbb0079a00799958245e1d96) )
+	ROM_LOAD( "sex7.bin",     0x0c000, 0x2000, CRC(4bddbe3c) SHA1(391012de04e8a3638fac6f173a81cf1f86d8f751) )
+	ROM_LOAD( "sex8.bin",     0x0e000, 0x2000, CRC(d4221641) SHA1(d2c0f66c4fe3a77c73cdcc71bbd8c48342d29431) )
+ROM_END
+
 GAME( 1984, hangman,  0, hangman,  hangman,  0, ROT0, "Status Games", "Hangman", 0 )
 GAME( 1984, trivquiz, 0, trivquiz, statriv2, 0, ROT0, "Status Games", "Triv Quiz", 0 )
 GAME( 1984, statriv2, 0, statriv2, statriv2, 0, ROT0, "Status Games", "Triv Two", 0 )
 GAME( 1985, statriv4, 0, statriv4, statriv4, 0, ROT0, "Status Games", "Triv Four", 0 )
+GAME( 1985, sextriv,  0, sextriv,  sextriv,  0, ROT0, "Status Games", "Sex Triv", 0 )
 GAME( 1985, quaquiz2, 0, quaquiz2, quaquiz2, 0, ROT0, "Status Games", "Quadro Quiz II", GAME_NOT_WORKING )
 GAME( 1986, supertr2, 0, supertr2, supertr2, 0, ROT0, "Status Games", "Super Triv II", 0 )
 GAME( 1988, supertr3, 0, supertr3, supertr2, 0, ROT0, "Status Games", "Super Triv III", GAME_IMPERFECT_GRAPHICS)

@@ -13,6 +13,7 @@ David Widel d_widel@hotmail.com
 ***************************************************************************/
 
 #include "driver.h"
+#include "includes/pacman.h"
 
 static INT8 counter=0;
 

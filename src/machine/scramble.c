@@ -11,10 +11,8 @@
 #include "cpu/z80/z80.h"
 #include "machine/7474.h"
 #include "machine/8255ppi.h"
-#include "galaxian.h"
-
-
-void cclimber_decode(const unsigned char xortable[8][16]);
+#include "includes/galaxian.h"
+#include "includes/cclimber.h"
 
 
 

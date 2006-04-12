@@ -1060,10 +1060,24 @@ static void HandleMemBlock( UINT32 insn)
 
 			if (insn & INSN_BDT_W)
 			{
+				/* Arm docs notes: The base register can always be loaded without any problems.
+                However, don't specify writeback if the base register is being loaded -
+                you can't end up with both a written-back value and a loaded value in the base register!
+
+                However - Fighter's History does exactly that at 0x121e4 (LDMUW [R13], { R13-R15 })!
+
+                This emulator implementation skips applying writeback in this case, which is confirmed
+                correct for this situation, but that is not necessarily true for all ARM hardware
+                implementations (the results are officially undefined).
+                */
+
 				if (ARM_DEBUG_CORE && rb==15)
 					logerror("%08x:  Illegal LDRM writeback to r15\n",R15);
 
-				SetRegister(rb,GetRegister(rb)+result*4);
+				if ((insn&(1<<rb))==0)
+					SetRegister(rb,GetRegister(rb)+result*4);
+				else if (ARM_DEBUG_CORE)
+					logerror("%08x:  Illegal LDRM writeback to base register (%d)\n",R15, rb);
 			}
 		}
 		else
@@ -1099,7 +1113,13 @@ static void HandleMemBlock( UINT32 insn)
 	} /* Loading */
 	else
 	{
-		/* Storing */
+		/* Storing
+
+            ARM docs notes: Storing a list of registers including the base register using writeback
+            will write the value of the base register before writeback to memory only if the base
+            register is the first in the list. Otherwise, the value which is used is not defined.
+
+        */
 		if (insn & (1<<eR15))
 		{
 			if (ARM_DEBUG_CORE)

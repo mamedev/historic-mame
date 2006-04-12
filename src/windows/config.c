@@ -298,6 +298,9 @@ void show_approx_matches(void)
 	{
 		int tmp;
 
+		if ((drivers[i]->flags & NOT_A_DRIVER) != 0)
+			continue;
+
 		penalty = penalty_compare (gamename, drivers[i]->description);
 		tmp = penalty_compare (gamename, drivers[i]->name);
 		if (tmp < penalty) penalty = tmp;
@@ -339,9 +342,10 @@ int parse_config (const char* filename, const game_driver *gamedrv)
 
 	if (gamedrv)
 	{
-		if (gamedrv->clone_of && strlen(gamedrv->clone_of->name))
+		const game_driver *clone_of = driver_get_clone(gamedrv);
+		if (clone_of != NULL)
 		{
-			retval = parse_config (NULL, gamedrv->clone_of);
+			retval = parse_config (NULL, clone_of);
 			if (retval)
 				return retval;
 		}
@@ -516,8 +520,9 @@ int cli_frontend_init (int argc, char **argv)
 	}
 
 	/* check for frontend options, horrible 1234 hack */
-	if (frontend_help(gamename, gamepath) != 1234)
-		exit(0);
+	result = frontend_help(gamename, gamepath);
+	if (result != 1234)
+		exit(result);
 
 	/* we give up. print a few approximate matches */
 	if (game_index == -1)
@@ -559,7 +564,7 @@ int cli_frontend_init (int argc, char **argv)
 		while (tmp_gd != NULL)
 		{
 			if (strcmp(tmp_gd->name, buffer) == 0) break;
-			tmp_gd = tmp_gd->clone_of;
+			tmp_gd = driver_get_clone(tmp_gd);
 		}
 
 		if (tmp_gd == NULL)

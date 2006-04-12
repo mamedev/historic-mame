@@ -6,8 +6,6 @@
 
 ***************************************************************************/
 
-/* VIDHRDW */
-
 #define GFX_8X8_4BIT    0
 #define GFX_16X16_4BIT  1
 #define GFX_32X32_4BIT  2
@@ -15,9 +13,8 @@
 #define GFX_8X8_8BIT    4
 #define GFX_16X16_8BIT  5
 
-extern void nvsram( offs_t offset, UINT16 data );
+/*----------- defined in machine/namcond1.c -----------*/
 
-/* MACHINE */
 extern UINT8 namcond1_gfxbank;
 
 extern UINT8 namcond1_h8_irq5_enabled;
@@ -30,9 +27,4 @@ extern WRITE16_HANDLER( namcond1_cuskey_w );
 
 MACHINE_START( namcond1 );
 MACHINE_RESET( namcond1 );
-
-/* VIDHRDW */
-
-// to be removed
-extern READ16_HANDLER( debug_trigger );
 

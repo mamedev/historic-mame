@@ -14,6 +14,23 @@
 
 
 /***************************************************************************
+    CONSTANTS
+***************************************************************************/
+
+#define CLONE_LRU_SIZE			10
+
+
+
+/***************************************************************************
+    GLOBAL VARIABLES
+***************************************************************************/
+
+static const game_driver *clone_lru[CLONE_LRU_SIZE];
+
+
+
+
+/***************************************************************************
 
     Miscellaneous bits & pieces
 
@@ -30,7 +47,6 @@ void expand_machine_driver(void (*constructor)(machine_config *), machine_config
 	memset(output, 0, sizeof(*output));
 	(*constructor)(output);
 }
-
 
 
 /*-------------------------------------------------
@@ -56,7 +72,6 @@ cpu_config *driver_add_cpu(machine_config *machine, const char *tag, int type, i
 }
 
 
-
 /*-------------------------------------------------
     driver_find_cpu - find a tagged CPU during
     machine driver expansion
@@ -73,7 +88,6 @@ cpu_config *driver_find_cpu(machine_config *machine, const char *tag)
 	logerror("Can't find CPU '%s'!\n", tag);
 	return NULL;
 }
-
 
 
 /*-------------------------------------------------
@@ -95,7 +109,6 @@ void driver_remove_cpu(machine_config *machine, const char *tag)
 
 	logerror("Can't find CPU '%s'!\n", tag);
 }
-
 
 
 /*-------------------------------------------------
@@ -122,7 +135,6 @@ speaker_config *driver_add_speaker(machine_config *machine, const char *tag, flo
 }
 
 
-
 /*-------------------------------------------------
     driver_find_speaker - find a tagged speaker
     system during machine driver expansion
@@ -139,7 +151,6 @@ speaker_config *driver_find_speaker(machine_config *machine, const char *tag)
 	logerror("Can't find speaker '%s'!\n", tag);
 	return NULL;
 }
-
 
 
 /*-------------------------------------------------
@@ -161,7 +172,6 @@ void driver_remove_speaker(machine_config *machine, const char *tag)
 
 	logerror("Can't find speaker '%s'!\n", tag);
 }
-
 
 
 /*-------------------------------------------------
@@ -186,9 +196,7 @@ sound_config *driver_add_sound(machine_config *machine, const char *tag, int typ
 
 	logerror("Out of sounds!\n");
 	return NULL;
-
 }
-
 
 
 /*-------------------------------------------------
@@ -209,7 +217,6 @@ sound_config *driver_find_sound(machine_config *machine, const char *tag)
 }
 
 
-
 /*-------------------------------------------------
     driver_remove_sound - remove a tagged sound
     system during machine driver expansion
@@ -228,4 +235,45 @@ void driver_remove_sound(machine_config *machine, const char *tag)
 		}
 
 	logerror("Can't find sound '%s'!\n", tag);
+}
+
+
+/*-------------------------------------------------
+    driver_get_clone - return a pointer to the
+    clone of a game driver.
+-------------------------------------------------*/
+
+const game_driver *driver_get_clone(const game_driver *driver)
+{
+	int i;
+
+	/* if no clone, easy out */
+	if (driver->parent == NULL || (driver->parent[0] == '0' && driver->parent[1] == 0))
+		return NULL;
+
+	/* scan the LRU list next */
+	for (i = 0; i < CLONE_LRU_SIZE; i++)
+		if (clone_lru[i] != NULL && !strcmp(clone_lru[i]->name, driver->parent))
+		{
+			/* if not first, swap with the head */
+			if (i != 0)
+			{
+				const game_driver *temp = clone_lru[0];
+				clone_lru[0] = clone_lru[i];
+				clone_lru[i] = temp;
+			}
+			return clone_lru[0];
+		}
+
+	/* scan for a match in the drivers -- slow! */
+	for (i = 0; drivers[i] != NULL; i++)
+		if (!strcmp(drivers[i]->name, driver->parent))
+		{
+			memmove(&clone_lru[1], &clone_lru[0], sizeof(clone_lru[0]) * (CLONE_LRU_SIZE - 1));
+			clone_lru[0] = drivers[i];
+			return clone_lru[0];
+		}
+
+	/* shouldn't happen */
+	return NULL;
 }

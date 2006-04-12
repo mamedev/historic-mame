@@ -14,11 +14,9 @@ Ernesto Corvi & Mariusz Wojcieszek
 #define LOG_CUSTOM	1
 #define LOG_CIA		0
 
-/* from vidhrdw */
-extern void copper_setpc( unsigned long pc );
-extern void copper_enable( void );
-
 static const struct amiga_machine_interface *amiga_intf;
+
+
 
 /***************************************************************************
 
@@ -31,15 +29,16 @@ WRITE16_HANDLER(amiga_custom_w);
 
 custom_regs_def custom_regs;
 
+UINT16 *amiga_chip_ram;
 UINT16 *amiga_expansion_ram;
 UINT16 *amiga_autoconfig_mem;
 
 static int translate_ints( void ) {
 
-	int ints = custom_regs.INTENA & custom_regs.INTREQ;
+	int ints = CUSTOM_REG(REG_INTENA) & CUSTOM_REG(REG_INTREQ);
 	int ret = 0;
 
-	if ( custom_regs.INTENA & 0x4000 ) { /* Master interrupt switch */
+	if ( CUSTOM_REG(REG_INTENA) & 0x4000 ) { /* Master interrupt switch */
 
 		/* Level 7 = NMI Can only be triggered from outside the hardware */
 
@@ -115,13 +114,13 @@ static unsigned short blitter_fill( unsigned short src, int mode, int *fc ) {
 	dataC =	new_data[2];																	\
 																							\
 	if ( first )																			\
-		dataA &= custom_regs.BLTAFWM;														\
+		dataA &= CUSTOM_REG(REG_BLTAFWM);													\
 																							\
 	if ( last )																				\
-		dataA &= custom_regs.BLTALWM;														\
+		dataA &= CUSTOM_REG(REG_BLTALWM);													\
 																							\
-	shiftA = ( custom_regs.BLTCON0 >> 12 ) & 0x0f;											\
-	shiftB = ( custom_regs.BLTCON1 >> 12 ) & 0x0f;											\
+	shiftA = ( CUSTOM_REG(REG_BLTCON0) >> 12 ) & 0x0f;										\
+	shiftB = ( CUSTOM_REG(REG_BLTCON1) >> 12 ) & 0x0f;										\
 																							\
 	if ( shiftA ) {																			\
 		dataA >>= shiftA;																	\
@@ -170,13 +169,13 @@ static int (*blit_func_a[8])( unsigned short *old_data, unsigned short *new_data
 	dataC =	new_data[2];																	\
 																							\
 	if ( first )																			\
-		dataA &= custom_regs.BLTAFWM;														\
+		dataA &= CUSTOM_REG(REG_BLTAFWM);													\
 																							\
 	if ( last )																				\
-		dataA &= custom_regs.BLTALWM;														\
+		dataA &= CUSTOM_REG(REG_BLTALWM);													\
 																							\
-	shiftA = ( custom_regs.BLTCON0 >> 12 ) & 0x0f;											\
-	shiftB = ( custom_regs.BLTCON1 >> 12 ) & 0x0f;											\
+	shiftA = ( CUSTOM_REG(REG_BLTCON0) >> 12 ) & 0x0f;										\
+	shiftB = ( CUSTOM_REG(REG_BLTCON1) >> 12 ) & 0x0f;										\
 																							\
 	if ( shiftA ) {																			\
 		dataA <<= shiftA;																	\
@@ -245,40 +244,39 @@ static int (*blit_func_line[8])( unsigned short dataA, unsigned short dataB, uns
 
 static void blitter_proc( int param ) {
 	/* Now we do the real blitting */
-	unsigned char *RAM = memory_region( REGION_CPU1 );
 	int	blt_total = 0;
 
-	custom_regs.DMACON |= 0x2000; /* Blit Zero, we modify it later */
+	CUSTOM_REG(REG_DMACON) |= 0x2000; /* Blit Zero, we modify it later */
 
-	if ( custom_regs.BLTCON1 & 1 ) { /* Line mode */
+	if ( CUSTOM_REG(REG_BLTCON1) & 1 ) { /* Line mode */
 		int linesize, single_bit, single_flag, texture, sign, start, ptr[4], temp_ptr3;
 		unsigned short dataA, dataB;
 
-		if ( ( custom_regs.BLTSIZE & 0x003f ) != 0x0002 ) {
+		if ( ( CUSTOM_REG(REG_BLTSIZE) & 0x003f ) != 0x0002 ) {
 			logerror("Blitter: BLTSIZE.w != 2 in line mode!\n" );
 		}
 
-		if ( ( custom_regs.BLTCON0 & 0x0b00 ) != 0x0b00 ) {
+		if ( ( CUSTOM_REG(REG_BLTCON0) & 0x0b00 ) != 0x0b00 ) {
 			logerror("Blitter: Channel selection incorrect in line mode!\n" );
 		}
 
-		linesize = ( custom_regs.BLTSIZE >> 6 ) & 0x3ff;
+		linesize = ( CUSTOM_REG(REG_BLTSIZE) >> 6 ) & 0x3ff;
 		if ( linesize == 0 )
 			linesize = 0x400;
 
-		single_bit = custom_regs.BLTCON1 & 0x0002;
+		single_bit = CUSTOM_REG(REG_BLTCON1) & 0x0002;
 		single_flag = 0;
-		sign = custom_regs.BLTCON1 & 0x0040;
-		texture = ( custom_regs.BLTCON1 >> 12 ) & 0x0f;
-		start = ( custom_regs.BLTCON0 >> 12 ) & 0x0f;
+		sign = CUSTOM_REG(REG_BLTCON1) & 0x0040;
+		texture = ( CUSTOM_REG(REG_BLTCON1) >> 12 ) & 0x0f;
+		start = ( CUSTOM_REG(REG_BLTCON0) >> 12 ) & 0x0f;
 
-		dataA = ( custom_regs.BLTxDAT[0] >> start );
+		dataA = ( CUSTOM_REG(REG_BLTADAT) >> start );
 
-		ptr[0] = ( custom_regs.BLTxPTH[0] << 16 ) | custom_regs.BLTxPTL[0];
-		ptr[2] = ( custom_regs.BLTxPTH[2] << 16 ) | custom_regs.BLTxPTL[2];
-		ptr[3] = ( custom_regs.BLTxPTH[3] << 16 ) | custom_regs.BLTxPTL[3];
+		ptr[0] = CUSTOM_REG_LONG(REG_BLTAPTH);
+		ptr[2] = CUSTOM_REG_LONG(REG_BLTCPTH);
+		ptr[3] = CUSTOM_REG_LONG(REG_BLTDPTH);
 
-		dataB = ( custom_regs.BLTxDAT[1] >> texture ) | ( custom_regs.BLTxDAT[1] << ( 16 - texture ) );
+		dataB = ( CUSTOM_REG(REG_BLTBDAT) >> texture ) | ( CUSTOM_REG(REG_BLTBDAT) << ( 16 - texture ) );
 
 		while ( linesize-- ) {
 			int dst_data = 0;
@@ -286,34 +284,34 @@ static void blitter_proc( int param ) {
 
 			temp_ptr3 = ptr[3];
 
-			if ( custom_regs.BLTCON0 & 0x0200 )
-				custom_regs.BLTxDAT[2] = *((UINT16 *) &RAM[ptr[2]] );
+			if ( CUSTOM_REG(REG_BLTCON0) & 0x0200 )
+				CUSTOM_REG(REG_BLTCDAT) = amiga_chip_ram[ptr[2]/2];
 
-			dataA = ( custom_regs.BLTxDAT[0] >> start );
+			dataA = ( CUSTOM_REG(REG_BLTADAT) >> start );
 
 			if ( single_bit && single_flag ) dataA = 0;
 			single_flag = 1;
 
 			for ( i = 0; i < 8; i++ ) {
-				if ( custom_regs.BLTCON0 & ( 1 << i ) ) {
-					dst_data |= (*blit_func_line[i])( dataA, ( dataB & 1 ) * 0xffff, custom_regs.BLTxDAT[2] );
+				if ( CUSTOM_REG(REG_BLTCON0) & ( 1 << i ) ) {
+					dst_data |= (*blit_func_line[i])( dataA, ( dataB & 1 ) * 0xffff, CUSTOM_REG(REG_BLTCDAT) );
 				}
 			}
 
 			if ( !sign ) {
-				ptr[0] += custom_regs.BLTxMOD[0];
-				if ( custom_regs.BLTCON1 & 0x0010 ) {
-					if ( custom_regs.BLTCON1 & 0x0008 ) { /* Decrement Y */
-						ptr[2] -= custom_regs.BLTxMOD[2];
-						ptr[3] -= custom_regs.BLTxMOD[2]; /* ? */
+				ptr[0] += CUSTOM_REG_SIGNED(REG_BLTAMOD);
+				if ( CUSTOM_REG(REG_BLTCON1) & 0x0010 ) {
+					if ( CUSTOM_REG(REG_BLTCON1) & 0x0008 ) { /* Decrement Y */
+						ptr[2] -= CUSTOM_REG_SIGNED(REG_BLTCMOD);
+						ptr[3] -= CUSTOM_REG_SIGNED(REG_BLTCMOD); /* ? */
 						single_flag = 0;
 					} else { /* Increment Y */
-						ptr[2] += custom_regs.BLTxMOD[2];
-						ptr[3] += custom_regs.BLTxMOD[2]; /* ? */
+						ptr[2] += CUSTOM_REG_SIGNED(REG_BLTCMOD);
+						ptr[3] += CUSTOM_REG_SIGNED(REG_BLTCMOD); /* ? */
 						single_flag = 0;
 					}
 				} else {
-					if ( custom_regs.BLTCON1 & 0x0008 ) { /* Decrement X */
+					if ( CUSTOM_REG(REG_BLTCON1) & 0x0008 ) { /* Decrement X */
 						if ( start-- == 0 ) {
 							start = 15;
 							ptr[2] -= 2;
@@ -328,10 +326,10 @@ static void blitter_proc( int param ) {
 					}
 				}
 			} else
-				ptr[0] += custom_regs.BLTxMOD[1];
+				ptr[0] += CUSTOM_REG_SIGNED(REG_BLTBMOD);
 
-			if ( custom_regs.BLTCON1 & 0x0010 ) {
-				if ( custom_regs.BLTCON1 & 0x0004 ) { /* Decrement X */
+			if ( CUSTOM_REG(REG_BLTCON1) & 0x0010 ) {
+				if ( CUSTOM_REG(REG_BLTCON1) & 0x0004 ) { /* Decrement X */
 					if ( start-- == 0 ) {
 						start = 15;
 						ptr[2] -= 2;
@@ -345,13 +343,13 @@ static void blitter_proc( int param ) {
 					}
 				}
 			} else {
-				if ( custom_regs.BLTCON1 & 0x0004 ) { /* Decrement Y */
-					ptr[2] -= custom_regs.BLTxMOD[2];
-					ptr[3] -= custom_regs.BLTxMOD[2]; /* ? */
+				if ( CUSTOM_REG(REG_BLTCON1) & 0x0004 ) { /* Decrement Y */
+					ptr[2] -= CUSTOM_REG_SIGNED(REG_BLTCMOD);
+					ptr[3] -= CUSTOM_REG_SIGNED(REG_BLTCMOD); /* ? */
 					single_flag = 0;
 				} else { /* Increment Y */
-					ptr[2] += custom_regs.BLTxMOD[2];
-					ptr[3] += custom_regs.BLTxMOD[2]; /* ? */
+					ptr[2] += CUSTOM_REG_SIGNED(REG_BLTCMOD);
+					ptr[3] += CUSTOM_REG_SIGNED(REG_BLTCMOD); /* ? */
 					single_flag = 0;
 				}
 			}
@@ -360,51 +358,48 @@ static void blitter_proc( int param ) {
 
 			blt_total |= dst_data;
 
-			if ( custom_regs.BLTCON0 & 0x0100 )
-				*((UINT16 *) &RAM[temp_ptr3]) = dst_data;
+			if ( CUSTOM_REG(REG_BLTCON0) & 0x0100 )
+				amiga_chip_ram[temp_ptr3/2] = dst_data;
 
 			dataB = ( dataB << 1 ) | ( dataB >> 15 );
 		}
 
-		custom_regs.BLTxPTH[0] = ( ptr[0] >> 16 ) & 0x1f;
-		custom_regs.BLTxPTL[0] = ptr[0] & 0xffff;
-		custom_regs.BLTxPTH[2] = ( ptr[2] >> 16 ) & 0x1f;
-		custom_regs.BLTxPTL[2] = ptr[2] & 0xffff;
-		custom_regs.BLTxPTH[3] = ( ptr[3] >> 16 ) & 0x1f;
-		custom_regs.BLTxPTL[3] = ptr[3] & 0xffff;
+		CUSTOM_REG_LONG(REG_BLTAPTH) = ptr[0] & 0x1fffff;
+		CUSTOM_REG_LONG(REG_BLTCPTH) = ptr[2] & 0x1fffff;
+		CUSTOM_REG_LONG(REG_BLTDPTH) = ptr[3] & 0x1fffff;
 
-//      custom_regs.BLTxDAT[0] = dataA;
-//      custom_regs.BLTxDAT[1] = dataB;
+//      CUSTOM_REG(REG_BLTADAT) = dataA;
+//      CUSTOM_REG(REG_BLTBDAT) = dataB;
 
 	} else { /* Blit mode */
-		if ( custom_regs.BLTCON0 & 0x0f00 ) {
+		if ( CUSTOM_REG(REG_BLTCON0) & 0x0f00 ) {
 			int i, x, y;
 			int ptr[4] = { -1, -1, -1, -1 };
-			int width = ( custom_regs.BLTSIZE & 0x3f );
-			int height = ( ( custom_regs.BLTSIZE >> 6 ) & 0x3ff );
+			int width = ( CUSTOM_REG(REG_BLTSIZE) & 0x3f );
+			int height = ( ( CUSTOM_REG(REG_BLTSIZE) >> 6 ) & 0x3ff );
 			unsigned short old_data[3];
 			unsigned short new_data[3];
 			int fc = 0;
 
-			if ( custom_regs.BLTCON0 & 0x800 )
-				ptr[0] = ( custom_regs.BLTxPTH[0] << 16 ) | custom_regs.BLTxPTL[0];
+			if ( CUSTOM_REG(REG_BLTCON0) & 0x800 )
+				ptr[0] = CUSTOM_REG_LONG(REG_BLTAPTH);
 
-			if ( custom_regs.BLTCON0 & 0x400 )
-				ptr[1] = ( custom_regs.BLTxPTH[1] << 16 ) | custom_regs.BLTxPTL[1];
+			if ( CUSTOM_REG(REG_BLTCON0) & 0x400 )
+				ptr[1] = CUSTOM_REG_LONG(REG_BLTBPTH);
 
-			if ( custom_regs.BLTCON0 & 0x200 )
-				ptr[2] = ( custom_regs.BLTxPTH[2] << 16 ) | custom_regs.BLTxPTL[2];
+			if ( CUSTOM_REG(REG_BLTCON0) & 0x200 )
+				ptr[2] = CUSTOM_REG_LONG(REG_BLTCPTH);
 
-			if ( custom_regs.BLTCON0 & 0x100 )
+			if ( CUSTOM_REG(REG_BLTCON0) & 0x100 )
 			{
-				ptr[3] = ( custom_regs.BLTxPTH[3] << 16 ) | custom_regs.BLTxPTL[3];
+				ptr[3] = CUSTOM_REG_LONG(REG_BLTDPTH);
 				if ( ptr[3] > 0x7ffff )
 					goto done;
 			}
 
-			if ( custom_regs.BLTCON1 & 0x0002 ) { /* Descending mode */
+			if ( CUSTOM_REG(REG_BLTCON1) & 0x0002 ) { /* Descending mode */
 				blit_func = blit_func_d;
-				fc = ( custom_regs.BLTCON1 >> 2 ) & 1; /* fill carry setup */
+				fc = ( CUSTOM_REG(REG_BLTCON1) >> 2 ) & 1; /* fill carry setup */
 			} else {
 				blit_func = blit_func_a;
 			}
@@ -416,42 +411,42 @@ static void blitter_proc( int param ) {
 				height = 0x400;
 
 			for ( y = 0; y < height; y++ ) {
-				fc = ( custom_regs.BLTCON1 >> 2 ) & 1; /* fill carry setup */
+				fc = ( CUSTOM_REG(REG_BLTCON1) >> 2 ) & 1; /* fill carry setup */
 				for ( x = 0; x < width; x++ ) {
 					int dst_data = 0;
 
 					/* get old data */
-					new_data[0] = old_data[0] = custom_regs.BLTxDAT[0];
-					new_data[1] = old_data[1] = custom_regs.BLTxDAT[1];
-					new_data[2] = old_data[2] = custom_regs.BLTxDAT[2];
+					new_data[0] = old_data[0] = CUSTOM_REG(REG_BLTADAT);
+					new_data[1] = old_data[1] = CUSTOM_REG(REG_BLTBDAT);
+					new_data[2] = old_data[2] = CUSTOM_REG(REG_BLTCDAT);
 
 					/* get new data */
 					if ( ptr[0] != -1 )
-						new_data[0] = *((UINT16 *) &RAM[ptr[0]] );
+						new_data[0] = amiga_chip_ram[ptr[0]/2];
 
 					if ( ptr[1] != -1 )
-						new_data[1] = *((UINT16 *) &RAM[ptr[1]] );
+						new_data[1] = amiga_chip_ram[ptr[1]/2];
 
 					if ( ptr[2] != -1 )
-						new_data[2] = *((UINT16 *) &RAM[ptr[2]] );
+						new_data[2] = amiga_chip_ram[ptr[2]/2];
 
 					for ( i = 0; i < 8; i++ ) {
-						if ( custom_regs.BLTCON0 & ( 1 << i ) ) {
+						if ( CUSTOM_REG(REG_BLTCON0) & ( 1 << i ) ) {
 							dst_data |= (*blit_func[i])( old_data, new_data, x == 0, x == (width - 1) );
 						}
 					}
 
 					/* store new data */
-					custom_regs.BLTxDAT[0] = new_data[0];
-					custom_regs.BLTxDAT[1] = new_data[1];
-					custom_regs.BLTxDAT[2] = new_data[2];
+					CUSTOM_REG(REG_BLTADAT) = new_data[0];
+					CUSTOM_REG(REG_BLTBDAT) = new_data[1];
+					CUSTOM_REG(REG_BLTCDAT) = new_data[2];
 
-					if ( custom_regs.BLTCON1 & 0x0002 ) { /* Descending mode */
-						if ( custom_regs.BLTCON1 & 0x0018 ) /* Fill mode */
-							dst_data = blitter_fill( dst_data, custom_regs.BLTCON1 & 0x18, &fc );
+					if ( CUSTOM_REG(REG_BLTCON1) & 0x0002 ) { /* Descending mode */
+						if ( CUSTOM_REG(REG_BLTCON1) & 0x0018 ) /* Fill mode */
+							dst_data = blitter_fill( dst_data, CUSTOM_REG(REG_BLTCON1) & 0x18, &fc );
 
 						if ( ptr[3] != -1 ) {
-							*((UINT16 *) &RAM[ptr[3]]) = dst_data;
+							amiga_chip_ram[ptr[3]/2] = dst_data;
 							ptr[3] -= 2;
 						}
 
@@ -465,7 +460,7 @@ static void blitter_proc( int param ) {
 							ptr[2] -= 2;
 					} else {
 						if ( ptr[3] != -1 ) {
-							*((UINT16 *) &RAM[ptr[3]]) = dst_data;
+							amiga_chip_ram[ptr[3]/2] = dst_data;
 							ptr[3] += 2;
 						}
 
@@ -481,95 +476,91 @@ static void blitter_proc( int param ) {
 					blt_total |= dst_data;
 				}
 
-				if ( custom_regs.BLTCON1 & 0x0002 ) { /* Descending mode */
+				if ( CUSTOM_REG(REG_BLTCON1) & 0x0002 ) { /* Descending mode */
 					if ( ptr[0] != -1 )
-						ptr[0] -= custom_regs.BLTxMOD[0];
+						ptr[0] -= CUSTOM_REG_SIGNED(REG_BLTAMOD);
 
 					if ( ptr[1] != -1 )
-						ptr[1] -= custom_regs.BLTxMOD[1];
+						ptr[1] -= CUSTOM_REG_SIGNED(REG_BLTBMOD);
 
 					if ( ptr[2] != -1 )
-						ptr[2] -= custom_regs.BLTxMOD[2];
+						ptr[2] -= CUSTOM_REG_SIGNED(REG_BLTCMOD);
 
 					if ( ptr[3] != -1 )
-						ptr[3] -= custom_regs.BLTxMOD[3];
+						ptr[3] -= CUSTOM_REG_SIGNED(REG_BLTDMOD);
 				} else {
 					if ( ptr[0] != -1 )
-						ptr[0] += custom_regs.BLTxMOD[0];
+						ptr[0] += CUSTOM_REG_SIGNED(REG_BLTAMOD);
 
 					if ( ptr[1] != -1 )
-						ptr[1] += custom_regs.BLTxMOD[1];
+						ptr[1] += CUSTOM_REG_SIGNED(REG_BLTBMOD);
 
 					if ( ptr[2] != -1 )
-						ptr[2] += custom_regs.BLTxMOD[2];
+						ptr[2] += CUSTOM_REG_SIGNED(REG_BLTCMOD);
 
 					if ( ptr[3] != -1 )
-						ptr[3] += custom_regs.BLTxMOD[3];
+						ptr[3] += CUSTOM_REG_SIGNED(REG_BLTDMOD);
 				}
 			}
 
 			/* We're done, update the ptr's now */
 			if ( ptr[0] != -1 ) {
-				custom_regs.BLTxPTH[0] = ptr[0] >> 16;
-				custom_regs.BLTxPTL[0] = ptr[0];
+				CUSTOM_REG_LONG(REG_BLTAPTH) = ptr[0];
 			}
 
 			if ( ptr[1] != -1 ) {
-				custom_regs.BLTxPTH[1] = ptr[1] >> 16;
-				custom_regs.BLTxPTL[1] = ptr[1];
+				CUSTOM_REG_LONG(REG_BLTBPTH) = ptr[1];
 			}
 
 			if ( ptr[2] != -1 ) {
-				custom_regs.BLTxPTH[2] = ptr[2] >> 16;
-				custom_regs.BLTxPTL[2] = ptr[2];
+				CUSTOM_REG_LONG(REG_BLTCPTH) = ptr[2];
 			}
 
 			if ( ptr[3] != -1 ) {
-				custom_regs.BLTxPTH[3] = ptr[3] >> 16;
-				custom_regs.BLTxPTL[3] = ptr[3];
+				CUSTOM_REG_LONG(REG_BLTDPTH) = ptr[3];
 			}
 		}
 	}
 
 done:
-	custom_regs.DMACON ^= 0x4000; /* signal we're done */
+	CUSTOM_REG(REG_DMACON) ^= 0x4000; /* signal we're done */
 
 	if ( blt_total )
-		custom_regs.DMACON ^= 0x2000;
+		CUSTOM_REG(REG_DMACON) ^= 0x2000;
 
 
-	amiga_custom_w( 0x009c>>1, 0x8040, 0);
+	amiga_custom_w(REG_INTREQ, 0x8040, 0);
 }
 
 static void blitter_setup( void ) {
 	int ticks, width, height;
 	double blit_time;
 
-	if ( ( custom_regs.DMACON & 0x0240 ) != 0x0240 ) /* Enabled ? */
+	if ( ( CUSTOM_REG(REG_DMACON) & 0x0240 ) != 0x0240 ) /* Enabled ? */
 		return;
 
-	if ( custom_regs.DMACON & 0x4000 ) { /* Is there another blitting in progress? */
+	if ( CUSTOM_REG(REG_DMACON) & 0x4000 ) { /* Is there another blitting in progress? */
 		logerror("This program is playing tricks with the blitter\n" );
 		return;
 	}
 
-	if ( custom_regs.BLTCON1 & 1 ) { /* Line mode */
+	if ( CUSTOM_REG(REG_BLTCON1) & 1 ) { /* Line mode */
 		ticks = 8;
 	} else {
 		ticks = 4;
-		if ( custom_regs.BLTCON0 & 0x0400 ) /* channel B, +2 ticks */
+		if ( CUSTOM_REG(REG_BLTCON0) & 0x0400 ) /* channel B, +2 ticks */
 			ticks += 2;
-		if ( ( custom_regs.BLTCON0 & 0x0300 ) == 0x0300 ) /* Both channel C and D, +2 ticks */
+		if ( ( CUSTOM_REG(REG_BLTCON0) & 0x0300 ) == 0x0300 ) /* Both channel C and D, +2 ticks */
 			ticks += 2;
 	}
 
-	custom_regs.DMACON |= 0x4000; /* signal blitter busy */
+	CUSTOM_REG(REG_DMACON) |= 0x4000; /* signal blitter busy */
 
-	width = ( custom_regs.BLTSIZE & 0x3f );
+	width = ( CUSTOM_REG(REG_BLTSIZE) & 0x3f );
 	if ( width == 0 )
 		width = 0x40;
 
-	height = ( ( custom_regs.BLTSIZE >> 6 ) & 0x3ff );
+	height = ( ( CUSTOM_REG(REG_BLTSIZE) >> 6 ) & 0x3ff );
 	if ( height == 0 )
 		height = 0x400;
 
@@ -638,9 +629,9 @@ static void cia_timer_proc( int param ) {
 			cia_8520[cia].ics |= 0x81; /* set status */
 			if ( cia_8520[cia].icr & 1 ) {
 				if ( cia == 0 ) {
-					amiga_custom_w( 0x009c>>1, 0x8008, 0);
+					amiga_custom_w(REG_INTREQ, 0x8008, 0);
 				} else {
-					amiga_custom_w( 0x009c>>1, 0xa000, 0);
+					amiga_custom_w(REG_INTREQ, 0xa000, 0);
 				}
 			}
 			cia_8520[cia].timerA_count = cia_8520[cia].timerA_latch; /* Reload the timer */
@@ -649,9 +640,9 @@ static void cia_timer_proc( int param ) {
 			cia_8520[cia].ics |= 0x81; /* set status */
 			if ( cia_8520[cia].icr & 1 ) {
 				if ( cia == 0 ) {
-					amiga_custom_w( 0x009c>>1, 0x8008, 0);
+					amiga_custom_w(REG_INTREQ, 0x8008, 0);
 				} else {
-					amiga_custom_w( 0x009c>>1, 0xa000, 0);
+					amiga_custom_w(REG_INTREQ, 0xa000, 0);
 				}
 			}
 			cia_8520[cia].timerA_count = cia_8520[cia].timerA_latch; /* Reload the timer */
@@ -662,9 +653,9 @@ static void cia_timer_proc( int param ) {
 			cia_8520[cia].ics |= 0x82; /* set status */
 			if ( cia_8520[cia].icr & 2 ) {
 				if ( cia == 0 ) {
-					amiga_custom_w( 0x009c>>1, 0x8008, 0);
+					amiga_custom_w(REG_INTREQ, 0x8008, 0);
 				} else {
-					amiga_custom_w( 0x009c>>1, 0xa000, 0);
+					amiga_custom_w(REG_INTREQ, 0xa000, 0);
 				}
 			}
 			cia_8520[cia].timerB_count = cia_8520[cia].timerB_latch; /* Reload the timer */
@@ -673,9 +664,9 @@ static void cia_timer_proc( int param ) {
 			cia_8520[cia].ics |= 0x82; /* set status */
 			if ( cia_8520[cia].icr & 2 ) {
 				if ( cia == 0 ) {
-					amiga_custom_w( 0x009c>>1, 0x8008, 0);
+					amiga_custom_w(REG_INTREQ, 0x8008, 0);
 				} else {
-					amiga_custom_w( 0x009c>>1, 0xa000, 0);
+					amiga_custom_w(REG_INTREQ, 0xa000, 0);
 				}
 			}
 			cia_8520[cia].timerB_count = cia_8520[cia].timerB_latch; /* Reload the timer */
@@ -735,7 +726,7 @@ static void cia_vblank_update( void ) {
 		if ( cia_8520[0].tod == cia_8520[0].alarm ) {
 			cia_8520[0].ics |= 0x84;
 			if ( cia_8520[0].icr & 0x04 ) {
-				amiga_custom_w( 0x009c>>1, 0x8008, 0);
+				amiga_custom_w(REG_INTREQ, 0x8008, 0);
 			}
 		}
 	}
@@ -751,7 +742,7 @@ static void cia_hblank_update( int param ) {
 			if ( cia_8520[1].tod == cia_8520[1].alarm ) {
 				cia_8520[1].ics |= 0x84;
 				if ( cia_8520[1].icr & 0x04 ) {
-				    amiga_custom_w( 0x009c>>1, 0xa000, 0 /* could also be hibyte only 0xff */);
+				    amiga_custom_w(REG_INTREQ, 0xa000, 0 /* could also be hibyte only 0xff */);
 				}
 			}
 		}
@@ -764,7 +755,7 @@ static void cia_hblank_update( int param ) {
 void amiga_cia_issue_index( void ) {
 	cia_8520[1].ics |= 0x90;
 	if ( cia_8520[1].icr & 0x10 ) {
-	    amiga_custom_w( 0x009c>>1, 0xa000, 0 /* could also be hibyte only 0xff*/);
+	    amiga_custom_w(REG_INTREQ, 0xa000, 0 /* could also be hibyte only 0xff*/);
 	}
 }
 
@@ -1098,391 +1089,227 @@ WRITE16_HANDLER ( amiga_cia_w ) {
 
 ***************************************************************************/
 
-static void amiga_custom_init( void ) {
-	custom_regs.DDFSTRT = 0x18;
-	custom_regs.DDFSTOP = 0xd8;
+static void amiga_custom_init( void )
+{
+	CUSTOM_REG(REG_DDFSTRT) = 0x18;
+	CUSTOM_REG(REG_DDFSTOP) = 0xd8;
 }
 
-READ16_HANDLER ( amiga_custom_r )
+READ16_HANDLER( amiga_custom_r )
 {
+	switch (offset & 0xff)
+	{
+		case REG_DMACONR:
+			return CUSTOM_REG(REG_DMACON);
 
-    offset<<=1;
-	offset &= 0xfff;
+		case REG_VPOSR:
+			return amiga_gethvpos() >> 16;
 
-	switch ( offset ) {
-		case 0x0002: /* DMACON */
-			return custom_regs.DMACON;
-		break;
+		case REG_VHPOSR:
+			return amiga_gethvpos();
 
-		case 0x0004: /* VPOSR */
-			return ( ( cpu_getscanline() >> 8 ) & 1 );
-		break;
-
-		case 0x0006: /* VHPOSR */
-			{
-				int h, v;
-
-				h = ( cpu_gethorzbeampos() >> 1 ); /* in color clocks */
-				v = ( cpu_getscanline() & 0xff );
-
-				return ( v << 8 ) | h;
-			}
-		break;
-
-		case 0x000a: /* JOY0DAT */
+		case REG_JOY0DAT:
 			return amiga_intf->read_joy0dat();
-		break;
 
-		case 0x000c: /* JOY1DAT */
+		case REG_JOY1DAT:
 			return amiga_intf->read_joy1dat();
-		break;
 
-		case 0x0010: /* ADKCONR */
-			return custom_regs.ADKCON;
-		break;
+		case REG_ADKCONR:
+			return CUSTOM_REG(REG_ADKCON);
 
-		case 0x0016: /* POTGOR */
-			custom_regs.POTGOR = custom_regs.POTGO & 0xaa00;
-			custom_regs.POTGOR |= ( readinputport( 0 ) & 1 ) << 10;
-			custom_regs.POTGOR |= ( readinputport( 0 ) & 2 ) << 13;
-			return custom_regs.POTGOR;
-		break;
+		case REG_POTGOR:
+			CUSTOM_REG(REG_POTGOR) = CUSTOM_REG(REG_POTGO) & 0xaa00;
+			CUSTOM_REG(REG_POTGOR) |= (readinputport(0) & 1) << 10;
+			CUSTOM_REG(REG_POTGOR) |= (readinputport(0) & 2) << 13;
+			return CUSTOM_REG(REG_POTGOR);
 
-		case 0x001a: /* DSKBYTR */
+		case REG_DSKBYTR:
 			return amiga_intf->read_dskbytr ? amiga_intf->read_dskbytr() : 0x00;
-		break;
 
+		case REG_INTENAR:
+			return CUSTOM_REG(REG_INTENA);
 
-		case 0x001c: /* INTENA */
-			return custom_regs.INTENA;
-		break;
+		case REG_INTREQR:
+			return CUSTOM_REG(REG_INTREQ);
 
-		case 0x001e: /* INTREQ */
-			return custom_regs.INTREQ;
-		break;
+		case REG_COPJMP1:
+			copper_setpc(CUSTOM_REG_LONG(REG_COP1LCH));
+			break;
 
-		case 0x0088: /* COPJMPA */
-			copper_setpc( ( custom_regs.COPLCH[0] << 16 ) | custom_regs.COPLCL[0] );
-		break;
-
-		case 0x008a: /* COPJMPB */
-			copper_setpc( ( custom_regs.COPLCH[1] << 16 ) | custom_regs.COPLCL[1] );
-		break;
+		case REG_COPJMP2:
+			copper_setpc(CUSTOM_REG_LONG(REG_COP2LCH));
+			break;
 
 		default:
 #if LOG_CUSTOM
 			logerror( "PC = %06x - Read from Custom %04x\n", cpu_getactivecpu() != -1 ? activecpu_get_pc() : 0, offset );
 #endif
-		break;
+			break;
 	}
 
 	return 0;
 }
 
-#define SETCLR( reg, data ) { \
-	if ( (data) & 0x8000 ) \
-		reg |= ( (data) & 0x7fff ); \
-	else \
-		reg &= ~( (data) & 0x7fff ); }
 
-WRITE16_HANDLER ( amiga_custom_w )
+WRITE16_HANDLER( amiga_custom_w )
 {
-    offset<<=1;
-	offset &= 0xfff;
+	offset &= 0xff;
 
-	switch ( offset ) {
-		case 0x0020: /* DSKPTH */
-			custom_regs.DSKPTH = data;
-		break;
-
-		case 0x0022: /* DSKPTL */
-			custom_regs.DSKPTL = data;
-		break;
-
-		case 0x0024: /* DSKLEN */
+	switch (offset)
+	{
+		case REG_DSKLEN:
 			if (amiga_intf->write_dsklen)
 				amiga_intf->write_dsklen(data);
-			custom_regs.DSKLEN = data;
-		break;
+			break;
 
-		case 0x002e: /* COPCON */
-			custom_regs.COPCON = data & 2;
-		break;
+		case REG_COPCON:
+			data &= 2;	/* why? */
+			break;
 
-		case 0x0034: /* POTGO */
-			custom_regs.POTGO = data;
-		break;
-
-		case 0x0040: /* BLTCON0 */
-			custom_regs.BLTCON0 = data;
-		break;
-
-		case 0x0042: /* BLTCON1 */
-			custom_regs.BLTCON1 = data;
-		break;
-
-		case 0x0044: /* BLTAFWM */
-			custom_regs.BLTAFWM = data;
-		break;
-
-		case 0x0046: /* BLTALWM */
-			custom_regs.BLTALWM = data;
-		break;
-
-		case 0x0048: /* BLTCPTH */
-		case 0x004a: /* BLTCPTL */
-		case 0x004c: /* BLTBPTH */
-		case 0x004e: /* BLTBPTL */
-		case 0x0050: /* BLTAPTH */
-		case 0x0052: /* BLTAPTL */
-		case 0x0054: /* BLTDPTH */
-		case 0x0056: /* BLTDPTL */
-			{
-				int lo = ( offset & 2 );
-				int loc = ( offset - 0x48 ) >> 2;
-				static const int order[4] = { 2, 1, 0, 3 };
-
-				if ( lo )
-					custom_regs.BLTxPTL[order[loc]] = ( data & 0xfffe ); /* should be word aligned, we make sure is is */
-				else
-					custom_regs.BLTxPTH[order[loc]] = ( data & 0x1f );
-			}
-		break;
-
-		case 0x0058: /* BLTSIZE */
-			custom_regs.BLTSIZE = data;
+		case REG_BLTSIZE:
+			CUSTOM_REG(REG_BLTSIZE) = data;
 			blitter_setup();
-		break;
+			break;
 
-		case 0x0060: /* BLTCMOD */
-		case 0x0062: /* BLTBMOD */
-		case 0x0064: /* BLTAMOD */
-		case 0x0066: /* BLTDMOD */
-			{
-				int loc = ( offset >> 1 ) & 3;
-				static const int order[4] = { 2, 1, 0, 3 };
+		case REG_AUD0LCL:	case REG_AUD1LCL:	case REG_AUD2LCL:	case REG_AUD3LCL:
+		case REG_BLTCMOD:	case REG_BLTBMOD:	case REG_BLTAMOD:	case REG_BLTDMOD:
+		case REG_BLTCPTL:	case REG_BLTBPTL:	case REG_BLTAPTL:	case REG_BLTDPTL:
+		case REG_COP1LCL:	case REG_COP2LCL:
+		case REG_BPL1PTL:	case REG_BPL2PTL:	case REG_BPL3PTL:	case REG_BPL4PTL:
+		case REG_BPL5PTL:	case REG_BPL6PTL:
+			/* keep word-aligned */
+			data &= 0xfffe;
+			break;
 
-				custom_regs.BLTxMOD[order[loc]] = ( signed short )( data & ~1 ); /* strip off lsb */
-			}
-		break;
+		case REG_AUD0LCH:	case REG_AUD1LCH:	case REG_AUD2LCH:	case REG_AUD3LCH:
+		case REG_BLTCPTH:	case REG_BLTBPTH:	case REG_BLTAPTH:	case REG_BLTDPTH:
+		case REG_COP1LCH:	case REG_COP2LCH:
+		case REG_BPL1PTH:	case REG_BPL2PTH:	case REG_BPL3PTH:	case REG_BPL4PTH:
+		case REG_BPL5PTH:	case REG_BPL6PTH:
+			/* mask off high bits */
+			data &= 0x001f;
+			break;
 
-		case 0x0070: /* BLTCDAT */
-		case 0x0072: /* BLTBDAT */
-		case 0x0074: /* BLTADAT */
-			{
-				int loc = ( offset >> 1 ) & 3;
-				static const int order[3] = { 2, 1, 0 };
+		case REG_SPR0PTL:	case REG_SPR1PTL:	case REG_SPR2PTL:	case REG_SPR3PTL:
+		case REG_SPR4PTL:	case REG_SPR5PTL:	case REG_SPR6PTL:	case REG_SPR7PTL:
+			/* keep word-aligned */
+			data &= 0xfffe;
+			amiga_sprite_dma_reset((offset - REG_SPR0PTL) / 2);
+			break;
 
-				custom_regs.BLTxDAT[order[loc]] = data;
-			}
-		break;
+		case REG_SPR0PTH:	case REG_SPR1PTH:	case REG_SPR2PTH:	case REG_SPR3PTH:
+		case REG_SPR4PTH:	case REG_SPR5PTH:	case REG_SPR6PTH:	case REG_SPR7PTH:
+			/* mask off high bits */
+			data &= 0x001f;
+			break;
 
-		case 0x007e: /* DSKSYNC */
-			custom_regs.DSKSYNC = data;
-		break;
+		case REG_SPR0CTL:	case REG_SPR1CTL:	case REG_SPR2CTL:	case REG_SPR3CTL:
+		case REG_SPR4CTL:	case REG_SPR5CTL:	case REG_SPR6CTL:	case REG_SPR7CTL:
+			/* disable comparitor on writes here */
+			amiga_sprite_enable_comparitor((offset - REG_SPR0CTL) / 4, FALSE);
+			break;
 
-		case 0x0080: /* COP1LCH */
-		case 0x0082: /* COP1LCL */
-		case 0x0084: /* COP2LCH */
-		case 0x0086: /* COP1LCL */
-			{
-				int lo = ( offset & 2 );
-				int loc = ( offset >> 2 ) & 1;
+		case REG_SPR0DATA:	case REG_SPR1DATA:	case REG_SPR2DATA:	case REG_SPR3DATA:
+		case REG_SPR4DATA:	case REG_SPR5DATA:	case REG_SPR6DATA:	case REG_SPR7DATA:
+			/* enable comparitor on writes here */
+			amiga_sprite_enable_comparitor((offset - REG_SPR0DATA) / 4, TRUE);
+			break;
 
-				if ( lo )
-					custom_regs.COPLCL[loc] = ( data & ~1 ); /* should be word aligned, we make sure it is */
-				else
-					custom_regs.COPLCH[loc] = ( data & 0x1f );
-			}
-		break;
+		case REG_COPJMP1:
+			copper_setpc(CUSTOM_REG_LONG(REG_COP1LCH));
+			break;
 
-		case 0x0088: /* COPJMPA */
-			copper_setpc( ( custom_regs.COPLCH[0] << 16 ) | custom_regs.COPLCL[0] );
-		break;
+		case REG_COPJMP2:
+			copper_setpc(CUSTOM_REG_LONG(REG_COP2LCH));
+			break;
 
-		case 0x008a: /* COPJMPB */
-			copper_setpc( ( custom_regs.COPLCH[1] << 16 ) | custom_regs.COPLCL[1] );
-		break;
-
-		case 0x008e: /* DIWSTRT */
-			custom_regs.DIWSTRT = data;
-		break;
-
-		case 0x0090: /* DIWSTOP */
-			custom_regs.DIWSTOP = data;
-		break;
-
-		case 0x0092: /* DDFSTRT */
-			custom_regs.DDFSTRT = data & 0xfc;
+		case REG_DDFSTRT:
 			/* impose hardware limits ( HRM, page 75 ) */
-			if ( custom_regs.DDFSTRT < 0x18 )
-				custom_regs.DDFSTRT = 0x18;
-		break;
+			data &= 0xfc;
+			if (data < 0x18)
+				data = 0x18;
+			break;
 
-		case 0x0094: /* DDFSTOP */
-			custom_regs.DDFSTOP = data & 0xfc;
+		case REG_DDFSTOP:
 			/* impose hardware limits ( HRM, page 75 ) */
-			if ( custom_regs.DDFSTOP > 0xd8 )
-				custom_regs.DDFSTOP = 0xd8;
-		break;
+			data &= 0xfc;
+			if (data > 0xd8)
+				data = 0xd8;
+			break;
 
-		case 0x0096: /* DMACON */
+		case REG_DMACON:
+			logerror("DMACON = %04X\n", offset);
+			amiga_audio_w(offset, data, mem_mask);
+
 			/* bits BBUSY (14) and BZERO (13) are read-only */
-			SETCLR( custom_regs.DMACON, data & 0x9fff )
-			copper_enable();
-		break;
+			data &= 0x9fff;
+			data = (data & 0x8000) ? (CUSTOM_REG(offset) | (data & 0x7fff)) : (CUSTOM_REG(offset) & ~(data & 0x7fff));
+			CUSTOM_REG(offset) = data;
+			break;
 
-		case 0x009a: /* INTENA */
-			SETCLR( custom_regs.INTENA, data )
+		case REG_INTENA:
+			data = (data & 0x8000) ? (CUSTOM_REG(offset) | (data & 0x7fff)) : (CUSTOM_REG(offset) & ~(data & 0x7fff));
+			CUSTOM_REG(offset) = data;
 			check_ints();
-		break;
+			break;
 
-		case 0x009c: /* INTREQ */
-			SETCLR( custom_regs.INTREQ, data )
+		case REG_INTREQ:
+			data = (data & 0x8000) ? (CUSTOM_REG(offset) | (data & 0x7fff)) : (CUSTOM_REG(offset) & ~(data & 0x7fff));
+			CUSTOM_REG(offset) = data;
 			check_ints();
-		break;
+			break;
 
-		case 0x009e: /* ADKCON */
-			SETCLR( custom_regs.ADKCON, data )
-		break;
+		case REG_ADKCON:
+			data = (data & 0x8000) ? (CUSTOM_REG(offset) | (data & 0x7fff)) : (CUSTOM_REG(offset) & ~(data & 0x7fff));
+			CUSTOM_REG(offset) = data;
+			amiga_audio_w(offset, data, mem_mask);
+			break;
 
-		case 0x00e0: /* BPL1PTH */
-		case 0x00e2: /* BPL1PTL */
-		case 0x00e4: /* BPL2PTH */
-		case 0x00e6: /* BPL2PTL */
-		case 0x00e8: /* BPL3PTH */
-		case 0x00ea: /* BPL3PTL */
-		case 0x00ec: /* BPL4PTH */
-		case 0x00ee: /* BPL4PTL */
-		case 0x00f0: /* BPL5PTH */
-		case 0x00f2: /* BPL5PTL */
-		case 0x00f4: /* BPL6PTH */
-		case 0x00f6: /* BPL6PTL */
+		case REG_AUD0PER:	case REG_AUD0VOL:	case REG_AUD0DAT:
+		case REG_AUD1PER:	case REG_AUD1VOL:	case REG_AUD1DAT:
+		case REG_AUD2PER:	case REG_AUD2VOL:	case REG_AUD2DAT:
+		case REG_AUD3PER:	case REG_AUD3VOL:	case REG_AUD3DAT:
+			amiga_audio_w(offset, data, mem_mask);
+			break;
+
+		case REG_BPLCON0:
+			if ((data & (BPLCON0_BPU0 | BPLCON0_BPU1 | BPLCON0_BPU2)) == (BPLCON0_BPU0 | BPLCON0_BPU1 | BPLCON0_BPU2))
 			{
-				int lo = ( offset & 2 );
-				int plane = ( offset >> 2 ) & 0x07;
-
-				if ( lo ) {
-					custom_regs.BPLPTR[plane] &= 0x001f0000;
-					custom_regs.BPLPTR[plane] |= ( data & 0xfffe );
-				} else {
-					custom_regs.BPLPTR[plane] &= 0x0000ffff;
-					custom_regs.BPLPTR[plane] |= ( data & 0x1f ) << 16;
-				}
-			}
-		break;
-
-		case 0x0100: /* BPLCON0 */
-			custom_regs.BPLCON0 = data;
-
-			if ( ( custom_regs.BPLCON0 & ( BPLCON0_BPU0 | BPLCON0_BPU1 | BPLCON0_BPU2 ) ) == ( BPLCON0_BPU0 | BPLCON0_BPU1 | BPLCON0_BPU2 ) ) {
 				/* planes go from 0 to 6, inclusive */
 				logerror( "This game is doing funky planes stuff. (planes > 6)\n" );
-				custom_regs.BPLCON0 &= ~BPLCON0_BPU0;
+				data &= ~BPLCON0_BPU0;
 			}
-		break;
+			break;
 
-		case 0x0102: /* BPLCON1 */
-			custom_regs.BPLCON1 = data & 0xff;
-		break;
+		case REG_BPLCON1:
+			data &= 0xff;
+			break;
 
-		case 0x0104: /* BPLCON2 */
-			custom_regs.BPLCON2 = data & 0x7f;
-		break;
+		case REG_BPLCON2:
+			data &= 0x7f;
+			break;
 
-		case 0x0108: /* BPL1MOD */
-			custom_regs.BPL1MOD = data;
-		break;
-
-		case 0x010a: /* BPL2MOD */
-			custom_regs.BPL2MOD = data;
-		break;
-
-		case 0x0110: /* BPL1DAT */
-		case 0x0112: /* BPL2DAT */
-		case 0x0114: /* BPL3DAT */
-		case 0x0116: /* BPL4DAT */
-		case 0x0118: /* BPL5DAT */
-		case 0x011a: /* BPL6DAT */
-			/* in our current implementation of the screen update, we ignore this */
-		break;
-
-		case 0x0120: /* SPR0PTH */
-		case 0x0122: /* SPR0PTL */
-		case 0x0124: /* SPR1PTH */
-		case 0x0126: /* SPR1PTL */
-		case 0x0128: /* SPR2PTH */
-		case 0x012a: /* SPR2PTL */
-		case 0x012c: /* SPR3PTH */
-		case 0x012e: /* SPR3PTL */
-		case 0x0130: /* SPR4PTH */
-		case 0x0132: /* SPR4PTL */
-		case 0x0134: /* SPR5PTH */
-		case 0x0136: /* SPR5PTL */
-		case 0x0138: /* SPR6PTH */
-		case 0x013a: /* SPR6PTL */
-		case 0x013c: /* SPR7PTH */
-		case 0x013e: /* SPR7PTL */
-			{
-				int lo = ( offset & 2 );
-				int num = ( offset >> 2 ) & 0x07;
-
-				if ( lo ) {
-					custom_regs.SPRxPT[num] &= 0x001f0000;
-					custom_regs.SPRxPT[num] |= ( data & 0xfffe );
-					amiga_reload_sprite_info( num );
-				} else {
-					custom_regs.SPRxPT[num] &= 0x0000ffff;
-					custom_regs.SPRxPT[num] |= ( data & 0x1f ) << 16;
-				}
-			}
-		break;
-
-		case 0x180: /* COLOR00 */
-		case 0x182: /* COLOR01 */
-		case 0x184: /* COLOR02 */
-		case 0x186: /* COLOR03 */
-		case 0x188: /* COLOR04 */
-		case 0x18a: /* COLOR05 */
-		case 0x18c: /* COLOR06 */
-		case 0x18e: /* COLOR07 */
-		case 0x190: /* COLOR08 */
-		case 0x192: /* COLOR09 */
-		case 0x194: /* COLOR10 */
-		case 0x196: /* COLOR11 */
-		case 0x198: /* COLOR12 */
-		case 0x19a: /* COLOR13 */
-		case 0x19c: /* COLOR14 */
-		case 0x19e: /* COLOR15 */
-		case 0x1a0: /* COLOR16 */
-		case 0x1a2: /* COLOR17 */
-		case 0x1a4: /* COLOR18 */
-		case 0x1a6: /* COLOR19 */
-		case 0x1a8: /* COLOR20 */
-		case 0x1aa: /* COLOR21 */
-		case 0x1ac: /* COLOR22 */
-		case 0x1ae: /* COLOR23 */
-		case 0x1b0: /* COLOR24 */
-		case 0x1b2: /* COLOR25 */
-		case 0x1b4: /* COLOR26 */
-		case 0x1b6: /* COLOR27 */
-		case 0x1b8: /* COLOR28 */
-		case 0x1ba: /* COLOR29 */
-		case 0x1bc: /* COLOR30 */
-		case 0x1be: /* COLOR31 */
-			{
-				int color = ( offset - 0x180 ) >> 1;
-
-				custom_regs.COLOR[color] = data;
-			}
-		break;
+		case REG_COLOR00:	case REG_COLOR01:	case REG_COLOR02:	case REG_COLOR03:
+		case REG_COLOR04:	case REG_COLOR05:	case REG_COLOR06:	case REG_COLOR07:
+		case REG_COLOR08:	case REG_COLOR09:	case REG_COLOR10:	case REG_COLOR11:
+		case REG_COLOR12:	case REG_COLOR13:	case REG_COLOR14:	case REG_COLOR15:
+		case REG_COLOR16:	case REG_COLOR17:	case REG_COLOR18:	case REG_COLOR19:
+		case REG_COLOR20:	case REG_COLOR21:	case REG_COLOR22:	case REG_COLOR23:
+		case REG_COLOR24:	case REG_COLOR25:	case REG_COLOR26:	case REG_COLOR27:
+		case REG_COLOR28:	case REG_COLOR29:	case REG_COLOR30:	case REG_COLOR31:
+			data &= 0xfff;
+			CUSTOM_REG(offset + 32) = (data >> 1) & 0x777;
+			break;
 
 		default:
 #if LOG_CUSTOM
-		logerror( "PC = %06x - Wrote to Custom %04x (%04x)\n", cpu_getactivecpu() != -1 ? activecpu_get_pc() : 0, offset, data );
+//          logerror("PC = %06x - Wrote to Custom %04x (%04x)\n", safe_activecpu_get_pc(), offset * 2, data);
 #endif
-		break;
+			break;
 	}
+
+	if (offset <= REG_COLOR31)
+		CUSTOM_REG(offset) = data;
 }
 
 /***************************************************************************
@@ -1491,9 +1318,8 @@ WRITE16_HANDLER ( amiga_custom_w )
 
 ***************************************************************************/
 
-INTERRUPT_GEN(amiga_vblank_irq)
+INTERRUPT_GEN( amiga_vblank_irq )
 {
-
 	/* Update TOD on CIA A */
 	cia_vblank_update();
 
@@ -1503,13 +1329,13 @@ INTERRUPT_GEN(amiga_vblank_irq)
 		cia_hblank_timer_set = 1;
 	}
 
-	amiga_custom_w( 0x009c>>1, 0x8020, 0);
+	amiga_custom_w(REG_INTREQ, 0x8020, 0);
 
 	if (amiga_intf->interrupt_callback)
 		amiga_intf->interrupt_callback();
 }
 
-INTERRUPT_GEN(amiga_irq)
+INTERRUPT_GEN( amiga_irq )
 {
 	int scanline = 261 - cpu_getiloops();
 
@@ -1521,6 +1347,9 @@ INTERRUPT_GEN(amiga_irq)
 	}
 
 	amiga_render_scanline(scanline);
+
+	/* force a sound update */
+	amiga_audio_w(0,0,0);
 }
 
 /***************************************************************************

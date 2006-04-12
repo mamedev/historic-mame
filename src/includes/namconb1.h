@@ -1,4 +1,4 @@
-/* namconb1.h */
+/*----------- defined in vidhrdw/namconb1.c -----------*/
 
 #define NAMCONB1_COLS		36
 #define NAMCONB1_ROWS		28

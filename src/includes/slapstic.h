@@ -9,6 +9,8 @@
 
 *************************************************************************/
 
+/*----------- defined in machine/slapstic.c -----------*/
+
 void slapstic_init(int chip);
 void slapstic_reset(void);
 

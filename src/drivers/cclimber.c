@@ -128,23 +128,7 @@ TODO:
 #include "driver.h"
 #include "sound/ay8910.h"
 #include "sound/samples.h"
-
-
-
-extern unsigned char *cclimber_bsvideoram;
-extern size_t cclimber_bsvideoram_size;
-extern unsigned char *cclimber_bigspriteram;
-extern unsigned char *cclimber_column_scroll;
-WRITE8_HANDLER( cclimber_colorram_w );
-WRITE8_HANDLER( cclimber_bigsprite_videoram_w );
-PALETTE_INIT( cclimber );
-VIDEO_UPDATE( cclimber );
-
-extern struct AY8910interface cclimber_ay8910_interface;
-extern struct Samplesinterface cclimber_custom_interface;
-WRITE8_HANDLER( cclimber_sample_trigger_w );
-WRITE8_HANDLER( cclimber_sample_rate_w );
-WRITE8_HANDLER( cclimber_sample_volume_w );
+#include "includes/cclimber.h"
 
 
 static WRITE8_HANDLER( flip_screen_x_w )

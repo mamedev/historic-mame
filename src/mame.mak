@@ -96,6 +96,7 @@ CPUS += TMS32010
 CPUS += TMS32025
 CPUS += TMS32026
 CPUS += TMS32031
+CPUS += TMS32051
 CPUS += CCPU
 CPUS += ADSP2100
 CPUS += ADSP2101
@@ -413,7 +414,7 @@ $(OBJ)/alpha.a: \
 	$(OBJ)/drivers/talbot.o \
 
 $(OBJ)/amiga.a: \
-	$(OBJ)/drivers/arcadia.o $(OBJ)/machine/amiga.o $(OBJ)/vidhrdw/amiga.o \
+	$(OBJ)/drivers/arcadia.o $(OBJ)/machine/amiga.o $(OBJ)/sndhrdw/amiga.o $(OBJ)/vidhrdw/amiga.o \
 	$(OBJ)/drivers/mquake.o \
 
 $(OBJ)/atari.a: \
@@ -1131,7 +1132,7 @@ $(OBJ)/seibu.a: \
 	$(OBJ)/sndhrdw/seibu.o \
 
 $(OBJ)/seta.a: \
-	$(OBJ)/drivers/aleck64.o $(OBJ)/vidhrdw/n64.o \
+	$(OBJ)/drivers/aleck64.o $(OBJ)/machine/n64.o $(OBJ)/vidhrdw/n64.o \
 	$(OBJ)/drivers/darkhors.o \
 	$(OBJ)/drivers/hanaawas.o $(OBJ)/vidhrdw/hanaawas.o \
 	$(OBJ)/drivers/macs.o \

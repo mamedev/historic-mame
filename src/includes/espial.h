@@ -4,7 +4,7 @@
 
 ***************************************************************************/
 
-/*----------- defined in vihdrdw/espial.c -----------*/
+/*----------- defined in vidhrdw/espial.c -----------*/
 
 extern UINT8 *espial_videoram;
 extern UINT8 *espial_colorram;

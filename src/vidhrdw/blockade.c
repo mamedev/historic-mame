@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "includes/blockade.h"
 
 static tilemap *bg_tilemap;
 

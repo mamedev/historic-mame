@@ -355,13 +355,20 @@ WRITE8_HANDLER( indyheat_analog_w )
  *
  *************************************/
 
-MACHINE_RESET( leland )
+MACHINE_START( leland )
 {
-	/* set the odd data bank */
-	battery_ram = memory_region(REGION_USER2);
+	/* allocate extra stuff */
+	battery_ram = auto_malloc(LELAND_BATTERY_RAM_SIZE);
 
 	/* start scanline interrupts going */
 	master_int_timer = timer_alloc(leland_interrupt_callback);
+
+	return 0;
+}
+
+
+MACHINE_RESET( leland )
+{
 	timer_adjust(master_int_timer, cpu_getscanlinetime(8), 8, 0);
 
 	/* reset globals */
@@ -402,21 +409,29 @@ MACHINE_RESET( leland )
 }
 
 
-MACHINE_RESET( ataxx )
+MACHINE_START( ataxx )
 {
 	/* set the odd data banks */
-	battery_ram = memory_region(REGION_USER2);
-	extra_tram = battery_ram + LELAND_BATTERY_RAM_SIZE;
+	battery_ram = auto_malloc(LELAND_BATTERY_RAM_SIZE);
+	extra_tram = auto_malloc(ATAXX_EXTRA_TRAM_SIZE);
+
+	/* start scanline interrupts going */
+	master_int_timer = timer_alloc(ataxx_interrupt_callback);
+
+	return 0;
+}
+
+
+MACHINE_RESET( ataxx )
+{
+	memset(extra_tram, 0, ATAXX_EXTRA_TRAM_SIZE);
+	timer_adjust(master_int_timer, cpu_getscanlinetime(8), 8, 0);
 
 	/* initialize the XROM */
 	xrom_length = memory_region_length(REGION_USER1);
 	xrom_base = memory_region(REGION_USER1);
 	xrom1_addr = 0;
 	xrom2_addr = 0;
-
-	/* start scanline interrupts going */
-	master_int_timer = timer_alloc(ataxx_interrupt_callback);
-	timer_adjust(master_int_timer, cpu_getscanlinetime(8), 8, 0);
 
 	/* reset globals */
 	wcol_enable = 0;
@@ -888,17 +903,17 @@ NVRAM_HANDLER( leland )
 	if (read_or_write)
 	{
 		EEPROM_save(file);
-		mame_fwrite(file, memory_region(REGION_USER2), LELAND_BATTERY_RAM_SIZE);
+		mame_fwrite(file, battery_ram, LELAND_BATTERY_RAM_SIZE);
 	}
 	else if (file)
 	{
 		EEPROM_load(file);
-		mame_fread(file, memory_region(REGION_USER2), LELAND_BATTERY_RAM_SIZE);
+		mame_fread(file, battery_ram, LELAND_BATTERY_RAM_SIZE);
 	}
 	else
 	{
 		EEPROM_set_data(eeprom_data, 64*2);
-		memset(memory_region(REGION_USER2), 0x00, LELAND_BATTERY_RAM_SIZE);
+		memset(battery_ram, 0x00, LELAND_BATTERY_RAM_SIZE);
 	}
 }
 
@@ -908,17 +923,17 @@ NVRAM_HANDLER( ataxx )
 	if (read_or_write)
 	{
 		EEPROM_save(file);
-		mame_fwrite(file, memory_region(REGION_USER2), LELAND_BATTERY_RAM_SIZE);
+		mame_fwrite(file, battery_ram, LELAND_BATTERY_RAM_SIZE);
 	}
 	else if (file)
 	{
 		EEPROM_load(file);
-		mame_fread(file, memory_region(REGION_USER2), LELAND_BATTERY_RAM_SIZE);
+		mame_fread(file, battery_ram, LELAND_BATTERY_RAM_SIZE);
 	}
 	else
 	{
 		EEPROM_set_data(eeprom_data, 128*2);
-		memset(memory_region(REGION_USER2), 0x00, LELAND_BATTERY_RAM_SIZE);
+		memset(battery_ram, 0x00, LELAND_BATTERY_RAM_SIZE);
 	}
 }
 

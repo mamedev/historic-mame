@@ -9,7 +9,7 @@
 #include "driver.h"
 #include "artwork.h"
 #include "cpu/z80/z80.h"
-
+#include "includes/astrocde.h"
 #include <math.h> /* for sin() and cos() */
 
 

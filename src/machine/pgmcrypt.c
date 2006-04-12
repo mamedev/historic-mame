@@ -310,9 +310,9 @@ void pgm_killbld_decrypt(void)
 		UINT16 x = src[i];
 
 		if((i & 0x6d00) == 0x0400 || (i & 0x6c80) == 0x0880)
-			x ^= 0x0800;
+			x ^= 0x0008;
 		if((i & 0x7500) == 0x2400 || (i & 0x7600) == 0x3200)
-			x ^= 0x0010;
+			x ^= 0x1000;
 
 		src[i] = x;
 	}

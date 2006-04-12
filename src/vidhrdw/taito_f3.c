@@ -225,8 +225,6 @@ static UINT32 *f3_pf_data_1,*f3_pf_data_2,*f3_pf_data_3,*f3_pf_data_4;
 UINT32 *f3_vram,*f3_line_ram;
 UINT32 *f3_pf_data,*f3_pivot_ram;
 
-extern int f3_game;
-
 static int f3_skip_this_frame;
 
 /* Game specific data, some of this can be
@@ -238,7 +236,7 @@ struct F3config
 	int sprite_lag;
 };
 
-const struct F3config *f3_game_config;
+static const struct F3config *f3_game_config;
 
 static const struct F3config f3_config_table[] =
 {

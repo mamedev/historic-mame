@@ -105,29 +105,10 @@ TODO:
 #include "driver.h"
 #include "sound/custom.h"
 #include "sound/tms36xx.h"
-
-
-extern unsigned char *naughtyb_videoram2;
-extern unsigned char *naughtyb_scrollreg;
-
-WRITE8_HANDLER( naughtyb_videoram2_w );
-WRITE8_HANDLER( naughtyb_scrollreg_w );
-WRITE8_HANDLER( naughtyb_videoreg_w );
-WRITE8_HANDLER( popflame_videoreg_w );
-VIDEO_START( naughtyb );
-PALETTE_INIT( naughtyb );
-VIDEO_UPDATE( naughtyb );
-
-WRITE8_HANDLER( pleiads_sound_control_a_w );
-WRITE8_HANDLER( pleiads_sound_control_b_w );
-void *naughtyb_sh_start(int clock, const struct CustomSound_interface *config);
-void *popflame_sh_start(int clock, const struct CustomSound_interface *config);
-
+#include "includes/phoenix.h"
 
 static READ8_HANDLER( in0_port_r )
 {
-	extern int naughtyb_cocktail;
-
 	int in0 = input_port_0_r(0);
 
 	if ( naughtyb_cocktail )

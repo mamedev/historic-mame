@@ -31,6 +31,7 @@
  - Raccoon World
  - Fortress 2 Blue Arcade (v. 1.01 / pcb ver 3.05)
  - Fortress 2 Blue Arcade (v. 1.00 / pcb ver 3.05)
+ - Puzzle King (Dance & Puzzle)
 
  Known games not dumped
  - Hidden Catch (pcb ver 3.02)
@@ -198,6 +199,17 @@ INPUT_PORTS_START( landbrk )
 	PORT_DIPNAME( 0x00000008, 0x00000008, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(          0x00000008, DEF_STR( Off ) )
 	PORT_DIPSETTING(          0x00000000, DEF_STR( On ) )
+	PORT_BIT( 0xfffffff0, IP_ACTIVE_LOW, IPT_UNUSED	)
+INPUT_PORTS_END
+
+INPUT_PORTS_START( puzzlekg )
+	PORT_INCLUDE(common)
+	PORT_MODIFY("IN0")
+	PORT_BIT( 0x00004000, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x00008000, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_MODIFY("DSW1")
+	PORT_SERVICE( 0x0000000f, IP_ACTIVE_LOW ) // every bit enables it
 	PORT_BIT( 0xfffffff0, IP_ACTIVE_LOW, IPT_UNUSED	)
 INPUT_PORTS_END
 
@@ -480,13 +492,51 @@ ROM_START( fort2ba )
 	ROM_LOAD( "ftii008.u111", 0x0000, 0x8000, CRC(79012474) SHA1(09a2d5705d7bc52cc2d1644c87c1e31ee44813ef) )
 
 	ROM_REGION( 0x080000, REGION_SOUND1, 0 ) /* Music data */
-	ROM_LOAD( "ftii009.u108", 0x00000, 0x80000,  CRC(9b996b60) SHA1(c4e34601f754ae2908dd6d59ea9da0c5c6f56f2d) )
+	ROM_LOAD( "ftii009.u108", 0x00000, 0x80000, CRC(9b996b60) SHA1(c4e34601f754ae2908dd6d59ea9da0c5c6f56f2d) )
 
 	ROM_REGION( 0x080000, REGION_SOUND2, 0 ) /* QDSP samples (SFX) */
 	ROM_LOAD( "ftii011.u97", 0x00000, 0x80000, CRC(8a431b14) SHA1(5a9824280f30ef2e7b7f16652b2f9f9559cb764f) )
 
 	ROM_REGION( 0x080000, REGION_SOUND3, 0 ) /* QDSP wavetable rom */
-	ROM_LOAD( "qs1001a.u97",  0x00000, 0x80000, NO_DUMP )
+	ROM_LOAD( "qs1001a.u97", 0x00000, 0x80000, NO_DUMP )
+ROM_END
+
+ROM_START( puzzlekg )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* Hyperstone CPU Code */
+	ROM_LOAD( "u43.bin",      0x00000, 0x80000, CRC(c3db7424) SHA1(5ee2be0f06fddb0c74fc6e82679b275cc4e86bcc) )
+
+	ROM_REGION32_BE( 0x2000000, REGION_USER1, ROMREGION_ERASE00 ) /* Game Data - banked ROM, swapping necessary */
+	ROM_LOAD32_WORD_SWAP( "u10.bin", 0x0000000, 0x200000, CRC(c9c3064b) SHA1(10a46d4674c1ef64e50dfcb5eb44953206fe6163) )
+	ROM_LOAD32_WORD_SWAP( "u1.bin",  0x0000002, 0x200000, CRC(6b4b369d) SHA1(3f528e557f2846d7c50afa332797e8bc541eeba8) )
+	ROM_LOAD32_WORD_SWAP( "u11.bin", 0x0400000, 0x200000, CRC(92615236) SHA1(dc602cb4c2a3d671cc60b075b399cf3efb67d3d3) )
+	ROM_LOAD32_WORD_SWAP( "u2.bin",  0x0400002, 0x200000, CRC(e76bbd1d) SHA1(6c191e3c4c363132abf5f62882a40a0fbf0fb7ad) )
+	ROM_LOAD32_WORD_SWAP( "u14.bin", 0x0800000, 0x200000, CRC(f5aa39d1) SHA1(6dde4c63cde388313370ed0cbf410965cfdfdaaa) )
+	ROM_LOAD32_WORD_SWAP( "u5.bin",  0x0800002, 0x200000, CRC(88bb70cf) SHA1(9f6e7a97c7ee98d80a362395bcdcde25ceccec09) )
+	ROM_LOAD32_WORD_SWAP( "u15.bin", 0x0c00000, 0x200000, CRC(bcc1f74d) SHA1(b2ee9b3761f77663a8f412fb3d3a724746e77c75) )
+	ROM_LOAD32_WORD_SWAP( "u6.bin",  0x0c00002, 0x200000, CRC(ab2248ff) SHA1(fcef9028973e7e8cc3a0b8bb1f4a261f24f49081) )
+	ROM_LOAD32_WORD_SWAP( "u12.bin", 0x1000000, 0x200000, CRC(1794973d) SHA1(09000781c87fa407a49addd35660517870fc997b) )
+	ROM_LOAD32_WORD_SWAP( "u3.bin",  0x1000002, 0x200000, CRC(0980e877) SHA1(325687d8f9f8bfe55a53d3bd9a857504738a4633) )
+	ROM_LOAD32_WORD_SWAP( "u13.bin", 0x1400000, 0x200000, CRC(31de6d19) SHA1(6d270d83f6c49fa8e0fc5a8ec63d8ba9e6c99105) )
+	ROM_LOAD32_WORD_SWAP( "u4.bin",  0x1400002, 0x200000, CRC(2706f23c) SHA1(a4ade1c243640a26b673e3f9d83de8c0b6927c74) )
+	ROM_LOAD32_WORD_SWAP( "u16.bin", 0x1800000, 0x200000, CRC(c2d09171) SHA1(d74ccc92cd11fef52a13f3bd2c4835131f3262c2) )
+	ROM_LOAD32_WORD_SWAP( "u7.bin",  0x1800002, 0x200000, CRC(52405e69) SHA1(e27648bb1e02c539758bf9223efab13360f6cd55) )
+	ROM_LOAD32_WORD_SWAP( "u17.bin", 0x1c00000, 0x200000, CRC(234b7261) SHA1(6bb95b8258133cc802f076c15e69c5412272e960) )
+	ROM_LOAD32_WORD_SWAP( "u8.bin",  0x1c00002, 0x200000, CRC(8f4e50d7) SHA1(78808f0193a13467b45c84aef7f6a8f1cfe24feb) )
+
+	ROM_REGION( 0x008000, REGION_CPU2, 0 ) /* QDSP ('51) Code */
+	ROM_LOAD( "u107.bin",    0x0000, 0x8000, CRC(f3add818) SHA1(96e77950154ced9f3234200de2aa29060c00d47f) )
+
+	ROM_REGION( 0x08000, REGION_CPU3, 0 ) /* Sound (80c301) CPU Code */
+	ROM_LOAD( "u111.bin",    0x0000, 0x8000, CRC(79012474) SHA1(09a2d5705d7bc52cc2d1644c87c1e31ee44813ef) )
+
+	ROM_REGION( 0x080000, REGION_SOUND1, 0 ) /* Music data */
+	ROM_LOAD( "u108.bin",    0x00000, 0x80000, CRC(e4555c6b) SHA1(128196a5b47d13ee7163981043b96f7b4b27204b) )
+
+	ROM_REGION( 0x080000, REGION_SOUND2, 0 ) /* QDSP samples (SFX) */
+	ROM_LOAD( "u97.bin",     0x00000, 0x80000, CRC(f4604ce8) SHA1(e061b203ef5df386120dbf089ece094d16a1b59b) )
+
+	ROM_REGION( 0x080000, REGION_SOUND3, 0 ) /* QDSP wavetable rom */
+	ROM_LOAD( "qs1001a.u97", 0x00000, 0x80000, NO_DUMP )
 ROM_END
 
 
@@ -507,6 +557,7 @@ static DRIVER_INIT( landbrka )
 }
 
 GAME( 1998, hidnctch, 0,       eolith, hidnctch, 0,        ROT0, "Eolith", "Hidden Catch (World) / Tul Lin Gu Lim Chat Ki '98 (Korea) (pcb ver 3.03)",  GAME_NO_SOUND ) // or Teurrin Geurim Chajgi '98
+GAME( 1998, puzzlekg, 0,       eolith, puzzlekg, 0,        ROT0, "Eolith", "Puzzle King (Dance & Puzzle)",  GAME_NO_SOUND )
 GAME( 1998, raccoon,  0,       eolith, raccoon,  0,        ROT0, "Eolith", "Raccoon World", GAME_NO_SOUND )
 GAME( 1999, landbrk,  0,       eolith, landbrk,  landbrk,  ROT0, "Eolith", "Land Breaker (World) / Miss Tang Ja Ru Gi (Korea) (pcb ver 3.02)",  GAME_NO_SOUND ) // or Miss Ttang Jjareugi
 GAME( 1999, landbrka, landbrk, eolith, landbrk,  landbrka, ROT0, "Eolith", "Land Breaker (World) / Miss Tang Ja Ru Gi (Korea) (pcb ver 3.03)",  GAME_NO_SOUND ) // or Miss Ttang Jjareugi

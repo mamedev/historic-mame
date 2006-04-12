@@ -4,7 +4,7 @@
 
 *************************************************************************/
 
-/*----------- defined in machine/missile.c -----------*/
+/*----------- defined in drivers/missile.c -----------*/
 
 MACHINE_RESET( missile );
 READ8_HANDLER( missile_r );

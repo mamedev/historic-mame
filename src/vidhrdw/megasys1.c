@@ -241,10 +241,6 @@ static void create_tilemaps(void);
 
 
 
-extern game_driver driver_lomakai;
-extern game_driver driver_soldamj;
-
-
 VIDEO_START( megasys1 )
 {
 	int i;
@@ -286,14 +282,14 @@ VIDEO_START( megasys1 )
 	megasys1_8x8_scroll_factor[1] = 1;	megasys1_16x16_scroll_factor[1] = 4;
 	megasys1_8x8_scroll_factor[2] = 1;	megasys1_16x16_scroll_factor[2] = 4;
 
-	if (Machine->gamedrv == &driver_soldamj)
+	if (strcmp(Machine->gamedrv->name, "soldamj") == 0)
 	{
 		megasys1_8x8_scroll_factor[1] = 4;	megasys1_16x16_scroll_factor[1] = 4;
 	}
 
 	hardware_type_z = 0;
-	if (Machine->gamedrv			==	&driver_lomakai ||
-		Machine->gamedrv->clone_of	==	&driver_lomakai )
+	if (strcmp(Machine->gamedrv->name, "lomakai") == 0 ||
+		strcmp(Machine->gamedrv->name, "makaiden") == 0)
 		hardware_type_z = 1;
 
  	return 0;
@@ -681,15 +677,11 @@ static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 
 struct priority
 {
-	game_driver *driver;
+	const char *driver;
 	int priorities[16];
 };
 
 int megasys1_layers_order[16];
-
-
-extern game_driver driver_64street;
-extern game_driver driver_chimerab;
 
 /*
     Layers order encoded as an int like: 0x01234, where
@@ -710,13 +702,13 @@ extern game_driver driver_chimerab;
 
 */
 
-static struct priority priorities[] =
+static const struct priority priorities[] =
 {
-	{	&driver_64street,
+	{	"64street",
 		{ 0xfffff,0x03142,0xfffff,0x04132,0xfffff,0x04132,0xfffff,0xfffff,
 		  0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff }
 	},
-	{	&driver_chimerab,
+	{	"chimerab",
 		{ 0x14032,0x04132,0x14032,0x04132,0xfffff,0xfffff,0xfffff,0xfffff,
 		  0xfffff,0xfffff,0x01324,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff }
 	},
@@ -778,8 +770,8 @@ PALETTE_INIT( megasys1 )
 
 	i = 0;
 	while (	priorities[i].driver &&
-			priorities[i].driver != Machine->gamedrv &&
-			priorities[i].driver != Machine->gamedrv->clone_of)
+			strcmp(priorities[i].driver, Machine->gamedrv->name) != 0 &&
+			strcmp(priorities[i].driver, Machine->gamedrv->parent) != 0)
 		i++;
 
 	if (priorities[i].driver)

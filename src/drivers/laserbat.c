@@ -28,14 +28,6 @@ static tilemap *bg_tilemap;
 static int laserbat_video_page = 0;
 static int laserbat_input_mux = 0;
 
-extern unsigned char *s2636_1_ram;
-extern unsigned char *s2636_2_ram;
-extern unsigned char *s2636_3_ram;
-
-extern unsigned char s2636_1_dirty[4];
-extern unsigned char s2636_2_dirty[4];
-extern unsigned char s2636_3_dirty[4];
-
 static mame_bitmap *collision_bitmap;
 
 /* information for the single 32x32 sprite displayed */

@@ -364,6 +364,7 @@ static data_accessors memory_accessors[ADDRESS_SPACES][4][2] =
 	},
 };
 
+const char *address_space_names[ADDRESS_SPACES] = { "program", "data", "I/O" };
 
 
 /*-------------------------------------------------
@@ -1240,8 +1241,14 @@ static int init_addrspace(UINT8 cpunum, UINT8 spacenum)
 			for (map = space->map; !IS_AMENTRY_END(map); map++)
 				if (!IS_AMENTRY_EXTENDED(map) && HANDLER_IS_ROM(map->read.handler) && !map->region)
 				{
-					map->region = REGION_CPU1 + cpunum;
-					map->region_offs = SPACE_SHIFT(space, map->start);
+					offs_t end = SPACE_SHIFT_END(space, map->end);
+
+					/* make sure they fit within the memory region before doing so, however */
+					if (end < memory_region_length(REGION_CPU1 + cpunum))
+					{
+						map->region = REGION_CPU1 + cpunum;
+						map->region_offs = SPACE_SHIFT(space, map->start);
+					}
 				}
 
 		/* convert region-relative entries to their memory pointers */
@@ -2107,6 +2114,7 @@ static void *allocate_memory_block(int cpunum, int spacenum, offs_t start, offs_
 {
 	memory_block *block = &memory_block_list[memory_block_count];
 	int allocatemem = (memory == NULL);
+	int region;
 
 	VPRINTF(("allocate_memory_block(%d,%d,%08X,%08X,%08X)\n", cpunum, spacenum, start, end, (UINT32)memory));
 
@@ -2117,8 +2125,19 @@ static void *allocate_memory_block(int cpunum, int spacenum, offs_t start, offs_
 		memset(memory, 0, end - start + 1);
 	}
 
-	/* register for saving */
-	register_for_save(cpunum, spacenum, start, memory, end - start + 1);
+	/* register for saving, but only if we're not part of a memory region */
+	for (region = 0; region < MAX_MEMORY_REGIONS; region++)
+	{
+		UINT8 *region_base = memory_region(region);
+		UINT32 region_length = memory_region_length(region);
+		if (region_base != NULL && region_length != 0 && (UINT8 *)memory >= region_base && ((UINT8 *)memory + (end - start + 1)) < region_base + region_length)
+		{
+			VPRINTF(("skipping save of this memory block as it is covered by a memory region\n"));
+			break;
+		}
+	}
+	if (region == MAX_MEMORY_REGIONS)
+		register_for_save(cpunum, spacenum, start, memory, end - start + 1);
 
 	/* fill in the tracking block */
 	block->cpunum = cpunum;

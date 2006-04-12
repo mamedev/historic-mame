@@ -7,9 +7,6 @@
 
 ***************************************************************************/
 
-#include "driver.h"
-
-
 /*----------- defined in vidhrdw/fromance.c -----------*/
 
 VIDEO_START( fromance );

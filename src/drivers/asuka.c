@@ -22,6 +22,7 @@ Made out of:    Rastan driver by Jarek Burczynski
 Main CPU: MC68000 uses irq 5 (4 in bonze, 4&5 in cadash).
 Sound   : Z80 & YM2151 + MSM5205 (YM2610 in bonze)
 Chips   : TC0100SCN + TC0002OBJ + TC0110PCR (+ C-Chip in bonze)
+(Bryan McPhail:  My Bonze uses TC0100SCN + PC0900J (OBJ) + TC0110PCR + TC0140SYT (SND))
 
 Memory map for Asuka & Asuka
 ----------------------------
@@ -1259,6 +1260,33 @@ ROM_START( bonzeadv )
 	ROM_LOAD( "b41-13.20",  0x00000, 0x04000, CRC(9e464254) SHA1(b6f6126b54c15320ecaa652d0eeabaa4cd94bd26) )
 	ROM_CONTINUE(        0x10000, 0x0c000 )   /* banked stuff */
 
+	/* CPU3 - CCHIP aka TC0030CMD marked b41-05.43 */
+
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	  /* ADPCM samples */
+	ROM_LOAD( "b41-04.48",  0x00000, 0x80000, CRC(c668638f) SHA1(07238a6cb4d93ffaf6351657163b5d80f0dbf688) )
+ROM_END
+
+ROM_START( bonzeado )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )     /* 68000 code */
+	ROM_LOAD16_BYTE( "b41-09.17",   0x00000, 0x10000, CRC(06818710) SHA1(b8045f4e15246231a5645d22bb965953f7fb47a3) )
+	ROM_LOAD16_BYTE( "b41-11.26",   0x00001, 0x10000, CRC(33c4c2f4) SHA1(3f1e76932d8f7e06e976b968a711177d25254bef) )
+	ROM_LOAD16_BYTE( "b41-10.16",   0x20000, 0x10000, CRC(4ca94d77) SHA1(69a9f6bcb6d5e4132eed50860bdfe8d6b6d914cd) )
+	ROM_LOAD16_BYTE( "b41-15.25",   0x20001, 0x10000, CRC(aed7a0d0) SHA1(99ffc0b0e88b81231756610bf48df5365e12603b) )
+	/* 0x040000 - 0x7ffff is intentionally empty */
+	ROM_LOAD16_WORD_SWAP( "b41-01.15", 0x80000, 0x80000, CRC(5d072fa4) SHA1(6ffe1b8531381eb6dd3f1fec18c91294a6aca9f6) )
+
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "b41-03.1",  0x00000, 0x80000, CRC(736d35d0) SHA1(7d41a7d71e117714bbd2cdda2953589cda6e763a) )	/* SCR tiles (8 x 8) */
+
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "b41-02.7",  0x00000, 0x80000, CRC(29f205d9) SHA1(9e9f0c2755a9aa5acfe2601911bfa07d8d61164c) )	/* Sprites (16 x 16) */
+
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )     /* sound cpu */
+	ROM_LOAD( "b41-13.20",  0x00000, 0x04000, CRC(9e464254) SHA1(b6f6126b54c15320ecaa652d0eeabaa4cd94bd26) )
+	ROM_CONTINUE(        0x10000, 0x0c000 )   /* banked stuff */
+
+	/* CPU3 - CCHIP aka TC0030CMD marked b41-05.43 */
+
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	  /* ADPCM samples */
 	ROM_LOAD( "b41-04.48",  0x00000, 0x80000, CRC(c668638f) SHA1(07238a6cb4d93ffaf6351657163b5d80f0dbf688) )
 ROM_END
@@ -1282,6 +1310,8 @@ ROM_START( bonzeadu )
 	ROM_LOAD( "b41-13.20",  0x00000, 0x04000, CRC(9e464254) SHA1(b6f6126b54c15320ecaa652d0eeabaa4cd94bd26) )
 	ROM_CONTINUE(        0x10000, 0x0c000 )   /* banked stuff */
 
+	/* CPU3 - CCHIP aka TC0030CMD marked b41-05.43 */
+
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	  /* ADPCM samples */
 	ROM_LOAD( "b41-04.48",  0x00000, 0x80000, CRC(c668638f) SHA1(07238a6cb4d93ffaf6351657163b5d80f0dbf688) )
 ROM_END
@@ -1304,6 +1334,8 @@ ROM_START( jigkmgri )
 	ROM_REGION( 0x1c000, REGION_CPU2, 0 )     /* sound cpu */
 	ROM_LOAD( "b41-13.20",  0x00000, 0x04000, CRC(9e464254) SHA1(b6f6126b54c15320ecaa652d0eeabaa4cd94bd26) )
 	ROM_CONTINUE(        0x10000, 0x0c000 )   /* banked stuff */
+
+	/* CPU3 - CCHIP aka TC0030CMD marked b41-05.43 */
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	  /* ADPCM samples */
 	ROM_LOAD( "b41-04.48",  0x00000, 0x80000, CRC(c668638f) SHA1(07238a6cb4d93ffaf6351657163b5d80f0dbf688) )
@@ -1525,7 +1557,8 @@ ROM_START( eto )
 ROM_END
 
 
-GAME( 1988, bonzeadv, 0,        bonzeadv, bonzeadv, 0, ROT0,   "Taito Corporation Japan", "Bonze Adventure (World)", 0 )
+GAME( 1988, bonzeadv, 0,        bonzeadv, bonzeadv, 0, ROT0,   "Taito Corporation Japan", "Bonze Adventure (World, Newer)", 0 )
+GAME( 1988, bonzeado, bonzeadv, bonzeadv, bonzeadv, 0, ROT0,   "Taito Corporation Japan", "Bonze Adventure (World, Older)", 0 )
 GAME( 1988, bonzeadu, bonzeadv, bonzeadv, jigkmgri, 0, ROT0,   "Taito America Corporation", "Bonze Adventure (US)", 0 )
 GAME( 1988, jigkmgri, bonzeadv, bonzeadv, jigkmgri, 0, ROT0,   "Taito Corporation", "Jigoku Meguri (Japan)", 0 )
 GAME( 1988, asuka,    0,        asuka,    asuka,    0, ROT270, "Taito Corporation", "Asuka & Asuka (Japan)", 0 )

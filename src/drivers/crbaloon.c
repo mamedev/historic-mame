@@ -55,15 +55,6 @@ write:
 #include "crbaloon.h"
 
 
-extern WRITE8_HANDLER( crbaloon_videoram_w );
-extern WRITE8_HANDLER( crbaloon_colorram_w );
-extern WRITE8_HANDLER( crbaloon_spritectrl_w );
-extern WRITE8_HANDLER( crbaloon_flipscreen_w );
-
-extern PALETTE_INIT( crbaloon );
-extern VIDEO_START( crbaloon );
-extern VIDEO_UPDATE( crbaloon );
-
 
 static UINT8 val06,val08,val0a;
 
@@ -126,8 +117,6 @@ WRITE8_HANDLER( crbaloon_0a_w )
 
 READ8_HANDLER( crbaloon_IN2_r )
 {
-	extern int crbaloon_collision;
-
 	if (crbaloon_collision != 0)
 	{
 		return (input_port_2_r(0) & 0xf0) | 0x08;

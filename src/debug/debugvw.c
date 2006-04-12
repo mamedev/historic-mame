@@ -1572,9 +1572,23 @@ static void disasm_recompute(debug_view *view, offs_t pc, int startline, int lin
 		{
 			offs_t comment_address = BYTE2ADDR(dasmdata->address[instr], cpuinfo, ADDRESS_SPACE_PROGRAM) ;
 
-			/* get the comment */
+			/* get and add the comment */
 			if (debug_comment_get_text(cpu_getactivecpu(), comment_address, debug_comment_get_opcode_crc32(comment_address)) != 0x00)
-				sprintf(&destbuf[dasmdata->divider2], "// %s", debug_comment_get_text(cpu_getactivecpu(), comment_address, debug_comment_get_opcode_crc32(comment_address)));
+			{
+				int i ;
+				char bob[DEBUG_COMMENT_MAX_LINE_LENGTH] ;
+				char pre[8] ;
+
+				// Stick in the 'comment' symbol
+				sprintf(pre, "// ") ;
+				for (i = 0; i < strlen(pre); i++)
+					destbuf[dasmdata->divider2+i] = pre[i] ;
+
+				// Stick in the comment itself
+				strcpy(bob, debug_comment_get_text(cpu_getactivecpu(), comment_address, debug_comment_get_opcode_crc32(comment_address))) ;
+				for (i = 0; i < (dasmdata->allocated_cols - dasmdata->divider2 - strlen(pre) - 1); i++)
+					destbuf[dasmdata->divider2+i+strlen(pre)] = bob[i] ;
+			}
 			else
 				sprintf(&destbuf[dasmdata->divider2], " ");
 		}

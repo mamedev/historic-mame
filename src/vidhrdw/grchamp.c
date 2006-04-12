@@ -1,13 +1,14 @@
 /*  Video hardware for Taito Grand Champion */
 
 /* updated by Hans Andersson, dec 2005     */
-#include "math.h"
+#include <math.h>
 #include "driver.h"
+#include "includes/grchamp.h"
 
 #define FOG_SIZE 70
 
 UINT8 grchamp_videoreg0;
-UINT8 grchamp_player_xpos;
+static UINT8 grchamp_player_xpos;
 UINT8 grchamp_player_ypos;
 int  grchamp_collision;
 

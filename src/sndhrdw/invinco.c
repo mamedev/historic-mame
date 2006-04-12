@@ -4,6 +4,7 @@
 
 #include "driver.h"
 #include "sound/samples.h"
+#include "includes/vicdual.h"
 
 /* output port 0x02 definitions - sound effect drive outputs */
 #define OUT_PORT_2_SAUCER		0x04

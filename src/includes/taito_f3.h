@@ -38,3 +38,38 @@ enum {
 	RECALH,		/* prototype */
 	COMMANDW	/* prototype */
 };
+
+/*----------- defined in drivers/taito_f3.c -----------*/
+
+extern UINT32 *f3_shared_ram;
+extern int f3_game;
+
+/*----------- defined in vidhrdw/taito_f3.c -----------*/
+
+extern UINT32 *f3_vram,*f3_line_ram;
+extern UINT32 *f3_pf_data,*f3_pivot_ram;
+
+VIDEO_START( f3 );
+VIDEO_UPDATE( f3 );
+VIDEO_EOF( f3 );
+
+WRITE32_HANDLER( f3_control_0_w );
+WRITE32_HANDLER( f3_control_1_w );
+WRITE32_HANDLER( f3_palette_24bit_w );
+WRITE32_HANDLER( f3_pf_data_w );
+WRITE32_HANDLER( f3_vram_w );
+WRITE32_HANDLER( f3_pivot_w );
+WRITE32_HANDLER( f3_lineram_w );
+WRITE32_HANDLER( f3_videoram_w );
+
+/*----------- defined in sndhrdw/taito_f3.c -----------*/
+
+READ16_HANDLER(f3_68000_share_r);
+WRITE16_HANDLER(f3_68000_share_w);
+READ16_HANDLER(f3_68681_r);
+WRITE16_HANDLER(f3_68681_w);
+READ16_HANDLER(es5510_dsp_r);
+WRITE16_HANDLER(es5510_dsp_w);
+WRITE16_HANDLER(f3_volume_w);
+WRITE16_HANDLER(f3_es5505_bank_w);
+void f3_68681_reset(void);

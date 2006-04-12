@@ -23,7 +23,7 @@
 #define LLANDER_TONE_6K_SND			NODE_12
 #define LLANDER_THRUST_EXPLOD_SND	NODE_13
 
-const struct discrete_lfsr_desc llander_lfsr={
+static const struct discrete_lfsr_desc llander_lfsr={
 	DISC_CLK_IS_FREQ,
 	16,			/* Bit Length */
 	0,			/* Reset Value */

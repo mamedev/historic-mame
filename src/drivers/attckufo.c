@@ -43,17 +43,13 @@ LOIPOIO-B
 ****************************************/
 
 #include "driver.h"
+#include "includes/attckufo.h"
 
 
-extern VIDEO_START( attckufo );
-extern unsigned char attckufo_palette[16 * 3];
-
-extern struct CustomSound_interface attckufo_sound_interface;
-
-extern INTERRUPT_GEN( attckufo_raster_interrupt );
-
-extern WRITE8_HANDLER ( attckufo_port_w );
-extern READ8_HANDLER ( attckufo_port_r );
+static struct CustomSound_interface attckufo_sound_interface =
+{
+	attckufo_custom_start
+};
 
 static UINT8 *mainram;
 static UINT8 *tileram;

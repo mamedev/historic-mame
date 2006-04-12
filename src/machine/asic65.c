@@ -5,6 +5,7 @@
  *************************************/
 
 #include "driver.h"
+#include "includes/atarig42.h"
 #include <math.h>
 
 

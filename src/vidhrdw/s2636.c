@@ -80,6 +80,18 @@ static int SpriteOffset[4] = {0,0x10,0x20,0x40};
 
 /* To adjust sprites against bitmap */
 
+unsigned char *s2636_1_ram;
+unsigned char *s2636_2_ram;
+unsigned char *s2636_3_ram;
+
+mame_bitmap *s2636_1_bitmap;
+mame_bitmap *s2636_2_bitmap;
+mame_bitmap *s2636_3_bitmap;
+
+unsigned char s2636_1_dirty[4];
+unsigned char s2636_2_dirty[4];
+unsigned char s2636_3_dirty[4];
+
 int s2636_x_offset=0;
 int s2636_y_offset=0;
 

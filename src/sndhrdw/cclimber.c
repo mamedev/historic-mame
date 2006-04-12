@@ -1,6 +1,7 @@
 #include "driver.h"
 #include "sound/ay8910.h"
 #include "sound/samples.h"
+#include "includes/cclimber.h"
 
 
 /* macro to convert 4-bit unsigned samples to 16-bit signed samples */

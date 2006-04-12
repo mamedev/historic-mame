@@ -7,6 +7,7 @@
 #include "driver.h"
 #include "machine/atarigen.h"
 #include "sound/dac.h"
+#include "includes/cyberbal.h"
 #include <math.h>
 
 

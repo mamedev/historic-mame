@@ -10,8 +10,6 @@
 #include "spiders.h"
 #include "vidhrdw/crtc6845.h"
 
-extern int spiders_video_flip;
-
 static UINT8 bitflip[256];
 static int *screenbuffer;
 

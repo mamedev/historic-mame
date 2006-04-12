@@ -13,7 +13,6 @@
 
 /*----------- defined in drivers/galaxian.c -----------*/
 
-extern gfx_decode galaxian_gfxdecodeinfo[];
 MACHINE_DRIVER_EXTERN(galaxian_base);
 
 
@@ -118,7 +117,6 @@ VIDEO_START( ad2083 );
 VIDEO_UPDATE( galaxian );
 
 WRITE8_HANDLER( galaxian_gfxbank_w );
-WRITE8_HANDLER( galaxian_nmi_enable_w );
 WRITE8_HANDLER( galaxian_flip_screen_x_w );
 WRITE8_HANDLER( galaxian_flip_screen_y_w );
 WRITE8_HANDLER( gteikob2_flip_screen_x_w );
@@ -219,6 +217,7 @@ WRITE8_HANDLER( galaxian_coin_counter_w );
 WRITE8_HANDLER( galaxian_coin_counter_1_w );
 WRITE8_HANDLER( galaxian_coin_counter_2_w );
 WRITE8_HANDLER( galaxian_leds_w );
+WRITE8_HANDLER( galaxian_nmi_enable_w );
 
 READ8_HANDLER( scramblb_protection_1_r );
 READ8_HANDLER( scramblb_protection_2_r );

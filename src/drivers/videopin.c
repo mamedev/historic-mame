@@ -15,14 +15,6 @@
 #include "videopin.h"
 #include "sound/discrete.h"
 
-extern UINT8* videopin_video_ram;
-
-extern WRITE8_HANDLER( videopin_video_ram_w );
-extern WRITE8_HANDLER( videopin_ball_w );
-
-extern VIDEO_START( videopin );
-extern VIDEO_UPDATE( videopin );
-
 static double time_pushed;
 static double time_released;
 

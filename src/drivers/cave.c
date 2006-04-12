@@ -2052,13 +2052,6 @@ MACHINE_RESET( cave )
 		EEPROM_get_data_pointer(0)[cave_region_byte] =  readinputport(2);
 }
 
-/* start with the watchdog armed */
-MACHINE_RESET( cave_watchdog )
-{
-	machine_reset_cave();
-	watchdog_reset16_w(0,0,0);
-}
-
 static struct YMZ280Binterface ymz280b_intf =
 {
 	REGION_SOUND1,
@@ -2424,8 +2417,9 @@ static MACHINE_DRIVER_START( mazinger )
 
 	MDRV_FRAMES_PER_SECOND(15625/271.5)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_WATCHDOG_VBLANK_INIT(DEFAULT_60HZ_3S_VBLANK_WATCHDOG)
 
-	MDRV_MACHINE_RESET(cave_watchdog)
+	MDRV_MACHINE_RESET(cave)
 	MDRV_NVRAM_HANDLER(cave)
 
 	/* video hardware */
@@ -2479,8 +2473,9 @@ static MACHINE_DRIVER_START( metmqstr )
 
 	MDRV_FRAMES_PER_SECOND(15625/271.5)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_WATCHDOG_VBLANK_INIT(DEFAULT_60HZ_3S_VBLANK_WATCHDOG)
 
-	MDRV_MACHINE_RESET(cave_watchdog)	/* start with the watchdog armed */
+	MDRV_MACHINE_RESET(cave)	/* start with the watchdog armed */
 	MDRV_NVRAM_HANDLER(cave)
 
 	/* video hardware */

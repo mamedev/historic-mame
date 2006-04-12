@@ -234,7 +234,7 @@ struct _machine_config
 struct _game_driver
 {
 	const char *		source_file;				/* set this to __FILE__ */
-	const game_driver *	clone_of;					/* if this is a clone, point to the main version of the game */
+	const char *		parent;						/* if this is a clone, the name of the parent */
 	const char *		name;						/* short (8-character) name of the game */
 	const bios_entry *	bios;						/* list of names and ROM_BIOSFLAGS */
 	const char *		description;				/* full name of the game */
@@ -502,11 +502,10 @@ struct _game_driver
 ***************************************************************************/
 
 #define GAME(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,MONITOR,COMPANY,FULLNAME,FLAGS)	\
-extern const game_driver driver_##PARENT;	\
-const game_driver driver_##NAME =			\
+game_driver driver_##NAME =					\
 {											\
 	__FILE__,								\
-	&driver_##PARENT,						\
+	#PARENT,								\
 	#NAME,									\
 	system_bios_0,							\
 	FULLNAME,								\
@@ -520,11 +519,10 @@ const game_driver driver_##NAME =			\
 };
 
 #define GAMEB(YEAR,NAME,PARENT,BIOS,MACHINE,INPUT,INIT,MONITOR,COMPANY,FULLNAME,FLAGS)	\
-extern const game_driver driver_##PARENT;	\
-const game_driver driver_##NAME =			\
+game_driver driver_##NAME =					\
 {											\
 	__FILE__,								\
-	&driver_##PARENT,						\
+	#PARENT,								\
 	#NAME,									\
 	system_bios_##BIOS,						\
 	FULLNAME,								\
@@ -549,7 +547,7 @@ const game_driver driver_##NAME =			\
     GLOBAL VARIABLES
 ***************************************************************************/
 
-extern const game_driver *drivers[];
+extern const game_driver * const drivers[];
 
 
 
@@ -570,6 +568,8 @@ void driver_remove_speaker(machine_config *machine, const char *tag);
 sound_config *driver_add_sound(machine_config *machine, const char *tag, int type, int clock);
 sound_config *driver_find_sound(machine_config *machine, const char *tag);
 void driver_remove_sound(machine_config *machine, const char *tag);
+
+const game_driver *driver_get_clone(const game_driver *driver);
 
 
 #endif	/* __DRIVER_H__ */

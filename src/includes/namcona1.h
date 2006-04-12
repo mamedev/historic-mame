@@ -1,4 +1,4 @@
-/* namcona1.h */
+/*----------- defined in vidhrdw/namcona1.c -----------*/
 
 enum
 {

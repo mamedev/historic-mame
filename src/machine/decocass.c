@@ -15,8 +15,6 @@ INT32 tape_speed;
 double tape_time0;
 void *tape_timer;
 
-extern UINT8 *decocass_rambase;
-
 static INT32 firsttime = 1;
 static INT32 tape_present;
 static INT32 tape_blocks;

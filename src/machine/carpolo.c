@@ -12,6 +12,7 @@
 #include "machine/7474.h"
 #include "machine/74148.h"
 #include "machine/74153.h"
+#include "includes/carpolo.h"
 
 
 /*************************************

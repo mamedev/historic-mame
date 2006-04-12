@@ -1,3 +1,5 @@
+/*----------- defined in vidhrdw/news.c -----------*/
+
 extern UINT8 *news_fgram;
 extern UINT8 *news_bgram;
 

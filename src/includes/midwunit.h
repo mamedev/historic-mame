@@ -6,7 +6,7 @@
 
 #include "midtunit.h"
 
-/*----------- defined in machine/midwolfu.c -----------*/
+/*----------- defined in machine/midwunit.c -----------*/
 
 extern UINT8 *midwunit_decode_memory;
 

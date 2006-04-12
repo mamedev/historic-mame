@@ -1,6 +1,7 @@
 #include "driver.h"
 #include "streams.h"
 #include "sound/samples.h"
+#include "includes/galaxian.h"
 #include <math.h>
 
 #define VERBOSE 0

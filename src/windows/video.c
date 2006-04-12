@@ -843,10 +843,6 @@ static void update_visible_area(mame_display *display)
 {
 	rectangle adjusted = display->game_visible_area;
 
-	// tell the UI where it can draw
-	ui_set_visible_area(display->game_visible_area.min_x, display->game_visible_area.min_y,
-			display->game_visible_area.max_x, display->game_visible_area.max_y);
-
 	// adjust for orientation
 	win_orient_rect(&adjusted);
 

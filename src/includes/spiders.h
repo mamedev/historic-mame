@@ -6,8 +6,6 @@
 
 #include "sound/discrete.h"
 
-extern UINT8 *spiders_ram;
-
 /* Discrete Sound Input Nodes */
 #define SPIDERS_WEB_SOUND_DATA      NODE_01
 #define SPIDER_WEB_SOUND_MOD_DATA   NODE_02
@@ -21,3 +19,19 @@ extern UINT8 *spiders_ram;
 /*----------- defined in sndhrdw/spiders.c -----------*/
 
 extern struct discrete_sound_block spiders_discrete_interface[];
+
+
+/*----------- defined in drivers/spiders.c -----------*/
+
+extern UINT8 *spiders_ram;
+
+/*----------- defined in machine/spiders.c -----------*/
+
+extern int spiders_video_flip;
+MACHINE_RESET( spiders );
+INTERRUPT_GEN( spiders_timed_irq );
+
+/*----------- defined in vidhrdw/spiders.c -----------*/
+
+VIDEO_START( spiders );
+VIDEO_UPDATE( spiders );

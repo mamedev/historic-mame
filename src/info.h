@@ -17,6 +17,6 @@
 #include "mamecore.h"
 
 /* Print the MAME database in XML format */
-void print_mame_xml(FILE* out, const game_driver* games[]);
+void print_mame_xml(FILE* out, const game_driver* const games[]);
 
 #endif	/* __INFO_H__ */

@@ -1,3 +1,5 @@
+/*----------- defined in vidhrdw/crshrace.c -----------*/
+
 extern UINT16 *crshrace_videoram1,*crshrace_videoram2;
 
 WRITE16_HANDLER( crshrace_videoram1_w );

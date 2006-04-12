@@ -1,3 +1,5 @@
+/*----------- defined in vidhrdw/homedata.c -----------*/
+
 extern UINT8 *homedata_vreg;
 extern int homedata_visible_page;
 extern int homedata_priority;

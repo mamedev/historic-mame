@@ -13,7 +13,6 @@
 #include "deco16ic.h"
 
 static UINT16 vaportra_priority[2];
-extern int deco16_pf1_colour_bank,deco16_pf2_colour_bank,deco16_pf3_colour_bank,deco16_pf4_colour_bank;
 
 /******************************************************************************/
 

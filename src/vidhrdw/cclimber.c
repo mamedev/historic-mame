@@ -7,7 +7,7 @@
 ***************************************************************************/
 
 #include "driver.h"
-
+#include "includes/cclimber.h"
 
 
 unsigned char *cclimber_bsvideoram;

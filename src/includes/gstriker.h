@@ -1,8 +1,7 @@
 #ifndef __GSTRIKER_H
 #define __GSTRIKER_H
 
-#include "driver.h"
-
+/*----------- defined in vidhrdw/gstriker.c -----------*/
 
 /*** VS920A **********************************************/
 

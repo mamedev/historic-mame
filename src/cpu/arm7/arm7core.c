@@ -75,6 +75,9 @@
 
     By Bryan McPhail (bmcphail@tendril.co.uk) and Phil Stroffolino
 *****************************************************************************/
+
+#include <stdarg.h>
+
 #define ARM7_DEBUG_CORE 0
 
 #if 0
@@ -83,7 +86,29 @@
 #define LOG(x) logerror x
 #endif
 
-#define VERBOSELOG(...)
+#define VERBOSELOG(x) verboselog x
+
+#define VERBOSE_LEVEL ( 0 )
+
+INLINE void verboselog( int n_level, const char *s_fmt, ... )
+{
+	if( VERBOSE_LEVEL >= n_level )
+	{
+		va_list v;
+		char buf[ 32768 ];
+		va_start( v, s_fmt );
+		vsprintf( buf, s_fmt, v );
+		va_end( v );
+		if( cpu_getactivecpu() != -1 )
+		{
+			logerror( "%08x: %s", activecpu_get_pc(), buf );
+		}
+		else
+		{
+			logerror( "(timer) : %s", buf );
+		}
+	}
+}
 
 /* Prototypes */
 

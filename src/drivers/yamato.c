@@ -65,23 +65,7 @@
 #include "driver.h"
 #include "machine/segacrpt.h"
 #include "sound/ay8910.h"
-
-
-extern unsigned char *cclimber_bsvideoram;
-extern size_t cclimber_bsvideoram_size;
-extern unsigned char *cclimber_bigspriteram;
-extern unsigned char *cclimber_column_scroll;
-
-extern UINT8 *toprollr_videoram2;
-extern UINT8 *toprollr_videoram3;
-extern UINT8 *toprollr_videoram4;
-
-WRITE8_HANDLER( cclimber_colorram_w );
-WRITE8_HANDLER( cclimber_bigsprite_videoram_w );
-PALETTE_INIT( cclimber );
-VIDEO_UPDATE( yamato );
-VIDEO_START( toprollr );
-VIDEO_UPDATE( toprollr );
+#include "includes/cclimber.h"
 
 PALETTE_INIT( yamato )
 {

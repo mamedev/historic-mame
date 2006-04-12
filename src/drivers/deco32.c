@@ -92,7 +92,7 @@ DE-0360-4 ROM board Layout:
 | CN1                           25.000MHz      PAL16L8BCN  |
 ------------------------------------------------------------
 
-CN1 = Tripple row 32 pin connector
+CN1 = Triple row 32 pin connector
 CN2 = Dual row 32 pin connector
 
 Locked 'n Loaded appears to be a conversion of Dragon Gun (c) 1993 as
@@ -352,6 +352,10 @@ static WRITE32_HANDLER( fghthist_eeprom_w )
 		EEPROM_set_clock_line((data & 0x20) ? ASSERT_LINE : CLEAR_LINE);
 		EEPROM_write_bit(data & 0x10);
 		EEPROM_set_cs_line((data & 0x40) ? CLEAR_LINE : ASSERT_LINE);
+	}
+	else if (mem_mask&0x0000ff00)
+	{
+		// Volume port
 	}
 }
 
@@ -722,7 +726,7 @@ static ADDRESS_MAP_START( fghthist_readmem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x16c000, 0x16c01f) AM_READ(MRA32_NOP)
 	AM_RANGE(0x17c000, 0x17c03f) AM_READ(MRA32_NOP)
 
-	AM_RANGE(0x200000, 0x200fff) AM_READ(deco32_fghthist_prot_r)
+	AM_RANGE(0x200000, 0x200fff) AM_READ(deco16_146_fghthist_prot_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( fghthist_writemem, ADDRESS_SPACE_PROGRAM, 32 )
@@ -752,62 +756,37 @@ static ADDRESS_MAP_START( fghthist_writemem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x1d4000, 0x1d4fff) AM_WRITE(MWA32_RAM) AM_BASE(&deco32_pf4_rowscroll)
 	AM_RANGE(0x1e0000, 0x1e001f) AM_WRITE(MWA32_RAM) AM_BASE(&deco32_pf34_control)
 
-	AM_RANGE(0x200000, 0x200fff) AM_WRITE(deco32_fghthist_prot_w) AM_BASE(&deco32_prot_ram)
+	AM_RANGE(0x200000, 0x200fff) AM_WRITE(deco16_146_fghthist_prot_w) AM_BASE(&deco32_prot_ram)
+	AM_RANGE(0x208800, 0x208803) AM_WRITE(MWA32_NOP) /* ? */
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( fghthsta_readmem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA32_ROM)
-	AM_RANGE(0x100000, 0x11ffff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x168000, 0x169fff) AM_READ(MRA32_RAM)
-
-	AM_RANGE(0x178000, 0x179fff) AM_READ(MRA32_RAM)
-
-	AM_RANGE(0x182000, 0x183fff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x184000, 0x185fff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x192000, 0x1927ff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x192800, 0x193fff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x194000, 0x1947ff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x194800, 0x195fff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x1a0000, 0x1a001f) AM_READ(MRA32_RAM)
-
-	AM_RANGE(0x1c2000, 0x1c3fff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x1c4000, 0x1c5fff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x1d2000, 0x1d27ff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x1d2800, 0x1d3fff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x1d4000, 0x1d47ff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x1d4800, 0x1d5fff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x1e0000, 0x1e001f) AM_READ(MRA32_RAM)
-
-	AM_RANGE(0x200000, 0x200fff) AM_READ(deco32_fghthist_prot_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( fghthsta_writemem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x001fff) AM_WRITE(deco32_pf1_data_w) /* Hardware bug?  Test mode writes here and expects to get PF1 */
-	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA32_ROM)
-	AM_RANGE(0x100000, 0x11ffff) AM_WRITE(MWA32_RAM) AM_BASE(&deco32_ram)
-
+static ADDRESS_MAP_START( fghthsta_memmap, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA32_ROM) AM_WRITE(MWA32_ROM)
+	AM_RANGE(0x100000, 0x11ffff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) AM_BASE(&deco32_ram)
 	AM_RANGE(0x140000, 0x140003) AM_WRITE(MWA32_NOP) /* VBL irq ack */
 	AM_RANGE(0x150000, 0x150003) AM_WRITE(fghthist_eeprom_w) /* Volume port/Eprom */
 
-	AM_RANGE(0x168000, 0x169fff) AM_WRITE(deco32_buffered_palette_w) AM_BASE(&paletteram32)
+	AM_RANGE(0x168000, 0x169fff) AM_READ(MRA32_RAM) AM_WRITE(deco32_buffered_palette_w) AM_BASE(&paletteram32)
 	AM_RANGE(0x16c008, 0x16c00b) AM_WRITE(deco32_palette_dma_w)
+	AM_RANGE(0x16c010, 0x16c013) AM_READ(MRA32_NOP)
 
-	AM_RANGE(0x178000, 0x179fff) AM_WRITE(MWA32_RAM) AM_BASE(&spriteram32) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x178000, 0x179fff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) AM_BASE(&spriteram32) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x17c010, 0x17c013) AM_WRITE(buffer_spriteram32_w)
+	AM_RANGE(0x17c020, 0x17c023) AM_READ(MRA32_NOP)
 
-	AM_RANGE(0x182000, 0x183fff) AM_WRITE(deco32_pf1_data_w) AM_BASE(&deco32_pf1_data)
-	AM_RANGE(0x184000, 0x185fff) AM_WRITE(deco32_pf2_data_w) AM_BASE(&deco32_pf2_data)
-	AM_RANGE(0x192000, 0x192fff) AM_WRITE(MWA32_RAM) AM_BASE(&deco32_pf1_rowscroll)
-	AM_RANGE(0x194000, 0x194fff) AM_WRITE(MWA32_RAM) AM_BASE(&deco32_pf2_rowscroll)
-	AM_RANGE(0x1a0000, 0x1a001f) AM_WRITE(MWA32_RAM) AM_BASE(&deco32_pf12_control)
+	AM_RANGE(0x182000, 0x183fff) AM_READ(MRA32_RAM) AM_WRITE(deco32_pf1_data_w) AM_BASE(&deco32_pf1_data)
+	AM_RANGE(0x184000, 0x185fff) AM_READ(MRA32_RAM) AM_WRITE(deco32_pf2_data_w) AM_BASE(&deco32_pf2_data)
+	AM_RANGE(0x192000, 0x192fff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) AM_BASE(&deco32_pf1_rowscroll)
+	AM_RANGE(0x194000, 0x194fff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) AM_BASE(&deco32_pf2_rowscroll)
+	AM_RANGE(0x1a0000, 0x1a001f) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) AM_BASE(&deco32_pf12_control)
 
-	AM_RANGE(0x1c2000, 0x1c3fff) AM_WRITE(deco32_pf3_data_w) AM_BASE(&deco32_pf3_data)
-	AM_RANGE(0x1c4000, 0x1c5fff) AM_WRITE(deco32_pf4_data_w) AM_BASE(&deco32_pf4_data)
-	AM_RANGE(0x1d2000, 0x1d2fff) AM_WRITE(MWA32_RAM) AM_BASE(&deco32_pf3_rowscroll)
-	AM_RANGE(0x1d4000, 0x1d4fff) AM_WRITE(MWA32_RAM) AM_BASE(&deco32_pf4_rowscroll)
-	AM_RANGE(0x1e0000, 0x1e001f) AM_WRITE(MWA32_RAM) AM_BASE(&deco32_pf34_control)
+	AM_RANGE(0x1c2000, 0x1c3fff) AM_READ(MRA32_RAM) AM_WRITE(deco32_pf3_data_w) AM_BASE(&deco32_pf3_data)
+	AM_RANGE(0x1c4000, 0x1c5fff) AM_READ(MRA32_RAM) AM_WRITE(deco32_pf4_data_w) AM_BASE(&deco32_pf4_data)
+	AM_RANGE(0x1d2000, 0x1d2fff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) AM_BASE(&deco32_pf3_rowscroll)
+	AM_RANGE(0x1d4000, 0x1d4fff) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) AM_BASE(&deco32_pf4_rowscroll)
+	AM_RANGE(0x1e0000, 0x1e001f) AM_READ(MRA32_RAM) AM_WRITE(MWA32_RAM) AM_BASE(&deco32_pf34_control)
 
-	AM_RANGE(0x200000, 0x200fff) AM_WRITE(deco32_fghthist_prot_w) AM_BASE(&deco32_prot_ram)
+	AM_RANGE(0x200000, 0x200fff) AM_READ(deco16_146_fghthist_prot_r) AM_WRITE(deco16_146_fghthist_prot_w) AM_BASE(&deco32_prot_ram)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( dragngun_readmem, ADDRESS_SPACE_PROGRAM, 32 )
@@ -1372,7 +1351,7 @@ INPUT_PORTS_START( fghthist )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT(0x0008, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_VBLANK )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1989,11 +1968,10 @@ static MACHINE_DRIVER_START( fghthsta )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(ARM, 28000000/3)
-	MDRV_CPU_PROGRAM_MAP(fghthsta_readmem,fghthsta_writemem)
+	MDRV_CPU_PROGRAM_MAP(fghthsta_memmap,0)
 	MDRV_CPU_VBLANK_INT(deco32_vbl_interrupt,1)
 
-	MDRV_CPU_ADD(H6280, 32220000/8)
-	/* audio CPU */
+	MDRV_CPU_ADD(H6280, 32220000/8) /* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -2599,7 +2577,7 @@ ROM_START( dragngun )
 	ROM_LOAD( "mar-07.n19", 0x000000, 0x80000,  CRC(40287d62) SHA1(c00cb08bcdae55bcddc14c38e88b0484b1bc9e3e) )
 ROM_END
 
-ROM_START( fghthist )
+ROM_START( fghthstu )
 	ROM_REGION(0x100000, REGION_CPU1, 0 ) /* ARM 32 bit code */
 	ROM_LOAD32_WORD( "kz00-1.1f", 0x000000, 0x80000, CRC(3a3dd15c) SHA1(689b51adf73402b12191a75061b8e709468c91bc) )
 	ROM_LOAD32_WORD( "kz01-1.2f", 0x000002, 0x80000, CRC(86796cd6) SHA1(c397c07d7a1d03ba96ccb2fe7a0ad25b8331e945) )
@@ -2629,7 +2607,7 @@ ROM_START( fghthist )
 	ROM_LOAD( "mb7124h.8j",  0,  512,  CRC(7294354b) SHA1(14fe42ad5d26d022c0fe9a46a4a9017af2296f40) )
 ROM_END
 
-ROM_START( fghthstw )
+ROM_START( fghthist )
 	ROM_REGION(0x100000, REGION_CPU1, 0 ) /* ARM 32 bit code */
 	ROM_LOAD32_WORD( "fhist00.bin", 0x000000, 0x80000, CRC(fe5eaba1) SHA1(c8a3784af487a1bbd2150abf4b1c8f3ad33da8a4) ) /* Rom kx */
 	ROM_LOAD32_WORD( "fhist01.bin", 0x000002, 0x80000, CRC(3fb8d738) SHA1(2fca7a3ea483f01c97fb28a0adfa6d7980d8236c) )
@@ -2663,8 +2641,6 @@ ROM_START( fghthsta )
 	ROM_REGION(0x100000, REGION_CPU1, 0 ) /* ARM 32 bit code */
 	ROM_LOAD32_WORD( "le-00.1f", 0x000000, 0x80000, CRC(a5c410eb) SHA1(e2b0cb2351782e1155ecc4029010beb7326fd874) )
 	ROM_LOAD32_WORD( "le-01.2f", 0x000002, 0x80000, CRC(7e148aa2) SHA1(b21e16604c4d29611f91d629deb9f041eaf41e9b) )
-//  ROM_LOAD32_WORD( "kz00.out", 0x000000, 0x80000, CRC(03a3dd5c) )
-//  ROM_LOAD32_WORD( "kz01.out", 0x000002, 0x80000, CRC(086796d6) )
 
 	ROM_REGION(0x10000, REGION_CPU2, 0 ) /* Sound CPU */
 	ROM_LOAD( "kz02.18k",  0x00000,  0x10000,  CRC(5fd2309c) SHA1(2fb7af54d5cd9bf7dd6fb4f6b82aa52b03294f1f) )
@@ -3071,6 +3047,8 @@ static DRIVER_INIT( fghthist )
 {
 	deco56_decrypt(REGION_GFX1);
 	deco74_decrypt(REGION_GFX2);
+
+	decoprot_reset();
 }
 
 static DRIVER_INIT( lockload )
@@ -3154,9 +3132,9 @@ GAME( 1991, captavnu, captaven, captaven, captaven, captaven, ROT0, "Data East C
 GAME( 1991, captavuu, captaven, captaven, captaven, captaven, ROT0, "Data East Corporation", "Captain America and The Avengers (US Rev 1.6)", 0 )
 GAME( 1991, captavnj, captaven, captaven, captaven, captaven, ROT0, "Data East Corporation", "Captain America and The Avengers (Japan Rev 0.2)", 0 )
 GAME( 1993, dragngun, 0,        dragngun, dragngun, dragngun, ROT0, "Data East Corporation", "Dragon Gun (US)", GAME_IMPERFECT_GRAPHICS  )
-GAME( 1993, fghthist, 0,        fghthist, fghthist, fghthist, ROT0, "Data East Corporation", "Fighter's History (US)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAME( 1993, fghthstw, fghthist, fghthist, fghthist, fghthist, ROT0, "Data East Corporation", "Fighter's History (World)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAME( 1993, fghthsta, fghthist, fghthsta, fghthist, fghthist, ROT0, "Data East Corporation", "Fighter's History (US Alternate Hardware)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING  )
+GAME( 1993, fghthist, 0,        fghthist, fghthist, fghthist, ROT0, "Data East Corporation", "Fighter's History (World ver 43-07)", 0 )
+GAME( 1993, fghthstu, fghthist, fghthist, fghthist, fghthist, ROT0, "Data East Corporation", "Fighter's History (US ver 42-03)", 0 )
+GAME( 1993, fghthsta, fghthist, fghthsta, fghthist, fghthist, ROT0, "Data East Corporation", "Fighter's History (US ver 42-05, alternate hardware )", 0 )
 GAME( 1994, lockload, 0,        lockload, lockload, lockload, ROT0, "Data East Corporation", "Locked 'n Loaded (US)", GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
 GAME( 1994, tattass,  0,        tattass,  tattass,  tattass,  ROT0, "Data East Pinball",     "Tattoo Assassins (US Prototype)", GAME_IMPERFECT_GRAPHICS )
 GAME( 1994, tattassa, tattass,  tattass,  tattass,  tattass,  ROT0, "Data East Pinball",     "Tattoo Assassins (Asia Prototype)", GAME_IMPERFECT_GRAPHICS )

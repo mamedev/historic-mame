@@ -592,9 +592,21 @@ void namcoio_51XX_write(int chip,int data)
 
 				{
 					/* kludge for a possible bug in Xevious */
-					extern const game_driver driver_xevious;
+					static const game_driver *namcoio_51XX_driver = NULL;
+					static int namcoio_51XX_kludge = 0;
 
-					if (Machine->gamedrv == &driver_xevious || Machine->gamedrv->clone_of == &driver_xevious)
+					/* Only compute namcoio_51XX_kludge when gamedrv changes */
+					if (namcoio_51XX_driver != Machine->gamedrv)
+					{
+						namcoio_51XX_driver = Machine->gamedrv;
+						if (strcmp(namcoio_51XX_driver->name, "xevious") == 0 ||
+							strcmp(namcoio_51XX_driver->parent, "xevious") == 0)
+							namcoio_51XX_kludge = 1;
+						else
+							namcoio_51XX_kludge = 0;
+					}
+
+					if (namcoio_51XX_kludge)
 					{
 						io[chip].coincred_mode = 6;
 						io[chip].remap_joy = 1;

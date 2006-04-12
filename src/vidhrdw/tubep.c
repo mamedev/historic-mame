@@ -7,6 +7,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "includes/tubep.h"
 
 
 UINT8 *tubep_textram;

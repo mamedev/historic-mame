@@ -237,9 +237,6 @@ This will benefit galpani3 and other kaneko16 games with TOYBOX MCU.
 ***************************************************************************/
 static UINT16 *mcu_ram, jchan_mcu_com[4];
 
-extern const game_driver driver_jchan;
-extern const game_driver driver_jchan2;
-
 void jchan_mcu_run(void)
 {
 	UINT16 mcu_command = mcu_ram[0x0010/2];		/* command nb */
@@ -270,7 +267,7 @@ void jchan_mcu_run(void)
 					mcu_ram[mcu_offset + 6] = 0x3939; mcu_ram[mcu_offset + 7] = 0x3420;
 					break;
 				case 0x3e:
-					if ( (Machine->gamedrv == &driver_jchan) ) /* $f72 ($f6a-$fc6) */
+					if ( strcmp(Machine->gamedrv->name, "jchan") == 0 ) /* $f72 ($f6a-$fc6) */
 					{
 						/* MCU writes the string "1995/05/24 The kung-Fu Master Jackie Chan   " to shared ram */
 						mcu_ram[mcu_offset +  0] = 0x3139; mcu_ram[mcu_offset +  1] = 0x3935;
@@ -285,7 +282,7 @@ void jchan_mcu_run(void)
 						mcu_ram[mcu_offset + 18] = 0x2043; mcu_ram[mcu_offset + 19] = 0x6861;
 						mcu_ram[mcu_offset + 20] = 0x6E20; mcu_ram[mcu_offset + 21] = 0x2020;
 					}
-					else if ( (Machine->gamedrv == &driver_jchan2) )
+					else if ( strcmp(Machine->gamedrv->name, "jchan2") == 0 )
 					{
 						/* MCU writes the string "1995/10/24 Fists Of Fire" to shared ram */
 						mcu_ram[mcu_offset +  0] = 0x3139; mcu_ram[mcu_offset +  1] = 0x3935;

@@ -1,3 +1,5 @@
+/*----------- defined in vidhrdw/dogfgt.c -----------*/
+
 extern UINT8 *dogfgt_bgvideoram;
 
 WRITE8_HANDLER( dogfgt_plane_select_w );

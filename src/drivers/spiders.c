@@ -169,18 +169,7 @@ $F987 - Addresses table at $f98d containing four structs:
 
 UINT8 *spiders_ram;
 
-
-/* VIDHRDW */
-
 PALETTE_INIT( nyny );
-VIDEO_START( spiders );
-VIDEO_UPDATE( spiders );
-
-/* MACHINE */
-
-MACHINE_RESET( spiders );
-INTERRUPT_GEN( spiders_timed_irq );
-
 
 /* Driver structure definition */
 

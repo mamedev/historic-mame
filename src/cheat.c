@@ -7970,7 +7970,7 @@ static UINT8 DefaultEnableRegion(SearchRegion * region, SearchInfo * info)
 
 			{
 				// for neogeo, search bank one
-				if(	(!strcmp(Machine->gamedrv->clone_of->name, "neogeo")) &&
+				if(	(!strcmp(Machine->gamedrv->parent, "neogeo")) &&
 					(info->targetType == kRegionType_CPU) &&
 					(info->targetIdx == 0) &&
 					(handler == MWA8_BANK1))

@@ -6,6 +6,7 @@
 
 #include "driver.h"
 #include "machine/atarigen.h"
+#include "includes/skullxbo.h"
 
 
 

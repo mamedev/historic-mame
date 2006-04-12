@@ -24,3 +24,14 @@ WRITE8_HANDLER( orbit_noise_amp_w );
 WRITE8_HANDLER( orbit_noise_rst_w );
 
 extern struct discrete_sound_block orbit_discrete_interface[];
+
+/*----------- defined in vidhrdw/orbit.c -----------*/
+
+VIDEO_START( orbit );
+VIDEO_UPDATE( orbit );
+
+extern UINT8* orbit_playfield_ram;
+extern UINT8* orbit_sprite_ram;
+
+extern WRITE8_HANDLER( orbit_playfield_w );
+extern WRITE8_HANDLER( orbit_sprite_w );

@@ -11,7 +11,7 @@ READ8_HANDLER( berzerk_led_on_r );
 READ8_HANDLER( berzerk_led_off_r );
 
 
-/*----------- defined in vidrhdw/berzerk.c -----------*/
+/*----------- defined in vidhrdw/berzerk.c -----------*/
 
 PALETTE_INIT( berzerk );
 VIDEO_START( berzerk );

@@ -213,6 +213,7 @@ static struct x_offset game_offsets[] =
 	{ "zombraid", {  0,  0 }, { -2, -2 } },	// correct for normal, flip screen not working yet
 	{ "madshark", {  0,  0 }, {  0,  0 } },	// unknown (wrong when flipped, but along y)
 	{ "utoukond", {  0,  0 }, { -2,  0 } }, // unknown (wrong when flipped, but along y)
+	{ "crazyfgt", {  0,  0 }, { -2,  0 } }, // wrong (empty background column in title screen, but aligned sprites in screen select)
 	{ NULL }
 };
 

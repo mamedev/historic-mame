@@ -415,6 +415,10 @@ $(OBJ)/%.pp: src/%.c
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) -E $< -o $@
 
+$(OBJ)/%.s: src/%.c
+	@echo Compiling $<...
+	$(CC) $(CDEFS) $(CFLAGS) -S $< -o $@
+
 $(OBJ)/%.a:
 	@echo Archiving $@...
 	$(RM) $@

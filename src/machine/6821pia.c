@@ -794,6 +794,26 @@ void pia_set_input_cb2(int which, int data)
 
 
 
+/******************* interface retrieving PIA port CA2 output *******************/
+
+int pia_get_output_ca2(int which)
+{
+	struct pia6821 *p = pia + which;
+	return p->out_ca2;
+}
+
+
+
+/******************* interface retrieving PIA port CB2 output *******************/
+
+int pia_get_output_cb2(int which)
+{
+	struct pia6821 *p = pia + which;
+	return p->out_cb2;
+}
+
+
+
 /******************* interface retrieving DDR *******************/
 
 UINT8 pia_get_ddr_a(int which)
@@ -809,6 +829,25 @@ UINT8 pia_get_ddr_b(int which)
 	struct pia6821 *p = pia + which;
 	return p->ddr_b;
 }
+
+
+
+/******************* interface retrieving IRQ *******************/
+
+int pia_get_irq_a(int which)
+{
+	struct pia6821 *p = pia + which;
+	return p->irq_a_state;
+}
+
+
+
+int pia_get_irq_b(int which)
+{
+	struct pia6821 *p = pia + which;
+	return p->irq_b_state;
+}
+
 
 
 

@@ -1,3 +1,5 @@
+/*----------- defined in vidhrdw/tubep.c -----------*/
+
 VIDEO_EOF( tubep_eof );
 PALETTE_INIT( tubep );
 VIDEO_UPDATE( tubep );

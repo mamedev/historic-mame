@@ -75,11 +75,9 @@ struct rc_option frontend_opts[] = {
 };
 
 
-static int silentident,knownstatus;
+static int silentident,knownstatus,identfiles,identmatches,identnonroms;
 
 void get_rom_sample_path (int argc, char **argv, int game_index, char *override_default_rompath);
-
-static const game_driver *gamedrv;
 
 /* compare string[8] using standard(?) DOS wildchars ('?' & '*')      */
 /* for this to work correctly, the shells internal wildcard expansion */
@@ -192,6 +190,8 @@ void identify_rom(const char* name, const char* hash, int length)
 			break;
 		}
 	}
+	identfiles++;
+
 	if (!silentident)
 		printf("%s ",&name[0]);
 
@@ -206,6 +206,7 @@ void identify_rom(const char* name, const char* hash, int length)
 		{
 			if (!silentident)
 				printf("NOT A ROM\n");
+			identnonroms++;
 		}
 		else
 		{
@@ -219,6 +220,7 @@ void identify_rom(const char* name, const char* hash, int length)
 	}
 	else
 	{
+		identmatches++;
 		if (knownstatus == KNOWN_START)
 			knownstatus = KNOWN_ALL;
 		else if (knownstatus == KNOWN_NONE)
@@ -439,6 +441,8 @@ int frontend_help (const char *gamename, const char *filename)
 {
 	machine_config drv;
 	int i, j;
+	const game_driver *gamedrv;
+	const game_driver *clone_of;
 	const char *all_games = "*";
 	char *pdest = NULL;
 	int result = 0;
@@ -472,6 +476,9 @@ int frontend_help (const char *gamename, const char *filename)
 	cpuintrf_init();
 	sndintrf_init();
 
+#define isclone(i) \
+	((clone_of = driver_get_clone(drivers[i])) != NULL && (clone_of->flags & NOT_A_DRIVER) == 0)
+
 	switch (list)  /* front-end utilities ;) */
 	{
         #ifdef MESS
@@ -485,7 +492,8 @@ int frontend_help (const char *gamename, const char *filename)
 		case LIST_FULL: /* games list with descriptions */
 			printf("Name:     Description:\n");
 			for (i = 0; drivers[i]; i++)
-				if (!strwildcmp(gamename, drivers[i]->name))
+				if (	((drivers[i]->flags & NOT_A_DRIVER) == 0) &&
+					!strwildcmp(gamename, drivers[i]->name))
 				{
 					char name[200];
 
@@ -580,7 +588,7 @@ int frontend_help (const char *gamename, const char *filename)
 							i++;
 						}
 					}
-                }
+				}
 #endif
 			}
 			return 0;
@@ -589,10 +597,10 @@ int frontend_help (const char *gamename, const char *filename)
 		case LIST_CLONES: /* list clones */
 			printf("Name:    Clone of:\n");
 			for (i = 0; drivers[i]; i++)
-				if (drivers[i]->clone_of && !(drivers[i]->clone_of->flags & NOT_A_DRIVER) &&
+				if (	isclone(i) &&
 						(!strwildcmp(gamename,drivers[i]->name)
-								|| !strwildcmp(gamename,drivers[i]->clone_of->name)))
-					printf("%-8s %-8s\n",drivers[i]->name,drivers[i]->clone_of->name);
+								|| !strwildcmp(gamename,clone_of->name)))
+					printf("%-8s %-8s\n",drivers[i]->name,clone_of->name);
 			return 0;
 			break;
 
@@ -658,8 +666,8 @@ int frontend_help (const char *gamename, const char *filename)
 				}
 
 				printf ("romset %s ", drivers[i]->name);
-				if (drivers[i]->clone_of && !(drivers[i]->clone_of->flags & NOT_A_DRIVER))
-					printf ("[%s] ", drivers[i]->clone_of->name);
+				if (isclone(i))
+					printf ("[%s] ", clone_of->name);
 			}
 			if (verify & VERIFY_SAMPLES)
 			{
@@ -741,6 +749,7 @@ nextloop:
 		else silentident = 0;
 
 		knownstatus = KNOWN_START;
+		identfiles = identmatches = identnonroms = 0;
 		romident(filename, 1);
 		if (ident == 2)
 		{
@@ -752,7 +761,15 @@ nextloop:
 				case KNOWN_SOME:  printf("PARTKNOWN %s\n",gamename); break;
 			}
 		}
-		return 0;
+
+		if (identmatches == identfiles)
+			return 0;
+		else if (identmatches == identfiles - identnonroms)
+			return 1;
+		else if (identmatches > 0)
+			return 2;
+		else
+			return 3;
 	}
 
 	/* FIXME: horrible hack to tell that no frontend option was used */

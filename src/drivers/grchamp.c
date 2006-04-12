@@ -44,42 +44,6 @@ Notes:
 #include "sound/ay8910.h"
 #include "grchamp.h"
 
-/* from vidhrdw */
-extern PALETTE_INIT( grchamp );
-extern VIDEO_START( grchamp );
-extern VIDEO_UPDATE( grchamp );
-extern WRITE8_HANDLER( grchamp_videoram_w );
-extern UINT8 *grchamp_videoram;
-extern UINT8 *grchamp_radar;
-extern UINT8 grchamp_player_ypos;
-
-extern WRITE8_HANDLER( grchamp_player_xpos_w );
-extern WRITE8_HANDLER( grchamp_player_ypos_w );
-extern WRITE8_HANDLER( grchamp_tile_select_w );
-extern WRITE8_HANDLER( grchamp_rain_xpos_w );
-extern WRITE8_HANDLER( grchamp_rain_ypos_w );
-
-/* from machine */
-extern int grchamp_cpu_irq_enable[2];
-extern DRIVER_INIT( grchamp );
-extern READ8_HANDLER( grchamp_port_0_r );
-extern READ8_HANDLER( grchamp_port_1_r );
-extern WRITE8_HANDLER( grchamp_port_1_w );
-
-extern WRITE8_HANDLER( grchamp_control0_w );
-extern WRITE8_HANDLER( grchamp_coinled_w );
-extern WRITE8_HANDLER( grchamp_sound_w );
-extern WRITE8_HANDLER( grchamp_comm_w );
-
-extern WRITE8_HANDLER( grchamp_portA_0_w );
-extern WRITE8_HANDLER( grchamp_portB_0_w );
-extern WRITE8_HANDLER( grchamp_portA_1_w );
-extern WRITE8_HANDLER( grchamp_portB_1_w );
-extern WRITE8_HANDLER( grchamp_portA_2_w );
-extern WRITE8_HANDLER( grchamp_portB_2_w );
-
-extern int grchamp_collision;
-
 /***************************************************************************/
 
 static UINT8 grchamp_led_data0;

@@ -36,7 +36,7 @@ WRITE8_HANDLER( profpac_nvram_w );
 MACHINE_START( astrocde );
 MACHINE_START( profpac );
 
-/*----------- defined in vidrhdw/astrocde.c -----------*/
+/*----------- defined in vidhrdw/astrocde.c -----------*/
 
 extern UINT8 *wow_videoram;
 extern read8_handler astrocde_videoram_r;

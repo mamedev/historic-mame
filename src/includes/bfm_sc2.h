@@ -6,7 +6,10 @@
 extern void on_scorpion2_reset(void);
 extern void send_to_sc2(int data);
 extern int  read_from_sc2(void);
+extern void send_to_adder(int data);
+extern int  receive_from_adder(void);
 
+extern void Scorpion2_SetSwitchState(int strobe, int data, int state);
 extern int Scorpion2_GetSwitchState(int strobe, int data);
 
 extern int  get_adder2_uart_status(void);

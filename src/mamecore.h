@@ -549,7 +549,8 @@ INLINE int gregorian_days_in_month(int month, int year)
 #define ATTR_PURE				__attribute__((pure))
 #define ATTR_CONST				__attribute__((const))
 #define UNEXPECTED(exp)			__builtin_expect((exp), 0)
-#define TYPES_COMPATIBLE(a,b)	__builtin_types_compatible_p((a), (b))
+#define TYPES_COMPATIBLE(a,b)	__builtin_types_compatible_p(a, b)
+#define RESTRICT				__restrict__
 #else
 #define ATTR_UNUSED
 #define ATTR_NORETURN
@@ -558,7 +559,8 @@ INLINE int gregorian_days_in_month(int month, int year)
 #define ATTR_PURE
 #define ATTR_CONST
 #define UNEXPECTED(exp)			(exp)
-#define TYPES_COMPATIBLE(a,b)	0
+#define TYPES_COMPATIBLE(a,b)	1
+#define RESTRICT
 #endif
 
 

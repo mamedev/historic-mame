@@ -4,7 +4,7 @@
 
 extern UINT32 *psikyosh_bgram, *psikyosh_zoomram, *psikyosh_vidregs, *psh_ram;
 
-/*----------- defined in vidhrdw/psiykosh.c -----------*/
+/*----------- defined in vidhrdw/psikyosh.c -----------*/
 
 VIDEO_START( psikyosh );
 VIDEO_UPDATE( psikyosh );

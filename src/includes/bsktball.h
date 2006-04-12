@@ -32,8 +32,11 @@ WRITE8_HANDLER( bsktball_noise_reset_w );
 
 extern struct discrete_sound_block bsktball_discrete_interface[];
 
-
 /*----------- defined in vidhrdw/bsktball.c -----------*/
 
 extern unsigned char *bsktball_motion;
+
+VIDEO_START( bsktball );
 VIDEO_UPDATE( bsktball );
+WRITE8_HANDLER( bsktball_videoram_w );
+

@@ -392,7 +392,7 @@ static void decode_graphics(const gfx_decode *gfxdecodeinfo)
 
 	/* loop over all elements */
 	for (i = 0; i < MAX_GFX_ELEMENTS; i++)
-		if (Machine->gfx[i])
+		if (Machine->gfx[i] && gfxdecodeinfo[i].memory_region > REGION_INVALID)
 		{
 			UINT8 *region_base = memory_region(gfxdecodeinfo[i].memory_region);
 			gfx_element *gfx = Machine->gfx[i];
@@ -528,6 +528,9 @@ void set_visible_area(int min_x, int max_x, int min_y, int max_y)
 
 	/* recompute scanline timing */
 	cpu_compute_scanline_timing();
+
+	/* set UI visible area */
+	ui_set_visible_area(min_x, min_y, max_x, max_y);
 }
 
 

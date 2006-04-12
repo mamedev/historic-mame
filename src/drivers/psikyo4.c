@@ -67,7 +67,8 @@ NOTE: The version number (A/B) on Lode Runner: The Dig Fight is ONLY displayed w
 #define DUAL_SCREEN 1 /* Display both screens simultaneously if 1, change in vidhrdw too */
 #define ROMTEST 0 /* Does necessary stuff to perform rom test, uses RAM as it doesn't dispose of GFX after decoding */
 
-UINT32 *psikyo4_vidregs, *ps4_ram, *ps4_io_select;
+UINT32 *psikyo4_vidregs;
+static UINT32 *ps4_ram, *ps4_io_select;
 static UINT32 *bgpen_1, *bgpen_2;
 
 #define MASTER_CLOCK 57272700	// main oscillator frequency

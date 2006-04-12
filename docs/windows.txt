@@ -534,8 +534,8 @@ Windows misc options
 
 -priority <priority>
 
-	Sets the thread priority for the main MAME thread. Default is -15, which
-	is IDLE priority, guaranteeing proper cooperation with other apps. The
+	Sets the thread priority for the main MAME thread. Default is 0, which
+	is NORMAL priority, guaranteeing proper cooperation with other apps. The
 	valid range is -15 to 1, with 1 being the highest priority.
 
 
@@ -850,11 +850,6 @@ MAME core misc options
 	Outputs error.log data to the Windows debugger instead of to a file.
 	Default is OFF (-nooslog).
 
--[no]skip_disclaimer
-
-	Forces MAME to skip displaying the disclaimer screen. The default is
-	OFF (-noskip_disclaimer).
-
 -[no]skip_gameinfo
 
 	Forces MAME to skip displaying the game info screen. The default is OFF
@@ -932,11 +927,18 @@ command:
 
 	Attempts to identify ROM files, if they are known to MAME, in the
 	specified .zip file. Can be used to try and identify ROM sets taken
-	from unknown boards.
+	from unknown boards. On exit, the errorlevel is returned as one of
+	the following:
+	
+		0: means all files were identified
+		1: means all files were identified except for 1 or more "non-ROM"
+			files
+		2: means some files were identified
+		3: means no files were identified
 
 -isknown
 
-	Very terse romident.
+	Very terse romident. The errorlevel is set the same as for -romident.
 
 
 Keys

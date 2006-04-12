@@ -7,13 +7,14 @@
 #include <math.h>
 #include "driver.h"
 #include "sound/discrete.h"
+#include "includes/asteroid.h"
 
 /************************************************************************/
 /* Asteroids Sound System Analog emulation by K.Wilkins Nov 2000        */
 /* Questions/Suggestions to mame@dysfunction.demon.co.uk                */
 /************************************************************************/
 
-const struct discrete_lfsr_desc asteroid_lfsr={
+static const struct discrete_lfsr_desc asteroid_lfsr={
 	DISC_CLK_IS_FREQ,
 	16,			/* Bit Length */
 	0,			/* Reset Value */
@@ -27,7 +28,7 @@ const struct discrete_lfsr_desc asteroid_lfsr={
 	16			/* Output bit is feedback bit */
 };
 
-const struct discrete_dac_r1_ladder asteroid_thump_dac1 =
+static const struct discrete_dac_r1_ladder asteroid_thump_dac1 =
 {
 	4,			// size of ladder
 	{RES_K(220), RES_K(100), RES_K(47), RES_K(22)}, //R44-R47
@@ -37,7 +38,7 @@ const struct discrete_dac_r1_ladder asteroid_thump_dac1 =
 	CAP_U(0.01)	// C27
 };
 
-const struct discrete_555_cc_desc asteroid_thump_555cc =
+static const struct discrete_555_cc_desc asteroid_thump_555cc =
 {
 	DISC_555_OUT_SQW | DISC_555_OUT_AC | DISCRETE_555_CC_TO_CAP,
 	5,		// B+ voltage of 555

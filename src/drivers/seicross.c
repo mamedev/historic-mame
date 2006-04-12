@@ -58,6 +58,9 @@ extern VIDEO_UPDATE( seicross );
 static UINT8 *nvram;
 static size_t nvram_size;
 
+static UINT8 portb;
+
+
 static NVRAM_HANDLER( seicross )
 {
 	if (read_or_write)
@@ -86,8 +89,6 @@ static MACHINE_RESET( friskyt )
 
 
 
-static int portb;
-
 static READ8_HANDLER( friskyt_portB_r )
 {
 	return (portb & 0x9f) | (readinputport(6) & 0x60);
@@ -114,85 +115,47 @@ static WRITE8_HANDLER( friskyt_portB_w )
 }
 
 
-static UINT8 *sharedram;
-
-static READ8_HANDLER( sharedram_r )
-{
-	return sharedram[offset];
-}
-
-static WRITE8_HANDLER( sharedram_w )
-{
-	sharedram[offset] = data;
-}
-
-
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x77ff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x7800, 0x7fff) AM_READ(sharedram_r)
-	AM_RANGE(0x8820, 0x887f) AM_READ(MRA8_RAM)
-	AM_RANGE(0x9000, 0x93ff) AM_READ(MRA8_RAM)	/* video RAM */
-	AM_RANGE(0x9800, 0x981f) AM_READ(MRA8_RAM)
-	AM_RANGE(0x9c00, 0x9fff) AM_READ(MRA8_RAM)	/* color RAM */
+static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x77ff) AM_ROM
+	AM_RANGE(0x7800, 0x7fff) AM_RAM AM_SHARE(1)
+	AM_RANGE(0x8820, 0x887f) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x9000, 0x93ff) AM_READWRITE(MRA8_RAM, seicross_videoram_w) AM_BASE(&videoram)	/* video RAM */
+	AM_RANGE(0x9800, 0x981f) AM_RAM AM_BASE(&seicross_row_scroll)
+	AM_RANGE(0x9880, 0x989f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2) AM_SIZE(&spriteram_2_size)
+	AM_RANGE(0x9c00, 0x9fff) AM_READWRITE(MRA8_RAM, seicross_colorram_w) AM_BASE(&colorram)
 	AM_RANGE(0xa000, 0xa000) AM_READ(input_port_0_r)	/* IN0 */
 	AM_RANGE(0xa800, 0xa800) AM_READ(input_port_1_r)	/* IN1 */
 	AM_RANGE(0xb000, 0xb000) AM_READ(input_port_2_r)	/* test */
 	AM_RANGE(0xb800, 0xb800) AM_READ(watchdog_reset_r)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x77ff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x7800, 0x7fff) AM_WRITE(sharedram_w) AM_BASE(&sharedram)
-	AM_RANGE(0x8820, 0x887f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x9000, 0x93ff) AM_WRITE(seicross_videoram_w) AM_BASE(&videoram)
-	AM_RANGE(0x9800, 0x981f) AM_WRITE(MWA8_RAM) AM_BASE(&seicross_row_scroll)
-	AM_RANGE(0x9880, 0x989f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram_2) AM_SIZE(&spriteram_2_size)
-	AM_RANGE(0x9c00, 0x9fff) AM_WRITE(seicross_colorram_w) AM_BASE(&colorram)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x04, 0x04) AM_READ(AY8910_read_port_0_r)
-	AM_RANGE(0x0c, 0x0c) AM_READ(AY8910_read_port_0_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( main_portmap, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x00, 0x00) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x04, 0x04) AM_READ(AY8910_read_port_0_r)
 	AM_RANGE(0x08, 0x08) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x09, 0x09) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x0c, 0x0c) AM_READ(AY8910_read_port_0_r)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( mcu_nvram_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x007f) AM_READ(MRA8_RAM)
-	AM_RANGE(0x1000, 0x10ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x8000, 0xf7ff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xf800, 0xffff) AM_READ(sharedram_r)
+
+static ADDRESS_MAP_START( mcu_nvram_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x007f) AM_RAM
+	AM_RANGE(0x1000, 0x10ff) AM_RAM AM_BASE(&nvram) AM_SIZE(&nvram_size)
+	AM_RANGE(0x2000, 0x2000) AM_WRITE(DAC_0_data_w)
+	AM_RANGE(0x8000, 0xf7ff) AM_ROM
+	AM_RANGE(0xf800, 0xffff) AM_RAM AM_SHARE(1)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( mcu_no_nvram_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x007f) AM_READ(MRA8_RAM)
+static ADDRESS_MAP_START( mcu_no_nvram_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x007f) AM_RAM
 	AM_RANGE(0x1003, 0x1003) AM_READ(input_port_3_r)	/* DSW1 */
 	AM_RANGE(0x1005, 0x1005) AM_READ(input_port_4_r)	/* DSW2 */
 	AM_RANGE(0x1006, 0x1006) AM_READ(input_port_5_r)	/* DSW3 */
-	AM_RANGE(0x8000, 0xf7ff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xf800, 0xffff) AM_READ(sharedram_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( mcu_nvram_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x007f) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x1000, 0x10ff) AM_WRITE(MWA8_RAM) AM_BASE(&nvram) AM_SIZE(&nvram_size)
 	AM_RANGE(0x2000, 0x2000) AM_WRITE(DAC_0_data_w)
-	AM_RANGE(0x8000, 0xf7ff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xf800, 0xffff) AM_WRITE(sharedram_w)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( mcu_no_nvram_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x007f) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x2000, 0x2000) AM_WRITE(DAC_0_data_w)
-	AM_RANGE(0x8000, 0xf7ff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xf800, 0xffff) AM_WRITE(sharedram_w)
+	AM_RANGE(0x8000, 0xf7ff) AM_ROM
+	AM_RANGE(0xf800, 0xffff) AM_RAM AM_SHARE(1)
 ADDRESS_MAP_END
 
 
@@ -440,12 +403,12 @@ static MACHINE_DRIVER_START( nvram )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz? */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
-	MDRV_CPU_IO_MAP(readport,writeport)
+	MDRV_CPU_PROGRAM_MAP(main_map,0)
+	MDRV_CPU_IO_MAP(main_portmap,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD_TAG("mcu", NSC8105, 6000000/4)	/* ??? */
-	MDRV_CPU_PROGRAM_MAP(mcu_nvram_readmem,mcu_nvram_writemem)
+	MDRV_CPU_PROGRAM_MAP(mcu_nvram_map,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)	/* frames per second, vblank duration */
@@ -482,7 +445,7 @@ static MACHINE_DRIVER_START( no_nvram )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(nvram)
 	MDRV_CPU_MODIFY("mcu")
-	MDRV_CPU_PROGRAM_MAP(mcu_no_nvram_readmem,mcu_no_nvram_writemem)
+	MDRV_CPU_PROGRAM_MAP(mcu_no_nvram_map,0)
 
 	MDRV_NVRAM_HANDLER(NULL)
 MACHINE_DRIVER_END
@@ -506,7 +469,7 @@ ROM_START( friskyt )
 	ROM_LOAD( "ft8_8.rom",    0x7000, 0x0800, CRC(10461a24) SHA1(c1f98316a4e90a2a6ef4953708b90c9546caaedd) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the protection mcu */
-	/* filled in later */
+	ROM_COPY( REGION_CPU1, 0x0000, 0x8000, 0x8000 )	/* shares the main program ROMs and RAM with the main CPU. */
 
 	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "ftom.11",      0x0000, 0x1000, CRC(1ec6ff65) SHA1(aab589c89cd14549b35f4dece5d3c231033c0c1a) )
@@ -531,7 +494,7 @@ ROM_START( friskyta )
 	ROM_LOAD( "ft8_8.rom",    0x7000, 0x0800, CRC(10461a24) SHA1(c1f98316a4e90a2a6ef4953708b90c9546caaedd) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the protection mcu */
-	/* filled in later */
+	ROM_COPY( REGION_CPU1, 0x0000, 0x8000, 0x8000 )	/* shares the main program ROMs and RAM with the main CPU. */
 
 	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "ft.11",        0x0000, 0x1000, CRC(956d924a) SHA1(e61bf5f187932c6cb676b4120cd95fe422f6a1a6) )
@@ -556,7 +519,7 @@ ROM_START( radrad )
 	ROM_LOAD( "8.3h",         0x7000, 0x0800, CRC(911c90e8) SHA1(94fa91e767ab27a1616f1768f97a44a59a3f3294) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the protection mcu */
-	/* filled in later */
+	ROM_COPY( REGION_CPU1, 0x0000, 0x8000, 0x8000 )	/* shares the main program ROMs and RAM with the main CPU. */
 
 	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "11.l7",        0x0000, 0x1000, CRC(4ace7afb) SHA1(3c495f106505d5dfed93393db1f1b3842f603448) )
@@ -581,7 +544,7 @@ ROM_START( seicross )
 	ROM_LOAD( "smc8",         0x7000, 0x0800, CRC(2093461d) SHA1(0d640bc7ee1e9ffe32580e3143677475145b06d2) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the protection mcu */
-	/* filled in later */
+	ROM_COPY( REGION_CPU1, 0x0000, 0x8000, 0x8000 )	/* shares the main program ROMs and RAM with the main CPU. */
 
 	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "sz11.7k",      0x0000, 0x1000, CRC(fbd9b91d) SHA1(6b3581f4b518c058b970d569ced07dd7dc6a87e6) )
@@ -606,7 +569,7 @@ ROM_START( sectrzon )
 	ROM_LOAD( "sz8.3j",       0x7000, 0x0800, CRC(9933526a) SHA1(2178ef8653f1d60be28bcaebe1033ef7ae480157) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the protection mcu */
-	/* filled in later */
+	ROM_COPY( REGION_CPU1, 0x0000, 0x8000, 0x8000 )	/* shares the main program ROMs and RAM with the main CPU. */
 
 	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "sz11.7k",      0x0000, 0x1000, CRC(fbd9b91d) SHA1(6b3581f4b518c058b970d569ced07dd7dc6a87e6) )
@@ -621,24 +584,8 @@ ROM_END
 
 
 
-static DRIVER_INIT( friskyt )
-{
-	int A;
-	UINT8 *src,*dest;
-
-	/* the protection mcu shares the main program ROMs and RAM with the main CPU. */
-
-	/* copy over the ROMs */
-	src = memory_region(REGION_CPU1);
-	dest = memory_region(REGION_CPU2);
-	for (A = 0;A < 0x8000;A++)
-		 dest[A + 0x8000] = src[A];
-}
-
-
-
-GAME( 1981, friskyt,  0,        nvram,    friskyt,  friskyt, ROT0,  "Nichibutsu", "Frisky Tom (set 1)", GAME_NO_COCKTAIL )
-GAME( 1981, friskyta, friskyt,  nvram,    friskyt,  friskyt, ROT0,  "Nichibutsu", "Frisky Tom (set 2)", GAME_NO_COCKTAIL )
-GAME( 1982, radrad,   0,        no_nvram, radrad,   friskyt, ROT0,  "Nichibutsu USA", "Radical Radial", GAME_NO_COCKTAIL )
-GAME( 1984, seicross, 0,        no_nvram, seicross, friskyt, ROT90, "Nichibutsu + Alice", "Seicross", GAME_NO_COCKTAIL )
-GAME( 1984, sectrzon, seicross, no_nvram, seicross, friskyt, ROT90, "Nichibutsu + Alice", "Sector Zone", GAME_NO_COCKTAIL )
+GAME( 1981, friskyt,  0,        nvram,    friskyt,  0, ROT0,  "Nichibutsu", "Frisky Tom (set 1)", GAME_NO_COCKTAIL )
+GAME( 1981, friskyta, friskyt,  nvram,    friskyt,  0, ROT0,  "Nichibutsu", "Frisky Tom (set 2)", GAME_NO_COCKTAIL )
+GAME( 1982, radrad,   0,        no_nvram, radrad,   0, ROT0,  "Nichibutsu USA", "Radical Radial", GAME_NO_COCKTAIL )
+GAME( 1984, seicross, 0,        no_nvram, seicross, 0, ROT90, "Nichibutsu + Alice", "Seicross", GAME_NO_COCKTAIL )
+GAME( 1984, sectrzon, seicross, no_nvram, seicross, 0, ROT90, "Nichibutsu + Alice", "Sector Zone", GAME_NO_COCKTAIL )

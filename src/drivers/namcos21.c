@@ -286,7 +286,11 @@ CPU68 PCB:
 #include "sound/c140.h"
 #include "namcos21.h"
 
-#define CPU_DSP_MASTER_REGION	REGION_CPU5
+static UINT16 *master_dsp_rom;
+static UINT16 *master_dsp_ram;
+static UINT16 *slave_dsp_rom;
+static UINT16 *slave_dsp_ram;
+
 #define CPU_DSP_SLAVE_REGION	REGION_CPU6
 
 #define DSP_BUF_MAX (4096*8)
@@ -332,13 +336,8 @@ static READ16_HANDLER( uploadhack_r )
 
 void namcos21_enabledsps( void )
 {
-	UINT16 *pMem;
-
-	pMem = (UINT16 *)memory_region(CPU_DSP_MASTER_REGION);
-	pMem[1] = 0x0100;
-
-	pMem = (UINT16 *)memory_region(CPU_DSP_SLAVE_REGION);
-	pMem[1] = 0x0100;
+	master_dsp_rom[1] = 0x0100;
+	slave_dsp_rom[1] = 0x0100;
 }
 
 static READ16_HANDLER( dspram16_r )
@@ -411,9 +410,7 @@ static READ16_HANDLER( dspram16_r )
 		{
 			int i;
 			unsigned len;
-			UINT16 *pUploadDest;
 			static int count;
-			UINT16 *pMem;
 
 			/* This signals that a large chunk of code/data has been written by the main CPU.
              * The 68k CPU waits for this flag to be cleared.
@@ -430,13 +427,11 @@ static READ16_HANDLER( dspram16_r )
 			if( len )
 			{
 				logerror( "upload master\n" );
-				pUploadDest = 0x8000 + (UINT16 *)memory_region(CPU_DSP_MASTER_REGION);
 				for( i=0; i<len; i++ )
 				{
-					pUploadDest[i] = namcos21_dspram16[0x2000/2+i];
+					master_dsp_ram[i] = namcos21_dspram16[0x2000/2+i];
 				}
-				pMem = (UINT16 *)memory_region(CPU_DSP_MASTER_REGION);
-				pMem[1] = 0x0100;
+				master_dsp_rom[1] = 0x0100;
 			}
 
 			/* upload to slave dsp(s) */
@@ -444,13 +439,11 @@ static READ16_HANDLER( dspram16_r )
 			if( len )
 			{
 				logerror( "upload slave\n" );
-				pUploadDest = 0x8000 + (UINT16 *)memory_region(CPU_DSP_SLAVE_REGION);
 				for( i=0; i<len; i++ )
 				{
-					pUploadDest[i] = namcos21_dspram16[0xa000/2+i];
+					slave_dsp_ram[i] = namcos21_dspram16[0xa000/2+i];
 				}
-				pMem = (UINT16 *)memory_region(CPU_DSP_SLAVE_REGION);
-				pMem[1] = 0x0100;
+				slave_dsp_rom[1] = 0x0100;
 			}
 		}
 	}
@@ -478,7 +471,7 @@ InitDSP( void )
 
 	memset( mpDspState, 0, sizeof(*mpDspState) );
 
-	pMem = (UINT16 *)memory_region(CPU_DSP_MASTER_REGION);
+	pMem = master_dsp_rom;
 	pc = 0;
 	pMem[pc++] = 0xff80; /* b */
 	pMem[pc++] = 0; /* 0x0100; */
@@ -506,7 +499,7 @@ InitDSP( void )
 	pMem[pc++] = 0xff80; /* b */
 	pMem[pc++] = loop;
 
-	pMem = (UINT16 *)memory_region(CPU_DSP_SLAVE_REGION);
+	pMem = slave_dsp_rom;
 	pc = 0;
 	pMem[pc++] = 0xff80; /* b */
 	pMem[pc++] = 0;
@@ -660,8 +653,8 @@ static READ16_HANDLER(dspcuskey_r)
 }
 
 static ADDRESS_MAP_START( master_dsp_program, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x0000, 0x01ff) AM_READ(MRA16_ROM) /* internal ROM */
-	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA16_ROM) /* uploaded code */
+	AM_RANGE(0x0000, 0x01ff) AM_READ(MRA16_ROM) AM_BASE(&master_dsp_rom) /* internal ROM */
+	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA16_ROM) AM_BASE(&master_dsp_ram) /* uploaded code */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( master_dsp_data, ADDRESS_SPACE_DATA, 16 )
@@ -927,8 +920,8 @@ static WRITE16_HANDLER( slave_XF_output_w )
 } /* slave_XF_output_w */
 
 static ADDRESS_MAP_START( slave_dsp_program, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x0000, 0x01ff) AM_READ(MRA16_ROM) /* internal ROM */
-	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA16_ROM) /* uploaded code */
+	AM_RANGE(0x0000, 0x01ff) AM_READ(MRA16_ROM) AM_BASE(&slave_dsp_rom) /* internal ROM */
+	AM_RANGE(0x8000, 0x8fff) AM_READ(MRA16_ROM) AM_BASE(&slave_dsp_ram) /* uploaded code */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( slave_dsp_data, ADDRESS_SPACE_DATA, 16 )
@@ -1507,10 +1500,6 @@ ROM_START( aircombu )
 	ROM_LOAD( "sys2mcpu.bin",  0x000000, 0x002000, CRC(a342a97e) SHA1(2c420d34dba21e409bf78ddca710fc7de65a6642) )
 	ROM_LOAD( "sys2c65c.bin",  0x008000, 0x008000, CRC(a5b2a4ff) SHA1(068bdfcc71a5e83706e8b23330691973c1c214dc) )
 
-	ROM_REGION( 0x20000, REGION_CPU5, 0 ) /* Master DSP */
-
-	ROM_REGION( 0x20000, REGION_CPU6, 0 ) /* Slave DSP */
-
 
 	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "ac2-obj0.5s",  0x000000, 0x80000, CRC(8327ff22) SHA1(16f6022dedb7a74590898bc8ed3e8a97993c4635) )
@@ -1558,10 +1547,6 @@ ROM_START( aircombj )
 	ROM_LOAD( "sys2mcpu.bin",  0x000000, 0x002000, CRC(a342a97e) SHA1(2c420d34dba21e409bf78ddca710fc7de65a6642) )
 	ROM_LOAD( "sys2c65c.bin",  0x008000, 0x008000, CRC(a5b2a4ff) SHA1(068bdfcc71a5e83706e8b23330691973c1c214dc) )
 
-	ROM_REGION( 0x20000, REGION_CPU5, 0 ) /* Master DSP */
-
-	ROM_REGION( 0x20000, REGION_CPU6, 0 ) /* Slave DSP */
-
 	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "ac1-obj0.5s",  0x000000, 0x80000, CRC(d2310c6a) SHA1(9bb8fdfc2c232574777248f4959975f9a20e3105) )
 	ROM_LOAD( "ac1-obj4.4s",  0x080000, 0x80000, CRC(0c93b478) SHA1(a92ffbcf04b64e0eee5bcf37008e247700641b25) )
@@ -1607,10 +1592,6 @@ ROM_START( cybsled )
 	ROM_REGION( 0x010000, REGION_CPU4, 0 ) /* I/O MCU */
 	ROM_LOAD( "sys2mcpu.bin",  0x000000, 0x002000, CRC(a342a97e) SHA1(2c420d34dba21e409bf78ddca710fc7de65a6642) )
 	ROM_LOAD( "sys2c65c.bin",  0x008000, 0x008000, CRC(a5b2a4ff) SHA1(068bdfcc71a5e83706e8b23330691973c1c214dc) )
-
-	ROM_REGION( 0x20000, REGION_CPU5, 0 ) /* Master DSP */
-
-	ROM_REGION( 0x20000, REGION_CPU6, 0 ) /* Slave DSP */
 
 	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "cy1-obj0.5s",  0x000000, 0x80000, CRC(5ae542d5) SHA1(99b1a3ed476da4a97cb864538909d7b831f0fd3b) )
@@ -1670,10 +1651,6 @@ We load the "r" set, then load set2's sound CPU code over it to keep the "r" rom
 	ROM_LOAD( "sys2mcpu.bin",  0x000000, 0x002000, CRC(a342a97e) SHA1(2c420d34dba21e409bf78ddca710fc7de65a6642) )
 	ROM_LOAD( "sys2c65c.bin",  0x008000, 0x008000, CRC(a5b2a4ff) SHA1(068bdfcc71a5e83706e8b23330691973c1c214dc) )
 
-	ROM_REGION( 0x20000, REGION_CPU5, 0 ) /* Master DSP */
-
-	ROM_REGION( 0x20000, REGION_CPU6, 0 ) /* Slave DSP */
-
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE ) /* sprites */
 	ROM_LOAD( "de1_obj0.5s",  0x000000, 0x40000, CRC(7438bd53) SHA1(7619c4b56d5c466e845eb45e6157dcaf2a03ad94) )
 	ROM_LOAD( "de1_obj1.5x",  0x040000, 0x40000, CRC(45f2334e) SHA1(95f277a4e43d6662ae44d6b69a57f65c72978319) )
@@ -1721,10 +1698,6 @@ ROM_START( starblad )
 	ROM_LOAD( "sys2mcpu.bin",  0x000000, 0x002000, CRC(a342a97e) SHA1(2c420d34dba21e409bf78ddca710fc7de65a6642) )
 	ROM_LOAD( "sys2c65c.bin",  0x008000, 0x008000, CRC(a5b2a4ff) SHA1(068bdfcc71a5e83706e8b23330691973c1c214dc) )
 
-	ROM_REGION( 0x20000, REGION_CPU5, 0 ) /* Master DSP */
-
-	ROM_REGION( 0x20000, REGION_CPU6, 0 ) /* Slave DSP */
-
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE ) /* sprites */
 	ROM_LOAD( "st1obj0.bin",  0x000000, 0x80000, CRC(5d42c71e) SHA1(f1aa2bb31bbbcdcac8e94334b1c78238cac1a0e7) )
 	ROM_LOAD( "st1obj1.bin",  0x080000, 0x80000, CRC(c98011ad) SHA1(bc34c21428e0ef5887051c0eb0fdef5397823a82) )
@@ -1768,10 +1741,6 @@ ROM_START( solvalou )
 	ROM_REGION( 0x010000, REGION_CPU4, 0 ) /* I/O MCU */
 	ROM_LOAD( "sys2mcpu.bin",  0x000000, 0x002000, CRC(a342a97e) SHA1(2c420d34dba21e409bf78ddca710fc7de65a6642) )
 	ROM_LOAD( "sys2c65c.bin",  0x008000, 0x008000, CRC(a5b2a4ff) SHA1(068bdfcc71a5e83706e8b23330691973c1c214dc) )
-
-	ROM_REGION( 0x20000, REGION_CPU5, 0 ) /* Master DSP */
-
-	ROM_REGION( 0x20000, REGION_CPU6, 0 ) /* Slave DSP */
 
 	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "sv1obj0.bin",  0x000000, 0x80000, CRC(773798bb) SHA1(51ab76c95030bab834f1a74ae677b2f0afc18c52) )

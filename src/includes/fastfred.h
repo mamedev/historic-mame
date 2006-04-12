@@ -5,7 +5,7 @@
 
 ***************************************************************************/
 
-/*----------- defined in vihdrdw/fastfred.h -----------*/
+/*----------- defined in vidhrdw/fastfred.c -----------*/
 
 extern UINT8 *fastfred_videoram;
 extern UINT8 *fastfred_spriteram;

@@ -32,9 +32,10 @@ SPOT TABLE test
 03F2AA: 33FC 4038 0080 0000        move.w  #$4038, $800000.l
 03F2B2: 06B9 0000 0001 00E0 AB08   addi.l  #$1, $e0ab08.l
 */
+
+#include "driver.h"
 #include "namcos22.h"
 #include <math.h>
-#include "drawgfx.h"
 
 static int mbSuperSystem22; /* used to conditionally support Super System22-specific features */
 static int mbSpotlightEnable;
@@ -1339,7 +1340,7 @@ namcos22_point_rom_r( offs_t offs )
 	return GetPolyData(offs);
 }
 
-static UINT32 *namcos22_cgram;
+UINT32 *namcos22_cgram;
 UINT32 *namcos22_textram;
 UINT32 *namcos22_polygonram;
 UINT32 *namcos22_gamma;
@@ -2557,8 +2558,6 @@ video_start_common( void )
 	{
 		tilemap_set_transparent_pen( bgtilemap, 0xf );
 	}
-
-   namcos22_cgram = (UINT32 *)memory_region(REGION_CGRAM);
 
 	mbDSPisActive = 0;
 	memset( namcos22_polygonram, 0xcc, 0x20000 );

@@ -26,3 +26,22 @@
 /*----------- defined in sndhrdw/tank8.c -----------*/
 
 extern struct discrete_sound_block tank8_discrete_interface[];
+
+
+/*----------- defined in drivers/tank8.c -----------*/
+
+extern void tank8_collision_callback(int index);
+
+/*----------- defined in vidhrdw/tank8.c -----------*/
+
+VIDEO_EOF( tank8 );
+VIDEO_START( tank8 );
+VIDEO_UPDATE( tank8 );
+
+WRITE8_HANDLER( tank8_video_ram_w );
+
+extern UINT8* tank8_video_ram;
+extern UINT8* tank8_pos_h_ram;
+extern UINT8* tank8_pos_v_ram;
+extern UINT8* tank8_pos_d_ram;
+

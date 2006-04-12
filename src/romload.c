@@ -475,7 +475,7 @@ static int open_rom_file(rom_load_data *romdata, const rom_entry *romp)
 	/* Attempt reading up the chain through the parents. It automatically also
        attempts any kind of load by checksum supported by the archives. */
 	romdata->file = NULL;
-	for (drv = Machine->gamedrv; !romdata->file && drv; drv = drv->clone_of)
+	for (drv = Machine->gamedrv; !romdata->file && drv; drv = driver_get_clone(drv))
 		if (drv->name && *drv->name)
 			romdata->file = mame_fopen_rom(drv->name, ROM_GETNAME(romp), ROM_GETHASHDATA(romp));
 

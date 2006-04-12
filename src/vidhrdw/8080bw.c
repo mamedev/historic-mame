@@ -9,7 +9,7 @@
 #include "driver.h"
 #include "artwork.h"
 #include "8080bw.h"
-#include "math.h"
+#include <math.h>
 
 static int screen_red;
 static int screen_red_enabled;		/* 1 for games that can turn the screen red */

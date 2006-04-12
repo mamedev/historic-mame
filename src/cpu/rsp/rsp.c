@@ -22,8 +22,8 @@ static FILE *exec_output;
 
 extern UINT32 sp_read_reg(UINT32 reg);
 extern void sp_write_reg(UINT32 reg, UINT32 data);
-extern READ32_HANDLER( dp_reg_r );
-extern WRITE32_HANDLER( dp_reg_w );
+extern READ32_HANDLER( n64_dp_reg_r );
+extern WRITE32_HANDLER( n64_dp_reg_w );
 extern void sp_set_status(UINT32 status);
 
 
@@ -240,7 +240,7 @@ static UINT32 get_cop0_reg(int reg)
 	}
 	else if (reg >= 8 && reg < 16)
 	{
-		return dp_reg_r(reg - 8, 0x00000000);
+		return n64_dp_reg_r(reg - 8, 0x00000000);
 	}
 	else
 	{
@@ -256,7 +256,7 @@ static void set_cop0_reg(int reg, UINT32 data)
 	}
 	else if (reg >= 8 && reg < 16)
 	{
-		dp_reg_w(reg - 8, data, 0x00000000);
+		n64_dp_reg_w(reg - 8, data, 0x00000000);
 	}
 	else
 	{

@@ -332,6 +332,7 @@ Notes:
 static int ss23_vstat = 0, hstat = 0, vstate = 0;
 static tilemap *bgtilemap;
 static UINT32 *namcos23_textram, *namcos23_shared_ram;
+static UINT32 *namcos23_charram;
 
 static UINT16 nthword( const UINT32 *pSource, int offs )
 {
@@ -528,11 +529,9 @@ static const gfx_layout namcos23_cg_layout;
 
 static WRITE32_HANDLER( s23_txtchar_w )
 {
-	UINT32 *chrdata = (UINT32 *)memory_region(REGION_GFX5);
+	COMBINE_DATA(&namcos23_charram[offset]	);
 
-	COMBINE_DATA(&chrdata[offset]	);
-
-	decodechar( Machine->gfx[0],offset/32,(UINT8 *)chrdata,&namcos23_cg_layout );
+	decodechar( Machine->gfx[0],offset/32,(UINT8 *)namcos23_charram,&namcos23_cg_layout );
 
 	tilemap_mark_all_tiles_dirty(bgtilemap);
 }
@@ -629,7 +628,7 @@ static ADDRESS_MAP_START( ss23_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x04c3ff08, 0x04c3ff0b) AM_WRITE( s23_mcuen_w )
 	AM_RANGE(0x04c3ff0c, 0x04c3ff0f) AM_RAM				// 3d FIFO
 	AM_RANGE(0x06800000, 0x06800fff) AM_RAM 			// text layer palette
-	AM_RANGE(0x06800000, 0x06803fff) AM_WRITE( s23_txtchar_w )	// text layer characters
+	AM_RANGE(0x06800000, 0x06803fff) AM_WRITE( s23_txtchar_w ) AM_BASE(&namcos23_charram)	// text layer characters
 	AM_RANGE(0x06804000, 0x0681dfff) AM_RAM
 	AM_RANGE(0x0681e000, 0x0681ffff) AM_READ(namcos23_textram_r) AM_WRITE(namcos23_textram_w) AM_BASE(&namcos23_textram)
 	AM_RANGE(0x06a08000, 0x06a2ffff) AM_READ(namcos23_paletteram_r) AM_WRITE(namcos23_paletteram_w) AM_BASE(&paletteram32)
@@ -840,7 +839,7 @@ static const gfx_layout sprite_layout =
 
 static const gfx_decode gfxdecodeinfo[] =
 {
-	{ REGION_GFX5, 0, &namcos23_cg_layout,  0, 0x80 },
+	{ 0, 0, &namcos23_cg_layout,  0, 0x80 },
 	{ -1 },
 };
 
@@ -933,8 +932,6 @@ MACHINE_DRIVER_START( ss23 )
 MACHINE_DRIVER_END
 
 ROM_START( timecrs2 )
-	ROM_REGION( 0x080000, REGION_CPU1, 0 )	/* dummy region for R4650 */
-
 	ROM_REGION32_BE( 0x400000, REGION_USER1, 0 ) /* 4 megs for main R4650 code */
         ROM_LOAD16_BYTE( "tss3verb.2",   0x000000, 0x200000, CRC(c7be691f) SHA1(5e2e7a0db3d8ce6dfeb6c0d99e9fe6a9f9cab467) )
         ROM_LOAD16_BYTE( "tss3verb.1",   0x000001, 0x200000, CRC(6e3f232b) SHA1(8007d8f31a605a5df89938d7c9f9d3d209c934be) )
@@ -966,8 +963,6 @@ ROM_START( timecrs2 )
         ROM_LOAD32_WORD( "tss1pt2l.4c",  0x1000000, 0x400000, CRC(4b230d79) SHA1(794cee0a19993e90913f58507c53224f361e9663) )
         ROM_LOAD32_WORD( "tss1pt2h.4a",  0x1000002, 0x400000, CRC(9b06e22d) SHA1(cff5ed098112a4f0a2bc8937e226f50066e605b1) )
 
-	ROM_REGION( 0x20000, REGION_GFX5, 0 )	/* text tilemap characters */
-
 	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* C352 PCM samples */
         ROM_LOAD( "tss1wavel.2c", 0x000000, 0x800000, CRC(deaead26) SHA1(72dac0c3f41d4c3c290f9eb1b50236ae3040a472) )
         ROM_LOAD( "tss1waveh.2a", 0x800000, 0x800000, CRC(5c8758b4) SHA1(b85c8f6869900224ef83a2340b17f5bbb2801af9) )
@@ -975,8 +970,6 @@ ROM_END
 
 ROM_START( gp500 )
 	/* r4650-generic-xrom-generic: NMON 1.0.8-sys23-19990105 P for SYSTEM23 P1 */
-	ROM_REGION( 0x080000, REGION_CPU1, 0 )	/* dummy region for R4650 */
-
 	ROM_REGION32_BE( 0x400000, REGION_USER1, 0 ) /* 4 megs for main R4650 code */
         ROM_LOAD16_BYTE( "5gp3verc.2",   0x000000, 0x200000, CRC(e2d43468) SHA1(5e861dd223c7fa177febed9803ac353cba18e19d) )
         ROM_LOAD16_BYTE( "5gp3verc.1",   0x000001, 0x200000, CRC(f6efc94a) SHA1(785eee2bec5080d4e8ef836f28d446328c942b0e) )
@@ -1017,16 +1010,12 @@ ROM_START( gp500 )
 	ROM_LOAD32_WORD( "5gp1pt3l.3c",  0x1800000, 0x400000, CRC(480b120d) SHA1(6c703550faa412095d9633cf508050614e15fbae) )
         ROM_LOAD32_WORD( "5gp1pt3h.3a",  0x1800002, 0x400000, CRC(26eaa400) SHA1(0157b76fffe81b40eb970e84c98398807ced92c4) )
 
-	ROM_REGION( 0x20000, REGION_GFX5, 0 )	/* text tilemap characters */
-
 	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* C352 PCM samples */
         ROM_LOAD( "5gp1wavel.2c", 0x000000, 0x800000, CRC(aa634cc2) SHA1(e96f5c682039bc6ef22bf90e98f4da78486bd2b1) )
         ROM_LOAD( "5gp1waveh.2a", 0x800000, 0x800000, CRC(1e3523e8) SHA1(cb3d0d389fcbfb728fad29cfc36ef654d28d553a) )
 ROM_END
 
 ROM_START( finfurl2 )
-	ROM_REGION( 0x080000, REGION_CPU1, 0 )	/* dummy region for R4650 */
-
 	ROM_REGION32_BE( 0x400000, REGION_USER1, 0 ) /* 4 megs for main R4650 code */
         ROM_LOAD16_BYTE( "29f016.ic2",   0x000000, 0x200000, CRC(13cbc545) SHA1(3e67a7bfbb1c1374e8e3996a0c09e4861b0dca14) )
         ROM_LOAD16_BYTE( "29f016.ic1",   0x000001, 0x200000, CRC(5b04e4f2) SHA1(8099fc3deab9ed14a2484a774666fbd928330de8) )
@@ -1060,16 +1049,12 @@ ROM_START( finfurl2 )
         ROM_LOAD32_WORD( "ffs1pt3l.3c",  0x1800000, 0x400000, CRC(2381611a) SHA1(a3d948bf910dcfd9f47c65c56b9920f58c42fed5) )
         ROM_LOAD32_WORD( "ffs1pt3h.3a",  0x1800002, 0x400000, CRC(48226e9f) SHA1(f099b2929d49903a33b4dab80972c3ce0ddb6ca2) )
 
-	ROM_REGION( 0x20000, REGION_GFX5, 0 )	/* text tilemap characters */
-
 	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* C352 PCM samples */
         ROM_LOAD( "ffs1wavel.2c", 0x000000, 0x800000, CRC(67ba16cf) SHA1(00b38617c2185b9a3bf279962ad0c21a7287256f) )
         ROM_LOAD( "ffs1waveh.2a", 0x800000, 0x800000, CRC(178e8bd3) SHA1(8ab1a97003914f70b09e96c5924f3a839fe634c7) )
 ROM_END
 
 ROM_START( finfrl2j )
-	ROM_REGION( 0x080000, REGION_CPU1, 0 )	/* dummy region for R4650 */
-
 	ROM_REGION32_BE( 0x400000, REGION_USER1, 0 ) /* 4 megs for main R4650 code */
         ROM_LOAD16_BYTE( "29f016_jap1.ic2", 0x000000, 0x200000, CRC(0215125d) SHA1(a99f601441c152b0b00f4811e5752c71897b1ed4) )
         ROM_LOAD16_BYTE( "29f016_jap1.ic1", 0x000001, 0x200000, CRC(38c9ae96) SHA1(b50afc7276662267ff6460f82d0e5e8b00b341ea) )
@@ -1102,8 +1087,6 @@ ROM_START( finfrl2j )
         ROM_LOAD32_WORD( "ffs1pt2h.4a",  0x1000002, 0x400000, CRC(26ea01e8) SHA1(9af096c99e6835e21b1b78dfce07040f50f8c922) )
         ROM_LOAD32_WORD( "ffs1pt3l.3c",  0x1800000, 0x400000, CRC(2381611a) SHA1(a3d948bf910dcfd9f47c65c56b9920f58c42fed5) )
         ROM_LOAD32_WORD( "ffs1pt3h.3a",  0x1800002, 0x400000, CRC(48226e9f) SHA1(f099b2929d49903a33b4dab80972c3ce0ddb6ca2) )
-
-	ROM_REGION( 0x20000, REGION_GFX5, 0 )	/* text tilemap characters */
 
 	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* C352 PCM samples */
         ROM_LOAD( "ffs1wavel.2c", 0x000000, 0x800000, CRC(67ba16cf) SHA1(00b38617c2185b9a3bf279962ad0c21a7287256f) )

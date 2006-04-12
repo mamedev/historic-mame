@@ -13,11 +13,7 @@
 
 #include "driver.h"
 #include "sound/custom.h"
-
-void *attckufo_custom_start(int, const struct CustomSound_interface*);
-void attckufo_soundport_w (int, int);
-int attckufo_dma_read (int);
-int attckufo_dma_read_color (int);
+#include "includes/attckufo.h"
 
 #define MAX_LINES 261
 
@@ -30,10 +26,6 @@ unsigned char attckufo_palette[] =
 	0xff, 0x00, 0xff, 0x00, 0xff, 0x00, 0x00, 0xa0, 0xff, 0xff, 0xff, 0x00
 };
 
-struct CustomSound_interface attckufo_sound_interface =
-{
-	attckufo_custom_start
-};
 
 
 UINT8 attckufo_regs[16];

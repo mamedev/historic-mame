@@ -5129,7 +5129,7 @@ void mame_debug_init(void)
 		DBG.brk_regs_mask = 0xffffffff;
 		DBG.brk_temp = INVALID;
 		DBGMEM[0].base = 0x0000;
-		DBGMEM[1].base = 1 << (ABITS / 2);
+		DBGMEM[1].base = 1 << (cpunum_addrbus_width(active_cpu, ADDRESS_SPACE_PROGRAM) - 1);
 		switch( cpunum_databus_width(active_cpu, ADDRESS_SPACE_PROGRAM) )
 		{
 			case  8: DBGMEM[0].mode = DBGMEM[1].mode = MODE_HEX_UINT8;  break;

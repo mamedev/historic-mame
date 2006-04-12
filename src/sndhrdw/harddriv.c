@@ -52,7 +52,7 @@ void hdsnd_init(void)
 {
 	rombase = (UINT8 *)memory_region(REGION_SOUND1);
 	romsize = memory_region_length(REGION_SOUND1);
-	comram = (UINT16 *)(memory_region(REGION_CPU1 + hdcpu_sounddsp) + 0x1000);
+	comram = (UINT16 *)auto_malloc(0x400);
 	last_bio_cycles = 0;
 }
 

@@ -86,7 +86,7 @@ void fcrash_render_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 		colour = cps1_gfxram[base+pos+1]&0x1f;
 		ypos = 256-ypos;
 
-		drawgfx(bitmap,Machine->gfx[1],tileno,colour,flipx,flipy,xpos+48,ypos-16,cliprect,TRANSPARENCY_PEN,15);
+		drawgfx(bitmap,Machine->gfx[2],tileno,colour,flipx,flipy,xpos+48,ypos-16,cliprect,TRANSPARENCY_PEN,15);
 
 	}
 

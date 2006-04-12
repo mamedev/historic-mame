@@ -15,13 +15,7 @@
 #include "driver.h"
 #include "vidhrdw/s2636.h"
 
-extern unsigned char* s2636_1_ram;
-extern unsigned char* s2636_2_ram;
-
 static INT8 frame_count;
-
-extern int s2636_x_offset;
-extern int s2636_y_offset;
 
 #define SAA5050_DBLHI	0x0001
 #define SAA5050_SEPGR	0x0002
@@ -56,9 +50,6 @@ static struct playfield
 	//int y;
 	int code;
 } field[256];
-
-extern unsigned char s2636_1_dirty[4];
-extern unsigned char s2636_2_dirty[4];
 
 VIDEO_START( malzak )
 {

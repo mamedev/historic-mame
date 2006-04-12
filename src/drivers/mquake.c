@@ -22,30 +22,21 @@ static READ16_HANDLER(unknown_r)
 	return 0;
 }
 
-static ADDRESS_MAP_START(readmem, ADDRESS_SPACE_PROGRAM, 16)
-	AM_RANGE( 0x000000, 0x07ffff) AM_READ( MRA16_BANK1 ) AM_REGION(REGION_CPU1, 0) /* Chip Ram - 512k or System ROM mirror*/
-	AM_RANGE( 0x200000, 0x203fff) AM_READ(MRA16_RAM) AM_BASE(&generic_nvram16) AM_SIZE( &generic_nvram_size )
-	AM_RANGE( 0x204000, 0x2041ff) AM_READ(MRA16_RAM) AM_BASE(&qchip_ram)
-	AM_RANGE( 0x2100c0, 0x2100c1) AM_READ( unknown_r )
-	AM_RANGE( 0x282000, 0x282003) AM_READ( io_handler2 )
-	AM_RANGE( 0x286002, 0x286003) AM_READ( input_port_2_word_r )
+static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE( 0x000000, 0x07ffff) AM_RAMBANK(1) AM_BASE(&amiga_chip_ram)	/* Chip Ram - 512k or System ROM mirror */
+	AM_RANGE( 0x200000, 0x203fff) AM_RAM AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
+	AM_RANGE( 0x204000, 0x2041ff) AM_RAM AM_BASE(&qchip_ram)
+	AM_RANGE( 0x2100c0, 0x2100c1) AM_READ(unknown_r)
+	AM_RANGE( 0x282000, 0x282003) AM_READ(io_handler2)
+	AM_RANGE( 0x286002, 0x286003) AM_READ(input_port_2_word_r)
 	AM_RANGE( 0x300000, 0x3bffff) AM_ROM AM_SHARE(1)
-	AM_RANGE( 0x742030, 0x74203f) AM_READ( unknown_r )
-	AM_RANGE( 0xbfd000, 0xbfefff) AM_READ( amiga_cia_r )        /* 8510's CIA A and CIA B */
-	AM_RANGE( 0xdbf000, 0xdfffff) AM_READ( amiga_custom_r )     /* Custom Chips */
-	AM_RANGE( 0xf00000, 0xfbffff) AM_ROM AM_REGION( REGION_USER2, 0 ) AM_SHARE(1)
-	AM_RANGE( 0xfc0000, 0xffffff) AM_ROM AM_REGION( REGION_USER1, 0 ) /* System ROM - mirror */
+	AM_RANGE( 0x742030, 0x74203f) AM_READ(unknown_r)
+	AM_RANGE( 0xbfd000, 0xbfefff) AM_READWRITE(amiga_cia_r, amiga_cia_w)	/* 8510's CIA A and CIA B */
+	AM_RANGE( 0xdbf000, 0xdfffff) AM_READWRITE(amiga_custom_r, amiga_custom_w) /* Custom Chips */
+	AM_RANGE( 0xf00000, 0xfbffff) AM_ROM AM_REGION(REGION_USER2, 0)			/* Custom ROM */
+	AM_RANGE( 0xfc0000, 0xffffff) AM_ROM AM_REGION(REGION_USER1, 0)			/* System ROM */
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START(writemem, ADDRESS_SPACE_PROGRAM, 16)
-	AM_RANGE( 0x000000, 0x07ffff) AM_WRITE( MWA16_ROM ) /* Chip Ram - 512k or System ROM mirror*/
-	AM_RANGE( 0x200000, 0x203fff) AM_WRITE(MWA16_RAM) AM_BASE(&generic_nvram16) AM_SIZE( &generic_nvram_size )
-	AM_RANGE( 0x204000, 0x2041ff) AM_WRITE(MWA16_RAM) AM_BASE(&qchip_ram)
-	AM_RANGE( 0xbfd000, 0xbfefff) AM_WRITE( amiga_cia_w )        /* 8510's CIA A and CIA B */
-	AM_RANGE( 0xdbf000, 0xdfffff) AM_WRITE( amiga_custom_w )     /* Custom Chips */
-	AM_RANGE( 0xf00000, 0xfbffff) AM_WRITE( MWA16_ROM )
-	AM_RANGE( 0xfc0000, 0xffffff) AM_WRITE( MWA16_ROM )            /* System ROM */
-ADDRESS_MAP_END
 
 INPUT_PORTS_START( mquake )
 	PORT_START
@@ -75,15 +66,17 @@ INPUT_PORTS_START( mquake )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-static const gfx_decode gfxdecodeinfo[] =
+
+static struct CustomSound_interface amiga_custom_interface =
 {
-	{ -1 } /* end of array */
+	amiga_sh_start
 };
+
 
 static MACHINE_DRIVER_START( mquake )
 	/* basic machine hardware */
 	MDRV_CPU_ADD( M68000, 7159090)        /* 7.15909 Mhz (NTSC) */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	MDRV_CPU_VBLANK_INT(amiga_irq, 262)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -95,20 +88,26 @@ static MACHINE_DRIVER_START( mquake )
 
     /* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
-	MDRV_SCREEN_SIZE(456, 262)
-	MDRV_VISIBLE_AREA(120, 456-1, 32, 262-1)
-	MDRV_GFXDECODE( gfxdecodeinfo )
+	MDRV_SCREEN_SIZE(512*2, 262)
+	MDRV_VISIBLE_AREA((129-8)*2, (449+8-1)*2, 44-8, 244+8-1)
 	MDRV_PALETTE_LENGTH(4096)
-	MDRV_COLORTABLE_LENGTH(4096)
 	MDRV_PALETTE_INIT( amiga )
 
 	MDRV_VIDEO_START( amiga )
 	MDRV_VIDEO_UPDATE( generic_bitmapped )
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(CUSTOM, 3579545)
+	MDRV_SOUND_CONFIG(amiga_custom_interface)
+	MDRV_SOUND_ROUTE(0, "left", 0.50)
+	MDRV_SOUND_ROUTE(1, "left", 0.50)
+	MDRV_SOUND_ROUTE(2, "right", 0.50)
+	MDRV_SOUND_ROUTE(3, "right", 0.50)
 MACHINE_DRIVER_END
 
 ROM_START( mquake )
-	ROM_REGION(0x80000, REGION_CPU1, 0 ) /* for ram, etc */
-
 	ROM_REGION(0x80000, REGION_USER1, 0)
 	ROM_LOAD16_WORD_SWAP( "kick12.rom", 0x000000, 0x40000, CRC(a6ce1636) SHA1(11f9e62cf299f72184835b7b2a70a16333fc0d88) )
 	ROM_COPY( REGION_USER1, 0x000000, 0x040000, 0x040000 )
@@ -155,19 +154,17 @@ static int mquake_cia_0_portB_r( void )
 
 static void mquake_cia_0_portA_w( int data )
 {
-	if ( (data & 1) == 1)
-	{
-		/* overlay enabled, map Amiga system ROM on 0x000000 */
-		memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, 0, 0, MRA16_BANK1 );
-		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, 0, 0, MWA16_ROM );
-	}
-	else if ( ((data & 1) == 0))
-	{
-		/* overlay disabled, map RAM on 0x000000 */
-		memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, 0, 0, MRA16_RAM );
-		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, 0, 0, MWA16_RAM );
-	}
+	/* switch banks as appropriate */
+	memory_set_bank(1, data & 1);
 
+	/* swap the write handlers between ROM and bank 1 based on the bit */
+	if ((data & 1) == 0)
+		/* overlay disabled, map RAM on 0x000000 */
+		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, 0, 0, MWA16_BANK1);
+
+	else
+		/* overlay enabled, map Amiga system ROM on 0x000000 */
+		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, 0, 0, MWA16_ROM);
 }
 
 static void mquake_cia_0_portB_w( int data )
@@ -236,7 +233,8 @@ DRIVER_INIT(mquake)
 	amiga_machine_config(&mquake_intf);
 
 	/* set up memory */
-	memory_set_bankptr(1, memory_region(REGION_USER1));
+	memory_configure_bank(1, 0, 1, amiga_chip_ram, 0);
+	memory_configure_bank(1, 1, 1, memory_region(REGION_USER1), 0);
 
 }
 

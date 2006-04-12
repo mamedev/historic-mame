@@ -7,6 +7,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "includes/galaga.h"
 
 
 UINT8 *xevious_fg_videoram,*xevious_fg_colorram;

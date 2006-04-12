@@ -3690,7 +3690,7 @@ ROM_END
 
 /*
 
-Sea Hunter Pengiun
+Sea Hunter Penguin
 
 CPU
 1x Z8400A (main)
@@ -3727,9 +3727,13 @@ ROM_START( shpeng )
 	ROM_LOAD( "u704.0g", 0xa0000, 0x20000, CRC(b062c928) SHA1(8c43689a1b8c444f91acbc7371eda744874eb538) )
 
 	ROM_REGION( 0x400, REGION_PROMS, ROMREGION_DISPOSE )	/* Color PROMs */
-	/* there were no proms in the dump? I assume they're missing? */
-	ROM_LOAD( "prom0", 0x000, 0x200, NO_DUMP )
-	ROM_LOAD( "prom1", 0x200, 0x200, NO_DUMP )
+	ROM_LOAD( "n82s147n.u13", 0x000, 0x200, CRC(29b6415b) SHA1(8085ff3265cda2d564da3dff609eb05ff02fae49) ) // FIXED BITS (0xxxxxxx)  (Ok)
+	ROM_LOAD( "n82s147n.u12", 0x200, 0x200, BAD_DUMP CRC(7b940daa) SHA1(3903ebef644b2519aebbbb6d16872441b283c780) ) // BADADDR xxx-xxxxx  (Bad Read, Prom has a broken leg!)
+
+	/* this rom doesn't belong here, it is from Dragon Punch, but shpeng hardware and game code is a hack
+       of dragon punch.  This rom is better than the bad dump above for the sprite colours, although the
+       colours on the intro/cutscenes are wrong */
+	ROM_LOAD_OPTIONAL( "1.17g", 0x200, 0x200, CRC(324fa9cf) SHA1(a03e23d9a9687dec4c23a8e41254a3f4b70c7e25) )
 ROM_END
 
 
@@ -3896,4 +3900,4 @@ GAME( 1990, mjelct3,  mjelctrn, mjelctrn, mjelct3,  mjelct3,  ROT180, "Dynax",  
 GAME( 1990, mjelct3a, mjelctrn, mjelctrn, mjelct3,  mjelct3a, ROT180, "Dynax",                   "Mahjong Electron Base (parts 2 & 3, alt., Japan)"     , 0 )
 GAME( 1990, neruton,  0,        neruton,  neruton,  mjelct3,  ROT180, "Dynax / Yukiyoshi Tokoro","Mahjong Neruton Haikujirada (Japan)",                         GAME_IMPERFECT_GRAPHICS )	// e.g. dynax logo
 /* not a dynax board */
-GAME( 1995, shpeng,   0,        sprtmtch, sprtmtch, 0,        ROT0,   "WSAC Systems?",                   "Sea Hunter Pengiun"                                 , GAME_WRONG_COLORS ) // proms?
+GAME( 1995, shpeng,   0,        sprtmtch, sprtmtch, 0,        ROT0,   "WSAC Systems?",                   "Sea Hunter Penguin"                                 , GAME_WRONG_COLORS ) // proms?

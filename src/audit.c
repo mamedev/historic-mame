@@ -30,7 +30,7 @@ chd_interface_file *audit_chd_open(const char *filename, const char *mode)
 	const game_driver *drv;
 
 	/* attempt reading up the chain through the parents */
-	for (drv = chd_gamedrv; drv != NULL; drv = drv->clone_of)
+	for (drv = chd_gamedrv; drv != NULL; drv = driver_get_clone(drv))
 	{
 		void* file = mame_fopen(drv->name, filename, FILETYPE_IMAGE, 0);
 
@@ -120,8 +120,9 @@ int audit_is_rom_used (const game_driver *gamedrv, const char* hash)
 int audit_has_missing_roms (int game)
 {
 	const game_driver *gamedrv = drivers[game];
+	const game_driver *clone_of = driver_get_clone(gamedrv);
 
-	if (gamedrv->clone_of)
+	if (clone_of != NULL)
 	{
 		audit_record	*aud;
 		int				count;
@@ -138,7 +139,7 @@ int audit_has_missing_roms (int game)
 
         /* count number of roms found that are unique to clone */
         for (i = 0; i < count; i++)
-			if (!audit_is_rom_used (gamedrv->clone_of, aud[i].exphash))
+			if (!audit_is_rom_used (clone_of, aud[i].exphash))
 			{
 				uniqueRomsFound++;
 				if (aud[i].status != AUD_ROM_NOT_FOUND)
@@ -155,7 +156,7 @@ int audit_has_missing_roms (int game)
 		/* count number of roms found that are unique to clone */
 		for (i = 0; i < count; i++)
 			if (aud[i].status != AUD_ROM_NOT_FOUND)
-				if (!audit_is_rom_used (gamedrv->clone_of, aud[i].exphash))
+				if (!audit_is_rom_used (clone_of, aud[i].exphash))
 					cloneRomsFound++;
 #endif
 
@@ -173,6 +174,7 @@ int audit_roms (int game, audit_record **audit)
 	const rom_entry *region, *rom, *chunk;
 	const char *name;
 	const game_driver *gamedrv;
+	const game_driver *clone_of;
 
 	int count = 0;
 	audit_record *aud;
@@ -193,6 +195,7 @@ int audit_roms (int game, audit_record **audit)
 		return 0;
 
 	gamedrv = drivers[game];
+	clone_of = driver_get_clone(gamedrv);
 
 	if (!gamedrv->rom) return -1;
 
@@ -200,8 +203,8 @@ int audit_roms (int game, audit_record **audit)
 	if (!mame_faccess (gamedrv->name, FILETYPE_ROM))
 	{
 		/* if the game is a clone, check for parent */
-		if (gamedrv->clone_of == 0 || (gamedrv->clone_of->flags & NOT_A_DRIVER) ||
-				!mame_faccess(gamedrv->clone_of->name,FILETYPE_ROM))
+		if (clone_of == NULL || (clone_of->flags & NOT_A_DRIVER) ||
+				!mame_faccess(clone_of->name,FILETYPE_ROM))
 			return 0;
 	}
 
@@ -229,7 +232,7 @@ int audit_roms (int game, audit_record **audit)
 				do
 				{
 					err = mame_fchecksum(drv->name, name, &aud->length, aud->hash);
-					drv = drv->clone_of;
+					drv = driver_get_clone(drv);
 				} while (err && drv);
 
 				/* spin through ROM_CONTINUEs, totaling length */
@@ -253,7 +256,7 @@ int audit_roms (int game, audit_record **audit)
 						/* not found */
 						aud->status = AUD_ROM_NOT_FOUND;
 
-						drv = gamedrv->clone_of;
+						drv = clone_of;
 
 						/* If missing ROM is also present in a parent set, indicate that */
 						while (drv)
@@ -272,7 +275,7 @@ int audit_roms (int game, audit_record **audit)
 							// Walk up the inheritance list. If this ROM is a clone of a set which
 							// contains a BIOS that is missing, we can correctly mark it as
 							// such.
-							drv = drv->clone_of;
+							drv = driver_get_clone(drv);
 						}
 					}
 				}
@@ -387,6 +390,7 @@ int audit_verify_roms (int game, verify_printf_proc verify_printf)
 	int						count;
 	int						archive_status = 0;
 	const game_driver *gamedrv = drivers[game];
+	const game_driver *clone_of = driver_get_clone(gamedrv);
 
 	if ((count = audit_roms (game, &aud)) == 0)
 		return NOTFOUND;
@@ -394,7 +398,7 @@ int audit_verify_roms (int game, verify_printf_proc verify_printf)
 	if (count == -1) return CORRECT;
 
 #if 1
-    if (gamedrv->clone_of)
+    if (clone_of != NULL)
     {
         int i;
         int cloneRomsFound = 0;
@@ -402,7 +406,7 @@ int audit_verify_roms (int game, verify_printf_proc verify_printf)
 
         /* count number of roms found that are unique to clone */
         for (i = 0; i < count; i++)
-			if (!audit_is_rom_used (gamedrv->clone_of, aud[i].exphash))
+			if (!audit_is_rom_used (clone_of, aud[i].exphash))
 			{
 				uniqueRomsFound++;
 				if (aud[i].status != AUD_ROM_NOT_FOUND)
@@ -415,7 +419,7 @@ int audit_verify_roms (int game, verify_printf_proc verify_printf)
         #endif
     }
 #else
-	if (gamedrv->clone_of)
+	if (clone_of != NULL)
 	{
 		int i;
 		int cloneRomsFound = 0;
@@ -423,7 +427,7 @@ int audit_verify_roms (int game, verify_printf_proc verify_printf)
 		/* count number of roms found that are unique to clone */
 		for (i = 0; i < count; i++)
 			if (aud[i].status != AUD_ROM_NOT_FOUND)
-				if (!audit_is_rom_used (gamedrv->clone_of, aud[i].exphash))
+				if (!audit_is_rom_used (clone_of, aud[i].exphash))
 					cloneRomsFound++;
 
                 #ifndef MESS

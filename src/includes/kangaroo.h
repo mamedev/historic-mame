@@ -6,9 +6,6 @@
 
 ***************************************************************************/
 
-#include "driver.h"
-
-
 /*----------- defined in vidhrdw/kangaroo.c -----------*/
 
 extern UINT8 *kangaroo_video_control;

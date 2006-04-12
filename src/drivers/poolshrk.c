@@ -9,13 +9,6 @@ Atari Poolshark Driver
 #include "sound/discrete.h"
 
 
-extern VIDEO_START( poolshrk );
-extern VIDEO_UPDATE( poolshrk );
-
-extern UINT8* poolshrk_playfield_ram;
-extern UINT8* poolshrk_hpos_ram;
-extern UINT8* poolshrk_vpos_ram;
-
 static int poolshrk_da_latch;
 
 

@@ -31,8 +31,6 @@ mame_bitmap * backfire_right;
 //UINT32 *backfire_180010, *backfire_188010;
 UINT32 *backfire_left_priority, *backfire_right_priority;
 
-extern int deco16_pf1_colour_bank,deco16_pf2_colour_bank,deco16_pf3_colour_bank,deco16_pf4_colour_bank;
-
 /* I'm using the functions in deco16ic.c ... same chips, why duplicate code? */
 
 static int backfire_bank_callback(int bank)
