@@ -14,7 +14,7 @@ UINT16 *qchip_ram;
 
 static READ16_HANDLER( io_handler2 )
 {
-	return 0xffff; /* to turn service switch off */
+	return readinputport(3 + offset); /* to turn service switch off */
 }
 
 static READ16_HANDLER(unknown_r)
@@ -23,18 +23,19 @@ static READ16_HANDLER(unknown_r)
 }
 
 static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE( 0x000000, 0x07ffff) AM_RAMBANK(1) AM_BASE(&amiga_chip_ram)	/* Chip Ram - 512k or System ROM mirror */
-	AM_RANGE( 0x200000, 0x203fff) AM_RAM AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
-	AM_RANGE( 0x204000, 0x2041ff) AM_RAM AM_BASE(&qchip_ram)
-	AM_RANGE( 0x2100c0, 0x2100c1) AM_READ(unknown_r)
-	AM_RANGE( 0x282000, 0x282003) AM_READ(io_handler2)
-	AM_RANGE( 0x286002, 0x286003) AM_READ(input_port_2_word_r)
-	AM_RANGE( 0x300000, 0x3bffff) AM_ROM AM_SHARE(1)
-	AM_RANGE( 0x742030, 0x74203f) AM_READ(unknown_r)
-	AM_RANGE( 0xbfd000, 0xbfefff) AM_READWRITE(amiga_cia_r, amiga_cia_w)	/* 8510's CIA A and CIA B */
-	AM_RANGE( 0xdbf000, 0xdfffff) AM_READWRITE(amiga_custom_r, amiga_custom_w) /* Custom Chips */
-	AM_RANGE( 0xf00000, 0xfbffff) AM_ROM AM_REGION(REGION_USER2, 0)			/* Custom ROM */
-	AM_RANGE( 0xfc0000, 0xffffff) AM_ROM AM_REGION(REGION_USER1, 0)			/* System ROM */
+	AM_RANGE(0x000000, 0x07ffff) AM_RAMBANK(1) AM_BASE(&amiga_chip_ram)	AM_SIZE(&amiga_chip_ram_size)
+	AM_RANGE(0x200000, 0x203fff) AM_RAM AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x204000, 0x2041ff) AM_RAM AM_BASE(&qchip_ram)
+	AM_RANGE(0x300000, 0x300003) AM_READ(io_handler2)
+//  AM_RANGE(0x2100c0, 0x2100c1) AM_READ(unknown_r)
+//  AM_RANGE(0x282000, 0x282003) AM_READ(io_handler2)
+//  AM_RANGE(0x286002, 0x286003) AM_READ(input_port_2_word_r)
+//  AM_RANGE(0x300000, 0x3bffff) AM_ROM AM_SHARE(1)
+//  AM_RANGE(0x742030, 0x74203f) AM_READ(unknown_r)
+	AM_RANGE(0xbfd000, 0xbfefff) AM_READWRITE(amiga_cia_r, amiga_cia_w)
+	AM_RANGE(0xdbf000, 0xdfffff) AM_READWRITE(amiga_custom_r, amiga_custom_w) AM_BASE(&amiga_custom_regs)
+	AM_RANGE(0xf00000, 0xfbffff) AM_ROM AM_REGION(REGION_USER2, 0)			/* Custom ROM */
+	AM_RANGE(0xfc0000, 0xffffff) AM_ROM AM_REGION(REGION_USER1, 0)			/* System ROM */
 ADDRESS_MAP_END
 
 
@@ -64,6 +65,34 @@ INPUT_PORTS_START( mquake )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN3 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START3 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START4 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_PLAYER(3)
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_PLAYER(3)
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_PLAYER(3)
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(3)
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(3)
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER(3)
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_PLAYER(3)
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON4 ) PORT_PLAYER(3)
+	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_PLAYER(4)
+	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_PLAYER(4)
+	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_PLAYER(4)
+	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(4)
+	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(4)
+	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER(4)
+	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_PLAYER(4)
+	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_BUTTON4 ) PORT_PLAYER(4)
 INPUT_PORTS_END
 
 
@@ -74,27 +103,27 @@ static struct CustomSound_interface amiga_custom_interface =
 
 
 static MACHINE_DRIVER_START( mquake )
+
 	/* basic machine hardware */
-	MDRV_CPU_ADD( M68000, 7159090)        /* 7.15909 Mhz (NTSC) */
+	MDRV_CPU_ADD(M68000, 7159090)        /* 7.15909 Mhz (NTSC) */
 	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	MDRV_CPU_VBLANK_INT(amiga_irq, 262)
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(1)
 
-	MDRV_MACHINE_RESET( amiga )
+	MDRV_FRAMES_PER_SECOND(59.997)
+	MDRV_VBLANK_DURATION(0)
+
+	MDRV_MACHINE_RESET(amiga)
 	MDRV_NVRAM_HANDLER(generic_0fill)
-
 
     /* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
 	MDRV_SCREEN_SIZE(512*2, 262)
 	MDRV_VISIBLE_AREA((129-8)*2, (449+8-1)*2, 44-8, 244+8-1)
 	MDRV_PALETTE_LENGTH(4096)
-	MDRV_PALETTE_INIT( amiga )
+	MDRV_PALETTE_INIT(amiga)
 
-	MDRV_VIDEO_START( amiga )
-	MDRV_VIDEO_UPDATE( generic_bitmapped )
+	MDRV_VIDEO_START(generic_bitmapped)
+	MDRV_VIDEO_UPDATE(generic_bitmapped)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
@@ -102,10 +131,11 @@ static MACHINE_DRIVER_START( mquake )
 	MDRV_SOUND_ADD(CUSTOM, 3579545)
 	MDRV_SOUND_CONFIG(amiga_custom_interface)
 	MDRV_SOUND_ROUTE(0, "left", 0.50)
-	MDRV_SOUND_ROUTE(1, "left", 0.50)
+	MDRV_SOUND_ROUTE(1, "right", 0.50)
 	MDRV_SOUND_ROUTE(2, "right", 0.50)
-	MDRV_SOUND_ROUTE(3, "right", 0.50)
+	MDRV_SOUND_ROUTE(3, "left", 0.50)
 MACHINE_DRIVER_END
+
 
 ROM_START( mquake )
 	ROM_REGION(0x80000, REGION_USER1, 0)
@@ -141,7 +171,7 @@ ROM_END
 
 static int mquake_cia_0_portA_r( void )
 {
-	int ret = readinputport( 0 ) & 0xc0;
+	int ret = readinputport(0) & 0xc0;
 	ret |= 0x3f;
 	return ret; /* Gameport 1 and 0 buttons */
 }
@@ -149,7 +179,7 @@ static int mquake_cia_0_portA_r( void )
 static int mquake_cia_0_portB_r( void )
 {
 	/* parallel port */
-	return 0;
+	return readinputport(2);
 }
 
 static void mquake_cia_0_portA_w( int data )

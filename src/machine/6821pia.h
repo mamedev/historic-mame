@@ -31,7 +31,8 @@
 #endif
 
 
-struct pia6821_interface
+typedef struct _pia6821_interface pia6821_interface;
+struct _pia6821_interface
 {
 	read8_handler in_a_func;
 	read8_handler in_b_func;
@@ -47,8 +48,7 @@ struct pia6821_interface
 	void (*irq_b_func)(int state);
 };
 
-void pia_unconfig(void);
-void pia_config(int which, int addressing, const struct pia6821_interface *intf);
+void pia_config(int which, int addressing, const pia6821_interface *intf);
 void pia_reset(void);
 int pia_read(int which, int offset);
 void pia_write(int which, int offset, int data);

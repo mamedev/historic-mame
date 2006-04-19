@@ -711,6 +711,7 @@ VIDEO_UPDATE( yamato )
 
 
 /* Top Roller */
+
 #define PRIORITY_OVER  	0x20
 #define PRIORITY_UNDER 	0x00
 #define PRIORITY_MASK 	0x20
@@ -725,19 +726,23 @@ UINT8 *toprollr_videoram4;
 static void get_tile_info_bg(int tile_index)
 {
 	int code = toprollr_videoram3[tile_index];
-	int atr = toprollr_videoram4[tile_index];
-	int flipx,flipy,bank;
+	int attr = toprollr_videoram4[tile_index];
+	int flipx,flipy,bank,palette;
 
-	bank=(atr&8)<<5;
+	bank=(attr&0x40)<<2;
 
-	flipx=(atr&2)?1:0;
-	flipy=atr&4;
 
-	if(bank)
-		flipx=1;
+
+
+
+	flipx=1;
+	flipy=0;
 
 	code+=bank;
-	SET_TILE_INFO(1, code, 0, (flipx?TILE_FLIPX:0)|(flipy?TILE_FLIPY:0))
+
+	palette=(attr&0xf)+0x18 ;
+
+	SET_TILE_INFO(1, code, palette, (flipx?TILE_FLIPX:0)|(flipy?TILE_FLIPY:0))
 }
 
 VIDEO_START( toprollr )
@@ -750,19 +755,25 @@ static void trdrawbigsprite(mame_bitmap *bitmap,const rectangle *cliprect,int pr
 {
 		if((cclimber_bigspriteram[1]&PRIORITY_MASK)==priority)
 		{
-			int code,xs,ys,pal,bank,x,y;
+			int code,xs,ys,palette,bank,x,y;
 			int flipx=0;
 			int flipy=0;
 
 			xs=136-cclimber_bigspriteram[3];
 			ys=128-cclimber_bigspriteram[2];
 
+
+			if(xs==0)
+			{
+				return;
+			}
+
 			if (flip_screen_x)
 			{
 				flipx^=1;
 			}
 
-			pal=cclimber_bigspriteram[1]&7;
+			palette=cclimber_bigspriteram[1]&0x7;
 
 			bank=(cclimber_bigspriteram[1]>>3)&3;
 
@@ -775,29 +786,34 @@ static void trdrawbigsprite(mame_bitmap *bitmap,const rectangle *cliprect,int pr
 					if (flipx) sx = 15 - x;
 					if (flipy) sy = 15 - y;
 
-					code=cclimber_bsvideoram[y*16+x];
-					drawgfx(bitmap, Machine->gfx[3], code+bank*256, pal, flipx, flipy,(sx*8+xs)&0xff,(sy*8+ys)&0xff, cliprect, TRANSPARENCY_PEN, 0);
-					drawgfx(bitmap, Machine->gfx[3], code+bank*256, pal, flipx, flipy,((sx*8+xs)&0xff)-256,((sy*8+ys)&0xff)-256, cliprect, TRANSPARENCY_PEN, 0);
-				}
+					code=cclimber_bsvideoram[y*16+x]+bank*256;
 
+					drawgfx(bitmap, Machine->gfx[3], code, palette, flipx, flipy,(sx*8+xs)&0xff,(sy*8+ys)&0xff, cliprect, TRANSPARENCY_PEN, 0);
+					drawgfx(bitmap, Machine->gfx[3], code, palette, flipx, flipy,((sx*8+xs)&0xff)-256,((sy*8+ys)&0xff)-256, cliprect, TRANSPARENCY_PEN, 0);
+				}
 		}
 }
 
 VIDEO_UPDATE( toprollr )
 {
 
-	UINT32 x,y,c,d;
+	UINT32 x,y;
 	int offs;
+	rectangle myclip=*cliprect;
+	myclip.min_x=4*8;
+	myclip.max_x=29*8-1;
+
+	fillbitmap(bitmap, 0, cliprect);
 
 	tilemap_set_scrollx(bg_tilemap,0,toprollr_videoram3[0]+8);
 	tilemap_mark_all_tiles_dirty(bg_tilemap);
-	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	tilemap_draw(bitmap, &myclip,bg_tilemap,0,0);
 
-	trdrawbigsprite(bitmap, cliprect, PRIORITY_UNDER);
+	trdrawbigsprite(bitmap, &myclip, PRIORITY_UNDER);
 
 	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
-		int sx,sy,flipx,flipy;
+		int sx,sy,flipx,flipy,palette;
 
 		sx = spriteram[offs + 3]-8;
 		sy = 240 - spriteram[offs + 2];
@@ -814,15 +830,17 @@ VIDEO_UPDATE( toprollr )
 			flipy = !flipy;
 		}
 
+		palette=0x08+(spriteram[offs + 1] & 0x0f);
+
 		drawgfx(bitmap,Machine->gfx[2],
 			(spriteram[offs] & 0x3f) + 2 * (spriteram[offs + 1] & 0x20)+8*(spriteram[offs + 1] & 0x10),
-				spriteram[offs + 1] & 0x0f,
+				palette,
 				flipx,flipy,
 				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+				&myclip,TRANSPARENCY_PEN,0);
 	}
 
-	trdrawbigsprite(bitmap, cliprect, PRIORITY_OVER);
+	trdrawbigsprite(bitmap, &myclip, PRIORITY_OVER);
 
 	for(y=0;y<32;y++)
 		for(x=0;x<32;x++)
@@ -832,8 +850,9 @@ VIDEO_UPDATE( toprollr )
 			int flipx=0;
 			int flipy=0;
 
-			c=videoram[y*32+x];
-			d=toprollr_videoram2[y*32+x];
+			int code=videoram[y*32+x];
+			int attr=(x>16)?(toprollr_videoram2[(y&0xfe)*32+x]):(toprollr_videoram2[y*32+x]);
+			int palette;
 
 			if (flip_screen_x)
 			{
@@ -846,17 +865,11 @@ VIDEO_UPDATE( toprollr )
 				flipy^=1;
 			}
 
-			if(x>3&&x<29)
-				drawgfx(bitmap, Machine->gfx[0], c+((d&0xf0)<<4), (d>>2)&0x3, flipx, flipy, sx, sy, cliprect, TRANSPARENCY_PEN, 0);
-			else
-			{
-				/* hack */
-				drawgfx(bitmap, Machine->gfx[0], 45, 0, flipx, flipy, sx, sy, cliprect, TRANSPARENCY_NONE, 0); //black
-				drawgfx(bitmap, Machine->gfx[0], c+((d&0xf0)<<4), (d>>2)&0x3, flipx, flipy, sx, sy, cliprect, TRANSPARENCY_PEN, 0);
-			}
+			palette=8+(attr&0xf);
+			drawgfx(bitmap, Machine->gfx[0], code+((attr&0xf0)<<4),palette, flipx, flipy, sx, sy, cliprect, TRANSPARENCY_PEN, 0);
+
 		}
 }
-
 
 
 

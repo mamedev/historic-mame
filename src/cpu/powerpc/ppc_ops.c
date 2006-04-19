@@ -1629,7 +1629,14 @@ INLINE int sign_double(FPR x)
 
 INLINE INT64 round_to_nearest(FPR f)
 {
-	return (INT64)(f.fd + 0.5);
+	if (f.fd >= 0)
+	{
+		return (INT64)(f.fd + 0.5);
+	}
+	else
+	{
+		return -(INT64)(-f.fd + 0.5);
+	}
 }
 
 INLINE INT64 round_toward_zero(FPR f)

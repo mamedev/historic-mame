@@ -15,19 +15,19 @@ Sound Chips  :  OKI M6295 + YM3812 [Optional]
 Year + Game         Board#
 ---------------------------------------------------------------------------
 19?? Magic Bubble     YS-1302
-1997 Shocking         YS-0211?
+1997 Shocking
 1998 Bomb Kick        YS-0211
 ---------------------------------------------------------------------------
+
+- Screen flipping: not used!?
+
+Original bugs:
 
 - In shocking, service mode just shows the menu, with mangled graphics
   (sprites, but the charset they used is in the tiles ROMs!).
   In magicbub they used color 0 for tiles (all blacks, so you can't see
   most of it!). Again, color 0 for sprites would be ok. Some kind
   of sprites-tiles swapping, or unfinished leftovers?
-
-- Screen flipping: not used!?
-
-- Are priorities correct?
 
 ***************************************************************************/
 
@@ -552,7 +552,7 @@ static MACHINE_DRIVER_START( shocking )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
-	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_ADD(OKIM6295, 1000000 / 132)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
@@ -658,6 +658,35 @@ ROM_END
 /***************************************************************************
 
                                 Shocking
+Yunsung, 1997
+
+PCB Layout
+----------
+
+|-------------------------------------------------|
+|UPC1242  ROM.U131           ROM.U20     6116     |
+|     VOL M6295              ROM.U22     6116     |
+|  PAL 6264                  ROM.U21              |
+|      6264                  ROM.U23     6116     |
+|                                        6116     |
+|                  PAL                      PAL   |
+|J                 PAL                      PAL   |
+|A  DSW1                       PAL                |
+|M                                                |
+|M  DSW2                PAL   ACTEL         PAL   |
+|A        PAL           PAL   A1020B  6116  6116  |
+|         PAL  PAL      PAL           6116  6116  |
+|              PAL                    ROM.U70     |
+|                62256                ROM.U69     |
+|        68000   62256                ROM.U68     |
+|                ROM.U32              ROM.U67     |
+|16MHz           ROM.U33           62256  62256   |
+|-------------------------------------------------|
+Notes:
+      68000 clock - 16MHz
+      M6295 clock - 1.000MHz, sample rate 1000000Hz / 132
+      HSync - 14.84kHz
+      VSync - 60Hz
 
 ***************************************************************************/
 

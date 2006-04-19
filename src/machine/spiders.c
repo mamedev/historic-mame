@@ -64,7 +64,7 @@ READ8_HANDLER( spiders_vrom_r );
 /* Declare PIA structure */
 
 /* PIA 1, main CPU */
-static struct pia6821_interface pia_0_intf =
+static const pia6821_interface pia_0_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ input_port_0_r, input_port_1_r, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, 0, 0, 0,
@@ -72,7 +72,7 @@ static struct pia6821_interface pia_0_intf =
 };
 
 /* PIA 2, main CPU */
-static struct pia6821_interface pia_1_intf =
+static const pia6821_interface pia_1_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ spiders_vrom_r, 0, input_port_5_r, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, spiders_vrif_w, 0, spiders_flip_w,
@@ -80,7 +80,7 @@ static struct pia6821_interface pia_1_intf =
 };
 
 /* PIA 3, main CPU */
-static struct pia6821_interface pia_2_intf =
+static const pia6821_interface pia_2_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ spiders_soundctrl_w, spiders_soundcmd_w, 0, 0,
@@ -88,7 +88,7 @@ static struct pia6821_interface pia_2_intf =
 };
 
 /* PIA, sound CPU */
-static struct pia6821_interface pia_3_intf =
+static const pia6821_interface pia_3_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ spiders_sounda_w, spiders_soundb_w, 0, 0,
@@ -102,13 +102,18 @@ static struct pia6821_interface pia_3_intf =
 
 ***************************************************************************/
 
-MACHINE_RESET( spiders )
+MACHINE_START( spiders )
 {
-	pia_unconfig();
 	pia_config(0, PIA_STANDARD_ORDERING, &pia_0_intf);
 	pia_config(1, PIA_ALTERNATE_ORDERING, &pia_1_intf);
 	pia_config(2, PIA_STANDARD_ORDERING, &pia_2_intf);
 	pia_config(3, PIA_STANDARD_ORDERING, &pia_3_intf);
+	return 0;
+}
+
+
+MACHINE_RESET( spiders )
+{
 	pia_reset();
 }
 

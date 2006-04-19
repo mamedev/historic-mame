@@ -617,14 +617,14 @@ static const gfx_decode magiccrd_gfxdecodeinfo[] =
 
 /* PIA Interfaces */
 
-static struct pia6821_interface pia0_intf =
+static const pia6821_interface pia0_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ input_port_0_r, input_port_1_r, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, 0, 0, 0,
 	/*irqs   : A/B             */ 0, 0
 };
 
-static struct pia6821_interface pia1_intf =
+static const pia6821_interface pia1_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ input_port_2_r, input_port_3_r, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, 0, 0, 0,

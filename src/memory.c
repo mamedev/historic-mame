@@ -1498,6 +1498,10 @@ static void install_mem_handler(addrspace_data *space, int iswrite, int databits
 	/* adjust the incoming addresses */
 	adjust_addresses(space, ismatchmask, &start, &end, &mask, &mirror);
 
+	/* sanity check */
+	if (HANDLER_IS_RAM(handler))
+		assert_always(mame_get_phase() == MAME_PHASE_INIT, "RAM/ROM memory handlers can only be installed at init time");
+
 	/* translate ROM to RAM/UNMAP here */
 	if (HANDLER_IS_ROM(handler))
 		handler = iswrite ? (genf *)STATIC_UNMAP : (genf *)MRA8_RAM;

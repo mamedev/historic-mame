@@ -397,17 +397,21 @@ MACHINE_DRIVER_END
 
 
 /* PIA 0, sound CPU */
-static struct pia6821_interface pia_0_intf =
+static const pia6821_interface pia_0_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, 0, 0, 0,
 	/*irqs   : A/B             */ 0, 0
 };
 
+MACHINE_START( demoneye )
+{
+	pia_config(0, PIA_STANDARD_ORDERING, &pia_0_intf);
+	return 0;
+}
+
 MACHINE_RESET( demoneye )
 {
-	pia_unconfig();
-	pia_config(0, PIA_STANDARD_ORDERING, &pia_0_intf);
 	pia_reset();
 }
 
@@ -425,6 +429,7 @@ static MACHINE_DRIVER_START( demoneye )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
+	MDRV_MACHINE_START(demoneye)
 	MDRV_MACHINE_RESET(demoneye)
 
 	/* video hardware */

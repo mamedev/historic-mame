@@ -36,7 +36,7 @@ Revisions:
 		eax = pos[CH]; \
 		ebx = eax; \
 		eax >>= 8; \
-		eax = *(char *)(esi + eax); \
+		eax = *(INT8 *)(esi + eax); \
 		eax *= vol[CH]; \
 		ebx += rate[CH]; \
 		pos[CH] = ebx; \
@@ -48,21 +48,21 @@ Revisions:
 
 struct IremGA20_channel_def
 {
-	unsigned long rate;
-	unsigned long size;
-	unsigned long start;
-	unsigned long pos;
-	unsigned long end;
-	unsigned long volume;
-	unsigned long pan;
-	unsigned long effect;
-	unsigned long play;
+	UINT32 rate;
+	UINT32 size;
+	UINT32 start;
+	UINT32 pos;
+	UINT32 end;
+	UINT32 volume;
+	UINT32 pan;
+	UINT32 effect;
+	UINT32 play;
 };
 
 struct IremGA20_chip_def
 {
 	const struct IremGA20_interface *intf;
-	unsigned char *rom;
+	UINT8 *rom;
 	INT32 rom_size;
 	sound_stream * stream;
 	INT32 regs[0x40];
@@ -73,8 +73,8 @@ struct IremGA20_chip_def
 void IremGA20_update( void *param, stream_sample_t **inputs, stream_sample_t **buffer, int length )
 {
 	struct IremGA20_chip_def *chip = param;
-	unsigned long rate[4], pos[4], end[4], vol[4], play[4];
-	unsigned long esi;
+	UINT32 rate[4], pos[4], end[4], vol[4], play[4];
+	UINT32 esi;
 	stream_sample_t *edi, *ebp;
 	int eax, ebx, ecx, edx;
 
@@ -89,7 +89,7 @@ void IremGA20_update( void *param, stream_sample_t **inputs, stream_sample_t **b
 	}
 
 	ecx = length;
-	esi = (unsigned long)chip->rom;
+	esi = (UINT32)chip->rom;
 	edi = buffer[0];
 	ebp = buffer[1];
 	edi += ecx;

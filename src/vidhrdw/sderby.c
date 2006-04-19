@@ -121,6 +121,15 @@ VIDEO_UPDATE( sderby )
 	tilemap_draw(bitmap,cliprect,sderby_fg_tilemap,0,0);
 }
 
+VIDEO_UPDATE( pmroulet )
+{
+	tilemap_draw(bitmap,cliprect,sderby_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,sderby_md_tilemap,0,0);
+	draw_sprites(bitmap,cliprect,0);
+	tilemap_draw(bitmap,cliprect,sderby_fg_tilemap,0,0);
+}
+
+
 WRITE16_HANDLER( sderby_scroll_w )
 {
 	static UINT16 scroll[6];

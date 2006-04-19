@@ -214,14 +214,14 @@ static void tms5220_irq_handler(int state)
 
 
 
-static struct pia6821_interface pia_0_intf =
+static const pia6821_interface pia_0_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ zaccaria_port0a_r, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ zaccaria_port0a_w, zaccaria_port0b_w, 0, 0,
 	/*irqs   : A/B             */ zaccaria_irq0a, zaccaria_irq0b
 };
 
-static struct pia6821_interface pia_1_intf =
+static const pia6821_interface pia_1_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ zaccaria_port1a_r, 0, 0, 0, zaccaria_ca2_r, 0,
 	/*outputs: A/B,CA/B2       */ zaccaria_port1a_w, zaccaria_port1b_w, 0, 0,
@@ -241,13 +241,16 @@ static ppi8255_interface ppi8255_intf =
 };
 
 
+static MACHINE_START( zaccaria )
+{
+	pia_config(0, PIA_STANDARD_ORDERING, &pia_0_intf);
+	pia_config(1, PIA_STANDARD_ORDERING, &pia_1_intf);
+	return 0;
+}
+
 static MACHINE_RESET( zaccaria )
 {
 	ppi8255_init(&ppi8255_intf);
-
-	pia_unconfig();
-	pia_config(0, PIA_STANDARD_ORDERING, &pia_0_intf);
-	pia_config(1, PIA_STANDARD_ORDERING, &pia_1_intf);
 	pia_reset();
 }
 
@@ -675,6 +678,7 @@ static MACHINE_DRIVER_START( zaccaria )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
+	MDRV_MACHINE_START(zaccaria)
 	MDRV_MACHINE_RESET(zaccaria)
 
 	/* video hardware */

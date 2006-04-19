@@ -69,26 +69,26 @@ static write8_handler ssio_custom_output[2];
 static UINT8 csdeluxe_sound_cpu;
 static UINT8 csdeluxe_dac_index;
 static UINT8 csdeluxe_status;
-extern struct pia6821_interface csdeluxe_pia_intf;
+extern const pia6821_interface csdeluxe_pia_intf;
 
 /* Turbo Chip Squeak-specific globals */
 static UINT8 turbocs_sound_cpu;
 static UINT8 turbocs_dac_index;
 static UINT8 turbocs_status;
-extern struct pia6821_interface turbocs_pia_intf;
+extern const pia6821_interface turbocs_pia_intf;
 
 /* Sounds Good-specific globals */
 static UINT8 soundsgood_sound_cpu;
 static UINT8 soundsgood_dac_index;
 static UINT8 soundsgood_status;
-extern struct pia6821_interface soundsgood_pia_intf;
+extern const pia6821_interface soundsgood_pia_intf;
 
 /* Squawk n' Talk-specific globals */
 static UINT8 squawkntalk_sound_cpu;
 static UINT8 squawkntalk_tms_command;
 static UINT8 squawkntalk_tms_strobes;
-extern struct pia6821_interface squawkntalk_pia0_intf;
-extern struct pia6821_interface squawkntalk_pia1_intf;
+extern const pia6821_interface squawkntalk_pia0_intf;
+extern const pia6821_interface squawkntalk_pia1_intf;
 
 
 
@@ -579,7 +579,7 @@ ADDRESS_MAP_END
 
 
 /********* PIA interfaces ***********/
-struct pia6821_interface csdeluxe_pia_intf =
+const pia6821_interface csdeluxe_pia_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ csdeluxe_porta_w, csdeluxe_portb_w, 0, 0,
@@ -683,7 +683,7 @@ ADDRESS_MAP_END
 /* Note: we map this board to PIA #1. It is only used in Spy Hunter and Spy Hunter 2 */
 /* For Spy Hunter 2, we also have a Turbo Chip Squeak in PIA slot 0, so we don't want */
 /* to interfere */
-struct pia6821_interface soundsgood_pia_intf =
+const pia6821_interface soundsgood_pia_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ soundsgood_porta_w, soundsgood_portb_w, 0, 0,
@@ -770,7 +770,7 @@ ADDRESS_MAP_END
 
 
 /********* PIA interfaces ***********/
-struct pia6821_interface turbocs_pia_intf =
+const pia6821_interface turbocs_pia_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ turbocs_porta_w, turbocs_portb_w, 0, 0,
@@ -907,14 +907,14 @@ ADDRESS_MAP_END
 
 
 /********* PIA interfaces ***********/
-struct pia6821_interface squawkntalk_pia0_intf =
+const pia6821_interface squawkntalk_pia0_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ squawkntalk_porta1_w, 0, 0, 0,
 	/*irqs   : A/B             */ squawkntalk_irq, squawkntalk_irq
 };
 
-struct pia6821_interface squawkntalk_pia1_intf =
+const pia6821_interface squawkntalk_pia1_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ squawkntalk_porta2_w, squawkntalk_portb2_w, 0, 0,

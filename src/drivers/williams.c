@@ -1513,6 +1513,7 @@ static MACHINE_DRIVER_START( joust2 )
 	MDRV_SPEAKER_REMOVE("mono")
 	MDRV_IMPORT_FROM(williams_cvsd_sound)
 
+	MDRV_MACHINE_START(joust2)
 	MDRV_MACHINE_RESET(joust2)
 
 	/* sound hardware */
@@ -2488,7 +2489,6 @@ ROM_END
 	williams2_tilemap_config = x
 
 #define CONFIGURE_PIAS(a,b,c) \
-	pia_unconfig();\
 	pia_config(0, PIA_STANDARD_ORDERING, &a);\
 	pia_config(1, PIA_STANDARD_ORDERING, &b);\
 	pia_config(2, PIA_STANDARD_ORDERING, &c)

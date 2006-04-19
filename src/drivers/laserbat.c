@@ -573,7 +573,7 @@ static WRITE8_HANDLER( zaccaria_port0b_w )
 	last = data;
 }
 
-static struct pia6821_interface pia_0_intf =
+static const pia6821_interface pia_0_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ zaccaria_port0a_r, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ zaccaria_port0a_w, zaccaria_port0b_w, 0, 0,
@@ -588,10 +588,14 @@ static struct AY8910interface ay8910_interface =
 	0
 };
 
+static MACHINE_START( catnmous )
+{
+	pia_config(0, PIA_STANDARD_ORDERING, &pia_0_intf);
+	return 0;
+}
+
 static MACHINE_RESET( catnmous )
 {
-	pia_unconfig();
-	pia_config(0, PIA_STANDARD_ORDERING, &pia_0_intf);
 	pia_reset();
 }
 

@@ -15,6 +15,11 @@
  - Elfin                               (c) 1999 dgPIX Entertainment Inc.
 
 
+ Original bugs:
+ - In King of Dynast Gear, Roger's fast attack shows some blank lines
+   in the sword "shadow" if you do it in the left direction
+
+
  driver by Pierpaolo Prazzoli & Tomasz Slanina
 
  - Pierpaolo Prazzoli 2006.01.16
@@ -296,11 +301,12 @@ VIDEO_UPDATE( dgpix )
 }
 
 static MACHINE_DRIVER_START( common )
-	MDRV_CPU_ADD_TAG("cpu", E132XT, 16934400)
+	MDRV_CPU_ADD_TAG("cpu", E132XT, 20000000)
 	MDRV_CPU_IO_MAP(io_map,0)
 
 /*
     unknown 16bit sound cpu, embedded inside the KS0164 sound chip
+    running at 16.9MHz
 */
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -358,7 +364,7 @@ VRenderOMinus Rev4
 |  POT1    T2316162               SEC KS0164      N   |
 |  POT2    T2316162                               N   |
 |J                                    169NDK19:   3   |
-|A     14.31818MHz                     CONN2          |
+|A     20MHz                           CONN2          |
 |M  KA4558                                            |
 |M                                                    |
 |A                                SEC KM6161002CJ-12  |
@@ -414,7 +420,7 @@ VRenderO Minus Rev5 dgPIX Entertainment Inc. 1999
 |  VOL1    K4E151611                  KS0164      N   |
 |  VOL2    K4E151611                              N   |
 |J                                    169NDK19    3   |
-|A     14.31818MHz                     CONN2          |
+|A     20MHz                           CONN2          |
 |M  KA4558                                            |
 |M                                                    |
 |A                                          KM6161002 |

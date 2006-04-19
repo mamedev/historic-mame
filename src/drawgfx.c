@@ -907,16 +907,8 @@ INLINE void common_drawgfx(mame_bitmap *dest,const gfx_element *gfx,
 		const rectangle *clip,int transparency,int transparent_color,
 		mame_bitmap *pri_buffer,UINT32 pri_mask)
 {
-	if (!gfx)
-	{
-		ui_popup("drawgfx() gfx == 0");
-		return;
-	}
-	if (!gfx->colortable && !is_raw[transparency])
-	{
-		ui_popup("drawgfx() gfx->colortable == 0");
-		return;
-	}
+	assert_always(gfx, "drawgfx() gfx == 0");
+	assert_always(gfx->colortable || is_raw[transparency], "drawgfx() gfx->colortable == 0");
 
 	code %= gfx->total_elements;
 	if (!is_raw[transparency])

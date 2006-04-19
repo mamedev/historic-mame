@@ -120,7 +120,7 @@ WRITE8_HANDLER(victory_sound_irq_clear_w);
 WRITE8_HANDLER(victory_main_ack_w);
 
 /* PIA 0 */
-static struct pia6821_interface pia_0_intf =
+static const pia6821_interface pia_0_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ pia_1_portb_w, pia_1_porta_w, pia_1_cb1_w, pia_1_ca1_w,
@@ -128,7 +128,7 @@ static struct pia6821_interface pia_0_intf =
 };
 
 /* PIA 1 */
-static struct pia6821_interface pia_1_intf =
+static const pia6821_interface pia_1_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ pia_0_portb_w, pia_0_porta_w, pia_0_cb1_w, pia_0_ca1_w,
@@ -136,7 +136,7 @@ static struct pia6821_interface pia_1_intf =
 };
 
 /* Victory PIA 0 */
-static struct pia6821_interface victory_pia_0_intf =
+static const pia6821_interface victory_pia_0_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, victory_sound_response_w, victory_sound_irq_clear_w, victory_main_ack_w,

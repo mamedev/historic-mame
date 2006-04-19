@@ -1,9 +1,10 @@
 /***************************************************************************
-Amiga Computer / Arcadia Game System
 
-Driver by:
+    Amiga Computer / Arcadia Game System
 
-Ernesto Corvi & Mariusz Wojcieszek
+    Driver by:
+
+    Ernesto Corvi & Mariusz Wojcieszek
 
 ***************************************************************************/
 
@@ -12,9 +13,96 @@ Ernesto Corvi & Mariusz Wojcieszek
 #include "cpu/m68000/m68000.h"
 
 #define LOG_CUSTOM	1
-#define LOG_CIA		0
+#define LOG_CIA		1
 
+
+
+/*************************************
+ *
+ *  Constants
+ *
+ *************************************/
+
+/* 715909 Hz for NTSC, 709379 for PAL */
+#define O2_TIMER_RATE		(TIME_IN_HZ(Machine->drv->cpu[0].cpu_clock / 10))
+
+
+
+/*************************************
+ *
+ *  Type definitions
+ *
+ *************************************/
+
+typedef struct _cia_timer cia_timer;
+typedef struct _cia_port cia_port;
+typedef struct _cia_state cia_state;
+
+struct _cia_timer
+{
+	UINT16		latch;
+	UINT16		count;
+	UINT8		mode;
+	UINT8		started;
+	UINT8		irq;
+	mame_timer *timer;
+	cia_state *	cia;
+};
+
+struct _cia_port
+{
+	UINT8		ddr;
+	UINT8		latch;
+	int			(*read)(void);
+	void		(*write)(int);
+};
+
+struct _cia_state
+{
+	UINT16			irq;
+
+	cia_port		port[2];
+	cia_timer		timer[2];
+
+	/* Time Of the Day clock (TOD) */
+	UINT32			tod;
+	UINT32			tod_latch;
+	UINT8			tod_running;
+	UINT32			alarm;
+
+	/* Interrupts */
+	UINT8			icr;
+	UINT8			ics;
+};
+
+
+typedef struct _autoconfig_device autoconfig_device;
+struct _autoconfig_device
+{
+	autoconfig_device *		next;
+	amiga_autoconfig_device	device;
+	offs_t					base;
+};
+
+
+
+/*************************************
+ *
+ *  Globals
+ *
+ *************************************/
+
+UINT16 *amiga_chip_ram;
+size_t amiga_chip_ram_size;
+UINT16 *amiga_custom_regs;
+UINT16 *amiga_expansion_ram;
+UINT16 *amiga_autoconfig_mem;
+
+static cia_state cia_8520[2];
 static const struct amiga_machine_interface *amiga_intf;
+
+static autoconfig_device *autoconfig_list;
+static autoconfig_device *cur_autoconfig;
 
 
 
@@ -24,56 +112,47 @@ static const struct amiga_machine_interface *amiga_intf;
 
 ***************************************************************************/
 
-/* required prototype */
-WRITE16_HANDLER(amiga_custom_w);
 
-custom_regs_def custom_regs;
 
-UINT16 *amiga_chip_ram;
-UINT16 *amiga_expansion_ram;
-UINT16 *amiga_autoconfig_mem;
 
-static int translate_ints( void ) {
-
+static void check_ints(void)
+{
 	int ints = CUSTOM_REG(REG_INTENA) & CUSTOM_REG(REG_INTREQ);
-	int ret = 0;
+	int irq = -1;
 
-	if ( CUSTOM_REG(REG_INTENA) & 0x4000 ) { /* Master interrupt switch */
+	/* Master interrupt switch */
+	if (CUSTOM_REG(REG_INTENA) & 0x4000)
+	{
+		/* Serial transmit buffer empty, disk block finished, software interrupts */
+		if (ints & 0x0007)
+			irq = 1;
 
-		/* Level 7 = NMI Can only be triggered from outside the hardware */
+		/* I/O ports and timer interrupts */
+		if (ints & 0x0008)
+			irq = 2;
 
-		if ( ints & 0x2000 )
-			ret |= ( 1 << 5 );
+		/* Copper, VBLANK, blitter interrupts */
+		if (ints & 0x0070)
+			irq = 3;
 
-		if ( ints & 0x1800 )
-			ret |= ( 1 << 4 );
+		/* Audio interrupts */
+		if (ints & 0x0780)
+			irq = 4;
 
-		if ( ints & 0x0780 )
-			ret |= ( 1 << 3 );
+		/* Serial receive buffer full, disk sync match */
+		if (ints & 0x1800)
+			irq = 5;
 
-		if ( ints & 0x0070 )
-			ret |= ( 1 << 2 );
-
-		if ( ints & 0x0008 )
-			ret |= ( 1 << 1 );
-
-		if ( ints & 0x0007 )
-			ret |= ( 1 << 0 );
+		/* External interrupts */
+		if (ints & 0x2000)
+			irq = 6;
 	}
 
-	return ret;
-}
-
-static void check_ints( void ) {
-
-	int ints = translate_ints(), i;
-
-	for ( i = 0; i < 7; i++ ) {
-		if ( ( ints >> i ) & 1 )
-			cpunum_set_input_line( 0, i + 1, ASSERT_LINE );
-		else
-			cpunum_set_input_line( 0, i + 1, CLEAR_LINE );
-	}
+	/* set the highest IRQ line */
+	if (irq >= 0)
+		cpunum_set_input_line(0, irq, ASSERT_LINE);
+	else
+		cpunum_set_input_line(0, 7, CLEAR_LINE);
 }
 
 
@@ -285,7 +364,7 @@ static void blitter_proc( int param ) {
 			temp_ptr3 = ptr[3];
 
 			if ( CUSTOM_REG(REG_BLTCON0) & 0x0200 )
-				CUSTOM_REG(REG_BLTCDAT) = amiga_chip_ram[ptr[2]/2];
+				CUSTOM_REG(REG_BLTCDAT) = amiga_chip_ram_r(ptr[2]);
 
 			dataA = ( CUSTOM_REG(REG_BLTADAT) >> start );
 
@@ -359,7 +438,7 @@ static void blitter_proc( int param ) {
 			blt_total |= dst_data;
 
 			if ( CUSTOM_REG(REG_BLTCON0) & 0x0100 )
-				amiga_chip_ram[temp_ptr3/2] = dst_data;
+				amiga_chip_ram_w(temp_ptr3, dst_data);
 
 			dataB = ( dataB << 1 ) | ( dataB >> 15 );
 		}
@@ -422,13 +501,13 @@ static void blitter_proc( int param ) {
 
 					/* get new data */
 					if ( ptr[0] != -1 )
-						new_data[0] = amiga_chip_ram[ptr[0]/2];
+						new_data[0] = amiga_chip_ram_r(ptr[0]);
 
 					if ( ptr[1] != -1 )
-						new_data[1] = amiga_chip_ram[ptr[1]/2];
+						new_data[1] = amiga_chip_ram_r(ptr[1]);
 
 					if ( ptr[2] != -1 )
-						new_data[2] = amiga_chip_ram[ptr[2]/2];
+						new_data[2] = amiga_chip_ram_r(ptr[2]);
 
 					for ( i = 0; i < 8; i++ ) {
 						if ( CUSTOM_REG(REG_BLTCON0) & ( 1 << i ) ) {
@@ -446,7 +525,7 @@ static void blitter_proc( int param ) {
 							dst_data = blitter_fill( dst_data, CUSTOM_REG(REG_BLTCON1) & 0x18, &fc );
 
 						if ( ptr[3] != -1 ) {
-							amiga_chip_ram[ptr[3]/2] = dst_data;
+							amiga_chip_ram_w(ptr[3], dst_data);
 							ptr[3] -= 2;
 						}
 
@@ -460,7 +539,7 @@ static void blitter_proc( int param ) {
 							ptr[2] -= 2;
 					} else {
 						if ( ptr[3] != -1 ) {
-							amiga_chip_ram[ptr[3]/2] = dst_data;
+							amiga_chip_ram_w(ptr[3], dst_data);
 							ptr[3] += 2;
 						}
 
@@ -529,7 +608,7 @@ done:
 		CUSTOM_REG(REG_DMACON) ^= 0x2000;
 
 
-	amiga_custom_w(REG_INTREQ, 0x8040, 0);
+	amiga_custom_w(REG_INTREQ, 0x8000 | INTENA_BLIT, 0);
 }
 
 static void blitter_setup( void ) {
@@ -577,509 +656,350 @@ static void blitter_setup( void ) {
 
 ***************************************************************************/
 
-/* required prototype */
-static void cia_fire_timer( int cia, int timer );
-static mame_timer *cia_hblank_timer;
-static int cia_hblank_timer_set;
-
-typedef struct {
-	unsigned char 	ddra;
-	unsigned char 	ddrb;
-	int	(*portA_read)( void );
-	int	(*portB_read)( void );
-	void (*portA_write)( int data );
-	void (*portB_write)( int data );
-	unsigned char	data_latchA;
-	unsigned char	data_latchB;
-	/* Timer A */
-	unsigned short	timerA_latch;
-	unsigned short	timerA_count;
-	unsigned char	timerA_mode;
-	/* Timer B */
-	unsigned short	timerB_latch;
-	unsigned short	timerB_count;
-	unsigned char	timerB_mode;
-	/* Time Of the Day clock (TOD) */
-	unsigned long	tod;
-	int				tod_running;
-	unsigned long	alarm;
-	/* Interrupts */
-	int				icr;
-	int				ics;
-	/* MESS timers */
-	mame_timer		*timerA;
-	mame_timer		*timerB;
-	int				timerA_started;
-	int				timerB_started;
-} cia_8520_def;
-
-static cia_8520_def cia_8520[2];
-
-static void cia_timer_proc( int param ) {
-	int cia = param >> 8;
-	int timer = param & 1;
-
-	if ( timer == 0 )
-		cia_8520[cia].timerA_started = 0;
+static void cia_update_interrupts(cia_state *cia)
+{
+	/* always update the high bit of ICS */
+	if (cia->ics & 0x7f)
+		cia->ics |= 0x80;
 	else
-		cia_8520[cia].timerB_started = 0;
+		cia->ics &= ~0x80;
 
-	if ( timer == 0 ) {
-		if ( cia_8520[cia].timerA_mode & 0x08 ) { /* One shot */
-			cia_8520[cia].ics |= 0x81; /* set status */
-			if ( cia_8520[cia].icr & 1 ) {
-				if ( cia == 0 ) {
-					amiga_custom_w(REG_INTREQ, 0x8008, 0);
-				} else {
-					amiga_custom_w(REG_INTREQ, 0xa000, 0);
-				}
-			}
-			cia_8520[cia].timerA_count = cia_8520[cia].timerA_latch; /* Reload the timer */
-			cia_8520[cia].timerA_mode &= 0xfe; /* Shut it down */
-		} else { /* Continuous */
-			cia_8520[cia].ics |= 0x81; /* set status */
-			if ( cia_8520[cia].icr & 1 ) {
-				if ( cia == 0 ) {
-					amiga_custom_w(REG_INTREQ, 0x8008, 0);
-				} else {
-					amiga_custom_w(REG_INTREQ, 0xa000, 0);
-				}
-			}
-			cia_8520[cia].timerA_count = cia_8520[cia].timerA_latch; /* Reload the timer */
-			cia_fire_timer( cia, 0 ); /* keep going */
-		}
-	} else {
-		if ( cia_8520[cia].timerB_mode & 0x08 ) { /* One shot */
-			cia_8520[cia].ics |= 0x82; /* set status */
-			if ( cia_8520[cia].icr & 2 ) {
-				if ( cia == 0 ) {
-					amiga_custom_w(REG_INTREQ, 0x8008, 0);
-				} else {
-					amiga_custom_w(REG_INTREQ, 0xa000, 0);
-				}
-			}
-			cia_8520[cia].timerB_count = cia_8520[cia].timerB_latch; /* Reload the timer */
-			cia_8520[cia].timerB_mode &= 0xfe; /* Shut it down */
-		} else { /* Continuous */
-			cia_8520[cia].ics |= 0x82; /* set status */
-			if ( cia_8520[cia].icr & 2 ) {
-				if ( cia == 0 ) {
-					amiga_custom_w(REG_INTREQ, 0x8008, 0);
-				} else {
-					amiga_custom_w(REG_INTREQ, 0xa000, 0);
-				}
-			}
-			cia_8520[cia].timerB_count = cia_8520[cia].timerB_latch; /* Reload the timer */
-			cia_fire_timer( cia, 1 ); /* keep going */
-		}
-	}
+	/* based on what is enabled, set/clear the IRQ via the custom chip */
+	if (cia->ics & cia->icr)
+		amiga_custom_w(REG_INTREQ, 0x8000 | cia->irq, 0);
+	else
+		amiga_custom_w(REG_INTREQ, 0x0000 | cia->irq, 0);
 }
 
-static int cia_get_count( int cia, int timer ) {
-	int time;
 
-	/* 715909 Hz for NTSC, 709379 for PAL */
-
-	if ( timer == 0 ) {
-		if ( cia_8520[cia].timerA_started )
-			time = cia_8520[cia].timerA_count - ( int )( timer_timeelapsed( cia_8520[cia].timerA ) / TIME_IN_HZ( 715909 ) );
-		else
-			time = cia_8520[cia].timerA_count;
-	} else {
-		if ( cia_8520[cia].timerB )
-			time = cia_8520[cia].timerB_count - ( int )( timer_timeelapsed( cia_8520[cia].timerB ) / TIME_IN_HZ( 715909 ) );
-		else
-			time = cia_8520[cia].timerB_count;
-	}
-
-	return time;
+INLINE void cia_timer_start(cia_timer *timer)
+{
+	if (!timer->started)
+		timer_adjust_ptr(timer->timer, (double)timer->count * O2_TIMER_RATE, 0);
 }
 
-static void cia_stop_timer( int cia, int timer ) {
 
-	if ( timer == 0 ) {
-		timer_reset( cia_8520[cia].timerA, TIME_NEVER );
-		cia_8520[cia].timerA_started = 0;
-	} else {
-		timer_reset( cia_8520[cia].timerB, TIME_NEVER );
-		cia_8520[cia].timerB_started = 0;
-	}
+INLINE void cia_timer_stop(cia_timer *timer)
+{
+	timer_reset(timer->timer, TIME_NEVER);
+	timer->started = FALSE;
 }
 
-static void cia_fire_timer( int cia, int timer ) {
 
-	/* 715909 Hz for NTSC, 709379 for PAL */
-
-	if ( timer == 0 ) {
-		if ( cia_8520[cia].timerA_started == 0 )
-			timer_adjust(cia_8520[cia].timerA, ( double )cia_8520[cia].timerA_count * TIME_IN_HZ( 715909 ), ( cia << 8 ) | timer, 0 );
-	} else {
-		if ( cia_8520[cia].timerB_started == 0 )
-			timer_adjust(cia_8520[cia].timerB, ( double )cia_8520[cia].timerB_count * TIME_IN_HZ( 715909 ), ( cia << 8 ) | timer, 0 );
-	}
+INLINE int cia_timer_count(cia_timer *timer)
+{
+	/* based on whether or not the timer is running, return the current count value */
+	if (timer->started)
+		return timer->count - (int)(timer_timeelapsed(timer->timer) / O2_TIMER_RATE);
+	else
+		return timer->count;
 }
+
+
+static void cia_timer_proc(void *param)
+{
+	cia_timer *timer = param;
+
+	/* clear the timer started flag */
+	timer->started = FALSE;
+
+	/* set the status and update interrupts */
+	timer->cia->ics |= timer->irq;
+	cia_update_interrupts(timer->cia);
+
+	/* reload the timer */
+	timer->count = timer->latch;
+
+	/* if one-shot mode, turn it off; otherwise, reprime the timer */
+	if (timer->mode & 0x08)
+		timer->mode &= 0xfe;
+	else
+		cia_timer_start(timer);
+}
+
 
 /* Update TOD on CIA A */
-static void cia_vblank_update( void ) {
-	if ( cia_8520[0].tod_running ) {
-		cia_8520[0].tod++;
-		if ( cia_8520[0].tod == cia_8520[0].alarm ) {
-			cia_8520[0].ics |= 0x84;
-			if ( cia_8520[0].icr & 0x04 ) {
-				amiga_custom_w(REG_INTREQ, 0x8008, 0);
-			}
+static void cia_clock_tod(cia_state *cia)
+{
+	if (cia->tod_running)
+	{
+		cia->tod++;
+		cia->tod &= 0xffffff;
+		if (cia->tod == cia->alarm)
+		{
+			cia->ics |= 0x04;
+			cia_update_interrupts(cia);
 		}
 	}
 }
 
-/* Update TOD on CIA B (each hblank) */
-static void cia_hblank_update( int param ) {
-	if ( cia_8520[1].tod_running ) {
-		int i;
-
-		for ( i = 0; i < Machine->drv->screen_height; i++ ) {
-			cia_8520[1].tod++;
-			if ( cia_8520[1].tod == cia_8520[1].alarm ) {
-				cia_8520[1].ics |= 0x84;
-				if ( cia_8520[1].icr & 0x04 ) {
-				    amiga_custom_w(REG_INTREQ, 0xa000, 0 /* could also be hibyte only 0xff */);
-				}
-			}
-		}
-	}
-
-	timer_adjust( cia_hblank_timer, cpu_getscanlineperiod(), 0, 0 );
-}
 
 /* Issue a index pulse when a disk revolution completes */
-void amiga_cia_issue_index( void ) {
-	cia_8520[1].ics |= 0x90;
-	if ( cia_8520[1].icr & 0x10 ) {
-	    amiga_custom_w(REG_INTREQ, 0xa000, 0 /* could also be hibyte only 0xff*/);
+void amiga_cia_issue_index(void)
+{
+	cia_state *cia = &cia_8520[1];
+	cia->ics |= 0x10;
+	cia_update_interrupts(cia);
+}
+
+
+static void cia_reset(void)
+{
+	int i, t;
+
+	/* initialize the CIA states */
+	memset(&cia_8520, 0, sizeof(cia_8520));
+
+	/* loop over and set up initial values */
+	for (i = 0; i < 2; i++)
+	{
+		cia_state *cia = &cia_8520[i];
+
+		/* select IRQ bit based on which CIA */
+		cia->irq = (i == 0) ? INTENA_PORTS : INTENA_EXTER;
+
+		/* initialize port handlers */
+		cia->port[0].read = (i == 0) ? amiga_intf->cia_0_portA_r : amiga_intf->cia_1_portA_r;
+		cia->port[1].read = (i == 0) ? amiga_intf->cia_0_portB_r : amiga_intf->cia_1_portB_r;
+		cia->port[0].write = (i == 0) ? amiga_intf->cia_0_portA_w : amiga_intf->cia_1_portA_w;
+		cia->port[1].write = (i == 0) ? amiga_intf->cia_0_portB_w : amiga_intf->cia_1_portB_w;
+
+		/* initialize data direction registers */
+		cia->port[0].ddr = (i == 0) ? 0x03 : 0xff;
+		cia->port[1].ddr = (i == 0) ? 0x00 : 0xff;
+
+		/* TOD running by default */
+		cia->tod_running = TRUE;
+
+		/* initialize timers */
+		for (t = 0; t < 2; t++)
+		{
+			cia_timer *timer = &cia->timer[t];
+
+			timer->latch = 0xffff;
+			timer->irq = 0x01 << t;
+			timer->cia = cia;
+			timer->timer = timer_alloc_ptr(cia_timer_proc, timer);
+		}
 	}
 }
 
-static int cia_0_portA_r( void )
+
+READ16_HANDLER( amiga_cia_r )
 {
-	return (amiga_intf->cia_0_portA_r) ? amiga_intf->cia_0_portA_r() : 0x00;
-}
+	cia_timer *timer;
+	cia_state *cia;
+	cia_port *port;
+	UINT8 data;
+	int shift;
 
-static int cia_0_portB_r( void )
-{
-	return (amiga_intf->cia_0_portB_r) ? amiga_intf->cia_0_portB_r() : 0x00;
-}
-
-static void cia_0_portA_w( int data )
-{
-	if (amiga_intf->cia_0_portA_w)
-		amiga_intf->cia_0_portA_w(data);
-}
-
-static void cia_0_portB_w( int data )
-{
-	if (amiga_intf->cia_0_portB_w)
-		amiga_intf->cia_0_portB_w(data);
-}
-
-static int cia_1_portA_r( void )
-{
-	return (amiga_intf->cia_1_portA_r) ? amiga_intf->cia_1_portA_r() : 0x00;
-}
-
-static int cia_1_portB_r( void )
-{
-	return (amiga_intf->cia_1_portB_r) ? amiga_intf->cia_1_portB_r() : 0x00;
-}
-
-static void cia_1_portA_w( int data )
-{
-	if (amiga_intf->cia_1_portA_w)
-		amiga_intf->cia_1_portA_w(data);
-}
-
-static void cia_1_portB_w( int data )
-{
-	if (amiga_intf->cia_1_portB_w)
-		amiga_intf->cia_1_portB_w(data);
-}
-
-static void cia_init( void ) {
-	int i;
-
-	cia_hblank_timer = timer_alloc( cia_hblank_update );
-	cia_hblank_timer_set = 0;
-
-	/* Initialize port handlers */
-	cia_8520[0].portA_read = cia_0_portA_r;
-	cia_8520[0].portB_read = cia_0_portB_r;
-	cia_8520[0].portA_write = cia_0_portA_w;
-	cia_8520[0].portB_write = cia_0_portB_w;
-	cia_8520[1].portA_read = cia_1_portA_r;
-	cia_8520[1].portB_read = cia_1_portB_r;
-	cia_8520[1].portA_write = cia_1_portA_w;
-	cia_8520[1].portB_write = cia_1_portB_w;
-
-	/* Initialize data direction registers */
-	cia_8520[0].ddra = 0x03;
-	cia_8520[0].ddrb = 0x00; /* undefined */
-	cia_8520[1].ddra = 0xff;
-	cia_8520[1].ddrb = 0xff;
-
-	/* Initialize timer's, TOD's and interrupts */
-	for ( i = 0; i < 2; i++ ) {
-		cia_8520[i].data_latchA = 0;
-		cia_8520[i].data_latchB = 0;
-		cia_8520[i].timerA_latch = 0xffff;
-		cia_8520[i].timerA_count = 0;
-		cia_8520[i].timerA_mode = 0;
-		cia_8520[i].timerB_latch = 0xffff;
-		cia_8520[i].timerB_count = 0;
-		cia_8520[i].timerB_mode = 0;
-		cia_8520[i].tod = 0;
-		cia_8520[i].tod_running = 0;
-		cia_8520[i].alarm = 0;
-		cia_8520[i].icr = 0;
-		cia_8520[i].ics = 0;
-		cia_8520[i].timerA = timer_alloc( cia_timer_proc );
-		cia_8520[i].timerB = timer_alloc( cia_timer_proc );
-		cia_8520[i].timerA_started = 0;
-		cia_8520[i].timerB_started = 0;
-	}
-}
-
-READ16_HANDLER ( amiga_cia_r ) {
-	int cia_sel = 1, mask, data;
-
-	offset<<=1; //PeT offset with new memory system now in word counts!
-	if ( offset >= 0x1000 )
-		cia_sel = 0;
-
-	switch( offset & 0xf00 ) {
-		case 0x000:
-			data = (*cia_8520[cia_sel].portA_read)();
-			mask = ~( cia_8520[cia_sel].ddra );
-			data &= mask;
-			mask = cia_8520[cia_sel].ddra & cia_8520[cia_sel].data_latchA;
-			data |= mask;
-			return ( cia_sel == 0 ) ? data : ( data << 8 );
-		break;
-
-		case 0x100:
-			data = (*cia_8520[cia_sel].portB_read)();
-			mask = ~( cia_8520[cia_sel].ddrb );
-			data &= mask;
-			mask = cia_8520[cia_sel].ddrb & cia_8520[cia_sel].data_latchB;
-			data |= mask;
-			return ( cia_sel == 0 ) ? data : ( data << 8 );
-		break;
-
-		case 0x200:
-			data = cia_8520[cia_sel].ddra;
-			return ( cia_sel == 0 ) ? data : ( data << 8 );
-		break;
-
-		case 0x300:
-			data = cia_8520[cia_sel].ddrb;
-			return ( cia_sel == 0 ) ? data : ( data << 8 );
-		break;
-
-		case 0x400:
-			data = cia_get_count( cia_sel, 0 ) & 0xff;
-			return ( cia_sel == 0 ) ? data : ( data << 8 );
-		break;
-
-		case 0x500:
-			data = ( cia_get_count( cia_sel, 0 ) >> 8 ) & 0xff;
-			return ( cia_sel == 0 ) ? data : ( data << 8 );
-		break;
-
-		case 0x600:
-			data = cia_get_count( cia_sel, 1 ) & 0xff;
-			return ( cia_sel == 0 ) ? data : ( data << 8 );
-		break;
-
-		case 0x700:
-			data = ( cia_get_count( cia_sel, 1 ) >> 8 ) & 0xff;
-			return ( cia_sel == 0 ) ? data : ( data << 8 );
-		break;
-
-		case 0x800:
-			data = cia_8520[cia_sel].tod & 0xff;
-			return ( cia_sel == 0 ) ? data : ( data << 8 );
-		break;
-
-		case 0x900:
-			data = ( cia_8520[cia_sel].tod >> 8 ) & 0xff;
-			return ( cia_sel == 0 ) ? data : ( data << 8 );
-		break;
-
-		case 0xa00:
-			data = ( cia_8520[cia_sel].tod >> 16 ) & 0xff;
-			return ( cia_sel == 0 ) ? data : ( data << 8 );
-		break;
-
-		case 0xd00:
-			data = cia_8520[cia_sel].ics;
-			cia_8520[cia_sel].ics = 0; /* clear on read */
-			return ( cia_sel == 0 ) ? data : ( data << 8 );
-		break;
-
-		case 0xe00:
-			data = cia_8520[cia_sel].timerA_mode;
-			return ( cia_sel == 0 ) ? data : ( data << 8 );
-		break;
-
-		case 0xf00:
-			data = cia_8520[cia_sel].timerB_mode;
-			return ( cia_sel == 0 ) ? data : ( data << 8 );
-		break;
+	/* offsets 0000-07ff reference CIA B, and are accessed via the MSB */
+	if ((offset & 0x0800) == 0)
+	{
+		cia = &cia_8520[1];
+		shift = 8;
 	}
 
-#if LOG_CIA
-	logerror("PC = %06x - Read from CIA %01x\n", activecpu_get_pc(), cia_sel );
-#endif
-
-	return 0;
-}
-
-WRITE16_HANDLER ( amiga_cia_w ) {
-	int cia_sel = 1, mask;
-
-	offset<<=1;
-	if ( offset >= 0x1000 )
-		cia_sel = 0;
+	/* offsets 0800-0fff reference CIA A, and are accessed via the LSB */
 	else
-		data >>= 8;
+	{
+		cia = &cia_8520[0];
+		shift = 0;
+	}
 
-	data &= 0xff;
+	/* switch off the offset */
+	switch (offset & 0x780)
+	{
+		/* port A/B data */
+		case CIA_PRA:
+		case CIA_PRB:
+			port = &cia->port[(offset >> 7) & 1];
+			data = port->read ? (*port->read)() : 0;
+			data = (data & ~port->ddr) | (port->latch & port->ddr);
+			break;
 
-	switch ( offset & 0xffe ) {
-		case 0x000:
-			mask = cia_8520[cia_sel].ddra;
-			cia_8520[cia_sel].data_latchA = data;
-			(*cia_8520[cia_sel].portA_write)( data & mask );
-		break;
+		/* port A/B direction */
+		case CIA_DDRA:
+		case CIA_DDRB:
+			port = &cia->port[(offset >> 7) & 1];
+			data = port->ddr;
+			break;
 
-		case 0x100:
-			mask = cia_8520[cia_sel].ddrb;
-			cia_8520[cia_sel].data_latchB = data;
-			(*cia_8520[cia_sel].portB_write)( data & mask );
-		break;
+		/* timer A/B low byte */
+		case CIA_TALO:
+		case CIA_TBLO:
+			timer = &cia->timer[(offset >> 8) & 1];
+			data = cia_timer_count(timer) >> 0;
+			break;
 
-		case 0x200:
-			cia_8520[cia_sel].ddra = data;
-		break;
+		/* timer A/B high byte */
+		case CIA_TAHI:
+		case CIA_TBHI:
+			timer = &cia->timer[(offset >> 8) & 1];
+			data = cia_timer_count(timer) >> 8;
+			break;
 
-		case 0x300:
-			cia_8520[cia_sel].ddrb = data;
-		break;
+		/* TOD counter low byte */
+		case CIA_TODLOW:
+			data = cia->tod_latch >> 0;
+			break;
 
-		case 0x400:
-			cia_8520[cia_sel].timerA_latch &= 0xff00;
-			cia_8520[cia_sel].timerA_latch |= data;
-		break;
+		/* TOD counter middle byte */
+		case CIA_TODMID:
+			data = cia->tod_latch >> 8;
+			break;
 
-		case 0x500:
-			cia_8520[cia_sel].timerA_latch &= 0x00ff;
-			cia_8520[cia_sel].timerA_latch |= data << 8;
+		/* TOD counter high byte */
+		case CIA_TODHI:
+			cia->tod_latch = cia->tod;
+			data = cia->tod_latch >> 16;
+			break;
 
-			/* If it's one shot, start the timer */
-			if ( cia_8520[cia_sel].timerA_mode & 0x08 ) {
-				cia_8520[cia_sel].timerA_count = cia_8520[cia_sel].timerA_latch;
-				cia_8520[cia_sel].timerA_mode |= 1;
-				cia_fire_timer( cia_sel, 0 );
-			}
-		break;
+		/* interrupt status/clear */
+		case CIA_ICR:
+			data = cia->ics;
+			cia->ics = 0; /* clear on read */
+			cia_update_interrupts(cia);
+			break;
 
-		case 0x600:
-			cia_8520[cia_sel].timerB_latch &= 0xff00;
-			cia_8520[cia_sel].timerB_latch |= data;
-		break;
-
-		case 0x700:
-			cia_8520[cia_sel].timerB_latch &= 0x00ff;
-			cia_8520[cia_sel].timerB_latch |= data << 8;
-
-			/* If it's one shot, start the timer */
-			if ( cia_8520[cia_sel].timerB_mode & 0x08 ) {
-				cia_8520[cia_sel].timerB_count = cia_8520[cia_sel].timerB_latch;
-				cia_8520[cia_sel].timerB_mode |= 1;
-				cia_fire_timer( cia_sel, 1 );
-			}
-		break;
-
-		case 0x800:
-			if ( cia_8520[cia_sel].timerB_mode & 0x80 ) { /* set alarm? */
-				cia_8520[cia_sel].alarm &= 0xffff00;
-				cia_8520[cia_sel].alarm |= data;
-			} else {
-				cia_8520[cia_sel].tod &= 0xffff00;
-				cia_8520[cia_sel].tod |= data;
-				cia_8520[cia_sel].tod_running = 1;
-			}
-		break;
-
-		case 0x900:
-			if ( cia_8520[cia_sel].timerB_mode & 0x80 ) { /* set alarm? */
-				cia_8520[cia_sel].alarm &= 0xff00ff;
-				cia_8520[cia_sel].alarm |= data << 8;
-			} else {
-				cia_8520[cia_sel].tod &= 0xff00ff;
-				cia_8520[cia_sel].tod |= data << 8;
-				cia_8520[cia_sel].tod_running = 0;
-			}
-		break;
-
-		case 0xa00:
-			if ( cia_8520[cia_sel].timerB_mode & 0x80 ) { /* set alarm? */
-				cia_8520[cia_sel].alarm &= 0x00ffff;
-				cia_8520[cia_sel].alarm |= data << 16;
-			} else {
-				cia_8520[cia_sel].tod &= 0x00ffff;
-				cia_8520[cia_sel].tod |= data << 16;
-				cia_8520[cia_sel].tod_running = 0;
-			}
-		break;
-
-		case 0xd00:
-			if ( data & 0x80 ) /* set */
-				cia_8520[cia_sel].icr |= ( data & 0x7f );
-			else /* clear */
-				cia_8520[cia_sel].icr &= ~( data & 0x7f );
-		break;
-
-		case 0xe00:
-			if ( data & 0x10 ) { /* force load */
-				cia_8520[cia_sel].timerA_count = cia_8520[cia_sel].timerA_latch;
-				cia_stop_timer( cia_sel, 0 );
-			}
-
-			if ( data & 0x01 )
-				cia_fire_timer( cia_sel, 0 );
-			else
-				cia_stop_timer( cia_sel, 0 );
-
-			cia_8520[cia_sel].timerA_mode = data & 0xef;
-		break;
-
-		case 0xf00:
-			if ( data & 0x10 ) { /* force load */
-				cia_8520[cia_sel].timerB_count = cia_8520[cia_sel].timerB_latch;
-				cia_stop_timer( cia_sel, 1 );
-			}
-
-			if ( data & 0x01 )
-				cia_fire_timer( cia_sel, 1 );
-			else
-				cia_stop_timer( cia_sel, 1 );
-
-			cia_8520[cia_sel].timerB_mode = data & 0xef;
-		break;
+		/* timer A/B mode */
+		case CIA_CRA:
+		case CIA_CRB:
+			timer = &cia->timer[(offset >> 7) & 1];
+			data = timer->mode;
+			break;
 	}
 
 #if LOG_CIA
-	logerror("PC = %06x - Wrote to CIA %01x (%02x)\n", activecpu_get_pc(), cia_sel, data );
+	logerror("%06x:cia_%c_read(%03x) = %04x & %04x\n", safe_activecpu_get_pc(), 'A' + ((~offset & 0x0800) >> 11), offset * 2, data << shift, mem_mask ^ 0xffff);
 #endif
+
+	return data << shift;
+}
+
+
+WRITE16_HANDLER( amiga_cia_w )
+{
+	cia_timer *timer;
+	cia_state *cia;
+	cia_port *port;
+	int shift;
+
+#if LOG_CIA
+	logerror("%06x:cia_%c_write(%03x) = %04x & %04x\n", safe_activecpu_get_pc(), 'A' + ((~offset & 0x0800) >> 11), offset * 2, data, mem_mask ^ 0xffff);
+#endif
+
+	/* offsets 0000-07ff reference CIA B, and are accessed via the MSB */
+	if ((offset & 0x0800) == 0)
+	{
+		if (!ACCESSING_MSB)
+			return;
+		cia = &cia_8520[1];
+		data >>= 8;
+	}
+
+	/* offsets 0800-0fff reference CIA A, and are accessed via the LSB */
+	else
+	{
+		if (!ACCESSING_LSB)
+			return;
+		cia = &cia_8520[0];
+		data &= 0xff;
+	}
+
+	/* handle the writes */
+	switch (offset & 0x7ff)
+	{
+		/* port A/B data */
+		case CIA_PRA:
+		case CIA_PRB:
+			port = &cia->port[(offset >> 7) & 1];
+			port->latch = data;
+			if (port->write)
+				(*port->write)(data & port->ddr);
+			break;
+
+		/* port A/B direction */
+		case CIA_DDRA:
+		case CIA_DDRB:
+			port = &cia->port[(offset >> 7) & 1];
+			port->ddr = data;
+			break;
+
+		/* timer A/B latch low */
+		case CIA_TALO:
+		case CIA_TBLO:
+			timer = &cia->timer[(offset >> 8) & 1];
+			timer->latch = (timer->latch & 0xff00) | (data << 0);
+			break;
+
+		/* timer A latch high */
+		case CIA_TAHI:
+		case CIA_TBHI:
+			timer = &cia->timer[(offset >> 8) & 1];
+			timer->latch = (timer->latch & 0x00ff) | (data << 8);
+
+			/* if it's one shot, start the timer */
+			if (timer->mode & 0x08)
+			{
+				timer->count = timer->latch;
+				timer->mode |= 0x01;
+				cia_timer_start(timer);
+			}
+			break;
+
+		/* time of day latches */
+		case CIA_TODLOW:
+		case CIA_TODMID:
+		case CIA_TODHI:
+			shift = 8 * ((offset - CIA_TODLOW) >> 7);
+
+			/* alarm setting mode? */
+			if (cia->timer[1].mode & 0x80)
+				cia->alarm = (cia->alarm & ~(0xff << shift)) | (data << shift);
+
+			/* counter setting mode */
+			else
+			{
+				cia->tod = (cia->tod & ~(0xff << shift)) | (data << shift);
+
+				/* only enable the TOD once the LSB is written */
+				cia->tod_running = (shift == 0);
+			}
+			break;
+
+		/* interrupt control register */
+		case CIA_ICR:
+			if (data & 0x80)
+				cia->icr |= data & 0x7f;
+			else
+				cia->icr &= ~(data & 0x7f);
+			cia_update_interrupts(cia);
+			break;
+
+		/* timer A/B modes */
+		case CIA_CRA:
+		case CIA_CRB:
+			timer = &cia->timer[(offset >> 7) & 1];
+			timer->mode = data & 0xef;
+
+			if (data & 0x02)
+				printf("Timer %c output on PB\n", 'A' + ((offset >> 8) & 1));
+
+			/* force load? */
+			if (data & 0x10)
+			{
+				timer->count = timer->latch;
+				cia_timer_stop(timer);
+			}
+
+			/* enable/disable? */
+			if (data & 0x01)
+				cia_timer_start(timer);
+			else
+				cia_timer_stop(timer);
+			break;
+	}
 }
 
 
@@ -1089,7 +1009,7 @@ WRITE16_HANDLER ( amiga_cia_w ) {
 
 ***************************************************************************/
 
-static void amiga_custom_init( void )
+static void amiga_custom_reset( void )
 {
 	CUSTOM_REG(REG_DDFSTRT) = 0x18;
 	CUSTOM_REG(REG_DDFSTOP) = 0xd8;
@@ -1097,6 +1017,8 @@ static void amiga_custom_init( void )
 
 READ16_HANDLER( amiga_custom_r )
 {
+	UINT16 temp;
+
 	switch (offset & 0xff)
 	{
 		case REG_DMACONR:
@@ -1140,6 +1062,12 @@ READ16_HANDLER( amiga_custom_r )
 			copper_setpc(CUSTOM_REG_LONG(REG_COP2LCH));
 			break;
 
+		case REG_CLXDAT:
+			printf("CLXDAT read\n");
+			temp = CUSTOM_REG(REG_CLXDAT);
+			CUSTOM_REG(REG_CLXDAT) = 0;
+			return temp;
+
 		default:
 #if LOG_CUSTOM
 			logerror( "PC = %06x - Read from Custom %04x\n", cpu_getactivecpu() != -1 ? activecpu_get_pc() : 0, offset );
@@ -1153,17 +1081,22 @@ READ16_HANDLER( amiga_custom_r )
 
 WRITE16_HANDLER( amiga_custom_w )
 {
+			logerror("PC = %06x - Wrote to Custom %04x (%04x)\n", safe_activecpu_get_pc(), offset * 2, data);
+
 	offset &= 0xff;
 
 	switch (offset)
 	{
+		case REG_BLTDDAT:	case REG_DMACONR:	case REG_VPOSR:		case REG_VHPOSR:
+		case REG_DSKDATR:	case REG_JOY0DAT:	case REG_JOY1DAT:	case REG_CLXDAT:
+		case REG_ADKCONR:	case REG_POT0DAT:	case REG_POT1DAT:	case REG_POTGOR:
+		case REG_SERDATR:	case REG_DSKBYTR:	case REG_INTENAR:	case REG_INTREQR:
+			/* read-only registers */
+			break;
+
 		case REG_DSKLEN:
 			if (amiga_intf->write_dsklen)
 				amiga_intf->write_dsklen(data);
-			break;
-
-		case REG_COPCON:
-			data &= 2;	/* why? */
 			break;
 
 		case REG_BLTSIZE:
@@ -1303,7 +1236,7 @@ WRITE16_HANDLER( amiga_custom_w )
 
 		default:
 #if LOG_CUSTOM
-//          logerror("PC = %06x - Wrote to Custom %04x (%04x)\n", safe_activecpu_get_pc(), offset * 2, data);
+			logerror("PC = %06x - Wrote to Custom %04x (%04x)\n", safe_activecpu_get_pc(), offset * 2, data);
 #endif
 			break;
 	}
@@ -1318,23 +1251,6 @@ WRITE16_HANDLER( amiga_custom_w )
 
 ***************************************************************************/
 
-INTERRUPT_GEN( amiga_vblank_irq )
-{
-	/* Update TOD on CIA A */
-	cia_vblank_update();
-
-	if ( cia_hblank_timer_set == 0 )
-	{
-		timer_adjust( cia_hblank_timer, cpu_getscanlineperiod(), 0, 0 );
-		cia_hblank_timer_set = 1;
-	}
-
-	amiga_custom_w(REG_INTREQ, 0x8020, 0);
-
-	if (amiga_intf->interrupt_callback)
-		amiga_intf->interrupt_callback();
-}
-
 INTERRUPT_GEN( amiga_irq )
 {
 	int scanline = 261 - cpu_getiloops();
@@ -1342,15 +1258,240 @@ INTERRUPT_GEN( amiga_irq )
 	if ( scanline == 0 )
 	{
 		/* vblank start */
-		amiga_prepare_frame();
-		amiga_vblank_irq();
+		cia_clock_tod(&cia_8520[0]);
+
+		amiga_custom_w(REG_INTREQ, 0x8000 | INTENA_VERTB, 0);
+
+		if (amiga_intf->interrupt_callback)
+			amiga_intf->interrupt_callback();
 	}
+	cia_clock_tod(&cia_8520[1]);
 
 	amiga_render_scanline(scanline);
 
 	/* force a sound update */
 	amiga_audio_w(0,0,0);
 }
+
+
+
+
+/***************************************************************************
+
+    Autoconfig devices
+
+***************************************************************************/
+
+void amiga_add_autoconfig(amiga_autoconfig_device *device)
+{
+	autoconfig_device *dev, **d;
+
+	/* validate the data */
+	assert_always((device->size & (device->size - 1)) == 0, "device->size must be power of 2!");
+
+	/* allocate memory and link it in at the end of the list */
+	dev = auto_malloc(sizeof(*dev));
+	dev->next = NULL;
+	for (d = &autoconfig_list; *d; d = &(*d)->next) ;
+	*d = dev;
+
+	/* fill in the data */
+	dev->device = *device;
+	dev->base = 0;
+}
+
+
+static void autoconfig_reset(void)
+{
+	autoconfig_device *dev;
+
+	/* uninstall any installed devices */
+	for (dev = autoconfig_list; dev; dev = dev->next)
+		if (dev->base && dev->device.uninstall)
+		{
+			(*dev->device.uninstall)(dev->base);
+			dev->base = 0;
+		}
+
+	/* reset the current autoconfig */
+	cur_autoconfig = autoconfig_list;
+}
+
+
+READ16_HANDLER( amiga_autoconfig_r )
+{
+	UINT8 byte;
+	int i;
+
+	/* if nothing present, just return */
+	if (!cur_autoconfig)
+	{
+		logerror("autoconfig_r(%02X) but no device selected\n", offset);
+		return 0xffff;
+	}
+
+	/* switch off of the base offset */
+	switch (offset/2)
+	{
+		/*
+           00/02        1  1  x  x     x  0  0  0 = 8 Megabytes
+                              ^  ^     ^  0  0  1 = 64 Kbytes
+                              |  |     |  0  1  0 = 128 Kbytes
+                              |  |     |  0  1  1 = 256 Kbytes
+                              |  |     |  1  0  0 = 1 Megabyte
+                              |  |     |  1  1  0 = 2 Megabytes
+                              |  |     |  1  1  1 = 4 Megabytes
+                              |  |     |
+                              |  |     `-- 1 = multiple devices on this card
+                              |  `-------- 1 = ROM vector offset is valid
+                              `----------- 1 = link into free memory list
+        */
+		case 0x00/4:
+			byte = 0xc0;
+			if (cur_autoconfig->device.link_memory)
+				byte |= 0x20;
+			if (cur_autoconfig->device.rom_vector_valid)
+				byte |= 0x10;
+			if (cur_autoconfig->device.multi_device)
+				byte |= 0x08;
+			for (i = 0; i < 8; i++)
+				if (cur_autoconfig->device.size & (1 << i))
+					break;
+			byte |= (i + 1) & 7;
+			break;
+
+		/*
+           04/06          product number (all bits inverted)
+        */
+		case 0x04/4:
+			byte = ~cur_autoconfig->device.product_number;
+			break;
+
+		/*
+           08/0a        x  x  1  1     1  1  1  1
+                        ^  ^
+                        |  |
+                        |  `-- 1 = this board can be shut up
+                        `----- 0 = prefer 8 Meg address space
+        */
+		case 0x08/4:
+			byte = 0x3f;
+			if (!cur_autoconfig->device.prefer_8meg)
+				byte |= 0x80;
+			if (cur_autoconfig->device.can_shutup)
+				byte |= 0x40;
+			break;
+
+		/*
+           10/12         manufacturers number (high byte, all inverted)
+           14/16                  ''          (low byte, all inverted)
+        */
+		case 0x10/4:
+			byte = ~cur_autoconfig->device.mfr_number >> 8;
+			break;
+
+		case 0x14/4:
+			byte = ~cur_autoconfig->device.mfr_number >> 0;
+			break;
+
+		/*
+           18/1a         optional serial number (all bits inverted) byte0
+           1c/1e                              ''                    byte1
+           20/22                              ''                    byte2
+           24/26                              ''                    byte3
+        */
+		case 0x18/4:
+			byte = ~cur_autoconfig->device.serial_number >> 24;
+			break;
+
+		case 0x1c/4:
+			byte = ~cur_autoconfig->device.serial_number >> 16;
+			break;
+
+		case 0x20/4:
+			byte = ~cur_autoconfig->device.serial_number >> 8;
+			break;
+
+		case 0x24/4:
+			byte = ~cur_autoconfig->device.serial_number >> 0;
+			break;
+
+		/*
+           28/2a         optional ROM vector offset (all bits inverted) high byte
+           2c/2e                              ''                        low byte
+        */
+		case 0x28/4:
+			byte = ~cur_autoconfig->device.rom_vector >> 8;
+			break;
+
+		case 0x2c/4:
+			byte = ~cur_autoconfig->device.rom_vector >> 0;
+			break;
+
+		/*
+           40/42   optional interrupt control and status register
+        */
+		case 0x40/4:
+			byte = 0x00;
+			if (cur_autoconfig->device.int_control_r)
+				byte = (*cur_autoconfig->device.int_control_r)();
+			break;
+
+		default:
+			byte = 0xff;
+			break;
+	}
+
+	/* return the appropriate nibble */
+	logerror("autoconfig_r(%02X) = %04X\n", offset, (offset & 1) ? ((byte << 12) | 0xfff) : ((byte << 8) | 0xfff));
+	return (offset & 1) ? ((byte << 12) | 0xfff) : ((byte << 8) | 0xfff);
+}
+
+
+WRITE16_HANDLER( amiga_autoconfig_w )
+{
+	int move_to_next = FALSE;
+
+	logerror("autoconfig_w(%02X) = %04X & %04X\n", offset, data, mem_mask ^ 0xffff);
+
+	/* if no current device, bail */
+	if (!cur_autoconfig || !ACCESSING_MSB)
+		return;
+
+	/* switch off of the base offset */
+	switch (offset/2)
+	{
+		/*
+           48/4a        write-only register for base address (A23-A16)
+        */
+		case 0x48/4:
+			if ((offset & 1) == 0)
+				cur_autoconfig->base = (cur_autoconfig->base & ~0xf00000) | ((data & 0xf000) << 8);
+			else
+				cur_autoconfig->base = (cur_autoconfig->base & ~0x0f0000) | ((data & 0xf000) << 4);
+			move_to_next = TRUE;
+			break;
+
+		/*
+           4c/4e        optional write-only 'shutup' trigger
+        */
+		case 0x4c/4:
+			cur_autoconfig->base = 0;
+			move_to_next = TRUE;
+			break;
+	}
+
+	/* install and move to the next device if requested */
+	if (move_to_next && (offset & 1) == 0)
+	{
+		logerror("Install to %06X\n", cur_autoconfig->base);
+		if (cur_autoconfig->base && cur_autoconfig->device.install)
+			(*cur_autoconfig->device.install)(cur_autoconfig->base);
+		cur_autoconfig = cur_autoconfig->next;
+	}
+}
+
+
 
 /***************************************************************************
 
@@ -1360,12 +1501,10 @@ INTERRUPT_GEN( amiga_irq )
 
 void amiga_m68k_reset( void )
 {
-	logerror( "Executed RESET at PC=%06x\n", activecpu_get_pc() );
-	amiga_cia_w( 0x1001/2, 1, 0 );	/* enable overlay */
-	if ( activecpu_get_pc() < 0x80000 )
-	{
+	logerror("Executed RESET at PC=%06x\n", activecpu_get_pc());
+	amiga_cia_w(0x1001/2, 1, 0);	/* enable overlay */
+	if (activecpu_get_pc() < 0x80000)
 		memory_set_opbase(0);
-	}
 }
 
 MACHINE_RESET(amiga)
@@ -1374,13 +1513,15 @@ MACHINE_RESET(amiga)
 	cpunum_set_info_fct(0, CPUINFO_PTR_M68K_RESET_CALLBACK, (genf *)amiga_m68k_reset);
 
 	/* Initialize the CIA's */
-	cia_init();
+	cia_reset();
 
 	/* Initialize the Custom chips */
-	amiga_custom_init();
+	amiga_custom_reset();
 
 	/* set the overlay bit */
-	amiga_cia_w( 0x1001/2, 1, 0 );
+	amiga_cia_w(0x1001/2, 1, 0);
+
+	autoconfig_reset();
 
 	if (amiga_intf->reset_callback)
 		amiga_intf->reset_callback();
@@ -1390,6 +1531,4 @@ void amiga_machine_config(const struct amiga_machine_interface *intf)
 {
 	amiga_intf = intf;
 }
-
-
 

@@ -5,6 +5,8 @@
 **************************************************************************/
 
 
+#include "machine/6821pia.h"
+
 /*----------- defined in drivers/williams.c -----------*/
 
 void defender_install_io_space(void);
@@ -13,36 +15,37 @@ void defender_install_io_space(void);
 /*----------- defined in machine/williams.c -----------*/
 
 /* Generic old-Williams PIA interfaces */
-extern struct pia6821_interface williams_pia_0_intf;
-extern struct pia6821_interface williams_muxed_pia_0_intf;
-extern struct pia6821_interface williams_dual_muxed_pia_0_intf;
-extern struct pia6821_interface williams_49way_pia_0_intf;
-extern struct pia6821_interface williams_49way_muxed_pia_0_intf;
-extern struct pia6821_interface williams_pia_1_intf;
-extern struct pia6821_interface williams_snd_pia_intf;
+extern const pia6821_interface williams_pia_0_intf;
+extern const pia6821_interface williams_muxed_pia_0_intf;
+extern const pia6821_interface williams_dual_muxed_pia_0_intf;
+extern const pia6821_interface williams_49way_pia_0_intf;
+extern const pia6821_interface williams_49way_muxed_pia_0_intf;
+extern const pia6821_interface williams_pia_1_intf;
+extern const pia6821_interface williams_snd_pia_intf;
 
 /* Game-specific old-Williams PIA interfaces */
-extern struct pia6821_interface lottofun_pia_0_intf;
-extern struct pia6821_interface sinistar_snd_pia_intf;
-extern struct pia6821_interface playball_pia_1_intf;
-extern struct pia6821_interface spdball_pia_3_intf;
+extern const pia6821_interface lottofun_pia_0_intf;
+extern const pia6821_interface sinistar_snd_pia_intf;
+extern const pia6821_interface playball_pia_1_intf;
+extern const pia6821_interface spdball_pia_3_intf;
 
 /* Generic later-Williams PIA interfaces */
-extern struct pia6821_interface williams2_muxed_pia_0_intf;
-extern struct pia6821_interface williams2_pia_1_intf;
-extern struct pia6821_interface williams2_snd_pia_intf;
+extern const pia6821_interface williams2_muxed_pia_0_intf;
+extern const pia6821_interface williams2_pia_1_intf;
+extern const pia6821_interface williams2_snd_pia_intf;
 
 /* Game-specific later-Williams PIA interfaces */
-extern struct pia6821_interface mysticm_pia_0_intf;
-extern struct pia6821_interface tshoot_pia_0_intf;
-extern struct pia6821_interface tshoot_snd_pia_intf;
-extern struct pia6821_interface joust2_pia_1_intf;
+extern const pia6821_interface mysticm_pia_0_intf;
+extern const pia6821_interface tshoot_pia_0_intf;
+extern const pia6821_interface tshoot_snd_pia_intf;
+extern const pia6821_interface joust2_pia_1_intf;
 
 /* initialization */
 MACHINE_RESET( defender );
 MACHINE_RESET( williams );
 MACHINE_RESET( blaster );
 MACHINE_RESET( williams2 );
+MACHINE_START( joust2 );
 MACHINE_RESET( joust2 );
 
 /* banking */

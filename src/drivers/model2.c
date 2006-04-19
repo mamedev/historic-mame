@@ -30,10 +30,12 @@
     dynabb
     lastbrnj/lastbrnx
     pltkids/pltkidsa
+    skisuprg
 
     almost OK
     ---------
     sgt24h: hangs on network test.  You can set it to non-linked in test but it still hangs on the network test.
+    overrev: bad network test like sgt24h.
     vstriker: shows some attract mode, then hangs
     manxtt: no escape from "active motion slider" tutorial (needs analog inputs)
     doaa: shows parade of 'ANIME' errors
@@ -2309,6 +2311,41 @@ ROM_START( stcc )
 	ROM_LOAD("mp19265.60s",  0x600000, 0x200000, CRC(7d98700a) SHA1(bedd37314ecab424b5b27030e1e7dc1b596303f3))
 ROM_END
 
+ROM_START( skisuprg )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 ) // i960 program
+        ROM_LOAD32_WORD( "epr19489.15",  0x000000, 0x080000, CRC(1df948a7) SHA1(a38faeb97c65b379ad05f7311b55217118c8d2be) )
+        ROM_LOAD32_WORD( "epr19490.16",  0x000002, 0x080000, CRC(e6fc24d3) SHA1(1ac9172cf0b4d6a3488483ffa490a4ca5d410927) )
+        ROM_LOAD32_WORD( "epr19551.13",  0x100000, 0x080000, CRC(3ee8f0d5) SHA1(23f45858559776a70b3b57f4cb2840f44e6a6531) )
+        ROM_LOAD32_WORD( "epr19552.14",  0x100002, 0x080000, CRC(baa2e49a) SHA1(b234f3b65e8fabfb6ec7ca62dd9a1d2935b2e95a) )
+
+	ROM_REGION32_LE( 0x2000000, REGION_USER1, 0 ) // Data
+        ROM_LOAD32_WORD( "mpr19494.11",  0x000000, 0x400000, CRC(f19cdb5c) SHA1(bdbb7d9e91a7742ff5a908b6244adbed291e5e7f) )
+        ROM_LOAD32_WORD( "mpr19495.12",  0x000002, 0x400000, CRC(d42e5ef2) SHA1(21ca5e7e543595a4691aacdbcdd2af21d464d939) )
+        ROM_LOAD32_WORD( "mpr19492.9",   0x800000, 0x400000, CRC(4805318f) SHA1(dbd1359817933313c6d74d3a1450682e8ce5857a) )
+        ROM_LOAD32_WORD( "mpr19493.10",  0x800002, 0x400000, CRC(39daa909) SHA1(e29e50c7fc39bd4945f993ceaa100358054efc5a) )
+
+	ROM_REGION( 0x800000, REGION_CPU3, 0 ) // TGPx4 program
+        ROM_LOAD32_WORD( "mpr19502.29",  0x000000, 0x400000, CRC(2212d8d6) SHA1(3b8a4da2dc00a1eac41b48cbdc322ea1c31b8b29) )
+        ROM_LOAD32_WORD( "mpr19503.30",  0x000002, 0x400000, CRC(3c9cfc73) SHA1(2213485a00cef0bcef11b67f00027c4159c5e2f5) )
+
+	ROM_REGION( 0x2000000, REGION_USER2, 0 ) // Models
+        ROM_LOAD32_WORD( "mpr19496.17",  0x000000, 0x400000, CRC(0e9aef4e) SHA1(d4b511b90c0a6e27d6097cb25ff005f68d5fa83c) )
+        ROM_LOAD32_WORD( "mpr19497.21",  0x000002, 0x400000, CRC(5397efe9) SHA1(4b20bab36462f9506fa2601c2545051ca49de7f5) )
+        ROM_LOAD32_WORD( "mpr19498.18",  0x800000, 0x400000, CRC(32e5ae60) SHA1(b8a1cc117875c3919a78eedb60a06926288d9b95) )
+        ROM_LOAD32_WORD( "mpr19499.22",  0x800002, 0x400000, CRC(2b9f5b48) SHA1(40f3f2844244c3f1c8792aa262872243ad20fd69) )
+
+	ROM_REGION( 0x1000000, REGION_USER3, 0 ) // Textures
+        ROM_LOAD32_WORD( "mpr19501.27",  0x000000, 0x400000, CRC(66d7b02e) SHA1(cede0dc5c8d9fbfa8de01fe864b3cc101abf67d7) )
+        ROM_LOAD32_WORD( "mpr19500.25",  0x000002, 0x400000, CRC(905f5798) SHA1(31f104e3022b5bc7ed7c667eb801a57949a06c93) )
+
+	ROM_REGION( 0x100000, REGION_CPU2, 0 ) // Sound program
+	ROM_LOAD16_WORD_SWAP( "epr19491.31",  0x000000, 0x080000, CRC(1c9b15fd) SHA1(045244a4eebc45f149aecf47f090cede1813477b) )
+
+	ROM_REGION( 0x800000, REGION_SOUND1, 0 ) // Samples
+        ROM_LOAD( "mpr19504.32",  0x000000, 0x400000, CRC(9419ec08) SHA1(d05d9ceb7fd09fa8991c0df4d1c57eb621460e30) )
+        ROM_LOAD( "mpr19505.34",  0x400000, 0x400000, CRC(eba7f41d) SHA1(f6e521bedf298808a768f6fdcb0b60b320a66d04) )
+ROM_END
+
 ROM_START( hotd )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 ) // i960 program
 	ROM_LOAD32_WORD("ep19696.15",   0x000000, 0x080000, CRC(03da5623) SHA1(be0bd34a9216375c7204445f084f6c74c4d3b0c8))
@@ -2607,6 +2644,35 @@ ROM_START( bel )
 	ROM_LOAD("mp20251.33",  0x0200000, 0x200000, CRC(703a947b) SHA1(95b8d3dc29e87e6537b288d8e946728e0b345dd0))
 	ROM_LOAD("mp20252.34",  0x0400000, 0x200000, CRC(8f48f375) SHA1(9e511e89e99c77f06a5fba033ca8f9b98bd86f91))
 	ROM_LOAD("mp20253.35",  0x0600000, 0x200000, CRC(ca6aa17c) SHA1(f6df2483ca75573449ba36638dbbed4be7843a44))
+ROM_END
+
+ROM_START( overrev )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 ) // i960 program
+        ROM_LOAD32_WORD( "20124a.15", 0x000000, 0x080000, CRC(74beb8d7) SHA1(c65c641138ecd7312c4930702d1498b8a346175a) )
+        ROM_LOAD32_WORD( "20125a.16", 0x000002, 0x080000, CRC(def64456) SHA1(cedb64d2d99a73301ef45c2f5f860a9b87faf6a7) )
+
+	ROM_REGION32_LE( 0x2000000, REGION_USER1, 0 ) // Data
+        ROM_LOAD32_WORD( "19996.11",        0x000000, 0x400000, CRC(21928a00) SHA1(6b439fd2b113b64df9378ef8180a17aa6fa975c5) )
+        ROM_LOAD32_WORD( "19997.12",        0x000002, 0x400000, CRC(2a169cab) SHA1(dbf9af938afd0599d345c42c1df242e575c14de9) )
+        ROM_LOAD32_WORD( "19994.9",         0x800000, 0x400000, CRC(e691fbd5) SHA1(b99c2f3f2a682966d792917dfcb8ed8e53bc0b7a) )
+        ROM_LOAD32_WORD( "19995.10",        0x800002, 0x400000, CRC(82a7828e) SHA1(4336a12a07a67f94091b4a9b491bab02c375dd15) )
+
+	ROM_REGION( 0x800000, REGION_CPU3, 0 ) // TGPx4 program (COPRO sockets)
+
+	ROM_REGION( 0x800000, REGION_USER2, 0 ) // Models (TGP sockets)
+        ROM_LOAD32_WORD( "19998.17",        0x000000, 0x200000, CRC(6a834574) SHA1(8be19bf42dbb157d6acde62a2018ef4c0d41aab4) )
+        ROM_LOAD32_WORD( "19999.21",        0x000002, 0x200000, CRC(ff590a2d) SHA1(ad29e4270b4a2f82189fbab83358eb1200f43777) )
+
+	ROM_REGION( 0x400000, REGION_USER3, 0 ) // Textures (TEXTURE sockets)
+        ROM_LOAD32_WORD( "20001.27",        0x000000, 0x200000, CRC(6ca236aa) SHA1(b3cb89fadb42afed13be4f229d7158dee487978a) )
+        ROM_LOAD32_WORD( "20000.25",        0x000002, 0x200000, CRC(894d8ded) SHA1(9bf7c754a29eef47fa49b5567980601895127306) )
+
+	ROM_REGION( 0x100000, REGION_CPU2, 0 ) // Sound program
+        ROM_LOAD16_WORD_SWAP( "20002.31",   0x000000, 0x080000, CRC(7efb069e) SHA1(30b1bbaf348d6a6b9ee2fdf82a0749baa025e0bf) )
+
+	ROM_REGION( 0x600000, REGION_SOUND1, 0 ) // Samples
+        ROM_LOAD( "20003.32", 0x000000, 0x200000, BAD_DUMP CRC(538215a6) SHA1(c68bba03026b774a70bab045b41fa226bcfbc1d6) )
+        ROM_LOAD( "20004.34", 0x400000, 0x200000, BAD_DUMP CRC(197c0b8d) SHA1(fdd948fa853d75b1d06539afd7945532041d2826) )
 ROM_END
 
 ROM_START( topskatr )
@@ -3420,8 +3486,10 @@ GAME( 1997, zerogunj,  zerogun, model2b, model2, zerogun, ROT0, "Psikyo", "Zero 
 GAME( 1998, pltkids,         0, model2b, model2, pltkids, ROT0, "Psikyo", "Pilot Kids (Model 2B)", GAME_NOT_WORKING|GAME_IMPERFECT_GRAPHICS )
 
 // Model 2C-CRX (TGPx4, SCSP sound board)
+GAME( 1996, skisuprg,        0, model2c, model2, 0, ROT0, "Sega", "Sega Ski Super G", GAME_NOT_WORKING|GAME_IMPERFECT_GRAPHICS )
 GAME( 1996, stcc,            0, model2c, model2, 0, ROT0, "Sega", "Sega Touring Car Championship", GAME_NOT_WORKING|GAME_IMPERFECT_GRAPHICS )
 GAME( 1997, hotd,            0, model2c, model2, 0, ROT0, "Sega", "House of the Dead", GAME_NOT_WORKING|GAME_IMPERFECT_GRAPHICS )
+GAME( 1997, overrev,         0, model2c, model2, 0, ROT0, "Jaleco", "Over Rev", GAME_NOT_WORKING|GAME_IMPERFECT_GRAPHICS )
 GAME( 1997, topskatr,        0, model2c, model2, 0, ROT0, "Sega", "Top Skater", GAME_NOT_WORKING|GAME_IMPERFECT_GRAPHICS )
 GAME( 1998, bel,             0, model2c, bel,    0, ROT0, "Sega/EPL Productions", "Behind Enemy Lines", GAME_NOT_WORKING|GAME_IMPERFECT_GRAPHICS )
 

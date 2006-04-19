@@ -102,42 +102,42 @@ static READ8_HANDLER( slither_trak_ud_r );
 
 ***************************************************************************/
 
-static struct pia6821_interface qix_pia_0_intf =
+static const pia6821_interface qix_pia_0_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ input_port_0_r, input_port_1_r, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, 0, 0, 0,
 	/*irqs   : A/B             */ 0, 0
 };
 
-static struct pia6821_interface qix_pia_1_intf =
+static const pia6821_interface qix_pia_1_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ input_port_2_r, input_port_3_r, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, 0, 0, 0,
 	/*irqs   : A/B             */ 0, 0
 };
 
-static struct pia6821_interface qix_pia_2_intf =
+static const pia6821_interface qix_pia_2_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ input_port_4_r, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, qix_coinctl_w, 0, 0,
 	/*irqs   : A/B             */ 0, 0
 };
 
-static struct pia6821_interface qix_pia_3_intf =
+static const pia6821_interface qix_pia_3_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ sync_pia_4_porta_w, qix_vol_w, pia_4_ca1_w, qix_inv_flag_w,
 	/*irqs   : A/B             */ qix_pia_dint, qix_pia_dint
 };
 
-static struct pia6821_interface qix_pia_4_intf =
+static const pia6821_interface qix_pia_4_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ pia_4_porta_r, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ pia_3_porta_w, qix_dac_w, pia_3_ca1_w, 0,
 	/*irqs   : A/B             */ qix_pia_sint, qix_pia_sint
 };
 
-static struct pia6821_interface qix_pia_5_intf =
+static const pia6821_interface qix_pia_5_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ pia_5_warning_w, pia_5_warning_w, pia_5_warning_w, pia_5_warning_w,
@@ -158,14 +158,14 @@ static WRITE8_HANDLER( pia_5_warning_w )
 
 ***************************************************************************/
 
-static struct pia6821_interface qixmcu_pia_0_intf =
+static const pia6821_interface qixmcu_pia_0_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ input_port_0_r, qixmcu_coin_r, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, qixmcu_coin_w, 0, 0,
 	/*irqs   : A/B             */ 0, 0
 };
 
-static struct pia6821_interface qixmcu_pia_2_intf =
+static const pia6821_interface qixmcu_pia_2_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ input_port_4_r, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, qixmcu_coinctrl_w, 0, 0,
@@ -181,21 +181,21 @@ static struct pia6821_interface qixmcu_pia_2_intf =
 
 ***************************************************************************/
 
-static struct pia6821_interface slither_pia_1_intf =
+static const pia6821_interface slither_pia_1_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ slither_trak_lr_r, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, slither_76489_0_w, 0, 0,
 	/*irqs   : A/B             */ 0, 0
 };
 
-static struct pia6821_interface slither_pia_2_intf =
+static const pia6821_interface slither_pia_2_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ slither_trak_ud_r, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, slither_76489_1_w, 0, 0,
 	/*irqs   : A/B             */ 0, 0
 };
 
-static struct pia6821_interface slither_pia_3_intf =
+static const pia6821_interface slither_pia_3_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ input_port_2_r, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, slither_coinctl_w, 0, qix_inv_flag_w,
@@ -210,40 +210,61 @@ static struct pia6821_interface slither_pia_3_intf =
  *
  *************************************/
 
-MACHINE_RESET( qix )
+MACHINE_START( qix )
 {
-	/* set a timer for the first scanline */
-	timer_set(cpu_getscanlinetime(0), 0, qix_scanline_callback);
-
-	/* configure and reset the PIAs */
-	pia_unconfig();
+	/* configure the PIAs */
 	pia_config(0, PIA_STANDARD_ORDERING, &qix_pia_0_intf);
 	pia_config(1, PIA_STANDARD_ORDERING, &qix_pia_1_intf);
 	pia_config(2, PIA_STANDARD_ORDERING, &qix_pia_2_intf);
 	pia_config(3, PIA_STANDARD_ORDERING, &qix_pia_3_intf);
 	pia_config(4, PIA_STANDARD_ORDERING, &qix_pia_4_intf);
 	pia_config(5, PIA_STANDARD_ORDERING, &qix_pia_5_intf);
-	pia_reset();
+	return 0;
 }
 
-
-MACHINE_RESET( qixmcu )
+MACHINE_RESET( qix )
 {
 	/* set a timer for the first scanline */
 	timer_set(cpu_getscanlinetime(0), 0, qix_scanline_callback);
 
-	/* configure and reset the PIAs */
-	pia_unconfig();
+	/* reset the PIAs */
+	pia_reset();
+}
+
+
+MACHINE_START( qixmcu )
+{
+	/* configure the PIAs */
 	pia_config(0, PIA_STANDARD_ORDERING, &qixmcu_pia_0_intf);
 	pia_config(1, PIA_STANDARD_ORDERING, &qix_pia_1_intf);
 	pia_config(2, PIA_STANDARD_ORDERING, &qixmcu_pia_2_intf);
 	pia_config(3, PIA_STANDARD_ORDERING, &qix_pia_3_intf);
 	pia_config(4, PIA_STANDARD_ORDERING, &qix_pia_4_intf);
 	pia_config(5, PIA_STANDARD_ORDERING, &qix_pia_5_intf);
+	return 0;
+}
+
+MACHINE_RESET( qixmcu )
+{
+	/* set a timer for the first scanline */
+	timer_set(cpu_getscanlinetime(0), 0, qix_scanline_callback);
+
+	/* reset the PIAs */
 	pia_reset();
 
 	/* reset the coin counter register */
 	qix_coinctrl = 0x00;
+}
+
+
+MACHINE_START( slither )
+{
+	/* configure the PIAs */
+	pia_config(0, PIA_STANDARD_ORDERING, &qix_pia_0_intf);
+	pia_config(1, PIA_STANDARD_ORDERING, &slither_pia_1_intf);
+	pia_config(2, PIA_STANDARD_ORDERING, &slither_pia_2_intf);
+	pia_config(3, PIA_STANDARD_ORDERING, &slither_pia_3_intf);
+	return 0;
 }
 
 
@@ -252,12 +273,7 @@ MACHINE_RESET( slither )
 	/* set a timer for the first scanline */
 	timer_set(cpu_getscanlinetime(0), 0, qix_scanline_callback);
 
-	/* configure and reset the PIAs */
-	pia_unconfig();
-	pia_config(0, PIA_STANDARD_ORDERING, &qix_pia_0_intf);
-	pia_config(1, PIA_STANDARD_ORDERING, &slither_pia_1_intf);
-	pia_config(2, PIA_STANDARD_ORDERING, &slither_pia_2_intf);
-	pia_config(3, PIA_STANDARD_ORDERING, &slither_pia_3_intf);
+	/* reset the PIAs */
 	pia_reset();
 }
 

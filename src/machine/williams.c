@@ -69,7 +69,7 @@ static WRITE8_HANDLER( joust2_pia_3_cb1_w );
  *************************************/
 
 /* Generic PIA 0, maps to input ports 0 and 1 */
-struct pia6821_interface williams_pia_0_intf =
+const pia6821_interface williams_pia_0_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ input_port_0_r, input_port_1_r, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, 0, 0, 0,
@@ -77,7 +77,7 @@ struct pia6821_interface williams_pia_0_intf =
 };
 
 /* Generic muxing PIA 0, maps to input ports 0/3 and 1; port select is CB2 */
-struct pia6821_interface williams_muxed_pia_0_intf =
+const pia6821_interface williams_muxed_pia_0_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ williams_input_port_0_3_r, input_port_1_r, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, 0, 0, williams_port_select_w,
@@ -85,7 +85,7 @@ struct pia6821_interface williams_muxed_pia_0_intf =
 };
 
 /* Generic dual muxing PIA 0, maps to input ports 0/3 and 1/4; port select is CB2 */
-struct pia6821_interface williams_dual_muxed_pia_0_intf =
+const pia6821_interface williams_dual_muxed_pia_0_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ williams_input_port_0_3_r, williams_input_port_1_4_r, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, 0, 0, williams_port_select_w,
@@ -93,7 +93,7 @@ struct pia6821_interface williams_dual_muxed_pia_0_intf =
 };
 
 /* Generic 49-way joystick PIA 0 for Sinistar/Blaster */
-struct pia6821_interface williams_49way_pia_0_intf =
+const pia6821_interface williams_49way_pia_0_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ williams_49way_port_0_r, input_port_1_r, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, 0, 0, 0,
@@ -101,7 +101,7 @@ struct pia6821_interface williams_49way_pia_0_intf =
 };
 
 /* Muxing 49-way joystick PIA 0 for Blaster kit */
-struct pia6821_interface williams_49way_muxed_pia_0_intf =
+const pia6821_interface williams_49way_muxed_pia_0_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ williams_input_port_49way_0_5_r, input_port_1_r, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, 0, 0, williams_port_select_w,
@@ -109,7 +109,7 @@ struct pia6821_interface williams_49way_muxed_pia_0_intf =
 };
 
 /* Generic PIA 1, maps to input port 2, sound command out, and IRQs */
-struct pia6821_interface williams_pia_1_intf =
+const pia6821_interface williams_pia_1_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ input_port_2_r, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, williams_snd_cmd_w, 0, 0,
@@ -117,7 +117,7 @@ struct pia6821_interface williams_pia_1_intf =
 };
 
 /* Generic PIA 2, maps to DAC data in and sound IRQs */
-struct pia6821_interface williams_snd_pia_intf =
+const pia6821_interface williams_snd_pia_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ DAC_0_data_w, 0, 0, 0,
@@ -133,7 +133,7 @@ struct pia6821_interface williams_snd_pia_intf =
  *************************************/
 
 /* Special PIA 0 for Lotto Fun, to handle the controls and ticket dispenser */
-struct pia6821_interface lottofun_pia_0_intf =
+const pia6821_interface lottofun_pia_0_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ lottofun_input_port_0_r, input_port_1_r, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, ticket_dispenser_w, 0, 0,
@@ -141,7 +141,7 @@ struct pia6821_interface lottofun_pia_0_intf =
 };
 
 /* Special PIA 2 for Sinistar, to handle the CVSD */
-struct pia6821_interface sinistar_snd_pia_intf =
+const pia6821_interface sinistar_snd_pia_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ DAC_0_data_w, 0, hc55516_0_digit_w, hc55516_0_clock_w,
@@ -149,7 +149,7 @@ struct pia6821_interface sinistar_snd_pia_intf =
 };
 
 /* Special PIA 1 for PlayBall, doesn't set the high bits on sound commands */
-struct pia6821_interface playball_pia_1_intf =
+const pia6821_interface playball_pia_1_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ input_port_2_r, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, playball_snd_cmd_w, 0, 0,
@@ -157,7 +157,7 @@ struct pia6821_interface playball_pia_1_intf =
 };
 
 /* extra PIA 3 for Speed Ball */
-struct pia6821_interface spdball_pia_3_intf =
+const pia6821_interface spdball_pia_3_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ input_port_3_r, input_port_4_r, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, 0, 0, 0,
@@ -173,7 +173,7 @@ struct pia6821_interface spdball_pia_3_intf =
  *************************************/
 
 /* Generic muxing PIA 0, maps to input ports 0/3 and 1; port select is CA2 */
-struct pia6821_interface williams2_muxed_pia_0_intf =
+const pia6821_interface williams2_muxed_pia_0_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ williams_input_port_0_3_r, input_port_1_r, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, 0, williams_port_select_w, 0,
@@ -181,7 +181,7 @@ struct pia6821_interface williams2_muxed_pia_0_intf =
 };
 
 /* Generic PIA 1, maps to input port 2, sound command out, and IRQs */
-struct pia6821_interface williams2_pia_1_intf =
+const pia6821_interface williams2_pia_1_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ input_port_2_r, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, williams2_snd_cmd_w, 0, pia_2_ca1_w,
@@ -189,7 +189,7 @@ struct pia6821_interface williams2_pia_1_intf =
 };
 
 /* Generic PIA 2, maps to DAC data in and sound IRQs */
-struct pia6821_interface williams2_snd_pia_intf =
+const pia6821_interface williams2_snd_pia_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ pia_1_portb_w, DAC_0_data_w, pia_1_cb1_w, 0,
@@ -205,7 +205,7 @@ struct pia6821_interface williams2_snd_pia_intf =
  *************************************/
 
 /* Mystic Marathon PIA 0 */
-struct pia6821_interface mysticm_pia_0_intf =
+const pia6821_interface mysticm_pia_0_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ input_port_0_r, input_port_1_r, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, 0, 0, 0,
@@ -213,7 +213,7 @@ struct pia6821_interface mysticm_pia_0_intf =
 };
 
 /* Turkey Shoot PIA 0 */
-struct pia6821_interface tshoot_pia_0_intf =
+const pia6821_interface tshoot_pia_0_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ tshoot_input_port_0_3_r, input_port_1_r, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, tshoot_lamp_w, williams_port_select_w, 0,
@@ -221,7 +221,7 @@ struct pia6821_interface tshoot_pia_0_intf =
 };
 
 /* Turkey Shoot PIA 2 */
-struct pia6821_interface tshoot_snd_pia_intf =
+const pia6821_interface tshoot_snd_pia_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ pia_1_portb_w, DAC_0_data_w, pia_1_cb1_w, tshoot_maxvol_w,
@@ -229,7 +229,7 @@ struct pia6821_interface tshoot_snd_pia_intf =
 };
 
 /* Joust 2 PIA 1 */
-struct pia6821_interface joust2_pia_1_intf =
+const pia6821_interface joust2_pia_1_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ input_port_2_r, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, joust2_snd_cmd_w, joust2_pia_3_cb1_w, pia_2_ca1_w,
@@ -877,13 +877,19 @@ static WRITE8_HANDLER( tshoot_lamp_w )
  *
  *************************************/
 
+MACHINE_START( joust2 )
+{
+	williams_cvsd_init(3);
+	return 0;
+}
+
+
 MACHINE_RESET( joust2 )
 {
 	/* standard init */
 	machine_reset_williams2();
 
 	/* make sure sound board starts out in the reset state */
-	williams_cvsd_init(3);
 	pia_reset();
 
 	state_save_register_global(joust2_current_sound_data);

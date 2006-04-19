@@ -852,6 +852,22 @@ ROM_START( funystrp )
 	ROM_LOAD( "14.u51",	0x060000, 0x020000, CRC(ed565a0b) SHA1(50789e0f04038d174b5529546c1ff430416b32d6) )
 ROM_END
 
+ROM_START( puckpepl )
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )	/* 68000 code + gfx */
+	ROM_LOAD16_BYTE(	"pp22.u87",	0x000000, 0x010000, CRC(1ceb522d) SHA1(216cd24bc2cc3fbd389ab96bc8b729c4d919faab) )
+	ROM_LOAD16_BYTE(	"pp23.111",	0x000001, 0x010000, CRC(84336569) SHA1(4358c48bf65dfdb6f52326ec5f026e1b9614a108) )
+
+	ROM_REGION( 0x080000, REGION_CPU2, 0 )	/* Z80 code + sound data */
+	ROM_LOAD( "pp31.130",	0x000000, 0x040000, NO_DUMP ) // dump was all 0xff
+	ROM_LOAD( "pp30.181",	0x040000, 0x040000, CRC(a5697b3d) SHA1(28ef3cfea82b3016c7c042a18509ba2bf83048e5) )
+
+	ROM_REGION( 0x080000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "pp37.u54",	0x000000, 0x020000, CRC(23c136b0) SHA1(bf3a6379934e205dcb6c0389d9dd5d0ffb92bdd4) )
+	ROM_LOAD( "pp36.u53",	0x020000, 0x020000, CRC(210e7579) SHA1(1a2d175a83f5ad933961a3c8b26cd8786527ea7f) )
+	ROM_LOAD( "pp35.u52",	0x040000, 0x020000, CRC(cd4cc5df) SHA1(b4dd9e97bdad46340e79e9c7747484aae49680a2) )
+	ROM_LOAD( "pp34.u51",	0x060000, 0x020000, CRC(93f2d483) SHA1(eb6981b0228acb1ec92325924d0aa295f9e2cfe1) )
+ROM_END
+
 
 /* DRIVER INITs */
 
@@ -900,3 +916,4 @@ GAME( 1993, roldfrog, 0,        roldfrog, splash,   roldfrog, ROT0, "Microhard",
 GAME( 1993, roldfrga, roldfrog, roldfrog, splash,   roldfrog, ROT0, "Microhard", "The Return of Lady Frog (set 2)", GAME_NO_SOUND )
 GAME( 1995, rebus,    0,        roldfrog, splash,   rebus,    ROT0, "Microhard", "Rebus", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION|GAME_NO_SOUND )
 GAME( 199?, funystrp, 0,        funystrp, funystrp, funystrp, ROT0, "Microhard / MagicGames",    "Funny Strip",GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION|GAME_NO_SOUND )
+GAME( 199?, puckpepl, funystrp, funystrp, funystrp, funystrp, ROT0, "Microhard",    "Puck People",GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION|GAME_NO_SOUND )

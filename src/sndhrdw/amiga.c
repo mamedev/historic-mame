@@ -146,7 +146,7 @@ static void amiga_stream_update(void *param, stream_sample_t **inputs, stream_sa
 					chan->curlocation++;
 					if (!(chan->curlocation & 1))
 					{
-						chan->data = amiga_chip_ram[chan->curlocation/2];
+						chan->data = amiga_chip_ram_r(chan->curlocation);
 						if (chan->curlength != 0)
 							chan->curlength--;
 

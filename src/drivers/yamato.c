@@ -25,12 +25,13 @@
      lives - $6155
 
      TODO:
-      - bg tile flip is wrong
-    - dump color proms
-    - COINB DSW is missing
-    - few issues in cocktail mode
 
--------------------------------------------------------------
+       - COINB DSW is missing
+       - few issues in cocktail mode
+       - wrong colors (fg text layer) - game sometimes ("round" text , lives) updates only even columns of cell attribs...
+
+-------------------------------------------------------------------
+
 
  Top Roller
  Jaleco
@@ -154,6 +155,45 @@ PALETTE_INIT( yamato )
 		palette_set_color(i+16*4+8*4,0,0,i);
 	}
 }
+
+PALETTE_INIT( toprollr )
+{
+	int i;
+
+	for (i = 0;i < 32*5;i++)
+	{
+		int bit0,bit1,bit2,r,g,b;
+
+
+		/* red component */
+		bit0 = (color_prom[0] >> 0) & 0x01;
+		bit1 = (color_prom[0] >> 1) & 0x01;
+		bit2 = (color_prom[0] >> 2) & 0x01;
+
+
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+		/* green component */
+		bit0 = (color_prom[0] >> 3) & 0x01;
+		bit1 = (color_prom[0] >> 4) & 0x01;
+		bit2 = (color_prom[0] >> 5) & 0x01;
+
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+		/* blue component */
+		bit0 = 0;
+		bit1 = (color_prom[0] >> 6) & 0x01;
+		bit2 = (color_prom[0] >> 7) & 0x01;
+
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+
+		palette_set_color(i,r,g,b);
+		color_prom++;
+	}
+
+}
+
 
 static int p0,p1;
 
@@ -281,13 +321,14 @@ static ADDRESS_MAP_START( trmem_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xa000, 0xa000) AM_WRITE(interrupt_enable_w) AM_READ(input_port_0_r)     /* IN0 */
 	AM_RANGE(0xa001, 0xa001) AM_WRITE(flip_screen_x_w)
 	AM_RANGE(0xa002, 0xa002) AM_WRITE(flip_screen_y_w)
-	AM_RANGE(0xa004, 0xa004) AM_WRITENOP /* watchdog ? */
+	AM_RANGE(0xa004, 0xa004) AM_WRITE(cclimber_sample_trigger_w)
 	AM_RANGE(0xa005, 0xa006) AM_WRITE(rombank_w)
-	AM_RANGE(0xa800, 0xa800) AM_READ(input_port_1_r)  AM_WRITENOP   /* IN1 */
-	AM_RANGE(0xb000, 0xb000) AM_READ(input_port_2_r)  AM_WRITENOP   /* DSW */
+	AM_RANGE(0xa800, 0xa800) AM_READ(input_port_1_r)  AM_WRITE(cclimber_sample_rate_w)   /* IN1 */
+	AM_RANGE(0xb000, 0xb000) AM_READ(input_port_2_r)  AM_WRITE(cclimber_sample_volume_w)   /* DSW */
 	AM_RANGE(0xb800, 0xb800) AM_READ(input_port_3_r)     /* IN2 */
 	AM_RANGE(0xc000, 0xffff) AM_ROM
 ADDRESS_MAP_END
+
 
 static ADDRESS_MAP_START( trport_map, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
@@ -454,7 +495,7 @@ static gfx_layout trcharlayout =
 	8,8,
 	RGN_FRAC(1,2),
 	2,
-	{ 0,RGN_FRAC(1,2) },
+	{ RGN_FRAC(1,2),0 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8
@@ -465,13 +506,14 @@ static gfx_layout trspritelayout =
 	16,16,  /* 16*16 sprites */
 	RGN_FRAC(1,2),    /* 128 sprites (64 in Crazy Climber) */
 	2,      /* 2 bits per pixel */
-	{ 0, RGN_FRAC(1,2) },       /* the bitplanes are separated */
+	{  RGN_FRAC(1,2),0 },       /* the bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7,       /* pretty straightforward layout */
 			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
 	32*8    /* every sprite takes 32 consecutive bytes */
 };
+
 
 static const gfx_decode gfxdecodeinfo[] =
 {
@@ -485,10 +527,10 @@ static const gfx_decode gfxdecodeinfo[] =
 
 static gfx_decode tr_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x0000, &trcharlayout,      0, 16 },
-	{ REGION_GFX2, 0x0000, &trcharlayout,      0, 16 },
-	{ REGION_GFX1, 0x0000, &trspritelayout,    0, 16 },
-	{ REGION_GFX3, 0x0000, &trcharlayout,   	 0, 16 },
+	{ REGION_GFX1, 0x0000, &trcharlayout,      0, 40 },
+	{ REGION_GFX2, 0x0000, &trcharlayout,      0, 40 },
+	{ REGION_GFX1, 0x0000, &trspritelayout,    0, 40 },
+	{ REGION_GFX3, 0x0000, &trcharlayout,   	 0, 40 },
 	{ -1 } /* end of array */
 };
 
@@ -530,7 +572,6 @@ static MACHINE_DRIVER_START( yamato )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
-
 static MACHINE_DRIVER_START( toprollr )
 
 	/* basic machine hardware */
@@ -546,10 +587,10 @@ static MACHINE_DRIVER_START( toprollr )
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(2*8, 31*8-1, 2*8, 30*8-1)
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 2*8, 30*8-1)
 	MDRV_GFXDECODE(tr_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(256)
-	//MDRV_PALETTE_INIT(toprollr)
+	MDRV_PALETTE_LENGTH(32*5)
+	MDRV_PALETTE_INIT(toprollr)
 
 	MDRV_VIDEO_START(toprollr)
 	MDRV_VIDEO_UPDATE(toprollr)
@@ -558,7 +599,12 @@ static MACHINE_DRIVER_START( toprollr )
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
 	MDRV_SOUND_ADD(AY8910, 1536000)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_CONFIG(cclimber_ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.60)
+
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(cclimber_custom_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.40)
 MACHINE_DRIVER_END
 
 
@@ -656,15 +702,16 @@ ROM_START( toprollr )
 	ROM_LOAD( "1.d5",	0x0c000, 0x02000, CRC(9894374d) SHA1(173de4abbc3fb5d522aa6d6d5caf8e4d54f2a598) )
 	ROM_LOAD( "7.d3",	0x0e000, 0x02000, CRC(904fffb6) SHA1(5528bc2a4d2fe8672428fd4725644265f0d57ded) )
 
+	ROM_REGION( 0x2000, REGION_SOUND1, 0 )
+	ROM_LOAD( "12.p3",  0x0000, 0x2000, CRC(7f989dc9) SHA1(3b4d18cbb992872b3cf8f5eaf5381ed3a9468cc1) )
+
 	ROM_REGION( 0x01a0, REGION_PROMS, 0 )
-	/* top board */
-	ROM_LOAD( "prom.9p",  0x0000, 0x0020, NO_DUMP )
-	ROM_LOAD( "prom.9n",  0x0020, 0x0020, NO_DUMP )
-	ROM_LOAD( "prom.9s",  0x0040, 0x0100, NO_DUMP )
-	/* bottom board - video */
-	ROM_LOAD( "prom.a1",  0x0140, 0x0020, NO_DUMP )
-	ROM_LOAD( "prom.r2",  0x0160, 0x0020, NO_DUMP )
-	ROM_LOAD( "prom.p2",  0x0180, 0x0020, NO_DUMP )
+	ROM_LOAD( "prom.a1",  0x0000, 0x0020, CRC(7d626d6c) SHA1(7c7202d0ec5bf0381e7104eef53afa5fa4596a29) ) //00-07 big sprites
+	ROM_LOAD( "prom.p2",  0x0020, 0x0020, CRC(42e828fa) SHA1(81250b1f7c3956b3902324adbbaf3b5989e854ee) ) //08-0f sprites + fg (wrong?)
+	ROM_LOAD( "prom.r2",  0x0040, 0x0020, CRC(99b87eed) SHA1(06c3164d681fe4aff0338c0dad1a921f7fe7369d) ) //10-17 sprites
+	ROM_LOAD( "prom.p9",  0x0060, 0x0020, CRC(eb399c02) SHA1(bf3d6c6dd982cb54446cf8a010b7adb949514bdb) ) //18-1f bg
+	ROM_LOAD( "prom.n9",  0x0080, 0x0020, CRC(fb03ea99) SHA1(4dcef86106cef713dfcbd965072bfa8fe4b68e15) ) //20-27 bg
+	ROM_LOAD( "prom.s9",  0x00a0, 0x0100, CRC(abf4c5fb) SHA1(a953f14642d4b72328293b36bc3c65b13491ffff) ) //unknown prom (filled with 2 bit vals)
 
 ROM_END
 
@@ -680,4 +727,4 @@ static DRIVER_INIT( toprollr )
 
 GAME( 1983, yamato,  0,      yamato, yamato, yamato, ROT90, "Sega", "Yamato (US)", GAME_IMPERFECT_GRAPHICS )
 GAME( 1983, yamato2, yamato, yamato, yamato, yamato, ROT90, "Sega", "Yamato (World?)", GAME_IMPERFECT_GRAPHICS )
-GAME( 1983, toprollr, 0, toprollr, toprollr, toprollr, ROT90, "Jaleco", "Top Roller", GAME_IMPERFECT_GRAPHICS|GAME_WRONG_COLORS )
+GAME( 1983, toprollr, 0, toprollr, toprollr, toprollr, ROT90, "Jaleco", "Top Roller", GAME_IMPERFECT_COLORS )

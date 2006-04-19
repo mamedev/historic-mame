@@ -22,6 +22,7 @@ Year + Game                                 Board
 98  Pachinko Gindama Shoubu DX (Japan)      NM522-1-9803
 98  Billiard Academy Real Break (Japan)     NM523-1-9805
 98  Billiard Academy Real Break (Europe)    MM600-1-9807
+98  Billiard Academy Real Break (Korea)     MM600-1-9807
 ---------------------------------------------------------------------------
 
 Notes:
@@ -996,9 +997,38 @@ ROM_START( realbrkj )
 	ROM_LOAD( "52303.2e", 0x000000, 0x400000, CRC(d3005b1e) SHA1(3afd10cdbc3aa7605083a9fcf3c4b8276937c2c4) )
 ROM_END
 
+ROM_START( realbrkk )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* TMP68301 Code */
+	ROM_LOAD16_BYTE( "600k_02b", 0x000000, 0x080000, CRC(fdca08b1) SHA1(69b35c85b1842d0a8c98fc519b46c72954322ceb
+) )
+	ROM_LOAD16_BYTE( "600k_01b", 0x000001, 0x080000, CRC(b6fe8998) SHA1(86f7d6067e007de50a02478a0e583ab64408bc4f) )
+
+	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE )	/* Backgrounds */
+	ROM_LOAD32_WORD( "52310.9b", 0x0000000, 0x400000, CRC(07dfd9f5) SHA1(8722a98adc33f56df1e3b194ce923bc987e15cbe) )
+	ROM_LOAD32_WORD( "52311.9a", 0x0000002, 0x400000, CRC(136a93a4) SHA1(b4bd46ba6c2b367aaf362f67d8be4757f1160864) )
+
+	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )	/* Text Layer */
+	ROM_LOAD16_BYTE( "600k_05", 0x000000, 0x020000, CRC(4de1d95e) SHA1(093d6d229b0e43e35f84a8d1bd707ccd1452fa91
+) )	// 1xxxxxxxxxxxxxxxx = 0xFF
+	ROM_LOAD16_BYTE( "600k_04", 0x000001, 0x020000, CRC(70f2cf3d) SHA1(214550b1a838243fadf5c6b8ba6cbecef2031985) )	// 1xxxxxxxxxxxxxxxx = 0xFF
+
+	ROM_REGION( 0xc00000, REGION_GFX3, ROMREGION_DISPOSE )	/* Sprites (256 colors) */
+	ROM_LOAD32_WORD( "52306.9f",   0x0000000, 0x400000, CRC(5ff0f666) SHA1(e3f1d9dc84fbef73af37cefd90bdf87a35f59e0e) )
+	ROM_LOAD32_WORD( "52308.9d",   0x0000002, 0x400000, CRC(20817051) SHA1(4c9a443b5d6353ce67d5b1fe716f5ac20d194ef0) )
+	ROM_LOAD32_WORD( "mm60007.9e", 0x0800000, 0x200000, CRC(a1d40934) SHA1(59b85435b13c6617e79b8d995506e585b6c8bedd) )
+	ROM_LOAD32_WORD( "mm60009.9c", 0x0800002, 0x200000, CRC(58c03a6c) SHA1(ec7ae49bba6ffdba0f79f1e41e14945f6c3acb1d) )
+
+	ROM_REGION( 0x200000, REGION_GFX4, ROMREGION_DISPOSE )	/* Sprites (16 colors) */
+	ROM_LOAD( "mm60012.14f", 0x000000, 0x200000, CRC(2b5ba1ec) SHA1(d548ef8c96b7b868c866dedb314f56583726564d) )
+
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "mm60003.2e", 0x000000, 0x400000, CRC(39512459) SHA1(b5859a7d8f2f87d923e7f86f095cbffd31f9cbfa) )
+ROM_END
 
 
 GAME( 1998, pkgnsh,   0,       pkgnsh,   pkgnsh,   0, ROT0, "Nakanihon / Dynax", "Pachinko Gindama Shoubu (Japan)", GAME_IMPERFECT_GRAPHICS )
 GAME( 1998, pkgnshdx, 0,       pkgnshdx, pkgnshdx, 0, ROT0, "Nakanihon / Dynax", "Pachinko Gindama Shoubu DX (Japan)", GAME_IMPERFECT_GRAPHICS )
 GAME( 1998, realbrk,  0,       realbrk,  realbrk,  0, ROT0, "Nakanihon", "Billiard Academy Real Break (Europe)", GAME_IMPERFECT_GRAPHICS )
 GAME( 1998, realbrkj, realbrk, realbrk,  realbrk,  0, ROT0, "Nakanihon", "Billiard Academy Real Break (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1998, realbrkk, realbrk, realbrk,  realbrk,  0, ROT0, "Nakanihon", "Billiard Academy Real Break (Korea)", GAME_IMPERFECT_GRAPHICS )
+

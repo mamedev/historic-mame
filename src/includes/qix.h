@@ -15,6 +15,9 @@ extern UINT8 *qix_sharedram;
 extern UINT8 *qix_68705_port_out;
 extern UINT8 *qix_68705_ddr;
 
+MACHINE_START( qix );
+MACHINE_START( qixmcu );
+MACHINE_START( slither );
 MACHINE_RESET( qix );
 MACHINE_RESET( qixmcu );
 MACHINE_RESET( slither );

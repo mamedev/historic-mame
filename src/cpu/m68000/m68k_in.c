@@ -891,13 +891,23 @@ M68KMAKE_OP(1111, 0, ., .)
 
 M68KMAKE_OP(040fpu0, 32, ., .)
 {
-	m68040_fpu_op0();
+	if(CPU_TYPE_IS_040_PLUS(CPU_TYPE))
+	{
+		m68040_fpu_op0();
+		return;
+	}
+	m68ki_exception_1111();
 }
 
 
 M68KMAKE_OP(040fpu1, 32, ., .)
 {
-	m68040_fpu_op1();
+	if(CPU_TYPE_IS_040_PLUS(CPU_TYPE))
+	{
+		m68040_fpu_op1();
+		return;
+	}
+	m68ki_exception_1111();
 }
 
 

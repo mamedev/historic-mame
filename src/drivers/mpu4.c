@@ -486,7 +486,7 @@ static READ8_HANDLER( pia_ic3_cb2_r )
 
 // IC3, lamp data lines + alphanumeric display
 
-static struct pia6821_interface pia_ic3_intf =
+static const pia6821_interface pia_ic3_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ pia_ic3_porta_r, pia_ic3_portb_r, pia_ic3_ca1_r, pia_ic3_cb1_r, pia_ic3_ca2_r, pia_ic3_cb2_r,
 	/*outputs: A/B,CA/B2       */ pia_ic3_porta_w, pia_ic3_portb_w, pia_ic3_ca2_w, pia_ic3_cb2_w,
@@ -564,7 +564,7 @@ static WRITE8_HANDLER( pia_ic4_cb2_w )
 
 // IC4, 7 seg leds, 50Hz timer reel sensors, current sensors
 
-static struct pia6821_interface pia_ic4_intf =
+static const pia6821_interface pia_ic4_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ pia_ic4_porta_r, pia_ic4_portb_r, pia_ic4_ca1_r, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ pia_ic4_porta_w, pia_ic4_portb_w, pia_ic4_ca2_w, pia_ic4_cb2_w,
@@ -645,7 +645,7 @@ static WRITE8_HANDLER( pia_ic5_cb_w )
 	//ay8912 chipsel
 }
 
-static struct pia6821_interface pia_ic5_intf =
+static const pia6821_interface pia_ic5_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ pia_ic5_porta_r, pia_ic5_portb_r, pia_ic5_ca1_r, 0, pia_ic5_ca2_r, 0,
 	/*outputs: A/B,CA/B2       */ pia_ic5_porta_w, pia_ic5_portb_w, pia_ic5_ca_w,  pia_ic5_cb_w,
@@ -687,7 +687,7 @@ static READ8_HANDLER( pia_ic6_portb_r )
 	return 0;
 }
 
-static struct pia6821_interface pia_ic6_intf =
+static const pia6821_interface pia_ic6_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ pia_ic6_porta_r, pia_ic6_portb_r, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ pia_ic6_porta_w, pia_ic6_portb_w, 0, 0,
@@ -736,7 +736,7 @@ static WRITE8_HANDLER( pia_ic7_cb2_w )
 	logerror("%04x IC7 PIA write CB2 %2x (meter driver PL3)\n", activecpu_get_previouspc(),data);
 }
 
-static struct pia6821_interface pia_ic7_intf =
+static const pia6821_interface pia_ic7_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ pia_ic7_porta_r, pia_ic7_portb_r, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ pia_ic7_porta_w, pia_ic7_portb_w, pia_ic7_ca2_w, pia_ic7_cb2_w,
@@ -801,7 +801,7 @@ static WRITE8_HANDLER( pia_ic8_ca2_w )
 	output_strobe = input_strobe; // same strobe lines are used for input and output
 }
 
-static struct pia6821_interface pia_ic8_intf =
+static const pia6821_interface pia_ic8_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ pia_ic8_porta_r, pia_ic8_portb_r, pia_ic8_ca1_r, 0, pia_ic8_ca2_r, 0,
 	/*outputs: A/B,CA/B2       */ pia_ic8_porta_w, pia_ic8_portb_w, pia_ic8_ca2_w, pia_ic8_cb_w,
@@ -1685,8 +1685,6 @@ INTERRUPT_GEN(mpu4_vid_irq)
 
 MACHINE_START( mpu4_vid )
 {
-	pia_unconfig();
-
 	pia_config(0, PIA_STANDARD_ORDERING, &pia_ic3_intf);
 	pia_config(1, PIA_STANDARD_ORDERING, &pia_ic4_intf);
 	pia_config(2, PIA_STANDARD_ORDERING, &pia_ic5_intf);

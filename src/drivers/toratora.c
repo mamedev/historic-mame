@@ -105,33 +105,37 @@ static WRITE8_HANDLER( cb2_1_w )
 	logerror("DIP tristate %sactive\n",(data & 1) ? "in" : "");
 }
 
-static struct pia6821_interface pia0_intf =
+static const pia6821_interface pia0_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ porta_0_r, 0, ca1_0_r, 0, ca2_0_r, 0,
 	/*outputs: A/B,CA/B2       */ 0, portb_0_w, 0, 0,
 	/*irqs   : A/B             */ 0, 0,
 };
 
-static struct pia6821_interface pia1_intf =
+static const pia6821_interface pia1_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, portb_1_r, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, 0, ca2_1_w, cb2_1_w,
 	/*irqs   : A/B             */ 0, 0,
 };
 
-static struct pia6821_interface pia2_intf =
+static const pia6821_interface pia2_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, 0, 0, 0,
 	/*irqs   : A/B             */ 0, 0,
 };
 
-MACHINE_RESET( toratora )
+MACHINE_START( toratora )
 {
-	pia_unconfig();
 	pia_config(0, PIA_STANDARD_ORDERING, &pia0_intf);
 	pia_config(1, PIA_STANDARD_ORDERING, &pia1_intf);
 	pia_config(2, PIA_STANDARD_ORDERING, &pia2_intf);
+	return 0;
+}
+
+MACHINE_RESET( toratora )
+{
 	pia_reset();
 }
 
@@ -225,6 +229,7 @@ static MACHINE_DRIVER_START( toratora )
 	MDRV_CPU_VBLANK_INT(toratora_interrupt,1)
 	MDRV_CPU_PERIODIC_INT(toratora_timer,TIME_IN_HZ(16))	/* timer counting at 16 Hz */
 
+	MDRV_MACHINE_START(toratora)
 	MDRV_MACHINE_RESET(toratora)
 
 	MDRV_FRAMES_PER_SECOND(60)

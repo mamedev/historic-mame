@@ -3,11 +3,12 @@
 
 
   Super Derby - Playmark
- *Roulette - Playmark
-
- Note: Roulette appears to be protected and doesn't work
+  Roulette(?) - Playmark
 
  Payout / hopper controls not connected
+
+ Roulette appears to have some kind of MCU device
+ between the processor and the hopper
 
 
 */
@@ -83,6 +84,7 @@ WRITE16_HANDLER( sderby_md_videoram_w );
 WRITE16_HANDLER( sderby_fg_videoram_w );
 VIDEO_START( sderby );
 VIDEO_UPDATE( sderby );
+VIDEO_UPDATE( pmroulet );
 WRITE16_HANDLER( sderby_scroll_w );
 
 
@@ -99,6 +101,21 @@ static READ16_HANDLER ( sderby_input_r )
 	logerror("sderby_input_r : offset = %x - PC = %06x\n",offset*2,activecpu_get_pc());
 
 	return 0xffff;
+}
+
+static READ16_HANDLER( roulette_input_r )
+{
+	switch (offset)
+	{
+	case 0x00 >>1:
+		return readinputport(0);
+	case 0x02 >>1:
+		return readinputport(1);
+	case 0x04 >>1:
+		return readinputport(2);
+	}
+	return 0xffff;
+
 }
 
 static ADDRESS_MAP_START( sderby_readmem, ADDRESS_SPACE_PROGRAM, 16 )
@@ -130,6 +147,19 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( roulette_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_ROM
+    AM_RANGE(0x440000, 0x440fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x500000, 0x500fff) AM_RAM AM_WRITE(sderby_videoram_w) AM_BASE(&sderby_videoram) // bg
+	AM_RANGE(0x501000, 0x501fff) AM_RAM AM_WRITE(sderby_md_videoram_w) AM_BASE(&sderby_md_videoram) // mid
+	AM_RANGE(0x502000, 0x503fff) AM_RAM AM_WRITE(sderby_fg_videoram_w) AM_BASE(&sderby_fg_videoram) // fg
+	AM_RANGE(0x504000, 0x50400b) AM_RAM AM_WRITE(sderby_scroll_w)
+	AM_RANGE(0x50400e, 0x50400f) AM_WRITE( MWA16_NOP )
+
+	AM_RANGE(0x708000, 0x70800d) AM_READ(roulette_input_r) AM_WRITE(MWA16_NOP) // what are the writes?
+	AM_RANGE(0x708008, 0x708009) AM_WRITE(MWA16_NOP)	// ???
+	AM_RANGE(0x70800e, 0x70800f) AM_READ(OKIM6295_status_0_lsb_r) AM_WRITE(OKIM6295_data_0_lsb_w) // ?? it only ever plays 1 sound
+	AM_RANGE(0x780000, 0x780fff) AM_WRITE(paletteram16_RRRRRGGGGGBBBBBx_word_w) AM_BASE(&paletteram16)
+
+	AM_RANGE(0xf00000, 0xffffff) AM_RAM
 ADDRESS_MAP_END
 
 
@@ -154,6 +184,34 @@ INPUT_PORTS_START( sderby )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( pmroulet )
+	PORT_START
+	PORT_BIT( 0x000f, IP_ACTIVE_LOW, IPT_UNKNOWN ) // ?
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_VBLANK ) // it must be toggled to boot anyway
+	PORT_SERVICE_NO_TOGGLE(0x0020, IP_ACTIVE_LOW) // seems to be ..
+	PORT_BIT( 0x00c0, IP_ACTIVE_LOW, IPT_UNKNOWN ) // ?
+	PORT_BIT( 0x0f00, IP_ACTIVE_LOW, IPT_UNKNOWN ) // ?
+	PORT_BIT( 0xf000, IP_ACTIVE_LOW, IPT_UNKNOWN ) // ?
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x000e, IP_ACTIVE_LOW, IPT_UNKNOWN ) // ?
+	PORT_BIT( 0x00f0, IP_ACTIVE_LOW, IPT_UNKNOWN ) // ?
+	PORT_BIT( 0x0f00, IP_ACTIVE_LOW, IPT_UNKNOWN ) // ?
+	PORT_BIT( 0xf000, IP_ACTIVE_LOW, IPT_UNKNOWN ) // ?
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN ) // ?
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 )
+  	PORT_BIT( 0x0f00, IP_ACTIVE_LOW, IPT_UNKNOWN ) // ?
+	PORT_BIT( 0xf000, IP_ACTIVE_LOW, IPT_UNKNOWN ) // ?
+INPUT_PORTS_END
 
 static const gfx_layout tiles8x8_layout =
 {
@@ -220,23 +278,13 @@ static MACHINE_DRIVER_START( sderby )
 
 MACHINE_DRIVER_END
 
-VIDEO_START(pmroulet)
-{
-	return 0;
-}
-
-VIDEO_UPDATE(pmroulet)
-{
-
-}
-
 static MACHINE_DRIVER_START( pmroulet )
 	MDRV_CPU_ADD(M68000, 12000000)
 	MDRV_CPU_PROGRAM_MAP(roulette_map,0)
-//  MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
+	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	MDRV_GFXDECODE(gfxdecodeinfo)
 
@@ -245,7 +293,7 @@ static MACHINE_DRIVER_START( pmroulet )
 	MDRV_VISIBLE_AREA(4*8, 44*8-1, 3*8, 33*8-1)
 	MDRV_PALETTE_LENGTH(0x1000)
 
-	MDRV_VIDEO_START(pmroulet)
+	MDRV_VIDEO_START(sderby)
 	MDRV_VIDEO_UPDATE(pmroulet)
 
 	MDRV_SPEAKER_STANDARD_MONO("mono")
@@ -273,38 +321,11 @@ ROM_START( sderby )
 	ROM_LOAD( "28.bin", 0x80000, 0x20000, CRC(39ca3b52) SHA1(9a03e73d88a1551cd3cfe616ab71e67dced1272a) )
 ROM_END
 
-DRIVER_INIT(pmroulet)
-{
-	/* Roulette appears to have protection which patches the ROM code..
-      the irq function seems to be the same as sderby with some modified addresses
-
-      I suspect the rom is mapped through a protection device, hence the writes to
-      ROM it makes at the start of the code
-
-      there are opcodes that need patching all through the code.. we should find
-      a working board to check it and make sure it isn't just a bad dump but the
-      board did have an additional IC not present on the Super Derby board which
-      could be an MCU
-
-
-      */
-	UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
-
-	rom[0x00440/2] = 0x33fc;
-
-	rom[0x00458/2] = 0x33fc;
-	rom[0x00460/2] = 0x303c;
-	rom[0x00464/2] = 0x323c; // ?
-	rom[0x00470/2] = 0x33fc;
-	rom[0x00538/2] = 0x48e7;
-
-
-}
 
 ROM_START( pmroulet )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 Code */
-    ROM_LOAD16_BYTE( "2.bin", 0x00000, 0x20000, CRC(b3069e2b) SHA1(6c5fa314c76aa52209c68599070c783a46567568))
-	ROM_LOAD16_BYTE( "3.bin", 0x00001, 0x20000, CRC(5a6cb8d7) SHA1(98772bf616900ad3c5654a2319e46b9a770ff8e8))
+    ROM_LOAD16_BYTE( "2.bin", 0x00000, 0x20000, CRC(1677a2de) SHA1(4dcbb3c1ce9b65e06ba7e0cffa00c0c8016538f5))
+	ROM_LOAD16_BYTE( "3.bin", 0x00001, 0x20000, CRC(11acaac2) SHA1(19e7bbbf4356fc9a866f9f36d0568c42d6a36c07))
 
 	ROM_REGION( 0x080000, REGION_SOUND1, 0 ) /* Samples */
 	ROM_LOAD( "1.bin", 0x00000, 0x40000, CRC(6673de85) SHA1(df390cd6268efc0e743a9020f19bc0cbeb757cfa))
@@ -318,5 +339,5 @@ ROM_START( pmroulet )
 ROM_END
 
 GAME( 1996, sderby, 0, sderby, sderby, 0, ROT0, "Playmark", "Super Derby", 0 )
-GAME( 1997, pmroulet, 0, pmroulet, sderby, pmroulet, ROT0, "Playmark", "Roulette (Playmark)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
+GAME( 1997, pmroulet, 0, pmroulet, pmroulet, 0, ROT0, "Playmark", "Croupier (Playmark Roulette)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
 

@@ -149,14 +149,14 @@ static WRITE8_HANDLER( tugboat_ctrl_w )
 	ctrl = data;
 }
 
-static struct pia6821_interface pia0_intf =
+static const pia6821_interface pia0_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ tugboat_input_r, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, 0, 0, 0,
 	/*irqs   : A/B             */ 0, 0,
 };
 
-static struct pia6821_interface pia1_intf =
+static const pia6821_interface pia1_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ input_port_5_r, tugboat_ctrl_r, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0,              tugboat_ctrl_w, 0, 0,
@@ -169,11 +169,15 @@ static void interrupt_gen(int scanline)
 	timer_set(cpu_getscanlinetime(1), 0, interrupt_gen);
 }
 
-MACHINE_RESET( tugboat )
+MACHINE_START( tugboat )
 {
-	pia_unconfig();
 	pia_config(0, PIA_STANDARD_ORDERING, &pia0_intf);
 	pia_config(1, PIA_STANDARD_ORDERING, &pia1_intf);
+	return 0;
+}
+
+MACHINE_RESET( tugboat )
+{
 	pia_reset();
 	timer_set(cpu_getscanlinetime(1), 0, interrupt_gen);
 }
@@ -376,6 +380,7 @@ static MACHINE_DRIVER_START( tugboat )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
+	MDRV_MACHINE_START(tugboat)
 	MDRV_MACHINE_RESET(tugboat)
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

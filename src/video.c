@@ -530,7 +530,10 @@ void set_visible_area(int min_x, int max_x, int min_y, int max_y)
 	cpu_compute_scanline_timing();
 
 	/* set UI visible area */
-	ui_set_visible_area(min_x, min_y, max_x, max_y);
+	ui_set_visible_area(Machine->absolute_visible_area.min_x,
+						Machine->absolute_visible_area.min_y,
+						Machine->absolute_visible_area.max_x,
+						Machine->absolute_visible_area.max_y);
 }
 
 

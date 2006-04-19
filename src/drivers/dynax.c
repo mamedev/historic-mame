@@ -3652,10 +3652,8 @@ ROM_START( mjelctrn )
 
 	ROM_REGION( 0x180000, REGION_GFX1, 0 )	/* blitter data */
 	ROM_LOAD( "eb-01.rom", 0x000000, 0x100000, CRC(e5c41448) SHA1(b8322e32b0cb3d771316c9c4f7be91de6e422a24) )
-	// eb-02 1st half = 2nd half with byte 0 replaced by 0 (wrong). Just use the 2nd half.
-	ROM_LOAD( "eb-02.rom", 0x100000, 0x040000, NO_DUMP )
-	ROM_CONTINUE(          0x100000, 0x040000 )
-	ROM_LOAD( "mj-1c020", 0x140000, 0x040000, CRC(f8e8d91b) SHA1(409e276157b328e7bbba5dda6a4c7adc020d519a) )
+	ROM_LOAD( "eb-02.rom", 0x100000, 0x080000, CRC(e1f1b431) SHA1(04a612aff4c30cb8ea741f228bfa7e4289acfee8) )
+	ROM_LOAD( "mj-1c020",  0x140000, 0x040000, CRC(f8e8d91b) SHA1(409e276157b328e7bbba5dda6a4c7adc020d519a) )
 ROM_END
 
 ROM_START( mjelct3 )
@@ -3666,11 +3664,9 @@ ROM_START( mjelct3 )
 	ROM_CONTINUE(        0x20000, 0x08000 )
 	ROM_CONTINUE(        0x18000, 0x08000 )
 
-	ROM_REGION( 0x140000, REGION_GFX1, 0 )	/* blitter data */
+	ROM_REGION( 0x180000, REGION_GFX1, 0 )	/* blitter data */
 	ROM_LOAD( "eb-01.rom", 0x000000, 0x100000, CRC(e5c41448) SHA1(b8322e32b0cb3d771316c9c4f7be91de6e422a24) )
-	// eb-02 1st half = 2nd half with byte 0 replaced by 0 (wrong). Just use the 2nd half.
-	ROM_LOAD( "eb-02.rom", 0x100000, 0x040000, CRC(f5b354d1) SHA1(d3f35d090de9af3f50aae9ff11de731950256212) )
-	ROM_CONTINUE(          0x100000, 0x040000 )
+	ROM_LOAD( "eb-02.rom", 0x100000, 0x080000, CRC(e1f1b431) SHA1(04a612aff4c30cb8ea741f228bfa7e4289acfee8) )
 ROM_END
 
 ROM_START( mjelct3a )
@@ -3681,11 +3677,9 @@ ROM_START( mjelct3a )
 	ROM_CONTINUE(          0x20000, 0x08000 )
 	ROM_CONTINUE(          0x18000, 0x08000 )
 
-	ROM_REGION( 0x140000, REGION_GFX1, 0 )	/* blitter data */
+	ROM_REGION( 0x180000, REGION_GFX1, 0 )	/* blitter data */
 	ROM_LOAD( "eb-01.rom", 0x000000, 0x100000, CRC(e5c41448) SHA1(b8322e32b0cb3d771316c9c4f7be91de6e422a24) )
-	// eb-02 1st half = 2nd half with byte 0 replaced by 0 (wrong). Just use the 2nd half.
-	ROM_LOAD( "eb-02.rom", 0x100000, 0x040000, CRC(f5b354d1) SHA1(d3f35d090de9af3f50aae9ff11de731950256212) )
-	ROM_CONTINUE(          0x100000, 0x040000 )
+	ROM_LOAD( "eb-02.rom", 0x100000, 0x080000, CRC(e1f1b431) SHA1(04a612aff4c30cb8ea741f228bfa7e4289acfee8) )
 ROM_END
 
 /*
@@ -3893,9 +3887,9 @@ GAME( 1991, yarunara, 0,        yarunara, yarunara, 0,        ROT180, "Dynax",  
 GAME( 1991, mjangels, 0,        yarunara, yarunara, 0,        ROT180, "Dynax",                   "Mahjong Angels - Comic Theater Vol.2 (Japan)"         , 0 )
 GAME( 1992, quiztvqq, 0,        yarunara, quiztvqq, 0,        ROT180, "Dynax",                   "Quiz TV Gassyuukoku Q&Q (Japan)"                      , 0 )
 GAME( 1994, maya,     0,        sprtmtch, sprtmtch, maya,     ROT0,   "Promat",                  "Maya"                                                 , 0 )
-GAME( 199?, inca,     maya,     sprtmtch, sprtmtch, maya,     ROT0,   "<unknown>",                 "Inca"                                                 , 0 )
+GAME( 199?, inca,     maya,     sprtmtch, sprtmtch, maya,     ROT0,   "<unknown>",               "Inca"                                                 , 0 )
 GAME( 1990, jantouki, 0,        jantouki, jantouki, 0,        ROT0,   "Dynax",                   "Jong Tou Ki (Japan)"                                  , 0 )
-GAME( 1993, mjelctrn, 0,        mjelctrn, mjelctrn, mjelct3,  ROT180, "Dynax",                   "Mahjong Electron Base (parts 2 & 4, Japan)",           GAME_IMPERFECT_GRAPHICS )	// part 4 title in the no_dump rom
+GAME( 1993, mjelctrn, 0,        mjelctrn, mjelctrn, mjelct3,  ROT180, "Dynax",                   "Mahjong Electron Base (parts 2 & 4, Japan)"           , 0 )
 GAME( 1990, mjelct3,  mjelctrn, mjelctrn, mjelct3,  mjelct3,  ROT180, "Dynax",                   "Mahjong Electron Base (parts 2 & 3, Japan)"           , 0 )
 GAME( 1990, mjelct3a, mjelctrn, mjelctrn, mjelct3,  mjelct3a, ROT180, "Dynax",                   "Mahjong Electron Base (parts 2 & 3, alt., Japan)"     , 0 )
 GAME( 1990, neruton,  0,        neruton,  neruton,  mjelct3,  ROT180, "Dynax / Yukiyoshi Tokoro","Mahjong Neruton Haikujirada (Japan)",                         GAME_IMPERFECT_GRAPHICS )	// e.g. dynax logo

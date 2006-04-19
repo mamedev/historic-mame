@@ -53,6 +53,7 @@ const game_driver * const drivers[] =
 	DRIVER( hangly2 )	/* hack */
 	DRIVER( hangly3 )	/* hack */
 	DRIVER( piranhah )	/* hack */
+	DRIVER( abscam )	/* hack */
 	DRIVER( crush )		/* (c) 1981 Kural Samno Electric Ltd */
 	DRIVER( crush2 )	/* (c) 1981 Kural Esco Electric Ltd - bootleg? */
 	DRIVER( crush3 )	/* Kural Electric Ltd - bootleg? */
@@ -84,6 +85,7 @@ const game_driver * const drivers[] =
 	DRIVER( woodpek )
 	DRIVER( woodpeka )
 	DRIVER( mspacmab )	/* bootleg */
+	DRIVER( mspacmbe )	/* bootleg */
 	DRIVER( pacgal )	/* hack */
 	DRIVER( mspacpls )	/* hack */
 	DRIVER( ponpoko )	/* (c) 1982 Sigma Ent. Inc. */
@@ -2268,6 +2270,7 @@ V-V                           TP-027
 	DRIVER( mswordu )	/* 25/07/1990 (c) 1990 (US)    */
 	DRIVER( mswordj )	/* 23/06/1990 (c) 1990 (Japan) */
 	DRIVER( cawing )	/* 12/10/1990 (c) 1990 (World) */
+	DRIVER( cawingr1 )	/* 09/10/1990 (c) 1990 (World) */
 	DRIVER( cawingu )	/* 12/10/1990 (c) 1990 (US) */
 	DRIVER( cawingj )	/* 12/10/1990 (c) 1990 (Japan) */
 	DRIVER( nemo )		/* 30/11/1990 (c) 1990 (World) */
@@ -2576,6 +2579,7 @@ V-V                           TP-027
 	DRIVER( sfex2a )	/* Street Fighter EX 2 (ASIA 980312) */
 	DRIVER( plsmaswd )	/* Plasma Sword (USA 980316) */
 	DRIVER( stargld2 )	/* Star Gladiator 2 (JAPAN 980316) */
+	DRIVER( plsmswda )	/* Plasma Sword (ASIA 980316) */
 	DRIVER( tgmj )		/* Tetris The Grand Master (JAPAN 980710) */
 	DRIVER( techromn )	/* Tech Romancer (EURO 980914) */
 	DRIVER( techromu )	/* Tech Romancer (USA 980914) */
@@ -3455,8 +3459,10 @@ Sep.1994 Quiz Ghost Hunter
 	DRIVER( pltkids )	/* 1998 */
 
 	/* Model 2C-CRX (TGPx4, SCSP sound board) */
+	DRIVER( skisuprg )	/* 1996 */
 	DRIVER( stcc )		/* 1996 */
 	DRIVER( hotd )		/* 1997 */
+	DRIVER( overrev )	/* 1997 */
 	DRIVER( topskatr )	/* 1997 */
 	DRIVER( bel )		/* 1998 */
 
@@ -4398,6 +4404,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 
 	/* Konami M2 games */
 	DRIVER( polystar )	/* GX623 (c)1997 */
+	DRIVER( totlvice )	/* ? (c)1997 */
 	DRIVER( btltryst )	/* GX636 (c)1998 */
 	DRIVER( heatof11 )	/* GX703 (c)1998 */
 	DRIVER( evilngt )	/* GX810 (c)1998 */
@@ -5964,6 +5971,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( roldfrga )	/* not a gaelco game but based on splash code */
 	DRIVER( rebus )		/* not a gaelco game but on similar hw to splash */
 	DRIVER( funystrp )	/* not a gaelco game but on similar hw to splash */
+	DRIVER( puckpepl )	/* not a gaelco game but on similar hw to splash */
 	DRIVER( thoop )		/* (c) 1992 - Ref 922804/1 */
 	DRIVER( squash )	/* (c) 1992 - Ref 922804/2 */
 	DRIVER( wrally )	/* (c) 1993 - Ref 930705 */
@@ -6003,6 +6011,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 
 	/* Kaneko games */
 	DRIVER( djboy )		/* (c) 1989 Kaneko */
+	DRIVER( djboyj )	/* (c) 1989 Kaneko */
 	DRIVER( airbustr )	/* (c) 1990 Kaneko + Namco */
 	DRIVER( airbustj )	/* (c) 1990 Kaneko + Namco (Japan) */
 	DRIVER( galpanic )	/* (c) 1990 Kaneko */
@@ -6427,6 +6436,7 @@ Other Sun games
 	DRIVER( hotbubl )	/* (c) 1998 Pandora */
 	DRIVER( popspops )	/* (c) 1999 */
 	DRIVER( firehawk )	/* (c) 2001 ESD */
+	DRIVER( mangchi )	/* (c) 2000 */
 	DRIVER( spec2k )	/* (c) 2000 Yonatech */
 
 	/* ESD games */
@@ -6483,6 +6493,7 @@ Other Sun games
 	DRIVER( hanakanz )	/* "507" 1996 Dynax */
 	DRIVER( hkagerou )	/* "510" Hana Kagerou 1996 Nakanihon */
 	DRIVER( realbrk )	/* "600" Billiard Academy Real Break 1998 (Europe)*/
+	DRIVER( realbrkk )	/* "600" Billiard Academy Real Break 1998 (Korea)*/
 	DRIVER( realbrkj )	/* "523" Billiard Academy Real Break 1998 (Japan)*/
 	DRIVER( mjchuuka )	/* "???" (c) 1998 Dynax */
 	DRIVER( mjreach1 )	/* "526" Mahjong Reach Ippatsu 1998 Nihon System/Dynax */
@@ -6899,8 +6910,9 @@ Other Sun games
 	DRIVER( suplup )	/* (c) 1999 Omega System */
 	DRIVER( vamphalf )	/* (c) 1999 DanBi & F2 System */
 	DRIVER( misncrft )	/* (c) 2000 Sun */
+	DRIVER( hidnctch )	/* (c) 1998 Eolith */
 	DRIVER( puzzlekg )	/* (c) 1998 Eolith */
-	DRIVER( hidnctch )	/* (c) 1999 Eolith */
+	DRIVER( nhidctch )	/* (c) 1999 Eolith */
 	DRIVER( landbrk )	/* (c) 1999 Eolith */
 	DRIVER( landbrka )	/* (c) 1999 Eolith */
 	DRIVER( raccoon )	/* (c) 1999 Eolith */
@@ -7029,5 +7041,6 @@ Other Sun games
 	DRIVER( go2000 )	/* (c) 2000 SA */
 	DRIVER( mirax )		/* (c) 1985 Current Technologies */
 	DRIVER( lastfght )	/* (c) 2000 Subsino */
+	DRIVER( sliver )	/* (c) 1996 Hollow Corp */
 
 #endif	/* DRIVER_RECURSIVE */

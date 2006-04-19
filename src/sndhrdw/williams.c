@@ -144,7 +144,7 @@ ADDRESS_MAP_END
 
 
 /* PIA structure */
-static struct pia6821_interface cvsd_pia_intf =
+static const pia6821_interface cvsd_pia_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ DAC_0_data_w, cvsd_talkback_w, 0, 0,

@@ -2,9 +2,11 @@
 
 Gals Panic       1990 Kaneko
 Fantasia         1994 Comad
+Super Model      1994 Comad
 New Fantasia     1995 Comad
 Fantasy '95      1995 Hi-max Technology Inc. (Running on a Comad PCB)
 Miss World '96   1996 Comad
+Ms/Mr World '96  1996 Comad
 Fantasia II      1997 Comad
 Gals Hustler     1997 Ace International
 
@@ -113,6 +115,16 @@ Bg for select screens seems to be corrupt
 Fantasia etc. games are locking up when the girl 'changes' due to not liking
 the way we handle OKI status reads.. however these reads are correct according to
 tests done with a real chip so there must be something odd going on on this hardware
+
+From Miss World 96 manual/dipswitch sheet:
+
+A/B/C Three Versions depending on nude grade
+ A-Version is the extreme hottest nude models
+ B-Version is the more attractive nude models
+ C-Version is very beautiful bikini models
+
+An example of this can be seen in Fantasia II with type A & B
+ The current set of Super Model is an example of type C
 
 ***************************************************************************/
 
@@ -1421,9 +1433,9 @@ GAME( 1994, fantasia, 0,        comad,    fantasia, 0, ROT90, "Comad & New Japan
 GAME( 1994, supmodel, 0,        supmodel, fantasia, 0, ROT90, "Comad & New Japan System", "Super Model",GAME_NO_COCKTAIL ) // 'official' or hack of fantasia?
 GAME( 1995, newfant,  0,        comad,    fantasia, 0, ROT90, "Comad & New Japan System", "New Fantasia", GAME_NO_COCKTAIL )
 GAME( 1995, fantsy95, 0,        comad,    fantasia, 0, ROT90, "Hi-max Technology Inc.", "Fantasy '95", GAME_NO_COCKTAIL )
-GAME( 1996, missw96,  0,        comad,    missw96,  0, ROT0,  "Comad", "Miss World '96 Nude", GAME_NO_COCKTAIL )
-GAME( 1996, missmw96, missw96,  comad,    missw96,  0, ROT0,  "Comad", "Miss Mister World '96 Nude", GAME_NO_COCKTAIL )
-GAME( 1997, fantsia2, 0,        fantsia2, missw96,  0, ROT0,  "Comad", "Fantasia II (set 1)", GAME_NO_COCKTAIL )
-GAME( 1997, fntsia2a, fantsia2, fantsia2, missw96,  0, ROT0,  "Comad", "Fantasia II (set 2, less explicit)", GAME_NO_COCKTAIL )
+GAME( 1996, missw96,  0,        comad,    missw96,  0, ROT0,  "Comad", "Miss World '96 (Nude)", GAME_NO_COCKTAIL )
+GAME( 1996, missmw96, missw96,  comad,    missw96,  0, ROT0,  "Comad", "Miss Mister World '96 (Nude)", GAME_NO_COCKTAIL )
+GAME( 1997, fantsia2, 0,        fantsia2, missw96,  0, ROT0,  "Comad", "Fantasia II (Explicit)", GAME_NO_COCKTAIL )
+GAME( 1997, fntsia2a, fantsia2, fantsia2, missw96,  0, ROT0,  "Comad", "Fantasia II (Less Explicit)", GAME_NO_COCKTAIL )
 GAME( 1997, galhustl, 0,        galhustl, galhustl, 0, ROT0,  "ACE International", "Gals Hustler", 0 )
-GAME( 1995, zipzap,   0,        zipzap,   zipzap,   0, ROT90, "Barko Corp", "Zip & Zap",GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
+GAME( 1995, zipzap,   0,        zipzap,   zipzap,   0, ROT90, "Barko Corp", "Zip & Zap", GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )

@@ -37,6 +37,7 @@ MACHINE_RESET( mcr );
 MACHINE_START( nflfoot );
 MACHINE_START( mcr68 );
 MACHINE_RESET( mcr68 );
+MACHINE_START( zwackery );
 MACHINE_RESET( zwackery );
 
 INTERRUPT_GEN( mcr_interrupt );

@@ -469,14 +469,14 @@ static READ8_HANDLER( pia_1_port_b_r )
 }
 
 
-static struct pia6821_interface pia_0_intf =
+static const pia6821_interface pia_0_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, pia_0_port_b_r, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ pia_0_port_a_w, pia_0_port_b_w, coin1_interrupt_clear_w, coin2_interrupt_clear_w,
 	/*irqs   : A/B             */ 0, 0
 };
 
-static struct pia6821_interface pia_1_intf =
+static const pia6821_interface pia_1_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ pia_1_port_a_r, pia_1_port_b_r, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, 0, coin3_interrupt_clear_w, coin4_interrupt_clear_w,
@@ -508,6 +508,14 @@ static struct TTL7474_interface TTL7474_2U_2_intf =
 	TTL7474_2U_2_cb
 };
 
+
+MACHINE_START( carpolo )
+{
+	/* set up the PIA's */
+	pia_config(0, PIA_STANDARD_ORDERING, &pia_0_intf);
+	pia_config(1, PIA_STANDARD_ORDERING, &pia_1_intf);
+	return 0;
+}
 
 MACHINE_RESET( carpolo )
 {
@@ -575,9 +583,4 @@ MACHINE_RESET( carpolo )
 
 	TTL74153_enable_w(TTL74153_1K, 0, 0);
 	TTL74153_enable_w(TTL74153_1K, 1, 0);
-
-
-	/* set up the PIA's */
-	pia_config(0, PIA_STANDARD_ORDERING, &pia_0_intf);
-	pia_config(1, PIA_STANDARD_ORDERING, &pia_1_intf);
 }

@@ -28,6 +28,7 @@ extern UINT8 *spiders_ram;
 /*----------- defined in machine/spiders.c -----------*/
 
 extern int spiders_video_flip;
+MACHINE_START( spiders );
 MACHINE_RESET( spiders );
 INTERRUPT_GEN( spiders_timed_irq );
 

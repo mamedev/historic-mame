@@ -1586,7 +1586,7 @@ void i8080_init(int index, int clock, const void *config, int (*irqcallback)(int
 	state_save_register_item("i8080", index, I.IRQ2);
 	state_save_register_item("i8080", index, I.IRQ1);
 	state_save_register_item("i8080", index, I.nmi_state);
-	state_save_register_item("i8080", index, I.irq_state);
+	state_save_register_item_array("i8080", index, I.irq_state);
 }
 
 void i8080_set_irq_line(int irqline, int state)

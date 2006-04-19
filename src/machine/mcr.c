@@ -160,21 +160,21 @@ gfx_layout mcr_sprite_layout =
 
 READ8_HANDLER( zwackery_port_2_r );
 
-static struct pia6821_interface zwackery_pia_2_intf =
+static const pia6821_interface zwackery_pia_2_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, input_port_0_r, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ zwackery_pia_2_w, 0, 0, 0,
 	/*irqs   : A/B             */ zwackery_pia_irq, zwackery_pia_irq
 };
 
-static struct pia6821_interface zwackery_pia_3_intf =
+static const pia6821_interface zwackery_pia_3_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ input_port_1_r, zwackery_port_2_r, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ zwackery_pia_3_w, 0, zwackery_ca2_w, 0,
 	/*irqs   : A/B             */ 0, 0
 };
 
-static struct pia6821_interface zwackery_pia_4_intf =
+static const pia6821_interface zwackery_pia_4_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ input_port_3_r, input_port_4_r, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ 0, 0, 0, 0,
@@ -388,6 +388,16 @@ MACHINE_RESET( mcr68 )
 }
 
 
+MACHINE_START( zwackery )
+{
+	/* append our PIA state onto the existing one and reinit */
+	pia_config(2, PIA_STANDARD_ORDERING, &zwackery_pia_2_intf);
+	pia_config(3, PIA_STANDARD_ORDERING, &zwackery_pia_3_intf);
+	pia_config(4, PIA_STANDARD_ORDERING, &zwackery_pia_4_intf);
+	return 0;
+}
+
+
 MACHINE_RESET( zwackery )
 {
 	/* for the most part all MCR/68k games are the same */
@@ -395,9 +405,6 @@ MACHINE_RESET( zwackery )
 	v493_callback = zwackery_493_callback;
 
 	/* append our PIA state onto the existing one and reinit */
-	pia_config(2, PIA_STANDARD_ORDERING, &zwackery_pia_2_intf);
-	pia_config(3, PIA_STANDARD_ORDERING, &zwackery_pia_3_intf);
-	pia_config(4, PIA_STANDARD_ORDERING, &zwackery_pia_4_intf);
 	pia_reset();
 
 	/* vectors are 5 and 6 */

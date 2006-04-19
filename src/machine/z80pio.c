@@ -180,7 +180,7 @@ void z80pio_init(int which, z80pio_interface *intf)
 	pio->rdyr[1] = intf->rdyB;
 	z80pio_reset(which);
 
-    state_save_register_item("z80pio", which, pio->vector);
+    state_save_register_item_array("z80pio", which, pio->vector);
     state_save_register_item_array("z80pio", which, pio->mode);
     state_save_register_item_array("z80pio", which, pio->enable);
     state_save_register_item_array("z80pio", which, pio->mask);

@@ -17,9 +17,9 @@ Ernesto Corvi & Mariusz Wojcieszek
 /* read them on both big-endian and little-endian systems, we store the custom */
 /* registers in 32-bit natural order. This means we need to XOR the register */
 /* address with 1 on little-endian systems. */
-#define CUSTOM_REG(x)			(custom_regs.reg[BYTE_XOR_BE(x)])
+#define CUSTOM_REG(x)			(amiga_custom_regs[BYTE_XOR_BE(x)])
 #define CUSTOM_REG_SIGNED(x)	((INT16)CUSTOM_REG(x))
-#define CUSTOM_REG_LONG(x)		(*(UINT32 *)&custom_regs.reg[x])
+#define CUSTOM_REG_LONG(x)		(*(UINT32 *)&amiga_custom_regs[x])
 
 /*
     A = Angus
@@ -264,6 +264,40 @@ Ernesto Corvi & Mariusz Wojcieszek
 #define BPLCON0_BPU2	0x4000
 #define BPLCON0_HIRES	0x8000
 
+/* INTENA/INTREQ bit layout */
+#define INTENA_TBE		0x0001
+#define INTENA_DSKBLK	0x0002
+#define INTENA_SOFT		0x0004
+#define INTENA_PORTS	0x0008
+#define INTENA_COPER	0x0010
+#define INTENA_VERTB	0x0020
+#define INTENA_BLIT		0x0040
+#define INTENA_AUD0		0x0080
+#define INTENA_AUD1		0x0100
+#define INTENA_AUD2		0x0200
+#define INTENA_AUD3		0x0400
+#define INTENA_RBF		0x0800
+#define INTENA_DSKSYN	0x1000
+#define INTENA_EXTER	0x2000
+#define INTENA_INTEN	0x4000
+#define INTENA_SETCLR	0x8000
+
+/* CIA registers */
+#define CIA_PRA			(0x0000/2)
+#define CIA_PRB			(0x0100/2)
+#define CIA_DDRA		(0x0200/2)
+#define CIA_DDRB		(0x0300/2)
+#define CIA_TALO		(0x0400/2)
+#define CIA_TAHI		(0x0500/2)
+#define CIA_TBLO		(0x0600/2)
+#define CIA_TBHI		(0x0700/2)
+#define CIA_TODLOW		(0x0800/2)
+#define CIA_TODMID		(0x0900/2)
+#define CIA_TODHI		(0x0a00/2)
+#define CIA_SDR			(0x0c00/2)
+#define CIA_ICR			(0x0d00/2)
+#define CIA_CRA			(0x0e00/2)
+#define CIA_CRB			(0x0f00/2)
 
 
 #define MAX_PLANES 6 /* 0 to 6, inclusive ( but we count from 0 to 5 ) */
@@ -290,52 +324,82 @@ struct amiga_machine_interface
 };
 
 
-
-typedef struct
+typedef struct _amiga_autoconfig_device amiga_autoconfig_device;
+struct _amiga_autoconfig_device
 {
-	UINT16		reg[0x100];
-} custom_regs_def;
+	UINT8		link_memory;		/* link into free memory list */
+	UINT8		rom_vector_valid;	/* ROM vector offset valid */
+	UINT8		multi_device;		/* multiple devices on card */
+	UINT8		size;				/* number of 64k pages */
+	UINT16		product_number;		/* product number */
+	UINT8		prefer_8meg;		/* prefer 8MB address space */
+	UINT8		can_shutup;			/* can be shut up */
+	UINT16		mfr_number;			/* manufacturers number */
+	UINT32		serial_number;		/* serial number */
+	UINT16		rom_vector;			/* ROM vector offset */
+	UINT8		(*int_control_r)(void); /* interrupt control read */
+	void		(*int_control_w)(UINT8 data); /* interrupt control write */
+	void		(*install)(offs_t base); /* memory installation */
+	void		(*uninstall)(offs_t base); /* memory uninstallation */
+};
 
-/* prototypes */
 
 /*----------- defined in machine/amiga.c -----------*/
 
-extern custom_regs_def custom_regs;
-
-extern void amiga_signal_irq(int which);
-extern void amiga_machine_config(const struct amiga_machine_interface *intf);
-extern void copper_setpc( unsigned long pc );
-extern WRITE16_HANDLER(amiga_custom_w);
-extern void amiga_reload_sprite_info( int spritenum );
-extern READ16_HANDLER(amiga_cia_r);
-extern WRITE16_HANDLER(amiga_cia_w);
-extern READ16_HANDLER(amiga_custom_r);
-extern WRITE16_HANDLER(amiga_custom_w);
-extern MACHINE_RESET(amiga);
-extern void amiga_cia_issue_index( void );
-
 extern UINT16 *amiga_chip_ram;
+extern size_t amiga_chip_ram_size;
+
+extern UINT16 *amiga_custom_regs;
 extern UINT16 *amiga_expansion_ram;
 extern UINT16 *amiga_autoconfig_mem;
 
+INTERRUPT_GEN(amiga_vblank_irq);
+INTERRUPT_GEN(amiga_irq);
+void amiga_signal_irq(int which);
+void amiga_machine_config(const struct amiga_machine_interface *intf);
+WRITE16_HANDLER(amiga_custom_w);
+void amiga_reload_sprite_info( int spritenum );
+READ16_HANDLER(amiga_cia_r);
+WRITE16_HANDLER(amiga_cia_w);
+READ16_HANDLER(amiga_custom_r);
+WRITE16_HANDLER(amiga_custom_w);
+MACHINE_RESET(amiga);
+void amiga_cia_issue_index( void );
+
+void amiga_add_autoconfig(amiga_autoconfig_device *device);
+READ16_HANDLER( amiga_autoconfig_r );
+WRITE16_HANDLER( amiga_autoconfig_w );
+
+
 /*----------- defined in sndhrdw/amiga.c -----------*/
 
-extern void *amiga_sh_start(int clock, const struct CustomSound_interface *config);
-extern void amiga_audio_update(void);
-extern READ16_HANDLER( amiga_audio_r );
-extern WRITE16_HANDLER( amiga_audio_w );
+void *amiga_sh_start(int clock, const struct CustomSound_interface *config);
+void amiga_audio_update(void);
+READ16_HANDLER( amiga_audio_r );
+WRITE16_HANDLER( amiga_audio_w );
 
 /*----------- defined in vidhrdw/amiga.c -----------*/
 
-extern UINT32 amiga_gethvpos(void);
-extern INTERRUPT_GEN(amiga_vblank_irq);
-extern INTERRUPT_GEN(amiga_irq);
-extern VIDEO_UPDATE(amiga);
-extern VIDEO_START(amiga);
-extern PALETTE_INIT(amiga);
-extern void amiga_prepare_frame(void);
-extern void amiga_render_scanline(int scanline);
-extern void amiga_sprite_dma_reset(int which);
-extern void amiga_sprite_enable_comparitor(int which, int enable);
+PALETTE_INIT(amiga);
+
+UINT32 amiga_gethvpos(void);
+void copper_setpc(UINT32 pc);
+void amiga_render_scanline(int scanline);
+void amiga_sprite_dma_reset(int which);
+void amiga_sprite_enable_comparitor(int which, int enable);
+
+
+
+INLINE UINT16 amiga_chip_ram_r(offs_t offset)
+{
+	return (offset < amiga_chip_ram_size) ? amiga_chip_ram[offset / 2] : 0xffff;
+}
+
+INLINE void amiga_chip_ram_w(offs_t offset, UINT16 data)
+{
+	if (offset < amiga_chip_ram_size)
+		amiga_chip_ram[offset / 2] = data;
+}
+
 
 #endif /* __AMIGA_H__ */
