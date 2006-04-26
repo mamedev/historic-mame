@@ -27,7 +27,6 @@ void K053936GP_1_zoom_draw(mame_bitmap *bitmap, const rectangle *cliprect, tilem
 
 
 // 1st-Tier GX/MW Variables and Functions
-extern int konamigx_cfgport;
 extern UINT8  konamigx_wrport1_0, konamigx_wrport1_1;
 extern UINT16 konamigx_wrport2;
 

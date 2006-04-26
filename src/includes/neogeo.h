@@ -27,21 +27,16 @@ MACHINE_START( neogeo );
 MACHINE_RESET( neogeo );
 DRIVER_INIT( neogeo );
 
-WRITE16_HANDLER( neogeo_sram16_lock_w );
-WRITE16_HANDLER( neogeo_sram16_unlock_w );
-READ16_HANDLER( neogeo_sram16_r );
-WRITE16_HANDLER( neogeo_sram16_w );
-
 NVRAM_HANDLER( neogeo );
 
 READ16_HANDLER( neogeo_memcard16_r );
 WRITE16_HANDLER( neogeo_memcard16_w );
 MEMCARD_HANDLER( neogeo );
 
+WRITE16_HANDLER (neogeo_select_bios_vectors);
+WRITE16_HANDLER (neogeo_select_game_vectors);
 
 /*----------- defined in machine/neocrypt.c -----------*/
-
-extern int neogeo_fix_bank_type;
 
 void kof99_neogeo_gfx_decrypt(int extra_xor);
 void kof2000_neogeo_gfx_decrypt(int extra_xor);
@@ -73,7 +68,11 @@ void neo_pcm2_swap(int value);
 
 extern INT32 neogeo_rng;
 
-void install_sram_protection(void);
+WRITE16_HANDLER( neogeo_sram16_lock_w );
+WRITE16_HANDLER( neogeo_sram16_unlock_w );
+READ16_HANDLER( neogeo_sram16_r );
+WRITE16_HANDLER( neogeo_sram16_w );
+
 void fatfury2_install_protection(void);
 void mslugx_install_protection(void);
 void kof99_install_protection(void);
@@ -119,6 +118,8 @@ void samsh5bl_px_decrypt( void );
 
 /*----------- defined in vidhrdw/neogeo.c -----------*/
 
+extern int neogeo_fix_bank_type;
+
 VIDEO_START( neogeo_mvs );
 
 WRITE16_HANDLER( neogeo_setpalbank0_16_w );
@@ -133,12 +134,5 @@ WRITE16_HANDLER( neogeo_vidram16_modulo_w );
 READ16_HANDLER( neogeo_vidram16_modulo_r );
 WRITE16_HANDLER( neo_board_fix_16_w );
 WRITE16_HANDLER( neo_game_fix_16_w );
-WRITE16_HANDLER (neogeo_select_bios_vectors);
-WRITE16_HANDLER (neogeo_select_game_vectors);
 
 VIDEO_UPDATE( neogeo );
-VIDEO_UPDATE( neogeo_raster );
-void neogeo_vh_raster_partial_refresh(mame_bitmap *bitmap,int current_line);
-
-
-

@@ -1,17 +1,11 @@
 #ifndef _INCLUDES_N64_H_
 #define _INCLUDES_N64_H_
 
-extern UINT32 *rdram;
-extern UINT32 *rsp_imem;
-extern UINT32 *rsp_dmem;
+/*----------- defined in vidhrdw/n64.c -----------*/
 
-/* defined in vidhrdw/n64.c */
 extern VIDEO_START( n64 );
 extern VIDEO_UPDATE( n64 );
 extern void rdp_process_list(void);
-
-extern void signal_rcp_interrupt(int interrupt);
-extern void clear_rcp_interrupt(int interrupt);
 
 
 #define SP_INTERRUPT	0x1
@@ -40,6 +34,16 @@ extern void clear_rcp_interrupt(int interrupt);
 #define DP_STATUS_XBUS_DMA		0x01
 #define DP_STATUS_FREEZE		0x02
 #define DP_STATUS_FLUSH			0x04
+
+/*----------- defined in machine/n64.c -----------*/
+
+extern UINT32 *rdram;
+extern UINT32 *rsp_imem;
+extern UINT32 *rsp_dmem;
+
+extern void signal_rcp_interrupt(int interrupt);
+extern void clear_rcp_interrupt(int interrupt);
+
 
 /* read/write handlers for the N64 subsystems */
 extern READ32_HANDLER( n64_mi_reg_r );

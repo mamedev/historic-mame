@@ -21,7 +21,7 @@ Hammerin' Harry / Daiku no Gensan  1990  M82(3)          N
 Pound for Pound                    1990  M85             N
 Air Duel                           1990  M72?            Y
 Cosmic Cop /                       1991  M84             N
-  Gallop - Armed Police Unit       1991  M73?            N
+  Gallop - Armed Police Unit       1991  M72             N
 Ken-Go                             1991  ?           Encrypted
 
 (1) different addressing PALs, so different memory map

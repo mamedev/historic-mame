@@ -17,7 +17,6 @@ WRITE8_HANDLER( segar_w );
 
 /*----------- defined in sndhrdw/segar.c -----------*/
 
-WRITE8_HANDLER( astrob_speech_port_w );
 WRITE8_HANDLER( astrob_audio_ports_w );
 WRITE8_HANDLER( spaceod_audio_ports_w );
 WRITE8_HANDLER( monsterb_audio_8255_w );
@@ -32,10 +31,6 @@ WRITE8_HANDLER( monsterb_sh_offset_a0_a3_w );
 WRITE8_HANDLER( monsterb_sh_offset_a4_a7_w );
 WRITE8_HANDLER( monsterb_sh_offset_a8_a11_w );
 WRITE8_HANDLER( monsterb_sh_rom_select_w );
-
-/* temporary speech handling through samples */
-int astrob_speech_sh_start(const sound_config *msound);
-void astrob_speech_sh_update(void);
 
 /* sample names */
 extern const char *astrob_sample_names[];

@@ -67,6 +67,7 @@ WRITE8_HANDLER( williams2_7segment_w );
 extern UINT8 *mayday_protection;
 READ8_HANDLER( mayday_protection_r );
 
+WRITE8_HANDLER( defender_video_control_w );
 
 /*----------- defined in vidhrdw/williams.c -----------*/
 
@@ -96,9 +97,6 @@ extern UINT8 williams2_tilemap_config;
 extern UINT8 williams_cocktail;
 
 
-WRITE8_HANDLER( defender_video_control_w );
-WRITE8_HANDLER( williams_videoram_w );
-WRITE8_HANDLER( williams2_videoram_w );
 WRITE8_HANDLER( williams_blitter_w );
 WRITE8_HANDLER( williams_paletteram_w );
 WRITE8_HANDLER( blaster_remap_select_w );

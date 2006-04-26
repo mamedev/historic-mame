@@ -843,7 +843,7 @@ ROM_START( macrossp )
 	ROM_LOAD16_BYTE( "bp964a.u24", 0x000000, 0x400000, CRC(93f90336) SHA1(75daa2f8cedc732cf5ef98254f61748c94b94aea) )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND2, 0 )
-	/* Filled in below in init routine */
+	ROM_COPY( REGION_SOUND1, 0x400000, 0x000000, 0x400000 )
 ROM_END
 
 ROM_START( quizmoon )
@@ -879,7 +879,7 @@ ROM_START( quizmoon )
 	ROM_REGION( 0x0200000, REGION_GFX4, 0 )
 	ROM_LOAD( "u17.bin", 0x0000000, 0x0200000, CRC(ff93c949) SHA1(13917d73a6cb70d03d0335bd816bf6b094758d0b) )
 
-	ROM_REGION( 0x400000, REGION_GFX5, 0 )
+	ROM_REGION( 0x400000, REGION_GFX5, ROMREGION_ERASE00 )
 	/* nothing on this game? */
 
 	ROM_REGION16_BE( 0x800000, REGION_SOUND1, 0 )
@@ -887,14 +887,14 @@ ROM_START( quizmoon )
 	ROM_LOAD16_BYTE( "u24.bin", 0x0000001, 0x0400000, CRC(5b12d0b1) SHA1(c5ddff2053148a1da0710a10f48689bf5c736ae4) )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND2, 0 )
-	/* Filled in below in init routine */
+	ROM_COPY( REGION_SOUND1, 0x400000, 0x000000, 0x400000 )
 
 	ROM_REGION16_BE( 0x800000, REGION_SOUND3, 0 )
 	ROM_LOAD16_BYTE( "u27.bin", 0x0000000, 0x0400000, CRC(bd75d165) SHA1(2da770d15c812cbfdb4e3048d320071edffccfa1) )
 	ROM_LOAD16_BYTE( "u25.bin", 0x0000001, 0x0400000, CRC(3b9689bc) SHA1(0857c3d3e9810f9468f7c17f8b795825c55a9f08) )
 
 	ROM_REGION16_BE( 0x400000, REGION_SOUND4, 0 )
-	/* Filled in below in init routine */
+	ROM_COPY( REGION_SOUND3, 0x400000, 0x000000, 0x400000 )
 ROM_END
 
 
@@ -912,26 +912,11 @@ PC :00018110 018110: beq     18104
 
 static DRIVER_INIT( macrossp )
 {
-	/* Expand top half of sound ROM into second banked sound area */
-	const UINT8* src=memory_region(REGION_SOUND1);
-	UINT8* dst=memory_region(REGION_SOUND2);
-
-	memcpy(dst,src+0x400000,0x400000);
-
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0xf10158, 0xf1015b, 0, 0, macrossp_speedup_w );
 }
 
 static DRIVER_INIT( quizmoon )
 {
-	/* Expand top half of sound ROM into second banked sound area */
-	const UINT8* src=memory_region(REGION_SOUND1);
-	UINT8* dst=memory_region(REGION_SOUND2);
-
-	memcpy(dst,src+0x400000,0x400000);
-
-	src=memory_region(REGION_SOUND3);
-	dst=memory_region(REGION_SOUND4);
-	memcpy(dst,src+0x400000,0x400000);
 }
 
 GAME( 1996, macrossp, 0, macrossp, macrossp, macrossp, ROT270, "Banpresto", "Macross Plus", GAME_IMPERFECT_GRAPHICS )

@@ -390,6 +390,25 @@ ROM_START( amidaro )
 	ROM_LOAD( "amidar.clr",   0x0000, 0x0020, CRC(f940dcc3) SHA1(1015e56f37c244a850a8f4bf0e36668f047fd46d) )
 ROM_END
 
+ROM_START( amidarb )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "ami2gor.2c", 0x0000, 0x1000, CRC(9ad2dcd2) SHA1(43ceb93d891c1ebf55e7c26de13e3db8e1d26f6d) )
+	ROM_LOAD( "2.2f",       0x1000, 0x1000, CRC(66282ff5) SHA1(986778278eb339768d190460680e7aa698812488) )
+	ROM_LOAD( "3.2j",       0x2000, 0x1000, CRC(b0860e31) SHA1(8fb92b0e71c826a509a8f712553de0f4a636286f) )
+	ROM_LOAD( "4.2m",       0x3000, 0x1000, CRC(4a4086c9) SHA1(6f309b67dc68e06e6eb1d3ee2ae75afe253a4ce3) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "8.11d",      0x0000, 0x1000, CRC(8ca7b750) SHA1(4f4c2915503b85abe141d717fd254ee10c9da99e) )
+	ROM_LOAD( "9.9d",       0x1000, 0x1000, CRC(9b5bdc0a) SHA1(84d953618c8bf510d23b42232a856ac55f1baff5) )
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "5.5f",      0x0000, 0x0800, CRC(2082ad0a) SHA1(c6014d9575e92adf09b0961c2158a779ebe940c4) )
+	ROM_LOAD( "6.5h",      0x0800, 0x0800, CRC(3029f94f) SHA1(3b432b42e79f8b0a7d65e197f373a04e3c92ff20) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "n82s123n.6e",   0x0000, 0x0020, CRC(01004d3f) SHA1(e53cbc54ea96e846481a67bbcccf6b1726e70f9c) )
+ROM_END
+
 ROM_START( amigo )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "2732.a1",      0x0000, 0x1000, CRC(930dc856) SHA1(7022f1f26830baccdc8b8f0b10fb1d1ccb080f22) )
@@ -474,6 +493,7 @@ ROM_END
 GAME( 1981, amidar,  0,       amidar, amidar,  amidar,       ROT90, "Konami", "Amidar", GAME_SUPPORTS_SAVE )
 GAME( 1982, amidaru, amidar,  amidar, amidaru, amidar,       ROT90, "Konami (Stern license)", "Amidar (Stern)", GAME_SUPPORTS_SAVE )
 GAME( 1982, amidaro, amidar,  amidar, amidaro, amidar,       ROT90, "Konami (Olympia license)", "Amidar (Olympia)", GAME_SUPPORTS_SAVE )
+GAME( 1982, amidarb, amidar,  amidar, amidaru, amidar,       ROT90, "bootleg", "Amidar (Bootleg)", GAME_SUPPORTS_SAVE ) /* Simular to Amigo bootleg */
 GAME( 1982, amigo,   amidar,  amidar, amidaru, amidar,       ROT90, "bootleg", "Amigo", GAME_SUPPORTS_SAVE )
 GAME( 1981, turtles, 0,       amidar, turtles, scramble_ppi, ROT90, "[Konami] (Stern license)", "Turtles", GAME_SUPPORTS_SAVE )
 GAME( 1981, turpin,  turtles, amidar, turpin,  scramble_ppi, ROT90, "[Konami] (Sega license)", "Turpin", GAME_SUPPORTS_SAVE )

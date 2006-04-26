@@ -12,6 +12,13 @@ Notes:
   "kung-fu master" on the introduction screen, the only original doing that is
   spartanx but the ROMs don't match after the copyright notice.
 
+Battle Bird (c) 1985 - Not Dumped
+ This game is on IREM's M64 platform which is a two tiered boardset.
+ Battle Bird is believed to have a limited release.
+ Two pictures of the PCB set appeared on the internet as well as showing two screen shots.
+ The picture of the board showed a genuine IREM License Seal PCB 1037 sticker and Serial # 353887
+     Top board: M64-S-A  Looks to contain Nec D780C, Yamaha YM2149 & YM2151 + 2 roms
+  Bottom board: M64-A-C  Mostly out of the picture, so no additional info.
 
 
 The following information is gathered from Kung Fu Master; the board was most

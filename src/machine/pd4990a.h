@@ -20,7 +20,6 @@ void pd4990a_addretrace (void);
 void pd4990a_init(void);
 READ8_HANDLER( pd4990a_testbit_r );
 READ8_HANDLER( pd4990a_databit_r );
-void pd4990a_control_w(unsigned short);
 WRITE16_HANDLER( pd4990a_control_16_w );
 void pd4990a_increment_day(void);
 void pd4990a_increment_month(void);

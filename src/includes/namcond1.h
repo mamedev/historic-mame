@@ -18,7 +18,7 @@
 extern UINT8 namcond1_gfxbank;
 
 extern UINT8 namcond1_h8_irq5_enabled;
-extern unsigned short int *namcond1_shared_ram;
+extern UINT16 *namcond1_shared_ram;
 
 extern READ16_HANDLER( namcond1_shared_ram_r );
 extern READ16_HANDLER( namcond1_cuskey_r );

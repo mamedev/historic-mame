@@ -5,6 +5,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "atari_vg.h"
 
 #define EAROM_SIZE	0x40
 

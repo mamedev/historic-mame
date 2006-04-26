@@ -169,6 +169,23 @@ static ADDRESS_MAP_START( gselect_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xc000, 0xffff) AM_READWRITE(MRA8_RAM, getrivia_bitmap_w) AM_BASE(&videoram)
 ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( gepoker_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_ROM
+	AM_RANGE(0x2000, 0x3fff) AM_ROMBANK(1)
+	AM_RANGE(0x4000, 0x47ff) AM_RAM AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x4800, 0x4803) AM_READWRITE(ppi8255_0_r, ppi8255_0_w)
+	AM_RANGE(0x5000, 0x5003) AM_READWRITE(ppi8255_1_r, ppi8255_1_w)
+	AM_RANGE(0x60ef, 0x60ef) AM_WRITE(banksel_3_1_w)
+	AM_RANGE(0x60f7, 0x60f7) AM_WRITE(banksel_2_2_w)
+	AM_RANGE(0x60fb, 0x60fb) AM_WRITE(banksel_2_1_w)
+	AM_RANGE(0x60fd, 0x60fd) AM_WRITE(banksel_1_2_w)
+	AM_RANGE(0x60fe, 0x60fe) AM_WRITE(banksel_1_1_w)
+	AM_RANGE(0x8000, 0x8002) AM_WRITE(MWA8_RAM) AM_BASE(&drawctrl)
+	AM_RANGE(0x8000, 0xbfff) AM_ROM /* space for diagnostic ROM? */
+	AM_RANGE(0xe000, 0xffff) AM_ROM
+	AM_RANGE(0xc000, 0xffff) AM_READWRITE(MRA8_RAM, getrivia_bitmap_w) AM_BASE(&videoram)
+ADDRESS_MAP_END
+
 INPUT_PORTS_START( getrivia )
 	PORT_START
 	PORT_DIPNAME( 0x03, 0x03, "Questions" )
@@ -337,6 +354,15 @@ static MACHINE_DRIVER_START( gselect )
 	MDRV_MACHINE_RESET(gselect)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( gepoker )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(getrivia)
+
+	MDRV_CPU_MODIFY("cpu")
+	MDRV_CPU_PROGRAM_MAP(gepoker_map,0)
+MACHINE_DRIVER_END
+
 ROM_START( gt102c )
 	ROM_REGION( 0x24000, REGION_CPU1, 0 )
 	ROM_LOAD( "prog2_right", 0x00000, 0x2000, CRC(76fdc3a3) SHA1(212e09644b9cab334aad22ec5860e8638c6ba3fa) )
@@ -442,7 +468,45 @@ ROM_START( gs4002 )
 	ROM_LOAD( "slot.5",       0x16000, 0x2000, CRC(cd7cfa4c) SHA1(aa3de086e5a1018b9e5a18403a6144a6b0ed1036) )
 ROM_END
 
+/*
+Greyhound Poker board...
+
+Standard Greyhound Electronics Inc UV-1B mainboard.
+
+Rom board UVM 10 B:
+
+Battery backed up NEC D449C ram
+PAL16R4
+74L374
+
+Roms in this order:
+
+Label            Type   Name / Info in rom
+------------------------------------------------------
+m105_high        2764   Version 50.02
+m105_low         2764
+m105_poker       2764   Joker Poker CB 10-19-88
+m105_blackjack   2764   Black Jack ICB 8-16-84
+m105_bones       2764   Rolling Bones ICB 8-16-84
+
+*/
+
+ROM_START( gepoker )
+	ROM_REGION( 0x1b000, REGION_CPU1, ROMREGION_ERASEFF )
+	ROM_LOAD( "m105_low",       0x00000, 0x2000, CRC(08b996f2) SHA1(5f5efb5015ec9571cc94734c18debfadaa28f585) )
+	ROM_LOAD( "m105_high",      0x0e000, 0x2000, CRC(6ddc1750) SHA1(ee19206b7f4a98e3e7647414127f4e09b3e9134f) )
+	/* Banked roms */
+	ROM_LOAD( "m105_blackjack", 0x10000, 0x2000, CRC(cff27ffd) SHA1(fd85b54400b2f22ae92042b01a2c162e64d2d066) )
+	ROM_LOAD( "m105_poker",     0x12000, 0x2000, CRC(a590af75) SHA1(63bc64fbc9ac0c489b1f4894d77a4be13d7251e7) )
+	ROM_LOAD( "m105_bones",     0x14000, 0x2000, CRC(52d66cb6) SHA1(57db34906fcafd37f3a361df209dafe080aeac16) )
+	// empty
+	// empty
+ROM_END
+
+
 GAME( 1982, gs4002,   0,      gselect,  gselect,  0, ROT0, "G.E.I.", "Selection (Version 40.02TMB)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+
+GAME( 1984, gepoker, 0,       gepoker,  gselect,  0, ROT0, "Greyhound Electronics", "Poker (Version 50.02)",                  GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 
 GAME( 1984, gt102c,   0,      getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02C)",                 GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 GAME( 1984, gt102b,   0,      getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02B)",                 GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )

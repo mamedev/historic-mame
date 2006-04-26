@@ -1,6 +1,7 @@
 /* Dallas DS2404 RTC/NVRAM */
 
 #include "driver.h"
+#include "ds2404.h"
 #include <time.h>
 
 typedef enum {

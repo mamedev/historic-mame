@@ -444,7 +444,7 @@ ROM_START( gradius3 )
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "945_m05.d9",				0x00000, 0x10000, CRC(c8c45365) SHA1(b9a7b736b52bca42c7b8c8ed64c8df73e0116158) )
 
-	ROM_REGION( 0x20000, REGION_GFX1, 0 )	/* fake */
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_ERASE00 )	/* fake */
 	/* gfx data is dynamically generated in RAM */
 
 	ROM_REGION( 0x200000, REGION_GFX2, 0 )	/* graphics (addressable by the main CPU) */
@@ -486,7 +486,7 @@ ROM_START( grdius3a )
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "945_m05.d9",				0x00000, 0x10000, CRC(c8c45365) SHA1(b9a7b736b52bca42c7b8c8ed64c8df73e0116158) )
 
-	ROM_REGION( 0x20000, REGION_GFX1, 0 )	/* fake */
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_ERASE00 )	/* fake */
 	/* gfx data is dynamically generated in RAM */
 
 	ROM_REGION( 0x200000, REGION_GFX2, 0 )	/* graphics (addressable by the main CPU) */
@@ -528,7 +528,7 @@ ROM_START( grdius3e )
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "945_m05.d9",				0x00000, 0x10000, CRC(c8c45365) SHA1(b9a7b736b52bca42c7b8c8ed64c8df73e0116158) ) /* 945_r05.d9 */
 
-	ROM_REGION( 0x20000, REGION_GFX1, 0 )	/* fake */
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_ERASE00 )	/* fake */
 	/* gfx data is dynamically generated in RAM */
 
 	ROM_REGION( 0x200000, REGION_GFX2, 0 )	/* graphics (addressable by the main CPU) */

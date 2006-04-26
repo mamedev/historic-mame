@@ -36,7 +36,6 @@ READ8_HANDLER( wbml_paged_videoram_r );
 WRITE8_HANDLER( wbml_paged_videoram_w );
 WRITE8_HANDLER( system1_background_collisionram_w );
 WRITE8_HANDLER( system1_sprites_collisionram_w );
-WRITE8_HANDLER( system1_videoram_w );
 WRITE8_HANDLER( system1_paletteram_w );
 WRITE8_HANDLER( system1_backgroundram_w );
 VIDEO_UPDATE( system1 );

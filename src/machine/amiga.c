@@ -11,9 +11,18 @@
 #include "driver.h"
 #include "includes/amiga.h"
 #include "cpu/m68000/m68000.h"
+#include "machine/6526cia.h"
 
-#define LOG_CUSTOM	1
-#define LOG_CIA		1
+
+/*************************************
+ *
+ *  Debugging
+ *
+ *************************************/
+
+#define LOG_CUSTOM	0
+#define LOG_CIA		0
+#define LOG_BLITS	0
 
 
 
@@ -33,48 +42,6 @@
  *  Type definitions
  *
  *************************************/
-
-typedef struct _cia_timer cia_timer;
-typedef struct _cia_port cia_port;
-typedef struct _cia_state cia_state;
-
-struct _cia_timer
-{
-	UINT16		latch;
-	UINT16		count;
-	UINT8		mode;
-	UINT8		started;
-	UINT8		irq;
-	mame_timer *timer;
-	cia_state *	cia;
-};
-
-struct _cia_port
-{
-	UINT8		ddr;
-	UINT8		latch;
-	int			(*read)(void);
-	void		(*write)(int);
-};
-
-struct _cia_state
-{
-	UINT16			irq;
-
-	cia_port		port[2];
-	cia_timer		timer[2];
-
-	/* Time Of the Day clock (TOD) */
-	UINT32			tod;
-	UINT32			tod_latch;
-	UINT8			tod_running;
-	UINT32			alarm;
-
-	/* Interrupts */
-	UINT8			icr;
-	UINT8			ics;
-};
-
 
 typedef struct _autoconfig_device autoconfig_device;
 struct _autoconfig_device
@@ -98,24 +65,221 @@ UINT16 *amiga_custom_regs;
 UINT16 *amiga_expansion_ram;
 UINT16 *amiga_autoconfig_mem;
 
-static cia_state cia_8520[2];
-static const struct amiga_machine_interface *amiga_intf;
+const amiga_machine_interface *amiga_intf;
 
 static autoconfig_device *autoconfig_list;
 static autoconfig_device *cur_autoconfig;
 
+const char *amiga_custom_names[0x100] =
+{
+	/* 0x000 */
+	"BLTDDAT", 		"DMACONR", 		"VPOSR", 		"VHPOSR",
+	"DSKDATR", 		"JOY0DAT", 		"JOY1DAT", 		"CLXDAT",
+	"ADKCONR", 		"POT0DAT", 		"POT1DAT", 		"POTGOR",
+	"SERDATR", 		"DSKBYTR", 		"INTENAR", 		"INTREQR",
+	/* 0x020 */
+	"DSKPTH", 		"DSKPTL", 		"DSKLEN", 		"DSKDAT",
+	"REFPTR", 		"VPOSW", 		"VHPOSW", 		"COPCON",
+	"SERDAT", 		"SERPER", 		"POTGO", 		"JOYTEST",
+	"STREQU", 		"STRVBL", 		"STRHOR", 		"STRLONG",
+	/* 0x040 */
+	"BLTCON0", 		"BLTCON1", 		"BLTAFWM", 		"BLTALWM",
+	"BLTCPTH", 		"BLTCPTL", 		"BLTBPTH", 		"BLTBPTL",
+	"BLTAPTH", 		"BLTAPTL", 		"BLTDPTH", 		"BLTDPTL",
+	"BLTSIZE", 		"UNK05A",		"UNK05C",		"UNK05E",
+	/* 0x060 */
+	"BLTCMOD", 		"BLTBMOD", 		"BLTAMOD", 		"BLTDMOD",
+	"UNK068",		"UNK06A",		"UNK06C",		"UNK06E",
+	"BLTCDAT", 		"BLTBDAT", 		"BLTADAT", 		"UNK076",
+	"UNK078",		"UNK07A",		"UNK07C",		"DSRSYNC",
+	/* 0x080 */
+	"COP1LCH", 		"COP1LCL", 		"COP2LCH", 		"COP2LCL",
+	"COPJMP1", 		"COPJMP2", 		"COPINS", 		"DIWSTRT",
+	"DIWSTOP", 		"DDFSTRT", 		"DDFSTOP", 		"DMACON",
+	"CLXCON", 		"INTENA", 		"INTREQ", 		"ADKCON",
+	/* 0x0A0 */
+	"AUD0LCH", 		"AUD0LCL", 		"AUD0LEN", 		"AUD0PER",
+	"AUD0VOL", 		"AUD0DAT", 		"UNK0AC",		"UNK0AE",
+	"AUD1LCH", 		"AUD1LCL", 		"AUD1LEN", 		"AUD1PER",
+	"AUD1VOL", 		"AUD1DAT", 		"UNK0BC",		"UNK0BE",
+	/* 0x0C0 */
+	"AUD2LCH", 		"AUD2LCL", 		"AUD2LEN", 		"AUD2PER",
+	"AUD2VOL", 		"AUD2DAT", 		"UNK0CC",		"UNK0CE",
+	"AUD3LCH", 		"AUD3LCL", 		"AUD3LEN", 		"AUD3PER",
+	"AUD3VOL", 		"AUD3DAT", 		"UNK0DC",		"UNK0DE",
+	/* 0x0E0 */
+	"BPL1PTH", 		"BPL1PTL", 		"BPL2PTH", 		"BPL2PTL",
+	"BPL3PTH", 		"BPL3PTL", 		"BPL4PTH", 		"BPL4PTL",
+	"BPL5PTH", 		"BPL5PTL", 		"BPL6PTH", 		"BPL6PTL",
+	"UNK0F8",		"UNK0FA",		"UNK0FC",		"UNK0FE",
+	/* 0x100 */
+	"BPLCON0", 		"BPLCON1", 		"BPLCON2", 		"UNK106",
+	"BPL1MOD", 		"BPL2MOD", 		"UNK10C",		"UNK10E",
+	"BPL1DAT", 		"BPL2DAT", 		"BPL3DAT", 		"BPL4DAT",
+	"BPL5DAT", 		"BPL6DAT", 		"UNK11C",		"UNK11E",
+	/* 0x120 */
+	"SPR0PTH", 		"SPR0PTL", 		"SPR1PTH", 		"SPR1PTL",
+	"SPR2PTH", 		"SPR2PTL", 		"SPR3PTH", 		"SPR3PTL",
+	"SPR4PTH", 		"SPR4PTL", 		"SPR5PTH", 		"SPR5PTL",
+	"SPR6PTH", 		"SPR6PTL", 		"SPR7PTH", 		"SPR7PTL",
+	/* 0x140 */
+	"SPR0POS", 		"SPR0CTL", 		"SPR0DATA", 	"SPR0DATB",
+	"SPR1POS", 		"SPR1CTL", 		"SPR1DATA", 	"SPR1DATB",
+	"SPR2POS", 		"SPR2CTL", 		"SPR2DATA", 	"SPR2DATB",
+	"SPR3POS", 		"SPR3CTL", 		"SPR3DATA", 	"SPR3DATB",
+	/* 0x160 */
+	"SPR4POS", 		"SPR4CTL", 		"SPR4DATA", 	"SPR4DATB",
+	"SPR5POS", 		"SPR5CTL", 		"SPR5DATA", 	"SPR5DATB",
+	"SPR6POS", 		"SPR6CTL", 		"SPR6DATA", 	"SPR6DATB",
+	"SPR7POS", 		"SPR7CTL", 		"SPR7DATA", 	"SPR7DATB",
+	/* 0x180 */
+	"COLOR00", 		"COLOR01", 		"COLOR02", 		"COLOR03",
+	"COLOR04", 		"COLOR05", 		"COLOR06", 		"COLOR07",
+	"COLOR08", 		"COLOR09", 		"COLOR10", 		"COLOR11",
+	"COLOR12", 		"COLOR13", 		"COLOR14", 		"COLOR15",
+	/* 0x1A0 */
+	"COLOR16", 		"COLOR17", 		"COLOR18", 		"COLOR19",
+	"COLOR20", 		"COLOR21", 		"COLOR22", 		"COLOR23",
+	"COLOR24", 		"COLOR25", 		"COLOR26", 		"COLOR27",
+	"COLOR28", 		"COLOR29", 		"COLOR30", 		"COLOR31",
+	/* 0x1C0 */
+	"UNK1C0",		"UNK1C2",		"UNK1C4",		"UNK1C6",
+	"UNK1C8",		"UNK1CA",		"UNK1CC",		"UNK1CE",
+	"UNK1D0",		"UNK1D2",		"UNK1D4",		"UNK1D6",
+	"UNK1D8",		"UNK1DA",		"UNK1DC",		"UNK1DE",
+	/* 0x1E0 */
+	"UNK1E0",		"UNK1E2",		"UNK1E4",		"UNK1E6",
+	"UNK1E8",		"UNK1EA",		"UNK1EC",		"UNK1EE",
+	"UNK1F0",		"UNK1F2",		"UNK1F4",		"UNK1F6",
+	"UNK1F8",		"UNK1FA",		"UNK1FC",		"UNK1FE"
+};
 
 
-/***************************************************************************
 
-    General routines and registers
+/*************************************
+ *
+ *  Prototypes
+ *
+ *************************************/
 
-***************************************************************************/
+static void custom_reset(void);
+static void autoconfig_reset(void);
+static void amiga_cia_0_irq(int state);
+static void amiga_cia_1_irq(int state);
 
 
 
+/*************************************
+ *
+ *  Machine config/reset
+ *
+ *************************************/
 
-static void check_ints(void)
+void amiga_machine_config(const amiga_machine_interface *intf)
+{
+	cia6526_interface cia_intf[2];
+
+	amiga_intf = intf;
+
+	/* set up CIA interfaces */
+	memset(&cia_intf, 0, sizeof(cia_intf));
+	cia_intf[0].type = CIA8520;
+	cia_intf[0].clock = O2_TIMER_RATE;
+	cia_intf[0].tod_clock = 0.0;
+	cia_intf[0].irq_func = amiga_cia_0_irq;
+	cia_intf[0].port[0].read = intf->cia_0_portA_r;
+	cia_intf[0].port[0].write = intf->cia_0_portA_w;
+	cia_intf[0].port[1].read = intf->cia_0_portB_r;
+	cia_intf[0].port[1].write = intf->cia_0_portB_w;
+	cia_config(0, &cia_intf[0]);
+
+	cia_intf[1].type = CIA8520;
+	cia_intf[1].clock = O2_TIMER_RATE;
+	cia_intf[1].tod_clock = 0.0;
+	cia_intf[1].irq_func = amiga_cia_1_irq;
+	cia_intf[1].port[0].read = intf->cia_1_portA_r;
+	cia_intf[1].port[0].write = intf->cia_1_portA_w;
+	cia_intf[1].port[1].read = intf->cia_1_portB_r;
+	cia_intf[1].port[1].write = intf->cia_1_portB_w;
+	cia_config(1, &cia_intf[1]);
+}
+
+
+static void amiga_m68k_reset(void)
+{
+	logerror("Executed RESET at PC=%06x\n", activecpu_get_pc());
+
+	/* reset all the devices */
+	amiga_cia_w(0x1001/2, 1, 0);
+//  machine_reset_amiga();
+	if (activecpu_get_pc() < 0x80000)
+		memory_set_opbase(0);
+}
+
+
+MACHINE_RESET( amiga )
+{
+	/* set m68k reset  function */
+	cpunum_set_info_fct(0, CPUINFO_PTR_M68K_RESET_CALLBACK, (genf *)amiga_m68k_reset);
+
+	/* Initialize the various chips */
+	cia_reset();
+	custom_reset();
+	autoconfig_reset();
+
+	/* set the overlay bit */
+	amiga_cia_w(0x1001/2, 1, 0);
+
+	/* call the system-specific callback */
+	if (amiga_intf->reset_callback)
+		(*amiga_intf->reset_callback)();
+}
+
+
+
+/*************************************
+ *
+ *  Per scanline callback
+ *
+ *************************************/
+
+INTERRUPT_GEN( amiga_scanline_callback )
+{
+	int scanline = 261 - cpu_getiloops();
+
+	/* on the first scanline, we do some extra bookkeeping */
+	if (scanline == 0)
+	{
+		/* signal VBLANK IRQ */
+		amiga_custom_w(REG_INTREQ, 0x8000 | INTENA_VERTB, 0);
+
+		/* clock the first CIA TOD */
+		cia_clock_tod(0);
+
+		/* call the system-specific callback */
+		if (amiga_intf->scanline_callback)
+			(*amiga_intf->scanline_callback)();
+	}
+
+	/* on every scanline, clock the second CIA TOD */
+	cia_clock_tod(1);
+
+	/* render this scanline */
+	amiga_render_scanline(scanline);
+
+	/* force a sound update */
+	amiga_audio_update();
+}
+
+
+
+/*************************************
+ *
+ *  Interrupt management
+ *
+ *************************************/
+
+static void update_irqs(void)
 {
 	int ints = CUSTOM_REG(REG_INTENA) & CUSTOM_REG(REG_INTREQ);
 	int irq = -1;
@@ -156,719 +320,634 @@ static void check_ints(void)
 }
 
 
-/***************************************************************************
 
-    Blitter emulation
+/*************************************
+ *
+ *  Standard joystick conversion
+ *
+ *************************************/
 
-***************************************************************************/
+UINT32 amiga_joystick_convert(void *param)
+{
+	UINT8 bits = readinputportbytag(param);
+	int up = (bits >> 0) & 1;
+	int down = (bits >> 1) & 1;
+	int left = (bits >> 2) & 1;
+	int right = (bits >> 3) & 1;
 
-static unsigned short blitter_fill( unsigned short src, int mode, int *fc ) {
-	int i, data;
-	unsigned short dst = 0;
+	if (left) up ^= 1;
+	if (right) down ^= 1;
 
-	for ( i = 0; i < 16; i++ ) {
-		data = ( src >> i ) & 1;
-		if ( data ) {
-			*fc ^= 1;
-			if ( mode & 0x0010 ) /* Exclusive mode */
-				dst |= ( data ^ *fc ) << i;
-			if ( mode & 0x0008 ) /* Inclusive mode */
-				dst |= ( data | *fc ) << i;
-		} else
-			dst |= ( *fc << i );
-	}
-
-	return dst;
+	return down | (right << 1) | (up << 8) | (left << 9);
 }
 
-/* Ascending */
-#define BLIT_FUNCA( num, op ) static int blit_func_a##num ( unsigned short *old_data,		\
-															unsigned short *new_data,		\
-														 	int first, int last ) {			\
-	unsigned short dataA, dataB, dataC; 													\
-	int shiftA, shiftB;																		\
-																							\
-	dataA =	new_data[0];																	\
-	dataB =	new_data[1];																	\
-	dataC =	new_data[2];																	\
-																							\
-	if ( first )																			\
-		dataA &= CUSTOM_REG(REG_BLTAFWM);													\
-																							\
-	if ( last )																				\
-		dataA &= CUSTOM_REG(REG_BLTALWM);													\
-																							\
-	shiftA = ( CUSTOM_REG(REG_BLTCON0) >> 12 ) & 0x0f;										\
-	shiftB = ( CUSTOM_REG(REG_BLTCON1) >> 12 ) & 0x0f;										\
-																							\
-	if ( shiftA ) {																			\
-		dataA >>= shiftA;																	\
-		if ( !first )																		\
-			dataA |= ( old_data[0] & ( ( 1 << shiftA ) - 1 ) ) << ( 16 - shiftA );			\
-	}																						\
-																							\
-	if ( shiftB ) {																			\
-		dataB >>= shiftB;																	\
-		if ( !first )																		\
-			dataB |= ( old_data[1] & ( ( 1 << shiftB ) - 1 ) ) << ( 16 - shiftB );			\
-	}																						\
-																							\
-	return ( op );																			\
-}
 
-BLIT_FUNCA( 0, ( ~dataA & ~dataB & ~dataC ) ) /* /A/B/C */
-BLIT_FUNCA( 1, ( ~dataA & ~dataB &  dataC ) ) /* /A/B C */
-BLIT_FUNCA( 2, ( ~dataA &  dataB & ~dataC ) ) /* /A B/C */
-BLIT_FUNCA( 3, ( ~dataA &  dataB &  dataC ) ) /* /A B C */
-BLIT_FUNCA( 4, (  dataA & ~dataB & ~dataC ) ) /*  A/B/C */
-BLIT_FUNCA( 5, (  dataA & ~dataB &  dataC ) ) /*  A/B C */
-BLIT_FUNCA( 6, (  dataA &  dataB & ~dataC ) ) /*  A B/C */
-BLIT_FUNCA( 7, (  dataA &  dataB &  dataC ) ) /*  A B C */
 
-static int (*blit_func_a[8])( unsigned short *old_data, unsigned short *new_data, int first, int last ) = {
-	blit_func_a0,
-	blit_func_a1,
-	blit_func_a2,
-	blit_func_a3,
-	blit_func_a4,
-	blit_func_a5,
-	blit_func_a6,
-	blit_func_a7
-};
+/*************************************
+ *
+ *  Ascending blitter variant
+ *
+ *************************************/
 
-/* Descending */
-#define BLIT_FUNCD( num, op ) static int blit_func_d##num ( unsigned short *old_data,		\
-															unsigned short *new_data,		\
-															int first, int last ) {			\
-	unsigned short dataA, dataB, dataC; 													\
-	int shiftA, shiftB;																		\
-																							\
-	dataA =	new_data[0];																	\
-	dataB =	new_data[1];																	\
-	dataC =	new_data[2];																	\
-																							\
-	if ( first )																			\
-		dataA &= CUSTOM_REG(REG_BLTAFWM);													\
-																							\
-	if ( last )																				\
-		dataA &= CUSTOM_REG(REG_BLTALWM);													\
-																							\
-	shiftA = ( CUSTOM_REG(REG_BLTCON0) >> 12 ) & 0x0f;										\
-	shiftB = ( CUSTOM_REG(REG_BLTCON1) >> 12 ) & 0x0f;										\
-																							\
-	if ( shiftA ) {																			\
-		dataA <<= shiftA;																	\
-		if ( !first )																		\
-			dataA |= ( old_data[0] >> ( 16 - shiftA ) ) & ( ( 1 << shiftA ) - 1 );			\
-	}																						\
-																							\
-	if ( shiftB ) {																			\
-		dataB <<= shiftB;																	\
-		if ( !first )																		\
-			dataB |= ( old_data[1] >> ( 16 - shiftB ) ) & ( ( 1 << shiftB ) - 1 );			\
-	}																						\
-																							\
-	return ( op );																			\
-}
+static unsigned int blit_ascending(void)
+{
+	unsigned int shifta = (CUSTOM_REG(REG_BLTCON0) >> 12) & 0xf;
+	unsigned int shiftb = (CUSTOM_REG(REG_BLTCON1) >> 12) & 0xf;
+	unsigned int height = (CUSTOM_REG(REG_BLTSIZE) >> 6) & 0x3ff;
+	unsigned int width = CUSTOM_REG(REG_BLTSIZE) & 0x3f;
+	UINT32 acca = 0, accb = 0;
+	unsigned int blitsum = 0;
+	unsigned int x, y;
 
-BLIT_FUNCD( 0, ( ~dataA & ~dataB & ~dataC ) ) /* /A/B/C */
-BLIT_FUNCD( 1, ( ~dataA & ~dataB &  dataC ) ) /* /A/B C */
-BLIT_FUNCD( 2, ( ~dataA &  dataB & ~dataC ) ) /* /A B/C */
-BLIT_FUNCD( 3, ( ~dataA &  dataB &  dataC ) ) /* /A B C */
-BLIT_FUNCD( 4, (  dataA & ~dataB & ~dataC ) ) /*  A/B/C */
-BLIT_FUNCD( 5, (  dataA & ~dataB &  dataC ) ) /*  A/B C */
-BLIT_FUNCD( 6, (  dataA &  dataB & ~dataC ) ) /*  A B/C */
-BLIT_FUNCD( 7, (  dataA &  dataB &  dataC ) ) /*  A B C */
+	/* normalize height/width */
+	if (height == 0)
+		height = 0x400;
+	if (width == 0)
+		width = 0x40;
 
-static int (*blit_func_d[8])( unsigned short *old_data, unsigned short *new_data, int first, int last ) = {
-	blit_func_d0,
-	blit_func_d1,
-	blit_func_d2,
-	blit_func_d3,
-	blit_func_d4,
-	blit_func_d5,
-	blit_func_d6,
-	blit_func_d7
-};
+	/* iterate over the height */
+	for (y = 0; y < height; y++)
+	{
+		/* iterate over the width */
+		for (x = 0; x < width; x++)
+		{
+			UINT16 abc0, abc1, abc2, abc3;
+			unsigned int tempa, tempd = 0;
+			unsigned int b;
 
-/* General for Ascending/Descending */
-static int (**blit_func)( unsigned short *old_data, unsigned short *new_data, int first, int last );
-
-/* Line mode */
-#define BLIT_FUNCL( num, op ) static int blit_func_line##num ( unsigned short dataA,		\
-															   unsigned short dataB,		\
-															   unsigned short dataC ) {		\
-	return ( op );																			\
-}
-
-BLIT_FUNCL( 0, ( ~dataA & ~dataB & ~dataC ) ) /* /A/B/C */
-BLIT_FUNCL( 1, ( ~dataA & ~dataB &  dataC ) ) /* /A/B C */
-BLIT_FUNCL( 2, ( ~dataA &  dataB & ~dataC ) ) /* /A B/C */
-BLIT_FUNCL( 3, ( ~dataA &  dataB &  dataC ) ) /* /A B C */
-BLIT_FUNCL( 4, (  dataA & ~dataB & ~dataC ) ) /*  A/B/C */
-BLIT_FUNCL( 5, (  dataA & ~dataB &  dataC ) ) /*  A/B C */
-BLIT_FUNCL( 6, (  dataA &  dataB & ~dataC ) ) /*  A B/C */
-BLIT_FUNCL( 7, (  dataA &  dataB &  dataC ) ) /*  A B C */
-
-static int (*blit_func_line[8])( unsigned short dataA, unsigned short dataB, unsigned short dataC ) = {
-	blit_func_line0,
-	blit_func_line1,
-	blit_func_line2,
-	blit_func_line3,
-	blit_func_line4,
-	blit_func_line5,
-	blit_func_line6,
-	blit_func_line7
-};
-
-static void blitter_proc( int param ) {
-	/* Now we do the real blitting */
-	int	blt_total = 0;
-
-	CUSTOM_REG(REG_DMACON) |= 0x2000; /* Blit Zero, we modify it later */
-
-	if ( CUSTOM_REG(REG_BLTCON1) & 1 ) { /* Line mode */
-		int linesize, single_bit, single_flag, texture, sign, start, ptr[4], temp_ptr3;
-		unsigned short dataA, dataB;
-
-		if ( ( CUSTOM_REG(REG_BLTSIZE) & 0x003f ) != 0x0002 ) {
-			logerror("Blitter: BLTSIZE.w != 2 in line mode!\n" );
-		}
-
-		if ( ( CUSTOM_REG(REG_BLTCON0) & 0x0b00 ) != 0x0b00 ) {
-			logerror("Blitter: Channel selection incorrect in line mode!\n" );
-		}
-
-		linesize = ( CUSTOM_REG(REG_BLTSIZE) >> 6 ) & 0x3ff;
-		if ( linesize == 0 )
-			linesize = 0x400;
-
-		single_bit = CUSTOM_REG(REG_BLTCON1) & 0x0002;
-		single_flag = 0;
-		sign = CUSTOM_REG(REG_BLTCON1) & 0x0040;
-		texture = ( CUSTOM_REG(REG_BLTCON1) >> 12 ) & 0x0f;
-		start = ( CUSTOM_REG(REG_BLTCON0) >> 12 ) & 0x0f;
-
-		dataA = ( CUSTOM_REG(REG_BLTADAT) >> start );
-
-		ptr[0] = CUSTOM_REG_LONG(REG_BLTAPTH);
-		ptr[2] = CUSTOM_REG_LONG(REG_BLTCPTH);
-		ptr[3] = CUSTOM_REG_LONG(REG_BLTDPTH);
-
-		dataB = ( CUSTOM_REG(REG_BLTBDAT) >> texture ) | ( CUSTOM_REG(REG_BLTBDAT) << ( 16 - texture ) );
-
-		while ( linesize-- ) {
-			int dst_data = 0;
-			int i;
-
-			temp_ptr3 = ptr[3];
-
-			if ( CUSTOM_REG(REG_BLTCON0) & 0x0200 )
-				CUSTOM_REG(REG_BLTCDAT) = amiga_chip_ram_r(ptr[2]);
-
-			dataA = ( CUSTOM_REG(REG_BLTADAT) >> start );
-
-			if ( single_bit && single_flag ) dataA = 0;
-			single_flag = 1;
-
-			for ( i = 0; i < 8; i++ ) {
-				if ( CUSTOM_REG(REG_BLTCON0) & ( 1 << i ) ) {
-					dst_data |= (*blit_func_line[i])( dataA, ( dataB & 1 ) * 0xffff, CUSTOM_REG(REG_BLTCDAT) );
-				}
-			}
-
-			if ( !sign ) {
-				ptr[0] += CUSTOM_REG_SIGNED(REG_BLTAMOD);
-				if ( CUSTOM_REG(REG_BLTCON1) & 0x0010 ) {
-					if ( CUSTOM_REG(REG_BLTCON1) & 0x0008 ) { /* Decrement Y */
-						ptr[2] -= CUSTOM_REG_SIGNED(REG_BLTCMOD);
-						ptr[3] -= CUSTOM_REG_SIGNED(REG_BLTCMOD); /* ? */
-						single_flag = 0;
-					} else { /* Increment Y */
-						ptr[2] += CUSTOM_REG_SIGNED(REG_BLTCMOD);
-						ptr[3] += CUSTOM_REG_SIGNED(REG_BLTCMOD); /* ? */
-						single_flag = 0;
-					}
-				} else {
-					if ( CUSTOM_REG(REG_BLTCON1) & 0x0008 ) { /* Decrement X */
-						if ( start-- == 0 ) {
-							start = 15;
-							ptr[2] -= 2;
-							ptr[3] -= 2;
-						}
-					} else { /* Increment X */
-						if ( ++start == 16 ) {
-							start = 0;
-							ptr[2] += 2;
-							ptr[3] += 2;
-						}
-					}
-				}
-			} else
-				ptr[0] += CUSTOM_REG_SIGNED(REG_BLTBMOD);
-
-			if ( CUSTOM_REG(REG_BLTCON1) & 0x0010 ) {
-				if ( CUSTOM_REG(REG_BLTCON1) & 0x0004 ) { /* Decrement X */
-					if ( start-- == 0 ) {
-						start = 15;
-						ptr[2] -= 2;
-						ptr[3] -= 2;
-					}
-				} else {
-					if ( ++start == 16 ) { /* Increment X */
-						start = 0;
-						ptr[2] += 2;
-						ptr[3] += 2;
-					}
-				}
-			} else {
-				if ( CUSTOM_REG(REG_BLTCON1) & 0x0004 ) { /* Decrement Y */
-					ptr[2] -= CUSTOM_REG_SIGNED(REG_BLTCMOD);
-					ptr[3] -= CUSTOM_REG_SIGNED(REG_BLTCMOD); /* ? */
-					single_flag = 0;
-				} else { /* Increment Y */
-					ptr[2] += CUSTOM_REG_SIGNED(REG_BLTCMOD);
-					ptr[3] += CUSTOM_REG_SIGNED(REG_BLTCMOD); /* ? */
-					single_flag = 0;
-				}
-			}
-
-			sign = 0 > ( signed short )ptr[0];
-
-			blt_total |= dst_data;
-
-			if ( CUSTOM_REG(REG_BLTCON0) & 0x0100 )
-				amiga_chip_ram_w(temp_ptr3, dst_data);
-
-			dataB = ( dataB << 1 ) | ( dataB >> 15 );
-		}
-
-		CUSTOM_REG_LONG(REG_BLTAPTH) = ptr[0] & 0x1fffff;
-		CUSTOM_REG_LONG(REG_BLTCPTH) = ptr[2] & 0x1fffff;
-		CUSTOM_REG_LONG(REG_BLTDPTH) = ptr[3] & 0x1fffff;
-
-//      CUSTOM_REG(REG_BLTADAT) = dataA;
-//      CUSTOM_REG(REG_BLTBDAT) = dataB;
-
-	} else { /* Blit mode */
-		if ( CUSTOM_REG(REG_BLTCON0) & 0x0f00 ) {
-			int i, x, y;
-			int ptr[4] = { -1, -1, -1, -1 };
-			int width = ( CUSTOM_REG(REG_BLTSIZE) & 0x3f );
-			int height = ( ( CUSTOM_REG(REG_BLTSIZE) >> 6 ) & 0x3ff );
-			unsigned short old_data[3];
-			unsigned short new_data[3];
-			int fc = 0;
-
-			if ( CUSTOM_REG(REG_BLTCON0) & 0x800 )
-				ptr[0] = CUSTOM_REG_LONG(REG_BLTAPTH);
-
-			if ( CUSTOM_REG(REG_BLTCON0) & 0x400 )
-				ptr[1] = CUSTOM_REG_LONG(REG_BLTBPTH);
-
-			if ( CUSTOM_REG(REG_BLTCON0) & 0x200 )
-				ptr[2] = CUSTOM_REG_LONG(REG_BLTCPTH);
-
-			if ( CUSTOM_REG(REG_BLTCON0) & 0x100 )
+			/* fetch data for A */
+			if (CUSTOM_REG(REG_BLTCON0) & 0x0800)
 			{
-				ptr[3] = CUSTOM_REG_LONG(REG_BLTDPTH);
-				if ( ptr[3] > 0x7ffff )
-					goto done;
+				CUSTOM_REG(REG_BLTADAT) = amiga_chip_ram_r(CUSTOM_REG_LONG(REG_BLTAPTH));
+				CUSTOM_REG_LONG(REG_BLTAPTH) += 2;
 			}
 
-			if ( CUSTOM_REG(REG_BLTCON1) & 0x0002 ) { /* Descending mode */
-				blit_func = blit_func_d;
-				fc = ( CUSTOM_REG(REG_BLTCON1) >> 2 ) & 1; /* fill carry setup */
-			} else {
-				blit_func = blit_func_a;
+			/* fetch data for B */
+			if (CUSTOM_REG(REG_BLTCON0) & 0x0400)
+			{
+				CUSTOM_REG(REG_BLTBDAT) = amiga_chip_ram_r(CUSTOM_REG_LONG(REG_BLTBPTH));
+				CUSTOM_REG_LONG(REG_BLTBPTH) += 2;
 			}
 
-			if ( width == 0 )
-				width = 0x40;
-
-			if ( height == 0 )
-				height = 0x400;
-
-			for ( y = 0; y < height; y++ ) {
-				fc = ( CUSTOM_REG(REG_BLTCON1) >> 2 ) & 1; /* fill carry setup */
-				for ( x = 0; x < width; x++ ) {
-					int dst_data = 0;
-
-					/* get old data */
-					new_data[0] = old_data[0] = CUSTOM_REG(REG_BLTADAT);
-					new_data[1] = old_data[1] = CUSTOM_REG(REG_BLTBDAT);
-					new_data[2] = old_data[2] = CUSTOM_REG(REG_BLTCDAT);
-
-					/* get new data */
-					if ( ptr[0] != -1 )
-						new_data[0] = amiga_chip_ram_r(ptr[0]);
-
-					if ( ptr[1] != -1 )
-						new_data[1] = amiga_chip_ram_r(ptr[1]);
-
-					if ( ptr[2] != -1 )
-						new_data[2] = amiga_chip_ram_r(ptr[2]);
-
-					for ( i = 0; i < 8; i++ ) {
-						if ( CUSTOM_REG(REG_BLTCON0) & ( 1 << i ) ) {
-							dst_data |= (*blit_func[i])( old_data, new_data, x == 0, x == (width - 1) );
-						}
-					}
-
-					/* store new data */
-					CUSTOM_REG(REG_BLTADAT) = new_data[0];
-					CUSTOM_REG(REG_BLTBDAT) = new_data[1];
-					CUSTOM_REG(REG_BLTCDAT) = new_data[2];
-
-					if ( CUSTOM_REG(REG_BLTCON1) & 0x0002 ) { /* Descending mode */
-						if ( CUSTOM_REG(REG_BLTCON1) & 0x0018 ) /* Fill mode */
-							dst_data = blitter_fill( dst_data, CUSTOM_REG(REG_BLTCON1) & 0x18, &fc );
-
-						if ( ptr[3] != -1 ) {
-							amiga_chip_ram_w(ptr[3], dst_data);
-							ptr[3] -= 2;
-						}
-
-						if ( ptr[0] != -1 )
-							ptr[0] -= 2;
-
-						if ( ptr[1] != -1 )
-							ptr[1] -= 2;
-
-						if ( ptr[2] != -1 )
-							ptr[2] -= 2;
-					} else {
-						if ( ptr[3] != -1 ) {
-							amiga_chip_ram_w(ptr[3], dst_data);
-							ptr[3] += 2;
-						}
-
-						if ( ptr[0] != -1 )
-							ptr[0] += 2;
-
-						if ( ptr[1] != -1 )
-							ptr[1] += 2;
-
-						if ( ptr[2] != -1 )
-							ptr[2] += 2;
-					}
-					blt_total |= dst_data;
-				}
-
-				if ( CUSTOM_REG(REG_BLTCON1) & 0x0002 ) { /* Descending mode */
-					if ( ptr[0] != -1 )
-						ptr[0] -= CUSTOM_REG_SIGNED(REG_BLTAMOD);
-
-					if ( ptr[1] != -1 )
-						ptr[1] -= CUSTOM_REG_SIGNED(REG_BLTBMOD);
-
-					if ( ptr[2] != -1 )
-						ptr[2] -= CUSTOM_REG_SIGNED(REG_BLTCMOD);
-
-					if ( ptr[3] != -1 )
-						ptr[3] -= CUSTOM_REG_SIGNED(REG_BLTDMOD);
-				} else {
-					if ( ptr[0] != -1 )
-						ptr[0] += CUSTOM_REG_SIGNED(REG_BLTAMOD);
-
-					if ( ptr[1] != -1 )
-						ptr[1] += CUSTOM_REG_SIGNED(REG_BLTBMOD);
-
-					if ( ptr[2] != -1 )
-						ptr[2] += CUSTOM_REG_SIGNED(REG_BLTCMOD);
-
-					if ( ptr[3] != -1 )
-						ptr[3] += CUSTOM_REG_SIGNED(REG_BLTDMOD);
-				}
+			/* fetch data for C */
+			if (CUSTOM_REG(REG_BLTCON0) & 0x0200)
+			{
+				CUSTOM_REG(REG_BLTCDAT) = amiga_chip_ram_r(CUSTOM_REG_LONG(REG_BLTCPTH));
+				CUSTOM_REG_LONG(REG_BLTCPTH) += 2;
 			}
 
-			/* We're done, update the ptr's now */
-			if ( ptr[0] != -1 ) {
-				CUSTOM_REG_LONG(REG_BLTAPTH) = ptr[0];
+			/* apply start/end masks to the A data */
+			tempa = CUSTOM_REG(REG_BLTADAT);
+		    if (x == 0)
+		    	tempa &= CUSTOM_REG(REG_BLTAFWM);
+		    if (x == width - 1)
+		    	tempa &= CUSTOM_REG(REG_BLTALWM);
+
+			/* update the B accumulator applying shifts */
+			acca = (acca << 16) | (tempa << (16 - shifta));
+			accb = (accb << 16) | (CUSTOM_REG(REG_BLTBDAT) << (16 - shiftb));
+
+			/* build up 4 16-bit words containing 4 pixels each in 0ABC bit order */
+			abc0 = ((acca >> 17) & 0x4444) | ((accb >> 18) & 0x2222) | ((CUSTOM_REG(REG_BLTCDAT) >> 3) & 0x1111);
+			abc1 = ((acca >> 16) & 0x4444) | ((accb >> 17) & 0x2222) | ((CUSTOM_REG(REG_BLTCDAT) >> 2) & 0x1111);
+			abc2 = ((acca >> 15) & 0x4444) | ((accb >> 16) & 0x2222) | ((CUSTOM_REG(REG_BLTCDAT) >> 1) & 0x1111);
+			abc3 = ((acca >> 14) & 0x4444) | ((accb >> 15) & 0x2222) | ((CUSTOM_REG(REG_BLTCDAT) >> 0) & 0x1111);
+
+			/* now loop over bits and compute the destination value */
+			for (b = 0; b < 4; b++)
+			{
+				unsigned int bit;
+
+				/* shift previous data up 4 bits */
+				tempd <<= 4;
+
+				/* lookup first bit in series */
+				bit = (CUSTOM_REG(REG_BLTCON0) >> (abc0 >> 12)) & 1;
+				abc0 <<= 4;
+				tempd |= bit << 3;
+
+				/* lookup second bit in series */
+				bit = (CUSTOM_REG(REG_BLTCON0) >> (abc1 >> 12)) & 1;
+				abc1 <<= 4;
+				tempd |= bit << 2;
+
+				/* lookup third bit in series */
+				bit = (CUSTOM_REG(REG_BLTCON0) >> (abc2 >> 12)) & 1;
+				abc2 <<= 4;
+				tempd |= bit << 1;
+
+				/* lookup fourth bit in series */
+				bit = (CUSTOM_REG(REG_BLTCON0) >> (abc3 >> 12)) & 1;
+				abc3 <<= 4;
+				tempd |= bit << 0;
 			}
 
-			if ( ptr[1] != -1 ) {
-				CUSTOM_REG_LONG(REG_BLTBPTH) = ptr[1];
-			}
+			/* accumulate the sum */
+			blitsum |= tempd;
 
-			if ( ptr[2] != -1 ) {
-				CUSTOM_REG_LONG(REG_BLTCPTH) = ptr[2];
-			}
-
-			if ( ptr[3] != -1 ) {
-				CUSTOM_REG_LONG(REG_BLTDPTH) = ptr[3];
+			/* write to the destination */
+			if (CUSTOM_REG(REG_BLTCON0) & 0x0100)
+			{
+				amiga_chip_ram_w(CUSTOM_REG_LONG(REG_BLTDPTH), tempd);
+				CUSTOM_REG_LONG(REG_BLTDPTH) += 2;
 			}
 		}
+
+		/* apply end of line modulos */
+		if (CUSTOM_REG(REG_BLTCON0) & 0x0800)
+			CUSTOM_REG_LONG(REG_BLTAPTH) += CUSTOM_REG_SIGNED(REG_BLTAMOD) & ~1;
+		if (CUSTOM_REG(REG_BLTCON0) & 0x0400)
+			CUSTOM_REG_LONG(REG_BLTBPTH) += CUSTOM_REG_SIGNED(REG_BLTBMOD) & ~1;
+		if (CUSTOM_REG(REG_BLTCON0) & 0x0200)
+			CUSTOM_REG_LONG(REG_BLTCPTH) += CUSTOM_REG_SIGNED(REG_BLTCMOD) & ~1;
+		if (CUSTOM_REG(REG_BLTCON0) & 0x0100)
+			CUSTOM_REG_LONG(REG_BLTDPTH) += CUSTOM_REG_SIGNED(REG_BLTDMOD) & ~1;
 	}
 
-done:
-	CUSTOM_REG(REG_DMACON) ^= 0x4000; /* signal we're done */
-
-	if ( blt_total )
-		CUSTOM_REG(REG_DMACON) ^= 0x2000;
+	/* return the blit sum */
+	return blitsum;
+}
 
 
+
+/*************************************
+ *
+ *  Descending blitter variant
+ *
+ *************************************/
+
+static unsigned int blit_descending(void)
+{
+	unsigned int fill_exclusive = (CUSTOM_REG(REG_BLTCON1) >> 4);
+	unsigned int fill_inclusive = (CUSTOM_REG(REG_BLTCON1) >> 3);
+	unsigned int shifta = (CUSTOM_REG(REG_BLTCON0) >> 12) & 0xf;
+	unsigned int shiftb = (CUSTOM_REG(REG_BLTCON1) >> 12) & 0xf;
+	unsigned int height = (CUSTOM_REG(REG_BLTSIZE) >> 6) & 0x3ff;
+	unsigned int width = CUSTOM_REG(REG_BLTSIZE) & 0x3f;
+	UINT32 acca = 0, accb = 0;
+	unsigned int blitsum = 0;
+	unsigned int x, y;
+
+	/* normalize height/width */
+	if (height == 0)
+		height = 0x400;
+	if (width == 0)
+		width = 0x40;
+
+	/* iterate over the height */
+	for (y = 0; y < height; y++)
+	{
+		unsigned int fill_state = (CUSTOM_REG(REG_BLTCON1) >> 2) & 1;
+
+		/* iterate over the width */
+		for (x = 0; x < width; x++)
+		{
+			UINT16 abc0, abc1, abc2, abc3;
+			unsigned int tempa, tempd = 0;
+			unsigned int b;
+
+			/* fetch data for A */
+			if (CUSTOM_REG(REG_BLTCON0) & 0x0800)
+			{
+				CUSTOM_REG(REG_BLTADAT) = amiga_chip_ram_r(CUSTOM_REG_LONG(REG_BLTAPTH));
+				CUSTOM_REG_LONG(REG_BLTAPTH) -= 2;
+			}
+
+			/* fetch data for B */
+			if (CUSTOM_REG(REG_BLTCON0) & 0x0400)
+			{
+				CUSTOM_REG(REG_BLTBDAT) = amiga_chip_ram_r(CUSTOM_REG_LONG(REG_BLTBPTH));
+				CUSTOM_REG_LONG(REG_BLTBPTH) -= 2;
+			}
+
+			/* fetch data for C */
+			if (CUSTOM_REG(REG_BLTCON0) & 0x0200)
+			{
+				CUSTOM_REG(REG_BLTCDAT) = amiga_chip_ram_r(CUSTOM_REG_LONG(REG_BLTCPTH));
+				CUSTOM_REG_LONG(REG_BLTCPTH) -= 2;
+			}
+
+			/* apply start/end masks to the A data */
+			tempa = CUSTOM_REG(REG_BLTADAT);
+		    if (x == 0)
+		    	tempa &= CUSTOM_REG(REG_BLTAFWM);
+		    if (x == width - 1)
+		    	tempa &= CUSTOM_REG(REG_BLTALWM);
+
+			/* update the B accumulator applying shifts */
+			acca = (acca >> 16) | (tempa << shifta);
+			accb = (accb >> 16) | (CUSTOM_REG(REG_BLTBDAT) << shiftb);
+
+			/* build up 4 16-bit words containing 4 pixels each in 0ABC bit order */
+			abc0 = ((acca >> 1) & 0x4444) | ((accb >> 2) & 0x2222) | ((CUSTOM_REG(REG_BLTCDAT) >> 3) & 0x1111);
+			abc1 = ((acca >> 0) & 0x4444) | ((accb >> 1) & 0x2222) | ((CUSTOM_REG(REG_BLTCDAT) >> 2) & 0x1111);
+			abc2 = ((acca << 1) & 0x4444) | ((accb >> 0) & 0x2222) | ((CUSTOM_REG(REG_BLTCDAT) >> 1) & 0x1111);
+			abc3 = ((acca << 2) & 0x4444) | ((accb << 1) & 0x2222) | ((CUSTOM_REG(REG_BLTCDAT) >> 0) & 0x1111);
+
+			/* now loop over bits and compute the destination value */
+			for (b = 0; b < 4; b++)
+			{
+				unsigned int prev_fill_state;
+				unsigned int bit;
+
+				/* shift previous data up 4 bits */
+				tempd >>= 4;
+
+				/* lookup fourth bit in series */
+				bit = (CUSTOM_REG(REG_BLTCON0) >> (abc3 & 0xf)) & 1;
+				abc3 >>= 4;
+				prev_fill_state = fill_state;
+				fill_state ^= bit;
+				bit ^= prev_fill_state & fill_exclusive;
+				bit |= prev_fill_state & fill_inclusive;
+				tempd |= bit << 12;
+
+				/* lookup third bit in series */
+				bit = (CUSTOM_REG(REG_BLTCON0) >> (abc2 & 0xf)) & 1;
+				abc2 >>= 4;
+				prev_fill_state = fill_state;
+				fill_state ^= bit;
+				bit ^= prev_fill_state & fill_exclusive;
+				bit |= prev_fill_state & fill_inclusive;
+				tempd |= bit << 13;
+
+				/* lookup second bit in series */
+				bit = (CUSTOM_REG(REG_BLTCON0) >> (abc1 & 0xf)) & 1;
+				abc1 >>= 4;
+				prev_fill_state = fill_state;
+				fill_state ^= bit;
+				bit ^= prev_fill_state & fill_exclusive;
+				bit |= prev_fill_state & fill_inclusive;
+				tempd |= bit << 14;
+
+				/* lookup first bit in series */
+				bit = (CUSTOM_REG(REG_BLTCON0) >> (abc0 & 0xf)) & 1;
+				abc0 >>= 4;
+				prev_fill_state = fill_state;
+				fill_state ^= bit;
+				bit ^= prev_fill_state & fill_exclusive;
+				bit |= prev_fill_state & fill_inclusive;
+				tempd |= bit << 15;
+			}
+
+			/* accumulate the sum */
+			blitsum |= tempd;
+
+			/* write to the destination */
+			if (CUSTOM_REG(REG_BLTCON0) & 0x0100)
+			{
+				amiga_chip_ram_w(CUSTOM_REG_LONG(REG_BLTDPTH), tempd);
+				CUSTOM_REG_LONG(REG_BLTDPTH) -= 2;
+			}
+		}
+
+		/* apply end of line modulos */
+		if (CUSTOM_REG(REG_BLTCON0) & 0x0800)
+			CUSTOM_REG_LONG(REG_BLTAPTH) -= CUSTOM_REG_SIGNED(REG_BLTAMOD) & ~1;
+		if (CUSTOM_REG(REG_BLTCON0) & 0x0400)
+			CUSTOM_REG_LONG(REG_BLTBPTH) -= CUSTOM_REG_SIGNED(REG_BLTBMOD) & ~1;
+		if (CUSTOM_REG(REG_BLTCON0) & 0x0200)
+			CUSTOM_REG_LONG(REG_BLTCPTH) -= CUSTOM_REG_SIGNED(REG_BLTCMOD) & ~1;
+		if (CUSTOM_REG(REG_BLTCON0) & 0x0100)
+			CUSTOM_REG_LONG(REG_BLTDPTH) -= CUSTOM_REG_SIGNED(REG_BLTDMOD) & ~1;
+	}
+
+	/* return the blit sum */
+	return blitsum;
+}
+
+
+
+/*************************************
+ *
+ *  Line drawing blitter variant
+ *
+ *************************************/
+
+/*
+    The exact line drawing algorithm is not known, but based on the cryptic
+    setup instructions, it is clear that it is a basic Bresenham line
+    algorithm. A standard Bresenham algorithm looks like this:
+
+    epsilon = 0;
+    while (length--)
+    {
+        plot(x, y);
+        x++;
+        epsilon += dy;
+        if ((2 * epsilon) >= dx)
+        {
+            y++;
+            epsilon -= dx;
+        }
+    }
+
+    If you multiply the epsilon term by 4 and shuffle the logic a bit, the
+    equivalent logic is:
+
+    epsilon = 4 * dy - 2 * dx;
+    while (length--)
+    {
+        plot(x, y);
+        x++;
+        if (epsilon >= 0)
+        {
+            y++;
+            epsilon += 4 * (dy - dx);
+        }
+        else
+            epsilon += 4 * dy;
+    }
+
+    With this refactoring, you can see that BLTAPT = epsilon,
+    BLTAMOD = 4 * (dy - dx) and BLTBMOD = 4 * dy.
+*/
+
+static unsigned int blit_line(void)
+{
+	unsigned int singlemode = (CUSTOM_REG(REG_BLTCON1) & 0x0002) ? 0x0000 : 0xffff;
+	unsigned int singlemask = 0xffff;
+	unsigned int blitsum = 0;
+	unsigned int height;
+
+	/* see if folks are breaking the rules */
+	if ((CUSTOM_REG(REG_BLTSIZE) & 0x003f) != 0x0002)
+		logerror("Blitter: BLTSIZE.w != 2 in line mode!\n");
+	if ((CUSTOM_REG(REG_BLTCON0) & 0x0b00) != 0x0b00)
+		logerror("Blitter: Channel selection incorrect in line mode!\n" );
+
+	/* extract the length of the line */
+	height = (CUSTOM_REG(REG_BLTSIZE) >> 6) & 0x3ff;
+	if (height == 0)
+		height = 0x400;
+
+	/* iterate over the line height */
+	while (height--)
+	{
+		UINT16 abc0, abc1, abc2, abc3;
+		unsigned int tempa, tempb, tempd = 0;
+		int b, dx, dy;
+
+		/* fetch data for C */
+		if (CUSTOM_REG(REG_BLTCON0) & 0x0200)
+			CUSTOM_REG(REG_BLTCDAT) = amiga_chip_ram_r(CUSTOM_REG_LONG(REG_BLTCPTH));
+
+		/* rotate the A data according to the shift */
+		tempa = CUSTOM_REG(REG_BLTADAT) >> (CUSTOM_REG(REG_BLTCON0) >> 12);
+
+		/* apply single bit mask */
+		tempa &= singlemask;
+		singlemask &= singlemode;
+
+		/* rotate the B data according to the shift and expand to 16 bits */
+		tempb = -((CUSTOM_REG(REG_BLTBDAT) >> (CUSTOM_REG(REG_BLTCON1) >> 12)) & 1);
+
+		/* build up 4 16-bit words containing 4 pixels each in 0ABC bit order */
+		abc0 = ((tempa >> 1) & 0x4444) | (tempb & 0x2222) | ((CUSTOM_REG(REG_BLTCDAT) >> 3) & 0x1111);
+		abc1 = ((tempa >> 0) & 0x4444) | (tempb & 0x2222) | ((CUSTOM_REG(REG_BLTCDAT) >> 2) & 0x1111);
+		abc2 = ((tempa << 1) & 0x4444) | (tempb & 0x2222) | ((CUSTOM_REG(REG_BLTCDAT) >> 1) & 0x1111);
+		abc3 = ((tempa << 2) & 0x4444) | (tempb & 0x2222) | ((CUSTOM_REG(REG_BLTCDAT) >> 0) & 0x1111);
+
+		/* now loop over bits and compute the destination value */
+		for (b = 0; b < 4; b++)
+		{
+			unsigned int bit;
+
+			/* shift previous data up 4 bits */
+			tempd <<= 4;
+
+			/* lookup first bit in series */
+			bit = (CUSTOM_REG(REG_BLTCON0) >> (abc0 >> 12)) & 1;
+			abc0 <<= 4;
+			tempd |= bit << 3;
+
+			/* lookup second bit in series */
+			bit = (CUSTOM_REG(REG_BLTCON0) >> (abc1 >> 12)) & 1;
+			abc1 <<= 4;
+			tempd |= bit << 2;
+
+			/* lookup third bit in series */
+			bit = (CUSTOM_REG(REG_BLTCON0) >> (abc2 >> 12)) & 1;
+			abc2 <<= 4;
+			tempd |= bit << 1;
+
+			/* lookup fourth bit in series */
+			bit = (CUSTOM_REG(REG_BLTCON0) >> (abc3 >> 12)) & 1;
+			abc3 <<= 4;
+			tempd |= bit << 0;
+		}
+
+		/* accumulate the sum */
+		blitsum |= tempd;
+
+		/* write to the destination */
+		if (CUSTOM_REG(REG_BLTCON0) & 0x0100)
+			amiga_chip_ram_w(CUSTOM_REG_LONG(REG_BLTDPTH), tempd);
+
+		/* always increment along the major axis */
+		if (CUSTOM_REG(REG_BLTCON1) & 0x0010)
+		{
+			dx = (CUSTOM_REG(REG_BLTCON1) & 0x0004) ? -1 : 1;
+			dy = 0;
+		}
+		else
+		{
+			dx = 0;
+			dy = (CUSTOM_REG(REG_BLTCON1) & 0x0004) ? -1 : 1;
+		}
+
+		/* is the sign bit clear? */
+		if (!(CUSTOM_REG(REG_BLTCON1) & 0x0040))
+		{
+			/* add 4 * (dy-dx) */
+			CUSTOM_REG_LONG(REG_BLTAPTH) += CUSTOM_REG_SIGNED(REG_BLTAMOD) & ~1;
+
+			/* increment along the minor axis */
+			if (CUSTOM_REG(REG_BLTCON1) & 0x0010)
+				dy = (CUSTOM_REG(REG_BLTCON1) & 0x0008) ? -1 : 1;
+			else
+				dx = (CUSTOM_REG(REG_BLTCON1) & 0x0008) ? -1 : 1;
+		}
+
+		/* else add 4 * dy and don't increment along the minor axis */
+		else
+			CUSTOM_REG_LONG(REG_BLTAPTH) += CUSTOM_REG_SIGNED(REG_BLTBMOD) & ~1;
+
+		/* adjust X if necessary */
+		if (dx)
+		{
+			/* adjust the A shift value */
+			UINT32 temp = CUSTOM_REG(REG_BLTCON0) + (INT32)(dx << 12);
+			CUSTOM_REG(REG_BLTCON0) = temp;
+
+			/* if we went from 0xf to 0x0 or vice-versa, adjust the actual pointers */
+			if (temp & 0x10000)
+			{
+				CUSTOM_REG_LONG(REG_BLTCPTH) += 2 * dx;
+				CUSTOM_REG_LONG(REG_BLTDPTH) += 2 * dx;
+			}
+		}
+
+		/* adjust Y if necessary */
+		if (dy)
+		{
+			/* BLTCMOD seems to be used for both C and D pointers */
+			CUSTOM_REG_LONG(REG_BLTCPTH) += dy * (INT16)(CUSTOM_REG_SIGNED(REG_BLTCMOD) & ~1);
+			CUSTOM_REG_LONG(REG_BLTDPTH) += dy * (INT16)(CUSTOM_REG_SIGNED(REG_BLTCMOD) & ~1);
+
+			/* reset the single mask since we're on a new line */
+			singlemask = 0xffff;
+		}
+
+		/* set the new sign bit value */
+		CUSTOM_REG(REG_BLTCON1) = (CUSTOM_REG(REG_BLTCON1) & ~0x0040) | ((CUSTOM_REG(REG_BLTAPTL) >> 9) & 0x0040);
+
+		/* increment texture shift on every pixel */
+		CUSTOM_REG(REG_BLTCON1) += 0x1000;
+	}
+
+	return blitsum;
+}
+
+
+
+/*************************************
+ *
+ *  Blitter deferred callback
+ *
+ *************************************/
+
+static void blitter_proc(int param)
+{
+	unsigned int blitsum = 0;
+
+	/* logging */
+	if (LOG_BLITS)
+	{
+		static const char *type[] = { "ASCENDING", "LINE", "DESCENDING", "LINE" };
+		logerror("BLIT %s: %dx%d  %04x %04x\n", type[CUSTOM_REG(REG_BLTCON1) & 0x0003], CUSTOM_REG(REG_BLTSIZE) & 0x3f, (CUSTOM_REG(REG_BLTSIZE) >> 6) & 0x3ff, CUSTOM_REG(REG_BLTCON0), CUSTOM_REG(REG_BLTCON1));
+		if (CUSTOM_REG(REG_BLTCON0) & 0x0800)
+			logerror("  A: addr=%06X mod=%3d shift=%2d maskl=%04x maskr=%04x\n", CUSTOM_REG_LONG(REG_BLTAPTH), CUSTOM_REG_SIGNED(REG_BLTAMOD), CUSTOM_REG(REG_BLTCON0) >> 12, CUSTOM_REG(REG_BLTAFWM), CUSTOM_REG(REG_BLTALWM));
+		if (CUSTOM_REG(REG_BLTCON0) & 0x0400)
+			logerror("  B: addr=%06X mod=%3d shift=%2d\n", CUSTOM_REG_LONG(REG_BLTBPTH), CUSTOM_REG_SIGNED(REG_BLTBMOD), CUSTOM_REG(REG_BLTCON1) >> 12);
+		if (CUSTOM_REG(REG_BLTCON0) & 0x0200)
+			logerror("  C: addr=%06X mod=%3d\n", CUSTOM_REG_LONG(REG_BLTCPTH), CUSTOM_REG_SIGNED(REG_BLTCMOD));
+		if (CUSTOM_REG(REG_BLTCON0) & 0x0100)
+			logerror("  D: addr=%06X mod=%3d\n", CUSTOM_REG_LONG(REG_BLTDPTH), CUSTOM_REG_SIGNED(REG_BLTDMOD));
+	}
+
+	/* set the zero flag */
+	CUSTOM_REG(REG_DMACON) |= 0x2000;
+
+	/* switch off the type of blit */
+	switch (CUSTOM_REG(REG_BLTCON1) & 0x0003)
+	{
+		case 0:	/* ascending */
+			blitsum = blit_ascending();
+			break;
+
+		case 2:	/* descending */
+			blitsum = blit_descending();
+			break;
+
+		case 1:	/* line */
+		case 3:
+			blitsum = blit_line();
+			break;
+	}
+
+	/* clear the zero flag if we actually wrote data */
+	if (blitsum)
+		CUSTOM_REG(REG_DMACON) &= ~0x2000;
+
+	/* no longer busy */
+	CUSTOM_REG(REG_DMACON) &= ~0x4000;
+
+	/* signal an interrupt */
 	amiga_custom_w(REG_INTREQ, 0x8000 | INTENA_BLIT, 0);
 }
 
-static void blitter_setup( void ) {
+
+
+/*************************************
+ *
+ *  Blitter setup
+ *
+ *************************************/
+
+static void blitter_setup(void)
+{
 	int ticks, width, height;
-	double blit_time;
 
-	if ( ( CUSTOM_REG(REG_DMACON) & 0x0240 ) != 0x0240 ) /* Enabled ? */
-		return;
-
-	if ( CUSTOM_REG(REG_DMACON) & 0x4000 ) { /* Is there another blitting in progress? */
+	/* is there another blitting in progress? */
+	if (CUSTOM_REG(REG_DMACON) & 0x4000)
+	{
 		logerror("This program is playing tricks with the blitter\n" );
 		return;
 	}
 
-	if ( CUSTOM_REG(REG_BLTCON1) & 1 ) { /* Line mode */
+	/* line mode is 8 ticks/pixel */
+	if (CUSTOM_REG(REG_BLTCON1) & 1)
 		ticks = 8;
-	} else {
+
+	/* standard mode is 4 ticks base */
+	else
+	{
 		ticks = 4;
-		if ( CUSTOM_REG(REG_BLTCON0) & 0x0400 ) /* channel B, +2 ticks */
+
+		/* plus 2 ticks if channel B is involved */
+		if (CUSTOM_REG(REG_BLTCON0) & 0x0400)
 			ticks += 2;
-		if ( ( CUSTOM_REG(REG_BLTCON0) & 0x0300 ) == 0x0300 ) /* Both channel C and D, +2 ticks */
+
+		/* plus 2 ticks if both channel C and D are involved */
+		if ((CUSTOM_REG(REG_BLTCON0) & 0x0300) == 0x0300)
 			ticks += 2;
 	}
 
-	CUSTOM_REG(REG_DMACON) |= 0x4000; /* signal blitter busy */
-
-	width = ( CUSTOM_REG(REG_BLTSIZE) & 0x3f );
-	if ( width == 0 )
+	/* extract height/width */
+	width = (CUSTOM_REG(REG_BLTSIZE) & 0x3f);
+	if (width == 0)
 		width = 0x40;
-
-	height = ( ( CUSTOM_REG(REG_BLTSIZE) >> 6 ) & 0x3ff );
-	if ( height == 0 )
+	height = ((CUSTOM_REG(REG_BLTSIZE) >> 6) & 0x3ff);
+	if (height == 0)
 		height = 0x400;
 
-	blit_time = ( (double)ticks * (double)width * (double)height );
+	/* set a timer */
+	timer_set((double)(ticks * width * height) * TIME_IN_HZ(Machine->drv->cpu[0].cpu_clock), 0, blitter_proc);
 
-	blit_time /= ( (double)Machine->drv->cpu[0].cpu_clock / 1000000.0 );
-
-	timer_set( TIME_IN_USEC( blit_time ), 0, blitter_proc );
-}
-
-/***************************************************************************
-
-    8520 CIA emulation
-
-***************************************************************************/
-
-static void cia_update_interrupts(cia_state *cia)
-{
-	/* always update the high bit of ICS */
-	if (cia->ics & 0x7f)
-		cia->ics |= 0x80;
-	else
-		cia->ics &= ~0x80;
-
-	/* based on what is enabled, set/clear the IRQ via the custom chip */
-	if (cia->ics & cia->icr)
-		amiga_custom_w(REG_INTREQ, 0x8000 | cia->irq, 0);
-	else
-		amiga_custom_w(REG_INTREQ, 0x0000 | cia->irq, 0);
+	/* signal blitter busy */
+ 	CUSTOM_REG(REG_DMACON) |= 0x4000;
 }
 
 
-INLINE void cia_timer_start(cia_timer *timer)
-{
-	if (!timer->started)
-		timer_adjust_ptr(timer->timer, (double)timer->count * O2_TIMER_RATE, 0);
-}
 
-
-INLINE void cia_timer_stop(cia_timer *timer)
-{
-	timer_reset(timer->timer, TIME_NEVER);
-	timer->started = FALSE;
-}
-
-
-INLINE int cia_timer_count(cia_timer *timer)
-{
-	/* based on whether or not the timer is running, return the current count value */
-	if (timer->started)
-		return timer->count - (int)(timer_timeelapsed(timer->timer) / O2_TIMER_RATE);
-	else
-		return timer->count;
-}
-
-
-static void cia_timer_proc(void *param)
-{
-	cia_timer *timer = param;
-
-	/* clear the timer started flag */
-	timer->started = FALSE;
-
-	/* set the status and update interrupts */
-	timer->cia->ics |= timer->irq;
-	cia_update_interrupts(timer->cia);
-
-	/* reload the timer */
-	timer->count = timer->latch;
-
-	/* if one-shot mode, turn it off; otherwise, reprime the timer */
-	if (timer->mode & 0x08)
-		timer->mode &= 0xfe;
-	else
-		cia_timer_start(timer);
-}
-
-
-/* Update TOD on CIA A */
-static void cia_clock_tod(cia_state *cia)
-{
-	if (cia->tod_running)
-	{
-		cia->tod++;
-		cia->tod &= 0xffffff;
-		if (cia->tod == cia->alarm)
-		{
-			cia->ics |= 0x04;
-			cia_update_interrupts(cia);
-		}
-	}
-}
-
-
-/* Issue a index pulse when a disk revolution completes */
-void amiga_cia_issue_index(void)
-{
-	cia_state *cia = &cia_8520[1];
-	cia->ics |= 0x10;
-	cia_update_interrupts(cia);
-}
-
-
-static void cia_reset(void)
-{
-	int i, t;
-
-	/* initialize the CIA states */
-	memset(&cia_8520, 0, sizeof(cia_8520));
-
-	/* loop over and set up initial values */
-	for (i = 0; i < 2; i++)
-	{
-		cia_state *cia = &cia_8520[i];
-
-		/* select IRQ bit based on which CIA */
-		cia->irq = (i == 0) ? INTENA_PORTS : INTENA_EXTER;
-
-		/* initialize port handlers */
-		cia->port[0].read = (i == 0) ? amiga_intf->cia_0_portA_r : amiga_intf->cia_1_portA_r;
-		cia->port[1].read = (i == 0) ? amiga_intf->cia_0_portB_r : amiga_intf->cia_1_portB_r;
-		cia->port[0].write = (i == 0) ? amiga_intf->cia_0_portA_w : amiga_intf->cia_1_portA_w;
-		cia->port[1].write = (i == 0) ? amiga_intf->cia_0_portB_w : amiga_intf->cia_1_portB_w;
-
-		/* initialize data direction registers */
-		cia->port[0].ddr = (i == 0) ? 0x03 : 0xff;
-		cia->port[1].ddr = (i == 0) ? 0x00 : 0xff;
-
-		/* TOD running by default */
-		cia->tod_running = TRUE;
-
-		/* initialize timers */
-		for (t = 0; t < 2; t++)
-		{
-			cia_timer *timer = &cia->timer[t];
-
-			timer->latch = 0xffff;
-			timer->irq = 0x01 << t;
-			timer->cia = cia;
-			timer->timer = timer_alloc_ptr(cia_timer_proc, timer);
-		}
-	}
-}
-
+/*************************************
+ *
+ *  8520 CIA read handler
+ *
+ *************************************/
 
 READ16_HANDLER( amiga_cia_r )
 {
-	cia_timer *timer;
-	cia_state *cia;
-	cia_port *port;
 	UINT8 data;
-	int shift;
+	int shift, which;
 
 	/* offsets 0000-07ff reference CIA B, and are accessed via the MSB */
 	if ((offset & 0x0800) == 0)
 	{
-		cia = &cia_8520[1];
+		which = 1;
 		shift = 8;
 	}
 
 	/* offsets 0800-0fff reference CIA A, and are accessed via the LSB */
 	else
 	{
-		cia = &cia_8520[0];
+		which = 0;
 		shift = 0;
 	}
 
-	/* switch off the offset */
-	switch (offset & 0x780)
-	{
-		/* port A/B data */
-		case CIA_PRA:
-		case CIA_PRB:
-			port = &cia->port[(offset >> 7) & 1];
-			data = port->read ? (*port->read)() : 0;
-			data = (data & ~port->ddr) | (port->latch & port->ddr);
-			break;
-
-		/* port A/B direction */
-		case CIA_DDRA:
-		case CIA_DDRB:
-			port = &cia->port[(offset >> 7) & 1];
-			data = port->ddr;
-			break;
-
-		/* timer A/B low byte */
-		case CIA_TALO:
-		case CIA_TBLO:
-			timer = &cia->timer[(offset >> 8) & 1];
-			data = cia_timer_count(timer) >> 0;
-			break;
-
-		/* timer A/B high byte */
-		case CIA_TAHI:
-		case CIA_TBHI:
-			timer = &cia->timer[(offset >> 8) & 1];
-			data = cia_timer_count(timer) >> 8;
-			break;
-
-		/* TOD counter low byte */
-		case CIA_TODLOW:
-			data = cia->tod_latch >> 0;
-			break;
-
-		/* TOD counter middle byte */
-		case CIA_TODMID:
-			data = cia->tod_latch >> 8;
-			break;
-
-		/* TOD counter high byte */
-		case CIA_TODHI:
-			cia->tod_latch = cia->tod;
-			data = cia->tod_latch >> 16;
-			break;
-
-		/* interrupt status/clear */
-		case CIA_ICR:
-			data = cia->ics;
-			cia->ics = 0; /* clear on read */
-			cia_update_interrupts(cia);
-			break;
-
-		/* timer A/B mode */
-		case CIA_CRA:
-		case CIA_CRB:
-			timer = &cia->timer[(offset >> 7) & 1];
-			data = timer->mode;
-			break;
-	}
+	/* handle the reads */
+	data = cia_read(which, offset >> 7);
 
 #if LOG_CIA
 	logerror("%06x:cia_%c_read(%03x) = %04x & %04x\n", safe_activecpu_get_pc(), 'A' + ((~offset & 0x0800) >> 11), offset * 2, data << shift, mem_mask ^ 0xffff);
@@ -878,12 +957,16 @@ READ16_HANDLER( amiga_cia_r )
 }
 
 
+
+/*************************************
+ *
+ *  8520 CIA write handler
+ *
+ *************************************/
+
 WRITE16_HANDLER( amiga_cia_w )
 {
-	cia_timer *timer;
-	cia_state *cia;
-	cia_port *port;
-	int shift;
+	int which;
 
 #if LOG_CIA
 	logerror("%06x:cia_%c_write(%03x) = %04x & %04x\n", safe_activecpu_get_pc(), 'A' + ((~offset & 0x0800) >> 11), offset * 2, data, mem_mask ^ 0xffff);
@@ -894,7 +977,7 @@ WRITE16_HANDLER( amiga_cia_w )
 	{
 		if (!ACCESSING_MSB)
 			return;
-		cia = &cia_8520[1];
+		which = 1;
 		data >>= 8;
 	}
 
@@ -903,117 +986,54 @@ WRITE16_HANDLER( amiga_cia_w )
 	{
 		if (!ACCESSING_LSB)
 			return;
-		cia = &cia_8520[0];
+		which = 0;
 		data &= 0xff;
 	}
 
 	/* handle the writes */
-	switch (offset & 0x7ff)
-	{
-		/* port A/B data */
-		case CIA_PRA:
-		case CIA_PRB:
-			port = &cia->port[(offset >> 7) & 1];
-			port->latch = data;
-			if (port->write)
-				(*port->write)(data & port->ddr);
-			break;
-
-		/* port A/B direction */
-		case CIA_DDRA:
-		case CIA_DDRB:
-			port = &cia->port[(offset >> 7) & 1];
-			port->ddr = data;
-			break;
-
-		/* timer A/B latch low */
-		case CIA_TALO:
-		case CIA_TBLO:
-			timer = &cia->timer[(offset >> 8) & 1];
-			timer->latch = (timer->latch & 0xff00) | (data << 0);
-			break;
-
-		/* timer A latch high */
-		case CIA_TAHI:
-		case CIA_TBHI:
-			timer = &cia->timer[(offset >> 8) & 1];
-			timer->latch = (timer->latch & 0x00ff) | (data << 8);
-
-			/* if it's one shot, start the timer */
-			if (timer->mode & 0x08)
-			{
-				timer->count = timer->latch;
-				timer->mode |= 0x01;
-				cia_timer_start(timer);
-			}
-			break;
-
-		/* time of day latches */
-		case CIA_TODLOW:
-		case CIA_TODMID:
-		case CIA_TODHI:
-			shift = 8 * ((offset - CIA_TODLOW) >> 7);
-
-			/* alarm setting mode? */
-			if (cia->timer[1].mode & 0x80)
-				cia->alarm = (cia->alarm & ~(0xff << shift)) | (data << shift);
-
-			/* counter setting mode */
-			else
-			{
-				cia->tod = (cia->tod & ~(0xff << shift)) | (data << shift);
-
-				/* only enable the TOD once the LSB is written */
-				cia->tod_running = (shift == 0);
-			}
-			break;
-
-		/* interrupt control register */
-		case CIA_ICR:
-			if (data & 0x80)
-				cia->icr |= data & 0x7f;
-			else
-				cia->icr &= ~(data & 0x7f);
-			cia_update_interrupts(cia);
-			break;
-
-		/* timer A/B modes */
-		case CIA_CRA:
-		case CIA_CRB:
-			timer = &cia->timer[(offset >> 7) & 1];
-			timer->mode = data & 0xef;
-
-			if (data & 0x02)
-				printf("Timer %c output on PB\n", 'A' + ((offset >> 8) & 1));
-
-			/* force load? */
-			if (data & 0x10)
-			{
-				timer->count = timer->latch;
-				cia_timer_stop(timer);
-			}
-
-			/* enable/disable? */
-			if (data & 0x01)
-				cia_timer_start(timer);
-			else
-				cia_timer_stop(timer);
-			break;
-	}
+	cia_write(which, offset >> 7, (UINT8) data);
 }
 
 
-/***************************************************************************
 
-    Custom chips emulation
+/*************************************
+ *
+ *  CIA interrupt callbacks
+ *
+ *************************************/
 
-***************************************************************************/
+static void amiga_cia_0_irq(int state)
+{
+	amiga_custom_w(REG_INTREQ, (state ? 0x8000 : 0x0000) | INTENA_PORTS, 0);
+}
 
-static void amiga_custom_reset( void )
+
+static void amiga_cia_1_irq(int state)
+{
+	amiga_custom_w(REG_INTREQ, (state ? 0x8000 : 0x0000) | INTENA_EXTER, 0);
+}
+
+
+
+/*************************************
+ *
+ *  Custom chip reset
+ *
+ *************************************/
+
+static void custom_reset(void)
 {
 	CUSTOM_REG(REG_DDFSTRT) = 0x18;
 	CUSTOM_REG(REG_DDFSTOP) = 0xd8;
 }
+
+
+
+/*************************************
+ *
+ *  Custom chip register read
+ *
+ *************************************/
 
 READ16_HANDLER( amiga_custom_r )
 {
@@ -1031,19 +1051,26 @@ READ16_HANDLER( amiga_custom_r )
 			return amiga_gethvpos();
 
 		case REG_JOY0DAT:
-			return amiga_intf->read_joy0dat();
+			if (amiga_intf->read_joy0dat)
+				return (*amiga_intf->read_joy0dat)();
+			return readinputportbytag_safe("JOY0DAT", 0xffff);
 
 		case REG_JOY1DAT:
-			return amiga_intf->read_joy1dat();
+			if (amiga_intf->read_joy1dat)
+				return (*amiga_intf->read_joy1dat)();
+			return readinputportbytag_safe("JOY1DAT", 0xffff);
 
 		case REG_ADKCONR:
 			return CUSTOM_REG(REG_ADKCON);
 
 		case REG_POTGOR:
-			CUSTOM_REG(REG_POTGOR) = CUSTOM_REG(REG_POTGO) & 0xaa00;
-			CUSTOM_REG(REG_POTGOR) |= (readinputport(0) & 1) << 10;
-			CUSTOM_REG(REG_POTGOR) |= (readinputport(0) & 2) << 13;
-			return CUSTOM_REG(REG_POTGOR);
+			return readinputportbytag_safe("POTGO", 0x5500);
+
+		case REG_POT0DAT:
+			return readinputportbytag_safe("POT0DAT", 0x0000);
+
+		case REG_POT1DAT:
+			return readinputportbytag_safe("POT1DAT", 0x0000);
 
 		case REG_DSKBYTR:
 			return amiga_intf->read_dskbytr ? amiga_intf->read_dskbytr() : 0x00;
@@ -1063,27 +1090,33 @@ READ16_HANDLER( amiga_custom_r )
 			break;
 
 		case REG_CLXDAT:
-			printf("CLXDAT read\n");
 			temp = CUSTOM_REG(REG_CLXDAT);
 			CUSTOM_REG(REG_CLXDAT) = 0;
 			return temp;
-
-		default:
-#if LOG_CUSTOM
-			logerror( "PC = %06x - Read from Custom %04x\n", cpu_getactivecpu() != -1 ? activecpu_get_pc() : 0, offset );
-#endif
-			break;
 	}
+
+#if LOG_CUSTOM
+	logerror("%06X:read from custom %s\n", safe_activecpu_get_pc(), amiga_custom_names[offset & 0xff]);
+#endif
 
 	return 0;
 }
 
 
+
+/*************************************
+ *
+ *  Custom chip register write
+ *
+ *************************************/
+
 WRITE16_HANDLER( amiga_custom_w )
 {
-			logerror("PC = %06x - Wrote to Custom %04x (%04x)\n", safe_activecpu_get_pc(), offset * 2, data);
-
 	offset &= 0xff;
+
+#if LOG_CUSTOM
+	logerror("%06X:write to custom %s = %04X\n", safe_activecpu_get_pc(), amiga_custom_names[offset & 0xff], data);
+#endif
 
 	switch (offset)
 	{
@@ -1104,36 +1137,9 @@ WRITE16_HANDLER( amiga_custom_w )
 			blitter_setup();
 			break;
 
-		case REG_AUD0LCL:	case REG_AUD1LCL:	case REG_AUD2LCL:	case REG_AUD3LCL:
-		case REG_BLTCMOD:	case REG_BLTBMOD:	case REG_BLTAMOD:	case REG_BLTDMOD:
-		case REG_BLTCPTL:	case REG_BLTBPTL:	case REG_BLTAPTL:	case REG_BLTDPTL:
-		case REG_COP1LCL:	case REG_COP2LCL:
-		case REG_BPL1PTL:	case REG_BPL2PTL:	case REG_BPL3PTL:	case REG_BPL4PTL:
-		case REG_BPL5PTL:	case REG_BPL6PTL:
-			/* keep word-aligned */
-			data &= 0xfffe;
-			break;
-
-		case REG_AUD0LCH:	case REG_AUD1LCH:	case REG_AUD2LCH:	case REG_AUD3LCH:
-		case REG_BLTCPTH:	case REG_BLTBPTH:	case REG_BLTAPTH:	case REG_BLTDPTH:
-		case REG_COP1LCH:	case REG_COP2LCH:
-		case REG_BPL1PTH:	case REG_BPL2PTH:	case REG_BPL3PTH:	case REG_BPL4PTH:
-		case REG_BPL5PTH:	case REG_BPL6PTH:
-			/* mask off high bits */
-			data &= 0x001f;
-			break;
-
 		case REG_SPR0PTL:	case REG_SPR1PTL:	case REG_SPR2PTL:	case REG_SPR3PTL:
 		case REG_SPR4PTL:	case REG_SPR5PTL:	case REG_SPR6PTL:	case REG_SPR7PTL:
-			/* keep word-aligned */
-			data &= 0xfffe;
 			amiga_sprite_dma_reset((offset - REG_SPR0PTL) / 2);
-			break;
-
-		case REG_SPR0PTH:	case REG_SPR1PTH:	case REG_SPR2PTH:	case REG_SPR3PTH:
-		case REG_SPR4PTH:	case REG_SPR5PTH:	case REG_SPR6PTH:	case REG_SPR7PTH:
-			/* mask off high bits */
-			data &= 0x001f;
 			break;
 
 		case REG_SPR0CTL:	case REG_SPR1CTL:	case REG_SPR2CTL:	case REG_SPR3CTL:
@@ -1171,38 +1177,39 @@ WRITE16_HANDLER( amiga_custom_w )
 			break;
 
 		case REG_DMACON:
-			logerror("DMACON = %04X\n", offset);
-			amiga_audio_w(offset, data, mem_mask);
+			amiga_audio_update();
 
 			/* bits BBUSY (14) and BZERO (13) are read-only */
 			data &= 0x9fff;
 			data = (data & 0x8000) ? (CUSTOM_REG(offset) | (data & 0x7fff)) : (CUSTOM_REG(offset) & ~(data & 0x7fff));
-			CUSTOM_REG(offset) = data;
 			break;
 
 		case REG_INTENA:
 			data = (data & 0x8000) ? (CUSTOM_REG(offset) | (data & 0x7fff)) : (CUSTOM_REG(offset) & ~(data & 0x7fff));
 			CUSTOM_REG(offset) = data;
-			check_ints();
+			update_irqs();
 			break;
 
 		case REG_INTREQ:
 			data = (data & 0x8000) ? (CUSTOM_REG(offset) | (data & 0x7fff)) : (CUSTOM_REG(offset) & ~(data & 0x7fff));
 			CUSTOM_REG(offset) = data;
-			check_ints();
+			update_irqs();
 			break;
 
 		case REG_ADKCON:
+			amiga_audio_update();
 			data = (data & 0x8000) ? (CUSTOM_REG(offset) | (data & 0x7fff)) : (CUSTOM_REG(offset) & ~(data & 0x7fff));
-			CUSTOM_REG(offset) = data;
-			amiga_audio_w(offset, data, mem_mask);
 			break;
 
-		case REG_AUD0PER:	case REG_AUD0VOL:	case REG_AUD0DAT:
-		case REG_AUD1PER:	case REG_AUD1VOL:	case REG_AUD1DAT:
-		case REG_AUD2PER:	case REG_AUD2VOL:	case REG_AUD2DAT:
-		case REG_AUD3PER:	case REG_AUD3VOL:	case REG_AUD3DAT:
-			amiga_audio_w(offset, data, mem_mask);
+		case REG_AUD0LCL:	case REG_AUD0LCH:	case REG_AUD0LEN:	case REG_AUD0PER:	case REG_AUD0VOL:
+		case REG_AUD1LCL:	case REG_AUD1LCH:	case REG_AUD1LEN:	case REG_AUD1PER:	case REG_AUD1VOL:
+		case REG_AUD2LCL:	case REG_AUD2LCH:	case REG_AUD2LEN:	case REG_AUD2PER:	case REG_AUD2VOL:
+		case REG_AUD3LCL:	case REG_AUD3LCH:	case REG_AUD3LEN:	case REG_AUD3PER:	case REG_AUD3VOL:
+			amiga_audio_update();
+			break;
+
+		case REG_AUD0DAT:	case REG_AUD1DAT:	case REG_AUD2DAT:	case REG_AUD3DAT:
+			amiga_audio_data_w((offset - REG_AUD0DAT) / 8, data);
 			break;
 
 		case REG_BPLCON0:
@@ -1212,14 +1219,6 @@ WRITE16_HANDLER( amiga_custom_w )
 				logerror( "This game is doing funky planes stuff. (planes > 6)\n" );
 				data &= ~BPLCON0_BPU0;
 			}
-			break;
-
-		case REG_BPLCON1:
-			data &= 0xff;
-			break;
-
-		case REG_BPLCON2:
-			data &= 0x7f;
 			break;
 
 		case REG_COLOR00:	case REG_COLOR01:	case REG_COLOR02:	case REG_COLOR03:
@@ -1235,9 +1234,6 @@ WRITE16_HANDLER( amiga_custom_w )
 			break;
 
 		default:
-#if LOG_CUSTOM
-			logerror("PC = %06x - Wrote to Custom %04x (%04x)\n", safe_activecpu_get_pc(), offset * 2, data);
-#endif
 			break;
 	}
 
@@ -1245,48 +1241,20 @@ WRITE16_HANDLER( amiga_custom_w )
 		CUSTOM_REG(offset) = data;
 }
 
-/***************************************************************************
-
-    Interrupt handling
-
-***************************************************************************/
-
-INTERRUPT_GEN( amiga_irq )
-{
-	int scanline = 261 - cpu_getiloops();
-
-	if ( scanline == 0 )
-	{
-		/* vblank start */
-		cia_clock_tod(&cia_8520[0]);
-
-		amiga_custom_w(REG_INTREQ, 0x8000 | INTENA_VERTB, 0);
-
-		if (amiga_intf->interrupt_callback)
-			amiga_intf->interrupt_callback();
-	}
-	cia_clock_tod(&cia_8520[1]);
-
-	amiga_render_scanline(scanline);
-
-	/* force a sound update */
-	amiga_audio_w(0,0,0);
-}
 
 
-
-
-/***************************************************************************
-
-    Autoconfig devices
-
-***************************************************************************/
+/*************************************
+ *
+ *  Autoconfig registration
+ *
+ *************************************/
 
 void amiga_add_autoconfig(amiga_autoconfig_device *device)
 {
 	autoconfig_device *dev, **d;
 
 	/* validate the data */
+	assert_always(mame_get_phase() == MAME_PHASE_INIT, "Can only call amiga_add_autoconfig at init time!");
 	assert_always((device->size & (device->size - 1)) == 0, "device->size must be power of 2!");
 
 	/* allocate memory and link it in at the end of the list */
@@ -1300,6 +1268,13 @@ void amiga_add_autoconfig(amiga_autoconfig_device *device)
 	dev->base = 0;
 }
 
+
+
+/*************************************
+ *
+ *  Autoconfig reset
+ *
+ *************************************/
 
 static void autoconfig_reset(void)
 {
@@ -1317,6 +1292,13 @@ static void autoconfig_reset(void)
 	cur_autoconfig = autoconfig_list;
 }
 
+
+
+/*************************************
+ *
+ *  Autoconfig space read
+ *
+ *************************************/
 
 READ16_HANDLER( amiga_autoconfig_r )
 {
@@ -1448,6 +1430,13 @@ READ16_HANDLER( amiga_autoconfig_r )
 }
 
 
+
+/*************************************
+ *
+ *  Autoconfig space write
+ *
+ *************************************/
+
 WRITE16_HANDLER( amiga_autoconfig_w )
 {
 	int move_to_next = FALSE;
@@ -1490,45 +1479,3 @@ WRITE16_HANDLER( amiga_autoconfig_w )
 		cur_autoconfig = cur_autoconfig->next;
 	}
 }
-
-
-
-/***************************************************************************
-
-    Init Machine
-
-***************************************************************************/
-
-void amiga_m68k_reset( void )
-{
-	logerror("Executed RESET at PC=%06x\n", activecpu_get_pc());
-	amiga_cia_w(0x1001/2, 1, 0);	/* enable overlay */
-	if (activecpu_get_pc() < 0x80000)
-		memory_set_opbase(0);
-}
-
-MACHINE_RESET(amiga)
-{
-	/* set m68k reset  function */
-	cpunum_set_info_fct(0, CPUINFO_PTR_M68K_RESET_CALLBACK, (genf *)amiga_m68k_reset);
-
-	/* Initialize the CIA's */
-	cia_reset();
-
-	/* Initialize the Custom chips */
-	amiga_custom_reset();
-
-	/* set the overlay bit */
-	amiga_cia_w(0x1001/2, 1, 0);
-
-	autoconfig_reset();
-
-	if (amiga_intf->reset_callback)
-		amiga_intf->reset_callback();
-}
-
-void amiga_machine_config(const struct amiga_machine_interface *intf)
-{
-	amiga_intf = intf;
-}
-

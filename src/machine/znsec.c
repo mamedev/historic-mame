@@ -82,6 +82,8 @@
                       = Shift(c[n-1, 6])^Shift(c[n-1, 7])
 */
 
+#include "znsec.h"
+
 typedef struct {
 	const unsigned char *transform;
 	unsigned char state;

@@ -12,20 +12,10 @@
 
 void init_pc_common(UINT32 flags);
 
-
-void pc_mda_init(void);
-
 void pc_keyboard(void);
 UINT8 pc_keyb_read(void);
 void pc_keyb_set_clock(int on);
 void pc_keyb_clear(void);
-
-/* from sndhrdw/pc.c */
-extern struct CustomSound_interface pc_sound_interface;
-void pc_sh_update(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int samples);
-void pc_sh_speaker(int mode);
-
-void pc_sh_speaker_change_clock(double pc_clock);
 
 READ8_HANDLER(pc_page_r);
 WRITE8_HANDLER(pc_page_w);
@@ -35,3 +25,11 @@ WRITE8_HANDLER(at_page8_w);
 
 READ32_HANDLER(at_page32_r);
 WRITE32_HANDLER(at_page32_w);
+
+/*----------- defined in sndhrdw/pc.c -----------*/
+
+extern struct CustomSound_interface pc_sound_interface;
+void pc_sh_update(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int samples);
+void pc_sh_speaker(int mode);
+
+void pc_sh_speaker_change_clock(double pc_clock);

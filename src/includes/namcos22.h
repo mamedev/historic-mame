@@ -78,7 +78,6 @@ VIDEO_UPDATE( namcos22 );
 VIDEO_START( namcos22s );
 VIDEO_UPDATE( namcos22s );
 
-void namcos22_WriteDataToRenderDevice( UINT32 data );
 void namcos22_draw_direct_poly( const UINT16 *pSource );
 extern UINT32 namcos22_point_rom_r( offs_t offs );
 extern void namcos22_enable_slave_simulation( void );

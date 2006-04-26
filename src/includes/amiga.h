@@ -282,44 +282,36 @@ Ernesto Corvi & Mariusz Wojcieszek
 #define INTENA_INTEN	0x4000
 #define INTENA_SETCLR	0x8000
 
-/* CIA registers */
-#define CIA_PRA			(0x0000/2)
-#define CIA_PRB			(0x0100/2)
-#define CIA_DDRA		(0x0200/2)
-#define CIA_DDRB		(0x0300/2)
-#define CIA_TALO		(0x0400/2)
-#define CIA_TAHI		(0x0500/2)
-#define CIA_TBLO		(0x0600/2)
-#define CIA_TBHI		(0x0700/2)
-#define CIA_TODLOW		(0x0800/2)
-#define CIA_TODMID		(0x0900/2)
-#define CIA_TODHI		(0x0a00/2)
-#define CIA_SDR			(0x0c00/2)
-#define CIA_ICR			(0x0d00/2)
-#define CIA_CRA			(0x0e00/2)
-#define CIA_CRB			(0x0f00/2)
-
 
 #define MAX_PLANES 6 /* 0 to 6, inclusive ( but we count from 0 to 5 ) */
 
-struct amiga_machine_interface
-{
-	int (*cia_0_portA_r)(void);
-	int (*cia_0_portB_r)(void);
-	void (*cia_0_portA_w)(int data);
-	void (*cia_0_portB_w)(int data);
 
-	int (*cia_1_portA_r)(void);
-	int (*cia_1_portB_r)(void);
-	void (*cia_1_portA_w)(int data);
-	void (*cia_1_portB_w)(int data);
+#define ANGUS_CHIP_RAM_MASK		0x07fffe
+#define FAT_ANGUS_CHIP_RAM_MASK	0x0ffffe
+#define ECS_CHIP_RAM_MASK		0x1ffffe
+
+
+typedef struct _amiga_machine_interface amiga_machine_interface;
+struct _amiga_machine_interface
+{
+	UINT32 chip_ram_mask;
+
+	UINT8 (*cia_0_portA_r)(void);
+	UINT8 (*cia_0_portB_r)(void);
+	void (*cia_0_portA_w)(UINT8 data);
+	void (*cia_0_portB_w)(UINT8 data);
+
+	UINT8 (*cia_1_portA_r)(void);
+	UINT8 (*cia_1_portB_r)(void);
+	void (*cia_1_portA_w)(UINT8 data);
+	void (*cia_1_portB_w)(UINT8 data);
 
 	UINT16 (*read_joy0dat)(void);
 	UINT16 (*read_joy1dat)(void);
 	UINT16 (*read_dskbytr)(void);
 	void (*write_dsklen)(UINT16 data);
 
-	void (*interrupt_callback)(void);
+	void (*scanline_callback)(void);
 	void (*reset_callback)(void);
 };
 
@@ -353,18 +345,20 @@ extern UINT16 *amiga_custom_regs;
 extern UINT16 *amiga_expansion_ram;
 extern UINT16 *amiga_autoconfig_mem;
 
-INTERRUPT_GEN(amiga_vblank_irq);
-INTERRUPT_GEN(amiga_irq);
-void amiga_signal_irq(int which);
-void amiga_machine_config(const struct amiga_machine_interface *intf);
-WRITE16_HANDLER(amiga_custom_w);
-void amiga_reload_sprite_info( int spritenum );
-READ16_HANDLER(amiga_cia_r);
-WRITE16_HANDLER(amiga_cia_w);
-READ16_HANDLER(amiga_custom_r);
-WRITE16_HANDLER(amiga_custom_w);
-MACHINE_RESET(amiga);
-void amiga_cia_issue_index( void );
+extern const char *amiga_custom_names[0x100];
+
+void amiga_machine_config(const amiga_machine_interface *intf);
+
+MACHINE_RESET( amiga );
+INTERRUPT_GEN( amiga_scanline_callback );
+
+UINT32 amiga_joystick_convert(void *param);
+
+READ16_HANDLER( amiga_cia_r );
+WRITE16_HANDLER( amiga_cia_w );
+
+READ16_HANDLER( amiga_custom_r );
+WRITE16_HANDLER( amiga_custom_w );
 
 void amiga_add_autoconfig(amiga_autoconfig_device *device);
 READ16_HANDLER( amiga_autoconfig_r );
@@ -375,12 +369,13 @@ WRITE16_HANDLER( amiga_autoconfig_w );
 
 void *amiga_sh_start(int clock, const struct CustomSound_interface *config);
 void amiga_audio_update(void);
-READ16_HANDLER( amiga_audio_r );
-WRITE16_HANDLER( amiga_audio_w );
+void amiga_audio_data_w(int which, UINT16 data);
+
 
 /*----------- defined in vidhrdw/amiga.c -----------*/
 
-PALETTE_INIT(amiga);
+PALETTE_INIT( amiga );
+VIDEO_START( amiga );
 
 UINT32 amiga_gethvpos(void);
 void copper_setpc(UINT32 pc);
@@ -392,13 +387,17 @@ void amiga_sprite_enable_comparitor(int which, int enable);
 
 INLINE UINT16 amiga_chip_ram_r(offs_t offset)
 {
-	return (offset < amiga_chip_ram_size) ? amiga_chip_ram[offset / 2] : 0xffff;
+	extern const amiga_machine_interface *amiga_intf;
+	offset &= amiga_intf->chip_ram_mask;
+	return (offset < amiga_chip_ram_size) ? amiga_chip_ram[offset/2] : 0xffff;
 }
 
 INLINE void amiga_chip_ram_w(offs_t offset, UINT16 data)
 {
+	extern const amiga_machine_interface *amiga_intf;
+	offset &= amiga_intf->chip_ram_mask;
 	if (offset < amiga_chip_ram_size)
-		amiga_chip_ram[offset / 2] = data;
+		amiga_chip_ram[offset/2] = data;
 }
 
 

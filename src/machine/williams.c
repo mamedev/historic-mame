@@ -446,16 +446,18 @@ WRITE8_HANDLER( williams2_bank_select_w )
 		/* page 0 is video ram */
 		case 0:
 			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x8fff, 0, 0, MRA8_BANK1);
-			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x87ff, 0, 0, MWA8_RAM);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x87ff, 0, 0, MWA8_BANK4);
 			memory_set_bank(1, 0);
+			memory_set_bankptr(4, &williams_videoram[0x8000]);
 			break;
 
 		/* pages 1 and 2 are ROM */
 		case 1:
 		case 2:
 			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x8fff, 0, 0, MRA8_BANK1);
-			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x87ff, 0, 0, MWA8_RAM);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x87ff, 0, 0, MWA8_BANK4);
 			memory_set_bank(1, 1 + ((vram_bank & 6) >> 1));
+			memory_set_bankptr(4, &williams_videoram[0x8000]);
 			break;
 
 		/* page 3 accesses palette RAM; the remaining areas are as if page 1 ROM was selected */
@@ -709,7 +711,7 @@ WRITE8_HANDLER( defender_bank_select_w )
 		case 8:
 		case 9:
 			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xcfff, 0, 0, MRA8_BANK1);
-			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xcfff, 0, 0, MWA8_ROM);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xcfff, 0, 0, MWA8_UNMAP);
 			memory_set_bank(1, vram_bank - 1);
 			break;
 
@@ -888,10 +890,7 @@ MACHINE_RESET( joust2 )
 {
 	/* standard init */
 	machine_reset_williams2();
-
-	/* make sure sound board starts out in the reset state */
-	pia_reset();
-
+	pia_set_input_ca1(3, 1);
 	state_save_register_global(joust2_current_sound_data);
 }
 

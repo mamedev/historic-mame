@@ -8,7 +8,6 @@
 #include "missile.h"
 
 UINT8 *missile_videoram;
-extern UINT8 *missile_ram;
 
 
 /***************************************************************************

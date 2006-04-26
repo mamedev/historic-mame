@@ -1,9 +1,10 @@
 /***************************************************************************
-Amiga Computer / Arcadia Game System
 
-Driver by:
+    Amiga Computer / Arcadia Game System
 
-Ernesto Corvi & Mariusz Wojcieszek
+    Driver by:
+
+    Ernesto Corvi & Mariusz Wojcieszek
 
 ***************************************************************************/
 
@@ -13,12 +14,32 @@ Ernesto Corvi & Mariusz Wojcieszek
 #include "cpu/m68000/m68000.h"
 
 
-#define CLOCK_DIVIDER	16
-
+/*************************************
+ *
+ *  Debugging
+ *
+ *************************************/
 
 #define LOG(x)
 //#define LOG(x)    logerror x
 
+
+
+/*************************************
+ *
+ *  Constants
+ *
+ *************************************/
+
+#define CLOCK_DIVIDER	16
+
+
+
+/*************************************
+ *
+ *  Type definitions
+ *
+ *************************************/
 
 typedef struct _audio_channel audio_channel;
 struct _audio_channel
@@ -29,10 +50,8 @@ struct _audio_channel
 	UINT16			curticks;
 	UINT8			index;
 	UINT8			dmaenabled;
-	UINT8			state;
-	UINT8			modper;
-	UINT8			modvol;
-	UINT16			data;
+	UINT8			manualmode;
+	INT8			latched;
 };
 
 
@@ -40,19 +59,31 @@ typedef struct _amiga_audio amiga_audio;
 struct _amiga_audio
 {
 	audio_channel	channel[4];
-	UINT16			ADKCON;
-	UINT16			DMACON;
 	sound_stream *	stream;
 	double			sample_period;
 };
 
 
+
+/*************************************
+ *
+ *  Globals
+ *
+ *************************************/
+
 static amiga_audio *audio_state;
 
 
+
+/*************************************
+ *
+ *  DMA reload/IRQ signalling
+ *
+ *************************************/
+
 static void signal_irq(int which)
 {
-	amiga_custom_w(REG_INTREQ, 0x8000 | (1 << which), 0);
+	amiga_custom_w(REG_INTREQ, 0x8000 | (0x80 << which), 0);
 }
 
 
@@ -60,9 +91,36 @@ static void dma_reload(audio_channel *chan)
 {
 	chan->curlocation = CUSTOM_REG_LONG(REG_AUD0LCH + chan->index * 8);
 	chan->curlength = CUSTOM_REG(REG_AUD0LEN + chan->index * 8);
-	timer_set(TIME_IN_HZ(15750), chan->index + 7, signal_irq);
+	timer_set(TIME_IN_HZ(15750), chan->index, signal_irq);
 	LOG(("dma_reload(%d): offs=%05X len=%04X\n", chan->index, chan->curlocation, chan->curlength));
 }
+
+
+
+/*************************************
+ *
+ *  Manual mode data writer
+ *
+ *************************************/
+
+void amiga_audio_data_w(int which, UINT16 data)
+{
+	audio_state->channel[which].manualmode = TRUE;
+}
+
+
+
+/*************************************
+ *
+ *  Stream updater
+ *
+ *************************************/
+
+void amiga_audio_update(void)
+{
+	stream_update(audio_state->stream, 0);
+}
+
 
 
 static void amiga_stream_update(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int length)
@@ -71,6 +129,25 @@ static void amiga_stream_update(void *param, stream_sample_t **inputs, stream_sa
 	int channum, sampoffs = 0;
 
 	length *= CLOCK_DIVIDER;
+
+	/* if all DMA off, disable all channels */
+	if (!(CUSTOM_REG(REG_DMACON) & 0x0200))
+	{
+		audio->channel[0].dmaenabled =
+		audio->channel[1].dmaenabled =
+		audio->channel[2].dmaenabled =
+		audio->channel[3].dmaenabled = FALSE;
+		return;
+	}
+
+	/* update the DMA states on each channel and reload if fresh */
+	for (channum = 0; channum < 4; channum++)
+	{
+		audio_channel *chan = &audio->channel[channum];
+		if (!chan->dmaenabled && ((CUSTOM_REG(REG_DMACON) >> channum) & 1))
+			dma_reload(chan);
+		chan->dmaenabled = (CUSTOM_REG(REG_DMACON) >> channum) & 1;
+	}
 
 	/* loop until done */
 	while (length > 0)
@@ -103,18 +180,18 @@ static void amiga_stream_update(void *param, stream_sample_t **inputs, stream_sa
 			volume *= 4;
 
 			/* are we modulating the period of the next channel? */
-			if (chan->modper)
+			if ((CUSTOM_REG(REG_ADKCON) >> channum) & 0x10)
 			{
-				nextper = chan->data;
+				nextper = CUSTOM_REG(REG_AUD0DAT + channum * 8);
 				nextvol = -1;
 				sample = 0;
 			}
 
 			/* are we modulating the volume of the next channel? */
-			else if (chan->modvol)
+			else if ((CUSTOM_REG(REG_ADKCON) >> channum) & 0x01)
 			{
 				nextper = -1;
-				nextvol = chan->data;
+				nextvol = CUSTOM_REG(REG_AUD0DAT + channum * 8);
 				sample = 0;
 			}
 
@@ -122,10 +199,7 @@ static void amiga_stream_update(void *param, stream_sample_t **inputs, stream_sa
 			else
 			{
 				nextper = nextvol = -1;
-				if (!(chan->curlocation & 1))
-					sample = (INT8)(chan->data >> 8) * volume;
-				else
-					sample = (INT8)(chan->data >> 0) * volume;
+				sample = chan->latched * volume;
 			}
 
 			/* fill the buffer with the sample */
@@ -136,24 +210,36 @@ static void amiga_stream_update(void *param, stream_sample_t **inputs, stream_sa
 			chan->curticks -= ticks;
 			if (chan->curticks == 0)
 			{
+				/* reset the clock and ensure we're above the minimum ticks */
 				chan->curticks = period;
 				if (chan->curticks < 124)
 					chan->curticks = 124;
 
 				/* move forward one byte; if we move to an even byte, fetch new */
-				if (chan->dmaenabled)
-				{
+				if (chan->dmaenabled || chan->manualmode)
 					chan->curlocation++;
-					if (!(chan->curlocation & 1))
-					{
-						chan->data = amiga_chip_ram_r(chan->curlocation);
-						if (chan->curlength != 0)
-							chan->curlength--;
+				if (chan->dmaenabled && !(chan->curlocation & 1))
+				{
+					CUSTOM_REG(REG_AUD0DAT + channum * 8) = amiga_chip_ram_r(chan->curlocation);
+					if (chan->curlength != 0)
+						chan->curlength--;
 
-						/* if we run out of data, reload the dma */
-						if (chan->curlength == 0)
-							dma_reload(chan);
-					}
+					/* if we run out of data, reload the dma */
+					if (chan->curlength == 0)
+						dma_reload(chan);
+				}
+
+				/* latch the next byte of the sample */
+				if (!(chan->curlocation & 1))
+					chan->latched = CUSTOM_REG(REG_AUD0DAT + channum * 8) >> 8;
+				else
+					chan->latched = CUSTOM_REG(REG_AUD0DAT + channum * 8) >> 0;
+
+				/* if we're in manual mode, signal an interrupt once we latch the low byte */
+				if (!chan->dmaenabled && chan->manualmode && (chan->curlocation & 1))
+				{
+					signal_irq(channum);
+					chan->manualmode = FALSE;
 				}
 			}
 		}
@@ -164,6 +250,13 @@ static void amiga_stream_update(void *param, stream_sample_t **inputs, stream_sa
 	}
 }
 
+
+
+/*************************************
+ *
+ *  Sound system startup
+ *
+ *************************************/
 
 void *amiga_sh_start(int clock, const struct CustomSound_interface *config)
 {
@@ -181,118 +274,4 @@ void *amiga_sh_start(int clock, const struct CustomSound_interface *config)
 	/* create the stream */
 	audio_state->stream = stream_create(0, 4, clock / CLOCK_DIVIDER, audio_state, amiga_stream_update);
 	return audio_state;
-}
-
-
-void amiga_audio_update(void)
-{
-	stream_update(audio_state->stream, 0);
-}
-
-
-WRITE16_HANDLER( amiga_audio_w )
-{
-	int channel = (offset - REG_AUD0LCH) / 0x0008;
-	audio_channel *chan = &audio_state->channel[channel];
-
-	stream_update(audio_state->stream, 0);
-
-	switch (offset)
-	{
-		case REG_DMACON:
-			LOG(("DMACON = %04X\n", data));
-
-			if (data & 0x8000)
-				audio_state->DMACON |= data & 0x7fff;
-			else
-				audio_state->DMACON &= ~(data & 0x7fff);
-
-			/* if all DMA off, disable all channels */
-			if (!(audio_state->DMACON & 0x0200))
-			{
-				audio_state->channel[0].dmaenabled =
-				audio_state->channel[1].dmaenabled =
-				audio_state->channel[2].dmaenabled =
-				audio_state->channel[3].dmaenabled = FALSE;
-			}
-
-			/* otherwise, set based on the channel */
-			else
-			{
-				if (!audio_state->channel[0].dmaenabled && ((audio_state->DMACON >> 0) & 1))
-					dma_reload(&audio_state->channel[0]);
-				audio_state->channel[0].dmaenabled = (audio_state->DMACON >> 0) & 1;
-
-				if (!audio_state->channel[1].dmaenabled && ((audio_state->DMACON >> 1) & 1))
-					dma_reload(&audio_state->channel[1]);
-				audio_state->channel[1].dmaenabled = (audio_state->DMACON >> 1) & 1;
-
-				if (!audio_state->channel[2].dmaenabled && ((audio_state->DMACON >> 2) & 1))
-					dma_reload(&audio_state->channel[2]);
-				audio_state->channel[2].dmaenabled = (audio_state->DMACON >> 2) & 1;
-
-				if (!audio_state->channel[3].dmaenabled && ((audio_state->DMACON >> 3) & 1))
-					dma_reload(&audio_state->channel[3]);
-				audio_state->channel[3].dmaenabled = (audio_state->DMACON >> 3) & 1;
-			}
-			break;
-/*
-NAME   rev ADDR type chip Description
---------------------------------------------------------------------------------
-DMACON  096  W  A D P DMA control write (clear or set)
-DMACONR 002  R  A   P DMA control (and blitter status) read
-
-    This register controls all of the DMA channels, and contains
-    blitter DMA status bits.
-
-         +------+----------+--------------------------------------------+
-         | BIT# | FUNCTION | DESCRIPTION                                |
-         +------+----------+--------------------------------------------+
-         | 15   | SET/CLR  | Set/Clear control bit. Determines if bits  |
-         |      |          | written wit a 1 get set or cleared.        |
-         |      |          | Bits written witn a zero are unchanged.    |
-         | 09   | DMAEN    | Enable all DMA below (also UHRES DMA)      |
-         | 03   | AUD3EN   | Audio chanel 3 DMA enable                  |
-         | 02   | AUD2EN   | Audio chanel 2 DMA enable                  |
-         | 01   | AUD1EN   | Audio chanel 1 DMA enable                  |
-         | 00   | AUD0EN   | Audio chanel 0 DMA enable                  |
-         +------+----------+--------------------------------------------+
-*/
-
-		case REG_ADKCON:
-			LOG(("ADKCON = %04X\n", data));
-
-			if (data & 0x8000)
-				audio_state->ADKCON |= data & 0x7fff;
-			else
-				audio_state->ADKCON &= ~(data & 0x7fff);
-
-			audio_state->channel[3].modper = (audio_state->ADKCON >> 7) & 1;
-			audio_state->channel[2].modper = (audio_state->ADKCON >> 6) & 1;
-			audio_state->channel[1].modper = (audio_state->ADKCON >> 5) & 1;
-			audio_state->channel[0].modper = (audio_state->ADKCON >> 4) & 1;
-			audio_state->channel[3].modvol = (audio_state->ADKCON >> 3) & 1;
-			audio_state->channel[2].modvol = (audio_state->ADKCON >> 2) & 1;
-			audio_state->channel[1].modvol = (audio_state->ADKCON >> 1) & 1;
-			audio_state->channel[0].modvol = (audio_state->ADKCON >> 0) & 1;
-/*
-07 USE3PN Use audio channel 3 to modulate nothing
-06 USE2P3 Use audio channel 2 to modulate period of channel 3.
-05 USE1P2 Use audio channel 1 to modulate period of channel 2
-04 USE0P1 Use audio channel 0 to modulate period of channel 1.
-03 USE3VN Use audio channel 3 to modulate nothing
-02 USE2V3 Use audio channel 2 to modulate volume of channel 3.
-01 USE1V2 Use audio channel 1 to modulate volume of channel 2.
-00 USE0V1 Use audio channel 0 to modulate volume of channel 1.
-*/
-			break;
-
-		case REG_AUD0DAT:
-		case REG_AUD1DAT:
-		case REG_AUD2DAT:
-		case REG_AUD3DAT:
-			LOG(("AUD%dDAT = %04X\n", chan->index, data));
-			chan->data = data;
-			break;
-	}
 }

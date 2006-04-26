@@ -60,8 +60,9 @@ extern int model3_irq_state;
 extern int model3_step;
 extern int model3_draw_crosshair;
 
+extern UINT32 *model3_vrom;
+
 UINT64 *paletteram64;
-static UINT32 *vrom;
 
 static UINT8 model3_layer_enable = 0;
 static UINT32 layer_modulate_r;
@@ -119,7 +120,6 @@ static float ambient_light_intensity;
 VIDEO_START( model3 )
 {
 	int j,t;
-	vrom = (UINT32*)memory_region(REGION_USER2);
 
 	bitmap3d = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
 	if (!bitmap3d)
@@ -1360,7 +1360,7 @@ static void traverse_list4(UINT32 address)
 
 	if ((link & 0xffffff) > 0x100000)		/* VROM model */
 	{
-		draw_model(&vrom[link & 0xffffff]);
+		draw_model(&model3_vrom[link & 0xffffff]);
 	}
 	else {		/* model in polygon ram */
 		/* TODO: polygon ram actually overrides the lowest 4MB of VROM.
@@ -1448,7 +1448,7 @@ static void traverse_node(UINT32 address)
 					case 0x03:		/* both of these link to models, is there any difference ? */
 						if ((link & 0xffffff) > 0x100000)		/* VROM model */
 						{
-							draw_model(&vrom[link & 0xffffff]);
+							draw_model(&model3_vrom[link & 0xffffff]);
 						}
 						else {		/* model in polygon ram */
 							/* TODO: polygon ram actually overrides the lowest 4MB of VROM.

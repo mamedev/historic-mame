@@ -39,8 +39,6 @@ extern VIDEO_UPDATE( sgladiat );
 extern void tnk3_draw_text( mame_bitmap *bitmap, int bank, unsigned char *source );
 extern void tnk3_draw_status( mame_bitmap *bitmap, int bank, unsigned char *source );
 
-extern UINT8 *snk_bg_tilemap_base;
-
 // note: compare tdfever which does blinking in software with tdfeverj which does it in hardware
 extern int snk_blink_parity;
 

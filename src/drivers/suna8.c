@@ -302,7 +302,7 @@ rom13:  0?, 1y, 2n, 3n      ?,?,?,? (palettes)
 	}
 
 	memory_configure_bank(1, 0, 16, memory_region(REGION_CPU1) + 0x10000, 0x4000);
-	memory_configure_bank(2, 0, 2, memory_region(REGION_USER3), 0x2000);
+	memory_configure_bank(2, 0, 2, auto_malloc(0x2000 * 2), 0x2000);
 }
 
 
@@ -2211,9 +2211,6 @@ ROM_START( brickzn )
 	ROM_LOAD( "brickzon.005", 0x60000, 0x20000, CRC(118f8392) SHA1(598fa4df3ae348ec9796cd6d90c3045bec546da3) )
 	ROM_LOAD( "brickzon.004", 0x80000, 0x20000, CRC(2be5f335) SHA1(dc870a3c5303cb2ea1fea4a25f53db016ed5ecee) )
 	ROM_LOAD( "brickzon.006", 0xa0000, 0x20000, CRC(bbf31081) SHA1(1fdbd0e0853082345225e18df340184a7a604b78) )
-
-	ROM_REGION( 0x0200 * 2, REGION_USER1, 0 )	/* Palette RAM Banks */
-	ROM_REGION( 0x2000 * 2, REGION_USER2, 0 )	/* Sprite  RAM Banks */
 ROM_END
 
 ROM_START( brickzn3 )
@@ -2235,9 +2232,6 @@ ROM_START( brickzn3 )
 	ROM_LOAD( "32",           0x60000, 0x20000, CRC(32dbf2dd) SHA1(b9ab8b93a062b871b7f824e4be2f214cc832d585) )
 	ROM_LOAD( "brickzon.001", 0x80000, 0x20000, CRC(6970ada9) SHA1(5cfe5dcf25af7aff67ee5d78eb963d598251025f) )
 	ROM_LOAD( "brickzon.003", 0xa0000, 0x20000, CRC(2e4f194b) SHA1(86da1a582ea274f2af96d3e3e2ac72bcaf3638cb) )
-
-	ROM_REGION( 0x0200 * 2, REGION_USER1, 0 )	/* Palette RAM Banks */
-	ROM_REGION( 0x2000 * 2, REGION_USER2, 0 )	/* Sprite  RAM Banks */
 ROM_END
 
 
@@ -2301,10 +2295,6 @@ ROM_START( hardhea2 )
 	ROM_LOAD( "hrd-hd6",  0x50000, 0x10000, CRC(bf90d3ca) SHA1(2d0533d93fc5155fe879c1890bc7bc4581308e16) )
 	ROM_LOAD( "hrd-hd7",  0x60000, 0x10000, CRC(992ce8cb) SHA1(21c0dd227138ec64003c7cb090855ec27d41719e) )
 	ROM_LOAD( "hrd-hd8",  0x70000, 0x10000, CRC(359597a4) SHA1(ae024dd61c5d12813a661abe8ea63ae6112ddc9c) )
-
-	ROM_REGION( 0x0200 * 2, REGION_USER1, 0 )	/* Palette RAM Banks */
-	ROM_REGION( 0x2000 * 2, REGION_USER2, 0 )	/* Sprite  RAM Banks */
-	ROM_REGION( 0x2000 * 2, REGION_USER3, 0 )	/* Scratch RAM Banks(protection) */
 ROM_END
 
 
@@ -2345,9 +2335,6 @@ ROM_START( starfigh )
 	ROM_RELOAD(              0xe0000, 0x10000             )
 	ROM_LOAD( "starfgtr.a6", 0xd0000, 0x10000, CRC(4a33f6f3) SHA1(daa0a1a43b1b60e2f05b9934fdd6b5f285a0b93a) )
 	ROM_RELOAD(              0xf0000, 0x10000             )
-
-	ROM_REGION( 0x0200 * 2, REGION_USER1, 0 )	/* Palette RAM Banks */
-	ROM_REGION( 0x2000 * 2, REGION_USER2, 0 )	/* Sprite  RAM Banks */
 ROM_END
 
 
@@ -2392,9 +2379,6 @@ ROM_START( sparkman )
 
 	ROM_REGION( 0x8000, REGION_SOUND2, 0 )		/* Samples */
 	ROM_LOAD( "sprkman.b11", 0x0000, 0x8000, CRC(d6823a62) SHA1(f8ce748aa7bdc9c95799dd111fd872717e46d416) )
-
-	ROM_REGION( 0x0200 * 2, REGION_USER1, 0 )	/* Palette RAM Banks */
-	ROM_REGION( 0x2000 * 2, REGION_USER2, 0 )	/* Sprite  RAM Banks */
 ROM_END
 
 

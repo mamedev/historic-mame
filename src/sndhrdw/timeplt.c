@@ -13,6 +13,7 @@
 #include "driver.h"
 #include "sound/ay8910.h"
 #include "sound/flt_rc.h"
+#include "timeplt.h"
 
 static READ8_HANDLER( timeplt_portB_r );
 static WRITE8_HANDLER( timeplt_filter_w );

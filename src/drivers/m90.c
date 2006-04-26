@@ -888,7 +888,7 @@ ROM_START( hasamu )
 	ROM_LOAD( "hasc-c2.bin",    0x040000, 0x20000, CRC(d90f9a68) SHA1(c9eab3e87dd5d3eb88461be493d88f5482c9e257) )
 	ROM_LOAD( "hasc-c3.bin",    0x060000, 0x20000, CRC(6cfe0d39) SHA1(104feeacbbc86b168c41cd37fc5797781d9b5a0f) )
 
-	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* samples */
+	ROM_REGION( 0x20000, REGION_SOUND1, ROMREGION_ERASE00 )	/* samples */
 	/* No samples */
 ROM_END
 
@@ -964,7 +964,7 @@ ROM_START( dynablsb )
 	ROM_LOAD( "bbm-c2.68",    0x080000, 0x40000, CRC(0700d406) SHA1(0d43a31a726b0de0004beef41307de2508106b69) )
 	ROM_LOAD( "bbm-c3.69",    0x0c0000, 0x40000, CRC(3c3613af) SHA1(f9554a73e95102333e449f6e81f2bb817ec00881) )
 
-	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* samples */
+	ROM_REGION( 0x20000, REGION_SOUND1, ROMREGION_ERASE00 )	/* samples */
 	/* Does this have a sample rom? */
 ROM_END
 
@@ -1120,7 +1120,7 @@ ROM_START( matchit2 )
 	ROM_LOAD( "ic83.rom",     0x100000, 0x80000, CRC(2bd65dc6) SHA1(b50dec707ea5a71972df0a8dc47141d75e8f874e) )
 	ROM_LOAD( "ic84.rom",     0x180000, 0x80000, CRC(876d5fdb) SHA1(723c58268be60f4973e914df238b264708d3f1e3) )
 
-	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* samples */
+	ROM_REGION( 0x20000, REGION_SOUND1, ROMREGION_ERASE00 )	/* samples */
 	/* Does this have a sample rom? */
 ROM_END
 
@@ -1139,7 +1139,7 @@ ROM_START( shisen2 )
 	ROM_LOAD( "ic83.rom",     0x100000, 0x80000, CRC(2bd65dc6) SHA1(b50dec707ea5a71972df0a8dc47141d75e8f874e) )
 	ROM_LOAD( "ic84.rom",     0x180000, 0x80000, CRC(876d5fdb) SHA1(723c58268be60f4973e914df238b264708d3f1e3) )
 
-	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* samples */
+	ROM_REGION( 0x20000, REGION_SOUND1, ROMREGION_ERASE00 )	/* samples */
 	/* Does this have a sample rom? */
 ROM_END
 

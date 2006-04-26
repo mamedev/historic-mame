@@ -125,6 +125,7 @@ void c140_get_info(void *token, UINT32 state, sndinfo *info);
 void qsound_get_info(void *token, UINT32 state, sndinfo *info);
 void saa1099_get_info(void *token, UINT32 state, sndinfo *info);
 void iremga20_get_info(void *token, UINT32 state, sndinfo *info);
+void es5503_get_info(void *token, UINT32 state, sndinfo *info);
 void es5505_get_info(void *token, UINT32 state, sndinfo *info);
 void es5506_get_info(void *token, UINT32 state, sndinfo *info);
 void bsmt2000_get_info(void *token, UINT32 state, sndinfo *info);
@@ -155,7 +156,6 @@ void speaker_get_info(void *token, UINT32 state, sndinfo *info);
 void wave_get_info(void *token, UINT32 state, sndinfo *info);
 void sid6581_get_info(void *token, UINT32 state, sndinfo *info);
 void sid8580_get_info(void *token, UINT32 state, sndinfo *info);
-void es5503_get_info(void *token, UINT32 state, sndinfo *info);
 #endif
 
 void filter_volume_get_info(void *token, UINT32 state, sndinfo *info);
@@ -331,6 +331,9 @@ static const struct
 #if (HAS_IREMGA20)
 	{ SOUND_IREMGA20, iremga20_get_info },
 #endif
+#if (HAS_ES5503)
+	{ SOUND_ES5503, es5503_get_info },
+#endif
 #if (HAS_ES5505)
 	{ SOUND_ES5505, es5505_get_info },
 #endif
@@ -416,9 +419,6 @@ static const struct
 #endif
 #if (HAS_SID8580)
 	{ SOUND_SID8580, sid8580_get_info },
-#endif
-#if (HAS_ES5503)
-	{ SOUND_ES5503, es5503_get_info },
 #endif
 #endif
 

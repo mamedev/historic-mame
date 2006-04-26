@@ -13,7 +13,8 @@
   TODO:
     - Self Test Fails
     - Banpresto logo in DBZ has bad colors after 1 run of the attract mode because
-      it's associated to the wrong logical tilemap (it should be a bug in K056832 emulation)
+      it's associated to the wrong logical tilemap and the same happens in DBZ2
+      test mode. It should be a bug in K056832 emulation.
 
 PCB Layout:
 
@@ -582,4 +583,4 @@ static DRIVER_INIT( dbz2 )
 }
 
 GAME( 1993, dbz,  0, dbz, dbz,  dbz,  ROT0, "Banpresto", "Dragonball Z", GAME_IMPERFECT_GRAPHICS )
-GAME( 1994, dbz2, 0, dbz, dbz2, dbz2, ROT0, "Banpresto", "Dragonball Z 2 - Super Battle", 0 )
+GAME( 1994, dbz2, 0, dbz, dbz2, dbz2, ROT0, "Banpresto", "Dragonball Z 2 - Super Battle", GAME_IMPERFECT_GRAPHICS )

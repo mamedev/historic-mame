@@ -49,6 +49,15 @@ extern GUID *screen_guid_ptr;
 
 
 //============================================================
+//  GLOBAL VARIABLES
+//============================================================
+
+// screen info
+GUID *screen_guid_ptr;
+
+
+
+//============================================================
 //  LOCAL VARIABLES
 //============================================================
 
@@ -87,6 +96,10 @@ static int best_refresh;
 static int needs_6bpp_per_gun;
 static int pixel_aspect_ratio;
 
+// screen info
+static GUID ddraw_device_guid;
+static BOOL ddraw_device_found;
+
 
 
 //============================================================
@@ -97,7 +110,7 @@ static double compute_mode_score(int width, int height, int depth, int refresh);
 static int set_resolution(void);
 static int create_surfaces(void);
 static int create_blit_surface(void);
-static void set_brightness(void);
+static void set_gamma(void);
 static int create_clipper(void);
 static void erase_surfaces(void);
 static void release_surfaces(void);
@@ -105,6 +118,53 @@ static void compute_color_masks(const DDSURFACEDESC *desc);
 static int render_to_blit(mame_bitmap *bitmap, const rectangle *bounds, void *vector_dirty_pixels, int update);
 static int render_to_primary(mame_bitmap *bitmap, const rectangle *bounds, void *vector_dirty_pixels, int update);
 static int blit_and_flip(LPDIRECTDRAWSURFACE target_surface, LPRECT src, LPRECT dst, int update);
+
+
+
+//============================================================
+//  devices_enum_callback
+//============================================================
+
+BOOL WINAPI devices_enum_callback(GUID *lpGUID, LPSTR lpDriverDescription, LPSTR lpDriverName, LPVOID lpContext, HMONITOR hm)
+{
+	if (screen_name != NULL && lpGUID != NULL && mame_stricmp(lpDriverName, screen_name) == 0)
+	{
+		ddraw_device_guid = *lpGUID;
+		assert_always(monitor == hm, "GDI and DirectDraw returned different handles for the same screen");
+		ddraw_device_found = TRUE;
+		// no more enumeration
+		return 0;
+	}
+
+	// continue enumeration
+	return 1;
+}
+
+
+
+//============================================================
+//  select_display_adapter
+//============================================================
+
+int select_display_adapter(void)
+{
+	HRESULT result;
+
+	screen_guid_ptr = NULL;
+	ddraw_device_found = FALSE;
+	memset(&ddraw_device_guid, 0, sizeof(ddraw_device_guid));
+
+	result = DirectDrawEnumerateEx(devices_enum_callback, NULL, DDENUM_ATTACHEDSECONDARYDEVICES | DDENUM_DETACHEDSECONDARYDEVICES);
+	if (result != DD_OK)
+	{
+		fprintf(stderr, "Error enumerating display adapters with DirectDraw: %08x\n", (UINT32)result);
+		return 1;
+	}
+
+	screen_guid_ptr = &ddraw_device_guid;
+
+	return 0;
+}
 
 
 
@@ -221,6 +281,9 @@ int win_ddraw_init(int width, int height, int depth, int attributes, const win_e
 		effect_min_xscale = effect->min_xscale;
 		effect_min_yscale = effect->min_yscale;
 	}
+
+	if (select_display_adapter())
+		goto cant_create_ddraw;
 
 	// now attempt to create it
 	result = DirectDrawCreate(screen_guid_ptr, &ddraw, NULL);
@@ -607,8 +670,8 @@ static int create_surfaces(void)
 	compute_color_masks(&primary_desc);
 
 	// if this is a full-screen mode, attempt to create a color control object
-	if (!win_window_mode && win_gfx_brightness != 0.0)
-		set_brightness();
+	if (!win_window_mode && win_gfx_gamma != 1.0)
+		set_gamma();
 
 	// print out the good stuff
 	if (verbose)
@@ -771,10 +834,10 @@ cant_create_blit:
 
 
 //============================================================
-//  set_brightness
+//  set_gamma
 //============================================================
 
-static void set_brightness(void)
+static void set_gamma(void)
 {
 	HRESULT result;
 
@@ -796,7 +859,7 @@ static void set_brightness(void)
 		// fill the gamma ramp
 		for (i = 0; i < 256; i++)
 		{
-			double val = ((float)i / 255.0) * win_gfx_brightness;
+			double val = ((float)i / 255.0) * win_gfx_gamma;
 			if (val > 1.0)
 				val = 1.0;
 			ramp.red[i] = ramp.green[i] = ramp.blue[i] = (WORD)(val * 65535.0);

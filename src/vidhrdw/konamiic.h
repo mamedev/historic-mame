@@ -301,8 +301,6 @@ READ32_HANDLER( K056832_rom_long_r );
 WRITE32_HANDLER( K056832_ram_long_w );
 WRITE32_HANDLER( K056832_long_w );
 WRITE32_HANDLER( K056832_b_long_w );
-READ16_HANDLER( K056832_ram_half_word_r );
-WRITE16_HANDLER( K056832_ram_half_word_w );
 
 /* bit depths for the 56832 */
 #define K056832_BPP_4	0

@@ -1,3 +1,8 @@
+/*----------- defined in drivers/namcona1.c -----------*/
+
+extern int namcona1_gametype;
+
+
 /*----------- defined in vidhrdw/namcona1.c -----------*/
 
 enum
@@ -14,8 +19,6 @@ enum
 	NAMCO_FA,
 	NAMCO_XDAY2
 };
-
-extern int namcona1_gametype;
 
 #define NA1_NVRAM_SIZE (0x800)
 

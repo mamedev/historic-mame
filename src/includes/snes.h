@@ -348,7 +348,8 @@ extern WRITE8_HANDLER( snes_w_bank6 );
 extern WRITE8_HANDLER( snes_w_io );
 extern WRITE8_HANDLER( snes_w_sram );
 
-extern INTERRUPT_GEN(snes_scanline_interrupt);
+extern int snes_validate_infoblock( UINT8 *infoblock, UINT16 offset );
+
 extern void snes_gdma( UINT8 channels );
 extern void snes_hdma_init(void);
 extern void snes_hdma(void);
@@ -441,7 +442,6 @@ extern WRITE8_HANDLER( spc_ram_w );
 extern READ8_HANDLER( spc_ipl_r );
 extern void *snes_sh_start(int clock, const struct CustomSound_interface *config);
 extern void snes_sh_update( void *param, stream_sample_t **inputs, stream_sample_t **buffer, int length );
-extern int snes_validate_infoblock( UINT8 *infoblock, UINT16 offset );
 
 /* Stuff from OpenSPC 0.3.99 by Brad Martin */
 

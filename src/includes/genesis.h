@@ -18,10 +18,6 @@ extern READ8_HANDLER (megatech_bios_port_be_bf_r);
 extern WRITE8_HANDLER (megatech_bios_port_be_bf_w);
 extern INTERRUPT_GEN (megatech_irq);
 
-/*----------- defined in drivers/segac2.c -----------*/
-
-extern WRITE16_HANDLER( sn76489_w );
-
 /*----------- defined in drivers/genesis.c -----------*/
 
 extern unsigned char *genesis_z80_ram;

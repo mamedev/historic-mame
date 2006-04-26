@@ -126,7 +126,6 @@ void tilemap_set_depth( tilemap *tmap, int tile_depth, int tile_granularity );
 
 void tilemap_mark_tile_dirty( tilemap *tmap, int memory_offset );
 void tilemap_mark_all_tiles_dirty( tilemap *tmap );
-void tilemap_mark_gfxdata_dirty( tilemap *tmap, UINT8 *dirty_array ); /* TBA */
 
 void tilemap_set_scroll_rows( tilemap *tmap, int scroll_rows ); /* default: 1 */
 void tilemap_set_scrolldx( tilemap *tmap, int dx, int dx_if_flipped );

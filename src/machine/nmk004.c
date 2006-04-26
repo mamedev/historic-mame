@@ -1,4 +1,5 @@
 #include "driver.h"
+#include "nmk004.h"
 #include "sound/2203intf.h"
 #include "sound/okim6295.h"
 

@@ -368,25 +368,17 @@ static WRITE16_HANDLER( sound_status_w )
  *
  *************************************/
 
-static READ32_HANDLER( input_port_0_020_r )
+static READ32_HANDLER( input_port_0_020_r ) { return readinputport(0) << 16; }
+static READ32_HANDLER( input_port_1_020_r ) { return readinputport(1) << 16; }
+static READ32_HANDLER( input_port_2_020_r ) { return readinputport(2) << 16; }
+static READ32_HANDLER( input_port_3_020_r ) { return readinputport(3) << 16; }
+
+
+static UINT32 analog_bit_r(void *param)
 {
-	return readinputport(0) << 16;
+	int which = (int)param;
+	return (analog_ports[which] >> 7) & 0x01;
 }
-
-
-static READ32_HANDLER( input_port_1_020_r )
-{
-	return readinputport(1) << 16;
-}
-
-
-static READ16_HANDLER( analog_port_r )
-{
-	UINT16 result = readinputport(2) << 8;
-	result |= ((analog_ports[0] >> 7) & 0x01) << 12;
-	return result;
-}
-static READ32_HANDLER( analog_port_020_r ) { return analog_port_r(offset, mem_mask) << 16; }
 
 
 static WRITE16_HANDLER( analog_port_clock_w )
@@ -395,7 +387,12 @@ static WRITE16_HANDLER( analog_port_clock_w )
 	if (!(mem_mask & 0xff))
 	{
 		if (!(data & 0xff))
+		{
 			analog_ports[0] <<= 1;
+			analog_ports[1] <<= 1;
+			analog_ports[2] <<= 1;
+			analog_ports[3] <<= 1;
+		}
 	}
 	else
 		logerror("%06X:analog_port_clock_w(%02X) = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
@@ -409,7 +406,12 @@ static WRITE16_HANDLER( analog_port_latch_w )
 	if (!(mem_mask & 0xff))
 	{
 		if (!(data & 0xff))
-			analog_ports[0] = readinputport(3);
+		{
+			analog_ports[0] = readinputportbytag_safe("ANALOG0", 0);
+			analog_ports[1] = readinputportbytag_safe("ANALOG1", 0);
+			analog_ports[2] = readinputportbytag_safe("ANALOG2", 0);
+			analog_ports[3] = readinputportbytag_safe("ANALOG3", 0);
+		}
 	}
 	else
 		logerror("%06X:analog_port_latch_w(%02X) = %08X & %08X\n", activecpu_get_pc(), offset, data, ~mem_mask);
@@ -747,7 +749,8 @@ static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x400000, 0x40ffff) AM_READWRITE(MRA16_RAM, gaelco3d_paletteram_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x51000c, 0x51000d) AM_READ(input_port_0_word_r)
 	AM_RANGE(0x51001c, 0x51001d) AM_READ(input_port_1_word_r)
-	AM_RANGE(0x51002c, 0x51002d) AM_READ(analog_port_r)
+	AM_RANGE(0x51002c, 0x51002d) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x51003c, 0x51003d) AM_READ(input_port_3_word_r)
 	AM_RANGE(0x510040, 0x510041) AM_WRITE(sound_data_w)
 	AM_RANGE(0x510042, 0x510043) AM_READ(sound_status_r)
 	AM_RANGE(0x510100, 0x510101) AM_READ(eeprom_data_r)
@@ -773,7 +776,8 @@ static ADDRESS_MAP_START( main020_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x400000, 0x40ffff) AM_READWRITE(MRA32_RAM, gaelco3d_paletteram_020_w) AM_BASE(&paletteram32)
 	AM_RANGE(0x51000c, 0x51000f) AM_READ(input_port_0_020_r)
 	AM_RANGE(0x51001c, 0x51001f) AM_READ(input_port_1_020_r)
-	AM_RANGE(0x51002c, 0x51002f) AM_READ(analog_port_020_r)
+	AM_RANGE(0x51002c, 0x51002f) AM_READ(input_port_2_020_r)
+	AM_RANGE(0x51003c, 0x51003f) AM_READ(input_port_3_020_r)
 	AM_RANGE(0x510040, 0x510043) AM_READ(sound_status_020_r)
 	AM_RANGE(0x510040, 0x510043) AM_WRITE(sound_data_020_w)
 	AM_RANGE(0x510100, 0x510103) AM_READ(eeprom_data_020_r)
@@ -805,6 +809,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( adsp_program_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x0000, 0x03ff) AM_RAM AM_BASE(&adsp_ram_base)		/* 1k words internal RAM */
+	AM_RANGE(0x37ff, 0x37ff) AM_READNOP							/* speedup hammers this for no apparent reason */
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( adsp_data_map, ADDRESS_SPACE_DATA, 16 )
@@ -823,74 +828,109 @@ ADDRESS_MAP_END
  *
  *************************************/
 
+INPUT_PORTS_START( speedup )
+	PORT_START	    /* DIPs */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_VOLUME_UP )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_VOLUME_DOWN )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON5 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON4 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_CODE(KEYCODE_LSHIFT) // view
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_CODE(KEYCODE_LALT)	// brake
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_CODE(KEYCODE_SPACE)	PORT_TOGGLE // gear (low=1 high=2)
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 )	// start
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_COIN1 ) 	// verified
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)	// checked after reading analog from port 1
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)	// checked after reading analog from port 2
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(2)	// checked after reading analog from port 3
+	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_SPECIAL) PORT_CUSTOM(analog_bit_r, 0)
+	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_SPECIAL) PORT_CUSTOM(analog_bit_r, 1)
+	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_SPECIAL) PORT_CUSTOM(analog_bit_r, 2)
+	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_SPECIAL) PORT_CUSTOM(analog_bit_r, 3)
+
+	PORT_START
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_COIN1 )	// verified
+	PORT_SERVICE_NO_TOGGLE( 0x0200, IP_ACTIVE_LOW )	// verified
+	PORT_BIT( 0xfc00, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START_TAG("ANALOG0")
+	PORT_BIT( 0xff, 0x80, IPT_PADDLE ) PORT_MINMAX(0x10,0xf0) PORT_SENSITIVITY(25) PORT_KEYDELTA(25)
+
+	PORT_START_TAG("ANALOG1")
+	PORT_BIT( 0xff, 0x00, IPT_PEDAL ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(20)
+INPUT_PORTS_END
+
+
 INPUT_PORTS_START( surfplnt )
 	PORT_START	    /* DIPs */
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN )	// low two bits read, compared against 3
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN )	// low four bits read, compared against f
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_VOLUME_UP )	// low two bits read, compared against 3
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_VOLUME_DOWN )	// low four bits read, compared against f
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )	// checked
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 )	// start
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )	// coin
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT(0x0008, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME(DEF_STR( Test )) PORT_CODE(KEYCODE_F2)		// service
-	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_SPECIAL )	// handlebar
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_COIN1 )	// coin
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_SERVICE_NO_TOGGLE( 0x0800, IP_ACTIVE_LOW )
+	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_SPECIAL) PORT_CUSTOM(analog_bit_r, 0)
+	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_SPECIAL) PORT_CUSTOM(analog_bit_r, 1)
+	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_SPECIAL) PORT_CUSTOM(analog_bit_r, 2)
+	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_SPECIAL) PORT_CUSTOM(analog_bit_r, 3)
 
 	PORT_START
+	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START_TAG("ANALOG0")
 	PORT_BIT( 0xff, 0x80, IPT_PADDLE ) PORT_MINMAX(0x10,0xf0) PORT_SENSITIVITY(25) PORT_KEYDELTA(25)
 INPUT_PORTS_END
 
 
 INPUT_PORTS_START( radikalb )
 	PORT_START	    /* DIPs */
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_VOLUME_UP )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_VOLUME_DOWN )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )	// handle up
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON3 )	// view
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 )	// brake
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON1 )	// accel
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 )	// start
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )	// coin
-	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT(0x0008, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME(DEF_STR( Test )) PORT_CODE(KEYCODE_F2)		// service
-	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_SPECIAL )	// handlebar
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_COIN1 )	// coin
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_SERVICE_NO_TOGGLE( 0x0800, IP_ACTIVE_LOW )
+	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_SPECIAL) PORT_CUSTOM(analog_bit_r, 0)
+	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_SPECIAL) PORT_CUSTOM(analog_bit_r, 1)
+	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_SPECIAL) PORT_CUSTOM(analog_bit_r, 2)
+	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_SPECIAL) PORT_CUSTOM(analog_bit_r, 3)
 
 	PORT_START
+	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START_TAG("ANALOG0")
 	PORT_BIT( 0xff, 0x80, IPT_PADDLE ) PORT_MINMAX(0x10,0xf0) PORT_SENSITIVITY(25) PORT_KEYDELTA(25)
 INPUT_PORTS_END
 
@@ -923,7 +963,6 @@ MACHINE_DRIVER_START( gaelco3d )
 	MDRV_CPU_CONFIG(tms_config)
 
 	MDRV_CPU_ADD_TAG("adsp", ADSP2115, 16000000)
-	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(adsp_program_map,0)
 	MDRV_CPU_DATA_MAP(adsp_data_map, 0)
 
@@ -948,16 +987,16 @@ MACHINE_DRIVER_START( gaelco3d )
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
 	MDRV_SOUND_ADD(DMADAC, 0)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)	/* speedup: front mono */
 
 	MDRV_SOUND_ADD(DMADAC, 0)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)	/* speedup: left rear */
 
 	MDRV_SOUND_ADD(DMADAC, 0)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)	/* speedup: right rear */
 
 	MDRV_SOUND_ADD(DMADAC, 0)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)	/* speedup: seat speaker */
 MACHINE_DRIVER_END
 
 
@@ -983,30 +1022,28 @@ MACHINE_DRIVER_END
 
 ROM_START( speedup )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )	/* 68000 code */
-	ROM_LOAD16_BYTE( "ic10.bin", 0x000000, 0x80000, CRC(07e70bae) SHA1(17013d859ec075e12518b094040a056d850b3271) )
-	ROM_LOAD16_BYTE( "ic15.bin", 0x000001, 0x80000, CRC(7947c28d) SHA1(46efb56d0f7fe2e92d0d04dcd2f130aef3be436d) )
+	ROM_LOAD16_BYTE( "sup10.bin", 0x000000, 0x80000, CRC(07e70bae) SHA1(17013d859ec075e12518b094040a056d850b3271) )
+	ROM_LOAD16_BYTE( "sup15.bin", 0x000001, 0x80000, CRC(7947c28d) SHA1(46efb56d0f7fe2e92d0d04dcd2f130aef3be436d) )
 
 	ROM_REGION16_LE( 0x400000, REGION_USER1, 0 )	/* ADSP-2115 code & data */
-	ROM_LOAD( "ic25.bin", 0x0000000, 0x400000, BAD_DUMP CRC(7d5b6975) SHA1(d92e064abb09a1a5a5f9f9ac6b165c82844668c8) )
+	ROM_LOAD( "sup25.bin", 0x0000000, 0x400000, CRC(284c7cd1) SHA1(58fbe73195aac9808a347c543423593e17ad3a10) )
 
 	ROM_REGION32_LE( 0x800000, REGION_USER2, 0 )
-	ROM_LOAD32_WORD( "ic33.bin", 0x000000, 0x400000, BAD_DUMP CRC(1e578fce) SHA1(233546494e040a58c1ca818c6802a7932f5c4264) )
-	ROM_LOAD32_WORD( "ic32.bin", 0x000002, 0x400000, BAD_DUMP CRC(a1f9f6ed) SHA1(eff4d2dfa6fa1a51c1f1799de62995405e4dba4c) )
+	ROM_LOAD32_WORD( "sup32.bin", 0x000000, 0x200000, CRC(aed151de) SHA1(a139d4451d3758aa70621a25289d64c98c26d5c0) )
+	ROM_LOAD32_WORD( "sup33.bin", 0x000002, 0x200000, CRC(9be6ab7d) SHA1(8bb07f2a096d1f8989a5a409f87b35b7d771de88) )
 
-	ROM_REGION( 0x1400000, REGION_USER3, 0 )
+	ROM_REGION( 0x1000000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "sup12.bin", 0x0000000, 0x400000, CRC(311f3247) SHA1(95014ea177011521a01df85fb511e5e6673dbdcb) )
+	ROM_LOAD( "sup14.bin", 0x0400000, 0x400000, CRC(3ad3c089) SHA1(1bd577679ed436251995a100aece2c26c0214fd8) )
+	ROM_LOAD( "sup11.bin", 0x0800000, 0x400000, CRC(b993e65a) SHA1(b95bd4c1eac7fba1d2429250446b58f741350bb3) )
+	ROM_LOAD( "sup13.bin", 0x0c00000, 0x400000, CRC(ad00023c) SHA1(9d7cce280fff38d7e0dac21e7a1774809d9758bd) )
 
-	ROM_REGION( 0x1000000, REGION_USER4, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic11.bin", 0x0000000, 0x400000, BAD_DUMP CRC(5cf3a30f) SHA1(74b5b93e768f362b3e8c87e4c46cba4c28b31be9) )
-	ROM_LOAD( "ic12.bin", 0x0400000, 0x400000, BAD_DUMP CRC(1a65bf36) SHA1(13e5a43227f72e1cc5f59776dc1ccf8151f08983) )
-	ROM_LOAD( "ic13.bin", 0x0800000, 0x400000, BAD_DUMP CRC(87e54421) SHA1(3bd22b7f53bfb34fe2253a6cc429951b63915f48) )
-	ROM_LOAD( "ic14.bin", 0x0c00000, 0x400000, BAD_DUMP CRC(ecdd5b9a) SHA1(09bb2c6561fb55808a4a4c984024931129cb2553) )
-
-	ROM_REGION( 0x0040000, REGION_USER5, ROMREGION_DISPOSE )
-	ROM_LOAD( "ic34.bin", 0x0000000, 0x020000, CRC(e89e829b) SHA1(50c99bd9667d78a61252eaad5281a2e7f57be85a) )
-	ROM_LOAD( "ic35.bin", 0x0020000, 0x020000, CRC(34737d1d) SHA1(e9109a88e211aa49851e72a6fa3417f1cad1cb8b) )
+	ROM_REGION( 0x0080000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic35.bin", 0x0000000, 0x020000, CRC(34737d1d) SHA1(e9109a88e211aa49851e72a6fa3417f1cad1cb8b) )
+	ROM_LOAD( "ic34.bin", 0x0020000, 0x020000, CRC(e89e829b) SHA1(50c99bd9667d78a61252eaad5281a2e7f57be85a) )
 	/* these 2 are copies of the previous 2 */
-//  ROM_LOAD( "ic42.bin", 0x0000000, 0x020000, CRC(e89e829b) SHA1(50c99bd9667d78a61252eaad5281a2e7f57be85a) )
-//  ROM_LOAD( "ic43.bin", 0x0020000, 0x020000, CRC(34737d1d) SHA1(e9109a88e211aa49851e72a6fa3417f1cad1cb8b) )
+//  ROM_LOAD( "ic43.bin", 0x0000000, 0x020000, CRC(34737d1d) SHA1(e9109a88e211aa49851e72a6fa3417f1cad1cb8b) )
+//  ROM_LOAD( "ic42.bin", 0x0020000, 0x020000, CRC(e89e829b) SHA1(50c99bd9667d78a61252eaad5281a2e7f57be85a) )
 ROM_END
 
 
@@ -1024,15 +1061,13 @@ ROM_START( surfplnt )
 	ROM_LOAD32_WORD( "pls.40", 0x000000, 0x400000, CRC(26877ad3) SHA1(2e0c15b0e060e0b3d5b5cdaf1e22b9ec8e1abc9a) )
 	ROM_LOAD32_WORD( "pls.37", 0x000002, 0x400000, CRC(75893062) SHA1(81f10243336a309f8cc8532ee9a130ecc35bbcd6) )
 
-	ROM_REGION( 0x1400000, REGION_USER3, 0 )
-
-	ROM_REGION( 0x1000000, REGION_USER4, ROMREGION_DISPOSE )
+	ROM_REGION( 0x1000000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "pls.7",  0x0000000, 0x400000, CRC(04bd1605) SHA1(4871758e57af5132c30137cd6c46f1a3a567b640) )
 	ROM_LOAD( "pls.9",  0x0400000, 0x400000, CRC(f4400160) SHA1(206557cd4c73b6b3a04bd35b48de736c7546c5e1) )
 	ROM_LOAD( "pls.12", 0x0800000, 0x400000, CRC(edc2e826) SHA1(48d428f928a9805a62bbeaecffcac21aaa76ce77) )
 	ROM_LOAD( "pls.15", 0x0c00000, 0x400000, CRC(b0f6b8da) SHA1(7404ec7455adf145919a28907443994f6a5706a1) )
 
-	ROM_REGION( 0x0080000, REGION_USER5, ROMREGION_DISPOSE )
+	ROM_REGION( 0x0080000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "surfplnt.u19", 0x0000000, 0x020000, CRC(691bd7a7) SHA1(2ff404b3974a64097372ed15fb5fbbe52c503265) )
 	ROM_LOAD( "surfplnt.u20", 0x0020000, 0x020000, CRC(fb293318) SHA1(d255fe3db1b91ec7cc744b0158e70503bca5ceab) )
 	ROM_LOAD( "surfplnt.u21", 0x0040000, 0x020000, CRC(b80611fb) SHA1(70d6767ddfb04e94cf2796e3f7090f89fd36fe8c) )
@@ -1059,9 +1094,7 @@ ROM_START( radikalb )
 	ROM_LOAD32_WORD( "rab.48", 0x000000, 0x400000, CRC(9c56a06a) SHA1(54f12d8b55fa14446c47e31684c92074c4157fe1) )
 	ROM_LOAD32_WORD( "rab.45", 0x000002, 0x400000, CRC(7e698584) SHA1(a9423835a126396902c499e9f7df3b68c2ab28a8) )
 
-	ROM_REGION( 0x2400000, REGION_USER3, 0 )
-
-	ROM_REGION( 0x2000000, REGION_USER4, ROMREGION_DISPOSE )
+	ROM_REGION( 0x2000000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "rab.8",  0x0000000, 0x400000, CRC(4fbd4737) SHA1(594438d3edbe00682290986cc631615d7bef67f3) )
 	ROM_LOAD( "rab.10", 0x0800000, 0x400000, CRC(870b0ce4) SHA1(75910dca87d2eb3a6b4a28f6e9c63a6b6700de84) )
 	ROM_LOAD( "rab.15", 0x1000000, 0x400000, CRC(edb9d409) SHA1(1f8df507e990eee197f2779b45bd8f143d1bd439) )
@@ -1072,7 +1105,7 @@ ROM_START( radikalb )
 	ROM_LOAD( "rab.16", 0x1400000, 0x400000, CRC(9d595e46) SHA1(b985332974e1fb0b9d20d521da0d7deceea93a8a) )
 	ROM_LOAD( "rab.18", 0x1c00000, 0x400000, CRC(3084bc49) SHA1(9da43482293eeb08ceae67455b2fcd97b6ef5109) )
 
-	ROM_REGION( 0x0080000, REGION_USER5, ROMREGION_DISPOSE )
+	ROM_REGION( 0x0080000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "rab.24", 0x0000000, 0x020000, CRC(2984bc1d) SHA1(1f62bdaa86feeff96640e325f8241b9c5f383a44) )
 	ROM_LOAD( "rab.25", 0x0020000, 0x020000, CRC(777758e3) SHA1(bd334b1ba46189ac8509eee3a4ab295c121400fd) )
 	ROM_LOAD( "rab.26", 0x0040000, 0x020000, CRC(bd9c1b54) SHA1(c9ef679cf7eca9ed315ea62a7ada452bc85f7a6a) )
@@ -1097,30 +1130,30 @@ static DRIVER_INIT( gaelco3d )
 	UINT8 *src, *dst;
 	int x, y;
 
-	/* compute the mask offset and size */
-	gaelco3d_mask_offset = memory_region_length(REGION_USER4);
-	gaelco3d_mask_size = memory_region_length(REGION_USER5) * 8;
-	if (memory_region_length(REGION_USER3) < gaelco3d_mask_offset + gaelco3d_mask_size)
-		fatalerror("REGION_USER3 must be 0x%08X bytes or greater!", gaelco3d_mask_offset + gaelco3d_mask_size);
+	/* allocate memory */
+	gaelco3d_texture_size = memory_region_length(REGION_GFX1);
+	gaelco3d_texmask_size = memory_region_length(REGION_GFX2) * 8;
+	gaelco3d_texture = auto_malloc(gaelco3d_texture_size);
+	gaelco3d_texmask = auto_malloc(gaelco3d_texmask_size);
 
 	/* first expand the pixel data */
-	src = memory_region(REGION_USER4);
-	dst = memory_region(REGION_USER3);
-	for (y = 0; y < gaelco3d_mask_offset/4096; y += 2)
+	src = memory_region(REGION_GFX1);
+	dst = gaelco3d_texture;
+	for (y = 0; y < gaelco3d_texture_size/4096; y += 2)
 		for (x = 0; x < 4096; x += 2)
 		{
-			dst[(y + 0) * 4096 + (x + 1)] = src[0*gaelco3d_mask_offset/4 + (y/2) * 2048 + (x/2)];
-			dst[(y + 1) * 4096 + (x + 1)] = src[1*gaelco3d_mask_offset/4 + (y/2) * 2048 + (x/2)];
-			dst[(y + 0) * 4096 + (x + 0)] = src[2*gaelco3d_mask_offset/4 + (y/2) * 2048 + (x/2)];
-			dst[(y + 1) * 4096 + (x + 0)] = src[3*gaelco3d_mask_offset/4 + (y/2) * 2048 + (x/2)];
+			dst[(y + 0) * 4096 + (x + 1)] = src[0*gaelco3d_texture_size/4 + (y/2) * 2048 + (x/2)];
+			dst[(y + 1) * 4096 + (x + 1)] = src[1*gaelco3d_texture_size/4 + (y/2) * 2048 + (x/2)];
+			dst[(y + 0) * 4096 + (x + 0)] = src[2*gaelco3d_texture_size/4 + (y/2) * 2048 + (x/2)];
+			dst[(y + 1) * 4096 + (x + 0)] = src[3*gaelco3d_texture_size/4 + (y/2) * 2048 + (x/2)];
 		}
 
 	/* then expand the mask data */
-	src = memory_region(REGION_USER5);
-	dst = memory_region(REGION_USER3) + gaelco3d_mask_offset;
-	for (y = 0; y < gaelco3d_mask_size/4096; y++)
+	src = memory_region(REGION_GFX2);
+	dst = gaelco3d_texmask;
+	for (y = 0; y < gaelco3d_texmask_size/4096; y++)
 		for (x = 0; x < 4096; x++)
-			dst[y * 4096 + x] = (src[(x / 1024) * (gaelco3d_mask_size/8/4) + (y * 1024 + x % 1024) / 8] >> (x % 8)) & 1;
+			dst[y * 4096 + x] = (src[(x / 1024) * (gaelco3d_texmask_size/8/4) + (y * 1024 + x % 1024) / 8] >> (x % 8)) & 1;
 }
 
 
@@ -1131,6 +1164,6 @@ static DRIVER_INIT( gaelco3d )
  *
  *************************************/
 
-GAME( 1996, speedup,  0,        gaelco3d,  surfplnt, gaelco3d, ROT0, "Gaelco", "Speed Up", GAME_NOT_WORKING )
+GAME( 1996, speedup,  0,        gaelco3d,  speedup,  gaelco3d, ROT0, "Gaelco", "Speed Up", GAME_IMPERFECT_GRAPHICS )
 GAME( 1997, surfplnt, 0,        gaelco3d,  surfplnt, gaelco3d, ROT0, "Gaelco", "Surf Planet", GAME_IMPERFECT_GRAPHICS )
 GAME( 1998, radikalb, 0,        gaelco3d2, radikalb, gaelco3d, ROT0, "Gaelco", "Radikal Bikers", GAME_IMPERFECT_GRAPHICS )

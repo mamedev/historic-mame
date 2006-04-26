@@ -562,27 +562,27 @@ static int blit_vectors(const win_blit_params *blit)
 		blit->flipy != active_vector_params.flipy ||
 		blit->swapxy != active_vector_params.swapxy)
 	{
-		rectangle temprect;
-		int x;
+		int i;
 
-		for (x = 0; x < MAX_SCREEN_DIM; x++)
+		for (i = 0; i < MAX_SCREEN_DIM; i++)
 		{
-			temprect.min_x = temprect.max_x = x;
-			temprect.min_y = temprect.max_y = 0;
-			win_orient_rect(&temprect);
-			xtrans[x] = blit->swapxy ? (temprect.max_y * blit->dstpitch) : (temprect.max_x * dstdepth);
+			POINT pixel = {i, i};
 
-			temprect.min_x = temprect.max_x = 0;
-			temprect.min_y = temprect.max_y = x;
-			win_orient_rect(&temprect);
-			ytrans[x] = blit->swapxy ? (temprect.max_x * dstdepth) : (temprect.max_y * blit->dstpitch);
+			if (blit->flipx)
+				pixel.x = blit->srcwidth - pixel.x - 1;
+
+			if (blit->flipy)
+				pixel.y = blit->srcheight - pixel.y - 1;
+
+			xtrans[i] = blit->swapxy ? (pixel.y * blit->dstpitch) : (pixel.x * dstdepth);
+			ytrans[i] = blit->swapxy ? (pixel.x * dstdepth) : (pixel.y * blit->dstpitch);
 		}
 
 		active_vector_params = *blit;
 	}
 
 	// 16-bit to 16-bit
-	if (blit->dstdepth == 15)
+	if (blit->dstdepth == 15 || blit->dstdepth == 16)
 	{
 		UINT32 *srclookup = blit->srclookup;
 		while (*list != VECTOR_PIXEL_END)

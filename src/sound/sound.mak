@@ -125,7 +125,19 @@ endif
 
 
 #-------------------------------------------------
-# Ensoniq sample players
+# Ensoniq 5503 (Apple IIgs)
+#-------------------------------------------------
+
+SOUNDDEFS += -DHAS_ES5503=$(if $(filter ES5503,$(SOUNDS)),1,0)
+
+ifneq ($(filter ES5503,$(SOUNDS)),)
+SOUNDOBJS += $(OBJ)/sound/es5503.o
+endif
+
+
+
+#-------------------------------------------------
+# Ensoniq 5505/5506
 #-------------------------------------------------
 
 SOUNDDEFS += -DHAS_ES5505=$(if $(filter ES5505,$(SOUNDS)),1,0)

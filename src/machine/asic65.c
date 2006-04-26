@@ -6,6 +6,7 @@
 
 #include "driver.h"
 #include "includes/atarig42.h"
+#include "asic65.h"
 #include <math.h>
 
 

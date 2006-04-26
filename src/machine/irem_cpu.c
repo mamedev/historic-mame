@@ -37,6 +37,7 @@
 *****************************************************************************/
 
 #include "driver.h"
+#include "irem_cpu.h"
 
 // CAVEATS:
 // 0x80 and 0x82 pre- opcodes can easily be confused. They perform exactly the same

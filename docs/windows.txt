@@ -233,6 +233,16 @@ Windows video options
 	is ON (-hwstretch). Note: Vector games may actually look better with
 	"-nohws".
 
+-screen [n]
+
+	Specify which screen to use. The screen name is usually something like
+	\\.\DISPLAYn, where \\.\DISPLAY1 is the primary screen. If no screen is
+	specified the primary is used. To make additional screens available to
+	MAME, as well as to any other application, they should be enabled at
+	first: from "Control Panel -> Display -> Settings", select the desired
+	screen icon and check "Extend my Windows desktop onto this monitor".
+	To get the full list of available screens start MAME with -verbose.
+
 -cleanstretch [option] / -cs [option]
 
 	Stretch the image to integer ratios only. This may leave a black border
@@ -342,17 +352,17 @@ Windows video options
 	throttling is off, MAME runs the game as fast as it can. The default is
 	ON (-throttle).
 
--full_screen_brightness / -fsb
+-full_screen_gamma / -fsg
 
-	Some video cards adjust the brightness/gamma when they switch into full
-	screen mode. To counteract this, you can specify the
-	-full_screen_brightness value, which is a number between 0.1 and 2. 0.1
-	means 1/10th as bright as the default, and 2 means twice as bright.
+	Some video cards adjust the gamma when they switch into full screen
+	mode. To counteract this, you can specify the -full_screen_gamma value,
+	which is a number between 0.1 and 4. 0.1 means 1/10th as bright as the
+	default, and 4 means four times as bright.
 	Note that the hardware support for this option is not present on all
-	video cards. If you set a non-zero value, you may get a warning if MAME
-	was unable to set the brightness on your card. The default is 0, which
-	means that MAME will not attempt to adjust the brightness on your video
-	card at all. This option requires -ddraw and -nowindow.
+	video cards. You may get a warning if MAME was unable to set the gamma
+	on your card. The default is 1.0, which means that MAME will not attempt
+	to adjust the gamma on your video card at all. This option requires
+	-ddraw and -nowindow.
 
 -frames_to_run / -ftr
 
@@ -413,15 +423,11 @@ Windows video options (Direct3D)
 	performance that may occur with some graphics cards when using
 	-direct3d. This option requires -direct3d.
 
--d3dfilter [f] / -flt [f]
+-[no]d3dfilter / -[no]flt
 
-	Select the type of filtering to apply to the image when stretching. 0
-	is point filtering, 1 is bi-linear filtering, 2 is bi-cubic filtering
-	(flat kernel), 3 is bi-cubic filtering gaussian kernel), 4 is
-	anisotropic filtering. Note that very few graphics cards support
-	bi-cubic filtering, and that older graphics cards may not support
-	anisotropic filtering. The default is bi-linear filtering (-d3dfilter
-	1). This option requires -direct3d.
+	Enable bilinear filtering when stretching the image. When disabled
+	point filtering is applied. The default is -d3dfilter. This option
+	requires -direct3d.
 
 -d3dfeedback [i]
 

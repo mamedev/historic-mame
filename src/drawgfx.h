@@ -154,7 +154,6 @@ void drawgfx_init(void);
 void decodechar(gfx_element *gfx,int num,const unsigned char *src,const gfx_layout *gl);
 gfx_element *allocgfx(const gfx_layout *gl);
 void decodegfx(gfx_element *gfx, const UINT8 *src, UINT32 first, UINT32 count);
-void set_pixel_functions(mame_bitmap *bitmap);
 void freegfx(gfx_element *gfx);
 void drawgfx(mame_bitmap *dest,const gfx_element *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,

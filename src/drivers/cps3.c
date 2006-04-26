@@ -290,8 +290,6 @@ static DRIVER_INIT (nocpu)
 
 
 ROM_START( sfiii )
-	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* dummy cpu region */
-
 	ROM_REGION( 0x080000, REGION_USER1, 0 ) /* bios region */
 	ROM_LOAD( "29f400.u2", 0x000000, 0x080000, CRC(74205250) SHA1(c3e83ace7121d32da729162662ec6b5285a31211) )
 
@@ -316,8 +314,6 @@ ROM_START( sfiii )
 ROM_END
 
 ROM_START( sfiii2 )
-	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* dummy cpu region */
-
 	ROM_REGION( 0x080000, REGION_USER1, 0 ) /* bios region */
 	ROM_LOAD( "29f400.u2", 0x000000, 0x080000, CRC(faea0a3e) SHA1(a03cd63bcf52e4d57f7a598c8bc8e243694624ec) )
 
@@ -344,8 +340,6 @@ ROM_START( sfiii2 )
 ROM_END
 
 ROM_START( sfiii3 )
-	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* dummy cpu region */
-
 	ROM_REGION( 0x080000, REGION_USER1, 0 ) /* bios region */
 	ROM_LOAD( "29f400.u2", 0x000000, 0x080000, CRC(74205250) SHA1(c3e83ace7121d32da729162662ec6b5285a31211) )
 
@@ -374,8 +368,6 @@ ROM_START( sfiii3 )
 ROM_END
 
 ROM_START( warzard )
-	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* dummy cpu region */
-
 	ROM_REGION( 0x080000, REGION_USER1, 0 ) /* bios region */
 	ROM_LOAD( "29f400.u2", 0x000000, 0x080000, CRC(f8e2f0c6) SHA1(93d6a986f44c211fff014e55681eca4d2a2774d6) )
 
@@ -400,8 +392,6 @@ ROM_START( warzard )
 ROM_END
 
 ROM_START( jojo )
-	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* dummy cpu region */
-
 	ROM_REGION( 0x080000, REGION_USER1, 0 ) /* bios region */
 	ROM_LOAD( "29f400.u2", 0x000000, 0x080000, CRC(02778f60) SHA1(a167f9ebe030592a0cdb0c6a3c75835c6a43be4c) )
 
@@ -428,8 +418,6 @@ ROM_END
 
 
 ROM_START( jojoba )
-	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* dummy cpu region */
-
 	ROM_REGION( 0x080000, REGION_USER1, 0 ) /* bios region */
 	// this was from a version which doesn't require the cd to run
 	ROM_LOAD( "29f400.u2", 0x000000, 0x080000, CRC(4dab19f5) SHA1(ba07190e7662937fc267f07285c51e99a45c061e) )
@@ -457,8 +445,6 @@ ROM_START( jojoba )
 ROM_END
 
 ROM_START( jojobaa )
-	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* dummy cpu region */
-
 	ROM_REGION( 0x080000, REGION_USER1, 0 ) /* bios region */
 	ROM_LOAD( "jojobacart.bin",  0x000000, 0x080000,  CRC(3085478c) SHA1(055eab1fc42816f370a44b17fd7e87ffcb10e8b7) )
 

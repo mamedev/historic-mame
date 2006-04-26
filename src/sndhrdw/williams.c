@@ -271,6 +271,7 @@ void williams_cvsd_init(int pianum)
 		offs_t offset = 0x8000 * ((bank >> 2) & 3) + 0x20000 * (bank & 3);
 		memory_configure_bank(5, bank, 1, &ROM[0x10000 + offset], 0);
 	}
+	memory_set_bank(5, 0);
 
 	/* reset the IRQ state */
 	pia_set_input_ca1(williams_pianum, 1);

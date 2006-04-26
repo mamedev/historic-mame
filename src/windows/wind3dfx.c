@@ -191,7 +191,7 @@ struct rc_option win_d3d_opts[] =
 	{ "Windows Direct3D 2D video options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
 	{ "zoom", "z", rc_int, &win_gfx_zoom, "2", 1, 8, NULL, "force specific zoom level" },
 	{ "d3dtexmanage", NULL, rc_bool, &win_d3d_tex_manage, "1", 0, 0, NULL, "use DirectX texture management" },
-	{ "d3dfilter", "flt", rc_int, &win_d3d_use_filter, "1", 0, 4, NULL, "interpolation method" },
+	{ "d3dfilter", "flt", rc_bool, &win_d3d_use_filter, "1", 0, 0, NULL, "enable bilinear filtering" },
 
 	{ "d3dfeedback", NULL, rc_int, &d3d_rc_feedback, "0", 0, 100, win_d3d_decode_feedback, "feedback strength" },
 	{ "d3dscan", NULL, rc_int, &d3d_rc_scan, "100", 0, 100, win_d3d_decode_scan, "scanline intensity" },

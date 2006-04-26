@@ -169,7 +169,7 @@ static int set_resolution(void);
 static int create_surfaces(void);
 static int create_blit_surface(void);
 static int create_effects_surfaces(void);
-static void set_brightness(void);
+static void set_gamma(void);
 static int create_clipper(void);
 static void erase_surfaces(void);
 static int restore_surfaces(void);
@@ -279,66 +279,11 @@ static int win_d3d_test_hardware_caps(void)
 	}
 
 	// override defaults if required
-	switch (win_d3d_use_filter)
+	if (!win_d3d_use_filter)
 	{
 		// point filtering
-		case 0:
-		{
-			d3dtfg_image = D3DTFG_POINT;
-			d3dtfn_image = D3DTFN_POINT;
-			break;
-		}
-		// cubic filtering (flat kernel)
-		case 2:
-		{
-			if (d3d_device_desc.dpcTriCaps.dwTextureFilterCaps & D3DPTFILTERCAPS_MAGFAFLATCUBIC)
-			{
-				d3dtfg_image = D3DTFG_FLATCUBIC;
-				d3dtfg_scanlines = D3DTFG_FLATCUBIC;
-			}
-			else if (verbose)
-			{
-				fprintf(stderr, "Warning: flat bi-cubic filtering not supported, falling back to bi-linear\n");
-			}
-			break;
-		}
-		// cubic filtering (gaussian kernel)
-		case 3:
-		{
-			if (d3d_device_desc.dpcTriCaps.dwTextureFilterCaps & D3DPTFILTERCAPS_MAGFGAUSSIANCUBIC)
-			{
-				d3dtfg_image = D3DTFG_GAUSSIANCUBIC;
-				d3dtfg_scanlines = D3DTFG_GAUSSIANCUBIC;
-			}
-			else if (verbose)
-			{
-				fprintf(stderr, "Warning: gaussian bi-cubic filtering not supported, falling back to bi-linear\n");
-			}
-			break;
-		}
-		// anisotropic filtering
-		case 4:
-		{
-			if (d3d_device_desc.dpcTriCaps.dwTextureFilterCaps & D3DPTFILTERCAPS_MAGFANISOTROPIC)
-			{
-				d3dtfg_image = D3DTFG_ANISOTROPIC;
-				d3dtfg_scanlines = D3DTFG_ANISOTROPIC;
-			}
-			else if (verbose)
-			{
-				fprintf(stderr, "Warning: anisotropic (mag) filtering not supported, falling back to bi-linear\n");
-			}
-			if (d3d_device_desc.dpcTriCaps.dwTextureFilterCaps & D3DPTFILTERCAPS_MINFANISOTROPIC)
-			{
-				d3dtfn_image = D3DTFN_ANISOTROPIC;
-				d3dtfn_scanlines = D3DTFN_ANISOTROPIC;
-			}
-			else if (verbose)
-			{
-				fprintf(stderr, "Warning: anisotropic (min) filtering not supported, falling back to bi-linear\n");
-			}
-			break;
-		}
+		d3dtfg_image = D3DTFG_POINT;
+		d3dtfn_image = D3DTFN_POINT;
 	}
 
 	// RGB effects
@@ -583,6 +528,9 @@ int win_d3d_init(int width, int height, int depth, int attributes, double aspect
 		fprintf(stderr, "Error importing DirectDrawCreateEx() function\n");
 		goto error_handling;
 	}
+
+	if (select_display_adapter())
+		goto error_handling;
 
 	result = fn_directdraw_create_ex(screen_guid_ptr, (void **)&ddraw7, &IID_IDirectDraw7, NULL);
 	if (result != DD_OK)
@@ -1094,8 +1042,8 @@ static int create_surfaces(void)
 	compute_color_masks(&primary_desc);
 
 	// if this is a full-screen mode, attempt to create a color control object
-	if (!win_window_mode && win_gfx_brightness != 0.0)
-		set_brightness();
+	if (!win_window_mode && win_gfx_gamma != 1.0)
+		set_gamma();
 
 	// window mode: allocate the back surface seperately
 	if (win_window_mode)
@@ -1547,10 +1495,10 @@ error_handling:
 
 
 //============================================================
-//  set_brightness
+//  set_gamma
 //============================================================
 
-static void set_brightness(void)
+static void set_gamma(void)
 {
 	HRESULT result;
 
@@ -1572,7 +1520,7 @@ static void set_brightness(void)
 		// fill the gamma ramp
 		for (i = 0; i < 256; i++)
 		{
-			double val = ((float)i / 255.0) * win_gfx_brightness;
+			double val = ((float)i / 255.0) * win_gfx_gamma;
 			if (val > 1.0)
 				val = 1.0;
 			ramp.red[i] = ramp.green[i] = ramp.blue[i] = (WORD)(val * 65535.0);

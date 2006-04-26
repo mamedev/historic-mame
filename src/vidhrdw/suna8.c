@@ -184,8 +184,8 @@ int suna8_vh_start_common(int dim)
 	suna8_text_dim = dim;
 	if (!(suna8_text_dim > 0))
 	{
-		paletteram	=	memory_region(REGION_USER1);
-		spriteram	=	memory_region(REGION_USER2);
+		paletteram	=	auto_malloc(0x200 * 2);
+		spriteram	=	auto_malloc(0x2000 * 2);
 		suna8_spritebank  = 0;
 		suna8_palettebank = 0;
 	}

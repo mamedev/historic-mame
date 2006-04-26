@@ -6,6 +6,8 @@
 READ8_HANDLER( C140_r );
 WRITE8_HANDLER( C140_w );
 
+void C140_set_base(int which, void *base);
+
 enum
 {
 	C140_TYPE_SYSTEM2,

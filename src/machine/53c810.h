@@ -17,7 +17,6 @@ extern void lsi53c810_read_data(int bytes, UINT8 *pData);
 extern void lsi53c810_write_data(int bytes, UINT8 *pData);
 
 extern void *lsi53c810_get_device(int id);
-extern void lsi53c810_set_device(int id, void *);
 
 UINT8 lsi53c810_reg_r(int reg);
 void lsi53c810_reg_w(int reg, UINT8 value);

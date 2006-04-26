@@ -55,68 +55,70 @@ static void pgm_prepare_sprite(int wide, int high,int palt, int boffset)
 	}
 }
 
-/* this just loops over our decoded bitmap and puts it on the screen */
-/* should be easier to add zooming once the table is understood (it's in the video regs at around offset 0x1000) */
-static void pgm_drawsprite_new(int wide, int high, int xpos, int ypos, int palt, int boffset, int flip, mame_bitmap* bitmap)
+
+
+static void pgm_drawspriteline(int wide, UINT16* dest, int xzoom, int xgrow, int yoffset, int flip, int xpos)
 {
-	int xcnt,ycnt;
-	int ydrawpos,xdrawpos;
-	UINT16 *dest;
-	int yoffset;
+	int xcnt,xcntdraw;
+	int xzoombit;
 	int xoffset;
+	int xdrawpos;
 
-	pgm_prepare_sprite( wide,high, palt, boffset );
-
-	/* now draw it */
-	ycnt = 0;
-	while (ycnt < high)
+	xcnt = 0;
+	xcntdraw = 0;
+	while (xcnt < wide*16)
 	{
-		ydrawpos = ypos + ycnt;
+		UINT32 srcdat;
+		if (!(flip&0x01)) xoffset = xcnt;
+		else xoffset = (wide*16)-xcnt-1;
 
-		if ((ydrawpos >= 0) && (ydrawpos < 224))
-		{
-			dest = (UINT16*)bitmap->line[ydrawpos];
+		srcdat = sprite_temp_render[yoffset+xoffset];
+		xzoombit = (xzoom >> (xcnt&0x1f))&1;
 
-			if (!(flip&0x02)) yoffset = (ycnt*(wide*16));
-			else yoffset = ( (high-ycnt-1)*(wide*16));
-
-			xcnt = 0;
-			while (xcnt < wide*16)
+		if (xzoombit == 1 && xgrow ==1)
+		{ // double this column
+			xdrawpos = xpos + xcntdraw;
+			if (!(srcdat&0x8000))
 			{
-				UINT32 srcdat;
-
-				if (!(flip&0x01)) xoffset = xcnt;
-				else xoffset = (wide*16)-xcnt-1;
-
-				srcdat = sprite_temp_render[yoffset+xoffset];
-
-				xdrawpos = xpos + xcnt;
-
-				if (!(srcdat&0x8000))
-				{
-					if ((xdrawpos > 0) && (xdrawpos < 448))  dest[xdrawpos] = srcdat;
-				}
-
-				xcnt++;
-
-				if (xdrawpos == 448) xcnt = wide*16;
+				if ((xdrawpos > 0) && (xdrawpos < 448))  dest[xdrawpos] = srcdat;
 			}
+			xcntdraw++;
+
+			xdrawpos = xpos + xcntdraw;
+
+			if (!(srcdat&0x8000))
+			{
+				if ((xdrawpos > 0) && (xdrawpos < 448))  dest[xdrawpos] = srcdat;
+			}
+			xcntdraw++;
 		}
-		ycnt++;
-		if (ydrawpos ==224) ycnt = high;
+		else if (xzoombit ==1 && xgrow ==0)
+		{
+			/* skip this column */
+		}
+		else //normal column
+		{
+			xdrawpos = xpos + xcntdraw;
+			if (!(srcdat&0x8000))
+			{
+				if ((xdrawpos > 0) && (xdrawpos < 448))  dest[xdrawpos] = srcdat;
+			}
+			xcntdraw++;
+		}
+
+		xcnt++;
+
+		if (xdrawpos == 448) xcnt = wide*16;
 	}
 }
-
-
+/* this just loops over our decoded bitmap and puts it on the screen */
 static void pgm_drawsprite_new_zoomed(int wide, int high, int xpos, int ypos, int palt, int boffset, int flip, mame_bitmap* bitmap, UINT32 xzoom, int xgrow, UINT32 yzoom, int ygrow )
 {
-	int xcnt,ycnt;
-	int ydrawpos,xdrawpos;
+	int ycnt;
+	int ydrawpos;
 	UINT16 *dest;
 	int yoffset;
-	int xoffset;
-	int xcntdraw, ycntdraw;
-	int xzoombit;
+	int ycntdraw;
 	int yzoombit;
 
 	pgm_prepare_sprite( wide,high, palt, boffset );
@@ -131,184 +133,46 @@ static void pgm_drawsprite_new_zoomed(int wide, int high, int xpos, int ypos, in
 		if (yzoombit == 1 && ygrow == 1) // double this line
 		{
 			ydrawpos = ypos + ycntdraw;
+
+			if (!(flip&0x02)) yoffset = (ycnt*(wide*16));
+			else yoffset = ( (high-ycnt-1)*(wide*16));
 			if ((ydrawpos >= 0) && (ydrawpos < 224))
 			{
 				dest = (UINT16*)bitmap->line[ydrawpos];
-
-				if (!(flip&0x02)) yoffset = (ycnt*(wide*16));
-				else yoffset = ( (high-ycnt-1)*(wide*16));
-
-				xcnt = 0;
-				xcntdraw = 0;
-				while (xcnt < wide*16)
-				{
-					UINT32 srcdat;
-
-					if (!(flip&0x01)) xoffset = xcnt;
-					else xoffset = (wide*16)-xcnt-1;
-
-					srcdat = sprite_temp_render[yoffset+xoffset];
-					xzoombit = (xzoom >> (xcnt&0x1f))&1;
-
-					if (xzoombit == 1 && xgrow ==1)
-					{ // double this column
-						xdrawpos = xpos + xcntdraw;
-						if (!(srcdat&0x8000))
-						{
-							if ((xdrawpos > 0) && (xdrawpos < 448))  dest[xdrawpos] = srcdat;
-						}
-						xcntdraw++;
-
-						xdrawpos = xpos + xcntdraw;
-						if (!(srcdat&0x8000))
-						{
-							if ((xdrawpos > 0) && (xdrawpos < 448))  dest[xdrawpos] = srcdat;
-						}
-						xcntdraw++;
-					}
-					else if (xzoombit ==1 && xgrow ==0)
-					{
-						/* skip this column */
-					}
-					else //normal column
-					{
-						xdrawpos = xpos + xcntdraw;
-						if (!(srcdat&0x8000))
-						{
-							if ((xdrawpos > 0) && (xdrawpos < 448))  dest[xdrawpos] = srcdat;
-						}
-						xcntdraw++;
-					}
-
-
-					xcnt++;
-
-					if (xdrawpos == 448) xcnt = wide*16;
-				}
+				pgm_drawspriteline(wide, dest, xzoom, xgrow, yoffset, flip, xpos);
 			}
 			ycntdraw++;
+
 			ydrawpos = ypos + ycntdraw;
+			if (!(flip&0x02)) yoffset = (ycnt*(wide*16));
+			else yoffset = ( (high-ycnt-1)*(wide*16));
 			if ((ydrawpos >= 0) && (ydrawpos < 224))
 			{
 				dest = (UINT16*)bitmap->line[ydrawpos];
-
-				if (!(flip&0x02)) yoffset = (ycnt*(wide*16));
-				else yoffset = ( (high-ycnt-1)*(wide*16));
-
-				xcnt = 0;
-				xcntdraw = 0;
-				while (xcnt < wide*16)
-				{
-					UINT32 srcdat;
-
-					if (!(flip&0x01)) xoffset = xcnt;
-					else xoffset = (wide*16)-xcnt-1;
-
-					srcdat = sprite_temp_render[yoffset+xoffset];
-					xzoombit = (xzoom >> (xcnt&0x1f))&1;
-
-					if (xzoombit == 1 && xgrow ==1)
-					{ // double this column
-						xdrawpos = xpos + xcntdraw;
-						if (!(srcdat&0x8000))
-						{
-							if ((xdrawpos > 0) && (xdrawpos < 448))  dest[xdrawpos] = srcdat;
-						}
-						xcntdraw++;
-
-						xdrawpos = xpos + xcntdraw;
-						if (!(srcdat&0x8000))
-						{
-							if ((xdrawpos > 0) && (xdrawpos < 448))  dest[xdrawpos] = srcdat;
-						}
-						xcntdraw++;
-					}
-					else if (xzoombit ==1 && xgrow ==0)
-					{
-						/* skip this column */
-					}
-					else //normal column
-					{
-						xdrawpos = xpos + xcntdraw;
-						if (!(srcdat&0x8000))
-						{
-							if ((xdrawpos > 0) && (xdrawpos < 448))  dest[xdrawpos] = srcdat;
-						}
-						xcntdraw++;
-					}
-
-
-					xcnt++;
-
-					if (xdrawpos == 448) xcnt = wide*16;
-				}
+				pgm_drawspriteline(wide, dest, xzoom, xgrow, yoffset, flip, xpos);
 			}
 			ycntdraw++;
+
 			if (ydrawpos ==224) ycnt = high;
 		}
 		else if (yzoombit ==1 && ygrow == 0)
 		{
 			/* skip this line */
+			/* we should process anyway if we don't do the pre-decode.. */
 		}
 		else /* normal line */
 		{
 			ydrawpos = ypos + ycntdraw;
+
+			if (!(flip&0x02)) yoffset = (ycnt*(wide*16));
+			else yoffset = ( (high-ycnt-1)*(wide*16));
 			if ((ydrawpos >= 0) && (ydrawpos < 224))
 			{
 				dest = (UINT16*)bitmap->line[ydrawpos];
-
-				if (!(flip&0x02)) yoffset = (ycnt*(wide*16));
-				else yoffset = ( (high-ycnt-1)*(wide*16));
-
-				xcnt = 0;
-				xcntdraw = 0;
-				while (xcnt < wide*16)
-				{
-					UINT32 srcdat;
-
-					if (!(flip&0x01)) xoffset = xcnt;
-					else xoffset = (wide*16)-xcnt-1;
-
-					srcdat = sprite_temp_render[yoffset+xoffset];
-					xzoombit = (xzoom >> (xcnt&0x1f))&1;
-
-					if (xzoombit == 1 && xgrow ==1)
-					{ // double column
-						xdrawpos = xpos + xcntdraw;
-						if (!(srcdat&0x8000))
-						{
-							if ((xdrawpos > 0) && (xdrawpos < 448))  dest[xdrawpos] = srcdat;
-						}
-						xcntdraw++;
-
-						xdrawpos = xpos + xcntdraw;
-						if (!(srcdat&0x8000))
-						{
-							if ((xdrawpos > 0) && (xdrawpos < 448))  dest[xdrawpos] = srcdat;
-						}
-						xcntdraw++;
-					}
-					else if (xzoombit ==1 && xgrow ==0)
-					{
-						/* skip this column */
-					}
-					else //normal column
-					{
-						xdrawpos = xpos + xcntdraw;
-						if (!(srcdat&0x8000))
-						{
-							if ((xdrawpos > 0) && (xdrawpos < 448))  dest[xdrawpos] = srcdat;
-						}
-						xcntdraw++;
-					}
-
-
-					xcnt++;
-
-					if (xdrawpos == 448) xcnt = wide*16;
-				}
+				pgm_drawspriteline(wide, dest, xzoom, xgrow, yoffset, flip, xpos);
 			}
 			ycntdraw++;
+
 			if (ydrawpos ==224) ycnt = high;
 		}
 
@@ -350,10 +214,16 @@ static void pgm_drawsprites(int priority, mame_bitmap* bitmap)
 		UINT16* pgm_sprite_zoomtable = &pgm_videoregs[0x1000/2];
 
 		if (xgrow)
-			xzom = 0xf-xzom;
+		{
+		//  xzom = 0xf-xzom; // would make more sense but everything gets zoomed slightly in dragon world 2 ?!
+			xzom = 0x10-xzom; // this way it doesn't but there is a bad line when zooming after the level select?
+		}
 
 		if (ygrow)
-			yzom = 0xf-yzom;
+		{
+		//  yzom = 0xf-yzom; // see comment above
+			yzom = 0x10-yzom;
+		}
 
 		xzoom = (pgm_sprite_zoomtable[xzom*2]<<16)|pgm_sprite_zoomtable[xzom*2+1];
 		yzoom = (pgm_sprite_zoomtable[yzom*2]<<16)|pgm_sprite_zoomtable[yzom*2+1];
@@ -366,10 +236,7 @@ static void pgm_drawsprites(int priority, mame_bitmap* bitmap)
 
 		if ((priority == 1) && (pri == 0)) break;
 
-		if ((xzoom == 0x00000000) && (yzoom == 0x00000000))
-			pgm_drawsprite_new(wide, high, xpos, ypos, palt, boff, flip, bitmap);
-		else
-			pgm_drawsprite_new_zoomed(wide, high, xpos, ypos, palt, boff, flip, bitmap, xzoom,xgrow, yzoom,ygrow);
+		pgm_drawsprite_new_zoomed(wide, high, xpos, ypos, palt, boff, flip, bitmap, xzoom,xgrow, yzoom,ygrow);
 
 		pgm_sprite_source += 5;
 	}

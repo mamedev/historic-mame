@@ -1120,7 +1120,7 @@ INPUT_PORTS_START( astyanax )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )	// according to manual
+	PORT_DIPNAME( 0x80, 0x80, "Test Mode" )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -1279,7 +1279,7 @@ INPUT_PORTS_START( avspirit )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x40, 0x40, "Test Mode" ) // freeze & slow motion via P1 + P2 start
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
@@ -1591,10 +1591,10 @@ INPUT_PORTS_START( cybattlr )
 	PORT_DIPNAME( 0x01, 0x01, "Unknown 2-0" )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, "Unknown 2-1" )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, "Unknown 2-2" )	// 1 bit
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
+	PORT_DIPNAME( 0x04, 0x04, "Disable Instruction Screen" )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Allow_Continue ) )
@@ -1603,10 +1603,10 @@ INPUT_PORTS_START( cybattlr )
 	PORT_DIPNAME( 0x10, 0x10, "Unknown 2-4" )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x20, 0x20, "Demo Sounds (Intro)" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown 2-6" )	// 1 bit
+	PORT_DIPNAME( 0x40, 0x40, "Demo Sounds (Game Play)" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
@@ -2302,11 +2302,11 @@ INPUT_PORTS_START( lomakai )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x30, "?Difficulty?" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( Normal ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Hard ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Hardest ) )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) ) // boss enemy damage bar
+	PORT_DIPSETTING(    0x30, DEF_STR( Easy ) ) // 6 dots
+	PORT_DIPSETTING(    0x20, DEF_STR( Normal ) ) // 8 dots
+	PORT_DIPSETTING(    0x10, DEF_STR( Hard ) ) // 9 dots
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) ) // 12 dots
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
@@ -2652,13 +2652,14 @@ INPUT_PORTS_START( peekaboo )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START_TAG("DSW2")			/* 1f003b.b<-e0001.b */
-	PORT_DIPNAME( 0x03, 0x03, "Unknown 2-0&1" )				// 1f0358<-!
-	PORT_DIPSETTING(    0x03, "3" )
-	PORT_DIPSETTING(    0x02, "2" )
-	PORT_DIPSETTING(    0x01, "1" )
-	PORT_DIPSETTING(    0x00, "0" )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )				// 1f0358<-!
+	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Hardest ) )
+
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x08, 0x08, "Movement?" )					// 1f0392<-!
+	PORT_DIPNAME( 0x08, 0x08, "Movement" )					// 1f0392<-!
 	PORT_DIPSETTING(    0x08, "Paddles" )
 	PORT_DIPSETTING(    0x00, "Buttons" )
 	PORT_DIPNAME( 0x30, 0x30, "Nudity" )					// 1f0356<-!
@@ -2669,9 +2670,9 @@ INPUT_PORTS_START( peekaboo )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )			// 1f006a<-!
 	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x80, 0x80, "(controls?)Unknown 2-7" )	// 1f0074<-!
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )	// num of controls?
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Number of controllers" )	// 1f0074<-!
+	PORT_DIPSETTING(    0x80, "1" )
+	PORT_DIPSETTING(    0x00, "2" )
 
 INPUT_PORTS_END
 
@@ -2799,11 +2800,11 @@ INPUT_PORTS_START( plusalph )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x08, "70k and every 130k")
 	PORT_DIPSETTING(    0x00, "100k and every 200k")
-	PORT_DIPNAME( 0x30, 0x30, "?Difficulty?" )
-	PORT_DIPSETTING(    0x30, "3" )	// 1
-	PORT_DIPSETTING(    0x20, "2" )	// 3
-	PORT_DIPSETTING(    0x10, "1" )	// 2
-	PORT_DIPSETTING(    0x00, "0" )	// 0
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
@@ -3075,11 +3076,11 @@ INPUT_PORTS_START( stdragon )
 	PORT_DIPNAME( 0x08, 0x08, "Unknown 2-3" )	// unused?
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x30, "Difficulty?" )
-	PORT_DIPSETTING(    0x30, "3" )
-	PORT_DIPSETTING(    0x20, "2" )
-	PORT_DIPSETTING(    0x10, "1" )
-	PORT_DIPSETTING(    0x00, "0" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )

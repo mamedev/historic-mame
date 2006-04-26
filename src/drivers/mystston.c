@@ -93,8 +93,8 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0780, 0x07df) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x07e0, 0x07ff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x0800, 0x0fff) AM_WRITE(MWA8_RAM)	/* work RAM? */
-	AM_RANGE(0x1000, 0x17ff) AM_WRITE(&mystston_videoram_w) AM_BASE(&videoram)
-	AM_RANGE(0x1800, 0x1bff) AM_WRITE(&mystston_videoram2_w) AM_BASE(&mystston_videoram2)
+	AM_RANGE(0x1000, 0x17ff) AM_WRITE(mystston_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0x1800, 0x1bff) AM_WRITE(mystston_videoram2_w) AM_BASE(&mystston_videoram2)
 	AM_RANGE(0x1c00, 0x1fff) AM_WRITE(MWA8_RAM)	/* work RAM? This gets copied to videoram */
 	AM_RANGE(0x2000, 0x2000) AM_WRITE(mystston_control_w)	/* text color, flip screen & coin counters */
 	AM_RANGE(0x2010, 0x2010) AM_WRITE(mystston_irq_reset_w)
@@ -137,7 +137,21 @@ INPUT_PORTS_START( mystston )
 	PORT_DIPNAME(0x04, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(   0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
-	PORT_BIT( 0xf8, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME(0x08, 0x08, DEF_STR( Unused ) )
+	PORT_DIPSETTING(   0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
+	PORT_DIPNAME(0x10, 0x10, DEF_STR( Unused ) )
+	PORT_DIPSETTING(   0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
+	PORT_DIPNAME(0x20, 0x20, DEF_STR( Unused ) )
+	PORT_DIPSETTING(   0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
+	PORT_DIPNAME(0x40, 0x40, DEF_STR( Unused ) )
+	PORT_DIPSETTING(   0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
+	PORT_DIPNAME(0x80, 0x80, DEF_STR( Unused ) )
+	PORT_DIPSETTING(   0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
 
 	PORT_START	/* DSW2 */
 	PORT_DIPNAME(0x03, 0x03, DEF_STR( Coin_A ) )
@@ -150,7 +164,9 @@ INPUT_PORTS_START( mystston )
 	PORT_DIPSETTING(   0x0c, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(   0x08, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(   0x04, DEF_STR( 1C_3C ) )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME(0x10, 0x10, DEF_STR( Unused ) )
+	PORT_DIPSETTING(   0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
 	PORT_DIPNAME(0x20, 0x00, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(   0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(   0x20, DEF_STR( On ) )
@@ -222,7 +238,7 @@ static INTERRUPT_GEN( mystston_interrupt )
 	/* IMS is triggered every time VLOC line 3 is raised,
        as VLOC counter starts at 16, effectively every 16 scanlines */
 	if ((scanline % 16) == 0)
-		cpunum_set_input_line(0, 0, HOLD_LINE);
+		cpunum_set_input_line(0, 0, ASSERT_LINE);
 }
 
 

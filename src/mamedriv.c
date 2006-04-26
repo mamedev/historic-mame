@@ -180,6 +180,7 @@ const game_driver * const drivers[] =
 	DRIVER( smooncrs )	/* Gremlin */
 	DRIVER( mooncrsb )	/* bootleg */
 	DRIVER( mooncrs2 )	/* bootleg */
+	DRIVER( mooncrs3 )	/* bootleg */
 	DRIVER( fantazia )	/* bootleg */
 	DRIVER( moonqsr )	/* (c) 1980 Nichibutsu */
 	DRIVER( mshuttle )	/* (c) 1981 Nichibutsu */
@@ -293,6 +294,7 @@ const game_driver * const drivers[] =
 	DRIVER( amidar )	/* GX337 (c) 1981 Konami */
 	DRIVER( amidaru )	/* GX337 (c) 1982 Konami + Stern license */
 	DRIVER( amidaro )	/* GX337 (c) 1982 Konami + Olympia license */
+	DRIVER( amidarb )	/* bootleg */
 	DRIVER( amigo )		/* bootleg */
 	DRIVER( turtles )	/* (c) 1981 Stern */
 	DRIVER( turpin )	/* (c) 1981 Sega */
@@ -2367,6 +2369,7 @@ V-V                           TP-027
 	DRIVER( ssf2tbr1 )	/* 11/09/1993 (c) 1993 (World) */
 	DRIVER( ssf2tbj )	/* 11/09/1993 (c) 1993 (Japan) */
 	DRIVER( ecofghtr )	/* 03/12/1993 (c) 1993 (World) */
+	DRIVER( ecofghtu )	/* 03/12/1993 (c) 1993 (US) */
 	DRIVER( ecofghta )	/* 03/12/1993 (c) 1993 (Asia) */
 	DRIVER( uecology ) 	/* 03/12/1993 (c) 1993 (Japan) */
 	DRIVER( ddtod )		/* 12/04/1994 (c) 1993 (Euro) */
@@ -2387,7 +2390,7 @@ V-V                           TP-027
 	DRIVER( avspj )		/* 20/05/1994 (c) 1994 (Japan) */
 	DRIVER( avspa )		/* 20/05/1994 (c) 1994 (Asia) */
 	DRIVER( avsph )		/* 20/05/1994 (c) 1994 (Hispanic) */
-				/*    06/1994? Galum Pa! (not listed on Capcom's site) */
+						/*    06/1994? Galum Pa! (not listed on Capcom's site) */
 	DRIVER( dstlk )		/* 05/07/1994 (c) 1994 (Euro) */
 	DRIVER( dstlku )	/* 18/08/1994 (c) 1994 (US) */
 	DRIVER( dstlkur1 )	/* 05/07/1994 (c) 1994 (US) */
@@ -2531,7 +2534,7 @@ V-V                           TP-027
 	DRIVER( gigawing )	/* 22/02/1999 (c) 1999 Takumi (US) */
 	DRIVER( gwingj )	/* 23/02/1999 (c) 1999 Takumi (Japan) */
 	DRIVER( gwinga )	/* 22/02/1999 (c) 1999 Takumi (Asia) */
-				/* 27/05/1999 Jyangokushi: Haoh no Saihai (Japan) */
+						/* 27/05/1999 Jyangokushi: Haoh no Saihai (Japan) */
 	DRIVER( dimahoo )	/* 21/01/2000 (c) 2000 Eighting/Raizing (US) */
 	DRIVER( gmahou )	/* 21/01/2000 (c) 2000 Eighting/Raizing (Japan) */
 	DRIVER( mmatrix )	/* 12/04/2000 (c) 2000 Takumi (US) */
@@ -2544,8 +2547,8 @@ V-V                           TP-027
 	DRIVER( progeara )	/* 17/01/2001 (c) 2001 Cave (Asia) */
 	DRIVER( pzloop2j )	/* 05/02/2001 (c) 2001 Mitchell (Japan) */
 	DRIVER( choko )		/* 20/08/2001 (c) 2001 Mitchell (Japan) */
-				/* 22/12/2003 Hyper Street Fighter 2 (Capcom, Japan) */
-				/* 02/02/2004 Hyper Street Fighter 2 (Capcom, Asia) */
+						/* 22/12/2003 Hyper Street Fighter 2 (Capcom, Japan) */
+						/* 02/02/2004 Hyper Street Fighter 2 (Capcom, Asia) */
 
 	/* Capcom CPS3 games */
 	DRIVER( warzard )	/* 10/1996 Warzard */
@@ -4272,6 +4275,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( xmen6p )	/* GX065 (c) 1992 */
 	DRIVER( xmen6pu )	/* GX065 (c) 1992 */
 	DRIVER( xexex )		/* GX067 (c) 1991 (World) */
+	DRIVER( xexexa )	/* GX067 (c) 1991 (AAA) */
 	DRIVER( xexexj )	/* GX067 (c) 1991 (Japan) */
 	DRIVER( asterix )	/* GX068 (c) 1992 (World) */
 	DRIVER( astrxeac )	/* GX068 (c) 1992 (World) */
@@ -5604,6 +5608,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( fitter )	/* (c) 1981 Taito */
 	DRIVER( thepit )	/* (c) 1982 Taito */
 	DRIVER( thepitc )	/* (c) 1982 Centuri */
+	DRIVER( thepitb )	/* bootleg */
 	DRIVER( dockman )	/* (c) 1982 Taito Corp. */
 	DRIVER( portman )	/* (c) 1982 Nova Games Ltd. */
 	DRIVER( funnymou )	/* (c) 1982 Chuo Co. Ltd */
@@ -6570,6 +6575,7 @@ Other Sun games
 	DRIVER( ddp2 )		/* (c) 2001 */
 	DRIVER( puzzli2 )	/* (c) 2001 */
 	DRIVER( martmast )	/* (c) 2001 */
+	DRIVER( theglad )	/* (c) 2001 */
 	DRIVER( dmnfrnt )	/* (c) 2002 */
 	DRIVER( dmnfrnta )	/* (c) 2002 */
 
@@ -6715,6 +6721,9 @@ Other Sun games
 	/* Sente Super System */
 	DRIVER( mquake )
 
+	/* Other Amiga-based games */
+	DRIVER( upscope )
+
 	/* Crystal System */
 	DRIVER( crysbios )
 	DRIVER( crysking )	/* 2001 Brezzasoft. Crystal of the kings */
@@ -6822,6 +6831,7 @@ Other Sun games
 	DRIVER( quiz )		/* (c) 1986 Italian bootleg */
 	DRIVER( quiz211 )	/* (c) 1986 Italian bootleg */
 	DRIVER( gs4002 )	/* (c) 1982 G.E.I. */
+	DRIVER( gepoker )	/* (c) 1984 Greyhound Electronics */
 	DRIVER( gt102c )	/* (c) 1984 Greyhound Electronics */
 	DRIVER( gt102b )	/* (c) 1984 Greyhound Electronics */
 	DRIVER( gt102c1 )	/* (c) 1985 Greyhound Electronics */

@@ -3519,13 +3519,13 @@ ROM_START( tetrist )
 	ROM_LOAD( "c12-06.bin", 0x00000, 0x4000, CRC(f2814b38) SHA1(846d3cc7a6f1cfbfd5661d6942f24330d21f91f0) )
 	ROM_CONTINUE(           0x10000, 0xc000 ) /* banked stuff */
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_ERASE00 )
 	/* empty (uses only pixel layer) */
 
-	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* adpcm samples */
+	ROM_REGION( 0x80000, REGION_SOUND1, ROMREGION_ERASE00 )	/* adpcm samples */
 	/* empty */
 
-	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* DELTA-T samples */
+	ROM_REGION( 0x80000, REGION_SOUND2, ROMREGION_ERASE00 )	/* DELTA-T samples */
 	/* empty */
 ROM_END
 
@@ -3540,7 +3540,7 @@ ROM_START( tetrista )
 	ROM_LOAD( "c35-05.bin", 0x00000, 0x4000, CRC(785c63fb) SHA1(13db76d8ce52ff21bfda0866c9c6b52147c6fc9d) )
 	ROM_CONTINUE(           0x10000, 0xc000 ) /* banked stuff */
 
-	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_ERASE00 )
 	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
 	/* these roms (present on the original board) are actually from from master of weapon
      b72-01.rom              mow-m01.rom             IDENTICAL

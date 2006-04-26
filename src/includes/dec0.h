@@ -55,8 +55,6 @@ WRITE16_HANDLER( slyspy_248000_w );
 WRITE16_HANDLER( slyspy_24c000_w );
 WRITE16_HANDLER( slyspy_24e000_w );
 
-WRITE8_HANDLER( robocop_bankswitch_w );
-
 DRIVER_INIT( slyspy );
 DRIVER_INIT( hippodrm );
 DRIVER_INIT( robocop );

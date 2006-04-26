@@ -23,7 +23,6 @@ VIDEO_UPDATE( bullsdrt );
 
 WRITE8_HANDLER( centiped_paletteram_w );
 WRITE8_HANDLER( milliped_paletteram_w );
-WRITE8_HANDLER( qwakprot_paletteram_w );
 
 WRITE8_HANDLER( centiped_videoram_w );
 WRITE8_HANDLER( centiped_flip_screen_w );

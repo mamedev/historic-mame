@@ -8,6 +8,7 @@
     to play a sample from a different bank at the same time. */
 
 #include "driver.h"
+#include "nmk112.h"
 
 #define MAXCHIPS 2
 #define TABLESIZE 0x100

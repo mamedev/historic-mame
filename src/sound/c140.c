@@ -246,6 +246,12 @@ WRITE8_HANDLER( C140_w )
 	}
 }
 
+void C140_set_base(int which, void *base)
+{
+	struct c140_info *info = sndti_token(SOUND_C140, 0);
+	info->pRom = base;
+}
+
 INLINE int limit(INT32 in)
 {
 	if(in>0x7fff)		return 0x7fff;
@@ -449,7 +455,8 @@ static void *c140_start(int sndindex, int clock, const void *config)
 
 	info->stream = stream_create(0,2,info->sample_rate,info,update_stereo);
 
-	info->pRom=memory_region(intf->region);
+	if (intf->region)
+		info->pRom=memory_region(intf->region);
 
 	/* make decompress pcm table */		//2000.06.26 CAB
 	{

@@ -1251,8 +1251,6 @@ YM2151   OKI M6295 VOI2  Z8400A
 */
 
 ROM_START( raiden2 )
-	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* dummy */
-
 	ROM_REGION( 0x200000, REGION_USER1, 0 ) /* v30 main cpu */
 	ROM_LOAD16_BYTE("prg0",   0x000000, 0x80000, CRC(09475ec4) SHA1(05027f2d8f9e11fcbd485659eda68ada286dae32) )
 	ROM_LOAD16_BYTE("prg1",   0x000001, 0x80000, CRC(4609b5f2) SHA1(272d2aa75b8ea4d133daddf42c4fc9089093df2e) )
@@ -1301,8 +1299,6 @@ S5 U0724     27C1024     ROM7        966D
 /* does this have worse sound hardware or are we just missing roms? */
 
 ROM_START( raiden2a )
-	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* dummy */
-
 	ROM_REGION( 0x200000, REGION_USER1, 0 ) /* v30 main cpu */
 	ROM_LOAD16_BYTE("prg0",   0x000000, 0x80000, CRC(09475ec4) SHA1(05027f2d8f9e11fcbd485659eda68ada286dae32) ) // rom1
 	ROM_LOAD16_BYTE("rom2e",  0x000001, 0x80000, CRC(458d619c) SHA1(842bf0eeb5d192a6b188f4560793db8dad697683) )
@@ -1330,8 +1326,6 @@ ROM_START( raiden2a )
 ROM_END
 
 ROM_START( raiden2b )
-	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* dummy */
-
 	ROM_REGION( 0x200000, REGION_USER1, 0 ) /* v30 main cpu */
 	ROM_LOAD16_BYTE("prg0",   0x000000, 0x80000, CRC(09475ec4) SHA1(05027f2d8f9e11fcbd485659eda68ada286dae32) ) // rom1
 	ROM_LOAD16_BYTE("rom2j",  0x000001, 0x80000, CRC(e4e4fb4c) SHA1(7ccf33fe9a1cddf0c7e80d7ed66d615a828b3bb9) )
@@ -1398,8 +1392,6 @@ CUSTOM:       SEI150
 
 
 ROM_START( raiden2c )
-	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* dummy */
-
 	ROM_REGION( 0x200000, REGION_USER1, 0 ) /* v30 main cpu */
 	ROM_LOAD16_BYTE("prg0",   0x000000, 0x80000, CRC(09475ec4) SHA1(05027f2d8f9e11fcbd485659eda68ada286dae32) ) // rom1
 	ROM_LOAD16_BYTE("rom2j",  0x000001, 0x80000, CRC(e4e4fb4c) SHA1(7ccf33fe9a1cddf0c7e80d7ed66d615a828b3bb9) )
@@ -1470,8 +1462,6 @@ r2_voi2.bin   262144  0x8cf0d17e  TC534000P Dumped as 27C040. 1'st and
 */
 
 ROM_START( raiden2e )
-	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* dummy */
-
 	ROM_REGION( 0x200000, REGION_USER1, 0 ) /* v30 main cpu */
 	ROM_LOAD16_BYTE("r2_prg_0.bin",   0x000000, 0x80000, CRC(2abc848c) SHA1(1df4276d0074fcf1267757fa0b525a980a520f3d) )
 	ROM_LOAD16_BYTE("r2_prg_1.bin",   0x000001, 0x80000, CRC(509ade43) SHA1(7cdee7bb00a6a1c7899d10b96385d54c261f6f5a) )
@@ -1547,8 +1537,6 @@ Notes:
       not in the other dumps, and to better document the hardware :-)
 */
 ROM_START( raidndx )
-	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* dummy */
-
 	ROM_REGION( 0x200000, REGION_USER1, 0 ) /* v30 main cpu */
 	ROM_LOAD32_BYTE("dx_1h.4n",   0x000000, 0x80000, BAD_DUMP CRC(7624c36b) SHA1(84c17f2988031210d06536710e1eac558f4290a1) ) // bad
 	ROM_LOAD32_BYTE("dx_2h.4p",   0x000001, 0x80000, CRC(4940fdf3) SHA1(c87e307ed7191802583bee443c7c8e4f4e33db25) )
@@ -1618,8 +1606,6 @@ rdxj_7.bin    131072  0xc73986d4  27C210
 */
 
 ROM_START( raidndxj )
-	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* dummy */
-
 	ROM_REGION( 0x200000, REGION_USER1, 0 ) /* v30 main cpu */
 	ROM_LOAD32_BYTE("rdxj_1.bin",   0x000000, 0x80000, CRC(b5b32885) SHA1(fb3c592b2436d347103c17bd765176062be95fa2) )
 	ROM_LOAD32_BYTE("rdxj_2.bin",   0x000001, 0x80000, CRC(7efd581d) SHA1(4609a0d8afb3d62a38b461089295efed47beea91) )
@@ -1697,8 +1683,6 @@ Unfortunately, my reader doesnt support 42 pin roms, so i can not dump the BACK 
 */
 
 ROM_START( raidndxa )
-	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* dummy */
-
 	ROM_REGION( 0x200000, REGION_USER1, 0 ) /* v30 main cpu */
 	ROM_LOAD32_BYTE("dx-1d.bin",   0x000000, 0x80000, CRC(14d725fc) SHA1(f12806f64f069fdc4ee29b309a32f7ca00b36f93) )
 	ROM_LOAD32_BYTE("dx-2d.bin",   0x000001, 0x80000, CRC(5e7e45cb) SHA1(94eff893b5335c522f1c063c3175b9bac87b0a25) )
@@ -1734,8 +1718,6 @@ ROM_START( raidndxa )
 ROM_END
 
 ROM_START( raidndxm )
-	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* dummy */
-
 	ROM_REGION( 0x200000, REGION_USER1, 0 ) /* v30 main cpu */
 	ROM_LOAD32_BYTE("1d.bin",   0x000000, 0x80000, CRC(22b155ae) SHA1(388151e2c8fb301bd5bc66a974e9fe16816ae0bc) )
 	ROM_LOAD32_BYTE("2d.bin",   0x000001, 0x80000, CRC(2be98ca8) SHA1(491e990405b0ad3de45bdbcc2453af9215ae19c8) )
@@ -1836,12 +1818,10 @@ Notes
 
 
 ROM_START( raidndxb )
-	ROM_REGION( 0x400000, REGION_CPU1, 0 ) /* dummy */
-
 	ROM_REGION( 0x400000, REGION_USER1, 0 ) /* v33 main cpu */
 	ROM_LOAD("prg.223",   0x000000, 0x400000, CRC(b3dbcf98) SHA1(30d6ec2090531c8c579dff74c4898889902d7d87) )
 
-	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* 64k code for sound Z80 */
+	ROM_REGION( 0x20000, REGION_CPU2, ROMREGION_ERASE00 ) /* 64k code for sound Z80 */
 	/* nothing?  no z80*/
 
 	ROM_REGION( 0x040000, REGION_GFX1, ROMREGION_DISPOSE ) /* chars */
@@ -1866,8 +1846,6 @@ ROM_END
 
 
 ROM_START( zeroteam )
-	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* dummy */
-
 	ROM_REGION( 0x200000, REGION_USER1, 0 ) /* v30 main cpu */
 	ROM_LOAD32_BYTE("1.5k",   0x000000, 0x40000, CRC(25aa5ba4) SHA1(40e6047620fbd195c87ac3763569af099096eff9) )
 	ROM_LOAD32_BYTE("3.6k",   0x000002, 0x40000, CRC(ec79a12b) SHA1(515026a2fca92555284ac49818499af7395783d3) )
@@ -1896,8 +1874,6 @@ ROM_START( zeroteam )
 ROM_END
 
 ROM_START( zeroteaa )
-	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* dummy */
-
 	ROM_REGION( 0x200000, REGION_USER1, 0 ) /* v30 main cpu */
 	ROM_LOAD32_BYTE("1.bin",   0x000000, 0x40000, CRC(bd7b3f3a) SHA1(896413901a429d0efa3290f61920063c81730e9b) )
 	ROM_LOAD32_BYTE("3.bin",   0x000002, 0x40000, CRC(19e02822) SHA1(36c9b887eaa9b9b67d65c55e8f7eefd08fe0be15) )
@@ -1927,8 +1903,6 @@ ROM_END
 
 /* set contained only program roms, was marked as 'non-encrytped' but program isn't encrypted anyway?! */
 ROM_START( zeroteab )
-	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* dummy */
-
 	ROM_REGION( 0x200000, REGION_USER1, 0 ) /* v30 main cpu */
 	ROM_LOAD32_BYTE("z1",   0x000000, 0x40000, CRC(157743d0) SHA1(f9c84c9025319f76807ef0e79f1ee1599f915b45) )
 	ROM_LOAD32_BYTE("z3",   0x000002, 0x40000, CRC(fea7e4e8) SHA1(08c4bdff82362ae4bcf86fa56fcfc384bbf82b71) )
@@ -1957,8 +1931,6 @@ ROM_START( zeroteab )
 ROM_END
 
 ROM_START( nzerotea )
-	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* dummy */
-
 	ROM_REGION( 0x200000, REGION_USER1, 0 ) /* v30 main cpu */
 	ROM_LOAD16_BYTE("prg1",   0x000000, 0x80000, CRC(3c7d9410) SHA1(25f2121b6c2be73f11263934266901ed5d64d2ee) )
 	ROM_LOAD16_BYTE("prg2",   0x000001, 0x80000, CRC(6cba032d) SHA1(bf5d488cd578fff09e62e3650efdee7658033e3f) )

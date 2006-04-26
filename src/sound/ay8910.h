@@ -11,7 +11,6 @@ struct AY8910interface
 	write8_handler portBwrite;
 };
 
-void AY8910_reset(int chip);
 void AY8910_set_volume(int chip,int channel,int volume);
 
 

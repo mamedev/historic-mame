@@ -13,3 +13,8 @@ extern UINT16 *namcos21_dspram16;
 
 extern void namcos21_ClearPolyFrameBuffer( void );
 extern void namcos21_DrawQuad( int sx[4], int sy[4], int zcode[4], int color );
+
+VIDEO_START( namcos21 );
+VIDEO_UPDATE( namcos21_default );
+VIDEO_UPDATE( namcos21_winrun );
+

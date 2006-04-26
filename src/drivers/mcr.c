@@ -2329,7 +2329,7 @@ ROM_START( demoderb )
 	ROM_LOAD( "dd_pro1",      0x04000, 0x4000, CRC(4c713bfe) SHA1(493b6ba01e86e7586ad123c53cf7f0a0c191d670) )
 	ROM_LOAD( "dd_pro2",      0x08000, 0x4000, CRC(c2cbd2a4) SHA1(fa642b2f61ff5529ab688a43c1dc14357a4eba6f) )
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU, not populated */
+	ROM_REGION( 0x10000, REGION_CPU2, ROMREGION_ERASE00 )	/* 64k for the audio CPU, not populated */
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* 64k for the Turbo Cheap Squeak */
 	ROM_LOAD( "tcs_u5.bin",   0x0c000, 0x2000, CRC(eca33b2c) SHA1(938b021ea3b0f23aed7a98a930a58af371a02303) )

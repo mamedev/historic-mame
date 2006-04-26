@@ -182,7 +182,9 @@ void z80gb_get_info(UINT32 state, union cpuinfo *info);
 void tms7000_get_info(UINT32 state, union cpuinfo *info);
 void tms7000_exl_get_info(UINT32 state, union cpuinfo *info);
 void cop411_get_info(UINT32 state, union cpuinfo *info);
-#endif
+void sm8500_get_info(UINT32 state, union cpuinfo *info);
+void v30mz_get_info(UINT32 state, union cpuinfo *info);
+#endif /* MESS */
 
 
 
@@ -716,6 +718,12 @@ static const struct
 #endif
 #if (HAS_COP411)
 	{ CPU_COP411, cop411_get_info },
+#endif
+#if (HAS_SM8500)
+	{ CPU_SM8500, sm8500_get_info },
+#endif
+#if (HAS_V30MZ)
+	{ CPU_V30MZ, v30mz_get_info },
 #endif
 #endif /* MESS */
 };

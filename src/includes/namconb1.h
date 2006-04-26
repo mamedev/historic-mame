@@ -1,3 +1,9 @@
+/*----------- defined in drivers/namconb1.c -----------*/
+
+extern UINT32 *namconb1_workram32;
+extern UINT32 *namconb1_spritebank32;
+extern UINT32 *namconb1_tilebank32;
+
 /*----------- defined in vidhrdw/namconb1.c -----------*/
 
 #define NAMCONB1_COLS		36
@@ -12,11 +18,6 @@
 #define NAMCONB1_TILEGFX		0
 #define NAMCONB1_SPRITEGFX		1
 #define NAMCONB1_ROTGFX			2
-
-extern UINT32 *namconb1_workram32;
-extern UINT32 *namconb1_spritebank32;
-extern UINT32 *namconb1_tilebank32;
-extern UINT32 *namconb1_spritepos32;
 
 VIDEO_UPDATE( namconb1 );
 VIDEO_START( namconb1 );

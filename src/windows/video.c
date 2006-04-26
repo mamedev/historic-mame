@@ -7,13 +7,20 @@
 //
 //============================================================
 
+// needed for multimonitor
+#define _WIN32_WINNT 0x501
+
 // standard windows headers
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <ddraw.h>
 
 // standard C headers
 #include <math.h>
+
+// Windows 95/NT4 multimonitor stubs
+#ifdef WIN95_MULTIMON
+#include "multidef.h"
+#endif
 
 // MAME headers
 #include "osdepend.h"
@@ -26,6 +33,7 @@
 #include "video.h"
 #include "window.h"
 #include "rc.h"
+#include "input.h"
 
 #ifndef NEW_DEBUGGER
 #include "debugwin.h"
@@ -66,9 +74,9 @@ extern struct rc_option win_d3d_opts[];
 //  GLOBAL VARIABLES
 //============================================================
 
-// screen to draw on
+// screen info
 HMONITOR monitor;
-GUID *screen_guid_ptr;
+char *screen_name;
 
 // current frameskip/autoframeskip settings
 static int frameskip;
@@ -93,11 +101,15 @@ UINT8 blit_swapxy;
 //  LOCAL VARIABLES
 //============================================================
 
-// screen info
-char *screen_name;
+// options decoding
+static char *cleanstretch;
+static char *resolution;
+static char *effect;
+static char *aspect;
+static char *mngwrite;
 
-static GUID ddraw_device_guid;
-static BOOL ddraw_device_found;
+// primary monitor handle
+static HMONITOR primary_monitor;
 
 // core video input parameters
 static int video_width;
@@ -105,18 +117,6 @@ static int video_height;
 static int video_depth;
 static double video_fps;
 static int video_attributes;
-
-// derived from video attributes
-static int vector_game;
-static int rgb_direct;
-
-// current visible area bounds
-static int vis_min_x;
-static int vis_max_x;
-static int vis_min_y;
-static int vis_max_y;
-static int vis_width;
-static int vis_height;
 
 // internal readiness states
 static int warming_up;
@@ -177,10 +177,9 @@ static const int waittable[FRAMESKIP_LEVELS][FRAMESKIP_LEVELS] =
 
 
 //============================================================
-//  OPTIONS
+//  PROTOTYPES
 //============================================================
 
-// prototypes
 static int decode_cleanstretch(struct rc_option *option, const char *arg, int priority);
 static int video_set_resolution(struct rc_option *option, const char *arg, int priority);
 static int decode_ftr(struct rc_option *option, const char *arg, int priority);
@@ -188,12 +187,11 @@ static int decode_effect(struct rc_option *option, const char *arg, int priority
 static int decode_aspect(struct rc_option *option, const char *arg, int priority);
 static void update_visible_area(mame_display *display);
 
-// internal variables
-static char *cleanstretch;
-static char *resolution;
-static char *effect;
-static char *aspect;
-static char *mngwrite;
+
+
+//============================================================
+//  OPTIONS
+//============================================================
 
 // options struct
 struct rc_option video_opts[] =
@@ -220,7 +218,7 @@ struct rc_option video_opts[] =
 	{ "matchrefresh", NULL, rc_bool, &win_match_refresh, "0", 0, 0, NULL, "attempt to match the game's refresh rate" },
 	{ "syncrefresh", NULL, rc_bool, &win_sync_refresh, "0", 0, 0, NULL, "syncronize only to the monitor refresh" },
 	{ "throttle", NULL, rc_bool, &throttle, "1", 0, 0, NULL, "throttle speed to the game's framerate" },
-	{ "full_screen_brightness", "fsb", rc_float, &win_gfx_brightness, "0.0", 0.0, 4.0, NULL, "sets the brightness in full screen mode" },
+	{ "full_screen_gamma", "fsg", rc_float, &win_gfx_gamma, "1.0", 0.0, 4.0, NULL, "sets the gamma in full screen mode" },
 	{ "frames_to_run", "ftr", rc_int, &frames_to_display, "0", 0, 0, decode_ftr, "sets the number of frames to run within the game" },
 	{ "effect", NULL, rc_string, &effect, "none", 0, 0, decode_effect, "specify the blitting effect" },
 	{ "screen_aspect", NULL, rc_string, &aspect, "4:3", 0, 0, decode_aspect, "specify an alternate monitor aspect ratio" },
@@ -332,7 +330,7 @@ static int decode_ftr(struct rc_option *option, const char *arg, int priority)
 		return -1;
 	}
 
-	/* if we're running < 5 minutes, allow us to skip warnings to facilitate benchmarking/validation testing */
+	// if we're running < 5 minutes, allow us to skip warnings to facilitate benchmarking/validation testing
 	frames_to_display = ftr;
 	if (frames_to_display > 0 && frames_to_display < 60*60*5)
 		options.skip_warnings = options.skip_gameinfo = options.skip_disclaimer = 1;
@@ -454,29 +452,36 @@ void win_disorient_rect(rectangle *rect)
 
 
 //============================================================
-//  devices_enum_callback
+//  monitor_enum_proc
 //============================================================
 
-static BOOL WINAPI devices_enum_callback(GUID *lpGUID, LPSTR lpDriverDescription,
-										 LPSTR lpDriverName, LPVOID lpContext, HMONITOR hm)
+static BOOL CALLBACK monitor_enum_proc(HMONITOR monitor_enum, HDC dc, LPRECT rect, LPARAM data)
 {
-	if (verbose)
-		fprintf(stderr, "Enumerating video device %s\n",lpDriverName);
+	MONITORINFOEX monitor_info = { sizeof(MONITORINFOEX) };
 
-	if (screen_name != NULL && mame_stricmp(lpDriverName,screen_name) == 0)
+	if (!GetMonitorInfo(monitor_enum, (LPMONITORINFO)&monitor_info))
 	{
-		if (lpGUID != NULL)
-		{
-			ddraw_device_guid = *lpGUID;
-			monitor = hm;
-			ddraw_device_found = TRUE;
-			// no more enumeration
-			return 0;
-		}
+		fprintf(stderr, "ERROR: Failed to get display monitor information\n");
+		return FALSE;	// stop enumeration
 	}
 
-	// continue enumeration
-	return 1;
+	if (verbose)
+	{
+		fprintf(stderr, "Enumerating display monitors... Found: %s %s\n",
+				monitor_info.szDevice,
+				monitor_info.dwFlags & MONITORINFOF_PRIMARY ? "(primary)" : "");
+	}
+
+	// save the primary monitor handle
+	if (monitor_info.dwFlags & MONITORINFOF_PRIMARY)
+		primary_monitor = monitor_enum;
+
+	// save the current handle if the monitor name matches the requested one
+	if (screen_name != NULL && mame_stricmp(monitor_info.szDevice, screen_name) == 0)
+		monitor = monitor_enum;
+
+	// enumerate all the available monitors so to list their names in verbose mode
+	return TRUE;
 }
 
 
@@ -490,7 +495,6 @@ int osd_create_display(const osd_create_params *params, UINT32 *rgb_components)
 	mame_display dummy_display;
 	double aspect_ratio;
 	int r, g, b;
-	HRESULT result;
 
 	logerror("width %d, height %d depth %d\n", params->width, params->height, params->depth);
 
@@ -507,41 +511,29 @@ int osd_create_display(const osd_create_params *params, UINT32 *rgb_components)
 	if (frameskip >= FRAMESKIP_LEVELS)
 		frameskip = FRAMESKIP_LEVELS - 1;
 
-	// extract useful parameters from the attributes
-	vector_game			= ((params->video_attributes & VIDEO_TYPE_VECTOR) != 0);
-	rgb_direct			= ((params->video_attributes & VIDEO_RGB_DIRECT) != 0);
-
 	if (!blit_swapxy)
 		aspect_ratio = (double)params->aspect_x / (double)params->aspect_y;
 	else
 		aspect_ratio = (double)params->aspect_y / (double)params->aspect_x;
 
-	// if not using the primary display, enumerate the display devices and find the
-	// proper screen
-
-	screen_guid_ptr = NULL;
-	ddraw_device_found = FALSE;
+	// find the monitor to draw on
 	monitor = NULL;
-	memset(&ddraw_device_guid, 0, sizeof(ddraw_device_guid));
- 	if (win_use_ddraw)
- 	{
-		result = DirectDrawEnumerateEx(devices_enum_callback, NULL, DDENUM_ATTACHEDSECONDARYDEVICES | DDENUM_DETACHEDSECONDARYDEVICES);
-		if (result != DD_OK)
-		{
-			fprintf(stderr, "Error enumerating DirectDraw: %08x\n", (UINT32)result);
-			return 1;
-		}
-		if (screen_name != NULL)
-		{
-			if (!ddraw_device_found)
-			{
-				fprintf(stderr, "Screen %s not found\n",screen_name);
-				return 1;
-			}
-			screen_guid_ptr = &ddraw_device_guid;
-		}
-	}
+	EnumDisplayMonitors(NULL, NULL, monitor_enum_proc, 0);
 
+	if (monitor == NULL)
+	{
+		if (primary_monitor)
+			monitor = primary_monitor;
+		else
+			fatalerror("ERROR: Unable to find a monitor");
+
+		if (screen_name)
+			fprintf(stderr, "WARNING: Screen %s not found, using primary display monitor\n", screen_name);
+		else if (verbose)
+			fprintf(stderr, "Screen name not specified, using primary display monitor\n");
+	}
+	else if (verbose)
+		fprintf(stderr, "Using %s as specified\n", screen_name);
 
 	// create the window
 	if (win_create_window(video_width, video_height, video_depth, video_attributes, aspect_ratio))
@@ -807,7 +799,6 @@ static void update_palette(mame_display *display)
 	for (i = 0; i < display->game_palette_entries; i += 32)
 	{
 		UINT32 dirtyflags = palette_lookups_invalid ? ~0 : display->game_palette_dirty[i / 32];
-//      UINT32 dirtyflags = display->game_palette_dirty[i / 32];
 		if (dirtyflags)
 		{
 			display->game_palette_dirty[i / 32] = 0;
@@ -841,27 +832,17 @@ static void update_palette(mame_display *display)
 
 static void update_visible_area(mame_display *display)
 {
-	rectangle adjusted = display->game_visible_area;
+	rectangle area = display->game_visible_area;
 
 	// adjust for orientation
-	win_orient_rect(&adjusted);
-
-	// copy the new parameters
-	vis_min_x = adjusted.min_x;
-	vis_max_x = adjusted.max_x;
-	vis_min_y = adjusted.min_y;
-	vis_max_y = adjusted.max_y;
+	win_orient_rect(&area);
 
 	// track these changes
-	logerror("set visible area %d-%d %d-%d\n",vis_min_x,vis_max_x,vis_min_y,vis_max_y);
-
-	// compute the visible width and height
-	vis_width  = vis_max_x - vis_min_x + 1;
-	vis_height = vis_max_y - vis_min_y + 1;
+	logerror("Visible area set to %d-%d %d-%d\n", area.min_x, area.max_x, area.min_y, area.max_y);
 
 	// now adjust the window for the aspect ratio
-	if (vis_width > 1 && vis_height > 1)
-		win_adjust_window_for_visible(vis_min_x, vis_max_x, vis_min_y, vis_max_y);
+	if (area.max_x > area.min_x && area.max_y > area.min_y)
+		win_adjust_window_for_visible(area.min_x, area.max_x, area.min_y, area.max_y);
 }
 
 

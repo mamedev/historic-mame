@@ -21,7 +21,6 @@ struct TAITO8741interface
 };
 
 int  TAITO8741_start(const struct TAITO8741interface *taito8741intf);
-void TAITO8741_stop(void);
 
 void TAITO8741_reset(int num);
 

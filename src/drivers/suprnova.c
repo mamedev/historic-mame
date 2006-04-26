@@ -1291,7 +1291,7 @@ ROM_START( cyvern )
 	ROM_LOAD( "cv200-00.u16", 0x000000, 0x400000, CRC(ddc8c67e) SHA1(9b99e87e69e88011e6d693d19ac5e115b4fa50b0) )
 	ROM_LOAD( "cv201-00.u13", 0x400000, 0x400000, CRC(65863321) SHA1(b8b75f50406068ffc3fca3887d2f0a653ca491c9) )
 
-	ROM_REGION( 0x800000, REGION_GFX3, 0 ) /* Tiles Plane B */
+	ROM_REGION( 0x800000, REGION_GFX3, ROMREGION_ERASE00 ) /* Tiles Plane B */
 	/* First 0x040000 bytes (0x03ff Tiles) are RAM Based Tiles */
 	/* 0x040000 - 0x3fffff empty? */
 	ROM_LOAD( "cv210-00.u18", 0x400000, 0x400000, CRC(7486bf3a) SHA1(3b4285ca570e9c5ad396c615bfc054372d1b0162) )
@@ -1316,7 +1316,7 @@ ROM_START( galpani4 )
     ROM_LOAD( "gp420000.u16", 0x000000, 0x200000, CRC(f0781376) SHA1(aeab9553a9af922524e528eb2d019cf36b6e2094) )
     ROM_LOAD( "gp420100.u18", 0x200000, 0x200000, CRC(10c4b183) SHA1(80e05f3932495ad4fc9bf928fa66e6d2931bbb06) )
 
-	ROM_REGION( 0x800000, REGION_GFX3, 0 ) /* Tiles Plane B */
+	ROM_REGION( 0x800000, REGION_GFX3, ROMREGION_ERASE00 ) /* Tiles Plane B */
 	/* First 0x040000 bytes (0x03ff Tiles) are RAM Based Tiles */
 	/* 0x040000 - 0x3fffff empty? */
 
@@ -1341,7 +1341,7 @@ ROM_START( galpanis )
     ROM_LOAD( "gps20000.u16", 0x000000, 0x400000, CRC(c146a09e) SHA1(5af5a7b9d9a55ec7aba3fd85a3a0211b92b1b84f) )
     ROM_LOAD( "gps20100.u13", 0x400000, 0x400000, CRC(9dfa2dc6) SHA1(a058c42fd76c23c0e5c8c11f5617fd29e056be7d) )
 
-	ROM_REGION( 0x800000, REGION_GFX3, 0 ) /* Tiles Plane B */
+	ROM_REGION( 0x800000, REGION_GFX3, ROMREGION_ERASE00 ) /* Tiles Plane B */
 	/* First 0x040000 bytes (0x03ff Tiles) are RAM Based Tiles */
 	/* 0x040000 - 0x3fffff empty? */
 
@@ -1367,7 +1367,7 @@ ROM_START( galpans2 )
     ROM_LOAD( "gs220000.u17", 0x000000, 0x400000, CRC(5caae1c0) SHA1(8f77e4cf018d7290b2d804cbff9fccf0bf4d2404) )
     ROM_LOAD( "gs220100.u9",  0x400000, 0x400000, CRC(8d51f197) SHA1(19d2afab823ea179918e7bcbf4df2283e77570f0) )
 
-	ROM_REGION( 0x800000, REGION_GFX3, 0 ) /* Tiles Plane B */
+	ROM_REGION( 0x800000, REGION_GFX3, ROMREGION_ERASE00 ) /* Tiles Plane B */
 	/* First 0x040000 bytes (0x03ff Tiles) are RAM Based Tiles */
 	/* 0x040000 - 0x3fffff empty? */
     ROM_LOAD( "gs221000.u3",  0x400000, 0x400000, CRC(58800a18) SHA1(5e6d55ecd12275662d6f59559e137b759f23fff6) )
@@ -1390,7 +1390,7 @@ ROM_START( gutsn )
 	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )
     ROM_LOAD( "gts20000.u16", 0x000000, 0x400000, CRC(c443aac3) SHA1(b0416a09ead26077e9276bae98d94eeb1cf86877) )
 
-	ROM_REGION( 0x400000, REGION_GFX3, 0 ) /* Tiles Plane B */
+	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_ERASE00 ) /* Tiles Plane B */
 	/* First 0x040000 bytes (0x03ff Tiles) are RAM Based Tiles */
 	/* 0x040000 - 0x3fffff empty? */
 
@@ -1413,7 +1413,7 @@ ROM_START( panicstr )
   	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )
     ROM_LOAD( "ps120000.u16", 0x000000, 0x400000, CRC(d772ac15) SHA1(6bf7b9bfccdcb7481b21fa2ab9b683d79033a192) )
 
-  	ROM_REGION( 0x400000, REGION_GFX3, 0 ) /* Tiles Plane B */
+  	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_ERASE00 ) /* Tiles Plane B */
 	/* First 0x040000 bytes (0x03ff Tiles) are RAM Based Tiles */
 	/* 0x040000 - 0x3fffff empty? */
 
@@ -1435,7 +1435,7 @@ ROM_START( puzzloop )
 	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "pzl20000.u16", 0x000000, 0x400000, CRC(ff558e68) SHA1(69a50c8100edbf2d5d92ce14b3f079f76c544bdd) )
 
-	ROM_REGION( 0x800000, REGION_GFX3, 0 ) /* Tiles Plane B */
+	ROM_REGION( 0x800000, REGION_GFX3, ROMREGION_ERASE00 ) /* Tiles Plane B */
 	/* First 0x040000 bytes (0x03ff Tiles) are RAM Based Tiles */
 	/* 0x040000 - 0x3fffff empty? */
 	ROM_LOAD( "pzl21000.u18", 0x400000, 0x400000, CRC(c8b3be64) SHA1(6da9ca8b963ebf10df6bc02bd1bdc66392e2fa60) )
@@ -1458,7 +1458,7 @@ ROM_START( puzloopj )
 	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "pzl20000.u16", 0x000000, 0x400000, CRC(ff558e68) SHA1(69a50c8100edbf2d5d92ce14b3f079f76c544bdd) )
 
-	ROM_REGION( 0x800000, REGION_GFX3, 0 ) /* Tiles Plane B */
+	ROM_REGION( 0x800000, REGION_GFX3, ROMREGION_ERASE00 ) /* Tiles Plane B */
 	/* First 0x040000 bytes (0x03ff Tiles) are RAM Based Tiles */
 	/* 0x040000 - 0x3fffff empty? */
 	ROM_LOAD( "pzl21000.u18", 0x400000, 0x400000, CRC(c8b3be64) SHA1(6da9ca8b963ebf10df6bc02bd1bdc66392e2fa60) )
@@ -1481,7 +1481,7 @@ ROM_START( puzloopu )
 	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "pzl20000.u16", 0x000000, 0x400000, CRC(ff558e68) SHA1(69a50c8100edbf2d5d92ce14b3f079f76c544bdd) )
 
-	ROM_REGION( 0x800000, REGION_GFX3, 0 ) /* Tiles Plane B */
+	ROM_REGION( 0x800000, REGION_GFX3, ROMREGION_ERASE00 ) /* Tiles Plane B */
 	/* First 0x040000 bytes (0x03ff Tiles) are RAM Based Tiles */
 	/* 0x040000 - 0x3fffff empty? */
 	ROM_LOAD( "pzl21000.u18", 0x400000, 0x400000, CRC(c8b3be64) SHA1(6da9ca8b963ebf10df6bc02bd1bdc66392e2fa60) )
@@ -1504,7 +1504,7 @@ ROM_START( puzloopk )
 	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "pzl20000.u16", 0x000000, 0x400000, CRC(ff558e68) SHA1(69a50c8100edbf2d5d92ce14b3f079f76c544bdd) )
 
-	ROM_REGION( 0x800000, REGION_GFX3, 0 ) /* Tiles Plane B */
+	ROM_REGION( 0x800000, REGION_GFX3, ROMREGION_ERASE00 ) /* Tiles Plane B */
 	/* First 0x040000 bytes (0x03ff Tiles) are RAM Based Tiles */
 	/* 0x040000 - 0x3fffff empty? */
 	ROM_LOAD( "pzl21000.u18", 0x400000, 0x400000, CRC(c8b3be64) SHA1(6da9ca8b963ebf10df6bc02bd1bdc66392e2fa60) )
@@ -1531,7 +1531,7 @@ ROM_START( jjparads )
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
     ROM_LOAD( "jp200-00.u16", 0x000000, 0x200000, CRC(493d63db) SHA1(4b8fe7ff1ae14a914a675ce4072a4d9e5cfc08b0) )
 
-	ROM_REGION( 0x400000, REGION_GFX3, 0 ) /* Tiles Plane B */
+	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_ERASE00 ) /* Tiles Plane B */
 	/* First 0x040000 bytes (0x03ff Tiles) are RAM Based Tiles */
 	/* 0x040000 - 0x3fffff empty? */
 
@@ -1556,7 +1556,7 @@ ROM_START( jjparad2 )
     ROM_LOAD( "jp220000.u17", 0x000000, 0x400000, CRC(d0e71873) SHA1(c6ffba3624e6d4c2d4e12ef7d88a02cbc3867b18) )
     ROM_LOAD( "jp220100.u9",  0x400000, 0x400000, CRC(4c7d964d) SHA1(3352cd866a64466f4f5a990c2c5e3e28e7028a99) )
 
-	ROM_REGION( 0x400000, REGION_GFX3, 0 ) /* Tiles Plane B */
+	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_ERASE00 ) /* Tiles Plane B */
 	/* First 0x040000 bytes (0x03ff Tiles) are RAM Based Tiles */
 	/* 0x040000 - 0x3fffff empty? */
 
@@ -1582,7 +1582,7 @@ ROM_START( sengekis )
     ROM_LOAD( "ss200-00.u17", 0x000000, 0x400000, CRC(cd773976) SHA1(38b8df5e685be65c3fde09f9e585591f678632d4) )
     ROM_LOAD( "ss201-00.u9",  0x400000, 0x400000, CRC(301fad4c) SHA1(15faf37eeec5cc46afcb4bd236345b5c3dd647ac) )
 
-	ROM_REGION( 0x600000, REGION_GFX3, 0 ) /* Tiles Plane B */
+	ROM_REGION( 0x600000, REGION_GFX3, ROMREGION_ERASE00 ) /* Tiles Plane B */
 	/* First 0x040000 bytes (0x03ff Tiles) are RAM Based Tiles */
 	/* 0x040000 - 0x3fffff empty? */
     ROM_LOAD( "ss210-00.u3",  0x400000, 0x200000, CRC(c3697805) SHA1(bd41064e3527cdc4b9a4ab9c423c916309b3f057) )
@@ -1609,7 +1609,7 @@ ROM_START( sengekij )
     ROM_LOAD( "ss200-00.u17", 0x000000, 0x400000, CRC(cd773976) SHA1(38b8df5e685be65c3fde09f9e585591f678632d4) )
     ROM_LOAD( "ss201-00.u9",  0x400000, 0x400000, CRC(301fad4c) SHA1(15faf37eeec5cc46afcb4bd236345b5c3dd647ac) )
 
-	ROM_REGION( 0x600000, REGION_GFX3, 0 ) /* Tiles Plane B */
+	ROM_REGION( 0x600000, REGION_GFX3, ROMREGION_ERASE00 ) /* Tiles Plane B */
 	/* First 0x040000 bytes (0x03ff Tiles) are RAM Based Tiles */
 	/* 0x040000 - 0x3fffff empty? */
     ROM_LOAD( "ss210-00.u3",  0x400000, 0x200000, CRC(c3697805) SHA1(bd41064e3527cdc4b9a4ab9c423c916309b3f057) )
@@ -1634,7 +1634,7 @@ ROM_START( senknow )
     ROM_LOAD( "snw20000.u17", 0x000000, 0x400000, CRC(d5fe5f8c) SHA1(817d8d0a5fbc0c50dc3c592f938150f82df97cec) )
     ROM_LOAD( "snw20100.u9",  0x400000, 0x400000, CRC(c0037846) SHA1(3267b142ebce47e1717250239d98fdb4af7964f8) )
 
-	ROM_REGION( 0x800000, REGION_GFX3, 0 ) /* Tiles Plane B */
+	ROM_REGION( 0x800000, REGION_GFX3, ROMREGION_ERASE00 ) /* Tiles Plane B */
 	/* First 0x040000 bytes (0x03ff Tiles) are RAM Based Tiles */
 	/* 0x040000 - 0x3fffff empty? */
     ROM_LOAD( "snw21000.u3",  0x400000, 0x400000, CRC(f5c23e79) SHA1(b509680001c3205b289f43d4f44aaaa7f896419b) )
@@ -1659,7 +1659,7 @@ ROM_START( teljan )
 	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE )
     ROM_LOAD( "tj200-00.u16", 0x000000, 0x400000, CRC(be0f90b2) SHA1(1848a65f244e1e8a3ff7ab38e76f86cabca8b47e) )
 
-	ROM_REGION( 0x400000, REGION_GFX3, 0 ) /* Tiles Plane B */
+	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_ERASE00 ) /* Tiles Plane B */
 	/* First 0x040000 bytes (0x03ff Tiles) are RAM Based Tiles */
 	/* 0x040000 - 0x3fffff empty? */
 
@@ -1684,7 +1684,7 @@ ROM_START( ryouran )
     ROM_LOAD( "or200-00.u16", 0x000000, 0x400000, CRC(4c4701a8) SHA1(7b397b553ba86bba2ee82228cabdf2179e878d69) )
     ROM_LOAD( "or201-00.u13", 0x400000, 0x400000, CRC(a94064aa) SHA1(5d736f810ffdbb6ada5c5efcb5fb29eedafc3e2f) )
 
-	ROM_REGION( 0x400000, REGION_GFX3, 0 ) /* Tiles Plane B */
+	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_ERASE00 ) /* Tiles Plane B */
 	/* First 0x040000 bytes (0x03ff Tiles) are RAM Based Tiles */
 	/* 0x040000 - 0x3fffff empty? */
 
@@ -1707,7 +1707,7 @@ ROM_START( vblokbrk )
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
     ROM_LOAD( "sk200-00.u16", 0x000000, 0x200000, CRC(2e297c61) SHA1(4071b945a1294fbc3d18fab1f144bf09af4349e8) )
 
-	ROM_REGION( 0x400000, REGION_GFX3, 0 ) /* Tiles Plane B */
+	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_ERASE00 ) /* Tiles Plane B */
 	/* First 0x040000 bytes (0x03ff Tiles) are RAM Based Tiles */
 	/* 0x040000 - 0x3fffff empty? */
 
@@ -1730,7 +1730,7 @@ ROM_START( sarukani )
 	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
     ROM_LOAD( "sk200-00.u16", 0x000000, 0x200000, CRC(2e297c61) SHA1(4071b945a1294fbc3d18fab1f144bf09af4349e8) )
 
-	ROM_REGION( 0x400000, REGION_GFX3, 0 ) /* Tiles Plane B */
+	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_ERASE00 ) /* Tiles Plane B */
 	/* First 0x040000 bytes (0x03ff Tiles) are RAM Based Tiles */
 	/* 0x040000 - 0x3fffff empty? */
 

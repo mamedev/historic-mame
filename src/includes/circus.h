@@ -35,4 +35,3 @@ extern VIDEO_UPDATE( crash );
 extern VIDEO_UPDATE( circus );
 extern VIDEO_UPDATE( robotbwl );
 extern VIDEO_UPDATE( ripcord ); //AT
-extern VIDEO_EOF( ripcord ); //AT

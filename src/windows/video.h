@@ -25,6 +25,11 @@
 //  GLOBAL VARIABLES
 //============================================================
 
+// screen info
+extern HMONITOR		monitor;
+extern char			*screen_name;
+
+
 // speed throttling
 extern int			throttle;
 

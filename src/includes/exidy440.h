@@ -33,7 +33,6 @@ WRITE8_HANDLER( exidy440_sound_interrupt_clear_w );
 
 /*----------- defined in vidhrdw/exidy440.c -----------*/
 
-extern UINT8 *spriteram;
 extern UINT8 *exidy440_imageram;
 extern UINT8 *exidy440_scanline;
 extern UINT8 exidy440_firq_vblank;

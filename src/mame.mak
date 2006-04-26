@@ -220,6 +220,7 @@ SOUNDS += C140
 SOUNDS += QSOUND
 SOUNDS += SAA1099
 SOUNDS += IREMGA20
+SOUNDS += ES5503
 SOUNDS += ES5505
 SOUNDS += ES5506
 SOUNDS += BSMT2000
@@ -347,6 +348,7 @@ $(OBJ)/shared.a: \
 	$(OBJ)/machine/53c810.o \
 	$(OBJ)/machine/6532riot.o \
 	$(OBJ)/machine/6522via.o \
+	$(OBJ)/machine/6526cia.o \
 	$(OBJ)/machine/6821pia.o \
 	$(OBJ)/machine/6840ptm.o \
 	$(OBJ)/machine/6850acia.o \
@@ -414,8 +416,10 @@ $(OBJ)/alpha.a: \
 	$(OBJ)/drivers/talbot.o \
 
 $(OBJ)/amiga.a: \
-	$(OBJ)/drivers/arcadia.o $(OBJ)/machine/amiga.o $(OBJ)/sndhrdw/amiga.o $(OBJ)/vidhrdw/amiga.o \
+	$(OBJ)/machine/amiga.o $(OBJ)/sndhrdw/amiga.o $(OBJ)/vidhrdw/amiga.o \
+	$(OBJ)/drivers/arcadia.o \
 	$(OBJ)/drivers/mquake.o \
+	$(OBJ)/drivers/upscope.o \
 
 $(OBJ)/atari.a: \
  	$(OBJ)/drivers/atarigx2.o $(OBJ)/vidhrdw/atarigx2.o \

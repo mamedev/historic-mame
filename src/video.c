@@ -392,20 +392,28 @@ static void decode_graphics(const gfx_decode *gfxdecodeinfo)
 
 	/* loop over all elements */
 	for (i = 0; i < MAX_GFX_ELEMENTS; i++)
-		if (Machine->gfx[i] && gfxdecodeinfo[i].memory_region > REGION_INVALID)
+		if (Machine->gfx[i])
 		{
-			UINT8 *region_base = memory_region(gfxdecodeinfo[i].memory_region);
-			gfx_element *gfx = Machine->gfx[i];
-			int j;
-
-			/* now decode the actual graphics */
-			for (j = 0; j < gfx->total_elements; j += 1024)
+			/* if we have a valid region, decode it now */
+			if (gfxdecodeinfo[i].memory_region > REGION_INVALID)
 			{
-				int num_to_decode = (j + 1024 < gfx->total_elements) ? 1024 : (gfx->total_elements - j);
-				decodegfx(gfx, region_base + gfxdecodeinfo[i].start, j, num_to_decode);
-				curgfx += num_to_decode;
-	/*          ui_display_decoding(artwork_get_ui_bitmap(), curgfx * 100 / totalgfx);*/
+				UINT8 *region_base = memory_region(gfxdecodeinfo[i].memory_region);
+				gfx_element *gfx = Machine->gfx[i];
+				int j;
+
+				/* now decode the actual graphics */
+				for (j = 0; j < gfx->total_elements; j += 1024)
+				{
+					int num_to_decode = (j + 1024 < gfx->total_elements) ? 1024 : (gfx->total_elements - j);
+					decodegfx(gfx, region_base + gfxdecodeinfo[i].start, j, num_to_decode);
+					curgfx += num_to_decode;
+		/*          ui_display_decoding(artwork_get_ui_bitmap(), curgfx * 100 / totalgfx);*/
+				}
 			}
+
+			/* otherwise, clear the target region */
+			else
+				memset(Machine->gfx[i]->gfxdata, 0, Machine->gfx[i]->char_modulo * Machine->gfx[i]->total_elements);
 		}
 }
 

@@ -12,8 +12,10 @@
 
 /*----------- defined in vidhrdw/gaelco3d.c -----------*/
 
-extern offs_t gaelco3d_mask_offset;
-extern offs_t gaelco3d_mask_size;
+extern UINT8 *gaelco3d_texture;
+extern UINT8 *gaelco3d_texmask;
+extern offs_t gaelco3d_texture_size;
+extern offs_t gaelco3d_texmask_size;
 
 void gaelco3d_render(void);
 WRITE32_HANDLER( gaelco3d_render_w );

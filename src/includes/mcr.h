@@ -18,7 +18,6 @@ WRITE8_HANDLER( mcr_ipu_sio_transmit );
 
 /*----------- defined in machine/mcr.c -----------*/
 
-extern INT16 spyhunt_scrollx, spyhunt_scrolly;
 extern double mcr68_timing_factor;
 
 extern struct z80_irq_daisy_chain mcr_daisy_chain[];
@@ -100,13 +99,11 @@ void mcr3_update_sprites(mame_bitmap *bitmap, const rectangle *cliprect, int col
 VIDEO_START( mcr3 );
 VIDEO_START( mcrmono );
 VIDEO_START( spyhunt );
-VIDEO_START( dotron );
 
 PALETTE_INIT( spyhunt );
 
 VIDEO_UPDATE( mcr3 );
 VIDEO_UPDATE( spyhunt );
-VIDEO_UPDATE( dotron );
 
 
 /*----------- defined in vidhrdw/mcr68.c -----------*/

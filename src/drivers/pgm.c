@@ -399,6 +399,12 @@ static WRITE16_HANDLER ( z80_reset_w )
 			fclose(out);
 		}
 	}
+	else
+	{
+		/* this might not be 100% correct, but several of the games (ddp2, puzzli2 etc. expect the z80 to be turned
+           off during data uploads, they write here before the upload */
+		cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
+	}
 }
 
 static WRITE16_HANDLER ( z80_ctrl_w )
@@ -1082,7 +1088,7 @@ static MACHINE_DRIVER_START( pgm )
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 	MDRV_SOUND_ADD(ICS2115, 0)
 	MDRV_SOUND_CONFIG(pgm_ics2115_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 5.0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -1275,11 +1281,21 @@ static DRIVER_INIT( kov2 )
 	pgm_kov2_decrypt();
 }
 
+extern READ16_HANDLER( PSTARS_protram_r );
+extern READ16_HANDLER( PSTARS_r16 );
+extern WRITE16_HANDLER( PSTARS_w16 );
+
 static DRIVER_INIT( pstar )
 {
 	pgm_basic_init();
  	pgm_pstar_decrypt();
+
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x4f0000, 0x4f0025, 0, 0, PSTARS_protram_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x500000, 0x500003, 0, 0, PSTARS_r16);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x500000, 0x500005, 0, 0, PSTARS_w16);
 }
+
+
 
 static DRIVER_INIT( kovsh )
 {
@@ -1618,11 +1634,6 @@ static DRIVER_INIT( ddp2 )
 
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xd00000, 0xd01fff, 0, 0, ddp2_protram_r);
 	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xd00000, 0xd01fff, 0, 0, ddp2_protram_w);
-
-	/* kill sound, something isn't working .. */
-	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xc00008, 0xc0000b, 0, 0, MWA16_NOP);
-
-
 }
 
 static DRIVER_INIT( puzzli2 )
@@ -1660,9 +1671,6 @@ static DRIVER_INIT( puzzli2 )
 	/* patch irq4 vector (irq4 should be disabled on this game? how?) */
 	mem16[0x100070/2]=0x0012;
 	mem16[0x100072/2]=0x5D78;
-	/* kill sound, something isn't working .. */
-	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xc00008, 0xc0000b, 0, 0, MWA16_NOP);
-
 }
 
 /*** Rom Loading *************************************************************/
@@ -2209,9 +2217,9 @@ ROM_START( kov115 )
 	ROM_LOAD( "b0600.rom",    0x0000000, 0x0800000, CRC(7d3cd059) SHA1(00cf994b63337e0e4ebe96453daf45f24192af1c) )
 	ROM_LOAD( "b0601.rom",    0x0800000, 0x0400000, CRC(a0bb1c2f) SHA1(0542348c6e27779e0a98de16f04f9c18158f2b28) )
 
-	ROM_REGION( 0x600000, REGION_SOUND1, 0 ) /* Samples - (8 bit mono 11025Hz) - */
+	ROM_REGION( 0x800000, REGION_SOUND1, 0 ) /* Samples - (8 bit mono 11025Hz) - */
 	ROM_LOAD( "pgm_m01s.rom", 0x000000, 0x200000, CRC(45ae7159) SHA1(d3ed3ff3464557fd0df6b069b2e431528b0ebfa8) ) // (BIOS)
-	ROM_LOAD( "m0600.rom",    0x200000, 0x400000, CRC(3ada4fd6) SHA1(4c87adb25d31cbd41f04fbffe31f7bc37173da76) )
+	ROM_LOAD( "m0600.rom",    0x400000, 0x400000, CRC(3ada4fd6) SHA1(4c87adb25d31cbd41f04fbffe31f7bc37173da76) )
 ROM_END
 
 /*
@@ -2896,9 +2904,9 @@ ROM_START( kov2 )
 	ROM_LOAD( "b1200.rom",   0x0000000, 0x0800000,  CRC(bed7d994) SHA1(019dfba8154256d64cd249eb0fa4c451edce34b8) )
 	ROM_LOAD( "b1201.rom",   0x0800000, 0x0800000,  CRC(f251eb57) SHA1(56a5fc14ab7822f83379cecb26638e5bb266349a) )
 
-	ROM_REGION( 0x1200000, REGION_SOUND1, 0 ) /* Samples - (8 bit mono 11025Hz) - */
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* Samples - (8 bit mono 11025Hz) - */
 	ROM_LOAD( "pgm_m01s.rom", 0x000000, 0x200000, CRC(45ae7159) SHA1(d3ed3ff3464557fd0df6b069b2e431528b0ebfa8) ) // (BIOS)
-	ROM_LOAD( "m1200.rom",    0x200000, 0x800000, CRC(b0d88720) SHA1(44ab137e3f8e15b7cb5697ffbd9b1143d8210c4f) )
+	ROM_LOAD( "m1200.rom",    0x400000, 0x800000, CRC(b0d88720) SHA1(44ab137e3f8e15b7cb5697ffbd9b1143d8210c4f) )
 ROM_END
 
 
@@ -2933,9 +2941,9 @@ ROM_START( kov2106 )
 	ROM_LOAD( "b1200.rom",   0x0000000, 0x0800000,  CRC(bed7d994) SHA1(019dfba8154256d64cd249eb0fa4c451edce34b8) )
 	ROM_LOAD( "b1201.rom",   0x0800000, 0x0800000,  CRC(f251eb57) SHA1(56a5fc14ab7822f83379cecb26638e5bb266349a) )
 
-	ROM_REGION( 0x1200000, REGION_SOUND1, 0 ) /* Samples - (8 bit mono 11025Hz) - */
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* Samples - (8 bit mono 11025Hz) - */
 	ROM_LOAD( "pgm_m01s.rom", 0x000000, 0x200000, CRC(45ae7159) SHA1(d3ed3ff3464557fd0df6b069b2e431528b0ebfa8) ) // (BIOS)
-	ROM_LOAD( "m1200.rom",    0x200000, 0x800000, CRC(b0d88720) SHA1(44ab137e3f8e15b7cb5697ffbd9b1143d8210c4f) )
+	ROM_LOAD( "m1200.rom",    0x400000, 0x800000, CRC(b0d88720) SHA1(44ab137e3f8e15b7cb5697ffbd9b1143d8210c4f) )
 ROM_END
 
 
@@ -2970,9 +2978,9 @@ ROM_START( kov2p )
 	ROM_LOAD( "b1200.rom",   0x0000000, 0x0800000,  CRC(bed7d994) SHA1(019dfba8154256d64cd249eb0fa4c451edce34b8) )
 	ROM_LOAD( "b1201.rom",   0x0800000, 0x0800000,  CRC(f251eb57) SHA1(56a5fc14ab7822f83379cecb26638e5bb266349a) )
 
-	ROM_REGION( 0x1200000, REGION_SOUND1, 0 ) /* Samples - (8 bit mono 11025Hz) - */
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* Samples - (8 bit mono 11025Hz) - */
 	ROM_LOAD( "pgm_m01s.rom", 0x000000, 0x200000, CRC(45ae7159) SHA1(d3ed3ff3464557fd0df6b069b2e431528b0ebfa8) ) // (BIOS)
-	ROM_LOAD( "m1200.rom",    0x200000, 0x800000, CRC(b0d88720) SHA1(44ab137e3f8e15b7cb5697ffbd9b1143d8210c4f) )
+	ROM_LOAD( "m1200.rom",    0x400000, 0x800000, CRC(b0d88720) SHA1(44ab137e3f8e15b7cb5697ffbd9b1143d8210c4f) )
 ROM_END
 
 /*
@@ -3017,9 +3025,9 @@ ROM_START( ddp2 )
 	ROM_REGION( 0x0800000, REGION_GFX4, 0 ) /* Sprite Masks + Colour Indexes */
 	ROM_LOAD( "b1300.u7",    0x0000000, 0x0800000,  CRC(ef646604) SHA1(d737ff513792962f18df88c2caa9dd71de449079) )
 
-	ROM_REGION( 0x600000, REGION_SOUND1, 0 ) /* Samples - (8 bit mono 11025Hz) - */
+	ROM_REGION( 0x800000, REGION_SOUND1, ROMREGION_ERASE00 ) /* Samples - (8 bit mono 11025Hz) - */
 	ROM_LOAD( "pgm_m01s.rom", 0x000000, 0x200000, CRC(45ae7159) SHA1(d3ed3ff3464557fd0df6b069b2e431528b0ebfa8) ) // (BIOS)
-	ROM_LOAD( "m1300.u5",    0x200000, 0x400000, CRC(82d4015d) SHA1(d4cdc1aec1c97cf23ff7a20ccaad822962e66ffa) )
+	ROM_LOAD( "m1300.u5",    0x400000, 0x400000, CRC(82d4015d) SHA1(d4cdc1aec1c97cf23ff7a20ccaad822962e66ffa) )
 ROM_END
 
 /*
@@ -3101,9 +3109,9 @@ ROM_START( puzzli2 )
 	ROM_REGION( 0x0200000, REGION_GFX4, 0 ) /* Sprite Masks + Colour Indexes */
 	ROM_LOAD( "b0900.u4",    0x0000000, 0x0200000,  CRC(6f0638b6) SHA1(14b315fe9e80b3314bb63487e6ea9ce04c9703bd) )
 
-	ROM_REGION( 0x600000, REGION_SOUND1, 0 ) /* Samples - (8 bit mono 11025Hz) - */
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* Samples - (8 bit mono 11025Hz) - */
 	ROM_LOAD( "pgm_m01s.rom", 0x000000, 0x200000, CRC(45ae7159) SHA1(d3ed3ff3464557fd0df6b069b2e431528b0ebfa8) ) // (BIOS)
-	ROM_LOAD( "m0900.u2",    0x200000, 0x400000, CRC(9ea7af2e) SHA1(d2593d391a93c5cf5a554750c32886dea6599b3d) )
+	ROM_LOAD( "m0900.u2",    0x400000, 0x400000, CRC(9ea7af2e) SHA1(d2593d391a93c5cf5a554750c32886dea6599b3d) )
 ROM_END
 
 
@@ -3197,10 +3205,10 @@ ROM_START( martmast )
 	ROM_LOAD( "b1000.u9",    0x0000000, 0x0800000,  CRC(c5961f6f) SHA1(a68060b10edbd084cbde79d2ed1c9084777beb10) )
 	ROM_LOAD( "b1001.u11",   0x0800000, 0x0800000,  CRC(0b7e1c06) SHA1(545e15e0087f8621d593fecd8b4013f7ca311686) )
 
-	ROM_REGION( 0x1200000, REGION_SOUND1, 0 ) /* Samples - (8 bit mono 11025Hz) - */
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* Samples - (8 bit mono 11025Hz) - */
 	ROM_LOAD( "pgm_m01s.rom", 0x000000, 0x200000, CRC(45ae7159) SHA1(d3ed3ff3464557fd0df6b069b2e431528b0ebfa8) ) // (BIOS)
-	ROM_LOAD( "m1000.u5",    0x200000, 0x800000, CRC(ed407ae8) SHA1(a6e9c09b39c13e8fb7fbc89fa9f823cbeb66e901) )
-	ROM_LOAD( "m1001.u7",    0xa00000, 0x400000, CRC(662d2d48) SHA1(2fcc3099d9c04456cae3b13035fb28eaf709e7d8) )
+	ROM_LOAD( "m1000.u5",    0x400000, 0x800000, CRC(ed407ae8) SHA1(a6e9c09b39c13e8fb7fbc89fa9f823cbeb66e901) )
+	ROM_LOAD( "m1001.u7",    0xc00000, 0x400000, CRC(662d2d48) SHA1(2fcc3099d9c04456cae3b13035fb28eaf709e7d8) )
 ROM_END
 
 /*
@@ -3282,9 +3290,9 @@ ROM_START( dmnfrnt )
 	ROM_LOAD( "b04501.u9",    0x0000000, 0x0800000,  CRC(29320b7d) SHA1(59c78805e666f912df201c34616744f46057937b) )
 	ROM_LOAD( "b04502.u11",   0x0800000, 0x0200000,  CRC(578c00e9) SHA1(14235cc8b0f8c7dd659512f017a2d4aacd91d89d) )
 
-	ROM_REGION( 0xc00000, REGION_SOUND1, 0 ) /* Samples - (8 bit mono 11025Hz) - */
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* Samples - (8 bit mono 11025Hz) - */
 	ROM_LOAD( "pgm_m01s.rom", 0x000000, 0x200000, CRC(45ae7159) SHA1(d3ed3ff3464557fd0df6b069b2e431528b0ebfa8) ) // (BIOS)
-	ROM_LOAD( "w04501.u5",    0x200000, 0x800000, CRC(3ab58137) SHA1(b221f7e551ff0bfa3fd97b6ebedbac69442a66e9) )
+	ROM_LOAD( "w04501.u5",    0x400000, 0x800000, CRC(3ab58137) SHA1(b221f7e551ff0bfa3fd97b6ebedbac69442a66e9) )
 ROM_END
 
 ROM_START( dmnfrnta )
@@ -3312,13 +3320,13 @@ ROM_START( dmnfrnta )
 	ROM_LOAD( "a04502.u4",    0x0800000, 0x0800000, CRC(e104f405) SHA1(124b3deed3e838f8bae6c7d78bdd788859597585) )
 	ROM_LOAD( "a04503.u6",    0x1000000, 0x0800000, CRC(bfd5cfe3) SHA1(fbe4c0a2987c2036df707b86597d78124ee2e665) )
 
-	ROM_REGION( 0x1000000, REGION_GFX4, 0 ) /* Sprite Masks + Colour Indexes */
+	ROM_REGION( 0xc00000, REGION_GFX4, 0 ) /* Sprite Masks + Colour Indexes */
 	ROM_LOAD( "b04501.u9",    0x0000000, 0x0800000,  CRC(29320b7d) SHA1(59c78805e666f912df201c34616744f46057937b) )
 	ROM_LOAD( "b04502.u11",   0x0800000, 0x0200000,  CRC(578c00e9) SHA1(14235cc8b0f8c7dd659512f017a2d4aacd91d89d) )
 
-	ROM_REGION( 0xc00000, REGION_SOUND1, 0 ) /* Samples - (8 bit mono 11025Hz) - */
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* Samples - (8 bit mono 11025Hz) - */
 	ROM_LOAD( "pgm_m01s.rom", 0x000000, 0x200000, CRC(45ae7159) SHA1(d3ed3ff3464557fd0df6b069b2e431528b0ebfa8) ) // (BIOS)
-	ROM_LOAD( "w04501.u5",    0x200000, 0x800000, CRC(3ab58137) SHA1(b221f7e551ff0bfa3fd97b6ebedbac69442a66e9) )
+	ROM_LOAD( "w04501.u5",    0x400000, 0x800000, CRC(3ab58137) SHA1(b221f7e551ff0bfa3fd97b6ebedbac69442a66e9) )
 ROM_END
 
 ROM_START( theglad )
@@ -3347,9 +3355,9 @@ ROM_START( theglad )
 	ROM_LOAD( "b04601.u11",    0x0000000, 0x0800000, CRC(ee72bccf) SHA1(73c25fe659f6c903447066e4ef83d2f580449d76) )
 	ROM_LOAD( "b04602.u12",    0x0800000, 0x0400000, CRC(7dba9c38) SHA1(a03d509274e8f6a500a7ebe2da5aab8bed4e7f2f) )
 
-	ROM_REGION( 0xc00000, REGION_SOUND1, 0 ) /* Samples - (8 bit mono 11025Hz) - */
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* Samples - (8 bit mono 11025Hz) - */
 	ROM_LOAD( "pgm_m01s.rom", 0x000000, 0x200000, CRC(45ae7159) SHA1(d3ed3ff3464557fd0df6b069b2e431528b0ebfa8) ) // (BIOS)
-	ROM_LOAD( "w04601.u1",    0x200000, 0x800000, CRC(5f15ddb3) SHA1(c38dcef8e06802a84e42a7fc9fa505475fc3ac65) )
+	ROM_LOAD( "w04601.u1",    0x400000, 0x800000, CRC(5f15ddb3) SHA1(c38dcef8e06802a84e42a7fc9fa505475fc3ac65) )
 ROM_END
 
 
@@ -3357,37 +3365,41 @@ ROM_END
 
 GAME( 1997, pgm,      0,          pgm, pgm,      0,          ROT0,   "IGS", "PGM (Polygame Master) System BIOS", NOT_A_DRIVER )
 
-GAME( 1997, orlegend, pgm,        pgm, pgm,      orlegend,   ROT0,   "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 126)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
-GAME( 1997, orlegnde, orlegend,   pgm, pgm,      orlegend,   ROT0,   "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 112)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
-GAME( 1997, orlegndc, orlegend,   pgm, pgm,      orlegend,   ROT0,   "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 112, Chinese Board)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
-GAME( 1997, orld111c, orlegend,   pgm, pgm,      orlegend,   ROT0,   "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 111, Chinese Board)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
-GAME( 1997, orld105k, orlegend,   pgm, orld105k, orlegend,   ROT0,   "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 105, Korean Board)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
-GAME( 1997, drgw2,    pgm,        pgm, pgm,      drgw2,      ROT0,   "IGS", "Dragon World II (ver. 110X, Export)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAME( 1997, drgw2c,   drgw2,      pgm, pgm,      drgw2c,     ROT0,   "IGS", "Zhong Guo Long II (ver. 100C, China)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAME( 1997, drgw2j,   drgw2,      pgm, pgm,      drgw2j,     ROT0,   "IGS", "Chuugokuryuu II (ver. 100J, Japan)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAME( 1999, kov,      pgm,        pgm, sango,    kov,        ROT0,   "IGS", "Knights of Valour / Sangoku Senki (ver. 117)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* ver # provided by protection? */
-GAME( 1999, kov115,   kov,        pgm, sango,    kov,        ROT0,   "IGS", "Knights of Valour / Sangoku Senki (ver. 115)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* ver # provided by protection? */
+GAME( 1997, orlegend, pgm,        pgm, pgm,      orlegend,   ROT0,   "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 126)", GAME_IMPERFECT_SOUND  )
+GAME( 1997, orlegnde, orlegend,   pgm, pgm,      orlegend,   ROT0,   "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 112)", GAME_IMPERFECT_SOUND  )
+GAME( 1997, orlegndc, orlegend,   pgm, pgm,      orlegend,   ROT0,   "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 112, Chinese Board)", GAME_IMPERFECT_SOUND  )
+GAME( 1997, orld111c, orlegend,   pgm, pgm,      orlegend,   ROT0,   "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 111, Chinese Board)", GAME_IMPERFECT_SOUND  )
+GAME( 1997, orld105k, orlegend,   pgm, orld105k, orlegend,   ROT0,   "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 105, Korean Board)", GAME_IMPERFECT_SOUND  )
+GAME( 1997, drgw2c,   drgw2,      pgm, pgm,      drgw2c,     ROT0,   "IGS", "Zhong Guo Long II (ver. 100C, China)", GAME_IMPERFECT_SOUND )
+GAME( 1999, kov,      pgm,        pgm, sango,    kov,        ROT0,   "IGS", "Knights of Valour / Sangoku Senki (ver. 117)", GAME_IMPERFECT_SOUND ) /* ver # provided by protection? */
+GAME( 1999, kov115,   kov,        pgm, sango,    kov,        ROT0,   "IGS", "Knights of Valour / Sangoku Senki (ver. 115)", GAME_IMPERFECT_SOUND ) /* ver # provided by protection? */
 GAME( 1999, kovj,     kov,        pgm, sango,    kov,        ROT0,   "IGS", "Knights of Valour / Sangoku Senki (ver. 100, Japanese Board)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* ver # provided by protection? */
-GAME( 1999, kovplus,  kov,        pgm, sango,    kov,        ROT0,   "IGS", "Knights of Valour Plus / Sangoku Senki Plus (ver. 119)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAME( 1999, kovplusa, kov,        pgm, sango,    kov,        ROT0,   "IGS", "Knights of Valour Plus / Sangoku Senki Plus (alt ver. 119)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAME( 1999, photoy2k, pgm,        pgm, sango,    djlzz,      ROT0,   "IGS", "Photo Y2K", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* region provided by protection device */
-GAME( 1999, raf102j,  photoy2k,   pgm, sango,    djlzz,      ROT0,   "IGS", "Real and Fake / Photo Y2K (ver. 102, Japan Board)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) /* region provided by protection device */
+GAME( 1999, photoy2k, pgm,        pgm, sango,    djlzz,      ROT0,   "IGS", "Photo Y2K", GAME_IMPERFECT_SOUND ) /* region provided by protection device */
+GAME( 1999, raf102j,  photoy2k,   pgm, sango,    djlzz,      ROT0,   "IGS", "Real and Fake / Photo Y2K (ver. 102, Japan Board)", GAME_IMPERFECT_SOUND ) /* region provided by protection device */
+
+/* Playable but maybe imperfect protection emulation */
+GAME( 1997, drgw2,    pgm,        pgm, pgm,      drgw2,      ROT0,   "IGS", "Dragon World II (ver. 110X, Export)", GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1997, drgw2j,   drgw2,      pgm, pgm,      drgw2j,     ROT0,   "IGS", "Chuugokuryuu II (ver. 100J, Japan)", GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1999, kovplus,  kov,        pgm, sango,    kov,        ROT0,   "IGS", "Knights of Valour Plus / Sangoku Senki Plus (ver. 119)", GAME_IMPERFECT_SOUND )
+GAME( 1999, kovplusa, kov,        pgm, sango,    kov,        ROT0,   "IGS", "Knights of Valour Plus / Sangoku Senki Plus (alt ver. 119)", GAME_IMPERFECT_SOUND )
+GAME( 1998, killbldt, killbld, killbld,sango,    killbld,    ROT0,   "IGS", "The Killing Blade (Chinese Board)", GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION ) // it's playable, but there are some things unclear about the protection
+GAME( 1999, puzlstar, pgm,        pgm, sango,    pstar,      ROT0,   "IGS", "Puzzle Star", GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION )
+
 
 /* not working */
-GAME( 1998, drgw3,    pgm,        pgm, sango,    dw3,        ROT0,   "IGS", "Dragon World 3", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAME( 1998, drgw3k,   drgw3,      pgm, sango,    dw3,        ROT0,   "IGS", "Dragon World 3 (Korean Board)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAME( 1999, kovsh,    kov,        pgm, sango,    kovsh,      ROT0,   "IGS", "Knights of Valour Superheroes / Sangoku Senki Superheroes (ver. 322)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAME( 1998, killbld,  pgm,     killbld,sango,    killbld,    ROT0,   "IGS", "The Killing Blade", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAME( 1998, killbldt, killbld, killbld,sango,    killbld,    ROT0,   "IGS", "The Killing Blade (Chinese Board)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING ) // one stage doesn't work.. needs better protection sim?
-GAME( 1999, puzlstar, pgm,        pgm, sango,    pstar,      ROT0,   "IGS", "Puzzle Star", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAME( 1999, olds,     pgm,        pgm, pgm,      orlegend,   ROT0,   "IGS", "Oriental Legend Super (Korea 101)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION|GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
-GAME( 1999, olds100,  olds,       pgm, pgm,      orlegend,   ROT0,   "IGS", "Oriental Legend Super (100)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION|GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
-GAME( 1999, olds100a, olds,       pgm, pgm,      orlegend,   ROT0,   "IGS", "Oriental Legend Super (100 alt)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION|GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND  )
-GAME( 2000, kov2,     pgm,       kov2, sango,    kov2,       ROT0,   "IGS", "Knights of Valour 2", GAME_NOT_WORKING )
-GAME( 2000, kov2106,  kov2,       pgm, sango,    pgm,        ROT0,   "IGS", "Knights of Valour 2 (106)", GAME_NOT_WORKING )
-GAME( 2000, kov2p,    kov2,       pgm, sango,    pgm,        ROT0,   "IGS", "Knights of Valour 2 Plus - Nine Dragons", GAME_NOT_WORKING )
-GAME( 2001, ddp2,     pgm,        pgm, ddp2,     ddp2,       ROT270, "IGS", "Bee Storm - DoDonPachi II", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAME( 2001, puzzli2,  pgm,        pgm, sango,    puzzli2,    ROT0,   "IGS", "Puzzli 2 Super", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAME( 2001, martmast, pgm,        pgm, sango,    pgm,        ROT0,   "IGS", "Martial Masters", GAME_NOT_WORKING )
-GAME( 2002, dmnfrnt,  pgm,        pgm, sango,    pgm,        ROT0,   "IGS", "Demon Front (V102)", GAME_NOT_WORKING )
-GAME( 2002, dmnfrnta, dmnfrnt,    pgm, sango,    pgm,        ROT0,   "IGS", "Demon Front (V105)", GAME_NOT_WORKING )
+GAME( 1998, drgw3,    pgm,        pgm, sango,    dw3,        ROT0,   "IGS", "Dragon World 3", GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1998, drgw3k,   drgw3,      pgm, sango,    dw3,        ROT0,   "IGS", "Dragon World 3 (Korean Board)", GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1999, kovsh,    kov,        pgm, sango,    kovsh,      ROT0,   "IGS", "Knights of Valour Superheroes / Sangoku Senki Superheroes (ver. 322)", GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1998, killbld,  pgm,     killbld,sango,    killbld,    ROT0,   "IGS", "The Killing Blade", GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1999, olds,     pgm,        pgm, pgm,      orlegend,   ROT0,   "IGS", "Oriental Legend Super (Korea 101)", GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1999, olds100,  olds,       pgm, pgm,      orlegend,   ROT0,   "IGS", "Oriental Legend Super (100)", GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 1999, olds100a, olds,       pgm, pgm,      orlegend,   ROT0,   "IGS", "Oriental Legend Super (100 alt)", GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 2000, kov2,     pgm,       kov2, sango,    kov2,       ROT0,   "IGS", "Knights of Valour 2", GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 2000, kov2106,  kov2,       pgm, sango,    pgm,        ROT0,   "IGS", "Knights of Valour 2 (106)", GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 2000, kov2p,    kov2,       pgm, sango,    pgm,        ROT0,   "IGS", "Knights of Valour 2 Plus - Nine Dragons", GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 2001, ddp2,     pgm,        pgm, ddp2,     ddp2,       ROT270, "IGS", "Bee Storm - DoDonPachi II", GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 2001, puzzli2,  pgm,        pgm, sango,    puzzli2,    ROT0,   "IGS", "Puzzli 2 Super", GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 2001, martmast, pgm,        pgm, sango,    pgm,        ROT0,   "IGS", "Martial Masters", GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 2001, theglad,  pgm,        pgm, sango,    pgm,        ROT0,   "IGS", "The Gladiator", GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 2002, dmnfrnt,  pgm,        pgm, sango,    pgm,        ROT0,   "IGS", "Demon Front (V102)", GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAME( 2002, dmnfrnta, dmnfrnt,    pgm, sango,    pgm,        ROT0,   "IGS", "Demon Front (V105)", GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )

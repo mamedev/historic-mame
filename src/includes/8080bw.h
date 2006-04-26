@@ -50,7 +50,6 @@ MACHINE_RESET( clowns );
 WRITE8_HANDLER( indianbt_sh_port7_w );
 
 extern struct Samplesinterface boothill_samples_interface;
-extern struct Samplesinterface circus_samples_interface;
 extern struct discrete_sound_block clowns_discrete_interface[];
 extern struct SN76477interface invaders_sn76477_interface;
 extern struct Samplesinterface invaders_samples_interface;
@@ -86,7 +85,6 @@ DRIVER_INIT( desertgu );
 DRIVER_INIT( phantom2 );
 DRIVER_INIT( bowler );
 DRIVER_INIT( gunfight );
-DRIVER_INIT( bandido );
 DRIVER_INIT( indianbt );
 DRIVER_INIT( shuttlei );
 
@@ -99,7 +97,6 @@ INTERRUPT_GEN( phantom2_interrupt );
 WRITE8_HANDLER( c8080bw_videoram_w );
 WRITE8_HANDLER( schaser_colorram_w );
 READ8_HANDLER( schaser_colorram_r );
-WRITE8_HANDLER( spaceint_color_w );
 WRITE8_HANDLER( cosmo_colorram_w );
 
 VIDEO_UPDATE( 8080bw );

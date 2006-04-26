@@ -72,5 +72,4 @@ PALETTE_INIT( buckrog );
 VIDEO_START( buckrog );
 VIDEO_UPDATE( buckrog );
 
-WRITE8_HANDLER( buckrog_led_display_w );
 WRITE8_HANDLER( buckrog_bitmap_w );

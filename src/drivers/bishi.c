@@ -310,7 +310,7 @@ ROM_START( bishi )
 	ROM_LOAD16_BYTE( "575jaa10.22n", 0x100001, 0x080000, BAD_DUMP CRC(c8b145d6) SHA1(15cb3e4bebb999f1791fafa7a2ce3875a56991ff) )  // both halves identical (bad)
 
 	// dummy region (game has no sprites, but we want to use the GX mixer)
-	ROM_REGION( 0x80000, REGION_GFX2, 0 )
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_ERASE00 )
 
 	ROM_REGION( 0x200000, REGION_SOUND1, 0 )
 	ROM_LOAD( "575jaa01.2f", 0x000000, 0x080000, CRC(e1e9f7b2) SHA1(4da93e384a6018d829cbb02cfde98fc3662c5267) )
@@ -331,7 +331,7 @@ ROM_START( sbishi )
 	ROM_LOAD16_BYTE( "675jaa10.22n", 0x100001, 0x080000, CRC(703ac462) SHA1(6dd05b2a78517a46b9ae8322c6b94bddbe91e848) )
 
 	// dummy region (game has no sprites, but we want to use the GX mixer)
-	ROM_REGION( 0x80000, REGION_GFX2, 0 )
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_ERASE00 )
 
 	ROM_REGION( 0x200000, REGION_SOUND1, 0 )
 	ROM_LOAD( "675jaa01.2f", 0x000000, 0x080000, CRC(67910b15) SHA1(6566e2344ebe9d61c584a1ab9ecbc8e7dd0a9a5b) )

@@ -67,7 +67,7 @@ extern int			win_keep_aspect;
 extern int			win_gfx_refresh;
 extern int			win_match_refresh;
 extern int			win_sync_refresh;
-extern float		win_gfx_brightness;
+extern float		win_gfx_gamma;
 extern int			win_blit_effect;
 extern float		win_screen_aspect;
 extern int			win_force_rdtsc;
@@ -149,8 +149,6 @@ void win_set_palette_entry(int _index, UINT8 red, UINT8 green, UINT8 blue);
 
 int win_process_events(int ingame);
 void win_process_events_periodic(void);
-void osd_set_leds(int state);
-int osd_get_leds(void);
 
 UINT32 *win_prepare_palette(win_blit_params *params);
 

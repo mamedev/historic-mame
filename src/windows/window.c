@@ -16,29 +16,8 @@
 #include <windows.h>
 #include <windowsx.h>
 
-// missing stuff from the mingw headers
-#ifndef ENUM_CURRENT_SETTINGS
-#define ENUM_CURRENT_SETTINGS       ((DWORD)-1)
-#define ENUM_REGISTRY_SETTINGS      ((DWORD)-2)
-#endif
-
-// hack for older header sets - unsafe
-#ifndef WM_XBUTTONDOWN
-#define WM_XBUTTONDOWN 0x020B
-#endif
-
-// hack for older header sets - unsafe
-#ifndef WM_XBUTTONUP
-#define WM_XBUTTONUP 0x020C
-#endif
-
 // standard C headers
 #include <math.h>
-
-// Windows 95/NT multimonitor stubs
-#ifdef WIN95_MULTIMON
-#include "multidef.h"
-#endif
 
 // MAME headers
 #include "osdepend.h"
@@ -125,10 +104,9 @@ int win_keep_aspect;
 int win_gfx_refresh;
 int win_match_refresh;
 int win_sync_refresh;
-float win_gfx_brightness;
+float win_gfx_gamma;
 int win_blit_effect;
 float win_screen_aspect = (4.0 / 3.0);
-int win_suspend_directx;
 
 // windows
 HWND win_video_window;
@@ -190,7 +168,6 @@ static cycles_t last_event_check;
 
 // derived attributes
 static int pixel_aspect_ratio;
-static int vector_game;
 
 // cached bounding rects
 static RECT non_fullscreen_bounds;
@@ -273,96 +250,16 @@ INLINE int wnd_extra_height(void)
 
 
 //============================================================
-//  wnd_extra_left
-//============================================================
-
-INLINE int wnd_extra_left(void)
-{
-	RECT window = { 100, 100, 200, 200 };
-	if (!win_window_mode)
-		return 0;
-	AdjustWindowRectEx(&window, WINDOW_STYLE, win_has_menu(), WINDOW_STYLE_EX);
-	return 100 - window.left;
-}
-
-
-
-//============================================================
-//  get_aligned_window_pos
-//============================================================
-
-INLINE int get_aligned_window_pos(int x)
-{
-	// get a DC for the screen
-	HDC dc = GetDC(NULL);
-	if (dc)
-	{
-		// determine the pixel depth
-		int bytes_per_pixel = (GetDeviceCaps(dc, BITSPIXEL) + 7) / 8;
-		if (bytes_per_pixel)
-		{
-			// compute the amount necessary to align to 16 byte boundary
-			int pixels_per_16bytes = 16 / bytes_per_pixel;
-			int extra_left = wnd_extra_left();
-			x = (((x + extra_left) + pixels_per_16bytes - 1) / pixels_per_16bytes) * pixels_per_16bytes - extra_left;
-		}
-
-		// release the DC
-		ReleaseDC(NULL, dc);
-	}
-	return x;
-}
-
-
-
-//============================================================
 //  get_screen_bounds
 //============================================================
 
 INLINE void get_screen_bounds(RECT *bounds)
 {
-	// reset the bounds to a reasonable default
-	bounds->top = bounds->left = 0;
-	bounds->right = 640;
-	bounds->bottom = 480;
+	MONITORINFO monitor_info = { sizeof(MONITORINFO) };
 
-	if (monitor == NULL)
-	{
-		// get entire windows desktop rect
-		// get a DC for the screen
-		HDC dc = GetDC(NULL);
-		if (dc)
-		{
-			// get the bounds from the DC
-			bounds->right = GetDeviceCaps(dc, HORZRES);
-			bounds->bottom = GetDeviceCaps(dc, VERTRES);
+	assert_always(GetMonitorInfo(monitor, &monitor_info), "Failed to get monitor info");
 
-			// release the DC
-			ReleaseDC(NULL, dc);
-		}
-	}
-	else
-	{
-		MONITORINFO info;
-
-		// get the position and size of the chosen monitor only
-		info.cbSize = sizeof(info);
-		if (GetMonitorInfo(monitor,&info))
-		{
-			*bounds = info.rcMonitor;
-		}
-	}
-}
-
-
-
-//============================================================
-//  set_aligned_window_pos
-//============================================================
-
-INLINE void set_aligned_window_pos(HWND wnd, HWND insert, int x, int y, int cx, int cy, UINT flags)
-{
-	SetWindowPos(wnd, insert, get_aligned_window_pos(x), y, cx, cy, flags);
+	*bounds = monitor_info.rcMonitor;
 }
 
 
@@ -424,28 +321,31 @@ INLINE void get_work_area(RECT *maximum)
 	int tempwidth = blit_swapxy ? win_gfx_height : win_gfx_width;
 	int tempheight = blit_swapxy ? win_gfx_width : win_gfx_height;
 
-	if (SystemParametersInfo(SPI_GETWORKAREA, 0, maximum, 0))
-	{
-		// clamp to the width specified
-		if (tempwidth && (maximum->right - maximum->left) > (tempwidth + wnd_extra_width()))
-		{
-			int diff = (maximum->right - maximum->left) - (tempwidth + wnd_extra_width());
-			if (diff > 0)
-			{
-				maximum->left += diff / 2;
-				maximum->right -= diff - (diff / 2);
-			}
-		}
+	MONITORINFO monitor_info = { sizeof(MONITORINFO) };
 
-		// clamp to the height specified
-		if (tempheight && (maximum->bottom - maximum->top) > (tempheight + wnd_extra_height()))
+	assert_always(GetMonitorInfo(monitor, &monitor_info), "Failed to get monitor info");
+
+	*maximum = monitor_info.rcWork;
+
+	// clamp to the width specified
+	if (tempwidth && (maximum->right - maximum->left) > (tempwidth + wnd_extra_width()))
+	{
+		int diff = (maximum->right - maximum->left) - (tempwidth + wnd_extra_width());
+		if (diff > 0)
 		{
-			int diff = (maximum->bottom - maximum->top) - (tempheight + wnd_extra_height());
-			if (diff > 0)
-			{
-				maximum->top += diff / 2;
-				maximum->bottom -= diff - (diff / 2);
-			}
+			maximum->left += diff / 2;
+			maximum->right -= diff - (diff / 2);
+		}
+	}
+
+	// clamp to the height specified
+	if (tempheight && (maximum->bottom - maximum->top) > (tempheight + wnd_extra_height()))
+	{
+		int diff = (maximum->bottom - maximum->top) - (tempheight + wnd_extra_height());
+		if (diff > 0)
+		{
+			maximum->top += diff / 2;
+			maximum->bottom -= diff - (diff / 2);
 		}
 	}
 }
@@ -546,14 +446,13 @@ int win_create_window(int width, int height, int depth, int attributes, double a
 
 	// extract useful parameters from the attributes
 	pixel_aspect_ratio	= (attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK);
-	vector_game			= ((attributes & VIDEO_TYPE_VECTOR) != 0);
 
 	// handle failure if we couldn't create the video window
 	if (!win_video_window)
 		return 1;
 
 	// adjust the window position
-	set_aligned_window_pos(win_video_window, NULL, 20, 20,
+	SetWindowPos(win_video_window, NULL, 20, 20,
 			width + wnd_extra_width() + 2, height + wnd_extra_height() + 2,
 			SWP_NOZORDER);
 
@@ -806,21 +705,9 @@ static void draw_video_contents(HDC dc, mame_bitmap *bitmap, const rectangle *bo
 	if (IsIconic(win_video_window))
 		return;
 
-	// if we're in a window, constrain to a 16-byte aligned boundary
-	if (win_window_mode && !update)
-	{
-		RECT original;
-		int newleft;
-
-		GetWindowRect(win_video_window, &original);
-		newleft = get_aligned_window_pos(original.left);
-		if (newleft != original.left)
-			SetWindowPos(win_video_window, NULL, newleft, original.top, 0, 0, SWP_NOZORDER | SWP_NOSIZE | SWP_NOACTIVATE);
-	}
-
 	// if we have a blit surface, use that
 
-	if (win_use_directx && !win_suspend_directx)
+	if (win_use_directx)
 	{
 		if (win_use_directx == USE_D3D)
 		{
@@ -1182,10 +1069,7 @@ void win_adjust_window_for_visible(int min_x, int max_x, int min_y, int max_y)
  		GetWindowRect(win_video_window, &r);
  		r.right += (win_visible_width - old_visible_width) * xmult;
  		r.bottom += (win_visible_height - old_visible_height) * ymult;
- 		set_aligned_window_pos(win_video_window, NULL, r.left, r.top,
- 				r.right - r.left,
- 				r.bottom - r.top,
- 				SWP_NOZORDER | SWP_NOMOVE);
+ 		SetWindowPos(win_video_window, NULL, r.left, r.top, r.right - r.left, r.bottom - r.top, SWP_NOZORDER | SWP_NOMOVE);
  	}
  	else
  	{
@@ -1215,7 +1099,7 @@ void win_adjust_window_for_visible(int min_x, int max_x, int min_y, int max_y)
 
 			// otherwise, just enforce the bounds
 			else
-				set_aligned_window_pos(win_video_window, NULL, non_maximized_bounds.left, non_maximized_bounds.top,
+				SetWindowPos(win_video_window, NULL, non_maximized_bounds.left, non_maximized_bounds.top,
 						non_maximized_bounds.right - non_maximized_bounds.left,
 						non_maximized_bounds.bottom - non_maximized_bounds.top,
 						SWP_NOZORDER);
@@ -1353,7 +1237,7 @@ void win_toggle_maximize(int force_maximize)
 	}
 
 	// set the new position
-	set_aligned_window_pos(win_video_window, NULL, current.left, current.top,
+	SetWindowPos(win_video_window, NULL, current.left, current.top,
 			current.right - current.left, current.bottom - current.top,
 			SWP_NOZORDER);
 }
@@ -1401,20 +1285,20 @@ void win_toggle_full_screen(void)
 		// adjust the style
 		SetWindowLong(win_video_window, GWL_STYLE, WINDOW_STYLE);
 		SetWindowLong(win_video_window, GWL_EXSTYLE, WINDOW_STYLE_EX);
-		set_aligned_window_pos(win_video_window, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
+		SetWindowPos(win_video_window, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 
 		// force to the bottom, then back on top
-		set_aligned_window_pos(win_video_window, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
-		set_aligned_window_pos(win_video_window, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+		SetWindowPos(win_video_window, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+		SetWindowPos(win_video_window, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 
 		// adjust the bounds
 		if (non_fullscreen_bounds.right != non_fullscreen_bounds.left)
-			set_aligned_window_pos(win_video_window, HWND_TOP, non_fullscreen_bounds.left, non_fullscreen_bounds.top,
+			SetWindowPos(win_video_window, HWND_TOP, non_fullscreen_bounds.left, non_fullscreen_bounds.top,
 						non_fullscreen_bounds.right - non_fullscreen_bounds.left, non_fullscreen_bounds.bottom - non_fullscreen_bounds.top,
 						SWP_NOZORDER);
 		else
 		{
-			set_aligned_window_pos(win_video_window, HWND_TOP, 0, 0, win_visible_width + 2, win_visible_height + 2, SWP_NOZORDER);
+			SetWindowPos(win_video_window, HWND_TOP, 0, 0, win_visible_width + 2, win_visible_height + 2, SWP_NOZORDER);
 			win_toggle_maximize(1);
 		}
 	}
@@ -1426,10 +1310,10 @@ void win_toggle_full_screen(void)
 		// adjust the style
 		SetWindowLong(win_video_window, GWL_STYLE, FULLSCREEN_STYLE);
 		SetWindowLong(win_video_window, GWL_EXSTYLE, FULLSCREEN_STYLE_EX);
-		set_aligned_window_pos(win_video_window, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
+		SetWindowPos(win_video_window, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 
 		// set topmost
-		set_aligned_window_pos(win_video_window, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+		SetWindowPos(win_video_window, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
 	}
 
 	// adjust the window to compensate for the change
@@ -1491,9 +1375,8 @@ void win_adjust_window(void)
 	if (original.left != window.left ||
 		original.top != window.top ||
 		original.right != window.right ||
-		original.bottom != window.bottom ||
-		original.left != get_aligned_window_pos(original.left))
-		set_aligned_window_pos(win_video_window, win_window_mode ? HWND_TOP : HWND_TOPMOST,
+		original.bottom != window.bottom)
+		SetWindowPos(win_video_window, win_window_mode ? HWND_TOP : HWND_TOPMOST,
 				window.left, window.top,
 				window.right - window.left, window.bottom - window.top, 0);
 

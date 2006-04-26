@@ -54,8 +54,13 @@ enum
 #define SCSI_DEVICE_CDROM scsicd_dispatch
 #define SCSI_DEVICE_HARDDISK scsihd_dispatch
 
+
+/*----------- defined in machine/scsicd.c -----------*/
+
 // CD-ROM handler
 int scsicd_dispatch(int operation, void *file, INT64 intparm, UINT8 *ptrparm);
+
+/*----------- defined in machine/scsihd.c -----------*/
 
 // hard disk handler
 int scsihd_dispatch(int operation, void *file, INT64 intparm, UINT8 *ptrparm);

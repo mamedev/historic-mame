@@ -699,8 +699,6 @@ ROM_START( mp_sonic ) /* Sonic */
 	ROM_LOAD16_BYTE( "ep15176.ic1", 0x000001, 0x040000, CRC(d180cc21) SHA1(62805cfaaa80c1da6146dd89fc2b49d819fd4f22) )
 	/* Game Instruction rom copied to 0x300000 - 0x310000 (odd / even bytes equal) */
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
-
 	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
 	ROM_LOAD( "ep15175-01.ic3", 0x000000, 0x08000, CRC(99246889) SHA1(184aa3b7fdedcf578c5e34edb7ed44f57f832258) )
 
@@ -717,8 +715,6 @@ ROM_START( mp_col3 ) /* Columns 3 */
 	ROM_LOAD16_BYTE( "2.ic1", 0x000001, 0x040000, CRC(999b2fe6) SHA1(ad967a28e4eebd7b01273e4e04c35a0198ef834a) )
 	/* Game Instruction rom copied to 0x300000 - 0x310000 (odd / even bytes equal) */
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
-
 	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
 	ROM_LOAD( "1.ic3", 0x000000, 0x08000,  CRC(dac9bf91) SHA1(0117972a7181f8aaf942a259cc8764b821031253) )
 
@@ -732,8 +728,6 @@ ROM_START( mp_gaxe2 ) /* Golden Axe 2 */
 	ROM_LOAD16_BYTE( "ep15178b.ic1", 0x000001, 0x040000, CRC(2ea576db) SHA1(6d96b948243533de1f488b1f80e0d5431a4f1f53) )
 	/* Game Instruction rom copied to 0x300000 - 0x310000 (odd / even bytes equal) */
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
-
 	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
 	ROM_LOAD( "ep15175-02b.ic3", 0x000000, 0x08000, CRC(3039b653) SHA1(b19874c74d0fc0cca1169f62e5e74f0e8ca83679) ) // 15175-02b.ic3
 
@@ -746,8 +740,6 @@ ROM_START( mp_gslam ) /* Grand Slam */
 	ROM_LOAD16_BYTE( "epr-15181.ic2", 0x000000, 0x040000, CRC(642437c1) SHA1(cbf88e196c04b6d886bf9642b69bf165045510fe) )
 	ROM_LOAD16_BYTE( "epr-15180.ic1", 0x000001, 0x040000, CRC(73bb48f1) SHA1(981b64f834d5618599352f5fad683bf232390ba3) )
 	/* Game Instruction rom copied to 0x300000 - 0x310000 (odd / even bytes equal) */
-
-	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
 
 	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
 	ROM_LOAD( "epr-15175-03.ic3", 0x000000, 0x08000, CRC(70ea1aec) SHA1(0d9d82a1f8aa51d02707f7b343e7cfb6591efccd) ) // 15175-02b.ic3
@@ -763,8 +755,6 @@ ROM_START( mp_twc ) /* Tecmo World Cup */
 	ROM_LOAD16_BYTE( "ep15182.ic1", 0x000001, 0x040000, CRC(eb8325c3) SHA1(bb21ac926c353e14184dd476222bc6a8714606e5) )
 	/* Game Instruction rom copied to 0x300000 - 0x310000 (odd / even bytes equal) */
 
- 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
-
  	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
 	ROM_LOAD( "ep15175-04.ic3", 0x000000, 0x08000, CRC(faf7c030) SHA1(16ef405335b4d3ecb0b7d97b088dafc4278d4726) )
 
@@ -776,8 +766,6 @@ ROM_START( mp_sor2 ) /* Streets of Rage 2 */
 	ROM_REGION( 0x400000, REGION_CPU1, 0 )
 	ROM_LOAD16_WORD_SWAP( "mpr-15425.ic1", 0x000000, 0x200000, CRC(cd6376af) SHA1(57ec210975e40505649f152b60ef54f99da31f0e) )
 	/* Game Instruction rom copied to 0x300000 - 0x310000 (odd / even bytes equal) */
-
-	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
 
 	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
 	ROM_LOAD( "epr-15175-05.ic2", 0x000000, 0x08000, CRC(1df5347c) SHA1(faced2e875e1914392f61577b5256d006eebeef9) )
@@ -791,8 +779,6 @@ ROM_START( mp_bio ) /* Bio Hazard Battle */
 	ROM_LOAD16_WORD_SWAP( "mpr-15699-f.ic1", 0x000000, 0x100000, CRC(4b193229) SHA1(f8629171ae9b4792f142f6957547d886e5cc6817) )
 	/* Game Instruction rom copied to 0x300000 - 0x310000 (odd / even bytes equal) */
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
-
 	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
 	ROM_LOAD( "epr-15175-06.ic2", 0x000000, 0x08000, CRC(1ef64e41) SHA1(13984b714b014ea41963b70de74a5358ed223bc5) )
 
@@ -805,8 +791,6 @@ ROM_START( mp_soni2 ) /* Sonic The Hedgehog 2 */
 	ROM_LOAD16_WORD_SWAP( "mpr-16011.ic1", 0x000000, 0x100000, CRC(3d7bf98a) SHA1(dce0e4e8f2573e0ffe851edaa235e4ed9e61ee2d) )
 	/* Game Instruction rom copied to 0x300000 - 0x310000 (odd / even bytes equal) */
 
-	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
-
 	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
 	ROM_LOAD( "epr-15175-07.ic1", 0x000000, 0x08000, CRC(bb5f67f0) SHA1(33b7a5d14015a5fcf41976a8f648f8f48ce9bb03) )
 
@@ -818,8 +802,6 @@ ROM_START( mp_mazin ) /* Mazin Wars */
 	ROM_REGION( 0x400000, REGION_CPU1, 0 )
 	ROM_LOAD16_WORD_SWAP( "mpr-16460.ic1", 0x000000, 0x100000, CRC(e9635a83) SHA1(ab3afa11656f0ae3a50c957dce012fb15d3992e0) )
 	/* Game Instruction rom copied to 0x300000 - 0x310000 (odd / even bytes equal) */
-
-	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* z80 */
 
 	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
 	ROM_LOAD( "epr-15175-11.ic2", 0x000000, 0x08000, CRC(bb651120) SHA1(81cb736f2732373e260dde162249c1d29a3489c3) )

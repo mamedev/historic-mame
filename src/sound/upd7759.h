@@ -18,7 +18,6 @@ void upd7759_set_bank_base(int which, offs_t base);
 
 void upd7759_reset_w(int num, UINT8 data);
 
-void upd7759_w(int num, UINT8 data);
 void upd7759_port_w(int num, UINT8 data);
 void upd7759_start_w(int num, UINT8 data);
 int upd7759_busy_r(int num);

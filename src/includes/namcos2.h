@@ -88,10 +88,6 @@ enum
 
 #define NAMCOS21_NUM_COLORS 0x8000
 
-VIDEO_START( namcos21 );
-VIDEO_UPDATE( namcos21_default );
-VIDEO_UPDATE( namcos21_winrun );
-
 VIDEO_START( namcos2 );
 VIDEO_UPDATE( namcos2_default );
 
@@ -107,7 +103,14 @@ VIDEO_UPDATE( metlhawk );
 VIDEO_START( sgunner );
 VIDEO_UPDATE( sgunner );
 
+extern UINT16 *namcos2_sprite_ram;
+WRITE16_HANDLER( namcos2_sprite_ram_w );
+READ16_HANDLER( namcos2_sprite_ram_r );
+
 int namcos2_GetPosIrqScanline( void );
+
+WRITE16_HANDLER( namcos2_gfx_ctrl_w );
+READ16_HANDLER( namcos2_gfx_ctrl_r );
 
 /**************************************************************/
 /*  Shared video palette function handlers                    */
@@ -135,13 +138,6 @@ extern UINT16 *namcos2_68k_roz_ram;
 extern int namcos2_gametype;
 
 MACHINE_RESET( namcos2 );
-
-WRITE16_HANDLER( namcos2_gfx_ctrl_w );
-READ16_HANDLER( namcos2_gfx_ctrl_r );
-
-extern UINT16 *namcos2_sprite_ram;
-WRITE16_HANDLER( namcos2_sprite_ram_w );
-READ16_HANDLER( namcos2_sprite_ram_r );
 
 READ16_HANDLER( namcos2_flap_prot_r );
 

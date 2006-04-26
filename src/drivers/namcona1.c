@@ -1102,7 +1102,7 @@ static WRITE16_HANDLER( mcu_mailbox_w_mcu )
 }
 
 static ADDRESS_MAP_START( namcona1_mcu_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_RAM AM_REGION(REGION_SOUND1, 0)
+	AM_RANGE(0x000000, 0x07ffff) AM_RAM AM_BASE(&namcona1_workram)
 	AM_RANGE(0x080000, 0x3f7fff) AM_READ(bogus_r)
 	AM_RANGE(0x3f8000, 0x3fffff) AM_READ(mcu_mailbox_r)
 	AM_RANGE(0x400000, 0xbfffff) AM_ROM AM_REGION(REGION_CPU1, 0x280000)	/* data */
@@ -1279,6 +1279,13 @@ static WRITE8_HANDLER( port8_w )
 	mcu_port8 = data;
 }
 
+
+static MACHINE_START( namcona1 )
+{
+	C140_set_base(0, namcona1_workram);
+	return 0;
+}
+
 // for games with the MCU emulated, the MCU boots the 68000.  don't allow it before that.
 static MACHINE_RESET( namcona1_mcu )
 {
@@ -1347,7 +1354,7 @@ static INTERRUPT_GEN( mcu_interrupt )
 static struct C140interface C140_interface_typeA =
 {
 	C140_TYPE_ASIC219,
-	REGION_SOUND1
+	0
 };
 
 /* cropped at sides */
@@ -1366,6 +1373,7 @@ static MACHINE_DRIVER_START( namcona1 )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	MDRV_NVRAM_HANDLER(namcosna1)
+	MDRV_MACHINE_START(namcona1)
 	MDRV_MACHINE_RESET(namcona1_mcu)
 	MDRV_INTERLEAVE(40)
 
@@ -1480,8 +1488,6 @@ init_namcona1( int gametype )
 {
 	UINT16 *pMem = (UINT16 *)memory_region( REGION_CPU1 );
 
-	namcona1_workram = (UINT16 *)memory_region(REGION_SOUND1);
-
 	namcona1_gametype = gametype;
 	mpBank0 = &pMem[0x80000/2];
 	mpBank1 = mpBank0 +  0x200000/2;
@@ -1541,9 +1547,6 @@ ROM_START( bkrtmaq )
 	/* M37702 BIOS - labeled as Namco custom C69 */
 	ROM_REGION16_LE( 0x4000, REGION_CPU2, 0 )
         ROM_LOAD( "c69.bin",      0x000000, 0x004000, CRC(349134d9) SHA1(61a4981fc2716c228b6121fedcbf1ed6f34dc2de) )
-
-	/* placeholder region for sample data */
-	ROM_REGION16_BE( 0x80000, REGION_SOUND1, 0 )
 ROM_END
 
 ROM_START( cgangpzl )
@@ -1554,9 +1557,6 @@ ROM_START( cgangpzl )
 	/* M37702 BIOS - labeled as Namco custom C69 */
 	ROM_REGION16_LE( 0x4000, REGION_CPU2, 0 )
         ROM_LOAD( "c69.bin",      0x000000, 0x004000, CRC(349134d9) SHA1(61a4981fc2716c228b6121fedcbf1ed6f34dc2de) )
-
-	/* placeholder region for sample data */
-	ROM_REGION16_BE( 0x80000, REGION_SOUND1, 0 )
 ROM_END
 
 ROM_START( cgangpzj )
@@ -1567,9 +1567,6 @@ ROM_START( cgangpzj )
 	/* M37702 BIOS - labeled as Namco custom C69 */
 	ROM_REGION16_LE( 0x4000, REGION_CPU2, 0 )
         ROM_LOAD( "c69.bin",      0x000000, 0x004000, CRC(349134d9) SHA1(61a4981fc2716c228b6121fedcbf1ed6f34dc2de) )
-
-	/* placeholder region for sample data */
-	ROM_REGION16_BE( 0x80000, REGION_SOUND1, 0 )
 ROM_END
 
 ROM_START( emeralda )
@@ -1582,9 +1579,6 @@ ROM_START( emeralda )
 	/* M37702 BIOS - labeled as Namco custom C69 */
 	ROM_REGION16_LE( 0x4000, REGION_CPU2, 0 )
         ROM_LOAD( "c69.bin",      0x000000, 0x004000, CRC(349134d9) SHA1(61a4981fc2716c228b6121fedcbf1ed6f34dc2de) )
-
-	/* placeholder region for sample data */
-	ROM_REGION16_BE( 0x80000, REGION_SOUND1, 0 )
 ROM_END
 
 ROM_START( emerldaa )
@@ -1597,9 +1591,6 @@ ROM_START( emerldaa )
 	/* M37702 BIOS - labeled as Namco custom C69 */
 	ROM_REGION16_LE( 0x4000, REGION_CPU2, 0 )
         ROM_LOAD( "c69.bin",      0x000000, 0x004000, CRC(349134d9) SHA1(61a4981fc2716c228b6121fedcbf1ed6f34dc2de) )
-
-	/* placeholder region for sample data */
-	ROM_REGION16_BE( 0x80000, REGION_SOUND1, 0 )
 ROM_END
 
 ROM_START( exvania )
@@ -1615,9 +1606,6 @@ ROM_START( exvania )
 	/* M37702 BIOS - labeled as Namco custom C69 */
 	ROM_REGION16_LE( 0x4000, REGION_CPU2, 0 )
         ROM_LOAD( "c69.bin",      0x000000, 0x004000, CRC(349134d9) SHA1(61a4981fc2716c228b6121fedcbf1ed6f34dc2de) )
-
-	/* placeholder region for sample data */
-	ROM_REGION16_BE( 0x80000, REGION_SOUND1, 0 )
 ROM_END
 
 ROM_START( knckhead )
@@ -1638,9 +1626,7 @@ ROM_START( knckhead )
 
 	/* M37702 BIOS - labeled as Namco custom C70 */
 	ROM_REGION16_LE( 0x4000, REGION_CPU2, 0 )
-
-	/* placeholder region for sample data */
-	ROM_REGION16_BE( 0x80000, REGION_SOUND1, 0 )
+        ROM_LOAD( "c70.bin",      0x000000, 0x004000, NO_DUMP )
 ROM_END
 
 ROM_START( knckhedj )
@@ -1661,9 +1647,7 @@ ROM_START( knckhedj )
 
 	/* M37702 BIOS - labeled as Namco custom C70 */
 	ROM_REGION16_LE( 0x4000, REGION_CPU2, 0 )
-
-	/* placeholder region for sample data */
-	ROM_REGION16_BE( 0x80000, REGION_SOUND1, 0 )
+        ROM_LOAD( "c70.bin",      0x000000, 0x004000, NO_DUMP )
 ROM_END
 
 ROM_START( numanatj )
@@ -1684,9 +1668,7 @@ ROM_START( numanatj )
 
 	/* M37702 BIOS - labeled as Namco custom C70 */
 	ROM_REGION16_LE( 0x4000, REGION_CPU2, 0 )
-
-	/* placeholder region for sample data */
-	ROM_REGION16_BE( 0x80000, REGION_SOUND1, 0 )
+        ROM_LOAD( "c70.bin",      0x000000, 0x004000, NO_DUMP )
 ROM_END
 
 ROM_START( numanath )
@@ -1707,9 +1689,7 @@ ROM_START( numanath )
 
 	/* M37702 BIOS - labeled as Namco custom C70 */
 	ROM_REGION16_LE( 0x4000, REGION_CPU2, 0 )
-
-	/* placeholder region for sample data */
-	ROM_REGION16_BE( 0x80000, REGION_SOUND1, 0 )
+        ROM_LOAD( "c70.bin",      0x000000, 0x004000, NO_DUMP )
 ROM_END
 
 ROM_START( quiztou )
@@ -1730,9 +1710,7 @@ ROM_START( quiztou )
 
 	/* M37702 BIOS - labeled as Namco custom C70 */
 	ROM_REGION16_LE( 0x4000, REGION_CPU2, 0 )
-
-	/* placeholder region for sample data */
-	ROM_REGION16_BE( 0x80000, REGION_SOUND1, 0 )
+        ROM_LOAD( "c70.bin",      0x000000, 0x004000, NO_DUMP )
 ROM_END
 
 ROM_START( swcourt )
@@ -1750,9 +1728,6 @@ ROM_START( swcourt )
 	/* M37702 BIOS - labeled as Namco custom C69 */
 	ROM_REGION16_LE( 0x4000, REGION_CPU2, 0 )
         ROM_LOAD( "c69.bin",      0x000000, 0x004000, CRC(349134d9) SHA1(61a4981fc2716c228b6121fedcbf1ed6f34dc2de) )
-
-	/* placeholder region for sample data */
-	ROM_REGION16_BE( 0x80000, REGION_SOUND1, 0 )
 ROM_END
 
 ROM_START( swcourtj )
@@ -1770,9 +1745,6 @@ ROM_START( swcourtj )
 	/* M37702 BIOS - labeled as Namco custom C69 */
 	ROM_REGION16_LE( 0x4000, REGION_CPU2, 0 )
         ROM_LOAD( "c69.bin",      0x000000, 0x004000, CRC(349134d9) SHA1(61a4981fc2716c228b6121fedcbf1ed6f34dc2de) )
-
-	/* placeholder region for sample data */
-	ROM_REGION16_BE( 0x80000, REGION_SOUND1, 0 )
 ROM_END
 
 ROM_START( tinklpit )
@@ -1792,9 +1764,6 @@ ROM_START( tinklpit )
 	/* M37702 BIOS - labeled as Namco custom C69 */
 	ROM_REGION16_LE( 0x4000, REGION_CPU2, 0 )
         ROM_LOAD( "c69.bin",      0x000000, 0x004000, CRC(349134d9) SHA1(61a4981fc2716c228b6121fedcbf1ed6f34dc2de) )
-
-	/* placeholder region for sample data */
-	ROM_REGION16_BE( 0x80000, REGION_SOUND1, 0 )
 ROM_END
 
 ROM_START( fghtatck )
@@ -1812,9 +1781,6 @@ ROM_START( fghtatck )
 	/* M37702 BIOS - labeled as Namco custom C69 */
 	ROM_REGION16_LE( 0x4000, REGION_CPU2, 0 )
         ROM_LOAD( "c69.bin",      0x000000, 0x004000, CRC(349134d9) SHA1(61a4981fc2716c228b6121fedcbf1ed6f34dc2de) )
-
-	/* placeholder region for sample data */
-	ROM_REGION16_BE( 0x80000, REGION_SOUND1, 0 )
 ROM_END
 
 ROM_START( fa )
@@ -1832,9 +1798,6 @@ ROM_START( fa )
 	/* M37702 BIOS - labeled as Namco custom C69 */
 	ROM_REGION16_LE( 0x4000, REGION_CPU2, 0 )
         ROM_LOAD( "c69.bin",      0x000000, 0x004000, CRC(349134d9) SHA1(61a4981fc2716c228b6121fedcbf1ed6f34dc2de) )
-
-	/* placeholder region for sample data */
-	ROM_REGION16_BE( 0x80000, REGION_SOUND1, 0 )
 ROM_END
 
 ROM_START( xday2 )
@@ -1849,9 +1812,7 @@ ROM_START( xday2 )
 
 	/* M37702 BIOS - labeled as Namco custom C70 */
 	ROM_REGION16_LE( 0x4000, REGION_CPU2, 0 )
-
-	/* placeholder region for sample data */
-	ROM_REGION16_BE( 0x80000, REGION_SOUND1, 0 )
+        ROM_LOAD( "c70.bin",      0x000000, 0x004000, NO_DUMP )
 ROM_END
 
 // NA-1 (C69 MCU)

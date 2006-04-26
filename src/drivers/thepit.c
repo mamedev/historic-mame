@@ -742,7 +742,7 @@ ROM_START( thepit )
 	ROM_LOAD( "pit09.ic8",           0x1000, 0x0800, CRC(a2e2b218) SHA1(1aa293a9503f3cbbc2fbd84b6b1d30124ef462e7) )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "82s123.ic4",   0x0000, 0x0020, CRC(a758b567) SHA1(d188c90dba10fe3abaae92488786b555b35218c5) )
+	ROM_LOAD( "82s123.ic4",   0x0000, 0x0020, CRC(a758b567) SHA1(d188c90dba10fe3abaae92488786b555b35218c5) ) /* Color prom */
 ROM_END
 
 ROM_START( thepitc )
@@ -761,7 +761,26 @@ ROM_START( thepitc )
 	ROM_LOAD( "p8",           0x1000, 0x0800, CRC(2ddd5045) SHA1(baa962a874f00e56c15c264980b1e31a2c9dc270) )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "pitclr.ic4",   0x0000, 0x0020, CRC(a758b567) SHA1(d188c90dba10fe3abaae92488786b555b35218c5) )
+	ROM_LOAD( "82s123.ic4",   0x0000, 0x0020, CRC(a758b567) SHA1(d188c90dba10fe3abaae92488786b555b35218c5) ) /* Color prom */
+ROM_END
+
+ROM_START( thepitb ) /* Bootleg based on the Centuri version by AW Zilec Elc Ltd */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for main CPU */
+	ROM_LOAD( "pit1.bin",     0x0000, 0x1000, CRC(71affecc) SHA1(e64cb2f8d546f5d44dc10a4178f3d211882c45a9) )
+	ROM_LOAD( "pit2.bin",     0x1000, 0x1000, CRC(894063cd) SHA1(772ff81cf44d21981f9768f017af5cb81ff57be3) )
+	ROM_LOAD( "pit3.bin",     0x2000, 0x1000, CRC(1b488543) SHA1(8991c6424f008ddd15edac953635aecdba4ea696) )
+	ROM_LOAD( "pit4.bin",     0x3000, 0x1000, CRC(e941e848) SHA1(1dd9ded69121d28b674209abe1efd60afde6926d) )
+	ROM_LOAD( "pit5.bin",     0x4000, 0x1000, CRC(e0643c95) SHA1(bb5133784b2b6a5c217d9ea42641daba2a797fff) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for audio CPU */
+	ROM_LOAD( "pit6.bin",     0x0000, 0x0800, CRC(1b79dfb6) SHA1(ba78b035a91a67732414ba327640fb771d4323c5) )
+
+	ROM_REGION( 0x1800, REGION_GFX1, ROMREGION_DISPOSE ) /* chars and sprites */
+	ROM_LOAD( "pit8.bin",     0x0000, 0x0800, CRC(69502afc) SHA1(9baf094baab8325af659879cfb6984eeca0d94bd) )
+	ROM_LOAD( "pit7.bin",     0x1000, 0x0800, CRC(d901b353) SHA1(4a35dd857ca352e0260361376fe666af4b3315af) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "82s123.ic4",   0x0000, 0x0020, CRC(a758b567) SHA1(d188c90dba10fe3abaae92488786b555b35218c5) ) /* Color prom was a MMI6331 and is compatible with the 82s123 prom type */
 ROM_END
 
 ROM_START( roundup )
@@ -1046,6 +1065,7 @@ GAME( 1981, roundup,  0,        thepit,   roundup,  0,     ROT90, "Amenip/Centur
 GAME( 1981, fitter,   roundup,  thepit,   fitter,   0,     ROT90, "Taito Corporation", "Fitter", 0 )
 GAME( 1982, thepit,   0,        thepit,   thepit,   0,     ROT90, "Taito", "The Pit", 0 )
 GAME( 1982, thepitc,  thepit,   thepit,   thepit,   0,     ROT90, "Centuri", "The Pit (Centuri)", 0 )
+GAME( 1982, thepitb,  thepit,   thepit,   thepit,   0,     ROT90, "Bootleg", "The Pit (Bootleg)", 0 ) /* based off the Centuri version */
 GAME( 1982, dockman,  0,        intrepid, dockman,  0,     ROT90, "Taito Corporation", "Dock Man", 0 )
 GAME( 1982, portman,  dockman,  intrepid, dockman,  0,     ROT90, "Nova Games Ltd.", "Port Man", 0 )
 GAME( 1982, funnymou, 0,        suprmous, suprmous, 0,     ROT90, "Chuo Co. Ltd", "Funny Mouse", 0 )

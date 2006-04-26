@@ -730,7 +730,6 @@ void antic_reset(void);
 WRITE8_HANDLER ( atari_antic_w );
 
 void antic_mode_0_xx(VIDEO *video);
-void antic_mode_1_xx(VIDEO *video);
 void antic_mode_2_32(VIDEO *video);
 void antic_mode_2_40(VIDEO *video);
 void antic_mode_2_48(VIDEO *video);

@@ -14,6 +14,7 @@
 #include "sega.h"
 #include "cpu/i8039/i8039.h"
 #include "sound/sp0250.h"
+#include "segasnd.h"
 #include <math.h>
 
 
