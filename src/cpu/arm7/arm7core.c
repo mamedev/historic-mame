@@ -552,7 +552,7 @@ static void arm7_core_reset(void)
     SwitchMode(eARM7_MODE_SVC);
     SET_CPSR(GET_CPSR | I_MASK | F_MASK);
     R15 = 0;
-//change_pc32lew(R15);
+	change_pc(R15);
 }
 
 //Execute used to be here.. moved to separate file (arm7exec.c) to be included by cpu cores separately
@@ -793,6 +793,8 @@ static void HandleBranch(  UINT32 insn )
     {
         R15 += off + 8;
     }
+
+	change_pc(R15);
 }
 
 static void HandleMemSingle( UINT32 insn )
@@ -865,6 +867,7 @@ static void HandleMemSingle( UINT32 insn )
             {
                 R15 = READ32(rnv);
                 R15 -= 4;
+				change_pc(R15);
                 //LDR, PC takes 2S + 2N + 1I (5 total cycles)
                 ARM7_ICOUNT -= 2;
             }
@@ -1023,7 +1026,7 @@ static void HandleHalfWordDT(UINT32 insn)
             if(rd == eR15)
             {
                 R15 = newval + 8;
-                //LDR(H,SH,SB) PC takes 2S + 2N + 1I (5 total cycles)
+				//LDR(H,SH,SB) PC takes 2S + 2N + 1I (5 total cycles)
                 ARM7_ICOUNT -= 2;
 
             }
@@ -1046,6 +1049,8 @@ static void HandleHalfWordDT(UINT32 insn)
                 R15 += 4;
             }
         }
+
+
     }
     /* Store */
     else
@@ -1057,6 +1062,8 @@ static void HandleHalfWordDT(UINT32 insn)
         //STRH takes 2 cycles, so we add + 1
         ARM7_ICOUNT += 1;
     }
+
+
 
     //SJE: No idea if this writeback code works or makes sense here..
 
@@ -1094,6 +1101,7 @@ static void HandleHalfWordDT(UINT32 insn)
             }
         }
     }
+	change_pc(R15);
 }
 
 static void HandleSwap(UINT32 insn)
@@ -1241,6 +1249,8 @@ static void HandleALU( UINT32 insn )
         }
     }
 
+	change_pc(R15);
+
     /* Perform the operation */
 
     switch (opcode)
@@ -1350,6 +1360,8 @@ static void HandleALU( UINT32 insn )
             #endif
         }
     }
+
+	change_pc(R15);
 }
 
 static void HandleMul( UINT32 insn)
@@ -1639,6 +1651,8 @@ static void HandleMemBlock( UINT32 insn)
         //STM takes (n+1)S+2N+1I cycles (n = # of register transfers)
         ARM7_ICOUNT -= ((result+1)+2+1);
     }
+
+	change_pc(R15);
 } /* HandleMemBlock */
 
 

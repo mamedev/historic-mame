@@ -130,7 +130,7 @@ typedef struct
 #define VREG_S(reg, offset)		rsp.v[(reg)].s[(7 - (offset))]
 #define VREG_L(reg, offset)		rsp.v[(reg)].l[(3 - (offset))]
 
-#define VEC_EL_1(x,z)		(7 - vector_elements_1[(x)][(z)])
+#define VEC_EL_1(x,z)		(vector_elements_1[(x)][(z)])
 #define VEC_EL_2(x,z)		(vector_elements_2[(x)][(z)])
 
 #define ACCUM(x)		rsp.accum[(7-(x))].q
@@ -207,7 +207,10 @@ INLINE void WRITE16(UINT32 address, UINT16 data)
 
 	if (address & 1)
 	{
-		fatalerror("RSP: WRITE16: unaligned %08X, %04X at %08X\n", address, data, rsp.ppc);
+		//fatalerror("RSP: WRITE16: unaligned %08X, %04X at %08X\n", address, data, rsp.ppc);
+		program_write_byte_32be(address + 0, (data >> 8) & 0xff);
+		program_write_byte_32be(address + 1, (data >> 0) & 0xff);
+		return;
 	}
 
 	program_write_word_32be(address, data);
@@ -1487,6 +1490,7 @@ static void handle_vector_ops(UINT32 op)
 
 				if (r > 32767) r = 32767;
 				if (r < -32768) r = -32768;
+
 				VREG_S(VDREG, del) = (INT16)(r);
 			}
 			CLEAR_ZERO_FLAGS();

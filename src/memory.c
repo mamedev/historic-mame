@@ -803,6 +803,8 @@ void memory_configure_bank(int banknum, int startentry, int numentries, void *ba
 		fatalerror("memory_configure_bank called with dynamic bank %d", banknum);
 	if (startentry < 0 || startentry + numentries > MAX_BANK_ENTRIES)
 		fatalerror("memory_configure_bank called with out-of-range entries %d-%d", startentry, startentry + numentries - 1);
+	if (!base)
+		fatalerror("memory_configure_bank called NULL base");
 
 	/* fill in the requested bank entries */
 	for (entrynum = startentry; entrynum < startentry + numentries; entrynum++)
@@ -827,6 +829,8 @@ void memory_configure_bank_decrypted(int banknum, int startentry, int numentries
 		fatalerror("memory_configure_bank called with dynamic bank %d", banknum);
 	if (startentry < 0 || startentry + numentries > MAX_BANK_ENTRIES)
 		fatalerror("memory_configure_bank called with out-of-range entries %d-%d", startentry, startentry + numentries - 1);
+	if (!base)
+		fatalerror("memory_configure_bank_decrypted called NULL base");
 
 	/* fill in the requested bank entries */
 	for (entrynum = startentry; entrynum < startentry + numentries; entrynum++)
@@ -877,6 +881,8 @@ void memory_set_bankptr(int banknum, void *base)
 		fatalerror("memory_set_bankptr called with invalid bank %d", banknum);
 	if (bankdata[banknum].dynamic)
 		fatalerror("memory_set_bankptr called with dynamic bank %d", banknum);
+	if (!base)
+		fatalerror("memory_set_bankptr called NULL base");
 
 	/* set the base */
 	bank_ptr[banknum] = base;

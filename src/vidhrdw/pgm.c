@@ -80,7 +80,7 @@ static void pgm_drawspriteline(int wide, UINT16* dest, int xzoom, int xgrow, int
 			xdrawpos = xpos + xcntdraw;
 			if (!(srcdat&0x8000))
 			{
-				if ((xdrawpos > 0) && (xdrawpos < 448))  dest[xdrawpos] = srcdat;
+				if ((xdrawpos >= 0) && (xdrawpos < 448))  dest[xdrawpos] = srcdat;
 			}
 			xcntdraw++;
 
@@ -88,7 +88,7 @@ static void pgm_drawspriteline(int wide, UINT16* dest, int xzoom, int xgrow, int
 
 			if (!(srcdat&0x8000))
 			{
-				if ((xdrawpos > 0) && (xdrawpos < 448))  dest[xdrawpos] = srcdat;
+				if ((xdrawpos >= 0) && (xdrawpos < 448))  dest[xdrawpos] = srcdat;
 			}
 			xcntdraw++;
 		}
@@ -101,7 +101,7 @@ static void pgm_drawspriteline(int wide, UINT16* dest, int xzoom, int xgrow, int
 			xdrawpos = xpos + xcntdraw;
 			if (!(srcdat&0x8000))
 			{
-				if ((xdrawpos > 0) && (xdrawpos < 448))  dest[xdrawpos] = srcdat;
+				if ((xdrawpos >= 0) && (xdrawpos < 448))  dest[xdrawpos] = srcdat;
 			}
 			xcntdraw++;
 		}

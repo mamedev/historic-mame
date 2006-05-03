@@ -616,3 +616,529 @@ void arm7_disasm( char *pBuf, UINT32 pc, UINT32 opcode )
 		pBuf += sprintf( pBuf, "Undefined" );
 	}
 }
+
+void thumb_disasm( char *pBuf, UINT32 pc, UINT16 opcode )
+{
+	const char *pBuf0;
+
+//      UINT32 readword;
+		UINT32 addr;
+		UINT32 rm, rn, rs, rd, op2, imm;//, rrs;
+		INT32 offs;
+
+	pBuf0 = pBuf;
+	pBuf = WritePadding( pBuf, pBuf0 );
+
+
+		switch( ( opcode & THUMB_INSN_TYPE ) >> THUMB_INSN_TYPE_SHIFT )
+		{
+			case 0x0: /* Logical shifting */
+				if( opcode & THUMB_SHIFT_R ) /* Shift right */
+				{
+					rs = ( opcode & THUMB_ADDSUB_RS ) >> THUMB_ADDSUB_RS_SHIFT;
+					rd = ( opcode & THUMB_ADDSUB_RD ) >> THUMB_ADDSUB_RD_SHIFT;
+					offs = ( opcode & THUMB_SHIFT_AMT ) >> THUMB_SHIFT_AMT_SHIFT;
+					pBuf += sprintf( pBuf, "LSR R%d, R%d, %d", rd, rs, offs);
+				}
+				else /* Shift left */
+				{
+					rs = ( opcode & THUMB_ADDSUB_RS ) >> THUMB_ADDSUB_RS_SHIFT;
+					rd = ( opcode & THUMB_ADDSUB_RD ) >> THUMB_ADDSUB_RD_SHIFT;
+					offs = ( opcode & THUMB_SHIFT_AMT ) >> THUMB_SHIFT_AMT_SHIFT;
+					pBuf += sprintf( pBuf, "LSL R%d, R%d, %d", rd, rs, offs);
+				}
+				break;
+			case 0x1: /* Arithmetic */
+				if( opcode & THUMB_INSN_ADDSUB )
+				{
+					switch( ( opcode & THUMB_ADDSUB_TYPE ) >> THUMB_ADDSUB_TYPE_SHIFT )
+					{
+						case 0x0: /* ADD Rd, Rs, Rn */
+							rn = ( opcode & THUMB_ADDSUB_RNIMM ) >> THUMB_ADDSUB_RNIMM_SHIFT;
+							rs = ( opcode & THUMB_ADDSUB_RS ) >> THUMB_ADDSUB_RS_SHIFT;
+							rd = ( opcode & THUMB_ADDSUB_RD ) >> THUMB_ADDSUB_RD_SHIFT;
+							pBuf += sprintf( pBuf, "ADD R%d, R%d, R%d", rd, rs, rn );
+							break;
+						case 0x1: /* SUB Rd, Rs, Rn */
+							rn = ( opcode & THUMB_ADDSUB_RNIMM ) >> THUMB_ADDSUB_RNIMM_SHIFT;
+							rs = ( opcode & THUMB_ADDSUB_RS ) >> THUMB_ADDSUB_RS_SHIFT;
+							rd = ( opcode & THUMB_ADDSUB_RD ) >> THUMB_ADDSUB_RD_SHIFT;
+							pBuf += sprintf( pBuf, "(case1 0x1)SUB R%d, R%d, R%d", rd, rs, rn );
+							break;
+						case 0x2: /* ADD Rd, Rs, #imm */
+							imm = ( opcode & THUMB_ADDSUB_RNIMM ) >> THUMB_ADDSUB_RNIMM_SHIFT;
+							rs = ( opcode & THUMB_ADDSUB_RS ) >> THUMB_ADDSUB_RS_SHIFT;
+							rd = ( opcode & THUMB_ADDSUB_RD ) >> THUMB_ADDSUB_RD_SHIFT;
+							pBuf += sprintf( pBuf, "ADD R%d, R%d, #%d", rd, rs, imm );
+							break;
+						case 0x3: /* SUB Rd, Rs, #imm */
+							imm = ( opcode & THUMB_ADDSUB_RNIMM ) >> THUMB_ADDSUB_RNIMM_SHIFT;
+							rs = ( opcode & THUMB_ADDSUB_RS ) >> THUMB_ADDSUB_RS_SHIFT;
+							rd = ( opcode & THUMB_ADDSUB_RD ) >> THUMB_ADDSUB_RD_SHIFT;
+							pBuf += sprintf( pBuf, "(case1 0x3)SUB R%d, R%d, #%d", rd, rs, imm );
+							break;
+						default:
+							sprintf( pBuf, "INVALID %04x", opcode);
+							break;
+					}
+				}
+				else
+				{
+					rs = ( opcode & THUMB_ADDSUB_RS ) >> THUMB_ADDSUB_RS_SHIFT;
+					rd = ( opcode & THUMB_ADDSUB_RD ) >> THUMB_ADDSUB_RD_SHIFT;
+					offs = ( opcode & THUMB_SHIFT_AMT ) >> THUMB_SHIFT_AMT_SHIFT;
+					pBuf += sprintf( pBuf, "ASR R%d, R%d, %d", rd, rs, offs);
+				}
+				break;
+			case 0x2: /* CMP / MOV */
+				if( opcode & THUMB_INSN_CMP )
+				{
+					rn = ( opcode & THUMB_INSN_IMM_RD ) >> THUMB_INSN_IMM_RD_SHIFT;
+					op2 = ( opcode & THUMB_INSN_IMM );
+					pBuf += sprintf( pBuf, "CMP R%d, %02x", rn, op2 );
+				}
+				else
+				{
+					rd = ( opcode & THUMB_INSN_IMM_RD ) >> THUMB_INSN_IMM_RD_SHIFT;
+					op2 = ( opcode & THUMB_INSN_IMM );
+					pBuf += sprintf( pBuf, "MOV R%d, %02x", rd, op2 );
+				}
+				break;
+			case 0x3: /* ADD/SUB immediate */
+				if( opcode & THUMB_INSN_SUB ) /* SUB Rd, #Offset8 */
+				{
+					rn = ( opcode & THUMB_INSN_IMM_RD ) >> THUMB_INSN_IMM_RD_SHIFT;
+					op2 = ( opcode & THUMB_INSN_IMM );
+					pBuf += sprintf( pBuf, "SUB R%d, %02x", rn, op2 ); // fixed, rd -> rn
+				}
+				else /* ADD Rd, #Offset8 */
+				{
+					rn = ( opcode & THUMB_INSN_IMM_RD ) >> THUMB_INSN_IMM_RD_SHIFT;
+					op2 = opcode & THUMB_INSN_IMM;
+					pBuf += sprintf( pBuf, "ADD R%d, %02x", rn, op2 );
+				}
+				break;
+			case 0x4: /* Rd & Rm instructions */
+				switch( ( opcode & THUMB_GROUP4_TYPE ) >> THUMB_GROUP4_TYPE_SHIFT )
+				{
+					case 0x0:
+						switch( ( opcode & THUMB_ALUOP_TYPE ) >> THUMB_ALUOP_TYPE_SHIFT )
+						{
+							case 0x1: /* EOR Rd, Rs */
+								rs = ( opcode & THUMB_ADDSUB_RS ) >> THUMB_ADDSUB_RS_SHIFT;
+								rd = ( opcode & THUMB_ADDSUB_RD ) >> THUMB_ADDSUB_RD_SHIFT;
+								pBuf += sprintf( pBuf, "EOR R%d, R%d", rd, rs );
+								break;
+							case 0x7: /* ROR Rd, Rs */
+								rs = ( opcode & THUMB_ADDSUB_RS ) >> THUMB_ADDSUB_RS_SHIFT;
+								rd = ( opcode & THUMB_ADDSUB_RD ) >> THUMB_ADDSUB_RD_SHIFT;
+								pBuf += sprintf( pBuf, "TST R%d, R%d", rd, rs );
+								break;
+							case 0x8: /* TST Rd, Rs */
+								rs = ( opcode & THUMB_ADDSUB_RS ) >> THUMB_ADDSUB_RS_SHIFT;
+								rd = ( opcode & THUMB_ADDSUB_RD ) >> THUMB_ADDSUB_RD_SHIFT;
+								pBuf += sprintf( pBuf, "TST R%d, R%d", rd, rs );
+								break;
+							case 0xa: /* CMP Rd, Rs */
+								rs = ( opcode & THUMB_ADDSUB_RS ) >> THUMB_ADDSUB_RS_SHIFT;
+								rd = ( opcode & THUMB_ADDSUB_RD ) >> THUMB_ADDSUB_RD_SHIFT;
+								pBuf += sprintf( pBuf, "CMP R%d, R%d", rd, rs );
+								break;
+							case 0xc: /* ORR Rd, Rs */
+								rs = ( opcode & THUMB_ADDSUB_RS ) >> THUMB_ADDSUB_RS_SHIFT;
+								rd = ( opcode & THUMB_ADDSUB_RD ) >> THUMB_ADDSUB_RD_SHIFT;
+								pBuf += sprintf( pBuf, "ORR R%d, R%d", rd, rs );
+								break;
+							case 0xd: /* MUL Rd, Rs */
+								rs = ( opcode & THUMB_ADDSUB_RS ) >> THUMB_ADDSUB_RS_SHIFT;
+								rd = ( opcode & THUMB_ADDSUB_RD ) >> THUMB_ADDSUB_RD_SHIFT;
+								pBuf += sprintf( pBuf, "MUL R%d, R%d", rd, rs );
+								break;
+							case 0xf: /* MVN Rd, Rs */
+								rs = ( opcode & THUMB_ADDSUB_RS ) >> THUMB_ADDSUB_RS_SHIFT;
+								rd = ( opcode & THUMB_ADDSUB_RD ) >> THUMB_ADDSUB_RD_SHIFT;
+								pBuf += sprintf( pBuf, "MVN R%d, R%d", rd, rs );
+								break;
+							default:
+								sprintf( pBuf, "INVALID %04x", opcode);
+								break;
+						}
+						break;
+					case 0x1:
+						switch( ( opcode & THUMB_HIREG_OP ) >> THUMB_HIREG_OP_SHIFT )
+						{
+							case 0x0: /* ADD Rd, Rs */
+								rs = ( opcode & THUMB_HIREG_RS ) >> THUMB_HIREG_RS_SHIFT;
+								rd = opcode & THUMB_HIREG_RD;
+								switch( ( opcode & THUMB_HIREG_H ) >> THUMB_HIREG_H_SHIFT )
+								{
+									case 0x2: /* ADD HRd, Rs */
+										pBuf += sprintf( pBuf, "ADD R%d, R%d", rd + 8, rs );
+										break;
+									default:
+										sprintf( pBuf, "INVALID %04x", opcode);
+										break;
+								}
+								break;
+							case 0x1: /* CMP */
+								switch( ( opcode & THUMB_HIREG_H ) >> THUMB_HIREG_H_SHIFT )
+								{
+									case 0x1: /* CMP Rd, HRs */
+										rs = ( opcode & THUMB_HIREG_RS ) >> THUMB_HIREG_RS_SHIFT;
+										rd = opcode & THUMB_HIREG_RD;
+										pBuf += sprintf( pBuf, "CMP R%d, R%d", rd, rs + 8 );
+										break;
+									default:
+										sprintf( pBuf, "INVALID %04x", opcode);
+										break;
+								}
+								break;
+							case 0x2: /* MOV */
+								switch( ( opcode & THUMB_HIREG_H ) >> THUMB_HIREG_H_SHIFT )
+								{
+									case 0x1:
+										rs = ( opcode & THUMB_HIREG_RS ) >> THUMB_HIREG_RS_SHIFT;
+										rd = opcode & THUMB_HIREG_RD;
+										pBuf += sprintf( pBuf, "MOV R%d, R%d", rd, rs + 8 );
+										break;
+									case 0x2:
+										rs = ( opcode & THUMB_HIREG_RS ) >> THUMB_HIREG_RS_SHIFT;
+										rd = opcode & THUMB_HIREG_RD;
+										pBuf += sprintf( pBuf, "MOV R%d, R%d", rd + 8, rs );
+										break;
+									default:
+										sprintf( pBuf, "INVALID %04x", opcode);
+										break;
+								}
+								break;
+							case 0x3:
+								switch( ( opcode & THUMB_HIREG_H ) >> THUMB_HIREG_H_SHIFT )
+								{
+									case 0x0:
+										rd = ( opcode & THUMB_HIREG_RS ) >> THUMB_HIREG_RS_SHIFT;
+										pBuf += sprintf( pBuf, "BX R%d", rd );
+										break;
+									case 0x1:
+										rd = ( ( opcode & THUMB_HIREG_RS ) >> THUMB_HIREG_RS_SHIFT ) + 8;
+										pBuf += sprintf( pBuf, "BX R%d", rd );
+										break;
+									default:
+										sprintf( pBuf, "INVALID %04x", opcode);
+										break;
+								}
+								break;
+							default:
+								sprintf( pBuf, "INVALID %04x", opcode);
+								break;
+						}
+						break;
+					case 0x2:
+					case 0x3:
+						rd = ( opcode & THUMB_INSN_IMM_RD ) >> THUMB_INSN_IMM_RD_SHIFT;
+						addr = ( opcode & THUMB_INSN_IMM ) << 2;
+						pBuf += sprintf( pBuf, "LDR R%d, [PC, #%03x]", rd, addr );
+						break;
+					default:
+						sprintf( pBuf, "INVALID %04x", opcode);
+						break;
+				}
+				break;
+			case 0x5: /* LDR* STR* */
+				switch( ( opcode & THUMB_GROUP5_TYPE ) >> THUMB_GROUP5_TYPE_SHIFT )
+				{
+					case 0x0: /* STR Rd, [Rn, Rm] */
+						rm = ( opcode & THUMB_GROUP5_RM ) >> THUMB_GROUP5_RM_SHIFT;
+						rn = ( opcode & THUMB_GROUP5_RN ) >> THUMB_GROUP5_RN_SHIFT;
+						rd = ( opcode & THUMB_GROUP5_RD ) >> THUMB_GROUP5_RD_SHIFT;
+						pBuf += sprintf( pBuf, "STR R%d, [R%d, R%d]", rd, rn, rm );
+						break;
+					case 0x1: /* STRH Rd, [Rn, Rm] */
+						rm = ( opcode & THUMB_GROUP5_RM ) >> THUMB_GROUP5_RM_SHIFT;
+						rn = ( opcode & THUMB_GROUP5_RN ) >> THUMB_GROUP5_RN_SHIFT;
+						rd = ( opcode & THUMB_GROUP5_RD ) >> THUMB_GROUP5_RD_SHIFT;
+						pBuf += sprintf( pBuf, "STRH R%d, [R%d, R%d]", rd, rn, rm );
+						break;
+					case 0x2: /* STRB Rd, [Rn, Rm] */ /* check */
+						rm = ( opcode & THUMB_GROUP5_RM ) >> THUMB_GROUP5_RM_SHIFT;
+						rn = ( opcode & THUMB_GROUP5_RN ) >> THUMB_GROUP5_RN_SHIFT;
+						rd = ( opcode & THUMB_GROUP5_RD ) >> THUMB_GROUP5_RD_SHIFT;
+						pBuf += sprintf( pBuf, "STRB R%d, [R%d, R%d]", rd, rn, rm );
+						break;
+					case 0x4: /* LDR Rd, [Rn, Rm] */ /* check */
+						rm = ( opcode & THUMB_GROUP5_RM ) >> THUMB_GROUP5_RM_SHIFT;
+						rn = ( opcode & THUMB_GROUP5_RN ) >> THUMB_GROUP5_RN_SHIFT;
+						rd = ( opcode & THUMB_GROUP5_RD ) >> THUMB_GROUP5_RD_SHIFT;
+						pBuf += sprintf( pBuf, "LDR R%d, [R%d, R%d]", rd, rn, rm );
+						break;
+					case 0x5: /* LDRH Rd, [Rn, Rm] */
+						rm = ( opcode & THUMB_GROUP5_RM ) >> THUMB_GROUP5_RM_SHIFT;
+						rn = ( opcode & THUMB_GROUP5_RN ) >> THUMB_GROUP5_RN_SHIFT;
+						rd = ( opcode & THUMB_GROUP5_RD ) >> THUMB_GROUP5_RD_SHIFT;
+						pBuf += sprintf( pBuf, "LDRH R%d, [R%d, R%d]", rd, rn, rm );
+						break;
+
+					case 0x6: /* LDRB Rd, [Rn, Rm] */
+						rm = ( opcode & THUMB_GROUP5_RM ) >> THUMB_GROUP5_RM_SHIFT;
+						rn = ( opcode & THUMB_GROUP5_RN ) >> THUMB_GROUP5_RN_SHIFT;
+						rd = ( opcode & THUMB_GROUP5_RD ) >> THUMB_GROUP5_RD_SHIFT;
+						pBuf += sprintf( pBuf, "LDRB R%d, [R%d, R%d]", rd, rn, rm );
+						break;
+					case 0x7: /* LDSH Rd, [Rn, Rm] */
+						rm = ( opcode & THUMB_GROUP5_RM ) >> THUMB_GROUP5_RM_SHIFT;
+						rn = ( opcode & THUMB_GROUP5_RN ) >> THUMB_GROUP5_RN_SHIFT;
+						rd = ( opcode & THUMB_GROUP5_RD ) >> THUMB_GROUP5_RD_SHIFT;
+						pBuf += sprintf( pBuf, "LDSH R%d, [R%d, R%d]", rd, rn, rm );
+						break;
+					default:
+						sprintf( pBuf, "INVALID %04x", opcode);
+						break;
+				}
+				break;
+			case 0x6: /* Word Store w/ Immediate Offset */
+				if( opcode & THUMB_LSOP_L ) /* Load */
+				{
+					rn = ( opcode & THUMB_ADDSUB_RS ) >> THUMB_ADDSUB_RS_SHIFT;
+					rd = opcode & THUMB_ADDSUB_RD;
+					offs = ( ( opcode & THUMB_LSOP_OFFS ) >> THUMB_LSOP_OFFS_SHIFT ) << 2;
+					pBuf += sprintf( pBuf, "LDR R%d [R%d + #%02x]", rd, rn, offs );
+				}
+				else /* Store */
+				{
+					rn = ( opcode & THUMB_ADDSUB_RS ) >> THUMB_ADDSUB_RS_SHIFT;
+					rd = opcode & THUMB_ADDSUB_RD;
+					offs = ( ( opcode & THUMB_LSOP_OFFS ) >> THUMB_LSOP_OFFS_SHIFT ) << 2;
+					pBuf += sprintf( pBuf, "STR R%d, [R%d + #%02x] ", rd, rn, offs );
+				}
+				break;
+			case 0x7: /* Byte Store w/ Immeidate Offset */
+				if( opcode & THUMB_LSOP_L ) /* Load */
+				{
+					rn = ( opcode & THUMB_ADDSUB_RS ) >> THUMB_ADDSUB_RS_SHIFT;
+					rd = opcode & THUMB_ADDSUB_RD;
+					offs = ( opcode & THUMB_LSOP_OFFS ) >> THUMB_LSOP_OFFS_SHIFT;
+					pBuf += sprintf( pBuf, "LDRB R%d, [R%d + #%02x]", rd, rn, offs );
+				}
+				else /* Store */
+				{
+					rn = ( opcode & THUMB_ADDSUB_RS ) >> THUMB_ADDSUB_RS_SHIFT;
+					rd = opcode & THUMB_ADDSUB_RD;
+					offs = ( opcode & THUMB_LSOP_OFFS ) >> THUMB_LSOP_OFFS_SHIFT;
+					pBuf += sprintf( pBuf, "STRB R%d, [R%d + #%02x] ", rd, rn, offs );
+				}
+				break;
+			case 0x8: /* Load/Store Halfword */
+				if( opcode & THUMB_HALFOP_L ) /* Load */
+				{
+					imm = ( opcode & THUMB_HALFOP_OFFS ) >> THUMB_HALFOP_OFFS_SHIFT;
+					rs = ( opcode & THUMB_ADDSUB_RS ) >> THUMB_ADDSUB_RS_SHIFT;
+					rd = ( opcode & THUMB_ADDSUB_RD ) >> THUMB_ADDSUB_RD_SHIFT;
+					pBuf += sprintf( pBuf, "LDRH R%d, [R%d, #%03x]", rd, rs, imm << 1 );
+				}
+				else /* Store */
+				{
+					imm = ( opcode & THUMB_HALFOP_OFFS ) >> THUMB_HALFOP_OFFS_SHIFT;
+					rs = ( opcode & THUMB_ADDSUB_RS ) >> THUMB_ADDSUB_RS_SHIFT;
+					rd = ( opcode & THUMB_ADDSUB_RD ) >> THUMB_ADDSUB_RD_SHIFT;
+					pBuf += sprintf( pBuf, "STRH R%d, [R%d, #%03x]", rd, rs, imm << 1 );
+				}
+				break;
+			case 0x9: /* Stack-Relative Load/Store */
+				if( opcode & THUMB_STACKOP_L )
+				{
+					rd = ( opcode & THUMB_STACKOP_RD ) >> THUMB_STACKOP_RD_SHIFT;
+					offs = (INT8)( opcode & THUMB_INSN_IMM );
+					pBuf += sprintf( pBuf, "LDR R%d, [SP, #%03x]", rd, offs << 2 );
+				}
+				else
+				{
+					rd = ( opcode & THUMB_STACKOP_RD ) >> THUMB_STACKOP_RD_SHIFT;
+					offs = (INT8)( opcode & THUMB_INSN_IMM );
+					pBuf += sprintf( pBuf, "STR R%d, [SP, #%03x]", rd, offs << 2 );
+				}
+				break;
+			case 0xa: /* Get relative address */
+				if( opcode & THUMB_RELADDR_SP ) /* ADD Rd, SP, #nn */
+				{
+					rd = ( opcode & THUMB_RELADDR_RD ) >> THUMB_RELADDR_RD_SHIFT;
+					offs = (UINT8)( opcode & THUMB_INSN_IMM ) << 2;
+					pBuf += sprintf( pBuf, "ADD R%d, SP, #%03x", rd, offs );
+				}
+				else /* ADD Rd, PC, #nn */
+				{
+					rd = ( opcode & THUMB_RELADDR_RD ) >> THUMB_RELADDR_RD_SHIFT;
+					offs = (UINT8)( opcode & THUMB_INSN_IMM ) << 2;
+					pBuf += sprintf( pBuf, "ADD R%d, PC, #%03x", rd, offs );
+				}
+				break;
+			case 0xb: /* Stack-Related Opcodes */
+				switch( ( opcode & THUMB_STACKOP_TYPE ) >> THUMB_STACKOP_TYPE_SHIFT )
+				{
+					case 0x0: /* ADD SP, #imm */
+						addr = ( opcode & THUMB_INSN_IMM );
+						addr &= ~THUMB_INSN_IMM_S;
+						pBuf += sprintf( pBuf, "ADD SP, #");
+						if( opcode & THUMB_INSN_IMM_S )
+						{
+							pBuf += sprintf( pBuf, "-");
+						}
+						pBuf += sprintf( pBuf, "%03x", addr << 2);
+						break;
+					case 0x5: /* PUSH {Rlist}{LR} */
+						pBuf += sprintf( pBuf, "PUSH {LR, ");
+						for( offs = 7; offs >= 0; offs-- )
+						{
+							if( opcode & ( 1 << offs ) )
+							{
+								pBuf += sprintf( pBuf, "R%d, ", offs);
+							}
+						}
+						pBuf += sprintf( pBuf, "}");
+						break;
+					case 0x4: /* PUSH {Rlist} */
+						pBuf += sprintf( pBuf, "PUSH {");
+						for( offs = 7; offs >= 0; offs-- )
+						{
+							if( opcode & ( 1 << offs ) )
+							{
+								pBuf += sprintf( pBuf, "R%d, ", offs);
+							}
+						}
+						pBuf += sprintf( pBuf, "}");
+						break;
+					case 0xc: /* POP {Rlist} */
+						pBuf += sprintf( pBuf, "POP {");
+						for( offs = 0; offs < 8; offs++ )
+						{
+							if( opcode & ( 1 << offs ) )
+							{
+								pBuf += sprintf( pBuf, "R%d, ", offs);
+							}
+						}
+						pBuf += sprintf( pBuf, "}");
+						break;
+					case 0xd: /* POP {Rlist}{PC} */
+						pBuf += sprintf( pBuf, "POP {");
+						for( offs = 0; offs < 8; offs++ )
+						{
+							if( opcode & ( 1 << offs ) )
+							{
+								pBuf += sprintf( pBuf, "R%d, ", offs);
+							}
+						}
+						pBuf += sprintf( pBuf, "PC}");
+						break;
+					default:
+						sprintf( pBuf, "INVALID %04x", opcode);
+						break;
+				}
+				break;
+			case 0xc: /* Multiple Load/Store */
+				if( opcode & THUMB_MULTLS ) /* Load */
+				{
+					rd = ( opcode & THUMB_MULTLS_BASE ) >> THUMB_MULTLS_BASE_SHIFT;
+					pBuf += sprintf( pBuf, "LDMIA R%d!,{", rd);
+					for( offs = 0; offs < 8; offs++ )
+					{
+						if( opcode & ( 1 << offs ) )
+						{
+							pBuf += sprintf( pBuf, "R%d, ", offs);
+						}
+					}
+					pBuf += sprintf( pBuf, "}");
+				}
+				else /* Store */
+				{
+					rd = ( opcode & THUMB_MULTLS_BASE ) >> THUMB_MULTLS_BASE_SHIFT;
+					pBuf += sprintf( pBuf, "STMIA R%d!,{", rd);
+					for( offs = 7; offs >= 0; offs-- )
+					{
+						if( opcode & ( 1 << offs ) )
+						{
+							pBuf += sprintf( pBuf, "R%d, ", offs);
+						}
+					}
+					pBuf += sprintf( pBuf, "}");
+				}
+				break;
+			case 0xd: /* Conditional Branch */
+				offs = (INT8)( opcode & THUMB_INSN_IMM );
+				switch( ( opcode & THUMB_COND_TYPE ) >> THUMB_COND_TYPE_SHIFT )
+				{
+					case COND_EQ:
+						pBuf += sprintf( pBuf, "BEQ %08x (%02x)", pc + 4 + (offs << 1), offs << 1);
+						break;
+					case COND_NE:
+						pBuf += sprintf( pBuf, "BNE %08x (%02x)", pc + 4 + (offs << 1), offs << 1);
+						break;
+					case COND_CS:
+						pBuf += sprintf( pBuf, "BCS %08x (%02x)", pc + 4 + (offs << 1), offs << 1);
+						break;
+					case COND_CC:
+						pBuf += sprintf( pBuf, "BCC %08x (%02x)", pc + 4 + (offs << 1), offs << 1);
+						break;
+					case COND_MI:
+						pBuf += sprintf( pBuf, "BMI %08x (%02x)", pc + 4 + (offs << 1), offs << 1);
+						break;
+					case COND_PL:
+						pBuf += sprintf( pBuf, "BPL %08x (%02x)", pc + 4 + (offs << 1), offs << 1);
+						break;
+					case COND_VS:
+						pBuf += sprintf( pBuf, "BVS %08x (%02x)", pc + 4 + (offs << 1), offs << 1);
+						break;
+					case COND_VC:
+						pBuf += sprintf( pBuf, "BVC %08x (%02x)", pc + 4 + (offs << 1), offs << 1);
+						break;
+					case COND_HI:
+						pBuf += sprintf( pBuf, "BHI %08x (%02x)", pc + 4 + (offs << 1), offs << 1);
+						break;
+					case COND_LS:
+						pBuf += sprintf( pBuf, "BLS %08x (%02x)", pc + 4 + (offs << 1), offs << 1);
+						break;
+					case COND_GE:
+						pBuf += sprintf( pBuf, "BGE %08x (%02x)", pc + 4 + (offs << 1), offs << 1);
+						break;
+					case COND_LT:
+						pBuf += sprintf( pBuf, "BLT %08x (%02x)", pc + 4 + (offs << 1), offs << 1);
+						break;
+					case COND_GT:
+						pBuf += sprintf( pBuf, "BGT %08x (%02x)", pc + 4 + (offs << 1), offs << 1);
+						break;
+					case COND_LE:
+						pBuf += sprintf( pBuf, "BLE %08x (%02x)", pc + 4 + (offs << 1), offs << 1);
+						break;
+					case COND_AL:
+						pBuf += sprintf( pBuf, "BAL %08x (%02x)", pc + 4 + (offs << 1), offs << 1);
+						break;
+					case COND_NV:
+						pBuf += sprintf( pBuf, "BNV %08x (%02x)", pc + 4 + (offs << 1), offs << 1);
+						break;
+				}
+				break;
+			case 0xe: /* B #offs */
+				offs = ( opcode & THUMB_BRANCH_OFFS ) << 1;
+				if( offs & 0x00000800 )
+				{
+					offs |= 0xfffff800;
+				}
+				pBuf += sprintf( pBuf, "B #%08x (%08x)", offs, pc + 4 + offs);
+				break;
+			case 0xf: /* BL */
+				if( opcode & THUMB_BLOP_LO )
+				{
+					pBuf += sprintf( pBuf, "BL (LO) %04x", ( opcode & THUMB_BLOP_OFFS ) << 1 );
+				}
+				else
+				{
+					addr = ( opcode & THUMB_BLOP_OFFS ) << 12;
+					if( addr & ( 1 << 22 ) )
+					{
+						addr |= 0xff800000;
+					}
+					pBuf += sprintf( pBuf, "BL (HI) %04x", ( opcode & THUMB_BLOP_OFFS ) << 12 );
+				}
+				break;
+			default:
+				sprintf( pBuf, "INVALID %04x", opcode);
+				break;
+		}
+}

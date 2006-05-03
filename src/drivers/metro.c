@@ -4580,12 +4580,12 @@ static DRIVER_INIT( metro )
 
 static DRIVER_INIT( karatour )
 {
-	UINT16 *RAM = (UINT16 *) memory_region( REGION_USER1 );
+	UINT16 *RAM = (UINT16 *)auto_malloc(0x20000*3);
 int i;
 	metro_vram_0 = RAM + (0x20000/2) * 0;
 	metro_vram_1 = RAM + (0x20000/2) * 1;
 	metro_vram_2 = RAM + (0x20000/2) * 2;
-for (i = 0;i < memory_region_length(REGION_USER1)/2;i++)
+for (i = 0;i < (0x20000*3)/2;i++)
 	RAM[i] = rand();
 
 	init_metro();
@@ -5107,9 +5107,6 @@ ROM_START( karatour )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "kt008.1d", 0x000000, 0x040000, CRC(47cf9fa1) SHA1(88923ace550154c58c066f859cadfa7864c5344c) )
-
-	/* Additional memory for the layers' ram */
-	ROM_REGION( 0x20000*3, REGION_USER1, 0 )
 ROM_END
 
 
@@ -5158,9 +5155,6 @@ ROM_START( ladykill )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "e8.bin",   0x000000, 0x040000, CRC(da88244d) SHA1(90c0cc275b69afffd9a0126985fd3fe16d44dced) )
-
-	/* Additional memory for the layers' ram */
-	ROM_REGION( 0x20000*3, REGION_USER1, 0 )
 ROM_END
 
 ROM_START( moegonta )
@@ -5180,9 +5174,6 @@ ROM_START( moegonta )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "e8j.1d",   0x000000, 0x040000, CRC(f66c2a80) SHA1(d95ddc8fe4144a6ad4a92385ff962d0b9391d53b) )
-
-	/* Additional memory for the layers' ram */
-	ROM_REGION( 0x20000*3, REGION_USER1, 0 )
 ROM_END
 
 
@@ -5658,9 +5649,6 @@ ROM_START( 3kokushi )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "7.bin",       0x000000, 0x040000, CRC(78fe9d44) SHA1(365a2d51daa24741957fa619bbbbf96e8f370701) )
-
-	/* Additional memory for the layers' ram */
-	ROM_REGION( 0x20000*3, REGION_USER1, 0 )
 ROM_END
 
 

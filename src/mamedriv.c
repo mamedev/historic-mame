@@ -1581,6 +1581,7 @@ const game_driver * const drivers[] =
 	DRIVER( arkbloc2 )	/* bootleg */
 	DRIVER( arkangc )	/* bootleg */
 	DRIVER( arkatour )	/* ??? (c) 1987 Taito America Corporation + Romstar license (US) */
+	DRIVER( tetrsark )	/* ??? (c) D.R.Korea */
 	DRIVER( sqix )		/* B03 1987 */
 	DRIVER( sqixa )		/* B03 1987 */
 	DRIVER( sqixbl )	/* bootleg? but (c) 1987 */
@@ -1980,6 +1981,7 @@ const game_driver * const drivers[] =
 	DRIVER( ghox )		/* TP-021 (c) 1991 Toaplan */
 	DRIVER( dogyuun )	/* TP-022 (c) 1992 Toaplan */
 	DRIVER( kbash )		/* TP-023 (c) 1993 Toaplan */
+	DRIVER( kbash2 )	/* bootleg */
 	DRIVER( truxton2 )	/* TP-024 (c) 1992 Toaplan */
 	DRIVER( pipibibs )	/* TP-025 */
 	DRIVER( whoopee )	/* TP-025 */
@@ -3931,6 +3933,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( hvysmsh )	/* MBG */
 	DRIVER( nslasher )	/* MBH (c) 1993 Data East Corporation */
 	DRIVER( nslashej )	/* MBH (c) 1993 Data East Corporation (Japan)*/
+	DRIVER( nslashes )	/* MBH (c) 1993 Data East Corporation (Japan)*/
 				/* MBI ?? */
 				/* MBJ ?? */
 				/* MBK ?? */
@@ -5091,7 +5094,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( gowcaizr )	/* 0094 (c) 1995 Technos */
 	DRIVER( rbff1 )		/* 0095 (c) 1995 SNK */
 	DRIVER( aof3 )		/* 0096 (c) 1996 SNK */
-	DRIVER( aof3k )		/* Korean hack of aof3 */
+	DRIVER( aof3k )		/* Censored Korean release of rbff2 */
 	DRIVER( sonicwi3 )	/* 0097 (c) 1995 Video System Co. */
 				/* 0098 Idol Mahjong - final romance 2 (CD only? not confirmed, MVS might exist) */
 				/* 0099 Neo Pool Masters */
@@ -5136,7 +5139,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( magdrop3 )	/* 0233 (c) 1997 Data East Corporation */
 	DRIVER( lastblad )	/* 0234 (c) 1997 SNK */
 	DRIVER( lastblda )	/* 0234 (c) 1997 SNK */
-	DRIVER( lastsold )	/* Korean hack of lastblad */
+	DRIVER( lastsold )	/* Censored Korean release of rbff2 */
 	DRIVER( puzzldpr )	/* 0235 (c) 1997 Taito (Visco license) */
 	DRIVER( irrmaze )	/* 0236 (c) 1997 SNK / Saurus */
 	DRIVER( popbounc )	/* 0237 (c) 1997 Video System Co. */
@@ -5145,7 +5148,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( blazstar )	/* 0239 (c) 1998 Yumekobo */
 	DRIVER( rbff2 )		/* 0240 (c) 1998 SNK */
 	DRIVER( rbff2a )	/* 0240 (c) 1998 SNK */
-	DRIVER( rbff2k )	/* Korean hack of rbff2 */
+	DRIVER( rbff2k )	/* Censored Korean release of rbff2 */
 	DRIVER( mslug2 )	/* 0241 (c) 1998 SNK */
 	DRIVER( kof98 )		/* 0242 (c) 1998 SNK */
 	DRIVER( kof98k )	/* 0242 (c) 1998 SNK */
@@ -5172,6 +5175,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( preisle2 )	/* 0255 (c) 1999 Yumekobo */
 	DRIVER( mslug3 )	/* 0256 (c) 2000 SNK */
 	DRIVER( mslug3n )	/* 0256 (c) 2000 SNK */
+	DRIVER( mslug3b6 )	/* bootleg */
 	DRIVER( kof2000 )	/* 0257 (c) 2000 SNK */
 	DRIVER( kof2000n )	/* 0257 (c) 2000 SNK */
 				/* 0258 SNK vs. Capcom? */
@@ -5196,9 +5200,11 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( kof2k4se )	/* bootleg of kof2002 */
 	DRIVER( matrim )	/* 0266 (c) 2002 Atlus */
 	DRIVER( pnyaa )		/* 0267 (c) 2003 Aiky / Taito */
+	DRIVER( ms5pcb )	/* 0268 (c) 2003 Playmore */
 	DRIVER( mslug5 )	/* 0268 (c) 2003 Playmore */
 	DRIVER( ms5plus )	/* bootleg */
 	DRIVER( svcpcb )	/* 0269 (c) 2003 Playmore / Capcom - JAMMA PCB */
+	DRIVER( svcpcba )	/* 0269 (c) 2003 Playmore / Capcom - JAMMA PCB */
 	DRIVER( svc )		/* 0269 (c) 2003 Playmore / Capcom */
 	DRIVER( svcboot )	/* bootleg */
 	DRIVER( svcplus )	/* bootleg */
@@ -5308,6 +5314,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( ddragon )	/* TA-0021 (c) 1987 */
 	DRIVER( ddragonu )	/* TA-0021 (c) 1987 Taito America */
 	DRIVER( ddragonw )	/* TA-0021 (c) 1987 Taito */
+	DRIVER( ddragnw1 )	/* TA-0021 (c) 1987 Taito */
 	DRIVER( ddragonb )	/* bootleg */
 	DRIVER( spdodgeb )	/* TA-0022 (c) 1987 */
 	DRIVER( nkdodgeb )	/* TA-0022 (c) 1987 (Japan) */
@@ -5948,7 +5955,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( percuss )	/* (c) 1981 Orca */
 	DRIVER( bounty )	/* (c) 1982 Orca */
 	DRIVER( espial )	/* (c) 1983 Thunderbolt, Orca logo is hidden in title screen */
-	DRIVER( espiale )	/* (c) 1983 Thunderbolt, Orca logo is hidden in title screen */
+	DRIVER( espialu )	/* (c) 1983 Thunderbolt, Orca logo is hidden in title screen */
 	DRIVER( netwars )	/* (c) 1983 Orca + Esco Trading Co license */
 	/* Vastar was made by Orca, but when it was finished, Orca had already bankrupted. */
 	/* So they sold this game as "Made by Sesame Japan" because they couldn't use */
@@ -6578,6 +6585,7 @@ Other Sun games
 	DRIVER( theglad )	/* (c) 2001 */
 	DRIVER( dmnfrnt )	/* (c) 2002 */
 	DRIVER( dmnfrnta )	/* (c) 2002 */
+	DRIVER( ddp3 )		/* (c) 2002 */
 
 	/* RamTek games */
 	DRIVER( hitme )		/* (c) 1976 Ramtek */

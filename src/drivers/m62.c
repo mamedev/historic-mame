@@ -1180,11 +1180,11 @@ INPUT_PORTS_START( horizon )
 	PORT_DIPSETTING(    0x03, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
-	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x00, "100 80000" )
-	PORT_DIPSETTING(    0x0c, "40000 120000" )
-	PORT_DIPSETTING(    0x08, "60000 140000" )
-	PORT_DIPSETTING(    0x04, "80000 160000" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) ) // as per the service mode
+	PORT_DIPSETTING(    0x00, "100 and 80k" ) // this one is blank but verified manually
+	PORT_DIPSETTING(    0x0c, "40k and every 80k" )
+	PORT_DIPSETTING(    0x08, "60k and every 100k" )
+	PORT_DIPSETTING(    0x04, "80k and every 120k" )
 	COINAGE3_DSW
 
 	PORT_START_TAG("DSW2")

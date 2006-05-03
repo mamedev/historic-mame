@@ -155,7 +155,15 @@ static void arm7_set_context(void *src)
 static offs_t arm7_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
-    arm7_disasm( buffer, pc, READ32(pc));
+	if( T_IS_SET(GET_CPSR) )
+	{
+		thumb_disasm( buffer, pc, READ16(pc));
+		return 2;
+	}
+	else
+	{
+    	arm7_disasm( buffer, pc, READ32(pc));
+	}
     return 4;
 #else
     sprintf(buffer, "$%08x", READ32(pc));

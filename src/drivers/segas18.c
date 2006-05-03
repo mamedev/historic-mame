@@ -1927,9 +1927,7 @@ ROM_START( mwalk )
 	ROM_LOAD( "mpr13249.b6", 0x190000, 0x40000, CRC(623edc5d) SHA1(c32d9f818d40f311877fbe6532d9e95b6045c3c4) )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* protection MCU */
-	/* extra byte on the end is security info put there by the eprom reader software.... */
-	/* not verified if mcu is the same on the other sets.. */
-	ROM_LOAD( "315-5437.bin", 0x00000, 0x1001,  CRC(3e2aeb90) SHA1(f889a42cef9a8ddbfa888692b45b74c3cb8fa054) )
+	ROM_LOAD( "315-5437.ic4", 0x00000, 0x1000,  CRC(4bf63bc1) SHA1(2766ab30b466b079febb30c488adad9ea56813f7) )
 ROM_END
 
 /**************************************************************************************************************************
@@ -1967,7 +1965,7 @@ ROM_START( mwalku )
 	ROM_LOAD( "mpr13249.b6", 0x190000, 0x40000, CRC(623edc5d) SHA1(c32d9f818d40f311877fbe6532d9e95b6045c3c4) )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* protection MCU */
-	ROM_LOAD( "315-5437.bin", 0x00000, 0x1001, BAD_DUMP CRC(3e2aeb90) SHA1(f889a42cef9a8ddbfa888692b45b74c3cb8fa054) )
+	ROM_LOAD( "315-5437.ic4", 0x00000, 0x1000,  CRC(4bf63bc1) SHA1(2766ab30b466b079febb30c488adad9ea56813f7) )
 ROM_END
 
 /**************************************************************************************************************************
@@ -2005,9 +2003,8 @@ ROM_START( mwalkj )
 	ROM_LOAD( "mpr13249.b6", 0x190000, 0x40000, CRC(623edc5d) SHA1(c32d9f818d40f311877fbe6532d9e95b6045c3c4) )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )	/* protection MCU */
-	/* extra byte on the end is security info put there by the eprom reader software.... */
-	/* not verified if mcu is the same on the other sets.. */
-	ROM_LOAD( "315-5437.bin", 0x00000, 0x1001, BAD_DUMP CRC(3e2aeb90) SHA1(f889a42cef9a8ddbfa888692b45b74c3cb8fa054) )
+	/* not verified if mcu is the same as the other sets.. */
+	ROM_LOAD( "315-5437.ic4", 0x00000, 0x1000, BAD_DUMP CRC(4bf63bc1) SHA1(2766ab30b466b079febb30c488adad9ea56813f7) )
 ROM_END
 
 

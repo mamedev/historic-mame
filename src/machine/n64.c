@@ -790,7 +790,7 @@ WRITE32_HANDLER( n64_pi_reg_w )
 
 		case 0x08/4:		// PI_RD_LEN_REG
 		{
-			fatalerror("PI_RD_LEN_REG: %08X\n", data);
+			fatalerror("PI_RD_LEN_REG: %08X, %08X to %08X\n", data, pi_dram_addr, pi_cart_addr);
 			break;
 		}
 
@@ -867,102 +867,227 @@ WRITE32_HANDLER( n64_ri_reg_w )
 }
 
 // Serial Interface
-UINT32 pif_ram[0x40/4];
-UINT32 pif_cmd[0x40/4];
+UINT8 pif_ram[0x40];
+UINT8 pif_cmd[0x40];
 UINT32 si_dram_addr = 0;
 UINT32 si_pif_addr = 0;
 UINT32 si_status = 0;
 
-static void handle_pif(void)
+static int pif_channel_handle_command(int channel, int slength, UINT8 *sdata, int rlength, UINT8 *rdata)
 {
 	int i;
-	if ((pif_cmd[0xf] & 0xff) == 0x01)		// only handle the command if the last byte is 1
+	UINT8 command = sdata[0];
+
+	switch (command)
 	{
-		for (i=0; i < 5; i++)
+		case 0x00:		// Read status
 		{
-			UINT32 d1 = pif_cmd[(i*2) + 0];
-		//  UINT32 d2 = pif_cmd[(i*2) + 1];
-
-			UINT8 command = (d1 >> 24) & 0xff;
-			UINT8 bytes_to_send = (d1 >> 16) & 0xff;
-			UINT8 bytes_to_recv = (d1 >> 8) & 0xff;
-			UINT8 cmd_type = (d1 & 0xff);
-
-			if (command == 0xff)		// new command
+			if (slength != 1 || rlength != 3)
 			{
-				switch (cmd_type)
+				// osd_die("handle_pif: read status (bytes to send %d, bytes to receive %d)\n", bytes_to_send, bytes_to_recv);
+			}
+
+			switch (channel)
+			{
+				case 0:
 				{
-					case 0x00:		// read status
-					{
-						if (bytes_to_send != 1 || bytes_to_recv != 3)
-						{
-				//          osd_die("handle_pif: read status (bytes to send %d, bytes to receive %d)\n", bytes_to_send, bytes_to_recv);
-						}
-
-						if (i==0)
-						{
-							pif_ram[(i*2) + 1] &= 0x000000ff;
-							pif_ram[(i*2) + 1] |= 0x05000200;
-						}
-						else
-						{
-							// not connected
-							pif_ram[(i*2) + 0] |= 0x00008000;
-							pif_ram[(i*2) + 1] = 0xffffffff;
-						}
-
-						break;
-					}
-
-					case 0x01:		// read button values
-					{
-						UINT16 buttons = 0;
-						INT8 x = 0, y = 0;
-						if (bytes_to_send != 1 || bytes_to_recv != 4)
-						{
-							fatalerror("handle_pif: read button values (bytes to send %d, bytes to receive %d)\n", bytes_to_send, bytes_to_recv);
-						}
-
-						if (i==0)
-						{
-							buttons = readinputport((i*3) + 0);
-							x = readinputport((i*3) + 1) - 128;
-							y = readinputport((i*3) + 2) - 128;
-						}
-						pif_ram[(i*2) + 1] = (buttons << 16) | ((UINT8)(x) << 8) | (UINT8)(y);
-						break;
-					}
-
-					case 0xff:		// reset
-					{
-						break;
-					}
-
-					default:
-					{
-						printf("handle_pif: unknown/unimplemented command %02X\n", cmd_type);
-					}
+					rdata[0] = 0x05;
+					rdata[1] = 0x00;
+					rdata[2] = 0x01;
+					return 0;
+				}
+				case 1:
+				case 2:
+				case 3:
+				{
+					// not connected
+					return 1;
+				}
+				case 4:
+				{
+					rdata[0] = 0x00;
+					rdata[1] = 0x80;
+					rdata[2] = 0x00;
+					return 0;
+				}
+				case 5:
+				{
+					printf("EEPROM2? read status\n");
+					return 1;
 				}
 			}
-			else if (command == 0xfe)	// end of commands
-			{
-				return;
-			}
-			else if (command == 0x00)	// empty
-			{
 
+			break;
+		}
+
+		case 0x01:		// Read button values
+		{
+			UINT16 buttons = 0;
+			INT8 x = 0, y = 0;
+			if (slength != 1 || rlength != 4)
+			{
+				fatalerror("handle_pif: read button values (bytes to send %d, bytes to receive %d)\n", slength, rlength);
+			}
+
+			switch (channel)
+			{
+				case 0:
+				{
+					buttons = readinputport((channel*3) + 0);
+					x = readinputport((channel*3) + 1) - 128;
+					y = readinputport((channel*3) + 2) - 128;
+
+					rdata[0] = (buttons >> 8) & 0xff;
+					rdata[1] = (buttons >> 0) & 0xff;
+					rdata[2] = (UINT8)(x);
+					rdata[3] = (UINT8)(y);
+					return 0;
+				}
+				case 1:
+				case 2:
+				case 3:
+				{
+					// not connected
+					return 1;
+				}
+			}
+
+			break;
+		}
+
+		case 0x04:		// Read from EEPROM
+		{
+			return 0;
+		}
+
+		case 0x05:		// Write to EEPROM
+		{
+			UINT8 block_offset;
+
+			if (channel != 4)
+			{
+				fatalerror("Tried to write to EEPROM on channel %d\n", channel);
+			}
+
+			if (slength != 10 || rlength != 1)
+			{
+				fatalerror("handle_pif: write EEPROM (bytes to send %d, bytes to receive %d)\n", slength, rlength);
+			}
+
+			block_offset = sdata[1];
+			printf("Write EEPROM: offset %02X: ", block_offset);
+			for (i=0; i < 8; i++)
+			{
+				printf("%02X ", sdata[2+i]);
+			}
+			printf("\n");
+
+			rdata[0] = 0;
+
+			return 0;
+		}
+
+		case 0xff:		// reset
+		{
+			rdata[0] = 0xff;
+			rdata[1] = 0xff;
+			rdata[2] = 0xff;
+			return 0;
+		}
+
+		default:
+		{
+			printf("handle_pif: unknown/unimplemented command %02X\n", command);
+			return 1;
+		}
+	}
+	return 0;
+}
+
+static void handle_pif(void)
+{
+	int j;
+
+	/*{
+        int i;
+        for (i=0; i < 8; i++)
+        {
+            int j = i * 8;
+            printf("PIFCMD%d: %02X %02X %02X %02X %02X %02X %02X %02X\n", i, pif_cmd[j], pif_cmd[j+1], pif_cmd[j+2], pif_cmd[j+3], pif_cmd[j+4], pif_cmd[j+5], pif_cmd[j+6], pif_cmd[j+7]);
+        }
+        printf("\n");
+    }*/
+
+
+	if (pif_cmd[0x3f] == 0x1)		// only handle the command if the last byte is 1
+	{
+		int channel = 0;
+		int end = 0;
+		int cmd_ptr = 0;
+
+		while (cmd_ptr < 0x3f && !end)
+		{
+			UINT8 bytes_to_send;
+			UINT8 bytes_to_recv;
+
+			bytes_to_send = pif_cmd[cmd_ptr++];
+
+			if (bytes_to_send == 0xfe)
+			{
+				end = 1;
+			}
+			else if (bytes_to_send == 0xff)
+			{
+				// do nothing
 			}
 			else
 			{
-				printf("handle_pif: unknown command %02X\n", command);
+				if (bytes_to_send > 0 && (bytes_to_send & 0xc0) == 0)
+				{
+					int res;
+					UINT8 recv_buffer[0x40];
+					UINT8 send_buffer[0x40];
 
-				pif_ram[(i*2) + 0] |= 0x00008000;
-				pif_ram[(i*2) + 1] = 0xffffffff;
+					bytes_to_recv = pif_cmd[cmd_ptr++];
+
+					for (j=0; j < bytes_to_send; j++)
+					{
+						send_buffer[j] = pif_cmd[cmd_ptr++];
+					}
+
+					res = pif_channel_handle_command(channel, bytes_to_send, send_buffer, bytes_to_recv, recv_buffer);
+
+					if (res == 0)
+					{
+						for (j=0; j < bytes_to_recv; j++)
+						{
+							pif_ram[cmd_ptr++] = recv_buffer[j];
+						}
+					}
+					else if (res == 1)
+					{
+						pif_ram[cmd_ptr-2] |= 0x80;
+					}
+				}
+
+				channel++;
 			}
 		}
 
-		pif_ram[0xf] &= 0xffffff00;
+		pif_ram[0x3f] = 0;
 	}
+
+	/*
+    {
+        int i;
+        for (i=0; i < 8; i++)
+        {
+            int j = i * 8;
+            printf("PIFRAM%d: %02X %02X %02X %02X %02X %02X %02X %02X\n", i, pif_ram[j], pif_ram[j+1], pif_ram[j+2], pif_ram[j+3], pif_ram[j+4], pif_ram[j+5], pif_ram[j+6], pif_ram[j+7]);
+        }
+        printf("\n");
+    }
+    */
 }
 
 static void pif_dma(int direction)
@@ -978,11 +1103,14 @@ static void pif_dma(int direction)
 	if (direction)		// RDRAM -> PIF RAM
 	{
 		src = &rdram[(si_dram_addr & 0x1fffffff) / 4];
-		dst = pif_ram;
 
 		for (i=0; i < 64; i+=4)
 		{
-			*dst++ = *src++;
+			UINT32 d = *src++;
+			pif_ram[i+0] = (d >> 24) & 0xff;
+			pif_ram[i+1] = (d >> 16) & 0xff;
+			pif_ram[i+2] = (d >>  8) & 0xff;
+			pif_ram[i+3] = (d >>  0) & 0xff;
 		}
 
 		memcpy(pif_cmd, pif_ram, 0x40);
@@ -991,12 +1119,17 @@ static void pif_dma(int direction)
 	{
 		handle_pif();
 
-		src = pif_ram;
 		dst = &rdram[(si_dram_addr & 0x1fffffff) / 4];
 
 		for (i=0; i < 64; i+=4)
 		{
-			*dst++ = *src++;
+			UINT32 d = 0;
+			d |= pif_ram[i+0] << 24;
+			d |= pif_ram[i+1] << 16;
+			d |= pif_ram[i+2] <<  8;
+			d |= pif_ram[i+3] <<  0;
+
+			*dst++ = d;
 		}
 	}
 

@@ -2,6 +2,9 @@
 
  Espial hardware games
 
+Espial: The Orca logo is displayed, but looks to be "blacked out" via the
+        color proms by having 0x1c & 0x1d set to black.
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -177,7 +180,7 @@ INPUT_PORTS_START( espial )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 1C_6C ) )
 	PORT_DIPSETTING(    0x1c, DEF_STR( Free_Play ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Bonus_Life ) )	/* Sources on the net show 20K/50K & 40K/70K */
 	PORT_DIPSETTING(	0x00, "20k and every 70k" )
 	PORT_DIPSETTING(	0x20, "50k and every 100k" )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )
@@ -366,50 +369,50 @@ MACHINE_DRIVER_END
 
 ROM_START( espial )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "espial.3",     0x0000, 0x2000, CRC(10f1da30) SHA1(8954ca3c7fccb8dd8433015ee303bb75a98f3474) )
-	ROM_LOAD( "espial.4",     0x2000, 0x2000, CRC(d2adbe39) SHA1(13c6041fd0e7c49988af89e3bab1b20999336928) )
+	ROM_LOAD( "esp3.4f",      0x0000, 0x2000, CRC(0973c8a4) SHA1(d1fc6775870710b3dfea4e58a937ab996021adb1) )
+	ROM_LOAD( "esp4.4h",      0x2000, 0x2000, CRC(6034d7e5) SHA1(62c9699088f4ee1c69ec10a2f82feddd4083efef) )
+	ROM_LOAD( "esp6.bin",     0x4000, 0x1000, CRC(357025b4) SHA1(8bc62f564fcbe37bd490452b2d569d1981f76db1) )
+	ROM_LOAD( "esp5.bin",     0xc000, 0x1000, CRC(d03a2fc4) SHA1(791d70e4354350507f4c39d6115c046254168895) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "esp1.4n",      0x0000, 0x1000, CRC(fc7729e9) SHA1(96dfec574521fa4fe2588fbac2ef1caba6c1b884) )
+	ROM_LOAD( "esp2.4r",      0x1000, 0x1000, CRC(e4e256da) SHA1(8007471405bdcf90e29657a3ac2c2f84c9db7c9b) )
+
+	ROM_REGION( 0x3000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "espial8.4b",   0x0000, 0x2000, CRC(2f43036f) SHA1(316e9fab778d6c0abb0b6673aba33dfbe44b1262) )
+	ROM_LOAD( "espial7.4a",   0x2000, 0x1000, CRC(ebfef046) SHA1(5aa6efb7254fb42e814c1a29c5363f2d0727452f) )
+
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "espial10.4e",  0x0000, 0x1000, CRC(de80fbc1) SHA1(f5601eac8cb35a92c51bf81e5ac5a2b79bcde28f) )
+	ROM_LOAD( "espial9.4d",   0x1000, 0x1000, CRC(48c258a0) SHA1(55e72b9072ddc05f848e5a6fae159c554102010b) )
+
+	ROM_REGION( 0x0200, REGION_PROMS, 0 ) /* The MMI6301 Bipolar PROM is compatible to the 82s129 */
+	ROM_LOAD( "mmi6301.1f",   0x0000, 0x0100, CRC(d12de557) SHA1(53e8a57dfab677cc5b9cdd83d2fbeb93169bcefd) ) /* palette low 4 bits */
+	ROM_LOAD( "mmi6301.1h",   0x0100, 0x0100, CRC(4c84fe70) SHA1(7ac52bd5b19663b9526ecb678e61db9939d2285d) ) /* palette high 4 bits */
+ROM_END
+
+ROM_START( espialu )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "espial3.4f",   0x0000, 0x2000, CRC(10f1da30) SHA1(8954ca3c7fccb8dd8433015ee303bb75a98f3474) )
+	ROM_LOAD( "espial4.4h",   0x2000, 0x2000, CRC(d2adbe39) SHA1(13c6041fd0e7c49988af89e3bab1b20999336928) )
 	ROM_LOAD( "espial.6",     0x4000, 0x1000, CRC(baa60bc1) SHA1(fc3d3f2e0316efb31161b28984fc8bd94473b783) )
 	ROM_LOAD( "espial.5",     0xc000, 0x1000, CRC(6d7bbfc1) SHA1(d886a76ce4a23c1310135bf1e4ffeda6d44625e7) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "espial.1",     0x0000, 0x1000, CRC(1e5ec20b) SHA1(f3bee38737321edf2d1ea753124421416441666e) )
-	ROM_LOAD( "espial.2",     0x1000, 0x1000, CRC(3431bb97) SHA1(97343bfb5e49cd1d26799723d8c5a31eff7b1170) )
+	ROM_LOAD( "espial1.4n",   0x0000, 0x1000, CRC(1e5ec20b) SHA1(f3bee38737321edf2d1ea753124421416441666e) )
+	ROM_LOAD( "espial2.4r",   0x1000, 0x1000, CRC(3431bb97) SHA1(97343bfb5e49cd1d26799723d8c5a31eff7b1170) )
 
 	ROM_REGION( 0x3000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "espial.8",     0x0000, 0x2000, CRC(2f43036f) SHA1(316e9fab778d6c0abb0b6673aba33dfbe44b1262) )
-	ROM_LOAD( "espial.7",     0x2000, 0x1000, CRC(ebfef046) SHA1(5aa6efb7254fb42e814c1a29c5363f2d0727452f) )
+	ROM_LOAD( "espial8.4b",   0x0000, 0x2000, CRC(2f43036f) SHA1(316e9fab778d6c0abb0b6673aba33dfbe44b1262) )
+	ROM_LOAD( "espial7.4a",   0x2000, 0x1000, CRC(ebfef046) SHA1(5aa6efb7254fb42e814c1a29c5363f2d0727452f) )
 
 	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "espial.10",    0x0000, 0x1000, CRC(de80fbc1) SHA1(f5601eac8cb35a92c51bf81e5ac5a2b79bcde28f) )
-	ROM_LOAD( "espial.9",     0x1000, 0x1000, CRC(48c258a0) SHA1(55e72b9072ddc05f848e5a6fae159c554102010b) )
+	ROM_LOAD( "espial10.4e",  0x0000, 0x1000, CRC(de80fbc1) SHA1(f5601eac8cb35a92c51bf81e5ac5a2b79bcde28f) )
+	ROM_LOAD( "espial9.4d",   0x1000, 0x1000, CRC(48c258a0) SHA1(55e72b9072ddc05f848e5a6fae159c554102010b) )
 
-	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "espial.1f",    0x0000, 0x0100, CRC(d12de557) SHA1(53e8a57dfab677cc5b9cdd83d2fbeb93169bcefd) ) /* palette low 4 bits */
-	ROM_LOAD( "espial.1h",    0x0100, 0x0100, CRC(4c84fe70) SHA1(7ac52bd5b19663b9526ecb678e61db9939d2285d) ) /* palette high 4 bits */
-ROM_END
-
-ROM_START( espiale )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "2764.3",       0x0000, 0x2000, CRC(0973c8a4) SHA1(d1fc6775870710b3dfea4e58a937ab996021adb1) )
-	ROM_LOAD( "2764.4",       0x2000, 0x2000, CRC(6034d7e5) SHA1(62c9699088f4ee1c69ec10a2f82feddd4083efef) )
-	ROM_LOAD( "2732.6",       0x4000, 0x1000, CRC(357025b4) SHA1(8bc62f564fcbe37bd490452b2d569d1981f76db1) )
-	ROM_LOAD( "2732.5",       0xc000, 0x1000, CRC(d03a2fc4) SHA1(791d70e4354350507f4c39d6115c046254168895) )
-
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "2732.1",       0x0000, 0x1000, CRC(fc7729e9) SHA1(96dfec574521fa4fe2588fbac2ef1caba6c1b884) )
-	ROM_LOAD( "2732.2",       0x1000, 0x1000, CRC(e4e256da) SHA1(8007471405bdcf90e29657a3ac2c2f84c9db7c9b) )
-
-	ROM_REGION( 0x3000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "espial.8",     0x0000, 0x2000, CRC(2f43036f) SHA1(316e9fab778d6c0abb0b6673aba33dfbe44b1262) )
-	ROM_LOAD( "espial.7",     0x2000, 0x1000, CRC(ebfef046) SHA1(5aa6efb7254fb42e814c1a29c5363f2d0727452f) )
-
-	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "espial.10",    0x0000, 0x1000, CRC(de80fbc1) SHA1(f5601eac8cb35a92c51bf81e5ac5a2b79bcde28f) )
-	ROM_LOAD( "espial.9",     0x1000, 0x1000, CRC(48c258a0) SHA1(55e72b9072ddc05f848e5a6fae159c554102010b) )
-
-	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "espial.1f",    0x0000, 0x0100, CRC(d12de557) SHA1(53e8a57dfab677cc5b9cdd83d2fbeb93169bcefd) ) /* palette low 4 bits */
-	ROM_LOAD( "espial.1h",    0x0100, 0x0100, CRC(4c84fe70) SHA1(7ac52bd5b19663b9526ecb678e61db9939d2285d) ) /* palette high 4 bits */
+	ROM_REGION( 0x0200, REGION_PROMS, 0 ) /* The MMI6301 Bipolar PROM is compatible to the 82s129 */
+	ROM_LOAD( "mmi6301.1f",   0x0000, 0x0100, CRC(d12de557) SHA1(53e8a57dfab677cc5b9cdd83d2fbeb93169bcefd) ) /* palette low 4 bits */
+	ROM_LOAD( "mmi6301.1h",   0x0100, 0x0100, CRC(4c84fe70) SHA1(7ac52bd5b19663b9526ecb678e61db9939d2285d) ) /* palette high 4 bits */
 ROM_END
 
 ROM_START( netwars )
@@ -429,13 +432,13 @@ ROM_START( netwars )
 	ROM_LOAD( "netw10.4e",    0x0000, 0x1000, CRC(87b65625) SHA1(a702726c0fbe7669604f48bf2c19a54031645731) )
 	ROM_LOAD( "netw9.4d",     0x1000, 0x1000, CRC(830d0218) SHA1(c726a4a9dd1f10279f79cbe5fdd693a62d9d3ac5) )
 
-	ROM_REGION( 0x0200, REGION_PROMS, 0 )
-	ROM_LOAD( "netw5.1f",     0x0000, 0x0100, CRC(f3ae1fe2) SHA1(4f259f8da3c9ecdc6010f83b6abc1371366bd0ab) ) /* palette low 4 bits */
-	ROM_LOAD( "netw6.1h",     0x0100, 0x0100, CRC(c44c3771) SHA1(c86125fac28fafc744957258bf3bb5a6dc664b54) ) /* palette high 4 bits */
+	ROM_REGION( 0x0200, REGION_PROMS, 0 ) /* The MMI6301 Bipolar PROM is compatible to the 82s129 */
+	ROM_LOAD( "mmi6301.1f",   0x0000, 0x0100, CRC(f3ae1fe2) SHA1(4f259f8da3c9ecdc6010f83b6abc1371366bd0ab) ) /* palette low 4 bits */
+	ROM_LOAD( "mmi6301.1h",   0x0100, 0x0100, CRC(c44c3771) SHA1(c86125fac28fafc744957258bf3bb5a6dc664b54) ) /* palette high 4 bits */
 ROM_END
 
 
 
-GAME( 1983, espial,  0,      espial,  espial,  0, ROT0,  "[Orca] Thunderbolt", "Espial (US?)", 0 )
-GAME( 1983, espiale, espial, espial,  espial,  0, ROT0,  "[Orca] Thunderbolt", "Espial (Europe)", 0 )
+GAME( 1983, espial,  0,      espial,  espial,  0, ROT0,  "[Orca] Thunderbolt", "Espial (Europe)", 0 )
+GAME( 1983, espialu, espial, espial,  espial,  0, ROT0,  "[Orca] Thunderbolt", "Espial (US?)", 0 )
 GAME( 1983, netwars, 0,      netwars, netwars, 0, ROT90, "Orca (Esco Trading Co license)", "Net Wars", 0 )

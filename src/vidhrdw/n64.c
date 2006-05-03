@@ -3,7 +3,6 @@
 */
 
 #include "driver.h"
-#include "includes/n64.h"
 
 #define LOG_RDP_EXECUTION 		0
 
@@ -1148,9 +1147,11 @@ static int rdp_dasm(char *buffer)
 
 /*****************************************************************************/
 
-static void triangle(UINT32 w1, UINT32 w2)
+static void triangle(UINT32 w1, UINT32 w2, int shade)
 {
 	int i, j;
+	int xleft, xright, xleft_inc, xright_inc;
+	int xstart, xend;
 	UINT16 *fb = (UINT16*)&rdram[fb_address / 4];
 	UINT16 color;
 
@@ -1158,7 +1159,6 @@ static void triangle(UINT32 w1, UINT32 w2)
 	INT32 xl, xm, xh;
 	INT64 dxldy, dxhdy, dxmdy;
 	UINT32 w3, w4, w5, w6, w7, w8;
-	int v1x, v1y, v2x, v2y, v3x, v3y;
 
 	w3 = rdp_cmd_data[rdp_cmd_cur+2];
 	w4 = rdp_cmd_data[rdp_cmd_cur+3];
@@ -1166,8 +1166,6 @@ static void triangle(UINT32 w1, UINT32 w2)
 	w6 = rdp_cmd_data[rdp_cmd_cur+5];
 	w7 = rdp_cmd_data[rdp_cmd_cur+6];
 	w8 = rdp_cmd_data[rdp_cmd_cur+7];
-
-	color = 0xffff;
 
 	yl = (w1 & 0x1fff) >> 2;
 	ym = ((w2 >> 16) & 0x1fff) >> 2;
@@ -1179,52 +1177,87 @@ static void triangle(UINT32 w1, UINT32 w2)
 	dxhdy = (INT32)(w6);
 	dxmdy = (INT32)(w8);
 
+	color = 0xffff;
+
+	if (shade)
+	{
+		UINT32 shade1 = rdp_cmd_data[rdp_cmd_cur+8];
+		UINT32 shade2 = rdp_cmd_data[rdp_cmd_cur+9];
+		int r = (shade1 >> 16) & 0xff;
+		int g = (shade1 >>  0) & 0xff;
+		int b = (shade2 >> 16) & 0xff;
+		r >>= 3;
+		g >>= 3;
+		b >>= 3;
+		color = r << 11 | g << 6 | b << 1;
+	}
+
 	if ((w1 & 0x800000) == 0)
 	{
-		int xleft, xright;
-		int bh = (yl-yh) ? (yl-yh) : 1;
-
-		v1x = (xl >> 16);
-		v1y = ym;
-		v2x = (xh >> 16);
-		v2y = yh;
-		v3x = ((bh * dxldy) / 65536);
-		v3y = yl;
-
 		xleft = xm;
-		xright = v2x << 16;
-
-		for (j=yh; j < ym; j++)
-		{
-			for (i=xleft>>16; i < xright>>16; i++)
-			{
-				if (i >= (clip.xh >> 2) && i < (clip.xl >> 2) && j >= (clip.yh >> 2) && j < (clip.yl >> 2))
-				fb[(j * fb_width + i) ^ 1] = color;
-			}
-			xleft += dxmdy;
-			xright += dxhdy;
-		}
-
-		xleft = xl;
-		for (j=ym; j < yl; j++)
-		{
-			for (i=xleft>>16; i < xright>>16; i++)
-			{
-				if (i >= (clip.xh >> 2) && i < (clip.xl >> 2) && j >= (clip.yh >> 2) && j < (clip.yl >> 2))
-				fb[(j * fb_width + i) ^ 1] = color;
-			}
-			xleft += dxldy;
-			xright += dxhdy;
-		}
+		xright = xh;
+		xleft_inc = dxmdy;
+		xright_inc = dxhdy;
 	}
 	else
 	{
-		v1x = (xl >> 16);
-		v1y = ym;
-		v2x = (xm >> 16);
-		v2y = yh;
-		v3x = (xh >> 16) + (((yl-ym) * dxhdy) / 65536);
-		v3y = yl;
+		xright = xm;
+		xleft = xh;
+		xright_inc = dxmdy;
+		xleft_inc = dxhdy;
+	}
+
+
+
+	for (j=yh; j < ym; j++)
+	{
+		xstart = xleft >> 16;
+		if ((xleft & 0xffff) >= 0x8000)
+			xstart++;
+
+		xend = xright >> 16;
+		if ((xright & 0xffff) >= 0x8000)
+			xend++;
+
+		for (i=xstart; i <= xend; i++)
+		{
+			//if (i >= (clip.xh >> 2) && i < (clip.xl >> 2) && j >= (clip.yh >> 2) && j < (clip.yl >> 2))
+			fb[(j * fb_width + i) ^ 1] = color;
+		}
+		xleft += xleft_inc;
+		xright += xright_inc;
+	}
+
+	if ((w1 & 0x800000) == 0)
+	{
+		xleft = xl;
+		xleft_inc = dxldy;
+		xright_inc = dxhdy;
+	}
+	else
+	{
+		xright = xl;
+		xright_inc = dxldy;
+		xleft_inc = dxhdy;
+	}
+
+	for (j=ym; j <= yl; j++)
+	{
+		xstart = xleft >> 16;
+		if ((xleft & 0xffff) >= 0x8000)
+			xstart++;
+
+		xend = xright >> 16;
+		if ((xright & 0xffff) >= 0x8000)
+			xend++;
+
+		for (i=xstart; i <= xend; i++)
+		{
+			//if (i >= (clip.xh >> 2) && i < (clip.xl >> 2) && j >= (clip.yh >> 2) && j < (clip.yl >> 2))
+			fb[(j * fb_width + i) ^ 1] = color;
+		}
+		xleft += xleft_inc;
+		xright += xright_inc;
 	}
 }
 
@@ -1244,54 +1277,56 @@ static void rdp_noop(UINT32 w1, UINT32 w2)
 
 static void rdp_tri_noshade(UINT32 w1, UINT32 w2)
 {
-	fatalerror("RDP: unhandled command tri_noshade, %08X %08X\n", w1, w2);
+	//fatalerror("RDP: unhandled command tri_noshade, %08X %08X\n", w1, w2);
+	triangle(w1, w2, 0);
 }
 
 static void rdp_tri_noshade_z(UINT32 w1, UINT32 w2)
 {
-	fatalerror("RDP: unhandled command tri_noshade_z, %08X %08X\n", w1, w2);
+	//fatalerror("RDP: unhandled command tri_noshade_z, %08X %08X\n", w1, w2);
+	triangle(w1, w2, 0);
 }
 
 static void rdp_tri_tex(UINT32 w1, UINT32 w2)
 {
 	//osd_die("RDP: unhandled command tri_tex, %08X %08X\n", w1, w2);
 
-	triangle(w1, w2);
+	triangle(w1, w2, 0);
 }
 
 static void rdp_tri_tex_z(UINT32 w1, UINT32 w2)
 {
 	//osd_die("RDP: unhandled command tri_tex_z, %08X %08X\n", w1, w2);
 
-	triangle(w1, w2);
+	triangle(w1, w2, 0);
 }
 
 static void rdp_tri_shade(UINT32 w1, UINT32 w2)
 {
 	//osd_die("RDP: unhandled command tri_shade, %08X %08X\n", w1, w2);
 
-	triangle(w1, w2);
+	triangle(w1, w2, 1);
 }
 
 static void rdp_tri_shade_z(UINT32 w1, UINT32 w2)
 {
 	//osd_die("RDP: unhandled command tri_shade_z, %08X %08X\n", w1, w2);
 
-	triangle(w1, w2);
+	triangle(w1, w2, 1);
 }
 
 static void rdp_tri_texshade(UINT32 w1, UINT32 w2)
 {
 	//osd_die("RDP: unhandled command tri_texshade, %08X %08X\n", w1, w2);
 
-	triangle(w1, w2);
+	triangle(w1, w2, 1);
 }
 
 static void rdp_tri_texshade_z(UINT32 w1, UINT32 w2)
 {
 	//osd_die("RDP: unhandled command tri_texshade_z, %08X %08X\n", w1, w2);
 
-	triangle(w1, w2);
+	triangle(w1, w2, 1);
 }
 
 static void rdp_tex_rect(UINT32 w1, UINT32 w2)

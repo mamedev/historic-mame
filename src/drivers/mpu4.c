@@ -1,8 +1,9 @@
-/*
+/***************************************************************************
+MPU4 highly preliminary driver, based on
+Bellfruit scorpion1 driver, (under heavy construction !!!)
 
-MPU4 with Video Add-on Board
-If anything, MAME will only emulate the video based games,
-AGEMAME may support the non-video titles at some point.
+  28-04-2006: El Condor
+  20-05-2004: Re-Animator
 
 --- Board Setup ---
 
@@ -20,7 +21,7 @@ an anti-tampering device which helped to prevent the hacking of certain titles i
 
 One of the advantages of the hardware setup was that the developer could change the nature of the game card
 up to a point, adding extra lamp support, different amounts of RAM, and (in many cases) an OKI MSM6376 and related PIA for
-improved ADPCM sample support (This was one of the most common modifications towards the end of the MPU4 era)
+improved ADPCM sample support (This was eventually endorsed in the latest official 'MOD' of the board)
 
 For the Barcrest MPU4 Video system, the cartridge contains the MPU4 video bios in the usual ROM space, interface chips to connect
 an additional Video board, and a 6850 serial IO to communicate with the video board. This version of the game card does not
@@ -34,15 +35,14 @@ card, in some cases an extra OKI sound chip is added to the video board's game c
 There is a protection chip (similar to and replacing the MPU4 Characteriser, which is often fed question data to descramble
 (unknown how it works).
 
-A decent schematic for the MPU4 board, is available, contact ElCondor of AGEMAME, for further details.
+A decent schematic for the MPU4 board, amongst other info is available,
+see http://www.mameworld.net/agemame/techinfo/mpu4.php .
 
 No video card schematics ever left the PCB factory, but the map we have seems pretty decent.
 
 Additional: 68k HALT line is tied to the reset circuit of the MPU4.
 
-I have an MPU4 manual, but no video card schematics were ever printed.
-
-Fixing communications is a priority, ideally we need the two ACIAs talking to each other properly.
+Emulating the standalone MPU4 is a priority, unless this works, the video won't run.
 
 Everything here is preliminary...  the boards are quite fussy with regards their self tests
 and the timing may have to be perfect for them to function correctly.  (as the comms are
@@ -91,15 +91,20 @@ Datasheets are available for the main components, The AGEMAME site mirrors a few
 
 
 -----------+---+-----------------+-----------------------------------------
- 0A00-0A03 |R/W| D D D D D D D D | PIA6821 IC3 port A + B are datalines 0-15
-                                            CA1 => alpha data
-                                            CA2 <= output2 from PTM6840 (IC2)
-                                            CB2 => alpha clock on dutch systems
+ 0A00-0A03 |R/W| D D D D D D D D | PIA6821 IC3 port A Lamp Drives 1,2,3,4,6,7,8,9 (sic)(IC14)
+
+                                            CA1 <= output2 from PTM6840 (IC2)
+                                            CA2 => alpha data
+
+                                            port B Lamp Drives 10,11,12,13,14,15,16,17 (sic)(IC13)
+
+                                            CB2 => alpha reset (clock on Dutch systems)
 -----------+---+-----------------+-----------------------------------------
- 0B00-0B03 |R/W| D D D D D D D D | PIA6821 IC4 port A = data for 7seg leds
+ 0B00-0B03 |R/W| D D D D D D D D | PIA6821 IC4 port A = data for 7seg leds (pins 10 - 17, via IC32)
 
                                                CA1 INPUT, 50 Hz input (used to generate IRQ)
                                                CA2 OUTPUT, connected to pin2 74LS138 CE for multiplexer
+                                                          (B on LED strobe multiplexer)
 
                                                port B
                                                       PB7 = INPUT, serial port Receive data (Rx)
@@ -107,7 +112,7 @@ Datasheets are available for the main components, The AGEMAME site mirrors a few
                                                       PB5 = INPUT, reel B sensor
                                                       PB4 = INPUT, reel C sensor
                                                       PB3 = INPUT, reel D sensor
-                                                      PB2 = INPUT, Connected to CA2 (50Hz signal)
+                                                      PB2 = INPUT, Connected to CA1 (50Hz signal)
                                                       PB1 = INPUT, undercurrent sense
                                                       PB0 = INPUT, overcurrent  sense
 
@@ -116,7 +121,7 @@ Datasheets are available for the main components, The AGEMAME site mirrors a few
 -----------+---+-----------------+-----------------------------------------
  0C00-0C03 |R/W| D D D D D D D D | PIA6821 IC5 port A
 
-                                                      PA0-PA7, INPUT AUX1 connector
+                                                      PA0-PA7, INPUT? AUX1 connector
 
                                                CA2  OUTPUT, serial port Transmit line
                                                CA1  not connected
@@ -136,7 +141,7 @@ Datasheets are available for the main components, The AGEMAME site mirrors a few
 
                                     port A
 
-                                          PA0 - PA7 INPUT/OUTPUT) data port AY8910 sound chip
+                                          PA0 - PA7 (INPUT/OUTPUT) data port AY8910 sound chip
 
                                           CA1 INPUT,  not connected
                                           CA2 OUTPUT, BC1 pin AY8910 sound chip
@@ -156,16 +161,17 @@ Datasheets are available for the main components, The AGEMAME site mirrors a few
 
                                     port A
 
-                                          PB0_PB7 OUTPUT, reel C + D
+                                          PA0-PA3 OUTPUT, reel C
+                                          PA4-PA7 OUTPUT, reel D
                                           CA1     INPUT, not connected
                                           CA2     OUTPUT   A on LED strobe multiplexer
                                           IRQA , connected to IRQ CPU
 
                                     port B
 
-                                          PB0-BP7 OUTPUT  reel E + F or mech meter
+                                          PB0-BP7 OUTPUT  mech meter or reel E + F
                                           CB1     INPUT, not connected
-                                          CB2     OUTPUT, output enable mech meter latch
+                                          CB2     OUTPUT, enable mech meter latch
                                           IRQB , connected to IRQ CPU
 
 -----------+---+-----------------+-----------------------------------------
@@ -194,7 +200,6 @@ Datasheets are available for the main components, The AGEMAME site mirrors a few
 
  4000, appears to be something special?
 
-
  TODO: - get better memorymap.
        - Get MPU4 board working properly, so that video layer will operate.
        - Confirm that MC6850 emulation is sufficient.
@@ -212,7 +217,7 @@ Datasheets are available for the main components, The AGEMAME site mirrors a few
 #include "cpu/m6809/m6809.h"
 #include "sound/ay8910.h"
 #include "sound/saa1099.h"
-//#include "vidhrdw/genfmvid.h" Fruit Machines Only
+//#include "vidhrdw/awpvid.h" Fruit Machines Only
 #include "machine/lamps.h"
 #include "machine/steppers.h" // stepper motor
 #include "machine/vacfdisp.h"  // vfd
@@ -239,8 +244,10 @@ static void update_irq(void);
 
 // user interface stuff ///////////////////////////////////////////////////
 
-static UINT8 lamps[224];
-static UINT8 inputs[32];
+static UINT8 lamps[224];		// 224 multiplexed lamps  (2 8X8 matrices) PIAs take care of this in some form
+static UINT8 inputs[32];		// 32  multiplexed inputs - but a further 8 possible per AUX.
+								// Two connectors 'orange' (sampled every 8ms) and 'black' (sampled every 16ms)
+								// Each connector carries two banks of eight inputs and two enable signals
 
 static int optic_pattern;
 static UINT16 lamp_strobe;
@@ -248,6 +255,20 @@ static UINT8  lamp_data;
 
 static int   led_mux_strobe;
 static UINT8 led_segs[8];
+/*
+LED Segments related to pins (5 is not connected):
+   _9_
+  |   |
+  3   8
+  |   |
+   _2_
+  |   |
+  4   7
+  |   |
+   _6_1
+
+8 display enables (pins 10 - 17)
+*/
 
 static int    input_strobe;	  // IC23 74LS138 A = CA2 IC7, B = CA2 IC4, C = CA2 IC8
 static int    output_strobe;  // same
@@ -323,8 +344,7 @@ static MACHINE_RESET( mpu4_vid )
 
 // reset stepper motors /////////////////////////////////////////////////
 	{
-		int pattern =0,
-		i;
+		int pattern =0,i;
 
 		for ( i = 0; i < 6; i++)
 		{
@@ -355,7 +375,6 @@ static MACHINE_RESET( mpu4_vid )
 			memory_set_bank(1,data&0x03);//not correct
 		}
 	#endif
-
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -364,6 +383,7 @@ static void cpu0_irq(int state)
 {
 	cpunum_set_input_line(0, M6809_IRQ_LINE, PULSE_LINE);
 }
+
 
 ///////////////////////////////////////////////////////////////////////////
 #if 0
@@ -389,16 +409,17 @@ static WRITE8_HANDLER( ic2_o1_callback )
 static WRITE8_HANDLER( ic2_o2_callback )
 {
 	pia_set_input_ca1(0, data); // copy output value to IC3 ca1
+	logerror("IC2 clock 3 %d \n",data);
+//  ic3_output_ca1 = data;
 	ptm6840_set_c3(   0, data); // copy output value to IC2 c3
 }
 
 static WRITE8_HANDLER( ic2_o3_callback )
 {
 	AY8910_control_port_0_w(0, data);
-	logerror("PTM0o3 output %d\n",data);
 }
 
-static struct ptm6840_interface ptm_ic2_intf =
+static const ptm6840_interface ptm_ic2_intf =
 {
 	ic2_o1_callback, ic2_o2_callback, ic2_o3_callback,
 	cpu0_irq
@@ -411,7 +432,7 @@ static void cpu1_irq(int state)
 	update_mpu68_interrupts();
 }
 
-static struct ptm6840_interface ptm_vid_intf =
+static const ptm6840_interface ptm_vid_intf =
 {
 	NULL, NULL, NULL,
 	cpu1_irq
@@ -437,13 +458,13 @@ static WRITE8_HANDLER( pia_ic3_portb_w )
 
 static READ8_HANDLER( pia_ic3_porta_r )
 {
-	LOG_IC3(("%04x IC3 PIA Read of Port A\n",activecpu_get_previouspc()));
+	LOG_IC3(("%04x IC3 PIA Read of Port A (Lamp drives 1,2,3,4,5,6,8,9)\n",activecpu_get_previouspc()));
 	return 0;
 }
 
 static READ8_HANDLER( pia_ic3_portb_r )
 {
-	LOG_IC3(("%04x IC3 PIA Read of Port B\n",activecpu_get_previouspc()));
+	LOG_IC3(("%04x IC3 PIA Read of Port B (Lamp drives 10,11,12,13,14,15,16,17)\n",activecpu_get_previouspc()));
 	return 0;
 }
 
@@ -453,6 +474,7 @@ static WRITE8_HANDLER( pia_ic3_ca2_w )
 
 	alpha_data_line = data;
 }
+
 
 static WRITE8_HANDLER( pia_ic3_cb2_w )
 {
@@ -484,7 +506,7 @@ static READ8_HANDLER( pia_ic3_cb2_r )
 	return 0;
 }
 
-// IC3, lamp data lines + alphanumeric display
+// IC3, lamp data lines + alpha numeric display
 
 static const pia6821_interface pia_ic3_intf =
 {
@@ -522,7 +544,7 @@ static READ8_HANDLER( pia_ic4_porta_r )
 
 static READ8_HANDLER( pia_ic4_portb_r )
 {
-	logerror("%04x IC4 PIA Read of Port B\n",activecpu_get_previouspc());
+	logerror("%04x IC4 PIA Read of Port B (reels)\n",activecpu_get_previouspc());
 
 	if ( optic_pattern & 0x01 ) ic4_input_b |=  0x40; // reel A tab
 	else                        ic4_input_b &= ~0x40;
@@ -557,12 +579,14 @@ static WRITE8_HANDLER( pia_ic4_ca2_w )
 	output_strobe = input_strobe; // same strobe lines are used for input and output
 }
 
+
 static WRITE8_HANDLER( pia_ic4_cb2_w )
 {
-	LOG_IC3(("%04x I43 PIA Write CB (T39, connector PL13 pin 2), %02X\n",activecpu_get_previouspc(),data&0xff));
+	LOG_IC3(("%04x IC4 PIA Write CB (T39, connector PL13 pin 2), %02X\n",activecpu_get_previouspc(),data&0xff));
 }
 
 // IC4, 7 seg leds, 50Hz timer reel sensors, current sensors
+
 
 static const pia6821_interface pia_ic4_intf =
 {
@@ -696,7 +720,7 @@ static const pia6821_interface pia_ic6_intf =
 
 static WRITE8_HANDLER( pia_ic7_porta_w )
 {
-	logerror("%04x IC7 PIA Port A Set to %2x\n", activecpu_get_previouspc(),data);
+	logerror("%04x IC7 PIA Port A Set to %2x (Reel C and D)\n", activecpu_get_previouspc(),data);
 
 	Stepper_update(2, (data >> 4) & 0x0F );
 	Stepper_update(3, data        & 0x0F );
@@ -705,7 +729,9 @@ static WRITE8_HANDLER( pia_ic7_porta_w )
 
 static WRITE8_HANDLER( pia_ic7_portb_w )
 {
-	logerror("%04x IC7 PIA Port B Set to %2x\n", activecpu_get_previouspc(),data);
+	logerror("%04x IC7 PIA Port B Set to %2x (Meters, Reel E and F)\n", activecpu_get_previouspc(),data);
+//  Stepper_update(4, (data >> 4) & 0x0F );
+//  Stepper_update(5, data        & 0x0F );
 
 }
 
@@ -745,12 +771,12 @@ static const pia6821_interface pia_ic7_intf =
 
 static WRITE8_HANDLER( pia_ic8_porta_w )
 {
-	LOG_IC8(("%04x IC8 PIA Port A Set to %2x\n", activecpu_get_previouspc(),data));
+	LOG_IC8(("%04x IC8 PIA Port A Set to %2x (MUX'd Inputs)\n", activecpu_get_previouspc(),data));
 }
 
 static WRITE8_HANDLER( pia_ic8_portb_w )
 {
-	LOG_IC8(("%04x IC8 PIA Port B Set to %2x\n", activecpu_get_previouspc(),data));
+	LOG_IC8(("%04x IC8 PIA Port B Set to %2x (OUTPUT PORT, TRIACS)\n", activecpu_get_previouspc(),data));
 }
 
 static READ8_HANDLER( pia_ic8_porta_r )
@@ -764,19 +790,19 @@ static READ8_HANDLER( pia_ic8_porta_r )
 
 static READ8_HANDLER( pia_ic8_portb_r )
 {
-	LOG_IC8(("%04x IC8 PIA Read of Port B\n",activecpu_get_previouspc()));
+	LOG_IC8(("%04x IC8 PIA Read of Port B\n (Triacs)",activecpu_get_previouspc()));
 	return 0;
 }
 
 static READ8_HANDLER( pia_ic8_ca1_r )
 {
-	LOG_IC8(("%04x IC8 PIA Read of CA1\n",activecpu_get_previouspc()));
+	LOG_IC8(("%04x IC8 PIA Read of CA1 (Should be unconnected)\n",activecpu_get_previouspc()));
 	return 0;
 }
 
 static READ8_HANDLER( pia_ic8_ca2_r )
 {
-	LOG_IC8(("%04x IC8 PIA Read of CA2\n",activecpu_get_previouspc()));
+	LOG_IC8(("%04x IC8 PIA Read of CA2 (LED Multiplexer 'C')\n",activecpu_get_previouspc()));
 	return 0;
 }
 

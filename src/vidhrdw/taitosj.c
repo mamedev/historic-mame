@@ -238,6 +238,11 @@ VIDEO_START( taitosj )
 
 	taitosj_spritebank = spriteram;
 
+	memset(dirtycharacter1, 1, sizeof(dirtycharacter1));
+	memset(dirtycharacter2, 1, sizeof(dirtycharacter2));
+	memset(dirtysprite1, 1, sizeof(dirtysprite1));
+	memset(dirtysprite2, 1, sizeof(dirtysprite2));
+
 	state_save_register_func_postload(taitosj_postload);
 	state_save_register_global_array(taitosj_collision_reg);
 	state_save_register_global(taitosj_video_enable);

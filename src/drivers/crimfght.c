@@ -494,8 +494,8 @@ static void crimfght_banking( int lines )
 		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x03ff, 0, 0, paletteram_xBBBBBGGGGGRRRRR_be_w);	/* palette */
 	}
 	else{
-		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x03ff, 0, 0, MRA8_RAM);								/* RAM */
-		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x03ff, 0, 0, MWA8_RAM);								/* RAM */
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x03ff, 0, 0, MRA8_BANK1);								/* RAM */
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x03ff, 0, 0, MWA8_BANK1);								/* RAM */
 	}
 
 	/* bit 6 = enable char ROM reading through the video RAM */

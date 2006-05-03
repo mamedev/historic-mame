@@ -737,37 +737,24 @@ ADDRESS_MAP_START( atarijsa2_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 
-ADDRESS_MAP_START( atarijsa3_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x2000, 0x2001) AM_READ(YM2151_status_port_0_r)
-	AM_RANGE(0x2800, 0x2bff) AM_READ(jsa3_io_r)
-	AM_RANGE(0x3000, 0xffff) AM_READ(MRA8_ROM)
+/* full map verified from schematics and Batman GALs */
+ADDRESS_MAP_START( atarijsa3_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_RAM
+	AM_RANGE(0x2000, 0x2000) AM_MIRROR(0x07fe) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0x2001, 0x2001) AM_MIRROR(0x07fe) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0x2000, 0x2001) AM_MIRROR(0x07fe) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0x2800, 0x2fff) AM_READWRITE(jsa3_io_r, jsa3_io_w)
+	AM_RANGE(0x3000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
 
-ADDRESS_MAP_START( atarijsa3_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x2000, 0x2000) AM_WRITE(YM2151_register_port_0_w)
-	AM_RANGE(0x2001, 0x2001) AM_WRITE(YM2151_data_port_0_w)
-	AM_RANGE(0x2800, 0x2bff) AM_WRITE(jsa3_io_w)
-	AM_RANGE(0x3000, 0xffff) AM_WRITE(MWA8_ROM)
-ADDRESS_MAP_END
-
-
-ADDRESS_MAP_START( atarijsa3s_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x2000, 0x2001) AM_READ(YM2151_status_port_0_r)
-	AM_RANGE(0x2800, 0x2bff) AM_READ(jsa3s_io_r)
-	AM_RANGE(0x3000, 0xffff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
-
-
-ADDRESS_MAP_START( atarijsa3s_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x2000, 0x2000) AM_WRITE(YM2151_register_port_0_w)
-	AM_RANGE(0x2001, 0x2001) AM_WRITE(YM2151_data_port_0_w)
-	AM_RANGE(0x2800, 0x2bff) AM_WRITE(jsa3s_io_w)
-	AM_RANGE(0x3000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_START( atarijsa3s_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_RAM
+	AM_RANGE(0x2000, 0x2000) AM_MIRROR(0x07fe) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0x2001, 0x2001) AM_MIRROR(0x07fe) AM_WRITE(YM2151_data_port_0_w)
+	AM_RANGE(0x2000, 0x2001) AM_MIRROR(0x07fe) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0x2800, 0x2fff) AM_READWRITE(jsa3s_io_r, jsa3s_io_w)
+	AM_RANGE(0x3000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
 
@@ -885,7 +872,7 @@ MACHINE_DRIVER_START( jsa_iii_mono )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(jsa_ii_mono)
 	MDRV_CPU_MODIFY("jsa")
-	MDRV_CPU_PROGRAM_MAP(atarijsa3_readmem,atarijsa3_writemem)
+	MDRV_CPU_PROGRAM_MAP(atarijsa3_map,0)
 MACHINE_DRIVER_END
 
 
@@ -905,7 +892,7 @@ MACHINE_DRIVER_START( jsa_iiis_stereo )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("jsa", M6502, ATARI_CLOCK_3MHz/2)
-	MDRV_CPU_PROGRAM_MAP(atarijsa3s_readmem,atarijsa3s_writemem)
+	MDRV_CPU_PROGRAM_MAP(atarijsa3s_map,0)
 	MDRV_CPU_PERIODIC_INT(atarigen_6502_irq_gen,TIME_IN_HZ((double)ATARI_CLOCK_3MHz/4/16/16/14))
 
 	/* sound hardware */

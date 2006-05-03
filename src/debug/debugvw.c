@@ -28,7 +28,7 @@
 #define DEFAULT_DASM_LINES	(1000)
 #define DEFAULT_DASM_WIDTH	(50)
 #define DASM_MAX_BYTES		(16)
-
+#define MEM_MAX_LINE_WIDTH	(1024)
 
 
 /***************************************************************************
@@ -138,6 +138,7 @@ struct _debug_view_memory
 	int				divider1, divider2;			/* left and right divider columns */
 	UINT8			spacenum;					/* target address space */
 	UINT8			bytes_per_chunk;			/* bytes per unit */
+	UINT16			chunks_displayed;			/* number of chunks displayed per line */
 	UINT8			reverse_view;				/* reverse-endian view? */
 	UINT8			ascii_view;					/* display ASCII characters? */
 	UINT8			live_tracking;				/* track the value of the live expression? */
@@ -1931,6 +1932,10 @@ static int memory_alloc(debug_view *view)
 
 	/* we support cursors */
 	view->supports_cursor = TRUE;
+
+	/* start out with 16 bytes in a single column */
+	memdata->chunks_displayed = 16;
+
 	return 1;
 }
 
@@ -1966,6 +1971,7 @@ static int memory_get_cursor_pos(debug_view *view, offs_t *address, UINT8 *shift
 {
 	debug_view_memory *memdata = view->extra_data;
 	int curx = view->cursor_col, cury = view->cursor_row;
+	UINT32 bytes_per_row;
 	int modval;
 
 	/* if not in the middle section, punt */
@@ -1976,7 +1982,8 @@ static int memory_get_cursor_pos(debug_view *view, offs_t *address, UINT8 *shift
 	curx -= memdata->divider1;
 
 	/* compute the base address */
-	*address = 0x10 * cury + memdata->byte_offset;
+	bytes_per_row = memdata->chunks_displayed * memdata->bytes_per_chunk;
+	*address = bytes_per_row * cury + memdata->byte_offset;
 
 	/* the rest depends on the current format */
 
@@ -2056,13 +2063,15 @@ static int memory_get_cursor_pos(debug_view *view, offs_t *address, UINT8 *shift
 static void memory_set_cursor_pos(debug_view *view, offs_t address, UINT8 shift)
 {
 	debug_view_memory *memdata = view->extra_data;
+	UINT32 bytes_per_row;
 	int curx, cury;
 
 	/* offset the address by the byte offset */
 	address -= memdata->byte_offset;
 
 	/* compute the y coordinate */
-	cury = address / 0x10;
+	bytes_per_row = memdata->chunks_displayed * memdata->bytes_per_chunk;
+	cury = address / bytes_per_row;
 
 	/* the rest depends on the current format */
 
@@ -2073,15 +2082,15 @@ static void memory_set_cursor_pos(debug_view *view, offs_t address, UINT8 shift)
 		{
 			default:
 			case 1:
-				curx = memdata->divider1 + 1 + 3 * (address % 0x10) + (1 - (shift / 4));
+				curx = memdata->divider1 + 1 + 3 * (address % bytes_per_row) + (1 - (shift / 4));
 				break;
 
 			case 2:
-				curx = memdata->divider1 + 2 + 6 * ((address % 0x10) / 2) + (3 - (shift / 4));
+				curx = memdata->divider1 + 2 + 6 * ((address % bytes_per_row) / 2) + (3 - (shift / 4));
 				break;
 
 			case 4:
-				curx = memdata->divider1 + 3 + 12 * ((address % 0x10) / 4) + (7 - (shift / 4));
+				curx = memdata->divider1 + 3 + 12 * ((address % bytes_per_row) / 4) + (7 - (shift / 4));
 				break;
 		}
 	}
@@ -2091,15 +2100,15 @@ static void memory_set_cursor_pos(debug_view *view, offs_t address, UINT8 shift)
 		{
 			default:
 			case 1:
-				curx = memdata->divider1 + 1 + 3 * (15 - address % 0x10) + (1 - (shift / 4));
+				curx = memdata->divider1 + 1 + 3 * (15 - address % bytes_per_row) + (1 - (shift / 4));
 				break;
 
 			case 2:
-				curx = memdata->divider1 + 2 + 6 * (7 - (address % 0x10) / 2) + (3 - (shift / 4));
+				curx = memdata->divider1 + 2 + 6 * (7 - (address % bytes_per_row) / 2) + (3 - (shift / 4));
 				break;
 
 			case 4:
-				curx = memdata->divider1 + 3 + 12 * (3 - (address % 0x10) / 4) + (7 - (shift / 4));
+				curx = memdata->divider1 + 3 + 12 * (3 - (address % bytes_per_row) / 4) + (7 - (shift / 4));
 				break;
 		}
 	}
@@ -2301,6 +2310,7 @@ static void memory_handle_char(debug_view *view, char chval)
 	const debug_cpu_info *cpuinfo = debug_get_cpu_info(memdata->cpunum);
 	static const char hexvals[] = "0123456789abcdef";
 	char *hexchar = strchr(hexvals, tolower(chval));
+	UINT32 bytes_per_row;
 	offs_t maxaddr;
 	offs_t address;
 	UINT8 shift;
@@ -2313,10 +2323,11 @@ static void memory_handle_char(debug_view *view, char chval)
 		return;
 
 	/* up/down work the same regardless */
+	bytes_per_row = memdata->chunks_displayed * memdata->bytes_per_chunk;
 	if (chval == DCH_UP && view->cursor_row > 0)
-		address -= 0x10;
+		address -= bytes_per_row;
 	if (chval == DCH_DOWN && view->cursor_row < view->total_rows - 1)
-		address += 0x10;
+		address += bytes_per_row;
 
 	/* switch off of the current chunk size */
 	cpuintrf_push_context(memdata->cpunum);
@@ -2391,12 +2402,14 @@ static void memory_update(debug_view *view)
 	UINT32 maxaddr;
 	offs_t addrmask;
 	UINT32 row;
+	UINT32 memory_display_width;
+	UINT32 bytes_per_line;
 
 	/* switch to the CPU's context */
 	if (memdata->raw_base == NULL)
 		cpuintrf_push_context(memdata->cpunum);
 
-	/* determine maximum address and number of charaacters for that */
+	/* determine maximum address and number of characters for that */
 	if (memdata->raw_base != NULL)
 	{
 		maxaddr = memdata->raw_length - 1;
@@ -2420,13 +2433,20 @@ static void memory_update(debug_view *view)
 	/* determine how many characters we need for an address and set the divider */
 	sprintf(addrformat, " %*s%%0%dX ", 8 - addrchars, "", addrchars);
 
-	/* compute total rows and columns */
-	view->total_rows = (maxaddr / 0x10) + 1;
-	view->total_cols = memdata->ascii_view ? 77 : 59;
+
+	/* determine how wide the memory display area is */
+	bytes_per_line = memdata->chunks_displayed * memdata->bytes_per_chunk;
+	memory_display_width = 1 + (bytes_per_line * 3) + 1;		/* characters + spaces */
+
+
+	/* compute total displayed rows and columns */
+	view->total_rows =  (maxaddr / bytes_per_line) + 1;
+	view->total_cols =  (1 + 8 + 1) + memory_display_width;
+	view->total_cols += memdata->ascii_view ? 1 + bytes_per_line : 0 ; /* +1 ??? */ /* 77 : 59; */
 
 	/* set up the dividers */
 	memdata->divider1 = 1 + 8 + 1;
-	memdata->divider2 = memdata->divider1 + 1 + 16*3 + 1;
+	memdata->divider2 = memdata->divider1 + memory_display_width;
 	if (memdata->reverse_view)
 	{
 		int temp = view->total_cols + 1 - memdata->divider2;
@@ -2467,8 +2487,8 @@ static void memory_update(debug_view *view)
 			memdata->last_result = result;
 			if (memdata->raw_base == NULL)
 				result = ADDR2BYTE_MASKED(memdata->last_result, cpuinfo, memdata->spacenum);
-			view->top_row = result / 0x10;
-			memdata->byte_offset = result % 0x10;
+			view->top_row = result / bytes_per_line;
+			memdata->byte_offset = result % bytes_per_line;
 			view->cursor_row = view->top_row;
 		}
 		memdata->recompute = FALSE;
@@ -2478,7 +2498,7 @@ static void memory_update(debug_view *view)
 	for (row = 0; row < view->visible_rows; row++)
 	{
 		UINT32 effrow = view->top_row + row;
-		offs_t addrbyte = effrow * 0x10 + memdata->byte_offset;
+		offs_t addrbyte = effrow * bytes_per_line + memdata->byte_offset;
 		UINT8 attrib = DCA_NORMAL;
 		UINT32 col = 0;
 
@@ -2487,7 +2507,7 @@ static void memory_update(debug_view *view)
 		{
 			UINT32 effcol = view->left_col;
 			UINT32 len = 0;
-			char data[100];
+			char data[MEM_MAX_LINE_WIDTH];
 			int i;
 
 			/* generate the string */
@@ -2499,7 +2519,7 @@ static void memory_update(debug_view *view)
 				{
 					default:
 					case 1:
-						for (i = 0; i < 16; i++)
+						for (i = 0; i < memdata->chunks_displayed; i++)
 						{
 							offs_t curaddr = addrbyte + i;
 							if (curaddr > maxaddr)
@@ -2512,7 +2532,7 @@ static void memory_update(debug_view *view)
 						break;
 
 					case 2:
-						for (i = 0; i < 8; i++)
+						for (i = 0; i < memdata->chunks_displayed; i++)
 						{
 							offs_t curaddr = addrbyte + 2 * i;
 							if (curaddr > maxaddr)
@@ -2525,7 +2545,7 @@ static void memory_update(debug_view *view)
 						break;
 
 					case 4:
-						for (i = 0; i < 4; i++)
+						for (i = 0; i < memdata->chunks_displayed; i++)
 						{
 							offs_t curaddr = addrbyte + 4 * i;
 							if (curaddr > maxaddr)
@@ -2540,7 +2560,7 @@ static void memory_update(debug_view *view)
 				len += sprintf(&data[len], " ");
 				if (memdata->ascii_view)
 				{
-					for (i = 0; i < 16; i++)
+					for (i = 0; i < bytes_per_line; i++)
 					{
 						if (addrbyte + i <= maxaddr)
 						{
@@ -2558,7 +2578,7 @@ static void memory_update(debug_view *view)
 				len = sprintf(&data[len], " ");
 				if (memdata->ascii_view)
 				{
-					for (i = 0; i < 16; i++)
+					for (i = 0; i < bytes_per_line; i++)
 					{
 						if (addrbyte + i <= maxaddr)
 						{
@@ -2575,7 +2595,7 @@ static void memory_update(debug_view *view)
 				{
 					default:
 					case 1:
-						for (i = 15; i >= 0; i--)
+						for (i = memdata->chunks_displayed - 1; i >= 0; i--)
 						{
 							offs_t curaddr = addrbyte + i;
 							if (curaddr > maxaddr)
@@ -2588,7 +2608,7 @@ static void memory_update(debug_view *view)
 						break;
 
 					case 2:
-						for (i = 7; i >= 0; i--)
+						for (i = memdata->chunks_displayed - 1; i >= 0; i--)
 						{
 							offs_t curaddr = addrbyte + 2 * i;
 							if (curaddr > maxaddr)
@@ -2601,7 +2621,7 @@ static void memory_update(debug_view *view)
 						break;
 
 					case 4:
-						for (i = 3; i >= 0; i--)
+						for (i = memdata->chunks_displayed - 1; i >= 0; i--)
 						{
 							offs_t curaddr = addrbyte + 4 * i;
 							if (curaddr > maxaddr)
@@ -2702,6 +2722,10 @@ static void	memory_getprop(debug_view *view, UINT32 property, debug_property_inf
 			value->i = memdata->raw_little_endian;
 			break;
 
+		case DVP_MEM_WIDTH:
+			value->i = memdata->chunks_displayed;
+			break;
+
 		default:
 			fatalerror("Attempt to get invalid property %d on debug view type %d", property, view->type);
 			break;
@@ -2770,6 +2794,13 @@ static void	memory_setprop(debug_view *view, UINT32 property, debug_property_inf
 			if (value.i != memdata->bytes_per_chunk)
 			{
 				debug_view_begin_update(view);
+
+				/* Change chunks_displayed based on the new bytes_per_chunk */
+				memdata->chunks_displayed = memdata->chunks_displayed *
+													   memdata->bytes_per_chunk  / value.i;
+
+				if (memdata->chunks_displayed <= 0) memdata->chunks_displayed = 1;
+
 				memdata->bytes_per_chunk = value.i;
 				view->update_pending = TRUE;
 				debug_view_end_update(view);
@@ -2843,6 +2874,20 @@ static void	memory_setprop(debug_view *view, UINT32 property, debug_property_inf
 			view->update_pending = TRUE;
 			debug_view_end_update(view);
 			break;
+
+		case DVP_MEM_WIDTH:
+			if (value.i != memdata->chunks_displayed)
+			{
+				/* lower bounds check - maybe upper bounds check someday? */
+				if (value.i < 1) break;
+
+				debug_view_begin_update(view);
+				memdata->chunks_displayed = value.i;
+				view->update_pending = TRUE;
+				debug_view_end_update(view);
+			}
+			break;
+
 
 		default:
 			fatalerror("Attempt to set invalid property %d on debug view type %d", property, view->type);

@@ -14,11 +14,8 @@
 
 #define PTM_6840_MAX 4		// maximum number of chips to emulate
 
-
-
-
-
-struct ptm6840_interface
+typedef struct _ptm6840_interface ptm6840_interface;
+struct _ptm6840_interface
 {
   write8_handler	out1_func;	// function to call when output1 changes
   write8_handler	out2_func;	// function to call when output2 changes
@@ -27,13 +24,9 @@ struct ptm6840_interface
   void (*irq_func)(int state);	// function called if IRQ line changes
 };
 
-
-
-
-
 void ptm6840_unconfig(void);
 
-void ptm6840_config( int which, const struct ptm6840_interface *intf);
+void ptm6840_config( int which, const ptm6840_interface *intf);
 void ptm6840_reset(  int which);
 int  ptm6840_read(   int which, int offset);
 void ptm6840_write(  int which, int offset, int data);

@@ -793,6 +793,9 @@ void artwork_update_visible_area(mame_display *display)
 		piece->bounds.max_y = (int)((piece->bottom - min_y) * (double)(original_height * gamescale) + 0.5) - 1;
 	}
 
+	/* set UI visible area */
+	ui_set_visible_area(screenrect.min_x, screenrect.min_y, screenrect.max_x, screenrect.max_y);
+
 	artwork_prep();
 }
 

@@ -363,8 +363,9 @@ enum
 #define GET_MODE                (GET_CPSR & MODE_FLAG)
 #define SIGN_BIT                ((UINT32)(1<<31))
 #define SIGN_BITS_DIFFER(a,b)   (((a)^(b)) >> 31)
-#define THUMB_SIGN_BIT				((UINT16)(1<<15))
-#define THUMB_SIGN_BITS_DIFFER(a,b)	(((a)^(b)) >> 15)
+/* I really don't know why these were set to 16-bit, the thumb registers are still 32-bit ... */
+#define THUMB_SIGN_BIT				((UINT32)(1<<31))
+#define THUMB_SIGN_BITS_DIFFER(a,b)	(((a)^(b)) >> 31)
 
 /* At one point I thought these needed to be cpu implementation specific, but they don't.. */
 #define GET_REGISTER(reg)       GetRegister(reg)
@@ -379,6 +380,7 @@ extern void (*arm7_coproc_dt_w_callback)(UINT32 insn, UINT32* prn, void (*write3
 
 #ifdef MAME_DEBUG
 extern void arm7_disasm( char *pBuf, UINT32 pc, UINT32 opcode );
+extern void thumb_disasm( char *pBuf, UINT32 pc, UINT16 opcode );
 
 extern char *(*arm7_dasm_cop_dt_callback)( char *pBuf, UINT32 opcode, char *pConditionCode, char *pBuf0 );
 extern char *(*arm7_dasm_cop_rt_callback)( char *pBuf, UINT32 opcode, char *pConditionCode, char *pBuf0 );

@@ -35,6 +35,7 @@ COREOBJS = \
 	$(OBJ)/info.o \
 	$(OBJ)/input.o \
 	$(OBJ)/inptport.o \
+	$(OBJ)/jedparse.o \
 	$(OBJ)/mame.o \
 	$(OBJ)/mamecore.o \
 	$(OBJ)/md5.o \
@@ -106,4 +107,4 @@ endif
 # set of tool targets
 #-------------------------------------------------
 
-TOOLS = romcmp$(EXE) chdman$(EXE) xml2info$(EXE)
+TOOLS = romcmp$(EXE) chdman$(EXE) xml2info$(EXE) jedutil$(EXE)

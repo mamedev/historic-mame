@@ -13,7 +13,7 @@
 
 extern game_driver TINY_NAME;
 
-game_driver * const drivers[] =
+const game_driver * const drivers[] =
 {
 	TINY_POINTER,
 	0	/* end of array */

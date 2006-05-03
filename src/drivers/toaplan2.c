@@ -18,10 +18,11 @@ Supported games:
     ghox        TP-021        Toaplan       Ghox
     dogyuun     TP-022        Toaplan       Dogyuun
     kbash       TP-023        Toaplan       Knuckle Bash
+    kbash2      bootleg       Toaplan       Knuckle Bash 2
     truxton2    TP-024        Toaplan       Truxton 2 / Tatsujin 2
     pipibibs    TP-025        Toaplan       Pipi & Bibis
     whoopee     TP-025        Toaplan       Whoopee
-    pipibibi    bootleg?      Toaplan       Pipi & Bibis
+    pipibibi    bootleg       Toaplan       Pipi & Bibis
     fixeight    TP-026        Toaplan       FixEight
     fixeighb    bootleg       Toaplan       FixEight
     grindstm    TP-027        Toaplan       Grind Stormer  (1992)
@@ -258,7 +259,7 @@ To Do / Unknowns:
         VIDEO_UPDATE should probably be AFTER Vblank.
         Where did the magical '262' IRQ/Sec for the 68K come from? Probably
         should be 256. CPU interleave on BBAKRAID is 262 aswell - why?
-    - Batrider IRQ4 beig activated at EOF is rubish. It's sound related -
+    - Batrider IRQ4 being activated at EOF is rubish. It's sound related -
         maybe acknowledgement from the Z80 when its NMI has completed (port 46)
 
 *****************************************************************************/
@@ -288,10 +289,10 @@ To Do / Unknowns:
 static UINT8 *toaplan2_shared_ram;
 static UINT8 *raizing_shared_ram;		/* Shared ram used in Shippumd and Mahoudai */
 static UINT16 *toaplan2_shared_ram16;	/* Really 8bit RAM connected to Z180 */
-static UINT16 *V25_shared_ram;		/* Really 8bit RAM connected to Z180 */
+static UINT16 *V25_shared_ram;			/* Really 8bit RAM connected to Z180 */
 static UINT16 *battleg_commram16;		/* Comm ram used in Battle Garegga */
-static UINT16 *raizing_cpu_comm16;	/* Raizing commands for the Z80 */
-static UINT8  raizing_cpu_reply[2];	/* Raizing replies to the 68K */
+static UINT16 *raizing_cpu_comm16;		/* Raizing commands for the Z80 */
+static UINT8  raizing_cpu_reply[2];		/* Raizing replies to the 68K */
 
 /************ Video RAM related values ************/
 extern UINT16 *toaplan2_txvideoram16;
@@ -439,14 +440,13 @@ static DRIVER_INIT( fixeight )
 	toaplan2_sub_cpu = CPU_2_V25;
 }
 
-
 static DRIVER_INIT( fixeighb )
 {
 	UINT16 *bgdata = (UINT16 *)memory_region(REGION_CPU1);
 	memory_set_bankptr(1, &bgdata[0x40000]); /* $80000 - $fffff */
+
+	toaplan2_sub_cpu = CPU_2_NONE;
 }
-
-
 
 static DRIVER_INIT( pipibibi )
 {
@@ -660,8 +660,8 @@ static WRITE8_HANDLER( toaplan2_coin_w )
 	{
 		coin_lockout_w( 0, ((data & 4) ? 0 : 1) );
 		coin_lockout_w( 1, ((data & 8) ? 0 : 1) );
-		coin_counter_w( 0, (data & 1) ); coin_counter_w( 0, 0 );
-		coin_counter_w( 1, (data & 2) ); coin_counter_w( 1, 0 );
+		coin_counter_w( 0, (data & 1) );
+		coin_counter_w( 1, (data & 2) );
 	}
 	else
 	{
@@ -921,7 +921,7 @@ static WRITE16_HANDLER( kbash_snd_cpu_w )
 	{
 		kbash_okisnd_w(data);
 	}
-	logerror("PC:%06x Writing command (%04x) to the NEC V25+ secondary CPU port %02x\n",activecpu_get_previouspc(),data,(offset*2));
+	logerror("PC:%06x Writing Sound command (%04x) to the NEC V25+ secondary CPU\n",activecpu_get_previouspc(),data);
 }
 
 static READ16_HANDLER( fixeight_sec_cpu_r )
@@ -960,7 +960,7 @@ static WRITE16_HANDLER( fixeight_sec_cpu_w )
 		}
 		else if (mcu_data == 0xff00)
 		{
-#if 0 	/* check the 37B6 code */
+#if 0 		/* check the 37B6 code */
 			/* copy nvram data to shared ram after post is complete */
 			fixeight_sharedram[0] = fixeight_nvram[0];	/* Dip Switch A */
 			fixeight_sharedram[1] = fixeight_nvram[1];	/* Dip Switch B */
@@ -1366,608 +1366,438 @@ static INTERRUPT_GEN( bbakraid_snd_interrupt )
 }
 
 
-static ADDRESS_MAP_START( tekipaki_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x01ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x020000, 0x03ffff) AM_READ(MRA16_ROM)				/* extra for Whoopee */
-	AM_RANGE(0x080000, 0x082fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x0c0000, 0x0c0fff) AM_READ(paletteram16_word_r)
-	AM_RANGE(0x140004, 0x140007) AM_READ(toaplan2_0_videoram16_r)
-	AM_RANGE(0x14000c, 0x14000d) AM_READ(toaplan2_inputport_0_word_r)	/* VBlank */
-	AM_RANGE(0x180000, 0x180001) AM_READ(input_port_4_word_r)	/* Dip Switch A */
-	AM_RANGE(0x180010, 0x180011) AM_READ(input_port_5_word_r)	/* Dip Switch B */
-	AM_RANGE(0x180020, 0x180021) AM_READ(input_port_3_word_r)	/* Coin/System inputs */
-	AM_RANGE(0x180030, 0x180031) AM_READ(c2map_port_6_r)		/* CPU 2 busy and Territory Jumper block */
-	AM_RANGE(0x180050, 0x180051) AM_READ(input_port_1_word_r)	/* Player 1 controls */
-	AM_RANGE(0x180060, 0x180061) AM_READ(input_port_2_word_r)	/* Player 2 controls */
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( tekipaki_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x01ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x020000, 0x03ffff) AM_WRITE(MWA16_ROM)			/* extra for Whoopee */
-	AM_RANGE(0x080000, 0x082fff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x0c0000, 0x0c0fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+static ADDRESS_MAP_START( tekipaki_68k_mem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x01ffff) AM_ROM
+	AM_RANGE(0x020000, 0x03ffff) AM_ROM							/* extra for Whoopee */
+	AM_RANGE(0x080000, 0x082fff) AM_RAM
+	AM_RANGE(0x0c0000, 0x0c0fff) AM_READWRITE(paletteram16_word_r, paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x140000, 0x140001) AM_WRITE(toaplan2_0_voffs_w)
-	AM_RANGE(0x140004, 0x140007) AM_WRITE(toaplan2_0_videoram16_w)/* Tile/Sprite VideoRAM */
+	AM_RANGE(0x140004, 0x140007) AM_READWRITE(toaplan2_0_videoram16_r, toaplan2_0_videoram16_w)	/* Tile/Sprite VideoRAM */
 	AM_RANGE(0x140008, 0x140009) AM_WRITE(toaplan2_0_scroll_reg_select_w)
-	AM_RANGE(0x14000c, 0x14000d) AM_WRITE(toaplan2_0_scroll_reg_data_w)
+	AM_RANGE(0x14000c, 0x14000d) AM_READWRITE(toaplan2_inputport_0_word_r, toaplan2_0_scroll_reg_data_w)
+	AM_RANGE(0x180000, 0x180001) AM_READ(port_tag_to_handler16("DSWA"))
+	AM_RANGE(0x180010, 0x180011) AM_READ(port_tag_to_handler16("DSWB"))
+	AM_RANGE(0x180020, 0x180021) AM_READ(port_tag_to_handler16("SYS"))
+	AM_RANGE(0x180030, 0x180031) AM_READ(c2map_port_6_r)		/* CPU 2 busy and Territory Jumper block */
 	AM_RANGE(0x180040, 0x180041) AM_WRITE(toaplan2_coin_word_w)	/* Coin count/lock */
+	AM_RANGE(0x180050, 0x180051) AM_READ(port_tag_to_handler16("IN1"))
+	AM_RANGE(0x180060, 0x180061) AM_READ(port_tag_to_handler16("IN2"))
 	AM_RANGE(0x180070, 0x180071) AM_WRITE(toaplan2_hd647180_cpu_w)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( ghox_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+
+static ADDRESS_MAP_START( ghox_68k_mem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_ROM
 	AM_RANGE(0x040000, 0x040001) AM_READ(ghox_p2_h_analog_r)	/* Paddle 2 */
-	AM_RANGE(0x080000, 0x083fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x0c0000, 0x0c0fff) AM_READ(paletteram16_word_r)
+	AM_RANGE(0x080000, 0x083fff) AM_RAM
+	AM_RANGE(0x0c0000, 0x0c0fff) AM_READWRITE(paletteram16_word_r, paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x100000, 0x100001) AM_READ(ghox_p1_h_analog_r)	/* Paddle 1 */
-	AM_RANGE(0x140004, 0x140007) AM_READ(toaplan2_0_videoram16_r)
-	AM_RANGE(0x14000c, 0x14000d) AM_READ(toaplan2_inputport_0_word_r)	/* VBlank */
-	AM_RANGE(0x180000, 0x180001) AM_READ(ghox_mcu_r)			/* really part of shared RAM */
-	AM_RANGE(0x180006, 0x180007) AM_READ(input_port_4_word_r)	/* Dip Switch A */
-	AM_RANGE(0x180008, 0x180009) AM_READ(input_port_5_word_r)	/* Dip Switch B */
-	AM_RANGE(0x180010, 0x180011) AM_READ(input_port_3_word_r)	/* Coin/System inputs */
-        AM_RANGE(0x18000c, 0x18000d) AM_READ(input_port_1_word_r)	/* Player 1 controls  */
- 	AM_RANGE(0x18000e, 0x18000f) AM_READ(input_port_2_word_r)	/* Player 2 controls  */
-	AM_RANGE(0x180500, 0x180fff) AM_READ(ghox_shared_ram_r)
-	AM_RANGE(0x18100c, 0x18100d) AM_READ(input_port_6_word_r)	/* Territory Jumper block */
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( ghox_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x080000, 0x083fff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x0c0000, 0x0c0fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x140000, 0x140001) AM_WRITE(toaplan2_0_voffs_w)
-	AM_RANGE(0x140004, 0x140007) AM_WRITE(toaplan2_0_videoram16_w)/* Tile/Sprite VideoRAM */
+	AM_RANGE(0x140004, 0x140007) AM_READWRITE(toaplan2_0_videoram16_r, toaplan2_0_videoram16_w)	/* Tile/Sprite VideoRAM */
 	AM_RANGE(0x140008, 0x140009) AM_WRITE(toaplan2_0_scroll_reg_select_w)
-	AM_RANGE(0x14000c, 0x14000d) AM_WRITE(toaplan2_0_scroll_reg_data_w)
-	AM_RANGE(0x180000, 0x180001) AM_WRITE(ghox_mcu_w)				/* really part of shared RAM */
-	AM_RANGE(0x180500, 0x180fff) AM_WRITE(ghox_shared_ram_w) AM_BASE(&toaplan2_shared_ram16)
+	AM_RANGE(0x14000c, 0x14000d) AM_READWRITE(toaplan2_inputport_0_word_r, toaplan2_0_scroll_reg_data_w)
+	AM_RANGE(0x180000, 0x180001) AM_READWRITE(ghox_mcu_r, ghox_mcu_w)	/* really part of shared RAM */
+	AM_RANGE(0x180006, 0x180007) AM_READ(port_tag_to_handler16("DSWA"))
+	AM_RANGE(0x180008, 0x180009) AM_READ(port_tag_to_handler16("DSWB"))
+	AM_RANGE(0x180010, 0x180011) AM_READ(port_tag_to_handler16("SYS"))
+	AM_RANGE(0x18000c, 0x18000d) AM_READ(port_tag_to_handler16("IN1"))
+	AM_RANGE(0x18000e, 0x18000f) AM_READ(port_tag_to_handler16("IN2"))
+	AM_RANGE(0x180500, 0x180fff) AM_READWRITE(ghox_shared_ram_r, ghox_shared_ram_w) AM_BASE(&toaplan2_shared_ram16)
 	AM_RANGE(0x181000, 0x181001) AM_WRITE(toaplan2_coin_word_w)
+	AM_RANGE(0x18100c, 0x18100d) AM_READ(port_tag_to_handler16("JMPR"))
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( dogyuun_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x100000, 0x103fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x200010, 0x200011) AM_READ(input_port_1_word_r)	/* Player 1 controls */
-	AM_RANGE(0x200014, 0x200015) AM_READ(input_port_2_word_r)	/* Player 2 controls */
-	AM_RANGE(0x200018, 0x200019) AM_READ(input_port_3_word_r)	/* Coin/System inputs */
-#if V25
-	AM_RANGE(0x21e000, 0x21fbff) AM_READ(shared_ram_r)			/* $21f000 status port */
-	AM_RANGE(0x21fc00, 0x21ffff) AM_READ(V25_sharedram_r)		/* 16-bit on 68000 side, 8-bit on V25+ side */
-#else
-	AM_RANGE(0x21e000, 0x21efff) AM_READ(shared_ram_r)
-	AM_RANGE(0x21f000, 0x21f001) AM_READ(toaplan2_snd_cpu_r)	/* V25 status port */
-	AM_RANGE(0x21f004, 0x21f005) AM_READ(input_port_4_word_r)	/* Dip Switch A */
-	AM_RANGE(0x21f006, 0x21f007) AM_READ(input_port_5_word_r)	/* Dip Switch B */
-	AM_RANGE(0x21f008, 0x21f009) AM_READ(input_port_6_word_r)	/* Territory Jumper block */
-	AM_RANGE(0x21fc00, 0x21ffff) AM_READ(V25_sharedram_r)		/* 16-bit on 68000 side, 8-bit on V25+ side */
-#endif
-	/***** The following in 0x30000x are for video controller 1 ******/
-	AM_RANGE(0x300004, 0x300007) AM_READ(toaplan2_0_videoram16_r)/* tile layers */
-	AM_RANGE(0x30000c, 0x30000d) AM_READ(toaplan2_inputport_0_word_r)	/* VBlank */
-	AM_RANGE(0x400000, 0x400fff) AM_READ(paletteram16_word_r)
-	/***** The following in 0x50000x are for video controller 2 ******/
-	AM_RANGE(0x500004, 0x500007) AM_READ(toaplan2_1_videoram16_r)/* tile layers 2 */
-	AM_RANGE(0x700000, 0x700001) AM_READ(video_count_r)			/* test bit 8 */
-ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( dogyuun_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x100000, 0x103fff) AM_WRITE(MWA16_RAM)
+static ADDRESS_MAP_START( dogyuun_68k_mem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_ROM
+	AM_RANGE(0x100000, 0x103fff) AM_RAM
+	AM_RANGE(0x200010, 0x200011) AM_READ(port_tag_to_handler16("IN1"))
+	AM_RANGE(0x200014, 0x200015) AM_READ(port_tag_to_handler16("IN2"))
+	AM_RANGE(0x200018, 0x200019) AM_READ(port_tag_to_handler16("SYS"))
 	AM_RANGE(0x20001c, 0x20001d) AM_WRITE(toaplan2_coin_word_w)
 #if V25
-	AM_RANGE(0x21e000, 0x21fbff) AM_WRITE(shared_ram_w) AM_BASE(&toaplan2_shared_ram16)	/* $21F000 */
-	AM_RANGE(0x21fc00, 0x21ffff) AM_WRITE(V25_sharedram_w) AM_BASE(&V25_shared_ram)	/* 16-bit on 68000 side, 8-bit on V25+ side */
+	AM_RANGE(0x21e000, 0x21fbff) AM_READWRITE(shared_ram_r, shared_ram_w) AM_BASE(&toaplan2_shared_ram16)	/* $21f000 status port */
+	AM_RANGE(0x21fc00, 0x21ffff) AM_READWRITE(V25_sharedram_r, V25_sharedram_w) AM_BASE(&V25_shared_ram)	/* 16-bit on 68000 side, 8-bit on V25+ side */
 #else
-	AM_RANGE(0x21e000, 0x21efff) AM_WRITE(shared_ram_w) AM_BASE(&toaplan2_shared_ram16)
-	AM_RANGE(0x21f000, 0x21f001) AM_WRITE(dogyuun_snd_cpu_w)	/* V25+ command port */
-	AM_RANGE(0x21fc00, 0x21ffff) AM_WRITE(V25_sharedram_w) AM_BASE(&V25_shared_ram)	/* 16-bit on 68000 side, 8-bit on V25+ side */
+	AM_RANGE(0x21e000, 0x21efff) AM_READWRITE(shared_ram_r, shared_ram_w) AM_BASE(&toaplan2_shared_ram16)
+	AM_RANGE(0x21f000, 0x21f001) AM_READWRITE(toaplan2_snd_cpu_r, dogyuun_snd_cpu_w)	/* V25+ status/command port */
+	AM_RANGE(0x21f004, 0x21f005) AM_READ(port_tag_to_handler16("DSWA"))
+	AM_RANGE(0x21f006, 0x21f007) AM_READ(port_tag_to_handler16("DSWB"))
+	AM_RANGE(0x21f008, 0x21f009) AM_READ(port_tag_to_handler16("JMPR"))
+	AM_RANGE(0x21fc00, 0x21ffff) AM_READWRITE(V25_sharedram_r, V25_sharedram_w) AM_BASE(&V25_shared_ram)	/* 16-bit on 68000 side, 8-bit on V25+ side */
 #endif
-	/***** The following in 0x30000x are for video controller 1 ******/
+	/***** The following locations in 0x30000x are for video controller 1 ******/
 	AM_RANGE(0x300000, 0x300001) AM_WRITE(toaplan2_0_voffs_w)	/* VideoRAM selector/offset */
-	AM_RANGE(0x300004, 0x300007) AM_WRITE(toaplan2_0_videoram16_w)/* Tile/Sprite VideoRAM */
+	AM_RANGE(0x300004, 0x300007) AM_READWRITE(toaplan2_0_videoram16_r, toaplan2_0_videoram16_w)	/* Tile/Sprite VideoRAM */
 	AM_RANGE(0x300008, 0x300009) AM_WRITE(toaplan2_0_scroll_reg_select_w)
-	AM_RANGE(0x30000c, 0x30000d) AM_WRITE(toaplan2_0_scroll_reg_data_w)
-	AM_RANGE(0x400000, 0x400fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
-	/***** The following in 0x50000x are for video controller 2 ******/
+	AM_RANGE(0x30000c, 0x30000d) AM_READWRITE(toaplan2_inputport_0_word_r, toaplan2_0_scroll_reg_data_w)
+	AM_RANGE(0x400000, 0x400fff) AM_READWRITE(paletteram16_word_r, paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+	/***** The following loctions in 0x50000x are for video controller 2 ******/
 	AM_RANGE(0x500000, 0x500001) AM_WRITE(toaplan2_1_voffs_w)	/* VideoRAM selector/offset */
-	AM_RANGE(0x500004, 0x500007) AM_WRITE(toaplan2_1_videoram16_w)/* Tile/Sprite VideoRAM */
+	AM_RANGE(0x500004, 0x500007) AM_READWRITE(toaplan2_1_videoram16_r, toaplan2_1_videoram16_w)	/* Tile/Sprite VideoRAM */
 	AM_RANGE(0x500008, 0x500009) AM_WRITE(toaplan2_1_scroll_reg_select_w)
 	AM_RANGE(0x50000c, 0x50000d) AM_WRITE(toaplan2_1_scroll_reg_data_w)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( kbash_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x100000, 0x103fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x200000, 0x200001) AM_READ(kbash_snd_cpu_r)
-	AM_RANGE(0x200004, 0x200005) AM_READ(input_port_4_word_r)	/* Dip Switch A */
-	AM_RANGE(0x200006, 0x200007) AM_READ(input_port_5_word_r)	/* Dip Switch B */
-	AM_RANGE(0x200008, 0x200009) AM_READ(input_port_6_word_r)	/* Territory Jumper block */
-	AM_RANGE(0x208010, 0x208011) AM_READ(input_port_1_word_r)	/* Player 1 controls */
-	AM_RANGE(0x208014, 0x208015) AM_READ(input_port_2_word_r)	/* Player 2 controls */
-	AM_RANGE(0x208018, 0x208019) AM_READ(input_port_3_word_r)	/* Coin/System inputs */
-	AM_RANGE(0x300004, 0x300007) AM_READ(toaplan2_0_videoram16_r)/* tile layers */
-	AM_RANGE(0x30000c, 0x30000d) AM_READ(toaplan2_inputport_0_word_r)	/* VBlank */
-	AM_RANGE(0x400000, 0x400fff) AM_READ(paletteram16_word_r)
 	AM_RANGE(0x700000, 0x700001) AM_READ(video_count_r)			/* test bit 8 */
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( kbash_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x100000, 0x103fff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x200000, 0x200003) AM_WRITE(kbash_snd_cpu_w)		/* sound number to play */
+
+static ADDRESS_MAP_START( kbash_68k_mem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_ROM
+	AM_RANGE(0x100000, 0x103fff) AM_RAM
+	AM_RANGE(0x200000, 0x200001) AM_READWRITE(kbash_snd_cpu_r, kbash_snd_cpu_w)	/* Sound number to play */
+	AM_RANGE(0x200002, 0x200003) AM_WRITENOP					/* Control info to V25+ */
+	AM_RANGE(0x200004, 0x200005) AM_READ(port_tag_to_handler16("DSWA"))
+	AM_RANGE(0x200006, 0x200007) AM_READ(port_tag_to_handler16("DSWB"))
+	AM_RANGE(0x200008, 0x200009) AM_READ(port_tag_to_handler16("JMPR"))
+	AM_RANGE(0x208010, 0x208011) AM_READ(port_tag_to_handler16("IN1"))
+	AM_RANGE(0x208014, 0x208015) AM_READ(port_tag_to_handler16("IN2"))
+	AM_RANGE(0x208018, 0x208019) AM_READ(port_tag_to_handler16("SYS"))
 	AM_RANGE(0x20801c, 0x20801d) AM_WRITE(toaplan2_coin_word_w)
 	AM_RANGE(0x300000, 0x300001) AM_WRITE(toaplan2_0_voffs_w)
-	AM_RANGE(0x300004, 0x300007) AM_WRITE(toaplan2_0_videoram16_w)
+	AM_RANGE(0x300004, 0x300007) AM_READWRITE(toaplan2_0_videoram16_r, toaplan2_0_videoram16_w)	/* Tile/Sprite VideoRAM */
 	AM_RANGE(0x300008, 0x300009) AM_WRITE(toaplan2_0_scroll_reg_select_w)
-	AM_RANGE(0x30000c, 0x30000d) AM_WRITE(toaplan2_0_scroll_reg_data_w)
-	AM_RANGE(0x400000, 0x400fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x30000c, 0x30000d) AM_READWRITE(toaplan2_inputport_0_word_r, toaplan2_0_scroll_reg_data_w)	/* VBlank */
+	AM_RANGE(0x400000, 0x400fff) AM_READWRITE(paletteram16_word_r, paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x700000, 0x700001) AM_READ(video_count_r)			/* test bit 8 */
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( truxton2_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x100000, 0x10ffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x200004, 0x200007) AM_READ(toaplan2_0_videoram16_r)
-	AM_RANGE(0x20000c, 0x20000d) AM_READ(toaplan2_inputport_0_word_r)	/* VBlank */
-	AM_RANGE(0x300000, 0x300fff) AM_READ(paletteram16_word_r)
-	AM_RANGE(0x400000, 0x401fff) AM_READ(toaplan2_txvideoram16_r)
-	AM_RANGE(0x402000, 0x4021ff) AM_READ(toaplan2_txvideoram16_offs_r)
-	AM_RANGE(0x402200, 0x402fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x403000, 0x4031ff) AM_READ(toaplan2_txscrollram16_r)
-	AM_RANGE(0x403200, 0x403fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x500000, 0x50ffff) AM_READ(toaplan2_tx_gfxram16_r)
-	AM_RANGE(0x600000, 0x600001) AM_READ(video_count_r)
-	AM_RANGE(0x700000, 0x700001) AM_READ(input_port_4_word_r)	/* Dip Switch A */
-	AM_RANGE(0x700002, 0x700003) AM_READ(input_port_5_word_r)	/* Dip Switch B */
-	AM_RANGE(0x700004, 0x700005) AM_READ(input_port_6_word_r)	/* Territory Jumper block */
-	AM_RANGE(0x700006, 0x700007) AM_READ(input_port_1_word_r)	/* Player 1 controls */
-	AM_RANGE(0x700008, 0x700009) AM_READ(input_port_2_word_r)	/* Player 2 controls */
-	AM_RANGE(0x70000a, 0x70000b) AM_READ(input_port_3_word_r)	/* Coin/System inputs */
-	AM_RANGE(0x700010, 0x700011) AM_READ(OKIM6295_status_0_lsb_r)
-	AM_RANGE(0x700014, 0x700015) AM_READ(MRA16_NOP)
-	AM_RANGE(0x700016, 0x700017) AM_READ(YM2151_status_port_0_lsb_r)
+
+static ADDRESS_MAP_START( kbash2_68k_mem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_ROM
+	AM_RANGE(0x100000, 0x103fff) AM_RAM
+	AM_RANGE(0x104000, 0x10401f) AM_RAM			/* Sound related? */
+	AM_RANGE(0x200000, 0x200001) AM_NOP			/* Left over from original code - Sound Number write, Status read */
+	AM_RANGE(0x200002, 0x200003) AM_WRITENOP	/* Left over from original code - Reset Sound */
+	AM_RANGE(0x200004, 0x200005) AM_READ(port_tag_to_handler16("DSWA"))
+	AM_RANGE(0x200008, 0x200009) AM_READ(port_tag_to_handler16("DSWB"))
+	AM_RANGE(0x20000c, 0x20000d) AM_READ(port_tag_to_handler16("JMPR"))
+	AM_RANGE(0x200010, 0x200011) AM_READ(port_tag_to_handler16("IN1"))
+	AM_RANGE(0x200014, 0x200015) AM_READ(port_tag_to_handler16("IN2"))
+	AM_RANGE(0x200018, 0x200019) AM_READ(port_tag_to_handler16("SYS"))
+	AM_RANGE(0x200020, 0x200021) AM_READWRITE(OKIM6295_status_1_lsb_r, OKIM6295_data_1_lsb_w)
+	AM_RANGE(0x200024, 0x200025) AM_READWRITE(OKIM6295_status_0_lsb_r, OKIM6295_data_0_lsb_w)
+	AM_RANGE(0x200028, 0x200029) AM_WRITE(oki_bankswitch_w)
+	AM_RANGE(0x20002c, 0x20002d) AM_READ(video_count_r)
+	AM_RANGE(0x300000, 0x300001) AM_WRITE(toaplan2_0_voffs_w)	/* VideoRAM selector/offset */
+	AM_RANGE(0x300004, 0x300007) AM_READWRITE(toaplan2_0_videoram16_r, toaplan2_0_videoram16_w)	/* Tile/Sprite VideoRAM */
+	AM_RANGE(0x300008, 0x300009) AM_WRITE(toaplan2_0_scroll_reg_select_w)
+	AM_RANGE(0x30000c, 0x30000d) AM_READWRITE(toaplan2_inputport_0_word_r, toaplan2_0_scroll_reg_data_w)
+	AM_RANGE(0x400000, 0x400fff) AM_READWRITE(paletteram16_word_r, paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( truxton2_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x200000, 0x200001) AM_WRITE(toaplan2_0_voffs_w)	/* VideoRAM selector/offset */
-	AM_RANGE(0x200004, 0x200007) AM_WRITE(toaplan2_0_videoram16_w)
+
+static ADDRESS_MAP_START( truxton2_68k_mem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_ROM
+	AM_RANGE(0x100000, 0x10ffff) AM_RAM
+	AM_RANGE(0x200000, 0x200001) AM_WRITE(toaplan2_0_voffs_w)
+	AM_RANGE(0x200004, 0x200007) AM_READWRITE(toaplan2_0_videoram16_r, toaplan2_0_videoram16_w)
 	AM_RANGE(0x200008, 0x200009) AM_WRITE(toaplan2_0_scroll_reg_select_w)
-	AM_RANGE(0x20000c, 0x20000d) AM_WRITE(toaplan2_0_scroll_reg_data_w)
-	AM_RANGE(0x300000, 0x300fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
-	AM_RANGE(0x400000, 0x401fff) AM_WRITE(toaplan2_txvideoram16_w) AM_BASE(&toaplan2_txvideoram16) AM_SIZE(&toaplan2_tx_vram_size)
-	AM_RANGE(0x402000, 0x4021ff) AM_WRITE(toaplan2_txvideoram16_offs_w) AM_BASE(&toaplan2_txvideoram16_offs) AM_SIZE(&toaplan2_tx_offs_vram_size)
-	AM_RANGE(0x402200, 0x402fff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x403000, 0x4031ff) AM_WRITE(toaplan2_txscrollram16_w) AM_BASE(&toaplan2_txscrollram16) AM_SIZE(&toaplan2_tx_scroll_vram_size)
-	AM_RANGE(0x403200, 0x403fff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x500000, 0x50ffff) AM_WRITE(toaplan2_tx_gfxram16_w) AM_BASE(&toaplan2_tx_gfxram16)
-	AM_RANGE(0x700010, 0x700011) AM_WRITE(OKIM6295_data_0_lsb_w)
+	AM_RANGE(0x20000c, 0x20000d) AM_READWRITE(toaplan2_inputport_0_word_r, toaplan2_0_scroll_reg_data_w)
+	AM_RANGE(0x300000, 0x300fff) AM_READWRITE(paletteram16_word_r, paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x400000, 0x401fff) AM_READWRITE(toaplan2_txvideoram16_r, toaplan2_txvideoram16_w) AM_BASE(&toaplan2_txvideoram16) AM_SIZE(&toaplan2_tx_vram_size)
+	AM_RANGE(0x402000, 0x4021ff) AM_READWRITE(toaplan2_txvideoram16_offs_r, toaplan2_txvideoram16_offs_w) AM_BASE(&toaplan2_txvideoram16_offs) AM_SIZE(&toaplan2_tx_offs_vram_size)
+	AM_RANGE(0x402200, 0x402fff) AM_RAM
+	AM_RANGE(0x403000, 0x4031ff) AM_READWRITE(toaplan2_txscrollram16_r, toaplan2_txscrollram16_w) AM_BASE(&toaplan2_txscrollram16) AM_SIZE(&toaplan2_tx_scroll_vram_size)
+	AM_RANGE(0x403200, 0x403fff) AM_RAM
+	AM_RANGE(0x500000, 0x50ffff) AM_READWRITE(toaplan2_tx_gfxram16_r, toaplan2_tx_gfxram16_w) AM_BASE(&toaplan2_tx_gfxram16)
+	AM_RANGE(0x600000, 0x600001) AM_READ(video_count_r)
+	AM_RANGE(0x700000, 0x700001) AM_READ(port_tag_to_handler16("DSWA"))
+	AM_RANGE(0x700002, 0x700003) AM_READ(port_tag_to_handler16("DSWB"))
+	AM_RANGE(0x700004, 0x700005) AM_READ(port_tag_to_handler16("JMPR"))
+	AM_RANGE(0x700006, 0x700007) AM_READ(port_tag_to_handler16("IN1"))
+	AM_RANGE(0x700008, 0x700009) AM_READ(port_tag_to_handler16("IN2"))
+	AM_RANGE(0x70000a, 0x70000b) AM_READ(port_tag_to_handler16("SYS"))
+	AM_RANGE(0x700010, 0x700011) AM_READWRITE(OKIM6295_status_0_lsb_r, OKIM6295_data_0_lsb_w)
 	AM_RANGE(0x700014, 0x700015) AM_WRITE(YM2151_register_port_0_lsb_w)
-	AM_RANGE(0x700016, 0x700017) AM_WRITE(YM2151_data_port_0_lsb_w)
-	AM_RANGE(0x70001e, 0x70001f) AM_WRITE(toaplan2_coin_word_w)	/* Coin count/lock */
+	AM_RANGE(0x700016, 0x700017) AM_READWRITE(YM2151_status_port_0_lsb_r, YM2151_data_port_0_lsb_w)
+	AM_RANGE(0x70001e, 0x70001f) AM_WRITE(toaplan2_coin_word_w)		/* Coin count/lock */
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( pipibibs_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x080000, 0x082fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x0c0000, 0x0c0fff) AM_READ(paletteram16_word_r)
-	AM_RANGE(0x140004, 0x140007) AM_READ(toaplan2_0_videoram16_r)
-	AM_RANGE(0x14000c, 0x14000d) AM_READ(toaplan2_inputport_0_word_r)	/* VBlank */
-	AM_RANGE(0x190000, 0x190fff) AM_READ(toaplan2_shared_r)
-	AM_RANGE(0x19c020, 0x19c021) AM_READ(input_port_4_word_r)	/* Dip Switch A */
-	AM_RANGE(0x19c024, 0x19c025) AM_READ(input_port_5_word_r)	/* Dip Switch B */
-	AM_RANGE(0x19c028, 0x19c029) AM_READ(input_port_6_word_r)	/* Territory Jumper block */
-	AM_RANGE(0x19c02c, 0x19c02d) AM_READ(input_port_3_word_r)	/* Coin/System inputs */
-	AM_RANGE(0x19c030, 0x19c031) AM_READ(input_port_1_word_r)	/* Player 1 controls */
-	AM_RANGE(0x19c034, 0x19c035) AM_READ(input_port_2_word_r)	/* Player 2 controls */
-ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( pipibibs_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x080000, 0x082fff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x0c0000, 0x0c0fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+static ADDRESS_MAP_START( pipibibs_68k_mem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_ROM
+	AM_RANGE(0x080000, 0x082fff) AM_RAM
+	AM_RANGE(0x0c0000, 0x0c0fff) AM_READWRITE(paletteram16_word_r, paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x140000, 0x140001) AM_WRITE(toaplan2_0_voffs_w)
-	AM_RANGE(0x140004, 0x140007) AM_WRITE(toaplan2_0_videoram16_w)/* Tile/Sprite VideoRAM */
+	AM_RANGE(0x140004, 0x140007) AM_READWRITE(toaplan2_0_videoram16_r, toaplan2_0_videoram16_w)
 	AM_RANGE(0x140008, 0x140009) AM_WRITE(toaplan2_0_scroll_reg_select_w)
-	AM_RANGE(0x14000c, 0x14000d) AM_WRITE(toaplan2_0_scroll_reg_data_w)
-	AM_RANGE(0x190000, 0x190fff) AM_WRITE(toaplan2_shared_w)
-	AM_RANGE(0x19c01c, 0x19c01d) AM_WRITE(toaplan2_coin_word_w)	/* Coin count/lock */
+	AM_RANGE(0x14000c, 0x14000d) AM_READWRITE(toaplan2_inputport_0_word_r, toaplan2_0_scroll_reg_data_w)
+	AM_RANGE(0x190000, 0x190fff) AM_READWRITE(toaplan2_shared_r, toaplan2_shared_w)
+	AM_RANGE(0x19c01c, 0x19c01d) AM_WRITE(toaplan2_coin_word_w)		/* Coin count/lock */
+	AM_RANGE(0x19c020, 0x19c021) AM_READ(port_tag_to_handler16("DSWA"))
+	AM_RANGE(0x19c024, 0x19c025) AM_READ(port_tag_to_handler16("DSWB"))
+	AM_RANGE(0x19c028, 0x19c029) AM_READ(port_tag_to_handler16("JMPR"))
+	AM_RANGE(0x19c02c, 0x19c02d) AM_READ(port_tag_to_handler16("SYS"))
+	AM_RANGE(0x19c030, 0x19c031) AM_READ(port_tag_to_handler16("IN1"))
+	AM_RANGE(0x19c034, 0x19c035) AM_READ(port_tag_to_handler16("IN2"))
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( pipibibi_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x080000, 0x082fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x083000, 0x0837ff) AM_READ(pipibibi_spriteram16_r)
-	AM_RANGE(0x083800, 0x087fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x0c0000, 0x0c0fff) AM_READ(paletteram16_word_r)
-	AM_RANGE(0x120000, 0x120fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x180000, 0x182fff) AM_READ(pipibibi_videoram16_r)
-	AM_RANGE(0x190002, 0x190003) AM_READ(pipibibi_z80_status_r)	/* Z80 ready ? */
-	AM_RANGE(0x19c020, 0x19c021) AM_READ(input_port_4_word_r)	/* Dip Switch A */
-	AM_RANGE(0x19c024, 0x19c025) AM_READ(input_port_5_word_r)	/* Dip Switch B */
-	AM_RANGE(0x19c028, 0x19c029) AM_READ(input_port_6_word_r)	/* Territory Jumper block */
-	AM_RANGE(0x19c02c, 0x19c02d) AM_READ(input_port_3_word_r)	/* Coin/System inputs */
-	AM_RANGE(0x19c030, 0x19c031) AM_READ(input_port_1_word_r)	/* Player 1 controls */
-	AM_RANGE(0x19c034, 0x19c035) AM_READ(input_port_2_word_r)	/* Player 2 controls */
-ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( pipibibi_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x080000, 0x082fff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x083000, 0x0837ff) AM_WRITE(pipibibi_spriteram16_w)/* SpriteRAM */
-	AM_RANGE(0x083800, 0x087fff) AM_WRITE(MWA16_RAM)			/* SpriteRAM (unused) */
-	AM_RANGE(0x0c0000, 0x0c0fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
-	AM_RANGE(0x120000, 0x120fff) AM_WRITE(MWA16_RAM)			/* Copy of SpriteRAM ? */
-//  AM_RANGE(0x13f000, 0x13f001) AM_WRITE(MWA16_NOP)            /* ??? */
-	AM_RANGE(0x180000, 0x182fff) AM_WRITE(pipibibi_videoram16_w)/* TileRAM */
+static ADDRESS_MAP_START( pipibibi_68k_mem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_ROM
+	AM_RANGE(0x080000, 0x082fff) AM_RAM
+	AM_RANGE(0x083000, 0x0837ff) AM_READWRITE(pipibibi_spriteram16_r, pipibibi_spriteram16_w)	/* SpriteRAM */
+	AM_RANGE(0x083800, 0x087fff) AM_RAM				/* SpriteRAM (unused) */
+	AM_RANGE(0x0c0000, 0x0c0fff) AM_READWRITE(paletteram16_word_r, paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x120000, 0x120fff) AM_RAM				/* Copy of SpriteRAM ? */
+//  AM_RANGE(0x13f000, 0x13f001) AM_WRITENOP        /* ??? */
+	AM_RANGE(0x180000, 0x182fff) AM_READWRITE(pipibibi_videoram16_r, pipibibi_videoram16_w)		/* TileRAM */
 	AM_RANGE(0x188000, 0x18800f) AM_WRITE(pipibibi_scroll_w)
+	AM_RANGE(0x190002, 0x190003) AM_READ(pipibibi_z80_status_r)	/* Z80 ready ? */
 	AM_RANGE(0x190010, 0x190011) AM_WRITE(pipibibi_z80_task_w)	/* Z80 task to perform */
 	AM_RANGE(0x19c01c, 0x19c01d) AM_WRITE(toaplan2_coin_word_w)	/* Coin count/lock */
+	AM_RANGE(0x19c020, 0x19c021) AM_READ(port_tag_to_handler16("DSWA"))
+	AM_RANGE(0x19c024, 0x19c025) AM_READ(port_tag_to_handler16("DSWB"))
+	AM_RANGE(0x19c028, 0x19c029) AM_READ(port_tag_to_handler16("JMPR"))
+	AM_RANGE(0x19c02c, 0x19c02d) AM_READ(port_tag_to_handler16("SYS"))
+	AM_RANGE(0x19c030, 0x19c031) AM_READ(port_tag_to_handler16("IN1"))
+	AM_RANGE(0x19c034, 0x19c035) AM_READ(port_tag_to_handler16("IN2"))
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( fixeight_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x100000, 0x103fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x200000, 0x200001) AM_READ(input_port_1_word_r)	/* Player 1 controls */
-	AM_RANGE(0x200004, 0x200005) AM_READ(input_port_2_word_r)	/* Player 2 controls */
-	AM_RANGE(0x200008, 0x200009) AM_READ(input_port_3_word_r)	/* Player 3 controls */
-	AM_RANGE(0x200010, 0x200011) AM_READ(input_port_4_word_r)	/* Coin/System inputs */
-	AM_RANGE(0x280000, 0x28dfff) AM_READ(MRA16_RAM)				/* part of shared ram ? */
+
+static ADDRESS_MAP_START( fixeight_68k_mem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_ROM
+	AM_RANGE(0x100000, 0x103fff) AM_RAM
+	AM_RANGE(0x200000, 0x200001) AM_READ(port_tag_to_handler16("IN1"))
+	AM_RANGE(0x200004, 0x200005) AM_READ(port_tag_to_handler16("IN2"))
+	AM_RANGE(0x200008, 0x200009) AM_READ(port_tag_to_handler16("IN3"))
+	AM_RANGE(0x200010, 0x200011) AM_READ(port_tag_to_handler16("SYS"))
+	AM_RANGE(0x20001c, 0x20001d) AM_WRITE(toaplan2_coin_word_w)	/* Coin count/lock */
+	AM_RANGE(0x280000, 0x28dfff) AM_RAM							/* part of shared ram ? */
 #if V25
-	AM_RANGE(0x28e000, 0x28fbff) AM_READ(shared_ram_r)			/* $28f000 status port */
-	AM_RANGE(0x28fc00, 0x28ffff) AM_READ(V25_sharedram_r)		/* 16-bit on 68000 side, 8-bit on V25+ side */
+	AM_RANGE(0x28e000, 0x28fbff) AM_READWRITE(shared_ram_r, shared_ram_w) AM_BASE(&toaplan2_shared_ram16)	/* $28f000 status port */
+	AM_RANGE(0x28fc00, 0x28ffff) AM_READWRITE(V25_sharedram_r, V25_sharedram_w) AM_BASE(&V25_shared_ram)	/* 16-bit on 68000 side, 8-bit on V25+ side */
 #else
-	AM_RANGE(0x28e000, 0x28efff) AM_READ(shared_ram_r)
-	AM_RANGE(0x28f000, 0x28f001) AM_READ(fixeight_sec_cpu_r)	/* V25+ status port */
+	AM_RANGE(0x28e000, 0x28efff) AM_READWRITE(shared_ram_r, shared_ram_w) AM_BASE(&toaplan2_shared_ram16)
+	AM_RANGE(0x28f000, 0x28f001) AM_READWRITE(fixeight_sec_cpu_r, fixeight_sec_cpu_w)	/* V25+ Command/Status port */
 //  AM_RANGE(0x28f002, 0x28f003) AM_READ(MRA16_RAM)             /* part of shared ram */
-//  AM_RANGE(0x28f004, 0x28f005) AM_READ(input_port_5_word_r)   /* Dip Switch A - Wrong !!! */
-//  AM_RANGE(0x28f006, 0x28f007) AM_READ(input_port_6_word_r)   /* Dip Switch B - Wrong !!! */
-//  AM_RANGE(0x28f008, 0x28f009) AM_READ(input_port_7_word_r)   /* Territory Jumper block - Wrong !!! */
-//  AM_RANGE(0x28f002, 0x28fbff) AM_READ(MRA16_RAM)             /* part of shared ram */
-	AM_RANGE(0x28fc00, 0x28ffff) AM_READ(V25_sharedram_r)		/* 16-bit on 68000 side, 8-bit on V25+ side */
+//  AM_RANGE(0x28f004, 0x28f005) AM_READ(port_tag_to_handler16("DSWA")) /* Dip Switch A - Wrong !!! */
+//  AM_RANGE(0x28f006, 0x28f007) AM_READ(port_tag_to_handler16("DSWB")) /* Dip Switch B - Wrong !!! */
+//  AM_RANGE(0x28f008, 0x28f009) AM_READ(port_tag_to_handler16("JMPR")) /* Territory Jumper block - Wrong !!! */
+//  AM_RANGE(0x28f00a, 0x28fbff) AM_READ(MRA16_RAM)             /* part of shared ram */
+	AM_RANGE(0x28fc00, 0x28ffff) AM_READWRITE(V25_sharedram_r, V25_sharedram_w) AM_BASE(&V25_shared_ram)	/* 16-bit on 68000 side, 8-bit on V25+ side */
 #endif
-	AM_RANGE(0x300004, 0x300007) AM_READ(toaplan2_0_videoram16_r)
-	AM_RANGE(0x30000c, 0x30000d) AM_READ(toaplan2_inputport_0_word_r)
-	AM_RANGE(0x400000, 0x400fff) AM_READ(paletteram16_word_r)
-	AM_RANGE(0x500000, 0x501fff) AM_READ(toaplan2_txvideoram16_r)
-	AM_RANGE(0x502000, 0x5021ff) AM_READ(toaplan2_txvideoram16_offs_r)
-	AM_RANGE(0x503000, 0x5031ff) AM_READ(toaplan2_txscrollram16_r)
-	AM_RANGE(0x600000, 0x60ffff) AM_READ(toaplan2_tx_gfxram16_r)
+	AM_RANGE(0x300000, 0x300001) AM_WRITE(toaplan2_0_voffs_w)	/* VideoRAM selector/offset */
+	AM_RANGE(0x300004, 0x300007) AM_READWRITE(toaplan2_0_videoram16_r, toaplan2_0_videoram16_w)	/* Tile/Sprite VideoRAM */
+	AM_RANGE(0x300008, 0x300009) AM_WRITE(toaplan2_0_scroll_reg_select_w)
+	AM_RANGE(0x30000c, 0x30000d) AM_READWRITE(toaplan2_inputport_0_word_r, toaplan2_0_scroll_reg_data_w)
+	AM_RANGE(0x400000, 0x400fff) AM_READWRITE(paletteram16_word_r, paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x500000, 0x501fff) AM_READWRITE(toaplan2_txvideoram16_r, toaplan2_txvideoram16_w) AM_BASE(&toaplan2_txvideoram16) AM_SIZE(&toaplan2_tx_vram_size)
+	AM_RANGE(0x502000, 0x5021ff) AM_READWRITE(toaplan2_txvideoram16_offs_r, toaplan2_txvideoram16_offs_w) AM_BASE(&toaplan2_txvideoram16_offs) AM_SIZE(&toaplan2_tx_offs_vram_size)
+	AM_RANGE(0x503000, 0x5031ff) AM_READWRITE(toaplan2_txscrollram16_r, toaplan2_txscrollram16_w) AM_BASE(&toaplan2_txscrollram16) AM_SIZE(&toaplan2_tx_scroll_vram_size)
+	AM_RANGE(0x600000, 0x60ffff) AM_READWRITE(toaplan2_tx_gfxram16_r, toaplan2_tx_gfxram16_w) AM_BASE(&toaplan2_tx_gfxram16)
 	AM_RANGE(0x800000, 0x800001) AM_READ(video_count_r)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( fixeight_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x100000, 0x103fff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x20001c, 0x20001d) AM_WRITE(toaplan2_coin_word_w)	/* Coin count/lock */
-	AM_RANGE(0x280000, 0x28dfff) AM_WRITE(MWA16_RAM)			/* part of shared ram ? */
-#if V25
-	AM_RANGE(0x28e000, 0x28fbff) AM_WRITE(shared_ram_w) AM_BASE(&toaplan2_shared_ram16)	/* $28F000 */
-	AM_RANGE(0x28fc00, 0x28ffff) AM_WRITE(V25_sharedram_w) AM_BASE(&V25_shared_ram)	/* 16-bit on 68000 side, 8-bit on V25+ side */
-#else
-	AM_RANGE(0x28e000, 0x28efff) AM_WRITE(shared_ram_w) AM_BASE(&toaplan2_shared_ram16)
-	AM_RANGE(0x28f000, 0x28f001) AM_WRITE(fixeight_sec_cpu_w)	/* V25+ command port */
-//  AM_RANGE(0x28f002, 0x28f003) AM_WRITE(MWA16_RAM)            /* part of shared ram */
-//  AM_RANGE(0x28f004, 0x28f009) AM_WRITE(MWA16_NOP)            /* part of shared ram */
-//  AM_RANGE(0x28f002, 0x28fbff) AM_WRITE(MWA16_RAM)            /* part of shared ram */
-	AM_RANGE(0x28fc00, 0x28ffff) AM_WRITE(V25_sharedram_w) AM_BASE(&V25_shared_ram)	/* 16-bit on 68000 side, 8-bit on V25+ side */
-#endif
-	AM_RANGE(0x300000, 0x300001) AM_WRITE(toaplan2_0_voffs_w)	/* VideoRAM selector/offset */
-	AM_RANGE(0x300004, 0x300007) AM_WRITE(toaplan2_0_videoram16_w)/* Tile/Sprite VideoRAM */
-	AM_RANGE(0x300008, 0x300009) AM_WRITE(toaplan2_0_scroll_reg_select_w)
-	AM_RANGE(0x30000c, 0x30000d) AM_WRITE(toaplan2_0_scroll_reg_data_w)
-	AM_RANGE(0x400000, 0x400fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
-	AM_RANGE(0x500000, 0x501fff) AM_WRITE(toaplan2_txvideoram16_w) AM_BASE(&toaplan2_txvideoram16) AM_SIZE(&toaplan2_tx_vram_size)
-	AM_RANGE(0x502000, 0x5021ff) AM_WRITE(toaplan2_txvideoram16_offs_w) AM_BASE(&toaplan2_txvideoram16_offs) AM_SIZE(&toaplan2_tx_offs_vram_size)
-	AM_RANGE(0x503000, 0x5031ff) AM_WRITE(toaplan2_txscrollram16_w) AM_BASE(&toaplan2_txscrollram16) AM_SIZE(&toaplan2_tx_scroll_vram_size)
-	AM_RANGE(0x600000, 0x60ffff) AM_WRITE(toaplan2_tx_gfxram16_w) AM_BASE(&toaplan2_tx_gfxram16)
-ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( fixeighb_mem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x0fffff) AM_ROM /* 0-$7ffff ?*/
-	AM_RANGE(0x100000, 0x10ffff) AM_RAM /* 10000 - 107fff  105000-105xxx 106000-106xxx 108000 - related to sound ?*/
-	AM_RANGE(0x200000, 0x200001) AM_READ(input_port_1_word_r)	/* Player 1 controls */
-	AM_RANGE(0x200004, 0x200005) AM_READ(input_port_2_word_r)	/* Player 2 controls */
-	AM_RANGE(0x200008, 0x200009) AM_READ(input_port_3_word_r)	/* Player 3 controls */
-	AM_RANGE(0x20000c, 0x20000d) AM_READ(input_port_6_word_r)
-	AM_RANGE(0x200010, 0x200011) AM_READ(input_port_4_word_r)	/* Coin/System inputs */
-	AM_RANGE(0x200014, 0x200015) AM_WRITE(fixeighb_oki_bankswitch_w) /* Sound banking. Code at $4084c, $5070 */
-	AM_RANGE(0x200018, 0x200019) AM_WRITE(OKIM6295_data_0_lsb_w) AM_READ(OKIM6295_status_0_lsb_r) /* ?? */
-	AM_RANGE(0x20001c, 0x20001d) AM_READ(input_port_5_word_r)
+static ADDRESS_MAP_START( fixeighb_68k_mem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_ROM		/* 0-$7ffff ?*/
+	AM_RANGE(0x100000, 0x10ffff) AM_RAM		/* 100000 - 107fff  105000-105xxx 106000-106xxx 108000 - related to sound ?*/
+	AM_RANGE(0x200000, 0x200001) AM_READ(port_tag_to_handler16("IN1"))
+	AM_RANGE(0x200004, 0x200005) AM_READ(port_tag_to_handler16("IN2"))
+	AM_RANGE(0x200008, 0x200009) AM_READ(port_tag_to_handler16("IN3"))
+	AM_RANGE(0x20000c, 0x20000d) AM_READ(port_tag_to_handler16("DSWB"))
+	AM_RANGE(0x200010, 0x200011) AM_READ(port_tag_to_handler16("SYS"))
+	AM_RANGE(0x200014, 0x200015) AM_WRITE(fixeighb_oki_bankswitch_w)	/* Sound banking. Code at $4084c, $5070 */
+	AM_RANGE(0x200018, 0x200019) AM_READWRITE(OKIM6295_status_0_lsb_r, OKIM6295_data_0_lsb_w)
+	AM_RANGE(0x20001c, 0x20001d) AM_READ(port_tag_to_handler16("DSWA"))
 	AM_RANGE(0x300000, 0x300001) AM_WRITE(toaplan2_0_voffs_w)	/* VideoRAM selector/offset */
-	AM_RANGE(0x300004, 0x300007) AM_READ(toaplan2_0_videoram16_r) AM_WRITE(toaplan2_0_videoram16_w)/* Tile/Sprite VideoRAM */
+	AM_RANGE(0x300004, 0x300007) AM_READWRITE(toaplan2_0_videoram16_r, toaplan2_0_videoram16_w)	/* Tile/Sprite VideoRAM */
 	AM_RANGE(0x300008, 0x300009) AM_WRITE(toaplan2_0_scroll_reg_select_w)
-	AM_RANGE(0x30000c, 0x30000d) AM_READ(toaplan2_inputport_0_word_r) AM_WRITE(toaplan2_0_scroll_reg_data_w)
-	AM_RANGE(0x400000, 0x400fff) AM_READ(paletteram16_word_r) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
-	AM_RANGE(0x500000, 0x501fff) AM_READ(toaplan2_txvideoram16_r) AM_WRITE(toaplan2_txvideoram16_w) AM_BASE(&toaplan2_txvideoram16) AM_SIZE(&toaplan2_tx_vram_size)
-	AM_RANGE(0x502000, 0x5021ff) AM_READ(toaplan2_txvideoram16_offs_r) AM_WRITE(toaplan2_txvideoram16_offs_w) AM_BASE(&toaplan2_txvideoram16_offs) AM_SIZE(&toaplan2_tx_offs_vram_size)
-	AM_RANGE(0x503000, 0x5031ff) AM_READ(toaplan2_txscrollram16_r) AM_WRITE(toaplan2_txscrollram16_w) AM_BASE(&toaplan2_txscrollram16) AM_SIZE(&toaplan2_tx_scroll_vram_size)
+	AM_RANGE(0x30000c, 0x30000d) AM_READWRITE(toaplan2_inputport_0_word_r, toaplan2_0_scroll_reg_data_w)
+	AM_RANGE(0x400000, 0x400fff) AM_READWRITE(paletteram16_word_r, paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x500000, 0x501fff) AM_READWRITE(toaplan2_txvideoram16_r, toaplan2_txvideoram16_w) AM_BASE(&toaplan2_txvideoram16) AM_SIZE(&toaplan2_tx_vram_size)
+	AM_RANGE(0x502000, 0x5021ff) AM_READWRITE(toaplan2_txvideoram16_offs_r, toaplan2_txvideoram16_offs_w) AM_BASE(&toaplan2_txvideoram16_offs) AM_SIZE(&toaplan2_tx_offs_vram_size)
+	AM_RANGE(0x503000, 0x5031ff) AM_READWRITE(toaplan2_txscrollram16_r, toaplan2_txscrollram16_w) AM_BASE(&toaplan2_txscrollram16) AM_SIZE(&toaplan2_tx_scroll_vram_size)
 	AM_RANGE(0x700000, 0x700001) AM_READ(video_count_r)
 	AM_RANGE(0x800000, 0x87ffff) AM_READ(MRA16_BANK1)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( vfive_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x100000, 0x103fff) AM_READ(MRA16_RAM)
-//  AM_RANGE(0x200000, 0x20ffff) AM_READ(MRA16_ROM)             /* Sound ROM is here ??? */
-	AM_RANGE(0x200010, 0x200011) AM_READ(input_port_1_word_r)	/* Player 1 controls */
-	AM_RANGE(0x200014, 0x200015) AM_READ(input_port_2_word_r)	/* Player 2 controls */
-	AM_RANGE(0x200018, 0x200019) AM_READ(input_port_3_word_r)	/* Coin/System inputs */
+
+static ADDRESS_MAP_START( vfive_68k_mem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_ROM
+	AM_RANGE(0x100000, 0x103fff) AM_RAM
+//  AM_RANGE(0x200000, 0x20ffff) AM_ROM                         /* Sound ROM is here ??? */
+	AM_RANGE(0x200010, 0x200011) AM_READ(port_tag_to_handler16("IN1"))
+	AM_RANGE(0x200014, 0x200015) AM_READ(port_tag_to_handler16("IN2"))
+	AM_RANGE(0x200018, 0x200019) AM_READ(port_tag_to_handler16("SYS"))
+	AM_RANGE(0x20001c, 0x20001d) AM_WRITE(toaplan2_coin_word_w)	/* Coin count/lock */
 #if V25
-	AM_RANGE(0x21e000, 0x21fbff) AM_READ(shared_ram_r)			/* $21f000 status port */
-	AM_RANGE(0x21fc00, 0x21ffff) AM_READ(V25_sharedram_r)		/* 16-bit on 68000 side, 8-bit on V25+ side */
+	AM_RANGE(0x21e000, 0x21fbff) AM_READWRITE(shared_ram_r, shared_ram_w) AM_BASE(&toaplan2_shared_ram16)	/* $21f000 status port */
+	AM_RANGE(0x21fc00, 0x21ffff) AM_READWRITE(V25_sharedram_r, V25_sharedram_w) AM_BASE(&V25_shared_ram)	/* 16-bit on 68000 side, 8-bit on V25+ side */
 #else
-	AM_RANGE(0x21e000, 0x21efff) AM_READ(shared_ram_r)
-	AM_RANGE(0x21f000, 0x21f001) AM_READ(toaplan2_snd_cpu_r)	/* V25+ status port */
-	AM_RANGE(0x21f004, 0x21f005) AM_READ(input_port_4_word_r)	/* Dip Switch A */
-	AM_RANGE(0x21f006, 0x21f007) AM_READ(input_port_5_word_r)	/* Dip Switch B */
-	AM_RANGE(0x21f008, 0x21f009) AM_READ(input_port_6_word_r)	/* Territory Jumper block */
-	AM_RANGE(0x21fc00, 0x21ffff) AM_READ(V25_sharedram_r)		/* 16-bit on 68000 side, 8-bit on V25+ side */
+	AM_RANGE(0x21e000, 0x21efff) AM_READWRITE(shared_ram_r, shared_ram_w) AM_BASE(&toaplan2_shared_ram16)
+	AM_RANGE(0x21f000, 0x21f001) AM_READWRITE(toaplan2_snd_cpu_r, vfive_snd_cpu_w)	/* V25+ Command/Status port */
+	AM_RANGE(0x21f004, 0x21f005) AM_READ(port_tag_to_handler16("DSWA"))
+	AM_RANGE(0x21f006, 0x21f007) AM_READ(port_tag_to_handler16("DSWB"))
+	AM_RANGE(0x21f008, 0x21f009) AM_READ(port_tag_to_handler16("JMPR"))
+	AM_RANGE(0x21fc00, 0x21ffff) AM_READWRITE(V25_sharedram_r, V25_sharedram_w) AM_BASE(&V25_shared_ram)	/* 16-bit on 68000 side, 8-bit on V25+ side */
 #endif
-	AM_RANGE(0x300004, 0x300007) AM_READ(toaplan2_0_videoram16_r)
-	AM_RANGE(0x30000c, 0x30000d) AM_READ(toaplan2_inputport_0_word_r)
-	AM_RANGE(0x400000, 0x400fff) AM_READ(paletteram16_word_r)
+	AM_RANGE(0x300000, 0x300001) AM_WRITE(toaplan2_0_voffs_w)	/* VideoRAM selector/offset */
+	AM_RANGE(0x300004, 0x300007) AM_READWRITE(toaplan2_0_videoram16_r, toaplan2_0_videoram16_w)	/* Tile/Sprite VideoRAM */
+	AM_RANGE(0x300008, 0x300009) AM_WRITE(toaplan2_0_scroll_reg_select_w)
+	AM_RANGE(0x30000c, 0x30000d) AM_READWRITE(toaplan2_inputport_0_word_r, toaplan2_0_scroll_reg_data_w)
+	AM_RANGE(0x400000, 0x400fff) AM_READWRITE(paletteram16_word_r, paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x700000, 0x700001) AM_READ(video_count_r)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( vfive_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x100000, 0x103fff) AM_WRITE(MWA16_RAM)
-//  AM_RANGE(0x200000, 0x20ffff) AM_WRITE(MWA16_ROM)            /* Sound ROM is here ??? */
-	AM_RANGE(0x20001c, 0x20001d) AM_WRITE(toaplan2_coin_word_w)	/* Coin count/lock */
-#if V25
-	AM_RANGE(0x21e000, 0x21fbff) AM_WRITE(shared_ram_w) AM_BASE(&toaplan2_shared_ram16)	/* $21F000 */
-	AM_RANGE(0x21fc00, 0x21ffff) AM_WRITE(V25_sharedram_w) AM_BASE(&V25_shared_ram)	/* 16-bit on 68000 side, 8-bit on V25+ side */
-#else
-	AM_RANGE(0x21e000, 0x21efff) AM_WRITE(shared_ram_w) AM_BASE(&toaplan2_shared_ram16)
-	AM_RANGE(0x21f000, 0x21f001) AM_WRITE(vfive_snd_cpu_w)		/* V25+ command port */
-	AM_RANGE(0x21fc00, 0x21ffff) AM_WRITE(V25_sharedram_w) AM_BASE(&V25_shared_ram)	/* 16-bit on 68000 side, 8-bit on V25+ side */
-#endif
-	AM_RANGE(0x300000, 0x300001) AM_WRITE(toaplan2_0_voffs_w)	/* VideoRAM selector/offset */
-	AM_RANGE(0x300004, 0x300007) AM_WRITE(toaplan2_0_videoram16_w)/* Tile/Sprite VideoRAM */
-	AM_RANGE(0x300008, 0x300009) AM_WRITE(toaplan2_0_scroll_reg_select_w)
-	AM_RANGE(0x30000c, 0x30000d) AM_WRITE(toaplan2_0_scroll_reg_data_w)
-	AM_RANGE(0x400000, 0x400fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
-ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( batsugun_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x100000, 0x10ffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x200010, 0x200011) AM_READ(input_port_1_word_r)	/* Player 1 controls */
-	AM_RANGE(0x200014, 0x200015) AM_READ(input_port_2_word_r)	/* Player 2 controls */
-	AM_RANGE(0x200018, 0x200019) AM_READ(input_port_3_word_r)	/* Coin/System inputs */
-	AM_RANGE(0x210000, 0x21bbff) AM_READ(MRA16_RAM)
-#if V25
-	AM_RANGE(0x21e000, 0x21fbff) AM_READ(shared_ram_r)			/* $21f000 status port */
-	AM_RANGE(0x21fc00, 0x21ffff) AM_READ(V25_sharedram_r)		/* 16-bit on 68000 side, 8-bit on V25+ side */
-#else
-	AM_RANGE(0x21e000, 0x21efff) AM_READ(shared_ram_r)
-	AM_RANGE(0x21f000, 0x21f001) AM_READ(toaplan2_snd_cpu_r)	/* V25+ status port */
-	AM_RANGE(0x21f004, 0x21f005) AM_READ(input_port_4_word_r)	/* Dip Switch A */
-	AM_RANGE(0x21f006, 0x21f007) AM_READ(input_port_5_word_r)	/* Dip Switch B */
-	AM_RANGE(0x21f008, 0x21f009) AM_READ(input_port_6_word_r)	/* Territory Jumper block */
-	AM_RANGE(0x21fc00, 0x21ffff) AM_READ(V25_sharedram_r)		/* 16-bit on 68000 side, 8-bit on V25+ side */
-#endif
-	/***** The following in 0x30000x are for video controller 1 ******/
-	AM_RANGE(0x300004, 0x300007) AM_READ(toaplan2_0_videoram16_r)/* tile layers */
-	AM_RANGE(0x30000c, 0x30000d) AM_READ(toaplan2_inputport_0_word_r)	/* VBlank */
-	AM_RANGE(0x400000, 0x400fff) AM_READ(paletteram16_word_r)
-	/***** The following in 0x50000x are for video controller 2 ******/
-	AM_RANGE(0x500004, 0x500007) AM_READ(toaplan2_1_videoram16_r)/* tile layers 2 */
-	AM_RANGE(0x700000, 0x700001) AM_READ(video_count_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( batsugun_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(MWA16_RAM)
+static ADDRESS_MAP_START( batsugun_68k_mem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_ROM
+	AM_RANGE(0x100000, 0x10ffff) AM_RAM
+	AM_RANGE(0x200010, 0x200011) AM_READ(port_tag_to_handler16("IN1"))
+	AM_RANGE(0x200014, 0x200015) AM_READ(port_tag_to_handler16("IN2"))
+	AM_RANGE(0x200018, 0x200019) AM_READ(port_tag_to_handler16("SYS"))
 	AM_RANGE(0x20001c, 0x20001d) AM_WRITE(toaplan2_coin_word_w)	/* Coin count/lock */
-	AM_RANGE(0x210000, 0x21bbff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x210000, 0x21bbff) AM_RAM
 #if V25
-	AM_RANGE(0x21e000, 0x21fbff) AM_WRITE(shared_ram_w) AM_BASE(&toaplan2_shared_ram16)	/* $21F000 */
-	AM_RANGE(0x21fc00, 0x21ffff) AM_WRITE(V25_sharedram_w) AM_BASE(&V25_shared_ram)	/* 16-bit on 68000 side, 8-bit on V25+ side */
+	AM_RANGE(0x21e000, 0x21fbff) AM_READWRITE(shared_ram_r, shared_ram_w) AM_BASE(&toaplan2_shared_ram16)	/* $21f000 status port */
+	AM_RANGE(0x21fc00, 0x21ffff) AM_READWRITE(V25_sharedram_r, V25_sharedram_w) AM_BASE(&V25_shared_ram)	/* 16-bit on 68000 side, 8-bit on V25+ side */
 #else
-	AM_RANGE(0x21e000, 0x21efff) AM_WRITE(shared_ram_w) AM_BASE(&toaplan2_shared_ram16)
-	AM_RANGE(0x21f000, 0x21f001) AM_WRITE(batsugun_snd_cpu_w)	/* V25+ command port */
-	AM_RANGE(0x21fc00, 0x21ffff) AM_WRITE(V25_sharedram_w) AM_BASE(&V25_shared_ram)	/* 16-bit on 68000 side, 8-bit on V25+ side */
+	AM_RANGE(0x21e000, 0x21efff) AM_READWRITE(shared_ram_r, shared_ram_w) AM_BASE(&toaplan2_shared_ram16)
+	AM_RANGE(0x21f000, 0x21f001) AM_READWRITE(toaplan2_snd_cpu_r, batsugun_snd_cpu_w)	/* V25+ Command/Status port */
+	AM_RANGE(0x21f004, 0x21f005) AM_READ(port_tag_to_handler16("DSWA"))
+	AM_RANGE(0x21f006, 0x21f007) AM_READ(port_tag_to_handler16("DSWB"))
+	AM_RANGE(0x21f008, 0x21f009) AM_READ(port_tag_to_handler16("JMPR"))
+	AM_RANGE(0x21fc00, 0x21ffff) AM_READWRITE(V25_sharedram_r, V25_sharedram_w) AM_BASE(&V25_shared_ram)	/* 16-bit on 68000 side, 8-bit on V25+ side */
 #endif
 	/***** The following in 0x30000x are for video controller 1 ******/
 	AM_RANGE(0x300000, 0x300001) AM_WRITE(toaplan2_0_voffs_w)	/* VideoRAM selector/offset */
-	AM_RANGE(0x300004, 0x300007) AM_WRITE(toaplan2_0_videoram16_w)/* Tile/Sprite VideoRAM */
+	AM_RANGE(0x300004, 0x300007) AM_READWRITE(toaplan2_0_videoram16_r, toaplan2_0_videoram16_w)	/* Tile/Sprite VideoRAM */
 	AM_RANGE(0x300008, 0x300009) AM_WRITE(toaplan2_0_scroll_reg_select_w)
-	AM_RANGE(0x30000c, 0x30000d) AM_WRITE(toaplan2_0_scroll_reg_data_w)
-	AM_RANGE(0x400000, 0x400fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x30000c, 0x30000d) AM_READWRITE(toaplan2_inputport_0_word_r, toaplan2_0_scroll_reg_data_w)	/* VBlank */
+	AM_RANGE(0x400000, 0x400fff) AM_READWRITE(paletteram16_word_r, paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
 	/***** The following in 0x50000x are for video controller 2 ******/
 	AM_RANGE(0x500000, 0x500001) AM_WRITE(toaplan2_1_voffs_w)	/* VideoRAM selector/offset */
-	AM_RANGE(0x500004, 0x500007) AM_WRITE(toaplan2_1_videoram16_w)/* Tile/Sprite VideoRAM */
+	AM_RANGE(0x500004, 0x500007) AM_READWRITE(toaplan2_1_videoram16_r, toaplan2_1_videoram16_w)	/* Tile/Sprite VideoRAM */
 	AM_RANGE(0x500008, 0x500009) AM_WRITE(toaplan2_1_scroll_reg_select_w)
 	AM_RANGE(0x50000c, 0x50000d) AM_WRITE(toaplan2_1_scroll_reg_data_w)
+	AM_RANGE(0x700000, 0x700001) AM_READ(video_count_r)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( snowbro2_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x100000, 0x10ffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x300004, 0x300007) AM_READ(toaplan2_0_videoram16_r)/* tile layers */
-	AM_RANGE(0x30000c, 0x30000d) AM_READ(toaplan2_inputport_0_word_r)	/* VBlank */
-	AM_RANGE(0x400000, 0x400fff) AM_READ(paletteram16_word_r)
-	AM_RANGE(0x500002, 0x500003) AM_READ(YM2151_status_port_0_lsb_r)
-	AM_RANGE(0x600000, 0x600001) AM_READ(OKIM6295_status_0_lsb_r)
-	AM_RANGE(0x700000, 0x700001) AM_READ(input_port_8_word_r)	/* Territory Jumper block */
-	AM_RANGE(0x700004, 0x700005) AM_READ(input_port_6_word_r)	/* Dip Switch A */
-	AM_RANGE(0x700008, 0x700009) AM_READ(input_port_7_word_r)	/* Dip Switch B */
-	AM_RANGE(0x70000c, 0x70000d) AM_READ(input_port_1_word_r)	/* Player 1 controls */
-	AM_RANGE(0x700010, 0x700011) AM_READ(input_port_2_word_r)	/* Player 2 controls */
-	AM_RANGE(0x700014, 0x700015) AM_READ(input_port_3_word_r)	/* Player 3 controls */
-	AM_RANGE(0x700018, 0x700019) AM_READ(input_port_4_word_r)	/* Player 4 controls */
-	AM_RANGE(0x70001c, 0x70001d) AM_READ(input_port_5_word_r)	/* Coin/System inputs */
-ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( snowbro2_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(MWA16_RAM)
+static ADDRESS_MAP_START( snowbro2_68k_mem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_ROM
+	AM_RANGE(0x100000, 0x10ffff) AM_RAM
 	AM_RANGE(0x300000, 0x300001) AM_WRITE(toaplan2_0_voffs_w)	/* VideoRAM selector/offset */
-	AM_RANGE(0x300004, 0x300007) AM_WRITE(toaplan2_0_videoram16_w)/* Tile/Sprite VideoRAM */
+	AM_RANGE(0x300004, 0x300007) AM_READWRITE(toaplan2_0_videoram16_r, toaplan2_0_videoram16_w)	/* Tile/Sprite VideoRAM */
 	AM_RANGE(0x300008, 0x300009) AM_WRITE(toaplan2_0_scroll_reg_select_w)
-	AM_RANGE(0x30000c, 0x30000d) AM_WRITE(toaplan2_0_scroll_reg_data_w)
-	AM_RANGE(0x400000, 0x400fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x30000c, 0x30000d) AM_READWRITE(toaplan2_inputport_0_word_r, toaplan2_0_scroll_reg_data_w)	/* VBlank */
+	AM_RANGE(0x400000, 0x400fff) AM_READWRITE(paletteram16_word_r, paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x500000, 0x500001) AM_WRITE(YM2151_register_port_0_lsb_w)
-	AM_RANGE(0x500002, 0x500003) AM_WRITE(YM2151_data_port_0_lsb_w)
-	AM_RANGE(0x600000, 0x600001) AM_WRITE(OKIM6295_data_0_lsb_w)
+	AM_RANGE(0x500002, 0x500003) AM_READWRITE(YM2151_status_port_0_lsb_r, YM2151_data_port_0_lsb_w)
+	AM_RANGE(0x600000, 0x600001) AM_READWRITE(OKIM6295_status_0_lsb_r, OKIM6295_data_0_lsb_w)
+	AM_RANGE(0x700000, 0x700001) AM_READ(port_tag_to_handler16("JMPR"))
+	AM_RANGE(0x700004, 0x700005) AM_READ(port_tag_to_handler16("DSWA"))
+	AM_RANGE(0x700008, 0x700009) AM_READ(port_tag_to_handler16("DSWB"))
+	AM_RANGE(0x70000c, 0x70000d) AM_READ(port_tag_to_handler16("IN1"))
+	AM_RANGE(0x700010, 0x700011) AM_READ(port_tag_to_handler16("IN2"))
+	AM_RANGE(0x700014, 0x700015) AM_READ(port_tag_to_handler16("IN3"))
+	AM_RANGE(0x700018, 0x700019) AM_READ(port_tag_to_handler16("IN4"))
+	AM_RANGE(0x70001c, 0x70001d) AM_READ(port_tag_to_handler16("SYS"))
 	AM_RANGE(0x700030, 0x700031) AM_WRITE(oki_bankswitch_w)		/* Sample bank switch */
 	AM_RANGE(0x700034, 0x700035) AM_WRITE(toaplan2_coin_word_w)	/* Coin count/lock */
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( mahoudai_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x100000, 0x10ffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x218000, 0x21bfff) AM_READ(raizing_shared_ram_r)
-	AM_RANGE(0x21c020, 0x21c021) AM_READ(input_port_1_word_r)	/* Player 1 controls */
-	AM_RANGE(0x21c024, 0x21c025) AM_READ(input_port_2_word_r)	/* Player 2 controls */
-	AM_RANGE(0x21c028, 0x21c029) AM_READ(input_port_3_word_r)	/* Coin/System inputs */
-	AM_RANGE(0x21c02c, 0x21c02d) AM_READ(input_port_4_word_r)	/* Dip Switch A */
-	AM_RANGE(0x21c030, 0x21c031) AM_READ(input_port_5_word_r)	/* Dip Switch B */
-	AM_RANGE(0x21c034, 0x21c035) AM_READ(input_port_6_word_r)	/* Territory Jumper block */
-	AM_RANGE(0x21c03c, 0x21c03d) AM_READ(video_count_r)
-	AM_RANGE(0x300004, 0x300007) AM_READ(toaplan2_0_videoram16_r)/* Tile/Sprite VideoRAM */
-	AM_RANGE(0x30000c, 0x30000d) AM_READ(toaplan2_inputport_0_word_r)	/* VBlank */
-	AM_RANGE(0x400000, 0x400fff) AM_READ(paletteram16_word_r)
-	AM_RANGE(0x401000, 0x4017ff) AM_READ(MRA16_RAM)				/* Unused PaletteRAM */
-	AM_RANGE(0x500000, 0x501fff) AM_READ(toaplan2_txvideoram16_r)
-	AM_RANGE(0x502000, 0x5021ff) AM_READ(toaplan2_txvideoram16_offs_r)
-	AM_RANGE(0x502200, 0x502fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x503000, 0x5031ff) AM_READ(toaplan2_txscrollram16_r)
-	AM_RANGE(0x503200, 0x503fff) AM_READ(MRA16_RAM)
-ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( mahoudai_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x218000, 0x21bfff) AM_WRITE(raizing_shared_ram_w)
+static ADDRESS_MAP_START( mahoudai_68k_mem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_ROM
+	AM_RANGE(0x100000, 0x10ffff) AM_RAM
+	AM_RANGE(0x218000, 0x21bfff) AM_READWRITE(raizing_shared_ram_r, raizing_shared_ram_w)
 	AM_RANGE(0x21c01c, 0x21c01d) AM_WRITE(toaplan2_coin_word_w)
-	AM_RANGE(0x300000, 0x300001) AM_WRITE(toaplan2_0_voffs_w)
-	AM_RANGE(0x300004, 0x300007) AM_WRITE(toaplan2_0_videoram16_w)
-	AM_RANGE(0x300008, 0x300009) AM_WRITE(toaplan2_0_scroll_reg_select_w)
-	AM_RANGE(0x30000c, 0x30000d) AM_WRITE(toaplan2_0_scroll_reg_data_w)
-	AM_RANGE(0x400000, 0x400fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
-	AM_RANGE(0x401000, 0x4017ff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x500000, 0x501fff) AM_WRITE(toaplan2_txvideoram16_w) AM_BASE(&toaplan2_txvideoram16) AM_SIZE(&toaplan2_tx_vram_size)
-	AM_RANGE(0x502000, 0x5021ff) AM_WRITE(toaplan2_txvideoram16_offs_w) AM_BASE(&toaplan2_txvideoram16_offs) AM_SIZE(&toaplan2_tx_offs_vram_size)
-	AM_RANGE(0x502200, 0x502fff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x503000, 0x5031ff) AM_WRITE(toaplan2_txscrollram16_w) AM_BASE(&toaplan2_txscrollram16) AM_SIZE(&toaplan2_tx_scroll_vram_size)
-	AM_RANGE(0x503200, 0x503fff) AM_WRITE(MWA16_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( shippumd_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x100000, 0x10ffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x218000, 0x21bfff) AM_READ(raizing_shared_ram_r)
-	AM_RANGE(0x21c020, 0x21c021) AM_READ(input_port_1_word_r)	/* Player 1 controls */
-	AM_RANGE(0x21c024, 0x21c025) AM_READ(input_port_2_word_r)	/* Player 2 controls */
-	AM_RANGE(0x21c028, 0x21c029) AM_READ(input_port_3_word_r)	/* Coin/System inputs */
-	AM_RANGE(0x21c02c, 0x21c02d) AM_READ(input_port_4_word_r)	/* Dip Switch A */
-	AM_RANGE(0x21c030, 0x21c031) AM_READ(input_port_5_word_r)	/* Dip Switch B */
-	AM_RANGE(0x21c034, 0x21c035) AM_READ(input_port_6_word_r)	/* Territory Jumper block */
+	AM_RANGE(0x21c020, 0x21c021) AM_READ(port_tag_to_handler16("IN1"))
+	AM_RANGE(0x21c024, 0x21c025) AM_READ(port_tag_to_handler16("IN2"))
+	AM_RANGE(0x21c028, 0x21c029) AM_READ(port_tag_to_handler16("SYS"))
+	AM_RANGE(0x21c02c, 0x21c02d) AM_READ(port_tag_to_handler16("DSWA"))
+	AM_RANGE(0x21c030, 0x21c031) AM_READ(port_tag_to_handler16("DSWB"))
+	AM_RANGE(0x21c034, 0x21c035) AM_READ(port_tag_to_handler16("JMPR"))
 	AM_RANGE(0x21c03c, 0x21c03d) AM_READ(video_count_r)
-	AM_RANGE(0x300004, 0x300007) AM_READ(toaplan2_0_videoram16_r)/* Tile/Sprite VideoRAM */
-	AM_RANGE(0x30000c, 0x30000d) AM_READ(toaplan2_inputport_0_word_r)	/* VBlank */
-	AM_RANGE(0x400000, 0x400fff) AM_READ(paletteram16_word_r)
-	AM_RANGE(0x401000, 0x4017ff) AM_READ(MRA16_RAM)				/* Unused PaletteRAM */
-	AM_RANGE(0x500000, 0x501fff) AM_READ(toaplan2_txvideoram16_r)
-	AM_RANGE(0x502000, 0x5021ff) AM_READ(toaplan2_txvideoram16_offs_r)
-	AM_RANGE(0x502200, 0x502fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x503000, 0x5031ff) AM_READ(toaplan2_txscrollram16_r)
-	AM_RANGE(0x503200, 0x503fff) AM_READ(MRA16_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( shippumd_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x218000, 0x21bfff) AM_WRITE(raizing_shared_ram_w)
-//  AM_RANGE(0x21c008, 0x21c009) AM_WRITE(MWA16_NOP)            /* ??? */
-	AM_RANGE(0x21c01c, 0x21c01d) AM_WRITE(toaplan2_coin_word_w)
 	AM_RANGE(0x300000, 0x300001) AM_WRITE(toaplan2_0_voffs_w)
-	AM_RANGE(0x300004, 0x300007) AM_WRITE(toaplan2_0_videoram16_w)
+	AM_RANGE(0x300004, 0x300007) AM_READWRITE(toaplan2_0_videoram16_r, toaplan2_0_videoram16_w)	/* Tile/Sprite VideoRAM */
 	AM_RANGE(0x300008, 0x300009) AM_WRITE(toaplan2_0_scroll_reg_select_w)
-	AM_RANGE(0x30000c, 0x30000d) AM_WRITE(toaplan2_0_scroll_reg_data_w)
-	AM_RANGE(0x400000, 0x400fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
-	AM_RANGE(0x401000, 0x4017ff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x500000, 0x501fff) AM_WRITE(toaplan2_txvideoram16_w) AM_BASE(&toaplan2_txvideoram16) AM_SIZE(&toaplan2_tx_vram_size)
-	AM_RANGE(0x502000, 0x5021ff) AM_WRITE(toaplan2_txvideoram16_offs_w) AM_BASE(&toaplan2_txvideoram16_offs) AM_SIZE(&toaplan2_tx_offs_vram_size)
-	AM_RANGE(0x502200, 0x502fff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x503000, 0x5031ff) AM_WRITE(toaplan2_txscrollram16_w) AM_BASE(&toaplan2_txscrollram16) AM_SIZE(&toaplan2_tx_scroll_vram_size)
-	AM_RANGE(0x503200, 0x503fff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x30000c, 0x30000d) AM_READWRITE(toaplan2_inputport_0_word_r, toaplan2_0_scroll_reg_data_w)	/* VBlank */
+	AM_RANGE(0x400000, 0x400fff) AM_READWRITE(paletteram16_word_r, paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x401000, 0x4017ff) AM_RAM							/* Unused PaletteRAM */
+	AM_RANGE(0x500000, 0x501fff) AM_READWRITE(toaplan2_txvideoram16_r, toaplan2_txvideoram16_w) AM_BASE(&toaplan2_txvideoram16) AM_SIZE(&toaplan2_tx_vram_size)
+	AM_RANGE(0x502000, 0x5021ff) AM_READWRITE(toaplan2_txvideoram16_offs_r, toaplan2_txvideoram16_offs_w) AM_BASE(&toaplan2_txvideoram16_offs) AM_SIZE(&toaplan2_tx_offs_vram_size)
+	AM_RANGE(0x502200, 0x502fff) AM_RAM
+	AM_RANGE(0x503000, 0x5031ff) AM_READWRITE(toaplan2_txscrollram16_r, toaplan2_txscrollram16_w) AM_BASE(&toaplan2_txscrollram16) AM_SIZE(&toaplan2_tx_scroll_vram_size)
+	AM_RANGE(0x503200, 0x503fff) AM_RAM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( battleg_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x100000, 0x10ffff) AM_READ(MRA16_RAM)
+
+static ADDRESS_MAP_START( shippumd_68k_mem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_ROM
+	AM_RANGE(0x100000, 0x10ffff) AM_RAM
+	AM_RANGE(0x218000, 0x21bfff) AM_READWRITE(raizing_shared_ram_r, raizing_shared_ram_w)
+//  AM_RANGE(0x21c008, 0x21c009) AM_WRITENOP                    /* ??? */
+	AM_RANGE(0x21c01c, 0x21c01d) AM_WRITE(toaplan2_coin_word_w)
+	AM_RANGE(0x21c020, 0x21c021) AM_READ(port_tag_to_handler16("IN1"))
+	AM_RANGE(0x21c024, 0x21c025) AM_READ(port_tag_to_handler16("IN2"))
+	AM_RANGE(0x21c028, 0x21c029) AM_READ(port_tag_to_handler16("SYS"))
+	AM_RANGE(0x21c02c, 0x21c02d) AM_READ(port_tag_to_handler16("DSWA"))
+	AM_RANGE(0x21c030, 0x21c031) AM_READ(port_tag_to_handler16("DSWB"))
+	AM_RANGE(0x21c034, 0x21c035) AM_READ(port_tag_to_handler16("JMPR"))
+	AM_RANGE(0x21c03c, 0x21c03d) AM_READ(video_count_r)
+	AM_RANGE(0x300000, 0x300001) AM_WRITE(toaplan2_0_voffs_w)
+	AM_RANGE(0x300004, 0x300007) AM_READWRITE(toaplan2_0_videoram16_r, toaplan2_0_videoram16_w)	/* Tile/Sprite VideoRAM */
+	AM_RANGE(0x300008, 0x300009) AM_WRITE(toaplan2_0_scroll_reg_select_w)
+	AM_RANGE(0x30000c, 0x30000d) AM_READWRITE(toaplan2_inputport_0_word_r, toaplan2_0_scroll_reg_data_w)	/* VBlank */
+	AM_RANGE(0x400000, 0x400fff) AM_READWRITE(paletteram16_word_r, paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x401000, 0x4017ff) AM_RAM							/* Unused PaletteRAM */
+	AM_RANGE(0x500000, 0x501fff) AM_READWRITE(toaplan2_txvideoram16_r, toaplan2_txvideoram16_w) AM_BASE(&toaplan2_txvideoram16) AM_SIZE(&toaplan2_tx_vram_size)
+	AM_RANGE(0x502000, 0x5021ff) AM_READWRITE(toaplan2_txvideoram16_offs_r, toaplan2_txvideoram16_offs_w) AM_BASE(&toaplan2_txvideoram16_offs) AM_SIZE(&toaplan2_tx_offs_vram_size)
+	AM_RANGE(0x502200, 0x502fff) AM_RAM
+	AM_RANGE(0x503000, 0x5031ff) AM_READWRITE(toaplan2_txscrollram16_r, toaplan2_txscrollram16_w) AM_BASE(&toaplan2_txscrollram16) AM_SIZE(&toaplan2_tx_scroll_vram_size)
+	AM_RANGE(0x503200, 0x503fff) AM_RAM
+ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( battleg_68k_mem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_ROM
+	AM_RANGE(0x100000, 0x10ffff) AM_RAM
 	AM_RANGE(0x218020, 0x218023) AM_READ(battleg_z80check_r)
-	AM_RANGE(0x21c020, 0x21c021) AM_READ(input_port_1_word_r)	/* Player 1 controls */
-	AM_RANGE(0x21c024, 0x21c025) AM_READ(input_port_2_word_r)	/* Player 2 controls */
-	AM_RANGE(0x21c028, 0x21c029) AM_READ(input_port_3_word_r)	/* Coin/System inputs */
-	AM_RANGE(0x21c02c, 0x21c02d) AM_READ(input_port_4_word_r)	/* Dip Switch A */
-	AM_RANGE(0x21c030, 0x21c031) AM_READ(input_port_5_word_r)	/* Dip Switch B */
-	AM_RANGE(0x21c034, 0x21c035) AM_READ(input_port_6_word_r)	/* Territory Jumper block */
-	AM_RANGE(0x21c03c, 0x21c03d) AM_READ(video_count_r)
-	AM_RANGE(0x300004, 0x300007) AM_READ(toaplan2_0_videoram16_r)/* Tile/Sprite VideoRAM */
-	AM_RANGE(0x30000c, 0x30000d) AM_READ(toaplan2_inputport_0_word_r)	/* VBlank */
-	AM_RANGE(0x400000, 0x400fff) AM_READ(paletteram16_word_r)
-	AM_RANGE(0x500000, 0x501fff) AM_READ(toaplan2_txvideoram16_r)
-	AM_RANGE(0x502000, 0x5021ff) AM_READ(toaplan2_txvideoram16_offs_r)
-	AM_RANGE(0x502200, 0x502fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x503000, 0x5031ff) AM_READ(toaplan2_txscrollram16_r)
-	AM_RANGE(0x503200, 0x503fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x600000, 0x600fff) AM_READ(battleg_commram_r)		/* CommRAM check */
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( battleg_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(MWA16_RAM)
 	AM_RANGE(0x21c01c, 0x21c01d) AM_WRITE(toaplan2_coin_word_w)
+	AM_RANGE(0x21c020, 0x21c021) AM_READ(port_tag_to_handler16("IN1"))
+	AM_RANGE(0x21c024, 0x21c025) AM_READ(port_tag_to_handler16("IN2"))
+	AM_RANGE(0x21c028, 0x21c029) AM_READ(port_tag_to_handler16("SYS"))
+	AM_RANGE(0x21c02c, 0x21c02d) AM_READ(port_tag_to_handler16("DSWA"))
+	AM_RANGE(0x21c030, 0x21c031) AM_READ(port_tag_to_handler16("DSWB"))
+	AM_RANGE(0x21c034, 0x21c035) AM_READ(port_tag_to_handler16("JMPR"))
+	AM_RANGE(0x21c03c, 0x21c03d) AM_READ(video_count_r)
 	AM_RANGE(0x300000, 0x300001) AM_WRITE(toaplan2_0_voffs_w)
-	AM_RANGE(0x300004, 0x300007) AM_WRITE(toaplan2_0_videoram16_w)
+	AM_RANGE(0x300004, 0x300007) AM_READWRITE(toaplan2_0_videoram16_r, toaplan2_0_videoram16_w)	/* Tile/Sprite VideoRAM */
 	AM_RANGE(0x300008, 0x300009) AM_WRITE(toaplan2_0_scroll_reg_select_w)
-	AM_RANGE(0x30000c, 0x30000d) AM_WRITE(toaplan2_0_scroll_reg_data_w)
-	AM_RANGE(0x400000, 0x400fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
-	AM_RANGE(0x500000, 0x501fff) AM_WRITE(toaplan2_txvideoram16_w) AM_BASE(&toaplan2_txvideoram16) AM_SIZE(&toaplan2_tx_vram_size)
-	AM_RANGE(0x502000, 0x5021ff) AM_WRITE(toaplan2_txvideoram16_offs_w) AM_BASE(&toaplan2_txvideoram16_offs) AM_SIZE(&toaplan2_tx_offs_vram_size)
-	AM_RANGE(0x502200, 0x502fff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x503000, 0x5031ff) AM_WRITE(toaplan2_txscrollram16_w) AM_BASE(&toaplan2_txscrollram16) AM_SIZE(&toaplan2_tx_scroll_vram_size)
-	AM_RANGE(0x503200, 0x503fff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x600000, 0x600fff) AM_WRITE(battleg_commram_w) AM_BASE(&battleg_commram16)
+	AM_RANGE(0x30000c, 0x30000d) AM_READWRITE(toaplan2_inputport_0_word_r, toaplan2_0_scroll_reg_data_w)	/* VBlank */
+	AM_RANGE(0x400000, 0x400fff) AM_READWRITE(paletteram16_word_r, paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x500000, 0x501fff) AM_READWRITE(toaplan2_txvideoram16_r, toaplan2_txvideoram16_w) AM_BASE(&toaplan2_txvideoram16) AM_SIZE(&toaplan2_tx_vram_size)
+	AM_RANGE(0x502000, 0x5021ff) AM_READWRITE(toaplan2_txvideoram16_offs_r, toaplan2_txvideoram16_offs_w) AM_BASE(&toaplan2_txvideoram16_offs) AM_SIZE(&toaplan2_tx_offs_vram_size)
+	AM_RANGE(0x502200, 0x502fff) AM_RAM
+	AM_RANGE(0x503000, 0x5031ff) AM_READWRITE(toaplan2_txscrollram16_r, toaplan2_txscrollram16_w) AM_BASE(&toaplan2_txscrollram16) AM_SIZE(&toaplan2_tx_scroll_vram_size)
+	AM_RANGE(0x503200, 0x503fff) AM_RAM
+	AM_RANGE(0x600000, 0x600fff) AM_READWRITE(battleg_commram_r, battleg_commram_w) AM_BASE(&battleg_commram16)	/* CommRAM check */
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( batrider_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x1fffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x200000, 0x201fff) AM_READ(toaplan2_txvideoram16_r)/* Text VideoRAM */
-	AM_RANGE(0x202000, 0x202fff) AM_READ(paletteram16_word_r)
-	AM_RANGE(0x203000, 0x2031ff) AM_READ(toaplan2_txvideoram16_offs_r)
-	AM_RANGE(0x203200, 0x2033ff) AM_READ(toaplan2_txscrollram16_r)
-	AM_RANGE(0x203400, 0x207fff) AM_READ(raizing_tx_gfxram16_r)	/* Main RAM actually */
-	AM_RANGE(0x208000, 0x20ffff) AM_READ(MRA16_RAM)
+
+static ADDRESS_MAP_START( batrider_68k_mem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x1fffff) AM_ROM
+	AM_RANGE(0x200000, 0x201fff) AM_READWRITE(toaplan2_txvideoram16_r, toaplan2_txvideoram16_w) AM_BASE(&toaplan2_txvideoram16) AM_SIZE(&toaplan2_tx_vram_size)	/* Text VideoRAM */
+	AM_RANGE(0x202000, 0x202fff) AM_READWRITE(paletteram16_word_r, paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16) AM_SIZE(&batrider_paletteram16_size)
+	AM_RANGE(0x203000, 0x2031ff) AM_READWRITE(toaplan2_txvideoram16_offs_r, toaplan2_txvideoram16_offs_w) AM_BASE(&toaplan2_txvideoram16_offs) AM_SIZE(&toaplan2_tx_offs_vram_size)
+	AM_RANGE(0x203200, 0x2033ff) AM_READWRITE(toaplan2_txscrollram16_r, toaplan2_txscrollram16_w) AM_BASE(&toaplan2_txscrollram16) AM_SIZE(&toaplan2_tx_scroll_vram_size)
+	AM_RANGE(0x203400, 0x207fff) AM_READWRITE(raizing_tx_gfxram16_r, raizing_tx_gfxram16_w)	/* Main RAM actually */
+	AM_RANGE(0x208000, 0x20ffff) AM_RAM
 	AM_RANGE(0x300000, 0x37ffff) AM_READ(raizing_z80rom_r)
-	AM_RANGE(0x400000, 0x400001) AM_READ(toaplan2_inputport_0_word_r)	/* VBlank */
-	AM_RANGE(0x400008, 0x40000b) AM_READ(toaplan2_0_videoram16_r)/* Tile/Sprite VideoRAM */
-	AM_RANGE(0x500000, 0x500001) AM_READ(input_port_1_word_r)
-	AM_RANGE(0x500002, 0x500003) AM_READ(input_port_2_word_r)
-	AM_RANGE(0x500004, 0x500005) AM_READ(input_port_3_word_r)
+	AM_RANGE(0x400000, 0x400001) AM_READWRITE(toaplan2_inputport_0_word_r, toaplan2_0_scroll_reg_data_w)	/* VBlank */
+	AM_RANGE(0x400004, 0x400005) AM_WRITE(toaplan2_0_scroll_reg_select_w)
+	AM_RANGE(0x400008, 0x40000b) AM_READWRITE(toaplan2_0_videoram16_r, toaplan2_0_videoram16_w)	/* Tile/Sprite VideoRAM */
+	AM_RANGE(0x40000c, 0x40000d) AM_WRITE(toaplan2_0_voffs_w)
+	AM_RANGE(0x500000, 0x500001) AM_READ(port_tag_to_handler16("IN"))
+	AM_RANGE(0x500002, 0x500003) AM_READ(port_tag_to_handler16("SYS-DSW"))
+	AM_RANGE(0x500004, 0x500005) AM_READ(port_tag_to_handler16("DSW"))
 	AM_RANGE(0x500006, 0x500007) AM_READ(video_count_r)
 	AM_RANGE(0x500008, 0x50000b) AM_READ(raizing_sndcomms_r)
 	AM_RANGE(0x50000c, 0x50000d) AM_READ(batrider_z80_busack_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( batrider_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x1fffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x200000, 0x201fff) AM_WRITE(toaplan2_txvideoram16_w) AM_BASE(&toaplan2_txvideoram16) AM_SIZE(&toaplan2_tx_vram_size)
-	AM_RANGE(0x202000, 0x202fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16) AM_SIZE(&batrider_paletteram16_size)
-	AM_RANGE(0x203000, 0x2031ff) AM_WRITE(toaplan2_txvideoram16_offs_w) AM_BASE(&toaplan2_txvideoram16_offs) AM_SIZE(&toaplan2_tx_offs_vram_size)
-	AM_RANGE(0x203200, 0x2033ff) AM_WRITE(toaplan2_txscrollram16_w) AM_BASE(&toaplan2_txscrollram16) AM_SIZE(&toaplan2_tx_scroll_vram_size)
-	AM_RANGE(0x203400, 0x207fff) AM_WRITE(raizing_tx_gfxram16_w)
-	AM_RANGE(0x208000, 0x20ffff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x400000, 0x400001) AM_WRITE(toaplan2_0_scroll_reg_data_w)
-	AM_RANGE(0x400004, 0x400005) AM_WRITE(toaplan2_0_scroll_reg_select_w)
-	AM_RANGE(0x400008, 0x40000b) AM_WRITE(toaplan2_0_videoram16_w)
-	AM_RANGE(0x40000c, 0x40000d) AM_WRITE(toaplan2_0_voffs_w)
 	AM_RANGE(0x500010, 0x500011) AM_WRITE(toaplan2_coin_word_w)
 	AM_RANGE(0x500020, 0x500023) AM_WRITE(raizing_sndcomms_w) AM_BASE(&raizing_cpu_comm16)
 	AM_RANGE(0x500060, 0x500061) AM_WRITE(batrider_z80_busreq_w)
@@ -1975,40 +1805,29 @@ static ADDRESS_MAP_START( batrider_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x5000c0, 0x5000cf) AM_WRITE(batrider_objectbank_w)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( bbakraid_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x1fffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x200000, 0x201fff) AM_READ(toaplan2_txvideoram16_r)/* Text VideoRAM */
-	AM_RANGE(0x202000, 0x202fff) AM_READ(paletteram16_word_r)
-	AM_RANGE(0x203000, 0x2031ff) AM_READ(toaplan2_txvideoram16_offs_r)
-	AM_RANGE(0x203200, 0x2033ff) AM_READ(toaplan2_txscrollram16_r)
-	AM_RANGE(0x203400, 0x207fff) AM_READ(raizing_tx_gfxram16_r)	/* Main RAM actually */
-	AM_RANGE(0x208000, 0x20ffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x300000, 0x33ffff) AM_READ(raizing_z80rom_r)
-	AM_RANGE(0x400000, 0x400001) AM_READ(toaplan2_inputport_0_word_r)	/* VBlank */
-	AM_RANGE(0x400008, 0x40000b) AM_READ(toaplan2_0_videoram16_r)/* Tile/Sprite VideoRAM */
-	AM_RANGE(0x500000, 0x500001) AM_READ(input_port_1_word_r)
-	AM_RANGE(0x500002, 0x500003) AM_READ(input_port_2_word_r)
-	AM_RANGE(0x500004, 0x500005) AM_READ(input_port_3_word_r)
-	AM_RANGE(0x500006, 0x500007) AM_READ(video_count_r)
-	AM_RANGE(0x500010, 0x500013) AM_READ(raizing_sndcomms_r)
-	AM_RANGE(0x500018, 0x500019) AM_READ(bbakraid_nvram_r)
-ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( bbakraid_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x1fffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x200000, 0x201fff) AM_WRITE(toaplan2_txvideoram16_w) AM_BASE(&toaplan2_txvideoram16) AM_SIZE(&toaplan2_tx_vram_size)
-	AM_RANGE(0x202000, 0x202fff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16) AM_SIZE(&batrider_paletteram16_size)
-	AM_RANGE(0x203000, 0x2031ff) AM_WRITE(toaplan2_txvideoram16_offs_w) AM_BASE(&toaplan2_txvideoram16_offs) AM_SIZE(&toaplan2_tx_offs_vram_size)
-	AM_RANGE(0x203200, 0x2033ff) AM_WRITE(toaplan2_txscrollram16_w) AM_BASE(&toaplan2_txscrollram16) AM_SIZE(&toaplan2_tx_scroll_vram_size)
-	AM_RANGE(0x203400, 0x207fff) AM_WRITE(raizing_tx_gfxram16_w)
-	AM_RANGE(0x208000, 0x20ffff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x400000, 0x400001) AM_WRITE(toaplan2_0_scroll_reg_data_w)
+static ADDRESS_MAP_START( bbakraid_68k_mem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x1fffff) AM_ROM
+	AM_RANGE(0x200000, 0x201fff) AM_READWRITE(toaplan2_txvideoram16_r, toaplan2_txvideoram16_w) AM_BASE(&toaplan2_txvideoram16) AM_SIZE(&toaplan2_tx_vram_size)	/* Text VideoRAM */
+	AM_RANGE(0x202000, 0x202fff) AM_READWRITE(paletteram16_word_r, paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16) AM_SIZE(&batrider_paletteram16_size)
+	AM_RANGE(0x203000, 0x2031ff) AM_READWRITE(toaplan2_txvideoram16_offs_r, toaplan2_txvideoram16_offs_w) AM_BASE(&toaplan2_txvideoram16_offs) AM_SIZE(&toaplan2_tx_offs_vram_size)
+	AM_RANGE(0x203200, 0x2033ff) AM_READWRITE(toaplan2_txscrollram16_r, toaplan2_txscrollram16_w) AM_BASE(&toaplan2_txscrollram16) AM_SIZE(&toaplan2_tx_scroll_vram_size)
+	AM_RANGE(0x203400, 0x207fff) AM_READWRITE(raizing_tx_gfxram16_r, raizing_tx_gfxram16_w)	/* Main RAM actually */
+	AM_RANGE(0x208000, 0x20ffff) AM_RAM
+	AM_RANGE(0x300000, 0x33ffff) AM_READ(raizing_z80rom_r)
+	AM_RANGE(0x400000, 0x400001) AM_READWRITE(toaplan2_inputport_0_word_r, toaplan2_0_scroll_reg_data_w)	/* VBlank */
 	AM_RANGE(0x400004, 0x400005) AM_WRITE(toaplan2_0_scroll_reg_select_w)
-	AM_RANGE(0x400008, 0x40000b) AM_WRITE(toaplan2_0_videoram16_w)
+	AM_RANGE(0x400008, 0x40000b) AM_READWRITE(toaplan2_0_videoram16_r, toaplan2_0_videoram16_w)	/* Tile/Sprite VideoRAM */
 	AM_RANGE(0x40000c, 0x40000d) AM_WRITE(toaplan2_0_voffs_w)
+	AM_RANGE(0x500000, 0x500001) AM_READ(port_tag_to_handler16("IN"))
+	AM_RANGE(0x500002, 0x500003) AM_READ(port_tag_to_handler16("SYS-DSW"))
+	AM_RANGE(0x500004, 0x500005) AM_READ(port_tag_to_handler16("DSW"))
+	AM_RANGE(0x500006, 0x500007) AM_READ(video_count_r)
 	AM_RANGE(0x500008, 0x500009) AM_WRITE(bbakraid_trigger_z80_irq)
 	AM_RANGE(0x500010, 0x500011) AM_WRITE(toaplan2_coin_word_w)
+	AM_RANGE(0x500010, 0x500013) AM_READ(raizing_sndcomms_r)
 	AM_RANGE(0x500014, 0x500017) AM_WRITE(raizing_sndcomms_w) AM_BASE(&raizing_cpu_comm16)
+	AM_RANGE(0x500018, 0x500019) AM_READ(bbakraid_nvram_r)
 	AM_RANGE(0x50001e, 0x50001f) AM_WRITE(bbakraid_nvram_w)
 	AM_RANGE(0x500080, 0x500081) AM_WRITE(batrider_textdata_decode)
 	AM_RANGE(0x5000c0, 0x5000cf) AM_WRITE(batrider_objectbank_w)
@@ -2016,85 +1835,57 @@ ADDRESS_MAP_END
 
 
 
-static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xe000, 0xe000) AM_READ(YM3812_status_port_0_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM) AM_BASE(&toaplan2_shared_ram)
-	AM_RANGE(0xe000, 0xe000) AM_WRITE(YM3812_control_port_0_w)
+static ADDRESS_MAP_START( sound_z80_mem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0x87ff) AM_RAM AM_BASE(&toaplan2_shared_ram)
+	AM_RANGE(0xe000, 0xe000) AM_READWRITE(YM3812_status_port_0_r, YM3812_control_port_0_w)
 	AM_RANGE(0xe001, 0xe001) AM_WRITE(YM3812_write_port_0_w)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( raizing_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xe001, 0xe001) AM_READ(YM2151_status_port_0_r)
-	AM_RANGE(0xe004, 0xe004) AM_READ(OKIM6295_status_0_r)
-ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( raizing_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM) AM_BASE(&raizing_shared_ram)
+static ADDRESS_MAP_START( raizing_sound_z80_mem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_ROM
+	AM_RANGE(0xc000, 0xdfff) AM_RAM AM_BASE(&raizing_shared_ram)
 	AM_RANGE(0xe000, 0xe000) AM_WRITE(YM2151_register_port_0_w)
-	AM_RANGE(0xe001, 0xe001) AM_WRITE(YM2151_data_port_0_w)
-	AM_RANGE(0xe004, 0xe004) AM_WRITE(OKIM6295_data_0_w)
+	AM_RANGE(0xe001, 0xe001) AM_READWRITE(YM2151_status_port_0_r, YM2151_data_port_0_w)
+	AM_RANGE(0xe004, 0xe004) AM_READWRITE(OKIM6295_status_0_r, OKIM6295_data_0_w)
 	AM_RANGE(0xe00e, 0xe00e) AM_WRITE(toaplan2_coin_w)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( battleg_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
-	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xe001, 0xe001) AM_READ(YM2151_status_port_0_r)
-	AM_RANGE(0xe004, 0xe004) AM_READ(OKIM6295_status_0_r)
-	AM_RANGE(0xe01c, 0xe01d) AM_READ(battleg_commram_check_r0)
-ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( battleg_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM) AM_BASE(&raizing_shared_ram)
+static ADDRESS_MAP_START( battleg_sound_z80_mem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0xbfff) AM_ROMBANK(1)
+	AM_RANGE(0xc000, 0xdfff) AM_RAM AM_BASE(&raizing_shared_ram)
 	AM_RANGE(0xe000, 0xe000) AM_WRITE(YM2151_register_port_0_w)
-	AM_RANGE(0xe001, 0xe001) AM_WRITE(YM2151_data_port_0_w)
-	AM_RANGE(0xe004, 0xe004) AM_WRITE(OKIM6295_data_0_w)
+	AM_RANGE(0xe001, 0xe001) AM_READWRITE(YM2151_status_port_0_r, YM2151_data_port_0_w)
+	AM_RANGE(0xe004, 0xe004) AM_READWRITE(OKIM6295_status_0_r, OKIM6295_data_0_w)
 	AM_RANGE(0xe006, 0xe006) AM_WRITE(raizing_okim6295_bankselect_0)
 	AM_RANGE(0xe008, 0xe008) AM_WRITE(raizing_okim6295_bankselect_1)
 	AM_RANGE(0xe00a, 0xe00a) AM_WRITE(battleg_bankswitch_w)
 	AM_RANGE(0xe00c, 0xe00c) AM_WRITE(battleg_commram_check_w0)
+	AM_RANGE(0xe01c, 0xe01d) AM_READ(battleg_commram_check_r0)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( batrider_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
-	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
+
+static ADDRESS_MAP_START( batrider_sound_z80_mem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0xbfff) AM_ROMBANK(1)
+	AM_RANGE(0xc000, 0xdfff) AM_RAM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( batrider_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM)
-ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( batrider_sound_readport, ADDRESS_SPACE_IO, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x48, 0x48) AM_READ(raizing_command_r)
-	AM_RANGE(0x4a, 0x4a) AM_READ(raizing_request_r)
-	AM_RANGE(0x81, 0x81) AM_READ(YM2151_status_port_0_r)
-	AM_RANGE(0x82, 0x82) AM_READ(OKIM6295_status_0_r)
-	AM_RANGE(0x84, 0x84) AM_READ(OKIM6295_status_1_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( batrider_sound_writeport, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( batrider_sound_z80_port, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x40, 0x40) AM_WRITE(raizing_command_ack_w)		/* Tune control */
 	AM_RANGE(0x42, 0x42) AM_WRITE(raizing_request_ack_w)		/* Tune to play */
-	AM_RANGE(0x46, 0x46) AM_WRITE(raizing_clear_nmi_w)		/* Clear the NMI state */
+	AM_RANGE(0x46, 0x46) AM_WRITE(raizing_clear_nmi_w)			/* Clear the NMI state */
+	AM_RANGE(0x48, 0x48) AM_READ(raizing_command_r)
+	AM_RANGE(0x4a, 0x4a) AM_READ(raizing_request_r)
 	AM_RANGE(0x80, 0x80) AM_WRITE(YM2151_register_port_0_w)
-	AM_RANGE(0x81, 0x81) AM_WRITE(YM2151_data_port_0_w)
-	AM_RANGE(0x82, 0x82) AM_WRITE(OKIM6295_data_0_w)
-	AM_RANGE(0x84, 0x84) AM_WRITE(OKIM6295_data_1_w)
+	AM_RANGE(0x81, 0x81) AM_READWRITE(YM2151_status_port_0_r, YM2151_data_port_0_w)
+	AM_RANGE(0x82, 0x82) AM_READWRITE(OKIM6295_status_0_r, OKIM6295_data_0_w)
+	AM_RANGE(0x84, 0x84) AM_READWRITE(OKIM6295_status_1_r, OKIM6295_data_1_w)
 	AM_RANGE(0x88, 0x88) AM_WRITE(batrider_bankswitch_w)
 	AM_RANGE(0xc0, 0xc0) AM_WRITE(raizing_okim6295_bankselect_0)
 	AM_RANGE(0xc2, 0xc2) AM_WRITE(raizing_okim6295_bankselect_1)
@@ -2102,76 +1893,57 @@ static ADDRESS_MAP_START( batrider_sound_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0xc6, 0xc6) AM_WRITE(raizing_okim6295_bankselect_3)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( bbakraid_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
-	AM_RANGE(0xc000, 0xffff) AM_READ(MRA8_RAM)
+
+static ADDRESS_MAP_START( bbakraid_sound_z80_mem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM			/* Only 2FFFh valid code */
+	AM_RANGE(0x8000, 0xbfff) AM_ROMBANK(1)
+	AM_RANGE(0xc000, 0xffff) AM_RAM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( bbakraid_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)	/* Only 2FFFh valid code */
-	AM_RANGE(0xc000, 0xffff) AM_WRITE(MWA8_RAM)
-ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( bbakraid_sound_readport, ADDRESS_SPACE_IO, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x48, 0x48) AM_READ(raizing_command_r)
-	AM_RANGE(0x4a, 0x4a) AM_READ(raizing_request_r)
-	AM_RANGE(0x81, 0x81) AM_READ(YMZ280B_status_0_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( bbakraid_sound_writeport, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( bbakraid_sound_z80_port, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x40, 0x40) AM_WRITE(raizing_command_ack_w)	/* Tune control */
 	AM_RANGE(0x42, 0x42) AM_WRITE(raizing_request_ack_w)	/* Tune to play */
 	AM_RANGE(0x46, 0x46) AM_WRITE(raizing_clear_nmi_w)		/* Clear the NMI state */
+	AM_RANGE(0x48, 0x48) AM_READ(raizing_command_r)
+	AM_RANGE(0x4a, 0x4a) AM_READ(raizing_request_r)
 	AM_RANGE(0x80, 0x80) AM_WRITE(YMZ280B_register_0_w)
-	AM_RANGE(0x81, 0x81) AM_WRITE(YMZ280B_data_0_w)
+	AM_RANGE(0x81, 0x81) AM_READWRITE(YMZ280B_status_0_r, YMZ280B_data_0_w)
 ADDRESS_MAP_END
+
+
 
 
 #if HD64x180
-static ADDRESS_MAP_START( hd647180_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xfe00, 0xffff) AM_READ(MRA8_RAM)			/* Internal 512 bytes of RAM */
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( hd647180_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xfe00, 0xffff) AM_WRITE(MWA8_RAM)			/* Internal 512 bytes of RAM */
+static ADDRESS_MAP_START( hd647180_mem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0xfe00, 0xffff) AM_RAM			/* Internal 512 bytes of RAM */
 ADDRESS_MAP_END
 #endif
 
 
 #if V25
-static ADDRESS_MAP_START( V25_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x00000, 0x03fff) AM_READ(MRA8_ROM)
-//  AM_RANGE(0x00000, 0x007ff) AM_READ(MRA8_RAM)            /* External shared RAM (Banked) */
-	AM_RANGE(0x04000, 0x04000) AM_READ(YM2151_status_port_0_r)
-	AM_RANGE(0x04002, 0x04002) AM_READ(OKIM6295_status_0_r)
-	AM_RANGE(0x04008, 0x04008) AM_READ(input_port_1_r)
-	AM_RANGE(0x0400a, 0x0400a) AM_READ(input_port_2_r)
-	AM_RANGE(0x0400c, 0x0400c) AM_READ(input_port_3_r)
-	AM_RANGE(0x0fe00, 0x0ffff) AM_READ(MRA8_RAM)			/* Internal 512 bytes of RAM */
-	AM_RANGE(0x80000, 0x87fff) AM_READ(MRA8_RAM)			/* External shared RAM (ROM for KBASH) */
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( V25_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x00000, 0x03fff) AM_WRITE(MWA8_ROM)
-//  AM_RANGE(0x00000, 0x007ff) AM_WRITE(MWA8_RAM)           /* External shared RAM (Banked) */
-	AM_RANGE(0x04000, 0x04000) AM_WRITE(YM2151_register_port_0_w)
+static ADDRESS_MAP_START( V25_mem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x03fff) AM_ROM
+//  AM_RANGE(0x00000, 0x007ff) AM_RAM                           /* External shared RAM (Banked) */
+	AM_RANGE(0x04000, 0x04000) AM_READWRITE(YM2151_status_port_0_r, YM2151_register_port_0_w)
 	AM_RANGE(0x04001, 0x04001) AM_WRITE(YM2151_data_port_0_w)
-	AM_RANGE(0x04002, 0x04002) AM_WRITE(OKIM6295_data_0_w)
+	AM_RANGE(0x04002, 0x04002) AM_READWRITE(OKIM6295_status_0_r, OKIM6295_data_0_w)
 	AM_RANGE(0x04004, 0x04004) AM_WRITE(oki_bankswitch_w)
+	AM_RANGE(0x04008, 0x04008) AM_READ(port_tag_to_handler16("IN1"))
+	AM_RANGE(0x0400a, 0x0400a) AM_READ(port_tag_to_handler16("IN2"))
+	AM_RANGE(0x0400c, 0x0400c) AM_READ(port_tag_to_handler16("SYS"))
 	AM_RANGE(0x0400e, 0x0400e) AM_WRITE(toaplan2_coin_w)
-	AM_RANGE(0x0fe00, 0x0ffff) AM_WRITE(MWA8_RAM)			/* Internal 512 bytes of RAM */
-	AM_RANGE(0x80000, 0x87fff) AM_WRITE(MWA8_RAM) AM_BASE(&V25_sharedram)	/* External shared RAM (ROM for KBASH) */
+	AM_RANGE(0x0fe00, 0x0ffff) AM_RAM							/* Internal 512 bytes of RAM */
+	AM_RANGE(0x80000, 0x87fff) AM_RAM AM_BASE(&V25_sharedram)	/* External shared RAM (ROM for KBASH) */
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( V25_readport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x0060, 0x0060) AM_READ(input_port_4_r)		/* Directly mapped I/O ports */
-	AM_RANGE(0x0061, 0x0061) AM_READ(input_port_5_r)		/* Directly mapped I/O ports */
-	AM_RANGE(0x0062, 0x0062) AM_READ(input_port_6_r)		/* Directly mapped I/O ports */
+
+static ADDRESS_MAP_START( V25_port, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0060, 0x0060) AM_READ(port_tag_to_handler16("DSWA"))	/* Directly mapped I/O ports */
+	AM_RANGE(0x0061, 0x0061) AM_READ(port_tag_to_handler16("DSWA"))	/* Directly mapped I/O ports */
+	AM_RANGE(0x0062, 0x0062) AM_READ(port_tag_to_handler16("JMPR"))	/* Directly mapped I/O ports */
 ADDRESS_MAP_END
 #endif
 
@@ -2186,1214 +1958,857 @@ ADDRESS_MAP_END
     Service & P1 start & P2 start : The game will play in slow motion.
 *****************************************************************************/
 
-#define  TOAPLAN2_PLAYER_INPUT( player, button3, button4 )						\
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_PLAYER(player) PORT_8WAY	\
-	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_PLAYER(player) PORT_8WAY	\
-	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_PLAYER(player) PORT_8WAY	\
-	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(player) PORT_8WAY	\
-	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(player)					\
-	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER(player)					\
-	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, button3 ) PORT_PLAYER(player)						\
-	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, button4 ) PORT_PLAYER(player)						\
-	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-#define  SNOWBRO2_PLAYER_INPUT( player, button3, button4 )						\
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_PLAYER(player) PORT_8WAY	\
-	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_PLAYER(player) PORT_8WAY	\
-	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_PLAYER(player) PORT_8WAY	\
-	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(player) PORT_8WAY	\
-	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(player)					\
-	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER(player)					\
-	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, button3 )									\
-	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, button4 )									\
-	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+#define TOAPLAN2_COINAGE( mask, value)																				\
+	PORT_DIPNAME( 0x0030,	0x0000, DEF_STR( Coin_A ) )		PORT_DIPLOCATION("SW1:6,5")								\
+	PORT_DIPSETTING(		0x0030, DEF_STR( 4C_1C ) )		PORT_CONDITION("JMPR",mask,PORTCOND_EQUALS,value)		\
+	PORT_DIPSETTING(		0x0020, DEF_STR( 3C_1C ) )		PORT_CONDITION("JMPR",mask,PORTCOND_EQUALS,value)		\
+	PORT_DIPSETTING(		0x0010, DEF_STR( 2C_1C ) )		PORT_CONDITION("JMPR",mask,PORTCOND_EQUALS,value)		\
+	PORT_DIPSETTING(		0x0020, DEF_STR( 2C_1C ) )		PORT_CONDITION("JMPR",mask,PORTCOND_NOTEQUALS,value)	\
+	PORT_DIPSETTING(		0x0000, DEF_STR( 1C_1C ) )																\
+	PORT_DIPSETTING(		0x0030, DEF_STR( 2C_3C ) )		PORT_CONDITION("JMPR",mask,PORTCOND_NOTEQUALS,value)	\
+	PORT_DIPSETTING(		0x0010, DEF_STR( 1C_2C ) )		PORT_CONDITION("JMPR",mask,PORTCOND_NOTEQUALS,value)	\
+	PORT_DIPNAME( 0x00c0,	0x0000, DEF_STR( Coin_B ) )		PORT_DIPLOCATION("SW1:8,7")								\
+	PORT_DIPSETTING(		0x0080, DEF_STR( 2C_1C ) )		PORT_CONDITION("JMPR",mask,PORTCOND_NOTEQUALS,value)	\
+	PORT_DIPSETTING(		0x0000, DEF_STR( 1C_1C ) )		PORT_CONDITION("JMPR",mask,PORTCOND_NOTEQUALS,value)	\
+	PORT_DIPSETTING(		0x00c0, DEF_STR( 2C_3C ) )		PORT_CONDITION("JMPR",mask,PORTCOND_NOTEQUALS,value)	\
+	PORT_DIPSETTING(		0x0040, DEF_STR( 1C_2C ) )		PORT_CONDITION("JMPR",mask,PORTCOND_NOTEQUALS,value)	\
+	PORT_DIPSETTING(		0x0000, DEF_STR( 1C_2C ) )		PORT_CONDITION("JMPR",mask,PORTCOND_EQUALS,value)		\
+	PORT_DIPSETTING(		0x0040, DEF_STR( 1C_3C ) )		PORT_CONDITION("JMPR",mask,PORTCOND_EQUALS,value)		\
+	PORT_DIPSETTING(		0x0080, DEF_STR( 1C_4C ) )		PORT_CONDITION("JMPR",mask,PORTCOND_EQUALS,value)		\
+	PORT_DIPSETTING(		0x00c0, DEF_STR( 1C_6C ) )		PORT_CONDITION("JMPR",mask,PORTCOND_EQUALS,value)
 
-#define  TOAPLAN2_SYSTEM_INPUTS						\
-	PORT_START_TAG("IN3")							\
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_SERVICE1 )\
-	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_TILT )	\
-	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_COIN1 )	\
-	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_COIN2 )	\
-	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_START1 )	\
-	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_START2 )	\
-	PORT_BIT( 0xff84, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-#define DSWA_8											\
-	PORT_START_TAG("DSWA")								\
-	PORT_DIPNAME( 0x01,	0x00, DEF_STR( Unused ) )		\
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )			\
-	PORT_DIPSETTING(	0x01, DEF_STR( On ) )			\
-	PORT_DIPNAME( 0x02,	0x00, DEF_STR( Flip_Screen ) )	\
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )			\
-	PORT_DIPSETTING(	0x02, DEF_STR( On ) )			\
-	PORT_SERVICE( 0x04,	IP_ACTIVE_HIGH )				\
-	PORT_DIPNAME( 0x08,	0x00, DEF_STR( Demo_Sounds ) )	\
-	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )			\
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 
-#define EUROPEAN_COINAGE_8							\
-	PORT_DIPNAME( 0x30,	0x00, DEF_STR( Coin_A ) )	\
-	PORT_DIPSETTING(	0x30, DEF_STR( 4C_1C ) )	\
-	PORT_DIPSETTING(	0x20, DEF_STR( 3C_1C ) )	\
-	PORT_DIPSETTING(	0x10, DEF_STR( 2C_1C ) )	\
-	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )	\
-	PORT_DIPNAME( 0xc0,	0x00, DEF_STR( Coin_B ) )	\
-	PORT_DIPSETTING(	0x00, DEF_STR( 1C_2C ) )	\
-	PORT_DIPSETTING(	0x40, DEF_STR( 1C_3C ) )	\
-	PORT_DIPSETTING(	0x80, DEF_STR( 1C_4C ) )	\
-	PORT_DIPSETTING(	0xc0, DEF_STR( 1C_6C ) )
 
-#define NONEUROPEAN_COINAGE_8						\
-	PORT_DIPNAME( 0x30,	0x00, DEF_STR( Coin_A ) )	\
-	PORT_DIPSETTING(	0x20, DEF_STR( 2C_1C ) )	\
-	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )	\
-	PORT_DIPSETTING(	0x30, DEF_STR( 2C_3C ) )	\
-	PORT_DIPSETTING(	0x10, DEF_STR( 1C_2C ) )	\
-	PORT_DIPNAME( 0xc0,	0x00, DEF_STR( Coin_B ) )	\
-	PORT_DIPSETTING(	0x80, DEF_STR( 2C_1C ) )	\
-	PORT_DIPSETTING(	0x00, DEF_STR( 1C_1C ) )	\
-	PORT_DIPSETTING(	0xc0, DEF_STR( 2C_3C ) )	\
-	PORT_DIPSETTING(	0x40, DEF_STR( 1C_2C ) )
+INPUT_PORTS_START( toaplan2 )
+	PORT_START_TAG("VBL")
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )
+	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Unknown/Unused */
 
-#define EUROPEAN_COINAGE_16								\
-	PORT_DIPNAME( 0x0030,	0x0000, DEF_STR( Coin_A ) )	\
-	PORT_DIPSETTING(		0x0030, DEF_STR( 4C_1C ) )	\
-	PORT_DIPSETTING(		0x0020, DEF_STR( 3C_1C ) )	\
-	PORT_DIPSETTING(		0x0010, DEF_STR( 2C_1C ) )	\
-	PORT_DIPSETTING(		0x0000, DEF_STR( 1C_1C ) )	\
-	PORT_DIPNAME( 0x00c0,	0x0000, DEF_STR( Coin_B ) )	\
-	PORT_DIPSETTING(		0x0000, DEF_STR( 1C_2C ) )	\
-	PORT_DIPSETTING(		0x0040, DEF_STR( 1C_3C ) )	\
-	PORT_DIPSETTING(		0x0080, DEF_STR( 1C_4C ) )	\
-	PORT_DIPSETTING(		0x00c0, DEF_STR( 1C_6C ) )
+	PORT_START_TAG("IN1")
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_PLAYER(1) PORT_8WAY
+	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_PLAYER(1) PORT_8WAY
+	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_PLAYER(1) PORT_8WAY
+	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(1) PORT_8WAY
+	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Unknown/Unused */
 
-#define NONEUROPEAN_COINAGE_16							\
-	PORT_DIPNAME( 0x0030,	0x0000, DEF_STR( Coin_A ) )	\
-	PORT_DIPSETTING(		0x0020, DEF_STR( 2C_1C ) )	\
-	PORT_DIPSETTING(		0x0000, DEF_STR( 1C_1C ) )	\
-	PORT_DIPSETTING(		0x0030, DEF_STR( 2C_3C ) )	\
-	PORT_DIPSETTING(		0x0010, DEF_STR( 1C_2C ) )	\
-	PORT_DIPNAME( 0xc0,		0x0000, DEF_STR( Coin_B ) )	\
-	PORT_DIPSETTING(		0x0080, DEF_STR( 2C_1C ) )	\
-	PORT_DIPSETTING(		0x0000, DEF_STR( 1C_1C ) )	\
-	PORT_DIPSETTING(		0x00c0, DEF_STR( 2C_3C ) )	\
-	PORT_DIPSETTING(		0x0040, DEF_STR( 1C_2C ) )
+	PORT_START_TAG("IN2")
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_PLAYER(2) PORT_8WAY
+	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_PLAYER(2) PORT_8WAY
+	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_PLAYER(2) PORT_8WAY
+	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2) PORT_8WAY
+	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Unknown/Unused */
 
-#define DIFFICULTY_8									\
-	PORT_DIPNAME( 0x03,	0x00, DEF_STR( Difficulty ) )	\
-	PORT_DIPSETTING(	0x01, DEF_STR( Easy ) )					\
-	PORT_DIPSETTING(	0x00, DEF_STR( Medium ) )				\
-	PORT_DIPSETTING(	0x02, DEF_STR( Hard ) )					\
-	PORT_DIPSETTING(	0x03, DEF_STR( Hardest ) )
+	PORT_START_TAG("SYS")
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_SERVICE1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_TILT )
+	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Unknown/Unused */
 
-#define LIVES_8										\
-	PORT_DIPNAME( 0x30,	0x00, DEF_STR( Lives ) )	\
-	PORT_DIPSETTING(	0x30, "1" )					\
-	PORT_DIPSETTING(	0x20, "2" )					\
-	PORT_DIPSETTING(	0x00, "3" )					\
-	PORT_DIPSETTING(	0x10, "5" )
+	PORT_START_TAG("DSWA")
+	PORT_DIPNAME( 0x0001,	0x0000, DEF_STR( Unused ) )			PORT_DIPLOCATION("SW1:1")
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0001, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002,	0x0000, DEF_STR( Flip_Screen ) )	PORT_DIPLOCATION("SW1:2")
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0002, DEF_STR( On ) )
+	PORT_SERVICE( 0x0004,	IP_ACTIVE_HIGH ) 				/// PORT_DIPLOCATION("SW1:3")
+	PORT_DIPNAME( 0x0008,	0x0000, DEF_STR( Demo_Sounds ) )	PORT_DIPLOCATION("SW1:4")
+	PORT_DIPSETTING(		0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
+	/* Coinage on bit mask 0x00f0 - see TOAPLAN2_COINAGE above */
+	PORT_BIT( 0x00f0, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Modified below */
+	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Unknown/Unused */
 
-#define DIFFICULTY_16										\
-	PORT_DIPNAME( 0x0003,	0x0000, DEF_STR( Difficulty ) )	\
-	PORT_DIPSETTING(		0x0001, DEF_STR( Easy ) )				\
-	PORT_DIPSETTING(		0x0000, DEF_STR( Medium ) )				\
-	PORT_DIPSETTING(		0x0002, DEF_STR( Hard ) )				\
+	PORT_START_TAG("DSWB")
+	PORT_DIPNAME( 0x0003,	0x0000, DEF_STR( Difficulty ) )		PORT_DIPLOCATION("SW2:2,1")
 	PORT_DIPSETTING(		0x0003, DEF_STR( Hardest ) )
+	PORT_DIPSETTING(		0x0002, DEF_STR( Hard ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Medium ) )
+	PORT_DIPSETTING(		0x0001, DEF_STR( Easy ) )
+	/* Various features on bit mask 0x00fc */
+	PORT_BIT( 0x00fc, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Modified below */
+	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Unknown/Unused */
 
-#define LIVES_16										\
-	PORT_DIPNAME( 0x0030,	0x0000, DEF_STR( Lives ) )	\
-	PORT_DIPSETTING(		0x0030, "1" )				\
-	PORT_DIPSETTING(		0x0020, "2" )				\
-	PORT_DIPSETTING(		0x0000, "3" )				\
-	PORT_DIPSETTING(		0x0010, "5" )
-
+	PORT_START_TAG("JMPR")	/* (6) Territory Jumper block */
+	/* Territory settings on bit mask 0x000f */
+	PORT_BIT( 0x000f, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Modified below */
+	PORT_BIT( 0xfff0, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Unknown/Unused */
+INPUT_PORTS_END
 
 
 
 INPUT_PORTS_START( tekipaki )
-	PORT_START_TAG("IN0")		/* (0) VBlank */
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_INCLUDE(toaplan2)
 
-	PORT_START_TAG("IN1")
-	TOAPLAN2_PLAYER_INPUT( 1, IPT_UNKNOWN, IPT_UNKNOWN )
+	PORT_MODIFY("DSWA")
+	/* Various features on bit mask 0x000f - see above */
+	/* Coinage on bit mask 0x00f0 - see TOAPLAN2_COINAGE above */
+	TOAPLAN2_COINAGE( 0x000f, 0x0002 )
 
-	PORT_START_TAG("IN2")
-	TOAPLAN2_PLAYER_INPUT( 2, IPT_UNKNOWN, IPT_UNKNOWN )
+	PORT_MODIFY("DSWB")
+	/* Difficulty on bit mask 0x0003 - see above */
+	PORT_DIPNAME( 0x0004,	0x0000, DEF_STR( Unused ) )		PORT_DIPLOCATION("SW2:3")
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0004, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008,	0x0000, DEF_STR( Unused ) )		PORT_DIPLOCATION("SW2:4")
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0008, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010,	0x0000, DEF_STR( Unused ) )		PORT_DIPLOCATION("SW2:5")
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0010, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020,	0x0000, DEF_STR( Unused ) )		PORT_DIPLOCATION("SW2:6")
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0020, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040,	0x0000, "Game Mode" )			PORT_DIPLOCATION("SW2:7")
+	PORT_DIPSETTING(		0x0040, "Stop" )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Normal ) )
+	PORT_DIPNAME( 0x0080,	0x0000, DEF_STR( Unused ) )		PORT_DIPLOCATION("SW2:8")
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0080, DEF_STR( On ) )
 
-	TOAPLAN2_SYSTEM_INPUTS
-
-	DSWA_8
-	EUROPEAN_COINAGE_8
-//  NONEUROPEAN_COINAGE_8
-
-	PORT_START_TAG("DSWB")
-	DIFFICULTY_8
-	PORT_DIPNAME( 0x04,	0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x04, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08,	0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10,	0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20,	0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40,	0x00, "Game Mode" )
-	PORT_DIPSETTING(	0x00, DEF_STR( Normal ) )
-	PORT_DIPSETTING(	0x40, "Stop" )
-	PORT_DIPNAME( 0x80,	0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
-
-	PORT_START_TAG("JMPR")		/* (6) Territory Jumper block */
-	PORT_DIPNAME( 0x0f,	0x02, "Territory" )
-	PORT_DIPSETTING(	0x02, DEF_STR( Europe ) )
-	PORT_DIPSETTING(	0x01, DEF_STR( USA ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Japan ) )
-	PORT_DIPSETTING(	0x0f, "Japan (Distributed by Tecmo)" )
-	PORT_DIPSETTING(	0x03, "Hong Kong" )
-	PORT_DIPSETTING(	0x05, "Taiwan" )
-	PORT_DIPSETTING(	0x04, "Korea" )
-	PORT_DIPSETTING(	0x07, "USA (Romstar)" )
-	PORT_DIPSETTING(	0x08, "Hong Kong (Honest Trading Co.)" )
-	PORT_DIPSETTING(	0x06, "Taiwan (Spacy Co. Ltd)" )
-	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_MODIFY("JMPR")
+	PORT_DIPNAME( 0x000f,	0x0002, "Territory" )
+	PORT_DIPSETTING(		0x0002, DEF_STR( Europe ) )
+	PORT_DIPSETTING(		0x0001, DEF_STR( USA ) )
+	PORT_DIPSETTING(		0x0007, "USA (Romstar)" )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Japan ) )
+	PORT_DIPSETTING(		0x000f, "Japan (Distributed by Tecmo)" )
+	PORT_DIPSETTING(		0x0004, "Korea" )
+	PORT_DIPSETTING(		0x0003, "Hong Kong" )
+	PORT_DIPSETTING(		0x0008, "Hong Kong (Honest Trading Co.)" )
+	PORT_DIPSETTING(		0x0005, "Taiwan" )
+	PORT_DIPSETTING(		0x0006, "Taiwan (Spacy Co. Ltd)" )
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( ghox )
-	PORT_START_TAG("IN0")		/* (0) VBlank */
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_INCLUDE(toaplan2)
 
-	PORT_START_TAG("IN1")
-	TOAPLAN2_PLAYER_INPUT( 1, IPT_UNKNOWN, IPT_UNKNOWN )
+	PORT_MODIFY("DSWA")
+	/* Various features on bit mask 0x000f - see above */
+	/* Coinage on bit mask 0x00f0 - see TOAPLAN2_COINAGE above */
+	TOAPLAN2_COINAGE( 0x80000, 0x80000 )
 
-	PORT_START_TAG("IN2")
-	TOAPLAN2_PLAYER_INPUT( 2, IPT_UNKNOWN, IPT_UNKNOWN )
-
-	TOAPLAN2_SYSTEM_INPUTS
-
-	DSWA_8
-	EUROPEAN_COINAGE_8
-//  NONEUROPEAN_COINAGE_8
-
-	PORT_START_TAG("DSWB")
-	DIFFICULTY_8
-	PORT_DIPNAME( 0x0c,	0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(	0x00, "100k and every 200k" )
-	PORT_DIPSETTING(	0x04, "100k and every 300k" )
-	PORT_DIPSETTING(	0x08, "100k only" )
-	PORT_DIPSETTING(	0x0c, DEF_STR( None ) )
-	LIVES_8
-	PORT_DIPNAME( 0x40, 0x00, "Invulnerability" )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80,	0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
-
-	PORT_START_TAG("JMPR")
-	PORT_DIPNAME( 0x0f,	0x02, "Territory" )
-	PORT_DIPSETTING(	0x02, DEF_STR( Europe ) )
-	PORT_DIPSETTING(	0x01, DEF_STR( USA ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Japan ) )
-	PORT_DIPSETTING(	0x04, "Korea" )
-	PORT_DIPSETTING(	0x03, "Hong Kong (Honest Trading Co.)" )
-	PORT_DIPSETTING(	0x05, "Taiwan" )
-	PORT_DIPSETTING(	0x06, "Spain & Portugal (APM Electronics SA)" )
-	PORT_DIPSETTING(	0x07, "Italy (Star Electronica SRL)" )
-	PORT_DIPSETTING(	0x08, "UK (JP Leisure Ltd)" )
-	PORT_DIPSETTING(	0x0a, "Europe (Nova Apparate GMBH & Co)" )
-	PORT_DIPSETTING(	0x0d, "Europe (Taito Corporation Japan)" )
-	PORT_DIPSETTING(	0x09, "USA (Romstar)" )
-	PORT_DIPSETTING(	0x0b, "USA (Taito America Corporation)" )
-	PORT_DIPSETTING(	0x0c, "USA (Taito Corporation Japan)" )
-	PORT_DIPSETTING(	0x0e, "Japan (Taito Corporation)" )
-	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START_TAG("IN7")		/* (7)  Paddle 1 (left-right)  read at $100000 */
-	PORT_BIT( 0xff,	0x00, IPT_DIAL ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(15) PORT_PLAYER(1)
-
-	PORT_START_TAG("IN8")		/* (8)  Paddle 2 (left-right)  read at $040000 */
-	PORT_BIT( 0xff,	0x00, IPT_DIAL ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(15) PORT_PLAYER(2)
-
-INPUT_PORTS_END
-
-INPUT_PORTS_START( dogyuun )
-	PORT_START_TAG("IN0")		/* (0) VBlank */
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START_TAG("IN1")
-	TOAPLAN2_PLAYER_INPUT( 1, IPT_BUTTON3, IPT_UNKNOWN )
-
-	PORT_START_TAG("IN2")
-	TOAPLAN2_PLAYER_INPUT( 2, IPT_BUTTON3, IPT_UNKNOWN )
-
-	TOAPLAN2_SYSTEM_INPUTS
-
-	PORT_START_TAG("DSWA")
-	PORT_DIPNAME( 0x0001,	0x0000, DEF_STR( Free_Play) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0001, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0002,	0x0000, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0002, DEF_STR( On ) )
-	PORT_SERVICE( 0x0004,	IP_ACTIVE_HIGH )		/* Service Mode */
-	PORT_DIPNAME( 0x0008,	0x0000, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(		0x0008, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
-	EUROPEAN_COINAGE_16
-//  NONEUROPEAN_COINAGE_16
-	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START_TAG("DSWB")
-	DIFFICULTY_16
-	PORT_DIPNAME( 0x000c,	0x0000, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(		0x0004, "200k, 400k and 600k" )
-	PORT_DIPSETTING(		0x0000, "200k only" )
-	PORT_DIPSETTING(		0x0008, "400k only" )
+	PORT_MODIFY("DSWB")
+	/* Difficulty on bit mask 0x0003 - see above */
+	PORT_DIPNAME( 0x000c,	0x0000, DEF_STR( Bonus_Life ) )		PORT_DIPLOCATION("SW2:4,3")
 	PORT_DIPSETTING(		0x000c, DEF_STR( None ) )
-	LIVES_16
-	PORT_DIPNAME( 0x0040, 0x0000, "Invulnerability" )
+	PORT_DIPSETTING(		0x0008, "100k only" )
+	PORT_DIPSETTING(		0x0004, "100k and 300k" )
+	PORT_DIPSETTING(		0x0000, "100k and every 200k" )
+	PORT_DIPNAME( 0x0030,	0x0000, DEF_STR( Lives ) )			PORT_DIPLOCATION("SW2:6,5")
+	PORT_DIPSETTING(		0x0030, "1" )
+	PORT_DIPSETTING(		0x0020, "2" )
+	PORT_DIPSETTING(		0x0000, "3" )
+	PORT_DIPSETTING(		0x0010, "5" )
+	PORT_DIPNAME( 0x0040, 	0x0000, "Invulnerability" )			PORT_DIPLOCATION("SW2:7")
 	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(		0x0040, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080,	0x0000, DEF_STR( Allow_Continue ) )
+	PORT_DIPNAME( 0x0080,	0x0000, DEF_STR( Unused ) )			PORT_DIPLOCATION("SW2:8")
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0080, DEF_STR( On ) )
+
+	PORT_MODIFY("JMPR")
+	/* Bit Mask 0x80000 is used here to signify European Coinage for MAME purposes - not read on the real board! */
+	PORT_DIPNAME( 0x8000f,	0x80002, "Territory" )
+	PORT_DIPSETTING(		0x80002, DEF_STR( Europe ) )
+	PORT_DIPSETTING(		0x8000a, "Europe (Nova Apparate GMBH & Co)" )
+	PORT_DIPSETTING(		0x8000d, "Europe (Taito Corporation Japan)" )
+	PORT_DIPSETTING(		0x00001, DEF_STR( USA ) )
+	PORT_DIPSETTING(		0x00009, "USA (Romstar)" )
+	PORT_DIPSETTING(		0x0000b, "USA (Taito America Corporation)" )
+	PORT_DIPSETTING(		0x0000c, "USA (Taito Corporation Japan)" )
+	PORT_DIPSETTING(		0x00000, DEF_STR( Japan ) )
+//  PORT_DIPSETTING(        0x0000e, "Japan (Taito Corporation)" )
+	PORT_DIPSETTING(		0x00004, "Korea" )
+	PORT_DIPSETTING(		0x00003, "Hong Kong (Honest Trading Co.)" )
+	PORT_DIPSETTING(		0x00005, "Taiwan" )
+	PORT_DIPSETTING(		0x80006, "Spain & Portugal (APM Electronics SA)" )
+	PORT_DIPSETTING(		0x80007, "Italy (Star Electronica SRL)" )
+	PORT_DIPSETTING(		0x80008, "UK (JP Leisure Ltd)" )
+
+	PORT_START_TAG("PAD1")		/* Paddle 1 (left-right)  read at $100000 */
+	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(15) PORT_PLAYER(1)
+	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Unknown/Unused */
+
+	PORT_START_TAG("PAD2")		/* Paddle 2 (left-right)  read at $040000 */
+	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_MINMAX(0,0xff) PORT_SENSITIVITY(25) PORT_KEYDELTA(15) PORT_PLAYER(2)
+	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Unknown/Unused */
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( dogyuun )
+	PORT_INCLUDE(toaplan2)
+
+	PORT_MODIFY("IN1")
+	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_PLAYER(1)
+
+	PORT_MODIFY("IN2")
+	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_PLAYER(2)
+
+	PORT_MODIFY("DSWA")
+	PORT_DIPNAME( 0x0001,	0x0000, DEF_STR( Free_Play) )		PORT_DIPLOCATION("SW1:1")
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0001, DEF_STR( On ) )
+	/* Various features on bit mask 0x000e - see above */
+	/* Coinage on bit mask 0x00f0 - see TOAPLAN2_COINAGE above */
+	TOAPLAN2_COINAGE( 0x000f, 0x0003 )
+
+	PORT_MODIFY("DSWB")
+	/* Difficulty on bit mask 0x0003 - see above */
+	PORT_DIPNAME( 0x000c,	0x0000, DEF_STR( Bonus_Life ) )		PORT_DIPLOCATION("SW2:4,3")
+	PORT_DIPSETTING(		0x000c, DEF_STR( None ) )
+	PORT_DIPSETTING(		0x0008, "400k only" )
+	PORT_DIPSETTING(		0x0000, "200k only" )
+	PORT_DIPSETTING(		0x0004, "200k, 400k and 600k" )
+	PORT_DIPNAME( 0x0030,	0x0000, DEF_STR( Lives ) )			PORT_DIPLOCATION("SW2:6,5")
+	PORT_DIPSETTING(		0x0030, "1" )
+	PORT_DIPSETTING(		0x0020, "2" )
+	PORT_DIPSETTING(		0x0000, "3" )
+	PORT_DIPSETTING(		0x0010, "5" )
+	PORT_DIPNAME( 0x0040,	0x0000, "Invulnerability" )			PORT_DIPLOCATION("SW2:7")
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0040, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080,	0x0000, DEF_STR( Allow_Continue ) )	PORT_DIPLOCATION("SW2:8")
 	PORT_DIPSETTING(		0x0080, DEF_STR( No ) )
 	PORT_DIPSETTING(		0x0000, DEF_STR( Yes ) )
 
-	PORT_START_TAG("JMPR")
-	PORT_DIPNAME( 0x0f,	0x03, "Territory" )
-	PORT_DIPSETTING(	0x03, DEF_STR( Europe ) )
-	PORT_DIPSETTING(	0x01, DEF_STR( USA ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Japan ) )
-	PORT_DIPSETTING(	0x05, "Korea (Unite Trading license)" )
-	PORT_DIPSETTING(	0x04, "Hong Kong (Charterfield license)" )
-	PORT_DIPSETTING(	0x06, "Taiwan" )
-	PORT_DIPSETTING(	0x08, "South East Asia (Charterfield license)" )
-	PORT_DIPSETTING(	0x0c, "USA (Atari Games Corp license)" )
-	PORT_DIPSETTING(	0x0f, "Japan (Taito Corp license)" )
-/*  Duplicate settings
-    PORT_DIPSETTING(    0x0b, DEF_STR( Europe ) )
-    PORT_DIPSETTING(    0x07, DEF_STR( USA ) )
-    PORT_DIPSETTING(    0x0a, "Korea (Unite Trading license)" )
-    PORT_DIPSETTING(    0x09, "Hong Kong (Charterfield license)" )
-    PORT_DIPSETTING(    0x0b, "Taiwan" )
-    PORT_DIPSETTING(    0x0d, "South East Asia (Charterfield license)" )
-    PORT_DIPSETTING(    0x0c, "USA (Atari Games Corp license)" )
-*/
-	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* bit 0x10 sound ready */
+	PORT_MODIFY("JMPR")
+	PORT_DIPNAME( 0x000f,	0x0003, "Territory" )
+	PORT_DIPSETTING(		0x0003, DEF_STR( Europe ) )
+	PORT_DIPSETTING(		0x0001, DEF_STR( USA ) )
+//  PORT_DIPSETTING(        0x0007, DEF_STR( USA ) )
+	PORT_DIPSETTING(		0x0002, "USA (Atari Games Corp license)" )
+//  PORT_DIPSETTING(        0x000c, "USA (Atari Games Corp license)" )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Japan ) )
+	PORT_DIPSETTING(		0x000f, "Japan (Taito Corp license)" )
+	PORT_DIPSETTING(		0x0008, "South East Asia (Charterfield license)" )
+//  PORT_DIPSETTING(        0x000d, "South East Asia (Charterfield license)" )
+	PORT_DIPSETTING(		0x0005, "Korea (Unite Trading license)" )
+//  PORT_DIPSETTING(        0x000a, "Korea (Unite Trading license)" )
+	PORT_DIPSETTING(		0x0004, "Hong Kong (Charterfield license)" )
+//  PORT_DIPSETTING(        0x0009, "Hong Kong (Charterfield license)" )
+	PORT_DIPSETTING(		0x0006, "Taiwan" )
+//  PORT_DIPSETTING(        0x000b, "Taiwan" )
+	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Sound ready */
 INPUT_PORTS_END
 
+
 INPUT_PORTS_START( kbash )
-	PORT_START_TAG("IN0")		/* (0) VBlank */
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_INCLUDE(toaplan2)
 
-	PORT_START_TAG("IN1")
-	TOAPLAN2_PLAYER_INPUT( 1, IPT_BUTTON3, IPT_UNKNOWN )
+	PORT_MODIFY("IN1")
+	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_PLAYER(1)
 
-	PORT_START_TAG("IN2")
-	TOAPLAN2_PLAYER_INPUT( 2, IPT_BUTTON3, IPT_UNKNOWN )
+	PORT_MODIFY("IN2")
+	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_PLAYER(2)
 
-	TOAPLAN2_SYSTEM_INPUTS
-
-	PORT_START_TAG("DSWA")
-	PORT_DIPNAME( 0x0001,	0x0000, "Continue Mode" )
+	PORT_MODIFY("DSWA")
+	PORT_DIPNAME( 0x0001,	0x0000, "Continue Mode" )		PORT_DIPLOCATION("SW1:1")
 	PORT_DIPSETTING(		0x0000, DEF_STR( Normal ) )
 	PORT_DIPSETTING(		0x0001, "Discount" )
-	PORT_DIPNAME( 0x0002,	0x0000, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0002, DEF_STR( On ) )
-	PORT_SERVICE( 0x0004,	IP_ACTIVE_HIGH )		/* Service Mode */
-	PORT_DIPNAME( 0x0008,	0x0000, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(		0x0008, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
-	EUROPEAN_COINAGE_16
-//  NONEUROPEAN_COINAGE_16
-	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	/* Various features on bit mask 0x000e - see above */
+	/* Coinage on bit mask 0x00f0 - see TOAPLAN2_COINAGE above */
+	TOAPLAN2_COINAGE( 0x0007, 0x0002 )
 
-	PORT_START_TAG("DSWB")
-	DIFFICULTY_16
-	PORT_DIPNAME( 0x000c,	0x0000, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(		0x0000, "100k and every 400k" )
-	PORT_DIPSETTING(		0x0004, "100k only" )
-	PORT_DIPSETTING(		0x0008, "200k only" )
+	PORT_MODIFY("DSWB")
+	/* Difficulty on bit mask 0x0003 - see above */
+	PORT_DIPNAME( 0x000c,	0x0000, DEF_STR( Bonus_Life ) )		PORT_DIPLOCATION("SW2:4,3")
 	PORT_DIPSETTING(		0x000c, DEF_STR( None ) )
-	/* Lives are different in this game */
-	PORT_DIPNAME( 0x0030,	0x0000, DEF_STR( Lives ) )
+	PORT_DIPSETTING(		0x0008, "200k only" )
+	PORT_DIPSETTING(		0x0004, "100k only" )
+	PORT_DIPSETTING(		0x0000, "100k and 400k" )
+	PORT_DIPNAME( 0x0030,	0x0000, DEF_STR( Lives ) )			PORT_DIPLOCATION("SW2:6,5")
 	PORT_DIPSETTING(		0x0030, "1" )
 	PORT_DIPSETTING(		0x0000, "2" )
 	PORT_DIPSETTING(		0x0020, "3" )
 	PORT_DIPSETTING(		0x0010, "4" )
-	PORT_DIPNAME( 0x0040, 0x0000, "Invulnerability" )
+	PORT_DIPNAME( 0x0040,	0x0000, "Invulnerability" )			PORT_DIPLOCATION("SW2:7")
 	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(		0x0040, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080,	0x0000, DEF_STR( Allow_Continue ) )
+	PORT_DIPNAME( 0x0080,	0x0000, DEF_STR( Allow_Continue ) )	PORT_DIPLOCATION("SW2:8")
 	PORT_DIPSETTING(		0x0080, DEF_STR( No ) )
 	PORT_DIPSETTING(		0x0000, DEF_STR( Yes ) )
-	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START_TAG("JMPR")
-	PORT_DIPNAME( 0x000f,	0x000a, "Territory" )
+	PORT_MODIFY("JMPR")
+	PORT_DIPNAME( 0x000f,	0x0002, "Territory" )
 	PORT_DIPSETTING(		0x000a, DEF_STR( Europe ) )
+	PORT_DIPSETTING(		0x0002, "Europe, USA (Atari license)" )
 	PORT_DIPSETTING(		0x0009, DEF_STR( USA ) )
+	PORT_DIPSETTING(		0x0001, "USA, Europe (Atari license)" )
 	PORT_DIPSETTING(		0x0000, DEF_STR( Japan ) )
+	PORT_DIPSETTING(		0x0006, "South East Asia" )	/*Service Mode lists European Coinage */
 	PORT_DIPSETTING(		0x0003, "Korea" )
 	PORT_DIPSETTING(		0x0004, "Hong Kong" )
-	PORT_DIPSETTING(		0x0007, "Taiwan" )
-	PORT_DIPSETTING(		0x0006, "South East Asia" )
-	PORT_DIPSETTING(		0x0002, "Europe, USA (Atari License)" )
-	PORT_DIPSETTING(		0x0001, "USA, Europe (Atari License)" )
-	PORT_BIT( 0xfff0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+
+INPUT_PORTS_START( kbash2 )
+	PORT_INCLUDE(kbash)
+
+	PORT_MODIFY("JMPR")
+	PORT_DIPNAME( 0x000f,	0x0006, "Territory" )
+	PORT_DIPSETTING(		0x0000, "Japan (Taito Corp license)" )
+	PORT_DIPSETTING(		0x000e, "South East Asia" )	/*Service Mode lists European Coinage */
+	PORT_DIPSETTING(		0x0006, "South East Asia (Charterfield license)" )	/*Service Mode lists European Coinage */
+	PORT_DIPSETTING(		0x000b, "Korea" )
+	PORT_DIPSETTING(		0x0003, "Korea (Unite license)" )
+	PORT_DIPSETTING(		0x0004, "Hong Kong" )
+	PORT_DIPSETTING(		0x0005, "Taiwan" )
+INPUT_PORTS_END
+
+
 INPUT_PORTS_START( truxton2 )
-	PORT_START_TAG("IN0")		/* (0) VBlank */
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_INCLUDE(toaplan2)
 
-	PORT_START_TAG("IN1")
-	TOAPLAN2_PLAYER_INPUT( 1, IPT_UNKNOWN, IPT_BUTTON4 )
+	PORT_MODIFY("IN1")
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_BUTTON4 ) PORT_PLAYER(1)
 
-	PORT_START_TAG("IN2")
-	TOAPLAN2_PLAYER_INPUT( 2, IPT_UNKNOWN, IPT_BUTTON4 )
+	PORT_MODIFY("IN2")
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_BUTTON4 ) PORT_PLAYER(2)
 
-	TOAPLAN2_SYSTEM_INPUTS
-
-	PORT_START_TAG("DSWA")
-	PORT_DIPNAME( 0x0001,	0x0000, "Rapid Fire" )
+	PORT_MODIFY("DSWA")
+	PORT_DIPNAME( 0x0001,	0x0000, "Rapid Fire" )				PORT_DIPLOCATION("SW1:1")
 	PORT_DIPSETTING(		0x0001, DEF_STR( Off ) )
 	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0002,	0x0000, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0002, DEF_STR( On ) )
-	PORT_SERVICE( 0x0004,	IP_ACTIVE_HIGH )		/* Service Mode */
-	PORT_DIPNAME( 0x0008,	0x0000, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(		0x0008, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
-	EUROPEAN_COINAGE_16
-//  NONEUROPEAN_COINAGE_16
-	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	/* Various features on bit mask 0x000e - see above */
+	/* Coinage on bit mask 0x00f0 - see TOAPLAN2_COINAGE above */
+	TOAPLAN2_COINAGE( 0x0007, 0x0002 )
 
-	PORT_START_TAG("DSWB")
-	DIFFICULTY_16
-	PORT_DIPNAME( 0x000c,	0x0000, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(		0x0000, "70k and 200k" )
-	PORT_DIPSETTING(		0x0004, "100k and 250k" )
-	PORT_DIPSETTING(		0x0008, "100k only" )
+	PORT_MODIFY("DSWB")
+	/* Difficulty on bit mask 0x0003 - see above */
+	PORT_DIPNAME( 0x000c,	0x0000, DEF_STR( Bonus_Life ) )		PORT_DIPLOCATION("SW2:4,3")
 	PORT_DIPSETTING(		0x000c, "200k only" )
-	/* Lives are different in this game */
-	PORT_DIPNAME( 0x0030,	0x0000, DEF_STR( Lives ) )
+	PORT_DIPSETTING(		0x0008, "100k only" )
+	PORT_DIPSETTING(		0x0004, "100k and 250k" )
+	PORT_DIPSETTING(		0x0000, "70k and 200k" )
+	PORT_DIPNAME( 0x0030,	0x0000, DEF_STR( Lives ) )			PORT_DIPLOCATION("SW2:6,5")
 	PORT_DIPSETTING(		0x0030, "2" )
 	PORT_DIPSETTING(		0x0000, "3" )
 	PORT_DIPSETTING(		0x0020, "4" )
 	PORT_DIPSETTING(		0x0010, "5" )
-	PORT_DIPNAME( 0x0040, 0x0000, "Invulnerability" )
+	PORT_DIPNAME( 0x0040,	0x0000, "Invulnerability" )			PORT_DIPLOCATION("SW2:7")
 	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(		0x0040, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080,	0x0000, DEF_STR( Allow_Continue ) )
+	PORT_DIPNAME( 0x0080,	0x0000, DEF_STR( Allow_Continue ) )	PORT_DIPLOCATION("SW2:8")
 	PORT_DIPSETTING(		0x0080, DEF_STR( No ) )
 	PORT_DIPSETTING(		0x0000, DEF_STR( Yes ) )
 
-	PORT_START_TAG("JMPR")
-	PORT_DIPNAME( 0x07,	0x02, "Territory" )
-	PORT_DIPSETTING(	0x02, DEF_STR( Europe ) )
-	PORT_DIPSETTING(	0x01, DEF_STR( USA ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Japan ) )
-	PORT_DIPSETTING(	0x03, "Hong Kong" )
-	PORT_DIPSETTING(	0x05, "Taiwan" )
-	PORT_DIPSETTING(	0x06, DEF_STR( Asia ) )
-	PORT_DIPSETTING(	0x04, "Korea" )
+	PORT_MODIFY("JMPR")
+	PORT_DIPNAME( 0x0007,	0x0002, "Territory" )
+	PORT_DIPSETTING(		0x0002, DEF_STR( Europe ) )
+	PORT_DIPSETTING(		0x0001, DEF_STR( USA ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Japan ) )
+	PORT_DIPSETTING(		0x0006, "South East Asia" )
+	PORT_DIPSETTING(		0x0004, "Korea" )
+	PORT_DIPSETTING(		0x0003, "Hong Kong" )
+	PORT_DIPSETTING(		0x0005, "Taiwan" )
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( pipibibs )
-	PORT_START_TAG("IN0")		/* (0) VBlank */
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_INCLUDE(toaplan2)
 
-	PORT_START_TAG("IN1")
-	TOAPLAN2_PLAYER_INPUT( 1, IPT_UNKNOWN, IPT_UNKNOWN )
+	PORT_MODIFY("DSWA")
+	/* Various features on bit mask 0x000f - see above */
+	/* Coinage on bit mask 0x00f0 - see TOAPLAN2_COINAGE above */
+	TOAPLAN2_COINAGE( 0x0006, 0x0006 )
 
-	PORT_START_TAG("IN2")
-	TOAPLAN2_PLAYER_INPUT( 2, IPT_UNKNOWN, IPT_UNKNOWN )
+	PORT_MODIFY("DSWB")
+	/* Difficulty on bit mask 0x0003 - see above */
+	PORT_DIPNAME( 0x000c,	0x0000, DEF_STR( Bonus_Life ) )		PORT_DIPLOCATION("SW2:4,3")
+	PORT_DIPSETTING(		0x000c, DEF_STR( None ) )
+	PORT_DIPSETTING(		0x0008, "200k only" )
+	PORT_DIPSETTING(		0x0000, "200k and every 300k" )
+	PORT_DIPSETTING(		0x0004, "150k and every 200k" )
+	PORT_DIPNAME( 0x0030,	0x0000, DEF_STR( Lives ) )			PORT_DIPLOCATION("SW2:6,5")
+	PORT_DIPSETTING(		0x0030, "1" )
+	PORT_DIPSETTING(		0x0020, "2" )
+	PORT_DIPSETTING(		0x0000, "3" )
+	PORT_DIPSETTING(		0x0010, "5" )
+	PORT_DIPNAME( 0x0040,	0x0000, "Invulnerability" )			PORT_DIPLOCATION("SW2:7")
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0040, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080,	0x0000, DEF_STR( Unused ) )			PORT_DIPLOCATION("SW2:8")
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0080, DEF_STR( On ) )
 
-	TOAPLAN2_SYSTEM_INPUTS
-
-	DSWA_8
-	EUROPEAN_COINAGE_8
-//  NONEUROPEAN_COINAGE_8
-
-	PORT_START_TAG("DSWB")
-	DIFFICULTY_8
-	PORT_DIPNAME( 0x0c,	0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(	0x04, "150k and every 200k" )
-	PORT_DIPSETTING(	0x00, "200k and every 300k" )
-	PORT_DIPSETTING(	0x08, "200k only" )
-	PORT_DIPSETTING(	0x0c, DEF_STR( None ) )
-	LIVES_8
-	PORT_DIPNAME( 0x40, 0x00, "Invulnerability" )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80,	0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
-
-	PORT_START_TAG("JMPR")
-	PORT_DIPNAME( 0x07,	0x06, "Territory" )
-	PORT_DIPSETTING(	0x06, DEF_STR( Europe ) )
-	PORT_DIPSETTING(	0x04, DEF_STR( USA ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Japan ) )
-	PORT_DIPSETTING(	0x02, "Hong Kong (Honest Trading Co.)" )
-	PORT_DIPSETTING(	0x03, "Taiwan" )
-	PORT_DIPSETTING(	0x01, DEF_STR( Asia ) )
-	PORT_DIPSETTING(	0x07, "Europe (Nova Apparate GMBH & Co)" )
-	PORT_DIPSETTING(	0x05, "USA (Romstar)" )
-	PORT_DIPNAME( 0x08,	0x00, "Nudity" )
-	PORT_DIPSETTING(	0x08, DEF_STR( Low ) )
-	PORT_DIPSETTING(	0x00, "High, but censored" )
-	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_MODIFY("JMPR")
+	PORT_DIPNAME( 0x0008,	0x0000, "Nudity" )
+	PORT_DIPSETTING(		0x0008, DEF_STR( Low ) )
+	PORT_DIPSETTING(		0x0000, "High, but censored" )
+	PORT_DIPNAME( 0x0007,	0x0006, "Territory" )
+	PORT_DIPSETTING(		0x0006, DEF_STR( Europe ) )
+	PORT_DIPSETTING(		0x0007, "Europe (Nova Apparate GMBH & Co)" )
+	PORT_DIPSETTING(		0x0004, DEF_STR( USA ) )
+	PORT_DIPSETTING(		0x0005, "USA (Romstar)" )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Japan ) )
+	PORT_DIPSETTING(		0x0001, DEF_STR( Asia ) )
+	PORT_DIPSETTING(		0x0002, "Hong Kong (Honest Trading Co.)" )
+	PORT_DIPSETTING(		0x0003, "Taiwan" )
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( whoopee )
-	PORT_START_TAG("IN0")		/* (0) VBlank */
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_INCLUDE(pipibibs)
 
-	TOAPLAN2_PLAYER_INPUT( 1, IPT_UNKNOWN, IPT_UNKNOWN )
-
-	TOAPLAN2_PLAYER_INPUT( 2, IPT_UNKNOWN, IPT_UNKNOWN )
-
-	TOAPLAN2_SYSTEM_INPUTS
-
-	DSWA_8
-//  EUROPEAN_COINAGE_8
-	NONEUROPEAN_COINAGE_8
-
-	PORT_START_TAG("DSWB")
-	DIFFICULTY_8
-	PORT_DIPNAME( 0x0c,	0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(	0x04, "150k and every 200k" )
-	PORT_DIPSETTING(	0x00, "200k and every 300k" )
-	PORT_DIPSETTING(	0x08, "200k only" )
-	PORT_DIPSETTING(	0x0c, DEF_STR( None ) )
-	LIVES_8
-	PORT_DIPNAME( 0x40, 0x00, "Invulnerability" )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80,	0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
-
-	PORT_START_TAG("IN6")
-	PORT_DIPNAME( 0x07,	0x00, "Territory" )
-	PORT_DIPSETTING(	0x06, DEF_STR( Europe ) )
-	PORT_DIPSETTING(	0x04, DEF_STR( USA ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Japan ) )
-	PORT_DIPSETTING(	0x02, "Hong Kong (Honest Trading Co.)" )
-	PORT_DIPSETTING(	0x03, "Taiwan" )
-	PORT_DIPSETTING(	0x01, DEF_STR( Asia ) )
-	PORT_DIPSETTING(	0x07, "Europe (Nova Apparate GMBH & Co)" )
-	PORT_DIPSETTING(	0x05, "USA (Romstar)" )
-	PORT_DIPNAME( 0x08,	0x08, "Nudity" )
-	PORT_DIPSETTING(	0x08, DEF_STR( Low ) )
-	PORT_DIPSETTING(	0x00, "High, but censored" )
-	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* bit 0x10 sound ready */
+	PORT_MODIFY("JMPR")
+	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* bit 0x10 sound ready */
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( pipibibi )
-	PORT_START_TAG("IN0")		/* (0) VBlank */
-//  PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )      /* This video HW */
-//  PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )     /* doesnt wait for VBlank */
+	PORT_INCLUDE(pipibibs)
 
-	PORT_START_TAG("IN1")
-	TOAPLAN2_PLAYER_INPUT( 1, IPT_UNKNOWN, IPT_UNKNOWN )
+	PORT_MODIFY("VBL")
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_UNKNOWN )		/* This video HW doesn't use this VBlank input */
 
-	PORT_START_TAG("IN2")
-	TOAPLAN2_PLAYER_INPUT( 2, IPT_UNKNOWN, IPT_UNKNOWN )
+	PORT_MODIFY("DSWA")
+	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_UNKNOWN )	PORT_DIPLOCATION("SW1:2")	/* This video HW doesn't support flip screen */
+	/* Various features on bit mask 0x000d - see above */
+	/* Coinage on bit mask 0x00f0 - see TOAPLAN2_COINAGE above */
+	TOAPLAN2_COINAGE( 0x80000, 0x80000 )
 
-	TOAPLAN2_SYSTEM_INPUTS
-
-	PORT_START_TAG("DSWA")
-	PORT_DIPNAME( 0x01,	0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x01, DEF_STR( On ) )
-	/* This video HW doesn't support flip screen */
-//  PORT_DIPNAME( 0x02, 0x00, DEF_STR( Flip_Screen ) )
-//  PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-//  PORT_DIPSETTING(    0x02, DEF_STR( On ) )
-	PORT_SERVICE( 0x04,	IP_ACTIVE_HIGH )		/* Service Mode */
-	PORT_DIPNAME( 0x08,	0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(	0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
-//  EUROPEAN_COINAGE_8
-	NONEUROPEAN_COINAGE_8
-
-	PORT_START_TAG("DSWB")
-	DIFFICULTY_8
-	PORT_DIPNAME( 0x0c,	0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(	0x04, "150k and every 200k" )
-	PORT_DIPSETTING(	0x00, "200k and every 300k" )
-	PORT_DIPSETTING(	0x08, "200k only" )
-	PORT_DIPSETTING(	0x0c, DEF_STR( None ) )
-	LIVES_8
-	PORT_DIPNAME( 0x40, 0x00, "Invulnerability" )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80,	0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
-
-	PORT_START_TAG("JMPR")
-	PORT_DIPNAME( 0x07,	0x05, "Territory" )
-	PORT_DIPSETTING(	0x07, "World (Ryouta Kikaku)" )
-	PORT_DIPSETTING(	0x00, "Japan (Ryouta Kikaku)" )
-	PORT_DIPSETTING(	0x02, DEF_STR( World ) )
-	PORT_DIPSETTING(	0x05, DEF_STR( Europe ) )
-	PORT_DIPSETTING(	0x04, DEF_STR( USA ) )
-	PORT_DIPSETTING(	0x01, "Hong Kong (Honest Trading Co.)" )
-	PORT_DIPSETTING(	0x06, "Spain & Portugal (APM Electronics SA)" )
-//  PORT_DIPSETTING(    0x03, DEF_STR( World ) )
-	PORT_DIPNAME( 0x08,	0x00, "Nudity" )
-	PORT_DIPSETTING(	0x08, DEF_STR( Low ) )
-	PORT_DIPSETTING(	0x00, "High, but censored" )
-	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_MODIFY("JMPR")
+	/* Bit Mask 0x80000 is used here to signify European Coinage for MAME purposes - not read on the real board! */
+	PORT_DIPNAME( 0x80007,	0x00007, "Territory" )
+	PORT_DIPSETTING(		0x00002, DEF_STR( World ) )
+//  PORT_DIPSETTING(        0x00003, DEF_STR( World ) )
+	PORT_DIPSETTING(		0x00007, "World (Ryouta Kikaku)" )
+	PORT_DIPSETTING(		0x80005, DEF_STR( Europe ) )
+	PORT_DIPSETTING(		0x00004, DEF_STR( USA ) )
+	PORT_DIPSETTING(		0x00000, "Japan (Ryouta Kikaku)" )
+	PORT_DIPSETTING(		0x00001, "Hong Kong (Honest Trading Co.)" )
+	PORT_DIPSETTING(		0x80006, "Spain & Portugal (APM Electronics SA)" )
 INPUT_PORTS_END
 
+
 INPUT_PORTS_START( fixeight )
-	PORT_START_TAG("IN0")		/* (0) VBlank */
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START_TAG("IN1")
-	TOAPLAN2_PLAYER_INPUT( 1, IPT_UNKNOWN, IPT_UNKNOWN )
-
-	PORT_START_TAG("IN2")
-	TOAPLAN2_PLAYER_INPUT( 2, IPT_UNKNOWN, IPT_UNKNOWN )
+	PORT_INCLUDE(toaplan2)
 
 	PORT_START_TAG("IN3")
-	SNOWBRO2_PLAYER_INPUT( 3, IPT_START3, IPT_UNKNOWN )
+	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_START3 )
 
-	PORT_START_TAG("IN4")	/* service input is a push-button marked 'Test SW' */
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_COIN3 )
-	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_TILT )
-	PORT_SERVICE_NO_TOGGLE(0x0004, IP_ACTIVE_HIGH)
-	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0xff80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_MODIFY("SYS")
+	PORT_SERVICE_NO_TOGGLE(0x0004, IP_ACTIVE_HIGH)	/* Service input is a push-button marked 'Test SW' */
 
 #if 0
 	PORT_START_TAG("FAKE")		/* Fake input, to display message */
-	PORT_DIPNAME( 0x00,	0x00, "    Press service button" )
-	PORT_DIPSETTING(	0x00, "" )
-	PORT_DIPNAME( 0x00,	0x00, "  for game keeping options" )
-	PORT_DIPSETTING(	0x00, "" )
-	PORT_DIPNAME( 0x00,	0x00, "" )
-	PORT_DIPSETTING(	0x00, "" )
+	PORT_DIPNAME( 0x0000,	0x0000, "    Press service button" )
+	PORT_DIPSETTING(		0x0000, "" )
+	PORT_DIPNAME( 0x0000,	0x0000, "  for game keeping options" )
+	PORT_DIPSETTING(		0x0000, "" )
+	PORT_DIPNAME( 0x0000,	0x0000, "" )
+	PORT_DIPSETTING(		0x0000, "" )
 #endif
 
-	PORT_START_TAG("DSWA")
-	PORT_DIPNAME( 0x0001,	0x0000, "Maximum Players" )
+	PORT_MODIFY("DSWA")
+	PORT_DIPNAME( 0x0001,	0x0000, "Maximum Players" )		PORT_DIPLOCATION("SW1:1")
 	PORT_DIPSETTING(		0x0000, "2" )
 	PORT_DIPSETTING(		0x0001, "3" )
-	PORT_DIPNAME( 0x0002,	0x0000, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0002, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0004,	0x0004, "Shooting style" )
+	PORT_DIPNAME( 0x0004,	0x0004, "Shooting style" )		PORT_DIPLOCATION("SW1:2")
 	PORT_DIPSETTING(		0x0004, "Semi-auto" )
 	PORT_DIPSETTING(		0x0000, "Fully-auto" )
-	PORT_DIPNAME( 0x0008,	0x0000, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(		0x0008, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
-	EUROPEAN_COINAGE_16
-//  NONEUROPEAN_COINAGE_16
-	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	/* Various features on bit mask 0x000a - see above */
+	/* Coinage on bit mask 0x00f0 - see TOAPLAN2_COINAGE above */
+	TOAPLAN2_COINAGE( 0x000e, 0x0008 )
 
-	PORT_START_TAG("DSWB")
-	DIFFICULTY_16
-	PORT_DIPNAME( 0x000c,	0x0000, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(		0x0004, "300k and every 300k" )
-	PORT_DIPSETTING(		0x0008, "300k only" )
-	PORT_DIPSETTING(		0x0000, "500k and every 500k" )
+	PORT_MODIFY("DSWB")
+	/* Difficulty on bit mask 0x0003 - see above */
+	PORT_DIPNAME( 0x000c,	0x0000, DEF_STR( Bonus_Life ) )		PORT_DIPLOCATION("SW2:4,3")
 	PORT_DIPSETTING(		0x000c, DEF_STR( None ) )
-	LIVES_16
-	PORT_DIPNAME( 0x0040, 0x0000, "Invulnerability" )
+	PORT_DIPSETTING(		0x0000, "500k and every 500k" )
+	PORT_DIPSETTING(		0x0008, "300k only" )
+	PORT_DIPSETTING(		0x0004, "300k and every 300k" )
+	PORT_DIPNAME( 0x0030,	0x0000, DEF_STR( Lives ) )			PORT_DIPLOCATION("SW2:6,5")
+	PORT_DIPSETTING(		0x0030, "1" )
+	PORT_DIPSETTING(		0x0020, "2" )
+	PORT_DIPSETTING(		0x0000, "3" )
+	PORT_DIPSETTING(		0x0010, "5" )
+	PORT_DIPNAME( 0x0040,	0x0000, "Invulnerability" )			PORT_DIPLOCATION("SW2:7")
 	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(		0x0040, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080,	0x0000, DEF_STR( Allow_Continue ) )
+	PORT_DIPNAME( 0x0080,	0x0000, DEF_STR( Allow_Continue ) )	PORT_DIPLOCATION("SW2:8")
 	PORT_DIPSETTING(		0x0080, DEF_STR( No ) )
 	PORT_DIPSETTING(		0x0000, DEF_STR( Yes ) )
 
-	PORT_START_TAG("JMPR")
-	PORT_DIPNAME( 0x0f,	0x09, "Territory" )
-	PORT_DIPSETTING(	0x09, DEF_STR( Europe ) )
-	PORT_DIPSETTING(	0x08, "Europe (Taito Corp)" )
-	PORT_DIPSETTING(	0x0b, DEF_STR( USA ) )
-	PORT_DIPSETTING(	0x0a, "USA (Taito America Corp)" )
-	PORT_DIPSETTING(	0x0e, DEF_STR( Japan ) )
-	PORT_DIPSETTING(	0x0f, "Japan (Taito corp)" )
-	PORT_DIPSETTING(	0x01, "Korea" )
-	PORT_DIPSETTING(	0x00, "Korea (Taito Corp)" )
-	PORT_DIPSETTING(	0x03, "Hong Kong" )
-	PORT_DIPSETTING(	0x02, "Hong Kong (Taito Corp)" )
-	PORT_DIPSETTING(	0x05, "Taiwan" )
-	PORT_DIPSETTING(	0x04, "Taiwan (Taito corp)" )
-	PORT_DIPSETTING(	0x07, "South East Asia" )
-	PORT_DIPSETTING(	0x06, "South East Asia (Taito corp)" )
-	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_MODIFY("JMPR")
+	PORT_DIPNAME( 0x000f,	0x0009, "Territory" )
+	PORT_DIPSETTING(		0x0009, DEF_STR( Europe ) )
+	PORT_DIPSETTING(		0x0008, "Europe (Taito Corp)" )
+	PORT_DIPSETTING(		0x000b, DEF_STR( USA ) )
+	PORT_DIPSETTING(		0x000a, "USA (Taito America Corp)" )
+	PORT_DIPSETTING(		0x000e, DEF_STR( Japan ) )
+	PORT_DIPSETTING(		0x000f, "Japan (Taito corp)" )
+	PORT_DIPSETTING(		0x0007, "South East Asia" )
+	PORT_DIPSETTING(		0x0006, "South East Asia (Taito corp)" )
+	PORT_DIPSETTING(		0x0001, "Korea" )
+	PORT_DIPSETTING(		0x0000, "Korea (Taito Corp)" )
+	PORT_DIPSETTING(		0x0003, "Hong Kong" )
+	PORT_DIPSETTING(		0x0002, "Hong Kong (Taito Corp)" )
+	PORT_DIPSETTING(		0x0005, "Taiwan" )
+	PORT_DIPSETTING(		0x0004, "Taiwan (Taito corp)" )
 INPUT_PORTS_END
 
 
 INPUT_PORTS_START( fixeighb )
-	PORT_START_TAG("IN0")		/* (0) VBlank */
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_INCLUDE(fixeight)
 
-	PORT_START_TAG("IN1")
-	TOAPLAN2_PLAYER_INPUT( 1, IPT_UNKNOWN, IPT_UNKNOWN )
+	PORT_MODIFY("DSWA")
+	 PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_UNKNOWN )	PORT_DIPLOCATION("SW1:2")	/* This video HW doesn't support flip screen */
 
-	PORT_START_TAG("IN2")
-	TOAPLAN2_PLAYER_INPUT( 2, IPT_UNKNOWN, IPT_UNKNOWN )
-
-	PORT_START_TAG("IN3")
-	SNOWBRO2_PLAYER_INPUT( 3, IPT_START3, IPT_UNKNOWN )
-
-	PORT_START_TAG("IN4")	/* service input is a push-button marked 'Test SW' */
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_COIN3 )
-	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_TILT )
-	PORT_SERVICE_NO_TOGGLE(0x0004, IP_ACTIVE_HIGH)
-	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0xff80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START_TAG("DSWA")
-	PORT_DIPNAME( 0x0001,	0x0000, "Maximum Players" )
-	PORT_DIPSETTING(		0x0000, "2" )
-	PORT_DIPSETTING(		0x0001, "3" )
-	PORT_DIPNAME( 0x0002,	0x0000, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0002, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0004,	0x0004, "Shooting style" )
-	PORT_DIPSETTING(		0x0004, "Semi-auto" )
-	PORT_DIPSETTING(		0x0000, "Fully-auto" )
-	PORT_DIPNAME( 0x0008,	0x0000, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(		0x0008, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
-//  EUROPEAN_COINAGE_16
-	NONEUROPEAN_COINAGE_16
-	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START_TAG("DSWB")
-	DIFFICULTY_16
-	PORT_DIPNAME( 0x000c,	0x0000, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(		0x0004, "300k and every 300k" )
-	PORT_DIPSETTING(		0x0008, "300k only" )
-	PORT_DIPSETTING(		0x0000, "500k and every 500k" )
-	PORT_DIPSETTING(		0x000c, DEF_STR( None ) )
-	LIVES_16
-	PORT_DIPNAME( 0x0040, 0x0000, "Invulnerability" )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0040, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080,	0x0000, DEF_STR( Allow_Continue ) )
-	PORT_DIPSETTING(		0x0080, DEF_STR( No ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Yes ) )
+	PORT_MODIFY("JMPR")
+	PORT_BIT( 0xffff, IP_ACTIVE_HIGH, IPT_UNKNOWN )		/* Doesn't exist? */
 INPUT_PORTS_END
-
-
 
 
 INPUT_PORTS_START( grindstm )
-	PORT_START_TAG("IN0")		/* (0) VBlank */
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_INCLUDE(toaplan2)
 
-	PORT_START_TAG("IN1")
-	TOAPLAN2_PLAYER_INPUT( 1, IPT_UNKNOWN, IPT_UNKNOWN )
-
-	PORT_START_TAG("IN2")
-	TOAPLAN2_PLAYER_INPUT( 2, IPT_UNKNOWN, IPT_UNKNOWN )
-
-	TOAPLAN2_SYSTEM_INPUTS
-
-	PORT_START_TAG("DSWA")
-	PORT_DIPNAME( 0x0001,	0x0000, DEF_STR( Cabinet ) )
+	PORT_MODIFY("DSWA")
+	PORT_DIPNAME( 0x0001,	0x0000, DEF_STR( Cabinet ) )		PORT_DIPLOCATION("SW1:1")
 	PORT_DIPSETTING(		0x0000, DEF_STR( Upright ) )
 	PORT_DIPSETTING(		0x0001, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x0002,	0x0000, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0002, DEF_STR( On ) )
-	PORT_SERVICE( 0x0004,	IP_ACTIVE_HIGH )		/* Service Mode */
-	PORT_DIPNAME( 0x0008,	0x0000, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(		0x0008, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
-	EUROPEAN_COINAGE_16
-//  NONEUROPEAN_COINAGE_16
-	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	/* Various features on bit mask 0x000e - see above */
+	/* Coinage on bit mask 0x00f0 - see TOAPLAN2_COINAGE above */
+	TOAPLAN2_COINAGE( 0x000f, 0x0009 )
 
-	PORT_START_TAG("DSWB")
-	DIFFICULTY_16
-	PORT_DIPNAME( 0x000c,	0x0000, DEF_STR( Bonus_Life ) )
+	PORT_MODIFY("DSWB")
+	/* Difficulty on bit mask 0x0003 - see above */
+	PORT_DIPNAME( 0x000c,	0x0000, DEF_STR( Bonus_Life ) )		PORT_DIPLOCATION("SW2:4,3")
+	PORT_DIPSETTING(		0x000c, DEF_STR( None ) )
 	PORT_DIPSETTING(		0x0008, "200k only" )
-	PORT_DIPSETTING(		0x0004, "300k and every 800k" )
 	PORT_DIPSETTING(		0x0000, "300k and 800k" )
-	PORT_DIPSETTING(		0x000c, DEF_STR( None ) )
-	LIVES_16
-	PORT_DIPNAME( 0x0040, 0x0000, "Invulnerability" )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0040, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080,	0x0000, DEF_STR( Allow_Continue ) )
-	PORT_DIPSETTING(		0x0080, DEF_STR( No ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Yes ) )
-
-	PORT_START_TAG("JMPR")
-	PORT_DIPNAME( 0x0f,	0x08, "Territory" )
-	PORT_DIPSETTING(	0x08, DEF_STR( Europe ) )
-	PORT_DIPSETTING(	0x0b, DEF_STR( USA ) )
-	PORT_DIPSETTING(	0x01, "Korea" )
-	PORT_DIPSETTING(	0x03, "Hong Kong" )
-	PORT_DIPSETTING(	0x05, "Taiwan" )
-	PORT_DIPSETTING(	0x07, "South East Asia" )
-	PORT_DIPSETTING(	0x0a, "USA (American Sammy Corporation License)" )
-	PORT_DIPSETTING(	0x00, "Korea (Unite Trading License)" )
-	PORT_DIPSETTING(	0x02, "Hong Kong (Charterfield License)" )
-	PORT_DIPSETTING(	0x04, "Taiwan (Anomoto International Inc License)" )
-	PORT_DIPSETTING(	0x06, "South East Asia (Charterfield License)" )
-/*  Duplicate settings
-    PORT_DIPSETTING(    0x09, DEF_STR( Europe ) )
-    PORT_DIPSETTING(    0x0d, DEF_STR( USA ) )
-    PORT_DIPSETTING(    0x0e, "Korea" )
-    PORT_DIPSETTING(    0x0f, "Korea" )
-    PORT_DIPSETTING(    0x0c, "USA (American Sammy Corporation License)" )
-*/
-	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* bit 0x10 sound ready */
-INPUT_PORTS_END
-
-INPUT_PORTS_START( vfive )
-	PORT_START_TAG("IN0")		/* (0) VBlank */
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START_TAG("IN1")
-	TOAPLAN2_PLAYER_INPUT( 1, IPT_UNKNOWN, IPT_UNKNOWN )
-
-	PORT_START_TAG("IN2")
-	TOAPLAN2_PLAYER_INPUT( 2, IPT_UNKNOWN, IPT_UNKNOWN )
-
-	TOAPLAN2_SYSTEM_INPUTS
-
-	PORT_START_TAG("DSWA")
-	PORT_DIPNAME( 0x0001,	0x0000, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Upright ) )
-	PORT_DIPSETTING(		0x0001, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x0002,	0x0000, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0002, DEF_STR( On ) )
-	PORT_SERVICE( 0x0004,	IP_ACTIVE_HIGH )		/* Service Mode */
-	PORT_DIPNAME( 0x0008,	0x0000, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(		0x0008, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
-	NONEUROPEAN_COINAGE_16
-	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START_TAG("DSWB")
-	DIFFICULTY_16
-	PORT_DIPNAME( 0x000c,	0x0000, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(		0x0008, "200k only" )
 	PORT_DIPSETTING(		0x0004, "300k and every 800k" )
-	PORT_DIPSETTING(		0x0000, "300k and 800k" )
-	PORT_DIPSETTING(		0x000c, DEF_STR( None ) )
-	LIVES_16
-	PORT_DIPNAME( 0x0040, 0x0000, "Invulnerability" )
+	PORT_DIPNAME( 0x0030,	0x0000, DEF_STR( Lives ) )			PORT_DIPLOCATION("SW2:6,5")
+	PORT_DIPSETTING(		0x0030, "1" )
+	PORT_DIPSETTING(		0x0020, "2" )
+	PORT_DIPSETTING(		0x0000, "3" )
+	PORT_DIPSETTING(		0x0010, "5" )
+	PORT_DIPNAME( 0x0040,	0x0000, "Invulnerability" )			PORT_DIPLOCATION("SW2:7")
 	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(		0x0040, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080,	0x0000, DEF_STR( Allow_Continue ) )
+	PORT_DIPNAME( 0x0080,	0x0000, DEF_STR( Allow_Continue ) )	PORT_DIPLOCATION("SW2:8")
 	PORT_DIPSETTING(		0x0080, DEF_STR( No ) )
 	PORT_DIPSETTING(		0x0000, DEF_STR( Yes ) )
 
-	PORT_START_TAG("JMPR")		/* (6) Territory Jumper block */
-	/* Territory is forced to Japan in this set. */
-	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* bit 0x10 sound ready */
-INPUT_PORTS_END
-
-INPUT_PORTS_START( batsugun )
-	PORT_START_TAG("IN0")		/* (0) VBlank */
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START_TAG("IN1")
-	TOAPLAN2_PLAYER_INPUT( 1, IPT_UNKNOWN, IPT_UNKNOWN )
-
-	PORT_START_TAG("IN2")
-	TOAPLAN2_PLAYER_INPUT( 2, IPT_UNKNOWN, IPT_UNKNOWN )
-
-	TOAPLAN2_SYSTEM_INPUTS
-
-	PORT_START_TAG("DSWA")
-	PORT_DIPNAME( 0x0001,	0x0000, "Continue Mode" )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Normal ) )
-	PORT_DIPSETTING(		0x0001, "Discount" )
-	PORT_DIPNAME( 0x0002,	0x0000, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0002, DEF_STR( On ) )
-	PORT_SERVICE( 0x0004,	IP_ACTIVE_HIGH )		/* Service Mode */
-	PORT_DIPNAME( 0x0008,	0x0000, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(		0x0008, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
-	EUROPEAN_COINAGE_16
-//  NONEUROPEAN_COINAGE_16
-	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START_TAG("DSWB")
-	DIFFICULTY_16
-	PORT_DIPNAME( 0x000c,	0x0000, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(		0x0004, "500k and every 600k" )
-	PORT_DIPSETTING(		0x0000, "1000k only" )
-	PORT_DIPSETTING(		0x0008, "1500k only" )
-	PORT_DIPSETTING(		0x000c, DEF_STR( None ) )
-	LIVES_16
-	PORT_DIPNAME( 0x0040, 0x0000, "Invulnerability" )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0040, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080,	0x0000, DEF_STR( Allow_Continue ) )
-	PORT_DIPSETTING(		0x0080, DEF_STR( No ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Yes ) )
-
-	PORT_START_TAG("JMPR")
+	PORT_MODIFY("JMPR")
 	PORT_DIPNAME( 0x000f,	0x0009, "Territory" )
 	PORT_DIPSETTING(		0x0009, DEF_STR( Europe ) )
-	PORT_DIPSETTING(		0x000b, DEF_STR( USA ) )
-	PORT_DIPSETTING(		0x000e, DEF_STR( Japan ) )
-//  PORT_DIPSETTING(        0x000f, DEF_STR( Japan ) )
-	PORT_DIPSETTING(		0x0001, "Korea" )
-	PORT_DIPSETTING(		0x0003, "Hong Kong" )
-	PORT_DIPSETTING(		0x0005, "Taiwan" )
+//  PORT_DIPSETTING(        0x0008, DEF_STR( Europe ) )
+	PORT_DIPSETTING(		0x000d, DEF_STR( USA ) )
+//  PORT_DIPSETTING(        0x000b, DEF_STR( USA ) )
+	PORT_DIPSETTING(		0x000c, "USA (American Sammy Corporation license)" )
+//  PORT_DIPSETTING(        0x000a, "USA (American Sammy Corporation license)" )
 	PORT_DIPSETTING(		0x0007, "South East Asia" )
-	PORT_DIPSETTING(		0x0008, "Europe (Taito Corp License)" )
-	PORT_DIPSETTING(		0x000a, "USA (Taito Corp License)" )
-	PORT_DIPSETTING(		0x000c, "Japan (Taito Corp License)" )
-//  PORT_DIPSETTING(        0x000d, "Japan (Taito Corp License)" )
-	PORT_DIPSETTING(		0x0000, "Korea (Unite Trading License)" )
-	PORT_DIPSETTING(		0x0002, "Hong Kong (Taito Corp License)" )
-	PORT_DIPSETTING(		0x0004, "Taiwan (Taito Corp License)" )
-	PORT_DIPSETTING(		0x0006, "South East Asia (Taito Corp License)" )
-	PORT_BIT( 0xfff0, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* bit 0x10 sound ready */
+	PORT_DIPSETTING(		0x0006, "South East Asia (Charterfield license)" )
+//  PORT_DIPSETTING(        0x000f, "Korea" )
+//  PORT_DIPSETTING(        0x000e, "Korea" )
+	PORT_DIPSETTING(		0x0001, "Korea" )
+	PORT_DIPSETTING(		0x0000, "Korea (Unite Trading license)" )
+	PORT_DIPSETTING(		0x0003, "Hong Kong" )
+	PORT_DIPSETTING(		0x0002, "Hong Kong (Charterfield license)" )
+	PORT_DIPSETTING(		0x0005, "Taiwan" )
+	PORT_DIPSETTING(		0x0004, "Taiwan (Anomoto International Inc license)" )
+	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* bit 0x10 sound ready */
 INPUT_PORTS_END
 
-INPUT_PORTS_START( snowbro2 )
-	PORT_START_TAG("IN0")		/* (0) VBlank */
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START_TAG("IN1")
-	TOAPLAN2_PLAYER_INPUT( 1, IPT_UNKNOWN, IPT_UNKNOWN )
+INPUT_PORTS_START( vfive )
+	PORT_INCLUDE(grindstm)
 
-	PORT_START_TAG("IN2")
-	TOAPLAN2_PLAYER_INPUT( 2, IPT_UNKNOWN, IPT_UNKNOWN )
+	PORT_MODIFY("JMPR")		/* (6) Territory Jumper block */
+	/* Territory is forced to Japan in this set. */
+	PORT_BIT( 0x000f, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* bit 0x10 sound ready */
+INPUT_PORTS_END
 
-	PORT_START_TAG("IN3")
-	SNOWBRO2_PLAYER_INPUT( 3, IPT_START3, IPT_UNKNOWN )
 
-	PORT_START_TAG("IN4")
-	SNOWBRO2_PLAYER_INPUT( 4, IPT_START4, IPT_UNKNOWN )
+INPUT_PORTS_START( batsugun )
+	PORT_INCLUDE(toaplan2)
 
-	TOAPLAN2_SYSTEM_INPUTS
-
-	PORT_START_TAG("DSWA")
-	PORT_DIPNAME( 0x0001,	0x0000, "Continue Mode" )
+	PORT_MODIFY("DSWA")
+	PORT_DIPNAME( 0x0001,	0x0000, "Continue Mode" )			PORT_DIPLOCATION("SW1:1")
 	PORT_DIPSETTING(		0x0000, DEF_STR( Normal ) )
 	PORT_DIPSETTING(		0x0001, "Discount" )
-	PORT_DIPNAME( 0x0002,	0x0000, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0002, DEF_STR( On ) )
-	PORT_SERVICE( 0x0004,	IP_ACTIVE_HIGH )		/* Service Mode */
-	PORT_DIPNAME( 0x0008,	0x0000, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(		0x0008, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
-	NONEUROPEAN_COINAGE_16
-	/*  The following are listed in service mode for European territory,
-        but are not actually used in game play. */
-//  EUROPEAN_COINAGE_16
-	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	/* Various features on bit mask 0x000e - see above */
+	/* Coinage on bit mask 0x00f0 - see TOAPLAN2_COINAGE above */
+	TOAPLAN2_COINAGE( 0x00ff, 0x00ff )	/* Actually European coinage isn't used */
 
-	PORT_START_TAG("DSWB")
-	DIFFICULTY_16
-	PORT_DIPNAME( 0x000c,	0x0000, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(		0x0004, "100k and every 500k" )
-	PORT_DIPSETTING(		0x0000, "100k only" )
-	PORT_DIPSETTING(		0x0008, "200k only" )
+	PORT_MODIFY("DSWB")
+	/* Difficulty on bit mask 0x0003 - see above */
+	PORT_DIPNAME( 0x000c,	0x0000, DEF_STR( Bonus_Life ) )		PORT_DIPLOCATION("SW2:4,3")
 	PORT_DIPSETTING(		0x000c, DEF_STR( None ) )
-	/* Lives have one different value */
-	PORT_DIPNAME( 0x0030,	0x0000, DEF_STR( Lives ) )
+	PORT_DIPSETTING(		0x0008, "1500k only" )
+	PORT_DIPSETTING(		0x0000, "1000k only" )
+	PORT_DIPSETTING(		0x0004, "500k and every 600k" )
+	PORT_DIPNAME( 0x0030,	0x0000, DEF_STR( Lives ) )			PORT_DIPLOCATION("SW2:6,5")
+	PORT_DIPSETTING(		0x0030, "1" )
+	PORT_DIPSETTING(		0x0020, "2" )
+	PORT_DIPSETTING(		0x0000, "3" )
+	PORT_DIPSETTING(		0x0010, "5" )
+	PORT_DIPNAME( 0x0040,	0x0000, "Invulnerability" )			PORT_DIPLOCATION("SW2:7")
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0040, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080,	0x0000, DEF_STR( Allow_Continue ) )	PORT_DIPLOCATION("SW2:8")
+	PORT_DIPSETTING(		0x0080, DEF_STR( No ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Yes ) )
+
+	PORT_MODIFY("JMPR")
+	PORT_DIPNAME( 0x000f,	0x0009, "Territory" )
+	PORT_DIPSETTING(		0x0009, DEF_STR( Europe ) )
+	PORT_DIPSETTING(		0x0008, "Europe (Taito Corp license)" )
+	PORT_DIPSETTING(		0x000b, DEF_STR( USA ) )
+	PORT_DIPSETTING(		0x000a, "USA (Taito Corp license)" )
+	PORT_DIPSETTING(		0x000f, DEF_STR( Japan ) )
+//  PORT_DIPSETTING(        0x000e, DEF_STR( Japan ) )
+	PORT_DIPSETTING(		0x000d, "Japan (Taito Corp license)" )
+//  PORT_DIPSETTING(        0x000c, "Japan (Taito Corp license)" )
+	PORT_DIPSETTING(		0x0007, "South East Asia" )
+	PORT_DIPSETTING(		0x0006, "South East Asia (Taito Corp license)" )
+	PORT_DIPSETTING(		0x0001, "Korea" )
+	PORT_DIPSETTING(		0x0000, "Korea (Unite Trading license)" )
+	PORT_DIPSETTING(		0x0003, "Hong Kong" )
+	PORT_DIPSETTING(		0x0002, "Hong Kong (Taito Corp license)" )
+	PORT_DIPSETTING(		0x0005, "Taiwan" )
+	PORT_DIPSETTING(		0x0004, "Taiwan (Taito Corp license)" )
+	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* bit 0x10 sound ready */
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( snowbro2 )
+	PORT_INCLUDE(toaplan2)
+
+	PORT_START_TAG("IN3")
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_PLAYER(3) PORT_8WAY
+	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_PLAYER(3) PORT_8WAY
+	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_PLAYER(3) PORT_8WAY
+	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(3) PORT_8WAY
+	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(3)
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER(3)
+	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_START3 )
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Unknown/Unused */
+
+	PORT_START_TAG("IN4")
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_PLAYER(4) PORT_8WAY
+	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_PLAYER(4) PORT_8WAY
+	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_PLAYER(4) PORT_8WAY
+	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(4) PORT_8WAY
+	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(4)
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER(4)
+	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_START4 )
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Unknown/Unused */
+
+	PORT_MODIFY("DSWA")
+	PORT_DIPNAME( 0x0001,	0x0000, "Continue Mode" )		PORT_DIPLOCATION("SW1:1")
+	PORT_DIPSETTING(		0x0000, DEF_STR( Normal ) )
+	PORT_DIPSETTING(		0x0001, "Discount" )
+	/* Various features on bit mask 0x000e - see above */
+	/* Coinage on bit mask 0x00f0 - see TOAPLAN2_COINAGE above */
+	TOAPLAN2_COINAGE( 0x1C00, 0x0800 )	/* European coinage is shown in service mode, but not used */
+
+	PORT_MODIFY("DSWB")
+	/* Difficulty on bit mask 0x0003 - see above */
+	PORT_DIPNAME( 0x000c,	0x0000, DEF_STR( Bonus_Life ) )	PORT_DIPLOCATION("SW2:4,3")
+	PORT_DIPSETTING(		0x000c, DEF_STR( None ) )
+	PORT_DIPSETTING(		0x0008, "200k only" )
+	PORT_DIPSETTING(		0x0000, "100k only" )
+	PORT_DIPSETTING(		0x0004, "100k and every 500k" )
+	PORT_DIPNAME( 0x0030,	0x0000, DEF_STR( Lives ) )		PORT_DIPLOCATION("SW2:6,5")
 	PORT_DIPSETTING(		0x0030, "1" )
 	PORT_DIPSETTING(		0x0020, "2" )
 	PORT_DIPSETTING(		0x0000, "3" )
 	PORT_DIPSETTING(		0x0010, "4" )
-	PORT_DIPNAME( 0x0040, 0x0000, "Invulnerability" )
+	PORT_DIPNAME( 0x0040,	0x0000, "Invulnerability" )		PORT_DIPLOCATION("SW2:7")
 	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(		0x0040, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080,	0x0000, "Maximum Players" )
+	PORT_DIPNAME( 0x0080,	0x0000, "Maximum Players" )		PORT_DIPLOCATION("SW2:8")
 	PORT_DIPSETTING(		0x0080, "2" )
 	PORT_DIPSETTING(		0x0000, "4" )
-	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START_TAG("JMPR")
+	PORT_MODIFY("JMPR")
+	PORT_DIPNAME( 0x2000,	0x0000, "Show All Rights Reserved" )
+	PORT_DIPSETTING(		0x0000, DEF_STR( No ) )
+	PORT_DIPSETTING(		0x2000, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x1c00,	0x0800, "Territory" )
 	PORT_DIPSETTING(		0x0800, DEF_STR( Europe ) )
 	PORT_DIPSETTING(		0x0400, DEF_STR( USA ) )
 	PORT_DIPSETTING(		0x0000, DEF_STR( Japan ) )
+	PORT_DIPSETTING(		0x1800, "South East Asia" )
 	PORT_DIPSETTING(		0x0c00, "Korea" )
 	PORT_DIPSETTING(		0x1000, "Hong Kong" )
 	PORT_DIPSETTING(		0x1400, "Taiwan" )
-	PORT_DIPSETTING(		0x1800, "South East Asia" )
-	PORT_DIPSETTING(		0x1c00, DEF_STR( Unused ) )
-	PORT_DIPNAME( 0x2000,	0x0000, "Show All Rights Reserved" )
-	PORT_DIPSETTING(		0x0000, DEF_STR( No ) )
-	PORT_DIPSETTING(		0x2000, DEF_STR( Yes ) )
 	PORT_BIT( 0xc3ff, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+
 INPUT_PORTS_START( sstriker )
-	PORT_START_TAG("IN0")		/* (0) VBlank */
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_INCLUDE(toaplan2)
 
-	PORT_START_TAG("IN1")
-	TOAPLAN2_PLAYER_INPUT( 1, IPT_UNKNOWN, IPT_UNKNOWN )
-
-	PORT_START_TAG("IN2")
-	TOAPLAN2_PLAYER_INPUT( 2, IPT_UNKNOWN, IPT_UNKNOWN )
-
-	TOAPLAN2_SYSTEM_INPUTS
-
-	PORT_START_TAG("DSWA")
-	PORT_DIPNAME( 0x0001,	0x0000, DEF_STR( Free_Play ) )
+	PORT_MODIFY("DSWA")
+	PORT_DIPNAME( 0x0001,	0x0000, DEF_STR( Free_Play ) )	PORT_DIPLOCATION("SW1:1")
 	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(		0x0001, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0002,	0x0000, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0002, DEF_STR( On ) )
-	PORT_SERVICE( 0x0004,	IP_ACTIVE_HIGH )		/* Service Mode */
-	PORT_DIPNAME( 0x0008,	0x0000, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(		0x0008, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
-	NONEUROPEAN_COINAGE_16
-	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	/* Various features on bit mask 0x000e - see above */
+	/* Coinage on bit mask 0x00f0 - see RAIZING8_COINAGE above */
+	TOAPLAN2_COINAGE( 0x000e, 0x0004 )
 
-	PORT_START_TAG("DSWB")
-	DIFFICULTY_16
-	PORT_DIPNAME( 0x000c,	0x0000, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(		0x0004, "200k and 500k" )
-	PORT_DIPSETTING(		0x0000, "Every 300k" )
-	PORT_DIPSETTING(		0x0008, "200k only" )
+	PORT_MODIFY("DSWB")
+	/* Difficulty on bit mask 0x0003 - see above */
+	PORT_DIPNAME( 0x000c,	0x0000, DEF_STR( Bonus_Life ) )		PORT_DIPLOCATION("SW2:4,3")
 	PORT_DIPSETTING(		0x000c, DEF_STR( None ) )
-	LIVES_16
-	PORT_DIPNAME( 0x0040, 0x0000, "Invulnerability" )
+	PORT_DIPSETTING(		0x0008, "200k only" )
+	PORT_DIPSETTING(		0x0000, "Every 300k" )
+	PORT_DIPSETTING(		0x0004, "200k and 500k" )
+	PORT_DIPNAME( 0x0030,	0x0000, DEF_STR( Lives ) )			PORT_DIPLOCATION("SW2:6,5")
+	PORT_DIPSETTING(		0x0030, "1" )
+	PORT_DIPSETTING(		0x0020, "2" )
+	PORT_DIPSETTING(		0x0000, "3" )
+	PORT_DIPSETTING(		0x0010, "5" )
+	PORT_DIPNAME( 0x0040,	0x0000, "Invulnerability" )			PORT_DIPLOCATION("SW2:7")
 	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(		0x0040, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080,	0x0000, DEF_STR( Allow_Continue ) )
+	PORT_DIPNAME( 0x0080,	0x0000, DEF_STR( Allow_Continue ) )	PORT_DIPLOCATION("SW2:8")
 	PORT_DIPSETTING(		0x0080, DEF_STR( No ) )
 	PORT_DIPSETTING(		0x0000, DEF_STR( Yes ) )
-	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START_TAG("JMPR")
+	PORT_MODIFY("JMPR")
 	PORT_DIPNAME( 0x000e,	0x0004, "Territory" )
 	PORT_DIPSETTING(		0x0004, DEF_STR( Europe ) )
 	PORT_DIPSETTING(		0x0002, DEF_STR( USA ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Japan ) )
+//  PORT_DIPSETTING(        0x0000, DEF_STR( Japan ) )  /* Wrong Title screen - use Mahoudai*/
 	PORT_DIPSETTING(		0x0006, "South East Asia" )
 	PORT_DIPSETTING(		0x0008, "China" )
-	PORT_DIPSETTING(		0x000a, "Korea" )
+	PORT_DIPSETTING(		0x000a, "Korea (Unite Trading license)" )
 	PORT_DIPSETTING(		0x000c, "Hong Kong" )
 	PORT_DIPSETTING(		0x000e, "Taiwan" )
-
-	PORT_BIT( 0xfff1, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+
 INPUT_PORTS_START( mahoudai )
-	PORT_START_TAG("IN0")		/* (0) VBlank */
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_INCLUDE(sstriker)
 
-	PORT_START_TAG("IN1")
-	TOAPLAN2_PLAYER_INPUT( 1, IPT_UNKNOWN, IPT_UNKNOWN )
-
-	PORT_START_TAG("IN2")
-	TOAPLAN2_PLAYER_INPUT( 2, IPT_UNKNOWN, IPT_UNKNOWN )
-
-	TOAPLAN2_SYSTEM_INPUTS
-
-	PORT_START_TAG("DSWA")
-	PORT_DIPNAME( 0x0001,	0x0000, DEF_STR( Free_Play ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0001, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0002,	0x0000, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0002, DEF_STR( On ) )
-	PORT_SERVICE( 0x0004,	IP_ACTIVE_HIGH )		/* Service Mode */
-	PORT_DIPNAME( 0x0008,	0x0000, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(		0x0008, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
-	NONEUROPEAN_COINAGE_16
-	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START_TAG("DSWB")
-	DIFFICULTY_16
-	PORT_DIPNAME( 0x000c,	0x0000, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(		0x0004, "200k and 500k" )
-	PORT_DIPSETTING(		0x0000, "Every 300k" )
-	PORT_DIPSETTING(		0x0008, "200k only" )
-	PORT_DIPSETTING(		0x000c, DEF_STR( None ) )
-	LIVES_16
-	PORT_DIPNAME( 0x0040, 0x0000, "Invulnerability" )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0040, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080,	0x0000, DEF_STR( Allow_Continue ) )
-	PORT_DIPSETTING(		0x0080, DEF_STR( No ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Yes ) )
-	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START_TAG("JMPR")
-	/* not used, it seems. This setting forces Japan for Territory */
+	PORT_MODIFY("JMPR")
+	/* Not used, it seems. This setting forces Japan for Territory */
 	PORT_BIT( 0xffff, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+
 INPUT_PORTS_START( kingdmgp )
-	PORT_START_TAG("IN0")		/* (0) VBlank */
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_INCLUDE(toaplan2)
 
-	PORT_START_TAG("IN1")
-	TOAPLAN2_PLAYER_INPUT( 1, IPT_UNKNOWN, IPT_UNKNOWN )
-
-	PORT_START_TAG("IN2")
-	TOAPLAN2_PLAYER_INPUT( 2, IPT_UNKNOWN, IPT_UNKNOWN )
-
-	TOAPLAN2_SYSTEM_INPUTS
-
-	PORT_START_TAG("DSWA")
-	PORT_DIPNAME( 0x0001,	0x0000, DEF_STR( Free_Play ) )
+	PORT_MODIFY("DSWA")
+	PORT_DIPNAME( 0x0001,	0x0000, DEF_STR( Free_Play ) )		PORT_DIPLOCATION("SW1:1")
 	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(		0x0001, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0002,	0x0000, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0002, DEF_STR( On ) )
-	PORT_SERVICE( 0x0004,	IP_ACTIVE_HIGH )		/* Service Mode */
-	PORT_DIPNAME( 0x0008,	0x0000, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(		0x0008, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
-	NONEUROPEAN_COINAGE_16
-	/*  When Territory is set to Europe, the Coin A and B have
-        different values */
-//  EUROPEAN_COINAGE_16
-	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	/* Various features on bit mask 0x000e - see above */
+	/* Coinage on bit mask 0x00f0 - see RAIZING8_COINAGE above */
+	TOAPLAN2_COINAGE( 0x000e, 0x0004 )
 
-	PORT_START_TAG("DSWB")
-	DIFFICULTY_16
-	PORT_DIPNAME( 0x000c,	0x0000, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(		0x0004, "200k and 500k" )
-	PORT_DIPSETTING(		0x0000, "Every 300k" )
-	PORT_DIPSETTING(		0x0008, "200k only" )
+	PORT_MODIFY("DSWB")
+	/* Difficulty on bit mask 0x0003 - see above */
+	PORT_DIPNAME( 0x000c,	0x0000, DEF_STR( Bonus_Life ) )		PORT_DIPLOCATION("SW2:4,3")
 	PORT_DIPSETTING(		0x000c, DEF_STR( None ) )
-	LIVES_16
-	PORT_DIPNAME( 0x0040, 0x0000, "Invulnerability" )
+	PORT_DIPSETTING(		0x0008, "200k only" )
+	PORT_DIPSETTING(		0x0000, "Every 300k" )
+	PORT_DIPSETTING(		0x0004, "200k and 500k" )
+	PORT_DIPNAME( 0x0030,	0x0000, DEF_STR( Lives ) )			PORT_DIPLOCATION("SW2:6,5")
+	PORT_DIPSETTING(		0x0030, "1" )
+	PORT_DIPSETTING(		0x0020, "2" )
+	PORT_DIPSETTING(		0x0000, "3" )
+	PORT_DIPSETTING(		0x0010, "5" )
+	PORT_DIPNAME( 0x0040,	0x0000, "Invulnerability" )			PORT_DIPLOCATION("SW2:7")
 	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(		0x0040, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080,	0x0000, DEF_STR( Allow_Continue ) )
+	PORT_DIPNAME( 0x0080,	0x0000, DEF_STR( Allow_Continue ) )	PORT_DIPLOCATION("SW2:8")
 	PORT_DIPSETTING(		0x0080, DEF_STR( No ) )
 	PORT_DIPSETTING(		0x0000, DEF_STR( Yes ) )
-	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START_TAG("JMPR")
-	/* Title screen is wrong when set to Japan for Territory */
+	PORT_MODIFY("JMPR")
 	PORT_DIPNAME( 0x000e,	0x0004, "Territory" )
 	PORT_DIPSETTING(		0x0004, DEF_STR( Europe ) )
 	PORT_DIPSETTING(		0x0002, DEF_STR( USA ) )
-//  PORT_DIPSETTING(        0x0000, DEF_STR( Japan ) )
+//  PORT_DIPSETTING(        0x0000, DEF_STR( Japan ) )  /* Title screen is wrong when set to Japan */
 	PORT_DIPSETTING(		0x0006, "South East Asia" )
 	PORT_DIPSETTING(		0x0008, "China" )
-	PORT_DIPSETTING(		0x000a, "Korea" )
+	PORT_DIPSETTING(		0x000a, "Korea (Unite Trading license)" )
 	PORT_DIPSETTING(		0x000c, "Hong Kong" )
 	PORT_DIPSETTING(		0x000e, "Taiwan" )
-	PORT_BIT( 0xfff1, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+
 INPUT_PORTS_START( shippumd )
-	PORT_START_TAG("IN0")		/* (0) VBlank */
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_INCLUDE(kingdmgp)
 
-	PORT_START_TAG("IN1")
-	TOAPLAN2_PLAYER_INPUT( 1, IPT_UNKNOWN, IPT_UNKNOWN )
-
-	PORT_START_TAG("IN2")
-	TOAPLAN2_PLAYER_INPUT( 2, IPT_UNKNOWN, IPT_UNKNOWN )
-
-	TOAPLAN2_SYSTEM_INPUTS
-
-	PORT_START_TAG("DSWA")
-	PORT_DIPNAME( 0x0001,	0x0000, DEF_STR( Free_Play ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0001, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0002,	0x0000, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0002, DEF_STR( On ) )
-	PORT_SERVICE( 0x0004,	IP_ACTIVE_HIGH )		/* Service Mode */
-	PORT_DIPNAME( 0x0008,	0x0000, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(		0x0008, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
-	NONEUROPEAN_COINAGE_16
-	/*  When Territory is set to Europe, the Coin A and B have
-        different values */
-//  EUROPEAN_COINAGE_16
-	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START_TAG("DSWB")
-	DIFFICULTY_16
-	PORT_DIPNAME( 0x000c,	0x0000, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(		0x0004, "200k and 500k" )
-	PORT_DIPSETTING(		0x0000, "Every 300k" )
-	PORT_DIPSETTING(		0x0008, "200k only" )
-	PORT_DIPSETTING(		0x000c, DEF_STR( None ) )
-	LIVES_16
-	PORT_DIPNAME( 0x0040, 0x0000, "Invulnerability" )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0040, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0080,	0x0000, DEF_STR( Allow_Continue ) )
-	PORT_DIPSETTING(		0x0080, DEF_STR( No ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Yes ) )
-	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START_TAG("JMPR")
+	PORT_MODIFY("JMPR")
 	 /* Title screen is corrupt for anything but Japan setting so this forces it to Japan */
 	PORT_BIT( 0xffff, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+
 INPUT_PORTS_START( battleg )
-	PORT_START_TAG("IN0")		/* (0) VBlank */
+	PORT_START_TAG("VBL")
 	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Unknown/Unused */
 
 	PORT_START_TAG("IN1")
-	TOAPLAN2_PLAYER_INPUT( 1, IPT_BUTTON3, IPT_UNKNOWN )
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_PLAYER(1) PORT_8WAY
+	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_PLAYER(1) PORT_8WAY
+	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_PLAYER(1) PORT_8WAY
+	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(1) PORT_8WAY
+	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Unknown/Unused */
 
 	PORT_START_TAG("IN2")
-	TOAPLAN2_PLAYER_INPUT( 2, IPT_BUTTON3, IPT_UNKNOWN )
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_PLAYER(2) PORT_8WAY
+	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_PLAYER(2) PORT_8WAY
+	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_PLAYER(2) PORT_8WAY
+	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2) PORT_8WAY
+	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Unknown/Unused */
 
-	TOAPLAN2_SYSTEM_INPUTS
+	PORT_START_TAG("SYS")
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_SERVICE1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_SERVICE2 )
+	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Unknown/Unused */
 
 	PORT_START_TAG("DSWA")
-	PORT_SERVICE( 0x0001,	IP_ACTIVE_HIGH )		/* Service Mode */
-	PORT_DIPNAME( 0x0002,	0x0000, "Credits to Start" )
+	PORT_SERVICE( 0x0001,	IP_ACTIVE_HIGH )			/// PORT_DIPLOCATION("SW1:1")
+	PORT_DIPNAME( 0x0002,	0x0000, "Credits to Start" )	PORT_DIPLOCATION("SW1:2")
 	PORT_DIPSETTING(		0x0000, "1" )
 	PORT_DIPSETTING(		0x0002, "2" )
-	PORT_DIPNAME( 0x001c,	0x0000, DEF_STR( Coin_A ) )
+	PORT_DIPNAME( 0x001c,	0x0000, DEF_STR( Coin_A ) )		PORT_DIPLOCATION("SW1:5,4,3")
 	PORT_DIPSETTING(		0x0018, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(		0x0014, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(		0x0010, DEF_STR( 2C_1C ) )
@@ -3402,37 +2817,39 @@ INPUT_PORTS_START( battleg )
 	PORT_DIPSETTING(		0x0008, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(		0x000c, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(		0x001c, DEF_STR( Free_Play ) )
-	PORT_DIPNAME( 0x00e0,	0x0000, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(		0x00c0, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(		0x00a0, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(		0x0080, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(		0x0020, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(		0x0040, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(		0x0060, DEF_STR( 1C_4C ) )
-//  PORT_DIPSETTING(        0x00e0, DEF_STR( 1C_1C ) )
-	/*  When Coin_A is set to Free_Play, Coin_A becomes Coin_A and Coin_B,
-        and Coin_B becomes the following dips */
-//  PORT_DIPNAME( 0x0020,   0x0000, "Joystick Mode" )
-//  PORT_DIPSETTING(        0x0000, "90 degrees ACW" )
-//  PORT_DIPSETTING(        0x0020, DEF_STR( Normal ) )
-//  PORT_DIPNAME( 0x0040,   0x0000, "Effect" )
-//  PORT_DIPSETTING(        0x0000, DEF_STR( Off ) )
-//  PORT_DIPSETTING(        0x0040, DEF_STR( On ) )
-//  PORT_DIPNAME( 0x0080,   0x0000, "Music" )
-//  PORT_DIPSETTING(        0x0000, DEF_STR( Off ) )
-//  PORT_DIPSETTING(        0x0080, DEF_STR( On ) )
-	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x00e0,	0x0000, DEF_STR( Coin_B ) )		PORT_CONDITION("DSWA",0x001c,PORTCOND_NOTEQUALS,0x001c)	PORT_DIPLOCATION("SW1:8,7,6")
+	PORT_DIPSETTING(		0x00c0, DEF_STR( 4C_1C ) )		PORT_CONDITION("DSWA",0x001c,PORTCOND_NOTEQUALS,0x001c)
+	PORT_DIPSETTING(		0x00a0, DEF_STR( 3C_1C ) )		PORT_CONDITION("DSWA",0x001c,PORTCOND_NOTEQUALS,0x001c)
+	PORT_DIPSETTING(		0x0080, DEF_STR( 2C_1C ) )		PORT_CONDITION("DSWA",0x001c,PORTCOND_NOTEQUALS,0x001c)
+	PORT_DIPSETTING(		0x0000, DEF_STR( 1C_1C ) )		PORT_CONDITION("DSWA",0x001c,PORTCOND_NOTEQUALS,0x001c)
+//  PORT_DIPSETTING(        0x00e0, DEF_STR( 1C_1C ) )      PORT_CONDITION("DSWA",0x001c,PORTCOND_NOTEQUALS,0x001c)
+	PORT_DIPSETTING(		0x0020, DEF_STR( 1C_2C ) )		PORT_CONDITION("DSWA",0x001c,PORTCOND_NOTEQUALS,0x001c)
+	PORT_DIPSETTING(		0x0040, DEF_STR( 1C_3C ) )		PORT_CONDITION("DSWA",0x001c,PORTCOND_NOTEQUALS,0x001c)
+	PORT_DIPSETTING(		0x0060, DEF_STR( 1C_4C ) )		PORT_CONDITION("DSWA",0x001c,PORTCOND_NOTEQUALS,0x001c)
+	/* When Coin_A is set to Free_Play, Coin_A becomes Coin_A and Coin_B, and the following dips occur */
+	PORT_DIPNAME( 0x0020,	0x0000, "Joystick Mode" )		PORT_CONDITION("DSWA",0x001c,PORTCOND_EQUALS,0x001c)	PORT_DIPLOCATION("SW1:6")
+	PORT_DIPSETTING(		0x0000, "90 degrees ACW" )		PORT_CONDITION("DSWA",0x001c,PORTCOND_EQUALS,0x001c)
+	PORT_DIPSETTING(		0x0020, DEF_STR( Normal ) )		PORT_CONDITION("DSWA",0x001c,PORTCOND_EQUALS,0x001c)
+	PORT_DIPNAME( 0x0040,	0x0000, "Effect" )				PORT_CONDITION("DSWA",0x001c,PORTCOND_EQUALS,0x001c)	PORT_DIPLOCATION("SW1:7")
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )		PORT_CONDITION("DSWA",0x001c,PORTCOND_EQUALS,0x001c)
+	PORT_DIPSETTING(		0x0040, DEF_STR( On ) )			PORT_CONDITION("DSWA",0x001c,PORTCOND_EQUALS,0x001c)
+	PORT_DIPNAME( 0x0080,	0x0000, "Music" )				PORT_CONDITION("DSWA",0x001c,PORTCOND_EQUALS,0x001c)	PORT_DIPLOCATION("SW1:8")
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )		PORT_CONDITION("DSWA",0x001c,PORTCOND_EQUALS,0x001c)
+	PORT_DIPSETTING(		0x0080, DEF_STR( On ) )			PORT_CONDITION("DSWA",0x001c,PORTCOND_EQUALS,0x001c)
 
 	PORT_START_TAG("DSWB")
-	DIFFICULTY_16
-	PORT_DIPNAME( 0x0004,	0x0000, DEF_STR( Flip_Screen ) )
+	PORT_DIPNAME( 0x0003,	0x0000, DEF_STR( Difficulty ) )		PORT_DIPLOCATION("SW2:2,1")
+	PORT_DIPSETTING(		0x0003, DEF_STR( Hardest ) )
+	PORT_DIPSETTING(		0x0002, DEF_STR( Hard ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Medium ) )
+	PORT_DIPSETTING(		0x0001, DEF_STR( Easy ) )
+	PORT_DIPNAME( 0x0004,	0x0000, DEF_STR( Flip_Screen ) )	PORT_DIPLOCATION("SW2:3")
 	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(		0x0004, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0008,	0x0000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x0008,	0x0000, DEF_STR( Demo_Sounds ) )	PORT_DIPLOCATION("SW2:4")
 	PORT_DIPSETTING(		0x0008, DEF_STR( Off ) )
 	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0070,	0x0000, DEF_STR( Lives ) )
+	PORT_DIPNAME( 0x0070,	0x0000, DEF_STR( Lives ) )			PORT_DIPLOCATION("SW2:7,6,5")
 	PORT_DIPSETTING(		0x0030, "1" )
 	PORT_DIPSETTING(		0x0020, "2" )
 	PORT_DIPSETTING(		0x0000, "3" )
@@ -3440,219 +2857,60 @@ INPUT_PORTS_START( battleg )
 	PORT_DIPSETTING(		0x0040, "5" )
 	PORT_DIPSETTING(		0x0050, "6" )
 	PORT_DIPSETTING(		0x0060, DEF_STR( Infinite ) )
-//  PORT_DIPSETTING(        0x0070, "Invulnerability (Cheat)")
-	PORT_DIPNAME( 0x0080,	0x0000, DEF_STR( Bonus_Life ) )
-	/* Bonus_Life for Non European territories */
-//  PORT_DIPSETTING(        0x0000, "Every 1000k" )
-//  PORT_DIPSETTING(        0x0080, "1000k and 2000k" )
-	/* Bonus_Life values for European territories */
-	PORT_DIPSETTING(		0x0080, "Every 2000k" )
-	PORT_DIPSETTING(		0x0000, DEF_STR( None ) )
-	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPSETTING(		0x0070, "Invulnerability (Cheat)" )
+	PORT_DIPNAME( 0x0080,	0x0000, DEF_STR( Bonus_Life ) )	PORT_DIPLOCATION("SW2:8")
+	PORT_DIPSETTING(		0x0000, DEF_STR( None ) )		PORT_CONDITION("JMPR",0x0003,PORTCOND_NOTEQUALS,0x0000)	/* Non-Japan */
+	PORT_DIPSETTING(		0x0080, "Every 2000k" )			PORT_CONDITION("JMPR",0x0003,PORTCOND_NOTEQUALS,0x0000)	/* Non-Japan */
+	PORT_DIPSETTING(		0x0080, "1000k and 2000k" )		PORT_CONDITION("JMPR",0x0003,PORTCOND_EQUALS,0x0000)	/* Japan */
+	PORT_DIPSETTING(		0x0000, "Every 1000k" )			PORT_CONDITION("JMPR",0x0003,PORTCOND_EQUALS,0x0000)	/* Japan */
 
 	PORT_START_TAG("JMPR")
-	PORT_DIPNAME( 0x0004,	0x0000, DEF_STR( Allow_Continue ) )
-	PORT_DIPSETTING(		0x0004, DEF_STR( No ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x0008,	0x0000, "Stage Edit" )
 	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(		0x0008, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004,	0x0000, DEF_STR( Allow_Continue ) )
+	PORT_DIPSETTING(		0x0004, DEF_STR( No ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x0003,	0x0001, "Territory" )
 	PORT_DIPSETTING(		0x0001, "Denmark (German Tuning license)" )
-	/* These Settings End Up Reporting ROM-0 as BAD */
+	/* These two settings end up reporting ROM-0 as BAD */
 //  PORT_DIPSETTING(        0x0002, "USA (Fabtek license)" )
 //  PORT_DIPSETTING(        0x0000, DEF_STR( Japan ) )
 	PORT_DIPSETTING(		0x0003, "China" )
-	PORT_BIT( 0xfff0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+
 INPUT_PORTS_START( battlega )
-	PORT_START_TAG("IN0")		/* (0) VBlank */
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_INCLUDE(battleg)
 
-	PORT_START_TAG("IN1")
-	TOAPLAN2_PLAYER_INPUT( 1, IPT_BUTTON3, IPT_UNKNOWN )
-
-	PORT_START_TAG("IN2")
-	TOAPLAN2_PLAYER_INPUT( 2, IPT_BUTTON3, IPT_UNKNOWN )
-
-	TOAPLAN2_SYSTEM_INPUTS
-
-	PORT_START_TAG("DSWA")
-	PORT_SERVICE( 0x0001,	IP_ACTIVE_HIGH )		/* Service Mode */
-	PORT_DIPNAME( 0x0002,	0x0000, "Credits to Start" )
-	PORT_DIPSETTING(		0x0000, "1" )
-	PORT_DIPSETTING(		0x0002, "2" )
-	PORT_DIPNAME( 0x001c,	0x0000, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(		0x0018, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(		0x0014, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(		0x0010, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(		0x0004, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(		0x0008, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(		0x000c, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(		0x001c, DEF_STR( Free_Play ) )
-	PORT_DIPNAME( 0x00e0,	0x0000, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(		0x00c0, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(		0x00a0, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(		0x0080, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(		0x0020, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(		0x0040, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(		0x0060, DEF_STR( 1C_4C ) )
-//  PORT_DIPSETTING(        0x00e0, DEF_STR( 1C_1C ) )
-	/*  When Coin_A is set to Free_Play, Coin_A becomes Coin_A and Coin_B,
-        and Coin_B becomes the following dips */
-//  PORT_DIPNAME( 0x0020,   0x0000, "Joystick Mode" )
-//  PORT_DIPSETTING(        0x0000, "90 degrees ACW" )
-//  PORT_DIPSETTING(        0x0020, DEF_STR( Normal ) )
-//  PORT_DIPNAME( 0x0040,   0x0000, "Effect" )
-//  PORT_DIPSETTING(        0x0000, DEF_STR( Off ) )
-//  PORT_DIPSETTING(        0x0040, DEF_STR( On ) )
-//  PORT_DIPNAME( 0x0080,   0x0000, "Music" )
-//  PORT_DIPSETTING(        0x0000, DEF_STR( Off ) )
-//  PORT_DIPSETTING(        0x0080, DEF_STR( On ) )
-	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START_TAG("DSWB")
-	DIFFICULTY_16
-	PORT_DIPNAME( 0x0004,	0x0000, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0004, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0008,	0x0000, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(		0x0008, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0070,	0x0000, DEF_STR( Lives ) )
-	PORT_DIPSETTING(		0x0030, "1" )
-	PORT_DIPSETTING(		0x0020, "2" )
-	PORT_DIPSETTING(		0x0000, "3" )
-	PORT_DIPSETTING(		0x0010, "4" )
-	PORT_DIPSETTING(		0x0040, "5" )
-	PORT_DIPSETTING(		0x0050, "6" )
-	PORT_DIPSETTING(		0x0060, DEF_STR( Infinite ) )
-//  PORT_DIPSETTING(        0x0070, "Invulnerability (Cheat)")
-	PORT_DIPNAME( 0x0080,	0x0000, DEF_STR( Bonus_Life ) )
-	/* Bonus_Life for Japanese territory */
-	PORT_DIPSETTING(		0x0000, "Every 1000k" )			PORT_CONDITION("JMPR",0x03,PORTCOND_EQUALS,0x00)
-	PORT_DIPSETTING(		0x0080, "1000k and 2000k" )		PORT_CONDITION("JMPR",0x03,PORTCOND_EQUALS,0x00)
-	/* Bonus_Life values for everywhere else */
-	PORT_DIPSETTING(		0x0080, "Every 2000k" )			PORT_CONDITION("JMPR",0x03,PORTCOND_NOTEQUALS,0x00)
-	PORT_DIPSETTING(		0x0000, DEF_STR( None ) )		PORT_CONDITION("JMPR",0x03,PORTCOND_NOTEQUALS,0x00)
-	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START_TAG("JMPR")
-	PORT_DIPNAME( 0x0004,	0x0000, DEF_STR( Allow_Continue ) )
-	PORT_DIPSETTING(		0x0004, DEF_STR( No ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x0008,	0x0000, "Stage Edit" )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0008, DEF_STR( On ) )
+	PORT_MODIFY("JMPR")
 	PORT_DIPNAME( 0x0003,	0x0001, "Territory" )
 	PORT_DIPSETTING(		0x0001, "Europe (German Tuning license)" )
 	PORT_DIPSETTING(		0x0002, "USA (Fabtek license)" )
 	PORT_DIPSETTING(		0x0000, DEF_STR( Japan ) )
 	PORT_DIPSETTING(		0x0003, DEF_STR( Asia ) )
-	PORT_BIT( 0xfff0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+
 INPUT_PORTS_START( battlegb )
-	PORT_START_TAG("IN0")		/* (0) VBlank */
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_INCLUDE(battleg)
 
-	PORT_START_TAG("IN1")
-	TOAPLAN2_PLAYER_INPUT( 1, IPT_BUTTON3, IPT_UNKNOWN )
-
-	PORT_START_TAG("IN2")
-	TOAPLAN2_PLAYER_INPUT( 2, IPT_BUTTON3, IPT_UNKNOWN )
-
-	TOAPLAN2_SYSTEM_INPUTS
-
-	PORT_START_TAG("DSWA")
-	PORT_SERVICE( 0x0001,	IP_ACTIVE_HIGH )		/* Service Mode */
-	PORT_DIPNAME( 0x0002,	0x0000, "Credits to Start" )
-	PORT_DIPSETTING(		0x0000, "1" )
-	PORT_DIPSETTING(		0x0002, "2" )
-	PORT_DIPNAME( 0x001c,	0x0000, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(		0x0018, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(		0x0014, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(		0x0010, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(		0x0004, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(		0x0008, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(		0x000c, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(		0x001c, DEF_STR( Free_Play ) )
-	PORT_DIPNAME( 0x00e0,	0x0000, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(		0x00c0, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(		0x00a0, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(		0x0080, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(		0x0020, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(		0x0040, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(		0x0060, DEF_STR( 1C_4C ) )
-//  PORT_DIPSETTING(        0x00e0, DEF_STR( 1C_1C ) )
-	/*  When Coin_A is set to Free_Play, Coin_A becomes Coin_A and Coin_B,
-        and Coin_B becomes the following dips */
-//  PORT_DIPNAME( 0x0020,   0x0000, "Joystick Mode" )
-//  PORT_DIPSETTING(        0x0000, "90 degrees ACW" )
-//  PORT_DIPSETTING(        0x0020, DEF_STR( Normal ) )
-//  PORT_DIPNAME( 0x0040,   0x0000, "Effect" )
-//  PORT_DIPSETTING(        0x0000, DEF_STR( Off ) )
-//  PORT_DIPSETTING(        0x0040, DEF_STR( On ) )
-//  PORT_DIPNAME( 0x0080,   0x0000, "Music" )
-//  PORT_DIPSETTING(        0x0000, DEF_STR( Off ) )
-//  PORT_DIPSETTING(        0x0080, DEF_STR( On ) )
-	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START_TAG("DSWB")
-	DIFFICULTY_16
-	PORT_DIPNAME( 0x0004,	0x0000, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0004, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0008,	0x0000, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(		0x0008, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0070,	0x0000, DEF_STR( Lives ) )
-	PORT_DIPSETTING(		0x0030, "1" )
-	PORT_DIPSETTING(		0x0020, "2" )
-	PORT_DIPSETTING(		0x0000, "3" )
-	PORT_DIPSETTING(		0x0010, "4" )
-	PORT_DIPSETTING(		0x0040, "5" )
-	PORT_DIPSETTING(		0x0050, "6" )
-	PORT_DIPSETTING(		0x0060, DEF_STR( Infinite ) )
-//  PORT_DIPSETTING(        0x0070, "Invulnerability (Cheat)")
-	PORT_DIPNAME( 0x0080,	0x0000, DEF_STR( Bonus_Life ) )
-	/* Bonus_Life for Non European territories */
-//  PORT_DIPSETTING(        0x0000, "Every 1000k" )
-//  PORT_DIPSETTING(        0x0080, "1000k and 2000k" )
-	/* Bonus_Life values for European territories */
-	PORT_DIPSETTING(		0x0080, "Every 2000k" )
-	PORT_DIPSETTING(		0x0000, DEF_STR( None ) )
-	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START_TAG("JMPR")
-	PORT_DIPNAME( 0x0004,	0x0000, DEF_STR( Allow_Continue ) )
-	PORT_DIPSETTING(		0x0004, DEF_STR( No ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x0008,	0x0000, "Stage Edit" )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0008, DEF_STR( On ) )
+	PORT_MODIFY("JMPR")
 	PORT_DIPNAME( 0x0003,	0x0001, "Territory" )
 	PORT_DIPSETTING(		0x0001, "Austria (German Tuning license)" )
-	/* These Settings End Up Reporting ROM-0 as BAD */
+	/* These two settings end up reporting ROM-0 as BAD */
 //  PORT_DIPSETTING(        0x0002, "USA (Fabtek license)" )
 //  PORT_DIPSETTING(        0x0000, DEF_STR( Japan ) )
 	PORT_DIPSETTING(		0x0003, "Hong Kong" )
-	PORT_BIT( 0xfff0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( batrider )
-	PORT_START_TAG("IN0")		/* (0) VBlank */
+	PORT_START_TAG("VBL")		/* VBlank */
 	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )
 	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START_TAG("IN1")
+	PORT_START_TAG("IN")		/* Player Inputs */
 	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
 	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
@@ -3669,51 +2927,15 @@ INPUT_PORTS_START( batrider )
 	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_PLAYER(2)
 	PORT_BIT( 0x8080, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START_TAG("IN2")		/* (2) Coin/System and DSWC */
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_COIN3 )
-	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_TILT )
-	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_SERVICE1 )
-	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_DIPNAME( 0x0100,	0x0000, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0100, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0200,	0x0000, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(		0x0200, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0400,	0x0000, "Stage Edit" )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0400, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0800,	0x0000, DEF_STR( Allow_Continue ) )
-	PORT_DIPSETTING(		0x0800, DEF_STR( No ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x1000, 0x0000, "Invulnerability" )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x1000, DEF_STR( On ) )
-	/*  These Dips are showed only when Coin_A is set to Free_Play.
-          But they work with normal play mode too. */
-	PORT_DIPNAME( 0x2000,   0x0000, "Guest Player" )
-	PORT_DIPSETTING(        0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(        0x2000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x4000,   0x0000, "Player Select" )
-	PORT_DIPSETTING(        0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(        0x4000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000,   0x0000, "Special Course" )
-	PORT_DIPSETTING(        0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(        0x8000, DEF_STR( On ) )
-
-	PORT_START_TAG("IN3")		/* (3) DSWA and DSWB */
-	PORT_SERVICE( 0x0001,	IP_ACTIVE_HIGH )		/* Service Mode */
-	PORT_DIPNAME( 0x0002,	0x0000, "Credits to Start" )
-	PORT_DIPSETTING(		0x0000, "1" )
-	PORT_DIPSETTING(		0x0002, "2" )
-	/* When Coin_A is set to Free_Play, dip 0x0002 becomes: */
-//  PORT_DIPNAME( 0x0002,   0x0000, "Joystick Mode" )
-//  PORT_DIPSETTING(        0x0000, DEF_STR( Normal ) )
-//  PORT_DIPSETTING(        0x0002, "90 degrees ACW" )
-	PORT_DIPNAME( 0x001c,	0x0000, DEF_STR( Coin_A ) )
+	PORT_START_TAG("DSW")		/* DSWA and DSWB */
+	PORT_SERVICE( 0x0001,	IP_ACTIVE_HIGH )			/// PORT_DIPLOCATION("SW1:1")
+	PORT_DIPNAME( 0x0002,	0x0000, "Credits to Start" )	PORT_CONDITION("DSW",0x001c,PORTCOND_NOTEQUALS,0x001c)	PORT_DIPLOCATION("SW1:2")
+	PORT_DIPSETTING(		0x0000, "1" )					PORT_CONDITION("DSW",0x001c,PORTCOND_NOTEQUALS,0x001c)
+	PORT_DIPSETTING(		0x0002, "2" )					PORT_CONDITION("DSW",0x001c,PORTCOND_NOTEQUALS,0x001c)
+	PORT_DIPNAME( 0x0002,	0x0000, "Joystick Mode" )		PORT_CONDITION("DSW",0x001c,PORTCOND_EQUALS,0x001c)		PORT_DIPLOCATION("SW1:2")
+	PORT_DIPSETTING(		0x0000, DEF_STR( Normal ) )		PORT_CONDITION("DSW",0x001c,PORTCOND_EQUALS,0x001c)
+	PORT_DIPSETTING(		0x0002, "90 degrees ACW" )		PORT_CONDITION("DSW",0x001c,PORTCOND_EQUALS,0x001c)
+	PORT_DIPNAME( 0x001c,	0x0000, DEF_STR( Coin_A ) )		PORT_DIPLOCATION("SW1:5,4,3")
 	PORT_DIPSETTING(		0x0018, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(		0x0014, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(		0x0010, DEF_STR( 2C_1C ) )
@@ -3722,112 +2944,114 @@ INPUT_PORTS_START( batrider )
 	PORT_DIPSETTING(		0x0008, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(		0x000c, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(		0x001c, DEF_STR( Free_Play ) )
-	PORT_DIPNAME( 0x00e0,	0x0000, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(		0x00c0, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(		0x00a0, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(		0x0080, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(		0x0020, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(		0x0040, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(		0x0060, DEF_STR( 1C_4C ) )
-//  PORT_DIPSETTING(        0x00e0, DEF_STR( 1C_1C ) )
-	/* Coin_B becomes the following dips, when Coin_A is set to Free_Play */
-//  PORT_DIPNAME( 0x0020,   0x0000, "Hit Score" )
-//  PORT_DIPSETTING(        0x0020, DEF_STR( Off ) )
-//  PORT_DIPSETTING(        0x0000, DEF_STR( On ) )
-//  PORT_DIPNAME( 0x0040,   0x0000, "Sound Effect" )
-//  PORT_DIPSETTING(        0x0040, DEF_STR( Off ) )
-//  PORT_DIPSETTING(        0x0000, DEF_STR( On ) )
-//  PORT_DIPNAME( 0x0080,   0x0000, "Music" )
-//  PORT_DIPSETTING(        0x0080, DEF_STR( Off ) )
-//  PORT_DIPSETTING(        0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0300,	0x0000, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(		0x0100, DEF_STR( Easy ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Medium ) )
-	PORT_DIPSETTING(		0x0200, DEF_STR( Hard ) )
+	PORT_DIPNAME( 0x00e0,	0x0000, DEF_STR( Coin_B ) )		PORT_CONDITION("DSW",0x001c,PORTCOND_NOTEQUALS,0x001c)	PORT_DIPLOCATION("SW1:8,7,6")
+	PORT_DIPSETTING(		0x00c0, DEF_STR( 4C_1C ) )		PORT_CONDITION("DSW",0x001c,PORTCOND_NOTEQUALS,0x001c)
+	PORT_DIPSETTING(		0x00a0, DEF_STR( 3C_1C ) )		PORT_CONDITION("DSW",0x001c,PORTCOND_NOTEQUALS,0x001c)
+	PORT_DIPSETTING(		0x0080, DEF_STR( 2C_1C ) )		PORT_CONDITION("DSW",0x001c,PORTCOND_NOTEQUALS,0x001c)
+	PORT_DIPSETTING(		0x0000, DEF_STR( 1C_1C ) )		PORT_CONDITION("DSW",0x001c,PORTCOND_NOTEQUALS,0x001c)
+//  PORT_DIPSETTING(        0x00e0, DEF_STR( 1C_1C ) )      PORT_CONDITION("DSW",0x001c,PORTCOND_NOTEQUALS,0x001c)
+	PORT_DIPSETTING(		0x0020, DEF_STR( 1C_2C ) )		PORT_CONDITION("DSW",0x001c,PORTCOND_NOTEQUALS,0x001c)
+	PORT_DIPSETTING(		0x0040, DEF_STR( 1C_3C ) )		PORT_CONDITION("DSW",0x001c,PORTCOND_NOTEQUALS,0x001c)
+	PORT_DIPSETTING(		0x0060, DEF_STR( 1C_4C ) )		PORT_CONDITION("DSW",0x001c,PORTCOND_NOTEQUALS,0x001c)
+	/* When Coin_A is set to Free_Play, Coin_A becomes Coin_A and Coin_B, and the following dips occur */
+	PORT_DIPNAME( 0x0020,	0x0000, "Hit Score" )			PORT_CONDITION("DSW",0x001c,PORTCOND_EQUALS,0x001c)		PORT_DIPLOCATION("SW1:6")
+	PORT_DIPSETTING(		0x0020, DEF_STR( Off ) )		PORT_CONDITION("DSW",0x001c,PORTCOND_EQUALS,0x001c)
+	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )			PORT_CONDITION("DSW",0x001c,PORTCOND_EQUALS,0x001c)
+	PORT_DIPNAME( 0x0040,	0x0000, "Sound Effect" )		PORT_CONDITION("DSW",0x001c,PORTCOND_EQUALS,0x001c)		PORT_DIPLOCATION("SW1:7")
+	PORT_DIPSETTING(		0x0040, DEF_STR( Off ) )		PORT_CONDITION("DSW",0x001c,PORTCOND_EQUALS,0x001c)
+	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )			PORT_CONDITION("DSW",0x001c,PORTCOND_EQUALS,0x001c)
+	PORT_DIPNAME( 0x0080,	0x0000, "Music" )				PORT_CONDITION("DSW",0x001c,PORTCOND_EQUALS,0x001c)		PORT_DIPLOCATION("SW1:8")
+	PORT_DIPSETTING(		0x0080, DEF_STR( Off ) )		PORT_CONDITION("DSW",0x001c,PORTCOND_EQUALS,0x001c)
+	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )			PORT_CONDITION("DSW",0x001c,PORTCOND_EQUALS,0x001c)
+	PORT_DIPNAME( 0x0300,	0x0000, DEF_STR( Difficulty ) )	PORT_DIPLOCATION("SW2:2,1")
 	PORT_DIPSETTING(		0x0300, DEF_STR( Hardest ) )
-	PORT_DIPNAME( 0x0c00,	0x0000, "Timer" )
-	PORT_DIPSETTING(		0x0400, DEF_STR( Easy ) )
+	PORT_DIPSETTING(		0x0200, DEF_STR( Hard ) )
 	PORT_DIPSETTING(		0x0000, DEF_STR( Medium ) )
-	PORT_DIPSETTING(		0x0800, DEF_STR( Hard ) )
-	PORT_DIPSETTING(		0x0c00, DEF_STR( Hardest ) )
-	PORT_DIPNAME( 0x3000,	0x0000, DEF_STR( Lives ) )
+	PORT_DIPSETTING(		0x0100, DEF_STR( Easy ) )
+	PORT_DIPNAME( 0x0c00,	0x0000, "Timer" )				PORT_DIPLOCATION("SW2:4,3")
+	PORT_DIPSETTING(		0x0c00, DEF_STR( Highest ) )
+	PORT_DIPSETTING(		0x0800, DEF_STR( High ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Medium ) )
+	PORT_DIPSETTING(		0x0400, DEF_STR( Low ) )
+	PORT_DIPNAME( 0x3000,	0x0000, DEF_STR( Lives ) )		PORT_DIPLOCATION("SW2:6,5")
 	PORT_DIPSETTING(		0x3000, "1" )
 	PORT_DIPSETTING(		0x2000, "2" )
 	PORT_DIPSETTING(		0x0000, "3" )
 	PORT_DIPSETTING(		0x1000, "4" )
-	PORT_DIPNAME( 0xc000,	0x0000, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(		0x4000, "Every 1000k" )
-	PORT_DIPSETTING(		0x0000, "Every 1500k" )
-	PORT_DIPSETTING(		0x8000, "Every 2000k" )
+	PORT_DIPNAME( 0xc000,	0x0000, DEF_STR( Bonus_Life ) )	PORT_DIPLOCATION("SW2:8,7")
 	PORT_DIPSETTING(		0xc000, DEF_STR( None ) )
-INPUT_PORTS_END
+	PORT_DIPSETTING(		0x8000, "Every 2000k" )
+	PORT_DIPSETTING(		0x0000, "Every 1500k" )
+	PORT_DIPSETTING(		0x4000, "Every 1000k" )
 
-INPUT_PORTS_START( bbakraid )
-	PORT_START_TAG("IN0")		/* (0) VBlank */
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START_TAG("IN1")		/* (1) Player Inputs */
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
-	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(1)
-	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER(1)
-	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_PLAYER(1)
-	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(2)
-	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER(2)
-	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_PLAYER(2)
-	PORT_BIT( 0x8080, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START_TAG("IN2")		/* (2) Coin/System and DSW-3 */
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_COIN3 )
-	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_TILT )
-	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_SERVICE1 )
+	PORT_START_TAG("SYS-DSW")	/* Coin/System and DSWC */
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_SERVICE1 )	/* Service */
+	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_UNKNOWN)
+	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_SERVICE2 )	/* Test */
 	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_DIPNAME( 0x0100,	0x0000, DEF_STR( Flip_Screen ) )
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x0100,	0x0000, DEF_STR( Flip_Screen ) )	PORT_DIPLOCATION("SW3:1")
 	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(		0x0100, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0200,	0x0000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x0200,	0x0000, DEF_STR( Demo_Sounds ) )	PORT_DIPLOCATION("SW3:2")
 	PORT_DIPSETTING(		0x0200, DEF_STR( Off ) )
 	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0400,	0x0000, "Stage Edit" )
+	PORT_DIPNAME( 0x0400,	0x0000, "Stage Edit" )				PORT_DIPLOCATION("SW3:3")
 	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(		0x0400, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0800,	0x0000, DEF_STR( Allow_Continue ) )
+	PORT_DIPNAME( 0x0800,	0x0000, DEF_STR( Allow_Continue ) )	PORT_DIPLOCATION("SW3:4")
 	PORT_DIPSETTING(		0x0800, DEF_STR( No ) )
 	PORT_DIPSETTING(		0x0000, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x1000, 0x0000, "Invulnerability" )
+	PORT_DIPNAME( 0x1000,	0x0000, "Invulnerability" )			PORT_DIPLOCATION("SW3:5")
 	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(		0x1000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x2000,	0x0000, "Save Scores" )
-	PORT_DIPSETTING(		0x2000, DEF_STR( Off ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x4000,	0x0000, DEF_STR( Unused ) )
+	/* These Dips are showed only when Coin_A is set to Free_Play, but they work in normal play mode too. */
+	PORT_DIPNAME( 0x2000,	0x0000, "Guest Player" )			PORT_DIPLOCATION("SW3:6")
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x2000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000,	0x0000, "Player Select" )			PORT_DIPLOCATION("SW3:7")
 	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(		0x4000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000,	0x0000, DEF_STR( Unused ) )
+	PORT_DIPNAME( 0x8000,	0x0000, "Special Course" )			PORT_DIPLOCATION("SW3:8")
 	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(		0x8000, DEF_STR( On ) )
+INPUT_PORTS_END
 
-	PORT_START_TAG("IN3")		/* (3) DSWA and DSWB */
-	PORT_SERVICE( 0x0001,	IP_ACTIVE_HIGH )		/* Service Mode */
-	PORT_DIPNAME( 0x0002,	0x0000, "Credits to Start" )
-	PORT_DIPSETTING(		0x0000, "1" )
-	PORT_DIPSETTING(		0x0002, "2" )
-	/* When Coin_A is set to Free_Play, dip 0x0002 becomes: */
-//  PORT_DIPNAME( 0x0002,   0x0000, "Joystick Mode" )
-//  PORT_DIPSETTING(        0x0000, DEF_STR( Normal ) )
-//  PORT_DIPSETTING(        0x0002, "90 degrees ACW" )
-	PORT_DIPNAME( 0x001c,	0x0000, DEF_STR( Coin_A ) )
+
+INPUT_PORTS_START( bbakraid )
+	PORT_START_TAG("VBL")		/* VBlank */
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_VBLANK )
+	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START_TAG("IN")		/* Player Inputs */
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT( 0x8080, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START_TAG("DSW")		/* DSWA and DSWB */
+	PORT_SERVICE( 0x0001,	IP_ACTIVE_HIGH )			/// PORT_DIPLOCATION("SW1:1")
+	PORT_DIPNAME( 0x0002,	0x0000, "Credits to Start" )	PORT_CONDITION("DSW",0x001c,PORTCOND_NOTEQUALS,0x001c)	PORT_DIPLOCATION("SW1:2")
+	PORT_DIPSETTING(		0x0000, "1" )					PORT_CONDITION("DSW",0x001c,PORTCOND_NOTEQUALS,0x001c)
+	PORT_DIPSETTING(		0x0002, "2" )					PORT_CONDITION("DSW",0x001c,PORTCOND_NOTEQUALS,0x001c)
+	PORT_DIPNAME( 0x0002,	0x0000, "Joystick Mode" )		PORT_CONDITION("DSW",0x001c,PORTCOND_EQUALS,0x001c)		PORT_DIPLOCATION("SW1:2")
+	PORT_DIPSETTING(		0x0000, DEF_STR( Normal ) )		PORT_CONDITION("DSW",0x001c,PORTCOND_EQUALS,0x001c)
+	PORT_DIPSETTING(		0x0002, "90 degrees ACW" )		PORT_CONDITION("DSW",0x001c,PORTCOND_EQUALS,0x001c)
+	PORT_DIPNAME( 0x001c,	0x0000, DEF_STR( Coin_A ) )		PORT_DIPLOCATION("SW1:5,4,3")
 	PORT_DIPSETTING(		0x0018, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(		0x0014, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(		0x0010, DEF_STR( 2C_1C ) )
@@ -3836,55 +3060,88 @@ INPUT_PORTS_START( bbakraid )
 	PORT_DIPSETTING(		0x0008, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(		0x000c, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(		0x001c, DEF_STR( Free_Play ) )
-	PORT_DIPNAME( 0x00e0,	0x0000, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(		0x00c0, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(		0x00a0, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(		0x0080, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(		0x0020, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(		0x0040, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(		0x0060, DEF_STR( 1C_4C ) )
-//  PORT_DIPSETTING(        0x00e0, DEF_STR( 1C_1C ) )
-	/* Coin_B becomes the following dips, when Coin_A is set to Free_Play */
-	/* Coin_B slot also behaves in freeplay mode when Coin_A is in freeplay */
-//  PORT_DIPNAME( 0x0020,   0x0000, "Hit Score" )
-//  PORT_DIPSETTING(        0x0020, DEF_STR( Off ) )
-//  PORT_DIPSETTING(        0x0000, DEF_STR( On ) )
-//  PORT_DIPNAME( 0x0040,   0x0000, "Sound Effect" )
-//  PORT_DIPSETTING(        0x0040, DEF_STR( Off ) )
-//  PORT_DIPSETTING(        0x0000, DEF_STR( On ) )
-//  PORT_DIPNAME( 0x0080,   0x0000, "Music" )
-//  PORT_DIPSETTING(        0x0080, DEF_STR( Off ) )
-//  PORT_DIPSETTING(        0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0300,	0x0000, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(		0x0100, DEF_STR( Easy ) )
-	PORT_DIPSETTING(		0x0000, DEF_STR( Medium ) )
-	PORT_DIPSETTING(		0x0200, DEF_STR( Hard ) )
+	PORT_DIPNAME( 0x00e0,	0x0000, DEF_STR( Coin_B ) )		PORT_CONDITION("DSW",0x001c,PORTCOND_NOTEQUALS,0x001c)	PORT_DIPLOCATION("SW1:8,7,6")
+	PORT_DIPSETTING(		0x00c0, DEF_STR( 4C_1C ) )		PORT_CONDITION("DSW",0x001c,PORTCOND_NOTEQUALS,0x001c)
+	PORT_DIPSETTING(		0x00a0, DEF_STR( 3C_1C ) )		PORT_CONDITION("DSW",0x001c,PORTCOND_NOTEQUALS,0x001c)
+	PORT_DIPSETTING(		0x0080, DEF_STR( 2C_1C ) )		PORT_CONDITION("DSW",0x001c,PORTCOND_NOTEQUALS,0x001c)
+	PORT_DIPSETTING(		0x0000, DEF_STR( 1C_1C ) )		PORT_CONDITION("DSW",0x001c,PORTCOND_NOTEQUALS,0x001c)
+//  PORT_DIPSETTING(        0x00e0, DEF_STR( 1C_1C ) )      PORT_CONDITION("DSW",0x001c,PORTCOND_NOTEQUALS,0x001c)
+	PORT_DIPSETTING(		0x0020, DEF_STR( 1C_2C ) )		PORT_CONDITION("DSW",0x001c,PORTCOND_NOTEQUALS,0x001c)
+	PORT_DIPSETTING(		0x0040, DEF_STR( 1C_3C ) )		PORT_CONDITION("DSW",0x001c,PORTCOND_NOTEQUALS,0x001c)
+	PORT_DIPSETTING(		0x0060, DEF_STR( 1C_4C ) )		PORT_CONDITION("DSW",0x001c,PORTCOND_NOTEQUALS,0x001c)
+	/* When Coin_A is set to Free_Play, Coin_A becomes Coin_A and Coin_B, and the following dips occur */
+	PORT_DIPNAME( 0x0020,	0x0000, "Hit Score" )			PORT_CONDITION("DSW",0x001c,PORTCOND_EQUALS,0x001c)	PORT_DIPLOCATION("SW1:6")
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )		PORT_CONDITION("DSW",0x001c,PORTCOND_EQUALS,0x001c)
+	PORT_DIPSETTING(		0x0020, DEF_STR( On ) )			PORT_CONDITION("DSW",0x001c,PORTCOND_EQUALS,0x001c)
+	PORT_DIPNAME( 0x0040,	0x0000, "Sound Effect" )		PORT_CONDITION("DSW",0x001c,PORTCOND_EQUALS,0x001c)	PORT_DIPLOCATION("SW1:7")
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )		PORT_CONDITION("DSW",0x001c,PORTCOND_EQUALS,0x001c)
+	PORT_DIPSETTING(		0x0040, DEF_STR( On ) )			PORT_CONDITION("DSW",0x001c,PORTCOND_EQUALS,0x001c)
+	PORT_DIPNAME( 0x0080,	0x0000, "Music" )				PORT_CONDITION("DSW",0x001c,PORTCOND_EQUALS,0x001c)	PORT_DIPLOCATION("SW1:8")
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )		PORT_CONDITION("DSW",0x001c,PORTCOND_EQUALS,0x001c)
+	PORT_DIPSETTING(		0x0080, DEF_STR( On ) )			PORT_CONDITION("DSW",0x001c,PORTCOND_EQUALS,0x001c)
+	PORT_DIPNAME( 0x0300,	0x0000, DEF_STR( Difficulty ) )	PORT_DIPLOCATION("SW2:2,1")
 	PORT_DIPSETTING(		0x0300, DEF_STR( Hardest ) )
-	PORT_DIPNAME( 0x0c00,	0x0000, "Timer" )
-	PORT_DIPSETTING(		0x0400, DEF_STR( Low ) )
+	PORT_DIPSETTING(		0x0200, DEF_STR( Hard ) )
 	PORT_DIPSETTING(		0x0000, DEF_STR( Medium ) )
-	PORT_DIPSETTING(		0x0800, DEF_STR( High ) )
+	PORT_DIPSETTING(		0x0100, DEF_STR( Easy ) )
+	PORT_DIPNAME( 0x0c00,	0x0000, "Timer" )				PORT_DIPLOCATION("SW2:4,3")
 	PORT_DIPSETTING(		0x0c00, DEF_STR( Highest ) )
-	PORT_DIPNAME( 0x3000,	0x0000, DEF_STR( Lives ) )
+	PORT_DIPSETTING(		0x0800, DEF_STR( High ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Medium ) )
+	PORT_DIPSETTING(		0x0400, DEF_STR( Low ) )
+	PORT_DIPNAME( 0x3000,	0x0000, DEF_STR( Lives ) )		PORT_DIPLOCATION("SW2:6,5")
 	PORT_DIPSETTING(		0x3000, "1" )
 	PORT_DIPSETTING(		0x2000, "2" )
 	PORT_DIPSETTING(		0x0000, "3" )
 	PORT_DIPSETTING(		0x1000, "4" )
-	PORT_DIPNAME( 0xc000,	0x0000, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(		0x0000, "Every 2000k" )
-	PORT_DIPSETTING(		0x4000, "Every 3000k" )
-	PORT_DIPSETTING(		0x8000, "Every 4000k" )
+	PORT_DIPNAME( 0xc000,	0x0000, DEF_STR( Bonus_Life ) )	PORT_DIPLOCATION("SW2:8,7")
 	PORT_DIPSETTING(		0xc000, DEF_STR( None ) )
+	PORT_DIPSETTING(		0x8000, "Every 4000k" )
+	PORT_DIPSETTING(		0x4000, "Every 3000k" )
+	PORT_DIPSETTING(		0x0000, "Every 2000k" )
+
+	PORT_START_TAG("SYS-DSW")	/* Coin/System and DSW-3 */
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_SERVICE1 )	/* Service */
+	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_UNKNOWN)
+	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_SERVICE2 )	/* Test */
+	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_UNKNOWN)
+	PORT_DIPNAME( 0x0100,	0x0000, DEF_STR( Flip_Screen ) )	PORT_DIPLOCATION("SW3:1")
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0100, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200,	0x0000, DEF_STR( Demo_Sounds ) )	PORT_DIPLOCATION("SW3:2")
+	PORT_DIPSETTING(		0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400,	0x0000, "Stage Edit" )				PORT_DIPLOCATION("SW3:3")
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0400, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800,	0x0000, DEF_STR( Allow_Continue ) )	PORT_DIPLOCATION("SW3:4")
+	PORT_DIPSETTING(		0x0800, DEF_STR( No ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x1000,	0x0000, "Invulnerability" )			PORT_DIPLOCATION("SW3:5")
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x1000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000,	0x0000, "Save Scores" )				PORT_DIPLOCATION("SW3:6")
+	PORT_DIPSETTING(		0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000,	0x0000, DEF_STR( Unused ) )			PORT_DIPLOCATION("SW3:7")
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x4000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000,	0x0000, DEF_STR( Unused ) )			PORT_DIPLOCATION("SW3:8")
+	PORT_DIPSETTING(		0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(		0x8000, DEF_STR( On ) )
 INPUT_PORTS_END
 
 
 
 static const gfx_layout tilelayout =
 {
-	16,16,	/* 16x16 */
+	16,16,			/* 16x16 */
 	RGN_FRAC(1,2),	/* Number of tiles */
-	4,		/* 4 bits per pixel */
+	4,				/* 4 bits per pixel */
 	{ RGN_FRAC(1,2)+8, RGN_FRAC(1,2), 8, 0 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7,
 		8*16+0, 8*16+1, 8*16+2, 8*16+3, 8*16+4, 8*16+5, 8*16+6, 8*16+7 },
@@ -3895,9 +3152,9 @@ static const gfx_layout tilelayout =
 
 static const gfx_layout spritelayout =
 {
-	8,8,	/* 8x8 */
+	8,8,			/* 8x8 */
 	RGN_FRAC(1,2),	/* Number of 8x8 sprites */
-	4,		/* 4 bits per pixel */
+	4,				/* 4 bits per pixel */
 	{ RGN_FRAC(1,2)+8, RGN_FRAC(1,2), 8, 0 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
@@ -4042,16 +3299,19 @@ static struct YMZ280Binterface ymz280b_interface =
 	bbakraid_irqhandler
 };
 
+
+
+
 static MACHINE_DRIVER_START( tekipaki )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 10000000)			/* 10MHz Oscillator */
-	MDRV_CPU_PROGRAM_MAP(tekipaki_readmem,tekipaki_writemem)
+	MDRV_CPU_PROGRAM_MAP(tekipaki_68k_mem, 0)
 	MDRV_CPU_VBLANK_INT(toaplan2_vblank_irq4,262)
 
 #if HD64x180
 	MDRV_CPU_ADD(Z180, 10000000)			/* HD647180 CPU actually */
-	MDRV_CPU_PROGRAM_MAP(hd647180_readmem,hd647180_writemem)
+	MDRV_CPU_PROGRAM_MAP(hd647180_mem, 0)
 #endif
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -4083,12 +3343,12 @@ static MACHINE_DRIVER_START( ghox )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 10000000)			/* 10MHz Oscillator */
-	MDRV_CPU_PROGRAM_MAP(ghox_readmem,ghox_writemem)
+	MDRV_CPU_PROGRAM_MAP(ghox_68k_mem, 0)
 	MDRV_CPU_VBLANK_INT(toaplan2_vblank_irq4,262)
 
 #if HD64x180
 	MDRV_CPU_ADD(Z180, 10000000)			/* HD647180 CPU actually */
-	MDRV_CPU_PROGRAM_MAP(hd647180_readmem,hd647180_writemem)
+	MDRV_CPU_PROGRAM_MAP(hd647180_mem, 0)
 #endif
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -4111,8 +3371,8 @@ static MACHINE_DRIVER_START( ghox )
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
 	MDRV_SOUND_ADD(YM2151, 27000000/8)
-	MDRV_SOUND_ROUTE(0, "left", 0.25)
-	MDRV_SOUND_ROUTE(1, "right", 0.25)
+	MDRV_SOUND_ROUTE(0, "left", 0.5)
+	MDRV_SOUND_ROUTE(1, "right", 0.5)
 MACHINE_DRIVER_END
 
 
@@ -4120,13 +3380,13 @@ static MACHINE_DRIVER_START( dogyuun )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)			/* 16MHz Oscillator */
-	MDRV_CPU_PROGRAM_MAP(dogyuun_readmem,dogyuun_writemem)
+	MDRV_CPU_PROGRAM_MAP(dogyuun_68k_mem, 0)
 	MDRV_CPU_VBLANK_INT(toaplan2_vblank_irq4,262)
 
 #if V25
 	MDRV_CPU_ADD(Z180, 16000000)			/* NEC V25+ type Toaplan marked CPU ??? */
-	MDRV_CPU_PROGRAM_MAP(V25_readmem,V25_writemem)
-	MDRV_CPU_IO_MAP(V25_readport,0)
+	MDRV_CPU_PROGRAM_MAP(V25_mem, 0)
+	MDRV_CPU_IO_MAP(V25_port, 0)
 #endif
 
 	MDRV_FRAMES_PER_SECOND( (27000000.0 / 4) / (432 * 263) )
@@ -4149,13 +3409,13 @@ static MACHINE_DRIVER_START( dogyuun )
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
 	MDRV_SOUND_ADD(YM2151, 27000000/8)
-	MDRV_SOUND_ROUTE(0, "left", 0.25)
-	MDRV_SOUND_ROUTE(1, "right", 0.25)
+	MDRV_SOUND_ROUTE(0, "left", 0.45)
+	MDRV_SOUND_ROUTE(1, "right", 0.45)
 
 	MDRV_SOUND_ADD(OKIM6295, 27000000/10/132)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.25)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.25)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.45)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.45)
 MACHINE_DRIVER_END
 
 
@@ -4163,13 +3423,13 @@ static MACHINE_DRIVER_START( kbash )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)			/* 16MHz Oscillator */
-	MDRV_CPU_PROGRAM_MAP(kbash_readmem,kbash_writemem)
+	MDRV_CPU_PROGRAM_MAP(kbash_68k_mem, 0)
 	MDRV_CPU_VBLANK_INT(toaplan2_vblank_irq4,262)
 
 #if V25
 	MDRV_CPU_ADD(Z180, 16000000)			/* NEC V25+ type Toaplan marked CPU ??? */
-	MDRV_CPU_PROGRAM_MAP(V25_readmem,V25_writemem)
-	MDRV_CPU_IO_MAP(V25_readport,0)
+	MDRV_CPU_PROGRAM_MAP(V25_mem, 0)
+	MDRV_CPU_IO_MAP(V25_port, 0)
 #endif
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -4192,13 +3452,50 @@ static MACHINE_DRIVER_START( kbash )
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
 	MDRV_SOUND_ADD(YM2151, 27000000/8)
-	MDRV_SOUND_ROUTE(0, "left", 0.25)
-	MDRV_SOUND_ROUTE(1, "right", 0.25)
+	MDRV_SOUND_ROUTE(0, "left", 0.45)
+	MDRV_SOUND_ROUTE(1, "right", 0.45)
 
 	MDRV_SOUND_ADD(OKIM6295, 32000000/32/132)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.25)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.25)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.45)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.45)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( kbash2 )
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000)			/* 16MHz Oscillator */
+	MDRV_CPU_PROGRAM_MAP(kbash2_68k_mem, 0)
+	MDRV_CPU_VBLANK_INT(toaplan2_vblank_irq4,262)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	MDRV_MACHINE_RESET(toaplan2)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
+	MDRV_SCREEN_SIZE(32*16, 32*16)
+	MDRV_VISIBLE_AREA(0, 319, 0, 239)
+	MDRV_GFXDECODE(gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(2048)
+
+	MDRV_VIDEO_START(toaplan2_0)
+	MDRV_VIDEO_EOF(toaplan2_0)
+	MDRV_VIDEO_UPDATE(toaplan2_0)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(OKIM6295, 16000000/16/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.45)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.45)
+
+	MDRV_SOUND_ADD(OKIM6295, 16000000/16/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.45)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.45)
 MACHINE_DRIVER_END
 
 
@@ -4206,7 +3503,7 @@ static MACHINE_DRIVER_START( truxton2 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)			/* 16MHz Oscillator */
-	MDRV_CPU_PROGRAM_MAP(truxton2_readmem,truxton2_writemem)
+	MDRV_CPU_PROGRAM_MAP(truxton2_68k_mem, 0)
 	MDRV_CPU_VBLANK_INT(toaplan2_vblank_irq2,262)
 
 	MDRV_FRAMES_PER_SECOND( (27000000.0 / 4) / (432 * 263) )
@@ -4229,13 +3526,13 @@ static MACHINE_DRIVER_START( truxton2 )
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
 	MDRV_SOUND_ADD(YM2151, 27000000/8)
-	MDRV_SOUND_ROUTE(0, "left", 0.25)
-	MDRV_SOUND_ROUTE(1, "right", 0.25)
+	MDRV_SOUND_ROUTE(0, "left", 0.5)
+	MDRV_SOUND_ROUTE(1, "right", 0.5)
 
 	MDRV_SOUND_ADD(OKIM6295, 27000000/10/132)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.25)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.25)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.5)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.5)
 MACHINE_DRIVER_END
 
 
@@ -4243,11 +3540,11 @@ static MACHINE_DRIVER_START( pipibibs )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 10000000)			/* 10MHz Oscillator */
-	MDRV_CPU_PROGRAM_MAP(pipibibs_readmem,pipibibs_writemem)
+	MDRV_CPU_PROGRAM_MAP(pipibibs_68k_mem, 0)
 	MDRV_CPU_VBLANK_INT(toaplan2_vblank_irq4,262)
 
 	MDRV_CPU_ADD(Z80,27000000/8)			/* ??? 3.37MHz , 27MHz Oscillator */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_z80_mem, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -4279,12 +3576,12 @@ static MACHINE_DRIVER_START( whoopee )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 10000000)			/* 10MHz Oscillator */
-	MDRV_CPU_PROGRAM_MAP(tekipaki_readmem,tekipaki_writemem)
+	MDRV_CPU_PROGRAM_MAP(tekipaki_68k_mem, 0)
 	MDRV_CPU_VBLANK_INT(toaplan2_vblank_irq4,262)
 
 	MDRV_CPU_ADD(Z80, 27000000/8)			/* This should be a HD647180 */
 											/* Change this to 10MHz when HD647180 gets dumped. 10MHz Oscillator */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_z80_mem, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -4316,11 +3613,11 @@ static MACHINE_DRIVER_START( pipibibi )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 10000000)			/* 10MHz Oscillator */
-	MDRV_CPU_PROGRAM_MAP(pipibibi_readmem,pipibibi_writemem)
+	MDRV_CPU_PROGRAM_MAP(pipibibi_68k_mem, 0)
 	MDRV_CPU_VBLANK_INT(toaplan2_vblank_irq4,262)
 
 	MDRV_CPU_ADD(Z80,27000000/8)			/* ??? 3.37MHz */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_z80_mem, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -4352,20 +3649,20 @@ static MACHINE_DRIVER_START( fixeight )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)			/* 16MHz Oscillator */
-	MDRV_CPU_PROGRAM_MAP(fixeight_readmem,fixeight_writemem)
+	MDRV_CPU_PROGRAM_MAP(fixeight_68k_mem, 0)
 	MDRV_CPU_VBLANK_INT(toaplan2_vblank_irq4,262)
 
 #if V25
 	MDRV_CPU_ADD(Z180, 16000000)			/* NEC V25+ type Toaplan marked CPU ??? */
-	MDRV_CPU_PROGRAM_MAP(V25_readmem,V25_writemem)
-	MDRV_CPU_IO_MAP(V25_readport,0)
+	MDRV_CPU_PROGRAM_MAP(V25_mem, 0)
+	MDRV_CPU_IO_MAP(V25_port, 0)
 #endif
 
 	MDRV_FRAMES_PER_SECOND( (27000000.0 / 4) / (432 * 263) )
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	MDRV_MACHINE_RESET(toaplan2)
-/// MDRV_NVRAM_HANDLER(fixeight)        /* See 37B6 code */
+//  MDRV_NVRAM_HANDLER(fixeight)        /* See 37B6 code */
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK)
@@ -4382,20 +3679,20 @@ static MACHINE_DRIVER_START( fixeight )
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
 	MDRV_SOUND_ADD(YM2151, 27000000/8)
-	MDRV_SOUND_ROUTE(0, "left", 0.25)
-	MDRV_SOUND_ROUTE(1, "right", 0.25)
+	MDRV_SOUND_ROUTE(0, "left", 0.45)
+	MDRV_SOUND_ROUTE(1, "right", 0.45)
 
 	MDRV_SOUND_ADD(OKIM6295, 32000000/32/132)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.25)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.25)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.45)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.45)
 MACHINE_DRIVER_END
 
 
 static MACHINE_DRIVER_START( fixeighb )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 10000000)			/* 10MHz Oscillator */
-	MDRV_CPU_PROGRAM_MAP(fixeighb_mem,0)
+	MDRV_CPU_PROGRAM_MAP(fixeighb_68k_mem, 0)
 	MDRV_CPU_VBLANK_INT(toaplan2_vblank_irq2,262)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -4424,18 +3721,17 @@ static MACHINE_DRIVER_START( fixeighb )
 MACHINE_DRIVER_END
 
 
-
 static MACHINE_DRIVER_START( vfive )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 10000000)			/* 10MHz Oscillator */
-	MDRV_CPU_PROGRAM_MAP(vfive_readmem,vfive_writemem)
+	MDRV_CPU_PROGRAM_MAP(vfive_68k_mem, 0)
 	MDRV_CPU_VBLANK_INT(toaplan2_vblank_irq4,262)
 
 #if V25
 	MDRV_CPU_ADD(Z180, 10000000)			/* NEC V25+ type Toaplan marked CPU ??? */
-	MDRV_CPU_PROGRAM_MAP(V25_readmem,V25_writemem)
-	MDRV_CPU_IO_MAP(V25_readport,0)
+	MDRV_CPU_PROGRAM_MAP(V25_mem, 0)
+	MDRV_CPU_IO_MAP(V25_port, 0)
 #endif
 
 	MDRV_FRAMES_PER_SECOND( (27000000.0 / 4) / (432 * 263) )
@@ -4458,8 +3754,8 @@ static MACHINE_DRIVER_START( vfive )
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
 	MDRV_SOUND_ADD(YM2151, 27000000/8)
-	MDRV_SOUND_ROUTE(0, "left", 0.25)
-	MDRV_SOUND_ROUTE(1, "right", 0.25)
+	MDRV_SOUND_ROUTE(0, "left", 0.5)
+	MDRV_SOUND_ROUTE(1, "right", 0.5)
 MACHINE_DRIVER_END
 
 
@@ -4467,13 +3763,13 @@ static MACHINE_DRIVER_START( batsugun )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000,32000000/2)			/* 16MHz , 32MHz Oscillator */
-	MDRV_CPU_PROGRAM_MAP(batsugun_readmem,batsugun_writemem)
+	MDRV_CPU_PROGRAM_MAP(batsugun_68k_mem, 0)
 	MDRV_CPU_VBLANK_INT(toaplan2_vblank_irq4,262)
 
 #if V25
 	MDRV_CPU_ADD(Z180, 32000000/2)			/* NEC V25+ type Toaplan marked CPU ??? */
-	MDRV_CPU_PROGRAM_MAP(V25_readmem,V25_writemem)
-	MDRV_CPU_IO_MAP(V25_readport,0)
+	MDRV_CPU_PROGRAM_MAP(V25_mem, 0)
+	MDRV_CPU_IO_MAP(V25_port, 0)
 #endif
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -4510,7 +3806,7 @@ static MACHINE_DRIVER_START( snowbro2 )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000, 16000000)
-	MDRV_CPU_PROGRAM_MAP(snowbro2_readmem,snowbro2_writemem)
+	MDRV_CPU_PROGRAM_MAP(snowbro2_68k_mem, 0)
 	MDRV_CPU_VBLANK_INT(toaplan2_vblank_irq4,262)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -4533,13 +3829,13 @@ static MACHINE_DRIVER_START( snowbro2 )
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
 	MDRV_SOUND_ADD(YM2151, 27000000/8)
-	MDRV_SOUND_ROUTE(0, "left", 0.25)
-	MDRV_SOUND_ROUTE(1, "right", 0.25)
+	MDRV_SOUND_ROUTE(0, "left", 0.45)
+	MDRV_SOUND_ROUTE(1, "right", 0.45)
 
 	MDRV_SOUND_ADD(OKIM6295, 27000000/10/132)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.25)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.25)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.45)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.45)
 MACHINE_DRIVER_END
 
 
@@ -4547,11 +3843,11 @@ static MACHINE_DRIVER_START( mahoudai )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000,32000000/2)			/* 16MHz , 32MHz Oscillator */
-	MDRV_CPU_PROGRAM_MAP(mahoudai_readmem,mahoudai_writemem)
+	MDRV_CPU_PROGRAM_MAP(mahoudai_68k_mem, 0)
 	MDRV_CPU_VBLANK_INT(toaplan2_vblank_irq4,262)
 
 	MDRV_CPU_ADD(Z80,32000000/8)			/* 4MHz , 32MHz Oscillator */
-	MDRV_CPU_PROGRAM_MAP(raizing_sound_readmem,raizing_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(raizing_sound_z80_mem, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -4574,13 +3870,13 @@ static MACHINE_DRIVER_START( mahoudai )
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
 	MDRV_SOUND_ADD(YM2151, 27000000/8)
-	MDRV_SOUND_ROUTE(0, "left", 0.25)
-	MDRV_SOUND_ROUTE(1, "right", 0.25)
+	MDRV_SOUND_ROUTE(0, "left", 0.95)
+	MDRV_SOUND_ROUTE(1, "right", 0.95)
 
 	MDRV_SOUND_ADD(OKIM6295, 32000000/32/132)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.25)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.25)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.95)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.95)
 MACHINE_DRIVER_END
 
 
@@ -4588,11 +3884,11 @@ static MACHINE_DRIVER_START( shippumd )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000,32000000/2)			/* 16MHz , 32MHz Oscillator */
-	MDRV_CPU_PROGRAM_MAP(shippumd_readmem,shippumd_writemem)
+	MDRV_CPU_PROGRAM_MAP(shippumd_68k_mem, 0)
 	MDRV_CPU_VBLANK_INT(toaplan2_vblank_irq4,262)
 
 	MDRV_CPU_ADD(Z80,32000000/8)			/* 4MHz , 32MHz Oscillator */
-	MDRV_CPU_PROGRAM_MAP(raizing_sound_readmem,raizing_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(raizing_sound_z80_mem, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -4615,13 +3911,13 @@ static MACHINE_DRIVER_START( shippumd )
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
 	MDRV_SOUND_ADD(YM2151, 27000000/8)
-	MDRV_SOUND_ROUTE(0, "left", 0.25)
-	MDRV_SOUND_ROUTE(1, "right", 0.25)
+	MDRV_SOUND_ROUTE(0, "left", 0.45)
+	MDRV_SOUND_ROUTE(1, "right", 0.45)
 
 	MDRV_SOUND_ADD(OKIM6295, 32000000/32/132)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.25)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.25)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.45)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.45)
 MACHINE_DRIVER_END
 
 
@@ -4629,11 +3925,11 @@ static MACHINE_DRIVER_START( battleg )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000,32000000/2)			/* 16MHz , 32MHz Oscillator */
-	MDRV_CPU_PROGRAM_MAP(battleg_readmem,battleg_writemem)
+	MDRV_CPU_PROGRAM_MAP(battleg_68k_mem, 0)
 	MDRV_CPU_VBLANK_INT(toaplan2_vblank_irq4,262)
 
 	MDRV_CPU_ADD(Z80,32000000/8)			/* 4MHz , 32MHz Oscillator */
-	MDRV_CPU_PROGRAM_MAP(battleg_sound_readmem,battleg_sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(battleg_sound_z80_mem, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -4656,13 +3952,13 @@ static MACHINE_DRIVER_START( battleg )
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
 	MDRV_SOUND_ADD(YM2151, 32000000/8)
-	MDRV_SOUND_ROUTE(0, "left", 0.25)
-	MDRV_SOUND_ROUTE(1, "right", 0.25)
+	MDRV_SOUND_ROUTE(0, "left", 0.45)
+	MDRV_SOUND_ROUTE(1, "right", 0.45)
 
 	MDRV_SOUND_ADD(OKIM6295, 32000000/16/132)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.25)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.25)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.45)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.45)
 MACHINE_DRIVER_END
 
 
@@ -4670,12 +3966,12 @@ static MACHINE_DRIVER_START( batrider )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000,32000000/2)			/* 16MHz , 32MHz Oscillator */
-	MDRV_CPU_PROGRAM_MAP(batrider_readmem,batrider_writemem)
+	MDRV_CPU_PROGRAM_MAP(batrider_68k_mem, 0)
 	MDRV_CPU_VBLANK_INT(toaplan2_vblank_irq2,262)
 
 	MDRV_CPU_ADD(Z80,32000000/8)			/* 4MHz , 32MHz Oscillator */
-	MDRV_CPU_PROGRAM_MAP(batrider_sound_readmem,batrider_sound_writemem)
-	MDRV_CPU_IO_MAP(batrider_sound_readport,batrider_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(batrider_sound_z80_mem, 0)
+	MDRV_CPU_IO_MAP(batrider_sound_z80_port, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -4698,30 +3994,30 @@ static MACHINE_DRIVER_START( batrider )
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
 
 	MDRV_SOUND_ADD(YM2151, 32000000/8)
-	MDRV_SOUND_ROUTE(0, "left", 0.25)
-	MDRV_SOUND_ROUTE(1, "right", 0.25)
+	MDRV_SOUND_ROUTE(0, "left", 0.5)
+	MDRV_SOUND_ROUTE(1, "right", 0.5)
 
 	MDRV_SOUND_ADD(OKIM6295, 32000000/10/132)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.25)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.25)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.5)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.5)
 
 	MDRV_SOUND_ADD(OKIM6295, 32000000/10/165)
 	MDRV_SOUND_CONFIG(okim6295_interface_region_2)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.25)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.25)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.5)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.5)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( bbakraid )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000,32000000/2)
-	MDRV_CPU_PROGRAM_MAP(bbakraid_readmem,bbakraid_writemem)
+	MDRV_CPU_PROGRAM_MAP(bbakraid_68k_mem, 0)
 	MDRV_CPU_VBLANK_INT(toaplan2_vblank_irq3,262)
 
 	MDRV_CPU_ADD(Z80,32000000/4)
-	MDRV_CPU_PROGRAM_MAP(bbakraid_sound_readmem,bbakraid_sound_writemem)
-	MDRV_CPU_IO_MAP(bbakraid_sound_readport,bbakraid_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(bbakraid_sound_z80_mem, 0)
+	MDRV_CPU_IO_MAP(bbakraid_sound_z80_port, 0)
 	MDRV_CPU_PERIODIC_INT(bbakraid_snd_interrupt, TIME_IN_HZ(388))
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
@@ -4774,6 +4070,7 @@ ROM_START( tekipaki )
 	ROM_LOAD( "tp020-3.bin", 0x080000, 0x080000, CRC(2d5e2201) SHA1(5846c844eedd48305c1c67dc645b6e070b3f5b98) )
 ROM_END
 
+
 ROM_START( ghox )
 	ROM_REGION( 0x040000, REGION_CPU1, 0 )			/* Main 68K code */
 	ROM_LOAD16_BYTE( "tp021-01.u10", 0x000000, 0x020000, CRC(9e56ac67) SHA1(daf241d9e55a6e60fc004ed61f787641595b1e62) )
@@ -4789,6 +4086,7 @@ ROM_START( ghox )
 	ROM_LOAD( "tp021-03.u36", 0x000000, 0x080000, CRC(a15d8e9d) SHA1(640a33997bdce8e84bea6a944139716379839037) )
 	ROM_LOAD( "tp021-04.u37", 0x080000, 0x080000, CRC(26ed1c9a) SHA1(37da8af86ea24327444c2d4ad3dfbd936208d43d) )
 ROM_END
+
 
 ROM_START( dogyuun )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )			/* Main 68K code */
@@ -4812,6 +4110,7 @@ ROM_START( dogyuun )
 	ROM_REGION( 0x40000, REGION_SOUND1, 0 )		/* ADPCM Samples */
 	ROM_LOAD( "tp022_2.w30", 0x00000, 0x40000, CRC(043271b3) SHA1(c7eaa929e55dd956579b824ea9d20a1d0129a925) )
 ROM_END
+
 
 ROM_START( kbash )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )			/* Main 68K code */
@@ -4838,6 +4137,26 @@ ROM_START( kbash )
 	ROM_LOAD( "kbash07.bin", 0x00000, 0x40000, CRC(3732318f) SHA1(f0768459f5ad2dee53d408a0a5ae3a314864e667) )
 ROM_END
 
+
+ROM_START( kbash2 )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )			/* Main 68K code */
+	ROM_LOAD16_WORD_SWAP( "mecat-m", 0x000000, 0x80000, CRC(bd2263c6) SHA1(eb794c0fc9c1fb4337114d48149283d42d22e4b3) )
+
+	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "mecat-34", 0x000000, 0x400000, CRC(6be7b37e) SHA1(13160ad0712fee932bb98cc226e651895b19228a) )
+	ROM_LOAD( "mecat-12", 0x400000, 0x400000, CRC(49e46b1f) SHA1(d12b12696a8473eb34f3cd247ab060289a6c0e9c) )
+
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )			/* ADPCM Music */
+	ROM_LOAD( "mecat-s", 0x00000, 0x80000, CRC(3eb7adf4) SHA1(b0e6e99726b854858bd0e69eb77f12b9664b35e6) )
+
+	ROM_REGION( 0x40000, REGION_SOUND2, 0 )			/* ADPCM Samples */
+	ROM_LOAD( "eprom",   0x00000, 0x40000, CRC(31115cb9) SHA1(c79ea01bd865e2fc3aaab3ff05483c8fd27e5c98) )
+
+	ROM_REGION( 0x10000, REGION_USER1, 0 )			/* ??? Some sort of table  - same as in pipibibi*/
+	ROM_LOAD( "050917-10", 0x0000, 0x10000, CRC(6b213183) SHA1(599c59d155d11edb151bfaed1d24ef964462a447) )
+ROM_END
+
+
 ROM_START( truxton2 )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )			/* Main 68K code */
 	ROM_LOAD16_WORD( "tp024_1.bin", 0x000000, 0x080000, CRC(f5cfe6ee) SHA1(30979888a4cd6500244117748f28386a7e20a169) )
@@ -4863,6 +4182,7 @@ ROM_START( pipibibs )
 	ROM_LOAD( "tp025-3.bin", 0x100000, 0x100000, CRC(7b16101e) SHA1(ae0119bbfa0937d18c4fbb0a3ef7cdc3b9fa6b56) )
 ROM_END
 
+
 ROM_START( whoopee )
 	ROM_REGION( 0x040000, REGION_CPU1, 0 )			/* Main 68K code */
 	ROM_LOAD16_BYTE( "whoopee.1", 0x000000, 0x020000, CRC(28882e7e) SHA1(8fcd278a7d005eb81cd9e461139c0c0f756a4fa4) )
@@ -4877,6 +4197,7 @@ ROM_START( whoopee )
 	ROM_LOAD( "tp025-4.bin", 0x000000, 0x100000, CRC(ab97f744) SHA1(c1620e614345dbd5c6567e4cb6f55c61b900d0ee) )
 	ROM_LOAD( "tp025-3.bin", 0x100000, 0x100000, CRC(7b16101e) SHA1(ae0119bbfa0937d18c4fbb0a3ef7cdc3b9fa6b56) )
 ROM_END
+
 
 ROM_START( pipibibi )
 	ROM_REGION( 0x040000, REGION_CPU1, 0 )			/* Main 68K code */
@@ -4896,6 +4217,7 @@ ROM_START( pipibibi )
 	ROM_REGION( 0x8000, REGION_USER1, 0 )			/* ??? Some sort of table */
 	ROM_LOAD( "ppbb07.bin", 0x0000, 0x8000, CRC(456dd16e) SHA1(84779ee64d3ea33ba1ba4dee39b504a81c6811a1) )
 ROM_END
+
 
 ROM_START( fixeight )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )			/* Main 68K code */
@@ -4920,6 +4242,7 @@ ROM_START( fixeight )
 	ROM_LOAD( "93c45.u21", 0x00, 0x80, CRC(40d75df0) SHA1(a22f1cc74ce9bc9bfe53f48f6a43ab60e921052b) )
 ROM_END
 
+
 ROM_START( fixeighb )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )			/* Main 68K code */
 	ROM_LOAD16_BYTE( "3.bin", 0x000000, 0x80000, CRC(cc77d4b4) SHA1(4d3376cbae13d90c6314d8bb9236c2183fc6253c) )
@@ -4940,6 +4263,7 @@ ROM_START( fixeighb )
 	ROM_LOAD( "5.bin", 0x0000, 0x8000, CRC(456dd16e) SHA1(84779ee64d3ea33ba1ba4dee39b504a81c6811a1) )
 ROM_END
 
+
 ROM_START( grindstm )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )			/* Main 68K code */
 	ROM_LOAD16_WORD_SWAP( "01.bin", 0x000000, 0x080000, CRC(4923f790) SHA1(1c2d66b432d190d0fb6ac7ca0ec0687aea3ccbf4) )
@@ -4955,6 +4279,7 @@ ROM_START( grindstm )
 	ROM_LOAD( "tp027_02.bin", 0x000000, 0x100000, CRC(877b45e8) SHA1(b3ed8d8dbbe51a1919afc55d619d2b6771971493) )
 	ROM_LOAD( "tp027_03.bin", 0x100000, 0x100000, CRC(b1fc6362) SHA1(5e97e3cce31be57689d394a50178cda4d80cce5f) )
 ROM_END
+
 
 ROM_START( grindsta )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )			/* Main 68K code */
@@ -4972,6 +4297,7 @@ ROM_START( grindsta )
 	ROM_LOAD( "tp027_03.bin", 0x100000, 0x100000, CRC(b1fc6362) SHA1(5e97e3cce31be57689d394a50178cda4d80cce5f) )
 ROM_END
 
+
 ROM_START( vfive )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )			/* Main 68K code */
 	ROM_LOAD16_WORD_SWAP( "tp027_01.bin", 0x000000, 0x080000, CRC(731d50f4) SHA1(794255d0a809cda9170f5bac473df9d7f0efdac8) )
@@ -4987,6 +4313,7 @@ ROM_START( vfive )
 	ROM_LOAD( "tp027_02.bin", 0x000000, 0x100000, CRC(877b45e8) SHA1(b3ed8d8dbbe51a1919afc55d619d2b6771971493) )
 	ROM_LOAD( "tp027_03.bin", 0x100000, 0x100000, CRC(b1fc6362) SHA1(5e97e3cce31be57689d394a50178cda4d80cce5f) )
 ROM_END
+
 
 ROM_START( batsugun )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )			/* Main 68K code */
@@ -5013,6 +4340,7 @@ ROM_START( batsugun )
 	ROM_LOAD( "tp030_2.bin", 0x00000, 0x40000, CRC(276146f5) SHA1(bf11d1f6782cefcad77d52af4f7e6054a8f93440) )
 ROM_END
 
+
 ROM_START( batsugna )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )			/* Main 68K code */
 	ROM_LOAD16_WORD_SWAP( "tp030_1a.bin", 0x000000, 0x080000,  CRC(cb1d4554) SHA1(ef31f24d77e1c13bdf5558a04a6253e2e3e6a790) )
@@ -5037,6 +4365,7 @@ ROM_START( batsugna )
 	ROM_REGION( 0x40000, REGION_SOUND1, 0 )			/* ADPCM Samples */
 	ROM_LOAD( "tp030_2.bin", 0x00000, 0x40000, CRC(276146f5) SHA1(bf11d1f6782cefcad77d52af4f7e6054a8f93440) )
 ROM_END
+
 
 ROM_START( batugnsp )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )			/* Main 68K code */
@@ -5063,6 +4392,7 @@ ROM_START( batugnsp )
 	ROM_LOAD( "tp030_2.bin", 0x00000, 0x40000, CRC(276146f5) SHA1(bf11d1f6782cefcad77d52af4f7e6054a8f93440) )
 ROM_END
 
+
 ROM_START( snowbro2 )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )			/* Main 68K code */
 	ROM_LOAD16_WORD_SWAP( "pro-4", 0x000000, 0x080000, CRC(4c7ee341) SHA1(ad46c605a38565d0148daac301be4e4b72302fe7) )
@@ -5077,9 +4407,9 @@ ROM_START( snowbro2 )
 	ROM_LOAD( "rom4", 0x00000, 0x80000, CRC(638f341e) SHA1(aa3fca25f099339ece1878ea730c5e9f18ec4823) )
 ROM_END
 
-/* -------------------------- Raizing games ------------------------- */
 
-/* one of these sstriker sets might be bad .. they're very similar */
+/* -------------------------- Raizing games ------------------------- */
+/* one of these sstriker sets might be bad .. they're very similar    */
 
 ROM_START( sstriker )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )			/* Main 68K code */
@@ -5098,6 +4428,7 @@ ROM_START( sstriker )
 	ROM_REGION( 0x40000, REGION_SOUND1, 0 )			/* ADPCM Samples */
 	ROM_LOAD( "ra_ma_01.06", 0x00000, 0x40000, CRC(6edb2ab8) SHA1(e3032e8eda2686f30df4b7a088c5a4d4d45782ed) )
 ROM_END
+
 
 ROM_START( sstrikra )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )			/* Main 68K code */
@@ -5136,6 +4467,7 @@ ROM_START( mahoudai )
 	ROM_LOAD( "ra_ma_01.06", 0x00000, 0x40000, CRC(6edb2ab8) SHA1(e3032e8eda2686f30df4b7a088c5a4d4d45782ed) )
 ROM_END
 
+
 ROM_START( kingdmgp )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )			/* Main 68K code */
 	ROM_LOAD16_BYTE( "ma02rom1.bin", 0x000000, 0x080000, CRC(a678b149) SHA1(8c1a631e023dbba0a3fa6cd1b7d10dec1663213a) )
@@ -5155,6 +4487,7 @@ ROM_START( kingdmgp )
 	ROM_LOAD( "ma02rom6.bin", 0x00000, 0x80000, CRC(199e7cae) SHA1(0f5e13cc8ec42c80bb4bbff90aba29cdb15213d4) )
 ROM_END
 
+
 ROM_START( shippumd )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )			/* Main 68K code */
 	ROM_LOAD16_BYTE( "ma02rom1.bin", 0x000000, 0x080000, CRC(a678b149) SHA1(8c1a631e023dbba0a3fa6cd1b7d10dec1663213a) )
@@ -5173,6 +4506,7 @@ ROM_START( shippumd )
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 )			/* ADPCM Samples */
 	ROM_LOAD( "ma02rom6.bin", 0x00000, 0x80000, CRC(199e7cae) SHA1(0f5e13cc8ec42c80bb4bbff90aba29cdb15213d4) )
 ROM_END
+
 
 ROM_START( battleg )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )			/* Main 68K code */
@@ -5196,6 +4530,7 @@ ROM_START( battleg )
 	ROM_LOAD( "rom5.bin", 0x040000, 0x100000, CRC(f6d49863) SHA1(3a3c354852adad06e8a051511abfab7606bce382) )
 ROM_END
 
+
 ROM_START( battlega )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )			/* Main 68K code */
 	ROM_LOAD16_BYTE( "prg0.bin", 0x000000, 0x080000, CRC(f80c2fc2) SHA1(a9aac5c7f5439b6fe8d1b3db1fb02a27cc28fdf6) )
@@ -5217,6 +4552,7 @@ ROM_START( battlega )
 	ROM_REGION( 0x140000, REGION_SOUND1, 0 )		/* ADPCM Samples */
 	ROM_LOAD( "rom5.bin", 0x040000, 0x100000, CRC(f6d49863) SHA1(3a3c354852adad06e8a051511abfab7606bce382) )
 ROM_END
+
 
 ROM_START( battlegb )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )			/* Main 68K code */
@@ -5240,6 +4576,7 @@ ROM_START( battlegb )
 	ROM_LOAD( "rom5.bin", 0x040000, 0x100000, CRC(f6d49863) SHA1(3a3c354852adad06e8a051511abfab7606bce382) )
 ROM_END
 
+
 ROM_START( battlegc )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )			/* Main 68K code */
 	ROM_LOAD16_BYTE( "prg_0.rom", 0x000000, 0x080000, CRC(26e0019e) SHA1(5197001f5d59246b137e19ed1952a8207b25d4c0) )
@@ -5261,6 +4598,7 @@ ROM_START( battlegc )
 	ROM_REGION( 0x140000, REGION_SOUND1, 0 )		/* ADPCM Samples */
 	ROM_LOAD( "rom5.bin", 0x040000, 0x100000, CRC(f6d49863) SHA1(3a3c354852adad06e8a051511abfab7606bce382) )
 ROM_END
+
 
 ROM_START( batrider )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )			/* Main 68k code */
@@ -5286,6 +4624,7 @@ ROM_START( batrider )
 	ROM_LOAD( "rom-6.bin", 0x040000, 0x100000, CRC(2a1c2426) SHA1(8abc3688ffc5ebb94b8d5118d4fa0908f07fe791) )
 ROM_END
 
+
 ROM_START( batridra )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )			/* Main 68k code */
 	ROM_LOAD16_BYTE( "prg0.bin", 0x000000, 0x080000, CRC(f93ea27c) SHA1(41023c2ee1efd70b5aa9c70e1ddd9e5c3d51d68a) )
@@ -5309,6 +4648,7 @@ ROM_START( batridra )
 	ROM_REGION( 0x140000, REGION_SOUND2, 0 )		/* ADPCM Samples 2 */
 	ROM_LOAD( "rom-6.bin", 0x040000, 0x100000, CRC(2a1c2426) SHA1(8abc3688ffc5ebb94b8d5118d4fa0908f07fe791) )
 ROM_END
+
 
 ROM_START( batridrk )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )			/* Main 68k code */
@@ -5334,6 +4674,7 @@ ROM_START( batridrk )
 	ROM_LOAD( "rom-6.bin", 0x040000, 0x100000, CRC(2a1c2426) SHA1(8abc3688ffc5ebb94b8d5118d4fa0908f07fe791) )
 ROM_END
 
+
 ROM_START( bbakraid )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )			/* Main 68k code */
 	ROM_LOAD16_BYTE( "prg0u022.bin", 0x000000, 0x080000, CRC(0dd59512) SHA1(c6a4e6aa49c6ac3b04ae62a0a4cc8084ae048381) )
@@ -5356,6 +4697,7 @@ ROM_START( bbakraid )
 	ROM_LOAD( "rom7.830", 0x400000, 0x400000, CRC(d6224267) SHA1(5c9b7b13effbef9f707811f84bfe50ca85e605e3) )
 	ROM_LOAD( "rom8.831", 0x800000, 0x400000, CRC(a101dfb0) SHA1(4b729b0d562e09df35438e9e6b457b8de2690a6e) )
 ROM_END
+
 
 ROM_START( bbakradu )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 )			/* Main 68k code */
@@ -5387,11 +4729,12 @@ ROM_END
 /* Whoopee machine to be changed to Teki Paki when (if) HD647180 is dumped */
 /* Whoopee  init   to be changed to T2_Z180   when (if) HD647180 is dumped */
 
-/*   ( YEAR  NAME      PARENT    MACHINE   INPUT     INIT      MONITOR COMPANY    FULLNAME     FLAGS ) */
+/*  ( YEAR  NAME      PARENT    MACHINE   INPUT     INIT      MONITOR COMPANY    FULLNAME     FLAGS ) */
 GAME( 1991, tekipaki, 0,        tekipaki, tekipaki, T2_Z180,  ROT0,   "Toaplan", "Teki Paki", GAME_NO_SOUND )
 GAME( 1991, ghox,     0,        ghox,     ghox,     T2_Z180,  ROT270, "Toaplan", "Ghox", GAME_NO_SOUND )
 GAME( 1992, dogyuun,  0,        dogyuun,  dogyuun,  T2_V25,   ROT270, "Toaplan", "Dogyuun", GAME_NO_SOUND )
 GAME( 1993, kbash,    0,        kbash,    kbash,    T2_V25,   ROT0,   "Toaplan", "Knuckle Bash", GAME_IMPERFECT_SOUND )
+GAME( 1999, kbash2,   0,        kbash2,   kbash2,   T2_noZ80, ROT0,   "bootleg", "Knuckle Bash 2 (bootleg)", 0 )
 GAME( 1992, truxton2, 0,        truxton2, truxton2, T2_noZ80, ROT270, "Toaplan", "Truxton II / Tatsujin II / Tatsujin Oh (Japan)", 0 )
 GAME( 1991, pipibibs, 0,        pipibibs, pipibibs, T2_Z80,   ROT0,   "Toaplan", "Pipi & Bibis / Whoopee!!", 0 )
 GAME( 1991, whoopee,  pipibibs, whoopee,  whoopee,  T2_Z80,   ROT0,   "Toaplan", "Whoopee!! / Pipi & Bibis", 0 )

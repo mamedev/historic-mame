@@ -51,7 +51,7 @@
 #define DEBUG_VIEW_STYLE_EX		0
 
 // edit box styles
-#define EDIT_BOX_STYLE			WS_CHILD | WS_VISIBLE
+#define EDIT_BOX_STYLE			WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL
 #define EDIT_BOX_STYLE_EX		0
 
 // combo box styles
@@ -88,6 +88,8 @@ enum
 	ID_2_BYTE_CHUNKS,
 	ID_4_BYTE_CHUNKS,
 	ID_REVERSE_VIEW,
+	ID_INCREASE_MEM_WIDTH,
+	ID_DECREASE_MEM_WIDTH,
 
 	ID_SHOW_RAW,
 	ID_SHOW_ENCRYPTED,
@@ -891,7 +893,6 @@ static void debug_view_draw_contents(debugview_info *view, HDC windc)
 				// if the attribute changed, adjust the colors
 				if (viewdata[col].attrib != last_attrib)
 				{
-//                  COLORREF oldfg = fgcolor;
 					COLORREF oldbg = bgcolor;
 
 					// reset to standard colors
@@ -1784,6 +1785,9 @@ static void memory_create_window(void)
 	AppendMenu(optionsmenu, MF_ENABLED, ID_4_BYTE_CHUNKS, "4-byte chunks\tCtrl+4");
 	AppendMenu(optionsmenu, MF_DISABLED | MF_SEPARATOR, 0, "");
 	AppendMenu(optionsmenu, MF_ENABLED, ID_REVERSE_VIEW, "Reverse View\tCtrl+R");
+	AppendMenu(optionsmenu, MF_DISABLED | MF_SEPARATOR, 0, "");
+	AppendMenu(optionsmenu, MF_ENABLED, ID_INCREASE_MEM_WIDTH, "Increase bytes per line\tCtrl+P");
+	AppendMenu(optionsmenu, MF_ENABLED, ID_DECREASE_MEM_WIDTH, "Decrease bytes per line\tCtrl+O");
 	AppendMenu(GetMenu(info->wnd), MF_ENABLED | MF_POPUP, (UINT_PTR)optionsmenu, "Options");
 	memory_update_checkmarks(info);
 
@@ -1993,6 +1997,18 @@ static int memory_handle_command(debugwin_info *info, WPARAM wparam, LPARAM lpar
 					debug_view_end_update(info->view[0].view);
 					memory_update_checkmarks(info);
 					return 1;
+
+				case ID_INCREASE_MEM_WIDTH:
+					debug_view_begin_update(info->view[0].view);
+					debug_view_set_property_UINT32(info->view[0].view, DVP_MEM_WIDTH, debug_view_get_property_UINT32(info->view[0].view, DVP_MEM_WIDTH) + 1);
+					debug_view_end_update(info->view[0].view);
+					return 1;
+
+				case ID_DECREASE_MEM_WIDTH:
+					debug_view_begin_update(info->view[0].view);
+					debug_view_set_property_UINT32(info->view[0].view, DVP_MEM_WIDTH, debug_view_get_property_UINT32(info->view[0].view, DVP_MEM_WIDTH) - 1);
+					debug_view_end_update(info->view[0].view);
+					return 1;
 			}
 			break;
 	}
@@ -2025,6 +2041,14 @@ static int memory_handle_key(debugwin_info *info, WPARAM wparam, LPARAM lparam)
 
 			case 'R':
 				SendMessage(info->wnd, WM_COMMAND, ID_REVERSE_VIEW, 0);
+				return 1;
+
+			case 'P':
+				SendMessage(info->wnd, WM_COMMAND, ID_INCREASE_MEM_WIDTH, 0);
+				return 1;
+
+			case 'O':
+				SendMessage(info->wnd, WM_COMMAND, ID_DECREASE_MEM_WIDTH, 0);
 				return 1;
 		}
 	}
