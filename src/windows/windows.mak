@@ -20,6 +20,9 @@
 # for details
 #-------------------------------------------------
 
+# uncomment next line to enable a build using Microsoft tools
+# MSVC_BUILD = 1
+
 # uncomment next line to enable multi-monitor stubs on Windows 95/NT
 # you will need to find multimon.h and put it into your include
 # path in order to make this work
@@ -30,6 +33,58 @@
 ###########################################################################
 ##################   END USER-CONFIGURABLE OPTIONS   ######################
 ###########################################################################
+
+
+#-------------------------------------------------
+# configure the resource compiler
+#-------------------------------------------------
+
+RC = @windres --use-temp-file
+
+RCDEFS = -DNDEBUG -D_WIN32_IE=0x0400
+
+RCFLAGS = -O coff --include-dir src/$(MAMEOS)
+
+
+
+#-------------------------------------------------
+# overrides for the MSVC compiler
+#-------------------------------------------------
+
+ifdef MSVC_BUILD
+
+# replace the various compilers with vconv.exe prefixes
+CC = @$(OBJ)/vconv.exe gcc /wd4025 /I.
+LD = @$(OBJ)/vconv.exe ld /subsystem:console /debug
+AR = @$(OBJ)/vconv.exe ar
+RC = @$(OBJ)/vconv.exe windres
+
+# turn on link-time codegen if the MAXOPT flag is also set
+ifdef MAXOPT
+CC += /GL
+LD += /LTCG
+endif
+
+# filter X86_ASM define
+DEFS := $(filter-out -DX86_ASM,$(DEFS))
+
+# add some VC++-specific defines
+DEFS += -DNONAMELESSUNION -D_CRT_SECURE_NO_DEPRECATE -DXML_STATIC -D__inline__=__inline -Dsnprintf=_snprintf -Dvsnprintf=_vsnprintf
+
+# make msvcprep into a pre-build step
+OSPREBUILD = msvcprep
+
+# rules for building vconv using the mingw tools for bootstrapping
+msvcprep: $(OBJ)/vconv.exe
+
+$(OBJ)/vconv.exe: $(OBJ)/windows/vconv.o
+	@gcc $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@
+
+$(OBJ)/windows/vconv.o: src/windows/vconv.c
+	@gcc $(CDEFS) $(CFLAGSOSDEPEND) -c $< -o $@
+
+endif
+
 
 
 #-------------------------------------------------
@@ -64,7 +119,7 @@ CFLAGS += -DWIN95_MULTIMON
 endif
 
 # add the windows libaries
-LIBS += -luser32 -lgdi32 -lddraw -ldsound -ldinput -ldxguid -lwinmm
+LIBS += -luser32 -lgdi32 -lddraw -ldsound -ldinput -ldxguid -lwinmm -ladvapi32 -lshell32
 
 
 
@@ -73,8 +128,6 @@ LIBS += -luser32 -lgdi32 -lddraw -ldsound -ldinput -ldxguid -lwinmm
 #-------------------------------------------------
 
 OSOBJS = \
-	$(OBJ)/$(MAMEOS)/asmblit.o \
-	$(OBJ)/$(MAMEOS)/asmtile.o \
 	$(OBJ)/$(MAMEOS)/blit.o \
 	$(OBJ)/$(MAMEOS)/config.o \
 	$(OBJ)/$(MAMEOS)/fileio.o \
@@ -93,6 +146,13 @@ OSOBJS = \
 
 OSTOOLOBJS = \
 	$(OBJ)/$(MAMEOS)/osd_tool.o
+
+# add 32-bit optimized blitters
+ifndef PTR64
+OSOBJS += \
+	$(OBJ)/$(MAMEOS)/asmblit.o \
+	$(OBJ)/$(MAMEOS)/asmtile.o
+endif
 
 # add debug-specific files
 ifdef DEBUG
@@ -148,18 +208,6 @@ ifneq ($(WINUI),)
 CFLAGS += -DWINUI=1
 include src/ui/ui.mak
 endif
-
-
-
-#-------------------------------------------------
-# configure resources
-#-------------------------------------------------
-
-RC = @windres --use-temp-file
-
-RCDEFS = -DNDEBUG -D_WIN32_IE=0x0400
-
-RCFLAGS = -O coff --include-dir src/$(MAMEOS)
 
 
 

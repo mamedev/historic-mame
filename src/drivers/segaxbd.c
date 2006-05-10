@@ -1819,7 +1819,7 @@ ROM_START( smgp5 )
 	ROM_LOAD( "mpr12438.12",    0x20000, 0x20000, CRC(6573d46b) SHA1(c4a4a0ea35250eff28a5bfd5e9cd372f52fd1308) )
 //  ROM_LOAD( "mpr12439.13",    0x40000, 0x20000, CRC(13bf6de5) SHA1(92228a05ec33d606491a1da98c4989f69cddbb49) ) // not here on this set
 
-	ROM_REGION( 0x10000, REGION_CPU4, 0 ) /* comms */
+	ROM_REGION( 0x10000, REGION_CPU4, ROMREGION_ERASE00 ) /* comms */
 	/* no comms? */
 
 	ROM_REGION( 0x10000, REGION_CPU5, 0 ) /* z80 on extra sound board */

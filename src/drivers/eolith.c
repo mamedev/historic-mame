@@ -27,6 +27,7 @@
  Games dumped
  - Hidden Catch (pcb ver 3.03)
  - New Hidden Catch (pcb ver 3.02)
+ - Hidden Catch 2 (pcb ver 3.03)
  - Land Breaker (pcb ver 3.03) (MCU internal flash dump is missing)
  - Land Breaker (pcb ver 3.02)
  - Raccoon World
@@ -341,6 +342,90 @@ ROM_START( nhidctch )
 	ROM_LOAD( "qs1001a.u96",  0x000000, 0x80000, CRC(d13c6407) SHA1(57b14f97c7d4f9b5d9745d3571a0b7115fbe3176) )
 ROM_END
 
+/*
+Hidden Catch 2
+Eolith, 1999
+
+PCB Layout
+----------
+
+GRADATION VER 3.03M
+|-------------------------------------------------|
+|    TDA1519 VOL    KM6161002 KM6161002  IS61C1024|
+|            VOL                                  |
+|         DA1311    KM6161002 KM6161002  IS61C1024|
+|     24MHz       QS1001A  DSW(4)                 |
+|          QS1000              DSW(4)    IS61C1024|
+|            U107   U97  EV0514-001               |
+|J                                       IC61C1024|
+|A                     14.31818MHz                |
+|M  SERVICE_SW                        E1-32N      |
+|M  TEST_SW                                       |
+|A     93C66                        50MHz         |
+|                                                 |
+|              |---------Sub Board (above)--------|
+|            AT89C52                         7705 |
+|       12MHz  |                                  |
+|              |                                  |
+|           U108    U41   U39   U37   U35    U43  |
+|      U111    | U42   U40   U38   U36   U34      |
+|              |                                  |
+|--------------|----------------------------------|
+Notes:
+      E1-32N       - Hyperstone E1-32N CPU, clock 50.000MHz (QFP160)
+      AT89C52      - Atmel AT89C52 Microcontroller w/8k internal FlashROM, clock 12.000MHz
+      IS61C1024    - ISSI 128k x8 High Speed CMOS Static RAM (SOJ32)
+      KM6161002    - Samsung 64k x16 Ultra High Speed CMOS Video Static RAM (SOJ44)
+      TDA1519      - Audio Power AMP
+      QS1000       - QDSP QS1000 AdMOS 9638R, Wavetable Audio chip, clock input of 24.000MHz (QFP100)
+                     see http://www.hwass.co.kr/product.htm for more info on QS100x chips.
+      QS1001A      - QDSP QS1001A 512k x8 MaskROM (SOP32)
+      EV0514-001   - Custom Eolith IC (QFP100)
+      VSync        - 60Hz
+      HSync        - 15.64kHz
+
+      Main board has ROMs populated at U108, U43, U107 & U97 ONLY
+      Sub Board contains 16x MX29F1610 16M FlashROMs. The filename is the location stamped on the PCB (SOP44)
+*/
+
+ROM_START( hidctch2 )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* Hyperstone CPU Code */
+	ROM_LOAD( "u43",        0x00000, 0x80000, CRC(326d1dbc) SHA1(b33434cd263dc40ee2b6562f72a87a0439a9833e) )
+
+	ROM_REGION32_BE( 0x2000000, REGION_USER1, ROMREGION_ERASE00 ) /* Game Data - banked ROM, swapping necessary */
+	ROM_LOAD32_WORD_SWAP( "00", 0x0000000, 0x200000, CRC(c6b1bc84) SHA1(205d1dc5079562b11cef72fef25a3c570eaecf78) )
+	ROM_LOAD32_WORD_SWAP( "01", 0x0000002, 0x200000, CRC(5a1c1ab3) SHA1(3c07a98f9ea8b30bac5a260403e688314fd12abb) )
+	ROM_LOAD32_WORD_SWAP( "02", 0x0400000, 0x200000, CRC(3f7815aa) SHA1(ed46cbe03fde5cab15e004812036b0aaa00fc628) )
+	ROM_LOAD32_WORD_SWAP( "03", 0x0400002, 0x200000, CRC(d686c59b) SHA1(f82d97f17d9cb10cae4d47f4efdd3ba6c5baace3) )
+	ROM_LOAD32_WORD_SWAP( "04", 0x0800000, 0x200000, CRC(d35cb515) SHA1(75943b6c8052232c8b01ab57b4d32d54a22e7279) )
+	ROM_LOAD32_WORD_SWAP( "05", 0x0800002, 0x200000, CRC(7870e5c6) SHA1(e36a62cb205d396337abdea8e553d70b6da32f8f) )
+	ROM_LOAD32_WORD_SWAP( "06", 0x0c00000, 0x200000, CRC(10184a21) SHA1(fc99bc003ba69b651691ca37a5490beae29e36bc) )
+	ROM_LOAD32_WORD_SWAP( "07", 0x0c00002, 0x200000, CRC(b6c4879f) SHA1(b672d5d7fc3dd1b32cd2f1084a71d1a225594866) )
+	ROM_LOAD32_WORD_SWAP( "08", 0x1000000, 0x200000, CRC(670204d1) SHA1(efdead17ea1d1796f47abf65dc4792a10406b45c) )
+	ROM_LOAD32_WORD_SWAP( "09", 0x1000002, 0x200000, CRC(28c0f55c) SHA1(0390aaf272deb1338293823d9d3a27306b2d9db6) )
+	ROM_LOAD32_WORD_SWAP( "10", 0x1400000, 0x200000, CRC(45f374f4) SHA1(a5cec2fcb58445e0ff74c86b20aba7accd132ea5) )
+	ROM_LOAD32_WORD_SWAP( "11", 0x1400002, 0x200000, CRC(cac54db3) SHA1(c31366e22d242ec0c0bb9f79869352894173db88) )
+	ROM_LOAD32_WORD_SWAP( "12", 0x1800000, 0x200000, CRC(66e681ff) SHA1(8f78dec1dc3e5c6825f559cef69e413c98ed9aab) )
+	ROM_LOAD32_WORD_SWAP( "13", 0x1800002, 0x200000, CRC(14bd38a9) SHA1(a3ff48de8150616a8ca49abf60225455397b938c) )
+	ROM_LOAD32_WORD_SWAP( "14", 0x1c00000, 0x200000, CRC(8eb1b01b) SHA1(e144ba01aa65dc96e22d1d41c3ca87ae19e874d5) )
+	ROM_LOAD32_WORD_SWAP( "15", 0x1c00002, 0x200000, CRC(3b06fe4e) SHA1(35356a116e6b825b8ed93c8ea1e016491ac1863a) )
+
+	ROM_REGION( 0x008000, REGION_CPU2, 0 ) /* QDSP ('51) Code */
+	ROM_LOAD( "u107",        0x0000, 0x8000, CRC(89450a2f) SHA1(d58efa805f497bec179fdbfb8c5860ac5438b4ec) )
+
+	ROM_REGION( 0x000800, REGION_CPU3, 0 ) /* AT89c52 */
+	ROM_LOAD( "hc2.103",     0x0000, 0x0800, NO_DUMP ) /* MCU internal 8K flash */
+
+	ROM_REGION( 0x080000, REGION_SOUND1, 0 ) /* Music data */
+	ROM_LOAD( "u108",        0x00000, 0x80000, CRC(75fc7a65) SHA1(308715ab62d28787ee894ddcf7304464e2543b2e) )
+
+	ROM_REGION( 0x080000, REGION_SOUND2, 0 ) /* QDSP samples (SFX) */
+	ROM_LOAD( "u97",        0x00000, 0x80000, CRC(a7a1627e) SHA1(a93ced858d839daac1fa9a85f4f8c89cb179bad5) )
+
+	ROM_REGION( 0x080000, REGION_SOUND3, 0 ) /* QDSP wavetable rom */
+	ROM_LOAD( "qs1001a.u96",  0x000000, 0x80000, CRC(d13c6407) SHA1(57b14f97c7d4f9b5d9745d3571a0b7115fbe3176) )
+ROM_END
+
 
 /*
 
@@ -633,11 +718,19 @@ static DRIVER_INIT( landbrka )
 	coin_counter_bit = 0x2000;
 }
 
+static DRIVER_INIT( hidctch2 )
+{
+	//it fails compares in memory like in landbrka
+	UINT32 *rombase = (UINT32*)memory_region(REGION_CPU1);
+	rombase[0xbcc8/4] = (rombase[0xbcc8/4] & 0xffff) | 0x03000000; /* Change BR to NOP */
+}
+
 GAME( 1998, hidnctch, 0,       eolith, hidnctch, 0,        ROT0, "Eolith", "Hidden Catch (World) / Tul Lin Gu Lim Chat Ki '98 (Korea) (pcb ver 3.03)",  GAME_NO_SOUND ) // or Teurrin Geurim Chajgi '98
+GAME( 1998, raccoon,  0,       eolith, raccoon,  0,        ROT0, "Eolith", "Raccoon World", GAME_NO_SOUND )
 GAME( 1998, puzzlekg, 0,       eolith, puzzlekg, 0,        ROT0, "Eolith", "Puzzle King (Dance & Puzzle)",  GAME_NO_SOUND )
-GAME( 1999, nhidctch, 0,       eolith, hidnctch, 0,        ROT0, "Eolith", "New Hidden Catch (World) / New Tul Lin Gu Lim Chat Ki '98 (Korea) (pcb ver 3.02)", GAME_NO_SOUND ) // or New Teurrin Geurim Chajgi '98
+GAME( 1999, hidctch2, 0,       eolith, hidnctch, hidctch2, ROT0, "Eolith", "Hidden Catch 2 (pcb ver 3.03)", GAME_NO_SOUND )
 GAME( 1999, landbrk,  0,       eolith, landbrk,  landbrk,  ROT0, "Eolith", "Land Breaker (World) / Miss Tang Ja Ru Gi (Korea) (pcb ver 3.02)",  GAME_NO_SOUND ) // or Miss Ttang Jjareugi
 GAME( 1999, landbrka, landbrk, eolith, landbrk,  landbrka, ROT0, "Eolith", "Land Breaker (World) / Miss Tang Ja Ru Gi (Korea) (pcb ver 3.03)",  GAME_NO_SOUND ) // or Miss Ttang Jjareugi
-GAME( 1998, raccoon,  0,       eolith, raccoon,  0,        ROT0, "Eolith", "Raccoon World", GAME_NO_SOUND )
+GAME( 1999, nhidctch, 0,       eolith, hidnctch, 0,        ROT0, "Eolith", "New Hidden Catch (World) / New Tul Lin Gu Lim Chat Ki '98 (Korea) (pcb ver 3.02)", GAME_NO_SOUND ) // or New Teurrin Geurim Chajgi '98
 GAME( 2001, fort2b,   0,       eolith, common,   0,        ROT0, "Eolith", "Fortress 2 Blue Arcade (ver 1.01 / pcb ver 3.05)",  GAME_NO_SOUND )
 GAME( 2001, fort2ba,  fort2b,  eolith, common,   0,        ROT0, "Eolith", "Fortress 2 Blue Arcade (ver 1.00 / pcb ver 3.05)",  GAME_NO_SOUND )

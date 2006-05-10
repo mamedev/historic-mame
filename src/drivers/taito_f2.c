@@ -519,12 +519,6 @@ static READ16_HANDLER( deadconx_input_r )
 
 		case 0x06:
 			return input_port_1_word_r(0,mem_mask); /* IN1 */
-
-		case 0x07:
-			return input_port_5_word_r(0,mem_mask); /* IN3 */
-
-		case 0x08:
-			return input_port_6_word_r(0,mem_mask); /* IN4 */
     }
 
 logerror("CPU #0 PC %06x: warning - read unmapped input offset %06x\n",activecpu_get_pc(),offset);
@@ -3037,8 +3031,6 @@ INPUT_PORTS_START( deadconx )
 	PORT_START      /* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN4 )
 	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Service A") PORT_CODE(KEYCODE_9)
 	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Service B") PORT_CODE(KEYCODE_0)
 	PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Service C") PORT_CODE(KEYCODE_MINUS)
@@ -3057,7 +3049,7 @@ INPUT_PORTS_START( deadconx )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	TAITO_COINAGE_WORLD_8
 
-	PORT_START /* DSW B, missing a timer speed maybe? */
+	PORT_START_TAG("DSWB") /* DSW B, missing a timer speed maybe? */
 	TAITO_DIFFICULTY_8
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
@@ -3076,16 +3068,6 @@ INPUT_PORTS_START( deadconx )
 	PORT_DIPNAME( 0x80, 0x80, "Game Type" )
 	PORT_DIPSETTING(    0x00, "1 Player only" )
 	PORT_DIPSETTING(    0x80, "Multiplayer" )
-
-	/* IN3 */
-	TAITO_F2_PLAYERS_INPUT( 3 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START3 )
-
-	/* IN4 */
-	TAITO_F2_PLAYERS_INPUT( 4 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START4 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( deadconj )

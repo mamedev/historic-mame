@@ -253,9 +253,9 @@ static const gfx_layout sprites =
 
 static const gfx_decode gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &tiles,       0,  16 }, /* Dynamically modified */
-	{ REGION_GFX1, 0, &sprites,   256,  16 }, /* Dynamically modified */
-	{ REGION_GFX1, 0, &tiles  ,   256,  16 }, /* Blank tile */
+	{ 0, 0, &tiles,       0,  16 }, /* Dynamically modified */
+	{ 0, 0, &sprites,   256,  16 }, /* Dynamically modified */
+	{ 0, 0, &tiles  ,   256,  16 }, /* Blank tile */
 	{ -1 } /* end of array */
 };
 
@@ -329,9 +329,6 @@ ROM_START( bldwolf )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Sound CPU */
 	ROM_LOAD( "es11.rom",   0x00000, 0x10000, CRC(f5b29c9c) SHA1(44dcdf96f8deb9a29aa9d94a8b9cf91a0ed808d4) )
-
-	ROM_REGION( 0x80000, REGION_GFX1, 0 )
-	/* Nothing */
 ROM_END
 
 ROM_START( battlera )
@@ -350,9 +347,6 @@ ROM_START( battlera )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Sound CPU */
 	ROM_LOAD( "es11.rom",  0x00000, 0x10000, CRC(f5b29c9c) SHA1(44dcdf96f8deb9a29aa9d94a8b9cf91a0ed808d4) )
-
-	ROM_REGION( 0x80000, REGION_GFX1, 0 )
-	/* Nothing */
 ROM_END
 
 /******************************************************************************/

@@ -711,8 +711,6 @@ ROM_START( turbo )
 	ROM_LOAD( "epr1242.rom", 0x3800, 0x0800, CRC(04866769) SHA1(1f9c0d53766fdaf8de57d3df05f291c2ca3dc5fb) )
 	ROM_LOAD( "epr1243.rom", 0x4000, 0x0800, CRC(29854c48) SHA1(cab89bc30f83d9746931ddf6f95a6d0c8a517e5d) )
 
-	ROM_REGION( 0x200, REGION_GFX4, 0 )		/* number data (copied at init time) */
-
 	ROM_REGION( 0x1000, REGION_PROMS, 0 )	/* various PROMs */
 	ROM_LOAD( "pr1121.bin",	 0x0000, 0x0200, CRC(7692f497) SHA1(42468c0705df9928e15ff8deb7e793a6c0c04353) )	/* palette */
 	ROM_LOAD( "pr1122.bin",	 0x0200, 0x0400, CRC(1a86ce70) SHA1(cab708b9a089b2e28f2298c1e4fae6e200923527) )	/* sprite priorities */
@@ -767,8 +765,6 @@ ROM_START( turboa )
 	ROM_LOAD( "epr1242.rom", 0x3800, 0x0800, CRC(04866769) SHA1(1f9c0d53766fdaf8de57d3df05f291c2ca3dc5fb) )
 	ROM_LOAD( "epr1243.rom", 0x4000, 0x0800, CRC(29854c48) SHA1(cab89bc30f83d9746931ddf6f95a6d0c8a517e5d) )
 
-	ROM_REGION( 0x200, REGION_GFX4, 0 )		/* number data (copied at init time) */
-
 	ROM_REGION( 0x1000, REGION_PROMS, 0 )	/* various PROMs */
 	ROM_LOAD( "pr1121.bin",	 0x0000, 0x0200, CRC(7692f497) SHA1(42468c0705df9928e15ff8deb7e793a6c0c04353) )	/* palette */
 	ROM_LOAD( "pr1122.bin",	 0x0200, 0x0400, CRC(1a86ce70) SHA1(cab708b9a089b2e28f2298c1e4fae6e200923527) )	/* sprite priorities */
@@ -822,8 +818,6 @@ ROM_START( turbob )
 	ROM_LOAD( "epr1241.rom", 0x3000, 0x0800, CRC(1109358a) SHA1(27a5351a4e87309671e72115299420315a93dba6) )
 	ROM_LOAD( "epr1242.rom", 0x3800, 0x0800, CRC(04866769) SHA1(1f9c0d53766fdaf8de57d3df05f291c2ca3dc5fb) )
 	ROM_LOAD( "epr1243.rom", 0x4000, 0x0800, CRC(29854c48) SHA1(cab89bc30f83d9746931ddf6f95a6d0c8a517e5d) )
-
-	ROM_REGION( 0x200, REGION_GFX4, 0 )		/* number data (copied at init time) */
 
 	ROM_REGION( 0x1000, REGION_PROMS, 0 )	/* various PROMs */
 	ROM_LOAD( "pr1121.bin",	 0x0000, 0x0200, CRC(7692f497) SHA1(42468c0705df9928e15ff8deb7e793a6c0c04353) )	/* palette */

@@ -313,6 +313,8 @@ CGLOBAL %1
 ;//	16bpp to 16bpp blitters (1x scale)
 ;//============================================================
 
+[SECTION .text]
+
 SNIPPET_BEGIN asmblit1_16_to_16_x1
 	movzx	eax,word [esi+FIXUPPIXEL(0)]
 	mov		eax,[ecx+eax*4]
@@ -1174,8 +1176,6 @@ SNIPPET_BEGIN asmblit16_32_to_32_x3
 	%endrep
 SNIPPET_END
 
-
-[SECTION .text]
 
 
 ;//============================================================

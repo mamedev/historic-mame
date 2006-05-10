@@ -1230,7 +1230,7 @@ static HRESULT CALLBACK enum_textures_callback(LPDDPIXELFORMAT pixelformat, LPVO
 static int create_blit_surface(void)
 {
 	DDPIXELFORMAT preferred_pixelformat = { 0 };
-	int width, height;
+	int width = 640, height = 480;
 	int texture_width = 256, texture_height = 256;
 	HRESULT result;
 	int done = 0;

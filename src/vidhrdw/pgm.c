@@ -62,7 +62,7 @@ static void pgm_drawspriteline(int wide, UINT16* dest, int xzoom, int xgrow, int
 	int xcnt,xcntdraw;
 	int xzoombit;
 	int xoffset;
-	int xdrawpos;
+	int xdrawpos = 0;
 
 	xcnt = 0;
 	xcntdraw = 0;

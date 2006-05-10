@@ -6,6 +6,7 @@
  ---------------------------------------------------------------------------
  - X-Files                             (c) 1999 dgPIX Entertainment Inc.
  - King of Dynast Gear (version 1.8)   (c) 1999 EZ Graphics [*]
+ - Fishing Maniac 3                    (c) 2002 Saero Entertainment
 
  [*] the version number is written at the beginning of the game settings
 
@@ -21,6 +22,9 @@
 
 
  driver by Pierpaolo Prazzoli & Tomasz Slanina
+
+ - Pierpaolo Prazzoli 2006.05.06
+    - added Fishing Maniac 3
 
  - Pierpaolo Prazzoli 2006.01.16
    - added King of Dynast Gear (protection patched by Tomasz)
@@ -193,16 +197,10 @@ static WRITE32_HANDLER( coin_w )
 	coin_counter_w(1, data & 2);
 }
 
-static ADDRESS_MAP_START( rev4_map, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x00000000, 0x003fffff) AM_RAM
-	AM_RANGE(0x40000000, 0x4003ffff) AM_READWRITE(vram_r, vram_w)
-	AM_RANGE(0xe0000000, 0xe1ffffff) AM_READWRITE(flash_r, flash_w)
-	AM_RANGE(0xffc00000, 0xffffffff) AM_ROM AM_REGION(REGION_USER1, 0x1c00000)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( rev5_map, ADDRESS_SPACE_PROGRAM, 32 )
+static ADDRESS_MAP_START( cpu_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000000, 0x007fffff) AM_RAM
 	AM_RANGE(0x40000000, 0x4003ffff) AM_READWRITE(vram_r, vram_w)
+	AM_RANGE(0xe0000000, 0xe1ffffff) AM_READWRITE(flash_r, flash_w)
 	AM_RANGE(0xe2000000, 0xe3ffffff) AM_READWRITE(flash_r, flash_w)
 	AM_RANGE(0xffc00000, 0xffffffff) AM_ROM AM_REGION(REGION_USER1, 0x1c00000)
 ADDRESS_MAP_END
@@ -251,8 +249,8 @@ void nvram_handler_flashroms(mame_file *file,int read_or_write)
 
 INPUT_PORTS_START( dgpix )
 	PORT_START
-	PORT_BIT( 0x00000001, IP_ACTIVE_LOW, IPT_VBLANK )
-	PORT_BIT( 0xfffffffe, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x00000003, IP_ACTIVE_LOW, IPT_VBLANK ) //value 2 is used by fmaniac3
+	PORT_BIT( 0xfffffffc, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START
 	PORT_BIT( 0x00000001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP	) PORT_8WAY PORT_PLAYER(1)
@@ -300,8 +298,9 @@ VIDEO_UPDATE( dgpix )
 	copybitmap(bitmap,bitmaps[vbuffer ^ 1],0,0,0,0,cliprect,TRANSPARENCY_NONE,0);
 }
 
-static MACHINE_DRIVER_START( common )
-	MDRV_CPU_ADD_TAG("cpu", E132XT, 20000000)
+static MACHINE_DRIVER_START( dgpix )
+	MDRV_CPU_ADD(E132XT, 20000000)
+	MDRV_CPU_PROGRAM_MAP(cpu_map,0)
 	MDRV_CPU_IO_MAP(io_map,0)
 
 /*
@@ -325,18 +324,6 @@ static MACHINE_DRIVER_START( common )
 
 	/* sound hardware */
 	// KS0164 sound chip
-MACHINE_DRIVER_END
-
-static MACHINE_DRIVER_START( rev4_pcb )
-	MDRV_IMPORT_FROM(common)
-	MDRV_CPU_MODIFY("cpu")
-	MDRV_CPU_PROGRAM_MAP(rev4_map,0)
-MACHINE_DRIVER_END
-
-static MACHINE_DRIVER_START( rev5_pcb )
-	MDRV_IMPORT_FROM(common)
-	MDRV_CPU_MODIFY("cpu")
-	MDRV_CPU_PROGRAM_MAP(rev5_map,0)
 MACHINE_DRIVER_END
 
 /*
@@ -386,8 +373,8 @@ CONN1,CONN2,CONN3: Connectors for small daughterboard containing
                    3x DA28F320J5 (32M surface mounted SSOP56 Flash ROM)
 XCS05            : XILINX XCS05 PLD
 B1,B2,B3         : Push Buttons for TEST, SERVICE and RESET
-SEC KS0164       : Manufactured by Samsung Electronics. Possibly sound
-                   related or Sound CPU? (QFP100)
+SEC KS0164       : Samsung Electronics KS0164 General Midi compliant 32-voice Wavetable Synthesizer Chip
+                   with built-in 16bit CPU and MPU-401 compatibility. (QFP100)
 T2316162         : Main program RAM (SOJ44)
 SEC KM6161002    : Graphics RAM (SOJ44)
 
@@ -439,8 +426,8 @@ Notes:
       CONN3
       XCS05        - Xilinx Spartan XCS05 FPGA (QFP100)
       B1,B2,B3     - Push Buttons for TEST, SERVICE and RESET
-      KS0164       - SEC KS0164. Manufactured by Samsung Electronics. Possibly sound
-                     related or Sound CPU? (QFP100)
+      KS0164       - Samsung Electronics KS0164 General Midi compliant 32-voice Wavetable Synthesizer Chip
+                     with built-in 16bit CPU and MPU-401 compatibility. (QFP100)
       K4E151611    - Samsung K4E151611C-JC60 1M x16Bit CMOS EDO DRAM (SOJ44)
       KM6161002    - Samsung KM6161002CJ-12 64k x16Bit High-Speed CMOS SRAM (SOJ44)
 
@@ -475,6 +462,79 @@ ROM_START( kdynastg )
 
 	ROM_REGION( 0x400000, REGION_CPU2, 0 ) /* sound rom */
 	ROM_LOAD16_WORD_SWAP( "flash.u10", 0x0000000, 0x400000, CRC(3f103cb1) SHA1(2ff9bd73f3005f09d872018b81c915b01d6703f5) )
+ROM_END
+
+/*
+Fishing Maniac 3
+Saero Entertainment, 2002
+
+This game runs on hardware that is identical to XFiles and King Of Dynast Gear
+but with less ROMs and no PIC.
+
+PCB Layout
+----------
+
+VRenderO Minus Rev4 dgPIX Entertainment Inc. 1999
+|-----------------------------------------------------|
+|TDA1515                C-O-N-N-1                     |
+|   DA1545A                                       C   |
+|                                                 O   |
+|  VOL1    K4E151611                  KS0164      N   |
+|  VOL2    K4E151611                              N   |
+|J                                    169NDK19    3   |
+|A     20MHz                           CONN2          |
+|M  KA4558                                            |
+|M                                                    |
+|A                                          KM6161002 |
+|          E1-32XT                                    |
+|                                           KM6161002 |
+|                                                     |
+|       ST7705C                             KM6161002 |
+| B1             XCS05                                |
+| B2 B3          14.31818MHz  LED           KM6161002 |
+|-----------------------------------------------------|
+Notes:
+      ST7705C      - Reset/Watchdog IC (SOIC8)
+      E1-32XT      - Hyperstone E1-32XT CPU (QFP144)
+      169NDK19     - Xtal, 16.9344MHz
+      CONN1,CONN2, - Connectors for joining main board to small sub-board
+      CONN3
+      XCS05        - Xilinx Spartan XCS05 FPGA (QFP100)
+      B1,B2,B3     - Push Buttons for TEST, SERVICE and RESET
+      KS0164       - Samsung Electronics KS0164 General Midi compliant 32-voice Wavetable Synthesizer Chip
+                     with built-in 16bit CPU and MPU-401 compatibility. (QFP100)
+      K4E151611    - Samsung K4E151611C-JC60 1M x16 CMOS EDO DRAM (SOJ44)
+      KM6161002    - Samsung KM6161002CJ-12 64k x16 High-Speed CMOS SRAM (SOJ44)
+
+Sub-Board
+---------
+
+Flash Module Type-A REV2 dgPIX Entertainment Inc. 1999
+|---------------------------------------|
+|            C-O-N-N-1            U100  |
+|C                FLASH.U3      FLASH.U5|
+|O        FLASH.U2       FLASH.U4       |
+|N FLASH.U10                            |
+|N                                      |
+|3                FLASH.U7      FLASH.U9|
+|  CONN2  FLASH.U6       FLASH.U8       |
+|---------------------------------------|
+Notes:
+      FLASH        - Intel DA28F320J5 32M x8 StrataFlash surface-mounted FlashROM (SSOP56)
+                     Only U8, U9 & U10 are populated
+      CONN1,CONN2,
+      CONN3        - Connectors for joining small sub-board to main board
+      U100         - Empty 18 pin socket
+*/
+
+ROM_START( fmaniac3 )
+	ROM_REGION32_BE( 0x2000000, REGION_USER1, ROMREGION_ERASE00 ) /* Hyperstone CPU Code & Data */
+	/* 0 - 0x17fffff empty space */
+	ROM_LOAD16_WORD_SWAP( "flash.u8", 0x1800000, 0x400000, CRC(dc08a224) SHA1(4d14145eb84ad13674296f81e90b9d60403fa0de) )
+	ROM_LOAD16_WORD_SWAP( "flash.u9", 0x1c00000, 0x400000, CRC(c1fee95f) SHA1(0ed5ed9fa18e7da9242a6df2c210c46de25a2281) )
+
+	ROM_REGION( 0x400000, REGION_CPU2, 0 ) /* sound rom */
+	ROM_LOAD16_WORD_SWAP( "flash.u10", 0x000000, 0x400000, CRC(dfeb91a0) SHA1(a4a79073c3f6135957ea8a4a66a9c71a3a39893c) )
 ROM_END
 
 static DRIVER_INIT( xfiles )
@@ -514,5 +574,11 @@ static DRIVER_INIT( kdynastg )
 	flash_roms = 4;
 }
 
-GAME( 1999, xfiles,   0, rev4_pcb, dgpix, xfiles,   ROT0, "dgPIX Entertainment Inc.", "X-Files",                           GAME_NO_SOUND )
-GAME( 1999, kdynastg, 0, rev5_pcb, dgpix, kdynastg, ROT0, "EZ Graphics",              "King of Dynast Gear (version 1.8)", GAME_NO_SOUND )
+static DRIVER_INIT( fmaniac3 )
+{
+	flash_roms = 2;
+}
+
+GAME( 1999, xfiles,   0, dgpix, dgpix, xfiles,   ROT0, "dgPIX Entertainment Inc.", "X-Files",                           GAME_NO_SOUND )
+GAME( 1999, kdynastg, 0, dgpix, dgpix, kdynastg, ROT0, "EZ Graphics",              "King of Dynast Gear (version 1.8)", GAME_NO_SOUND )
+GAME( 2002, fmaniac3, 0, dgpix, dgpix, fmaniac3, ROT0, "Saero Entertainment",      "Fishing Maniac 3",                  GAME_NO_SOUND )

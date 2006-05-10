@@ -788,7 +788,7 @@ ROM_START( othunder )
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
 	ROM_LOAD( "b67-07", 0x00000, 0x80000, CRC(4f834357) SHA1(f34705ce64870a8b24ec2639505079cc031fb719) )
 
-	ROM_REGION( 0x10000, REGION_USER2, 0 )	/* PALs */
+//  ROM_REGION( 0x10000, REGION_USER2, 0 )  /* PALs */
 //  ROM_LOAD( "b67-09", 0x00000, 0xd56, CRC(130fd2ab) )     // PAL read as PLHS18P8A/B but I don't see that in the schematics
 //  ROM_LOAD( "b67-10.33", 0x00000, 0xcd5, CRC(312f9e2a) )  // address decoding (PAL 20L8B)
 //  ROM_LOAD( "b67-11.36", 0x00000, 0xada, CRC(f863b864) )  // interrupt control (PAL 16L8B)

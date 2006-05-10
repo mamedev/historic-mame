@@ -350,7 +350,8 @@ static void update_memory_mapping(struct memory_mapper_chip *chip)
 					decrypted = fd1089_get_decrypted_base();
 
 				memory_configure_bank(banknum, 0, 1, memory_region(REGION_CPU1 + chip->cpunum) + region_start, 0);
-				memory_configure_bank_decrypted(banknum, 0, 1, decrypted ? (decrypted + region_start) : 0, 0);
+				if (decrypted)
+					memory_configure_bank_decrypted(banknum, 0, 1, decrypted ? (decrypted + region_start) : 0, 0);
 				memory_set_bank(banknum, 0);
 			}
 		}

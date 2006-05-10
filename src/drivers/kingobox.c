@@ -849,7 +849,7 @@ ROM_START( ringkinw )
 	ROM_LOAD( "10.1d",        0x08000, 0x2000, CRC(af5013e7) SHA1(26e737138ab0e8dc28bea1f81d1f83345419e611) )
 	ROM_LOAD( "12.1d",        0x0a000, 0x2000, CRC(1f6654d6) SHA1(edd234b6daeaeaad335c8c725380bebd5c11063e) )
 
-	ROM_REGION( 0x0300, REGION_PROMS, 0 )
+	ROM_REGION( 0x0300, REGION_PROMS, ROMREGION_ERASE00 )
 	/* PROMs are encoded here like the kingofb ones... */
 
 	ROM_REGION( 0x0c00, REGION_USER1, 0 ) /* color proms */

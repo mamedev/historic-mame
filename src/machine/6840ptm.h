@@ -17,11 +17,11 @@
 typedef struct _ptm6840_interface ptm6840_interface;
 struct _ptm6840_interface
 {
-  write8_handler	out1_func;	// function to call when output1 changes
-  write8_handler	out2_func;	// function to call when output2 changes
-  write8_handler	out3_func;	// function to call when output3 changes
+	write8_handler	out1_func;	// function to call when output1 changes
+	write8_handler	out2_func;	// function to call when output2 changes
+	write8_handler	out3_func;	// function to call when output3 changes
 
-  void (*irq_func)(int state);	// function called if IRQ line changes
+	void (*irq_func)(int state);	// function called if IRQ line changes
 };
 
 void ptm6840_unconfig(void);

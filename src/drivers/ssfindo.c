@@ -688,13 +688,13 @@ ROM_START( ppcar )
 	ROM_LOAD16_BYTE( "du3",		0x800000, 0x400000, CRC(73882474) SHA1(191b64e662542b5322160c99af8e00079420d473) )
 	ROM_LOAD16_BYTE( "du2",		0x800001, 0x400000, CRC(9250124a) SHA1(650f4b89c92fe4fb63fc89d4e08c4c4c611bebbc) )
 
-	ROM_REGION(0x10000, REGION_USER4, 0 ) /* qdsp code */
+	ROM_REGION(0x10000, REGION_USER4, ROMREGION_ERASE00 ) /* qdsp code */
 	/* none */
 
 	ROM_REGION(0x100000, REGION_USER5, 0 ) /* HWASS 1008S-1  qdsp samples */
 	ROM_LOAD( "nasn9289.u9",	0x000000, 0x100000, CRC(9aef9545) SHA1(f23ef72c3e3667923768dfdd0c5b4951b23dcbcf) )
 
-	ROM_REGION(0x100000, REGION_USER6, 0 ) /* samples - same internal structure as qdsp samples  */
+	ROM_REGION(0x100000, REGION_USER6, ROMREGION_ERASE00 ) /* samples - same internal structure as qdsp samples  */
 	/* none */
 ROM_END
 

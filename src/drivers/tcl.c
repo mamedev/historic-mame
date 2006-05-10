@@ -141,6 +141,7 @@ MACHINE_DRIVER_END
 
 ROM_START( tcl )
 	ROM_REGION( 0x10000*2, REGION_CPU1, 0 )
+	ROM_LOAD( "tcl.16f",   0x00000, 0x20000, CRC(8e694a58) SHA1(7a3c20a7c740065b71fe66ec581edce0dd32f145) )
 
 	ROM_REGION( 0x8000*3, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "tcl.1e",   0x00000, 0x8000, CRC(37edf9b8) SHA1(9225728116d6edfe8476e565a12e1f1e59766d26) )
@@ -157,10 +158,6 @@ ROM_START( tcl )
 	ROM_LOAD( "tcl_pr1.15c",   0x000, 0x100, CRC(21eb5b19) SHA1(9b8425bdb97f11f4855c998c7792c3291fd07470) )
 	ROM_LOAD( "tcl_pr2.16c",   0x100, 0x100, CRC(0489b760) SHA1(78f8632b17a76335183c5c204cdec856988368b0) )
 	ROM_LOAD( "tcl_pr3.9e",    0x200, 0x100, CRC(50ec383b) SHA1(ae95b92bd3946b40134bcdc22708d5c6b0f4c23e) )
-
-	ROM_REGION( 0x20000, REGION_USER1, 0 ) /* encrypted  program ROM */
-	ROM_LOAD( "tcl.16f",   0x00000, 0x20000, CRC(8e694a58) SHA1(7a3c20a7c740065b71fe66ec581edce0dd32f145) )
-
 ROM_END
 
 #define ROL(x,n) (BITSWAP8((x),(7+8-n)&7,(6+8-n)&7,(5+8-n)&7,(4+8-n)&7,(3+8-n)&7,(2+8-n)&7,(1+8-n)&7,(0+8-n)&7))
@@ -175,9 +172,10 @@ DRIVER_INIT(tcl)
 	/* only the first part is decrypted (and verified)*/
 
 	UINT8 *dest = memory_region(REGION_CPU1);
-	UINT8 *src = memory_region(REGION_USER1);
+	UINT8 *src = malloc_or_die(memory_region_length(REGION_CPU1));
 
 	int i,idx=0;
+	memcpy(src, dest, memory_region_length(REGION_CPU1));
 	for(i=0;i<64*1024;i+=4)
 	{
 		if(i&0x8000)
@@ -195,6 +193,7 @@ DRIVER_INIT(tcl)
 			WRITEDEST((src[idx]^0x11)^0xf0); // abcdefgh -> ABCdefgH
 		}
 	}
+	free(src);
 
 	memory_set_decrypted_region(0, 0x0000, 0x7fff, dest+0x10000);
 }

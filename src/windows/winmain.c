@@ -216,8 +216,11 @@ static void output_oslog(const char *buffer)
 int osd_init(void)
 {
 	extern int win_init_input(void);
+	extern void win_blit_init(void);
 	extern int win_erroroslog;
 	int result;
+
+	win_blit_init();
 
 	result = win_init_window();
 	if (result == 0)
@@ -411,17 +414,41 @@ static LONG CALLBACK exception_filter(struct _EXCEPTION_POINTERS *info)
 
 	// print the state of the CPU
 	fprintf(stderr, "-----------------------------------------------------\n");
-	fprintf(stderr, "EAX=%08X EBX=%08X ECX=%08X EDX=%08X\n",
-			(UINT32)info->ContextRecord->Eax,
-			(UINT32)info->ContextRecord->Ebx,
-			(UINT32)info->ContextRecord->Ecx,
-			(UINT32)info->ContextRecord->Edx);
-	fprintf(stderr, "ESI=%08X EDI=%08X EBP=%08X ESP=%08X\n",
-			(UINT32)info->ContextRecord->Esi,
-			(UINT32)info->ContextRecord->Edi,
-			(UINT32)info->ContextRecord->Ebp,
-			(UINT32)info->ContextRecord->Esp);
+#ifdef PTR64
+	fprintf(stderr, "RAX=%p RBX=%p RCX=%p RDX=%p\n",
+			(void *)info->ContextRecord->Rax,
+			(void *)info->ContextRecord->Rbx,
+			(void *)info->ContextRecord->Rcx,
+			(void *)info->ContextRecord->Rdx);
+	fprintf(stderr, "RSI=%p RDI=%p RBP=%p RSP=%p\n",
+			(void *)info->ContextRecord->Rsi,
+			(void *)info->ContextRecord->Rdi,
+			(void *)info->ContextRecord->Rbp,
+			(void *)info->ContextRecord->Rsp);
+	fprintf(stderr, " R8=%p  R9=%p R10=%p R11=%p\n",
+			(void *)info->ContextRecord->R8,
+			(void *)info->ContextRecord->R9,
+			(void *)info->ContextRecord->R10,
+			(void *)info->ContextRecord->R11);
+	fprintf(stderr, "R12=%p R13=%p R14=%p R15=%p\n",
+			(void *)info->ContextRecord->R12,
+			(void *)info->ContextRecord->R13,
+			(void *)info->ContextRecord->R14,
+			(void *)info->ContextRecord->R15);
+#else
+	fprintf(stderr, "EAX=%p EBX=%p ECX=%p EDX=%p\n",
+			(void *)info->ContextRecord->Eax,
+			(void *)info->ContextRecord->Ebx,
+			(void *)info->ContextRecord->Ecx,
+			(void *)info->ContextRecord->Edx);
+	fprintf(stderr, "ESI=%p EDI=%p EBP=%p ESP=%p\n",
+			(void *)info->ContextRecord->Esi,
+			(void *)info->ContextRecord->Edi,
+			(void *)info->ContextRecord->Ebp,
+			(void *)info->ContextRecord->Esp);
+#endif
 
+#ifndef PTR64
 	// crawl the stack for a while
 	if (get_code_base_size(&code_start, &code_size))
 	{
@@ -475,6 +502,7 @@ static LONG CALLBACK exception_filter(struct _EXCEPTION_POINTERS *info)
 			}
 		}
 	}
+#endif
 
 	logerror("shutting down after exception\n");
 

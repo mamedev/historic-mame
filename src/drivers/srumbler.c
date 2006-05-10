@@ -311,9 +311,6 @@ MACHINE_DRIVER_END
 ***************************************************************************/
 
 ROM_START( srumbler )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )  /* 64k for code */
-	/* empty, will be filled later */
-
 	ROM_REGION( 0x40000, REGION_USER1, 0 ) /* Paged ROMs */
 	ROM_LOAD( "14e_sr04.bin", 0x00000, 0x08000, CRC(a68ce89c) SHA1(cb5dd8c47c24f9d8ac9a6135c0b7942d16002d25) )  /* RC4 */
 	ROM_LOAD( "13e_sr03.bin", 0x08000, 0x08000, CRC(87bda812) SHA1(f46dcce21d78c8525a2578b73e05b7cd8a2d8745) )  /* RC3 */
@@ -357,9 +354,6 @@ ROM_START( srumbler )
 ROM_END
 
 ROM_START( srumblr2 )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )  /* 64k for code */
-	/* empty, will be filled later */
-
 	ROM_REGION( 0x40000, REGION_USER1, 0 ) /* Paged ROMs */
 	ROM_LOAD( "14e_sr04.bin", 0x00000, 0x08000, CRC(a68ce89c) SHA1(cb5dd8c47c24f9d8ac9a6135c0b7942d16002d25) )  /* RC4 */
 	ROM_LOAD( "rc03.13e",     0x08000, 0x08000, CRC(e82f78d4) SHA1(39cb5d9c18e7635d48aa29221ae99e6a500e2841) )  /* RC3 (different) */
@@ -403,9 +397,6 @@ ROM_START( srumblr2 )
 ROM_END
 
 ROM_START( rushcrsh )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )  /* 64k for code */
-	/* empty, will be filled later */
-
 	ROM_REGION( 0x40000, REGION_USER1, 0 ) /* Paged ROMs */
 	ROM_LOAD( "14e_sr04.bin", 0x00000, 0x08000, CRC(a68ce89c) SHA1(cb5dd8c47c24f9d8ac9a6135c0b7942d16002d25) )  /* RC4 */
 	ROM_LOAD( "rc03.bin",     0x08000, 0x08000, CRC(a49c9be0) SHA1(9aa385063a289e71fef4c2846c8c960a8adafcc0) )  /* RC3 (different) */

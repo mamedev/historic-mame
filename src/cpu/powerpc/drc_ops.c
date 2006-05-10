@@ -636,7 +636,7 @@ static UINT32 recompile_bx(drc_core *drc, UINT32 op)
 
 static UINT32 recompile_bcx(drc_core *drc, UINT32 op)
 {
-	link_info link1, link2;
+	link_info link1 = {0}, link2 = {0};
 	int do_link1 = 0, do_link2 = 0;
 	UINT32 newpc;
 
@@ -712,7 +712,7 @@ static UINT32 recompile_bcx(drc_core *drc, UINT32 op)
 
 static UINT32 recompile_bcctrx(drc_core *drc, UINT32 op)
 {
-	link_info link1 ,link2;
+	link_info link1 = {0} ,link2 = {0};
 	int do_link1 = 0, do_link2 = 0;
 
 	if (BO == 20)		/* condition is always true, so the basic block ends here */
@@ -789,7 +789,7 @@ static UINT32 recompile_bcctrx(drc_core *drc, UINT32 op)
 
 static UINT32 recompile_bclrx(drc_core *drc, UINT32 op)
 {
-	link_info link1, link2;
+	link_info link1 = {0}, link2 = {0};
 	int do_link1 = 0, do_link2 = 0;
 
 	if (BO == 20)		/* condition is always true, so the basic block ends here */
@@ -2351,7 +2351,7 @@ static UINT32 recompile_sync(drc_core *drc, UINT32 op)
 
 static UINT32 recompile_tw(drc_core *drc, UINT32 op)
 {
-	link_info link1, link2, link3, link4, link5, link6;
+	link_info link1 = {0}, link2 = {0}, link3 = {0}, link4 = {0}, link5 = {0}, link6 = {0};
 	int do_link1 = 0;
 	int do_link2 = 0;
 	int do_link3 = 0;
@@ -2411,7 +2411,7 @@ static UINT32 recompile_tw(drc_core *drc, UINT32 op)
 
 static UINT32 recompile_twi(drc_core *drc, UINT32 op)
 {
-	link_info link1, link2, link3, link4, link5, link6;
+	link_info link1 = {0}, link2 = {0}, link3 = {0}, link4 = {0}, link5 = {0}, link6 = {0};
 	int do_link1 = 0;
 	int do_link2 = 0;
 	int do_link3 = 0;

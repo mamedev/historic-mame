@@ -3138,13 +3138,10 @@ ROM_START( maya )
 	ROM_LOAD( "1.17e", 0x00000, 0x10000, CRC(5aaa015e) SHA1(b84d02b1b6c07636176f226fef09a034d00445f0) )
 	ROM_LOAD( "2.15e", 0x28000, 0x10000, CRC(7ea5b49a) SHA1(aaae848669d9f88c0660f46cc801e4eb0f5e3b89) )
 
-	ROM_REGION( 0xc0000, REGION_USER1, ROMREGION_DISPOSE )	/* blitter data */
+	ROM_REGION( 0xc0000, REGION_GFX1, 0 )
 	ROM_LOAD( "3.18g", 0x00000, 0x40000, CRC(8534af04) SHA1(b9bc94541776b5c0c6bf0ecc63ffef914756376e) )
 	ROM_LOAD( "4.17g", 0x40000, 0x40000, CRC(ab85ce5e) SHA1(845b846e0fb8c9fcd1540960cda006fdac364fea) )
 	ROM_LOAD( "5.15g", 0x80000, 0x40000, CRC(c4316dec) SHA1(2e727a491a71eb1f4d9f338cc6ec76e03f7b46fd) )
-
-	ROM_REGION( 0xc0000, REGION_GFX1, 0 )
-	/* blitter data will be decrypted here*/
 
 	ROM_REGION( 0x400, REGION_PROMS, ROMREGION_DISPOSE )	/* Color PROMs */
 	ROM_LOAD( "prom2.5b",  0x000, 0x200, CRC(d276bf61) SHA1(987058b37182a54a360a80a2f073b000606a11c9) )	// FIXED BITS (0xxxxxxx)
@@ -3156,13 +3153,10 @@ ROM_START( inca )
 	ROM_LOAD( "am27c512.1", 0x00000, 0x10000, CRC(b0d513f7) SHA1(65ef4702302bbfc7c7a77f7353120ee3f5c94b31) )
 	ROM_LOAD( "2.15e", 0x28000, 0x10000, CRC(7ea5b49a) SHA1(aaae848669d9f88c0660f46cc801e4eb0f5e3b89) )
 
-	ROM_REGION( 0xc0000, REGION_USER1, ROMREGION_DISPOSE )	/* blitter data */
+	ROM_REGION( 0xc0000, REGION_GFX1, 0 )
 	ROM_LOAD( "m27c2001.3", 0x00000, 0x40000, CRC(3a3c54ea) SHA1(2743c6a66d3eff60080c9183fa2bf9081207ac6b) )
 	ROM_LOAD( "am27c020.4", 0x40000, 0x40000, CRC(d3571d63) SHA1(5f0abb0da19af34bbd3eb93270311e824839deb4) )
 	ROM_LOAD( "m27c2001.5", 0x80000, 0x40000, CRC(bde60c29) SHA1(3ff7fbd5978bec27ff2ecf5977f640c66058e45d) )
-
-	ROM_REGION( 0xc0000, REGION_GFX1, 0 )
-	/* blitter data will be decrypted here*/
 
 	ROM_REGION( 0x400, REGION_PROMS, ROMREGION_DISPOSE )	/* Color PROMs */
 	ROM_LOAD( "n82s147n.2",  0x000, 0x200, CRC(268bd9d3) SHA1(1f77d9dc58ab29f013ee21d7ec521b90be72610d) )	// FIXED BITS (0xxxxxxx)
@@ -3188,10 +3182,11 @@ static DRIVER_INIT( maya )
 	}
 
 	/* Address lines scrambling on the blitter data roms */
-	rom = memory_region(REGION_USER1);
-
+	rom = malloc(0xc0000);
+	memcpy(rom, gfx, 0xc0000);
 	for (i = 0; i < 0xc0000; i++)
 		gfx[i] = rom[BITSWAP24(i,23,22,21,20,19,18,14,15, 16,17,13,12,11,10,9,8, 7,6,5,4,3,2,1,0)];
+	free(rom);
 }
 
 

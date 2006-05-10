@@ -7044,7 +7044,7 @@ ROM_START( slammast )
 	ROM_CONTINUE(               0x10000, 0x18000 )
 
 	ROM_REGION( 0x8000, REGION_USER1, 0 )
-	/* the encrypted Z80 ROM will be copied here, where the main CPU can read it. */
+	ROM_COPY( REGION_CPU2, 0x00000, 0x00000, 0x8000 )
 
 	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* QSound samples */
 	ROM_LOAD( "mb_q1.bin",      0x000000, 0x80000, CRC(0630c3ce) SHA1(520fc74c5c3638f611fa2f1b5efb08b91747e29b) )
@@ -7089,7 +7089,7 @@ ROM_START( slammasu )
 	ROM_CONTINUE(               0x10000, 0x18000 )
 
 	ROM_REGION( 0x8000, REGION_USER1, 0 )
-	/* the encrypted Z80 ROM will be copied here, where the main CPU can read it. */
+	ROM_COPY( REGION_CPU2, 0x00000, 0x00000, 0x8000 )
 
 	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* QSound samples */
 	ROM_LOAD( "mb_q1.bin",      0x000000, 0x80000, CRC(0630c3ce) SHA1(520fc74c5c3638f611fa2f1b5efb08b91747e29b) )
@@ -7134,7 +7134,7 @@ ROM_START( mbomberj )
 	ROM_CONTINUE(               0x10000, 0x18000 )
 
 	ROM_REGION( 0x8000, REGION_USER1, 0 )
-	/* the encrypted Z80 ROM will be copied here, where the main CPU can read it. */
+	ROM_COPY( REGION_CPU2, 0x00000, 0x00000, 0x8000 )
 
 	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* QSound samples */
 	ROM_LOAD( "mb_q1.bin",      0x000000, 0x80000, CRC(0630c3ce) SHA1(520fc74c5c3638f611fa2f1b5efb08b91747e29b) )

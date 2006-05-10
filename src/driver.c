@@ -269,7 +269,7 @@ const game_driver *driver_get_clone(const game_driver *driver)
 	for (i = 0; drivers[i] != NULL; i++)
 		if (!strcmp(drivers[i]->name, driver->parent))
 		{
-			memmove(&clone_lru[1], &clone_lru[0], sizeof(clone_lru[0]) * (CLONE_LRU_SIZE - 1));
+			memmove((void *)&clone_lru[1], (void *)&clone_lru[0], sizeof(clone_lru[0]) * (CLONE_LRU_SIZE - 1));
 			clone_lru[0] = drivers[i];
 			return clone_lru[0];
 		}

@@ -3902,45 +3902,6 @@ ROM_START( theglad )
 	ROM_LOAD( "w04601.u1",    0x400000, 0x800000, CRC(5f15ddb3) SHA1(c38dcef8e06802a84e42a7fc9fa505475fc3ac65) )
 ROM_END
 
-/* Single Boards, NOT running on PGM motherboard, so NOT a clone of the bios */
-
-/* Uses igs027a, custom ARM CPU with internal ROM for protection, We don't know
-   if this uses an external ROM as there is only the single non-BIOS program rom,
-   it's possible the custom 68k BIOS just boots the ARM and runs the game from
-   that */
-
-ROM_START( ddp3 ) /* Dodonpachi Dai-Ou-Jou */
-	ROM_REGION( 0x600000, REGION_CPU1, 0 ) /* 68000 Code */
-	ROM_LOAD16_WORD_SWAP( "ddp3_bios.u37", 0x000000, 0x080000, CRC(b3cc5c8f) SHA1(02d9511cf71e4a0d6ca8fd9a1ef2c79b0d001824) )  // (custom CAVE BIOS)
-	ROM_LOAD16_WORD_SWAP( "ddp3_d_d_1_0.u36",    0x100000, 0x200000, CRC(5d3f85ba) SHA1(4c24ea206140863d456179750366921442e1d2b8) ) // or prot data? (encrypted) game reads from here so its probably 68k code
-
-	/* CPU2 = Z80, romless, code uploaded by 68k */
-
-	ROM_REGION( 0x4000, REGION_CPU3, ROMREGION_ERASE00 ) /* ARM protection ASIC - internal rom */
-//  ROM_LOAD( "ddp3_igs027a.bin", 0x000000, 0x04000, NO_DUMP ) // we don't know if it can be read
-
-	ROM_REGION( 0x200000, REGION_USER1, ROMREGION_ERASE00 ) /* Protection Data (encrypted external ARM data, internal missing) */
-	/* no external data? (or is it ddp3_d_d_1_0.u36?) */
-
-	ROM_REGION( 0xc00000, REGION_GFX1, 0 ) /* 8x8 Text Tiles + 32x32 BG Tiles */
-	ROM_LOAD( "pgm_t01s.rom", 0x000000, 0x200000, CRC(1a7123a0) SHA1(cc567f577bfbf45427b54d6695b11b74f2578af3) ) // (standard BIOS rom)
-	ROM_LOAD( "cave_t04401w064_ef73_4e85",    0x400000, 0x800000, NO_DUMP )
-
-	ROM_REGION( 0xc00000/5*8, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_ERASEFF ) /* Region for 32x32 BG Tiles */
-	/* 32x32 Tile Data is put here for easier Decoding */
-
-	ROM_REGION( 0x1800000, REGION_GFX3, ROMREGION_ERASE00 ) /* Sprite Colour Data */
-	ROM_LOAD( "cave_a04401w064_bf79_9426",    0x0000000, 0x0800000, NO_DUMP )
-	ROM_LOAD( "cave_a04402w064_298e_0517",    0x0800000, 0x0800000, NO_DUMP )
-
-	ROM_REGION( 0x1000000, REGION_GFX4, ROMREGION_ERASE00 ) /* Sprite Masks + Colour Indexes */
-	ROM_LOAD( "cave_b04401w064_f2cb_202c",    0x0000000, 0x0800000, NO_DUMP )
-
-	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* Samples - (8 bit mono 11025Hz) - */
-	ROM_LOAD( "pgm_m01s.rom", 0x000000, 0x200000, CRC(45ae7159) SHA1(d3ed3ff3464557fd0df6b069b2e431528b0ebfa8) ) // (standard BIOS rom)
-	ROM_LOAD( "cave_m04401b032_7959_78e9",    0x400000, 0x400000, NO_DUMP )
-ROM_END
-
 
 /*** GAME ********************************************************************/
 
@@ -3984,6 +3945,3 @@ GAME( 2001, martmast, pgm,       kov2, sango,    martmast,        ROT0,   "IGS",
 GAME( 2001, theglad,  pgm,        pgm, sango,    pgm,        ROT0,   "IGS", "The Gladiator", GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAME( 2002, dmnfrnt,  pgm,        pgm, sango,    pgm,        ROT0,   "IGS", "Demon Front (V102)", GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAME( 2002, dmnfrnta, dmnfrnt,    pgm, sango,    pgm,        ROT0,   "IGS", "Demon Front (V105)", GAME_IMPERFECT_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-
-/* Cave, Single Board, */
-GAME( 2002, ddp3,     0,          cavepgm, pgm,      pgm,        ROT0,   "Cave", "DoDonpachi Dai-Ou-Jou (V100)", GAME_NOT_WORKING ) // incomplete, protected etc.

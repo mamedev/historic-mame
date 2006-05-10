@@ -49,40 +49,27 @@ VIDEO_UPDATE(pbillrd);
 VIDEO_UPDATE(freekick);
 WRITE8_HANDLER( freek_videoram_w );
 
+
+
+/*************************************
+ *
+ *  Statics
+ *
+ *************************************/
+
 static int oigas_inval,oigas_outval,oigas_cnt;//oigas
 static int romaddr;
+static int spinner;
+static int nmi_en;
+static int ff_data;
 
-static WRITE8_HANDLER( snd_rom_addr_l_w )
-{
-	romaddr = (romaddr & 0xff00) | data;
-}
 
-static WRITE8_HANDLER( snd_rom_addr_h_w )
-{
-	romaddr = (romaddr & 0x00ff) | (data << 8);
-}
 
-static READ8_HANDLER( snd_rom_r )
-{
-	return memory_region(REGION_USER1)[romaddr & 0x7fff];
-}
-
-static ppi8255_interface ppi8255_intf =
-{
-	2, 										/* 1 chips */
-	{ NULL,             input_port_0_r },	/* Port A read */
-	{ NULL,             input_port_1_r },	/* Port B read */
-	{ snd_rom_r,        input_port_2_r },	/* Port C read */
-	{ snd_rom_addr_l_w, NULL },				/* Port A write */
-	{ snd_rom_addr_h_w, NULL },				/* Port B write */
-	{ NULL,             NULL },				/* Port C write */
-};
-
-MACHINE_RESET( freekckb )
-{
-	ppi8255_init(&ppi8255_intf);
-}
-
+/*************************************
+ *
+ *  Machines' structure
+ *
+ *************************************/
 
 static WRITE8_HANDLER( flipscreen_w )
 {
@@ -97,9 +84,6 @@ static WRITE8_HANDLER( coin_w )
 {
 	coin_counter_w(offset,~data & 1);
 }
-
-
-static int spinner;
 
 static WRITE8_HANDLER( spinner_select_w )
 {
@@ -116,15 +100,10 @@ static READ8_HANDLER( gigas_spinner_r )
 	return readinputport( spinner );
 }
 
-
-
 static WRITE8_HANDLER( pbillrd_bankswitch_w )
 {
 	memory_set_bankptr(1,memory_region(REGION_CPU1) + 0x10000 + 0x4000 * (data & 1));
 }
-
-
-static int nmi_en;
 
 static WRITE8_HANDLER( nmi_enable_w )
 {
@@ -135,46 +114,6 @@ static INTERRUPT_GEN( freekick_irqgen )
 {
 	if (nmi_en) cpunum_set_input_line(0,INPUT_LINE_NMI,PULSE_LINE);
 }
-
-static ADDRESS_MAP_START( gigas_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xe000, 0xe000) AM_READ(input_port_2_r)
-	AM_RANGE(0xe800, 0xe800) AM_READ(input_port_3_r)
-	AM_RANGE(0xf000, 0xf000) AM_READ(input_port_4_r)
-	AM_RANGE(0xf800, 0xf800) AM_READ(input_port_5_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( gigas_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(freek_videoram_w) AM_BASE(&freek_videoram)
-	AM_RANGE(0xd800, 0xd8ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
-	AM_RANGE(0xd900, 0xdfff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xe000, 0xe001) AM_WRITE(MWA8_NOP)// probably not flipscreen
-	AM_RANGE(0xe002, 0xe003) AM_WRITE(coin_w)
-	AM_RANGE(0xe004, 0xe004) AM_WRITE(nmi_enable_w)
-	AM_RANGE(0xe005, 0xe005) AM_WRITE(MWA8_NOP)
-	AM_RANGE(0xf000, 0xf000) AM_WRITE(MWA8_NOP) //bankswitch ?
-	AM_RANGE(0xfc00, 0xfc00) AM_WRITE(SN76496_0_w)
-	AM_RANGE(0xfc01, 0xfc01) AM_WRITE(SN76496_1_w)
-	AM_RANGE(0xfc02, 0xfc02) AM_WRITE(SN76496_2_w)
-	AM_RANGE(0xfc03, 0xfc03) AM_WRITE(SN76496_3_w)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( gigas_readport, ADDRESS_SPACE_IO, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x00, 0x00) AM_READ(gigas_spinner_r)
-	AM_RANGE(0x01, 0x01) AM_READ(MRA8_NOP) //unused dip 3
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( gigas_writeport, ADDRESS_SPACE_IO, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x00, 0x00) AM_WRITE(spinner_select_w)
-ADDRESS_MAP_END
-
-
 
 static WRITE8_HANDLER(oigas_5_w)
 {
@@ -227,22 +166,23 @@ static READ8_HANDLER(oigas_2_r)
 	return 1;
 }
 
-static ADDRESS_MAP_START( oigas_readport, ADDRESS_SPACE_IO, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x00, 0x00) AM_READ(gigas_spinner_r)
-	AM_RANGE(0x01, 0x01) AM_READ(MRA8_NOP) //unused dip 3
-	AM_RANGE(0x02, 0x02) AM_READ(oigas_2_r)
-	AM_RANGE(0x03, 0x03) AM_READ(oigas_3_r)
-ADDRESS_MAP_END
+static READ8_HANDLER (freekick_ff_r)
+{
+	return ff_data;
+}
 
-static ADDRESS_MAP_START( oigas_writeport, ADDRESS_SPACE_IO, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x00, 0x00) AM_WRITE(spinner_select_w)
-	AM_RANGE(0x05, 0x05) AM_WRITE(oigas_5_w)
-ADDRESS_MAP_END
+static WRITE8_HANDLER (freekick_ff_w)
+{
+	ff_data = data;
+}
 
 
 
+/*************************************
+ *
+ *  Memory handlers
+ *
+ *************************************/
 
 static ADDRESS_MAP_START( pbillrd_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
@@ -300,18 +240,57 @@ static ADDRESS_MAP_START( freekckb_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xfc03, 0xfc03) AM_WRITE(SN76496_3_w)
 ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( gigas_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_READ(input_port_2_r)
+	AM_RANGE(0xe800, 0xe800) AM_READ(input_port_3_r)
+	AM_RANGE(0xf000, 0xf000) AM_READ(input_port_4_r)
+	AM_RANGE(0xf800, 0xf800) AM_READ(input_port_5_r)
+ADDRESS_MAP_END
 
-static int ff_data;
+static ADDRESS_MAP_START( gigas_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(freek_videoram_w) AM_BASE(&freek_videoram)
+	AM_RANGE(0xd800, 0xd8ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xd900, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe001) AM_WRITE(MWA8_NOP)// probably not flipscreen
+	AM_RANGE(0xe002, 0xe003) AM_WRITE(coin_w)
+	AM_RANGE(0xe004, 0xe004) AM_WRITE(nmi_enable_w)
+	AM_RANGE(0xe005, 0xe005) AM_WRITE(MWA8_NOP)
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(MWA8_NOP) //bankswitch ?
+	AM_RANGE(0xfc00, 0xfc00) AM_WRITE(SN76496_0_w)
+	AM_RANGE(0xfc01, 0xfc01) AM_WRITE(SN76496_1_w)
+	AM_RANGE(0xfc02, 0xfc02) AM_WRITE(SN76496_2_w)
+	AM_RANGE(0xfc03, 0xfc03) AM_WRITE(SN76496_3_w)
+ADDRESS_MAP_END
 
-static READ8_HANDLER (freekick_ff_r)
-{
-	return ff_data;
-}
+static ADDRESS_MAP_START( gigas_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE(0x00, 0x00) AM_READ(gigas_spinner_r)
+	AM_RANGE(0x01, 0x01) AM_READ(MRA8_NOP) //unused dip 3
+ADDRESS_MAP_END
 
-static WRITE8_HANDLER (freekick_ff_w)
-{
-	ff_data = data;
-}
+static ADDRESS_MAP_START( gigas_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE(0x00, 0x00) AM_WRITE(spinner_select_w)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( oigas_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE(0x00, 0x00) AM_READ(gigas_spinner_r)
+	AM_RANGE(0x01, 0x01) AM_READ(MRA8_NOP) //unused dip 3
+	AM_RANGE(0x02, 0x02) AM_READ(oigas_2_r)
+	AM_RANGE(0x03, 0x03) AM_READ(oigas_3_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( oigas_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE(0x00, 0x00) AM_WRITE(spinner_select_w)
+	AM_RANGE(0x05, 0x05) AM_WRITE(oigas_5_w)
+ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( freekckb_readport, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
@@ -323,192 +302,17 @@ static ADDRESS_MAP_START( freekckb_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0xff, 0xff) AM_WRITE(freekick_ff_w)
 ADDRESS_MAP_END
 
-INPUT_PORTS_START( gigas )
-
-	PORT_START
-	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(30) PORT_KEYDELTA(15) PORT_REVERSE
-
-	PORT_START
-	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(30) PORT_KEYDELTA(15) PORT_REVERSE PORT_COCKTAIL
-
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
-
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
-
-	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x01, "3" )
-	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x06, "20000, 60000, Every 60000" )
-	PORT_DIPSETTING(    0x02, "20000, 60000" )
-	PORT_DIPSETTING(    0x04, "30000, 80000, Every 80000" )
-	PORT_DIPSETTING(    0x00, "20000" )
-	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x18, DEF_STR( Easy ) )    /* level 1 */
-	PORT_DIPSETTING(    0x10, DEF_STR( Normal ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Hard ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) ) /* level 4 */
-  PORT_DIPNAME( 0x20, 0x20, DEF_STR( Allow_Continue ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
-	PORT_START
-	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
-	PORT_DIPSETTING(    0x0c, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x0e, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x05, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x06, DEF_STR( 3C_2C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 4C_3C ) )
-	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 4C_5C ) )
-	PORT_DIPSETTING(    0x0a, DEF_STR( 3C_4C ) )
-	PORT_DIPSETTING(    0x09, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x02, "3 Coins/5 Credits" )
-	PORT_DIPSETTING(    0x07, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 2C_5C ) )
-	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_5C ) )
-	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0xe0, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x50, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x60, DEF_STR( 3C_2C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 4C_3C ) )
-	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 4C_5C ) )
-	PORT_DIPSETTING(    0xa0, DEF_STR( 3C_4C ) )
-	PORT_DIPSETTING(    0x90, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x20, "3 Coins/5 Credits" )
-	PORT_DIPSETTING(    0x70, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 2C_5C ) )
-	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_5C ) )
 
 
-INPUT_PORTS_END
+/*************************************
+ *
+ *  Game-specific port definitions
+ *
+ *************************************/
 
+static INPUT_PORTS_START( pbillrd )
 
-INPUT_PORTS_START( gigasm2 )
-
-	PORT_START
-	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(30) PORT_KEYDELTA(15) PORT_REVERSE
-
-	PORT_START
-	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(30) PORT_KEYDELTA(15) PORT_REVERSE PORT_COCKTAIL
-
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
-
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
-
-	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x01, "3" )
-	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x06, "20000, 60000, Every 60000" )
-	PORT_DIPSETTING(    0x02, "20000, 60000" )
-	PORT_DIPSETTING(    0x04, "30000, 90000, Every 90000" )
-	PORT_DIPSETTING(    0x00, "20000" )
-	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x18, DEF_STR( Easy ) )    /* level 1 */
-	PORT_DIPSETTING(    0x10, DEF_STR( Normal ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Hard ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) ) /* level 4 */
-  PORT_DIPNAME( 0x20, 0x20, DEF_STR( Allow_Continue ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
-	PORT_START
-	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
-	PORT_DIPSETTING(    0x0c, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x0e, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x05, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x06, DEF_STR( 3C_2C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 4C_3C ) )
-	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 4C_5C ) )
-	PORT_DIPSETTING(    0x0a, DEF_STR( 3C_4C ) )
-	PORT_DIPSETTING(    0x09, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x02, "3 Coins/5 Credits" )
-	PORT_DIPSETTING(    0x07, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 2C_5C ) )
-	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_5C ) )
-	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0xe0, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x50, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x60, DEF_STR( 3C_2C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 4C_3C ) )
-	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 4C_5C ) )
-	PORT_DIPSETTING(    0xa0, DEF_STR( 3C_4C ) )
-	PORT_DIPSETTING(    0x90, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x20, "3 Coins/5 Credits" )
-	PORT_DIPSETTING(    0x70, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 2C_5C ) )
-	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_5C ) )
-
-
-
-INPUT_PORTS_END
-
-INPUT_PORTS_START( pbillrd )
-	PORT_START
+	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
@@ -518,7 +322,7 @@ INPUT_PORTS_START( pbillrd )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
-	PORT_START
+	PORT_START_TAG("IN1")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_COCKTAIL
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_COCKTAIL
@@ -528,15 +332,15 @@ INPUT_PORTS_START( pbillrd )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
-	PORT_START
+	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x01, 0x01, "Balls" )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x06, 0x06, "Bonus Ball" )
-	PORT_DIPSETTING(    0x06, "10000, 30000, 50000"  )
-	PORT_DIPSETTING(    0x02, "20000, 60000" )
-	PORT_DIPSETTING(    0x04, "30000, 80000" )
-	PORT_DIPSETTING(    0x00, "20000" )
+	PORT_DIPSETTING(    0x06, "10000, 30000 & 50000 Points"  )
+	PORT_DIPSETTING(    0x02, "20000 & 60000 Points" )
+	PORT_DIPSETTING(    0x04, "30000 & 80000 Points" )
+	PORT_DIPSETTING(    0x00, "Only 20000 Points" )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -553,7 +357,7 @@ INPUT_PORTS_START( pbillrd )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
-	PORT_START
+	PORT_START_TAG("DSW2")
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 4C_1C ) )
@@ -590,8 +394,49 @@ INPUT_PORTS_START( pbillrd )
 	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_5C ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( freekckb )
-	PORT_START
+static INPUT_PORTS_START( gigas )
+
+	PORT_START_TAG("IN2")
+	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(30) PORT_KEYDELTA(15) PORT_REVERSE
+
+	PORT_START_TAG("IN3")
+	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(30) PORT_KEYDELTA(15) PORT_REVERSE PORT_COCKTAIL
+
+	PORT_INCLUDE( pbillrd )
+
+	PORT_MODIFY("DSW1")
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x06, "20000 & 60000, Every 60000 Points" )
+	PORT_DIPSETTING(    0x02, "20000 & 60000 Points" )
+	PORT_DIPSETTING(    0x04, "30000 & 80000, Every 80000 Points" )
+	PORT_DIPSETTING(    0x00, "Only 20000 Points" )
+	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( Easy ) )    /* level 1 */
+	PORT_DIPSETTING(    0x10, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) ) /* level 4 */
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Allow_Continue ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Yes ) )
+INPUT_PORTS_END
+
+static INPUT_PORTS_START( gigasm2 )
+	PORT_INCLUDE( gigas )
+
+	PORT_MODIFY("DSW1")
+	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x06, "20000 & 60000, Every 60000 Points" )
+	PORT_DIPSETTING(    0x02, "20000 & 60000 Points" )
+	PORT_DIPSETTING(    0x04, "30000 & 90000, Every 90000 Points" )
+	PORT_DIPSETTING(    0x00, "Only 20000 Points" )
+INPUT_PORTS_END
+
+static INPUT_PORTS_START( freekck )
+
+	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
@@ -605,7 +450,7 @@ INPUT_PORTS_START( freekckb )
 	PORT_DIPSETTING(    0x10, DEF_STR( Normal ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Hard ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) ) /* level 4 */
-    PORT_DIPNAME( 0x20, 0x20, DEF_STR( Allow_Continue ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
@@ -615,7 +460,7 @@ INPUT_PORTS_START( freekckb )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START
+	PORT_START_TAG("DSW2")
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 4C_1C ) )
@@ -651,7 +496,7 @@ INPUT_PORTS_START( freekckb )
 	PORT_DIPSETTING(    0x40, "1 Coin/25 Credits" )
 	PORT_DIPSETTING(    0x80, "1 Coin/50 Credits" )
 
-	PORT_START
+	PORT_START_TAG("DSW3")
 	PORT_DIPNAME( 0x01, 0x00, "Manufacturer" )
 	PORT_DIPSETTING(    0x00, "Nihon System" )
 	PORT_DIPSETTING(    0x01, "Sega/Nihon System" )
@@ -677,121 +522,7 @@ INPUT_PORTS_START( freekckb )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x80, "2" )
 
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
-
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
-
-	PORT_START
-	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(30) PORT_KEYDELTA(15) PORT_REVERSE
-
-	PORT_START
-	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(30) PORT_KEYDELTA(15) PORT_REVERSE PORT_COCKTAIL
-INPUT_PORTS_END
-
-INPUT_PORTS_START( countrun )
-	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x01, "3" )
-	PORT_DIPSETTING(    0x00, "2" )
-	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x06, "20000, 60000 and every 60000 Points" )
-	PORT_DIPSETTING(    0x02, "30000, 80000 and every 80000 Points" )
-	PORT_DIPSETTING(    0x04, "20000 & 60000 Points" )
-	PORT_DIPSETTING(    0x00, "ONLY 20000 Points" )
-	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x18, DEF_STR( Easy ) )    /* level 1 */
-	PORT_DIPSETTING(    0x10, DEF_STR( Normal ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Hard ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) ) /* level 4 */
-    PORT_DIPNAME( 0x20, 0x20, DEF_STR( Allow_Continue ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
-	PORT_START
-	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
-	PORT_DIPSETTING(    0x0c, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x0e, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x05, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x06, DEF_STR( 3C_2C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 4C_3C ) )
-	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 4C_5C ) )
-	PORT_DIPSETTING(    0x0a, DEF_STR( 3C_4C ) )
-	PORT_DIPSETTING(    0x09, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x02, "3 Coins/5 Credits" )
-	PORT_DIPSETTING(    0x07, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 2C_5C ) )
-	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_5C ) )
-	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
-	PORT_DIPSETTING(    0xe0, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x50, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x60, DEF_STR( 3C_2C ) )
-	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0xa0, DEF_STR( 3C_4C ) )
-	PORT_DIPSETTING(    0x90, DEF_STR( 2C_3C ) )
-	PORT_DIPSETTING(    0x20, "3 Coins/5 Credits" )
-	PORT_DIPSETTING(    0x70, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 2C_5C ) )
-	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_5C ) )
-	PORT_DIPSETTING(    0xc0, "1 Coin/10 Credits" )
-	PORT_DIPSETTING(    0x40, "1 Coin/25 Credits" )
-	PORT_DIPSETTING(    0x80, "1 Coin/50 Credits" )
-
-	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, "Coin Slots" )
-	PORT_DIPSETTING(    0x00, "1" )
-	PORT_DIPSETTING(    0x80, "2" )
-
-PORT_START
+	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
@@ -801,7 +532,7 @@ PORT_START
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
-	PORT_START
+	PORT_START_TAG("IN1")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_COCKTAIL
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_COCKTAIL
@@ -811,33 +542,78 @@ PORT_START
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
-
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
-
-	PORT_START
+	PORT_START_TAG("IN2")
 	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(30) PORT_KEYDELTA(15) PORT_REVERSE
 
-	PORT_START
+	PORT_START_TAG("IN3")
 	PORT_BIT( 0xff, 0x00, IPT_DIAL ) PORT_SENSITIVITY(30) PORT_KEYDELTA(15) PORT_REVERSE PORT_COCKTAIL
 INPUT_PORTS_END
 
+static INPUT_PORTS_START( countrun )
+	PORT_INCLUDE( freekck )
+
+	PORT_MODIFY("DSW1")
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x06, "20000, 60000 and every 60000 Points" )
+	PORT_DIPSETTING(    0x02, "30000, 80000 and every 80000 Points" )
+	PORT_DIPSETTING(    0x04, "20000 & 60000 Points" )
+	PORT_DIPSETTING(    0x00, "ONLY 20000 Points" )
+
+	PORT_MODIFY("DSW3")
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
+
+
+/*************************************
+ *
+ *  Sound definitions
+ *
+ *************************************/
+
+static WRITE8_HANDLER( snd_rom_addr_l_w )
+{
+	romaddr = (romaddr & 0xff00) | data;
+}
+
+static WRITE8_HANDLER( snd_rom_addr_h_w )
+{
+	romaddr = (romaddr & 0x00ff) | (data << 8);
+}
+
+static READ8_HANDLER( snd_rom_r )
+{
+	return memory_region(REGION_USER1)[romaddr & 0x7fff];
+}
+
+static ppi8255_interface ppi8255_intf =
+{
+	2, 										/* 1 chips */
+	{ NULL,             input_port_0_r },	/* Port A read */
+	{ NULL,             input_port_1_r },	/* Port B read */
+	{ snd_rom_r,        input_port_2_r },	/* Port C read */
+	{ snd_rom_addr_l_w, NULL },				/* Port A write */
+	{ snd_rom_addr_h_w, NULL },				/* Port B write */
+	{ NULL,             NULL },				/* Port C write */
+};
+
+MACHINE_RESET( freekckb )
+{
+	ppi8255_init(&ppi8255_intf);
+}
+
+
+
+/*************************************
+ *
+ *  Graphics definitions
+ *
+ *************************************/
 
 static const gfx_layout charlayout =
 {
@@ -872,10 +648,14 @@ static const gfx_decode gfxdecodeinfo[] =
 	{ -1 }
 };
 
-
+/*************************************
+ *
+ *  Machine driver(s)
+ *
+ *************************************/
 
 static MACHINE_DRIVER_START( pbillrd )
-	MDRV_CPU_ADD(Z80, 12000000/2)	/* 6 MHz? */
+	MDRV_CPU_ADD_TAG("main",Z80, 18432000/6)	//confirmed
 	MDRV_CPU_PROGRAM_MAP(pbillrd_readmem,pbillrd_writemem)
 	MDRV_CPU_PERIODIC_INT(irq0_line_pulse,TIME_IN_HZ(50*3)) //??
 	MDRV_CPU_VBLANK_INT(freekick_irqgen,1)
@@ -911,78 +691,25 @@ static MACHINE_DRIVER_START( pbillrd )
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( freekckb )
-	MDRV_CPU_ADD(Z80, 12000000/2)	/* 6 MHz? */
+	MDRV_IMPORT_FROM(pbillrd)
+
+	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(freekckb_readmem,freekckb_writemem)
 	MDRV_CPU_IO_MAP(freekckb_readport,freekckb_writeport)
-	MDRV_CPU_PERIODIC_INT(irq0_line_pulse,TIME_IN_HZ(60*3)) //??
-	MDRV_CPU_VBLANK_INT(freekick_irqgen,1)
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_MACHINE_RESET(freekckb)
 
-	MDRV_GFXDECODE(gfxdecodeinfo)
-
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
-	MDRV_PALETTE_LENGTH(0x200)
-	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
-
-	MDRV_VIDEO_START(freekick)
 	MDRV_VIDEO_UPDATE(freekick)
-
-	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_MONO("mono")
-
-	MDRV_SOUND_ADD(SN76496, 12000000/4)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
-
-	MDRV_SOUND_ADD(SN76496, 12000000/4)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
-
-	MDRV_SOUND_ADD(SN76496, 12000000/4)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
-
-	MDRV_SOUND_ADD(SN76496, 12000000/4)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( gigas )
-	MDRV_CPU_ADD_TAG("main",Z80, 18432000/6)	//confirmed
+	MDRV_IMPORT_FROM(pbillrd)
+
+	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(gigas_readmem,gigas_writemem)
 	MDRV_CPU_IO_MAP(gigas_readport,gigas_writeport)
-	MDRV_CPU_PERIODIC_INT(irq0_line_pulse,TIME_IN_HZ(60*3))
-	MDRV_CPU_VBLANK_INT(freekick_irqgen,1)
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-
-	MDRV_GFXDECODE(gfxdecodeinfo)
-
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
-	MDRV_PALETTE_LENGTH(0x200)
-	MDRV_PALETTE_INIT(RRRR_GGGG_BBBB)
-
-	MDRV_VIDEO_START(freekick)
 	MDRV_VIDEO_UPDATE(gigas)
-
-	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_MONO("mono")
-
-	MDRV_SOUND_ADD(SN76496, 12000000/4)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
-
-	MDRV_SOUND_ADD(SN76496, 12000000/4)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
-
-	MDRV_SOUND_ADD(SN76496, 12000000/4)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
-
-	MDRV_SOUND_ADD(SN76496, 12000000/4)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( oigas )
@@ -991,7 +718,13 @@ static MACHINE_DRIVER_START( oigas )
 	MDRV_CPU_IO_MAP(oigas_readport,oigas_writeport)
 MACHINE_DRIVER_END
 
-/* roms */
+
+
+/*************************************
+ *
+ *  ROM definition(s)
+ *
+ *************************************/
 
 ROM_START( pbillrd )
 	ROM_REGION( 0x18000, REGION_CPU1, 0 ) /* Z80 Code */
@@ -1270,18 +1003,34 @@ ROM_START( oigas )
 	ROM_LOAD( "3.pr",    0x0500, 0x0100, CRC(28b5ee4c) SHA1(e21b9c38f433dca1e8894619b1d9f0389a81b48a) )
 ROM_END
 
+
+
+/*************************************
+ *
+ *  Game-specific driver inits
+ *
+ *************************************/
+
 static DRIVER_INIT(gigas)
 {
 	memory_set_decrypted_region(0, 0x0000, 0x7fff, memory_region(REGION_CPU1) + 0x10000);
 }
+
+
+
+/*************************************
+ *
+ *  Game driver(s)
+ *
+ *************************************/
 
 GAME( 1986, gigasb,   0,        gigas,    gigas,    gigas, ROT270, "bootleg", "Gigas (bootleg)", GAME_NO_COCKTAIL )
 GAME( 1986, oigas,    gigasb,   oigas,    gigas,    gigas, ROT270, "bootleg", "Oigas (bootleg)", GAME_NO_COCKTAIL )
 GAME( 1986, gigasm2b, 0,        gigas,    gigasm2,  gigas, ROT270, "bootleg", "Gigas Mark II (bootleg)", GAME_NO_COCKTAIL )
 GAME( 1987, pbillrd,  0,        pbillrd,  pbillrd,  0,     ROT0,   "Nihon System", "Perfect Billiard", 0 )
 GAME( 1987, pbillrds, pbillrd,  pbillrd,  pbillrd,  0,     ROT0,   "Nihon System", "Perfect Billiard (Sega)", GAME_UNEMULATED_PROTECTION )	// encrypted
-GAME( 1987, freekick, 0,        freekckb, freekckb, 0,     ROT270, "Nihon System (Sega license)", "Free Kick", GAME_NOT_WORKING )
-GAME( 1987, freekckb, freekick, freekckb, freekckb, 0,     ROT270, "bootleg", "Free Kick (bootleg)", 0 )
+GAME( 1987, freekick, 0,        freekckb, freekck,  0,     ROT270, "Nihon System (Sega license)", "Free Kick", GAME_NOT_WORKING )
+GAME( 1987, freekckb, freekick, freekckb, freekck,  0,     ROT270, "bootleg", "Free Kick (bootleg)", 0 )
 GAME( 1988, countrun, 0,        freekckb, countrun, 0,     ROT0,   "Nihon System (Sega license)", "Counter Run", GAME_NOT_WORKING )
 GAME( 1988, countrnb, countrun, freekckb, countrun, 0,     ROT0,   "bootleg", "Counter Run (bootleg set 1)", 0 )
 GAME( 1988, countrb2, countrun, freekckb, countrun, 0,     ROT0,   "bootleg", "Counter Run (bootleg set 2)", GAME_NOT_WORKING )

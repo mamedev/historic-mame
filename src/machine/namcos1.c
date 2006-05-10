@@ -666,7 +666,8 @@ static void set_bank(int banknum, bankhandler *handler)
 	int cpunum = (banknum >> 3) & 1;
 
 	/* for BANK handlers , memory direct and OP-code base */
-	memory_set_bankptr(banknum + 1, handler->bank_pointer);
+	if (handler->bank_pointer)
+		memory_set_bankptr(banknum + 1, handler->bank_pointer);
 
 	/* read handlers */
 	if (!handler->bank_handler_r)

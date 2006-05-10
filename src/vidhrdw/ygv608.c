@@ -105,6 +105,9 @@ static UINT32 get_tile_offset( UINT32 col, UINT32 row,
 	return( ( col << 6 ) | row );
 }
 
+#define layout_total(x) \
+(Machine->drv->gfxdecodeinfo[x].gfxlayout->total)
+
 static void get_tile_info_A_8( int offset )
 {
 	// extract row,col packed into offset
@@ -173,7 +176,7 @@ static void get_tile_info_A_8( int offset )
 		j += ( (int)ygv608.scroll_data_table[0][0xc0+page] << 10 );
 		j += ( ygv608.base_addr[0][base] << 8 );
 
-		if( j >= Machine->drv->gfxdecodeinfo[set].gfxlayout->total )
+		if( j >= layout_total(set) )
 		{
 			logerror( "A_8X8: tilemap=%d\n", j );
 			j = 0;
@@ -268,7 +271,7 @@ static void get_tile_info_B_8( int offset )
 		j += ( (int)ygv608.scroll_data_table[1][0xc0+page] << 10 );
 		j += ( ygv608.base_addr[1][base] << 8 );
 
-		if( j >= Machine->drv->gfxdecodeinfo[set].gfxlayout->total )
+		if( j >= layout_total(set) )
 		{
 			logerror( "B_8X8: tilemap=%d\n", j );
 			j = 0;
@@ -357,7 +360,7 @@ static void get_tile_info_A_16( int offset )
     j += ( (int)ygv608.scroll_data_table[0][0xc0+page] << 8 );
     j += ( ygv608.base_addr[0][base] << 8 );
 
-    if( j >= Machine->drv->gfxdecodeinfo[set].gfxlayout->total ) {
+    if( j >= layout_total(set) ) {
 	logerror( "A_16X16: tilemap=%d\n", j );
       j = 0;
     }
@@ -447,7 +450,7 @@ static void get_tile_info_B_16( int offset )
     j += ( (int)ygv608.scroll_data_table[1][0xc0+page] << 8 );
     j += ( ygv608.base_addr[1][base] << 8 );
 
-    if( j >= Machine->drv->gfxdecodeinfo[set].gfxlayout->total ) {
+    if( j >= layout_total(set) ) {
 	logerror( "B_16X16: tilemap=%d\n", j );
       j = 0;
     }
@@ -581,7 +584,7 @@ static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
       code = ( (int)ygv608.regs.s.sba << 8 ) | (int)sa->sn;
       if (spf != 0)
 	    color = ( code >> ( (spf - 1) * 2 ) ) & 0x0f;
-      if( code >= Machine->drv->gfxdecodeinfo[GFX_8X8_4BIT].gfxlayout->total ) {
+      if( code >= layout_total(GFX_8X8_4BIT) ) {
 	    logerror( "SZ_8X8: sprite=%d\n", code );
 	    code = 0;
       }
@@ -614,7 +617,7 @@ static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
       code = ( ( (int)ygv608.regs.s.sba & 0xfc ) << 6 ) | (int)sa->sn;
       if (spf != 0)
 	    color = ( code >> (spf * 2) ) & 0x0f;
-      if( code >= Machine->drv->gfxdecodeinfo[GFX_16X16_4BIT].gfxlayout->total ) {
+      if( code >= layout_total(GFX_16X16_4BIT) ) {
 	    logerror( "SZ_8X8: sprite=%d\n", code );
 	    code = 0;
       }
@@ -647,7 +650,7 @@ static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
       code = ( ( (int)ygv608.regs.s.sba & 0xf0 ) << 4 ) | (int)sa->sn;
       if (spf != 0)
 	color = ( code >> ( (spf + 1) * 2 ) ) & 0x0f;
-      if( code >= Machine->drv->gfxdecodeinfo[GFX_32X32_4BIT].gfxlayout->total ) {
+      if( code >= layout_total(GFX_32X32_4BIT) ) {
 	  logerror( "SZ_32X32: sprite=%d\n", code );
 	code = 0;
       }
@@ -680,7 +683,7 @@ static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
       code = ( ( (int)ygv608.regs.s.sba & 0xc0 ) << 2 ) | (int)sa->sn;
       if (spf != 0)
 	    color = ( code >> ( (spf + 1) * 2 ) ) & 0x0f;
-      if( code >= Machine->drv->gfxdecodeinfo[GFX_64X64_4BIT].gfxlayout->total ) {
+      if( code >= layout_total(GFX_64X64_4BIT) ) {
 	    logerror( "SZ_64X64: sprite=%d\n", code );
 	    code = 0;
       }

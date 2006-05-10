@@ -644,7 +644,7 @@ static int validate_gfx(int drivnum, const machine_config *drv, const UINT32 *re
 			int len, avail, plane, start;
 
 			/* determine which plane is the largest */
-			start = 0;
+ 			start = 0;
 			for (plane = 0; plane < MAX_GFX_PLANES; plane++)
 				if (gfx->gfxlayout->planeoffset[plane] > start)
 					start = gfx->gfxlayout->planeoffset[plane];

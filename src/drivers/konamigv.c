@@ -972,7 +972,7 @@ INPUT_PORTS_END
 ROM_START( konamigv )
 	GV_BIOS
 
-	ROM_REGION( 0x0000080, REGION_USER2, 0 ) /* default eeprom */
+	ROM_REGION( 0x0000080, REGION_USER2, ROMREGION_ERASE00 ) /* default eeprom */
 ROM_END
 
 ROM_START( susume )

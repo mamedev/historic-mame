@@ -4,31 +4,24 @@
 ************************************/
 
 #include "driver.h"
+#include "st0016.h"
 
 UINT8 *st0016_charram,*st0016_spriteram,*st0016_paletteram;
 
-#define ISMACS (st0016_game&0x80)
+UINT8 *macs_ram1,*macs_ram2;
 
-#define ST0016_MAX_SPR_BANK   0x10
-#define ST0016_MAX_CHAR_BANK  0x10000
-#define ST0016_MAX_PAL_BANK   4
+UINT32 st0016_game;
 
-#define ST0016_SPR_BANK_SIZE  0x1000
-#define ST0016_CHAR_BANK_SIZE 0x20
-#define ST0016_PAL_BANK_SIZE  0x200
-
-#define UNUSED_PEN 1024
-
-#define ST0016_SPR_BANK_MASK  (ST0016_MAX_SPR_BANK-1)
-#define ST0016_CHAR_BANK_MASK (ST0016_MAX_CHAR_BANK-1)
-#define ST0016_PAL_BANK_MASK  (ST0016_MAX_PAL_BANK-1)
 
 static INT32 st0016_spr_bank,st0016_spr2_bank,st0016_pal_bank,st0016_char_bank;
 static int spr_dx,spr_dy;
 
-int st0016_game;
+
 static UINT8 st0016_vregs[0xc0];
 static int st0016_ramgfx;
+
+
+
 
 static const gfx_layout charlayout =
 {
@@ -267,7 +260,7 @@ static void drawsprites( mame_bitmap *bitmap, const rectangle *cliprect)
 
     */
 
-	int i,j,lx,ly,x,y,code,offset,length,sx,sy,color,flipx,flipy,scrollx,scrolly;
+	int i,j,lx,ly,x,y,code,offset,length,sx,sy,color,flipx,flipy,scrollx,scrolly,plx,ply;
 
 
 	for(i=0;i<ST0016_SPR_BANK_SIZE*ST0016_MAX_SPR_BANK;i+=8)
@@ -278,10 +271,19 @@ static void drawsprites( mame_bitmap *bitmap, const rectangle *cliprect)
   	scrollx=(st0016_vregs[(((st0016_spriteram[i+1]&0x0f)>>1)<<2)+0x40]+256*st0016_vregs[(((st0016_spriteram[i+1]&0x0f)>>1)<<2)+1+0x40])&0x3ff;
   	scrolly=(st0016_vregs[(((st0016_spriteram[i+1]&0x0f)>>1)<<2)+2+0x40]+256*st0016_vregs[(((st0016_spriteram[i+1]&0x0f)>>1)<<2)+3+0x40])&0x3ff;
 
-		if(!ISMACS)
-		{
+	if(!ISMACS)
+	{
 	  	if (x & 0x200) x-= 0x400; //sign
   		if (y & 0x200) y-= 0x400;
+
+  		if (scrollx & 0x200) scrollx-= 0x400; //sign
+  		if (scrolly & 0x200) scrolly-= 0x400;
+  	}
+
+  	if(ISMACS1)
+	{
+	  	if (x & 0x200) x-= 0x400; //sign
+  		if (y & 0x200) y-= 0x2b0;//0x400;
 
   		if (scrollx & 0x200) scrollx-= 0x400; //sign
   		if (scrolly & 0x200) scrolly-= 0x400;
@@ -291,15 +293,20 @@ static void drawsprites( mame_bitmap *bitmap, const rectangle *cliprect)
   	y+=scrolly;
 
   	if(ISMACS)
+  	{
   		y+=0x20;
+  	}
 
-		if( st0016_spriteram[i+3]&0x80) /* end of list */
-			break;
+	if( st0016_spriteram[i+3]&0x80) /* end of list */
+		break;
 
 		offset=st0016_spriteram[i+2]+256*(st0016_spriteram[i+3]);
 		offset<<=3;
 
 		length=st0016_spriteram[i+0]+1+256*(st0016_spriteram[i+1]&1);
+
+		plx=(st0016_spriteram[i+5]>>2)&0x3;
+		ply=(st0016_spriteram[i+7]>>2)&0x3;
 
 		if(offset<ST0016_SPR_BANK_SIZE*ST0016_MAX_SPR_BANK)
 		{
@@ -309,14 +316,29 @@ static void drawsprites( mame_bitmap *bitmap, const rectangle *cliprect)
 				sx=st0016_spriteram[offset+4]+((st0016_spriteram[offset+5]&1)<<8);
 				sy=st0016_spriteram[offset+6]+((st0016_spriteram[offset+7]&1)<<8);
 
+				if(ISMACS && !(ISMACS1))
+				{
+					if (sy & 0x100) sy-= 0x200; //yuka & yujan
+				}
+
 				if(ISMACS)
+				{
 					sy=0xe0-sy;
+				}
 
 				sx+=x;
 				sy+=y;
 				color=st0016_spriteram[offset+2]&0x3f;
 				lx=(st0016_spriteram[offset+5]>>2)&3;
 				ly=(st0016_spriteram[offset+7]>>2)&3;
+			/*
+                if(plx |ply) //parent
+                {
+                    lx=plx;
+                    ly=ply;
+                }
+                */
+
 				flipx=st0016_spriteram[offset+3]&0x80;
 				flipy=st0016_spriteram[offset+3]&0x40;
 
@@ -338,7 +360,8 @@ static void drawsprites( mame_bitmap *bitmap, const rectangle *cliprect)
 							int gfxoffs;
 							ypos = sy+y0*8+spr_dy;
 							xpos = sx+x0*8+spr_dx;
-							tileno = code+i0++;
+							tileno = (code+i0++)&ST0016_CHAR_BANK_MASK ;
+
 							gfxoffs = 0;
 							srcgfx= gfx->gfxdata+(64*tileno);
 
@@ -362,22 +385,27 @@ static void drawsprites( mame_bitmap *bitmap, const rectangle *cliprect)
 
 									if ((drawxpos >= cliprect->min_x) && (drawxpos <= cliprect->max_x) && (drawypos >= cliprect->min_y) && (drawypos <= cliprect->max_y) )
 									{
-										/*Quick and dirty kludge to get past the booting tests in yuka*/
-										#if 0
-										if(st0016_spriteram[offset+5]&0x20)
-										{
-											#ifdef MAME_DEBUG
-											ui_popup("sprite bit activated");
-											#endif
-											break;
-										}
-										#endif
-
 										if(st0016_spriteram[offset+5]&0x40)
-											destline[drawxpos] |= pixdata<<4;
+										{
+											destline[drawxpos] =(destline[drawxpos] | pixdata<<4)&0x3ff;
+										}
 										else
-											if(pixdata || destline[drawxpos]==UNUSED_PEN)
-												destline[drawxpos] = pixdata + (color*16);
+										{
+											if(ISMACS2)
+											{
+												if(pixdata )//|| destline[drawxpos]==UNUSED_PEN)
+												{
+													destline[drawxpos] = pixdata + (color*16);
+												}
+											}
+											else
+											{
+												if(pixdata || destline[drawxpos]==UNUSED_PEN)
+												{
+													destline[drawxpos] = pixdata + (color*16);
+												}
+											}
+										}
 									}
 
 									gfxoffs++;
@@ -392,9 +420,6 @@ static void drawsprites( mame_bitmap *bitmap, const rectangle *cliprect)
 		}
 	}
 }
-
-WRITE8_HANDLER(st0016_rom_bank_w);
-extern int st0016_rom_bank;
 
 static void st0016_postload(void)
 {
@@ -418,6 +443,7 @@ void st0016_save_init(void)
 	state_save_register_global_pointer(st0016_spriteram, ST0016_MAX_SPR_BANK*ST0016_SPR_BANK_SIZE);
 	state_save_register_func_postload(st0016_postload);
 }
+
 
 VIDEO_START( st0016 )
 {
@@ -453,7 +479,7 @@ VIDEO_START( st0016 )
 			spr_dy=0;
 		break;
 
-		case 1: //neratte cyuh!
+		case 1: //neratte chu!
 			set_visible_area(8,41*8-1,0,30*8-1);
 			spr_dx=0;
 			spr_dy=8;
@@ -467,11 +493,18 @@ VIDEO_START( st0016 )
 			set_visible_area(0,383,0,255);
 		break;
 
+		case 11:
+			set_visible_area(0,383,0,383);
+		break;
+
+
 		default:
 			spr_dx=0;
 			spr_dy=0;
 	}
+
 	st0016_save_init();
+
 	return 0;
 }
 
@@ -479,25 +512,28 @@ VIDEO_START( st0016 )
 static void drawbgmap(mame_bitmap *bitmap,const rectangle *cliprect, int priority)
 {
 	int j;
-	for(j=8;j<0x40;j+=8)
+	//for(j=0x40-8;j>=0;j-=8)
+	for(j=0;j<0x40;j+=8)
 	{
 		if(st0016_vregs[j+1] && ((priority && (st0016_vregs[j+3]==0xff))||((!priority)&&(st0016_vregs[j+3]!=0xff))))
 		{
-			int x,y,code,color;
+			int x,y,code,color,flipx,flipy;
 			int i=st0016_vregs[j+1]*0x1000;
-			for(x=0;x<32;x++)
+			for(x=0;x<32*2;x++)
 	 			for(y=0;y<8*4;y++)
 	 			{
-
 				 	code=st0016_spriteram[i]+256*st0016_spriteram[i+1];
-	 				color=st0016_spriteram[i+2];
+	 				color=st0016_spriteram[i+2]&0x3f;
+
+	 				flipx=st0016_spriteram[i+3]&0x80;
+					flipy=st0016_spriteram[i+3]&0x40;
 
 				 	if(priority)
 				 	{
 				 		drawgfx(bitmap,Machine->gfx[0],
 										code,
 										color,
-										0,0,
+										flipx,flipy,
 										x*8+spr_dx,y*8+spr_dy,
 										&Machine->visible_area,TRANSPARENCY_PEN,0);
 					}
@@ -509,7 +545,7 @@ static void drawbgmap(mame_bitmap *bitmap,const rectangle *cliprect, int priorit
 							const gfx_element *gfx = Machine->gfx[0];
 							UINT8 *srcgfx;
 							int gfxoffs;
-							ypos = y*8+spr_dy+((st0016_vregs[j+2]==0xaf)?0x50:0);//hack for mayjinsen title screen
+							ypos = y*8+spr_dy;//+((st0016_vregs[j+2]==0xaf)?0x50:0);//hack for mayjinsen title screen
 							xpos = x*8+spr_dx;
 							gfxoffs = 0;
 							srcgfx= gfx->gfxdata+(64*code);
@@ -518,7 +554,7 @@ static void drawbgmap(mame_bitmap *bitmap,const rectangle *cliprect, int priorit
 							{
 								UINT16 drawypos;
 
-								drawypos = ypos+yloop;
+								if (!flipy) {drawypos = ypos+yloop;} else {drawypos = (ypos+8-1)-yloop;}
 								destline = (UINT16 *)(bitmap->line[drawypos]);
 
 								for (xloop=0; xloop<8; xloop++)
@@ -527,18 +563,39 @@ static void drawbgmap(mame_bitmap *bitmap,const rectangle *cliprect, int priorit
 									int pixdata;
 									pixdata = srcgfx[gfxoffs];
 
-									drawxpos = xpos+xloop;
+									if (!flipx) { drawxpos = xpos+xloop; } else { drawxpos = (xpos+8-1)-xloop; }
+
+									if (drawxpos > cliprect->max_x)
+										drawxpos -= 512; // wrap around
 
 									if ((drawxpos >= cliprect->min_x) && (drawxpos <= cliprect->max_x) && (drawypos >= cliprect->min_y) && (drawypos <= cliprect->max_y) )
 									{
+
 										if(st0016_vregs[j+7]==0x12)
-											destline[drawxpos] |= pixdata<<4;
+											destline[drawxpos] = (destline[drawxpos] | (pixdata<<4))&0x3ff;
 										else
-											if(pixdata || destline[drawxpos]==UNUSED_PEN)
-												destline[drawxpos] = pixdata + (color*16);
+										{
+
+											if(ISMACS2)
+											{
+												if(pixdata)// || destline[drawxpos]==UNUSED_PEN)
+												{
+													destline[drawxpos] = pixdata + (color*16);
+												}
+											}
+											else
+											{
+												if(pixdata || destline[drawxpos]==UNUSED_PEN)
+												{
+													destline[drawxpos] = pixdata + (color*16);
+												}
+											}
+
+										}
 									}
 
 									gfxoffs++;
+
 								}
 							}
 						}
@@ -572,6 +629,15 @@ VIDEO_UPDATE( st0016 )
 		fclose(p);
 	}
 #endif
+
+	if(ISMACS1)
+	{
+		if(!(readinputportbytag("SYS1")&1))	//fake coins - MACS2 system
+		{
+			macs_ram2[0]++;
+		}
+	}
+
 	fillbitmap(bitmap,Machine->pens[UNUSED_PEN],&Machine->visible_area);
 	drawbgmap(bitmap,cliprect,0);
  	drawsprites(bitmap,cliprect);

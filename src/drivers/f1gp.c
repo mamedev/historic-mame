@@ -581,7 +581,7 @@ ROM_START( f1gp )
 	ROM_LOAD32_WORD( "rom7-b.17",    0x000000, 0x40000, CRC(2aed9003) SHA1(45ff9953ad98063573e7fd7b930ae8b0183cdd04) )
 	ROM_LOAD32_WORD( "rom6-b.16",    0x000002, 0x40000, CRC(6789ef12) SHA1(9b0d1cc6e9c6398ccb7f635c4c148fddd224a21f) )
 
-	ROM_REGION( 0x40000, REGION_GFX4, 0 )	/* gfx data for the 053936 */
+	ROM_REGION( 0x40000, REGION_GFX4, ROMREGION_ERASE00 )	/* gfx data for the 053936 */
 	/* RAM, not ROM - handled at run time */
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 ) /* sound samples */

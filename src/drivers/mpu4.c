@@ -21,7 +21,7 @@ an anti-tampering device which helped to prevent the hacking of certain titles i
 
 One of the advantages of the hardware setup was that the developer could change the nature of the game card
 up to a point, adding extra lamp support, different amounts of RAM, and (in many cases) an OKI MSM6376 and related PIA for
-improved ADPCM sample support (This was eventually endorsed in the latest official 'MOD' of the board)
+improved ADPCM sample support (This was eventually endorsed in the most recent official 'MOD' of the board)
 
 For the Barcrest MPU4 Video system, the cartridge contains the MPU4 video bios in the usual ROM space, interface chips to connect
 an additional Video board, and a 6850 serial IO to communicate with the video board. This version of the game card does not
@@ -56,11 +56,11 @@ Datasheets are available for the main components, The AGEMAME site mirrors a few
 
    hex     |r/w| D D D D D D D D |
  location  |   | 7 6 5 4 3 2 1 0 | function
------------+---+-----------------+-----------------------------------------
+-----------+---+-----------------+--------------------------------------------------------------------------
  0000-07FF |R/W| D D D D D D D D | 2k RAM
------------+---+-----------------+-----------------------------------------
+-----------+---+-----------------+--------------------------------------------------------------------------
  0800      | ? |                 | Characteriser (Security PAL) (NV)
------------+---+-----------------+-----------------------------------------
+-----------+---+-----------------+--------------------------------------------------------------------------
  0880      |R/W| D D D D D D D D | PIA6821 on soundboard (Oki MSM6376@16MHz,(NV)
                                    port A = ??
                                    port B (882)
@@ -73,11 +73,11 @@ Datasheets are available for the main components, The AGEMAME site mirrors a few
                                           b2 = ??
                                           b1 = ??
                                           b0 = ??
------------+---+-----------------+-----------------------------------------
+-----------+---+-----------------+--------------------------------------------------------------------------
  0850 ?    | W | ??????????????? | page latch (NV?)
------------+---+-----------------+-----------------------------------------
+-----------+---+-----------------+--------------------------------------------------------------------------
  08C0      |   |                 | MC6840 on sound board(NV?)
------------+---+-----------------+-----------------------------------------
+-----------+---+-----------------+--------------------------------------------------------------------------
  0900-     |R/W| D D D D D D D D | MC6840 PTM IC2
 
                                      IRQ line connected to CPU
@@ -90,7 +90,7 @@ Datasheets are available for the main components, The AGEMAME site mirrors a few
                          +--------> CA1 IC3 (
 
 
------------+---+-----------------+-----------------------------------------
+-----------+---+-----------------+--------------------------------------------------------------------------
  0A00-0A03 |R/W| D D D D D D D D | PIA6821 IC3 port A Lamp Drives 1,2,3,4,6,7,8,9 (sic)(IC14)
 
                                             CA1 <= output2 from PTM6840 (IC2)
@@ -99,7 +99,7 @@ Datasheets are available for the main components, The AGEMAME site mirrors a few
                                             port B Lamp Drives 10,11,12,13,14,15,16,17 (sic)(IC13)
 
                                             CB2 => alpha reset (clock on Dutch systems)
------------+---+-----------------+-----------------------------------------
+-----------+---+-----------------+--------------------------------------------------------------------------
  0B00-0B03 |R/W| D D D D D D D D | PIA6821 IC4 port A = data for 7seg leds (pins 10 - 17, via IC32)
 
                                                CA1 INPUT, 50 Hz input (used to generate IRQ)
@@ -118,10 +118,10 @@ Datasheets are available for the main components, The AGEMAME site mirrors a few
 
                                                CB1 INPUT,  used to generate IRQ on edge of serial input line
                                                CB2 OUTPUT, enable signal for reel optics
------------+---+-----------------+-----------------------------------------
+-----------+---+-----------------+--------------------------------------------------------------------------
  0C00-0C03 |R/W| D D D D D D D D | PIA6821 IC5 port A
 
-                                                      PA0-PA7, INPUT? AUX1 connector
+                                                      PA0-PA7, INPUT AUX1 connector
 
                                                CA2  OUTPUT, serial port Transmit line
                                                CA1  not connected
@@ -136,7 +136,7 @@ Datasheets are available for the main components, The AGEMAME site mirrors a few
                                                CB2  OUTPUT, AY8910 chip select line
                                                IRQB connected to IRQ of CPU
 
------------+---+-----------------+-----------------------------------------
+-----------+---+-----------------+--------------------------------------------------------------------------
  0D00-0D03 |R/W| D D D D D D D D | PIA6821 IC6
 
                                     port A
@@ -156,53 +156,54 @@ Datasheets are available for the main components, The AGEMAME site mirrors a few
                                           CB2 OUTPUT, B01R pin AY8910 sound chip
                                           IRQB , connected to IRQ CPU
 
------------+---+-----------------+-----------------------------------------
+-----------+---+-----------------+--------------------------------------------------------------------------
  0E00-0E03 |R/W| D D D D D D D D | PIA6821 IC7
 
                                     port A
 
                                           PA0-PA3 OUTPUT, reel C
                                           PA4-PA7 OUTPUT, reel D
-                                          CA1     INPUT, not connected
-                                          CA2     OUTPUT   A on LED strobe multiplexer
+                                          CA1     INPUT,  not connected
+                                          CA2     OUTPUT, A on LED strobe multiplexer
                                           IRQA , connected to IRQ CPU
 
                                     port B
 
-                                          PB0-BP7 OUTPUT  mech meter or reel E + F
+                                          PB0-BP7 OUTPUT mech meter or reel E + F
                                           CB1     INPUT, not connected
-                                          CB2     OUTPUT, enable mech meter latch
+                                          CB2     OUTPUT,enable mech meter latch
                                           IRQB , connected to IRQ CPU
 
------------+---+-----------------+-----------------------------------------
+-----------+---+-----------------+--------------------------------------------------------------------------
  0F00-0F03 |R/W| D D D D D D D D | PIA6821 IC8
 
                                    port A
 
-                                          PA0-PA7 INPUT   multiplexed inputs data
+                                          PA0-PA7 INPUT  multiplexed inputs data
 
-                                          CA1     INPUT,  not connected
+                                          CA1     INPUT, not connected
                                           CA2    OUTPUT, C on LED strobe multiplexer
-                                          IRQA            connected to IRQ CPU
+                                          IRQA           connected to IRQ CPU
 
                                    port B
 
                                           PB0-PB7 OUTPUT  triacs outputs connector PL6
                                           used for slides / hoppers
 
-                                          CB1     INPUT,  not connected
+                                          CB1     INPUT, not connected
                                           CB2    OUTPUT, pin1 alpha display PL7 (clock signal)
                                           IRQB           connected to IRQ CPU
 
------------+---+-----------------+-----------------------------------------
+-----------+---+-----------------+--------------------------------------------------------------------------
  1000-FFFF | R | D D D D D D D D | ROM (can be banked switched by ??? in 8 banks of 64 k )
------------+---+-----------------+-----------------------------------------
+-----------+---+-----------------+--------------------------------------------------------------------------
 
  4000, appears to be something special?
 
  TODO: - get better memorymap.
        - Get MPU4 board working properly, so that video layer will operate.
        - Confirm that MC6850 emulation is sufficient.
+       - Confirm that MC6840 emulation actually works (it appears to, but it could do with another view).
 
 */
 
@@ -223,18 +224,59 @@ Datasheets are available for the main components, The AGEMAME site mirrors a few
 #include "machine/vacfdisp.h"  // vfd
 #include "machine/mmtr.h"
 
+#define VERBOSE 1
+
+#if VERBOSE
+#define LOG(x)	logerror x
+#else
+#define LOG(x)
+#endif
+
 #define LOGSTUFF logerror
-#define LOG_IC3(x)
-#define LOG_IC8(x)
+
+#define LOG_IC3(x)	logerror x
+
+#define LOG_IC8(x)	//logerror x
+
+
+
+void draw_7segment_led_temp(mame_bitmap *bitmap, int x, int y, UINT8 value, int col_on, int col_off)
+{
+
+	plot_box(bitmap, x-1, y-1, 7, 11, 0);
+
+	/* Top */
+	plot_box(bitmap, x+1, y+0, 3, 1, (value & 0x40) ? col_on : col_off);
+	/* Middle */
+	plot_box(bitmap, x+1, y+4, 3, 1, (value & 0x01) ? col_on : col_off);
+	/* Bottom */
+	plot_box(bitmap, x+1, y+8, 3, 1, (value & 0x08) ? col_on : col_off);
+	/* Top Left */
+	plot_box(bitmap, x+0, y+1, 1, 3, (value & 0x02) ? col_on : col_off);
+	/* Top Right */
+	plot_box(bitmap, x+4, y+1, 1, 3, (value & 0x20) ? col_on : col_off);
+	/* Bottom Left */
+	plot_box(bitmap, x+0, y+5, 1, 3, (value & 0x04) ? col_on : col_off);
+	/* Bottom Right */
+	plot_box(bitmap, x+4, y+5, 1, 3, (value & 0x10) ? col_on : col_off);
+}
+
+// local prototypes ///////////////////////////////////////////////////////
+
 
 // local vars /////////////////////////////////////////////////////////////
 
 static int alpha_data_line;
 static int alpha_clock;
 static int ay8910_address;
+//static int expansion_latch;
+//static int global_volume;
 
 static int signal_50hz;
 static int ic4_input_b;
+static int IC23G2A;
+static int IC23G23;
+static int IC23G1;
 
 static UINT8 m6840_irq_state;
 extern UINT8 m6850_irq_state; // referenced in machine/6850acia.c
@@ -245,7 +287,7 @@ static void update_irq(void);
 // user interface stuff ///////////////////////////////////////////////////
 
 static UINT8 lamps[224];		// 224 multiplexed lamps  (2 8X8 matrices) PIAs take care of this in some form
-static UINT8 inputs[32];		// 32  multiplexed inputs - but a further 8 possible per AUX.
+//static UINT8 inputs[32];      // 32  multiplexed inputs - but a further 8 possible per AUX.
 								// Two connectors 'orange' (sampled every 8ms) and 'black' (sampled every 16ms)
 								// Each connector carries two banks of eight inputs and two enable signals
 
@@ -253,7 +295,9 @@ static int optic_pattern;
 static UINT16 lamp_strobe;
 static UINT8  lamp_data;
 
-static int   led_mux_strobe;
+static UINT8  IC3ca1;
+
+//static int   led_mux_strobe;
 static UINT8 led_segs[8];
 /*
 LED Segments related to pins (5 is not connected):
@@ -269,7 +313,6 @@ LED Segments related to pins (5 is not connected):
 
 8 display enables (pins 10 - 17)
 */
-
 static int    input_strobe;	  // IC23 74LS138 A = CA2 IC7, B = CA2 IC4, C = CA2 IC8
 static int    output_strobe;  // same
 
@@ -354,9 +397,14 @@ static MACHINE_RESET( mpu4_vid )
 		optic_pattern = pattern;
 	}
 
-	led_mux_strobe = 0;
+	//led_mux_strobe = 0;
 	lamp_strobe    = 0;
 	lamp_data      = 0;
+
+	IC23G2A    = 0;
+	IC23G23    = 0;
+	IC23G1     = 1;
+
 	uart1_status  = 0x02; // MC6850 transmit buffer empty !!!
 	uart2_status  = 0x02; // MC6850 transmit buffer empty !!!
 	vid_rx                = 0;
@@ -409,14 +457,13 @@ static WRITE8_HANDLER( ic2_o1_callback )
 static WRITE8_HANDLER( ic2_o2_callback )
 {
 	pia_set_input_ca1(0, data); // copy output value to IC3 ca1
-	logerror("IC2 clock 3 %d \n",data);
-//  ic3_output_ca1 = data;
+	IC3ca1 = data;
 	ptm6840_set_c3(   0, data); // copy output value to IC2 c3
 }
 
 static WRITE8_HANDLER( ic2_o3_callback )
 {
-	AY8910_control_port_0_w(0, data);
+	pia_set_input_a(3, data);
 }
 
 static const ptm6840_interface ptm_ic2_intf =
@@ -458,14 +505,14 @@ static WRITE8_HANDLER( pia_ic3_portb_w )
 
 static READ8_HANDLER( pia_ic3_porta_r )
 {
-	LOG_IC3(("%04x IC3 PIA Read of Port A (Lamp drives 1,2,3,4,5,6,8,9)\n",activecpu_get_previouspc()));
-	return 0;
+	LOG_IC3(("%04x IC3 PIA Read of Port A (lamp strobes 1 - 9)\n",activecpu_get_previouspc()));
+	return lamp_strobe;
 }
 
 static READ8_HANDLER( pia_ic3_portb_r )
 {
-	LOG_IC3(("%04x IC3 PIA Read of Port B (Lamp drives 10,11,12,13,14,15,16,17)\n",activecpu_get_previouspc()));
-	return 0;
+	LOG_IC3(("%04x IC3 PIA Read of Port B (lamp strobes 10 - 17)\n",activecpu_get_previouspc()));
+	return lamp_strobe;
 }
 
 static WRITE8_HANDLER( pia_ic3_ca2_w )
@@ -486,18 +533,18 @@ static WRITE8_HANDLER( pia_ic3_cb2_w )
 
 static READ8_HANDLER( pia_ic3_ca1_r )
 {
-	LOG_IC3(("%04x IC3 PIA Read CA1\n",activecpu_get_previouspc()));
-	return 0;
+	LOG_IC3(("%04x IC3 PIA Read CA1 (PTM) %x \n",activecpu_get_previouspc(),IC3ca1));
+	return IC3ca1;
 }
 
 static READ8_HANDLER( pia_ic3_ca2_r )
 {
-	LOG_IC3(("%04x IC3 PIA Read CA2\n",activecpu_get_previouspc()));
-	return 0;
+//  LOG_IC3(("%04x IC3 PIA Read CA2\n",activecpu_get_previouspc()));
+	return alpha_data_line;//0;
 }
 static READ8_HANDLER( pia_ic3_cb1_r )
 {
-	LOG_IC3(("%04x IC3 PIA Read CB1\n",activecpu_get_previouspc()));
+//  LOG_IC3(("%04x IC3 PIA Read CB1\n",activecpu_get_previouspc()));
 	return 0;
 }
 static READ8_HANDLER( pia_ic3_cb2_r )
@@ -505,6 +552,7 @@ static READ8_HANDLER( pia_ic3_cb2_r )
 	LOG_IC3(("%04x IC3 PIA Read CB2\n",activecpu_get_previouspc()));
 	return 0;
 }
+
 
 // IC3, lamp data lines + alpha numeric display
 
@@ -517,18 +565,46 @@ static const pia6821_interface pia_ic3_intf =
 
 static WRITE8_HANDLER( pia_ic4_porta_w )
 {
-	int p,i;
+	if (IC23G2A ==0)
+	{
+		if (IC23G23 ==0)
+		{
+			if (IC23G1)
+			{
+				switch (input_strobe)
+				{
+					case 0x00:
+					led_segs[0] = data;
+					case 0x01:
+					led_segs[1] = data;
+					case 0x02:
+					led_segs[2] = data;
+					case 0x03:
+					led_segs[3] = data;
+					case 0x04:
+					led_segs[4] = data;
+					case 0x05:
+					led_segs[5] = data;
+					case 0x06:
+					led_segs[6] = data;
+					case 0x07:
+					led_segs[7] = data;
+				}
+			}
+		}
+	}
+//  int p,i;
 
 	logerror("%04x IC4 PIA Port A Set to %2x\n", activecpu_get_previouspc(),data);
 
-	p = 1;
-	i = 0;
-	while ( p )
-	{
-		if ( led_mux_strobe & p ) led_segs[i] = data;
-		i++;
-		p <<= 1;
-	}
+//  p = 1;
+//  i = 0;
+//  while ( p )
+//  {
+//      if ( led_mux_strobe & p ) led_segs[i] = data;
+//      i++;
+//      p <<= 1;
+//  }
 }
 
 static WRITE8_HANDLER( pia_ic4_portb_w )
@@ -544,7 +620,10 @@ static READ8_HANDLER( pia_ic4_porta_r )
 
 static READ8_HANDLER( pia_ic4_portb_r )
 {
-	logerror("%04x IC4 PIA Read of Port B (reels)\n",activecpu_get_previouspc());
+	logerror("%04x IC4 PIA Read of Port B\n",activecpu_get_previouspc());
+
+	// if ( serial_data  ) ic4_input_b |=  0x80;
+	// else                ic4_input_b &= ~0x80;
 
 	if ( optic_pattern & 0x01 ) ic4_input_b |=  0x40; // reel A tab
 	else                        ic4_input_b &= ~0x40;
@@ -558,9 +637,12 @@ static READ8_HANDLER( pia_ic4_portb_r )
 	if ( optic_pattern & 0x08 ) ic4_input_b |=  0x08; // reel D tab
 	else                        ic4_input_b &= ~0x08;
 
-	// if ( lamp_overcurrent  ) result |= 0x02;
-	// if ( lamp_undercurrent ) result |= 0x01;
-
+	// if ( lamp_overcurrent  ) ic4_input_b |= 0x02;
+	// if ( lamp_undercurrent ) ic4_input_b |= 0x01;
+	if (offset & 2)
+	{
+	return signal_50hz;
+	}
 	return ic4_input_b;
 }
 
@@ -569,12 +651,22 @@ static READ8_HANDLER( pia_ic4_ca1_r )
 	return signal_50hz?1:0;
 }
 
+static READ8_HANDLER( pia_ic4_cb1_r )
+{
+	return 0;
+}
+
+static READ8_HANDLER( pia_ic4_cb2_r )
+{
+	return 0;
+}
+
 static WRITE8_HANDLER( pia_ic4_ca2_w )
 {
-	LOG_IC3(("%04x IC4 PIA Write CA (input MUX strobe), %02X\n", activecpu_get_previouspc(),data&0xFF));
+	LOG_IC3(("%04x IC4 PIA Write CA (input MUX strobe /LED B), %02X\n", activecpu_get_previouspc(),data&0xFF));
 
-	if ( data )  input_strobe |=  0x020;
-	else         input_strobe &= ~0x020;
+	if ( data )  input_strobe |=  0x02;
+	else         input_strobe &= ~0x02;
 
 	output_strobe = input_strobe; // same strobe lines are used for input and output
 }
@@ -582,7 +674,7 @@ static WRITE8_HANDLER( pia_ic4_ca2_w )
 
 static WRITE8_HANDLER( pia_ic4_cb2_w )
 {
-	LOG_IC3(("%04x IC4 PIA Write CB (T39, connector PL13 pin 2), %02X\n",activecpu_get_previouspc(),data&0xff));
+	LOG_IC3(("%04x I43 PIA Write CB (T39, connector PL13 pin 2), %02X\n",activecpu_get_previouspc(),data&0xff));
 }
 
 // IC4, 7 seg leds, 50Hz timer reel sensors, current sensors
@@ -590,13 +682,14 @@ static WRITE8_HANDLER( pia_ic4_cb2_w )
 
 static const pia6821_interface pia_ic4_intf =
 {
-	/*inputs : A/B,CA/B1,CA/B2 */ pia_ic4_porta_r, pia_ic4_portb_r, pia_ic4_ca1_r, 0, 0, 0,
+	/*inputs : A/B,CA/B1,CA/B2 */ pia_ic4_porta_r, pia_ic4_portb_r, pia_ic4_ca1_r, pia_ic4_cb1_r, 0, pia_ic4_cb2_r,
 	/*outputs: A/B,CA/B2       */ pia_ic4_porta_w, pia_ic4_portb_w, pia_ic4_ca2_w, pia_ic4_cb2_w,
 	/*irqs   : A/B             */ cpu0_irq, cpu0_irq
 };
 
 static WRITE8_HANDLER( pia_ic5_porta_w )
 {
+
 	int changed = lamp_data ^ data;
 
 	lamp_data = data;
@@ -621,29 +714,31 @@ static WRITE8_HANDLER( pia_ic5_porta_w )
 	Lamps_SetBrightness(0, 255, lamps);
 		}
 	}
+
 }
 
 static WRITE8_HANDLER( pia_ic5_portb_w )
 {
 	logerror("%04x IC5 PIA Port B Set to %2x\n", activecpu_get_previouspc(), data);
-
-	led_mux_strobe = data;
+	pia_set_input_b(2, data);
+//  led_mux_strobe = data;
 }
 
 static READ8_HANDLER( pia_ic5_porta_r )
 {
 	logerror("%04x IC5 PIA Read of Port A\n",activecpu_get_previouspc());
-	return 0;
+	return readinputportbytag("AUX1");
+//  return 0;
 }
 
 static READ8_HANDLER( pia_ic5_portb_r )
 {
-	int result = 0;
+	//int result = 0;
 	logerror("%04x IC5 PIA Read of Port B (coin input AUX2 )\n",activecpu_get_previouspc());
 
 	//result = coin_latch()
-
-	return result;
+	return readinputportbytag("AUX2");
+	//return result;
 }
 
 static READ8_HANDLER( pia_ic5_ca1_r )
@@ -655,6 +750,18 @@ static READ8_HANDLER( pia_ic5_ca1_r )
 static READ8_HANDLER( pia_ic5_ca2_r )
 {
 	logerror("%04x IC5 PIA Read of CA2\n",activecpu_get_previouspc());
+	return 0;
+}
+
+static READ8_HANDLER( pia_ic5_cb1_r )
+{
+	logerror("%04x IC5 PIA Read of CA1\n",activecpu_get_previouspc());
+	return readinputportbytag("AUX2") & 0x40;
+}
+
+static READ8_HANDLER( pia_ic5_cb2_r )
+{
+	logerror("%04x IC5 PIA Read of CB2\n",activecpu_get_previouspc());
 	return 0;
 }
 
@@ -671,7 +778,7 @@ static WRITE8_HANDLER( pia_ic5_cb_w )
 
 static const pia6821_interface pia_ic5_intf =
 {
-	/*inputs : A/B,CA/B1,CA/B2 */ pia_ic5_porta_r, pia_ic5_portb_r, pia_ic5_ca1_r, 0, pia_ic5_ca2_r, 0,
+	/*inputs : A/B,CA/B1,CA/B2 */ pia_ic5_porta_r, pia_ic5_portb_r, 0, pia_ic5_cb1_r, pia_ic5_ca2_r, pia_ic5_cb2_r,//CB1 connected to PB7 Aux 2
 	/*outputs: A/B,CA/B2       */ pia_ic5_porta_w, pia_ic5_portb_w, pia_ic5_ca_w,  pia_ic5_cb_w,
 	/*irqs   : A/B             */ cpu0_irq, cpu0_irq
 };
@@ -688,7 +795,7 @@ static WRITE8_HANDLER( pia_ic6_porta_w )
 {
 	logerror("%04x IC6 PIA Write A %2x\n", activecpu_get_previouspc(),data);
 
-	AY8910_control_port_0_w(0, data);
+	//AY8910_control_port_0_w(0, data);
 }
 
 static WRITE8_HANDLER( pia_ic6_portb_w )
@@ -703,6 +810,7 @@ static READ8_HANDLER( pia_ic6_porta_r )
 {
 	logerror("%04x IC6 PIA Read of Port A\n",activecpu_get_previouspc());
 	return 0;
+//  return AY8910_read_port_0_r;
 }
 
 static READ8_HANDLER( pia_ic6_portb_r )
@@ -711,10 +819,15 @@ static READ8_HANDLER( pia_ic6_portb_r )
 	return 0;
 }
 
+static READ8_HANDLER( pia_ic6_cb1_r )
+{
+	return 0;
+}
+
 static const pia6821_interface pia_ic6_intf =
 {
-	/*inputs : A/B,CA/B1,CA/B2 */ pia_ic6_porta_r, pia_ic6_portb_r, 0, 0, 0, 0,
-	/*outputs: A/B,CA/B2       */ pia_ic6_porta_w, pia_ic6_portb_w, 0, 0,
+	/*inputs : A/B,CA/B1,CA/B2 */ pia_ic6_porta_r, pia_ic6_portb_r, 0, pia_ic6_cb1_r, 0, 0,
+	/*outputs: A/B,CA/B2       */ AY8910_control_port_0_w, pia_ic6_portb_w, 0, 0,
 	/*irqs   : A/B             */ cpu0_irq, cpu0_irq
 };
 
@@ -747,9 +860,15 @@ static READ8_HANDLER( pia_ic7_portb_r )
 	return 0;
 }
 
+static READ8_HANDLER( pia_ic7_cb2_r )
+{
+	logerror("%04x IC7 PIA read CB2 (meter driver PL3)\n", activecpu_get_previouspc());
+	return 0;
+}
+
 static WRITE8_HANDLER( pia_ic7_ca2_w )
 {
-	logerror("%04x IC7 PIA write CA2 %2x (input strobe bit 0)\n", activecpu_get_previouspc(),data);
+	logerror("%04x IC7 PIA write CA2 %2x (input strobe bit 0 / LED A)\n", activecpu_get_previouspc(),data);
 
 	if ( data ) input_strobe |=  0x01;
 	else        input_strobe &= ~0x01;
@@ -764,7 +883,7 @@ static WRITE8_HANDLER( pia_ic7_cb2_w )
 
 static const pia6821_interface pia_ic7_intf =
 {
-	/*inputs : A/B,CA/B1,CA/B2 */ pia_ic7_porta_r, pia_ic7_portb_r, 0, 0, 0, 0,
+	/*inputs : A/B,CA/B1,CA/B2 */ pia_ic7_porta_r, pia_ic7_portb_r, 0, 0, 0, pia_ic7_cb2_r,
 	/*outputs: A/B,CA/B2       */ pia_ic7_porta_w, pia_ic7_portb_w, pia_ic7_ca2_w, pia_ic7_cb2_w,
 	/*irqs   : A/B             */ cpu0_irq, cpu0_irq
 };
@@ -784,8 +903,7 @@ static READ8_HANDLER( pia_ic8_porta_r )
 	LOG_IC8(("%04x IC8 PIA Read of Port A (MUX input data)\n",activecpu_get_previouspc()));
 
 	// strobe
-
-	return inputs[ input_strobe&0x07 ];
+	return readinputport(input_strobe&0x07);//inputs[ input_strobe&0x07 ];
 }
 
 static READ8_HANDLER( pia_ic8_portb_r )
@@ -819,7 +937,7 @@ static WRITE8_HANDLER( pia_ic8_cb_w )
 
 static WRITE8_HANDLER( pia_ic8_ca2_w )
 {
-	LOG_IC8(("%04x IC8 PIA write CA2 (input_strobe bit 2) %02X\n", activecpu_get_previouspc(), data & 0xFF));
+	LOG_IC8(("%04x IC8 PIA write CA2 (input_strobe bit 2 / LED C) %02X\n", activecpu_get_previouspc(), data & 0xFF));
 
 	if ( data ) input_strobe |=  0x04;
 	else        input_strobe &= ~0x04;
@@ -829,7 +947,7 @@ static WRITE8_HANDLER( pia_ic8_ca2_w )
 
 static const pia6821_interface pia_ic8_intf =
 {
-	/*inputs : A/B,CA/B1,CA/B2 */ pia_ic8_porta_r, pia_ic8_portb_r, pia_ic8_ca1_r, 0, pia_ic8_ca2_r, 0,
+	/*inputs : A/B,CA/B1,CA/B2 */ pia_ic8_porta_r, pia_ic8_portb_r, 0, 0, pia_ic8_ca2_r, 0,
 	/*outputs: A/B,CA/B2       */ pia_ic8_porta_w, pia_ic8_portb_w, pia_ic8_ca2_w, pia_ic8_cb_w,
 	/*irqs   : A/B             */ cpu0_irq, cpu0_irq
 };
@@ -969,6 +1087,15 @@ VIDEO_UPDATE( mpu4_vid )
 	}
 
 	ui_popup("%02x %02x %02x %02x %02x %02x",scn2674_screen1_l,scn2674_screen1_h,scn2674_cursor_l, scn2674_cursor_h,scn2674_screen2_l,scn2674_screen2_h);
+
+	draw_7segment_led_temp(bitmap, 300, 504, led_segs[0], 4, 0);
+	draw_7segment_led_temp(bitmap, 308, 504, led_segs[1], 4, 0);
+	draw_7segment_led_temp(bitmap, 316, 504, led_segs[2], 4, 0);
+	draw_7segment_led_temp(bitmap, 324, 504, led_segs[3], 4, 0);
+	draw_7segment_led_temp(bitmap, 332, 504, led_segs[4], 4, 0);
+	draw_7segment_led_temp(bitmap, 340, 504, led_segs[5], 4, 0);
+	draw_7segment_led_temp(bitmap, 348, 504, led_segs[6], 4, 0);
+	draw_7segment_led_temp(bitmap, 356, 504, led_segs[7], 4, 0);
 
 }
 
@@ -1671,6 +1798,70 @@ static ADDRESS_MAP_START( mpu4_map, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 INPUT_PORTS_START( mpu4_vid )
+
+	PORT_START_TAG("IN1A")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("00")
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("01")
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("02")
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("03")
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("04")
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("05")
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("06")
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("07")
+
+	PORT_START_TAG("IN1B")
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("08")
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("09")
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("10")
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("11")
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("12")
+	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("13")
+	PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("14")
+	PORT_BIT(0x80, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("15")
+
+	PORT_START_TAG("IN2A")
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("16")
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("17")
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("18")
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("19")
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("20")
+	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("21")
+	PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("22")
+	PORT_BIT(0x80, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("23")
+
+	PORT_START_TAG("IN2B")
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("24")
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("25")
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("26")
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("27")
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("28")
+	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("29")
+	PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("30")
+	PORT_BIT(0x80, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("31")
+
+	PORT_START_TAG("AUX1")
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("0")
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("1")
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("2")
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("3")
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("4")
+	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("5")
+	PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("6")
+	PORT_BIT(0x80, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("7")
+
+	PORT_START_TAG("AUX2")
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("0")
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("1")
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("2")
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("3")
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("4")
+	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("5")
+	PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("6")
+	PORT_BIT(0x80, IP_ACTIVE_LOW, IPT_OTHER) PORT_NAME("7")
+
+	//PORT_BIT( 0x01, IP_ACTIVE_LOW,IPT_OTHER) PORT_NAME("Refill Key") PORT_CODE(KEYCODE_R) PORT_TOGGLE
+	//PORT_BIT( 0x02, IP_ACTIVE_LOW,IPT_OTHER) PORT_NAME("Bookkeeping") PORT_CODE(KEYCODE_F1) PORT_TOGGLE
+	//2X8 dips
 INPUT_PORTS_END
 
 /*
@@ -1722,15 +1913,15 @@ MACHINE_START( mpu4_vid )
 
 	pia_reset();
 
-	pia_set_input_ca1(2, 1);	// set IC5 CA1
-	pia_set_input_ca2(2, 1);	// set IC5 CA2
+//  pia_set_input_ca1(2, 1);    // set IC5 CA1
+//  pia_set_input_ca2(2, 1);    // set IC5 CA2
 
-	pia_set_input_b(6, 0x80);
+//  pia_set_input_b(6, 0x80);
 
-	pia_set_input_cb1(0, 1);	// IC3
-	pia_set_input_ca1(0, 1);	// set IC3 CA1
-	pia_set_input_ca2(0, 1);	// set IC5 CA2
-	pia_set_input_ca1(0, 1);	// set IC3 CA1
+//  pia_set_input_cb1(0, 1);    // IC3
+//  pia_set_input_ca1(0, 1);    // set IC3 CA1
+//  pia_set_input_ca2(0, 1);    // set IC5 CA2
+//  pia_set_input_ca1(0, 1);    // set IC3 CA1
 
 // setup ptm ////////////////////////////////////////////////////////////
 

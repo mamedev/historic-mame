@@ -15,6 +15,7 @@
 #include "osdepend.h"
 #include "driver.h"
 #include "vidhrdw/vector.h"
+#include "x86drc.h"
 
 // MAMEOS headers
 #include "blit.h"
@@ -157,8 +158,6 @@ extern void asmblit_footer(void);
 extern void asmblit_footer_mmx(void);
 extern void asmblit_prefetch_sse(void);
 
-extern UINT32 asmblit_cpuid_features(void);
-
 
 //============================================================
 //  GLOBAL VARIABLES
@@ -192,9 +191,9 @@ static int					xtrans[MAX_SCREEN_DIM];
 static int					ytrans[MAX_SCREEN_DIM];
 
 // MMX/SSE/SSE2 supported?
-static int					use_mmx = -1;
-static int					use_sse = -1;
-static int					use_sse2 = -1;
+static int					use_mmx;
+static int					use_sse;
+static int					use_sse2;
 
 // register index to size table
 static const UINT8 regoffset_regsize[32] =
@@ -458,6 +457,35 @@ static void (*blit16_core_rgb[4][4])(void) =
 	{ NULL, NULL, NULL, NULL },
 	{ NULL, NULL, NULL, NULL }
 };
+
+
+
+//============================================================
+//  win_blit_init
+//============================================================
+
+void win_blit_init(void)
+{
+	UINT32 features;
+
+	// determine MMX/XMM support
+	features = drc_x86_get_features();
+	use_mmx = (features & (1 << 23));
+	use_sse = (features & (1 << 25));
+	use_sse2 = (features & (1 << 26));
+
+	if (verbose)
+	{
+		if (use_sse2)
+			fprintf(stderr, "SSE2 supported\n");
+		else if (use_sse)
+			fprintf(stderr, "SSE supported\n");
+		else if (use_mmx)
+			fprintf(stderr, "MMX supported\n");
+		else
+			fprintf(stderr, "MMX not supported\n");
+	}
+}
 
 
 
@@ -1138,29 +1166,6 @@ static void emit_expansion(int count, const UINT8 *reglist, const UINT32 *offsli
 
 
 //============================================================
-//  check_for_mmx
-//============================================================
-
-static void check_for_mmx(void)
-{
-	UINT32 features = asmblit_cpuid_features();
-	use_mmx = (features & (1 << 23));
-	use_sse = (features & (1 << 25));
-	use_sse2 = (features & (1 << 26));
-
-	if (use_sse2 && verbose)
-		fprintf(stderr, "SSE2 supported\n");
-	else if (use_sse && verbose)
-		fprintf(stderr, "SSE supported\n");
-	else if (use_mmx && verbose)
-		fprintf(stderr, "MMX supported\n");
-	else if (verbose)
-		fprintf(stderr, "MMX not supported\n");
-}
-
-
-
-//============================================================
 //  expand_blitter
 //============================================================
 
@@ -1500,10 +1505,6 @@ static void generate_blitter(const win_blit_params *blit)
 	assert_always(active_fast_blitter != NULL && active_update_blitter != NULL, "Out of memory for blitters!");
 	fastptr = active_fast_blitter;
 	updateptr = active_update_blitter;
-
-	// determine MMX/XMM support
-	if (use_mmx == -1)
-		check_for_mmx();
 
 #if DEBUG_BLITTERS
 	fprintf(stderr, "Generating blitter\n");

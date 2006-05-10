@@ -1508,6 +1508,9 @@ static void FlatPolygon( int n_points )
 
 	n_cmd = BGR_C( m_packet.FlatPolygon.n_bgr );
 
+	n_cx1.d = 0;
+	n_cx2.d = 0;
+
 	SOLIDSETUP
 
 	n_r.w.h = BGR_R( m_packet.FlatPolygon.n_bgr ); n_r.w.l = 0;
@@ -1680,6 +1683,16 @@ static void FlatTexturedPolygon( int n_points )
 
 	n_clutx = ( m_packet.FlatTexturedPolygon.vertex[ 0 ].n_texture.w.h & 0x3f ) << 4;
 	n_cluty = ( m_packet.FlatTexturedPolygon.vertex[ 0 ].n_texture.w.h >> 6 ) & 0x3ff;
+
+	n_r.d = 0;
+	n_g.d = 0;
+	n_b.d = 0;
+	n_cx1.d = 0;
+	n_cu1.d = 0;
+	n_cv1.d = 0;
+	n_cx2.d = 0;
+	n_cu2.d = 0;
+	n_cv2.d = 0;
 
 	decode_tpage( &psxgpu, m_packet.FlatTexturedPolygon.vertex[ 1 ].n_texture.w.h );
 	TEXTURESETUP
@@ -1886,6 +1899,15 @@ static void GouraudPolygon( int n_points )
 #endif
 
 	n_cmd = BGR_C( m_packet.GouraudPolygon.vertex[ 0 ].n_bgr );
+
+	n_cx1.d = 0;
+	n_cr1.d = 0;
+	n_cg1.d = 0;
+	n_cb1.d = 0;
+	n_cx2.d = 0;
+	n_cr2.d = 0;
+	n_cg2.d = 0;
+	n_cb2.d = 0;
 
 	SOLIDSETUP
 
@@ -2111,6 +2133,19 @@ static void GouraudTexturedPolygon( int n_points )
 
 	n_clutx = ( m_packet.GouraudTexturedPolygon.vertex[ 0 ].n_texture.w.h & 0x3f ) << 4;
 	n_cluty = ( m_packet.GouraudTexturedPolygon.vertex[ 0 ].n_texture.w.h >> 6 ) & 0x3ff;
+
+	n_cx1.d = 0;
+	n_cr1.d = 0;
+	n_cg1.d = 0;
+	n_cb1.d = 0;
+	n_cu1.d = 0;
+	n_cv1.d = 0;
+	n_cx2.d = 0;
+	n_cr2.d = 0;
+	n_cg2.d = 0;
+	n_cb2.d = 0;
+	n_cu2.d = 0;
+	n_cv2.d = 0;
 
 	decode_tpage( &psxgpu, m_packet.GouraudTexturedPolygon.vertex[ 1 ].n_texture.w.h );
 	TEXTURESETUP
@@ -2832,6 +2867,10 @@ static void FlatTexturedRectangle( void )
 	n_clutx = ( m_packet.FlatTexturedRectangle.n_texture.w.h & 0x3f ) << 4;
 	n_cluty = ( m_packet.FlatTexturedRectangle.n_texture.w.h >> 6 ) & 0x3ff;
 
+	n_r.d = 0;
+	n_g.d = 0;
+	n_b.d = 0;
+
 	TEXTURESETUP
 	SPRITESETUP
 
@@ -2926,6 +2965,10 @@ static void Sprite8x8( void )
 	n_clutx = ( m_packet.Sprite8x8.n_texture.w.h & 0x3f ) << 4;
 	n_cluty = ( m_packet.Sprite8x8.n_texture.w.h >> 6 ) & 0x3ff;
 
+	n_r.d = 0;
+	n_g.d = 0;
+	n_b.d = 0;
+
 	TEXTURESETUP
 	SPRITESETUP
 
@@ -3019,6 +3062,10 @@ static void Sprite16x16( void )
 
 	n_clutx = ( m_packet.Sprite16x16.n_texture.w.h & 0x3f ) << 4;
 	n_cluty = ( m_packet.Sprite16x16.n_texture.w.h >> 6 ) & 0x3ff;
+
+	n_r.d = 0;
+	n_g.d = 0;
+	n_b.d = 0;
 
 	TEXTURESETUP
 	SPRITESETUP

@@ -2125,7 +2125,7 @@ static UINT32 recompile_instruction(drc_core *drc, UINT32 pc, UINT32 physpc)
     recompile_special
 ------------------------------------------------------------------*/
 
-static UINT32 recompile_special(drc_core *drc, UINT32 pc, UINT32 op)
+static UINT32 recompile_special1(drc_core *drc, UINT32 pc, UINT32 op)
 {
 	link_info link1, link2, link3;
 	int cycles;
@@ -2559,7 +2559,18 @@ static UINT32 recompile_special(drc_core *drc, UINT32 pc, UINT32 op)
 			_call((genf *)ddivu);													// call ddivu
 			_add_r32_imm(REG_ESP, 8);												// add  esp,8
 			return RECOMPILE_SUCCESSFUL_CP(68,4);
+	}
 
+	_jmp((void *)mips3.generate_invalidop_exception);								// jmp  generate_invalidop_exception
+	return RECOMPILE_SUCCESSFUL | RECOMPILE_END_OF_STRING;
+}
+
+static UINT32 recompile_special2(drc_core *drc, UINT32 pc, UINT32 op)
+{
+	link_info link1, link2, link3;
+
+	switch (op & 63)
+	{
 		case 0x20:	/* ADD */
 			if (RSREG != 0 && RTREG != 0)
 			{
@@ -3189,6 +3200,15 @@ static UINT32 recompile_special(drc_core *drc, UINT32 pc, UINT32 op)
 
 	_jmp((void *)mips3.generate_invalidop_exception);								// jmp  generate_invalidop_exception
 	return RECOMPILE_SUCCESSFUL | RECOMPILE_END_OF_STRING;
+}
+
+
+static UINT32 recompile_special(drc_core *drc, UINT32 pc, UINT32 op)
+{
+	if (!(op & 32))
+		return recompile_special1(drc, pc, op);
+	else
+		return recompile_special2(drc, pc, op);
 }
 
 

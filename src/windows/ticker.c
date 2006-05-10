@@ -144,6 +144,15 @@ static cycles_t performance_cycle_counter(void)
 
 #ifdef _MSC_VER
 
+#ifdef PTR64
+
+static cycles_t rdtsc_cycle_counter(void)
+{
+	return __rdtsc();
+}
+
+#else
+
 static cycles_t rdtsc_cycle_counter(void)
 {
 	INT64 result;
@@ -158,6 +167,8 @@ static cycles_t rdtsc_cycle_counter(void)
 
 	return result;
 }
+
+#endif
 
 #else
 

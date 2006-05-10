@@ -752,9 +752,6 @@ ROM_START( apache3 )
 	ROM_REGION( 0x100000, REGION_CPU3, 0 ) /* 64k code for sound V20 */
 	ROM_LOAD( "ap-27d.151",   0x0f0000, 0x10000, CRC(294b4d79) SHA1(2b03418a12a2aaf3919b98161d8d0ce6ae29a2bb) )
 
-	ROM_REGION( 0x10000, REGION_CPU4, 0 ) /* 64k code for z80 */
-	/* Filled in by main cpu */
-
 	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
 	/* Filled in by both regions below */
 

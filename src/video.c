@@ -315,36 +315,51 @@ static int allocate_graphics(const gfx_decode *gfxdecodeinfo)
 	for (i = 0; i < MAX_GFX_ELEMENTS && gfxdecodeinfo[i].memory_region != -1; i++)
 	{
 		int region_length = 8 * memory_region_length(gfxdecodeinfo[i].memory_region);
+		UINT32 extxoffs[MAX_ABS_GFX_SIZE], extyoffs[MAX_ABS_GFX_SIZE];
+		UINT32 *xoffset, *yoffset;
 		gfx_layout glcopy;
 		int j;
 
 		/* make a copy of the layout */
 		glcopy = *gfxdecodeinfo[i].gfxlayout;
+		if (glcopy.extxoffs)
+		{
+			memcpy(extxoffs, glcopy.extxoffs, glcopy.width * sizeof(extxoffs[0]));
+			glcopy.extxoffs = extxoffs;
+		}
+		if (glcopy.extyoffs)
+		{
+			memcpy(extyoffs, glcopy.extyoffs, glcopy.height * sizeof(extyoffs[0]));
+			glcopy.extyoffs = extyoffs;
+		}
 
 		/* if the character count is a region fraction, compute the effective total */
 		if (IS_FRAC(glcopy.total))
 			glcopy.total = region_length / glcopy.charincrement * FRAC_NUM(glcopy.total) / FRAC_DEN(glcopy.total);
 
 		/* loop over all the planes, converting fractions */
-		for (j = 0; j < MAX_GFX_PLANES; j++)
+		for (j = 0; j < glcopy.planes; j++)
 		{
-			int value = glcopy.planeoffset[j];
+			UINT32 value = glcopy.planeoffset[j];
 			if (IS_FRAC(value))
 				glcopy.planeoffset[j] = FRAC_OFFSET(value) + region_length * FRAC_NUM(value) / FRAC_DEN(value);
 		}
 
 		/* loop over all the X/Y offsets, converting fractions */
+		xoffset = glcopy.extxoffs ? extxoffs : glcopy.xoffset;
 		for (j = 0; j < glcopy.width; j++)
 		{
-			int value = glcopy.xoffset[j];
+			UINT32 value = xoffset[j];
 			if (IS_FRAC(value))
-				glcopy.xoffset[j] = FRAC_OFFSET(value) + region_length * FRAC_NUM(value) / FRAC_DEN(value);
+				xoffset[j] = FRAC_OFFSET(value) + region_length * FRAC_NUM(value) / FRAC_DEN(value);
 		}
+
+		yoffset = glcopy.extyoffs ? extyoffs : glcopy.yoffset;
 		for (j = 0; j < glcopy.height; j++)
 		{
-			int value = glcopy.yoffset[j];
+			UINT32 value = yoffset[j];
 			if (IS_FRAC(value))
-				glcopy.yoffset[j] = FRAC_OFFSET(value) + region_length * FRAC_NUM(value) / FRAC_DEN(value);
+				yoffset[j] = FRAC_OFFSET(value) + region_length * FRAC_NUM(value) / FRAC_DEN(value);
 		}
 
 		/* some games increment on partial tile boundaries; to handle this without reading */
@@ -357,7 +372,7 @@ static int allocate_graphics(const gfx_decode *gfxdecodeinfo)
 			while (glcopy.total > 0)
 			{
 				int elementbase = base + (glcopy.total - 1) * glcopy.charincrement / 8;
-				int lastpixelbase = elementbase + glcopy.height * glcopy.yoffset[0] / 8 - 1;
+				int lastpixelbase = elementbase + glcopy.height * yoffset[0] / 8 - 1;
 				if (lastpixelbase < end)
 					break;
 				glcopy.total--;

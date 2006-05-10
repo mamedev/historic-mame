@@ -235,9 +235,9 @@ struct rc_option input_opts[] =
 	{ "offscreen_reload", "reload", rc_bool, &use_lightgun_reload, "0", 0, 0, NULL, "offscreen shots reload" },
 	{ "steadykey", "steady", rc_bool, &steadykey, "0", 0, 0, NULL, "enable steadykey support" },
 	{ "keyboard_leds", "leds", rc_bool, &use_keyboard_leds, "1", 0, 0, NULL, "enable keyboard LED emulation" },
-	{ "led_mode", NULL, rc_string, &ledmode, "ps/2", 0, 0, decode_ledmode, "LED mode (ps/2|usb)" },
+	{ "led_mode", NULL, rc_string, (char *)&ledmode, "ps/2", 0, 0, decode_ledmode, "LED mode (ps/2|usb)" },
 	{ "a2d_deadzone", "a2d", rc_float, &a2d_deadzone, "0.3", 0.0, 1.0, NULL, "minimal analog value for digital input" },
-	{ "ctrlr", NULL, rc_string, &options.controller, 0, 0, 0, NULL, "preconfigure for specified controller" },
+	{ "ctrlr", NULL, rc_string, (char *)&options.controller, 0, 0, 0, NULL, "preconfigure for specified controller" },
 	{ "paddle_device", "paddle", rc_string, &dummy[0], "keyboard", ANALOG_TYPE_PADDLE, 0, decode_analog_select, "enable (keyboard|mouse|joystick) if a paddle control is present" },
 	{ "adstick_device", "adstick", rc_string, &dummy[1], "keyboard", ANALOG_TYPE_ADSTICK, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if an analog joystick control is present" },
 	{ "pedal_device", "pedal", rc_string, &dummy[2], "keyboard", ANALOG_TYPE_PEDAL, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if a pedal control is present" },
@@ -2525,7 +2525,7 @@ static void set_rawmouse_device_name(const char *raw_string, unsigned int mouse_
 	char *test_pos;							// general purpose test pointer for positioning
 	DWORD name_length = MAX_PATH;
 	DWORD instance, hardware;
-	HKEY hardware_key, reg_key, sub_key;
+	HKEY hardware_key, reg_key, sub_key = NULL;
 	int key_pos, hardware_key_pos;		// used to keep track of where the keys are added.
 	LONG hardware_result, instance_result;
 

@@ -4323,7 +4323,7 @@ ROM_START( spacegun )
 	ROM_LOAD( "c57-08.75", 0x00000, 0x80000, CRC(22593550) SHA1(e802e947e6947d146e1b57dbff7ac021e19e7b2b) )
 
 /*  (no unused 0x10000 rom like the rest?) */
-	ROM_REGION( 0x10000, REGION_USER2, 0 )	/* unused ROMs */
+//  ROM_REGION( 0x10000, REGION_USER2, 0 )  /* unused ROMs */
 //  ROM_LOAD( "c57-09.9",  0x00000, 0xada, CRC(306f130b) )  /* pals */
 //  ROM_LOAD( "c57-10.47", 0x00000, 0xcd5, CRC(f11474bd) )
 //  ROM_LOAD( "c57-11.48", 0x00000, 0xada, CRC(b33be19f) )

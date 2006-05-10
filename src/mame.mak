@@ -675,6 +675,7 @@ $(OBJ)/gaelco.a: \
 	$(OBJ)/drivers/gaelco2.o $(OBJ)/machine/gaelco2.o $(OBJ)/vidhrdw/gaelco2.o \
 	$(OBJ)/drivers/gaelco3d.o $(OBJ)/vidhrdw/gaelco3d.o \
 	$(OBJ)/drivers/glass.o $(OBJ)/vidhrdw/glass.o \
+	$(OBJ)/drivers/mastboy.o \
 	$(OBJ)/drivers/splash.o $(OBJ)/vidhrdw/splash.o \
 	$(OBJ)/drivers/targeth.o $(OBJ)/vidhrdw/targeth.o \
 	$(OBJ)/drivers/thoop2.o $(OBJ)/vidhrdw/thoop2.o \
@@ -1450,6 +1451,7 @@ $(OBJ)/misc.a: \
 	$(OBJ)/drivers/hexa.o $(OBJ)/vidhrdw/hexa.o \
 	$(OBJ)/drivers/homedata.o $(OBJ)/vidhrdw/homedata.o \
 	$(OBJ)/drivers/hotblock.o \
+	$(OBJ)/drivers/intrscti.o \
 	$(OBJ)/drivers/jackpool.o \
 	$(OBJ)/drivers/kyugo.o $(OBJ)/vidhrdw/kyugo.o \
 	$(OBJ)/drivers/ladyfrog.o $(OBJ)/vidhrdw/ladyfrog.o \

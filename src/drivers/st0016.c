@@ -18,27 +18,12 @@ Not working games :
 #include "cpu/z80/z80.h"
 #include "cpu/mips/r3000.h"
 #include "sound/st0016.h"
+#include "st0016.h"
 
-WRITE8_HANDLER (st0016_sprite_bank_w);
-WRITE8_HANDLER (st0016_palette_bank_w);
-WRITE8_HANDLER (st0016_character_bank_w);
-READ8_HANDLER  (st0016_sprite_ram_r);
-WRITE8_HANDLER (st0016_sprite_ram_w);
-READ8_HANDLER  (st0016_sprite2_ram_r);
-WRITE8_HANDLER (st0016_sprite2_ram_w);
-READ8_HANDLER  (st0016_palette_ram_r);
-WRITE8_HANDLER (st0016_palette_ram_w);
-READ8_HANDLER  (st0016_character_ram_r);
-WRITE8_HANDLER (st0016_character_ram_w);
-READ8_HANDLER(st0016_vregs_r);
-WRITE8_HANDLER(st0016_vregs_w);
 
-VIDEO_START(st0016);
-VIDEO_UPDATE(st0016);
-extern int st0016_game;
-void st0016_save_init(void);
+
 static int mux_port;
-int st0016_rom_bank;
+UINT32 st0016_rom_bank;
 
 /*************************************
  *
@@ -652,7 +637,7 @@ ROM_START( srmp5 )
 	ROM_LOAD( "sx008-08.bin",   0x10000, 0x200000,   CRC(d4ac54f4) SHA1(c3dc76cd71485796a0b6a960294ea96eae8c946e) )
 	ROM_COPY( REGION_CPU1,  0x10000, 0x00000, 0x08000 )
 
-	ROM_REGION32_BE( 0x200000, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 )
 	ROM_LOAD32_BYTE( "sx008-14.bin",   0x00000, 0x80000,   CRC(b5c55120) SHA1(0a41351c9563b2c6a00709189a917757bd6e0a24) )
 	ROM_LOAD32_BYTE( "sx008-13.bin",   0x00001, 0x80000,   CRC(0af475e8) SHA1(24cddffa0f8c81832ae8870823d772e3b7493194) )
 	ROM_LOAD32_BYTE( "sx008-12.bin",   0x00002, 0x80000,   CRC(43e9bb98) SHA1(e46dd98d2e1babfa12ddf2fa9b31377e8691d3a1) )
@@ -733,7 +718,7 @@ ROM_START( speglsha )
 	ROM_LOAD( "sx004-07",   0x10000, 0x200000,   CRC(2d759cc4) SHA1(9fedd829190b2aab850b2f1088caaec91e8715dd) )
 	ROM_COPY( REGION_CPU1,  0x10000, 0x00000, 0x08000 )
 
-	ROM_REGION32_BE( 0x200000, REGION_USER1, ROMREGION_DISPOSE )
+	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 )
 	ROM_LOAD32_BYTE( "sx004-04.u33",   0x00000, 0x80000,   CRC(e46d2e57) SHA1(b1fb836ab2ce547dc2e8d1046d7ef835b87bb04e) )
 	ROM_LOAD32_BYTE( "sx004-03.u32",   0x00001, 0x80000,   CRC(c6ffb00e) SHA1(f57ef45bb5c690c3e63101a36835d2687abfcdbd) )
 	ROM_LOAD32_BYTE( "sx004-02.u31",   0x00002, 0x80000,   CRC(21eb46e4) SHA1(0ab21ed012c9a76e01c83b60c6f4670836dfa718) )
@@ -851,6 +836,12 @@ static DRIVER_INIT(speglsht)
 
 static DRIVER_INIT(mayjinsn)
 {
+	st0016_game=4|0x80;
+	memory_set_bankptr(2, memory_region(REGION_USER1));
+}
+
+static DRIVER_INIT(mayjisn2)
+{
 	st0016_game=4;
 	memory_set_bankptr(2, memory_region(REGION_USER1));
 }
@@ -863,7 +854,7 @@ static DRIVER_INIT(mayjinsn)
 
 GAME(  1994, renju,	0,	  st0016,   renju,    renju,    ROT0, "Visco", "Renju Kizoku", 0)
 GAME(  1996, nratechu,	0,	  st0016,   nratechu, nratechu, ROT0, "Seta",  "Neratte Chu", 0)
-GAME(  1994, mayjisn2,	0,	  mayjinsn, mayjisn2, mayjinsn, ROT0, "Seta",  "Mayjinsen 2", 0)
+GAME(  1994, mayjisn2,	0,	  mayjinsn, mayjisn2, mayjisn2, ROT0, "Seta",  "Mayjinsen 2", 0)
 /* Not working */
 GAME( 199?, srmp5,	0,	  srmp5,    srmp5,    srmp5,    ROT0, "Seta",  "Super Real Mahjong P5",GAME_NOT_WORKING)
 GAME( 1994, speglsht,	0,	  speglsht, speglsht, speglsht, ROT0, "Seta",  "Super Eagle Shot (set 1)",GAME_NOT_WORKING)

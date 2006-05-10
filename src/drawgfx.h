@@ -16,8 +16,12 @@
 
 #include "mamecore.h"
 
-#define MAX_GFX_PLANES 8
-#define MAX_GFX_SIZE 256
+#define MAX_GFX_PLANES		8
+#define MAX_GFX_SIZE		32
+#define MAX_ABS_GFX_SIZE	1024
+
+#define EXTENDED_XOFFS		{ 0 }
+#define EXTENDED_YOFFS		{ 0 }
 
 #define RGN_FRAC(num,den) (0x80000000 | (((num) & 0x0f) << 27) | (((den) & 0x0f) << 23))
 #define IS_FRAC(offset) ((offset) & 0x80000000)
@@ -32,13 +36,15 @@
 
 struct _gfx_layout
 {
-	UINT16 width,height; /* width and height (in pixels) of chars/sprites */
-	UINT32 total; /* total numer of chars/sprites in the rom */
-	UINT16 planes; /* number of bitplanes */
+	UINT16 width,height;				/* width and height (in pixels) of chars/sprites */
+	UINT32 total;						/* total number of chars/sprites in the rom */
+	UINT16 planes;						/* number of bitplanes */
 	UINT32 planeoffset[MAX_GFX_PLANES]; /* start of every bitplane (in bits) */
-	UINT32 xoffset[MAX_GFX_SIZE]; /* position of the bit corresponding to the pixel */
-	UINT32 yoffset[MAX_GFX_SIZE]; /* of the given coordinates */
-	UINT32 charincrement; /* distance between two consecutive characters/sprites (in bits) */
+	UINT32 xoffset[MAX_GFX_SIZE];		/* position of the bit corresponding to the pixel */
+	UINT32 yoffset[MAX_GFX_SIZE];		/* of the given coordinates */
+	UINT32 charincrement;				/* distance between two consecutive characters/sprites (in bits) */
+	const UINT32 *extxoffs;				/* extended X offset array for really big layouts */
+	const UINT32 *extyoffs;				/* extended Y offset array for really big layouts */
 };
 typedef struct _gfx_layout gfx_layout;
 

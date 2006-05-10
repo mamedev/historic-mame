@@ -202,11 +202,6 @@ static void cps1_decode(int swap_key1,int swap_key2,int addr_key,int xor_key)
 {
 	UINT8 *decrypt = auto_malloc(0x8000);
 	UINT8 *rom = memory_region(REGION_CPU2);
-	UINT8 *backup = memory_region(REGION_USER1);
-
-	/* the main CPU can read the ROM and checksum it to verify that it hasn't been */
-	/* replaced with a decrypted one. */
-	if (backup) memcpy(backup,rom,0x8000);
 
 	memory_set_decrypted_region(1, 0x0000, 0x7fff, decrypt);
 	kabuki_decode(rom,decrypt,rom,0x0000,0x8000, swap_key1,swap_key2,addr_key,xor_key);

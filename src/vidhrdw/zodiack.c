@@ -167,7 +167,7 @@ static void zodiack_draw_bullets( mame_bitmap *bitmap )
 	{
 		int x, y;
 
-		x = zodiack_bulletsram[offs + 3] + Machine->drv->gfxdecodeinfo[2].gfxlayout->width;
+		x = zodiack_bulletsram[offs + 3] + 7;
 		y = 255 - zodiack_bulletsram[offs + 1];
 
 		if (flip_screen && percuss_hardware)

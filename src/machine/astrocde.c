@@ -316,7 +316,8 @@ MACHINE_START( profpac )
 {
 	state_save_register_global(ram_write_enable);
 
-	memory_configure_bank(1, 0,  14, memory_region(REGION_USER1), 0x4000);
+	if (memory_region(REGION_USER1))
+		memory_configure_bank(1, 0,  14, memory_region(REGION_USER1), 0x4000);
 	memory_configure_bank(1, 14, 3,  memory_region(REGION_CPU1) + 0x14000, 0x8000);
 	memory_configure_bank(2, 0,  1,  memory_region(REGION_CPU1) + 0x8000, 0);
 	memory_configure_bank(2, 1,  1,  memory_region(REGION_CPU1) + 0x18000, 0);

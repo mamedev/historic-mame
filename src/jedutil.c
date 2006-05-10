@@ -102,7 +102,7 @@ static int read_source_file(const char *srcfile)
 	srcbuf = malloc(srcbuflen);
 	if (!srcbuf)
 	{
-		fprintf(stderr, "Unable to allocate %d bytes for the source!\n", srcbuflen);
+		fprintf(stderr, "Unable to allocate %d bytes for the source!\n", (int)srcbuflen);
 		fclose(file);
 		return 1;
 	}
@@ -111,7 +111,7 @@ static int read_source_file(const char *srcfile)
 	bytes = fread(srcbuf, 1, srcbuflen, file);
 	if (bytes != srcbuflen)
 	{
-		fprintf(stderr, "Error reading %d bytes from the source!\n", srcbuflen);
+		fprintf(stderr, "Error reading %d bytes from the source!\n", (int)srcbuflen);
 		free(srcbuf);
 		fclose(file);
 		return 1;
@@ -146,7 +146,7 @@ static int write_dest_file(const char *dstfile)
 	bytes = fwrite(dstbuf, 1, dstbuflen, file);
 	if (bytes != dstbuflen)
 	{
-		fprintf(stderr, "Error writing %d bytes to the target!\n", dstbuflen);
+		fprintf(stderr, "Error writing %d bytes to the target!\n", (int)dstbuflen);
 		fclose(file);
 		return 1;
 	}
@@ -246,7 +246,7 @@ int main(int argc, char *argv[])
 		dstbuf = malloc(dstbuflen);
 		if (!dstbuf)
 		{
-			fprintf(stderr, "Unable to allocate %d bytes for the target buffer!\n", dstbuflen);
+			fprintf(stderr, "Unable to allocate %d bytes for the target buffer!\n", (int)dstbuflen);
 			return 1;
 		}
 		dstbuflen = jedbin_output(&jed, dstbuf, dstbuflen);
@@ -273,7 +273,7 @@ int main(int argc, char *argv[])
 		dstbuf = malloc(dstbuflen);
 		if (!dstbuf)
 		{
-			fprintf(stderr, "Unable to allocate %d bytes for the target buffer!\n", dstbuflen);
+			fprintf(stderr, "Unable to allocate %d bytes for the target buffer!\n", (int)dstbuflen);
 			return 1;
 		}
 		dstbuflen = jed_output(&jed, dstbuf, dstbuflen);

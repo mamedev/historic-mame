@@ -720,8 +720,11 @@ static unsigned char curbank;
 
 static void reset_bank(void)
 {
-	memory_set_bankptr(1, memory_region(REGION_USER1) + curbank * 0x40000);
-	memory_set_bankptr(2, memory_region(REGION_USER1) + curbank * 0x40000);
+	if (memory_region(REGION_USER1))
+	{
+		memory_set_bankptr(1, memory_region(REGION_USER1) + curbank * 0x40000);
+		memory_set_bankptr(2, memory_region(REGION_USER1) + curbank * 0x40000);
+	}
 }
 
 static READ16_HANDLER( curbank_r )
@@ -2102,7 +2105,7 @@ ROM_START( sgmast )
 	ROM_LOAD16_BYTE( "epr-12186.ic1", 0x000001, 0x20000, CRC(ce76319d) SHA1(0ede61f0700f9161285c768fa97636f0e42b96f8) )
 
 	ROM_REGION( 0x2000, REGION_USER3, 0 )	/* decryption key */
-//  ROM_LOAD( "317-0058-05d.key", 0x0000, 0x2000, CRC(1) SHA1(1) )
+	ROM_LOAD( "317-0058-05d.key", 0x0000, 0x2000, NO_DUMP )
 
 	ROM_REGION( 0x1c2000, REGION_USER2, 0)
 	/* not sure which of these images is best */

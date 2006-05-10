@@ -185,7 +185,7 @@ void amiga_machine_config(const amiga_machine_interface *intf)
 	memset(&cia_intf, 0, sizeof(cia_intf));
 	cia_intf[0].type = CIA8520;
 	cia_intf[0].clock = O2_TIMER_RATE;
-	cia_intf[0].tod_clock = 0.0;
+	cia_intf[0].tod_clock = Machine->drv->frames_per_second;
 	cia_intf[0].irq_func = amiga_cia_0_irq;
 	cia_intf[0].port[0].read = intf->cia_0_portA_r;
 	cia_intf[0].port[0].write = intf->cia_0_portA_w;
@@ -195,7 +195,7 @@ void amiga_machine_config(const amiga_machine_interface *intf)
 
 	cia_intf[1].type = CIA8520;
 	cia_intf[1].clock = O2_TIMER_RATE;
-	cia_intf[1].tod_clock = 0.0;
+	cia_intf[1].tod_clock = Machine->drv->frames_per_second;
 	cia_intf[1].irq_func = amiga_cia_1_irq;
 	cia_intf[1].port[0].read = intf->cia_1_portA_r;
 	cia_intf[1].port[0].write = intf->cia_1_portA_w;
@@ -1025,6 +1025,17 @@ static void custom_reset(void)
 {
 	CUSTOM_REG(REG_DDFSTRT) = 0x18;
 	CUSTOM_REG(REG_DDFSTOP) = 0xd8;
+
+	switch (amiga_intf->chip_ram_mask) {
+		case ANGUS_CHIP_RAM_MASK:
+		case FAT_ANGUS_CHIP_RAM_MASK:
+			CUSTOM_REG(REG_VPOSR) = 0x10 << 8;
+			break;
+		case ECS_CHIP_RAM_MASK:
+			CUSTOM_REG(REG_VPOSR) = 0x30 << 8;
+			break;
+	}
+
 }
 
 
@@ -1045,10 +1056,12 @@ READ16_HANDLER( amiga_custom_r )
 			return CUSTOM_REG(REG_DMACON);
 
 		case REG_VPOSR:
-			return amiga_gethvpos() >> 16;
+			CUSTOM_REG(REG_VPOSR) &= 0xff00;
+			CUSTOM_REG(REG_VPOSR) |= amiga_gethvpos() >> 16;
+			return CUSTOM_REG(REG_VPOSR);
 
 		case REG_VHPOSR:
-			return amiga_gethvpos();
+			return amiga_gethvpos() & 0xffff;
 
 		case REG_JOY0DAT:
 			if (amiga_intf->read_joy0dat)

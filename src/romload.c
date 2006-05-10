@@ -939,7 +939,7 @@ int rom_init(const rom_entry *romp)
 		return 0;
 
 	/* reset the region list */
-	memset(regionlist, 0, sizeof(regionlist));
+	memset((void *)regionlist, 0, sizeof(regionlist));
 
 	/* reset the romdata struct */
 	memset(&romdata, 0, sizeof(romdata));

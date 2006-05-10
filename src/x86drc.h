@@ -152,6 +152,15 @@ extern const UINT8 scale_lookup[];
 #define REG_DH		6
 #define REG_BH		7
 
+#define REG_MM0		0
+#define REG_MM1		1
+#define REG_MM2		2
+#define REG_MM3		3
+#define REG_MM4		4
+#define REG_MM5		5
+#define REG_MM6		6
+#define REG_MM7		7
+
 #define REG_XMM0	0
 #define REG_XMM1	1
 #define REG_XMM2	2
@@ -1237,13 +1246,13 @@ do {												\
 	if ((link)->size == 1)							\
 	{												\
 		if ((INT8)delta != delta)					\
-			printf("Error: link out of range!\n");	\
+			fatalerror("Error: link out of range!\n");	\
 		(link)->target[-1] = delta;					\
 	}												\
 	else if ((link)->size == 4)						\
 		*(UINT32 *)&(link)->target[-4] = delta;		\
 	else											\
-		printf("Unsized link!\n");					\
+		fatalerror("Unsized link!\n");					\
 } while (0)
 
 
@@ -1261,6 +1270,18 @@ do { OP1(0x0f); OP1(0xae); MODRM_MBISD(2, NO_BASE, indx, scale, disp); } while (
 #define _stmxcsr_m32abs(addr) \
 do { OP1(0x0f); OP1(0xae); MODRM_MABS(3, addr); } while (0)
 
+
+#define _movd_mmx_r32(r1, r2) \
+do { OP1(0x0f); OP1(0x6e); MODRM_REG(r1, r2); } while (0)
+
+#define _movd_r32_mmx(r1, r2) \
+do { OP1(0x0f); OP1(0x7e); MODRM_REG(r1, r2); } while (0)
+
+#define _movd_mmx_m32bd(reg, base, disp) \
+do { OP1(0x0f); OP1(0x6e); MODRM_MBD(reg, base, disp); } while (0)
+
+#define _movd_mmx_m32bisd(reg, base, indx, scale, disp) \
+do { OP1(0x0f); OP1(0x6e); MODRM_MBISD(reg, base, indx, scale, disp); } while (0)
 
 #define _movd_r128_r32(r1, r2) \
 do { OP1(0x66); OP1(0x0f); OP1(0x6e); MODRM_REG(r1, r2); } while (0)
@@ -1681,6 +1702,15 @@ do { OP1(0x66); OP1(0x0f); OP1(0xef); MODRM_REG(r1, r2); } while (0)
 #define _pxor_r128_m128abs(reg, addr) \
 do { OP1(0x66); OP1(0x0f); OP1(0xef); MODRM_MABS(reg, addr); } while (0)
 
+#define _punpcklbw_mmx_mmx(r1, r2) \
+do { OP1(0x0f); OP1(0x60); MODRM_REG(r1, r2); } while (0)
+
+#define _punpcklwd_mmx_mmx(r1, r2) \
+do { OP1(0x0f); OP1(0x61); MODRM_REG(r1, r2); } while (0)
+
+#define _punpckldq_mmx_mmx(r1, r2) \
+do { OP1(0x0f); OP1(0x62); MODRM_REG(r1, r2); } while (0)
+
 
 #define _prefetch_m8abs(type, addr) \
 do { OP1(0x0f); OP1(0x18); MODRM_MABS(type, addr); } while (0)
@@ -1688,6 +1718,52 @@ do { OP1(0x0f); OP1(0x18); MODRM_MABS(type, addr); } while (0)
 #define _prefetch_m8bd(type, base, disp) \
 do { OP1(0x0f); OP1(0x18); MODRM_MBD(type, base, disp); } while (0)
 
+
+#define _emms() \
+do { OP1(0x0f); OP1(0x77); } while(0)
+
+#define _mfence() \
+do { OP1(0x0f); OP1(0xae); OP1(0xf0); } while(0)
+
+#define _sfence() \
+do { OP1(0x0f); OP1(0xae); OP1(0xf8); } while(0)
+
+
+#define _movnti_m32abs_r32(addr, sreg) \
+do { OP1(0x0f); OP1(0xc3); MODRM_MABS(sreg, addr); } while (0)
+
+#define _movnti_m32bd_r32(base, disp, sreg) \
+do { OP1(0x0f); OP1(0xc3); MODRM_MBD(sreg, base, disp); } while (0)
+
+#define _movnti_m32isd_r32(indx, scale, addr, dreg) \
+do { OP1(0x0f); OP1(0xc3); MODRM_MBISD(dreg, NO_BASE, indx, scale, addr); } while (0)
+
+#define _movnti_m32bisd_r32(base, indx, scale, addr, dreg) \
+do { OP1(0x0f); OP1(0xc3); MODRM_MBISD(dreg, base, indx, scale, addr); } while (0)
+
+#define _movntq_m64abs_mmx(addr, sreg) \
+do { OP1(0x0f); OP1(0xe7); MODRM_MABS(sreg, addr); } while (0)
+
+#define _movntq_m64bd_mmx(base, disp, sreg) \
+do { OP1(0x0f); OP1(0xe7); MODRM_MBD(sreg, base, disp); } while (0)
+
+#define _movntq_m64isd_mmx(indx, scale, addr, dreg) \
+do { OP1(0x0f); OP1(0xe7); MODRM_MBISD(dreg, NO_BASE, indx, scale, addr); } while (0)
+
+#define _movntq_m64bisd_mmx(base, indx, scale, addr, dreg) \
+do { OP1(0x0f); OP1(0xe7); MODRM_MBISD(dreg, base, indx, scale, addr); } while (0)
+
+#define _movq_m64abs_mmx(addr, sreg) \
+do { OP1(0x0f); OP1(0x7f); MODRM_MABS(sreg, addr); } while (0)
+
+#define _movq_m64bd_mmx(base, disp, sreg) \
+do { OP1(0x0f); OP1(0x7f); MODRM_MBD(sreg, base, disp); } while (0)
+
+#define _movq_m64isd_mmx(indx, scale, addr, dreg) \
+do { OP1(0x0f); OP1(0x7f); MODRM_MBISD(dreg, NO_BASE, indx, scale, addr); } while (0)
+
+#define _movq_m64bisd_mmx(base, indx, scale, addr, dreg) \
+do { OP1(0x0f); OP1(0x7f); MODRM_MBISD(dreg, base, indx, scale, addr); } while (0)
 
 
 /***************************************************************************
@@ -1726,7 +1802,7 @@ void drc_append_set_temp_sse_rounding(drc_core *drc, UINT8 rounding);
 void drc_append_restore_sse_rounding(drc_core *drc);
 
 /* disassembling drc code */
-void drc_dasm(FILE *f, unsigned pc, void *begin, void *end);
+void drc_dasm(FILE *f, const void *begin, const void *end);
 
 /* x86 CPU features */
 UINT32 drc_x86_get_features(void);

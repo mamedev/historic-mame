@@ -308,7 +308,7 @@ void ptm6840_write (int which, int offset, int data)
 				(data & 0x40)?1:0,
 				opmode[ (data>>3)&0x07 ],
 				(data & 0x02)?"E":"external",
-				(data & 0x04)?"16 bit": "dual 8 bit"));
+				(data & 0x04)?"dual 8 bit" : "16 bit"));
 	}
 
 	switch ( offset )

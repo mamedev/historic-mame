@@ -172,6 +172,8 @@ static void calc_penusage(gfx_element *gfx, int num)
 
 void decodechar(gfx_element *gfx, int num, const UINT8 *src, const gfx_layout *gl)
 {
+	const UINT32 *xoffset = gl->extxoffs ? gl->extxoffs : gl->xoffset;
+	const UINT32 *yoffset = gl->extyoffs ? gl->extyoffs : gl->yoffset;
 	UINT8 *dp = gfx->gfxdata + num * gfx->char_modulo;
 	int plane, x, y;
 
@@ -188,14 +190,14 @@ void decodechar(gfx_element *gfx, int num, const UINT8 *src, const gfx_layout *g
 
 			for (y = 0; y < gfx->height; y++)
 			{
-				int yoffs = planeoffs + gl->yoffset[y];
+				int yoffs = planeoffs + yoffset[y];
 
 				dp = gfx->gfxdata + num * gfx->char_modulo + y * gfx->line_modulo;
 				for (x = 0; x < gfx->width; x += 2)
 				{
-					if (readbit(src, yoffs + gl->xoffset[x+0]))
+					if (readbit(src, yoffs + xoffset[x+0]))
 						dp[x+0] |= planebit;
-					if (readbit(src, yoffs + gl->xoffset[x+1]))
+					if (readbit(src, yoffs + xoffset[x+1]))
 						dp[x+1] |= planebit;
 				}
 			}
@@ -212,11 +214,11 @@ void decodechar(gfx_element *gfx, int num, const UINT8 *src, const gfx_layout *g
 
 			for (y = 0; y < gfx->height; y++)
 			{
-				int yoffs = planeoffs + gl->yoffset[y];
+				int yoffs = planeoffs + yoffset[y];
 
 				dp = gfx->gfxdata + num * gfx->char_modulo + y * gfx->line_modulo;
 				for (x = 0; x < gfx->width; x++)
-					if (readbit(src, yoffs + gl->xoffset[x]))
+					if (readbit(src, yoffs + xoffset[x]))
 						dp[x] |= planebit;
 			}
 		}
@@ -244,11 +246,25 @@ gfx_element *allocgfx(const gfx_layout *gl)
 	gfx_element *gfx;
 
 	/* allocate memory for the gfx_element structure */
-	gfx = malloc(sizeof(*gfx));
+	gfx = malloc_or_die(sizeof(*gfx));
 	memset(gfx, 0, sizeof(*gfx));
 
-	/* fill it in */
+	/* copy the layout */
 	gfx->layout = *gl;
+	if (gl->extxoffs)
+	{
+		UINT32 *buffer = malloc_or_die(sizeof(buffer[0]) * gl->width);
+		memcpy(buffer, gl->extxoffs, sizeof(gfx->layout.extxoffs[0]) * gl->width);
+		gfx->layout.extxoffs = buffer;
+	}
+	if (gl->extyoffs)
+	{
+		UINT32 *buffer = malloc_or_die(sizeof(buffer[0]) * gl->height);
+		memcpy(buffer, gl->extyoffs, sizeof(gfx->layout.extyoffs[0]) * gl->height);
+		gfx->layout.extyoffs = buffer;
+	}
+
+	/* fill in the rest */
 	gfx->width = gl->width;
 	gfx->height = gl->height;
 	gfx->total_elements = gl->total;
@@ -260,7 +276,7 @@ gfx_element *allocgfx(const gfx_layout *gl)
 	if (gl->planeoffset[0] == GFX_RAW)
 	{
 		/* modulos are determined for us by the layout */
-		gfx->line_modulo = gl->yoffset[0] / 8;
+		gfx->line_modulo = (gl->extyoffs ? gl->extyoffs[0] : gl->yoffset[0]) / 8;
 		gfx->char_modulo = gl->charincrement / 8;
 
 		/* don't free the data because we will get a pointer at decode time */
@@ -330,6 +346,10 @@ void freegfx(gfx_element *gfx)
 		return;
 
 	/* free our data */
+	if (gfx->layout.extyoffs)
+		free((void *)gfx->layout.extyoffs);
+	if (gfx->layout.extxoffs)
+		free((void *)gfx->layout.extxoffs);
 	if (gfx->pen_usage)
 		free(gfx->pen_usage);
 	if (!(gfx->flags & GFX_DONT_FREE_GFXDATA))

@@ -331,7 +331,7 @@ ROM_START( tail2nos )
 	ROM_LOAD( "oj1",          0x000000, 0x40000, CRC(39c36b35) SHA1(a97480696bf6d81bf415737e03cc5324d439ab84) )
 	ROM_LOAD( "oj2",          0x040000, 0x40000, CRC(77ccaea2) SHA1(e38175859c75c6d0f2f01752fad6e167608c4662) )
 
-	ROM_REGION( 0x20000, REGION_GFX3, 0 )	/* gfx data for the 051316 */
+	ROM_REGION( 0x20000, REGION_GFX3, ROMREGION_ERASE00 )	/* gfx data for the 051316 */
 	/* RAM, not ROM - handled at run time */
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* sound samples */
@@ -366,7 +366,7 @@ ROM_START( sformula )
 	ROM_LOAD( "oj1",          0x000000, 0x40000, CRC(39c36b35) SHA1(a97480696bf6d81bf415737e03cc5324d439ab84) )
 	ROM_LOAD( "oj2",          0x040000, 0x40000, CRC(77ccaea2) SHA1(e38175859c75c6d0f2f01752fad6e167608c4662) )
 
-	ROM_REGION( 0x20000, REGION_GFX3, 0 )	/* gfx data for the 051316 */
+	ROM_REGION( 0x20000, REGION_GFX3, ROMREGION_ERASE00 )	/* gfx data for the 051316 */
 	/* RAM, not ROM - handled at run time */
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* sound samples */

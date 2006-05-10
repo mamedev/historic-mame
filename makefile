@@ -74,6 +74,9 @@ X86_PPC_DRC = 1
 # PM = 1
 # AMD64 = 1
 
+# uncomment next line if you are building for a 64-bit target
+# PTR64 = 1
+
 # uncomment next line to use cygwin compiler
 # COMPILESYSTEM_CYGWIN	= 1
 
@@ -93,6 +96,18 @@ BUILD_ZLIB = 1
 ###########################################################################
 ##################   END USER-CONFIGURABLE OPTIONS   ######################
 ###########################################################################
+
+
+#-------------------------------------------------
+# sanity check the configuration
+#-------------------------------------------------
+
+# disable DRC cores for 64-bit builds
+ifdef PTR64
+X86_MIPS3_DRC =
+X86_PPC_DRC =
+endif
+
 
 
 #-------------------------------------------------
@@ -119,8 +134,6 @@ RM = @rm -f
 
 ifeq ($(MAMEOS),msdos)
 PREFIX = d
-else
-PREFIX =
 endif
 
 # by default, compile for Pentium target
@@ -171,6 +184,10 @@ OBJ = obj/$(NAME)
 #-------------------------------------------------
 
 DEFS = -DX86_ASM -DLSB_FIRST -DINLINE="static __inline__" -Dasm=__asm__ -DCRLF=3
+
+ifdef PTR64
+DEFS += -DPTR64
+endif
 
 ifdef DEBUG
 DEFS += -DMAME_DEBUG
@@ -335,7 +352,7 @@ emulator: maketree $(EMULATOR)
 
 extra: $(TOOLS)
 
-maketree: $(sort $(OBJDIRS))
+maketree: $(sort $(OBJDIRS)) $(OSPREBUILD)
 
 clean:
 	@echo Deleting object tree $(OBJ)...
@@ -424,7 +441,7 @@ $(OBJ)/%.s: src/%.c
 $(OBJ)/%.a:
 	@echo Archiving $@...
 	$(RM) $@
-	$(AR) cr $@ $^
+	$(AR) -cr $@ $^
 	
 %$(EXE):
 	@echo Linking $@...

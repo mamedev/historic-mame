@@ -3129,7 +3129,7 @@ ROM_START( gtmr )
 	ROM_REGION( 0x400000, REGION_SOUND1, 0 )	/* Samples, plus room for expansion */
 	ROM_LOAD( "mm-100-401-e0.bin",  0x000000, 0x100000, CRC(b9cbfbee) SHA1(051d48a68477ef9c29bd5cc0bb7955d513a0ab94) )	// 16 x $10000
 
-	ROM_REGION( 0x100000, REGION_SOUND2, 0 )	/* Samples */
+	ROM_REGION( 0x100000, REGION_SOUND2, ROMREGION_ERASE00 )	/* Samples */
 	/* Not present on this board */
 ROM_END
 
@@ -3158,7 +3158,7 @@ ROM_START( gtmra )
 	ROM_REGION( 0x400000, REGION_SOUND1, 0 )	/* Samples, plus room for expansion */
 	ROM_LOAD( "mm-100-401-e0.bin",  0x000000, 0x100000, CRC(b9cbfbee) SHA1(051d48a68477ef9c29bd5cc0bb7955d513a0ab94) )	// 16 x $10000
 
-	ROM_REGION( 0x100000, REGION_SOUND2, 0 )	/* Samples */
+	ROM_REGION( 0x100000, REGION_SOUND2, ROMREGION_ERASE00 )	/* Samples */
 	/* Not present on this board */
 ROM_END
 

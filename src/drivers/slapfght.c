@@ -1556,9 +1556,6 @@ ROM_START( gtstarba )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )		/* Region 3 - sound cpu code */
 	ROM_LOAD( "a68-03",       0x00000, 0x2000, CRC(18daa44c) SHA1(1a3d22a186c591321d1b836ee30d89fba4771122) )
 
-	ROM_REGION( 0x0800, REGION_CPU3, 0 )	/* 2k for the microcontroller */
-	/* its a bootleg, it has it's own protection instead */
-
 	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )	/* Region 1 - temporary for gfx */
 	/* these roms were in the set, but they're corrupt */
 //  ROM_LOAD( "gs_rb_8.bin",   0x00000, 0x2000, CRC(a30aaf04) SHA1(2509554c3851a68eaec1cadc01f4d69c7aa2c09d) )  /* Chars */

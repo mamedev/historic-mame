@@ -1632,6 +1632,12 @@ static const gfx_layout tiles_16x16_quad =
 	16*16*4
 };
 
+static const UINT32 road_layout_xoffset[64] =
+{
+	STEP16(16*4*0,4),STEP16(16*4*1,4),
+	STEP16(16*4*2,4),STEP16(16*4*3,4)
+};
+
 /* Road: 64 x 1 x 4 */
 static const gfx_layout road_layout =
 {
@@ -1639,10 +1645,11 @@ static const gfx_layout road_layout =
 	RGN_FRAC(1,1),
 	4,
 	{ STEP4(0,1) },
-	{ STEP16(16*4*0,4),STEP16(16*4*1,4),
-	  STEP16(16*4*2,4),STEP16(16*4*3,4) },
+	EXTENDED_XOFFS,
 	{ 0 },
-	64*1*4
+	64*1*4,
+	road_layout_xoffset,
+	NULL
 };
 
 /**************************************************************************

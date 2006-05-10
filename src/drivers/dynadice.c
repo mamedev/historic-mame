@@ -245,7 +245,7 @@ ROM_START( dynadice )
 	ROM_REGION( 0x0800, REGION_GFX1, 0 )
 	ROM_LOAD( "dy_4.bin",     0x0000, 0x0800, CRC(306b851b) SHA1(bf69ed126d32b31e1711ff23c5a75b8a8bd28207) )
 
-	ROM_REGION( 0x0800*8, REGION_GFX2, 0 )
+	ROM_REGION( 0x0800*8, REGION_GFX2, ROMREGION_ERASE00 )
 	/* gfx data will be rearranged here for 8x8 3bpp tiles */
 
 	ROM_REGION( 0x0800, REGION_USER1,0 )

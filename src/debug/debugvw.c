@@ -726,7 +726,7 @@ static void textbuf_update(debug_view *view)
 {
 	debug_view_textbuf *textdata = view->extra_data;
 	debug_view_char *dest = view->viewdata;
-	UINT32 curseq, row;
+	UINT32 curseq = 0, row;
 
 	/* update the console info */
 	view->total_rows = text_buffer_num_lines(textdata->textbuf);
@@ -1511,7 +1511,7 @@ static void disasm_recompute(debug_view *view, offs_t pc, int startline, int lin
 		offs_t pcbyte, tempaddr;
 		UINT64 dummyreadop;
 		char buffer[100];
-		int numbytes;
+		int numbytes = 0;
 		int instr = startline + line;
 		char *destbuf = &dasmdata->dasm[instr * dasmdata->allocated_cols];
 

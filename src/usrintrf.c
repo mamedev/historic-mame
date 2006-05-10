@@ -3929,7 +3929,7 @@ static void ui_display_popup(void)
 	/* show popup message if any */
 	if (popup_text_counter > 0)
 	{
-		draw_multiline_text_box(popup_text, JUSTIFY_CENTER, 0.5, 0.9);
+		draw_multiline_text_box(popup_text, JUSTIFY_CENTER, 0.5f, 0.9f);
 
 		if (--popup_text_counter == 0)
 			schedule_full_refresh();

@@ -95,9 +95,12 @@ drc_core *drc_init(UINT8 cpunum, drc_config *config)
 	drc->sequence_count_max = config->max_instructions;
 	drc->sequence_list = malloc(drc->sequence_count_max * sizeof(*drc->sequence_list));
 	drc->tentative_count_max = config->max_instructions;
-	drc->tentative_list = malloc(drc->tentative_count_max * sizeof(*drc->tentative_list));
-	if (!drc->sequence_list || !drc->tentative_list)
-		return NULL;
+	if (drc->tentative_count_max)
+	{
+		drc->tentative_list = malloc(drc->tentative_count_max * sizeof(*drc->tentative_list));
+		if (!drc->sequence_list || !drc->tentative_list)
+			return NULL;
+	}
 
 	/* seed the cache */
 	drc_cache_reset(drc);
@@ -214,8 +217,8 @@ void drc_begin_sequence(drc_core *drc, UINT32 pc)
 	{
 		/* create a new copy of the recompile table */
 		drc->lookup_l1[l1index] = malloc(sizeof(*drc->lookup_l2_recompile) * (1 << drc->l2bits));
-		if (!drc->lookup_l1[l1index])
-			exit(1);
+		assert_always(drc->lookup_l1[l1index], "Out of memory");
+
 		memcpy(drc->lookup_l1[l1index], drc->lookup_l2_recompile, sizeof(*drc->lookup_l2_recompile) * (1 << drc->l2bits));
 	}
 
@@ -558,37 +561,29 @@ void drc_append_restore_sse_rounding(drc_core *drc)
     by the functionality of DasmI386
 ------------------------------------------------------------------*/
 
-void drc_dasm(FILE *f, unsigned pc, void *begin, void *end)
+void drc_dasm(FILE *f, const void *begin, const void *end)
 {
-#if 0
 	extern int i386_dasm_one(char *buffer, UINT32 eip, UINT8 *oprom, int addr_size, int op_size);
 
 	char buffer[256];
-	char buffer2[256];
-	UINT8 *addr = begin;
-	UINT8 *addr_end = end;
-	unsigned offset;
+	const UINT8 *begin_ptr = (const UINT8 *) begin;
+	const UINT8 *end_ptr = (const UINT8 *) end;
+	UINT32 pc = (UINT32) begin;
+	int length;
 
-	activecpu_dasm(buffer, pc);
-	if (addr == addr_end)
+	while(begin_ptr < end_ptr)
 	{
-		logerror("%08x: %s\t(NOP)\n", pc, buffer);
-	}
-	else
-	{
-		logerror("%08x: %s\t(%08x-%08x)\n", pc, buffer, (UINT32)addr, (UINT32)addr_end - 1);
-
-		while(addr < addr_end)
-		{
-			offset = i386_dasm_one(buffer, (UINT32)addr, addr, 1, 1);
-			sprintf(buffer2, "\t%08x: %s\n", (UINT32)addr, buffer);
-			logerror("%s", buffer2);
-			if (f)
-				fputs(buffer2, f);
-			addr += offset & DASMFLAG_LENGTHMASK;
-		}
-	}
+#if defined(MAME_DEBUG) && HAS_I386
+		length = i386_dasm_one(buffer, pc, (UINT8 *) begin_ptr, 1, 1) & DASMFLAG_LENGTHMASK;
+#else
+		sprintf(buffer, "%02X", *begin_ptr);
+		length = 1;
 #endif
+
+		fprintf(f, "%08X:\t%s\n", (unsigned) pc, buffer);
+		begin_ptr += length;
+		pc += length;
+	}
 }
 
 

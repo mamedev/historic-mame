@@ -5972,7 +5972,8 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 */
 
 	/* Gaelco 2D games */
-	/* Master Boy */	/* (c) 1987 - No Ref on the PCB */
+	DRIVER( mastboy )	/* (c) 1987 - No Ref on the PCB */
+	DRIVER( mastboyi )	/* (c) 1987 - No Ref on the PCB */
 	DRIVER( xorworld )	/* (c) 1990 - prototype */
 	DRIVER( bigkarnk )	/* (c) 1991 - Ref 901112-1 */
 	/* Master Boy 2 */	/* (c) 1991 - Ref ??? */
@@ -6585,7 +6586,6 @@ Other Sun games
 	DRIVER( theglad )	/* (c) 2001 */
 	DRIVER( dmnfrnt )	/* (c) 2002 */
 	DRIVER( dmnfrnta )	/* (c) 2002 */
-	DRIVER( ddp3 )		/* (c) 2002 */
 
 	/* RamTek games */
 	DRIVER( hitme )		/* (c) 1976 Ramtek */
@@ -6839,7 +6839,11 @@ Other Sun games
 	DRIVER( quiz )		/* (c) 1986 Italian bootleg */
 	DRIVER( quiz211 )	/* (c) 1986 Italian bootleg */
 	DRIVER( gs4002 )	/* (c) 1982 G.E.I. */
+	DRIVER( gs4002a )	/* (c) 1982 G.E.I. */
 	DRIVER( gepoker )	/* (c) 1984 Greyhound Electronics */
+	DRIVER( gepoker1 )	/* (c) 1984 Greyhound Electronics */
+	DRIVER( gepoker2 )	/* (c) 1984 Greyhound Electronics */
+	DRIVER( gepoker3 )	/* (c) 1984 Greyhound Electronics */
 	DRIVER( gt102c )	/* (c) 1984 Greyhound Electronics */
 	DRIVER( gt102b )	/* (c) 1984 Greyhound Electronics */
 	DRIVER( gt102c1 )	/* (c) 1985 Greyhound Electronics */
@@ -6930,6 +6934,7 @@ Other Sun games
 	DRIVER( misncrft )	/* (c) 2000 Sun */
 	DRIVER( hidnctch )	/* (c) 1998 Eolith */
 	DRIVER( puzzlekg )	/* (c) 1998 Eolith */
+	DRIVER( hidctch2 )	/* (c) 1999 Eolith */
 	DRIVER( nhidctch )	/* (c) 1999 Eolith */
 	DRIVER( landbrk )	/* (c) 1999 Eolith */
 	DRIVER( landbrka )	/* (c) 1999 Eolith */
@@ -6938,7 +6943,8 @@ Other Sun games
 	DRIVER( fort2ba )	/* (c) 2001 Eolith */
 	DRIVER( klondkp )	/* (c) 1999 Eolith */
 	DRIVER( xfiles )	/* (c) 1999 dgPIX Entertainment Inc */
-	DRIVER( kdynastg )	/* (c) 1999 dgPIX Entertainment Inc */
+	DRIVER( kdynastg )	/* (c) 1999 EZ Graphics */
+	DRIVER( fmaniac3 )	/* (c) 2002 Saero Entertainment */
 	DRIVER( promutrv )	/* (c) 1985 Enerdyne Technologies Inc */
 	DRIVER( promutra )	/* (c) 1985 Enerdyne Technologies Inc */
 	DRIVER( promutrb )	/* (c) 1985 Enerdyne Technologies Inc */
@@ -7060,5 +7066,6 @@ Other Sun games
 	DRIVER( mirax )		/* (c) 1985 Current Technologies */
 	DRIVER( lastfght )	/* (c) 2000 Subsino */
 	DRIVER( sliver )	/* (c) 1996 Hollow Corp */
+	DRIVER( intrscti )	/* ???? */
 
 #endif	/* DRIVER_RECURSIVE */

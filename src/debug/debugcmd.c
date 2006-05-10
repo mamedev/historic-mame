@@ -1741,7 +1741,7 @@ static void execute_dasm(int ref, int params, const char *param[])
 		UINT64 dummyreadop;
 		offs_t tempaddr;
 		int outdex = 0;
-		int numbytes;
+		int numbytes = 0;
 
 		/* print the address */
 		outdex += sprintf(&output[outdex], "%0*X: ", info->space[ADDRESS_SPACE_PROGRAM].logchars, (UINT32)BYTE2ADDR(pcbyte, info, ADDRESS_SPACE_PROGRAM));
@@ -2090,7 +2090,7 @@ static void execute_symlist(int ref, int params, const char **param)
 
 	/* sort the symbols */
 	if (count > 1)
-		qsort(namelist, count, sizeof(namelist[0]), symbol_sort_compare);
+		qsort((void *)namelist, count, sizeof(namelist[0]), symbol_sort_compare);
 
 	/* iterate over symbols and print out relevant ones */
 	for (symnum = 0; symnum < count; symnum++)

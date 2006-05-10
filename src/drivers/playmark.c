@@ -976,7 +976,7 @@ ROM_START( bigtwin )
 	ROM_LOAD16_BYTE( "2.302",        0x000000, 0x80000, CRC(e6767f60) SHA1(ec0ba1c786e6fde04601c2f3f619e3c6545f9239) )
 	ROM_LOAD16_BYTE( "3.301",        0x000001, 0x80000, CRC(5aba6990) SHA1(4f664a91819fdd27821fa607425701d83fcbd8ce) )
 
-	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound (PIC16C57) */
+	ROM_REGION( 0x1000, REGION_CPU2, ROMREGION_ERASE00 )	/* sound (PIC16C57) */
 //  ROM_LOAD( "16c57hs.bin",  0x0000, 0x1000, CRC(b4c95cc3) SHA1(7fc9b141e7782aa5c17310ee06db99d884537c30) )
 	/* ROM will be copied here by the init code from REGION_USER1 */
 
@@ -1004,7 +1004,7 @@ ROM_START( wbeachvl )
 	ROM_LOAD16_BYTE( "wbv_02.bin",   0x000000, 0x40000, CRC(c7cca29e) SHA1(03af361081d688c4204a95f7f5babcc598b72c23) )
 	ROM_LOAD16_BYTE( "wbv_03.bin",   0x000001, 0x40000, CRC(db4e69d5) SHA1(119bf35a463d279ddde67ab08f6f1bab9f05cf0c) )
 
-	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound (missing) */
+	ROM_REGION( 0x1000, REGION_CPU2, ROMREGION_ERASE00 )	/* sound (missing) */
 	ROM_LOAD( "pic16c57",     0x0000, 0x1000, NO_DUMP )
 
 	ROM_REGION( 0x600000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -1098,7 +1098,7 @@ ROM_START( excelsr )
 	ROM_LOAD16_BYTE( "20.u305", 0x200001, 0x80000, CRC(8692afe9) SHA1(b4411bad64a9a6efd8eb13dcf7c5eebfb5681f3d) )
 	ROM_LOAD16_BYTE( "17.u306", 0x200000, 0x80000, CRC(978f9a6b) SHA1(9514b97f071fd20740218a58af877765beffedad) )
 
-	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound (PIC16C57) */
+	ROM_REGION( 0x1000, REGION_CPU2, ROMREGION_ERASE00 )	/* sound (PIC16C57) */
 	/* ROM will be copied here by the init code from REGION_USER1 */
 
 	ROM_REGION( 0x3000, REGION_USER1, ROMREGION_DISPOSE )
@@ -1176,7 +1176,7 @@ ROM_START( hotmind )
 	ROM_LOAD16_BYTE( "21.u87",       0x00000, 0x20000, CRC(e9000f7f) SHA1(c19fee7b774d3f30f4d4025a63ec396ec119c855) )
 	ROM_LOAD16_BYTE( "22.u68",       0x00001, 0x20000, CRC(2c518ec5) SHA1(6d9e81ddb5793d64e22dc0254519b947f6ec6954) )
 
-	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound (PIC16C57) */
+	ROM_REGION( 0x1000, REGION_CPU2, ROMREGION_ERASE00 )	/* sound (PIC16C57) */
 	/* ROM will be copied here by the init code from REGION_USER1 */
 
 	/* original PIC was protected, but it seem to be good with the Excelsior one (probably they're the same) */

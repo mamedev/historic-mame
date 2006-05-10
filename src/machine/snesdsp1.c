@@ -1049,7 +1049,7 @@ static void dsp1_write(UINT16 address, UINT8 data)
 			{
 				if (--dsp1_in_cnt == 0)
 				{
-					INT16 tr, tr1, tr2, tr3;
+					INT16 tr = 0, tr1 = 0, tr2 = 0, tr3 = 0;
 					INT32 ltr;
 
 					// time to run the command

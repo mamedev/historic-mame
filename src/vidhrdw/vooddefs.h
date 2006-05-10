@@ -2453,7 +2453,7 @@ do																				\
 		/* non-constant fog comes from several sources */						\
 		else																	\
 		{																		\
-			INT32 fogblend;														\
+			INT32 fogblend = 0;														\
 																				\
 			/* if fog_add is zero, we start with the fog color */				\
 			if (FOGMODE_FOG_ADD(FOGMODE) == 0)									\

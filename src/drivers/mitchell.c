@@ -1679,9 +1679,6 @@ ROM_END
 /* seems to be the same basic hardware, but the memory map and io map are different at least.. */
 ROM_START( mstworld )
 	ROM_REGION( 0x50000*2, REGION_CPU1, 0 )	/* CPU1 code */
-	/* we descramble code to here */
-
-	ROM_REGION( 0x80000, REGION_USER1, ROMREGION_DISPOSE )	/* CPU1 code - scrambled */
 	ROM_LOAD( "mw-1.rom", 0x00000, 0x080000, CRC(c4e51fb4) SHA1(60ad4ff2cec3a4d13b4aa0319dfcdab941404b1a) ) /* fixed code */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* CPU2 code */
@@ -2080,7 +2077,7 @@ static DRIVER_INIT( blockbl )
 static DRIVER_INIT( mstworld )
 {
 	/* descramble the program rom .. */
-	UINT8* source = memory_region(REGION_USER1) ;
+	UINT8* source = malloc_or_die(memory_region_length(REGION_CPU1));
 	UINT8* dst    = memory_region(REGION_CPU1) ;
 	int x;
 
@@ -2108,6 +2105,7 @@ static DRIVER_INIT( mstworld )
 		/* bank f     */12, 12,
 	};
 
+	memcpy(source, dst, memory_region_length(REGION_CPU1));
 	for (x=0;x<40;x+=2)
 	{
 		if (tablebank[x]!=-1)
@@ -2116,6 +2114,7 @@ static DRIVER_INIT( mstworld )
 			memcpy(&dst[((x/2)*0x4000)+0x50000],&source[tablebank[x+1]*0x4000],0x4000);
 		}
 	}
+	free(source);
 
 	bootleg_decode();
 	configure_banks();

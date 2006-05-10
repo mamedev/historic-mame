@@ -3416,7 +3416,7 @@ ROM_START( crystalg )
 	ROM_LOAD( "mbs3.5c",  0x08000, 0x04000, CRC(faacafd0) SHA1(facab33c668a15dc85ada690dd02ffee2c332485) )
 	ROM_LOAD( "mbs4.6c",  0x0c000, 0x04000, CRC(b3bedcf1) SHA1(12d1b9ab94d77fdb5d6d4e42da447d27e50815d8) )
 
-	ROM_REGION( 0x10000, REGION_SOUND1, 0 ) /* voice */
+	ROM_REGION( 0x10000, REGION_SOUND1, ROMREGION_ERASE00 ) /* voice */
 	// not used
 
 	ROM_REGION( 0x080000, REGION_GFX1, 0 ) /* gfx */
@@ -3439,7 +3439,7 @@ ROM_START( crystal2 )
 	ROM_LOAD( "cgl2_03.bin",  0x08000, 0x04000, CRC(c11987ed) SHA1(69a7c252b28843437a06812213ad1d6de683aac3) )
 	ROM_LOAD( "cgl2_04.bin",  0x0c000, 0x04000, CRC(ae0b7df8) SHA1(9ca74fd087d299195b06aa8ea811393e3f87b76f) )
 
-	ROM_REGION( 0x10000, REGION_SOUND1, 0 ) /* voice */
+	ROM_REGION( 0x10000, REGION_SOUND1, ROMREGION_ERASE00 ) /* voice */
 	// not used
 
 	ROM_REGION( 0x080000, REGION_GFX1, 0 ) /* gfx */
@@ -3467,7 +3467,7 @@ ROM_START( apparel )
 	ROM_LOAD( "12.bin", 0x04000, 0x04000, CRC(56acd87d) SHA1(d228db94b66c1f7da80c799251c28a0bc3e48ea9) )
 	ROM_LOAD( "13.bin", 0x08000, 0x04000, CRC(3e2a9c66) SHA1(f6a4859463524f46002fc5684d573d1fae8a5e22) )
 
-	ROM_REGION( 0x10000, REGION_SOUND1, 0 ) /* voice */
+	ROM_REGION( 0x10000, REGION_SOUND1, ROMREGION_ERASE00 ) /* voice */
 	// not used
 
 	ROM_REGION( 0x0a0000, REGION_GFX1, 0 ) /* gfx */
@@ -3973,7 +3973,7 @@ ROM_START( kaguya2f )
 	ROM_LOAD( "12.6m",   0x080000, 0x10000, CRC(420402f7) SHA1(7013b1e5d0f1a135d5f8422058c8ecd93e5b1890) )
 	ROM_LOAD( "13.6p",   0x090000, 0x10000, CRC(ecb9f670) SHA1(c58ef1b17841d292e11e8906f11e61124eef672d) )
 
-	ROM_REGION( 0x40000, REGION_USER1, 0 ) /* protection data */
+	ROM_REGION( 0x40000, REGION_USER1, ROMREGION_ERASE00 ) /* protection data */
 //  ROM_LOAD( "ic4m.bin", 0x00000, 0x40000, CRC(f85c5b07) SHA1(0fc55e9b60ccc630a0d77862eb5e64a3ba366947) )  // same as housemnq/3i.bin gfx data
 ROM_END
 
@@ -4021,7 +4021,7 @@ ROM_START( kyuhito )
 	ROM_LOAD( "9.6ma", 0x0a0000, 0x10000, CRC(401c23fe) SHA1(ef3d484d4b2c640fbdb5b023d271ee98e1a85d1a) )
 	ROM_LOAD( "10.6p", 0x0b0000, 0x10000, CRC(1447ed65) SHA1(6b0f4ef3aef4dffe235a63000103c53ccad1c94f) )	// kanatuen/10.6p
 
-	ROM_REGION( 0x40000, REGION_USER1, 0 ) /* protection data */
+	ROM_REGION( 0x40000, REGION_USER1, ROMREGION_ERASE00 ) /* protection data */
 //  ROM_LOAD( "mask.bin", 0x00000, 0x40000, CRC(f85c5b07) SHA1(0fc55e9b60ccc630a0d77862eb5e64a3ba366947) )  // same as housemnq/3i.bin gfx data
 ROM_END
 

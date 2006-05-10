@@ -447,7 +447,7 @@ Rom board is UVM-4B
 
 Contains 5 2764 eproms, MMI PAL16R4CN
 
-Battery (3V litium battery) backuped HM6117P-4
+Battery (3V litium battery) backed up HM6117P-4
 
 Roms labeled as:
 
@@ -456,16 +456,32 @@ BLJK at spot 2
 POKR at spot 3
 SPRD at spot 4
 SLOT at spot 3
+
+Alt set included BONE in place of SPRD & a newer SLOT
+
+These board sets may also be known as the V116 (or V16)
+sets as the alt set also included that name on the labels
+
 ****************************************************/
 
 ROM_START( gs4002 )
 	ROM_REGION( 0x18000, REGION_CPU1, 0 )
-	ROM_LOAD( "4-1.1",        0x0000, 0x2000, CRC(a456e456) SHA1(f36b96ac31ce0f128ecb94f94d1dbdd88ee03c77) )
+	ROM_LOAD( "4-1.1",          0x00000, 0x2000, CRC(a456e456) SHA1(f36b96ac31ce0f128ecb94f94d1dbdd88ee03c77) ) /* V16M 5-4-84 */
 	/* Banked roms */
-	ROM_LOAD( "bljk.2",       0x10000, 0x2000, CRC(c3785523) SHA1(090f324fc7adb0a36b189cf04086f0e050895ee4) )
-	ROM_LOAD( "pokr.3",       0x12000, 0x2000, CRC(f0e99cc5) SHA1(02fdc95974e503b6627930918fcc3c029a7a4612) )
-	ROM_LOAD( "sprd.4",       0x14000, 0x2000, CRC(5fe90ed4) SHA1(38db69567d9c38f78127e581fdf924aca4926378) )
-	ROM_LOAD( "slot.5",       0x16000, 0x2000, CRC(cd7cfa4c) SHA1(aa3de086e5a1018b9e5a18403a6144a6b0ed1036) )
+	ROM_LOAD( "bljk_3-16-84.2", 0x10000, 0x2000, CRC(c3785523) SHA1(090f324fc7adb0a36b189cf04086f0e050895ee4) )
+	ROM_LOAD( "pokr_5-16-84.3", 0x12000, 0x2000, CRC(f0e99cc5) SHA1(02fdc95974e503b6627930918fcc3c029a7a4612) )
+	ROM_LOAD( "sprd_1-24-84.4", 0x14000, 0x2000, CRC(5fe90ed4) SHA1(38db69567d9c38f78127e581fdf924aca4926378) )
+	ROM_LOAD( "slot_1-24-84.5", 0x16000, 0x2000, CRC(cd7cfa4c) SHA1(aa3de086e5a1018b9e5a18403a6144a6b0ed1036) )
+ROM_END
+
+ROM_START( gs4002a )
+	ROM_REGION( 0x18000, REGION_CPU1, 0 )
+	ROM_LOAD( "4-1.1",          0x00000, 0x2000, CRC(a456e456) SHA1(f36b96ac31ce0f128ecb94f94d1dbdd88ee03c77) ) /* V16M 5-4-84 */
+	/* Banked roms */
+	ROM_LOAD( "bljk_3-16-84.2", 0x10000, 0x2000, CRC(c3785523) SHA1(090f324fc7adb0a36b189cf04086f0e050895ee4) )
+	ROM_LOAD( "pokr_5-16-84.3", 0x12000, 0x2000, CRC(f0e99cc5) SHA1(02fdc95974e503b6627930918fcc3c029a7a4612) )
+	ROM_LOAD( "bone_5-16-84.4", 0x14000, 0x2000, CRC(eccd2fb0) SHA1(2683e432ffcca4280c31f57b2596e4389bc59b7b) )
+	ROM_LOAD( "slot_9-24-84.5", 0x16000, 0x2000, CRC(25d8c504) SHA1(2d52b66e8a1f06f486015440668bd924a123dad0) )
 ROM_END
 
 /*
@@ -473,40 +489,90 @@ Greyhound Poker board...
 
 Standard Greyhound Electronics Inc UV-1B mainboard.
 
-Rom board UVM 10 B:
+Rom board UVM 10 B or UMV 10 C
 
 Battery backed up NEC D449C ram
 PAL16R4
 74L374
 
-Roms in this order:
+Roms in this order on the UMV 10 C board:
 
-Label            Type   Name / Info in rom
-------------------------------------------------------
-m105_high        2764   Version 50.02
-m105_low         2764
-m105_poker       2764   Joker Poker CB 10-19-88
-m105_blackjack   2764   Black Jack ICB 8-16-84
-m105_bones       2764   Rolling Bones ICB 8-16-84
+Label        Normaly in the slot
+--------------------------------
+High
+Control
+rom1         Joker Poker
+rom2         Black jack
+rom3         Rolling Bones
+rom4         Casino Slots
+rom5         Horse Race
+
+For UMV 10 B: 1C, 2C, 1, 2, 3, 4, & 5
+
+There looks to be several types and combos for these, some are "ICB" or "IAM"
+It also looks like operators mixed & matched to upgrade (some times incorrectly)
+their boards.  Sets will be filled in as found and dumped.
+
+There are some versions, like, the ICB sets that use 2764 roms for all roms. While the IAM set uses
+27128 roms for all roms.  These roms are the correct size, but it's currently not known if the rom
+board (UVM 10 B/C) "sees" them as 27128 or the standard size of 2764.
+
+Dumped, but not known to be supported by any High/Control combo:
+ROM_LOAD( "rollingbones_am_3-16-84",  0x16000, 0x4000, CRC(41879e9b) SHA1(5106d5772bf43b28817e27efd16c785359cd929e) ) // Might work with IAM control, once it gets figured out
+
+The ICB set may also be known as the M105 set as some label sets included that name.
 
 */
 
-ROM_START( gepoker )
+ROM_START( gepoker ) /* v50.02 with most roms for ICB dated 8-16-84 */
 	ROM_REGION( 0x1b000, REGION_CPU1, ROMREGION_ERASEFF )
-	ROM_LOAD( "m105_low",       0x00000, 0x2000, CRC(08b996f2) SHA1(5f5efb5015ec9571cc94734c18debfadaa28f585) )
-	ROM_LOAD( "m105_high",      0x0e000, 0x2000, CRC(6ddc1750) SHA1(ee19206b7f4a98e3e7647414127f4e09b3e9134f) )
+	ROM_LOAD( "control_icb_8-16",  0x00000, 0x2000, CRC(0103963d) SHA1(9bc646e721048b84111e0686eaca23bc24eee3e2) )
+	ROM_LOAD( "high_icb_6-25",     0x0e000, 0x2000, CRC(dfb6592e) SHA1(d68de9f537d3c14279dc576424d195bb266e3897) )
 	/* Banked roms */
-	ROM_LOAD( "m105_blackjack", 0x10000, 0x2000, CRC(cff27ffd) SHA1(fd85b54400b2f22ae92042b01a2c162e64d2d066) )
-	ROM_LOAD( "m105_poker",     0x12000, 0x2000, CRC(a590af75) SHA1(63bc64fbc9ac0c489b1f4894d77a4be13d7251e7) )
-	ROM_LOAD( "m105_bones",     0x14000, 0x2000, CRC(52d66cb6) SHA1(57db34906fcafd37f3a361df209dafe080aeac16) )
-	// empty
-	// empty
+	ROM_LOAD( "jokerpoker_icb_8-16-84",    0x10000, 0x2000, CRC(0834a1e6) SHA1(663e6f4e0586eb9b84d3098aef8c596585c27304) )
+	ROM_LOAD( "blackjack_icb_8-16-84",     0x12000, 0x2000, CRC(cff27ffd) SHA1(fd85b54400b2f22ae92042b01a2c162e64d2d066) )
+	ROM_LOAD( "rollingbones_icb_8-16-84",  0x14000, 0x2000, CRC(52d66cb6) SHA1(57db34906fcafd37f3a361df209dafe080aeac16) )
+	ROM_LOAD( "casinoslots_icb_8-16-84",   0x16000, 0x2000, CRC(3db002a3) SHA1(7dff4efceee37b25328303cf0606bf4baa4df5f3) )
+	ROM_LOAD( "horserace_icb_3-19-85",     0x18000, 0x2000, CRC(f1e6e61e) SHA1(944b1ab4af911e5ed136f1fca3c44219726eeebb) )
+ROM_END
+
+ROM_START( gepoker1 ) /* v50.08 with most roms for IAM dated 8-16-84 */
+	ROM_REGION( 0x24000, REGION_CPU1, ROMREGION_ERASEFF )
+	ROM_LOAD( "control_iam_8-16",  0x00000, 0x4000, CRC(345434b9) SHA1(ec880f6f5e90aa971937e0270701e323f6a83671) ) /* all roms were 27128, twice the size of other sets */
+	ROM_LOAD( "high_iam_8-16",     0x0c000, 0x4000, CRC(57000fb7) SHA1(144723eb528c4816b9aa4b0ba77d2723c6442546) ) /* Is only the 1st half used by the board / program? */
+	/* Banked roms */
+	ROM_LOAD( "jokerpoker_iam_8-16-84",    0x10000, 0x4000, CRC(33794a87) SHA1(2b46809623713582746d9f817db33077f15a3684) ) /* This set is verified correct by 3 different sets checked */
+	ROM_LOAD( "blackjack_iam_8-16-84",     0x14000, 0x4000, CRC(6e10b5b8) SHA1(5dc294b4a562193a99b0d307323fcc084a053426) )
+	ROM_LOAD( "rollingbones_iam_8-16-84",  0x18000, 0x4000, CRC(26949774) SHA1(20571b955521ec3929430249aa651cee8a97043d) )
+	ROM_LOAD( "casinoslots_iam_8-16-84",   0x1c000, 0x4000, CRC(c5a1eec6) SHA1(43d31bfe4cbbb6b86f52f675f513050866443176) )
+	ROM_LOAD( "horserace_iam_3-19-84",     0x20000, 0x4000, CRC(7b9e75cb) SHA1(0db8da6f5f59f57886766bec96102d43796567ef) )
+ROM_END
+
+ROM_START( gepoker2 ) /* v50.02 with roms for ICB dated 9-30-86 */
+	ROM_REGION( 0x1b000, REGION_CPU1, ROMREGION_ERASEFF )
+	ROM_LOAD( "control_icb_9-30",  0x00000, 0x2000, CRC(08b996f2) SHA1(5f5efb5015ec9571cc94734c18debfadaa28f585) )
+	ROM_LOAD( "high_icb_6-25a",    0x0e000, 0x2000, CRC(6ddc1750) SHA1(ee19206b7f4a98e3e7647414127f4e09b3e9134f) )
+	/* Banked roms */
+	ROM_LOAD( "jokerpoker_icb_9-30-86",    0x10000, 0x2000, CRC(a1473367) SHA1(9b37ccafc02704e8f1d61150326494e86148d84e) )
+	ROM_LOAD( "casinoslots_icb_9-30-86",   0x12000, 0x2000, CRC(713c3963) SHA1(a9297c04fc44522ca6891516a2c744712132896a) )
+ROM_END
+
+ROM_START( gepoker3 ) /* v50.02 with control dated 9-30-84 */
+	ROM_REGION( 0x1b000, REGION_CPU1, ROMREGION_ERASEFF )
+	ROM_LOAD( "control_icb_9-30",  0x00000, 0x2000, CRC(08b996f2) SHA1(5f5efb5015ec9571cc94734c18debfadaa28f585) )
+	ROM_LOAD( "high_icb_6-25a",    0x0e000, 0x2000, CRC(6ddc1750) SHA1(ee19206b7f4a98e3e7647414127f4e09b3e9134f) )
+	/* Banked roms */
+	ROM_LOAD( "jokerpoker_cb_10-19-88",    0x10000, 0x2000, CRC(a590af75) SHA1(63bc64fbc9ac0c489b1f4894d77a4be13d7251e7) )
 ROM_END
 
 
-GAME( 1982, gs4002,   0,      gselect,  gselect,  0, ROT0, "G.E.I.", "Selection (Version 40.02TMB)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1982, gs4002,   0,       gselect,  gselect,  0, ROT0, "G.E.I.", "Selection (Version 40.02TMB) set 1", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1982, gs4002a,  gs4002,  gselect,  gselect,  0, ROT0, "G.E.I.", "Selection (Version 40.02TMB) set 2", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 
-GAME( 1984, gepoker, 0,       gepoker,  gselect,  0, ROT0, "Greyhound Electronics", "Poker (Version 50.02)",                  GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1984, gepoker,  0,       gepoker,  gselect,  0, ROT0, "Greyhound Electronics", "Poker (Version 50.02 ICB)",              GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1984, gepoker1, 0,       gepoker,  gselect,  0, ROT0, "Greyhound Electronics", "Poker (Version 50.08 IAM)",              GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAME( 1984, gepoker2, gepoker, gepoker,  gselect,  0, ROT0, "Greyhound Electronics", "Poker (Version 50.02 ICB set 2)",        GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1984, gepoker3, gepoker, gepoker,  gselect,  0, ROT0, "Greyhound Electronics", "Poker (Version 50.02 ICB set 3)",        GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 
 GAME( 1984, gt102c,   0,      getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02C)",                 GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 GAME( 1984, gt102b,   0,      getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02B)",                 GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
