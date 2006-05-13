@@ -1,3 +1,17 @@
+0.106
+-----
+
+
+Source Changes
+--------------
+Fixed vconv.exe so it doesn't use options that have been deprecated
+in MSVC 2005. [Aaron Giles]
+
+Fixed crash in the model3 games introduced by cleaning up empty ROM
+regions. [Ville Linde]
+
+
+
 0.105u5
 -------
 
@@ -90,7 +104,6 @@ New games marked as GAME_NOT_WORKING
 ------------------------------------
 Master Boy [David Haywood]
 Intersecti [David Haywood]
-
 
 
 
@@ -189,12 +202,6 @@ Metal Slug 5 (JAMMA PCB) [Mame32Plus]
 SVC Chaos - SNK vs CAPCOM (JAMMA PCB, set 2) [Mame32Plus]
 Night Slashers (Over Sea Rev 1.2) [Stefan Lindberg]
 Double Dragon (World Set 2) [Stefan Lindberg]
-
-
-
-New games marked as GAME_NOT_WORKING
-------------------------------------
-DoDonpachi Dai-Ou-Jou (V100) [Wu]
 
 
 

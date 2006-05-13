@@ -692,7 +692,6 @@ void real3d_vrom_texture_dma(UINT32 src, UINT32 dst, int length, int byteswap)
 	if((dst & 0xff) == 0) {
 
 		UINT32 address, header;
-		UINT32 *rom;
 
 		if (byteswap) {
 			address = BYTE_REVERSE32(program_read_dword_64le((src+0)^4));
@@ -701,8 +700,7 @@ void real3d_vrom_texture_dma(UINT32 src, UINT32 dst, int length, int byteswap)
 			address = program_read_dword_64le((src+0)^4);
 			header = program_read_dword_64le((src+4)^4);
 		}
-		rom = (UINT32*)memory_region(REGION_USER2);
-		real3d_upload_texture(header, (UINT32*)&rom[address]);
+		real3d_upload_texture(header, (UINT32*)&model3_vrom[address]);
 	}
 }
 

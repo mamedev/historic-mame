@@ -654,9 +654,8 @@ int xml_get_attribute_int(xml_data_node *node, const char *attribute, int defval
 	const char *string = xml_get_attribute_string(node, attribute, NULL);
 	int value;
 
-	if (!string)
+	if (!string || sscanf(string, "%d", &value) != 1)
 		return defvalue;
-	sscanf(string, "%d", &value);
 	return value;
 }
 
@@ -666,9 +665,8 @@ float xml_get_attribute_float(xml_data_node *node, const char *attribute, float 
 	const char *string = xml_get_attribute_string(node, attribute, NULL);
 	float value;
 
-	if (!string)
+	if (!string || sscanf(string, "%f", &value) != 1)
 		return defvalue;
-	sscanf(string, "%f", &value);
 	return value;
 }
 
