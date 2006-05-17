@@ -715,7 +715,7 @@ int code_pressed_memory_repeat(input_code code, int speed)
 		}
 
 		/* if this is an autorepeat case, set a 1x delay and leave pressed = 1 */
-		else if (++counter > keydelay * speed * Machine->refresh_rate / 60)
+		else if (++counter > keydelay * speed * Machine->refresh_rate[0] / 60)
 		{
 			keydelay = 1;
 			counter = 0;

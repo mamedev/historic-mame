@@ -168,8 +168,8 @@ static void draw_sprites(mame_bitmap *bitmap)
 	int code,color,x,y,fx,fy;
 	rectangle clip;
 
-	clip.min_x = Machine->visible_area.min_x;
-	clip.max_x = Machine->visible_area.max_x;
+	clip.min_x = Machine->visible_area[0].min_x;
+	clip.max_x = Machine->visible_area[0].max_x;
 
 	for (block=0; block<0x8000; block+=0x800)
 	{

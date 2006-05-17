@@ -240,7 +240,7 @@ WRITE16_HANDLER( atarisy1_bankselect_w )
 
 	/* if MO or playfield banks change, force a partial update */
 	if (diff & 0x003c)
-		force_partial_update(scanline);
+		force_partial_update(0, scanline);
 
 	/* motion object bank select */
 	atarimo_set_bank(0, (newselect >> 3) & 7);
@@ -273,7 +273,7 @@ WRITE16_HANDLER( atarisy1_priority_w )
 	/* force a partial update in case this changes mid-screen */
 	COMBINE_DATA(&newpens);
 	if (oldpens != newpens)
-		force_partial_update(cpu_getscanline());
+		force_partial_update(0, cpu_getscanline());
 	playfield_priority_pens = newpens;
 }
 
@@ -293,7 +293,7 @@ WRITE16_HANDLER( atarisy1_xscroll_w )
 	/* force a partial update in case this changes mid-screen */
 	COMBINE_DATA(&newscroll);
 	if (oldscroll != newscroll)
-		force_partial_update(cpu_getscanline());
+		force_partial_update(0, cpu_getscanline());
 
 	/* set the new scroll value */
 	tilemap_set_scrollx(atarigen_playfield_tilemap, 0, newscroll);
@@ -325,12 +325,12 @@ WRITE16_HANDLER( atarisy1_yscroll_w )
 
 	/* force a partial update in case this changes mid-screen */
 	COMBINE_DATA(&newscroll);
-	force_partial_update(scanline);
+	force_partial_update(0, scanline);
 
 	/* because this latches a new value into the scroll base,
        we need to adjust for the scanline */
 	adjusted_scroll = newscroll;
-	if (scanline <= Machine->visible_area.max_y)
+	if (scanline <= Machine->visible_area[0].max_y)
 		adjusted_scroll -= (scanline + 1);
 	tilemap_set_scrolly(atarigen_playfield_tilemap, 0, adjusted_scroll);
 
@@ -374,7 +374,7 @@ WRITE16_HANDLER( atarisy1_spriteram_w )
 		/* renders the next scanline's sprites to the line buffers, but Road Runner still glitches */
 		/* without the extra +1 */
 		else
-			force_partial_update(cpu_getscanline() + 2);
+			force_partial_update(0, cpu_getscanline() + 2);
 	}
 
 	/* let the MO handler do the basic work */

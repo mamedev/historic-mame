@@ -177,7 +177,7 @@ void atarig1_scanline_update(int scanline)
 			int newscroll = ((word >> 6) + pfscroll_xoffset) & 0x1ff;
 			if (newscroll != playfield_xscroll)
 			{
-				force_partial_update(scanline + i - 1);
+				force_partial_update(0, scanline + i - 1);
 				tilemap_set_scrollx(atarigen_playfield_tilemap, 0, newscroll);
 				playfield_xscroll = newscroll;
 			}
@@ -191,13 +191,13 @@ void atarig1_scanline_update(int scanline)
 			int newbank = word & 7;
 			if (newscroll != playfield_yscroll)
 			{
-				force_partial_update(scanline + i - 1);
+				force_partial_update(0, scanline + i - 1);
 				tilemap_set_scrolly(atarigen_playfield_tilemap, 0, newscroll);
 				playfield_yscroll = newscroll;
 			}
 			if (newbank != playfield_tile_bank)
 			{
-				force_partial_update(scanline + i - 1);
+				force_partial_update(0, scanline + i - 1);
 				tilemap_mark_all_tiles_dirty(atarigen_playfield_tilemap);
 				playfield_tile_bank = newbank;
 			}

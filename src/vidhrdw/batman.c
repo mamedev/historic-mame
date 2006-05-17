@@ -140,7 +140,7 @@ VIDEO_START( batman )
 void batman_scanline_update(int scanline)
 {
 	/* update the scanline parameters */
-	if (scanline <= Machine->visible_area.max_y && atarivc_state.rowscroll_enable)
+	if (scanline <= Machine->visible_area[0].max_y && atarivc_state.rowscroll_enable)
 	{
 		UINT16 *base = &atarigen_alpha[scanline / 8 * 64 + 48];
 		int scan, i;
@@ -152,13 +152,13 @@ void batman_scanline_update(int scanline)
 				switch (data & 15)
 				{
 					case 9:
-						force_partial_update(scanline - 1);
+						force_partial_update(0, scanline - 1);
 						atarivc_state.mo_xscroll = (data >> 7) & 0x1ff;
 						atarimo_set_xscroll(0, atarivc_state.mo_xscroll);
 						break;
 
 					case 10:
-						force_partial_update(scanline - 1);
+						force_partial_update(0, scanline - 1);
 						atarivc_state.pf1_xscroll_raw = (data >> 7) & 0x1ff;
 						atarivc_update_pf_xscrolls();
 						tilemap_set_scrollx(atarigen_playfield_tilemap, 0, atarivc_state.pf0_xscroll);
@@ -166,26 +166,26 @@ void batman_scanline_update(int scanline)
 						break;
 
 					case 11:
-						force_partial_update(scanline - 1);
+						force_partial_update(0, scanline - 1);
 						atarivc_state.pf0_xscroll_raw = (data >> 7) & 0x1ff;
 						atarivc_update_pf_xscrolls();
 						tilemap_set_scrollx(atarigen_playfield_tilemap, 0, atarivc_state.pf0_xscroll);
 						break;
 
 					case 13:
-						force_partial_update(scanline - 1);
+						force_partial_update(0, scanline - 1);
 						atarivc_state.mo_yscroll = (data >> 7) & 0x1ff;
 						atarimo_set_yscroll(0, atarivc_state.mo_yscroll);
 						break;
 
 					case 14:
-						force_partial_update(scanline - 1);
+						force_partial_update(0, scanline - 1);
 						atarivc_state.pf1_yscroll = (data >> 7) & 0x1ff;
 						tilemap_set_scrolly(atarigen_playfield2_tilemap, 0, atarivc_state.pf1_yscroll);
 						break;
 
 					case 15:
-						force_partial_update(scanline - 1);
+						force_partial_update(0, scanline - 1);
 						atarivc_state.pf0_yscroll = (data >> 7) & 0x1ff;
 						tilemap_set_scrolly(atarigen_playfield_tilemap, 0, atarivc_state.pf0_yscroll);
 						break;

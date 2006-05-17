@@ -78,10 +78,10 @@ VIDEO_START( flkatck )
 	if (!k007121_tilemap[0] || !k007121_tilemap[1])
 		return 1;
 
-	k007121_clip[0] = Machine->visible_area;
+	k007121_clip[0] = Machine->visible_area[0];
 	k007121_clip[0].min_x += 40;
 
-	k007121_clip[1] = Machine->visible_area;
+	k007121_clip[1] = Machine->visible_area[0];
 	k007121_clip[1].max_x = 39;
 	k007121_clip[1].min_x = 0;
 

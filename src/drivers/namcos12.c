@@ -1340,9 +1340,9 @@ static int gunx( int port )
 	{
 		x = x - gunxmin;
 	}
-	x *= ( Machine->visible_area.max_x - Machine->visible_area.min_x );
+	x *= ( Machine->visible_area[0].max_x - Machine->visible_area[0].min_x );
 	x /= ( gunxmax - gunxmin );
-	return Machine->visible_area.min_x + x;
+	return Machine->visible_area[0].min_x + x;
 }
 
 static int guny( int port )
@@ -1356,9 +1356,9 @@ static int guny( int port )
 	{
 		y = y - gunymin;
 	}
-	y *= ( Machine->visible_area.max_y - Machine->visible_area.min_y );
+	y *= ( Machine->visible_area[0].max_y - Machine->visible_area[0].min_y );
 	y /= ( gunymax - gunymin );
-	return Machine->visible_area.min_y + y;
+	return Machine->visible_area[0].min_y + y;
 }
 
 static void s12_draw_crosshair( mame_bitmap *bitmap, const char *xtag, const char *ytag, const rectangle *cliprect, int player )

@@ -117,8 +117,8 @@ VIDEO_START( cska )
 	cpk_palette  = auto_malloc(0x800 * sizeof(unsigned char));
 	cpk_palette2 = auto_malloc(0x800 * sizeof(unsigned char));
 
-	tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
-	tmpbitmap2 = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
+	tmpbitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight);
+	tmpbitmap2 = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight);
 
 	if (!tmpbitmap || !tmpbitmap2)
 	{
@@ -258,7 +258,7 @@ VIDEO_UPDATE( cska )
 						0,TRANSPARENCY_NONE,0);
 			}
 		}
-		copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+		copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 	}
 
 	for (offs = CPK_VIDEO_SIZE-1; offs >= 0; offs--)
@@ -285,5 +285,5 @@ VIDEO_UPDATE( cska )
 		}
 	}
 
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area, (abilityflag) ? TRANSPARENCY_COLOR : TRANSPARENCY_NONE, 0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area[0], (abilityflag) ? TRANSPARENCY_COLOR : TRANSPARENCY_NONE, 0);
 }

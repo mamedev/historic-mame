@@ -291,7 +291,7 @@ static void draw_stars( mame_bitmap *bitmap, const rectangle *cliprect )
 
 					if (flip_screen) x += 64;
 
-					if (y >= Machine->visible_area.min_y && y <= Machine->visible_area.max_y)
+					if (y >= Machine->visible_area[0].min_y && y <= Machine->visible_area[0].max_y)
 					{
 						if (read_pixel(bitmap, x, y) == bpen)
    							plot_pixel(bitmap, x, y, STARS_COLOR_BASE + star_seed_tab[star_cntr].col );

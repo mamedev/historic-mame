@@ -84,7 +84,7 @@ WRITE8_HANDLER( gridlee_cocktail_flip_w )
 {
 	if (gridlee_cocktail_flip != (data & 1))
 	{
-		force_partial_update(cpu_getscanline() - 1);
+		force_partial_update(0, cpu_getscanline() - 1);
 		gridlee_cocktail_flip = data & 1;
 	}
 }
@@ -119,7 +119,7 @@ WRITE8_HANDLER( gridlee_palette_select_w )
 	/* update the scanline palette */
 	if (palettebank_vis != (data & 0x3f))
 	{
-		force_partial_update(cpu_getscanline() - 1);
+		force_partial_update(0, cpu_getscanline() - 1);
 		palettebank_vis = data & 0x3f;
 	}
 }

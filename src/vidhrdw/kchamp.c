@@ -105,7 +105,7 @@ static void kchamp_draw_sprites( mame_bitmap *bitmap )
 		}
 
         drawgfx(bitmap, Machine->gfx[bank], code, color, flipx, flipy, sx, sy,
-            &Machine->visible_area, TRANSPARENCY_PEN, 0);
+            &Machine->visible_area[0], TRANSPARENCY_PEN, 0);
 	}
 }
 
@@ -133,7 +133,7 @@ static void kchampvs_draw_sprites( mame_bitmap *bitmap )
 		}
 
         drawgfx(bitmap, Machine->gfx[bank], code, color, flipx, flipy, sx, sy,
-            &Machine->visible_area, TRANSPARENCY_PEN, 0);
+            &Machine->visible_area[0], TRANSPARENCY_PEN, 0);
 	}
 }
 

@@ -340,7 +340,7 @@ void cyberbal_scanline_update(int scanline)
 		{
 			if (((base[3] >> 1) & 7) != playfield_palette_bank[i])
 			{
-				force_partial_update(scanline - 1);
+				force_partial_update(0, scanline - 1);
 				playfield_palette_bank[i] = (base[3] >> 1) & 7;
 				tilemap_set_palette_offset(i ? atarigen_playfield2_tilemap : atarigen_playfield_tilemap, playfield_palette_bank[i] << 8);
 			}
@@ -350,7 +350,7 @@ void cyberbal_scanline_update(int scanline)
 			int newscroll = 2 * (((base[4] >> 7) + 4) & 0x1ff);
 			if (newscroll != playfield_xscroll[i])
 			{
-				force_partial_update(scanline - 1);
+				force_partial_update(0, scanline - 1);
 				tilemap_set_scrollx(i ? atarigen_playfield2_tilemap : atarigen_playfield_tilemap, 0, i ? (-SCREEN2_SCROLL_OFFSET + newscroll) : newscroll);
 				playfield_xscroll[i] = newscroll;
 			}
@@ -361,7 +361,7 @@ void cyberbal_scanline_update(int scanline)
 			int newscroll = ((base[5] >> 7) - (scanline)) & 0x1ff;
 			if (newscroll != playfield_yscroll[i])
 			{
-				force_partial_update(scanline - 1);
+				force_partial_update(0, scanline - 1);
 				tilemap_set_scrolly(i ? atarigen_playfield2_tilemap : atarigen_playfield_tilemap, 0, newscroll);
 				playfield_yscroll[i] = newscroll;
 			}
@@ -370,7 +370,7 @@ void cyberbal_scanline_update(int scanline)
 		{
 			if (current_slip[i] != base[7])
 			{
-				force_partial_update(scanline - 1);
+				force_partial_update(0, scanline - 1);
 				current_slip[i] = base[7];
 			}
 		}
@@ -398,13 +398,13 @@ static void update_one_screen(int screen, mame_bitmap *bitmap, rectangle *clipre
 	mooffset = screen ? SCREEN2_SCROLL_OFFSET : 0;
 	cliprect->min_x -= mooffset;
 	cliprect->max_x -= mooffset;
-	temp = Machine->visible_area.max_x;
+	temp = Machine->visible_area[0].max_x;
 	if (temp > SCREEN_WIDTH)
-		Machine->visible_area.max_x /= 2;
+		Machine->visible_area[0].max_x /= 2;
 	mobitmap = atarimo_render(screen, cliprect, &rectlist);
 	cliprect->min_x += mooffset;
 	cliprect->max_x += mooffset;
-	Machine->visible_area.max_x = temp;
+	Machine->visible_area[0].max_x = temp;
 
 	/* draw and merge the MO */
 	for (r = 0; r < rectlist.numrects; r++, rectlist.rect++)

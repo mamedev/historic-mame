@@ -31,10 +31,10 @@ VIDEO_START( mnight )
 {
 	bg_dirtybuffer = auto_malloc(1024);
 
-	if ((bitmap_bg = auto_bitmap_alloc (Machine->drv->screen_width*2,Machine->drv->screen_height*2)) == 0)
+	if ((bitmap_bg = auto_bitmap_alloc (Machine->drv->screen[0].maxwidth*2,Machine->drv->screen[0].maxheight*2)) == 0)
 		return 1;
 
-	if ((bitmap_sp = auto_bitmap_alloc (Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((bitmap_sp = auto_bitmap_alloc (Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight)) == 0)
 		return 1;
 
 	mnight_mark_background_dirty() ;
@@ -78,7 +78,7 @@ WRITE8_HANDLER( mnight_sprite_overdraw_w )
 	if (sp_overdraw != (data&1))
 	{
 		mnight_spoverdraw_ram[offset] = data;
-		fillbitmap(bitmap_sp,15,&Machine->visible_area);
+		fillbitmap(bitmap_sp,15,&Machine->visible_area[0]);
 		sp_overdraw = data & 1;
 	}
 }
@@ -110,7 +110,7 @@ void mnight_draw_foreground(mame_bitmap *bitmap)
 					palette,
 					flipx,flipy,
 					sx,sy,
-					&Machine->visible_area,TRANSPARENCY_PEN, 15);
+					&Machine->visible_area[0],TRANSPARENCY_PEN, 15);
 		}
 
 	}
@@ -177,7 +177,7 @@ void mnight_draw_sprites(mame_bitmap *bitmap)
 					palette,
 					flipx,flipy,
 					sx,sy,
-					&Machine->visible_area,
+					&Machine->visible_area[0],
 					TRANSPARENCY_PEN, 15);
 
 			/* kludge to clear shots */
@@ -208,14 +208,14 @@ VIDEO_UPDATE( mnight )
 
 	if (sp_overdraw)	/* overdraw sprite mode */
 	{
-		copyscrollbitmap(bitmap,bitmap_bg,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,bitmap_bg,1,&scrollx,1,&scrolly,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 		mnight_draw_sprites(bitmap_sp);
 		mnight_draw_foreground(bitmap_sp);
-		copybitmap(bitmap,bitmap_sp,0,0,0,0,&Machine->visible_area,TRANSPARENCY_PEN, 15);
+		copybitmap(bitmap,bitmap_sp,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_PEN, 15);
 	}
 	else			/* normal sprite mode */
 	{
-		copyscrollbitmap(bitmap,bitmap_bg,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,bitmap_bg,1,&scrollx,1,&scrolly,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 		mnight_draw_sprites(bitmap);
 		mnight_draw_foreground(bitmap);
 	}

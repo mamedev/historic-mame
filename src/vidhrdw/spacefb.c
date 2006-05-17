@@ -127,7 +127,7 @@ VIDEO_UPDATE( spacefb )
 		background_colour = 35;			/* WHITE */
 	}
 
-	fillbitmap(bitmap,Machine->pens[background_colour],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[background_colour],&Machine->visible_area[0]);
 
 	/* Draw the sprite/chars */
 	spriteno = (video_control & 0x20) ? 0x80 : 0x00;
@@ -167,7 +167,7 @@ VIDEO_UPDATE( spacefb )
 						col,
 						flip_screen,flip_screen,
 						sx,sy,
-						&Machine->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 
 			}
 			else if (cnt & 0x40)
@@ -185,7 +185,7 @@ VIDEO_UPDATE( spacefb )
 						col,
 						flip_screen,flip_screen,
 						sx,sy,
-						&Machine->visible_area,TRANSPARENCY_NONE,0);
+						&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 			}
 		}
 	}
@@ -200,7 +200,7 @@ VIDEO_UPDATE( spacefb )
 					1,
 					0,0,
 					32,128+(7-b)*8,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 
 		}
 		for (b=0;b<8;b++)
@@ -211,7 +211,7 @@ VIDEO_UPDATE( spacefb )
 					1,
 					0,0,
 					32+8,128+(7-b)*8,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 
 		}
 	}

@@ -341,7 +341,7 @@ static void draw_sprites(mame_bitmap *bitmap, int colormask, int prioritymask, i
 						code + i * incr,col,
 						flipx,flipy,
 						sx,sy + 16 * i,
-						&Machine->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 
 				i--;
 			} while (i >= 0);

@@ -5,6 +5,7 @@
 #include "sound/custom.h"
 #include "streams.h"
 #include "includes/n64.h"
+#include "sound/dmadac.h"
 
 UINT32 *rdram;
 UINT32 *rsp_imem;
@@ -475,7 +476,7 @@ WRITE32_HANDLER( n64_vi_reg_w )
 		case 0x00/4:		// VI_CONTROL_REG
 			if ((vi_control & 0x40) != (data & 0x40))
 			{
-				set_visible_area(0, vi_width-1, 0, (data & 0x40) ? 479 : 239);
+				set_visible_area(0, 0, vi_width-1, 0, (data & 0x40) ? 479 : 239);
 			}
 			vi_control = data;
 			break;
@@ -487,7 +488,7 @@ WRITE32_HANDLER( n64_vi_reg_w )
 		case 0x08/4:		// VI_WIDTH_REG
 			if (vi_width != data && data > 0)
 			{
-				set_visible_area(0, data-1, 0, (vi_control & 0x40) ? 479 : 239);
+				set_visible_area(0, 0, data-1, 0, (vi_control & 0x40) ? 479 : 239);
 			}
 			vi_width = data;
 			break;
@@ -551,10 +552,9 @@ static int ai_dacrate;
 static int ai_bitrate;
 static UINT32 ai_status = 0;
 
-static int audio_dma_active = 0;
 static void *audio_timer;
 
-#define SOUNDBUFFER_LENGTH		0x80000
+#define SOUNDBUFFER_LENGTH	0x20000
 #define AUDIO_DMA_DEPTH		2
 
 typedef struct
@@ -568,19 +568,21 @@ static int audio_fifo_wpos = 0;
 static int audio_fifo_rpos = 0;
 static int audio_fifo_num = 0;
 
-static INT16 *soundbuffer[2];
-static INT64 sb_dma_ptr = 0;
-static INT64 sb_play_ptr = 0;
-
 static void audio_fifo_push(UINT32 address, UINT32 length)
 {
+	AUDIO_DMA *current;
+	double time, frequency;
+
 	if (audio_fifo_num == AUDIO_DMA_DEPTH)
 	{
 		printf("audio_fifo_push: tried to push to full DMA FIFO!!!\n");
 	}
 
+//  printf("fifo_push: adr %08x len %08x\n", address, length);
+
 	audio_fifo[audio_fifo_wpos].address = address;
 	audio_fifo[audio_fifo_wpos].length = length;
+	current = &audio_fifo[audio_fifo_wpos];
 
 	audio_fifo_wpos++;
 	audio_fifo_num++;
@@ -593,8 +595,12 @@ static void audio_fifo_push(UINT32 address, UINT32 length)
 	if (audio_fifo_num >= AUDIO_DMA_DEPTH)
 	{
 		ai_status |= 0x80000001;	// FIFO full
-		signal_rcp_interrupt(AI_INTERRUPT);
 	}
+
+	// adjust the timer
+	frequency = (double)DACRATE_NTSC / (double)(ai_dacrate+1);
+	time = (double)(current->length / 4) / frequency;
+	timer_adjust(audio_timer, TIME_IN_SEC(time), 0, 0);
 }
 
 static void audio_fifo_pop(void)
@@ -635,33 +641,13 @@ static AUDIO_DMA *audio_fifo_get_top(void)
 static void start_audio_dma(void)
 {
 	UINT16 *ram = (UINT16*)rdram;
-	int i;
-	double time, frequency;
 	AUDIO_DMA *current = audio_fifo_get_top();
 
-	frequency = (double)48681812 / (double)(ai_dacrate+1);
-	time = (double)(current->length / 4) / frequency;
+	ram = &ram[current->address/2];
 
-	timer_adjust(audio_timer, TIME_IN_SEC(time), 0, 0);
+//  printf("DACDMA: %x for %x bytes\n", current->address, current->length);
 
-	//sb_play_ptr += current->length;
-
-	for (i=0; i < current->length; i+=4)
-	{
-		//INT16 l = program_read_word_32be(current->address + i + 0);
-		//INT16 r = program_read_word_32be(current->address + i + 2);
-		INT16 l = ram[(current->address + i + 0) / 2];
-		INT16 r = ram[(current->address + i + 2) / 2];
-
-		soundbuffer[0][sb_dma_ptr] = l;
-		soundbuffer[1][sb_dma_ptr] = r;
-
-		sb_dma_ptr++;
-		if (sb_dma_ptr >= SOUNDBUFFER_LENGTH)
-		{
-			sb_dma_ptr = 0;
-		}
-	}
+	dmadac_transfer(0, 2, 2, 2, current->length/4, ram);
 }
 
 static void audio_timer_callback(int param)
@@ -672,10 +658,7 @@ static void audio_timer_callback(int param)
 	if (audio_fifo_get_top() != NULL)
 	{
 		start_audio_dma();
-	}
-	else
-	{
-		audio_dma_active = 0;
+		signal_rcp_interrupt(AI_INTERRUPT);
 	}
 }
 
@@ -701,6 +684,8 @@ READ32_HANDLER( n64_ai_reg_r )
 
 WRITE32_HANDLER( n64_ai_reg_w )
 {
+//  UINT16 *ram = (UINT16*)rdram;
+
 	switch (offset)
 	{
 		case 0x00/4:		// AI_DRAM_ADDR_REG
@@ -711,14 +696,7 @@ WRITE32_HANDLER( n64_ai_reg_w )
 		case 0x04/4:		// AI_LEN_REG
 //          printf("ai_len = %08X at %08X\n", data, activecpu_get_pc());
 			ai_len = data & 0x3ffff;		// Hardware v2.0 has 18 bits, v1.0 has 15 bits
-			//audio_dma();
 			audio_fifo_push(ai_dram_addr, ai_len);
-
-			// if no DMA transfer is active, start right away
-			if (!audio_dma_active)
-			{
-				start_audio_dma();
-			}
 			break;
 
 		case 0x08/4:		// AI_CONTROL_REG
@@ -731,8 +709,9 @@ WRITE32_HANDLER( n64_ai_reg_w )
 			break;
 
 		case 0x10/4:		// AI_DACRATE_REG
-//          printf("ai_dacrate = %08X\n", data);
 			ai_dacrate = data & 0x3fff;
+			dmadac_set_frequency(0, 2, (double)DACRATE_NTSC / (double)(ai_dacrate+1));
+			dmadac_enable(0, 2, 1);
 			break;
 
 		case 0x14/4:		// AI_BITRATE_REG
@@ -1195,63 +1174,6 @@ WRITE32_HANDLER( n64_pif_ram_w )
 	signal_rcp_interrupt(SI_INTERRUPT);
 }
 
-static int audio_playing = 0;
-
-static void n64_sh_update( void *param, stream_sample_t **inputs, stream_sample_t **outputs, int length )
-{
-	INT64 play_step;
-	double frequency;
-	int i;
-
-	frequency = (double)48681812 / (double)(ai_dacrate+1);
-	play_step = (UINT32)((frequency / (double)Machine->sample_rate) * 65536.0);
-
-	//printf("dma_ptr = %08X, play_ptr = %08X%08X\n", (UINT32)sb_dma_ptr, (UINT32)(sb_play_ptr >> 32),(UINT32)sb_play_ptr);
-	//printf("frequency = %f, step = %08X\n", frequency, (UINT32)play_step);
-
-	if (!audio_playing)
-	{
-		if (sb_dma_ptr >= 0x1000)
-		{
-			audio_playing = 1;
-		}
-		else
-		{
-			return;
-		}
-	}
-
-	for (i = 0; i < length; i++)
-	{
-		short mix[2];
-		mix[0] = soundbuffer[0][sb_play_ptr >> 16];
-		mix[1] = soundbuffer[1][sb_play_ptr >> 16];
-
-		sb_play_ptr += play_step;
-
-		if ((sb_play_ptr >> 16) >= SOUNDBUFFER_LENGTH)
-		{
-			sb_play_ptr = 0;
-		}
-
-		// Update the buffers
-		outputs[0][i] = (stream_sample_t)mix[0];
-		outputs[1][i] = (stream_sample_t)mix[1];
-	}
-}
-
-static void *n64_sh_start(int clock, const struct CustomSound_interface *config)
-{
-	stream_create( 0, 2, 44100, NULL, n64_sh_update );
-
-	return auto_malloc(1);
-}
-
-struct CustomSound_interface n64_sound_interface =
-{
-	n64_sh_start
-};
-
 static UINT16 crc_seed = 0x3f;
 
 void n64_machine_reset(void)
@@ -1270,8 +1192,6 @@ void n64_machine_reset(void)
 	cpunum_set_info_ptr(0, CPUINFO_PTR_MIPS3_FASTRAM_BASE, rdram);
 	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_FASTRAM_READONLY, 0);
 
-	soundbuffer[0] = auto_malloc(SOUNDBUFFER_LENGTH * sizeof(INT16));
-	soundbuffer[1] = auto_malloc(SOUNDBUFFER_LENGTH * sizeof(INT16));
 	audio_timer = timer_alloc(audio_timer_callback);
 	timer_adjust(audio_timer, TIME_NEVER, 0, 0);
 

@@ -43,8 +43,12 @@ static const game_driver *clone_lru[CLONE_LRU_SIZE];
 
 void expand_machine_driver(void (*constructor)(machine_config *), machine_config *output)
 {
-	/* keeping this function allows us to pre-init the driver before constructing it */
+	/* initialize the tag on the first screen */
 	memset(output, 0, sizeof(*output));
+	output->screen[0].tag = "main";
+	output->screen[0].aspect = 4.0f / 3.0f;
+
+	/* keeping this function allows us to pre-init the driver before constructing it */
 	(*constructor)(output);
 }
 
@@ -235,6 +239,67 @@ void driver_remove_sound(machine_config *machine, const char *tag)
 		}
 
 	logerror("Can't find sound '%s'!\n", tag);
+}
+
+
+/*-------------------------------------------------
+    driver_add_screen - add a screen during
+    machine driver expansion
+-------------------------------------------------*/
+
+screen_config *driver_add_screen(machine_config *machine, const char *tag, int palbase)
+{
+	int screennum;
+
+	for (screennum = 0; screennum < MAX_SCREENS; screennum++)
+		if (machine->screen[screennum].tag == NULL)
+		{
+			machine->screen[screennum].tag = tag;
+			machine->screen[screennum].palette_base = palbase;
+			return &machine->screen[screennum];
+		}
+
+	logerror("Out of screens!\n");
+	return NULL;
+}
+
+
+/*-------------------------------------------------
+    driver_find_screen - find a tagged screen
+    during machine driver expansion
+-------------------------------------------------*/
+
+screen_config *driver_find_screen(machine_config *machine, const char *tag)
+{
+	int screennum;
+
+	for (screennum = 0; screennum < MAX_SCREENS; screennum++)
+		if (machine->screen[screennum].tag && strcmp(machine->screen[screennum].tag, tag) == 0)
+			return &machine->screen[screennum];
+
+	logerror("Can't find screen '%s'!\n", tag);
+	return NULL;
+}
+
+
+/*-------------------------------------------------
+    driver_remove_screen - remove a tagged screen
+    during machine driver expansion
+-------------------------------------------------*/
+
+void driver_remove_screen(machine_config *machine, const char *tag)
+{
+	int screennum;
+
+	for (screennum = 0; screennum < MAX_SCREENS; screennum++)
+		if (machine->screen[screennum].tag && strcmp(machine->screen[screennum].tag, tag) == 0)
+		{
+			memmove(&machine->screen[screennum], &machine->screen[screennum + 1], sizeof(machine->screen[0]) * (MAX_SCREENS - screennum - 1));
+			memset(&machine->screen[MAX_SCREENS - 1], 0, sizeof(machine->screen[0]));
+			return;
+		}
+
+	logerror("Can't find screen '%s'!\n", tag);
 }
 
 

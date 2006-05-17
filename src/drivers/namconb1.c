@@ -295,14 +295,14 @@ GetCPURegister(int which)
 static void namconb1_TriggerPOSIRQ( int scanline )
 {
 	int irqlevel = GetCPURegister(0x04)>>4;
-	force_partial_update(scanline);
+	force_partial_update(0, scanline);
 	cpunum_set_input_line(0, irqlevel, PULSE_LINE);
 }
 
 static void namconb2_TriggerPOSIRQ( int scanline )
 {
 	int irqlevel = GetCPURegister(0x02);
-	force_partial_update(scanline);
+	force_partial_update(0, scanline);
 	cpunum_set_input_line(0, irqlevel, PULSE_LINE);
 } /* namconb2_TriggerPOSIRQ */
 

@@ -178,10 +178,10 @@ VIDEO_EOF( xmen6p )
 
 	xmen_current_frame ^=0x8000;
 
-	cliprect.min_x = Machine->visible_area.min_x;
-	cliprect.max_x = Machine->visible_area.max_x;
-	cliprect.min_y = Machine->visible_area.min_y;
-	cliprect.max_y = Machine->visible_area.max_y;
+	cliprect.min_x = Machine->visible_area[0].min_x;
+	cliprect.max_x = Machine->visible_area[0].max_x;
+	cliprect.min_y = Machine->visible_area[0].min_y;
+	cliprect.max_y = Machine->visible_area[0].max_y;
 
 	if (xmen_current_frame&0x8000)
 	{

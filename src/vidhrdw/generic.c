@@ -259,7 +259,7 @@ VIDEO_START( generic )
 	memset(dirtybuffer, 1, videoram_size);
 
 	/* allocate the temporary bitmap */
-	tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
+	tmpbitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
 	if (tmpbitmap == NULL)
 		return 1;
 
@@ -277,7 +277,7 @@ VIDEO_START( generic )
 VIDEO_START( generic_bitmapped )
 {
 	/* allocate the temporary bitmap */
-	tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
+	tmpbitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
 	if (tmpbitmap == NULL)
 		return 1;
 
@@ -294,7 +294,7 @@ VIDEO_START( generic_bitmapped )
 
 VIDEO_UPDATE( generic_bitmapped )
 {
-	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area[0], TRANSPARENCY_NONE, 0);
 }
 
 
@@ -516,29 +516,29 @@ static void updateflip(void)
 
 	tilemap_set_flip(ALL_TILEMAPS,(TILEMAP_FLIPX & flip_screen_x) | (TILEMAP_FLIPY & flip_screen_y));
 
-	min_x = Machine->drv->default_visible_area.min_x;
-	max_x = Machine->drv->default_visible_area.max_x;
-	min_y = Machine->drv->default_visible_area.min_y;
-	max_y = Machine->drv->default_visible_area.max_y;
+	min_x = Machine->drv->screen[0].default_visible_area.min_x;
+	max_x = Machine->drv->screen[0].default_visible_area.max_x;
+	min_y = Machine->drv->screen[0].default_visible_area.min_y;
+	max_y = Machine->drv->screen[0].default_visible_area.max_y;
 
 	if (flip_screen_x)
 	{
 		int temp;
 
-		temp = Machine->drv->screen_width - min_x - 1;
-		min_x = Machine->drv->screen_width - max_x - 1;
+		temp = Machine->drv->screen[0].maxwidth - min_x - 1;
+		min_x = Machine->drv->screen[0].maxwidth - max_x - 1;
 		max_x = temp;
 	}
 	if (flip_screen_y)
 	{
 		int temp;
 
-		temp = Machine->drv->screen_height - min_y - 1;
-		min_y = Machine->drv->screen_height - max_y - 1;
+		temp = Machine->drv->screen[0].maxheight - min_y - 1;
+		min_y = Machine->drv->screen[0].maxheight - max_y - 1;
 		max_y = temp;
 	}
 
-	set_visible_area(min_x,max_x,min_y,max_y);
+	set_visible_area(0, min_x,max_x,min_y,max_y);
 }
 
 

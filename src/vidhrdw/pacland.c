@@ -168,8 +168,8 @@ static void get_fg_tile_info(int tile_index)
 
 VIDEO_START( pacland )
 {
-	fg_bitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
-	sprite_bitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
+	fg_bitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight);
+	sprite_bitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight);
 
 	bg_tilemap = tilemap_create(get_bg_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,           8,8,64,32);
 	fg_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT_COLOR,8,8,64,32);

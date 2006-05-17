@@ -16,63 +16,102 @@
 
 
 //============================================================
+//  CONSTANTS
+//============================================================
+
+#define PRINT_COMMAND_LINE	0
+
+#define	VS6		0x00060000
+#define VS7		0x00070000
+#define VS2005	0x00080000
+
+
+
+//============================================================
+//  TYPE DEFINITIONS
+//============================================================
+
+typedef struct _translation_info translation_info;
+struct _translation_info
+{
+	DWORD vc_version;
+	const char *gcc_option;
+	const char *vc_option;
+};
+
+
+
+//============================================================
 //  TRANSLATION TABLES
 //============================================================
 
-static const char *gcc_translate[] =
+static const translation_info gcc_translate[] =
 {
-	"-D*",				"/D*",
-	"-U*",				"/U*",
-	"-I*",				"/I*",
-	"-o*",				"~*",
-	"-include*",		"/FI*",
-	"-c",				"/c~/Fo",
-	"-E",				"/E",
-	"-S",				"/FA~/Fa",
-	"-O0",				"/Od",
-	"-O3",				"/O2",
-	"-g",				"/Zi",
-	"-fno-strict-aliasing",	"",	// was: /Oa, but has been deprecated in VS2005
-	"-Werror",			"/WX",
-	"-Wall",			"/Wall /W3 /wd4018 /wd4146 /wd4242 /wd4244 /wd4305 /wd4619 /wd4702 /wd4706 /wd4710 /wd4711 /wd4738 /wd4826",
-	"-Wno-unused",		"/wd4100 /wd4101 /wd4102",
-	"-W*",				"",
-	"-march=*",			"",		// was: /G5, /G6, or /G7, but have been deprecated in VS2005
-	"-msse2",			"/arch:SSE2",
-	"-mwindows",		"",
-	"-mno-cygwin",		"",
-	"-std=gnu89",		"",
-	NULL
+	{ 0,		"-D*",					"/D*" },
+	{ 0,		"-U*",					"/U*" },
+	{ 0,		"-I*",					"/I*" },
+	{ 0,		"-o*",					"~*" },
+	{ 0,		"-include*",			"/FI*" },
+	{ 0,		"-c",					"/c~/Fo" },
+	{ 0,		"-E",					"/E" },
+	{ 0,		"-S",					"/FA~/Fa" },
+	{ VS7,		"-O0",					"/Od /GS" },
+	{ 0,		"-O0",					"/Od" },
+	{ 0,		"-O3",					"/O2" },
+	{ 0,		"-g",					"/Zi" },
+	{ VS2005,	"-fno-strict-aliasing",	"" },		// deprecated in VS2005
+	{ 0,		"-fno-strict-aliasing",	"/Oa" },
+	{ 0,		"-Werror",				"/WX" },
+	{ VS2005,	"-Wall",				"/Wall /W3 /wd4018 /wd4146 /wd4242 /wd4244 /wd4305 /wd4619 /wd4702 /wd4706 /wd4710 /wd4711 /wd4738 /wd4826" },
+	{ VS7,		"-Wall",				"/Wall /W3 /wd4018 /wd4146 /wd4242 /wd4244 /wd4305 /wd4550 /wd4619 /wd4702 /wd4706 /wd4710 /wd4711 /wd4826" },
+	{ 0,		"-Wall",				"/W0" },
+	{ VS7,		"-Wno-unused",			"/wd4100 /wd4101 /wd4102" },
+	{ 0,		"-W*",					"" },
+	{ VS2005,	"-march=*",				"" },		// deprecated in VS2005
+	{ 0,		"-march=pentium",		"/G5" },
+	{ 0,		"-march=athlon",		"/G7" },
+	{ 0,		"-march=pentiumpro",	"/G6" },
+	{ 0,		"-march=pentium4",		"/G7" },
+	{ 0,		"-march=athlon64",		"/G7" },
+	{ 0,		"-march=pentium3",		"/G6" },
+	{ 0,		"-msse2",				"/arch:SSE2" },
+	{ 0,		"-mwindows",			"" },
+	{ 0,		"-mno-cygwin",			"" },
+	{ 0,		"-std=gnu89",			"" },
+	{ 0 }
 };
 
-static const char *ld_translate[] =
+static const translation_info ld_translate[] =
 {
-	"-l*",				"*.lib",
-	"-o*",				"/out:*",
-	"-Wl,-Map,*",		"/map:*",
- 	"-Wl,--allow-multiple-definition", "/force:multiple",
-	"-mno-cygwin",		"",
-	"-s",				"",
-	"-WO",				"",
-	NULL
+	{ 0,		"-l*",				"*.lib" },
+	{ 0,		"-o*",				"/out:*" },
+	{ 0,		"-Wl,-Map,*",		"/map:*" },
+ 	{ 0,		"-Wl,--allow-multiple-definition", "/force:multiple" },
+	{ 0,		"-mno-cygwin",		"" },
+	{ 0,		"-s",				"" },
+	{ 0,		"-WO",				"" },
+	{ 0,		"-mconsole",		"" },
+	{ 0,		"-mwindows",		"" },
+	{ 0,		"-shared",			"/dll" },
+	{ 0 }
 };
 
-static const char *ar_translate[] =
+static const translation_info ar_translate[] =
 {
-	"-cr",				"",
-	NULL
+	{ 0,		"-cr",				"" },
+	{ 0 }
 };
 
 
-static const char *windres_translate[] =
+static const translation_info windres_translate[] =
 {
-	"-D*",				"/D*",
-	"-U*",				"/U*",
-	"--include-dir*",	"/I*",
-	"-o*",				"/fo*",
-	"-O*",				"",
-	"-i*",				"*",
-	NULL
+	{ 0,		"-D*",				"/D*" },
+	{ 0,		"-U*",				"/U*" },
+	{ 0,		"--include-dir*",	"/I*" },
+	{ 0,		"-o*",				"/fo*" },
+	{ 0,		"-O*",				"" },
+	{ 0,		"-i*",				"*" },
+	{ 0 }
 };
 
 
@@ -86,16 +125,74 @@ static char command_line[32768];
 
 
 //============================================================
+//  get_exe_version
+//============================================================
+
+static DWORD get_exe_version(const char *executable)
+{
+	char path[MAX_PATH];
+	void *version_info;
+	DWORD version_info_size, dummy;
+	void *sub_buffer;
+	UINT sub_buffer_size;
+	VS_FIXEDFILEINFO *info;
+	DWORD product_version;
+	char sub_block[2] = { '\\', '\0' };
+
+	if (!SearchPath(NULL, executable, NULL, sizeof(path) / sizeof(path[0]), path, NULL))
+	{
+		fprintf(stderr, "Cannot find %s\n", executable);
+		exit(-100);
+	}
+
+	version_info_size = GetFileVersionInfoSize(path, &dummy);
+	if (version_info_size == 0)
+	{
+		fprintf(stderr, "GetFileVersionInfoSize() failed\n");
+		exit(-100);
+	}
+
+	version_info = GlobalAlloc(GMEM_FIXED, version_info_size);
+	if (!version_info)
+	{
+		fprintf(stderr, "Out of memory\n");
+		exit(-100);
+	}
+
+	if (!GetFileVersionInfo(path, 0, version_info_size, version_info))
+	{
+		fprintf(stderr, "GetFileVersionInfo() failed\n");
+		exit(-100);
+	}
+
+	if (!VerQueryValue(version_info, sub_block, &sub_buffer, &sub_buffer_size))
+	{
+		fprintf(stderr, "VerQueryValue() failed\n");
+		exit(-100);
+	}
+
+	info = (VS_FIXEDFILEINFO *) sub_buffer;
+	product_version = info->dwProductVersionMS;
+
+	GlobalFree(version_info);
+	return product_version;
+}
+
+
+
+//============================================================
 //  build_command_line
 //============================================================
 
 static void build_command_line(int argc, char *argv[])
 {
-	const char **transtable;
+	const translation_info *transtable;
+	const char *executable;
 	const char *outstring = "";
 	char *dst = command_line;
 	int output_is_first = 0;
 	int param;
+	DWORD exe_version;
 
 	// if no parameters, show usage
 	if (argc < 2)
@@ -108,21 +205,25 @@ static void build_command_line(int argc, char *argv[])
 	if (!strcmp(argv[1], "gcc"))
 	{
 		transtable = gcc_translate;
+		executable = "cl.exe";
 		dst += sprintf(dst, "cl /nologo ");
 	}
 	else if (!strcmp(argv[1], "windres"))
 	{
 		transtable = windres_translate;
+		executable = "rc.exe";
 		dst += sprintf(dst, "rc ");
 	}
 	else if (!strcmp(argv[1], "ld"))
 	{
 		transtable = ld_translate;
-		dst += sprintf(dst, "link /nologo ");
+		executable = "link.exe";
+		dst += sprintf(dst, "link /nologo /debug ");
 	}
 	else if (!strcmp(argv[1], "ar"))
 	{
 		transtable = ar_translate;
+		executable = "lib.exe";
 		dst += sprintf(dst, "lib /nologo ");
 		outstring = "/out:";
 		output_is_first = 1;
@@ -132,6 +233,13 @@ static void build_command_line(int argc, char *argv[])
 		fprintf(stderr, "Error: unknown translation type '%s'\n", argv[1]);
 		exit(-100);
 	}
+
+	// identify the version number of the EXE
+	exe_version = get_exe_version(executable);
+
+	// special case
+	if (!strcmp(executable, "cl.exe") && (exe_version >= 0x00070000))
+		dst += sprintf(dst, "/wd4025 ");
 
 	// iterate over parameters
 	for (param = 2; param < argc; param++)
@@ -143,11 +251,15 @@ static void build_command_line(int argc, char *argv[])
 		// find a match
 		if (src[0] == '-')
 		{
-			for (i = 0; transtable[i]; i += 2)
+			for (i = 0; transtable[i].gcc_option; i++)
 			{
-				const char *compare = transtable[i];
+				const char *compare = transtable[i].gcc_option;
 				const char *replace;
 				int j;
+
+				// check version number
+				if (exe_version < transtable[i].vc_version)
+					continue;
 
 				// find a match
 				for (j = 0; j < srclen; j++)
@@ -164,7 +276,7 @@ static void build_command_line(int argc, char *argv[])
 						src += j;
 
 					// copy the replacement up to the asterisk
-					replace = transtable[i+1];
+					replace = transtable[i].vc_option;
 					while (*replace && *replace != '*')
 					{
 						if (*replace == '~')
@@ -206,7 +318,7 @@ static void build_command_line(int argc, char *argv[])
 				else if (compare[j] == 0 && j == srclen)
 				{
 					// copy the replacement up to the tilde
-					replace = transtable[i+1];
+					replace = transtable[i].vc_option;
 					while (*replace && *replace != '~')
 						*dst++ = *replace++;
 
@@ -223,7 +335,7 @@ static void build_command_line(int argc, char *argv[])
 			}
 
 			// warn if we didn't get a match
-			if (!transtable[i])
+			if (!transtable[i].gcc_option)
 				fprintf(stderr, "Unable to match parameter '%s'\n", src);
 		}
 
@@ -271,7 +383,8 @@ int main(int argc, char *argv[])
 	// build the new command line
 	build_command_line(argc, argv);
 
-//  printf("%s\n", command_line);
+	if (PRINT_COMMAND_LINE)
+		printf("%s\n", command_line);
 
 	// create the process information structures
 	memset(&si, 0, sizeof(si));

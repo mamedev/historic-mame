@@ -160,14 +160,14 @@ static void gridiron_drawled(mame_bitmap *bitmap,UINT8 led,int player)
 					0x0a,
 					0,0,
 					0,232,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 		else
 			drawgfx(bitmap,Machine->gfx[0],
 					0xc0 + i,
 					0x03,
 					1,1,
 					0,16,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 	}
 else logerror("unknown LED %02x for player %d\n",led,player);
 }
@@ -200,17 +200,17 @@ static void tehkanwc_draw_sprites( mame_bitmap *bitmap )
 
 		drawgfx(bitmap, Machine->gfx[1],
 			code, color, flipx, flipy, sx, sy,
-			&Machine->visible_area, TRANSPARENCY_PEN, 0);
+			&Machine->visible_area[0], TRANSPARENCY_PEN, 0);
 	}
 }
 
 VIDEO_UPDATE( tehkanwc )
 {
 	tilemap_set_scrollx(bg_tilemap, 0, scroll_x[0] + 256 * scroll_x[1]);
-	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
-	tilemap_draw(bitmap, &Machine->visible_area, fg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->visible_area[0], fg_tilemap, 0, 0);
 	tehkanwc_draw_sprites(bitmap);
-	tilemap_draw(bitmap, &Machine->visible_area, fg_tilemap, 1, 0);
+	tilemap_draw(bitmap, &Machine->visible_area[0], fg_tilemap, 1, 0);
 	gridiron_drawled(bitmap, led0, 0);
 	gridiron_drawled(bitmap, led1, 1);
 }

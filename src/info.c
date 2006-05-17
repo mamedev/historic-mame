@@ -603,8 +603,8 @@ static void print_game_video(FILE* out, const game_driver* game)
 
 	int dx;
 	int dy;
-	int ax;
-	int ay;
+	float ax;
+	float ay;
 	int showxy;
 	int orientation;
 
@@ -624,26 +624,26 @@ static void print_game_video(FILE* out, const game_driver* game)
 
 	if (game->flags & ORIENTATION_SWAP_XY)
 	{
-		ax = driver.aspect_y;
-		ay = driver.aspect_x;
+		ax = 1.0f;
+		ay = driver.screen[0].aspect;
 		if (ax == 0 && ay == 0) {
 			ax = 3;
 			ay = 4;
 		}
-		dx = driver.default_visible_area.max_y - driver.default_visible_area.min_y + 1;
-		dy = driver.default_visible_area.max_x - driver.default_visible_area.min_x + 1;
+		dx = driver.screen[0].default_visible_area.max_y - driver.screen[0].default_visible_area.min_y + 1;
+		dy = driver.screen[0].default_visible_area.max_x - driver.screen[0].default_visible_area.min_x + 1;
 		orientation = 1;
 	}
 	else
 	{
-		ax = driver.aspect_x;
-		ay = driver.aspect_y;
+		ax = driver.screen[0].aspect;
+		ay = 1.0f;
 		if (ax == 0 && ay == 0) {
 			ax = 4;
 			ay = 3;
 		}
-		dx = driver.default_visible_area.max_x - driver.default_visible_area.min_x + 1;
-		dy = driver.default_visible_area.max_y - driver.default_visible_area.min_y + 1;
+		dx = driver.screen[0].default_visible_area.max_x - driver.screen[0].default_visible_area.min_x + 1;
+		dy = driver.screen[0].default_visible_area.max_y - driver.screen[0].default_visible_area.min_y + 1;
 		orientation = 0;
 	}
 
@@ -654,10 +654,10 @@ static void print_game_video(FILE* out, const game_driver* game)
 		fprintf(out, " height=\"%d\"", dy);
 	}
 
-	fprintf(out, " aspectx=\"%d\"", ax);
-	fprintf(out, " aspecty=\"%d\"", ay);
+	fprintf(out, " aspectx=\"%f\"", ax);
+	fprintf(out, " aspecty=\"%f\"", ay);
 
-	fprintf(out, " refresh=\"%f\"", driver.frames_per_second);
+	fprintf(out, " refresh=\"%f\"", driver.screen[0].refresh_rate);
 	fprintf(out, "/>\n");
 }
 

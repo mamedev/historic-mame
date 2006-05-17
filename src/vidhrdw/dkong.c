@@ -271,7 +271,7 @@ static void draw_sprites(mame_bitmap *bitmap, unsigned int mask_bank, unsigned i
 						(spriteram[offs + 2] & 0x0f) + 16 * palette_bank,
 						!(spriteram[offs + 2] & 0x80),!(spriteram[offs + 1] & 0x80),
 						x,y,
-						&Machine->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 
 				/* draw with wrap around - this fixes the 'beheading' bug */
 				drawgfx(bitmap,Machine->gfx[1],
@@ -279,7 +279,7 @@ static void draw_sprites(mame_bitmap *bitmap, unsigned int mask_bank, unsigned i
 						(spriteram[offs + 2] & 0x0f) + 16 * palette_bank,
 						(spriteram[offs + 2] & 0x80),(spriteram[offs + 1] & 0x80),
 						x-256,y,
-						&Machine->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 			}
 			else
 			{
@@ -288,7 +288,7 @@ static void draw_sprites(mame_bitmap *bitmap, unsigned int mask_bank, unsigned i
 						(spriteram[offs + 2] & 0x0f) + 16 * palette_bank,
 						(spriteram[offs + 2] & 0x80),(spriteram[offs + 1] & 0x80),
 						x,y,
-						&Machine->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 
 				/* draw with wrap around - this fixes the 'beheading' bug */
 				drawgfx(bitmap,Machine->gfx[1],
@@ -296,7 +296,7 @@ static void draw_sprites(mame_bitmap *bitmap, unsigned int mask_bank, unsigned i
 						(spriteram[offs + 2] & 0x0f) + 16 * palette_bank,
 						(spriteram[offs + 2] & 0x80),(spriteram[offs + 1] & 0x80),
 						x+256,y,
-						&Machine->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 			}
 		}
 	}
@@ -309,13 +309,13 @@ static void draw_grid(mame_bitmap *bitmap)
 
 	counter = flip_screen ? 0x000 : 0x400;
 
-	x = Machine->visible_area.min_x;
-	y = Machine->visible_area.min_y;
-	while (y <= Machine->visible_area.max_y)
+	x = Machine->visible_area[0].min_x;
+	y = Machine->visible_area[0].min_y;
+	while (y <= Machine->visible_area[0].max_y)
 	{
 		x = 4 * (table[counter] & 0x7f);
-		if (x >= Machine->visible_area.min_x &&
-				x <= Machine->visible_area.max_x)
+		if (x >= Machine->visible_area[0].min_x &&
+				x <= Machine->visible_area[0].max_x)
 		{
 			if (table[counter] & 0x80)	/* star */
 			{

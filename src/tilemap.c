@@ -727,8 +727,8 @@ INLINE tilemap_draw_func pick_draw_func( mame_bitmap *dest )
 
 int tilemap_init( void )
 {
-	screen_width	= Machine->drv->screen_width;
-	screen_height	= Machine->drv->screen_height;
+	screen_width	= Machine->drv->screen[0].maxwidth;
+	screen_height	= Machine->drv->screen[0].maxheight;
 	first_tilemap	= NULL;
 
 	priority_bitmap = bitmap_alloc_depth( screen_width, screen_height, -8 );

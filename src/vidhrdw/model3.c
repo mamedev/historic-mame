@@ -121,11 +121,11 @@ VIDEO_START( model3 )
 {
 	int j,t;
 
-	bitmap3d = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
+	bitmap3d = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
 	if (!bitmap3d)
 		return 1;
 
-	zbuffer = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 32);
+	zbuffer = auto_bitmap_alloc_depth(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight, 32);
 	if (!zbuffer)
 		return 1;
 

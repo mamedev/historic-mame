@@ -497,7 +497,7 @@ int starcrus_collision_check_s2p1p2(void)
 
 VIDEO_UPDATE( starcrus )
 {
-    fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+    fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area[0]);
 
 	/* Draw ship 1 */
     drawgfx(bitmap,
@@ -506,7 +506,7 @@ VIDEO_UPDATE( starcrus )
             0,
             (s1_sprite&0x08)>>3,(s1_sprite&0x10)>>4,
             s1_x,s1_y,
-            &Machine->visible_area,
+            &Machine->visible_area[0],
             TRANSPARENCY_PEN,
             0);
 
@@ -517,7 +517,7 @@ VIDEO_UPDATE( starcrus )
             0,
             (s2_sprite&0x08)>>3,(s2_sprite&0x10)>>4,
             s2_x,s2_y,
-            &Machine->visible_area,
+            &Machine->visible_area[0],
             TRANSPARENCY_PEN,
             0);
 
@@ -528,7 +528,7 @@ VIDEO_UPDATE( starcrus )
             0,
             0,0,
             p1_x,p1_y,
-            &Machine->visible_area,
+            &Machine->visible_area[0],
             TRANSPARENCY_PEN,
             0);
 
@@ -539,7 +539,7 @@ VIDEO_UPDATE( starcrus )
             0,
             0,0,
             p2_x,p2_y,
-            &Machine->visible_area,
+            &Machine->visible_area[0],
             TRANSPARENCY_PEN,
             0);
 

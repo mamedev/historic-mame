@@ -166,8 +166,8 @@ void skyfox_draw_sprites(mame_bitmap *bitmap)
 {
 	int offs;
 
-	int width	=	Machine->drv->screen_width;
-	int height	=	Machine->drv->screen_height;
+	int width	=	Machine->drv->screen[0].maxwidth;
+	int height	=	Machine->drv->screen[0].maxheight;
 
 	/* The 32x32 tiles in the 80-ff range are bankswitched */
 	int shift	=	(skyfox_bg_ctrl & 0x80) ? (4-1) : 4;
@@ -202,7 +202,7 @@ void skyfox_draw_sprites(mame_bitmap *bitmap)
 				0, \
 				flipx,flipy, \
 				x + (DX),y + (DY), \
-				&Machine->visible_area,TRANSPARENCY_PEN, 0xff); \
+				&Machine->visible_area[0],TRANSPARENCY_PEN, 0xff); \
 
 		if (skyfox_bg_ctrl & 1)	// flipscreen
 		{
@@ -286,7 +286,7 @@ void skyfox_draw_background(mame_bitmap *bitmap)
 
 VIDEO_UPDATE( skyfox )
 {
-	fillbitmap(bitmap,Machine->pens[255],&Machine->visible_area);	// the bg is black
+	fillbitmap(bitmap,Machine->pens[255],&Machine->visible_area[0]);	// the bg is black
 	skyfox_draw_background(bitmap);
 	skyfox_draw_sprites(bitmap);
 }

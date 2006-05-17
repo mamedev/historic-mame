@@ -61,7 +61,7 @@ WRITE16_HANDLER( blockout_frontcolor_w )
 VIDEO_START( blockout )
 {
 	/* Allocate temporary bitmaps */
-	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight)) == 0)
 		return 1;
 
 	return 0;
@@ -75,10 +75,10 @@ static void updatepixels(int x,int y)
 	int color;
 
 
-	if (x < Machine->visible_area.min_x ||
-			x > Machine->visible_area.max_x ||
-			y < Machine->visible_area.min_y ||
-			y > Machine->visible_area.max_y)
+	if (x < Machine->visible_area[0].min_x ||
+			x > Machine->visible_area[0].max_x ||
+			y < Machine->visible_area[0].min_y ||
+			y > Machine->visible_area[0].max_y)
 		return;
 
 	front = blockout_videoram[y*256+x/2];
@@ -110,7 +110,7 @@ WRITE16_HANDLER( blockout_videoram_w )
 
 VIDEO_UPDATE( blockout )
 {
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 
 	{
 		int x,y,color;

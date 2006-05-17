@@ -92,7 +92,7 @@ WRITE8_HANDLER( mnchmobl_videoram_w )
 
 static void draw_status( mame_bitmap *bitmap )
 {
-	rectangle clip = Machine->visible_area;
+	rectangle clip = Machine->visible_area[0];
 	const gfx_element *gfx = Machine->gfx[0];
 	int row;
 
@@ -158,13 +158,13 @@ static void draw_background( mame_bitmap *bitmap )
 
 		copyscrollbitmap(bitmap,tmpbitmap,
 			1,&scrollx,1,&scrolly,
-			&Machine->visible_area,TRANSPARENCY_NONE,0);
+			&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 	}
 }
 
 static void draw_sprites( mame_bitmap *bitmap )
 {
-	const rectangle *clip = &Machine->visible_area;
+	const rectangle *clip = &Machine->visible_area[0];
 	int scroll = mnchmobl_vreg[6];
 	int flags = mnchmobl_vreg[7];					/*   XB?????? */
 	int xadjust = - 128-16 - ((flags&0x80)?1:0);

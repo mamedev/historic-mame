@@ -304,7 +304,7 @@ static INTERRUPT_GEN(namcofl_interrupt)
 
 	if (triggerscanline==currentscanline)
 	{
-		force_partial_update(currentscanline);
+		force_partial_update(0, currentscanline);
 		cpunum_set_input_line(0, I960_IRQ1, ASSERT_LINE);
 	}
 

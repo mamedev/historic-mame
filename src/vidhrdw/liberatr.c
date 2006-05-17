@@ -277,7 +277,7 @@ static int liberatr_init_planet(int planet_select)
 
 			/* calculate the bitmap's x coordinate for the western horizon
                center of bitmap - (the number of planet pixels) / 4 */
-			*buffer++ = Machine->drv->screen_width/2 - (line->max_x + 2) / 4;
+			*buffer++ = Machine->drv->screen[0].maxwidth/2 - (line->max_x + 2) / 4;
 
 			for (i = 0; i < segment_count; i++)
 			{
@@ -306,10 +306,10 @@ VIDEO_START( liberatr )
     liberatr_planet_segs[1] = 0;
 
     /* allocate a tmpbitmap */
-    if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0)
+    if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight)) == 0)
     	return 1;
 
-	liberatr_videoram = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height);
+	liberatr_videoram = auto_malloc(Machine->drv->screen[0].maxwidth * Machine->drv->screen[0].maxheight);
 
 	/* allocate the planet descriptor structure */
 	liberatr_planet_segs[0] = auto_malloc(sizeof(Liberator_Planet));
@@ -387,9 +387,9 @@ VIDEO_UPDATE( liberatr )
 		UINT8 liberatr_x_save = *liberatr_x;
 
 		/* redraw bitmap */
-		for (*liberatr_y = Machine->visible_area.min_y; *liberatr_y < Machine->visible_area.max_y; (*liberatr_y)++)
+		for (*liberatr_y = Machine->visible_area[0].min_y; *liberatr_y < Machine->visible_area[0].max_y; (*liberatr_y)++)
 		{
-			for (*liberatr_x = Machine->visible_area.min_x; *liberatr_x < Machine->visible_area.max_x; (*liberatr_x)++)
+			for (*liberatr_x = Machine->visible_area[0].min_x; *liberatr_x < Machine->visible_area[0].max_x; (*liberatr_x)++)
 			{
 				liberatr_bitmap_xy_w(0, liberatr_bitmap_xy_r(0));
 			}
@@ -398,7 +398,7 @@ VIDEO_UPDATE( liberatr )
 		*liberatr_y = liberatr_y_save;
 		*liberatr_x = liberatr_x_save;
 	}
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 
 	/* draw the planet */
 	liberatr_draw_planet(bitmap);

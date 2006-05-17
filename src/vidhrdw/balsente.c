@@ -49,7 +49,7 @@ VIDEO_START( balsente )
 	sprite_bank[1] = memory_region(REGION_GFX1) + 0x10000;
 
 	/* allocate a bitmap */
-	tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
+	tmpbitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
 	if (!tmpbitmap)
 		return 1;
 

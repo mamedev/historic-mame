@@ -461,7 +461,7 @@ VIDEO_START( tceptor )
 		return 1;
 
 	/* allocate temp bitmaps */
-	temp_bitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
+	temp_bitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
 	if (!temp_bitmap)
 		return 1;
 

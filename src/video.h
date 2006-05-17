@@ -19,10 +19,40 @@
 
 /***************************************************************************
 
+    Screen configuration
+
+***************************************************************************/
+
+/* maximum number of screens for one game */
+#define MAX_SCREENS					8
+
+
+/*-------------------------------------------------
+    screen_config - configuration of a single
+    screen
+-------------------------------------------------*/
+
+typedef struct _screen_config screen_config;
+struct _screen_config
+{
+	const char *		tag;				/* nametag for the screen */
+	UINT32				palette_base;		/* base palette entry for this screen */
+	float				refresh_rate;		/* refresh rate */
+	double				vblank_time;		/* duration of a VBLANK */
+	float				aspect;				/* aspect ratio of the screen */
+	int					maxwidth, maxheight;/* maximum width/height in pixels */
+	rectangle			default_visible_area;/* default visible area */
+};
+
+
+
+/***************************************************************************
+
     Display state passed to the OSD layer for rendering
 
 ***************************************************************************/
 
+#ifndef NEW_RENDER
 /* these flags are set in the mame_display struct to indicate that */
 /* a particular piece of state has changed since the last call to */
 /* osd_update_video_and_audio() */
@@ -39,6 +69,7 @@
 
 /* the main mame_display structure, containing the current state of the */
 /* video display */
+/* in mamecore.h: typedef struct _mame_display mame_display; */
 struct _mame_display
 {
 	/* bitfield indicating which states have changed */
@@ -63,7 +94,7 @@ struct _mame_display
 	/* other misc information */
 	UINT8			led_state;					/* bitfield of current LED states */
 };
-/* in mamecore.h: typedef struct _mame_display mame_display; */
+#endif
 
 
 
@@ -95,29 +126,22 @@ struct _performance_info
 int video_init(void);
 
 /* set the current visible area of the screen bitmap */
-void set_visible_area(int min_x, int max_x, int min_y, int max_y);
+void set_visible_area(int scrnum, int min_x, int max_x, int min_y, int max_y);
 
 /* set the current refresh rate of the video mode */
-void set_refresh_rate(float fps);
+void set_refresh_rate(int scrnum, float fps);
 
 /* force an erase and a complete redraw of the video next frame */
 void schedule_full_refresh(void);
 
-/* called by cpuexec.c to reset updates at the end of VBLANK */
-void reset_partial_updates(void);
-
 /* force a partial update of the screen up to and including the requested scanline */
-void force_partial_update(int scanline);
-
-/* finish updating the screen for this frame */
-void draw_screen(void);
+void force_partial_update(int scrnum, int scanline);
 
 /* update the video by calling down to the OSD layer */
 void update_video_and_audio(void);
 
 /* update the screen, handling frame skipping and rendering */
-/* (this calls draw_screen and update_video_and_audio) */
-void updatescreen(void);
+void video_frame_update(void);
 
 /* can we skip this frame? */
 int skip_this_frame(void);

@@ -124,14 +124,14 @@ void pastelg_vramflip(void)
 
 	if (pastelg_flipscreen == pastelg_flipscreen_old) return;
 
-	for (y = 0; y < Machine->drv->screen_height; y++)
+	for (y = 0; y < Machine->drv->screen[0].maxheight; y++)
 	{
-		for (x = 0; x < Machine->drv->screen_width; x++)
+		for (x = 0; x < Machine->drv->screen[0].maxwidth; x++)
 		{
-			color1 = pastelg_videoram[(y * Machine->drv->screen_width) + x];
-			color2 = pastelg_videoram[((y ^ 0xff) * Machine->drv->screen_width) + (x ^ 0xff)];
-			pastelg_videoram[(y * Machine->drv->screen_width) + x] = color2;
-			pastelg_videoram[((y ^ 0xff) * Machine->drv->screen_width) + (x ^ 0xff)] = color1;
+			color1 = pastelg_videoram[(y * Machine->drv->screen[0].maxwidth) + x];
+			color2 = pastelg_videoram[((y ^ 0xff) * Machine->drv->screen[0].maxwidth) + (x ^ 0xff)];
+			pastelg_videoram[(y * Machine->drv->screen[0].maxwidth) + x] = color2;
+			pastelg_videoram[((y ^ 0xff) * Machine->drv->screen[0].maxwidth) + (x ^ 0xff)] = color1;
 		}
 	}
 
@@ -141,7 +141,7 @@ void pastelg_vramflip(void)
 
 static void update_pixel(int x,int y)
 {
-	int color = pastelg_videoram[(y * Machine->drv->screen_width) + x];
+	int color = pastelg_videoram[(y * Machine->drv->screen[0].maxwidth) + x];
 	plot_pixel(pastelg_tmpbitmap, x, y, Machine->pens[color]);
 }
 
@@ -237,14 +237,14 @@ void pastelg_gfxdraw(void)
 				if (color)
 				{
 					color = ((pastelg_palbank * 0x10) + color);
-					pastelg_videoram[(dy * Machine->drv->screen_width) + dx] = color;
+					pastelg_videoram[(dy * Machine->drv->screen[0].maxwidth) + dx] = color;
 					update_pixel(dx, dy);
 				}
 			}
 			else
 			{
 				color = ((pastelg_palbank * 0x10) + pastelg_clut[color]);
-				pastelg_videoram[(dy * Machine->drv->screen_width) + dx] = color;
+				pastelg_videoram[(dy * Machine->drv->screen[0].maxwidth) + dx] = color;
 				update_pixel(dx, dy);
 			}
 
@@ -262,10 +262,10 @@ void pastelg_gfxdraw(void)
 ******************************************************************************/
 VIDEO_START( pastelg )
 {
-	if ((pastelg_tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
-	pastelg_videoram = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(UINT8));
+	if ((pastelg_tmpbitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight)) == 0) return 1;
+	pastelg_videoram = auto_malloc(Machine->drv->screen[0].maxwidth * Machine->drv->screen[0].maxheight * sizeof(UINT8));
 	pastelg_clut = auto_malloc(0x10 * sizeof(UINT8));
-	memset(pastelg_videoram, 0x00, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(UINT8)));
+	memset(pastelg_videoram, 0x00, (Machine->drv->screen[0].maxwidth * Machine->drv->screen[0].maxheight * sizeof(UINT8)));
 	return 0;
 }
 
@@ -282,11 +282,11 @@ VIDEO_UPDATE( pastelg )
 	{
 		pastelg_screen_refresh = 0;
 
-		for (y = 0; y < Machine->drv->screen_height; y++)
+		for (y = 0; y < Machine->drv->screen[0].maxheight; y++)
 		{
-			for (x = 0; x < Machine->drv->screen_width; x++)
+			for (x = 0; x < Machine->drv->screen[0].maxwidth; x++)
 			{
-				color = pastelg_videoram[(y * Machine->drv->screen_width) + x];
+				color = pastelg_videoram[(y * Machine->drv->screen[0].maxwidth) + x];
 				plot_pixel(pastelg_tmpbitmap, x, y, Machine->pens[color]);
 			}
 		}
@@ -294,7 +294,7 @@ VIDEO_UPDATE( pastelg )
 
 	if (pastelg_dispflag)
 	{
-		copybitmap(bitmap, pastelg_tmpbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+		copybitmap(bitmap, pastelg_tmpbitmap, 0, 0, 0, 0, &Machine->visible_area[0], TRANSPARENCY_NONE, 0);
 	}
 	else
 	{

@@ -108,7 +108,6 @@ if(keyboard_pressed(KEYCODE_F1))
         InputCode code;
 
                   update_video_and_audio();
-                  reset_partial_updates();
 
         if (input_ui_pressed(IPT_UI_CANCEL))
             break;

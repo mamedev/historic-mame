@@ -44,7 +44,7 @@ VIDEO_UPDATE( snowbros )
 
 	/* This clears & redraws the entire screen each pass */
 
-	fillbitmap(bitmap,0xf0,&Machine->visible_area);
+	fillbitmap(bitmap,0xf0,&Machine->visible_area[0]);
 
 	for (offs = 0;offs < spriteram_size/2;offs += 8)
 	{
@@ -90,7 +90,7 @@ VIDEO_UPDATE( snowbros )
 				(tilecolour & 0xf0) >> 4,
 				flipx, flipy,
 				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 	}
 }
 
@@ -100,7 +100,7 @@ VIDEO_UPDATE( honeydol )
 
 	/* not standard snowbros video */
 
-	fillbitmap(bitmap,0xf0,&Machine->visible_area);
+	fillbitmap(bitmap,0xf0,&Machine->visible_area[0]);
 
 	for (offs = 0x0000/2;offs < 0x2000/2;offs += 8)
 	{
@@ -136,7 +136,7 @@ VIDEO_UPDATE( honeydol )
 				tilecolour,
 				flipx, flipy,
 				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 
 		/* second list interleaved with first ??? */
 		dx = spriteram16[offs+4] & 0xff;
@@ -171,7 +171,7 @@ VIDEO_UPDATE( honeydol )
 				(tilecolour & 0xf0) >> 4,
 				flipx, flipy,
 				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 
 	}
 }
@@ -181,7 +181,7 @@ VIDEO_UPDATE( wintbob )
 {
 	int offs;
 
-	fillbitmap(bitmap,get_black_pen(),&Machine->visible_area);
+	fillbitmap(bitmap,get_black_pen(),&Machine->visible_area[0]);
 
 	for (offs = 0;offs < spriteram_size/2;offs += 8)
 	{
@@ -213,7 +213,7 @@ VIDEO_UPDATE( wintbob )
 					colr,
 					flipx, flipy,
 					xpos,ypos,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 		}
 	}
 }
@@ -248,7 +248,7 @@ VIDEO_UPDATE( snowbro3 )
 
 	/* This clears & redraws the entire screen each pass */
 
-	fillbitmap(bitmap,get_black_pen(),&Machine->visible_area);
+	fillbitmap(bitmap,get_black_pen(),&Machine->visible_area[0]);
 
 	for (offs = 0;offs < spriteram_size/2;offs += 8)
 	{
@@ -301,7 +301,7 @@ VIDEO_UPDATE( snowbro3 )
 				(tilecolour & 0xf0) >> 4,
 				flipx, flipy,
 				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 	}
 }
 

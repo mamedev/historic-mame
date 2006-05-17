@@ -55,6 +55,18 @@ typedef struct _input_port_entry input_port_entry;
 typedef struct _input_port_default_entry input_port_default_entry;
 typedef struct _mame_file mame_file;
 typedef struct _chd_file chd_file;
+
+/* These values are returned as error codes by osd_fopen() */
+enum _osd_file_error
+{
+	FILEERR_SUCCESS,
+	FILEERR_FAILURE,
+	FILEERR_OUT_OF_MEMORY,
+	FILEERR_NOT_FOUND,
+	FILEERR_ACCESS_DENIED,
+	FILEERR_ALREADY_OPEN,
+	FILEERR_TOO_MANY_FILES
+};
 typedef enum _osd_file_error osd_file_error;
 
 

@@ -31,7 +31,7 @@ VIDEO_UPDATE( spcforce )
 
 	/* draw the characters as sprites because they could be overlapping */
 
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area[0]);
 
 
 	for (offs = 0; offs < videoram_size; offs++)
@@ -55,6 +55,6 @@ VIDEO_UPDATE( spcforce )
 				code, col,
 				flip_screen, flip_screen,
 				sx, sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 	}
 }

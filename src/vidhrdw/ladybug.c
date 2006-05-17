@@ -404,7 +404,7 @@ static void ladybug_draw_sprites( mame_bitmap *bitmap )
 							spriteram[offs + i] & 0x20,spriteram[offs + i] & 0x10,
 							spriteram[offs + i + 3],
 							offs / 4 - 8 + (spriteram[offs + i] & 0x0f),
-							&Machine->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 				else	/* 8x8 */
 					drawgfx(bitmap,Machine->gfx[2],
 							spriteram[offs + i + 1] + 16 * (spriteram[offs + i + 2] & 0x10),
@@ -412,7 +412,7 @@ static void ladybug_draw_sprites( mame_bitmap *bitmap )
 							spriteram[offs + i] & 0x20,spriteram[offs + i] & 0x10,
 							spriteram[offs + i + 3],
 							offs / 4 + (spriteram[offs + i] & 0x0f),
-							&Machine->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 			}
 		}
 	}
@@ -433,7 +433,7 @@ VIDEO_UPDATE( ladybug )
 			tilemap_set_scrollx(bg_tilemap, offs, videoram[32 * sx + sy]);
 	}
 
-	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
 	ladybug_draw_sprites(bitmap);
 }
 
@@ -462,7 +462,7 @@ VIDEO_UPDATE( sraider )
 	}
 
 	// clear the bg bitmap
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area[0]);
 
 	// draw the stars
 	if (flip_screen)
@@ -471,7 +471,7 @@ VIDEO_UPDATE( sraider )
 		redclash_draw_stars(bitmap,32,1,0x00,0xd8);
 
 	// draw the horizontal gridlines
-	tilemap_draw(bitmap, &Machine->visible_area, grid_tilemap, 0, flip_screen);
+	tilemap_draw(bitmap, &Machine->visible_area[0], grid_tilemap, 0, flip_screen);
 	for(i=0;i<256;i++)
 	{
 		if (gridline[i] != 0)
@@ -484,7 +484,7 @@ VIDEO_UPDATE( sraider )
 	}
 
 	// now the chars
-	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, flip_screen);
+	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, flip_screen);
 
 	// now the sprites
 	ladybug_draw_sprites(bitmap);

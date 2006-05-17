@@ -92,7 +92,7 @@ static void ultratnk_tile_info(int tile_index)
 
 VIDEO_START( sprint4 )
 {
-	helper = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
+	helper = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
 
 	if (helper == NULL)
 	{
@@ -112,7 +112,7 @@ VIDEO_START( sprint4 )
 
 VIDEO_START( ultratnk )
 {
-	helper = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
+	helper = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
 
 	if (helper == NULL)
 	{
@@ -221,14 +221,14 @@ VIDEO_EOF( sprint4 )
 		rect.max_x = horz - 15 + Machine->gfx[1]->width - 1;
 		rect.max_y = vert - 15 + Machine->gfx[1]->height - 1;
 
-		if (rect.min_x < Machine->visible_area.min_x)
-			rect.min_x = Machine->visible_area.min_x;
-		if (rect.min_y < Machine->visible_area.min_y)
-			rect.min_y = Machine->visible_area.min_y;
-		if (rect.max_x > Machine->visible_area.max_x)
-			rect.max_x = Machine->visible_area.max_x;
-		if (rect.max_y > Machine->visible_area.max_y)
-			rect.max_y = Machine->visible_area.max_y;
+		if (rect.min_x < Machine->visible_area[0].min_x)
+			rect.min_x = Machine->visible_area[0].min_x;
+		if (rect.min_y < Machine->visible_area[0].min_y)
+			rect.min_y = Machine->visible_area[0].min_y;
+		if (rect.max_x > Machine->visible_area[0].max_x)
+			rect.max_x = Machine->visible_area[0].max_x;
+		if (rect.max_y > Machine->visible_area[0].max_y)
+			rect.max_y = Machine->visible_area[0].max_y;
 
 		tilemap_draw(helper, &rect, playfield, 0, 0);
 
@@ -292,14 +292,14 @@ VIDEO_EOF( ultratnk )
 		rect.max_x = horz - 15 + Machine->gfx[1]->width - 1;
 		rect.max_y = vert - 15 + Machine->gfx[1]->height - 1;
 
-		if (rect.min_x < Machine->visible_area.min_x)
-			rect.min_x = Machine->visible_area.min_x;
-		if (rect.min_y < Machine->visible_area.min_y)
-			rect.min_y = Machine->visible_area.min_y;
-		if (rect.max_x > Machine->visible_area.max_x)
-			rect.max_x = Machine->visible_area.max_x;
-		if (rect.max_y > Machine->visible_area.max_y)
-			rect.max_y = Machine->visible_area.max_y;
+		if (rect.min_x < Machine->visible_area[0].min_x)
+			rect.min_x = Machine->visible_area[0].min_x;
+		if (rect.min_y < Machine->visible_area[0].min_y)
+			rect.min_y = Machine->visible_area[0].min_y;
+		if (rect.max_x > Machine->visible_area[0].max_x)
+			rect.max_x = Machine->visible_area[0].max_x;
+		if (rect.max_y > Machine->visible_area[0].max_y)
+			rect.max_y = Machine->visible_area[0].max_y;
 
 		tilemap_draw(helper, &rect, playfield, 0, 0);
 

@@ -188,7 +188,7 @@ static void hal21_draw_background( mame_bitmap *bitmap, int scrollx, int scrolly
 	rectangle *cliprect;
 	int bankbase, c, x, y, offsx, offsy, dx, dy, sx, sy, offs, tile_number;
 
-	cliprect = &Machine->visible_area;
+	cliprect = &Machine->visible_area[0];
 	bankbase = attrs<<3 & 0x100;
 	c = attrs & 0x0f;
 	if (c > 11) { fillbitmap(bitmap,Machine->pens[(c<<4)+8], cliprect); return; }
@@ -228,7 +228,7 @@ static void hal21_draw_sprites( mame_bitmap *bitmap, int scrollx, int scrolly,
 	UINT8 *sprptr, *endptr;
 	int attrs, tile, x, y, color, fy;
 
-	cliprect = &Machine->visible_area;
+	cliprect = &Machine->visible_area[0];
 	sprptr = spriteram;
 	endptr = spriteram + 0x100;
 
@@ -259,7 +259,7 @@ static void aso_draw_background( mame_bitmap *bitmap, int scrollx, int scrolly, 
 	rectangle *cliprect;
 	int bankbase, c, x, y, offsx, offsy, dx, dy, sx, sy, offs, tile_number;
 
-	cliprect = &Machine->visible_area;
+	cliprect = &Machine->visible_area[0];
 	bankbase = attrs<<4 & 0x300;
 	c = attrs & 0x0f;
 	if (c == 7) c = 15;
@@ -292,7 +292,7 @@ static void aso_draw_sprites( mame_bitmap *bitmap, int scrollx, int scrolly,
 	UINT8 *sprptr, *endptr;
 	int attrs, tile, x, y, color;
 
-	cliprect = &Machine->visible_area;
+	cliprect = &Machine->visible_area[0];
 	sprptr = spriteram;
 	endptr = spriteram + 0x100;
 

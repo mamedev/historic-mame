@@ -102,7 +102,7 @@ static void srmp2_draw_sprites(mame_bitmap *bitmap)
 	/* Sprites Banking and/or Sprites Buffering */
 	UINT16 *src = spriteram16_2 + ( ((ctrl2 ^ (~ctrl2<<1)) & 0x40) ? 0x2000/2 : 0 );
 
-	int max_y	=	Machine -> drv -> screen_height;
+	int max_y	=	Machine -> drv -> screen[0].maxheight;
 
 	xoffs	=	flip ? 0x10 : 0x10;
 	yoffs	=	flip ? 0x05 : 0x07;
@@ -136,7 +136,7 @@ static void srmp2_draw_sprites(mame_bitmap *bitmap)
 				flipx, flipy,
 				(x + xoffs) & 0x1ff,
 				max_y - ((y + yoffs) & 0x0ff),
-				&Machine->visible_area, TRANSPARENCY_PEN, 15);
+				&Machine->visible_area[0], TRANSPARENCY_PEN, 15);
 	}
 }
 
@@ -182,7 +182,7 @@ static void srmp3_draw_sprites_map(mame_bitmap *bitmap)
 
 			int sx		=	  x + xoffs  + (offs & 1) * 16;
 			int sy		=	-(y + yoffs) + (offs / 2) * 16 -
-							(Machine->drv->screen_height-(Machine->visible_area.max_y + 1));
+							(Machine->drv->screen[0].maxheight-(Machine->visible_area[0].max_y + 1));
 
 			if (upper & (1 << col))	sx += 256;
 
@@ -201,7 +201,7 @@ static void srmp3_draw_sprites_map(mame_bitmap *bitmap)
 					color, \
 					flipx, flipy, \
 					_x_, _y_, \
-					&Machine->visible_area, TRANSPARENCY_PEN, 0);
+					&Machine->visible_area[0], TRANSPARENCY_PEN, 0);
 
 			DRAWTILE(sx - 0x000, sy + 0x000)
 			DRAWTILE(sx - 0x200, sy + 0x000)
@@ -252,7 +252,7 @@ static void srmp3_draw_sprites(mame_bitmap *bitmap)
 	int offs;
 	int xoffs, yoffs;
 
-	int max_y	=	Machine -> drv -> screen_height;
+	int max_y	=	Machine -> drv -> screen[0].maxheight;
 
 	int ctrl	=	spriteram[ 0x600/2 ];
 //  int ctrl2   =   spriteram[ 0x602/2 ];
@@ -293,7 +293,7 @@ static void srmp3_draw_sprites(mame_bitmap *bitmap)
 				flipx, flipy,
 				(x + xoffs) & 0x1ff,
 				max_y - ((y + yoffs) & 0x0ff),
-				&Machine->visible_area, TRANSPARENCY_PEN, 0);
+				&Machine->visible_area[0], TRANSPARENCY_PEN, 0);
 	}
 }
 
@@ -345,7 +345,7 @@ static void mjyuugi_draw_sprites_map(mame_bitmap *bitmap)
 
 			int sx		=	  x + xoffs  + (offs & 1) * 16;
 			int sy		=	-(y + yoffs) + (offs / 2) * 16 -
-							(Machine->drv->screen_height-(Machine->visible_area.max_y + 1));
+							(Machine->drv->screen[0].maxheight-(Machine->visible_area[0].max_y + 1));
 
 			if (upper & (1 << col))	sx += 256;
 
@@ -365,7 +365,7 @@ static void mjyuugi_draw_sprites_map(mame_bitmap *bitmap)
 					color, \
 					flipx, flipy, \
 					_x_, _y_, \
-					&Machine->visible_area, TRANSPARENCY_PEN, 0);
+					&Machine->visible_area[0], TRANSPARENCY_PEN, 0);
 
 			DRAWTILE(sx - 0x000, sy + 0x000)
 			DRAWTILE(sx - 0x200, sy + 0x000)
@@ -413,7 +413,7 @@ static void mjyuugi_draw_sprites(mame_bitmap *bitmap)
 	/* Sprites Banking and/or Sprites Buffering */
 	UINT16 *src = spriteram16_2 + ( ((ctrl2 ^ (~ctrl2<<1)) & 0x40) ? 0x2000/2 : 0 );
 
-	int max_y	=	Machine -> drv -> screen_height;
+	int max_y	=	Machine -> drv -> screen[0].maxheight;
 
 	mjyuugi_draw_sprites_map(bitmap);
 
@@ -439,7 +439,7 @@ static void mjyuugi_draw_sprites(mame_bitmap *bitmap)
 		if (flip)
 		{
 			y = max_y - y
-				+(Machine->drv->screen_height-(Machine->visible_area.max_y + 1));
+				+(Machine->drv->screen[0].maxheight-(Machine->visible_area[0].max_y + 1));
 			flipx = !flipx;
 			flipy = !flipy;
 		}
@@ -450,27 +450,27 @@ static void mjyuugi_draw_sprites(mame_bitmap *bitmap)
 				flipx, flipy,
 				(x + xoffs) & 0x1ff,
 				max_y - ((y + yoffs) & 0x0ff),
-				&Machine->visible_area, TRANSPARENCY_PEN, 0);
+				&Machine->visible_area[0], TRANSPARENCY_PEN, 0);
 	}
 }
 
 
 VIDEO_UPDATE( srmp2 )
 {
-	fillbitmap(bitmap, Machine->pens[0x1f0], &Machine->visible_area);
+	fillbitmap(bitmap, Machine->pens[0x1f0], &Machine->visible_area[0]);
 	srmp2_draw_sprites(bitmap);
 }
 
 
 VIDEO_UPDATE( srmp3 )
 {
-	fillbitmap(bitmap, Machine->pens[0x1f0], &Machine->visible_area);
+	fillbitmap(bitmap, Machine->pens[0x1f0], &Machine->visible_area[0]);
 	srmp3_draw_sprites(bitmap);
 }
 
 
 VIDEO_UPDATE( mjyuugi )
 {
-	fillbitmap(bitmap, Machine->pens[0x1f0], &Machine->visible_area);
+	fillbitmap(bitmap, Machine->pens[0x1f0], &Machine->visible_area[0]);
 	mjyuugi_draw_sprites(bitmap);
 }

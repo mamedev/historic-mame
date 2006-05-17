@@ -2052,7 +2052,7 @@ profiler_mark(PROFILER_INPUT);
 		}
 
 		/* if this is an autorepeat case, set a 1x delay and leave pressed = 1 */
-		else if (++counter > keydelay * speed * Machine->refresh_rate / 60)
+		else if (++counter > keydelay * speed * Machine->refresh_rate[0] / 60)
 		{
 			keydelay = 1;
 			counter = 0;
@@ -2177,8 +2177,8 @@ profiler_mark(PROFILER_INPUT);
 			if (info->port->type == IPT_VBLANK)
 			{
 				portinfo->vblank ^= info->port->mask;
-				if (Machine->drv->vblank_duration == 0)
-					logerror("Warning: you are using IPT_VBLANK with vblank_duration = 0. You need to increase vblank_duration for IPT_VBLANK to work.\n");
+				if (Machine->drv->screen[0].vblank_time == 0)
+					logerror("Warning: you are using IPT_VBLANK with vblank_time = 0. You need to increase vblank_time for IPT_VBLANK to work.\n");
 			}
 
 		/* now loop back and modify based on the inputs */

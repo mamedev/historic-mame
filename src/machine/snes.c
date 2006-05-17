@@ -246,7 +246,7 @@ static void snes_hblank_tick(int ref)
 			if( snes_ram[HDMAEN] )
 				snes_hdma();
 
-			force_partial_update(snes_ppu.beam.current_vert-1);
+			force_partial_update(0, snes_ppu.beam.current_vert-1);
 		}
 	}
 
@@ -320,7 +320,7 @@ static void snes_init_ram(void)
 	has_dsp1 = ((snes_r_bank1(0xffd6) >= 3) && (snes_r_bank1(0xffd6) <= 5)) ? 1 : 0;
 
 	// init frame counter so first line is 0
-	if( Machine->drv->frames_per_second == 60 )
+	if( Machine->drv->screen[0].refresh_rate == 60 )
 	{
 		snes_ppu.beam.current_vert = SNES_MAX_LINES_NTSC;
 	}
@@ -351,9 +351,9 @@ MACHINE_RESET( snes )
 	snes_init_ram();
 
 	/* Set STAT78 to NTSC or PAL */
-	if( Machine->drv->frames_per_second == 60 )
+	if( Machine->drv->screen[0].refresh_rate == 60 )
 		snes_ram[STAT78] = SNES_NTSC;
-	else /* if( Machine->drv->frames_per_second == 50 ) */
+	else /* if( Machine->drv->screen[0].refresh_rate == 50 ) */
 		snes_ram[STAT78] = SNES_PAL;
 }
 
@@ -1032,14 +1032,14 @@ WRITE8_HANDLER( snes_w_io )
 			snes_ppu.mode = data & 0x7;
 #ifdef SNES_DBG_VIDHRDW
 			if( snes_ppu.mode == 5 || snes_ppu.mode == 6 )
-				set_visible_area(0, (SNES_SCR_WIDTH * 2 * 1.75) - 1, 0, snes_ppu.beam.last_visible_line  - 1);
+				set_visible_area(0, 0, (SNES_SCR_WIDTH * 2 * 1.75) - 1, 0, snes_ppu.beam.last_visible_line  - 1);
 			else
-				set_visible_area(0, (SNES_SCR_WIDTH * 2 * 1.75) - 1, 0, snes_ppu.beam.last_visible_line - 1 );
+				set_visible_area(0, 0, (SNES_SCR_WIDTH * 2 * 1.75) - 1, 0, snes_ppu.beam.last_visible_line - 1 );
 #else
 			if( snes_ppu.mode == 5 || snes_ppu.mode == 6 )
-				set_visible_area(0, (SNES_SCR_WIDTH * 2) - 1, 0, snes_ppu.beam.last_visible_line - 1 );
+				set_visible_area(0, 0, (SNES_SCR_WIDTH * 2) - 1, 0, snes_ppu.beam.last_visible_line - 1 );
 			else
-				set_visible_area(0, SNES_SCR_WIDTH - 1, 0, snes_ppu.beam.last_visible_line - 1 );
+				set_visible_area(0, 0, SNES_SCR_WIDTH - 1, 0, snes_ppu.beam.last_visible_line - 1 );
 #endif
 
 			snes_ppu.layer[0].tile_size = (data >> 4) & 0x1;

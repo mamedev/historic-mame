@@ -28,6 +28,10 @@
 #include "profiler.h"
 #include "vidhrdw/vector.h"
 
+#ifdef NEW_RENDER
+#include "render.h"
+#endif
+
 // MAMEOS headers
 #include "blit.h"
 #include "video.h"
@@ -490,6 +494,8 @@ static BOOL CALLBACK monitor_enum_proc(HMONITOR monitor_enum, HDC dc, LPRECT rec
 //  osd_create_display
 //============================================================
 
+#ifndef NEW_RENDER
+
 int osd_create_display(const osd_create_params *params, UINT32 *rgb_components)
 {
 	mame_display dummy_display;
@@ -602,6 +608,7 @@ void osd_close_display(void)
 	}
 }
 
+#endif
 
 
 //============================================================
@@ -630,7 +637,7 @@ const char *osd_get_fps_text(const performance_info *performance)
 			autoframeskip ? "auto" : "fskp", frameskip,
 			(int)(performance->game_speed_percent + 0.5),
 			(int)(performance->frames_per_second + 0.5),
-			(int)(Machine->refresh_rate + 0.5));
+			(int)(Machine->refresh_rate[0] + 0.5));
 
 	/* for vector games, add the number of vector updates */
 	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
@@ -793,6 +800,7 @@ static void throttle_speed(void)
 
 static void update_palette(mame_display *display)
 {
+#ifndef NEW_RENDER
 	int i, j;
 
 	// loop over dirty colors in batches of 32
@@ -819,6 +827,7 @@ static void update_palette(mame_display *display)
 				}
 		}
 	}
+#endif
 
 	// reset the invalidate flag
 	palette_lookups_invalid = 0;
@@ -832,6 +841,7 @@ static void update_palette(mame_display *display)
 
 static void update_visible_area(mame_display *display)
 {
+#ifndef NEW_RENDER
 	rectangle area = display->game_visible_area;
 
 	// adjust for orientation
@@ -843,6 +853,7 @@ static void update_visible_area(mame_display *display)
 	// now adjust the window for the aspect ratio
 	if (area.max_x > area.min_x && area.max_y > area.min_y)
 		win_adjust_window_for_visible(area.min_x, area.max_x, area.min_y, area.max_y);
+#endif
 }
 
 
@@ -933,12 +944,14 @@ static void render_frame(mame_bitmap *bitmap, const rectangle *bounds, void *vec
 			// make a filename with an underscore prefix
 			sprintf(name, "_%.8s", Machine->gamedrv->name);
 
+#ifndef NEW_RENDER
 			// write out the screenshot
 			if ((fp = mame_fopen(Machine->gamedrv->name, name, FILETYPE_SCREENSHOT, 1)) != NULL)
 			{
 				save_screen_snapshot_as(fp, artwork_get_ui_bitmap());
 				mame_fclose(fp);
 			}
+#endif
 			mame_schedule_exit();
 		}
 		end_time = curr;
@@ -963,6 +976,8 @@ static void render_frame(mame_bitmap *bitmap, const rectangle *bounds, void *vec
 //============================================================
 //  osd_update_video_and_audio
 //============================================================
+
+#ifndef NEW_RENDER
 
 void osd_update_video_and_audio(mame_display *display)
 {
@@ -1036,6 +1051,23 @@ void osd_update_video_and_audio(mame_display *display)
 	win_poll_input();
 }
 
+#else
+
+static render_target *main_target;
+
+int win_init_video(void)
+{
+	main_target = render_target_alloc(NULL, FALSE);
+	return (main_target == NULL) ? 1 : 0;
+}
+
+void osd_update(mame_time emutime)
+{
+	render_primitive *primlist = render_target_get_primitives(main_target);
+	(void)primlist;
+}
+
+#endif
 
 
 //============================================================

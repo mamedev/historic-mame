@@ -215,13 +215,13 @@ void gsword_draw_sprites(mame_bitmap *bitmap)
 					gsword_spritetile_ram[offs+1] & 0x3f,
 					flipx,flipy,
 					sx,sy,
-					&Machine->visible_area,TRANSPARENCY_COLOR, 0x8f);
+					&Machine->visible_area[0],TRANSPARENCY_COLOR, 0x8f);
 		}
 	}
 }
 
 VIDEO_UPDATE( gsword )
 {
-	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
 	gsword_draw_sprites(bitmap);
 }

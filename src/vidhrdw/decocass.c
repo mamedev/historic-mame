@@ -582,11 +582,11 @@ VIDEO_START( decocass )
 	tilemap_set_transparent_pen( bg_tilemap_r, 0 );
 	tilemap_set_transparent_pen( fg_tilemap, 0 );
 
-	bg_tilemap_l_clip = Machine->visible_area;
-	bg_tilemap_l_clip.max_y = Machine->drv->screen_height / 2;
+	bg_tilemap_l_clip = Machine->visible_area[0];
+	bg_tilemap_l_clip.max_y = Machine->drv->screen[0].maxheight / 2;
 
-	bg_tilemap_r_clip = Machine->visible_area;
-	bg_tilemap_r_clip.min_y = Machine->drv->screen_height / 2;
+	bg_tilemap_r_clip = Machine->visible_area[0];
+	bg_tilemap_r_clip.min_y = Machine->drv->screen[0].maxheight / 2;
 
 	/* background videroam bits D0-D3 are shared with the tileram */
 	decocass_bgvideoram = decocass_tileram;
@@ -672,18 +672,19 @@ VIDEO_UPDATE( decocass )
 	tilemap_set_scrollx( bg_tilemap_r, 0, scrollx );
 	tilemap_set_scrolly( bg_tilemap_r, 0, scrolly_r );
 
+	if (mode_set & 0x08)	/* bkg_ena on ? */
+	{
+		clip = bg_tilemap_l_clip;
+		sect_rect(&clip,cliprect);
+		tilemap_draw(bitmap,&clip, bg_tilemap_l, TILEMAP_IGNORE_TRANSPARENCY, 0);
+
+		clip = bg_tilemap_r_clip;
+		sect_rect(&clip,cliprect);
+		tilemap_draw(bitmap,&clip, bg_tilemap_r, TILEMAP_IGNORE_TRANSPARENCY, 0);
+	}
+
 	if (mode_set & 0x20)
 	{
-		if (mode_set & 0x08)	/* bkg_ena on ? */
-		{
-			clip = bg_tilemap_l_clip;
-			sect_rect(&clip,cliprect);
-			tilemap_draw(bitmap,&clip, bg_tilemap_l, 0, 0);
-
-			clip = bg_tilemap_r_clip;
-			sect_rect(&clip,cliprect);
-			tilemap_draw(bitmap,&clip, bg_tilemap_r, 0, 0);
-		}
 		draw_object(bitmap,cliprect);
 		draw_center(bitmap,cliprect);
 	}

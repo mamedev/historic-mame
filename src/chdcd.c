@@ -128,6 +128,12 @@ static UINT64 get_file_size(const char *file)
     cdrom_parse_toc - parse a CDRDAO format TOC file
 -------------------------------------------------*/
 
+static void show_raw_message(void)
+{
+	printf("Note: MAME now prefers and can accept RAW format images.\n");
+	printf("At least one track of this CDRDAO rip is not either RAW or AUDIO.\n");
+}
+
 int cdrom_parse_toc(char *tocfname, cdrom_toc *outtoc, cdrom_track_input_info *outinfo)
 {
 	FILE *infile;
@@ -308,6 +314,7 @@ trycolonagain:
 
 				if (!strcmp(token, "MODE1"))
 				{
+					show_raw_message();
 					outtoc->tracks[trknum].trktype = CD_TRACK_MODE1;
 					outtoc->tracks[trknum].datasize = 2048;
 					outtoc->tracks[trknum].subtype = CD_SUB_NONE;
@@ -315,9 +322,6 @@ trycolonagain:
 				}
 				else if (!strcmp(token, "MODE1_RAW"))
 				{
-					printf("\nWarning: Track %d uses RAW format data.  Although such images may be created, MAME cannot read them at present.\n", trknum+1);
-					printf("To get usable data, burn this image to a disc or CD emulator and read as to a normal image with CDRDAO.\n\n");
-
 					outtoc->tracks[trknum].trktype = CD_TRACK_MODE1_RAW;
 					outtoc->tracks[trknum].datasize = 2352;
 					outtoc->tracks[trknum].subtype = CD_SUB_NONE;
@@ -325,6 +329,7 @@ trycolonagain:
 				}
 				else if (!strcmp(token, "MODE2"))
 				{
+					show_raw_message();
 					outtoc->tracks[trknum].trktype = CD_TRACK_MODE2;
 					outtoc->tracks[trknum].datasize = 2336;
 					outtoc->tracks[trknum].subtype = CD_SUB_NONE;
@@ -332,6 +337,7 @@ trycolonagain:
 				}
 				else if (!strcmp(token, "MODE2_FORM1"))
 				{
+					show_raw_message();
 					outtoc->tracks[trknum].trktype = CD_TRACK_MODE2_FORM1;
 					outtoc->tracks[trknum].datasize = 2048;
 					outtoc->tracks[trknum].subtype = CD_SUB_NONE;
@@ -339,6 +345,7 @@ trycolonagain:
 				}
 				else if (!strcmp(token, "MODE2_FORM2"))
 				{
+					show_raw_message();
 					outtoc->tracks[trknum].trktype = CD_TRACK_MODE2_FORM2;
 					outtoc->tracks[trknum].datasize = 2324;
 					outtoc->tracks[trknum].subtype = CD_SUB_NONE;
@@ -346,6 +353,7 @@ trycolonagain:
 				}
 				else if (!strcmp(token, "MODE2_FORM_MIX"))
 				{
+					show_raw_message();
 					outtoc->tracks[trknum].trktype = CD_TRACK_MODE2_FORM_MIX;
 					outtoc->tracks[trknum].datasize = 2336;
 					outtoc->tracks[trknum].subtype = CD_SUB_NONE;
@@ -353,9 +361,6 @@ trycolonagain:
 				}
 				else if (!strcmp(token, "MODE2_RAW"))
 				{
-					printf("\nWarning: Track %d uses RAW format data.  Although such images may be created, MAME cannot read them at present.\n", trknum+1);
-					printf("To get usable data, burn this image to a disc or CD emulator and read it as a normal image with CDRDAO.\n");
-
 					outtoc->tracks[trknum].trktype = CD_TRACK_MODE2_RAW;
 					outtoc->tracks[trknum].datasize = 2352;
 					outtoc->tracks[trknum].subtype = CD_SUB_NONE;

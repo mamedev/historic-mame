@@ -89,9 +89,9 @@ static void tank8_get_tile_info2(int tile_index)
 
 VIDEO_START( tank8 )
 {
-	helper1 = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
-	helper2 = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
-	helper3 = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
+	helper1 = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
+	helper2 = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
+	helper3 = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
 
 	if (helper1 == NULL)
 		return 1;
@@ -195,7 +195,7 @@ VIDEO_UPDATE( tank8 )
 
 VIDEO_EOF( tank8 )
 {
-	const rectangle* clip = &Machine->visible_area;
+	const rectangle* clip = &Machine->visible_area[0];
 
 	int x;
 	int y;
@@ -205,8 +205,8 @@ VIDEO_EOF( tank8 )
 	fillbitmap(helper2, 8, clip);
 	fillbitmap(helper3, 8, clip);
 
-	draw_sprites(helper2, &Machine->visible_area);
-	draw_bullets(helper3, &Machine->visible_area);
+	draw_sprites(helper2, &Machine->visible_area[0]);
+	draw_bullets(helper3, &Machine->visible_area[0]);
 
 	for (y = clip->min_y; y <= clip->max_y; y++)
 	{

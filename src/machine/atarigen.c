@@ -267,7 +267,7 @@ static void scanline_interrupt_callback(int param)
 	atarigen_scanline_int_gen();
 
 	/* set a new timer to go off at the same scan line next frame */
-	timer_adjust(scanline_interrupt_timer, TIME_IN_HZ(Machine->drv->frames_per_second), 0, 0);
+	timer_adjust(scanline_interrupt_timer, TIME_IN_HZ(Machine->refresh_rate[0]), 0, 0);
 }
 
 
@@ -846,10 +846,10 @@ void atarigen_scanline_timer_reset(atarigen_scanline_callback update_graphics, i
 	scanlines_per_callback = frequency;
 
 	/* compute the last scanline */
-	last_scanline = (int)(TIME_IN_HZ(Machine->drv->frames_per_second) / cpu_getscanlineperiod());
+	last_scanline = (int)(TIME_IN_HZ(Machine->refresh_rate[0]) / cpu_getscanlineperiod());
 
 	/* set a timer to go off on the next VBLANK */
-	timer_set(cpu_getscanlinetime(Machine->drv->screen_height), 0, vblank_timer);
+	timer_set(cpu_getscanlinetime(Machine->drv->screen[0].maxheight), 0, vblank_timer);
 }
 
 
@@ -861,10 +861,10 @@ void atarigen_scanline_timer_reset(atarigen_scanline_callback update_graphics, i
 static void vblank_timer(int param)
 {
 	/* set a timer to go off at scanline 0 */
-	timer_set(TIME_IN_USEC(Machine->drv->vblank_duration), 0, scanline_timer);
+	timer_set(Machine->drv->screen[0].vblank_time, 0, scanline_timer);
 
 	/* set a timer to go off on the next VBLANK */
-	timer_set(cpu_getscanlinetime(Machine->drv->screen_height), 1, vblank_timer);
+	timer_set(cpu_getscanlinetime(Machine->drv->screen[0].maxheight), 1, vblank_timer);
 }
 
 
@@ -1027,7 +1027,7 @@ static void atarivc_common_w(offs_t offset, UINT16 newword)
 			/* check for palette banking */
 			if (atarivc_state.palette_bank != (((newword & 0x0400) >> 10) ^ 1))
 			{
-				force_partial_update(cpu_getscanline());
+				force_partial_update(0, cpu_getscanline());
 				atarivc_state.palette_bank = ((newword & 0x0400) >> 10) ^ 1;
 			}
 			break;
@@ -1113,7 +1113,7 @@ READ16_HANDLER( atarivc_r )
 
 		if (result > 255)
 			result = 255;
-		if (result > Machine->visible_area.max_y)
+		if (result > Machine->visible_area[0].max_y)
 			result |= 0x4000;
 
 		return result;
@@ -1303,7 +1303,7 @@ WRITE16_HANDLER( atarigen_playfield2_latched_msb_w )
 
 int atarigen_get_hblank(void)
 {
-	return (cpu_gethorzbeampos() > (Machine->drv->screen_width * 9 / 10));
+	return (cpu_gethorzbeampos() > (Machine->drv->screen[0].maxwidth * 9 / 10));
 }
 
 
@@ -1316,15 +1316,15 @@ WRITE16_HANDLER( atarigen_halt_until_hblank_0_w )
 {
 	/* halt the CPU until the next HBLANK */
 	int hpos = cpu_gethorzbeampos();
-	int hblank = Machine->drv->screen_width * 9 / 10;
+	int hblank = Machine->drv->screen[0].maxwidth * 9 / 10;
 	double fraction;
 
 	/* if we're in hblank, set up for the next one */
 	if (hpos >= hblank)
-		hblank += Machine->drv->screen_width;
+		hblank += Machine->drv->screen[0].maxwidth;
 
 	/* halt and set a timer to wake up */
-	fraction = (double)(hblank - hpos) / (double)Machine->drv->screen_width;
+	fraction = (double)(hblank - hpos) / (double)Machine->drv->screen[0].maxwidth;
 	timer_set(cpu_getscanlineperiod() * fraction, 0, unhalt_cpu);
 	cpunum_set_input_line(0, INPUT_LINE_HALT, ASSERT_LINE);
 }

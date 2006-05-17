@@ -489,7 +489,7 @@ static INTERRUPT_GEN( fuuki32_interrupt )
 	if ( ((fuuki32_vregs[0x1c/4]>>16) & 0xff) == (INTERRUPTS_NUM-1 - cpu_getiloops()) )
 	{
 		cpunum_set_input_line(0, 5, PULSE_LINE);	// Raster Line IRQ
-		if(fuuki32_raster_enable) force_partial_update(cpu_getscanline());
+		if(fuuki32_raster_enable) force_partial_update(0, cpu_getscanline());
 	}
 }
 

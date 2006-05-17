@@ -189,7 +189,7 @@ static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 				code, color,
 				flipx, flipy,
 				sx, sy,
-				&Machine->visible_area,
+				&Machine->visible_area[0],
 				TRANSPARENCY_PEN, 0 );
 
 		source += 4;

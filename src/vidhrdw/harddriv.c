@@ -217,10 +217,10 @@ void hdgsp_read_from_shiftreg(UINT32 address, UINT16 *shiftreg)
 void hdgsp_display_update(UINT32 offs, int rowbytes, int scanline)
 {
 	if (scanline == 0) scanline--;
-	if (scanline <= 0 && last_rendered_scanline < Machine->visible_area.max_y)
-		force_partial_update(Machine->visible_area.max_y);
+	if (scanline <= 0 && last_rendered_scanline < Machine->visible_area[0].max_y)
+		force_partial_update(0, Machine->visible_area[0].max_y);
 	else
-		force_partial_update(scanline);
+		force_partial_update(0, scanline);
 	gfx_offset = offs >> hdgsp_multisync;
 	gfx_offsetscan = scanline + 1;
 	gfx_rowbytes = rowbytes >> hdgsp_multisync;
@@ -238,7 +238,7 @@ static void update_palette_bank(int newbank)
 {
 	if (gfx_palettebank != newbank)
 	{
-		force_partial_update(cpu_getscanline());
+		force_partial_update(0, cpu_getscanline());
 		gfx_palettebank = newbank;
 	}
 }
@@ -303,7 +303,7 @@ WRITE16_HANDLER( hdgsp_control_hi_w )
 			data = data & (15 >> hdgsp_multisync);
 			if (gfx_finescroll != data)
 			{
-				force_partial_update(cpu_getscanline() - 1);
+				force_partial_update(0, cpu_getscanline() - 1);
 				gfx_finescroll = data;
 			}
 			break;

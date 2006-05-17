@@ -83,7 +83,7 @@ VIDEO_UPDATE( exzisus )
 	int gfx_num, gfx_attr, gfx_offs;
 
 	/* Is this correct ? */
-	fillbitmap(bitmap, Machine->pens[1023], &Machine->visible_area);
+	fillbitmap(bitmap, Machine->pens[1023], &Machine->visible_area[0]);
 
 	/* ---------- 1st TC0010VCU ---------- */
 	sx = 0;
@@ -149,7 +149,7 @@ VIDEO_UPDATE( exzisus )
 						color,
 						flip_screen, flip_screen,
 						x, y,
-						&Machine->visible_area, TRANSPARENCY_PEN, 15);
+						&Machine->visible_area[0], TRANSPARENCY_PEN, 15);
 				goffs += 2;
 			}
 			gfx_offs += height << 1;
@@ -219,7 +219,7 @@ VIDEO_UPDATE( exzisus )
 						color,
 						flip_screen, flip_screen,
 						x, y,
-						&Machine->visible_area, TRANSPARENCY_PEN, 15);
+						&Machine->visible_area[0], TRANSPARENCY_PEN, 15);
 				goffs += 2;
 			}
 			gfx_offs += height << 1;

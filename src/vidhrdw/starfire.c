@@ -29,7 +29,7 @@ static UINT8 starfire_color;
 VIDEO_START( starfire )
 {
 	/* make a temporary bitmap */
-	tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
+	tmpbitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
 	if (!tmpbitmap)
 		return 1;
 
@@ -283,7 +283,7 @@ void starfire_video_update(int scanline, int count)
 VIDEO_UPDATE( starfire )
 {
 	/* copy the bitmap, remapping the colors */
-	copybitmap_remap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+	copybitmap_remap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area[0], TRANSPARENCY_NONE, 0);
 }
 
 

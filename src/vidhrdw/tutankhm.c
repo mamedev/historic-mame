@@ -95,7 +95,7 @@ VIDEO_UPDATE( tutankhm )
 				scroll[i] = 0;
 		}
 
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 	}
 }
 

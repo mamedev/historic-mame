@@ -331,7 +331,7 @@ static READ32_HANDLER( boardconfig_r )
     111----- rev=5
     */
 
-	if( Machine->drv->screen_height == 1024 )
+	if( Machine->drv->screen[0].maxheight == 1024 )
 	{
 		return 64|32|8;
 	}

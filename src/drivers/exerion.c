@@ -37,7 +37,7 @@ static READ8_HANDLER( exerion_port3_r )
 	/* bit 0 is VBLANK, which we simulate manually */
 	int result = input_port_3_r(offset);
 	int ybeam = cpu_getscanline();
-	if (ybeam > Machine->visible_area.max_y)
+	if (ybeam > Machine->visible_area[0].max_y)
 		result |= 1;
 	return result;
 }

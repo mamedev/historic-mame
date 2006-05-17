@@ -283,7 +283,7 @@ WRITE32_HANDLER( stv_vdp1_regs_w )
 			if ( STV_VDP1_PTMR == 1 )
 			{
 				if ( vdp1_sprite_log ) logerror( "VDP1: Access to register PTMR = %1X\n", STV_VDP1_PTMR );
-				stv_vdp1_process_list( NULL, &Machine->visible_area );
+				stv_vdp1_process_list( NULL, &Machine->visible_area[0] );
 
 				if(!(stv_scu[40] & 0x2000)) /*Sprite draw end irq*/
 				{

@@ -299,7 +299,7 @@ static void DebugMeshInit( void )
 	m_b_debugclear = 1;
 	m_n_debugcoord = 0;
 	m_n_debugskip = 0;
-	debugmesh = auto_bitmap_alloc_depth( Machine->drv->screen_width, Machine->drv->screen_height, 16 );
+	debugmesh = auto_bitmap_alloc_depth( Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight, 16 );
 }
 
 static void DebugMesh( int n_coordx, int n_coordy )
@@ -402,8 +402,8 @@ static void DebugMesh( int n_coordx, int n_coordy )
 		{
 			if( (INT16)n_x.w.h >= 0 &&
 				(INT16)n_y.w.h >= 0 &&
-				(INT16)n_x.w.h <= Machine->drv->screen_width - 1 &&
-				(INT16)n_y.w.h <= Machine->drv->screen_height - 1 )
+				(INT16)n_x.w.h <= Machine->drv->screen[0].maxwidth - 1 &&
+				(INT16)n_y.w.h <= Machine->drv->screen[0].maxheight - 1 )
 			{
 				if( read_pixel( debugmesh, n_x.w.h, n_y.w.h ) != 0xffff )
 				{
@@ -434,11 +434,11 @@ static void DebugCheckKeys( void )
 	}
 	if( m_b_debugmesh || m_b_debugtexture )
 	{
-		set_visible_area( 0, Machine->drv->screen_width - 1, 0, Machine->drv->screen_height - 1 );
+		set_visible_area(0,  0, Machine->drv->screen[0].maxwidth - 1, 0, Machine->drv->screen[0].maxheight - 1 );
 	}
 	else
 	{
-		set_visible_area( 0, m_n_screenwidth - 1, 0, m_n_screenheight - 1 );
+		set_visible_area(0,  0, m_n_screenwidth - 1, 0, m_n_screenheight - 1 );
 	}
 
 	if( code_pressed_memory( KEYCODE_I ) )
@@ -530,14 +530,14 @@ static int DebugTextureDisplay( mame_bitmap *bitmap )
 
 	if( m_b_debugtexture )
 	{
-		for( n_y = 0; n_y < Machine->drv->screen_height; n_y++ )
+		for( n_y = 0; n_y < Machine->drv->screen[0].maxheight; n_y++ )
 		{
 			int n_x;
 			int n_xi;
 			int n_yi;
 			unsigned short p_n_interleave[ 1024 ];
 
-			for( n_x = 0; n_x < Machine->drv->screen_width; n_x++ )
+			for( n_x = 0; n_x < Machine->drv->screen[0].maxwidth; n_x++ )
 			{
 				if( m_n_debuginterleave == 0 )
 				{
@@ -556,7 +556,7 @@ static int DebugTextureDisplay( mame_bitmap *bitmap )
 				}
 				p_n_interleave[ n_x ] = m_p_p_vram[ n_yi ][ n_xi ];
 			}
-			draw_scanline16( bitmap, 0, n_y, Machine->drv->screen_width, p_n_interleave, Machine->pens, -1 );
+			draw_scanline16( bitmap, 0, n_y, Machine->drv->screen[0].maxwidth, p_n_interleave, Machine->pens, -1 );
 		}
 	}
 	return m_b_debugtexture;
@@ -569,7 +569,7 @@ static void updatevisiblearea( void )
 	if( ( m_n_gpustatus & ( 1 << 0x14 ) ) != 0 )
 	{
 		/* pal */
-		set_refresh_rate( 50 );
+		set_refresh_rate( 0, 50 );
 		switch( ( m_n_gpustatus >> 0x13 ) & 1 )
 		{
 		case 0:
@@ -583,7 +583,7 @@ static void updatevisiblearea( void )
 	else
 	{
 		/* ntsc */
-		set_refresh_rate( 60 );
+		set_refresh_rate( 0, 60 );
 		switch( ( m_n_gpustatus >> 0x13 ) & 1 )
 		{
 		case 0:
@@ -625,7 +625,7 @@ static void updatevisiblearea( void )
 		m_n_screenwidth = 640;
 		break;
 	}
-	set_visible_area( 0, m_n_screenwidth - 1, 0, m_n_screenheight - 1 );
+	set_visible_area(0,  0, m_n_screenwidth - 1, 0, m_n_screenheight - 1 );
 }
 
 static int psx_gpu_init( void )
@@ -646,13 +646,13 @@ static int psx_gpu_init( void )
 	m_n_lightgun_x = 0;
 	m_n_lightgun_y = 0;
 
-	m_n_vram_size = Machine->drv->screen_width * Machine->drv->screen_height;
+	m_n_vram_size = Machine->drv->screen[0].maxwidth * Machine->drv->screen[0].maxheight;
 	m_p_vram = auto_malloc( m_n_vram_size * 2 );
 	memset( m_p_vram, 0x00, m_n_vram_size * 2 );
 
 	for( n_line = 0; n_line < 1024; n_line++ )
 	{
-		m_p_p_vram[ n_line ] = &m_p_vram[ ( n_line % Machine->drv->screen_height ) * Machine->drv->screen_width ];
+		m_p_p_vram[ n_line ] = &m_p_vram[ ( n_line % Machine->drv->screen[0].maxheight ) * Machine->drv->screen[0].maxwidth ];
 	}
 
 	for( n_level = 0; n_level < MAX_LEVEL; n_level++ )

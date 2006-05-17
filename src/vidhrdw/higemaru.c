@@ -131,7 +131,7 @@ static void higemaru_draw_sprites( mame_bitmap *bitmap )
 				col,
 				flipx,flipy,
 				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,15);
+				&Machine->visible_area[0],TRANSPARENCY_PEN,15);
 
 		/* draw again with wraparound */
 		drawgfx(bitmap,Machine->gfx[1],
@@ -139,12 +139,12 @@ static void higemaru_draw_sprites( mame_bitmap *bitmap )
 				col,
 				flipx,flipy,
 				sx - 256,sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,15);
+				&Machine->visible_area[0],TRANSPARENCY_PEN,15);
 	}
 }
 
 VIDEO_UPDATE( higemaru )
 {
-	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
 	higemaru_draw_sprites(bitmap);
 }

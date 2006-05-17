@@ -233,8 +233,8 @@ static void afega_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect, UI
 {
 	int offs;
 
-	int max_x		=	Machine->drv->screen_width;
-	int max_y		=	Machine->drv->screen_height;
+	int max_x		=	Machine->drv->screen[0].maxwidth;
+	int max_y		=	Machine->drv->screen[0].maxheight;
 
 	for ( offs = 0; offs < spriteram_size/2; offs += 16/2 )
 	{

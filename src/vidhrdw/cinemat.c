@@ -51,10 +51,10 @@ void cinemat_vector_callback(INT16 sx, INT16 sy, INT16 ex, INT16 ey, UINT8 shift
 	int intensity = 0xff;
 
 	/* adjust for slop */
-	sx = sx - Machine->visible_area.min_x;
-	ex = ex - Machine->visible_area.min_x;
-	sy = sy - Machine->visible_area.min_y;
-	ey = ey - Machine->visible_area.min_y;
+	sx = sx - Machine->visible_area[0].min_x;
+	ex = ex - Machine->visible_area[0].min_x;
+	sy = sy - Machine->visible_area[0].min_y;
+	ey = ey - Machine->visible_area[0].min_y;
 
 	/* point intensity is determined by the shift value */
 	if (sx == ex && sy == ey)

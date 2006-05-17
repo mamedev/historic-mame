@@ -183,7 +183,7 @@ static void interrupt_common(void)
 {
 	int i,next;
 
-	force_partial_update(CurrentScan);
+	force_partial_update(0, CurrentScan);
 
 	next = (CurrentScan + 1) % MAX_INT_PER_FRAME;
 	for (i = 0;i < 8;i++)
@@ -722,10 +722,10 @@ static void init_star_field(void)
 	{
 		for (x = -16;x < CLOCKS_PER_LINE-16;x++)	/* perfect values determined with screen shots */
 		{
-			if (x >= Machine->visible_area.min_x &&
-				x <= Machine->visible_area.max_x &&
-				y >= Machine->visible_area.min_y &&
-				y <= Machine->visible_area.max_y)
+			if (x >= Machine->visible_area[0].min_x &&
+				x <= Machine->visible_area[0].max_x &&
+				y >= Machine->visible_area[0].min_y &&
+				y <= Machine->visible_area[0].max_y)
 			{
 				if ((rng[count] & 0x1fe00) == 0x0fe00)
 					star[x+SCREEN_WIDTH*y] = 1;
@@ -1079,7 +1079,7 @@ VIDEO_UPDATE( seawolf2 )
 		if (centre<2)   centre=2;
 		if (centre>317) centre=317;
 
-		draw_crosshair(bitmap,centre,35,&Machine->visible_area,0);
+		draw_crosshair(bitmap,centre,35,&Machine->visible_area[0],0);
 
 		/* Player 2 */
 
@@ -1090,7 +1090,7 @@ VIDEO_UPDATE( seawolf2 )
 			if (centre<1)   centre=1;
 			if (centre>316) centre=316;
 
-			draw_crosshair(bitmap,centre,33,&Machine->visible_area,1);
+			draw_crosshair(bitmap,centre,33,&Machine->visible_area[0],1);
 		}
 	}
 }

@@ -167,7 +167,7 @@ VIDEO_UPDATE( megazone )
 		}
 
 
-		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 	}
 
 
@@ -191,7 +191,7 @@ VIDEO_UPDATE( megazone )
 					spriteram[offs + 0] & 0x0f,
 					flipx,flipy,
 					sx,sy,
-					&Machine->visible_area,TRANSPARENCY_COLOR,0);
+					&Machine->visible_area[0],TRANSPARENCY_COLOR,0);
 		}
 	}
 

@@ -184,7 +184,7 @@ void tnzs_vh_draw_foreground(mame_bitmap *bitmap,
 				color,
 				flipx,flipy,
 				sx,sy+2,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 
 		/* wrap around x */
 		drawgfx(bitmap,Machine->gfx[0],
@@ -192,7 +192,7 @@ void tnzs_vh_draw_foreground(mame_bitmap *bitmap,
 				color,
 				flipx,flipy,
 				sx + 512,sy+2,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 	}
 }
 
@@ -204,7 +204,7 @@ VIDEO_UPDATE( tnzs )
 
 
 	/* Blank the background */
-	fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
+	fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area[0]);
 
 	/* Redraw the background tiles (c400-c5ff) */
 	tnzs_vh_draw_background(bitmap, tnzs_objram + 0x400);

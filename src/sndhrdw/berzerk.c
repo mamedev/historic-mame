@@ -110,7 +110,7 @@ static void berzerk_sh_start(void)
 			berzerknoisemulate = 0;
 	}
 
-	timer_pulse(TIME_IN_HZ(Machine->drv->frames_per_second), 0, berzerk_sh_update);
+	timer_pulse(TIME_IN_HZ(Machine->drv->screen[0].refresh_rate), 0, berzerk_sh_update);
 }
 
 WRITE8_HANDLER( berzerk_sound_w )

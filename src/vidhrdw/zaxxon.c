@@ -222,12 +222,12 @@ static void zaxxon_draw_background( mame_bitmap *bitmap, const rectangle *clipre
 				scroll = -(2*(zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7))) - 2;
 		}
 
-		skew = 72 - (255 - Machine->visible_area.max_y);
+		skew = 72 - (255 - Machine->visible_area[0].max_y);
 
-		clip.min_x = Machine->visible_area.min_x;
-		clip.max_x = Machine->visible_area.max_x;
+		clip.min_x = Machine->visible_area[0].min_x;
+		clip.max_x = Machine->visible_area[0].max_x;
 
-		for (i = Machine->visible_area.max_y;i >= Machine->visible_area.min_y;i-=2)
+		for (i = Machine->visible_area[0].max_y;i >= Machine->visible_area[0].min_y;i-=2)
 		{
 			clip.min_y = i-1;
 			clip.max_y = i;

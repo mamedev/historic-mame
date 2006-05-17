@@ -83,10 +83,10 @@ WRITE16_HANDLER( aztarac_ubr_w )
 
 VIDEO_START( aztarac )
 {
-	int xmin = Machine->visible_area.min_x;
-	int ymin = Machine->visible_area.min_y;
-	int xmax = Machine->visible_area.max_x;
-	int ymax = Machine->visible_area.max_y;
+	int xmin = Machine->visible_area[0].min_x;
+	int ymin = Machine->visible_area[0].min_y;
+	int xmax = Machine->visible_area[0].max_x;
+	int ymax = Machine->visible_area[0].max_y;
 
 	xcenter=((xmax + xmin) / 2) << 16;
 	ycenter=((ymax + ymin) / 2) << 16;

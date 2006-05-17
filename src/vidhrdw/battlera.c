@@ -397,14 +397,14 @@ INTERRUPT_GEN( battlera_interrupt )
 
 	/* If raster interrupt occurs, refresh screen _up_ to this point */
 	if (rcr_enable && (current_scanline+56)==HuC6270_registers[6]) {
-		force_partial_update(current_scanline);
+		force_partial_update(0, current_scanline);
 		cpunum_set_input_line(0, 0, HOLD_LINE); /* RCR interrupt */
 	}
 
 	/* Start of vblank */
 	else if (current_scanline==240) {
 		bldwolf_vblank=1;
-		force_partial_update(240);
+		force_partial_update(0, 240);
 		if (irq_enable)
 			cpunum_set_input_line(0, 0, HOLD_LINE); /* VBL */
 	}

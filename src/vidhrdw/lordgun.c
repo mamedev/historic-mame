@@ -213,10 +213,10 @@ void lordgun_update_gun(int i)
 
 	lorddgun_calc_gun_scr(i);
 
-	if (	(lordgun_gun[i].scr_x < Machine->visible_area.min_x)	||
-			(lordgun_gun[i].scr_x > Machine->visible_area.max_x)	||
-			(lordgun_gun[i].scr_y < Machine->visible_area.min_y)	||
-			(lordgun_gun[i].scr_y > Machine->visible_area.max_y)	)
+	if (	(lordgun_gun[i].scr_x < Machine->visible_area[0].min_x)	||
+			(lordgun_gun[i].scr_x > Machine->visible_area[0].max_x)	||
+			(lordgun_gun[i].scr_y < Machine->visible_area[0].min_y)	||
+			(lordgun_gun[i].scr_y > Machine->visible_area[0].max_y)	)
 		lordgun_gun[i].hw_x = lordgun_gun[i].hw_y = 0;
 }
 
@@ -255,7 +255,7 @@ static void lordgun_draw_sprites(mame_bitmap *bitmap)
 		drawgfx(	bitmap,	Machine->gfx[0],
 					code,	color,
 					flipx,	flipy,	sx,	sy,
-					&Machine->visible_area, TRANSPARENCY_PEN, 0x3f);
+					&Machine->visible_area[0], TRANSPARENCY_PEN, 0x3f);
 	}
 }
 

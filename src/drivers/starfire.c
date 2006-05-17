@@ -82,7 +82,7 @@ static void update_callback(int scanline)
 	/* update the previous chunk of scanlines */
 	starfire_video_update(scanline, SCANLINE_UPDATE_CHUNK);
 	scanline += SCANLINE_UPDATE_CHUNK;
-	if (scanline >= Machine->drv->screen_height)
+	if (scanline >= Machine->drv->screen[0].maxheight)
 		scanline = 32;
 	timer_set(cpu_getscanlinetime(scanline + SCANLINE_UPDATE_CHUNK - 1), scanline, update_callback);
 }

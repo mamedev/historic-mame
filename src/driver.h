@@ -78,6 +78,10 @@
 #include "sndhrdw/generic.h"
 #include "vidhrdw/generic.h"
 
+#ifdef NEW_RENDER
+#include "render.h"
+#endif
+
 #ifdef MESS
 #include "messdrv.h"
 #endif
@@ -196,8 +200,6 @@
 struct _machine_config
 {
 	cpu_config			cpu[MAX_CPU];				/* array of CPUs in the system */
-	float				frames_per_second;			/* number of frames per second */
-	int					vblank_duration;			/* duration of a VBLANK, in msec/usec */
 	UINT32				cpu_slices_per_frame;		/* number of times to interleave execution per frame */
 	INT32				watchdog_vblank_count;		/* number of VBLANKs until the watchdog kills us */
 	double				watchdog_time;				/* length of time until the watchdog kills us */
@@ -209,12 +211,10 @@ struct _machine_config
 	void 				(*memcard_handler)(mame_file *file, int action); /* memory card save/load callback  */
 
 	UINT32				video_attributes;			/* flags describing the video system */
-	UINT32				aspect_x, aspect_y;			/* aspect ratio of the video screen */
-	int					screen_width, screen_height;/* size of the video screen (in pixels) */
-	rectangle			default_visible_area;		/* default visible area of the screen */
 	const gfx_decode *	gfxdecodeinfo;				/* pointer to graphics decoding information */
 	UINT32				total_colors;				/* total number of colors in the palette */
 	UINT32				color_table_len;			/* length of the color indirection table */
+	screen_config		screen[MAX_SCREENS];		/* total number of screens */
 
 	void 				(*init_palette)(UINT16 *colortable, const UINT8 *color_prom); /* one-time palette init callback  */
 	int					(*video_start)(void);		/* one-time video start callback */
@@ -276,8 +276,10 @@ struct _game_driver
 	{																	\
 		cpu_config *cpu = NULL;											\
 		sound_config *sound = NULL;										\
+		screen_config *screen = &machine->screen[0];					\
 		(void)cpu;														\
 		(void)sound;													\
+		(void)screen;													\
 
 #define MACHINE_DRIVER_END 												\
 	}																	\
@@ -357,12 +359,6 @@ struct _game_driver
 
 
 /* core parameters */
-#define MDRV_FRAMES_PER_SECOND(rate)									\
-	machine->frames_per_second = (rate);								\
-
-#define MDRV_VBLANK_DURATION(duration)									\
-	machine->vblank_duration = (duration);								\
-
 #define MDRV_INTERLEAVE(interleave)										\
 	machine->cpu_slices_per_frame = (interleave);						\
 
@@ -391,20 +387,6 @@ struct _game_driver
 #define MDRV_VIDEO_ATTRIBUTES(flags)									\
 	machine->video_attributes = (flags);								\
 
-#define MDRV_ASPECT_RATIO(num, den)										\
-	machine->aspect_x = (num);											\
-	machine->aspect_y = (den);											\
-
-#define MDRV_SCREEN_SIZE(width, height)									\
-	machine->screen_width = (width);									\
-	machine->screen_height = (height);									\
-
-#define MDRV_VISIBLE_AREA(minx, maxx, miny, maxy)						\
-	machine->default_visible_area.min_x = (minx);						\
-	machine->default_visible_area.max_x = (maxx);						\
-	machine->default_visible_area.min_y = (miny);						\
-	machine->default_visible_area.max_y = (maxy);						\
-
 #define MDRV_GFXDECODE(gfx)												\
 	machine->gfxdecodeinfo = (gfx);										\
 
@@ -430,6 +412,53 @@ struct _game_driver
 
 #define MDRV_VIDEO_UPDATE(name)											\
 	machine->video_update = video_update_##name;						\
+
+
+/* add/remove screens */
+#define MDRV_SCREEN_ADD(tag, palbase)									\
+	screen = driver_add_screen(machine, (tag), (palbase));				\
+
+#define MDRV_SCREEN_REMOVE(tag)											\
+	driver_remove_screen(machine, tag);									\
+
+#define MDRV_SCREEN_MODIFY(tag)											\
+	screen = driver_find_screen(machine, tag);							\
+
+#define MDRV_SCREEN_REFRESH_RATE(rate)									\
+	screen->refresh_rate = (rate);										\
+
+#define MDRV_SCREEN_VBLANK_TIME(time)									\
+	screen->vblank_time = (time);										\
+
+#define MDRV_SCREEN_ASPECT(ratio)										\
+	screen->aspect = (ratio);											\
+
+#define MDRV_SCREEN_MAXSIZE(width, height)								\
+	screen->maxwidth = (width);											\
+	screen->maxheight = (height);										\
+
+#define MDRV_SCREEN_VISIBLE_AREA(minx, maxx, miny, maxy)				\
+	screen->default_visible_area.min_x = (minx);						\
+	screen->default_visible_area.max_x = (maxx);						\
+	screen->default_visible_area.min_y = (miny);						\
+	screen->default_visible_area.max_y = (maxy);						\
+
+
+/* video backwards compatibility */
+#define MDRV_FRAMES_PER_SECOND(rate)									\
+	MDRV_SCREEN_REFRESH_RATE(rate)										\
+
+#define MDRV_VBLANK_DURATION(duration)									\
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(duration))						\
+
+#define MDRV_ASPECT_RATIO(num, den)										\
+	MDRV_SCREEN_ASPECT((float)(num) / (float)(den))						\
+
+#define MDRV_SCREEN_SIZE(width, height)									\
+	MDRV_SCREEN_MAXSIZE(width, height)									\
+
+#define MDRV_VISIBLE_AREA(minx, maxx, miny, maxy)						\
+	MDRV_SCREEN_VISIBLE_AREA(minx, maxx, miny, maxy)					\
 
 
 /* add/remove speakers */
@@ -568,6 +597,10 @@ void driver_remove_speaker(machine_config *machine, const char *tag);
 sound_config *driver_add_sound(machine_config *machine, const char *tag, int type, int clock);
 sound_config *driver_find_sound(machine_config *machine, const char *tag);
 void driver_remove_sound(machine_config *machine, const char *tag);
+
+screen_config *driver_add_screen(machine_config *machine, const char *tag, int palbase);
+screen_config *driver_find_screen(machine_config *machine, const char *tag);
+void driver_remove_screen(machine_config *machine, const char *tag);
 
 const game_driver *driver_get_clone(const game_driver *driver);
 

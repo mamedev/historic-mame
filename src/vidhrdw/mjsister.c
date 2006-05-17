@@ -110,5 +110,5 @@ VIDEO_UPDATE( mjsister )
 		copybitmap(bitmap,mjsister_tmpbitmap1,f,f,2,0,cliprect,TRANSPARENCY_PEN,0);
 	}
 	else
-		fillbitmap(bitmap, get_black_pen(), &Machine->visible_area);
+		fillbitmap(bitmap, get_black_pen(), &Machine->visible_area[0]);
 }

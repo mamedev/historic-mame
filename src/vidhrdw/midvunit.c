@@ -182,14 +182,14 @@ static void render_straight_flat_quad(void)
 	ey = vert[botleft].y;
 
 	/* clip */
-	if (sx < Machine->visible_area.min_x)
-		sx = Machine->visible_area.min_x;
-	if (ex > Machine->visible_area.max_x)
-		ex = Machine->visible_area.max_x;
-	if (sy < Machine->visible_area.min_y)
-		sy = Machine->visible_area.min_y;
-	if (ey > Machine->visible_area.max_y)
-		ey = Machine->visible_area.max_y;
+	if (sx < Machine->visible_area[0].min_x)
+		sx = Machine->visible_area[0].min_x;
+	if (ex > Machine->visible_area[0].max_x)
+		ex = Machine->visible_area[0].max_x;
+	if (sy < Machine->visible_area[0].min_y)
+		sy = Machine->visible_area[0].min_y;
+	if (ey > Machine->visible_area[0].max_y)
+		ey = Machine->visible_area[0].max_y;
 
 	ADD_TO_PIXEL_COUNT((ey - sy + 1) * (ex - sx + 1));
 
@@ -219,14 +219,14 @@ static void render_straight_flat_dither_quad(void)
 	ey = vert[botleft].y;
 
 	/* clip */
-	if (sx < Machine->visible_area.min_x)
-		sx = Machine->visible_area.min_x;
-	if (ex > Machine->visible_area.max_x)
-		ex = Machine->visible_area.max_x;
-	if (sy < Machine->visible_area.min_y)
-		sy = Machine->visible_area.min_y;
-	if (ey > Machine->visible_area.max_y)
-		ey = Machine->visible_area.max_y;
+	if (sx < Machine->visible_area[0].min_x)
+		sx = Machine->visible_area[0].min_x;
+	if (ex > Machine->visible_area[0].max_x)
+		ex = Machine->visible_area[0].max_x;
+	if (sy < Machine->visible_area[0].min_y)
+		sy = Machine->visible_area[0].min_y;
+	if (ey > Machine->visible_area[0].max_y)
+		ey = Machine->visible_area[0].max_y;
 
 	ADD_TO_PIXEL_COUNT((ey - sy + 1) * (ex - sx + 1));
 
@@ -280,22 +280,22 @@ static void render_straight_tex_quad(void)
 		dudy = dvdy = 1;
 
 	/* clip */
-	if (sx < Machine->visible_area.min_x)
+	if (sx < Machine->visible_area[0].min_x)
 	{
-		su += (Machine->visible_area.min_x - sx) * dudx;
-		sv += (Machine->visible_area.min_x - sx) * dvdx;
-		sx = Machine->visible_area.min_x;
+		su += (Machine->visible_area[0].min_x - sx) * dudx;
+		sv += (Machine->visible_area[0].min_x - sx) * dvdx;
+		sx = Machine->visible_area[0].min_x;
 	}
-	if (ex > Machine->visible_area.max_x)
-		ex = Machine->visible_area.max_x;
-	if (sy < Machine->visible_area.min_y)
+	if (ex > Machine->visible_area[0].max_x)
+		ex = Machine->visible_area[0].max_x;
+	if (sy < Machine->visible_area[0].min_y)
 	{
-		su += (Machine->visible_area.min_y - sy) * dudy;
-		sv += (Machine->visible_area.min_y - sy) * dvdy;
-		sy = Machine->visible_area.min_y;
+		su += (Machine->visible_area[0].min_y - sy) * dudy;
+		sv += (Machine->visible_area[0].min_y - sy) * dvdy;
+		sy = Machine->visible_area[0].min_y;
 	}
-	if (ey > Machine->visible_area.max_y)
-		ey = Machine->visible_area.max_y;
+	if (ey > Machine->visible_area[0].max_y)
+		ey = Machine->visible_area[0].max_y;
 
 	ADD_TO_PIXEL_COUNT((ey - sy + 1) * (ex - sx + 1));
 
@@ -351,22 +351,22 @@ static void render_straight_textrans_quad(void)
 		dudy = dvdy = 1;
 
 	/* clip */
-	if (sx < Machine->visible_area.min_x)
+	if (sx < Machine->visible_area[0].min_x)
 	{
-		su += (Machine->visible_area.min_x - sx) * dudx;
-		sv += (Machine->visible_area.min_x - sx) * dvdx;
-		sx = Machine->visible_area.min_x;
+		su += (Machine->visible_area[0].min_x - sx) * dudx;
+		sv += (Machine->visible_area[0].min_x - sx) * dvdx;
+		sx = Machine->visible_area[0].min_x;
 	}
-	if (ex > Machine->visible_area.max_x)
-		ex = Machine->visible_area.max_x;
-	if (sy < Machine->visible_area.min_y)
+	if (ex > Machine->visible_area[0].max_x)
+		ex = Machine->visible_area[0].max_x;
+	if (sy < Machine->visible_area[0].min_y)
 	{
-		su += (Machine->visible_area.min_y - sy) * dudy;
-		sv += (Machine->visible_area.min_y - sy) * dvdy;
-		sy = Machine->visible_area.min_y;
+		su += (Machine->visible_area[0].min_y - sy) * dudy;
+		sv += (Machine->visible_area[0].min_y - sy) * dvdy;
+		sy = Machine->visible_area[0].min_y;
 	}
-	if (ey > Machine->visible_area.max_y)
-		ey = Machine->visible_area.max_y;
+	if (ey > Machine->visible_area[0].max_y)
+		ey = Machine->visible_area[0].max_y;
 
 	ADD_TO_PIXEL_COUNT((ey - sy + 1) * (ex - sx + 1));
 
@@ -423,22 +423,22 @@ static void render_straight_textransmask_quad(void)
 		dudy = dvdy = 1;
 
 	/* clip */
-	if (sx < Machine->visible_area.min_x)
+	if (sx < Machine->visible_area[0].min_x)
 	{
-		su += (Machine->visible_area.min_x - sx) * dudx;
-		sv += (Machine->visible_area.min_x - sx) * dvdx;
-		sx = Machine->visible_area.min_x;
+		su += (Machine->visible_area[0].min_x - sx) * dudx;
+		sv += (Machine->visible_area[0].min_x - sx) * dvdx;
+		sx = Machine->visible_area[0].min_x;
 	}
-	if (ex > Machine->visible_area.max_x)
-		ex = Machine->visible_area.max_x;
-	if (sy < Machine->visible_area.min_y)
+	if (ex > Machine->visible_area[0].max_x)
+		ex = Machine->visible_area[0].max_x;
+	if (sy < Machine->visible_area[0].min_y)
 	{
-		su += (Machine->visible_area.min_y - sy) * dudy;
-		sv += (Machine->visible_area.min_y - sy) * dvdy;
-		sy = Machine->visible_area.min_y;
+		su += (Machine->visible_area[0].min_y - sy) * dudy;
+		sv += (Machine->visible_area[0].min_y - sy) * dvdy;
+		sy = Machine->visible_area[0].min_y;
 	}
-	if (ey > Machine->visible_area.max_y)
-		ey = Machine->visible_area.max_y;
+	if (ey > Machine->visible_area[0].max_y)
+		ey = Machine->visible_area[0].max_y;
 
 	ADD_TO_PIXEL_COUNT((ey - sy + 1) * (ex - sx + 1));
 
@@ -483,9 +483,9 @@ static void render_flat_quad(void)
 	{
 		/* first tri is 0,1,2; second is 0,3,2 */
 		if (i == 0)
-			scans = setup_triangle_0(&vert[0], &vert[1], &vert[2], &Machine->visible_area);
+			scans = setup_triangle_0(&vert[0], &vert[1], &vert[2], &Machine->visible_area[0]);
 		else
-			scans = setup_triangle_0(&vert[0], &vert[3], &vert[2], &Machine->visible_area);
+			scans = setup_triangle_0(&vert[0], &vert[3], &vert[2], &Machine->visible_area[0]);
 
 		/* skip if we're clipped out */
 		if (!scans)
@@ -518,9 +518,9 @@ static void render_flat_dither_quad(void)
 	{
 		/* first tri is 0,1,2; second is 0,3,2 */
 		if (i == 0)
-			scans = setup_triangle_0(&vert[0], &vert[1], &vert[2], &Machine->visible_area);
+			scans = setup_triangle_0(&vert[0], &vert[1], &vert[2], &Machine->visible_area[0]);
 		else
-			scans = setup_triangle_0(&vert[0], &vert[3], &vert[2], &Machine->visible_area);
+			scans = setup_triangle_0(&vert[0], &vert[3], &vert[2], &Machine->visible_area[0]);
 
 		/* skip if we're clipped out */
 		if (!scans)
@@ -571,9 +571,9 @@ static void render_tex_quad(void)
 	{
 		/* first tri is 0,1,2; second is 0,3,2 */
 		if (i == 0)
-			scans = setup_triangle_2(&vert[0], &vert[1], &vert[2], &Machine->visible_area);
+			scans = setup_triangle_2(&vert[0], &vert[1], &vert[2], &Machine->visible_area[0]);
 		else
-			scans = setup_triangle_2(&vert[0], &vert[3], &vert[2], &Machine->visible_area);
+			scans = setup_triangle_2(&vert[0], &vert[3], &vert[2], &Machine->visible_area[0]);
 
 		/* skip if we're clipped out */
 		if (!scans)
@@ -623,9 +623,9 @@ static void render_textrans_quad(void)
 	{
 		/* first tri is 0,1,2; second is 0,3,2 */
 		if (i == 0)
-			scans = setup_triangle_2(&vert[0], &vert[1], &vert[2], &Machine->visible_area);
+			scans = setup_triangle_2(&vert[0], &vert[1], &vert[2], &Machine->visible_area[0]);
 		else
-			scans = setup_triangle_2(&vert[0], &vert[3], &vert[2], &Machine->visible_area);
+			scans = setup_triangle_2(&vert[0], &vert[3], &vert[2], &Machine->visible_area[0]);
 
 		/* skip if we're clipped out */
 		if (!scans)
@@ -676,9 +676,9 @@ static void render_textransmask_quad(void)
 	{
 		/* first tri is 0,1,2; second is 0,3,2 */
 		if (i == 0)
-			scans = setup_triangle_2(&vert[0], &vert[1], &vert[2], &Machine->visible_area);
+			scans = setup_triangle_2(&vert[0], &vert[1], &vert[2], &Machine->visible_area[0]);
 		else
-			scans = setup_triangle_2(&vert[0], &vert[3], &vert[2], &Machine->visible_area);
+			scans = setup_triangle_2(&vert[0], &vert[3], &vert[2], &Machine->visible_area[0]);
 
 		/* skip if we're clipped out */
 		if (!scans)
@@ -736,9 +736,9 @@ static void render_tex_dither_quad(void)
 	{
 		/* first tri is 0,1,2; second is 0,3,2 */
 		if (i == 0)
-			scans = setup_triangle_2(&vert[0], &vert[1], &vert[2], &Machine->visible_area);
+			scans = setup_triangle_2(&vert[0], &vert[1], &vert[2], &Machine->visible_area[0]);
 		else
-			scans = setup_triangle_2(&vert[0], &vert[3], &vert[2], &Machine->visible_area);
+			scans = setup_triangle_2(&vert[0], &vert[3], &vert[2], &Machine->visible_area[0]);
 
 		/* skip if we're clipped out */
 		if (!scans)
@@ -799,9 +799,9 @@ static void render_textrans_dither_quad(void)
 	{
 		/* first tri is 0,1,2; second is 0,3,2 */
 		if (i == 0)
-			scans = setup_triangle_2(&vert[0], &vert[1], &vert[2], &Machine->visible_area);
+			scans = setup_triangle_2(&vert[0], &vert[1], &vert[2], &Machine->visible_area[0]);
 		else
-			scans = setup_triangle_2(&vert[0], &vert[3], &vert[2], &Machine->visible_area);
+			scans = setup_triangle_2(&vert[0], &vert[3], &vert[2], &Machine->visible_area[0]);
 
 		/* skip if we're clipped out */
 		if (!scans)
@@ -863,9 +863,9 @@ static void render_textransmask_dither_quad(void)
 	{
 		/* first tri is 0,1,2; second is 0,3,2 */
 		if (i == 0)
-			scans = setup_triangle_2(&vert[0], &vert[1], &vert[2], &Machine->visible_area);
+			scans = setup_triangle_2(&vert[0], &vert[1], &vert[2], &Machine->visible_area[0]);
 		else
-			scans = setup_triangle_2(&vert[0], &vert[3], &vert[2], &Machine->visible_area);
+			scans = setup_triangle_2(&vert[0], &vert[3], &vert[2], &Machine->visible_area[0]);
 
 		/* skip if we're clipped out */
 		if (!scans)
@@ -1071,7 +1071,7 @@ WRITE32_HANDLER( midvunit_page_control_w )
 		polycount = pixelcount = 0;
 		framecount++;
 #endif
-		force_partial_update(cpu_getscanline() - 1);
+		force_partial_update(0, cpu_getscanline() - 1);
 	}
 	page_control = data;
 }

@@ -1614,7 +1614,7 @@ static void update_joystick_axes(void)
 
 			/* if we've only ever seen one value here, or if we've been stuck at the same value for a long */
 			/* time (1 minute), mark the axis as dead or invalid */
-			if (history[1].count == 0 || history[0].count > Machine->refresh_rate * 60)
+			if (history[1].count == 0 || history[0].count > Machine->refresh_rate[0] * 60)
 				newtype = AXIS_TYPE_INVALID;
 
 			/* scan the history and count unique values; if we get more than 3, it's analog */

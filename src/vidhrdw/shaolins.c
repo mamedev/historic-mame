@@ -191,7 +191,7 @@ static void shaolins_draw_sprites( mame_bitmap *bitmap )
 				code, color,
 				flipx, flipy,
 				sx, sy,
-				&Machine->visible_area,
+				&Machine->visible_area[0],
 				TRANSPARENCY_COLOR, 0);
 				/* transparency_color, otherwise sprites in test mode are not visible */
 		}
@@ -200,6 +200,6 @@ static void shaolins_draw_sprites( mame_bitmap *bitmap )
 
 VIDEO_UPDATE( shaolins )
 {
-	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
 	shaolins_draw_sprites(bitmap);
 }

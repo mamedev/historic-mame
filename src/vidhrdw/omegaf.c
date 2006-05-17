@@ -259,7 +259,7 @@ static int videoram_alloc(int size)
 	omegaf_bg2_videoram = auto_malloc(size);
 	memset( omegaf_bg2_videoram, 0x00, size );
 
-	if ( (bitmap_sp = auto_bitmap_alloc (Machine -> drv -> screen_width, Machine -> drv -> screen_height ) ) == NULL )
+	if ( (bitmap_sp = auto_bitmap_alloc (Machine -> drv -> screen[0].maxwidth, Machine -> drv -> screen[0].maxheight ) ) == NULL )
 		return 1;
 
 	return 0;
@@ -538,7 +538,7 @@ WRITE8_HANDLER( omegaf_sprite_overdraw_w )
 	if (sprite_overdraw_enabled != (data & 1))
 	{
 		sprite_overdraw_enabled = data & 1;
-		fillbitmap(bitmap_sp, 15, &Machine->visible_area);
+		fillbitmap(bitmap_sp, 15, &Machine->visible_area[0]);
 	}
 }
 
@@ -585,7 +585,7 @@ static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 						color,
 						flipx,flipy,
 						sx,sy,
-						&Machine->visible_area,
+						&Machine->visible_area[0],
 						TRANSPARENCY_PEN, 15);
 			}
 			else
@@ -595,7 +595,7 @@ static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 						color,
 						flipx,flipy,
 						sx,sy,
-						&Machine->visible_area,
+						&Machine->visible_area[0],
 						TRANSPARENCY_PEN, 15);
 
 				/* all the "normal" sprites clear the "static" ones */
@@ -623,7 +623,7 @@ static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 	}
 
 	if(sprite_overdraw_enabled)
-		copybitmap(bitmap, bitmap_sp, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_PEN, 15);
+		copybitmap(bitmap, bitmap_sp, 0, 0, 0, 0, &Machine->visible_area[0], TRANSPARENCY_PEN, 15);
 }
 
 VIDEO_UPDATE( omegaf )

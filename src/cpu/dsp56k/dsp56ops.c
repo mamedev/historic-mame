@@ -160,6 +160,7 @@ static void execute_one(void)
 
 
 	PC += size ;
+	change_pc(PC) ;
 
 	// Loop processing
 	if (lfFLAG)
@@ -171,6 +172,7 @@ static void execute_one(void)
 			{
 				LC-- ;
 				PC = SSH ;
+				change_pc(PC) ;
 			}
 			else
 			{
@@ -188,6 +190,7 @@ static void execute_one(void)
 			{
 				LC-- ;
 				PC -= size ;								// Eh, seems reasonable :)
+				change_pc(PC) ;
 			}
 			else
 			{
@@ -635,6 +638,7 @@ static unsigned ExecuteSpecialOpcode(void)
 				SR = SSL ;
 				SP-- ;
 				retSize = 0 ;
+				change_pc(PC) ;
 				break ;
 		}
 	}
@@ -1134,6 +1138,9 @@ static int JmpOperation(void)
 	PC = (ROPCODE((PC<<1)+2)) ;						// Can this offset by 2 bytes be handled better?  Say, for example, by moving "1 word"?
 
 	retSize = 0 ;									// Jump with no offset.
+
+	change_pc(PC) ;
+
 	return retSize ;
 }
 
@@ -1159,6 +1166,9 @@ static int BsrOperation(void)
 	PC += branchOffset ;
 
 	retSize = 0 ;									// Branch and then no offset.
+
+	change_pc(PC) ;
+
 	return retSize ;
 }
 
@@ -1190,6 +1200,8 @@ static int BraOperation(void)
 
 	dsp56k.ppc = PC ;
 	PC += branchOffset ;
+
+	change_pc(PC) ;
 
 	return retSize ;
 }
@@ -1642,6 +1654,8 @@ static int BsccOperation(void)
 			SSL = SR ;
 
 			PC += branchOffset ;
+
+			change_pc(PC) ;
 		}
 		else
 		{
@@ -1680,6 +1694,8 @@ static int BccOperation(void)
 				PC += 2 ;
     			dsp56k.ppc = PC ;
 				PC += op2 ;
+
+				change_pc(PC) ;
 			}
 			else
 			{
@@ -1706,6 +1722,8 @@ static int BccOperation(void)
 			PC += 1 ;
 			dsp56k.ppc = PC ;
 			PC += offset ;
+
+			change_pc(PC) ;
 		}
 		else
 		{

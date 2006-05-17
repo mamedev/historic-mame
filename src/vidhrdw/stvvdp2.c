@@ -5093,7 +5093,7 @@ READ32_HANDLER ( stv_vdp2_regs_r )
 		case 0x8/4:
 		/*H/V Counter Register*/
 								     /*H-Counter                               V-Counter                                         */
-			stv_vdp2_regs[offset] = (((Machine->visible_area.max_x - 1)<<16)&0x3ff0000)|(((Machine->visible_area.max_y - 1)<<0)& ((STV_VDP2_LSMD == 3) ? 0x7ff : 0x3ff));
+			stv_vdp2_regs[offset] = (((Machine->visible_area[0].max_x - 1)<<16)&0x3ff0000)|(((Machine->visible_area[0].max_y - 1)<<0)& ((STV_VDP2_LSMD == 3) ? 0x7ff : 0x3ff));
 			if(LOG_VDP2) logerror("CPU #%d PC(%08x) = VDP2: H/V counter read : %08x\n",cpu_getactivecpu(),activecpu_get_pc(),stv_vdp2_regs[offset]);
 			stv_vdp2_regs[offset] = 0;
 		break;
@@ -5170,7 +5170,7 @@ static void stv_vdp2_dynamic_res_change()
 		case 7: horz = 704; vert = 480; break;
 	}
 
-	set_visible_area(0*8, horz-1,0*8, vert-1);
+	set_visible_area(0, 0*8, horz-1,0*8, vert-1);
 	//if(LOG_VDP2) ui_popup("%04d %04d",horz-1,vert-1);
 }
 

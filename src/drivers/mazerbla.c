@@ -103,10 +103,10 @@ static mame_bitmap * tmpbitmaps[4];
 
 VIDEO_START( mazerbla )
 {
-	tmpbitmaps[0] = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
-	tmpbitmaps[1] = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
-	tmpbitmaps[2] = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
-	tmpbitmaps[3] = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
+	tmpbitmaps[0] = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight);
+	tmpbitmaps[1] = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight);
+	tmpbitmaps[2] = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight);
+	tmpbitmaps[3] = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight);
 
 	if ((tmpbitmaps[0]==0) || (tmpbitmaps[1]==0) || (tmpbitmaps[2]==0) || (tmpbitmaps[3]==0))
 	{
@@ -147,21 +147,21 @@ VIDEO_UPDATE( test_vcu )
 
 
 	if (planes_enabled[3])
-		copybitmap(bitmap,tmpbitmaps[3],0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE, 0 );
+		copybitmap(bitmap,tmpbitmaps[3],0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE, 0 );
 
 
 	if (planes_enabled[2])
-		copybitmap(bitmap,tmpbitmaps[2],0,0,0,0,&Machine->visible_area,TRANSPARENCY_PEN, Machine->pens[color_base] );
+		copybitmap(bitmap,tmpbitmaps[2],0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_PEN, Machine->pens[color_base] );
 	fillbitmap(tmpbitmaps[2],Machine->pens[color_base],NULL);
 
 
 	if (planes_enabled[1])
-		copybitmap(bitmap,tmpbitmaps[1],0,0,0,0,&Machine->visible_area,TRANSPARENCY_PEN, Machine->pens[color_base] );
+		copybitmap(bitmap,tmpbitmaps[1],0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_PEN, Machine->pens[color_base] );
 	fillbitmap(tmpbitmaps[1],Machine->pens[color_base],NULL);
 
 
 	if (planes_enabled[0])
-		copybitmap(bitmap,tmpbitmaps[0],0,0,0,0,&Machine->visible_area,TRANSPARENCY_PEN, Machine->pens[color_base] );
+		copybitmap(bitmap,tmpbitmaps[0],0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_PEN, Machine->pens[color_base] );
 	fillbitmap(tmpbitmaps[0],Machine->pens[color_base],NULL);
 
 	if (code_pressed_memory(KEYCODE_1))	/* plane 1 */
@@ -256,10 +256,10 @@ VIDEO_UPDATE( greatgun )
 
 //fillbitmap(bitmap,0,NULL);
 
-	copybitmap(bitmap,tmpbitmaps[3],0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE, 0 );
-	copybitmap(bitmap,tmpbitmaps[2],0,0,0,0,&Machine->visible_area,TRANSPARENCY_PEN, Machine->pens[color_base] );
-	copybitmap(bitmap,tmpbitmaps[1],0,0,0,0,&Machine->visible_area,TRANSPARENCY_PEN, Machine->pens[color_base] );
-	copybitmap(bitmap,tmpbitmaps[0],0,0,0,0,&Machine->visible_area,TRANSPARENCY_PEN, Machine->pens[color_base] );
+	copybitmap(bitmap,tmpbitmaps[3],0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE, 0 );
+	copybitmap(bitmap,tmpbitmaps[2],0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_PEN, Machine->pens[color_base] );
+	copybitmap(bitmap,tmpbitmaps[1],0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_PEN, Machine->pens[color_base] );
+	copybitmap(bitmap,tmpbitmaps[0],0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_PEN, Machine->pens[color_base] );
 }
 
 VIDEO_UPDATE( mazerbla )
@@ -275,10 +275,10 @@ VIDEO_UPDATE( mazerbla )
 
 //fillbitmap(bitmap,0,NULL);
 
-	copybitmap(bitmap,tmpbitmaps[3],0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE, 0 ); //text
-	copybitmap(bitmap,tmpbitmaps[2],0,0,0,0,&Machine->visible_area,TRANSPARENCY_PEN, Machine->pens[0] );
-	copybitmap(bitmap,tmpbitmaps[1],0,0,0,0,&Machine->visible_area,TRANSPARENCY_PEN, Machine->pens[0] ); //haircross
-	copybitmap(bitmap,tmpbitmaps[0],0,0,0,0,&Machine->visible_area,TRANSPARENCY_PEN, Machine->pens[0] ); //sprites
+	copybitmap(bitmap,tmpbitmaps[3],0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE, 0 ); //text
+	copybitmap(bitmap,tmpbitmaps[2],0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_PEN, Machine->pens[0] );
+	copybitmap(bitmap,tmpbitmaps[1],0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_PEN, Machine->pens[0] ); //haircross
+	copybitmap(bitmap,tmpbitmaps[0],0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_PEN, Machine->pens[0] ); //sprites
 }
 
 
@@ -1286,15 +1286,15 @@ INPUT_PORTS_START( mazerbla )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* Strobe 6: horizontal movement of gun */
-	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_X ) PORT_MINMAX(0,255) PORT_SENSITIVITY(25) PORT_KEYDELTA(7) PORT_REVERSE PORT_PLAYER(1)
+	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_X ) PORT_MINMAX(0,255) PORT_SENSITIVITY(25) PORT_KEYDELTA(7) PORT_REVERSE PORT_PLAYER(1)
 	PORT_START	/* Strobe 7: vertical movement of gun */
-	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_Y ) PORT_MINMAX(0,255) PORT_SENSITIVITY(25) PORT_KEYDELTA(7) PORT_PLAYER(1)
+	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_Y ) PORT_MINMAX(0,255) PORT_SENSITIVITY(25) PORT_KEYDELTA(7) PORT_PLAYER(1)
 
 /* Mazer Blazer cabinet has only one gun, really */
 	PORT_START	/* Strobe 8: horizontal movement of gun */
-	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_X ) PORT_MINMAX(0,255) PORT_SENSITIVITY(25) PORT_KEYDELTA(7) PORT_REVERSE PORT_PLAYER(2)
+	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_X ) PORT_MINMAX(0,255) PORT_SENSITIVITY(25) PORT_KEYDELTA(7) PORT_REVERSE PORT_PLAYER(2)
 	PORT_START	/* Strobe 9: vertical movement of gun */
-	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_Y ) PORT_MINMAX(0,255) PORT_SENSITIVITY(25) PORT_KEYDELTA(7) PORT_PLAYER(2)
+	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_Y ) PORT_MINMAX(0,255) PORT_SENSITIVITY(25) PORT_KEYDELTA(7) PORT_PLAYER(2)
 INPUT_PORTS_END
 
 INPUT_PORTS_START( greatgun )
@@ -1434,14 +1434,14 @@ INPUT_PORTS_START( greatgun )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON4 )
 
 	PORT_START	/* Strobe 6: horizontal movement of gun */
-	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_X ) PORT_MINMAX(0,255) PORT_SENSITIVITY(25) PORT_KEYDELTA(7) PORT_PLAYER(1)
+	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_X ) PORT_MINMAX(0,255) PORT_SENSITIVITY(25) PORT_KEYDELTA(7) PORT_PLAYER(1)
 	PORT_START	/* Strobe 7: vertical movement of gun */
-	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_Y ) PORT_MINMAX(0,255) PORT_SENSITIVITY(25) PORT_KEYDELTA(7) PORT_PLAYER(1)
+	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_Y ) PORT_MINMAX(0,255) PORT_SENSITIVITY(25) PORT_KEYDELTA(7) PORT_PLAYER(1)
 
 	PORT_START	/* Strobe 8: horizontal movement of gun */
-	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_X ) PORT_MINMAX(0,255) PORT_SENSITIVITY(25) PORT_KEYDELTA(7) PORT_PLAYER(2)
+	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_X ) PORT_MINMAX(0,255) PORT_SENSITIVITY(25) PORT_KEYDELTA(7) PORT_PLAYER(2)
 	PORT_START	/* Strobe 9: vertical movement of gun */
-	PORT_BIT( 0xff, 0x80, IPT_LIGHTGUN_Y ) PORT_MINMAX(0,255) PORT_SENSITIVITY(25) PORT_KEYDELTA(7) PORT_PLAYER(2)
+	PORT_BIT( 0xff, 0x80, IPT_AD_STICK_Y ) PORT_MINMAX(0,255) PORT_SENSITIVITY(25) PORT_KEYDELTA(7) PORT_PLAYER(2)
 INPUT_PORTS_END
 
 

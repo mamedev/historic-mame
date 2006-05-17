@@ -38,31 +38,11 @@ extern int verbose;
 //============================================================
 
 #define DEBUG_BLITTERS		0
-#define MAX_BLITTER_SIZE	8192
-#define MAX_RGB_ROWS		8
 #define MAX_SCREEN_DIM		2048
+#define SUPPORT_MMX			1
+#define SUPPORT_SSE			1
+#define SUPPORT_SSE2		1
 
-#undef RGB
-#define RGB					0
-#define RGb					1
-#define RgB					2
-#define Rgb					3
-#define rGB					4
-#define rGb					5
-#define rgB					6
-#define rgb					7
-
-#define FIXUPVAL_DSTBYTES1		0
-#define FIXUPVAL_DSTBYTES16		1
-#define FIXUPVAL_DSTADVANCE		2
-#define FIXUPVAL_MIDDLEXCOUNT	3
-#define FIXUPVAL_LASTXCOUNT		4
-#define FIXUPVAL_SRCBYTES1		5
-#define FIXUPVAL_SRCBYTES16		6
-#define FIXUPVAL_SRCADVANCE		7
-#define FIXUPVAL_SRCPREFETCH16	8
-#define FIXUPVAL_PIXOFFSET0		9
-#define FIXUPVAL_PIXOFFSET15	24
 
 
 //============================================================
@@ -71,92 +51,26 @@ extern int verbose;
 
 typedef void (*blitter_func)(void);
 
-struct rgb_descriptor
+typedef struct _blit_state blit_state;
+struct _blit_state
 {
-	int rows;
-	UINT8 data[MAX_RGB_ROWS][16];
+	const win_blit_params *blit;
+	int offset;
+	int update;
+	int has_used_mmx;
+	int has_used_non_temporal;
+	int row_count;
 };
 
+typedef enum _brightness brightness;
+enum _brightness
+{
+	BRIGHTNESS_25,
+	BRIGHTNESS_50,
+	BRIGHTNESS_75,
+	BRIGHTNESS_100
+};
 
-//============================================================
-//  IMPORTS
-//============================================================
-
-extern void asmblit1_16_to_16_x1(void);
-extern void asmblit1_16_to_16_x2(void);
-extern void asmblit1_16_to_16_x3(void);
-extern void asmblit1_16_to_24_x1(void);
-extern void asmblit1_16_to_24_x2(void);
-extern void asmblit1_16_to_24_x3(void);
-extern void asmblit1_16_to_32_x1(void);
-extern void asmblit1_16_to_32_x2(void);
-extern void asmblit1_16_to_32_x3(void);
-
-extern void asmblit1_32_to_16_x1(void);
-extern void asmblit1_32_to_16_x2(void);
-extern void asmblit1_32_to_16_x3(void);
-extern void asmblit1_32_to_24_x1(void);
-extern void asmblit1_32_to_24_x2(void);
-extern void asmblit1_32_to_24_x3(void);
-extern void asmblit1_32_to_32_x1(void);
-extern void asmblit1_32_to_32_x2(void);
-extern void asmblit1_32_to_32_x3(void);
-
-extern void asmblit16_16_to_16_x1(void);
-extern void asmblit16_16_to_16_x1_mmx(void);
-extern void asmblit16_16_to_16_x1_sse(void);
-extern void asmblit16_16_to_16_x2(void);
-extern void asmblit16_16_to_16_x2_mmx(void);
-extern void asmblit16_16_to_16_x3(void);
-extern void asmblit16_16_to_16_x3_mmx(void);
-extern void asmblit16_16_to_24_x1(void);
-extern void asmblit16_16_to_24_x2(void);
-extern void asmblit16_16_to_24_x3(void);
-extern void asmblit16_16_to_32_x1(void);
-extern void asmblit16_16_to_32_x1_mmx(void);
-extern void asmblit16_16_to_32_x1_sse(void);
-extern void asmblit16_16_to_32_x2(void);
-extern void asmblit16_16_to_32_x2_mmx(void);
-extern void asmblit16_16_to_32_x3(void);
-extern void asmblit16_16_to_32_x3_mmx(void);
-
-extern void asmblit16_24_to_16_x1(void);
-extern void asmblit16_24_to_16_x2(void);
-extern void asmblit16_24_to_16_x3(void);
-extern void asmblit16_24_to_24_x1(void);
-extern void asmblit16_24_to_24_x2(void);
-extern void asmblit16_24_to_24_x3(void);
-extern void asmblit16_24_to_32_x1(void);
-extern void asmblit16_24_to_32_x2(void);
-extern void asmblit16_24_to_32_x3(void);
-
-extern void asmblit16_32_to_16_x1(void);
-extern void asmblit16_32_to_16_x2(void);
-extern void asmblit16_32_to_16_x3(void);
-extern void asmblit16_32_to_24_x1(void);
-extern void asmblit16_32_to_24_x2(void);
-extern void asmblit16_32_to_24_x3(void);
-extern void asmblit16_32_to_32_x1(void);
-extern void asmblit16_32_to_32_x2(void);
-extern void asmblit16_32_to_32_x3(void);
-
-extern void asmblit1_16_to_16_rgb(void);
-extern void asmblit16_16_to_16_rgb(void);
-extern void asmblit1_16_to_32_rgb(void);
-extern void asmblit16_16_to_32_rgb(void);
-
-extern void asmblit_header(void);
-extern void asmblit_yloop_top(void);
-extern void asmblit_middlexloop_header(void);
-extern void asmblit_middlexloop_top(void);
-extern void asmblit_middlexloop_bottom(void);
-extern void asmblit_lastxloop_header(void);
-extern void asmblit_lastxloop_top(void);
-extern void asmblit_lastxloop_bottom(void);
-extern void asmblit_yloop_bottom(void);
-extern void asmblit_footer(void);
-extern void asmblit_footer_mmx(void);
-extern void asmblit_prefetch_sse(void);
 
 
 //============================================================
@@ -184,279 +98,33 @@ static UINT8 *				active_update_blitter;
 
 // current parameters
 static win_blit_params	active_blitter_params;
-static win_blit_params	active_vector_params;
-
-// coordinate transforms
-static int					xtrans[MAX_SCREEN_DIM];
-static int					ytrans[MAX_SCREEN_DIM];
 
 // MMX/SSE/SSE2 supported?
 static int					use_mmx;
 static int					use_sse;
 static int					use_sse2;
 
-// register index to size table
-static const UINT8 regoffset_regsize[32] =
-{
-	4,4,4,4, 2,2,2,2, 1,1,1,1, 1,1,1,1,
-	8,8,8,8, 8,8,8,8, 16,16,16,16, 16,16,16,16
-};
+static drc_core *			drc;
+static int					pixoffset[16];
 
-// register index to bits table
-static const UINT8 regoffset_regbits[32] =
-{
-	0,1,2,3, 0,1,2,3, 0,1,2,3, 4,5,6,7,
-	0,1,2,3, 4,5,6,7, 0,1,2,3, 4,5,6,7
-};
-
-// register index to effective modified size table
-static const UINT8 regoffset_modsize[32] =
-{
-	4,4,4,4, 2,2,2,2, 1,1,1,1, 2,2,2,2,
-	8,8,8,8, 8,8,8,8, 16,16,16,16, 16,16,16,16
-};
-
-// table for 16-pixel RGB pattern
-static struct rgb_descriptor rgb16_desc =
-{
-	8,
-	{
-		{ rgb,rgb,rgb,rgb,rgb,rgb,rgb,rgb, rgb,rgb,rgb,rgb,rgb,rgb,rgb,rgb },
-		{ rGb,rgB,Rgb,rgb,rGb,rgB,Rgb,rgb, rGb,rgB,Rgb,rgb,rGb,rgB,Rgb,rgb },
-		{ rGb,rgB,Rgb,rgb,rGb,rgB,Rgb,rgb, rGb,rgB,Rgb,rgb,rGb,rgB,Rgb,rgb },
-		{ rGb,rgB,Rgb,rgb,rGb,rgB,Rgb,rgb, rGb,rgB,Rgb,rgb,rGb,rgB,Rgb,rgb },
-		{ rgb,rgb,rgb,rgb,rgb,rgb,rgb,rgb, rgb,rgb,rgb,rgb,rgb,rgb,rgb,rgb },
-		{ rgb,rGb,rgB,Rgb,rgb,rGb,rgB,Rgb, rgb,rGb,rgB,Rgb,rgb,rGb,rgB,Rgb },
-		{ rgb,rGb,rgB,Rgb,rgb,rGb,rgB,Rgb, rgb,rGb,rgB,Rgb,rgb,rGb,rgB,Rgb },
-		{ rgb,rGb,rgB,Rgb,rgb,rGb,rgB,Rgb, rgb,rGb,rgB,Rgb,rgb,rGb,rgB,Rgb }
-	}
-};
-
-// table for 6-pixel RGB pattern
-static struct rgb_descriptor rgb6_desc =
-{
-	6,
-	{
-		{ rgB,Rgb,rgB,Rgb,rgB,Rgb,rgB,Rgb, rgB,Rgb,rgB,Rgb,rgB,Rgb,rgB,Rgb },
-		{ rgB,rGb,rgB,rGb,rgB,rGb,rgB,rGb, rgB,rGb,rgB,rGb,rgB,rGb,rgB,rGb },
-		{ Rgb,rGb,Rgb,rGb,Rgb,rGb,Rgb,rGb, Rgb,rGb,Rgb,rGb,Rgb,rGb,Rgb,rGb },
-		{ Rgb,rgB,Rgb,rgB,Rgb,rgB,Rgb,rgB, Rgb,rgB,Rgb,rgB,Rgb,rgB,Rgb,rgB },
-		{ rGb,rgB,rGb,rgB,rGb,rgB,rGb,rgB, rGb,rgB,rGb,rgB,rGb,rgB,rGb,rgB },
-		{ rGb,Rgb,rGb,Rgb,rGb,Rgb,rGb,Rgb, rGb,Rgb,rGb,Rgb,rGb,Rgb,rGb,Rgb }
-	}
-};
-
-// table for 4-pixel RGB pattern
-static struct rgb_descriptor rgb4_desc =
-{
-	4,
-	{
-		{ rgb,rgb,rgb,rgb,RgB,RGb,rGB,rgb, rgb,rgb,rgb,rgb,RgB,RGb,rGB,rgb },
-		{ RgB,RGb,rGB,rgb,RgB,RGb,rGB,rgb, RgB,RGb,rGB,rgb,RgB,RGb,rGB,rgb },
-		{ RgB,RGb,rGB,rgb,rgb,rgb,rgb,rgb, RgB,RGb,rGB,rgb,rgb,rgb,rgb,rgb },
-		{ RgB,RGb,rGB,rgb,RgB,RGb,rGB,rgb, RgB,RGb,rGB,rgb,RgB,RGb,rGB,rgb }
-	}
-};
-
-// table for 3-pixel RGB pattern
-static struct rgb_descriptor rgb3_desc =
-{
-	3,
-	{
-		{ Rgb,rgB,Rgb,rgB,Rgb,rgB,Rgb,rgB, Rgb,rgB,Rgb,rgB,Rgb,rgB,Rgb,rgB },
-		{ rGb,Rgb,rGb,Rgb,rGb,Rgb,rGb,Rgb, rGb,Rgb,rGb,Rgb,rGb,Rgb,rGb,Rgb },
-		{ rgB,rGb,rgB,rGb,rgB,rGb,rgB,rGb, rgB,rGb,rgB,rGb,rgB,rGb,rgB,rGb }
-	}
-};
-
-// table for tiny mesh pattern
-static struct rgb_descriptor rgbtiny_desc =
-{
-	4,
-	{
-		{ rGb,rgB,Rgb,RGB,rGb,rgB,Rgb,RGB, rGb,rgB,Rgb,RGB,rGb,rgB,Rgb,RGB },
-		{ rgb,RGB,rgb,RGB,rgb,RGB,rgb,RGB, rgb,RGB,rgb,RGB,rgb,RGB,rgb,RGB },
-		{ Rgb,RGB,rGb,rgB,Rgb,RGB,rGb,rgB, Rgb,RGB,rGb,rgB,Rgb,RGB,rGb,rgB },
-		{ rgb,RGB,rgb,RGB,rgb,RGB,rgb,RGB, rgb,RGB,rgb,RGB,rgb,RGB,rgb,RGB }
-	}
-};
-
-// table for 4-pixel vertical (Now 8-pixel) RGB pattern
-static struct rgb_descriptor rgb4v_desc =
-{
-	8,
-	{
-		{ rgb,rgb,rgb,rgb,rgb,rgb,rgb,rgb, rgb,rgb,rgb,rgb,rgb,rgb,rgb,rgb },
-		{ rGB,rGB,rgb,rGB,rGB,rGB,rgb,rGB, rGB,rGB,rgb,rGB,rGB,rGB,rgb,rGB },
-		{ RGb,RGb,rgb,RGb,RGb,RGb,rgb,RGb, RGb,RGb,rgb,RGb,RGb,RGb,rgb,RGb },
-		{ RgB,RgB,rgb,RgB,RgB,RgB,rgb,RgB, RgB,RgB,rgb,RgB,RgB,RgB,rgb,RgB },
-		{ rgb,rgb,rgb,rgb,rgb,rgb,rgb,rgb, rgb,rgb,rgb,rgb,rgb,rgb,rgb,rgb },
-		{ rgb,rGB,rGB,rGB,rgb,rGB,rGB,rGB, rgb,rGB,rGB,rGB,rgb,rGB,rGB,rGB },
-		{ rgb,RGb,RGb,RGb,rgb,RGb,RGb,RGb, rgb,RGb,RGb,RGb,rgb,RGb,RGb,RGb },
-		{ rgb,RgB,RgB,RgB,rgb,RgB,RgB,RgB, rgb,RgB,RgB,RgB,rgb,RgB,RgB,RgB }
-	}
-};
-
-// table for 75% vertical win_old_scanlines RGB pattern
-static struct rgb_descriptor scan75v_desc =
-{
-	1,
-	{
-		{ RGB,rgb,RGB,rgb,RGB,rgb,RGB,rgb, RGB,rgb,RGB,rgb,RGB,rgb,RGB,rgb }
-	}
-};
-
-// table for "sharp" pattern, i.e., no change, just pixel double
-static struct rgb_descriptor sharp_desc =
-{
-	1,
-	{
-		{ RGB,RGB,RGB,RGB,RGB,RGB,RGB,RGB, RGB,RGB,RGB,RGB,RGB,RGB,RGB,RGB }
-	}
-};
 
 
 //============================================================
 //  PROTOTYPES
 //============================================================
 
-static int blit_vectors(const win_blit_params *blit);
 static void generate_blitter(const win_blit_params *blit);
-static void compute_source_fixups(const win_blit_params *blit, UINT32 valuefixups[]);
 
 
 
 //============================================================
-//  BLITTER CORE TABLES
+//  win_blit_exit
 //============================================================
 
-static void (*blit1_core[4][4][3])(void) =
+static void win_blit_exit(void)
 {
-	{
-		{ NULL,                 NULL,                 NULL },
-		{ NULL,                 NULL,                 NULL },
-		{ NULL,                 NULL,                 NULL },
-		{ NULL,                 NULL,                 NULL },
-	},
-	{
-		{ NULL,                 NULL,                 NULL },
-		{ asmblit1_16_to_16_x1, asmblit1_16_to_16_x2, asmblit1_16_to_16_x3 },
-		{ asmblit1_16_to_24_x1, asmblit1_16_to_24_x2, asmblit1_16_to_24_x3 },
-		{ asmblit1_16_to_32_x1, asmblit1_16_to_32_x2, asmblit1_16_to_32_x3 }
-	},
-	{
-		{ NULL,                 NULL,                 NULL },
-		{ NULL,                 NULL,                 NULL },
-		{ NULL,                 NULL,                 NULL },
-		{ NULL,                 NULL,                 NULL },
-	},
-	{
-		{ NULL,                 NULL,                 NULL },
-		{ asmblit1_32_to_16_x1, asmblit1_32_to_16_x2, asmblit1_32_to_16_x3 },
-		{ asmblit1_32_to_24_x1, asmblit1_32_to_24_x2, asmblit1_32_to_24_x3 },
-		{ asmblit1_32_to_32_x1, asmblit1_32_to_32_x2, asmblit1_32_to_32_x3 }
-	}
-};
-
-static void (*blit16_core[4][4][3])(void) =
-{
-	{
-		{ NULL,                 NULL,                 NULL },
-		{ NULL,                 NULL,                 NULL },
-		{ NULL,                 NULL,                 NULL },
-		{ NULL,                 NULL,                 NULL },
-	},
-	{
-		{ NULL,                  NULL,                  NULL },
-		{ asmblit16_16_to_16_x1, asmblit16_16_to_16_x2, asmblit16_16_to_16_x3 },
-		{ asmblit16_16_to_24_x1, asmblit16_16_to_24_x2, asmblit16_16_to_24_x3 },
-		{ asmblit16_16_to_32_x1, asmblit16_16_to_32_x2, asmblit16_16_to_32_x3 }
-	},
-	{
-		{ NULL,                  NULL,                  NULL },
-		{ NULL,                  NULL,                  NULL },
-		{ NULL,                  NULL,                  NULL },
-		{ NULL,                  NULL,                  NULL },
-	},
-	{
-		{ NULL,                  NULL,                  NULL },
-		{ asmblit16_32_to_16_x1, asmblit16_32_to_16_x2, asmblit16_32_to_16_x3 },
-		{ asmblit16_32_to_24_x1, asmblit16_32_to_24_x2, asmblit16_32_to_24_x3 },
-		{ asmblit16_32_to_32_x1, asmblit16_32_to_32_x2, asmblit16_32_to_32_x3 }
-	}
-};
-
-static void (*blit16_core_mmx[4][4][3])(void) =
-{
-	{
-		{ NULL,                 NULL,                 NULL },
-		{ NULL,                 NULL,                 NULL },
-		{ NULL,                 NULL,                 NULL },
-		{ NULL,                 NULL,                 NULL },
-	},
-	{
-		{ NULL,                      NULL,                      NULL },
-		{ asmblit16_16_to_16_x1_mmx, asmblit16_16_to_16_x2_mmx, asmblit16_16_to_16_x3_mmx },
-		{ NULL,                      NULL,                      NULL },
-		{ asmblit16_16_to_32_x1_mmx, asmblit16_16_to_32_x2_mmx, asmblit16_16_to_32_x3_mmx },
-	},
-	{
-		{ NULL,                      NULL,                      NULL },
-		{ NULL,                      NULL,                      NULL },
-		{ NULL,                      NULL,                      NULL },
-		{ NULL,                      NULL,                      NULL },
-	},
-	{
-		{ NULL,                      NULL,                      NULL },
-		{ NULL,                      NULL,                      NULL },
-		{ NULL,                      NULL,                      NULL },
-		{ NULL,                      NULL,                      NULL },
-	}
-};
-
-static void (*blit16_core_sse[4][4][3])(void) =
-{
-	{
-		{ NULL,                 NULL,                 NULL },
-		{ NULL,                 NULL,                 NULL },
-		{ NULL,                 NULL,                 NULL },
-		{ NULL,                 NULL,                 NULL },
-	},
-	{
-		{ NULL,                      NULL,                      NULL },
-		{ asmblit16_16_to_16_x1_sse, NULL,                      NULL },
-		{ NULL,                      NULL,                      NULL },
-		{ NULL,                      NULL,                      NULL },
-	},
-	{
-		{ NULL,                      NULL,                      NULL },
-		{ NULL,                      NULL,                      NULL },
-		{ NULL,                      NULL,                      NULL },
-		{ NULL,                      NULL,                      NULL },
-	},
-	{
-		{ NULL,                      NULL,                      NULL },
-		{ NULL,                      NULL,                      NULL },
-		{ NULL,                      NULL,                      NULL },
-		{ NULL,                      NULL,                      NULL },
-	}
-};
-
-static void (*blit1_core_rgb[4][4])(void) =
-{
-	{ NULL, NULL, NULL, NULL },
-	{ NULL, asmblit1_16_to_16_rgb, NULL, asmblit1_16_to_32_rgb },
-	{ NULL, NULL, NULL, NULL },
-	{ NULL, NULL, NULL, NULL }
-};
-
-static void (*blit16_core_rgb[4][4])(void) =
-{
-	{ NULL, NULL, NULL, NULL },
-	{ NULL, asmblit16_16_to_16_rgb, NULL, asmblit16_16_to_32_rgb },
-	{ NULL, NULL, NULL, NULL },
-	{ NULL, NULL, NULL, NULL }
-};
+	drc_exit(drc);
+}
 
 
 
@@ -466,13 +134,31 @@ static void (*blit16_core_rgb[4][4])(void) =
 
 void win_blit_init(void)
 {
+	drc_config drconfig;
 	UINT32 features;
 
+	// initialize DRC
+	memset(&drconfig, 0, sizeof(drconfig));
+	drconfig.cache_size = (16 * 1024 * 1024);
+	drc = drc_init(~0, &drconfig);
+	if (!drc)
+		fatalerror("Failed to init blit");
+
 	// determine MMX/XMM support
-	features = drc_x86_get_features();
-	use_mmx = (features & (1 << 23));
-	use_sse = (features & (1 << 25));
-	use_sse2 = (features & (1 << 26));
+	if (sizeof(void *) == 8)
+	{
+		// 64-bit always has these
+		use_mmx = TRUE;
+		use_sse = TRUE;
+		use_sse2 = TRUE;
+	}
+	else
+	{
+		features = drc_x86_get_features();
+		use_mmx = (features & (1 << 23));
+		use_sse = (features & (1 << 25));
+		use_sse2 = (features & (1 << 26));
+	}
 
 	if (verbose)
 	{
@@ -485,6 +171,8 @@ void win_blit_init(void)
 		else
 			fprintf(stderr, "MMX not supported\n");
 	}
+
+	add_exit_callback(win_blit_exit);
 }
 
 
@@ -500,11 +188,6 @@ int win_perform_blit(const win_blit_params *blit, int update)
 	rectangle temprect;
 	blitter_func blitter;
 	int srcx, srcy;
-
-	// if we have a vector dirty array, alter the plan
-	if (blit->vecdirty && !update)
-		if (blit_vectors(blit))
-			return 1;
 
 	// determine the starting source X/Y
 	temprect.min_x = blit->srcxoffs;
@@ -561,606 +244,188 @@ int win_perform_blit(const win_blit_params *blit, int update)
 
 
 //============================================================
-//  blit_vectors
+//  has_mmx
+//  has_sse
 //============================================================
 
-static int blit_vectors(const win_blit_params *blit)
+// we don't need to use the use_mmx/use_sse variables if we are a
+// 64-bit compile
+static int has_mmx(void)	{ return SUPPORT_MMX && ((sizeof(void *) == 8) || use_mmx); }
+static int has_sse(void)	{ return SUPPORT_SSE && ((sizeof(void *) == 8) || use_sse); }
+static int has_sse2(void)	{ return SUPPORT_SSE2 && ((sizeof(void *) == 8) || use_sse2); }
+
+
+
+//============================================================
+//  output_r8
+//  output_r16
+//  output_r32
+//  output_mmx
+//  shift_r32
+//  shift_mmx_d
+//============================================================
+
+static void output_r8(blit_state *state, int reg)
 {
-	int srcdepth = (blit->srcdepth + 7) / 8;
-	int dstdepth = (blit->dstdepth + 7) / 8;
-	void *srcbase = (UINT8 *)blit->srcdata + blit->srcpitch * blit->srcyoffs + srcdepth * blit->srcxoffs;
-	void *dstbase = (UINT8 *)blit->dstdata + blit->dstpitch * blit->dstyoffs + dstdepth * blit->dstxoffs;
-	UINT32 srcpitch = blit->srcpitch;
-	vector_pixel_t *list = blit->vecdirty;
-
-	// skip if not 1:1
-	if (blit->dstxscale != 1 || blit->dstyscale != 1)
-		return 0;
-
-	// can't handle anything but 15bpp
-	if (blit->srcdepth != 15)
-		return 0;
-
-	// recompute the lookups
-	if (blit->srcwidth != active_vector_params.srcwidth ||
-		blit->srcpitch != active_vector_params.srcpitch ||
-		blit->dstdepth != active_vector_params.dstdepth ||
-		blit->dstpitch != active_vector_params.dstpitch ||
-		blit->flipx != active_vector_params.flipx ||
-		blit->flipy != active_vector_params.flipy ||
-		blit->swapxy != active_vector_params.swapxy)
-	{
-		int i;
-
-		for (i = 0; i < MAX_SCREEN_DIM; i++)
-		{
-			POINT pixel = {i, i};
-
-			if (blit->flipx)
-				pixel.x = blit->srcwidth - pixel.x - 1;
-
-			if (blit->flipy)
-				pixel.y = blit->srcheight - pixel.y - 1;
-
-			xtrans[i] = blit->swapxy ? (pixel.y * blit->dstpitch) : (pixel.x * dstdepth);
-			ytrans[i] = blit->swapxy ? (pixel.x * dstdepth) : (pixel.y * blit->dstpitch);
-		}
-
-		active_vector_params = *blit;
-	}
-
-	// 16-bit to 16-bit
-	if (blit->dstdepth == 15 || blit->dstdepth == 16)
-	{
-		UINT32 *srclookup = blit->srclookup;
-		while (*list != VECTOR_PIXEL_END)
-		{
-			vector_pixel_t coords = *list++;
-			int x = VECTOR_PIXEL_X(coords);
-			int y = VECTOR_PIXEL_Y(coords);
-			*(UINT16 *)((UINT8 *)dstbase + xtrans[x] + ytrans[y]) =
-					srclookup[*(UINT16 *)((UINT8 *)srcbase + y * srcpitch + x * 2)];
-		}
-		return 1;
-	}
-
-	// 16-bit to 32-bit
-	else if (blit->dstdepth == 32)
-	{
-		UINT32 *srclookup = blit->srclookup;
-		while (*list != VECTOR_PIXEL_END)
-		{
-			vector_pixel_t coords = *list++;
-			int x = VECTOR_PIXEL_X(coords);
-			int y = VECTOR_PIXEL_Y(coords);
-			*(UINT32 *)((UINT8 *)dstbase + xtrans[x] + ytrans[y]) =
-					srclookup[*(UINT16 *)((UINT8 *)srcbase + y * srcpitch + x * 2)];
-		}
-		return 1;
-	}
-
-	return 0;
+	int row;
+	for (row = 0; row < state->row_count; row++)
+		_mov_m8bd_r8(REG_EDI, state->offset + row * state->blit->dstpitch, reg);
+	state->offset += 1;
 }
 
-
-
-//============================================================
-//  snippet_length
-//============================================================
-
-static int snippet_length(void *snippet)
+static void output_r16(blit_state *state, int reg)
 {
-	UINT8 *current = snippet;
-
-	// determine the length of a code snippet
-	while (current[0] != 0xcc || current[1] != 0xcc || current[2] != 0xcc || current[3] != 0xe0)
-		current++;
-	return current - (UINT8 *)snippet;
+	int row;
+	for (row = 0; row < state->row_count; row++)
+		_mov_m16bd_r16(REG_EDI, state->offset + row * state->blit->dstpitch, reg);
+	state->offset += 2;
 }
 
-
-
-//============================================================
-//  emit_snippet_pair
-//============================================================
-
-static void emit_snippet(void *snippet, UINT8 **dest)
+static void output_r32(blit_state *state, int reg)
 {
-	// emit a snippet as-is
-	int length = snippet_length(snippet);
-	memcpy(*dest, snippet, length);
-	*dest += length;
-}
-
-
-
-//============================================================
-//  emit_mov_edi_reg
-//============================================================
-
-static void emit_mov_edi_reg(int reg, int offs, UINT8 **dest)
-{
-	int regsize = regoffset_regsize[reg];
-	int regbits = regoffset_regbits[reg];
-
-	// first byte depends on register size
-	if (regsize == 1)
-		*(*dest)++ = 0x88;
-	else if (regsize == 2)
-		*(*dest)++ = 0x66, *(*dest)++ = 0x89;
-	else if (regsize == 4)
-		*(*dest)++ = 0x89;
-	else if (regsize == 8)
-		*(*dest)++ = 0x0f, *(*dest)++ = (use_sse ? 0xe7 : 0x7f);
-	else if (regsize == 16)
-		*(*dest)++ = 0xf3, *(*dest)++ = 0x0f, *(*dest)++ = 0x7f;
-
-	// second byte is mod r/m byte; offset follows
-	if (offs == 0)
-		*(*dest)++ = 0x07 | (regbits << 3);
-	else if (offs >= -128 && offs <= 127)
-		*(*dest)++ = 0x47 | (regbits << 3), *(*dest)++ = offs & 0xff;
-	else
-		*(*dest)++ = 0x87 | (regbits << 3), *(UINT32 *)*dest = offs, *dest += 4;
-}
-
-
-
-//============================================================
-//  emit_mov_edi_0
-//============================================================
-
-static void emit_mov_edi_0(int reg, int offs, UINT8 **dest)
-{
-	// register parameter is only used to determine the size
-	int regsize = regoffset_regsize[reg];
-
-	// first byte depends on register size
-	if (regsize == 1)
-		*(*dest)++ = 0xc6;
-	else if (regsize == 2)
-		*(*dest)++ = 0x66, *(*dest)++ = 0xc7;
-	else if (regsize == 4)
-		*(*dest)++ = 0xc7;
-	else if (regsize == 8)
-		*(*dest)++ = 0x0f, *(*dest)++ = 0x7f;
-	else if (regsize == 16)
-		*(*dest)++ = 0xf3, *(*dest)++ = 0x0f, *(*dest)++ = 0x7f;
-
-	// second byte is mod r/m byte; offset follows (for non-MMX registers)
-	if (regsize < 8)
+	int row;
+	for (row = 0; row < state->row_count; row++)
 	{
-		if (offs == 0)
-			*(*dest)++ = 0x07 | (0 << 3);
-		else if (offs >= -128 && offs <= 127)
-			*(*dest)++ = 0x47 | (0 << 3), *(*dest)++ = offs & 0xff;
+		if (has_sse2())
+			_movnti_m32bd_r32(REG_EDI, state->offset + row * state->blit->dstpitch, reg);
 		else
-			*(*dest)++ = 0x87 | (0 << 3), *(UINT32 *)*dest = offs, *dest += 4;
+			_mov_m32bd_r32(REG_EDI, state->offset + row * state->blit->dstpitch, reg);
+	}
+	state->offset += 4;
 
-		// immediate follows that
-		if (regsize == 1)
-			*(*dest)++ = 0;
-		else if (regsize == 2)
-			*(UINT16 *)*dest = 0, *dest += 2;
+	if (has_sse2())
+		state->has_used_non_temporal = TRUE;
+}
+
+static void output_mmx(blit_state *state, int reg)
+{
+	int row;
+	for (row = 0; row < state->row_count; row++)
+	{
+		if (has_sse())
+			_movntq_m64bd_mmx(REG_EDI, state->offset + row * state->blit->dstpitch, reg);
 		else
-			*(UINT32 *)*dest = 0, *dest += 4;
+			_movq_m64bd_mmx(REG_EDI, state->offset + row * state->blit->dstpitch, reg);
 	}
+	state->offset += 8;
 
-	// for MMX registers, we assume that (X)MM7 has been zeroed
-	else
+	state->has_used_mmx = TRUE;
+	if (has_sse())
+		state->has_used_non_temporal = TRUE;
+}
+
+static void shift_r32(int reg, int shift)
+{
+	if (shift > 0)
+		_shl_r32_imm(reg, shift);
+	else if (shift < 0)
+		_shr_r32_imm(reg, -shift);
+}
+
+static void shift_mmx_d(int reg, int shift)
+{
+	if (shift > 0)
+		_pssld_mmx_imm(reg, shift);
+	else if (shift < 0)
+		_pssrd_mmx_imm(reg, -shift);
+}
+
+
+
+//============================================================
+//  adjust_brightness_r16
+//  adjust_brightness_r32
+//============================================================
+
+static void adjust_brightness_r16(int reg, brightness b)
+{
+	UINT16 shift1_mask;
+	UINT16 shift2_mask;
+
+	shift1_mask	= ~(1 << (win_color16_bdst_shift - 1))
+				& ~(1 << (win_color16_bdst_shift + win_color16_gdst_shift - 1))
+				& ~(1 << (win_color16_bdst_shift + win_color16_gdst_shift - win_color16_rdst_shift));
+	shift2_mask = shift1_mask & (shift1_mask >> 1);
+
+	switch(b)
 	{
-		if (offs == 0)
-			*(*dest)++ = 0x07 | (7 << 3);
-		else if (offs >= -128 && offs <= 127)
-			*(*dest)++ = 0x47 | (7 << 3), *(*dest)++ = offs & 0xff;
-		else
-			*(*dest)++ = 0x87 | (7 << 3), *(UINT32 *)*dest = offs, *dest += 4;
+		case BRIGHTNESS_25:
+			_shr_r16_imm(reg, 2);
+			_and_r16_imm(reg, shift2_mask);
+			break;
+
+		case BRIGHTNESS_50:
+			_shr_r16_imm(reg, 1);
+			_and_r16_imm(reg, shift1_mask);
+			break;
+
+		case BRIGHTNESS_75:
+			_mov_r16_r16(REG_DX, reg);
+			_shr_r16_imm(reg, 2);
+			_shr_r16_imm(REG_DX, 1);
+			_and_r16_imm(reg, shift2_mask);
+			_and_r16_imm(REG_DX, shift1_mask);
+			_add_r16_r16(reg, REG_DX);
+			break;
+
+		case BRIGHTNESS_100:
+			// no reduction necessary
+			break;
+	}
+}
+
+static void adjust_brightness_r32(int reg, brightness b)
+{
+	switch(b)
+	{
+		case BRIGHTNESS_25:
+			_shr_r32_imm(reg, 2);
+			_and_r32_imm(reg, 0x3F3F3F);
+			break;
+
+		case BRIGHTNESS_50:
+			_shr_r32_imm(reg, 1);
+			_and_r32_imm(reg, 0x7F7F7F);
+			break;
+
+		case BRIGHTNESS_75:
+			_mov_r32_r32(REG_EDX, reg);
+			_shr_r32_imm(reg, 2);
+			_shr_r32_imm(REG_EDX, 1);
+			_and_r32_imm(reg, 0x3F3F3F);
+			_and_r32_imm(REG_EDX, 0x7F7F7F);
+			_add_r32_r32(reg, REG_EDX);
+			break;
+
+		case BRIGHTNESS_100:
+			// no reduction necessary
+			break;
 	}
 }
 
 
 
 //============================================================
-//  emit_reduce_brightness
+//  emit_val16_from_val32
 //============================================================
 
-static void emit_reduce_brightness(int count, const UINT8 *reglist, const win_blit_params *blit, UINT8 **dest)
+static void emit_val16_from_val32(int reg)
 {
-	int regsize[4] = { 0 };
-	UINT32 mask;
-	int shift, i;
+	_mov_r32_r32(REG_ECX, reg);
+	shift_r32(REG_ECX,
+		win_color16_rdst_shift - win_color32_rdst_shift - win_color16_rsrc_shift);
+	_and_r32_imm(REG_ECX, (0xFF >> win_color16_rsrc_shift) << win_color16_rdst_shift);
 
-	// do nothing for less than 16bpp
-	if (blit->dstdepth < 16)
-		return;
+	_mov_r32_r32(REG_EDX, reg);
+	shift_r32(REG_EDX,
+		win_color16_gdst_shift - win_color32_gdst_shift - win_color16_gsrc_shift);
+	_and_r32_imm(REG_EDX, (0xFF >> win_color16_gsrc_shift) << win_color16_gdst_shift);
+	_or_r32_r32(REG_ECX, REG_EDX);
 
-	// find all the registers we need to tweak
-	for (i = 0; i < count; i++)
-	{
-		int size = regoffset_modsize[reglist[i]];
-		int idx = reglist[i] & 3;
-		if (size > regsize[idx])
-			regsize[idx] = size;
-	}
-
-	// for 25/75% we need to shift right by 2
-	if (blit->dsteffect == EFFECT_SCANLINE_25 || blit->dsteffect == EFFECT_SCANLINE_75)
-	{
-		for (i = 0; i < 4; i++)
-			if (regsize[i])
-			{
-				// emit opcode
-				if (regsize[i] == 1)
-					*(*dest)++ = 0xc0;
-				else if (regsize[i] == 2)
-					*(*dest)++ = 0x66, *(*dest)++ = 0xc1;
-				else if (regsize[i] == 4)
-					*(*dest)++ = 0xc1;
-
-				// emit modrm and count
-				*(*dest)++ = 0xc0 | (5 << 3) | (i & 7);
-				*(*dest)++ = 2;
-			}
-		shift = 2;
-	}
-
-	// for 50% we need to shift right by 1
-	else
-	{
-		for (i = 0; i < 4; i++)
-			if (regsize[i])
-			{
-				// emit opcode
-				if (regsize[i] == 1)
-					*(*dest)++ = 0xd0;
-				else if (regsize[i] == 2)
-					*(*dest)++ = 0x66, *(*dest)++ = 0xd1;
-				else if (regsize[i] == 4)
-					*(*dest)++ = 0xd1;
-
-				// emit modrm and count
-				*(*dest)++ = 0xc0 | (5 << 3) | (i & 7);
-			}
-		shift = 1;
-	}
-
-	// now determine the mask to use
-	if (blit->dstdepth == 16)
-	{
-		mask = (0xff >> (win_color16_rsrc_shift + shift)) << win_color16_rdst_shift;
-		mask |= (0xff >> (win_color16_gsrc_shift + shift)) << win_color16_gdst_shift;
-		mask |= (0xff >> (win_color16_bsrc_shift + shift)) << win_color16_bdst_shift;
-		mask |= mask << 16;
-	}
-	else
-	{
-		mask = (0xff >> shift) << win_color32_rdst_shift;
-		mask |= (0xff >> shift) << win_color32_gdst_shift;
-		mask |= (0xff >> shift) << win_color32_bdst_shift;
-	}
-
-	// generate an AND with that mask
-	// emit opcode
-	for (i = 0; i < 4; i++)
-		if (regsize[i])
-		{
-			if (regsize[i] == 1)
-				*(*dest)++ = 0x80;
-			else if (regsize[i] == 2)
-				*(*dest)++ = 0x66, *(*dest)++ = 0x81;
-			else if (regsize[i] == 4)
-				*(*dest)++ = 0x81;
-
-			// emit modrm
-			*(*dest)++ = 0xc0 | (4 << 3) | i;
-
-			// emit mask
-			if (regsize[i] == 1)
-				*(*dest)++ = mask;
-			else if (regsize[i] == 2)
-				*(UINT16 *)*dest = mask, *dest += 2;
-			else if (regsize[i] == 4)
-				*(UINT32 *)*dest = mask, *dest += 4;
-		}
-
-	// for the 75% case, we need to multiply by 3 (lea reg,[reg+reg*2])
-	if (blit->dsteffect == EFFECT_SCANLINE_75)
-	{
-		for (i = 0; i < 4; i++)
-			if (regsize[i] > 1 && regsize[i] < 8)
-			{
-				// emit opcode
-				if (regsize[i] == 2)
-					*(*dest)++ = 0x66, *(*dest)++ = 0x8d;
-				else if (regsize[i] == 4)
-					*(*dest)++ = 0x8d;
-
-				// emit modrm + sib
-				*(*dest)++ = 0x00 | (i << 3) | 4;
-				*(*dest)++ = 0x40 | (i << 3) | i;
-			}
-	}
-}
-
-
-
-//============================================================
-//  emit_reduce_brightness_mmx
-//============================================================
-
-static void emit_reduce_brightness_mmx(int count, const UINT8 *reglist, const win_blit_params *blit, UINT8 **dest)
-{
-	int freelist[16], tempfree[16];
-	int regsize[16] = { 0 };
-	int i, j, shift;
-	UINT32 mask;
-
-	// do nothing for less than 16bpp
-	if (blit->dstdepth < 16)
-		return;
-
-	// find all the registers we need to tweak
-	for (i = 0; i < count; i++)
-	{
-		int size = regoffset_modsize[reglist[i]];
-		int idx = reglist[i] & 15;
-		if (size > regsize[idx])
-			regsize[idx] = size;
-	}
-
-	// now find some free registers
-	for (i = j = 0; i < 8; i++)
-		if (!regsize[i])
-			tempfree[j++] = i;
-	for (i = j = 0; i < 8; i++)
-		if (!regsize[8 + i])
-			tempfree[8 + j++] = i;
-
-	// associate a free register with each used one
-	for (i = j = 0; i < 8; i++)
-		if (regsize[i])
-			freelist[i] = tempfree[j++];
-	for (i = j = 0; i < 8; i++)
-		if (regsize[8 + i])
-			freelist[8 + i] = tempfree[8 + j++];
-
-	// for 75% (MMX) we need to copy to a free reg temporarily
-	if (blit->dsteffect == EFFECT_SCANLINE_75)
-	{
-		for (i = 0; i < 16; i++)
-			if (regsize[i])
-			{
-				// emit opcode
-				if (regsize[i] == 16)
-					*(*dest)++ = 0x66;
-				*(*dest)++ = 0x0f, *(*dest)++ = 0x6f;
-
-				// emit modrm
-				*(*dest)++ = 0xc0 | (freelist[i] << 3) | (i & 7);
-			}
-	}
-
-	// for 25% we need to shift right by 2
-	if (blit->dsteffect == EFFECT_SCANLINE_25)
-	{
-		for (i = 0; i < 16; i++)
-			if (regsize[i])
-			{
-				// emit opcode
-				if (regsize[i] == 16)
-					*(*dest)++ = 0x66;
-				*(*dest)++ = 0x0f, *(*dest)++ = 0x73;
-
-				// emit modrm and count
-				*(*dest)++ = 0xc0 | (2 << 3) | (i & 7);
-				*(*dest)++ = 2;
-			}
-		shift = 2;
-	}
-
-	// for 50% we need to shift right by 1
-	else if (blit->dsteffect == EFFECT_SCANLINE_50)
-	{
-		for (i = 0; i < 16; i++)
-			if (regsize[i])
-			{
-				// emit opcode
-				if (regsize[i] == 16)
-					*(*dest)++ = 0x66;
-				*(*dest)++ = 0x0f, *(*dest)++ = 0x73;
-
-				// emit modrm and count
-				*(*dest)++ = 0xc0 | (2 << 3) | (i & 7);
-				*(*dest)++ = 1;
-			}
-		shift = 1;
-	}
-
-	// for 75% we need to shift the temp right by 2
-	else
-	{
-		for (i = 0; i < 16; i++)
-			if (regsize[i])
-			{
-				// emit opcode
-				if (regsize[i] == 16)
-					*(*dest)++ = 0x66;
-				*(*dest)++ = 0x0f, *(*dest)++ = 0x73;
-
-				// emit modrm and count
-				*(*dest)++ = 0xc0 | (2 << 3) | freelist[i];
-				*(*dest)++ = 2;
-			}
-		shift = 2;
-	}
-
-	// now determine the masks to use
-	if (blit->dstdepth == 16)
-	{
-		mask = (0xff >> (win_color16_rsrc_shift + shift)) << win_color16_rdst_shift;
-		mask |= (0xff >> (win_color16_gsrc_shift + shift)) << win_color16_gdst_shift;
-		mask |= (0xff >> (win_color16_bsrc_shift + shift)) << win_color16_bdst_shift;
-		mask |= mask << 16;
-	}
-	else
-	{
-		mask = (0xff >> shift) << win_color32_rdst_shift;
-		mask |= (0xff >> shift) << win_color32_gdst_shift;
-		mask |= (0xff >> shift) << win_color32_bdst_shift;
-	}
-	asmblit_mmxmask[0] = asmblit_mmxmask[1] = asmblit_mmxmask[2] = asmblit_mmxmask[3] = mask;
-
-	// generate an AND with that mask
-	if (blit->dsteffect != EFFECT_SCANLINE_75)
-	{
-		for (i = 0; i < 16; i++)
-			if (regsize[i])
-			{
-				// emit opcode
-				if (regsize[i] == 16)
-					*(*dest)++ = 0x66;
-				*(*dest)++ = 0x0f, *(*dest)++ = 0xdb;
-
-				// emit modrm
-				*(*dest)++ = 0x00 | ((i & 7) << 3) | 5;
-
-				// emit address
-				*(UINT32 *)*dest = (UINT32)&asmblit_mmxmask;
-				*dest += 4;
-			}
-	}
-
-	// for 75% we and the temporary instead, then subtract
-	else
-	{
-		// and
-		for (i = 0; i < 16; i++)
-			if (regsize[i])
-			{
-				// emit opcode
-				if (regsize[i] == 16)
-					*(*dest)++ = 0x66;
-				*(*dest)++ = 0x0f, *(*dest)++ = 0xdb;
-
-				// emit modrm
-				*(*dest)++ = 0x00 | (freelist[i] << 3) | 5;
-
-				// emit address
-				*(UINT32 *)*dest = (UINT32)&asmblit_mmxmask;
-				*dest += 4;
-			}
-
-		// sub
-		for (i = 0; i < 16; i++)
-			if (regsize[i])
-			{
-				// emit opcode
-				if (regsize[i] == 16)
-					*(*dest)++ = 0x66;
-				*(*dest)++ = 0x0f, *(*dest)++ = 0xfa;
-
-				// emit modrm and count
-				*(*dest)++ = 0xc0 | (i << 3) | freelist[i];
-			}
-	}
-}
-
-
-
-//============================================================
-//  generate_rgb_masks
-//============================================================
-
-static void generate_rgb_masks(const struct rgb_descriptor *desc, const win_blit_params *blit)
-{
-	int i;
-
-	// generate an entry for each row of the destination
-	for (i = 0; i < MAX_VIDEO_HEIGHT * 2; i++)
-	{
-		const UINT8 *src = &desc->data[i % desc->rows][0];
-		UINT32 *dst = &asmblit_rgbmask[i * 16];
-		int j;
-
-		// loop over all 16 pixels
-		for (j = 0; j < 16; j++)
-		{
-			int rmask = (src[j] & 4) ? 0x3f : 0;
-			int gmask = (src[j] & 2) ? 0x3f : 0;
-			int bmask = (src[j] & 1) ? 0x3f : 0;
-			UINT32 mask;
-
-			// now determine the masks to use
-			if (blit->dstdepth == 16)
-			{
-				mask = (rmask >> win_color16_rsrc_shift) << win_color16_rdst_shift;
-				mask |= (gmask >> win_color16_gsrc_shift) << win_color16_gdst_shift;
-				mask |= (bmask >> win_color16_bsrc_shift) << win_color16_bdst_shift;
-				*(UINT16 *)dst = mask;
-				dst = (UINT32 *)((UINT16 *)dst + 1);
-			}
-			else
-			{
-				mask = rmask << win_color32_rdst_shift;
-				mask |= gmask << win_color32_gdst_shift;
-				mask |= bmask << win_color32_bdst_shift;
-				*dst++ = mask;
-			}
-		}
-	}
-}
-
-
-//============================================================
-//  emit_expansion
-//============================================================
-
-static void emit_expansion(int count, const UINT8 *reglist, const UINT32 *offslist, const win_blit_params *blit, UINT8 **dest, int update)
-{
-	int row, i, rowoffs = 0;
-	int has_mmx = 0;
-
-	// determine if we have MMX registers in the list
-	for (i = 0; i < count; i++)
-		if (reglist[i] >= 16)
-			has_mmx = 1;
-
-	// loop over copied lines and blit them
-	for (row = 0; row < blit->dstyscale; row++)
-	{
-		// handle dimmed scanlines
-		if (blit->dsteffect >= EFFECT_SCANLINE_25 && blit->dsteffect <= EFFECT_SCANLINE_75 && row != 0 && row == blit->dstyscale - 1)
-		{
-			if (has_mmx)
-				emit_reduce_brightness_mmx(count, reglist, blit, dest);
-			else
-				emit_reduce_brightness(count, reglist, blit, dest);
-		}
-
-		// store the results
-		for (i = 0; i < count; i++)
-			emit_mov_edi_reg(reglist[i], offslist[i] + rowoffs, dest);
-		rowoffs += blit->dstpitch;
-	}
-
-	// if updating, and generating scanlines, store a 0
-	if (update && blit->dstyskip)
-	{
-		// if we have any MMX, generate a PXOR MM7,MM7
-		if (has_mmx)
-		{
-			*(*dest)++ = 0x0f, *(*dest)++ = 0xef;
-			*(*dest)++ = 0xc0 | (7 << 3) | 7;
-		}
-
-		// generate the moves
-		for (row = 0; row < blit->dstyskip; row++)
-		{
-			for (i = 0; i < count; i++)
-				emit_mov_edi_0(reglist[i], offslist[i] + rowoffs, dest);
-			rowoffs += blit->dstpitch;
-		}
-	}
+	shift_r32(reg,
+		win_color16_bdst_shift - win_color32_bdst_shift - win_color16_bsrc_shift);
+	_and_r32_imm(reg, (0xFF >> win_color16_bsrc_shift) << win_color16_bdst_shift);
+	_or_r32_r32(reg, REG_ECX);
 }
 
 
@@ -1169,298 +434,426 @@ static void emit_expansion(int count, const UINT8 *reglist, const UINT32 *offsli
 //  expand_blitter
 //============================================================
 
-static void expand_blitter(int which, const win_blit_params *blit, UINT8 **dest, int update)
+static void expand_blitter(int count, blit_state *state,
+	int row_start, int row_count, brightness b)
 {
-	int srcdepth_index = (blit->srcdepth + 7) / 8 - 1;
-	int dstdepth_index = (blit->dstdepth + 7) / 8 - 1;
-	int xscale_index = blit->dstxscale - 1;
-	UINT8 *blitter = NULL;
-	int i;
+	int i, j, x, is_contiguous, span, block;
+	const win_blit_params *blit = state->blit;
 
-	// find the blitter -- custom case
-	switch (blit->dsteffect)
+	state->offset = blit->dstpitch * row_start;
+	state->row_count = row_count;
+
+	// determine if contiguous or not
+	is_contiguous = TRUE;
+	for (i = 1; i < count; i++)
 	{
-		case EFFECT_RGB16:
-		case EFFECT_RGB6:
-		case EFFECT_RGB4:
-		case EFFECT_RGB4V:
-		case EFFECT_RGB3:
-		case EFFECT_RGB_TINY:
-		case EFFECT_SCANLINE_75V:
-			if (use_mmx)
-			{
-				if (blit->dsteffect == EFFECT_RGB16)
-					generate_rgb_masks(&rgb16_desc, blit);
-				else if (blit->dsteffect == EFFECT_RGB6)
-					generate_rgb_masks(&rgb6_desc, blit);
-				else if (blit->dsteffect == EFFECT_RGB4)
-					generate_rgb_masks(&rgb4_desc, blit);
-				else if (blit->dsteffect == EFFECT_RGB4V)
-					generate_rgb_masks(&rgb4v_desc, blit);
-				else if (blit->dsteffect == EFFECT_RGB3)
-					generate_rgb_masks(&rgb3_desc, blit);
-				else if (blit->dsteffect == EFFECT_RGB_TINY)
-					generate_rgb_masks(&rgbtiny_desc, blit);
-				else if (blit->dsteffect == EFFECT_SCANLINE_75V)
-					generate_rgb_masks(&scan75v_desc, blit);
-				else if (blit->dsteffect == EFFECT_SHARP)
-					generate_rgb_masks(&sharp_desc, blit);
-
-				if (which == 1)
-					blitter = (UINT8 *)(blit1_core_rgb[srcdepth_index][dstdepth_index]);
-				else
-					blitter = (UINT8 *)(blit16_core_rgb[srcdepth_index][dstdepth_index]);
-			}
+		if ((pixoffset[0] + i * (blit->srcdepth / 8)) != pixoffset[i])
+		{
+			is_contiguous = FALSE;
 			break;
-	}
-
-	// find the blitter -- standard case
-	if (blitter == NULL)
-	{
-		if (which == 1)
-			blitter = (UINT8 *)(blit1_core[srcdepth_index][dstdepth_index][xscale_index]);
-		else
-		{
-			blitter = (UINT8 *)(blit16_core_sse[srcdepth_index][dstdepth_index][xscale_index]);
-			if (!use_sse || blitter == NULL)
-			{
-				blitter = (UINT8 *)(blit16_core_mmx[srcdepth_index][dstdepth_index][xscale_index]);
-				if (!use_mmx || blitter == NULL)
-					blitter = (UINT8 *)(blit16_core[srcdepth_index][dstdepth_index][xscale_index]);
-			}
 		}
 	}
 
-	// copy until the end
-	while (blitter[0] != 0xcc || blitter[1] != 0xcc || blitter[2] != 0xcc || blitter[3] != 0xe0)
+	if (has_mmx()
+		&& ((count % REGCOUNT_MMX) == 0)
+		&& (blit->srcdepth == 16)
+		&& ((blit->dstdepth == 16) || (blit->dstdepth == 32))
+		&& ((blit->dstxscale == 1) || (blit->dstxscale == 2) || (blit->dstxscale == 3))
+		&& (b == BRIGHTNESS_100))
 	{
-		UINT8 reglist[8];
-		UINT32 offslist[8];
-		int count;
-
-		// if we're not at a special tag, just copy and continue
-		if (blitter[0] != 0xcc || blitter[1] != 0xcc || blitter[2] != 0xcc)
+		// MMX, mod REGCOUNT_MMX, src 16 bit, dest 16 bit, scale 1/2
+		switch(blit->dstxscale)
 		{
-			*(*dest)++ = *blitter++;
-			continue;
+			case 1:		span = 2;	break;
+			case 2:		span = 2;	break;
+			case 3:		span = 4;	break;
+			default:	fatalerror("Invalid blit->dstxscale");	break;
 		}
 
-		// if we're at a shift tag, process it
-		if ((blitter[3] & 0xe0) == 0x40)
+		for (i = 0; i < count; i += block * 2)
 		{
-			int dstreg = 0, rshift1 = 0, rshift2 = 0, lshift = 0;
-			int shifttype = blitter[3] & 15;
-			blitter += 4;
+			block = MIN(count - i, REGCOUNT_MMX / span);
 
-			// determine parameters
-			switch (shifttype & 3)
+			for (j = 0; j < block; j++)
 			{
-				case 0:	rshift1 = win_color32_rdst_shift; rshift2 = win_color16_rsrc_shift; lshift = win_color16_rdst_shift; break;
-				case 1:	rshift1 = win_color32_gdst_shift; rshift2 = win_color16_gsrc_shift; lshift = win_color16_gdst_shift; break;
-				case 2:	rshift1 = win_color32_bdst_shift; rshift2 = win_color16_bsrc_shift; lshift = win_color16_bdst_shift; break;
+				_movzx_r32_m16bd(REG_EAX, REG_ESI, pixoffset[i + j * 2 + 0]);
+				_movzx_r32_m16bd(REG_EBX, REG_ESI, pixoffset[i + j * 2 + 1]);
+				_movd_mmx_m32bisd(REG_MM0 + j * span, REG_ECX, REG_EAX, 4, 0);
+				_movd_mmx_m32bisd(REG_MM1 + j * span, REG_ECX, REG_EBX, 4, 0);
 			}
 
-			// determine registers
-			switch (shifttype >> 2)
+			switch(blit->dstdepth * 100 + blit->dstxscale)
 			{
-				case 0: dstreg = 3;	break;	// ebx
-				case 1: dstreg = 1; break;	// ecx
+				case 1601:
+					for (j = 0; j < block; j++)
+						_punpcklwd_mmx_mmx(REG_MM0 + j * span, REG_MM1 + j * span);
+					for (j = 0; j < block; j += 2)
+						_punpckldq_mmx_mmx(REG_MM0 + j * span, REG_MM0 + (j + 1) * span);
+					for (j = 0; j < block; j += 2)
+						output_mmx(state, REG_MM0 + j * span);
+					break;
+
+				case 1602:
+					for (j = 0; j < block; j++)
+					{
+						_punpcklwd_mmx_mmx(REG_MM0 + j * span, REG_MM0 + j * span);
+						_punpcklwd_mmx_mmx(REG_MM1 + j * span, REG_MM1 + j * span);
+					}
+					for (j = 0; j < block; j++)
+						_punpckldq_mmx_mmx(REG_MM0 + j * span, REG_MM1 + j * span);
+					for (j = 0; j < block; j++)
+						output_mmx(state, REG_MM0 + j * span);
+					break;
+
+				case 1603:
+					for (j = 0; j < block; j++)
+						_movq_mmx_mmx(REG_MM2 + j * span, REG_MM0 + j * span);
+					for (j = 0; j < block; j += 2)
+						_punpcklwd_mmx_mmx(REG_MM0 + j * span, REG_MM0 + j * span);
+					for (j = 0; j < block; j += 2)
+						_punpcklwd_mmx_mmx(REG_MM1 + j * span, REG_MM1 + j * span);
+					for (j = 0; j < block; j += 2)
+						_punpcklwd_mmx_mmx(REG_MM4 + j * span, REG_MM5 + j * span);
+					for (j = 0; j < block; j += 2)
+						_punpcklwd_mmx_mmx(REG_MM4 + j * span, REG_MM5 + j * span);
+					for (j = 0; j < block; j += 2)
+						_punpcklwd_mmx_mmx(REG_MM6 + j * span, REG_MM6 + j * span);
+					for (j = 0; j < block; j += 2)
+						_punpcklwd_mmx_mmx(REG_MM2 + j * span, REG_MM1 + j * span);
+					for (j = 0; j < block; j += 2)
+						_punpckldq_mmx_mmx(REG_MM0 + j * span, REG_MM2 + j * span);
+					for (j = 0; j < block; j += 2)
+						_punpckldq_mmx_mmx(REG_MM1 + j * span, REG_MM6 + j * span);
+					for (j = 0; j < block; j += 2)
+						_punpckldq_mmx_mmx(REG_MM4 + j * span, REG_MM5 + j * span);
+
+					for (j = 0; j < block; j += 2)
+					{
+						output_mmx(state, REG_MM0 + j * span);
+						output_mmx(state, REG_MM1 + j * span);
+						output_mmx(state, REG_MM4 + j * span);
+					}
+					break;
+
+				case 3201:
+					for (j = 0; j < block; j++)
+						_punpckldq_mmx_mmx(REG_MM0 + j * span, REG_MM1 + j * span);
+					for (j = 0; j < block; j++)
+						output_mmx(state, REG_MM0 + j * span);
+					break;
+
+				case 3202:
+					for (j = 0; j < block; j++)
+						_punpckldq_mmx_mmx(REG_MM0 + j * span, REG_MM1 + j * span);
+					for (j = 0; j < block; j++)
+						output_mmx(state, REG_MM0 + j * span);
+					break;
+
+				case 3203:
+					for (j = 0; j < block; j++)
+						_movq_mmx_mmx(REG_MM2 + j * span, REG_MM0 + j * span);
+					for (j = 0; j < block; j++)
+						_punpckldq_mmx_mmx(REG_MM0 + j * span, REG_MM0 + j * span);
+					for (j = 0; j < block; j++)
+						_punpckldq_mmx_mmx(REG_MM2 + j * span, REG_MM1 + j * span);
+					for (j = 0; j < block; j++)
+						_punpckldq_mmx_mmx(REG_MM1 + j * span, REG_MM1 + j * span);
+					for (j = 0; j < block; j++)
+					{
+						output_mmx(state, REG_MM0 + j * span);
+						output_mmx(state, REG_MM2 + j * span);
+						output_mmx(state, REG_MM1 + j * span);
+					}
+					break;
+
+				default:
+					fatalerror("Invalid blit->dstxdepth/blit->dstxscale");
+					break;
 			}
-
-			// emit the right shift instruction
-			*(*dest)++ = 0xc1;
-			*(*dest)++ = 0xc0 | (5 << 3) | dstreg;
-			*(*dest)++ = rshift1 + rshift2;
-
-			// emit the AND instruction
-			*(*dest)++ = 0x83;
-			*(*dest)++ = 0xc0 | (4 << 3) | dstreg;
-			*(*dest)++ = 0xff >> rshift2;
-
-			// emit the left shift instruction
-			*(*dest)++ = 0xc1;
-			*(*dest)++ = 0xc0 | (4 << 3) | dstreg;
-			*(*dest)++ = lshift;
-		}
-
-		// if we're at an expansion tag, process it
-		else if ((blitter[3] & 0xe0) == 0x60)
-		{
-			// store the first one
-			count = 1;
-			reglist[0] = blitter[3] - 0x60;
-			blitter += 4;
-
-			// loop over all the remaining
-			while (blitter[0] == 0xcc && blitter[1] == 0xcc && blitter[2] == 0xcc && (blitter[3] & 0xe0) == 0x60)
-			{
-				reglist[count++] = blitter[3] - 0x60;
-				blitter += 4;
-			}
-
-			// now get the offsets
-			for (i = 0; i < count; i++)
-			{
-				offslist[i] = *(UINT32 *)blitter;
-				blitter += 4;
-			}
-
-			// now generate the expansion code
-			emit_expansion(count, reglist, offslist, blit, dest, update);
-		}
-
-		// otherwise, copy as-is
-		else
-			*(*dest)++ = *blitter++;
-	}
-}
-
-
-
-//============================================================
-//  fixup_addresses
-//============================================================
-
-static void fixup_addresses(UINT8 **fixups, UINT8 *start, UINT8 *end)
-{
-	// loop over the final blitter
-	for ( ; start < end; start++)
-	{
-		// if this is an address fixup, do it
-		if (start[0] == 0xcc && start[1] == 0xcc && start[2] == 0xcc && (start[3] & 0xe0) == 0x00)
-		{
-			int idx = start[3] & 0x1f;
-			*(UINT32 *)start = fixups[idx] - (start + 4);
-		}
-	}
-}
-
-
-
-//============================================================
-//  fixup_values
-//============================================================
-
-static void fixup_values(UINT32 *fixups, UINT8 *start, UINT8 *end)
-{
-	// loop over the final blitter
-	for ( ; start < end; start++)
-	{
-		// if this is an address fixup, do it
-		if (start[0] == 0xcc && start[1] == 0xcc && start[2] == 0xcc && (start[3] & 0xe0) == 0x20)
-		{
-			int idx = start[3] & 0x1f;
-			*(UINT32 *)start = fixups[idx];
 		}
 	}
-}
-
-
-
-//============================================================
-//  compute_source_fixups
-//============================================================
-
-static void compute_source_fixups(const win_blit_params *blit, UINT32 valuefixups[])
-{
-	int srcxsize = (blit->srcdepth + 7) / 8;
-	int srcysize = blit->srcpitch;
-	int pix;
-
-	if (!blit->swapxy)
+	else if (has_mmx()
+		&& ((count % REGCOUNT_MMX) == 0)
+		&& (blit->srcdepth == 32)
+		&& (blit->dstdepth == 32)
+		&& ((blit->dstxscale == 1) || (blit->dstxscale == 2))
+		&& (b == BRIGHTNESS_100))
 	{
-		if (!blit->flipx)
+		// MMX, mod REGCOUNT_MMX, src 32 bit, dest 32 bit, scale 1
+		switch(blit->dstxscale)
 		{
-			// no flipping, no swapping
-			if (!blit->flipy)
-			{
-				valuefixups[FIXUPVAL_SRCBYTES1] = srcxsize;
-				valuefixups[FIXUPVAL_SRCBYTES16] = srcxsize * 16;
-				valuefixups[FIXUPVAL_SRCADVANCE] = srcysize;
-				for (pix = 0; pix < 16; pix++)
-					valuefixups[FIXUPVAL_PIXOFFSET0+pix] = pix * srcxsize;
-			}
+			case 1:		span = 1;	break;
+			case 2:		span = 2;	break;
+			default:	fatalerror("Invalid blit->dstxscale");	break;
+		}
+		span = MAX(span, is_contiguous ? 1 : 2);
 
-			// Y flipping, no swapping
+		for (i = 0; i < count; i += block * 2)
+		{
+			block = MIN(count - i, REGCOUNT_MMX / span);
+
+			if (is_contiguous)
+			{
+				for (j = 0; j < block; j++)
+					_movq_mmx_m64bd(REG_MM0 + (j * span), REG_ESI, pixoffset[i + j * 2]);
+			}
 			else
 			{
-				valuefixups[FIXUPVAL_SRCBYTES1] = srcxsize;
-				valuefixups[FIXUPVAL_SRCBYTES16] = srcxsize * 16;
-				valuefixups[FIXUPVAL_SRCADVANCE] = -srcysize;
-				for (pix = 0; pix < 16; pix++)
-					valuefixups[FIXUPVAL_PIXOFFSET0+pix] = pix * srcxsize - srcysize;
-			}
-		}
-
-		else
-		{
-			// X flipping, no swapping
-			if (!blit->flipy)
-			{
-				valuefixups[FIXUPVAL_SRCBYTES1] = -srcxsize;
-				valuefixups[FIXUPVAL_SRCBYTES16] = -srcxsize * 16;
-				valuefixups[FIXUPVAL_SRCADVANCE] = srcysize;
-				for (pix = 0; pix < 16; pix++)
-					valuefixups[FIXUPVAL_PIXOFFSET0+pix] = -(pix + 1) * srcxsize;
+				for (j = 0; j < block; j++)
+				{
+					_movd_mmx_m32bd(REG_MM0 + (j * span), REG_ESI, pixoffset[i + j * 2 + 0]);
+					_movd_mmx_m32bd(REG_MM1 + (j * span), REG_ESI, pixoffset[i + j * 2 + 1]);
+				}
+				for (j = 0; j < block; j++)
+					_punpckldq_mmx_mmx(REG_MM0 + (j * span), REG_MM1 + (j * span));
 			}
 
-			// X and Y flipping, no swapping
-			else
+			switch(blit->dstxscale)
 			{
-				valuefixups[FIXUPVAL_SRCBYTES1] = -srcxsize;
-				valuefixups[FIXUPVAL_SRCBYTES16] = -srcxsize * 16;
-				valuefixups[FIXUPVAL_SRCADVANCE] = -srcysize;
-				for (pix = 0; pix < 16; pix++)
-					valuefixups[FIXUPVAL_PIXOFFSET0+pix] = -(pix + 1) * srcxsize - srcysize;
+				case 1:
+					for (j = 0; j < block; j++)
+						output_mmx(state, REG_MM0 + (j * span));
+					break;
+
+				case 2:
+					for (j = 0; j < block; j++)
+						_movq_mmx_mmx(REG_MM1 + (j * span), REG_MM0 + (j * span));
+					for (j = 0; j < block; j++)
+					{
+						_punpckldq_mmx_mmx(REG_MM0 + (j * span), REG_MM0 + (j * span));
+						_punpckhdq_mmx_mmx(REG_MM1 + (j * span), REG_MM1 + (j * span));
+					}
+					for (j = 0; j < block; j++)
+					{
+						output_mmx(state, REG_MM0 + (j * span));
+						output_mmx(state, REG_MM1 + (j * span));
+					}
+					break;
+
+				default:
+					fatalerror("Invalid blit->dstxscale");
+					break;
 			}
 		}
 	}
+	else if (has_mmx()
+		&& ((count % (REGCOUNT_MMX / 2)) == 0)
+		&& (blit->srcdepth == 32)
+		&& (blit->dstdepth == 16)
+		&& (blit->dstxscale == 1)
+		&& (b == BRIGHTNESS_100))
+	{
+		// MMX, mod REGCOUNT_MMX/2, src 32 bit, dest 16 bit, scale 1
+		static PAIR64 rmmx_shift;
+		static PAIR64 gmmx_shift;
+		static PAIR64 bmmx_shift;
 
+		rmmx_shift.d.h = rmmx_shift.d.l = (UINT16) ((0xFF >> win_color16_rsrc_shift) << win_color16_rdst_shift);
+		gmmx_shift.d.h = gmmx_shift.d.l = (UINT16) ((0xFF >> win_color16_gsrc_shift) << win_color16_gdst_shift);
+		bmmx_shift.d.h = bmmx_shift.d.l = (UINT16) ((0xFF >> win_color16_bsrc_shift) << win_color16_bdst_shift);
+
+		for (i = 0; i < count; i += (REGCOUNT_MMX / 2))
+		{
+			if (is_contiguous)
+			{
+				for (j = 0; j < REGCOUNT_MMX; j += 4)
+					_movq_mmx_m64bd(REG_MM0 + j, REG_ESI, pixoffset[i + j / 2]);
+			}
+			else
+			{
+				for (j = 0; j < REGCOUNT_MMX; j += 2)
+					_movd_mmx_m32bd(REG_MM0 + j, REG_ESI, pixoffset[i + j / 2]);
+				for (j = 0; j < REGCOUNT_MMX; j += 4)
+					_punpckldq_mmx_mmx(REG_MM0 + j, REG_MM2 + j);
+			}
+
+			for (j = 0; j < REGCOUNT_MMX; j += 4)
+				_movq_mmx_mmx(REG_MM1 + j, REG_MM0 + j);
+			for (j = 0; j < REGCOUNT_MMX; j += 4)
+				shift_mmx_d(REG_MM1 + j, win_color16_rdst_shift - win_color32_rdst_shift - win_color16_rsrc_shift);
+			for (j = 0; j < REGCOUNT_MMX; j += 4)
+				_pand_mmx_m64abs(REG_MM1 + j, &rmmx_shift);
+
+			for (j = 0; j < REGCOUNT_MMX; j += 4)
+				_movq_mmx_mmx(REG_MM2 + j, REG_MM0 + j);
+			for (j = 0; j < REGCOUNT_MMX; j += 4)
+				shift_mmx_d(REG_MM2 + j, win_color16_gdst_shift - win_color32_gdst_shift - win_color16_gsrc_shift);
+			for (j = 0; j < REGCOUNT_MMX; j += 4)
+				_pand_mmx_m64abs(REG_MM2 + j, &gmmx_shift);
+
+			for (j = 0; j < REGCOUNT_MMX; j += 4)
+				shift_mmx_d(REG_MM0 + j, win_color16_bdst_shift - win_color32_bdst_shift - win_color16_bsrc_shift);
+			for (j = 0; j < REGCOUNT_MMX; j += 4)
+				_pand_mmx_m64abs(REG_MM0 + j, &bmmx_shift);
+
+			for (j = 0; j < REGCOUNT_MMX; j += 4)
+				_por_mmx_mmx(REG_MM0 + j, REG_MM1 + j);
+			for (j = 0; j < REGCOUNT_MMX; j += 4)
+				_por_mmx_mmx(REG_MM0 + j, REG_MM2 + j);
+
+			if (has_sse())
+			{
+				for (j = 0; j < REGCOUNT_MMX; j += 4)
+					_pshufw_mmx_mmx_imm(REG_MM0 + j, REG_MM0 + j, 0x08);
+				for (j = 0; j < REGCOUNT_MMX; j += 8)
+					_punpckldq_mmx_mmx(REG_MM0 + j, REG_MM4 + j);
+				for (j = 0; j < REGCOUNT_MMX; j += 8)
+					output_mmx(state, REG_MM0 + j);
+			}
+			else
+			{
+				for (j = 0; j < REGCOUNT_MMX; j += 4)
+					_movq_mmx_mmx(REG_MM1 + j, REG_MM0 + j);
+				for (j = 0; j < REGCOUNT_MMX; j += 4)
+					_punpckhdq_mmx_mmx(REG_MM1 + j, REG_MM1 + j);
+				for (j = 0; j < REGCOUNT_MMX; j += 4)
+					_punpcklwd_mmx_mmx(REG_MM0 + j, REG_MM1 + j);
+				for (j = 0; j < REGCOUNT_MMX; j += 8)
+					_punpckldq_mmx_mmx(REG_MM0 + j, REG_MM4 + j);
+				for (j = 0; j < REGCOUNT_MMX; j += 8)
+					output_mmx(state, REG_MM0 + j);
+			}
+		}
+	}
+	else if ((count % 2) == 0)
+	{
+		// No MMX/SSE, even count
+		for (i = 0; i < count; i += 2)
+		{
+			switch(blit->srcdepth)
+			{
+				case 16:
+					_movzx_r32_m16bd(REG_EAX, REG_ESI, pixoffset[i + 0]);
+					_movzx_r32_m16bd(REG_EBX, REG_ESI, pixoffset[i + 1]);
+					_mov_r32_m32bisd(REG_EAX, REG_ECX, REG_EAX, 4, 0);
+					_mov_r32_m32bisd(REG_EBX, REG_ECX, REG_EBX, 4, 0);
+					break;
+
+				case 32:
+					_mov_r32_m32bd(REG_EAX, REG_ESI, pixoffset[i + 0]);
+					_mov_r32_m32bd(REG_EBX, REG_ESI, pixoffset[i + 1]);
+					break;
+
+				default:
+					fatalerror("Invalid blit->srcdepth");
+					break;
+			}
+
+			// if we are converting 32 bit values to 16 bit values, we
+			// must shuffle the bits around
+			if ((blit->srcdepth == 32) && (blit->dstdepth == 16))
+			{
+				emit_val16_from_val32(REG_EAX);
+				emit_val16_from_val32(REG_EBX);
+			}
+
+			// adjust brightness if necessary
+			switch(blit->dstdepth)
+			{
+				case 16:
+					adjust_brightness_r16(REG_AX, b);
+					adjust_brightness_r16(REG_BX, b);
+					break;
+
+				case 24:
+				case 32:
+					adjust_brightness_r32(REG_EAX, b);
+					adjust_brightness_r32(REG_EBX, b);
+					break;
+			}
+
+			switch(blit->dstdepth)
+			{
+				case 16:
+					for (x = 0; x < blit->dstxscale; x++)
+						output_r16(state, REG_AX);
+					for (x = 0; x < blit->dstxscale; x++)
+						output_r16(state, REG_BX);
+					break;
+
+				case 24:
+					_mov_r32_r32(REG_EDX, REG_EAX);
+					_shr_r32_imm(REG_EDX, 16);
+					for (x = 0; x < blit->dstxscale; x++)
+					{
+						output_r16(state, REG_AX);
+						output_r8(state, REG_DL);
+					}
+
+					_mov_r32_r32(REG_EDX, REG_EBX);
+					_shr_r32_imm(REG_EDX, 16);
+					for (x = 0; x < blit->dstxscale; x++)
+					{
+						output_r16(state, REG_BX);
+						output_r8(state, REG_DL);
+					}
+					break;
+
+				case 32:
+					for (x = 0; x < blit->dstxscale; x++)
+						output_r32(state, REG_EAX);
+					for (x = 0; x < blit->dstxscale; x++)
+						output_r32(state, REG_EBX);
+					break;
+
+				default:
+					fatalerror("Invalid blit->dstdepth");
+					break;
+			}
+		}
+	}
 	else
 	{
-		if (!blit->flipx)
+		// No MMX/SSE, odd count
+		for (i = 0; i < count; i++)
 		{
-			// no flipping, swapped
-			if (!blit->flipy)
+			switch(blit->srcdepth)
 			{
-				valuefixups[FIXUPVAL_SRCBYTES1] = srcysize;
-				valuefixups[FIXUPVAL_SRCBYTES16] = srcysize * 16;
-				valuefixups[FIXUPVAL_SRCADVANCE] = srcxsize;
-				for (pix = 0; pix < 16; pix++)
-					valuefixups[FIXUPVAL_PIXOFFSET0+pix] = pix * srcysize;
+				case 16:
+					_movzx_r32_m16bd(REG_EAX, REG_ESI, pixoffset[i]);
+					_mov_r32_m32bisd(REG_EAX, REG_ECX, REG_EAX, 4, 0);
+					break;
+
+				case 32:
+					_mov_r32_m32bd(REG_EAX, REG_ESI, pixoffset[i]);
+					break;
+
+				default:
+					fatalerror("Invalid blit->srcdepth");
+					break;
 			}
 
-			// Y flipping, swapped
-			else
-			{
-				valuefixups[FIXUPVAL_SRCBYTES1] = srcysize;
-				valuefixups[FIXUPVAL_SRCBYTES16] = srcysize * 16;
-				valuefixups[FIXUPVAL_SRCADVANCE] = -srcxsize;
-				for (pix = 0; pix < 16; pix++)
-					valuefixups[FIXUPVAL_PIXOFFSET0+pix] = pix * srcysize - srcxsize;
-			}
-		}
+			// if we are converting 32 bit values to 16 bit values, we
+			// must shuffle the bits around
+			if ((blit->srcdepth == 32) && (blit->dstdepth == 16))
+				emit_val16_from_val32(REG_EAX);
 
-		else
-		{
-			// X flipping, swapped
-			if (!blit->flipy)
+			for (x = 0; x < blit->dstxscale; x++)
 			{
-				valuefixups[FIXUPVAL_SRCBYTES1] = -srcysize;
-				valuefixups[FIXUPVAL_SRCBYTES16] = -srcysize * 16;
-				valuefixups[FIXUPVAL_SRCADVANCE] = srcxsize;
-				for (pix = 0; pix < 16; pix++)
-					valuefixups[FIXUPVAL_PIXOFFSET0+pix] = -(pix + 1) * srcysize;
-			}
+				switch(blit->dstdepth)
+				{
+					case 16:
+						adjust_brightness_r16(REG_AX, b);
+						output_r16(state, REG_AX);
+						break;
 
-			// X and Y flipping, swapped
-			else
-			{
-				valuefixups[FIXUPVAL_SRCBYTES1] = -srcysize;
-				valuefixups[FIXUPVAL_SRCBYTES16] = -srcysize * 16;
-				valuefixups[FIXUPVAL_SRCADVANCE] = -srcxsize;
-				for (pix = 0; pix < 16; pix++)
-					valuefixups[FIXUPVAL_PIXOFFSET0+pix] = -(pix + 1) * srcysize - srcxsize;
+					case 24:
+						adjust_brightness_r32(REG_EAX, b);
+						_mov_r32_r32(REG_EDX, REG_EAX);
+						_shr_r32_imm(REG_EDX, 16);
+						output_r16(state, REG_AX);
+						output_r8(state, REG_DL);
+						break;
+
+					case 32:
+						adjust_brightness_r32(REG_EAX, b);
+						output_r32(state, REG_EAX);
+						break;
+
+					default:
+						fatalerror("Invalid blit->dstdepth");
+						break;
+				}
 			}
 		}
 	}
@@ -1472,125 +865,291 @@ static void compute_source_fixups(const win_blit_params *blit, UINT32 valuefixup
 //  generate_blitter
 //============================================================
 
-#define EMIT_SNIPPET_PAIR(snipname) \
-	emit_snippet(asmblit_##snipname, &fastptr); \
-	emit_snippet(asmblit_##snipname, &updateptr); \
-
-#define EMIT_SNIPPET_PAIR_REVERSE(snipname) \
-	emit_snippet(asmblit_##snipname, &fastptr); \
-	emit_snippet(asmblit_##snipname, &updateptr); \
-
-#define EXPAND_BLITTER_PAIR(count) \
-	expand_blitter(count, blit, &fastptr, 0); \
-	expand_blitter(count, blit, &updateptr, 1); \
-
-#define SET_FIXUPS(index) \
-	addrfixups[0][index] = fastptr; \
-	addrfixups[1][index] = updateptr;
-
-static void generate_blitter(const win_blit_params *blit)
+static void generate_single_blitter(const win_blit_params *blit, int update)
 {
-	UINT8 *fastptr = active_fast_blitter;
-	UINT8 *updateptr = active_update_blitter;
-
-	UINT8 *addrfixups[2][32];
-	UINT32 valuefixups[32];
 	int middle, last;
+	int srcxsize = (blit->srcdepth + 7) / 8;
+	int srcysize = blit->srcpitch;
+	int srcbytes, srcadvance;
+	int pix;
+	int row, row_count;
+	brightness b;
+	void *xloop_base;
+	void *yloop_base;
+	blit_state state;
 
-	// allocate the blitters if we haven't yet
-	if (!active_fast_blitter)
-		active_fast_blitter = osd_alloc_executable(MAX_BLITTER_SIZE);
-	if (!active_update_blitter)
-		active_update_blitter = osd_alloc_executable(MAX_BLITTER_SIZE);
-	assert_always(active_fast_blitter != NULL && active_update_blitter != NULL, "Out of memory for blitters!");
-	fastptr = active_fast_blitter;
-	updateptr = active_update_blitter;
+	memset(&state, 0, sizeof(state));
+	state.blit = blit;
+	state.update = update;
 
-#if DEBUG_BLITTERS
-	fprintf(stderr, "Generating blitter\n");
-#endif
+	if (blit->swapxy)
+	{
+		int temp = srcxsize;
+		srcxsize = srcysize;
+		srcysize = temp;
+	}
+
+	if (!blit->flipx)
+	{
+		// no flipping
+		if (!blit->flipy)
+		{
+			srcbytes = srcxsize;
+			srcadvance = srcysize;
+			for (pix = 0; pix < 16; pix++)
+				pixoffset[pix] = pix * srcxsize;
+		}
+
+		// Y flipping
+		else
+		{
+			srcbytes = srcxsize;
+			srcadvance = -srcysize;
+			for (pix = 0; pix < 16; pix++)
+				pixoffset[pix] = pix * srcxsize - srcysize;
+		}
+	}
+
+	else
+	{
+		// X flipping
+		if (!blit->flipy)
+		{
+			srcbytes = -srcxsize;
+			srcadvance = srcysize;
+			for (pix = 0; pix < 16; pix++)
+				pixoffset[pix] = -(pix + 1) * srcxsize;
+		}
+
+		// X and Y flipping
+		else
+		{
+			srcbytes = -srcxsize;
+			srcadvance = -srcysize;
+			for (pix = 0; pix < 16; pix++)
+				pixoffset[pix] = -(pix + 1) * srcxsize - srcysize;
+		}
+	}
 
 	// determine how many pixels to do at the middle, and end
 	middle = blit->srcwidth / 16;
 	last = blit->srcwidth % 16;
 
-	// generate blitter loop
+	_pushad();
 
-	// function header
-	EMIT_SNIPPET_PAIR(header);
+	// load the source/dest pointers
+	_mov_r32_m32abs(REG_ESI, &asmblit_srcdata);
+	_mov_r32_m32abs(REG_EDI, &asmblit_dstdata);
 
-	// top of outer (Y) loop
-	SET_FIXUPS(0);
-	EMIT_SNIPPET_PAIR(yloop_top);
+	if (blit->srcdepth == 16)
+	{
+		// load the palette pointer
+		_mov_r32_m32abs(REG_ECX, &asmblit_srclookup);
+	}
+
+	_push_r32(REG_ESI);
+	_push_r32(REG_EDI);
+
+	// top of yloop
+	yloop_base = drc->cache_top;
+
+	row = 0;
+	while(row < blit->dstyscale)
+	{
+		// retrieve EDI/ESI
+		_mov_r32_m32bd(REG_EDI, REG_ESP, 0);
+		_mov_r32_m32bd(REG_ESI, REG_ESP, 4);
+
+		// evaluate how many lines we are doing in this pass, depending
+		// on the blit effect
+		switch(blit->dsteffect)
+		{
+			case EFFECT_SCANLINE_25:
+				b = (row == 0) ? BRIGHTNESS_100 : BRIGHTNESS_25;
+				row_count = (row == 0) ? blit->dstyscale - 1 : 1;
+				break;
+
+			case EFFECT_SCANLINE_50:
+				b = (row == 0) ? BRIGHTNESS_100 : BRIGHTNESS_50;
+				row_count = (row == 0) ? blit->dstyscale - 1 : 1;
+				break;
+
+			case EFFECT_SCANLINE_75:
+				b = (row == 0) ? BRIGHTNESS_100 : BRIGHTNESS_75;
+				row_count = (row == 0) ? blit->dstyscale - 1 : 1;
+				break;
+
+			default:
+				b = BRIGHTNESS_100;
+				row_count = blit->dstyscale;
+				break;
+		}
 
 		// top of middle (X) loop
-		if (middle)
+		if (middle > 0)
 		{
-			EMIT_SNIPPET_PAIR(middlexloop_header);
-			SET_FIXUPS(1);
-			EMIT_SNIPPET_PAIR(middlexloop_top);
-			if (use_sse)
+			// determine the number of 16-byte chunks to blit
+			_mov_r32_imm(REG_EBP, middle);
+
+			xloop_base = drc->cache_top;
+
+			if (has_sse() && (row == 0))
 			{
 				// prefetch instructions
-				EMIT_SNIPPET_PAIR(prefetch_sse);
+				_prefetch_m8bd(0, REG_ESI, srcbytes * 16 + 64);
 			}
 
-			EXPAND_BLITTER_PAIR(16);
-			SET_FIXUPS(2);
-			EMIT_SNIPPET_PAIR(middlexloop_bottom);
+			expand_blitter(16, &state, row, row_count, b);
+
+			// middlexloop_bottom
+			_sub_or_dec_r32_imm(REG_EBP, 1);
+			_lea_r32_m32bd(REG_ESI, REG_ESI, srcbytes * 16);
+			_lea_r32_m32bd(REG_EDI, REG_EDI, ((blit->dstdepth + 7) / 8) * blit->dstxscale * 16);
+			_jcc(COND_NE, xloop_base);
 		}
 
 		// top of last (X) loop
-		if (last)
+		if (last > 0)
 		{
-			EMIT_SNIPPET_PAIR(lastxloop_header);
-			SET_FIXUPS(3);
-			EMIT_SNIPPET_PAIR(lastxloop_top);
-			EXPAND_BLITTER_PAIR(1);
-			EMIT_SNIPPET_PAIR(lastxloop_bottom);
+			_mov_r32_imm(REG_EBP, last);
+
+			xloop_base = drc->cache_top;
+
+			expand_blitter(1, &state, row, row_count, b);
+
+			// lastxloop_bottom
+			_sub_or_dec_r32_imm(REG_EBP, 1);
+			_lea_r32_m32bd(REG_ESI, REG_ESI, srcbytes);
+			_lea_r32_m32bd(REG_EDI, REG_EDI, ((blit->dstdepth + 7) / 8) * blit->dstxscale);
+			_jcc(COND_NE, xloop_base);
 		}
 
-	SET_FIXUPS(4);
-	EMIT_SNIPPET_PAIR_REVERSE(yloop_bottom);
+		row += row_count;
+	}
+
+	if (update && blit->dstyskip)
+	{
+		// need to emit code to blank out scanline
+		UINT32 size = blit->dstpitch * blit->dstyskip;
+		UINT32 increment;
+		void *skiploop_base;
+
+		_mov_r32_m32bd(REG_EDI, REG_ESP, 0);
+		_lea_r32_m32bd(REG_EDI, REG_EDI, blit->dstpitch * blit->dstyscale);
+
+		if (has_mmx() && ((size % 8) == 0))
+		{
+			increment = 8;
+			_mov_r32_imm(REG_EBP, size / 8);
+			_pxor_mmx_mmx(REG_MM7, REG_MM7);
+
+			skiploop_base = drc->cache_top;
+			if (has_sse())
+				_movntq_m64bd_mmx(REG_EDI, 0, REG_MM7);
+			else
+				_movq_m64bd_mmx(REG_EDI, 0, REG_MM7);
+
+			state.has_used_mmx = TRUE;
+			if (has_sse())
+				state.has_used_non_temporal = TRUE;
+		}
+		else if ((size % 4) == 0)
+		{
+			increment = 4;
+			_mov_r32_imm(REG_EBP, size / 4);
+			_xor_r32_r32(REG_EAX, REG_EAX);
+
+			skiploop_base = drc->cache_top;
+			if (has_sse2())
+				_movnti_m32bd_r32(REG_EDI, 0, REG_EAX);
+			else
+				_mov_m32bd_r32(REG_EDI, 0, REG_EAX);
+
+			if (has_sse2())
+				state.has_used_non_temporal = TRUE;
+		}
+		else
+		{
+			increment = 1;
+			_mov_r32_imm(REG_EBP, size / 1);
+			_mov_r8_imm(REG_AL, 0);
+
+			skiploop_base = drc->cache_top;
+			_mov_m8bd_r8(REG_EDI, 0, REG_AL);
+		}
+
+		_sub_or_dec_r32_imm(REG_EBP, 1);
+		_lea_r32_m32bd(REG_EDI, REG_EDI, increment);
+		_jcc(COND_NE, skiploop_base);
+	}
+
+	// advance source and destinations
+	_add_m32bd_imm(REG_ESP, 0, blit->dstpitch * (blit->dstyscale + blit->dstyskip));
+	_add_m32bd_imm(REG_ESP, 4, srcadvance);
+
+	// end of the loop
+	_sub_or_dec_m32abs_imm(&asmblit_srcheight, 1);
+	_jcc(COND_NE, yloop_base);
 
 	// function footer
-	if (use_mmx)
+	if (state.has_used_mmx)
+		_emms();
+	if (state.has_used_non_temporal)
+		_sfence();
+	_add_r32_imm(REG_ESP, 8);
+	_popad();
+	_ret();
+}
+
+
+
+static void generate_blitter(const win_blit_params *blit)
+{
+	const UINT8 *fast_end;
+	const UINT8 *update_end;
+
+	if (DEBUG_BLITTERS)
+		fprintf(stderr, "Generating blitter\n");
+
+	drc_cache_reset(drc);
+
+	active_fast_blitter = drc->cache_top;
+	generate_single_blitter(blit, FALSE);
+	fast_end = drc->cache_top;
+
+	if (blit->dstyskip == 0)
 	{
-		EMIT_SNIPPET_PAIR(footer_mmx);
+		// if dstyskip is zero, then the fast and update blits are identical
+		active_update_blitter = active_fast_blitter;
+		update_end = fast_end;
 	}
-	EMIT_SNIPPET_PAIR(footer);
+	else
+	{
+		// generate a separate update blitter
+		active_update_blitter = drc->cache_top;
+		generate_single_blitter(blit, TRUE);
+		update_end = drc->cache_top;
+	}
 
-	// fixup local jmps
-	fixup_addresses(&addrfixups[0][0], active_fast_blitter, fastptr);
-	fixup_addresses(&addrfixups[1][0], active_update_blitter, updateptr);
-
-	// fixup data values
-	valuefixups[FIXUPVAL_DSTBYTES1] = ((blit->dstdepth + 7) / 8) * blit->dstxscale;
-	valuefixups[FIXUPVAL_DSTBYTES16] = valuefixups[0] * 16;
-	valuefixups[FIXUPVAL_DSTADVANCE] = blit->dstpitch * (blit->dstyscale + blit->dstyskip);
-	valuefixups[FIXUPVAL_MIDDLEXCOUNT] = middle;
-	valuefixups[FIXUPVAL_LASTXCOUNT] = last;
-
-	// compute the fixup values
-	compute_source_fixups(blit, valuefixups);
-
-	valuefixups[FIXUPVAL_SRCPREFETCH16] = valuefixups[FIXUPVAL_SRCBYTES16] + 64;
-
-	fixup_values(valuefixups, active_fast_blitter, fastptr);
-	fixup_values(valuefixups, active_update_blitter, updateptr);
-
-#if DEBUG_BLITTERS
 	// generate files with the results; use ndisasmw to disassemble them
+	if (DEBUG_BLITTERS)
 	{
 		FILE *out;
 
 		out = fopen("fast.com", "wb");
-		fwrite(active_fast_blitter, 1, fastptr - active_fast_blitter, out);
+		fwrite(active_fast_blitter, 1, fast_end - active_fast_blitter, out);
 		fclose(out);
 
 		out = fopen("update.com", "wb");
-		fwrite(active_update_blitter, 1, updateptr - active_update_blitter, out);
+		fwrite(active_update_blitter, 1, update_end - active_update_blitter, out);
+		fclose(out);
+
+		out = fopen("fast.dasm", "w");
+		drc_dasm(out, active_fast_blitter, (void *) fast_end);
+		fclose(out);
+
+		out = fopen("update.dasm", "w");
+		drc_dasm(out, active_update_blitter, (void *) update_end);
 		fclose(out);
 	}
-#endif
 }

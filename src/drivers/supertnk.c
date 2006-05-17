@@ -174,7 +174,7 @@ READ8_HANDLER( supertnk_videoram_r )
 
 VIDEO_UPDATE( supertnk )
 {
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 }
 
 

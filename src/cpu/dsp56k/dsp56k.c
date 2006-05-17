@@ -342,7 +342,6 @@ static void dsp56k_reset(void)
 {
 	if (dsp56k.config == NULL)
 	{
-		LINE_RESET = 1 ;			/* hack - hold the CPU reset at startup */
 		memory_set_opbase(PC);
 
 		// Handle internal stuff
@@ -369,13 +368,6 @@ static void dsp56k_reset(void)
 
 		dsp56k.repFlag = 0 ;		// Certainly not repeating to start
 		dsp56k.repAddr = 0x0000 ;	// Reset the address too...
-
-		// Wait here in RESET state until the RESET interrupt is deasserted
-	//  UINT64 waitLoop = 0 ;
-	//  while(LINE_RESET)
-	//  {
-	//      waitLoop++ ;
-	//  }
 
 		// Manipulate everything you need to for the ports (!! maybe these will be callbacks someday !!)...
 		data_write_word_16le(0xffde, 0x43ff) ;	// Sets Port A Bus Control Register (BCR) to the really slow bootup mode...

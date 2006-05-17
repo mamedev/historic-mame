@@ -493,7 +493,7 @@ void segaic16_set_display_enable(int enable)
 	enable = (enable != 0);
 	if (segaic16_display_enable != enable)
 	{
-		force_partial_update(cpu_getscanline());
+		force_partial_update(0, cpu_getscanline());
 		segaic16_display_enable = enable;
 	}
 }
@@ -608,10 +608,10 @@ void segaic16_draw_virtual_tilemap(struct tilemap_info *info, mame_bitmap *bitma
 	int page;
 
 	/* which half/halves of the virtual tilemap do we intersect in the X direction? */
-	if (xscroll < 64*8 - Machine->drv->screen_width)
+	if (xscroll < 64*8 - Machine->drv->screen[0].maxwidth)
 	{
 		leftmin = 0;
-		leftmax = Machine->drv->screen_width - 1;
+		leftmax = Machine->drv->screen[0].maxwidth - 1;
 		rightmin = -1;
 	}
 	else if (xscroll < 64*8)
@@ -619,12 +619,12 @@ void segaic16_draw_virtual_tilemap(struct tilemap_info *info, mame_bitmap *bitma
 		leftmin = 0;
 		leftmax = 64*8 - xscroll - 1;
 		rightmin = leftmax + 1;
-		rightmax = Machine->drv->screen_width - 1;
+		rightmax = Machine->drv->screen[0].maxwidth - 1;
 	}
-	else if (xscroll < 128*8 - Machine->drv->screen_width)
+	else if (xscroll < 128*8 - Machine->drv->screen[0].maxwidth)
 	{
 		rightmin = 0;
-		rightmax = Machine->drv->screen_width - 1;
+		rightmax = Machine->drv->screen[0].maxwidth - 1;
 		leftmin = -1;
 	}
 	else
@@ -632,14 +632,14 @@ void segaic16_draw_virtual_tilemap(struct tilemap_info *info, mame_bitmap *bitma
 		rightmin = 0;
 		rightmax = 128*8 - xscroll - 1;
 		leftmin = rightmax + 1;
-		leftmax = Machine->drv->screen_width - 1;
+		leftmax = Machine->drv->screen[0].maxwidth - 1;
 	}
 
 	/* which half/halves of the virtual tilemap do we intersect in the Y direction? */
-	if (yscroll < 32*8 - Machine->drv->screen_height)
+	if (yscroll < 32*8 - Machine->drv->screen[0].maxheight)
 	{
 		topmin = 0;
-		topmax = Machine->drv->screen_height - 1;
+		topmax = Machine->drv->screen[0].maxheight - 1;
 		bottommin = -1;
 	}
 	else if (yscroll < 32*8)
@@ -647,12 +647,12 @@ void segaic16_draw_virtual_tilemap(struct tilemap_info *info, mame_bitmap *bitma
 		topmin = 0;
 		topmax = 32*8 - yscroll - 1;
 		bottommin = topmax + 1;
-		bottommax = Machine->drv->screen_height - 1;
+		bottommax = Machine->drv->screen[0].maxheight - 1;
 	}
-	else if (yscroll < 64*8 - Machine->drv->screen_height)
+	else if (yscroll < 64*8 - Machine->drv->screen[0].maxheight)
 	{
 		bottommin = 0;
-		bottommax = Machine->drv->screen_height - 1;
+		bottommax = Machine->drv->screen[0].maxheight - 1;
 		topmin = -1;
 	}
 	else
@@ -660,7 +660,7 @@ void segaic16_draw_virtual_tilemap(struct tilemap_info *info, mame_bitmap *bitma
 		bottommin = 0;
 		bottommax = 64*8 - yscroll - 1;
 		topmin = bottommax + 1;
-		topmax = Machine->drv->screen_height - 1;
+		topmax = Machine->drv->screen[0].maxheight - 1;
 	}
 
 	/* if the tilemap is flipped, we need to flip our sense within each quadrant */
@@ -669,26 +669,26 @@ void segaic16_draw_virtual_tilemap(struct tilemap_info *info, mame_bitmap *bitma
 		if (leftmin != -1)
 		{
 			int temp = leftmin;
-			leftmin = Machine->drv->screen_width - 1 - leftmax;
-			leftmax = Machine->drv->screen_width - 1 - temp;
+			leftmin = Machine->drv->screen[0].maxwidth - 1 - leftmax;
+			leftmax = Machine->drv->screen[0].maxwidth - 1 - temp;
 		}
 		if (rightmin != -1)
 		{
 			int temp = rightmin;
-			rightmin = Machine->drv->screen_width - 1 - rightmax;
-			rightmax = Machine->drv->screen_width - 1 - temp;
+			rightmin = Machine->drv->screen[0].maxwidth - 1 - rightmax;
+			rightmax = Machine->drv->screen[0].maxwidth - 1 - temp;
 		}
 		if (topmin != -1)
 		{
 			int temp = topmin;
-			topmin = Machine->drv->screen_height - 1 - topmax;
-			topmax = Machine->drv->screen_height - 1 - temp;
+			topmin = Machine->drv->screen[0].maxheight - 1 - topmax;
+			topmax = Machine->drv->screen[0].maxheight - 1 - temp;
 		}
 		if (bottommin != -1)
 		{
 			int temp = bottommin;
-			bottommin = Machine->drv->screen_height - 1 - bottommax;
-			bottommax = Machine->drv->screen_height - 1 - temp;
+			bottommin = Machine->drv->screen[0].maxheight - 1 - bottommax;
+			bottommax = Machine->drv->screen[0].maxheight - 1 - temp;
 		}
 	}
 
@@ -1344,7 +1344,7 @@ void segaic16_tilemap_set_bank(int which, int banknum, int offset)
 
 	if (info->bank[banknum] != offset)
 	{
-		force_partial_update(cpu_getscanline());
+		force_partial_update(0, cpu_getscanline());
 		info->bank[banknum] = offset;
 		tilemap_mark_all_tiles_dirty(NULL);
 	}
@@ -1366,7 +1366,7 @@ void segaic16_tilemap_set_flip(int which, int flip)
 	flip = (flip != 0);
 	if (info->flip != flip)
 	{
-		force_partial_update(cpu_getscanline());
+		force_partial_update(0, cpu_getscanline());
 		info->flip = flip;
 		tilemap_set_flip(info->textmap, flip ? (TILEMAP_FLIPX | TILEMAP_FLIPY) : 0);
 		for (pagenum = 0; pagenum < info->numpages; pagenum++)
@@ -1389,7 +1389,7 @@ void segaic16_tilemap_set_rowscroll(int which, int enable)
 	enable = (enable != 0);
 	if (info->rowscroll != enable)
 	{
-		force_partial_update(cpu_getscanline());
+		force_partial_update(0, cpu_getscanline());
 		info->rowscroll = enable;
 	}
 }
@@ -1409,7 +1409,7 @@ void segaic16_tilemap_set_colscroll(int which, int enable)
 	enable = (enable != 0);
 	if (info->colscroll != enable)
 	{
-		force_partial_update(cpu_getscanline());
+		force_partial_update(0, cpu_getscanline());
 		info->colscroll = enable;
 	}
 }
@@ -1433,7 +1433,7 @@ WRITE16_HANDLER( segaic16_textram_0_w )
 {
 	/* certain ranges need immediate updates */
 	if (offset >= 0xe80/2)
-		force_partial_update(cpu_getscanline());
+		force_partial_update(0, cpu_getscanline());
 
 	COMBINE_DATA(&segaic16_textram_0[offset]);
 	tilemap_mark_tile_dirty(bg_tilemap[0].textmap, offset);
@@ -2760,7 +2760,7 @@ void segaic16_sprites_set_bank(int which, int banknum, int offset)
 
 	if (info->bank[banknum] != offset)
 	{
-		force_partial_update(cpu_getscanline());
+		force_partial_update(0, cpu_getscanline());
 		info->bank[banknum] = offset;
 	}
 }
@@ -2780,7 +2780,7 @@ void segaic16_sprites_set_flip(int which, int flip)
 	flip = (flip != 0);
 	if (info->flip != flip)
 	{
-		force_partial_update(cpu_getscanline());
+		force_partial_update(0, cpu_getscanline());
 		info->flip = flip;
 	}
 }
@@ -2800,7 +2800,7 @@ void segaic16_sprites_set_shadow(int which, int shadow)
 	shadow = (shadow != 0);
 	if (info->shadow != shadow)
 	{
-		force_partial_update(cpu_getscanline());
+		force_partial_update(0, cpu_getscanline());
 		info->shadow = shadow;
 	}
 }

@@ -138,7 +138,7 @@ VIDEO_START( airbustr )
 	if ( !fg_tilemap )
 		return 1;
 
-	if ((sprites_bitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((sprites_bitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight)) == 0)
 		return 1;
 
 	tilemap_set_transparent_pen(fg_tilemap, 0);

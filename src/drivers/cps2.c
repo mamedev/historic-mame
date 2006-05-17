@@ -673,7 +673,7 @@ static INTERRUPT_GEN( cps2_interrupt )
 		cps1_output[0x50/2] = 0;
 		cpunum_set_input_line(0, 4, HOLD_LINE);
 		cps2_set_sprite_priorities();
-		force_partial_update(16 - 10 + scancount);	/* Machine->visible_area.min_y - [first visible line?] + scancount */
+		force_partial_update(0, 16 - 10 + scancount);	/* Machine->visible_area[0].min_y - [first visible line?] + scancount */
 		scancalls++;
 //          ui_popup("IRQ4 scancounter = %04i",scancount);
 	}
@@ -684,7 +684,7 @@ static INTERRUPT_GEN( cps2_interrupt )
 		cps1_output[0x52/2] = 0;
 		cpunum_set_input_line(0, 4, HOLD_LINE);
 		cps2_set_sprite_priorities();
-		force_partial_update(16 - 10 + scancount);	/* Machine->visible_area.min_y - [first visible line?] + scancount */
+		force_partial_update(0, 16 - 10 + scancount);	/* Machine->visible_area[0].min_y - [first visible line?] + scancount */
 		scancalls++;
 //          ui_popup("IRQ4 scancounter = %04i",scancount);
 	}
@@ -697,7 +697,7 @@ static INTERRUPT_GEN( cps2_interrupt )
 		if(scancalls)
 		{
 			cps2_set_sprite_priorities();
-			force_partial_update(256);
+			force_partial_update(0, 256);
 		}
 		cps2_objram_latch();
 	}

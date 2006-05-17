@@ -185,6 +185,7 @@ int ptm6840_read(int which, int offset)
 		case PTM_6840_MSBBUF1://2
 
 		currptr->status_reg &= ~0x01;
+		val = currptr->lsb_counter[0];
 		break;
 
 		case PTM_6840_LSB1://3
@@ -195,6 +196,7 @@ int ptm6840_read(int which, int offset)
 		case PTM_6840_MSBBUF2://4
 
 		currptr->status_reg &= ~0x02;
+		val = currptr->lsb_counter[1];
 		break;
 
 		case PTM_6840_LSB2://5
@@ -205,6 +207,7 @@ int ptm6840_read(int which, int offset)
 		case PTM_6840_MSBBUF3://6
 
 		currptr->status_reg &= ~0x04;
+		val = currptr->lsb_counter[2];
 		break;
 
 		case PTM_6840_LSB3://7
@@ -228,6 +231,7 @@ void ptm6840_write (int which, int offset, int data)
 
 	int  idx = 0;
 	long time;
+
 	if (offset < 2)
 	{
 		idx = (offset == 1) ? 1 : (currptr->control_reg[1] & 0x01) ? 0 : 2;
@@ -323,9 +327,11 @@ void ptm6840_write (int which, int offset, int data)
 
 		case PTM_6840_LSB1://3
 
+		PLOG(("6840PTM #%d msb latch 1 = %02X\n", which, currptr->msb_buffer));
 		PLOG(("6840PTM #%d lsb latch 1 = %02X\n", which, data));
 
 		currptr->status_reg &= ~0x01;
+		currptr->msb_latch[0] = currptr->msb_buffer;
 		currptr->lsb_latch[0] = data;
 		break;
 
@@ -340,9 +346,11 @@ void ptm6840_write (int which, int offset, int data)
 
 		case PTM_6840_LSB2://5
 
+		PLOG(("6840PTM #%d msb latch 2 = %02X\n", which, currptr->msb_buffer));
 		PLOG(("6840PTM #%d lsb latch 2 = %02X\n", which, data));
 
 		currptr->status_reg &= ~0x02;
+		currptr->msb_latch[1] = currptr->msb_buffer;
 		currptr->lsb_latch[1] = data;
 		break;
 
@@ -356,9 +364,11 @@ void ptm6840_write (int which, int offset, int data)
 
 		case PTM_6840_LSB3://7
 
+		PLOG(("6840PTM #%d msb latch 3 = %02X\n", which, currptr->msb_buffer));
 		PLOG(("6840PTM #%d lsb latch 3 = %02X\n", which, data));
 
 		currptr->status_reg &= ~0x04;
+		currptr->msb_latch[2] = currptr->msb_buffer;
 		currptr->lsb_latch[2] = data;
 		break;
 
@@ -375,17 +385,20 @@ static void ptm6840_t1_timeout(int which)
 {
 	ptm6840 *p = ptm + which;
 
-	logerror("**ptm6840 %d t1 timeout**\n", which);
-
-	if ( p->control_reg[0] & 0x40 )
-	{ // interrupt enabled
-		p->status_reg |= 0x01;
-		if ( p->intf->irq_func  ) p->intf->irq_func(0);
-	}
-
-	if ( p->intf )
+	if ( p->control_reg[0] & 0x80 )
 	{
-		if ( p->intf->out1_func ) p->intf->out1_func(0, p->output[0]);
+		logerror("**ptm6840 %d t1 timeout**\n", which);
+
+		if ( p->control_reg[0] & 0x40 )
+		{ // interrupt enabled
+			p->status_reg |= 0x01;
+			if ( p->intf->irq_func  ) p->intf->irq_func(0);
+		}
+
+		if ( p->intf )
+		{
+			if ( p->intf->out1_func ) p->intf->out1_func(0, p->output[0]);
+		}
 	}
 }
 
@@ -399,17 +412,20 @@ static void ptm6840_t2_timeout(int which)
 {
 	ptm6840 *p = ptm + which;
 
-	logerror("**ptm6840 %d t2 timeout**\n", which);
-
-	if ( p->control_reg[1] & 0x40 )
-	{ // interrupt enabled
-		p->status_reg |= 0x02;
-		if ( p->intf->irq_func  ) p->intf->irq_func(0);
-	}
-
-	if ( p->intf )
+	if ( p->control_reg[1] & 0x80 )
 	{
-		if ( p->intf->out2_func ) p->intf->out2_func(0, p->output[1]);
+		logerror("**ptm6840 %d t2 timeout**\n", which);
+
+		if ( p->control_reg[1] & 0x40 )
+		{ // interrupt enabled
+			p->status_reg |= 0x02;
+			if ( p->intf->irq_func  ) p->intf->irq_func(0);
+		}
+
+		if ( p->intf )
+		{
+			if ( p->intf->out2_func ) p->intf->out2_func(0, p->output[1]);
+		}
 	}
 }
 
@@ -423,17 +439,20 @@ static void ptm6840_t3_timeout(int which)
 {
 	ptm6840 *p = ptm + which;
 
-	logerror("**ptm6840 %d t3 timeout**\n", which);
-
-	if ( p->control_reg[1] & 0x40 )
-	{ // interrupt enabled
-		p->status_reg |= 0x04;
-		if ( p->intf->irq_func  ) p->intf->irq_func(0);
-	}
-
-	if ( p->intf )
+	if ( p->control_reg[2] & 0x80 )
 	{
-		if ( p->intf->out3_func ) p->intf->out3_func(0, p->output[2]);
+		logerror("**ptm6840 %d t3 timeout**\n", which);
+
+		if ( p->control_reg[2] & 0x40 )
+		{ // interrupt enabled
+			p->status_reg |= 0x04;
+			if ( p->intf->irq_func  ) p->intf->irq_func(0);
+		}
+
+		if ( p->intf )
+		{
+			if ( p->intf->out3_func ) p->intf->out3_func(0, p->output[2]);
+		}
 	}
 }
 

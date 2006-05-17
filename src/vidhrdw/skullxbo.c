@@ -117,7 +117,7 @@ WRITE16_HANDLER( skullxbo_xscroll_w )
 
 	/* if something changed, force an update */
 	if (oldscroll != newscroll)
-		force_partial_update(cpu_getscanline());
+		force_partial_update(0, cpu_getscanline());
 
 	/* adjust the actual scrolls */
 	tilemap_set_scrollx(atarigen_playfield_tilemap, 0, 2 * (newscroll >> 7));
@@ -139,10 +139,10 @@ WRITE16_HANDLER( skullxbo_yscroll_w )
 
 	/* if something changed, force an update */
 	if (oldscroll != newscroll)
-		force_partial_update(scanline);
+		force_partial_update(0, scanline);
 
 	/* adjust the effective scroll for the current scanline */
-	if (scanline > Machine->visible_area.max_y)
+	if (scanline > Machine->visible_area[0].max_y)
 		scanline = 0;
 	effscroll = (newscroll >> 7) - scanline;
 
@@ -164,7 +164,7 @@ WRITE16_HANDLER( skullxbo_yscroll_w )
 
 WRITE16_HANDLER( skullxbo_mobmsb_w )
 {
-	force_partial_update(cpu_getscanline());
+	force_partial_update(0, cpu_getscanline());
 	atarimo_set_bank(0, (offset >> 9) & 1);
 }
 
@@ -219,7 +219,7 @@ void skullxbo_scanline_update(int scanline)
 			int newscroll = ((data >> 7) - scanline) & 0x1ff;
 
 			/* force a partial update with the previous scroll */
-			force_partial_update(scanline - 1);
+			force_partial_update(0, scanline - 1);
 
 			/* update the new scroll */
 			tilemap_set_scrolly(atarigen_playfield_tilemap, 0, newscroll);

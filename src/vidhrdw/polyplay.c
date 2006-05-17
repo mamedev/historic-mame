@@ -87,7 +87,7 @@ VIDEO_UPDATE( polyplay )
 						0,
 						0,0,
 						8*sx,8*sy,
-						&Machine->visible_area,TRANSPARENCY_NONE,0);
+						&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 
 			}
 			else {
@@ -109,12 +109,12 @@ VIDEO_UPDATE( polyplay )
 						0,
 						0,0,
 						8*sx,8*sy,
-						&Machine->visible_area,TRANSPARENCY_NONE,0);
+						&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 
 			}
 		}
 	}
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 
 
 	for (offs = 0;offs < 256;offs++)

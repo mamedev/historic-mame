@@ -149,13 +149,13 @@ static void champbas_draw_sprites( mame_bitmap *bitmap )
 			code, color,
 			flipx, flipy,
 			sx, sy,
-			&Machine->visible_area,
+			&Machine->visible_area[0],
 			TRANSPARENCY_COLOR, 0);
 	}
 }
 
 VIDEO_UPDATE( champbas )
 {
-	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
 	champbas_draw_sprites(bitmap);
 }

@@ -198,7 +198,7 @@ void *cchasm_sh_start(int clock, const struct CustomSound_interface *config)
 	ctc_intf.baseclock = Machine->drv->cpu[1].cpu_clock;
 	z80ctc_init (0, &ctc_intf);
 
-	timer_pulse(TIME_IN_HZ(Machine->drv->frames_per_second), 0, cchasm_sh_update);
+	timer_pulse(TIME_IN_HZ(Machine->drv->screen[0].refresh_rate), 0, cchasm_sh_update);
 
 	return auto_malloc(1);
 }

@@ -1033,7 +1033,7 @@ static void psikyosh_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect
 					sprintf(buf, "%X",xdim/16); /* Display Zoom in 16.16 */
 					if (Machine->gamedrv->flags & ORIENTATION_SWAP_XY) {
 						x = ypos;
-						y = Machine->visible_area.max_x - xpos; /* ORIENTATION_FLIP_Y */
+						y = Machine->visible_area[0].max_x - xpos; /* ORIENTATION_FLIP_Y */
 					}
 					else {
 						x = xpos;
@@ -1058,7 +1058,7 @@ VIDEO_START( psikyosh )
 		return 1;
 
 	/* Need 16-bit z-buffer */
-	if ((z_bitmap = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 16)) == 0)
+	if ((z_bitmap = auto_bitmap_alloc_depth(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight, 16)) == 0)
 		return 1;
 
 	Machine->gfx[1]->color_granularity=16; /* 256 colour sprites with palette selectable on 16 colour boundaries */

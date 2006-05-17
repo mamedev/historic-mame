@@ -643,11 +643,11 @@ VIDEO_UPDATE( taitob )
 VIDEO_EOF( taitob )
 {
   if (~video_control & 0x01)
-    fillbitmap(framebuffer[framebuffer_page],0,&Machine->visible_area);
+    fillbitmap(framebuffer[framebuffer_page],0,&Machine->visible_area[0]);
 
   if (~video_control & 0x80)
     framebuffer_page ^= 1;
 
-  taitob_draw_sprites(framebuffer[framebuffer_page],&Machine->visible_area);
+  taitob_draw_sprites(framebuffer[framebuffer_page],&Machine->visible_area[0]);
 }
 

@@ -105,7 +105,7 @@ VIDEO_START( crbaloon )
 	if ( !bg_tilemap )
 		return 1;
 
-	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight)) == 0)
 		return 1;
 
 	state_save_register_global_array(spritectrl);
@@ -136,7 +136,7 @@ static void crbaloon_draw_sprites( mame_bitmap *bitmap )
 			15,
 			0,0,
 			bx,by,
-			&Machine->visible_area,TRANSPARENCY_PEN,0);
+			&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 
     crbaloon_collision = 0;
 
@@ -144,10 +144,10 @@ static void crbaloon_draw_sprites( mame_bitmap *bitmap )
 	{
 		for (y = by; y < by + Machine->gfx[1]->height; y++)
         {
-			if ((x < Machine->visible_area.min_x) ||
-			    (x > Machine->visible_area.max_x) ||
-			    (y < Machine->visible_area.min_y) ||
-			    (y > Machine->visible_area.max_y))
+			if ((x < Machine->visible_area[0].min_x) ||
+			    (x > Machine->visible_area[0].max_x) ||
+			    (y < Machine->visible_area[0].min_y) ||
+			    (y > Machine->visible_area[0].max_y))
 			{
 				continue;
 			}
@@ -168,11 +168,11 @@ static void crbaloon_draw_sprites( mame_bitmap *bitmap )
 			(spritectrl[0] & 0xf0) >> 4,
 			0,0,
 			bx,by,
-			&Machine->visible_area,TRANSPARENCY_PEN,0);
+			&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 }
 
 VIDEO_UPDATE( crbaloon )
 {
-	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
 	crbaloon_draw_sprites(bitmap);
 }

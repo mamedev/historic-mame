@@ -161,5 +161,5 @@ VIDEO_UPDATE( missile )
 		for (offs = 0x1900; offs <= 0xffff; offs++)
 			missile_blit_w (offs);
 	}
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 }

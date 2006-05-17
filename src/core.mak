@@ -17,7 +17,6 @@
 #-------------------------------------------------
 
 COREOBJS = \
-	$(OBJ)/artwork.o \
 	$(OBJ)/audit.o \
 	$(OBJ)/cdrom.o \
 	$(OBJ)/chd.o \
@@ -66,6 +65,13 @@ COREOBJS = \
 	$(OBJ)/sndhrdw/generic.o \
 	$(OBJ)/vidhrdw/generic.o \
 	$(OBJ)/vidhrdw/vector.o \
+
+ifdef NEW_RENDER
+COREOBJS += $(OBJ)/render.o \
+			$(OBJ)/rendfont.o
+else
+COREOBJS += $(OBJ)/artwork.o
+endif
 
 ifdef X86_MIPS3_DRC
 COREOBJS += $(OBJ)/x86drc.o

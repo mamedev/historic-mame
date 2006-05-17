@@ -203,7 +203,7 @@ PALETTE_INIT( enigma2 )
 VIDEO_UPDATE( enigma2 )
 {
 	int i,x,y,col,offs,data;
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area[0]);
 	blink_cnt++;
 
 	/* starfield */

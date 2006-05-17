@@ -116,14 +116,14 @@ static void seicross_draw_sprites( mame_bitmap *bitmap )
 				spriteram[offs + 1] & 0x0f,
 				spriteram[offs] & 0x40,spriteram[offs] & 0x80,
 				x,240-spriteram[offs + 2],
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 		if(x>0xf0)
 			drawgfx(bitmap,Machine->gfx[1],
 					(spriteram[offs] & 0x3f) + ((spriteram[offs + 1] & 0x10) << 2) + 128,
 					spriteram[offs + 1] & 0x0f,
 					spriteram[offs] & 0x40,spriteram[offs] & 0x80,
 					x-256,240-spriteram[offs + 2],
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 	}
 
 	for (offs = spriteram_2_size - 4;offs >= 0;offs -= 4)
@@ -134,14 +134,14 @@ static void seicross_draw_sprites( mame_bitmap *bitmap )
 				spriteram_2[offs + 1] & 0x0f,
 				spriteram_2[offs] & 0x40,spriteram_2[offs] & 0x80,
 				x,240-spriteram_2[offs + 2],
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 		if(x>0xf0)
 			drawgfx(bitmap,Machine->gfx[1],
 					(spriteram_2[offs] & 0x3f) + ((spriteram_2[offs + 1] & 0x10) << 2),
 					spriteram_2[offs + 1] & 0x0f,
 					spriteram_2[offs] & 0x40,spriteram_2[offs] & 0x80,
 					x-256,240-spriteram_2[offs + 2],
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 	}
 }
 
@@ -154,6 +154,6 @@ VIDEO_UPDATE( seicross )
 		tilemap_set_scrolly(bg_tilemap, col, seicross_row_scroll[col]);
 	}
 
-	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
 	seicross_draw_sprites(bitmap);
 }

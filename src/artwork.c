@@ -1007,8 +1007,8 @@ void artwork_get_screensize(int *width, int *height)
 	}
 	else
 	{
-		*width = Machine->drv->screen_width;
-		*height = Machine->drv->screen_height;
+		*width = Machine->drv->screen[0].maxwidth;
+		*height = Machine->drv->screen[0].maxheight;
 	}
 }
 

@@ -153,8 +153,8 @@ static void yunsun16_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs;
 
-	int max_x		=	Machine->visible_area.max_x+1;
-	int max_y		=	Machine->visible_area.max_y+1;
+	int max_x		=	Machine->visible_area[0].max_x+1;
+	int max_y		=	Machine->visible_area[0].max_y+1;
 
 	int pri			=	*yunsun16_priority & 3;
 	int pri_mask;
@@ -240,13 +240,13 @@ VIDEO_UPDATE( yunsun16 )
 	yunsun16_draw_sprites(bitmap,cliprect);
 
 	/* tilemap.c only copes with screen widths which are a multiple of 8 pixels */
-	if ( (Machine->drv->screen_width-1-Machine->visible_area.max_x) & 7 )
+	if ( (Machine->drv->screen[0].maxwidth-1-Machine->visible_area[0].max_x) & 7 )
 	{
 		rectangle clip;
-		clip.min_x = Machine->visible_area.max_x+1;
-		clip.max_x = Machine->drv->screen_width-1;
-		clip.min_y = Machine->visible_area.min_y;
-		clip.max_y = Machine->visible_area.max_y;
+		clip.min_x = Machine->visible_area[0].max_x+1;
+		clip.max_x = Machine->drv->screen[0].maxwidth-1;
+		clip.min_y = Machine->visible_area[0].min_y;
+		clip.max_y = Machine->visible_area[0].max_y;
 		sect_rect(&clip,cliprect);
 		fillbitmap(bitmap,Machine->pens[0],&clip);
 	}

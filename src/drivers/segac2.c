@@ -453,7 +453,7 @@ static WRITE16_HANDLER( io_chip_w )
 			newbank = data & 3;
 			if (newbank != palbank)
 			{
-				force_partial_update(cpu_getscanline() + 1);
+				force_partial_update(0, cpu_getscanline() + 1);
 				palbank = newbank;
 				recompute_palette_tables();
 			}
@@ -551,7 +551,7 @@ static WRITE16_HANDLER( prot_w )
 	/* if the palette changed, force an update */
 	if (new_sp_palbase != sp_palbase || new_bg_palbase != bg_palbase)
 	{
-		force_partial_update(cpu_getscanline() + 1);
+		force_partial_update(0, cpu_getscanline() + 1);
 		sp_palbase = new_sp_palbase;
 		bg_palbase = new_bg_palbase;
 		recompute_palette_tables();

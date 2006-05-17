@@ -515,9 +515,7 @@ void debug_halt_on_next_instruction(void)
 
 void debug_refresh_display(void)
 {
-	reset_partial_updates();
-	draw_screen();
-	update_video_and_audio();
+	video_frame_update();
 }
 
 
@@ -2094,7 +2092,12 @@ void debug_source_script(const char *file)
 	{
 		debug_source_file = fopen(file, "r");
 		if (!debug_source_file)
-			debug_console_printf("Cannot open command file '%s'\n", file);
+		{
+			if (mame_get_phase() == MAME_PHASE_RUNNING)
+				debug_console_printf("Cannot open command file '%s'\n", file);
+			else
+				fatalerror("Cannot open command file '%s'", file);
+		}
 	}
 }
 

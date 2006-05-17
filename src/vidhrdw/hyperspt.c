@@ -149,7 +149,7 @@ static void hyperspt_draw_sprites( mame_bitmap *bitmap )
 			spriteram[offs] & 0x0f,
 			flipx, flipy,
 			sx, sy,
-			&Machine->visible_area,
+			&Machine->visible_area[0],
 			TRANSPARENCY_COLOR, 0);
 
 		/* redraw with wraparound */
@@ -159,7 +159,7 @@ static void hyperspt_draw_sprites( mame_bitmap *bitmap )
 			spriteram[offs] & 0x0f,
 			flipx, flipy,
 			sx - 256, sy,
-			&Machine->visible_area,
+			&Machine->visible_area[0],
 			TRANSPARENCY_COLOR, 0);
 	}
 }
@@ -175,7 +175,7 @@ VIDEO_UPDATE( hyperspt )
 		tilemap_set_scrollx(bg_tilemap, row, scrollx);
 	}
 
-	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
 	hyperspt_draw_sprites(bitmap);
 }
 

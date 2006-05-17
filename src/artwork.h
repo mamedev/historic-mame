@@ -14,6 +14,19 @@
 #ifndef __ARTWORK_H__
 #define __ARTWORK_H__
 
+#ifdef NEW_RENDER
+
+#define artwork_set_overlay(v)
+#define artwork_show(x,e)
+
+#define OVERLAY_START(name)
+#define OVERLAY_END
+#define OVERLAY_RECT(l,t,r,b,c)
+#define OVERLAY_DISK(x,y,r,c)
+#define OVERLAY_DISK_NOBLEND(x,y,r,c)
+
+#else
+
 #include "mamecore.h"
 
 
@@ -113,5 +126,6 @@ mame_file *artwork_load_artwork_file(const game_driver **driver);
 const rectangle *artwork_get_game_rect(void);
 int artwork_overlay_active(void);
 
-#endif /* __ARTWORK_H__ */
+#endif
 
+#endif /* __ARTWORK_H__ */

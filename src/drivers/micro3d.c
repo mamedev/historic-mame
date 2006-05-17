@@ -90,7 +90,7 @@ static struct {
     int MRB_ptr;
 } M68681;
 
-static UINT8 ti_uart[8];
+static UINT8 ti_uart[9];
 static int ti_uart_mode_cycle=0;
 static int ti_uart_sync_cycle=0;
 
@@ -130,7 +130,7 @@ void data_from_i8031(int data)
 WRITE16_HANDLER( micro3d_34010_io_register_w )
 {
 	if (offset == REG_DPYADR || offset == REG_DPYTAP)
-		force_partial_update(cpu_getscanline());
+		force_partial_update(0, cpu_getscanline());
 	tms34010_io_register_w(offset, data, mem_mask);
 
 	if (offset == REG_DPYADR)
@@ -148,7 +148,7 @@ INTERRUPT_GEN( micro3d_tms_vblank )
 
 	/* due to timing issues, we sometimes set the DPYADR just before we get here;
        in order to avoid trouncing that value, we look for the last scanline */
-	if (dpyadrscan < Machine->visible_area.max_y)
+	if (dpyadrscan < Machine->visible_area[0].max_y)
 		dpyadr = ~tms34010_io_register_r(REG_DPYSTRT, 0) & 0xfffc;
 	dpyadrscan = 0;
 

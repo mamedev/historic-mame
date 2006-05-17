@@ -36,7 +36,7 @@ PALETTE_INIT( leprechn )
 
 VIDEO_START( leprechn )
 {
-	videoram_size = Machine->drv->screen_width * Machine->drv->screen_height;
+	videoram_size = Machine->drv->screen[0].maxwidth * Machine->drv->screen[0].maxheight;
 
 	/* allocate our own dirty buffer */
 	videoram = auto_malloc(videoram_size);
@@ -66,7 +66,7 @@ WRITE8_HANDLER( leprechn_videoram_w )
 	if (pending)
 	{
 		plot_pixel(tmpbitmap, x, y, Machine->pens[color]);
-        videoram[y * Machine->drv->screen_width + x] = color;
+        videoram[y * Machine->drv->screen[0].maxwidth + x] = color;
 
         pending = 0;
    	}
@@ -112,9 +112,9 @@ WRITE8_HANDLER( leprechn_videoram_w )
 
         memset(videoram, data, videoram_size);
 
-        for (sx = 0; sx < Machine->drv->screen_width; sx++)
+        for (sx = 0; sx < Machine->drv->screen[0].maxwidth; sx++)
         {
-	        for (sy = 0; sy < Machine->drv->screen_height; sy++)
+	        for (sy = 0; sy < Machine->drv->screen[0].maxheight; sy++)
 	        {
 				plot_pixel(tmpbitmap, sx, sy, Machine->pens[data]);
 			}
@@ -136,5 +136,5 @@ WRITE8_HANDLER( leprechn_videoram_w )
 
 READ8_HANDLER( leprechn_videoram_r )
 {
-    return videoram[y * Machine->drv->screen_width + x];
+    return videoram[y * Machine->drv->screen[0].maxwidth + x];
 }

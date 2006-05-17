@@ -258,11 +258,11 @@ VIDEO_START( bking2 )
 	{
 		return 1;
 	}
-	if ((helper0 = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == NULL)
+	if ((helper0 = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight)) == NULL)
 	{
 		return 1;
 	}
-	if ((helper1 = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == NULL)
+	if ((helper1 = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight)) == NULL)
 	{
 		return 1;
 	}

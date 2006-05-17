@@ -192,27 +192,27 @@ static void nbmj9195_vramflip(int vram)
 
 	if (nbmj9195_flipscreen[vram] == nbmj9195_flipscreen_old[vram]) return;
 
-	for (y = 0; y < (Machine->drv->screen_height / 2); y++)
+	for (y = 0; y < (Machine->drv->screen[0].maxheight / 2); y++)
 	{
-		for (x = 0; x < Machine->drv->screen_width; x++)
+		for (x = 0; x < Machine->drv->screen[0].maxwidth; x++)
 		{
-			color1 = nbmj9195_videoram[vram][(y * Machine->drv->screen_width) + x];
-			color2 = nbmj9195_videoram[vram][((y ^ 0x1ff) * Machine->drv->screen_width) + (x ^ 0x3ff)];
-			nbmj9195_videoram[vram][(y * Machine->drv->screen_width) + x] = color2;
-			nbmj9195_videoram[vram][((y ^ 0x1ff) * Machine->drv->screen_width) + (x ^ 0x3ff)] = color1;
+			color1 = nbmj9195_videoram[vram][(y * Machine->drv->screen[0].maxwidth) + x];
+			color2 = nbmj9195_videoram[vram][((y ^ 0x1ff) * Machine->drv->screen[0].maxwidth) + (x ^ 0x3ff)];
+			nbmj9195_videoram[vram][(y * Machine->drv->screen[0].maxwidth) + x] = color2;
+			nbmj9195_videoram[vram][((y ^ 0x1ff) * Machine->drv->screen[0].maxwidth) + (x ^ 0x3ff)] = color1;
 		}
 	}
 
 	if (gfxdraw_mode == 2)
 	{
-		for (y = 0; y < (Machine->drv->screen_height / 2); y++)
+		for (y = 0; y < (Machine->drv->screen[0].maxheight / 2); y++)
 		{
-			for (x = 0; x < Machine->drv->screen_width; x++)
+			for (x = 0; x < Machine->drv->screen[0].maxwidth; x++)
 			{
-				color1 = nbmj9195_videoworkram[vram][(y * Machine->drv->screen_width) + x];
-				color2 = nbmj9195_videoworkram[vram][((y ^ 0x1ff) * Machine->drv->screen_width) + (x ^ 0x3ff)];
-				nbmj9195_videoworkram[vram][(y * Machine->drv->screen_width) + x] = color2;
-				nbmj9195_videoworkram[vram][((y ^ 0x1ff) * Machine->drv->screen_width) + (x ^ 0x3ff)] = color1;
+				color1 = nbmj9195_videoworkram[vram][(y * Machine->drv->screen[0].maxwidth) + x];
+				color2 = nbmj9195_videoworkram[vram][((y ^ 0x1ff) * Machine->drv->screen[0].maxwidth) + (x ^ 0x3ff)];
+				nbmj9195_videoworkram[vram][(y * Machine->drv->screen[0].maxwidth) + x] = color2;
+				nbmj9195_videoworkram[vram][((y ^ 0x1ff) * Machine->drv->screen[0].maxwidth) + (x ^ 0x3ff)] = color1;
 			}
 		}
 	}
@@ -223,7 +223,7 @@ static void nbmj9195_vramflip(int vram)
 
 static void update_pixel(int vram, int x, int y)
 {
-	UINT16 color = nbmj9195_videoram[vram][(y * Machine->drv->screen_width) + x];
+	UINT16 color = nbmj9195_videoram[vram][(y * Machine->drv->screen[0].maxwidth) + x];
 	plot_pixel(nbmj9195_tmpbitmap[vram], x, y, Machine->pens[color]);
 }
 
@@ -328,27 +328,27 @@ static void nbmj9195_gfxdraw(int vram)
 				if (nbmj9195_gfxflag2 & 0xc0)
 				{
 					// clut256 mode 1st(low)
-					nbmj9195_videoworkram[vram][(dy * Machine->drv->screen_width) + dx1] &= 0x00f0;
-					nbmj9195_videoworkram[vram][(dy * Machine->drv->screen_width) + dx1] |= color1 & 0x0f;
-					nbmj9195_videoworkram[vram][(dy * Machine->drv->screen_width) + dx2] &= 0x00f0;
-					nbmj9195_videoworkram[vram][(dy * Machine->drv->screen_width) + dx2] |= color2 & 0x0f;
+					nbmj9195_videoworkram[vram][(dy * Machine->drv->screen[0].maxwidth) + dx1] &= 0x00f0;
+					nbmj9195_videoworkram[vram][(dy * Machine->drv->screen[0].maxwidth) + dx1] |= color1 & 0x0f;
+					nbmj9195_videoworkram[vram][(dy * Machine->drv->screen[0].maxwidth) + dx2] &= 0x00f0;
+					nbmj9195_videoworkram[vram][(dy * Machine->drv->screen[0].maxwidth) + dx2] |= color2 & 0x0f;
 
 					continue;
 				}
 				else
 				{
 					// clut256 mode 2nd(high)
-					nbmj9195_videoworkram[vram][(dy * Machine->drv->screen_width) + dx1] &= 0x000f;
-					nbmj9195_videoworkram[vram][(dy * Machine->drv->screen_width) + dx1] |= (color1 & 0x0f) << 4;
-					nbmj9195_videoworkram[vram][(dy * Machine->drv->screen_width) + dx2] &= 0x000f;
-					nbmj9195_videoworkram[vram][(dy * Machine->drv->screen_width) + dx2] |= (color2 & 0x0f) << 4;
+					nbmj9195_videoworkram[vram][(dy * Machine->drv->screen[0].maxwidth) + dx1] &= 0x000f;
+					nbmj9195_videoworkram[vram][(dy * Machine->drv->screen[0].maxwidth) + dx1] |= (color1 & 0x0f) << 4;
+					nbmj9195_videoworkram[vram][(dy * Machine->drv->screen[0].maxwidth) + dx2] &= 0x000f;
+					nbmj9195_videoworkram[vram][(dy * Machine->drv->screen[0].maxwidth) + dx2] |= (color2 & 0x0f) << 4;
 
-					nbmj9195_videoworkram[vram][(dy * Machine->drv->screen_width) + dx1] += nbmj9195_clut[vram][(nbmj9195_clutsel * 0x10)];
-					nbmj9195_videoworkram[vram][(dy * Machine->drv->screen_width) + dx2] += nbmj9195_clut[vram][(nbmj9195_clutsel * 0x10)];
+					nbmj9195_videoworkram[vram][(dy * Machine->drv->screen[0].maxwidth) + dx1] += nbmj9195_clut[vram][(nbmj9195_clutsel * 0x10)];
+					nbmj9195_videoworkram[vram][(dy * Machine->drv->screen[0].maxwidth) + dx2] += nbmj9195_clut[vram][(nbmj9195_clutsel * 0x10)];
 				}
 
-				color1 = nbmj9195_videoworkram[vram][(dy * Machine->drv->screen_width) + dx1];
-				color2 = nbmj9195_videoworkram[vram][(dy * Machine->drv->screen_width) + dx2];
+				color1 = nbmj9195_videoworkram[vram][(dy * Machine->drv->screen[0].maxwidth) + dx1];
+				color2 = nbmj9195_videoworkram[vram][(dy * Machine->drv->screen[0].maxwidth) + dx2];
 			}
 			else
 			{
@@ -365,12 +365,12 @@ static void nbmj9195_gfxdraw(int vram)
 
 			if (((color1 & 0x00ff) != 0x00ff) || (!nbmj9195_transparency[vram]))
 			{
-				nbmj9195_videoram[vram][(dy * Machine->drv->screen_width) + dx1] = color1;
+				nbmj9195_videoram[vram][(dy * Machine->drv->screen[0].maxwidth) + dx1] = color1;
 				update_pixel(vram, dx1, dy);
 			}
 			if (((color2 & 0x00ff) != 0x00ff) || (!nbmj9195_transparency[vram]))
 			{
-				nbmj9195_videoram[vram][(dy * Machine->drv->screen_width) + dx2] = color2;
+				nbmj9195_videoram[vram][(dy * Machine->drv->screen[0].maxwidth) + dx2] = color2;
 				update_pixel(vram, dx2, dy);
 			}
 
@@ -407,11 +407,11 @@ WRITE8_HANDLER( nbmj9195_clut_1_w )		{ nbmj9195_clut_w(1, offset, data); }
 ******************************************************************************/
 VIDEO_START( nbmj9195_1layer )
 {
-	if ((nbmj9195_tmpbitmap[0] = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
-	nbmj9195_videoram[0] = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(UINT16));
+	if ((nbmj9195_tmpbitmap[0] = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight)) == 0) return 1;
+	nbmj9195_videoram[0] = auto_malloc(Machine->drv->screen[0].maxwidth * Machine->drv->screen[0].maxheight * sizeof(UINT16));
 	nbmj9195_palette = auto_malloc(0x200 * sizeof(UINT8));
 	nbmj9195_clut[0] = auto_malloc(0x1000 * sizeof(UINT8));
-	memset(nbmj9195_videoram[0], 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(UINT16)));
+	memset(nbmj9195_videoram[0], 0x0000, (Machine->drv->screen[0].maxwidth * Machine->drv->screen[0].maxheight * sizeof(UINT16)));
 	nbmj9195_scanline[0] = nbmj9195_scanline[1] = SCANLINE_MIN;
 	nb19010_busyflag = 1;
 	gfxdraw_mode = 0;
@@ -420,15 +420,15 @@ VIDEO_START( nbmj9195_1layer )
 
 VIDEO_START( nbmj9195_2layer )
 {
-	if ((nbmj9195_tmpbitmap[0] = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
-	if ((nbmj9195_tmpbitmap[1] = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
-	nbmj9195_videoram[0] = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(UINT16));
-	nbmj9195_videoram[1] = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(UINT16));
+	if ((nbmj9195_tmpbitmap[0] = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight)) == 0) return 1;
+	if ((nbmj9195_tmpbitmap[1] = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight)) == 0) return 1;
+	nbmj9195_videoram[0] = auto_malloc(Machine->drv->screen[0].maxwidth * Machine->drv->screen[0].maxheight * sizeof(UINT16));
+	nbmj9195_videoram[1] = auto_malloc(Machine->drv->screen[0].maxwidth * Machine->drv->screen[0].maxheight * sizeof(UINT16));
 	nbmj9195_palette = auto_malloc(0x200 * sizeof(UINT8));
 	nbmj9195_clut[0] = auto_malloc(0x1000 * sizeof(UINT8));
 	nbmj9195_clut[1] = auto_malloc(0x1000 * sizeof(UINT8));
-	memset(nbmj9195_videoram[0], 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(UINT16)));
-	memset(nbmj9195_videoram[1], 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(UINT16)));
+	memset(nbmj9195_videoram[0], 0x0000, (Machine->drv->screen[0].maxwidth * Machine->drv->screen[0].maxheight * sizeof(UINT16)));
+	memset(nbmj9195_videoram[1], 0x0000, (Machine->drv->screen[0].maxwidth * Machine->drv->screen[0].maxheight * sizeof(UINT16)));
 	nbmj9195_scanline[0] = nbmj9195_scanline[1] = SCANLINE_MIN;
 	nb19010_busyflag = 1;
 	gfxdraw_mode = 1;
@@ -437,19 +437,19 @@ VIDEO_START( nbmj9195_2layer )
 
 VIDEO_START( nbmj9195_nb22090 )
 {
-	if ((nbmj9195_tmpbitmap[0] = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
-	if ((nbmj9195_tmpbitmap[1] = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height)) == 0) return 1;
-	nbmj9195_videoram[0] = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(UINT16));
-	nbmj9195_videoram[1] = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(UINT16));
-	nbmj9195_videoworkram[0] = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(UINT16));
-	nbmj9195_videoworkram[1] = auto_malloc(Machine->drv->screen_width * Machine->drv->screen_height * sizeof(UINT16));
+	if ((nbmj9195_tmpbitmap[0] = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight)) == 0) return 1;
+	if ((nbmj9195_tmpbitmap[1] = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight)) == 0) return 1;
+	nbmj9195_videoram[0] = auto_malloc(Machine->drv->screen[0].maxwidth * Machine->drv->screen[0].maxheight * sizeof(UINT16));
+	nbmj9195_videoram[1] = auto_malloc(Machine->drv->screen[0].maxwidth * Machine->drv->screen[0].maxheight * sizeof(UINT16));
+	nbmj9195_videoworkram[0] = auto_malloc(Machine->drv->screen[0].maxwidth * Machine->drv->screen[0].maxheight * sizeof(UINT16));
+	nbmj9195_videoworkram[1] = auto_malloc(Machine->drv->screen[0].maxwidth * Machine->drv->screen[0].maxheight * sizeof(UINT16));
 	nbmj9195_nb22090_palette = auto_malloc(0xc00 * sizeof(UINT8));
 	nbmj9195_clut[0] = auto_malloc(0x1000 * sizeof(UINT8));
 	nbmj9195_clut[1] = auto_malloc(0x1000 * sizeof(UINT8));
-	memset(nbmj9195_videoram[0], 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(UINT16)));
-	memset(nbmj9195_videoram[1], 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(UINT16)));
-	memset(nbmj9195_videoworkram[0], 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(UINT16)));
-	memset(nbmj9195_videoworkram[1], 0x0000, (Machine->drv->screen_width * Machine->drv->screen_height * sizeof(UINT16)));
+	memset(nbmj9195_videoram[0], 0x0000, (Machine->drv->screen[0].maxwidth * Machine->drv->screen[0].maxheight * sizeof(UINT16)));
+	memset(nbmj9195_videoram[1], 0x0000, (Machine->drv->screen[0].maxwidth * Machine->drv->screen[0].maxheight * sizeof(UINT16)));
+	memset(nbmj9195_videoworkram[0], 0x0000, (Machine->drv->screen[0].maxwidth * Machine->drv->screen[0].maxheight * sizeof(UINT16)));
+	memset(nbmj9195_videoworkram[1], 0x0000, (Machine->drv->screen[0].maxwidth * Machine->drv->screen[0].maxheight * sizeof(UINT16)));
 	nbmj9195_scanline[0] = nbmj9195_scanline[1] = SCANLINE_MIN;
 	nb19010_busyflag = 1;
 	gfxdraw_mode = 2;
@@ -470,9 +470,9 @@ VIDEO_UPDATE( nbmj9195 )
 	{
 		nbmj9195_screen_refresh = 0;
 
-		for (y = 0; y < Machine->drv->screen_height; y++)
+		for (y = 0; y < Machine->drv->screen[0].maxheight; y++)
 		{
-			for (x = 0; x < Machine->drv->screen_width; x++)
+			for (x = 0; x < Machine->drv->screen[0].maxwidth; x++)
 			{
 				update_pixel(0, x, y);
 
@@ -508,7 +508,7 @@ VIDEO_UPDATE( nbmj9195 )
 	if (nbmj9195_dispflag[0])
 	{
 		// nbmj9195 1layer
-		copyscrollbitmap(bitmap, nbmj9195_tmpbitmap[0], SCANLINE_MAX, nbmj9195_scrollx_raster[0], 1, &scrolly[0], &Machine->visible_area, TRANSPARENCY_NONE, 0);
+		copyscrollbitmap(bitmap, nbmj9195_tmpbitmap[0], SCANLINE_MAX, nbmj9195_scrollx_raster[0], 1, &scrolly[0], &Machine->visible_area[0], TRANSPARENCY_NONE, 0);
 	}
 	else
 	{
@@ -520,12 +520,12 @@ VIDEO_UPDATE( nbmj9195 )
 		if (gfxdraw_mode == 1)
 		{
 			// nbmj9195 2layer
-			copyscrollbitmap(bitmap, nbmj9195_tmpbitmap[1], SCANLINE_MAX, nbmj9195_scrollx_raster[1], 1, &scrolly[1], &Machine->visible_area, TRANSPARENCY_PEN, Machine->pens[0x0ff]);
+			copyscrollbitmap(bitmap, nbmj9195_tmpbitmap[1], SCANLINE_MAX, nbmj9195_scrollx_raster[1], 1, &scrolly[1], &Machine->visible_area[0], TRANSPARENCY_PEN, Machine->pens[0x0ff]);
 		}
 		if (gfxdraw_mode == 2)
 		{
 			// nbmj9195 nb22090 2layer
-			copyscrollbitmap(bitmap, nbmj9195_tmpbitmap[1], SCANLINE_MAX, nbmj9195_scrollx_raster[1], 1, &scrolly[1], &Machine->visible_area, TRANSPARENCY_PEN, Machine->pens[0x1ff]);
+			copyscrollbitmap(bitmap, nbmj9195_tmpbitmap[1], SCANLINE_MAX, nbmj9195_scrollx_raster[1], 1, &scrolly[1], &Machine->visible_area[0], TRANSPARENCY_PEN, Machine->pens[0x1ff]);
 		}
 	}
 }

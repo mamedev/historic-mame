@@ -297,8 +297,8 @@ WRITE8_HANDLER( firetrk_playfield_w )
 
 VIDEO_START( firetrk )
 {
-	helper1 = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
-	helper2 = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
+	helper1 = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
+	helper2 = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
 
 	if (helper1 == NULL || helper2 == NULL)
 	{

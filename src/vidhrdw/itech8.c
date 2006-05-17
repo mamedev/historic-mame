@@ -227,7 +227,7 @@ WRITE8_HANDLER( itech8_palette_w )
 
 WRITE8_HANDLER( itech8_page_w )
 {
-	force_partial_update(cpu_getscanline());
+	force_partial_update(0, cpu_getscanline());
 	logerror("%04x:display_page = %02X (%d)\n", activecpu_get_pc(), data, cpu_getscanline());
 	page_select = data;
 }

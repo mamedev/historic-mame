@@ -116,12 +116,12 @@ static void mustache_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprec
 		code+=(attr&0x0c)<<6;
 
 		if ((control_byte & 0xa))
-			clip.max_y = Machine->visible_area.max_y;
+			clip.max_y = Machine->visible_area[0].max_y;
 		else
 			if (flip_screen)
-				clip.min_y = Machine->visible_area.min_y + 56;
+				clip.min_y = Machine->visible_area[0].min_y + 56;
 			else
-				clip.max_y = Machine->visible_area.max_y - 56;
+				clip.max_y = Machine->visible_area[0].max_y - 56;
 
 		if (flip_screen)
 		{

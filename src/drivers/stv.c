@@ -3020,8 +3020,8 @@ static VIDEO_UPDATE(critcrsh)
 	gun_y = readinputport(8);
 	if ( gun_y <= 46 )
 		draw_crosshair(bitmap,
-					  readinputport(7)*Machine->visible_area.max_x/64,
-					  readinputport(8)*Machine->visible_area.max_y/46,
+					  readinputport(7)*Machine->visible_area[0].max_x/64,
+					  readinputport(8)*Machine->visible_area[0].max_y/46,
 					  cliprect,
 					  0);
 }

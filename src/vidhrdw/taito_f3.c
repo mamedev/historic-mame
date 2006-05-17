@@ -602,7 +602,7 @@ VIDEO_START( f3 )
 	pivot_dirty = (UINT8 *)auto_malloc(2048);
 	pf_line_inf = auto_malloc(5 * sizeof(struct f3_playfield_line_inf));
 	sa_line_inf = auto_malloc(1 * sizeof(struct f3_spritealpha_line_inf));
-	pri_alp_bitmap = auto_bitmap_alloc_depth( Machine->drv->screen_width, Machine->drv->screen_height, -8 );
+	pri_alp_bitmap = auto_bitmap_alloc_depth( Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight, -8 );
 	tile_opaque_sp = (UINT8 *)auto_malloc(Machine->gfx[2]->total_elements);
 	tile_opaque_pf = (UINT8 *)auto_malloc(Machine->gfx[1]->total_elements);
 
@@ -2939,8 +2939,8 @@ INLINE void f3_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 
 static void get_sprite_info(const UINT32 *spriteram32_ptr)
 {
-	const int min_x=Machine->visible_area.min_x,max_x=Machine->visible_area.max_x;
-	const int min_y=Machine->visible_area.min_y,max_y=Machine->visible_area.max_y;
+	const int min_x=Machine->visible_area[0].min_x,max_x=Machine->visible_area[0].max_x;
+	const int min_y=Machine->visible_area[0].min_y,max_y=Machine->visible_area[0].max_y;
 	int offs,spritecont,flipx,flipy,old_x,old_y,color,x,y;
 	int sprite,global_x=0,global_y=0,subglobal_x=0,subglobal_y=0;
 	int block_x=0, block_y=0;

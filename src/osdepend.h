@@ -15,6 +15,7 @@
 #define __OSDEPEND_H__
 
 #include "mamecore.h"
+#include "timer.h"
 #include <stdarg.h>
 
 int osd_init(void);
@@ -29,6 +30,8 @@ void osd_wait_for_debugger(void);
     Display
 
 ******************************************************************************/
+
+#ifndef NEW_RENDER
 
 /* these are the parameters passed into osd_create_display */
 /* In mamecore.h: typedef struct _osd_create_params osd_create_params; */
@@ -71,6 +74,8 @@ struct _osd_create_params
 int osd_create_display(const osd_create_params *params, UINT32 *rgb_components);
 void osd_close_display(void);
 
+#endif
+
 
 /*
   osd_skip_this_frame() must return 0 if the current frame will be displayed.
@@ -98,7 +103,11 @@ int osd_skip_this_frame(void);
   simulated using the keyboard LEDs, or in other ways e.g. by placing graphics
   on the window title bar.
 */
+#ifndef NEW_RENDER
 void osd_update_video_and_audio(struct _mame_display *display);
+#else
+void osd_update(mame_time emutime);
+#endif
 
 
 /*
@@ -134,12 +143,12 @@ const char *osd_get_fps_text(const performance_info *performance);
 
   osd_start_audio_stream() and osd_update_audio_stream() must return the number
   of samples (or couples of samples, when using stereo) required for next frame.
-  This will be around Machine->sample_rate / Machine->drv->frames_per_second,
+  This will be around Machine->sample_rate / Machine->drv->screen[0].refresh_rate,
   the code may adjust it by SMALL AMOUNTS to keep timing accurate and to
   maintain audio and video in sync when using vsync. Note that sound emulation,
   especially when DACs are involved, greatly depends on the number of samples
   per frame to be roughly constant, so the returned value must always stay close
-  to the reference value of Machine->sample_rate / Machine->drv->frames_per_second.
+  to the reference value of Machine->sample_rate / Machine->drv->screen[0].refresh_rate.
   Of course that value is not necessarily an integer so at least a +/- 1
   adjustment is necessary to avoid drifting over time.
 */
@@ -249,18 +258,6 @@ enum
 	PATH_NOT_FOUND,
 	PATH_IS_FILE,
 	PATH_IS_DIRECTORY
-};
-
-/* These values are returned as error codes by osd_fopen() */
-enum _osd_file_error
-{
-	FILEERR_SUCCESS,
-	FILEERR_FAILURE,
-	FILEERR_OUT_OF_MEMORY,
-	FILEERR_NOT_FOUND,
-	FILEERR_ACCESS_DENIED,
-	FILEERR_ALREADY_OPEN,
-	FILEERR_TOO_MANY_FILES
 };
 
 typedef struct _osd_file osd_file;

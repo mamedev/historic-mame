@@ -121,8 +121,8 @@ VIDEO_UPDATE( playch10 )
 	/* Dual monitor version */
 	if(system_bios == 0)
 	{
-		rectangle top_monitor = Machine->visible_area;
-		rectangle bottom_monitor = Machine->visible_area;
+		rectangle top_monitor = Machine->visible_area[0];
+		rectangle bottom_monitor = Machine->visible_area[0];
 
 		top_monitor.max_y = ( top_monitor.max_y - top_monitor.min_y ) / 2;
 		bottom_monitor.min_y = ( bottom_monitor.max_y - bottom_monitor.min_y ) / 2;
@@ -157,7 +157,7 @@ VIDEO_UPDATE( playch10 )
 	}
 	else	/* Single Monitor version */
 	{
-		rectangle top_monitor = Machine->visible_area;
+		rectangle top_monitor = Machine->visible_area[0];
 
 		top_monitor.max_y = ( top_monitor.max_y - top_monitor.min_y ) / 2;
 

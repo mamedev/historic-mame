@@ -222,8 +222,8 @@ static void realbrk_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs;
 
-	int max_x		=	Machine->drv->screen_width;
-	int max_y		=	Machine->drv->screen_height;
+	int max_x		=	Machine->drv->screen[0].maxwidth;
+	int max_y		=	Machine->drv->screen[0].maxheight;
 
 	for ( offs = 0x3000/2; offs < 0x3600/2; offs += 2/2 )
 	{

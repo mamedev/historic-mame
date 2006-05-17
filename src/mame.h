@@ -13,6 +13,7 @@
 #define __MAME_H__
 
 #include "mamecore.h"
+#include "video.h"
 
 #ifdef MESS
 #include "device.h"
@@ -126,9 +127,8 @@ struct _running_machine
 
 	/* video-related information */
 	gfx_element *			gfx[MAX_GFX_ELEMENTS];/* array of pointers to graphic sets (chars, sprites) */
-	rectangle 				visible_area;		/* current visible area, and a prerotated one adjusted for orientation */
-	rectangle				absolute_visible_area;
-	float					refresh_rate;		/* current video refresh rate */
+	rectangle 				visible_area[MAX_SCREENS]; /* current visible area */
+	float					refresh_rate[MAX_SCREENS]; /* current video refresh rate */
 	pen_t *					pens;				/* remapped palette pen numbers */
 	UINT16 *				game_colortable;	/* lookup table used to map gfx pen numbers to color numbers */
 	pen_t *					remapped_colortable;/* the above, already remapped through Machine->pens */
@@ -142,8 +142,12 @@ struct _running_machine
 	mame_file *				record_file;		/* recording file (NULL if not recording) */
 	mame_file *				playback_file;		/* playback file (NULL if not recording) */
 
+#ifndef NEW_RENDER
+	rectangle				absolute_visible_area;
+
 	/* ui-related information */
 	int 					ui_orientation;		/* user interface orientation */
+#endif
 
 	/* debugger-related information */
 	int						debug_mode;			/* was debug mode enabled? */

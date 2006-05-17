@@ -4202,7 +4202,7 @@ void K053247_sprites_draw(mame_bitmap *bitmap,const rectangle *cliprect) //*
 	int offy = (short)((K053246_regs[2] << 8) | K053246_regs[3]);
 
 	int solidpens = K053247_gfx->color_granularity - 1;
-	int screen_width = Machine->drv->screen_width;
+	int screen_width = Machine->drv->screen[0].maxwidth;
 
 	/*
         safeguard older drivers missing any of the following video attributes:
@@ -7312,10 +7312,10 @@ void K054338_fill_backcolor(mame_bitmap *bitmap, int mode) // (see p.67)
 	UINT32 *dst_ptr, *pal_ptr;
 	register int bgcolor;
 
-	clipx = Machine->visible_area.min_x & ~3;
-	clipy = Machine->visible_area.min_y;
-	clipw = (Machine->visible_area.max_x - clipx + 4) & ~3;
-	cliph = Machine->visible_area.max_y - clipy + 1;
+	clipx = Machine->visible_area[0].min_x & ~3;
+	clipy = Machine->visible_area[0].min_y;
+	clipw = (Machine->visible_area[0].max_x - clipx + 4) & ~3;
+	cliph = Machine->visible_area[0].max_y - clipy + 1;
 
 	dst_ptr = (UINT32 *)bitmap->line[clipy];
 	dst_pitch = bitmap->rowpixels;
@@ -7817,7 +7817,7 @@ void K053250_draw(mame_bitmap *bitmap, const rectangle *cliprect, int chip, int 
 	static int pmode[2] = {-1,-1};
 	static int kc=-1, kk=0, kxx=-105, kyy=0;
 
-	const rectangle area = Machine->visible_area;
+	const rectangle area = Machine->visible_area[0];
 	UINT16 *line;
 	int delta, dim1, dim1_max, dim2_max;
 	UINT32 mask1, mask2;

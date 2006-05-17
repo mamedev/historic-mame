@@ -756,12 +756,14 @@ int palette_init(void)
 int palette_get_total_colors_with_ui(void)
 {
 	int result = Machine->drv->total_colors;
+#ifndef NEW_RENDER
 	if (Machine->drv->video_attributes & VIDEO_HAS_SHADOWS && !(colormode & DIRECT_RGB))
 		result += Machine->drv->total_colors;
 	if (Machine->drv->video_attributes & VIDEO_HAS_HIGHLIGHTS && !(colormode & DIRECT_RGB))
 		result += Machine->drv->total_colors;
 	if (result <= 65534)
 		result += 2;
+#endif
 	return result;
 }
 
@@ -771,6 +773,8 @@ int palette_get_total_colors_with_ui(void)
     palette_update_display - update the display
     state with our latest info
 -------------------------------------------------*/
+
+#ifndef NEW_RENDER
 
 void palette_update_display(mame_display *display)
 {
@@ -807,6 +811,8 @@ void palette_update_display(mame_display *display)
 	adjusted_palette_dirty = 0;
 	debug_palette_dirty = 0;
 }
+
+#endif
 
 
 

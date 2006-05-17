@@ -825,9 +825,9 @@ static int kdeadeye_crosshair_x( int port )
 	const int portmin = 0x004c;
 	const int portmax = 0x01bb;
 	int x = ( readinputport( port ) - portmin );
-	x *= ( Machine->visible_area.max_x - Machine->visible_area.min_x );
+	x *= ( Machine->visible_area[0].max_x - Machine->visible_area[0].min_x );
 	x /= ( portmax - portmin );
-	return Machine->visible_area.min_x + x;
+	return Machine->visible_area[0].min_x + x;
 }
 
 static int kdeadeye_crosshair_y( int port )
@@ -835,9 +835,9 @@ static int kdeadeye_crosshair_y( int port )
 	const int portmin = 0x0000;
 	const int portmax = 0x00ef;
 	int y = ( readinputport( port ) - portmin );
-	y *= ( Machine->visible_area.max_y - Machine->visible_area.min_y );
+	y *= ( Machine->visible_area[0].max_y - Machine->visible_area[0].min_y );
 	y /= ( portmax - portmin );
-	return Machine->visible_area.min_y + y;
+	return Machine->visible_area[0].min_y + y;
 }
 
 static VIDEO_UPDATE( kdeadeye )
@@ -981,7 +981,7 @@ ROM_START( susume )
 	ROM_REGION( 0x0000080, REGION_USER2, 0 ) /* default eeprom */
 	ROM_LOAD( "susume.25c",   0x000000, 0x000080, CRC(52f17df7) SHA1(b8ad7787b0692713439d7d9bebfa0c801c806006) )
 	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE_READONLY( "susume", 0, MD5(6645e48204b32d8619b5ba3169f515ab) SHA1(2e83d3a0b45ed740e2ab27d259347b20b87a3eaf) )
+	DISK_IMAGE_READONLY( "gv027j1", 0, MD5(4443754686d399c3ad12349ac2565f94) SHA1(36676b7bd63e20ce6126280a3f7a3e3ea0a4b8c0) )
 ROM_END
 
 ROM_START( hyperath )

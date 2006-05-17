@@ -54,8 +54,8 @@ RCFLAGS = -O coff --include-dir src/$(MAMEOS)
 ifdef MSVC_BUILD
 
 # replace the various compilers with vconv.exe prefixes
-CC = @$(OBJ)/vconv.exe gcc /wd4025 /I.
-LD = @$(OBJ)/vconv.exe ld /subsystem:console /debug
+CC = @$(OBJ)/vconv.exe gcc -I.
+LD = @$(OBJ)/vconv.exe ld
 AR = @$(OBJ)/vconv.exe ar
 RC = @$(OBJ)/vconv.exe windres
 
@@ -78,9 +78,11 @@ OSPREBUILD = msvcprep
 msvcprep: $(OBJ)/vconv.exe
 
 $(OBJ)/vconv.exe: $(OBJ)/windows/vconv.o
-	@gcc $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@
+	@echo Linking $@...
+	@gcc $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -lversion -o $@
 
 $(OBJ)/windows/vconv.o: src/windows/vconv.c
+	@echo Compiling $<...
 	@gcc $(CDEFS) $(CFLAGSOSDEPEND) -c $< -o $@
 
 endif

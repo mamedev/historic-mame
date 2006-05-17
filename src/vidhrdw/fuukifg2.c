@@ -152,8 +152,8 @@ static void fuuki16_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int offs;
 
-	int max_x		=	Machine->visible_area.max_x+1;
-	int max_y		=	Machine->visible_area.max_y+1;
+	int max_x		=	Machine->visible_area[0].max_x+1;
+	int max_y		=	Machine->visible_area[0].max_y+1;
 
 	/* Draw them backwards, for pdrawgfx */
 	for ( offs = (spriteram_size-8)/2; offs >=0; offs -= 8/2 )
@@ -352,6 +352,6 @@ VIDEO_UPDATE( fuuki16 )
 	fuuki16_draw_layer(bitmap,cliprect, tm_front,  0, 4);
 
 	// don't do the rasters on the sprites . its very slow and the hw might not anyway.
-	if (cliprect->max_y == Machine->visible_area.max_y)
-		fuuki16_draw_sprites(bitmap,&Machine->visible_area);
+	if (cliprect->max_y == Machine->visible_area[0].max_y)
+		fuuki16_draw_sprites(bitmap,&Machine->visible_area[0]);
 }

@@ -103,7 +103,7 @@ static VIDEO_UPDATE( xtheball )
 static void xtheball_display_addr_changed(UINT32 offs, int rowbytes, int scanline)
 {
 	logerror("display_start = %X\n", offs);
-	force_partial_update(scanline - 1);
+	force_partial_update(0, scanline - 1);
 	display_start = offs;
 }
 
@@ -177,7 +177,7 @@ static WRITE16_HANDLER( bit_controls_w )
 					break;
 
 				case 0x13:
-					force_partial_update(cpu_getscanline());
+					force_partial_update(0, cpu_getscanline());
 					break;
 			}
 		}

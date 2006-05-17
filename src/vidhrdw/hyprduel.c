@@ -413,8 +413,8 @@ static void hypr_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 	unsigned char *base_gfx	=	memory_region(region);
 	unsigned char *gfx_max	=	base_gfx + memory_region_length(region);
 
-	int max_x				=	Machine->drv->screen_width;
-	int max_y				=	Machine->drv->screen_height;
+	int max_x				=	Machine->drv->screen[0].maxwidth;
+	int max_y				=	Machine->drv->screen[0].maxheight;
 
 	int max_sprites			=	spriteram_size / 8;
 	int sprites				=	hyprduel_videoregs[0x00/2] % max_sprites;
@@ -648,8 +648,8 @@ VIDEO_UPDATE( hyprduel )
 		free(dirtyindex);
 	}
 
-	hyprduel_sprite_xoffs	=	hyprduel_videoregs[0x06/2] - Machine->drv->screen_width  / 2;
-	hyprduel_sprite_yoffs	=	hyprduel_videoregs[0x04/2] - Machine->drv->screen_height / 2;
+	hyprduel_sprite_xoffs	=	hyprduel_videoregs[0x06/2] - Machine->drv->screen[0].maxwidth  / 2;
+	hyprduel_sprite_yoffs	=	hyprduel_videoregs[0x04/2] - Machine->drv->screen[0].maxheight / 2;
 
 	/* The background color is selected by a register */
 	fillbitmap(priority_bitmap,0,cliprect);

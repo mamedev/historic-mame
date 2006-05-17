@@ -1118,7 +1118,7 @@ INTERRUPT_GEN( chl_interrupt )
 {
 	int vector = cpu_getvblank() ? 0xdf : 0xcf; /* 4 irqs per frame: 3 times 0xcf, 1 time 0xdf */
 
-//    force_partial_update(cpu_getscanline());
+//    force_partial_update(0, cpu_getscanline());
 
 	cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, vector);
 

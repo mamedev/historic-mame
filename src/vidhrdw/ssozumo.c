@@ -189,7 +189,7 @@ static void ssozumo_draw_sprites( mame_bitmap *bitmap )
 				code, color,
 				flipx, flipy,
 				sx, sy,
-				&Machine->visible_area,
+				&Machine->visible_area[0],
 				TRANSPARENCY_PEN, 0);
 		}
 	}
@@ -197,7 +197,7 @@ static void ssozumo_draw_sprites( mame_bitmap *bitmap )
 
 VIDEO_UPDATE( ssozumo )
 {
-	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
-	tilemap_draw(bitmap, &Machine->visible_area, fg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->visible_area[0], fg_tilemap, 0, 0);
 	ssozumo_draw_sprites(bitmap);
 }

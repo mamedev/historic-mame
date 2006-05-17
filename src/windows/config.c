@@ -726,11 +726,6 @@ int cli_frontend_init (int argc, char **argv)
 
 void cli_frontend_exit(void)
 {
-#ifdef MESS
-	if (win_write_config && Machine)
-		write_config(NULL, Machine->gamedrv);
-#endif /* MESS */
-
 	if (gamename)
 	{
 		free(gamename);

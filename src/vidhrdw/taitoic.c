@@ -2017,7 +2017,7 @@ static void TC0080VCO_bg1_tilemap_draw(mame_bitmap *bitmap,const rectangle *clip
 			sx, sy,
 			zx, 0, 0, zy,
 			0,					/* why no wraparound ?? */
-			&Machine->visible_area,
+			&Machine->visible_area[0],
 			TRANSPARENCY_COLOR, 0, priority);
 	}
 }
@@ -2340,7 +2340,7 @@ int TC0100SCN_vh_start(int chips,int gfxnum,int x_offset,int y_offset,int flip_x
            Thundfox is the only one of those with two chips, and
            we're safe as it uses single width tilemaps. */
 
-		myclip = Machine->visible_area;
+		myclip = Machine->visible_area[0];
 
 		if (chips==2 && multiscrn_xoffs!=TC0100SCN_SINGLE_VDU)	/* Dual screen */
 		{

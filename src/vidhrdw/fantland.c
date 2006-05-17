@@ -120,7 +120,7 @@ static void fantland_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 
 		if (x >= 0x180)		x -= 0x200;
 
-		drawgfx(bitmap,Machine->gfx[0], code,color, flipx,flipy, x,y, &Machine->visible_area,TRANSPARENCY_PEN,0);
+		drawgfx(bitmap,Machine->gfx[0], code,color, flipx,flipy, x,y, &Machine->visible_area[0],TRANSPARENCY_PEN,0);
 	}
 }
 

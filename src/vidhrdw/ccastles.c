@@ -85,10 +85,10 @@ WRITE8_HANDLER( ccastles_paletteram_w )
 ***************************************************************************/
 VIDEO_START( ccastles )
 {
-	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight)) == 0)
 		return 1;
 
-	if ((maskbitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((maskbitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight)) == 0)
 		return 1;
 
 	if ((sprite_bm = auto_bitmap_alloc(8,16)) == 0)

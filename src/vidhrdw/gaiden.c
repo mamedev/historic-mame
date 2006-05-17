@@ -94,8 +94,8 @@ VIDEO_START( gaiden )
 VIDEO_START( raiga )
 {
 	/* set up tile layers */
-	tile_bitmap_bg = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 16);
-	tile_bitmap_fg = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 16);
+	tile_bitmap_bg = auto_bitmap_alloc_depth(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight, 16);
+	tile_bitmap_fg = auto_bitmap_alloc_depth(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight, 16);
 
 	if (!tile_bitmap_bg || !tile_bitmap_fg)
 		return 1;
@@ -112,7 +112,7 @@ VIDEO_START( raiga )
 	tilemap_set_transparent_pen(text_layer,0);
 
 	/* set up sprites */
-	sprite_bitmap = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 16);
+	sprite_bitmap = auto_bitmap_alloc_depth(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight, 16);
 
 	if (!sprite_bitmap)
 		return 1;

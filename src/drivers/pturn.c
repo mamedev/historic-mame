@@ -132,7 +132,7 @@ VIDEO_UPDATE(pturn)
 	int sx, sy;
 	int flipx, flipy;
 
-	fillbitmap(bitmap, bgcolor, &Machine->visible_area);
+	fillbitmap(bitmap, bgcolor, &Machine->visible_area[0]);
 	tilemap_draw(bitmap,cliprect,pturn_bgmap,0,0);
 	for ( offs = 0x80-4 ; offs >=0 ; offs -= 4)
 	{

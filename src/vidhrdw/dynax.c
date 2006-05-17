@@ -1180,8 +1180,8 @@ VIDEO_UPDATE( sprtmtch )
 
 VIDEO_UPDATE( jantouki )
 {
-	rectangle cliprect1 = Machine->visible_area, cliprect2 = Machine->visible_area;
-	int middle_y = (Machine->visible_area.min_y + Machine->visible_area.max_y + 1) / 2;
+	rectangle cliprect1 = Machine->visible_area[0], cliprect2 = Machine->visible_area[0];
+	int middle_y = (Machine->visible_area[0].min_y + Machine->visible_area[0].max_y + 1) / 2;
 
 	int layers_ctrl = dynax_layer_enable;
 

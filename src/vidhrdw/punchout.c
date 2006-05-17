@@ -446,7 +446,7 @@ VIDEO_UPDATE( punchout )
 		for (offs = 0;offs < BOTTOM_MONITOR_ROWS;offs++)
 			scroll[TOP_MONITOR_ROWS + offs] = -(58 + punchout_scroll[2*(offs+2)] + 256 * (punchout_scroll[2*(offs+2) + 1] & 0x01));
 
-		copyscrollbitmap(bitmap,tmpbitmap,TOP_MONITOR_ROWS + BOTTOM_MONITOR_ROWS,scroll,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,TOP_MONITOR_ROWS + BOTTOM_MONITOR_ROWS,scroll,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 	}
 
 	/* copy the two big sprites */
@@ -613,7 +613,7 @@ VIDEO_UPDATE( armwrest )
 
 
 	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 
 
 	/* copy the two big sprites */

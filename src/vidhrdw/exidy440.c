@@ -58,7 +58,7 @@ VIDEO_START( exidy440 )
 	topsecex_last_yscroll = 0;
 
 	/* allocate a bitmap */
-	tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
+	tmpbitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
 	if (!tmpbitmap)
 		return 1;
 
@@ -181,7 +181,7 @@ READ8_HANDLER( exidy440_vertical_pos_r )
 
 WRITE8_HANDLER( exidy440_spriteram_w )
 {
-	force_partial_update(cpu_getscanline());
+	force_partial_update(0, cpu_getscanline());
 	spriteram[offset] = data;
 }
 

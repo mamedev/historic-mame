@@ -474,27 +474,27 @@ VIDEO_START( st0016 )
 	switch(st0016_game&0x3f)
 	{
 		case 0: //renju kizoku
-			set_visible_area(0, 40*8-1, 0, 30*8-1);
+			set_visible_area(0, 0, 40*8-1, 0, 30*8-1);
 			spr_dx=0;
 			spr_dy=0;
 		break;
 
 		case 1: //neratte chu!
-			set_visible_area(8,41*8-1,0,30*8-1);
+			set_visible_area(0, 8,41*8-1,0,30*8-1);
 			spr_dx=0;
 			spr_dy=8;
 		break;
 
 		case 4: //mayjinsen 1&2
-			set_visible_area(0,32*8-1,0,28*8-1);
+			set_visible_area(0, 0,32*8-1,0,28*8-1);
 		break;
 
 		case 10:
-			set_visible_area(0,383,0,255);
+			set_visible_area(0, 0,383,0,255);
 		break;
 
 		case 11:
-			set_visible_area(0,383,0,383);
+			set_visible_area(0, 0,383,0,383);
 		break;
 
 
@@ -535,7 +535,7 @@ static void drawbgmap(mame_bitmap *bitmap,const rectangle *cliprect, int priorit
 										color,
 										flipx,flipy,
 										x*8+spr_dx,y*8+spr_dy,
-										&Machine->visible_area,TRANSPARENCY_PEN,0);
+										&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 					}
 					else
 					{
@@ -638,7 +638,7 @@ VIDEO_UPDATE( st0016 )
 		}
 	}
 
-	fillbitmap(bitmap,Machine->pens[UNUSED_PEN],&Machine->visible_area);
+	fillbitmap(bitmap,Machine->pens[UNUSED_PEN],&Machine->visible_area[0]);
 	drawbgmap(bitmap,cliprect,0);
  	drawsprites(bitmap,cliprect);
 	drawbgmap(bitmap,cliprect,1);

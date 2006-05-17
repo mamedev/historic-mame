@@ -49,10 +49,10 @@ WRITE8_HANDLER( dotrikun_videoram_w )
 	x = 2 * (((offset % 16) * 8));
 	y = 2 * ((offset / 16));
 
-	if (x >= Machine->visible_area.min_x &&
-			x <= Machine->visible_area.max_x &&
-			y >= Machine->visible_area.min_y &&
-			y <= Machine->visible_area.max_y)
+	if (x >= Machine->visible_area[0].min_x &&
+			x <= Machine->visible_area[0].max_x &&
+			y >= Machine->visible_area[0].min_y &&
+			y <= Machine->visible_area[0].max_y)
 	{
 		for (i = 0; i < 8; i++)
 		{
@@ -79,5 +79,5 @@ VIDEO_UPDATE( dotrikun )
 		for (offs = 0; offs < videoram_size; offs++)
 			dotrikun_videoram_w(offs,videoram[offs]);
 	}
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 }

@@ -186,7 +186,7 @@ const char *profiler_get_text(void)
 		}
 		if (computed || showdelay[i])
 		{
-			if (computed) showdelay[i] = Machine->refresh_rate;
+			if (computed) showdelay[i] = Machine->refresh_rate[0];
 			showdelay[i]--;
 
 			if (i < PROFILER_PROFILER)

@@ -65,14 +65,14 @@ static void tx_get_tile_info(int tile_index)
 VIDEO_START( fstarfrc )
 {
 	/* set up tile layers */
-	tile_bitmap_bg = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 16);
-	tile_bitmap_fg = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 16);
+	tile_bitmap_bg = auto_bitmap_alloc_depth(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight, 16);
+	tile_bitmap_fg = auto_bitmap_alloc_depth(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight, 16);
 
 	if (!tile_bitmap_bg || !tile_bitmap_fg)
 		return 1;
 
 	/* set up sprites */
-	sprite_bitmap = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 16);
+	sprite_bitmap = auto_bitmap_alloc_depth(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight, 16);
 
 	if (!sprite_bitmap)
 		return 1;
@@ -98,14 +98,14 @@ VIDEO_START( fstarfrc )
 VIDEO_START( ginkun )
 {
 	/* set up tile layers */
-	tile_bitmap_bg = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 16);
-	tile_bitmap_fg = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 16);
+	tile_bitmap_bg = auto_bitmap_alloc_depth(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight, 16);
+	tile_bitmap_fg = auto_bitmap_alloc_depth(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight, 16);
 
 	if (!tile_bitmap_bg || !tile_bitmap_fg)
 		return 1;
 
 	/* set up sprites */
-	sprite_bitmap = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 16);
+	sprite_bitmap = auto_bitmap_alloc_depth(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight, 16);
 
 	if (!sprite_bitmap)
 		return 1;
@@ -129,14 +129,14 @@ VIDEO_START( ginkun )
 VIDEO_START( riot )
 {
 	/* set up tile layers */
-	tile_bitmap_bg = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 16);
-	tile_bitmap_fg = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 16);
+	tile_bitmap_bg = auto_bitmap_alloc_depth(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight, 16);
+	tile_bitmap_fg = auto_bitmap_alloc_depth(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight, 16);
 
 	if (!tile_bitmap_bg || !tile_bitmap_fg)
 		return 1;
 
 	/* set up sprites */
-	sprite_bitmap = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 16);
+	sprite_bitmap = auto_bitmap_alloc_depth(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight, 16);
 
 	if (!sprite_bitmap)
 		return 1;

@@ -744,8 +744,8 @@ VIDEO_UPDATE( vector )
 	ymax = vecheight;
 
 	/* setup scaling */
-	vector_scale_x = ((float)vecwidth)/(Machine->visible_area.max_x - Machine->visible_area.min_x);
-	vector_scale_y = ((float)vecheight)/(Machine->visible_area.max_y - Machine->visible_area.min_y);
+	vector_scale_x = ((float)vecwidth)/(Machine->visible_area[0].max_x - Machine->visible_area[0].min_x);
+	vector_scale_y = ((float)vecheight)/(Machine->visible_area[0].max_y - Machine->visible_area[0].min_y);
 
 	/* next call to vector_clear_list() is allowed to swap the lists */
 	vector_runs = 0;

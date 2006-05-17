@@ -483,11 +483,11 @@ static const I386_OPCODE i386_opcode_table2[256] =
 	{"???",				0,				0,					0,					0				},
 	{"???",				0,				0,					0,					0				},
 	{"movd",			MODRM,			PARAM_MMX,			PARAM_RM,			0				},
-	{"???",				0,				0,					0,					0				},
+	{"movq",			MODRM,			PARAM_MMX,			PARAM_MMXM,			0				},
 	// 0x70
+	{"pshufw",			MODRM,			PARAM_MMX,			PARAM_MMXM,			PARAM_I8		},
 	{"???",				0,				0,					0,					0				},
-	{"???",				0,				0,					0,					0				},
-	{"???",				0,				0,					0,					0				},
+	{"group0F72",		GROUP,			0,					0,					0				},
 	{"???",				0,				0,					0,					0				},
 	{"pcmpeqb",			MODRM,			PARAM_MMX,			PARAM_MMXM,			0				},
 	{"pcmpeqw",			MODRM,			PARAM_MMX,			PARAM_MMXM,			0				},
@@ -495,12 +495,12 @@ static const I386_OPCODE i386_opcode_table2[256] =
 	{"emms",			0,				0,					0,					0				},
 	{"???",				0,				0,					0,					0				},
 	{"???",				0,				0,					0,					0				},
-	{"???",				0,				0,					0,					0				},
-	{"???",				0,				0,					0,					0				},
-	{"???",				0,				0,					0,					0				},
-	{"???",				0,				0,					0,					0				},
+	{"pcmpeqb",			MODRM,			PARAM_MMX,			PARAM_MMXM,			0				},
+	{"pcmpeqw",			MODRM,			PARAM_MMX,			PARAM_MMXM,			0				},
+	{"pcmpeqd",			MODRM,			PARAM_MMX,			PARAM_MMXM,			0				},
+	{"emms",			0,				0,					0,					0				},
 	{"movd",			MODRM,			PARAM_RM,			PARAM_MMX,			0				},
-	{"???",				0,				0,					0,					0				},
+	{"movq",			MODRM,			PARAM_MMXM,			PARAM_MMX,			0				},
 	// 0x80
 	{"jo",				0,				PARAM_REL,			0,					0				},
 	{"jno",				0,				PARAM_REL,			0,					0				},
@@ -615,7 +615,7 @@ static const I386_OPCODE i386_opcode_table2[256] =
 	{"psubsb",			MODRM,			PARAM_MMX,			PARAM_MMXM,			0				},
 	{"psubsw",			MODRM,			PARAM_MMX,			PARAM_MMXM,			0				},
 	{"pminsw",			MODRM,			PARAM_MMX,			PARAM_MMXM,			0				},
-	{"???",				0,				0,					0,					0				},
+	{"por",				MODRM,			PARAM_MMX,			PARAM_MMXM,			0				},
 	{"paddsb",			MODRM,			PARAM_MMX,			PARAM_MMXM,			0				},
 	{"paddsw",			MODRM,			PARAM_MMX,			PARAM_MMXM,			0				},
 	{"pmaxsw",			MODRM,			PARAM_MMX,			PARAM_MMXM,			0				},
@@ -1107,6 +1107,18 @@ static const I386_OPCODE group0F18_table[8] =
 	{"???",				0,				0,					0,					0				}
 };
 
+static const I386_OPCODE group0F72_table[8] =
+{
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"psrld",			0,				PARAM_MMX,			PARAM_I8,			0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"pslld",			0,				PARAM_MMX,			PARAM_I8,			0				},
+	{"???",				0,				0,					0,					0				}
+};
+
 static const I386_OPCODE group0FAE_table[8] =
 {
 	{"???",				0,				0,					0,					0				},
@@ -1118,6 +1130,7 @@ static const I386_OPCODE group0FAE_table[8] =
 	{"mfence",			0,				0,					0,					0				},
 	{"sfence",			0,				0,					0,					0				}
 };
+
 
 static const I386_OPCODE group0FBA_table[8] =
 {
@@ -1149,6 +1162,7 @@ static const GROUP_OP group_op_table[] =
 	{ "group0F00",			group0F00_table			},
 	{ "group0F01",			group0F01_table			},
 	{ "group0F18",			group0F18_table			},
+	{ "group0F72",			group0F72_table			},
 	{ "group0FAE",			group0FAE_table			},
 	{ "group0FBA",			group0FBA_table			}
 };

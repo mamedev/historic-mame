@@ -88,11 +88,16 @@ struct _ui_menu_item
  *************************************/
 
 /* main init/exit routines */
-int ui_init(int show_disclaimer, int show_warnings, int show_gameinfo);
+int ui_init(void);
+int ui_display_startup_screens(int show_disclaimer, int show_warnings, int show_gameinfo);
 void ui_exit(void);
 
 /* once-per-frame update and render */
+#ifndef NEW_RENDER
 void ui_update_and_render(mame_bitmap *bitmap);
+#else
+void ui_update_and_render(void);
+#endif
 
 /* returns non-zero if the UI has been drawn recently */
 int ui_is_dirty(void);
@@ -133,12 +138,6 @@ UINT32 ui_menu_stack_pop(void);
 /* display a temporary message at the bottom of the screen */
 void CLIB_DECL ui_popup(const char *text, ...) ATTR_PRINTF(1,2);
 void CLIB_DECL ui_popup_time(int seconds, const char *text, ...) ATTR_PRINTF(2,3);
-
-/* informational displays used before the game is fully up and running */
-int ui_display_decoding(mame_bitmap *bitmap, int percent);
-int ui_display_copyright(mame_bitmap *bitmap);
-int ui_display_game_warnings(mame_bitmap *bitmap);
-int ui_display_game_info(mame_bitmap *bitmap);
 
 /* temporarily show the FPS display for a period of time */
 void ui_show_fps_temp(double seconds);

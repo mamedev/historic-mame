@@ -901,26 +901,26 @@ static void draw_sprites(mame_bitmap *bitmap)
 				tileno, color,
 				flipx, flipy,
 				sx+8*flipx,sy+8*flipy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 
 			if(1) {//only 4x4 sprites?
 				drawgfx(bitmap,Machine->gfx[gfx],
 				tileno+1, color,
 				flipx, flipy,
 				sx+8-8*flipx,sy+8*flipy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 
 				drawgfx(bitmap,Machine->gfx[gfx],
 				tileno+2, color,
 				flipx, flipy,
 				sx+8*flipx,sy+8-8*flipy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 
 				drawgfx(bitmap,Machine->gfx[gfx],
 				tileno+3, color,
 				flipx, flipy,
 				sx+8-8*flipx,sy+8-8*flipy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 			}
 		}
 	}

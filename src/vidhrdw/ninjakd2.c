@@ -25,10 +25,10 @@ VIDEO_START( ninjakd2 )
 {
 	bg_dirtybuffer = auto_malloc(1024);
 
-	if ((bitmap_bg = auto_bitmap_alloc(Machine->drv->screen_width*2,Machine->drv->screen_height*2)) == 0)
+	if ((bitmap_bg = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth*2,Machine->drv->screen[0].maxheight*2)) == 0)
 		return 1;
 
-	if ((bitmap_sp = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((bitmap_sp = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight)) == 0)
 		return 1;
 
 	memset(bg_dirtybuffer,1,1024);
@@ -69,7 +69,7 @@ WRITE8_HANDLER( ninjakd2_sprite_overdraw_w )
 	if (sp_overdraw!=data)
 	{
 		ninjakd2_spoverdraw_ram[offset] = data;
-		fillbitmap(bitmap_sp,15,&Machine->visible_area);
+		fillbitmap(bitmap_sp,15,&Machine->visible_area[0]);
 		sp_overdraw = data;
 	}
 }
@@ -101,7 +101,7 @@ void ninjakd2_draw_foreground(mame_bitmap *bitmap)
 						palette,
 						flipx,flipy,
 						sx,sy,
-						&Machine->visible_area,TRANSPARENCY_PEN, 15);
+						&Machine->visible_area[0],TRANSPARENCY_PEN, 15);
 		}
 
 	}
@@ -167,7 +167,7 @@ void ninjakd2_draw_sprites(mame_bitmap *bitmap)
 						palette,
 						flipx,flipy,
 						sx,sy,
-						&Machine->visible_area,
+						&Machine->visible_area[0],
 						TRANSPARENCY_PEN, 15);
 		}
 	}
@@ -195,12 +195,12 @@ VIDEO_UPDATE( ninjakd2 )
 	{
 		ninjakd2_draw_sprites(bitmap_sp);
 		ninjakd2_draw_foreground(bitmap_sp);
-		copyscrollbitmap(bitmap,bitmap_bg,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
-		copybitmap(bitmap,bitmap_sp,0,0,0,0,&Machine->visible_area,TRANSPARENCY_PEN, 15);
+		copyscrollbitmap(bitmap,bitmap_bg,1,&scrollx,1,&scrolly,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+		copybitmap(bitmap,bitmap_sp,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_PEN, 15);
 	}
 	else 			/* normal sprite mode */
 	{
-		copyscrollbitmap(bitmap,bitmap_bg,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,bitmap_bg,1,&scrollx,1,&scrolly,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 		ninjakd2_draw_sprites(bitmap);
 		ninjakd2_draw_foreground(bitmap);
 	}

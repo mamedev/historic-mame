@@ -242,7 +242,7 @@ static WRITE16_HANDLER(wheelfir_blit_w)
 				pix = rom[offs];
 
 
-				if(pix && destx<Machine->drv->screen_width && desty <Machine->drv->screen_height)
+				if(pix && destx<Machine->drv->screen[0].maxwidth && desty <Machine->drv->screen[0].maxheight)
 					plot_pixel(wheelfir_tmp_bitmap,destx,desty,pix);
 			}
 
@@ -259,7 +259,7 @@ static WRITE16_HANDLER(wheelfir_blit_w)
 VIDEO_START(wheelfir)
 {
 
-	wheelfir_tmp_bitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
+	wheelfir_tmp_bitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight);
 	return 0;
 }
 

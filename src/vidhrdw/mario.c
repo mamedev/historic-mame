@@ -152,13 +152,13 @@ static void mario_draw_sprites( mame_bitmap *bitmap )
 					(spriteram[offs + 1] & 0x0f) + 16 * palette_bank,
 					spriteram[offs + 1] & 0x80,spriteram[offs + 1] & 0x40,
 					spriteram[offs + 3] - 8,240 - spriteram[offs] + 8,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 		}
 	}
 }
 
 VIDEO_UPDATE( mario )
 {
-	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
 	mario_draw_sprites(bitmap);
 }

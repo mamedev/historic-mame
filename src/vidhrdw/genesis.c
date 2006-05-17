@@ -276,7 +276,7 @@ int start_system18_vdp(void)
 void segac2_enable_display(int enable)
 {
 	if (!cpu_getvblank())
-		force_partial_update(cpu_getscanline() + scanbase);
+		force_partial_update(0, cpu_getscanline() + scanbase);
 	display_enable = enable;
 }
 
@@ -508,7 +508,7 @@ static void vdp_data_w(int data)
 			if (!cpu_getvblank() &&
 				vdp_address >= vdp_hscrollbase &&
 				vdp_address < vdp_hscrollbase + vdp_hscrollsize)
-				force_partial_update(cpu_getscanline() + scanbase);
+				force_partial_update(0, cpu_getscanline() + scanbase);
 
 			/* write to VRAM */
 			if (vdp_address & 1)
@@ -536,7 +536,7 @@ static void vdp_data_w(int data)
 
 			/* if the vscroll RAM is changing during screen refresh, force an update */
 			if (!cpu_getvblank())
-				force_partial_update(cpu_getscanline() + scanbase);
+				force_partial_update(0, cpu_getscanline() + scanbase);
 
 			/* write to VSRAM */
 			if (vdp_address & 1)
@@ -603,7 +603,7 @@ static int vdp_control_r(void)
 		status |= 0x0008;
 
 	/* set the HBLANK bit */
-	if (beampos < Machine->visible_area.min_x || beampos > Machine->visible_area.max_x)
+	if (beampos < Machine->visible_area[0].min_x || beampos > Machine->visible_area[0].max_x)
 		status |= 0x0004;
 
 	return (status);
@@ -652,7 +652,7 @@ static void vdp_register_w(int data, int vblank)
 	/* these are mostly important writes; force an update if they */
 	/* are written during a screen refresh */
 	if (!vblank && is_important[regnum])
-		force_partial_update(cpu_getscanline() + scanbase);
+		force_partial_update(0, cpu_getscanline() + scanbase);
 
 	/* For quite a few of the registers its a good idea to set a couple of variable based
        upon the writes here */
@@ -714,9 +714,9 @@ static void vdp_register_w(int data, int vblank)
 					window_width=64;
 				break;
 			}
-			set_visible_area(0, scrwidth*8-1,
-				Machine->visible_area.min_y,
-				Machine->visible_area.max_y);
+			set_visible_area(0, 0, scrwidth*8-1,
+				Machine->visible_area[0].min_y,
+				Machine->visible_area[0].max_y);
 			break;
 
 		case 0x0d: /* HScroll Base */

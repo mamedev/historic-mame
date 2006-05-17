@@ -788,7 +788,7 @@ static void seta_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 
 		if (flip)
 		{
-			y = (0x100 - Machine->drv->screen_height) + max_y - y;
+			y = (0x100 - Machine->drv->screen[0].maxheight) + max_y - y;
 			flipx = !flipx;
 			flipy = !flipy;
 		}
@@ -848,7 +848,7 @@ VIDEO_UPDATE( seta )
 	int order	= 	0;
 	int flip	=	(spriteram16[ 0x600/2 ] & 0x40) >> 6;
 
-	int vis_dimy = Machine->visible_area.max_y - Machine->visible_area.min_y + 1;
+	int vis_dimy = Machine->visible_area[0].max_y - Machine->visible_area[0].min_y + 1;
 
 	flip ^= tilemaps_flip;
 

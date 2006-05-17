@@ -545,8 +545,8 @@ static void get_sprite_info_cave(void)
 	int	glob_flipx	=	cave_videoregs[ 0 ] & 0x8000;
 	int	glob_flipy	=	cave_videoregs[ 1 ] & 0x8000;
 
-	int max_x		=	Machine->drv->screen_width;
-	int max_y		=	Machine->drv->screen_height;
+	int max_x		=	Machine->drv->screen[0].maxwidth;
+	int max_y		=	Machine->drv->screen[0].maxheight;
 
 	for (; source < finish; source+=8 )
 	{
@@ -666,8 +666,8 @@ static void get_sprite_info_donpachi(void)
 	int	glob_flipx	=	cave_videoregs[ 0 ] & 0x8000;
 	int	glob_flipy	=	cave_videoregs[ 1 ] & 0x8000;
 
-	int max_x		=	Machine->drv->screen_width;
-	int max_y		=	Machine->drv->screen_height;
+	int max_x		=	Machine->drv->screen[0].maxwidth;
+	int max_y		=	Machine->drv->screen[0].maxheight;
 
 	for (; source < finish; source+=8 )
 	{
@@ -732,8 +732,8 @@ static void get_sprite_info_donpachi(void)
 
 static int sprite_init_cave(void)
 {
-	screen_width = Machine->drv->screen_width;
-	screen_height = Machine->drv->screen_height;
+	screen_width = Machine->drv->screen[0].maxwidth;
+	screen_height = Machine->drv->screen[0].maxheight;
 
 	if (cave_spritetype == 0 || cave_spritetype == 2)	// most of the games
 	{
@@ -746,7 +746,7 @@ static int sprite_init_cave(void)
 		cave_spritetype2 = 0;
 	}
 
-	if(!(sprite_zbuf = auto_bitmap_alloc_depth( Machine->drv->screen_width, Machine->drv->screen_height, 16 ))) return 1;
+	if(!(sprite_zbuf = auto_bitmap_alloc_depth( Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight, 16 ))) return 1;
 	blit.baseaddr_zbuf = sprite_zbuf->line[0];
 	blit.line_offset_zbuf = ((UINT8 *)sprite_zbuf->line[1])-((UINT8 *)sprite_zbuf->line[0]);
 
@@ -815,7 +815,7 @@ static void cave_sprite_check( const rectangle *clip )
 				if(!mame_get_performance_info()->partial_updates_this_frame)
 				{
 					if(!(sprite_zbuf_baseval += MAX_SPRITE_NUM))
-						fillbitmap(sprite_zbuf,0,&Machine->visible_area);
+						fillbitmap(sprite_zbuf,0,&Machine->visible_area[0]);
 				}
 				break;
 
@@ -824,7 +824,7 @@ static void cave_sprite_check( const rectangle *clip )
 				if(!mame_get_performance_info()->partial_updates_this_frame)
 				{
 					if(!(sprite_zbuf_baseval += MAX_SPRITE_NUM))
-						fillbitmap(sprite_zbuf,0,&Machine->visible_area);
+						fillbitmap(sprite_zbuf,0,&Machine->visible_area[0]);
 				}
 				break;
 

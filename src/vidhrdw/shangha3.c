@@ -74,7 +74,7 @@ static mame_bitmap *rawbitmap;
 
 VIDEO_START( shangha3 )
 {
-	if ((rawbitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((rawbitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight)) == 0)
 		return 1;
 
 	if (shangha3_do_shadows)
@@ -266,5 +266,5 @@ else
 
 VIDEO_UPDATE( shangha3 )
 {
-	copybitmap(bitmap,rawbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,rawbitmap,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 }

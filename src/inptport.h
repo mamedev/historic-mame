@@ -633,6 +633,7 @@ struct _input_port_entry
 	PORT_BIT(0, default, IPT_DIPSWITCH_SETTING) PORT_NAME(name)		\
 
 /* physical location, of the form: name:sw,[name:]sw,... */
+/* note that these are specified LSB-first */
 #define PORT_DIPLOCATION(location_)									\
 	input_port_parse_diplocation(port, location_);					\
 

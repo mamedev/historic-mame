@@ -192,8 +192,8 @@ static void esd16_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int offs;
 
-	int max_x		=	Machine->drv->screen_width;
-	int max_y		=	Machine->drv->screen_height;
+	int max_x		=	Machine->drv->screen[0].maxwidth;
+	int max_y		=	Machine->drv->screen[0].maxheight;
 
 	for ( offs = spriteram_size/2 - 8/2; offs >= 0 ; offs -= 8/2 )
 	{
@@ -248,8 +248,8 @@ static void hedpanic_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect
 {
 	int offs;
 
-	int max_x		=	Machine->drv->screen_width;
-	int max_y		=	Machine->drv->screen_height;
+	int max_x		=	Machine->drv->screen[0].maxwidth;
+	int max_y		=	Machine->drv->screen[0].maxheight;
 
 	for ( offs = spriteram_size/2 - 8/2; offs >= 0 ; offs -= 8/2 )
 	{

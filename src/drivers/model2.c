@@ -334,7 +334,7 @@ static VIDEO_START(model2)
 static VIDEO_UPDATE(model2)
 {
 	sys24_tile_update();
-	fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
+	fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area[0]);
 
 	sys24_tile_draw(bitmap, cliprect, 7, 0, 0);
 	sys24_tile_draw(bitmap, cliprect, 6, 0, 0);

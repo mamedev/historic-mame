@@ -115,7 +115,7 @@ VIDEO_UPDATE( xxmissio )
 					col,
 					flipscreen,flipscreen,
 					px,py,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 			}
 		}
 	}
@@ -131,7 +131,7 @@ VIDEO_UPDATE( xxmissio )
 		sy = xxmissio_yscroll;
 	}
 
-	copyscrollbitmap(bitmap,tmpbitmap,1,&sx,1,&sy,&Machine->visible_area,TRANSPARENCY_NONE,0);
+	copyscrollbitmap(bitmap,tmpbitmap,1,&sx,1,&sy,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 	xxmissio_bg_redraw = 0;
 
 /* draw sprites */
@@ -168,14 +168,14 @@ VIDEO_UPDATE( xxmissio )
 			col,
 			fx,fy,
 			px,py,
-			&Machine->visible_area,TRANSPARENCY_PEN,0);
+			&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 		if (px>0x1e0)
 			drawgfx(bitmap,Machine->gfx[1],
 				chr,
 				col,
 				fx,fy,
 				px-0x200,py,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 
 	}
 
@@ -206,7 +206,7 @@ VIDEO_UPDATE( xxmissio )
 				col,
 				flipscreen,flipscreen,
 				px,py,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 		}
 	}
 

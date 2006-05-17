@@ -247,9 +247,9 @@ static void hng64_transition_control(mame_bitmap *bitmap)
 		brigG = (INT32)((hng64_tcram[0x0000000a] >> 8)  & 0xff) ;
 		brigB = (INT32)((hng64_tcram[0x0000000a] >> 16) & 0xff) ;
 
-		for (i = Machine->visible_area.min_x; i < Machine->visible_area.max_x; i++)
+		for (i = Machine->visible_area[0].min_x; i < Machine->visible_area[0].max_x; i++)
 		{
-			for (j = Machine->visible_area.min_y; j < Machine->visible_area.max_y; j++)
+			for (j = Machine->visible_area[0].min_y; j < Machine->visible_area[0].max_y; j++)
 			{
 				UINT32* thePixel = &((UINT32 *)(bitmap->line[j]))[i] ;
 
@@ -860,11 +860,11 @@ static void hng64_draw3d( mame_bitmap *bitmap, const rectangle *cliprect )
 									ndCoords[3] = polys[numPolys].vert[m].clipCoords[3] ;
 
 									// Final pixel values are garnered here :
-									windowCoords[0] = (ndCoords[0]+1.0f) * ((float)(Machine->visible_area.max_x) / 2.0f) + 0.0f ;
-									windowCoords[1] = (ndCoords[1]+1.0f) * ((float)(Machine->visible_area.max_y) / 2.0f) + 0.0f ;
+									windowCoords[0] = (ndCoords[0]+1.0f) * ((float)(Machine->visible_area[0].max_x) / 2.0f) + 0.0f ;
+									windowCoords[1] = (ndCoords[1]+1.0f) * ((float)(Machine->visible_area[0].max_y) / 2.0f) + 0.0f ;
 									windowCoords[2] = (ndCoords[2]+1.0f) * 0.5f ;
 
-									windowCoords[1] = (float)Machine->visible_area.max_y - windowCoords[1] ;		// Flip Y
+									windowCoords[1] = (float)Machine->visible_area[0].max_y - windowCoords[1] ;		// Flip Y
 
 									// Store the points in a list for later use...
 									polys[numPolys].vert[m].clipCoords[0] = windowCoords[0] ;
@@ -913,7 +913,7 @@ static void hng64_draw3d( mame_bitmap *bitmap, const rectangle *cliprect )
 	/////////////////////////////////////////////////
 
 	// Reset the depth buffer...
-	for (i = 0; i < (Machine->visible_area.max_x)*(Machine->visible_area.max_y); i++)
+	for (i = 0; i < (Machine->visible_area[0].max_x)*(Machine->visible_area[0].max_y); i++)
 		depthBuffer[i] = 100.0f ;
 
 	for (i = 0; i < numPolys; i++)
@@ -1068,7 +1068,7 @@ static void plotTilemap3Line(mame_bitmap *tilemapBitmap,
 
 	numPix = gatherPixelsForLine(tilemapBitmap, startX, startY, endX, endY, penList) ;
 
-	pixStride = (float)numPix / (float)(Machine->visible_area.max_x-1) ;
+	pixStride = (float)numPix / (float)(Machine->visible_area[0].max_x-1) ;
 	pixOffset = 0 ;
 
 	if (numPix == 0)
@@ -1077,7 +1077,7 @@ static void plotTilemap3Line(mame_bitmap *tilemapBitmap,
 //  printf("numpix %d ps %f po %f s(%d,%d) e(%d,%d)\n", numPix, pixStride, pixOffset, startX, startY, endX, endY) ;
 
 	// Draw out the screen's line...
-	for (i = Machine->visible_area.min_x; i < Machine->visible_area.max_x; i++)
+	for (i = Machine->visible_area[0].min_x; i < Machine->visible_area[0].max_x; i++)
 	{
 		// Nearest-neighbor interpolation for now (but i doubt it does linear)
 		UINT16 tmPen = penList[(int)pixOffset] ;
@@ -1097,7 +1097,7 @@ static void hng64_drawtilemap3( mame_bitmap *bitmap, const rectangle *cliprect )
 
 //  usrintf_showmessage("%d", hackTm3Count) ;
 
-	if (hackTm3Count/4 < Machine->visible_area.max_y)
+	if (hackTm3Count/4 < Machine->visible_area[0].max_y)
 	{
 		for (i = 0; i < hackTm3Count/4; i++)
 		{
@@ -1114,7 +1114,7 @@ static void hng64_drawtilemap3( mame_bitmap *bitmap, const rectangle *cliprect )
 							 (INT16)((hng64_videoram[address+0x2]&0xffff0000) >> 16),
 							 (INT16)((hng64_videoram[address+0x1]&0xffff0000) >> 16),
 							 (INT16)((hng64_videoram[address+0x3]&0xffff0000) >> 16),
-							 (Machine->visible_area.max_y-1)-i,
+							 (Machine->visible_area[0].max_y-1)-i,
 							 bitmap) ;
 		}
 	}
@@ -1306,7 +1306,7 @@ VIDEO_START( hng64 )
 	tilemap_set_transparent_pen(hng64_tilemap3,0);
 
 	// 3d Buffer Allocation
-	depthBuffer = (float*)auto_malloc((Machine->visible_area.max_x)*(Machine->visible_area.max_y)*sizeof(float)) ;
+	depthBuffer = (float*)auto_malloc((Machine->visible_area[0].max_x)*(Machine->visible_area[0].max_y)*sizeof(float)) ;
 
 	// The general display list of polygons in the scene...
 	// !! This really should be a dynamic array !!
@@ -1704,7 +1704,7 @@ INLINE void FillSmoothTexPCHorizontalLine(mame_bitmap *Color,
 					  float g_start, float g_delta, float b_start, float b_delta,
 					  float s_start, float s_delta, float t_start, float t_delta)
 {
-	float *dp = &(depthBuffer[y*Machine->visible_area.max_x+x_start]);
+	float *dp = &(depthBuffer[y*Machine->visible_area[0].max_x+x_start]);
 
 	const UINT8 *gfx = memory_region(REGION_GFX3);
 	const UINT8 *textureOffset ;

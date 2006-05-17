@@ -1167,8 +1167,8 @@ static void gx_wipezbuf(int noshadow)
 	int w, h;
 	register int ecx;
 
-	w = Machine->visible_area.max_x - Machine->visible_area.min_x + 1;
-	h = Machine->visible_area.max_y - Machine->visible_area.min_y + 1;
+	w = Machine->visible_area[0].max_x - Machine->visible_area[0].min_x + 1;
+	h = Machine->visible_area[0].max_y - Machine->visible_area[0].min_y + 1;
 
 	zptr = gx_objzbuf;
 	ecx = h;
@@ -1595,7 +1595,7 @@ void konamigx_mixer(mame_bitmap *bitmap, const rectangle *cliprect,
 	}
 
 	// traverse draw list
-	screenwidth = Machine->drv->screen_width;
+	screenwidth = Machine->drv->screen[0].maxwidth;
 
 	for (count=0; count<nobj; count++)
 	{

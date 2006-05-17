@@ -219,8 +219,8 @@ void suna8_draw_normal_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 	int i;
 	int mx = 0;	// multisprite x counter
 
-	int max_x	=	Machine->drv->screen_width	- 8;
-	int max_y	=	Machine->drv->screen_height - 8;
+	int max_x	=	Machine->drv->screen[0].maxwidth	- 8;
+	int max_y	=	Machine->drv->screen[0].maxheight - 8;
 
 	for (i = 0x1d00; i < 0x2000; i += 4)
 	{
@@ -349,8 +349,8 @@ void suna8_draw_text_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int i;
 
-	int max_x	=	Machine->drv->screen_width	- 8;
-	int max_y	=	Machine->drv->screen_height - 8;
+	int max_x	=	Machine->drv->screen[0].maxwidth	- 8;
+	int max_y	=	Machine->drv->screen[0].maxheight - 8;
 
 	/* Earlier games only */
 	if (!(suna8_text_dim > 0))	return;

@@ -252,7 +252,7 @@ VIDEO_UPDATE( cloud9 )
 {
 	int offs;
 
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 
 	/* draw the sprites */
 	for (offs = 0;offs < 20;offs++)
@@ -275,13 +275,13 @@ VIDEO_UPDATE( cloud9 )
 				1 + ((*cloud9_color_bank & 0x80) >> 6),
 				xflip,yflip,
 				x,y,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 	}
 }
 
 VIDEO_START( cloud9 )
 {
-	tmpbitmap = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
+	tmpbitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight);
 	cloud9_vram2 = auto_malloc(videoram_size);
 
 	if (!tmpbitmap)

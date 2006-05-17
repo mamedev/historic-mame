@@ -312,8 +312,8 @@ static void psikyo_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, 
 	unsigned char *TILES	=	memory_region(REGION_USER1);	// Sprites LUT
 	int TILES_LEN			=	memory_region_length(REGION_USER1);
 
-	int width	=	Machine->drv->screen_width;
-	int height	=	Machine->drv->screen_height;
+	int width	=	Machine->drv->screen[0].maxwidth;
+	int height	=	Machine->drv->screen[0].maxheight;
 
 	/* Exit if sprites are disabled */
 	if ( spritelist[ BYTE_XOR_BE((0x800-2)/2) ] & 1 )	return;

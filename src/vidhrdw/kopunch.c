@@ -117,8 +117,8 @@ VIDEO_UPDATE( kopunch )
 {
 	int offs;
 
-	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
-	//tilemap_draw(bitmap, &Machine->visible_area, fg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
+	//tilemap_draw(bitmap, &Machine->visible_area[0], fg_tilemap, 0, 0);
 
 	for (offs = 1023;offs >= 0;offs--)
 	{
@@ -132,6 +132,6 @@ VIDEO_UPDATE( kopunch )
 				0,
 				0,gfxflip,
 				8*(sx+8)+scroll[0],8*(8+(gfxflip ? 15-sy : sy))+scroll[1],
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 	}
 }

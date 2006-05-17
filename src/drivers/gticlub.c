@@ -150,7 +150,7 @@ WRITE32_HANDLER(K001006_1_w)
 
 VIDEO_START( gticlub )
 {
-	K001005_bitmap = auto_bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
+	K001005_bitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
 	if (!K001005_bitmap)
 		return 1;
 
@@ -714,8 +714,8 @@ static void draw_triangle(mame_bitmap *bitmap, VERTEX v1, VERTEX v2, VERTEX v3, 
 	rectangle cliprect;
 	cliprect.min_x = 0;
 	cliprect.min_y = 0;
-	cliprect.max_x = Machine->drv->screen_width-1;
-	cliprect.max_y = Machine->drv->screen_height-1;
+	cliprect.max_x = Machine->drv->screen[0].maxwidth-1;
+	cliprect.max_y = Machine->drv->screen[0].maxheight-1;
 
 	vert[0].x = v1.x;	vert[0].y = v1.y;
 	vert[1].x = v2.x;	vert[1].y = v2.y;

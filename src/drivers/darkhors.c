@@ -131,7 +131,7 @@ static void darkhors_draw_sprites(mame_bitmap *bitmap)
 		drawgfx(	bitmap,	Machine->gfx[0],
 					code/2,	color,
 					flipx,	flipy,	sx,	sy,
-					&Machine->visible_area, TRANSPARENCY_PEN, 0);
+					&Machine->visible_area[0], TRANSPARENCY_PEN, 0);
 	}
 }
 

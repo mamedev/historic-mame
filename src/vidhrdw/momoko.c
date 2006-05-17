@@ -147,7 +147,7 @@ VIDEO_UPDATE( momoko )
 					col,
 					flip,flip,
 					px,py,
-					&Machine->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 			}
 		}
 	}
@@ -182,7 +182,7 @@ VIDEO_UPDATE( momoko )
 			col,
 			!fx,fy,
 			px,py,
-			&Machine->visible_area,TRANSPARENCY_PEN,0);
+			&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 	}
 
 
@@ -246,7 +246,7 @@ VIDEO_UPDATE( momoko )
 			col,
 			!fx,fy,
 			px,py,
-			&Machine->visible_area,TRANSPARENCY_PEN,0);
+			&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 	}
 
 
@@ -281,7 +281,7 @@ VIDEO_UPDATE( momoko )
 				col,
 				flip,0,
 				px,py,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 		}
 	}
 
@@ -316,7 +316,7 @@ VIDEO_UPDATE( momoko )
 					0, /* color */
 					flip,flip, /* flip */
 					px,py,
-					&Machine->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 			}
 		}
 	}

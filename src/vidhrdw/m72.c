@@ -45,7 +45,7 @@ INTERRUPT_GEN( m72_interrupt )
 		if (line != splitline - 128)
 			return;
 
-		force_partial_update(line + 128);
+		force_partial_update(0, line + 128);
 
 		/* this is used to do a raster effect and show the score display at
            the bottom of the screen or other things. The line where the

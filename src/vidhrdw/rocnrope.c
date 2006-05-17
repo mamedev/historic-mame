@@ -129,12 +129,12 @@ static void rocnrope_draw_sprites( mame_bitmap *bitmap )
 				spriteram_2[offs] & 0x0f,
 				spriteram_2[offs] & 0x40,~spriteram_2[offs] & 0x80,
 				240-spriteram[offs],spriteram_2[offs + 1],
-				&Machine->visible_area,TRANSPARENCY_COLOR,0);
+				&Machine->visible_area[0],TRANSPARENCY_COLOR,0);
 	}
 }
 
 VIDEO_UPDATE( rocnrope )
 {
-	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
 	rocnrope_draw_sprites(bitmap);
 }

@@ -102,7 +102,7 @@ static void psikyo4_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect,
 
 			if((!scr && flipscreen1) || (scr && flipscreen2))
 			{
-				ypos = Machine->visible_area.max_y+1 - ypos - high*16; /* Screen Height depends on game */
+				ypos = Machine->visible_area[0].max_y+1 - ypos - high*16; /* Screen Height depends on game */
 				xpos = 40*8 - xpos - wide*16;
 				flipx = !flipx;
 				flipy = !flipy;
@@ -139,16 +139,16 @@ VIDEO_UPDATE( psikyo4 )
 
 		clip.min_x = 0;
 		clip.max_x = 40*8-1;
-		clip.min_y = Machine->visible_area.min_y;
-		clip.max_y = Machine->visible_area.max_y;
+		clip.min_y = Machine->visible_area[0].min_y;
+		clip.max_y = Machine->visible_area[0].max_y;
 
 		fillbitmap(bitmap, Machine->pens[0x1000], &clip);
 		psikyo4_drawsprites(bitmap, &clip, 0x0000);
 
 		clip.min_x = 40*8;
 		clip.max_x = 80*8-1;
-		clip.min_y = Machine->visible_area.min_y;
-		clip.max_y = Machine->visible_area.max_y;
+		clip.min_y = Machine->visible_area[0].min_y;
+		clip.max_y = Machine->visible_area[0].max_y;
 
 		fillbitmap(bitmap, Machine->pens[0x1001], &clip);
 		psikyo4_drawsprites(bitmap, &clip, 0x2000);

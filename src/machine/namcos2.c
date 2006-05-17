@@ -569,7 +569,7 @@ READ16_HANDLER( namcos2_68k_slave_C148_r )
 
 void namcos2_68k_master_posirq( int scanline )
 {
-	force_partial_update(scanline);
+	force_partial_update(0, scanline);
 	cpunum_set_input_line(CPU_MASTER , namcos2_68k_master_C148[NAMCOS2_C148_POSIRQ] , ASSERT_LINE);
 }
 
@@ -602,7 +602,7 @@ INTERRUPT_GEN( namcos2_68k_master_vblank )
 
 void namcos2_68k_slave_posirq( int scanline )
 {
-	force_partial_update(scanline);
+	force_partial_update(0, scanline);
 	cpunum_set_input_line(CPU_SLAVE , namcos2_68k_slave_C148[NAMCOS2_C148_POSIRQ] , ASSERT_LINE);
 }
 

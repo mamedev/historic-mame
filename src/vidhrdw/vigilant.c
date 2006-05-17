@@ -215,7 +215,7 @@ static void draw_foreground( mame_bitmap *bitmap, int priority, int opaque )
 					color,
 					0,0,
 					sx,sy,
-					&Machine->visible_area,(opaque || color >= 4) ? TRANSPARENCY_NONE : TRANSPARENCY_PEN,0);
+					&Machine->visible_area[0],(opaque || color >= 4) ? TRANSPARENCY_NONE : TRANSPARENCY_PEN,0);
 		}
 	}
 }
@@ -349,7 +349,7 @@ VIDEO_UPDATE( kikcubic )
 		}
 	}
 
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 
-	draw_sprites(bitmap,&Machine->visible_area);
+	draw_sprites(bitmap,&Machine->visible_area[0]);
 }

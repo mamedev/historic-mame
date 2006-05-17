@@ -328,10 +328,10 @@ VIDEO_START( sega )
 {
 	if (vectorram_size == 0)
 		return 1;
-	min_x =Machine->visible_area.min_x;
-	min_y =Machine->visible_area.min_y;
-	max_x =Machine->visible_area.max_x;
-	max_y =Machine->visible_area.max_y;
+	min_x =Machine->visible_area[0].min_x;
+	min_y =Machine->visible_area[0].min_y;
+	max_x =Machine->visible_area[0].max_x;
+	max_y =Machine->visible_area[0].max_y;
 	width =max_x-min_x;
 	height=max_y-min_y;
 	cent_x=(max_x+min_x)/2;

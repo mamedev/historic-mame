@@ -475,10 +475,10 @@ VIDEO_UPDATE( tms9928a )
 		tms.StatusReg = tms.oldStatusReg;
 
 	if (! (tms.Regs[1] & 0x40))
-		fillbitmap(bitmap, Machine->pens[tms.BackColour], &Machine->visible_area);
+		fillbitmap(bitmap, Machine->pens[tms.BackColour], &Machine->visible_area[0]);
 	else
 	{
-		copybitmap(bitmap, tms.tmpbmp, 0, 0, LEFT_BORDER, TOP_BORDER, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+		copybitmap(bitmap, tms.tmpbmp, 0, 0, LEFT_BORDER, TOP_BORDER, &Machine->visible_area[0], TRANSPARENCY_NONE, 0);
 		{
 			rectangle rt;
 
@@ -921,6 +921,7 @@ void mdrv_tms9928a(machine_config *machine, const TMS9928a_interface *intf)
 {
 	int top_border = ((intf->model == TMS9929) || (intf->model == TMS9929A)) ? TOP_BORDER_50HZ : TOP_BORDER_60HZ;
 	int bottom_border = ((intf->model == TMS9929) || (intf->model == TMS9929A)) ? BOTTOM_BORDER_50HZ : BOTTOM_BORDER_60HZ;
+	screen_config *screen = &machine->screen[0];
 
 	sIntf = *intf;
 

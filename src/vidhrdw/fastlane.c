@@ -91,10 +91,10 @@ VIDEO_START( fastlane )
 	if (!layer0 || !layer1)
 		return 1;
 
-	clip0 = Machine->visible_area;
+	clip0 = Machine->visible_area[0];
 	clip0.min_x += 40;
 
-	clip1 = Machine->visible_area;
+	clip1 = Machine->visible_area[0];
 	clip1.max_x = 39;
 	clip1.min_x = 0;
 

@@ -141,13 +141,13 @@ static void bombjack_draw_sprites( mame_bitmap *bitmap )
 				spriteram[offs+1] & 0x0f,
 				flipx,flipy,
 				sx,sy,
-				&Machine->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 	}
 }
 
 VIDEO_UPDATE( bombjack )
 {
-	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
-	tilemap_draw(bitmap, &Machine->visible_area, fg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->visible_area[0], fg_tilemap, 0, 0);
 	bombjack_draw_sprites(bitmap);
 }

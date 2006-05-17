@@ -387,12 +387,12 @@ void skns_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect )
 			if (sprite_flip&2)
 			{
 				xflip ^= 1;
-				sx = Machine->visible_area.max_x+1 - sx;
+				sx = Machine->visible_area[0].max_x+1 - sx;
 			}
 			if (sprite_flip&1)
 			{
 				yflip ^= 1;
-				sy = Machine->visible_area.max_y+1 - sy;
+				sy = Machine->visible_area[0].max_y+1 - sy;
 			}
 
 			/* Palette linking */

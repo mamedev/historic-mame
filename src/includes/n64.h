@@ -7,6 +7,9 @@ extern VIDEO_START( n64 );
 extern VIDEO_UPDATE( n64 );
 extern void rdp_process_list(void);
 
+#define DACRATE_NTSC	(48681812)
+#define DACRATE_PAL	(49656530)
+#define DACRATE_MPAL	(48628316)
 
 #define SP_INTERRUPT	0x1
 #define SI_INTERRUPT	0x2
@@ -64,8 +67,6 @@ extern READ32_HANDLER( n64_si_reg_r );
 extern WRITE32_HANDLER( n64_si_reg_w );
 extern READ32_HANDLER( n64_pif_ram_r );
 extern WRITE32_HANDLER( n64_pif_ram_w );
-
-extern struct CustomSound_interface n64_sound_interface;
 
 void n64_machine_reset(void);
 

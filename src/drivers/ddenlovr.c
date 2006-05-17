@@ -149,7 +149,7 @@ VIDEO_START(ddenlovr)
 	for (i = 0; i < 8; i++)
 		pixmap[i] = auto_malloc(512*512);
 
-	if (!(framebuffer = auto_bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height))) return 1;
+	if (!(framebuffer = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight))) return 1;
 
 	extra_layers = 0;
 
@@ -1302,7 +1302,7 @@ if (code_pressed(KEYCODE_Z))
 	if (code_pressed_memory(KEYCODE_F)) { base++; while ((memory_region(REGION_GFX1)[base] & 0xf0) != 0x30) base++; }
 #endif
 
-	fillbitmap(framebuffer,dynax_bgcolor,&Machine->visible_area);
+	fillbitmap(framebuffer,dynax_bgcolor,&Machine->visible_area[0]);
 
 #ifdef MAME_DEBUG
 	if (code_pressed(KEYCODE_Z))
@@ -1342,10 +1342,10 @@ if (code_pressed(KEYCODE_Z))
 			pri = 0;
 		}
 
-		copylayer(framebuffer,&Machine->visible_area,order[pri][0]);
-		copylayer(framebuffer,&Machine->visible_area,order[pri][1]);
-		copylayer(framebuffer,&Machine->visible_area,order[pri][2]);
-		copylayer(framebuffer,&Machine->visible_area,order[pri][3]);
+		copylayer(framebuffer,&Machine->visible_area[0],order[pri][0]);
+		copylayer(framebuffer,&Machine->visible_area[0],order[pri][1]);
+		copylayer(framebuffer,&Machine->visible_area[0],order[pri][2]);
+		copylayer(framebuffer,&Machine->visible_area[0],order[pri][3]);
 
 	if (extra_layers)
 	{
@@ -1357,10 +1357,10 @@ if (code_pressed(KEYCODE_Z))
 			pri = 0;
 		}
 
-		copylayer(framebuffer,&Machine->visible_area,order[pri][0]+4);
-		copylayer(framebuffer,&Machine->visible_area,order[pri][1]+4);
-		copylayer(framebuffer,&Machine->visible_area,order[pri][2]+4);
-		copylayer(framebuffer,&Machine->visible_area,order[pri][3]+4);
+		copylayer(framebuffer,&Machine->visible_area[0],order[pri][0]+4);
+		copylayer(framebuffer,&Machine->visible_area[0],order[pri][1]+4);
+		copylayer(framebuffer,&Machine->visible_area[0],order[pri][2]+4);
+		copylayer(framebuffer,&Machine->visible_area[0],order[pri][3]+4);
 	}
 
 	dynax_layer_enable = enab;

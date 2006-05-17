@@ -1944,6 +1944,7 @@ static void execute_traceflush(int ref, int params, const char *param[])
 
 static void execute_snap(int ref, int params, const char *param[])
 {
+#ifndef NEW_RENDER
 	/* if no params, use the default behavior */
 	if (params == 0)
 	{
@@ -1964,6 +1965,7 @@ static void execute_snap(int ref, int params, const char *param[])
 			debug_console_printf("Saved snapshot as '%s'\n", param[0]);
 		}
 	}
+#endif
 }
 
 

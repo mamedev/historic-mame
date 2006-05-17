@@ -868,7 +868,7 @@ static void swap_buffers(voodoo_state *v)
 	if (LOG_VBLANK_SWAP) logerror("--- swap_buffers @ %d\n", cpu_getscanline());
 
 	/* force a partial update */
-	force_partial_update(cpu_getscanline());
+	force_partial_update(0, cpu_getscanline());
 
 	/* keep a history of swap intervals */
 	count = v->fbi.vblank_count;
@@ -924,7 +924,7 @@ static void swap_buffers(voodoo_state *v)
 	/* update the statistics (debug) */
 	if (v->stats.display)
 	{
-		int screen_area = (Machine->visible_area.max_x - Machine->visible_area.min_x + 1) * (Machine->visible_area.max_y - Machine->visible_area.min_y + 1);
+		int screen_area = (Machine->visible_area[0].max_x - Machine->visible_area[0].min_x + 1) * (Machine->visible_area[0].max_y - Machine->visible_area[0].min_y + 1);
 		int pixelcount = v->stats.total_pixels_out;
 		char *statsptr = v->stats.buffer;
 		int i;
@@ -984,7 +984,7 @@ static void vblank_off_callback(void *param)
 		(*v->fbi.vblank_client)(FALSE);
 
 	/* go to the end of the next frame */
-	timer_adjust_ptr(v->fbi.vblank_timer, cpu_getscanlinetime(Machine->visible_area.max_y + 1), TIME_NEVER);
+	timer_adjust_ptr(v->fbi.vblank_timer, cpu_getscanlinetime(Machine->visible_area[0].max_y + 1), TIME_NEVER);
 }
 
 
@@ -2471,7 +2471,7 @@ static INT32 register_w(voodoo_state *v, offs_t offset, UINT32 data)
 					v->fbi.width = data & 0x3ff;
 				if (data & 0x3ff0000)
 					v->fbi.height = (data >> 16) & 0x3ff;
-				set_visible_area(0, v->fbi.width - 1, 0, v->fbi.height - 1);
+				set_visible_area(0, 0, v->fbi.width - 1, 0, v->fbi.height - 1);
 				timer_adjust_ptr(v->fbi.vblank_timer, cpu_getscanlinetime(v->fbi.height), TIME_NEVER);
 				recompute_video_memory(v);
 			}
@@ -2486,16 +2486,16 @@ static INT32 register_w(voodoo_state *v, offs_t offset, UINT32 data)
 				if (v->reg[hSync].u != 0 && v->reg[vSync].u != 0)
 				{
 					float vtotal = (v->reg[vSync].u >> 16) + (v->reg[vSync].u & 0xffff);
-					float stdfps = 15750 / vtotal, stddiff = fabs(stdfps - Machine->drv->frames_per_second);
-					float medfps = 25000 / vtotal, meddiff = fabs(medfps - Machine->drv->frames_per_second);
-					float vgafps = 31500 / vtotal, vgadiff = fabs(vgafps - Machine->drv->frames_per_second);
+					float stdfps = 15750 / vtotal, stddiff = fabs(stdfps - Machine->drv->screen[0].refresh_rate);
+					float medfps = 25000 / vtotal, meddiff = fabs(medfps - Machine->drv->screen[0].refresh_rate);
+					float vgafps = 31500 / vtotal, vgadiff = fabs(vgafps - Machine->drv->screen[0].refresh_rate);
 
 					if (stddiff < meddiff && stddiff < vgadiff)
-						set_refresh_rate(stdfps);
+						set_refresh_rate(0, stdfps);
 					else if (meddiff < vgadiff)
-						set_refresh_rate(medfps);
+						set_refresh_rate(0, medfps);
 					else
-						set_refresh_rate(vgafps);
+						set_refresh_rate(0, vgafps);
 				}
 			}
 			break;
@@ -4302,7 +4302,7 @@ static void banshee_io_w(voodoo_state *v, offs_t offset, UINT32 data, UINT32 mem
 				v->fbi.width = data & 0xfff;
 			if (data & 0xfff000)
 				v->fbi.height = (data >> 12) & 0xfff;
-			set_visible_area(0, v->fbi.width - 1, 0, v->fbi.height - 1);
+			set_visible_area(0, 0, v->fbi.width - 1, 0, v->fbi.height - 1);
 			timer_adjust_ptr(v->fbi.vblank_timer, cpu_getscanlinetime(v->fbi.height), TIME_NEVER);
 			if (LOG_REGISTERS)
 				logerror("%08X:banshee_io_w(%s) = %08X & %08X\n", activecpu_get_pc(), banshee_io_reg_name[offset], data, ~mem_mask);

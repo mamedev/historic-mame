@@ -61,7 +61,7 @@ void gtia_reset(void)
 	for (i = 0; i < 32; i++)
 		atari_gtia_w(i,0);
     memset(&gtia.r, 0, sizeof(gtia.r));
-	if( Machine->drv->frames_per_second > 55 )
+	if( Machine->drv->screen[0].refresh_rate > 55 )
 		gtia.r.pal = 0xff;
 	else
 		gtia.r.pal = 0xf1;

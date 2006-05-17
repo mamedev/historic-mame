@@ -69,7 +69,7 @@ VIDEO_START( system18 )
 		return 1;
 
 	/* create a temp bitmap to draw the VDP data into */
-	tempbitmap = auto_bitmap_alloc_depth(Machine->drv->screen_width, Machine->drv->screen_height, 16);
+	tempbitmap = auto_bitmap_alloc_depth(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight, 16);
 	if (!tempbitmap)
 		return 1;
 	return 0;
@@ -88,7 +88,7 @@ void system18_set_grayscale(int enable)
 	enable = (enable != 0);
 	if (enable != grayscale_enable)
 	{
-		force_partial_update(cpu_getscanline());
+		force_partial_update(0, cpu_getscanline());
 		grayscale_enable = enable;
 //      printf("Grayscale = %02X\n", enable);
 	}
@@ -100,7 +100,7 @@ void system18_set_vdp_enable(int enable)
 	enable = (enable != 0);
 	if (enable != vdp_enable)
 	{
-		force_partial_update(cpu_getscanline());
+		force_partial_update(0, cpu_getscanline());
 		vdp_enable = enable;
 #if DEBUG_VDP
 		printf("VDP enable = %02X\n", enable);
@@ -113,7 +113,7 @@ void system18_set_vdp_mixing(int mixing)
 {
 	if (mixing != vdp_mixing)
 	{
-		force_partial_update(cpu_getscanline());
+		force_partial_update(0, cpu_getscanline());
 		vdp_mixing = mixing;
 #if DEBUG_VDP
 		printf("VDP mixing = %02X\n", mixing);

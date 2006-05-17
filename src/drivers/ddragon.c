@@ -961,7 +961,7 @@ static INTERRUPT_GEN( ddragon_interrupt )
 
 	/* VBLK is raised on scanline 240 and NMI line is pulled high */
 	if (scanline==240) {
-		force_partial_update(scanline);
+		force_partial_update(0, scanline);
 		cpunum_set_input_line(0, INPUT_LINE_NMI, ASSERT_LINE);
 		VBLK=0x8;
 	}
@@ -969,7 +969,7 @@ static INTERRUPT_GEN( ddragon_interrupt )
 	/* IMS is triggered every time VPOS line 3 is raised, as VPOS counter starts at 16, effectively every 16 scanlines */
 	if ((scanline%16)==7)
 	{
-		force_partial_update(scanline);
+		force_partial_update(0, scanline);
 		cpunum_set_input_line(0,M6809_FIRQ_LINE,ASSERT_LINE);
 	}
 }

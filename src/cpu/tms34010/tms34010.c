@@ -1084,7 +1084,7 @@ static void set_raster_op(void)
 
 INLINE int scanline_to_vcount(int scanline)
 {
-	if (Machine->visible_area.min_y == 0)
+	if (Machine->visible_area[0].min_y == 0)
 		scanline += SMART_IOREG(VEBLNK);
 	if (scanline > SMART_IOREG(VTOTAL))
 		scanline -= SMART_IOREG(VTOTAL);
@@ -1094,7 +1094,7 @@ INLINE int scanline_to_vcount(int scanline)
 
 INLINE int vcount_to_scanline(int vcount)
 {
-	if (Machine->visible_area.min_y == 0)
+	if (Machine->visible_area[0].min_y == 0)
 		vcount -= SMART_IOREG(VEBLNK);
 	if (vcount < 0)
 		vcount += SMART_IOREG(VTOTAL);
@@ -1140,7 +1140,7 @@ static void update_display_address(int vcount)
 
 static void vsblnk_callback(int cpunum)
 {
-	double interval = TIME_IN_HZ(Machine->drv->frames_per_second);
+	double interval = TIME_IN_HZ(Machine->refresh_rate[0]);
 
 	/* reset timer for next frame before going into the CPU context */
 	timer_adjust(vsblnk_timer[cpunum], interval, cpunum, 0);
@@ -1156,7 +1156,7 @@ static void vsblnk_callback(int cpunum)
 
 static void dpyint_callback(int cpunum)
 {
-	double interval = TIME_IN_HZ(Machine->drv->frames_per_second);
+	double interval = TIME_IN_HZ(Machine->refresh_rate[0]);
 
 logerror("-- dpyint(%d) @ %d --\n", cpunum, cpu_getscanline());
 
@@ -1584,7 +1584,7 @@ READ16_HANDLER( tms34010_io_register_r )
 			/* scale the horizontal position from screen width to HTOTAL */
 			result = cpu_gethorzbeampos();
 			total = IOREG(REG_HTOTAL);
-			result = result * total / Machine->drv->screen_width;
+			result = result * total / Machine->drv->screen[0].maxwidth;
 
 			/* offset by the HBLANK end */
 			result += IOREG(REG_HEBLNK);
@@ -1633,7 +1633,7 @@ READ16_HANDLER( tms34020_io_register_r )
 			/* scale the horizontal position from screen width to HTOTAL */
 			result = cpu_gethorzbeampos();
 			total = IOREG(REG020_HTOTAL);
-			result = result * total / Machine->drv->screen_width;
+			result = result * total / Machine->drv->screen[0].maxwidth;
 
 			/* offset by the HBLANK end */
 			result += IOREG(REG020_HEBLNK);

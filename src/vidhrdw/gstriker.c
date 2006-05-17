@@ -251,10 +251,10 @@ void MB60553_draw(int numchip, mame_bitmap* screen, const rectangle* cliprect, i
 
 
 
-	clip.min_x = Machine->visible_area.min_x;
-	clip.max_x = Machine->visible_area.max_x;
-	clip.min_y = Machine->visible_area.min_y;
-	clip.max_y = Machine->visible_area.max_y;
+	clip.min_x = Machine->visible_area[0].min_x;
+	clip.max_x = Machine->visible_area[0].max_x;
+	clip.min_y = Machine->visible_area[0].min_y;
+	clip.max_y = Machine->visible_area[0].max_y;
 
 	for (line = 0; line < 224;line++)
 	{

@@ -79,6 +79,10 @@
 #include "debugger.h"
 #include "profiler.h"
 
+#ifdef NEW_RENDER
+#include "render.h"
+#endif
+
 #if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
 #include "debug/debugcon.h"
 #endif
@@ -305,7 +309,7 @@ int run_game(int game)
 			nvram_load();
 
 			/* initialize the UI and display the startup screens */
-			if (ui_init(!settingsloaded && !options.skip_disclaimer, !options.skip_warnings, !options.skip_gameinfo) != 0)
+			if (ui_display_startup_screens(!settingsloaded && !options.skip_disclaimer, !options.skip_warnings, !options.skip_gameinfo) != 0)
 				fatalerror("User cancelled");
 
 			/* ensure we don't show the opening screens on a reset */
@@ -331,10 +335,7 @@ int run_game(int game)
 
 				/* otherwise, just pump video updates through */
 				else
-				{
-					updatescreen();
-					reset_partial_updates();
-				}
+					video_frame_update();
 
 				/* handle save/load */
 				if (saveload_schedule_callback)
@@ -576,7 +577,7 @@ void mame_pause(int pause)
 
 int mame_is_paused(void)
 {
-	return mame_paused;
+	return (current_phase != MAME_PHASE_RUNNING) || mame_paused;
 }
 
 
@@ -976,6 +977,8 @@ UINT32 mame_rand(void)
 
 static void create_machine(int game)
 {
+	int scrnum;
+
 	/* first give the machine a good cleaning */
 	Machine = &active_machine;
 	memset(Machine, 0, sizeof(*Machine));
@@ -984,7 +987,8 @@ static void create_machine(int game)
 	Machine->gamedrv = drivers[game];
 	Machine->drv = &internal_drv;
 	expand_machine_driver(Machine->gamedrv->drv, &internal_drv);
-	Machine->refresh_rate = Machine->drv->frames_per_second;
+	for (scrnum = 0; scrnum < MAX_SCREENS; scrnum++)
+		Machine->refresh_rate[scrnum] = Machine->drv->screen[scrnum].refresh_rate;
 
 	/* copy some settings into easier-to-handle variables */
 	Machine->record_file = options.record;
@@ -1005,8 +1009,10 @@ static void create_machine(int game)
 	/* initialize the samplerate */
 	Machine->sample_rate = options.samplerate;
 
+#ifndef NEW_RENDER
 	/* get orientation right */
 	Machine->ui_orientation = options.ui_orientation;
+#endif
 
 	/* add an exit callback to clear out the Machine on the way out */
 	add_exit_callback(destroy_machine);
@@ -1040,6 +1046,10 @@ static void init_machine(void)
 	state_init();
 	state_save_allow_registration(TRUE);
 	drawgfx_init();
+#ifdef NEW_RENDER
+	render_init();
+#endif
+	ui_init();
 	generic_machine_init();
 	generic_video_init();
 	rand_seed = 0x9d14abd7;
