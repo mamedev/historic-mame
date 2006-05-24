@@ -21,7 +21,7 @@
 
 /*----------- defined in sndhrdw/skydiver.c -----------*/
 
-extern struct discrete_sound_block skydiver_discrete_interface[];
+extern discrete_sound_block skydiver_discrete_interface[];
 
 
 /*----------- defined in vidhrdw/skydiver.c -----------*/

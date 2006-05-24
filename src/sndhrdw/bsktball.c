@@ -31,7 +31,8 @@ WRITE8_HANDLER( bsktball_noise_reset_w )
 /* bsktball Sound System Analog emulation                               */
 /************************************************************************/
 
-const struct discrete_lfsr_desc bsktball_lfsr={
+static const discrete_lfsr_desc bsktball_lfsr =
+{
 	DISC_CLK_IS_FREQ,
 	16,			/* Bit Length */
 	0,			/* Reset Value */
@@ -45,7 +46,7 @@ const struct discrete_lfsr_desc bsktball_lfsr={
 	15			/* Output bit */
 };
 
-const struct discrete_dac_r1_ladder bsktball_crowd_r1_ladder =
+static const discrete_dac_r1_ladder bsktball_crowd_r1_ladder =
 {
 	4,
 	{RES_K(390), RES_K(220), RES_K(100), RES_K(56)},	// r55, r54, r53, r52
@@ -54,7 +55,7 @@ const struct discrete_dac_r1_ladder bsktball_crowd_r1_ladder =
 	CAP_U(0.1)	// c32
 };
 
-const struct discrete_op_amp_filt_info bsktball_crowd_filt =
+static const discrete_op_amp_filt_info bsktball_crowd_filt =
 {
 	1.0/(1.0/RES_K(390) + 1.0/RES_K(220) + 1.0/RES_K(100) + 1.0/RES_K(56) + 1.0/RES_K(1)),	// r55, r54, r53, r52, r21
 	0, 0, 0,
@@ -65,7 +66,7 @@ const struct discrete_op_amp_filt_info bsktball_crowd_filt =
 	5, 12, 0
 };
 
-const struct discrete_mixer_desc bsktball_mixer =
+static const discrete_mixer_desc bsktball_mixer =
 {
 	DISC_MIXER_IS_OP_AMP,
 	{RES_K(47), RES_K(47), RES_K(220)},		// r56, r57, r60

@@ -82,7 +82,7 @@ DISCRETE_SOUND_START(circus_discrete_interface)
 	DISCRETE_OUTPUT(CIRCUS_MUSIC_SND, 1)
 DISCRETE_SOUND_END
 
-const struct discrete_mixer_desc crash_mixer =
+static const discrete_mixer_desc crash_mixer =
 {
 	DISC_MIXER_IS_RESISTOR,
 	{RES_K(22), RES_K(5)},
@@ -91,14 +91,14 @@ const struct discrete_mixer_desc crash_mixer =
 	0, RES_K(100), 0, CAP_U(.1), 0, 10000
 };
 
-const struct discrete_555_desc crash_beeper_555m =
+static const discrete_555_desc crash_beeper_555m =
 {
 	DISC_555_TRIGGER_IS_LOGIC | DISC_555_OUT_DC | DISC_555_OUT_SQW,
 	5,		// B+ voltage of 555
 	DEFAULT_555_VALUES
 };
 
-const struct discrete_555_desc crash_beeper_555a =
+static const discrete_555_desc crash_beeper_555a =
 {
 	DISC_555_OUT_DC | DISC_555_OUT_SQW,
 	5,		// B+ voltage of 555

@@ -217,7 +217,6 @@ struct _global_options
 	int		beam;			/* vector beam width */
 	float	vector_flicker;	/* vector beam flicker effect control */
 	float	vector_intensity;/* vector beam intensity */
-	int		translucency;	/* 1 to enable translucency on vectors */
 	int 	antialias;		/* 1 to enable antialiasing on vectors */
 
 	int		use_artwork;	/* bitfield indicating which artwork pieces to use */

@@ -23,7 +23,7 @@ WRITE8_HANDLER( canyon_explode_w );
 WRITE8_HANDLER( canyon_attract_w );
 WRITE8_HANDLER( canyon_whistle_w );
 
-extern struct discrete_sound_block canyon_discrete_interface[];
+extern discrete_sound_block canyon_discrete_interface[];
 
 
 /*----------- defined in vidhrdw/canyon.c -----------*/

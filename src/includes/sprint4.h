@@ -20,7 +20,7 @@ Atari Sprint 4 + Ultra Tank driver
 
 /*----------- defined in sndhrdw/sprint4.c -----------*/
 
-extern struct discrete_sound_block sprint4_discrete_interface[];
+extern discrete_sound_block sprint4_discrete_interface[];
 
 
 /*----------- defined in vidhrdw/sprint4.c -----------*/

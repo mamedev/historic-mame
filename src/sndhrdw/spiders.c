@@ -16,7 +16,7 @@
 /* Todo - Add proper sound mixer                                        */
 /************************************************************************/
 
-const struct discrete_dac_r1_ladder spiders_sound_dac =
+static const discrete_dac_r1_ladder spiders_sound_dac =
 {
 	4,			// size of ladder
 	{RES_K(68), RES_K(47), RES_K(33), RES_K(33)}, // R21, R31, R30, R50
@@ -27,7 +27,8 @@ const struct discrete_dac_r1_ladder spiders_sound_dac =
 };
 
 /* The noice generator consists of two LS164 plus a LS74, so the lenght is 8+8+1 */
-const struct discrete_lfsr_desc spiders_lfsr={
+static const discrete_lfsr_desc spiders_lfsr =
+{
 	DISC_CLK_IS_FREQ,
 	17,			          /* Bit Length */
 	0,			          /* Reset Value */
@@ -42,7 +43,7 @@ const struct discrete_lfsr_desc spiders_lfsr={
 };
 
 
-struct discrete_dac_r1_ladder spiders_fire_dac =
+discrete_dac_r1_ladder spiders_fire_dac =
 {
 	1,
 	{RES_K(10)},	// R29
@@ -52,7 +53,7 @@ struct discrete_dac_r1_ladder spiders_fire_dac =
 	CAP_N(100)		// C100
 };
 
-struct discrete_dac_r1_ladder spiders_web_exp_dac =
+discrete_dac_r1_ladder spiders_web_exp_dac =
 {
 	1,
 	{RES_K(10)},	// R44
@@ -63,7 +64,7 @@ struct discrete_dac_r1_ladder spiders_web_exp_dac =
 };
 
 // IC 10
-const struct discrete_555_desc spiders_fire_555a =
+static const discrete_555_desc spiders_fire_555a =
 {
     DISC_555_OUT_SQW | DISC_555_OUT_DC,
 	5,		// B+ voltage of 555
@@ -71,7 +72,7 @@ const struct discrete_555_desc spiders_fire_555a =
 };
 
 
-const struct discrete_555_desc spiders_super_web_555a =
+static const discrete_555_desc spiders_super_web_555a =
 {
 	DISC_555_OUT_DC | DISC_555_OUT_CAP,
 	5,		// B+ voltage of 555

@@ -29,7 +29,7 @@ void nitedrvr_crash_toggle(int dummy);
 
 /*----------- defined in sndhrdw/nitedrvr.c -----------*/
 
-extern struct discrete_sound_block nitedrvr_discrete_interface[];
+extern discrete_sound_block nitedrvr_discrete_interface[];
 
 
 /*----------- defined in vidhrdw/nitedrvr.c -----------*/

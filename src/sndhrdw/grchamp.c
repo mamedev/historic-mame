@@ -12,7 +12,7 @@
 /* Written by Hans Andersson,  dec 2005                                 */
 /************************************************************************/
 
-const struct discrete_dac_r1_ladder grchamp_sound_dac1 =
+static const discrete_dac_r1_ladder grchamp_sound_dac1 =
 {
 	8,			// size of ladder
 	{RES_K(680), RES_K(330), RES_K(150), RES_K(82), RES_K(39), RES_K(20), RES_K(10), RES_K(4.7)},
@@ -22,7 +22,7 @@ const struct discrete_dac_r1_ladder grchamp_sound_dac1 =
 	0			// no cap
 };
 
-const struct discrete_dac_r1_ladder grchamp_sound_dac2 =
+static const discrete_dac_r1_ladder grchamp_sound_dac2 =
 {
 	8,			// size of ladder
 	{RES_K(680), RES_K(330), RES_K(150), RES_K(82), RES_K(39), RES_K(20), RES_K(10), RES_K(4.7)},

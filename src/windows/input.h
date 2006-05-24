@@ -51,6 +51,11 @@ typedef struct _KEYBOARD_INDICATOR_PARAMETERS {
 extern const int win_key_trans_table[][4];
 extern int win_use_mouse;
 
+void win_pause_input(int pause);
+void wininput_poll(void);
+
+BOOL win_raw_mouse_update(HANDLE in_device_handle);
+
 int osd_get_leds(void);
 void osd_set_leds(int state);
 
@@ -58,5 +63,7 @@ void start_led(void);
 void stop_led(void);
 void input_mouse_button_down(int button, int x, int y);
 void input_mouse_button_up(int button);
+
+int win_is_mouse_captured(void);
 
 #endif /* ifndef __INPUTD_H */

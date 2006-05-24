@@ -102,7 +102,7 @@ struct dst_rcfilter_context
 #define DST_CRFILTER__C			(*(node->input[3]))
 #define DST_CRFILTER__VREF		(*(node->input[4]))
 
-void dst_crfilter_step(struct node_description *node)
+void dst_crfilter_step(node_description *node)
 {
 	struct dst_rcfilter_context *context = node->context;
 
@@ -117,7 +117,7 @@ void dst_crfilter_step(struct node_description *node)
 	}
 }
 
-void dst_crfilter_reset(struct node_description *node)
+void dst_crfilter_reset(node_description *node)
 {
 	struct dst_rcfilter_context *context = node->context;
 
@@ -170,7 +170,7 @@ static void calculate_filter1_coefficients(double fc, double type,
 	}
 }
 
-void dst_filter1_step(struct node_description *node)
+void dst_filter1_step(node_description *node)
 {
 	struct dss_filter1_context *context = node->context;
 	double gain = 1.0;
@@ -186,7 +186,7 @@ void dst_filter1_step(struct node_description *node)
 	context->y1 = node->output;
 }
 
-void dst_filter1_reset(struct node_description *node)
+void dst_filter1_reset(node_description *node)
 {
 	struct dss_filter1_context *context = node->context;
 
@@ -254,7 +254,7 @@ static void calculate_filter2_coefficients(double fc, double d, double type,
 	}
 }
 
-void dst_filter2_step(struct node_description *node)
+void dst_filter2_step(node_description *node)
 {
 	struct dss_filter2_context *context = node->context;
 	double gain = 1.0;
@@ -273,7 +273,7 @@ void dst_filter2_step(struct node_description *node)
 	context->y1 = node->output;
 }
 
-void dst_filter2_reset(struct node_description *node)
+void dst_filter2_reset(node_description *node)
 {
 	struct dss_filter2_context *context = node->context;
 
@@ -302,9 +302,9 @@ void dst_filter2_reset(struct node_description *node)
 #define DST_OP_AMP_FILT__INP2	(*(node->input[2]))
 #define DST_OP_AMP_FILT__TYPE	(*(node->input[3]))
 
-void dst_op_amp_filt_step(struct node_description *node)
+void dst_op_amp_filt_step(node_description *node)
 {
-	const struct discrete_op_amp_filt_info *info = node->custom;
+	const discrete_op_amp_filt_info *info = node->custom;
 	struct dst_op_amp_filt_context *context = node->context;
 
 	double i, v=0;
@@ -384,9 +384,9 @@ void dst_op_amp_filt_step(struct node_description *node)
 
 }
 
-void dst_op_amp_filt_reset(struct node_description *node)
+void dst_op_amp_filt_reset(node_description *node)
 {
-	const struct discrete_op_amp_filt_info *info = node->custom;
+	const discrete_op_amp_filt_info *info = node->custom;
 	struct dst_op_amp_filt_context *context = node->context;
 
 	/* Convert the passed filter type into an int for easy use. */
@@ -499,7 +499,7 @@ void dst_op_amp_filt_reset(struct node_description *node)
 #define DST_RCDISC__R		(*(node->input[2]))
 #define DST_RCDISC__C		(*(node->input[3]))
 
-void dst_rcdisc_step(struct node_description *node)
+void dst_rcdisc_step(node_description *node)
 {
 	struct dst_rcdisc_context *context = node->context;
 
@@ -522,7 +522,7 @@ void dst_rcdisc_step(struct node_description *node)
 		}
 }
 
-void dst_rcdisc_reset(struct node_description *node)
+void dst_rcdisc_reset(node_description *node)
 {
 	struct dst_rcdisc_context *context = node->context;
 
@@ -554,7 +554,7 @@ void dst_rcdisc_reset(struct node_description *node)
 #define DST_RCDISC2__R1		(*(node->input[4]))
 #define DST_RCDISC2__C		(*(node->input[5]))
 
-void dst_rcdisc2_step(struct node_description *node)
+void dst_rcdisc2_step(node_description *node)
 {
 	double diff;
 	struct dst_rcdisc_context *context = node->context;
@@ -567,7 +567,7 @@ void dst_rcdisc2_step(struct node_description *node)
 	node->output += diff;
 }
 
-void dst_rcdisc2_reset(struct node_description *node)
+void dst_rcdisc2_reset(node_description *node)
 {
 	struct dst_rcdisc_context *context = node->context;
 
@@ -597,7 +597,7 @@ void dst_rcdisc2_reset(struct node_description *node)
 #define DST_RCDISC3__R2		(*(node->input[3]))
 #define DST_RCDISC3__C		(*(node->input[4]))
 
-void dst_rcdisc3_step(struct node_description *node)
+void dst_rcdisc3_step(node_description *node)
 {
 	double diff;
 	struct dst_rcdisc_context *context = node->context;
@@ -625,7 +625,7 @@ void dst_rcdisc3_step(struct node_description *node)
 	}
 }
 
-void dst_rcdisc3_reset(struct node_description *node)
+void dst_rcdisc3_reset(node_description *node)
 {
 	struct dst_rcdisc_context *context = node->context;
 
@@ -660,7 +660,7 @@ void dst_rcdisc3_reset(struct node_description *node)
 #define DST_RCDISC4__VP		(*(node->input[6]))
 #define DST_RCDISC4__TYPE	(*(node->input[7]))
 
-void dst_rcdisc4_step(struct node_description *node)
+void dst_rcdisc4_step(node_description *node)
 {
 	struct dst_rcdisc4_context *context = node->context;
 	int inp1 = (DST_RCDISC4__IN == 0) ? 0 : 1;
@@ -685,7 +685,7 @@ void dst_rcdisc4_step(struct node_description *node)
 	if (node->output < 0) node->output = 0;
 }
 
-void dst_rcdisc4_reset(struct node_description *node)
+void dst_rcdisc4_reset(node_description *node)
 {
 	struct dst_rcdisc4_context *context = node->context;
 	double	v, i, r, rT;
@@ -774,7 +774,7 @@ void dst_rcdisc4_reset(struct node_description *node)
 #define DST_RCDISC5__R		(*(node->input[2]))
 #define DST_RCDISC5__C		(*(node->input[3]))
 
-void dst_rcdisc5_step(struct node_description *node)
+void dst_rcdisc5_step(node_description *node)
 {
 	double diff,u;
 	struct dst_rcdisc_context *context = node->context;
@@ -799,7 +799,7 @@ void dst_rcdisc5_step(struct node_description *node)
 	}
 }
 
-void dst_rcdisc5_reset(struct node_description *node)
+void dst_rcdisc5_reset(node_description *node)
 {
 	struct dst_rcdisc_context *context = node->context;
 
@@ -827,7 +827,7 @@ void dst_rcdisc5_reset(struct node_description *node)
 #define DST_RCFILTER__C			(*(node->input[3]))
 #define DST_RCFILTER__VREF		(*(node->input[4]))
 
-void dst_rcfilter_step(struct node_description *node)
+void dst_rcfilter_step(node_description *node)
 {
 	struct dst_rcfilter_context *context = node->context;
 
@@ -846,7 +846,7 @@ void dst_rcfilter_step(struct node_description *node)
 	}
 }
 
-void dst_rcfilter_reset(struct node_description *node)
+void dst_rcfilter_reset(node_description *node)
 {
 	struct dst_rcfilter_context *context = node->context;
 
@@ -875,7 +875,7 @@ void dst_rcfilter_reset(struct node_description *node)
 #define DST_RCFILTERN__R		(*(node->input[2]))
 #define DST_RCFILTERN__C		(*(node->input[3]))
 
-void dst_rcfilterN_reset(struct node_description *node)
+void dst_rcfilterN_reset(node_description *node)
 {
 //  double f=1.0/(2*M_PI* DST_RCFILTERN__R * DST_RCFILTERN__C);
 
@@ -906,7 +906,7 @@ void dst_rcfilterN_reset(struct node_description *node)
 #define DST_RCDISCN__R		(*(node->input[2]))
 #define DST_RCDISCN__C		(*(node->input[3]))
 
-void dst_rcdiscN_reset(struct node_description *node)
+void dst_rcdiscN_reset(node_description *node)
 {
 //  double f=1.0/(2*M_PI* DST_RCDISCN__R * DST_RCDISCN__C);
 
@@ -920,7 +920,7 @@ void dst_rcdiscN_reset(struct node_description *node)
 	dst_filter1_reset(node);
 }
 
-void dst_rcdiscN_step(struct node_description *node)
+void dst_rcdiscN_step(node_description *node)
 {
 	struct dss_filter1_context *context = node->context;
 	double gain = 1.0;
@@ -970,7 +970,7 @@ struct dss_rcdisc2_context
 	double a1_1, b0_1, b1_1;	/* digital filter coefficients, filter #2 */
 };
 
-void dst_rcdisc2N_step(struct node_description *node)
+void dst_rcdisc2N_step(node_description *node)
 {
 	struct dss_rcdisc2_context *context = node->context;
 	double input = ((DST_RCDISC2N__ENABLE == 0) ? DST_RCDISC2N__IN0 : DST_RCDISC2N__IN1);
@@ -984,7 +984,7 @@ void dst_rcdisc2N_step(struct node_description *node)
 	context->y1 = node->output;
 }
 
-void dst_rcdisc2N_reset(struct node_description *node)
+void dst_rcdisc2N_reset(node_description *node)
 {
 	struct dss_rcdisc2_context *context = node->context;
 	double f1,f2;

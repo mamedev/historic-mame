@@ -13,14 +13,15 @@
 /* Jan 2004, Derrick Renaud                                             */
 /************************************************************************/
 
-const struct discrete_555_desc skydiverWhistl555 =
+static const discrete_555_desc skydiverWhistl555 =
 {
 	DISC_555_OUT_SQW | DISC_555_OUT_AC,
 	5,		// B+ voltage of 555
 	DEFAULT_555_VALUES
 };
 
-const struct discrete_lfsr_desc skydiver_lfsr={
+static const discrete_lfsr_desc skydiver_lfsr =
+{
 	DISC_CLK_IS_FREQ,
 	16,						/* Bit Length */
 	0,						/* Reset Value */

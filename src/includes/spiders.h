@@ -18,7 +18,7 @@
 
 /*----------- defined in sndhrdw/spiders.c -----------*/
 
-extern struct discrete_sound_block spiders_discrete_interface[];
+extern discrete_sound_block spiders_discrete_interface[];
 
 
 /*----------- defined in drivers/spiders.c -----------*/

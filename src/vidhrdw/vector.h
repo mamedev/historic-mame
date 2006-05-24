@@ -40,8 +40,6 @@ typedef UINT32 vector_pixel_t;
 
 extern vector_pixel_t *vector_dirty_list;
 
-extern int translucency;  /* translucent vectors  */
-
 extern unsigned char *vectorram;
 extern size_t vectorram_size;
 

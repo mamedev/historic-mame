@@ -50,4 +50,4 @@ WRITE8_HANDLER( frogs_sh_port2_w );
 void croak_callback(int param);
 
 extern struct Samplesinterface frogs_samples_interface;
-extern struct discrete_sound_block frogs_discrete_interface[];
+extern discrete_sound_block frogs_discrete_interface[];

@@ -10,6 +10,10 @@
 #include "artwork.h"
 #include "sound/samples.h"
 
+#ifdef NEW_RENDER
+#include "render.h"
+#endif
+
 /* globals */
 UINT8 turbo_opa, turbo_opb, turbo_opc;
 UINT8 turbo_ipa, turbo_ipb, turbo_ipc;
@@ -290,19 +294,26 @@ void turbo_update_segments(void)
 
 	for (i = 0; i < 32; i++)
 	{
-		char buf_old[8];
-		char buf_new[8];
-
 		int v_old = old_segment_data[i];
 		int v_new = new_segment_data[i];
 
 		if (segment_init || v_old != v_new)
 		{
+#ifndef NEW_RENDER
+			char buf_old[8];
+			char buf_new[8];
+
 			sprintf(buf_old, "LED%02d-%c", i, v_old >= 10 ? 'X' : '0' + v_old);
 			sprintf(buf_new, "LED%02d-%c", i, v_new >= 10 ? 'X' : '0' + v_new);
 
 			artwork_show(buf_old, 0);
 			artwork_show(buf_new, 1);
+#else
+			char buf_new[8];
+
+			sprintf(buf_new, "led%02d", i);
+			render_view_item_set_state(buf_new, (v_new >= 10) ? 10 : v_new);
+#endif
 		}
 	}
 
@@ -349,6 +360,7 @@ WRITE8_HANDLER( turbo_coin_and_lamp_w )
 
 void turbo_update_tachometer(void)
 {
+#ifndef NEW_RENDER
 	int i;
 
 	char buf[8] = "Speed00";
@@ -360,6 +372,9 @@ void turbo_update_tachometer(void)
 
 		artwork_show(buf, i == turbo_speed);
 	}
+#else
+	render_view_item_set_state("speed", turbo_speed);
+#endif
 }
 
 

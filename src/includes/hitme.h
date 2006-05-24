@@ -15,4 +15,4 @@
 
 /*----------- defined in sndhrdw/hitme.c -----------*/
 
-extern struct discrete_sound_block hitme_discrete_interface[];
+extern discrete_sound_block hitme_discrete_interface[];

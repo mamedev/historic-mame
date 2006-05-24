@@ -23,9 +23,9 @@
 
 /*----------- defined in sndhrdw/sprint2.c -----------*/
 
-extern struct discrete_sound_block sprint2_discrete_interface[];
-extern struct discrete_sound_block sprint1_discrete_interface[];
-extern struct discrete_sound_block dominos_discrete_interface[];
+extern discrete_sound_block sprint2_discrete_interface[];
+extern discrete_sound_block sprint1_discrete_interface[];
+extern discrete_sound_block dominos_discrete_interface[];
 
 
 /*----------- defined in vidhrdw/sprint2.c -----------*/

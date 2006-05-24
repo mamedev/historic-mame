@@ -12,7 +12,8 @@
 /* triplhnt Sound System Analog emulation                               */
 /* Feb 2004, Derrick Renaud                                             */
 /************************************************************************/
-const struct discrete_lfsr_desc triplhnt_lfsr={
+static const discrete_lfsr_desc triplhnt_lfsr =
+{
 	DISC_CLK_IS_FREQ,
 	16,			/* Bit Length */
 	0,			/* Reset Value */
@@ -26,7 +27,7 @@ const struct discrete_lfsr_desc triplhnt_lfsr={
 	15			/* Output bit */
 };
 
-const struct discrete_dac_r1_ladder triplhnt_bear_roar_v_dac =
+static const discrete_dac_r1_ladder triplhnt_bear_roar_v_dac =
 {
 	4,		// size of ladder
 	{1000000, 470000, 220000, 2200000},	// R47, R50, R48, R51
@@ -36,7 +37,7 @@ const struct discrete_dac_r1_ladder triplhnt_bear_roar_v_dac =
 	0		// no smoothing cap
 };
 
-const struct discrete_dac_r1_ladder triplhnt_bear_roar_out_dac =
+static const discrete_dac_r1_ladder triplhnt_bear_roar_out_dac =
 {
 	3,		// size of ladder
 	{100000, 33000, 100000},	// R56, R58, R57
@@ -46,7 +47,7 @@ const struct discrete_dac_r1_ladder triplhnt_bear_roar_out_dac =
 	0		// no smoothing cap
 };
 
-const struct discrete_dac_r1_ladder triplhnt_shot_dac =
+static const discrete_dac_r1_ladder triplhnt_shot_dac =
 {
 	4,		// size of ladder
 	{8200, 3900, 2200, 1000},	// R53, R54, R55, R52
@@ -56,7 +57,7 @@ const struct discrete_dac_r1_ladder triplhnt_shot_dac =
 	0		// no smoothing cap
 };
 
-const struct discrete_555_cc_desc triplhnt_bear_roar_vco =
+static const discrete_555_cc_desc triplhnt_bear_roar_vco =
 {
 	DISC_555_OUT_DC | DISC_555_OUT_SQW,
 	5,		// B+ voltage of 555
@@ -65,7 +66,7 @@ const struct discrete_555_cc_desc triplhnt_bear_roar_vco =
 	0.7		// Q2 junction voltage
 };
 
-const struct discrete_schmitt_osc_desc triplhnt_screech_osc =
+static const discrete_schmitt_osc_desc triplhnt_screech_osc =
 {
 	2200,	// R84
 	330,	// R85
@@ -74,7 +75,7 @@ const struct discrete_schmitt_osc_desc triplhnt_screech_osc =
 	1		// invert output using 7400 gate E7
 };
 
-const struct discrete_mixer_desc triplhnt_mixer =
+static const discrete_mixer_desc triplhnt_mixer =
 {
 	DISC_MIXER_IS_RESISTOR,
 	{3300 + 19879.5, 47000, 27000 + 545.6},	// R59 + (R56||R57||R58), R60 + (R52||R53||R54||R55), R61

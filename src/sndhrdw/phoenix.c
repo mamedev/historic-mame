@@ -214,21 +214,21 @@ static void phoenix_sound_update(void *param, stream_sample_t **inputs, stream_s
 /* April 2005, DR.                                                      */
 /************************************************************************/
 
-const struct discrete_555_desc phoenix_effect1_555 =
+static const discrete_555_desc phoenix_effect1_555 =
 {
 	DISC_555_OUT_COUNT_F_X,
 	5,		// B+ voltage of 555
 	DEFAULT_555_VALUES
 };
 
-const struct discrete_555_desc phoenix_effect2_555 =
+static const discrete_555_desc phoenix_effect2_555 =
 {
 	DISC_555_OUT_ENERGY,
 	5,		// B+ voltage of 555
 	4.0, DEFAULT_555_THRESHOLD, DEFAULT_555_TRIGGER
 };
 
-const struct discrete_comp_adder_table phoenix_effect2_cap_sel =
+static const discrete_comp_adder_table phoenix_effect2_cap_sel =
 {
 	DISC_COMP_P_CAPACITOR,
 	CAP_U(0.01),	// C18
@@ -236,7 +236,7 @@ const struct discrete_comp_adder_table phoenix_effect2_cap_sel =
 	{CAP_U(0.47), CAP_U(1)}	// C16, C17
 };
 
-const struct discrete_mixer_desc phoenix_effect2_mixer1 =
+static const discrete_mixer_desc phoenix_effect2_mixer1 =
 {
 	DISC_MIXER_IS_RESISTOR,
 	{RES_K(10), RES_K(5.1) + RES_K(5.1), RES_K(5)},	// R42, R45+R46, internal 555 R
@@ -249,7 +249,7 @@ const struct discrete_mixer_desc phoenix_effect2_mixer1 =
 	1	// final gain
 };
 
-const struct discrete_mixer_desc phoenix_effect2_mixer2 =
+static const discrete_mixer_desc phoenix_effect2_mixer2 =
 {
 	DISC_MIXER_IS_RESISTOR,
 	{RES_K(5.1), RES_K(5.1)},	// R45, R46
@@ -262,7 +262,7 @@ const struct discrete_mixer_desc phoenix_effect2_mixer2 =
 	1	// final gain
 };
 
-const struct discrete_mixer_desc phoenix_effect2_mixer3 =
+static const discrete_mixer_desc phoenix_effect2_mixer3 =
 {
 	DISC_MIXER_IS_RESISTOR,
 	{RES_K(10), RES_K(5.1), RES_K(5)},	// R42, R46, internal 555 R
@@ -275,7 +275,7 @@ const struct discrete_mixer_desc phoenix_effect2_mixer3 =
 	1	// final gain
 };
 
-const struct discrete_mixer_desc phoenix_mixer =
+static const discrete_mixer_desc phoenix_mixer =
 {
 	DISC_MIXER_IS_RESISTOR,
 	{RES_K(10+47), RES_K(10+20), RES_K(20), RES_K(20)},	// R19+R21, R38+R47, R67, R68

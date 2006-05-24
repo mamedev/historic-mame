@@ -45,11 +45,14 @@ void expand_machine_driver(void (*constructor)(machine_config *), machine_config
 {
 	/* initialize the tag on the first screen */
 	memset(output, 0, sizeof(*output));
-	output->screen[0].tag = "main";
 	output->screen[0].aspect = 4.0f / 3.0f;
 
 	/* keeping this function allows us to pre-init the driver before constructing it */
 	(*constructor)(output);
+
+	/* if no screen tagged, tag screen 0 as main */
+	if (output->screen[0].tag == NULL)
+		output->screen[0].tag = "main";
 }
 
 

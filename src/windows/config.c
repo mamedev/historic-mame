@@ -41,7 +41,11 @@
 
 #include "rc.h"
 #include "misc.h"
+#ifndef NEW_RENDER
+#include "videoold.h"
+#else
 #include "video.h"
+#endif
 
 #ifdef NEW_DEBUGGER
 #include "debug/debugcpu.h"
@@ -118,10 +122,6 @@ static char *win_strip_extension(char *filename);
 static int video_set_beam(struct rc_option *option, const char *arg, int priority)
 {
 	options.beam = (int)(f_beam * 0x00010000);
-	if (options.beam < 0x00010000)
-		options.beam = 0x00010000;
-	if (options.beam > 0x00100000)
-		options.beam = 0x00100000;
 	option->priority = priority;
 	return 0;
 }
@@ -191,8 +191,7 @@ static struct rc_option opts[] = {
 	/* vector */
 	{ "Mame CORE vector " GAMENOUN " options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
 	{ "antialias", "aa", rc_bool, &options.antialias, "1", 0, 0, NULL, "draw antialiased vectors" },
-	{ "translucency", "tl", rc_bool, &options.translucency, "1", 0, 0, NULL, "draw translucent vectors" },
-	{ "beam", NULL, rc_float, &f_beam, "1.0", 1.0, 16.0, video_set_beam, "set beam width in vector " GAMESNOUN },
+	{ "beam", NULL, rc_float, &f_beam, "1.0", 0.1, 16.0, video_set_beam, "set beam width in vector " GAMESNOUN },
 	{ "flicker", NULL, rc_float, &f_flicker, "0.0", 0.0, 100.0, video_set_flicker, "set flickering in vector " GAMESNOUN },
 	{ "intensity", NULL, rc_float, &f_intensity, "1.5", 0.5, 3.0, video_set_intensity, "set intensity in vector " GAMESNOUN },
 
@@ -210,8 +209,10 @@ static struct rc_option opts[] = {
 	{ "use_backdrops", "backdrop", rc_bool, &use_backdrops, "1", 0, 0, NULL, "use backdrop artwork" },
 	{ "use_overlays", "overlay", rc_bool, &use_overlays, "1", 0, 0, NULL, "use overlay artwork" },
 	{ "use_bezels", "bezel", rc_bool, &use_bezels, "1", 0, 0, NULL, "use bezel artwork" },
+#ifndef NEW_RENDER
 	{ "artwork_crop", "artcrop", rc_bool, &options.artwork_crop, "0", 0, 0, NULL, "crop artwork to " GAMENOUN " screen only" },
 	{ "artwork_resolution", "artres", rc_int, &options.artwork_res, "0", 0, 0, NULL, "artwork resolution (0 for auto)" },
+#endif
 	{ "cheat", "c", rc_bool, &options.cheat, "0", 0, 0, NULL, "enable/disable cheat subsystem" },
 	{ "debug", "d", rc_bool, &options.mame_debug, "0", 0, 0, NULL, "enable/disable debugger (only if available)" },
 	{ "debugscript", NULL, rc_string, &debugscript, NULL, 0, 0, NULL, "script for debugger (only if available)" },
@@ -638,7 +639,11 @@ int cli_frontend_init (int argc, char **argv)
 
 {
 	/* first start with the game's built in orientation */
+#ifndef NEW_RENDER
 	int orientation = drivers[game_index]->flags & ORIENTATION_MASK;
+#else
+	int orientation = ROT0;
+#endif
 	options.ui_orientation = orientation;
 
 	if (options.ui_orientation & ORIENTATION_SWAP_XY)
@@ -703,6 +708,7 @@ int cli_frontend_init (int argc, char **argv)
 	if (video_flipy)
 		orientation ^= ORIENTATION_FLIP_Y;
 
+#ifndef NEW_RENDER
 	blit_flipx = ((orientation & ORIENTATION_FLIP_X) != 0);
 	blit_flipy = ((orientation & ORIENTATION_FLIP_Y) != 0);
 	blit_swapxy = ((orientation & ORIENTATION_SWAP_XY) != 0);
@@ -719,6 +725,9 @@ int cli_frontend_init (int argc, char **argv)
 		options.vector_width = options.vector_height;
 		options.vector_height = temp;
 	}
+#else
+	video_orientation = orientation;
+#endif
 }
 
 	return game_index;

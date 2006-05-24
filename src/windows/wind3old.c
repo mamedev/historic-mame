@@ -27,11 +27,11 @@
 #include "driver.h"
 #include "profiler.h"
 
-#include "window.h"
-#include "video.h"
+#include "windold.h"
+#include "videoold.h"
 #include "blit.h"
-#include "wind3dfx.h"
-#include "winddraw.h"
+#include "wind4old.h"
+#include "winddold.h"
 
 
 

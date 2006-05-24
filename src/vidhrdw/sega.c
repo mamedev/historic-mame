@@ -238,7 +238,7 @@ void sega_generate_vector_list(void)
 				/* Compute color/intensity values from the attributes */
 				color = VECTOR_COLOR222((attrib >> 1) & 0x3f);
 				if ((attrib & 1) && color)
-					intensity = translucency ? 0xa0 : 0xff;
+					intensity = 0xff;
 				else
 					intensity = 0;
 

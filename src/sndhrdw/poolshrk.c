@@ -11,7 +11,7 @@
 /* poolshrk Sound System Analog emulation                               */
 /* Jan 2004, Derrick Renaud                                             */
 /************************************************************************/
-const struct discrete_dac_r1_ladder poolshrk_score_v_dac =
+static const discrete_dac_r1_ladder poolshrk_score_v_dac =
 {
 	4,		// size of ladder
 	{220000, 470000, 1000000, 2200000, 0,0,0,0},	// R57 - R60
@@ -21,7 +21,7 @@ const struct discrete_dac_r1_ladder poolshrk_score_v_dac =
 	1.e-5		// C13
 };
 
-const struct discrete_555_cc_desc poolshrk_score_vco =
+static const discrete_555_cc_desc poolshrk_score_vco =
 {
 	DISC_555_OUT_SQW,
 	5,		// B+ voltage of 555
@@ -30,7 +30,7 @@ const struct discrete_555_cc_desc poolshrk_score_vco =
 	0.7		// Q3 junction voltage
 };
 
-const struct discrete_mixer_desc poolshrk_mixer =
+static const discrete_mixer_desc poolshrk_mixer =
 {
 	DISC_MIXER_IS_RESISTOR,
 	{330000, 330000, 330000, 82000 + 470},	// R77, R75, R74, R76 + R53

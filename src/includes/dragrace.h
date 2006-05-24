@@ -24,7 +24,7 @@
 
 /*----------- defined in sndhrdw/dragrace.c -----------*/
 
-extern struct discrete_sound_block dragrace_discrete_interface[];
+extern discrete_sound_block dragrace_discrete_interface[];
 
 /*----------- defined in vidhrdw/dragrace.c -----------*/
 

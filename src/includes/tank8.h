@@ -25,7 +25,7 @@
 
 /*----------- defined in sndhrdw/tank8.c -----------*/
 
-extern struct discrete_sound_block tank8_discrete_interface[];
+extern discrete_sound_block tank8_discrete_interface[];
 
 
 /*----------- defined in drivers/tank8.c -----------*/

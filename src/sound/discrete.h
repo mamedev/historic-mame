@@ -207,7 +207,7 @@
  * DISCRETE_CRFILTER_VREF(NODE,ENAB,IN0,RVAL,CVAL,VREF)
  * DISCRETE_OP_AMP_FILTER(NODE,ENAB,INP0,INP1,TYPE,INFO)
  * DISCRETE_RCDISC(NODE,ENAB,IN0,RVAL,CVAL)
- * DISCRETE_RCDISC2(NODE,IN0,RVAL0,IN1,RVAL1,CVAL)
+ * DISCRETE_RCDISC2(NODE,SWITCH,INP0,RVAL0,INP1,RVAL1,CVAL)
  * DISCRETE_RCDISC3(NODE,ENAB,INP0,RVAL0,RVAL1,CVAL)
  * DISCRETE_RCDISC4(NODE,ENAB,INP0,RVAL0,RVAL1,RVAL2,CVAL,VP,TYPE)
  * DISCRETE_RCDISC5(NODE,ENAB,IN0,RVAL,CVAL)
@@ -2452,6 +2452,13 @@
  *                          Vin2 (CV) node or static value,
  *                          address of discrete_555_vco1_desc structure)
  *
+ *  discrete_555_vco1_desc = {options,        // bit mapped options
+ *                            r1, r2, r3, r4, c,
+ *                            v555,           // B+ voltage of 555
+ *                            v555high,       // High output voltage of 555 (Usually v555 - 1.2V)
+ *                            threshold555,   // normally 2/3 of v555
+ *                            trigger555}     // normally 1/3 of v555
+ *
  * Notes: The value of resistor rX is not needed.  It is just a pull-up
  *        for the discharge output.
  *        The 'En' block can be a transistor or 4066 switch.  It connects
@@ -2771,7 +2778,7 @@ enum
  *
  *************************************/
 
-struct discrete_sound_block
+struct _discrete_sound_block
 {
 	int				node;							/* Output node number */
 	int				type;							/* see defines below */
@@ -2781,7 +2788,7 @@ struct discrete_sound_block
 	const void *	custom;							/* Custom function specific initialisation data */
 	const char *	name;							/* Node Name */
 };
-
+typedef struct _discrete_sound_block discrete_sound_block;
 
 /*************************************
  *
@@ -2789,16 +2796,17 @@ struct discrete_sound_block
  *
  *************************************/
 
-struct node_description;
-struct discrete_module
+typedef struct _node_description node_description;
+
+struct _discrete_module
 {
 	int				type;
 	const char *	name;
 	size_t			contextsize;
-	void (*reset)(struct node_description *node);	/* Called to reset a node after creation or system reset */
-	void (*step)(struct node_description *node);	/* Called to execute one time delta of output update */
+	void (*reset)(node_description *node);	/* Called to reset a node after creation or system reset */
+	void (*step)(node_description *node);	/* Called to execute one time delta of output update */
 };
-
+typedef struct _discrete_module discrete_module;
 
 
 /*************************************
@@ -2807,20 +2815,20 @@ struct discrete_module
  *
  *************************************/
 
-struct node_description
+struct _node_description
 {
-	int				node;							/* The node's index number in the node list */
-	double			output;							/* The node's last output value */
+	int				node;						/* The node's index number in the node list */
+	double			output;						/* The node's last output value */
 
-	int				active_inputs;					/* Number of active inputs on this node type */
-	int				input_is_node;					/* Bit Flags.  1 in bit location means input_is_node */
-	const double *	input[DISCRETE_MAX_INPUTS];		/* Addresses of Input values */
+	int				active_inputs;				/* Number of active inputs on this node type */
+	int				input_is_node;				/* Bit Flags.  1 in bit location means input_is_node */
+	const double *	input[DISCRETE_MAX_INPUTS];	/* Addresses of Input values */
 
-	struct	discrete_module module;					/* Copy of the node's module info */
-	const struct discrete_sound_block *block;		/* Points to the node's setup block. */
-	void *			context;						/* Contextual information specific to this node type */
-	const char *	name;							/* Text name string for identification/debug */
-	const void *	custom;							/* Custom function specific initialisation data */
+	discrete_module module;						/* Copy of the node's module info */
+	const discrete_sound_block *block;			/* Points to the node's setup block. */
+	void *			context;					/* Contextual information specific to this node type */
+	const char *	name;						/* Text name string for identification/debug */
+	const void *	custom;						/* Custom function specific initialisation data */
 };
 
 
@@ -2831,7 +2839,7 @@ struct node_description
  *
  *************************************/
 
-struct discrete_lfsr_desc
+struct _discrete_lfsr_desc
 {
 	int clock_type;
 	int bitlength;
@@ -2850,9 +2858,10 @@ struct discrete_lfsr_desc
 
 	int output_bit;
 };
+typedef struct _discrete_lfsr_desc discrete_lfsr_desc;
 
 
-struct discrete_op_amp_osc_info
+struct _discrete_op_amp_osc_info
 {
 	int		type;
 	double	r1;
@@ -2866,13 +2875,14 @@ struct discrete_op_amp_osc_info
 	double	c;
 	double	vP;		// Op amp B+
 };
+typedef struct _discrete_op_amp_osc_info discrete_op_amp_osc_info;
 
 
 #define DEFAULT_7414_VALUES 	1.7, 0.9, 3.4
 
 #define DEFAULT_74LS14_VALUES 	1.6, 0.8, 3.4
 
-struct discrete_schmitt_osc_desc
+struct _discrete_schmitt_osc_desc
 {
 	double	rIn;
 	double	rFeedback;
@@ -2882,18 +2892,20 @@ struct discrete_schmitt_osc_desc
 	double	vGate;		// the output high voltage of the gate that gets fedback through rFeedback
 	int		options;	// bitmaped options
 };
+typedef struct _discrete_schmitt_osc_desc discrete_schmitt_osc_desc;
 
 
-struct discrete_comp_adder_table
+struct _discrete_comp_adder_table
 {
 	int		type;
 	double	cDefault;				// Default componet.  0 if not used.
 	int		length;
 	double	c[DISC_LADDER_MAXRES];	// Componet table
 };
+typedef struct _discrete_comp_adder_table discrete_comp_adder_table;
 
 
-struct discrete_dac_r1_ladder
+struct _discrete_dac_r1_ladder
 {
 	int		ladderLength;		// 2 to DISC_LADDER_MAXRES.  1 would be useless.
 	double	r[DISC_LADDER_MAXRES];	// Don't use 0 for valid resistors.  That is a short.
@@ -2902,9 +2914,10 @@ struct discrete_dac_r1_ladder
 	double	rGnd;			// Resistor tied to ground (0 = not used)
 	double	cFilter;		// Filtering cap (0 = not used)
 };
+typedef struct _discrete_dac_r1_ladder discrete_dac_r1_ladder;
 
 
-struct discrete_integrate_info
+struct _discrete_integrate_info
 {
 	int		type;
 	double	r1;		// r1a + r1b
@@ -2917,10 +2930,11 @@ struct discrete_integrate_info
 	double	f1;
 	double	f2;
 };
+typedef struct _discrete_integrate_info discrete_integrate_info;
 
 
 #define DISC_MAX_MIXER_INPUTS	8
-struct discrete_mixer_desc
+struct _discrete_mixer_desc
 {
 	int		type;
 	double	r[DISC_MAX_MIXER_INPUTS];	// static input resistance values.  These are in series with rNode, if used.
@@ -2933,9 +2947,10 @@ struct discrete_mixer_desc
 	double	vRef;
 	double	gain;				// Scale value to get output close to +/- 32767
 };
+typedef struct _discrete_mixer_desc discrete_mixer_desc;
 
 
-struct discrete_op_amp_tvca_info
+struct _discrete_op_amp_tvca_info
 {
 	double	r1;
 	double	r2;		// r2a + r2b
@@ -2959,9 +2974,10 @@ struct discrete_op_amp_tvca_info
 	int		f4;
 	int		f5;
 };
+typedef struct _discrete_op_amp_tvca_info discrete_op_amp_tvca_info;
 
 
-struct discrete_op_amp_filt_info
+struct _discrete_op_amp_filt_info
 {
 	double	r1;
 	double	r2;
@@ -2975,6 +2991,7 @@ struct discrete_op_amp_filt_info
 	double	vP;
 	double	vN;
 };
+typedef struct _discrete_op_amp_filt_info discrete_op_amp_filt_info;
 
 
 #define DEFAULT_555_HIGH		-1
@@ -2982,7 +2999,7 @@ struct discrete_op_amp_filt_info
 #define DEFAULT_555_TRIGGER		-1
 #define DEFAULT_555_VALUES		DEFAULT_555_HIGH, DEFAULT_555_THRESHOLD, DEFAULT_555_TRIGGER
 
-struct discrete_555_desc
+struct _discrete_555_desc
 {
 	int		options;		// bit mapped options
 	double	v555;			// B+ voltage of 555
@@ -2990,9 +3007,10 @@ struct discrete_555_desc
 	double	threshold555;	// normally 2/3 of v555
 	double	trigger555;		// normally 1/3 of v555
 };
+typedef struct _discrete_555_desc discrete_555_desc;
 
 
-struct discrete_555_cc_desc
+struct _discrete_555_cc_desc
 {
 	int		options;		// bit mapped options
 	double	v555;			// B+ voltage of 555
@@ -3002,17 +3020,31 @@ struct discrete_555_cc_desc
 	double	vCCsource;		// B+ voltage of the Constant Current source
 	double	vCCjunction;	// The voltage drop of the Constant Current source transitor (0 if Op Amp)
 };
+typedef struct _discrete_555_cc_desc discrete_555_cc_desc;
 
 
-struct discrete_566_desc
+struct _discrete_555_vco1_desc
+{
+	int    options;				// bit mapped options
+	double r1, r2, r3, r4, c;
+	double v555;				// B+ voltage of 555
+	double v555high;			// High output voltage of 555 (Usually v555 - 1.2V)
+	double threshold555;		// normally 2/3 of v555
+	double trigger555;			// normally 1/3 of v555
+};
+typedef struct _discrete_555_vco1_desc discrete_555_vco1_desc;
+
+
+struct _discrete_566_desc
 {
 	int		options;	// bit mapped options
 	double	vPlus;		// B+ voltage of 566
 	double	vNeg;		// B- voltage of 566
 };
+typedef struct _discrete_566_desc discrete_566_desc;
 
 
-struct discrete_adsr
+struct _discrete_adsr
 {
 	double attack_time;  /* All times are in seconds */
 	double attack_value;
@@ -3023,6 +3055,7 @@ struct discrete_adsr
 	double release_time;
 	double release_value;
 };
+typedef struct _discrete_adsr discrete_adsr;
 
 
 
@@ -3172,7 +3205,7 @@ enum
 	DSD_555_ASTBL,		/* NE555 Astable Emulation */
 	DSD_555_MSTBL,		/* NE555 Monostable Emulation */
 	DSD_555_CC,			/* Constant Current 555 circuit (VCO)*/
-	DSD_555_VCO1,		/* Op-Amp linear ramp based VCO */
+	DSD_555_VCO1,		/* Op-Amp linear ramp based 555 VCO */
 	DSD_566,			/* NE566 Emulation */
 
 	/* Custom */
@@ -3195,7 +3228,7 @@ enum
  *
  *************************************/
 
-#define DISCRETE_SOUND_START(STRUCTURENAME) struct discrete_sound_block STRUCTURENAME[] = {
+#define DISCRETE_SOUND_START(STRUCTURENAME) discrete_sound_block STRUCTURENAME[] = {
 #define DISCRETE_SOUND_END                                              { NODE_00, DSS_NULL     , 0, { NODE_NC }, { 0 } ,NULL  ,"End Marker" }  };
 
 /* from disc_inp.c */
@@ -3343,7 +3376,7 @@ enum
  *
  *************************************/
 
-struct node_description *discrete_find_node(void *chip, int node);
+node_description *discrete_find_node(void *chip, int node);
 
 WRITE8_HANDLER(discrete_sound_w);
 READ8_HANDLER(discrete_sound_r);

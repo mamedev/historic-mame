@@ -29,7 +29,17 @@
 // MAME headers
 #include "osdepend.h"
 #include "driver.h"
+#ifndef NEW_RENDER
+#include "windold.h"
+#else
 #include "window.h"
+INLINE int _win_has_menu(void)
+{
+	return 	win_has_menu(win_window_list);
+}
+#define win_video_window		win_window_list->hwnd
+#define win_has_menu			_win_has_menu
+#endif
 #include "rc.h"
 #include "input.h"
 #include "debugwin.h"
@@ -1092,6 +1102,8 @@ int win_init_input(void)
 	const input_port_entry *inp;
 	HRESULT result;
 
+	add_pause_callback(win_pause_input);
+
 	// first attempt to initialize DirectInput
 	dinput_version = DIRECTINPUT_VERSION;
 	result = DirectInputCreate(GetModuleHandle(NULL), dinput_version, &dinput, NULL);
@@ -1301,16 +1313,16 @@ void win_pause_input(int paused)
 
 	// set the paused state
 	input_paused = paused;
-	win_update_cursor_state();
+	window_update_cursor_state();
 }
 
 
 
 //============================================================
-//  win_poll_input
+//  wininput_poll
 //============================================================
 
-void win_poll_input(void)
+void wininput_poll(void)
 {
 	HWND focus = GetFocus();
 	HRESULT result = 1;
@@ -1320,7 +1332,7 @@ void win_poll_input(void)
 	last_poll = osd_cycles();
 
 	// periodically process events, in case they're not coming through
-	win_process_events_periodic();
+	winwindow_process_events_periodic();
 
 	// if we don't have focus, turn off all keys
 	if (!focus)
@@ -1483,7 +1495,7 @@ static int is_key_pressed(os_code keycode)
 
 	// make sure we've polled recently
 	if (osd_cycles() > last_poll + osd_cycles_per_second()/4)
-		win_poll_input();
+		wininput_poll();
 
 	// if the video window isn't visible, we have to get our events from the console
 	if (!win_video_window || !IsWindowVisible(win_video_window))

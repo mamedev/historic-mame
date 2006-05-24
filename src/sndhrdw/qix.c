@@ -42,7 +42,7 @@ WRITE8_HANDLER( qix_vol_w )
  * start with the final gain.
  */
 
-static struct discrete_comp_adder_table qix_attn_table =
+static const discrete_comp_adder_table qix_attn_table =
 {
 	DISC_COMP_P_RESISTOR, 0, 4,
 	{RES_K(22)+250, RES_K(10)+250, RES_K(5.6)+250, RES_K(3.3)+250}

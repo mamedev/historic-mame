@@ -17,7 +17,7 @@
 
 /*----------- defined in sndhrdw/videopin.c -----------*/
 
-extern struct discrete_sound_block videopin_discrete_interface[];
+extern discrete_sound_block videopin_discrete_interface[];
 
 
 /*----------- defined in vidhrdw/videopin.c -----------*/

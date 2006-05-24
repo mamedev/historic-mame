@@ -22,12 +22,12 @@
 
 // MAME headers
 #include "driver.h"
-#include "window.h"
-#include "video.h"
+#include "windold.h"
+#include "videoold.h"
 #include "blit.h"
 #include "rc.h"
-#include "wind3d.h"
-#include "wind3dfx.h"
+#include "wind3old.h"
+#include "wind4old.h"
 
 // RGB effects pattern data
 #include "pattern.h"

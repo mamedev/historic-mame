@@ -40,7 +40,8 @@ WRITE8_HANDLER( orbit_noise_rst_w )
 /* orbit Sound System Analog emulation                                  */
 /************************************************************************/
 
-const struct discrete_lfsr_desc orbit_lfsr = {
+static const discrete_lfsr_desc orbit_lfsr =
+{
 	DISC_CLK_IS_FREQ,
 	16,			/* Bit Length */
 	0,			/* Reset Value */

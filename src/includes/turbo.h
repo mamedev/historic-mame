@@ -40,7 +40,7 @@ READ8_HANDLER( buckrog_port_3_r );
 
 /*----------- defined in sndhrdw/turbo.c -----------*/
 
-extern struct discrete_sound_block turbo_sound_interface[];
+extern discrete_sound_block turbo_sound_interface[];
 
 WRITE8_HANDLER( turbo_sound_A_w );
 WRITE8_HANDLER( turbo_sound_B_w );

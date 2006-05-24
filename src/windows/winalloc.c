@@ -7,6 +7,8 @@
 //
 //============================================================
 
+#define _WIN32_WINNT 0x0400
+
 // standard windows headers
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -187,6 +189,8 @@ void *malloc_file_line(size_t size, const char *file, int line)
 	entry->file = file;
 	entry->line = line;
 	entry->id = current_id++;
+
+//if (entry->size == 72 && IsDebuggerPresent()) DebugBreak();
 
 #if LOG_CALLS
 	// logging

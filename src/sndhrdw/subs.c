@@ -43,7 +43,8 @@ WRITE8_HANDLER( subs_noise_reset_w )
 /* subs Sound System Analog emulation                                   */
 /************************************************************************/
 
-const struct discrete_lfsr_desc subs_lfsr={
+static const discrete_lfsr_desc subs_lfsr =
+{
 	DISC_CLK_IS_FREQ,
 	16,			/* Bit Length */
 	0,			/* Reset Value */

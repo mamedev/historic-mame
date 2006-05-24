@@ -10,7 +10,8 @@
 
 /* Discrete Sound Emulation */
 
-const struct discrete_lfsr_desc nitedrvr_lfsr = {
+static const discrete_lfsr_desc nitedrvr_lfsr =
+{
 	DISC_CLK_IS_FREQ,
 	16,			/* Bit Length */
 	0,			/* Reset Value */

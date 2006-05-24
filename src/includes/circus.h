@@ -13,9 +13,9 @@ extern int circus_game;
 
 extern WRITE8_HANDLER( circus_clown_z_w );
 
-extern struct discrete_sound_block circus_discrete_interface[];
-extern struct discrete_sound_block robotbwl_discrete_interface[];
-extern struct discrete_sound_block crash_discrete_interface[];
+extern discrete_sound_block circus_discrete_interface[];
+extern discrete_sound_block robotbwl_discrete_interface[];
+extern discrete_sound_block crash_discrete_interface[];
 extern struct Samplesinterface circus_samples_interface;
 extern struct Samplesinterface crash_samples_interface;
 extern struct Samplesinterface ripcord_samples_interface;

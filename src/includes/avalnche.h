@@ -24,7 +24,7 @@ INTERRUPT_GEN( avalnche_interrupt );
 
 /*----------- defined in sndhrdw/avalnche.c -----------*/
 
-extern struct discrete_sound_block avalnche_discrete_interface[];
+extern discrete_sound_block avalnche_discrete_interface[];
 
 
 /*----------- defined in vidhrdw/avalnche.c -----------*/

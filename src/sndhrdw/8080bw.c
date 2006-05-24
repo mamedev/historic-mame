@@ -425,7 +425,7 @@ static WRITE8_HANDLER( ballbomb_sh_port5_w )
 /* Taito "Indian Battle"                               */
 /* Sept 2005, D.R.                                     */
 /*******************************************************/
-const struct discrete_dac_r1_ladder indianbt_music_dac =
+static const discrete_dac_r1_ladder indianbt_music_dac =
 	{3, {0, RES_K(47), RES_K(12)}, 0, 0, 0, CAP_U(0.1)};
 
 #define INDIANBT_MUSIC_CLK		(7680.0*2*2*2)
@@ -476,7 +476,7 @@ WRITE8_HANDLER( indianbt_sh_port7_w )
 // The R/C values in the schematic may have no bearing in reality.
 // I have noted some differences from a real board.
 
-const struct discrete_lfsr_desc polaris_lfsr={
+static const discrete_lfsr_desc polaris_lfsr={
 	DISC_CLK_IS_FREQ,
 	17,			/* Bit Length */
 	0,			/* Reset Value */
@@ -490,61 +490,61 @@ const struct discrete_lfsr_desc polaris_lfsr={
 	12			/* Output bit */
 };
 
-const struct discrete_dac_r1_ladder polaris_music_dac =
+static const discrete_dac_r1_ladder polaris_music_dac =
 	{2, {RES_K(47), RES_K(12), 0,0,0,0,0,0}, 0, 0, 0, CAP_P(180)};
 
-const struct discrete_op_amp_filt_info polaris_music_op_amp_filt_info =
+static const discrete_op_amp_filt_info polaris_music_op_amp_filt_info =
 	{RES_K(580), 0, 0, RES_M(2.2), RES_M(1), CAP_U(.01), 0, 0, 0, 12, 0};
 
-const struct discrete_op_amp_filt_info polaris_nol_op_amp_filt_info =
+static const discrete_op_amp_filt_info polaris_nol_op_amp_filt_info =
 	{560, RES_K(6.8), RES_K(1002), RES_M(2.2), RES_M(1), CAP_U(.22), CAP_U(.22), CAP_U(1), 0, 12, 0};
 
-const struct discrete_op_amp_filt_info polaris_noh_op_amp_filt_info =
+static const discrete_op_amp_filt_info polaris_noh_op_amp_filt_info =
 	{560, RES_K(6.8), RES_K(1002), RES_M(2.2), RES_M(1), CAP_U(.001), CAP_U(.001), CAP_U(.01), 0, 12, 0};
 
-const struct discrete_op_amp_osc_info polaris_sonar_vco_info =
+static const discrete_op_amp_osc_info polaris_sonar_vco_info =
 	{DISC_OP_AMP_OSCILLATOR_VCO_1 | DISC_OP_AMP_IS_NORTON, RES_M(1), RES_K(680), RES_K(680), RES_M(1), RES_M(1), RES_K(120), RES_M(1), 0, CAP_P(180), 12};
 
-const struct discrete_op_amp_tvca_info polaris_sonar_tvca_info =
+static const discrete_op_amp_tvca_info polaris_sonar_tvca_info =
 	{ RES_M(2.7), RES_K(680), 0, RES_K(680), RES_K(1), RES_K(120), RES_K(560), 0, 0, 0, 0, CAP_U(1), 0, 0, 12, DISC_OP_AMP_TRIGGER_FUNCTION_NONE, DISC_OP_AMP_TRIGGER_FUNCTION_NONE, DISC_OP_AMP_TRIGGER_FUNCTION_TRG1, DISC_OP_AMP_TRIGGER_FUNCTION_TRG0_INV, DISC_OP_AMP_TRIGGER_FUNCTION_NONE, DISC_OP_AMP_TRIGGER_FUNCTION_NONE};
 
-const struct discrete_op_amp_osc_info polaris_boat_mod_info =
+static const discrete_op_amp_osc_info polaris_boat_mod_info =
 	{DISC_OP_AMP_OSCILLATOR_1 | DISC_OP_AMP_IS_NORTON, RES_M(1), RES_K(10), RES_K(100), RES_K(120), RES_M(1), 0, 0, 0, CAP_U(.22), 12};
 
-const struct discrete_op_amp_osc_info polaris_boat_vco_info =
+static const discrete_op_amp_osc_info polaris_boat_vco_info =
 	{DISC_OP_AMP_OSCILLATOR_VCO_1 | DISC_OP_AMP_IS_NORTON, RES_M(1), RES_K(680), RES_K(680), RES_M(1), RES_M(1), 0, 0, 0, CAP_P(180), 12};
 
-const struct discrete_op_amp_tvca_info polaris_shot_tvca_info =
+static const discrete_op_amp_tvca_info polaris_shot_tvca_info =
 	{ RES_M(2.7), RES_K(680), RES_K(680), RES_K(680), RES_K(1), 0, RES_K(680), 0, 0, 0, 0, CAP_U(1), 0, 0, 12, DISC_OP_AMP_TRIGGER_FUNCTION_TRG0_INV, DISC_OP_AMP_TRIGGER_FUNCTION_TRG0, DISC_OP_AMP_TRIGGER_FUNCTION_TRG0, DISC_OP_AMP_TRIGGER_FUNCTION_NONE, DISC_OP_AMP_TRIGGER_FUNCTION_NONE, DISC_OP_AMP_TRIGGER_FUNCTION_NONE};
 
-const struct discrete_op_amp_tvca_info polaris_shiphit_tvca_info =
+static const discrete_op_amp_tvca_info polaris_shiphit_tvca_info =
 	{ RES_M(2.7), RES_K(680), RES_K(680), RES_K(680), RES_K(1), 0, RES_K(680), 0, 0, 0, 0, CAP_U(1), 0, 0, 12, DISC_OP_AMP_TRIGGER_FUNCTION_TRG0_INV, DISC_OP_AMP_TRIGGER_FUNCTION_NONE, DISC_OP_AMP_TRIGGER_FUNCTION_TRG0, DISC_OP_AMP_TRIGGER_FUNCTION_NONE, DISC_OP_AMP_TRIGGER_FUNCTION_NONE, DISC_OP_AMP_TRIGGER_FUNCTION_NONE};
 
-const struct discrete_op_amp_tvca_info polaris_exp_tvca_info =
+static const discrete_op_amp_tvca_info polaris_exp_tvca_info =
 	{ RES_M(2.7), RES_K(680), 0, RES_K(680), RES_K(1), 0, RES_K(680), 0, 0, 0, 0, CAP_U(.33), 0, 0, 12, DISC_OP_AMP_TRIGGER_FUNCTION_NONE, DISC_OP_AMP_TRIGGER_FUNCTION_NONE, DISC_OP_AMP_TRIGGER_FUNCTION_TRG0, DISC_OP_AMP_TRIGGER_FUNCTION_NONE, DISC_OP_AMP_TRIGGER_FUNCTION_NONE, DISC_OP_AMP_TRIGGER_FUNCTION_NONE};
 
 // The schematic shows a .22uF cap but Guru's board has a 1uF
-const struct discrete_op_amp_tvca_info polaris_hit_tvca_info =
+static const discrete_op_amp_tvca_info polaris_hit_tvca_info =
 	{ RES_M(2.7), RES_K(1360), RES_K(1360), RES_K(680), RES_K(1), 0, RES_K(680), 0, 0, 0, 0, CAP_U(1), 0, 0, 12, DISC_OP_AMP_TRIGGER_FUNCTION_TRG0, DISC_OP_AMP_TRIGGER_FUNCTION_TRG1, DISC_OP_AMP_TRIGGER_FUNCTION_TRG01_NAND, DISC_OP_AMP_TRIGGER_FUNCTION_NONE, DISC_OP_AMP_TRIGGER_FUNCTION_NONE, DISC_OP_AMP_TRIGGER_FUNCTION_NONE};
 
 // The schematic shows a 1uF cap but Guru's board has a 2.2uF
-const struct discrete_integrate_info polaris_plane_integrate_info =
+static const discrete_integrate_info polaris_plane_integrate_info =
 	{DISC_INTEGRATE_OP_AMP_2 | DISC_OP_AMP_IS_NORTON, RES_K(1001), RES_K(1001), RES_K(101), CAP_U(2.2), 12, 12, DISC_OP_AMP_TRIGGER_FUNCTION_TRG0, DISC_OP_AMP_TRIGGER_FUNCTION_TRG0_INV, DISC_OP_AMP_TRIGGER_FUNCTION_TRG1_INV};
 
 // A bit of a cheat.  The schematic show the cap as 47p, but that makes the frequency too high.
 // Guru's board has a .01 cap, which would make the freq sub-sonic using the other schematic values.
 // I will use 2000p until the proper value can be confirmed.
-const struct discrete_op_amp_osc_info polaris_plane_vco_info =
+static const discrete_op_amp_osc_info polaris_plane_vco_info =
 	{DISC_OP_AMP_OSCILLATOR_VCO_1 | DISC_OP_AMP_IS_NORTON, RES_M(1), RES_K(680), RES_K(680), RES_M(1), RES_M(1), RES_K(100), RES_K(10), RES_K(100), CAP_U(0.002), 12};
 
-const struct discrete_mixer_desc polaris_mixer_vr1_desc =
+static const discrete_mixer_desc polaris_mixer_vr1_desc =
 	{DISC_MIXER_IS_RESISTOR,
 		{RES_K(66), RES_K(43), RES_K(20), RES_K(43)},
 		{0},	// no variable resistors
 		{CAP_U(1), CAP_U(1), CAP_U(1), CAP_U(1)},
 		0, RES_K(50), 0, 0, 0, 1};
 
-const struct discrete_mixer_desc polaris_mixer_vr2_desc =
+static const discrete_mixer_desc polaris_mixer_vr2_desc =
 	{DISC_MIXER_IS_RESISTOR,
 		{RES_K(66), RES_K(110)},
 		{0},	// no variable resistors
@@ -554,7 +554,7 @@ const struct discrete_mixer_desc polaris_mixer_vr2_desc =
 // Note: the final gain leaves the explosions (SX3) at a level
 // where they clip.  From the schematics, this is how they wanted it.
 // This makes them have more bass and distortion.
-const struct discrete_mixer_desc polaris_mixer_vr4_desc =
+static const discrete_mixer_desc polaris_mixer_vr4_desc =
 	{DISC_MIXER_IS_RESISTOR,
 		{RES_K(22), RES_K(20), RES_K(22), RES_K(22)},
 		{0},	// no variable resistors
@@ -1230,7 +1230,7 @@ MACHINE_RESET( schaser )
 #define CLOWNS_MUSIC_SND		NODE_13
 #define CLOWNS_SB_HIT_SND		NODE_14
 
-const struct discrete_lfsr_desc clowns_lfsr={
+static const discrete_lfsr_desc clowns_lfsr={
 	DISC_CLK_IS_FREQ,
 	17,			/* Bit Length */
 	/* C101, R104, D100, have the effect of presetting all bits high at power up */
@@ -1245,7 +1245,7 @@ const struct discrete_lfsr_desc clowns_lfsr={
 	12			/* Output bit */
 };
 
-const struct discrete_op_amp_tvca_info clowns_music_tvca_info =
+static const discrete_op_amp_tvca_info clowns_music_tvca_info =
 {
 	RES_M(3.3),				// r502
 	RES_K(10) + RES_K(680),	// r505 + r506
@@ -1261,7 +1261,7 @@ const struct discrete_op_amp_tvca_info clowns_music_tvca_info =
 	DISC_OP_AMP_TRIGGER_FUNCTION_TRG0, DISC_OP_AMP_TRIGGER_FUNCTION_NONE, DISC_OP_AMP_TRIGGER_FUNCTION_TRG1, DISC_OP_AMP_TRIGGER_FUNCTION_NONE, DISC_OP_AMP_TRIGGER_FUNCTION_NONE, DISC_OP_AMP_TRIGGER_FUNCTION_NONE
 };
 
-const struct discrete_op_amp_tvca_info clowns_pop_tvca_info =
+static const discrete_op_amp_tvca_info clowns_pop_tvca_info =
 {
 	RES_M(2.7),		// r304
 	RES_K(680),		// r303
@@ -1281,7 +1281,7 @@ const struct discrete_op_amp_tvca_info clowns_pop_tvca_info =
 	DISC_OP_AMP_TRIGGER_FUNCTION_NONE, DISC_OP_AMP_TRIGGER_FUNCTION_NONE, DISC_OP_AMP_TRIGGER_FUNCTION_TRG0, DISC_OP_AMP_TRIGGER_FUNCTION_NONE, DISC_OP_AMP_TRIGGER_FUNCTION_TRG1, DISC_OP_AMP_TRIGGER_FUNCTION_TRG2
 };
 
-const struct discrete_op_amp_osc_info clowns_sb_hit_osc_info =
+static const discrete_op_amp_osc_info clowns_sb_hit_osc_info =
 {
 	DISC_OP_AMP_OSCILLATOR_1 | DISC_OP_AMP_IS_NORTON,
 	RES_K(820),		// r200
@@ -1294,7 +1294,7 @@ const struct discrete_op_amp_osc_info clowns_sb_hit_osc_info =
 	12
 };
 
-const struct discrete_op_amp_tvca_info clowns_sb_hit_tvca_info =
+static const discrete_op_amp_tvca_info clowns_sb_hit_tvca_info =
 {
 	RES_M(2.7),		// r207
 	RES_K(680),		// r205

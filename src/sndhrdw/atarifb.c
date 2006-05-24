@@ -15,14 +15,14 @@
 /* Complete re-write Dec 2004, D. Renaud                                */
 /************************************************************************/
 
-const struct discrete_555_desc atarifbWhistl555 =
+static const discrete_555_desc atarifbWhistl555 =
 {
 	DISC_555_OUT_CAP | DISC_555_OUT_DC,
 	5,		// B+ voltage of 555
 	DEFAULT_555_VALUES
 };
 
-const struct discrete_lfsr_desc atarifb_lfsr =
+static const discrete_lfsr_desc atarifb_lfsr =
 {
 	DISC_CLK_IS_FREQ,
 	16,			/* Bit Length */
@@ -37,7 +37,7 @@ const struct discrete_lfsr_desc atarifb_lfsr =
 	16			/* Output bit is feedback bit */
 };
 
-const struct discrete_dac_r1_ladder atarifb_crowd_r1_ladder =
+static const discrete_dac_r1_ladder atarifb_crowd_r1_ladder =
 {
 	4,
 	{RES_K(390), RES_K(220), RES_K(100), RES_K(56)},	// r17, r16, r14, r15
@@ -46,7 +46,7 @@ const struct discrete_dac_r1_ladder atarifb_crowd_r1_ladder =
 	CAP_U(0.1)	// c32
 };
 
-const struct discrete_op_amp_filt_info atarifb_crowd_filt =
+static const discrete_op_amp_filt_info atarifb_crowd_filt =
 {
 	1.0/(1.0/RES_K(390) + 1.0/RES_K(220) + 1.0/RES_K(100) + 1.0/RES_K(56)),	// r17, r16, r14, r15
 	0, 0, 0,
@@ -57,7 +57,7 @@ const struct discrete_op_amp_filt_info atarifb_crowd_filt =
 	5, 12, 0
 };
 
-const struct discrete_mixer_desc atarifb_mixer =
+static const discrete_mixer_desc atarifb_mixer =
 {
 	DISC_MIXER_IS_OP_AMP,
 	{RES_K(47), RES_K(47), RES_K(220)},	// r71, r70, r73
@@ -127,7 +127,7 @@ DISCRETE_SOUND_END
 /* Complete re-write Dec 2004, D. Renaud                                */
 /************************************************************************/
 
-const struct discrete_dac_r1_ladder abaseb_crowd_r1_ladder =
+static const discrete_dac_r1_ladder abaseb_crowd_r1_ladder =
 {
 	4,
 	{RES_K(390), RES_K(220), RES_K(100), RES_K(56)},	// r17, r16, r14, r15
@@ -136,7 +136,7 @@ const struct discrete_dac_r1_ladder abaseb_crowd_r1_ladder =
 	0			// no filter
 };
 
-const struct discrete_op_amp_filt_info abaseb_crowd_filt =
+static const discrete_op_amp_filt_info abaseb_crowd_filt =
 {
 	1.0/(1.0/RES_K(390) + 1.0/RES_K(220) + 1.0/RES_K(100) + 1.0/RES_K(56) + 1.0/RES_K(1)),	// r17, r16, r14, r15, r76
 	0, 0, 0,
@@ -147,7 +147,7 @@ const struct discrete_op_amp_filt_info abaseb_crowd_filt =
 	5, 12, 0
 };
 
-const struct discrete_mixer_desc abaseb_mixer =
+static const discrete_mixer_desc abaseb_mixer =
 {
 	DISC_MIXER_IS_OP_AMP,
 	{RES_K(330), RES_K(220), RES_K(220)},	// r71, r70, r73

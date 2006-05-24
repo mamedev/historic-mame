@@ -19,14 +19,14 @@
 #define CRBALOON_LAUGH_SND		NODE_80
 #define CRBALOON_MUSIC_SND		NODE_81
 
-const struct discrete_555_desc desc_crbaloon_laugh_osc =
+static const discrete_555_desc desc_crbaloon_laugh_osc =
 {
 	DISC_555_OUT_SQW | DISC_555_OUT_DC,
 	5,				// B+ voltage of 555
 	DEFAULT_555_VALUES
 };
 
-const struct discrete_dac_r1_ladder desc_crbaloon_music_dac =
+static const discrete_dac_r1_ladder desc_crbaloon_music_dac =
 {
 	3,
 	{0, RES_K(470), RES_K(120)},

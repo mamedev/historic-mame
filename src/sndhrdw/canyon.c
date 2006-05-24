@@ -42,14 +42,15 @@ WRITE8_HANDLER( canyon_whistle_w )
 /* canyon Sound System Analog emulation                                 */
 /************************************************************************/
 
-const struct discrete_555_desc canyonWhistl555 =
+static const discrete_555_desc canyonWhistl555 =
 {
 	DISC_555_OUT_CAP | DISC_555_OUT_AC,
 	5,		// B+ voltage of 555
 	DEFAULT_555_VALUES
 };
 
-const struct discrete_lfsr_desc canyon_lfsr={
+static const discrete_lfsr_desc canyon_lfsr =
+{
 	DISC_CLK_IS_FREQ,
 	16,                 /* Bit Length */
 	0,                  /* Reset Value */

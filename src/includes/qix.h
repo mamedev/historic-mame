@@ -71,7 +71,7 @@ WRITE8_HANDLER( qix_palettebank_w );
 
 /*----------- defined in sndhrdw/qix.c -----------*/
 
-extern struct discrete_sound_block qix_discrete_interface[];
+extern discrete_sound_block qix_discrete_interface[];
 
 WRITE8_HANDLER( qix_dac_w );
 WRITE8_HANDLER( qix_vol_w );

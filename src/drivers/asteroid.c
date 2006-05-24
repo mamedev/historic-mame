@@ -170,6 +170,7 @@ static WRITE8_HANDLER( astdelux_coin_counter_w )
 
 static WRITE8_HANDLER( llander_led_w )
 {
+#ifndef NEW_RENDER
 	static const char *lampname[] =
 	{
 		"lamp0", "lamp1", "lamp2", "lamp3", "lamp4"
@@ -178,6 +179,7 @@ static WRITE8_HANDLER( llander_led_w )
 
     for (i = 0; i < 5; i++)
 		artwork_show(lampname[i], (data >> (4 - i)) & 1);
+#endif
 }
 
 

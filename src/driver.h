@@ -78,10 +78,6 @@
 #include "sndhrdw/generic.h"
 #include "vidhrdw/generic.h"
 
-#ifdef NEW_RENDER
-#include "render.h"
-#endif
-
 #ifdef MESS
 #include "messdrv.h"
 #endif
@@ -251,6 +247,7 @@ struct _game_driver
 #endif
 
 	UINT32				flags;						/* orientation and other flags; see defines below */
+	const char *		default_layout;				/* default internally defined layout */
 };
 
 
@@ -544,7 +541,8 @@ game_driver driver_##NAME =					\
 	construct_ipt_##INPUT,					\
 	init_##INIT,							\
 	rom_##NAME,								\
-	(MONITOR)|(FLAGS)						\
+	(MONITOR)|(FLAGS),						\
+	NULL									\
 };
 
 #define GAMEB(YEAR,NAME,PARENT,BIOS,MACHINE,INPUT,INIT,MONITOR,COMPANY,FULLNAME,FLAGS)	\
@@ -561,7 +559,26 @@ game_driver driver_##NAME =					\
 	construct_ipt_##INPUT,					\
 	init_##INIT,							\
 	rom_##NAME,								\
-	(MONITOR)|(FLAGS)						\
+	(MONITOR)|(FLAGS),						\
+	NULL									\
+};
+
+#define GAMEL(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,MONITOR,COMPANY,FULLNAME,FLAGS,LAYOUT)	\
+game_driver driver_##NAME =					\
+{											\
+	__FILE__,								\
+	#PARENT,								\
+	#NAME,									\
+	system_bios_0,							\
+	FULLNAME,								\
+	#YEAR,									\
+	COMPANY,								\
+	construct_##MACHINE,					\
+	construct_ipt_##INPUT,					\
+	init_##INIT,							\
+	rom_##NAME,								\
+	(MONITOR)|(FLAGS),						\
+	&LAYOUT[0]								\
 };
 
 /* this allows to leave the INIT field empty in the GAME() macro call */

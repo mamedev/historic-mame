@@ -11,6 +11,9 @@
 #define __WIN_WINDOW__
 
 #include "blit.h"
+#include "video.h"
+
+#include "render.h"
 
 
 //============================================================
@@ -26,11 +29,47 @@
 
 
 //============================================================
+//  CONSTANTS
+//============================================================
+
+#define RESIZE_STATE_NORMAL		0
+#define RESIZE_STATE_RESIZING	1
+#define RESIZE_STATE_PENDING	2
+
+
+
+//============================================================
 //  TYPE DEFINITIONS
 //============================================================
 
-typedef struct _win_effect_data win_effect_data;
+typedef struct _win_window_info win_window_info;
+struct _win_window_info
+{
+	win_window_info *	next;
 
+	// window handle
+	HWND				hwnd;
+	win_monitor_info *	monitor;
+
+	// rendering info
+	RECT				non_fullscreen_bounds;
+	int					maxwidth, maxheight;
+	int					switchres;
+	float				aspect;
+	render_target *		target;
+	int					targetview;
+	int					targetorient;
+	const render_primitive *primlist;
+	int					resize_state;
+	int					ismaximized;
+
+	// drawing data
+	void *				gdidata;
+	void *				dxdata;
+};
+
+
+typedef struct _win_effect_data win_effect_data;
 struct _win_effect_data
 {
 	const char *name;
@@ -46,6 +85,9 @@ struct _win_effect_data
 //============================================================
 //  GLOBAL VARIABLES
 //============================================================
+
+// windows
+extern win_window_info *win_window_list;
 
 // command line config
 extern int			win_window_mode;
@@ -68,13 +110,11 @@ extern int			win_gfx_refresh;
 extern int			win_match_refresh;
 extern int			win_sync_refresh;
 extern float		win_gfx_gamma;
-extern int			win_blit_effect;
 extern float		win_screen_aspect;
 extern int			win_force_rdtsc;
 extern int			win_priority;
 
 // windows
-extern HWND			win_video_window;
 extern HWND			win_debug_window;
 
 // video bounds
@@ -85,19 +125,6 @@ extern int 			win_default_constraints;
 extern RECT			win_visible_rect;
 extern int			win_visible_width;
 extern int			win_visible_height;
-
-// 16bpp color conversion
-extern int			win_color16_rsrc_shift;
-extern int			win_color16_gsrc_shift;
-extern int			win_color16_bsrc_shift;
-extern int			win_color16_rdst_shift;
-extern int			win_color16_gdst_shift;
-extern int			win_color16_bdst_shift;
-
-// 32bpp color conversion
-extern int			win_color32_rdst_shift;
-extern int			win_color32_gdst_shift;
-extern int			win_color32_bdst_shift;
 
 // raw mouse support
 extern int			win_use_raw_mouse;
@@ -132,33 +159,20 @@ extern int			win_use_raw_mouse;
 //  PROTOTYPES
 //============================================================
 
-int win_init_window(void);
-int win_create_window(int width, int height, int depth, int attributes, double aspect);
-void win_destroy_window(void);
-void win_update_cursor_state(void);
-void win_toggle_maximize(int force_maximize);
-void win_toggle_full_screen(void);
-void win_adjust_window(void);
+// core initialization
+int win_window_init(void);
 
-void win_constrain_to_aspect_ratio(RECT *rect, int adjustment, int constraints, int coordinate_system);
-void win_adjust_window_for_visible(int min_x, int max_x, int min_y, int max_y);
+// creation/deletion of windows
+int win_window_create(win_monitor_info *monitor, const char *layout, const char *view, int width, int height, int switchres);
 
-void win_update_video_window(mame_bitmap *bitmap, const rectangle *bounds, void *vector_dirty_pixels);
-
-void win_set_palette_entry(int _index, UINT8 red, UINT8 green, UINT8 blue);
-
-int win_process_events(int ingame);
-void win_process_events_periodic(void);
-
-UINT32 *win_prepare_palette(win_blit_params *params);
-
-int win_lookup_effect(const char *arg);
-int win_determine_effect(const win_blit_params *params);
-void win_compute_multipliers(const RECT *rect, int *xmult, int *ymult);
-
-BOOL win_raw_mouse_update(HANDLE in_device_handle);
+void window_update_cursor_state(void);
+void win_update_video_window(win_window_info *window);
 
 LRESULT CALLBACK win_video_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam);
+void win_toggle_full_screen(void);
+
+void winwindow_process_events_periodic(void);
+int winwindow_process_events(int ingame);
 
 #if HAS_WINDOW_MENU
 int win_create_menu(HMENU *menus);
@@ -173,77 +187,28 @@ void debugwin_set_focus(int focus);
 
 
 //============================================================
-//  win_color16
-//============================================================
-
-INLINE UINT16 win_color16(UINT8 r, UINT8 g, UINT8 b)
-{
-	return ((r >> win_color16_rsrc_shift) << win_color16_rdst_shift) |
-		   ((g >> win_color16_gsrc_shift) << win_color16_gdst_shift) |
-		   ((b >> win_color16_bsrc_shift) << win_color16_bdst_shift);
-}
-
-INLINE UINT8 win_red16(UINT16 color)
-{
-	int val = (color >> win_color16_rdst_shift) << win_color16_rsrc_shift;
-	return val | (val >> (8 - win_color16_rsrc_shift));
-}
-
-INLINE UINT8 win_green16(UINT16 color)
-{
-	int val = (color >> win_color16_gdst_shift) << win_color16_gsrc_shift;
-	return val | (val >> (8 - win_color16_gsrc_shift));
-}
-
-INLINE UINT8 win_blue16(UINT16 color)
-{
-	int val = (color >> win_color16_bdst_shift) << win_color16_bsrc_shift;
-	return val | (val >> (8 - win_color16_bsrc_shift));
-}
-
-
-
-//============================================================
-//  win_color32
-//============================================================
-
-INLINE UINT32 win_color32(UINT8 r, UINT8 g, UINT8 b)
-{
-	return (r << win_color32_rdst_shift) |
-		   (g << win_color32_gdst_shift) |
-		   (b << win_color32_bdst_shift);
-}
-
-INLINE UINT8 win_red32(UINT32 color)
-{
-	return color >> win_color32_rdst_shift;
-}
-
-INLINE UINT8 win_green32(UINT32 color)
-{
-	return color >> win_color32_gdst_shift;
-}
-
-INLINE UINT8 win_blue32(UINT32 color)
-{
-	return color >> win_color32_bdst_shift;
-}
-
-
-
-//============================================================
 //  win_has_menu
 //============================================================
 
-INLINE BOOL win_has_menu(void)
+INLINE BOOL win_has_menu(win_window_info *window)
 {
-#if HAS_WINDOW_MENU
-	return GetMenu(win_video_window) ? TRUE : FALSE;
-#else
-	return FALSE;
-#endif
+	return GetMenu(window->hwnd) ? TRUE : FALSE;
 }
 
 
+//============================================================
+//  rect_width / rect_height
+//============================================================
+
+INLINE int rect_width(const RECT *rect)
+{
+	return rect->right - rect->left;
+}
+
+
+INLINE int rect_height(const RECT *rect)
+{
+	return rect->bottom - rect->top;
+}
 
 #endif

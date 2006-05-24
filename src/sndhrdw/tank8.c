@@ -13,7 +13,8 @@
 /* Written by Hans Andersson. Feb 2005                                  */
 /************************************************************************/
 
-const struct discrete_lfsr_desc tank8_lfsr={
+static const discrete_lfsr_desc tank8_lfsr =
+{
 	DISC_CLK_IS_FREQ,
 	16,			/* Bit Length */
 	0,			/* Reset Value */
@@ -27,7 +28,8 @@ const struct discrete_lfsr_desc tank8_lfsr={
 	12			/* Output bit */
 };
 
-const struct discrete_integrate_info tank8_op1_integrate_info = {
+static const discrete_integrate_info tank8_op1_integrate_info =
+{
 	DISC_INTEGRATE_OP_AMP_1,
 	RES_K(27),		/* R98 */
 	RES_K(2.2),		/* R97 */
@@ -40,7 +42,8 @@ const struct discrete_integrate_info tank8_op1_integrate_info = {
 	0,
 };
 
-const struct discrete_integrate_info tank8_op2_integrate_info = {
+static const discrete_integrate_info tank8_op2_integrate_info =
+{
 	DISC_INTEGRATE_OP_AMP_1,
 	RES_K(27),		/* R99 */
 	RES_K(2.2),		/* R97 */
@@ -53,14 +56,14 @@ const struct discrete_integrate_info tank8_op2_integrate_info = {
 	0,
 };
 
-const struct discrete_555_desc tank8_555_a =
+static const discrete_555_desc tank8_555_a =
 {
 	DISC_555_OUT_SQW | DISC_555_OUT_DC,
 	5,		// B+ voltage of 555
 	DEFAULT_555_VALUES
 };
 
-const struct discrete_555_desc tank8_555_m =
+static const discrete_555_desc tank8_555_m =
 {
 	DISC_555_TRIGGER_IS_VOLTAGE | DISC_555_OUT_SQW | DISC_555_OUT_DC,
 	5,		// B+ voltage of 555
@@ -68,7 +71,7 @@ const struct discrete_555_desc tank8_555_m =
 };
 
 
-const struct discrete_op_amp_filt_info tank8_filt =
+static const discrete_op_amp_filt_info tank8_filt =
 {
 	RES_K(18),		// R56
 	0,
@@ -83,7 +86,7 @@ const struct discrete_op_amp_filt_info tank8_filt =
 	0  /* VEE */
 };
 
-struct discrete_dac_r1_ladder tank8_dac =
+discrete_dac_r1_ladder tank8_dac =
 {
 	1,
 	{RES_K(4.7)},	// R89

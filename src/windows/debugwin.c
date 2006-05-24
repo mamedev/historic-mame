@@ -26,8 +26,14 @@
 
 // MAMEOS headers
 #include "debugwin.h"
+#ifndef NEW_RENDER
+#include "windold.h"
+#include "videoold.h"
+#else
 #include "window.h"
 #include "video.h"
+#define win_video_window		win_window_list->hwnd
+#endif
 #include "config.h"
 
 

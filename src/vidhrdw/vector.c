@@ -34,7 +34,12 @@
 #include "osinline.h"
 #include "driver.h"
 #include "vector.h"
+
+#ifdef NEW_RENDER
+#include "render.h"
+#else
 #include "artwork.h"
+#endif
 
 #define MAX_DIRTY_PIXELS (2*MAX_PIXELS)
 
@@ -44,7 +49,6 @@ size_t vectorram_size;
 static int antialias;                            /* flag for anti-aliasing */
 static int beam;                                 /* size of vector beam    */
 static int flicker;                              /* beam flicker value     */
-int translucency;
 
 static int beam_diameter_is_one;		  /* flag that beam is one pixel wide */
 
@@ -187,7 +191,6 @@ VIDEO_START( vector )
 
 	/* Grab the settings for this session */
 	antialias = options.antialias;
-	translucency = options.translucency;
 	vector_set_flicker(options.vector_flicker);
 	vector_set_intensity(options.vector_intensity);
 	beam = options.beam;
@@ -713,6 +716,9 @@ static void clever_mark_dirty (void)
 	}
 }
 
+
+#ifndef NEW_RENDER
+
 VIDEO_UPDATE( vector )
 {
 	int i;
@@ -781,3 +787,64 @@ VIDEO_UPDATE( vector )
 
 	vector_dirty_list[dirty_index] = VECTOR_PIXEL_END;
 }
+
+#else
+
+VIDEO_UPDATE( vector )
+{
+	UINT32 flags = PRIMFLAG_ANTIALIAS(options.antialias ? 1 : 0) | PRIMFLAG_BLENDMODE(BLENDMODE_ADD);
+	float xscale = 1.0f / (65536 * (Machine->visible_area[screen].max_x - Machine->visible_area[screen].min_x));
+	float yscale = 1.0f / (65536 * (Machine->visible_area[screen].max_y - Machine->visible_area[screen].min_y));
+	float xoffs = (float)Machine->visible_area[screen].min_x;
+	float yoffs = (float)Machine->visible_area[screen].min_y;
+	point *curpoint;
+	render_bounds clip;
+	int lastx = 0, lasty = 0;
+	int i;
+
+	curpoint = new_list;
+
+	render_screen_add_rect(screen, 0.0f, 0.0f, 1.0f, 1.0f, MAKE_ARGB(0xff,0x04,0x04,0x04), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+
+	clip.x0 = clip.y0 = 0.0f;
+	clip.x1 = clip.y1 = 1.0f;
+
+	for (i = 0; i < new_index; i++)
+	{
+		render_bounds coords;
+
+		if (curpoint->status == VCLIP)
+		{
+			coords.x0 = ((float)curpoint->x - xoffs) * xscale;
+			coords.y0 = ((float)curpoint->y - yoffs) * yscale;
+			coords.x1 = ((float)curpoint->arg1 - xoffs) * xscale;
+			coords.y1 = ((float)curpoint->arg2 - yoffs) * yscale;
+
+			clip.x0 = (coords.x0 > 0.0f) ? coords.x0 : 0.0f;
+			clip.y0 = (coords.y0 > 0.0f) ? coords.y0 : 0.0f;
+			clip.x1 = (coords.x1 < 1.0f) ? coords.x1 : 1.0f;
+			clip.y1 = (coords.y1 < 1.0f) ? coords.y1 : 1.0f;
+		}
+		else
+		{
+			coords.x0 = ((float)lastx - xoffs) * xscale;
+			coords.y0 = ((float)lasty - yoffs) * yscale;
+			coords.x1 = ((float)curpoint->x - xoffs) * xscale;
+			coords.y1 = ((float)curpoint->y - yoffs) * yscale;
+
+			if (curpoint->intensity != 0)
+				if (!render_clip_line(&coords, &clip))
+					render_screen_add_line(screen, coords.x0, coords.y0, coords.x1, coords.y1,
+							(float)options.beam * (1.0f / (65536.0f * 1024.0f)),
+							(curpoint->intensity << 24) | (curpoint->col & 0xffffff),
+							flags);
+
+			lastx = curpoint->x;
+			lasty = curpoint->y;
+		}
+		curpoint++;
+	}
+}
+
+#endif
+

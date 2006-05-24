@@ -34,6 +34,10 @@
 #include "cpu/ccpu/ccpu.h"
 #include "cinemat.h"
 
+#ifdef NEW_RENDER
+#include "render.h"
+#endif
+
 
 static UINT16 *rambase;
 
@@ -285,15 +289,86 @@ static WRITE8_HANDLER( qb3_ram_bank_w )
  *
  *************************************/
 
+static const char sundance_layout[] =
+	"<?xml version=\"1.0\"?>"
+	"<mamelayout version=\"2\">"
+		"<element name=\"overlay\">"
+			"<rect>"
+				"<bounds left=\"0\" top=\"0\" right=\"1\" bottom=\"1\" />"
+				"<color red=\"1.0\" green=\"1.0\" blue=\"0.125\" />"
+			"</rect>"
+		"</element>"
+		"<view name=\"Built-in Overlay\">"
+			"<screen index=\"0\">"
+				"<bounds left=\"0\" top=\"0\" right=\"3\" bottom=\"4\" />"
+			"</screen>"
+			"<overlay element=\"overlay\">"
+				"<bounds left=\"0\" top=\"0\" right=\"3\" bottom=\"4\" />"
+			"</overlay>"
+		"</view>"
+	"</mamelayout>";
+
 OVERLAY_START( sundance_overlay )
 	OVERLAY_RECT( 0.0, 0.0, 1.0, 1.0, MAKE_ARGB(0x04,0xff,0xff,0x20) )
 OVERLAY_END
 
 
+
+static const char tailg_layout[] =
+	"<?xml version=\"1.0\"?>"
+	"<mamelayout version=\"2\">"
+		"<element name=\"overlay\">"
+			"<rect>"
+				"<bounds left=\"0\" top=\"0\" right=\"1\" bottom=\"1\" />"
+				"<color red=\"0.125\" green=\"1.0\" blue=\"1.0\" />"
+			"</rect>"
+		"</element>"
+		"<view name=\"Built-in Overlay\">"
+			"<screen index=\"0\">"
+				"<bounds left=\"0\" top=\"0\" right=\"4\" bottom=\"3\" />"
+			"</screen>"
+			"<overlay element=\"overlay\">"
+				"<bounds left=\"0\" top=\"0\" right=\"4\" bottom=\"3\" />"
+			"</overlay>"
+		"</view>"
+	"</mamelayout>";
+
 OVERLAY_START( tailg_overlay )
 	OVERLAY_RECT( 0.0, 0.0, 1.0, 1.0, MAKE_ARGB(0x04,0x20,0xff,0xff) )
 OVERLAY_END
 
+
+
+static const char starcas_layout[] =
+	"<?xml version=\"1.0\"?>"
+	"<mamelayout version=\"2\">"
+		"<element name=\"overlay\">"
+			"<rect>"
+				"<bounds left=\"0\" top=\"0.125\" right=\"1\" bottom=\"0.875\" />"
+				"<color red=\"0.0\" green=\"0.25\" blue=\"1.0\" />"
+			"</rect>"
+			"<disk>"
+				"<bounds left=\"0.3775\" top=\"0.3775\" right=\"0.6225\" bottom=\"0.6225\" />"
+				"<color red=\"1.0\" green=\"0.125\" blue=\"0.125\" />"
+			"</disk>"
+			"<disk>"
+				"<bounds left=\"0.4050\" top=\"0.4050\" right=\"0.5950\" bottom=\"0.5950\" />"
+				"<color red=\"1.0\" green=\"0.5\" blue=\"0.0625\" />"
+			"</disk>"
+			"<disk>"
+				"<bounds left=\"0.4275\" top=\"0.4275\" right=\"0.5725\" bottom=\"0.5725\" />"
+				"<color red=\"1.0\" green=\"1.0\" blue=\"0.125\" />"
+			"</disk>"
+		"</element>"
+		"<view name=\"Built-in Overlay\">"
+			"<screen index=\"0\">"
+				"<bounds left=\"0\" top=\"0\" right=\"4\" bottom=\"3\" />"
+			"</screen>"
+			"<overlay element=\"overlay\">"
+				"<bounds left=\"0\" top=\"0\" right=\"4\" bottom=\"3\" />"
+			"</overlay>"
+		"</view>"
+	"</mamelayout>";
 
 OVERLAY_START( starcas_overlay )
 	OVERLAY_RECT( 0.0, 0.0, 1.0, 1.0,       MAKE_ARGB(0x24,0x00,0x3c,0xff) )
@@ -302,6 +377,34 @@ OVERLAY_START( starcas_overlay )
 	OVERLAY_DISK_NOBLEND( 0.5, 0.5, 0.0725, MAKE_ARGB(0x24,0xff,0xff,0x20) )
 OVERLAY_END
 
+
+
+static const char solarq_layout[] =
+	"<?xml version=\"1.0\"?>"
+	"<mamelayout version=\"2\">"
+		"<element name=\"overlay\">"
+			"<rect>"
+				"<bounds left=\"0\" top=\"0.125\" right=\"1\" bottom=\"0.2\" />"
+				"<color red=\"1.0\" green=\"0.125\" blue=\"0.125\" />"
+			"</rect>"
+			"<rect>"
+				"<bounds left=\"0\" top=\"0.2\" right=\"1\" bottom=\"0.875\" />"
+				"<color red=\"0.125\" green=\"0.125\" blue=\"1.0\" />"
+			"</rect>"
+			"<disk>"
+				"<bounds left=\"0.47\" top=\"0.47\" right=\"0.53\" bottom=\"0.53\" />"
+				"<color red=\"1.0\" green=\"1.0\" blue=\"0.125\" />"
+			"</disk>"
+		"</element>"
+		"<view name=\"Built-in Overlay\">"
+			"<screen index=\"0\">"
+				"<bounds left=\"0\" top=\"0\" right=\"4\" bottom=\"3\" />"
+			"</screen>"
+			"<overlay element=\"overlay\">"
+				"<bounds left=\"0\" top=\"0\" right=\"4\" bottom=\"3\" />"
+			"</overlay>"
+		"</view>"
+	"</mamelayout>";
 
 OVERLAY_START( solarq_overlay )
 	OVERLAY_RECT( 0.0, 0.9, 1.0, 1.0, MAKE_ARGB(0x04,0xff,0x20,0x20) )
@@ -1471,7 +1574,11 @@ static DRIVER_INIT( speedfrk )
 
 static DRIVER_INIT( sundance )
 {
+#ifndef NEW_RENDER
 	artwork_set_overlay(sundance_overlay);
+#else
+
+#endif
 	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x00, 0x0f, 0, 0, sundance_inputs_r);
 }
 
@@ -1522,20 +1629,20 @@ GAME( 1977, spacewar, 0,       spacewar, spacewar, 0,        ORIENTATION_FLIP_Y,
 GAME( 1979, barrier,  0,       barrier,  barrier,  0,        ORIENTATION_FLIP_X ^ ROT270, "Vectorbeam", "Barrier", GAME_SUPPORTS_SAVE )
 GAME( 1979, speedfrk, 0,       speedfrk, speedfrk, speedfrk, ORIENTATION_FLIP_Y,   "Vectorbeam", "Speed Freak", GAME_NO_SOUND )
 GAME( 1979, starhawk, 0,       starhawk, starhawk, 0,        ORIENTATION_FLIP_Y,   "Cinematronics", "Star Hawk", GAME_SUPPORTS_SAVE )
-GAME( 1979, sundance, 0,       sundance, sundance, sundance, ORIENTATION_FLIP_X ^ ROT270, "Cinematronics", "Sundance", GAME_SUPPORTS_SAVE )
-GAME( 1979, tailg,    0,       tailg,    tailg,    tailg,    ORIENTATION_FLIP_Y,   "Cinematronics", "Tailgunner", GAME_SUPPORTS_SAVE )
+GAMEL(1979, sundance, 0,       sundance, sundance, sundance, ORIENTATION_FLIP_X ^ ROT270, "Cinematronics", "Sundance", GAME_SUPPORTS_SAVE, sundance_layout )
+GAMEL(1979, tailg,    0,       tailg,    tailg,    tailg,    ORIENTATION_FLIP_Y,   "Cinematronics", "Tailgunner", GAME_SUPPORTS_SAVE, tailg_layout )
 GAME( 1979, warrior,  0,       warrior,  warrior,  0,        ORIENTATION_FLIP_Y,   "Vectorbeam", "Warrior", GAME_SUPPORTS_SAVE )
 GAME( 1980, armora,   0,       armora,   armora,   0,        ORIENTATION_FLIP_Y,   "Cinematronics", "Armor Attack", GAME_SUPPORTS_SAVE )
 GAME( 1980, armorap,  armora,  armora,   armora,   0,        ORIENTATION_FLIP_Y,   "Cinematronics", "Armor Attack (prototype)", GAME_SUPPORTS_SAVE )
 GAME( 1980, armorar,  armora,  armora,   armora,   0,        ORIENTATION_FLIP_Y,   "Cinematronics (Rock-ola license)", "Armor Attack (Rock-ola)", GAME_SUPPORTS_SAVE )
 GAME( 1980, ripoff,   0,       ripoff,   ripoff,   0,        ORIENTATION_FLIP_Y,   "Cinematronics", "Rip Off", GAME_SUPPORTS_SAVE )
-GAME( 1980, starcas,  0,       starcas,  starcas,  starcas,  ORIENTATION_FLIP_Y,   "Cinematronics", "Star Castle (version 3)", GAME_SUPPORTS_SAVE )
-GAME( 1980, starcas1, starcas, starcas,  starcas,  starcas,  ORIENTATION_FLIP_Y,   "Cinematronics", "Star Castle (older)", GAME_SUPPORTS_SAVE )
-GAME( 1980, starcasp, starcas, starcas,  starcas,  starcas,  ORIENTATION_FLIP_Y,   "Cinematronics", "Star Castle (prototype)", GAME_SUPPORTS_SAVE )
-GAME( 1980, starcase, starcas, starcas,  starcas,  starcas,  ORIENTATION_FLIP_Y,   "Cinematronics (Mottoeis license)", "Star Castle (Mottoeis)", GAME_SUPPORTS_SAVE )
-GAME( 1980, stellcas, starcas, starcas,  starcas,  starcas,  ORIENTATION_FLIP_Y,   "bootleg", "Stellar Castle (Elettronolo)", GAME_SUPPORTS_SAVE )
-GAME( 1981, spaceftr, starcas, starcas,  starcas,  starcas,  ORIENTATION_FLIP_Y,   "Zaccaria", "Space Fortress (Zaccaria)", GAME_SUPPORTS_SAVE )
-GAME( 1981, solarq,   0,       solarq,   solarq,   solarq,   ORIENTATION_FLIP_Y ^ ORIENTATION_FLIP_X, "Cinematronics", "Solar Quest", GAME_SUPPORTS_SAVE )
+GAMEL(1980, starcas,  0,       starcas,  starcas,  starcas,  ORIENTATION_FLIP_Y,   "Cinematronics", "Star Castle (version 3)", GAME_SUPPORTS_SAVE, starcas_layout )
+GAMEL(1980, starcas1, starcas, starcas,  starcas,  starcas,  ORIENTATION_FLIP_Y,   "Cinematronics", "Star Castle (older)", GAME_SUPPORTS_SAVE, starcas_layout )
+GAMEL(1980, starcasp, starcas, starcas,  starcas,  starcas,  ORIENTATION_FLIP_Y,   "Cinematronics", "Star Castle (prototype)", GAME_SUPPORTS_SAVE, starcas_layout )
+GAMEL(1980, starcase, starcas, starcas,  starcas,  starcas,  ORIENTATION_FLIP_Y,   "Cinematronics (Mottoeis license)", "Star Castle (Mottoeis)", GAME_SUPPORTS_SAVE, starcas_layout )
+GAMEL(1980, stellcas, starcas, starcas,  starcas,  starcas,  ORIENTATION_FLIP_Y,   "bootleg", "Stellar Castle (Elettronolo)", GAME_SUPPORTS_SAVE, starcas_layout )
+GAMEL(1981, spaceftr, starcas, starcas,  starcas,  starcas,  ORIENTATION_FLIP_Y,   "Zaccaria", "Space Fortress (Zaccaria)", GAME_SUPPORTS_SAVE, starcas_layout )
+GAMEL(1981, solarq,   0,       solarq,   solarq,   solarq,   ORIENTATION_FLIP_Y ^ ORIENTATION_FLIP_X, "Cinematronics", "Solar Quest", GAME_SUPPORTS_SAVE, solarq_layout )
 GAME( 1981, boxingb,  0,       boxingb,  boxingb,  boxingb,  ORIENTATION_FLIP_Y,   "Cinematronics", "Boxing Bugs", GAME_SUPPORTS_SAVE )
 GAME( 1981, wotw,     0,       wotw,     wotw,     0,        ORIENTATION_FLIP_Y,   "Cinematronics", "War of the Worlds", GAME_SUPPORTS_SAVE )
 GAME( 1981, wotwc,    wotw,    wotwc,    wotw,     0,        ORIENTATION_FLIP_Y,   "Cinematronics", "War of the Worlds (color)", GAME_SUPPORTS_SAVE )

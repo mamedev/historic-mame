@@ -639,7 +639,8 @@ static const gfx_decode stinger_gfxdecodeinfo[] =
 //* ANALOG SOUND STARTS
 
 // cut-and-pasted from Asteroid
-const struct discrete_lfsr_desc stinger_lfsr={
+static const discrete_lfsr_desc stinger_lfsr =
+{
 	DISC_CLK_IS_FREQ,
 	16,			/* Bit Length */
 	0,			/* Reset Value */

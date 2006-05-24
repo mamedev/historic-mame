@@ -928,6 +928,11 @@ static const char *get_extension_for_filetype(int filetype)
 			break;
 
 		case FILETYPE_ARTWORK:		/* artwork files */
+#ifdef NEW_RENDER
+			extension = "lay";
+			break;
+#endif
+
 		case FILETYPE_SCREENSHOT:	/* screenshot files */
 			extension = "png";
 			break;

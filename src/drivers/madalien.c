@@ -581,7 +581,7 @@ static ADDRESS_MAP_START( madalien_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x9000, 0x9000) AM_READ(input_port_0_r)    		/* Input ports */
 	AM_RANGE(0x9001, 0x9001) AM_READ(input_port_1_r)
 	AM_RANGE(0x9002, 0x9002) AM_READ(input_port_2_r)
-	AM_RANGE(0xc000, 0xffff) AM_READ(MRA8_ROM)			/* Program ROM */
+	AM_RANGE(0xb000, 0xffff) AM_READ(MRA8_ROM)			/* Program ROM */
 ADDRESS_MAP_END
 
 
@@ -599,7 +599,7 @@ static ADDRESS_MAP_START( madalien_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x800d, 0x800d) AM_WRITE(madalien_scroll_l_w)		/* Background horiz. scroll register left part */
 	AM_RANGE(0x800e, 0x800e) AM_WRITE(madalien_scroll_r_w)		/* Background horiz. scroll register right part */
 	AM_RANGE(0x800f, 0x800f) AM_WRITE(madalien_scroll_v_w) 		/* Background vertical scroll register */
-	AM_RANGE(0xc000, 0xffff) AM_WRITE(MWA8_ROM)			/* Program ROM */
+	AM_RANGE(0xb000, 0xffff) AM_WRITE(MWA8_ROM)			/* Program ROM */
 ADDRESS_MAP_END
 
 
@@ -718,12 +718,12 @@ ROM_START( madalien )
 	ROM_LOAD( "m8", 0xf800, 0x0400, CRC(cfd19dab) SHA1(566dc84ffe9bcaeb112250a9e1882bf62f47b579) )
 	ROM_LOAD( "m9", 0xfc00, 0x0400, CRC(48f30f24) SHA1(9c0bf6e43b143d6af1ebb9dad2bdc2b53eb2e48e) )
 
-	ROM_REGION( 0x6000, REGION_GFX1, ROMREGION_DISPOSE )   /* Background tiles */
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )   /* Background tiles */
 	ROM_LOAD( "mc", 0x0000, 0x0400, CRC(2daadfb7) SHA1(8be084a39b256e538fd57111e92d47115cb142cd) )
 	ROM_LOAD( "md", 0x0400, 0x0400, CRC(3ee1287a) SHA1(33bc59a8d09d22f3db80f881c2f37aa788718138) )
 	ROM_LOAD( "me", 0x0800, 0x0400, CRC(45a5c201) SHA1(ac600afeabf494634c3189d8e96644bd0deb45f3) )
 
-	ROM_REGION( 0x6000, REGION_GFX2, 0 )  			/* Background tile maps */
+	ROM_REGION( 0x0400, REGION_GFX2, 0 )  			/* Background tile maps */
 	ROM_LOAD( "mf", 0x0000, 0x0400, CRC(e9cba773) SHA1(356c7edb1b412a9e04f0747e780c945af8791c55) )
 
 	ROM_REGION( 0x0400, REGION_GFX3, 0 )			/* Car headlight */
@@ -732,8 +732,44 @@ ROM_START( madalien )
 	ROM_REGION( 0x0800, REGION_GFX4, 0 )			/* Shifting data */
 	ROM_LOAD( "mb", 0x0000, 0x0800, CRC(cb801e49) SHA1(7444c4af7cf07e5fdc54044d62ea4fcb201b2b8b) )
 
-	ROM_REGION( 0x0060, REGION_PROMS, 0 ) 			/* Color PROM */
+	ROM_REGION( 0x0020, REGION_PROMS, 0 ) 			/* Color PROM */
 	ROM_LOAD( "mg",	0x0000, 0x0020, CRC(3395b31f) SHA1(26235fb448a4180c58f0887e53a29c17857b3b34) )
+ROM_END
+
+
+ROM_START( madalina )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) 			/* 64k for 6502 code of main CPU */
+	ROM_LOAD( "2716.4c",        0xb000, 0x0800, CRC(90be68af) SHA1(472ccfd2e04d6d49be47d919cba0c55d850b2887) )
+	ROM_LOAD( "2716.4e",        0xb800, 0x0800, CRC(aba10cbb) SHA1(6ca213ded8ed7f4f310ab5ae25220cf867dd1d00) )
+	ROM_LOAD( "2716.3f",        0xc000, 0x0800, CRC(c3af484c) SHA1(c3667526d3b5aeee68823f92826053e657512851) )
+	ROM_LOAD( "2716.3j",        0xc800, 0x0800, CRC(78ca5a87) SHA1(729d69ee63c710241a098471e9769063dfe8ef1e) )
+	ROM_LOAD( "2716.3k",        0xd000, 0x0800, CRC(070e81ea) SHA1(006831f4bf289812e4e87a3ece7885e8b901f2f5) )
+	ROM_LOAD( "2716.3l",        0xd800, 0x0800, CRC(98225cb0) SHA1(ca74f5e33fa9116215b03abadd5d09840c04fb0b) )
+	ROM_LOAD( "2716.4f",        0xe000, 0x0800, CRC(52fea0fc) SHA1(443fd859daf4279d5976256a4b1c970b520661a2) )
+	ROM_LOAD( "2716.4j",        0xe800, 0x0800, CRC(dba6c4f6) SHA1(51f815fc7eb99a05eee6204de2d4cad1734adc52) )
+	ROM_LOAD( "2716.4k",        0xf000, 0x0800, CRC(06991af6) SHA1(19112306529721222b6e1c07920348c263d8b8aa) )
+	ROM_LOAD( "2716.4l",        0xf800, 0x0800, CRC(57752b47) SHA1(a34d3150ea9082889154042dbea3386f71322a78) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     		/* 64k for 6502 code of audio CPU */
+	ROM_LOAD( "8_2708.4d",      0xf800, 0x0400, CRC(46162e7e) SHA1(7ed85f4a9ac58d6d9bafba0c843a16c269656563) )
+	ROM_LOAD( "9_2708.3d",      0xfc00, 0x0400, CRC(4175f5c4) SHA1(45cae8a1fcfd34b91c63cc7e544a32922da14f16) )
+
+	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )    /* Background tiles */
+	ROM_LOAD( "mc-1_82s137.3k", 0x0000, 0x0400, NO_DUMP )
+	ROM_LOAD( "me-1_82s137.3l", 0x0400, 0x0400, CRC(7328a425) SHA1(327adc8b0e25d93f1ae98a44c26d0aaaac1b1a9c) )
+	ROM_LOAD( "md-1_82s137.3m", 0x0800, 0x0400, CRC(b5329929) SHA1(86890e1b7cc8cb31fc0dcbc2d3cff02e4cf95619) )
+
+	ROM_REGION( 0x0400, REGION_GFX2, 0 )  			/* Background tile maps */
+	ROM_LOAD( "mf-1_82s137.4h", 0x0000, 0x0400, CRC(9b04c446) SHA1(918013f3c0244ab6a670b9d1b6b642298e2c5ab8) )
+
+	ROM_REGION( 0x0400, REGION_GFX3, 0 )			/* Car headlight */
+	ROM_LOAD( "ma-_2708.2b",    0x0000, 0x0400, CRC(aab16446) SHA1(d2342627cc2766004343f27515d8a7989d5fe932) )
+
+	ROM_REGION( 0x0800, REGION_GFX4, 0 )			/* Shifting data */
+	ROM_LOAD( "mb-_2716.5c",    0x0000, 0x0800, CRC(cb801e49) SHA1(7444c4af7cf07e5fdc54044d62ea4fcb201b2b8b) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 ) 			/* Color PROM */
+	ROM_LOAD( "mg-1_82s123.7e", 0x0000, 0x0020, CRC(e622396a) SHA1(8972704bd25fed462e25c453771cc5ca4fc74034) )
 ROM_END
 
 
@@ -754,5 +790,5 @@ DRIVER_INIT( madalien )
 
 
 /*          rom       parent     machine   inp       init */
-GAME( 1980, madalien,  0,        madalien, madalien, madalien, ROT270, "Data East Corporation", "Mad Alien", 0 )
-
+GAME( 1980, madalien, 0,         madalien, madalien, madalien, ROT270, "Data East Corporation", "Mad Alien", 0 )
+GAME( 1980, madalina, madalien,  madalien, madalien, madalien, ROT270, "Data East Corporation", "Mad Alien (Highway Chase)", 0 )

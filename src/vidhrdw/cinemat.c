@@ -234,9 +234,10 @@ VIDEO_EOF( cinemat )
 
 VIDEO_UPDATE( spacewar )
 {
-	int sw_option = readinputportbytag("INPUTS");
-
 	video_update_vector(screen, bitmap, cliprect);
+#ifndef NEW_RENDER
+{
+	int sw_option = readinputportbytag("INPUTS");
 
 	/* set the state of the artwork */
 	artwork_show("pressed3", (~sw_option >> 0) & 1);
@@ -249,5 +250,7 @@ VIDEO_UPDATE( spacewar )
 	artwork_show("pressed7", (~sw_option >> 7) & 1);
 	artwork_show("pressed5", (~sw_option >> 10) & 1);
 	artwork_show("pressed0", (~sw_option >> 11) & 1);
+}
+#endif
 }
 

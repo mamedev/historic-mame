@@ -89,7 +89,7 @@ WRITE8_HANDLER( firetrk_out2_w )
 /* Complete re-write Feb 2004, D. Renaud                                */
 /************************************************************************/
 
-const struct discrete_lfsr_desc firetrk_lfsr={
+static const discrete_lfsr_desc firetrk_lfsr={
 	DISC_CLK_IS_FREQ,
 	16,			/* Bit Length */
 	0,			/* Reset Value */
@@ -103,7 +103,7 @@ const struct discrete_lfsr_desc firetrk_lfsr={
 	15			/* Output bit */
 };
 
-const struct discrete_dac_r1_ladder firetrk_motor_v_dac =
+static const discrete_dac_r1_ladder firetrk_motor_v_dac =
 {
 	4,			// size of ladder
 	{RES_M(2.2), RES_M(1), RES_K(470), RES_K(220), 0,0,0,0},	// R24, R23, R22, R21
@@ -113,7 +113,7 @@ const struct discrete_dac_r1_ladder firetrk_motor_v_dac =
 	CAP_U(10)	// C24
 };
 
-const struct discrete_555_cc_desc firetrk_motor_vco =
+static const discrete_555_cc_desc firetrk_motor_vco =
 {
 	DISC_555_OUT_DC | DISC_555_OUT_SQW,
 	5,		// B+ voltage of 555
@@ -122,7 +122,7 @@ const struct discrete_555_cc_desc firetrk_motor_vco =
 	0.7		// Q2 junction voltage
 };
 
-const struct discrete_dac_r1_ladder firetrk_motor_out_dac =
+static const discrete_dac_r1_ladder firetrk_motor_out_dac =
 {
 	4,			// size of ladder
 	{RES_K(10), 0,0, RES_K(10)},	// R74, -, -, R73
@@ -132,7 +132,7 @@ const struct discrete_dac_r1_ladder firetrk_motor_out_dac =
 	CAP_U(0.1)	// C43
 };
 
-const struct discrete_dac_r1_ladder firetrk_siren_cv_dac =
+static const discrete_dac_r1_ladder firetrk_siren_cv_dac =
 {
 	4,				// size of ladder
 	{RES_M(2.2), RES_M(1), RES_K(470), RES_K(220), 0,0,0,0},	// R46, R47, R45, R48
@@ -142,14 +142,14 @@ const struct discrete_dac_r1_ladder firetrk_siren_cv_dac =
 	CAP_U(10)		// C30
 };
 
-const struct discrete_555_desc firetrk_siren_555 =
+static const discrete_555_desc firetrk_siren_555 =
 {
 	DISC_555_OUT_SQW | DISC_555_OUT_DC,
 	5,		// B+ voltage of 555
 	DEFAULT_555_VALUES
 };
 
-const struct discrete_dac_r1_ladder firetrk_bang_dac =
+static const discrete_dac_r1_ladder firetrk_bang_dac =
 {
 	4,		// size of ladder
 	{RES_K(8.2), RES_K(3.9), RES_K(2.2), RES_K(1), 0,0,0,0},	// R37, R35, R36, R34
@@ -159,7 +159,7 @@ const struct discrete_dac_r1_ladder firetrk_bang_dac =
 	0		// no smoothing cap
 };
 
-const struct discrete_schmitt_osc_desc firetrk_screech_osc =
+static const discrete_schmitt_osc_desc firetrk_screech_osc =
 {
 	RES_K(2.2),	// R29
 	330,		// R16
@@ -168,7 +168,7 @@ const struct discrete_schmitt_osc_desc firetrk_screech_osc =
 	DISC_SCHMITT_OSC_IN_IS_LOGIC | DISC_SCHMITT_OSC_ENAB_IS_NOR
 };
 
-const struct discrete_mixer_desc firetrk_mixer =
+static const discrete_mixer_desc firetrk_mixer =
 {
 	DISC_MIXER_IS_OP_AMP,
 	{RES_K(4.7), RES_K(22), RES_K(31.333), RES_K(33), RES_K(10.5456), RES_K(32), RES_K(150)}, // R54, R55, R72||(R70+R71), R53, R56 + R37||R35||R36||R34, R58 + R73||R74, R52
@@ -330,7 +330,7 @@ DISCRETE_SOUND_END
 /* Complete re-write Feb 2004, D. Renaud                                */
 /************************************************************************/
 
-const struct discrete_dac_r1_ladder superbug_motor_v_dac =
+static const discrete_dac_r1_ladder superbug_motor_v_dac =
 {
 	4,			// size of ladder
 	{RES_M(2.2), RES_M(1), RES_K(470), RES_K(220), 0,0,0,0},	// R8, R9, R6, R7
@@ -340,7 +340,7 @@ const struct discrete_dac_r1_ladder superbug_motor_v_dac =
 	CAP_U(10)	// C20
 };
 
-const struct discrete_555_cc_desc superbug_motor_vco =
+static const discrete_555_cc_desc superbug_motor_vco =
 {
 	DISC_555_OUT_DC | DISC_555_OUT_SQW,
 	5,				// B+ voltage of 555
@@ -349,7 +349,7 @@ const struct discrete_555_cc_desc superbug_motor_vco =
 	0.7				// Q1 junction voltage
 };
 
-const struct discrete_dac_r1_ladder superbug_motor_out_dac =
+static const discrete_dac_r1_ladder superbug_motor_out_dac =
 {
 	4,			// size of ladder
 	{RES_K(10), 0,0, RES_K(10)},	// R34, -, -, R32
@@ -359,7 +359,7 @@ const struct discrete_dac_r1_ladder superbug_motor_out_dac =
 	CAP_U(0.1)	// C26
 };
 
-const struct discrete_dac_r1_ladder superbug_bang_dac =
+static const discrete_dac_r1_ladder superbug_bang_dac =
 {
 	4,			// size of ladder
 	{RES_K(8.2), RES_K(3.9), RES_K(2.2), RES_K(1), 0,0,0,0},	// R28, R28, R27, R26
@@ -369,7 +369,7 @@ const struct discrete_dac_r1_ladder superbug_bang_dac =
 	CAP_U(0.1)	// C25
 };
 
-const struct discrete_schmitt_osc_desc superbug_screech_osc =
+static const discrete_schmitt_osc_desc superbug_screech_osc =
 {
 	RES_K(2.2),		// R30
 	330,			// R52
@@ -378,7 +378,7 @@ const struct discrete_schmitt_osc_desc superbug_screech_osc =
 	DISC_SCHMITT_OSC_IN_IS_LOGIC | DISC_SCHMITT_OSC_ENAB_IS_NOR
 };
 
-const struct discrete_mixer_desc superbug_mixer =
+static const discrete_mixer_desc superbug_mixer =
 {
 	DISC_MIXER_IS_RESISTOR,
 	{RES_K(15), RES_K(10.5456), RES_K(33), RES_K(4.7)}, // R54, R55, R72||(R70+R71), R53, R56 + R37||R35||R36||R34, R58 + R73||R74, R52
@@ -491,7 +491,7 @@ DISCRETE_SOUND_END
 /************************************************************************/
 
 /* Both cars use same parts for v_dac, vco and out_dac */
-const struct discrete_dac_r1_ladder montecar_motor_v_dac =
+static const discrete_dac_r1_ladder montecar_motor_v_dac =
 {
 	4,				// size of ladder
 	{RES_M(2.2), RES_M(1), RES_K(470), RES_K(220), 0,0,0,0},	// R44, R43, R46, R45
@@ -501,7 +501,7 @@ const struct discrete_dac_r1_ladder montecar_motor_v_dac =
 	CAP_U(4.7)		// C77
 };
 
-const struct discrete_555_cc_desc montecar_motor_vco =
+static const discrete_555_cc_desc montecar_motor_vco =
 {
 	DISC_555_OUT_DC | DISC_555_OUT_SQW,
 	5,		// B+ voltage of 555
@@ -510,7 +510,7 @@ const struct discrete_555_cc_desc montecar_motor_vco =
 	0.7		// Q1 junction voltage
 };
 
-const struct discrete_dac_r1_ladder montecar_motor_out_dac =
+static const discrete_dac_r1_ladder montecar_motor_out_dac =
 {
 	4,			// size of ladder
 	{RES_K(10), RES_K(10), 0, RES_K(10)},	// R31, R30, -, R29
@@ -520,7 +520,7 @@ const struct discrete_dac_r1_ladder montecar_motor_out_dac =
 	CAP_U(0.1)	// C53
 };
 
-const struct discrete_comp_adder_table montecar_drone_vol_res =
+static const discrete_comp_adder_table montecar_drone_vol_res =
 {
 	DISC_COMP_P_RESISTOR,
 	0,					// no default
@@ -528,7 +528,7 @@ const struct discrete_comp_adder_table montecar_drone_vol_res =
 	{RES_K(100.25), RES_K(47.25), RES_K(22.25), RES_K(10.25), 0,0,0,0}	// R105, R104, R103, R102 (250 added to all for 4066 resistance)
 };
 
-const struct discrete_dac_r1_ladder montecar_bang_dac =
+static const discrete_dac_r1_ladder montecar_bang_dac =
 {
 	4,		// size of ladder
 	{RES_K(8.2), RES_K(3.9), RES_K(2.2), RES_K(1), 0,0,0,0},	// R39, R42, R41, R40
@@ -538,7 +538,7 @@ const struct discrete_dac_r1_ladder montecar_bang_dac =
 	0		// no cSmoothing
 };
 
-const struct discrete_op_amp_filt_info montecar_bang_filt =
+static const discrete_op_amp_filt_info montecar_bang_filt =
 {
 	1.0/(1.0/RES_K(8.2) + 1.0/RES_K(3.9) + 1.0/RES_K(2.2) + 1.0/RES_K(1)) + RES_K(3.3),	// R39, R42, R41, R40, r82
 	0,
@@ -551,7 +551,7 @@ const struct discrete_op_amp_filt_info montecar_bang_filt =
 	5, 12, 0
 };
 
-const struct discrete_schmitt_osc_desc montecar_screech_osc =
+static const discrete_schmitt_osc_desc montecar_screech_osc =
 {
 	RES_K(2.2),	// R54
 	330,	// R53
@@ -560,7 +560,7 @@ const struct discrete_schmitt_osc_desc montecar_screech_osc =
 	DISC_SCHMITT_OSC_IN_IS_LOGIC | DISC_SCHMITT_OSC_ENAB_IS_NOR
 };
 
-const struct discrete_mixer_desc montecar_mixer =
+static const discrete_mixer_desc montecar_mixer =
 {
 	DISC_MIXER_IS_OP_AMP,
 	{RES_K(15), RES_K(33), RES_K(10), RES_K(10), RES_K(13.3333)}, // R93, R97, R96, variable , R95 + R31||R30||R29

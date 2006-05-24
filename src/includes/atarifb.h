@@ -38,8 +38,8 @@ READ8_HANDLER( atarifb4_in2_r );
 
 /*----------- defined in sndhrdw/atarifb.c -----------*/
 
-extern struct discrete_sound_block atarifb_discrete_interface[];
-extern struct discrete_sound_block abaseb_discrete_interface[];
+extern discrete_sound_block atarifb_discrete_interface[];
+extern discrete_sound_block abaseb_discrete_interface[];
 
 
 /*----------- defined in vidhrdw/atarifb.c -----------*/

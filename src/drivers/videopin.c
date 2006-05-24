@@ -114,6 +114,9 @@ static READ8_HANDLER( videopin_misc_r )
 
 static WRITE8_HANDLER( videopin_led_w )
 {
+	int i = (cpu_getscanline() >> 5) & 7;
+
+#ifndef NEW_RENDER
 	static const char* matrix[8][4] =
 	{
 		{ "LED26", "LED18", "LED11", "LED13" },
@@ -126,12 +129,11 @@ static WRITE8_HANDLER( videopin_led_w )
 		{ "LED19", "LED14", "LED12", "-" }
 	};
 
-	int i = (cpu_getscanline() >> 5) & 7;
-
 	artwork_show(matrix[i][0], data & 1);
 	artwork_show(matrix[i][1], data & 2);
 	artwork_show(matrix[i][2], data & 4);
 	artwork_show(matrix[i][3], data & 8);
+#endif
 
 	if (i == 7)
 	{

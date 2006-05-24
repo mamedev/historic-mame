@@ -12,7 +12,8 @@
 /* sprint4 Sound System Analog emulation                                */
 /************************************************************************/
 
-const struct discrete_lfsr_desc sprint4_lfsr={
+static const discrete_lfsr_desc sprint4_lfsr =
+{
 	DISC_CLK_IS_FREQ,
 	16,                 /* Bit Length */
 	0,                  /* Reset Value */

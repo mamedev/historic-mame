@@ -1474,6 +1474,7 @@ $(OBJ)/misc.a: \
 	$(OBJ)/drivers/oneshot.o $(OBJ)/vidhrdw/oneshot.o \
 	$(OBJ)/drivers/onetwo.o \
 	$(OBJ)/drivers/othldrby.o $(OBJ)/vidhrdw/othldrby.o \
+	$(OBJ)/drivers/pasha2.o \
 	$(OBJ)/drivers/pass.o $(OBJ)/vidhrdw/pass.o \
 	$(OBJ)/drivers/pipeline.o \
 	$(OBJ)/drivers/pkscram.o \
@@ -1497,6 +1498,7 @@ $(OBJ)/misc.a: \
 	$(OBJ)/drivers/tickee.o $(OBJ)/vidhrdw/tickee.o \
 	$(OBJ)/drivers/truco.o $(OBJ)/vidhrdw/truco.o \
 	$(OBJ)/drivers/trucocl.o $(OBJ)/vidhrdw/trucocl.o \
+	$(OBJ)/drivers/trvmadns.o \
 	$(OBJ)/drivers/trvquest.o \
 	$(OBJ)/drivers/ttchamp.o \
 	$(OBJ)/drivers/tugboat.o \

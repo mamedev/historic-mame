@@ -19,7 +19,7 @@
 
 /*----------- defined in sndhrdw/grchamp.c -----------*/
 
-extern struct discrete_sound_block grchamp_discrete_interface[];
+extern discrete_sound_block grchamp_discrete_interface[];
 
 /*----------- defined in vidhrdw/grchamp.c -----------*/
 

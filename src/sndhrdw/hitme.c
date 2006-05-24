@@ -8,14 +8,14 @@
 #include "sound/discrete.h"
 
 
-const struct discrete_555_desc desc_hitme_555 =
+static const discrete_555_desc desc_hitme_555 =
 {
 	DISC_555_OUT_SQW | DISC_555_OUT_DC,
 	5,				// B+ voltage of 555
 	DEFAULT_555_VALUES
 };
 
-static struct discrete_comp_adder_table desc_hitme_adder =
+static const discrete_comp_adder_table desc_hitme_adder =
 {
 	DISC_COMP_P_CAPACITOR, 0, 5,
 	{

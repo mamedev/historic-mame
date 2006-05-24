@@ -13,7 +13,7 @@ Crazy Ballooon
 
 /*----------- defined in sndhrdw/crbaloon.c -----------*/
 
-extern struct discrete_sound_block crbaloon_discrete_interface[];
+extern discrete_sound_block crbaloon_discrete_interface[];
 
 /*----------- defined in vidhrdw/crbaloon.c -----------*/
 

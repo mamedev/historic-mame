@@ -7,12 +7,19 @@
  *  (c) K.Wilkins 2000
  *  (c) D.Renaud 2003-2004
  *
- ***********************************************************************
+ ************************************************************************
  *
  * DSD_555_ASTBL         - NE555 Simulation - Astable mode
  * DSD_555_MSTBL         - NE555 Simulation - Monostable mode
  * DSD_555_CC            - NE555 Constant Current VCO
+ * DSD_555_VCO1          - Op-Amp linear ramp based 555 VCO
  * DSD_566               - NE566 Simulation
+ *
+ ************************************************************************
+ *
+ * You will notice that the code for a lot of these routines are similar.
+ * I tried to make a common charging routine, but there are too many
+ * minor differences that affect each module.
  *
  ************************************************************************/
 
@@ -21,54 +28,69 @@
 struct dsd_555_astbl_context
 {
 	int		error;
-	int		wav_type;
 	int		use_ctrlv;
-	int		flip_flop;	// 555 flip/flop output state
-	int		is_ac;
-	double	ac_shift;	// DC shift needed to make waveform ac
+	int		output_type;
+	int		output_is_ac;
+	double	ac_shift;				// DC shift needed to make waveform ac
+	int		flip_flop;				// 555 flip/flop output state
 	double	x_init;
-	double	vCap;		// voltage on cap
+	double	cap_voltage;			// voltage on cap
 	double	threshold;
 	double	trigger;
-	double	vHigh;		// Logic 1 voltage level
+	double	output_high_voltage;	// Logic 1 voltage level
 	double	v555;
 };
 
 struct dsd_555_mstbl_context
 {
 	int		error;
-	int		wav_type;
-	int		flip_flop;	// 555 flip/flop output state
-	int		is_ac;
-	double	ac_shift;	// DC shift needed to make waveform ac
-	double	vCap;		// voltage on cap
+	int		trig_is_logic;
+	int		output_type;
+	int		output_is_ac;
+	double	ac_shift;				// DC shift needed to make waveform ac
+	int		flip_flop;				// 555 flip/flop output state
+	double	cap_voltage;			// voltage on cap
 	double	threshold;
 	double	trigger;
-	double	vHigh;		// Logic 1 voltage level
-	int		trig_is_logic;
+	double	output_high_voltage;	// Logic 1 voltage level
 };
 
 struct dsd_555_cc_context
 {
 	int				error;
-	int				wav_type;
-	unsigned int	type;		// type of 555cc circuit
-	int				flip_flop;	// 555 flip/flop output state
-	int				is_ac;
-	double			ac_shift;	// DC shift needed to make waveform ac
+	unsigned int	type;			// type of 555cc circuit
+	int				output_type;
+	int				output_is_ac;
+	double			ac_shift;		// DC shift needed to make waveform ac
+	int				flip_flop;		// 555 flip/flop output state
 	double			x_init;
-	double			vCap;		// voltage on cap
+	double			cap_voltage;	// voltage on cap
 	double			threshold;
 	double			trigger;
-	double			vHigh;		// Logic 1 voltage level
+	double			output_high_voltage;	// Logic 1 voltage level
+};
+
+struct dsd_555_vco1_context
+{
+	int		ctrlv_is_node;
+	int		output_type;
+	int		output_is_ac;
+	double	ac_shift;				// DC shift needed to make waveform ac
+	int		flip_flop;				// flip/flop output state
+	double	output_high_voltage;	// 555 high voltage
+	double	threshold;				// falling threshold
+	double	trigger;				// rising threshold
+	double	i_charge;				// charge current
+	double	i_discharge;			// discharge current
+	double	cap_voltage;			// current capacitor voltage
 };
 
 struct dsd_566_context
 {
-	int				error;
-	unsigned int	state[2];	// keeps track of excess flip_flop changes during the current step
+	int			error;
+	unsigned int state[2];		// keeps track of excess flip_flop changes during the current step
 	int			flip_flop;		// 566 flip/flop output state
-	double		vCap;			// voltage on cap
+	double		cap_voltage;	// voltage on cap
 	double		vDiff;			// voltage difference between vPlus and vNeg
 	double		vSqrLow;		// voltage for a squarewave at low
 	double		vSqrHigh;		// voltage for a squarewave at high
@@ -129,9 +151,9 @@ int test_555(double threshold, double trigger, double v555, int node)
 #define DSD_555_ASTBL__C		(*(node->input[3]))
 #define DSD_555_ASTBL__CTRLV	(*(node->input[4]))
 
-void dsd_555_astbl_step(struct node_description *node)
+void dsd_555_astbl_step(node_description *node)
 {
-	const struct discrete_555_desc *info = node->custom;
+	const discrete_555_desc *info = node->custom;
 	struct dsd_555_astbl_context *context = node->context;
 
 	int		count_f = 0;
@@ -139,7 +161,7 @@ void dsd_555_astbl_step(struct node_description *node)
 	double	dt;					// change in time
 	double	xTime;				// time since change happened
 	double	tRC = 0;			// RC time constant
-	double	vC = context->vCap;	// Current voltage on capacitor, before dt
+	double	vC = context->cap_voltage;	// Current voltage on capacitor, before dt
 	double	vCnext = 0;			// Voltage on capacitor, after dt
 
 	if(DSD_555_ASTBL__RESET || context->error)
@@ -148,7 +170,7 @@ void dsd_555_astbl_step(struct node_description *node)
 		/* If there was a fatal INIT error then we will also stay in RESET */
 		node->output = 0;
 		context->flip_flop = 1;
-		context->vCap = 0;
+		context->cap_voltage = 0;
 		return;
 	}
 
@@ -162,13 +184,13 @@ void dsd_555_astbl_step(struct node_description *node)
 		context->threshold = DSD_555_ASTBL__CTRLV;
 		context->trigger = DSD_555_ASTBL__CTRLV / 2.0;
 		/* Since the thresholds may have changed we need to update the FF */
-		if (vC > context->threshold)
+		if (vC >= context->threshold)
 		{
 			context->flip_flop = 0;
 			count_f++;
 		}
 		else
-		if (vC < context->trigger)
+		if (vC <= context->trigger)
 		{
 			context->flip_flop = 1;
 			count_r++;
@@ -205,7 +227,7 @@ void dsd_555_astbl_step(struct node_description *node)
 		/* The voltage goes high because the cap circuit is open. */
 		vCnext = context->v555;
 		vC = context->v555;
-		context->vCap = 0;
+		context->cap_voltage = 0;
 	}
 	else
 	{
@@ -270,25 +292,25 @@ void dsd_555_astbl_step(struct node_description *node)
 			}
 		} while(dt);
 
-		context->vCap = vCnext;
+		context->cap_voltage = vCnext;
 	}
 
 	/* Convert last switch time to a ratio */
 	xTime = xTime / discrete_current_context->sample_time;
 
-	switch (context->wav_type)
+	switch (context->output_type)
 	{
 		case DISC_555_OUT_SQW:
-			node->output = context->flip_flop * context->vHigh + context->ac_shift;
+			node->output = context->flip_flop * context->output_high_voltage + context->ac_shift;
 			break;
 		case DISC_555_OUT_CAP:
 			node->output = vCnext;
 			/* Fake it to AC if needed */
-			if (context->is_ac)
+			if (context->output_is_ac)
 				node->output -= context->threshold * 3.0 /4.0;
 			break;
 		case DISC_555_OUT_ENERGY:
-			node->output = context->vHigh * (context->flip_flop ? xTime : (1 - xTime));
+			node->output = context->output_high_voltage * (context->flip_flop ? xTime : (1 - xTime));
 			node->output += context->ac_shift;
 			break;
 		case DISC_555_OUT_LOGIC_X:
@@ -309,16 +331,16 @@ void dsd_555_astbl_step(struct node_description *node)
 	}
 }
 
-void dsd_555_astbl_reset(struct node_description *node)
+void dsd_555_astbl_reset(node_description *node)
 {
-	const struct discrete_555_desc *info = node->custom;
+	const discrete_555_desc *info = node->custom;
 	struct dsd_555_astbl_context *context = node->context;
 
 	context->use_ctrlv = (node->input_is_node >> 4) & 1;
-	context->wav_type = info->options & DISC_555_OUT_MASK;
+	context->output_type = info->options & DISC_555_OUT_MASK;
 
 	/* Use the supplied values or set to defaults. */
-	context->vHigh = (info->v555high == DEFAULT_555_HIGH) ? info->v555 - 1.2 : info->v555high;
+	context->output_high_voltage = (info->v555high == DEFAULT_555_HIGH) ? info->v555 - 1.2 : info->v555high;
 	if ((DSD_555_ASTBL__CTRLV != -1) && !context->use_ctrlv)
 	{
 		/* Setup based on supplied static value */
@@ -332,19 +354,19 @@ void dsd_555_astbl_reset(struct node_description *node)
 		context->trigger =  (info->trigger555 == DEFAULT_555_TRIGGER) ? info->v555 /3 : info->trigger555;
 	}
 
-	context->is_ac = info->options & DISC_555_OUT_AC;
+	context->output_is_ac = info->options & DISC_555_OUT_AC;
 	/* Calculate DC shift needed to make squarewave waveform AC */
-	context->ac_shift = context->is_ac ? -context->vHigh / 2.0 : 0;
+	context->ac_shift = context->output_is_ac ? -context->output_high_voltage / 2.0 : 0;
 
 	context->error = test_555(context->threshold, context->trigger, info->v555, node->node);
 
 	context->v555 = (info->options & DISC_555_ASTABLE_HAS_FAST_CHARGE_DIODE) ? info->v555 - 0.5: info->v555;
 	context->flip_flop = 1;
-	context->vCap = 0;
+	context->cap_voltage = 0;
 
 	/* Used to adjust the ratio depending on if it is the extra percent or energy */
 	context->x_init = 0;
-	if (context->wav_type == DISC_555_OUT_ENERGY)
+	if (context->output_type == DISC_555_OUT_ENERGY)
 		context->x_init = discrete_current_context->sample_time;
 
 	/* Step to set the output */
@@ -370,9 +392,9 @@ void dsd_555_astbl_reset(struct node_description *node)
 #define DSD_555_MSTBL__R		(*(node->input[2]))
 #define DSD_555_MSTBL__C		(*(node->input[3]))
 
-void dsd_555_mstbl_step(struct node_description *node)
+void dsd_555_mstbl_step(node_description *node)
 {
-	const struct discrete_555_desc *info = node->custom;
+	const discrete_555_desc *info = node->custom;
 	struct dsd_555_mstbl_context *context = node->context;
 
 	double vC;	// Current voltage on capacitor, before dt
@@ -386,7 +408,7 @@ void dsd_555_mstbl_step(struct node_description *node)
 		/* If there was a fatal INIT error then we will also stay in RESET */
 		node->output = 0;
 		context->flip_flop = 0;
-		context->vCap = 0;
+		context->cap_voltage = 0;
 	}
 	else
 	{
@@ -401,7 +423,7 @@ void dsd_555_mstbl_step(struct node_description *node)
 		}
 		else
 		{
-			vC = context->vCap;
+			vC = context->cap_voltage;
 
 			/* Sometimes a switching network is used to setup the capacitance.
              * These may select 'no' capacitor, causing oscillation to stop.
@@ -412,7 +434,7 @@ void dsd_555_mstbl_step(struct node_description *node)
 				/* The voltage goes high because the cap circuit is open. */
 				vCnext = info->v555;
 				vC = info->v555;
-				context->vCap = 0;
+				context->cap_voltage = 0;
 			}
 			else
 			{
@@ -430,20 +452,20 @@ void dsd_555_mstbl_step(struct node_description *node)
 				}
 			}
 
-			context->vCap = vCnext;
+			context->cap_voltage = vCnext;
 
 			switch (info->options & DISC_555_OUT_MASK)
 			{
 				case DISC_555_OUT_SQW:
-					node->output = context->flip_flop * context->vHigh;
+					node->output = context->flip_flop * context->output_high_voltage;
 					/* Fake it to AC if needed */
-					if (context->is_ac)
-						node->output -= context->vHigh / 2.0;
+					if (context->output_is_ac)
+						node->output -= context->output_high_voltage / 2.0;
 					break;
 				case DISC_555_OUT_CAP:
 					node->output = vCnext;
 					/* Fake it to AC if needed */
-					if (context->is_ac)
+					if (context->output_is_ac)
 						node->output -= context->threshold * 3.0 /4.0;
 					break;
 			}
@@ -451,33 +473,33 @@ void dsd_555_mstbl_step(struct node_description *node)
 	}
 }
 
-void dsd_555_mstbl_reset(struct node_description *node)
+void dsd_555_mstbl_reset(node_description *node)
 {
-	const struct discrete_555_desc *info = node->custom;
+	const discrete_555_desc *info = node->custom;
 	struct dsd_555_mstbl_context *context = node->context;
 
-	context->wav_type = info->options & DISC_555_OUT_MASK;
-	if ((context->wav_type == DISC_555_OUT_COUNT_F) || (context->wav_type == DISC_555_OUT_COUNT_R))
+	context->output_type = info->options & DISC_555_OUT_MASK;
+	if ((context->output_type == DISC_555_OUT_COUNT_F) || (context->output_type == DISC_555_OUT_COUNT_R))
 	{
-		discrete_log("Invalid Waveform type in NODE_%d.\n", node->node - NODE_00);
-		context->wav_type = DISC_555_OUT_SQW;
+		discrete_log("Invalid Output type in NODE_%d.\n", node->node - NODE_00);
+		context->output_type = DISC_555_OUT_SQW;
 	}
 
 	/* Use the supplied values or set to defaults. */
 	context->threshold = (info->threshold555 == DEFAULT_555_THRESHOLD) ? info->v555 *2 /3 : info->threshold555;
 	context->trigger =  (info->trigger555 == DEFAULT_555_TRIGGER) ? info->v555 /3 : info->trigger555;
-	context->vHigh = (info->v555high == DEFAULT_555_HIGH) ? info->v555 - 1.2 : info->v555high;
+	context->output_high_voltage = (info->v555high == DEFAULT_555_HIGH) ? info->v555 - 1.2 : info->v555high;
 
-	context->is_ac = info->options & DISC_555_OUT_AC;
+	context->output_is_ac = info->options & DISC_555_OUT_AC;
 	/* Calculate DC shift needed to make squarewave waveform AC */
-	context->ac_shift = context->is_ac ? -context->vHigh / 2.0 : 0;
+	context->ac_shift = context->output_is_ac ? -context->output_high_voltage / 2.0 : 0;
 
 	context->error = test_555(context->threshold, context->trigger, info->v555, node->node);
 
 	context->trig_is_logic = (info->options & DISC_555_TRIGGER_IS_VOLTAGE) ? 0: 1;
 
 	context->flip_flop = 0;
-	context->vCap = 0;
+	context->cap_voltage = 0;
 
 	node->output = 0;
 }
@@ -507,9 +529,9 @@ void dsd_555_mstbl_reset(struct node_description *node)
 #define DSD_555_CC__RGND	(*(node->input[5]))
 #define DSD_555_CC__RDIS	(*(node->input[6]))
 
-void dsd_555_cc_step(struct node_description *node)
+void dsd_555_cc_step(node_description *node)
 {
-	const struct discrete_555_cc_desc *info = node->custom;
+	const discrete_555_cc_desc *info = node->custom;
 	struct dsd_555_cc_context *context = node->context;
 
 	int		count_f = 0;
@@ -535,13 +557,13 @@ void dsd_555_cc_step(struct node_description *node)
 		/* If there was a fatal INIT error then we will also stay in RESET */
 		node->output = 0;
 		context->flip_flop = 1;
-		context->vCap = 0;
+		context->cap_voltage = 0;
 		return;
 	}
 
 	dt = discrete_current_context->sample_time;	// Change in time
 	xTime = context->x_init;
-	vC = context->vCap;	// Set to voltage before change
+	vC = context->cap_voltage;	// Set to voltage before change
 	viLimit = DSD_555_CC__VIN + info->vCCjunction;	// the max vC can be and still be charged by i
 	/* Calculate charging current */
 	i = (info->vCCsource - viLimit) / DSD_555_CC__R;
@@ -736,12 +758,12 @@ void dsd_555_cc_step(struct node_description *node)
 		}
 	} while(dt);
 
-	context->vCap = vCnext;
+	context->cap_voltage = vCnext;
 
 	/* Convert last switch time to a ratio */
 	xTime = xTime / discrete_current_context->sample_time;
 
-	switch (context->wav_type)
+	switch (context->output_type)
 	{
 		case DISC_555_OUT_SQW:
 			if (count_r && (~context->type & 0x01))
@@ -750,7 +772,7 @@ void dsd_555_cc_step(struct node_description *node)
 				node->output = 0;
 			}
 			else
-				node->output = context->flip_flop * context->vHigh;
+				node->output = context->flip_flop * context->output_high_voltage;
 			/* Fake it to AC if needed */
 			node->output += context->ac_shift;
 			break;
@@ -758,7 +780,7 @@ void dsd_555_cc_step(struct node_description *node)
 			node->output = vCnext + context->ac_shift;
 			break;
 		case DISC_555_OUT_ENERGY:
-			node->output = context->vHigh * (context->flip_flop ? xTime : (1 - xTime));
+			node->output = context->output_high_voltage * (context->flip_flop ? xTime : (1 - xTime));
 			node->output += context->ac_shift;
 			break;
 		case DISC_555_OUT_LOGIC_X:
@@ -779,29 +801,29 @@ void dsd_555_cc_step(struct node_description *node)
 	}
 }
 
-void dsd_555_cc_reset(struct node_description *node)
+void dsd_555_cc_reset(node_description *node)
 {
-	const struct discrete_555_cc_desc *info = node->custom;
+	const discrete_555_cc_desc *info = node->custom;
 	struct dsd_555_cc_context *context = node->context;
 
 	context->flip_flop=1;
-	context->vCap = 0;
+	context->cap_voltage = 0;
 
-	context->wav_type = info->options & DISC_555_OUT_MASK;
+	context->output_type = info->options & DISC_555_OUT_MASK;
 
 	/* Used to adjust the ratio depending on if it is the extra percent or energy */
 	context->x_init = 0;
-	if (context->wav_type == DISC_555_OUT_ENERGY)
+	if (context->output_type == DISC_555_OUT_ENERGY)
 		context->x_init = discrete_current_context->sample_time;
 
 	/* Use the supplied values or set to defaults. */
 	context->threshold = (info->threshold555 == DEFAULT_555_THRESHOLD) ? info->v555 *2 /3 : info->threshold555;
 	context->trigger =  (info->trigger555 == DEFAULT_555_TRIGGER) ? info->v555 /3 : info->trigger555;
-	context->vHigh = (info->v555high == DEFAULT_555_HIGH) ? info->v555 - 1.2 : info->v555high;
+	context->output_high_voltage = (info->v555high == DEFAULT_555_HIGH) ? info->v555 - 1.2 : info->v555high;
 
-	context->is_ac = info->options & DISC_555_OUT_AC;
+	context->output_is_ac = info->options & DISC_555_OUT_AC;
 	/* Calculate DC shift needed to make squarewave waveform AC */
-	context->ac_shift = context->is_ac ? -context->vHigh / 2.0 : 0;
+	context->ac_shift = context->output_is_ac ? -context->output_high_voltage / 2.0 : 0;
 
 	context->error = test_555(context->threshold, context->trigger, info->v555, node->node);
 
@@ -825,10 +847,10 @@ void dsd_555_cc_reset(struct node_description *node)
      * When there is not any charge current, the cap will bleed off.
      * Once the lower threshold(trigger) is reached, the output will
      * go high but the cap will continue to discharge due to losses.
-     *   .------+---> vCap      CHARGING:
+     *   .------+---> cap_voltage      CHARGING:
      *   |      |                 dv (change in voltage) compared to dt (change in time in seconds).
      * .---.   ---                dv = i * dt / C; where i is current in amps and C is capacitance in farads.
-     * | i |   --- C              vCap = vCap + dv
+     * | i |   --- C              cap_voltage = cap_voltage + dv
      * '---'    |
      *   |      |               DISCHARGING:
      *  gnd    gnd                instantaneous
@@ -839,10 +861,10 @@ void dsd_555_cc_reset(struct node_description *node)
      * When there is not any charge current, the cap will bleed off.
      * Once the lower threshold(trigger) is reached, the output will
      * go high but the cap will continue to discharge due to losses.
-     *   .----ZZZ-----+---> vCap      CHARGING:
+     *   .----ZZZ-----+---> cap_voltage      CHARGING:
      *   | rDischarge |                 dv (change in voltage) compared to dt (change in time in seconds).
      * .---.         ---                dv = i * dt / C; where i is current in amps and C is capacitance in farads.
-     * | i |         --- C              vCap = vCap + dv
+     * | i |         --- C              cap_voltage = cap_voltage + dv
      * '---'          |
      *   |            |               DISCHARGING:
      *  gnd          gnd                thru rDischarge
@@ -858,7 +880,7 @@ void dsd_555_cc_reset(struct node_description *node)
      * after that point.
      *
      * .------------.     Rc                  Rc is the equivilent circuit resistance.
-     * |     v      |----ZZZZ---+---> vCap    v  is the equivilent circuit voltage.
+     * |     v      |----ZZZZ---+---> cap_voltage    v  is the equivilent circuit voltage.
      * |            |           |
      * '------------'          ---            Then the standard RC charging formula applies.
      *       |                 --- C
@@ -869,7 +891,7 @@ void dsd_555_cc_reset(struct node_description *node)
      * When there is not any charge current, the cap will bleed off.
      * Once the lower threshold(trigger) is reached, the output will
      * go high but the cap will continue to discharge due to rGnd.
-     *   .-------+------+------> vCap         CHARGING:
+     *   .-------+------+------> cap_voltage         CHARGING:
      *   |       |      |                       v = vi = i * rGnd
      * .---.    ---     Z                       Rc = rGnd
      * | i |    --- C   Z rGnd
@@ -881,7 +903,7 @@ void dsd_555_cc_reset(struct node_description *node)
      * When there is not any charge current, the cap will bleed off.
      * Once the lower threshold(trigger) is reached, the output will
      * go high but the cap will continue to discharge due to rGnd.
-     *   .----ZZZ-----+------+------> vCap    CHARGING:
+     *   .----ZZZ-----+------+------> cap_voltage    CHARGING:
      *   | rDischarge |      |                  v = vi = i * rGnd
      * .---.         ---     Z                  Rc = rGnd
      * | i |         --- C   Z rGnd
@@ -890,7 +912,7 @@ void dsd_555_cc_reset(struct node_description *node)
      *  gnd          gnd    gnd
      *
      * [4]
-     *     .---ZZZ---+------------+-------------> vCap      CHARGING:
+     *     .---ZZZ---+------------+-------------> cap_voltage      CHARGING:
      *     |  rBias  |            |                           Rc = rBias
      * .-------.   .---.         ---                          vi = i * rBias
      * | vBias |   | i |         --- C                        v = vBias + vi
@@ -899,7 +921,7 @@ void dsd_555_cc_reset(struct node_description *node)
      *    gnd       gnd          gnd                          instantaneous
      *
      * [5]
-     *     .---ZZZ---+----ZZZ-----+-------------> vCap      CHARGING:
+     *     .---ZZZ---+----ZZZ-----+-------------> cap_voltage      CHARGING:
      *     |  rBias  | rDischarge |                           Rc = rBias + rDischarge
      * .-------.   .---.         ---                          vi = i * rBias
      * | vBias |   | i |         --- C                        v = vBias + vi
@@ -908,7 +930,7 @@ void dsd_555_cc_reset(struct node_description *node)
      *    gnd       gnd          gnd                          thru rDischarge
      *
      * [6]
-     *     .---ZZZ---+------------+------+------> vCap      CHARGING:
+     *     .---ZZZ---+------------+------+------> cap_voltage      CHARGING:
      *     |  rBias  |            |      |                    Rc = rBias || rGnd
      * .-------.   .---.         ---     Z                    vi = i * Rc
      * | vBias |   | i |         --- C   Z rGnd               v = vBias * (rGnd / (rBias + rGnd)) + vi
@@ -917,7 +939,7 @@ void dsd_555_cc_reset(struct node_description *node)
      *    gnd       gnd          gnd    gnd                   instantaneous
      *
      * [7]
-     *     .---ZZZ---+----ZZZ-----+------+------> vCap      CHARGING:
+     *     .---ZZZ---+----ZZZ-----+------+------> cap_voltage      CHARGING:
      *     |  rBias  | rDischarge |      |                    Rc = (rBias + rDischarge) || rGnd
      * .-------.   .---.         ---     Z                    vi = i * rBias * (rGnd / (rBias + rDischarge + rGnd))
      * | vBias |   | i |         --- C   Z rGnd               v = vBias * (rGnd / (rBias + rDischarge + rGnd)) + vi
@@ -934,9 +956,9 @@ void dsd_555_cc_reset(struct node_description *node)
      * discharge.  So in charge mode it charges linearly from the constant
      * current cource.  But when in discharge mode it behaves like circuit
      * type 2 above.
-     *   .-------+------+------> vCap         CHARGING:
+     *   .-------+------+------> cap_voltage         CHARGING:
      *   |       |      |                       dv = i * dt / C
-     * .---.    ---     Z                       vCap = vCap + dv
+     * .---.    ---     Z                       cap_voltage = cap_voltage + dv
      * | i |    --- C   Z rDischarge
      * '---'     |      |                     DISCHARGING:
      *   |       |      |                       v = vi = i * rGnd
@@ -958,18 +980,221 @@ void dsd_555_cc_reset(struct node_description *node)
  *
  * also passed discrete_5555_vco1_desc structure
  *
- * Feb 2006, D Renaud.
+ * Apr 2006, D Renaud.
  ************************************************************************/
-#define DSD_555_VCO1__RESET	(*(node->input[0]))
+#define DSD_555_VCO1__RESET	(*(node->input[0]))	// reset active low
 #define DSD_555_VCO1__VIN1	(*(node->input[1]))
 #define DSD_555_VCO1__VIN2	(*(node->input[2]))
 
-void dsd_555_vco1_step(struct node_description *node)
+void dsd_555_vco1_step(node_description *node)
 {
+	const discrete_555_vco1_desc *info = node->custom;
+	struct dsd_555_vco1_context *context = node->context;
+
+	int		count_f = 0;
+	int		count_r = 0;
+	double	dt;			// change in time
+	double	xTime = 0;	// time since change happened
+	double	vC;			// Current voltage on capacitor, before dt
+	double	vCnext = 0;	// Voltage on capacitor, after dt
+
+	dt = discrete_current_context->sample_time;	// Change in time
+	vC = context->cap_voltage;
+
+	/* Check: if the Control Voltage node is connected. */
+	if (context->ctrlv_is_node && DSD_555_VCO1__RESET)	// reset active low
+	{
+		/* If CV is less then .25V, the circuit will oscillate way out of range.
+         * So we will just ignore it when it happens. */
+		if (DSD_555_VCO1__VIN2 < .25) return;
+		/* If it is a node then calculate thresholds based on Control Voltage */
+		context->threshold = DSD_555_VCO1__VIN2;
+		context->trigger = DSD_555_VCO1__VIN2 / 2.0;
+		/* Since the thresholds may have changed we need to update the FF */
+		if (vC >= context->threshold)
+		{
+			context->flip_flop = 0;
+			count_f++;
+		}
+		else
+		if (vC <= context->trigger)
+		{
+			context->flip_flop = 1;
+			count_r++;
+		}
+	}
+
+	/* Keep looping until all toggling in time sample is used up. */
+	do
+	{
+		if (context->flip_flop)
+		{
+			// if we are in reset then toggle f/f and discharge
+			if (!DSD_555_VCO1__RESET)	// reset active low
+			{
+				context->flip_flop = 0;
+				count_f++;
+			}
+			else
+			{
+				/* Charging */
+				/* iC=C*dv/dt  works out to dv=iC*dt/C */
+				vCnext = vC + (context->i_charge * dt / info->c);
+				dt = 0;
+
+				/* has it charged past upper limit? */
+				if (vCnext >= context->threshold)
+				{
+					if (vCnext > context->threshold)
+					{
+						/* calculate the overshoot time */
+						dt = info->c * (vCnext - context->threshold) / context->i_charge;
+					}
+					vC = context->threshold;
+					context->flip_flop = 0;
+					count_f++;
+					xTime = dt;
+				}
+			}
+		}
+		else
+		{
+			/* Discharging */
+			/* iC=C*dv/dt  works out to dv=iC*dt/C */
+			vCnext = vC - (context->i_discharge * dt / info->c);
+
+			// if we are in reset, then the cap can discharge to 0
+			if (!DSD_555_VCO1__RESET)	// reset active low
+			{
+				if (vCnext < 0) vCnext = 0;
+				dt = 0;
+			}
+			else
+			{
+				// if we are out of reset and the cap voltage is less then
+				// the lower threshold, toggle f/f and start charging
+				if (vC <= context->trigger)
+				{
+					context->flip_flop = 1;
+					count_r++;
+				}
+				else
+				{
+					dt = 0;
+					/* has it discharged past lower limit? */
+					if (vCnext <= context->trigger)
+					{
+						if (vCnext < context->trigger)
+						{
+							/* calculate the overshoot time */
+							dt = info->c * (vCnext - context->trigger) / context->i_discharge;
+						}
+						vC = context->trigger;
+						context->flip_flop = 1;
+						count_r++;
+						xTime = dt;
+					}
+				}
+			}
+		}
+	} while(dt);
+
+	context->cap_voltage = vCnext;
+
+	/* Convert last switch time to a ratio */
+	xTime = xTime / discrete_current_context->sample_time;
+
+	switch (context->output_type)
+	{
+		case DISC_555_OUT_SQW:
+			node->output = context->flip_flop * context->output_high_voltage + context->ac_shift;
+			break;
+		case DISC_555_OUT_CAP:
+			node->output = vCnext;
+			/* Fake it to AC if needed */
+			if (context->output_is_ac)
+				node->output -= context->threshold * 3.0 /4.0;
+			break;
+		case DISC_555_OUT_ENERGY:
+			node->output = context->output_high_voltage * (context->flip_flop ? xTime : (1 - xTime));
+			node->output += context->ac_shift;
+			break;
+		case DISC_555_OUT_LOGIC_X:
+			node->output = context->flip_flop + xTime;
+			break;
+		case DISC_555_OUT_COUNT_F_X:
+			node->output = count_f ? count_f + xTime : count_f;
+			break;
+		case DISC_555_OUT_COUNT_R_X:
+			node->output =  count_r ? count_r + xTime : count_r;
+			break;
+		case DISC_555_OUT_COUNT_F:
+			node->output = count_f;
+			break;
+		case DISC_555_OUT_COUNT_R:
+			node->output = count_r;
+			break;
+	}
 }
 
-void dsd_555_vco1_reset(struct node_description *node)
+void dsd_555_vco1_reset(node_description *node)
 {
+	const discrete_555_vco1_desc *info = node->custom;
+	struct dsd_555_vco1_context *context = node->context;
+
+	double v_ratio_r3, v_ratio_r4_1, r_in_1;
+
+	context->output_type = info->options & DISC_555_OUT_MASK;
+	context->output_is_ac = info->options & DISC_555_OUT_AC;
+
+	/* Setup op-amp parameters */
+
+	/* The voltage at op-amp +in is always a fixed ratio of the modulation voltage. */
+	v_ratio_r3 = info->r3 / (info->r2 + info->r3);			// +in voltage
+	/* The voltage at op-amp -in is 1 of 2 fixed ratios of the modulation voltage,
+     * based on the 555 Flip-Flop state. */
+	/* If the FF is 0, then only R1 is connected allowing the full modulation volatge to pass. */
+	/* v_ratio_r4_0 = 1 */
+	/* If the FF is 1, then R1 & R4 make a voltage divider similar to R2 & R3 */
+	v_ratio_r4_1 = info->r4 / (info->r1 + info->r4);		// -in voltage
+	/* the input resistance to the op amp depends on the FF state */
+	/* r_in_0 = info->r1 when FF = 0 */
+	r_in_1 = 1.0 / (1.0 / info->r1 + 1.0 / info->r4);	// input resistance when r4 switched in
+
+	/* Now that we know the voltages entering the op amp and the resistance for the
+     * FF states, we can predetermine the ratios for the charge/discharge currents. */
+	 context->i_discharge = (1 - v_ratio_r3) / info->r1;
+	 context->i_charge = (v_ratio_r3 - v_ratio_r4_1) / r_in_1;
+
+	/* the cap starts off discharged */
+	context->cap_voltage = 0;
+
+	/* Setup 555 parameters */
+
+	/* There is no charge on the cap so the 555 goes high at init. */
+	context->flip_flop = 1;
+	context->ctrlv_is_node = (node->input_is_node >> 2) & 1;
+	context->output_high_voltage = (info->v555high == DEFAULT_555_HIGH) ? info->v555 - 1.2 : info->v555high;
+
+	/* Calculate 555 thresholds.
+     * If the Control Voltage is a node, then the thresholds will be calculated each step.
+     * If the Control Voltage is a fixed voltage, then the thresholds will be calculated
+     * from that.  Otherwise we will use the thresholds specified in the setup info. */
+	if (!context->ctrlv_is_node && (DSD_555_VCO1__VIN2 != -1))
+	{
+		/* Setup based on supplied static value */
+		context->threshold = DSD_555_VCO1__VIN2;
+		context->trigger = DSD_555_VCO1__VIN2 / 2.0;
+	}
+	else
+	{
+		/* use values passed in structure */
+		context->threshold = (info->threshold555 == DEFAULT_555_THRESHOLD) ? info->v555 * 2 /3 : info->threshold555;
+		context->trigger =  (info->trigger555 == DEFAULT_555_TRIGGER) ? info->v555 /3 : info->trigger555;
+	}
+
+	/* Calculate DC shift needed to make squarewave waveform AC */
+	context->ac_shift = context->output_is_ac ? -context->output_high_voltage / 2.0 : 0;
 }
 
 /************************************************************************
@@ -990,9 +1215,9 @@ void dsd_555_vco1_reset(struct node_description *node)
 #define DSD_566__R		(*(node->input[2]))
 #define DSD_566__C		(*(node->input[3]))
 
-void dsd_566_step(struct node_description *node)
+void dsd_566_step(node_description *node)
 {
-	const struct discrete_566_desc *info = node->custom;
+	const discrete_566_desc *info = node->custom;
 	struct dsd_566_context *context = node->context;
 
 	double i;	// Charging current created by vIn
@@ -1003,7 +1228,7 @@ void dsd_566_step(struct node_description *node)
 	if (DSD_566__ENABLE && !context->error)
 	{
 		dt = discrete_current_context->sample_time;	// Change in time
-		vC = context->vCap;	// Set to voltage before change
+		vC = context->cap_voltage;	// Set to voltage before change
 		/* Calculate charging current */
 		i = (context->vDiff - DSD_566__VMOD) / DSD_566__R;
 
@@ -1063,7 +1288,7 @@ void dsd_566_step(struct node_description *node)
 			}
 		} while(dt);
 
-		context->vCap = vCnext;
+		context->cap_voltage = vCnext;
 
 		switch (info->options & DISC_566_OUT_MASK)
 		{
@@ -1100,9 +1325,9 @@ void dsd_566_step(struct node_description *node)
 		node->output = 0;
 }
 
-void dsd_566_reset(struct node_description *node)
+void dsd_566_reset(node_description *node)
 {
-	const struct discrete_566_desc *info = node->custom;
+	const discrete_566_desc *info = node->custom;
 	struct dsd_566_context *context = node->context;
 
 	double	temp;
@@ -1116,7 +1341,7 @@ void dsd_566_reset(struct node_description *node)
 
 	context->vDiff = info->vPlus - info->vNeg;
 	context->flip_flop = 0;
-	context->vCap = 0;
+	context->cap_voltage = 0;
 	context->state[0] = 0;
 	context->state[1] = 0;
 

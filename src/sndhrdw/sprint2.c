@@ -12,7 +12,8 @@
 /* Rewritten by Hans Andersson. March 2005                              */
 /************************************************************************/
 
-const struct discrete_lfsr_desc sprint2_lfsr={
+static const discrete_lfsr_desc sprint2_lfsr =
+{
 	DISC_CLK_IS_FREQ,
 	16,                  /* Bit Length */
 	0,                   /* Reset Value */
@@ -26,7 +27,7 @@ const struct discrete_lfsr_desc sprint2_lfsr={
 	15                   /* Output bit */
 };
 
-const struct discrete_dac_r1_ladder sprint2_motor_v_dac =
+static const discrete_dac_r1_ladder sprint2_motor_v_dac =
 {
 	4,			// size of ladder
 	{RES_M(2.2), RES_M(1), RES_K(470), RES_K(220)},	// R5, R6, R7, R8
@@ -36,7 +37,7 @@ const struct discrete_dac_r1_ladder sprint2_motor_v_dac =
 	CAP_U(10)	// C17
 };
 
-const struct discrete_555_cc_desc sprint2_motor_vco =
+static const discrete_555_cc_desc sprint2_motor_vco =
 {
 	DISC_555_OUT_DC | DISC_555_OUT_SQW,
 	5,		// B+ voltage of 555
@@ -45,7 +46,7 @@ const struct discrete_555_cc_desc sprint2_motor_vco =
 	0.7	// VBE 2N3644 (Si)
 };
 
-const struct discrete_dac_r1_ladder sprint2_motor_out_dac =
+static const discrete_dac_r1_ladder sprint2_motor_out_dac =
 {
 	4,			// size of ladder
 	{RES_K(10), RES_K(10), 0, RES_K(10)}, // R42, R43, -, R44
@@ -55,7 +56,7 @@ const struct discrete_dac_r1_ladder sprint2_motor_out_dac =
 	CAP_U(0.1)	// C36
 };
 
-const struct discrete_dac_r1_ladder sprint2_crash_dac =
+static const discrete_dac_r1_ladder sprint2_crash_dac =
 {
 	4,		// size of ladder
 	{RES_K(8.2), RES_K(3.9), RES_K(2.2), RES_K(1)},	// R27, R25, R26, R24
@@ -65,7 +66,7 @@ const struct discrete_dac_r1_ladder sprint2_crash_dac =
 	CAP_U(0.1) // C69
 };
 
-const struct discrete_schmitt_osc_desc sprint2_screech_osc =
+static const discrete_schmitt_osc_desc sprint2_screech_osc =
 {
 	RES_K(1),	// R19
 	100,		// R16
@@ -74,7 +75,7 @@ const struct discrete_schmitt_osc_desc sprint2_screech_osc =
 	DISC_SCHMITT_OSC_IN_IS_LOGIC | DISC_SCHMITT_OSC_ENAB_IS_AND
 };
 
-const struct discrete_mixer_desc sprint2_mixer =
+static const discrete_mixer_desc sprint2_mixer =
 {
 	DISC_MIXER_IS_RESISTOR,
 	{RES_K(13.3333), RES_K(10.5456), RES_K(33)},	// R61 + motor, R60 + bang, R62
@@ -313,7 +314,7 @@ DISCRETE_SOUND_END
 /* updated to new code March 2005, DR.                                  */
 /************************************************************************/
 
-const struct discrete_dac_r1_ladder dominos_tone_vco_dac =
+static const discrete_dac_r1_ladder dominos_tone_vco_dac =
 {
 	4,
 	{RES_M(2.2), RES_M(1), RES_K(470), RES_K(220)},	// R5, R6, R7, R8
@@ -323,7 +324,7 @@ const struct discrete_dac_r1_ladder dominos_tone_vco_dac =
 	CAP_U(.1)	// C17
 };
 
-const struct discrete_555_cc_desc dominos_tone_vco =
+static const discrete_555_cc_desc dominos_tone_vco =
 {
 	DISC_555_OUT_DC | DISC_555_OUT_SQW,
 	5,		// B+ voltage of 555
@@ -332,7 +333,7 @@ const struct discrete_555_cc_desc dominos_tone_vco =
 	0.7		// Q1 junction voltage
 };
 
-const struct discrete_dac_r1_ladder dominos_tone_dac =
+static const discrete_dac_r1_ladder dominos_tone_dac =
 {
 	4,
 	{RES_K(8.2), RES_K(3.9), RES_K(2.2), RES_K(1)},	// R27, R24, R25, R26
@@ -340,7 +341,7 @@ const struct discrete_dac_r1_ladder dominos_tone_dac =
 	CAP_U(.1)	// C69
 };
 
-const struct discrete_mixer_desc dominos_mixer =
+static const discrete_mixer_desc dominos_mixer =
 {
 	DISC_MIXER_IS_RESISTOR,
 	{RES_K(33), RES_K(10)+ 1.0/(1.0/RES_K(8.2) + 1.0/RES_K(3.9) + 1.0/RES_K(2.2) + 1.0/RES_K(1))}, // R62, R60 + R27||R24||R25||R26

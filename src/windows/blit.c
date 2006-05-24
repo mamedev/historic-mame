@@ -19,8 +19,13 @@
 
 // MAMEOS headers
 #include "blit.h"
+#ifndef NEW_RENDER
+#include "videoold.h"
+#include "windold.h"
+#else
 #include "video.h"
 #include "window.h"
+#endif
 
 
 
@@ -84,9 +89,6 @@ void *asmblit_srclookup;
 void *asmblit_dstdata;
 UINT32 asmblit_dstpitch;
 
-UINT32 asmblit_mmxmask[4];
-UINT32 asmblit_rgbmask[MAX_VIDEO_HEIGHT * 2 * 16];
-
 
 //============================================================
 //  LOCAL VARIABLES
@@ -97,7 +99,7 @@ static UINT8 *				active_fast_blitter;
 static UINT8 *				active_update_blitter;
 
 // current parameters
-static win_blit_params	active_blitter_params;
+static win_blit_params		active_blitter_params;
 
 // MMX/SSE/SSE2 supported?
 static int					use_mmx;

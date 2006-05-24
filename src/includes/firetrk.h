@@ -49,9 +49,9 @@ WRITE8_HANDLER( firetrk_xtndply_w );
 WRITE8_HANDLER( firetrk_asr_w );
 WRITE8_HANDLER( firetrk_out2_w );
 
-extern struct discrete_sound_block firetrk_discrete_interface[];
-extern struct discrete_sound_block superbug_discrete_interface[];
-extern struct discrete_sound_block montecar_discrete_interface[];
+extern discrete_sound_block firetrk_discrete_interface[];
+extern discrete_sound_block superbug_discrete_interface[];
+extern discrete_sound_block montecar_discrete_interface[];
 
 
 /*----------- defined in vidhrdw/firetrk.c -----------*/
