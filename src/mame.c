@@ -162,14 +162,6 @@ static callback_item *exit_callback_list;
 static jmp_buf fatal_error_jmpbuf;
 static int fatal_error_jmpbuf_valid;
 
-/* malloc tracking */
-static void **malloc_list = NULL;
-static int malloc_list_index = 0;
-static int malloc_list_size = 0;
-
-/* resource tracking */
-int resource_tracking_tag = 0;
-
 /* array of memory regions */
 static region_info mem_region[MAX_MEMORY_REGIONS];
 
@@ -180,7 +172,7 @@ static UINT32 rand_seed;
 static callback_item *logerror_callback_list;
 
 /* a giant string buffer for temporary strings */
-char giant_string_buffer[65536];
+char giant_string_buffer[GIANT_STRING_BUFFER_SIZE];
 
 /* the "disclaimer" that should be printed when run with no parameters */
 const char *mame_disclaimer =
@@ -280,6 +272,10 @@ int run_game(int game)
 	exit_pending = FALSE;
 	while (error == 0 && !exit_pending)
 	{
+		init_resource_tracking();
+		add_free_resources_callback(timer_free);
+		add_free_resources_callback(state_save_free);
+
 		/* use setjmp/longjmp for deep error recovery */
 		fatal_error_jmpbuf_valid = TRUE;
 		error = setjmp(fatal_error_jmpbuf);
@@ -361,8 +357,7 @@ int run_game(int game)
 			(*cb->func.exit)();
 
 		/* close all inner resource tracking */
-		while (resource_tracking_tag != 0)
-			end_resource_tracking();
+		exit_resource_tracking();
 
 		/* free our callback lists */
 		free_callback_list(&exit_callback_list);
@@ -710,119 +705,6 @@ UINT32 memory_region_flags(int num)
 
 /***************************************************************************
 
-    Resource tracking code
-
-***************************************************************************/
-
-/*-------------------------------------------------
-    auto_malloc_add - add pointer to malloc list
--------------------------------------------------*/
-
-INLINE void auto_malloc_add(void *result)
-{
-	/* make sure we have tracking space */
-	if (malloc_list_index == malloc_list_size)
-	{
-		void **list;
-
-		/* if this is the first time, allocate 256 entries, otherwise double the slots */
-		if (malloc_list_size == 0)
-			malloc_list_size = 256;
-		else
-			malloc_list_size *= 2;
-
-		/* realloc the list */
-		list = realloc(malloc_list, malloc_list_size * sizeof(list[0]));
-		if (list == NULL)
-			fatalerror("Unable to extend malloc tracking array to %d slots", malloc_list_size);
-		malloc_list = list;
-	}
-	malloc_list[malloc_list_index++] = result;
-}
-
-
-/*-------------------------------------------------
-    auto_malloc_free - release auto_malloc'd memory
--------------------------------------------------*/
-
-static void auto_malloc_free(void)
-{
-	/* start at the end and free everything till you reach the sentinel */
-	while (malloc_list_index > 0 && malloc_list[--malloc_list_index] != NULL)
-		free(malloc_list[malloc_list_index]);
-
-	/* if we free everything, free the list */
-	if (malloc_list_index == 0)
-	{
-		free(malloc_list);
-		malloc_list = NULL;
-		malloc_list_size = 0;
-	}
-}
-
-
-/*-------------------------------------------------
-    begin_resource_tracking - start tracking
-    resources
--------------------------------------------------*/
-
-void begin_resource_tracking(void)
-{
-	/* add a NULL as a sentinel */
-	auto_malloc_add(NULL);
-
-	/* increment the tag counter */
-	resource_tracking_tag++;
-}
-
-
-/*-------------------------------------------------
-    end_resource_tracking - stop tracking
-    resources
--------------------------------------------------*/
-
-void end_resource_tracking(void)
-{
-	/* call everyone who tracks resources to let them know */
-	auto_malloc_free();
-	timer_free();
-	state_save_free();
-
-	/* decrement the tag counter */
-	resource_tracking_tag--;
-}
-
-
-/*-------------------------------------------------
-    auto_malloc - allocate auto-freeing memory
--------------------------------------------------*/
-
-void *_auto_malloc(size_t size, const char *file, int line)
-{
-	void *result;
-
-	/* fail horribly if it doesn't work */
-	result = _malloc_or_die(size, file, line);
-
-	/* track this item in our list */
-	auto_malloc_add(result);
-	return result;
-}
-
-
-/*-------------------------------------------------
-    auto_strdup - allocate auto-freeing string
--------------------------------------------------*/
-
-char *auto_strdup(const char *str)
-{
-	return strcpy(auto_malloc(strlen(str) + 1), str);
-}
-
-
-
-/***************************************************************************
-
     Miscellaneous bits & pieces
 
 ***************************************************************************/
@@ -913,29 +795,6 @@ static void logfile_callback(const char *buffer)
 
 
 /*-------------------------------------------------
-    _malloc_or_die - allocate memory or die
-    trying
--------------------------------------------------*/
-
-void *_malloc_or_die(size_t size, const char *file, int line)
-{
-	void *result;
-
-	/* fail on attempted allocations of 0 */
-	if (size == 0)
-		fatalerror("Attempted to malloc zero bytes (%s:%d)", file, line);
-
-	/* allocate and return if we succeeded */
-	result = malloc(size);
-	if (result != NULL)
-		return result;
-
-	/* otherwise, die horribly */
-	fatalerror("Failed to allocate %d bytes (%s:%d)", (int)size, file, line);
-}
-
-
-/*-------------------------------------------------
     mame_find_cpu_index - return the index of the
     given CPU, or -1 if not found
 -------------------------------------------------*/
@@ -1000,16 +859,16 @@ static void create_machine(int game)
 	if (Machine->drv->video_attributes & VIDEO_RGB_DIRECT)
 		Machine->color_depth = (Machine->drv->video_attributes & VIDEO_NEEDS_6BITS_PER_GUN) ? 32 : 15;
 
+	/* initialize the samplerate */
+	Machine->sample_rate = options.samplerate;
+
+#ifndef NEW_RENDER
 	/* update the vector width/height with defaults */
 	if (options.vector_width == 0)
 		options.vector_width = 640;
 	if (options.vector_height == 0)
 		options.vector_height = 480;
 
-	/* initialize the samplerate */
-	Machine->sample_rate = options.samplerate;
-
-#ifndef NEW_RENDER
 	/* get orientation right */
 	Machine->ui_orientation = options.ui_orientation;
 #endif
@@ -1156,7 +1015,7 @@ static void soft_reset(int param)
 	current_phase = MAME_PHASE_RESET;
 
 	/* a bit gross -- back off of the resource tracking, and put it back at the end */
-	assert(resource_tracking_tag == 2);
+	assert(get_resource_tag() == 2);
 	end_resource_tracking();
 	begin_resource_tracking();
 

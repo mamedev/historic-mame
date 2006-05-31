@@ -56,6 +56,20 @@ correctly.
 0x08 is the sound card service interupt. The game uses this to throw sounds
      at the sound CPU.
 
+
+SAVE STATE (lee@lmservers.com):
+1942 uses the Z80 and AY8910 which both support save state.
+
+The global variables in drivers/1942.c are extern and defined in vidhrdw/1942.c
+The rationale for saving/not saving are as follows:
+UINT8 *c1942_fgvideoram;        Saved via reference to AM_BASE
+UINT8 *c1942_bgvideoram;        Saved via reference to AM_BASE
+
+static int c1942_palette_bank;  Explicitly saved
+static tilemap *fg_tilemap, *bg_tilemap;    Saved due to tilemap supporting save
+
+There are no static local variables.
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -425,6 +439,6 @@ DRIVER_INIT( 1942 )
 }
 
 
-GAME( 1984, 1942,  0,    1942, 1942, 1942, ROT270, "Capcom", "1942 (set 1)", 0 )
-GAME( 1984, 1942a, 1942, 1942, 1942, 1942, ROT270, "Capcom", "1942 (set 2)", 0 )
-GAME( 1984, 1942b, 1942, 1942, 1942, 1942, ROT270, "Capcom", "1942 (set 3)", 0 )
+GAME( 1984, 1942,  0,    1942, 1942, 1942, ROT270, "Capcom", "1942 (set 1)", GAME_SUPPORTS_SAVE )
+GAME( 1984, 1942a, 1942, 1942, 1942, 1942, ROT270, "Capcom", "1942 (set 2)", GAME_SUPPORTS_SAVE )
+GAME( 1984, 1942b, 1942, 1942, 1942, 1942, ROT270, "Capcom", "1942 (set 3)", GAME_SUPPORTS_SAVE )

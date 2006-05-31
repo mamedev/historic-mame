@@ -458,7 +458,7 @@ static void expand_blitter(int count, blit_state *state,
 
 	if (has_mmx()
 		&& ((count % REGCOUNT_MMX) == 0)
-		&& (blit->srcdepth == 16)
+		&& ((blit->srcdepth == 15) || (blit->srcdepth == 16))
 		&& ((blit->dstdepth == 16) || (blit->dstdepth == 32))
 		&& ((blit->dstxscale == 1) || (blit->dstxscale == 2) || (blit->dstxscale == 3))
 		&& (b == BRIGHTNESS_100))
@@ -724,6 +724,7 @@ static void expand_blitter(int count, blit_state *state,
 		{
 			switch(blit->srcdepth)
 			{
+				case 15:
 				case 16:
 					_movzx_r32_m16bd(REG_EAX, REG_ESI, pixoffset[i + 0]);
 					_movzx_r32_m16bd(REG_EBX, REG_ESI, pixoffset[i + 1]);
@@ -811,6 +812,7 @@ static void expand_blitter(int count, blit_state *state,
 		{
 			switch(blit->srcdepth)
 			{
+				case 15:
 				case 16:
 					_movzx_r32_m16bd(REG_EAX, REG_ESI, pixoffset[i]);
 					_mov_r32_m32bisd(REG_EAX, REG_ECX, REG_EAX, 4, 0);

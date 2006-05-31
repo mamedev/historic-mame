@@ -124,6 +124,7 @@ static const int pcm_tab[] = { 0, 4, 8, -1, 12, 16, 20, -1, 24, 28, 32, -1, 36, 
 static INT16 *wavetable[7];
 static double plfo_table[4][8][LFO_LENGTH];
 static int alfo_table[4][LFO_LENGTH];
+static INT32 *mix;
 
 #define ENV_ATTACK		0
 #define ENV_DECAY1		1
@@ -671,7 +672,6 @@ static void ymf271_update(void *param, stream_sample_t **inputs, stream_sample_t
 {
 	int i, j;
 	int op;
-	INT32 mix[48000*2];
 	INT32 *mixp;
 	YMF271Chip *chip = param;
 
@@ -1634,6 +1634,8 @@ static void init_tables(void)
 		tri_wave = ((i % (LFO_LENGTH/2)) * ALFO_MAX) / (LFO_LENGTH/2);
 		alfo_table[3][i] = (i < (LFO_LENGTH/2)) ? ALFO_MAX-tri_wave : tri_wave;
 	}
+
+	mix = auto_malloc(48000*2*sizeof(*mix));
 }
 
 static void init_state(YMF271Chip *chip)

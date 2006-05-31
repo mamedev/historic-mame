@@ -10,17 +10,12 @@
 ****************************************************************************
 
     Things that are still broken:
-        * optimization: skip clear in software if opaque bitmap is first
-        * software renderer needs to support add and RGB blend modes
         * no way to view tilemaps/charsets
+        * invaders doesn't compute minimum size correctly (lines are missing)
 
     OSD-specific things that are busted:
-        * quad clipping not respected
         * need to respect options for:
-            bilinear filtering
             pre-scaling of texture
-        * -waitvsync/-matchrefresh/-syncrefresh
-        * -refresh
         * -full_screen_gamma
         * -hws: allow to disable, but disables artwork as well
         * no fallback if we run out of video memory
@@ -299,6 +294,7 @@ struct _element_component
 	render_bounds		bounds;				/* bounds of the element */
 	render_color		color;				/* color of the element */
 	mame_bitmap *		bitmap;				/* source bitmap for images */
+	int					hasalpha;			/* is there any alpha component present? */
 };
 
 
@@ -373,6 +369,7 @@ struct _render_target
 	layout_view *		curview;			/* current view */
 	layout_file *		filelist;			/* list of layout files */
 	render_primitive *	primlist;			/* list of primitives */
+	render_primitive **	primnext;			/* pointer to address of next primitive */
 	INT32				width;				/* width in pixels */
 	INT32				height;				/* height in pixels */
 	float				pixel_aspect;		/* aspect ratio of individual pixels */
@@ -432,8 +429,9 @@ static view_item_state *item_statelist;
 static void render_exit(void);
 
 /* render targets */
-static render_primitive **add_container_primitives(render_primitive **primnext, const object_transform *xform, const render_container *container, int blendmode);
-static render_primitive **add_element_primitives(render_primitive **primnext, const object_transform *xform, const layout_element *element, int state, int blendmode);
+static void add_container_primitives(render_target *target, const object_transform *xform, const render_container *container, int blendmode);
+static void add_element_primitives(render_target *target, const object_transform *xform, const layout_element *element, int state, int blendmode);
+static void add_clear_and_optimize_primitive_list(render_target *target);
 
 /* render textures */
 static void render_texture_get_scaled(render_texture *texture, UINT32 dwidth, UINT32 dheight, render_texinfo *texinfo);
@@ -458,7 +456,7 @@ static layout_element *load_layout_element(xml_data_node *elemnode);
 static element_component *load_element_component(xml_data_node *compnode);
 static layout_view *load_layout_view(xml_data_node *viewnode, layout_element *elemlist);
 static view_item *load_view_item(xml_data_node *itemnode, layout_element *elemlist);
-static mame_bitmap *load_component_bitmap(const char *file, const char *alphafile);
+static mame_bitmap *load_component_bitmap(const char *file, const char *alphafile, int *hasalpha);
 static int load_alpha_bitmap(const char *alphafile, mame_bitmap *bitmap, const png_info *original);
 static int load_bounds(xml_data_node *boundsnode, render_bounds *bounds);
 static int load_color(xml_data_node *colornode, render_color *color);
@@ -502,52 +500,6 @@ INLINE const char *copy_string(const char *string)
 
 
 /*-------------------------------------------------
-    swap_flips - swap the X and Y flip flags
--------------------------------------------------*/
-
-INLINE int swap_flips(int orientation)
-{
-	return (orientation & ORIENTATION_SWAP_XY) |
-	       ((orientation & ORIENTATION_FLIP_X) ? ORIENTATION_FLIP_Y : 0) |
-	       ((orientation & ORIENTATION_FLIP_Y) ? ORIENTATION_FLIP_X : 0);
-}
-
-
-/*-------------------------------------------------
-    reverse_orientation - compute the orientation
-    that will undo another orientation
--------------------------------------------------*/
-
-INLINE int reverse_orientation(int orientation)
-{
-	/* if not swapping X/Y, then just apply the same transform to reverse */
-	if (!(orientation & ORIENTATION_SWAP_XY))
-		return orientation;
-
-	/* if swapping X/Y, then swap X/Y flip bits to get the reverse */
-	else
-		return swap_flips(orientation);
-}
-
-
-/*-------------------------------------------------
-    add_orientation - compute effective orientation
-    after applying two subsequent orientations
--------------------------------------------------*/
-
-INLINE int add_orientation(int orientation1, int orientation2)
-{
-	/* if the 2nd transform doesn't swap, just XOR together */
-	if (!(orientation2 & ORIENTATION_SWAP_XY))
-		return orientation1 ^ orientation2;
-
-	/* otherwise, we need to effectively swap the flip bits on the first transform */
-	else
-		return swap_flips(orientation1) ^ orientation2;
-}
-
-
-/*-------------------------------------------------
     apply_orientation - apply orientation to a
     set of bounds
 -------------------------------------------------*/
@@ -578,6 +530,32 @@ INLINE void apply_orientation(render_bounds *bounds, int orientation)
 
 
 /*-------------------------------------------------
+    set_bounds_xy - cleaner way to set the bounds
+-------------------------------------------------*/
+
+INLINE void set_bounds_xy(render_bounds *bounds, float x0, float y0, float x1, float y1)
+{
+	bounds->x0 = x0;
+	bounds->y0 = y0;
+	bounds->x1 = x1;
+	bounds->y1 = y1;
+}
+
+
+/*-------------------------------------------------
+    set_bounds_wh - cleaner way to set the bounds
+-------------------------------------------------*/
+
+INLINE void set_bounds_wh(render_bounds *bounds, float x0, float y0, float width, float height)
+{
+	bounds->x0 = x0;
+	bounds->y0 = y0;
+	bounds->x1 = x0 + width;
+	bounds->y1 = y0 + height;
+}
+
+
+/*-------------------------------------------------
     normalize_bounds - normalize bounds so that
     x0/y0 are less than x1/y1
 -------------------------------------------------*/
@@ -592,6 +570,20 @@ INLINE void normalize_bounds(render_bounds *bounds)
 
 
 /*-------------------------------------------------
+    sect_bounds - compute the intersection of two
+    render_bounds
+-------------------------------------------------*/
+
+INLINE void sect_bounds(render_bounds *dest, const render_bounds *src)
+{
+	dest->x0 = (dest->x0 > src->x0) ? dest->x0 : src->x0;
+	dest->x1 = (dest->x1 < src->x1) ? dest->x1 : src->x1;
+	dest->y0 = (dest->y0 > src->y0) ? dest->y0 : src->y0;
+	dest->y1 = (dest->y1 < src->y1) ? dest->y1 : src->y1;
+}
+
+
+/*-------------------------------------------------
     union_bounds - compute the union of two
     render_bounds
 -------------------------------------------------*/
@@ -602,6 +594,19 @@ INLINE void union_bounds(render_bounds *dest, const render_bounds *src)
 	dest->x1 = (dest->x1 > src->x1) ? dest->x1 : src->x1;
 	dest->y0 = (dest->y0 < src->y0) ? dest->y0 : src->y0;
 	dest->y1 = (dest->y1 > src->y1) ? dest->y1 : src->y1;
+}
+
+
+/*-------------------------------------------------
+    set_color - cleaner way to set a color
+-------------------------------------------------*/
+
+INLINE void set_color(render_color *color, float a, float r, float g, float b)
+{
+	color->a = a;
+	color->r = r;
+	color->g = g;
+	color->b = b;
 }
 
 
@@ -653,7 +658,7 @@ INLINE void free_container_item(container_item *item)
     element object
 -------------------------------------------------*/
 
-INLINE render_primitive *alloc_render_primitive(void)
+INLINE render_primitive *alloc_render_primitive(int type)
 {
 	render_primitive *result = render_primitive_free_list;
 
@@ -665,7 +670,20 @@ INLINE render_primitive *alloc_render_primitive(void)
 
 	/* clear to 0 */
 	memset(result, 0, sizeof(*result));
+	result->type = type;
 	return result;
+}
+
+
+/*-------------------------------------------------
+    append_render_primitive - append a primitive
+    to the end of the list
+-------------------------------------------------*/
+
+INLINE void append_render_primitive(render_target *target, render_primitive *prim)
+{
+	*target->primnext = prim;
+	target->primnext = &prim->next;
 }
 
 
@@ -822,15 +840,16 @@ render_target *render_target_alloc(const char *layoutfile, int singleview)
 	const layout_generator *generator;
 	layout_file **nextfile;
 	render_target *target;
+	render_target **nextptr;
 	int scrnum, scrcount;
 
 	/* allocate memory for the target */
-	target = malloc(sizeof(*target));
-	memset(target, 0, sizeof(target));
+	target = malloc_or_die(sizeof(*target));
+	memset(target, 0, sizeof(*target));
 
-	/* add it to the list */
-	target->next = targetlist;
-	targetlist = target;
+	/* add it to the end of the list */
+	for (nextptr = &targetlist; *nextptr != NULL; nextptr = &(*nextptr)->next) ;
+	*nextptr = target;
 
 	/* fill in the basics with reasonable defaults */
 	target->width = 640;
@@ -1171,9 +1190,9 @@ void render_target_get_minimum_size(render_target *target, INT32 *minwidth, INT3
 const render_primitive *render_target_get_primitives(render_target *target)
 {
 	object_transform root_xform, ui_xform;
-	INT32 viswidth, visheight;
-	render_primitive **primnext;
 	int itemcount[ITEM_LAYER_MAX];
+	render_primitive *prim;
+	INT32 viswidth, visheight;
 	int layer;
 
 	/* free any previous primitives */
@@ -1183,6 +1202,15 @@ const render_primitive *render_target_get_primitives(render_target *target)
 		target->primlist = temp->next;
 		free_render_primitive(temp);
 	}
+	target->primnext = &target->primlist;
+
+	/* start with a clip push primitive */
+	prim = alloc_render_primitive(RENDER_PRIMITIVE_CLIP_PUSH);
+	prim->bounds.x0 = 0.0f;
+	prim->bounds.y0 = 0.0f;
+	prim->bounds.x1 = (float)target->width;
+	prim->bounds.y1 = (float)target->height;
+	append_render_primitive(target, prim);
 
 	/* compute the visible width/height */
 	render_target_compute_visible_area(target, target->width, target->height, target->pixel_aspect, target->orientation, &viswidth, &visheight);
@@ -1196,7 +1224,6 @@ const render_primitive *render_target_get_primitives(render_target *target)
 	root_xform.orientation = target->orientation;
 
 	/* iterate over layers back-to-front */
-	primnext = &target->primlist;
 	for (layer = 0; layer < ITEM_LAYER_MAX; layer++)
 	{
 		int blendmode = BLENDMODE_ALPHA;
@@ -1229,13 +1256,13 @@ const render_primitive *render_target_get_primitives(render_target *target)
 			item_xform.color.g = item->color.g * root_xform.color.g;
 			item_xform.color.b = item->color.b * root_xform.color.b;
 			item_xform.color.a = item->color.a * root_xform.color.a;
-			item_xform.orientation = add_orientation(item->orientation, root_xform.orientation);
+			item_xform.orientation = orientation_add(item->orientation, root_xform.orientation);
 
 			/* if there is no associated element, it must be a screen element */
 			if (item->element != NULL)
-				primnext = add_element_primitives(primnext, &item_xform, item->element, item->state->curstate, blendmode);
+				add_element_primitives(target, &item_xform, item->element, item->state->curstate, blendmode);
 			else
-				primnext = add_container_primitives(primnext, &item_xform, screen_container[item->index], blendmode);
+				add_container_primitives(target, &item_xform, screen_container[item->index], blendmode);
 
 			/* keep track of how many items are in the layer */
 			itemcount[layer]++;
@@ -1254,9 +1281,15 @@ const render_primitive *render_target_get_primitives(render_target *target)
 		ui_xform.orientation = target->orientation;
 
 		/* add UI elements */
-		primnext = add_container_primitives(primnext, &ui_xform, ui_container, BLENDMODE_ALPHA);
+		add_container_primitives(target, &ui_xform, ui_container, BLENDMODE_ALPHA);
 	}
 
+	/* add a clip pop primitive for completeness */
+	prim = alloc_render_primitive(RENDER_PRIMITIVE_CLIP_POP);
+	append_render_primitive(target, prim);
+
+	/* optimize the list before handing it off */
+	add_clear_and_optimize_primitive_list(target);
 	return target->primlist;
 }
 
@@ -1266,23 +1299,19 @@ const render_primitive *render_target_get_primitives(render_target *target)
     based on the container
 -------------------------------------------------*/
 
-static render_primitive **add_container_primitives(render_primitive **primnext, const object_transform *xform, const render_container *container, int blendmode)
+static void add_container_primitives(render_target *target, const object_transform *xform, const render_container *container, int blendmode)
 {
-	int orientation = add_orientation(container->orientation, xform->orientation);
+	int orientation = orientation_add(container->orientation, xform->orientation);
 	render_primitive *prim;
 	container_item *item;
 
 	/* add a clip push primitive */
-	prim = alloc_render_primitive();
-	prim->type = RENDER_PRIMITIVE_CLIP_PUSH;
+	prim = alloc_render_primitive(RENDER_PRIMITIVE_CLIP_PUSH);
 	prim->bounds.x0 = floor(xform->xoffs + 0.5f);
 	prim->bounds.y0 = floor(xform->yoffs + 0.5f);
 	prim->bounds.x1 = prim->bounds.x0 + ceil(xform->xscale);
 	prim->bounds.y1 = prim->bounds.y0 + ceil(xform->yscale);
-
-	/* add it to the list */
-	*primnext = prim;
-	primnext = &prim->next;
+	append_render_primitive(target, prim);
 
 	/* iterate over elements */
 	for (item = container->itemlist; item != NULL; item = item->next)
@@ -1294,11 +1323,11 @@ static render_primitive **add_container_primitives(render_primitive **primnext, 
 		apply_orientation(&bounds, orientation);
 
 		/* allocate the primitive */
-		prim = alloc_render_primitive();
+		prim = alloc_render_primitive(0);
 		prim->bounds.x0 = floor(xform->xoffs + bounds.x0 * xform->xscale + 0.5f);
 		prim->bounds.y0 = floor(xform->yoffs + bounds.y0 * xform->yscale + 0.5f);
-		prim->bounds.x1 = prim->bounds.x0 + ceil((bounds.x1 - bounds.x0) * xform->xscale);
-		prim->bounds.y1 = prim->bounds.y0 + ceil((bounds.y1 - bounds.y0) * xform->yscale);
+		prim->bounds.x1 = prim->bounds.x0 + floor((bounds.x1 - bounds.x0) * xform->xscale + 0.5f);
+		prim->bounds.y1 = prim->bounds.y0 + floor((bounds.y1 - bounds.y0) * xform->yscale + 0.5f);
 		prim->color.r = xform->color.r * item->color.r;
 		prim->color.g = xform->color.g * item->color.g;
 		prim->color.b = xform->color.b * item->color.b;
@@ -1308,8 +1337,10 @@ static render_primitive **add_container_primitives(render_primitive **primnext, 
 		switch (item->type)
 		{
 			case CONTAINER_ITEM_LINE:
-				/* only need to set the type for lines */
+				/* set the line type */
 				prim->type = RENDER_PRIMITIVE_LINE;
+
+				/* scale the width by the minimum of X/Y scale factors */
 				prim->width = item->width * MIN(xform->xscale, xform->yscale);
 				prim->flags = item->flags;
 				break;
@@ -1325,7 +1356,7 @@ static render_primitive **add_container_primitives(render_primitive **primnext, 
 				if (item->texture != NULL)
 				{
 					/* determine the final orientation */
-					orientation = add_orientation(PRIMFLAG_GET_TEXORIENT(item->flags), orientation);
+					orientation = orientation_add(PRIMFLAG_GET_TEXORIENT(item->flags), orientation);
 
 					/* based on the swap values, get the scaled final texture */
 					render_texture_get_scaled(item->texture,
@@ -1334,31 +1365,27 @@ static render_primitive **add_container_primitives(render_primitive **primnext, 
 										&prim->texture);
 
 					/* apply the final orientation from the quad flags and then build up the final flags */
-					prim->flags = PRIMFLAG_TEXORIENT(orientation) | PRIMFLAG_TEXFORMAT(item->texture->format) | PRIMFLAG_BLENDMODE(blendmode);
+					prim->flags = (item->flags & ~(PRIMFLAG_TEXORIENT_MASK | PRIMFLAG_BLENDMODE_MASK | PRIMFLAG_TEXFORMAT_MASK)) |
+									PRIMFLAG_TEXORIENT(orientation) |
+									PRIMFLAG_BLENDMODE(blendmode) |
+									PRIMFLAG_TEXFORMAT(item->texture->format);
 				}
 				else
 				{
+					/* no texture -- set the basic flags */
 					prim->texture.base = NULL;
-					prim->texture.palette = NULL;
 					prim->flags = PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA);
 				}
 				break;
 		}
 
-		/* add it to the list */
-		*primnext = prim;
-		primnext = &prim->next;
+		/* add to the list */
+		append_render_primitive(target, prim);
 	}
 
 	/* add a clip pop primitive */
-	prim = alloc_render_primitive();
-	prim->type = RENDER_PRIMITIVE_CLIP_POP;
-
-	/* add it to the list */
-	*primnext = prim;
-	primnext = &prim->next;
-
-	return primnext;
+	prim = alloc_render_primitive(RENDER_PRIMITIVE_CLIP_POP);
+	append_render_primitive(target, prim);
 }
 
 
@@ -1367,7 +1394,7 @@ static render_primitive **add_container_primitives(render_primitive **primnext, 
     for an element in the current state
 -------------------------------------------------*/
 
-static render_primitive **add_element_primitives(render_primitive **primnext, const object_transform *xform, const layout_element *element, int state, int blendmode)
+static void add_element_primitives(render_target *target, const object_transform *xform, const layout_element *element, int state, int blendmode)
 {
 	INT32 width = ceil(xform->xscale);
 	INT32 height = ceil(xform->yscale);
@@ -1376,7 +1403,7 @@ static render_primitive **add_element_primitives(render_primitive **primnext, co
 
 	/* if we're out of range, bail */
 	if (state > element->maxstate)
-		return primnext;
+		return;
 	if (state < 0)
 		state = 0;
 
@@ -1384,21 +1411,134 @@ static render_primitive **add_element_primitives(render_primitive **primnext, co
 	texture = element->elemtex[state].texture;
 
 	/* now add the primitive */
-	prim = alloc_render_primitive();
-	prim->type = RENDER_PRIMITIVE_QUAD;
-	prim->bounds.x0 = floor(xform->xoffs + 0.5f);
-	prim->bounds.y0 = floor(xform->yoffs + 0.5f);
-	prim->bounds.x1 = prim->bounds.x0 + width;
-	prim->bounds.y1 = prim->bounds.y0 + height;
+	prim = alloc_render_primitive(RENDER_PRIMITIVE_QUAD);
+	set_bounds_wh(&prim->bounds, floor(xform->xoffs + 0.5f), floor(xform->yoffs + 0.5f), width, height);
 	prim->color = xform->color;
 	prim->flags = PRIMFLAG_TEXORIENT(xform->orientation) | PRIMFLAG_BLENDMODE(blendmode) | PRIMFLAG_TEXFORMAT(texture->format);
 	render_texture_get_scaled(texture, (xform->orientation & ORIENTATION_SWAP_XY) ? height : width, (xform->orientation & ORIENTATION_SWAP_XY) ? width : height, &prim->texture);
+	append_render_primitive(target, prim);
+}
 
-	/* add it to the list */
-	*primnext = prim;
-	primnext = &prim->next;
 
-	return primnext;
+/*-------------------------------------------------
+    add_clear_and_optimize_primitive_list -
+    optimize the primitive list
+-------------------------------------------------*/
+
+static void add_clear_and_optimize_primitive_list(render_target *target)
+{
+	render_bounds *clipstack[8];
+	render_bounds **clip = &clipstack[-1];
+	render_primitive *clearlist = NULL;
+	render_primitive **clearnext = &clearlist;
+	render_primitive *prim;
+
+	/* find the first quad in the list */
+	for (prim = target->primlist; prim != NULL; prim = prim->next)
+	{
+		if (prim->type == RENDER_PRIMITIVE_CLIP_PUSH)
+			*++clip = &prim->bounds;
+		else if (prim->type == RENDER_PRIMITIVE_CLIP_POP)
+			clip--;
+		else if (prim->type == RENDER_PRIMITIVE_QUAD)
+			break;
+	}
+
+	/* if we got one, erase the areas on the outside of it */
+	if (prim != NULL && prim->type == RENDER_PRIMITIVE_QUAD)
+	{
+		render_bounds inner;
+
+		/* clip the bounds to the current clip */
+		inner = prim->bounds;
+		sect_bounds(&inner, *clip);
+
+		/* change the blendmode on the first primitive to be NONE */
+		if (PRIMFLAG_GET_BLENDMODE(prim->flags) == BLENDMODE_RGB_MULTIPLY)
+		{
+			/* RGB multiply will multiply against 0, leaving nothing */
+			set_color(&prim->color, 1.0f, 0.0f, 0.0f, 0.0f);
+			prim->texture.base = NULL;
+			prim->flags = (prim->flags & ~PRIMFLAG_BLENDMODE_MASK) | PRIMFLAG_BLENDMODE(BLENDMODE_NONE);
+		}
+		else
+		{
+			/* for alpha or add modes, we will blend against 0 or add to 0; treat it like none */
+			prim->flags = (prim->flags & ~PRIMFLAG_BLENDMODE_MASK) | PRIMFLAG_BLENDMODE(BLENDMODE_NONE);
+		}
+
+		/* since alpha is disabled, premultiply the RGB values and reset the alpha to 1.0 */
+		prim->color.r *= prim->color.a;
+		prim->color.g *= prim->color.a;
+		prim->color.b *= prim->color.a;
+		prim->color.a = 1.0f;
+
+		/* clear along the top */
+		if (inner.y0 > 0.0f)
+		{
+			prim = alloc_render_primitive(RENDER_PRIMITIVE_QUAD);
+			set_bounds_xy(&prim->bounds, 0.0f, 0.0f, (float)target->width, inner.y0);
+			set_color(&prim->color, 1.0f, 0.0f, 0.0f, 0.0f);
+			prim->texture.base = NULL;
+			prim->flags = PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA);
+			*clearnext = prim;
+			clearnext = &prim->next;
+		}
+
+		/* clear along the bottom */
+		if (inner.y1 < (float)target->height)
+		{
+			prim = alloc_render_primitive(RENDER_PRIMITIVE_QUAD);
+			set_bounds_xy(&prim->bounds, 0.0f, inner.y1, (float)target->width, (float)target->height);
+			set_color(&prim->color, 1.0f, 0.0f, 0.0f, 0.0f);
+			prim->texture.base = NULL;
+			prim->flags = PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA);
+			*clearnext = prim;
+			clearnext = &prim->next;
+		}
+
+		/* clear along the left */
+		if (inner.x0 > 0.0f)
+		{
+			prim = alloc_render_primitive(RENDER_PRIMITIVE_QUAD);
+			set_bounds_xy(&prim->bounds, 0.0f, inner.y0, inner.x0, inner.y1);
+			set_color(&prim->color, 1.0f, 0.0f, 0.0f, 0.0f);
+			prim->texture.base = NULL;
+			prim->flags = PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA);
+			*clearnext = prim;
+			clearnext = &prim->next;
+		}
+
+		/* clear along the right */
+		if (inner.x1 < (float)target->width)
+		{
+			prim = alloc_render_primitive(RENDER_PRIMITIVE_QUAD);
+			set_bounds_xy(&prim->bounds, inner.x1, inner.y0, (float)target->width, inner.y1);
+			set_color(&prim->color, 1.0f, 0.0f, 0.0f, 0.0f);
+			prim->texture.base = NULL;
+			prim->flags = PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA);
+			*clearnext = prim;
+			clearnext = &prim->next;
+		}
+	}
+
+	/* otherwise, we need to clear the whole thing */
+	else
+	{
+		prim = alloc_render_primitive(RENDER_PRIMITIVE_QUAD);
+		set_bounds_xy(&prim->bounds, 0.0f, 0.0f, (float)target->width, (float)target->height);
+		set_color(&prim->color, 1.0f, 0.0f, 0.0f, 0.0f);
+		prim->texture.base = NULL;
+		prim->flags = PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA);
+		*clearnext = prim;
+		clearnext = &prim->next;
+	}
+
+	/* we know that the first primitive in the list will be the global clip */
+	/* so we insert the clears immediately after */
+	assert(target->primlist->type == RENDER_PRIMITIVE_CLIP_PUSH);
+	*clearnext = target->primlist->next;
+	target->primlist->next = clearlist;
 }
 
 
@@ -2038,14 +2178,14 @@ static void resample_argb_bitmap_bilinear(UINT32 *dest, UINT32 drowpixels, UINT3
 
 int render_clip_line(render_bounds *bounds, const render_bounds *clip)
 {
-	// loop until we get a final result
+	/* loop until we get a final result */
 	while (1)
 	{
 		UINT8 code0 = 0, code1 = 0;
 		UINT8 thiscode;
 		float x, y;
 
-		// compute Cohen Sutherland bits for first coordinate
+		/* compute Cohen Sutherland bits for first coordinate */
 		if (bounds->y0 > clip->y1)
 			code0 |= 1;
 		if (bounds->y0 < clip->y0)
@@ -2055,7 +2195,7 @@ int render_clip_line(render_bounds *bounds, const render_bounds *clip)
 		if (bounds->x0 < clip->x0)
 			code0 |= 8;
 
-		// compute Cohen Sutherland bits for second coordinate
+		/* compute Cohen Sutherland bits for second coordinate */
 		if (bounds->y1 > clip->y1)
 			code1 |= 1;
 		if (bounds->y1 < clip->y0)
@@ -2065,40 +2205,46 @@ int render_clip_line(render_bounds *bounds, const render_bounds *clip)
 		if (bounds->x1 < clip->x0)
 			code1 |= 8;
 
-		// trivial accept: just return
+		/* trivial accept: just return FALSE */
 		if ((code0 | code1) == 0)
 			return FALSE;
 
-		// trivial reject
+		/* trivial reject: just return TRUE */
 		if ((code0 & code1) != 0)
 			return TRUE;
 
-		// fix one of the OOB cases
+		/* fix one of the OOB cases */
 		thiscode = code0 ? code0 : code1;
 
-		// off the top
+		/* off the bottom */
 		if (thiscode & 1)
 		{
 			x = bounds->x0 + (bounds->x1 - bounds->x0) * (clip->y1 - bounds->y0) / (bounds->y1 - bounds->y0);
 			y = clip->y1;
 		}
+
+		/* off the top */
 		else if (thiscode & 2)
 		{
 			x = bounds->x0 + (bounds->x1 - bounds->x0) * (clip->y0 - bounds->y0) / (bounds->y1 - bounds->y0);
 			y = clip->y0;
 		}
+
+		/* off the right */
 		else if (thiscode & 4)
 		{
 			y = bounds->y0 + (bounds->y1 - bounds->y0) * (clip->x1 - bounds->x0) / (bounds->x1 - bounds->x0);
 			x = clip->x1;
 		}
+
+		/* off the left */
 		else
 		{
 			y = bounds->y0 + (bounds->y1 - bounds->y0) * (clip->x0 - bounds->x0) / (bounds->x1 - bounds->x0);
 			x = clip->x0;
 		}
 
-		// fix the appropriate coordinate
+		/* fix the appropriate coordinate */
 		if (thiscode == code0)
 		{
 			bounds->x0 = x;
@@ -2110,6 +2256,100 @@ int render_clip_line(render_bounds *bounds, const render_bounds *clip)
 			bounds->y1 = y;
 		}
 	}
+}
+
+
+
+/***************************************************************************
+
+    Generic quad clipper
+
+***************************************************************************/
+
+int render_clip_quad(render_bounds *bounds, const render_bounds *clip, float *u, float *v)
+{
+	/*
+        note: this code assumes that u,v coordinates are in clockwise order
+        starting from the top-left:
+
+          u0,v0    u1,v1
+            +--------+
+            |        |
+            |        |
+            +--------+
+          u3,v3    u2,v2
+    */
+
+	/* ensure our assumptions about the bounds are correct */
+	assert(bounds->x0 <= bounds->x1);
+	assert(bounds->y0 <= bounds->y1);
+
+	/* trivial reject */
+	if (bounds->y1 < clip->y0)
+		return TRUE;
+	if (bounds->y0 > clip->y1)
+		return TRUE;
+	if (bounds->x1 < clip->x0)
+		return TRUE;
+	if (bounds->x0 > clip->x1)
+		return TRUE;
+
+	/* clip top (x0,y0)-(x1,y1) */
+	if (bounds->y0 < clip->y0)
+	{
+		float frac = (clip->y0 - bounds->y0) / (bounds->y1 - bounds->y0);
+		bounds->y0 = clip->y0;
+		if (u != NULL && v != NULL)
+		{
+			u[0] += (u[3] - u[0]) * frac;
+			v[0] += (v[3] - v[0]) * frac;
+			u[1] += (u[2] - u[1]) * frac;
+			v[1] += (v[2] - v[1]) * frac;
+		}
+	}
+
+	/* clip bottom (x3,y3)-(x2,y2) */
+	if (bounds->y1 > clip->y1)
+	{
+		float frac = (bounds->y1 - clip->y1) / (bounds->y1 - bounds->y0);
+		bounds->y1 = clip->y1;
+		if (u != NULL && v != NULL)
+		{
+			u[3] -= (u[3] - u[0]) * frac;
+			v[3] -= (v[3] - v[0]) * frac;
+			u[2] -= (u[2] - u[1]) * frac;
+			v[2] -= (v[2] - v[1]) * frac;
+		}
+	}
+
+	/* clip left (x0,y0)-(x3,y3) */
+	if (bounds->x0 < clip->x0)
+	{
+		float frac = (clip->x0 - bounds->x0) / (bounds->x1 - bounds->x0);
+		bounds->x0 = clip->x0;
+		if (u != NULL && v != NULL)
+		{
+			u[0] += (u[1] - u[0]) * frac;
+			v[0] += (v[1] - v[0]) * frac;
+			u[3] += (u[2] - u[3]) * frac;
+			v[3] += (v[2] - v[3]) * frac;
+		}
+	}
+
+	/* clip right (x1,y1)-(x2,y2) */
+	if (bounds->x1 > clip->x1)
+	{
+		float frac = (bounds->x1 - clip->x1) / (bounds->x1 - bounds->x0);
+		bounds->x1 = clip->x1;
+		if (u != NULL && v != NULL)
+		{
+			u[1] -= (u[1] - u[0]) * frac;
+			v[1] -= (v[1] - v[0]) * frac;
+			u[2] -= (u[2] - u[3]) * frac;
+			v[2] -= (v[2] - v[3]) * frac;
+		}
+	}
+	return FALSE;
 }
 
 
@@ -2174,14 +2414,14 @@ static void layout_element_scale(mame_bitmap *dest, const mame_bitmap *source, c
 
 static void layout_element_draw_rect(mame_bitmap *dest, const rectangle *bounds, const render_color *color)
 {
-	UINT32 r, g, b, a;
+	UINT32 r, g, b, inva;
 	UINT32 x, y;
 
 	/* compute premultiplied colors */
 	r = color->r * color->a * 255.0;
 	g = color->g * color->a * 255.0;
 	b = color->b * color->a * 255.0;
-	a = color->a * 255.0;
+	inva = (1.0f - color->a) * 255.0;
 
 	/* iterate over X and Y */
 	for (y = bounds->min_y; y < bounds->max_y; y++)
@@ -2190,20 +2430,18 @@ static void layout_element_draw_rect(mame_bitmap *dest, const rectangle *bounds,
 			UINT32 finalr = r;
 			UINT32 finalg = g;
 			UINT32 finalb = b;
-			UINT32 finala = a;
 
 			/* if we're translucent, add in the destination pixel contribution */
-			if (a < 255)
+			if (inva > 0)
 			{
 				UINT32 dpix = *((UINT32 *)dest->base + y * dest->rowpixels + x);
-				finala += RGB_ALPHA(dpix) * (256 - a);
-				finalr += RGB_RED(dpix) * (256 - a);
-				finalg += RGB_GREEN(dpix) * (256 - a);
-				finalb += RGB_BLUE(dpix) * (256 - a);
+				finalr += (RGB_RED(dpix) * inva) >> 8;
+				finalg += (RGB_GREEN(dpix) * inva) >> 8;
+				finalb += (RGB_BLUE(dpix) * inva) >> 8;
 			}
 
 			/* store the target pixel, dividing the RGBA values by the overall scale factor */
-			*((UINT32 *)dest->base + y * dest->rowpixels + x) = MAKE_ARGB(finala, finalr, finalg, finalb);
+			*((UINT32 *)dest->base + y * dest->rowpixels + x) = MAKE_ARGB(0xff, finalr, finalg, finalb);
 		}
 }
 
@@ -2217,14 +2455,14 @@ static void layout_element_draw_disk(mame_bitmap *dest, const rectangle *bounds,
 {
 	float xcenter, ycenter;
 	float xradius, yradius, ooyradius2;
-	UINT32 r, g, b, a;
+	UINT32 r, g, b, inva;
 	UINT32 x, y;
 
 	/* compute premultiplied colors */
 	r = color->r * color->a * 255.0;
 	g = color->g * color->a * 255.0;
 	b = color->b * color->a * 255.0;
-	a = color->a * 255.0;
+	inva = (1.0f - color->a) * 255.0;
 
 	/* find the center */
 	xcenter = (float)(bounds->min_x + bounds->max_x) * 0.5f;
@@ -2250,20 +2488,18 @@ static void layout_element_draw_disk(mame_bitmap *dest, const rectangle *bounds,
 			UINT32 finalr = r;
 			UINT32 finalg = g;
 			UINT32 finalb = b;
-			UINT32 finala = a;
 
 			/* if we're translucent, add in the destination pixel contribution */
-			if (a < 255)
+			if (inva > 0)
 			{
 				UINT32 dpix = *((UINT32 *)dest->base + y * dest->rowpixels + x);
-				finala += RGB_ALPHA(dpix) * (256 - a);
-				finalr += RGB_RED(dpix) * (256 - a);
-				finalg += RGB_GREEN(dpix) * (256 - a);
-				finalb += RGB_BLUE(dpix) * (256 - a);
+				finalr += (RGB_RED(dpix) * inva) >> 8;
+				finalg += (RGB_GREEN(dpix) * inva) >> 8;
+				finalb += (RGB_BLUE(dpix) * inva) >> 8;
 			}
 
 			/* store the target pixel, dividing the RGBA values by the overall scale factor */
-			*((UINT32 *)dest->base + y * dest->rowpixels + x) = MAKE_ARGB(finala, finalr, finalg, finalb);
+			*((UINT32 *)dest->base + y * dest->rowpixels + x) = MAKE_ARGB(0xff, finalr, finalg, finalb);
 		}
 	}
 }
@@ -2436,7 +2672,7 @@ static layout_element *load_layout_element(xml_data_node *elemnode)
 	for (state = 0; state <= element->maxstate; state++)
 	{
 		element->elemtex[state].element = element;
-		element->elemtex[state].texture = render_texture_alloc(NULL, NULL, NULL, TEXFORMAT_ARGB32_PM, layout_element_scale, &element->elemtex[state]);
+		element->elemtex[state].texture = render_texture_alloc(NULL, NULL, NULL, TEXFORMAT_ARGB32, layout_element_scale, &element->elemtex[state]);
 		element->elemtex[state].state = state;
 	}
 	return element;
@@ -2475,7 +2711,7 @@ static element_component *load_element_component(xml_data_node *compnode)
 
 		/* load and allocate the bitmap */
 		component->type = COMPONENT_TYPE_IMAGE;
-		component->bitmap = load_component_bitmap(file, afile);
+		component->bitmap = load_component_bitmap(file, afile, &component->hasalpha);
 		if (component->bitmap == NULL)
 			goto error;
 	}
@@ -2675,12 +2911,15 @@ error:
     with artwork for a component
 -------------------------------------------------*/
 
-static mame_bitmap *load_component_bitmap(const char *file, const char *alphafile)
+static mame_bitmap *load_component_bitmap(const char *file, const char *alphafile, int *hasalpha)
 {
 	mame_bitmap *bitmap;
 	png_info png;
 	UINT8 *src;
 	int x, y;
+
+	/* assume no alpha by default */
+	*hasalpha = FALSE;
 
 	/* open and read the main png file */
 	if (open_and_read_png(file, &png))
@@ -2705,6 +2944,8 @@ static mame_bitmap *load_component_bitmap(const char *file, const char *alphafil
 			{
 				/* determine alpha and expand to 32bpp */
 				UINT8 alpha = (*src < png.num_trans) ? png.trans[*src] : 0xff;
+				if (alpha < 0xff)
+					*hasalpha = TRUE;
 				plot_pixel(bitmap, x, y, MAKE_ARGB(alpha, png.palette[*src * 3], png.palette[*src * 3 + 1], png.palette[*src * 3 + 2]));
 			}
 
@@ -2739,17 +2980,25 @@ static mame_bitmap *load_component_bitmap(const char *file, const char *alphafil
 		src = png.image;
 		for (y = 0; y < png.height; y++)
 			for (x = 0; x < png.width; x++, src += 4)
+			{
+				if (src[3] < 0xff)
+					*hasalpha = TRUE;
 				plot_pixel(bitmap, x, y, MAKE_ARGB(src[3], src[0], src[1], src[2]));
+			}
 	}
 
 	/* free the raw image data and return after loading any alpha map */
 	free(png.image);
 
 	/* now load the alpha bitmap if present */
-	if (alphafile != NULL && load_alpha_bitmap(alphafile, bitmap, &png))
+	if (alphafile != NULL)
 	{
-		bitmap_free(bitmap);
-		bitmap = NULL;
+		if (load_alpha_bitmap(alphafile, bitmap, &png))
+		{
+			bitmap_free(bitmap);
+			bitmap = NULL;
+		}
+		*hasalpha = TRUE;
 	}
 	return bitmap;
 }

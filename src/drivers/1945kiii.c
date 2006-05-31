@@ -38,6 +38,19 @@ Notes:
     M6295 clocks : 1.000MHz (both), sample rate = 1000000 / 132
            VSync : 60Hz
 
+
+SAVE STATE (lee@lmservers.com):
+No code changes required to support save state
+1945kiii uses the 68000 and OKIM6295 which both support save state.
+The rationale for saving/not saving are as follows:
+
+static UINT16* k3_spriteram_1;  Saved via reference to AM_BASE
+static UINT16* k3_spriteram_2;  Saved via reference to AM_BASE
+static UINT16* k3_bgram;        Saved via reference to AM_BASE
+static tilemap *k3_bg_tilemap;  Saved due to tilemap supporting save
+
+There are no static local variables.
+
 */
 
 #include "driver.h"
@@ -297,4 +310,4 @@ ROM_START( 1945kiii )
 	ROM_LOAD( "m16m-3.u61", 0x00000, 0x200000, CRC(32fc80dd) SHA1(bee32493a250e9f21997114bba26b9535b1b636c) )
 ROM_END
 
-GAME( 2000, 1945kiii, 0, k3, k3, 0, ROT270, "Oriental", "1945k III", 0 )
+GAME( 2000, 1945kiii, 0, k3, k3, 0, ROT270, "Oriental", "1945k III", GAME_SUPPORTS_SAVE )

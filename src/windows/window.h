@@ -47,21 +47,25 @@ struct _win_window_info
 {
 	win_window_info *	next;
 
-	// window handle
+	// window handle and info
 	HWND				hwnd;
+	RECT				non_fullscreen_bounds;
+	int					isminimized;
+	int					ismaximized;
+	int					resize_state;
+
+	// monitor info
 	win_monitor_info *	monitor;
+	int					maxwidth, maxheight;
+	int					depth;
+	int					refresh;
+	float				aspect;
 
 	// rendering info
-	RECT				non_fullscreen_bounds;
-	int					maxwidth, maxheight;
-	int					switchres;
-	float				aspect;
 	render_target *		target;
 	int					targetview;
 	int					targetorient;
 	const render_primitive *primlist;
-	int					resize_state;
-	int					ismaximized;
 
 	// drawing data
 	void *				gdidata;
@@ -88,31 +92,6 @@ struct _win_effect_data
 
 // windows
 extern win_window_info *win_window_list;
-
-// command line config
-extern int			win_window_mode;
-extern int			win_wait_vsync;
-extern int			win_triple_buffer;
-extern int			win_use_ddraw;
-extern int			win_use_d3d;
-extern int			win_dd_hw_stretch;
-extern int			win_force_int_stretch;
-extern int			win_gfx_width;
-extern int			win_gfx_height;
-extern int			win_gfx_depth;
-extern int			win_gfx_zoom;
-extern int			win_old_scanlines;
-extern int			win_switch_res;
-extern int			win_switch_bpp;
-extern int			win_start_maximized;
-extern int			win_keep_aspect;
-extern int			win_gfx_refresh;
-extern int			win_match_refresh;
-extern int			win_sync_refresh;
-extern float		win_gfx_gamma;
-extern float		win_screen_aspect;
-extern int			win_force_rdtsc;
-extern int			win_priority;
 
 // windows
 extern HWND			win_debug_window;
@@ -160,16 +139,16 @@ extern int			win_use_raw_mouse;
 //============================================================
 
 // core initialization
-int win_window_init(void);
+int winwindow_init(void);
 
 // creation/deletion of windows
-int win_window_create(win_monitor_info *monitor, const char *layout, const char *view, int width, int height, int switchres);
+int winwindow_video_window_create(int index, win_monitor_info *monitor, const win_window_config *config);
 
-void window_update_cursor_state(void);
-void win_update_video_window(win_window_info *window);
+void winwindow_update_cursor_state(void);
+void winwindow_video_window_update(win_window_info *window);
 
-LRESULT CALLBACK win_video_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam);
-void win_toggle_full_screen(void);
+LRESULT CALLBACK winwindow_video_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam);
+void winwindow_toggle_full_screen(void);
 
 void winwindow_process_events_periodic(void);
 int winwindow_process_events(int ingame);

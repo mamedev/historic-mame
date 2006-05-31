@@ -48,6 +48,7 @@ int vector_updates = 0;
 
 /* main bitmap to render to */
 #ifdef NEW_RENDER
+static int skipping_this_frame;
 static render_texture *scrtexture[MAX_SCREENS];
 static int scrformat[MAX_SCREENS];
 static
@@ -677,7 +678,11 @@ void force_partial_update(int scrnum, int scanline)
 	rectangle clip = Machine->visible_area[scrnum];
 
 	/* if skipping this frame, bail */
+#ifndef NEW_RENDER
 	if (osd_skip_this_frame())
+#else
+	if (skipping_this_frame)
+#endif
 		return;
 
 	/* special case: if the last entry was 0 and we get an update for an area */
@@ -731,7 +736,11 @@ void force_partial_update(int scrnum, int scanline)
 
 void update_video_and_audio(void)
 {
+#ifndef NEW_RENDER
 	int skipped_it = osd_skip_this_frame();
+#else
+	int skipped_it = skipping_this_frame;
+#endif
 
 #if defined(MAME_DEBUG) && !defined(NEW_DEBUGGER)
 	debug_trace_delay = 0;
@@ -801,7 +810,7 @@ void update_video_and_audio(void)
 	int scrnum;
 
 	/* call the OSD to update */
-	osd_update(mame_timer_get_time());
+	skipping_this_frame = osd_update(mame_timer_get_time());
 
 	/* empty the containers */
 	for (scrnum = 0; scrnum < MAX_SCREENS; scrnum++)
@@ -884,20 +893,27 @@ void video_frame_update(void)
 				/* only update if empty and not a vector game; otherwise assume the driver did it directly */
 				if (render_container_is_empty(render_container_get_screen(scrnum)) && !(Machine->drv->video_attributes & VIDEO_TYPE_VECTOR))
 				{
-					render_texture_set_bitmap(scrtexture[scrnum], scrbitmap[scrnum][curbitmap], &Machine->visible_area[scrnum], &game_palette[Machine->drv->screen[scrnum].palette_base], scrformat[scrnum]);
-					render_screen_add_quad(scrnum, 0.0f, 0.0f, 1.0f, 1.0f, MAKE_ARGB(0xff,0xff,0xff,0xff), scrtexture[scrnum], PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+					if (!skipping_this_frame)
+					{
+						rectangle visarea = Machine->visible_area[scrnum];
+						visarea.max_x++;
+						visarea.max_y++;
+						render_texture_set_bitmap(scrtexture[scrnum], scrbitmap[scrnum][curbitmap], &visarea, &game_palette[Machine->drv->screen[scrnum].palette_base], scrformat[scrnum]);
+					}
+					render_screen_add_quad(scrnum, 0.0f, 0.0f, 1.0f, 1.0f, MAKE_ARGB(0xff,0xff,0xff,0xff), scrtexture[scrnum], PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_SCREENTEX(1));
 				}
 #endif
 			}
 
-#ifdef NEW_RENDER
-		/* advance to the next bitmap */
-		curbitmap = 1 - curbitmap;
-#endif
-
 		/* update our movie recording state */
 		if (!paused)
 			record_movie_frame(scrbitmap[0][curbitmap]);
+
+#ifdef NEW_RENDER
+		/* advance to the next bitmap */
+		if (!skipping_this_frame)
+			curbitmap = 1 - curbitmap;
+#endif
 	}
 
 	/* the user interface must be called between vh_update() and osd_update_video_and_audio(), */
@@ -935,7 +951,11 @@ void video_frame_update(void)
 
 int skip_this_frame(void)
 {
+#ifndef NEW_RENDER
 	return osd_skip_this_frame();
+#else
+	return skipping_this_frame;
+#endif
 }
 
 
@@ -1119,7 +1139,7 @@ void save_screen_snapshot(mame_bitmap *bitmap)
 
 	if ((fp = mame_fopen_next(FILETYPE_SCREENSHOT)) != NULL)
 	{
-		save_screen_snapshot_as(fp, bitmap);
+		save_screen_snapshot_as(fp, scrbitmap[0][curbitmap]);
 		mame_fclose(fp);
 	}
 }

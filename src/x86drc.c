@@ -70,10 +70,11 @@ drc_core *drc_init(UINT8 cpunum, drc_config *config)
 	drc->mxcsr_curr   = sse_control[0];
 
 	/* allocate cache */
-	drc->cache_base = osd_alloc_executable(config->cache_size);
+	drc->cache_size = config->cache_size;
+	drc->cache_base = osd_alloc_executable(drc->cache_size);
 	if (!drc->cache_base)
 		return NULL;
-	drc->cache_end = drc->cache_base + config->cache_size;
+	drc->cache_end = drc->cache_base + drc->cache_size;
 	drc->cache_danger = drc->cache_end - 65536;
 
 	/* compute shifts and masks */
@@ -173,7 +174,7 @@ void drc_exit(drc_core *drc)
 
 	/* free the cache */
 	if (drc->cache_base)
-		osd_free_executable(drc->cache_base);
+	  osd_free_executable(drc->cache_base, drc->cache_size);
 
 	/* free all the l2 tables allocated */
 	for (i = 0; i < (1 << drc->l1bits); i++)

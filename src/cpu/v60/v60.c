@@ -130,8 +130,6 @@ static int v60_ICount;
 #define PC		v60.reg[32]
 #define PSW		v60.reg[33]
 
-#define PPC		v60.PPC
-
 // Privileged registers
 #define ISP		v60.reg[36]
 #define L0SP	v60.reg[37]
@@ -307,7 +305,7 @@ static void base_init(const char *type, int index, int (*irqcallback)(int))
 	state_save_register_item_array(type, index, v60.reg);
 	state_save_register_item(type, index, v60.irq_line);
 	state_save_register_item(type, index, v60.nmi_line);
-	state_save_register_item(type, index, PPC);
+	state_save_register_item(type, index, v60.PPC);
 	state_save_register_item(type, index, _CY);
 	state_save_register_item(type, index, _OV);
 	state_save_register_item(type, index, _S);
@@ -416,7 +414,7 @@ static int v60_execute(int cycles)
 	if(v60.irq_line != CLEAR_LINE)
 		v60_try_irq();
 	while(v60_ICount >= 0) {
-		PPC = PC;
+		v60.PPC = PC;
 		CALL_MAME_DEBUG;
 		v60_ICount -= 8;	/* fix me -- this is just an average */
 		PC += OpCodeTable[OpRead8(PC)]();
@@ -606,7 +604,7 @@ void v60_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_INPUT_STATE + 0:				info->i = v60.irq_line;					break;
 		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	info->i = v60.nmi_line;					break;
 
-		case CPUINFO_INT_PREVIOUSPC:					info->i = PPC;							break;
+		case CPUINFO_INT_PREVIOUSPC:					info->i = v60.PPC;							break;
 
 		case CPUINFO_INT_REGISTER + V60_R0:				info->i = R0;							break;
 		case CPUINFO_INT_REGISTER + V60_R1:				info->i = R1;							break;

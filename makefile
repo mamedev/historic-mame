@@ -49,7 +49,7 @@ endif
 NEW_DEBUGGER = 1
 
 # uncomment next line to use the new rendering system
-# NEW_RENDER = 1
+NEW_RENDER = 1
 
 # uncomment next line to use DRC MIPS3 engine
 X86_MIPS3_DRC = 1
@@ -121,8 +121,6 @@ EXE = .exe
 AR = @ar
 CC = @gcc
 LD = @gcc
-ASM = @nasm
-ASMFLAGS = -f coff
 MD = -mkdir.exe
 RM = @rm -f
 
@@ -340,7 +338,7 @@ include src/cpu/cpu.mak
 include src/sound/sound.mak
 
 # combine the various definitions to one
-CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS) $(ASMDEFS)
+CDEFS = $(DEFS) $(COREDEFS) $(CPUDEFS) $(SOUNDDEFS)
 
 
 

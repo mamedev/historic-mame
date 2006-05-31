@@ -398,8 +398,12 @@ static void FUNC_PREFIX(draw_rect)(const render_primitive *prim, void *dstdata, 
 	if (fpos.x0 > fpos.x1 || fpos.y0 > fpos.y1)
 		return;
 
+	/* only support alpha and "none" blendmodes */
+	assert(PRIMFLAG_GET_BLENDMODE(prim->flags) == BLENDMODE_NONE ||
+	       PRIMFLAG_GET_BLENDMODE(prim->flags) == BLENDMODE_ALPHA);
+
 	/* fast case: no alpha */
-	if (prim->color.a >= 1.0f)
+	if (PRIMFLAG_GET_BLENDMODE(prim->flags) == BLENDMODE_NONE || prim->color.a >= 1.0f)
 	{
 		UINT32 r = (UINT32)(256.0f * prim->color.r);
 		UINT32 g = (UINT32)(256.0f * prim->color.g);
@@ -465,11 +469,11 @@ static void FUNC_PREFIX(draw_rect)(const render_primitive *prim, void *dstdata, 
 
 
 /*-------------------------------------------------
-    draw_quad_palette16 - perform rasterization of
-    a 16bpp palettized texture
+    draw_quad_palette16_none - perform
+    rasterization of a 16bpp palettized texture
 -------------------------------------------------*/
 
-static void FUNC_PREFIX(draw_quad_palette16)(const render_primitive *prim, void *dstdata, UINT32 pitch, quad_setup_data *setup)
+static void FUNC_PREFIX(draw_quad_palette16_none)(const render_primitive *prim, void *dstdata, UINT32 pitch, quad_setup_data *setup)
 {
 	UINT16 *texbase = prim->texture.base;
 	rgb_t *palbase = prim->texture.palette;
@@ -567,6 +571,91 @@ static void FUNC_PREFIX(draw_quad_palette16)(const render_primitive *prim, void 
 				UINT32 g = (SOURCE32_G(pix) * sg + DEST_G(dpix) * invsa) >> 8;
 				UINT32 b = (SOURCE32_B(pix) * sb + DEST_B(dpix) * invsa) >> 8;
 
+				*dest++ = DEST_ASSEMBLE_RGB(r, g, b);
+				curu += dudx;
+				curv += dvdx;
+			}
+		}
+	}
+}
+
+
+/*-------------------------------------------------
+    draw_quad_palette16_add - perform
+    rasterization of a 16bpp palettized texture
+-------------------------------------------------*/
+
+static void FUNC_PREFIX(draw_quad_palette16_add)(const render_primitive *prim, void *dstdata, UINT32 pitch, quad_setup_data *setup)
+{
+	UINT16 *texbase = prim->texture.base;
+	rgb_t *palbase = prim->texture.palette;
+	UINT32 texrp = prim->texture.rowpixels;
+	INT32 dudx = setup->dudx;
+	INT32 dvdx = setup->dvdx;
+	INT32 endx = setup->endx;
+	INT32 x, y;
+
+	/* ensure all parameters are valid */
+	assert(palbase != NULL);
+
+	/* fast case: no coloring, no alpha */
+	if (prim->color.r >= 1.0f && prim->color.g >= 1.0f && prim->color.b >= 1.0f && prim->color.a >= 1.0f)
+	{
+		/* loop over rows */
+		for (y = setup->starty; y < setup->endy; y++)
+		{
+			PIXEL_TYPE *dest = (PIXEL_TYPE *)dstdata + y * pitch + setup->startx;
+			INT32 curu = setup->startu + (y - setup->starty) * setup->dudy;
+			INT32 curv = setup->startv + (y - setup->starty) * setup->dvdy;
+
+			/* loop over cols */
+			for (x = setup->startx; x < endx; x++)
+			{
+				UINT32 pix = palbase[texbase[(curv >> 16) * texrp + (curu >> 16)]];
+				UINT32 dpix = *dest;
+				UINT32 r = SOURCE32_R(pix) + DEST_R(dpix);
+				UINT32 g = SOURCE32_G(pix) + DEST_G(dpix);
+				UINT32 b = SOURCE32_B(pix) + DEST_B(dpix);
+				r = (r | -(r >> 8)) & 0xff;
+				g = (g | -(g >> 8)) & 0xff;
+				b = (b | -(b >> 8)) & 0xff;
+				*dest++ = DEST_ASSEMBLE_RGB(r, g, b);
+				curu += dudx;
+				curv += dvdx;
+			}
+		}
+	}
+
+	/* alpha and/or coloring case */
+	else
+	{
+		UINT32 sr = (UINT32)(256.0f * prim->color.r * prim->color.a);
+		UINT32 sg = (UINT32)(256.0f * prim->color.g * prim->color.a);
+		UINT32 sb = (UINT32)(256.0f * prim->color.b * prim->color.a);
+
+		/* clamp R,G,B and inverse A to 0-256 range */
+		if (sr > 0x100) { if ((INT32)sr < 0) sr = 0; else sr = 0x100; }
+		if (sg > 0x100) { if ((INT32)sg < 0) sg = 0; else sg = 0x100; }
+		if (sb > 0x100) { if ((INT32)sb < 0) sb = 0; else sb = 0x100; }
+
+		/* loop over rows */
+		for (y = setup->starty; y < setup->endy; y++)
+		{
+			PIXEL_TYPE *dest = (PIXEL_TYPE *)dstdata + y * pitch + setup->startx;
+			INT32 curu = setup->startu + (y - setup->starty) * setup->dudy;
+			INT32 curv = setup->startv + (y - setup->starty) * setup->dvdy;
+
+			/* loop over cols */
+			for (x = setup->startx; x < endx; x++)
+			{
+				UINT32 pix = palbase[texbase[(curv >> 16) * texrp + (curu >> 16)]];
+				UINT32 dpix = *dest;
+				UINT32 r = ((SOURCE32_R(pix) * sr) >> 8) + DEST_R(dpix);
+				UINT32 g = ((SOURCE32_G(pix) * sg) >> 8) + DEST_G(dpix);
+				UINT32 b = ((SOURCE32_B(pix) * sb) >> 8) + DEST_B(dpix);
+				r = (r | -(r >> 8)) & 0xff;
+				g = (g | -(g >> 8)) & 0xff;
+				b = (b | -(b >> 8)) & 0xff;
 				*dest++ = DEST_ASSEMBLE_RGB(r, g, b);
 				curu += dudx;
 				curv += dvdx;
@@ -793,11 +882,11 @@ static void FUNC_PREFIX(draw_quad_rgb15)(const render_primitive *prim, void *dst
 
 
 /*-------------------------------------------------
-    draw_quad_argb32_pm_alpha - perform
+    draw_quad_argb32_alpha - perform
     rasterization using standard alpha blending
 -------------------------------------------------*/
 
-static void FUNC_PREFIX(draw_quad_argb32_pm_alpha)(const render_primitive *prim, void *dstdata, UINT32 pitch, quad_setup_data *setup)
+static void FUNC_PREFIX(draw_quad_argb32_alpha)(const render_primitive *prim, void *dstdata, UINT32 pitch, quad_setup_data *setup)
 {
 	UINT32 *texbase = prim->texture.base;
 	UINT32 texrp = prim->texture.rowpixels;
@@ -884,11 +973,11 @@ static void FUNC_PREFIX(draw_quad_argb32_pm_alpha)(const render_primitive *prim,
 
 
 /*-------------------------------------------------
-    draw_quad_argb32_pm_multiply - perform
+    draw_quad_argb32_multiply - perform
     rasterization using RGB multiply
 -------------------------------------------------*/
 
-static void FUNC_PREFIX(draw_quad_argb32_pm_multiply)(const render_primitive *prim, void *dstdata, UINT32 pitch, quad_setup_data *setup)
+static void FUNC_PREFIX(draw_quad_argb32_multiply)(const render_primitive *prim, void *dstdata, UINT32 pitch, quad_setup_data *setup)
 {
 	UINT32 *texbase = prim->texture.base;
 	UINT32 texrp = prim->texture.rowpixels;
@@ -1037,25 +1126,35 @@ static void FUNC_PREFIX(setup_and_draw_textured_quad)(const render_primitive *pr
 	setup.startv += (setup.dvdx + setup.dvdy) / 2;
 
 	/* render based on the texture coordinates */
-	switch (PRIMFLAG_GET_TEXFORMAT(prim->flags))
+	switch (prim->flags & (PRIMFLAG_TEXFORMAT_MASK | PRIMFLAG_BLENDMODE_MASK))
 	{
-		case TEXFORMAT_PALETTE16:
-			FUNC_PREFIX(draw_quad_palette16)(prim, dstdata, pitch, &setup);
+		case PRIMFLAG_TEXFORMAT(TEXFORMAT_PALETTE16) | PRIMFLAG_BLENDMODE(BLENDMODE_NONE):
+			FUNC_PREFIX(draw_quad_palette16_none)(prim, dstdata, pitch, &setup);
 			break;
 
-		case TEXFORMAT_RGB15:
+		case PRIMFLAG_TEXFORMAT(TEXFORMAT_PALETTE16) | PRIMFLAG_BLENDMODE(BLENDMODE_ADD):
+			FUNC_PREFIX(draw_quad_palette16_add)(prim, dstdata, pitch, &setup);
+			break;
+
+		case PRIMFLAG_TEXFORMAT(TEXFORMAT_RGB15) | PRIMFLAG_BLENDMODE(BLENDMODE_NONE):
 			FUNC_PREFIX(draw_quad_rgb15)(prim, dstdata, pitch, &setup);
 			break;
 
-		case TEXFORMAT_RGB32:
+		case PRIMFLAG_TEXFORMAT(TEXFORMAT_RGB32) | PRIMFLAG_BLENDMODE(BLENDMODE_NONE):
+		case PRIMFLAG_TEXFORMAT(TEXFORMAT_ARGB32) | PRIMFLAG_BLENDMODE(BLENDMODE_NONE):
 			FUNC_PREFIX(draw_quad_rgb32)(prim, dstdata, pitch, &setup);
 			break;
 
-		case TEXFORMAT_ARGB32_PM:
-			if (PRIMFLAG_GET_BLENDMODE(prim->flags) == BLENDMODE_ALPHA)
-				FUNC_PREFIX(draw_quad_argb32_pm_alpha)(prim, dstdata, pitch, &setup);
-			else if (PRIMFLAG_GET_BLENDMODE(prim->flags) == BLENDMODE_RGB_MULTIPLY)
-				FUNC_PREFIX(draw_quad_argb32_pm_multiply)(prim, dstdata, pitch, &setup);
+		case PRIMFLAG_TEXFORMAT(TEXFORMAT_ARGB32) | PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA):
+			FUNC_PREFIX(draw_quad_argb32_alpha)(prim, dstdata, pitch, &setup);
+			break;
+
+		case PRIMFLAG_TEXFORMAT(TEXFORMAT_ARGB32) | PRIMFLAG_BLENDMODE(BLENDMODE_RGB_MULTIPLY):
+			FUNC_PREFIX(draw_quad_argb32_multiply)(prim, dstdata, pitch, &setup);
+			break;
+
+		default:
+			fatalerror("Unknown texformat(%d)/blendmode(%d) combo\n", PRIMFLAG_GET_TEXFORMAT(prim->flags), PRIMFLAG_GET_BLENDMODE(prim->flags));
 			break;
 	}
 }
@@ -1072,11 +1171,6 @@ void FUNC_PREFIX(draw_primitives)(const render_primitive *primlist, void *dstdat
 	const render_primitive *prim;
 	render_bounds clipstack[8];
 	render_bounds *clip = &clipstack[0];
-	int y;
-
-	/* implicit clear on the bitmap */
-	for (y = 0; y < height; y++)
-		memset((UINT8 *)dstdata + y * pitch * sizeof(PIXEL_TYPE), 0, width * sizeof(PIXEL_TYPE));
 
 	/* set up the initial cliprect */
 	clip->x0 = clip->y0 = 0;

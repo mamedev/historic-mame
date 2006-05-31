@@ -40,7 +40,7 @@ INLINE int _win_has_menu(void)
 #define win_video_window		win_window_list->hwnd
 #define win_has_menu			_win_has_menu
 #endif
-#include "rc.h"
+#include "options.h"
 #include "input.h"
 #include "debugwin.h"
 
@@ -52,7 +52,13 @@ INLINE int _win_has_menu(void)
 extern int verbose;
 extern int win_physical_width;
 extern int win_physical_height;
+
+#ifndef NEW_RENDER
 extern int win_window_mode;
+#else
+#include "video.h"
+#define win_window_mode video_config.windowed
+#endif
 
 
 //============================================================
@@ -176,7 +182,6 @@ static int					use_keyboard_leds;
 static const char *			ledmode;
 static int					steadykey;
 static UINT8				analog_type[ANALOG_TYPE_COUNT];
-static int					dummy[10];
 
 // keyboard states
 static int					keyboard_count;
@@ -229,19 +234,46 @@ static int					ledmethod;
 //============================================================
 
 // prototypes
-static int decode_ledmode(struct rc_option *option, const char *arg, int priority);
-static int decode_analog_select(struct rc_option *option, const char *arg, int priority);
-static int decode_digital(struct rc_option *option, const char *arg, int priority);
+static void extract_input_config(void);
 
+const options_entry input_opts[] =
+{
+	// video options
+	{ NULL,                       NULL,       OPTION_HEADER,     "INPUT DEVICE OPTIONS" },
+	{ "mouse",                    "0",        OPTION_BOOLEAN,    "enable mouse input" },
+	{ "joystick;joy",             "0",        OPTION_BOOLEAN,    "enable joystick input" },
+	{ "lightgun;gun",             "0",        OPTION_BOOLEAN,    "enable lightgun input" },
+	{ "dual_lightgun;dual",       "0",        OPTION_BOOLEAN,    "enable dual lightgun input" },
+	{ "offscreen_reload;reload",  "0",        OPTION_BOOLEAN,    "offscreen shots reload" },
+	{ "steadykey;steady",         "0",        OPTION_BOOLEAN,    "enable steadykey support" },
+	{ "keyboard_leds;leds",       "1",        OPTION_BOOLEAN,    "enable keyboard LED emulation" },
+	{ "led_mode",                 "ps/2",     0,                 "LED mode (PS/2|USB)" },
+	{ "a2d_deadzone;a2d",         "0.3",      0,                 "minimal analog value for digital input" },
+	{ "ctrlr",                    NULL,       0,                 "preconfigure for specified controller" },
+	{ "paddle_device;paddle",     "keyboard", 0,                 "enable (keyboard|mouse|joystsick) if a paddle control is present" },
+	{ "adstick_device;adstick",   "keyboard", 0,                 "enable (keyboard|mouse|joystsick) if an analog joystick control is present" },
+	{ "pedal_device;pedal",       "keyboard", 0,                 "enable (keyboard|mouse|joystsick) if a pedal control is present" },
+	{ "dial_device;dial",         "keyboard", 0,                 "enable (keyboard|mouse|joystsick) if a dial control is present" },
+	{ "trackball_device;trackball","keyboard", 0,                "enable (keyboard|mouse|joystsick) if a trackball control is present" },
+	{ "lightgun_device",          "keyboard", 0,                 "enable (keyboard|mouse|joystsick) if a lightgun control is present" },
+#ifdef MESS
+	{ "mouse_device",             "mouse",    0,                 "enable (keyboard|mouse|joystsick) if a mouse control is present" },
+#endif
+	{ "digital",                  "none",     0,                 "mark certain joysticks or axes as digital (none|all|j<N>*|j<N>a<M>[,...])" },
+	{ NULL },
+};
+
+
+#if 0
 // global input options
 struct rc_option input_opts[] =
 {
 	/* name, shortname, type, dest, deflt, min, max, func, help */
 	{ "Input device options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
 	{ "mouse", NULL, rc_bool, &win_use_mouse, "0", 0, 0, NULL, "enable mouse input" },
-	{ "joystick", "joy", rc_bool, &use_joystick, "0", 0, 0, NULL, "enable joystick input" },
-	{ "lightgun", "gun", rc_bool, &use_lightgun, "0", 0, 0, NULL, "enable lightgun input" },
-	{ "dual_lightgun", "dual", rc_bool, &use_lightgun_dual, "0", 0, 0, NULL, "enable dual lightgun input" },
+	{ "joystick", "joy", rc_bool, &use_joystick, "0", 0, 0, NULL, "enable  input" },
+	{ "lightgun", "gun", rc_bool, &use_lightgun, "0", 0, 0, NULL, "enable  input" },
+	{ "dual_lightgun", "dual", rc_bool, &use_lightgun_dual, "0", 0, 0, NULL, "enable  input" },
 	{ "offscreen_reload", "reload", rc_bool, &use_lightgun_reload, "0", 0, 0, NULL, "offscreen shots reload" },
 	{ "steadykey", "steady", rc_bool, &steadykey, "0", 0, 0, NULL, "enable steadykey support" },
 	{ "keyboard_leds", "leds", rc_bool, &use_keyboard_leds, "1", 0, 0, NULL, "enable keyboard LED emulation" },
@@ -260,6 +292,7 @@ struct rc_option input_opts[] =
 	{ "digital", NULL, rc_string, &dummy[7], "none", 1, 0, decode_digital, "mark certain joysticks or axes as digital (none|all|j<N>*|j<N>a<M>[,...])" },
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
+#endif
 
 
 
@@ -668,134 +701,6 @@ static int joy_trans_table[][2] =
 
 
 //============================================================
-//  decode_ledmode
-//============================================================
-
-static int decode_ledmode(struct rc_option *option, const char *arg, int priority)
-{
-	if( strcmp( arg, "ps/2" ) != 0 &&
-		strcmp( arg, "usb" ) != 0 )
-	{
-		fprintf(stderr, "error: invalid value for led_mode: %s\n", arg);
-		return -1;
-	}
-	option->priority = priority;
-	return 0;
-}
-
-
-
-//============================================================
-//  decode_analog_select
-//============================================================
-
-static int decode_analog_select(struct rc_option *option, const char *arg, int priority)
-{
-	if (strcmp(arg, "keyboard") == 0)
-		analog_type[(int)option->min] = SELECT_TYPE_KEYBOARD;
-	else if (strcmp(arg, "mouse") == 0)
-		analog_type[(int)option->min] = SELECT_TYPE_MOUSE;
-	else if (strcmp(arg, "joystick") == 0)
-		analog_type[(int)option->min] = SELECT_TYPE_JOYSTICK;
-	else if (strcmp(arg, "lightgun") == 0)
-		analog_type[(int)option->min] = SELECT_TYPE_LIGHTGUN;
-	else
-	{
-		fprintf(stderr, "error: invalid value for %s: %s\n", option->name, arg);
-		return -1;
-	}
-	option->priority = priority;
-	return 0;
-}
-
-
-
-//============================================================
-//  decode_digital
-//============================================================
-
-static int decode_digital(struct rc_option *option, const char *arg, int priority)
-{
-	if (strcmp(arg, "none") == 0)
-		memset(joystick_digital, 0, sizeof(joystick_digital));
-	else if (strcmp(arg, "all") == 0)
-		memset(joystick_digital, 1, sizeof(joystick_digital));
-	else
-	{
-		/* scan the string */
-		while (1)
-		{
-			int joynum = 0;
-			int axisnum = 0;
-
-			/* stop if we hit the end */
-			if (arg[0] == 0)
-				break;
-
-			/* we require the next bits to be j<N> */
-			if (tolower(arg[0]) != 'j' || sscanf(&arg[1], "%d", &joynum) != 1)
-				goto usage;
-			arg++;
-			while (arg[0] != 0 && isdigit(arg[0]))
-				arg++;
-
-			/* if we are followed by a comma or an end, mark all the axes digital */
-			if (arg[0] == 0 || arg[0] == ',')
-			{
-				if (joynum != 0 && joynum - 1 < MAX_JOYSTICKS)
-					memset(&joystick_digital[joynum - 1], 1, sizeof(joystick_digital[joynum - 1]));
-				if (arg[0] == 0)
-					break;
-				arg++;
-				continue;
-			}
-
-			/* loop over axes */
-			while (1)
-			{
-				/* stop if we hit the end */
-				if (arg[0] == 0)
-					break;
-
-				/* if we hit a comma, skip it and break out */
-				if (arg[0] == ',')
-				{
-					arg++;
-					break;
-				}
-
-				/* we require the next bits to be a<N> */
-				if (tolower(arg[0]) != 'a' || sscanf(&arg[1], "%d", &axisnum) != 1)
-					goto usage;
-				arg++;
-				while (arg[0] != 0 && isdigit(arg[0]))
-					arg++;
-
-				/* set that axis to digital */
-				if (joynum != 0 && joynum - 1 < MAX_JOYSTICKS && axisnum < MAX_AXES)
-					joystick_digital[joynum - 1][axisnum] = 1;
-			}
-		}
-	}
-	option->priority = priority;
-	return 0;
-
-usage:
-	fprintf(stderr, "error: invalid value for digital: %s -- valid values are:\n", arg);
-	fprintf(stderr, "         none -- no axes on any joysticks are digital\n");
-	fprintf(stderr, "         all -- all axes on all joysticks are digital\n");
-	fprintf(stderr, "         j<N> -- all axes on joystick <N> are digital\n");
-	fprintf(stderr, "         j<N>a<M> -- axis <M> on joystick <N> is digital\n");
-	fprintf(stderr, "    Multiple axes can be specified for one joystick:\n");
-	fprintf(stderr, "         j1a5a6 -- axes 5 and 6 on joystick 1 are digital\n");
-	fprintf(stderr, "    Multiple joysticks can be specified separated by commas:\n");
-	fprintf(stderr, "         j1,j2a2 -- all joystick 1 axes and axis 2 on joystick 2 are digital\n");
-	return -1;
-}
-
-
-
-//============================================================
 //  autoselect_analog_devices
 //============================================================
 
@@ -1094,15 +999,18 @@ out_of_joysticks:
 
 
 //============================================================
-//  win_init_input
+//  wininput_init
 //============================================================
 
-int win_init_input(void)
+int wininput_init(void)
 {
 	const input_port_entry *inp;
 	HRESULT result;
 
 	add_pause_callback(win_pause_input);
+
+	// decode the options
+	extract_input_config();
 
 	// first attempt to initialize DirectInput
 	dinput_version = DIRECTINPUT_VERSION;
@@ -1313,7 +1221,7 @@ void win_pause_input(int paused)
 
 	// set the paused state
 	input_paused = paused;
-	window_update_cursor_state();
+	winwindow_update_cursor_state();
 }
 
 
@@ -1448,6 +1356,144 @@ void wininput_poll(void)
 int win_is_mouse_captured(void)
 {
 	return (!input_paused && mouse_active && mouse_count > 0 && win_use_mouse && !win_has_menu());
+}
+
+
+
+//============================================================
+//  extract_input_options
+//============================================================
+
+static void parse_analog_select(int type, const char *option)
+{
+	const char *stemp = options_get_string(option, TRUE);
+
+	if (strcmp(stemp, "keyboard") == 0)
+		analog_type[type] = SELECT_TYPE_KEYBOARD;
+	else if (strcmp(stemp, "mouse") == 0)
+		analog_type[type] = SELECT_TYPE_MOUSE;
+	else if (strcmp(stemp, "joystick") == 0)
+		analog_type[type] = SELECT_TYPE_JOYSTICK;
+	else if (strcmp(stemp, "lightgun") == 0)
+		analog_type[type] = SELECT_TYPE_LIGHTGUN;
+	else
+	{
+		fprintf(stderr, "Invalid %s value %s; reverting to keyboard\n", option, stemp);
+		analog_type[type] = SELECT_TYPE_KEYBOARD;
+	}
+}
+
+
+static void parse_digital(const char *option)
+{
+	const char *soriginal = options_get_string(option, TRUE);
+	const char *stemp = soriginal;
+
+	if (strcmp(stemp, "none") == 0)
+		memset(joystick_digital, 0, sizeof(joystick_digital));
+	else if (strcmp(stemp, "all") == 0)
+		memset(joystick_digital, 1, sizeof(joystick_digital));
+	else
+	{
+		/* scan the string */
+		while (1)
+		{
+			int joynum = 0;
+			int axisnum = 0;
+
+			/* stop if we hit the end */
+			if (stemp[0] == 0)
+				break;
+
+			/* we require the next bits to be j<N> */
+			if (tolower(stemp[0]) != 'j' || sscanf(&stemp[1], "%d", &joynum) != 1)
+				goto usage;
+			stemp++;
+			while (stemp[0] != 0 && isdigit(stemp[0]))
+				stemp++;
+
+			/* if we are followed by a comma or an end, mark all the axes digital */
+			if (stemp[0] == 0 || stemp[0] == ',')
+			{
+				if (joynum != 0 && joynum - 1 < MAX_JOYSTICKS)
+					memset(&joystick_digital[joynum - 1], 1, sizeof(joystick_digital[joynum - 1]));
+				if (stemp[0] == 0)
+					break;
+				stemp++;
+				continue;
+			}
+
+			/* loop over axes */
+			while (1)
+			{
+				/* stop if we hit the end */
+				if (stemp[0] == 0)
+					break;
+
+				/* if we hit a comma, skip it and break out */
+				if (stemp[0] == ',')
+				{
+					stemp++;
+					break;
+				}
+
+				/* we require the next bits to be a<N> */
+				if (tolower(stemp[0]) != 'a' || sscanf(&stemp[1], "%d", &axisnum) != 1)
+					goto usage;
+				stemp++;
+				while (stemp[0] != 0 && isdigit(stemp[0]))
+					stemp++;
+
+				/* set that axis to digital */
+				if (joynum != 0 && joynum - 1 < MAX_JOYSTICKS && axisnum < MAX_AXES)
+					joystick_digital[joynum - 1][axisnum] = 1;
+			}
+		}
+	}
+	return;
+
+usage:
+	fprintf(stderr, "Invalid %s value %s; reverting to all -- valid values are:\n", option, soriginal);
+	fprintf(stderr, "         none -- no axes on any joysticks are digital\n");
+	fprintf(stderr, "         all -- all axes on all joysticks are digital\n");
+	fprintf(stderr, "         j<N> -- all axes on joystick <N> are digital\n");
+	fprintf(stderr, "         j<N>a<M> -- axis <M> on joystick <N> is digital\n");
+	fprintf(stderr, "    Multiple axes can be specified for one joystick:\n");
+	fprintf(stderr, "         j1a5a6 -- axes 5 and 6 on joystick 1 are digital\n");
+	fprintf(stderr, "    Multiple joysticks can be specified separated by commas:\n");
+	fprintf(stderr, "         j1,j2a2 -- all joystick 1 axes and axis 2 on joystick 2 are digital\n");
+}
+
+static void extract_input_config(void)
+{
+	// extract boolean options
+	win_use_mouse = options_get_bool("mouse", TRUE);
+	use_joystick = options_get_bool("joystick", TRUE);
+	use_lightgun = options_get_bool("lightgun", TRUE);
+	use_lightgun_dual = options_get_bool("dual_lightgun", TRUE);
+	use_lightgun_reload = options_get_bool("offscreen_reload", TRUE);
+	steadykey = options_get_bool("steadykey", TRUE);
+	use_keyboard_leds = options_get_bool("keyboard_leds", TRUE);
+	ledmode = options_get_string("led_mode", TRUE);
+	a2d_deadzone = options_get_float("a2d_deadzone", TRUE);
+	options.controller = options_get_string("ctrlr", TRUE);
+	parse_analog_select(ANALOG_TYPE_PADDLE, "paddle_device");
+	parse_analog_select(ANALOG_TYPE_ADSTICK, "adstick_device");
+	parse_analog_select(ANALOG_TYPE_PEDAL, "pedal_device");
+	parse_analog_select(ANALOG_TYPE_DIAL, "dial_device");
+	parse_analog_select(ANALOG_TYPE_TRACKBALL, "trackball_device");
+	parse_analog_select(ANALOG_TYPE_LIGHTGUN, "lightgun_device");
+#ifdef MESS
+	parse_analog_select(ANALOG_TYPE_MOUSE, "mouse_device");
+#endif
+	parse_digital("digital");
+
+	// sanity check values
+	if (strcmp(ledmode, "ps/2") != 0 && strcmp(ledmode, "usb") != 0)
+	{
+		fprintf(stderr, "Invalid ledmode value %s; reverting to ps/2\n", ledmode);
+		ledmode = "ps/2";
+	}
 }
 
 

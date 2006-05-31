@@ -10,9 +10,7 @@
 // standard windows headers
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <winnt.h>
 #include <mmsystem.h>
-#include <shellapi.h>
 
 // standard includes
 #include <time.h>
@@ -33,25 +31,6 @@
 
 #define ENABLE_PROFILER		0
 
-
-//============================================================
-//  TYPE DEFINITIONS
-//============================================================
-
-#define MAX_SYMBOLS		65536
-
-typedef struct _map_entry map_entry;
-
-struct _map_entry
-{
-	UINT32 start;
-	UINT32 end;
-	UINT32 hits;
-	char *name;
-};
-
-
-
 //============================================================
 //  GLOBAL VARIABLES
 //============================================================
@@ -69,14 +48,6 @@ int _CRT_glob = 0;
 
 static char mapfile_name[MAX_PATH];
 static LPTOP_LEVEL_EXCEPTION_FILTER pass_thru_filter;
-
-#if ENABLE_PROFILER
-static map_entry symbol_map[MAX_SYMBOLS];
-static int map_entries;
-static HANDLE profiler_thread;
-static DWORD profiler_thread_id;
-static volatile UINT8 profiler_thread_exit;
-#endif
 
 #ifndef MESS
 static const char helpfile[] = "docs\\windows.txt";
@@ -96,14 +67,8 @@ static LONG CALLBACK exception_filter(struct _EXCEPTION_POINTERS *info);
 static const char *lookup_symbol(UINT32 address);
 static int get_code_base_size(UINT32 *base, UINT32 *size);
 
-#if ENABLE_PROFILER
-static void parse_map_file(void);
-static void free_symbol_map(void);
-static void output_symbol_list(FILE *f);
-static void increment_bucket(UINT32 addr);
 static void start_profiler(void);
 static void stop_profiler(void);
-#endif
 
 
 
@@ -131,16 +96,12 @@ int main(int argc, char **argv)
 		return 1;
 #endif
 
-	// parse the map file, if present
 	strcpy(mapfile_name, argv[0]);
 	ext = strchr(mapfile_name, '.');
 	if (ext)
 		strcpy(ext, ".map");
 	else
 		strcat(mapfile_name, ".map");
-#if ENABLE_PROFILER
-	parse_map_file();
-#endif
 
 	// parse config and cmdline options
 	game_index = cli_frontend_init(argc, argv);
@@ -160,16 +121,12 @@ int main(int argc, char **argv)
 		if (result == TIMERR_NOERROR)
 			timeBeginPeriod(caps.wPeriodMin);
 
-#if ENABLE_PROFILER
 		start_profiler();
-#endif
 
 		// run the game
 		res = run_game(game_index);
 
-#if ENABLE_PROFILER
 		stop_profiler();
-#endif
 
 		// restore the timer resolution
 		if (result == TIMERR_NOERROR)
@@ -183,10 +140,6 @@ int main(int argc, char **argv)
 	// close errorlog, input and playback
 	cli_frontend_exit();
 
-#if ENABLE_PROFILER
-	output_symbol_list(stderr);
-	free_symbol_map();
-#endif
 	free_pathlists();
 
 #ifdef MALLOC_DEBUG
@@ -220,22 +173,16 @@ static void output_oslog(const char *buffer)
 
 int osd_init(void)
 {
-	extern int win_init_input(void);
+	extern int wininput_init(void);
 	extern void win_blit_init(void);
 	extern int win_erroroslog;
 	int result = 0;
 
-#ifdef NEW_RENDER
 	if (result == 0)
 		result = winvideo_init();
-#else
-	win_blit_init();
 
 	if (result == 0)
-		result = win_init_window();
-#endif
-	if (result == 0)
-		result = win_init_input();
+		result = wininput_init();
 
 	add_exit_callback(osd_exit);
 
@@ -276,7 +223,7 @@ void *osd_alloc_executable(size_t size)
 //  osd_free_executable
 //============================================================
 
-void osd_free_executable(void *ptr)
+void osd_free_executable(void *ptr, size_t size)
 {
 	VirtualFree(ptr, 0, MEM_RELEASE);
 }
@@ -344,10 +291,20 @@ static int check_for_double_click_start(int argc)
 			FILE *fp = fopen(helpfile, "r");
 			if (fp)
 			{
+				HANDLE hShell32;
+				HINSTANCE (WINAPI *pfnShellExecuteA)(HWND hwnd, LPCSTR lpOperation, LPCSTR lpFile, LPCSTR lpParameters, LPCSTR lpDirectory, int nShowCmd);
+
 				fclose(fp);
 
 				// if so, open it with the default application
-				ShellExecute(NULL, "open", helpfile, NULL, NULL, SW_SHOWNORMAL);
+				hShell32 = LoadLibrary(TEXT("shell32.dll"));
+				if (NULL != hShell32)
+				{
+					pfnShellExecuteA = (HINSTANCE (WINAPI *)(HWND,LPCSTR,LPCSTR,LPCSTR,LPCSTR,int))GetProcAddress(hShell32, TEXT("ShellExecuteA"));
+					if (NULL != pfnShellExecuteA)
+						pfnShellExecuteA(NULL, "open", helpfile, NULL, NULL, SW_SHOWNORMAL);
+					FreeLibrary(hShell32);
+				}
 			}
 			else
 			{
@@ -586,6 +543,40 @@ static int get_code_base_size(UINT32 *base, UINT32 *size)
 }
 
 
+#if ENABLE_PROFILER
+
+//============================================================
+//
+//  profiler.c - Sampling profiler
+//
+//============================================================
+
+//============================================================
+//  TYPE DEFINITIONS
+//============================================================
+
+#define MAX_SYMBOLS		65536
+
+typedef struct _map_entry map_entry;
+
+struct _map_entry
+{
+	UINT32 start;
+	UINT32 end;
+	UINT32 hits;
+	char *name;
+};
+
+//============================================================
+//  LOCAL VARIABLES
+//============================================================
+
+static map_entry symbol_map[MAX_SYMBOLS];
+static int map_entries;
+
+static HANDLE profiler_thread;
+static DWORD profiler_thread_id;
+static volatile UINT8 profiler_thread_exit;
 
 //============================================================
 //  compare_base
@@ -597,9 +588,7 @@ static int CLIB_DECL compare_start(const void *item1, const void *item2)
 	return ((const map_entry *)item1)->start - ((const map_entry *)item2)->start;
 }
 
-
-#if ENABLE_PROFILER
-static int compare_hits(const void *item1, const void *item2)
+static int CLIB_DECL compare_hits(const void *item1, const void *item2)
 {
 	return ((const map_entry *)item2)->hits - ((const map_entry *)item1)->hits;
 }
@@ -764,6 +753,9 @@ static void start_profiler(void)
 	HANDLE currentThread;
 	BOOL result;
 
+	// parse the map file, if present
+	parse_map_file();
+
 	/* do the dance to get a handle to ourself */
 	result = DuplicateHandle(GetCurrentProcess(), GetCurrentThread(), GetCurrentProcess(), &currentThread,
 			THREAD_GET_CONTEXT | THREAD_SUSPEND_RESUME | THREAD_QUERY_INFORMATION, FALSE, 0);
@@ -789,5 +781,10 @@ static void stop_profiler(void)
 {
 	profiler_thread_exit = 1;
 	WaitForSingleObject(profiler_thread, 2000);
+	output_symbol_list(stderr);
+	free_symbol_map();
 }
+#else
+static void start_profiler(void) {}
+static void stop_profiler(void) {}
 #endif

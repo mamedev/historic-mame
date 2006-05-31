@@ -422,6 +422,7 @@ static void add_line(int x1, int y1, int x2, int y2, rgb_t color);
 static void add_fill(int left, int top, int right, int bottom, rgb_t color);
 static void add_char(int x, int y, UINT16 ch, int color);
 static void add_filled_box(int x1, int y1, int x2, int y2);
+#define add_black_box add_filled_box
 static void render_ui(mame_bitmap *dest);
 /* -- end this stuff will go away with the new rendering system */
 #else
@@ -429,6 +430,7 @@ static void render_ui(mame_bitmap *dest);
 #define add_fill(x0,y0,x1,y1,color) render_ui_add_rect(UI_UNSCALE_TO_FLOAT(x0), UI_UNSCALE_TO_FLOAT(y0), UI_UNSCALE_TO_FLOAT(x1), UI_UNSCALE_TO_FLOAT(y1), color, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA))
 #define add_char(x,y,ch,color)		render_ui_add_char(UI_UNSCALE_TO_FLOAT(x), UI_UNSCALE_TO_FLOAT(y), UI_FONT_HEIGHT, render_get_ui_aspect(), color, ui_font, ch)
 static void add_filled_box(int x1, int y1, int x2, int y2);
+static void add_black_box(int x1, int y1, int x2, int y2);
 #endif
 
 
@@ -565,10 +567,8 @@ int ui_display_startup_screens(int show_disclaimer, int show_warnings, int show_
 		while (code_read_async() != CODE_NONE) ;
 
 		/* loop while we have a handler */
-		while (ui_handler_callback != NULL)
+		while (ui_handler_callback != NULL && !mame_is_scheduled_event_pending())
 		{
-			int ui_width, ui_height;
-
 			/* reset the contents of the screen */
 #ifndef NEW_RENDER
 			erase_screen(bitmap);
@@ -576,12 +576,7 @@ int ui_display_startup_screens(int show_disclaimer, int show_warnings, int show_
 			render_container_empty(render_container_get_ui());
 #endif
 
-			/* first draw a box around the whole screen */
-			ui_get_bounds(&ui_width, &ui_height);
-			add_filled_box(0, 0, ui_width - 1, ui_height - 1);
-
 			/* call the handler */
-			ui_handler_param = (*ui_handler_callback)(ui_handler_param);
 			if (ui_handler_param == 1000)
 				break;
 			if (ui_handler_param == UI_HANDLER_CANCEL)
@@ -1468,11 +1463,9 @@ static void handle_keys(void)
 	if (input_ui_pressed(IPT_UI_LOAD_STATE))
 		initiate_load_save(LOADSAVE_LOAD);
 
-#ifndef NEW_RENDER
 	/* handle a save snapshot request */
 	if (input_ui_pressed(IPT_UI_SNAPSHOT))
-		save_screen_snapshot(bitmap);
-#endif
+		save_screen_snapshot(NULL);
 
 	/* toggle pause */
 	if (input_ui_pressed(IPT_UI_PAUSE))
@@ -2608,11 +2601,11 @@ static UINT32 menu_video(UINT32 state)
 
 		/* handle the keys */
 		if (ui_menu_generic_keys(&selected, menu_items))
-			return selected | (curtarget << 16);
+			return selected;
 
 		/* handle actions */
 		if (input_ui_pressed(IPT_UI_SELECT))
-			return (selected << 16) | 0;
+			return ui_menu_stack_push(menu_video, (selected << 16) | render_target_get_view(render_target_get_indexed(selected)));
 	}
 
 	/* otherwise, draw the list of layouts */
@@ -2633,14 +2626,14 @@ static UINT32 menu_video(UINT32 state)
 		}
 
 		/* add an item to return */
-		item_list[menu_items++].text = ui_getstring(UI_returntomain);
+		item_list[menu_items++].text = ui_getstring(UI_returntoprior);
 
 		/* draw the menu */
 		ui_draw_menu(item_list, menu_items, selected);
 
 		/* handle the keys */
 		if (ui_menu_generic_keys(&selected, menu_items))
-			return selected | (curtarget << 16);
+			return selected;
 
 		/* handle actions */
 		if (input_ui_pressed(IPT_UI_SELECT))
@@ -3413,10 +3406,15 @@ static UINT32 disclaimer_ui_handler(UINT32 state)
 {
 	char buf[1000];
 	char *bufptr = buf;
+	int ui_width, ui_height;
 
 	bufptr += sprintf(bufptr, "%s\n\n", ui_getstring(UI_copyright1));
 	bufptr += sprintf(bufptr, ui_getstring(UI_copyright2), Machine->gamedrv->description);
 	bufptr += sprintf(bufptr, "\n\n%s", ui_getstring(UI_copyright3));
+
+	/* first draw a box around the whole screen */
+	ui_get_bounds(&ui_width, &ui_height);
+	add_black_box(0, 0, ui_width - 1, ui_height - 1);
 
 	ui_draw_message_window(buf);
 
@@ -3449,6 +3447,7 @@ static UINT32 warnings_ui_handler(UINT32 state)
 	int i;
 	char buf[2048];
 	char *bufptr = buf;
+	int ui_width, ui_height;
 
 	if (rom_load_warnings() > 0 || (Machine->gamedrv->flags & WARNING_FLAGS))
 	{
@@ -3519,6 +3518,10 @@ static UINT32 warnings_ui_handler(UINT32 state)
 
 		bufptr += sprintf(bufptr, "\n\n%s", ui_getstring(UI_typeok));
 
+		/* first draw a box around the whole screen */
+		ui_get_bounds(&ui_width, &ui_height);
+		add_black_box(0, 0, ui_width - 1, ui_height - 1);
+
 		ui_draw_message_window(buf);
 
 		/* an 'O' or left joystick kicks us to the next state */
@@ -3544,6 +3547,7 @@ static UINT32 gameinfo_ui_handler(UINT32 state)
 {
 	char buf[2048];
 	char *bufptr = buf;
+	int ui_width, ui_height;
 
 	/* state 0 is the standard game info */
 	if (state == 0)
@@ -3563,6 +3567,10 @@ static UINT32 gameinfo_ui_handler(UINT32 state)
 		bufptr += ui_sprintf_image_info(bufptr);
 #endif
 	}
+
+	/* first draw a box around the whole screen */
+	ui_get_bounds(&ui_width, &ui_height);
+	add_black_box(0, 0, ui_width - 1, ui_height - 1);
 
 	/* draw the window */
 	ui_draw_message_window(buf);
@@ -4373,6 +4381,18 @@ static void add_filled_box(int x1, int y1, int x2, int y2)
 	add_line(x2, y1, x2, y2, ARGB_WHITE);
 	add_line(x2, y2, x1, y2, ARGB_WHITE);
 	add_line(x1, y2, x1, y1, ARGB_WHITE);
+}
+
+static void add_black_box(int x1, int y1, int x2, int y2)
+{
+	float hw = UI_LINE_WIDTH * 0.5f;
+
+	render_ui_add_rect(0.0f, 0.0f, 1.0f, 1.0f, ARGB_BLACK, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+
+	render_ui_add_line(0.0f + hw, 0.0f + hw, 1.0f - hw, 0.0f + hw, UI_LINE_WIDTH, ARGB_WHITE, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+	render_ui_add_line(1.0f - hw, 0.0f + hw, 1.0f - hw, 1.0f - hw, UI_LINE_WIDTH, ARGB_WHITE, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+	render_ui_add_line(1.0f - hw, 1.0f - hw, 0.0f + hw, 1.0f - hw, UI_LINE_WIDTH, ARGB_WHITE, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+	render_ui_add_line(0.0f + hw, 1.0f - hw, 0.0f + hw, 0.0f + hw, UI_LINE_WIDTH, ARGB_WHITE, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
 }
 
 #endif

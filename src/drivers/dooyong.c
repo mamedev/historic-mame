@@ -579,6 +579,16 @@ INPUT_PORTS_END
 INPUT_PORTS_START( gulfstrm )
 	PORT_INCLUDE( dooyongz80_generic )
 
+	PORT_MODIFY("DSW2")
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x30, "Every 300,000" )
+	PORT_DIPSETTING(    0x20, "Every 400,000" )
+	PORT_DIPSETTING(    0x10, "Every 500,000" )
+	PORT_DIPSETTING(    0x00, DEF_STR( None ) )
+	PORT_DIPNAME( 0x40, 0x40, "Power Rise(?)" )
+	PORT_DIPSETTING(    0x40, "1" )
+	PORT_DIPSETTING(    0x00, "2" )
+
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -621,6 +631,11 @@ INPUT_PORTS_END
 INPUT_PORTS_START( flytiger )
 	PORT_INCLUDE( dooyongz80_generic )
 
+	PORT_MODIFY("DSW2")
+	PORT_DIPNAME( 0x40, 0x40, "Auto Fire" ) /* Mainly (only?) for 3-way charge */
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 )
@@ -632,6 +647,32 @@ INPUT_PORTS_START( flytiger )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( sadari )
+	PORT_INCLUDE( dooyongz80_generic )
+
+	PORT_MODIFY("DSW2")
+	PORT_DIPNAME( 0x03, 0x01, "Show Girl" )
+	PORT_DIPSETTING(    0x00, "Skip Skip Skip" )
+	PORT_DIPSETTING(    0x03, "Dress Dress Dress" )
+	PORT_DIPSETTING(    0x02, "Dress Half Half" )
+	PORT_DIPSETTING(    0x01, "Dress Half Naked" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x40, 0x40, "Girl Show Point" )
+	PORT_DIPSETTING(    0x40, "Other Country" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Asia ) )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
 
 INPUT_PORTS_START( primella )
 	PORT_INCLUDE( dooyongz80_generic )
@@ -641,7 +682,7 @@ INPUT_PORTS_START( primella )
 	PORT_DIPSETTING(    0x00, "Skip Skip Skip" )
 	PORT_DIPSETTING(    0x03, "Dress Dress Dress" )
 	PORT_DIPSETTING(    0x02, "Dress Half Half" )
-	PORT_DIPSETTING(    0x01, "Dress Half Nake" )
+	PORT_DIPSETTING(    0x01, "Dress Half Naked" )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
@@ -674,11 +715,6 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( superx )
 	PORT_INCLUDE( dooyongm68_generic )
-
-	PORT_MODIFY("DSW")
-	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( popbingo )
@@ -1927,7 +1963,7 @@ GAME( 1991, polluxa2, pollux,   pollux,   pollux,   0, ROT270, "Dooyong", "Pollu
 GAME( 1992, flytiger, 0,        flytiger, flytiger, 0, ROT270, "Dooyong", "Flying Tiger", GAME_IMPERFECT_GRAPHICS | GAME_WRONG_COLORS )
 GAME( 1993, bluehawk, 0,        bluehawk, bluehawk, 0, ROT270, "Dooyong", "Blue Hawk", GAME_IMPERFECT_GRAPHICS )
 GAME( 1993, bluehawn, bluehawk, bluehawk, bluehawk, 0, ROT270, "[Dooyong] (NTC license)", "Blue Hawk (NTC)", GAME_IMPERFECT_GRAPHICS )
-GAME( 1993, sadari,   0,        primella, primella, 0, ROT0,   "[Dooyong] (NTC license)", "Sadari", 0 )
+GAME( 1993, sadari,   0,        primella, sadari,   0, ROT0,   "[Dooyong] (NTC license)", "Sadari", 0 )
 GAME( 1994, gundl94,  0,        primella, primella, 0, ROT0,   "Dooyong", "Gun Dealer '94", 0 )
 GAME( 1994, primella, gundl94,  primella, primella, 0, ROT0,   "[Dooyong] (NTC license)", "Primella", 0 )
 GAME( 1994, superx,   0,        superx,   superx,   0, ROT270, "NTC", "Super-X (NTC)", GAME_IMPERFECT_GRAPHICS )

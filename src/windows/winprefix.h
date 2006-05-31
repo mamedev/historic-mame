@@ -10,10 +10,6 @@
 #ifdef MALLOC_DEBUG
 #include <stdlib.h>
 
-#ifdef _MSC_VER
-#include <malloc.h>
-#endif /* _MSC_VER */
-
 // override malloc to track file/line
 void* malloc_file_line(size_t size, const char *file, int line);
 void* calloc_file_line(size_t size, size_t count, const char *FILE, int line);

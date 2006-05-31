@@ -85,9 +85,13 @@ static void internal_modify_pen(pen_t pen, rgb_t color, int pen_bright);
 
 INLINE UINT16 rgb_to_direct15(rgb_t rgb)
 {
+#ifndef NEW_RENDER
 	return  (  RGB_RED(rgb) >> 3) * (direct_rgb_components[0] / 0x1f) +
 			(RGB_GREEN(rgb) >> 3) * (direct_rgb_components[1] / 0x1f) +
 			( RGB_BLUE(rgb) >> 3) * (direct_rgb_components[2] / 0x1f);
+#else
+	return ((RGB_RED(rgb) >> 3) << 10) | ((RGB_GREEN(rgb) >> 3) << 5) | ((RGB_BLUE(rgb) >> 3) << 0);
+#endif
 }
 
 
@@ -99,9 +103,13 @@ INLINE UINT16 rgb_to_direct15(rgb_t rgb)
 
 INLINE UINT32 rgb_to_direct32(rgb_t rgb)
 {
+#ifndef NEW_RENDER
 	return    RGB_RED(rgb) * (direct_rgb_components[0] / 0xff) +
 			RGB_GREEN(rgb) * (direct_rgb_components[1] / 0xff) +
 			 RGB_BLUE(rgb) * (direct_rgb_components[2] / 0xff);
+#else
+	return rgb;
+#endif
 }
 
 
@@ -756,11 +764,11 @@ int palette_init(void)
 int palette_get_total_colors_with_ui(void)
 {
 	int result = Machine->drv->total_colors;
-#ifndef NEW_RENDER
 	if (Machine->drv->video_attributes & VIDEO_HAS_SHADOWS && !(colormode & DIRECT_RGB))
 		result += Machine->drv->total_colors;
 	if (Machine->drv->video_attributes & VIDEO_HAS_HIGHLIGHTS && !(colormode & DIRECT_RGB))
 		result += Machine->drv->total_colors;
+#ifndef NEW_RENDER
 	if (result <= 65534)
 		result += 2;
 #endif

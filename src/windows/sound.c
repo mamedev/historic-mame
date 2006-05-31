@@ -26,12 +26,12 @@
 #ifndef NEW_RENDER
 #include "windold.h"
 #include "videoold.h"
+extern int throttle;
 #else
 #include "window.h"
 #include "video.h"
 #define win_video_window		win_window_list->hwnd
 #endif
-#include "rc.h"
 
 
 //============================================================
@@ -77,6 +77,8 @@ extern int verbose;
 // global parameters
 int							attenuation = 0;
 
+int							audio_latency;
+char *						wavwrite;
 
 
 //============================================================
@@ -111,7 +113,6 @@ static UINT32				samples_this_frame;
 
 // sample rate adjustments
 static int					current_adjustment = 0;
-static int					audio_latency;
 static int					lower_thresh;
 static int					upper_thresh;
 
@@ -123,19 +124,7 @@ static int					is_enabled = 1;
 static FILE *				sound_log;
 #endif
 
-static char *				wavwrite;
 static void *				wavptr;
-
-// sound options (none at this time)
-struct rc_option sound_opts[] =
-{
-	// name, shortname, type, dest, deflt, min, max, func, help
-	{ "Windows sound options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
-	{ "audio_latency", NULL, rc_int, &audio_latency, "1", 1, 4, NULL, "set audio latency (increase to reduce glitches)" },
-	{ "wavwrite", NULL, rc_string, &wavwrite, NULL, 0, 0, NULL, "save sound in wav file" },
-	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
-};
-
 
 
 //============================================================
@@ -259,7 +248,11 @@ static void update_sample_adjustment(int buffered)
 	static int consecutive_highs = 0;
 
 	// if we're not throttled don't bother
+#ifndef NEW_RENDER
 	if (!throttle)
+#else
+	if (!video_config.throttle)
+#endif
 	{
 		consecutive_lows = 0;
 		consecutive_mids = 0;

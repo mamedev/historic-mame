@@ -25,7 +25,6 @@
 #include "windold.h"
 #include "videoold.h"
 #include "blit.h"
-#include "rc.h"
 #include "wind3old.h"
 #include "wind4old.h"
 
@@ -77,24 +76,24 @@ UINT32 win_d3d_preprocess_tfactor;
 static int use_effect_preset = 0;
 static int use_scanlines;
 static int use_prescale;
-static int use_feedback;
+int use_feedback;
 static int use_rotate;
 static int use_pixelcounter = 0;
 
-static int priority_use_effect_preset;
-static int priority_use_scanlines;
-static int priority_use_prescale;
-static int priority_use_feedback;
-static int priority_use_rotate;
-static int priority_use_pixelcounter;
+//static int priority_use_effect_preset;
+//static int priority_use_scanlines;
+//static int priority_use_prescale;
+//static int priority_use_feedback;
+//static int priority_use_rotate;
+//static int priority_use_pixelcounter;
 
-static char *d3d_rc_effect;
-static char *d3d_rc_custom;
-static char *d3d_rc_expert;
-static int d3d_rc_scan;
-static int d3d_rc_prescale;
-static int d3d_rc_feedback;
-static int d3d_rc_rotate;
+//static char *d3d_rc_effect;
+//static char *d3d_rc_custom;
+//static char *d3d_rc_expert;
+//static int d3d_rc_scan;
+//static int d3d_rc_prescale;
+//static int d3d_rc_feedback;
+//static int d3d_rc_rotate;
 
 typedef struct _d3d_preset_info d3d_preset_info;
 
@@ -165,6 +164,7 @@ static d3d_preset_info active_preset;
 //  PROTOTYPES
 //============================================================
 
+#if 0
 static int win_d3d_decode_scan(struct rc_option *option, const char *arg, int priority);
 static int win_d3d_decode_feedback(struct rc_option *option, const char *arg, int priority);
 static int win_d3d_decode_prescale(struct rc_option *option, const char *arg, int priority);
@@ -172,6 +172,7 @@ static int win_d3d_decode_rotate(struct rc_option *option, const char *arg, int 
 static int win_d3d_decode_custom(struct rc_option *option, const char *arg, int priority);
 static int win_d3d_decode_effect(struct rc_option *option, const char *arg, int priority);
 static int win_d3d_decode_expert(struct rc_option *option, const char *arg, int priority);
+#endif
 
 static int effects_rgb_init(void);
 static int effects_scanline_init(void);
@@ -185,6 +186,7 @@ static void win_ddrawsurf_plot_pixel(const LPDDSURFACEDESC2 surface_desc, int x,
 //  Options
 //============================================================
 
+#if 0
 struct rc_option win_d3d_opts[] =
 {
 	// name, shortname, type, dest, deflt, min, max, func, help
@@ -204,8 +206,6 @@ struct rc_option win_d3d_opts[] =
 
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
-
-
 
 //============================================================
 //  Effect command line parsing
@@ -517,6 +517,8 @@ static int win_d3d_decode_expert(struct rc_option *option, const char *arg, int 
 	return 1;
 }
 
+
+#endif
 
 
 //============================================================

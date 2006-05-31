@@ -36,8 +36,9 @@
 #include "blit.h"
 #include "videoold.h"
 #include "windold.h"
-#include "rc.h"
+#include "options.h"
 #include "input.h"
+#include "blit.h"
 
 #ifndef NEW_DEBUGGER
 #include "debugwin.h"
@@ -106,10 +107,10 @@ UINT8 blit_swapxy;
 //============================================================
 
 // options decoding
-static char *cleanstretch;
-static char *resolution;
-static char *effect;
-static char *aspect;
+//static char *cleanstretch;
+//static char *resolution;
+//static char *effect;
+//static char *aspect;
 static char *mngwrite;
 
 // primary monitor handle
@@ -197,193 +198,68 @@ static void update_visible_area(mame_display *display);
 //  OPTIONS
 //============================================================
 
-// options struct
-struct rc_option video_opts[] =
+const options_entry video_opts[] =
 {
-	// name, shortname, type, dest, deflt, min, max, func, help
-	{ "Windows video options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
-	{ "autoframeskip", "afs", rc_bool, &autoframeskip, "1", 0, 0, NULL, "skip frames to speed up emulation" },
-	{ "frameskip", "fs", rc_int, &frameskip, "0", 0, 12, NULL, "set frameskip explicitly (autoframeskip needs to be off)" },
-	{ "waitvsync", NULL, rc_bool, &win_wait_vsync, "0", 0, 0, NULL, "wait for vertical sync (reduces tearing)"},
-	{ "triplebuffer", "tb", rc_bool, &win_triple_buffer, "0", 0, 0, NULL, "triple buffering (only if fullscreen)" },
-	{ "window", "w", rc_bool, &win_window_mode, "0", 0, 0, NULL, "run in a window/run on full screen" },
-	{ "ddraw", "dd", rc_bool, &win_use_ddraw, "1", 0, 0, NULL, "use DirectDraw for rendering" },
-	{ "direct3d", "d3d", rc_bool, &win_use_d3d, "0", 0, 0, NULL, "use Direct3D for rendering" },
-	{ "hwstretch", "hws", rc_bool, &win_dd_hw_stretch, "1", 0, 0, NULL, "(dd) stretch video using the hardware" },
-	{ "screen", NULL, rc_string, &screen_name, NULL, 0, 0, NULL, "specify which screen to use" },
-	{ "cleanstretch", "cs", rc_string, &cleanstretch, "auto", 0, 0, decode_cleanstretch, "stretch to integer ratios" },
-	{ "resolution", "r", rc_string, &resolution, "auto", 0, 0, video_set_resolution, "set resolution" },
-	{ "refresh", NULL, rc_int, &win_gfx_refresh, "0", 0, 0, NULL, "set specific monitor refresh rate" },
-	{ "scanlines", "sl", rc_bool, &win_old_scanlines, "0", 0, 0, NULL, "emulate win_old_scanlines" },
-	{ "switchres", NULL, rc_bool, &win_switch_res, "1", 0, 0, NULL, "switch resolutions to best fit" },
-	{ "switchbpp", NULL, rc_bool, &win_switch_bpp, "1", 0, 0, NULL, "switch color depths to best fit" },
-	{ "maximize", "max", rc_bool, &win_start_maximized, "1", 0, 0, NULL, "start out maximized" },
-	{ "keepaspect", "ka", rc_bool, &win_keep_aspect, "1", 0, 0, NULL, "enforce aspect ratio" },
-	{ "matchrefresh", NULL, rc_bool, &win_match_refresh, "0", 0, 0, NULL, "attempt to match the game's refresh rate" },
-	{ "syncrefresh", NULL, rc_bool, &win_sync_refresh, "0", 0, 0, NULL, "syncronize only to the monitor refresh" },
-	{ "throttle", NULL, rc_bool, &throttle, "1", 0, 0, NULL, "throttle speed to the game's framerate" },
-	{ "full_screen_gamma", "fsg", rc_float, &win_gfx_gamma, "1.0", 0.0, 4.0, NULL, "sets the gamma in full screen mode" },
-	{ "frames_to_run", "ftr", rc_int, &frames_to_display, "0", 0, 0, decode_ftr, "sets the number of frames to run within the game" },
-	{ "effect", NULL, rc_string, &effect, "none", 0, 0, decode_effect, "specify the blitting effect" },
-	{ "screen_aspect", NULL, rc_string, &aspect, "4:3", 0, 0, decode_aspect, "specify an alternate monitor aspect ratio" },
-	{ "mngwrite", NULL, rc_string, &mngwrite, NULL, 0, 0, NULL, "save video in specified mng file" },
+	// performance options
+	{ NULL,                       NULL,   OPTION_HEADER,     "PERFORMANCE OPTIONS" },
+	{ "autoframeskip;afs",        "1",    OPTION_BOOLEAN,    "enable automatic frameskip selection" },
+	{ "frameskip;fs",             "0",    0,                 "set frameskip to fixed value, 0-12 (autoframeskip must be disabled)" },
+	{ "throttle",                 "1",    OPTION_BOOLEAN,    "enable throttling to keep game running in sync with real time" },
+	{ "sleep",                    "1",    OPTION_BOOLEAN,    "enable sleeping, which gives time back to other applications when idle" },
+	{ "rdtsc",                    "0",    OPTION_BOOLEAN,    "use the RDTSC instruction for timing; faster but may result in uneven performance" },
+	{ "priority",                 "0",    0,                 "thread priority for the main game thread; range from -15 to 1" },
 
-	{ NULL, NULL, rc_link, win_d3d_opts, NULL, 0, 0, NULL, NULL },
+	// misc options
+	{ NULL,                       NULL,   OPTION_HEADER,     "MISC VIDEO OPTIONS" },
+	{ "frames_to_run;ftr",        "0",    0,                 "number of frames to run before automatically exiting" },
+	{ "mngwrite",                 NULL,   0,                 "optional filename to write a MNG movie of the current session" },
 
-	{ "Windows misc options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
-	{ "sleep", NULL, rc_bool, &allow_sleep, "1", 0, 0, NULL, "allow " APPNAME " to give back time to the system when it's not needed" },
-	{ "rdtsc", NULL, rc_bool, &win_force_rdtsc, "0", 0, 0, NULL, "prefer RDTSC over QueryPerformanceCounter for timing" },
-	{ "priority", NULL, rc_int, &win_priority, "0", -15, 1, NULL, "thread priority" },
+	// global options
+	{ NULL,                       NULL,   OPTION_HEADER,     "GLOBAL VIDEO OPTIONS" },
+	{ "window;w",                 "0",    OPTION_BOOLEAN,    "enable window mode; otherwise, full screen mode is assumed" },
+	{ "maximize;max",             "1",    OPTION_BOOLEAN,    "default to maximized windows; otherwise, windows will be minimized" },
+	{ "numscreens",               "1",    0,                 "number of screens to create; usually, you want just one" },
+	{ "extra_layout;layout",      NULL,   0,                 "name of an extra layout file to parse" },
 
-	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
+	// per-window options
+	{ NULL,                       NULL,   OPTION_HEADER,     "PER-WINDOW VIDEO OPTIONS" },
+	{ "screen",                   NULL,   0,                 "specify which screen to use" },
+	{ "screen_aspect",            "4:3",  0,                 "aspect ratio of the screen" },
+	{ "resolution;r",             "auto", 0,                 "preferred resolution of the screen; format is <width>x<height>[x<depth>] or 'auto'" },
+
+	// directx options
+	{ NULL,                       NULL,   OPTION_HEADER,     "DIRECTX VIDEO OPTIONS" },
+	{ "ddraw;dd",                 "1",    OPTION_BOOLEAN,    "enable using DirectDraw for video rendering (preferred)" },
+	{ "direct3d;d3d",             "0",    OPTION_BOOLEAN,    "enable using Direct3D for video rendering" },
+	{ "waitvsync",                "0",    OPTION_BOOLEAN,    "enable waiting for the start of VBLANK before flipping screens; reduces tearing effects" },
+	{ "syncrefresh",              "0",    OPTION_BOOLEAN,    "enable using the start of VBLANK for throttling instead of the game time" },
+	{ "triplebuffer;tb",          "0",    OPTION_BOOLEAN,    "enable triple buffering" },
+	{ "switchres",                "1",    OPTION_BOOLEAN,    "enable resolution switching" },
+	{ "full_screen_gamma;fsg",    "1.0",  0,                 "gamma value in full screen mode" },
+
+	{ "hwstretch;hws",            "1",    OPTION_BOOLEAN,    "(dd) stretch video using the hardware" },
+	{ "cleanstretch;cs",          "auto", 0,                 "stretch to integer ratios" },
+	{ "refresh",                  "0",    0,                 "set specific monitor refresh rate" },
+	{ "scanlines;sl",             "0",    OPTION_BOOLEAN,    "emulate win_old_scanlines" },
+	{ "switchbpp",                "1",    OPTION_BOOLEAN,    "switch color depths to best fit" },
+	{ "keepaspect;ka",            "1",    OPTION_BOOLEAN,    "enforce aspect ratio" },
+	{ "matchrefresh",             "0",    OPTION_BOOLEAN,    "attempt to match the game's refresh rate" },
+	{ "effect",                   "none", 0,                 "specify the blitting effect" },
+
+	{ "zoom;z",                   "2",    0,                 "force specific zoom level" },
+	{ "d3dtexmanage",             "1",    OPTION_BOOLEAN,    "use DirectX texture management" },
+	{ "d3dfilter;flt",            "1",    OPTION_BOOLEAN,    "enable bilinear filtering" },
+
+	{ "d3dfeedback",              "0",    OPTION_DEPRECATED, "feedback strength" },
+	{ "d3dscan",                  "100",  OPTION_DEPRECATED, "scanline intensity" },
+	{ "d3deffectrotate",          "1",    OPTION_DEPRECATED, "enable rotation of effects for rotated games" },
+	{ "d3dprescale",              "auto", OPTION_DEPRECATED, "prescale effect" },
+	{ "d3deffect",                "none", OPTION_DEPRECATED, "specify the blitting effects" },
+	{ "d3dcustom",                NULL,   OPTION_DEPRECATED, "customised blitting effects preset" },
+	{ "d3dexpert",                NULL,   OPTION_DEPRECATED, "additional customised settings (undocumented)" },
+
+	{ NULL }
 };
-
-
-
-//============================================================
-//  decode_cleanstretch
-//============================================================
-
-static int decode_cleanstretch(struct rc_option *option, const char *arg, int priority)
-{
-	// none: never contrain stretching
-	if (!strcmp(arg, "none"))
-	{
-		win_force_int_stretch = FORCE_INT_STRECT_NONE;
-	}
-	// full: constrain both width and height to integer ratios
-	else if (!strcmp(arg, "full"))
-	{
-		win_force_int_stretch = FORCE_INT_STRECT_FULL;
-	}
-	// auto: let the blitter module decide when/how to constrain stretching
-	else if (!strcmp(arg, "auto"))
-	{
-		win_force_int_stretch = FORCE_INT_STRECT_AUTO;
-	}
-	// horizontal: constrain width to integer ratios (relative to game)
-	else if (!strncmp(arg, "horizontal", strlen(arg)))
-	{
-		win_force_int_stretch = FORCE_INT_STRECT_HOR;
-	}
-	// vertical: constrain height to integer ratios (relative to game)
-	else if (!strncmp(arg, "vertical", strlen(arg)))
-	{
-		win_force_int_stretch = FORCE_INT_STRECT_VER;
-	}
-	else
-	{
-		fprintf(stderr, "error: invalid value for cleanstretch: %s\n", arg);
-		return -1;
-	}
-
-	option->priority = priority;
-	return 0;
-}
-
-
-
-//============================================================
-//  video_set_resolution
-//============================================================
-
-static int video_set_resolution(struct rc_option *option, const char *arg, int priority)
-{
-	if (!strcmp(arg, "auto"))
-	{
-		win_gfx_width = win_gfx_height = win_gfx_depth = 0;
-		options.vector_width = options.vector_height = 0;
-	}
-	else if (sscanf(arg, "%dx%dx%d", &win_gfx_width, &win_gfx_height, &win_gfx_depth) < 2)
-	{
-		win_gfx_width = win_gfx_height = win_gfx_depth = 0;
-		options.vector_width = options.vector_height = 0;
-		fprintf(stderr, "error: invalid value for resolution: %s\n", arg);
-		return -1;
-	}
-	if ((win_gfx_depth != 0) &&
-		(win_gfx_depth != 16) &&
-		(win_gfx_depth != 24) &&
-		(win_gfx_depth != 32))
-	{
-		win_gfx_width = win_gfx_height = win_gfx_depth = 0;
-		options.vector_width = options.vector_height = 0;
-		fprintf(stderr, "error: invalid value for resolution: %s\n", arg);
-		return -1;
-	}
-	options.vector_width = win_gfx_width;
-	options.vector_height = win_gfx_height;
-
-	option->priority = priority;
-	return 0;
-}
-
-
-
-//============================================================
-//  decode_ftr
-//============================================================
-
-static int decode_ftr(struct rc_option *option, const char *arg, int priority)
-{
-	int ftr;
-
-	if (sscanf(arg, "%d", &ftr) != 1)
-	{
-		fprintf(stderr, "error: invalid value for frames_to_run: %s\n", arg);
-		return -1;
-	}
-
-	// if we're running < 5 minutes, allow us to skip warnings to facilitate benchmarking/validation testing
-	frames_to_display = ftr;
-	if (frames_to_display > 0 && frames_to_display < 60*60*5)
-		options.skip_warnings = options.skip_gameinfo = options.skip_disclaimer = 1;
-
-	option->priority = priority;
-	return 0;
-}
-
-
-
-//============================================================
-//  decode_effect
-//============================================================
-
-static int decode_effect(struct rc_option *option, const char *arg, int priority)
-{
-	int temp_blit_effect = win_lookup_effect(arg);
-
-	if (temp_blit_effect == -1)
-	{
-		fprintf(stderr, "error: invalid value for effect: %s\n", arg);
-		return -1;
-	}
-	win_blit_effect = temp_blit_effect;
-	option->priority = priority;
-
-	return 0;
-}
-
-
-
-//============================================================
-//  decode_aspect
-//============================================================
-
-static int decode_aspect(struct rc_option *option, const char *arg, int priority)
-{
-	int num, den;
-
-	if (sscanf(arg, "%d:%d", &num, &den) != 2 || num == 0 || den == 0)
-	{
-		fprintf(stderr, "error: invalid value for aspect ratio: %s\n", arg);
-		return -1;
-	}
-	win_screen_aspect = (double)num / (double)den;
-
-	option->priority = priority;
-	return 0;
-}
 
 
 
@@ -491,10 +367,165 @@ static BOOL CALLBACK monitor_enum_proc(HMONITOR monitor_enum, HDC dc, LPRECT rec
 
 
 //============================================================
-//  osd_create_display
+//  extract_video_config
 //============================================================
 
-#ifndef NEW_RENDER
+static int get_cleanstretch(const char *option, int report_error)
+{
+	const char *stemp = options_get_string(option, report_error);
+
+	// none: never contrain stretching
+	if (!strcmp(stemp, "none"))
+	{
+		return FORCE_INT_STRECT_NONE;
+	}
+	// full: constrain both width and height to integer ratios
+	else if (!strcmp(stemp, "full"))
+	{
+		return FORCE_INT_STRECT_FULL;
+	}
+	// auto: let the blitter module decide when/how to constrain stretching
+	else if (!strcmp(stemp, "auto"))
+	{
+		return FORCE_INT_STRECT_AUTO;
+	}
+	// horizontal: constrain width to integer ratios (relative to game)
+	else if (!strncmp(stemp, "horizontal", strlen(stemp)))
+	{
+		return FORCE_INT_STRECT_HOR;
+	}
+	// vertical: constrain height to integer ratios (relative to game)
+	else if (!strncmp(stemp, "vertical", strlen(stemp)))
+	{
+		return FORCE_INT_STRECT_VER;
+	}
+	else
+	{
+		fprintf(stderr, "error: invalid value for cleanstretch: %s\n", stemp);
+	}
+
+	return 0;
+}
+
+static float get_aspect(const char *name, int report_error)
+{
+	const char *data = options_get_string(name, report_error);
+	int num = 0, den = 1;
+
+	if (strcmp(data, "auto") == 0)
+		return 0;
+	else if (sscanf(data, "%d:%d", &num, &den) != 2 && report_error)
+		fprintf(stderr, "Illegal aspect ratio value for %s = %s\n", name, data);
+	return (float)num / (float)den;
+}
+
+static void get_resolution(const char *name, int report_error)
+{
+	const char *data = options_get_string(name, report_error);
+
+	win_gfx_width = win_gfx_height = win_gfx_depth = 0;
+	if (strcmp(data, "auto") == 0)
+		return;
+	else if (sscanf(data, "%dx%dx%d", &win_gfx_width, &win_gfx_height, &win_gfx_depth) < 2 && report_error)
+		fprintf(stderr, "Illegal resolution value for %s = %s\n", name, data);
+}
+
+static void extract_video_config(void)
+{
+extern int win_d3d_use_filter;
+extern int win_d3d_tex_manage;
+
+	// performance options: extract the data
+	autoframeskip              = options_get_bool  ("autoframeskip", TRUE);
+	frameskip                  = options_get_int   ("frameskip", TRUE);
+	throttle                   = options_get_bool  ("throttle", TRUE);
+	allow_sleep                = options_get_bool  ("sleep", TRUE);
+
+	// misc options: extract the data
+	frames_to_display          = options_get_int   ("frames_to_run", TRUE);
+	mngwrite                   = (char *)options_get_string("mngwrite", TRUE);
+
+	// global options: extract the data
+	win_window_mode            = options_get_bool  ("window", TRUE);
+	win_start_maximized        = options_get_bool  ("maximize", TRUE);
+
+	// per-window options: extract the data
+	screen_name                = (char *)options_get_string("screen", TRUE);
+	win_screen_aspect          = get_aspect("screen_aspect", TRUE);
+	get_resolution("resolution", TRUE);
+
+	// d3d options: extract the data
+	win_use_ddraw              = options_get_bool  ("ddraw", TRUE);
+	win_use_d3d                = options_get_bool  ("direct3d", TRUE);
+	win_wait_vsync             = options_get_bool  ("waitvsync", TRUE);
+	win_sync_refresh           = options_get_bool  ("syncrefresh", TRUE);
+	win_triple_buffer          = options_get_bool  ("triplebuffer", TRUE);
+	win_switch_res             = options_get_bool  ("switchres", TRUE);
+	win_gfx_gamma              = options_get_float ("full_screen_gamma", TRUE);
+
+	win_dd_hw_stretch          = options_get_bool  ("hwstretch", TRUE);
+	win_force_int_stretch      = get_cleanstretch  ("cleanstretch", TRUE);
+	win_gfx_refresh            = options_get_int   ("refresh", TRUE);
+	win_old_scanlines          = options_get_bool  ("scanlines", TRUE);
+	win_switch_bpp             = options_get_bool  ("switchbpp", TRUE);
+	win_keep_aspect            = options_get_bool  ("keepaspect", TRUE);
+	win_match_refresh          = options_get_bool  ("matchrefresh", TRUE);
+	win_blit_effect            = win_lookup_effect(options_get_string("effect", TRUE));
+
+	win_gfx_zoom               = options_get_int   ("zoom", TRUE);
+	win_d3d_tex_manage         = options_get_bool  ("d3dtexmanage", TRUE);
+	win_d3d_use_filter         = options_get_bool  ("d3dfilter", TRUE);
+
+	// performance options: sanity check values
+	if (frameskip < 0 || frameskip > FRAMESKIP_LEVELS)
+	{
+		fprintf(stderr, "Invalid frameskip value %d; reverting to 0\n", frameskip);
+		frameskip = 0;
+	}
+	if (options_get_int("priority", TRUE) < -15 || options_get_int("priority", TRUE) > 1)
+	{
+		fprintf(stderr, "Invalid priority value %d; reverting to 0\n", options_get_int("priority", TRUE));
+		options_set_int("priority", 0);
+	}
+
+	// misc options: sanity check values
+
+	// global options: sanity check values
+
+	// per-window options: sanity check values
+
+	// d3d options: sanity check values
+	if (win_gfx_gamma < 0.0 || win_gfx_gamma > 4.0)
+	{
+		fprintf(stderr, "Invalid full_screen_gamma value %f; reverting to 1.0\n", win_gfx_gamma);
+		win_gfx_gamma = 1.0;
+	}
+
+	if (frames_to_display > 0 && frames_to_display < 60*60*5)
+		options.skip_warnings = options.skip_gameinfo = options.skip_disclaimer = 1;
+}
+
+
+
+
+
+int winvideo_init(void)
+{
+extern void win_blit_init(void);
+
+	// extract data from the options
+	extract_video_config();
+
+	win_blit_init();
+
+	return win_init_window();
+}
+
+
+
+//============================================================
+//  osd_create_display
+//============================================================
 
 int osd_create_display(const osd_create_params *params, UINT32 *rgb_components)
 {
@@ -608,7 +639,6 @@ void osd_close_display(void)
 	}
 }
 
-#endif
 
 
 //============================================================
@@ -725,7 +755,7 @@ static void check_inputs(void)
 
 	// check for toggling fullscreen mode
 	if (input_ui_pressed(IPT_OSD_1))
-		win_toggle_full_screen();
+		winwindow_toggle_full_screen();
 
 #ifdef MESS
 	// check for toggling menu bar
@@ -800,7 +830,6 @@ static void throttle_speed(void)
 
 static void update_palette(mame_display *display)
 {
-#ifndef NEW_RENDER
 	int i, j;
 
 	// loop over dirty colors in batches of 32
@@ -827,7 +856,6 @@ static void update_palette(mame_display *display)
 				}
 		}
 	}
-#endif
 
 	// reset the invalidate flag
 	palette_lookups_invalid = 0;
@@ -963,7 +991,7 @@ static void render_frame(mame_bitmap *bitmap, const rectangle *bounds, void *vec
 
 	// update the bitmap we're drawing
 	profiler_mark(PROFILER_BLIT);
-	win_update_video_window(bitmap, bounds, vector_dirty_pixels);
+	winwindow_video_window_update(bitmap, bounds, vector_dirty_pixels);
 	profiler_mark(PROFILER_END);
 
 	// if we're throttling and autoframeskip is on, adjust
@@ -976,8 +1004,6 @@ static void render_frame(mame_bitmap *bitmap, const rectangle *bounds, void *vec
 //============================================================
 //  osd_update_video_and_audio
 //============================================================
-
-#ifndef NEW_RENDER
 
 void osd_update_video_and_audio(mame_display *display)
 {
@@ -1050,24 +1076,6 @@ void osd_update_video_and_audio(mame_display *display)
 	winwindow_process_events(1);
 	wininput_poll();
 }
-
-#else
-
-static render_target *main_target;
-
-int win_init_video(void)
-{
-	main_target = render_target_alloc(NULL, FALSE);
-	return (main_target == NULL) ? 1 : 0;
-}
-
-void osd_update(mame_time emutime)
-{
-	render_primitive *primlist = render_target_get_primitives(main_target);
-	(void)primlist;
-}
-
-#endif
 
 
 //============================================================

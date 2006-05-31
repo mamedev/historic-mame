@@ -23,6 +23,7 @@
 
 #define	VS6		0x00060000
 #define VS7		0x00070000
+#define VS71		0x0007000a
 #define VS2005	0x00080000
 
 
@@ -74,7 +75,8 @@ static const translation_info gcc_translate[] =
 	{ 0,		"-march=pentium4",		"/G7" },
 	{ 0,		"-march=athlon64",		"/G7" },
 	{ 0,		"-march=pentium3",		"/G6" },
-	{ 0,		"-msse2",				"/arch:SSE2" },
+	{ VS71,		"-msse2",				"/arch:SSE2" },
+	{ 0,		"-msse2",				"" },
 	{ 0,		"-mwindows",			"" },
 	{ 0,		"-mno-cygwin",			"" },
 	{ 0,		"-std=gnu89",			"" },
@@ -224,7 +226,7 @@ static void build_command_line(int argc, char *argv[])
 	{
 		transtable = ar_translate;
 		executable = "lib.exe";
-		dst += sprintf(dst, "lib /nologo ");
+		dst += sprintf(dst, "link /lib /nologo ");
 		outstring = "/out:";
 		output_is_first = 1;
 	}

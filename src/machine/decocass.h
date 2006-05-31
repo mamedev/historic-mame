@@ -29,6 +29,7 @@ extern void *tape_timer;
 
 extern WRITE8_HANDLER( decocass_reset_w );
 extern READ8_HANDLER( decocass_type1_r );
+extern READ8_HANDLER( decocass_type1_alt_r );
 extern READ8_HANDLER( decocass_type1_map1_r );
 extern READ8_HANDLER( decocass_type1_map2_r );
 extern READ8_HANDLER( decocass_type1_map3_r );
@@ -40,6 +41,7 @@ extern WRITE8_HANDLER( decocass_e900_w );
 
 extern MACHINE_RESET( decocass );
 extern MACHINE_RESET( ctsttape );
+extern MACHINE_RESET( chwy );
 extern MACHINE_RESET( clocknch );
 extern MACHINE_RESET( ctisland );
 extern MACHINE_RESET( csuperas );

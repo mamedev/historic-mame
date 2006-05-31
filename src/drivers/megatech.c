@@ -27,6 +27,33 @@ Sega part numbers is given..
 
 A fairly significant number of Genesis games were available for this system.
 
+
+Sega Mega Tech Cartridges (Readme by Guru)
+-------------------------
+
+These are cart-based games for use with Sega Mega Tech hardware. There are 6 known types of carts. All carts
+are very simple, almost exactly the same as Mega Play carts. They contain just 2 or 3 ROMs.
+PCB 171-6215A has locations for 2 ROMs and is dated 1991. PCB 171-6215A is also used in Mega Play!
+PCB 171-5782 has locations for 2 ROMs and is dated 1989.
+PCB 171-5869A has locations for 3 ROMs and is dated 1989.
+PCB 171-5834 has locations for 3 ROMs and is dated 1989.
+PCB 171-5783 has locations for 2 ROMs and is dated 1989.
+PCB 171-5784 has locations for 2 ROMs and is dated 1989. It also contains a custom Sega IC 315-5235
+
+                                                                      |------------------------------- ROMs -----------------------------|
+                                                                      |                                                                  |
+Game                PCB #       Sticker on PCB    Sticker on cart      IC1                    IC2                    IC3
+-----------------------------------------------------------------------------------------------------------------------------------------
+Space Harrier II    171-5782    837-6963-02       610-0239-02          MPR-11934    (834200)  EPR-12368-02 (27256)   n/a
+Alien Syndrome      171-5783    837-6963-07       610-0239-07          MPR-11194    (232011)  EPR-12368-07 (27256)   n/a
+Afterburner         171-5784    837-6963-10       610-0239-10          315-5235     (custom)  MPR-11271-T  (834000)  EPR-12368-10 (27256)
+Tetris              171-5834    837-6963-22       610-0239-22          MPR-12356F   (831000)  MPR-12357F   (831000)  EPR-12368-22 (27256)
+Ghouls & Ghosts     171-5869A   -                 610-0239-23          MPR-12605    (40 pins) MPR-12606    (40 pins) EPR-12368-23 (27256)
+Super Hang On       171-5782    837-6963-24       610-0239-24          MPR-12640    (234000)  EPR-12368-24 (27256)   n/a
+Sonic Hedgehog 2    171-6215A   837-6963-62       610-0239-62          MPR-15000A-F (838200)  EPR-12368-62 (27256)   n/a
+Mario Lemeux Hockey 171-5782    837-6963-59       610-0239-59          MPR-14376-H  (234000)  EPR-12368-59 (27256)   n/a
+
+
 */
 #include "driver.h"
 #include "genesis.h"
@@ -629,6 +656,17 @@ ROM_START( mt_soni2 ) /* Sonic 2 */
 	ROM_LOAD( "epr12664.20", 0x000000, 0x8000, CRC(f71e9526) SHA1(1c7887541d02c41426992d17f8e3db9e03975953) )
 ROM_END
 
+ROM_START( mt_mlh ) /* Mario Lemieux Hockey */
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "mpr-14376-h.ic1", 0x000000, 0x80000, CRC(aa9be87e) SHA1(dceed94eaeb30e534f6953a4bc25ff37673b1e6b) )
+
+	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
+	ROM_LOAD( "epr-12368-59.ic2", 0x000000, 0x08000, CRC(6d47b438) SHA1(0a145f6438e4e55c957ae559663c37662b685246) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Bios */
+	ROM_LOAD( "epr12664.20", 0x000000, 0x8000, CRC(f71e9526) SHA1(1c7887541d02c41426992d17f8e3db9e03975953) )
+ROM_END
+
 ROM_START( mt_kcham ) /* Kid Chameleon */
 	ROM_REGION( 0x400000, REGION_CPU1, 0 )
 	ROM_LOAD16_WORD_SWAP( "mp14557.ic1", 0x000000, 0x100000, CRC(e1a889a4) SHA1(a2768eacafc47d371e5276f0cce4b12b6041337a) )
@@ -923,7 +961,7 @@ ROM_END
 /* 56 */ // unknown
 /* 57 */ GAME( 1991, mt_gaxe2, megatech, megatech, megatech, 0, ROT0, "Sega",                  "Golden Axe II (Mega-Tech)", GAME_NOT_WORKING )
 /* 58 */ GAME( 1991, mt_stf,   megatech, megatech, megatech, 0, ROT0, "Sega",                  "Joe Montana II: Sports Talk Football (Mega-Tech)", GAME_NOT_WORKING )
-/* 59 */ // unknown
+/* 59 */ GAME( 1991, mt_mlh,   megatech, megatech, megatech, 0, ROT0, "Sega",                  "Mario Lemieux Hockey (Mega-Tech)", GAME_NOT_WORKING )
 /* 60 */ GAME( 1992, mt_kcham, megatech, megatech, megatech, 0, ROT0, "Sega",                  "Kid Chameleon (Mega-Tech)", GAME_NOT_WORKING )
 /* 61 */ // unknown
 /* 62 */ GAME( 1992, mt_soni2, megatech, megatech, megatech, 0, ROT0, "Sega",                  "Sonic The Hedgehog 2 (Mega-Tech)", GAME_NOT_WORKING )

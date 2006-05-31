@@ -128,25 +128,8 @@ int audit_has_missing_roms (int game)
 		int				count;
 		int 			i;
 
-#if 1
-        int cloneRomsFound = 0;
-        int uniqueRomsFound = 0;
-
-		if ((count = audit_roms (game, &aud)) == 0)
-			return 1;
-
-		if (count == -1) return 0;
-
-        /* count number of roms found that are unique to clone */
-        for (i = 0; i < count; i++)
-			if (!audit_is_rom_used (clone_of, aud[i].exphash))
-			{
-				uniqueRomsFound++;
-				if (aud[i].status != AUD_ROM_NOT_FOUND)
-					cloneRomsFound++;
-			}
-#else
 		int cloneRomsFound = 0;
+		int uniqueRomsFound = 0;
 
 		if ((count = audit_roms (game, &aud)) == 0)
 			return 1;
@@ -155,10 +138,13 @@ int audit_has_missing_roms (int game)
 
 		/* count number of roms found that are unique to clone */
 		for (i = 0; i < count; i++)
-			if (aud[i].status != AUD_ROM_NOT_FOUND)
-				if (!audit_is_rom_used (clone_of, aud[i].exphash))
+			if (!hash_data_has_info(aud[i].exphash, HASH_INFO_NO_DUMP) &&
+				!audit_is_rom_used (clone_of, aud[i].exphash))
+			{
+				uniqueRomsFound++;
+				if (aud[i].status != AUD_ROM_NOT_FOUND)
 					cloneRomsFound++;
-#endif
+			}
 
 		return !cloneRomsFound;
 	}
@@ -397,46 +383,28 @@ int audit_verify_roms (int game, verify_printf_proc verify_printf)
 
 	if (count == -1) return CORRECT;
 
-#if 1
-    if (clone_of != NULL)
-    {
-        int i;
-        int cloneRomsFound = 0;
-        int uniqueRomsFound = 0;
+	if (clone_of != NULL)
+	{
+		int i;
+		int cloneRomsFound = 0;
+		int uniqueRomsFound = 0;
 
-        /* count number of roms found that are unique to clone */
-        for (i = 0; i < count; i++)
-			if (!audit_is_rom_used (clone_of, aud[i].exphash))
+		/* count number of roms found that are unique to clone */
+		for (i = 0; i < count; i++)
+			if (!hash_data_has_info(aud[i].exphash, HASH_INFO_NO_DUMP) &&
+				!audit_is_rom_used (clone_of, aud[i].exphash))
 			{
 				uniqueRomsFound++;
 				if (aud[i].status != AUD_ROM_NOT_FOUND)
 					cloneRomsFound++;
 			}
-        #ifndef MESS
-        /* Different MESS systems can use the same ROMs */
-        if (uniqueRomsFound && !cloneRomsFound)
-            return CLONE_NOTFOUND;
-        #endif
-    }
-#else
-	if (clone_of != NULL)
-	{
-		int i;
-		int cloneRomsFound = 0;
 
-		/* count number of roms found that are unique to clone */
-		for (i = 0; i < count; i++)
-			if (aud[i].status != AUD_ROM_NOT_FOUND)
-				if (!audit_is_rom_used (clone_of, aud[i].exphash))
-					cloneRomsFound++;
-
-                #ifndef MESS
-                /* Different MESS systems can use the same ROMs */
-		if (cloneRomsFound == 0)
+		#ifndef MESS
+		/* Different MESS systems can use the same ROMs */
+		if (uniqueRomsFound && !cloneRomsFound)
 			return CLONE_NOTFOUND;
-                #endif
+		#endif
 	}
-#endif
 
 	while (count--)
 	{

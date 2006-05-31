@@ -82,7 +82,6 @@ int v810_ICount;
 
 #define OP	v810.op
 #define PC	v810.reg[64]
-#define PPC	v810.PPC
 
 /* Flags */
 #define GET_Z					( PSW & 0x00000001)
@@ -955,7 +954,7 @@ void v810_init(int index, int clock, const void *config, int (*irqcallback)(int)
 	state_save_register_item_array("v810", index, v810.reg);
 	state_save_register_item("v810", index, v810.irq_line);
 	state_save_register_item("v810", index, v810.nmi_line);
-	state_save_register_item("v810", index, PPC);
+	state_save_register_item("v810", index, v810.PPC);
 
 }
 
@@ -973,7 +972,7 @@ int v810_execute(int cycles)
 	v810_ICount = cycles;
 	while(v810_ICount>=0)
 	{
-		PPC=PC;
+		v810.PPC=PC;
 		CALL_MAME_DEBUG;
 		OP=R_OP(PC);
 		PC+=2;
@@ -1061,7 +1060,7 @@ static void v810_set_info(UINT32 state, union cpuinfo *info)
 
 		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	set_irq_line(INPUT_LINE_NMI, info->i);	break;
 
-		case CPUINFO_INT_PREVIOUSPC:					 		PPC = info->i;						break;
+		case CPUINFO_INT_PREVIOUSPC:					 		v810.PPC = info->i;						break;
 
 		case CPUINFO_INT_REGISTER + V810_PC:
 		case CPUINFO_INT_PC:											PC = info->i; 						break;
@@ -1161,7 +1160,7 @@ void v810_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_INPUT_STATE + 0:				info->i = v810.irq_line;					break;
 		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	info->i = v810.nmi_line;					break;
 
-		case CPUINFO_INT_PREVIOUSPC:					info->i = PPC;							break;
+		case CPUINFO_INT_PREVIOUSPC:					info->i = v810.PPC;							break;
 
 		case CPUINFO_INT_REGISTER + V810_PC:
 		case CPUINFO_INT_PC:											info->i = PC;  						break;

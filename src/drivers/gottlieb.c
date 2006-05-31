@@ -1729,12 +1729,14 @@ ROM_END
 
 ROM_START( mplanets )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
-	ROM_LOAD( "rom4",         0x6000, 0x2000, CRC(5402077f) SHA1(f4e8699ab3c6dfc0f86b6df86d2a5b35caf2ca73) )
-	ROM_LOAD( "rom3",         0x8000, 0x2000, CRC(5d18d740) SHA1(30307d98704c49dec5aecd0a1ec2f06f1869a5d2) )
-	ROM_LOAD( "rom2",         0xa000, 0x2000, CRC(960c3bb1) SHA1(305a7904fa8c0b9823ad186d1c5c7460c0900bad) )
-	ROM_LOAD( "rom1",         0xc000, 0x2000, CRC(eb515f10) SHA1(31c3519328eba7adc4a3b0adcc0384f606d81a57) )
-	ROM_LOAD( "rom0",         0xe000, 0x2000, CRC(74de78aa) SHA1(7ebd02e660c1413eff284a7ca77feeff41c1e2b7) )
+	ROM_LOAD( "rom4.c16",         0x6000, 0x2000, CRC(5402077f) SHA1(f4e8699ab3c6dfc0f86b6df86d2a5b35caf2ca73) )
+	ROM_LOAD( "rom3.c14-15",         0x8000, 0x2000, CRC(5d18d740) SHA1(30307d98704c49dec5aecd0a1ec2f06f1869a5d2) )
+	ROM_LOAD( "rom2.c13-14",         0xa000, 0x2000, CRC(960c3bb1) SHA1(305a7904fa8c0b9823ad186d1c5c7460c0900bad) )
+	ROM_LOAD( "rom1.c12-13",         0xc000, 0x2000, CRC(eb515f10) SHA1(31c3519328eba7adc4a3b0adcc0384f606d81a57) )
+	ROM_LOAD( "rom0.c11-12",         0xe000, 0x2000, CRC(74de78aa) SHA1(7ebd02e660c1413eff284a7ca77feeff41c1e2b7) )
 
+	/* note from f205v: my original Gottlieb PCB only sports one 2732 sound EPROM labeled "snd.3h"
+    It contains the two joint roms you can find herefollowing, therefore the sound is identical */
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for sound cpu */
 	ROM_LOAD( "snd1",         0xf000, 0x800, CRC(453193a1) SHA1(317ec81f71661eaa92624c0304a52b635dcd5613) )
 	ROM_RELOAD(               0x7000, 0x800 ) /* A15 is not decoded */
@@ -1742,14 +1744,14 @@ ROM_START( mplanets )
 	ROM_RELOAD(               0x7800, 0x800 ) /* A15 is not decoded */
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "bg0",          0x0000, 0x1000, CRC(709aa24c) SHA1(95be072bf63320f4b44feaf88003ba011754e20f) )	/* chars */
-	ROM_LOAD( "bg1",          0x1000, 0x1000, CRC(4921e345) SHA1(7b6e03458222be501ed150ffbd489433027fc6cb) )
+	ROM_LOAD( "bg0.e11-12",          0x0000, 0x1000, CRC(709aa24c) SHA1(95be072bf63320f4b44feaf88003ba011754e20f) )	/* chars */
+	ROM_LOAD( "bg1.e13",          0x1000, 0x1000, CRC(4921e345) SHA1(7b6e03458222be501ed150ffbd489433027fc6cb) )
 
 	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "fg3",          0x0000, 0x2000, CRC(c990b39f) SHA1(d1b6060744b78df430e914504b20e8693829bbd5) )	/* sprites */
-	ROM_LOAD( "fg2",          0x2000, 0x2000, CRC(735e2522) SHA1(9fac59e9b1d81695d3da32107d640726cf96e31a) )
-	ROM_LOAD( "fg1",          0x4000, 0x2000, CRC(6456cc1c) SHA1(12c20f0ce49a7d3579049e8ba95e542c4aaee241) )
-	ROM_LOAD( "fg0",          0x6000, 0x2000, CRC(a920e325) SHA1(60f15d5014a55d9c18b06c17c7587d45716619e4) )
+	ROM_LOAD( "fg3.k7-8",          0x0000, 0x2000, CRC(c990b39f) SHA1(d1b6060744b78df430e914504b20e8693829bbd5) )	/* sprites */
+	ROM_LOAD( "fg2.k6",          0x2000, 0x2000, CRC(735e2522) SHA1(9fac59e9b1d81695d3da32107d640726cf96e31a) )
+	ROM_LOAD( "fg1.k5",          0x4000, 0x2000, CRC(6456cc1c) SHA1(12c20f0ce49a7d3579049e8ba95e542c4aaee241) )
+	ROM_LOAD( "fg0.k4",          0x6000, 0x2000, CRC(a920e325) SHA1(60f15d5014a55d9c18b06c17c7587d45716619e4) )
 ROM_END
 
 ROM_START( mplanuk )

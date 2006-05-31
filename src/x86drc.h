@@ -36,6 +36,7 @@ struct _drc_core
 	UINT8 *		cache_top;				/* current top of cache */
 	UINT8 *		cache_danger;			/* high water mark for the end */
 	UINT8 *		cache_end;				/* end of cache memory */
+	size_t		cache_size;				/* cache allocated size */
 
 	void ***	lookup_l1;				/* level 1 lookup */
 	void **		lookup_l2_recompile;	/* level 2 lookup populated with recompile pointers */

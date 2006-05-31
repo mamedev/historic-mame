@@ -86,13 +86,17 @@ static READ32_HANDLER( flash_r )
 
 static WRITE32_HANDLER( flash_w )
 {
+	static INT32 first_offset = -1;
+
 	if(flash_cmd == 0x20200000)
 	{
 		// erase game settings
 		if(data == 0xd0d00000)
 		{
 			// point to game settings
-			UINT8 *rom = (UINT8 *)memory_region(REGION_USER1) + 0x1c00000 + 0x380000;
+			UINT8 *rom = (UINT8 *)memory_region(REGION_USER1) + offset*4;
+
+			// erase one block
 			memset(rom, 0xff, 0x10000);
 
 			flash_cmd = 0;
@@ -100,10 +104,11 @@ static WRITE32_HANDLER( flash_w )
 	}
 	else if(flash_cmd == 0x0f0f0000)
 	{
-		if(data == 0xd0d00000)
+		if(data == 0xd0d00000 && offset == first_offset)
 		{
 			// finished
 			flash_cmd = 0;
+			first_offset = -1;
 		}
 		else
 		{
@@ -120,6 +125,11 @@ static WRITE32_HANDLER( flash_w )
 	else
 	{
 		flash_cmd = data;
+
+		if(flash_cmd == 0x0f0f0000 && first_offset == -1)
+		{
+			first_offset = offset;
+		}
 	}
 }
 
@@ -222,27 +232,27 @@ void nvram_handler_flashroms(mame_file *file,int read_or_write)
 	if (read_or_write)
 	{
 		// point to game settings
-		UINT8 *rom = (UINT8 *)memory_region(REGION_USER1) + 0x1c00000 + 0x380000;
-		UINT8 tmp[0x10000];
+		UINT8 *rom = (UINT8 *)memory_region(REGION_USER1) + 0x1c00000 + 0x360000;
+		UINT8 tmp[0x40000];
 		int i;
 
 		// save the new settings
-		for( i = 0; i < 0x10000; i++ )
+		for( i = 0; i < 0x40000; i++ )
 			tmp[i] = rom[WORD_XOR_BE(i)];
 
-		mame_fwrite( file, tmp, 0x10000 );
+		mame_fwrite( file, tmp, 0x40000 );
 	}
 	else if (file)
 	{
 		// point to game settings
-		UINT8 *rom = (UINT8 *)memory_region(REGION_USER1) + 0x1c00000 + 0x380000;
-		UINT8 tmp[0x10000];
+		UINT8 *rom = (UINT8 *)memory_region(REGION_USER1) + 0x1c00000 + 0x360000;
+		UINT8 tmp[0x40000];
 		int i;
 
-		mame_fread( file, tmp, 0x10000 );
+		mame_fread( file, tmp, 0x40000 );
 
 		// overlap the default settings with the saved ones
-		for( i = 0; i < 0x10000; i++ )
+		for( i = 0; i < 0x40000; i++ )
 			rom[WORD_XOR_BE(i)] = tmp[i];
 	}
 }
@@ -388,6 +398,9 @@ ROM_START( xfiles )
 
 	ROM_REGION( 0x400000, REGION_CPU2, 0 ) /* sound rom */
 	ROM_LOAD16_WORD_SWAP( "u10.bin", 0x0000000, 0x400000, CRC(f2ef1eb9) SHA1(d033d140fce6716d7d78509aa5387829f0a1404c) )
+
+	ROM_REGION( 0x1000, REGION_CPU3, ROMREGION_DISPOSE ) /* PIC */
+	ROM_LOAD( "xfiles_pic",  0x0000, 0x1000, NO_DUMP ) // protected
 ROM_END
 
 /*
@@ -462,6 +475,9 @@ ROM_START( kdynastg )
 
 	ROM_REGION( 0x400000, REGION_CPU2, 0 ) /* sound rom */
 	ROM_LOAD16_WORD_SWAP( "flash.u10", 0x0000000, 0x400000, CRC(3f103cb1) SHA1(2ff9bd73f3005f09d872018b81c915b01d6703f5) )
+
+	ROM_REGION( 0x1000, REGION_CPU3, ROMREGION_DISPOSE ) /* PIC */
+	ROM_LOAD( "kdynastg_pic",  0x0000, 0x1000, NO_DUMP ) // protected
 ROM_END
 
 /*
@@ -535,6 +551,9 @@ ROM_START( fmaniac3 )
 
 	ROM_REGION( 0x400000, REGION_CPU2, 0 ) /* sound rom */
 	ROM_LOAD16_WORD_SWAP( "flash.u10", 0x000000, 0x400000, CRC(dfeb91a0) SHA1(a4a79073c3f6135957ea8a4a66a9c71a3a39893c) )
+
+	ROM_REGION( 0x1000, REGION_CPU3, ROMREGION_DISPOSE ) /* PIC */
+	// not present
 ROM_END
 
 static DRIVER_INIT( xfiles )

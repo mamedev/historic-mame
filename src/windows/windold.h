@@ -135,15 +135,15 @@ extern int			win_use_raw_mouse;
 int win_init_window(void);
 int win_create_window(int width, int height, int depth, int attributes, double aspect);
 void win_destroy_window(void);
-void window_update_cursor_state(void);
+void winwindow_update_cursor_state(void);
 void win_toggle_maximize(int force_maximize);
-void win_toggle_full_screen(void);
+void winwindow_toggle_full_screen(void);
 void win_adjust_window(void);
 
 void win_constrain_to_aspect_ratio(RECT *rect, int adjustment, int constraints, int coordinate_system);
 void win_adjust_window_for_visible(int min_x, int max_x, int min_y, int max_y);
 
-void win_update_video_window(mame_bitmap *bitmap, const rectangle *bounds, void *vector_dirty_pixels);
+void winwindow_video_window_update(mame_bitmap *bitmap, const rectangle *bounds, void *vector_dirty_pixels);
 
 void win_set_palette_entry(int _index, UINT8 red, UINT8 green, UINT8 blue);
 
@@ -158,7 +158,7 @@ void win_compute_multipliers(const RECT *rect, int *xmult, int *ymult);
 
 BOOL win_raw_mouse_update(HANDLE in_device_handle);
 
-LRESULT CALLBACK win_video_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam);
+LRESULT CALLBACK winwindow_video_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam);
 
 #if HAS_WINDOW_MENU
 int win_create_menu(HMENU *menus);

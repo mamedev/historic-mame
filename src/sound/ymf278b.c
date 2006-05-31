@@ -99,6 +99,7 @@ typedef struct
 	int index;
 } YMF278BChip;
 
+static INT32 *mix;
 
 static int ymf278b_compute_rate(YMF278BSlot *slot, int val)
 {
@@ -238,7 +239,6 @@ static void ymf278b_pcm_update(void *param, stream_sample_t **inputs, stream_sam
 	YMF278BSlot *slot = NULL;
 	INT16 sample = 0;
 	const UINT8 *rombase;
-	INT32 mix[44100*2];
 	INT32 *mixp;
 	INT32 vl, vr;
 
@@ -635,6 +635,8 @@ static void ymf278b_init(YMF278BChip *chip, UINT8 *rom, void (*cb)(int), int clo
 	chip->timer_b = timer_alloc_ptr(ymf278b_timer_b_tick, chip);
 	chip->irq_line = CLEAR_LINE;
 	chip->clock_ratio = (float)clock / (float)YMF278B_STD_CLOCK;
+
+	mix = auto_malloc(44100*2*sizeof(*mix));
 }
 
 static void *ymf278b_start(int sndindex, int clock, const void *config)

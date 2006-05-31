@@ -448,9 +448,9 @@ INPUT_PORTS_START( horekid )
 	PORT_DIPSETTING(      0x0008, "50k then every 60k" )	// "50000 60000" in the "test mode"
 	PORT_DIPSETTING(      0x0004, "20k then every 90k" )	// "20000 90000" in the "test mode"
 	PORT_DIPSETTING(      0x0000, "50k then every 90k" )	// "50000 90000" in the "test mode"
-	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0010, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Upright ) )
 	PORT_DIPSETTING(      0x0020, DEF_STR( Cocktail ) )

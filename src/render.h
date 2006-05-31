@@ -73,13 +73,13 @@ enum
 #define TEXFORMAT_PALETTE16			1				/* 16bpp palettized */
 #define TEXFORMAT_RGB15				2				/* 5-5-5 RGB */
 #define TEXFORMAT_RGB32				3				/* 8-8-8 RGB */
-#define TEXFORMAT_ARGB32_PM			4				/* 8-8-8-8 premultiplied ARGB */
+#define TEXFORMAT_ARGB32			4				/* 8-8-8-8 ARGB */
 
 /* blending modes */
 #define	BLENDMODE_NONE				0				/* no blending */
 #define	BLENDMODE_ALPHA				1				/* standard alpha blend */
-#define BLENDMODE_RGB_MULTIPLY		2				/* multiply RGB values */
-#define BLENDMODE_ADD				3				/* ignore alpha, just add to destination */
+#define BLENDMODE_RGB_MULTIPLY		2				/* apply source alpha to source pix, then multiply RGB values */
+#define BLENDMODE_ADD				3				/* apply source alpha to source pix, then add to destination */
 
 
 /* flags for primitives */
@@ -88,20 +88,25 @@ enum
 #define PRIMFLAG_TEXORIENT(x)		((x) << PRIMFLAG_TEXORIENT_SHIFT)
 #define PRIMFLAG_GET_TEXORIENT(x)	(((x) & PRIMFLAG_TEXORIENT_MASK) >> PRIMFLAG_TEXORIENT_SHIFT)
 
-#define PRIMFLAG_BLENDMODE_SHIFT	4
-#define PRIMFLAG_BLENDMODE_MASK		(3 << PRIMFLAG_BLENDMODE_SHIFT)
-#define PRIMFLAG_BLENDMODE(x)		((x) << PRIMFLAG_BLENDMODE_SHIFT)
-#define PRIMFLAG_GET_BLENDMODE(x)	(((x) & PRIMFLAG_BLENDMODE_MASK) >> PRIMFLAG_BLENDMODE_SHIFT)
-
-#define PRIMFLAG_TEXFORMAT_SHIFT	8
+#define PRIMFLAG_TEXFORMAT_SHIFT	4
 #define PRIMFLAG_TEXFORMAT_MASK		(7 << PRIMFLAG_TEXFORMAT_SHIFT)
 #define PRIMFLAG_TEXFORMAT(x)		((x) << PRIMFLAG_TEXFORMAT_SHIFT)
 #define PRIMFLAG_GET_TEXFORMAT(x)	(((x) & PRIMFLAG_TEXFORMAT_MASK) >> PRIMFLAG_TEXFORMAT_SHIFT)
+
+#define PRIMFLAG_BLENDMODE_SHIFT	8
+#define PRIMFLAG_BLENDMODE_MASK		(3 << PRIMFLAG_BLENDMODE_SHIFT)
+#define PRIMFLAG_BLENDMODE(x)		((x) << PRIMFLAG_BLENDMODE_SHIFT)
+#define PRIMFLAG_GET_BLENDMODE(x)	(((x) & PRIMFLAG_BLENDMODE_MASK) >> PRIMFLAG_BLENDMODE_SHIFT)
 
 #define PRIMFLAG_ANTIALIAS_SHIFT	12
 #define PRIMFLAG_ANTIALIAS_MASK		(1 << PRIMFLAG_ANTIALIAS_SHIFT)
 #define PRIMFLAG_ANTIALIAS(x)		((x) << PRIMFLAG_ANTIALIAS_SHIFT)
 #define PRIMFLAG_GET_ANTIALIAS(x)	(((x) & PRIMFLAG_ANTIALIAS_MASK) >> PRIMFLAG_ANTIALIAS_SHIFT)
+
+#define PRIMFLAG_SCREENTEX_SHIFT	13
+#define PRIMFLAG_SCREENTEX_MASK		(1 << PRIMFLAG_SCREENTEX_SHIFT)
+#define PRIMFLAG_SCREENTEX(x)		((x) << PRIMFLAG_SCREENTEX_SHIFT)
+#define PRIMFLAG_GET_SCREENTEX(x)	(((x) & PRIMFLAG_SCREENTEX_MASK) >> PRIMFLAG_SCREENTEX_SHIFT)
 
 
 
@@ -267,6 +272,59 @@ void render_container_add_char(render_container *container, float x0, float y0, 
 
 void render_resample_argb_bitmap_hq(void *dest, UINT32 drowpixels, UINT32 dwidth, UINT32 dheight, const mame_bitmap *source, const rectangle *sbounds, const render_color *color);
 int render_clip_line(render_bounds *bounds, const render_bounds *clip);
+int render_clip_quad(render_bounds *bounds, const render_bounds *clip, float *u, float *v);
+
+
+
+/***************************************************************************
+    INLINES
+***************************************************************************/
+
+/*-------------------------------------------------
+    orientation_swap_flips - swap the X and Y
+    flip flags
+-------------------------------------------------*/
+
+INLINE int orientation_swap_flips(int orientation)
+{
+	return (orientation & ORIENTATION_SWAP_XY) |
+	       ((orientation & ORIENTATION_FLIP_X) ? ORIENTATION_FLIP_Y : 0) |
+	       ((orientation & ORIENTATION_FLIP_Y) ? ORIENTATION_FLIP_X : 0);
+}
+
+
+/*-------------------------------------------------
+    orientation_reverse - compute the orientation
+    that will undo another orientation
+-------------------------------------------------*/
+
+INLINE int orientation_reverse(int orientation)
+{
+	/* if not swapping X/Y, then just apply the same transform to reverse */
+	if (!(orientation & ORIENTATION_SWAP_XY))
+		return orientation;
+
+	/* if swapping X/Y, then swap X/Y flip bits to get the reverse */
+	else
+		return orientation_swap_flips(orientation);
+}
+
+
+/*-------------------------------------------------
+    orientation_add - compute effective orientation
+    after applying two subsequent orientations
+-------------------------------------------------*/
+
+INLINE int orientation_add(int orientation1, int orientation2)
+{
+	/* if the 2nd transform doesn't swap, just XOR together */
+	if (!(orientation2 & ORIENTATION_SWAP_XY))
+		return orientation1 ^ orientation2;
+
+	/* otherwise, we need to effectively swap the flip bits on the first transform */
+	else
+		return orientation_swap_flips(orientation1) ^ orientation2;
+}
 
 
 #endif	/* __RENDER_H__ */

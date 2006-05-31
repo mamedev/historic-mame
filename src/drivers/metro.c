@@ -2170,11 +2170,11 @@ INPUT_PORTS_START( balcube )
 
 	PORT_START_TAG("IN2")	// Strangely mapped in the 0x400000-0x41ffff range
 	COINAGE_DSW
-	PORT_DIPNAME( 0x0300, 0x0300, "Difficulty?" )
-	PORT_DIPSETTING(      0x0100, "0" )
-	PORT_DIPSETTING(      0x0000, "1" )
-	PORT_DIPSETTING(      0x0200, "2" )
-	PORT_DIPSETTING(      0x0300, "3" )
+	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Easy )    )
+	PORT_DIPSETTING(      0x0300, DEF_STR( Normal )  )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Hard )    )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Very_Hard ) )
 	PORT_DIPNAME( 0x0400, 0x0400, "2 Players Game" )
 	PORT_DIPSETTING(      0x0000, "1 Credit" )
 	PORT_DIPSETTING(      0x0400, "2 Credits" )
@@ -2184,10 +2184,10 @@ INPUT_PORTS_START( balcube )
 	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
 	PORT_DIPSETTING(      0x1000, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Demo_Sounds ) )
@@ -2626,11 +2626,11 @@ INPUT_PORTS_START( daitorid )
 	PORT_START_TAG("IN2") // $c00004
 	COINAGE_DSW
 
-	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Difficulty ) )		// Timer speed
-	PORT_DIPSETTING(      0x0200, DEF_STR( Easy ) )				//   Slow
-	PORT_DIPSETTING(      0x0300, DEF_STR( Normal ) )				//   Normal
-	PORT_DIPSETTING(      0x0100, DEF_STR( Hard ) )				//   Fast
-	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )				//   Fastest
+	PORT_DIPNAME( 0x0300, 0x0300, "Timer Speed" )
+	PORT_DIPSETTING(      0x0200, "Slower" )
+	PORT_DIPSETTING(      0x0300, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0100, "Fast" )
+	PORT_DIPSETTING(      0x0000, "Fastest" )
 	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
@@ -2727,19 +2727,19 @@ INPUT_PORTS_START( gunmast )
 	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Allow_Continue ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
 	PORT_DIPSETTING(      0x0400, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0800, "Allow P2 to Join Game" )
+	PORT_DIPSETTING(      0x0000, DEF_STR( No ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x1000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Lives ) )
 	PORT_DIPSETTING(      0x2000, "1" )
 	PORT_DIPSETTING(      0x0000, "2" )
-	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unused ) ) /* Listed as "Unused" */
 	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unused ) ) /* Listed as "Unused" */
 	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 
@@ -2766,15 +2766,15 @@ INPUT_PORTS_START( karatour )
 	PORT_DIPSETTING(      0x0000, "2" )
 	PORT_DIPSETTING(      0x0003, "3" )
 	PORT_DIPSETTING(      0x0002, "4" )
-	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x000c, "11 (0)" )
-	PORT_DIPSETTING(      0x0008, "10 (1)" )
-	PORT_DIPSETTING(      0x0004, "01 (2)" )
-	PORT_DIPSETTING(      0x0000, "00 (3)" )
-	PORT_DIPNAME( 0x0010, 0x0010, "Time" )
-	PORT_DIPSETTING(      0x0010, "60" )
-	PORT_DIPSETTING(      0x0000, "40" )
-	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x000c, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
+	PORT_DIPNAME( 0x0010, 0x0010, "Time" )			/* Listed as "Timer" */
+	PORT_DIPSETTING(      0x0010, "60" )			/* Listed as "Normal" */
+	PORT_DIPSETTING(      0x0000, "40" )			/* Listed as "Short" */
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Free_Play ) )	/* Listed as "Unused" */
 	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Allow_Continue ) )
@@ -2932,11 +2932,11 @@ INPUT_PORTS_START( lastfort )
 	LFORT_COMMON
 
 	PORT_START_TAG("IN4")// $c0000c
-	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Difficulty ) )		// Timer speed
-	PORT_DIPSETTING(      0x0000, DEF_STR( Easiest ) )			//   Slowest
-	PORT_DIPSETTING(      0x0001, DEF_STR( Easy ) )				//   Slow
-	PORT_DIPSETTING(      0x0003, DEF_STR( Normal ) )			//   Normal
-	PORT_DIPSETTING(      0x0002, DEF_STR( Hard ) )				//   Fast
+	PORT_DIPNAME( 0x0300, 0x0300, "Timer Speed" )
+	PORT_DIPSETTING(      0x0200, "Slower" )
+	PORT_DIPSETTING(      0x0300, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0100, "Fast" )
+	PORT_DIPSETTING(      0x0000, "Fastest" )
 	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unused ) )
 	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
@@ -3529,14 +3529,14 @@ INPUT_PORTS_START( toride2g )
 	PORT_START_TAG("IN2") //$800004
 	COINAGE_DSW
 
-	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0200, DEF_STR( Easy ) )
+	PORT_DIPNAME( 0x0300, 0x0300, "Timer Speed" )
+	PORT_DIPSETTING(      0x0200, "Slower" )
 	PORT_DIPSETTING(      0x0300, DEF_STR( Normal ) )
-	PORT_DIPSETTING(      0x0100, DEF_STR( Hard ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
-	PORT_DIPNAME( 0x0400, 0x0400, "Levels" )				// See notes
-	PORT_DIPSETTING(      0x0400, "Table 1" )
-	PORT_DIPSETTING(      0x0000, "Table 2" )
+	PORT_DIPSETTING(      0x0100, "Fast" )
+	PORT_DIPSETTING(      0x0000, "Fastest" )
+	PORT_DIPNAME( 0x0400, 0x0400, "Tile Arrangement" ) /* As listed by the manual */
+	PORT_DIPSETTING(      0x0400, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hard ) )
 	PORT_DIPNAME( 0x0800, 0x0000, "Retry Level On Continue" )
 	PORT_DIPSETTING(      0x0000, "Ask Player" )
 	PORT_DIPSETTING(      0x0800, DEF_STR( Yes ) )

@@ -17,9 +17,9 @@
 //  PROTOTYPES
 //============================================================
 
-int win_gdi_init(win_window_info *window);
-int win_gdi_draw(win_window_info *window, HDC dc, const render_primitive *primlist, int update);
-void win_gdi_kill(win_window_info *window);
+int drawgdi_window_init(win_window_info *window);
+int drawgdi_window_draw(win_window_info *window, HDC dc, const render_primitive *primlist, int update);
+void drawgdi_window_destroy(win_window_info *window);
 
 
 #endif

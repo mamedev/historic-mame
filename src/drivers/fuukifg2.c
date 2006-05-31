@@ -213,15 +213,15 @@ INPUT_PORTS_START( gogomile )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0002, DEF_STR( On ) )
 	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0000, "Easy?"    )	// 0
-	PORT_DIPSETTING(      0x000c, DEF_STR( Normal )   )	// 1
-	PORT_DIPSETTING(      0x0008, "Hard?"    )	// 2
-	PORT_DIPSETTING(      0x0004, "Hardest?" )	// 3
-	PORT_DIPNAME( 0x0030, 0x0020, "Country" )	// Default Country: USA
-	PORT_DIPSETTING(      0x0010, "China" )
-	PORT_DIPSETTING(      0x0030, DEF_STR( Japan )  )
-	PORT_DIPSETTING(      0x0000, "Korea" )
-	PORT_DIPSETTING(      0x0020, DEF_STR( USA )    )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x000c, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Very_Hard ) )
+	PORT_DIPNAME( 0x0030, 0x0020, DEF_STR( Language ) )	/* Default Language: English */
+	PORT_DIPSETTING(      0x0010, "Chinese" )
+	PORT_DIPSETTING(      0x0030, DEF_STR( Japanese ) ) /* Only setting to give a "For use only in...." Copyright Notice */
+	PORT_DIPSETTING(      0x0000, "Korean" )
+	PORT_DIPSETTING(      0x0020, DEF_STR( English ) )
 	PORT_DIPNAME( 0x00c0, 0x00c0, DEF_STR( Lives ) )
 	PORT_DIPSETTING(      0x0000, "2" )
 	PORT_DIPSETTING(      0x00c0, "3" )
@@ -231,7 +231,7 @@ INPUT_PORTS_START( gogomile )
 	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0200, 0x0200, "Unknown 2-1" )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unused ) ) /* Manual states this dip is "Unused" */
 	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x1c00, 0x1c00, DEF_STR( Coin_A ) )
@@ -297,15 +297,15 @@ INPUT_PORTS_START( gogomilj )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0002, DEF_STR( On ) )
 	PORT_DIPNAME( 0x000c, 0x000c, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(      0x0000, "Easy?"    )	// 0
-	PORT_DIPSETTING(      0x000c, DEF_STR( Normal )   )	// 1
-	PORT_DIPSETTING(      0x0008, "Hard?"    )	// 2
-	PORT_DIPSETTING(      0x0004, "Hardest?" )	// 3
-	PORT_DIPNAME( 0x0030, 0x0030, "Country" )	// Default Country: Japan
-	PORT_DIPSETTING(      0x0010, "China" )
-	PORT_DIPSETTING(      0x0030, DEF_STR( Japan )  )
-	PORT_DIPSETTING(      0x0000, "Korea" )
-	PORT_DIPSETTING(      0x0020, DEF_STR( USA )    )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Easy ) )
+	PORT_DIPSETTING(      0x000c, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Very_Hard ) )
+	PORT_DIPNAME( 0x0030, 0x0030, DEF_STR( Language ) )	/* Default Language: Japanese */
+	PORT_DIPSETTING(      0x0010, "Chinese" )
+	PORT_DIPSETTING(      0x0030, DEF_STR( Japanese ) ) /* Only setting to give a "For use only in...." Copyright Notice */
+	PORT_DIPSETTING(      0x0000, "Korean" )
+	PORT_DIPSETTING(      0x0020, DEF_STR( English ) )
 	PORT_DIPNAME( 0x00c0, 0x00c0, DEF_STR( Lives ) )
 	PORT_DIPSETTING(      0x0000, "2" )
 	PORT_DIPSETTING(      0x00c0, "3" )
@@ -315,7 +315,7 @@ INPUT_PORTS_START( gogomilj )
 	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0200, 0x0200, "Unknown 2-1" )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unused ) ) /* Manual states this dip is "Unused" */
 	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x1c00, 0x1c00, DEF_STR( Coin_A ) )
@@ -327,7 +327,7 @@ INPUT_PORTS_START( gogomilj )
 	PORT_DIPSETTING(      0x0800, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(      0x0c00, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Free_Play ) )
-	PORT_DIPNAME( 0xe000, 0xe000, DEF_STR( Coin_B ) )
+	PORT_DIPNAME( 0xe000, 0xe000, DEF_STR( Coin_B ) ) /* Manual states these dips (6-8) are "Unused" */
 	PORT_DIPSETTING(      0xc000, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(      0xa000, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(      0x8000, DEF_STR( 2C_1C ) )

@@ -2004,13 +2004,16 @@ static void PREFIX86(_wait)(void)    /* Opcode 0x9b */
 
 static void PREFIX86(_pushf)(void)    /* Opcode 0x9c */
 {
+	unsigned tmp;
 	ICOUNT -= cycles.pushf;
+
+	tmp = CompressFlags();
 #ifdef I286
-    PUSH( CompressFlags() | 0xc000 );
+    PUSH( tmp | 0xc000 );
 #elif defined V20
-    PUSH( CompressFlags() | 0xe000 );
+    PUSH( tmp | 0xe000 );
 #else
-    PUSH( CompressFlags() | 0xf000 );
+    PUSH( tmp | 0xf000 );
 #endif
 }
 

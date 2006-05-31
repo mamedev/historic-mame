@@ -387,7 +387,7 @@ int win_init_window(void)
 #ifdef MESS
 		wc.lpfnWndProc		= win_mess_window_proc;
 #else
-		wc.lpfnWndProc		= win_video_window_proc;
+		wc.lpfnWndProc		= winwindow_video_window_proc;
 #endif
 		wc.hCursor			= LoadCursor(NULL, IDC_ARROW);
 		wc.hIcon			= LoadIcon(NULL, IDI_APPLICATION);
@@ -457,7 +457,7 @@ int win_create_window(int width, int height, int depth, int attributes, double a
 			SWP_NOZORDER);
 
 	// make sure we paint the window once here
-	win_update_video_window(NULL, NULL, NULL);
+	winwindow_video_window_update(NULL, NULL, NULL);
 
 	// fill in the bitmap info header
 	video_dib_info->bmiHeader.biSize			= sizeof(video_dib_info->bmiHeader);
@@ -594,10 +594,10 @@ void win_destroy_window(void)
 
 
 //============================================================
-//  window_update_cursor_state
+//  winwindow_update_cursor_state
 //============================================================
 
-void window_update_cursor_state(void)
+void winwindow_update_cursor_state(void)
 {
 	static POINT last_cursor_pos = {-1,-1};
 	RECT bounds;	// actual screen area of game video
@@ -665,10 +665,10 @@ static void update_system_menu(void)
 
 
 //============================================================
-//  win_update_video_window
+//  winwindow_video_window_update
 //============================================================
 
-void win_update_video_window(mame_bitmap *bitmap, const rectangle *bounds, void *vector_dirty_pixels)
+void winwindow_video_window_update(mame_bitmap *bitmap, const rectangle *bounds, void *vector_dirty_pixels)
 {
 	// get the client DC and draw to it
 	if (win_video_window)
@@ -728,10 +728,10 @@ static void draw_video_contents(HDC dc, mame_bitmap *bitmap, const rectangle *bo
 
 
 //============================================================
-//  win_video_window_proc
+//  winwindow_video_window_proc
 //============================================================
 
-LRESULT CALLBACK win_video_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam)
+LRESULT CALLBACK winwindow_video_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam)
 {
 	extern void win_timer_enable(int enabled);
 
@@ -815,7 +815,7 @@ LRESULT CALLBACK win_video_window_proc(HWND wnd, UINT message, WPARAM wparam, LP
 			}
 			else if (wparam == MENU_FULLSCREEN)
 			{
-				win_toggle_full_screen();
+				winwindow_toggle_full_screen();
 				break;
 			}
 			return DefWindowProc(wnd, message, wparam, lparam);
@@ -1109,17 +1109,17 @@ void win_adjust_window_for_visible(int min_x, int max_x, int min_y, int max_y)
 		if (!win_use_directx && !win_window_mode)
 		{
 			win_window_mode = 1;
-			win_toggle_full_screen();
+			winwindow_toggle_full_screen();
 			memset(&non_fullscreen_bounds, 0, sizeof(non_fullscreen_bounds));
 		}
 
 		// show the result
 		ShowWindow(win_video_window, SW_SHOW);
 		SetForegroundWindow(win_video_window);
-		win_update_video_window(NULL, NULL, NULL);
+		winwindow_video_window_update(NULL, NULL, NULL);
 
 		// update the cursor state
-		window_update_cursor_state();
+		winwindow_update_cursor_state();
 
 		// unpause the input devices
 		win_pause_input(0);
@@ -1245,10 +1245,10 @@ void win_toggle_maximize(int force_maximize)
 
 
 //============================================================
-//  win_toggle_full_screen
+//  winwindow_toggle_full_screen
 //============================================================
 
-void win_toggle_full_screen(void)
+void winwindow_toggle_full_screen(void)
 {
 #ifdef MAME_DEBUG
 	// if we are in debug mode, never go full screen
@@ -1387,7 +1387,7 @@ void win_adjust_window(void)
 	logerror("Physical width %d, height %d\n",win_physical_width,win_physical_height);
 
 	// update the cursor state
-	window_update_cursor_state();
+	winwindow_update_cursor_state();
 }
 
 

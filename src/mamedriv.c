@@ -1533,6 +1533,7 @@ const game_driver * const drivers[] =
 	DRIVER( halleycj )	/* A62 (c) 1986 Taito Corporation (Japan) */
 	DRIVER( lsasquad )	/* A64 (c) 1986 Taito Corporation / Taito America (dip switch) */
 	DRIVER( storming )	/* A64 (c) 1986 Taito Corporation */
+	DRIVER( daikaiju )	/* A74 (c) 1986 Taito */
 	DRIVER( tokio )		/* A71 1986 */
 	DRIVER( tokiou )	/* A71 1986 */
 	DRIVER( tokiob )	/* bootleg */
@@ -2193,6 +2194,7 @@ V-V                           TP-027
 	DRIVER( sidearmr )	/* 12/1986 (c) 1986 + Romstar license (US) */
 	DRIVER( sidearjp )	/* 12/1986 (c) 1986 (Japan) */
 	DRIVER( turtship )	/* (c) 1988 Philco (NOT A CAPCOM GAME but runs on modified Sidearms hardware) */
+	DRIVER( turtshij )	/* (c) 1988 Philco (NOT A CAPCOM GAME but runs on modified Sidearms hardware) */
 	DRIVER( turtshik )	/* (c) 1988 Philco (NOT A CAPCOM GAME but runs on modified Sidearms hardware) */
 	DRIVER( dyger )		/* (c) 1989 Philco (NOT A CAPCOM GAME but runs on modified Sidearms hardware) */
 	DRIVER( dygera )	/* (c) 1989 Philco (NOT A CAPCOM GAME but runs on modified Sidearms hardware) */
@@ -3640,7 +3642,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 						/* 56 */
 	DRIVER( mt_gaxe2 )	/* 57 */
 	DRIVER( mt_stf )	/* 58 */
-						/* 59 */
+	DRIVER( mt_mlh )	/* 59 */
 	DRIVER( mt_kcham )	/* 60 */
 						/* 61 */
 	DRIVER( mt_soni2 )	/* 62 */

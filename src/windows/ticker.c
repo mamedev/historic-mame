@@ -16,6 +16,11 @@
 #include "osdepend.h"
 #include "driver.h"
 #include "x86drc.h"
+#include "options.h"
+
+#ifdef NEW_RENDER
+#include "video.h"
+#endif
 
 
 
@@ -39,8 +44,6 @@ static cycles_t nop_cycle_counter(void);
 cycles_t		(*cycle_counter)(void) = init_cycle_counter;
 cycles_t		(*ticks_counter)(void) = init_cycle_counter;
 cycles_t		cycles_per_sec;
-int				win_force_rdtsc;
-int				win_priority;
 
 
 
@@ -61,12 +64,13 @@ static cycles_t init_cycle_counter(void)
 	cycles_t start, end;
 	DWORD a, b;
 	int priority = GetThreadPriority(GetCurrentThread());
+	int newpriority = options_get_int("priority", TRUE);
 	LARGE_INTEGER frequency;
 
 	suspend_adjustment = 0;
 	suspend_time = 0;
 
-	if (!win_force_rdtsc && QueryPerformanceFrequency( &frequency ))
+	if (!options_get_bool("rdtsc", TRUE) && QueryPerformanceFrequency( &frequency ))
 	{
 		// use performance counter if available as it is constant
 		cycle_counter = performance_cycle_counter;
@@ -111,8 +115,8 @@ static cycles_t init_cycle_counter(void)
 
 	// restore our priority
 	// raise it if the config option is set and the debugger is not active
-	if (win_priority < priority || !options.mame_debug )
-		priority = win_priority;
+	if (newpriority < priority || !options.mame_debug)
+		priority = newpriority;
 	SetThreadPriority(GetCurrentThread(), priority);
 
 	// log the results
@@ -132,7 +136,7 @@ static cycles_t init_cycle_counter(void)
 static cycles_t performance_cycle_counter(void)
 {
 	LARGE_INTEGER performance_count;
-	QueryPerformanceCounter( &performance_count );
+	QueryPerformanceCounter(&performance_count);
 	return (cycles_t)performance_count.QuadPart;
 }
 

@@ -12,6 +12,14 @@
 
 
 //============================================================
+//  CONSTANTS
+//============================================================
+
+#define MAX_WINDOWS		4
+
+
+
+//============================================================
 //  TYPE DEFINITIONS
 //============================================================
 
@@ -27,6 +35,47 @@ struct _win_monitor_info
 };
 
 
+typedef struct _win_window_config win_window_config;
+struct _win_window_config
+{
+	float				aspect;						// decoded aspect ratio
+	int					width;						// decoded width
+	int					height;						// decoded height
+	int					depth;						// decoded depth
+	int					refresh;					// decoded refresh
+};
+
+
+typedef struct _win_video_config win_video_config;
+struct _win_video_config
+{
+	// performance options
+	int					autoframeskip;				// autoframeskip?
+	int					frameskip;					// explicit frameskip
+	int					throttle;					// throttle speed?
+	int					sleep;						// allow sleeping?
+
+	// misc options
+	int					framestorun;				// number of frames to run
+
+	// global configuration
+	int					windowed;					// start windowed?
+	int					numscreens;					// number of screens
+
+	// per-window configuration
+	win_window_config	window[MAX_WINDOWS];		// configuration data per-window
+
+	// d3d options
+	int					d3d;						// use d3d
+	int					waitvsync;					// spin until vsync
+	int					syncrefresh;				// sync only to refresh rate
+	int					triplebuf;					// triple buffer
+	int					switchres;					// switch resolutions
+	int					filter;						// enable filtering
+	float				gamma;						// full screen gamma
+};
+
+
 
 //============================================================
 //  GLOBAL VARIABLES
@@ -36,11 +85,8 @@ extern win_monitor_info *win_monitor_list;
 
 extern int video_orientation;
 
-extern int win_use_d3d;
 
-// speed throttling
-extern int			throttle;
-
+extern win_video_config video_config;
 
 
 //============================================================

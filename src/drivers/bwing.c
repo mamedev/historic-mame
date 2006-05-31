@@ -29,7 +29,6 @@ Known issues:
 #include "sound/dac.h"
 
 #define BW_DEBUG 0
-#define BW_CHEAT 0
 
 #define MAX_SOUNDS 16
 
@@ -264,16 +263,13 @@ INPUT_PORTS_START( bwing )
 	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
-#if BW_CHEAT // undocumented and only labeled as "KEEP OFF" in B-Wings
 	PORT_DIPNAME( 0x40, 0x40, "Invincibility" )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Infinite ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-#else
-	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNKNOWN )
-#endif
+
 
 	PORT_START
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Lives ) )

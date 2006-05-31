@@ -39,8 +39,10 @@ COREOBJS = \
 	$(OBJ)/mamecore.o \
 	$(OBJ)/md5.o \
 	$(OBJ)/memory.o \
+	$(OBJ)/options.o \
 	$(OBJ)/palette.o \
 	$(OBJ)/png.o \
+	$(OBJ)/restrack.o \
 	$(OBJ)/romload.o \
 	$(OBJ)/sha1.o \
 	$(OBJ)/sound.o \

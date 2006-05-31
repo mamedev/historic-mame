@@ -30,14 +30,15 @@
 
 #ifdef NEW_RENDER
 #include "render.h"
+#include "options.h"
 #endif
 
 // MAMEOS headers
 #include "blit.h"
 #include "video.h"
 #include "window.h"
-#include "rc.h"
 #include "input.h"
+#include "options.h"
 
 #ifdef NEW_DEBUGGER
 #include "debugwin.h"
@@ -83,18 +84,8 @@ extern struct rc_option win_d3d_opts[];
 //  GLOBAL VARIABLES
 //============================================================
 
-// screen info
-char *screen_name;
-char *layout_name;
-
 int video_orientation;
-
-// speed throttling
-int throttle = 1;
-
-// current frameskip/autoframeskip settings
-static int frameskip;
-static int autoframeskip;
+win_video_config video_config;
 
 
 
@@ -106,23 +97,10 @@ static int autoframeskip;
 win_monitor_info *win_monitor_list;
 static win_monitor_info *primary_monitor;
 
-// options decoding
-static char *cleanstretch;
-static char *resolution;
-static char *aspect;
-static char *mngwrite;
-
-static int win_gfx_width, win_gfx_height;
-int win_start_maximized;
-
-// timing measurements for throttling
-static int allow_sleep;
-
 // average FPS calculation
 static cycles_t fps_start_time;
 static cycles_t fps_end_time;
 static int fps_frames_displayed;
-static int frames_to_run;
 
 // throttling calculations
 static cycles_t throttle_last_cycles;
@@ -175,15 +153,16 @@ static const int waittable[FRAMESKIP_LEVELS][FRAMESKIP_LEVELS] =
 static void video_exit(void);
 static void init_monitors(void);
 static BOOL CALLBACK monitor_enum_callback(HMONITOR handle, HDC dc, LPRECT rect, LPARAM data);
+static win_monitor_info *pick_monitor(int index);
 
-static int decode_cleanstretch(struct rc_option *option, const char *arg, int priority);
-static int decode_resolution(struct rc_option *option, const char *arg, int priority);
-static int decode_ftr(struct rc_option *option, const char *arg, int priority);
-static int decode_aspect(struct rc_option *option, const char *arg, int priority);
 static void update_throttle(mame_time emutime);
 static void update_fps(mame_time emutime);
 static void update_autoframeskip(void);
 static void check_osd_inputs(void);
+
+static void extract_video_config(void);
+static float get_aspect(const char *name, int report_error);
+static void get_resolution(const char *name, win_window_config *config, int report_error);
 
 
 
@@ -191,52 +170,72 @@ static void check_osd_inputs(void);
 //  OPTIONS
 //============================================================
 
-// options struct
-struct rc_option video_opts[] =
+const options_entry video_opts[] =
 {
-	// name, shortname, type, dest, deflt, min, max, func, help
-	{ "Windows video options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
-
 	// performance options
-	{ "autoframeskip", "afs", rc_bool, &autoframeskip, "1", 0, 0, NULL, "skip frames to speed up emulation" },
-	{ "frameskip", "fs", rc_int, &frameskip, "0", 0, FRAMESKIP_LEVELS, NULL, "set frameskip explicitly (autoframeskip needs to be off)" },
-	{ "throttle", NULL, rc_bool, &throttle, "1", 0, 0, NULL, "throttle speed to the game's framerate" },
-	{ "sleep", NULL, rc_bool, &allow_sleep, "1", 0, 0, NULL, "allow " APPNAME " to give back time to the system when it's not needed" },
-	{ "rdtsc", NULL, rc_bool, &win_force_rdtsc, "0", 0, 0, NULL, "prefer RDTSC over QueryPerformanceCounter for timing" },
-	{ "priority", NULL, rc_int, &win_priority, "0", -15, 1, NULL, "thread priority" },
+	{ NULL,                       NULL,   OPTION_HEADER,  "PERFORMANCE OPTIONS" },
+	{ "autoframeskip;afs",        "1",    OPTION_BOOLEAN, "enable automatic frameskip selection" },
+	{ "frameskip;fs",             "0",    0,              "set frameskip to fixed value, 0-12 (autoframeskip must be disabled)" },
+	{ "throttle",                 "1",    OPTION_BOOLEAN, "enable throttling to keep game running in sync with real time" },
+	{ "sleep",                    "1",    OPTION_BOOLEAN, "enable sleeping, which gives time back to other applications when idle" },
+	{ "rdtsc",                    "0",    OPTION_BOOLEAN, "use the RDTSC instruction for timing; faster but may result in uneven performance" },
+	{ "priority",                 "0",    0,              "thread priority for the main game thread; range from -15 to 1" },
 
-	// per-window positioning/layout options
-	{ "window", "w", rc_bool, &win_window_mode, "0", 0, 0, NULL, "run in a window/run on full screen" },
-	{ "screen", NULL, rc_string, &screen_name, NULL, 0, 0, NULL, "specify which screen to use" },
-	{ "layout", NULL, rc_string, &layout_name, NULL, 0, 0, NULL, "specify which [file:]layout to use for the screen" },
-	{ "resolution", "r", rc_string, &resolution, "auto", 0, 0, decode_resolution, "set resolution" },
-	{ "screen_aspect", NULL, rc_string, &aspect, "4:3", 0, 0, decode_aspect, "specify an alternate monitor aspect ratio" },
+	// misc options
+	{ NULL,                       NULL,   OPTION_HEADER,  "MISC VIDEO OPTIONS" },
+	{ "frames_to_run;ftr",        "0",    0,              "number of frames to run before automatically exiting" },
+	{ "mngwrite",                 NULL,   0,              "optional filename to write a MNG movie of the current session" },
 
-	// global sizing options
-	{ "cleanstretch", "cs", rc_string, &cleanstretch, "auto", 0, 0, decode_cleanstretch, "stretch to integer ratios" },
-	{ "keepaspect", "ka", rc_bool, &win_keep_aspect, "1", 0, 0, NULL, "enforce aspect ratio" },
-	{ "maximize", "max", rc_bool, &win_start_maximized, "1", 0, 0, NULL, "start out maximized" },
-	{ "scanlines", "sl", rc_bool, &win_old_scanlines, "0", 0, 0, NULL, "emulate win_old_scanlines" },
+	// global options
+	{ NULL,                       NULL,   OPTION_HEADER,  "GLOBAL VIDEO OPTIONS" },
+	{ "window;w",                 "0",    OPTION_BOOLEAN, "enable window mode; otherwise, full screen mode is assumed" },
+	{ "maximize;max",             "1",    OPTION_BOOLEAN, "default to maximized windows; otherwise, windows will be minimized" },
+	{ "numscreens",               "1",    0,              "number of screens to create; usually, you want just one" },
+	{ "extra_layout;layout",      NULL,   0,              "name of an extra layout file to parse" },
 
-	// misc other options
-	{ "frames_to_run", "ftr", rc_int, &frames_to_run, "0", 0, 0, decode_ftr, "sets the number of frames to run within the game" },
-	{ "mngwrite", NULL, rc_string, &mngwrite, NULL, 0, 0, NULL, "save video in specified mng file" },
+	// per-window options
+	{ NULL,                       NULL,   OPTION_HEADER,  "PER-WINDOW VIDEO OPTIONS" },
+	{ "screen0;screen",           "auto", 0,              "explicit name of the first screen; 'auto' here will try to make a best guess" },
+	{ "aspect0;screen_aspect",    "auto", 0,              "aspect ratio of the first screen; 'auto' here will try to make a best guess" },
+	{ "resolution0;resolution;r", "auto", 0,              "preferred resolution of the first screen; format is <width>x<height>[x<depth>[@<refreshrate>]] or 'auto'" },
+	{ "view0;view",               "auto", 0,              "preferred view for the first screen" },
 
-	// ddraw/d3d options
-	{ "waitvsync", NULL, rc_bool, &win_wait_vsync, "0", 0, 0, NULL, "wait for vertical sync (reduces tearing)"},
-	{ "matchrefresh", NULL, rc_bool, &win_match_refresh, "0", 0, 0, NULL, "attempt to match the game's refresh rate" },
-	{ "syncrefresh", NULL, rc_bool, &win_sync_refresh, "0", 0, 0, NULL, "syncronize only to the monitor refresh" },
-	{ "triplebuffer", "tb", rc_bool, &win_triple_buffer, "0", 0, 0, NULL, "triple buffering (only if fullscreen)" },
-	{ "refresh", NULL, rc_int, &win_gfx_refresh, "0", 0, 0, NULL, "set specific monitor refresh rate" },
-	{ "switchres", NULL, rc_bool, &win_switch_res, "0", 0, 0, NULL, "switch resolutions to best fit" },
-	{ "full_screen_gamma", "fsg", rc_float, &win_gfx_gamma, "1.0", 0.0, 4.0, NULL, "sets the gamma in full screen mode" },
+	{ "screen1",                  "auto", 0,              "explicit name of the second screen; 'auto' here will try to make a best guess" },
+	{ "aspect1",                  "auto", 0,              "aspect ratio of the second screen; 'auto' here will try to make a best guess" },
+	{ "resolution1",              "auto", 0,              "preferred resolution of the second screen; format is <width>x<height>[x<depth>[@<refreshrate>]] or 'auto'" },
+	{ "view1",                    "auto", 0,              "preferred view for the second screen" },
 
-	// d3d options
-	{ "direct3d", "d3d", rc_bool, &win_use_d3d, "1", 0, 0, NULL, "use Direct3D for rendering" },
+	{ "screen2",                  "auto", 0,              "explicit name of the third screen; 'auto' here will try to make a best guess" },
+	{ "aspect2",                  "auto", 0,              "aspect ratio of the third screen; 'auto' here will try to make a best guess" },
+	{ "resolution2",              "auto", 0,              "preferred resolution of the third screen; format is <width>x<height>[x<depth>[@<refreshrate>]] or 'auto'" },
+	{ "view2",                    "auto", 0,              "preferred view for the third screen" },
+
+	{ "screen3",                  "auto", 0,              "explicit name of the fourth screen; 'auto' here will try to make a best guess" },
+	{ "aspect3",                  "auto", 0,              "aspect ratio of the fourth screen; 'auto' here will try to make a best guess" },
+	{ "resolution3",              "auto", 0,              "preferred resolution of the fourth screen; format is <width>x<height>[x<depth>[@<refreshrate>]] or 'auto'" },
+	{ "view3",                    "auto", 0,              "preferred view for the fourth screen" },
+
+	// directx options
+	{ NULL,                       NULL,   OPTION_HEADER,  "DIRECTX VIDEO OPTIONS" },
+	{ "direct3d;d3d",             "1",    OPTION_BOOLEAN, "enable using Direct3D for video rendering (preferred)" },
+	{ "waitvsync",                "0",    OPTION_BOOLEAN, "enable waiting for the start of VBLANK before flipping screens; reduces tearing effects" },
+	{ "syncrefresh",              "0",    OPTION_BOOLEAN, "enable using the start of VBLANK for throttling instead of the game time" },
+	{ "triplebuffer;tb",          "0",    OPTION_BOOLEAN, "enable triple buffering" },
+	{ "switchres",                "0",    OPTION_BOOLEAN, "enable resolution switching" },
+	{ "filter;d3dfilter;flt",     "1",    OPTION_BOOLEAN, "enable bilinear filtering on screen output" },
+	{ "full_screen_gamma;fsg",    "1.0",  0,              "gamma value in full screen mode" },
+
+	// deprecated junk
+	{ "ddraw",                    "0",    OPTION_DEPRECATED, "(deprecated)" },
+	{ "hwstretch",                "0",    OPTION_DEPRECATED, "(deprecated)" },
+	{ "switchbpp",                "0",    OPTION_DEPRECATED, "(deprecated)" },
+	{ "effect",                   "0",    OPTION_DEPRECATED, "(deprecated)" },
+	{ "zoom",                     "0",    OPTION_DEPRECATED, "(deprecated)" },
+	{ "d3dtexmanage",             "0",    OPTION_DEPRECATED, "(deprecated)" },
 #ifndef NEW_RENDER
-	{ NULL, NULL, rc_link, win_d3d_opts, NULL, 0, 0, NULL, NULL },
+	{ "d3dfilter",                "0",    OPTION_DEPRECATED, "(deprecated)" },
 #endif
-	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
+	{ NULL }
 };
 
 
@@ -247,10 +246,14 @@ struct rc_option video_opts[] =
 
 int winvideo_init(void)
 {
+	const char *stemp;
 	int index;
 
 	// ensure we get called on the way out
 	add_exit_callback(video_exit);
+
+	// extract data from the options
+	extract_video_config();
 
 	// set up monitors first
 	init_monitors();
@@ -258,41 +261,18 @@ int winvideo_init(void)
 #ifdef MAME_DEBUG
 	// if we are in debug mode, never go full screen
 	if (options.mame_debug)
-		win_window_mode = TRUE;
+		video_config.windowed = TRUE;
 #endif
 
 	// initialize the window system so we can make windows
-	if (win_window_init())
+	if (winwindow_init())
 		goto error;
 
-	// create the windows (todo: how many windows?)
-	for (index = 0; index < 1; index++)
-	{
-		win_monitor_info *monitor = NULL;
-		char *layout = NULL;
-		char *view = NULL;
-
-		// find the monitor for this window
-		if (screen_name != NULL)
-			for (monitor = win_monitor_list; monitor != NULL; monitor = monitor->next)
-				if (strcmp(screen_name, monitor->info.szDevice) == 0)
-					break;
-		if (monitor == NULL)
-			monitor = primary_monitor;
-
-		// extract the layout name and file
-		if (layout_name != NULL)
-		{
-			layout = layout_name;
-			view = strchr(layout, ':');
-			if (view != NULL)
-				*view++ = 0;
-		}
-
-		// create the window
-		if (win_window_create(monitor, layout, view, win_gfx_width, win_gfx_height, win_switch_res))
+	// create the windows
+	for (index = 0; index < video_config.numscreens; index++)
+		if (winwindow_video_window_create(index, pick_monitor(index), &video_config.window[index]))
 			goto error;
-	}
+	SetForegroundWindow(win_window_list->hwnd);
 
 	// possibly create the debug window, but don't show it yet
 #ifdef MAME_DEBUG
@@ -302,15 +282,19 @@ int winvideo_init(void)
 #endif
 
 	// start recording movie
-	if (mngwrite != NULL)
-		record_movie_start(mngwrite);
+	stemp = options_get_string("mngwrite", TRUE);
+	if (stemp != NULL)
+		record_movie_start(stemp);
+
+	// if we're running < 5 minutes, allow us to skip warnings to facilitate benchmarking/validation testing
+	if (video_config.framestorun > 0 && video_config.framestorun < 60*60*5)
+		options.skip_warnings = options.skip_gameinfo = options.skip_disclaimer = 1;
 
 	return 0;
 
 error:
 	return 1;
 }
-
 
 
 //============================================================
@@ -331,6 +315,13 @@ static void video_exit(void)
 		win_monitor_info *temp = win_monitor_list;
 		win_monitor_list = temp->next;
 		free(temp);
+	}
+
+	// print a final result to the stdout
+	if (fps_frames_displayed != 0)
+	{
+		cycles_t cps = osd_cycles_per_second();
+		printf("Average FPS: %f (%d frames)\n", (double)cps / (fps_end_time - fps_start_time) * fps_frames_displayed, fps_frames_displayed);
 	}
 }
 
@@ -393,13 +384,13 @@ void winvideo_set_frameskip(int value)
 {
 	if (value >= 0)
 	{
-		frameskip = value;
-		autoframeskip = 0;
+		video_config.frameskip = value;
+		video_config.autoframeskip = 0;
 	}
 	else
 	{
-		frameskip = 0;
-		autoframeskip = 1;
+		video_config.frameskip = 0;
+		video_config.autoframeskip = 1;
 	}
 }
 
@@ -411,7 +402,7 @@ void winvideo_set_frameskip(int value)
 
 int winvideo_get_frameskip(void)
 {
-	return autoframeskip ? -1 : frameskip;
+	return video_config.autoframeskip ? -1 : video_config.frameskip;
 }
 
 
@@ -420,45 +411,40 @@ int winvideo_get_frameskip(void)
 //  osd_update
 //============================================================
 
-void osd_update(mame_time emutime)
+int osd_update(mame_time emutime)
 {
 	win_window_info *window;
 
 	// if we're throttling, paused, or if the UI is up, synchronize
-	if (throttle || mame_is_paused() || ui_is_setup_active() || ui_is_onscrd_active())
+	if (video_config.throttle || mame_is_paused() || ui_is_setup_active() || ui_is_onscrd_active())
 		update_throttle(emutime);
 
 	// update the FPS computations
 	update_fps(emutime);
 
-	// update all the windows
-	profiler_mark(PROFILER_BLIT);
-	for (window = win_window_list; window != NULL; window = window->next)
-		win_update_video_window(window);
-	profiler_mark(PROFILER_END);
+	// update all the windows, but only if we're not skipping this frame
+	if (!skiptable[video_config.frameskip][frameskip_counter])
+	{
+		profiler_mark(PROFILER_BLIT);
+		for (window = win_window_list; window != NULL; window = window->next)
+			winwindow_video_window_update(window);
+		profiler_mark(PROFILER_END);
+	}
 
 	// if we're throttling and autoframeskip is on, adjust
-	if (throttle && autoframeskip && frameskip_counter == 0)
+	if (video_config.throttle && video_config.autoframeskip && frameskip_counter == 0)
 		update_autoframeskip();
-
-	// increment the frameskip counter
-	frameskip_counter = (frameskip_counter + 1) % FRAMESKIP_LEVELS;
 
 	// poll the joystick values here
 	winwindow_process_events(TRUE);
 	wininput_poll();
 	check_osd_inputs();
-}
 
+	// increment the frameskip counter
+	frameskip_counter = (frameskip_counter + 1) % FRAMESKIP_LEVELS;
 
-//============================================================
-//  osd_skip_this_frame
-//============================================================
-
-int osd_skip_this_frame(void)
-{
-	// skip the current frame?
-	return skiptable[frameskip][frameskip_counter];
+	// return whether or not to skip the next frame
+	return skiptable[video_config.frameskip][frameskip_counter];
 }
 
 
@@ -475,13 +461,13 @@ const char *osd_get_fps_text(const performance_info *performance)
 	// if we're paused, display less info
 	if (mame_is_paused())
 		dest += sprintf(dest, "%s%2d%4d/%d fps",
-				autoframeskip ? "auto" : "fskp", frameskip,
+				video_config.autoframeskip ? "auto" : "fskp", video_config.frameskip,
 				(int)(performance->frames_per_second + 0.5),
 				PAUSED_REFRESH_RATE);
 	else
 	{
 		dest += sprintf(dest, "%s%2d%4d%%%4d/%d fps",
-				autoframeskip ? "auto" : "fskp", frameskip,
+				video_config.autoframeskip ? "auto" : "fskp", video_config.frameskip,
 				(int)(performance->game_speed_percent + 0.5),
 				(int)(performance->frames_per_second + 0.5),
 				(int)(Machine->refresh_rate[0] + 0.5));
@@ -653,127 +639,47 @@ static BOOL CALLBACK monitor_enum_callback(HMONITOR handle, HDC dc, LPRECT rect,
 
 
 //============================================================
-//  decode_cleanstretch
+//  pick_monitor
 //============================================================
 
-static int decode_cleanstretch(struct rc_option *option, const char *arg, int priority)
+static win_monitor_info *pick_monitor(int index)
 {
-	// none: never contrain stretching
-	if (!strcmp(arg, "none"))
-	{
-		win_force_int_stretch = FORCE_INT_STRECT_NONE;
-	}
-	// full: constrain both width and height to integer ratios
-	else if (!strcmp(arg, "full"))
-	{
-		win_force_int_stretch = FORCE_INT_STRECT_FULL;
-	}
-	// auto: let the blitter module decide when/how to constrain stretching
-	else if (!strcmp(arg, "auto"))
-	{
-		win_force_int_stretch = FORCE_INT_STRECT_AUTO;
-	}
-	// horizontal: constrain width to integer ratios (relative to game)
-	else if (!strncmp(arg, "horizontal", strlen(arg)))
-	{
-		win_force_int_stretch = FORCE_INT_STRECT_HOR;
-	}
-	// vertical: constrain height to integer ratios (relative to game)
-	else if (!strncmp(arg, "vertical", strlen(arg)))
-	{
-		win_force_int_stretch = FORCE_INT_STRECT_VER;
-	}
-	else
-	{
-		fprintf(stderr, "error: invalid value for cleanstretch: %s\n", arg);
-		return -1;
-	}
+	win_monitor_info *monitor;
+	const char *scrname;
+	int moncount = 0;
+	char option[20];
+	float aspect;
 
-	option->priority = priority;
-	return 0;
-}
+	// get the screen option
+	sprintf(option, "screen%d", index);
+	scrname = options_get_string(option, TRUE);
 
+	// get the aspect ratio
+	sprintf(option, "aspect%d", index);
+	aspect = get_aspect(option, TRUE);
 
+	// look for a match in the name first
+	if (scrname != NULL)
+		for (monitor = win_monitor_list; monitor != NULL; monitor = monitor->next)
+		{
+			moncount++;
+			if (strcmp(scrname, monitor->info.szDevice) == 0)
+				goto finishit;
+		}
 
-//============================================================
-//  decode_resolution
-//============================================================
+	// didn't find it; alternate monitors until we hit the jackpot
+	index %= moncount;
+	for (monitor = win_monitor_list; monitor != NULL; monitor = monitor->next)
+		if (index-- == 0)
+			goto finishit;
 
-static int decode_resolution(struct rc_option *option, const char *arg, int priority)
-{
-	if (!strcmp(arg, "auto"))
-	{
-		win_gfx_width = win_gfx_height = win_gfx_depth = 0;
-		options.vector_width = options.vector_height = 0;
-	}
-	else if (sscanf(arg, "%dx%dx%d", &win_gfx_width, &win_gfx_height, &win_gfx_depth) < 2)
-	{
-		win_gfx_width = win_gfx_height = win_gfx_depth = 0;
-		options.vector_width = options.vector_height = 0;
-		fprintf(stderr, "error: invalid value for resolution: %s\n", arg);
-		return -1;
-	}
-	if ((win_gfx_depth != 0) &&
-		(win_gfx_depth != 16) &&
-		(win_gfx_depth != 24) &&
-		(win_gfx_depth != 32))
-	{
-		win_gfx_width = win_gfx_height = win_gfx_depth = 0;
-		options.vector_width = options.vector_height = 0;
-		fprintf(stderr, "error: invalid value for resolution: %s\n", arg);
-		return -1;
-	}
-	options.vector_width = win_gfx_width;
-	options.vector_height = win_gfx_height;
+	// return the primary just in case all else fails
+	monitor = primary_monitor;
 
-	option->priority = priority;
-	return 0;
-}
-
-
-
-//============================================================
-//  decode_ftr
-//============================================================
-
-static int decode_ftr(struct rc_option *option, const char *arg, int priority)
-{
-	int ftr;
-
-	if (sscanf(arg, "%d", &ftr) != 1)
-	{
-		fprintf(stderr, "error: invalid value for frames_to_run: %s\n", arg);
-		return -1;
-	}
-
-	// if we're running < 5 minutes, allow us to skip warnings to facilitate benchmarking/validation testing
-	frames_to_run = ftr;
-	if (frames_to_run > 0 && frames_to_run < 60*60*5)
-		options.skip_warnings = options.skip_gameinfo = options.skip_disclaimer = 1;
-
-	option->priority = priority;
-	return 0;
-}
-
-
-
-//============================================================
-//  decode_aspect
-//============================================================
-
-static int decode_aspect(struct rc_option *option, const char *arg, int priority)
-{
-	int num, den;
-
-	if (sscanf(arg, "%d:%d", &num, &den) != 2 || num == 0 || den == 0)
-	{
-		fprintf(stderr, "error: invalid value for aspect ratio: %s\n", arg);
-		return -1;
-	}
-	win_screen_aspect = (double)num / (double)den;
-
-	option->priority = priority;
-	return 0;
+finishit:
+	if (aspect != 0)
+		monitor->aspect = aspect;
+	return monitor;
 }
 
 
@@ -789,7 +695,7 @@ static void update_throttle(mame_time emutime)
 	subseconds_t subsecs_per_cycle;
 
 	// if we're only syncing to the refresh, bail now
-	if (win_sync_refresh)
+	if (video_config.syncrefresh)
 		return;
 
 	// if we're paused, emutime will not advance; explicitly resync and set us backwards
@@ -834,7 +740,7 @@ static void update_throttle(mame_time emutime)
 	{
 		// if we have enough time to sleep, do it
 		// ...but not if we're autoframeskipping and we're behind
-		if (allow_sleep && (!autoframeskip || frameskip == 0) &&
+		if (video_config.sleep && (!video_config.autoframeskip || video_config.frameskip == 0) &&
 			(target - curr) > (cycles_t)(ticks_per_sleep_msec * 1.1))
 		{
 			cycles_t next;
@@ -880,7 +786,7 @@ static void update_fps(mame_time emutime)
 	else
 	{
 		fps_frames_displayed++;
-		if (fps_frames_displayed == frames_to_run)
+		if (fps_frames_displayed == video_config.framestorun)
 		{
 #ifndef NEW_RENDER
 			char name[20];
@@ -925,7 +831,7 @@ static void update_autoframeskip(void)
 			if (frameskipadjust >= 3)
 			{
 				frameskipadjust = 0;
-				if (frameskip > 0) frameskip--;
+				if (video_config.frameskip > 0) video_config.frameskip--;
 			}
 		}
 
@@ -937,15 +843,15 @@ static void update_autoframeskip(void)
 				frameskipadjust -= (90 - performance->game_speed_percent) / 5;
 
 			// if we're close, only force it up to frameskip 8
-			else if (frameskip < 8)
+			else if (video_config.frameskip < 8)
 				frameskipadjust--;
 
 			// perform the adjustment
 			while (frameskipadjust <= -2)
 			{
 				frameskipadjust += 2;
-				if (frameskip < FRAMESKIP_LEVELS - 1)
-					frameskip++;
+				if (video_config.frameskip < FRAMESKIP_LEVELS - 1)
+					video_config.frameskip++;
 			}
 		}
 	}
@@ -963,22 +869,22 @@ static void check_osd_inputs(void)
 	if (input_ui_pressed(IPT_UI_FRAMESKIP_INC))
 	{
 		// if autoframeskip, disable auto and go to 0
-		if (autoframeskip)
+		if (video_config.autoframeskip)
 		{
-			autoframeskip = 0;
-			frameskip = 0;
+			video_config.autoframeskip = 0;
+			video_config.frameskip = 0;
 		}
 
 		// wrap from maximum to auto
-		else if (frameskip == FRAMESKIP_LEVELS - 1)
+		else if (video_config.frameskip == FRAMESKIP_LEVELS - 1)
 		{
-			frameskip = 0;
-			autoframeskip = 1;
+			video_config.frameskip = 0;
+			video_config.autoframeskip = 1;
 		}
 
 		// else just increment
 		else
-			frameskip++;
+			video_config.frameskip++;
 
 		// display the FPS counter for 2 seconds
 		ui_show_fps_temp(2.0);
@@ -991,19 +897,19 @@ static void check_osd_inputs(void)
 	if (input_ui_pressed(IPT_UI_FRAMESKIP_DEC))
 	{
 		// if autoframeskip, disable auto and go to max
-		if (autoframeskip)
+		if (video_config.autoframeskip)
 		{
-			autoframeskip = 0;
-			frameskip = FRAMESKIP_LEVELS-1;
+			video_config.autoframeskip = 0;
+			video_config.frameskip = FRAMESKIP_LEVELS-1;
 		}
 
 		// wrap from 0 to auto
-		else if (frameskip == 0)
-			autoframeskip = 1;
+		else if (video_config.frameskip == 0)
+			video_config.autoframeskip = 1;
 
 		// else just decrement
 		else
-			frameskip--;
+			video_config.frameskip--;
 
 		// display the FPS counter for 2 seconds
 		ui_show_fps_temp(2.0);
@@ -1015,7 +921,7 @@ static void check_osd_inputs(void)
 	// toggle throttle?
 	if (input_ui_pressed(IPT_UI_THROTTLE))
 	{
-		throttle ^= 1;
+		video_config.throttle = !video_config.throttle;
 
 		// reset the frame counter so we'll measure the average FPS on a consistent status
 		fps_frames_displayed = 0;
@@ -1023,11 +929,116 @@ static void check_osd_inputs(void)
 
 	// check for toggling fullscreen mode
 	if (input_ui_pressed(IPT_OSD_1))
-		win_toggle_full_screen();
+		winwindow_toggle_full_screen();
 
 #ifdef MESS
 	// check for toggling menu bar
 	if (input_ui_pressed(IPT_OSD_2))
 		win_toggle_menubar();
 #endif
+}
+
+
+
+//============================================================
+//  extract_video_config
+//============================================================
+
+static void extract_video_config(void)
+{
+	int itemp;
+
+	// performance options: extract the data
+	video_config.autoframeskip = options_get_bool  ("autoframeskip", TRUE);
+	video_config.frameskip     = options_get_int   ("frameskip", TRUE);
+	video_config.throttle      = options_get_bool  ("throttle", TRUE);
+	video_config.sleep         = options_get_bool  ("sleep", TRUE);
+
+	// misc options: extract the data
+	video_config.framestorun   = options_get_int   ("frames_to_run", TRUE);
+
+	// global options: extract the data
+	video_config.windowed      = options_get_bool  ("window", TRUE);
+	video_config.numscreens    = options_get_int   ("numscreens", TRUE);
+
+	// per-window options: extract the data
+	get_resolution("resolution0", &video_config.window[0], TRUE);
+	get_resolution("resolution1", &video_config.window[1], TRUE);
+	get_resolution("resolution2", &video_config.window[2], TRUE);
+	get_resolution("resolution3", &video_config.window[3], TRUE);
+
+	// d3d options: extract the data
+	video_config.d3d           = options_get_bool  ("direct3d", TRUE);
+	video_config.waitvsync     = options_get_bool  ("waitvsync", TRUE);
+	video_config.syncrefresh   = options_get_bool  ("syncrefresh", TRUE);
+	video_config.triplebuf     = options_get_bool  ("triplebuffer", TRUE);
+	video_config.switchres     = options_get_bool  ("switchres", TRUE);
+	video_config.filter        = options_get_bool  ("filter", TRUE);
+	video_config.gamma         = options_get_float ("full_screen_gamma", TRUE);
+
+	// performance options: sanity check values
+	if (video_config.frameskip < 0 || video_config.frameskip > FRAMESKIP_LEVELS)
+	{
+		fprintf(stderr, "Invalid frameskip value %d; reverting to 0\n", video_config.frameskip);
+		video_config.frameskip = 0;
+	}
+	itemp = options_get_int("priority", TRUE);
+	if (itemp < -15 || itemp > 1)
+	{
+		fprintf(stderr, "Invalid priority value %d; reverting to 0\n", itemp);
+		options_set_int("priority", 0);
+	}
+
+	// misc options: sanity check values
+
+	// global options: sanity check values
+	if (video_config.numscreens < 1 || video_config.numscreens > MAX_WINDOWS)
+	{
+		fprintf(stderr, "Invalid numscreens value %d; reverting to 1\n", video_config.numscreens);
+		video_config.numscreens = 1;
+	}
+
+	// per-window options: sanity check values
+
+	// d3d options: sanity check values
+	if (video_config.gamma < 0.0 || video_config.gamma > 4.0)
+	{
+		fprintf(stderr, "Invalid full_screen_gamma value %f; reverting to 1.0\n", video_config.gamma);
+		video_config.gamma = 1.0;
+	}
+}
+
+
+
+//============================================================
+//  get_aspect
+//============================================================
+
+static float get_aspect(const char *name, int report_error)
+{
+	const char *data = options_get_string(name, report_error);
+	int num = 0, den = 1;
+
+	if (strcmp(data, "auto") == 0)
+		return 0;
+	else if (sscanf(data, "%d:%d", &num, &den) != 2 && report_error)
+		fprintf(stderr, "Illegal aspect ratio value for %s = %s\n", name, data);
+	return (float)num / (float)den;
+}
+
+
+
+//============================================================
+//  get_resolution
+//============================================================
+
+static void get_resolution(const char *name, win_window_config *config, int report_error)
+{
+	const char *data = options_get_string(name, report_error);
+
+	config->width = config->height = config->depth = config->refresh = 0;
+	if (strcmp(data, "auto") == 0)
+		return;
+	else if (sscanf(data, "%dx%dx%d@%d", &config->width, &config->height, &config->depth, &config->refresh) < 2 && report_error)
+		fprintf(stderr, "Illegal resolution value for %s = %s\n", name, data);
 }

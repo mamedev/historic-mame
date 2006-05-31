@@ -36,10 +36,10 @@ struct _gdi_info
 
 
 //============================================================
-//  win_gdi_init
+//  drawgdi_window_init
 //============================================================
 
-int win_gdi_init(win_window_info *window)
+int drawgdi_window_init(win_window_info *window)
 {
 	gdi_info *gdi;
 	int i;
@@ -74,10 +74,10 @@ int win_gdi_init(win_window_info *window)
 
 
 //============================================================
-//  win_gdi_kill
+//  drawgdi_window_destroy
 //============================================================
 
-void win_gdi_kill(win_window_info *window)
+void drawgdi_window_destroy(win_window_info *window)
 {
 	gdi_info *gdi = window->gdidata;
 
@@ -95,10 +95,10 @@ void win_gdi_kill(win_window_info *window)
 
 
 //============================================================
-//  win_gdi_draw
+//  drawgdi_window_draw
 //============================================================
 
-int win_gdi_draw(win_window_info *window, HDC dc, const render_primitive *primlist, int update)
+int drawgdi_window_draw(win_window_info *window, HDC dc, const render_primitive *primlist, int update)
 {
 	gdi_info *gdi = window->gdidata;
 	int width, height, pitch;

@@ -74,8 +74,6 @@ struct _osd_create_params
 int osd_create_display(const osd_create_params *params, UINT32 *rgb_components);
 void osd_close_display(void);
 
-#endif
-
 
 /*
   osd_skip_this_frame() must return 0 if the current frame will be displayed.
@@ -103,10 +101,12 @@ int osd_skip_this_frame(void);
   simulated using the keyboard LEDs, or in other ways e.g. by placing graphics
   on the window title bar.
 */
-#ifndef NEW_RENDER
 void osd_update_video_and_audio(struct _mame_display *display);
+
 #else
-void osd_update(mame_time emutime);
+
+int osd_update(mame_time emutime);
+
 #endif
 
 
@@ -323,7 +323,7 @@ cycles_t osd_profiling_ticks(void);
 
 /* called to allocate/free memory that can contain executable code */
 void *osd_alloc_executable(size_t size);
-void osd_free_executable(void *ptr);
+void osd_free_executable(void *ptr, size_t size);
 
 /* called while loading ROMs. It is called a last time with name == 0 to signal */
 /* that the ROM loading process is finished. */

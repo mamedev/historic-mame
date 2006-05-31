@@ -79,23 +79,12 @@ msvcprep: $(OBJ)/vconv.exe
 
 $(OBJ)/vconv.exe: $(OBJ)/windows/vconv.o
 	@echo Linking $@...
-	@gcc $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -lversion -o $@
+	@link.exe /nologo $^ version.lib /out:$@
 
 $(OBJ)/windows/vconv.o: src/windows/vconv.c
 	@echo Compiling $<...
-	@gcc $(CDEFS) $(CFLAGSOSDEPEND) -c $< -o $@
+	@cl.exe /nologo /O1 -D_CRT_SECURE_NO_DEPRECATE -c $< /Fo$@
 
-endif
-
-
-
-#-------------------------------------------------
-# nasm for Windows (but not cygwin) has a "w"
-# at the end
-#-------------------------------------------------
-
-ifndef COMPILESYSTEM_CYGWIN
-ASM = @nasmw
 endif
 
 
@@ -121,7 +110,7 @@ CFLAGS += -DWIN95_MULTIMON
 endif
 
 # add the windows libaries
-LIBS += -luser32 -lgdi32 -lddraw -ldsound -ldinput -ldxguid -lwinmm -ladvapi32 -lshell32
+LIBS += -luser32 -lgdi32 -lddraw -ldsound -ldinput -ldxguid -lwinmm -ladvapi32
 
 
 
@@ -135,7 +124,6 @@ OSOBJS = \
 	$(OBJ)/$(MAMEOS)/fronthlp.o \
 	$(OBJ)/$(MAMEOS)/input.o \
 	$(OBJ)/$(MAMEOS)/misc.o \
-	$(OBJ)/$(MAMEOS)/rc.o \
 	$(OBJ)/$(MAMEOS)/sound.o \
 	$(OBJ)/$(MAMEOS)/ticker.o \
 	$(OBJ)/$(MAMEOS)/winmain.o \
@@ -159,12 +147,6 @@ OSOBJS += \
 $(OBJ)/$(MAMEOS)/rendsoft.o : rendersw.c
 endif
 
-
-# add 32-bit optimized blitters
-ifndef PTR64
-OSOBJS += \
-	$(OBJ)/$(MAMEOS)/asmtile.o
-endif
 
 OSTOOLOBJS = \
 	$(OBJ)/$(MAMEOS)/osd_tool.o
@@ -195,22 +177,6 @@ DEFS += -DMALLOC_DEBUG
 OSDBGOBJS += $(OBJ)/$(MAMEOS)/winalloc.o
 OSDBGLDFLAGS += -Wl,--allow-multiple-definition
 endif
-
-
-
-#-------------------------------------------------
-# rules for assembly targets
-#-------------------------------------------------
-
-# video blitting functions
-$(OBJ)/$(MAMEOS)/asmblit.o: src/$(MAMEOS)/asmblit.asm
-	@echo Assembling $<...
-	$(ASM) -o $@ $(ASMFLAGS) $(subst -D,-d,$(ASMDEFS)) $<
-
-# tilemap blitting functions
-$(OBJ)/$(MAMEOS)/asmtile.o: src/$(MAMEOS)/asmtile.asm
-	@echo Assembling $<...
-	$(ASM) -o $@ $(ASMFLAGS) $(subst -D,-d,$(ASMDEFS)) $<
 
 
 
