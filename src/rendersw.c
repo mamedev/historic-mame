@@ -94,10 +94,7 @@ static UINT32 cosine_table[2049];
 
 INLINE float round_nearest(float f)
 {
-	if (f >= 0)
-		return floor(f + 0.5f);
-	else
-		return floor(f - 0.5f);
+	return floor(f + 0.5f);
 }
 
 

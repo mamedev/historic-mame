@@ -48,13 +48,6 @@
 #endif // UNICODE
 
 
-//============================================================
-//  EXTERNALS
-//============================================================
-
-extern char *rompath_extra;
-
-
 
 //============================================================
 //  TYPE DEFINITIONS
@@ -125,10 +118,11 @@ static const struct
 	const char *option;
 } fileio_options[] =
 {
-	{ FILETYPE_ROM,			"rompath" },
 #ifndef MESS
+	{ FILETYPE_ROM,			"rompath" },
 	{ FILETYPE_IMAGE,		"rompath" },
 #else
+	{ FILETYPE_ROM,			"biospath" },
 	{ FILETYPE_IMAGE,		"softwarepath" },
 	{ FILETYPE_HASH,		"hash_directory" },
 #endif
@@ -395,15 +389,6 @@ static const char *get_path_for_filetype(int filetype, int pathindex, DWORD *cou
 		// if we don't have a path, set an empty string
 		if (rawpath == NULL)
 			rawpath = "";
-
-		// special hack for ROMs
-		if (list == &pathlist[FILETYPE_ROM] && rompath_extra)
-		{
-			// this may leak a little memory, but it's a hack anyway! :-P
-			char *newpath = malloc_or_die(strlen(rompath_extra) + strlen(rawpath) + 2);
-			sprintf(newpath, "%s;%s", rompath_extra, rawpath);
-			rawpath = newpath;
-		}
 
 		// decompose the path
 		expand_pathlist(list, rawpath);

@@ -27,6 +27,8 @@
 #include "blit.h"
 #include "wind3old.h"
 #include "wind4old.h"
+#include "window.h"
+#include "winmain.h"
 
 // RGB effects pattern data
 #include "pattern.h"
@@ -36,9 +38,6 @@
 //============================================================
 //  IMPORTS
 //============================================================
-
-// from input.c
-extern int verbose;
 
 // from wind3d.c (surfaces)
 extern LPDIRECTDRAWSURFACE7 win_d3d_background_surface;
@@ -794,8 +793,7 @@ static int effects_rgb_init(void)
 
 		if (fp == NULL)
 		{
-			if (verbose)
-				fprintf(stderr, "Unable to find RGB effects pattern\n");
+			verbose_printf("Unable to find RGB effects pattern\n");
 			free(pattern_rgb_data);
 			return 1;
 		}
@@ -803,8 +801,7 @@ static int effects_rgb_init(void)
 		filesize = ftell(fp);
 		if (filesize != patternsize)
 		{
-			if (verbose)
-				fprintf(stderr, "RGB pattern has a wrong filesize (expected %i bytes, found %i)\n", patternsize, filesize);
+			verbose_printf("RGB pattern has a wrong filesize (expected %i bytes, found %i)\n", patternsize, filesize);
 			free(pattern_rgb_data);
 			return 1;
 		}

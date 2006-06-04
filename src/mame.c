@@ -171,9 +171,6 @@ static UINT32 rand_seed;
 /* logerror calback info */
 static callback_item *logerror_callback_list;
 
-/* a giant string buffer for temporary strings */
-char giant_string_buffer[GIANT_STRING_BUFFER_SIZE];
-
 /* the "disclaimer" that should be printed when run with no parameters */
 const char *mame_disclaimer =
 	"MAME is an emulator: it reproduces, more or less faithfully, the behaviour of\n"
@@ -720,7 +717,7 @@ void CLIB_DECL fatalerror(const char *text, ...)
 
 	/* dump to the buffer; assume no one writes >2k lines this way */
 	va_start(arg, text);
-	vsnprintf(giant_string_buffer, sizeof(giant_string_buffer), text, arg);
+	vsnprintf(giant_string_buffer, GIANT_STRING_BUFFER_SIZE, text, arg);
 	va_end(arg);
 
 	/* output and return */
@@ -750,7 +747,7 @@ void CLIB_DECL logerror(const char *text, ...)
 
 		/* dump to the buffer */
 		va_start(arg, text);
-		vsnprintf(giant_string_buffer, sizeof(giant_string_buffer), text, arg);
+		vsnprintf(giant_string_buffer, GIANT_STRING_BUFFER_SIZE, text, arg);
 		va_end(arg);
 
 		/* log to all callbacks */

@@ -106,9 +106,6 @@ enum
 extern const char *memory_region_names[REGION_MAX];
 
 
-#define GIANT_STRING_BUFFER_SIZE	65536
-
-
 /* artwork options */
 #define ARTWORK_USE_ALL			(~0)
 #define ARTWORK_USE_NONE		(0)

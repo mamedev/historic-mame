@@ -1035,7 +1035,7 @@ mame_time cpu_getscanlinetime_mt(int scanline)
 	abstime = mame_timer_get_time();
 
 	/* if we're already past the computed time, count it for the next frame */
-	if (compare_mame_times(abstime, scantime) >= 0)
+	while (compare_mame_times(abstime, scantime) >= 0)
 		scantime = add_mame_times(scantime, refresh_period);
 
 	/* compute how long from now until that time */
@@ -1473,6 +1473,8 @@ static void cpu_updatecallback(int param)
 
 	/* reset the refresh timer */
 	mame_timer_adjust(refresh_timer, time_never, 0, time_never);
+
+logerror("Partial: (previous reset)\n");
 }
 
 

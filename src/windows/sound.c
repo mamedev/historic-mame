@@ -23,6 +23,7 @@
 #include "osdepend.h"
 #include "sound/wavwrite.h"
 
+#include "winmain.h"
 #ifndef NEW_RENDER
 #include "windold.h"
 #include "videoold.h"
@@ -32,14 +33,6 @@ extern int throttle;
 #include "video.h"
 #define win_video_window		win_window_list->hwnd
 #endif
-
-
-//============================================================
-//  IMPORTS
-//============================================================
-
-extern int verbose;
-
 
 
 //============================================================
@@ -225,8 +218,8 @@ void osd_stop_audio_stream(void)
 	dsound_kill();
 
 	// print out over/underflow stats
-	if (verbose && (buffer_overflows || buffer_underflows))
-		fprintf(stderr, "Sound buffer: overflows=%d underflows=%d\n", buffer_overflows, buffer_underflows);
+	if (buffer_overflows || buffer_underflows)
+		verbose_printf("Sound: buffer overflows=%d underflows=%d\n", buffer_overflows, buffer_underflows);
 
 #if LOG_SOUND
 	if (sound_log)
@@ -613,8 +606,7 @@ static int dsound_create_buffers(void)
 		fprintf(stderr, "Error getting primary format: %08x\n", (UINT32)result);
 		goto cant_get_primary_format;
 	}
-	if (verbose)
-		fprintf(stderr, "Primary buffer: %d Hz, %d bits, %d channels\n",
+	verbose_printf("DirectSound: Primary buffer: %d Hz, %d bits, %d channels\n",
 				(int)primary_format.nSamplesPerSec, (int)primary_format.wBitsPerSample, (int)primary_format.nChannels);
 
 	// create a buffer desc for the stream buffer

@@ -51,5 +51,21 @@ void mame_debug_hook(void);
 /* call this to break into the debugger as soon as possible */
 void mame_debug_break(void);
 
+/* call this to determine if the debugger is currently active (broken) */
+int mame_debug_is_active(void);
+
+
+
+/***************************************************************************
+    STUBS
+***************************************************************************/
+
+#ifndef MAME_DEBUG
+#define mame_debug_init() do { } while (0)
+#define mame_debug_hook() do { } while (0)
+#define mame_debug_break() do { } while (0)
+#define mame_debug_is_active() FALSE
+#endif
+
 
 #endif	/* __DEBUGGER_H__ */

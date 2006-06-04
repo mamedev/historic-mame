@@ -34,7 +34,7 @@
 #endif
 
 // MAMEOS headers
-#include "blit.h"
+#include "winmain.h"
 #include "video.h"
 #include "window.h"
 #include "input.h"
@@ -52,9 +52,6 @@
 //============================================================
 //  IMPORTS
 //============================================================
-
-// from input.c
-extern int verbose;
 
 // from sound.c
 extern void sound_update_refresh_rate(float newrate);
@@ -217,7 +214,8 @@ const options_entry video_opts[] =
 
 	// directx options
 	{ NULL,                       NULL,   OPTION_HEADER,  "DIRECTX VIDEO OPTIONS" },
-	{ "direct3d;d3d",             "1",    OPTION_BOOLEAN, "enable using Direct3D for video rendering (preferred)" },
+	{ "direct3d;d3d",             "1",    OPTION_BOOLEAN, "enable using Direct3D 9 for video rendering if available (preferred)" },
+	{ "d3dversion",               "9",    0,              "specify the preferred Direct3D version (8 or 9)" },
 	{ "waitvsync",                "0",    OPTION_BOOLEAN, "enable waiting for the start of VBLANK before flipping screens; reduces tearing effects" },
 	{ "syncrefresh",              "0",    OPTION_BOOLEAN, "enable using the start of VBLANK for throttling instead of the game time" },
 	{ "triplebuffer;tb",          "0",    OPTION_BOOLEAN, "enable triple buffering" },
@@ -587,11 +585,10 @@ static void init_monitors(void)
 	EnumDisplayMonitors(NULL, NULL, monitor_enum_callback, (LPARAM)&tailptr);
 
 	// if we're verbose, print the list of monitors
-	if (verbose)
 	{
 		win_monitor_info *monitor;
 		for (monitor = win_monitor_list; monitor != NULL; monitor = monitor->next)
-			printf("Monitor %p = \"%s\" %s\n", monitor->handle, monitor->info.szDevice, (monitor == primary_monitor) ? "(primary)" : "");
+			verbose_printf("Video: Monitor %p = \"%s\" %s\n", monitor->handle, monitor->info.szDevice, (monitor == primary_monitor) ? "(primary)" : "");
 	}
 }
 
@@ -949,17 +946,17 @@ static void extract_video_config(void)
 	int itemp;
 
 	// performance options: extract the data
-	video_config.autoframeskip = options_get_bool  ("autoframeskip", TRUE);
-	video_config.frameskip     = options_get_int   ("frameskip", TRUE);
-	video_config.throttle      = options_get_bool  ("throttle", TRUE);
-	video_config.sleep         = options_get_bool  ("sleep", TRUE);
+	video_config.autoframeskip = options_get_bool ("autoframeskip", TRUE);
+	video_config.frameskip     = options_get_int  ("frameskip", TRUE);
+	video_config.throttle      = options_get_bool ("throttle", TRUE);
+	video_config.sleep         = options_get_bool ("sleep", TRUE);
 
 	// misc options: extract the data
-	video_config.framestorun   = options_get_int   ("frames_to_run", TRUE);
+	video_config.framestorun   = options_get_int  ("frames_to_run", TRUE);
 
 	// global options: extract the data
-	video_config.windowed      = options_get_bool  ("window", TRUE);
-	video_config.numscreens    = options_get_int   ("numscreens", TRUE);
+	video_config.windowed      = options_get_bool ("window", TRUE);
+	video_config.numscreens    = options_get_int  ("numscreens", TRUE);
 
 	// per-window options: extract the data
 	get_resolution("resolution0", &video_config.window[0], TRUE);
@@ -968,13 +965,13 @@ static void extract_video_config(void)
 	get_resolution("resolution3", &video_config.window[3], TRUE);
 
 	// d3d options: extract the data
-	video_config.d3d           = options_get_bool  ("direct3d", TRUE);
-	video_config.waitvsync     = options_get_bool  ("waitvsync", TRUE);
-	video_config.syncrefresh   = options_get_bool  ("syncrefresh", TRUE);
-	video_config.triplebuf     = options_get_bool  ("triplebuffer", TRUE);
-	video_config.switchres     = options_get_bool  ("switchres", TRUE);
-	video_config.filter        = options_get_bool  ("filter", TRUE);
-	video_config.gamma         = options_get_float ("full_screen_gamma", TRUE);
+	video_config.d3d           = options_get_bool ("direct3d", TRUE);
+	video_config.waitvsync     = options_get_bool ("waitvsync", TRUE);
+	video_config.syncrefresh   = options_get_bool ("syncrefresh", TRUE);
+	video_config.triplebuf     = options_get_bool ("triplebuffer", TRUE);
+	video_config.switchres     = options_get_bool ("switchres", TRUE);
+	video_config.filter        = options_get_bool ("filter", TRUE);
+	video_config.gamma         = options_get_float("full_screen_gamma", TRUE);
 
 	// performance options: sanity check values
 	if (video_config.frameskip < 0 || video_config.frameskip > FRAMESKIP_LEVELS)
@@ -1001,6 +998,12 @@ static void extract_video_config(void)
 	// per-window options: sanity check values
 
 	// d3d options: sanity check values
+	itemp = options_get_int("d3dversion", TRUE);
+	if (itemp < 8 || itemp > 9)
+	{
+		fprintf(stderr, "Invalid d3dversion value %d; reverting to 9\n", itemp);
+		options_set_int("d3dversion", 9);
+	}
 	if (video_config.gamma < 0.0 || video_config.gamma > 4.0)
 	{
 		fprintf(stderr, "Invalid full_screen_gamma value %f; reverting to 1.0\n", video_config.gamma);

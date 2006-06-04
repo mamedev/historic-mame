@@ -24,6 +24,7 @@
 #include "profiler.h"
 #include "windold.h"
 #include "videoold.h"
+#include "winmain.h"
 #include "blit.h"
 
 
@@ -31,9 +32,6 @@
 //============================================================
 //  IMPORTS
 //============================================================
-
-// from input.c
-extern int verbose;
 
 // from video.c
 extern GUID *screen_guid_ptr;
@@ -310,8 +308,8 @@ int win_ddraw_init(int width, int height, int depth, int attributes, const win_e
 	// determine if hardware stretching is available
 	if (win_dd_hw_stretch)
 		win_dd_hw_stretch = ((ddraw_caps.dwCaps & DDCAPS_BLTSTRETCH) != 0);
-	if (win_dd_hw_stretch && verbose)
-		fprintf(stderr, "Hardware stretching supported\n");
+	if (win_dd_hw_stretch)
+		verbose_printf("Hardware stretching supported\n");
 
 	// set the cooperative level
 	// for non-window modes, we will use full screen here
@@ -579,12 +577,11 @@ static int set_resolution(void)
 			goto cant_enumerate_modes;
 		}
 
-		if (verbose)
 		{
 			if (best_refresh)
-				fprintf(stderr, "Best mode = %dx%dx%d @ %d Hz\n", best_width, best_height, best_depth, best_refresh);
+				verbose_printf("Best mode = %dx%dx%d @ %d Hz\n", best_width, best_height, best_depth, best_refresh);
 			else
-				fprintf(stderr, "Best mode = %dx%dx%d @ default Hz\n", best_width, best_height, best_depth);
+				verbose_printf("Best mode = %dx%dx%d @ default Hz\n", best_width, best_height, best_depth);
 		}
 
 		// set it
@@ -652,8 +649,7 @@ static int create_surfaces(void)
 	result = IDirectDraw_CreateSurface(ddraw, &primary_desc, &primary_surface, NULL);
 	if (result != DD_OK)
 	{
-		if (verbose)
-			fprintf(stderr, "Error creating primary surface: %08x\n", (UINT32)result);
+		verbose_printf("Error creating primary surface: %08x\n", (UINT32)result);
 		goto cant_create_primary;
 	}
 
@@ -673,8 +669,7 @@ static int create_surfaces(void)
 		set_gamma();
 
 	// print out the good stuff
-	if (verbose)
-		fprintf(stderr, "Primary surface created: %dx%dx%d (R=%08x G=%08x B=%08x)\n",
+	verbose_printf("Primary surface created: %dx%dx%d (R=%08x G=%08x B=%08x)\n",
 				(int)primary_desc.dwWidth,
 				(int)primary_desc.dwHeight,
 				(int)primary_desc.ddpfPixelFormat.DUMMYUNIONNAMEN(1).dwRGBBitCount,
@@ -794,8 +789,7 @@ static int create_blit_surface(void)
 	}
 	if (result != DD_OK)
 	{
-		if (verbose)
-			fprintf(stderr, "Error creating blit surface: %08x\n", (UINT32)result);
+		verbose_printf("Error creating blit surface: %08x\n", (UINT32)result);
 		goto cant_create_blit;
 	}
 
@@ -811,8 +805,7 @@ static int create_blit_surface(void)
 	compute_color_masks(&blit_desc);
 
 	// print out the good stuff
-	if (verbose)
-		fprintf(stderr, "Blit surface created: %dx%dx%d (R=%08x G=%08x B=%08x)\n",
+	verbose_printf("Blit surface created: %dx%dx%d (R=%08x G=%08x B=%08x)\n",
 				(int)blit_desc.dwWidth,
 				(int)blit_desc.dwHeight,
 				(int)blit_desc.ddpfPixelFormat.DUMMYUNIONNAMEN(1).dwRGBBitCount,
@@ -844,8 +837,7 @@ static void set_gamma(void)
 	result = IDirectDrawSurface_QueryInterface(primary_surface, &IID_IDirectDrawGammaControl, (void **)&gamma_control);
 	if (result != DD_OK)
 	{
-		if (verbose)
-			fprintf(stderr, "Warning: could not create gamma control to change brightness: %08x\n", (UINT32)result);
+		verbose_printf("Warning: could not create gamma control to change brightness: %08x\n", (UINT32)result);
 		gamma_control = NULL;
 	}
 
@@ -1137,8 +1129,7 @@ tryagain:
 		return 1;
 	if (result != DD_OK)
 	{
-		if (verbose)
-			fprintf(stderr, "Unable to lock blit_surface: %08x\n", (UINT32)result);
+		verbose_printf("Unable to lock blit_surface: %08x\n", (UINT32)result);
 		return 0;
 	}
 
@@ -1242,8 +1233,7 @@ tryagain:
 	return 1;
 
 surface_lost:
-	if (verbose)
-		fprintf(stderr, "Recreating surfaces\n");
+	verbose_printf("Recreating surfaces\n");
 
 	// go ahead and adjust the window
 	win_adjust_window();
@@ -1284,8 +1274,7 @@ tryagain:
 	if (result != DD_OK && result != DDERR_WASSTILLDRAWING)
 	{
 		// otherwise, print the error and fall back
-		if (verbose)
-			fprintf(stderr, "Unable to blt blit_surface: %08x\n", (UINT32)result);
+		verbose_printf("Unable to blt blit_surface: %08x\n", (UINT32)result);
 		return 0;
 	}
 
@@ -1320,8 +1309,7 @@ tryagain:
 	return 1;
 
 surface_lost:
-	if (verbose)
-		fprintf(stderr, "Recreating surfaces\n");
+	verbose_printf("Recreating surfaces\n");
 
 	// go ahead and adjust the window
 	win_adjust_window();
@@ -1419,8 +1407,7 @@ tryagain:
 		return 1;
 	if (result != DD_OK)
 	{
-		if (verbose)
-			fprintf(stderr, "Unable to lock target_surface: %08x\n", (UINT32)result);
+		verbose_printf("Unable to lock target_surface: %08x\n", (UINT32)result);
 		return 0;
 	}
 
@@ -1505,8 +1492,7 @@ tryagain:
 	return 1;
 
 surface_lost:
-	if (verbose)
-		fprintf(stderr, "Recreating surfaces\n");
+	verbose_printf("Recreating surfaces\n");
 
 	// go ahead and adjust the window
 	win_adjust_window();

@@ -13,6 +13,7 @@
 #include "driver.h"
 #include "profiler.h"
 #include "png.h"
+#include "debugger.h"
 #include "vidhrdw/vector.h"
 
 #ifdef NEW_RENDER
@@ -29,6 +30,8 @@
 /***************************************************************************
     CONSTANTS
 ***************************************************************************/
+
+#define LOG_PARTIAL_UPDATES(x)		/* logerror x */
 
 #define FRAMES_PER_FPS_UPDATE		12
 
@@ -66,6 +69,7 @@ static UINT8 full_refresh_pending;
 
 /* video updating */
 static int last_partial_scanline[MAX_SCREENS];
+static mame_timer *partial_update_timer;
 
 /* speed computation */
 static cycles_t last_fps_time;
@@ -100,6 +104,7 @@ static artwork_callbacks mame_artwork_callbacks =
 
 static void video_pause(int pause);
 static void video_exit(void);
+static void partial_update_reset(int param);
 static int allocate_graphics(const gfx_decode *gfxdecodeinfo);
 static void decode_graphics(const gfx_decode *gfxdecodeinfo);
 static void scale_vectorgames(int gfx_width, int gfx_height, int *width, int *height);
@@ -282,6 +287,10 @@ int video_init(void)
 	/* reset video statics and get out of here */
 	pdrawgfx_shadow_lowpri = 0;
 	leds_status = 0;
+
+	/* create a timer for partial updates */
+	partial_update_timer = timer_alloc(partial_update_reset);
+	timer_adjust(partial_update_timer, TIME_NOW, 0, 0);
 
 	/* initialize tilemaps */
 	if (tilemap_init() != 0)
@@ -477,6 +486,7 @@ static void decode_graphics(const gfx_decode *gfxdecodeinfo)
 }
 
 
+#ifndef NEW_RENDER
 /*-------------------------------------------------
     scale_vectorgames - scale the vector games
     to a given resolution
@@ -501,6 +511,7 @@ static void scale_vectorgames(int gfx_width, int gfx_height, int *width, int *he
 	*width  &= ~3;
 	*height &= ~3;
 }
+#endif
 
 
 /*-------------------------------------------------
@@ -677,27 +688,33 @@ void force_partial_update(int scrnum, int scanline)
 {
 	rectangle clip = Machine->visible_area[scrnum];
 
+	LOG_PARTIAL_UPDATES(("Partial: force_partial_update(%d,%d): ", scrnum, scanline));
+
 	/* if skipping this frame, bail */
 #ifndef NEW_RENDER
 	if (osd_skip_this_frame())
 #else
 	if (skipping_this_frame)
 #endif
+	{
+		LOG_PARTIAL_UPDATES(("skipped due to frameskipping\n"));
 		return;
-
-	/* special case: if the last entry was 0 and we get an update for an area */
-	/* beyond the bottom of the screen, ignore it */
-	if (last_partial_scanline[scrnum] == 0 && scanline > clip.max_y)
-		return;
+	}
 
 	/* skip if less than the lowest so far */
 	if (scanline < last_partial_scanline[scrnum])
+	{
+		LOG_PARTIAL_UPDATES(("skipped because less than previous\n"));
 		return;
+	}
 
 #ifdef NEW_RENDER
 	/* skip if this screen is not visible anywhere */
 	if (!(render_get_live_screens_mask() & (1 << scrnum)))
+	{
+		LOG_PARTIAL_UPDATES(("skipped because screen not live\n"));
 		return;
+	}
 #endif
 
 #ifndef NEW_RENDER
@@ -719,6 +736,7 @@ void force_partial_update(int scrnum, int scanline)
 	if (clip.min_y <= clip.max_y)
 	{
 		profiler_mark(PROFILER_VIDEO);
+		LOG_PARTIAL_UPDATES(("updating %d-%d\n", clip.min_y, clip.max_y));
 		(*Machine->drv->video_update)(scrnum, scrbitmap[scrnum][curbitmap], &clip);
 		performance.partial_updates_this_frame++;
 		profiler_mark(PROFILER_END);
@@ -726,6 +744,22 @@ void force_partial_update(int scrnum, int scanline)
 
 	/* remember where we left off */
 	last_partial_scanline[scrnum] = scanline + 1;
+}
+
+
+/*-------------------------------------------------
+    partial_update_reset - reset partial updates
+    at the start of each frame
+-------------------------------------------------*/
+
+static void partial_update_reset(int param)
+{
+	/* reset partial updates */
+	LOG_PARTIAL_UPDATES(("Partial: reset to 0\n"));
+	memset(last_partial_scanline, 0, sizeof(last_partial_scanline));
+	performance.partial_updates_this_frame = 0;
+
+	timer_adjust(partial_update_timer, cpu_getscanlinetime(0), 0, 0);
 }
 
 
@@ -938,9 +972,9 @@ void video_frame_update(void)
 			profiler_mark(PROFILER_END);
 		}
 
-		/* reset partial updates */
-		memset(last_partial_scanline, 0, sizeof(last_partial_scanline));
-		performance.partial_updates_this_frame = 0;
+		/* reset partial updates if we're paused or if the debugger is active */
+		if (paused || mame_debug_is_active())
+			partial_update_reset(0);
 	}
 }
 

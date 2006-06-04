@@ -123,7 +123,6 @@ OSOBJS = \
 	$(OBJ)/$(MAMEOS)/fileio.o \
 	$(OBJ)/$(MAMEOS)/fronthlp.o \
 	$(OBJ)/$(MAMEOS)/input.o \
-	$(OBJ)/$(MAMEOS)/misc.o \
 	$(OBJ)/$(MAMEOS)/sound.o \
 	$(OBJ)/$(MAMEOS)/ticker.o \
 	$(OBJ)/$(MAMEOS)/winmain.o \
@@ -141,6 +140,8 @@ OSOBJS += \
 	$(OBJ)/$(MAMEOS)/rendsoft.o \
 	$(OBJ)/$(MAMEOS)/video.o \
 	$(OBJ)/$(MAMEOS)/window.o \
+	$(OBJ)/$(MAMEOS)/d3d8intf.o \
+	$(OBJ)/$(MAMEOS)/d3d9intf.o \
 	$(OBJ)/$(MAMEOS)/drawd3d.o \
 	$(OBJ)/$(MAMEOS)/drawgdi.o
 

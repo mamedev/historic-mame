@@ -12,6 +12,7 @@
     Things that are still broken:
         * no way to view tilemaps/charsets
         * invaders doesn't compute minimum size correctly (lines are missing)
+        * LEDs missing
 
     OSD-specific things that are busted:
         * need to respect options for:
@@ -486,6 +487,17 @@ static const layout_generator builtin_layout_generator[] =
 /***************************************************************************
     INLINE FUNCTIONS
 ***************************************************************************/
+
+/*-------------------------------------------------
+    round_nearest - floating point
+    round-to-nearest
+-------------------------------------------------*/
+
+INLINE float round_nearest(float f)
+{
+	return floor(f + 0.5f);
+}
+
 
 /*-------------------------------------------------
     copy_string - make a copy of a string
@@ -1107,9 +1119,9 @@ void render_target_compute_visible_area(render_target *target, INT32 target_widt
 
 	/* set the final width/height */
 	if (visible_width != NULL)
-		*visible_width = ceil(width * scale);
+		*visible_width = round_nearest(width * scale);
 	if (visible_height != NULL)
-		*visible_height = ceil(height * scale);
+		*visible_height = round_nearest(height * scale);
 }
 
 
@@ -1176,9 +1188,9 @@ void render_target_get_minimum_size(render_target *target, INT32 *minwidth, INT3
 
 	/* round up */
 	if (minwidth != NULL)
-		*minwidth = ceil(maxxscale);
+		*minwidth = round_nearest(maxxscale);
 	if (minheight != NULL)
-		*minheight = ceil(maxyscale);
+		*minheight = round_nearest(maxyscale);
 }
 
 
@@ -1307,10 +1319,10 @@ static void add_container_primitives(render_target *target, const object_transfo
 
 	/* add a clip push primitive */
 	prim = alloc_render_primitive(RENDER_PRIMITIVE_CLIP_PUSH);
-	prim->bounds.x0 = floor(xform->xoffs + 0.5f);
-	prim->bounds.y0 = floor(xform->yoffs + 0.5f);
-	prim->bounds.x1 = prim->bounds.x0 + ceil(xform->xscale);
-	prim->bounds.y1 = prim->bounds.y0 + ceil(xform->yscale);
+	prim->bounds.x0 = round_nearest(xform->xoffs);
+	prim->bounds.y0 = round_nearest(xform->yoffs);
+	prim->bounds.x1 = prim->bounds.x0 + round_nearest(xform->xscale);
+	prim->bounds.y1 = prim->bounds.y0 + round_nearest(xform->yscale);
 	append_render_primitive(target, prim);
 
 	/* iterate over elements */
@@ -1324,10 +1336,10 @@ static void add_container_primitives(render_target *target, const object_transfo
 
 		/* allocate the primitive */
 		prim = alloc_render_primitive(0);
-		prim->bounds.x0 = floor(xform->xoffs + bounds.x0 * xform->xscale + 0.5f);
-		prim->bounds.y0 = floor(xform->yoffs + bounds.y0 * xform->yscale + 0.5f);
-		prim->bounds.x1 = prim->bounds.x0 + floor((bounds.x1 - bounds.x0) * xform->xscale + 0.5f);
-		prim->bounds.y1 = prim->bounds.y0 + floor((bounds.y1 - bounds.y0) * xform->yscale + 0.5f);
+		prim->bounds.x0 = round_nearest(xform->xoffs + bounds.x0 * xform->xscale);
+		prim->bounds.y0 = round_nearest(xform->yoffs + bounds.y0 * xform->yscale);
+		prim->bounds.x1 = prim->bounds.x0 + round_nearest((bounds.x1 - bounds.x0) * xform->xscale);
+		prim->bounds.y1 = prim->bounds.y0 + round_nearest((bounds.y1 - bounds.y0) * xform->yscale);
 		prim->color.r = xform->color.r * item->color.r;
 		prim->color.g = xform->color.g * item->color.g;
 		prim->color.b = xform->color.b * item->color.b;
@@ -1396,8 +1408,8 @@ static void add_container_primitives(render_target *target, const object_transfo
 
 static void add_element_primitives(render_target *target, const object_transform *xform, const layout_element *element, int state, int blendmode)
 {
-	INT32 width = ceil(xform->xscale);
-	INT32 height = ceil(xform->yscale);
+	INT32 width = round_nearest(xform->xscale);
+	INT32 height = round_nearest(xform->yscale);
 	render_texture *texture;
 	render_primitive *prim;
 
@@ -1412,7 +1424,7 @@ static void add_element_primitives(render_target *target, const object_transform
 
 	/* now add the primitive */
 	prim = alloc_render_primitive(RENDER_PRIMITIVE_QUAD);
-	set_bounds_wh(&prim->bounds, floor(xform->xoffs + 0.5f), floor(xform->yoffs + 0.5f), width, height);
+	set_bounds_wh(&prim->bounds, round_nearest(xform->xoffs), round_nearest(xform->yoffs), width, height);
 	prim->color = xform->color;
 	prim->flags = PRIMFLAG_TEXORIENT(xform->orientation) | PRIMFLAG_BLENDMODE(blendmode) | PRIMFLAG_TEXFORMAT(texture->format);
 	render_texture_get_scaled(texture, (xform->orientation & ORIENTATION_SWAP_XY) ? height : width, (xform->orientation & ORIENTATION_SWAP_XY) ? width : height, &prim->texture);
@@ -2277,7 +2289,7 @@ int render_clip_quad(render_bounds *bounds, const render_bounds *clip, float *u,
             |        |
             |        |
             +--------+
-          u3,v3    u2,v2
+          u2,v2    u3,v3
     */
 
 	/* ensure our assumptions about the bounds are correct */
@@ -2301,10 +2313,10 @@ int render_clip_quad(render_bounds *bounds, const render_bounds *clip, float *u,
 		bounds->y0 = clip->y0;
 		if (u != NULL && v != NULL)
 		{
-			u[0] += (u[3] - u[0]) * frac;
-			v[0] += (v[3] - v[0]) * frac;
-			u[1] += (u[2] - u[1]) * frac;
-			v[1] += (v[2] - v[1]) * frac;
+			u[0] += (u[2] - u[0]) * frac;
+			v[0] += (v[2] - v[0]) * frac;
+			u[1] += (u[3] - u[1]) * frac;
+			v[1] += (v[3] - v[1]) * frac;
 		}
 	}
 
@@ -2315,10 +2327,10 @@ int render_clip_quad(render_bounds *bounds, const render_bounds *clip, float *u,
 		bounds->y1 = clip->y1;
 		if (u != NULL && v != NULL)
 		{
-			u[3] -= (u[3] - u[0]) * frac;
-			v[3] -= (v[3] - v[0]) * frac;
-			u[2] -= (u[2] - u[1]) * frac;
-			v[2] -= (v[2] - v[1]) * frac;
+			u[3] -= (u[2] - u[0]) * frac;
+			v[3] -= (v[2] - v[0]) * frac;
+			u[2] -= (u[3] - u[1]) * frac;
+			v[2] -= (v[3] - v[1]) * frac;
 		}
 	}
 
@@ -2331,8 +2343,8 @@ int render_clip_quad(render_bounds *bounds, const render_bounds *clip, float *u,
 		{
 			u[0] += (u[1] - u[0]) * frac;
 			v[0] += (v[1] - v[0]) * frac;
-			u[3] += (u[2] - u[3]) * frac;
-			v[3] += (v[2] - v[3]) * frac;
+			u[3] += (u[3] - u[2]) * frac;
+			v[3] += (v[3] - v[2]) * frac;
 		}
 	}
 
@@ -2345,8 +2357,8 @@ int render_clip_quad(render_bounds *bounds, const render_bounds *clip, float *u,
 		{
 			u[1] -= (u[1] - u[0]) * frac;
 			v[1] -= (v[1] - v[0]) * frac;
-			u[2] -= (u[2] - u[3]) * frac;
-			v[2] -= (v[2] - v[3]) * frac;
+			u[2] -= (u[3] - u[2]) * frac;
+			v[2] -= (v[3] - v[2]) * frac;
 		}
 	}
 	return FALSE;
@@ -2378,10 +2390,10 @@ static void layout_element_scale(mame_bitmap *dest, const mame_bitmap *source, c
 			rectangle bounds;
 
 			/* get the local scaled bounds */
-			bounds.min_x = (int)(float)ceil(component->bounds.x0 * dest->width);
-			bounds.min_y = (int)(float)ceil(component->bounds.y0 * dest->height);
-			bounds.max_x = (int)(float)ceil(component->bounds.x1 * dest->width);
-			bounds.max_y = (int)(float)ceil(component->bounds.y1 * dest->height);
+			bounds.min_x = round_nearest(component->bounds.x0 * dest->width);
+			bounds.min_y = round_nearest(component->bounds.y0 * dest->height);
+			bounds.max_x = round_nearest(component->bounds.x1 * dest->width);
+			bounds.max_y = round_nearest(component->bounds.y1 * dest->height);
 
 			/* based on the component type, add to the texture */
 			switch (component->type)
@@ -3491,11 +3503,11 @@ static const char *layout_make_standard(int screen, int numscreens)
 	for (ay = 1; ay < 1000; ay++)
 	{
 		float testax = ay * Machine->drv->screen[screen].aspect;
-		float intax = floor(testax + 0.5f);
+		float intax = round_nearest(testax);
 		if (fabs(testax - intax) < 0.001f)
 			break;
 	}
-	ax = floor(ay * Machine->drv->screen[screen].aspect + 0.5f);
+	ax = round_nearest(ay * Machine->drv->screen[screen].aspect);
 
 	/* swap X/Y here */
 	if (Machine->gamedrv->flags & ORIENTATION_SWAP_XY)

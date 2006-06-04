@@ -50,7 +50,7 @@ static UINT64 wpaddr;
 static int execution_state;
 static UINT32 execution_counter;
 static int next_index = 1;
-static int within_debugger_code = 0;
+static int within_debugger_code = FALSE;
 static int last_cpunum;
 static int last_stopped_cpunum;
 static int steps_until_stop;
@@ -129,6 +129,16 @@ void mame_debug_break(void)
 }
 
 
+/*-------------------------------------------------
+    mame_debug_is_active - true if the debugger
+    is currently live
+-------------------------------------------------*/
+
+int mame_debug_is_active(void)
+{
+	return within_debugger_code;
+}
+
 
 /***************************************************************************
     INITIALIZATION
@@ -147,7 +157,7 @@ void debug_cpu_init(void)
 	execution_state = EXECUTION_STATE_STOPPED;
 	execution_counter = 0;
 	next_index = 1;
-	within_debugger_code = 0;
+	within_debugger_code = FALSE;
 	last_cpunum = 0;
 	last_stopped_cpunum = 0;
 	steps_until_stop = 0;
@@ -691,7 +701,7 @@ void mame_debug_hook(void)
 		return;
 
 	/* note that we are in the debugger code */
-	within_debugger_code = 1;
+	within_debugger_code = TRUE;
 
 	/* bump the counter */
 	execution_counter++;
@@ -820,7 +830,7 @@ void mame_debug_hook(void)
 		prepare_for_step_overout();
 
 	/* no longer in debugger code */
-	within_debugger_code = 0;
+	within_debugger_code = FALSE;
 }
 
 
@@ -1262,7 +1272,7 @@ static void check_watchpoints(int cpunum, int spacenum, int type, offs_t address
 	if (within_debugger_code)
 		return;
 
-	within_debugger_code = 1;
+	within_debugger_code = TRUE;
 
 	/* if we are a write watchpoint, stash the value that will be written */
 	wpaddr = address;
@@ -1307,7 +1317,7 @@ static void check_watchpoints(int cpunum, int spacenum, int type, offs_t address
 				break;
 			}
 
-	within_debugger_code = 0;
+	within_debugger_code = FALSE;
 }
 
 

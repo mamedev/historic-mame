@@ -19,6 +19,7 @@
 
 // MAMEOS headers
 #include "blit.h"
+#include "winmain.h"
 #ifndef NEW_RENDER
 #include "videoold.h"
 #include "windold.h"
@@ -26,15 +27,6 @@
 #include "video.h"
 #include "window.h"
 #endif
-
-
-
-//============================================================
-//  IMPORTS
-//============================================================
-
-// from winmain.c
-extern int verbose;
 
 
 
@@ -162,17 +154,14 @@ void win_blit_init(void)
 		use_sse2 = (features & (1 << 26));
 	}
 
-	if (verbose)
-	{
-		if (use_sse2)
-			fprintf(stderr, "SSE2 supported\n");
-		else if (use_sse)
-			fprintf(stderr, "SSE supported\n");
-		else if (use_mmx)
-			fprintf(stderr, "MMX supported\n");
-		else
-			fprintf(stderr, "MMX not supported\n");
-	}
+	if (use_sse2)
+		verbose_printf("blit: SSE2 supported\n");
+	else if (use_sse)
+		verbose_printf("blit: SSE supported\n");
+	else if (use_mmx)
+		verbose_printf("blit: MMX supported\n");
+	else
+		verbose_printf("blit: MMX not supported\n");
 
 	add_exit_callback(win_blit_exit);
 }

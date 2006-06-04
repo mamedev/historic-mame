@@ -34,6 +34,7 @@
 
 // MAMEOS headers
 #include "blit.h"
+#include "winmain.h"
 #include "videoold.h"
 #include "windold.h"
 #include "options.h"
@@ -56,7 +57,6 @@
 // from input.c
 extern void wininput_poll(void);
 extern void win_pause_input(int pause);
-extern int verbose;
 
 // from sound.c
 extern void sound_update_refresh_rate(float newrate);
@@ -345,12 +345,9 @@ static BOOL CALLBACK monitor_enum_proc(HMONITOR monitor_enum, HDC dc, LPRECT rec
 		return FALSE;	// stop enumeration
 	}
 
-	if (verbose)
-	{
-		fprintf(stderr, "Enumerating display monitors... Found: %s %s\n",
+	verbose_printf("Video: Enumerating display monitors... Found: %s %s\n",
 				monitor_info.szDevice,
 				monitor_info.dwFlags & MONITORINFOF_PRIMARY ? "(primary)" : "");
-	}
 
 	// save the primary monitor handle
 	if (monitor_info.dwFlags & MONITORINFOF_PRIMARY)
@@ -566,11 +563,11 @@ int osd_create_display(const osd_create_params *params, UINT32 *rgb_components)
 
 		if (screen_name)
 			fprintf(stderr, "WARNING: Screen %s not found, using primary display monitor\n", screen_name);
-		else if (verbose)
-			fprintf(stderr, "Screen name not specified, using primary display monitor\n");
+		else
+			verbose_printf("Video: Screen name not specified, using primary display monitor\n");
 	}
-	else if (verbose)
-		fprintf(stderr, "Using %s as specified\n", screen_name);
+	else
+		verbose_printf("Video: Using %s as specified\n", screen_name);
 
 	// create the window
 	if (win_create_window(video_width, video_height, video_depth, video_attributes, aspect_ratio))

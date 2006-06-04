@@ -7,38 +7,21 @@
 //
 //============================================================
 
-/*
- * Configuration routines.
- *
- * 20010424 BW uses Hans de Goede's rc subsystem
- * last changed 20010727 BW
- *
- * TODO:
- * - make errorlog a ringbuffer
- *
- * Suggestions
- * - norotate? funny, leads to option -nonorotate ...
- *   fix when rotation options take turnable LCD's in account
- * - win_switch_bpp --> switch_bpp, swbpp
- * - give up distinction between vector_width and win_gfx_width
- *   eventually introduce options.width, options.height
- * - new core options:
- *   gamma (is already osd_)
- *   sound (enable/disable sound)
- *   volume
-  * - get rid of #ifdef MESS's by providing appropriate hooks
- */
-
+// standard windows headers
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
+// standard C headers
 #include <stdarg.h>
 #include <ctype.h>
 #include <time.h>
+
+// MAME headers
 #include "osdepend.h"
 #include "driver.h"
+#include "options.h"
 
-#include "misc.h"
+#include "winmain.h"
 #ifndef NEW_RENDER
 #include "videoold.h"
 #else
@@ -51,8 +34,11 @@
 #include "debug/debugcon.h"
 #endif
 
-#include "options.h"
 
+
+//============================================================
+//  EXTERNALS
+//============================================================
 
 int frontend_listxml(FILE *output);
 int frontend_listfull(FILE *output);
@@ -66,6 +52,10 @@ int frontend_verifysamples(FILE *output);
 int frontend_romident(FILE *output);
 int frontend_isknown(FILE *output);
 
+#ifdef MESS
+int frontend_listdevices(FILE *output);
+#endif /* MESS */
+
 void set_pathlist(int file_type, const char *new_rawpath);
 
 extern const options_entry fileio_opts[];
@@ -75,36 +65,48 @@ extern const options_entry input_opts[];
 extern const options_entry mess_opts[];
 #endif
 
-#ifdef MESS
-#include "configms.h"
-#endif
+
+
+//============================================================
+//  GLOBALS
+//============================================================
 
 int win_erroroslog;
 
-/* fix me - need to have the core call osd_set_mastervolume with this value */
-/* instead of relying on the name of an osd variable */
+// fix me - need to have the core call osd_set_mastervolume with this value
+// instead of relying on the name of an osd variable
 extern int attenuation;
 extern int audio_latency;
 extern const char *wavwrite;
-extern int verbose;
 
-static char *gamename;
-static char *gamepath;
 
-char *rompath_extra;
 
-static char *win_basename(char *filename);
-static char *win_dirname(char *filename);
-static char *win_strip_extension(char *filename);
+//============================================================
+//  PROTOTYPES
+//============================================================
 
+static void extract_options(const game_driver *driver, machine_config *drv);
+static void parse_ini_file(const char *name);
+static void execute_simple_commands(void);
+static void execute_commands(const char *argv0);
+static void display_help(void);
+static void extract_options(const game_driver *driver, machine_config *drv);
+static void setup_playback(const char *filename, const game_driver *driver);
+static void setup_record(const char *filename, const game_driver *driver);
+static char *extract_base_name(const char *name, char *dest, int destsize);
+static char *extract_path(const char *name, char *dest, int destsize);
 
 #ifndef NEW_RENDER
 static void set_old_video_options(const game_driver *driver);
 #endif
 
-static void extract_options(const game_driver *driver, machine_config *drv);
 
-/* struct definitions */
+
+//============================================================
+//  OPTIONS
+//============================================================
+
+// struct definitions
 static const options_entry config_opts[] =
 {
 	{ "",                         NULL,   0,                 NULL },
@@ -212,115 +214,15 @@ static const options_entry config_opts[] =
 };
 
 
-/*
- * Penalty string compare, the result _should_ be a measure on
- * how "close" two strings ressemble each other.
- * The implementation is way too simple, but it sort of suits the
- * purpose.
- * This used to be called fuzzy matching, but there's no randomness
- * involved and it is in fact a penalty method.
- */
-
-int penalty_compare (const char *s, const char *l)
-{
-	int gaps = 0;
-	int match = 0;
-	int last = 1;
-
-	for (; *s && *l; l++)
-	{
-		if (*s == *l)
-			match = 1;
-		else if (*s >= 'a' && *s <= 'z' && (*s - 'a') == (*l - 'A'))
-			match = 1;
-		else if (*s >= 'A' && *s <= 'Z' && (*s - 'A') == (*l - 'a'))
-			match = 1;
-		else
-			match = 0;
-
-		if (match)
-			s++;
-
-		if (match != last)
-		{
-			last = match;
-			if (!match)
-				gaps++;
-		}
-	}
-
-	/* penalty if short string does not completely fit in */
-	for (; *s; s++)
-		gaps++;
-
-	return gaps;
-}
-
-/*
- * We compare the game name given on the CLI against the long and
- * the short game names supported
- */
-void show_approx_matches(void)
-{
-	struct { int penalty; int index; } topten[10];
-	int i,j;
-	int penalty; /* best fuzz factor so far */
-
-	for (i = 0; i < 10; i++)
-	{
-		topten[i].penalty = 9999;
-		topten[i].index = -1;
-	}
-
-	for (i = 0; (drivers[i] != 0); i++)
-	{
-		int tmp;
-
-		if ((drivers[i]->flags & NOT_A_DRIVER) != 0)
-			continue;
-
-		penalty = penalty_compare (gamename, drivers[i]->description);
-		tmp = penalty_compare (gamename, drivers[i]->name);
-		if (tmp < penalty) penalty = tmp;
-
-		/* eventually insert into table of approximate matches */
-		for (j = 0; j < 10; j++)
-		{
-			if (penalty >= topten[j].penalty) break;
-			if (j > 0)
-			{
-				topten[j-1].penalty = topten[j].penalty;
-				topten[j-1].index = topten[j].index;
-			}
-			topten[j].index = i;
-			topten[j].penalty = penalty;
-		}
-	}
-
-	for (i = 9; i >= 0; i--)
-	{
-		if (topten[i].index != -1)
-			fprintf (stderr, "%-10s%s\n", drivers[topten[i].index]->name, drivers[topten[i].index]->description);
-	}
-}
-
-
-static void display_help(void)
-{
-#ifndef MESS
-	printf("M.A.M.E. v%s - Multiple Arcade Machine Emulator\n"
-		   "Copyright (C) 1997-2006 by Nicola Salmoria and the MAME Team\n\n",build_version);
-	printf("%s\n", mame_disclaimer);
-	printf("Usage:  MAME gamename [options]\n\n"
-		   "        MAME -showusage    for a brief list of options\n"
-		   "        MAME -showconfig   for a list of configuration options\n"
-		   "        MAME -createconfig to create a mame.ini\n\n"
-		   "For usage instructions, please consult the file windows.txt\n");
-#else
-	showmessinfo();
+#ifdef MESS
+#include "configms.h"
 #endif
-}
 
+
+
+//============================================================
+//  INLINES
+//============================================================
 
 INLINE int is_directory_separator(char c)
 {
@@ -328,36 +230,184 @@ INLINE int is_directory_separator(char c)
 }
 
 
-static char *extract_base_name(const char *name, char *dest, int destsize)
+
+//============================================================
+//  cli_frontend_init
+//============================================================
+
+int cli_frontend_init(int argc, char **argv)
 {
-	const char *start;
-	int i;
+	const char *gamename;
+	machine_config drv;
+	char basename[20];
+	char buffer[512];
+	int drvnum = -1;
 
-	/* extract the base of the name */
-	start = name + strlen(name);
-	while (start > name && !is_directory_separator(start[-1]))
-		start--;
+	// initialize the options manager
+	options_free_entries();
+	options_add_entries(fileio_opts);
+	options_add_entries(config_opts);
+	options_add_entries(input_opts);
+	options_add_entries(video_opts);
+#ifdef MESS
+	options_add_entries(mess_opts);
+#endif // MESS
 
-	/* copy in the base name */
-	for (i = 0; i < destsize; i++)
+	// parse the command line first; if we fail here, we're screwed
+	if (options_parse_command_line(argc, argv))
+		exit(1);
+
+	// parse the simple commmands before we go any further
+	execute_simple_commands();
+
+	// find out what game we might be referring to
+	gamename = options_get_string("", FALSE);
+	if (gamename != NULL)
+		drvnum = driver_get_index(extract_base_name(gamename, basename, ARRAY_LENGTH(basename)));
+
+	// now parse the core set of INI files
+	parse_ini_file(CONFIGNAME ".ini");
+	parse_ini_file(extract_base_name(argv[0], buffer, ARRAY_LENGTH(buffer)));
+#ifdef MAME_DEBUG
+	parse_ini_file("debug.ini");
+#endif
+
+	// if we have a valid game driver, parse game-specific INI files
+	if (drvnum != -1)
 	{
-		if (start[i] == 0 || start[i] == '.')
-			break;
-		else
-			dest[i] = start[i];
+		const game_driver *driver = drivers[drvnum];
+		const game_driver *parent = driver_get_clone(driver);
+		const game_driver *gparent = (parent != NULL) ? driver_get_clone(parent) : NULL;
+
+		// expand the machine driver to look at the info
+		expand_machine_driver(driver->drv, &drv);
+
+		// parse vector.ini for vector games
+		if (drv.video_attributes & VIDEO_TYPE_VECTOR)
+			parse_ini_file("vector.ini");
+
+		// then parse sourcefile.ini
+		parse_ini_file(extract_base_name(driver->source_file, buffer, ARRAY_LENGTH(buffer)));
+
+		// then parent the grandparent, parent, and game-specific INIs
+		if (gparent != NULL)
+			parse_ini_file(gparent->name);
+		if (parent != NULL)
+			parse_ini_file(parent->name);
+		parse_ini_file(driver->name);
 	}
 
-	/* NULL terminate */
-	if (i < destsize)
-		dest[i] = 0;
-	else
-		dest[destsize - 1] = 0;
+	// reparse the command line to ensure its options override all
+	options_parse_command_line(argc, argv);
 
-	return dest;
+	// execute any commands specified
+	execute_commands(argv[0]);
+
+	// if no driver specified, display help
+	if (gamename == NULL)
+	{
+		display_help();
+		exit(1);
+	}
+
+	// if we don't have a valid driver selected, offer some suggestions
+	if (drvnum == -1)
+	{
+		int matches[10];
+		fprintf(stderr, "\n\"%s\" approximately matches the following\n"
+				"supported " GAMESNOUN " (best match first):\n\n", basename);
+		driver_get_approx_matches(basename, ARRAY_LENGTH(matches), matches);
+		for (drvnum = 0; drvnum < ARRAY_LENGTH(matches); drvnum++)
+			if (matches[drvnum] != -1)
+				fprintf(stderr, "%-10s%s\n", drivers[matches[drvnum]]->name, drivers[matches[drvnum]]->description);
+		exit(1);
+	}
+
+	// extract the directory name
+	extract_path(gamename, buffer, ARRAY_LENGTH(buffer));
+	if (buffer[0] != 0)
+	{
+		// okay, we got one; prepend it to the rompath
+		const char *rompath = options_get_string("rompath", FALSE);
+		if (rompath == NULL)
+			options_set_string("rompath", buffer);
+		else
+		{
+			char *newpath = malloc_or_die(strlen(rompath) + strlen(buffer) + 2);
+			sprintf(newpath, "%s;%s", buffer, rompath);
+			options_set_string("rompath", newpath);
+			free(newpath);
+		}
+	}
+
+	// extract options information
+	extract_options(drivers[drvnum], &drv);
+	return drvnum;
 }
 
 
-static void execute_minimal_commands(void)
+
+//============================================================
+//  cli_frontend_exit
+//============================================================
+
+void cli_frontend_exit(void)
+{
+	// close open files
+	if (options.logfile != NULL)
+		mame_fclose(options.logfile);
+	options.logfile = NULL;
+
+	if (options.playback != NULL)
+		mame_fclose(options.playback);
+	options.playback = NULL;
+
+	if (options.record != NULL)
+		mame_fclose(options.record);
+	options.record = NULL;
+
+	if (options.language_file != NULL)
+		mame_fclose(options.language_file);
+	options.language_file = NULL;
+
+	// free the options that we added previously
+	options_free_entries();
+}
+
+
+
+//============================================================
+//  parse_ini_file
+//============================================================
+
+static void parse_ini_file(const char *name)
+{
+	mame_file *file;
+
+	// don't parse if it has been disabled
+	if (!options_get_bool("readconfig", FALSE))
+		return;
+
+	// open the file; if we fail, that's ok
+	file = mame_fopen(name, NULL, FILETYPE_INI, 0);
+	if (file == NULL)
+		return;
+
+	// parse the file and close it
+	options_parse_ini_file(file);
+	mame_fclose(file);
+
+	// reset the INI path so it gets re-expanded next time
+	set_pathlist(FILETYPE_INI, NULL);
+}
+
+
+
+//============================================================
+//  execute_simple_commands
+//============================================================
+
+static void execute_simple_commands(void)
 {
 	// help?
 	if (options_get_bool("help", FALSE))
@@ -382,6 +432,11 @@ static void execute_minimal_commands(void)
 	}
 }
 
+
+
+//============================================================
+//  execute_commands
+//============================================================
 
 static void execute_commands(const char *argv0)
 {
@@ -456,173 +511,32 @@ static void execute_commands(const char *argv0)
 }
 
 
-static int get_driver_index(const char *name)
+
+//============================================================
+//  display_help
+//============================================================
+
+static void display_help(void)
 {
-	char basename[9];
-	int drvnum;
-
-	/* if no name, just bail */
-	if (name == NULL)
-		return -1;
-
-	/* extract the base of the name */
-	extract_base_name(name, basename, ARRAY_LENGTH(basename));
-
-	/* scan the list for a match */
-	for (drvnum = 0; drivers[drvnum] != NULL; drvnum++)
-		if (strcmp(basename, drivers[drvnum]->name) == 0)
-			return drvnum;
-
-	/* return -1 if none */
-	return -1;
-}
-
-
-static void parse_ini_file(const char *name)
-{
-	mame_file *file;
-
-	/* don't parse if it has been disabled */
-	if (!options_get_bool("readconfig", FALSE))
-		return;
-
-	/* reset the INI path so it gets re-expanded */
-	set_pathlist(FILETYPE_INI, NULL);
-
-	/* open the file; if we fail, that's ok */
-	file = mame_fopen(name, NULL, FILETYPE_INI, 0);
-	if (file == NULL)
-		return;
-
-	/* parse the file and close it */
-	options_parse_ini_file(file);
-	mame_fclose(file);
-}
-
-
-int cli_frontend_init(int argc, char **argv)
-{
-	machine_config drv;
-	char buffer[128];
-	int drvnum;
-
-	// initialize the options manager
-	options_free_entries();
-	options_add_entries(fileio_opts);
-	options_add_entries(config_opts);
-	options_add_entries(input_opts);
-	options_add_entries(video_opts);
-
-	// parse the command line first; if we fail here, we're screwed
-	if (options_parse_command_line(argc, argv))
-		exit(1);
-
-	// parse the minimal commmands
-	execute_minimal_commands();
-
-	// find out what game we might be referring to
-	drvnum = get_driver_index(options_get_string("", FALSE));
-
-	// now parse the core set of INI files
-	parse_ini_file(CONFIGNAME ".ini");
-	parse_ini_file(extract_base_name(argv[0], buffer, ARRAY_LENGTH(buffer)));
-#ifdef MAME_DEBUG
-	parse_ini_file("debug.ini");
+#ifndef MESS
+	printf("M.A.M.E. v%s - Multiple Arcade Machine Emulator\n"
+		   "Copyright (C) 1997-2006 by Nicola Salmoria and the MAME Team\n\n",build_version);
+	printf("%s\n", mame_disclaimer);
+	printf("Usage:  MAME gamename [options]\n\n"
+		   "        MAME -showusage    for a brief list of options\n"
+		   "        MAME -showconfig   for a list of configuration options\n"
+		   "        MAME -createconfig to create a mame.ini\n\n"
+		   "For usage instructions, please consult the file windows.txt\n");
+#else
+	showmessinfo();
 #endif
-
-	// if we have a valid game driver, parse game-specific INI files
-	if (drvnum != -1)
-	{
-		const game_driver *driver = drivers[drvnum];
-		const game_driver *parent = driver_get_clone(driver);
-		const game_driver *gparent = (parent != NULL) ? driver_get_clone(parent) : NULL;
-
-		// expand the machine driver to look at the info
-		expand_machine_driver(driver->drv, &drv);
-
-		// parse vector.ini for vector games
-		if (drv.video_attributes & VIDEO_TYPE_VECTOR)
-			parse_ini_file("vector.ini");
-
-		// then parse sourcefile.ini
-		parse_ini_file(extract_base_name(driver->source_file, buffer, ARRAY_LENGTH(buffer)));
-
-		// then parent the grandparent, parent, and game-specific INIs
-		if (gparent != NULL)
-			parse_ini_file(gparent->name);
-		if (parent != NULL)
-			parse_ini_file(parent->name);
-		parse_ini_file(driver->name);
-	}
-
-	// reparse the command line to ensure its options override all
-	options_parse_command_line(argc, argv);
-
-	// execute any commands specified
-	execute_commands(argv[0]);
-
-	// if no driver specified, display help
-	if (options_get_string("", FALSE) == NULL)
-	{
-		display_help();
-		exit(1);
-	}
-
-	// if we don't have a valid driver selected, we're hosed here
-	if (drvnum == -1)
-	{
-		fprintf(stderr, "\n\"%s\" approximately matches the following\n"
-				"supported " GAMESNOUN " (best match first):\n\n", gamename);
-		show_approx_matches();
-		exit(1);
-	}
-
-	// extract options information
-	extract_options(drivers[drvnum], &drv);
-	return drvnum;
 }
 
 
 
-static void setup_playback(const char *filename, const game_driver *driver)
-{
-	inp_header inp_header;
-
-	// open the playback file
-	options.playback = mame_fopen(filename, 0, FILETYPE_INPUTLOG, 0);
-	assert_always(options.playback != NULL, "Failed to open file for playback");
-
-	// read playback header
-	mame_fread(options.playback, &inp_header, sizeof(inp_header));
-
-	// if the first byte is not alphanumeric, it's an old INP file with no header
-	if (!isalnum(inp_header.name[0]))
-		mame_fseek(options.playback, 0, SEEK_SET);
-
-	// else verify the header against the current game
-	else if (strcmp(driver->name, inp_header.name) != 0)
-		fatalerror("Input file is for " GAMENOUN " '%s', not for current " GAMENOUN " '%s'\n", inp_header.name, driver->name);
-
-	// otherwise, print a message indicating what's happening
-	else
-		printf("Playing back previously recorded " GAMENOUN " %s\n", driver->name);
-}
-
-
-static void setup_record(const char *filename, const game_driver *driver)
-{
-	inp_header inp_header;
-
-	// open the record file
-	options.record = mame_fopen(filename, 0, FILETYPE_INPUTLOG, 1);
-	assert_always(options.record != NULL, "Failed to open file for recording");
-
-	// create a header
-	memset(&inp_header, '\0', sizeof(inp_header));
-	strcpy(inp_header.name, driver->name);
-	mame_fwrite(options.record, &inp_header, sizeof(inp_header));
-}
-
+//============================================================
+//  extract_options
+//============================================================
 
 static void extract_options(const game_driver *driver, machine_config *drv)
 {
@@ -688,6 +602,10 @@ static void extract_options(const game_driver *driver, machine_config *drv)
 	if (!options_get_bool("use_bezels", TRUE)) options.use_artwork &= ~ARTWORK_USE_BEZELS;
 	if (!options_get_bool("artwork", TRUE)) options.use_artwork = ARTWORK_USE_NONE;
 
+#ifdef MESS
+	win_mess_extract_options();
+#endif /* MESS */
+
 	// save states and input recording
 	stemp = options_get_string("playback", TRUE);
 	if (stemp != NULL)
@@ -705,7 +623,10 @@ static void extract_options(const game_driver *driver, machine_config *drv)
 		assert_always(options.logfile != NULL, "unable to open log file");
 	}
 	win_erroroslog = options_get_bool("oslog", TRUE);
+{
+	extern int verbose;
 	verbose = options_get_bool("verbose", TRUE);
+}
 #ifdef MAME_DEBUG
 	options.mame_debug = options_get_bool("debug", TRUE);
 #ifdef NEW_DEBUGGER
@@ -724,241 +645,147 @@ static void extract_options(const game_driver *driver, machine_config *drv)
 }
 
 
-void cli_frontend_exit(void)
+
+//============================================================
+//  setup_playback
+//============================================================
+
+static void setup_playback(const char *filename, const game_driver *driver)
 {
-	if (gamename)
-	{
-		free(gamename);
-		gamename = NULL;
-	}
-	if (gamepath)
-	{
-		free(gamepath);
-		gamepath = NULL;
-	}
+	inp_header inp_header;
 
-	/* close open files */
-	if (options.logfile)
-	{
-		mame_fclose(options.logfile);
-		options.logfile = NULL;
-	}
+	// open the playback file
+	options.playback = mame_fopen(filename, 0, FILETYPE_INPUTLOG, 0);
+	assert_always(options.playback != NULL, "Failed to open file for playback");
 
-	if (options.playback)
-	{
-		mame_fclose(options.playback);
-		options.playback = NULL;
-	}
-	if (options.record)
-	{
-		mame_fclose(options.record);
-		options.record = NULL;
-	}
-	if (options.language_file)
-	{
-		mame_fclose(options.language_file);
-		options.language_file = NULL;
-	}
+	// read playback header
+	mame_fread(options.playback, &inp_header, sizeof(inp_header));
 
-	options_free_entries();
+	// if the first byte is not alphanumeric, it's an old INP file with no header
+	if (!isalnum(inp_header.name[0]))
+		mame_fseek(options.playback, 0, SEEK_SET);
+
+	// else verify the header against the current game
+	else if (strcmp(driver->name, inp_header.name) != 0)
+		fatalerror("Input file is for " GAMENOUN " '%s', not for current " GAMENOUN " '%s'\n", inp_header.name, driver->name);
+
+	// otherwise, print a message indicating what's happening
+	else
+		printf("Playing back previously recorded " GAMENOUN " %s\n", driver->name);
 }
 
 
-#if 0
-static int config_handle_arg(char *arg)
+
+//============================================================
+//  setup_record
+//============================================================
+
+static void setup_record(const char *filename, const game_driver *driver)
 {
+	inp_header inp_header;
+
+	// open the record file
+	options.record = mame_fopen(filename, 0, FILETYPE_INPUTLOG, 1);
+	assert_always(options.record != NULL, "Failed to open file for recording");
+
+	// create a header
+	memset(&inp_header, '\0', sizeof(inp_header));
+	strcpy(inp_header.name, driver->name);
+	mame_fwrite(options.record, &inp_header, sizeof(inp_header));
+}
+
+
+
+//============================================================
+//  extract_base_name
+//============================================================
+
+static char *extract_base_name(const char *name, char *dest, int destsize)
+{
+	const char *start;
 	int i;
 
-	/* notice: for MESS game means system */
-	if (got_gamename)
+	// extract the base of the name
+	start = name + strlen(name);
+	while (start > name && !is_directory_separator(start[-1]))
+		start--;
+
+	// copy in the base name
+	for (i = 0; i < destsize; i++)
 	{
-		fprintf(stderr,"error: duplicate gamename: %s\n", arg);
-		return -1;
+		if (start[i] == 0 || start[i] == '.')
+			break;
+		else
+			dest[i] = start[i];
 	}
 
-	if (!strcmp(arg, "random"))
-	{
-		/* special case: random driver */
-		i = 0;
-		while (drivers[i])
-			i++;	/* count available drivers */
+	// NULL terminate
+	if (i < destsize)
+		dest[i] = 0;
+	else
+		dest[destsize - 1] = 0;
 
-		srand(time(0));
-		/* call rand() once to get away from the seed */
-		rand();
-		game_index = rand() % i;
+	return dest;
+}
 
-		/* make sure that we prompt the driver name */
-		prompt_driver_name = TRUE;
-	}
+
+
+//============================================================
+//  extract_path
+//============================================================
+
+static char *extract_path(const char *name, char *dest, int destsize)
+{
+	const char *start;
+
+	// find the base of the name
+	start = name + strlen(name);
+	while (start > name && !is_directory_separator(start[-1]))
+		start--;
+
+	// handle the null path case
+	if (start == name)
+		*dest = 0;
+
+	// else just copy the path part
 	else
 	{
-		rompath_extra = win_dirname(arg);
-
-		if (rompath_extra && !strlen(rompath_extra))
-		{
-			free (rompath_extra);
-			rompath_extra = NULL;
-		}
-
-		gamename = arg;
-		gamename = win_basename(gamename);
-		gamename = win_strip_extension(gamename);
-		gamepath = mame_strdup(arg);
-
-		/* do we have a driver for this? */
-		for (i = 0; drivers[i]; i++)
-		{
-			if (mame_stricmp(gamename, drivers[i]->name) == 0)
-			{
-				game_index = i;
-				break;
-			}
-		}
+		int bytes = start - 1 - name;
+		bytes = MIN(destsize - 1, bytes);
+		memcpy(dest, name, bytes);
+		dest[bytes] = 0;
 	}
-
-#ifdef MESS
-	if (game_index >= 0)
-		win_add_mess_device_options(rc, drivers[game_index]);
-#endif /* MESS */
-
-	got_gamename = TRUE;
-	return 0;
-}
-#endif
-
-
-//============================================================
-//  win_basename
-//============================================================
-
-static char *win_basename(char *filename)
-{
-	char *c;
-
-	// NULL begets NULL
-	if (!filename)
-		return NULL;
-
-	// start at the end and return when we hit a slash or colon
-	for (c = filename + strlen(filename) - 1; c >= filename; c--)
-		if (*c == '\\' || *c == '/' || *c == ':')
-			return c + 1;
-
-	// otherwise, return the whole thing
-	return filename;
+	return dest;
 }
 
 
-
-//============================================================
-//  win_dirname
-//============================================================
-
-static char *win_dirname(char *filename)
-{
-	char *dirname;
-	char *c;
-
-	// NULL begets NULL
-	if (!filename)
-		return NULL;
-
-	// allocate space for it
-	dirname = malloc(strlen(filename) + 1);
-	if (!dirname)
-	{
-		fprintf(stderr, "error: malloc failed in win_dirname\n");
-		return NULL;
-	}
-
-	// copy in the name
-	strcpy(dirname, filename);
-
-	// search backward for a slash or a colon
-	for (c = dirname + strlen(dirname) - 1; c >= dirname; c--)
-		if (*c == '\\' || *c == '/' || *c == ':')
-		{
-			// found it: NULL terminate and return
-			*(c + 1) = 0;
-			return dirname;
-		}
-
-	// otherwise, return an empty string
-	dirname[0] = 0;
-	return dirname;
-}
-
-
-
-//============================================================
-//  win_strip_extension
-//============================================================
-
-static char *win_strip_extension(char *filename)
-{
-	char *newname;
-	char *c;
-
-	// NULL begets NULL
-	if (!filename)
-		return NULL;
-
-	// allocate space for it
-	newname = malloc(strlen(filename) + 1);
-	if (!newname)
-	{
-		fprintf(stderr, "error: malloc failed in win_strip_extension\n");
-		return NULL;
-	}
-
-	// copy in the name
-	strcpy(newname, filename);
-
-	// search backward for a period, failing if we hit a slash or a colon
-	for (c = newname + strlen(newname) - 1; c >= newname; c--)
-	{
-		// if we hit a period, NULL terminate and break
-		if (*c == '.')
-		{
-			*c = 0;
-			break;
-		}
-
-		// if we hit a slash or colon just stop
-		if (*c == '\\' || *c == '/' || *c == ':')
-			break;
-	}
-
-	return newname;
-}
 
 
 
 #ifndef NEW_RENDER
 static void set_old_video_options(const game_driver *driver)
 {
-	/* first start with the game's built in orientation */
+	// first start with the game's built in orientation
 	int orientation = driver->flags & ORIENTATION_MASK;
 
 	options.ui_orientation = orientation;
 
 	if (options.ui_orientation & ORIENTATION_SWAP_XY)
 	{
-		/* if only one of the components is inverted, switch them */
+		// if only one of the components is inverted, switch them
 		if ((options.ui_orientation & ROT180) == ORIENTATION_FLIP_X ||
 				(options.ui_orientation & ROT180) == ORIENTATION_FLIP_Y)
 			options.ui_orientation ^= ROT180;
 	}
 
-	/* override if no rotation requested */
+	// override if no rotation requested
 	if (!options_get_bool("rotate", TRUE))
 		orientation = options.ui_orientation = ROT0;
 
-	/* rotate right */
+	// rotate right
 	if (options_get_bool("ror", TRUE))
 	{
-		/* if only one of the components is inverted, switch them */
+		// if only one of the components is inverted, switch them
 		if ((orientation & ROT180) == ORIENTATION_FLIP_X ||
 				(orientation & ROT180) == ORIENTATION_FLIP_Y)
 			orientation ^= ROT180;
@@ -966,10 +793,10 @@ static void set_old_video_options(const game_driver *driver)
 		orientation ^= ROT90;
 	}
 
-	/* rotate left */
+	// rotate left
 	if (options_get_bool("rol", TRUE))
 	{
-		/* if only one of the components is inverted, switch them */
+		// if only one of the components is inverted, switch them
 		if ((orientation & ROT180) == ORIENTATION_FLIP_X ||
 				(orientation & ROT180) == ORIENTATION_FLIP_Y)
 			orientation ^= ROT180;
@@ -977,10 +804,10 @@ static void set_old_video_options(const game_driver *driver)
 		orientation ^= ROT270;
 	}
 
-	/* auto-rotate right (e.g. for rotating lcds), based on original orientation */
+	// auto-rotate right (e.g. for rotating lcds), based on original orientation
 	if (options_get_bool("autoror", TRUE) && (driver->flags & ORIENTATION_SWAP_XY) )
 	{
-		/* if only one of the components is inverted, switch them */
+		// if only one of the components is inverted, switch them
 		if ((orientation & ROT180) == ORIENTATION_FLIP_X ||
 				(orientation & ROT180) == ORIENTATION_FLIP_Y)
 			orientation ^= ROT180;
@@ -988,10 +815,10 @@ static void set_old_video_options(const game_driver *driver)
 		orientation ^= ROT90;
 	}
 
-	/* auto-rotate left (e.g. for rotating lcds), based on original orientation */
+	// auto-rotate left (e.g. for rotating lcds), based on original orientation
 	if (options_get_bool("autorol", TRUE) && (driver->flags & ORIENTATION_SWAP_XY) )
 	{
-		/* if only one of the components is inverted, switch them */
+		// if only one of the components is inverted, switch them
 		if ((orientation & ROT180) == ORIENTATION_FLIP_X ||
 				(orientation & ROT180) == ORIENTATION_FLIP_Y)
 			orientation ^= ROT180;
@@ -999,7 +826,7 @@ static void set_old_video_options(const game_driver *driver)
 		orientation ^= ROT270;
 	}
 
-	/* flip X/Y */
+	// flip X/Y
 	if (options_get_bool("flipx", TRUE))
 		orientation ^= ORIENTATION_FLIP_X;
 	if (options_get_bool("flipy", TRUE))

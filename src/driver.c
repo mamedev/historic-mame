@@ -10,6 +10,7 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include <ctype.h>
 
 
 
@@ -17,7 +18,7 @@
     CONSTANTS
 ***************************************************************************/
 
-#define CLONE_LRU_SIZE			10
+#define DRIVER_LRU_SIZE			10
 
 
 
@@ -25,8 +26,15 @@
     GLOBAL VARIABLES
 ***************************************************************************/
 
-static const game_driver *clone_lru[CLONE_LRU_SIZE];
+static int driver_lru[DRIVER_LRU_SIZE];
 
+
+
+/***************************************************************************
+    PROTOTYPES
+***************************************************************************/
+
+static int penalty_compare(const char *source, const char *target);
 
 
 
@@ -307,41 +315,151 @@ void driver_remove_screen(machine_config *machine, const char *tag)
 
 
 /*-------------------------------------------------
+    driver_get_index - return the index of a
+    driver given its name.
+-------------------------------------------------*/
+
+int driver_get_index(const char *name)
+{
+	int lurnum, drvnum;
+
+	/* scan the LRU list first */
+	for (lurnum = 0; lurnum < DRIVER_LRU_SIZE; lurnum++)
+		if (strcmp(drivers[driver_lru[lurnum]]->name, name) == 0)
+		{
+			/* if not first, swap with the head */
+			if (lurnum != 0)
+			{
+				int temp = driver_lru[0];
+				driver_lru[0] = driver_lru[lurnum];
+				driver_lru[lurnum] = temp;
+			}
+			return driver_lru[0];
+		}
+
+	/* scan for a match in the drivers -- slow! */
+	for (drvnum = 0; drivers[drvnum] != NULL; drvnum++)
+		if (strcmp(drivers[drvnum]->name, name) == 0)
+		{
+			memmove((void *)&driver_lru[1], (void *)&driver_lru[0], sizeof(driver_lru[0]) * (DRIVER_LRU_SIZE - 1));
+			driver_lru[0] = drvnum;
+			return drvnum;
+		}
+
+	/* shouldn't happen */
+	return -1;
+}
+
+
+/*-------------------------------------------------
     driver_get_clone - return a pointer to the
     clone of a game driver.
 -------------------------------------------------*/
 
 const game_driver *driver_get_clone(const game_driver *driver)
 {
-	int i;
+	int index;
 
 	/* if no clone, easy out */
 	if (driver->parent == NULL || (driver->parent[0] == '0' && driver->parent[1] == 0))
 		return NULL;
 
-	/* scan the LRU list next */
-	for (i = 0; i < CLONE_LRU_SIZE; i++)
-		if (clone_lru[i] != NULL && !strcmp(clone_lru[i]->name, driver->parent))
+	/* convert the name to an index */
+	index = driver_get_index(driver->parent);
+	return (index == -1) ? NULL : drivers[index];
+}
+
+
+/*-------------------------------------------------
+    driver_get_approx_matches - find the best n
+    matches to a driver name.
+-------------------------------------------------*/
+
+void driver_get_approx_matches(const char *name, int matches, int *indexes)
+{
+	int *penalty;
+	int drvnum;
+	int matchnum;
+
+	/* allocate some temp memory */
+	penalty = malloc_or_die(matches * sizeof(*penalty));
+
+	/* initialize everyone's states */
+	for (matchnum = 0; matchnum < matches; matchnum++)
+	{
+		penalty[matchnum] = 9999;
+		indexes[matchnum] = -1;
+	}
+
+	/* scan the entire drivers array */
+	for (drvnum = 0; drivers[drvnum] != NULL; drvnum++)
+	{
+		int curpenalty, tmp;
+
+		/* skip non-drivers */
+		if ((drivers[drvnum]->flags & NOT_A_DRIVER) != 0)
+			continue;
+
+		/* pick the best match between driver name and description */
+		curpenalty = penalty_compare(name, drivers[drvnum]->description);
+		tmp = penalty_compare(name, drivers[drvnum]->name);
+		curpenalty = MIN(curpenalty, tmp);
+
+		/* insert into the sorted table of matches */
+		for (matchnum = matches - 1; matchnum >= 0; matchnum--)
 		{
-			/* if not first, swap with the head */
-			if (i != 0)
+			/* stop if we're worse than the current entry */
+			if (curpenalty >= penalty[matchnum])
+				break;
+
+			/* as lng as this isn't the last entry, bump this one down */
+			if (matchnum < matches - 1)
 			{
-				const game_driver *temp = clone_lru[0];
-				clone_lru[0] = clone_lru[i];
-				clone_lru[i] = temp;
+				penalty[matchnum + 1] = penalty[matchnum];
+				indexes[matchnum + 1] = indexes[matchnum];
 			}
-			return clone_lru[0];
+			indexes[matchnum] = drvnum;
+			penalty[matchnum] = curpenalty;
 		}
+	}
 
-	/* scan for a match in the drivers -- slow! */
-	for (i = 0; drivers[i] != NULL; i++)
-		if (!strcmp(drivers[i]->name, driver->parent))
+	/* free our temp memory */
+	free(penalty);
+}
+
+
+/*-------------------------------------------------
+    penalty_compare - compare two strings for
+    closeness and assign a score.
+-------------------------------------------------*/
+
+static int penalty_compare(const char *source, const char *target)
+{
+	int gaps = 0;
+	int last = 1;
+
+	/* scan the strings */
+	for (; *source && *target; target++)
+	{
+		/* do a case insensitive match */
+		int match = (tolower(*source) == tolower(*target));
+
+		/* if we matched, advance the source */
+		if (match)
+			source++;
+
+		/* if the match state changed, count gaps */
+		if (match != last)
 		{
-			memmove((void *)&clone_lru[1], (void *)&clone_lru[0], sizeof(clone_lru[0]) * (CLONE_LRU_SIZE - 1));
-			clone_lru[0] = drivers[i];
-			return clone_lru[0];
+			last = match;
+			if (!match)
+				gaps++;
 		}
+	}
 
-	/* shouldn't happen */
-	return NULL;
+	/* penalty if short string does not completely fit in */
+	for ( ; *source; source++)
+		gaps++;
+
+	return gaps;
 }

@@ -15,6 +15,7 @@
 // standard includes
 #include <time.h>
 #include <ctype.h>
+#include <stdarg.h>
 
 // MAME headers
 #include "driver.h"
@@ -239,6 +240,24 @@ int osd_is_bad_read_ptr(const void *ptr, size_t size)
 	return IsBadReadPtr(ptr, size);
 }
 
+
+
+//============================================================
+//  verbose_printf
+//============================================================
+
+void CLIB_DECL verbose_printf(const char *text, ...)
+{
+	if (verbose)
+	{
+		va_list arg;
+
+		/* dump to the buffer */
+		va_start(arg, text);
+		vprintf(text, arg);
+		va_end(arg);
+	}
+}
 
 
 //============================================================

@@ -1,191 +1,173 @@
-/*
-************************************
+
+/************************************
  Card Line
- preliminary driver by Tomasz Slanina
+ driver by Tomasz Slanina
  analog[at]op[dot]pl
 
 
- SIEMENS 80C32
-
+ SIEMENS 80C32 (main cpu)
  MC6845P
+ GM76C88 x3 (8K x 8 RAM)
+ K-665 9546 (OKI 6295)
+ STARS B2072 9629 (qfp ASIC)
+ XTAL 12 MHz
+ XTAL  4 MHz
 
- GM76C88 x3 (8K x 8)
- K-665 9546
+***********************************/
 
- STARS B2072 9629
-
- XTAL 12 MHz, 4 MHz
-
-************************************
-*/
 
 #include "driver.h"
 #include "cpu/i8051/i8051.h"
+#include "sound/okim6295.h"
 
-static tilemap *bgtilemap  = NULL;
-static tilemap *fgtilemap  = NULL;
+#define USE_LAMPS
+//fake lamps - remove above line to disable
 
-static void get_bg_tile_info(int tile_index)
-{
-	int code;
+static int cardline_video;
+static int cardline_lamps;
 
-	code = videoram[tile_index ] | (colorram[tile_index]<<8);
-
-	SET_TILE_INFO(
-			0,
-			code,
-			0	,
-			0)
-}
-
-static void get_fg_tile_info(int tile_index)
-{
-	int code;
-
-	code = videoram[tile_index+0x800 ] | (colorram[tile_index+0x800]<<8);
-
-	SET_TILE_INFO(
-			0,
-			code,
-			0	,
-			0)
-}
-
-
-VIDEO_START( cardline )
-{
-	bgtilemap  = tilemap_create(get_bg_tile_info, tilemap_scan_rows,TILEMAP_OPAQUE,8,8,64,32);
-	fgtilemap  = tilemap_create(get_fg_tile_info, tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
-	tilemap_set_transparent_pen(fgtilemap, 1);
-	return 0;
-}
+#define DRAW_TILE(offset, transparency) drawgfx(bitmap, Machine->gfx[0],\
+					(videoram[index+offset] | (colorram[index+offset]<<8))&0x3fff,\
+					(colorram[index+offset]&0x80)>>7,\
+					0,0,\
+					x<<3, y<<3,\
+					&Machine->visible_area[0],\
+					transparency?TRANSPARENCY_PEN:TRANSPARENCY_NONE,transparency);
 
 VIDEO_UPDATE( cardline )
 {
-	tilemap_mark_all_tiles_dirty(bgtilemap);
-	tilemap_mark_all_tiles_dirty(fgtilemap);
-	tilemap_draw(bitmap,cliprect, bgtilemap, 0,0);
-	tilemap_draw(bitmap,cliprect, fgtilemap, 0,0);
+	int x,y;
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area[0]);
+	for(y=0;y<32;y++)
+	{
+		for(x=0;x<64;x++)
+		{
+			int index=y*64+x;
+			if(cardline_video&1)
+			{
+				DRAW_TILE(0,0);
+				DRAW_TILE(0x800,1);
+			}
+
+			if(cardline_video&2)
+			{
+				DRAW_TILE(0x1000,0);
+				DRAW_TILE(0x1800,1);
+			}
+		}
+	}
+#ifdef USE_LAMPS
+	{
+		//fake lamps (only 5 buttons - there are at least 8 lamps (5 buttons +start +bet +?)
+		int i,j,k;
+		j=cardline_lamps>>1;
+		for(i=0;i<5;i++)
+		{
+			if(j&1)
+			{
+				for(k=0;k<10;k++)
+				{
+					drawgfx(bitmap, Machine->gfx[0],
+						0x3fff,
+						0,
+						0,0,
+						104*i+(k+1)*8, 264,
+						&Machine->visible_area[0],
+						TRANSPARENCY_NONE,0);
+				}
+			}
+			j>>=1;
+		}
+	}
+#endif
+}
+
+static WRITE8_HANDLER(vram_w)
+{
+	offset+=0x1000*((cardline_video&2)>>1);
+	videoram[offset]=data;
+}
+
+static WRITE8_HANDLER(attr_w)
+{
+	offset+=0x1000*((cardline_video&2)>>1);
+	colorram[offset]=data;
+}
+
+static WRITE8_HANDLER(video_w)
+{
+	cardline_video=data;
+}
+
+static READ8_HANDLER(unk_r)
+{
+	static int var=0;
+	var^=0x10;
+	return var;
+}
+
+static WRITE8_HANDLER(lamps_w)
+{
+	// lamps linked to buttons (check input port 0)
+	cardline_lamps=data;
 }
 
 static ADDRESS_MAP_START( mem_prg, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
-
-static READ8_HANDLER(myread)
-{
-	return mame_rand();
-}
-
 static ADDRESS_MAP_START( mem_data, ADDRESS_SPACE_DATA, 8 )
 	AM_RANGE(0x0000, 0x1fff) AM_RAM
 	AM_RANGE(0x2003, 0x2003) AM_READ(input_port_0_r)
-	AM_RANGE(0x2005, 0x2005) AM_READ(myread) //AM_READ(input_port_1_r)//coin + test
-	AM_RANGE(0x2006, 0x2006) AM_READ(input_port_2_r) //counters (status?) see input ports for more details
-	AM_RANGE(0x2007, 0x2008) AM_NOP
+	AM_RANGE(0x2005, 0x2005) AM_READ(input_port_1_r)
+	AM_RANGE(0x2006, 0x2006) AM_READ(input_port_2_r)
+	AM_RANGE(0x2007, 0x2007) AM_WRITE(lamps_w)
+	AM_RANGE(0x2008, 0x2008) AM_NOP
 	AM_RANGE(0x2080, 0x213f) AM_NOP
-	AM_RANGE(0x2400, 0x2400) AM_NOP
+	AM_RANGE(0x2400, 0x2400) AM_READWRITE(OKIM6295_status_0_r, OKIM6295_data_0_w)
 	AM_RANGE(0x2800, 0x2801) AM_NOP
 	AM_RANGE(0x2840, 0x2840) AM_NOP
 	AM_RANGE(0x2880, 0x2880) AM_NOP
 	AM_RANGE(0x3003, 0x3003) AM_NOP
-	AM_RANGE(0xc000, 0xcfff) AM_RAM  AM_BASE(&videoram)
-	AM_RANGE(0xe000, 0xefff) AM_RAM  AM_BASE(&colorram)
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(vram_w) AM_BASE(&videoram)
+	AM_RANGE(0xe000, 0xffff) AM_WRITE(attr_w) AM_BASE(&colorram)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( mem_io, ADDRESS_SPACE_IO, 8 )
-  AM_RANGE(0x00, 0x03) AM_READ(myread) AM_WRITENOP
+  AM_RANGE(0x01, 0x01) AM_READWRITE(unk_r, video_w)
 ADDRESS_MAP_END
 
 INPUT_PORTS_START( cardline )
-	PORT_START      /* IN0 */
-	PORT_DIPNAME( 0x01, 0x01, "0-0" )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
 
-	PORT_START      /* IN0 */
-	PORT_DIPNAME( 0x01, 0x01, "1-0" )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) ) //bookeeping
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) ) //test
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) ) //payout
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_NAME("Button 1")
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON6 ) PORT_NAME("Button 2")
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON7 ) PORT_NAME("Button 3")
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON8 ) PORT_NAME("Button 4")
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON9 ) PORT_NAME("Button 5")
 
-	PORT_START      /* IN2 */
-	PORT_DIPNAME( 0x01, 0x00, "2-0" )						//coin in counter
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_NAME("Bet")
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON4 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Bookkeeping Info") PORT_CODE(KEYCODE_F1)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_CODE(KEYCODE_L) PORT_NAME("Payout 2")
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+  PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_CODE(KEYCODE_ENTER) PORT_NAME("Payout")
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON10 )
+
+	PORT_START
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) ) //"wirtaufbuhung" counter
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )//lamps
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )//coin out counter
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )//"wirtauszahlung" counter
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )// auswurfeinheit
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
-	PORT_START      /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY
+	PORT_BIT( 0xf5, IP_ACTIVE_HIGH, IPT_SPECIAL ) // h/w status bits
 INPUT_PORTS_END
 
 static gfx_layout charlayout =
@@ -244,15 +226,25 @@ static MACHINE_DRIVER_START( cardline )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(64*8, 32*8)
+	MDRV_SCREEN_SIZE(64*8, 35*8)
+#ifdef USE_LAMPS
+	MDRV_VISIBLE_AREA(0*8, 64*8-1, 0*8, 35*8-1)
+#else
 	MDRV_VISIBLE_AREA(0*8, 64*8-1, 0*8, 32*8-1)
+#endif
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(512)
 	MDRV_PALETTE_INIT(cardline)
 
-	MDRV_VIDEO_START(cardline)
 	MDRV_VIDEO_UPDATE(cardline)
 
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(OKIM6295, 8000)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.0)
 
 MACHINE_DRIVER_END
 
@@ -278,4 +270,4 @@ ROM_START( cardline )
 
 ROM_END
 
-GAME( 199?, cardline,  0,       cardline,  cardline,  0, ROT0, "Veltmeijer", "Card Line" , GAME_NOT_WORKING | GAME_NO_SOUND)
+GAME( 199?, cardline,  0,       cardline,  cardline,  0, ROT0, "Veltmeijer", "Card Line" , 0)

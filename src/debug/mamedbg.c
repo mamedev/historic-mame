@@ -5099,7 +5099,6 @@ void CLIB_DECL mame_debug_trace_write (int cpunum, const char *fmt, ...)
  *  mame_debug_init
  *  This function is called from cpu_run to startup the debugger
  **************************************************************************/
-#ifndef NEW_DEBUGGER
 void mame_debug_exit(void);
 
 void mame_debug_init(void)
@@ -5220,6 +5219,12 @@ void mame_debug_break(void)
 {
 	debug_key_pressed = 1;
 }
+
+int mame_debug_is_active(void)
+{
+	return dbg_active;
+}
+
 
 /**************************************************************************
  **************************************************************************
@@ -5397,4 +5402,3 @@ void mame_debug_hook(void)
 				DBGREGS.newval, DBGREGS.count * sizeof(UINT32) );
 	}
 }
-#endif /* NEW_DEBUGGER */

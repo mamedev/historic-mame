@@ -619,7 +619,9 @@ screen_config *driver_add_screen(machine_config *machine, const char *tag, int p
 screen_config *driver_find_screen(machine_config *machine, const char *tag);
 void driver_remove_screen(machine_config *machine, const char *tag);
 
+int driver_get_index(const char *name);
 const game_driver *driver_get_clone(const game_driver *driver);
+void driver_get_approx_matches(const char *name, int matches, int *indexes);
 
 
 #endif	/* __DRIVER_H__ */

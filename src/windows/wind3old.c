@@ -27,6 +27,7 @@
 #include "driver.h"
 #include "profiler.h"
 
+#include "winmain.h"
 #include "windold.h"
 #include "videoold.h"
 #include "blit.h"
@@ -38,9 +39,6 @@
 //============================================================
 //  IMPORTS
 //============================================================
-
-// from input.c
-extern int verbose;
 
 // from video.c
 extern GUID *screen_guid_ptr;
@@ -256,10 +254,8 @@ static int win_d3d_test_hardware_caps(void)
 		{
 			d3dtop_scanlines = D3DTOP_ADDSMOOTH;
 		}
-		else if (verbose)
-		{
-			fprintf(stderr, "Warning: using fall-back method for scanline blending.\n");
-		}
+		else
+			verbose_printf("Direct3D: Warning: using fall-back method for scanline blending.\n");
 	}
 
 	// filtering
@@ -294,9 +290,7 @@ static int win_d3d_test_hardware_caps(void)
 		{
 			if (!(d3d_device_desc.dpcTriCaps.dwDestBlendCaps & D3DPBLENDCAPS_SRCCOLOR))
 			{
-				if (verbose)
-					fprintf(stderr, "Error: RGB effects (multiply mode) not supported\n");
-
+				verbose_printf("Direct3D: Error: RGB effects (multiply mode) not supported\n");
 				return 1;
 			}
 			break;
@@ -307,9 +301,7 @@ static int win_d3d_test_hardware_caps(void)
 			if (!(d3d_device_desc.dpcTriCaps.dwSrcBlendCaps & D3DPBLENDCAPS_SRCALPHA) ||
 				!(d3d_device_desc.dpcTriCaps.dwDestBlendCaps & D3DPBLENDCAPS_SRCCOLOR))
 			{
-				if (verbose)
-					fprintf(stderr, "Error: RGB effects (multiply & add mode) not supported\n");
-
+				verbose_printf("Direct3D: Error: RGB effects (multiply & add mode) not supported\n");
 				return 1;
 			}
 			break;
@@ -547,7 +539,6 @@ int win_d3d_init(int width, int height, int depth, int attributes, double aspect
 	}
 
 	// print initialisation message and available video memory
-	if (verbose)
 	{
 		DDSCAPS2 caps = { 0 };
 		DWORD mem_total;
@@ -555,12 +546,12 @@ int win_d3d_init(int width, int height, int depth, int attributes, double aspect
 
 		caps.dwCaps = DDSCAPS_PRIMARYSURFACE;
 
-		fprintf(stderr, "Initialising DirectDraw & Direct3D 7 blitter");
+		verbose_printf("Initialising DirectDraw & Direct3D 7 blitter");
 		if (IDirectDraw7_GetAvailableVidMem(ddraw7, &caps, &mem_total, &mem_free) == DD_OK)
 		{
-			fprintf(stderr, " (%.2lfMB video memory available)", (double)mem_total / (1024 * 1024));
+			verbose_printf(" (%.2lfMB video memory available)", (double)mem_total / (1024 * 1024));
 		}
-		fprintf(stderr, "\n");
+		verbose_printf("\n");
 	}
 
 	// set the graphics mode width/height to the window size
@@ -658,7 +649,6 @@ int win_d3d_init(int width, int height, int depth, int attributes, double aspect
 	IDirect3DDevice7_SetRenderState(d3d_device7, D3DRENDERSTATE_ALPHABLENDENABLE, TRUE);
 
 	// print available video memory
-	if (verbose)
 	{
 		DDSCAPS2 caps = { 0 };
 		DWORD mem_total;
@@ -668,7 +658,7 @@ int win_d3d_init(int width, int height, int depth, int attributes, double aspect
 
 		if (IDirectDraw7_GetAvailableVidMem(ddraw7, &caps, &mem_total, &mem_free) == DD_OK)
 		{
-			fprintf(stderr, "Blitter initialisation complete (%.2lfMB video memory free)\n", (double)mem_free / (1024 * 1024));
+			verbose_printf("Blitter initialisation complete (%.2lfMB video memory free)\n", (double)mem_free / (1024 * 1024));
 		}
 	}
 
@@ -893,13 +883,10 @@ static int set_resolution(void)
 			goto error_handling;
 		}
 
-		if (verbose)
-		{
-			if (best_refresh)
-				fprintf(stderr, "Best mode = %dx%dx%d @ %d Hz\n", best_width, best_height, best_depth, best_refresh);
-			else
-				fprintf(stderr, "Best mode = %dx%dx%d @ default Hz\n", best_width, best_height, best_depth);
-		}
+		if (best_refresh)
+			verbose_printf("Best mode = %dx%dx%d @ %d Hz\n", best_width, best_height, best_depth, best_refresh);
+		else
+			verbose_printf("Best mode = %dx%dx%d @ default Hz\n", best_width, best_height, best_depth);
 
 		// set it
 		if (best_width != 0)
@@ -1008,8 +995,7 @@ static int create_surfaces(void)
 	result = IDirectDraw7_CreateSurface(ddraw7, &primary_desc, &primary_surface, NULL);
 	if (result != DD_OK)
 	{
-		if (verbose)
-			fprintf(stderr, "Error creating primary surface: %08x\n", (UINT32)result);
+		verbose_printf("Error creating primary surface: %08x\n", (UINT32)result);
 		goto error_handling;
 	}
 
@@ -1022,20 +1008,19 @@ static int create_surfaces(void)
 	}
 
 	// print out the good stuff
-	if (verbose)
 	{
 		char size[80];
 		char colour[80];
 
 		if (win_window_mode)
-			fprintf(stderr, "Rendering to an off-screen surface and using blt()\n");
+			verbose_printf("Rendering to an off-screen surface and using blt()\n");
 		else
-			fprintf(stderr, "Using a %s buffer and pageflipping\n", win_triple_buffer ? "triple" : "double");
+			verbose_printf("Using a %s buffer and pageflipping\n", win_triple_buffer ? "triple" : "double");
 
 		print_surface_size(primary_surface, size);
 		print_surface_colour(primary_surface, colour);
 
-		fprintf(stderr, "Primary surface created: %s (%s)\n", size, colour);
+		verbose_printf("Primary surface created: %s (%s)\n", size, colour);
 	}
 
 	// determine the color masks and force the palette to recalc
@@ -1134,12 +1119,11 @@ static int create_effects_surfaces(void)
 			goto error_handling;
 		}
 
-		if (verbose)
 		{
 			char size[80];
 
 			print_surface_size(win_d3d_background_surface, size);
-			fprintf(stderr, "RGB effects surface created: %s\n", size);
+			verbose_printf("RGB effects surface created: %s\n", size);
 		}
 	}
 
@@ -1172,12 +1156,11 @@ static int create_effects_surfaces(void)
 				goto error_handling;
 			}
 
-			if (verbose)
 			{
 				char size[80];
 
 				print_surface_size(win_d3d_scanline_surface[i], size);
-				fprintf(stderr, "Scanline surface[%i] created: %s\n", i, size);
+				verbose_printf("Scanline surface[%i] created: %s\n", i, size);
 			}
 		}
 	}
@@ -1293,8 +1276,7 @@ static int create_blit_surface(void)
 
 	if (texture_width > d3d_device_desc.dwMaxTextureWidth || texture_height > d3d_device_desc.dwMaxTextureHeight)
 	{
-		if (verbose)
-			fprintf(stderr, "Error: required texture size too large (max: %ix%i, need %ix%i)\n", (int)d3d_device_desc.dwMaxTextureWidth, (int)d3d_device_desc.dwMaxTextureHeight, texture_width, texture_height);
+		verbose_printf("Error: required texture size too large (max: %ix%i, need %ix%i)\n", (int)d3d_device_desc.dwMaxTextureWidth, (int)d3d_device_desc.dwMaxTextureHeight, texture_width, texture_height);
 		goto error_handling;
 	}
 
@@ -1330,8 +1312,7 @@ static int create_blit_surface(void)
 	result = IDirectDraw7_CreateSurface(ddraw7, &blit_desc, &blit_surface, NULL);
 	if (result != DD_OK)
 	{
-		if (verbose)
-			fprintf(stderr, "Error creating blit surface: %08x\n", (UINT32)result);
+		verbose_printf("Error creating blit surface: %08x\n", (UINT32)result);
 		goto error_handling;
 	}
 
@@ -1351,8 +1332,7 @@ static int create_blit_surface(void)
 		result = IDirectDraw7_CreateSurface(ddraw7, &texture_desc, &texture_surface, NULL);
 		if (result != DD_OK)
 		{
-			if (verbose)
-				fprintf(stderr, "Error creating texture surface: %08x\n", (UINT32)result);
+			verbose_printf("Error creating texture surface: %08x\n", (UINT32)result);
 			goto error_handling;
 		}
 	}
@@ -1386,8 +1366,7 @@ static int create_blit_surface(void)
 
 		if (preprocess_desc.dwWidth > d3d_device_desc.dwMaxTextureWidth || preprocess_desc.dwHeight > d3d_device_desc.dwMaxTextureHeight)
 		{
-			if (verbose)
-				fprintf(stderr, "Warning: required texture size too large for prescale, disabling prescale\n");
+			verbose_printf("Warning: required texture size too large for prescale, disabling prescale\n");
 
 			if (preprocess_desc.dwWidth > d3d_device_desc.dwMaxTextureWidth)
 			{
@@ -1421,8 +1400,7 @@ static int create_blit_surface(void)
 				}
 				else
 				{
-					if (verbose)
-						fprintf(stderr, "Error: feedback or prescale effects not supported.\n");
+					verbose_printf("Error: feedback or prescale effects not supported.\n");
 				}
 				IDirect3DDevice7_SetRenderTarget(d3d_device7, previous_target, 0);
 				IDirectDrawSurface7_Release(previous_target);
@@ -1435,8 +1413,7 @@ static int create_blit_surface(void)
 		if (result != DD_OK)
 #endif
 		{
-			if (verbose)
-				fprintf(stderr, "Error creating preprocess surface: %08x\n", (UINT32)result);
+			verbose_printf("Error creating preprocess surface: %08x\n", (UINT32)result);
 			goto error_handling;
 		}
 	}
@@ -1464,23 +1441,22 @@ static int create_blit_surface(void)
 	compute_color_masks(&blit_desc);
 
 	// print out the good stuff
-	if (verbose)
 	{
 		char size[80];
 		char colour[80];
 
 		print_surface_size(texture_surface, size);
 		print_surface_colour(texture_surface, colour);
-		fprintf(stderr, "%s surface created: %s (%s)\n", (texture_desc.ddsCaps.dwCaps2 & DDSCAPS2_TEXTUREMANAGE) ? "Managed texture" : "Texture", size, colour);
+		verbose_printf("%s surface created: %s (%s)\n", (texture_desc.ddsCaps.dwCaps2 & DDSCAPS2_TEXTUREMANAGE) ? "Managed texture" : "Texture", size, colour);
 		if (blit_surface != texture_surface)
 		{
 			print_surface_size(blit_surface, size);
-			fprintf(stderr, "Blit surface created: %s\n", size);
+			verbose_printf("Blit surface created: %s\n", size);
 		}
 		if (preprocess_surface)
 		{
 			print_surface_size(preprocess_surface, size);
-			fprintf(stderr, "Pre-process texture surface created: %s\n", size);
+			verbose_printf("Pre-process texture surface created: %s\n", size);
 		}
 	}
 
@@ -1506,8 +1482,7 @@ static void set_gamma(void)
 	result = IDirectDrawSurface7_QueryInterface(primary_surface, &IID_IDirectDrawGammaControl, (void **)&gamma_control);
 	if (result != DD_OK)
 	{
-		if (verbose)
-			fprintf(stderr, "Warning: could not create gamma control to change brightness: %08x\n", (UINT32)result);
+		verbose_printf("Warning: could not create gamma control to change brightness: %08x\n", (UINT32)result);
 		gamma_control = NULL;
 	}
 
@@ -1908,8 +1883,7 @@ tryagain:
 		return 1;
 	if (result != DD_OK)
 	{
-		if (verbose)
-			fprintf(stderr, "Unable to lock blit_surface: %08x\n", (UINT32)result);
+		verbose_printf("Unable to lock blit_surface: %08x\n", (UINT32)result);
 		return 0;
 	}
 
@@ -1985,8 +1959,7 @@ tryagain:
 		if (result != DD_OK)
 		{
 			// error, print the error and fall back
-			if (verbose)
-				fprintf(stderr, "Unable to blt blit_surface to texture_surface: %08x\n", (UINT32)result);
+			verbose_printf("Unable to blt blit_surface to texture_surface: %08x\n", (UINT32)result);
 			return 0;
 		}
 	}
@@ -2042,8 +2015,7 @@ tryagain:
 	return 1;
 
 surface_lost:
-	if (verbose)
-		fprintf(stderr, "Restoring surfaces\n");
+	verbose_printf("Restoring surfaces\n");
 
 	// go ahead and adjust the window
 	win_adjust_window();
@@ -2212,8 +2184,7 @@ tryagain:
 		if (result != DD_OK)
 		{
 			// error, print the error and fall back
-			if (verbose)
-				fprintf(stderr, "Unable to render to preprocess texture: %08x\n", (UINT32)result);
+			verbose_printf("Unable to render to preprocess texture: %08x\n", (UINT32)result);
 			return 0;
 		}
 
@@ -2326,8 +2297,7 @@ tryagain:
 	if (result != DD_OK)
 	{
 		// error, print the error and fall back
-		if (verbose)
-			fprintf(stderr, "Unable to render to back_surface: %08x\n", (UINT32)result);
+		verbose_printf("Unable to render to back_surface: %08x\n", (UINT32)result);
 		return 0;
 	}
 
@@ -2366,8 +2336,7 @@ tryagain:
 		if (result != DD_OK)
 		{
 			// otherwise, print the error and fall back
-			if (verbose)
-				fprintf(stderr, "Unable to blt back_surface to primary_surface: %08x\n", (UINT32)result);
+			verbose_printf("Unable to blt back_surface to primary_surface: %08x\n", (UINT32)result);
 			return 0;
 		}
 	}
@@ -2399,8 +2368,7 @@ tryagain:
 		if (result != DD_OK)
 		{
 			// error, print the error and fall back
-			if (verbose)
-				fprintf(stderr, "Unable to blt RGB effect to back_surface: %08x\n",	(UINT32)result);
+			verbose_printf("Unable to blt RGB effect to back_surface: %08x\n",	(UINT32)result);
 			return 0;
 		}
 	}
@@ -2408,8 +2376,7 @@ tryagain:
 	return 1;
 
 surface_lost:
-	if (verbose)
-		fprintf(stderr, "Restoring surfaces\n");
+	verbose_printf("Restoring surfaces\n");
 
 	// go ahead and adjust the window
 	win_adjust_window();

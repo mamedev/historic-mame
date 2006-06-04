@@ -111,7 +111,6 @@ static UINT32 atarigt_playfield_scan(UINT32 col, UINT32 row, UINT32 num_cols, UI
 
 VIDEO_START( atarigt )
 {
-	extern UINT32 direct_rgb_components[3];
 	static const struct atarirle_desc modesc =
 	{
 		REGION_GFX3,/* region where the GFX data lives */
@@ -133,7 +132,6 @@ VIDEO_START( atarigt )
 		{{ 0,0x8000,0,0,0,0,0,0 }}	/* mask for the VRAM target */
 	};
 	struct atarirle_desc adjusted_modesc = modesc;
-	UINT32 temp;
 	int i;
 
 	/* blend the playfields and free the temporary one */
@@ -167,10 +165,9 @@ VIDEO_START( atarigt )
 		Machine->pens[i] = i;
 
 	/* compute shift values */
-	rshift = gshift = bshift = 0;
-	for (temp = direct_rgb_components[0]; (temp & 1) == 0; temp >>= 1) rshift++;
-	for (temp = direct_rgb_components[1]; (temp & 1) == 0; temp >>= 1) gshift++;
-	for (temp = direct_rgb_components[2]; (temp & 1) == 0; temp >>= 1) bshift++;
+	rshift = 16;
+	gshift = 8;
+	bshift = 0;
 
 	/* reset statics */
 	playfield_tile_bank = 0;
