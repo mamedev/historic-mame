@@ -32,8 +32,25 @@ Notes:
       U3         - 27C040 EPROM (DIP32)
       UM2/UM51/53- 29F040 EPROM (PLCC32)
       U101/102   - Each location contains a small adapter board plugged into a DIP42 socket. Each
-                   adapter board holds 2x Intel E28F016S5 TSOP40 FlashROMs. On the PCB under the ROMs
-                   it's marked '32MASK'
+                   adapter board holds 2x Intel E28F016S5 TSOP40 16M FlashROMs. On the PCB under the ROMs
+                   it's marked '32MASK'. However, the adapter boards are not standard. If you try to read
+                   the ROMs while they are _ON-THE-ADAPTER_ as a 32M DIP42 EPROM (such as 27C322), the
+                   FlashROMs are damaged and the PCB no longer works :(
+                   Thus, the FlashROMs must be removed and read separately!
+                   The small adapter boards with their respective FlashROMs are laid out like this........
+
+                   |------------------------------|
+                   |                              |
+                   |       U2           U1        |  U102
+                   |                              |
+                   |------------------------------|
+
+                   |------------------------------|
+                   |                              |
+                   |       U2           U1        |  U101
+                   |                              |
+                   |------------------------------|
+
       A42MX16    - Actel A42MX16 FPGA (QFP160)
       AT89C52    - Atmel AT89C52 Microcontroller w/8k internal FlashROM, clock 12MHz (DIP40)
       E1-16XT    - Hyperstone E1-16XT CPU, clock 20MHz
@@ -78,6 +95,7 @@ static WRITE16_HANDLER( pasha2_misc_w )
 		printf("%X\n",activecpu_get_pc());
 }
 
+
 static READ16_HANDLER( fake_r )
 {
 	return rand();
@@ -86,7 +104,7 @@ static READ16_HANDLER( fake_r )
 
 static ADDRESS_MAP_START( pasha2_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x00000000, 0x001fffff) AM_RAM	AM_BASE(&wram)
-	AM_RANGE(0x40000000, 0x4003ffff) AM_RAM AM_BASE(&tiles) //tiles?
+	AM_RANGE(0x40000000, 0x4003ffff) AM_RAM AM_BASE(&tiles)
 	AM_RANGE(0x40060000, 0x40060001) AM_WRITENOP
 	AM_RANGE(0x40064000, 0x40064001) AM_WRITENOP
 	AM_RANGE(0x40068000, 0x40068001) AM_WRITENOP
@@ -116,23 +134,31 @@ static ADDRESS_MAP_START( pasha2_io, ADDRESS_SPACE_IO, 16 )
 	AM_RANGE(0xe0, 0xef) AM_WRITENOP
 ADDRESS_MAP_END
 
+static int a=0;
 VIDEO_UPDATE( pasha2 )
-{/*
-    int x, y, count = 0;
+{
+	int x,y,count;
+	int color;
 
-    fillbitmap(bitmap,Machine->pens[0],cliprect);
+	if(code_pressed_memory(KEYCODE_Q))
+		a^=0xff;
 
-    for(y = 0; y < 256/2; x++)
-    {
-        for(x = 0; x < 256/2; y++)
-        {
-            plot_pixel(bitmap, x*2+0,y,Machine->pens[tiles[count] & 0xff]);
-            plot_pixel(bitmap, x*2+1,y,Machine->pens[(tiles[count] & 0xff00)>>8]);
-            count++;
-        }
-    }
+	/* 2 512x256 bitmaps */
 
-*/
+	count = 0;
+	for (y=0;y < 512/*256*/;y++)
+	{
+		for (x=0;x < 512/2;x++)
+		{
+			color = tiles[count] & 0xff;
+			plot_pixel(bitmap, x*2 + 1, y, Machine->pens[(color ^a /*^ 0xff*/)]);
+
+			color = (tiles[count] & 0xff00) >> 8;
+			plot_pixel(bitmap, x*2 + 0, y, Machine->pens[(color ^ a /*^ 0xff*/)]);
+
+			count++;
+		}
+	}
 }
 
 INPUT_PORTS_START( pasha2 )
@@ -148,6 +174,31 @@ static INTERRUPT_GEN( pasha2_interrupts )
 	}
 
 	//irq3 is enabled but it's empty
+}
+
+// setup a custom palette because pixels use 8 bits per color
+// fake - wrong !!!!!!!
+PALETTE_INIT( pasha2 )
+{
+	int c;
+
+	for (c = 0; c < 256; c++)
+	{
+		int bit0,bit1,bit2,r,g,b;
+		bit0 = (c >> 0) & 0x01;
+		bit1 = (c >> 1) & 0x01;
+		bit2 = (c >> 2) & 0x01;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		bit0 = (c >> 3) & 0x01;
+		bit1 = (c >> 4) & 0x01;
+		bit2 = (c >> 5) & 0x01;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		bit0 = (c >> 6) & 0x01;
+		bit1 = (c >> 7) & 0x01;
+		b = 0x55 * bit0 + 0xaa * bit1;
+
+		palette_set_color(c,r,g,b);
+	}
 }
 
 static MACHINE_DRIVER_START( pasha2 )
@@ -166,7 +217,8 @@ static MACHINE_DRIVER_START( pasha2 )
 	MDRV_SCREEN_SIZE(512, 512)
 	MDRV_VISIBLE_AREA(0, 511, 0, 511)
 
-	MDRV_PALETTE_LENGTH(0x200)
+	MDRV_PALETTE_LENGTH(0x100)
+	MDRV_PALETTE_INIT(pasha2)
 
 	MDRV_VIDEO_UPDATE(pasha2)
 
@@ -184,17 +236,16 @@ static MACHINE_DRIVER_START( pasha2 )
 	//and ATMEL DREAM SAM9773
 MACHINE_DRIVER_END
 
-
 ROM_START( pasha2 )
 	ROM_REGION16_BE( 0x80000, REGION_USER1, 0 ) /* Hyperstone CPU Code */
 	ROM_LOAD( "pp2.u3",       0x00000, 0x80000, CRC(1c701273) SHA1(f465323a1d3f2fd752c51c178fafe4cc866e28d6) )
 
 	ROM_REGION16_BE( 0x400000*6, REGION_USER2, ROMREGION_ERASEFF ) /* data roms */
-	ROM_LOAD16_BYTE( "pp2-b.u101",   0x000000, 0x200000, BAD_DUMP CRC(82b42d4d) SHA1(57b71b141350ed7a68fe152d85945ff0f2290eca) )
-	ROM_LOAD16_BYTE( "pp2-a.u101",   0x000001, 0x200000, BAD_DUMP CRC(a571dee8) SHA1(e730e8239c688f4b55a8f7ee88f9c64a228e215a) )
-	ROM_LOAD16_BYTE( "pp2-b.u102",   0x400000, 0x200000, BAD_DUMP CRC(9cf4363c) SHA1(1ab644ae0ef44df6690fe2ad794c4a79cb941ddb) )
-	ROM_LOAD16_BYTE( "pp2-a.u102",   0x400001, 0x200000, BAD_DUMP CRC(45460cd3) SHA1(4df8bf9bbd90563816c86ef1e51447e828806071) )
-	// empty space
+	ROM_LOAD16_BYTE( "pp2-u2.u101",  0x000000, 0x200000, CRC(85c4a2d0) SHA1(452b24b74bd0b65d2d6852486e2917f94e21ecc8) )
+	ROM_LOAD16_BYTE( "pp2-u1.u101",  0x000001, 0x200000, CRC(96cbd04e) SHA1(a4e7dd61194584b3c4217674d78ab2fd96b7b2e0) )
+	ROM_LOAD16_BYTE( "pp2-u2.u102",  0x400000, 0x200000, CRC(2097d88c) SHA1(7597578e6ddca00909feac35d9d7331f783b2bd6) )
+	ROM_LOAD16_BYTE( "pp2-u1.u102",  0x400001, 0x200000, CRC(7a3492fb) SHA1(de72c4d10e17eaf2b7531f637b42cbb3d07819b5) )
+	// empty space, but no empty sockets on the pcb
 
 	ROM_REGION( 0x0800, REGION_CPU2, 0 ) /* AT89C52 (protected) */
 	ROM_LOAD( "pasha2_at89c52",  0x0000, 0x0800, NO_DUMP ) /* MCU internal 8K flash */
@@ -223,7 +274,7 @@ DRIVER_INIT( pasha2 )
 {
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x95744, 0x95747, 0, 0, pasha2_speedup_r );
 
-	memory_set_bankptr(1, memory_region(REGION_USER2) + 0x400000 * 0);
+	memory_set_bankptr(1, memory_region(REGION_USER2));
 }
 
 GAME( 1998, pasha2, 0, pasha2, pasha2, pasha2, ROT0, "Dong Sung", "Pasha Pasha 2", GAME_NOT_WORKING | GAME_NO_SOUND )

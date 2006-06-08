@@ -147,7 +147,7 @@ void winwindow_video_window_update(mame_bitmap *bitmap, const rectangle *bounds,
 
 void win_set_palette_entry(int _index, UINT8 red, UINT8 green, UINT8 blue);
 
-int winwindow_process_events(int ingame);
+void winwindow_process_events(int ingame);
 void winwindow_process_events_periodic(void);
 
 UINT32 *win_prepare_palette(win_blit_params *params);

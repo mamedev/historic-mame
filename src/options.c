@@ -38,6 +38,7 @@ struct _options_data
 	UINT32					flags;				/* flags from the entry */
 	const char *			data;				/* data for this item */
 	const char *			description;		/* description for this item */
+	void					(*callback)(const char *arg);	/* callback to be invoked when parsing */
 };
 
 
@@ -149,6 +150,23 @@ void options_add_entries(const options_entry *entrylist)
 
 
 /*-------------------------------------------------
+    options_set_option_callback - specifies a
+    callback to be invoked when parsing options
+-------------------------------------------------*/
+
+void options_set_option_callback(const char *name, void (*callback)(const char *arg))
+{
+	options_data *data;
+
+	/* find our entry */
+	data = find_entry_data(name, TRUE);
+	assert(data);
+
+	data->callback = callback;
+}
+
+
+/*-------------------------------------------------
     options_free_entries - free all the entries
     that were added
 -------------------------------------------------*/
@@ -221,6 +239,10 @@ int options_parse_command_line(int argc, char **argv)
 			fprintf(stderr, "Error: option %s expected a parameter\n", argv[arg]);
 			return 1;
 		}
+
+		/* invoke callback, if present */
+		if (data->callback)
+			(*data->callback)(newdata);
 
 		/* allocate a new copy of data for this */
 		update_data(data, newdata);

@@ -221,6 +221,7 @@ const options_entry video_opts[] =
 	{ "triplebuffer;tb",          "0",    OPTION_BOOLEAN, "enable triple buffering" },
 	{ "switchres",                "0",    OPTION_BOOLEAN, "enable resolution switching" },
 	{ "filter;d3dfilter;flt",     "1",    OPTION_BOOLEAN, "enable bilinear filtering on screen output" },
+	{ "prescale;d3dprescale",     "0",    0,              "screen texture prescaling amount" },
 	{ "full_screen_gamma;fsg",    "1.0",  0,              "gamma value in full screen mode" },
 
 	// deprecated junk
@@ -256,12 +257,6 @@ int winvideo_init(void)
 	// set up monitors first
 	init_monitors();
 
-#ifdef MAME_DEBUG
-	// if we are in debug mode, never go full screen
-	if (options.mame_debug)
-		video_config.windowed = TRUE;
-#endif
-
 	// initialize the window system so we can make windows
 	if (winwindow_init())
 		goto error;
@@ -286,7 +281,7 @@ int winvideo_init(void)
 
 	// if we're running < 5 minutes, allow us to skip warnings to facilitate benchmarking/validation testing
 	if (video_config.framestorun > 0 && video_config.framestorun < 60*60*5)
-		options.skip_warnings = options.skip_gameinfo = options.skip_disclaimer = 1;
+		options.skip_warnings = options.skip_gameinfo = options.skip_disclaimer = TRUE;
 
 	return 0;
 
@@ -689,7 +684,9 @@ static void update_throttle(mame_time emutime)
 {
 	static double ticks_per_sleep_msec = 0;
 	cycles_t target, curr, cps, diffcycles;
+	int allowed_to_sleep;
 	subseconds_t subsecs_per_cycle;
+	int paused = mame_is_paused();
 
 	// if we're only syncing to the refresh, bail now
 	if (video_config.syncrefresh)
@@ -697,7 +694,7 @@ static void update_throttle(mame_time emutime)
 
 	// if we're paused, emutime will not advance; explicitly resync and set us backwards
 	// 1/60th of a second
-	if (mame_is_paused())
+	if (paused)
 		throttle_realtime = throttle_emutime = sub_subseconds_from_mame_time(emutime, MAX_SUBSECONDS / PAUSED_REFRESH_RATE);
 
 	// if time moved backwards (reset), or if it's been more than 1 second in emulated time, resync
@@ -732,13 +729,15 @@ static void update_throttle(mame_time emutime)
 	// this counts as idle time
 	profiler_mark(PROFILER_IDLE);
 
+	// determine whether or not we are allowed to sleep
+	allowed_to_sleep = video_config.sleep && (!video_config.autoframeskip || video_config.frameskip == 0);
+
 	// sync
 	for (curr = osd_cycles(); curr - target < 0; curr = osd_cycles())
 	{
 		// if we have enough time to sleep, do it
 		// ...but not if we're autoframeskipping and we're behind
-		if (video_config.sleep && (!video_config.autoframeskip || video_config.frameskip == 0) &&
-			(target - curr) > (cycles_t)(ticks_per_sleep_msec * 1.1))
+		if (paused || (allowed_to_sleep && (target - curr) > (cycles_t)(ticks_per_sleep_msec * 1.1)))
 		{
 			cycles_t next;
 
@@ -813,6 +812,10 @@ static void update_fps(mame_time emutime)
 
 static void update_autoframeskip(void)
 {
+	// skip if paused
+	if (mame_is_paused())
+		return;
+
 	// don't adjust frameskip if we're paused or if the debugger was
 	// visible this cycle or if we haven't run yet
 	if (cpu_getcurrentframe() > 2 * FRAMESKIP_LEVELS)
@@ -957,6 +960,11 @@ static void extract_video_config(void)
 	// global options: extract the data
 	video_config.windowed      = options_get_bool ("window", TRUE);
 	video_config.numscreens    = options_get_int  ("numscreens", TRUE);
+#ifdef MAME_DEBUG
+	// if we are in debug mode, never go full screen
+	if (options.mame_debug)
+		video_config.windowed = TRUE;
+#endif
 
 	// per-window options: extract the data
 	get_resolution("resolution0", &video_config.window[0], TRUE);
@@ -971,6 +979,7 @@ static void extract_video_config(void)
 	video_config.triplebuf     = options_get_bool ("triplebuffer", TRUE);
 	video_config.switchres     = options_get_bool ("switchres", TRUE);
 	video_config.filter        = options_get_bool ("filter", TRUE);
+	video_config.prescale      = options_get_int  ("prescale", TRUE);
 	video_config.gamma         = options_get_float("full_screen_gamma", TRUE);
 
 	// performance options: sanity check values

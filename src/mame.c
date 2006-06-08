@@ -301,9 +301,8 @@ int run_game(int game)
 			settingsloaded = config_load_settings();
 			nvram_load();
 
-			/* initialize the UI and display the startup screens */
-			if (ui_display_startup_screens(!settingsloaded && !options.skip_disclaimer, !options.skip_warnings, !options.skip_gameinfo) != 0)
-				fatalerror("User cancelled");
+			/* display the startup screens */
+			ui_display_startup_screens(!settingsloaded && !options.skip_disclaimer, !options.skip_warnings, !options.skip_gameinfo);
 
 			/* ensure we don't show the opening screens on a reset */
 			options.skip_disclaimer = options.skip_warnings = options.skip_gameinfo = TRUE;

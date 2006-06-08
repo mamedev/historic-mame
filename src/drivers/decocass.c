@@ -476,6 +476,7 @@ static MACHINE_DRIVER_START( ctsttape )
 	MDRV_MACHINE_RESET(ctsttape)
 MACHINE_DRIVER_END
 
+
 static MACHINE_DRIVER_START( chwy )
 
 	/* basic machine hardware */
@@ -752,7 +753,7 @@ ROM_END
 ROM_START( chwy )
 	DECOCASS_COMMON_ROMS
 
-	ROM_REGION( 0x01000, REGION_USER1, 0 )	  /* dongle data */
+	ROM_REGION( 0x00020, REGION_USER1, 0 )	  /* dongle data */
 	/* The dongle data is reverse engineered from manual decryption */
 	ROM_LOAD( "chwy.pro",   0x0000, 0x0020, BAD_DUMP CRC(2fae678e) SHA1(4a7de851442d4c1d690de03262f0e136a52fca35) )
 
@@ -862,7 +863,8 @@ ROM_START( cexplore )
 	DECOCASS_COMMON_ROMS
 
 	ROM_REGION( 0x00020, REGION_USER1, 0 )	  /* dongle data */
-	ROM_LOAD( "de-0061.pro", 0x0000, 0x0020, CRC(e09ae5de) SHA1(7dec067d0739a6dad2607132641b66880a5b7751) )
+	/* The dongle data is reverse engineered by table analysis */
+	ROM_LOAD( "cexplore.pro", 0x0000, 0x0020, BAD_DUMP CRC(c7a9ac8f) SHA1(b0a566d948f71a4eddcde0dd5e9e69ca96f71c36) )
 
 	ROM_REGION( 0x10000, REGION_USER2, 0 )	  /* (max) 64k for cassette image */
 	ROM_LOAD( "cexplore.cas", 0x0000, 0x8000, CRC(fae49c66) SHA1(4ae69e2f706fdf30204f0aa1277619395cacc21b) )

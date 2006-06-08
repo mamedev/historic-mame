@@ -72,6 +72,7 @@ struct _win_video_config
 	int					triplebuf;					// triple buffer
 	int					switchres;					// switch resolutions
 	int					filter;						// enable filtering
+	int					prescale;					// prescale factor
 	float				gamma;						// full screen gamma
 };
 

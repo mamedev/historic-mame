@@ -52,6 +52,7 @@ struct _options_entry
 ***************************************************************************/
 
 void options_add_entries(const options_entry *entrylist);
+void options_set_option_callback(const char *name, void (*callback)(const char *arg));
 void options_free_entries(void);
 
 int options_parse_command_line(int argc, char **argv);

@@ -1410,7 +1410,7 @@ void winwindow_process_events_periodic(void)
 //  winwindow_process_events
 //============================================================
 
-int winwindow_process_events(int ingame)
+void winwindow_process_events(int ingame)
 {
 	int is_debugger_visible = 0;
 	MSG message;
@@ -1491,9 +1491,6 @@ int winwindow_process_events(int ingame)
 			DispatchMessage(&message);
 		}
 	}
-
-	// return 1 if we slept this frame
-	return 0;
 }
 
 

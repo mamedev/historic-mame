@@ -47,6 +47,7 @@ enum
 
 typedef struct _d3d d3d;
 typedef struct _d3d_device d3d_device;
+typedef struct _d3d_surface d3d_surface;
 typedef struct _d3d_texture d3d_texture;
 typedef struct _d3d_vertex_buffer d3d_vertex_buffer;
 
@@ -93,7 +94,8 @@ enum _d3d_caps_index
 	CAPS_TEXTURE_OP_CAPS,
 	CAPS_MAX_TEXTURE_ASPECT,
 	CAPS_MAX_TEXTURE_WIDTH,
-	CAPS_MAX_TEXTURE_HEIGHT
+	CAPS_MAX_TEXTURE_HEIGHT,
+	CAPS_STRETCH_RECT_FILTER
 };
 
 
@@ -113,7 +115,7 @@ struct _d3d_interface
 	UINT     (*get_adapter_mode_count)(d3d *d3dptr, UINT adapter, D3DFORMAT format);
 	HMONITOR (*get_adapter_monitor)(d3d *d3dptr, UINT adapter);
 	HRESULT  (*get_caps_dword)(d3d *d3dptr, UINT adapter, D3DDEVTYPE devtype, d3d_caps_index which, DWORD *value);
-	HRESULT  (*release)(d3d *d3dptr);
+	ULONG    (*release)(d3d *d3dptr);
 };
 
 
@@ -126,20 +128,37 @@ struct _d3d_device_interface
 {
 	HRESULT (*begin_scene)(d3d_device *dev);
 	HRESULT (*clear)(d3d_device *dev, DWORD count, const D3DRECT *rects, DWORD flags, D3DCOLOR color, float z, DWORD stencil);
+	HRESULT (*create_offscreen_plain_surface)(d3d_device *dev, UINT width, UINT height, D3DFORMAT format, D3DPOOL pool, d3d_surface **surface);
 	HRESULT (*create_texture)(d3d_device *dev, UINT width, UINT height, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool, d3d_texture **texture);
 	HRESULT (*create_vertex_buffer)(d3d_device *dev, UINT length, DWORD usage, DWORD fvf, D3DPOOL pool, d3d_vertex_buffer **buf);
 	HRESULT (*draw_primitive)(d3d_device *dev, D3DPRIMITIVETYPE type, UINT start, UINT count);
 	HRESULT (*end_scene)(d3d_device *dev);
 	HRESULT (*get_raster_status)(d3d_device *dev, D3DRASTER_STATUS *status);
+	HRESULT (*get_render_target)(d3d_device *dev, DWORD index, d3d_surface **surface);
 	HRESULT (*present)(d3d_device *dev, const RECT *source, const RECT *dest, HWND override, RGNDATA *dirty, DWORD flags);
-	HRESULT (*release)(d3d_device *dev);
+	ULONG   (*release)(d3d_device *dev);
 	HRESULT (*reset)(d3d_device *dev, d3d_present_parameters *params);
 	HRESULT (*set_render_state)(d3d_device *dev, D3DRENDERSTATETYPE state, DWORD value);
+	HRESULT (*set_render_target)(d3d_device *dev, DWORD index, d3d_surface *surf);
 	HRESULT (*set_stream_source)(d3d_device *dev, UINT number, d3d_vertex_buffer *vbuf, UINT stride);
 	HRESULT (*set_texture)(d3d_device *dev, DWORD stage, d3d_texture *tex);
 	HRESULT (*set_texture_stage_state)(d3d_device *dev, DWORD stage, D3DTEXTURESTAGESTATETYPE state, DWORD value);
 	HRESULT (*set_vertex_shader)(d3d_device *dev, D3DFORMAT format);
+	HRESULT (*stretch_rect)(d3d_device *dev, d3d_surface *source, const RECT *srcrect, d3d_surface *dest, const RECT *dstrect, D3DTEXTUREFILTERTYPE filter);
 	HRESULT (*test_cooperative_level)(d3d_device *dev);
+};
+
+
+//============================================================
+//  Direct3DSurface interfaces
+//============================================================
+
+typedef struct _d3d_surface_interface d3d_surface_interface;
+struct _d3d_surface_interface
+{
+	HRESULT (*lock_rect)(d3d_surface *surf, D3DLOCKED_RECT *locked, const RECT *rect, DWORD flags);
+	ULONG   (*release)(d3d_surface *tex);
+	HRESULT (*unlock_rect)(d3d_surface *surf);
 };
 
 
@@ -150,11 +169,11 @@ struct _d3d_device_interface
 typedef struct _d3d_texture_interface d3d_texture_interface;
 struct _d3d_texture_interface
 {
+	HRESULT (*get_surface_level)(d3d_texture *tex, UINT level, d3d_surface **surface);
 	HRESULT (*lock_rect)(d3d_texture *tex, UINT level, D3DLOCKED_RECT *locked, const RECT *rect, DWORD flags);
-	HRESULT (*release)(d3d_texture *tex);
+	ULONG   (*release)(d3d_texture *tex);
 	HRESULT (*unlock_rect)(d3d_texture *tex, UINT level);
 };
-
 
 
 //============================================================
@@ -165,7 +184,7 @@ typedef struct _d3d_vertex_buffer_interface d3d_vertex_buffer_interface;
 struct _d3d_vertex_buffer_interface
 {
 	HRESULT (*lock)(d3d_vertex_buffer *vbuf, UINT offset, UINT size, VOID **data, DWORD flags);
-	HRESULT (*release)(d3d_vertex_buffer *vbuf);
+	ULONG   (*release)(d3d_vertex_buffer *vbuf);
 	HRESULT (*unlock)(d3d_vertex_buffer *vbuf);
 };
 
@@ -184,6 +203,7 @@ struct _d3d
 	// interface pointers
 	d3d_interface				d3d;
 	d3d_device_interface		device;
+	d3d_surface_interface		surface;
 	d3d_texture_interface		texture;
 	d3d_vertex_buffer_interface vertexbuf;
 };

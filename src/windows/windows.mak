@@ -59,6 +59,9 @@ LD = @$(OBJ)/vconv.exe ld
 AR = @$(OBJ)/vconv.exe ar
 RC = @$(OBJ)/vconv.exe windres
 
+# make sure we use the multithreaded runtime
+CC += /MT
+
 # turn on link-time codegen if the MAXOPT flag is also set
 ifdef MAXOPT
 CC += /GL
@@ -112,6 +115,9 @@ endif
 # add the windows libaries
 LIBS += -luser32 -lgdi32 -lddraw -ldsound -ldinput -ldxguid -lwinmm -ladvapi32
 
+ifdef PTR64
+LIBS +=  -lbufferoverflowu
+endif
 
 
 #-------------------------------------------------
@@ -160,7 +166,11 @@ endif
 
 # non-UI builds need a stub resource file
 ifeq ($(WINUI),)
+ifdef PTR64
+OSOBJS += $(OBJ)/$(MAMEOS)/mamex64.res
+else
 OSOBJS += $(OBJ)/$(MAMEOS)/mame.res
+endif
 endif
 
 

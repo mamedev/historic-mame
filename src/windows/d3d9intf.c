@@ -185,7 +185,7 @@ static HRESULT d3d_get_caps_dword(d3d *d3dptr, UINT adapter, D3DDEVTYPE devtype,
 	switch (which)
 	{
 		case CAPS_PRESENTATION_INTERVALS:	*value = caps.PresentationIntervals;	break;
-		case CAPS_CAPS2:					*value = caps.DevCaps;					break;
+		case CAPS_CAPS2:					*value = caps.Caps2;					break;
 		case CAPS_DEV_CAPS:					*value = caps.DevCaps;					break;
 		case CAPS_SRCBLEND_CAPS:			*value = caps.SrcBlendCaps;				break;
 		case CAPS_DSTBLEND_CAPS:			*value = caps.DestBlendCaps;			break;
@@ -196,15 +196,16 @@ static HRESULT d3d_get_caps_dword(d3d *d3dptr, UINT adapter, D3DDEVTYPE devtype,
 		case CAPS_MAX_TEXTURE_ASPECT:		*value = caps.MaxTextureAspectRatio;	break;
 		case CAPS_MAX_TEXTURE_WIDTH:		*value = caps.MaxTextureWidth;			break;
 		case CAPS_MAX_TEXTURE_HEIGHT:		*value = caps.MaxTextureHeight;			break;
+		case CAPS_STRETCH_RECT_FILTER:		*value = caps.StretchRectFilterCaps;	break;
 	}
 	return result;
 }
 
 
-static HRESULT d3d_release(d3d *d3dptr)
+static ULONG d3d_release(d3d *d3dptr)
 {
 	IDirect3D9 *d3d9 = (IDirect3D9 *)d3dptr->d3dobj;
-	HRESULT result = IDirect3D9_Release(d3d9);
+	ULONG result = IDirect3D9_Release(d3d9);
 	FreeLibrary(d3dptr->dllhandle);
 	free(d3dptr);
 	return result;
@@ -245,6 +246,13 @@ static HRESULT device_clear(d3d_device *dev, DWORD count, const D3DRECT *rects, 
 }
 
 
+static HRESULT device_create_offscreen_plain_surface(d3d_device *dev, UINT width, UINT height, D3DFORMAT format, D3DPOOL pool, d3d_surface **surface)
+{
+	IDirect3DDevice9 *device = (IDirect3DDevice9 *)dev;
+	return IDirect3DDevice9_CreateOffscreenPlainSurface(device, width, height, format, pool, (IDirect3DSurface9 **)surface, NULL);
+}
+
+
 static HRESULT device_create_texture(d3d_device *dev, UINT width, UINT height, UINT levels, DWORD usage, D3DFORMAT format, D3DPOOL pool, d3d_texture **texture)
 {
 	IDirect3DDevice9 *device = (IDirect3DDevice9 *)dev;
@@ -280,6 +288,13 @@ static HRESULT device_get_raster_status(d3d_device *dev, D3DRASTER_STATUS *statu
 }
 
 
+static HRESULT device_get_render_target(d3d_device *dev, DWORD index, d3d_surface **surface)
+{
+	IDirect3DDevice9 *device = (IDirect3DDevice9 *)dev;
+	return IDirect3DDevice9_GetRenderTarget(device, index, (IDirect3DSurface9 **)surface);
+}
+
+
 static HRESULT device_present(d3d_device *dev, const RECT *source, const RECT *dest, HWND override, RGNDATA *dirty, DWORD flags)
 {
 	IDirect3DDevice9 *device = (IDirect3DDevice9 *)dev;
@@ -298,7 +313,7 @@ static HRESULT device_present(d3d_device *dev, const RECT *source, const RECT *d
 }
 
 
-static HRESULT device_release(d3d_device *dev)
+static ULONG device_release(d3d_device *dev)
 {
 	IDirect3DDevice9 *device = (IDirect3DDevice9 *)dev;
 	return IDirect3DDevice9_Release(device);
@@ -318,6 +333,14 @@ static HRESULT device_set_render_state(d3d_device *dev, D3DRENDERSTATETYPE state
 {
 	IDirect3DDevice9 *device = (IDirect3DDevice9 *)dev;
 	return IDirect3DDevice9_SetRenderState(device, state, value);
+}
+
+
+static HRESULT device_set_render_target(d3d_device *dev, DWORD index, d3d_surface *surf)
+{
+	IDirect3DDevice9 *device = (IDirect3DDevice9 *)dev;
+	IDirect3DSurface9 *surface = (IDirect3DSurface9 *)surf;
+	return IDirect3DDevice9_SetRenderTarget(device, index, surface);
 }
 
 
@@ -375,6 +398,15 @@ static HRESULT device_set_vertex_shader(d3d_device *dev, D3DFORMAT format)
 }
 
 
+static HRESULT device_stretch_rect(d3d_device *dev, d3d_surface *source, const RECT *srcrect, d3d_surface *dest, const RECT *dstrect, D3DTEXTUREFILTERTYPE filter)
+{
+	IDirect3DDevice9 *device = (IDirect3DDevice9 *)dev;
+	IDirect3DSurface9 *ssurface = (IDirect3DSurface9 *)source;
+	IDirect3DSurface9 *dsurface = (IDirect3DSurface9 *)dest;
+	return IDirect3DDevice9_StretchRect(device, ssurface, srcrect, dsurface, dstrect, filter);
+}
+
+
 static HRESULT device_test_cooperative_level(d3d_device *dev)
 {
 	IDirect3DDevice9 *device = (IDirect3DDevice9 *)dev;
@@ -386,20 +418,58 @@ static d3d_device_interface d3d9_device_interface =
 {
 	device_begin_scene,
 	device_clear,
+	device_create_offscreen_plain_surface,
 	device_create_texture,
 	device_create_vertex_buffer,
 	device_draw_primitive,
 	device_end_scene,
 	device_get_raster_status,
+	device_get_render_target,
 	device_present,
 	device_release,
 	device_reset,
 	device_set_render_state,
+	device_set_render_target,
 	device_set_stream_source,
 	device_set_texture,
 	device_set_texture_stage_state,
 	device_set_vertex_shader,
+	device_stretch_rect,
 	device_test_cooperative_level
+};
+
+
+
+//============================================================
+//  Direct3DSurface interfaces
+//============================================================
+
+static HRESULT surface_lock_rect(d3d_surface *surf, D3DLOCKED_RECT *locked, const RECT *rect, DWORD flags)
+{
+	IDirect3DSurface9 *surface = (IDirect3DSurface9 *)surf;
+	return IDirect3DSurface9_LockRect(surface, locked, rect, flags);
+}
+
+
+static ULONG surface_release(d3d_surface *surf)
+{
+	IDirect3DSurface9 *surface = (IDirect3DSurface9 *)surf;
+	return IDirect3DSurface9_Release(surface);
+}
+
+
+static HRESULT surface_unlock_rect(d3d_surface *surf)
+{
+	IDirect3DSurface9 *surface = (IDirect3DSurface9 *)surf;
+	return IDirect3DSurface9_UnlockRect(surface);
+}
+
+
+static d3d_surface_interface d3d9_surface_interface =
+{
+	surface_lock_rect,
+	surface_release,
+	surface_unlock_rect
 };
 
 
@@ -408,6 +478,13 @@ static d3d_device_interface d3d9_device_interface =
 //  Direct3DTexture interfaces
 //============================================================
 
+static HRESULT texture_get_surface_level(d3d_texture *tex, UINT level, d3d_surface **surface)
+{
+	IDirect3DTexture9 *texture = (IDirect3DTexture9 *)tex;
+	return IDirect3DTexture9_GetSurfaceLevel(texture, level, (IDirect3DSurface9 **)surface);
+}
+
+
 static HRESULT texture_lock_rect(d3d_texture *tex, UINT level, D3DLOCKED_RECT *locked, const RECT *rect, DWORD flags)
 {
 	IDirect3DTexture9 *texture = (IDirect3DTexture9 *)tex;
@@ -415,7 +492,7 @@ static HRESULT texture_lock_rect(d3d_texture *tex, UINT level, D3DLOCKED_RECT *l
 }
 
 
-static HRESULT texture_release(d3d_texture *tex)
+static ULONG texture_release(d3d_texture *tex)
 {
 	IDirect3DTexture9 *texture = (IDirect3DTexture9 *)tex;
 	return IDirect3DTexture9_Release(texture);
@@ -431,6 +508,7 @@ static HRESULT texture_unlock_rect(d3d_texture *tex, UINT level)
 
 static d3d_texture_interface d3d9_texture_interface =
 {
+	texture_get_surface_level,
 	texture_lock_rect,
 	texture_release,
 	texture_unlock_rect
@@ -449,7 +527,7 @@ static HRESULT vertex_buffer_lock(d3d_vertex_buffer *vbuf, UINT offset, UINT siz
 }
 
 
-static HRESULT vertex_buffer_release(d3d_vertex_buffer *vbuf)
+static ULONG vertex_buffer_release(d3d_vertex_buffer *vbuf)
 {
 	IDirect3DVertexBuffer9 *vertexbuf = (IDirect3DVertexBuffer9 *)vbuf;
 	return IDirect3DVertexBuffer9_Release(vertexbuf);
@@ -480,6 +558,7 @@ static void set_interfaces(d3d *d3dptr)
 {
 	d3dptr->d3d = d3d9_interface;
 	d3dptr->device = d3d9_device_interface;
+	d3dptr->surface = d3d9_surface_interface;
 	d3dptr->texture = d3d9_texture_interface;
 	d3dptr->vertexbuf = d3d9_vertex_buffer_interface;
 }

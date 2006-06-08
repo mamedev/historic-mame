@@ -6340,6 +6340,7 @@ Other Sun games
 	DRIVER( wbeachv2 )	/* (c) 1995 */
 	DRIVER( excelsr )	/* (c) 1995 */
 	DRIVER( hotmind )	/* (c) 1995 */
+	DRIVER( hrdtimes )	/* (c) 1994 */
 	DRIVER( drtomy )	/* (c) 1993 no copyright message (1993 on pcb), some code taken from 'Big Karnak' */
 	DRIVER( sderby )	/* (c) 1996 */
 	DRIVER( pmroulet )

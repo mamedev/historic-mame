@@ -17,6 +17,11 @@
 typedef struct _ptm6840_interface ptm6840_interface;
 struct _ptm6840_interface
 {
+	double internal_clock;
+	double external_clock1;
+	double external_clock2;
+	double external_clock3;
+
 	write8_handler	out1_func;	// function to call when output1 changes
 	write8_handler	out2_func;	// function to call when output2 changes
 	write8_handler	out3_func;	// function to call when output3 changes
@@ -48,24 +53,29 @@ READ8_HANDLER( ptm6840_1_r );
 READ8_HANDLER( ptm6840_2_r );
 READ8_HANDLER( ptm6840_3_r );
 
-READ16_HANDLER( ptm6840_0_r16l );
-READ16_HANDLER( ptm6840_1_r16l );
-READ16_HANDLER( ptm6840_2_r16l );
-READ16_HANDLER( ptm6840_3_r16l );
+READ16_HANDLER( ptm6840_0_lsb_r );
+READ16_HANDLER( ptm6840_1_lsb_r );
+READ16_HANDLER( ptm6840_2_lsb_r );
+READ16_HANDLER( ptm6840_3_lsb_r );
 
-READ16_HANDLER( ptm6840_0_r16u );
-READ16_HANDLER( ptm6840_1_r16u );
-READ16_HANDLER( ptm6840_2_r16u );
-READ16_HANDLER( ptm6840_3_r16u );
+READ16_HANDLER( ptm6840_0_msb_r );
+READ16_HANDLER( ptm6840_1_msb_r );
+READ16_HANDLER( ptm6840_2_msb_r );
+READ16_HANDLER( ptm6840_3_msb_r );
 
 WRITE8_HANDLER( ptm6840_0_w );
 WRITE8_HANDLER( ptm6840_1_w );
 WRITE8_HANDLER( ptm6840_2_w );
 WRITE8_HANDLER( ptm6840_3_w );
 
-WRITE16_HANDLER( ptm6840_0_w16 );
-WRITE16_HANDLER( ptm6840_1_w16 );
-WRITE16_HANDLER( ptm6840_2_w16 );
-WRITE16_HANDLER( ptm6840_3_w16 );
+WRITE16_HANDLER( ptm6840_0_lsb_w );
+WRITE16_HANDLER( ptm6840_1_lsb_w );
+WRITE16_HANDLER( ptm6840_2_lsb_w );
+WRITE16_HANDLER( ptm6840_3_lsb_w );
+
+WRITE16_HANDLER( ptm6840_0_msb_w );
+WRITE16_HANDLER( ptm6840_1_msb_w );
+WRITE16_HANDLER( ptm6840_2_msb_w );
+WRITE16_HANDLER( ptm6840_3_msb_w );
 
 #endif /* PTM_6840 */

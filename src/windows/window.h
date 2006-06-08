@@ -46,26 +46,31 @@ typedef struct _win_window_info win_window_info;
 struct _win_window_info
 {
 	win_window_info *	next;
+	volatile int		init_state;
 
 	// window handle and info
 	HWND				hwnd;
+	TCHAR				title[256];
 	RECT				non_fullscreen_bounds;
+	int					startmaximized;
 	int					isminimized;
 	int					ismaximized;
 	int					resize_state;
 
 	// monitor info
 	win_monitor_info *	monitor;
+	int					fullscreen;
 	int					maxwidth, maxheight;
 	int					depth;
 	int					refresh;
 	float				aspect;
 
 	// rendering info
+	osd_lock *			render_lock;
 	render_target *		target;
 	int					targetview;
 	int					targetorient;
-	const render_primitive *primlist;
+	const render_primitive_list *primlist;
 
 	// drawing data
 	void *				gdidata;
@@ -151,7 +156,7 @@ LRESULT CALLBACK winwindow_video_window_proc(HWND wnd, UINT message, WPARAM wpar
 void winwindow_toggle_full_screen(void);
 
 void winwindow_process_events_periodic(void);
-int winwindow_process_events(int ingame);
+void winwindow_process_events(int ingame);
 
 #if HAS_WINDOW_MENU
 int win_create_menu(HMENU *menus);

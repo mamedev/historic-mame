@@ -38,7 +38,7 @@ There is a protection chip (similar to and replacing the MPU4 Characteriser, whi
 A decent schematic for the MPU4 board, amongst other info is available,
 see http://www.mameworld.net/agemame/techinfo/mpu4.php .
 
-No video card schematics ever left the PCB factory, but the map we have seems pretty decent.
+No video card schematics ever left the PCB factory, but some decent scans of the board have been made.
 
 Additional: 68k HALT line is tied to the reset circuit of the MPU4.
 
@@ -47,6 +47,8 @@ Emulating the standalone MPU4 is a priority, unless this works, the video won't 
 Everything here is preliminary...  the boards are quite fussy with regards their self tests
 and the timing may have to be perfect for them to function correctly.  (as the comms are
 timer driven, the video is capable of various raster effects etc.)
+An new emulation the 6840 timer chip is being created from the existing, incomplete emulations, and is linked
+to here.
 
 Datasheets are available for the main components, The AGEMAME site mirrors a few of the harder-to-find ones.
 
@@ -203,7 +205,8 @@ Datasheets are available for the main components, The AGEMAME site mirrors a few
  TODO: - get better memorymap.
        - Get MPU4 board working properly, so that video layer will operate.
        - Confirm that MC6850 emulation is sufficient.
-       - Confirm that MC6840 emulation actually works (it appears to, but it could do with another view).
+       - Confirm that MC6840 emulation actually works (it appears to, but there is no output,
+         or correct IRQ handling).
 
 */
 
@@ -468,6 +471,8 @@ static WRITE8_HANDLER( ic2_o3_callback )
 
 static const ptm6840_interface ptm_ic2_intf =
 {
+	1250,
+	1250,	1250,	1250,
 	ic2_o1_callback, ic2_o2_callback, ic2_o3_callback,
 	cpu0_irq
 };
@@ -481,6 +486,8 @@ static void cpu1_irq(int state)
 
 static const ptm6840_interface ptm_vid_intf =
 {
+	1250,
+	1250,	1250,	1250,
 	NULL, NULL, NULL,
 	cpu1_irq
 };
@@ -1743,8 +1750,8 @@ static ADDRESS_MAP_START( mpu4_vid_map, ADDRESS_SPACE_PROGRAM, 16 )
     AM_RANGE(0xff8002, 0xff8003) AM_READ(  vidcard_uart_rx_r )  // 6850 compatible uart read  data
     AM_RANGE(0xff8002, 0xff8003) AM_WRITE( vidcard_uart_tx_w )  // 6850 compatible uart write data
 
-	AM_RANGE(0xff9000, 0xff900f) AM_READ(  ptm6840_1_r16u)  // 6840PTM IC2
-	AM_RANGE(0xff9000, 0xff900f) AM_WRITE( ptm6840_1_w16)  // 6840PTM IC2
+	AM_RANGE(0xff9000, 0xff900f) AM_READ(  ptm6840_1_msb_r)  // 6840PTM IC2
+	AM_RANGE(0xff9000, 0xff900f) AM_WRITE( ptm6840_1_msb_w)  // 6840PTM IC2
 
 	/* characterizer??? */
 //  AM_RANGE(0xffd000, 0xffd00f) AM_RAM // crmaze et al???

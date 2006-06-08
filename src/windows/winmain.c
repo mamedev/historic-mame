@@ -31,6 +31,21 @@
 
 
 #define ENABLE_PROFILER		0
+#define DEBUG_SLOW_LOCKS	0
+
+
+//============================================================
+//  TYPE DEFINITIONS
+//============================================================
+
+typedef BOOL (WINAPI *try_enter_critical_section_ptr)(LPCRITICAL_SECTION lpCriticalSection);
+
+struct _osd_lock
+{
+	CRITICAL_SECTION	critsect;
+};
+
+
 
 //============================================================
 //  GLOBAL VARIABLES
@@ -46,6 +61,8 @@ int _CRT_glob = 0;
 //============================================================
 //  LOCAL VARIABLES
 //============================================================
+
+static try_enter_critical_section_ptr try_enter_critical_section;
 
 static char mapfile_name[MAX_PATH];
 static LPTOP_LEVEL_EXCEPTION_FILTER pass_thru_filter;
@@ -87,6 +104,7 @@ int main(int argc, char **argv)
 	char *ext;
 	int res = 0;
 	extern void free_pathlists(void);
+	HMODULE library;
 
 	// set up exception handling
 	pass_thru_filter = SetUnhandledExceptionFilter(exception_filter);
@@ -96,6 +114,13 @@ int main(int argc, char **argv)
 	if (check_for_double_click_start(argc) != 0)
 		return 1;
 #endif
+
+	// see if we can use TryEnterCriticalSection
+	try_enter_critical_section = NULL;
+	library = LoadLibrary("kernel32.dll");
+	if (library != NULL)
+		try_enter_critical_section = (try_enter_critical_section_ptr)GetProcAddress(library, "TryEnterCriticalSection");
+
 
 	strcpy(mapfile_name, argv[0]);
 	ext = strchr(mapfile_name, '.');
@@ -238,6 +263,76 @@ void osd_free_executable(void *ptr, size_t size)
 int osd_is_bad_read_ptr(const void *ptr, size_t size)
 {
 	return IsBadReadPtr(ptr, size);
+}
+
+
+
+//============================================================
+//  osd_lock_alloc
+//============================================================
+
+osd_lock *osd_lock_alloc(void)
+{
+	osd_lock *lock = malloc_or_die(sizeof(*lock));
+	InitializeCriticalSection(&lock->critsect);
+	return lock;
+}
+
+
+
+//============================================================
+//  osd_lock_acquire
+//============================================================
+
+void osd_lock_acquire(osd_lock *lock)
+{
+#if DEBUG_SLOW_LOCKS
+	cycles_t cycles = osd_cycles();
+#endif
+	EnterCriticalSection(&lock->critsect);
+#if DEBUG_SLOW_LOCKS
+	cycles = osd_cycles() - cycles;
+	if (cycles > 10000) printf("Blocked %d cycles on lock acquire\n", (int)cycles);
+#endif
+}
+
+
+
+//============================================================
+//  osd_lock_try
+//============================================================
+
+int osd_lock_try(osd_lock *lock)
+{
+	int result = TRUE;
+	if (try_enter_critical_section != NULL)
+		result = (*try_enter_critical_section)(&lock->critsect);
+	else
+		EnterCriticalSection(&lock->critsect);
+	return result;
+}
+
+
+
+//============================================================
+//  osd_lock_release
+//============================================================
+
+void osd_lock_release(osd_lock *lock)
+{
+	LeaveCriticalSection(&lock->critsect);
+}
+
+
+
+//============================================================
+//  osd_lock_free
+//============================================================
+
+void osd_lock_free(osd_lock *lock)
+{
+	DeleteCriticalSection(&lock->critsect);
+	free(lock);
 }
 
 

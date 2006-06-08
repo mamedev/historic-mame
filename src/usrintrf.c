@@ -576,17 +576,15 @@ int ui_display_startup_screens(int show_disclaimer, int show_warnings, int show_
 			render_container_empty(render_container_get_ui());
 #endif
 
-			/* call the handler */
-			if (ui_handler_param == 1000)
-				break;
-			if (ui_handler_param == UI_HANDLER_CANCEL)
-				return 1;
-
 			/* render and update */
 #ifndef NEW_RENDER
 			render_ui(bitmap);
 #endif
 			video_frame_update();
+
+			/* call the handler */
+			if (ui_handler_param == 1000)
+				break;
 		}
 	}
 
@@ -655,9 +653,8 @@ void ui_update_and_render(void)
 		int alpha = (1.0f - options.pause_bright) * 255.0f;
 		if (alpha > 255)
 			alpha = 255;
-		if (alpha < 0)
-			alpha = 0;
-		render_ui_add_rect(0.0f, 0.0f, 1.0f, 1.0f, MAKE_ARGB(alpha,0x00,0x00,0x00), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+		if (alpha >= 0)
+			render_ui_add_rect(0.0f, 0.0f, 1.0f, 1.0f, MAKE_ARGB(alpha,0x00,0x00,0x00), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
 	}
 #endif
 
@@ -692,10 +689,10 @@ void ui_update_and_render(void)
 		/* then let the cheat engine display its stuff */
 		if (options.cheat)
 			cheat_display_watches();
-
-		/* finally, display any popup messages */
-		ui_display_popup();
 	}
+
+	/* finally, display any popup messages */
+	ui_display_popup();
 
 #ifdef MESS
 	/* let MESS display its stuff */
@@ -2626,6 +2623,9 @@ static UINT32 menu_video(UINT32 state)
 		}
 
 		/* add an item to return */
+		item_list[menu_items++].text = "Rotate View";
+
+		/* add an item to return */
 		item_list[menu_items++].text = ui_getstring(UI_returntoprior);
 
 		/* draw the menu */
@@ -2637,7 +2637,16 @@ static UINT32 menu_video(UINT32 state)
 
 		/* handle actions */
 		if (input_ui_pressed(IPT_UI_SELECT))
-			render_target_set_view(target, selected);
+		{
+			if (selected == menu_items - 2)
+			{
+				render_target_set_orientation(target, orientation_add(ROT90, render_target_get_orientation(target)));
+				if (curtarget == 0)
+					render_container_set_orientation(render_container_get_ui(), orientation_add(ROT270, render_container_get_orientation(render_container_get_ui())));
+			}
+			else
+				render_target_set_view(target, selected);
+		}
 	}
 
 	return selected | (curtarget << 16);
@@ -3428,7 +3437,10 @@ static UINT32 disclaimer_ui_handler(UINT32 state)
 
 	/* if the user cancels, exit out completely */
 	if (input_ui_pressed(IPT_UI_CANCEL))
+	{
+		mame_schedule_exit();
 		return UI_HANDLER_CANCEL;
+	}
 
 	return state;
 }
@@ -3534,7 +3546,10 @@ static UINT32 warnings_ui_handler(UINT32 state)
 
 		/* if the user cancels, exit out completely */
 		if (input_ui_pressed(IPT_UI_CANCEL))
+		{
+			mame_schedule_exit();
 			return UI_HANDLER_CANCEL;
+		}
 	}
 	else
 		return 1000;
@@ -3577,7 +3592,10 @@ static UINT32 gameinfo_ui_handler(UINT32 state)
 
 	/* allow cancelling */
 	if (input_ui_pressed(IPT_UI_CANCEL))
+	{
+		mame_schedule_exit();
 		return UI_HANDLER_CANCEL;
+	}
 
 	/* advance to the next state */
 	if (code_read_async() != CODE_NONE)

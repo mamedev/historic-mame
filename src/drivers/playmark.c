@@ -4,24 +4,26 @@ Big Twins
 World Beach Volley
 Excelsior
 Hot Mind
+Hard Times
 
-driver by Nicola Salmoria
+driver by Nicola Salmoria and Pierpaolo Prazzoli
 
 The games run on different, but similar, hardware. The sprite system is the
 same (almost - the tile size is different).
 
-Even if the two games are from the same year, World Beach Volley is much more
+Even if some games are from the same year, World Beach Volley is much more
 advanced - more colourful, and stores setting in an EEPROM.
 
 An interesting thing about this hardware is that the same gfx ROMs are used
 to generate both 8x8 and 16x16 tiles for different tilemaps.
 
-Hot Mind has different tilemaps layout than the other ones, also its pcb was
-marked as HARD TIMES 28-06-94, probably the 2 games can be swapped
+Hard Times and Hot Mind have different tilemaps layout than the other ones.
 
+Hard Times was hacked from Blood Bros. program code.
 
-Games needed:
-- Hard Times
+Hot Mind is a romswap kit for Hard Times pcb, in fact it was found in a pcb
+marked as HARD TIMES 28-06-94.
+
 
 Original Bugs:
 - World Beach Volley histogram functions don't work.
@@ -51,22 +53,23 @@ VIDEO_START( bigtwin );
 VIDEO_START( wbeachvl );
 VIDEO_START( excelsr );
 VIDEO_START( hotmind );
+VIDEO_START( hrdtimes );
 WRITE16_HANDLER( wbeachvl_txvideoram_w );
 WRITE16_HANDLER( wbeachvl_fgvideoram_w );
 WRITE16_HANDLER( wbeachvl_bgvideoram_w );
-WRITE16_HANDLER( hotmind_txvideoram_w );
-WRITE16_HANDLER( hotmind_fgvideoram_w );
-WRITE16_HANDLER( hotmind_bgvideoram_w );
+WRITE16_HANDLER( hrdtimes_txvideoram_w );
+WRITE16_HANDLER( hrdtimes_fgvideoram_w );
+WRITE16_HANDLER( hrdtimes_bgvideoram_w );
 WRITE16_HANDLER( bigtwin_paletteram_w );
 WRITE16_HANDLER( bigtwin_bgvideoram_w );
 WRITE16_HANDLER( bigtwin_scroll_w );
 WRITE16_HANDLER( wbeachvl_scroll_w );
 WRITE16_HANDLER( excelsr_scroll_w );
-WRITE16_HANDLER( hotmind_scroll_w );
+WRITE16_HANDLER( hrdtimes_scroll_w );
 VIDEO_UPDATE( bigtwin );
 VIDEO_UPDATE( wbeachvl );
 VIDEO_UPDATE( excelsr );
-VIDEO_UPDATE( hotmind );
+VIDEO_UPDATE( hrdtimes );
 
 
 
@@ -169,6 +172,11 @@ static WRITE16_HANDLER( hotmind_coin_eeprom_w )
 	}
 }
 
+static WRITE16_HANDLER( hrdtimes_coin_w )
+{
+	coin_counter_w(0,data & 0x01);
+	coin_counter_w(1,data & 0x02);
+}
 
 static WRITE16_HANDLER( playmark_snd_command_w )
 {
@@ -327,11 +335,10 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( hotmind_main_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_ROM
-	AM_RANGE(0x100000, 0x103fff) AM_READWRITE(MRA16_RAM, hotmind_bgvideoram_w) AM_BASE(&wbeachvl_videoram3)
-	AM_RANGE(0x104000, 0x107fff) AM_READWRITE(MRA16_RAM, hotmind_fgvideoram_w) AM_BASE(&wbeachvl_videoram2)
-	AM_RANGE(0x108000, 0x10ffff) AM_READWRITE(MRA16_RAM, hotmind_txvideoram_w) AM_BASE(&wbeachvl_videoram1)
-	AM_RANGE(0x110000, 0x11000b) AM_WRITE(hotmind_scroll_w)
-	AM_RANGE(0x11000c, 0x11000d) AM_WRITENOP
+	AM_RANGE(0x100000, 0x103fff) AM_READWRITE(MRA16_RAM, hrdtimes_bgvideoram_w) AM_BASE(&wbeachvl_videoram3)
+	AM_RANGE(0x104000, 0x107fff) AM_READWRITE(MRA16_RAM, hrdtimes_fgvideoram_w) AM_BASE(&wbeachvl_videoram2)
+	AM_RANGE(0x108000, 0x10ffff) AM_READWRITE(MRA16_RAM, hrdtimes_txvideoram_w) AM_BASE(&wbeachvl_videoram1)
+	AM_RANGE(0x110000, 0x11000d) AM_WRITE(hrdtimes_scroll_w)
 	AM_RANGE(0x200000, 0x200fff) AM_RAM AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x280000, 0x2807ff) AM_RAM AM_WRITE(bigtwin_paletteram_w) AM_BASE(&paletteram16)
 	AM_RANGE(0x300010, 0x300011) AM_READ(input_port_0_word_r)
@@ -342,6 +349,27 @@ static ADDRESS_MAP_START( hotmind_main_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x30001e, 0x30001f) AM_WRITE(playmark_snd_command_w)
 	AM_RANGE(0x304000, 0x304001) AM_WRITENOP		/* watchdog? irq ack? */
 	AM_RANGE(0xff0000, 0xffffff) AM_RAM
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( hrdtimes_main_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_ROM
+	AM_RANGE(0x080000, 0x0bffff) AM_RAM
+	AM_RANGE(0x0c0000, 0x0fffff) AM_ROM AM_REGION(REGION_CPU1, 0x0c0000)
+	AM_RANGE(0x100000, 0x103fff) AM_READWRITE(MRA16_RAM, hrdtimes_bgvideoram_w) AM_BASE(&wbeachvl_videoram3)
+	AM_RANGE(0x104000, 0x107fff) AM_READWRITE(MRA16_RAM, hrdtimes_fgvideoram_w) AM_BASE(&wbeachvl_videoram2)
+	AM_RANGE(0x108000, 0x10ffff) AM_READWRITE(MRA16_RAM, hrdtimes_txvideoram_w) AM_BASE(&wbeachvl_videoram1)
+	AM_RANGE(0x110000, 0x11000d) AM_WRITE(hrdtimes_scroll_w)
+	AM_RANGE(0x200000, 0x200fff) AM_RAM AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x280000, 0x2807ff) AM_RAM AM_WRITE(bigtwin_paletteram_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x280800, 0x280fff) AM_RAM // unused
+	AM_RANGE(0x300010, 0x300011) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x300012, 0x300013) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x300014, 0x300015) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x300016, 0x300017) AM_WRITE(hrdtimes_coin_w)
+	AM_RANGE(0x30001a, 0x30001b) AM_READ(input_port_3_word_r)
+	AM_RANGE(0x30001c, 0x30001d) AM_READ(input_port_4_word_r)
+	AM_RANGE(0x30001e, 0x30001f) AM_WRITENOP //(playmark_snd_command_w)
+	AM_RANGE(0x304000, 0x304001) AM_WRITENOP		/* watchdog? irq ack? */
 ADDRESS_MAP_END
 
 
@@ -705,6 +733,99 @@ INPUT_PORTS_START( hotmind )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( hrdtimes )
+	PORT_START_TAG("IN0")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START_TAG("IN1")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+
+	PORT_START_TAG("IN2")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START_TAG("DSW1")
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x02, "2" )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x01, "5" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x0c, "Every 300k - 500k" )
+	PORT_DIPSETTING(    0x08, "Every 500k - 500k" )
+	PORT_DIPSETTING(    0x04, "Only 500k" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Very_Hard ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Allow_Continue ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START_TAG("DSW2")
+	PORT_DIPNAME( 0x01, 0x01, "Coin Mode" )
+	PORT_DIPSETTING(    0x01, "Mode 1" )
+	PORT_DIPSETTING(    0x00, "Mode 2" )
+	PORT_DIPNAME( 0x1e, 0x1e, "Coinage Mode 1" ) PORT_CONDITION("DSW2",0x01,PORTCOND_EQUALS,0x01)
+	PORT_DIPSETTING(    0x14, DEF_STR( 6C_1C ) ) PORT_CONDITION("DSW2",0x01,PORTCOND_EQUALS,0x01)
+	PORT_DIPSETTING(    0x16, DEF_STR( 5C_1C ) ) PORT_CONDITION("DSW2",0x01,PORTCOND_EQUALS,0x01)
+	PORT_DIPSETTING(    0x18, DEF_STR( 4C_1C ) ) PORT_CONDITION("DSW2",0x01,PORTCOND_EQUALS,0x01)
+	PORT_DIPSETTING(    0x1a, DEF_STR( 3C_1C ) ) PORT_CONDITION("DSW2",0x01,PORTCOND_EQUALS,0x01)
+	PORT_DIPSETTING(    0x02, DEF_STR( 8C_3C ) ) PORT_CONDITION("DSW2",0x01,PORTCOND_EQUALS,0x01)
+	PORT_DIPSETTING(    0x1c, DEF_STR( 2C_1C ) ) PORT_CONDITION("DSW2",0x01,PORTCOND_EQUALS,0x01)
+	PORT_DIPSETTING(    0x04, DEF_STR( 5C_3C ) ) PORT_CONDITION("DSW2",0x01,PORTCOND_EQUALS,0x01)
+	PORT_DIPSETTING(    0x06, DEF_STR( 3C_2C ) ) PORT_CONDITION("DSW2",0x01,PORTCOND_EQUALS,0x01)
+	PORT_DIPSETTING(    0x1e, DEF_STR( 1C_1C ) ) PORT_CONDITION("DSW2",0x01,PORTCOND_EQUALS,0x01)
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_3C ) ) PORT_CONDITION("DSW2",0x01,PORTCOND_EQUALS,0x01)
+	PORT_DIPSETTING(    0x12, DEF_STR( 1C_2C ) ) PORT_CONDITION("DSW2",0x01,PORTCOND_EQUALS,0x01)
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_3C ) ) PORT_CONDITION("DSW2",0x01,PORTCOND_EQUALS,0x01)
+	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_4C ) ) PORT_CONDITION("DSW2",0x01,PORTCOND_EQUALS,0x01)
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_5C ) ) PORT_CONDITION("DSW2",0x01,PORTCOND_EQUALS,0x01)
+	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_6C ) ) PORT_CONDITION("DSW2",0x01,PORTCOND_EQUALS,0x01)
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) ) PORT_CONDITION("DSW2",0x01,PORTCOND_EQUALS,0x01)
+	PORT_DIPNAME( 0x06, 0x06, "Coin A Mode 2" ) PORT_CONDITION("DSW2",0x01,PORTCOND_NOTEQUALS,0x01)
+	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) ) PORT_CONDITION("DSW2",0x01,PORTCOND_NOTEQUALS,0x01)
+	PORT_DIPSETTING(    0x02, DEF_STR( 3C_1C ) ) PORT_CONDITION("DSW2",0x01,PORTCOND_NOTEQUALS,0x01)
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) ) PORT_CONDITION("DSW2",0x01,PORTCOND_NOTEQUALS,0x01)
+	PORT_DIPSETTING(    0x06, DEF_STR( 1C_1C ) ) PORT_CONDITION("DSW2",0x01,PORTCOND_NOTEQUALS,0x01)
+	PORT_DIPNAME( 0x18, 0x18, "Coin B Mode 2" ) PORT_CONDITION("DSW2",0x01,PORTCOND_NOTEQUALS,0x01)
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_2C ) ) PORT_CONDITION("DSW2",0x01,PORTCOND_NOTEQUALS,0x01)
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_3C ) ) PORT_CONDITION("DSW2",0x01,PORTCOND_NOTEQUALS,0x01)
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_5C ) ) PORT_CONDITION("DSW2",0x01,PORTCOND_NOTEQUALS,0x01)
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) ) PORT_CONDITION("DSW2",0x01,PORTCOND_NOTEQUALS,0x01)
+	PORT_DIPNAME( 0x20, 0x20, "Minimum Credits to Start" )
+	PORT_DIPSETTING(    0x20, "1" )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPNAME( 0x40, 0x40, "1 Life If Continue" )
+	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+INPUT_PORTS_END
 
 static const gfx_layout charlayout =
 {
@@ -717,7 +838,7 @@ static const gfx_layout charlayout =
 	32*8
 };
 
-static const gfx_layout hotmind_charlayout =
+static const gfx_layout hrdtimes_charlayout =
 {
 	8,8,
 	RGN_FRAC(1,4),
@@ -823,11 +944,11 @@ static const gfx_decode excelsr_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static const gfx_decode hotmind_gfxdecodeinfo[] =
+static const gfx_decode hrdtimes_gfxdecodeinfo[] =
 {
-	{ REGION_GFX2, 0, &tilelayout,         0x200, 16 },	/* colors 0x200-0x2ff */
+	{ REGION_GFX2, 0, &tilelayout,         0x200, 32 },	/* colors 0x200-0x2ff */
 	{ REGION_GFX1, 0, &tilelayout,         0x000, 16 },	/* colors 0x000-0x0ff */
-	{ REGION_GFX1, 0, &hotmind_charlayout, 0x100,  8 },	/* colors 0x100-0x07f */
+	{ REGION_GFX1, 0, &hrdtimes_charlayout, 0x100,  8 },	/* colors 0x100-0x17f */
 	{ -1 } /* end of array */
 };
 
@@ -950,11 +1071,11 @@ static MACHINE_DRIVER_START( hotmind )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(64*8, 64*8)
 	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
-	MDRV_GFXDECODE(hotmind_gfxdecodeinfo)
+	MDRV_GFXDECODE(hrdtimes_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(1024)
 
 	MDRV_VIDEO_START(hotmind)
-	MDRV_VIDEO_UPDATE(hotmind)
+	MDRV_VIDEO_UPDATE(hrdtimes)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
@@ -964,6 +1085,37 @@ static MACHINE_DRIVER_START( hotmind )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( hrdtimes )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)	/* 12 MHz */
+	MDRV_CPU_PROGRAM_MAP(hrdtimes_main_map, 0)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
+
+//  MDRV_CPU_ADD(PIC16C57, (12000000/PIC16C5x_CLOCK_DIVIDER))   /* 3MHz */
+	/* Program and Data Maps are internal to the MCU */
+//  MDRV_CPU_IO_MAP(playmark_sound_io_map, 0)
+
+	MDRV_FRAMES_PER_SECOND(58)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(64*8, 64*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(hrdtimes_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
+
+	MDRV_VIDEO_START(hrdtimes)
+	MDRV_VIDEO_UPDATE(hrdtimes)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(OKIM6295, 1000000/132)
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -1049,7 +1201,7 @@ ROM_START( wbeachv2 )
 	ROM_LOAD16_BYTE( "2.bin",   0x000000, 0x40000, CRC(8993487e) SHA1(c927ae655807f9046f66ff96a30bd2c6fa671566) )
 	ROM_LOAD16_BYTE( "3.bin",   0x000001, 0x40000, CRC(15904789) SHA1(640c80bbf7302529e1a39c2ae60e018ecb176478) )
 
-	ROM_REGION( 0x1000, REGION_CPU2, 0 )	/* sound (missing) */
+	ROM_REGION( 0x1000, REGION_CPU2, ROMREGION_ERASE00 )	/* sound (missing) */
 	ROM_LOAD( "pic16c57",     0x0000, 0x1000, NO_DUMP )
 
 	ROM_REGION( 0x600000, REGION_GFX1, ROMREGION_DISPOSE )
@@ -1179,15 +1331,20 @@ ROM_START( hotmind )
 	ROM_REGION( 0x1000, REGION_CPU2, ROMREGION_ERASE00 )	/* sound (PIC16C57) */
 	/* ROM will be copied here by the init code from REGION_USER1 */
 
-	/* original PIC was protected, but it seem to be good with the Excelsior one (probably they're the same) */
+	/* original PIC (which is the one from Hard Times) was protected, but it works with the Excelsior one
+       because it uses only 1 bank of samples */
 	ROM_REGION( 0x3000, REGION_USER1, ROMREGION_DISPOSE )
-	ROM_LOAD( "pic16c57-hs.i015", 0x0000, 0x2d4c, CRC(022c6941) SHA1(8ead40bfa7aa783b1ce62bd6cfa673cb876e29e7) )
+	ROM_LOAD( "pic16c57-hs.i015", 0x0000, 0x2d4c, BAD_DUMP CRC(022c6941) SHA1(8ead40bfa7aa783b1ce62bd6cfa673cb876e29e7) )
 
-	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "23.u36",       0x00000, 0x20000, CRC(ddcf60b9) SHA1(0c0fbc44131cb7d36c21bf5aead87b498c5684f5) )
-	ROM_LOAD( "27.u42",       0x20000, 0x20000, CRC(413bbcf4) SHA1(d82ae9d26df1a69b760b3025048e47ab757d9175) )
-	ROM_LOAD( "24.u39",       0x40000, 0x20000, CRC(4baa5b4c) SHA1(ee953ed9a4a45715d1ae39b5bb8b9b6505a4e95d) )
-	ROM_LOAD( "28.u49",       0x60000, 0x20000, CRC(8df34d6a) SHA1(ca0d2ca7e0f2a302bc8b1a03c0c18ac72fe105ac) )
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "23.u36",       0x000000, 0x10000, CRC(ddcf60b9) SHA1(0c0fbc44131cb7d36c21bf5aead87b498c5684f5) )
+	ROM_CONTINUE(			  0x040000, 0x10000 )
+	ROM_LOAD( "27.u42",       0x080000, 0x10000, CRC(413bbcf4) SHA1(d82ae9d26df1a69b760b3025048e47ab757d9175) )
+	ROM_CONTINUE(			  0x0c0000, 0x10000 )
+	ROM_LOAD( "24.u39",       0x100000, 0x10000, CRC(4baa5b4c) SHA1(ee953ed9a4a45715d1ae39b5bb8b9b6505a4e95d) )
+	ROM_CONTINUE(			  0x140000, 0x10000 )
+	ROM_LOAD( "28.u49",       0x180000, 0x10000, CRC(8df34d6a) SHA1(ca0d2ca7e0f2a302bc8b1a03c0c18ac72fe105ac) )
+	ROM_CONTINUE(			  0x1c0000, 0x10000 )
 
 	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "26.u34",       0x00000, 0x20000, CRC(ff8d3b75) SHA1(5427b70a61dee4c125877e040be21cb1cadb1af5) )
@@ -1199,6 +1356,39 @@ ROM_START( hotmind )
 	ROM_LOAD( "20.io13",      0x00000, 0x40000, CRC(0bf3a3e5) SHA1(2ae06f37a6bcd20bc5fbaa90d970aba2ebf3cf5a) )
 ROM_END
 
+ROM_START( hrdtimes )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )	/* 68000 code */
+	ROM_LOAD16_BYTE( "31.u67",       0x00000, 0x80000, CRC(53eb041b) SHA1(7437da1ceb26e9518a3085560b8a42f37e77ace9) )
+	ROM_LOAD16_BYTE( "32.u66",       0x00001, 0x80000, CRC(f2c6b382) SHA1(d73affed091a261c4bfe17f409657e0a46b6c163) )
+
+	ROM_REGION( 0x1000, REGION_CPU2, ROMREGION_ERASE00 )	/* sound (PIC16C57) */
+	ROM_LOAD( "pic16c57",     0x0000, 0x1000, NO_DUMP )
+
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "33.u36",       0x000000, 0x80000, CRC(d1239ce5) SHA1(8e966a39a47f66c5e904ec4357c751e896ed47cb) )
+	ROM_LOAD( "37.u42",       0x080000, 0x80000, CRC(aa692005) SHA1(1e274da358a25ceebdc71cb8f7228ef39348a895) )
+	ROM_LOAD( "34.u39",       0x100000, 0x80000, CRC(e4108c59) SHA1(15f7b53a7bbdc4aefdae31a00be64c419326bfd1) )
+	ROM_LOAD( "38.u45",       0x180000, 0x80000, CRC(ff7cacf3) SHA1(5ed93e86fe3b0b594bdd62e314cd9e2ffd3c2a2a) )
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "36.u86",       0x000000, 0x80000, CRC(f2fc1ca3) SHA1(f70913d9b89338932e62ca6bb60e5f5e412d7f64) )
+	ROM_LOAD( "40.u85",       0x080000, 0x80000, CRC(368c15f4) SHA1(8ae95fd672448921964c4d0312d7366903362e27) )
+	ROM_LOAD( "35.u84",       0x100000, 0x80000, CRC(7bde46ec) SHA1(1d26d268e1fc937e23ae7d93a1f86386b899a0c2) )
+	ROM_LOAD( "39.u83",       0x180000, 0x80000, CRC(a0bae586) SHA1(0b2bb0c5c51b2717b820f0176d5775df21652667) )
+
+	ROM_REGION( 0x80000, REGION_USER2, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "30.id13",      0x00000, 0x80000, CRC(fa5e50ae) SHA1(f3bd87c83fca9269cc2f19db1fbf55540c96f931) )
+
+	/* $00000-$20000 stays the same in all sound banks, */
+	/* the second half of the bank is what gets switched */
+	ROM_REGION( 0xc0000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_COPY( REGION_USER2, 0x000000, 0x000000, 0x020000)
+	ROM_COPY( REGION_USER2, 0x020000, 0x020000, 0x020000)
+	ROM_COPY( REGION_USER2, 0x000000, 0x040000, 0x020000)
+	ROM_COPY( REGION_USER2, 0x040000, 0x060000, 0x020000)
+	ROM_COPY( REGION_USER2, 0x000000, 0x080000, 0x020000)
+	ROM_COPY( REGION_USER2, 0x060000, 0x0a0000, 0x020000)
+ROM_END
 
 static UINT8 playmark_asciitohex(UINT8 data)
 {
@@ -1280,3 +1470,4 @@ GAME( 1995, wbeachvl, 0,        wbeachvl, wbeachvl, 0,       ROT0, "Playmark", "
 GAME( 1995, wbeachv2, wbeachvl, wbeachvl, wbeachvl, 0,       ROT0, "Playmark", "World Beach Volley (set 2)",  GAME_NO_COCKTAIL | GAME_NO_SOUND )
 GAME( 1996, excelsr,  0,        excelsr,  excelsr,  bigtwin, ROT0, "Playmark", "Excelsior", 0 )
 GAME( 1995, hotmind,  0,        hotmind,  hotmind,  bigtwin, ROT0, "Playmark", "Hot Mind", 0 )
+GAME( 1994, hrdtimes, 0,        hrdtimes, hrdtimes, 0,       ROT0, "Playmark", "Hard Times", GAME_NO_SOUND )

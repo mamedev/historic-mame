@@ -1,5 +1,3 @@
-// fix me -- need to clear the entire texture data if we scale up
-
 //============================================================
 //
 //  drawd3d.c - Win32 Direct3D implementation
@@ -30,6 +28,7 @@
 #include <math.h>
 
 #include "driver.h"
+#include "osdepend.h"
 #include "render.h"
 #include "video.h"
 #include "window.h"
@@ -60,6 +59,15 @@
 #define VERTEX_FORMAT		(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1)
 #define VERTEX_BUFFER_SIZE	(2048*4)
 
+#define MIN_UPDATE_RATE		(4)
+
+enum
+{
+	TEXTURE_TYPE_PLAIN,
+	TEXTURE_TYPE_DYNAMIC,
+	TEXTURE_TYPE_SURFACE
+};
+
 
 
 //============================================================
@@ -81,10 +89,14 @@ struct _texture_info
 	texture_info *			next;						// next texture in the list
 	UINT32					hash;						// hash value for the texture
 	UINT32					flags;						// rendering flags
+	render_texinfo			texinfo;					// copy of the texture info
 	float					ustart, ustop;				// beginning/ending U coordinates
 	float					vstart, vstop;				// beginning/ending V coordinates
-	render_texinfo			texinfo;					// copy of the texture info
+	int						rawwidth, rawheight;		// raw width/height of the texture
+	int						type;						// what type of texture are we?
 	d3d_texture *			d3dtex;						// Direct3D texture pointer
+	d3d_surface *			d3dsurface;					// Direct3D offscreen plain surface pointer
+	d3d_texture *			d3dfinaltex;				// Direct3D final (post-scaled) texture
 };
 
 
@@ -123,7 +135,7 @@ struct _d3d_info
 	d3d_present_parameters	presentation;				// set of presentation parameters
 	D3DDISPLAYMODE			origmode;					// original display mode for the adapter
 	D3DFORMAT				pixformat;					// pixel format we are using
-	int						skipnext;					// skip the next render (because we have one pending)
+	DWORD					lastupdate;					// time of the last update
 
 	d3d_vertex_buffer *		vertexbuf;					// pointer to the vertex buffer object
 	d3d_vertex *			lockedbuf;					// pointer to the locked vertex buffer
@@ -134,6 +146,7 @@ struct _d3d_info
 
 	texture_info *			texlist;					// list of active textures
 	int						dynamic_supported;			// are dynamic textures supported?
+	int						stretch_supported;			// is StretchRect with point filtering supported?
 	D3DFORMAT				screen_format;				// format to use for screen textures
 
 	DWORD					texture_caps;				// textureCaps field
@@ -198,7 +211,7 @@ INLINE void set_texture(d3d_info *d3d, texture_info *texture)
 	if (texture != d3d->last_texture)
 	{
 		d3d->last_texture = texture;
-		result = (*d3dintf->device.set_texture)(d3d->device, 0, (texture == NULL) ? NULL : texture->d3dtex);
+		result = (*d3dintf->device.set_texture)(d3d->device, 0, (texture == NULL) ? NULL : texture->d3dfinaltex);
 		if (result != D3D_OK) verbose_printf("Direct3D: Error %08X during device set_texture call\n", (int)result);
 	}
 }
@@ -287,7 +300,9 @@ static void primitive_flush_pending(d3d_info *d3d);
 
 // textures
 static texture_info *texture_create(d3d_info *d3d, const render_texinfo *texsource, UINT32 flags);
-static void texture_set_data(d3d_info *d3d, d3d_texture *texture, const render_texinfo *texsource, UINT32 flags);
+static void texture_compute_size(d3d_info *d3d, int texwidth, int texheight, texture_info *texture);
+static void texture_set_data(d3d_info *d3d, texture_info *texture, const render_texinfo *texsource, UINT32 flags);
+static void texture_prescale(d3d_info *d3d, texture_info *texture);
 static texture_info *texture_find(d3d_info *d3d, const render_primitive *prim);
 static void texture_update(d3d_info *d3d, const render_primitive *prim);
 
@@ -340,7 +355,7 @@ int drawd3d_window_init(win_window_info *window)
 		goto error;
 
 	// create the device immediately for the full screen case (defer for window mode)
-	if (!video_config.windowed && device_create(window))
+	if (window->fullscreen && device_create(window))
 		goto error;
 
 	return 0;
@@ -378,7 +393,7 @@ void drawd3d_window_destroy(win_window_info *window)
 //  drawd3d_window_draw
 //============================================================
 
-int drawd3d_window_draw(win_window_info *window, HDC dc, const render_primitive *primlist, int update)
+int drawd3d_window_draw(win_window_info *window, HDC dc, const render_primitive_list *primlist, int update)
 {
 	render_bounds clipstack[8];
 	render_bounds *clip = &clipstack[0];
@@ -398,100 +413,84 @@ int drawd3d_window_draw(win_window_info *window, HDC dc, const render_primitive 
 			return 1;
 	}
 
-	// only process if we're not skipping due to a pending draw last time
-	if (!d3d->skipnext)
+	// in window mode, we need to track the window size
+	if (!window->fullscreen || d3d->device == NULL)
 	{
-		// in window mode, we need to track the window size
-		if (video_config.windowed || d3d->device == NULL)
-		{
-			// if the size changes, skip this update since the render target will be out of date
-			if (update_window_size(window))
-				return 0;
+		// if the size changes, skip this update since the render target will be out of date
+		if (update_window_size(window))
+			return 0;
 
-			// if we have no device, after updating the size, return an error so GDI can try
-			if (d3d->device == NULL)
-				return 1;
-		}
-
-		// set up the initial clipping rect
-		clip->x0 = clip->y0 = 0;
-		clip->x1 = (float)d3d->width;
-		clip->y1 = (float)d3d->height;
-
-		// first update any textures
-		for (prim = primlist; prim != NULL; prim = prim->next)
-			if (prim->texture.base != NULL)
-				texture_update(d3d, prim);
-
-		// begin the scene
-		result = (*d3dintf->device.begin_scene)(d3d->device);
-		if (result != D3D_OK) verbose_printf("Direct3D: Error %08X during device begin_scene call\n", (int)result);
-
-		d3d->lockedbuf = NULL;
-
-		// loop over primitives
-		for (prim = primlist; prim != NULL; prim = prim->next)
-			switch (prim->type)
-			{
-				case RENDER_PRIMITIVE_CLIP_PUSH:
-					clip++;
-					assert(clip - clipstack < ARRAY_LENGTH(clipstack));
-
-					/* extract the new clip */
-					*clip = prim->bounds;
-
-					/* clip against the main bounds */
-					if (clip->x0 < 0) clip->x0 = 0;
-					if (clip->y0 < 0) clip->y0 = 0;
-					if (clip->x1 > (float)d3d->width) clip->x1 = (float)d3d->width;
-					if (clip->y1 > (float)d3d->height) clip->y1 = (float)d3d->height;
-					break;
-
-				case RENDER_PRIMITIVE_CLIP_POP:
-					clip--;
-					assert(clip >= clipstack);
-					break;
-
-				case RENDER_PRIMITIVE_LINE:
-					draw_line(d3d, prim, clip);
-					break;
-
-				case RENDER_PRIMITIVE_QUAD:
-					draw_quad(d3d, prim, clip);
-					break;
-			}
-
-		// flush any pending polygons
-		primitive_flush_pending(d3d);
-
-		// finish the scene
-		result = (*d3dintf->device.end_scene)(d3d->device);
-		if (result != D3D_OK) verbose_printf("Direct3D: Error %08X during device end_scene call\n", (int)result);
-
-		// explicitly wait for VBLANK
-		if ((video_config.waitvsync || video_config.syncrefresh) && video_config.throttle && !(!video_config.windowed && video_config.triplebuf))
-		{
-			// this counts as idle time
-			profiler_mark(PROFILER_IDLE);
-			while (1)
-			{
-				D3DRASTER_STATUS status;
-
-				// get the raster status, and break only when we hit VBLANK
-				result = (*d3dintf->device.get_raster_status)(d3d->device, &status);
-				if (result != D3D_OK) verbose_printf("Direct3D: Error %08X during device get_raster_status call\n", (int)result);
-				if (status.InVBlank)
-					break;
-			}
-			profiler_mark(PROFILER_END);
-		}
+		// if we have no device, after updating the size, return an error so GDI can try
+		if (d3d->device == NULL)
+			return 1;
 	}
 
-	// finally present the scene
-	result = (*d3dintf->device.present)(d3d->device, NULL, NULL, NULL, NULL, video_config.throttle ? 0 : D3DPRESENT_DONOTWAIT);
-	d3d->skipnext = (result == D3DERR_WASSTILLDRAWING);
-	if (result != D3D_OK && !d3d->skipnext) verbose_printf("Direct3D: Error %08X during device present call\n", (int)result);
+	// set up the initial clipping rect
+	clip->x0 = clip->y0 = 0;
+	clip->x1 = (float)d3d->width;
+	clip->y1 = (float)d3d->height;
 
+	// first update any textures
+	osd_lock_acquire(primlist->lock);
+	for (prim = primlist->head; prim != NULL; prim = prim->next)
+		if (prim->texture.base != NULL)
+			texture_update(d3d, prim);
+
+	// begin the scene
+	result = (*d3dintf->device.begin_scene)(d3d->device);
+	if (result != D3D_OK) verbose_printf("Direct3D: Error %08X during device begin_scene call\n", (int)result);
+
+	d3d->lockedbuf = NULL;
+
+	// loop over primitives
+	for (prim = primlist->head; prim != NULL; prim = prim->next)
+		switch (prim->type)
+		{
+			case RENDER_PRIMITIVE_CLIP_PUSH:
+				clip++;
+				assert(clip - clipstack < ARRAY_LENGTH(clipstack));
+
+				/* extract the new clip */
+				*clip = prim->bounds;
+
+				/* clip against the main bounds */
+				if (clip->x0 < 0) clip->x0 = 0;
+				if (clip->y0 < 0) clip->y0 = 0;
+				if (clip->x1 > (float)d3d->width) clip->x1 = (float)d3d->width;
+				if (clip->y1 > (float)d3d->height) clip->y1 = (float)d3d->height;
+				break;
+
+			case RENDER_PRIMITIVE_CLIP_POP:
+				clip--;
+				assert(clip >= clipstack);
+				break;
+
+			case RENDER_PRIMITIVE_LINE:
+				draw_line(d3d, prim, clip);
+				break;
+
+			case RENDER_PRIMITIVE_QUAD:
+				draw_quad(d3d, prim, clip);
+				break;
+		}
+	osd_lock_release(primlist->lock);
+
+	// flush any pending polygons
+	primitive_flush_pending(d3d);
+
+	// finish the scene
+	result = (*d3dintf->device.end_scene)(d3d->device);
+	if (result != D3D_OK) verbose_printf("Direct3D: Error %08X during device end_scene call\n", (int)result);
+
+	// cheat to get insane framerates: give up our timeslice if we're unthrottled
+	// and we've already updated recently
+	if (!video_config.throttle && (timeGetTime() - d3d->lastupdate) < 1000 / MIN_UPDATE_RATE)
+		Sleep(0);
+	d3d->lastupdate = timeGetTime();
+
+	// present the current buffers
+	result = (*d3dintf->device.present)(d3d->device, NULL, NULL, NULL, NULL, 0);
+	if (result != D3D_OK) verbose_printf("Direct3D: Error %08X during device present call\n", (int)result);
 	return 0;
 }
 
@@ -559,15 +558,16 @@ try_again:
 	d3d->presentation.MultiSampleType				= D3DMULTISAMPLE_NONE;
 	d3d->presentation.SwapEffect					= D3DSWAPEFFECT_DISCARD;
 	d3d->presentation.hDeviceWindow					= window->hwnd;
-	d3d->presentation.Windowed						= video_config.windowed;
+	d3d->presentation.Windowed						= !window->fullscreen;
 	d3d->presentation.EnableAutoDepthStencil		= FALSE;
 	d3d->presentation.AutoDepthStencilFormat		= D3DFMT_D16;
 	d3d->presentation.Flags							= 0;
 	d3d->presentation.FullScreen_RefreshRateInHz	= d3d->refresh;
-	d3d->presentation.PresentationInterval			= (video_config.triplebuf && !video_config.windowed) ? D3DPRESENT_INTERVAL_ONE :
-											  			D3DPRESENT_INTERVAL_IMMEDIATE;
+	d3d->presentation.PresentationInterval			= ((video_config.triplebuf && window->fullscreen) || video_config.waitvsync || video_config.syncrefresh) ?
+														D3DPRESENT_INTERVAL_ONE : D3DPRESENT_INTERVAL_IMMEDIATE;
 	// create the D3D device
-	result = (*d3dintf->d3d.create_device)(d3dintf, d3d->adapter, D3DDEVTYPE_HAL, win_window_list->hwnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3d->presentation, &d3d->device);
+	result = (*d3dintf->d3d.create_device)(d3dintf, d3d->adapter, D3DDEVTYPE_HAL, win_window_list->hwnd,
+					D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3d->presentation, &d3d->device);
 	if (result != D3D_OK)
 	{
 		fprintf(stderr, "Unable to create the Direct3D device (%08X)\n", (UINT32)result);
@@ -659,6 +659,7 @@ static void device_delete(d3d_info *d3d)
 	// free the device itself
 	if (d3d->device != NULL)
 		(*d3dintf->device.release)(d3d->device);
+	d3d->device = NULL;
 }
 
 
@@ -674,8 +675,12 @@ static void device_delete_resources(d3d_info *d3d)
 	{
 		texture_info *tex = d3d->texlist;
 		d3d->texlist = tex->next;
-		if (tex->d3dtex != NULL)
+		if (tex->d3dfinaltex != NULL)
+			(*d3dintf->texture.release)(tex->d3dfinaltex);
+		if (tex->d3dtex != NULL && tex->d3dtex != tex->d3dfinaltex)
 			(*d3dintf->texture.release)(tex->d3dtex);
+		if (tex->d3dsurface != NULL)
+			(*d3dintf->surface.release)(tex->d3dsurface);
 		free(tex);
 	}
 
@@ -826,6 +831,13 @@ static int device_verify_caps(d3d_info *d3d)
 	result = (*d3dintf->d3d.get_caps_dword)(d3dintf, d3d->adapter, D3DDEVTYPE_HAL, CAPS_CAPS2, &tempcaps);
 	if (result != D3D_OK) verbose_printf("Direct3D: Error %08X during get_caps_dword call\n", (int)result);
 	d3d->dynamic_supported = ((tempcaps & D3DCAPS2_DYNAMICTEXTURES) != 0);
+	if (d3d->dynamic_supported) verbose_printf("Direct3D: Using dynamic textures\n");
+
+	// set a simpler flag to indicate we can use StretchRect
+	result = (*d3dintf->d3d.get_caps_dword)(d3dintf, d3d->adapter, D3DDEVTYPE_HAL, CAPS_STRETCH_RECT_FILTER, &tempcaps);
+	if (result != D3D_OK) verbose_printf("Direct3D: Error %08X during get_caps_dword call\n", (int)result);
+	d3d->stretch_supported = ((tempcaps & D3DPTFILTERCAPS_MAGFPOINT) != 0);
+	if (d3d->stretch_supported && video_config.prescale > 1) verbose_printf("Direct3D: Using StretchRect for prescaling\n");
 
 	return retval;
 }
@@ -892,7 +904,7 @@ static int config_adapter_mode(win_window_info *window)
 	}
 
 	// choose a resolution: window mode case
-	if (video_config.windowed)
+	if (!window->fullscreen)
 	{
 		RECT client;
 
@@ -928,7 +940,7 @@ static int config_adapter_mode(win_window_info *window)
 	}
 
 	// see if we can handle the device type
-	result = (*d3dintf->d3d.check_device_type)(d3dintf, d3d->adapter, D3DDEVTYPE_HAL, d3d->pixformat, d3d->pixformat, video_config.windowed);
+	result = (*d3dintf->d3d.check_device_type)(d3dintf, d3d->adapter, D3DDEVTYPE_HAL, d3d->pixformat, d3d->pixformat, !window->fullscreen);
 	if (result != DD_OK)
 	{
 		fprintf(stderr, "Proposed video mode not supported on device %s\n", window->monitor->info.szDevice);
@@ -981,6 +993,9 @@ static void pick_best_mode(win_window_info *window)
 	int modenum;
 
 	// determine the minimum width/height for the selected target
+	// note: technically we should not be calling this from an alternate window
+	// thread; however, it is only done during init time, and the init code on
+	// the main thread is waiting for us to finish, so it is safe to do so here
 	render_target_get_minimum_size(window->target, &minwidth, &minheight);
 
 	// use those as the target for now
@@ -1421,12 +1436,8 @@ static void primitive_flush_pending(d3d_info *d3d)
 
 static texture_info *texture_create(d3d_info *d3d, const render_texinfo *texsource, UINT32 flags)
 {
-	int texwidth = texsource->width;
-	int texheight = texsource->height;
 	texture_info *texture;
 	HRESULT result;
-
-//printf("texture_create(%p, %dx%d, %03x)\n", texsource->base, texwidth, texheight, flags);
 
 	// allocate a new texture
 	texture = malloc_or_die(sizeof(*texture));
@@ -1437,82 +1448,69 @@ static texture_info *texture_create(d3d_info *d3d, const render_texinfo *texsour
 	texture->flags = flags;
 	texture->texinfo = *texsource;
 
-	// if we're not wrapping, add a 1 pixel border on all sides
-	if (!(flags & PRIMFLAG_TEXWRAP_MASK))
+	// compute the size
+	texture_compute_size(d3d, texsource->width, texsource->height, texture);
+
+	// non-screen textures are easy
+	if (!PRIMFLAG_GET_SCREENTEX(flags))
 	{
-		texwidth += 2;
-		texheight += 2;
+		result = (*d3dintf->device.create_texture)(d3d->device, texture->rawwidth, texture->rawheight, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &texture->d3dtex);
+		if (result != D3D_OK)
+			goto error;
+		texture->d3dfinaltex = texture->d3dtex;
+		texture->type = TEXTURE_TYPE_PLAIN;
 	}
 
-	// round width/height up to nearest power of 2 if we need to
-	if (!(d3d->texture_caps & D3DPTEXTURECAPS_NONPOW2CONDITIONAL))
+	// screen textures are allocated differently
+	else
 	{
-		texwidth |= texwidth >> 1;
-		texwidth |= texwidth >> 2;
-		texwidth |= texwidth >> 4;
-		texwidth |= texwidth >> 8;
-		texheight |= texheight >> 1;
-		texheight |= texheight >> 2;
-		texheight |= texheight >> 4;
-		texheight |= texheight >> 8;
-		texwidth++;
-		texheight++;
-	}
+		DWORD usage = d3d->dynamic_supported ? D3DUSAGE_DYNAMIC : 0;
+		DWORD pool = d3d->dynamic_supported ? D3DPOOL_DEFAULT : D3DPOOL_MANAGED;
 
-	// round up to square if we need to
-	if (d3d->texture_caps & D3DPTEXTURECAPS_SQUAREONLY)
-	{
-		if (texwidth < texheight)
-			texwidth = texheight;
+		// screen textures with no prescaling are pretty easy
+		if (video_config.prescale <= 1)
+		{
+			result = (*d3dintf->device.create_texture)(d3d->device, texture->rawwidth, texture->rawheight, 1, usage, d3d->screen_format, pool, &texture->d3dtex);
+			if (result != D3D_OK)
+				goto error;
+			texture->d3dfinaltex = texture->d3dtex;
+			texture->type = d3d->dynamic_supported ? TEXTURE_TYPE_DYNAMIC : TEXTURE_TYPE_PLAIN;
+		}
+
+		// screen textures with prescaling require two allocations
 		else
-			texheight = texwidth;
+		{
+			int scwidth, scheight;
+
+			// use an offscreen plain surface for stretching if supported
+			if (d3d->stretch_supported)
+			{
+				result = (*d3dintf->device.create_offscreen_plain_surface)(d3d->device, texture->rawwidth, texture->rawheight, d3d->screen_format, D3DPOOL_DEFAULT, &texture->d3dsurface);
+				if (result != D3D_OK)
+					goto error;
+				texture->type = TEXTURE_TYPE_SURFACE;
+			}
+
+			// otherwise, we allocate a dynamic texture for the source
+			else
+			{
+				result = (*d3dintf->device.create_texture)(d3d->device, texture->rawwidth, texture->rawheight, 1, usage, d3d->screen_format, pool, &texture->d3dtex);
+				if (result != D3D_OK)
+					goto error;
+				texture->type = d3d->dynamic_supported ? TEXTURE_TYPE_DYNAMIC : TEXTURE_TYPE_PLAIN;
+			}
+
+			// for the target surface, we allocate a render target texture
+			scwidth = texture->rawwidth * video_config.prescale;
+			scheight = texture->rawheight * video_config.prescale;
+			result = (*d3dintf->device.create_texture)(d3d->device, scwidth, scheight, 1, D3DUSAGE_RENDERTARGET, d3d->screen_format, D3DPOOL_DEFAULT, &texture->d3dfinaltex);
+			if (result != D3D_OK)
+				goto error;
+		}
 	}
-
-	// adjust the aspect ratio if we need to
-	while (texwidth < texheight && texheight / texwidth > d3d->texture_max_aspect)
-		texwidth *= 2;
-	while (texheight < texwidth && texwidth / texheight > d3d->texture_max_aspect)
-		texheight *= 2;
-
-	// if we're above the max width/height, do what?
-	if (texwidth > d3d->texture_max_width || texheight > d3d->texture_max_height)
-	{
-		static int printed = FALSE;
-		if (!printed) fprintf(stderr, "Texture too big! (wanted: %dx%d, max is %dx%d)\n", texwidth, texheight, (int)d3d->texture_max_width, (int)d3d->texture_max_height);
-		printed = TRUE;
-	}
-
-	// compute the U/V scale factors
-	if (!(flags & PRIMFLAG_TEXWRAP_MASK))
-	{
-		texture->ustart = 1.0f / (float)texwidth;
-		texture->ustop = (float)(texsource->width + 1) / (float)texwidth;
-		texture->vstart = 1.0f / (float)texheight;
-		texture->vstop = (float)(texsource->height + 1) / (float)texheight;
-	}
-	else
-	{
-		texture->ustart = 0.0f;
-		texture->ustop = (float)texsource->width / (float)texwidth;
-		texture->vstart = 0.0f;
-		texture->vstop = (float)texsource->height / (float)texheight;
-	}
-
-//if (d3d->caps.Caps2 & D3DCAPS2_CANMANAGERESOURCE)
-
-	// create a new texture
-	if (PRIMFLAG_GET_SCREENTEX(flags))
-		result = (*d3dintf->device.create_texture)(d3d->device, texwidth, texheight, 1,
-					d3d->dynamic_supported ? D3DUSAGE_DYNAMIC : 0,
-					d3d->screen_format,
-					d3d->dynamic_supported ? D3DPOOL_DEFAULT : D3DPOOL_MANAGED, &texture->d3dtex);
-	else
-		result = (*d3dintf->device.create_texture)(d3d->device, texwidth, texheight, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &texture->d3dtex);
-	if (result != D3D_OK)
-		goto error;
 
 	// copy the data to the texture
-	texture_set_data(d3d, texture->d3dtex, texsource, flags);
+	texture_set_data(d3d, texture, texsource, flags);
 
 	// add us to the texture list
 	texture->next = d3d->texlist;
@@ -1520,8 +1518,98 @@ static texture_info *texture_create(d3d_info *d3d, const render_texinfo *texsour
 	return texture;
 
 error:
+	if (texture->d3dsurface != NULL)
+		(*d3dintf->surface.release)(texture->d3dsurface);
+	if (texture->d3dtex != NULL)
+		(*d3dintf->texture.release)(texture->d3dtex);
 	free(texture);
 	return NULL;
+}
+
+
+
+//============================================================
+//  texture_compute_size
+//============================================================
+
+static void texture_compute_size(d3d_info *d3d, int texwidth, int texheight, texture_info *texture)
+{
+	int finalheight = texheight;
+	int finalwidth = texwidth;
+
+	// if we're not wrapping, add a 1 pixel border on all sides
+	if (!(texture->flags & PRIMFLAG_TEXWRAP_MASK))
+	{
+		finalwidth += 2;
+		finalheight += 2;
+	}
+
+	// round width/height up to nearest power of 2 if we need to
+	if (!(d3d->texture_caps & D3DPTEXTURECAPS_NONPOW2CONDITIONAL))
+	{
+		// first the width
+		if (finalwidth & (finalwidth - 1))
+		{
+			finalwidth |= finalwidth >> 1;
+			finalwidth |= finalwidth >> 2;
+			finalwidth |= finalwidth >> 4;
+			finalwidth |= finalwidth >> 8;
+			finalwidth++;
+		}
+
+		// then the height
+		if (finalheight & (finalheight - 1))
+		{
+			finalheight |= finalheight >> 1;
+			finalheight |= finalheight >> 2;
+			finalheight |= finalheight >> 4;
+			finalheight |= finalheight >> 8;
+			finalheight++;
+		}
+	}
+
+	// round up to square if we need to
+	if (d3d->texture_caps & D3DPTEXTURECAPS_SQUAREONLY)
+	{
+		if (finalwidth < finalheight)
+			finalwidth = finalheight;
+		else
+			finalheight = finalwidth;
+	}
+
+	// adjust the aspect ratio if we need to
+	while (finalwidth < finalheight && finalheight / finalwidth > d3d->texture_max_aspect)
+		finalwidth *= 2;
+	while (finalheight < finalwidth && finalwidth / finalheight > d3d->texture_max_aspect)
+		finalheight *= 2;
+
+	// if we're above the max width/height, do what?
+	if (finalwidth > d3d->texture_max_width || finalheight > d3d->texture_max_height)
+	{
+		static int printed = FALSE;
+		if (!printed) fprintf(stderr, "Texture too big! (wanted: %dx%d, max is %dx%d)\n", finalwidth, finalheight, (int)d3d->texture_max_width, (int)d3d->texture_max_height);
+		printed = TRUE;
+	}
+
+	// compute the U/V scale factors
+	if (!(texture->flags & PRIMFLAG_TEXWRAP_MASK))
+	{
+		texture->ustart = 1.0f / (float)finalwidth;
+		texture->ustop = (float)(texwidth + 1) / (float)finalwidth;
+		texture->vstart = 1.0f / (float)finalheight;
+		texture->vstop = (float)(texheight + 1) / (float)finalheight;
+	}
+	else
+	{
+		texture->ustart = 0.0f;
+		texture->ustop = (float)texwidth / (float)finalwidth;
+		texture->vstart = 0.0f;
+		texture->vstop = (float)texheight / (float)finalheight;
+	}
+
+	// set the final values
+	texture->rawwidth = finalwidth;
+	texture->rawheight = finalheight;
 }
 
 
@@ -1530,7 +1618,7 @@ error:
 //  texture_set_data
 //============================================================
 
-static void texture_set_data(d3d_info *d3d, d3d_texture *texture, const render_texinfo *texsource, UINT32 flags)
+static void texture_set_data(d3d_info *d3d, texture_info *texture, const render_texinfo *texsource, UINT32 flags)
 {
 	D3DLOCKED_RECT rect;
 	HRESULT result;
@@ -1538,10 +1626,13 @@ static void texture_set_data(d3d_info *d3d, d3d_texture *texture, const render_t
 	int x, y;
 
 	// lock the texture
-	if (PRIMFLAG_GET_SCREENTEX(flags) && d3d->dynamic_supported)
-		result = (*d3dintf->texture.lock_rect)(texture, 0, &rect, NULL, D3DLOCK_DISCARD);
-	else
-		result = (*d3dintf->texture.lock_rect)(texture, 0, &rect, NULL, 0);
+	switch (texture->type)
+	{
+		default:
+		case TEXTURE_TYPE_PLAIN:	result = (*d3dintf->texture.lock_rect)(texture->d3dtex, 0, &rect, NULL, 0);					break;
+		case TEXTURE_TYPE_DYNAMIC:	result = (*d3dintf->texture.lock_rect)(texture->d3dtex, 0, &rect, NULL, D3DLOCK_DISCARD);	break;
+		case TEXTURE_TYPE_SURFACE:	result = (*d3dintf->surface.lock_rect)(texture->d3dsurface, &rect, NULL, D3DLOCK_DISCARD);	break;
+	}
 	if (result != D3D_OK)
 		return;
 
@@ -1618,8 +1709,139 @@ static void texture_set_data(d3d_info *d3d, d3d_texture *texture, const render_t
 	}
 
 	// unlock
-	result = (*d3dintf->texture.unlock_rect)(texture, 0);
+	switch (texture->type)
+	{
+		default:
+		case TEXTURE_TYPE_PLAIN:	result = (*d3dintf->texture.unlock_rect)(texture->d3dtex, 0);	break;
+		case TEXTURE_TYPE_DYNAMIC:	result = (*d3dintf->texture.unlock_rect)(texture->d3dtex, 0);	break;
+		case TEXTURE_TYPE_SURFACE:	result = (*d3dintf->surface.unlock_rect)(texture->d3dsurface);	break;
+	}
 	if (result != D3D_OK) verbose_printf("Direct3D: Error %08X during texture unlock_rect call\n", (int)result);
+
+	// prescale
+	texture_prescale(d3d, texture);
+}
+
+
+
+//============================================================
+//  texture_prescale
+//============================================================
+
+static void texture_prescale(d3d_info *d3d, texture_info *texture)
+{
+	d3d_surface *surface;
+	HRESULT result;
+	int i;
+
+	// if we don't need to, just skip it
+	if (texture->d3dtex == texture->d3dfinaltex)
+		return;
+
+	// for all cases, we need to get the surface of the render target
+	result = (*d3dintf->texture.get_surface_level)(texture->d3dfinaltex, 0, &surface);
+	if (result != D3D_OK) verbose_printf("Direct3D: Error %08X during texture get_surface_level call\n", (int)result);
+
+	// if we have an offscreen plain surface, we can just StretchRect to it
+	if (texture->type == TEXTURE_TYPE_SURFACE)
+	{
+		RECT source, dest;
+
+		assert(texture->d3dsurface != NULL);
+
+		// set the source bounds
+		source.left = source.top = 0;
+		source.right = texture->texinfo.width + 2;
+		source.bottom = texture->texinfo.height + 2;
+
+		// set the target bounds
+		dest = source;
+		dest.right *= video_config.prescale;
+		dest.bottom *= video_config.prescale;
+
+		// do the stretchrect
+		result = (*d3dintf->device.stretch_rect)(d3d->device, texture->d3dsurface, &source, surface, &dest, D3DTEXF_NONE);
+		if (result != D3D_OK) verbose_printf("Direct3D: Error %08X during device stretct_rect call\n", (int)result);
+	}
+
+	// if we are using a texture render target, we need to do more preparations
+	else
+	{
+		d3d_surface *backbuffer;
+
+		assert(texture->d3dtex != NULL);
+
+		// first remember the original render target and set the new one
+		result = (*d3dintf->device.get_render_target)(d3d->device, 0, &backbuffer);
+		if (result != D3D_OK) verbose_printf("Direct3D: Error %08X during device get_render_target call\n", (int)result);
+		result = (*d3dintf->device.set_render_target)(d3d->device, 0, surface);
+		if (result != D3D_OK) verbose_printf("Direct3D: Error %08X during device set_render_target call\n", (int)result);
+
+		// start the scene
+		result = (*d3dintf->device.begin_scene)(d3d->device);
+		if (result != D3D_OK) verbose_printf("Direct3D: Error %08X during device begin_scene call\n", (int)result);
+
+		// configure the rendering pipeline
+		set_filter(d3d, FALSE);
+		set_blendmode(d3d, BLENDMODE_NONE);
+		result = (*d3dintf->device.set_texture)(d3d->device, 0, texture->d3dtex);
+		if (result != D3D_OK) verbose_printf("Direct3D: Error %08X during device set_texture call\n", (int)result);
+
+		// lock the vertex buffer
+		result = (*d3dintf->vertexbuf.lock)(d3d->vertexbuf, 0, 0, (VOID **)&d3d->lockedbuf, D3DLOCK_DISCARD);
+		if (result != D3D_OK) verbose_printf("Direct3D: Error %08X during vertex buffer lock call\n", (int)result);
+
+		// configure the X/Y coordinates on the target surface
+		d3d->lockedbuf[0].x = -0.5f;
+		d3d->lockedbuf[0].y = -0.5f;
+		d3d->lockedbuf[1].x = (float)((texture->texinfo.width + 2) * video_config.prescale) - 0.5f;
+		d3d->lockedbuf[1].y = -0.5f;
+		d3d->lockedbuf[2].x = -0.5f;
+		d3d->lockedbuf[2].y = (float)((texture->texinfo.height + 2) * video_config.prescale) - 0.5f;
+		d3d->lockedbuf[3].x = (float)((texture->texinfo.width + 2) * video_config.prescale) - 0.5f;
+		d3d->lockedbuf[3].y = (float)((texture->texinfo.height + 2) * video_config.prescale) - 0.5f;
+
+		// configure the U/V coordintes on the source texture
+		d3d->lockedbuf[0].u0 = 0.0f;
+		d3d->lockedbuf[0].v0 = 0.0f;
+		d3d->lockedbuf[1].u0 = (float)(texture->texinfo.width + 2) / (float)texture->rawwidth;
+		d3d->lockedbuf[1].v0 = 0.0f;
+		d3d->lockedbuf[2].u0 = 0.0f;
+		d3d->lockedbuf[2].v0 = (float)(texture->texinfo.height + 2) / (float)texture->rawheight;
+		d3d->lockedbuf[3].u0 = (float)(texture->texinfo.width + 2) / (float)texture->rawwidth;
+		d3d->lockedbuf[3].v0 = (float)(texture->texinfo.height + 2) / (float)texture->rawheight;
+
+		// reset the remaining vertex parameters
+		for (i = 0; i < 4; i++)
+		{
+			d3d->lockedbuf[i].z = 0.0f;
+			d3d->lockedbuf[i].rhw = 1.0f;
+			d3d->lockedbuf[i].color = D3DCOLOR_ARGB(0xff,0xff,0xff,0xff);
+		}
+
+		// unlock the vertex buffer
+		result = (*d3dintf->vertexbuf.unlock)(d3d->vertexbuf);
+		if (result != D3D_OK) verbose_printf("Direct3D: Error %08X during vertex buffer unlock call\n", (int)result);
+		d3d->lockedbuf = NULL;
+
+		// set the stream and draw the triangle strip
+		result = (*d3dintf->device.set_stream_source)(d3d->device, 0, d3d->vertexbuf, sizeof(d3d_vertex));
+		if (result != D3D_OK) verbose_printf("Direct3D: Error %08X during device set_stream_source call\n", (int)result);
+		result = (*d3dintf->device.draw_primitive)(d3d->device, D3DPT_TRIANGLESTRIP, 0, 2);
+		if (result != D3D_OK) verbose_printf("Direct3D: Error %08X during device draw_primitive call\n", (int)result);
+
+		// end the scene
+		result = (*d3dintf->device.end_scene)(d3d->device);
+		if (result != D3D_OK) verbose_printf("Direct3D: Error %08X during device end_scene call\n", (int)result);
+
+		// reset the render target and release our reference to the backbuffer
+		result = (*d3dintf->device.set_render_target)(d3d->device, 0, backbuffer);
+		if (result != D3D_OK) verbose_printf("Direct3D: Error %08X during device set_render_target call\n", (int)result);
+		(*d3dintf->surface.release)(backbuffer);
+	}
+
+	// release our reference to the target surface
+	(*d3dintf->surface.release)(surface);
 }
 
 
@@ -1663,7 +1885,7 @@ static void texture_update(d3d_info *d3d, const render_primitive *prim)
 	// if we found it, but with a different seqid, copy the data
 	if (texture->texinfo.seqid != prim->texture.seqid)
 	{
-		texture_set_data(d3d, texture->d3dtex, &prim->texture, prim->flags);
+		texture_set_data(d3d, texture, &prim->texture, prim->flags);
 		texture->texinfo.seqid = prim->texture.seqid;
 	}
 }

@@ -13,6 +13,7 @@
 #define __RENDER_H__
 
 #include "driver.h"
+#include "osdepend.h"
 
 
 
@@ -223,6 +224,20 @@ struct _render_primitive
 };
 
 
+/*-------------------------------------------------
+    render_primitive_list - an object containing
+    a list head plus a lock
+-------------------------------------------------*/
+
+typedef struct _render_primitive_list render_primitive_list;
+struct _render_primitive_list
+{
+	render_primitive *	head;				/* head of the list */
+	render_primitive **	nextptr;			/* pointer to the next tail pointer */
+	osd_lock *			lock;				/* should only should be accessed under this lock */
+};
+
+
 
 /***************************************************************************
     PROTOTYPES
@@ -246,11 +261,12 @@ void render_target_set_view(render_target *target, int viewindex);
 const char *render_target_get_view_name(render_target *target, int viewindex);
 void render_target_compute_visible_area(render_target *target, INT32 target_width, INT32 target_height, float target_pixel_aspect, UINT8 target_orientation, INT32 *visible_width, INT32 *visible_height);
 void render_target_get_minimum_size(render_target *target, INT32 *minwidth, INT32 *minheight);
-const render_primitive *render_target_get_primitives(render_target *target);
+const render_primitive_list *render_target_get_primitives(render_target *target);
 
 
 /* ----- runtime controls ----- */
 
+int render_view_item_get_state(const char *itemname);
 void render_view_item_set_state(const char *itemname, int state);
 
 
@@ -266,6 +282,8 @@ void render_texture_hq_scale(mame_bitmap *dest, const mame_bitmap *source, const
 
 void render_container_empty(render_container *container);
 int render_container_is_empty(render_container *container);
+int render_container_get_orientation(render_container *container);
+void render_container_set_orientation(render_container *container, int orientation);
 render_container *render_container_get_ui(void);
 render_container *render_container_get_screen(int screen);
 void render_container_add_line(render_container *container, float x0, float y0, float x1, float y1, float width, rgb_t argb, UINT32 flags);

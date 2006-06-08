@@ -12,6 +12,7 @@
 #include <windows.h>
 
 #include "driver.h"
+#include "osdepend.h"
 #include "video.h"
 #include "window.h"
 #include "rendsoft.h"
@@ -98,7 +99,7 @@ void drawgdi_window_destroy(win_window_info *window)
 //  drawgdi_window_draw
 //============================================================
 
-int drawgdi_window_draw(win_window_info *window, HDC dc, const render_primitive *primlist, int update)
+int drawgdi_window_draw(win_window_info *window, HDC dc, const render_primitive_list *primlist, int update)
 {
 	gdi_info *gdi = window->gdidata;
 	int width, height, pitch;
@@ -124,8 +125,10 @@ int drawgdi_window_draw(win_window_info *window, HDC dc, const render_primitive 
 	}
 
 	// draw the primitives to the bitmap
-	rgb888_draw_primitives(primlist, gdi->bmdata, width, height, pitch);
-//  rgb555_draw_primitives(primlist, gdi->bmdata, width, height, pitch);
+	osd_lock_acquire(primlist->lock);
+	rgb888_draw_primitives(primlist->head, gdi->bmdata, width, height, pitch);
+//  rgb555_draw_primitives(primlist->head, gdi->bmdata, width, height, pitch);
+	osd_lock_release(primlist->lock);
 
 	// fill in bitmap-specific info
 	gdi->bminfo.bmiHeader.biWidth = pitch;

@@ -21,7 +21,7 @@ int drawd3d_init(void);
 void drawd3d_exit(void);
 
 int drawd3d_window_init(win_window_info *window);
-int drawd3d_window_draw(win_window_info *window, HDC dc, const render_primitive *primlist, int update);
+int drawd3d_window_draw(win_window_info *window, HDC dc, const render_primitive_list *primlist, int update);
 void drawd3d_window_destroy(win_window_info *window);
 
 

@@ -333,6 +333,13 @@ int osd_display_loading_rom_message(const char *name,rom_load_data *romdata);
 /* checks to see if a pointer is bad */
 int osd_is_bad_read_ptr(const void *ptr, size_t size);
 
+/* multithreading locks; only need to implement if you use threads */
+typedef struct _osd_lock osd_lock;
+osd_lock *osd_lock_alloc(void);
+void osd_lock_acquire(osd_lock *lock);
+int osd_lock_try(osd_lock *lock);
+void osd_lock_release(osd_lock *lock);
+void osd_lock_free(osd_lock *lock);
 
 
 #ifdef MESS
