@@ -630,6 +630,9 @@ ROM_START( luplup ) /* version 3.0 / 990128 */
 
 	ROM_REGION( 0x40000, REGION_SOUND1, 0 ) /* Oki Samples */
 	ROM_LOAD( "vrom1.bin", 0x00000, 0x40000, CRC(34a56987) SHA1(4d8983648a7f0acf43ff4c9c8aa6c8640ee2bbfe) )
+
+	ROM_REGION( 0x0400, REGION_PLDS, 0 )
+	ROM_LOAD( "gal22v10b.gal1", 0x0000, 0x02e5, NO_DUMP ) /* GAL is read protected */
 ROM_END
 
 

@@ -9,9 +9,9 @@ Sound:  various
 VDP:    HD46505SP (6845) (CRT controller)
 Custom: TC17G032AP-0246 (blitter)
 
-----------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------
 Year + Game                 Board(s)                    Sound                       Palette
-----------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------
 88 Hana no Mai              D1610088L1                  AY8912 YM2203        M5205  PROM
 88 Hana Kochou              D201901L2 + D201901L1-0     AY8912 YM2203        M5205  PROM
 89 Hana Oriduru             D2304268L                   AY8912        YM2413 M5205  RAM
@@ -22,17 +22,19 @@ Year + Game                 Board(s)                    Sound                   
 90 Mahjong Campus Hunting   D3312108L1-1 + D23SUB1      AY8912        YM2413 M5205  RAM
 90 7jigen no Youseitachi    D3707198L1 + D23SUB1        AY8912        YM2413 M5205  RAM
 90 Mahjong Electron Base                                AY8912        YM2413        RAM
+90 Mahjong X-Tal/Diamond 7  D4005208L1-1 + D23SUB       AY8912        YM2413 M5205  RAM
 90 Neruton Haikujiradan     D4005208L1-1 + D4508308L-2  AY8912        YM2413 M5205  RAM
 91 Mahjong Yarunara         D5512068L1-1 + D4508308L-2  AY8912        YM2413 M5205  RAM
 91 Mahjong Angels           D5512068L1-1 + D6107068L-1  AY8912        YM2413 M5205  RAM
 91 Mahjong Dial Q2          D5212298L-1                               YM2413        PROM
 92 Quiz TV Gassyuukoku Q&Q  D5512068L1-2 + D6410288L-1  AY8912        YM2413 M5205  RAM
-94 Maya                                                       YM2203                PROM
-9? Inca                                                      TM2203               PROM
-----------------------------------------------------------------------------------------
+94 Maya                                                        YM2203               PROM
+9? Inca                                                        TM2203               PROM
+-------------------------------------------------------------------------------------------
 (1) quite different from the others: it has a slave Z80 and *two* blitters
 
 Notes:
+
 - In some games (drgpunch etc) there's a more complete service mode. To enter
   it, set the service mode dip switch and reset keeping start1 pressed.
   In hnkochou, keep F2 pressed and reset.
@@ -47,6 +49,7 @@ Notes:
   the chip is on the board but unused.
 
 TODO:
+
 - Inputs are grossly mapped, especially for the card games.
 
 - In the interleaved games, "reverse write" test in service mode is wrong due to
@@ -65,6 +68,7 @@ TODO:
   attract mode, where the girl is hidden by the background. Another possible
   priority issue in attract mode is when the balls scroll over the devil.
 
+- neruton / majxtal7: girls are behind the background in demo mode.
 
 ***************************************************************************/
 
@@ -2142,7 +2146,7 @@ INPUT_PORTS_END
 
 
 INPUT_PORTS_START( mjelct3 )
-	PORT_START_TAG("DSW2")	//7c21 (select = 00)
+	PORT_START_TAG("DSW2")	// 7c21 (select = 00)
 	PORT_DIPNAME( 0x03, 0x03, "Difficulty?" )
 	PORT_DIPSETTING(    0x03, "0" )	// 20
 	PORT_DIPSETTING(    0x00, "1" )	// 32
@@ -2158,7 +2162,7 @@ INPUT_PORTS_START( mjelct3 )
 	PORT_DIPSETTING(    0x20, "2" )
 	PORT_DIPSETTING(    0x10, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x40, 0x40, "Allow Coin Out" )//This is a skill game, isn't it?
+	PORT_DIPNAME( 0x40, 0x40, "Allow Coin Out" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Win A Prize?" )
@@ -2166,7 +2170,7 @@ INPUT_PORTS_START( mjelct3 )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START_TAG("DSW1")	// 7c20 (select = 40)
-	PORT_DIPNAME( 0x0f, 0x07, "Pay Out Rate" ) //This is a skill game, isn't it?
+	PORT_DIPNAME( 0x0f, 0x07, "Pay Out Rate" )
 	PORT_DIPSETTING(    0x00, "50" )
 	PORT_DIPSETTING(    0x01, "53" )
 	PORT_DIPSETTING(    0x02, "56" )
@@ -2406,6 +2410,139 @@ INPUT_PORTS_START( mjelctrn )
 	PORT_DIPSETTING(    0xff, DEF_STR( On ) )
 INPUT_PORTS_END
 
+
+INPUT_PORTS_START( majxtal7 )
+	PORT_START_TAG("DSW2")	// select = 00
+	PORT_DIPNAME( 0x03, 0x03, "Difficulty?" )
+	PORT_DIPSETTING(    0x03, "0" )	// 20
+	PORT_DIPSETTING(    0x00, "1" )	// 32
+	PORT_DIPSETTING(    0x01, "2" )	// 64
+	PORT_DIPSETTING(    0x02, "3" )	// c8
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x00, "1 Coin/10 Credits" )
+	PORT_DIPNAME( 0x30, 0x30, "Min Pay?" )
+	PORT_DIPSETTING(    0x30, "1" )
+	PORT_DIPSETTING(    0x20, "2" )
+	PORT_DIPSETTING(    0x10, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x40, 0x40, "Allow Coin Out" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Win A Prize?" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START_TAG("DSW1") // select = 40
+	PORT_DIPNAME( 0x0f, 0x07, "Pay Out Rate" )
+	PORT_DIPSETTING(    0x00, "50" )
+	PORT_DIPSETTING(    0x01, "53" )
+	PORT_DIPSETTING(    0x02, "56" )
+	PORT_DIPSETTING(    0x03, "59" )
+	PORT_DIPSETTING(    0x04, "62" )
+	PORT_DIPSETTING(    0x05, "65" )
+	PORT_DIPSETTING(    0x06, "68" )
+	PORT_DIPSETTING(    0x07, "71" )
+	PORT_DIPSETTING(    0x08, "75" )
+	PORT_DIPSETTING(    0x09, "78" )
+	PORT_DIPSETTING(    0x0a, "81" )
+	PORT_DIPSETTING(    0x0b, "84" )
+	PORT_DIPSETTING(    0x0c, "87" )
+	PORT_DIPSETTING(    0x0d, "90" )
+	PORT_DIPSETTING(    0x0e, "93" )
+	PORT_DIPSETTING(    0x0f, "96" )
+	PORT_DIPNAME( 0x30, 0x30, "Max Bet" )
+	PORT_DIPSETTING(    0x30, "1" )
+	PORT_DIPSETTING(    0x20, "5" )
+	PORT_DIPSETTING(    0x10, "10" )
+	PORT_DIPSETTING(    0x00, "20" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x00, "1 Coin/10 Credits" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START_TAG("IN2")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE4 )	// Pay
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN  )	// 18B
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )				// Test
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE2 )	// Analyzer
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE3 )	// Memory Reset
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN2    )	// Note
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1    )	// Coin
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE1 )	// Service
+
+	MAHJONG_BOARD
+
+	PORT_START_TAG("IN7")
+	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_MAHJONG_LAST_CHANCE )
+	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_MAHJONG_SCORE )
+	PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_MAHJONG_DOUBLE_UP )
+	PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_MAHJONG_FLIP_FLOP )
+	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_MAHJONG_BIG )
+	PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_MAHJONG_SMALL )
+
+	PORT_START_TAG("DSW3") // select = 80
+	PORT_DIPNAME( 0x07, 0x07, "YAKUMAN Bonus" )
+	PORT_DIPSETTING(    0x07, "Cut" )
+	PORT_DIPSETTING(    0x06, "1 T" )
+	PORT_DIPSETTING(    0x05, "300" )
+	PORT_DIPSETTING(    0x04, "500" )
+	PORT_DIPSETTING(    0x03, "700" )
+	PORT_DIPSETTING(    0x02, "1000" )
+//  PORT_DIPSETTING(    0x01, "1000" )
+//  PORT_DIPSETTING(    0x00, "1000" )
+	PORT_DIPNAME( 0x08, 0x08, "YAKU times" )
+	PORT_DIPSETTING(    0x08, "1" )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPNAME( 0x10, 0x10, "Win Rate?" )
+	PORT_DIPSETTING(    0x10, DEF_STR( High ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Low ) )
+	PORT_DIPNAME( 0x20, 0x20, "Draw New Tile (Part 4 Only)" )
+	PORT_DIPSETTING(    0x00, "Automatic" )
+	PORT_DIPSETTING(    0x20, "Manual" )
+	PORT_DIPNAME( 0x40, 0x40, "DonDen Key" )
+	PORT_DIPSETTING(    0x40, "A" )
+	PORT_DIPSETTING(    0x00, "Flip Flop" )
+	PORT_DIPNAME( 0x80, 0x80, "Title" )
+	PORT_DIPSETTING(    0x80, "X-Tal" )
+	PORT_DIPSETTING(    0x00, "Diamond" )
+
+	PORT_START_TAG("DSW4") // select = c0
+	PORT_DIPNAME( 0x01, 0x01, "Last Chance" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Pay Rate?" )
+	PORT_DIPSETTING(    0x02, DEF_STR( High ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Low ) )
+	PORT_DIPNAME( 0x04, 0x04, "Choose Bonus" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "In-Game Bet?" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x00, "In-Game Music" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "Select Girl" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START_TAG("FAKE")	// IN10 - Fake DSW
+	PORT_DIPNAME( 0xff, 0xff, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0xff, DEF_STR( On ) )
+INPUT_PORTS_END
+
 INPUT_PORTS_START( neruton )
 	PORT_START_TAG("DSW2") //6a77 (select = 00)
 	PORT_DIPNAME( 0x07, 0x07, "Hours" )
@@ -2578,11 +2715,11 @@ static MACHINE_DRIVER_START( hnoridur )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
-	MDRV_SOUND_ADD(AY8910, 22000000 / 8)
+	MDRV_SOUND_ADD(AY8910, 22000000 / 16)
 	MDRV_SOUND_CONFIG(hnoridur_ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
 
-	MDRV_SOUND_ADD(YM2413, 3580000)
+	MDRV_SOUND_ADD(YM2413, 3579545)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 
 	MDRV_SOUND_ADD(MSM5205, 384000)
@@ -2894,6 +3031,31 @@ static MACHINE_DRIVER_START( neruton )
 
 	MDRV_VIDEO_START(neruton)
 MACHINE_DRIVER_END
+
+/***************************************************************************
+                                    Mahjong X-Tal 7
+***************************************************************************/
+
+/*  It runs in IM 2, thus needs a vector on the data bus:
+    0x42 and 0x44 are very similar, they should be triggered by the blitter
+    0x40 is vblank  */
+INTERRUPT_GEN( majxtal7_vblank_interrupt )
+{
+	// This is a kludge to avoid losing blitter interrupts
+	// there should be a vblank ack mechanism
+	if (dynax_blitter_irq)	return;
+
+	cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0x40);
+}
+
+static MACHINE_DRIVER_START( majxtal7 )
+
+	MDRV_IMPORT_FROM( neruton )
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_VBLANK_INT(majxtal7_vblank_interrupt,1)	/* IM 2 needs a vector on the data bus */
+
+MACHINE_DRIVER_END
+
 
 /***************************************************************************
 
@@ -3863,30 +4025,103 @@ ROM_END
 
 /***************************************************************************
 
+Mahjong Crystal 7
+Dynax, 1990
+
+PCB Layout
+----------
+
+D4005208L1-1
+|------------------------------------------------------------------|
+|    VR1       3.579545MHz  3-8912    22MHz|------|        4001.1A |
+|    VR2   358                             |TMPZ84|        4002.3A |
+|               YM2413    6845             |C015-6|                |
+|          358  384kHz                     |------|                |
+|               M5205                                              |
+|                                                          5563    |
+|M                                                         5.5V_BAT|
+|A            6264                                                 |
+|H                                                                 |
+|J            6264                PAL         PAL                  |
+|O                                                                 |
+|N                                                                 |
+|G  DSW1(8)                                                        |
+|2  DSW2(8)                                                        |
+|8  DSW3(8)                                                        |
+|   DSW4(8)                                |------------ 4011.11A -| |-ROM-sub-board-D23SUB--|
+|                                          |             4012.13A  | |                       |
+|                                          |             4013.14A  | | 4003.1B   4007.1A     |
+|                                          |             4014.15A-|| |                    |-||
+|                       HM53461  PAL       |                    | || | 4004.2B   4008.2A  | ||
+|               HM53461 HM53461            |                    | || |                    | ||
+|               HM53461 HM53461            |                    | || | 4005.3B   4009.3A  | ||
+|               HM53461 HM53461            |                    |-|| |                    |-||
+|               HM53461   |----------|     |                       | | 4006.4B   4010.4A     |
+|                         |    %     |     |                       | |                       |
+|                         |----------|     |                       | |                       |
+|------------------------------------------|-----------------------| |-----------------------|
+Notes:
+      TMPZ84C015-6    - Toshiba TMPZ84C015F-6 (QFP100)
+                        XTAL1- 11.000MHz [22/2], XTAL2- 11.000MHz [22/2], CLKIN- 5.500MHz [22/4], CLKOUT- 5.500MHz [22/4]
+      %               - SDIP64 IC, surface scratched off. This is most likely a Dynax NL-00x graphics generator or similar.
+      AY-3-8912 clock - 1.375MHz [22/16]
+      YM2413 clock    - 3.579545MHz
+      M5205 clock     - 384kHz
+      VSync           - 60Hz
+      HSync           - 15.87kHz
+
+***************************************************************************/
+
+ROM_START( majxtal7 )
+	ROM_REGION( 0x50000, REGION_CPU1, 0 )	/* Z80 Code */
+	ROM_LOAD( "4001.1a",  0x000000, 0x020000, CRC(82fc6dd5) SHA1(3c6e58d4c302a0f305c67c31fce6a1d4cbfe5f78) )
+	ROM_RELOAD(           0x010000, 0x020000 )
+	ROM_LOAD( "4002.3a",  0x030000, 0x010000, CRC(b5fec88f) SHA1(bc3a2404150edd570ea7d320b2d43735fbdce195) )
+	ROM_RELOAD(           0x040000, 0x010000 )
+
+	ROM_REGION( 0x300000, REGION_GFX1, 0 )	/* blitter data */
+	ROM_LOAD( "4011.11a", 0x000000, 0x020000, CRC(63551c37) SHA1(338f62125d217ab7a928476d36dd2797480ef3c1) )
+	ROM_LOAD( "4012.13a", 0x020000, 0x020000, CRC(51a431d5) SHA1(df2327b61154f5c8eddc7572c08e714daa1498b4) )
+	ROM_LOAD( "4013.14a", 0x040000, 0x020000, CRC(cdbb24f8) SHA1(6bec3931ceaed75bfee9079e095786b088b95e70) )
+	ROM_LOAD( "4014.15a", 0x060000, 0x020000, CRC(f2677938) SHA1(778ce4a6bebef934749f65acd0b6472fd314ce7a) )
+
+	ROM_LOAD( "4003.1b",  0x200000, 0x020000, CRC(26348ae4) SHA1(3659d18608848c58ad980a79bc1c29da238a5604) )
+	ROM_LOAD( "4004.2b",  0x220000, 0x020000, CRC(5b5ea036) SHA1(187a7f6356ead05d8e3d9f5efa82554004429780) )
+	ROM_LOAD( "4005.3b",  0x240000, 0x020000, CRC(7fdfb600) SHA1(ce4485e43ee6bf63b4e8e3bb91267295995c736f) )
+	ROM_LOAD( "4006.4b",  0x260000, 0x020000, CRC(67fa83ea) SHA1(f8b0012aaaf125b7266dbf1ae7df23d04d484e54) )
+	ROM_LOAD( "4010.4a",  0x280000, 0x020000, CRC(f1d4399d) SHA1(866af46900a4b04db69c838b7ec7e347a5fadd3d) )
+	ROM_LOAD( "4009.3a",  0x2a0000, 0x020000, CRC(0a92af7c) SHA1(4383dc8f3019b3b2716d32e1c91b0ac5b1e367c3) )
+	ROM_LOAD( "4008.2a",  0x2c0000, 0x020000, CRC(86f27f1c) SHA1(43b829597993d3043d5bbb0a468f603910638b87) )
+	ROM_LOAD( "4007.1a",  0x2e0000, 0x020000, CRC(8082d0ac) SHA1(44d708f8e307b782105082092edd3ea9affd2329) )
+ROM_END
+
+
+/***************************************************************************
+
 
                                 Game Drivers
 
 
 ***************************************************************************/
 
-GAME( 1988, hanamai,  0,        hanamai,  hanamai,  0,        ROT180, "Dynax",                   "Hana no Mai (Japan)"                                  , 0 )
-GAME( 1989, hnkochou, hanamai,  hanamai,  hnkochou, 0,        ROT180, "Dynax",                   "Hana Kochou [BET] (Japan)"                            , 0 )
-GAME( 1989, hnoridur, 0,        hnoridur, hnoridur, 0,        ROT180, "Dynax",                   "Hana Oriduru (Japan)",                                 GAME_IMPERFECT_GRAPHICS ) // 1 rom is bad
-GAME( 1989, drgpunch, 0,        sprtmtch, sprtmtch, 0,        ROT0,   "Dynax",                   "Dragon Punch (Japan)"                                 , 0 )
-GAME( 1989, sprtmtch, drgpunch, sprtmtch, sprtmtch, 0,        ROT0,   "Dynax (Fabtek license)",  "Sports Match"                                         , 0 )
-GAME( 1989, mjfriday, 0,        mjfriday, mjfriday, 0,        ROT180, "Dynax",                   "Mahjong Friday (Japan)"                               , 0 )
-GAME( 1990, mcnpshnt, 0,        mcnpshnt, mcnpshnt, 0,        ROT0,   "Dynax",                   "Mahjong Campus Hunting (Japan)"                       , 0 )
-GAME( 1990, 7jigen,   0,        nanajign, nanajign, 0,        ROT180, "Dynax",                   "7jigen no Youseitachi - Mahjong 7 Dimensions (Japan)", GAME_IMPERFECT_GRAPHICS )
-GAME( 1991, mjdialq2, 0,        mjdialq2, mjdialq2, 0,        ROT180, "Dynax",                   "Mahjong Dial Q2 (Japan)"                              , 0 )
-GAME( 1991, yarunara, 0,        yarunara, yarunara, 0,        ROT180, "Dynax",                   "Mahjong Yarunara (Japan)"                             , 0 )
-GAME( 1991, mjangels, 0,        yarunara, yarunara, 0,        ROT180, "Dynax",                   "Mahjong Angels - Comic Theater Vol.2 (Japan)"         , 0 )
-GAME( 1992, quiztvqq, 0,        yarunara, quiztvqq, 0,        ROT180, "Dynax",                   "Quiz TV Gassyuukoku Q&Q (Japan)"                      , 0 )
-GAME( 1994, maya,     0,        sprtmtch, sprtmtch, maya,     ROT0,   "Promat",                  "Maya"                                                 , 0 )
-GAME( 199?, inca,     maya,     sprtmtch, sprtmtch, maya,     ROT0,   "<unknown>",               "Inca"                                                 , 0 )
-GAME( 1990, jantouki, 0,        jantouki, jantouki, 0,        ROT0,   "Dynax",                   "Jong Tou Ki (Japan)"                                  , 0 )
-GAME( 1993, mjelctrn, 0,        mjelctrn, mjelctrn, mjelct3,  ROT180, "Dynax",                   "Mahjong Electron Base (parts 2 & 4, Japan)"           , 0 )
-GAME( 1990, mjelct3,  mjelctrn, mjelctrn, mjelct3,  mjelct3,  ROT180, "Dynax",                   "Mahjong Electron Base (parts 2 & 3, Japan)"           , 0 )
-GAME( 1990, mjelct3a, mjelctrn, mjelctrn, mjelct3,  mjelct3a, ROT180, "Dynax",                   "Mahjong Electron Base (parts 2 & 3, alt., Japan)"     , 0 )
-GAME( 1990, neruton,  0,        neruton,  neruton,  mjelct3,  ROT180, "Dynax / Yukiyoshi Tokoro","Mahjong Neruton Haikujirada (Japan)",                         GAME_IMPERFECT_GRAPHICS )	// e.g. dynax logo
-/* not a dynax board */
-GAME( 1995, shpeng,   0,        sprtmtch, sprtmtch, 0,        ROT0,   "WSAC Systems?",                   "Sea Hunter Penguin"                                 , GAME_WRONG_COLORS ) // proms?
+GAME( 1988, hanamai,  0,        hanamai,  hanamai,  0,        ROT180, "Dynax",                   "Hana no Mai (Japan)"                                          , 0 )
+GAME( 1989, hnkochou, hanamai,  hanamai,  hnkochou, 0,        ROT180, "Dynax",                   "Hana Kochou [BET] (Japan)"                                    , 0 )
+GAME( 1989, hnoridur, 0,        hnoridur, hnoridur, 0,        ROT180, "Dynax",                   "Hana Oriduru (Japan)"                                         , GAME_IMPERFECT_GRAPHICS ) // 1 rom is bad
+GAME( 1989, drgpunch, 0,        sprtmtch, sprtmtch, 0,        ROT0,   "Dynax",                   "Dragon Punch (Japan)"                                         , 0 )
+GAME( 1989, sprtmtch, drgpunch, sprtmtch, sprtmtch, 0,        ROT0,   "Dynax (Fabtek license)",  "Sports Match"                                                 , 0 )
+GAME( 1989, mjfriday, 0,        mjfriday, mjfriday, 0,        ROT180, "Dynax",                   "Mahjong Friday (Japan)"                                       , 0 )
+GAME( 1990, mcnpshnt, 0,        mcnpshnt, mcnpshnt, 0,        ROT0,   "Dynax",                   "Mahjong Campus Hunting (Japan)"                               , 0 )
+GAME( 1990, 7jigen,   0,        nanajign, nanajign, 0,        ROT180, "Dynax",                   "7jigen no Youseitachi - Mahjong 7 Dimensions (Japan)"         , GAME_IMPERFECT_GRAPHICS )
+GAME( 1991, mjdialq2, 0,        mjdialq2, mjdialq2, 0,        ROT180, "Dynax",                   "Mahjong Dial Q2 (Japan)"                                      , 0 )
+GAME( 1991, yarunara, 0,        yarunara, yarunara, 0,        ROT180, "Dynax",                   "Mahjong Yarunara (Japan)"                                     , 0 )
+GAME( 1991, mjangels, 0,        yarunara, yarunara, 0,        ROT180, "Dynax",                   "Mahjong Angels - Comic Theater Vol.2 (Japan)"                 , 0 )
+GAME( 1992, quiztvqq, 0,        yarunara, quiztvqq, 0,        ROT180, "Dynax",                   "Quiz TV Gassyuukoku Q&Q (Japan)"                              , 0 )
+GAME( 1994, maya,     0,        sprtmtch, sprtmtch, maya,     ROT0,   "Promat",                  "Maya"                                                         , 0 )
+GAME( 199?, inca,     maya,     sprtmtch, sprtmtch, maya,     ROT0,   "<unknown>",               "Inca"                                                         , 0 )
+GAME( 1990, jantouki, 0,        jantouki, jantouki, 0,        ROT0,   "Dynax",                   "Jong Tou Ki (Japan)"                                          , 0 )
+GAME( 1993, mjelctrn, 0,        mjelctrn, mjelctrn, mjelct3,  ROT180, "Dynax",                   "Mahjong Electron Base (parts 2 & 4, Japan)"                   , 0 )
+GAME( 1990, mjelct3,  mjelctrn, mjelctrn, mjelct3,  mjelct3,  ROT180, "Dynax",                   "Mahjong Electron Base (parts 2 & 3, Japan)"                   , 0 )
+GAME( 1990, mjelct3a, mjelctrn, mjelctrn, mjelct3,  mjelct3a, ROT180, "Dynax",                   "Mahjong Electron Base (parts 2 & 3, alt., Japan)"             , 0 )
+GAME( 1990, majxtal7, 0,        majxtal7, majxtal7, mjelct3,  ROT180, "Dynax",                   "Mahjong X-Tal 7 - Crystal Mahjong / Mahjong Diamond 7 (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1990, neruton,  0,        neruton,  neruton,  mjelct3,  ROT180, "Dynax / Yukiyoshi Tokoro","Mahjong Neruton Haikujirada (Japan)"                          , GAME_IMPERFECT_GRAPHICS )
+GAME( 1995, shpeng,   0,        sprtmtch, sprtmtch, 0,        ROT0,   "WSAC Systems?",           "Sea Hunter Penguin"                                           , GAME_WRONG_COLORS ) // not a dynax board. proms?

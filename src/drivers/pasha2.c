@@ -61,8 +61,13 @@ Notes:
       VSync      - 60Hz
       HSync      - 15.15kHz
 
+ driver by Pierpaolo Prazzoli
 
- preliminary driver by Pierpaolo Prazzoli
+ TODO:
+ - eeprom - is it used?
+ - irq2 - sound related? reads the 2 unmapped input registers.
+ - irq3 - it only writes a 0 into memory and changes a registe
+ - simulate music (DREAM chip)
 
 *********************************************************************/
 
@@ -70,142 +75,325 @@ Notes:
 #include "machine/eeprom.h"
 #include "sound/okim6295.h"
 
-static UINT16 *tiles, *wram;
+static UINT16 *bitmap0, *bitmap1, *wram;
+static int vbuffer = 0;
 
 static WRITE16_HANDLER( pasha2_misc_w )
 {
-	if(data & 0x0800)
+	if(offset)
 	{
-		int bank = data & 0xf000;
-		switch(bank)
+		if(data & 0x0800)
 		{
-		//right?
-		case 0x8000: memory_set_bankptr(1, memory_region(REGION_USER2) + 0x400000 * 0); break;
-		case 0x9000: memory_set_bankptr(1, memory_region(REGION_USER2) + 0x400000 * 1); break;
+			static int old_bank = -1;
+			int bank = data & 0xf000;
 
-		//???? empty banks ????
-		case 0xa000: memory_set_bankptr(1, memory_region(REGION_USER2) + 0x400000 * 2); break;
-		case 0xb000: memory_set_bankptr(1, memory_region(REGION_USER2) + 0x400000 * 3); break;
-		case 0xc000: memory_set_bankptr(1, memory_region(REGION_USER2) + 0x400000 * 4); break;
-		case 0xd000: memory_set_bankptr(1, memory_region(REGION_USER2) + 0x400000 * 5); break;
-		default: printf("default = %X @ %X\n",bank, activecpu_get_pc());
+			if(bank != old_bank)
+			{
+				old_bank = bank;
+
+				switch(bank)
+				{
+					case 0x8000: memory_set_bankptr(1, memory_region(REGION_USER2) + 0x400000 * 0); break;
+					case 0x9000: memory_set_bankptr(1, memory_region(REGION_USER2) + 0x400000 * 1); break;
+					case 0xa000: memory_set_bankptr(1, memory_region(REGION_USER2) + 0x400000 * 2); break;
+					case 0xb000: memory_set_bankptr(1, memory_region(REGION_USER2) + 0x400000 * 3); break;
+					case 0xc000: memory_set_bankptr(1, memory_region(REGION_USER2) + 0x400000 * 4); break;
+					case 0xd000: memory_set_bankptr(1, memory_region(REGION_USER2) + 0x400000 * 5); break;
+				}
+			}
 		}
 	}
-	else
-		printf("%X\n",activecpu_get_pc());
 }
 
-
-static READ16_HANDLER( fake_r )
+static WRITE16_HANDLER( pasha2_palette_w )
 {
-	return rand();
-	return ~0;
+	int color;
+	COMBINE_DATA(&paletteram16[offset]);
+
+	offset &= 0xff;
+
+	color = (paletteram16[offset] >> 8) | (paletteram16[offset+0x100] & 0xff00);
+	palette_set_color(offset*2+0,pal5bit(color),pal5bit(color >> 5),pal5bit(color >> 10));
+
+	color = (paletteram16[offset] & 0xff) | ((paletteram16[offset+0x100] & 0xff) << 8);
+	palette_set_color(offset*2+1,pal5bit(color),pal5bit(color >> 5),pal5bit(color >> 10));
+}
+
+static WRITE16_HANDLER( vbuffer_set_w )
+{
+	vbuffer = 1;
+}
+
+static WRITE16_HANDLER( vbuffer_clear_w )
+{
+	vbuffer = 0;
+}
+
+static WRITE16_HANDLER( bitmap_0_w )
+{
+	COMBINE_DATA(&bitmap0[offset + vbuffer*0x20000/2]);
+}
+
+static WRITE16_HANDLER( bitmap_1_w )
+{
+	// handle overlapping pixels without writing them
+	switch(mem_mask)
+	{
+		case 0:
+			bitmap_1_w(offset,data,0x00ff);
+			bitmap_1_w(offset,data,0xff00);
+			return;
+
+		case 0x00ff:
+			if((data & 0xff00) == 0xff00)
+				return;
+		break;
+
+		case 0xff00:
+			if((data & 0x00ff) == 0x00ff)
+				return;
+		break;
+	}
+
+	COMBINE_DATA(&bitmap1[offset + vbuffer*0x20000/2]);
+}
+
+static READ16_HANDLER( oki_0_r )
+{
+	if(offset)
+		return OKIM6295_status_0_r(0);
+	else
+		return 0;
+}
+
+static WRITE16_HANDLER( oki_0_w )
+{
+	if(offset)
+		OKIM6295_data_0_w(0, data);
+}
+
+static WRITE16_HANDLER( oki_1_w )
+{
+	if(offset)
+		OKIM6295_data_1_w(0, data);
+}
+
+static READ16_HANDLER( oki_1_r )
+{
+	if(offset)
+		return OKIM6295_status_1_r(0);
+	else
+		return 0;
+}
+
+static WRITE16_HANDLER( oki_0_bank_w )
+{
+	if(offset)
+		OKIM6295_set_bank_base(0, (data & 1) * 0x40000);
+}
+
+static WRITE16_HANDLER( oki_1_bank_w )
+{
+	if(offset)
+		OKIM6295_set_bank_base(1, (data & 1) * 0x40000);
+}
+
+static WRITE16_HANDLER( pasha2_lamps_w )
+{
+	if(data)
+		ui_popup("1P: %c%c%c 2P: %c%c%c 3P: %c%c%c",
+				(data & 0x001) ? 'R' : '-',
+				(data & 0x002) ? 'G' : '-',
+				(data & 0x004) ? 'B' : '-',
+				(data & 0x010) ? 'R' : '-',
+				(data & 0x020) ? 'G' : '-',
+				(data & 0x040) ? 'B' : '-',
+				(data & 0x100) ? 'R' : '-',
+				(data & 0x200) ? 'G' : '-',
+				(data & 0x400) ? 'B' : '-');
 }
 
 static ADDRESS_MAP_START( pasha2_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x00000000, 0x001fffff) AM_RAM	AM_BASE(&wram)
-	AM_RANGE(0x40000000, 0x4003ffff) AM_RAM AM_BASE(&tiles)
+	AM_RANGE(0x40000000, 0x4001ffff) AM_RAM AM_WRITE(bitmap_0_w)
+	AM_RANGE(0x40020000, 0x4003ffff) AM_RAM AM_WRITE(bitmap_1_w)
 	AM_RANGE(0x40060000, 0x40060001) AM_WRITENOP
 	AM_RANGE(0x40064000, 0x40064001) AM_WRITENOP
 	AM_RANGE(0x40068000, 0x40068001) AM_WRITENOP
 	AM_RANGE(0x4006c000, 0x4006c001) AM_WRITENOP
-	AM_RANGE(0x40070000, 0x40070001) AM_WRITENOP
-	AM_RANGE(0x40074000, 0x40074001) AM_WRITENOP
-	AM_RANGE(0x40078000, 0x40078001) AM_WRITENOP
+	AM_RANGE(0x40070000, 0x40070001) AM_WRITE(vbuffer_clear_w)
+	AM_RANGE(0x40074000, 0x40074001) AM_WRITE(vbuffer_set_w)
+	AM_RANGE(0x40078000, 0x40078001) AM_WRITENOP //once at startup -> to disable the eeprom?
 	AM_RANGE(0x80000000, 0x803fffff) AM_ROMBANK(1)
-	AM_RANGE(0xe0000000, 0xe00003ff) AM_RAM //tilemap? palette?
+	AM_RANGE(0xe0000000, 0xe00003ff) AM_RAM AM_WRITE(pasha2_palette_w) AM_BASE(&paletteram16) //tilemap? palette?
 	AM_RANGE(0xfff80000, 0xffffffff) AM_ROM AM_REGION(REGION_USER1,0)
 ADDRESS_MAP_END
 
-
 static ADDRESS_MAP_START( pasha2_io, ADDRESS_SPACE_IO, 16 )
-	AM_RANGE(0x00, 0x03) AM_WRITENOP
-	AM_RANGE(0x08, 0x0b) AM_READ(fake_r)
-	AM_RANGE(0x18, 0x1b) AM_READ(fake_r)
-	AM_RANGE(0x20, 0x23) AM_WRITENOP
-	AM_RANGE(0x40, 0x43) AM_READ(fake_r) // tests $100, $200, $300 (active low)
-	AM_RANGE(0x60, 0x63) AM_READ(fake_r)
-	AM_RANGE(0x80, 0x83) AM_READ(fake_r) // tests $8, $80, $8000 (active low, nibble swapped)
-	AM_RANGE(0xa0, 0xa3) AM_WRITENOP
-	AM_RANGE(0xc0, 0xc1) AM_WRITENOP
-	AM_RANGE(0xc2, 0xc3) AM_WRITE(pasha2_misc_w)
-	AM_RANGE(0xe0, 0xe3) AM_READ(fake_r) // mask $F -> then discarded
-	AM_RANGE(0xe4, 0xe7) AM_READ(fake_r) // mask $F -> then discarded
-	AM_RANGE(0xe0, 0xef) AM_WRITENOP
+	AM_RANGE(0x08, 0x0b) AM_READNOP //sound status?
+	AM_RANGE(0x18, 0x1b) AM_READNOP //sound status?
+	AM_RANGE(0x20, 0x23) AM_WRITE(pasha2_lamps_w)
+	AM_RANGE(0x40, 0x43) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x60, 0x63) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x80, 0x83) AM_READ(input_port_2_word_r)
+	AM_RANGE(0xa0, 0xa3) AM_WRITENOP //soundlatch?
+	AM_RANGE(0xc0, 0xc3) AM_WRITE(pasha2_misc_w)
+	AM_RANGE(0xe0, 0xe3) AM_READWRITE(oki_0_r, oki_0_w)
+	AM_RANGE(0xe4, 0xe7) AM_READWRITE(oki_1_r, oki_1_w)
+	AM_RANGE(0xe8, 0xeb) AM_WRITE(oki_0_bank_w)
+	AM_RANGE(0xec, 0xef) AM_WRITE(oki_1_bank_w)
 ADDRESS_MAP_END
 
-static int a=0;
+INPUT_PORTS_START( pasha2 )
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	// 2 physical dip-switches
+	PORT_START
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0018, 0x0008, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0018, "1" )
+	PORT_DIPSETTING(      0x0010, "2" )
+	PORT_DIPSETTING(      0x0008, "3" )
+	PORT_DIPSETTING(      0x0000, "5" )
+	PORT_DIPNAME( 0x0060, 0x0060, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0060, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(3)
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(3)
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(3)
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START3 )
+INPUT_PORTS_END
+
+VIDEO_START( pasha2 )
+{
+	bitmap0 = auto_malloc(0x40000);
+	bitmap1 = auto_malloc(0x40000);
+
+	if(!bitmap0 || !bitmap1)
+		return 1;
+
+	return 0;
+}
+
 VIDEO_UPDATE( pasha2 )
 {
 	int x,y,count;
 	int color;
 
-	if(code_pressed_memory(KEYCODE_Q))
-		a^=0xff;
-
 	/* 2 512x256 bitmaps */
 
 	count = 0;
-	for (y=0;y < 512/*256*/;y++)
+	for (y=0;y < 256 && y < cliprect->max_y;y++)
 	{
 		for (x=0;x < 512/2;x++)
 		{
-			color = tiles[count] & 0xff;
-			plot_pixel(bitmap, x*2 + 1, y, Machine->pens[(color ^a /*^ 0xff*/)]);
+			if(x*2 < cliprect->max_x)
+			{
+				color = (bitmap0[count + (vbuffer^1)*0x20000/2] & 0xff00) >> 8;
+				plot_pixel(bitmap, x*2 + 0, y, Machine->pens[(color + 0x100)]);
 
-			color = (tiles[count] & 0xff00) >> 8;
-			plot_pixel(bitmap, x*2 + 0, y, Machine->pens[(color ^ a /*^ 0xff*/)]);
+				color = bitmap0[count + (vbuffer^1)*0x20000/2] & 0xff;
+				plot_pixel(bitmap, x*2 + 1, y, Machine->pens[(color + 0x100)]);
+			}
 
 			count++;
 		}
 	}
-}
 
-INPUT_PORTS_START( pasha2 )
-INPUT_PORTS_END
-
-static INTERRUPT_GEN( pasha2_interrupts )
-{
-	switch(cpu_getiloops())
+	count = 0;
+	for (y=0;y < 256 && y < cliprect->max_y;y++)
 	{
-		case 0: cpunum_set_input_line(0, 2, PULSE_LINE); break; //?
-		case 1: cpunum_set_input_line(0, 4, PULSE_LINE); break; //?
-		case 2: cpunum_set_input_line(0, 5, PULSE_LINE); break; //vblank irq
+		for (x=0;x < 512/2;x++)
+		{
+			if(x*2 < cliprect->max_x)
+			{
+				color = bitmap1[count + (vbuffer^1)*0x20000/2] & 0xff;
+				if(color != 0)
+					plot_pixel(bitmap, x*2 + 1, y, Machine->pens[(color)]);
+
+				color = (bitmap1[count + (vbuffer^1)*0x20000/2] & 0xff00) >> 8;
+				if(color != 0)
+					plot_pixel(bitmap, x*2 + 0, y, Machine->pens[(color)]);
+			}
+
+			count++;
+		}
 	}
 
-	//irq3 is enabled but it's empty
-}
-
-// setup a custom palette because pixels use 8 bits per color
-// fake - wrong !!!!!!!
-PALETTE_INIT( pasha2 )
-{
-	int c;
-
-	for (c = 0; c < 256; c++)
-	{
-		int bit0,bit1,bit2,r,g,b;
-		bit0 = (c >> 0) & 0x01;
-		bit1 = (c >> 1) & 0x01;
-		bit2 = (c >> 2) & 0x01;
-		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		bit0 = (c >> 3) & 0x01;
-		bit1 = (c >> 4) & 0x01;
-		bit2 = (c >> 5) & 0x01;
-		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		bit0 = (c >> 6) & 0x01;
-		bit1 = (c >> 7) & 0x01;
-		b = 0x55 * bit0 + 0xaa * bit1;
-
-		palette_set_color(c,r,g,b);
-	}
 }
 
 static MACHINE_DRIVER_START( pasha2 )
 	MDRV_CPU_ADD(E116T /*E116XT*/, 20000000)	/* 20 MHz */
 	MDRV_CPU_PROGRAM_MAP(pasha2_map,0)
 	MDRV_CPU_IO_MAP(pasha2_io,0)
-	MDRV_CPU_VBLANK_INT(pasha2_interrupts, 3)
+	MDRV_CPU_VBLANK_INT(irq5_line_pulse, 1)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -215,11 +403,10 @@ static MACHINE_DRIVER_START( pasha2 )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(512, 512)
-	MDRV_VISIBLE_AREA(0, 511, 0, 511)
+	MDRV_VISIBLE_AREA(0, 383, 0, 239)
+	MDRV_PALETTE_LENGTH(0x200)
 
-	MDRV_PALETTE_LENGTH(0x100)
-	MDRV_PALETTE_INIT(pasha2)
-
+	MDRV_VIDEO_START(pasha2)
 	MDRV_VIDEO_UPDATE(pasha2)
 
 	/* sound hardware */
@@ -250,7 +437,7 @@ ROM_START( pasha2 )
 	ROM_REGION( 0x0800, REGION_CPU2, 0 ) /* AT89C52 (protected) */
 	ROM_LOAD( "pasha2_at89c52",  0x0000, 0x0800, NO_DUMP ) /* MCU internal 8K flash */
 
-	ROM_REGION( 0x80000, REGION_USER3, 0 ) /* SAM9773 sound data ? */
+	ROM_REGION( 0x80000, REGION_USER3, 0 ) /* SAM9773 sound data */
 	ROM_LOAD( "pp2.um2",      0x00000, 0x80000, CRC(86814b37) SHA1(70f8a94410e362669570c39e00492c0d69de6b17) )
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 ) /* Oki Samples */
@@ -277,4 +464,4 @@ DRIVER_INIT( pasha2 )
 	memory_set_bankptr(1, memory_region(REGION_USER2));
 }
 
-GAME( 1998, pasha2, 0, pasha2, pasha2, pasha2, ROT0, "Dong Sung", "Pasha Pasha 2", GAME_NOT_WORKING | GAME_NO_SOUND )
+GAME( 1998, pasha2, 0, pasha2, pasha2, pasha2, ROT0, "Dong Sung", "Pasha Pasha 2", GAME_IMPERFECT_SOUND )

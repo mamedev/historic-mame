@@ -1721,6 +1721,59 @@ INPUT_PORTS_START( wboy )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( wboysys2 )
+	PORT_START  /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* down - unused */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* up - unused */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_2WAY
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_2WAY
+
+	PORT_START  /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_COCKTAIL
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* down - unused */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* up - unused */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_2WAY PORT_COCKTAIL
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_2WAY PORT_COCKTAIL
+
+	PORT_START  /* IN0 */
+	IN0_PORT
+
+	PORT_START  /* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(	0x01, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(	0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
+	PORT_DIPSETTING(	0x0c, "3" )
+	PORT_DIPSETTING(	0x08, "4" )
+	PORT_DIPSETTING(	0x04, "5" )
+	PORT_DIPSETTING(	0x00, DEF_STR( Infinite ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(	0x10, "30k 100k 170k 240k" )
+	PORT_DIPSETTING(	0x00, "30k 120k 210k 300k" )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Allow_Continue ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(	0x20, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(	0x40, DEF_STR( Easy ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Hard ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+
+	PORT_START	  /* DSW1 */
+	DSW1_PORT
+INPUT_PORTS_END
+
 /* same as wboy, additional Energy Consumption switch */
 INPUT_PORTS_START( wbdeluxe )
 	PORT_START  /* IN1 */
@@ -4270,7 +4323,7 @@ GAME( 1986, wboy2,    wboy,     system1,  wboy,     wboy2,    ROT0,   "Sega (Esc
 GAME( 1986, wboy2u,   wboy,     system1,  wboy,     0,        ROT0,   "Sega (Escape license)", "Wonder Boy (set 2 not encrypted)", GAME_SUPPORTS_SAVE )
 GAME( 1986, wboy3,    wboy,     system1,  wboy,     hvymetal, ROT0,   "Sega (Escape license)", "Wonder Boy (set 3)", GAME_SUPPORTS_SAVE )
 GAME( 1986, wboyu,    wboy,     system1,  wboyu,    0,        ROT0,   "Sega (Escape license)", "Wonder Boy (not encrypted)", GAME_SUPPORTS_SAVE )
-GAME( 1986, wboysys2, wboy,     wbml,     wboy,     wboy,     ROT0,   "Sega (Escape license)", "Wonder Boy (system 2)", GAME_SUPPORTS_SAVE )
+GAME( 1986, wboysys2, wboy,     wbml,     wboysys2, wboy,     ROT0,   "Sega (Escape license)", "Wonder Boy (system 2)", GAME_SUPPORTS_SAVE )
 GAME( 1986, wbdeluxe, wboy,     system1,  wbdeluxe, 0,        ROT0,   "Sega (Escape license)", "Wonder Boy Deluxe", GAME_SUPPORTS_SAVE )
 GAME( 1986, gardia,   0,        brain,    gardia,   gardia,   ROT270, "Sega / Coreland", 	   "Gardia", GAME_NO_COCKTAIL | GAME_SUPPORTS_SAVE)
 GAME( 1986, gardiab,  gardia,   brain,    gardia,   gardiab,  ROT270, "bootleg", 		 	   "Gardia (bootleg)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )

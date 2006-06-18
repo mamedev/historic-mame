@@ -1208,6 +1208,32 @@ ROM_START( spacfura ) /* Revision A */
 ROM_END
 
 
+ROM_START( spacfurb ) /* Revision B */
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "969a.u25", 0x0000, 0x0800, CRC(896a615c) SHA1(542386196eca9fd822e36508e173201ee8a962ed) )
+	ROM_LOAD( "960b.bin",  0x0800, 0x0800, CRC(8a99b63f) SHA1(4b9ec152e0fad50afeea11f5d61331f3211da606) )
+	ROM_LOAD( "961b.bin",  0x1000, 0x0800, CRC(c72c1609) SHA1(b489423b52a15275b63f6b01b9aa75ad1ce777b5) )
+	ROM_LOAD( "962b.bin",  0x1800, 0x0800, CRC(7ffc338d) SHA1(2c37049657305c465e3a5301e0be9f1afc9333c0) )
+	ROM_LOAD( "963b.bin",  0x2000, 0x0800, CRC(4fe0bd88) SHA1(d1902c8b2c2577fb49894aeac4c9d6b8cf38f2f6) )
+	ROM_LOAD( "964b.bin",  0x2800, 0x0800, CRC(09b359db) SHA1(e1d6af48680dc0f34068ee6e916650dac738e280) )
+	ROM_LOAD( "965b.bin",  0x3000, 0x0800, CRC(7c1f9b71) SHA1(ebe29a558e7239b4f0bc49a1fe92e5f1903edce3) )
+	ROM_LOAD( "966b.bin",  0x3800, 0x0800, CRC(8933b852) SHA1(dabb219195a668893c82ccc80ed09989f7fd83af) )
+	ROM_LOAD( "967b.bin",  0x4000, 0x0800, CRC(82b5768d) SHA1(823d8c0a537bad62e8186f88f8d02a0f3dc6da0f) )
+	ROM_LOAD( "968b.bin",  0x4800, 0x0800, CRC(fea68f02) SHA1(83bef40dfaac014b7929239d81075335ff8fd506) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for speech code and data */
+	ROM_LOAD( "808a.u7",  0x0000, 0x0800, CRC(5988c767) SHA1(3b91a8cd46aa7e714028cc40f700fea32287afb1) )
+	ROM_LOAD( "970.u6",   0x0800, 0x1000, CRC(f3b47b36) SHA1(6ae0b627349664140a7f70799645b368e452d69c) )
+	ROM_LOAD( "971.u5",   0x1800, 0x1000, CRC(e72bbe88) SHA1(efadf8aa448c289cf4d0cf1831255b9ac60820f2) )
+	ROM_LOAD( "972.u4",   0x2800, 0x1000, CRC(8b3da539) SHA1(3a0c4af96a2116fc668a340534582776b2018663) )
+
+	ROM_REGION( 0x0440, REGION_PROMS, 0 )
+	ROM_LOAD ("s-c.u39",  0x0000, 0x0400, CRC(56484d19) SHA1(61f43126fdcfc230638ed47085ae037a098e6781) )	/* sine table */
+	ROM_LOAD ("pr-82.u15",0x0400, 0x0020, CRC(c609b79e) SHA1(49dbcbb607079a182d7eb396c0da097166ea91c9) )	/* CPU board addressing */
+	ROM_LOAD ("6331.u30", 0x0420, 0x0020, CRC(adcb81d0) SHA1(74b0efc7e8362b0c98e54a6107981cff656d87e1) )	/* speech board addressing */
+ROM_END
+
+
 ROM_START( zektor )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "1611.cpu", 0x0000, 0x0800, CRC(6245aa23) SHA1(815f3c7edad9c290b719a60964085e90e7268112) )
@@ -1444,6 +1470,7 @@ GAME( 1981, elim4,	  elim2,    elim2,    elim4,    elim4,    ORIENTATION_FLIP_Y,
 GAME( 1981, elim4p,	  elim2,	elim2,	  elim4,	elim4,	  ORIENTATION_FLIP_Y,   "Gremlin", "Eliminator (4 Players, prototype)", 0 )
 GAME( 1981, spacfury, 0,        spacfury, spacfury, spacfury, ORIENTATION_FLIP_Y,   "Sega", "Space Fury (revision C)", 0 )
 GAME( 1981, spacfura, spacfury, spacfury, spacfury, spacfury, ORIENTATION_FLIP_Y,   "Sega", "Space Fury (revision A)", 0 )
+GAME( 1981, spacfurb, spacfury, spacfury, spacfury, spacfury, ORIENTATION_FLIP_Y,   "Sega", "Space Fury (revision B)", 0 )
 GAME( 1982, zektor,   0,        zektor,   zektor,   zektor,   ORIENTATION_FLIP_Y,   "Sega", "Zektor (revision B)", 0 )
 GAME( 1982, tacscan,  0,        tacscan,  tacscan,  tacscan,  ORIENTATION_FLIP_X ^ ROT270, "Sega", "Tac/Scan", GAME_IMPERFECT_SOUND )
 GAME( 1982, startrek, 0,        startrek, startrek, startrek, ORIENTATION_FLIP_Y,   "Sega", "Star Trek", GAME_IMPERFECT_SOUND )

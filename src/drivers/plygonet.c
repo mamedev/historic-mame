@@ -25,6 +25,7 @@
     - TTL text plane
 
     Driver needs:
+    - Handle network at 580800 so game starts
     - Polygon rasterization (K054009 + K054010)
     - Hook up PSAC2 (gfx decode for it is already present and correct)
     - Palettes
@@ -148,8 +149,8 @@ static READ32_HANDLER( psac_rom_r )
 }
 
 /* irqs 3, 5, and 7 have valid vectors                */
-/* irq 3 does ??? (vblank?)                           */
-/* irq 5 does ??? (polygon end of draw?)              */
+/* irq 3 does ??? (network)                           */
+/* irq 5 does ??? (polygon end of draw or VBL?)       */
 /* irq 7 does nothing (it jsrs to a rts and then rte) */
 
 static INTERRUPT_GEN(polygonet_interrupt)
@@ -185,7 +186,7 @@ static WRITE32_HANDLER( sound_w )
 
 static WRITE32_HANDLER( sound_irq_w )
 {
-	cpunum_set_input_line(1, 0, HOLD_LINE);
+	cpunum_set_input_line(2, 0, HOLD_LINE);
 }
 
 
@@ -321,6 +322,14 @@ static WRITE32_HANDLER( dsp_w )
 	}
 }
 
+static READ32_HANDLER( network_r )
+{
+	return 0x08000000;
+}
+
+static WRITE32_HANDLER( network_w )
+{
+}
 
 /**************************/
 /* DSP56k MEMORY HANDLERS */
@@ -606,44 +615,29 @@ static WRITE16_HANDLER( dsp56k_host_interface_write )
 
 /**********************************************************************************/
 
-
-static ADDRESS_MAP_START( polygonet_readmem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x1fffff) AM_READ(MRA32_ROM)
-	AM_RANGE(0x200000, 0x21ffff) AM_READ(MRA32_RAM)
-	AM_RANGE(0x440000, 0x440fff) AM_READ(MRA32_RAM)
+static ADDRESS_MAP_START( polygonet_map, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x000000, 0x1fffff) AM_ROM	// program/data ROM
+	AM_RANGE(0x200000, 0x21ffff) AM_RAM	// PSAC2 tilemap
+	AM_RANGE(0x440000, 0x440fff) AM_RAM	// PSAC2 lineram
 	AM_RANGE(0x480000, 0x480003) AM_READ(polygonet_eeprom_r)
-	AM_RANGE(0x500000, 0x503fff) AM_READ(dsp_shared_ram_read)
-	AM_RANGE(0x506004, 0x506007) AM_READ(dsp_r)
-	AM_RANGE(0x540000, 0x540fff) AM_READ(polygonet_ttl_ram_r)
-	AM_RANGE(0x541000, 0x54101f) AM_READ(MRA32_RAM)
-	AM_RANGE(0x50600c, 0x50600f) AM_READ(dsp_hi_r)
-	AM_RANGE(0x580000, 0x5807ff) AM_READ(MRA32_RAM)
-//  AM_RANGE(0x580800, 0x580803) AM_READ(MRA32_RAM) // network RAM / registers?
-	AM_RANGE(0x600008, 0x60000b) AM_READ(sound_r)
-	AM_RANGE(0x700000, 0x73ffff) AM_READ(psac_rom_r)
-	AM_RANGE(0x780000, 0x79ffff) AM_READ(ttl_rom_r)
-	AM_RANGE(0xff8000, 0xffffff) AM_READ(MRA32_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( polygonet_writemem, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x000000, 0x1fffff) AM_WRITE(MWA32_ROM)
-	AM_RANGE(0x200000, 0x21ffff) AM_WRITE(MWA32_RAM)	// PSAC2 tilemap
-	AM_RANGE(0x440000, 0x440fff) AM_WRITE(MWA32_RAM)	// PSAC2 lineram
 	AM_RANGE(0x4C0000, 0x4C0003) AM_WRITE(polygonet_eeprom_w)
-	AM_RANGE(0x500000, 0x503fff) AM_WRITE(dsp_shared_ram_write) AM_BASE(&dsp_shared_ram)
+	AM_RANGE(0x500000, 0x503fff) AM_READWRITE(dsp_shared_ram_read, dsp_shared_ram_write) AM_BASE(&dsp_shared_ram)
 	AM_RANGE(0x504000, 0x504003) AM_WRITE(dsp_2_w)
 	AM_RANGE(0x506000, 0x506003) AM_WRITE(dsp_w)
-	AM_RANGE(0x50600c, 0x50600f) AM_WRITE(dsp_hi_w)
-	AM_RANGE(0x540000, 0x540fff) AM_WRITE(polygonet_ttl_ram_w)
-	AM_RANGE(0x541000, 0x54101f) AM_WRITE(MWA32_RAM)
-	AM_RANGE(0x580000, 0x5807ff) AM_WRITE(MWA32_RAM)	// A21K
-//  AM_RANGE(0x580800, 0x580803) AM_WRITE(MWA32_RAM)    // network RAM / registers?
+	AM_RANGE(0x506004, 0x506007) AM_READ(dsp_r)
+	AM_RANGE(0x50600c, 0x50600f) AM_READ(dsp_hi_r) AM_WRITE(dsp_hi_w)
+	AM_RANGE(0x540000, 0x540fff) AM_READWRITE(polygonet_ttl_ram_r, polygonet_ttl_ram_w)
+	AM_RANGE(0x541000, 0x54101f) AM_RAM
+	AM_RANGE(0x580000, 0x5807ff) AM_RAM	// chip A21K on the PCB
+	AM_RANGE(0x580800, 0x580803) AM_READWRITE(network_r, network_w)
 	AM_RANGE(0x600004, 0x600007) AM_WRITE(sound_w)
+	AM_RANGE(0x600008, 0x60000b) AM_READ(sound_r)
 	AM_RANGE(0x640000, 0x640003) AM_WRITE(sound_irq_w)
 	AM_RANGE(0x680000, 0x680003) AM_WRITE(watchdog_reset32_w)
-	AM_RANGE(0xff8000, 0xffffff) AM_WRITE(MWA32_RAM)
+	AM_RANGE(0x700000, 0x73ffff) AM_READ(psac_rom_r)
+	AM_RANGE(0x780000, 0x79ffff) AM_READ(ttl_rom_r)
+	AM_RANGE(0xff8000, 0xffffff) AM_RAM	// work RAM
 ADDRESS_MAP_END
-
 
 /**********************************************************************************/
 
@@ -651,38 +645,21 @@ ADDRESS_MAP_END
 //       It's strange though, the CPU writes to 7000 in X data memory (pc=0x0068) and then
 //       jumps to 7000 in program memory ???
 
-static ADDRESS_MAP_START( dsp56156_p_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA16_RAM) AM_BASE(&dsp56k_program_memory)
+static ADDRESS_MAP_START( dsp56156_p_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x0000, 0x07ff) AM_RAM AM_BASE(&dsp56k_program_memory)
 	AM_RANGE(0x8000, 0x87ff) AM_RAM												// the processor memtests here
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( dsp56156_p_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA16_RAM) AM_BASE(&dsp56k_program_memory)
-	AM_RANGE(0x8000, 0x87ff) AM_RAM												// the processor memtests here
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( dsp56156_d_readmem, ADDRESS_SPACE_DATA, 16 )
+static ADDRESS_MAP_START( dsp56156_d_map, ADDRESS_SPACE_DATA, 16 )
 	AM_RANGE(0x0000, 0x07ff) AM_RAM												// Memory on the CPU
 	AM_RANGE(0x0800, 0x5fff) AM_RAM
-	AM_RANGE(0x6000, 0x6fff) AM_READ(dsp56k_ram_bank00_read)
-	AM_RANGE(0x7000, 0x7fff) AM_READ(dsp56k_ram_bank01_read)
-	AM_RANGE(0x8000, 0xbfff) AM_READ(dsp56k_ram_bank02_read)
-	AM_RANGE(0xc000, 0xdfff) AM_READ(dsp56k_shared_ram_read)
-	AM_RANGE(0xe000, 0xffbf) AM_READ(dsp56k_ram_bank04_read)
-	AM_RANGE(0xffc0, 0xffff) AM_READ(dsp56k_host_interface_read) AM_BASE(&dsp56k_hi_ram)
+	AM_RANGE(0x6000, 0x6fff) AM_READWRITE(dsp56k_ram_bank00_read, dsp56k_ram_bank00_write)
+	AM_RANGE(0x7000, 0x7fff) AM_READWRITE(dsp56k_ram_bank01_read, dsp56k_ram_bank01_write)
+	AM_RANGE(0x8000, 0xbfff) AM_READWRITE(dsp56k_ram_bank02_read, dsp56k_ram_bank02_write)
+	AM_RANGE(0xc000, 0xdfff) AM_READWRITE(dsp56k_shared_ram_read, dsp56k_shared_ram_write)
+	AM_RANGE(0xe000, 0xffbf) AM_READWRITE(dsp56k_ram_bank04_read, dsp56k_ram_bank04_write)
+	AM_RANGE(0xffc0, 0xffff) AM_READWRITE(dsp56k_host_interface_read, dsp56k_host_interface_write) AM_BASE(&dsp56k_hi_ram)
 ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( dsp56156_d_writemem, ADDRESS_SPACE_DATA, 16 )
-	AM_RANGE(0x0000, 0x07ff) AM_RAM
-	AM_RANGE(0x0800, 0x5fff) AM_RAM
-	AM_RANGE(0x6000, 0x6fff) AM_WRITE(dsp56k_ram_bank00_write)
-	AM_RANGE(0x7000, 0x7fff) AM_WRITE(dsp56k_ram_bank01_write)
-	AM_RANGE(0x8000, 0xbfff) AM_WRITE(dsp56k_ram_bank02_write)
-	AM_RANGE(0xc000, 0xdfff) AM_WRITE(dsp56k_shared_ram_write)
-	AM_RANGE(0xe000, 0xffbf) AM_WRITE(dsp56k_ram_bank04_write)
-	AM_RANGE(0xffc0, 0xffff) AM_WRITE(dsp56k_host_interface_write) AM_BASE(&dsp56k_hi_ram)
-ADDRESS_MAP_END
-
 
 /**********************************************************************************/
 
@@ -702,29 +679,20 @@ static WRITE8_HANDLER( sound_bankswitch_w )
 
 static INTERRUPT_GEN(audio_interrupt)
 {
-	cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
+	cpunum_set_input_line(2, INPUT_LINE_NMI, PULSE_LINE);
 }
 
-static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+static ADDRESS_MAP_START( sound_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
 	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK2)
-	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xe000, 0xe22f) AM_READ(K054539_0_r)
-	AM_RANGE(0xe230, 0xe3ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xe400, 0xe62f) AM_READ(K054539_1_r)
-	AM_RANGE(0xe630, 0xe7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xc000, 0xdfff) AM_RAM
+	AM_RANGE(0xe000, 0xe22f) AM_READWRITE(K054539_0_r, K054539_0_w)
+	AM_RANGE(0xe230, 0xe3ff) AM_RAM
+	AM_RANGE(0xe400, 0xe62f) AM_READWRITE(K054539_1_r, K054539_1_w)
+	AM_RANGE(0xe630, 0xe7ff) AM_RAM
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(soundlatch3_w)
 	AM_RANGE(0xf002, 0xf002) AM_READ(soundlatch_r)
 	AM_RANGE(0xf003, 0xf003) AM_READ(soundlatch2_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_NOP)
-	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xe000, 0xe22f) AM_WRITE(K054539_0_w)
-	AM_RANGE(0xe230, 0xe3ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xe400, 0xe62f) AM_WRITE(K054539_1_w)
-	AM_RANGE(0xe630, 0xe7ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xf000, 0xf000) AM_WRITE(soundlatch3_w)
 	AM_RANGE(0xf800, 0xf800) AM_WRITE(sound_bankswitch_w)
 	AM_RANGE(0xfff1, 0xfff3) AM_WRITE(MWA8_NOP)
 ADDRESS_MAP_END
@@ -757,25 +725,22 @@ static const gfx_decode gfxdecodeinfo[] =
 
 MACHINE_DRIVER_START( plygonet )
 	MDRV_CPU_ADD(M68EC020, 16000000)	/* 16 MHz (xtal is 32.0 MHz) */
-	MDRV_CPU_PROGRAM_MAP(polygonet_readmem,polygonet_writemem)
+	MDRV_CPU_PROGRAM_MAP(polygonet_map, 0)
 	MDRV_CPU_VBLANK_INT(polygonet_interrupt, 2)
 
-	MDRV_CPU_ADD(DSP56156,10000000)		/* no idea */
+	MDRV_CPU_ADD(DSP56156, 10000000)		/* no idea */
 	MDRV_CPU_FLAGS(CPU_DISABLE)
-	MDRV_CPU_PROGRAM_MAP(dsp56156_p_readmem, dsp56156_p_writemem)
-	MDRV_CPU_DATA_MAP(dsp56156_d_readmem,dsp56156_d_writemem)
+	MDRV_CPU_PROGRAM_MAP(dsp56156_p_map, 0)
+	MDRV_CPU_DATA_MAP(dsp56156_d_map, 0)
 
-
-	MDRV_CPU_ADD_TAG( "sound", Z80, 8000000 )
-	/* audio CPU */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_ADD_TAG("sound", Z80, 8000000)
+	MDRV_CPU_PROGRAM_MAP(sound_map, 0)
 	MDRV_CPU_PERIODIC_INT(audio_interrupt, TIME_IN_HZ(480))
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_GFXDECODE(gfxdecodeinfo)
-
 	MDRV_NVRAM_HANDLER(nvram_handler)
 
 	/* video hardware */

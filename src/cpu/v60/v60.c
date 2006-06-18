@@ -410,6 +410,8 @@ static void set_irq_line(int irqline, int state)
 
 static int v60_execute(int cycles)
 {
+	UINT32 inc;
+
 	v60_ICount = cycles;
 	if(v60.irq_line != CLEAR_LINE)
 		v60_try_irq();
@@ -417,7 +419,8 @@ static int v60_execute(int cycles)
 		v60.PPC = PC;
 		CALL_MAME_DEBUG;
 		v60_ICount -= 8;	/* fix me -- this is just an average */
-		PC += OpCodeTable[OpRead8(PC)]();
+		inc = OpCodeTable[OpRead8(PC)]();
+		PC += inc;
 		if(v60.irq_line != CLEAR_LINE)
 			v60_try_irq();
 	}

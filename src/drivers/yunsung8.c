@@ -13,8 +13,9 @@ Sound Chips  :  OKI M5205 + YM3812
 ---------------------------------------------------------------------------
 Year + Game         Board#
 ---------------------------------------------------------------------------
-95 Cannon Ball      YS-ROCK-970712
-95 Magix / Rock     YS-ROCK-970712
+95  Cannon Ball      YS-ROCK-970712 or 940712?
+95  Magix / Rock     YS-ROCK-970712 or 940712?
+94? Rock Tris        YS-ROCK-940712
 ---------------------------------------------------------------------------
 
 Notes:
@@ -367,7 +368,92 @@ INPUT_PORTS_START( cannball )
 
 INPUT_PORTS_END
 
+/***************************************************************************
+                                    Rock Tris
+***************************************************************************/
 
+INPUT_PORTS_START( rocktris )
+
+	PORT_START	// IN0 - Coins
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_START2   )
+	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_START1   )
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_SERVICE1 ) PORT_IMPULSE(1)
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_COIN1    ) PORT_IMPULSE(1)
+
+	PORT_START	// IN1 - Player 1
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)	// same as button1 !?
+	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(1)
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(1)
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_PLAYER(1)
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_PLAYER(1)
+
+	PORT_START	// IN2 - Player 2
+	PORT_BIT(  0x01, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+	PORT_BIT(  0x02, IP_ACTIVE_LOW, IPT_UNKNOWN  )
+	PORT_BIT(  0x04, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)	// same as button1 !?
+	PORT_BIT(  0x08, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT(  0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2)
+	PORT_BIT(  0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(2)
+	PORT_BIT(  0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_PLAYER(2)
+	PORT_BIT(  0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_PLAYER(2)
+
+	PORT_START	// IN3 - DSW 1
+	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Hardest ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_4C ) )
+
+	PORT_START	// IN4 - DSW 2
+	PORT_DIPNAME( 0x01, 0x01, "Unknown 2-0" ) 	// the rest seems unused
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Unknown 2-1" )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, "Unknown 2-2" )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "Unknown 2-3" )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown 2-4" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown 2-5" )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown 2-6" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown 2-7" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+INPUT_PORTS_END
 
 /***************************************************************************
 
@@ -564,6 +650,53 @@ ROM_START( cannball )
 
 ROM_END
 
+/***************************************************************************
+
+Rock Tris by Yunsung
+
+Pcb marked Ys-rock 940712
+
+pcb has no sound, the osc for the msm5205 has been cut so I don't know the frequency
+
+Pcb has no markings in the sockets and eproms have anonymous stickers
+
+2x z80
+1x 16mhz
+1x UA010
+1x msm5205
+1x fpga
+1x dipswitch (there is place for another one, but the space is empty and
+they jumpered the first position)
+
+***************************************************************************/
+
+ROM_START( rocktris )
+
+	ROM_REGION( 0x24000+0x4000, REGION_CPU1, 0 )		/* Main Z80 Code */
+	ROM_LOAD( "cpu.bin",     0x00000, 0x0c000, CRC(46e3b79c) SHA1(81a587b9f986c4e39b1888ec6ed6b86d1469b9a0) )
+	ROM_CONTINUE(         0x10000, 0x14000             )
+	/* $2000 bytes for bank 0 of video ram (text) */
+	/* $2000 bytes for bank 1 of video ram (background) */
+
+	ROM_REGION( 0x24000, REGION_CPU2, 0 )		/* Sound Z80 Code */
+	ROM_LOAD( "cpu2.bin",    0x00000, 0x0c000, CRC(3a78a4cf) SHA1(f643c7a217cbb71f3a03f1f4a16545c546332819) )
+	ROM_CONTINUE(         0x10000, 0x14000             )
+
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )	/* Background */
+	ROM_LOAD( "gfx4.bin",     0x000000, 0x80000, CRC(abb49cac) SHA1(e2d766e950df398a8ec8b6888e128ffc3bdf1ce9) )
+	ROM_LOAD( "gfx3.bin",     0x080000, 0x80000, CRC(70a6ad52) SHA1(04cd58d3f885dd7c2fb1061f93d3ae3a418ad762) )
+	ROM_LOAD( "gfx2.bin",     0x100000, 0x80000, CRC(fcc9ec97) SHA1(1f09452988e3fa976b233e3b458c7a60977b76aa) )
+	ROM_LOAD( "gfx1.bin",     0x180000, 0x80000, CRC(4295034d) SHA1(9bdbbcdb46eb659a13b77c5bb26c9d8ad43731a7) )
+
+
+	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )	/* Text */
+	ROM_LOAD( "gfx5.bin",     0x00000, 0x20000, CRC(058ee379) SHA1(57088bb02c56212979b9119b773eedc31af17e50) )
+	ROM_LOAD( "gfx6.bin",     0x20000, 0x20000, CRC(593cbd39) SHA1(4d60b5811118f3f22f6f3b300a4daec158456b72) )
+
+ROM_END
+
+
+
 
 /***************************************************************************
 
@@ -573,5 +706,6 @@ ROM_END
 
 ***************************************************************************/
 
-GAME( 1995, cannball, 0, yunsung8, cannball, 0, ROT0, "Yun Sung / Soft Vision", "Cannon Ball",  GAME_IMPERFECT_SOUND )
-GAME( 1995, magix,    0, yunsung8, magix,    0, ROT0, "Yun Sung",               "Magix / Rock", GAME_IMPERFECT_SOUND ) // Title: DSW
+GAME( 1995,  cannball, 0, yunsung8, cannball, 0, ROT0, "Yun Sung / Soft Vision", "Cannon Ball",  GAME_IMPERFECT_SOUND )
+GAME( 1995,  magix,    0, yunsung8, magix,    0, ROT0, "Yun Sung",               "Magix / Rock", GAME_IMPERFECT_SOUND ) // Title: DSW
+GAME( 1994?, rocktris, 0, yunsung8, rocktris, 0, ROT0, "Yun Sung",               "Rock Tris",    GAME_IMPERFECT_SOUND )

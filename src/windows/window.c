@@ -7,6 +7,8 @@
 //
 //============================================================
 
+#define ENABLE_THREADS		0
+
 // Needed for RAW Input
 #define _WIN32_WINNT 0x501
 #define WM_INPUT 0x00FF
@@ -15,6 +17,7 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <windowsx.h>
+#include <mmsystem.h>
 
 // standard C headers
 #include <math.h>
@@ -110,6 +113,8 @@ static int ui_temp_was_paused;
 static HANDLE window_thread;
 static DWORD window_threadid;
 
+static DWORD last_update_time;
+
 
 
 //============================================================
@@ -137,6 +142,46 @@ static void adjust_window_position_after_major_change(win_window_info *window);
 static void set_fullscreen(win_window_info *window, int fullscreen);
 
 
+// temporary hacks
+#if ENABLE_THREADS
+struct _mtlog
+{
+	cycles_t	timestamp;
+	const char *event;
+};
+
+static struct _mtlog mtlog[100000];
+static volatile LONG mtlogindex;
+
+void mtlog_add(const char *event)
+{
+	int index = InterlockedIncrement(&mtlogindex) - 1;
+	if (index < ARRAY_LENGTH(mtlog))
+	{
+		mtlog[index].timestamp = osd_cycles();
+		mtlog[index].event = event;
+	}
+}
+
+static void mtlog_dump(void)
+{
+	cycles_t cps = osd_cycles_per_second();
+	cycles_t last = mtlog[0].timestamp * 1000000 / cps;
+	int i;
+
+	FILE *f = fopen("mt.log", "w");
+	for (i = 0; i < mtlogindex; i++)
+	{
+		cycles_t curr = mtlog[i].timestamp * 1000000 / cps;
+		fprintf(f, "%20I64d %10I64d %s\n", curr, curr - last, mtlog[i].event);
+		last = curr;
+	}
+	fclose(f);
+}
+#else
+void mtlog_add(const char *event) { }
+#endif
+
 
 //============================================================
 //  win_init_window
@@ -145,8 +190,6 @@ static void set_fullscreen(win_window_info *window, int fullscreen);
 
 int winwindow_init(void)
 {
-	size_t temp;
-
 	// get the main thread ID
 	main_threadid = GetCurrentThreadId();
 
@@ -157,11 +200,21 @@ int winwindow_init(void)
 	if (create_window_class())
 		return 1;
 
+#if ENABLE_THREADS
+{
 	// create a thread to run the windows from
-	temp = _beginthreadex(NULL, 0, thread_entry, NULL, 0, (unsigned *)&window_threadid);
+	size_t temp = _beginthreadex(NULL, 0, thread_entry, NULL, 0, (unsigned *)&window_threadid);
 	window_thread = (HANDLE)temp;
 	if (window_thread == NULL)
 		return 1;
+
+	// set the thread priority equal to the main MAME thread
+	SetThreadPriority(window_thread, GetThreadPriority(GetCurrentThread()));
+}
+#else
+	window_thread = GetCurrentThread();
+	window_threadid = main_threadid;
+#endif
 
 	// initialize the drawers
 	if (video_config.d3d)
@@ -195,9 +248,13 @@ static void winwindow_exit(void)
 	if (video_config.d3d)
 		drawd3d_exit();
 
+#if ENABLE_THREADS
 	// kill the window thread
 	PostThreadMessage(window_threadid, WM_USER_SELF_TERMINATE, 0, 0);
 	WaitForSingleObject(window_thread, INFINITE);
+
+	mtlog_dump();
+#endif
 }
 
 
@@ -472,9 +529,13 @@ int winwindow_video_window_create(int index, win_monitor_info *monitor, const wi
 	window->startmaximized = options_get_bool("maximize", TRUE);
 
 	// finish the window creation on the window thread
+#if ENABLE_THREADS
 	PostThreadMessage(window_threadid, WM_USER_FINISH_CREATE_WINDOW, 0, (LPARAM)window);
 	while (window->init_state == 0)
 		Sleep(1);
+#else
+	window->init_state = complete_create(window) ? -1 : 1;
+#endif
 	if (window->init_state == -1)
 		goto error;
 	return 0;
@@ -533,6 +594,8 @@ void winwindow_video_window_update(win_window_info *window)
 
 	assert(GetCurrentThreadId() == main_threadid);
 
+mtlog_add("winwindow_video_window_update: begin");
+
 	// see if the target has changed significantly in window mode
 	targetview = render_target_get_view(window->target);
 	targetorient = render_target_get_orientation(window->target);
@@ -552,12 +615,13 @@ void winwindow_video_window_update(win_window_info *window)
 	}
 
 	// if we're visible and running and not in the middle of a resize, draw
-	if (window->hwnd != NULL && window->target != NULL && !IsIconic(window->hwnd) && window->resize_state == RESIZE_STATE_NORMAL)
+	if (window->hwnd != NULL && window->target != NULL)
 	{
 		int got_lock = TRUE;
 
+mtlog_add("winwindow_video_window_update: try lock");
 		// only block if we're throttled
-		if (video_config.throttle)
+		if (video_config.throttle || timeGetTime() - last_update_time > 250)
 			osd_lock_acquire(window->render_lock);
 		else
 			got_lock = osd_lock_try(window->render_lock);
@@ -568,6 +632,8 @@ void winwindow_video_window_update(win_window_info *window)
 			const render_primitive_list *primlist;
 			RECT client;
 
+mtlog_add("winwindow_video_window_update: got lock");
+
 			// don't hold the lock; we just used it to see if rendering was still happening
 			osd_lock_release(window->render_lock);
 
@@ -577,9 +643,14 @@ void winwindow_video_window_update(win_window_info *window)
 			primlist = render_target_get_primitives(window->target);
 
 			// post a redraw request with the primitive list as a parameter
+			last_update_time = timeGetTime();
+mtlog_add("winwindow_video_window_update: PostMessage start");
 			PostMessage(window->hwnd, WM_USER_REDRAW, 0, (LPARAM)primlist);
+mtlog_add("winwindow_video_window_update: PostMessage end");
 		}
 	}
+
+mtlog_add("winwindow_video_window_update: end");
 }
 
 
@@ -801,9 +872,11 @@ static unsigned __stdcall thread_entry(void *param)
 			// ignore input messages here
 			case WM_SYSKEYUP:
 			case WM_SYSKEYDOWN:
+#ifndef MESS
 			case WM_KEYUP:
 			case WM_KEYDOWN:
 			case WM_CHAR:
+#endif // MESS
 			case WM_LBUTTONDOWN:
 			case WM_RBUTTONDOWN:
 			case WM_MBUTTONDOWN:
@@ -971,14 +1044,22 @@ LRESULT CALLBACK winwindow_video_window_proc(HWND wnd, UINT message, WPARAM wpar
 		case WM_ENTERSIZEMOVE:
 			window->resize_state = RESIZE_STATE_RESIZING;
 		case WM_ENTERMENULOOP:
+#if ENABLE_THREADS
 			PostThreadMessage(main_threadid, WM_USER_UI_TEMP_PAUSE, TRUE, 0);
+#else
+			temp_pause_ui(TRUE);
+#endif
 			break;
 
 		// unpause the system when we stop a menu or resize and force a redraw
 		case WM_EXITSIZEMOVE:
 			window->resize_state = RESIZE_STATE_PENDING;
 		case WM_EXITMENULOOP:
+#if ENABLE_THREADS
 			PostThreadMessage(main_threadid, WM_USER_UI_TEMP_PAUSE, FALSE, 0);
+#else
+			temp_pause_ui(FALSE);
+#endif
 			InvalidateRect(wnd, NULL, FALSE);
 			break;
 
@@ -995,7 +1076,7 @@ LRESULT CALLBACK winwindow_video_window_proc(HWND wnd, UINT message, WPARAM wpar
 		case WM_SIZING:
 		{
 			RECT *rect = (RECT *)lparam;
-			if (/*win_keep_aspect &&*/ !(GetAsyncKeyState(VK_CONTROL) & 0x8000))
+			if (video_config.keepaspect && !(GetAsyncKeyState(VK_CONTROL) & 0x8000))
 				constrain_to_aspect_ratio(window, rect, wparam);
 			InvalidateRect(wnd, NULL, FALSE);
 			break;
@@ -1031,7 +1112,11 @@ LRESULT CALLBACK winwindow_video_window_proc(HWND wnd, UINT message, WPARAM wpar
 
 		// close: cause MAME to exit
 		case WM_CLOSE:
+#if ENABLE_THREADS
 			PostThreadMessage(main_threadid, WM_USER_REQUEST_EXIT, 0, 0);
+#else
+			mame_schedule_exit();
+#endif
 			break;
 
 		// destroy: clean up all attached rendering bits and NULL out our hwnd
@@ -1046,8 +1131,10 @@ LRESULT CALLBACK winwindow_video_window_proc(HWND wnd, UINT message, WPARAM wpar
 		case WM_USER_REDRAW:
 		{
 			HDC hdc = GetDC(wnd);
+mtlog_add("winwindow_video_window_proc: WM_USER_REDRAW begin");
 			window->primlist = (const render_primitive_list *)lparam;
 			draw_video_contents(window, hdc, FALSE);
+mtlog_add("winwindow_video_window_proc: WM_USER_REDRAW end");
 			ReleaseDC(wnd, hdc);
 			break;
 		}
@@ -1091,24 +1178,36 @@ static void draw_video_contents(win_window_info *window, HDC dc, int update)
 {
 	assert(GetCurrentThreadId() == window_threadid);
 
-	// if we're iconic, don't bother
-	if (window->hwnd == NULL || IsIconic(window->hwnd))
-		return;
+mtlog_add("draw_video_contents: begin");
 
-	// if no bitmap, just fill
-	if (window->primlist == NULL)
+mtlog_add("draw_video_contents: render lock acquire");
+	osd_lock_acquire(window->render_lock);
+mtlog_add("draw_video_contents: render lock acquired");
+
+	// if we're iconic, don't bother
+	if (window->hwnd != NULL && !IsIconic(window->hwnd))// && window->resize_state == RESIZE_STATE_NORMAL)
 	{
-		RECT fill;
-		GetClientRect(window->hwnd, &fill);
-		FillRect(dc, &fill, (HBRUSH)GetStockObject(BLACK_BRUSH));
-		return;
+		// if no bitmap, just fill
+		if (window->primlist == NULL)
+		{
+			RECT fill;
+			GetClientRect(window->hwnd, &fill);
+			FillRect(dc, &fill, (HBRUSH)GetStockObject(BLACK_BRUSH));
+		}
+
+		else
+		{
+			// if we have a blit surface, use that
+			if (!video_config.d3d || drawd3d_window_draw(window, dc, window->primlist, update) != 0)
+				drawgdi_window_draw(window, dc, window->primlist, update);
+mtlog_add("draw_video_contents: drawing finished");
+		}
 	}
 
-	// if we have a blit surface, use that
-	osd_lock_acquire(window->render_lock);
-	if (!video_config.d3d || drawd3d_window_draw(window, dc, window->primlist, update) != 0)
-		drawgdi_window_draw(window, dc, window->primlist, update);
 	osd_lock_release(window->render_lock);
+mtlog_add("draw_video_contents: render lock released");
+
+mtlog_add("draw_video_contents: end");
 }
 
 
@@ -1354,8 +1453,8 @@ static void update_minmax_state(win_window_info *window)
 		RECT bounds, minbounds, maxbounds;
 
 		// compare the maximum bounds versus the current bounds
-		get_min_bounds(window, &minbounds, TRUE);
-		get_max_bounds(window, &maxbounds, TRUE);
+		get_min_bounds(window, &minbounds, video_config.keepaspect);
+		get_max_bounds(window, &maxbounds, video_config.keepaspect);
 		GetWindowRect(window->hwnd, &bounds);
 
 		// if either the width or height matches, we were maximized
@@ -1384,7 +1483,7 @@ static void minimize_window(win_window_info *window)
 
 	assert(GetCurrentThreadId() == window_threadid);
 
-	get_min_bounds(window, &newsize, TRUE);
+	get_min_bounds(window, &newsize, video_config.keepaspect);
 	SetWindowPos(window->hwnd, NULL, newsize.left, newsize.top, rect_width(&newsize), rect_height(&newsize), SWP_NOZORDER);
 }
 
@@ -1401,7 +1500,7 @@ static void maximize_window(win_window_info *window)
 
 	assert(GetCurrentThreadId() == window_threadid);
 
-	get_max_bounds(window, &newsize, TRUE);
+	get_max_bounds(window, &newsize, video_config.keepaspect);
 	SetWindowPos(window->hwnd, NULL, newsize.left, newsize.top, rect_width(&newsize), rect_height(&newsize), SWP_NOZORDER);
 }
 
@@ -1426,7 +1525,8 @@ static void adjust_window_position_after_major_change(win_window_info *window)
 	{
 		// constrain the existing size to the aspect ratio
 		newrect = oldrect;
-		constrain_to_aspect_ratio(window, &newrect, WMSZ_BOTTOMRIGHT);
+		if (video_config.keepaspect)
+			constrain_to_aspect_ratio(window, &newrect, WMSZ_BOTTOMRIGHT);
 	}
 
 	// in full screen, make sure it covers the primary display

@@ -1,17 +1,19 @@
-/******************************************************************************
+/***************************************************************************
+
     Atari 400/800
 
     GTIA  graphics television interface adapter
 
     Juergen Buchmueller, June 1998
-******************************************************************************/
+
+***************************************************************************/
 
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
 #include "includes/atari.h"
-#include "sound/dac.h"
+#include "vidhrdw/gtia.h"
 
-GTIA    gtia;
+gtia_struct gtia;
 
 #define P0 0x01
 #define P1 0x02
@@ -23,6 +25,11 @@ GTIA    gtia;
 #define M3 0x80
 
 #define CHECK_GRACTL	0
+#define VERBOSE			0
+
+static void gtia_reset(void);
+static void gtia_state(void);
+static void gtia_state_postload(void);
 
 /**********************************************
  * split a color into hue and luminance values
@@ -48,20 +55,110 @@ GTIA    gtia;
 #define SETCOL_R(o,d) \
 	*((UINT8*)&antic.color_lookup[o] + 1) = Machine->remapped_colortable[d]
 
-/**************************************************************
- *
- * Reset GTIA
- *
- **************************************************************/
 
-void gtia_reset(void)
+
+/*************************************
+ *
+ *  Initialization/Reset
+ *
+ *************************************/
+
+void gtia_init(const gtia_interface *intf)
+{
+	memset(&gtia, 0, sizeof(gtia));
+	gtia.intf = *intf;
+
+	add_reset_callback(gtia_reset);
+
+	/* state saves */
+	gtia_state();
+}
+
+
+
+static void gtia_state(void)
+{
+	state_save_register_global(gtia.r.m0pf);
+	state_save_register_global(gtia.r.m1pf);
+	state_save_register_global(gtia.r.m2pf);
+	state_save_register_global(gtia.r.m3pf);
+	state_save_register_global(gtia.r.p0pf);
+	state_save_register_global(gtia.r.p1pf);
+	state_save_register_global(gtia.r.p2pf);
+	state_save_register_global(gtia.r.p3pf);
+	state_save_register_global(gtia.r.m0pl);
+	state_save_register_global(gtia.r.m1pl);
+	state_save_register_global(gtia.r.m2pl);
+	state_save_register_global(gtia.r.m3pl);
+	state_save_register_global(gtia.r.p0pl);
+	state_save_register_global(gtia.r.p1pl);
+	state_save_register_global(gtia.r.p2pl);
+	state_save_register_global(gtia.r.p3pl);
+	state_save_register_global_array(gtia.r.but);
+	state_save_register_global(gtia.r.pal);
+	state_save_register_global(gtia.r.gtia15);
+	state_save_register_global(gtia.r.gtia16);
+	state_save_register_global(gtia.r.gtia17);
+	state_save_register_global(gtia.r.gtia18);
+	state_save_register_global(gtia.r.gtia19);
+	state_save_register_global(gtia.r.gtia1a);
+	state_save_register_global(gtia.r.gtia1b);
+	state_save_register_global(gtia.r.gtia1c);
+	state_save_register_global(gtia.r.gtia1d);
+	state_save_register_global(gtia.r.gtia1e);
+	state_save_register_global(gtia.r.cons);
+	state_save_register_global(gtia.w.hposp0);
+	state_save_register_global(gtia.w.hposp1);
+	state_save_register_global(gtia.w.hposp2);
+	state_save_register_global(gtia.w.hposp3);
+	state_save_register_global(gtia.w.hposm0);
+	state_save_register_global(gtia.w.hposm1);
+	state_save_register_global(gtia.w.hposm2);
+	state_save_register_global(gtia.w.hposm3);
+	state_save_register_global(gtia.w.sizep0);
+	state_save_register_global(gtia.w.sizep1);
+	state_save_register_global(gtia.w.sizep2);
+	state_save_register_global(gtia.w.sizep3);
+	state_save_register_global(gtia.w.sizem);
+	state_save_register_global_array(gtia.w.grafp0);
+	state_save_register_global_array(gtia.w.grafp1);
+	state_save_register_global_array(gtia.w.grafp2);
+	state_save_register_global_array(gtia.w.grafp3);
+	state_save_register_global_array(gtia.w.grafm);
+	state_save_register_global(gtia.w.colpm0);
+	state_save_register_global(gtia.w.colpm1);
+	state_save_register_global(gtia.w.colpm2);
+	state_save_register_global(gtia.w.colpm3);
+	state_save_register_global(gtia.w.colpf0);
+	state_save_register_global(gtia.w.colpf1);
+	state_save_register_global(gtia.w.colpf2);
+	state_save_register_global(gtia.w.colpf3);
+	state_save_register_global(gtia.w.colbk);
+	state_save_register_global(gtia.w.prior);
+	state_save_register_global(gtia.w.vdelay);
+	state_save_register_global(gtia.w.gractl);
+	state_save_register_global(gtia.w.hitclr);
+	state_save_register_global(gtia.w.cons);
+	state_save_register_func_postload(gtia_state_postload);
+}
+
+
+
+static int is_ntsc(void)
+{
+	return Machine->drv->screen[0].refresh_rate > 55;
+}
+
+
+
+static void gtia_reset(void)
 {
 	int i;
     /* reset the GTIA read/write/helper registers */
 	for (i = 0; i < 32; i++)
 		atari_gtia_w(i,0);
     memset(&gtia.r, 0, sizeof(gtia.r));
-	if( Machine->drv->screen[0].refresh_rate > 55 )
+	if (is_ntsc())
 		gtia.r.pal = 0xff;
 	else
 		gtia.r.pal = 0xf1;
@@ -80,13 +177,15 @@ void gtia_reset(void)
 	SETCOL_B(EOR,0xff); 	/* yellow */
 }
 
+
+
 /**************************************************************
  *
  * Read GTIA hardware registers
  *
  **************************************************************/
 
-READ8_HANDLER ( atari_gtia_r )
+READ8_HANDLER( atari_gtia_r )
 {
     switch (offset & 31)
     {
@@ -125,16 +224,14 @@ READ8_HANDLER ( atari_gtia_r )
 		case 29: return gtia.r.gtia1d;
 		case 30: return gtia.r.gtia1e;
 
-		case 31: return gtia.r.cons = (atari_readinputport(0) | gtia.w.cons) & 0x07;
+		case 31:
+			gtia.r.cons = gtia.intf.console_read ? (gtia.intf.console_read() & 0x0F) : 0x00;
+			return gtia.r.cons;
     }
     return 0xff;
 }
 
-/**************************************************************
- *
- * Write GTIA hardware registers
- *
- **************************************************************/
+
 
 static void recalc_p0(void)
 {
@@ -280,7 +377,9 @@ static void recalc_m3(void)
     }
 }
 
-WRITE8_HANDLER ( atari_gtia_w )
+
+
+WRITE8_HANDLER( atari_gtia_w )
 {
 	/* used for mixing hue/lum of different colors */
 	static UINT8 lumpm0=0,lumpm1=0,lumpm2=0,lumpm3=0,lumpm4=0;
@@ -383,9 +482,9 @@ WRITE8_HANDLER ( atari_gtia_w )
 		if (data == gtia.w.colpm0)
 			break;
 		gtia.w.colpm0 = data;
-#ifdef VERBOSE
-		logerror("atari colpm0 $%02x\n", data);
-#endif
+		if (VERBOSE)
+			logerror("atari colpm0 $%02x\n", data);
+
 		SETCOL_B(PL0,data); 	/* set player 0 color */
 		SETCOL_B(MI0,data); 	/* set missile 0 color */
 		SETCOL_B(GT2,data); 	/* set GTIA mode 2 color 0 */
@@ -403,9 +502,9 @@ WRITE8_HANDLER ( atari_gtia_w )
 		if (data == gtia.w.colpm1)
 			break;
 		gtia.w.colpm1 = data;
-#ifdef VERBOSE
-		logerror("atari colpm1 $%02x\n", data);
-#endif
+		if (VERBOSE)
+			logerror("atari colpm1 $%02x\n", data);
+
 		SETCOL_B(PL1,data); 	/* set player color 1 */
 		SETCOL_B(MI1,data); 	/* set missile color 1 */
 		SETCOL_B(GT2+1,data);	/* set GTIA mode 2 color 1 */
@@ -423,9 +522,9 @@ WRITE8_HANDLER ( atari_gtia_w )
 		if (data == gtia.w.colpm2)
 			break;
 		gtia.w.colpm2 = data;
-#ifdef VERBOSE
-		logerror("atari colpm2 $%02x\n", data);
-#endif
+		if (VERBOSE)
+			logerror("atari colpm2 $%02x\n", data);
+
 		SETCOL_B(PL2,data); 	/* set player 2 color */
 		SETCOL_B(MI2,data); 	/* set missile 2 color */
 		SETCOL_B(GT2+2,data);	/* set GTIA mode 2 color 2 */
@@ -443,9 +542,9 @@ WRITE8_HANDLER ( atari_gtia_w )
 		if (data == gtia.w.colpm3)
 			break;
 		gtia.w.colpm3 = data;
-#ifdef VERBOSE
-		logerror("atari colpm3 $%02x\n", data);
-#endif
+		if (VERBOSE)
+			logerror("atari colpm3 $%02x\n", data);
+
 		SETCOL_B(PL3,data); 	/* set player 3 color */
 		SETCOL_B(MI3,data); 	/* set missile 3 color */
 		SETCOL_B(GT2+3,data);	/* set GTIA mode 2 color 3 */
@@ -463,9 +562,9 @@ WRITE8_HANDLER ( atari_gtia_w )
 		if (data == gtia.w.colpf0)
 			break;
 		gtia.w.colpf0 = data;
-#ifdef VERBOSE
-		logerror("atari colpf0 $%02x\n", data);
-#endif
+		if (VERBOSE)
+			logerror("atari colpf0 $%02x\n", data);
+
 		SETCOL_B(PF0,data); 	/* set playfield 0 color */
 		SETCOL_B(GT2+4,data);	/* set GTIA mode 2 color 4 */
 		break;
@@ -474,9 +573,9 @@ WRITE8_HANDLER ( atari_gtia_w )
 		if (data == gtia.w.colpf1)
 			break;
 		gtia.w.colpf1 = data;
-#ifdef VERBOSE
-		logerror("atari colpf1 $%02x\n", data);
-#endif
+		if (VERBOSE)
+			logerror("atari colpf1 $%02x\n", data);
+
 		SETCOL_B(PF1,data); 	/* set playfield 1 color */
 		SETCOL_B(GT2+5,data);	/* set GTIA mode 2 color 5 */
 		SPLIT_HUE_LUM(data,huepf1,lumpf1);
@@ -514,9 +613,9 @@ WRITE8_HANDLER ( atari_gtia_w )
 		if (data == gtia.w.colpf2)
 			break;
 		gtia.w.colpf2 = data;
-#ifdef VERBOSE
-		logerror("atari colpf2 $%02x\n", data);
-#endif
+		if (VERBOSE)
+			logerror("atari colpf2 $%02x\n", data);
+
 		SETCOL_B(PF2,data); 	/* set playfield color 2 */
 		SETCOL_B(GT2+6,data);	/* set GTIA mode 2 color 6 */
 		SETCOL_B(T00,data); 	/* set text mode both pixels 0 */
@@ -533,9 +632,9 @@ WRITE8_HANDLER ( atari_gtia_w )
 		if (data == gtia.w.colpf3)
 			break;
 		gtia.w.colpf3 = data;
-#ifdef VERBOSE
-		logerror("atari colpf3 $%02x\n", data);
-#endif
+		if (VERBOSE)
+			logerror("atari colpf3 $%02x\n", data);
+
 		SETCOL_B(PF3,data); 	/* set playfield color 3 */
 		SETCOL_B(GT2+7,data);	/* set GTIA mode 2 color 7 */
 		SETCOL_B(P400,data);	/* set p/m xor mode both pixels 0 */
@@ -552,9 +651,9 @@ WRITE8_HANDLER ( atari_gtia_w )
 		if (data == gtia.w.colbk)
 			break;
 		gtia.w.colbk = data;
-#ifdef VERBOSE
-		logerror("atari colbk  $%02x\n", data);
-#endif
+		if (VERBOSE)
+			logerror("atari colbk  $%02x\n", data);
+
 		SETCOL_B(PBK,data); 	/* set background color */
 		SETCOL_B(GT2+8,data);	/* set GTIA mode 2 color 8 */
 		SETCOL_B(GT2+9,data);	/* set GTIA mode 2 color 9 */
@@ -650,18 +749,29 @@ WRITE8_HANDLER ( atari_gtia_w )
 		if (data == gtia.w.cons)
 			break;
 		gtia.w.cons  = data;
- 		if (sndti_exists(SOUND_DAC, 0))
- 		{
-			if (gtia.w.cons & 0x08)
-				DAC_data_w(0, -120);
-			else
-				DAC_data_w(0, +120);
-		}
+		if (gtia.intf.console_write)
+			gtia.intf.console_write(gtia.w.cons);
 		break;
     }
 }
 
-static UINT8 pf_collision[256] = {
+
+
+static void gtia_state_postload(void)
+{
+	recalc_p0();
+	recalc_p1();
+	recalc_p2();
+	recalc_p3();
+	recalc_m0();
+	recalc_m1();
+	recalc_m2();
+	recalc_m3();
+}
+
+
+
+static const UINT8 pf_collision[256] = {
 	0,1,2,0,4,0,0,0,8,0,0,0,0,0,0,0,
 	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
 	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
@@ -680,7 +790,7 @@ static UINT8 pf_collision[256] = {
 	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 };
 
-static int	pf_prioindex[256] = {
+static const int	pf_prioindex[256] = {
 /*          PBK   PF0   PF1         PF2                     PF3                                            */
 /*     */	0x000,0x100,0x100,0x000,0x200,0x000,0x000,0x000,0x200,0x000,0x000,0x000,0x000,0x000,0x000,0x000,
 /*     */	0x000,0x000,0x000,0x000,0x000,0x000,0x000,0x000,0x000,0x000,0x000,0x000,0x000,0x000,0x000,0x000,

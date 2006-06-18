@@ -546,6 +546,13 @@ ROM_START( powerbal )
 	ROM_CONTINUE(             0xa0000, 0x20000 )
 	ROM_COPY( REGION_SOUND1,  0x00000, 0x40000, 0x20000)
 	ROM_COPY( REGION_SOUND1,  0x00000, 0x80000, 0x20000)
+
+	ROM_REGION( 0x1200, REGION_PLDS, 0 )
+	ROM_LOAD( "palce16v8h.u102",  0x0000, 0x0117, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "palce22v10h.u183", 0x0200, 0x02dd, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "palce22v10h.u211", 0x0600, 0x02dd, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "palce22v10h.bin",  0x0a00, 0x02dd, NO_DUMP ) /* PAL is soldered */
+	ROM_LOAD( "pal22v10a.bin",    0x0e00, 0x02dd, NO_DUMP ) /* PAL is soldered */
 ROM_END
 
 ROM_START( magicstk )
@@ -567,6 +574,11 @@ ROM_START( magicstk )
 
 	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* OKI Samples */
 	ROM_LOAD( "10.u16",       0x00000, 0x20000, CRC(1e4a03ef) SHA1(6a134daa9a6d8dbda51cab348627f078c3dde8c7) )
+
+	ROM_REGION( 0x0800, REGION_PLDS, 0 )
+	ROM_LOAD( "palce16v8.u33", 0x0000, 0x0117, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "palce16v8.u58", 0x0200, 0x0117, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "gal22v10b.bin", 0x0400, 0x02e5, NO_DUMP ) /* GAL is soldered */
 ROM_END
 
 DRIVER_INIT( powerbal )

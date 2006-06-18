@@ -1042,11 +1042,11 @@ static void registers_recompute(debug_view *view)
 			break;
 
 		/* retrieve the string for this register */
-		str = cpunum_reg_string(regdata->cpunum, regnum);
+		str = cpunum_reg_string(regdata->cpunum, regid);
 
 		/* did we get a string? */
 		if (str && str[0] != '~')
-			add_register(view, regnum, str);
+			add_register(view, regid, str);
 	}
 
 	/* no longer need to recompute */

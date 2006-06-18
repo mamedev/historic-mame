@@ -60,6 +60,7 @@ struct _win_video_config
 
 	// global configuration
 	int					windowed;					// start windowed?
+	int					keepaspect;					// start windowed?
 	int					numscreens;					// number of screens
 
 	// per-window configuration

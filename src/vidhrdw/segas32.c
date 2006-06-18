@@ -2628,31 +2628,16 @@ for (showclip = 0; showclip < 4; showclip++)
 
 VIDEO_UPDATE( multi32 )
 {
-	rectangle clipleft, clipright;
 	UINT8 enablemask;
 
 	/* update the visible area */
 	if (system32_videoram[0x1ff00/2] & 0x8000)
-	{
-		set_visible_area(0, 0, 52*2*8-1, 0, 28*8-1);
-		clipleft.min_x = 0;
-		clipleft.max_x = 52*8-1;
-		clipright.min_x = 52*8;
-		clipright.max_x = 52*2*8-1;
-	}
+		set_visible_area(screen, 0, 52*8-1, 0, 28*8-1);
 	else
-	{
-		set_visible_area(0, 0, 40*2*8-1, 0, 28*8-1);
-		clipleft.min_x = 0;
-		clipleft.max_x = 40*8-1;
-		clipright.min_x = 40*8;
-		clipright.max_x = 40*2*8-1;
-	}
-	clipleft.min_y = clipright.min_y = cliprect->min_y;
-	clipleft.max_y = clipright.max_y = cliprect->max_y;
+		set_visible_area(screen, 0, 40*8-1, 0, 28*8-1);
 
 	/* if the display is off, punt */
-	if (!system32_displayenable[0] && !system32_displayenable[1])
+	if (!system32_displayenable[screen])
 	{
 		fillbitmap(bitmap, get_black_pen(), cliprect);
 		return;
@@ -2660,7 +2645,7 @@ VIDEO_UPDATE( multi32 )
 
 	/* update the tilemaps */
 	profiler_mark(PROFILER_USER1);
-	enablemask = update_tilemaps(&clipleft);
+	enablemask = update_tilemaps(cliprect);
 	profiler_mark(PROFILER_END);
 
 	/* debugging */
@@ -2675,14 +2660,7 @@ VIDEO_UPDATE( multi32 )
 
 	/* do the mixing */
 	profiler_mark(PROFILER_USER3);
-	if (system32_displayenable[0])
-		mix_all_layers(0, 0, bitmap, &clipleft, enablemask);
-	else
-		fillbitmap(bitmap, get_black_pen(), &clipleft);
-	if (system32_displayenable[1])
-		mix_all_layers(1, clipright.min_x, bitmap, &clipleft, enablemask);
-	else
-		fillbitmap(bitmap, get_black_pen(), &clipright);
+	mix_all_layers(screen, 0, bitmap, cliprect, enablemask);
 	profiler_mark(PROFILER_END);
 
 	if (!code_pressed(KEYCODE_M)) print_mixer_data(0);

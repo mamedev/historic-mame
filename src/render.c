@@ -23,7 +23,6 @@
         * no fallback if we run out of video memory
 
     To do features:
-        * add rotate options to the video options
         * positioning of game screens
         * remember current video options in cfg file
 
@@ -830,10 +829,11 @@ float render_get_ui_aspect(void)
 	if (targetlist != NULL)
 	{
 		int orient = orientation_add(targetlist->orientation, ui_container->orientation);
+		float effaspect = (targetlist->pixel_aspect == 0.0f) ? 1.0f : targetlist->pixel_aspect;
 		if (!(orient & ORIENTATION_SWAP_XY))
-			return (float)targetlist->height / ((float)targetlist->width * targetlist->pixel_aspect);
+			return (float)targetlist->height * effaspect / (float)targetlist->width;
 		else
-			return (float)targetlist->width / ((float)targetlist->height * targetlist->pixel_aspect);
+			return (float)targetlist->width * effaspect / (float)targetlist->height;
 	}
 
 	return 1.0f;
@@ -872,7 +872,7 @@ render_target *render_target_alloc(const char *layoutfile, int singleview)
 	/* fill in the basics with reasonable defaults */
 	target->width = 640;
 	target->height = 480;
-	target->pixel_aspect = 1.0f;
+	target->pixel_aspect = 0.0f;
 	target->orientation = ROT0;
 
 	/* allocate a lock for the primitive list */
@@ -1117,22 +1117,34 @@ void render_target_compute_visible_area(render_target *target, INT32 target_widt
 	float width, height;
 	float scale;
 
-	/* start with the aspect ratio of the square pixel layout */
-	width = target->curview->aspect;
-	height = 1.0f;
+	/* constrained case */
+	if (target_pixel_aspect != 0.0f)
+	{
+		/* start with the aspect ratio of the square pixel layout */
+		width = target->curview->aspect;
+		height = 1.0f;
 
-	/* first apply target orientation */
-	if (target_orientation & ORIENTATION_SWAP_XY)
-		FSWAP(width, height);
+		/* first apply target orientation */
+		if (target_orientation & ORIENTATION_SWAP_XY)
+			FSWAP(width, height);
 
-	/* apply the target pixel aspect ratio */
-	width *= target_pixel_aspect;
+		/* apply the target pixel aspect ratio */
+		height *= target_pixel_aspect;
 
-	/* based on the height/width ratio of the source and target, compute the scale factor */
-	if (width / height > (float)target_width / (float)target_height)
-		scale = (float)target_width / width;
+		/* based on the height/width ratio of the source and target, compute the scale factor */
+		if (width / height > (float)target_width / (float)target_height)
+			scale = (float)target_width / width;
+		else
+			scale = (float)target_height / height;
+	}
+
+	/* stretch-to-fit case */
 	else
-		scale = (float)target_height / height;
+	{
+		width = (float)target_width;
+		height = (float)target_height;
+		scale = 1.0f;
+	}
 
 	/* set the final width/height */
 	if (visible_width != NULL)

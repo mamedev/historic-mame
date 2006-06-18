@@ -813,6 +813,11 @@ ROM_START( royalcrd )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	ROM_LOAD( "n82s147.bin",    0x0000, 0x0200, CRC(8bc86f48) SHA1(4c677ab9314a1f571e35104b22659e6811aeb194) )
+
+	ROM_REGION( 0x0600, REGION_PLDS, 0 )
+	ROM_LOAD( "palce16v8h-4.bin",  0x0000, 0x0117, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "1-peel18cv8.bin",   0x0200, 0x0155, NO_DUMP ) /* PEEL is read protected */
+	ROM_LOAD( "2-peel18cv8.bin",   0x0400, 0x0155, CRC(8fdafd55) SHA1(fbb187ba682111648ea1586f400990cb81a3077a) )
 ROM_END
 
 ROM_START( royalcdb )
@@ -825,6 +830,9 @@ ROM_START( royalcdb )
 
 	ROM_REGION( 0x0200, REGION_PROMS, 0 )
 	ROM_LOAD( "n82s147.bin",    0x0000, 0x0200, CRC(8bc86f48) SHA1(4c677ab9314a1f571e35104b22659e6811aeb194) )
+
+	ROM_REGION( 0x0200, REGION_PLDS, 0 )
+	ROM_LOAD( "palce16v8h-4.bin",   0x0000, 0x0117, NO_DUMP ) /* PAL is read protected */
 ROM_END
 
 ROM_START( magiccrd )

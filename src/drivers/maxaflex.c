@@ -19,6 +19,8 @@
 #include "cpu/m6805/m6805.h"
 #include "sound/dac.h"
 #include "sound/pokey.h"
+#include "machine/6821pia.h"
+#include "vidhrdw/gtia.h"
 
 
 /* Supervisor board emulation */
@@ -216,10 +218,10 @@ void supervisor_board_check_coin_input(void)
 	}
 }
 
-static MACHINE_RESET(maxaflex)
+static MACHINE_START(maxaflex)
 {
-	machine_reset_supervisor_board();
-	machine_reset_a600xl();
+	add_reset_callback(machine_reset_supervisor_board);
+	return machine_start_a600xl();
 }
 
 VIDEO_UPDATE(maxaflex)
@@ -247,25 +249,12 @@ VIDEO_UPDATE(maxaflex)
 	if (lamps & 0x08) ui_draw_text("OVER", 300, 216);
 }
 
-int atari_readinputport(int port)
+int atari_input_disabled(void)
 {
-	if ( port <= PORT_JOY_BUTTONS )
-	{
-		if ( portB_out & 0x80 )
-		{
-			return readinputport(port);
-		}
-		else
-		{
-			/* controls are disabled by mcu */
-			return 0xff;
-		}
-	}
-	else
-	{
-		return readinputport(port);
-	}
+	return (portB_out & 0x80) == 0x00;
 }
+
+
 
 static ADDRESS_MAP_START(a600xl_mem, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0x0000, 0x3fff) AM_RAM
@@ -275,7 +264,7 @@ static ADDRESS_MAP_START(a600xl_mem, ADDRESS_SPACE_PROGRAM, 8)
 	AM_RANGE(0xd000, 0xd0ff) AM_READWRITE(atari_gtia_r, atari_gtia_w)
 	AM_RANGE(0xd100, 0xd1ff) AM_NOP
 	AM_RANGE(0xd200, 0xd2ff) AM_READWRITE(pokey1_r, pokey1_w)
-    AM_RANGE(0xd300, 0xd3ff) AM_READWRITE(atari_pia_r, atari_pia_w)
+    AM_RANGE(0xd300, 0xd3ff) AM_READWRITE(pia_0_r, pia_0_w)
 	AM_RANGE(0xd400, 0xd4ff) AM_READWRITE(atari_antic_r, atari_antic_w)
 	AM_RANGE(0xd500, 0xd7ff) AM_NOP
 	AM_RANGE(0xd800, 0xffff) AM_ROM /* OS */
@@ -298,12 +287,12 @@ ADDRESS_MAP_END
 
 INPUT_PORTS_START( a600xl )
 
-    PORT_START  /* IN0 console keys & switch settings */
+    PORT_START_TAG("console")  /* IN0 console keys & switch settings */
 	PORT_BIT(0x04, 0x04, IPT_KEYBOARD) PORT_NAME("Option") PORT_CODE(KEYCODE_F2)
 	PORT_BIT(0x02, 0x02, IPT_KEYBOARD) PORT_NAME("Select") PORT_CODE(KEYCODE_F1)
 	PORT_BIT(0x01, 0x01, IPT_START1 )
 
-	PORT_START	/* IN1 digital joystick #1 + #2 (PIA port A) */
+	PORT_START_TAG("djoy_0_1")	/* IN1 digital joystick #1 + #2 (PIA port A) */
 	PORT_BIT(0x01, 0x01, IPT_JOYSTICK_UP) PORT_PLAYER(1)
 	PORT_BIT(0x02, 0x02, IPT_JOYSTICK_DOWN) PORT_PLAYER(1)
 	PORT_BIT(0x04, 0x04, IPT_JOYSTICK_LEFT) PORT_PLAYER(1)
@@ -314,7 +303,7 @@ INPUT_PORTS_START( a600xl )
 	PORT_BIT(0x40, 0x40, IPT_JOYSTICK_LEFT) PORT_PLAYER(2)
 	PORT_BIT(0x80, 0x80, IPT_JOYSTICK_RIGHT) PORT_PLAYER(2)
 
-	PORT_START	/* IN2 digital joystick #3 + #4 (PIA port B) */
+	PORT_START_TAG("djoy_2_3")	/* IN2 digital joystick #3 + #4 (PIA port B) */
 	/* not connected */
 	PORT_BIT(0x01, 0x01, IPT_JOYSTICK_UP) PORT_PLAYER(3)
 	PORT_BIT(0x02, 0x02, IPT_JOYSTICK_DOWN) PORT_PLAYER(3)
@@ -325,7 +314,7 @@ INPUT_PORTS_START( a600xl )
 	PORT_BIT(0x40, 0x40, IPT_JOYSTICK_LEFT) PORT_PLAYER(4)
 	PORT_BIT(0x80, 0x80, IPT_JOYSTICK_RIGHT) PORT_PLAYER(4)
 
-	PORT_START	/* IN3 digital joystick buttons (GTIA button bits) */
+	PORT_START_TAG("djoy_b")	/* IN3 digital joystick buttons (GTIA button bits) */
 	PORT_BIT(0x01, 0x01, IPT_BUTTON1) PORT_PLAYER(1)
 	PORT_BIT(0x02, 0x02, IPT_BUTTON1) PORT_PLAYER(2)
 	PORT_BIT(0x04, 0x04, IPT_BUTTON1) PORT_PLAYER(3)
@@ -512,7 +501,7 @@ static MACHINE_DRIVER_START( a600xl )
 	MDRV_SOUND_ADD(DAC, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 
-	MDRV_MACHINE_RESET( maxaflex )
+	MDRV_MACHINE_START( maxaflex )
 MACHINE_DRIVER_END
 
 ROM_START(maxaflex)

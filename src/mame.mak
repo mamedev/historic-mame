@@ -289,6 +289,7 @@ DRVLIBS = \
 	$(OBJ)/midcoin.a \
 	$(OBJ)/midw8080.a \
 	$(OBJ)/midway.a \
+	$(OBJ)/msx.a \
 	$(OBJ)/namco.a \
 	$(OBJ)/nasco.a \
 	$(OBJ)/neogeo.a \
@@ -900,6 +901,10 @@ $(OBJ)/midway.a: \
 	$(OBJ)/sndhrdw/gorf.o \
 	$(OBJ)/sndhrdw/wow.o \
 
+$(OBJ)/msx.a: \
+	$(OBJ)/drivers/sangho.o \
+	$(OBJ)/vidhrdw/v9938.o \
+
 $(OBJ)/namco.a: \
 	$(OBJ)/drivers/baraduke.o $(OBJ)/vidhrdw/baraduke.o \
 	$(OBJ)/drivers/galaga.o $(OBJ)/vidhrdw/galaga.o \
@@ -1071,6 +1076,7 @@ $(OBJ)/sega.a: \
 	$(OBJ)/drivers/deniam.o $(OBJ)/vidhrdw/deniam.o \
 	$(OBJ)/drivers/dotrikun.o $(OBJ)/vidhrdw/dotrikun.o \
 	$(OBJ)/drivers/genesis.o $(OBJ)/vidhrdw/genesis.o \
+	$(OBJ)/drivers/hshavoc.o \
 	$(OBJ)/drivers/kopunch.o $(OBJ)/vidhrdw/kopunch.o \
 	$(OBJ)/drivers/megaplay.o \
 	$(OBJ)/drivers/megatech.o \
@@ -1483,6 +1489,8 @@ $(OBJ)/misc.a: \
 	$(OBJ)/drivers/policetr.o $(OBJ)/vidhrdw/policetr.o \
 	$(OBJ)/drivers/polyplay.o $(OBJ)/sndhrdw/polyplay.o $(OBJ)/vidhrdw/polyplay.o \
 	$(OBJ)/drivers/rbmk.o \
+	$(OBJ)/drivers/rcorsair.o \
+	$(OBJ)/drivers/sfkick.o \
 	$(OBJ)/drivers/shangkid.o $(OBJ)/vidhrdw/shangkid.o \
 	$(OBJ)/drivers/skyarmy.o \
 	$(OBJ)/drivers/sliver.o \

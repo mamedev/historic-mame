@@ -42,12 +42,12 @@
 
     Regarding pixel_aspect, this is the aspect ratio of the individual
     pixels, not the aspect ratio of the screen. You can determine this by
-    dividing the aspect ratio of the resolution by the aspect ratio of the
-    screen. For example, a 4:3 screen displaying 640x480 gives a
-    pixel aspect ratio of (640/480)/(4/3) = 1.0, meaning the pixels are
+    dividing the aspect ratio of the screen by the aspect ratio of the
+    resolution. For example, a 4:3 screen displaying 640x480 gives a
+    pixel aspect ratio of (4/3)/(640/480) = 1.0, meaning the pixels are
     square. That same screen displaying 1280x1024 would have a pixel
-    aspect ratio of (1280/1024)/(4/3) = 0.9375, meaning the pixels are
-    slightly taller than they are wide.
+    aspect ratio of (4/3)/(1280/1024) = 1.06666, meaning the pixels are
+    slightly wider than they are tall.
 
     Artwork is always assumed to be a 1.0 pixel aspect ratio. The game
     screens themselves can be variable aspect ratios.

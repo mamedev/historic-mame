@@ -438,7 +438,7 @@ static void expand_blitter(int count, blit_state *state,
 	is_contiguous = TRUE;
 	for (i = 1; i < count; i++)
 	{
-		if ((pixoffset[0] + i * (blit->srcdepth / 8)) != pixoffset[i])
+		if ((pixoffset[0] + i * ((blit->srcdepth + 7) / 8)) != pixoffset[i])
 		{
 			is_contiguous = FALSE;
 			break;
@@ -934,7 +934,7 @@ static void generate_single_blitter(const win_blit_params *blit, int update)
 	_mov_r32_m32abs(REG_ESI, &asmblit_srcdata);
 	_mov_r32_m32abs(REG_EDI, &asmblit_dstdata);
 
-	if (blit->srcdepth == 16)
+	if (blit->srcdepth == 15 || blit->srcdepth == 16)
 	{
 		// load the palette pointer
 		_mov_r32_m32abs(REG_ECX, &asmblit_srclookup);

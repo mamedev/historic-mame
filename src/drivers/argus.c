@@ -17,6 +17,7 @@ Supported games :
  Argus      (C) 1986 NMK / Jaleco
  Valtric    (C) 1986 NMK / Jaleco
  Butasan    (C) 1987 NMK / Jaleco
+ Bombs Away (C) 1988 Jaleco
 
 
 System specs :
@@ -106,24 +107,29 @@ extern UINT8 *butasan_bg1ram;
 VIDEO_START( argus );
 VIDEO_START( valtric );
 VIDEO_START( butasan );
+VIDEO_START( bombsa );
 VIDEO_UPDATE( argus );
 VIDEO_UPDATE( valtric );
 VIDEO_UPDATE( butasan );
+VIDEO_UPDATE( bombsa );
 
 static UINT8 argus_bank_latch   = 0x00;
 static UINT8 butasan_page_latch = 0x00;
 
 READ8_HANDLER( argus_txram_r );
 READ8_HANDLER( butasan_txram_r );
+READ8_HANDLER( bombsa_txram_r );
 READ8_HANDLER( argus_bg1ram_r );
 READ8_HANDLER( butasan_bg0ram_r );
 READ8_HANDLER( butasan_bg1ram_r );
 READ8_HANDLER( argus_paletteram_r );
+READ8_HANDLER( bombsa_paletteram_r );
 READ8_HANDLER( butasan_txbackram_r );
 READ8_HANDLER( butasan_bg0backram_r );
 
 WRITE8_HANDLER( argus_txram_w );
 WRITE8_HANDLER( butasan_txram_w );
+WRITE8_HANDLER( bombsa_txram_w );
 WRITE8_HANDLER( argus_bg1ram_w );
 WRITE8_HANDLER( butasan_bg0ram_w );
 WRITE8_HANDLER( butasan_bg1ram_w );
@@ -139,9 +145,11 @@ WRITE8_HANDLER( argus_flipscreen_w );
 WRITE8_HANDLER( argus_paletteram_w );
 WRITE8_HANDLER( valtric_paletteram_w );
 WRITE8_HANDLER( butasan_paletteram_w );
+WRITE8_HANDLER( bombsa_paletteram_w );
 WRITE8_HANDLER( butasan_txbackram_w );
 WRITE8_HANDLER( butasan_bg0backram_w );
 WRITE8_HANDLER( butasan_bg1_status_w );
+WRITE8_HANDLER( bombsa_pageselect_w );
 
 /***************************************************************************
 
@@ -191,12 +199,9 @@ static WRITE8_HANDLER( argus_bankselect_w )
 	UINT8 *RAM = memory_region(REGION_CPU1);
 	int bankaddress;
 
-	if (data != argus_bank_latch)
-	{
-		argus_bank_latch = data;
-		bankaddress = 0x10000 + ((data & 7) * 0x4000);
-		memory_set_bankptr(1, &RAM[bankaddress]);	 /* Select 8 banks of 16k */
-	}
+	argus_bank_latch = data;
+	bankaddress = 0x10000 + ((data & 7) * 0x4000);
+	memory_set_bankptr(1, &RAM[bankaddress]);	 /* Select 8 banks of 16k */
 }
 
 static WRITE8_HANDLER( butasan_pageselect_w )
@@ -371,6 +376,50 @@ static ADDRESS_MAP_START( butasan_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xf680, 0xffff) AM_WRITE(MWA8_RAM)
 ADDRESS_MAP_END
 
+WRITE8_HANDLER( bombsa_txram_w );
+READ8_HANDLER( bombsa_txram_r );
+
+static ADDRESS_MAP_START( bombsa_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK1)
+
+	AM_RANGE(0xc000, 0xcfff) AM_READ(MRA8_RAM)
+
+	AM_RANGE(0xd000, 0xd1ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd200, 0xd7ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xd800, 0xdfff) AM_READ(MRA8_RAM)
+	/* Input ports */
+	AM_RANGE(0xe000, 0xe000) AM_READ(input_port_0_r)					// Coin
+	AM_RANGE(0xe001, 0xe001) AM_READ(input_port_1_r)					// Player 1
+	AM_RANGE(0xe002, 0xe002) AM_READ(input_port_2_r)					// Player 2
+	AM_RANGE(0xe003, 0xe003) AM_READ(input_port_3_r)					// DSW 1
+	AM_RANGE(0xe004, 0xe004) AM_READ(input_port_4_r)					// DSW 2
+
+	AM_RANGE(0xe800, 0xefff) AM_READ(bombsa_txram_r)
+	AM_RANGE(0xf000, 0xffff) AM_READ(bombsa_paletteram_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( bombsa_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_WRITE(MWA8_BANK1)
+
+	AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_RAM)
+
+	/* ports look like the other games */
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(soundlatch_w) // confirmed
+//  AM_RANGE(0xd001, 0xd001) AM_WRITE(argus_flipscreen_w)
+	AM_RANGE(0xd002, 0xd002) AM_WRITE(argus_bankselect_w)
+	AM_RANGE(0xd003, 0xd003) AM_WRITE(bombsa_pageselect_w) // 0,1,0,1,0,1 etc.
+
+	AM_RANGE(0xd000, 0xd1ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xd200, 0xd7ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xd800, 0xdfff) AM_WRITE(MWA8_RAM)
+
+	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(MWA8_RAM) // ??
+	AM_RANGE(0xe800, 0xefff) AM_WRITE(bombsa_txram_w) AM_BASE(&argus_txram) // banked? it gets corrupted at game start, maybe its banked and one layer can be 16x16 or 8x8?
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(bombsa_paletteram_w) AM_BASE(&argus_paletteram) // banked?
+ADDRESS_MAP_END
+
 static ADDRESS_MAP_START( sound_readmem_a, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
@@ -391,6 +440,12 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( sound_writemem_b, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( sound_writemem_c, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(MWA8_RAM)							// Is this a confirm of some sort?
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_readport_1, ADDRESS_SPACE_IO, 8 )
@@ -488,19 +543,19 @@ ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( argus )
-ARGUS_IN0 /* System control */
+	ARGUS_IN0 /* System control */
 
-ARGUS_IN1 /* Player 1 control */
+	ARGUS_IN1 /* Player 1 control */
 
-ARGUS_IN2 /* Player 2 control */
+	ARGUS_IN2 /* Player 2 control */
 
-ARGUS_DSW1
+	ARGUS_DSW1
 
 	PORT_START_TAG("DSW2")
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) ) /* Listed as "Unused" in the manual */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unused ) ) /* Listed as "Unused" in the manual */
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Coin_B ) )
@@ -525,13 +580,14 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( valtric )
 
-ARGUS_IN0
+	ARGUS_IN0
 
-ARGUS_IN1
+	ARGUS_IN1
 
-ARGUS_IN2
+	ARGUS_IN2
 
-ARGUS_DSW1
+	ARGUS_DSW1
+
 	PORT_START_TAG("DSW2")
 	PORT_DIPNAME( 0x01, 0x01, "Invulnerability (Cheat")
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
@@ -570,9 +626,9 @@ INPUT_PORTS_START( butasan )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
-ARGUS_IN1
+	ARGUS_IN1
 
-ARGUS_IN2
+	ARGUS_IN2
 
 	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Free_Play ) )
@@ -625,6 +681,74 @@ ARGUS_IN2
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_4C ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( bombsa )
+
+	PORT_START_TAG("IN0")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20,	IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+
+	ARGUS_IN1
+
+	ARGUS_IN2
+
+	PORT_START_TAG("DSW1")
+	PORT_DIPNAME(   0x01, 0x01, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x01, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x00, DEF_STR( On ) )
+    PORT_DIPNAME(   0x02, 0x02, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x02, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x00, DEF_STR( On ) )
+    PORT_DIPNAME(   0x04, 0x04, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x04, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x00, DEF_STR( On ) )
+    PORT_DIPNAME(   0x08, 0x08, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x08, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x00, DEF_STR( On ) )
+    PORT_DIPNAME(   0x10, 0x10, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x10, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x00, DEF_STR( On ) )
+    PORT_DIPNAME(   0x20, 0x20, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x20, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x00, DEF_STR( On ) )
+    PORT_DIPNAME(   0x40, 0x40, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x40, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x00, DEF_STR( On ) )
+    PORT_DIPNAME(   0x80, 0x80, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x80, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x00, DEF_STR( On ) )
+
+	PORT_START_TAG("DSW2")
+    PORT_DIPNAME(   0x01, 0x01, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x01, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x00, DEF_STR( On ) )
+    PORT_DIPNAME(   0x02, 0x02, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x02, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x00, DEF_STR( On ) )
+    PORT_DIPNAME(   0x04, 0x04, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x04, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x00, DEF_STR( On ) )
+    PORT_DIPNAME(   0x08, 0x08, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x08, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x00, DEF_STR( On ) )
+    PORT_DIPNAME(   0x10, 0x10, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x10, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x00, DEF_STR( On ) )
+    PORT_DIPNAME(   0x20, 0x20, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x20, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x00, DEF_STR( On ) )
+    PORT_DIPNAME(   0x40, 0x40, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x40, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x00, DEF_STR( On ) )
+    PORT_DIPNAME(   0x80, 0x80, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x80, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x00, DEF_STR( On ) )
+INPUT_PORTS_END
 
 /***************************************************************************
 
@@ -731,6 +855,14 @@ static const gfx_decode butasan_gfxdecodeinfo[] =
 	{ REGION_GFX2, 0, &tilelayout_1024, 16*16, 16 },
 	{ REGION_GFX3, 0, &tilelayout_512,  12*16, 16 },
 	{ REGION_GFX4, 0, &charlayout,      32*16, 16 },
+	{ -1 } /* end of array */
+};
+
+static const gfx_decode bombsa_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &tilelayout_1024, 32*16, 16 },
+	{ REGION_GFX2, 0, &tilelayout_1024, 0*16, 16 },
+	{ REGION_GFX3, 0, &charlayout,      16*16, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -857,6 +989,49 @@ static MACHINE_DRIVER_START( butasan )
 	MDRV_SOUND_ROUTE(3, "mono", 1.0)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( bombsa )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 5000000)			/* 5 MHz */
+	MDRV_CPU_PROGRAM_MAP(bombsa_readmem,bombsa_writemem)
+	MDRV_CPU_VBLANK_INT(argus_interrupt,2)
+
+	MDRV_CPU_ADD(Z80, 12000000 / 2)
+	/* audio CPU */						/* 6 MHz */				/* maybe CPU speeds are reversed? Probably not (ajg) */
+	MDRV_CPU_PROGRAM_MAP(sound_readmem_b,sound_writemem_c)
+	MDRV_CPU_IO_MAP(sound_readport_2,sound_writeport_2)
+
+	MDRV_FRAMES_PER_SECOND(54)									/* Guru says : VSync - 54Hz . HSync - 15.25kHz */
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*16, 32*16)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(bombsa_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x1000/2)
+
+	MDRV_VIDEO_START(bombsa)
+	MDRV_VIDEO_UPDATE(bombsa)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(YM2203, 12000000 / 8)
+	MDRV_SOUND_CONFIG(ym2203_interface)
+	MDRV_SOUND_ROUTE(0, "mono", 0.30)
+	MDRV_SOUND_ROUTE(1, "mono", 0.30)
+	MDRV_SOUND_ROUTE(2, "mono", 0.30)
+	MDRV_SOUND_ROUTE(3, "mono", 1.0)
+
+	MDRV_SOUND_ADD(YM2203, 12000000 / 8)
+	MDRV_SOUND_ROUTE(0, "mono", 0.30)
+	MDRV_SOUND_ROUTE(1, "mono", 0.30)
+	MDRV_SOUND_ROUTE(2, "mono", 0.30)
+	MDRV_SOUND_ROUTE(3, "mono", 1.0)
+MACHINE_DRIVER_END
+
 
 /***************************************************************************
 
@@ -956,8 +1131,36 @@ ROM_START( butasan )
 	ROM_LOAD( "buta-02.prm",  0x00100, 0x00100, CRC(0dcb18fc) SHA1(0b097b873c9484981f87a5e3d1af767f901ae05f) )
 ROM_END
 
+ROM_START( bombsa )
+	ROM_REGION( 0x30000, REGION_CPU1, 0 )					/* Main CPU */
+	ROM_LOAD( "4.7a", 0x00000, 0x08000, CRC(0191f6a7) SHA1(10a0434abbf4be068751e65c81b1a211729e3742) )
+	/* these fail their self-test... should be checked on real hw (hold start1+start2 on boot) */
+	ROM_LOAD( "5.7c", 0x10000, 0x08000, BAD_DUMP CRC(095c451a) SHA1(892ca84376f89640ad4d28f1e548c26bc8f72c0e) ) // contains palettes etc. but fails rom check??
+	ROM_LOAD( "6.7d", 0x20000, 0x10000, BAD_DUMP CRC(89f9dc0f) SHA1(5cf6a7aade3d56bc229d3771bc4141ad0c0e8da2) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )					/* Sound CPU */
+	ROM_LOAD( "1.3a", 0x00000, 0x08000, CRC(92801404) SHA1(c4ff47989d355b18a909eaa88f138e2f68178ecc) )
+
+	ROM_REGION( 0x20000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprite */
+	ROM_LOAD( "2.4p", 0x00000, 0x10000, CRC(bd972ff4) SHA1(63bfb455bc0ae1d31e6f1066864ec0c8d2d0cf99) )
+	ROM_LOAD( "3.4s", 0x10000, 0x10000, CRC(9a8a8a97) SHA1(13328631202c196c9d8791cc6063048eb6be0472) )
+
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE )	/* BG0 */
+	/* some corrupt 'blank' characters, should also be checked with a redump */
+	ROM_LOAD( "8.2l", 0x00000, 0x10000, BAD_DUMP CRC(3391c769) SHA1(7ae7575ac81d6e0d915c279c1f57a9bc6d096bd6) )
+	ROM_LOAD( "9.2m", 0x10000, 0x10000, BAD_DUMP CRC(5b315976) SHA1(d17cc1926f926bdd88b66ea6af88dac30880e7d4) )
+
+	ROM_REGION( 0x08000, REGION_GFX3, ROMREGION_DISPOSE )	/* Text */
+	ROM_LOAD( "7.4f", 0x00000, 0x08000, CRC(400114b9) SHA1(db2f3ba05a2005ae0e0e7d19c8739353032cbeab) )
+
+	ROM_REGION( 0x08000, REGION_USER1, ROMREGION_DISPOSE )	/* Proms */
+	ROM_LOAD( "82s131.7l", 0x000, 0x200, CRC(6a7d13c0) SHA1(2a835a4ac1acb7663d0b915d0339af9800284da6) )
+	ROM_LOAD( "82s137.3t", 0x000, 0x400, CRC(59e44236) SHA1(f53d99694fa5acd7cc51dd78e09f0d2ef730e7a4) )
+ROM_END
+
 
 /*  ( YEAR   NAME     PARENT  MACHINE   INPUT     INIT  MONITOR  COMPANY                 FULLNAME ) */
-GAME( 1986, argus,    0,      argus,    argus,    0,    ROT270,  "[NMK] (Jaleco license)", "Argus"          , 0 )
-GAME( 1986, valtric,  0,      valtric,  valtric,  0,    ROT270,  "[NMK] (Jaleco license)", "Valtric"        , 0 )
-GAME( 1987, butasan,  0,      butasan,  butasan,  0,    ROT0,    "[NMK] (Jaleco license)", "Butasan (Japan)", 0 )
+GAME( 1986, argus,    0,      argus,    argus,    0,    ROT270,  "[NMK] (Jaleco license)", "Argus"          , GAME_IMPERFECT_GRAPHICS )
+GAME( 1986, valtric,  0,      valtric,  valtric,  0,    ROT270,  "[NMK] (Jaleco license)", "Valtric"        , GAME_IMPERFECT_GRAPHICS )
+GAME( 1987, butasan,  0,      butasan,  butasan,  0,    ROT0,    "[NMK] (Jaleco license)", "Butasan (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAME( 1988, bombsa,   0,      bombsa,   bombsa,   0,    ROT270,  "Jaleco",                 "Bombs Away"     , GAME_NOT_WORKING )

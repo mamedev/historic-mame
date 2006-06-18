@@ -142,6 +142,7 @@ static UINT8 *butasan_txbackram;
 static tilemap *tx_tilemap  = NULL;
 static tilemap *bg0_tilemap = NULL;
 static tilemap *bg1_tilemap = NULL;
+static tilemap *bombsa_bg_tilemap = NULL;
 
 static UINT8 argus_bg_status    = 0x01;
 static UINT8 butasan_bg1_status = 0x01;
@@ -154,6 +155,8 @@ static int argus_palette_intensity = 0;
 static int lowbitscroll = 0;
 static int prvscrollx = 0;
 
+UINT8 bombsa_ram_page;
+UINT8* bomba_otherram;
 
 /***************************************************************************
   Callbacks for the tilemap code
@@ -267,6 +270,11 @@ static void butasan_get_bg0_tile_info(int tile_index)
 			TILE_FLIPYX((hi & 0x30) >> 4))
 }
 
+
+
+
+
+
 static void butasan_get_bg1_tile_info(int tile_index)
 {
 	int bank, tile, attrib, color;
@@ -364,6 +372,71 @@ VIDEO_START( butasan )
 	return 0;
 }
 
+#if 0
+static void bombsa_get_tx_alt_tile_info(int tile_index)
+{
+	int hi, lo;
+
+	lo = bombsa_tx_alt_ram[  tile_index << 1  ];
+	hi = bombsa_tx_alt_ram[ (tile_index << 1) + 1 ];
+
+	SET_TILE_INFO(
+			2,
+			((hi & 0xc0) << 2) | lo,
+			hi & 0x0f,
+			TILE_FLIPYX((hi & 0x30) >> 4))
+}
+#endif
+
+static void bombsa_get_bg_tile_info(int tile_index)
+{
+	int tileno;
+	int col;
+
+	tileno = bomba_otherram[tile_index*2] | ( bomba_otherram[tile_index*2+1]<<8);
+	col = 0;
+
+	SET_TILE_INFO(
+			1,
+			tileno,
+			col,
+			0)
+}
+
+
+VIDEO_START( bombsa )
+{
+	/*                           info                       offset             type                 w   h  col  row */
+//  bg1_tilemap = tilemap_create(valtric_get_bg_tile_info,  tilemap_scan_cols, TILEMAP_OPAQUE,      16, 16, 32, 32);
+	tx_tilemap  = tilemap_create(valtric_get_tx_tile_info,  tilemap_scan_cols, TILEMAP_TRANSPARENT,  8,  8, 32, 32);
+
+#if 0
+	/* this might be wrong.. but it looks like there may be a tilemap here that can change between 8x8 and 16x16 mode.. */
+	/* when you start the game it gets 'corrupted' with data for another layer.. */
+	tx_alt_tilemap  = tilemap_create(bombsa_get_tx_alt_tile_info,  tilemap_scan_cols, TILEMAP_TRANSPARENT,  8,  8, 32, 32);
+#endif
+
+	bombsa_bg_tilemap  = tilemap_create(bombsa_get_bg_tile_info,  tilemap_scan_cols, TILEMAP_TRANSPARENT,  16,  16, 64, 32);
+
+#if 0
+	bombsa_tx_alt_ram = auto_malloc(0x800);
+#endif
+
+//  if ( !tx_tilemap || !bg1_tilemap )
+//      return 1;
+
+//  tilemap_set_transparent_pen( bg1_tilemap, 15 );
+	tilemap_set_transparent_pen( tx_tilemap,  15 );
+#if 0
+	tilemap_set_transparent_pen( tx_alt_tilemap,  15 );
+#endif
+//  jal_blend_table = auto_malloc(0xc00);
+//  memset(jal_blend_table,0,0xc00) ;
+
+	bomba_otherram = auto_malloc(0x1000);
+
+	return 0;
+}
 
 /***************************************************************************
   Functions for handler of MAP roms in Argus and palette color
@@ -393,6 +466,27 @@ static void argus_write_dummy_rams( int dramoffs, int vromoffs )
 		voffs += 2;
 	}
 }
+
+
+static void bombsa_change_palette(int color, int data)
+{
+	int r, g, b;//, a;
+
+	r = (data >> 12) & 0x0f;
+	g = (data >>  8) & 0x0f;
+	b = (data >>  4) & 0x0f;
+//  a = (data      ) & 0x0f;
+
+	r = (r << 4) | r;
+	g = (g << 4) | g;
+	b = (b << 4) | b;
+//  a = (a << 4) | a;
+
+//  jal_blend_table[color] = a ;
+
+	palette_set_color(color, r, g, b);
+}
+
 
 static void argus_change_palette(int color, int data)
 {
@@ -450,6 +544,11 @@ static void argus_change_bg_palette(int color, int data)
   Memory handler
 ***************************************************************************/
 
+WRITE8_HANDLER( bombsa_pageselect_w )
+{
+	bombsa_ram_page = data;
+}
+
 READ8_HANDLER( argus_txram_r )
 {
 	return argus_txram[ offset ];
@@ -462,6 +561,43 @@ WRITE8_HANDLER( argus_txram_w )
 		argus_txram[ offset ] = data;
 		tilemap_mark_tile_dirty(tx_tilemap, offset >> 1);
 	}
+}
+
+READ8_HANDLER( bombsa_txram_r )
+{
+#if 0
+	if (bombsa_ram_page == 1)
+	{
+		return argus_txram[ offset ];
+	}
+	else
+	{
+		return bombsa_tx_alt_ram[ offset ];
+	}
+#endif
+
+	return argus_txram[ offset ];
+
+}
+
+WRITE8_HANDLER( bombsa_txram_w )
+{
+#if 0
+	if (bombsa_ram_page == 1)
+	{
+		argus_txram[ offset ] = data;
+		tilemap_mark_tile_dirty(tx_tilemap, offset >> 1);
+	}
+	else
+	{
+		/* 8x8 .. */
+		bombsa_tx_alt_ram[ offset ] = data;
+		tilemap_mark_tile_dirty(tx_alt_tilemap, offset >> 1);
+		/* also 16x16 ..? */
+	}
+#endif
+	argus_txram[ offset ] = data;
+	tilemap_mark_tile_dirty(tx_tilemap, offset >> 1);
 }
 
 READ8_HANDLER( butasan_txram_r )
@@ -833,6 +969,42 @@ WRITE8_HANDLER( butasan_paletteram_w )
 	{
 		argus_change_palette( ((offset - 0x0600) >> 1) + 512,
 			argus_paletteram[offset | 1] | (argus_paletteram[offset & ~1] << 8));
+	}
+}
+
+READ8_HANDLER( bombsa_paletteram_r )
+{
+	if (bombsa_ram_page==1)
+	{
+		return argus_paletteram[ offset ];
+	}
+	else if (bombsa_ram_page==0)
+	{
+		return bomba_otherram[ offset ];
+	}
+	else
+	{
+		printf("unknown bombsa_paletteram_r %02x %04x\n",bombsa_ram_page,offset);
+		return 0x00;
+	}
+}
+
+WRITE8_HANDLER( bombsa_paletteram_w )
+{
+	if (bombsa_ram_page==1)
+	{
+		argus_paletteram[ offset ] = data;
+		bombsa_change_palette( offset>>1, argus_paletteram[offset | 1] | (argus_paletteram[offset & ~1] << 8));
+	}
+	else if (bombsa_ram_page==0)
+	{
+		bomba_otherram[offset] = data;
+
+		tilemap_mark_tile_dirty(bombsa_bg_tilemap, offset/2);
+	}
+	else
+	{
+		printf("unknown bombsa_paletteram_w %02x %04x %02x\n",bombsa_ram_page,offset, data);
 	}
 }
 
@@ -1334,6 +1506,69 @@ static void butasan_log_vram(void)
 }
 #endif
 
+static void bombsa_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
+{
+	int offs;
+
+	/* Draw the sprites */
+	for (offs = 11 ; offs < spriteram_size ; offs += 16)
+	{
+		if ( !(spriteram[offs+4] == 0 && spriteram[offs] == 0xf0) )
+		{
+			int sx, sy, tile, flipx, flipy, color, size;
+
+			sx = spriteram[offs + 1];
+			sy = spriteram[offs];
+
+			if (spriteram[offs+2] & 0x01)  sx += 256;
+			if (spriteram[offs+2] & 0x02)  sy += 256;
+
+
+			tile	 = spriteram[offs+3] + ((spriteram[offs+2] & 0xc0) << 2);
+			flipx	 = spriteram[offs+2] & 0x10;
+			flipy	 = spriteram[offs+2] & 0x20;
+			color	 = spriteram[offs+4] & 0x0f;
+			size     = spriteram[offs+2] & 0x08;
+
+			if(!size)
+			{
+				drawgfx(bitmap,Machine->gfx[0],tile,color,flipx,flipy,sx,sy,cliprect,TRANSPARENCY_PEN,15);
+			}
+			else
+			{
+				if (!flipy && !flipx)
+				{
+					drawgfx(bitmap,Machine->gfx[0],tile+0,color,flipx,flipy,sx,sy,cliprect,TRANSPARENCY_PEN,15);
+					drawgfx(bitmap,Machine->gfx[0],tile+1,color,flipx,flipy,sx,sy+16,cliprect,TRANSPARENCY_PEN,15);
+					drawgfx(bitmap,Machine->gfx[0],tile+2,color,flipx,flipy,sx+16,sy,cliprect,TRANSPARENCY_PEN,15);
+					drawgfx(bitmap,Machine->gfx[0],tile+3,color,flipx,flipy,sx+16,sy+16,cliprect,TRANSPARENCY_PEN,15);
+				}
+				else if (!flipy && flipx)
+				{
+					drawgfx(bitmap,Machine->gfx[0],tile+0,color,flipx,flipy,sx+16,sy,cliprect,TRANSPARENCY_PEN,15);
+					drawgfx(bitmap,Machine->gfx[0],tile+1,color,flipx,flipy,sx+16,sy+16,cliprect,TRANSPARENCY_PEN,15);
+					drawgfx(bitmap,Machine->gfx[0],tile+2,color,flipx,flipy,sx,sy,cliprect,TRANSPARENCY_PEN,15);
+					drawgfx(bitmap,Machine->gfx[0],tile+3,color,flipx,flipy,sx,sy+16,cliprect,TRANSPARENCY_PEN,15);
+				}
+				else if (flipy && !flipx)
+				{
+					drawgfx(bitmap,Machine->gfx[0],tile+0,color,flipx,flipy,sx,sy+16,cliprect,TRANSPARENCY_PEN,15);
+					drawgfx(bitmap,Machine->gfx[0],tile+1,color,flipx,flipy,sx,sy,cliprect,TRANSPARENCY_PEN,15);
+					drawgfx(bitmap,Machine->gfx[0],tile+2,color,flipx,flipy,sx+16,sy+16,cliprect,TRANSPARENCY_PEN,15);
+					drawgfx(bitmap,Machine->gfx[0],tile+3,color,flipx,flipy,sx+16,sy,cliprect,TRANSPARENCY_PEN,15);
+				}
+				else if (flipy && flipx)
+				{
+					drawgfx(bitmap,Machine->gfx[0],tile+0,color,flipx,flipy,sx+16,sy+16,cliprect,TRANSPARENCY_PEN,15);
+					drawgfx(bitmap,Machine->gfx[0],tile+1,color,flipx,flipy,sx+16,sy,cliprect,TRANSPARENCY_PEN,15);
+					drawgfx(bitmap,Machine->gfx[0],tile+2,color,flipx,flipy,sx,sy+16,cliprect,TRANSPARENCY_PEN,15);
+					drawgfx(bitmap,Machine->gfx[0],tile+3,color,flipx,flipy,sx,sy,cliprect,TRANSPARENCY_PEN,15);
+				}
+			}
+		}
+	}
+}
+
 VIDEO_UPDATE( argus )
 {
 	/* scroll BG0 and render tile at proper position */
@@ -1369,4 +1604,20 @@ VIDEO_UPDATE( butasan )
 #ifdef MAME_DEBUG
 	butasan_log_vram();
 #endif
+}
+
+
+VIDEO_UPDATE( bombsa )
+{
+	fillbitmap(bitmap, Machine->pens[0], cliprect);
+
+//  tilemap_draw(bitmap, cliprect, bg1_tilemap, 0, 0);
+//  valtric_draw_sprites(bitmap, cliprect);
+	tilemap_draw(bitmap, cliprect, bombsa_bg_tilemap,  0, 0);
+
+#if 0
+	tilemap_draw(bitmap, cliprect, tx_alt_tilemap,  0, 0);
+#endif
+	tilemap_draw(bitmap, cliprect, tx_tilemap,  0, 0);
+	bombsa_draw_sprites(bitmap,cliprect);
 }

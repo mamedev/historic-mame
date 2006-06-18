@@ -64,7 +64,6 @@ static cycles_t init_cycle_counter(void)
 	cycles_t start, end;
 	DWORD a, b;
 	int priority = GetThreadPriority(GetCurrentThread());
-	int newpriority = options_get_int("priority", TRUE);
 	LARGE_INTEGER frequency;
 
 	suspend_adjustment = 0;
@@ -114,9 +113,6 @@ static cycles_t init_cycle_counter(void)
 	}
 
 	// restore our priority
-	// raise it if the config option is set and the debugger is not active
-	if (newpriority < priority || !options.mame_debug)
-		priority = newpriority;
 	SetThreadPriority(GetCurrentThread(), priority);
 
 	// log the results

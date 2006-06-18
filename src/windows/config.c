@@ -199,7 +199,6 @@ static const options_entry config_opts[] =
 	{ "norotate",                 "0",    OPTION_DEPRECATED, "(deprecated)" },
 #ifdef NEW_RENDER
 	{ "cleanstretch",             "0",    OPTION_DEPRECATED, "(deprecated)" },
-	{ "keepaspect",               "0",    OPTION_DEPRECATED, "(deprecated)" },
 	{ "scanlines",                "0",    OPTION_DEPRECATED, "(deprecated)" },
 	{ "matchrefresh",             "0",    OPTION_DEPRECATED, "(deprecated)" },
 	{ "refresh",                  "0",    OPTION_DEPRECATED, "(deprecated)" },
@@ -650,6 +649,18 @@ static void extract_options(const game_driver *driver, machine_config *drv)
 	if (options.debug_height == 0)
 		options.debug_height = 480;
 	options.debug_depth = 8;
+
+	// thread priority
+	if (!options.mame_debug)
+	{
+		int priority = options_get_int("priority", TRUE);
+		if (priority < -15 || priority > 1)
+		{
+			fprintf(stderr, "Invalid priority value %d; reverting to 0\n", priority);
+			priority = 0;
+		}
+		SetThreadPriority(GetCurrentThread(), priority);
+	}
 }
 
 

@@ -8,6 +8,7 @@
 
 #include "driver.h"
 #include "includes/atari.h"
+#include "vidhrdw/gtia.h"
 
 #ifdef	LSB_FIRST
 #define BYTE_XOR(n) (n)
@@ -27,7 +28,7 @@ char atari_frame_message[64+1];
 int atari_frame_counter;
 
 /* flag for displaying television artifacts in ANTIC mode F (15) */
-static int tv_artifacts = 0;
+static UINT32 tv_artifacts = 0;
 
 /*************************************************************************
  * The priority tables tell which playfield, player or missile colors
@@ -721,7 +722,6 @@ VIDEO_START( atari )
 
 	LOG(("atari antic_vh_start\n"));
     memset(&antic, 0, sizeof(antic));
-	memset(&gtia, 0, sizeof(gtia));
 
 	antic.cclk_expand = auto_malloc(21 * 256 * sizeof(UINT32));
 
@@ -780,15 +780,14 @@ VIDEO_START( atari )
  ************************************************************************/
 VIDEO_UPDATE( atari )
 {
-#ifdef MESS
-	video_update_generic_bitmapped(screen, bitmap, cliprect, do_skip);
-#else
-	video_update_generic_bitmapped(screen, bitmap, cliprect);
-#endif
+	UINT32 new_tv_artifacts;
 
-	if( tv_artifacts != (readinputport(0) & 0x40) )
+	video_update_generic_bitmapped(screen, bitmap, cliprect);
+
+	new_tv_artifacts = readinputportbytag_safe("artifacts", 0);
+	if( tv_artifacts != new_tv_artifacts )
 	{
-		tv_artifacts = readinputport(0) & 0x40;
+		tv_artifacts = new_tv_artifacts;
 		schedule_full_refresh();
 	}
 	if( atari_frame_counter > 0 )
@@ -1514,7 +1513,7 @@ static void generic_atari_interrupt(void (*handle_keyboard)(void), int button_co
 
     if( antic.scanline == VBL_START )
     {
-		button_port = atari_readinputport(PORT_JOY_BUTTONS);
+		button_port = readinputportbytag_safe("djoy_b", 0);
 
 		/* specify buttons relevant to this Atari variant */
 		for (i = 0; i < button_count; i++)

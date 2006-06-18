@@ -187,6 +187,7 @@ const options_entry video_opts[] =
 	{ NULL,                       NULL,   OPTION_HEADER,  "GLOBAL VIDEO OPTIONS" },
 	{ "window;w",                 "0",    OPTION_BOOLEAN, "enable window mode; otherwise, full screen mode is assumed" },
 	{ "maximize;max",             "1",    OPTION_BOOLEAN, "default to maximized windows; otherwise, windows will be minimized" },
+	{ "keepaspect;ka",            "1",    OPTION_BOOLEAN, "constrain to the proper aspect ratio" },
 	{ "numscreens",               "1",    0,              "number of screens to create; usually, you want just one" },
 	{ "extra_layout;layout",      NULL,   0,              "name of an extra layout file to parse" },
 
@@ -343,11 +344,15 @@ void winvideo_monitor_refresh(win_monitor_info *monitor)
 float winvideo_monitor_get_aspect(win_monitor_info *monitor)
 {
 	// refresh the monitor information and compute the aspect
-	int width, height;
-	winvideo_monitor_refresh(monitor);
-	width = rect_width(&monitor->info.rcMonitor);
-	height = rect_height(&monitor->info.rcMonitor);
-	return ((float)width / (float)height) / monitor->aspect;
+	if (video_config.keepaspect)
+	{
+		int width, height;
+		winvideo_monitor_refresh(monitor);
+		width = rect_width(&monitor->info.rcMonitor);
+		height = rect_height(&monitor->info.rcMonitor);
+		return monitor->aspect / ((float)width / (float)height);
+	}
+	return 0.0f;
 }
 
 
@@ -959,6 +964,7 @@ static void extract_video_config(void)
 
 	// global options: extract the data
 	video_config.windowed      = options_get_bool ("window", TRUE);
+	video_config.keepaspect    = options_get_bool ("keepaspect", TRUE);
 	video_config.numscreens    = options_get_int  ("numscreens", TRUE);
 #ifdef MAME_DEBUG
 	// if we are in debug mode, never go full screen
@@ -987,12 +993,6 @@ static void extract_video_config(void)
 	{
 		fprintf(stderr, "Invalid frameskip value %d; reverting to 0\n", video_config.frameskip);
 		video_config.frameskip = 0;
-	}
-	itemp = options_get_int("priority", TRUE);
-	if (itemp < -15 || itemp > 1)
-	{
-		fprintf(stderr, "Invalid priority value %d; reverting to 0\n", itemp);
-		options_set_int("priority", 0);
 	}
 
 	// misc options: sanity check values

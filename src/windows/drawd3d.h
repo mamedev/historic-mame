@@ -1,6 +1,6 @@
 //============================================================
 //
-//  wind3d.h - Win32 Direct3D 7 (with DirectDraw 7) code
+//  drawd3d.c - Win32 Direct3D implementation
 //
 //  Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
 //  Visit http://mamedev.org for licensing and usage restrictions.
