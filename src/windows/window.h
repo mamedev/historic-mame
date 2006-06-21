@@ -12,7 +12,6 @@
 
 #include "blit.h"
 #include "video.h"
-
 #include "render.h"
 
 
@@ -78,15 +77,15 @@ struct _win_window_info
 };
 
 
-typedef struct _win_effect_data win_effect_data;
-struct _win_effect_data
+typedef struct _win_draw_callbacks win_draw_callbacks;
+struct _win_draw_callbacks
 {
-	const char *name;
-	int effect;
-	int min_xscale;
-	int min_yscale;
-	int max_xscale;
-	int max_yscale;
+	void (*exit)(void);
+
+	int (*window_init)(win_window_info *window);
+	const render_primitive_list *(*window_get_primitives)(win_window_info *window);
+	int (*window_draw)(win_window_info *window, HDC dc, int update);
+	void (*window_destroy)(win_window_info *window);
 };
 
 
@@ -98,13 +97,6 @@ struct _win_effect_data
 // windows
 extern win_window_info *win_window_list;
 
-// windows
-extern HWND			win_debug_window;
-
-// video bounds
-extern double		win_aspect_ratio_adjust;
-extern int 			win_default_constraints;
-
 // visible bounds
 extern RECT			win_visible_rect;
 extern int			win_visible_width;
@@ -112,30 +104,6 @@ extern int			win_visible_height;
 
 // raw mouse support
 extern int			win_use_raw_mouse;
-
-
-
-//============================================================
-//  DEFINES
-//============================================================
-
-// win_constrain_to_aspect_ratio() constraints parameter
-#define CONSTRAIN_INTEGER_WIDTH 1
-#define CONSTRAIN_INTEGER_HEIGHT 2
-
-// win_constrain_to_aspect_ratio() coordinate_system parameter
-// desktop coordinates--when not in any full screen mode
-#define COORDINATES_DESKTOP 1
-// display coordinates, when each display is 0,0 at the top left
-#define COORDINATES_DISPLAY 2
-
-
-// win_force_int_stretch values
-#define FORCE_INT_STRECT_NONE 0
-#define FORCE_INT_STRECT_FULL 1
-#define FORCE_INT_STRECT_AUTO 2
-#define FORCE_INT_STRECT_HOR 3
-#define FORCE_INT_STRECT_VER 4
 
 
 
@@ -151,6 +119,7 @@ int winwindow_video_window_create(int index, win_monitor_info *monitor, const wi
 
 void winwindow_update_cursor_state(void);
 void winwindow_video_window_update(win_window_info *window);
+win_monitor_info *winwindow_video_window_monitor(win_window_info *window, const RECT *proposed);
 
 LRESULT CALLBACK winwindow_video_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam);
 void winwindow_toggle_full_screen(void);
@@ -162,12 +131,6 @@ void winwindow_process_events(int ingame);
 int win_create_menu(HMENU *menus);
 #endif
 
-#ifndef NEW_DEBUGGER
-int debugwin_init_windows(void);
-void debugwin_update_windows(mame_bitmap *bitmap, const rgb_t *palette);
-void debugwin_show(int type);
-void debugwin_set_focus(int focus);
-#endif
 
 
 //============================================================

@@ -38,6 +38,10 @@
 #error Must define DSTSHIFT_R/DSTSHIFT_G/DSTSHIFT_B!
 #endif
 
+#if !defined(NO_DEST_READ)
+#define NO_DEST_READ 0
+#endif
+
 
 
 /***************************************************************************
@@ -53,6 +57,7 @@
 #include <math.h>
 
 
+
 /***************************************************************************
     MACROS
 ***************************************************************************/
@@ -62,6 +67,8 @@
 #define Tinten(intensity, col) \
 	MAKE_RGB((RGB_RED(col) * (intensity)) >> 8, (RGB_GREEN(col) * (intensity)) >> 8, (RGB_BLUE(col) * (intensity)) >> 8)
 
+#define IS_OPAQUE(a)		(a >= (NO_DEST_READ ? 0.5f : 1.0f))
+#define IS_TRANSPARENT(a)	(a <  (NO_DEST_READ ? 0.5f : 0.0001f))
 
 
 
@@ -205,7 +212,7 @@ INLINE void FUNC_PREFIX(draw_aa_pixel)(void *dstdata, UINT32 pitch, int x, int y
 		return;
 
 	dest = (PIXEL_TYPE *)dstdata + y * pitch + x;
-	dpix = *dest;
+	dpix = NO_DEST_READ ? 0 : *dest;
 	dr = RGB_RED(col) + DEST_R(dpix);
 	if (dr > 0xff) dr = 0xff;
 	dg = RGB_GREEN(col) + DEST_G(dpix);
@@ -400,7 +407,7 @@ static void FUNC_PREFIX(draw_rect)(const render_primitive *prim, void *dstdata, 
 	       PRIMFLAG_GET_BLENDMODE(prim->flags) == BLENDMODE_ALPHA);
 
 	/* fast case: no alpha */
-	if (PRIMFLAG_GET_BLENDMODE(prim->flags) == BLENDMODE_NONE || prim->color.a >= 1.0f)
+	if (PRIMFLAG_GET_BLENDMODE(prim->flags) == BLENDMODE_NONE || IS_OPAQUE(prim->color.a))
 	{
 		UINT32 r = (UINT32)(256.0f * prim->color.r);
 		UINT32 g = (UINT32)(256.0f * prim->color.g);
@@ -425,7 +432,7 @@ static void FUNC_PREFIX(draw_rect)(const render_primitive *prim, void *dstdata, 
 	}
 
 	/* alpha and/or coloring case */
-	else
+	else if (!IS_TRANSPARENT(prim->color.a))
 	{
 		UINT32 rmask = DEST_RGB_TO_PIXEL(0xff,0x00,0x00);
 		UINT32 gmask = DEST_RGB_TO_PIXEL(0x00,0xff,0x00);
@@ -454,7 +461,7 @@ static void FUNC_PREFIX(draw_rect)(const render_primitive *prim, void *dstdata, 
 			/* loop over cols */
 			for (x = startx; x < endx; x++)
 			{
-				UINT32 dpix = *dest;
+				UINT32 dpix = NO_DEST_READ ? 0 : *dest;
 				UINT32 dr = (r + ((dpix & rmask) * inva)) & (rmask << 8);
 				UINT32 dg = (g + ((dpix & gmask) * inva)) & (gmask << 8);
 				UINT32 db = (b + ((dpix & bmask) * inva)) & (bmask << 8);
@@ -484,7 +491,7 @@ static void FUNC_PREFIX(draw_quad_palette16_none)(const render_primitive *prim, 
 	assert(palbase != NULL);
 
 	/* fast case: no coloring, no alpha */
-	if (prim->color.r >= 1.0f && prim->color.g >= 1.0f && prim->color.b >= 1.0f && prim->color.a >= 1.0f)
+	if (prim->color.r >= 1.0f && prim->color.g >= 1.0f && prim->color.b >= 1.0f && IS_OPAQUE(prim->color.a))
 	{
 		/* loop over rows */
 		for (y = setup->starty; y < setup->endy; y++)
@@ -505,7 +512,7 @@ static void FUNC_PREFIX(draw_quad_palette16_none)(const render_primitive *prim, 
 	}
 
 	/* coloring-only case */
-	else if (prim->color.a >= 1.0f)
+	else if (IS_OPAQUE(prim->color.a))
 	{
 		UINT32 sr = (UINT32)(256.0f * prim->color.r);
 		UINT32 sg = (UINT32)(256.0f * prim->color.g);
@@ -539,7 +546,7 @@ static void FUNC_PREFIX(draw_quad_palette16_none)(const render_primitive *prim, 
 	}
 
 	/* alpha and/or coloring case */
-	else
+	else if (!IS_TRANSPARENT(prim->color.a))
 	{
 		UINT32 sr = (UINT32)(256.0f * prim->color.r * prim->color.a);
 		UINT32 sg = (UINT32)(256.0f * prim->color.g * prim->color.a);
@@ -563,7 +570,7 @@ static void FUNC_PREFIX(draw_quad_palette16_none)(const render_primitive *prim, 
 			for (x = setup->startx; x < endx; x++)
 			{
 				UINT32 pix = palbase[texbase[(curv >> 16) * texrp + (curu >> 16)]];
-				UINT32 dpix = *dest;
+				UINT32 dpix = NO_DEST_READ ? 0 : *dest;
 				UINT32 r = (SOURCE32_R(pix) * sr + DEST_R(dpix) * invsa) >> 8;
 				UINT32 g = (SOURCE32_G(pix) * sg + DEST_G(dpix) * invsa) >> 8;
 				UINT32 b = (SOURCE32_B(pix) * sb + DEST_B(dpix) * invsa) >> 8;
@@ -596,7 +603,7 @@ static void FUNC_PREFIX(draw_quad_palette16_add)(const render_primitive *prim, v
 	assert(palbase != NULL);
 
 	/* fast case: no coloring, no alpha */
-	if (prim->color.r >= 1.0f && prim->color.g >= 1.0f && prim->color.b >= 1.0f && prim->color.a >= 1.0f)
+	if (prim->color.r >= 1.0f && prim->color.g >= 1.0f && prim->color.b >= 1.0f && IS_OPAQUE(prim->color.a))
 	{
 		/* loop over rows */
 		for (y = setup->starty; y < setup->endy; y++)
@@ -609,14 +616,18 @@ static void FUNC_PREFIX(draw_quad_palette16_add)(const render_primitive *prim, v
 			for (x = setup->startx; x < endx; x++)
 			{
 				UINT32 pix = palbase[texbase[(curv >> 16) * texrp + (curu >> 16)]];
-				UINT32 dpix = *dest;
-				UINT32 r = SOURCE32_R(pix) + DEST_R(dpix);
-				UINT32 g = SOURCE32_G(pix) + DEST_G(dpix);
-				UINT32 b = SOURCE32_B(pix) + DEST_B(dpix);
-				r = (r | -(r >> 8)) & 0xff;
-				g = (g | -(g >> 8)) & 0xff;
-				b = (b | -(b >> 8)) & 0xff;
-				*dest++ = DEST_ASSEMBLE_RGB(r, g, b);
+				if ((pix & 0xffffff) != 0)
+				{
+					UINT32 dpix = NO_DEST_READ ? 0 : *dest;
+					UINT32 r = SOURCE32_R(pix) + DEST_R(dpix);
+					UINT32 g = SOURCE32_G(pix) + DEST_G(dpix);
+					UINT32 b = SOURCE32_B(pix) + DEST_B(dpix);
+					r = (r | -(r >> 8)) & 0xff;
+					g = (g | -(g >> 8)) & 0xff;
+					b = (b | -(b >> 8)) & 0xff;
+					*dest = DEST_ASSEMBLE_RGB(r, g, b);
+				}
+				dest++;
 				curu += dudx;
 				curv += dvdx;
 			}
@@ -646,16 +657,19 @@ static void FUNC_PREFIX(draw_quad_palette16_add)(const render_primitive *prim, v
 			for (x = setup->startx; x < endx; x++)
 			{
 				UINT32 pix = palbase[texbase[(curv >> 16) * texrp + (curu >> 16)]];
-				UINT32 dpix = *dest;
-				UINT32 r = ((SOURCE32_R(pix) * sr) >> 8) + DEST_R(dpix);
-				UINT32 g = ((SOURCE32_G(pix) * sg) >> 8) + DEST_G(dpix);
-				UINT32 b = ((SOURCE32_B(pix) * sb) >> 8) + DEST_B(dpix);
-				r = (r | -(r >> 8)) & 0xff;
-				g = (g | -(g >> 8)) & 0xff;
-				b = (b | -(b >> 8)) & 0xff;
-				*dest++ = DEST_ASSEMBLE_RGB(r, g, b);
-				curu += dudx;
-				curv += dvdx;
+				if ((pix & 0xffffff) != 0)
+				{
+					UINT32 dpix = NO_DEST_READ ? 0 : *dest;
+					UINT32 r = ((SOURCE32_R(pix) * sr) >> 8) + DEST_R(dpix);
+					UINT32 g = ((SOURCE32_G(pix) * sg) >> 8) + DEST_G(dpix);
+					UINT32 b = ((SOURCE32_B(pix) * sb) >> 8) + DEST_B(dpix);
+					r = (r | -(r >> 8)) & 0xff;
+					g = (g | -(g >> 8)) & 0xff;
+					b = (b | -(b >> 8)) & 0xff;
+					*dest++ = DEST_ASSEMBLE_RGB(r, g, b);
+					curu += dudx;
+					curv += dvdx;
+				}
 			}
 		}
 	}
@@ -677,7 +691,7 @@ static void FUNC_PREFIX(draw_quad_rgb32)(const render_primitive *prim, void *dst
 	INT32 x, y;
 
 	/* fast case: no coloring, no alpha */
-	if (prim->color.r >= 1.0f && prim->color.g >= 1.0f && prim->color.b >= 1.0f && prim->color.a >= 1.0f)
+	if (prim->color.r >= 1.0f && prim->color.g >= 1.0f && prim->color.b >= 1.0f && IS_OPAQUE(prim->color.a))
 	{
 		/* loop over rows */
 		for (y = setup->starty; y < setup->endy; y++)
@@ -698,7 +712,7 @@ static void FUNC_PREFIX(draw_quad_rgb32)(const render_primitive *prim, void *dst
 	}
 
 	/* coloring-only case */
-	else if (prim->color.a >= 1.0f)
+	else if (IS_OPAQUE(prim->color.a))
 	{
 		UINT32 sr = (UINT32)(256.0f * prim->color.r);
 		UINT32 sg = (UINT32)(256.0f * prim->color.g);
@@ -732,7 +746,7 @@ static void FUNC_PREFIX(draw_quad_rgb32)(const render_primitive *prim, void *dst
 	}
 
 	/* alpha and/or coloring case */
-	else
+	else if (!IS_TRANSPARENT(prim->color.a))
 	{
 		UINT32 sr = (UINT32)(256.0f * prim->color.r * prim->color.a);
 		UINT32 sg = (UINT32)(256.0f * prim->color.g * prim->color.a);
@@ -756,7 +770,7 @@ static void FUNC_PREFIX(draw_quad_rgb32)(const render_primitive *prim, void *dst
 			for (x = setup->startx; x < endx; x++)
 			{
 				UINT32 pix = texbase[(curv >> 16) * texrp + (curu >> 16)];
-				UINT32 dpix = *dest;
+				UINT32 dpix = NO_DEST_READ ? 0 : *dest;
 				UINT32 r = (SOURCE32_R(pix) * sr + DEST_R(dpix) * invsa) >> 8;
 				UINT32 g = (SOURCE32_G(pix) * sg + DEST_G(dpix) * invsa) >> 8;
 				UINT32 b = (SOURCE32_B(pix) * sb + DEST_B(dpix) * invsa) >> 8;
@@ -785,7 +799,7 @@ static void FUNC_PREFIX(draw_quad_rgb15)(const render_primitive *prim, void *dst
 	INT32 x, y;
 
 	/* fast case: no coloring, no alpha */
-	if (prim->color.r >= 1.0f && prim->color.g >= 1.0f && prim->color.b >= 1.0f && prim->color.a >= 1.0f)
+	if (prim->color.r >= 1.0f && prim->color.g >= 1.0f && prim->color.b >= 1.0f && IS_OPAQUE(prim->color.a))
 	{
 		/* loop over rows */
 		for (y = setup->starty; y < setup->endy; y++)
@@ -806,7 +820,7 @@ static void FUNC_PREFIX(draw_quad_rgb15)(const render_primitive *prim, void *dst
 	}
 
 	/* coloring-only case */
-	else if (prim->color.a >= 1.0f)
+	else if (IS_OPAQUE(prim->color.a))
 	{
 		UINT32 sr = (UINT32)(256.0f * prim->color.r);
 		UINT32 sg = (UINT32)(256.0f * prim->color.g);
@@ -840,7 +854,7 @@ static void FUNC_PREFIX(draw_quad_rgb15)(const render_primitive *prim, void *dst
 	}
 
 	/* alpha and/or coloring case */
-	else
+	else if (!IS_TRANSPARENT(prim->color.a))
 	{
 		UINT32 sr = (UINT32)(256.0f * prim->color.r * prim->color.a);
 		UINT32 sg = (UINT32)(256.0f * prim->color.g * prim->color.a);
@@ -864,7 +878,7 @@ static void FUNC_PREFIX(draw_quad_rgb15)(const render_primitive *prim, void *dst
 			for (x = setup->startx; x < endx; x++)
 			{
 				UINT32 pix = texbase[(curv >> 16) * texrp + (curu >> 16)];
-				UINT32 dpix = *dest;
+				UINT32 dpix = NO_DEST_READ ? 0 : *dest;
 				UINT32 r = (SOURCE15_R(pix) * sr + DEST_R(dpix) * invsa) >> 8;
 				UINT32 g = (SOURCE15_G(pix) * sg + DEST_G(dpix) * invsa) >> 8;
 				UINT32 b = (SOURCE15_B(pix) * sb + DEST_B(dpix) * invsa) >> 8;
@@ -893,7 +907,7 @@ static void FUNC_PREFIX(draw_quad_argb32_alpha)(const render_primitive *prim, vo
 	INT32 x, y;
 
 	/* fast case: no coloring, no alpha */
-	if (prim->color.r >= 1.0f && prim->color.g >= 1.0f && prim->color.b >= 1.0f && prim->color.a >= 1.0f)
+	if (prim->color.r >= 1.0f && prim->color.g >= 1.0f && prim->color.b >= 1.0f && IS_OPAQUE(prim->color.a))
 	{
 		/* loop over rows */
 		for (y = setup->starty; y < setup->endy; y++)
@@ -909,7 +923,7 @@ static void FUNC_PREFIX(draw_quad_argb32_alpha)(const render_primitive *prim, vo
 				UINT32 ta = pix >> 24;
 				if (ta != 0)
 				{
-					UINT32 dpix = *dest;
+					UINT32 dpix = NO_DEST_READ ? 0 : *dest;
 					UINT32 invta = 0x100 - ta;
 					UINT32 r = (SOURCE32_R(pix) * ta + DEST_R(dpix) * invta) >> 8;
 					UINT32 g = (SOURCE32_G(pix) * ta + DEST_G(dpix) * invta) >> 8;
@@ -950,9 +964,9 @@ static void FUNC_PREFIX(draw_quad_argb32_alpha)(const render_primitive *prim, vo
 			{
 				UINT32 pix = texbase[(curv >> 16) * texrp + (curu >> 16)];
 				UINT32 ta = (pix >> 24) * sa;
-				if (ta)
+				if (ta != 0)
 				{
-					UINT32 dpix = *dest;
+					UINT32 dpix = NO_DEST_READ ? 0 : *dest;
 					UINT32 invsta = (0x10000 - ta) << 8;
 					UINT32 r = (SOURCE32_R(pix) * sr * ta + DEST_R(dpix) * invsta) >> 24;
 					UINT32 g = (SOURCE32_G(pix) * sg * ta + DEST_G(dpix) * invsta) >> 24;
@@ -983,8 +997,12 @@ static void FUNC_PREFIX(draw_quad_argb32_multiply)(const render_primitive *prim,
 	INT32 endx = setup->endx;
 	INT32 x, y;
 
+	/* simply can't do this without reading from the dest */
+	if (NO_DEST_READ)
+		return;
+
 	/* fast case: no coloring, no alpha */
-	if (prim->color.r >= 1.0f && prim->color.g >= 1.0f && prim->color.b >= 1.0f && prim->color.a >= 1.0f)
+	if (prim->color.r >= 1.0f && prim->color.g >= 1.0f && prim->color.b >= 1.0f && IS_OPAQUE(prim->color.a))
 	{
 		/* loop over rows */
 		for (y = setup->starty; y < setup->endy; y++)
@@ -997,7 +1015,7 @@ static void FUNC_PREFIX(draw_quad_argb32_multiply)(const render_primitive *prim,
 			for (x = setup->startx; x < endx; x++)
 			{
 				UINT32 pix = texbase[(curv >> 16) * texrp + (curu >> 16)];
-				UINT32 dpix = *dest;
+				UINT32 dpix = NO_DEST_READ ? 0 : *dest;
 				UINT32 r = (SOURCE32_R(pix) * DEST_R(dpix)) >> 8;
 				UINT32 g = (SOURCE32_G(pix) * DEST_G(dpix)) >> 8;
 				UINT32 b = (SOURCE32_B(pix) * DEST_B(dpix)) >> 8;
@@ -1032,7 +1050,7 @@ static void FUNC_PREFIX(draw_quad_argb32_multiply)(const render_primitive *prim,
 			for (x = setup->startx; x < endx; x++)
 			{
 				UINT32 pix = texbase[(curv >> 16) * texrp + (curu >> 16)];
-				UINT32 dpix = *dest;
+				UINT32 dpix = NO_DEST_READ ? 0 : *dest;
 				UINT32 r = (SOURCE32_R(pix) * sr * DEST_R(dpix)) >> 16;
 				UINT32 g = (SOURCE32_G(pix) * sg * DEST_G(dpix)) >> 16;
 				UINT32 b = (SOURCE32_B(pix) * sb * DEST_B(dpix)) >> 16;
@@ -1244,5 +1262,7 @@ void FUNC_PREFIX(draw_primitives)(const render_primitive *primlist, void *dstdat
 #undef DSTSHIFT_R
 #undef DSTSHIFT_G
 #undef DSTSHIFT_B
+
+#undef NO_DEST_READ
 
 #undef VARIABLE_SHIFT

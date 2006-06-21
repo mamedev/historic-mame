@@ -11,20 +11,21 @@
 
     Things that are still broken:
         * no way to view tilemaps/charsets
-        * invaders doesn't compute minimum size correctly (lines are missing)
         * LEDs missing
         * listxml output needs to be cleaned up
+        * UI line drawing tends to overshoot or be offscreen at low resolutions
 
     OSD-specific things that are busted:
-        * need to respect options for:
-            pre-scaling of texture
         * -full_screen_gamma
-        * -hws: allow to disable, but disables artwork as well
         * no fallback if we run out of video memory
+        * running fullscreen with not enough screens should be prevented
 
     To do features:
+        * further optimization of clearing for multi-screen views
+        * remove aspect ratio from machine driver
         * positioning of game screens
         * remember current video options in cfg file
+        * convert drivers to multiple screens
 
 ****************************************************************************
 
@@ -824,16 +825,31 @@ UINT32 render_get_live_screens_mask(void)
 
 float render_get_ui_aspect(void)
 {
+	render_target *target = targetlist;
+
 	/* this is a bit of a kludge; we compute the UI aspect based on the orientation */
 	/* and pixel_aspect of the first target */
-	if (targetlist != NULL)
+	if (target != NULL)
 	{
-		int orient = orientation_add(targetlist->orientation, ui_container->orientation);
-		float effaspect = (targetlist->pixel_aspect == 0.0f) ? 1.0f : targetlist->pixel_aspect;
+		int orient = orientation_add(target->orientation, ui_container->orientation);
+		float aspect;
+
+		/* based on the orientation of the target, compute height/width or width/height */
 		if (!(orient & ORIENTATION_SWAP_XY))
-			return (float)targetlist->height * effaspect / (float)targetlist->width;
+			aspect = (float)target->height / (float)target->width;
 		else
-			return (float)targetlist->width * effaspect / (float)targetlist->height;
+			aspect = (float)target->width / (float)target->height;
+
+		/* if we have a valid pixel aspect, apply that and return */
+		if (target->pixel_aspect != 0.0f)
+			return aspect * target->pixel_aspect;
+
+		/* if not, clamp for extreme proportions */
+		if (aspect < 0.66f)
+			aspect = 0.66f;
+		if (aspect > 1.5f)
+			aspect = 1.5f;
+		return aspect;
 	}
 
 	return 1.0f;
@@ -1176,7 +1192,7 @@ void render_target_get_minimum_size(render_target *target, INT32 *minwidth, INT3
 		for (item = target->curview->itemlist[layer]; item != NULL; item = item->next)
 			if (item->element == NULL)
 			{
-				const rectangle vectorvis = { 0, 319, 0, 239 };
+				const rectangle vectorvis = { 0, 639, 0, 479 };
 				const rectangle *visarea;
 				render_container *container = screen_container[item->index];
 				render_bounds bounds;
@@ -1196,7 +1212,7 @@ void render_target_get_minimum_size(render_target *target, INT32 *minwidth, INT3
 				normalize_bounds(&bounds);
 
 				/* based on the orientation of the screen container, check the bitmap */
-				if (!(container->orientation & ORIENTATION_SWAP_XY))
+				if (!(orientation_add(target->orientation, container->orientation) & ORIENTATION_SWAP_XY))
 				{
 					xscale = (float)(visarea->max_x + 1 - visarea->min_x) / (bounds.x1 - bounds.x0);
 					yscale = (float)(visarea->max_y + 1 - visarea->min_y) / (bounds.y1 - bounds.y0);
@@ -1761,6 +1777,10 @@ static void render_texture_get_scaled(render_texture *texture, UINT32 dwidth, UI
 	/* source width/height come from the source bounds */
 	swidth = texture->sbounds.max_x - texture->sbounds.min_x;
 	sheight = texture->sbounds.max_y - texture->sbounds.min_y;
+
+	/* ensure height/width are non-zero */
+	if (dwidth < 1) dwidth = 1;
+	if (dheight < 1) dheight = 1;
 
 	/* are we scaler-free? if so, just return the source bitmap */
 	if (texture->scaler == NULL || (texture->bitmap != NULL && swidth == dwidth && sheight == dheight))

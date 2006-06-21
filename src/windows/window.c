@@ -31,8 +31,6 @@
 #include "blit.h"
 #include "input.h"
 #include "options.h"
-#include "drawd3d.h"
-#include "drawgdi.h"
 #include "debugwin.h"
 
 #ifdef MESS
@@ -40,6 +38,10 @@
 #endif /* MESS */
 
 extern void win_timer_enable(int enabled);
+
+extern int drawgdi_init(win_draw_callbacks *callbacks);
+extern int drawdd_init(win_draw_callbacks *callbacks);
+extern int drawd3d_init(win_draw_callbacks *callbacks);
 
 
 //============================================================
@@ -81,13 +83,6 @@ win_window_info *win_window_list;
 static win_window_info **last_window_ptr;
 static DWORD main_threadid;
 
-// windows
-HWND win_debug_window;
-
-// video bounds
-double win_aspect_ratio_adjust = 1.0;
-int win_default_constraints;
-
 // actual physical resolution
 int win_physical_width;
 int win_physical_height;
@@ -114,6 +109,8 @@ static HANDLE window_thread;
 static DWORD window_threadid;
 
 static DWORD last_update_time;
+
+static win_draw_callbacks draw;
 
 
 
@@ -217,8 +214,21 @@ int winwindow_init(void)
 #endif
 
 	// initialize the drawers
-	if (video_config.d3d)
-		video_config.d3d = !drawd3d_init();
+	if (video_config.mode == VIDEO_MODE_D3D)
+	{
+		if (drawd3d_init(&draw))
+			video_config.mode = VIDEO_MODE_GDI;
+	}
+	if (video_config.mode == VIDEO_MODE_DDRAW)
+	{
+		if (drawdd_init(&draw))
+			video_config.mode = VIDEO_MODE_GDI;
+	}
+	if (video_config.mode == VIDEO_MODE_GDI)
+	{
+		if (drawgdi_init(&draw))
+			return 1;
+	}
 
 	// set up the window list
 	last_window_ptr = &win_window_list;
@@ -245,8 +255,7 @@ static void winwindow_exit(void)
 	}
 
 	// kill the drawers
-	if (video_config.d3d)
-		drawd3d_exit();
+	(*draw.exit)();
 
 #if ENABLE_THREADS
 	// kill the window thread
@@ -594,7 +603,7 @@ void winwindow_video_window_update(win_window_info *window)
 
 	assert(GetCurrentThreadId() == main_threadid);
 
-mtlog_add("winwindow_video_window_update: begin");
+	mtlog_add("winwindow_video_window_update: begin");
 
 	// see if the target has changed significantly in window mode
 	targetview = render_target_get_view(window->target);
@@ -619,7 +628,8 @@ mtlog_add("winwindow_video_window_update: begin");
 	{
 		int got_lock = TRUE;
 
-mtlog_add("winwindow_video_window_update: try lock");
+		mtlog_add("winwindow_video_window_update: try lock");
+
 		// only block if we're throttled
 		if (video_config.throttle || timeGetTime() - last_update_time > 250)
 			osd_lock_acquire(window->render_lock);
@@ -630,27 +640,53 @@ mtlog_add("winwindow_video_window_update: try lock");
 		if (got_lock)
 		{
 			const render_primitive_list *primlist;
-			RECT client;
 
-mtlog_add("winwindow_video_window_update: got lock");
+			mtlog_add("winwindow_video_window_update: got lock");
 
 			// don't hold the lock; we just used it to see if rendering was still happening
 			osd_lock_release(window->render_lock);
 
 			// ensure the target bounds are up-to-date, and then get the primitives
-			GetClientRect(window->hwnd, &client);
-			render_target_set_bounds(window->target, rect_width(&client), rect_height(&client), winvideo_monitor_get_aspect(window->monitor));
-			primlist = render_target_get_primitives(window->target);
+			primlist = (*draw.window_get_primitives)(window);
 
 			// post a redraw request with the primitive list as a parameter
 			last_update_time = timeGetTime();
-mtlog_add("winwindow_video_window_update: PostMessage start");
+			mtlog_add("winwindow_video_window_update: PostMessage start");
 			PostMessage(window->hwnd, WM_USER_REDRAW, 0, (LPARAM)primlist);
-mtlog_add("winwindow_video_window_update: PostMessage end");
+			mtlog_add("winwindow_video_window_update: PostMessage end");
 		}
 	}
 
-mtlog_add("winwindow_video_window_update: end");
+	mtlog_add("winwindow_video_window_update: end");
+}
+
+
+
+//============================================================
+//  winwindow_video_window_monitor
+//  (window thread)
+//============================================================
+
+win_monitor_info *winwindow_video_window_monitor(win_window_info *window, const RECT *proposed)
+{
+	win_monitor_info *monitor;
+
+	// in window mode, find the nearest
+	if (!window->fullscreen)
+	{
+		if (proposed != NULL)
+			monitor = winvideo_monitor_from_handle(MonitorFromRect(proposed, MONITOR_DEFAULTTONEAREST));
+		else
+			monitor = winvideo_monitor_from_handle(MonitorFromWindow(window->hwnd, MONITOR_DEFAULTTONEAREST));
+	}
+
+	// in full screen, just use the configured monitor
+	else
+		monitor = window->monitor;
+
+	// make sure we're up-to-date
+	winvideo_monitor_refresh(monitor);
+	return monitor;
 }
 
 
@@ -819,35 +855,6 @@ INLINE int wnd_extra_height(win_window_info *window)
 
 
 //============================================================
-//  get_window_monitor
-//  (window thread)
-//============================================================
-
-INLINE win_monitor_info *get_window_monitor(win_window_info *window, const RECT *proposed)
-{
-	win_monitor_info *monitor;
-
-	// in window mode, find the nearest
-	if (!window->fullscreen)
-	{
-		if (proposed != NULL)
-			monitor = winvideo_monitor_from_handle(MonitorFromRect(proposed, MONITOR_DEFAULTTONEAREST));
-		else
-			monitor = winvideo_monitor_from_handle(MonitorFromWindow(window->hwnd, MONITOR_DEFAULTTONEAREST));
-	}
-
-	// in full screen, just use the configured monitor
-	else
-		monitor = window->monitor;
-
-	// make sure we're up-to-date
-	winvideo_monitor_refresh(monitor);
-	return monitor;
-}
-
-
-
-//============================================================
 //  thread_entry
 //  (window thread)
 //============================================================
@@ -974,9 +981,7 @@ static int complete_create(win_window_info *window)
 	adjust_window_position_after_major_change(window);
 
 	// finish off by trying to initialize DirectX; if we fail, ignore it
-	if (video_config.d3d)
-		result = drawd3d_window_init(window);
-	result = drawgdi_window_init(window);
+	result = (*draw.window_init)(window);
 
 	// show the window
 	ShowWindow(window->hwnd, SW_SHOW);
@@ -1121,9 +1126,7 @@ LRESULT CALLBACK winwindow_video_window_proc(HWND wnd, UINT message, WPARAM wpar
 
 		// destroy: clean up all attached rendering bits and NULL out our hwnd
 		case WM_DESTROY:
-			if (video_config.d3d)
-				drawd3d_window_destroy(window);
-			drawgdi_window_destroy(window);
+			(*draw.window_destroy)(window);
 			window->hwnd = NULL;
 			return DefWindowProc(wnd, message, wparam, lparam);
 
@@ -1131,10 +1134,12 @@ LRESULT CALLBACK winwindow_video_window_proc(HWND wnd, UINT message, WPARAM wpar
 		case WM_USER_REDRAW:
 		{
 			HDC hdc = GetDC(wnd);
-mtlog_add("winwindow_video_window_proc: WM_USER_REDRAW begin");
+
+			mtlog_add("winwindow_video_window_proc: WM_USER_REDRAW begin");
 			window->primlist = (const render_primitive_list *)lparam;
 			draw_video_contents(window, hdc, FALSE);
-mtlog_add("winwindow_video_window_proc: WM_USER_REDRAW end");
+			mtlog_add("winwindow_video_window_proc: WM_USER_REDRAW end");
+
 			ReleaseDC(wnd, hdc);
 			break;
 		}
@@ -1178,11 +1183,11 @@ static void draw_video_contents(win_window_info *window, HDC dc, int update)
 {
 	assert(GetCurrentThreadId() == window_threadid);
 
-mtlog_add("draw_video_contents: begin");
+	mtlog_add("draw_video_contents: begin");
 
-mtlog_add("draw_video_contents: render lock acquire");
+	mtlog_add("draw_video_contents: render lock acquire");
 	osd_lock_acquire(window->render_lock);
-mtlog_add("draw_video_contents: render lock acquired");
+	mtlog_add("draw_video_contents: render lock acquired");
 
 	// if we're iconic, don't bother
 	if (window->hwnd != NULL && !IsIconic(window->hwnd))// && window->resize_state == RESIZE_STATE_NORMAL)
@@ -1195,19 +1200,18 @@ mtlog_add("draw_video_contents: render lock acquired");
 			FillRect(dc, &fill, (HBRUSH)GetStockObject(BLACK_BRUSH));
 		}
 
+		// otherwise, render with our drawing system
 		else
 		{
-			// if we have a blit surface, use that
-			if (!video_config.d3d || drawd3d_window_draw(window, dc, window->primlist, update) != 0)
-				drawgdi_window_draw(window, dc, window->primlist, update);
-mtlog_add("draw_video_contents: drawing finished");
+			(*draw.window_draw)(window, dc, update);
+			mtlog_add("draw_video_contents: drawing finished");
 		}
 	}
 
 	osd_lock_release(window->render_lock);
-mtlog_add("draw_video_contents: render lock released");
+	mtlog_add("draw_video_contents: render lock released");
 
-mtlog_add("draw_video_contents: end");
+	mtlog_add("draw_video_contents: end");
 }
 
 
@@ -1219,7 +1223,7 @@ mtlog_add("draw_video_contents: end");
 
 static void constrain_to_aspect_ratio(win_window_info *window, RECT *rect, int adjustment)
 {
-	win_monitor_info *monitor = get_window_monitor(window, rect);
+	win_monitor_info *monitor = winwindow_video_window_monitor(window, rect);
 	INT32 extrawidth = wnd_extra_width(window);
 	INT32 extraheight = wnd_extra_height(window);
 	INT32 propwidth, propheight;
@@ -1532,7 +1536,7 @@ static void adjust_window_position_after_major_change(win_window_info *window)
 	// in full screen, make sure it covers the primary display
 	else
 	{
-		win_monitor_info *monitor = get_window_monitor(window, NULL);
+		win_monitor_info *monitor = winwindow_video_window_monitor(window, NULL);
 		newrect = monitor->info.rcMonitor;
 	}
 
@@ -1564,6 +1568,8 @@ static void adjust_window_position_after_major_change(win_window_info *window)
 
 static void set_fullscreen(win_window_info *window, int fullscreen)
 {
+	int result;
+
 	assert(GetCurrentThreadId() == window_threadid);
 
 	// if we're in the right state, punt
@@ -1572,9 +1578,7 @@ static void set_fullscreen(win_window_info *window, int fullscreen)
 	window->fullscreen = fullscreen;
 
 	// kill off the drawers
-	if (video_config.d3d)
-		drawd3d_window_destroy(window);
-	drawgdi_window_destroy(window);
+	(*draw.window_destroy)(window);
 
 	// hide ourself
 	ShowWindow(window->hwnd, SW_HIDE);
@@ -1629,9 +1633,8 @@ static void set_fullscreen(win_window_info *window, int fullscreen)
 	ShowWindow(window->hwnd, SW_SHOW);
 
 	// reconfigure the drawers
-	if (video_config.d3d && drawd3d_window_init(window))
-		exit(1);
-	if (drawgdi_window_init(window))
+	result = 0;
+	if ((*draw.window_init)(window))
 		exit(1);
 
 	// ensure we're still adjusted correctly

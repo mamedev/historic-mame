@@ -1974,7 +1974,7 @@ void LmmmEngine(void)
 /** LmcmEngine() *********************************************/
 /** Vram -> CPU                                             **/
 /*************************************************************/
-void LmcmEngine()
+void LmcmEngine(void)
 {
   if ((VDPStatus[2]&0x80)!=0x80) {
 

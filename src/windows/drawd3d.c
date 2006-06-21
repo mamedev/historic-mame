@@ -25,16 +25,13 @@
 // standard C headers
 #include <math.h>
 
-#include "driver.h"
-#include "osdepend.h"
+// MAME headers
 #include "render.h"
-#include "video.h"
-#include "window.h"
-#include "drawd3d.h"
 #include "options.h"
-#include "profiler.h"
 
+// OSD headers
 #include "winmain.h"
+#include "window.h"
 
 
 // future caps to handle:
@@ -287,6 +284,14 @@ INLINE void reset_render_states(d3d_info *d3d)
 //  PROTOTYPES
 //============================================================
 
+// core functions
+static void drawd3d_exit(void);
+static int drawd3d_window_init(win_window_info *window);
+static void drawd3d_window_destroy(win_window_info *window);
+static const render_primitive_list *drawd3d_window_get_primitives(win_window_info *window);
+static int drawd3d_window_draw(win_window_info *window, HDC dc, int update);
+
+// devices
 static int device_create(win_window_info *window);
 static int device_create_resources(d3d_info *d3d);
 static void device_delete(d3d_info *d3d);
@@ -322,17 +327,33 @@ static void texture_update(d3d_info *d3d, const render_primitive *prim);
 //  drawd3d_init
 //============================================================
 
-int drawd3d_init(void)
+int drawd3d_init(win_draw_callbacks *callbacks)
 {
 	int version = options_get_int("d3dversion", TRUE);
 	d3dintf = NULL;
+
+	// try Direct3D 9 if requested
 	if (version >= 9)
 		d3dintf = drawd3d9_init();
+
+	// if that didn't work, try Direct3D 8
 	if (d3dintf == NULL && version >= 8)
 		d3dintf = drawd3d8_init();
+
+	// if we failed, note the error
 	if (d3dintf == NULL)
+	{
 		fprintf(stderr, "Unable to initialize Direct3D.\n");
-	return (d3dintf == NULL) ? 1 : 0;
+		return 1;
+	}
+
+	// fill in the callbacks
+	callbacks->exit = drawd3d_exit;
+	callbacks->window_init = drawd3d_window_init;
+	callbacks->window_get_primitives = drawd3d_window_get_primitives;
+	callbacks->window_draw = drawd3d_window_draw;
+	callbacks->window_destroy = drawd3d_window_destroy;
+	return 0;
 }
 
 
@@ -341,7 +362,7 @@ int drawd3d_init(void)
 //  drawd3d_exit
 //============================================================
 
-void drawd3d_exit(void)
+static void drawd3d_exit(void)
 {
 	if (d3dintf != NULL)
 		(*d3dintf->d3d.release)(d3dintf);
@@ -353,7 +374,7 @@ void drawd3d_exit(void)
 //  drawd3d_window_init
 //============================================================
 
-int drawd3d_window_init(win_window_info *window)
+static int drawd3d_window_init(win_window_info *window)
 {
 	d3d_info *d3d;
 
@@ -384,7 +405,7 @@ error:
 //  drawd3d_window_destroy
 //============================================================
 
-void drawd3d_window_destroy(win_window_info *window)
+static void drawd3d_window_destroy(win_window_info *window)
 {
 	d3d_info *d3d = window->dxdata;
 
@@ -403,10 +424,24 @@ void drawd3d_window_destroy(win_window_info *window)
 
 
 //============================================================
+//  drawd3d_window_get_primitives
+//============================================================
+
+static const render_primitive_list *drawd3d_window_get_primitives(win_window_info *window)
+{
+	RECT client;
+	GetClientRect(window->hwnd, &client);
+	render_target_set_bounds(window->target, rect_width(&client), rect_height(&client), winvideo_monitor_get_aspect(window->monitor));
+	return render_target_get_primitives(window->target);
+}
+
+
+
+//============================================================
 //  drawd3d_window_draw
 //============================================================
 
-int drawd3d_window_draw(win_window_info *window, HDC dc, const render_primitive_list *primlist, int update)
+static int drawd3d_window_draw(win_window_info *window, HDC dc, int update)
 {
 	render_bounds clipstack[8];
 	render_bounds *clip = &clipstack[0];
@@ -446,8 +481,8 @@ mtlog_add("drawd3d_window_draw: begin");
 	clip->y1 = (float)d3d->height;
 
 	// first update any textures
-	osd_lock_acquire(primlist->lock);
-	for (prim = primlist->head; prim != NULL; prim = prim->next)
+	osd_lock_acquire(window->primlist->lock);
+	for (prim = window->primlist->head; prim != NULL; prim = prim->next)
 		if (prim->texture.base != NULL)
 			texture_update(d3d, prim);
 
@@ -460,7 +495,7 @@ mtlog_add("drawd3d_window_draw: begin_scene");
 
 	// loop over primitives
 mtlog_add("drawd3d_window_draw: primitive loop begin");
-	for (prim = primlist->head; prim != NULL; prim = prim->next)
+	for (prim = window->primlist->head; prim != NULL; prim = prim->next)
 		switch (prim->type)
 		{
 			case RENDER_PRIMITIVE_CLIP_PUSH:
@@ -491,7 +526,7 @@ mtlog_add("drawd3d_window_draw: primitive loop begin");
 				break;
 		}
 mtlog_add("drawd3d_window_draw: primitive loop end");
-	osd_lock_release(primlist->lock);
+	osd_lock_release(window->primlist->lock);
 
 	// flush any pending polygons
 mtlog_add("drawd3d_window_draw: flush_pending begin");
@@ -589,7 +624,7 @@ try_again:
 														D3DPRESENT_INTERVAL_ONE : D3DPRESENT_INTERVAL_IMMEDIATE;
 	// create the D3D device
 	result = (*d3dintf->d3d.create_device)(d3dintf, d3d->adapter, D3DDEVTYPE_HAL, win_window_list->hwnd,
-					D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3d->presentation, &d3d->device);
+					D3DCREATE_SOFTWARE_VERTEXPROCESSING | D3DCREATE_FPU_PRESERVE, &d3d->presentation, &d3d->device);
 	if (result != D3D_OK)
 	{
 		fprintf(stderr, "Unable to create the Direct3D device (%08X)\n", (UINT32)result);
@@ -1465,8 +1500,8 @@ static texture_info *texture_create(d3d_info *d3d, const render_texinfo *texsour
 	texture->hash = texture_compute_hash(texsource, flags);
 	texture->flags = flags;
 	texture->texinfo = *texsource;
-	texture->xprescale = (video_config.prescale < 1) ? 1 : video_config.prescale;
-	texture->yprescale = (video_config.prescale < 1) ? 1 : video_config.prescale;
+	texture->xprescale = video_config.prescale;
+	texture->yprescale = video_config.prescale;
 
 	// compute the size
 	texture_compute_size(d3d, texsource->width, texsource->height, texture);

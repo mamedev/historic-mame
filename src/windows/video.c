@@ -215,19 +215,24 @@ const options_entry video_opts[] =
 
 	// directx options
 	{ NULL,                       NULL,   OPTION_HEADER,  "DIRECTX VIDEO OPTIONS" },
-	{ "direct3d;d3d",             "1",    OPTION_BOOLEAN, "enable using Direct3D 9 for video rendering if available (preferred)" },
-	{ "d3dversion",               "9",    0,              "specify the preferred Direct3D version (8 or 9)" },
+	{ "video",                    "d3d",  0,              "video output method: gdi, ddraw, or d3d" },
 	{ "waitvsync",                "0",    OPTION_BOOLEAN, "enable waiting for the start of VBLANK before flipping screens; reduces tearing effects" },
 	{ "syncrefresh",              "0",    OPTION_BOOLEAN, "enable using the start of VBLANK for throttling instead of the game time" },
 	{ "triplebuffer;tb",          "0",    OPTION_BOOLEAN, "enable triple buffering" },
 	{ "switchres",                "0",    OPTION_BOOLEAN, "enable resolution switching" },
-	{ "filter;d3dfilter;flt",     "1",    OPTION_BOOLEAN, "enable bilinear filtering on screen output" },
 	{ "prescale;d3dprescale",     "0",    0,              "screen texture prescaling amount" },
 	{ "full_screen_gamma;fsg",    "1.0",  0,              "gamma value in full screen mode" },
 
+	{ NULL,                       NULL,   OPTION_HEADER,  "DIRECTDRAW-SPECIFIC OPTIONS" },
+	{ "hwstretch;hws",            "1",    OPTION_BOOLEAN, "enable hardware stretching" },
+
+	{ NULL,                       NULL,   OPTION_HEADER,  "DIRECT3D-SPECIFIC OPTIONS" },
+	{ "d3dversion",               "9",    0,              "specify the preferred Direct3D version (8 or 9)" },
+	{ "filter;d3dfilter;flt",     "1",    OPTION_BOOLEAN, "enable bilinear filtering on screen output" },
+
 	// deprecated junk
+	{ "direct3d;d3d",             "1",    OPTION_DEPRECATED, "(deprecated)" },
 	{ "ddraw",                    "0",    OPTION_DEPRECATED, "(deprecated)" },
-	{ "hwstretch",                "0",    OPTION_DEPRECATED, "(deprecated)" },
 	{ "switchbpp",                "0",    OPTION_DEPRECATED, "(deprecated)" },
 	{ "effect",                   "0",    OPTION_DEPRECATED, "(deprecated)" },
 	{ "zoom",                     "0",    OPTION_DEPRECATED, "(deprecated)" },
@@ -951,6 +956,7 @@ static void check_osd_inputs(void)
 
 static void extract_video_config(void)
 {
+	const char *stemp;
 	int itemp;
 
 	// performance options: extract the data
@@ -979,14 +985,32 @@ static void extract_video_config(void)
 	get_resolution("resolution3", &video_config.window[3], TRUE);
 
 	// d3d options: extract the data
-	video_config.d3d           = options_get_bool ("direct3d", TRUE);
+	stemp = options_get_string("video", TRUE);
+	if (strcmp(stemp, "d3d") == 0)
+		video_config.mode = VIDEO_MODE_D3D;
+	else if (strcmp(stemp, "ddraw") == 0)
+		video_config.mode = VIDEO_MODE_DDRAW;
+	else if (strcmp(stemp, "gdi") == 0)
+		video_config.mode = VIDEO_MODE_GDI;
+	else
+	{
+		fprintf(stderr, "Invalid video value %s; reverting to gdi\n", stemp);
+		video_config.mode = VIDEO_MODE_GDI;
+	}
 	video_config.waitvsync     = options_get_bool ("waitvsync", TRUE);
 	video_config.syncrefresh   = options_get_bool ("syncrefresh", TRUE);
 	video_config.triplebuf     = options_get_bool ("triplebuffer", TRUE);
 	video_config.switchres     = options_get_bool ("switchres", TRUE);
+	video_config.gamma         = options_get_float("full_screen_gamma", TRUE);
+
+	// ddraw options: extract the data
+	video_config.hwstretch     = options_get_bool ("hwstretch", TRUE);
+
+	// d3d options: extract the data
 	video_config.filter        = options_get_bool ("filter", TRUE);
 	video_config.prescale      = options_get_int  ("prescale", TRUE);
-	video_config.gamma         = options_get_float("full_screen_gamma", TRUE);
+	if (video_config.prescale == 0)
+		video_config.prescale = 1;
 
 	// performance options: sanity check values
 	if (video_config.frameskip < 0 || video_config.frameskip > FRAMESKIP_LEVELS)

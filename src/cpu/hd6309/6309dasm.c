@@ -757,7 +757,8 @@ offs_t hd6309_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int byte
 
 			if( !((pb == 0xcf) || (pb == 0xd0) || (pb == 0xef) || (pb == 0xf0) ) )
 			{
-			offset = (INT16)( (cpu_readop_arg(pc) << 8) + cpu_readop_arg(pc+1) );
+				offset = (INT16)( (cpu_readop_arg(pc) << 8) + cpu_readop_arg(pc+1) );
+				p += 2;
 			}
 
 			if( pb == 0x8d || pb == 0xad || pb == 0xcd || pb == 0xed || pb == 0x9d || pb == 0xbd || pb == 0xdd || pb == 0xfd )

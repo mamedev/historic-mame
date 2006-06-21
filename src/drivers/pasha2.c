@@ -350,7 +350,7 @@ VIDEO_UPDATE( pasha2 )
 	/* 2 512x256 bitmaps */
 
 	count = 0;
-	for (y=0;y < 256 && y < cliprect->max_y;y++)
+	for (y=0;y <= cliprect->max_y;y++)
 	{
 		for (x=0;x < 512/2;x++)
 		{
@@ -368,7 +368,7 @@ VIDEO_UPDATE( pasha2 )
 	}
 
 	count = 0;
-	for (y=0;y < 256 && y < cliprect->max_y;y++)
+	for (y=0;y <= cliprect->max_y;y++)
 	{
 		for (x=0;x < 512/2;x++)
 		{

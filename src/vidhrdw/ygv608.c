@@ -765,15 +765,11 @@ VIDEO_UPDATE( ygv608 )
 						  0, ((int)(ygv608.regs.s.vdw)<<3)-1 );
 #endif
 
-#ifdef _ENABLE_ROTATE_ZOOM
 		if( work_bitmap )
 			bitmap_free( work_bitmap );
 		work_bitmap = bitmap_alloc_depth( Machine->drv->screen[0].maxwidth,
 										  Machine->drv->screen[0].maxheight,
 										  Machine->color_depth );
-#else
-		work_bitmap = bitmap;
-#endif
 
 		// reset resize flag
 		ygv608.screen_resize = 0;
@@ -896,6 +892,7 @@ VIDEO_UPDATE( ygv608 )
                    cliprect,
                    TRANSPARENCY_NONE, 0, 0 );
   else
+#endif
     copybitmap( bitmap, work_bitmap, 0, 0, 0, 0,
                 cliprect,
                 TRANSPARENCY_NONE, 0 );
@@ -906,7 +903,6 @@ VIDEO_UPDATE( ygv608 )
   fillbitmap( work_bitmap,
               Machine->pens[0],
               &Machine->visible_area[0] );
-#endif
 
 	if ((ygv608.regs.s.r11 & r11_prm) == PRM_ASBDEX ||
 		(ygv608.regs.s.r11 & r11_prm) == PRM_ASEBDX )
@@ -923,10 +919,10 @@ VIDEO_UPDATE( ygv608 )
                    cliprect,
                    TRANSPARENCY_PEN, Machine->pens[0], 0 );
   else
+#endif
     copybitmap( bitmap, work_bitmap, 0, 0, 0, 0,
                 cliprect,
                 TRANSPARENCY_PEN, Machine->pens[0] );
-#endif
 
 	if ((ygv608.regs.s.r11 & r11_prm) == PRM_SABDEX ||
 		(ygv608.regs.s.r11 & r11_prm) == PRM_SEABDX)

@@ -23,7 +23,7 @@
 
 #define	VS6		0x00060000
 #define VS7		0x00070000
-#define VS71		0x0007000a
+#define VS71	0x0007000a
 #define VS2005	0x00080000
 
 
@@ -141,19 +141,32 @@ static DWORD get_exe_version(const char *executable)
 	DWORD product_version;
 	char sub_block[2] = { '\\', '\0' };
 
+	// try to locate the executable
 	if (!SearchPath(NULL, executable, NULL, sizeof(path) / sizeof(path[0]), path, NULL))
 	{
 		fprintf(stderr, "Cannot find %s\n", executable);
 		exit(-100);
 	}
 
+	// determine the size of the version info
 	version_info_size = GetFileVersionInfoSize(path, &dummy);
 	if (version_info_size == 0)
 	{
-		fprintf(stderr, "GetFileVersionInfoSize() failed\n");
+		switch(GetLastError())
+		{
+			case ERROR_RESOURCE_TYPE_NOT_FOUND:
+				fprintf(stderr, "\"%s\" does not contain version info; this is probably not a MSVC executable\n", path);
+				break;
+
+			default:
+				fprintf(stderr, "GetFileVersionInfoSize() failed\n");
+				break;
+		}
 		exit(-100);
 	}
 
+	// allocate the memory; using GlobalAlloc() so that we do not
+	// unintentionally uses malloc() overrides
 	version_info = GlobalAlloc(GMEM_FIXED, version_info_size);
 	if (!version_info)
 	{
@@ -161,12 +174,14 @@ static DWORD get_exe_version(const char *executable)
 		exit(-100);
 	}
 
+	// retrieve the version info
 	if (!GetFileVersionInfo(path, 0, version_info_size, version_info))
 	{
 		fprintf(stderr, "GetFileVersionInfo() failed\n");
 		exit(-100);
 	}
 
+	// extract the VS_FIXEDFILEINFO from the version info
 	if (!VerQueryValue(version_info, sub_block, &sub_buffer, &sub_buffer_size))
 	{
 		fprintf(stderr, "VerQueryValue() failed\n");

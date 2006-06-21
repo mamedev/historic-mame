@@ -15,7 +15,11 @@
 //  CONSTANTS
 //============================================================
 
-#define MAX_WINDOWS		4
+#define MAX_WINDOWS			4
+
+#define VIDEO_MODE_GDI		0
+#define VIDEO_MODE_DDRAW	1
+#define VIDEO_MODE_D3D		2
 
 
 
@@ -66,15 +70,20 @@ struct _win_video_config
 	// per-window configuration
 	win_window_config	window[MAX_WINDOWS];		// configuration data per-window
 
-	// d3d options
-	int					d3d;						// use d3d
+	// hardware options
+	int					mode;						// output mode
 	int					waitvsync;					// spin until vsync
 	int					syncrefresh;				// sync only to refresh rate
 	int					triplebuf;					// triple buffer
 	int					switchres;					// switch resolutions
+	float				gamma;						// full screen gamma
+
+	// ddraw options
+	int					hwstretch;					// stretch using the hardware
+
+	// d3d options
 	int					filter;						// enable filtering
 	int					prescale;					// prescale factor
-	float				gamma;						// full screen gamma
 };
 
 

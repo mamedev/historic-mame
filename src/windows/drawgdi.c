@@ -1,6 +1,6 @@
 //============================================================
 //
-//  wingdi.c - Win32 GDI drawing
+//  drawgdi.c - Win32 GDI drawing
 //
 //  Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
 //  Visit http://mamedev.org for licensing and usage restrictions.
@@ -11,12 +11,11 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-#include "driver.h"
-#include "osdepend.h"
-#include "video.h"
+// MAME headers
+#include "mamecore.h"
+
+// OSD headers
 #include "window.h"
-#include "rendsoft.h"
-#include "drawgdi.h"
 
 
 
@@ -37,10 +36,53 @@ struct _gdi_info
 
 
 //============================================================
+//  PROTOTYPES
+//============================================================
+
+// core functions
+static void drawgdi_exit(void);
+static int drawgdi_window_init(win_window_info *window);
+static void drawgdi_window_destroy(win_window_info *window);
+static const render_primitive_list *drawgdi_window_get_primitives(win_window_info *window);
+static int drawgdi_window_draw(win_window_info *window, HDC dc, int update);
+
+// rendering
+void drawgdi_rgb888_draw_primitives(const render_primitive *primlist, void *dstdata, UINT32 width, UINT32 height, UINT32 pitch);
+
+
+
+//============================================================
+//  drawgdi_init
+//============================================================
+
+int drawgdi_init(win_draw_callbacks *callbacks)
+{
+	// fill in the callbacks
+	callbacks->exit = drawgdi_exit;
+	callbacks->window_init = drawgdi_window_init;
+	callbacks->window_get_primitives = drawgdi_window_get_primitives;
+	callbacks->window_draw = drawgdi_window_draw;
+	callbacks->window_destroy = drawgdi_window_destroy;
+	return 0;
+}
+
+
+
+//============================================================
+//  drawgdi_exit
+//============================================================
+
+static void drawgdi_exit(void)
+{
+}
+
+
+
+//============================================================
 //  drawgdi_window_init
 //============================================================
 
-int drawgdi_window_init(win_window_info *window)
+static int drawgdi_window_init(win_window_info *window)
 {
 	gdi_info *gdi;
 	int i;
@@ -78,7 +120,7 @@ int drawgdi_window_init(win_window_info *window)
 //  drawgdi_window_destroy
 //============================================================
 
-void drawgdi_window_destroy(win_window_info *window)
+static void drawgdi_window_destroy(win_window_info *window)
 {
 	gdi_info *gdi = window->gdidata;
 
@@ -96,10 +138,24 @@ void drawgdi_window_destroy(win_window_info *window)
 
 
 //============================================================
+//  drawgdi_window_get_primitives
+//============================================================
+
+static const render_primitive_list *drawgdi_window_get_primitives(win_window_info *window)
+{
+	RECT client;
+	GetClientRect(window->hwnd, &client);
+	render_target_set_bounds(window->target, rect_width(&client), rect_height(&client), winvideo_monitor_get_aspect(window->monitor));
+	return render_target_get_primitives(window->target);
+}
+
+
+
+//============================================================
 //  drawgdi_window_draw
 //============================================================
 
-int drawgdi_window_draw(win_window_info *window, HDC dc, const render_primitive_list *primlist, int update)
+static int drawgdi_window_draw(win_window_info *window, HDC dc, int update)
 {
 	gdi_info *gdi = window->gdidata;
 	int width, height, pitch;
@@ -125,16 +181,14 @@ int drawgdi_window_draw(win_window_info *window, HDC dc, const render_primitive_
 	}
 
 	// draw the primitives to the bitmap
-	osd_lock_acquire(primlist->lock);
-	rgb888_draw_primitives(primlist->head, gdi->bmdata, width, height, pitch);
-//  rgb555_draw_primitives(primlist->head, gdi->bmdata, width, height, pitch);
-	osd_lock_release(primlist->lock);
+	osd_lock_acquire(window->primlist->lock);
+	drawgdi_rgb888_draw_primitives(window->primlist->head, gdi->bmdata, width, height, pitch);
+	osd_lock_release(window->primlist->lock);
 
 	// fill in bitmap-specific info
 	gdi->bminfo.bmiHeader.biWidth = pitch;
 	gdi->bminfo.bmiHeader.biHeight = -height;
 	gdi->bminfo.bmiHeader.biBitCount = 32;
-//  gdi->bminfo.bmiHeader.biBitCount = 16;
 
 	// blit to the screen
 	StretchDIBits(dc, 0, 0, width, height,
@@ -142,3 +196,21 @@ int drawgdi_window_draw(win_window_info *window, HDC dc, const render_primitive_
 				gdi->bmdata, &gdi->bminfo, DIB_RGB_COLORS, SRCCOPY);
 	return 0;
 }
+
+
+
+//============================================================
+//  SOFTWARE RENDERING
+//============================================================
+
+#define FUNC_PREFIX(x)		drawgdi_rgb888_##x
+#define PIXEL_TYPE			UINT32
+#define SRCSHIFT_R			0
+#define SRCSHIFT_G			0
+#define SRCSHIFT_B			0
+#define DSTSHIFT_R			16
+#define DSTSHIFT_G			8
+#define DSTSHIFT_B			0
+#define NO_DEST_READ		1
+
+#include "rendersw.c"

@@ -137,6 +137,9 @@ void schedule_full_refresh(void);
 /* force a partial update of the screen up to and including the requested scanline */
 void force_partial_update(int scrnum, int scanline);
 
+/* reset the partial updating for a frame; generally only called by cpuexec.c */
+void reset_partial_updates(void);
+
 /* update the video by calling down to the OSD layer */
 void update_video_and_audio(void);
 
