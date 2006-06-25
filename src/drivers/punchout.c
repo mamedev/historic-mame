@@ -99,18 +99,20 @@ write:
 #include "sound/vlm5030.h"
 #include "sound/nes_apu.h"
 
+#include "render.h"
 
-extern unsigned char *punchout_videoram2;
-extern size_t punchout_videoram2_size;
-extern unsigned char *punchout_bigsprite1ram;
-extern size_t punchout_bigsprite1ram_size;
-extern unsigned char *punchout_bigsprite2ram;
-extern size_t punchout_bigsprite2ram_size;
-extern unsigned char *punchout_scroll;
-extern unsigned char *punchout_bigsprite1;
-extern unsigned char *punchout_bigsprite2;
-extern unsigned char *punchout_palettebank;
+
+extern UINT8 *punchout_videoram2;
+extern UINT8 *armwrest_videoram3;
+extern UINT8 *punchout_bigsprite1ram;
+extern UINT8 *punchout_bigsprite2ram;
+extern UINT8 *punchout_scroll;
+extern UINT8 *punchout_bigsprite1;
+extern UINT8 *punchout_bigsprite2;
+extern UINT8 *punchout_palettebank;
+WRITE8_HANDLER( punchout_videoram_w );
 WRITE8_HANDLER( punchout_videoram2_w );
+WRITE8_HANDLER( armwrest_videoram3_w );
 WRITE8_HANDLER( punchout_bigsprite1ram_w );
 WRITE8_HANDLER( punchout_bigsprite2ram_w );
 WRITE8_HANDLER( punchout_palettebank_w );
@@ -387,25 +389,36 @@ static WRITE8_HANDLER( spunchout_prot_f_w ) {
 
 
 
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xc000, 0xc3ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xd000, 0xffff) AM_READ(MRA8_RAM)
+static ADDRESS_MAP_START( punchout_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_ROM
+	AM_RANGE(0xc000, 0xc3ff) AM_RAM AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0xd000, 0xd7ff) AM_RAM
+	AM_RANGE(0xdff0, 0xdff7) AM_RAM AM_BASE(&punchout_bigsprite1)
+	AM_RANGE(0xdff8, 0xdffc) AM_RAM AM_BASE(&punchout_bigsprite2)
+	AM_RANGE(0xdffd, 0xdffd) AM_READWRITE(MRA8_RAM, punchout_palettebank_w) AM_BASE(&punchout_palettebank)
+	AM_RANGE(0xd800, 0xdfff) AM_READWRITE(MRA8_RAM, punchout_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xe000, 0xe7ff) AM_READWRITE(MRA8_RAM, punchout_bigsprite1ram_w) AM_BASE(&punchout_bigsprite1ram)
+	AM_RANGE(0xe800, 0xefff) AM_READWRITE(MRA8_RAM, punchout_bigsprite2ram_w) AM_BASE(&punchout_bigsprite2ram)
+	AM_RANGE(0xf000, 0xf03f) AM_RAM AM_BASE(&punchout_scroll)
+	AM_RANGE(0xf000, 0xffff) AM_READWRITE(MRA8_RAM, punchout_videoram2_w) AM_BASE(&punchout_videoram2)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xc000, 0xc3ff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
-	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xdff0, 0xdff7) AM_WRITE(MWA8_RAM) AM_BASE(&punchout_bigsprite1)
-	AM_RANGE(0xdff8, 0xdffc) AM_WRITE(MWA8_RAM) AM_BASE(&punchout_bigsprite2)
-	AM_RANGE(0xdffd, 0xdffd) AM_WRITE(punchout_palettebank_w) AM_BASE(&punchout_palettebank)
-	AM_RANGE(0xd800, 0xdfff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
-	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(punchout_bigsprite1ram_w) AM_BASE(&punchout_bigsprite1ram) AM_SIZE(&punchout_bigsprite1ram_size)
-	AM_RANGE(0xe800, 0xefff) AM_WRITE(punchout_bigsprite2ram_w) AM_BASE(&punchout_bigsprite2ram) AM_SIZE(&punchout_bigsprite2ram_size)
-	AM_RANGE(0xf000, 0xf03f) AM_WRITE(MWA8_RAM) AM_BASE(&punchout_scroll)
-	AM_RANGE(0xf000, 0xffff) AM_WRITE(punchout_videoram2_w) AM_BASE(&punchout_videoram2) AM_SIZE(&punchout_videoram2_size)
+
+static ADDRESS_MAP_START( armwrest_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_ROM
+	AM_RANGE(0xc000, 0xc3ff) AM_RAM AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0xd000, 0xd7ff) AM_RAM
+	AM_RANGE(0xdff0, 0xdff7) AM_RAM AM_BASE(&punchout_bigsprite1)
+	AM_RANGE(0xdff8, 0xdffc) AM_RAM AM_BASE(&punchout_bigsprite2)
+	AM_RANGE(0xdffd, 0xdffd) AM_READWRITE(MRA8_RAM, punchout_palettebank_w) AM_BASE(&punchout_palettebank)
+	AM_RANGE(0xd800, 0xdfff) AM_READWRITE(MRA8_RAM, armwrest_videoram3_w) AM_BASE(&armwrest_videoram3)
+	AM_RANGE(0xe000, 0xe7ff) AM_READWRITE(MRA8_RAM, punchout_bigsprite1ram_w) AM_BASE(&punchout_bigsprite1ram)
+	AM_RANGE(0xe800, 0xefff) AM_READWRITE(MRA8_RAM, punchout_bigsprite2ram_w) AM_BASE(&punchout_bigsprite2ram)
+	AM_RANGE(0xf000, 0xf03f) AM_RAM AM_BASE(&punchout_scroll)
+	AM_RANGE(0xf000, 0xf7ff) AM_READWRITE(MRA8_RAM, punchout_videoram2_w) AM_BASE(&punchout_videoram2)
+	AM_RANGE(0xf800, 0xffff) AM_READWRITE(MRA8_RAM, punchout_videoram_w) AM_BASE(&videoram)
 ADDRESS_MAP_END
+
 
 static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
@@ -772,8 +785,8 @@ static struct VLM5030interface vlm5030_interface =
 static MACHINE_DRIVER_START( punchout )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 8000000/2)	/* 4 MHz */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_ADD_TAG("main", Z80, 8000000/2)	/* 4 MHz */
+	MDRV_CPU_PROGRAM_MAP(punchout_map,0)
 	MDRV_CPU_IO_MAP(readport,writeport)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
@@ -782,19 +795,26 @@ static MACHINE_DRIVER_START( punchout )
 	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_ASPECT_RATIO(4,6)
-	MDRV_SCREEN_SIZE(32*8, 28*8*2)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8*2-1)
 	MDRV_GFXDECODE(punchout_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(1024+1)
 	MDRV_COLORTABLE_LENGTH(128*4+128*4+64*8+128*4)
+	MDRV_DEFAULT_LAYOUT(layout_dualhovu)
+
+	MDRV_SCREEN_ADD("top", 0x000)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(DEFAULT_60HZ_VBLANK_DURATION))
+	MDRV_SCREEN_MAXSIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+
+	MDRV_SCREEN_ADD("bottom", 0x000)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(DEFAULT_60HZ_VBLANK_DURATION))
+	MDRV_SCREEN_MAXSIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
 
 	MDRV_PALETTE_INIT(punchout)
 	MDRV_VIDEO_START(punchout)
@@ -817,6 +837,9 @@ static MACHINE_DRIVER_START( armwrest )
 
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(punchout)
+
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(armwrest_map,0)
 
 	/* video hardware */
 	MDRV_GFXDECODE(armwrest_gfxdecodeinfo)
@@ -846,15 +869,15 @@ ROM_START( punchout )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the sound CPU */
 	ROM_LOAD( "chp1-c.4k",    0xe000, 0x2000, CRC(cb6ef376) SHA1(503dbcc1b18a497311bf129689d5650860bf96c7) )
 
-	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_ERASEFF )
 	ROM_LOAD( "chp1-b.4c",    0x00000, 0x2000, CRC(e26dc8b3) SHA1(a704d39ef6f5cbad64a478e5c109b18aae427cbc) )	/* chars #1 */
 	ROM_LOAD( "chp1-b.4d",    0x02000, 0x2000, CRC(dd1310ca) SHA1(918d2eda000244b692f1da7ac57d7a0edaef95fb) )
 
-	ROM_REGION( 0x04000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_ERASEFF )
 	ROM_LOAD( "chp1-b.4a",    0x00000, 0x2000, CRC(20fb4829) SHA1(9f0ce9379eb31c19bfacdc514ac6a28aa4217cbb) )	/* chars #2 */
 	ROM_LOAD( "chp1-b.4b",    0x02000, 0x2000, CRC(edc34594) SHA1(fbb4a8b979d60b183dc23bdbb7425100b9325287) )
 
-	ROM_REGION( 0x30000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_REGION( 0x30000, REGION_GFX3, ROMREGION_DISPOSE | ROMREGION_ERASEFF )
 	ROM_LOAD( "chp1-v.2r",    0x00000, 0x4000, CRC(bd1d4b2e) SHA1(492ae301a9890c2603d564c9048b1b67895052dd) )	/* chars #3 */
 	ROM_LOAD( "chp1-v.2t",    0x04000, 0x4000, CRC(dd9a688a) SHA1(fbb98eebfbaab445928da939846a2d07a8046afb) )
 	ROM_LOAD( "chp1-v.2u",    0x08000, 0x2000, CRC(da6a3c4b) SHA1(e03469fb6f552f41a9b7f4b3e51c15a52b61cf84) )
@@ -873,7 +896,7 @@ ROM_START( punchout )
 	/* 2a000-2bfff empty (space for 16k ROM) */
 	/* 2c000-2ffff empty (4v doesn't exist, it is seen as a 0xff fill) */
 
-	ROM_REGION( 0x10000, REGION_GFX4, ROMREGION_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX4, ROMREGION_DISPOSE | ROMREGION_ERASEFF )
 	ROM_LOAD( "chp1-v.6p",    0x00000, 0x2000, CRC(16588f7a) SHA1(1aeaaa5cc2477c3aa4bf80df7d9474cc9ded9f15) )	/* chars #4 */
 	ROM_LOAD( "chp1-v.6n",    0x02000, 0x2000, CRC(dc743674) SHA1(660582c76ee68a7267d5686a2f8ea0fd6c2b25fc) )
 	/* 04000-07fff empty (space for 6l and 6k) */
@@ -905,7 +928,7 @@ ROM_START( spnchout )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the sound CPU */
 	ROM_LOAD( "chp1-c.4k",    0xe000, 0x2000, CRC(cb6ef376) SHA1(503dbcc1b18a497311bf129689d5650860bf96c7) )
 
-	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_ERASEFF )
 	ROM_LOAD( "chs1-b.4c",    0x00000, 0x0800, CRC(9f2ede2d) SHA1(58a0f8c34ff9ec425c846c1eb6c6ccd99c2d0132) )	/* chars #1 */
 	ROM_CONTINUE(             0x01000, 0x0800 )
 	ROM_CONTINUE(             0x00800, 0x0800 )
@@ -915,7 +938,7 @@ ROM_START( spnchout )
 	ROM_CONTINUE(             0x02800, 0x0800 )
 	ROM_CONTINUE(             0x03800, 0x0800 )
 
-	ROM_REGION( 0x04000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_ERASEFF )
 	ROM_LOAD( "chp1-b.4a",    0x00000, 0x0800, CRC(c075f831) SHA1(f22d9e415637599420c443ce08e7e70d1eb1c6f5) )	/* chars #2 */
 	ROM_CONTINUE(             0x01000, 0x0800 )
 	ROM_CONTINUE(             0x00800, 0x0800 )
@@ -925,7 +948,7 @@ ROM_START( spnchout )
 	ROM_CONTINUE(             0x02800, 0x0800 )
 	ROM_CONTINUE(             0x03800, 0x0800 )
 
-	ROM_REGION( 0x30000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_REGION( 0x30000, REGION_GFX3, ROMREGION_DISPOSE | ROMREGION_ERASEFF )
 	ROM_LOAD( "chs1-v.2r",    0x00000, 0x4000, CRC(ff33405d) SHA1(31b892d184d24a0ec05fd6facec61a532ce8535b) )	/* chars #3 */
 	ROM_LOAD( "chs1-v.2t",    0x04000, 0x4000, CRC(f507818b) SHA1(fb99c5c88e829d7e81c53ead21554a614b6fdcf9) )
 	ROM_LOAD( "chs1-v.2u",    0x08000, 0x4000, CRC(0995fc95) SHA1(d056fc61ad2409525622b4db69796668c3145460) )
@@ -941,7 +964,7 @@ ROM_START( spnchout )
 	ROM_LOAD( "chs1-v.4u",    0x28000, 0x4000, CRC(74e0d956) SHA1(b172cdcc5d26f3be06a7f0f9e19879957e87f992) )
 	/* 2c000-2ffff empty (4v doesn't exist, it is seen as a 0xff fill) */
 
-	ROM_REGION( 0x10000, REGION_GFX4, ROMREGION_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX4, ROMREGION_DISPOSE | ROMREGION_ERASEFF )
 	ROM_LOAD( "chp1-v.6p",    0x00000, 0x0800, CRC(75be7aae) SHA1(396bc1d301b99e064de4dad699882618b1b9c958) )	/* chars #4 */
 	ROM_CONTINUE(             0x01000, 0x0800 )
 	ROM_CONTINUE(             0x00800, 0x0800 )
@@ -985,11 +1008,11 @@ ROM_START( spnchotj )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the sound CPU */
 	ROM_LOAD( "chp1-c.4k",    0xe000, 0x2000, CRC(cb6ef376) SHA1(503dbcc1b18a497311bf129689d5650860bf96c7) )
 
-	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_ERASEFF )
 	ROM_LOAD( "b_4c_01a.bin", 0x00000, 0x2000, CRC(b017e1e9) SHA1(39e98f48bff762a674a2506efa39b3619337a1e0) )	/* chars #1 */
 	ROM_LOAD( "b_4d_01a.bin", 0x02000, 0x2000, CRC(e3de9d18) SHA1(f55b6f522e127e6239197dd7eb1564e6f275df74) )
 
-	ROM_REGION( 0x04000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_ERASEFF )
 	ROM_LOAD( "chp1-b.4a",    0x00000, 0x0800, CRC(c075f831) SHA1(f22d9e415637599420c443ce08e7e70d1eb1c6f5) )	/* chars #2 */
 	ROM_CONTINUE(             0x01000, 0x0800 )
 	ROM_CONTINUE(             0x00800, 0x0800 )
@@ -999,7 +1022,7 @@ ROM_START( spnchotj )
 	ROM_CONTINUE(             0x02800, 0x0800 )
 	ROM_CONTINUE(             0x03800, 0x0800 )
 
-	ROM_REGION( 0x30000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_REGION( 0x30000, REGION_GFX3, ROMREGION_DISPOSE | ROMREGION_ERASEFF )
 	ROM_LOAD( "chs1-v.2r",    0x00000, 0x4000, CRC(ff33405d) SHA1(31b892d184d24a0ec05fd6facec61a532ce8535b) )	/* chars #3 */
 	ROM_LOAD( "chs1-v.2t",    0x04000, 0x4000, CRC(f507818b) SHA1(fb99c5c88e829d7e81c53ead21554a614b6fdcf9) )
 	ROM_LOAD( "chs1-v.2u",    0x08000, 0x4000, CRC(0995fc95) SHA1(d056fc61ad2409525622b4db69796668c3145460) )
@@ -1015,7 +1038,7 @@ ROM_START( spnchotj )
 	ROM_LOAD( "chs1-v.4u",    0x28000, 0x4000, CRC(74e0d956) SHA1(b172cdcc5d26f3be06a7f0f9e19879957e87f992) )
 	/* 2c000-2ffff empty (4v doesn't exist, it is seen as a 0xff fill) */
 
-	ROM_REGION( 0x10000, REGION_GFX4, ROMREGION_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX4, ROMREGION_DISPOSE | ROMREGION_ERASEFF )
 	ROM_LOAD( "chp1-v.6p",    0x00000, 0x0800, CRC(75be7aae) SHA1(396bc1d301b99e064de4dad699882618b1b9c958) )	/* chars #4 */
 	ROM_CONTINUE(             0x01000, 0x0800 )
 	ROM_CONTINUE(             0x00800, 0x0800 )
@@ -1059,16 +1082,16 @@ ROM_START( armwrest )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the sound CPU */
 	ROM_LOAD( "chp1-c.4k",    0xe000, 0x2000, CRC(cb6ef376) SHA1(503dbcc1b18a497311bf129689d5650860bf96c7) )	/* same as Punch Out */
 
-	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x08000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_ERASEFF )
 	ROM_LOAD( "chpv-b.2e",    0x00000, 0x4000, CRC(8b45f365) SHA1(15fadccc9afe26672fbbb8eaeaa7d3ee70bcb056) )	/* chars #1 */
 	ROM_LOAD( "chpv-b.2d",    0x04000, 0x4000, CRC(b1a2850c) SHA1(e3aec428bb52443921fb7ceb5eb21b5f9ee9edcb) )
 
-	ROM_REGION( 0x0c000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_REGION( 0x0c000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_ERASEFF )
 	ROM_LOAD( "chpv-b.2m",    0x00000, 0x4000, CRC(19245b37) SHA1(711e263d487661afca09f731e9333a84eb8d1541) )	/* chars #2 */
 	ROM_LOAD( "chpv-b.2l",    0x04000, 0x4000, CRC(46797941) SHA1(e21fcec8e19702f9765205a4dc89105b4e98dcdd) )
-	ROM_LOAD( "chpv-b.2k",    0x08000, 0x4000, CRC(24c4c26d) SHA1(2ed4a8fbb7858aff8a724ca34a0fac915cfc3a3a) )
+	ROM_LOAD( "chpv-b.2k",    0x0a000, 0x2000, CRC(de189b00) SHA1(62b38d5f95bb4f0a0d04947c7c2031e07f95cbe4) )
 
-	ROM_REGION( 0x30000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_REGION( 0x30000, REGION_GFX3, ROMREGION_DISPOSE | ROMREGION_ERASEFF )
 	ROM_LOAD( "chv1-v.2r",    0x00000, 0x4000, CRC(d86056d9) SHA1(decedf6b54e5990ff14d8049791b2d06c33ae71b) )	/* chars #3 */
 	ROM_LOAD( "chv1-v.2t",    0x04000, 0x4000, CRC(5ad77059) SHA1(05a1c7957982fa695bca62a05dc593c7913ccd7f) )
 	/* 08000-0bfff empty */
@@ -1082,7 +1105,7 @@ ROM_START( armwrest )
 	/* 28000-2bfff empty */
 	/* 2c000-2ffff empty (4v doesn't exist, it is seen as a 0xff fill) */
 
-	ROM_REGION( 0x10000, REGION_GFX4, ROMREGION_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX4, ROMREGION_DISPOSE | ROMREGION_ERASEFF )
 	ROM_LOAD( "chv1-v.6p",    0x00000, 0x2000, CRC(d834e142) SHA1(e7d654145b695147b744af2284173f90749fbf0e) )	/* chars #4 */
 	/* 02000-03fff empty (space for 16k ROM) */
 	/* 04000-07fff empty (space for 6l and 6k) */

@@ -221,6 +221,8 @@
 #include "vidhrdw/avgdvg.h"
 #include "sound/ay8910.h"
 
+#include "omegrace.lh"
+
 
 
 /*************************************
@@ -334,26 +336,6 @@ WRITE8_HANDLER( omegrace_soundlatch_w )
 OVERLAY_START( omegrace_overlay )
 	OVERLAY_RECT( 0.0, 0.0, 1.0, 1.0, MAKE_ARGB(0x04,0xff,0xe4,0x57) )
 OVERLAY_END
-
-
-static const char omegrace_layout[] =
-	"<?xml version=\"1.0\"?>"
-	"<mamelayout version=\"2\">"
-		"<element name=\"overlay\">"
-			"<rect>"
-				"<bounds left=\"0\" top=\"0\" right=\"1\" bottom=\"1\" />"
-				"<color red=\"1.0\" green=\"1.0\" blue=\"0.15\" />"
-			"</rect>"
-		"</element>"
-		"<view name=\"Built-in Overlay\">"
-			"<screen index=\"0\">"
-				"<bounds left=\"0\" top=\"0\" right=\"4\" bottom=\"3\" />"
-			"</screen>"
-			"<overlay element=\"overlay\">"
-				"<bounds left=\"0\" top=\"0\" right=\"4\" bottom=\"3\" />"
-			"</overlay>"
-		"</view>"
-	"</mamelayout>";
 
 
 
@@ -622,5 +604,5 @@ static DRIVER_INIT( omegrace )
  *
  *************************************/
 
-GAMEL(1981, omegrace, 0,        omegrace, omegrace, omegrace, ROT0, "Midway",         "Omega Race", GAME_NO_COCKTAIL, omegrace_layout )
-GAMEL(1981, deltrace, omegrace, omegrace, omegrace, omegrace, ROT0, "Allied Leisure", "Delta Race", GAME_NO_COCKTAIL, omegrace_layout )
+GAMEL(1981, omegrace, 0,        omegrace, omegrace, omegrace, ROT0, "Midway",         "Omega Race", GAME_NO_COCKTAIL, layout_omegrace )
+GAMEL(1981, deltrace, omegrace, omegrace, omegrace, omegrace, ROT0, "Allied Leisure", "Delta Race", GAME_NO_COCKTAIL, layout_omegrace )

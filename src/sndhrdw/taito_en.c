@@ -226,3 +226,47 @@ WRITE16_HANDLER(es5510_dsp_w)
 			break;
 	}
 }
+
+static UINT16 *sound_ram;
+
+ADDRESS_MAP_START( f3_sound_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x00ffff) AM_RAM AM_MIRROR(0x30000) AM_SHARE(1) AM_BASE(&sound_ram)
+	AM_RANGE(0x140000, 0x140fff) AM_READWRITE(f3_68000_share_r, f3_68000_share_w)
+	AM_RANGE(0x200000, 0x20001f) AM_READWRITE(ES5505_data_0_r, ES5505_data_0_w)
+	AM_RANGE(0x260000, 0x2601ff) AM_READWRITE(es5510_dsp_r, es5510_dsp_w)
+	AM_RANGE(0x280000, 0x28001f) AM_READWRITE(f3_68681_r, f3_68681_w)
+	AM_RANGE(0x300000, 0x30003f) AM_WRITE(f3_es5505_bank_w)
+	AM_RANGE(0x340000, 0x340003) AM_WRITE(f3_volume_w) /* 8 channel volume control */
+	AM_RANGE(0xc00000, 0xc1ffff) AM_ROMBANK(1)
+	AM_RANGE(0xc20000, 0xc3ffff) AM_ROMBANK(2)
+	AM_RANGE(0xc40000, 0xc7ffff) AM_ROMBANK(3)
+	AM_RANGE(0xff0000, 0xffffff) AM_RAM AM_SHARE(1)	// mirror
+ADDRESS_MAP_END
+
+void taito_f3_soundsystem_reset(void)
+{
+	/* Sound cpu program loads to 0xc00000 so we use a bank */
+	UINT16 *ROM = (UINT16 *)memory_region(REGION_CPU2);
+	memory_set_bankptr(1,&ROM[0x80000]);
+	memory_set_bankptr(2,&ROM[0x90000]);
+	memory_set_bankptr(3,&ROM[0xa0000]);
+
+	sound_ram[0]=ROM[0x80000]; /* Stack and Reset vectors */
+	sound_ram[1]=ROM[0x80001];
+	sound_ram[2]=ROM[0x80002];
+	sound_ram[3]=ROM[0x80003];
+
+	//cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
+}
+
+struct ES5505interface es5505_interface =
+{
+	REGION_SOUND1,	/* Bank 0: Unused by F3 games? */
+	REGION_SOUND1,	/* Bank 1: All games seem to use this */
+	0 /* irq */
+};
+
+
+
+
+

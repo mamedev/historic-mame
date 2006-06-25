@@ -1255,7 +1255,7 @@ $(OBJ)/taito.a: \
 	$(OBJ)/drivers/superqix.o $(OBJ)/vidhrdw/superqix.o \
 	$(OBJ)/drivers/taito_b.o $(OBJ)/vidhrdw/taito_b.o \
 	$(OBJ)/drivers/taito_f2.o $(OBJ)/vidhrdw/taito_f2.o \
-	$(OBJ)/drivers/taito_f3.o $(OBJ)/vidhrdw/taito_f3.o $(OBJ)/sndhrdw/taito_f3.o \
+	$(OBJ)/drivers/taito_f3.o $(OBJ)/vidhrdw/taito_f3.o $(OBJ)/sndhrdw/taito_en.o \
 	$(OBJ)/drivers/taito_h.o $(OBJ)/vidhrdw/taito_h.o \
 	$(OBJ)/drivers/taito_l.o $(OBJ)/vidhrdw/taito_l.o \
 	$(OBJ)/drivers/taito_x.o $(OBJ)/machine/cchip.o \

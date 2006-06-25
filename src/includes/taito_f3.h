@@ -62,14 +62,4 @@ WRITE32_HANDLER( f3_pivot_w );
 WRITE32_HANDLER( f3_lineram_w );
 WRITE32_HANDLER( f3_videoram_w );
 
-/*----------- defined in sndhrdw/taito_f3.c -----------*/
 
-READ16_HANDLER(f3_68000_share_r);
-WRITE16_HANDLER(f3_68000_share_w);
-READ16_HANDLER(f3_68681_r);
-WRITE16_HANDLER(f3_68681_w);
-READ16_HANDLER(es5510_dsp_r);
-WRITE16_HANDLER(es5510_dsp_w);
-WRITE16_HANDLER(f3_volume_w);
-WRITE16_HANDLER(f3_es5505_bank_w);
-void f3_68681_reset(void);

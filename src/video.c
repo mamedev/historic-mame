@@ -159,7 +159,7 @@ int video_init(void)
 	}
 
 	/* fill in the rest of the display parameters */
-	params.aspect_x = (int)(Machine->drv->screen[0].aspect * 1000);
+	params.aspect_x = 1333;
 	params.aspect_y = 1000;
 	params.depth = Machine->color_depth;
 	params.colors = palette_get_total_colors_with_ui();
@@ -217,7 +217,7 @@ int video_init(void)
 				scrformat[scrnum] = TEXFORMAT_RGB32;
 
 			/* allocate a texture per screen */
-			scrtexture[scrnum] = render_texture_alloc(scrbitmap[scrnum][0], &Machine->visible_area[scrnum], &game_palette[Machine->drv->screen[scrnum].palette_base], scrformat[scrnum], NULL, NULL);
+			scrtexture[scrnum] = render_texture_alloc(scrbitmap[scrnum][0], &Machine->visible_area[scrnum], &adjusted_palette[Machine->drv->screen[scrnum].palette_base], scrformat[scrnum], NULL, NULL);
 
 			/* set the default refresh rate */
 			set_refresh_rate(scrnum, Machine->drv->screen[scrnum].refresh_rate);
@@ -924,7 +924,7 @@ void video_frame_update(void)
 						rectangle visarea = Machine->visible_area[scrnum];
 						visarea.max_x++;
 						visarea.max_y++;
-						render_texture_set_bitmap(scrtexture[scrnum], scrbitmap[scrnum][curbitmap], &visarea, &game_palette[Machine->drv->screen[scrnum].palette_base], scrformat[scrnum]);
+						render_texture_set_bitmap(scrtexture[scrnum], scrbitmap[scrnum][curbitmap], &visarea, &adjusted_palette[Machine->drv->screen[scrnum].palette_base], scrformat[scrnum]);
 					}
 					render_screen_add_quad(scrnum, 0.0f, 0.0f, 1.0f, 1.0f, MAKE_ARGB(0xff,0xff,0xff,0xff), scrtexture[scrnum], PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_SCREENTEX(1));
 				}
@@ -1161,13 +1161,18 @@ static mame_file *mame_fopen_next(int filetype)
 
 void save_screen_snapshot(mame_bitmap *bitmap)
 {
+	UINT32 screenmask = render_get_live_screens_mask();
 	mame_file *fp;
+	int scrnum;
 
-	if ((fp = mame_fopen_next(FILETYPE_SCREENSHOT)) != NULL)
-	{
-		save_screen_snapshot_as(fp, scrbitmap[0][curbitmap]);
-		mame_fclose(fp);
-	}
+	/* write one snapshot per visible screen */
+	for (scrnum = 0; scrnum < MAX_SCREENS; scrnum++)
+		if (screenmask & (1 << scrnum))
+			if ((fp = mame_fopen_next(FILETYPE_SCREENSHOT)) != NULL)
+			{
+				save_screen_snapshot_as(fp, scrbitmap[scrnum][curbitmap]);
+				mame_fclose(fp);
+			}
 }
 
 

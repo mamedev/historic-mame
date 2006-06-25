@@ -59,6 +59,7 @@ struct _win_window_info
 	// monitor info
 	win_monitor_info *	monitor;
 	int					fullscreen;
+	int					fullscreen_safe;
 	int					maxwidth, maxheight;
 	int					depth;
 	int					refresh;

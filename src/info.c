@@ -603,8 +603,6 @@ static void print_game_video(FILE* out, const game_driver* game)
 
 	int dx;
 	int dy;
-	float ax;
-	float ay;
 	int showxy;
 	int orientation;
 
@@ -624,24 +622,12 @@ static void print_game_video(FILE* out, const game_driver* game)
 
 	if (game->flags & ORIENTATION_SWAP_XY)
 	{
-		ax = 1.0f;
-		ay = driver.screen[0].aspect;
-		if (ax == 0 && ay == 0) {
-			ax = 3;
-			ay = 4;
-		}
 		dx = driver.screen[0].default_visible_area.max_y - driver.screen[0].default_visible_area.min_y + 1;
 		dy = driver.screen[0].default_visible_area.max_x - driver.screen[0].default_visible_area.min_x + 1;
 		orientation = 1;
 	}
 	else
 	{
-		ax = driver.screen[0].aspect;
-		ay = 1.0f;
-		if (ax == 0 && ay == 0) {
-			ax = 4;
-			ay = 3;
-		}
 		dx = driver.screen[0].default_visible_area.max_x - driver.screen[0].default_visible_area.min_x + 1;
 		dy = driver.screen[0].default_visible_area.max_y - driver.screen[0].default_visible_area.min_y + 1;
 		orientation = 0;
@@ -653,9 +639,6 @@ static void print_game_video(FILE* out, const game_driver* game)
 		fprintf(out, " width=\"%d\"", dx);
 		fprintf(out, " height=\"%d\"", dy);
 	}
-
-	fprintf(out, " aspectx=\"%f\"", ax);
-	fprintf(out, " aspecty=\"%f\"", ay);
 
 	fprintf(out, " refresh=\"%f\"", driver.screen[0].refresh_rate);
 	fprintf(out, "/>\n");
@@ -869,23 +852,25 @@ static void print_resource_info(FILE* out, const game_driver* game)
 }
 #endif
 
-static void print_mame_data(FILE* out, const game_driver* const games[])
+static void print_mame_data(FILE* out, const game_driver* const games[], const char *gamename)
 {
 	int j;
 
 	/* print games */
 	for(j=0;games[j];++j)
-		print_game_info(out, games[j]);
+		if (mame_strwildcmp(gamename, games[j]->name) == 0)
+			print_game_info(out, games[j]);
 
 #if !defined(MESS)
 	/* print resources */
  	for (j=0;games[j];++j)
- 		print_resource_info(out, games[j]);
+		if (mame_strwildcmp(gamename, games[j]->name) == 0)
+	 		print_resource_info(out, games[j]);
 #endif
 }
 
 /* Print the MAME database in XML format */
-void print_mame_xml(FILE* out, const game_driver* const games[])
+void print_mame_xml(FILE* out, const game_driver* const games[], const char *gamename)
 {
 	fprintf(out,
 		"<?xml version=\"1.0\"?>\n"
@@ -893,9 +878,9 @@ void print_mame_xml(FILE* out, const game_driver* const games[])
 		"<!ELEMENT " XML_ROOT " (" XML_TOP "+)>\n"
 		"\t<!ATTLIST " XML_ROOT " build CDATA #IMPLIED>\n"
 #ifdef MESS
-		"\t<!ELEMENT " XML_TOP " (description, year?, manufacturer, history?, biosset*, rom*, disk*, sample*, chip*, video?, sound?, input?, dipswitch*, driver?, device*, ramoption*)>\n"
+		"\t<!ELEMENT " XML_TOP " (description, year?, manufacturer, biosset*, (rom | disk)*, sample*, chip*, video?, sound?, input?, dipswitch*, driver?, device*, ramoption*)>\n"
 #else
-		"\t<!ELEMENT " XML_TOP " (description, year?, manufacturer, history?, biosset*, rom*, disk*, sample*, chip*, video?, sound?, input?, dipswitch*, driver?)>\n"
+		"\t<!ELEMENT " XML_TOP " (description, year?, manufacturer, biosset*, (rom | disk)*, sample*, chip*, video?, sound?, input?, dipswitch*, driver?)>\n"
 #endif
 		"\t\t<!ATTLIST " XML_TOP " name CDATA #REQUIRED>\n"
 		"\t\t<!ATTLIST " XML_TOP " sourcefile CDATA #IMPLIED>\n"
@@ -906,7 +891,6 @@ void print_mame_xml(FILE* out, const game_driver* const games[])
 		"\t\t<!ELEMENT description (#PCDATA)>\n"
 		"\t\t<!ELEMENT year (#PCDATA)>\n"
 		"\t\t<!ELEMENT manufacturer (#PCDATA)>\n"
-		"\t\t<!ELEMENT history (#PCDATA)>\n"
 		"\t\t<!ELEMENT biosset EMPTY>\n"
 		"\t\t\t<!ATTLIST biosset name CDATA #REQUIRED>\n"
 		"\t\t\t<!ATTLIST biosset description CDATA #REQUIRED>\n"
@@ -942,8 +926,6 @@ void print_mame_xml(FILE* out, const game_driver* const games[])
 		"\t\t\t<!ATTLIST video orientation (vertical|horizontal) #REQUIRED>\n"
 		"\t\t\t<!ATTLIST video width CDATA #IMPLIED>\n"
 		"\t\t\t<!ATTLIST video height CDATA #IMPLIED>\n"
-		"\t\t\t<!ATTLIST video aspectx CDATA #IMPLIED>\n"
-		"\t\t\t<!ATTLIST video aspecty CDATA #IMPLIED>\n"
 		"\t\t\t<!ATTLIST video refresh CDATA #REQUIRED>\n"
 		"\t\t<!ELEMENT sound EMPTY>\n"
 		"\t\t\t<!ATTLIST sound channels CDATA #REQUIRED>\n"
@@ -986,7 +968,7 @@ void print_mame_xml(FILE* out, const game_driver* const games[])
 		normalize_string(build_version)
 	);
 
-	print_mame_data(out, games);
+	print_mame_data(out, games, gamename);
 
 	fprintf(out, "</" XML_ROOT ">\n");
 }

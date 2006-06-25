@@ -84,6 +84,21 @@ endif
 endif
 
 
+
+#-------------------------------------------------
+# layouts
+#-------------------------------------------------
+
+LAYOUTS = $(wildcard src/layout/*)
+
+LAYOUTHEADERS = $(subst src,$(OBJ),$(subst .lay,.lh,$(LAYOUTS)))
+
+$(LAYOUTHEADERS): $(OBJ)/%.lh: src/%.lay
+
+$(OBJ)/render.o: $(LAYOUTHEADERS)
+
+
+
 #-------------------------------------------------
 # additional core files needed for the debugger
 #-------------------------------------------------

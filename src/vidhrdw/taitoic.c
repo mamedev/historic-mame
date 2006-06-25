@@ -1195,6 +1195,20 @@ void PC080SN_tilemap_draw(mame_bitmap *bitmap,const rectangle *cliprect,int chip
 	tilemap_draw(bitmap,cliprect,PC080SN_tilemap[chip][layer],flags,priority);
 }
 
+void PC080SN_tilemap_draw_offset(mame_bitmap *bitmap,const rectangle *cliprect,int chip,int layer,int flags,UINT32 priority,int xoffs,int yoffs)
+{
+	int basedx = -16 - PC080SN_xoffs;
+	int basedxflip = -16 + PC080SN_xoffs;
+	int basedy = PC080SN_yoffs;
+	int basedyflip = -PC080SN_yoffs;
+
+	tilemap_set_scrolldx(PC080SN_tilemap[chip][layer], basedx + xoffs, basedxflip + xoffs);
+	tilemap_set_scrolldy(PC080SN_tilemap[chip][layer], basedy + yoffs, basedyflip + yoffs);
+	tilemap_draw(bitmap,cliprect,PC080SN_tilemap[chip][layer],flags,priority);
+	tilemap_set_scrolldx(PC080SN_tilemap[chip][layer], basedx, basedxflip);
+	tilemap_set_scrolldy(PC080SN_tilemap[chip][layer], basedy, basedyflip);
+}
+
 void PC080SN_tilemap_draw_special(mame_bitmap *bitmap,const rectangle *cliprect,int chip,int layer,int flags,UINT32 priority,UINT16 *ram)
 {
 	topspeed_custom_draw(bitmap,cliprect,chip,layer,flags,priority,ram);
@@ -2340,23 +2354,7 @@ int TC0100SCN_vh_start(int chips,int gfxnum,int x_offset,int y_offset,int flip_x
            Thundfox is the only one of those with two chips, and
            we're safe as it uses single width tilemaps. */
 
-		myclip = Machine->visible_area[0];
-
-		if (chips==2 && multiscrn_xoffs!=TC0100SCN_SINGLE_VDU)	/* Dual screen */
-		{
-			myclip.min_x = (320*i);
-			myclip.min_y = 16;
-			myclip.max_x = 320*(i+1) - 1;
-			myclip.max_y = 256;
-		}
-
-		if (chips==3 && multiscrn_xoffs!=TC0100SCN_SINGLE_VDU)	/* Triple screen */
-		{
-			myclip.min_x = (288*i);
-			myclip.min_y = 16;
-			myclip.max_x = 288*(i+1) - 1;
-			myclip.max_y = 256;
-		}
+		myclip = Machine->visible_area[(Machine->drv->screen[i].tag == NULL) ? 0 : i];
 
 		TC0100SCN_cliprect[i] = myclip;
 
@@ -2439,6 +2437,7 @@ int TC0100SCN_vh_start(int chips,int gfxnum,int x_offset,int y_offset,int flip_x
 		xd = -x_offset;
 		yd = 8-y_offset;
 
+#if 0
 		if (chips==2)	/* Dual screen */
 		{
 			if (i==1)  xd += (320-multiscrn_xoffs);
@@ -2448,6 +2447,7 @@ int TC0100SCN_vh_start(int chips,int gfxnum,int x_offset,int y_offset,int flip_x
 			if (i==1)  xd += (286-multiscrn_xoffs);
 			if (i==2)  xd += (572-multiscrn_xoffs*2);
 		}
+#endif
 		tilemap_set_scrolldx(TC0100SCN_tilemap[i][0][1], xd-16, -flip_xoffs -xd-16);
 		tilemap_set_scrolldy(TC0100SCN_tilemap[i][0][1], yd,    -flip_yoffs -yd);
 		tilemap_set_scrolldx(TC0100SCN_tilemap[i][1][1], xd-16, -flip_xoffs -xd-16);

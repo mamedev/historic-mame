@@ -18,11 +18,8 @@ WRITE8_HANDLER( playch10_videoram_w )
 {
 	if (pc10_sdcs)
 	{
-		if (videoram[offset] != data)
-		{
-			videoram[offset] = data;
-			tilemap_mark_tile_dirty(bg_tilemap, offset / 2);
-		}
+		videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap, offset / 2);
 	}
 }
 
@@ -121,38 +118,39 @@ VIDEO_UPDATE( playch10 )
 	/* Dual monitor version */
 	if(system_bios == 0)
 	{
-		rectangle top_monitor = Machine->visible_area[0];
-		rectangle bottom_monitor = Machine->visible_area[0];
-
-		top_monitor.max_y = ( top_monitor.max_y - top_monitor.min_y ) / 2;
-		bottom_monitor.min_y = ( bottom_monitor.max_y - bottom_monitor.min_y ) / 2;
-
 		/* On Playchoice 10 single monitor, this bit toggles    */
 		/* between PPU and BIOS display.                        */
 		/* We support the multi-monitor layout. In this case,   */
 		/* if the bit is not set, then we should display        */
 		/* the PPU portion.                                     */
 
-		if ( !pc10_dispmask )
+		if ( screen == 1 )
 		{
-			/* render the ppu */
-			ppu2c03b_render( 0, bitmap, 0, 0, 0, 30*8 );
-
-			/* if this is a gun game, draw a simple crosshair */
-			if ( pc10_gun_controller )
+			if ( !pc10_dispmask )
 			{
-				int x_center = readinputport( 5 );
-				int y_center = readinputport( 6 ) + 30*8;
+				/* render the ppu */
+				ppu2c03b_render( 0, bitmap, 0, 0, 0, 0 );
 
-				draw_crosshair(bitmap, x_center, y_center, &bottom_monitor, 0);
+				/* if this is a gun game, draw a simple crosshair */
+				if ( pc10_gun_controller )
+				{
+					int x_center = readinputport( 5 );
+					int y_center = readinputport( 6 ) + 30*8;
+
+					draw_crosshair(bitmap, x_center, y_center, cliprect, 0);
+				}
 			}
+			else
+				fillbitmap(bitmap, 0, cliprect);
 		}
-
-		/* When the bios is accessing vram, the video circuitry can't access it */
-
-		if ( !pc10_sdcs )
+		else
 		{
-			tilemap_draw(bitmap, &top_monitor, bg_tilemap, 0, 0);
+			/* When the bios is accessing vram, the video circuitry can't access it */
+
+			if ( !pc10_sdcs )
+				tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
+			else
+				fillbitmap(bitmap, 0, cliprect);
 		}
 	}
 	else	/* Single Monitor version */

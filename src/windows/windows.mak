@@ -23,6 +23,9 @@
 # uncomment next line to enable a build using Microsoft tools
 # MSVC_BUILD = 1
 
+# uncomment next line to use cygwin compiler
+# CYGWIN_BUILD = 1
+
 # uncomment next line to enable multi-monitor stubs on Windows 95/NT
 # you will need to find multimon.h and put it into your include
 # path in order to make this work
@@ -44,6 +47,17 @@ RC = @windres --use-temp-file
 RCDEFS = -DNDEBUG -D_WIN32_IE=0x0400
 
 RCFLAGS = -O coff --include-dir src/$(MAMEOS)
+
+
+
+#-------------------------------------------------
+# overrides for the CYGWIN compiler
+#-------------------------------------------------
+
+ifdef CYGWIN_BUILD
+CFLAGS += -mno-cygwin
+LDFLAGS	+= -mno-cygwin
+endif
 
 
 

@@ -63,8 +63,8 @@ NOTE: The version number (A/B) on Lode Runner: The Dig Fight is ONLY displayed w
 #include "cpu/sh2/sh2.h"
 #include "machine/eeprom.h"
 #include "sound/ymf278b.h"
+#include "render.h"
 
-#define DUAL_SCREEN 1 /* Display both screens simultaneously if 1, change in vidhrdw too */
 #define ROMTEST 0 /* Does necessary stuff to perform rom test, uses RAM as it doesn't dispose of GFX after decoding */
 
 UINT32 *psikyo4_vidregs;
@@ -428,25 +428,25 @@ static MACHINE_DRIVER_START( ps4big )
 	MDRV_CPU_PROGRAM_MAP(ps4_readmem,ps4_writemem)
 	MDRV_CPU_VBLANK_INT(psikyosh_interrupt,1)
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-
 	MDRV_NVRAM_HANDLER(93C56)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
-#if DUAL_SCREEN
-	MDRV_ASPECT_RATIO(8,3)
-	MDRV_SCREEN_SIZE(80*8, 32*8)
-	MDRV_VISIBLE_AREA(0, 80*8-1, 0, 28*8-1)
-#else
-	MDRV_ASPECT_RATIO(4,3)
-	MDRV_SCREEN_SIZE(64*8, 32*8)
-	MDRV_VISIBLE_AREA(0, 40*8-1, 0, 28*8-1)
-#endif
-
 	MDRV_GFXDECODE(gfxdecodeinfops4)
 	MDRV_PALETTE_LENGTH((0x2000/4)*2 + 2) /* 0x2000/4 for each screen. 1 for each screen clear colour */
+	MDRV_DEFAULT_LAYOUT(layout_dualhsxs)
+
+	MDRV_SCREEN_ADD("left", 0x000)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(DEFAULT_60HZ_VBLANK_DURATION))
+	MDRV_SCREEN_MAXSIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 28*8-1)
+
+	MDRV_SCREEN_ADD("right", 0x000)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(DEFAULT_60HZ_VBLANK_DURATION))
+	MDRV_SCREEN_MAXSIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 28*8-1)
 
 	MDRV_VIDEO_START(psikyo4)
 	MDRV_VIDEO_UPDATE(psikyo4)
@@ -464,11 +464,11 @@ static MACHINE_DRIVER_START( ps4small )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(ps4big)
 
-#if DUAL_SCREEN
-	MDRV_VISIBLE_AREA(0, 80*8-1, 0, 30*8-1)
-#else
-	MDRV_VISIBLE_AREA(0, 40*8-1, 0, 30*8-1)
-#endif
+	MDRV_SCREEN_MODIFY("left")
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 30*8-1)
+
+	MDRV_SCREEN_MODIFY("right")
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 30*8-1)
 MACHINE_DRIVER_END
 
 
@@ -581,13 +581,6 @@ INPUT_PORTS_START( hotgmck )
 #endif
 	PORT_BIT(  0x80, IP_ACTIVE_LOW,  IPT_SERVICE2 ) // Screen 2
 
-#if !DUAL_SCREEN
-	PORT_START_TAG("FAKE")	/* fake port for screen switching */
-	PORT_BIT(  0x01, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_NAME("Select PL1 Screen") PORT_CODE(KEYCODE_MINUS)
-	PORT_BIT(  0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_NAME("Select PL2 Screen") PORT_CODE(KEYCODE_EQUALS)
-	PORT_BIT(   0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
-#endif
-
 	PORT_START_TAG("JP4")/* jumper pads 'JP4' on the PCB */
 	UNUSED_PORT
 INPUT_PORTS_END
@@ -657,15 +650,6 @@ INPUT_PORTS_START( loderndf )
 
 	PORT_START_TAG("IN7")
 	UNUSED_PORT
-
-#if !DUAL_SCREEN
-	PORT_START_TAG("IN8")
-	UNUSED_PORT /* dummy, to pad below to IN9 */
-	PORT_START_TAG("FAKE")	/* fake port for screen switching */
-	PORT_BIT(  0x01, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_NAME("Select PL1+PL2 Screen") PORT_CODE(KEYCODE_MINUS)
-	PORT_BIT(  0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_NAME("Select PL3+PL4 Screen") PORT_CODE(KEYCODE_EQUALS)
-	PORT_BIT(   0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
-#endif
 
 	PORT_START_TAG("JP4")/* jumper pads 'JP4' on the PCB */
 //  1-ON,2-ON,3-ON,4-ON  --> Japanese
@@ -741,15 +725,6 @@ INPUT_PORTS_START( hotdebut )
 
 	PORT_START_TAG("IN7")
 	UNUSED_PORT
-
-#if !DUAL_SCREEN
-	PORT_START_TAG("IN8")
-	UNUSED_PORT /* dummy, to pad below to IN9 */
-	PORT_START_TAG("FAKE")/* fake port for screen switching */
-	PORT_BIT(  0x01, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_NAME("Select PL1+PL2 Screen") PORT_CODE(KEYCODE_MINUS)
-	PORT_BIT(  0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_NAME("Select PL3+PL4 Screen") PORT_CODE(KEYCODE_EQUALS)
-	PORT_BIT(   0xfc, IP_ACTIVE_LOW, IPT_UNUSED )
-#endif
 
 	PORT_START_TAG("JP4")/* jumper pads 'JP4' on the PCB */
 	UNUSED_PORT

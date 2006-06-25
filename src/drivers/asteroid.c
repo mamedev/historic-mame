@@ -147,6 +147,8 @@
 #include "sound/discrete.h"
 #include "sound/pokey.h"
 
+#include "astdelux.lh"
+
 
 
 /*************************************
@@ -181,26 +183,6 @@ static WRITE8_HANDLER( llander_led_w )
 		artwork_show(lampname[i], (data >> (4 - i)) & 1);
 #endif
 }
-
-
-static const char astdelux_layout[] =
-	"<?xml version=\"1.0\"?>"
-	"<mamelayout version=\"2\">"
-		"<element name=\"overlay\">"
-			"<rect>"
-				"<bounds left=\"0\" top=\"0\" right=\"1\" bottom=\"1\" />"
-				"<color red=\"0.5333\" green=\"1.0\" blue=\"1.0\" />"
-			"</rect>"
-		"</element>"
-		"<view name=\"Built-in Overlay\">"
-			"<screen index=\"0\">"
-				"<bounds left=\"0\" top=\"0\" right=\"4\" bottom=\"3\" />"
-			"</screen>"
-			"<overlay element=\"overlay\">"
-				"<bounds left=\"0\" top=\"0\" right=\"4\" bottom=\"3\" />"
-			"</overlay>"
-		"</view>"
-	"</mamelayout>";
 
 
 /*************************************
@@ -861,7 +843,7 @@ GAME( 1979, asteroi1, asteroid, asteroid, asteroid, 0,        ROT0, "Atari", "As
 GAME( 1979, asteroib, asteroid, asteroid, asteroib, asteroib, ROT0, "bootleg", "Asteroids (bootleg on Lunar Lander hardware)", 0 )
 GAME( 1979, asterock, asteroid, asterock, asterock, asterock, ROT0, "Sidam", "Asterock", 0 )
 GAME( 1979, meteorts, asteroid, asteroid, asteroid, 0,        ROT0, "VGG",   "Meteorites", 0 )
-GAMEL(1980, astdelux, 0,        astdelux, astdelux, astdelux, ROT0, "Atari", "Asteroids Deluxe (rev 2)", 0, astdelux_layout )
-GAMEL(1980, astdelu1, astdelux, astdelux, astdelux, astdelux, ROT0, "Atari", "Asteroids Deluxe (rev 1)", 0, astdelux_layout )
+GAMEL(1980, astdelux, 0,        astdelux, astdelux, astdelux, ROT0, "Atari", "Asteroids Deluxe (rev 2)", 0, layout_astdelux )
+GAMEL(1980, astdelu1, astdelux, astdelux, astdelux, astdelux, ROT0, "Atari", "Asteroids Deluxe (rev 1)", 0, layout_astdelux )
 GAME( 1979, llander,  0,        llander,  llander,  0,        ROT0, "Atari", "Lunar Lander (rev 2)", 0 )
 GAME( 1979, llander1, llander,  llander,  llander1, 0,        ROT0, "Atari", "Lunar Lander (rev 1)", 0 )

@@ -460,7 +460,7 @@ static MACHINE_DRIVER_START( megatech )
 	MDRV_VIDEO_START(megatech)
 	MDRV_VIDEO_UPDATE(megatech)
 
-	MDRV_ASPECT_RATIO(4,6)
+//  MDRV_ASPECT_RATIO(4,6)
 	MDRV_SCREEN_SIZE(320,224+192) /* +192 for megatech BIOS screen/menu */
 	MDRV_VISIBLE_AREA(0, 319, 0, 223+192)
 	MDRV_PALETTE_LENGTH(64+32) /* +32 for megatech bios vdp part */

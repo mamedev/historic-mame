@@ -89,7 +89,7 @@ WRITE16_HANDLER( darius_fg_layer_w )
 
 /***************************************************************************/
 
-void darius_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect,int primask, int y_offs)
+void darius_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect,int primask, int x_offs, int y_offs)
 {
 	int offs,curx,cury;
 	UINT16 code,data,sx,sy;
@@ -120,7 +120,7 @@ void darius_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect,int prima
 			if (priority != primask) continue;
 			color = (data & 0x7f);
 
-			curx = sx;
+			curx = sx - x_offs;
 			cury = sy + y_offs;
 
 			if (curx > 900) curx -= 1024;
@@ -147,21 +147,23 @@ void darius_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect,int prima
 
 VIDEO_UPDATE( darius )
 {
+	int xoffs = 36*8*screen;
+
 	PC080SN_tilemap_update();
 
 	// draw bottom layer(always active)
- 	PC080SN_tilemap_draw(bitmap,cliprect,0,0,TILEMAP_IGNORE_TRANSPARENCY,0);
+ 	PC080SN_tilemap_draw_offset(bitmap,cliprect,0,0,TILEMAP_IGNORE_TRANSPARENCY,0,-xoffs,0);
 
 	/* Sprites can be under/over the layer below text layer */
-	darius_draw_sprites(bitmap,cliprect,0,-8); // draw sprites with priority 0 which are under the mid layer
+	darius_draw_sprites(bitmap,cliprect,0,xoffs,-8); // draw sprites with priority 0 which are under the mid layer
 
 	// draw middle layer
-	PC080SN_tilemap_draw(bitmap,cliprect,0,1,0,0);
+	PC080SN_tilemap_draw_offset(bitmap,cliprect,0,1,0,0,-xoffs,0);
 
-	darius_draw_sprites(bitmap,cliprect,1,-8); // draw sprites with priority 1 which are over the mid layer
+	darius_draw_sprites(bitmap,cliprect,1,xoffs,-8); // draw sprites with priority 1 which are over the mid layer
 
 	/* top(text) layer is in fixed position */
-	tilemap_set_scrollx(fg_tilemap,0,0);
+	tilemap_set_scrollx(fg_tilemap,0,0+xoffs);
 	tilemap_set_scrolly(fg_tilemap,0,-8);
 	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
 }

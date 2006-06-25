@@ -157,6 +157,7 @@ typedef struct _render_container render_container;
 typedef struct _render_target render_target;
 typedef struct _render_texture render_texture;
 typedef struct _render_font render_font;
+typedef struct _render_ref render_ref;
 
 
 
@@ -235,6 +236,7 @@ struct _render_primitive_list
 	render_primitive *	head;				/* head of the list */
 	render_primitive **	nextptr;			/* pointer to the next tail pointer */
 	osd_lock *			lock;				/* should only should be accessed under this lock */
+	render_ref *		reflist;			/* list of references */
 };
 
 
@@ -246,12 +248,14 @@ struct _render_primitive_list
 void render_init(void);
 UINT32 render_get_live_screens_mask(void);
 float render_get_ui_aspect(void);
+render_target *render_get_ui_target(void);
 
 
 /* ----- render target management ----- */
 
 render_target *render_target_alloc(const char *layout, int singleview);
 void render_target_free(render_target *target);
+void render_target_get_bounds(render_target *target, INT32 *width, INT32 *height, float *pixel_aspect);
 void render_target_set_bounds(render_target *target, INT32 width, INT32 height, float pixel_aspect);
 int render_target_get_orientation(render_target *target);
 void render_target_set_orientation(render_target *target, int orientation);
@@ -259,6 +263,7 @@ render_target *render_target_get_indexed(int index);
 int render_target_get_view(render_target *target);
 void render_target_set_view(render_target *target, int viewindex);
 const char *render_target_get_view_name(render_target *target, int viewindex);
+UINT32 render_target_get_view_screens(render_target *target, int viewindex);
 void render_target_compute_visible_area(render_target *target, INT32 target_width, INT32 target_height, float target_pixel_aspect, UINT8 target_orientation, INT32 *visible_width, INT32 *visible_height);
 void render_target_get_minimum_size(render_target *target, INT32 *minwidth, INT32 *minheight);
 const render_primitive_list *render_target_get_primitives(render_target *target);
@@ -296,6 +301,18 @@ void render_container_add_char(render_container *container, float x0, float y0, 
 void render_resample_argb_bitmap_hq(void *dest, UINT32 drowpixels, UINT32 dwidth, UINT32 dheight, const mame_bitmap *source, const rectangle *sbounds, const render_color *color);
 int render_clip_line(render_bounds *bounds, const render_bounds *clip);
 int render_clip_quad(render_bounds *bounds, const render_bounds *clip, float *u, float *v);
+
+
+
+/***************************************************************************
+    GLOBAL VARIABLES
+***************************************************************************/
+
+extern const char layout_horizont[];
+extern const char layout_vertical[];
+extern const char layout_dualhsxs[];
+extern const char layout_dualhovu[];
+extern const char layout_triphsxs[];
 
 
 

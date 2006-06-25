@@ -47,7 +47,7 @@ UINT16 *palette_shadow_table;
 -------------------------------------------------*/
 
 rgb_t *game_palette;				/* RGB palette as set by the driver */
-static rgb_t *adjusted_palette;		/* actual RGB palette after brightness/gamma adjustments */
+rgb_t *adjusted_palette;		/* actual RGB palette after brightness/gamma adjustments */
 static UINT32 *dirty_palette;
 static UINT16 *pen_brightness;
 

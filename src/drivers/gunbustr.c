@@ -51,13 +51,14 @@
 #include "machine/eeprom.h"
 #include "sound/es5506.h"
 #include "includes/taito_f3.h"
+#include "sndhrdw/taito_en.h"
+
 
 VIDEO_START( gunbustr );
 VIDEO_UPDATE( gunbustr );
 
 static UINT16 coin_word;
 static UINT32 *gunbustr_ram;
-static UINT16 *sound_ram;
 
 /*********************************************************************/
 
@@ -227,30 +228,6 @@ static ADDRESS_MAP_START( gunbustr_writemem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0xc00000, 0xc03fff) AM_WRITE(MWA32_RAM)	/* network ram ?? */
 ADDRESS_MAP_END
 
-/******************************************************************************/
-
-static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x140000, 0x140fff) AM_READ(f3_68000_share_r)
-	AM_RANGE(0x200000, 0x20001f) AM_READ(ES5505_data_0_r)
-	AM_RANGE(0x260000, 0x2601ff) AM_READ(es5510_dsp_r)
-	AM_RANGE(0x280000, 0x28001f) AM_READ(f3_68681_r)
-	AM_RANGE(0xc00000, 0xcfffff) AM_READ(MRA16_BANK1)
-	AM_RANGE(0xff8000, 0xffffff) AM_READ(MRA16_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_RAM) AM_BASE(&sound_ram)
-	AM_RANGE(0x140000, 0x140fff) AM_WRITE(f3_68000_share_w)
-	AM_RANGE(0x200000, 0x20001f) AM_WRITE(ES5505_data_0_w)
-	AM_RANGE(0x260000, 0x2601ff) AM_WRITE(es5510_dsp_w)
-	AM_RANGE(0x280000, 0x28001f) AM_WRITE(f3_68681_w)
-	AM_RANGE(0x300000, 0x30003f) AM_WRITE(f3_es5505_bank_w)
-	AM_RANGE(0x340000, 0x340003) AM_WRITE(f3_volume_w) /* 8 channel volume control */
-	AM_RANGE(0xc00000, 0xcfffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0xff8000, 0xffffff) AM_WRITE(MWA16_RAM)
-ADDRESS_MAP_END
-
 /***********************************************************
              INPUT PORTS (dips in eprom)
 ***********************************************************/
@@ -367,24 +344,11 @@ static const gfx_decode gunbustr_gfxdecodeinfo[] =
 
 static MACHINE_RESET( gunbustr )
 {
-	/* Sound cpu program loads to 0xc00000 so we use a bank */
-	UINT16 *ROM = (UINT16 *)memory_region(REGION_CPU2);
-	memory_set_bankptr(1,&ROM[0x80000]);
-
-	sound_ram[0]=ROM[0x80000]; /* Stack and Reset vectors */
-	sound_ram[1]=ROM[0x80001];
-	sound_ram[2]=ROM[0x80002];
-	sound_ram[3]=ROM[0x80003];
+	taito_f3_soundsystem_reset();
 
 	f3_68681_reset();
 }
 
-static struct ES5505interface es5505_interface =
-{
-	REGION_SOUND1,	/* Bank 0: Unused by F3 games? */
-	REGION_SOUND1,	/* Bank 1: All games seem to use this */
-	0				/* irq callback */
-};
 
 static UINT8 default_eeprom[128]={
 	0x00,0x01,0x00,0x85,0x00,0xfd,0x00,0xff,0x00,0x67,0x00,0x02,0x00,0x00,0x00,0x7b,
@@ -428,9 +392,7 @@ static MACHINE_DRIVER_START( gunbustr )
 	MDRV_CPU_PROGRAM_MAP(gunbustr_readmem,gunbustr_writemem)
 	MDRV_CPU_VBLANK_INT(gunbustr_interrupt,1) /* VBL */
 
-	MDRV_CPU_ADD(M68000, 16000000)
-	/* audio CPU */	/* 16 MHz */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	TAITO_F3_SOUND_SYSTEM_CPU(16000000)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -449,12 +411,7 @@ static MACHINE_DRIVER_START( gunbustr )
 	MDRV_VIDEO_UPDATE(gunbustr)
 
 	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
-
-	MDRV_SOUND_ADD(ES5505, 30476100/2)
-	MDRV_SOUND_CONFIG(es5505_interface)
-	MDRV_SOUND_ROUTE(0, "left", 1.0)
-	MDRV_SOUND_ROUTE(1, "right", 1.0)
+	TAITO_F3_SOUND_SYSTEM_ES5505(30476100/2)
 MACHINE_DRIVER_END
 
 /***************************************************************************/
@@ -483,11 +440,11 @@ ROM_START( gunbustr )
 	ROM_REGION16_LE( 0x80000, REGION_USER1, 0 )
 	ROM_LOAD16_WORD( "d27-03.bin", 0x00000, 0x80000, CRC(23bf2000) SHA1(49b29e771a47fcd7e6cd4e2704b217f9727f8299) )	/* STY, used to create big sprites on the fly */
 
-	ROM_REGION16_BE( 0xa00000, REGION_SOUND1 , ROMREGION_ERASE00 )
-	ROM_LOAD16_BYTE( "d27-08.bin", 0x000000, 0x100000, CRC(7c147e30) SHA1(b605045154967050ec06391798da4afe3686a6e1) )
-	/* 0x200000 Empty bank? */
-	ROM_LOAD16_BYTE( "d27-09.bin", 0x400000, 0x100000, CRC(3e060304) SHA1(c4da4a94c168c3a454409d758c3ed45babbab170) )
-	ROM_LOAD16_BYTE( "d27-10.bin", 0x600000, 0x100000, CRC(ed894fe1) SHA1(5bf2fb6abdcf25bc525a2c3b29dbf7aca0b18fea) )
+	ROM_REGION16_BE( 0x800000, REGION_SOUND1 , ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE( "d27-08.bin", 0x000000, 0x100000, CRC(7c147e30) SHA1(b605045154967050ec06391798da4afe3686a6e1) ) // C8, C9
+	ROM_RELOAD(0x400000,0x100000)
+	ROM_LOAD16_BYTE( "d27-09.bin", 0x200000, 0x100000, CRC(3e060304) SHA1(c4da4a94c168c3a454409d758c3ed45babbab170) ) // CA, CB
+	ROM_LOAD16_BYTE( "d27-10.bin", 0x600000, 0x100000, CRC(ed894fe1) SHA1(5bf2fb6abdcf25bc525a2c3b29dbf7aca0b18fea) ) // -std-
 ROM_END
 
 static READ32_HANDLER( main_cycle_r )

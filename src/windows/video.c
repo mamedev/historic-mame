@@ -494,20 +494,18 @@ const char *osd_get_fps_text(const performance_info *performance)
 
 mame_bitmap *osd_override_snapshot(mame_bitmap *bitmap, rectangle *bounds)
 {
-	return NULL;
-/*
-
+	int orientation = Machine->gamedrv->flags & ORIENTATION_MASK;
     rectangle newbounds;
     mame_bitmap *copy;
     int x, y, w, h, t;
 
     // if we can send it in raw, no need to override anything
-    if (!blit_swapxy && !blit_flipx && !blit_flipy)
+    if (orientation == 0)
         return NULL;
 
     // allocate a copy
-    w = blit_swapxy ? bitmap->height : bitmap->width;
-    h = blit_swapxy ? bitmap->width : bitmap->height;
+    w = (orientation & ORIENTATION_SWAP_XY) ? bitmap->height : bitmap->width;
+    h = (orientation & ORIENTATION_SWAP_XY) ? bitmap->width : bitmap->height;
     copy = bitmap_alloc_depth(w, h, bitmap->depth);
     if (!copy)
         return NULL;
@@ -519,13 +517,13 @@ mame_bitmap *osd_override_snapshot(mame_bitmap *bitmap, rectangle *bounds)
             int tx = x, ty = y;
 
             // apply the rotation/flipping
-            if (blit_swapxy)
+            if ((orientation & ORIENTATION_SWAP_XY))
             {
                 t = tx; tx = ty; ty = t;
             }
-            if (blit_flipx)
+            if (orientation & ORIENTATION_FLIP_X)
                 tx = copy->width - tx - 1;
-            if (blit_flipy)
+            if (orientation & ORIENTATION_FLIP_Y)
                 ty = copy->height - ty - 1;
 
             // read the old pixel and copy to the new location
@@ -548,14 +546,14 @@ mame_bitmap *osd_override_snapshot(mame_bitmap *bitmap, rectangle *bounds)
     newbounds = *bounds;
 
     // apply X/Y swap first
-    if (blit_swapxy)
+    if (orientation & ORIENTATION_SWAP_XY)
     {
         t = newbounds.min_x; newbounds.min_x = newbounds.min_y; newbounds.min_y = t;
         t = newbounds.max_x; newbounds.max_x = newbounds.max_y; newbounds.max_y = t;
     }
 
     // apply X flip
-    if (blit_flipx)
+    if (orientation & ORIENTATION_FLIP_X)
     {
         t = copy->width - newbounds.min_x - 1;
         newbounds.min_x = copy->width - newbounds.max_x - 1;
@@ -563,7 +561,7 @@ mame_bitmap *osd_override_snapshot(mame_bitmap *bitmap, rectangle *bounds)
     }
 
     // apply Y flip
-    if (blit_flipy)
+    if (orientation & ORIENTATION_FLIP_Y)
     {
         t = copy->height - newbounds.min_y - 1;
         newbounds.min_y = copy->height - newbounds.max_y - 1;
@@ -571,7 +569,7 @@ mame_bitmap *osd_override_snapshot(mame_bitmap *bitmap, rectangle *bounds)
     }
 
     *bounds = newbounds;
-    return copy;*/
+    return copy;
 }
 
 

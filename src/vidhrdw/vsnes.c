@@ -81,6 +81,5 @@ VIDEO_UPDATE( vsnes )
 VIDEO_UPDATE( vsdual )
 {
 	/* render the ppu's */
-	ppu2c03b_render( 0, bitmap, 0, 0, 0, 0 );
-	ppu2c03b_render( 1, bitmap, 0, 0, 32*8, 0 );
+	ppu2c03b_render( screen, bitmap, 0, 0, 0, 0 );
 }

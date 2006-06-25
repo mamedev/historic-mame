@@ -9,44 +9,22 @@
 #include "driver.h"
 
 
-#define TOP_MONITOR_ROWS 28
-#define BOTTOM_MONITOR_ROWS 28
+static tilemap *toptilemap;
+static tilemap *bottilemap;
+static tilemap *spr1tilemap;
+static tilemap *spr2tilemap;
+static tilemap *fgtilemap;
 
-#define BIGSPRITE_WIDTH 128
-#define BIGSPRITE_HEIGHT 256
-#define ARMWREST_BIGSPRITE_WIDTH 256
-#define ARMWREST_BIGSPRITE_HEIGHT 128
+UINT8 *punchout_videoram2;
+UINT8 *armwrest_videoram3;
+UINT8 *punchout_bigsprite1ram;
+UINT8 *punchout_bigsprite2ram;
+UINT8 *punchout_scroll;
+UINT8 *punchout_bigsprite1;
+UINT8 *punchout_bigsprite2;
+UINT8 *punchout_palettebank;
 
-unsigned char *punchout_videoram2;
-size_t punchout_videoram2_size;
-unsigned char *punchout_bigsprite1ram;
-size_t punchout_bigsprite1ram_size;
-unsigned char *punchout_bigsprite2ram;
-size_t punchout_bigsprite2ram_size;
-unsigned char *punchout_scroll;
-unsigned char *punchout_bigsprite1;
-unsigned char *punchout_bigsprite2;
-unsigned char *punchout_palettebank;
-static unsigned char *dirtybuffer2,*bs1dirtybuffer,*bs2dirtybuffer;
-static mame_bitmap *bs1tmpbitmap,*bs2tmpbitmap;
-
-static int top_palette_bank,bottom_palette_bank;
-
-static rectangle topvisiblearea =
-{
-	0*8, 32*8-1,
-	0*8, TOP_MONITOR_ROWS*8-1
-};
-static rectangle bottomvisiblearea =
-{
-	0*8, 32*8-1,
-	TOP_MONITOR_ROWS*8, (TOP_MONITOR_ROWS+BOTTOM_MONITOR_ROWS)*8-1
-};
-static rectangle backgroundvisiblearea =
-{
-	0*8, 64*8-1,
-	TOP_MONITOR_ROWS*8, (TOP_MONITOR_ROWS+BOTTOM_MONITOR_ROWS)*8-1
-};
+static UINT8 top_palette_bank,bottom_palette_bank;
 
 
 
@@ -64,7 +42,7 @@ static rectangle backgroundvisiblearea =
   bit 0 -- 2  kohm resistor -- inverter  -- RED/GREEN/BLUE
 
 ***************************************************************************/
-static void convert_palette(const unsigned char *color_prom)
+static void convert_palette(const UINT8 *color_prom)
 {
 	int i;
 
@@ -171,17 +149,8 @@ PALETTE_INIT( armwrest )
 
 
 
-static void gfx_fix(void)
-{
-	/* one graphics ROM (4v) doesn't */
-	/* exist but must be seen as a 0xff fill for colors to come out properly */
-	memset(memory_region(REGION_GFX3) + 0x2c000,0xff,0x4000);
-}
-
 DRIVER_INIT( punchout )
 {
-	gfx_fix();
-
 	gfx0inv = 0x03;
 	gfx1inv = 0xfc;
 	gfx2inv = 0xff;
@@ -190,8 +159,6 @@ DRIVER_INIT( punchout )
 
 DRIVER_INIT( spnchout )
 {
-	gfx_fix();
-
 	gfx0inv = 0x00;
 	gfx1inv = 0xff;
 	gfx2inv = 0xff;
@@ -200,8 +167,6 @@ DRIVER_INIT( spnchout )
 
 DRIVER_INIT( spnchotj )
 {
-	gfx_fix();
-
 	gfx0inv = 0xfc;
 	gfx1inv = 0xff;
 	gfx2inv = 0xff;
@@ -210,11 +175,6 @@ DRIVER_INIT( spnchotj )
 
 DRIVER_INIT( armwrest )
 {
-	gfx_fix();
-
-	/* also, ROM 2k is enabled only when its top half is accessed. The other half must */
-	/* be seen as a 0xff fill for colors to come out properly */
-	memset(memory_region(REGION_GFX2) + 0x08000,0xff,0x2000);
 }
 
 
@@ -225,88 +185,126 @@ DRIVER_INIT( armwrest )
   Start the video hardware emulation.
 
 ***************************************************************************/
+static void top_get_info(int offs)
+{
+	int code = videoram[offs*2] + 256 * (videoram[offs*2 + 1] & 0x03);
+	int color = ((videoram[offs*2 + 1] & 0x7c) >> 2) + 64 * top_palette_bank;
+	int flipx = videoram[offs*2 + 1] & 0x80;
+	SET_TILE_INFO(0, code, color, flipx ? TILE_FLIPX : 0);
+}
+
+static void bot_get_info(int offs)
+{
+	int code = punchout_videoram2[offs*2] + 256 * (punchout_videoram2[offs*2 + 1] & 0x03);
+	int color = ((punchout_videoram2[offs*2 + 1] & 0x7c) >> 2) + 64 * bottom_palette_bank;
+	int flipx = punchout_videoram2[offs*2 + 1] & 0x80;
+	SET_TILE_INFO(1, code, color, flipx ? TILE_FLIPX : 0);
+}
+
+static void bs1_get_info(int offs)
+{
+	int code = punchout_bigsprite1ram[offs*4] + 256 * (punchout_bigsprite1ram[offs*4 + 1] & 0x1f);
+	int color = (punchout_bigsprite1ram[offs*4 + 3] & 0x1f) + 32 * bottom_palette_bank;
+	int flipx = punchout_bigsprite1ram[offs*4 + 3] & 0x80;
+	SET_TILE_INFO(2, code, color, flipx ? TILE_FLIPX : 0);
+}
+
+static void bs2_get_info(int offs)
+{
+	int code = punchout_bigsprite2ram[offs*4] + 256 * (punchout_bigsprite2ram[offs*4 + 1] & 0x0f);
+	int color = (punchout_bigsprite2ram[offs*4 + 3] & 0x3f) + 64 * bottom_palette_bank;
+	int flipx = punchout_bigsprite2ram[offs*4 + 3] & 0x80;
+	SET_TILE_INFO(3, code, color, flipx ? TILE_FLIPX : 0);
+}
+
 VIDEO_START( punchout )
 {
-	dirtybuffer = auto_malloc(videoram_size);
-	memset(dirtybuffer,1,videoram_size);
+	toptilemap = tilemap_create(top_get_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8,8, 32,32);
+	bottilemap = tilemap_create(bot_get_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8,8, 64,32);
+	tilemap_set_scroll_rows(bottilemap, 32);
 
-	dirtybuffer2 = auto_malloc(punchout_videoram2_size);
-	memset(dirtybuffer2,1,punchout_videoram2_size);
+	spr1tilemap = tilemap_create(bs1_get_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8,8, 16,32);
+	spr2tilemap = tilemap_create(bs2_get_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8,8, 16,32);
 
-	if ((tmpbitmap = auto_bitmap_alloc(512,480)) == 0)
-		return 1;
-
-	bs1dirtybuffer = auto_malloc(punchout_bigsprite1ram_size);
-	memset(bs1dirtybuffer,1,punchout_bigsprite1ram_size);
-
-	if ((bs1tmpbitmap = auto_bitmap_alloc(BIGSPRITE_WIDTH,BIGSPRITE_HEIGHT)) == 0)
-		return 1;
-
-	bs2dirtybuffer = auto_malloc(punchout_bigsprite2ram_size);
-	memset(bs2dirtybuffer,1,punchout_bigsprite2ram_size);
-
-	if ((bs2tmpbitmap = auto_bitmap_alloc(BIGSPRITE_WIDTH,BIGSPRITE_HEIGHT)) == 0)
-		return 1;
-
+	fgtilemap = NULL;
 	return 0;
+}
+
+
+
+static void armwrest_top_get_info(int offs)
+{
+	int code = videoram[offs*2] + 256 * (videoram[offs*2 + 1] & 0x03) +
+								8 * (videoram[offs*2 + 1] & 0x80);
+	int color = ((videoram[offs*2 + 1] & 0x7c) >> 2) + 64 * top_palette_bank;
+	SET_TILE_INFO(0, code, color, 0);
+}
+
+static void armwrest_bot_get_info(int offs)
+{
+	int code = punchout_videoram2[offs*2] + 256 * (punchout_videoram2[offs*2 + 1] & 0x03);
+	int color = 128 + ((punchout_videoram2[offs*2 + 1] & 0x7c) >> 2) + 64 * bottom_palette_bank;
+	int flipx = punchout_videoram2[offs*2 + 1] & 0x80;
+	SET_TILE_INFO(0, code, color, flipx ? TILE_FLIPX : 0);
+}
+
+static UINT32 armwrest_bs1_scan(UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows)
+{
+	int halfcols = num_cols/2;
+	return (col/halfcols)*(halfcols*num_rows) + row*halfcols + col%halfcols;
+}
+
+static void armwrest_fg_get_info(int offs)
+{
+	int code = armwrest_videoram3[offs*2] + 256 * (armwrest_videoram3[offs*2 + 1] & 0x07);
+	int color = ((armwrest_videoram3[offs*2 + 1] & 0xf8) >> 3) + 32 * bottom_palette_bank;
+	int flipx = armwrest_videoram3[offs*2 + 1] & 0x80;
+	SET_TILE_INFO(1, code, color, flipx ? TILE_FLIPX : 0);
 }
 
 VIDEO_START( armwrest )
 {
-	dirtybuffer = auto_malloc(videoram_size);
-	memset(dirtybuffer,1,videoram_size);
+	toptilemap = tilemap_create(armwrest_top_get_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8,8, 32,32);
+	bottilemap = tilemap_create(armwrest_bot_get_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8,8, 32,32);
 
-	dirtybuffer2 = auto_malloc(punchout_videoram2_size);
-	memset(dirtybuffer2,1,punchout_videoram2_size);
+	spr1tilemap = tilemap_create(bs1_get_info, armwrest_bs1_scan, TILEMAP_OPAQUE, 8,8, 32,16);
+	spr2tilemap = tilemap_create(bs2_get_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8,8, 16,32);
 
-	if ((tmpbitmap = auto_bitmap_alloc(512,480)) == 0)
-		return 1;
-
-	bs1dirtybuffer = auto_malloc(punchout_bigsprite1ram_size);
-	memset(bs1dirtybuffer,1,punchout_bigsprite1ram_size);
-
-	if ((bs1tmpbitmap = auto_bitmap_alloc(ARMWREST_BIGSPRITE_WIDTH,ARMWREST_BIGSPRITE_HEIGHT)) == 0)
-		return 1;
-
-	bs2dirtybuffer = auto_malloc(punchout_bigsprite2ram_size);
-	memset(bs2dirtybuffer,1,punchout_bigsprite2ram_size);
-
-	if ((bs2tmpbitmap = auto_bitmap_alloc(BIGSPRITE_WIDTH,BIGSPRITE_HEIGHT)) == 0)
-		return 1;
-
+	fgtilemap = tilemap_create(armwrest_fg_get_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8,8, 32,32);
+	tilemap_set_transparent_pen(fgtilemap, 7);
 	return 0;
 }
 
 
 
+WRITE8_HANDLER( punchout_videoram_w )
+{
+	videoram[offset] = data;
+	tilemap_mark_tile_dirty(toptilemap, offset/2);
+}
+
 WRITE8_HANDLER( punchout_videoram2_w )
 {
-	if (punchout_videoram2[offset] != data)
-	{
-		dirtybuffer2[offset] = 1;
+	punchout_videoram2[offset] = data;
+	tilemap_mark_tile_dirty(bottilemap, offset/2);
+}
 
-		punchout_videoram2[offset] = data;
-	}
+WRITE8_HANDLER( armwrest_videoram3_w )
+{
+	armwrest_videoram3[offset] = data;
+	tilemap_mark_tile_dirty(fgtilemap, offset/2);
 }
 
 WRITE8_HANDLER( punchout_bigsprite1ram_w )
 {
-	if (punchout_bigsprite1ram[offset] != data)
-	{
-		bs1dirtybuffer[offset] = 1;
-
-		punchout_bigsprite1ram[offset] = data;
-	}
+	punchout_bigsprite1ram[offset] = data;
+	tilemap_mark_tile_dirty(spr1tilemap, offset/4);
 }
 
 WRITE8_HANDLER( punchout_bigsprite2ram_w )
 {
-	if (punchout_bigsprite2ram[offset] != data)
-	{
-		bs2dirtybuffer[offset] = 1;
-
-		punchout_bigsprite2ram[offset] = data;
-	}
+	punchout_bigsprite2ram[offset] = data;
+	tilemap_mark_tile_dirty(spr2tilemap, offset/4);
 }
 
 
@@ -318,14 +316,16 @@ WRITE8_HANDLER( punchout_palettebank_w )
 	if (top_palette_bank != ((data >> 1) & 0x01))
 	{
 		top_palette_bank = (data >> 1) & 0x01;
-		memset(dirtybuffer,1,videoram_size);
+		tilemap_mark_all_tiles_dirty(toptilemap);
 	}
 	if (bottom_palette_bank != ((data >> 0) & 0x01))
 	{
 		bottom_palette_bank = (data >> 0) & 0x01;
-		memset(dirtybuffer2,1,punchout_videoram2_size);
-		memset(bs1dirtybuffer,1,punchout_bigsprite1ram_size);
-		memset(bs2dirtybuffer,1,punchout_bigsprite2ram_size);
+		if (fgtilemap != NULL)
+			tilemap_mark_all_tiles_dirty(fgtilemap);
+		tilemap_mark_all_tiles_dirty(bottilemap);
+		tilemap_mark_all_tiles_dirty(spr1tilemap);
+		tilemap_mark_all_tiles_dirty(spr2tilemap);
 	}
 }
 
@@ -338,368 +338,109 @@ WRITE8_HANDLER( punchout_palettebank_w )
   the main emulation engine.
 
 ***************************************************************************/
+
+static void drawbs1(mame_bitmap *bitmap, const rectangle *cliprect)
+{
+	int zoom;
+
+	zoom = punchout_bigsprite1[0] + 256 * (punchout_bigsprite1[1] & 0x0f);
+	if (zoom)
+	{
+		mame_bitmap *sprbitmap = tilemap_get_pixmap(spr1tilemap);
+		int sx,sy;
+		UINT32 startx,starty;
+		int incxx,incyy;
+
+		sx = 4096 - (punchout_bigsprite1[2] + 256 * (punchout_bigsprite1[3] & 0x0f));
+		if (sx > 4096-4*127) sx -= 4096;
+
+		sy = -(punchout_bigsprite1[4] + 256 * (punchout_bigsprite1[5] & 1));
+		if (sy <= -256 + zoom/0x40) sy += 512;
+		sy += 12;
+
+		incxx = zoom << 6;
+		incyy = zoom << 6;
+
+		startx = -sx * 0x4000;
+		starty = -sy * 0x10000;
+		startx += 3740 * zoom;	/* adjustment to match the screen shots */
+		starty -= 178 * zoom;	/* and make the hall of fame picture nice */
+
+		if (punchout_bigsprite1[6] & 1)	/* flip x */
+		{
+			startx = (sprbitmap->width << 16) - startx - 1;
+			incxx = -incxx;
+		}
+
+		copyrozbitmap(bitmap,sprbitmap,
+			startx,starty + 0x200*(2) * zoom,
+			incxx,0,0,incyy,	/* zoom, no rotation */
+			0,	/* no wraparound */
+			cliprect,TRANSPARENCY_COLOR,1024,0);
+	}
+}
+
+static void drawbs2(mame_bitmap *bitmap, const rectangle *cliprect)
+{
+	mame_bitmap *sprbitmap = tilemap_get_pixmap(spr2tilemap);
+	int sx,sy;
+
+	sx = 512 - (punchout_bigsprite2[0] + 256 * (punchout_bigsprite2[1] & 1));
+	if (sx > 512-127) sx -= 512;
+	sx -= 55;	/* adjustment to match the screen shots */
+
+	sy = -punchout_bigsprite2[2] + 256 * (punchout_bigsprite2[3] & 1);
+	sy += 3;	/* adjustment to match the screen shots */
+
+	copybitmap(bitmap,sprbitmap,
+			punchout_bigsprite2[4] & 1,0,
+			sx,sy,
+			cliprect,TRANSPARENCY_COLOR,1024);
+}
+
 VIDEO_UPDATE( punchout )
 {
-	int offs;
-
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 2;offs >= 0;offs -= 2)
+	if (screen == 0)
 	{
-		if (dirtybuffer[offs] || dirtybuffer[offs + 1])
-		{
-			int sx,sy;
+		tilemap_draw(bitmap, cliprect, toptilemap, 0, 0);
 
-
-			dirtybuffer[offs] = 0;
-			dirtybuffer[offs + 1] = 0;
-
-			sx = offs/2 % 32;
-			sy = offs/2 / 32;
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + 256 * (videoram[offs + 1] & 0x03),
-					((videoram[offs + 1] & 0x7c) >> 2) + 64 * top_palette_bank,
-					videoram[offs + 1] & 0x80,0,
-					8*sx,8*sy - 16,
-					&topvisiblearea,TRANSPARENCY_NONE,0);
-		}
+		if (punchout_bigsprite1[7] & 1)	/* display in top monitor */
+			drawbs1(bitmap, cliprect);
 	}
-
-	for (offs = punchout_videoram2_size - 2;offs >= 0;offs -= 2)
+	else
 	{
-		if (dirtybuffer2[offs] | dirtybuffer2[offs + 1])
-		{
-			int sx,sy;
+		int offs;
 
+		/* copy the character mapped graphics */
+		for (offs = 0;offs < 32;offs++)
+			tilemap_set_scrollx(bottilemap, offs, 58 + punchout_scroll[2*offs] + 256 * (punchout_scroll[2*offs + 1] & 0x01));
 
-			dirtybuffer2[offs] = 0;
-			dirtybuffer2[offs + 1] = 0;
+		tilemap_draw(bitmap, cliprect, bottilemap, 0, 0);
 
-			sx = offs/2 % 64;
-			sy = offs/2 / 64;
-
-			drawgfx(tmpbitmap,Machine->gfx[1],
-					punchout_videoram2[offs] + 256 * (punchout_videoram2[offs + 1] & 0x03),
-					((punchout_videoram2[offs + 1] & 0x7c) >> 2) + 64 * bottom_palette_bank,
-					punchout_videoram2[offs + 1] & 0x80,0,
-					8*sx,8*sy + 8*TOP_MONITOR_ROWS - 16,
-					&backgroundvisiblearea,TRANSPARENCY_NONE,0);
-		}
-	}
-
-	for (offs = punchout_bigsprite1ram_size - 4;offs >= 0;offs -= 4)
-	{
-		if (bs1dirtybuffer[offs] | bs1dirtybuffer[offs + 1] | bs1dirtybuffer[offs + 3])
-		{
-			int sx,sy;
-
-
-			bs1dirtybuffer[offs] = 0;
-			bs1dirtybuffer[offs + 1] = 0;
-			bs1dirtybuffer[offs + 3] = 0;
-
-			sx = offs/4 % 16;
-			sy = offs/4 / 16;
-
-			drawgfx(bs1tmpbitmap,Machine->gfx[2],
-					punchout_bigsprite1ram[offs] + 256 * (punchout_bigsprite1ram[offs + 1] & 0x1f),
-					(punchout_bigsprite1ram[offs + 3] & 0x1f) + 32 * bottom_palette_bank,
-					punchout_bigsprite1ram[offs + 3] & 0x80,0,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-
-	for (offs = punchout_bigsprite2ram_size - 4;offs >= 0;offs -= 4)
-	{
-		if (bs2dirtybuffer[offs] | bs2dirtybuffer[offs + 1] | bs2dirtybuffer[offs + 3])
-		{
-			int sx,sy;
-
-
-			bs2dirtybuffer[offs] = 0;
-			bs2dirtybuffer[offs + 1] = 0;
-			bs2dirtybuffer[offs + 3] = 0;
-
-			sx = offs/4 % 16;
-			sy = offs/4 / 16;
-
-			drawgfx(bs2tmpbitmap,Machine->gfx[3],
-					punchout_bigsprite2ram[offs] + 256 * (punchout_bigsprite2ram[offs + 1] & 0x0f),
-					(punchout_bigsprite2ram[offs + 3] & 0x3f) + 64 * bottom_palette_bank,
-					punchout_bigsprite2ram[offs + 3] & 0x80,0,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-
-
-	/* copy the character mapped graphics */
-	{
-		int scroll[64];
-
-
-		for (offs = 0;offs < TOP_MONITOR_ROWS;offs++)
-			scroll[offs] = 0;
-		for (offs = 0;offs < BOTTOM_MONITOR_ROWS;offs++)
-			scroll[TOP_MONITOR_ROWS + offs] = -(58 + punchout_scroll[2*(offs+2)] + 256 * (punchout_scroll[2*(offs+2) + 1] & 0x01));
-
-		copyscrollbitmap(bitmap,tmpbitmap,TOP_MONITOR_ROWS + BOTTOM_MONITOR_ROWS,scroll,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
-	}
-
-	/* copy the two big sprites */
-	{
-		int zoom;
-
-		zoom = punchout_bigsprite1[0] + 256 * (punchout_bigsprite1[1] & 0x0f);
-		if (zoom)
-		{
-			int sx,sy;
-			UINT32 startx,starty;
-			int incxx,incyy;
-
-			sx = 4096 - (punchout_bigsprite1[2] + 256 * (punchout_bigsprite1[3] & 0x0f));
-			if (sx > 4096-4*127) sx -= 4096;
-
-			sy = -(punchout_bigsprite1[4] + 256 * (punchout_bigsprite1[5] & 1));
-			if (sy <= -256 + zoom/0x40) sy += 512;
-
-			incxx = zoom << 6;
-			incyy = zoom << 6;
-
-			startx = -sx * 0x4000;
-			starty = -sy * 0x10000;
-			startx += 3740 * zoom;	/* adjustment to match the screen shots */
-			starty -= 178 * zoom;	/* and make the hall of fame picture nice */
-
-			if (punchout_bigsprite1[6] & 1)	/* flip x */
-			{
-				startx = (bs1tmpbitmap->width << 16) - startx - 1;
-				incxx = -incxx;
-			}
-
-			if (punchout_bigsprite1[7] & 1)	/* display in top monitor */
-			{
-				copyrozbitmap(bitmap,bs1tmpbitmap,
-					startx,starty + 0x200*(2) * zoom,
-					incxx,0,0,incyy,	/* zoom, no rotation */
-					0,	/* no wraparound */
-					&topvisiblearea,TRANSPARENCY_COLOR,1024,0);
-			}
-			if (punchout_bigsprite1[7] & 2)	/* display in bottom monitor */
-			{
-				copyrozbitmap(bitmap,bs1tmpbitmap,
-					startx,starty - 0x200*TOP_MONITOR_ROWS * zoom,
-					incxx,0,0,incyy,	/* zoom, no rotation */
-					0,	/* no wraparound */
-					&bottomvisiblearea,TRANSPARENCY_COLOR,1024,0);
-			}
-		}
-	}
-	{
-		int sx,sy;
-
-
-		sx = 512 - (punchout_bigsprite2[0] + 256 * (punchout_bigsprite2[1] & 1));
-		if (sx > 512-127) sx -= 512;
-		sx -= 55;	/* adjustment to match the screen shots */
-
-		sy = -punchout_bigsprite2[2] + 256 * (punchout_bigsprite2[3] & 1);
-		sy += 3;	/* adjustment to match the screen shots */
-
-		copybitmap(bitmap,bs2tmpbitmap,
-				punchout_bigsprite2[4] & 1,0,
-				sx,sy + 8*TOP_MONITOR_ROWS - 16,
-				&bottomvisiblearea,TRANSPARENCY_COLOR,1024);
+		if (punchout_bigsprite1[7] & 2)	/* display in bottom monitor */
+			drawbs1(bitmap, cliprect);
+		drawbs2(bitmap, cliprect);
 	}
 }
 
 
 VIDEO_UPDATE( armwrest )
 {
-	int offs;
-
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = punchout_videoram2_size - 2;offs >= 0;offs -= 2)
+	if (screen == 0)
 	{
-		if (dirtybuffer2[offs] | dirtybuffer2[offs + 1])
-		{
-			int sx,sy;
+		tilemap_draw(bitmap, cliprect, toptilemap, 0, 0);
 
-
-			dirtybuffer2[offs] = 0;
-			dirtybuffer2[offs + 1] = 0;
-
-			sx = offs/2 % 32;
-			sy = offs/2 / 32;
-
-			if (sy >= 32)
-			{
-				/* top screen */
-				sy -= 32;
-				drawgfx(tmpbitmap,Machine->gfx[0],
-						punchout_videoram2[offs] + 256 * (punchout_videoram2[offs + 1] & 0x03) +
-								8 * (punchout_videoram2[offs + 1] & 0x80),
-						((punchout_videoram2[offs + 1] & 0x7c) >> 2) + 64 * top_palette_bank,
-						0,0,
-						8*sx,8*sy - 16,
-						&topvisiblearea,TRANSPARENCY_NONE,0);
-			}
-			else
-				/* bottom screen background */
-				drawgfx(tmpbitmap,Machine->gfx[0],
-						punchout_videoram2[offs] + 256 * (punchout_videoram2[offs + 1] & 0x03),
-						128 + ((punchout_videoram2[offs + 1] & 0x7c) >> 2) + 64 * bottom_palette_bank,
-						punchout_videoram2[offs + 1] & 0x80,0,
-						8*sx,8*sy + 8*TOP_MONITOR_ROWS - 16,
-						&backgroundvisiblearea,TRANSPARENCY_NONE,0);
-		}
+		if (punchout_bigsprite1[7] & 1)	/* display in top monitor */
+			drawbs1(bitmap, cliprect);
 	}
-
-	for (offs = punchout_bigsprite1ram_size - 4;offs >= 0;offs -= 4)
+	else
 	{
-		if (bs1dirtybuffer[offs] | bs1dirtybuffer[offs + 1] | bs1dirtybuffer[offs + 3])
-		{
-			int sx,sy;
+		tilemap_draw(bitmap, cliprect, bottilemap, 0, 0);
 
+		if (punchout_bigsprite1[7] & 2)	/* display in bottom monitor */
+			drawbs1(bitmap, cliprect);
+		drawbs2(bitmap, cliprect);
 
-			bs1dirtybuffer[offs] = 0;
-			bs1dirtybuffer[offs + 1] = 0;
-			bs1dirtybuffer[offs + 3] = 0;
-
-			sx = offs/4 % 16;
-			sy = offs/4 / 16;
-			if (sy >= 16)
-			{
-				sy -= 16;
-				sx += 16;
-			}
-
-			drawgfx(bs1tmpbitmap,Machine->gfx[2],
-					punchout_bigsprite1ram[offs] + 256 * (punchout_bigsprite1ram[offs + 1] & 0x1f),
-					(punchout_bigsprite1ram[offs + 3] & 0x1f) + 32 * bottom_palette_bank,
-					punchout_bigsprite1ram[offs + 3] & 0x80,0,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-
-	for (offs = punchout_bigsprite2ram_size - 4;offs >= 0;offs -= 4)
-	{
-		if (bs2dirtybuffer[offs] | bs2dirtybuffer[offs + 1] | bs2dirtybuffer[offs + 3])
-		{
-			int sx,sy;
-
-
-			bs2dirtybuffer[offs] = 0;
-			bs2dirtybuffer[offs + 1] = 0;
-			bs2dirtybuffer[offs + 3] = 0;
-
-			sx = offs/4 % 16;
-			sy = offs/4 / 16;
-
-			drawgfx(bs2tmpbitmap,Machine->gfx[3],
-					punchout_bigsprite2ram[offs] + 256 * (punchout_bigsprite2ram[offs + 1] & 0x0f),
-					(punchout_bigsprite2ram[offs + 3] & 0x3f) + 64 * bottom_palette_bank,
-					punchout_bigsprite2ram[offs + 3] & 0x80,0,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-
-
-	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
-
-
-	/* copy the two big sprites */
-	{
-		int zoom;
-
-		zoom = punchout_bigsprite1[0] + 256 * (punchout_bigsprite1[1] & 0x0f);
-		if (zoom)
-		{
-			int sx,sy;
-			UINT32 startx,starty;
-			int incxx,incyy;
-
-			sx = 4096 - (punchout_bigsprite1[2] + 256 * (punchout_bigsprite1[3] & 0x0f));
-			if (sx > 4096-4*127) sx -= 4096;
-
-			sy = -(punchout_bigsprite1[4] + 256 * (punchout_bigsprite1[5] & 1));
-			if (sy <= -256 + zoom/0x40) sy += 512;
-
-			incxx = zoom << 6;
-			incyy = zoom << 6;
-
-			startx = -sx * 0x4000;
-			starty = -sy * 0x10000;
-			startx += 3740 * zoom;	/* adjustment to match the screen shots */
-			starty -= 178 * zoom;	/* and make the hall of fame picture nice */
-
-			if (punchout_bigsprite1[6] & 1)	/* flip x */
-			{
-				startx = (bs1tmpbitmap->width << 16) - startx - 1;
-				incxx = -incxx;
-			}
-
-			if (punchout_bigsprite1[7] & 1)	/* display in top monitor */
-			{
-				copyrozbitmap(bitmap,bs1tmpbitmap,
-					startx,starty + 0x200*(2) * zoom,
-					incxx,0,0,incyy,	/* zoom, no rotation */
-					0,	/* no wraparound */
-					&topvisiblearea,TRANSPARENCY_COLOR,1024,0);
-			}
-			if (punchout_bigsprite1[7] & 2)	/* display in bottom monitor */
-			{
-				copyrozbitmap(bitmap,bs1tmpbitmap,
-					startx,starty - 0x200*(TOP_MONITOR_ROWS-2) * zoom,
-					incxx,0,0,incyy,	/* zoom, no rotation */
-					0,	/* no wraparound */
-					&bottomvisiblearea,TRANSPARENCY_COLOR,1024,0);
-			}
-		}
-	}
-	{
-		int sx,sy;
-
-
-		sx = 512 - (punchout_bigsprite2[0] + 256 * (punchout_bigsprite2[1] & 1));
-		if (sx > 512-127) sx -= 512;
-		sx -= 55;	/* adjustment to match the screen shots */
-
-		sy = -punchout_bigsprite2[2] + 256 * (punchout_bigsprite2[3] & 1);
-		sy += 3;	/* adjustment to match the screen shots */
-
-		copybitmap(bitmap,bs2tmpbitmap,
-				punchout_bigsprite2[4] & 1,0,
-				sx,sy + 8*TOP_MONITOR_ROWS - 16,
-				&bottomvisiblearea,TRANSPARENCY_COLOR,1024);
-	}
-
-
-	/* draw the foregound chars */
-	for (offs = videoram_size - 2;offs >= 0;offs -= 2)
-	{
-		int sx,sy;
-
-
-		dirtybuffer[offs] = 0;
-		dirtybuffer[offs + 1] = 0;
-
-		sx = offs/2 % 32;
-		sy = offs/2 / 32;
-
-		drawgfx(bitmap,Machine->gfx[1],
-				videoram[offs] + 256 * (videoram[offs + 1] & 0x07),
-				((videoram[offs + 1] & 0xf8) >> 3) + 32 * bottom_palette_bank,
-				videoram[offs + 1] & 0x80,0,
-				8*sx,8*sy + 8*TOP_MONITOR_ROWS - 16,
-				&backgroundvisiblearea,TRANSPARENCY_PEN,7);
+		tilemap_draw(bitmap, cliprect, fgtilemap, 0, 0);
 	}
 }

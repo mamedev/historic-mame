@@ -111,6 +111,7 @@
 ***************************************************************************/
 
 extern rgb_t *game_palette;
+extern rgb_t *adjusted_palette;
 extern UINT32 direct_rgb_components[3];
 extern UINT16 *palette_shadow_table;
 

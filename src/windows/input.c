@@ -1171,7 +1171,8 @@ void win_shutdown_input(void)
 	dinput = NULL;
 
 	// release lock
-	osd_lock_free(raw_mouse_lock);
+	if (raw_mouse_lock != NULL)
+		osd_lock_free(raw_mouse_lock);
 }
 
 

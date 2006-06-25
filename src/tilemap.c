@@ -383,6 +383,16 @@ static void pdo16pal( UINT16 *dest, const UINT16 *source, int count, UINT8 *pri,
 }
 #endif
 
+static void pdo16palnp( UINT16 *dest, const UINT16 *source, int count, UINT8 *pri, UINT32 pcode )
+{
+	int pal = pcode >> 16;
+	int i;
+	for( i=0; i<count; i++ )
+	{
+		dest[i] = source[i] + pal;
+	}
+}
+
 #ifndef pdo16np
 static void pdo16np( UINT16 *dest, const UINT16 *source, int count, UINT8 *pri, UINT32 pcode )
 {
@@ -401,6 +411,16 @@ static void pdo15( UINT16 *dest, const UINT16 *source, int count, UINT8 *pri, UI
 	}
 }
 
+static void pdo15np( UINT16 *dest, const UINT16 *source, int count, UINT8 *pri, UINT32 pcode )
+{
+	int i;
+	pen_t *clut = &Machine->remapped_colortable[pcode >> 16];
+	for( i=0; i<count; i++ )
+	{
+		dest[i] = clut[source[i]];
+	}
+}
+
 #ifndef pdo32
 static void pdo32( UINT32 *dest, const UINT16 *source, int count, UINT8 *pri, UINT32 pcode )
 {
@@ -413,6 +433,16 @@ static void pdo32( UINT32 *dest, const UINT16 *source, int count, UINT8 *pri, UI
 	}
 }
 #endif
+
+static void pdo32np( UINT32 *dest, const UINT16 *source, int count, UINT8 *pri, UINT32 pcode )
+{
+	int i;
+	pen_t *clut = &Machine->remapped_colortable[pcode >> 16];
+	for( i=0; i<count; i++ )
+	{
+		dest[i] = clut[source[i]];
+	}
+}
 
 #ifndef npdo32
 static void npdo32( UINT32 *dest, const UINT16 *source, int count, UINT8 *pri, UINT32 pcode )
@@ -1652,17 +1682,17 @@ void tilemap_nb_draw( mame_bitmap *dest, UINT32 number, UINT32 scrollx, UINT32 s
 	switch( dest->depth )
 	{
 	case 32:
-		blit.draw_opaque = (blitopaque_t)pdo32;
+		blit.draw_opaque = (blitopaque_t)pdo32np;
 		blit.screen_bitmap_pitch_line /= 4;
 		break;
 
 	case 15:
-		blit.draw_opaque = (blitopaque_t)pdo15;
+		blit.draw_opaque = (blitopaque_t)pdo15np;
 		blit.screen_bitmap_pitch_line /= 2;
 		break;
 
 	case 16:
-		blit.draw_opaque = (blitopaque_t)pdo16pal;
+		blit.draw_opaque = (blitopaque_t)pdo16palnp;
 		blit.screen_bitmap_pitch_line /= 2;
 		break;
 

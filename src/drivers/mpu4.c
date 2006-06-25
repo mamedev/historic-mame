@@ -227,7 +227,7 @@ Datasheets are available for the main components, The AGEMAME site mirrors a few
 #include "machine/vacfdisp.h"  // vfd
 #include "machine/mmtr.h"
 
-#define VERBOSE 1
+#define VERBOSE 0
 
 #if VERBOSE
 #define LOG(x)	logerror x
@@ -235,9 +235,9 @@ Datasheets are available for the main components, The AGEMAME site mirrors a few
 #define LOG(x)
 #endif
 
-#define LOGSTUFF logerror
+#define LOGSTUFF ui_popup
 
-#define LOG_IC3(x)	logerror x
+#define LOG_IC3(x)	//logerror x
 
 #define LOG_IC8(x)	//logerror x
 
@@ -432,7 +432,7 @@ static MACHINE_RESET( mpu4_vid )
 
 static void cpu0_irq(int state)
 {
-	cpunum_set_input_line(0, M6809_IRQ_LINE, PULSE_LINE);
+	cpunum_set_input_line(0, M6809_IRQ_LINE, ASSERT_LINE);
 }
 
 
@@ -449,7 +449,7 @@ static WRITE8_HANDLER( bankswitch_w )
 static WRITE8_HANDLER( ic2_o1_callback )
 {
 	ptm6840_set_c2(0,data);
-
+	logerror("PTM C2 triggered %d\n",data);
 	// copy output value to IC2 c2
 	// this output is the clock for timer2,
 	// the output from timer2 is the input clock for timer3
@@ -471,8 +471,8 @@ static WRITE8_HANDLER( ic2_o3_callback )
 
 static const ptm6840_interface ptm_ic2_intf =
 {
-	1250,
-	1250,	1250,	1250,
+	100000,
+	0,	0,	0,
 	ic2_o1_callback, ic2_o2_callback, ic2_o3_callback,
 	cpu0_irq
 };
@@ -486,8 +486,8 @@ static void cpu1_irq(int state)
 
 static const ptm6840_interface ptm_vid_intf =
 {
-	1250,
-	1250,	1250,	1250,
+	1000000,
+	1000000,	1000000,	1000000,
 	NULL, NULL, NULL,
 	cpu1_irq
 };

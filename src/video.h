@@ -39,7 +39,6 @@ struct _screen_config
 	UINT32				palette_base;		/* base palette entry for this screen */
 	float				refresh_rate;		/* refresh rate */
 	double				vblank_time;		/* duration of a VBLANK */
-	float				aspect;				/* aspect ratio of the screen */
 	int					maxwidth, maxheight;/* maximum width/height in pixels */
 	rectangle			default_visible_area;/* default visible area */
 };

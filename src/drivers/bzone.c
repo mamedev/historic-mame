@@ -205,9 +205,8 @@
 #include "artwork.h"
 #include "bzone.h"
 
-#ifdef NEW_RENDER
-#include "render.h"
-#endif
+extern const char layout_astdelux[];
+#include "bzone.lh"
 
 #define IN0_3KHZ (1<<7)
 #define IN0_VG_HALT (1<<6)
@@ -307,54 +306,10 @@ static READ8_HANDLER( redbaron_joy_r )
  *
  *************************************/
 
-static const char bzone_layout[] =
-	"<?xml version=\"1.0\"?>"
-	"<mamelayout version=\"2\">"
-		"<element name=\"overlay\">"
-			"<rect>"
-				"<bounds left=\"0\" top=\"0\" right=\"1\" bottom=\"0.2\" />"
-				"<color red=\"1.0\" green=\"0.125\" blue=\"0.125\" />"
-			"</rect>"
-			"<rect>"
-				"<bounds left=\"0\" top=\"0.2\" right=\"1\" bottom=\"1.0\" />"
-				"<color red=\"0.125\" green=\"1.0\" blue=\"0.125\" />"
-			"</rect>"
-		"</element>"
-		"<view name=\"Built-in Overlay\">"
-			"<screen index=\"0\">"
-				"<bounds left=\"0\" top=\"0\" right=\"4\" bottom=\"3\" />"
-			"</screen>"
-			"<overlay element=\"overlay\">"
-				"<bounds left=\"0\" top=\"0\" right=\"4\" bottom=\"3\" />"
-			"</overlay>"
-		"</view>"
-	"</mamelayout>";
-
 OVERLAY_START( bzone_overlay )
 	OVERLAY_RECT( 0.0, 0.0, 1.0, 0.2, MAKE_ARGB(0x04,0xff,0x20,0x20) )
 	OVERLAY_RECT( 0.0, 0.2, 1.0, 1.0, MAKE_ARGB(0x04,0x20,0xff,0x20) )
 OVERLAY_END
-
-
-static const char redbaron_layout[] =
-	"<?xml version=\"1.0\"?>"
-	"<mamelayout version=\"2\">"
-		"<element name=\"overlay\">"
-			"<rect>"
-				"<bounds left=\"0\" top=\"0\" right=\"1\" bottom=\"1\" />"
-				"<color red=\"0.5333\" green=\"1.0\" blue=\"1.0\" />"
-			"</rect>"
-		"</element>"
-		"<view name=\"Built-in Overlay\">"
-			"<screen index=\"0\">"
-				"<bounds left=\"0\" top=\"0\" right=\"4\" bottom=\"3\" />"
-			"</screen>"
-			"<overlay element=\"overlay\">"
-				"<bounds left=\"0\" top=\"0\" right=\"4\" bottom=\"3\" />"
-			"</overlay>"
-		"</view>"
-	"</mamelayout>";
-
 
 
 
@@ -837,8 +792,8 @@ static DRIVER_INIT( redbaron )
  *
  *************************************/
 
-GAMEL(1980, bzone,    0,     bzone,    bzone,    bzone,    ROT0, "Atari", "Battle Zone (set 1)", 0, bzone_layout )
-GAMEL(1980, bzone2,   bzone, bzone,    bzone,    bzone,    ROT0, "Atari", "Battle Zone (set 2)", 0, bzone_layout )
-GAMEL(1980, bzonec,   bzone, bzone,    bzone,    bzone,    ROT0, "Atari", "Battle Zone (cocktail)", GAME_NO_COCKTAIL, bzone_layout )
+GAMEL(1980, bzone,    0,     bzone,    bzone,    bzone,    ROT0, "Atari", "Battle Zone (set 1)", 0, layout_bzone )
+GAMEL(1980, bzone2,   bzone, bzone,    bzone,    bzone,    ROT0, "Atari", "Battle Zone (set 2)", 0, layout_bzone )
+GAMEL(1980, bzonec,   bzone, bzone,    bzone,    bzone,    ROT0, "Atari", "Battle Zone (cocktail)", GAME_NO_COCKTAIL, layout_bzone )
 GAME( 1980, bradley,  0,     bradley,  bradley,  bradley,  ROT0, "Atari", "Bradley Trainer", 0 )
-GAMEL(1980, redbaron, 0,     redbaron, redbaron, redbaron, ROT0, "Atari", "Red Baron", 0, redbaron_layout )
+GAMEL(1980, redbaron, 0,     redbaron, redbaron, redbaron, ROT0, "Atari", "Red Baron", 0, layout_astdelux )

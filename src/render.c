@@ -10,10 +10,10 @@
 ****************************************************************************
 
     Things that are still broken:
-        * no way to view tilemaps/charsets
         * LEDs missing
         * listxml output needs to be cleaned up
         * UI line drawing tends to overshoot or be offscreen at low resolutions
+        * palette_set_brightness
 
     OSD-specific things that are busted:
         * -full_screen_gamma
@@ -21,6 +21,7 @@
         * running fullscreen with not enough screens should be prevented
 
     To do features:
+        * optimize for elements that are empty
         * further optimization of clearing for multi-screen views
         * remove aspect ratio from machine driver
         * positioning of game screens
@@ -187,16 +188,28 @@
 
 
 /***************************************************************************
+    STANDARD LAYOUTS
+***************************************************************************/
+
+#include "horizont.lh"
+#include "vertical.lh"
+#include "dualhsxs.lh"
+#include "dualhovu.lh"
+#include "triphsxs.lh"
+
+
+
+/***************************************************************************
     CONSTANTS
 ***************************************************************************/
 
 #define LAYOUT_VERSION			2
 
-#define MAX_TEXTURE_SCALES		4
+#define MAX_TEXTURE_SCALES		8
 
 #define NUM_PRIMLISTS			2
 
-#define DUAL_SCREEN_SEPARATION	0.01
+#define MAX_CLEAR_EXTENTS		1000
 
 enum
 {
@@ -239,13 +252,11 @@ enum
     TYPE DEFINITIONS
 ***************************************************************************/
 
-typedef const char *(*layout_generator)(int, int);
-
-
 /* typedef struct _render_texture render_texture; -- defined in render.h */
 /* typedef struct _render_target render_target; -- defined in render.h */
 /* typedef struct _render_container render_container; -- defined in render.h */
 typedef struct _object_transform object_transform;
+typedef struct _scaled_texture scaled_texture;
 typedef struct _element_component element_component;
 typedef struct _element_texture element_texture;
 typedef struct _layout_element layout_element;
@@ -254,6 +265,14 @@ typedef struct _view_item view_item;
 typedef struct _layout_view layout_view;
 typedef struct _layout_file layout_file;
 typedef struct _container_item container_item;
+
+
+/* a render_ref is an abstract reference to an internal object of some sort */
+struct _render_ref
+{
+	render_ref *		next;				/* link to the next reference */
+	void *				refptr;				/* reference pointer */
+};
 
 
 /* an object_transform is used to track transformations when building an object list */
@@ -267,7 +286,6 @@ struct _object_transform
 
 
 /* a scaled_texture contains a single scaled entry for a texture */
-typedef struct _scaled_texture scaled_texture;
 struct _scaled_texture
 {
 	mame_bitmap *		bitmap;				/* final bitmap */
@@ -377,7 +395,6 @@ struct _render_target
 	INT32				height;				/* height in pixels */
 	float				pixel_aspect;		/* aspect ratio of individual pixels */
 	int					orientation;		/* orientation */
-	int					disableui;			/* disable the UI on this target? */
 };
 
 
@@ -411,9 +428,10 @@ struct _render_container
 /* array of live targets */
 static render_target *targetlist;
 
-/* free list for render_primitives */
+/* free lists */
 static render_primitive *render_primitive_free_list;
 static container_item *container_item_free_list;
+static render_ref *render_ref_free_list;
 
 /* containers for the UI and for screens */
 static render_container *ui_container;
@@ -421,6 +439,10 @@ static render_container *screen_container[MAX_SCREENS];
 
 /* list of view item states */
 static view_item_state *item_statelist;
+
+/* variables for tracking extents to clear */
+static INT32 clear_extents[MAX_CLEAR_EXTENTS];
+static INT32 clear_extent_count;
 
 
 
@@ -432,12 +454,16 @@ static view_item_state *item_statelist;
 static void render_exit(void);
 
 /* render targets */
+static void release_render_list(render_primitive_list *list);
 static void add_container_primitives(render_primitive_list *list, const object_transform *xform, const render_container *container, int blendmode);
 static void add_element_primitives(render_primitive_list *list, const object_transform *xform, const layout_element *element, int state, int blendmode);
 static void add_clear_and_optimize_primitive_list(render_target *target, render_primitive_list *list);
 
+/* render references */
+static void invalidate_all_render_ref(void *refptr);
+
 /* render textures */
-static void render_texture_get_scaled(render_texture *texture, UINT32 dwidth, UINT32 dheight, render_texinfo *texinfo);
+static void render_texture_get_scaled(render_texture *texture, UINT32 dwidth, UINT32 dheight, render_texinfo *texinfo, render_ref **reflist);
 
 /* render containers */
 static render_container *render_container_alloc(void);
@@ -469,21 +495,6 @@ static void layout_file_free(layout_file *file);
 static void layout_view_free(layout_view *view);
 static void layout_element_free(layout_element *element);
 
-/* layout generators */
-static const char *layout_make_standard(int screen, int numscreens);
-static const char *layout_make_dual(int screen, int numscreens);
-static const char *layout_make_cocktail(int screen, int numscreens);
-static const char *layout_make_native(int screen, int numscreens);
-
-static const layout_generator builtin_layout_generator[] =
-{
-	layout_make_standard,
-	layout_make_native,
-	layout_make_dual,
-	layout_make_cocktail,
-	NULL
-};
-
 
 
 /***************************************************************************
@@ -502,14 +513,40 @@ INLINE float round_nearest(float f)
 
 
 /*-------------------------------------------------
-    copy_string - make a copy of a string
+    decimal_to_fraction - convert a (small) fp
+    value to a numerator/denominator
 -------------------------------------------------*/
 
-INLINE const char *copy_string(const char *string)
+INLINE void decimal_to_fraction(float decimal, int *num, int *den)
 {
-	char *newstring = malloc_or_die(strlen(string) + 1);
-	strcpy(newstring, string);
-	return newstring;
+	/* find integral aspect ratios */
+	for (*den = 1; *den < 1000; *den += 1)
+	{
+		float testnum = *den * decimal;
+		float intnum = round_nearest(testnum);
+		if (fabs(testnum - intnum) < 0.001f)
+			break;
+	}
+	*num = round_nearest(*den * decimal);
+}
+
+
+/*-------------------------------------------------
+    reduce_fraction - reduce a fraction by
+    dividing out common factors
+-------------------------------------------------*/
+
+INLINE void reduce_fraction(int *num, int *den)
+{
+	int div;
+
+	/* keep trying to divide down the fraction as much as possible */
+	for (div = MAX(*num,*den) / 2; div > 1; div--)
+		if (((*num / div) * div) == *num && ((*den / div) * div) == *den)
+		{
+			*num /= div;
+			*den /= div;
+		}
 }
 
 
@@ -636,6 +673,18 @@ INLINE UINT8 compute_brightness(rgb_t rgb)
 
 
 /*-------------------------------------------------
+    copy_string - make a copy of a string
+-------------------------------------------------*/
+
+INLINE const char *copy_string(const char *string)
+{
+	char *newstring = malloc_or_die(strlen(string) + 1);
+	strcpy(newstring, string);
+	return newstring;
+}
+
+
+/*-------------------------------------------------
     alloc_container_item - allocate a new
     container item object
 --------------------------------------------------*/
@@ -713,6 +762,62 @@ INLINE void free_render_primitive(render_primitive *element)
 }
 
 
+/*-------------------------------------------------
+    add_render_ref - add a new reference
+-------------------------------------------------*/
+
+INLINE void add_render_ref(render_ref **list, void *refptr)
+{
+	render_ref *ref;
+
+	/* skip if we already have one */
+	for (ref = *list; ref != NULL; ref = ref->next)
+		if (ref->refptr == refptr)
+			return;
+
+	/* allocate from the free list if we can; otherwise, malloc a new item */
+	ref = render_ref_free_list;
+	if (ref != NULL)
+		render_ref_free_list = ref->next;
+	else
+		ref = malloc_or_die(sizeof(*ref));
+
+	/* set the refptr and link us into the list */
+	ref->refptr = refptr;
+	ref->next = *list;
+	*list = ref;
+}
+
+
+/*-------------------------------------------------
+    has_render_ref - find a refptr in a reference
+    list
+-------------------------------------------------*/
+
+INLINE int has_render_ref(render_ref *list, void *refptr)
+{
+	render_ref *ref;
+
+	/* skip if we already have one */
+	for (ref = list; ref != NULL; ref = ref->next)
+		if (ref->refptr == refptr)
+			return TRUE;
+	return FALSE;
+}
+
+
+/*-------------------------------------------------
+    free_render_ref - free a previously
+    allocated render reference
+-------------------------------------------------*/
+
+INLINE void free_render_ref(render_ref *ref)
+{
+	ref->next = render_ref_free_list;
+	render_ref_free_list = ref;
+}
+
+
 
 /***************************************************************************
 
@@ -776,6 +881,14 @@ static void render_exit(void)
 		free(temp);
 	}
 
+	/* free the render refs */
+	while (render_ref_free_list != NULL)
+	{
+		render_ref *temp = render_ref_free_list;
+		render_ref_free_list = temp->next;
+		free(temp);
+	}
+
 	/* free the container items */
 	while (container_item_free_list != NULL)
 	{
@@ -819,16 +932,24 @@ UINT32 render_get_live_screens_mask(void)
 
 
 /*-------------------------------------------------
+    render_get_ui_target - return the UI target
+-------------------------------------------------*/
+
+render_target *render_get_ui_target(void)
+{
+	/* this is a bit of a kludge; right now the UI target is always the first */
+	return targetlist;
+}
+
+
+/*-------------------------------------------------
     render_get_ui_aspect - return the aspect
     ratio for UI fonts
 -------------------------------------------------*/
 
 float render_get_ui_aspect(void)
 {
-	render_target *target = targetlist;
-
-	/* this is a bit of a kludge; we compute the UI aspect based on the orientation */
-	/* and pixel_aspect of the first target */
+	render_target *target = render_get_ui_target();
 	if (target != NULL)
 	{
 		int orient = orientation_add(target->orientation, ui_container->orientation);
@@ -871,7 +992,6 @@ float render_get_ui_aspect(void)
 
 render_target *render_target_alloc(const char *layoutfile, int singleview)
 {
-	const layout_generator *generator;
 	layout_file **nextfile;
 	render_target *target;
 	render_target **nextptr;
@@ -928,6 +1048,15 @@ render_target *render_target_alloc(const char *layoutfile, int singleview)
 				nextfile = &(*nextfile)->next;
 		}
 	}
+	if (!singleview || target->filelist == NULL)
+	{
+		if (Machine->drv->default_layout != NULL)
+		{
+			*nextfile = load_layout_file(Machine->drv->default_layout);
+			if (*nextfile != NULL)
+				nextfile = &(*nextfile)->next;
+		}
+	}
 
 	/* try to load another file based on the parent driver name */
 	if (!singleview || target->filelist == NULL)
@@ -941,22 +1070,16 @@ render_target *render_target_alloc(const char *layoutfile, int singleview)
 		}
 	}
 
-	/* now do the built-in layouts */
-	for (generator = &builtin_layout_generator[0]; *generator != NULL; generator++)
-		for (scrnum = 0; scrnum < scrcount; scrnum++)
-			if (!singleview || target->filelist == NULL)
-			{
-				const char *layout = (**generator)(scrnum, scrcount);
-
-				/* load it */
-				if (layout != NULL)
-				{
-					*nextfile = load_layout_file(giant_string_buffer);
-					assert_always(*nextfile != NULL, "Couldn't parse default layout??");
-					if (*nextfile != NULL)
-						nextfile = &(*nextfile)->next;
-				}
-			}
+	/* now do the built-in layouts for single-screen games */
+	if ((!singleview || target->filelist == NULL) && Machine->drv->screen[1].tag == NULL)
+	{
+		if (Machine->gamedrv->flags & ORIENTATION_SWAP_XY)
+			*nextfile = load_layout_file(layout_vertical);
+		else
+			*nextfile = load_layout_file(layout_horizont);
+		assert_always(*nextfile != NULL, "Couldn't parse default layout??");
+		nextfile = &(*nextfile)->next;
+	}
 
 	/* set the current view to the first one */
 	render_target_set_view(target, 0);
@@ -981,14 +1104,7 @@ void render_target_free(render_target *target)
 	/* free any primitives */
 	for (listnum = 0; listnum < NUM_PRIMLISTS; listnum++)
 	{
-		osd_lock_acquire(target->primlist[listnum].lock);
-		while (target->primlist[listnum].head != NULL)
-		{
-			render_primitive *temp = target->primlist[listnum].head;
-			target->primlist[listnum].head = temp->next;
-			free_render_primitive(temp);
-		}
-		osd_lock_release(target->primlist[listnum].lock);
+		release_render_list(&target->primlist[listnum]);
 		osd_lock_free(target->primlist[listnum].lock);
 	}
 
@@ -1002,6 +1118,23 @@ void render_target_free(render_target *target)
 
 	/* free the target itself */
 	free(target);
+}
+
+
+
+/*-------------------------------------------------
+    render_target_get_bounds - get the bounds and
+    pixel aspect of a target
+-------------------------------------------------*/
+
+void render_target_get_bounds(render_target *target, INT32 *width, INT32 *height, float *pixel_aspect)
+{
+	if (width != NULL)
+		*width = target->width;
+	if (height != NULL)
+		*height = target->height;
+	if (pixel_aspect != NULL)
+		*pixel_aspect = target->pixel_aspect;
 }
 
 
@@ -1119,6 +1252,27 @@ const char *render_target_get_view_name(render_target *target, int viewindex)
 				return view->name;
 
 	return NULL;
+}
+
+
+/*-------------------------------------------------
+    render_target_get_view_screens - return a
+    bitmask of which screens are visible on a
+    given view
+-------------------------------------------------*/
+
+UINT32 render_target_get_view_screens(render_target *target, int viewindex)
+{
+	layout_file *file;
+	layout_view *view;
+
+	/* return the name from the indexed view */
+	for (file = target->filelist; file != NULL; file = file->next)
+		for (view = file->viewlist; view != NULL; view = view->next)
+			if (viewindex-- == 0)
+				return view->screens;
+
+	return 0;
 }
 
 
@@ -1263,13 +1417,7 @@ const render_primitive_list *render_target_get_primitives(render_target *target)
 	}
 
 	/* free any previous primitives */
-	while (target->primlist[listnum].head != NULL)
-	{
-		render_primitive *temp = target->primlist[listnum].head;
-		target->primlist[listnum].head = temp->next;
-		free_render_primitive(temp);
-	}
-	target->primlist[listnum].nextptr = &target->primlist[listnum].head;
+	release_render_list(&target->primlist[listnum]);
 
 	/* start with a clip push primitive */
 	prim = alloc_render_primitive(RENDER_PRIMITIVE_CLIP_PUSH);
@@ -1336,8 +1484,8 @@ const render_primitive_list *render_target_get_primitives(render_target *target)
 		}
 	}
 
-	/* process the UI if not disabled */
-	if (!target->disableui)
+	/* process the UI if we are the UI target */
+	if (target == render_get_ui_target())
 	{
 		/* compute the transform for the UI */
 		ui_xform.xoffs = 0;
@@ -1359,6 +1507,38 @@ const render_primitive_list *render_target_get_primitives(render_target *target)
 	add_clear_and_optimize_primitive_list(target, &target->primlist[listnum]);
 	osd_lock_release(target->primlist[listnum].lock);
 	return &target->primlist[listnum];
+}
+
+
+/*-------------------------------------------------
+    release_render_list - release the contents of
+    a render list
+-------------------------------------------------*/
+
+static void release_render_list(render_primitive_list *list)
+{
+	/* take the lock */
+	osd_lock_acquire(list->lock);
+
+	/* free everything on the list */
+	while (list->head != NULL)
+	{
+		render_primitive *temp = list->head;
+		list->head = temp->next;
+		free_render_primitive(temp);
+	}
+	list->nextptr = &list->head;
+
+	/* release all our references */
+	while (list->reflist != NULL)
+	{
+		render_ref *temp = list->reflist;
+		list->reflist = temp->next;
+		free_render_ref(temp);
+	}
+
+	/* let other people at it again */
+	osd_lock_release(list->lock);
 }
 
 
@@ -1394,8 +1574,8 @@ static void add_container_primitives(render_primitive_list *list, const object_t
 		prim = alloc_render_primitive(0);
 		prim->bounds.x0 = round_nearest(xform->xoffs + bounds.x0 * xform->xscale);
 		prim->bounds.y0 = round_nearest(xform->yoffs + bounds.y0 * xform->yscale);
-		prim->bounds.x1 = prim->bounds.x0 + round_nearest((bounds.x1 - bounds.x0) * xform->xscale);
-		prim->bounds.y1 = prim->bounds.y0 + round_nearest((bounds.y1 - bounds.y0) * xform->yscale);
+		prim->bounds.x1 = round_nearest(xform->xoffs + bounds.x1 * xform->xscale);//prim->bounds.x0 + round_nearest((bounds.x1 - bounds.x0) * xform->xscale);
+		prim->bounds.y1 = round_nearest(xform->yoffs + bounds.y1 * xform->yscale);//prim->bounds.y0 + round_nearest((bounds.y1 - bounds.y0) * xform->yscale);
 		prim->color.r = xform->color.r * item->color.r;
 		prim->color.g = xform->color.g * item->color.g;
 		prim->color.b = xform->color.b * item->color.b;
@@ -1424,17 +1604,17 @@ static void add_container_primitives(render_primitive_list *list, const object_t
 				if (item->texture != NULL)
 				{
 					/* determine the final orientation */
-					orientation = orientation_add(PRIMFLAG_GET_TEXORIENT(item->flags), orientation);
+					int finalorient = orientation_add(PRIMFLAG_GET_TEXORIENT(item->flags), orientation);
 
 					/* based on the swap values, get the scaled final texture */
 					render_texture_get_scaled(item->texture,
-										(orientation & ORIENTATION_SWAP_XY) ? (prim->bounds.y1 - prim->bounds.y0) : (prim->bounds.x1 - prim->bounds.x0),
-										(orientation & ORIENTATION_SWAP_XY) ? (prim->bounds.x1 - prim->bounds.x0) : (prim->bounds.y1 - prim->bounds.y0),
-										&prim->texture);
+										(finalorient & ORIENTATION_SWAP_XY) ? (prim->bounds.y1 - prim->bounds.y0) : (prim->bounds.x1 - prim->bounds.x0),
+										(finalorient & ORIENTATION_SWAP_XY) ? (prim->bounds.x1 - prim->bounds.x0) : (prim->bounds.y1 - prim->bounds.y0),
+										&prim->texture, &list->reflist);
 
 					/* apply the final orientation from the quad flags and then build up the final flags */
 					prim->flags = (item->flags & ~(PRIMFLAG_TEXORIENT_MASK | PRIMFLAG_BLENDMODE_MASK | PRIMFLAG_TEXFORMAT_MASK)) |
-									PRIMFLAG_TEXORIENT(orientation) |
+									PRIMFLAG_TEXORIENT(finalorient) |
 									PRIMFLAG_BLENDMODE(blendmode) |
 									PRIMFLAG_TEXFORMAT(item->texture->format);
 				}
@@ -1483,8 +1663,216 @@ static void add_element_primitives(render_primitive_list *list, const object_tra
 	set_bounds_wh(&prim->bounds, round_nearest(xform->xoffs), round_nearest(xform->yoffs), width, height);
 	prim->color = xform->color;
 	prim->flags = PRIMFLAG_TEXORIENT(xform->orientation) | PRIMFLAG_BLENDMODE(blendmode) | PRIMFLAG_TEXFORMAT(texture->format);
-	render_texture_get_scaled(texture, (xform->orientation & ORIENTATION_SWAP_XY) ? height : width, (xform->orientation & ORIENTATION_SWAP_XY) ? width : height, &prim->texture);
+	render_texture_get_scaled(texture, (xform->orientation & ORIENTATION_SWAP_XY) ? height : width, (xform->orientation & ORIENTATION_SWAP_XY) ? width : height, &prim->texture, &list->reflist);
 	append_render_primitive(list, prim);
+}
+
+
+/*-------------------------------------------------
+    init_clear_extents - reset the extents list
+-------------------------------------------------*/
+
+static void init_clear_extents(INT32 width, INT32 height)
+{
+	clear_extents[0] = -height;
+	clear_extents[1] = 1;
+	clear_extents[2] = width;
+	clear_extent_count = 3;
+}
+
+
+/*-------------------------------------------------
+    remove_clear_extent - remove a quad from the
+    list of stuff to clear, unless it overlaps
+    a previous quad
+-------------------------------------------------*/
+
+static int remove_clear_extent(const render_bounds *bounds)
+{
+	INT32 *max = &clear_extents[MAX_CLEAR_EXTENTS];
+	INT32 *last = &clear_extents[clear_extent_count];
+	INT32 *ext = &clear_extents[0];
+	INT32 boundsx0 = round_nearest(bounds->x0);
+	INT32 boundsx1 = round_nearest(bounds->x1);
+	INT32 boundsy0 = round_nearest(bounds->y0);
+	INT32 boundsy1 = round_nearest(bounds->y1);
+	INT32 y0, y1 = 0;
+
+	/* loop over Y extents */
+	while (ext < last)
+	{
+		INT32 *linelast;
+
+		/* first entry of each line should always be negative */
+		assert(ext[0] < 0.0f);
+		y0 = y1;
+		y1 = y0 - ext[0];
+
+		/* do we intersect this extent? */
+		if (boundsy0 < y1 && boundsy1 > y0)
+		{
+			INT32 *xext;
+			INT32 x0, x1 = 0;
+
+			/* split the top */
+			if (y0 < boundsy0)
+			{
+				int diff = boundsy0 - y0;
+
+				/* make a copy of this extent */
+				memmove(&ext[ext[1] + 2], &ext[0], (last - ext) * sizeof(*ext));
+				last += ext[1] + 2;
+				assert_always(last < max, "Ran out of clear extents!\n");
+
+				/* split the extent between pieces */
+				ext[ext[1] + 2] = -(-ext[0] - diff);
+				ext[0] = -diff;
+
+				/* advance to the new extent */
+				y0 -= ext[0];
+				ext += ext[1] + 2;
+				y1 = y0 - ext[0];
+			}
+
+			/* split the bottom */
+			if (y1 > boundsy1)
+			{
+				int diff = y1 - boundsy1;
+
+				/* make a copy of this extent */
+				memmove(&ext[ext[1] + 2], &ext[0], (last - ext) * sizeof(*ext));
+				last += ext[1] + 2;
+				assert_always(last < max, "Ran out of clear extents!\n");
+
+				/* split the extent between pieces */
+				ext[ext[1] + 2] = -diff;
+				ext[0] = -(-ext[0] - diff);
+
+				/* recompute y1 */
+				y1 = y0 - ext[0];
+			}
+
+			/* now remove the X extent */
+			linelast = &ext[ext[1] + 2];
+			xext = &ext[2];
+			while (xext < linelast)
+			{
+				x0 = x1;
+				x1 = x0 + xext[0];
+
+				/* do we fully intersect this extent? */
+				if (boundsx0 >= x0 && boundsx1 <= x1)
+				{
+					/* yes; split it */
+					memmove(&xext[2], &xext[0], (last - xext) * sizeof(*xext));
+					last += 2;
+					linelast += 2;
+					assert_always(last < max, "Ran out of clear extents!\n");
+
+					/* split this extent into three parts */
+					xext[0] = boundsx0 - x0;
+					xext[1] = boundsx1 - boundsx0;
+					xext[2] = x1 - boundsx1;
+
+					/* recompute x1 */
+					x1 = boundsx1;
+					xext += 2;
+				}
+
+				/* do we partially intersect this extent? */
+				else if (boundsx0 < x1 && boundsx1 > x0)
+					goto abort;
+
+				/* advance */
+				xext++;
+
+				/* do we partially intersect the next extent (which is a non-clear extent)? */
+				if (xext < linelast)
+				{
+					x0 = x1;
+					x1 = x0 + xext[0];
+					if (boundsx0 < x1 && boundsx1 > x0)
+						goto abort;
+					xext++;
+				}
+			}
+
+			/* update the count */
+			ext[1] = linelast - &ext[2];
+		}
+
+		/* advance to the next row */
+		ext += 2 + ext[1];
+	}
+
+	/* update the total count */
+	clear_extent_count = last - &clear_extents[0];
+	return TRUE;
+
+abort:
+	/* update the total count even on a failure as we may have split extents */
+	clear_extent_count = last - &clear_extents[0];
+	return FALSE;
+}
+
+
+/*-------------------------------------------------
+    add_clear_extents - add the accumulated
+    extents as a series of quads to clear
+-------------------------------------------------*/
+
+static void add_clear_extents(render_primitive_list *list)
+{
+	render_primitive *clearlist = NULL;
+	render_primitive **clearnext = &clearlist;
+	INT32 *last = &clear_extents[clear_extent_count];
+	INT32 *ext = &clear_extents[0];
+	INT32 y0, y1 = 0;
+
+	/* loop over all extents */
+	while (ext < last)
+	{
+		INT32 *linelast = &ext[ext[1] + 2];
+		INT32 *xext = &ext[2];
+		INT32 x0, x1 = 0;
+
+		/* first entry should always be negative */
+		assert(ext[0] < 0);
+		y0 = y1;
+		y1 = y0 - ext[0];
+
+		/* now remove the X extent */
+		while (xext < linelast)
+		{
+			x0 = x1;
+			x1 = x0 + *xext++;
+
+			/* only add entries for non-zero widths */
+			if (x1 - x0 > 0)
+			{
+				render_primitive *prim = alloc_render_primitive(RENDER_PRIMITIVE_QUAD);
+				set_bounds_xy(&prim->bounds, (float)x0, (float)y0, (float)x1, (float)y1);
+				set_color(&prim->color, 1.0f, 0.0f, 0.0f, 0.0f);
+				prim->texture.base = NULL;
+				prim->flags = PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA);
+				*clearnext = prim;
+				clearnext = &prim->next;
+			}
+
+			/* skip the non-clearing extent */
+			x0 = x1;
+			x1 = x0 + *xext++;
+		}
+
+		/* advance to the next part */
+		ext += 2 + ext[1];
+	}
+
+	/* we know that the first primitive in the list will be the global clip */
+	/* so we insert the clears immediately after */
+	assert(list->head->type == RENDER_PRIMITIVE_CLIP_PUSH);
+	*clearnext = list->head->next;
+	list->head->next = clearlist;
 }
 
 
@@ -1497,116 +1885,68 @@ static void add_clear_and_optimize_primitive_list(render_target *target, render_
 {
 	render_bounds *clipstack[8];
 	render_bounds **clip = &clipstack[-1];
-	render_primitive *clearlist = NULL;
-	render_primitive **clearnext = &clearlist;
 	render_primitive *prim;
 
-	/* find the first quad in the list */
+	/* start with the assumption that we need to clear the whole screen */
+	init_clear_extents(target->width, target->height);
+
+	/* scan the list until we hit an intersection quad or a line */
 	for (prim = list->head; prim != NULL; prim = prim->next)
 	{
-		if (prim->type == RENDER_PRIMITIVE_CLIP_PUSH)
-			*++clip = &prim->bounds;
-		else if (prim->type == RENDER_PRIMITIVE_CLIP_POP)
-			clip--;
-		else if (prim->type == RENDER_PRIMITIVE_QUAD)
-			break;
-	}
-
-	/* if we got one, erase the areas on the outside of it */
-	if (prim != NULL && prim->type == RENDER_PRIMITIVE_QUAD)
-	{
-		render_bounds inner;
-
-		/* clip the bounds to the current clip */
-		inner = prim->bounds;
-		sect_bounds(&inner, *clip);
-
-		/* change the blendmode on the first primitive to be NONE */
-		if (PRIMFLAG_GET_BLENDMODE(prim->flags) == BLENDMODE_RGB_MULTIPLY)
+		/* switch off the type */
+		switch (prim->type)
 		{
-			/* RGB multiply will multiply against 0, leaving nothing */
-			set_color(&prim->color, 1.0f, 0.0f, 0.0f, 0.0f);
-			prim->texture.base = NULL;
-			prim->flags = (prim->flags & ~PRIMFLAG_BLENDMODE_MASK) | PRIMFLAG_BLENDMODE(BLENDMODE_NONE);
-		}
-		else
-		{
-			/* for alpha or add modes, we will blend against 0 or add to 0; treat it like none */
-			prim->flags = (prim->flags & ~PRIMFLAG_BLENDMODE_MASK) | PRIMFLAG_BLENDMODE(BLENDMODE_NONE);
-		}
+			case RENDER_PRIMITIVE_CLIP_PUSH:
+				*++clip = &prim->bounds;
+				break;
 
-		/* since alpha is disabled, premultiply the RGB values and reset the alpha to 1.0 */
-		prim->color.r *= prim->color.a;
-		prim->color.g *= prim->color.a;
-		prim->color.b *= prim->color.a;
-		prim->color.a = 1.0f;
+			case RENDER_PRIMITIVE_CLIP_POP:
+				clip--;
+				break;
 
-		/* clear along the top */
-		if (inner.y0 > 0.0f)
-		{
-			prim = alloc_render_primitive(RENDER_PRIMITIVE_QUAD);
-			set_bounds_xy(&prim->bounds, 0.0f, 0.0f, (float)target->width, inner.y0);
-			set_color(&prim->color, 1.0f, 0.0f, 0.0f, 0.0f);
-			prim->texture.base = NULL;
-			prim->flags = PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA);
-			*clearnext = prim;
-			clearnext = &prim->next;
-		}
+			case RENDER_PRIMITIVE_LINE:
+				goto done;
 
-		/* clear along the bottom */
-		if (inner.y1 < (float)target->height)
-		{
-			prim = alloc_render_primitive(RENDER_PRIMITIVE_QUAD);
-			set_bounds_xy(&prim->bounds, 0.0f, inner.y1, (float)target->width, (float)target->height);
-			set_color(&prim->color, 1.0f, 0.0f, 0.0f, 0.0f);
-			prim->texture.base = NULL;
-			prim->flags = PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA);
-			*clearnext = prim;
-			clearnext = &prim->next;
-		}
+			case RENDER_PRIMITIVE_QUAD:
+			{
+				render_bounds inner = prim->bounds;
 
-		/* clear along the left */
-		if (inner.x0 > 0.0f)
-		{
-			prim = alloc_render_primitive(RENDER_PRIMITIVE_QUAD);
-			set_bounds_xy(&prim->bounds, 0.0f, inner.y0, inner.x0, inner.y1);
-			set_color(&prim->color, 1.0f, 0.0f, 0.0f, 0.0f);
-			prim->texture.base = NULL;
-			prim->flags = PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA);
-			*clearnext = prim;
-			clearnext = &prim->next;
-		}
+				/* stop when we hit an alpha texture */
+				if (PRIMFLAG_GET_TEXFORMAT(prim->flags) == TEXFORMAT_ARGB32)
+					goto done;
 
-		/* clear along the right */
-		if (inner.x1 < (float)target->width)
-		{
-			prim = alloc_render_primitive(RENDER_PRIMITIVE_QUAD);
-			set_bounds_xy(&prim->bounds, inner.x1, inner.y0, (float)target->width, inner.y1);
-			set_color(&prim->color, 1.0f, 0.0f, 0.0f, 0.0f);
-			prim->texture.base = NULL;
-			prim->flags = PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA);
-			*clearnext = prim;
-			clearnext = &prim->next;
+				/* if this quad can't be cleanly removed from the extents list, we're done */
+				sect_bounds(&inner, *clip);
+				if (!remove_clear_extent(&inner))
+					goto done;
+
+				/* change the blendmode on the first primitive to be NONE */
+				if (PRIMFLAG_GET_BLENDMODE(prim->flags) == BLENDMODE_RGB_MULTIPLY)
+				{
+					/* RGB multiply will multiply against 0, leaving nothing */
+					set_color(&prim->color, 1.0f, 0.0f, 0.0f, 0.0f);
+					prim->texture.base = NULL;
+					prim->flags = (prim->flags & ~PRIMFLAG_BLENDMODE_MASK) | PRIMFLAG_BLENDMODE(BLENDMODE_NONE);
+				}
+				else
+				{
+					/* for alpha or add modes, we will blend against 0 or add to 0; treat it like none */
+					prim->flags = (prim->flags & ~PRIMFLAG_BLENDMODE_MASK) | PRIMFLAG_BLENDMODE(BLENDMODE_NONE);
+				}
+
+				/* since alpha is disabled, premultiply the RGB values and reset the alpha to 1.0 */
+				prim->color.r *= prim->color.a;
+				prim->color.g *= prim->color.a;
+				prim->color.b *= prim->color.a;
+				prim->color.a = 1.0f;
+				break;
+			}
 		}
 	}
 
-	/* otherwise, we need to clear the whole thing */
-	else
-	{
-		prim = alloc_render_primitive(RENDER_PRIMITIVE_QUAD);
-		set_bounds_xy(&prim->bounds, 0.0f, 0.0f, (float)target->width, (float)target->height);
-		set_color(&prim->color, 1.0f, 0.0f, 0.0f, 0.0f);
-		prim->texture.base = NULL;
-		prim->flags = PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA);
-		*clearnext = prim;
-		clearnext = &prim->next;
-	}
-
-	/* we know that the first primitive in the list will be the global clip */
-	/* so we insert the clears immediately after */
-	assert(list->head->type == RENDER_PRIMITIVE_CLIP_PUSH);
-	*clearnext = list->head->next;
-	list->head->next = clearlist;
+done:
+	/* now add the extents to the clear list */
+	add_clear_extents(list);
 }
 
 
@@ -1684,6 +2024,36 @@ void render_view_item_set_state(const char *itemname, int newstate)
 
 /***************************************************************************
 
+    Render references
+
+***************************************************************************/
+
+/*-------------------------------------------------
+    invalidate_all_render_ref - remove all refs
+    to a particular reference pointer
+-------------------------------------------------*/
+
+static void invalidate_all_render_ref(void *refptr)
+{
+	render_target *target;
+	int listnum;
+
+	/* loop over targets */
+	for (target = targetlist; target != NULL; target = target->next)
+		for (listnum = 0; listnum < NUM_PRIMLISTS; listnum++)
+		{
+			render_primitive_list *list = &target->primlist[listnum];
+			osd_lock_acquire(list->lock);
+			if (has_render_ref(list->reflist, refptr))
+				release_render_list(list);
+			osd_lock_release(list->lock);
+		}
+}
+
+
+
+/***************************************************************************
+
     Render textures
 
 ***************************************************************************/
@@ -1726,7 +2096,13 @@ void render_texture_free(render_texture *texture)
 	/* free all scaled versions */
 	for (scalenum = 0; scalenum < ARRAY_LENGTH(texture->scaled); scalenum++)
 		if (texture->scaled[scalenum].bitmap != NULL)
+		{
+			invalidate_all_render_ref(texture->scaled[scalenum].bitmap);
 			bitmap_free(texture->scaled[scalenum].bitmap);
+		}
+
+	/* invalidate references to the original bitmap as well */
+	invalidate_all_render_ref(texture->bitmap);
 
 	/* and the texture itself */
 	free(texture);
@@ -1742,6 +2118,10 @@ void render_texture_set_bitmap(render_texture *texture, mame_bitmap *bitmap, con
 {
 	int scalenum;
 
+	/* invalidate references to the old bitmap */
+	if (bitmap != texture->bitmap)
+		invalidate_all_render_ref(texture->bitmap);
+
 	/* set the new bitmap/palette */
 	texture->bitmap = bitmap;
 	texture->sbounds.min_x = (sbounds != NULL) ? sbounds->min_x : 0;
@@ -1755,7 +2135,10 @@ void render_texture_set_bitmap(render_texture *texture, mame_bitmap *bitmap, con
 	for (scalenum = 0; scalenum < ARRAY_LENGTH(texture->scaled); scalenum++)
 	{
 		if (texture->scaled[scalenum].bitmap != NULL)
+		{
+			invalidate_all_render_ref(texture->scaled[scalenum].bitmap);
 			bitmap_free(texture->scaled[scalenum].bitmap);
+		}
 		texture->scaled[scalenum].bitmap = NULL;
 		texture->scaled[scalenum].seqid = 0;
 	}
@@ -1767,7 +2150,7 @@ void render_texture_set_bitmap(render_texture *texture, mame_bitmap *bitmap, con
     bitmap (if we can)
 -------------------------------------------------*/
 
-static void render_texture_get_scaled(render_texture *texture, UINT32 dwidth, UINT32 dheight, render_texinfo *texinfo)
+static void render_texture_get_scaled(render_texture *texture, UINT32 dwidth, UINT32 dheight, render_texinfo *texinfo, render_ref **reflist)
 {
 	UINT8 bpp = (texture->format == TEXFORMAT_PALETTE16 || texture->format == TEXFORMAT_RGB15) ? 16 : 32;
 	scaled_texture *scaled = NULL;
@@ -1785,6 +2168,7 @@ static void render_texture_get_scaled(render_texture *texture, UINT32 dwidth, UI
 	/* are we scaler-free? if so, just return the source bitmap */
 	if (texture->scaler == NULL || (texture->bitmap != NULL && swidth == dwidth && sheight == dheight))
 	{
+		add_render_ref(reflist, texture->bitmap);
 		texinfo->base = (UINT8 *)texture->bitmap->base + (texture->sbounds.min_y * texture->bitmap->rowpixels + texture->sbounds.min_x) * (bpp / 8);
 		texinfo->rowpixels = texture->bitmap->rowpixels;
 		texinfo->width = swidth;
@@ -1808,15 +2192,19 @@ static void render_texture_get_scaled(render_texture *texture, UINT32 dwidth, UI
 	if (scalenum == ARRAY_LENGTH(texture->scaled))
 	{
 		/* didn't find one -- take the entry with the lowest seqnum */
-		int lowest = 0;
-		for (scalenum = 1; scalenum < ARRAY_LENGTH(texture->scaled); scalenum++)
-			if (texture->scaled[scalenum].seqid < texture->scaled[lowest].seqid)
+		int lowest = -1;
+		for (scalenum = 0; scalenum < ARRAY_LENGTH(texture->scaled); scalenum++)
+			if ((lowest == -1 || texture->scaled[scalenum].seqid < texture->scaled[lowest].seqid) && !has_render_ref(*reflist, texture->scaled[scalenum].bitmap))
 				lowest = scalenum;
+		assert_always(lowest != -1, "Too many live texture instances!");
 
 		/* throw out any existing entries */
 		scaled = &texture->scaled[lowest];
 		if (scaled->bitmap != NULL)
+		{
+			invalidate_all_render_ref(scaled->bitmap);
 			bitmap_free(scaled->bitmap);
+		}
 
 		/* allocate a new bitmap */
 		scaled->bitmap = bitmap_alloc_depth(dwidth, dheight, 32);
@@ -1827,6 +2215,7 @@ static void render_texture_get_scaled(render_texture *texture, UINT32 dwidth, UI
 	}
 
 	/* finally fill out the new info */
+	add_render_ref(reflist, scaled->bitmap);
 	texinfo->base = scaled->bitmap->base;
 	texinfo->rowpixels = scaled->bitmap->rowpixels;
 	texinfo->width = dwidth;
@@ -2625,6 +3014,136 @@ static void layout_element_draw_disk(mame_bitmap *dest, const rectangle *bounds,
 ***************************************************************************/
 
 /*-------------------------------------------------
+    get_variable_value - compute the value of
+    a variable in an XML attribute
+-------------------------------------------------*/
+
+static int get_variable_value(const char *string, char **outputptr)
+{
+	int num, den, scrnum;
+	char temp[100];
+
+	/* screen 0 parameters */
+	for (scrnum = 0; scrnum < MAX_SCREENS; scrnum++)
+	{
+		/* native X aspect factor */
+		sprintf(temp, "~scr%dnativexaspect~", scrnum);
+		if (!strncmp(string, temp, strlen(temp)))
+		{
+			num = Machine->drv->screen[scrnum].default_visible_area.max_x + 1 - Machine->drv->screen[scrnum].default_visible_area.min_x;
+			den = Machine->drv->screen[scrnum].default_visible_area.max_y + 1 - Machine->drv->screen[scrnum].default_visible_area.min_y;
+			reduce_fraction(&num, &den);
+			*outputptr += sprintf(*outputptr, "%d", num);
+			return strlen(temp);
+		}
+
+		/* native Y aspect factor */
+		sprintf(temp, "~scr%dnativeyaspect~", scrnum);
+		if (!strncmp(string, temp, strlen(temp)))
+		{
+			num = Machine->drv->screen[scrnum].default_visible_area.max_x + 1 - Machine->drv->screen[scrnum].default_visible_area.min_x;
+			den = Machine->drv->screen[scrnum].default_visible_area.max_y + 1 - Machine->drv->screen[scrnum].default_visible_area.min_y;
+			reduce_fraction(&num, &den);
+			*outputptr += sprintf(*outputptr, "%d", den);
+			return strlen(temp);
+		}
+
+		/* native width */
+		sprintf(temp, "~scr%dwidth~", scrnum);
+		if (!strncmp(string, temp, strlen(temp)))
+		{
+			*outputptr += sprintf(*outputptr, "%d", Machine->drv->screen[scrnum].default_visible_area.max_x + 1 - Machine->drv->screen[0].default_visible_area.min_x);
+			return strlen(temp);
+		}
+
+		/* native height */
+		sprintf(temp, "~scr%dheight~", scrnum);
+		if (!strncmp(string, temp, strlen(temp)))
+		{
+			*outputptr += sprintf(*outputptr, "%d", Machine->drv->screen[scrnum].default_visible_area.max_y + 1 - Machine->drv->screen[0].default_visible_area.min_y);
+			return strlen(temp);
+		}
+	}
+
+	/* default: copy the first character and continue */
+	**outputptr = *string;
+	*outputptr += 1;
+	return 1;
+}
+
+
+/*-------------------------------------------------
+    xml_get_attribute_string_with_subst - analog
+    to xml_get_attribute_string but with variable
+    substitution
+-------------------------------------------------*/
+
+static const char *xml_get_attribute_string_with_subst(xml_data_node *node, const char *attribute, const char *defvalue)
+{
+	const char *str = xml_get_attribute_string(node, attribute, NULL);
+	static char buffer[1000];
+	const char *s;
+	char *d;
+
+	/* if nothing, just return the default */
+	if (str == NULL)
+		return defvalue;
+
+	/* if no tildes, don't worry */
+	if (strchr(str, '~') == NULL)
+		return str;
+
+	/* make a copy of the string, doing substitutions along the way */
+	for (s = str, d = buffer; *s != 0; )
+	{
+		/* if not a variable, just copy */
+		if (*s != '~')
+			*d++ = *s++;
+
+		/* extract the variable */
+		else
+			s += get_variable_value(s, &d);
+	}
+	*d = 0;
+	return buffer;
+}
+
+
+/*-------------------------------------------------
+    xml_get_attribute_int_with_subst - analog
+    to xml_get_attribute_int but with variable
+    substitution
+-------------------------------------------------*/
+
+static int xml_get_attribute_int_with_subst(xml_data_node *node, const char *attribute, int defvalue)
+{
+	const char *string = xml_get_attribute_string_with_subst(node, attribute, NULL);
+	int value;
+
+	if (!string || sscanf(string, "%d", &value) != 1)
+		return defvalue;
+	return value;
+}
+
+
+/*-------------------------------------------------
+    xml_get_attribute_float_with_subst - analog
+    to xml_get_attribute_float but with variable
+    substitution
+-------------------------------------------------*/
+
+static float xml_get_attribute_float_with_subst(xml_data_node *node, const char *attribute, float defvalue)
+{
+	const char *string = xml_get_attribute_string_with_subst(node, attribute, NULL);
+	float value;
+
+	if (!string || sscanf(string, "%f", &value) != 1)
+		return defvalue;
+	return value;
+}
+
+
+/*-------------------------------------------------
     load_layout_file - parse a layout XML file
     into a layout_file
 -------------------------------------------------*/
@@ -2729,14 +3248,14 @@ static layout_element *load_layout_element(xml_data_node *elemnode)
 	memset(element, 0, sizeof(*element));
 
 	/* extract the name */
-	name = xml_get_attribute_string(elemnode, "name", NULL);
+	name = xml_get_attribute_string_with_subst(elemnode, "name", NULL);
 	if (name == NULL)
 	{
 		logerror("All layout elements must have a name!\n");
 		goto error;
 	}
 	element->name = copy_string(name);
-	element->defstate = xml_get_attribute_int(elemnode, "defstate", -1);
+	element->defstate = xml_get_attribute_int_with_subst(elemnode, "defstate", -1);
 
 	/* parse components in order */
 	first = TRUE;
@@ -2809,7 +3328,7 @@ static element_component *load_element_component(xml_data_node *compnode)
 	memset(component, 0, sizeof(*component));
 
 	/* fetch common data */
-	component->state = xml_get_attribute_int(compnode, "state", 0);
+	component->state = xml_get_attribute_int_with_subst(compnode, "state", 0);
 	if (load_bounds(xml_get_sibling(compnode->child, "bounds"), &component->bounds))
 		goto error;
 	if (load_color(xml_get_sibling(compnode->child, "color"), &component->color))
@@ -2818,8 +3337,8 @@ static element_component *load_element_component(xml_data_node *compnode)
 	/* image nodes */
 	if (strcmp(compnode->name, "image") == 0)
 	{
-		const char *file = xml_get_attribute_string(compnode, "file", NULL);
-		const char *afile = xml_get_attribute_string(compnode, "alphafile", NULL);
+		const char *file = xml_get_attribute_string_with_subst(compnode, "file", NULL);
+		const char *afile = xml_get_attribute_string_with_subst(compnode, "alphafile", NULL);
 
 		/* load and allocate the bitmap */
 		component->type = COMPONENT_TYPE_IMAGE;
@@ -2870,7 +3389,7 @@ static layout_view *load_layout_view(xml_data_node *viewnode, layout_element *el
 	memset(view, 0, sizeof(*view));
 
 	/* allocate a copy of the name */
-	view->name = copy_string(xml_get_attribute_string(viewnode, "name", ""));
+	view->name = copy_string(xml_get_attribute_string_with_subst(viewnode, "name", ""));
 
 	/* loop over all the layer types we support */
 	first = TRUE;
@@ -2957,10 +3476,10 @@ static view_item *load_view_item(xml_data_node *itemnode, layout_element *elemli
 	memset(item, 0, sizeof(*item));
 
 	/* allocate a copy of the name */
-	item->name = copy_string(xml_get_attribute_string(itemnode, "name", ""));
+	item->name = copy_string(xml_get_attribute_string_with_subst(itemnode, "name", ""));
 
 	/* find the associated element */
-	name = xml_get_attribute_string(itemnode, "element", NULL);
+	name = xml_get_attribute_string_with_subst(itemnode, "element", NULL);
 	if (name != NULL)
 	{
 		layout_element *element;
@@ -2980,7 +3499,7 @@ static view_item *load_view_item(xml_data_node *itemnode, layout_element *elemli
 	}
 
 	/* fetch common data */
-	item->index = xml_get_attribute_int(itemnode, "index", -1);
+	item->index = xml_get_attribute_int_with_subst(itemnode, "index", -1);
 	item->state = render_view_item_get_state_ptr(item->name);
 	item->state->curstate = (item->name[0] != 0 && item->element != NULL) ? item->element->defstate : 0;
 	if (load_bounds(xml_get_sibling(itemnode->child, "bounds"), &item->bounds))
@@ -3223,18 +3742,18 @@ static int load_bounds(xml_data_node *boundsnode, render_bounds *bounds)
 	if (xml_get_attribute(boundsnode, "left") != NULL)
 	{
 		/* left/right/top/bottom format */
-		bounds->x0 = xml_get_attribute_float(boundsnode, "left", 0.0);
-		bounds->x1 = xml_get_attribute_float(boundsnode, "right", 1.0);
-		bounds->y0 = xml_get_attribute_float(boundsnode, "top", 0.0);
-		bounds->y1 = xml_get_attribute_float(boundsnode, "bottom", 1.0);
+		bounds->x0 = xml_get_attribute_float_with_subst(boundsnode, "left", 0.0);
+		bounds->x1 = xml_get_attribute_float_with_subst(boundsnode, "right", 1.0);
+		bounds->y0 = xml_get_attribute_float_with_subst(boundsnode, "top", 0.0);
+		bounds->y1 = xml_get_attribute_float_with_subst(boundsnode, "bottom", 1.0);
 	}
 	else if (xml_get_attribute(boundsnode, "x") != NULL)
 	{
 		/* x/y/width/height format */
-		bounds->x0 = xml_get_attribute_float(boundsnode, "x", 0.0);
-		bounds->x1 = bounds->x0 + xml_get_attribute_float(boundsnode, "width", 1.0);
-		bounds->y0 = xml_get_attribute_float(boundsnode, "y", 0.0);
-		bounds->y1 = bounds->y0 + xml_get_attribute_float(boundsnode, "height", 1.0);
+		bounds->x0 = xml_get_attribute_float_with_subst(boundsnode, "x", 0.0);
+		bounds->x1 = bounds->x0 + xml_get_attribute_float_with_subst(boundsnode, "width", 1.0);
+		bounds->y0 = xml_get_attribute_float_with_subst(boundsnode, "y", 0.0);
+		bounds->y1 = bounds->y0 + xml_get_attribute_float_with_subst(boundsnode, "height", 1.0);
 	}
 	else
 		return 1;
@@ -3263,10 +3782,10 @@ static int load_color(xml_data_node *colornode, render_color *color)
 	}
 
 	/* parse out the data */
-	color->r = xml_get_attribute_float(colornode, "red", 1.0);
-	color->g = xml_get_attribute_float(colornode, "green", 1.0);
-	color->b = xml_get_attribute_float(colornode, "blue", 1.0);
-	color->a = xml_get_attribute_float(colornode, "alpha", 1.0);
+	color->r = xml_get_attribute_float_with_subst(colornode, "red", 1.0);
+	color->g = xml_get_attribute_float_with_subst(colornode, "green", 1.0);
+	color->b = xml_get_attribute_float_with_subst(colornode, "blue", 1.0);
+	color->a = xml_get_attribute_float_with_subst(colornode, "alpha", 1.0);
 
 	/* check for errors */
 	if (color->r < 0.0 || color->r > 1.0 || color->g < 0.0 || color->g > 1.0 ||
@@ -3296,7 +3815,7 @@ static int load_orientation(xml_data_node *orientnode, int *orientation)
 	}
 
 	/* parse out the data */
-	rotate = xml_get_attribute_int(orientnode, "rotate", 0);
+	rotate = xml_get_attribute_int_with_subst(orientnode, "rotate", 0);
 	switch (rotate)
 	{
 		case 0:		*orientation = ROT0;	break;
@@ -3307,11 +3826,11 @@ static int load_orientation(xml_data_node *orientnode, int *orientation)
 			logerror("Invalid rotation in orientation node: %d\n", rotate);
 			return 1;
 	}
-	if (strcmp("yes", xml_get_attribute_string(orientnode, "swapxy", "no")) == 0)
+	if (strcmp("yes", xml_get_attribute_string_with_subst(orientnode, "swapxy", "no")) == 0)
 		*orientation ^= ORIENTATION_SWAP_XY;
-	if (strcmp("yes", xml_get_attribute_string(orientnode, "flipx", "no")) == 0)
+	if (strcmp("yes", xml_get_attribute_string_with_subst(orientnode, "flipx", "no")) == 0)
 		*orientation ^= ORIENTATION_FLIP_X;
-	if (strcmp("yes", xml_get_attribute_string(orientnode, "flipy", "no")) == 0)
+	if (strcmp("yes", xml_get_attribute_string_with_subst(orientnode, "flipy", "no")) == 0)
 		*orientation ^= ORIENTATION_FLIP_Y;
 	return 0;
 }
@@ -3450,272 +3969,4 @@ static void layout_element_free(layout_element *element)
 	if (element->name != NULL)
 		free((void *)element->name);
 	free(element);
-}
-
-
-
-/***************************************************************************
-
-    Built-in layouts
-
-***************************************************************************/
-
-/*-------------------------------------------------
-    single screen layout
-
-    parameters:
-        1. name (string)
-        2. screen index (int)
-        3. x aspect (float)
-        4. y aspect (float)
--------------------------------------------------*/
-
-static const char *single_screen_layout =
-	"<?xml version=\"1.0\"?>"
-	"<mamelayout version=\"2\">"
-	"    <view name=\"%s\">"
-	"        <screen index=\"%d\">"
-	"            <bounds left=\"0\" top=\"0\" right=\"%f\" bottom=\"%f\" />"
-	"        </screen>"
-	"    </view>"
-	"</mamelayout>";
-
-
-/*-------------------------------------------------
-    horizontal over-under layout
-
-    parameters:
-        1. name (string)
-        2. top screen index (int)
-        3. top screen aspect (float)
-        4. bottom screen index (int)
-        5. bottom screen aspect (float)
-        6. bottom screen rotation (int)
--------------------------------------------------*/
-
-static const char *horz_over_under_layout =
-	"<?xml version=\"1.0\"?>"
-	"<mamelayout version=\"2\">"
-	"    <view name=\"%s\">"
-	"        <screen index=\"%d\">"
-	"            <bounds left=\"0\" top=\"0\" right=\"%f\" bottom=\"1.0\" />"
-	"        </screen>"
-	"        <screen index=\"%d\">"
-	"            <bounds left=\"0\" top=\"-1.01\" right=\"%f\" bottom=\"-0.01\" />"
-	"            <orientation rotate=\"%d\" />"
-	"        </screen>"
-	"    </view>"
-	"</mamelayout>";
-
-
-/*-------------------------------------------------
-    horizontal side-by-side layout
-
-    parameters:
-        1. name (string)
-        2. left screen index (int)
-        3. left screen aspect (float)
-        4. right screen index (int)
-        5. right screen aspect + 0.01 (float)
-        6. right screen rotation (int)
--------------------------------------------------*/
-
-static const char *horz_side_by_side_layout =
-	"<?xml version=\"1.0\"?>"
-	"<mamelayout version=\"2\">"
-	"    <view name=\"%s\">"
-	"        <screen index=\"%d\">"
-	"            <bounds left=\"-%f\" top=\"0\" right=\"0.0\" bottom=\"1.0\" />"
-	"        </screen>"
-	"        <screen index=\"%d\">"
-	"            <bounds left=\"0.01\" top=\"0\" right=\"%f\" bottom=\"1.0\" />"
-	"            <orientation rotate=\"%d\" />"
-	"        </screen>"
-	"    </view>"
-	"</mamelayout>";
-
-
-/*-------------------------------------------------
-    vertical over-under layout
-
-    parameters:
-        1. name (string)
-        2. top screen index (int)
-        3. top screen aspect (float)
-        4. bottom screen index (int)
-        5. bottom screen aspect + 0.01 (float)
-        6. bottom screen rotation (int)
--------------------------------------------------*/
-
-static const char *vert_over_under_layout =
-	"<?xml version=\"1.0\"?>"
-	"<mamelayout version=\"2\">"
-	"    <view name=\"%s\">"
-	"        <screen index=\"%d\">"
-	"            <bounds left=\"0\" top=\"-%f\" right=\"1.0\" bottom=\"0\" />"
-	"        </screen>"
-	"        <screen index=\"%d\">"
-	"            <bounds left=\"0\" top=\"0.01\" right=\"1.0\" bottom=\"%f\" />"
-	"            <orientation rotate=\"%d\" />"
-	"        </screen>"
-	"    </view>"
-	"</mamelayout>";
-
-
-/*-------------------------------------------------
-    vertical side-by-side layout
-
-    parameters:
-        1. name (string)
-        2. left screen index (int)
-        3. left screen aspect (float)
-        4. right screen index (int)
-        5. right screen aspect (float)
-        6. right screen rotation (int)
--------------------------------------------------*/
-
-static const char *vert_side_by_side_layout =
-	"<?xml version=\"1.0\"?>"
-	"<mamelayout version=\"2\">"
-	"    <view name=\"%s\">"
-	"        <screen index=\"%d\">"
-	"            <bounds left=\"0\" top=\"0\" right=\"1.0\" bottom=\"%f\" />"
-	"        </screen>"
-	"        <screen index=\"%d\">"
-	"            <bounds left=\"-1.01\" top=\"0\" right=\"-0.01\" bottom=\"%f\" />"
-	"            <orientation rotate=\"%d\" />"
-	"        </screen>"
-	"    </view>"
-	"</mamelayout>";
-
-
-/*-------------------------------------------------
-    layout_make_standard - make a standard layout
-    based on the aspect ratio of each screen
--------------------------------------------------*/
-
-static const char *layout_make_standard(int screen, int numscreens)
-{
-	char name[100];
-	int ax, ay;
-
-	/* find integral aspect ratios */
-	for (ay = 1; ay < 1000; ay++)
-	{
-		float testax = ay * Machine->drv->screen[screen].aspect;
-		float intax = round_nearest(testax);
-		if (fabs(testax - intax) < 0.001f)
-			break;
-	}
-	ax = round_nearest(ay * Machine->drv->screen[screen].aspect);
-
-	/* swap X/Y here */
-	if (Machine->gamedrv->flags & ORIENTATION_SWAP_XY)
-		ISWAP(ax, ay);
-
-	/* choose a name based on the screen */
-	if (numscreens == 1)
-		sprintf(name, "Standard (%d:%d)", ax, ay);
-	else
-		sprintf(name, "Screen %d Standard (%d:%d)", screen, ax, ay);
-
-	/* make a "Standard" layout which is based on the aspect ratio */
-	if (Machine->gamedrv->flags & ORIENTATION_SWAP_XY)
-		sprintf(giant_string_buffer, single_screen_layout, name, screen, 1.0f, Machine->drv->screen[screen].aspect);
-	else
-		sprintf(giant_string_buffer, single_screen_layout, name, screen, Machine->drv->screen[screen].aspect, 1.0f);
-	return giant_string_buffer;
-}
-
-
-/*-------------------------------------------------
-    layout_make_dual - make side-by-side and
-    over-under layouts for 2-screen games
--------------------------------------------------*/
-
-static const char *layout_make_dual(int screen, int numscreens)
-{
-	/* only do this once, and only if we have 2 screens */
-	if (numscreens != 2)
-		return NULL;
-
-	/* make a "Cocktail" layout which is based on the screen 0 aspect ratio */
-	if (Machine->gamedrv->flags & ORIENTATION_SWAP_XY)
-	{
-		if (screen == 0)
-			sprintf(giant_string_buffer, vert_side_by_side_layout, "Dual Side-by-Side", 0, Machine->drv->screen[0].aspect, numscreens - 1, Machine->drv->screen[1].aspect, 0);
-		else
-			sprintf(giant_string_buffer, vert_over_under_layout, "Dual Over-Under", 0, Machine->drv->screen[0].aspect, numscreens - 1, Machine->drv->screen[1].aspect + DUAL_SCREEN_SEPARATION, 0);
-	}
-	else
-	{
-		if (screen == 0)
-			sprintf(giant_string_buffer, horz_over_under_layout, "Dual Over-Under", 0, Machine->drv->screen[0].aspect, numscreens - 1, Machine->drv->screen[1].aspect, 0);
-		else
-			sprintf(giant_string_buffer, horz_side_by_side_layout, "Dual Side-by-Side", 0, Machine->drv->screen[0].aspect, numscreens - 1, Machine->drv->screen[1].aspect + DUAL_SCREEN_SEPARATION, 0);
-	}
-
-	return giant_string_buffer;
-}
-
-
-/*-------------------------------------------------
-    layout_make_cocktail - make cocktail layouts
-    for 1 and 2 screen games
--------------------------------------------------*/
-
-static const char *layout_make_cocktail(int screen, int numscreens)
-{
-	/* only do this once, and only if we have 1 or 2 screens */
-	if (screen != 0 || numscreens > 2)
-		return NULL;
-
-	/* make a "Cocktail" layout which is based on the screen 0 aspect ratio */
-	if (Machine->gamedrv->flags & ORIENTATION_SWAP_XY)
-		sprintf(giant_string_buffer, vert_side_by_side_layout, "Cocktail", 0, Machine->drv->screen[0].aspect, numscreens - 1, Machine->drv->screen[numscreens - 1].aspect, 180);
-	else
-		sprintf(giant_string_buffer, horz_over_under_layout, "Cocktail", 0, Machine->drv->screen[0].aspect, numscreens - 1, Machine->drv->screen[numscreens - 1].aspect, 180);
-
-	return giant_string_buffer;
-}
-
-
-/*-------------------------------------------------
-    layout_make_native - make a standard layout
-    based on the native pixel resolution of each
-    screen
--------------------------------------------------*/
-
-static const char *layout_make_native(int screen, int numscreens)
-{
-	int ax = Machine->drv->screen[screen].default_visible_area.max_x + 1 - Machine->drv->screen[screen].default_visible_area.min_x;
-	int ay = Machine->drv->screen[screen].default_visible_area.max_y + 1 - Machine->drv->screen[screen].default_visible_area.min_y;
-	char name[100];
-	int div;
-
-	/* not for vector games */
-	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
-		return NULL;
-
-	/* reduce the aspect ratio */
-	for (div = MAX(ax,ay) / 2; div > 1; div--)
-		if (((ax / div) * div) == ax && ((ay / div) * div) == ay)
-		{
-			ax /= div;
-			ay /= div;
-		}
-
-	/* swap X/Y here */
-	if (Machine->gamedrv->flags & ORIENTATION_SWAP_XY)
-		ISWAP(ax, ay);
-
-	/* choose a name based on the screen */
-	if (numscreens == 1)
-		sprintf(name, "Native (%d:%d)", ax, ay);
-	else
-		sprintf(name, "Screen %d Native (%d:%d)", screen, ax, ay);
-
-	/* make a "Native" layout which is based on the aspect ratio */
-	sprintf(giant_string_buffer, single_screen_layout, name, screen, (float)ax, (float)ay);
-	return giant_string_buffer;
 }

@@ -130,6 +130,7 @@ Changes:
 ***************************************************************************/
 
 #include "driver.h"
+#include "render.h"
 #include "vidhrdw/ppu2c03b.h"
 #include "machine/rp5h01.h"
 #include "sound/dac.h"
@@ -2129,12 +2130,22 @@ static MACHINE_DRIVER_START( vsdual )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_ASPECT_RATIO(8,3)
-	MDRV_SCREEN_SIZE(32*8*2, 30*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8*2-1, 0*8, 30*8-1)
 	MDRV_GFXDECODE(nes_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(2*4*16)
 	MDRV_COLORTABLE_LENGTH(2*4*16)
+	MDRV_DEFAULT_LAYOUT(layout_dualhsxs)
+
+	MDRV_SCREEN_ADD("top", 0x000)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(( ( ( 1.0 / 60.0 ) * 1000000.0 ) / 262 ) * ( 262 - 239 )))
+	MDRV_SCREEN_MAXSIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 30*8-1)
+
+	MDRV_SCREEN_ADD("bottom", 0x000)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(( ( ( 1.0 / 60.0 ) * 1000000.0 ) / 262 ) * ( 262 - 239 )))
+	MDRV_SCREEN_MAXSIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 30*8-1)
 
 	MDRV_PALETTE_INIT(vsdual)
 	MDRV_VIDEO_START(vsdual)

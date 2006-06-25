@@ -32,6 +32,7 @@ void PC080SN_set_scroll(int chip,int tilemap_num,int scrollx,int scrolly);
 void PC080SN_set_trans_pen(int chip,int tilemap_num,int pen);
 void PC080SN_tilemap_update(void);
 void PC080SN_tilemap_draw(mame_bitmap *bitmap,const rectangle *cliprect,int chip,int layer,int flags,UINT32 priority);
+void PC080SN_tilemap_draw_offset(mame_bitmap *bitmap,const rectangle *cliprect,int chip,int layer,int flags,UINT32 priority,int xoffs,int yoffs);
 
 /* For Topspeed */
 void PC080SN_tilemap_draw_special(mame_bitmap *bitmap,const rectangle *cliprect,int chip,int layer,int flags,UINT32 priority,UINT16 *ram);

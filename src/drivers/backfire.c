@@ -21,6 +21,7 @@ extern void decrypt156(void);
 #include "sound/ymz280b.h"
 #include "cpu/arm/arm.h"
 #include "deco16ic.h"
+#include "render.h"
 
 UINT32 *backfire_spriteram32_1;
 UINT32 *backfire_spriteram32_2;
@@ -175,69 +176,55 @@ VIDEO_UPDATE(backfire)
 {
 	/* screen 1 uses pf1 as the forground and pf3 as the background */
 	/* screen 2 uses pf2 as the foreground and pf4 as the background */
-	int x,y;
 
 	deco16_pf12_update(deco16_pf1_rowscroll,deco16_pf2_rowscroll);
 	deco16_pf34_update(deco16_pf3_rowscroll,deco16_pf4_rowscroll);
 
-	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(backfire_left,Machine->pens[0x100],cliprect);
+	if (screen==0)
+	{
 
-	if (backfire_left_priority[0] == 0)
-	{
-		deco16_tilemap_3_draw(backfire_left,cliprect,0,1);
-		deco16_tilemap_1_draw(backfire_left,cliprect,0,2);
-		backfire_drawsprites(backfire_left,cliprect,backfire_spriteram32_1,3);
-	}
-	else if (backfire_left_priority[0] == 2)
-	{
-		deco16_tilemap_1_draw(backfire_left,cliprect,0,2);
-		deco16_tilemap_3_draw(backfire_left,cliprect,0,4);
-		backfire_drawsprites(backfire_left,cliprect,backfire_spriteram32_1,3);
-	}
-	else
-	{
-		ui_popup( "unknown left priority %08x", backfire_left_priority[0] );
-	}
+		fillbitmap(priority_bitmap,0,NULL);
+		fillbitmap(bitmap,Machine->pens[0x100],cliprect);
 
-	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(backfire_right,Machine->pens[0x500],cliprect);
-
-	if (backfire_right_priority[0] == 0)
-	{
-		deco16_tilemap_4_draw(backfire_right,cliprect,0,1);
-		deco16_tilemap_2_draw(backfire_right,cliprect,0,2);
-		backfire_drawsprites(backfire_right,cliprect,backfire_spriteram32_2,4);
-	}
-	else if (backfire_right_priority[0] == 2)
-	{
-		deco16_tilemap_2_draw(backfire_right,cliprect,0,2);
-		deco16_tilemap_4_draw(backfire_right,cliprect,0,4);
-		backfire_drawsprites(backfire_right,cliprect,backfire_spriteram32_2,4);
-	}
-	else
-	{
-		ui_popup( "unknown right priority %08x", backfire_right_priority[0] );
-	}
-
-	/* copy the screens to the final display bitmap */
-	for(y=0;y<32*8;y++)
-	{
-		UINT16* line_dest = (UINT16 *)(bitmap->line[y]);
-		UINT16* line_src = (UINT16 *)(backfire_left->line[y]);
-		UINT16* line_src2 = (UINT16 *)(backfire_right->line[y]);
-		/* left screen */
-		for (x=0*8;x<40*8;x++)
+		if (backfire_left_priority[0] == 0)
 		{
-			line_dest[x] = line_src[x];
+			deco16_tilemap_3_draw(bitmap,cliprect,0,1);
+			deco16_tilemap_1_draw(bitmap,cliprect,0,2);
+			backfire_drawsprites(bitmap,cliprect,backfire_spriteram32_1,3);
 		}
-		/* right screen */
-		for (x=0*8;x<40*8;x++)
+		else if (backfire_left_priority[0] == 2)
 		{
-			line_dest[x+40*8] = line_src2[x];
+			deco16_tilemap_1_draw(bitmap,cliprect,0,2);
+			deco16_tilemap_3_draw(bitmap,cliprect,0,4);
+			backfire_drawsprites(bitmap,cliprect,backfire_spriteram32_1,3);
+		}
+		else
+		{
+			ui_popup( "unknown left priority %08x", backfire_left_priority[0] );
 		}
 	}
+	else if (screen==1)
+	{
+		fillbitmap(priority_bitmap,0,NULL);
+		fillbitmap(bitmap,Machine->pens[0x500],cliprect);
 
+		if (backfire_right_priority[0] == 0)
+		{
+			deco16_tilemap_4_draw(bitmap,cliprect,0,1);
+			deco16_tilemap_2_draw(bitmap,cliprect,0,2);
+			backfire_drawsprites(bitmap,cliprect,backfire_spriteram32_2,4);
+		}
+		else if (backfire_right_priority[0] == 2)
+		{
+			deco16_tilemap_2_draw(bitmap,cliprect,0,2);
+			deco16_tilemap_4_draw(bitmap,cliprect,0,4);
+			backfire_drawsprites(bitmap,cliprect,backfire_spriteram32_2,4);
+		}
+		else
+		{
+			ui_popup( "unknown right priority %08x", backfire_right_priority[0] );
+		}
+	}
 }
 
 
@@ -516,11 +503,21 @@ static MACHINE_DRIVER_START( backfire )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN )
-	MDRV_SCREEN_SIZE(80*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 80*8-1, 1*8, 31*8-1)
-	MDRV_GFXDECODE(gfxdecodeinfo_backfire)
 	MDRV_PALETTE_LENGTH(2048)
-	MDRV_ASPECT_RATIO(8,3)
+	MDRV_GFXDECODE(gfxdecodeinfo_backfire)
+	MDRV_DEFAULT_LAYOUT(layout_dualhsxs)
+
+	MDRV_SCREEN_ADD("left", 0x000)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(DEFAULT_60HZ_VBLANK_DURATION))
+	MDRV_SCREEN_MAXSIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8, 31*8-1)
+
+	MDRV_SCREEN_ADD("right", 0x000)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(DEFAULT_60HZ_VBLANK_DURATION))
+	MDRV_SCREEN_MAXSIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8, 31*8-1)
 
 	MDRV_VIDEO_START(backfire)
 	MDRV_VIDEO_UPDATE(backfire)

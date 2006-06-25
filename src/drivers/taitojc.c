@@ -343,6 +343,7 @@ Notes:
 #include "taito_f3.h"
 #include "sound/es5506.h"
 #include "machine/eeprom.h"
+#include "sndhrdw/taito_en.h"
 
 static UINT32 *main_ram;
 static UINT16 *dsp_shared_ram;
@@ -357,7 +358,6 @@ static UINT32 *taitojc_char_ram;
 static UINT32 *taitojc_tile_ram;
 static int taitojc_char_dirty = 1;
 static tilemap *taitojc_tilemap;
-static UINT16 *sound_ram;
 
 #define TAITOJC_NUM_TILES		0x180
 
@@ -618,30 +618,6 @@ static ADDRESS_MAP_START( taitojc_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x10000000, 0x10001fff) AM_READWRITE(dsp_shared_r, dsp_shared_w)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x140000, 0x140fff) AM_READ(f3_68000_share_r)
-	AM_RANGE(0x200000, 0x20001f) AM_READ(ES5505_data_0_r)
-	AM_RANGE(0x260000, 0x2601ff) AM_READ(es5510_dsp_r)
-	AM_RANGE(0x280000, 0x28001f) AM_READ(f3_68681_r)
-	AM_RANGE(0xc00000, 0xc1ffff) AM_READ(MRA16_BANK1)
-	AM_RANGE(0xc20000, 0xc3ffff) AM_READ(MRA16_BANK2)
-	AM_RANGE(0xc40000, 0xc7ffff) AM_READ(MRA16_BANK3)
-	AM_RANGE(0xff8000, 0xffffff) AM_READ(MRA16_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_RAM) AM_BASE(&sound_ram)
-	AM_RANGE(0x140000, 0x140fff) AM_WRITE(f3_68000_share_w)
-	AM_RANGE(0x200000, 0x20001f) AM_WRITE(ES5505_data_0_w)
-	AM_RANGE(0x260000, 0x2601ff) AM_WRITE(es5510_dsp_w)
-	AM_RANGE(0x280000, 0x28001f) AM_WRITE(f3_68681_w)
-	AM_RANGE(0x300000, 0x30003f) AM_WRITE(f3_es5505_bank_w)
-	AM_RANGE(0x340000, 0x340003) AM_WRITE(f3_volume_w) /* 8 channel volume control */
-	AM_RANGE(0xc00000, 0xc7ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0xff8000, 0xffffff) AM_WRITE(MWA16_RAM)
-ADDRESS_MAP_END
-
 
 static ADDRESS_MAP_START( hc11_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x4000, 0x5fff) AM_RAM
@@ -734,16 +710,7 @@ static const gfx_decode gfxdecodeinfo[] =
 
 static MACHINE_RESET( taitojc )
 {
-	/* Sound cpu program loads to 0xc00000 so we use a bank */
-	UINT16 *ROM = (UINT16 *)memory_region(REGION_CPU2);
-	memory_set_bankptr(1,&ROM[0x80000]);
-	memory_set_bankptr(2,&ROM[0x90000]);
-	memory_set_bankptr(3,&ROM[0xa0000]);
-
-	sound_ram[0]=ROM[0x80000]; /* Stack and Reset vectors */
-	sound_ram[1]=ROM[0x80001];
-	sound_ram[2]=ROM[0x80002];
-	sound_ram[3]=ROM[0x80003];
+	taito_f3_soundsystem_reset();
 
 	cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
 // do not let the 68k start up until f3_shared_ram points to valid RAM
@@ -758,12 +725,6 @@ static MACHINE_RESET( taitojc )
 	cpunum_set_input_line(3, INPUT_LINE_RESET, ASSERT_LINE);
 }
 
-static struct ES5505interface es5505_interface =
-{
-	REGION_SOUND1,	/* Bank 0: Unused by F3 games? */
-	REGION_SOUND1	/* Bank 1: All games seem to use this */
-};
-
 static INTERRUPT_GEN( taitojc_vblank )
 {
 	cpunum_set_input_line(0, 6, HOLD_LINE);
@@ -777,9 +738,7 @@ static MACHINE_DRIVER_START( taitojc )
 	MDRV_MACHINE_RESET(taitojc)
 	MDRV_NVRAM_HANDLER(93C46)
 
-	MDRV_CPU_ADD(M68000, 16000000)
-	/* audio CPU */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	TAITO_F3_SOUND_SYSTEM_CPU(16000000)
 
 	MDRV_CPU_ADD(MC68HC11, 4000000)
 	MDRV_CPU_PROGRAM_MAP(hc11_map, 0)
@@ -801,12 +760,8 @@ static MACHINE_DRIVER_START( taitojc )
 	MDRV_VIDEO_START(taitojc)
 	MDRV_VIDEO_UPDATE(taitojc)
 
-	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
-
-	MDRV_SOUND_ADD(ES5505, 30476100/2)
-	MDRV_SOUND_CONFIG(es5505_interface)
-	MDRV_SOUND_ROUTE(0, "left", 1.0)
-	MDRV_SOUND_ROUTE(0, "right", 1.0)
+	/* sound hardware */
+	TAITO_F3_SOUND_SYSTEM_ES5505(30476100/2)
 MACHINE_DRIVER_END
 
 static DRIVER_INIT( taitojc )

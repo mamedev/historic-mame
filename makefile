@@ -77,9 +77,6 @@ X86_PPC_DRC = 1
 # uncomment next line if you are building for a 64-bit target
 # PTR64 = 1
 
-# uncomment next line to use cygwin compiler
-# COMPILESYSTEM_CYGWIN	= 1
-
 # uncomment next line to build expat as part of MAME build
 BUILD_EXPAT = 1
 
@@ -209,7 +206,7 @@ endif
 # compile and linking flags
 #-------------------------------------------------
 
-CFLAGS = -std=gnu89 -Isrc -Isrc/includes -Isrc/$(MAMEOS)
+CFLAGS = -std=gnu89 -Isrc -Isrc/includes -Isrc/$(MAMEOS) -I$(OBJ)/layout
 
 ifdef SYMBOLS
 CFLAGS += -O0 -Wall -Wno-unused -g
@@ -246,11 +243,6 @@ else
 MAPFLAGS =
 endif
 
-ifdef COMPILESYSTEM_CYGWIN
-CFLAGS += -mno-cygwin
-LDFLAGS	+= -mno-cygwin
-endif
-
 
 
 #-------------------------------------------------
@@ -265,12 +257,27 @@ VPATH = src $(wildcard src/cpu/*)
 # define the standard object directories
 #-------------------------------------------------
 
-OBJDIRS = obj $(OBJ) $(OBJ)/cpu $(OBJ)/sound $(OBJ)/$(MAMEOS) \
-	$(OBJ)/drivers $(OBJ)/machine $(OBJ)/vidhrdw $(OBJ)/sndhrdw $(OBJ)/debug
+OBJDIRS = \
+	obj \
+	$(OBJ) \
+	$(OBJ)/cpu \
+	$(OBJ)/sound \
+	$(OBJ)/debug \
+	$(OBJ)/drivers \
+	$(OBJ)/layout \
+	$(OBJ)/machine \
+	$(OBJ)/sndhrdw \
+	$(OBJ)/vidhrdw \
+	$(OBJ)/$(MAMEOS) \
 
 ifdef MESS
-OBJDIRS += $(OBJ)/mess $(OBJ)/mess/systems $(OBJ)/mess/machine \
-	$(OBJ)/mess/vidhrdw $(OBJ)/mess/sndhrdw $(OBJ)/mess/tools
+OBJDIRS += 
+	$(OBJ)/mess \
+	$(OBJ)/mess/systems \
+	$(OBJ)/mess/machine \
+	$(OBJ)/mess/sndhrdw \
+	$(OBJ)/mess/vidhrdw \
+	$(OBJ)/mess/tools
 endif
 
 
@@ -386,6 +393,8 @@ $(EMULATOR): $(COREOBJS) $(OSOBJS) $(CPULIB) $(SOUNDLIB) $(DRVLIBS) $(EXPAT) $(Z
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@ $(MAPFLAGS)
 
+file2str$(EXE): $(OBJ)/file2str.o $(OSDBGOBJS)
+
 romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o $(ZLIB) $(OSDBGOBJS)
 
 chdman$(EXE): $(OBJ)/chdman.o $(OBJ)/chd.o $(OBJ)/chdcd.o $(OBJ)/cdrom.o $(OBJ)/md5.o $(OBJ)/sha1.o $(OBJ)/version.o $(ZLIB) $(OSTOOLOBJS) $(OSDBGOBJS)
@@ -435,6 +444,10 @@ $(OBJ)/%.pp: src/%.c
 $(OBJ)/%.s: src/%.c
 	@echo Compiling $<...
 	$(CC) $(CDEFS) $(CFLAGS) -S $< -o $@
+
+$(OBJ)/%.lh: src/%.lay file2str$(EXE)
+	@echo Converting $<...
+	@file2str$(EXE) $< $@ layout_$(basename $(notdir $<))
 
 $(OBJ)/%.a:
 	@echo Archiving $@...

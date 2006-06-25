@@ -213,12 +213,12 @@ INLINE void FUNC_PREFIX(draw_aa_pixel)(void *dstdata, UINT32 pitch, int x, int y
 
 	dest = (PIXEL_TYPE *)dstdata + y * pitch + x;
 	dpix = NO_DEST_READ ? 0 : *dest;
-	dr = RGB_RED(col) + DEST_R(dpix);
-	if (dr > 0xff) dr = 0xff;
-	dg = RGB_GREEN(col) + DEST_G(dpix);
-	if (dg > 0xff) dg = 0xff;
-	db = RGB_BLUE(col) + DEST_B(dpix);
-	if (db > 0xff) db = 0xff;
+	dr = SOURCE32_R(col) + DEST_R(dpix);
+	dg = SOURCE32_G(col) + DEST_G(dpix);
+	db = SOURCE32_B(col) + DEST_B(dpix);
+	dr = (dr | -(dr >> (8 - SRCSHIFT_R))) & (0xff >> SRCSHIFT_R);
+	dg = (dg | -(dg >> (8 - SRCSHIFT_G))) & (0xff >> SRCSHIFT_G);
+	db = (db | -(db >> (8 - SRCSHIFT_B))) & (0xff >> SRCSHIFT_B);
 	*dest = DEST_ASSEMBLE_RGB(dr, dg, db);
 }
 
@@ -622,9 +622,9 @@ static void FUNC_PREFIX(draw_quad_palette16_add)(const render_primitive *prim, v
 					UINT32 r = SOURCE32_R(pix) + DEST_R(dpix);
 					UINT32 g = SOURCE32_G(pix) + DEST_G(dpix);
 					UINT32 b = SOURCE32_B(pix) + DEST_B(dpix);
-					r = (r | -(r >> 8)) & 0xff;
-					g = (g | -(g >> 8)) & 0xff;
-					b = (b | -(b >> 8)) & 0xff;
+					r = (r | -(r >> (8 - SRCSHIFT_R))) & (0xff >> SRCSHIFT_R);
+					g = (g | -(g >> (8 - SRCSHIFT_G))) & (0xff >> SRCSHIFT_G);
+					b = (b | -(b >> (8 - SRCSHIFT_B))) & (0xff >> SRCSHIFT_B);
 					*dest = DEST_ASSEMBLE_RGB(r, g, b);
 				}
 				dest++;
@@ -663,9 +663,9 @@ static void FUNC_PREFIX(draw_quad_palette16_add)(const render_primitive *prim, v
 					UINT32 r = ((SOURCE32_R(pix) * sr) >> 8) + DEST_R(dpix);
 					UINT32 g = ((SOURCE32_G(pix) * sg) >> 8) + DEST_G(dpix);
 					UINT32 b = ((SOURCE32_B(pix) * sb) >> 8) + DEST_B(dpix);
-					r = (r | -(r >> 8)) & 0xff;
-					g = (g | -(g >> 8)) & 0xff;
-					b = (b | -(b >> 8)) & 0xff;
+					r = (r | -(r >> (8 - SRCSHIFT_R))) & (0xff >> SRCSHIFT_R);
+					g = (g | -(g >> (8 - SRCSHIFT_G))) & (0xff >> SRCSHIFT_G);
+					b = (b | -(b >> (8 - SRCSHIFT_B))) & (0xff >> SRCSHIFT_B);
 					*dest++ = DEST_ASSEMBLE_RGB(r, g, b);
 					curu += dudx;
 					curv += dvdx;
@@ -1144,6 +1144,7 @@ static void FUNC_PREFIX(setup_and_draw_textured_quad)(const render_primitive *pr
 	switch (prim->flags & (PRIMFLAG_TEXFORMAT_MASK | PRIMFLAG_BLENDMODE_MASK))
 	{
 		case PRIMFLAG_TEXFORMAT(TEXFORMAT_PALETTE16) | PRIMFLAG_BLENDMODE(BLENDMODE_NONE):
+		case PRIMFLAG_TEXFORMAT(TEXFORMAT_PALETTE16) | PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA):
 			FUNC_PREFIX(draw_quad_palette16_none)(prim, dstdata, pitch, &setup);
 			break;
 
@@ -1152,10 +1153,12 @@ static void FUNC_PREFIX(setup_and_draw_textured_quad)(const render_primitive *pr
 			break;
 
 		case PRIMFLAG_TEXFORMAT(TEXFORMAT_RGB15) | PRIMFLAG_BLENDMODE(BLENDMODE_NONE):
+		case PRIMFLAG_TEXFORMAT(TEXFORMAT_RGB15) | PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA):
 			FUNC_PREFIX(draw_quad_rgb15)(prim, dstdata, pitch, &setup);
 			break;
 
 		case PRIMFLAG_TEXFORMAT(TEXFORMAT_RGB32) | PRIMFLAG_BLENDMODE(BLENDMODE_NONE):
+		case PRIMFLAG_TEXFORMAT(TEXFORMAT_RGB32) | PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA):
 		case PRIMFLAG_TEXFORMAT(TEXFORMAT_ARGB32) | PRIMFLAG_BLENDMODE(BLENDMODE_NONE):
 			FUNC_PREFIX(draw_quad_rgb32)(prim, dstdata, pitch, &setup);
 			break;

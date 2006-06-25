@@ -210,6 +210,7 @@ struct _machine_config
 	const gfx_decode *	gfxdecodeinfo;				/* pointer to graphics decoding information */
 	UINT32				total_colors;				/* total number of colors in the palette */
 	UINT32				color_table_len;			/* length of the color indirection table */
+	const char *		default_layout;				/* default layout for this machine */
 	screen_config		screen[MAX_SCREENS];		/* total number of screens */
 
 	void 				(*init_palette)(UINT16 *colortable, const UINT8 *color_prom); /* one-time palette init callback  */
@@ -393,6 +394,9 @@ struct _game_driver
 #define MDRV_COLORTABLE_LENGTH(length)									\
 	machine->color_table_len = (length);								\
 
+#define MDRV_DEFAULT_LAYOUT(layout)										\
+	machine->default_layout = &(layout)[0];								\
+
 
 /* core video functions */
 #define MDRV_PALETTE_INIT(name)											\
@@ -427,9 +431,6 @@ struct _game_driver
 #define MDRV_SCREEN_VBLANK_TIME(time)									\
 	screen->vblank_time = (time);										\
 
-#define MDRV_SCREEN_ASPECT(ratio)										\
-	screen->aspect = (ratio);											\
-
 #define MDRV_SCREEN_MAXSIZE(width, height)								\
 	screen->maxwidth = (width);											\
 	screen->maxheight = (height);										\
@@ -447,9 +448,6 @@ struct _game_driver
 
 #define MDRV_VBLANK_DURATION(duration)									\
 	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(duration))						\
-
-#define MDRV_ASPECT_RATIO(num, den)										\
-	MDRV_SCREEN_ASPECT((float)(num) / (float)(den))						\
 
 #define MDRV_SCREEN_SIZE(width, height)									\
 	MDRV_SCREEN_MAXSIZE(width, height)									\

@@ -827,7 +827,7 @@ static MACHINE_DRIVER_START( touchgo )
 	MDRV_VISIBLE_AREA(0, 480-1, 16, 256-1)
 #else
 	MDRV_VISIBLE_AREA(0, 2*480-1, 16, 256-1)
-	MDRV_ASPECT_RATIO(8,3)
+//  MDRV_ASPECT_RATIO(8,3)
 #endif
 	MDRV_GFXDECODE(gfxdecodeinfo_0x0400000)
 	MDRV_PALETTE_LENGTH(4096*16 - 16)	/* game's palette is 4096 but we allocate 15 more for shadows & highlights */
@@ -1277,7 +1277,7 @@ static MACHINE_DRIVER_START( wrally2 )
 	MDRV_VISIBLE_AREA(0, 384-1, 16, 256-1)
 #else
 	MDRV_VISIBLE_AREA(0, 2*384-1, 16, 256-1)
-	MDRV_ASPECT_RATIO(8,3)
+//  MDRV_ASPECT_RATIO(8,3)
 #endif
 	MDRV_GFXDECODE(gfxdecodeinfo_0x0200000)
 	MDRV_PALETTE_LENGTH(4096*16 - 16)	/* game's palette is 4096 but we allocate 15 more for shadows & highlights */

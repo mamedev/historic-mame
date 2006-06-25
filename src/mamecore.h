@@ -376,6 +376,10 @@ int mame_strnicmp(const char *s1, const char *s2, size_t n);
 #define strnicmp !MUST_USE_MAME_STRNICMP_INSTEAD!
 
 
+/* additional string compare helper */
+int mame_strwildcmp(const char *sp1, const char *sp2);
+
+
 /* since strdup is not part of the standard, we use this instead */
 char *mame_strdup(const char *str);
 

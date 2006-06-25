@@ -68,6 +68,7 @@
 #include "machine/eeprom.h"
 #include "sound/es5506.h"
 #include "includes/taito_f3.h"
+#include "sndhrdw/taito_en.h"
 
 VIDEO_START( groundfx );
 VIDEO_UPDATE( groundfx );
@@ -76,7 +77,6 @@ static UINT16 coin_word, frame_counter=0;
 static UINT16 port_sel = 0;
 extern UINT16 groundfx_rotate_ctrl[8];
 static UINT32 *groundfx_ram;
-static UINT16 *sound_ram;
 
 /***********************************************************
                 COLOR RAM
@@ -293,31 +293,6 @@ static ADDRESS_MAP_START( groundfx_writemem, ADDRESS_SPACE_PROGRAM, 32 )
 	/* f00000 is seat control? */
 ADDRESS_MAP_END
 
-/******************************************************************************/
-
-static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_RAM) AM_BASE(&sound_ram)
-	AM_RANGE(0x140000, 0x140fff) AM_READ(f3_68000_share_r)
-	AM_RANGE(0x200000, 0x20001f) AM_READ(ES5505_data_0_r)
-	AM_RANGE(0x260000, 0x2601ff) AM_READ(es5510_dsp_r)
-	AM_RANGE(0x280000, 0x28001f) AM_READ(f3_68681_r)
-	AM_RANGE(0xc00000, 0xcfffff) AM_READ(MRA16_BANK1)
-	AM_RANGE(0xff8000, 0xffffff) AM_READ(MRA16_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x140000, 0x140fff) AM_WRITE(f3_68000_share_w)
-	AM_RANGE(0x200000, 0x20001f) AM_WRITE(ES5505_data_0_w)
-	AM_RANGE(0x260000, 0x2601ff) AM_WRITE(es5510_dsp_w)
-	AM_RANGE(0x280000, 0x28001f) AM_WRITE(f3_68681_w)
-	AM_RANGE(0x300000, 0x30003f) AM_WRITE(f3_es5505_bank_w)
-	AM_RANGE(0x340000, 0x340003) AM_WRITE(f3_volume_w) /* 8 channel volume control */
-	AM_RANGE(0xc00000, 0xcfffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0xff8000, 0xffffff) AM_WRITE(MWA16_RAM)
-ADDRESS_MAP_END
-
-
 /***********************************************************
              INPUT PORTS (dips in eprom)
 ***********************************************************/
@@ -420,23 +395,9 @@ static const gfx_decode groundfx_gfxdecodeinfo[] =
 
 static MACHINE_RESET( groundfx )
 {
-	/* Sound cpu program loads to 0xc00000 so we use a bank */
-	UINT16 *ROM = (UINT16 *)memory_region(REGION_CPU2);
-	memory_set_bankptr(1,&ROM[0x80000]);
-
-	sound_ram[0]=ROM[0x80000]; /* Stack and Reset vectors */
-	sound_ram[1]=ROM[0x80001];
-	sound_ram[2]=ROM[0x80002];
-	sound_ram[3]=ROM[0x80003];
-
+	taito_f3_soundsystem_reset();
 	f3_68681_reset();
 }
-
-static struct ES5505interface es5505_interface =
-{
-	REGION_SOUND1,	/* Bank 0: Unused by F3 games? */
-	REGION_SOUND1	/* Bank 1: All games seem to use this */
-};
 
 static INTERRUPT_GEN( groundfx_interrupt )
 {
@@ -451,9 +412,7 @@ static MACHINE_DRIVER_START( groundfx )
 	MDRV_CPU_PROGRAM_MAP(groundfx_readmem,groundfx_writemem)
 	MDRV_CPU_VBLANK_INT(groundfx_interrupt,1)
 
-	MDRV_CPU_ADD(M68000, 16000000)
-	/* audio CPU */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	TAITO_F3_SOUND_SYSTEM_CPU(16000000)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -472,12 +431,7 @@ static MACHINE_DRIVER_START( groundfx )
 	MDRV_VIDEO_UPDATE(groundfx)
 
 	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
-
-	MDRV_SOUND_ADD(ES5505, 30476000 / 2)
-	MDRV_SOUND_CONFIG(es5505_interface)
-	MDRV_SOUND_ROUTE(0, "left", 1.0)
-	MDRV_SOUND_ROUTE(1, "right", 1.0)
+	TAITO_F3_SOUND_SYSTEM_ES5505(30476100/2)
 MACHINE_DRIVER_END
 
 /***************************************************************************

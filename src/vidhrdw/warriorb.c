@@ -46,7 +46,7 @@ VIDEO_START( warriorb )
             SPRITE DRAW ROUTINE
 ************************************************************/
 
-static void warriorb_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect,int y_offs)
+static void warriorb_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect,int x_offs,int y_offs)
 {
 	int offs, data, data2, tilenum, color, flipx, flipy;
 	int x, y, priority, pri_mask;
@@ -85,6 +85,7 @@ static void warriorb_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect,
 		if (data2 & 0xf280)   unknown |= (data2 &0xf280);
 #endif
 
+		x -= x_offs;
 		y += y_offs;
 
 		/* sprite wrap: coords become negative at high values */
@@ -112,6 +113,7 @@ static void warriorb_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect,
 
 VIDEO_UPDATE( warriorb )
 {
+	int xoffs = 40*8*screen;
 	UINT8 layer[3], nodraw;
 
 	TC0100SCN_tilemap_update();
@@ -125,20 +127,17 @@ VIDEO_UPDATE( warriorb )
 
 	/* chip 0 does tilemaps on the left, chip 1 does the ones on the right */
 	// draw bottom layer
-	nodraw  = TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);	/* left */
-	nodraw |= TC0100SCN_tilemap_draw(bitmap,cliprect,1,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);	/* right */
+	nodraw  = TC0100SCN_tilemap_draw(bitmap,cliprect,screen,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);	/* left */
 
 	/* Ensure screen blanked even when bottom layers not drawn due to disable bit */
 	if(nodraw) fillbitmap(bitmap, get_black_pen(), cliprect);
 
 	// draw middle layer
-	TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[1],0,1);
-	TC0100SCN_tilemap_draw(bitmap,cliprect,1,layer[1],0,1);
+	TC0100SCN_tilemap_draw(bitmap,cliprect,screen,layer[1],0,1);
 
 	/* Sprites can be under/over the layer below text layer */
-	warriorb_draw_sprites(bitmap,cliprect,8); // draw sprites
+	warriorb_draw_sprites(bitmap,cliprect,xoffs,8); // draw sprites
 
 	// draw top(text) layer
-	TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[2],0,0);
-	TC0100SCN_tilemap_draw(bitmap,cliprect,1,layer[2],0,0);
+	TC0100SCN_tilemap_draw(bitmap,cliprect,screen,layer[2],0,0);
 }

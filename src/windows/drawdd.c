@@ -68,6 +68,7 @@ struct _dd_info
 	int						clearouter;					// clear the outer areas?
 
 	INT32					blitwidth, blitheight;		// current blit width/height values
+	RECT					lastdest;					// last destination rectangle
 
 	IDirectDraw7 *			ddraw;						// pointer to the DirectDraw object
 	IDirectDrawSurface7 *	primary;					// pointer to the primary surface object
@@ -127,6 +128,14 @@ INLINE void update_outer_rects(dd_info *dd)
 }
 
 
+INLINE int better_mode(int width0, int height0, int width1, int height1, float desired_aspect)
+{
+	float aspect0 = (float)width0 / (float)height0;
+	float aspect1 = (float)width1 / (float)height1;
+	return (fabs(desired_aspect - aspect0) < fabs(desired_aspect - aspect1)) ? 0 : 1;
+}
+
+
 
 //============================================================
 //  PROTOTYPES
@@ -161,6 +170,8 @@ static void pick_best_mode(win_window_info *window);
 // rendering
 void drawdd_rgb888_draw_primitives(const render_primitive *primlist, void *dstdata, UINT32 width, UINT32 height, UINT32 pitch);
 void drawdd_bgr888_draw_primitives(const render_primitive *primlist, void *dstdata, UINT32 width, UINT32 height, UINT32 pitch);
+void drawdd_rgb565_draw_primitives(const render_primitive *primlist, void *dstdata, UINT32 width, UINT32 height, UINT32 pitch);
+void drawdd_rgb555_draw_primitives(const render_primitive *primlist, void *dstdata, UINT32 width, UINT32 height, UINT32 pitch);
 
 
 
@@ -335,10 +346,28 @@ static int drawdd_window_draw(win_window_info *window, HDC dc, int update)
 
 	// render to it
 	osd_lock_acquire(window->primlist->lock);
-	if (dd->blitdesc.ddpfPixelFormat.dwRBitMask == 0x00ff0000)
-		drawdd_rgb888_draw_primitives(window->primlist->head, dd->blitdesc.lpSurface, dd->blitwidth, dd->blitheight, dd->blitdesc.lPitch / 4);
-	else
-		drawdd_bgr888_draw_primitives(window->primlist->head, dd->blitdesc.lpSurface, dd->blitwidth, dd->blitheight, dd->blitdesc.lPitch / 4);
+	switch (dd->blitdesc.ddpfPixelFormat.dwRBitMask)
+	{
+		case 0x00ff0000:
+			drawdd_rgb888_draw_primitives(window->primlist->head, dd->blitdesc.lpSurface, dd->blitwidth, dd->blitheight, dd->blitdesc.lPitch / 4);
+			break;
+
+		case 0x000000ff:
+			drawdd_bgr888_draw_primitives(window->primlist->head, dd->blitdesc.lpSurface, dd->blitwidth, dd->blitheight, dd->blitdesc.lPitch / 4);
+			break;
+
+		case 0xf800:
+			drawdd_rgb565_draw_primitives(window->primlist->head, dd->blitdesc.lpSurface, dd->blitwidth, dd->blitheight, dd->blitdesc.lPitch / 2);
+			break;
+
+		case 0x7c00:
+			drawdd_rgb555_draw_primitives(window->primlist->head, dd->blitdesc.lpSurface, dd->blitwidth, dd->blitheight, dd->blitdesc.lPitch / 2);
+			break;
+
+		default:
+			verbose_printf("DirectDraw: Unknown target mode: R=%08X G=%08X B=%08X\n", (int)dd->blitdesc.ddpfPixelFormat.dwRBitMask, (int)dd->blitdesc.ddpfPixelFormat.dwGBitMask, (int)dd->blitdesc.ddpfPixelFormat.dwBBitMask);
+			break;
+	}
 	osd_lock_release(window->primlist->lock);
 
 	// unlock and blit
@@ -730,12 +759,14 @@ static void compute_blit_surface_size(win_window_info *window)
 	{
 		INT32 target_width = rect_width(&client);
 		INT32 target_height = rect_height(&client);
+		float desired_aspect = 1.0f;
 
 		// compute the appropriate visible area if we're trying to keepaspect
 		if (video_config.keepaspect)
 		{
 			win_monitor_info *monitor = winwindow_video_window_monitor(window, NULL);
 			render_target_compute_visible_area(window->target, target_width, target_height, winvideo_monitor_get_aspect(monitor), render_target_get_orientation(window->target), &target_width, &target_height);
+			desired_aspect = (float)target_width / (float)target_height;
 		}
 
 		// compute maximum integral scaling to fit the window
@@ -746,23 +777,25 @@ static void compute_blit_surface_size(win_window_info *window)
 		if (video_config.keepaspect)
 		{
 			// if we could stretch more in the X direction, and that makes a better fit, bump the xscale
-			if (newwidth * (xscale + 1) <= rect_width(&client))
-			{
-				float aspect = (float)(newwidth * xscale) / (float)(newheight * yscale);
-				float aspect1 = (float)(newwidth * (xscale + 1)) / (float)(newheight * yscale);
-				float desired = (float)target_width / (float)target_height;
-				if (fabs(desired - aspect1) < fabs(desired - aspect))
-					xscale++;
-			}
+			while (newwidth * (xscale + 1) <= rect_width(&client) &&
+				better_mode(newwidth * xscale, newheight * yscale, newwidth * (xscale + 1), newheight * yscale, desired_aspect))
+				xscale++;
 
 			// if we could stretch more in the Y direction, and that makes a better fit, bump the yscale
-			if (newheight * (yscale + 1) <= rect_height(&client))
+			while (newheight * (yscale + 1) <= rect_height(&client) &&
+				better_mode(newwidth * xscale, newheight * yscale, newwidth * xscale, newheight * (yscale + 1), desired_aspect))
+				yscale++;
+
+			// now that we've maxed out, see if backing off the maximally stretched one makes a better fit
+			if (rect_width(&client) - newwidth * xscale < rect_height(&client) - newheight * yscale)
 			{
-				float aspect = (float)(newwidth * xscale) / (float)(newheight * yscale);
-				float aspect1 = (float)(newwidth * xscale) / (float)(newheight * (yscale + 1));
-				float desired = (float)target_width / (float)target_height;
-				if (fabs(desired - aspect1) < fabs(desired - aspect))
-					yscale++;
+				while (better_mode(newwidth * xscale, newheight * yscale, newwidth * (xscale - 1), newheight * yscale, desired_aspect))
+					xscale--;
+			}
+			else
+			{
+				while (better_mode(newwidth * xscale, newheight * yscale, newwidth * xscale, newheight * (yscale - 1), desired_aspect))
+					yscale--;
 			}
 		}
 	}
@@ -859,6 +892,13 @@ static void blit_to_primary(win_window_info *window, int srcwidth, int srcheight
 	dest.right = dest.left + dstwidth;
 	dest.top = outer.top + (rect_height(&outer) - dstheight) / 2;
 	dest.bottom = dest.top + dstheight;
+
+	// compare against last destination; if different, force a redraw
+	if (dest.left != dd->lastdest.left || dest.right != dd->lastdest.right || dest.top != dd->lastdest.top || dest.bottom != dd->lastdest.bottom)
+	{
+		dd->lastdest = dest;
+		update_outer_rects(dd);
+	}
 
 	// clear outer rects if we need to
 	if (dd->clearouter != 0)
@@ -963,6 +1003,23 @@ static int config_adapter_mode(win_window_info *window)
 	// release the DirectDraw object
 	IDirectDraw7_Release(dd->ddraw);
 	dd->ddraw = NULL;
+
+	// if we're not changing resolutions, make sure we have a resolution we can handle
+	if (!window->fullscreen || !video_config.switchres)
+	{
+		switch (dd->origmode.ddpfPixelFormat.dwRBitMask)
+		{
+			case 0x00ff0000:
+			case 0x000000ff:
+			case 0xf800:
+			case 0x7c00:
+				break;
+
+			default:
+				verbose_printf("DirectDraw: Unknown target mode: R=%08X G=%08X B=%08X\n", (int)dd->origmode.ddpfPixelFormat.dwRBitMask, (int)dd->origmode.ddpfPixelFormat.dwGBitMask, (int)dd->origmode.ddpfPixelFormat.dwBBitMask);
+				return 1;
+		}
+	}
 
 	return 0;
 }
@@ -1146,6 +1203,30 @@ static void pick_best_mode(win_window_info *window)
 #define DSTSHIFT_R			0
 #define DSTSHIFT_G			8
 #define DSTSHIFT_B			16
+#define NO_DEST_READ		1
+
+#include "rendersw.c"
+
+#define FUNC_PREFIX(x)		drawdd_rgb565_##x
+#define PIXEL_TYPE			UINT16
+#define SRCSHIFT_R			3
+#define SRCSHIFT_G			2
+#define SRCSHIFT_B			3
+#define DSTSHIFT_R			11
+#define DSTSHIFT_G			5
+#define DSTSHIFT_B			0
+#define NO_DEST_READ		1
+
+#include "rendersw.c"
+
+#define FUNC_PREFIX(x)		drawdd_rgb555_##x
+#define PIXEL_TYPE			UINT16
+#define SRCSHIFT_R			3
+#define SRCSHIFT_G			3
+#define SRCSHIFT_B			3
+#define DSTSHIFT_R			10
+#define DSTSHIFT_G			5
+#define DSTSHIFT_B			0
 #define NO_DEST_READ		1
 
 #include "rendersw.c"
