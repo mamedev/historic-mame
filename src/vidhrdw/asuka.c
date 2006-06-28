@@ -71,6 +71,7 @@ VIDEO_UPDATE( asuka )
 
 	/* Sprites may be over or under top bg layer */
 	PC090OJ_draw_sprites(bitmap,cliprect,2);
+	return 0;
 }
 
 
@@ -95,4 +96,5 @@ VIDEO_UPDATE( bonzeadv )
 
 	/* Sprites are always over both bg layers */
 	PC090OJ_draw_sprites(bitmap,cliprect,0);
+	return 0;
 }

@@ -131,6 +131,7 @@ VIDEO_UPDATE( spaceint )
 	}
 
 	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0);
+	return 0;
 }
 
 
@@ -154,4 +155,5 @@ VIDEO_UPDATE( astinvad )
 
 		copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0);
 	}
+	return 0;
 }

@@ -446,6 +446,7 @@ VIDEO_START( coinmstr )
 VIDEO_UPDATE( coinmstr )
 {
 	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	return 0;
 }
 
 /* Declare PIA structure */

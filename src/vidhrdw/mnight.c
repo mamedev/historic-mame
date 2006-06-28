@@ -220,4 +220,5 @@ VIDEO_UPDATE( mnight )
 		mnight_draw_foreground(bitmap);
 	}
 
+	return 0;
 }

@@ -533,4 +533,5 @@ VIDEO_UPDATE( gaelco3d )
 		copybitmap(bitmap, screenbits, 0,0, 0,0, cliprect, TRANSPARENCY_NONE, 0);
 
 	logerror("---update---\n");
+	return 0;
 }

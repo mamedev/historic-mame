@@ -134,4 +134,5 @@ VIDEO_UPDATE( djboy )
 
 	tilemap_draw( bitmap, cliprect,background,0,0 );
 	draw_sprites( bitmap, cliprect );
+	return 0;
 }

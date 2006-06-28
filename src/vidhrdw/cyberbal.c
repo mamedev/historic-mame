@@ -457,4 +457,5 @@ VIDEO_UPDATE( cyberbal )
 #else
 	update_one_screen(screen, bitmap, cliprect);
 #endif
+	return 0;
 }

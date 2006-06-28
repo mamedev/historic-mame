@@ -158,6 +158,7 @@ VIDEO_UPDATE( sprint4 )
 			vert - 15,
 			cliprect, TRANSPARENCY_PEN, 0);
 	}
+	return 0;
 }
 
 
@@ -192,6 +193,7 @@ VIDEO_UPDATE( ultratnk )
 				cliprect, TRANSPARENCY_PEN, 0);
 		}
 	}
+	return 0;
 }
 
 

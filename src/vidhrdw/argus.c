@@ -1581,6 +1581,7 @@ VIDEO_UPDATE( argus )
 	tilemap_draw(bitmap, cliprect, bg1_tilemap, 0, 0);
 	argus_draw_sprites(bitmap, cliprect, 1);
 	tilemap_draw(bitmap, cliprect, tx_tilemap,  0, 0);
+	return 0;
 }
 
 VIDEO_UPDATE( valtric )
@@ -1590,6 +1591,7 @@ VIDEO_UPDATE( valtric )
 	tilemap_draw(bitmap, cliprect, bg1_tilemap, 0, 0);
 	valtric_draw_sprites(bitmap, cliprect);
 	tilemap_draw(bitmap, cliprect, tx_tilemap,  0, 0);
+	return 0;
 }
 
 VIDEO_UPDATE( butasan )
@@ -1604,6 +1606,7 @@ VIDEO_UPDATE( butasan )
 #ifdef MAME_DEBUG
 	butasan_log_vram();
 #endif
+	return 0;
 }
 
 
@@ -1620,4 +1623,5 @@ VIDEO_UPDATE( bombsa )
 #endif
 	tilemap_draw(bitmap, cliprect, tx_tilemap,  0, 0);
 	bombsa_draw_sprites(bitmap,cliprect);
+	return 0;
 }

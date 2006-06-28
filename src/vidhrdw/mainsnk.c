@@ -186,6 +186,7 @@ VIDEO_UPDATE(mainsnk)
 	draw_status( bitmap,cliprect,0,0x400 );
 	draw_status( bitmap,cliprect,32*8,0x40 );
 	update_palette(1);
+	return 0;
 }
 
 VIDEO_UPDATE(canvas)
@@ -201,4 +202,5 @@ VIDEO_UPDATE(canvas)
 //  draw_status( bitmap,cliprect,0,0x400 );
 //  draw_status( bitmap,cliprect,32*8,0x40 );
 	update_palette(1);
+	return 0;
 }

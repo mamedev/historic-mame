@@ -354,4 +354,5 @@ VIDEO_UPDATE( fortyl )
 	tilemap_draw(bitmap,cliprect,background,0,0);
 
 	draw_sprites(bitmap,cliprect);
+	return 0;
 }

@@ -512,6 +512,7 @@ static VIDEO_START( flagstaff )
 static VIDEO_UPDATE( seattle )
 {
 	voodoo_update(0, bitmap, cliprect);
+	return 0;
 }
 
 
@@ -1428,6 +1429,7 @@ static VIDEO_UPDATE( carnevil )
 	draw_crosshair(bitmap, beamx, beamy, cliprect, 0);
 	get_crosshair_xy(1, &beamx, &beamy);
 	draw_crosshair(bitmap, beamx, beamy, cliprect, 1);
+	return 0;
 }
 
 

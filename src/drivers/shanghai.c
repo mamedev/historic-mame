@@ -749,6 +749,7 @@ VIDEO_UPDATE( shanghai )
 			}
 		}
 	}
+	return 0;
 }
 
 

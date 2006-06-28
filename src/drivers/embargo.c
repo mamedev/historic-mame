@@ -17,6 +17,7 @@ static int input_select;
 static VIDEO_UPDATE( embargo )
 {
 	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0);
+	return 0;
 }
 
 

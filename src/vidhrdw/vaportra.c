@@ -187,4 +187,5 @@ VIDEO_UPDATE( vaportra )
 
 	vaportra_drawsprites(bitmap,cliprect,1);
 	deco16_tilemap_1_draw(bitmap,cliprect,0,0);
+	return 0;
 }

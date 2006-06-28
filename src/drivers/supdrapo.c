@@ -269,6 +269,7 @@ VIDEO_UPDATE( supdrapo )
 {
 	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
 
+	return 0;
 }
 
 static MACHINE_DRIVER_START( supdrapo )

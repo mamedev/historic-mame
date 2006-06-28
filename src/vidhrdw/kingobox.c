@@ -269,6 +269,7 @@ VIDEO_UPDATE( kingofb )
 	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
 	kingofb_draw_sprites(bitmap);
 	tilemap_draw(bitmap, &Machine->visible_area[0], fg_tilemap, 0, 0);
+	return 0;
 }
 
 /* Ring King */
@@ -336,4 +337,5 @@ VIDEO_UPDATE( ringking )
 	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
 	ringking_draw_sprites(bitmap);
 	tilemap_draw(bitmap, &Machine->visible_area[0], fg_tilemap, 0, 0);
+	return 0;
 }

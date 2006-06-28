@@ -1535,6 +1535,7 @@ VIDEO_UPDATE( cave )
 			if (layers_ctrl&(1<<(pri+12)))	cave_tilemap_3_draw(bitmap, cliprect, pri, 0, pri2);
 		}
 	}
+	return 0;
 }
 
 

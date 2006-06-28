@@ -820,6 +820,34 @@ static void compute_blit_surface_size(win_window_info *window)
 
 
 //============================================================
+//  calc_fullscreen_margins
+//============================================================
+
+static void calc_fullscreen_margins(win_window_info *window, DWORD desc_width, DWORD desc_height, RECT *margins)
+{
+	margins->left = 0;
+	margins->top = 0;
+	margins->right = desc_width;
+	margins->bottom = desc_height;
+
+	if (win_has_menu(window))
+	{
+		static int height_with_menubar = 0;
+		if (height_with_menubar == 0)
+		{
+			RECT with_menu = { 100, 100, 200, 200 };
+			RECT without_menu = { 100, 100, 200, 200 };
+			AdjustWindowRect(&with_menu, WS_OVERLAPPED, TRUE);
+			AdjustWindowRect(&without_menu, WS_OVERLAPPED, FALSE);
+			height_with_menubar = (with_menu.bottom - with_menu.top) - (without_menu.bottom - without_menu.top);
+		}
+		margins->top = height_with_menubar;
+	}
+}
+
+
+
+//============================================================
 //  blit_to_primary
 //============================================================
 
@@ -855,9 +883,7 @@ static void blit_to_primary(win_window_info *window, int srcwidth, int srcheight
 	// compute outer rect -- full screen version
 	else
 	{
-		outer.left = outer.top = 0;
-		outer.right = dd->primarydesc.dwWidth;
-		outer.bottom = dd->primarydesc.dwHeight;
+		calc_fullscreen_margins(window, dd->primarydesc.dwWidth, dd->primarydesc.dwHeight, &outer);
 	}
 
 	// if we're respecting the aspect ratio, we need to adjust to fit

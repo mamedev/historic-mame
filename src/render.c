@@ -11,22 +11,19 @@
 
     Things that are still broken:
         * LEDs missing
-        * listxml output needs to be cleaned up
+        * remember current video options in cfg file
         * UI line drawing tends to overshoot or be offscreen at low resolutions
-        * palette_set_brightness
+        * controls for which screen the UI is displayed on
+        * listxml output needs to be cleaned up
 
     OSD-specific things that are busted:
         * -full_screen_gamma
         * no fallback if we run out of video memory
-        * running fullscreen with not enough screens should be prevented
+        * multiple windows on screen produces odd order and UI is not visible
 
     To do features:
         * optimize for elements that are empty
-        * further optimization of clearing for multi-screen views
-        * remove aspect ratio from machine driver
         * positioning of game screens
-        * remember current video options in cfg file
-        * convert drivers to multiple screens
 
 ****************************************************************************
 
@@ -181,6 +178,7 @@
 
 #include "render.h"
 #include "rendfont.h"
+#include "config.h"
 #include "xmlfile.h"
 #include "png.h"
 #include <math.h>
@@ -195,6 +193,7 @@
 #include "vertical.lh"
 #include "dualhsxs.lh"
 #include "dualhovu.lh"
+#include "dualhuov.lh"
 #include "triphsxs.lh"
 
 
@@ -210,6 +209,8 @@
 #define NUM_PRIMLISTS			2
 
 #define MAX_CLEAR_EXTENTS		1000
+
+#define INTERNAL_FLAG_CHAR		0x00000001
 
 enum
 {
@@ -360,6 +361,7 @@ struct _view_item
 	view_item_state *	state;				/* pointer to the state */
 	int					orientation;		/* orientation of this item */
 	render_bounds		bounds;				/* bounds of the item */
+	render_bounds		rawbounds;			/* raw (original) bounds of the item */
 	render_color		color;				/* color of the item */
 };
 
@@ -370,7 +372,12 @@ struct _layout_view
 	layout_view *		next;				/* pointer to next layout in the list */
 	const char *		name;				/* name of the layout */
 	float				aspect;				/* X/Y of the layout */
+	float				scraspect;			/* X/Y of the screen areas */
 	UINT32				screens;			/* bitmask of screens used */
+	render_bounds		bounds;				/* computed bounds of the view */
+	render_bounds		scrbounds;			/* computed bounds of the screens within the view */
+	render_bounds		expbounds;			/* explicit bounds of the view */
+	UINT8				layenabled[ITEM_LAYER_MAX]; /* is this layer enabled? */
 	view_item *			itemlist[ITEM_LAYER_MAX]; /* list of layout items for each layer */
 };
 
@@ -395,6 +402,9 @@ struct _render_target
 	INT32				height;				/* height in pixels */
 	float				pixel_aspect;		/* aspect ratio of individual pixels */
 	int					orientation;		/* orientation */
+	int					layerconfig;		/* layer configuration */
+	int					maxtexwidth;		/* maximum width of a texture */
+	int					maxtexheight;		/* maximum height of a texture */
 };
 
 
@@ -406,6 +416,7 @@ struct _container_item
 	render_bounds		bounds;				/* bounds of the element */
 	render_color		color;				/* RGBA factors */
 	UINT32				flags;				/* option flags */
+	UINT32				internal;			/* internal flags */
 	float				width;				/* width of the line (lines only) */
 	render_texture *	texture;			/* pointer to the source texture (quads only) */
 };
@@ -452,11 +463,13 @@ static INT32 clear_extent_count;
 
 /* core system */
 static void render_exit(void);
+static void render_load(int config_type, xml_data_node *parentnode);
+static void render_save(int config_type, xml_data_node *parentnode);
 
 /* render targets */
 static void release_render_list(render_primitive_list *list);
-static void add_container_primitives(render_primitive_list *list, const object_transform *xform, const render_container *container, int blendmode);
-static void add_element_primitives(render_primitive_list *list, const object_transform *xform, const layout_element *element, int state, int blendmode);
+static void add_container_primitives(render_target *target, render_primitive_list *list, const object_transform *xform, const render_container *container, int blendmode);
+static void add_element_primitives(render_target *target, render_primitive_list *list, const object_transform *xform, const layout_element *element, int state, int blendmode);
 static void add_clear_and_optimize_primitive_list(render_target *target, render_primitive_list *list);
 
 /* render references */
@@ -473,6 +486,9 @@ static container_item *render_container_item_add_generic(render_container *conta
 /* resampler */
 static void resample_argb_bitmap_average(UINT32 *dest, UINT32 drowpixels, UINT32 dwidth, UINT32 dheight, const UINT32 *source, UINT32 srowpixels, const render_color *color, UINT32 dx, UINT32 dy);
 static void resample_argb_bitmap_bilinear(UINT32 *dest, UINT32 drowpixels, UINT32 dwidth, UINT32 dheight, const UINT32 *source, UINT32 srowpixels, const render_color *color, UINT32 dx, UINT32 dy);
+
+/* layout views */
+static void layout_view_recompute(layout_view *view, int layerconfig);
 
 /* layout elements */
 static void layout_element_scale(mame_bitmap *dest, const mame_bitmap *source, const rectangle *sbounds, void *param);
@@ -853,6 +869,9 @@ void render_init(void)
 		screen_container[screen] = render_container_alloc();
 		screen_container[screen]->orientation = Machine->gamedrv->flags & ORIENTATION_MASK;
 	}
+
+	/* register callbacks */
+	config_register("video", render_load, render_save);
 }
 
 
@@ -910,6 +929,77 @@ static void render_exit(void)
 			free((void *)temp->name);
 		free(temp);
 	}
+}
+
+
+/*-------------------------------------------------
+    render_load - read and apply data from the
+    configuration file
+-------------------------------------------------*/
+
+static void render_load(int config_type, xml_data_node *parentnode)
+{
+#if 0
+	xml_data_node *channelnode;
+	int mixernum;
+
+	/* we only care about game files */
+	if (config_type != CONFIG_TYPE_GAME)
+		return;
+
+	/* might not have any data */
+	if (!parentnode)
+		return;
+
+	/* iterate over channel nodes */
+	for (channelnode = xml_get_sibling(parentnode->child, "channel"); channelnode; channelnode = xml_get_sibling(channelnode->next, "channel"))
+	{
+		mixernum = xml_get_attribute_int(channelnode, "index", -1);
+		if (mixernum >= 0 && mixernum < MAX_MIXER_CHANNELS)
+		{
+			float defvol = xml_get_attribute_float(channelnode, "defvol", -1000.0);
+			float newvol = xml_get_attribute_float(channelnode, "newvol", -1000.0);
+			if (defvol == sound_get_default_gain(mixernum) && newvol != -1000.0)
+				sound_set_user_gain(mixernum, newvol);
+		}
+	}
+#endif
+}
+
+
+/*-------------------------------------------------
+    render_save - save data to the configuration
+    file
+-------------------------------------------------*/
+
+static void render_save(int config_type, xml_data_node *parentnode)
+{
+#if 0
+	int mixernum;
+
+	/* we only care about game files */
+	if (config_type != CONFIG_TYPE_GAME)
+		return;
+
+	/* iterate over mixer channels */
+	if (parentnode)
+		for (mixernum = 0; mixernum < MAX_MIXER_CHANNELS; mixernum++)
+		{
+			float defvol = sound_get_default_gain(mixernum);
+			float newvol = sound_get_user_gain(mixernum);
+
+			if (defvol != newvol)
+			{
+				xml_data_node *channelnode = xml_add_child(parentnode, "channel", NULL);
+				if (channelnode)
+				{
+					xml_set_attribute_int(channelnode, "index", mixernum);
+					xml_set_attribute_float(channelnode, "defvol", defvol);
+					xml_set_attribute_float(channelnode, "newvol", newvol);
+				}
+			}
+		}
+#endif
 }
 
 
@@ -1010,6 +1100,9 @@ render_target *render_target_alloc(const char *layoutfile, int singleview)
 	target->height = 480;
 	target->pixel_aspect = 0.0f;
 	target->orientation = ROT0;
+	target->layerconfig = LAYER_CONFIG_ENABLE_BACKDROP | LAYER_CONFIG_ENABLE_OVERLAY | LAYER_CONFIG_ENABLE_BEZEL;
+	target->maxtexwidth = 65536;
+	target->maxtexheight = 65536;
 
 	/* allocate a lock for the primitive list */
 	for (listnum = 0; listnum < NUM_PRIMLISTS; listnum++)
@@ -1121,6 +1214,64 @@ void render_target_free(render_target *target)
 }
 
 
+/*-------------------------------------------------
+    render_target_get_indexed - get a render_target
+    by index
+-------------------------------------------------*/
+
+render_target *render_target_get_indexed(int index)
+{
+	render_target *target;
+
+	/* count up the targets until we hit the requested index */
+	for (target = targetlist; target != NULL; target = target->next)
+		if (index-- == 0)
+			return target;
+	return NULL;
+}
+
+
+/*-------------------------------------------------
+    render_target_get_view_name - return the
+    name of the indexed view, or NULL if it
+    doesn't exist
+-------------------------------------------------*/
+
+const char *render_target_get_view_name(render_target *target, int viewindex)
+{
+	layout_file *file;
+	layout_view *view;
+
+	/* return the name from the indexed view */
+	for (file = target->filelist; file != NULL; file = file->next)
+		for (view = file->viewlist; view != NULL; view = view->next)
+			if (viewindex-- == 0)
+				return view->name;
+
+	return NULL;
+}
+
+
+/*-------------------------------------------------
+    render_target_get_view_screens - return a
+    bitmask of which screens are visible on a
+    given view
+-------------------------------------------------*/
+
+UINT32 render_target_get_view_screens(render_target *target, int viewindex)
+{
+	layout_file *file;
+	layout_view *view;
+
+	/* return the name from the indexed view */
+	for (file = target->filelist; file != NULL; file = file->next)
+		for (view = file->viewlist; view != NULL; view = view->next)
+			if (viewindex-- == 0)
+				return view->screens;
+
+	return 0;
+}
+
 
 /*-------------------------------------------------
     render_target_get_bounds - get the bounds and
@@ -1174,19 +1325,25 @@ void render_target_set_orientation(render_target *target, int orientation)
 
 
 /*-------------------------------------------------
-    render_target_get_indexed - get a render_target
-    by index
+    render_target_get_layer_config - get the
+    layer config of a target
 -------------------------------------------------*/
 
-render_target *render_target_get_indexed(int index)
+int render_target_get_layer_config(render_target *target)
 {
-	render_target *target;
+	return target->layerconfig;
+}
 
-	/* count up the targets until we hit the requested index */
-	for (target = targetlist; target != NULL; target = target->next)
-		if (index-- == 0)
-			return target;
-	return NULL;
+
+/*-------------------------------------------------
+    render_target_set_layer_config - set the
+    layer config of a target
+-------------------------------------------------*/
+
+void render_target_set_layer_config(render_target *target, int layerconfig)
+{
+	target->layerconfig = layerconfig;
+	layout_view_recompute(target->curview, layerconfig);
 }
 
 
@@ -1229,50 +1386,21 @@ void render_target_set_view(render_target *target, int viewindex)
 			if (viewindex-- == 0)
 			{
 				target->curview = view;
+				layout_view_recompute(view, target->layerconfig);
 				break;
 			}
 }
 
 
 /*-------------------------------------------------
-    render_target_get_view_name - return the
-    name of the indexed view, or NULL if it
-    doesn't exist
+    render_target_set_max_texture_size - set the
+    upper bound on the texture size
 -------------------------------------------------*/
 
-const char *render_target_get_view_name(render_target *target, int viewindex)
+void render_target_set_max_texture_size(render_target *target, int maxwidth, int maxheight)
 {
-	layout_file *file;
-	layout_view *view;
-
-	/* return the name from the indexed view */
-	for (file = target->filelist; file != NULL; file = file->next)
-		for (view = file->viewlist; view != NULL; view = view->next)
-			if (viewindex-- == 0)
-				return view->name;
-
-	return NULL;
-}
-
-
-/*-------------------------------------------------
-    render_target_get_view_screens - return a
-    bitmask of which screens are visible on a
-    given view
--------------------------------------------------*/
-
-UINT32 render_target_get_view_screens(render_target *target, int viewindex)
-{
-	layout_file *file;
-	layout_view *view;
-
-	/* return the name from the indexed view */
-	for (file = target->filelist; file != NULL; file = file->next)
-		for (view = file->viewlist; view != NULL; view = view->next)
-			if (viewindex-- == 0)
-				return view->screens;
-
-	return 0;
+	target->maxtexwidth = maxwidth;
+	target->maxtexheight = maxheight;
 }
 
 
@@ -1291,7 +1419,7 @@ void render_target_compute_visible_area(render_target *target, INT32 target_widt
 	if (target_pixel_aspect != 0.0f)
 	{
 		/* start with the aspect ratio of the square pixel layout */
-		width = target->curview->aspect;
+		width = (target->layerconfig & LAYER_CONFIG_ZOOM_TO_SCREEN) ? target->curview->scraspect : target->curview->aspect;
 		height = 1.0f;
 
 		/* first apply target orientation */
@@ -1440,49 +1568,50 @@ const render_primitive_list *render_target_get_primitives(render_target *target)
 
 	/* iterate over layers back-to-front */
 	for (layer = 0; layer < ITEM_LAYER_MAX; layer++)
-	{
-		int blendmode = BLENDMODE_ALPHA;
-		view_item *item;
-
-		/* pick a blendmode */
-		if (layer == ITEM_LAYER_SCREEN)
-			blendmode = BLENDMODE_ADD;
-		else if (layer == ITEM_LAYER_OVERLAY)
-			blendmode = BLENDMODE_RGB_MULTIPLY;
-
-		/* iterate over items in the layer */
-		itemcount[layer] = 0;
-		for (item = target->curview->itemlist[layer]; item != NULL; item = item->next)
+		if (target->curview->layenabled[layer])
 		{
-			object_transform item_xform;
-			render_bounds bounds;
+			int blendmode = BLENDMODE_ALPHA;
+			view_item *item;
 
-			/* first apply orientation to the bounds */
-			bounds = item->bounds;
-			apply_orientation(&bounds, root_xform.orientation);
-			normalize_bounds(&bounds);
+			/* pick a blendmode */
+			if (layer == ITEM_LAYER_SCREEN)
+				blendmode = BLENDMODE_ADD;
+			else if (layer == ITEM_LAYER_OVERLAY)
+				blendmode = BLENDMODE_RGB_MULTIPLY;
 
-			/* apply the transform to the item */
-			item_xform.xoffs = root_xform.xoffs + bounds.x0 * root_xform.xscale;
-			item_xform.yoffs = root_xform.yoffs + bounds.y0 * root_xform.yscale;
-			item_xform.xscale = (bounds.x1 - bounds.x0) * root_xform.xscale;
-			item_xform.yscale = (bounds.y1 - bounds.y0) * root_xform.yscale;
-			item_xform.color.r = item->color.r * root_xform.color.r;
-			item_xform.color.g = item->color.g * root_xform.color.g;
-			item_xform.color.b = item->color.b * root_xform.color.b;
-			item_xform.color.a = item->color.a * root_xform.color.a;
-			item_xform.orientation = orientation_add(item->orientation, root_xform.orientation);
+			/* iterate over items in the layer */
+			itemcount[layer] = 0;
+			for (item = target->curview->itemlist[layer]; item != NULL; item = item->next)
+			{
+				object_transform item_xform;
+				render_bounds bounds;
 
-			/* if there is no associated element, it must be a screen element */
-			if (item->element != NULL)
-				add_element_primitives(&target->primlist[listnum], &item_xform, item->element, item->state->curstate, blendmode);
-			else
-				add_container_primitives(&target->primlist[listnum], &item_xform, screen_container[item->index], blendmode);
+				/* first apply orientation to the bounds */
+				bounds = item->bounds;
+				apply_orientation(&bounds, root_xform.orientation);
+				normalize_bounds(&bounds);
 
-			/* keep track of how many items are in the layer */
-			itemcount[layer]++;
+				/* apply the transform to the item */
+				item_xform.xoffs = root_xform.xoffs + bounds.x0 * root_xform.xscale;
+				item_xform.yoffs = root_xform.yoffs + bounds.y0 * root_xform.yscale;
+				item_xform.xscale = (bounds.x1 - bounds.x0) * root_xform.xscale;
+				item_xform.yscale = (bounds.y1 - bounds.y0) * root_xform.yscale;
+				item_xform.color.r = item->color.r * root_xform.color.r;
+				item_xform.color.g = item->color.g * root_xform.color.g;
+				item_xform.color.b = item->color.b * root_xform.color.b;
+				item_xform.color.a = item->color.a * root_xform.color.a;
+				item_xform.orientation = orientation_add(item->orientation, root_xform.orientation);
+
+				/* if there is no associated element, it must be a screen element */
+				if (item->element != NULL)
+					add_element_primitives(target, &target->primlist[listnum], &item_xform, item->element, item->state->curstate, blendmode);
+				else
+					add_container_primitives(target, &target->primlist[listnum], &item_xform, screen_container[item->index], blendmode);
+
+				/* keep track of how many items are in the layer */
+				itemcount[layer]++;
+			}
 		}
-	}
 
 	/* process the UI if we are the UI target */
 	if (target == render_get_ui_target())
@@ -1496,7 +1625,7 @@ const render_primitive_list *render_target_get_primitives(render_target *target)
 		ui_xform.orientation = target->orientation;
 
 		/* add UI elements */
-		add_container_primitives(&target->primlist[listnum], &ui_xform, ui_container, BLENDMODE_ALPHA);
+		add_container_primitives(target, &target->primlist[listnum], &ui_xform, ui_container, BLENDMODE_ALPHA);
 	}
 
 	/* add a clip pop primitive for completeness */
@@ -1547,7 +1676,7 @@ static void release_render_list(render_primitive_list *list)
     based on the container
 -------------------------------------------------*/
 
-static void add_container_primitives(render_primitive_list *list, const object_transform *xform, const render_container *container, int blendmode)
+static void add_container_primitives(render_target *target, render_primitive_list *list, const object_transform *xform, const render_container *container, int blendmode)
 {
 	int orientation = orientation_add(container->orientation, xform->orientation);
 	render_primitive *prim;
@@ -1565,6 +1694,7 @@ static void add_container_primitives(render_primitive_list *list, const object_t
 	for (item = container->itemlist; item != NULL; item = item->next)
 	{
 		render_bounds bounds;
+		int width, height;
 
 		/* compute the oriented bounds */
 		bounds = item->bounds;
@@ -1574,8 +1704,16 @@ static void add_container_primitives(render_primitive_list *list, const object_t
 		prim = alloc_render_primitive(0);
 		prim->bounds.x0 = round_nearest(xform->xoffs + bounds.x0 * xform->xscale);
 		prim->bounds.y0 = round_nearest(xform->yoffs + bounds.y0 * xform->yscale);
-		prim->bounds.x1 = round_nearest(xform->xoffs + bounds.x1 * xform->xscale);//prim->bounds.x0 + round_nearest((bounds.x1 - bounds.x0) * xform->xscale);
-		prim->bounds.y1 = round_nearest(xform->yoffs + bounds.y1 * xform->yscale);//prim->bounds.y0 + round_nearest((bounds.y1 - bounds.y0) * xform->yscale);
+		if (item->internal & INTERNAL_FLAG_CHAR)
+		{
+			prim->bounds.x1 = prim->bounds.x0 + round_nearest((bounds.x1 - bounds.x0) * xform->xscale);
+			prim->bounds.y1 = prim->bounds.y0 + round_nearest((bounds.y1 - bounds.y0) * xform->yscale);
+		}
+		else
+		{
+			prim->bounds.x1 = round_nearest(xform->xoffs + bounds.x1 * xform->xscale);
+			prim->bounds.y1 = round_nearest(xform->yoffs + bounds.y1 * xform->yscale);
+		}
 		prim->color.r = xform->color.r * item->color.r;
 		prim->color.g = xform->color.g * item->color.g;
 		prim->color.b = xform->color.b * item->color.b;
@@ -1607,10 +1745,11 @@ static void add_container_primitives(render_primitive_list *list, const object_t
 					int finalorient = orientation_add(PRIMFLAG_GET_TEXORIENT(item->flags), orientation);
 
 					/* based on the swap values, get the scaled final texture */
-					render_texture_get_scaled(item->texture,
-										(finalorient & ORIENTATION_SWAP_XY) ? (prim->bounds.y1 - prim->bounds.y0) : (prim->bounds.x1 - prim->bounds.x0),
-										(finalorient & ORIENTATION_SWAP_XY) ? (prim->bounds.x1 - prim->bounds.x0) : (prim->bounds.y1 - prim->bounds.y0),
-										&prim->texture, &list->reflist);
+					width = (finalorient & ORIENTATION_SWAP_XY) ? (prim->bounds.y1 - prim->bounds.y0) : (prim->bounds.x1 - prim->bounds.x0);
+					height = (finalorient & ORIENTATION_SWAP_XY) ? (prim->bounds.x1 - prim->bounds.x0) : (prim->bounds.y1 - prim->bounds.y0);
+					width = MIN(width, target->maxtexwidth);
+					height = MIN(height, target->maxtexheight);
+					render_texture_get_scaled(item->texture, width, height, &prim->texture, &list->reflist);
 
 					/* apply the final orientation from the quad flags and then build up the final flags */
 					prim->flags = (item->flags & ~(PRIMFLAG_TEXORIENT_MASK | PRIMFLAG_BLENDMODE_MASK | PRIMFLAG_TEXFORMAT_MASK)) |
@@ -1642,7 +1781,7 @@ static void add_container_primitives(render_primitive_list *list, const object_t
     for an element in the current state
 -------------------------------------------------*/
 
-static void add_element_primitives(render_primitive_list *list, const object_transform *xform, const layout_element *element, int state, int blendmode)
+static void add_element_primitives(render_target *target, render_primitive_list *list, const object_transform *xform, const layout_element *element, int state, int blendmode)
 {
 	INT32 width = round_nearest(xform->xscale);
 	INT32 height = round_nearest(xform->yscale);
@@ -1663,7 +1802,11 @@ static void add_element_primitives(render_primitive_list *list, const object_tra
 	set_bounds_wh(&prim->bounds, round_nearest(xform->xoffs), round_nearest(xform->yoffs), width, height);
 	prim->color = xform->color;
 	prim->flags = PRIMFLAG_TEXORIENT(xform->orientation) | PRIMFLAG_BLENDMODE(blendmode) | PRIMFLAG_TEXFORMAT(texture->format);
-	render_texture_get_scaled(texture, (xform->orientation & ORIENTATION_SWAP_XY) ? height : width, (xform->orientation & ORIENTATION_SWAP_XY) ? width : height, &prim->texture, &list->reflist);
+	if (xform->orientation & ORIENTATION_SWAP_XY)
+		ISWAP(width, height);
+	width = MIN(width, target->maxtexwidth);
+	height = MIN(height, target->maxtexheight);
+	render_texture_get_scaled(texture, width, height, &prim->texture, &list->reflist);
 	append_render_primitive(list, prim);
 }
 
@@ -2418,14 +2561,18 @@ void render_container_add_char(render_container *container, float x0, float y0, 
 {
 	render_texture *texture;
 	render_bounds bounds;
+	container_item *item;
 
 	/* compute the bounds of the character cell and get the texture */
 	bounds.x0 = x0;
 	bounds.y0 = y0;
 	texture = render_font_get_char_texture_and_bounds(font, height, aspect, ch, &bounds);
 
-	/* now add as a standard quad */
-	render_container_add_quad(container, bounds.x0, bounds.y0, bounds.x1, bounds.y1, argb, texture, PRIMFLAG_TEXORIENT(ROT0) | PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+	/* add it like a quad */
+ 	item = render_container_item_add_generic(container, CONTAINER_ITEM_QUAD, bounds.x0, bounds.y0, bounds.x1, bounds.y1, argb);
+ 	item->texture = texture;
+	item->flags = PRIMFLAG_TEXORIENT(ROT0) | PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA);
+	item->internal = INTERNAL_FLAG_CHAR;
 }
 
 
@@ -2816,10 +2963,10 @@ int render_clip_quad(render_bounds *bounds, const render_bounds *clip, float *u,
 		bounds->y1 = clip->y1;
 		if (u != NULL && v != NULL)
 		{
-			u[3] -= (u[2] - u[0]) * frac;
-			v[3] -= (v[2] - v[0]) * frac;
-			u[2] -= (u[3] - u[1]) * frac;
-			v[2] -= (v[3] - v[1]) * frac;
+			u[2] -= (u[2] - u[0]) * frac;
+			v[2] -= (v[2] - v[0]) * frac;
+			u[3] -= (u[3] - u[1]) * frac;
+			v[3] -= (v[3] - v[1]) * frac;
 		}
 	}
 
@@ -2832,8 +2979,8 @@ int render_clip_quad(render_bounds *bounds, const render_bounds *clip, float *u,
 		{
 			u[0] += (u[1] - u[0]) * frac;
 			v[0] += (v[1] - v[0]) * frac;
-			u[3] += (u[3] - u[2]) * frac;
-			v[3] += (v[3] - v[2]) * frac;
+			u[2] += (u[3] - u[2]) * frac;
+			v[2] += (v[3] - v[2]) * frac;
 		}
 	}
 
@@ -2846,11 +2993,126 @@ int render_clip_quad(render_bounds *bounds, const render_bounds *clip, float *u,
 		{
 			u[1] -= (u[1] - u[0]) * frac;
 			v[1] -= (v[1] - v[0]) * frac;
-			u[2] -= (u[3] - u[2]) * frac;
-			v[2] -= (v[3] - v[2]) * frac;
+			u[3] -= (u[3] - u[2]) * frac;
+			v[3] -= (v[3] - v[2]) * frac;
 		}
 	}
 	return FALSE;
+}
+
+
+
+/***************************************************************************
+
+    Layout views
+
+***************************************************************************/
+
+/*-------------------------------------------------
+    layout_view_recompute - recompute the bounds
+    and aspect ratio of a view and all of its
+    contained items
+-------------------------------------------------*/
+
+static void layout_view_recompute(layout_view *view, int layerconfig)
+{
+	render_bounds target_bounds;
+	float xscale, yscale;
+	float xoffs, yoffs;
+	int scrfirst = TRUE;
+	int first = TRUE;
+	int layer;
+
+	/* reset the bounds */
+	view->bounds.x0 = view->bounds.y0 = view->bounds.x1 = view->bounds.y1 = 0.0f;
+	view->scrbounds.x0 = view->scrbounds.y0 = view->scrbounds.x1 = view->scrbounds.y1 = 0.0f;
+	view->screens = 0;
+
+	/* loop over all layers */
+	for (layer = 0; layer < ITEM_LAYER_MAX; layer++)
+	{
+		static const int layer_mask[ITEM_LAYER_MAX] = { LAYER_CONFIG_ENABLE_BACKDROP, 0, LAYER_CONFIG_ENABLE_OVERLAY, LAYER_CONFIG_ENABLE_BEZEL };
+
+		/* determine if this layer should be visible */
+		view->layenabled[layer] = (layer_mask[layer] == 0 || (layerconfig & layer_mask[layer]));
+
+		/* only do it if requested */
+		if (view->layenabled[layer])
+		{
+			view_item *item;
+
+			for (item = view->itemlist[layer]; item != NULL; item = item->next)
+			{
+				/* accumulate bounds */
+				if (first)
+					view->bounds = item->rawbounds;
+				else
+					union_bounds(&view->bounds, &item->rawbounds);
+				first = FALSE;
+
+				/* accumulate screen bounds */
+				if (item->element == NULL)
+				{
+					if (scrfirst)
+						view->scrbounds = item->rawbounds;
+					else
+						union_bounds(&view->scrbounds, &item->rawbounds);
+					scrfirst = FALSE;
+				}
+			}
+		}
+	}
+
+	/* if we have an explicit bounds, override it */
+	if (view->expbounds.x1 > view->expbounds.x0)
+		view->bounds = view->expbounds;
+
+	/* compute the aspect ratio of the view */
+	view->aspect = (view->bounds.x1 - view->bounds.x0) / (view->bounds.y1 - view->bounds.y0);
+	view->scraspect = (view->scrbounds.x1 - view->scrbounds.x0) / (view->scrbounds.y1 - view->scrbounds.y0);
+
+	/* if we're handling things normally, the target bounds are (0,0)-(1,1) */
+	if (!(layerconfig & LAYER_CONFIG_ZOOM_TO_SCREEN))
+	{
+		target_bounds.x0 = target_bounds.y0 = 0.0f;
+		target_bounds.x1 = target_bounds.y1 = 1.0f;
+	}
+
+	/* if we're cropping, we want the screen area to fill (0,0)-(1,1) */
+	else
+	{
+		float targwidth = (view->bounds.x1 - view->bounds.x0) / (view->scrbounds.x1 - view->scrbounds.x0);
+		float targheight = (view->bounds.y1 - view->bounds.y0) / (view->scrbounds.y1 - view->scrbounds.y0);
+		target_bounds.x0 = (view->bounds.x0 - view->scrbounds.x0) / (view->bounds.x1 - view->bounds.x0) * targwidth;
+		target_bounds.y0 = (view->bounds.y0 - view->scrbounds.y0) / (view->bounds.y1 - view->bounds.y0) * targheight;
+		target_bounds.x1 = target_bounds.x0 + targwidth;
+		target_bounds.y1 = target_bounds.y0 + targheight;
+	}
+
+	/* determine the scale/offset for normalization */
+	xoffs = view->bounds.x0;
+	yoffs = view->bounds.y0;
+	xscale = (target_bounds.x1 - target_bounds.x0) / (view->bounds.x1 - view->bounds.x0);
+	yscale = (target_bounds.y1 - target_bounds.y0) / (view->bounds.y1 - view->bounds.y0);
+
+	/* normalize all the item bounds */
+	for (layer = 0; layer < ITEM_LAYER_MAX; layer++)
+	{
+		view_item *item;
+
+		/* adjust the bounds for each item */
+		for (item = view->itemlist[layer]; item; item = item->next)
+		{
+			item->bounds.x0 = target_bounds.x0 + (item->rawbounds.x0 - xoffs) * xscale;
+			item->bounds.x1 = target_bounds.x0 + (item->rawbounds.x1 - xoffs) * xscale;
+			item->bounds.y0 = target_bounds.y0 + (item->rawbounds.y0 - yoffs) * yscale;
+			item->bounds.y1 = target_bounds.y0 + (item->rawbounds.y1 - yoffs) * yscale;
+
+			/* accumulate the screens in use while we're scanning */
+			if (item->element == NULL)
+				view->screens |= 1 << item->index;
+		}
+	}
 }
 
 
@@ -3376,12 +3638,9 @@ error:
 
 static layout_view *load_layout_view(xml_data_node *viewnode, layout_element *elemlist)
 {
-	render_bounds bounds = { 0 };
+	xml_data_node *boundsnode;
 	view_item **itemnext;
 	layout_view *view;
-	float xscale, yscale;
-	float xoffs, yoffs;
-	int first;
 	int layer;
 
 	/* first allocate memory */
@@ -3391,11 +3650,14 @@ static layout_view *load_layout_view(xml_data_node *viewnode, layout_element *el
 	/* allocate a copy of the name */
 	view->name = copy_string(xml_get_attribute_string_with_subst(viewnode, "name", ""));
 
+	/* if we have a bounds item, load it */
+	boundsnode = xml_get_sibling(viewnode->child, "bounds");
+	if (boundsnode != NULL && load_bounds(xml_get_sibling(boundsnode, "bounds"), &view->expbounds))
+		goto error;
+
 	/* loop over all the layer types we support */
-	first = TRUE;
 	for (layer = 0; layer < ITEM_LAYER_MAX; layer++)
 	{
-		static const int layer_mask[ITEM_LAYER_MAX] = { ARTWORK_USE_BACKDROPS, 0, ARTWORK_USE_OVERLAYS, ARTWORK_USE_BEZELS };
 		static const char *layer_node_name[ITEM_LAYER_MAX] = { "backdrop", "screen", "overlay", "bezel" };
 		xml_data_node *itemnode;
 
@@ -3403,57 +3665,21 @@ static layout_view *load_layout_view(xml_data_node *viewnode, layout_element *el
 		view->itemlist[layer] = NULL;
 		itemnext = &view->itemlist[layer];
 
-		/* only do it if requested */
-		if (layer_mask[layer] == 0 || (options.use_artwork & layer_mask[layer]))
+		/* parse all of the elements of that type */
+		for (itemnode = xml_get_sibling(viewnode->child, layer_node_name[layer]); itemnode; itemnode = xml_get_sibling(itemnode->next, layer_node_name[layer]))
 		{
-			/* parse all of the elements of that type */
-			for (itemnode = xml_get_sibling(viewnode->child, layer_node_name[layer]); itemnode; itemnode = xml_get_sibling(itemnode->next, layer_node_name[layer]))
-			{
-				view_item *item = load_view_item(itemnode, elemlist);
-				if (!item)
-					goto error;
+			view_item *item = load_view_item(itemnode, elemlist);
+			if (!item)
+				goto error;
 
-				/* accumulate bounds */
-				if (first)
-					bounds = item->bounds;
-				else
-					union_bounds(&bounds, &item->bounds);
-				first = FALSE;
-
-				/* add to the end of the list */
-				*itemnext = item;
-				itemnext = &item->next;
-			}
+			/* add to the end of the list */
+			*itemnext = item;
+			itemnext = &item->next;
 		}
 	}
 
-	/* compute the aspect ratio of the view */
-	view->aspect = (bounds.x1 - bounds.x0) / (bounds.y1 - bounds.y0);
-
-	/* determine the scale/offset for normalization */
-	xoffs = bounds.x0;
-	yoffs = bounds.y0;
-	xscale = 1.0f / (bounds.x1 - bounds.x0);
-	yscale = 1.0f / (bounds.y1 - bounds.y0);
-
-	/* normalize all the item bounds */
-	for (layer = 0; layer < ITEM_LAYER_MAX; layer++)
-	{
-		view_item *item;
-
-		/* adjust the boundsfor each item */
-		for (item = view->itemlist[layer]; item; item = item->next)
-		{
-			item->bounds.x0 = (item->bounds.x0 - xoffs) * xscale;
-			item->bounds.x1 = (item->bounds.x1 - xoffs) * xscale;
-			item->bounds.y0 = (item->bounds.y0 - yoffs) * yscale;
-			item->bounds.y1 = (item->bounds.y1 - yoffs) * yscale;
-
-			/* accumulate the screens in use while we're scanning */
-			if (item->element == NULL)
-				view->screens |= 1 << item->index;
-		}
-	}
+	/* recompute the data for the view */
+	layout_view_recompute(view, ~0);
 	return view;
 
 error:
@@ -3502,7 +3728,7 @@ static view_item *load_view_item(xml_data_node *itemnode, layout_element *elemli
 	item->index = xml_get_attribute_int_with_subst(itemnode, "index", -1);
 	item->state = render_view_item_get_state_ptr(item->name);
 	item->state->curstate = (item->name[0] != 0 && item->element != NULL) ? item->element->defstate : 0;
-	if (load_bounds(xml_get_sibling(itemnode->child, "bounds"), &item->bounds))
+	if (load_bounds(xml_get_sibling(itemnode->child, "bounds"), &item->rawbounds))
 		goto error;
 	if (load_color(xml_get_sibling(itemnode->child, "color"), &item->color))
 		goto error;

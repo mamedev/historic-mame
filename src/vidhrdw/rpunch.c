@@ -300,4 +300,5 @@ VIDEO_UPDATE( rpunch )
 	draw_sprites(bitmap,cliprect, effbins, gins);
 	if (rpunch_bitmapram)
 		draw_bitmap(bitmap,cliprect);
+	return 0;
 }

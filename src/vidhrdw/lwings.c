@@ -284,6 +284,7 @@ VIDEO_UPDATE( lwings )
 	tilemap_draw(bitmap,cliprect,bg1_tilemap,0,0);
 	lwings_draw_sprites(bitmap,cliprect);
 	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
+	return 0;
 }
 
 VIDEO_UPDATE( trojan )
@@ -293,6 +294,7 @@ VIDEO_UPDATE( trojan )
 	trojan_draw_sprites(bitmap,cliprect);
 	tilemap_draw(bitmap,cliprect,bg1_tilemap,TILEMAP_FRONT,0);
 	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
+	return 0;
 }
 
 VIDEO_EOF( lwings )

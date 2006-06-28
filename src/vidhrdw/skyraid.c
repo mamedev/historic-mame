@@ -158,4 +158,5 @@ VIDEO_UPDATE( skyraid )
 	draw_missiles(helper, cliprect);
 	draw_trapezoid(bitmap, helper);
 	draw_text(bitmap, cliprect);
+	return 0;
 }

@@ -230,4 +230,5 @@ VIDEO_UPDATE( vastar )
 		logerror("Unimplemented priority %X\n", *vastar_sprite_priority);
 		break;
 	}
+	return 0;
 }

@@ -257,5 +257,6 @@ VIDEO_UPDATE( msisaac )
 	tilemap_draw(bitmap,cliprect,background2,0,0);
 	draw_sprites(bitmap,cliprect);
 	tilemap_draw(bitmap,cliprect,foreground, 0,0);
+	return 0;
 }
 

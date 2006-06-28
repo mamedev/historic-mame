@@ -69,6 +69,7 @@ static VIDEO_UPDATE( suprgolf )
 {
 	tilemap_mark_all_tiles_dirty(suprgolf_tilemap);
 	tilemap_draw(bitmap,cliprect,suprgolf_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
+	return 0;
 }
 
 

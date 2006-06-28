@@ -279,6 +279,7 @@ VIDEO_UPDATE( pacman )
 
 	if (bgpriority != 0)
 		tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	return 0;
 }
 
 
@@ -432,6 +433,7 @@ VIDEO_UPDATE( s2650games )
 				sx,sy + xoffsethack,
 				cliprect,TRANSPARENCY_COLOR,0);
 	}
+	return 0;
 }
 
 WRITE8_HANDLER( s2650games_videoram_w )

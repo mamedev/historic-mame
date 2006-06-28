@@ -160,6 +160,7 @@ VIDEO_START(vp906iii)
 VIDEO_UPDATE(vp906iii)
 {
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
+	return 0;
 }
 
 static ADDRESS_MAP_START( vp906iii_map, ADDRESS_SPACE_PROGRAM, 8 )

@@ -67,4 +67,5 @@ WRITE8_HANDLER( mole_flipscreen_w )
 VIDEO_UPDATE( mole )
 {
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
+	return 0;
 }

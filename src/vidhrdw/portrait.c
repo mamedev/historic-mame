@@ -177,4 +177,5 @@ VIDEO_UPDATE( portrait )
 	tilemap_draw(bitmap, &cliprect_scroll, foreground, 0, 0);
 
 	draw_sprites(bitmap,cliprect);
+	return 0;
 }

@@ -80,6 +80,7 @@ VIDEO_UPDATE( cardline )
 		}
 	}
 #endif
+	return 0;
 }
 
 static WRITE8_HANDLER(vram_w)

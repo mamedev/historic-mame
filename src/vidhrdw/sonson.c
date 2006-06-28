@@ -178,4 +178,5 @@ VIDEO_UPDATE( sonson )
 {
 	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
 	sonson_draw_sprites(bitmap);
+	return 0;
 }

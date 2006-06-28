@@ -208,4 +208,5 @@ VIDEO_UPDATE( raiders5 )
 				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 		}
 	}
+	return 0;
 }

@@ -74,7 +74,7 @@ VIDEO_UPDATE( xboard )
 	if (!segaic16_display_enable)
 	{
 		fillbitmap(bitmap, get_black_pen(), cliprect);
-		return;
+		return 0;
 	}
 
 	/* reset priorities */
@@ -103,4 +103,5 @@ VIDEO_UPDATE( xboard )
 
 	/* draw the sprites */
 	segaic16_sprites_draw(0, bitmap, cliprect);
+	return 0;
 }

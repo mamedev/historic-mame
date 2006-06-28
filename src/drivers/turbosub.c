@@ -65,6 +65,7 @@ VIDEO_START( turbosub )
 
 VIDEO_UPDATE( turbosub )
 {
+	return 0;
 }
 
 

@@ -264,6 +264,7 @@ VIDEO_UPDATE( matmania )
 				8*sx,8*sy,
 				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 	}
+	return 0;
 }
 
 VIDEO_UPDATE( maniach )
@@ -360,4 +361,5 @@ VIDEO_UPDATE( maniach )
 				8*sx,8*sy,
 				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 	}
+	return 0;
 }

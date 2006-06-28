@@ -78,6 +78,7 @@ VIDEO_UPDATE(ttchamp)
 			count++;
 		}
 	}
+	return 0;
 }
 
 static UINT8 paloff_l;

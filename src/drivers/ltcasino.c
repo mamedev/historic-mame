@@ -648,6 +648,7 @@ static const gfx_decode gfxdecodeinfo[] =
 VIDEO_UPDATE(ltcasino)
 {
 	tilemap_draw(bitmap,cliprect,ltcasino_tilemap,0,0);
+	return 0;
 }
 
 

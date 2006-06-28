@@ -153,6 +153,7 @@ VIDEO_START( cybertnk )
 VIDEO_UPDATE( cybertnk )
 {
 	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
+	return 0;
 }
 
 static WRITE16_HANDLER( tx_vram_w )

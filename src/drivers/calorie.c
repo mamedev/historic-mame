@@ -169,6 +169,7 @@ VIDEO_UPDATE( calorie )
 			drawgfx(bitmap,Machine->gfx[2],tileno,color,flipx,flipy,xpos,ypos - 15,cliprect,TRANSPARENCY_PEN,0);
 		}
 	}
+	return 0;
 }
 
 static WRITE8_HANDLER( calorie_fg_w )

@@ -306,6 +306,7 @@ VIDEO_START( dgpix )
 VIDEO_UPDATE( dgpix )
 {
 	copybitmap(bitmap,bitmaps[vbuffer ^ 1],0,0,0,0,cliprect,TRANSPARENCY_NONE,0);
+	return 0;
 }
 
 static MACHINE_DRIVER_START( dgpix )

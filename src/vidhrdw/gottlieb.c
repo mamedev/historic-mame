@@ -225,4 +225,5 @@ VIDEO_UPDATE( gottlieb )
 	{
 		tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
 	}
+	return 0;
 }

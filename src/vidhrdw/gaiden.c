@@ -565,6 +565,7 @@ VIDEO_UPDATE( gaiden )
 	tilemap_draw(bitmap, cliprect, text_layer, 0, 4);
 
 	draw_sprites(bitmap, NULL, NULL, cliprect);
+	return 0;
 }
 
 VIDEO_UPDATE( raiga )
@@ -588,6 +589,7 @@ VIDEO_UPDATE( raiga )
 
 	/* mix & blend the tilemaps and sprites into a 32-bit bitmap */
 	blendbitmaps(bitmap, tile_bitmap_bg, tile_bitmap_fg, sprite_bitmap, 0, 0, cliprect);
+	return 0;
 }
 
 VIDEO_UPDATE( drgnbowl )
@@ -598,4 +600,5 @@ VIDEO_UPDATE( drgnbowl )
 	tilemap_draw(bitmap, cliprect, foreground, 0, 2);
 	tilemap_draw(bitmap, cliprect, text_layer, 0, 4);
 	drgnbowl_draw_sprites(bitmap, cliprect);
+	return 0;
 }

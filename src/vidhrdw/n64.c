@@ -197,6 +197,7 @@ VIDEO_UPDATE(n64)
 
 		default:	fatalerror("Unknown framebuffer format %d\n", vi_control & 0x3);
 	}
+	return 0;
 }
 
 

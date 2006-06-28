@@ -85,4 +85,5 @@ VIDEO_START( hexa )
 VIDEO_UPDATE( hexa )
 {
 	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
+	return 0;
 }

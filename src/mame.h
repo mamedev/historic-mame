@@ -218,8 +218,6 @@ struct _global_options
 	float	vector_intensity;/* vector beam intensity */
 	int 	antialias;		/* 1 to enable antialiasing on vectors */
 
-	int		use_artwork;	/* bitfield indicating which artwork pieces to use */
-
 	const char * savegame;	/* string representing a savegame to load; if one length then interpreted as a character */
 	int		auto_save;		/* 1 to automatically save/restore at startup/quitting time */
 	char *	bios;			/* specify system bios (if used), 0 is default */
@@ -235,6 +233,7 @@ struct _global_options
 	int		vector_height;	/* requested height for vector games; 0 means default (480) */
 	int		ui_orientation;	/* orientation of the UI relative to the video */
 	int		artwork_res;	/* 1 for 1x game scaling, 2 for 2x */
+	int		use_artwork;	/* bitfield indicating which artwork pieces to use */
 	int		artwork_crop;	/* 1 to crop artwork to the game screen */
 #endif
 

@@ -219,6 +219,7 @@ VIDEO_UPDATE( malzak )
 
 	Update_Bitmap(bitmap,s2636_1_ram,s2636_1_dirty,1,collision_bitmap);
 	Update_Bitmap(bitmap,s2636_2_ram,s2636_2_dirty,2,collision_bitmap);
+	return 0;
 }
 
 WRITE8_HANDLER( playfield_w )

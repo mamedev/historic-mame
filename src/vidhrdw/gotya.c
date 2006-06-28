@@ -191,4 +191,5 @@ VIDEO_UPDATE( gotya )
 	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
 	gotya_draw_sprites(bitmap);
 	gotya_draw_status(bitmap);
+	return 0;
 }

@@ -216,4 +216,5 @@ VIDEO_UPDATE( spacefb )
 		}
 	}
 #endif
+	return 0;
 }

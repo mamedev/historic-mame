@@ -140,4 +140,5 @@ VIDEO_UPDATE( blueprnt )
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 	blueprnt_draw_sprites(bitmap, cliprect);
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 1, 0);
+	return 0;
 }

@@ -118,4 +118,5 @@ VIDEO_UPDATE( xorworld )
 {
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 	xorworld_draw_sprites(bitmap, cliprect);
+	return 0;
 }

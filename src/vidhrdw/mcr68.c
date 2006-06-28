@@ -343,6 +343,7 @@ VIDEO_UPDATE( mcr68 )
 
 	/* draw the high-priority sprites */
 	mcr68_update_sprites(bitmap, cliprect, 1);
+	return 0;
 }
 
 
@@ -359,4 +360,5 @@ VIDEO_UPDATE( zwackery )
 
 	/* draw the high-priority sprites */
 	zwackery_update_sprites(bitmap, cliprect, 1);
+	return 0;
 }

@@ -232,4 +232,5 @@ tilemap_mark_all_tiles_dirty(bgmap);
 				fcombat_cocktail_flip, fcombat_cocktail_flip, x, y,
 				cliprect, TRANSPARENCY_PEN, 0);
 		}
+	return 0;
 }

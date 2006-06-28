@@ -268,4 +268,5 @@ if (code_pressed(KEYCODE_Z))
 
 	if (layers_ctrl&8)
 		blmbycar_draw_sprites(bitmap, cliprect);
+	return 0;
 }

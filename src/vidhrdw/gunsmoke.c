@@ -219,4 +219,5 @@ VIDEO_UPDATE( gunsmoke )
 
 	if (objon) gunsmoke_draw_sprites(bitmap, cliprect);
 	if (chon)  tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
+	return 0;
 }

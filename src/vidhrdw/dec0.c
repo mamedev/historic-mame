@@ -358,6 +358,7 @@ VIDEO_UPDATE( hbarrel )
 
 	dec0_drawsprites(bitmap,cliprect,0x08,0x00);
 	dec0_pf1_draw(bitmap,cliprect,0);
+	return 0;
 }
 
 /******************************************************************************/
@@ -395,6 +396,7 @@ VIDEO_UPDATE( baddudes )
 	}
 
 	dec0_pf1_draw(bitmap,cliprect,0);
+	return 0;
 }
 
 /******************************************************************************/
@@ -439,6 +441,7 @@ VIDEO_UPDATE( robocop )
 		dec0_drawsprites(bitmap,cliprect,0x00,0x00);
 
 	dec0_pf1_draw(bitmap,cliprect,0);
+	return 0;
 }
 
 /******************************************************************************/
@@ -453,6 +456,7 @@ VIDEO_UPDATE( birdtry )
 	dec0_pf2_draw(bitmap,cliprect,0);
 	dec0_drawsprites(bitmap,cliprect,0x00,0x00);
 	dec0_pf1_draw(bitmap,cliprect,0);
+	return 0;
 }
 
 /******************************************************************************/
@@ -474,6 +478,7 @@ VIDEO_UPDATE( hippodrm )
 
 	dec0_drawsprites(bitmap,cliprect,0x00,0x00);
 	dec0_pf1_draw(bitmap,cliprect,0);
+	return 0;
 }
 
 /******************************************************************************/
@@ -492,6 +497,7 @@ VIDEO_UPDATE( slyspy )
 		dec0_pf2_draw(bitmap,cliprect,TILEMAP_FRONT);
 
 	dec0_pf1_draw(bitmap,cliprect,0);
+	return 0;
 }
 
 /******************************************************************************/
@@ -531,6 +537,7 @@ VIDEO_UPDATE( midres )
 		dec0_drawsprites(bitmap,cliprect,0x00,0x00);
 
 	dec0_pf1_draw(bitmap,cliprect,0);
+	return 0;
 }
 
 /******************************************************************************/

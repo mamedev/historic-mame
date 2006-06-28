@@ -135,4 +135,5 @@ VIDEO_UPDATE( foodf )
 		drawgfx(bitmap, Machine->gfx[1], pict, color, hflip, vflip,
 				xpos - 256, ypos, cliprect, TRANSPARENCY_PEN, 0);
 	}
+	return 0;
 }

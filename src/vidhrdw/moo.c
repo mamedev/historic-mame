@@ -165,4 +165,5 @@ VIDEO_UPDATE(moo)
 	K053247_sprites_draw(bitmap,cliprect);
 
 	K056832_tilemap_draw(bitmap, cliprect, 0, 0, 0);
+	return 0;
 }

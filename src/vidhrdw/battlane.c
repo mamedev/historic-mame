@@ -257,4 +257,5 @@ VIDEO_UPDATE( battlane )
 	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
 	battlane_draw_sprites(bitmap);
 	battlane_draw_fg_bitmap(bitmap);
+	return 0;
 }

@@ -172,4 +172,5 @@ VIDEO_UPDATE( hexion )
 {
 	tilemap_draw(bitmap,cliprect,bg_tilemap[1],0,0);
 	tilemap_draw(bitmap,cliprect,bg_tilemap[0],0,0);
+	return 0;
 }

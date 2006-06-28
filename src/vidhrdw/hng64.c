@@ -1292,6 +1292,7 @@ VIDEO_UPDATE( hng64 )
 	frameCount++ ;
 
 	hackTilemap3 = rowScrollOffset = hackTm3Count = 0 ;
+	return 0;
 }
 
 VIDEO_START( hng64 )

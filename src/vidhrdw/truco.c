@@ -50,4 +50,5 @@ VIDEO_UPDATE( truco )
 
 		vid += 0x80;
 	}
+	return 0;
 }

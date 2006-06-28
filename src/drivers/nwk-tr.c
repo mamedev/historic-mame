@@ -388,6 +388,7 @@ VIDEO_UPDATE( nwktr )
 
 	draw_7segment_led(bitmap, 3, 3, led_reg0);
 	draw_7segment_led(bitmap, 9, 3, led_reg1);
+	return 0;
 }
 
 /*****************************************************************************/

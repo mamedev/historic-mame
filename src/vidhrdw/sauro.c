@@ -164,6 +164,7 @@ VIDEO_UPDATE( sauro )
 	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
 	tilemap_draw(bitmap, &Machine->visible_area[0], fg_tilemap, 0, 0);
 	sauro_draw_sprites(bitmap);
+	return 0;
 }
 
 /* Tricky Doc */
@@ -242,4 +243,5 @@ VIDEO_UPDATE( trckydoc )
 {
 	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
 	trckydoc_draw_sprites(bitmap);
+	return 0;
 }

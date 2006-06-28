@@ -194,4 +194,5 @@ VIDEO_UPDATE(aquarium)
 	tilemap_draw(bitmap,cliprect,aquarium_mid_tilemap,1,0);
 
 	tilemap_draw(bitmap,cliprect,aquarium_txt_tilemap,0,0);
+	return 0;
 }

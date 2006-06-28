@@ -326,6 +326,7 @@ VIDEO_UPDATE(wheelfir)
         }
     }
 */
+	return 0;
 }
 
 static WRITE16_HANDLER( pal_reset_pos_w )

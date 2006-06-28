@@ -76,6 +76,7 @@ VIDEO_START( couple )
 VIDEO_UPDATE( couple )
 {
 	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	return 0;
 }
 
 static WRITE8_HANDLER( couple_vram_lo_w )

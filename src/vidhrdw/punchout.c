@@ -400,7 +400,7 @@ static void drawbs2(mame_bitmap *bitmap, const rectangle *cliprect)
 
 VIDEO_UPDATE( punchout )
 {
-	if (screen == 0)
+	if (screen == 1)
 	{
 		tilemap_draw(bitmap, cliprect, toptilemap, 0, 0);
 
@@ -421,12 +421,13 @@ VIDEO_UPDATE( punchout )
 			drawbs1(bitmap, cliprect);
 		drawbs2(bitmap, cliprect);
 	}
+	return 0;
 }
 
 
 VIDEO_UPDATE( armwrest )
 {
-	if (screen == 0)
+	if (screen == 1)
 	{
 		tilemap_draw(bitmap, cliprect, toptilemap, 0, 0);
 
@@ -443,4 +444,5 @@ VIDEO_UPDATE( armwrest )
 
 		tilemap_draw(bitmap, cliprect, fgtilemap, 0, 0);
 	}
+	return 0;
 }

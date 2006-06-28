@@ -1145,6 +1145,7 @@ VIDEO_UPDATE( psikyosh ) /* Note the z-buffer on each sprite to get correct prio
 		psikyosh_drawbackground(bitmap, cliprect, i);
 			if((psikyosh_vidregs[2]&0xf) == i) psikyosh_postlineblend(bitmap, cliprect);
 		}
+	return 0;
 }
 
 VIDEO_EOF( psikyosh )

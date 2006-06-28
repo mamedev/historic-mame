@@ -252,5 +252,6 @@ VIDEO_UPDATE( spacewar )
 	artwork_show("pressed0", (~sw_option >> 11) & 1);
 }
 #endif
+	return 0;
 }
 

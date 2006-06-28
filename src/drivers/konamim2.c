@@ -137,6 +137,7 @@ VIDEO_UPDATE( m2 )
 	{
 		fillbitmap(bitmap, 0, cliprect);
 	}
+	return 0;
 }
 
 static READ64_HANDLER(unk1_r)

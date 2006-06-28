@@ -77,4 +77,5 @@ VIDEO_UPDATE( gbusters )
 		K051960_sprites_draw(bitmap,cliprect,0,0);
 		tilemap_draw(bitmap,cliprect,K052109_tilemap[0],0,0);
 	}
+	return 0;
 }

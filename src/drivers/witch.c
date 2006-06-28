@@ -935,6 +935,7 @@ VIDEO_UPDATE(witch)
 	tilemap_draw(bitmap,cliprect,gfx1_tilemap,0,0);
 	draw_sprites(bitmap);
 	tilemap_draw(bitmap,cliprect,gfx0_tilemap,0,0);
+	return 0;
 }
 
 static INTERRUPT_GEN( witch_interrupt ) {

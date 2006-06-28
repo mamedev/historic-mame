@@ -92,4 +92,5 @@ VIDEO_UPDATE( mrflea )
 {
 	draw_background( bitmap );
 	draw_sprites( bitmap );
+	return 0;
 }

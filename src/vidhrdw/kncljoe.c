@@ -266,4 +266,5 @@ VIDEO_UPDATE( kncljoe )
 {
 	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 	draw_sprites(bitmap,cliprect);
+	return 0;
 }

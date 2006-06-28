@@ -71,4 +71,5 @@ VIDEO_UPDATE( qdrmfgp )
 	K056832_tilemap_draw(bitmap,cliprect, 2, 0, 2);
 	K056832_tilemap_draw(bitmap,cliprect, 1, 0, 4);
 	K056832_tilemap_draw(bitmap,cliprect, 0, 0, 8);
+	return 0;
 }

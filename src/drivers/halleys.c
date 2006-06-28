@@ -1445,6 +1445,7 @@ static VIDEO_UPDATE( halleys )
 	i = io_ram[0xa0];
 	j = io_ram[0xa1];
 	if (io_ram[0x2b] && (i>0xc6 && i<0xfe) && (j==0xc0 || j==0xed)) filter_bitmap(bitmap, i);
+	return 0;
 }
 
 
@@ -1457,6 +1458,7 @@ static VIDEO_UPDATE( benberob )
 
 	copy_fixed_xp (bitmap, render_layer[1]);
 	copy_fixed_xp (bitmap, render_layer[0]);
+	return 0;
 }
 
 

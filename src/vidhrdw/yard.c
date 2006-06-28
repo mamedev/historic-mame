@@ -287,4 +287,5 @@ VIDEO_UPDATE( yard )
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 	yard_draw_sprites(bitmap, cliprect);
 	yard_draw_panel(bitmap, cliprect);
+	return 0;
 }

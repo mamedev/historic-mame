@@ -253,4 +253,5 @@ VIDEO_UPDATE( gunbustr )
 	TC0480SCP_tilemap_draw(bitmap,cliprect,layer[4],0,8);	/* text layer */
 	gunbustr_draw_sprites_16x16(bitmap,cliprect,primasks,48,-116);
 #endif
+	return 0;
 }

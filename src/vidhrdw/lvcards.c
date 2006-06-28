@@ -122,4 +122,5 @@ VIDEO_START( lvcards )
 VIDEO_UPDATE( lvcards )
 {
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
+	return 0;
 }

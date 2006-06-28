@@ -223,6 +223,7 @@ VIDEO_UPDATE( maniacsq )
 	tilemap_draw(bitmap,cliprect,pant[0],0,4);
 
 	gaelco_draw_sprites(bitmap,cliprect);
+	return 0;
 }
 
 VIDEO_UPDATE( bigkarnk )
@@ -261,4 +262,5 @@ VIDEO_UPDATE( bigkarnk )
 	tilemap_draw(bitmap,cliprect,pant[0],TILEMAP_FRONT | 0,8);
 
 	gaelco_draw_sprites(bitmap,cliprect);
+	return 0;
 }

@@ -340,6 +340,7 @@ VIDEO_UPDATE( baraduke )
 	draw_sprites(bitmap,cliprect,1);
 
 	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
+	return 0;
 }
 
 

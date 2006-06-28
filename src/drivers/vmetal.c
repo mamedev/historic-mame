@@ -426,6 +426,7 @@ VIDEO_UPDATE(varia)
 	tilemap_draw(bitmap,cliprect,vmetal_mid2tilemap,0,0);
 	metro_draw_sprites(bitmap,cliprect);
 	tilemap_draw(bitmap,cliprect,vmetal_texttilemap,0,0);
+	return 0;
 }
 
 static MACHINE_DRIVER_START( varia )

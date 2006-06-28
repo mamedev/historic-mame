@@ -118,4 +118,5 @@ VIDEO_UPDATE( offtwall )
 					mo[x] = 0;
 				}
 		}
+	return 0;
 }

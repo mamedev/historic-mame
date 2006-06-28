@@ -173,4 +173,5 @@ VIDEO_UPDATE( wrally )
 	tilemap_draw(bitmap,cliprect,pant[1],0,0);
 	tilemap_draw(bitmap,cliprect,pant[0],0,0);
 	gaelco_draw_sprites(bitmap,cliprect);
+	return 0;
 }

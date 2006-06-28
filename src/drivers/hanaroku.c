@@ -70,6 +70,7 @@ VIDEO_UPDATE(hanaroku)
 {
 	fillbitmap(bitmap, Machine->pens[0x1f0], cliprect);	// ???
 	hanaroku_draw_sprites(bitmap, cliprect);
+	return 0;
 }
 
 static WRITE8_HANDLER( hanaroku_out_0_w )

@@ -47,6 +47,7 @@ VIDEO_START( tcl )
 }
 VIDEO_UPDATE( tcl )
 {
+	return 0;
 }
 
 static ADDRESS_MAP_START( tcl_map, ADDRESS_SPACE_PROGRAM, 8 )

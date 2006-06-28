@@ -1060,7 +1060,7 @@ if ( code_pressed(KEYCODE_Z) ||
 
 	fillbitmap(priority_bitmap,0,cliprect);
 
-	if (!kaneko16_disp_enable) return;
+	if (!kaneko16_disp_enable) return 0;
 
 	for ( i = 0; i < 8; i++ )
 	{
@@ -1091,4 +1091,5 @@ if ( code_pressed(KEYCODE_Z) ||
 			kaneko16_draw_sprites(bitmap,cliprect, (layers_ctrl >> 16) & 0xf);
 		}
 	}
+	return 0;
 }

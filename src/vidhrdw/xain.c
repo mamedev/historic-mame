@@ -285,4 +285,5 @@ VIDEO_UPDATE( xain )
 		tilemap_draw(bitmap,cliprect,char_tilemap,0,0);
 		break;
 	}
+	return 0;
 }

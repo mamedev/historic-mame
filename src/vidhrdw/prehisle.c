@@ -161,4 +161,5 @@ VIDEO_UPDATE( prehisle )
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 	prehisle_draw_sprites(bitmap, cliprect);
 	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
+	return 0;
 }

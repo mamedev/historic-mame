@@ -443,4 +443,5 @@ VIDEO_UPDATE( senjyo )
 	ui_draw_text(baf,0,30);
 }
 #endif
+	return 0;
 }

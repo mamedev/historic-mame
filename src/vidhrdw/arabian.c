@@ -392,4 +392,5 @@ VIDEO_UPDATE( arabian )
 			draw_scanline8(bitmap, 0, BITMAP_HEIGHT - 1 - y, BITMAP_WIDTH, scanline, colortable, -1);
 		}
 	}
+	return 0;
 }

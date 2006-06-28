@@ -267,4 +267,5 @@ VIDEO_UPDATE( tryout )
 	draw_sprites(bitmap,cliprect);
 
 //  ui_popup("%02x %02x %02x - %04x",mem[0xe402],mem[0xe403],mem[0xe404], ((tryout_gfx_control[0]&1)<<8) | ((tryout_gfx_control[0]&4)<<7));
+	return 0;
 }

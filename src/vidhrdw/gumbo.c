@@ -55,4 +55,5 @@ VIDEO_UPDATE( gumbo )
 {
 	tilemap_draw(bitmap,cliprect,gumbo_bg_tilemap,0,0);
 	tilemap_draw(bitmap,cliprect,gumbo_fg_tilemap,0,0);
+	return 0;
 }

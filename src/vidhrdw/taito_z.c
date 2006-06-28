@@ -874,6 +874,7 @@ VIDEO_UPDATE( contcirc )
 	TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[2],0,4);
 
 	contcirc_draw_sprites_16x8(bitmap,cliprect,5);	// 7
+	return 0;
 }
 
 
@@ -900,6 +901,7 @@ VIDEO_UPDATE( chasehq )
 	TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[2],0,4);
 
 	chasehq_draw_sprites_16x16(bitmap,cliprect,7);
+	return 0;
 }
 
 
@@ -924,6 +926,7 @@ VIDEO_UPDATE( bshark )
 	TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[2],0,4);
 
 	bshark_draw_sprites_16x8(bitmap,cliprect,8);
+	return 0;
 }
 
 
@@ -948,6 +951,7 @@ VIDEO_UPDATE( sci )
 	TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[2],0,4);
 
 	sci_draw_sprites_16x8(bitmap,cliprect,6);
+	return 0;
 }
 
 
@@ -972,6 +976,7 @@ VIDEO_UPDATE( aquajack )
 	TC0100SCN_tilemap_draw(bitmap,cliprect,0,layer[2],0,4);
 
 	aquajack_draw_sprites_16x8(bitmap,cliprect,3);
+	return 0;
 }
 
 
@@ -1100,6 +1105,7 @@ VIDEO_UPDATE( spacegun )
 
 		draw_crosshair(bitmap,screenx,screeny,cliprect,1);
 	}
+	return 0;
 }
 
 
@@ -1134,6 +1140,7 @@ VIDEO_UPDATE( dblaxle )
 	TC0480SCP_tilemap_draw(bitmap,cliprect,layer[3],0,4);
 
 	TC0480SCP_tilemap_draw(bitmap,cliprect,layer[4],0,0);	/* Text layer */
+	return 0;
 }
 
 

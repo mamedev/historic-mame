@@ -237,6 +237,7 @@ VIDEO_UPDATE( enigma2 )
 			data <<= 1;
 		}
 	}
+	return 0;
 }
 
 INPUT_PORTS_START( enigma2 )

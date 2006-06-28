@@ -405,6 +405,7 @@ VIDEO_UPDATE( starshp1 )
 
 	if (starshp1_phasor != 0)
 		draw_phasor(bitmap);
+	return 0;
 }
 
 

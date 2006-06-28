@@ -67,4 +67,5 @@ VIDEO_UPDATE( bsktball )
 {
 	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
 	bsktball_draw_sprites(bitmap);
+	return 0;
 }

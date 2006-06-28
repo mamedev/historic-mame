@@ -98,4 +98,5 @@ VIDEO_START( trucocl )
 VIDEO_UPDATE( trucocl )
 {
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
+	return 0;
 }

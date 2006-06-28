@@ -133,4 +133,5 @@ VIDEO_UPDATE( compgolf )
 	tilemap_draw(bitmap, cliprect, background_tilemap, 0, 0);
 	tilemap_draw(bitmap, cliprect, text_tilemap, 0, 0);
 	draw_sprites(bitmap,cliprect);
+	return 0;
 }

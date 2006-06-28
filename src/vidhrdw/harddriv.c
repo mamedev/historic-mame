@@ -493,7 +493,7 @@ VIDEO_UPDATE( harddriv )
 	if (tms34010_io_display_blanked(1))
 	{
 		fillbitmap(bitmap, black, cliprect);
-		return;
+		return 0;
 	}
 
 	/* gross! they use start/end of HBLANK to adjust the position of screen elements */
@@ -555,4 +555,5 @@ if (cliprect->min_y < 30)
 	ui_draw_text(temp, 0, 20);
 }
 #endif
+	return 0;
 }

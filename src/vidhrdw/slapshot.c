@@ -636,5 +636,6 @@ VIDEO_UPDATE( slapshot )
 	if (dislayer[layer[4]]==0)
 #endif
 	TC0480SCP_tilemap_draw(bitmap,cliprect,layer[4],0,0);
+	return 0;
 }
 

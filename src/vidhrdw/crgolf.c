@@ -236,4 +236,5 @@ VIDEO_UPDATE( crgolf )
 	/* apply the color select bit */
 	if (*crgolf_color_select)
 		copybitmap(bitmap, highbit, 0, 0, 0, 0, cliprect, TRANSPARENCY_BLEND, 0);
+	return 0;
 }

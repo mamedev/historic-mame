@@ -786,6 +786,7 @@ VIDEO_UPDATE( vector )
 	}
 
 	vector_dirty_list[dirty_index] = VECTOR_PIXEL_END;
+	return 0;
 }
 
 #else
@@ -844,6 +845,7 @@ VIDEO_UPDATE( vector )
 		}
 		curpoint++;
 	}
+	return 0;
 }
 
 #endif

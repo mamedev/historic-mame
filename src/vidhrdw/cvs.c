@@ -718,4 +718,5 @@ VIDEO_UPDATE( cvs )
 		}
 
     }
+	return 0;
 }

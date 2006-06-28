@@ -69,6 +69,13 @@ enum
 };
 
 
+/* layer config masks */
+#define LAYER_CONFIG_ENABLE_BACKDROP 0x01			/* enable backdrop layers */
+#define LAYER_CONFIG_ENABLE_OVERLAY	0x02			/* enable overlay layers */
+#define LAYER_CONFIG_ENABLE_BEZEL	0x04			/* enable bezel layers */
+#define LAYER_CONFIG_ZOOM_TO_SCREEN	0x08			/* zoom to screen area by default */
+
+
 /* texture formats */
 #define TEXFORMAT_UNDEFINED			0				/* require a format to be specified */
 #define TEXFORMAT_PALETTE16			1				/* 16bpp palettized */
@@ -255,15 +262,18 @@ render_target *render_get_ui_target(void);
 
 render_target *render_target_alloc(const char *layout, int singleview);
 void render_target_free(render_target *target);
+render_target *render_target_get_indexed(int index);
+const char *render_target_get_view_name(render_target *target, int viewindex);
+UINT32 render_target_get_view_screens(render_target *target, int viewindex);
 void render_target_get_bounds(render_target *target, INT32 *width, INT32 *height, float *pixel_aspect);
 void render_target_set_bounds(render_target *target, INT32 width, INT32 height, float pixel_aspect);
 int render_target_get_orientation(render_target *target);
 void render_target_set_orientation(render_target *target, int orientation);
-render_target *render_target_get_indexed(int index);
+int render_target_get_layer_config(render_target *target);
+void render_target_set_layer_config(render_target *target, int layerconfig);
 int render_target_get_view(render_target *target);
 void render_target_set_view(render_target *target, int viewindex);
-const char *render_target_get_view_name(render_target *target, int viewindex);
-UINT32 render_target_get_view_screens(render_target *target, int viewindex);
+void render_target_set_max_texture_size(render_target *target, int maxwidth, int maxheight);
 void render_target_compute_visible_area(render_target *target, INT32 target_width, INT32 target_height, float target_pixel_aspect, UINT8 target_orientation, INT32 *visible_width, INT32 *visible_height);
 void render_target_get_minimum_size(render_target *target, INT32 *minwidth, INT32 *minheight);
 const render_primitive_list *render_target_get_primitives(render_target *target);
@@ -312,6 +322,7 @@ extern const char layout_horizont[];
 extern const char layout_vertical[];
 extern const char layout_dualhsxs[];
 extern const char layout_dualhovu[];
+extern const char layout_dualhuov[];
 extern const char layout_triphsxs[];
 
 

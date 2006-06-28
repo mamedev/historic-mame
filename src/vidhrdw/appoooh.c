@@ -330,6 +330,7 @@ VIDEO_UPDATE( appoooh )
 
 	if (priority != 0)	/* fg in front of sprites */
 		tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
+	return 0;
 }
 
 VIDEO_UPDATE( robowres )
@@ -357,4 +358,5 @@ VIDEO_UPDATE( robowres )
 
 	if (priority != 0)	/* fg in front of sprites */
 		tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
+	return 0;
 }

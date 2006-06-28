@@ -553,6 +553,7 @@ VIDEO_UPDATE( nemesis )
 	tilemap_draw(bitmap,cliprect,foreground,1,8);
 
 	draw_sprites(bitmap,cliprect);
+	return 0;
 }
 
 VIDEO_UPDATE( salamand )
@@ -596,4 +597,5 @@ VIDEO_UPDATE( salamand )
 	}
 
 	draw_sprites(bitmap,cliprect);
+	return 0;
 }

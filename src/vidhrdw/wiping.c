@@ -223,4 +223,5 @@ VIDEO_UPDATE( wiping )
 	}
 }
 #endif
+	return 0;
 }

@@ -151,6 +151,7 @@ VIDEO_UPDATE( commando )
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 	commando_draw_sprites(bitmap, cliprect);
 	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
+	return 0;
 }
 
 VIDEO_EOF( commando )

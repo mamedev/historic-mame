@@ -267,4 +267,5 @@ VIDEO_UPDATE( inufuku )
 	tilemap_draw(bitmap, cliprect, inufuku_text_tilemap, 0, 4);
 
 	inufuku_draw_sprites(bitmap, cliprect);
+	return 0;
 }

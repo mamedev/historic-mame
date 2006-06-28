@@ -256,6 +256,7 @@ VIDEO_UPDATE( pntnpuzl )
 
 		draw_crosshair(bitmap,sx,sy,cliprect,0);
 	}
+	return 0;
 }
 
 WRITE16_HANDLER( pntnpuzl_palette_w )

@@ -490,6 +490,7 @@ static void update_rohga(mame_bitmap *bitmap, const rectangle *cliprect, int is_
 VIDEO_UPDATE( rohga )
 {
 	update_rohga(bitmap, cliprect, 0);
+	return 0;
 }
 
 VIDEO_UPDATE( schmeisr )
@@ -497,6 +498,7 @@ VIDEO_UPDATE( schmeisr )
 	// The Schmeisr pcb has wire mods which seem to remap sprite palette indices.
 	// Otherwise video update is the same as Rohga.
 	update_rohga(bitmap, cliprect, 1);
+	return 0;
 }
 
 VIDEO_UPDATE( wizdfire )
@@ -525,6 +527,7 @@ VIDEO_UPDATE( wizdfire )
 	wizdfire_drawsprites(bitmap,buffered_spriteram16_2,1,4);
 
 	deco16_tilemap_1_draw(bitmap,cliprect,0,0);
+	return 0;
 }
 
 VIDEO_UPDATE( nitrobal )
@@ -547,4 +550,5 @@ VIDEO_UPDATE( nitrobal )
 	nitrobal_drawsprites(bitmap,cliprect,buffered_spriteram16_2,4);
 
 	deco16_tilemap_1_draw(bitmap,cliprect,0,0);
+	return 0;
 }

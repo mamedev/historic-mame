@@ -225,4 +225,5 @@ VIDEO_UPDATE( exzisus )
 			gfx_offs += height << 1;
 		}
 	}
+	return 0;
 }

@@ -1114,6 +1114,7 @@ VIDEO_UPDATE ( wecleman )
 
 	/* Draw the text layer */
 	if (video_on) tilemap_draw(bitmap,cliprect, txt_tilemap, 0, 0);
+	return 0;
 }
 
 /***************************************************************************
@@ -1143,4 +1144,5 @@ VIDEO_UPDATE( hotchase )
 
 	/* Draw the foreground (text) */
 	if (video_on) K051316_zoom_draw_1(bitmap,cliprect, 0, 0);
+	return 0;
 }

@@ -97,6 +97,7 @@ VIDEO_UPDATE(pktgaldx)
 	deco16_tilemap_2_draw(bitmap,cliprect,0,0);
 	pktgaldx_drawsprites(bitmap,cliprect);
 	deco16_tilemap_1_draw(bitmap,cliprect,0,0);
+	return 0;
 }
 
 /* Video for the bootleg */
@@ -157,4 +158,5 @@ VIDEO_UPDATE(pktgaldb)
 		drawgfx(bitmap,Machine->gfx[0],tileno^0x3000,colour,0,0,x,y,cliprect,TRANSPARENCY_PEN,0);
 	}
 
+	return 0;
 }

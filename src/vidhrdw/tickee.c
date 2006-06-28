@@ -144,5 +144,6 @@ VIDEO_UPDATE( tickee )
 	/* draw player 2's crosshair */
 	get_crosshair_xy(1, &beamx, &beamy);
 	draw_crosshair(bitmap, beamx, beamy, cliprect, 1);
+	return 0;
 }
 

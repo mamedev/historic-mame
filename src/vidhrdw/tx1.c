@@ -60,6 +60,7 @@ VIDEO_UPDATE( tx1 )
 {
 
         tilemap_draw(bitmap,cliprect,tx1_tilemap,0,0);
+	return 0;
 }
 
 /*************/
@@ -407,6 +408,7 @@ VIDEO_UPDATE( buggyb1 )
               tilemap_draw(bitmap,cliprect,buggyb1_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
               bb_draw_objects(bitmap,cliprect);
             }
+	return 0;
 }
 
 VIDEO_UPDATE( buggyboy )
@@ -422,4 +424,5 @@ VIDEO_UPDATE( buggyboy )
               tilemap_draw(bitmap,cliprect,buggyboy_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
               bb_draw_objects(bitmap,cliprect);
             }
+	return 0;
 }

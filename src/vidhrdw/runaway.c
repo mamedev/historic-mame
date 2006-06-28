@@ -127,6 +127,7 @@ VIDEO_UPDATE( runaway )
 			x - 256, 240 - y,
 			cliprect, TRANSPARENCY_PEN, 0);
 	}
+	return 0;
 }
 
 
@@ -162,4 +163,5 @@ VIDEO_UPDATE( qwak )
 			x - 256, 240 - y,
 			cliprect, TRANSPARENCY_PEN, 0);
 	}
+	return 0;
 }

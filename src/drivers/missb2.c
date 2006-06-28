@@ -48,7 +48,7 @@ VIDEO_UPDATE( missb2 )
 	/* This clears & redraws the entire screen each pass */
 	fillbitmap(bitmap,Machine->pens[255],&Machine->visible_area[0]);
 
-	if (!bublbobl_video_enable) return;
+	if (!bublbobl_video_enable) return 0;
 
 	/* background map register */
 	//ui_popup("%02x",(*missb2_bgvram) & 0x1f);
@@ -125,6 +125,7 @@ VIDEO_UPDATE( missb2 )
 
 		sx += 16;
 	}
+	return 0;
 }
 
 INLINE void bg_changecolor_RRRRGGGGBBBBxxxx(pen_t color,int data)

@@ -642,5 +642,6 @@ VIDEO_UPDATE( st0016 )
 	drawbgmap(bitmap,cliprect,0);
  	drawsprites(bitmap,cliprect);
 	drawbgmap(bitmap,cliprect,1);
+	return 0;
 }
 

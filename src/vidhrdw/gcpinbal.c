@@ -360,5 +360,6 @@ VIDEO_UPDATE( gcpinbal )
 	}
 #endif
 
+	return 0;
 }
 

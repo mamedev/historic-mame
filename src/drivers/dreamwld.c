@@ -137,6 +137,7 @@ VIDEO_UPDATE(dreamwld)
 
 	dreamwld_drawsprites(bitmap,cliprect);
 
+	return 0;
 }
 
 

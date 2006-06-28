@@ -217,6 +217,7 @@ static VIDEO_UPDATE( common )
 {
 	fillbitmap(bitmap,Machine->pens[0],cliprect);
 	draw_sprites(bitmap);
+	return 0;
 }
 
 

@@ -220,6 +220,7 @@ VIDEO_UPDATE( tia )
 {
 	copybitmap(bitmap, helper[1 - current_bitmap], 0, 0, 0, 0,
 		cliprect, TRANSPARENCY_NONE, 0);
+	return 0;
 }
 
 

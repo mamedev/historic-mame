@@ -1199,6 +1199,7 @@ VIDEO_UPDATE( bigrun )
 	cischeat_tmap_DRAW(2)
 
 	megasys1_active_layers = megasys1_active_layers1;
+	return 0;
 }
 
 
@@ -1253,6 +1254,7 @@ VIDEO_UPDATE( cischeat )
 
 
 	megasys1_active_layers = megasys1_active_layers1;
+	return 0;
 }
 
 
@@ -1312,6 +1314,7 @@ VIDEO_UPDATE( f1gpstar )
 
 
 	megasys1_active_layers = megasys1_active_layers1;
+	return 0;
 }
 
 
@@ -1371,5 +1374,6 @@ if ( code_pressed(KEYCODE_Z) || code_pressed(KEYCODE_X) )
 	cischeat_tmap_DRAW(2)
 
 	megasys1_active_layers = megasys1_active_layers1;
+	return 0;
 }
 

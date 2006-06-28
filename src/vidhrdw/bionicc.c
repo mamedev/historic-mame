@@ -232,6 +232,7 @@ VIDEO_UPDATE( bionicc )
 	bionicc_draw_sprites(bitmap,cliprect);
 	tilemap_draw(bitmap,cliprect,fg_tilemap,0|TILEMAP_FRONT,0);
 	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
+	return 0;
 }
 
 VIDEO_EOF( bionicc )

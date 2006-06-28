@@ -476,6 +476,7 @@ VIDEO_UPDATE( laserbat )
 				0,0,
 				sprite_info.x - 6,sprite_info.y,
 				cliprect,TRANSPARENCY_PEN,0);
+	return 0;
 }
 
 /* Laser Battle sound **********************************/

@@ -95,6 +95,7 @@ VIDEO_UPDATE( stadhero )
 	tilemap_draw(bitmap,cliprect,pf2_tilemap,0,0);
 	stadhero_drawsprites(bitmap,cliprect,0x00,0x00);
 	tilemap_draw(bitmap,cliprect,pf1_tilemap,0,0);
+	return 0;
 }
 
 /******************************************************************************/

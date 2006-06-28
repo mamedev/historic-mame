@@ -277,6 +277,7 @@ VIDEO_UPDATE(meijinsn)
 			plot_pixel(bitmap, (sx*4 + (3-x)), sy, color*4 + data);
 		}
 	}
+	return 0;
 }
 
 

@@ -1194,6 +1194,7 @@ VIDEO_UPDATE( rallybik )
 		tilemap_draw(bitmap,cliprect,pf1_tilemap,priority,0);
 		draw_rallybik_sprites(bitmap,cliprect,priority << 8);
 	}
+	return 0;
 }
 
 VIDEO_UPDATE( toaplan1 )
@@ -1220,6 +1221,7 @@ VIDEO_UPDATE( toaplan1 )
 	}
 
 	draw_sprites(bitmap,cliprect);
+	return 0;
 }
 
 VIDEO_UPDATE( demonwld )
@@ -1245,6 +1247,7 @@ VIDEO_UPDATE( demonwld )
 	}
 
 	draw_sprites(bitmap,cliprect);
+	return 0;
 }
 
 

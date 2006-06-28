@@ -68,4 +68,5 @@ VIDEO_UPDATE( battlnts ){
 	K007342_tilemap_draw( bitmap, cliprect, 0, TILEMAP_IGNORE_TRANSPARENCY ,0);
 	K007420_sprites_draw( bitmap, cliprect );
 	K007342_tilemap_draw( bitmap, cliprect, 0, 1 | TILEMAP_IGNORE_TRANSPARENCY ,0);
+	return 0;
 }

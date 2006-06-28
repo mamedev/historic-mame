@@ -220,4 +220,5 @@ VIDEO_UPDATE( cheekyms )
 
 	/* copy the temporary bitmap to the screen over the sprites */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_PEN,Machine->pens[4*char_palette]);
+	return 0;
 }

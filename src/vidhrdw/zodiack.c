@@ -230,4 +230,5 @@ VIDEO_UPDATE( zodiack )
 	tilemap_draw(bitmap, &Machine->visible_area[0], fg_tilemap, 0, 0);
 	zodiack_draw_bullets(bitmap);
 	zodiack_draw_sprites(bitmap);
+	return 0;
 }

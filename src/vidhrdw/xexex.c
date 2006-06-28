@@ -141,4 +141,5 @@ VIDEO_UPDATE( xexex )
 	}
 
 	K056832_tilemap_draw(bitmap, cliprect, 0, 0, 0);
+	return 0;
 }

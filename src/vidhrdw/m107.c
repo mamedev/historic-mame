@@ -442,5 +442,6 @@ VIDEO_UPDATE( m107 )
 {
 	m107_update_scroll_positions();
 	m107_screenrefresh(bitmap,cliprect);
+	return 0;
 }
 

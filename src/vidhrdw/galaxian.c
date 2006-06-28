@@ -2086,4 +2086,5 @@ VIDEO_UPDATE( galaxian )
 	{
 		draw_sprites(bitmap, galaxian_spriteram2, galaxian_spriteram2_size);
 	}
+	return 0;
 }

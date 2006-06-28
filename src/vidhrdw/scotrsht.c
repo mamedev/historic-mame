@@ -176,4 +176,5 @@ VIDEO_UPDATE( scotrsht )
 
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 	scotrsht_draw_sprites(bitmap, cliprect);
+	return 0;
 }

@@ -387,7 +387,7 @@ static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 			if (!w) w=16;
 
 			if (use8bppMode) {
-				UINT32* index_ptr2=mlc_vram + indx2*4;
+				UINT32* index_ptr2=mlc_vram + ((indx2*4)&0x7fff);
 				sprite2=((index_ptr2[2]&0x3)<<16) | (index_ptr2[3]&0xffff);
 			}
 
@@ -533,4 +533,5 @@ VIDEO_UPDATE( mlc )
 //  fillbitmap(temp_bitmap,0,cliprect);
 	fillbitmap(bitmap,Machine->pens[0],cliprect); /* Pen 0 fill colour confirmed from Skull Fang level 2 */
 	draw_sprites(bitmap,cliprect);
+	return 0;
 }

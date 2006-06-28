@@ -392,6 +392,7 @@ if ( code_pressed(KEYCODE_Z) || code_pressed(KEYCODE_X) )
 			readinputport(3)*224/256,
 			cliprect,1);
 	}
+	return 0;
 }
 
 VIDEO_UPDATE( zeropnt2 )
@@ -442,5 +443,6 @@ if ( code_pressed(KEYCODE_Z) || code_pressed(KEYCODE_X) )
 			readinputport(3)*224/256,
 			cliprect,1);
 	}
+	return 0;
 }
 

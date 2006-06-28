@@ -229,4 +229,5 @@ VIDEO_UPDATE( wwfsstar )
 	tilemap_draw(bitmap,cliprect,bg0_tilemap,0,0);
 	wwfsstar_drawsprites( bitmap,cliprect );
 	tilemap_draw(bitmap,cliprect,fg0_tilemap,0,0);
+	return 0;
 }

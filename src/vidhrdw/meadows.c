@@ -113,4 +113,5 @@ VIDEO_UPDATE( meadows )
 	/* draw the sprites */
 	if (Machine->gfx[1])
 		draw_sprites(bitmap, cliprect);
+	return 0;
 }

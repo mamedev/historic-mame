@@ -243,4 +243,5 @@ VIDEO_UPDATE( dogfgt )
 	draw_sprites(bitmap,cliprect);
 
 	copybitmap(bitmap,pixbitmap,0,0,0,0,cliprect,TRANSPARENCY_COLOR,PIXMAP_COLOR_BASE + 8*pixcolor);
+	return 0;
 }

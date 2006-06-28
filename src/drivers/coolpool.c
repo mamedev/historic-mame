@@ -88,7 +88,7 @@ static VIDEO_UPDATE( amerdart )
 	if (tms34010_io_display_blanked(0))
 	{
 		fillbitmap(bitmap, get_black_pen(), cliprect);
-		return;
+		return 0;
 	}
 
 	/* update the palette */
@@ -117,6 +117,7 @@ static VIDEO_UPDATE( amerdart )
 		}
 		base += TOWORD(0x800);
 	}
+	return 0;
 }
 
 
@@ -130,7 +131,7 @@ static VIDEO_UPDATE( coolpool )
 	if (tms34010_io_display_blanked(0))
 	{
 		fillbitmap(bitmap, get_black_pen(), cliprect);
-		return;
+		return 0;
 	}
 
 	/* fetch current scanline advance and column offset values */
@@ -185,6 +186,7 @@ static VIDEO_UPDATE( coolpool )
 			offset += dudate;
 		}
 	}
+	return 0;
 }
 
 

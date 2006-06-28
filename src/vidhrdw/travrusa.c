@@ -333,4 +333,5 @@ VIDEO_UPDATE( travrusa )
 	tilemap_draw(bitmap,cliprect,bg_tilemap,TILEMAP_BACK,0);
 	draw_sprites(bitmap,cliprect);
 	tilemap_draw(bitmap,cliprect,bg_tilemap,TILEMAP_FRONT,0);
+	return 0;
 }

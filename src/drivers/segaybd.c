@@ -362,6 +362,7 @@ static VIDEO_UPDATE( rchase )
 	video_update_yboard(screen, bitmap, cliprect);
 	draw_crosshair(bitmap, x1 * (Machine->drv->screen[0].maxwidth - 1) / 255, y1 * (Machine->drv->screen[0].maxheight - 1) / 255, cliprect, 0);
 	draw_crosshair(bitmap, x2 * (Machine->drv->screen[0].maxwidth - 1) / 255, y2 * (Machine->drv->screen[0].maxheight - 1) / 255, cliprect, 1);
+	return 0;
 }
 
 

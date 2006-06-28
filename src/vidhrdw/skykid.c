@@ -274,4 +274,5 @@ VIDEO_UPDATE( skykid )
 
 	if ((priority & 0xf0) == 0x50)
 		skykid_draw_sprites(bitmap,cliprect);
+	return 0;
 }

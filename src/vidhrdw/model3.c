@@ -435,6 +435,7 @@ VIDEO_UPDATE( model3 )
 	//draw_texture_sheet(bitmap, cliprect);
 
 	real3d_display_list = 0;
+	return 0;
 }
 
 

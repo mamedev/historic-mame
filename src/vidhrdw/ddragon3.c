@@ -211,6 +211,7 @@ VIDEO_UPDATE( ddragon3 )
 		ddragon3_draw_sprites(bitmap, cliprect);
 		tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
 	}
+	return 0;
 }
 
 VIDEO_UPDATE( ctribe )
@@ -232,4 +233,5 @@ VIDEO_UPDATE( ctribe )
 		tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
 		ddragon3_draw_sprites(bitmap, cliprect);
 	}
+	return 0;
 }

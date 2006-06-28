@@ -218,6 +218,7 @@ VIDEO_UPDATE( kinst )
 			*dest++ = (data >> 16) & 0x7fff;
 		}
 	}
+	return 0;
 }
 
 

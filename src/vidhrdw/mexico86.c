@@ -97,6 +97,7 @@ if (offs >= mexico86_objectram_size+0x1c0) continue;
 			}
 		}
 	}
+	return 0;
 }
 //AT
 #if 0 // old code
@@ -176,6 +177,7 @@ if (offs >= mexico86_objectram_size+0x1c0) continue;
 			}
 		}
 	}
+	return 0;
 }
 #endif
 
@@ -242,5 +244,6 @@ VIDEO_UPDATE( kikikai )
 					&Machine->visible_area[0],TRANSPARENCY_PEN,15);
 		}
 	}
+	return 0;
 }
 //ZT

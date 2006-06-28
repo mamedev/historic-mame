@@ -248,4 +248,5 @@ VIDEO_UPDATE( retofinv )
 	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 	draw_sprites(bitmap);
 	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
+	return 0;
 }

@@ -166,4 +166,5 @@ VIDEO_UPDATE( volfied )
 	copybitmap(bitmap, pixel_layer, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0);
 
 	PC090OJ_draw_sprites(bitmap, cliprect, 0);
+	return 0;
 }

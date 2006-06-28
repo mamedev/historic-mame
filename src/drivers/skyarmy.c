@@ -139,6 +139,7 @@ VIDEO_UPDATE( skyarmy )
 		sx,sy,
 		cliprect,TRANSPARENCY_PEN,0);
 	}
+	return 0;
 }
 
 static int skyarmy_nmi=0;

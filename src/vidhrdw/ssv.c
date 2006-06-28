@@ -941,6 +941,7 @@ VIDEO_UPDATE( eaglshot )
 	}
 
 	video_update_ssv(screen, bitmap, cliprect);
+	return 0;
 }
 
 /*
@@ -1146,6 +1147,7 @@ VIDEO_UPDATE( gdfs )
 		Machine->visible_area[0].min_y + ((Machine->visible_area[0].max_y - Machine->visible_area[0].min_y) * readinputport(8)) / 255,
 		cliprect,1);
 #endif
+	return 0;
 }
 
 static int enable_video;
@@ -1173,9 +1175,10 @@ VIDEO_UPDATE( ssv )
 	/* The background color is the first one in the palette */
 	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area[0]);
 
-	if (!enable_video)	return;
+	if (!enable_video)	return 0;
 
 	ssv_draw_layer(bitmap,0);	// "background layer"
 
 	ssv_draw_sprites(bitmap);	// sprites list
+	return 0;
 }

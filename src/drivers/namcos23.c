@@ -523,6 +523,7 @@ VIDEO_UPDATE( ss23 )
 		bNew = 1;
 	}
 #endif
+	return 0;
 }
 
 static const gfx_layout namcos23_cg_layout;

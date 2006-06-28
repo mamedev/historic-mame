@@ -633,4 +633,5 @@ VIDEO_UPDATE( tceptor )
 	}
 
 	tilemap_draw(bitmap, cliprect, tx_tilemap, 0, 0);
+	return 0;
 }

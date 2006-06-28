@@ -177,4 +177,5 @@ VIDEO_UPDATE( ambush )
 
 	/* Draw the foreground priority characters */
 	draw_chars(bitmap, 0x10);
+	return 0;
 }

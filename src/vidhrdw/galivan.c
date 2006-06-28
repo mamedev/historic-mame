@@ -416,6 +416,7 @@ VIDEO_UPDATE( galivan )
 	draw_sprites(bitmap,cliprect);
 
 	tilemap_draw(bitmap,cliprect,tx_tilemap,1,0);
+	return 0;
 }
 
 VIDEO_UPDATE( ninjemak )
@@ -432,4 +433,5 @@ VIDEO_UPDATE( ninjemak )
 	draw_sprites(bitmap,cliprect);
 
 	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
+	return 0;
 }

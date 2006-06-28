@@ -351,5 +351,6 @@ VIDEO_UPDATE( othunder )
 		/* player 2 */
 		draw_crosshair(bitmap,screenx,screeny,cliprect,1);
 	}
+	return 0;
 }
 

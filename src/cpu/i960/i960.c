@@ -223,7 +223,7 @@ static double get_1_rif(UINT32 opcode)
 static double get_2_rif(UINT32 opcode)
 {
 	if(!(opcode & 0x00001000))
-		return i960.r[(opcode>>14) & 0x1f];
+		return u2f(i960.r[(opcode>>14) & 0x1f]);
 	else {
 		int idx = (opcode>>14) & 0x1f;
 		if(idx < 4)
@@ -2253,4 +2253,9 @@ void i960_get_info(UINT32 state, union cpuinfo *info)
 void i960_noburst(void)
 {
 	i960.bursting = 0;
+}
+
+void i960_stall(void)
+{
+	i960.IP = i960.PIP;
 }

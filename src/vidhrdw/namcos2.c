@@ -425,7 +425,8 @@ VIDEO_UPDATE( namcos2_default )
 		}
 	}
 	DrawCrossshair( bitmap,&clip );
-} /* namcos2_default */
+	return 0;
+}
 
 /**************************************************************************/
 
@@ -458,7 +459,8 @@ VIDEO_UPDATE( finallap )
 		namco_road_draw( bitmap,&clip,pri );
 		namcos2_draw_sprites( bitmap,&clip,pri,namcos2_gfx_ctrl );
 	}
-} /* finallap */
+	return 0;
+}
 
 /**************************************************************************/
 
@@ -503,7 +505,8 @@ VIDEO_UPDATE( luckywld )
 		namco_obj_draw( bitmap, &clip, pri );
 	}
 	DrawCrossshair( bitmap,&clip );
-} /* luckywld */
+	return 0;
+}
 
 /**************************************************************************/
 
@@ -532,6 +535,7 @@ VIDEO_UPDATE( sgunner )
 		namco_obj_draw( bitmap, &clip, pri );
 	}
 	DrawCrossshair( bitmap,&clip );
+	return 0;
 }
 
 
@@ -565,4 +569,5 @@ VIDEO_UPDATE( metlhawk )
 		namco_roz_draw( bitmap, &clip, pri );
 		namcos2_draw_sprites_metalhawk( bitmap,&clip,pri );
 	}
+	return 0;
 }

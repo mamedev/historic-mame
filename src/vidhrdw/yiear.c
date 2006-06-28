@@ -154,4 +154,5 @@ VIDEO_UPDATE( yiear )
 {
 	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
 	yiear_draw_sprites(bitmap);
+	return 0;
 }

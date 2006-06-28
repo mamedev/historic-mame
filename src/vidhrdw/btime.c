@@ -562,6 +562,7 @@ VIDEO_UPDATE( btime )
     }
 
     drawsprites(bitmap, 0, 1, 0, videoram, 0x20);
+	return 0;
 }
 
 
@@ -576,6 +577,7 @@ VIDEO_UPDATE( eggs )
     copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 
     drawsprites(bitmap, 0, 0, 0, videoram, 0x20);
+	return 0;
 }
 
 
@@ -590,6 +592,7 @@ VIDEO_UPDATE( lnc )
     copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 
     drawsprites(bitmap, 0, 1, 2, videoram, 0x20);
+	return 0;
 }
 
 
@@ -615,6 +618,7 @@ VIDEO_UPDATE( zoar )
     /* The order is important for correct priorities */
     drawsprites(bitmap, btime_palette + 1, 1, 2, videoram + 0x1f, 0x20);
     drawsprites(bitmap, btime_palette + 1, 1, 2, videoram,        0x20);
+	return 0;
 }
 
 
@@ -681,6 +685,7 @@ VIDEO_UPDATE( bnj )
 
         drawsprites(bitmap, 0, 0, 0, videoram, 0x20);
     }
+	return 0;
 }
 
 
@@ -720,6 +725,7 @@ VIDEO_UPDATE( cookrace )
     drawchars(bitmap, TRANSPARENCY_PEN, 0, -1);
 
     drawsprites(bitmap, 0, 1, 0, videoram, 0x20);
+	return 0;
 }
 
 
@@ -736,4 +742,5 @@ VIDEO_UPDATE( disco )
     copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 
     drawsprites(bitmap, btime_palette, 0, 0, spriteram, 1);
+	return 0;
 }

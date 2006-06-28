@@ -222,6 +222,7 @@ VIDEO_UPDATE( mcatadv )
 #endif
 		mcatadv_drawsprites (bitmap, cliprect);
 	profiler_mark(PROFILER_END);
+	return 0;
 }
 
 VIDEO_START( mcatadv )

@@ -232,4 +232,5 @@ VIDEO_UPDATE( cop01 )
 	draw_sprites(bitmap,cliprect);
 	tilemap_draw(bitmap,cliprect,bg_tilemap,TILEMAP_FRONT,0);
 	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0 );
+	return 0;
 }

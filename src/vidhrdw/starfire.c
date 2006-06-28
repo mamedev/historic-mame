@@ -284,6 +284,7 @@ VIDEO_UPDATE( starfire )
 {
 	/* copy the bitmap, remapping the colors */
 	copybitmap_remap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area[0], TRANSPARENCY_NONE, 0);
+	return 0;
 }
 
 

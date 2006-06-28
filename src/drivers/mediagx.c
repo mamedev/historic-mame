@@ -286,6 +286,7 @@ static VIDEO_UPDATE(mediagx)
 	{
 		draw_cga(bitmap, cliprect);
 	}
+	return 0;
 }
 
 static READ32_HANDLER( disp_ctrl_r )

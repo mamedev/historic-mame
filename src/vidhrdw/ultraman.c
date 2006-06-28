@@ -140,4 +140,5 @@ VIDEO_UPDATE( ultraman )
 	K051960_sprites_draw(bitmap,cliprect,0,0);
 	K051316_zoom_draw_0(bitmap,cliprect,0,0);
 	K051960_sprites_draw(bitmap,cliprect,1,1);
+	return 0;
 }

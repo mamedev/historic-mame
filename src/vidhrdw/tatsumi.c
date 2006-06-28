@@ -994,6 +994,7 @@ VIDEO_UPDATE( apache3 )
 	draw_sky(bitmap, cliprect, 256, apache3_a0000[1]);
 	draw_sprites(bitmap,cliprect,0, (tatsumi_sprite_control_ram[0x20]&0x1000) ? 0x1000 : 0);
 	tilemap_draw(bitmap,cliprect,tx_layer,0,0);
+	return 0;
 }
 
 VIDEO_UPDATE( roundup5 )
@@ -1013,6 +1014,7 @@ VIDEO_UPDATE( roundup5 )
 	draw_road(bitmap,cliprect,priority_bitmap);
 	draw_sprites(bitmap,cliprect,0,(tatsumi_sprite_control_ram[0xe0]&0x1000) ? 0x1000 : 0); // Full pass
 	tilemap_draw(bitmap,cliprect,tx_layer,0,0);
+	return 0;
 }
 
 VIDEO_UPDATE( cyclwarr )
@@ -1022,4 +1024,5 @@ VIDEO_UPDATE( cyclwarr )
 	update_cluts(8192, 4096, 8192);
 	draw_sprites(bitmap,cliprect,0,(tatsumi_sprite_control_ram[0xe0]&0x1000) ? 0x1000 : 0);
 	tilemap_draw(bitmap,cliprect,tx_layer,0,0);
+	return 0;
 }

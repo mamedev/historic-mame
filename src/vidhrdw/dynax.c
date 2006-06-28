@@ -1097,7 +1097,7 @@ VIDEO_UPDATE( hanamai )
 	int layers_ctrl = ~dynax_layer_enable;
 	int lay[4];
 
-	if (debug_viewer(bitmap,cliprect))	return;
+	if (debug_viewer(bitmap,cliprect))	return 0;
 	layers_ctrl &= debug_mask();
 
 	fillbitmap(
@@ -1106,7 +1106,7 @@ VIDEO_UPDATE( hanamai )
 		cliprect);
 
 	/* bit 4 = display enable? */
-	if (!(hanamai_priority & 0x10)) return;
+	if (!(hanamai_priority & 0x10)) return 0;
 
 	switch (hanamai_priority)
 	{
@@ -1123,6 +1123,7 @@ VIDEO_UPDATE( hanamai )
 	if (layers_ctrl & (1 << lay[1]))	hanamai_copylayer( bitmap, cliprect, lay[1] );
 	if (layers_ctrl & (1 << lay[2]))	hanamai_copylayer( bitmap, cliprect, lay[2] );
 	if (layers_ctrl & (1 << lay[3]))	hanamai_copylayer( bitmap, cliprect, lay[3] );
+	return 0;
 }
 
 
@@ -1132,7 +1133,7 @@ VIDEO_UPDATE( hnoridur )
 	int lay[4];
 	int pri;
 
-	if (debug_viewer(bitmap,cliprect))	return;
+	if (debug_viewer(bitmap,cliprect))	return 0;
 	layers_ctrl &= debug_mask();
 
 	fillbitmap(
@@ -1158,6 +1159,7 @@ VIDEO_UPDATE( hnoridur )
 	if (layers_ctrl & (1 << lay[1]))	hanamai_copylayer( bitmap, cliprect, lay[1] );
 	if (layers_ctrl & (1 << lay[2]))	hanamai_copylayer( bitmap, cliprect, lay[2] );
 	if (layers_ctrl & (1 << lay[3]))	hanamai_copylayer( bitmap, cliprect, lay[3] );
+	return 0;
 }
 
 
@@ -1165,7 +1167,7 @@ VIDEO_UPDATE( sprtmtch )
 {
 	int layers_ctrl = ~dynax_layer_enable;
 
-	if (debug_viewer(bitmap,cliprect))	return;
+	if (debug_viewer(bitmap,cliprect))	return 0;
 	layers_ctrl &= debug_mask();
 
 	fillbitmap(
@@ -1176,6 +1178,7 @@ VIDEO_UPDATE( sprtmtch )
 	if (layers_ctrl & 1)	hanamai_copylayer( bitmap, cliprect, 0 );
 	if (layers_ctrl & 2)	hanamai_copylayer( bitmap, cliprect, 1 );
 	if (layers_ctrl & 4)	hanamai_copylayer( bitmap, cliprect, 2 );
+	return 0;
 }
 
 VIDEO_UPDATE( jantouki )
@@ -1185,7 +1188,7 @@ VIDEO_UPDATE( jantouki )
 
 	int layers_ctrl = dynax_layer_enable;
 
-	if (debug_viewer(bitmap,cliprect))	return;
+	if (debug_viewer(bitmap,cliprect))	return 0;
 	layers_ctrl &= debug_mask();
 
 	fillbitmap(
@@ -1206,6 +1209,7 @@ VIDEO_UPDATE( jantouki )
 	if (layers_ctrl & 0x20)	jantouki_copylayer( bitmap, &cliprect1, 6, 0 );
 	if (layers_ctrl & 0x40)	jantouki_copylayer( bitmap, &cliprect1, 5, 0 );
 	if (layers_ctrl & 0x80)	jantouki_copylayer( bitmap, &cliprect1, 4, 0 );
+	return 0;
 }
 
 
@@ -1213,7 +1217,7 @@ VIDEO_UPDATE( mjdialq2 )
 {
 	int layers_ctrl = ~dynax_layer_enable;
 
-	if (debug_viewer(bitmap,cliprect))	return;
+	if (debug_viewer(bitmap,cliprect))	return 0;
 	layers_ctrl &= debug_mask();
 
 	fillbitmap(
@@ -1223,4 +1227,5 @@ VIDEO_UPDATE( mjdialq2 )
 
 	if (layers_ctrl & 1)	mjdialq2_copylayer( bitmap, cliprect, 0 );
 	if (layers_ctrl & 2)	mjdialq2_copylayer( bitmap, cliprect, 1 );
+	return 0;
 }

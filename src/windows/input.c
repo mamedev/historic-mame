@@ -2284,6 +2284,13 @@ void osd_customize_inputport_list(input_port_default_entry *defaults)
 				}
 				break;
 #endif /* MESS */
+
+			// insert for fastforward
+			case IPT_OSD_3:
+				idef->token = "FAST_FORWARD";
+				idef->name = "Fast Forward";
+				seq_set_1(&idef->defaultseq, KEYCODE_INSERT);
+				break;
 		}
 
 		// disable the config menu if the ALT key is down

@@ -408,6 +408,7 @@ macrossp_scrc_videoregs[0]&0xffff33ff, // 00 - 03
 macrossp_scrc_videoregs[1], // 04 - 07
 macrossp_scrc_videoregs[2]);// 08 - 0b
 #endif
+	return 0;
 }
 
 VIDEO_EOF( macrossp )

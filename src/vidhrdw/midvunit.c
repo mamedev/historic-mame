@@ -1216,4 +1216,5 @@ VIDEO_UPDATE( midvunit )
 			*dest++ = midvunit_videoram[offset + x] & 0x7fff;
 		offset += 512;
 	}
+	return 0;
 }

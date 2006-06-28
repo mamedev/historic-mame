@@ -325,6 +325,7 @@ VIDEO_UPDATE(littlerb)
 		littlerb_drawsprite(bitmap,xsize,ysize,code,x-8,y-16);
 	}
 
+	return 0;
 }
 
 static MACHINE_DRIVER_START( littlerb )

@@ -321,6 +321,7 @@ VIDEO_UPDATE( vigilant )
 		draw_sprites(bitmap,&bottomvisiblearea);
 		draw_foreground(bitmap,1,0); // priority tiles
 	}
+	return 0;
 }
 
 VIDEO_UPDATE( kikcubic )
@@ -352,4 +353,5 @@ VIDEO_UPDATE( kikcubic )
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 
 	draw_sprites(bitmap,&Machine->visible_area[0]);
+	return 0;
 }

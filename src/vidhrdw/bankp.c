@@ -215,4 +215,5 @@ VIDEO_UPDATE( bankp )
 		tilemap_draw(bitmap, cliprect, fg_tilemap, TILEMAP_IGNORE_TRANSPARENCY, 0); // just a guess
 		break;
 	}
+	return 0;
 }

@@ -155,4 +155,5 @@ VIDEO_UPDATE(bigstrkb)
 	tilemap_draw(bitmap,cliprect,bsb_tilemap,0,0);
 
 //  ui_popup ("Regs %08x %08x %08x %08x",bsb_vidreg2[0],bsb_vidreg2[1],bsb_vidreg2[2],bsb_vidreg2[3]);
+	return 0;
 }

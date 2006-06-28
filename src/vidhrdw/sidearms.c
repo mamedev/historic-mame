@@ -369,6 +369,7 @@ VIDEO_UPDATE( sidearms )
 
 	if (charon)
 		tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
+	return 0;
 }
 
 VIDEO_EOF( sidearms )

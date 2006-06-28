@@ -13,6 +13,7 @@ VIDEO_START( dambustr  )
 VIDEO_UPDATE( dambustr )
 {
 
+	return 0;
 }
 
 

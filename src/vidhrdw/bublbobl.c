@@ -37,7 +37,7 @@ VIDEO_UPDATE( bublbobl )
 	/* This clears & redraws the entire screen each pass */
 	fillbitmap(bitmap,Machine->pens[255],&Machine->visible_area[0]);
 
-	if (!bublbobl_video_enable) return;
+	if (!bublbobl_video_enable) return 0;
 
 	sx = 0;
 
@@ -101,4 +101,5 @@ VIDEO_UPDATE( bublbobl )
 
 		sx += 16;
 	}
+	return 0;
 }

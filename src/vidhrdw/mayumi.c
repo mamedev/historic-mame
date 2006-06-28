@@ -47,5 +47,6 @@ READ8_HANDLER( mayumi_videoram_r )
 VIDEO_UPDATE( mayumi )
 {
 	tilemap_draw(bitmap, cliprect, mayumi_tilemap, 0, 0);
+	return 0;
 }
 

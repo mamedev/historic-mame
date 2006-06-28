@@ -143,4 +143,5 @@ VIDEO_UPDATE( jailbrek )
 
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 	jailbrek_draw_sprites(bitmap, cliprect);
+	return 0;
 }

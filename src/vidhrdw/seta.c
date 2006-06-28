@@ -836,6 +836,7 @@ VIDEO_UPDATE( seta_no_layers )
 {
 	fillbitmap(bitmap,Machine->pens[0x1f0],cliprect);
 	seta_draw_sprites(bitmap,cliprect);
+	return 0;
 }
 
 
@@ -976,4 +977,5 @@ if (code_pressed(KEYCODE_Z))
 	{
 		zombraid_drawcrosshairs(bitmap,cliprect);
 	}
+	return 0;
 }

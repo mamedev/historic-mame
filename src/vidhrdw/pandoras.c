@@ -174,4 +174,5 @@ VIDEO_UPDATE( pandoras )
 	tilemap_draw( bitmap,cliprect, layer0, 1 ,0);
 	draw_sprites( bitmap,cliprect, &pandoras_sharedram[0x800] );
 	tilemap_draw( bitmap,cliprect, layer0, 0 ,0);
+	return 0;
 }

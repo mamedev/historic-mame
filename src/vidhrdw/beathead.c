@@ -234,4 +234,5 @@ VIDEO_UPDATE( beathead )
 		/* then draw it */
 		draw_scanline8(bitmap, cliprect->min_x, y, cliprect->max_x - cliprect->min_x + 1, &scanline[cliprect->min_x], &Machine->pens[scanline_palette[y] * 256], -1);
 	}
+	return 0;
 }

@@ -334,6 +334,7 @@ VIDEO_UPDATE( toki )
 	}
 	toki_draw_sprites (bitmap,cliprect);
 	tilemap_draw(bitmap,cliprect,text_layer,0,0);
+	return 0;
 }
 
 VIDEO_UPDATE( tokib )
@@ -355,4 +356,5 @@ VIDEO_UPDATE( tokib )
 
 	tokib_draw_sprites (bitmap,cliprect);
 	tilemap_draw(bitmap,cliprect,text_layer,0,0);
+	return 0;
 }

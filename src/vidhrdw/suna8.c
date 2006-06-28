@@ -457,4 +457,5 @@ VIDEO_UPDATE( suna8 )
 		suna8_draw_normal_sprites(bitmap,cliprect);
 		suna8_draw_text_sprites(bitmap,cliprect);
 	}
+	return 0;
 }

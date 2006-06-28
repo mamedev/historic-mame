@@ -150,4 +150,5 @@ VIDEO_UPDATE( goindol )
 	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
 	draw_sprites(bitmap,cliprect,1,spriteram);
 	draw_sprites(bitmap,cliprect,0,spriteram_2);
+	return 0;
 }

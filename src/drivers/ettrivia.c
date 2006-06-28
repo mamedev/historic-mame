@@ -204,6 +204,7 @@ VIDEO_UPDATE( ettrivia )
 {
 	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
+	return 0;
 }
 
 static struct AY8910interface ay8912_interface_2 =

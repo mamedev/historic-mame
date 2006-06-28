@@ -383,7 +383,7 @@ VIDEO_UPDATE( deniam )
 	int page;
 
 
-	if (!display_enable) return;	/* don't update (freeze display) */
+	if (!display_enable) return 0;	/* don't update (freeze display) */
 
 	bg_scrollx = deniam_textram[bg_scrollx_reg] - bg_scrollx_offs;
 	bg_scrolly = (deniam_textram[bg_scrolly_reg] & 0xff) - bg_scrolly_offs;
@@ -413,4 +413,5 @@ VIDEO_UPDATE( deniam )
 	tilemap_draw(bitmap,cliprect,tx_tilemap,0,4);
 
 	draw_sprites(bitmap,cliprect);
+	return 0;
 }

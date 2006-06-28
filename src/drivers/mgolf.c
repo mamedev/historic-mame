@@ -72,6 +72,7 @@ static VIDEO_UPDATE( mgolf )
 			mgolf_video_ram[0x39a + 4 * i] - 16,
 			cliprect, TRANSPARENCY_PEN, 0);
 	}
+	return 0;
 }
 
 

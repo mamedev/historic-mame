@@ -300,4 +300,5 @@ VIDEO_UPDATE( brkthru )
 
 /*  show_register(bitmap,8,8,(unsigned long)flipscreen); */
 
+	return 0;
 }

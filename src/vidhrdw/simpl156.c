@@ -122,6 +122,7 @@ VIDEO_UPDATE( simpl156 )
 	deco16_tilemap_1_draw(bitmap,cliprect,0,4);
 
 	simpl156_drawsprites(bitmap,cliprect);
+	return 0;
 }
 
 static int simpl156_bank_callback(const int bank)

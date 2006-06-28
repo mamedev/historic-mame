@@ -348,4 +348,5 @@ VIDEO_UPDATE( thepit )
 
 	/* high priority sprites */
 	drawsprites(bitmap,1);
+	return 0;
 }

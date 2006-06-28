@@ -302,6 +302,7 @@ VIDEO_UPDATE( dcon )
 	tilemap_draw(bitmap,cliprect,text_layer,0,4);
 
 	draw_sprites(bitmap,cliprect);
+	return 0;
 }
 
 VIDEO_UPDATE( sdgndmps )
@@ -337,4 +338,5 @@ VIDEO_UPDATE( sdgndmps )
 	tilemap_draw(bitmap,cliprect,text_layer,0,4);
 
 	draw_sprites(bitmap,cliprect);
+	return 0;
 }

@@ -1901,6 +1901,7 @@ VIDEO_UPDATE( snes )
 
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 		snes_refresh_scanline(bitmap, y);
+	return 0;
 }
 
 

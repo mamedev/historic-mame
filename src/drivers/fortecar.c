@@ -136,9 +136,8 @@ VIDEO_UPDATE(fortecar)
 			count++;
 
 		}
-
-
 	}
+	return 0;
 }
 
 

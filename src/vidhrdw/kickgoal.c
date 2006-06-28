@@ -152,6 +152,7 @@ VIDEO_UPDATE( kickgoal )
     kickgoal_scrram[6],
     kickgoal_scrram[7]);
     */
+	return 0;
 }
 
 /* Holywood Action */
@@ -264,4 +265,5 @@ VIDEO_UPDATE( actionhw )
 	actionhw_draw_sprites(bitmap,cliprect);
 
 	tilemap_draw(bitmap,cliprect,kickgoal_fgtm,0,0);
+	return 0;
 }

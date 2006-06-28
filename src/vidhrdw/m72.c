@@ -604,7 +604,7 @@ VIDEO_UPDATE( m72 )
 	if (video_off)
 	{
 		fillbitmap(bitmap,get_black_pen(),cliprect);
-		return;
+		return 0;
 	}
 
 	tilemap_set_scrollx(fg_tilemap,0,scrollx1 + xadjust);
@@ -618,6 +618,7 @@ VIDEO_UPDATE( m72 )
 	draw_sprites(bitmap,cliprect);
 	tilemap_draw(bitmap,cliprect,bg_tilemap,TILEMAP_FRONT,0);
 	tilemap_draw(bitmap,cliprect,fg_tilemap,TILEMAP_FRONT,0);
+	return 0;
 }
 
 VIDEO_UPDATE( majtitle )
@@ -628,7 +629,7 @@ VIDEO_UPDATE( majtitle )
 	if (video_off)
 	{
 		fillbitmap(bitmap,get_black_pen(),cliprect);
-		return;
+		return 0;
 	}
 
 	tilemap_set_scrollx(fg_tilemap,0,scrollx1 + xadjust);
@@ -654,4 +655,5 @@ VIDEO_UPDATE( majtitle )
 	draw_sprites(bitmap,cliprect);
 	tilemap_draw(bitmap,cliprect,bg_tilemap,TILEMAP_FRONT,0);
 	tilemap_draw(bitmap,cliprect,fg_tilemap,TILEMAP_FRONT,0);
+	return 0;
 }

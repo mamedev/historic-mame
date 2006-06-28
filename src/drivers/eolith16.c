@@ -120,6 +120,7 @@ VIDEO_UPDATE( eolith16 )
 			count++;
 		}
 	}
+	return 0;
 }
 
 void nvram_handler_eolith16_eeprom(mame_file *file,int read_or_write)

@@ -282,4 +282,5 @@ VIDEO_UPDATE( spbactn )
 
 	/* mix & blend the tilemaps and sprites into a 32-bit bitmap */
 	blendbitmaps(bitmap, tile_bitmap_bg, tile_bitmap_fg, 0, 0, cliprect);
+	return 0;
 }

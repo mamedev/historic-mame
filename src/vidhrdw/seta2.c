@@ -379,9 +379,10 @@ VIDEO_UPDATE( seta2 )
 	/* Black or pens[0]? */
 	fillbitmap(bitmap,Machine->pens[0],cliprect);
 
-	if (seta2_vregs[0x30/2] & 1)	return;		// BLANK SCREEN
+	if (seta2_vregs[0x30/2] & 1)	return 0;		// BLANK SCREEN
 
 	seta2_draw_sprites(bitmap,cliprect);
+	return 0;
 }
 
 VIDEO_EOF( seta2 )

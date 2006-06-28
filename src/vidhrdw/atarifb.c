@@ -356,4 +356,5 @@ if (atarifb_game != 4)
 	ui_draw_text(buf1, 24*8, 0);
 	ui_draw_text(buf2, 0, 0);
 }
+	return 0;
 }

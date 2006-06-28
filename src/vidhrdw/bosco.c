@@ -335,6 +335,7 @@ VIDEO_UPDATE( bosco )
 	draw_bullets(bitmap,cliprect);
 
 	draw_stars(bitmap,cliprect);
+	return 0;
 }
 
 

@@ -437,6 +437,7 @@ VIDEO_UPDATE (raiden2)
 	draw_sprites(bitmap,cliprect,0);
 	if(!code_pressed(KEYCODE_A))
 		tilemap_draw(bitmap,cliprect,text_layer,0,0);
+	return 0;
 }
 
 

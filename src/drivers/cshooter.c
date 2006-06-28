@@ -190,6 +190,7 @@ VIDEO_UPDATE(cshooter)
 
 	tilemap_mark_all_tiles_dirty(cshooter_txtilemap);
 	tilemap_draw(bitmap,cliprect,cshooter_txtilemap,0,0);
+	return 0;
 }
 
 

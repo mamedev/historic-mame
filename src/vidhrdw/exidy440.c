@@ -492,6 +492,7 @@ VIDEO_UPDATE( exidy440 )
 		/* redraw the screen */
 		update_screen(bitmap, cliprect, 0);
 	}
+	return 0;
 }
 
 

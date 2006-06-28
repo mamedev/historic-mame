@@ -162,7 +162,8 @@ VIDEO_UPDATE( namcos21_default )
 	{
 		namco_obj_draw( bitmap, cliprect, pri );
 	}
-} /* VIDEO_UPDATE( namcos21_default ) */
+	return 0;
+}
 
 VIDEO_UPDATE( namcos21_winrun )
 {
@@ -187,7 +188,8 @@ VIDEO_UPDATE( namcos21_winrun )
 		}
 	}
 	namcos21_dspram16[0x100/2] = 0x0001;
-} /* VIDEO_UPDATE( namcos21_winrun ) */
+	return 0;
+}
 
 /*********************************************************************************************/
 

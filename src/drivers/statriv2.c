@@ -124,6 +124,7 @@ VIDEO_START (statriv2)
 VIDEO_UPDATE (statriv2)
 {
 	tilemap_draw(bitmap,cliprect,statriv2_tilemap,0,0);
+	return 0;
 }
 
 PALETTE_INIT(statriv2)

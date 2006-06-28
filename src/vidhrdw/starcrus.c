@@ -569,6 +569,7 @@ VIDEO_UPDATE( starcrus )
         collision_reg |= 0x04;
     }
 
+	return 0;
 }
 
 READ8_HANDLER( starcrus_coll_det_r )

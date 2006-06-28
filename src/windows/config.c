@@ -146,6 +146,7 @@ static const options_entry config_opts[] =
 	{ "cheat;c",                  "0",    OPTION_BOOLEAN,    "enable cheat subsystem" },
 	{ "skip_gameinfo",            "0",    OPTION_BOOLEAN,    "skip displaying the information screen at startup" },
 	{ "artwork;art",              "1",    OPTION_BOOLEAN,    "enable external artwork, if available" },
+	{ "artwork_crop;artcrop",     "0",    OPTION_BOOLEAN,    "crop artwork to game screen size" },
 	{ "use_backdrops;backdrop",   "1",    OPTION_BOOLEAN,    "enable backdrops if artwork is enabled and available" },
 	{ "use_overlays;overlay",     "1",    OPTION_BOOLEAN,    "enable overlays if artwork is enabled and available" },
 	{ "use_bezels;bezel",         "1",    OPTION_BOOLEAN,    "enable bezels if artwork is enabled and available" },
@@ -203,7 +204,6 @@ static const options_entry config_opts[] =
 	{ "matchrefresh",             "0",    OPTION_DEPRECATED, "(deprecated)" },
 	{ "refresh",                  "0",    OPTION_DEPRECATED, "(deprecated)" },
 	{ "gamma",                    "1.0",  OPTION_DEPRECATED, "(deprecated)" },
-	{ "artwork_crop;artcrop",     "0",    OPTION_DEPRECATED, "(deprecated)" },
 	{ "artwork_resolution;artres","0",    OPTION_DEPRECATED, "(deprecated)" },
 #else
 	{ "gamma",                    "1.0",  0,                 "color gamma" },
@@ -598,11 +598,6 @@ static void extract_options(const game_driver *driver, machine_config *drv)
 	options.bios = (char *)options_get_string("bios", TRUE);
 	options.cheat = options_get_bool("cheat", TRUE);
 	options.skip_gameinfo = options_get_bool("skip_gameinfo", TRUE);
-	options.use_artwork = ARTWORK_USE_ALL;
-	if (!options_get_bool("use_backdrops", TRUE)) options.use_artwork &= ~ARTWORK_USE_BACKDROPS;
-	if (!options_get_bool("use_overlays", TRUE)) options.use_artwork &= ~ARTWORK_USE_OVERLAYS;
-	if (!options_get_bool("use_bezels", TRUE)) options.use_artwork &= ~ARTWORK_USE_BEZELS;
-	if (!options_get_bool("artwork", TRUE)) options.use_artwork = ARTWORK_USE_NONE;
 
 #ifdef MESS
 	win_mess_extract_options();

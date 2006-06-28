@@ -605,6 +605,7 @@ VIDEO_UPDATE( cosmicg )
 	fillbitmap(bitmap, Machine->pens[0], cliprect);
 
 	draw_bitmap(bitmap);
+	return 0;
 }
 
 
@@ -615,6 +616,7 @@ VIDEO_UPDATE( panic )
 	draw_bitmap(bitmap);
 
 	draw_sprites(bitmap, 0x07, 1);
+	return 0;
 }
 
 
@@ -627,6 +629,7 @@ VIDEO_UPDATE( cosmica )
 	draw_bitmap(bitmap);
 
 	draw_sprites(bitmap, 0x0f, 0);
+	return 0;
 }
 
 
@@ -637,6 +640,7 @@ VIDEO_UPDATE( magspot2 )
 	draw_bitmap(bitmap);
 
 	draw_sprites(bitmap, 0x07, 0);
+	return 0;
 }
 
 
@@ -652,6 +656,7 @@ VIDEO_UPDATE( devzone )
 	draw_bitmap(bitmap);
 
 	draw_sprites(bitmap, 0x07, 0);
+	return 0;
 }
 
 
@@ -670,4 +675,5 @@ VIDEO_UPDATE( nomnlnd )
     {
     	nomnlnd_draw_background(bitmap);
 	}
+	return 0;
 }

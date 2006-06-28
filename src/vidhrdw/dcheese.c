@@ -147,6 +147,7 @@ VIDEO_UPDATE( dcheese )
 		for (x = cliprect->min_x; x <= cliprect->max_x; x++)
 			dest[x] = src[x];
 	}
+	return 0;
 }
 
 

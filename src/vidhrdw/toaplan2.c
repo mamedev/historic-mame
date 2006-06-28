@@ -1503,6 +1503,7 @@ VIDEO_UPDATE( toaplan2_0 )
 		if (sprite_priority[0][priority])
 			draw_sprites(bitmap,cliprect,0,priority,0);
 	}
+	return 0;
 }
 
 VIDEO_UPDATE( dogyuun_1 )
@@ -1537,6 +1538,7 @@ VIDEO_UPDATE( dogyuun_1 )
 		if (sprite_priority[0][priority])
 			draw_sprites(bitmap,cliprect,0,priority,0);
 	}
+	return 0;
 }
 
 VIDEO_UPDATE( batsugun_1 )
@@ -1573,12 +1575,14 @@ VIDEO_UPDATE( batsugun_1 )
 			draw_sprites(bitmap,cliprect,1,priority,0);
 	}
 
+	return 0;
 }
 
 VIDEO_UPDATE( truxton2_0 )
 {
 	video_update_toaplan2_0(screen,bitmap,cliprect);
 	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
+	return 0;
 }
 
 VIDEO_UPDATE( batrider_0 )
@@ -1627,6 +1631,7 @@ VIDEO_UPDATE( batrider_0 )
 		tilemap_set_scrolly(tx_tilemap,0,toaplan2_txvideoram16_offs[line&0xff]-line);
 		tilemap_draw(bitmap,&clip,tx_tilemap,0,0);
 	}
+	return 0;
 }
 
 
@@ -1658,6 +1663,7 @@ VIDEO_UPDATE( mahoudai_0 )
 	if (sprite_priority[0][15])
 		draw_sprites(bitmap,cliprect,0,15,0);
 	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
+	return 0;
 }
 
 

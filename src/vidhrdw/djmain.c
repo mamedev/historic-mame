@@ -194,4 +194,5 @@ VIDEO_UPDATE( djmain )
 				K056832_tilemap_draw_dj(bitmap, cliprect, layer, 0, 1 << i);
 		}
 	}
+	return 0;
 }

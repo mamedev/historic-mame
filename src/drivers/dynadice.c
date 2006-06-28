@@ -191,6 +191,7 @@ VIDEO_UPDATE( dynadice )
 	myclip.max_x=15;
 	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 	tilemap_draw(bitmap,&myclip,top_tilemap,0,0);
+	return 0;
 }
 
 PALETTE_INIT( dynadice )

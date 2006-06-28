@@ -382,6 +382,7 @@ VIDEO_UPDATE( ddayjlc )
 					drawgfx(bitmap, Machine->gfx[1], c+char_bank*0x100, 1, 0, 0, x*8, y*8, cliprect, TRANSPARENCY_NONE, 0);
 		}
 	}
+	return 0;
 }
 
 static struct AY8910interface ay8910_interface =

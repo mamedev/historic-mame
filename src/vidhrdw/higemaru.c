@@ -147,4 +147,5 @@ VIDEO_UPDATE( higemaru )
 {
 	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
 	higemaru_draw_sprites(bitmap);
+	return 0;
 }

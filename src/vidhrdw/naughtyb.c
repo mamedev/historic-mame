@@ -336,4 +336,5 @@ VIDEO_UPDATE( naughtyb )
 		scrollx = ( naughtyb_cocktail ) ? *naughtyb_scrollreg - 239 : -*naughtyb_scrollreg + 16;
 		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,0,0,&scrollvisiblearea,TRANSPARENCY_NONE,0);
 	}
+	return 0;
 }

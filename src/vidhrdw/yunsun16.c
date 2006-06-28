@@ -250,4 +250,5 @@ VIDEO_UPDATE( yunsun16 )
 		sect_rect(&clip,cliprect);
 		fillbitmap(bitmap,Machine->pens[0],&clip);
 	}
+	return 0;
 }

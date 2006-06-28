@@ -181,4 +181,5 @@ VIDEO_UPDATE( simpsons )
 	tilemap_draw(bitmap,cliprect,K052109_tilemap[layer[2]],0,4);
 
 	K053247_sprites_draw(bitmap,cliprect);
+	return 0;
 }

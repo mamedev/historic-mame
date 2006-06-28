@@ -134,6 +134,7 @@ VIDEO_UPDATE( sprint2 )
 			get_sprite_y(i),
 			cliprect, TRANSPARENCY_PEN, 0);
 	}
+	return 0;
 }
 
 

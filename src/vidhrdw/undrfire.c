@@ -371,4 +371,5 @@ VIDEO_UPDATE( undrfire )
 		}
 	}
 #endif
+	return 0;
 }

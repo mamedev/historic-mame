@@ -390,6 +390,7 @@ VIDEO_UPDATE( namcos86 )
 	}
 
 	draw_sprites(bitmap,cliprect);
+	return 0;
 }
 
 

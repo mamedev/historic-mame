@@ -480,6 +480,7 @@ VIDEO_UPDATE(deroon)
 			cpunum_set_reg(0, M68K_PC, 0x17d2a); /* angel eyes */
 		}
 	}
+	return 0;
 }
 
 /*

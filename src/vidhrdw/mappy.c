@@ -490,6 +490,7 @@ VIDEO_UPDATE( superpac )
 				plot_pixel(bitmap,x,y,0);
 		}
 	}
+	return 0;
 }
 
 VIDEO_UPDATE( phozon )
@@ -504,6 +505,7 @@ VIDEO_UPDATE( phozon )
 
 	/* Redraw the high priority characters */
 	tilemap_draw(bitmap,cliprect,bg_tilemap,1,0);
+	return 0;
 }
 
 VIDEO_UPDATE( mappy )
@@ -520,4 +522,5 @@ VIDEO_UPDATE( mappy )
 
 	/* Redraw the high priority characters */
 	tilemap_draw(bitmap,cliprect,bg_tilemap,1,0);
+	return 0;
 }

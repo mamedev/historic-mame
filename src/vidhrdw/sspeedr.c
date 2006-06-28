@@ -266,6 +266,7 @@ VIDEO_UPDATE( sspeedr )
 	draw_drones(bitmap, cliprect);
 
 	draw_driver(bitmap, cliprect);
+	return 0;
 }
 
 

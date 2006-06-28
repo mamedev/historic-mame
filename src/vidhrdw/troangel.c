@@ -234,4 +234,5 @@ VIDEO_UPDATE( troangel )
 {
 	draw_background(bitmap);
 	draw_sprites(bitmap);
+	return 0;
 }

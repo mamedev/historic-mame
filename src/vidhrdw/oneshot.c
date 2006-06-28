@@ -195,6 +195,7 @@ VIDEO_UPDATE( oneshot )
 	oneshot_drawsprites(bitmap,cliprect);
 	tilemap_draw(bitmap,cliprect,oneshot_fg_tilemap,0,0);
 	oneshot_drawcrosshairs(bitmap,cliprect);
+	return 0;
 }
 
 VIDEO_UPDATE( maddonna )
@@ -210,4 +211,5 @@ VIDEO_UPDATE( maddonna )
 //  oneshot_drawcrosshairs(bitmap,cliprect); // not a gun game
 
 //  ui_popup ("%04x %04x %04x %04x %04x %04x %04x %04x", oneshot_scroll[0],oneshot_scroll[1],oneshot_scroll[2],oneshot_scroll[3],oneshot_scroll[4],oneshot_scroll[5],oneshot_scroll[6],oneshot_scroll[7]);
+	return 0;
 }

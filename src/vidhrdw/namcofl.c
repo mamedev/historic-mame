@@ -155,7 +155,8 @@ VIDEO_UPDATE( namcofl )
 		namco_obj_draw( bitmap, cliprect, pri );
 	}
 
-} /* namcofl_vh_screenrefresh */
+	return 0;
+}
 
 // NOTE : The two low bits toggle banks (code + 0x4000) for two
 //        groups of sprites.  I am unsure how to differentiate those groups

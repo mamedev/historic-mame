@@ -264,4 +264,5 @@ VIDEO_UPDATE( sshangha )
 
 	sshangha_drawsprites(bitmap,spriteram16_2,0x0000,0x0000);
 	sshangha_drawsprites(bitmap,spriteram16,0x4000,0x0000);
+	return 0;
 }

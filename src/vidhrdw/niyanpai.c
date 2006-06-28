@@ -451,4 +451,5 @@ VIDEO_UPDATE( niyanpai )
 	{
 		copyscrollbitmap(bitmap, niyanpai_tmpbitmap[2], 1, &scrollx[2], 1, &scrolly[2], &Machine->visible_area[0], TRANSPARENCY_PEN, Machine->pens[0x02ff]);
 	}
+	return 0;
 }

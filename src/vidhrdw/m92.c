@@ -630,5 +630,6 @@ VIDEO_UPDATE( m92 )
 		flip_screen_set(0);
 	else
 		flip_screen_set(1);
+	return 0;
 }
 

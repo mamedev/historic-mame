@@ -299,4 +299,5 @@ VIDEO_UPDATE( contra )
 	draw_sprites( bitmap,cliprect, 0 );
 	draw_sprites( bitmap,cliprect, 1 );
 	tilemap_draw( bitmap,&tx_finalclip, tx_tilemap, 0 ,0);
+	return 0;
 }

@@ -125,6 +125,7 @@ VIDEO_UPDATE( rastan )
 	PC080SN_tilemap_draw(bitmap,cliprect,0,layer[1],0,2);
 
 	PC090OJ_draw_sprites(bitmap,cliprect,0);
+	return 0;
 }
 
 /***************************************************************************/
@@ -155,6 +156,7 @@ VIDEO_UPDATE( opwolf )
 		/* Draw an aiming crosshair */
 		draw_crosshair(bitmap,(input_port_4_word_r(0,0xffff)*320)/256,input_port_5_word_r(0,0xffff),cliprect,0);
 	}
+	return 0;
 }
 
 /***************************************************************************/
@@ -174,6 +176,7 @@ VIDEO_UPDATE( rainbow )
 	PC080SN_tilemap_draw(bitmap,cliprect,0,layer[1],0,2);
 
 	PC090OJ_draw_sprites(bitmap,cliprect,1);
+	return 0;
 }
 
 /***************************************************************************
@@ -237,5 +240,6 @@ VIDEO_UPDATE( jumping )
 		ui_popup(buf);
 	}
 #endif
+	return 0;
 }
 

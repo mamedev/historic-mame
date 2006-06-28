@@ -167,7 +167,7 @@ VIDEO_UPDATE( capbowl )
 	if (state.blanked)
 	{
 		fillbitmap(bitmap, get_black_pen(), cliprect);
-		return;
+		return 0;
 	}
 
 	/* now regenerate the bitmap */
@@ -194,4 +194,5 @@ VIDEO_UPDATE( capbowl )
 			*dest++ = ybase + (pix & 0x0f);
 		}
 	}
+	return 0;
 }

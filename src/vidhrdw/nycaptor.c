@@ -308,5 +308,6 @@ VIDEO_UPDATE( nycaptor )
  	draw_crosshair(bitmap,readinputport(5),255-readinputport(6),cliprect,0);
  else
  	draw_crosshair(bitmap,readinputport(5),readinputport(6),cliprect,0);
+	return 0;
 }
 

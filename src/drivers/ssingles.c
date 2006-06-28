@@ -19,6 +19,7 @@ VIDEO_START(ssingles)
 VIDEO_UPDATE(ssingles)
 {
 
+	return 0;
 }
 
 static ADDRESS_MAP_START( ssingles_map, ADDRESS_SPACE_PROGRAM, 8 )

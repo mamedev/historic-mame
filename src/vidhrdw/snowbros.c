@@ -92,6 +92,7 @@ VIDEO_UPDATE( snowbros )
 				sx,sy,
 				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 	}
+	return 0;
 }
 
 VIDEO_UPDATE( honeydol )
@@ -174,6 +175,7 @@ VIDEO_UPDATE( honeydol )
 				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 
 	}
+	return 0;
 }
 
 
@@ -216,6 +218,7 @@ VIDEO_UPDATE( wintbob )
 					&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 		}
 	}
+	return 0;
 }
 
 
@@ -303,5 +306,6 @@ VIDEO_UPDATE( snowbro3 )
 				sx,sy,
 				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 	}
+	return 0;
 }
 

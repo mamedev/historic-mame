@@ -93,4 +93,5 @@ VIDEO_UPDATE( flyball )
 			}
 		}
 	}
+	return 0;
 }

@@ -36,7 +36,7 @@
 
 #define PALETTE_INIT(name)		void palette_init_##name(UINT16 *colortable, const UINT8 *color_prom)
 #define VIDEO_EOF(name)			void video_eof_##name(void)
-#define VIDEO_UPDATE(name)		void video_update_##name(int screen, mame_bitmap *bitmap, const rectangle *cliprect)
+#define VIDEO_UPDATE(name)		UINT32 video_update_##name(int screen, mame_bitmap *bitmap, const rectangle *cliprect)
 
 /* NULL versions */
 #define init_NULL				NULL
@@ -188,6 +188,11 @@
 
 
 
+/* ----- flags to return from video_update ----- */
+#define UPDATE_HAS_NOT_CHANGED			0x0001	/* the video has not changed */
+
+
+
 /***************************************************************************
     TYPE DEFINITIONS
 ***************************************************************************/
@@ -217,7 +222,7 @@ struct _machine_config
 	int					(*video_start)(void);		/* one-time video start callback */
 	void				(*video_reset)(void);		/* video reset callback */
 	void				(*video_eof)(void);			/* end-of-frame video callback */
-	void				(*video_update)(int screen, mame_bitmap *bitmap, const rectangle *cliprect); /* video update callback */
+	UINT32				(*video_update)(int screen, mame_bitmap *bitmap, const rectangle *cliprect); /* video update callback */
 
 	sound_config		sound[MAX_SOUND];			/* array of sound chips in the system */
 	speaker_config		speaker[MAX_SPEAKER];		/* array of speakers in the system */

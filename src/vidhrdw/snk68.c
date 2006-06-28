@@ -231,6 +231,7 @@ VIDEO_UPDATE( pow )
 	draw_sprites(bitmap,cliprect,0,0x800);
 
 	tilemap_draw(bitmap,cliprect,fix_tilemap,0,0);
+	return 0;
 }
 
 
@@ -312,5 +313,6 @@ VIDEO_UPDATE( searchar )
 	draw_sprites2(bitmap,cliprect,4,0x1000,0x800);
 
 	tilemap_draw(bitmap,cliprect,fix_tilemap,0,0);
+	return 0;
 }
 

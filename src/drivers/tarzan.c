@@ -77,6 +77,7 @@ VIDEO_START(tarzan)
 VIDEO_UPDATE(tarzan)
 {
 
+	return 0;
 }
 
 static ADDRESS_MAP_START( tarzan_map, ADDRESS_SPACE_PROGRAM, 8 )

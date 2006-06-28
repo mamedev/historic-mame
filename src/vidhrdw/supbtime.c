@@ -101,5 +101,6 @@ VIDEO_UPDATE(supbtime)
 	deco16_tilemap_2_draw(bitmap,cliprect,0,0);
 	supbtime_drawsprites(bitmap,cliprect);
 	deco16_tilemap_1_draw(bitmap,cliprect,0,0);
+	return 0;
 }
 

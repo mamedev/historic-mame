@@ -158,4 +158,5 @@ VIDEO_UPDATE( champbas )
 {
 	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
 	champbas_draw_sprites(bitmap);
+	return 0;
 }

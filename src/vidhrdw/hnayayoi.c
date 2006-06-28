@@ -272,4 +272,5 @@ VIDEO_UPDATE( hnayayoi )
 		draw_layer_interleaved(bitmap,cliprect,3,2,col1,1);
 		draw_layer_interleaved(bitmap,cliprect,1,0,col0,1);
 	}
+	return 0;
 }

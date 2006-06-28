@@ -306,4 +306,5 @@ VIDEO_UPDATE( vindictr )
 					mo[x] = 0;
 				}
 		}
+	return 0;
 }

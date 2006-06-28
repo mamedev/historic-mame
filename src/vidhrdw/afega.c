@@ -343,10 +343,10 @@ if ( code_pressed(KEYCODE_Z) )
 	if (layers_ctrl & 2)	tilemap_draw(bitmap,cliprect,tilemap_1,0,0);
 }
 
-VIDEO_UPDATE( afega )		{	video_update(screen,bitmap,cliprect, 1, -0x100,+0x000, 0x0001);	}
-VIDEO_UPDATE( bubl2000 )	{	video_update(screen,bitmap,cliprect, 0, -0x100,+0x000, 0x0001);	}	// no flipscreen support, I really would confirmation from the schematics
-VIDEO_UPDATE( redhawkb )	{	video_update(screen,bitmap,cliprect, 0, +0x000,+0x100, 0x0001);	}
-VIDEO_UPDATE( twinactn )	{	video_update(screen,bitmap,cliprect, 0, +0x000,+0x000, 0x0100);	}
+VIDEO_UPDATE( afega )		{	video_update(screen,bitmap,cliprect, 1, -0x100,+0x000, 0x0001);	return 0; }
+VIDEO_UPDATE( bubl2000 )	{	video_update(screen,bitmap,cliprect, 0, -0x100,+0x000, 0x0001);	return 0; }	// no flipscreen support, I really would confirmation from the schematics
+VIDEO_UPDATE( redhawkb )	{	video_update(screen,bitmap,cliprect, 0, +0x000,+0x100, 0x0001);	return 0; }
+VIDEO_UPDATE( twinactn )	{	video_update(screen,bitmap,cliprect, 0, +0x000,+0x000, 0x0100);	return 0; }
 
 VIDEO_UPDATE( firehawk )
 {
@@ -357,4 +357,5 @@ VIDEO_UPDATE( firehawk )
 	afega_draw_sprites(bitmap,cliprect,1);
 
 	tilemap_draw(bitmap,cliprect,tilemap_1,0,0);
+	return 0;
 }

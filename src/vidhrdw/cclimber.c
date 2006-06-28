@@ -464,6 +464,7 @@ VIDEO_UPDATE( cclimber )
 	if ((cclimber_bigspriteram[0] & 1) == 0)
 		/* draw the "big sprite" over sprites */
 		drawbigsprite(bitmap);
+	return 0;
 }
 
 
@@ -580,6 +581,7 @@ VIDEO_UPDATE( swimmer )
 	if ((cclimber_bigspriteram[0] & 1) == 0)
 		/* draw the "big sprite" over sprites */
 		drawbigsprite(bitmap);
+	return 0;
 }
 
 VIDEO_UPDATE( yamato )
@@ -707,6 +709,7 @@ VIDEO_UPDATE( yamato )
 	if ((cclimber_bigspriteram[0] & 1) == 0)
 		/* draw the "big sprite" over sprites */
 		drawbigsprite(bitmap);
+	return 0;
 }
 
 
@@ -869,6 +872,7 @@ VIDEO_UPDATE( toprollr )
 			drawgfx(bitmap, Machine->gfx[0], code+((attr&0xf0)<<4),palette, flipx, flipy, sx, sy, cliprect, TRANSPARENCY_PEN, 0);
 
 		}
+	return 0;
 }
 
 

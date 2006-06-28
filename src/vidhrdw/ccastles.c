@@ -343,4 +343,5 @@ VIDEO_UPDATE( ccastles )
 					cliprect,TRANSPARENCY_PEN,7);
 		}
 	}
+	return 0;
 }

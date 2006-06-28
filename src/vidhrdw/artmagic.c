@@ -363,7 +363,7 @@ VIDEO_UPDATE( artmagic )
 	if (!vram || tms34010_io_display_blanked(0))
 	{
 		fillbitmap(bitmap, get_black_pen(), cliprect);
-		return;
+		return 0;
 	}
 	offset += cliprect->min_y * TOWORD(0x2000);
 	offset += dpytap;
@@ -376,4 +376,5 @@ VIDEO_UPDATE( artmagic )
 			dest[x] = vram[(offset + x) & TOWORD(0x1fffff)] & 0xff;
 		offset += TOWORD(0x2000);
 	}
+	return 0;
 }

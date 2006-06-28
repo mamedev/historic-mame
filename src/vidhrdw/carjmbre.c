@@ -146,4 +146,5 @@ VIDEO_UPDATE( carjmbre )
 			}
 		}
 	}
+	return 0;
 }

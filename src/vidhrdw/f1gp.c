@@ -320,6 +320,7 @@ VIDEO_UPDATE( f1gp )
 		f1gp_drawsprites(bitmap,cliprect,0,0x00);
 		f1gp_drawsprites(bitmap,cliprect,1,0x02);
 	}
+	return 0;
 }
 
 
@@ -428,4 +429,5 @@ VIDEO_UPDATE( f1gp2 )
 #endif
 		}
 	}
+	return 0;
 }

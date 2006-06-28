@@ -50,4 +50,5 @@ VIDEO_UPDATE(diverboy)
 {
 //  fillbitmap(bitmap,get_black_pen(),cliprect);
 	diverboy_drawsprites(bitmap,cliprect);
+	return 0;
 }

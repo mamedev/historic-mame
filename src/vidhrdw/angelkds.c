@@ -316,4 +316,5 @@ VIDEO_UPDATE( angelkds )
 	if ((angelkds_layer_ctrl & 0x40) == 0x00) tilemap_draw(bitmap,&clip,bgbot_tilemap,0,0);
 	draw_sprites(bitmap,&clip, 0x40);
 	if ((angelkds_layer_ctrl & 0x20) == 0x00) tilemap_draw(bitmap,&clip,tx_tilemap,0,0);
+	return 0;
 }

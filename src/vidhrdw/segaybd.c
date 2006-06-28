@@ -63,7 +63,7 @@ VIDEO_UPDATE( yboard )
 	if (!segaic16_display_enable)
 	{
 		fillbitmap(bitmap, get_black_pen(), cliprect);
-		return;
+		return 0;
 	}
 
 	/* draw the yboard sprites */
@@ -76,4 +76,5 @@ VIDEO_UPDATE( yboard )
 
 	/* draw the 16B sprites */
 	segaic16_sprites_draw(0, bitmap, cliprect);
+	return 0;
 }

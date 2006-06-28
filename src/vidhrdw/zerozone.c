@@ -51,4 +51,5 @@ VIDEO_START( zerozone )
 VIDEO_UPDATE( zerozone )
 {
 	tilemap_draw(bitmap,cliprect,zerozone_tilemap,0,0);
+	return 0;
 }

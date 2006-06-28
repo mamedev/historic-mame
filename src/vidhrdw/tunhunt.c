@@ -421,4 +421,5 @@ VIDEO_UPDATE( tunhunt )
 		tunhunt_control&0x10 ); /* hstretch */
 
 	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
+	return 0;
 }

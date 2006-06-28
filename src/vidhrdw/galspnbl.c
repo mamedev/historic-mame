@@ -151,4 +151,5 @@ VIDEO_UPDATE( galspnbl )
 	}
 
 	draw_sprites(bitmap,1);
+	return 0;
 }

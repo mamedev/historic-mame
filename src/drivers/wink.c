@@ -281,6 +281,7 @@ VIDEO_START( wink )
 VIDEO_UPDATE( wink )
 {
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
+	return 0;
 }
 
 static const gfx_layout charlayout =

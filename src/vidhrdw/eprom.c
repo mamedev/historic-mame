@@ -273,4 +273,5 @@ VIDEO_UPDATE( eprom )
 					mo[x] = 0;
 				}
 		}
+	return 0;
 }

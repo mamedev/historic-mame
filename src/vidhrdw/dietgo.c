@@ -92,4 +92,5 @@ VIDEO_UPDATE(dietgo)
 	deco16_tilemap_1_draw(bitmap,cliprect,0,0);
 
 	dietgogo_drawsprites(bitmap,cliprect);
+	return 0;
 }

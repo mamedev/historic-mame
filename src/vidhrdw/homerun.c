@@ -110,6 +110,7 @@ VIDEO_UPDATE(homerun)
 	draw_sprites(bitmap,&myclip);
 
 	homerun_gc_down=homerun_gc_up;
+	return 0;
 }
 
 

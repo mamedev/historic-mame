@@ -277,6 +277,7 @@ VIDEO_UPDATE( trvmadns )
 			count += 2;
 		}
 	}
+	return 0;
 }
 
 static MACHINE_DRIVER_START( trvmadns )

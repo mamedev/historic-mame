@@ -188,6 +188,7 @@ VIDEO_UPDATE( panicr)
 	draw_sprites(bitmap,cliprect);
 	tilemap_draw(bitmap,cliprect,txttilemap,0,0);
 
+	return 0;
 }
 
 static INTERRUPT_GEN( panicr_interrupt )

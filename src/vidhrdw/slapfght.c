@@ -217,6 +217,7 @@ VIDEO_UPDATE( perfrman )
 #ifdef MAME_DEBUG
 	slapfght_log_vram();
 #endif
+	return 0;
 }
 
 
@@ -264,4 +265,5 @@ VIDEO_UPDATE( slapfight )
 #ifdef MAME_DEBUG
 	slapfght_log_vram();
 #endif
+	return 0;
 }

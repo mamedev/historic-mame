@@ -407,12 +407,12 @@ static UINT32 menu_tape_control(UINT32 state);
 
 static int sprintf_game_info(char *buf);
 
-static UINT32 menu_ui_handler(UINT32 state);
-static UINT32 osd_ui_handler(UINT32 state);
-static UINT32 disclaimer_ui_handler(UINT32 state);
-static UINT32 warnings_ui_handler(UINT32 state);
-static UINT32 gameinfo_ui_handler(UINT32 state);
-static UINT32 showgfx_ui_handler(UINT32 state);
+static UINT32 ui_handler_menu(UINT32 state);
+static UINT32 ui_handler_osd(UINT32 state);
+static UINT32 ui_handler_disclaimer(UINT32 state);
+static UINT32 ui_handler_warnings(UINT32 state);
+static UINT32 ui_handler_gameinfo(UINT32 state);
+static UINT32 ui_handler_showgfx(UINT32 state);
 
 
 #ifndef NEW_RENDER
@@ -562,22 +562,25 @@ int ui_display_startup_screens(int show_disclaimer, int show_warnings, int show_
 		{
 			case 0:
 				if (show_disclaimer)
-					ui_set_handler(disclaimer_ui_handler, 0);
+					ui_set_handler(ui_handler_disclaimer, 0);
 				break;
 
 			case 1:
 				if (show_warnings)
-					ui_set_handler(warnings_ui_handler, 0);
+					ui_set_handler(ui_handler_warnings, 0);
 				break;
 
 			case 2:
 				if (show_gameinfo)
-					ui_set_handler(gameinfo_ui_handler, 0);
+					ui_set_handler(ui_handler_gameinfo, 0);
 				break;
 		}
 
 		/* clear the input memory */
 		while (code_read_async() != CODE_NONE) ;
+
+		/* clear the giant string buffer */
+		giant_string_buffer[0] = 0;
 
 		/* loop while we have a handler */
 		while (ui_handler_callback != NULL && !mame_is_scheduled_event_pending())
@@ -585,8 +588,6 @@ int ui_display_startup_screens(int show_disclaimer, int show_warnings, int show_
 			/* reset the contents of the screen */
 #ifndef NEW_RENDER
 			erase_screen(bitmap);
-#else
-			render_container_empty(render_container_get_ui());
 #endif
 
 			/* render and update */
@@ -601,7 +602,9 @@ int ui_display_startup_screens(int show_disclaimer, int show_warnings, int show_
 		}
 	}
 
+	/* clear the handler and force one more update */
 	ui_set_handler(NULL, 0);
+	video_frame_update();
 
 #ifndef NEW_RENDER
 	/* enable artwork now */
@@ -738,13 +741,13 @@ int ui_is_dirty(void)
 
 int ui_is_onscrd_active(void)
 {
-	return (ui_handler_callback == osd_ui_handler);
+	return (ui_handler_callback == ui_handler_osd);
 }
 
 
 int ui_is_setup_active(void)
 {
-	return (ui_handler_callback == menu_ui_handler);
+	return (ui_handler_callback == ui_handler_menu);
 }
 
 
@@ -1442,14 +1445,14 @@ static void handle_keys(void)
 
 	/* turn on menus if requested */
 	if (input_ui_pressed(IPT_UI_CONFIGURE))
-		ui_set_handler(menu_ui_handler, 0);
+		ui_set_handler(ui_handler_menu, 0);
 
 	/* if the on-screen display isn't up and the user has toggled it, turn it on */
 #ifdef MAME_DEBUG
 	if (!Machine->debug_mode)
 #endif
 		if (input_ui_pressed(IPT_UI_ON_SCREEN_DISPLAY))
-			ui_set_handler(osd_ui_handler, 0);
+			ui_set_handler(ui_handler_osd, 0);
 
 	/* handle a reset request */
 	if (input_ui_pressed(IPT_UI_RESET_MACHINE))
@@ -1470,7 +1473,7 @@ static void handle_keys(void)
 	{
 		if (!is_paused)
 			mame_pause(TRUE);
-		ui_set_handler(showgfx_ui_handler, is_paused ? 0x0000 : 0x8000);
+		ui_set_handler(ui_handler_showgfx, is_paused);
 	}
 #endif
 
@@ -1527,7 +1530,7 @@ static void handle_keys(void)
  *
  *************************************/
 
-static UINT32 menu_ui_handler(UINT32 state)
+static UINT32 ui_handler_menu(UINT32 state)
 {
 	/* if we have no menus stacked up, start with the main menu */
 	if (menu_handler == NULL)
@@ -2631,6 +2634,7 @@ static UINT32 menu_video(UINT32 state)
 	else
 	{
 		render_target *target = render_target_get_indexed(curtarget);
+		int layermask;
 		assert(target != NULL);
 
 		/* add all the views */
@@ -2644,8 +2648,33 @@ static UINT32 menu_video(UINT32 state)
 			item_list[menu_items].text = name;
 		}
 
-		/* add an item to return */
+		/* add an item to rotate */
 		item_list[menu_items++].text = "Rotate View";
+
+		/* add an item to enable/disable backdrops */
+		layermask = render_target_get_layer_config(target);
+		if (layermask & LAYER_CONFIG_ENABLE_BACKDROP)
+			item_list[menu_items++].text = "Hide Backdrops";
+		else
+			item_list[menu_items++].text = "Show Backdrops";
+
+		/* add an item to enable/disable overlays */
+		if (layermask & LAYER_CONFIG_ENABLE_OVERLAY)
+			item_list[menu_items++].text = "Hide Overlays";
+		else
+			item_list[menu_items++].text = "Show Overlays";
+
+		/* add an item to enable/disable bezels */
+		if (layermask & LAYER_CONFIG_ENABLE_BEZEL)
+			item_list[menu_items++].text = "Hide Bezels";
+		else
+			item_list[menu_items++].text = "Show Bezels";
+
+		/* add an item to enable/disable cropping */
+		if (layermask & LAYER_CONFIG_ZOOM_TO_SCREEN)
+			item_list[menu_items++].text = "Show Full Artwork";
+		else
+			item_list[menu_items++].text = "Crop to Screen";
 
 		/* add an item to return */
 		item_list[menu_items++].text = ui_getstring(UI_returntoprior);
@@ -2660,12 +2689,43 @@ static UINT32 menu_video(UINT32 state)
 		/* handle actions */
 		if (input_ui_pressed(IPT_UI_SELECT))
 		{
-			if (selected == menu_items - 2)
+			/* rotate */
+			if (selected == menu_items - 6)
 			{
 				render_target_set_orientation(target, orientation_add(ROT90, render_target_get_orientation(target)));
-				if (curtarget == 0)
+				if (target == render_get_ui_target())
 					render_container_set_orientation(render_container_get_ui(), orientation_add(ROT270, render_container_get_orientation(render_container_get_ui())));
 			}
+
+			/* show/hide backdrops */
+			else if (selected == menu_items - 5)
+			{
+				layermask ^= LAYER_CONFIG_ENABLE_BACKDROP;
+				render_target_set_layer_config(target, layermask);
+			}
+
+			/* show/hide overlays */
+			else if (selected == menu_items - 4)
+			{
+				layermask ^= LAYER_CONFIG_ENABLE_OVERLAY;
+				render_target_set_layer_config(target, layermask);
+			}
+
+			/* show/hide bezels */
+			else if (selected == menu_items - 3)
+			{
+				layermask ^= LAYER_CONFIG_ENABLE_BEZEL;
+				render_target_set_layer_config(target, layermask);
+			}
+
+			/* crop/uncrop artwork */
+			else if (selected == menu_items - 2)
+			{
+				layermask ^= LAYER_CONFIG_ZOOM_TO_SCREEN;
+				render_target_set_layer_config(target, layermask);
+			}
+
+			/* else just set the selected view */
 			else
 				render_target_set_view(target, selected);
 		}
@@ -3623,13 +3683,17 @@ static void showgfx_tilemap_handler(showgfx_state *state)
 }
 
 
-static UINT32 showgfx_ui_handler(UINT32 uistate)
+static UINT32 ui_handler_showgfx(UINT32 uistate)
 {
 	showgfx_state *state = &showgfx;
 
 	/* if we have nothing, implicitly cancel */
 	if (Machine->drv->total_colors == 0 && Machine->drv->color_table_len == 0 && Machine->gfx[0] == NULL && tilemap_count() == 0)
 		goto cancel;
+
+	/* if we're not paused, mark the bitmap dirty */
+	if (!mame_is_paused())
+		state->bitmap_dirty = TRUE;
 
 	/* switch off the state to display something */
 again:
@@ -3676,13 +3740,16 @@ again:
 		state->bitmap_dirty = TRUE;
 	}
 
+	if (input_ui_pressed(IPT_UI_PAUSE))
+		mame_pause(!mame_is_paused());
+
 	if (input_ui_pressed(IPT_UI_CANCEL) || input_ui_pressed(IPT_UI_SHOW_GFX))
 		goto cancel;
 
 	return uistate;
 
 cancel:
-	if (uistate & 0x8000)
+	if (!uistate)
 		mame_pause(FALSE);
 	state->bitmap_dirty = TRUE;
 	return UI_HANDLER_CANCEL;
@@ -4131,21 +4198,24 @@ int ui_display_decoding(int percent)
 }
 
 
-static UINT32 disclaimer_ui_handler(UINT32 state)
+static UINT32 ui_handler_disclaimer(UINT32 state)
 {
-	char buf[1000];
-	char *bufptr = buf;
 	int ui_width, ui_height;
 
-	bufptr += sprintf(bufptr, "%s\n\n", ui_getstring(UI_copyright1));
-	bufptr += sprintf(bufptr, ui_getstring(UI_copyright2), Machine->gamedrv->description);
-	bufptr += sprintf(bufptr, "\n\n%s", ui_getstring(UI_copyright3));
+	if (giant_string_buffer[0] == 0)
+	{
+		char *bufptr = giant_string_buffer;
+
+		bufptr += sprintf(bufptr, "%s\n\n", ui_getstring(UI_copyright1));
+		bufptr += sprintf(bufptr, ui_getstring(UI_copyright2), Machine->gamedrv->description);
+		bufptr += sprintf(bufptr, "\n\n%s", ui_getstring(UI_copyright3));
+	}
 
 	/* first draw a box around the whole screen */
 	ui_get_bounds(&ui_width, &ui_height);
 	add_black_box(0, 0, ui_width - 1, ui_height - 1);
 
-	ui_draw_message_window(buf);
+	ui_draw_message_window(giant_string_buffer);
 
 	/* an 'O' or left joystick kicks us to the next state */
 	if (code_pressed_memory(KEYCODE_O) || input_ui_pressed(IPT_UI_LEFT))
@@ -4166,7 +4236,7 @@ static UINT32 disclaimer_ui_handler(UINT32 state)
 }
 
 
-static UINT32 warnings_ui_handler(UINT32 state)
+static UINT32 ui_handler_warnings(UINT32 state)
 {
 #define WARNING_FLAGS (	GAME_NOT_WORKING | \
 						GAME_UNEMULATED_PROTECTION | \
@@ -4177,12 +4247,15 @@ static UINT32 warnings_ui_handler(UINT32 state)
 						GAME_IMPERFECT_GRAPHICS | \
 						GAME_NO_COCKTAIL)
 	int i;
-	char buf[2048];
-	char *bufptr = buf;
 	int ui_width, ui_height;
 
-	if (rom_load_warnings() > 0 || (Machine->gamedrv->flags & WARNING_FLAGS))
+	if (rom_load_warnings() == 0 && !(Machine->gamedrv->flags & WARNING_FLAGS))
+		return 1000;
+
+	if (giant_string_buffer[0] == 0)
 	{
+		char *bufptr = giant_string_buffer;
+
 		if (rom_load_warnings() > 0)
 		{
 			bufptr += sprintf(bufptr, "%s\n", ui_getstring(UI_incorrectroms));
@@ -4249,58 +4322,59 @@ static UINT32 warnings_ui_handler(UINT32 state)
 		}
 
 		bufptr += sprintf(bufptr, "\n\n%s", ui_getstring(UI_typeok));
-
-		/* first draw a box around the whole screen */
-		ui_get_bounds(&ui_width, &ui_height);
-		add_black_box(0, 0, ui_width - 1, ui_height - 1);
-
-		ui_draw_message_window(buf);
-
-		/* an 'O' or left joystick kicks us to the next state */
-		if (code_pressed_memory(KEYCODE_O) || input_ui_pressed(IPT_UI_LEFT))
-			return 1;
-
-		/* a 'K' or right joystick exits the state */
-		if (state == 1 && (code_pressed_memory(KEYCODE_K) || input_ui_pressed(IPT_UI_RIGHT)))
-			return 1000;
-
-		/* if the user cancels, exit out completely */
-		if (input_ui_pressed(IPT_UI_CANCEL))
-		{
-			mame_schedule_exit();
-			return UI_HANDLER_CANCEL;
-		}
 	}
-	else
+
+	/* first draw a box around the whole screen */
+	ui_get_bounds(&ui_width, &ui_height);
+	add_black_box(0, 0, ui_width - 1, ui_height - 1);
+
+	ui_draw_message_window(giant_string_buffer);
+
+	/* an 'O' or left joystick kicks us to the next state */
+	if (code_pressed_memory(KEYCODE_O) || input_ui_pressed(IPT_UI_LEFT))
+		return 1;
+
+	/* a 'K' or right joystick exits the state */
+	if (state == 1 && (code_pressed_memory(KEYCODE_K) || input_ui_pressed(IPT_UI_RIGHT)))
 		return 1000;
+
+	/* if the user cancels, exit out completely */
+	if (input_ui_pressed(IPT_UI_CANCEL))
+	{
+		mame_schedule_exit();
+		return UI_HANDLER_CANCEL;
+	}
 
 	return state;
 }
 
 
-static UINT32 gameinfo_ui_handler(UINT32 state)
+static UINT32 ui_handler_gameinfo(UINT32 state)
 {
-	char buf[2048];
-	char *bufptr = buf;
 	int ui_width, ui_height;
 
-	/* state 0 is the standard game info */
-	if (state == 0)
+	if (giant_string_buffer[0] == 0)
 	{
-		/* add the game info */
-		bufptr += sprintf_game_info(bufptr);
+		char *bufptr = giant_string_buffer;
 
-		/* append MAME version and ask for any key */
-		bufptr += sprintf(bufptr, "\n\t%s %s\n\t%s", ui_getstring(UI_mame), build_version, ui_getstring(UI_anykey));
-	}
+		/* state 0 is the standard game info */
+		if (state == 0)
+		{
+			/* add the game info */
+			bufptr += sprintf_game_info(bufptr);
 
-	/* state 1 is the image info for MESS */
-	else
-	{
+			/* append MAME version and ask for any key */
+			bufptr += sprintf(bufptr, "\n\t%s %s\n\t%s", ui_getstring(UI_mame), build_version, ui_getstring(UI_anykey));
+		}
+
+		/* state 1 is the image info for MESS */
+		else
+		{
 #ifdef MESS
-		/* add the game info */
-		bufptr += ui_sprintf_image_info(bufptr);
+			/* add the game info */
+			bufptr += ui_sprintf_image_info(bufptr);
 #endif
+		}
 	}
 
 	/* first draw a box around the whole screen */
@@ -4308,7 +4382,7 @@ static UINT32 gameinfo_ui_handler(UINT32 state)
 	add_black_box(0, 0, ui_width - 1, ui_height - 1);
 
 	/* draw the window */
-	ui_draw_message_window(buf);
+	ui_draw_message_window(giant_string_buffer);
 
 	/* allow cancelling */
 	if (input_ui_pressed(IPT_UI_CANCEL))
@@ -4321,6 +4395,7 @@ static UINT32 gameinfo_ui_handler(UINT32 state)
 	if (code_read_async() != CODE_NONE)
 	{
 		state++;
+		giant_string_buffer[0] = 0;
 #ifdef MESS
 		if (state >= 2)
 #else
@@ -4347,7 +4422,7 @@ static UINT32 gameinfo_ui_handler(UINT32 state)
  *
  *************************************/
 
-static UINT32 osd_ui_handler(UINT32 state)
+static UINT32 ui_handler_osd(UINT32 state)
 {
 	int increment = 0;
 
@@ -4366,7 +4441,7 @@ static UINT32 osd_ui_handler(UINT32 state)
 	if (input_ui_pressed(IPT_UI_ON_SCREEN_DISPLAY) || input_ui_pressed(IPT_UI_CANCEL))
 		return UI_HANDLER_CANCEL;
 	if (input_ui_pressed(IPT_UI_CONFIGURE))
-		ui_set_handler(menu_ui_handler, 0);
+		ui_set_handler(ui_handler_menu, 0);
 
 	return 0;
 }

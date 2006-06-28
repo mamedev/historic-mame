@@ -133,4 +133,5 @@ VIDEO_UPDATE( klax )
 					mo[x] = 0;
 				}
 		}
+	return 0;
 }

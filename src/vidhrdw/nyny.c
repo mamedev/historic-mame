@@ -151,4 +151,5 @@ VIDEO_UPDATE( nyny )
 {
 	copybitmap(bitmap,tmpbitmap2,flip_screen,flip_screen,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 	copybitmap(bitmap,tmpbitmap1,flip_screen,flip_screen,0,0,&Machine->visible_area[0],TRANSPARENCY_COLOR,0);
+	return 0;
 }

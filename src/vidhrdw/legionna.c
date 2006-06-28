@@ -324,6 +324,7 @@ VIDEO_UPDATE( legionna )
 	if (dislayer[4]==0)
 #endif
 	tilemap_draw(bitmap,cliprect,text_layer,0,0);
+	return 0;
 }
 
 VIDEO_UPDATE( godzilla )
@@ -341,6 +342,7 @@ VIDEO_UPDATE( godzilla )
 	draw_sprites(bitmap,cliprect,0);
 	draw_sprites(bitmap,cliprect,3);
 	tilemap_draw(bitmap,cliprect,text_layer,0,0);
+	return 0;
 }
 
 VIDEO_UPDATE( sdgndmrb )
@@ -365,5 +367,6 @@ VIDEO_UPDATE( sdgndmrb )
 	draw_sprites(bitmap,cliprect,0);
 	draw_sprites(bitmap,cliprect,3);
 	tilemap_draw(bitmap,cliprect,text_layer,0,0);
+	return 0;
 }
 

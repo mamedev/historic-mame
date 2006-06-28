@@ -222,6 +222,7 @@ VIDEO_UPDATE( lockon )
        tilemap_draw(bitmap,cliprect,lockon_tilemap0,0,0);       // Characters
 //     tilemap_draw(bitmap,cliprect,lockon_tilemap2,0,0);       // HUD
        draw_sprites(bitmap,cliprect);
+	return 0;
 }
 
 /* Wrong last time I checked */

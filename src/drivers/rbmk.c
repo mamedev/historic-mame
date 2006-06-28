@@ -480,6 +480,7 @@ VIDEO_UPDATE(rbmk)
 			count++;
 		}
 	}
+	return 0;
 }
 
 void nvram_handler_syf(mame_file *file,int read_or_write)

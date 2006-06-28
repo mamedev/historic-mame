@@ -87,7 +87,7 @@ VIDEO_UPDATE( exterm )
 	if (tms34010_io_display_blanked(0))
 	{
 		fillbitmap(bitmap, get_black_pen(), cliprect);
-		return;
+		return 0;
 	}
 
 	/* 16-bit case */
@@ -134,4 +134,5 @@ VIDEO_UPDATE( exterm )
 			}
 		}
 	}
+	return 0;
 }

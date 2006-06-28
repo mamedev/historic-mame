@@ -298,6 +298,7 @@ VIDEO_UPDATE( tp84 )
 	clip.min_y = Machine->visible_area[0].min_y;
 	clip.max_y = Machine->visible_area[0].max_y;
 	tilemap_draw(bitmap, &clip, fg_tilemap, 0, 0);
+	return 0;
 }
 
 INTERRUPT_GEN( tp84_6809_interrupt )

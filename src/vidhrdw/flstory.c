@@ -199,6 +199,7 @@ VIDEO_UPDATE( flstory )
 	tilemap_draw(bitmap,cliprect,bg_tilemap,0|TILEMAP_FRONT,0);
 	flstory_draw_sprites(bitmap,cliprect,0x80);
 	tilemap_draw(bitmap,cliprect,bg_tilemap,1|TILEMAP_FRONT,0);
+	return 0;
 }
 
 void victnine_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
@@ -251,4 +252,5 @@ VIDEO_UPDATE( victnine )
 {
 	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 	victnine_draw_sprites(bitmap,cliprect);
+	return 0;
 }

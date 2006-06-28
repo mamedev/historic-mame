@@ -46,6 +46,7 @@ VIDEO_UPDATE(laserbas)
 			plot_pixel(tmpbitmap, x*2+1, y, Machine->pens[vram2[y*128+x]>>4]);
 		}
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+	return 0;
 }
 
 static READ8_HANDLER(vram_r)

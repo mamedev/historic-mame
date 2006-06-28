@@ -247,4 +247,5 @@ VIDEO_UPDATE( airbustr )
 		airbustr_draw_sprites(sprites_bitmap, cliprect);
 		copybitmap(bitmap,sprites_bitmap,0,0,0,0,cliprect,TRANSPARENCY_PEN,0);
 	}
+	return 0;
 }

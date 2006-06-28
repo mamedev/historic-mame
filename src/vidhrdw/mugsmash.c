@@ -159,4 +159,5 @@ VIDEO_UPDATE( mugsmash )
 	tilemap_draw(bitmap,cliprect,mugsmash_tilemap2,0,0);
 	tilemap_draw(bitmap,cliprect,mugsmash_tilemap1,0,0);
 	draw_sprites(bitmap,cliprect);
+	return 0;
 }

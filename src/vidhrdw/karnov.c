@@ -203,6 +203,7 @@ VIDEO_UPDATE( karnov )
 	draw_background(bitmap,cliprect);
 	draw_sprites(bitmap,cliprect);
 	tilemap_draw(bitmap,cliprect,fix_tilemap,0,0);
+	return 0;
 }
 
 /******************************************************************************/

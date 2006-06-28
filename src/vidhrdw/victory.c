@@ -1252,4 +1252,5 @@ VIDEO_UPDATE( victory )
 
 	/* indicate that we already did collision detection */
 	update_complete = 1;
+	return 0;
 }

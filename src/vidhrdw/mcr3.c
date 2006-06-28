@@ -294,6 +294,7 @@ VIDEO_UPDATE( mcr3 )
 
 	/* draw the sprites */
 	mcr3_update_sprites(bitmap, cliprect, 0x03, 0, 0, 0);
+	return 0;
 }
 
 
@@ -310,4 +311,5 @@ VIDEO_UPDATE( spyhunt )
 
 	/* render any characters on top */
 	tilemap_draw(bitmap, cliprect, alpha_tilemap, 0, 0);
+	return 0;
 }

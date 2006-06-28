@@ -439,6 +439,7 @@ VIDEO_UPDATE( kungfum )
 	tilemap_draw( bitmap, cliprect, m62_background, 0, 0 );
 	draw_sprites( bitmap, 0x1f, 0x00, 0x00 );
 	tilemap_draw( bitmap, cliprect, m62_background, 1, 0 );
+	return 0;
 }
 
 VIDEO_START( kungfum )
@@ -479,6 +480,7 @@ VIDEO_UPDATE( ldrun )
 	draw_sprites( bitmap, 0x0f, 0x10, 0x00 );
 	tilemap_draw( bitmap, cliprect, m62_background, 1, 0 );
 	draw_sprites( bitmap, 0x0f, 0x10, 0x10 );
+	return 0;
 }
 
 VIDEO_START( ldrun )
@@ -532,6 +534,7 @@ VIDEO_UPDATE( battroad )
 	tilemap_draw( bitmap, cliprect, m62_background, 1, 0 );
 	draw_sprites( bitmap, 0x0f, 0x10, 0x10 );
 	tilemap_draw( bitmap, cliprect, m62_foreground, 0, 0 );
+	return 0;
 }
 
 VIDEO_START( battroad )
@@ -558,6 +561,7 @@ VIDEO_UPDATE( ldrun4 )
 
 	tilemap_draw( bitmap, cliprect, m62_background, 0, 0 );
 	draw_sprites( bitmap, 0x1f, 0x00, 0x00 );
+	return 0;
 }
 
 VIDEO_START( ldrun4 )
@@ -601,6 +605,7 @@ VIDEO_UPDATE( lotlot )
 	tilemap_draw( bitmap, cliprect, m62_background, 0, 0 );
 	tilemap_draw( bitmap, cliprect, m62_foreground, 0, 0 );
 	draw_sprites( bitmap, 0x1f, 0x00, 0x00 );
+	return 0;
 }
 
 VIDEO_START( lotlot )
@@ -659,6 +664,7 @@ VIDEO_UPDATE( kidniki )
 	draw_sprites( bitmap, 0x1f, 0x00, 0x00 );
 	tilemap_draw( bitmap, cliprect, m62_background, TILEMAP_FRONT, 0 );
 	tilemap_draw( bitmap, cliprect, m62_foreground, 0, 0 );
+	return 0;
 }
 
 VIDEO_START( kidniki )
@@ -720,6 +726,7 @@ VIDEO_UPDATE( spelunkr )
 	tilemap_draw( bitmap, cliprect, m62_background, 0, 0 );
 	draw_sprites( bitmap, 0x1f, 0x00, 0x00 );
 	tilemap_draw( bitmap, cliprect, m62_foreground, 0, 0 );
+	return 0;
 }
 
 VIDEO_START( spelunkr )
@@ -761,6 +768,7 @@ VIDEO_UPDATE( spelunk2 )
 	tilemap_draw( bitmap, cliprect, m62_background, 0, 0 );
 	draw_sprites( bitmap, 0x1f, 0x00, 0x00 );
 	tilemap_draw( bitmap, cliprect, m62_foreground, 0, 0 );
+	return 0;
 }
 
 VIDEO_START( spelunk2 )
@@ -807,6 +815,7 @@ VIDEO_UPDATE( youjyudn )
 	draw_sprites( bitmap, 0x1f, 0x00, 0x00 );
 	tilemap_draw( bitmap, cliprect, m62_background, 1, 0 );
 	tilemap_draw( bitmap, cliprect, m62_foreground, 0, 0 );
+	return 0;
 }
 
 VIDEO_START( youjyudn )
@@ -848,6 +857,7 @@ VIDEO_UPDATE( horizon )
 	tilemap_draw( bitmap, cliprect, m62_background, 0, 0 );
 	draw_sprites( bitmap, 0x1f, 0x00, 0x00 );
 	tilemap_draw( bitmap, cliprect, m62_background, 1, 0 );
+	return 0;
 }
 
 VIDEO_START( horizon )

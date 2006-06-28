@@ -1049,6 +1049,7 @@ VIDEO_UPDATE( astrocde )
 
 	for (i = cliprect->min_y;i <= cliprect->max_y;i++)
 		wow_update_line(bitmap,i);
+	return 0;
 }
 
 VIDEO_UPDATE( profpac )
@@ -1057,6 +1058,7 @@ VIDEO_UPDATE( profpac )
 
 	for (i = cliprect->min_y;i <= cliprect->max_y;i++)
 		profpac_update_line(bitmap,i);
+	return 0;
 }
 
 VIDEO_UPDATE( seawolf2 )
@@ -1093,6 +1095,7 @@ VIDEO_UPDATE( seawolf2 )
 			draw_crosshair(bitmap,centre,33,&Machine->visible_area[0],1);
 		}
 	}
+	return 0;
 }
 
 READ8_HANDLER( robby_io_r )

@@ -635,6 +635,7 @@ VIDEO_UPDATE( nmg5 )
 		draw_bitmap(bitmap);
 		draw_sprites(bitmap,cliprect);
 	}
+	return 0;
 }
 
 

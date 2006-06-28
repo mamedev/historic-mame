@@ -387,6 +387,7 @@ VIDEO_UPDATE( pasha2 )
 		}
 	}
 
+	return 0;
 }
 
 static MACHINE_DRIVER_START( pasha2 )

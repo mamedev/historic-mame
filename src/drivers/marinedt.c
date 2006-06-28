@@ -590,6 +590,7 @@ VIDEO_UPDATE( marinedt )
 				}
 			}
 	}
+	return 0;
 }
 
 static MACHINE_DRIVER_START( marinedt )

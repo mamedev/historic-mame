@@ -259,6 +259,7 @@ VIDEO_UPDATE( pbillian )
 			last_power[1] = curr_power;
 		}
 	}
+	return 0;
 }
 
 VIDEO_UPDATE( superqix )
@@ -267,4 +268,5 @@ VIDEO_UPDATE( superqix )
 	copybitmap(bitmap,fg_bitmap[show_bitmap],flip_screen,flip_screen,0,0,cliprect,TRANSPARENCY_PEN,0);
 	sqix_draw_sprites(bitmap,cliprect);
 	tilemap_draw(bitmap, cliprect, bg_tilemap, TILEMAP_FRONT, 0);
+	return 0;
 }

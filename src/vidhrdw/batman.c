@@ -316,4 +316,5 @@ VIDEO_UPDATE( batman )
 					mo[x] = 0;
 				}
 		}
+	return 0;
 }

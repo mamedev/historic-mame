@@ -207,6 +207,7 @@ VIDEO_UPDATE( lsasquad )
 	draw_layer(bitmap,lsasquad_scrollram + 0x080);
 	draw_sprites(bitmap);
 	draw_layer(bitmap,lsasquad_scrollram + 0x100);
+	return 0;
 }
 
 
@@ -216,4 +217,5 @@ VIDEO_UPDATE( daikaiju )
 	drawbg(bitmap,0); // bottom
 	draw_sprites(bitmap);
 	drawbg(bitmap,1);	// top = pallete $d ?
+	return 0;
 }

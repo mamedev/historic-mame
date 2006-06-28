@@ -188,4 +188,5 @@ VIDEO_UPDATE(silkroad)
     silkroad_regs[5]
     );
 */
+	return 0;
 }

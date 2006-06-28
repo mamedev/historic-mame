@@ -224,4 +224,5 @@ VIDEO_UPDATE( toypop )
 	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 
 	mappy_draw_sprites( bitmap, cliprect, -31, -8, 0xff );
+	return 0;
 }

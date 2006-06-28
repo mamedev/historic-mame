@@ -550,6 +550,7 @@ VIDEO_UPDATE( combasc )
 		clip.min_x = clip.max_x - 7;
 		fillbitmap(bitmap,Machine->pens[0],&clip);
 	}
+	return 0;
 }
 
 
@@ -653,4 +654,5 @@ VIDEO_UPDATE( combascb )
 	}
 
 	tilemap_draw( bitmap,cliprect,textlayer,0,0);
+	return 0;
 }

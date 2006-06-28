@@ -178,6 +178,7 @@ VIDEO_UPDATE( spaceg )
 {
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,cliprect,TRANSPARENCY_NONE,0);
 
+	return 0;
 }
 
 static PALETTE_INIT( spaceg )

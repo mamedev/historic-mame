@@ -42,6 +42,7 @@ VIDEO_START(sbugger)
 VIDEO_UPDATE(sbugger)
 {
 	tilemap_draw(bitmap,cliprect,sbugger_tilemap,0,0);
+	return 0;
 }
 
 /* not right but so we can see things ok */

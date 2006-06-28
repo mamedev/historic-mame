@@ -244,4 +244,5 @@ VIDEO_UPDATE( astrof )
 	}
 
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+	return 0;
 }

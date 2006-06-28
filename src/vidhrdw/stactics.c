@@ -889,4 +889,5 @@ VIDEO_UPDATE( stactics )
         dirty_chardata_f[i] &= 0x01;
     }
 
+	return 0;
 }

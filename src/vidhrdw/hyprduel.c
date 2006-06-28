@@ -666,7 +666,7 @@ VIDEO_UPDATE( hyprduel )
         ---- ---- ---4 32--
         ---- ---- ---- --1-     ? Blank Screen
         ---- ---- ---- ---0     Flip  Screen    */
-	if (screenctrl & 2)	return;
+	if (screenctrl & 2)	return 0;
 	flip_screen_set(screenctrl & 1);
 
 	/* If the game supports 16x16 tiles, make sure that the
@@ -695,4 +695,5 @@ if (code_pressed(KEYCODE_Z))
 
 	if (layers_ctrl & 0x08)
 		hypr_draw_sprites(bitmap,cliprect);
+	return 0;
 }

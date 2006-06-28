@@ -106,6 +106,7 @@ VIDEO_UPDATE( skychut )
 				8*sx,8*sy,
 				cliprect,TRANSPARENCY_PEN,0);
 	}
+	return 0;
 }
 
 
@@ -162,5 +163,6 @@ VIDEO_UPDATE( iremm15 )
 	}
 
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+	return 0;
 }
 

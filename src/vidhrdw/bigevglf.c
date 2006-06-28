@@ -92,4 +92,5 @@ VIDEO_UPDATE( bigevglf )
 {
 	copybitmap(bitmap,tmp_bitmap[ plane_visible ],0,0,0,0,cliprect,TRANSPARENCY_NONE, 0);
 	beg_draw_sprites(bitmap,cliprect);
+	return 0;
 }

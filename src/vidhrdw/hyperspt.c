@@ -177,6 +177,7 @@ VIDEO_UPDATE( hyperspt )
 
 	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
 	hyperspt_draw_sprites(bitmap);
+	return 0;
 }
 
 /* Road Fighter */

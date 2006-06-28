@@ -383,12 +383,14 @@ VIDEO_UPDATE( lasso )
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 	draw_lasso  (bitmap);
 	draw_sprites(bitmap, cliprect, 0);
+	return 0;
 }
 
 VIDEO_UPDATE( chameleo )
 {
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 	draw_sprites(bitmap, cliprect, 0);
+	return 0;
 }
 
 
@@ -404,4 +406,5 @@ VIDEO_UPDATE( wwjgtin )
 
 	draw_sprites(bitmap, cliprect, 1);	// reverse order
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
+	return 0;
 }

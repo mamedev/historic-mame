@@ -174,7 +174,7 @@ VIDEO_UPDATE(sslam)
 	if(!(sslam_regs[6] & 1))
 	{
 		fillbitmap(bitmap,get_black_pen(),cliprect);
-		return;
+		return 0;
 	}
 
 	tilemap_set_scrollx(sslam_tx_tilemap,0, sslam_regs[0]+2);
@@ -204,6 +204,7 @@ VIDEO_UPDATE(sslam)
 
 	sslam_drawsprites(bitmap,cliprect);
 	tilemap_draw(bitmap,cliprect,sslam_tx_tilemap,0,0);
+	return 0;
 }
 
 VIDEO_UPDATE(powerbls)
@@ -211,7 +212,7 @@ VIDEO_UPDATE(powerbls)
 	if(!(sslam_regs[6] & 1))
 	{
 		fillbitmap(bitmap,get_black_pen(),cliprect);
-		return;
+		return 0;
 	}
 
 	tilemap_set_scrollx(sslam_bg_tilemap,0, sslam_regs[0]+21);
@@ -219,4 +220,5 @@ VIDEO_UPDATE(powerbls)
 
 	tilemap_draw(bitmap,cliprect,sslam_bg_tilemap,0,0);
 	sslam_drawsprites(bitmap,cliprect);
+	return 0;
 }

@@ -85,4 +85,5 @@ VIDEO_UPDATE( boxer )
 	}
 
 	draw_boxer(bitmap, cliprect);
+	return 0;
 }

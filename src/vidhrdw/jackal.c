@@ -217,4 +217,5 @@ VIDEO_UPDATE( jackal )
 {
 	jackal_draw_background(bitmap, cliprect);
 	jackal_draw_sprites(bitmap, cliprect);
+	return 0;
 }

@@ -218,4 +218,5 @@ VIDEO_UPDATE( tail2nos )
 	}
 	else
 		fillbitmap(bitmap,Machine->pens[0],cliprect);
+	return 0;
 }

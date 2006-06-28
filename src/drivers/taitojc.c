@@ -2,8 +2,7 @@
 
 Taito JC System
 
--- will need a 68040 core
--- they upload a font to ram, all games upload the same font, boring ;-)
+Driver by Ville Linde, based on the preliminary driver by David Haywood
 
 Side By Side 2
 Taito, 1997
@@ -345,6 +344,19 @@ Notes:
 #include "machine/eeprom.h"
 #include "sndhrdw/taito_en.h"
 
+/* from Machine.c */
+READ16_HANDLER(f3_68000_share_r);
+WRITE16_HANDLER(f3_68000_share_w);
+READ16_HANDLER(f3_68681_r);
+WRITE16_HANDLER(f3_68681_w);
+READ16_HANDLER(es5510_dsp_r);
+WRITE16_HANDLER(es5510_dsp_w);
+WRITE16_HANDLER(f3_volume_w);
+WRITE16_HANDLER(f3_es5505_bank_w);
+void f3_68681_reset(void);
+
+extern UINT32 *f3_shared_ram;
+
 static UINT32 *main_ram;
 static UINT16 *dsp_shared_ram;
 
@@ -359,7 +371,7 @@ static UINT32 *taitojc_tile_ram;
 static int taitojc_char_dirty = 1;
 static tilemap *taitojc_tilemap;
 
-#define TAITOJC_NUM_TILES		0x180
+#define TAITOJC_NUM_TILES		0x80
 
 static const gfx_layout taitojc_char_layout =
 {
@@ -375,7 +387,7 @@ static const gfx_layout taitojc_char_layout =
 static void taitojc_tile_info(int tile_index)
 {
 	UINT32 val = taitojc_tile_ram[tile_index];
-	int color = 0;
+	int color = (val >> 22) & 0xff;
 	int tile = (val >> 2) & 0x7f;
 	SET_TILE_INFO(taitojc_gfx_index, tile, color, 0);
 }
@@ -464,12 +476,105 @@ static WRITE32_HANDLER(taitojc_char_w)
 	taitojc_char_dirty = 1;
 }
 
+// Object data format:
+//         31       23       15       7        0
+// Word 0: |hhhhhhyy|yyyyyyyy|wwwwwwxx|xxxxxxxx|
+//
+//         31       23       15       7        0
+// Word 1: |???ppppp|pp??????|?aaaaaaa|aaaaaaaa|
+
+static void draw_object(mame_bitmap *bitmap, const rectangle *cliprect, UINT32 w1, UINT32 w2)
+{
+	int x, y, width, height, palette;
+	int i, j;
+	int x1, x2, y1, y2;
+	int ix, iy;
+	UINT32 address;
+	UINT8 *v;
+
+	address		= (w2 & 0x7fff) * 0x20;
+	x			= ((w1 >>  0) & 0x3ff);
+	if (x & 0x200) x |= ~0x1ff;
+	y			= ((w1 >> 16) & 0x3ff);
+	if (y & 0x200) y |= ~0x1ff;
+	width		= ((w1 >>  8) & 0xfc) * 4;
+	height		= ((w1 >> 24) & 0xfc) * 4;
+	palette		= ((w2 >> 22) & 0x7f) << 8;
+
+	v = (UINT8*)&vram[address/4];
+
+	if (address >= 0xf8000) return;
+
+	x1 = x;
+	x2 = x + width;
+	y1 = y;
+	y2 = y + height;
+
+	// trivial rejection
+	if (x1 > cliprect->max_x || x2 < cliprect->min_x || y1 > cliprect->max_y || y2 < cliprect->min_y)
+	{
+		return;
+	}
+
+	ix = 0;
+	iy = 0;
+
+	// clip
+	if (x1 < cliprect->min_x)
+	{
+		ix = abs(cliprect->min_x - x1);
+		x1 = cliprect->min_x;
+	}
+	if (x2 > cliprect->max_x)
+	{
+		x2 = cliprect->max_x;
+	}
+	if (y1 < cliprect->min_y)
+	{
+		iy = abs(cliprect->min_y - y1);
+		y1 = cliprect->min_y;
+	}
+	if (y2 > cliprect->max_y)
+	{
+		y2 = cliprect->max_y;
+	}
+
+	for (j=y1; j < y2; j++)
+	{
+		UINT16 *d = bitmap->line[j];
+		int index = (iy * width) + ix;
+
+		for (i=x1; i < x2; i++)
+		{
+			UINT8 pen = v[BYTE4_XOR_BE(index)];
+			if (pen != 0)
+			{
+				d[i] = Machine->remapped_colortable[palette + pen];
+			}
+			index++;
+		}
+
+		iy++;
+	}
+}
+
 VIDEO_UPDATE( taitojc )
 {
+	int i;
 	fillbitmap(bitmap, 0, cliprect);
+
+	//for (i=0; i < 0x400/4; i+=2)
+	for (i=(0xc00/4)-2; i >= 0; i-=2)
+	{
+		UINT32 w1 = vram[(0xff000/4) + i + 0];
+		UINT32 w2 = vram[(0xff000/4) + i + 1];
+
+		draw_object(bitmap, cliprect, w1, w2);
+	}
 
 	taitojc_tile_update();
 	tilemap_draw(bitmap, cliprect, taitojc_tilemap, 0,0);
+	return 0;
 }
 
 static READ32_HANDLER( taitojc_palette_r )
@@ -484,26 +589,66 @@ static WRITE32_HANDLER( taitojc_palette_w )
 	COMBINE_DATA( palette_ram + offset );
 
 	color = palette_ram[offset];
-	r = (color >> 16) & 0xff;
-	g = (color >>  8) & 0xff;
+	r = (color >>  8) & 0xff;
+	g = (color >> 16) & 0xff;
 	b = (color >>  0) & 0xff;
 
 	palette_set_color(offset, r, g, b);
 }
 
-
-
 static READ32_HANDLER ( jc_control_r )
 {
 	UINT32 r = 0;
+//  printf("jc_control_r: %08X, %08X at %08X\n", offset, mem_mask, activecpu_get_pc());
 	switch(offset)
 	{
+		case 0x0:
+		{
+			if (!(mem_mask & 0xff000000))
+			{
+				r |= ((readinputport(0) & 0x2) << 2) << 24;
+			}
+			return r;
+		}
 		case 0x1:
 		{
 			if (!(mem_mask & 0xff000000))
 			{
 				UINT32 data = EEPROM_read_bit() | 0x00;		/* 0x02 enables memory test. Test switch ? */
+				data |= readinputport(0) & 0xfe;
 				r |= data << 24;
+			}
+			return r;
+		}
+		case 0x2:
+		{
+			if (!(mem_mask & 0xff000000))
+			{
+				r |= readinputport(1) << 24;
+			}
+			return r;
+		}
+		case 0x3:
+		{
+			if (!(mem_mask & 0xff000000))
+			{
+				r |= readinputport(2) << 24;
+			}
+			return r;
+		}
+		case 0x4:
+		{
+			if (!(mem_mask & 0xff000000))
+			{
+				//r |= (rand() & 0xff) << 24;
+			}
+			return r;
+		}
+		case 0x7:
+		{
+			if (!(mem_mask & 0xff000000))
+			{
+				r |= readinputport(3) << 24;
 			}
 			return r;
 		}
@@ -518,6 +663,7 @@ static READ32_HANDLER ( jc_control_r )
 
 static WRITE32_HANDLER ( jc_control_w )
 {
+	//printf("jc_control_w: %08X, %08X, %08X\n", data, offset, mem_mask);
 	switch(offset)
 	{
 		case 0x3:
@@ -545,27 +691,111 @@ static WRITE32_HANDLER (jc_control1_w)
 	}
 }
 
-static int jc_unk2_regs[4] = { 0xff, 0x00, 0x01, 0x00 };
-static UINT32 jc_unk2_reg = 0;
-static READ32_HANDLER(hc11_r)
+static UINT8 hc11_cmd;
+static UINT8 hc11_reg_r(int reg)
 {
-	if (offset == 0)
+	UINT8 r = 0;
+
+	switch (reg)
 	{
-		jc_unk2_reg++;
-		return (jc_unk2_regs[jc_unk2_reg & 0x3] << 0);
-	}
-	else
-	{
-		return 0xffffffff;
+		case 0x03:
+		{
+			//printf("hc11_reg_r: %02X at %08X\n", reg, activecpu_get_pc());
+			if (hc11_cmd == 0x00)
+			{
+				r = 0;
+			}
+			else if (hc11_cmd == 0xff)
+			{
+				r = 0xff;
+			}
+			else
+			{
+				r = 0;
+			}
+			break;
+		}
+		case 0x04:
+		{
+			r = 0x10 | 0x20 | 0x04;
+			break;
+		}
+		default:
+		{
+			printf("hc11_reg_r: %02X at %08X\n", reg, activecpu_get_pc());
+			break;
+		}
 	}
 
-	//logerror("hc11_r: %08X, %08X\n", offset, mem_mask);
-	return 0xffffffff;
+	return r;
+}
+
+static void hc11_reg_w(int reg, UINT8 data)
+{
+	switch (reg)
+	{
+		case 0x00:
+		{
+			hc11_cmd = data;
+			break;
+		}
+		case 0x04:
+		{
+			break;
+		}
+		default:
+		{
+			printf("hc11_reg_w: %02X, %02X at %08X\n", reg, data, activecpu_get_pc());
+			break;
+		}
+	}
+}
+
+static READ32_HANDLER(hc11_r)
+{
+	UINT32 r = 0;
+	int reg = offset * 4;
+
+	if (!(mem_mask & 0xff000000))
+	{
+		r |= hc11_reg_r(reg + 0) << 24;
+	}
+	if (!(mem_mask & 0x00ff0000))
+	{
+		r |= hc11_reg_r(reg + 1) << 16;
+	}
+	if (!(mem_mask & 0x0000ff00))
+	{
+		r |= hc11_reg_r(reg + 2) << 8;
+	}
+	if (!(mem_mask & 0x000000ff))
+	{
+		r |= hc11_reg_r(reg + 3) << 0;
+	}
+
+	return r;
 }
 
 static WRITE32_HANDLER(hc11_w)
 {
-	//logerror("hc11_w: %08X, %08X, %08X\n", data, offset, mem_mask);
+	int reg = offset * 4;
+
+	if (!(mem_mask & 0xff000000))
+	{
+		hc11_reg_w(reg + 0, (data >> 24) & 0xff);
+	}
+	if (!(mem_mask & 0x00ff0000))
+	{
+		hc11_reg_w(reg + 1, (data >> 16) & 0xff);
+	}
+	if (!(mem_mask & 0x0000ff00))
+	{
+		hc11_reg_w(reg + 2, (data >> 8) & 0xff);
+	}
+	if (!(mem_mask & 0x000000ff))
+	{
+		hc11_reg_w(reg + 3, (data >> 0) & 0xff);
+	}
 }
 
 static READ32_HANDLER(jc_unknown1_r)
@@ -578,15 +808,21 @@ static READ32_HANDLER(dsp_shared_r)
 	return dsp_shared_ram[offset] << 16;
 }
 
+static int first_dsp_reset = 1;
 static WRITE32_HANDLER(dsp_shared_w)
 {
+//  printf("dsp_shared_ram: %08X, %04X\n", offset, data >> 16);
 	dsp_shared_ram[offset] = data >> 16;
 
 	if (offset == 0x1ffc/4)
 	{
 		if ((data & 0x80000) == 0)
 		{
-			cpunum_set_input_line(3, INPUT_LINE_RESET, CLEAR_LINE);
+			if (!first_dsp_reset)
+			{
+				cpunum_set_input_line(3, INPUT_LINE_RESET, CLEAR_LINE);
+			}
+			first_dsp_reset = 0;
 		}
 		else
 		{
@@ -595,8 +831,40 @@ static WRITE32_HANDLER(dsp_shared_w)
 	}
 }
 
+static READ32_HANDLER(f3_share_r)
+{
+	switch (offset & 3)
+	{
+		case 0: return (f3_shared_ram[(offset/4)] >>  0) & 0xff000000;
+		case 1: return (f3_shared_ram[(offset/4)] <<  8) & 0xff000000;
+		case 2: return (f3_shared_ram[(offset/4)] >> 16) & 0xff000000;
+		case 3: return (f3_shared_ram[(offset/4)] >> 24) & 0xff000000;
+	}
+
+	return 0;
+}
+
+static WRITE32_HANDLER(f3_share_w)
+{
+	UINT32 d = (data >> 24) & 0xff;
+
+	switch (offset & 3)
+	{
+		case 0: f3_shared_ram[(offset/4)] &= ~0xff000000; f3_shared_ram[(offset/4)] |= d << 24; break;
+		case 1: f3_shared_ram[(offset/4)] &= ~0x00ff0000; f3_shared_ram[(offset/4)] |= d << 16; break;
+		case 2: f3_shared_ram[(offset/4)] &= ~0x0000ff00; f3_shared_ram[(offset/4)] |= d <<  8; break;
+		case 3: f3_shared_ram[(offset/4)] &= ~0x000000ff; f3_shared_ram[(offset/4)] |= d <<  0; break;
+	}
+}
+
+static WRITE32_HANDLER(jc_output_w)
+{
+	// acceleration and break meter outputs in Densya De Go!
+	//printf("jc_output_w: %d, %d\n", offset, (data >> 16) & 0xffff);
+}
+
 static ADDRESS_MAP_START( taitojc_map, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x00000000, 0x001fffff) AM_ROM
+	AM_RANGE(0x00000000, 0x001fffff) AM_ROM AM_MIRROR(0x200000)
 	AM_RANGE(0x00400000, 0x01bfffff) AM_ROM AM_REGION(REGION_GFX1, 0)
 	AM_RANGE(0x04000000, 0x040f7fff) AM_RAM AM_BASE(&vram)
 	AM_RANGE(0x040f8000, 0x040fbfff) AM_READWRITE(taitojc_tile_r, taitojc_tile_w)
@@ -607,14 +875,14 @@ static ADDRESS_MAP_START( taitojc_map, ADDRESS_SPACE_PROGRAM, 32 )
 	//AM_RANGE(0x05a00000, 0x05a01fff)
 	//AM_RANGE(0x05fc0000, 0x05fc3fff)
 	AM_RANGE(0x06400000, 0x0641ffff) AM_READWRITE(taitojc_palette_r, taitojc_palette_w)
-	AM_RANGE(0x06600000, 0x06600007) AM_READ(jc_control_r)
+	AM_RANGE(0x06600000, 0x0660001f) AM_READ(jc_control_r)
 	AM_RANGE(0x06600000, 0x06600003) AM_WRITE(jc_control1_w)
 	AM_RANGE(0x06600040, 0x0660004f) AM_WRITE(jc_control_w)
 	//AM_RANGE(0x06800000, 0x06801fff) AM_RAM
-	AM_RANGE(0x06a00000, 0x06a01fff) AM_RAM
+	AM_RANGE(0x06a00000, 0x06a01fff) AM_READWRITE(f3_share_r, f3_share_w)
 	//AM_RANGE(0x06c00000, 0x06c0ffff) AM_RAM
-	//AM_RANGE(0x06e00000, 0x06e0ffff) AM_RAM
-	AM_RANGE(0x08000000, 0x081fffff) AM_RAM AM_BASE(&main_ram)
+	AM_RANGE(0x06e00000, 0x06e0ffff) AM_WRITE(jc_output_w)
+	AM_RANGE(0x08000000, 0x080fffff) AM_RAM AM_BASE(&main_ram)
 	AM_RANGE(0x10000000, 0x10001fff) AM_READWRITE(dsp_shared_r, dsp_shared_w)
 ADDRESS_MAP_END
 
@@ -632,6 +900,7 @@ static READ16_HANDLER( dsp_rom_r )
 {
 	UINT16 *rom = (UINT16*)memory_region(REGION_GFX2);
 	UINT16 data = rom[dsp_rom_pos++];
+	//printf("dsp_rom_r:  %08X, %08X at %08X\n", offset, mem_mask, activecpu_get_pc());
 	return data;
 }
 
@@ -695,8 +964,90 @@ ADDRESS_MAP_END
 
 /*****************************************************************************/
 
-
 INPUT_PORTS_START( taitojc )
+	PORT_START
+		PORT_BIT(0x80, IP_ACTIVE_LOW, IPT_COIN4)
+		PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_COIN3)
+		PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_COIN2)
+		PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_COIN1)
+		PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_SERVICE1 )
+		//PORT_SERVICE(0x02, 0x00)
+
+	PORT_START
+		PORT_BIT(0x80, IP_ACTIVE_LOW, IPT_START4)
+		PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_START3)
+		PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_START2)
+		PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_START1)
+		PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_SERVICE3)
+		PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_SERVICE2)
+		PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_UNUSED)
+		PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_TILT)
+
+	PORT_START
+		PORT_BIT(0xff, IP_ACTIVE_LOW, IPT_UNUSED)
+
+	PORT_START
+		PORT_BIT(0x80, IP_ACTIVE_LOW, IPT_BUTTON1)
+		PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_BUTTON2)
+		PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_BUTTON3)
+		PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_BUTTON4)
+		PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_BUTTON5)
+		PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_BUTTON6)
+		PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_BUTTON7)
+		PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_BUTTON8)
+
+INPUT_PORTS_END
+
+INPUT_PORTS_START( dendeg )
+	PORT_START
+		PORT_BIT(0x80, IP_ACTIVE_LOW, IPT_COIN4)
+		PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_COIN3)
+		PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_COIN2)
+		PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_COIN1)
+		PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_SERVICE1 )
+
+	PORT_START
+		PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_START1)
+		PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_UNUSED)
+		PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_TILT)
+
+	PORT_START
+		PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_BUTTON7) 		// Horn
+		PORT_BIT(0xfe, IP_ACTIVE_LOW, IPT_UNUSED)
+
+	PORT_START
+		PORT_BIT(0x80, IP_ACTIVE_LOW, IPT_UNUSED)
+		PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_BUTTON6)		// Mascon 5
+		PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_BUTTON4)		// Mascon 3
+		PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_BUTTON2)		// Mascon 1
+		PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_UNUSED)
+		PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_BUTTON5)		// Mascon 4
+		PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_BUTTON3)		// Mascon 2
+		PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_BUTTON1)		// Mascon 0
+
+INPUT_PORTS_END
+
+INPUT_PORTS_START( landgear )
+	PORT_START
+		PORT_BIT(0x80, IP_ACTIVE_LOW, IPT_COIN4)
+		PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_COIN3)
+		PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_COIN2)
+		PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_COIN1)
+		PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_SERVICE1 )
+
+	PORT_START
+		PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_BUTTON1)		// View button
+		PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_START1)
+		PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_UNUSED)
+		PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_TILT)
+
+	PORT_START
+		PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_BUTTON2)		// View button
+		PORT_BIT(0xfe, IP_ACTIVE_LOW, IPT_UNUSED)
+
+	PORT_START
+		PORT_BIT(0xff, IP_ACTIVE_LOW, IPT_UNUSED)
+
 INPUT_PORTS_END
 
 
@@ -712,14 +1063,7 @@ static MACHINE_RESET( taitojc )
 {
 	taito_f3_soundsystem_reset();
 
-	cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
-// do not let the 68k start up until f3_shared_ram points to valid RAM
-//  cpunum_set_input_line(1, INPUT_LINE_RESET, CLEAR_LINE);
 	f3_68681_reset();
-
-	// Code assumes RAM at 05800000 is initalized to all FF, but then tests it
-	// like normal RAM later.  Weird.
-	//memset(jc_weirdram, 0xff, 0xffff);
 
 	// hold the TMS in reset until we have code
 	cpunum_set_input_line(3, INPUT_LINE_RESET, ASSERT_LINE);
@@ -727,7 +1071,8 @@ static MACHINE_RESET( taitojc )
 
 static INTERRUPT_GEN( taitojc_vblank )
 {
-	cpunum_set_input_line(0, 6, HOLD_LINE);
+	cpunum_set_input_line_and_vector(0, 2, ASSERT_LINE, 130);
+	cpunum_set_input_line(0, 6, PULSE_LINE);
 }
 
 static MACHINE_DRIVER_START( taitojc )
@@ -747,15 +1092,17 @@ static MACHINE_DRIVER_START( taitojc )
 	MDRV_CPU_PROGRAM_MAP(tms_program_map, 0)
 	MDRV_CPU_DATA_MAP(tms_data_map, 0)
 
+	MDRV_INTERLEAVE(100)
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_GFXDECODE(gfxdecodeinfo)
 
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(64*16, 48*16)
-	MDRV_VISIBLE_AREA(0*16, 32*16-1, 0*16, 24*16-1)
-	MDRV_PALETTE_LENGTH(65536)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_SCREEN_SIZE(512, 512)
+	MDRV_VISIBLE_AREA(0, 511, 0, 399)
+	MDRV_PALETTE_LENGTH(32768)
 
 	MDRV_VIDEO_START(taitojc)
 	MDRV_VIDEO_UPDATE(taitojc)
@@ -766,18 +1113,16 @@ MACHINE_DRIVER_END
 
 static DRIVER_INIT( taitojc )
 {
-
+	f3_shared_ram = auto_malloc(0x800);
 }
 
 static DRIVER_INIT( dendeg )
 {
-	UINT16 *rom = (UINT16*)memory_region(REGION_CPU1);
+	//UINT16 *rom = (UINT16*)memory_region(REGION_CPU1);
+
+	//rom[(0x12bec2 / 2) ^ 1] = 0xffff;     // enable debug mode
 
 	init_taitojc();
-
-	rom[((0x100000 + 0x1330) / 2) ^ 1] = 0x4e71;		// (0x8071330): skip TMS wait loop
-	rom[((0x100000 + 0x22d0) / 2) ^ 1] = 0x6704;		// (0x80722d0): skip service switch error
-	rom[((0x100000 + 0x1d39c) / 2) ^ 1] = 0x4e71;
 }
 
 static DRIVER_INIT( dendegx )
@@ -789,11 +1134,9 @@ static DRIVER_INIT( dendegx )
 
 static DRIVER_INIT( dendeg2 )
 {
-	UINT16 *rom = (UINT16*)memory_region(REGION_CPU1);
+	//UINT16 *rom = (UINT16*)memory_region(REGION_CPU1);
 
 	init_taitojc();
-	rom[((0x100000 + 0x13c8) / 2) ^ 1] = 0x4e71;		// (0x8071330): skip TMS wait loop
-	rom[((0x100000 + 0x23b2) / 2) ^ 1] = 0x6704;		// (0x80722d0): skip service switch error
 }
 
 static DRIVER_INIT( dendeg2x )
@@ -805,31 +1148,25 @@ static DRIVER_INIT( dendeg2x )
 
 static DRIVER_INIT( sidebs )
 {
-//  UINT16 *rom = (UINT16*)memory_region(REGION_CPU1);
+	//UINT16 *rom = (UINT16*)memory_region(REGION_CPU1);
+
+	//rom[((0x100000 + 0x33c30) / 2) ^ 1] = 0xffff;     // enable debug mode
 
 	init_taitojc();
 }
 
 static DRIVER_INIT( sidebs2 )
 {
-	UINT16 *rom = (UINT16*)memory_region(REGION_CPU1);
+	//UINT16 *rom = (UINT16*)memory_region(REGION_CPU1);
 
 	init_taitojc();
-	rom[((0x100000 + 0x12c0) / 2) ^ 1] = 0x4e71;
-	rom[((0x100000 + 0x26e0) / 2) ^ 1] = 0x6704;		// (0x80722d0): skip service switch error
-
-	rom[((0x100000 + 0x116bc) / 2) ^ 1] = 0x4e71;
-	rom[((0x100000 + 0x116c6) / 2) ^ 1] = 0x4e71;
-	rom[((0x100000 + 0x116d8) / 2) ^ 1] = 0x4e71;
 }
 
 static DRIVER_INIT( landgear )
 {
-	UINT16 *rom = (UINT16*)memory_region(REGION_CPU1);
+	//UINT16 *rom = (UINT16*)memory_region(REGION_CPU1);
 
 	init_taitojc();
-	rom[((0x100000 + 0x1366) / 2) ^ 1] = 0x4e71;
-	rom[((0x100000 + 0x3aa0) / 2) ^ 1] = 0x6704;		// (0x80722d0): skip service switch error
 }
 
 ROM_START( sidebs )
@@ -839,9 +1176,9 @@ ROM_START( sidebs )
 	ROM_LOAD32_BYTE("e23-21.038", 0x000002, 0x80000, CRC(357f2e10) SHA1(226922f2649d9ac78d253200f5bbff4fb3ac74c8) )
 	ROM_LOAD32_BYTE("e23-22.039", 0x000003, 0x80000, CRC(c793ba43) SHA1(0ddbf625320968b4e18309d8e732ce4a2b9f4bce) )
 
-	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* 68000 Code? */
-	ROM_LOAD16_BYTE( "e23-23.030",  0x000001, 0x040000, CRC(cffbffe5) SHA1(c01ac44390dacab4b49bb066a46d81a184b07a1e) )
-	ROM_LOAD16_BYTE( "e23-24.031",  0x000000, 0x040000, CRC(64bae246) SHA1(f929f664881487615b1259db43a0721135830274) )
+	ROM_REGION( 0x180000, REGION_CPU2, 0 ) /* 68000 Code? */
+	ROM_LOAD16_BYTE( "e23-23.030",  0x100001, 0x040000, CRC(cffbffe5) SHA1(c01ac44390dacab4b49bb066a46d81a184b07a1e) )
+	ROM_LOAD16_BYTE( "e23-24.031",  0x100000, 0x040000, CRC(64bae246) SHA1(f929f664881487615b1259db43a0721135830274) )
 
 	ROM_REGION( 0x010000, REGION_USER1, 0 ) /* MC68HC11M0 related? */
 	ROM_LOAD( "e17-23.065",  0x000000, 0x010000, CRC(80ac1428) SHA1(5a2a1e60a11ecdb8743c20ddacfb61f9fd00f01c) )
@@ -852,8 +1189,8 @@ ROM_START( sidebs )
 	ROM_REGION( 0x1800000, REGION_GFX1, 0 ) /* other roms, not sorted */
 	ROM_LOAD32_WORD( "e23-05.009",  0x0800002, 0x200000, CRC(9aa0d956) SHA1(bd146e3db7c2a53701eca6b43f903899ed15623a) )
 	ROM_LOAD32_WORD( "e23-12.022",  0x0800000, 0x200000, CRC(c93fab09) SHA1(1ed292b11bf6bf09d1783d247f3de0c899e4df28) )
-	ROM_LOAD32_WORD( "e23-06.010",  0x1000002, 0x200000, CRC(2077ac3a) SHA1(894e1bbfef8a693bda50aa8681e8f283c0d6b6cf) )
-	ROM_LOAD32_WORD( "e23-13.023",  0x1000000, 0x200000, CRC(985f6785) SHA1(81cd33957b943f4bb33323fbf491ace344f8245b) )
+	ROM_LOAD32_WORD( "e23-06.010",  0x0c00002, 0x200000, CRC(2077ac3a) SHA1(894e1bbfef8a693bda50aa8681e8f283c0d6b6cf) )
+	ROM_LOAD32_WORD( "e23-13.023",  0x0c00000, 0x200000, CRC(985f6785) SHA1(81cd33957b943f4bb33323fbf491ace344f8245b) )
 	ROM_LOAD32_WORD( "e23-07.012",  0x1400002, 0x200000, CRC(bf1cd99d) SHA1(f98e1dacb485c7e40b0b2277a690d74ae020c9d9) )
 	ROM_LOAD32_WORD( "e23-14.025",  0x1400000, 0x200000, CRC(9d54eac7) SHA1(4f97b388a0fd0529d26e1cc31491a0e2ce6c381d) )
 
@@ -881,9 +1218,9 @@ ROM_START( sidebs2 )
 	ROM_LOAD32_BYTE( "sbs2_p2.38", 0x000002, 0x80000, CRC(ade07d7e) SHA1(a5200ea3ddbfef37d302e7cb27015b6f6aa8a7c1) )
 	ROM_LOAD32_BYTE( "sbs2_p3.39", 0x000003, 0x80000, CRC(94e943d6) SHA1(2bc7332526b969e5084b9d73063f1c0d18ec5181) )
 
-	ROM_REGION( 0x080000, REGION_CPU2, 0 ) /* 68000 Code? */
-	ROM_LOAD16_BYTE( "e38-19.30", 0x000001, 0x040000, CRC(3f50cb7b) SHA1(76af65c9b74ede843a3182f79cecda8c3e3febe6) )
-	ROM_LOAD16_BYTE( "e38-20.31", 0x000000, 0x040000, CRC(d01340e7) SHA1(76ee48d644dc1ec415d47e0df4864c64ac928b9d) )
+	ROM_REGION( 0x180000, REGION_CPU2, 0 ) /* 68000 Code? */
+	ROM_LOAD16_BYTE( "e38-19.30", 0x100001, 0x040000, CRC(3f50cb7b) SHA1(76af65c9b74ede843a3182f79cecda8c3e3febe6) )
+	ROM_LOAD16_BYTE( "e38-20.31", 0x100000, 0x040000, CRC(d01340e7) SHA1(76ee48d644dc1ec415d47e0df4864c64ac928b9d) )
 
 	ROM_REGION( 0x010000, REGION_USER1, 0 ) /* MC68HC11M0 related? */
 	ROM_LOAD( "e17-23.65",  0x000000, 0x010000, CRC(80ac1428) SHA1(5a2a1e60a11ecdb8743c20ddacfb61f9fd00f01c) )
@@ -906,10 +1243,16 @@ ROM_START( sidebs2 )
 	ROM_LOAD( "e38-02.6",  0x0200000, 0x200000, CRC(ecdfb75a) SHA1(85e7afa321846816fa3bd9074ad9dec95abe23fe) )
 	ROM_LOAD( "e38-03.7",  0x0400000, 0x200000, CRC(28e9cb59) SHA1(a2651fd81a1263573f868864ee049f8fc4177ffa) )
 	ROM_LOAD( "e38-04.8",  0x0600000, 0x080000, CRC(26cab05b) SHA1(d5bcf021646dade834840051e0ce083319c53985) )
+	ROM_RELOAD( 0x680000, 0x80000 )
+	ROM_RELOAD( 0x700000, 0x80000 )
+	ROM_RELOAD( 0x780000, 0x80000 )
 	ROM_LOAD( "e38-09.18", 0x0800000, 0x200000, CRC(03c95a7f) SHA1(fc046cf5fcfcf5648f68af4bed78576f6d67b32f) )
 	ROM_LOAD( "e38-10.19", 0x0a00000, 0x200000, CRC(0fb06794) SHA1(2d0e3b07ded698235572fe9e907a84d5779ac2c5) )
 	ROM_LOAD( "e38-11.20", 0x0c00000, 0x200000, CRC(6a312351) SHA1(8037e377f8eef4cc6dd84aec9c829106f0bb130c) )
 	ROM_LOAD( "e38-12.21", 0x0e00000, 0x080000, CRC(193a5774) SHA1(aa017ae4fec92bb87c0eb94f59d093853ddbabc9) )
+	ROM_RELOAD( 0xe80000, 0x80000 )
+	ROM_RELOAD( 0xf00000, 0x80000 )
+	ROM_RELOAD( 0xf80000, 0x80000 )
 
 	ROM_REGION16_BE( 0x1000000, REGION_SOUND1, ROMREGION_ERASE00  )
 	ROM_LOAD16_BYTE( "e23-15.32", 0x000000, 0x200000, CRC(8955b7c7) SHA1(767626bd5cf6810b0368ee85e487c12ef7e8a23d) ) // from sidebs (redump)
@@ -989,8 +1332,8 @@ ROM_START( dendegx )
 	ROM_LOAD32_BYTE( "e35-33.039", 0x000003, 0x80000, CRC(76a6bde2) SHA1(ca456ec3f0410777362e3eb977ae156866271bd5) )//ex
 
 	ROM_REGION( 0x180000, REGION_CPU2, 0 ) /* 68000 Code? */
-	ROM_LOAD16_BYTE( "e35-25.030",  0x100000, 0x040000, CRC(8104de13) SHA1(e518fbaf91704cf5cb8ffbb4833e3adba8c18658) )
-	ROM_LOAD16_BYTE( "e35-26.031",  0x100001, 0x040000, CRC(61821cc9) SHA1(87cd5bd3bb22c9f4ca4b6d96f75434d48418321b) )
+	ROM_LOAD16_BYTE( "e35-25.030",  0x100001, 0x040000, CRC(8104de13) SHA1(e518fbaf91704cf5cb8ffbb4833e3adba8c18658) )
+	ROM_LOAD16_BYTE( "e35-26.031",  0x100000, 0x040000, CRC(61821cc9) SHA1(87cd5bd3bb22c9f4ca4b6d96f75434d48418321b) )
 
 	ROM_REGION( 0x010000, REGION_USER1, 0 ) /* MC68HC11M0 related? */
 	ROM_LOAD( "e17-23.065",  0x000000, 0x010000, CRC(80ac1428) SHA1(5a2a1e60a11ecdb8743c20ddacfb61f9fd00f01c) )
@@ -1188,10 +1531,10 @@ ROM_END
 
 
 
-GAME( 1997, dendeg,   0,       taitojc, taitojc, dendeg,   ROT0, "Taito", "Densya De Go", GAME_NOT_WORKING|GAME_NO_SOUND )
-GAME( 1997, dendegx,  dendeg,  taitojc, taitojc, dendegx,  ROT0, "Taito", "Densya De Go Ex", GAME_NOT_WORKING|GAME_NO_SOUND )
-GAME( 1998, dendeg2,  0,       taitojc, taitojc, dendeg2,  ROT0, "Taito", "Densya De Go 2", GAME_NOT_WORKING|GAME_NO_SOUND )
-GAME( 1998, dendeg2x, dendeg2, taitojc, taitojc, dendeg2x, ROT0, "Taito", "Densya De Go 2 Ex", GAME_NOT_WORKING|GAME_NO_SOUND )
-GAME( 1996, sidebs,   0,       taitojc, taitojc, sidebs,   ROT0, "Taito", "Side By Side", GAME_NOT_WORKING|GAME_NO_SOUND )
-GAME( 1997, sidebs2,  0,       taitojc, taitojc, sidebs2,  ROT0, "Taito", "Side By Side 2", GAME_NOT_WORKING|GAME_NO_SOUND )
-GAME( 1995, landgear, 0,       taitojc, taitojc, landgear, ROT0, "Taito", "Landing Gear", GAME_NOT_WORKING|GAME_NO_SOUND )
+GAME( 1997, dendeg,   0,       taitojc, dendeg,   dendeg,   ROT0, "Taito", "Densya De Go", GAME_NOT_WORKING )
+GAME( 1997, dendegx,  dendeg,  taitojc, dendeg,   dendegx,  ROT0, "Taito", "Densya De Go Ex", GAME_NOT_WORKING )
+GAME( 1998, dendeg2,  0,       taitojc, dendeg,   dendeg2,  ROT0, "Taito", "Densya De Go 2", GAME_NOT_WORKING )
+GAME( 1998, dendeg2x, dendeg2, taitojc, dendeg,   dendeg2x, ROT0, "Taito", "Densya De Go 2 Ex", GAME_NOT_WORKING )
+GAME( 1996, sidebs,   0,       taitojc, taitojc,  sidebs,   ROT0, "Taito", "Side By Side", GAME_NOT_WORKING )
+GAME( 1997, sidebs2,  0,       taitojc, taitojc,  sidebs2,  ROT0, "Taito", "Side By Side 2", GAME_NOT_WORKING )
+GAME( 1995, landgear, 0,       taitojc, landgear, landgear, ROT0, "Taito", "Landing Gear", GAME_NOT_WORKING )

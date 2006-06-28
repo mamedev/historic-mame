@@ -86,4 +86,5 @@ VIDEO_UPDATE( destroyr )
 		if (i & 4)
 			plot_pixel(bitmap, i, destroyr_cursor ^ 0xff, Machine->pens[7]);
 	}
+	return 0;
 }

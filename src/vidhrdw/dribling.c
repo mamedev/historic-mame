@@ -81,4 +81,5 @@ VIDEO_UPDATE( dribling )
 			dst[x] = (b7 << 7) | (b6 << 6) | (b5 << 5) | (b4 << 4) | (b3 << 3) | b2_0;
 		}
 	}
+	return 0;
 }

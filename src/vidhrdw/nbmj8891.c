@@ -581,4 +581,5 @@ VIDEO_UPDATE( nbmj8891 )
 	{
 		fillbitmap(bitmap, Machine->pens[0xff], 0);
 	}
+	return 0;
 }

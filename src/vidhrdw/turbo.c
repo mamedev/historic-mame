@@ -961,6 +961,7 @@ VIDEO_UPDATE( turbo )
 
 	/* indicate that we drew this frame, so that the eof callback doesn't bother doing anything */
 	drew_frame = 1;
+	return 0;
 }
 
 
@@ -971,6 +972,7 @@ VIDEO_UPDATE( subroc3d )
 
 	/* draw the LEDs for the scores */
 	turbo_update_segments();
+	return 0;
 }
 
 
@@ -981,6 +983,7 @@ VIDEO_UPDATE( buckrog )
 
 	/* draw the LEDs for the scores */
 	turbo_update_segments();
+	return 0;
 }
 
 

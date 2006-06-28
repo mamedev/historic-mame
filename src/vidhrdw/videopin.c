@@ -101,10 +101,11 @@ VIDEO_UPDATE( videopin )
 					}
 				}
 
-				return;   /* keep things simple and ignore the rest */
+				return 0;   /* keep things simple and ignore the rest */
 			}
 		}
 	}
+	return 0;
 }
 
 

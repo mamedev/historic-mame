@@ -100,4 +100,5 @@ VIDEO_UPDATE( parodius )
 	tilemap_draw(bitmap,cliprect,K052109_tilemap[layer[2]],0,4);
 
 	K053245_sprites_draw(0,bitmap,cliprect);
+	return 0;
 }

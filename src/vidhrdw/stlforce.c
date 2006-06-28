@@ -188,6 +188,7 @@ VIDEO_UPDATE( stlforce )
 	tilemap_draw(bitmap,cliprect,stlforce_mhigh_tilemap,0,0);
 	draw_sprites(bitmap,cliprect);
 	tilemap_draw(bitmap,cliprect,stlforce_tx_tilemap,0,0);
+	return 0;
 }
 
 VIDEO_START( stlforce )

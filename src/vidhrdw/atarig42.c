@@ -268,4 +268,5 @@ VIDEO_UPDATE( atarig42 )
 
 	/* add the alpha on top */
 	tilemap_draw(bitmap, cliprect, atarigen_alpha_tilemap, 0, 0);
+	return 0;
 }

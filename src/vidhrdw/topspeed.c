@@ -196,6 +196,7 @@ VIDEO_UPDATE( topspeed )
 #endif
 
 	topspeed_draw_sprites(bitmap,cliprect);
+	return 0;
 }
 
 

@@ -85,6 +85,7 @@ static VIDEO_UPDATE(taitowlf)
 			index++;
 		}
 	}
+	return 0;
 }
 
 static READ8_HANDLER(at_dma8237_1_r)

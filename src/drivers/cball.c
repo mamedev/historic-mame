@@ -53,6 +53,7 @@ static VIDEO_UPDATE( cball )
 		240 - cball_video_ram[0x390],
 		240 - cball_video_ram[0x398],
 		cliprect, TRANSPARENCY_PEN, 0);
+	return 0;
 }
 
 

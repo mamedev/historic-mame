@@ -301,6 +301,7 @@ VIDEO_UPDATE( bwing )
 		tilemap_set_flip(charmap, mapflip);
 		tilemap_draw(bitmap, cliprect, charmap, 0, 0);
 	}
+	return 0;
 }
 
 //****************************************************************************

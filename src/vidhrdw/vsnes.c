@@ -75,11 +75,13 @@ VIDEO_UPDATE( vsnes )
 
 		}
 
-	}
+	return 0;
+}
 
 
 VIDEO_UPDATE( vsdual )
 {
 	/* render the ppu's */
 	ppu2c03b_render( screen, bitmap, 0, 0, 0, 0 );
+	return 0;
 }

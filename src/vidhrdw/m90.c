@@ -262,4 +262,5 @@ VIDEO_UPDATE( m90 )
 	}
 
 	m90_drawsprites(bitmap,cliprect);
+	return 0;
 }

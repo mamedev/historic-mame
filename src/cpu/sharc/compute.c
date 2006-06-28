@@ -1,6 +1,10 @@
 /* compute operations */
 
 #include <math.h>
+#ifdef _WIN32
+#include <float.h>
+#define scalb _scalb
+#endif
 
 #define CLEAR_ALU_FLAGS()		(sharc.astat &= ~(AZ|AN|AV|AC|AS|AI))
 
@@ -240,6 +244,20 @@ INLINE void compute_neg(int rn, int rx)
 	sharc.astat &= ~AF;
 }
 
+/* Rn = NOT Rx */
+INLINE void compute_not(int rn, int rx)
+{
+	UINT32 r = ~REG(rx);
+
+	CLEAR_ALU_FLAGS();
+	SET_FLAG_AN(r);
+	SET_FLAG_AZ(r);
+
+	REG(rn) = r;
+
+	sharc.astat &= ~AF;
+}
+
 /*****************************************************************************/
 /* Floating-point ALU operations */
 
@@ -296,7 +314,7 @@ INLINE void compute_fix_scaled(int rn, int rx, int ry)
 	INT32 alu_i;
 	SHARC_REG r_alu;
 
-	r_alu.f = (FREG(rx) * (float)pow(2.0, (INT32)REG(ry)));
+	r_alu.f = scalb(FREG(rx), (INT32)REG(ry));
 	if (sharc.mode1 & TRUNCATE)
 	{
 		alu_i = (INT32)(r_alu.f);
@@ -323,9 +341,7 @@ INLINE void compute_fix_scaled(int rn, int rx, int ry)
 /* Fn = FLOAT Rx BY Ry */
 INLINE void compute_float_scaled(int rn, int rx, int ry)
 {
-	float r = (float)(INT32)REG(rx);
-
-	r *= (float)pow(2.0, (INT32)REG(ry));
+	float r = scalb((float)(INT32)REG(rx), (INT32)REG(ry));
 
 	FREG(rn) = r;
 
@@ -370,12 +386,12 @@ INLINE void compute_logb(int rn, int rx)
 INLINE void compute_scalb(int rn, int rx, int ry)
 {
 	SHARC_REG r;
-	r.f = FREG(rx);
-	r.f *= (float)pow(2.0, (INT32)REG(ry));
+
+	r.f = scalb(FREG(rx), (INT32)REG(ry));
 
 	CLEAR_ALU_FLAGS();
 	// AN
-	SET_FLAG_AN(r.r);
+	sharc.astat |= (r.f < 0.0f) ? AN : 0;
 	// AZ
 	sharc.astat |= (IS_FLOAT_DENORMAL(r.r) || IS_FLOAT_ZERO(r.r)) ? AZ : 0;
 	// AUS
@@ -554,6 +570,41 @@ INLINE void compute_fmin(int rn, int rx, int ry)
 	sharc.astat |= AF;
 }
 
+/* Fn = CLIP Fx BY Fy */
+INLINE void compute_fclip(int rn, int rx, int ry)
+{
+	SHARC_REG r_alu;
+
+	if (FREG(rx) < fabs(FREG(ry)))
+	{
+		r_alu.f = FREG(rx);
+	}
+	else
+	{
+		if (FREG(rx) >= 0.0f)
+		{
+			r_alu.f = fabs(FREG(ry));
+		}
+		else
+		{
+			r_alu.f = -fabs(FREG(ry));
+		}
+	}
+
+
+	CLEAR_ALU_FLAGS();
+	SET_FLAG_AN(r_alu.r);
+	// AZ
+	sharc.astat |= (IS_FLOAT_ZERO(r_alu.r)) ? AZ : 0;
+	// AU
+	sharc.stky |= (IS_FLOAT_DENORMAL(r_alu.r)) ? AUS : 0;
+	// AI
+	sharc.astat |= (IS_FLOAT_NAN(REG(rx)) || IS_FLOAT_NAN(REG(ry))) ? AI : 0;
+
+	FREG(rn) = r_alu.f;
+	sharc.astat |= AF;
+}
+
 /* Fn = RECIPS Fx */
 INLINE void compute_recips(int rn, int rx)
 {
@@ -563,10 +614,9 @@ INLINE void compute_recips(int rn, int rx)
 
 	CLEAR_ALU_FLAGS();
 	// AN
-	SET_FLAG_AN(REG(rx));
+	SET_FLAG_AN(r.r);
 	// AZ & AV
-	sharc.astat |= (IS_FLOAT_ZERO(r.r)) ? AZ : 0;
-	sharc.astat |= (IS_FLOAT_ZERO(REG(rx))) ? AV : 0;
+	sharc.astat |= (IS_FLOAT_ZERO(r.r)) ? (AZ | AV) : 0;
 	// AI
 	sharc.astat |= (IS_FLOAT_NAN(REG(rx))) ? AI : 0;
 
@@ -586,10 +636,9 @@ INLINE void compute_rsqrts(int rn, int rx)
 
 	CLEAR_ALU_FLAGS();
 	// AN
-	sharc.astat |= (REG(rx) == 0x80000000) ? AN : 0;
+	sharc.astat |= (r.r == 0x80000000) ? AN : 0;
 	// AZ & AV
-	sharc.astat |= (IS_FLOAT_ZERO(r.r)) ? AZ : 0;
-	sharc.astat |= (IS_FLOAT_ZERO(REG(rx))) ? AV : 0;
+	sharc.astat |= (IS_FLOAT_ZERO(r.r)) ? (AZ | AV) : 0;
 	// AI
 	sharc.astat |= (IS_FLOAT_NAN(REG(rx)) || (REG(rx) & 0x80000000)) ? AI : 0;
 
@@ -606,6 +655,24 @@ INLINE void compute_fpass(int rn, int rx)
 {
 	SHARC_REG r;
 	r.f = FREG(rx);
+
+	CLEAR_ALU_FLAGS();
+	// AN
+	sharc.astat |= (r.f < 0.0f) ? AN : 0;
+	// AZ
+	sharc.astat |= (IS_FLOAT_ZERO(r.r)) ? AZ : 0;
+	// AI
+	sharc.astat |= (IS_FLOAT_NAN(REG(rx))) ? AI : 0;
+
+	FREG(rn) = r.f;
+	sharc.astat |= AF;
+}
+
+/* Fn = ABS Fx */
+INLINE void compute_fabs(int rn, int rx)
+{
+	SHARC_REG r;
+	r.f = fabs(FREG(rx));
 
 	CLEAR_ALU_FLAGS();
 	// AN
@@ -903,8 +970,7 @@ INLINE void compute_fmul_float_scaled(int fm, int fxm, int fym, int fa, int fxa,
 	SHARC_REG r_mul, r_alu;
 	r_mul.f = FREG(fxm) * FREG(fym);
 
-	r_alu.f = (float)(INT32)REG(fxa);
-	r_alu.f *= (float)pow(2.0, (INT32)REG(fya));
+	r_alu.f = scalb((float)(INT32)REG(fxa), (INT32)REG(fya));
 
 	CLEAR_MULTIPLIER_FLAGS();
 	SET_FLAG_MN(r_mul.r);
@@ -932,7 +998,8 @@ INLINE void compute_fmul_fix_scaled(int fm, int fxm, int fym, int fa, int fxa, i
 	SHARC_REG r_mul, r_alu;
 	r_mul.f = FREG(fxm) * FREG(fym);
 
-	r_alu.f = (FREG(fxa) * (float)pow(2.0, (INT32)REG(fya)));
+	r_alu.f = scalb(FREG(fxa), (INT32)REG(fya));
+
 	if (sharc.mode1 & TRUNCATE)
 	{
 		alu_i = (INT32)(r_alu.f);

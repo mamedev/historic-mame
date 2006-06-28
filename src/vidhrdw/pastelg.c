@@ -300,4 +300,5 @@ VIDEO_UPDATE( pastelg )
 	{
 		fillbitmap(bitmap, Machine->pens[0x00], 0);
 	}
+	return 0;
 }

@@ -203,4 +203,5 @@ VIDEO_UPDATE( ikki )
 		}
 	}
 
+	return 0;
 }

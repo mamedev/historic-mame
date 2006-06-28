@@ -221,6 +221,7 @@ VIDEO_UPDATE( namconb1 )
 		beamy = ((readinputport(7))*224)/256;
 		draw_crosshair( bitmap, beamx, beamy, cliprect, 1 );
 	}
+	return 0;
 }
 
 static int
@@ -267,7 +268,8 @@ VIDEO_UPDATE( namconb2 )
 		memcpy(tilemap_tile_bank,namconb1_tilebank32,sizeof(tilemap_tile_bank));
 	}
 	video_update_common( bitmap, &clip, 1 );
-} /* namconb2_vh_screenrefresh */
+	return 0;
+}
 
 static int
 NB2objcode2tile( int code )

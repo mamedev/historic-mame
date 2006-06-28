@@ -67,4 +67,5 @@ VIDEO_UPDATE( blockhl )
 	tilemap_draw(bitmap,cliprect,K052109_tilemap[0],0,2);
 
 	K051960_sprites_draw(bitmap,cliprect,0,-1); // draw sprites with pdrawgfx
+	return 0;
 }

@@ -106,6 +106,7 @@ VIDEO_UPDATE( ace )
 				10*8+offs*16,256-16, /* ?? */
 				&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 	}
+	return 0;
 }
 
 

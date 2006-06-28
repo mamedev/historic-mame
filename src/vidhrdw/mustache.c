@@ -142,4 +142,5 @@ VIDEO_UPDATE( mustache )
 {
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 	mustache_draw_sprites(bitmap, cliprect);
+	return 0;
 }

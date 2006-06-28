@@ -213,7 +213,7 @@ VIDEO_UPDATE( system18 )
 	if (!segaic16_display_enable)
 	{
 		fillbitmap(bitmap, get_black_pen(), cliprect);
-		return;
+		return 0;
 	}
 
 	/* if the VDP is enabled, update our tempbitmap */
@@ -259,4 +259,5 @@ VIDEO_UPDATE( system18 )
 		fclose(f);
 	}
 #endif
+	return 0;
 }

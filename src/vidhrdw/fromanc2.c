@@ -599,4 +599,5 @@ VIDEO_UPDATE( fromanc2 )
 		tilemap_set_scrolly(fromanc2_tilemap[fromanc2_dispvram][3], 0, -fromanc2_scrolly[fromanc2_dispvram][3]);
 	 	tilemap_draw(bitmap,cliprect, fromanc2_tilemap[fromanc2_dispvram][3], 0, 0);
 	}
+	return 0;
 }

@@ -359,6 +359,7 @@ VIDEO_UPDATE( armedf )
 	if ((mcu_mode&0x0030)==0x0000) tilemap_draw( bitmap, cliprect, armedf_tx_tilemap, 0, 0);
 	if( sprite_enable ) draw_sprites( bitmap, cliprect, 0 );
 
+	return 0;
 }
 
 VIDEO_EOF( armedf )

@@ -546,6 +546,7 @@ VIDEO_UPDATE( system1 )
 	/* even if screen is off, sprites must still be drawn to update the collision table */
 	if (system1_video_mode & 0x10)  /* screen off */
 		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area[0]);
+	return 0;
 }
 
 
@@ -694,6 +695,7 @@ VIDEO_UPDATE( choplifter )
 		memory_region(REGION_CPU1)[0xC085]=33;
 	}
 #endif
+	return 0;
 }
 
 
@@ -816,6 +818,7 @@ VIDEO_UPDATE( wbml )
 	/* even if screen is off, sprites must still be drawn to update the collision table */
 	if (system1_video_mode & 0x10)  /* screen off */
 		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area[0]);
+	return 0;
 }
 
 /* same as wbml but with rows scroll */
@@ -885,6 +888,7 @@ VIDEO_UPDATE( ufosensi )
 	/* even if screen is off, sprites must still be drawn to update the collision table */
 	if (system1_video_mode & 0x10)  /* screen off */
 		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area[0]);
+	return 0;
 }
 
 VIDEO_UPDATE( blockgal )
@@ -907,4 +911,5 @@ VIDEO_UPDATE( blockgal )
 		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area[0]);
 
 	blockgal_kludgeoffset = 0;
+	return 0;
 }

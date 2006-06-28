@@ -171,6 +171,7 @@ VIDEO_UPDATE( bmcbowl )
 			z++;
 		}
 	}
+	return 0;
 }
 
 static READ16_HANDLER( bmc_random_read )

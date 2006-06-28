@@ -659,4 +659,5 @@ VIDEO_UPDATE( spi )
 	draw_sprites(bitmap, cliprect, 3);
 
 	combine_tilemap(bitmap, cliprect, text_layer, 0, 0, 0, NULL);
+	return 0;
 }

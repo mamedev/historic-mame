@@ -1256,6 +1256,7 @@ static void copylayer(mame_bitmap *bitmap,const rectangle *cliprect,int layer)
 VIDEO_UPDATE(ddenlovr)
 {
 	copybitmap(bitmap,framebuffer,0,0,0,0,cliprect,TRANSPARENCY_NONE,0);
+	return 0;
 }
 
 /*

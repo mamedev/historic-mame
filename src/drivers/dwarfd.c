@@ -167,6 +167,7 @@ VIDEO_UPDATE(dwarfd)
 	}
 
 
+	return 0;
 }
 
 static MACHINE_DRIVER_START( dwarfd )

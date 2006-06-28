@@ -6000,6 +6000,7 @@ VIDEO_UPDATE( stv_vdp2 )
 
 
 
+	return 0;
 }
 
 /* below is some old code we might use .. */

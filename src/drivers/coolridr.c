@@ -80,6 +80,7 @@ VIDEO_START(coolridr)
 VIDEO_UPDATE(coolridr)
 {
 
+	return 0;
 }
 
 /* end video */

@@ -202,4 +202,5 @@ VIDEO_UPDATE(boogwing)
 	boogie_drawsprites(bitmap, cliprect, buffered_spriteram16_2, 4);
 
 	deco16_tilemap_1_draw(bitmap,cliprect,0,0);
+	return 0;
 }

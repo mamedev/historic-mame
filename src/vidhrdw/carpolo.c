@@ -347,6 +347,7 @@ VIDEO_UPDATE( carpolo )
 	draw_alpha_line(bitmap, cliprect, 5, (1*4+2)*2+1);
 	draw_alpha_line(bitmap, cliprect, 6, (0*4+3)*2  );
 	draw_alpha_line(bitmap, cliprect, 7, (0*4+3)*2+1);
+	return 0;
 }
 
 

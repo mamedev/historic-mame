@@ -105,6 +105,7 @@ VIDEO_UPDATE( jack )
 {
 	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 	jack_draw_sprites(bitmap);
+	return 0;
 }
 
 /*
@@ -190,4 +191,5 @@ VIDEO_UPDATE( joinem )
 {
 	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 	joinem_draw_sprites(bitmap);
+	return 0;
 }

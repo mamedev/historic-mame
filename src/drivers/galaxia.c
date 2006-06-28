@@ -52,6 +52,7 @@ VIDEO_UPDATE( galaxia )
 
 
 
+	return 0;
 }
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )

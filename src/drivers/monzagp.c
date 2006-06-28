@@ -98,6 +98,7 @@ VIDEO_UPDATE( monzagp )
 			dest[sx] = *source++;
 		}
 	}
+	return 0;
 }
 
 /* the master cpu transmits data to the slave CPU one word at a time using a rapid sequence of triggered NMIs

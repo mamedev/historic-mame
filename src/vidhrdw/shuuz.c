@@ -140,4 +140,5 @@ VIDEO_UPDATE( shuuz )
 					mo[x] = 0;
 				}
 		}
+	return 0;
 }

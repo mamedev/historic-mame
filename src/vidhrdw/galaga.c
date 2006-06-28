@@ -595,6 +595,7 @@ VIDEO_UPDATE( galaga )
 	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
 
 	draw_stars(bitmap,cliprect);
+	return 0;
 }
 
 

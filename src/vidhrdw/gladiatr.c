@@ -304,6 +304,7 @@ VIDEO_UPDATE( ppking )
 			sy++;
 		} /* next y */
 	}
+	return 0;
 }
 
 VIDEO_UPDATE( gladiatr )
@@ -327,4 +328,5 @@ VIDEO_UPDATE( gladiatr )
 	}
 	else
 		fillbitmap( bitmap, get_black_pen(), cliprect );
+	return 0;
 }

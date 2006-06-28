@@ -492,6 +492,7 @@ static VIDEO_UPDATE( lghost )
 	draw_crosshair(bitmap, x1 * (Machine->drv->screen[0].maxwidth - 1) / 255, y1 * (Machine->drv->screen[0].maxheight - 1) / 255, cliprect, 0);
 	draw_crosshair(bitmap, x2 * (Machine->drv->screen[0].maxwidth - 1) / 255, y2 * (Machine->drv->screen[0].maxheight - 1) / 255, cliprect, 1);
 	draw_crosshair(bitmap, x3 * (Machine->drv->screen[0].maxwidth - 1) / 255, y3 * (Machine->drv->screen[0].maxheight - 1) / 255, cliprect, 2);
+	return 0;
 }
 
 

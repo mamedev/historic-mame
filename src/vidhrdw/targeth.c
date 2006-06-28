@@ -166,4 +166,5 @@ VIDEO_UPDATE( targeth )
 		posy = readinputport(3) & 0x0ff;
 		draw_crosshair(bitmap, posx - 0x17, posy + 1, cliprect, 1);
 	}
+	return 0;
 }

@@ -89,4 +89,5 @@ VIDEO_UPDATE( funkyjet )
 	deco16_tilemap_2_draw(bitmap,cliprect,TILEMAP_IGNORE_TRANSPARENCY,0);
 	deco16_tilemap_1_draw(bitmap,cliprect,0,0);
 	funkyjet_drawsprites(bitmap,cliprect);
+	return 0;
 }

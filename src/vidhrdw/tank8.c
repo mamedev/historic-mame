@@ -190,6 +190,7 @@ VIDEO_UPDATE( tank8 )
 
 	draw_sprites(bitmap, cliprect);
 	draw_bullets(bitmap, cliprect);
+	return 0;
 }
 
 

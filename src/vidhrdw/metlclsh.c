@@ -262,5 +262,6 @@ VIDEO_UPDATE( metlclsh )
 	tilemap_draw(bitmap,cliprect,fg_tilemap,2,0);	// high priority tiles of foreground
 
 //  ui_popup("%02X",metlclsh_scrollx[0]);
+	return 0;
 }
 

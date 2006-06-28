@@ -166,5 +166,6 @@ VIDEO_UPDATE( drmicro )
 			}
 		}
 	}
+	return 0;
 }
 

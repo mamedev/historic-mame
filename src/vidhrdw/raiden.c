@@ -187,4 +187,5 @@ VIDEO_UPDATE( raiden )
 
 	/* Text layer */
 	tilemap_draw(bitmap,cliprect,tx_layer,0,0);
+	return 0;
 }

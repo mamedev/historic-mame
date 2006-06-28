@@ -71,6 +71,7 @@ VIDEO_START(mastboy)
 VIDEO_UPDATE(mastboy)
 {
 
+	return 0;
 }
 
 

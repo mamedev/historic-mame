@@ -15,6 +15,7 @@ int start_megatech_video_normal(void);
 void update_megatech_video_normal(mame_bitmap *bitmap, const rectangle *cliprect );
 void update_megaplay_video_normal(mame_bitmap *bitmap, const rectangle *cliprect );
 
+int genesis_screen_number;
 
 
 /******************************************************************************
@@ -74,7 +75,6 @@ static void drawline_sprite(int line, UINT16 *bmap, int priority, UINT8 *spriteb
        UINT16		genesis_bg_pal_lookup[4];	/* lookup table for background tiles */
        UINT16		genesis_sp_pal_lookup[4];	/* lookup table for sprites */
        UINT8		genesis_vdp_regs[32];		/* VDP registers */
-static UINT16		scanbase;
 
 /* LOCAL */
 static UINT8 *		vdp_vram;					/* VDP video RAM */
@@ -125,7 +125,8 @@ static UINT8		window_width;				/* window width */
 
 ******************************************************************************/
 
-VIDEO_START( genesis )
+
+int start_genesis_vdp(int screen_number)
 {
 	static const UINT8 vdp_init[24] =
 	{
@@ -134,6 +135,8 @@ VIDEO_START( genesis )
 		0x01, 0x00, 0x00, 0xFF, 0xFF, 0x00, 0x00, 0x80,
 	};
 	int i;
+
+	genesis_screen_number = screen_number;
 
 	/* allocate memory for the VDP, the lookup table, and the buffer bitmap */
 	vdp_vram			= auto_malloc(VRAM_SIZE);
@@ -164,8 +167,6 @@ VIDEO_START( genesis )
 	genesis_bg_pal_lookup[1] = genesis_sp_pal_lookup[1] = 0x10;
 	genesis_bg_pal_lookup[2] = genesis_sp_pal_lookup[2] = 0x20;
 	genesis_bg_pal_lookup[3] = genesis_sp_pal_lookup[3] = 0x30;
-
-	scanbase = 0;
 
 	/* reset VDP */
     for (i = 0; i < 24; i++)
@@ -202,11 +203,15 @@ VIDEO_START( genesis )
 	return 0;
 }
 
+VIDEO_START(genesis)
+{
+	return start_genesis_vdp(0);
+}
+
 
 VIDEO_START( segac2 )
 {
-	if (video_start_genesis())
-		return 1;
+	start_genesis_vdp(0);
 
 	/* C2 has separate sprite/background palettes */
 	genesis_sp_pal_lookup[0] = 0x100;
@@ -220,21 +225,18 @@ VIDEO_START( segac2 )
 
 VIDEO_START( megatech )
 {
-	if (video_start_genesis())
-		return 1;
+	start_genesis_vdp(1);
 
 	if (start_megatech_video_normal())
 		return 1;
 
-	scanbase = 256;
 	return 0;
 }
 
 
 VIDEO_START( megaplay )
 {
-	if (video_start_genesis())
-		return 1;
+	start_genesis_vdp(0);
 
 	if (start_megatech_video_normal())
 		return 1;
@@ -245,8 +247,7 @@ VIDEO_START( megaplay )
 
 int start_system18_vdp(void)
 {
-	if (video_start_genesis())
-		return 1;
+	start_genesis_vdp(0);
 
 	genesis_palette_base = 0x1800;
 	genesis_bg_pal_lookup[0] = genesis_sp_pal_lookup[0] = 0x1800;
@@ -276,7 +277,7 @@ int start_system18_vdp(void)
 void segac2_enable_display(int enable)
 {
 	if (!cpu_getvblank())
-		force_partial_update(0, cpu_getscanline() + scanbase);
+		force_partial_update(0, cpu_getscanline());
 	display_enable = enable;
 }
 
@@ -287,6 +288,7 @@ VIDEO_UPDATE( genesis )
 
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 		drawline((UINT16 *)bitmap->line[y], y, 0);
+	return 0;
 }
 
 
@@ -296,24 +298,25 @@ VIDEO_UPDATE( segac2 )
 		fillbitmap(bitmap, get_black_pen(), cliprect);
 	else
 		video_update_genesis(screen, bitmap, cliprect);
+	return 0;
 }
 
 
 VIDEO_UPDATE( megatech )
 {
-	int starty;
 	int y;
 
-	/* generate the final screen */
-	starty = (cliprect->min_y < 192) ? 192 : cliprect->min_y;
-	for (y = starty; y <= cliprect->max_y; y++)
-		drawline((UINT16 *)bitmap->line[y], y-192, 0);
-
-	/* sms display should be on second monitor, for now we control it with a fake dipswitch while
-       the driver is in development */
-	/*if (readinputport(5)&0x01)*/
+	if (screen ==1)
+	{
+		/* generate the final screen */
+		for (y = 0; y <= cliprect->max_y; y++)
+			drawline((UINT16 *)bitmap->line[y], y, 0);
+	}
+	else if (screen==0)
+	{
 		update_megatech_video_normal(bitmap, cliprect);
-
+	}
+	return 0;
 }
 
 /* megaplay, draws either Genesis or SMS (single screen display) */
@@ -323,13 +326,13 @@ VIDEO_UPDATE( megaplay )
 {
 	int y;
 
-	/* generate the final screen - control which screen is
-       shown by a keystroke for now */
+
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 		drawline((UINT16 *)bitmap->line[y], y, 0);
 
 	update_megaplay_video_normal(bitmap, cliprect);
 
+	return 0;
 }
 
 void update_system18_vdp( mame_bitmap *bitmap, const rectangle *cliprect )
@@ -508,7 +511,7 @@ static void vdp_data_w(int data)
 			if (!cpu_getvblank() &&
 				vdp_address >= vdp_hscrollbase &&
 				vdp_address < vdp_hscrollbase + vdp_hscrollsize)
-				force_partial_update(0, cpu_getscanline() + scanbase);
+				force_partial_update(0, cpu_getscanline());
 
 			/* write to VRAM */
 			if (vdp_address & 1)
@@ -536,7 +539,7 @@ static void vdp_data_w(int data)
 
 			/* if the vscroll RAM is changing during screen refresh, force an update */
 			if (!cpu_getvblank())
-				force_partial_update(0, cpu_getscanline() + scanbase);
+				force_partial_update(0, cpu_getscanline());
 
 			/* write to VSRAM */
 			if (vdp_address & 1)
@@ -652,7 +655,7 @@ static void vdp_register_w(int data, int vblank)
 	/* these are mostly important writes; force an update if they */
 	/* are written during a screen refresh */
 	if (!vblank && is_important[regnum])
-		force_partial_update(0, cpu_getscanline() + scanbase);
+		force_partial_update(0, cpu_getscanline());
 
 	/* For quite a few of the registers its a good idea to set a couple of variable based
        upon the writes here */
@@ -714,9 +717,10 @@ static void vdp_register_w(int data, int vblank)
 					window_width=64;
 				break;
 			}
-			set_visible_area(0, 0, scrwidth*8-1,
-				Machine->visible_area[0].min_y,
-				Machine->visible_area[0].max_y);
+			/* this gets called from the init! */
+			set_visible_area(genesis_screen_number, 0, scrwidth*8-1,
+				Machine->visible_area[genesis_screen_number].min_y,
+				Machine->visible_area[genesis_screen_number].max_y);
 			break;
 
 		case 0x0d: /* HScroll Base */

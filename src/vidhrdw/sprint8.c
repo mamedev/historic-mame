@@ -145,6 +145,7 @@ VIDEO_UPDATE( sprint8 )
 	tilemap_draw(bitmap, cliprect, tilemap1, 0, 0);
 
 	draw_sprites(bitmap, cliprect);
+	return 0;
 }
 
 

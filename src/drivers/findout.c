@@ -16,6 +16,7 @@ driver by Nicola Salmoria
 VIDEO_UPDATE( findout )
 {
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,cliprect,TRANSPARENCY_NONE,0);
+	return 0;
 }
 
 

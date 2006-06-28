@@ -435,6 +435,7 @@ VIDEO_UPDATE( ladybug )
 
 	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
 	ladybug_draw_sprites(bitmap);
+	return 0;
 }
 
 VIDEO_EOF( sraider )	/* update starfield position */
@@ -489,5 +490,6 @@ VIDEO_UPDATE( sraider )
 	// now the sprites
 	ladybug_draw_sprites(bitmap);
 
+	return 0;
 }
 

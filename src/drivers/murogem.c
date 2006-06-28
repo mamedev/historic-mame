@@ -175,6 +175,7 @@ VIDEO_UPDATE(murogem)
 
 	}
 
+	return 0;
 }
 
 

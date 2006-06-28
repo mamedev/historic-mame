@@ -354,4 +354,5 @@ VIDEO_UPDATE( sega )
 {
 	sega_generate_vector_list();
 	video_update_vector(screen,bitmap,0);
+	return 0;
 }

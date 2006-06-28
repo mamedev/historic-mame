@@ -288,6 +288,7 @@ VIDEO_UPDATE( segar )
 		sv.refresh = 1;
 
 	segar_common_screenrefresh(bitmap, TRANSPARENCY_NONE, TRANSPARENCY_NONE);
+	return 0;
 }
 
 
@@ -508,6 +509,7 @@ VIDEO_UPDATE( spaceod )
 
 	/* Refresh the "standard" graphics */
 	segar_common_screenrefresh(bitmap, TRANSPARENCY_NONE, TRANSPARENCY_PEN);
+	return 0;
 }
 
 
@@ -681,6 +683,7 @@ VIDEO_UPDATE( monsterb )
 
 	/* Refresh the "standard" graphics */
 	segar_common_screenrefresh(bitmap, sprite_transparency, TRANSPARENCY_NONE);
+	return 0;
 }
 
 /***************************************************************************
@@ -864,5 +867,6 @@ VIDEO_UPDATE( sindbadm )
 	/* Refresh the "standard" graphics */
 	segar_common_screenrefresh(bitmap, sprite_transparency, TRANSPARENCY_NONE);
 
+	return 0;
 }
 

@@ -414,6 +414,7 @@ VIDEO_UPDATE( jalmah )
 	if(pri & 2 && (!(pri & 0x8))) { jalmah_tilemap_draw(sc0_tilemap); }
 	if(pri & 2 && (!(pri & 0x8))) { jalmah_tilemap_draw(sc2_tilemap); }
 	jalmah_tilemap_draw(sc3_tilemap);
+	return 0;
 }
 
 

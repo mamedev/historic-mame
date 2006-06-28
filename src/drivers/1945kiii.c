@@ -111,6 +111,7 @@ VIDEO_UPDATE(k3)
 {
 	tilemap_draw(bitmap,cliprect,k3_bg_tilemap,0,0);
 	k3_draw_sprites(bitmap,cliprect);
+	return 0;
 }
 
 

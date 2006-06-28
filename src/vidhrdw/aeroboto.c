@@ -214,4 +214,5 @@ VIDEO_UPDATE( aeroboto )
 	// the status display behaves more closely to a 40-line splitscreen than an overlay
 	tilemap_set_scrolly(bg_tilemap,0,0);
 	tilemap_draw(bitmap,&splitrect1,bg_tilemap,0,0);
+	return 0;
 }

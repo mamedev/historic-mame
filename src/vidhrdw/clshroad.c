@@ -373,4 +373,5 @@ VIDEO_UPDATE( clshroad )
 	tilemap_draw(bitmap,cliprect,tilemap_0b,0,0);
 	draw_sprites(bitmap,cliprect);
 	tilemap_draw(bitmap,cliprect,tilemap_1,0,0);
+	return 0;
 }

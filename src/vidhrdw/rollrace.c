@@ -166,4 +166,5 @@ VIDEO_UPDATE( rollrace )
 
 
 
+	return 0;
 }

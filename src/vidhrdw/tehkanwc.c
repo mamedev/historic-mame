@@ -213,4 +213,5 @@ VIDEO_UPDATE( tehkanwc )
 	tilemap_draw(bitmap, &Machine->visible_area[0], fg_tilemap, 1, 0);
 	gridiron_drawled(bitmap, led0, 0);
 	gridiron_drawled(bitmap, led1, 1);
+	return 0;
 }

@@ -361,4 +361,5 @@ VIDEO_UPDATE( hyhoo )
 	{
 		fillbitmap(bitmap, Machine->pens[0x0000], 0);
 	}
+	return 0;
 }

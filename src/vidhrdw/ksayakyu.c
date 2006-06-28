@@ -117,4 +117,5 @@ VIDEO_UPDATE(ksayakyu)
 		tilemap_draw(bitmap,cliprect,ksayakyu_tilemap,0,0);
 	draw_sprites(bitmap,cliprect);
 	tilemap_draw(bitmap,cliprect,ksayakyu_textmap, 0,0);
+	return 0;
 }

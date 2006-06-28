@@ -1052,7 +1052,7 @@ VIDEO_UPDATE( system16 ){
 	if (!sys16_refreshenable)
 	{
 		fillbitmap(bitmap, 0, cliprect);
-		return;
+		return 0;
 	}
 
 	if( sys16_update_proc ) sys16_update_proc();
@@ -1075,6 +1075,7 @@ VIDEO_UPDATE( system16 ){
 	tilemap_draw( bitmap,cliprect, text_layer, 0, 0xf );
 
 	draw_sprites( bitmap,cliprect,0 );
+	return 0;
 }
 
 
@@ -1083,7 +1084,7 @@ VIDEO_UPDATE( system18old ){
 	{
 		/* should it REALLY not clear the bitmap? ddcrew vdp gfx look ugly if i don't do it like this */
 		fillbitmap(bitmap,get_black_pen(),cliprect);
-		return;
+		return 0;
 	}
 
 	if( sys16_update_proc ) sys16_update_proc();
@@ -1126,4 +1127,5 @@ VIDEO_UPDATE( system18old ){
 //  if (!strcmp(Machine->gamedrv->name,"astorm"))  update_system18_vdp(bitmap,cliprect); // kludge: render vdp here for astorm
 
 	draw_sprites( bitmap,cliprect, 0 );
+	return 0;
 }

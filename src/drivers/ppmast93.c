@@ -343,6 +343,7 @@ VIDEO_UPDATE( ppmast93 )
 {
 	tilemap_draw(bitmap,cliprect,ppmast93_bg_tilemap,0,0);
 	tilemap_draw(bitmap,cliprect,ppmast93_fg_tilemap,0,0);
+	return 0;
 }
 
 static MACHINE_DRIVER_START( ppmast93 )

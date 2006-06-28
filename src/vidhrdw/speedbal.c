@@ -141,4 +141,5 @@ VIDEO_UPDATE( speedbal )
 	speedbal_draw_sprites(bitmap, cliprect);
 	tilemap_draw(bitmap, cliprect, bg_tilemap, TILEMAP_FRONT, 0);
 	tilemap_draw(bitmap, cliprect, fg_tilemap, TILEMAP_FRONT, 0);
+	return 0;
 }

@@ -167,6 +167,7 @@ VIDEO_UPDATE( gberet )
 	tilemap_draw(bitmap, cliprect, bg_tilemap, TILEMAP_IGNORE_TRANSPARENCY | 1, 0);
 	gberet_draw_sprites(bitmap, cliprect);
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
+	return 0;
 }
 
 /* Green Beret (bootleg) */
@@ -218,4 +219,5 @@ VIDEO_UPDATE( gberetb )
 	tilemap_draw(bitmap, cliprect, bg_tilemap, TILEMAP_IGNORE_TRANSPARENCY | 1, 0);
 	gberetb_draw_sprites(bitmap, cliprect);
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
+	return 0;
 }

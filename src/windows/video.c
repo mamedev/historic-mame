@@ -164,6 +164,29 @@ static void get_resolution(const char *name, win_window_config *config, int repo
 
 
 //============================================================
+//  INLINES
+//============================================================
+
+INLINE int effective_autoframeskip(void)
+{
+	return video_config.autoframeskip && !video_config.fastforward;
+}
+
+
+INLINE int effective_frameskip(void)
+{
+	return video_config.fastforward ? (FRAMESKIP_LEVELS - 1) : video_config.frameskip;
+}
+
+
+INLINE int effective_throttle(void)
+{
+	return video_config.throttle && !video_config.fastforward;
+}
+
+
+
+//============================================================
 //  OPTIONS
 //============================================================
 
@@ -419,14 +442,14 @@ int osd_update(mame_time emutime)
 	win_window_info *window;
 
 	// if we're throttling, paused, or if the UI is up, synchronize
-	if (video_config.throttle || mame_is_paused() || ui_is_setup_active() || ui_is_onscrd_active())
+	if (effective_throttle() || mame_is_paused() || ui_is_setup_active() || ui_is_onscrd_active())
 		update_throttle(emutime);
 
 	// update the FPS computations
 	update_fps(emutime);
 
 	// update all the windows, but only if we're not skipping this frame
-	if (!skiptable[video_config.frameskip][frameskip_counter])
+	if (!skiptable[effective_frameskip()][frameskip_counter])
 	{
 		profiler_mark(PROFILER_BLIT);
 		for (window = win_window_list; window != NULL; window = window->next)
@@ -435,7 +458,7 @@ int osd_update(mame_time emutime)
 	}
 
 	// if we're throttling and autoframeskip is on, adjust
-	if (video_config.throttle && video_config.autoframeskip && frameskip_counter == 0)
+	if (effective_throttle() && effective_autoframeskip() && frameskip_counter == 0)
 		update_autoframeskip();
 
 	// poll the joystick values here
@@ -447,7 +470,7 @@ int osd_update(mame_time emutime)
 	frameskip_counter = (frameskip_counter + 1) % FRAMESKIP_LEVELS;
 
 	// return whether or not to skip the next frame
-	return skiptable[video_config.frameskip][frameskip_counter];
+	return skiptable[effective_frameskip()][frameskip_counter];
 }
 
 
@@ -464,13 +487,13 @@ const char *osd_get_fps_text(const performance_info *performance)
 	// if we're paused, display less info
 	if (mame_is_paused())
 		dest += sprintf(dest, "%s%2d%4d/%d fps",
-				video_config.autoframeskip ? "auto" : "fskp", video_config.frameskip,
+				effective_autoframeskip() ? "auto" : "fskp", effective_frameskip(),
 				(int)(performance->frames_per_second + 0.5),
 				PAUSED_REFRESH_RATE);
 	else
 	{
 		dest += sprintf(dest, "%s%2d%4d%%%4d/%d fps",
-				video_config.autoframeskip ? "auto" : "fskp", video_config.frameskip,
+				effective_autoframeskip() ? "auto" : "fskp", effective_frameskip(),
 				(int)(performance->game_speed_percent + 0.5),
 				(int)(performance->frames_per_second + 0.5),
 				(int)(Machine->refresh_rate[0] + 0.5));
@@ -738,7 +761,7 @@ static void update_throttle(mame_time emutime)
 	profiler_mark(PROFILER_IDLE);
 
 	// determine whether or not we are allowed to sleep
-	allowed_to_sleep = video_config.sleep && (!video_config.autoframeskip || video_config.frameskip == 0);
+	allowed_to_sleep = video_config.sleep && (!effective_autoframeskip() || effective_frameskip() == 0);
 
 	// sync
 	for (curr = osd_cycles(); curr - target < 0; curr = osd_cycles())
@@ -944,6 +967,11 @@ static void check_osd_inputs(void)
 	if (input_ui_pressed(IPT_OSD_2))
 		win_toggle_menubar();
 #endif
+
+	// check for fast forward
+	video_config.fastforward = input_port_type_pressed(IPT_OSD_3, 0);
+	if (video_config.fastforward)
+		ui_show_fps_temp(0.5);
 }
 
 
@@ -975,6 +1003,14 @@ static void extract_video_config(void)
 	if (options.mame_debug)
 		video_config.windowed = TRUE;
 #endif
+
+	// configure layers
+	video_config.layerconfig = LAYER_CONFIG_ENABLE_BACKDROP | LAYER_CONFIG_ENABLE_OVERLAY | LAYER_CONFIG_ENABLE_BEZEL;
+	if (!options_get_bool("use_backdrops", TRUE)) video_config.layerconfig &= ~LAYER_CONFIG_ENABLE_BACKDROP;
+	if (!options_get_bool("use_overlays", TRUE)) video_config.layerconfig &= ~LAYER_CONFIG_ENABLE_OVERLAY;
+	if (!options_get_bool("use_bezels", TRUE)) video_config.layerconfig &= ~LAYER_CONFIG_ENABLE_BEZEL;
+	if (!options_get_bool("artwork", TRUE)) video_config.layerconfig = 0;
+	if (options_get_bool("artwork_crop", TRUE)) video_config.layerconfig |= LAYER_CONFIG_ZOOM_TO_SCREEN;
 
 	// per-window options: extract the data
 	get_resolution("resolution0", &video_config.window[0], TRUE);

@@ -533,6 +533,7 @@ VIDEO_UPDATE( leland )
 
 	/* Merge the two bitmaps together */
 	copybitmap(bitmap, fgbitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_BLEND, 6);
+	return 0;
 }
 
 
@@ -575,4 +576,5 @@ VIDEO_UPDATE( ataxx )
 
 	/* Merge the two bitmaps together */
 	copybitmap(bitmap, fgbitmap, 0, 0, 0, 0, cliprect, TRANSPARENCY_BLEND, 6);
+	return 0;
 }

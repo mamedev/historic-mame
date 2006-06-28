@@ -120,6 +120,7 @@ VIDEO_UPDATE( tugboat )
 
 	draw_tilemap(bitmap,cliprect,startaddr0,0,1,TRANSPARENCY_NONE);
 	draw_tilemap(bitmap,cliprect,startaddr1,2,3,TRANSPARENCY_PEN);
+	return 0;
 }
 
 

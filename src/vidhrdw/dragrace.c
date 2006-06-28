@@ -85,4 +85,5 @@ VIDEO_UPDATE( dragrace )
 
 		tilemap_draw(bitmap, &rect, bg_tilemap, 0, 0);
 	}
+	return 0;
 }

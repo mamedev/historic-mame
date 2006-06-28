@@ -2657,6 +2657,7 @@ VIDEO_UPDATE( namcos22s )
       while( code_pressed(KEYCODE_D) ){}
    }
 #endif
+	return 0;
 }
 
 VIDEO_UPDATE( namcos22 )
@@ -2687,6 +2688,7 @@ VIDEO_UPDATE( namcos22 )
       while( code_pressed(KEYCODE_D) ){}
    }
 #endif
+	return 0;
 }
 
 WRITE16_HANDLER( namcos22_dspram16_bank_w )

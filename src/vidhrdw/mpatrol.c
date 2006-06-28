@@ -384,4 +384,5 @@ VIDEO_UPDATE( mpatrol )
 			sx, sy,
 			cliprect, TRANSPARENCY_COLOR, 512+32);
 	}
+	return 0;
 }

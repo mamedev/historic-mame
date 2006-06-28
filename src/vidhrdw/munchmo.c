@@ -198,4 +198,5 @@ VIDEO_UPDATE( mnchmobl )
 	draw_background( bitmap );
 	draw_sprites( bitmap );
 	draw_status( bitmap );
+	return 0;
 }

@@ -292,6 +292,7 @@ VIDEO_UPDATE( wolfpack )
 	draw_ship(bitmap, cliprect);
 	draw_torpedo(bitmap, cliprect);
 	draw_water(bitmap, cliprect);
+	return 0;
 }
 
 

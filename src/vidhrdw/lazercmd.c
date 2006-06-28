@@ -130,4 +130,5 @@ VIDEO_UPDATE( lazercmd )
 	x = marker_x - 1;             /* normal video lags marker by 1 pixel */
 	y = vert_scale(marker_y) - VERT_CHR; /* first line used as scratch pad */
 	plot_pattern(bitmap,x,y);
+	return 0;
 }

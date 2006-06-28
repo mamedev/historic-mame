@@ -622,6 +622,7 @@ VIDEO_UPDATE( tetrisp2 )
 		tilemap_draw(bitmap,cliprect, tilemap_fg,  0, 1 << 2);
 
 	tetrisp2_draw_sprites(bitmap,cliprect, spriteram16, spriteram_size, 0);
+	return 0;
 }
 
 VIDEO_UPDATE( rockntread )
@@ -706,6 +707,7 @@ VIDEO_UPDATE( rockntread )
 		tilemap_draw(bitmap,cliprect, tilemap_fg,  0, 1 << 2);
 
 	tetrisp2_draw_sprites(bitmap,cliprect, spriteram16, spriteram_size, 0);
+	return 0;
 }
 
 
@@ -917,4 +919,5 @@ static void video_update_rocknms_0(mame_bitmap *bitmap, const rectangle *cliprec
 VIDEO_UPDATE( rocknms )
 {
 	video_update_rocknms_0(bitmap, cliprect, (320-224)/2, 224);
+	return 0;
 }

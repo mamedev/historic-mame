@@ -380,4 +380,5 @@ VIDEO_UPDATE( dday )
 	{
 		copybitmap(bitmap,main_bitmap,0,0,0,0,cliprect,TRANSPARENCY_NONE,0);
 	}
+	return 0;
 }

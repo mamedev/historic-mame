@@ -287,7 +287,7 @@ if (code_pressed(KEYCODE_Z))
 	if (lordgun_whitescreen)
 	{
 		fillbitmap( bitmap, get_white_pen(), cliprect );
-		return;
+		return 0;
 	}
 
 	tilemap_set_scrollx( tilemap_0, 0, *lordgun_scroll_x_0 );
@@ -316,4 +316,5 @@ if (code_pressed(KEYCODE_Z))
 		lorddgun_calc_gun_scr(i);
 		draw_crosshair(bitmap, lordgun_gun[i].scr_x,lordgun_gun[i].scr_y, cliprect,i);
 	}
+	return 0;
 }

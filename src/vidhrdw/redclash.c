@@ -417,4 +417,5 @@ VIDEO_UPDATE( redclash )
 	redclash_draw_sprites(bitmap);
 	redclash_draw_bullets(bitmap);
 	tilemap_draw(bitmap, &Machine->visible_area[0], fg_tilemap, 0, 0);
+	return 0;
 }

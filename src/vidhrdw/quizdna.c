@@ -207,4 +207,5 @@ VIDEO_UPDATE( quizdna )
 	}
 	else
 		fillbitmap(bitmap, get_black_pen(), &Machine->visible_area[0]);
+	return 0;
 }

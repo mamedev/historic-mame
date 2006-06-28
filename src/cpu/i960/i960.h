@@ -59,5 +59,6 @@ enum {
 
 void i960_get_info(UINT32 state, union cpuinfo *info);
 void i960_noburst(void);
+void i960_stall(void);
 
 #endif

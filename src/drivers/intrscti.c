@@ -86,6 +86,7 @@ VIDEO_UPDATE(intrscti)
 	}
 
 
+	return 0;
 }
 
 static MACHINE_DRIVER_START( intrscti )

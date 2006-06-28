@@ -59,7 +59,11 @@
 #include "sound/multipcm.h"
 #include "sound/2612intf.h"
 
+extern VIDEO_START(model2);
+extern VIDEO_UPDATE(model2);
+
 UINT32 *model2_bufferram, *model2_colorxlat, *model2_workram, *model2_backup1, *model2_backup2;
+UINT32 *model2_textureram0, *model2_textureram1, *model2_lumaram;
 static UINT32 model2_intreq;
 static UINT32 model2_intena;
 static UINT32 model2_coproctl, model2_coprocnt, model2_geoctl, model2_geocnt;
@@ -71,16 +75,17 @@ static int model2_ctrlmode;
 
 
 
-#define COPRO_FIFOIN_SIZE	16
+#define COPRO_FIFOIN_SIZE	32000
 static int copro_fifoin_rpos, copro_fifoin_wpos;
 static UINT32 copro_fifoin_data[COPRO_FIFOIN_SIZE];
 static int copro_fifoin_num = 0;
 static UINT32 copro_fifoin_pop(void)
 {
 	UINT32 r;
-	if (copro_fifoin_wpos == copro_fifoin_rpos)
+	//if (copro_fifoin_wpos == copro_fifoin_rpos)
+	if (copro_fifoin_num == 0)
 	{
-		//fatalerror("Copro FIFOIN underflow (at %08X)", activecpu_get_pc());
+		fatalerror("Copro FIFOIN underflow (at %08X)", activecpu_get_pc());
 		return 0;
 	}
 	r = copro_fifoin_data[copro_fifoin_rpos++];
@@ -93,11 +98,19 @@ static UINT32 copro_fifoin_pop(void)
 	copro_fifoin_num--;
 	if (copro_fifoin_num == 0)
 	{
-		cpunum_set_input_line(2, SHARC_INPUT_FLAG0, ASSERT_LINE);
+		cpuintrf_push_context(2);
+		sharc_set_flag_input(0, ASSERT_LINE);
+		cpuintrf_pop_context();
+
+		//cpunum_set_input_line(2, SHARC_INPUT_FLAG0, ASSERT_LINE);
 	}
 	else
 	{
-		cpunum_set_input_line(2, SHARC_INPUT_FLAG0, CLEAR_LINE);
+		cpuintrf_push_context(2);
+		sharc_set_flag_input(0, CLEAR_LINE);
+		cpuintrf_pop_context();
+
+		//cpunum_set_input_line(2, SHARC_INPUT_FLAG0, CLEAR_LINE);
 	}
 
 	return r;
@@ -105,34 +118,44 @@ static UINT32 copro_fifoin_pop(void)
 
 static void copro_fifoin_push(UINT32 data)
 {
+	//if (copro_fifoin_wpos == copro_fifoin_rpos)
+	if (copro_fifoin_num == COPRO_FIFOIN_SIZE)
+	{
+		fatalerror("Copro FIFOIN overflow (at %08X)", activecpu_get_pc());
+		return;
+	}
+
+	//printf("COPRO FIFOIN at %08X, %08X, %f\n", activecpu_get_pc(), data, *(float*)&data);
+
 	copro_fifoin_data[copro_fifoin_wpos++] = data;
 	if (copro_fifoin_wpos == COPRO_FIFOIN_SIZE)
 	{
 		copro_fifoin_wpos = 0;
 	}
-	if (copro_fifoin_wpos == copro_fifoin_rpos)
-	{
-		//fatalerror("Copro FIFOIN overflow (at %08X)", activecpu_get_pc());
-		return;
-	}
+
 
 	copro_fifoin_num++;
 	// clear FIFO empty flag on SHARC
-	cpunum_set_input_line(2, SHARC_INPUT_FLAG0, CLEAR_LINE);
+	cpuintrf_push_context(2);
+	sharc_set_flag_input(0, CLEAR_LINE);
+	cpuintrf_pop_context();
+
+	//cpunum_set_input_line(2, SHARC_INPUT_FLAG0, CLEAR_LINE);
 }
 
 
-#define COPRO_FIFOOUT_SIZE	16
+#define COPRO_FIFOOUT_SIZE	32000
 static int copro_fifoout_rpos, copro_fifoout_wpos;
 static UINT32 copro_fifoout_data[COPRO_FIFOOUT_SIZE];
 static int copro_fifoout_num = 0;
-static int copro_fifoout_empty = 1;
 static UINT32 copro_fifoout_pop(void)
 {
 	UINT32 r;
-	if (copro_fifoout_wpos == copro_fifoout_rpos)
+	//if (copro_fifoout_wpos == copro_fifoout_rpos)
+	if (copro_fifoout_num == 0)
 	{
-		//fatalerror("Copro FIFOOUT underflow (at %08X)", activecpu_get_pc());
+		// Reading from empty FIFO causes the i960 to enter wait state
+		i960_stall();
 		return 0;
 	}
 	r = copro_fifoout_data[copro_fifoout_rpos++];
@@ -142,23 +165,23 @@ static UINT32 copro_fifoout_pop(void)
 		copro_fifoout_rpos = 0;
 	}
 	copro_fifoout_num--;
-	if (copro_fifoout_num == 0)
-	{
-		copro_fifoout_empty = 1;
-	}
-	else
-	{
-		copro_fifoout_empty = 0;
-	}
 
 	// set SHARC flag 1: 0 if space available, 1 if FIFO full
 	if (copro_fifoout_num == COPRO_FIFOOUT_SIZE)
 	{
-		cpunum_set_input_line(2, SHARC_INPUT_FLAG1, ASSERT_LINE);
+		cpuintrf_push_context(2);
+		sharc_set_flag_input(1, ASSERT_LINE);
+		cpuintrf_pop_context();
+
+		//cpunum_set_input_line(2, SHARC_INPUT_FLAG1, ASSERT_LINE);
 	}
 	else
 	{
-		cpunum_set_input_line(2, SHARC_INPUT_FLAG1, CLEAR_LINE);
+		cpuintrf_push_context(2);
+		sharc_set_flag_input(1, CLEAR_LINE);
+		cpuintrf_pop_context();
+
+		//cpunum_set_input_line(2, SHARC_INPUT_FLAG1, CLEAR_LINE);
 	}
 
 	return r;
@@ -166,28 +189,39 @@ static UINT32 copro_fifoout_pop(void)
 
 static void copro_fifoout_push(UINT32 data)
 {
+	//if (copro_fifoout_wpos == copro_fifoout_rpos)
+	if (copro_fifoout_num == COPRO_FIFOOUT_SIZE)
+	{
+		fatalerror("Copro FIFOOUT overflow (at %08X)", activecpu_get_pc());
+		return;
+	}
+
+	//printf("COPRO FIFOOUT %08X, %f\n", data, *(float*)&data);
+
 	copro_fifoout_data[copro_fifoout_wpos++] = data;
 	if (copro_fifoout_wpos == COPRO_FIFOOUT_SIZE)
 	{
 		copro_fifoout_wpos = 0;
 	}
-	if (copro_fifoout_wpos == copro_fifoout_rpos)
-	{
-		//fatalerror("Copro FIFOOUT overflow (at %08X)", activecpu_get_pc());
-		return;
-	}
+
 	copro_fifoout_num++;
-	// clear FIFO empty flag on i960
-	copro_fifoout_empty = 0;
 
 	// set SHARC flag 1: 0 if space available, 1 if FIFO full
 	if (copro_fifoout_num == COPRO_FIFOOUT_SIZE)
 	{
-		cpunum_set_input_line(2, SHARC_INPUT_FLAG1, ASSERT_LINE);
+		cpuintrf_push_context(2);
+		sharc_set_flag_input(1, ASSERT_LINE);
+		cpuintrf_pop_context();
+
+		//cpunum_set_input_line(2, SHARC_INPUT_FLAG1, ASSERT_LINE);
 	}
 	else
 	{
-		cpunum_set_input_line(2, SHARC_INPUT_FLAG1, CLEAR_LINE);
+		cpuintrf_push_context(2);
+		sharc_set_flag_input(1, CLEAR_LINE);
+		cpuintrf_pop_context();
+
+		//cpunum_set_input_line(2, SHARC_INPUT_FLAG1, CLEAR_LINE);
 	}
 }
 
@@ -312,39 +346,13 @@ static MACHINE_RESET(model2b)
 {
 	machine_reset_model2();
 
-	cpunum_set_input_line(2, INPUT_LINE_RESET, ASSERT_LINE);
-	cpunum_set_input_line(3, INPUT_LINE_RESET, ASSERT_LINE);
+	cpunum_set_input_line(2, INPUT_LINE_HALT, ASSERT_LINE);
+	//cpunum_set_input_line(3, INPUT_LINE_HALT, ASSERT_LINE);
 
 	// set FIFOIN empty flag on SHARC
 	cpunum_set_input_line(2, SHARC_INPUT_FLAG0, ASSERT_LINE);
 	// clear FIFOOUT buffer full flag on SHARC
 	cpunum_set_input_line(2, SHARC_INPUT_FLAG1, CLEAR_LINE);
-
-	// set FIFO empty flag on i960
-	copro_fifoout_empty = 1;
-}
-
-static VIDEO_START(model2)
-{
-	if(sys24_tile_vh_start(0x3fff))
-		return 1;
-	return 0;
-}
-
-static VIDEO_UPDATE(model2)
-{
-	sys24_tile_update();
-	fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area[0]);
-
-	sys24_tile_draw(bitmap, cliprect, 7, 0, 0);
-	sys24_tile_draw(bitmap, cliprect, 6, 0, 0);
-	sys24_tile_draw(bitmap, cliprect, 5, 0, 0);
-	sys24_tile_draw(bitmap, cliprect, 4, 0, 0);
-
-	sys24_tile_draw(bitmap, cliprect, 3, 0, 0);
-	sys24_tile_draw(bitmap, cliprect, 2, 0, 0);
-	sys24_tile_draw(bitmap, cliprect, 1, 0, 0);
-	sys24_tile_draw(bitmap, cliprect, 0, 0, 0);
 }
 
 static void chcolor(pen_t color, UINT16 data)
@@ -420,8 +428,15 @@ static READ32_HANDLER(analog_r)
 
 static READ32_HANDLER(fifoctl_r)
 {
+	UINT32 r = 0;
+
+	if (copro_fifoout_num == 0)
+	{
+		r |= 1;
+	}
+
 	// #### 1 if fifo empty, zerogun needs | 0x04 set
-	return copro_fifoout_empty | 0x04;
+	return r | 0x04;
 }
 
 static READ32_HANDLER(videoctl_r)
@@ -429,19 +444,11 @@ static READ32_HANDLER(videoctl_r)
 	return (cpu_getcurrentframe() & 1)<<2;
 }
 
-static READ32_HANDLER(geo_prg_r)
-{
-	return 0xffffffff;
-}
 
-static WRITE32_HANDLER(geo_prg_w)
-{
-	if (model2_geoctl & 0x80000000)
-	{
-		logerror("geo_prg_w: %08X:   %08X\n", model2_geocnt, data);
-		model2_geocnt++;
-	}
-}
+
+
+/*****************************************************************************/
+/* COPRO */
 
 static READ32_HANDLER(copro_prg_r)
 {
@@ -451,6 +458,19 @@ static READ32_HANDLER(copro_prg_r)
 	}
 
 	return 0xffffffff;
+}
+
+static WRITE32_HANDLER(copro_prg_w)
+{
+	if (model2_coproctl & 0x80000000)
+	{
+		logerror("copro_prg_w: %08X:   %08X\n", model2_coprocnt, data);
+		model2_coprocnt++;
+	}
+	else
+	{
+		//printf("COPRO: push %08X\n", data);
+	}
 }
 
 static WRITE32_HANDLER( copro_ctl1_w )
@@ -472,6 +492,107 @@ static WRITE32_HANDLER( copro_ctl1_w )
 	model2_coproctl = data;
 }
 
+static WRITE32_HANDLER( copro_sharc_ctl1_w )
+{
+	// did hi bit change?
+	if ((data ^ model2_coproctl) == 0x80000000)
+	{
+		if (data & 0x80000000)
+		{
+			logerror("Start copro upload\n");
+			model2_coprocnt = 0;
+		}
+		else
+		{
+			logerror("Boot copro, %d dwords\n", model2_coprocnt);
+			cpunum_set_input_line(2, INPUT_LINE_HALT, CLEAR_LINE);
+			//cpu_spinuntil_time(TIME_IN_USEC(1000));       // Give the SHARC enough time to boot itself
+		}
+	}
+
+	model2_coproctl = data;
+}
+
+static WRITE32_HANDLER(copro_function_port_w)
+{
+	UINT32 d = data & 0x800fffff;
+	UINT32 a = (offset >> 2) & 0xff;
+	d |= a << 23;
+
+	//logerror("copro_function_port_w: %08X, %08X, %08X\n", data, offset, mem_mask);
+	copro_fifoin_push(d);
+}
+
+static READ32_HANDLER(copro_sharc_fifo_r)
+{
+	if ((strcmp(Machine->gamedrv->name, "manxtt" ) == 0) || (strcmp(Machine->gamedrv->name, "srallyc" ) == 0))
+	{
+		return 8;
+	}
+	else
+	{
+		//logerror("copro_fifo_r: %08X, %08X\n", offset, mem_mask);
+		return copro_fifoout_pop();
+	}
+}
+
+static WRITE32_HANDLER(copro_sharc_fifo_w)
+{
+	if (model2_coproctl & 0x80000000)
+	{
+		cpuintrf_push_context(2);
+		sharc_external_dma_write(model2_coprocnt, data & 0xffff);
+		cpuintrf_pop_context();
+
+		model2_coprocnt++;
+	}
+	else
+	{
+		//printf("copro_fifo_w: %08X, %08X, %08X at %08X\n", data, offset, mem_mask, activecpu_get_pc());
+		copro_fifoin_push(data);
+	}
+}
+
+static int iop_write_num = 0;
+static UINT32 iop_data = 0;
+static WRITE32_HANDLER(copro_sharc_iop_w)
+{
+	if ((strcmp(Machine->gamedrv->name, "schamp" ) == 0) ||
+		(strcmp(Machine->gamedrv->name, "fvipers" ) == 0) ||
+		(strcmp(Machine->gamedrv->name, "vstriker" ) == 0) ||
+		(strcmp(Machine->gamedrv->name, "gunblade" ) == 0))
+	{
+		cpuintrf_push_context(2);
+		sharc_external_iop_write(offset, data);
+		cpuintrf_pop_context();
+	}
+	else
+	{
+		if ((iop_write_num & 1) == 0)
+		{
+			iop_data = data & 0xffff;
+		}
+		else
+		{
+			iop_data |= (data & 0xffff) << 16;
+			cpuintrf_push_context(2);
+			sharc_external_iop_write(offset, iop_data);
+			cpuintrf_pop_context();
+		}
+		iop_write_num++;
+	}
+}
+
+
+
+
+
+/*****************************************************************************/
+/* GEO */
+
+UINT32 geo_read_start_address = 0;
+UINT32 geo_write_start_address = 0;
+
 static WRITE32_HANDLER( geo_ctl1_w )
 {
 	// did hi bit change?
@@ -491,123 +612,199 @@ static WRITE32_HANDLER( geo_ctl1_w )
 	model2_geoctl = data;
 }
 
-static WRITE32_HANDLER(copro_prg_w)
-{
-	if (model2_coproctl & 0x80000000)
-	{
-		logerror("copro_prg_w: %08X:   %08X\n", model2_coprocnt, data);
-		model2_coprocnt++;
-	}
-}
 
-
-
-static WRITE32_HANDLER( copro_sharc_ctl1_w )
-{
-	// did hi bit change?
-	if ((data ^ model2_coproctl) == 0x80000000)
-	{
-		if (data & 0x80000000)
-		{
-			logerror("Start copro upload\n");
-			model2_coprocnt = 0;
-		}
-		else
-		{
-			logerror("Boot copro, %d dwords\n", model2_coprocnt);
-			cpunum_set_input_line(2, INPUT_LINE_RESET, CLEAR_LINE);
-			//cpu_spinuntil_time(TIME_IN_USEC(1000));       // Give the SHARC enough time to boot itself
-		}
-	}
-
-	model2_coproctl = data;
-}
-
+/*
 static WRITE32_HANDLER( geo_sharc_ctl1_w )
 {
-	// did hi bit change?
-	if ((data ^ model2_geoctl) == 0x80000000)
-	{
-		if (data & 0x80000000)
-		{
-			logerror("Start geo upload\n");
-			model2_geocnt = 0;
-		}
-		else
-		{
-			logerror("Boot geo, %d dwords\n", model2_geocnt);
-			cpunum_set_input_line(3, INPUT_LINE_RESET, CLEAR_LINE);
-		}
-	}
+    // did hi bit change?
+    if ((data ^ model2_geoctl) == 0x80000000)
+    {
+        if (data & 0x80000000)
+        {
+            logerror("Start geo upload\n");
+            model2_geocnt = 0;
+        }
+        else
+        {
+            logerror("Boot geo, %d dwords\n", model2_geocnt);
+            cpunum_set_input_line(3, INPUT_LINE_HALT, CLEAR_LINE);
+            //cpu_spinuntil_time(TIME_IN_USEC(1000));       // Give the SHARC enough time to boot itself
+        }
+    }
 
-	model2_geoctl = data;
+    model2_geoctl = data;
 }
 
-static READ32_HANDLER(copro_sharc_fifo_r)
+static READ32_HANDLER(geo_sharc_fifo_r)
 {
-	if ((strcmp(Machine->gamedrv->name, "manxtt" ) == 0) || (strcmp(Machine->gamedrv->name, "srallyc" ) == 0))
-	{
-		return 8;
-	}
-	else
-	{
-		logerror("copro_fifo_r: %08X, %08X\n", offset, mem_mask);
-		return copro_fifoout_pop();
-	}
+    if ((strcmp(Machine->gamedrv->name, "manxtt" ) == 0) || (strcmp(Machine->gamedrv->name, "srallyc" ) == 0))
+    {
+        return 8;
+    }
+    else
+    {
+        //logerror("copro_fifo_r: %08X, %08X\n", offset, mem_mask);
+        return 0;
+    }
 }
 
-static UINT16 copro_program_word[3];
-static WRITE32_HANDLER(copro_sharc_fifo_w)
+static WRITE32_HANDLER(geo_sharc_fifo_w)
 {
-	if (model2_coproctl & 0x80000000)
-	{
-		copro_program_word[model2_coprocnt % 3] = data & 0xffff;
-		if ((model2_coprocnt % 3) == 2)
-		{
-			UINT64 value = ((UINT64)copro_program_word[2] << 32) |
-						   ((UINT64)copro_program_word[1] << 16) |
-						   ((UINT64)copro_program_word[0]);
-			cpuintrf_push_context(2);
-			sharc_write_program_ram(0x20000 + (model2_coprocnt/3), value);
-			cpuintrf_pop_context();
-		}
+    if (model2_geoctl & 0x80000000)
+    {
+        cpuintrf_push_context(3);
+        sharc_external_dma_write(model2_geocnt, data & 0xffff);
+        cpuintrf_pop_context();
 
-		model2_coprocnt++;
-	}
-	else
-	{
-		logerror("copro_fifo_w: %08X, %08X, %08X at %08X\n", data, offset, mem_mask, activecpu_get_pc());
-		if (data != 0)
-		{
-			copro_fifoin_push(data);
-		}
-	}
+        model2_geocnt++;
+    }
+    else
+    {
+        //printf("copro_fifo_w: %08X, %08X, %08X at %08X\n", data, offset, mem_mask, activecpu_get_pc());
+    }
 }
 
-static UINT16 geo_program_word[3];
-static WRITE32_HANDLER(geo_sharc_prg_w)
+static int geo_iop_write_num = 0;
+static UINT32 geo_iop_data = 0;
+static WRITE32_HANDLER(geo_sharc_iop_w)
+{
+    if ((strcmp(Machine->gamedrv->name, "schamp" ) == 0))
+    {
+        cpuintrf_push_context(3);
+        sharc_external_iop_write(offset, data);
+        cpuintrf_pop_context();
+    }
+    else
+    {
+        if ((geo_iop_write_num & 1) == 0)
+        {
+            geo_iop_data = data & 0xffff;
+        }
+        else
+        {
+            geo_iop_data |= (data & 0xffff) << 16;
+            cpuintrf_push_context(3);
+            sharc_external_iop_write(offset, geo_iop_data);
+            cpuintrf_pop_context();
+        }
+        geo_iop_write_num++;
+    }
+}
+*/
+
+
+static void push_geo_data(UINT32 data)
+{
+	//printf("push_geo_data: %08X: %08X\n", 0x900000+geo_write_start_address, data);
+	model2_bufferram[geo_write_start_address/4] = data;
+	geo_write_start_address += 4;
+}
+
+static READ32_HANDLER(geo_prg_r)
+{
+	return 0xffffffff;
+}
+
+static WRITE32_HANDLER(geo_prg_w)
 {
 	if (model2_geoctl & 0x80000000)
 	{
-		geo_program_word[model2_geocnt % 3] = data & 0xffff;
-		if ((model2_geocnt % 3) == 2)
-		{
-			UINT64 value = ((UINT64)geo_program_word[2] << 32) |
-						   ((UINT64)geo_program_word[1] << 16) |
-						   ((UINT64)geo_program_word[0]);
-			cpuintrf_push_context(3);
-			sharc_write_program_ram(0x20000 + (model2_geocnt/3), value);
-			cpuintrf_pop_context();
-		}
-
+		//logerror("geo_prg_w: %08X:   %08X\n", model2_geocnt, data);
 		model2_geocnt++;
+	}
+	else
+	{
+		//printf("GEO: %08X: push %08X\n", geo_write_start_address, data);
+		push_geo_data(data);
 	}
 }
 
-static WRITE32_HANDLER(copro_function_port_w)
+static READ32_HANDLER( geo_r )
 {
-	logerror("copro_function_port_w: %08X, %08X, %08X\n", data, offset, mem_mask);
+	int address = offset * 4;
+	if (address == 0x2008)
+	{
+		return geo_write_start_address;
+	}
+	else if (address == 0x3008)
+	{
+		return geo_read_start_address;
+	}
+
+	fatalerror("geo_r: %08X, %08X\n", address, mem_mask);
 }
+
+static WRITE32_HANDLER( geo_w )
+{
+	int address = offset * 4;
+
+	if (address < 0x1000)
+	{
+		/*if (data & 0x80000000)
+        {
+            int i;
+            UINT32 a;
+            printf("GEO: jump to %08X\n", (data & 0xfffff));
+            a = (data & 0xfffff) / 4;
+            for (i=0; i < 4; i++)
+            {
+                printf("   %08X: %08X %08X %08X %08X\n", 0x900000+(a*4)+(i*16),
+                    model2_bufferram[a+(i*4)+0], model2_bufferram[a+(i*4)+1], model2_bufferram[a+(i*4)+2], model2_bufferram[a+(i*4)+3]);
+            }
+        }
+        else
+        {
+            int function = (address >> 4) & 0x3f;
+            switch (address & 0xf)
+            {
+                case 0x0:
+                {
+                    printf("GEO: function %02X (%08X, %08X)\n", function, address, data);
+                    break;
+                }
+
+                case 0x4:   printf("GEO: function %02X, command length %d\n", function, data & 0x3f); break;
+                case 0x8:   printf("GEO: function %02X, data length %d\n", function, data & 0x7f); break;
+            }
+        }*/
+
+		if (data & 0x80000000)
+		{
+			UINT32 r = 0;
+			r |= data & 0x800fffff;
+			r |= ((address >> 4) & 0x3f) << 23;
+			push_geo_data(r);
+		}
+		else
+		{
+			if ((address & 0xf) == 0)
+			{
+				UINT32 r = 0;
+				r |= data & 0x000fffff;
+				r |= ((address >> 4) & 0x3f) << 23;
+				push_geo_data(r);
+			}
+		}
+	}
+	else if (address == 0x1008)
+	{
+		//printf("GEO: Write Start Address: %08X\n", data);
+		geo_write_start_address = data & 0xfffff;
+	}
+	else if (address == 0x3008)
+	{
+		//printf("GEO: Read Start Address: %08X\n", data);
+		geo_read_start_address = data & 0xfffff;
+	}
+	else
+	{
+		fatalerror("geo_w: %08X = %08X\n", address, data);
+	}
+}
+
+/*****************************************************************************/
+
+
 
 
 
@@ -944,15 +1141,41 @@ static WRITE32_HANDLER( network_w )
 	}
 }
 
+static WRITE32_HANDLER( copro_w )
+{
+	int address = offset * 4;
+
+	if (address < 0x400)
+	{
+		int function = (address & 0xfff) >> 4;
+		switch (address & 0xf)
+		{
+			case 0x0:	printf("COPRO: function %02X, command %d\n", function, (data >> 23) & 0x3f); break;
+			case 0x4:	printf("COPRO: function %02X, command length %d\n", function, data & 0x3f); break;
+			case 0x8:	printf("COPRO: function %02X, data length %d\n", function, data & 0x7f); break;
+		}
+	}
+
+	//printf("COPRO: %08X = %08X\n", offset, data);
+}
+
+static WRITE32_HANDLER(mode_w)
+{
+	printf("Mode = %08X\n", data);
+}
+
 /* common map for all Model 2 versions */
 static ADDRESS_MAP_START( model2_base_mem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000000, 0x001fffff) AM_ROM AM_WRITENOP
 
 	AM_RANGE(0x00500000, 0x005fffff) AM_RAM AM_BASE(&model2_workram)
 
-	AM_RANGE(0x00800010, 0x00800013) AM_WRITENOP
-	AM_RANGE(0x008000b0, 0x008000b3) AM_WRITENOP
-	AM_RANGE(0x00804004, 0x0080400f) AM_WRITENOP	// quiet psikyo games
+	AM_RANGE(0x00800000, 0x00803fff) AM_READWRITE(geo_r, geo_w)
+	//AM_RANGE(0x00800010, 0x00800013) AM_WRITENOP
+	//AM_RANGE(0x008000b0, 0x008000b3) AM_WRITENOP
+	//AM_RANGE(0x00804004, 0x0080400f) AM_WRITENOP  // quiet psikyo games
+
+	//AM_RANGE(0x00880000, 0x00883fff) AM_WRITE(copro_w)
 
 	AM_RANGE(0x00900000, 0x0097ffff) AM_RAM AM_BASE(&model2_bufferram)
 
@@ -982,9 +1205,11 @@ static ADDRESS_MAP_START( model2_base_mem, ADDRESS_SPACE_PROGRAM, 32 )
 	// "extra" data
 	AM_RANGE(0x06000000, 0x06ffffff) AM_ROM AM_REGION(REGION_USER1, 0x1000000)
 
-	AM_RANGE(0x11000000, 0x111fffff) AM_RAM	// texture RAM 0 (2b/2c)
-	AM_RANGE(0x11200000, 0x113fffff) AM_RAM	// texture RAM 1 (2b/2c)
-	AM_RANGE(0x11400000, 0x1140ffff) AM_RAM	// polygon "luma" RAM (2b/2c)
+	AM_RANGE(0x10000000, 0x101fffff) AM_WRITE(mode_w)
+
+	AM_RANGE(0x11000000, 0x111fffff) AM_RAM	AM_BASE(&model2_textureram0)	// texture RAM 0 (2b/2c)
+	AM_RANGE(0x11200000, 0x113fffff) AM_RAM	AM_BASE(&model2_textureram1)	// texture RAM 1 (2b/2c)
+	AM_RANGE(0x11400000, 0x1140ffff) AM_RAM	AM_BASE(&model2_lumaram)		// polygon "luma" RAM (2b/2c)
 
 	AM_RANGE(0x11600000, 0x1167ffff) AM_RAM	AM_SHARE(1) // framebuffer (last bronx)
 	AM_RANGE(0x11680000, 0x116fffff) AM_RAM	AM_SHARE(1) // FB mirror
@@ -997,8 +1222,8 @@ static ADDRESS_MAP_START( model2o_mem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00200000, 0x0021ffff) AM_RAM
 	AM_RANGE(0x00220000, 0x0023ffff) AM_ROM AM_REGION(REGION_CPU1, 0x20000)
 
-	AM_RANGE(0x00804000, 0x00804003) AM_READWRITE(geo_prg_r, geo_prg_w)
-	AM_RANGE(0x00884000, 0x00884003) AM_READWRITE(copro_prg_r, copro_prg_w)
+	AM_RANGE(0x00804000, 0x00807fff) AM_READWRITE(geo_prg_r, geo_prg_w)
+	AM_RANGE(0x00884000, 0x00887fff) AM_READWRITE(copro_prg_r, copro_prg_w)
 
 	AM_RANGE(0x00980000, 0x00980003) AM_WRITE( copro_ctl1_w )
 	AM_RANGE(0x00980008, 0x0098000b) AM_WRITE( geo_ctl1_w )
@@ -1017,8 +1242,8 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( model2a_crx_mem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00200000, 0x0023ffff) AM_RAM
 
-	AM_RANGE(0x00804000, 0x00804003) AM_READWRITE(geo_prg_r, geo_prg_w)
-	AM_RANGE(0x00884000, 0x00884003) AM_READWRITE(copro_prg_r, copro_prg_w)
+	AM_RANGE(0x00804000, 0x00807fff) AM_READWRITE(geo_prg_r, geo_prg_w)
+	AM_RANGE(0x00884000, 0x00887fff) AM_READWRITE(copro_prg_r, copro_prg_w)
 
 	AM_RANGE(0x00980000, 0x00980003) AM_WRITE( copro_ctl1_w )
 	AM_RANGE(0x00980008, 0x0098000b) AM_WRITE( geo_ctl1_w )
@@ -1038,12 +1263,19 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( model2b_crx_mem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00200000, 0x0023ffff) AM_RAM
 
-	AM_RANGE(0x00804000, 0x00804003) AM_READWRITE(geo_prg_r, geo_sharc_prg_w)
+	AM_RANGE(0x00804000, 0x00807fff) AM_READWRITE(geo_prg_r, geo_prg_w)
+	//AM_RANGE(0x00804000, 0x00807fff) AM_READWRITE(geo_sharc_fifo_r, geo_sharc_fifo_w)
+	//AM_RANGE(0x00840000, 0x00840fff) AM_WRITE(geo_sharc_iop_w)
+
 	AM_RANGE(0x00880000, 0x00883fff) AM_WRITE(copro_function_port_w)
 	AM_RANGE(0x00884000, 0x00887fff) AM_READWRITE(copro_sharc_fifo_r, copro_sharc_fifo_w)
+	AM_RANGE(0x008c0000, 0x008c0fff) AM_WRITE(copro_sharc_iop_w)
 
 	AM_RANGE(0x00980000, 0x00980003) AM_WRITE( copro_sharc_ctl1_w )
-	AM_RANGE(0x00980008, 0x0098000b) AM_WRITE( geo_sharc_ctl1_w )
+
+	AM_RANGE(0x00980008, 0x0098000b) AM_WRITE( geo_ctl1_w )
+	//AM_RANGE(0x00980008, 0x0098000b) AM_WRITE( geo_sharc_ctl1_w )
+
 	AM_RANGE(0x009c0000, 0x009cffff) AM_READWRITE( model2_serial_r, model2_serial_w )
 
 	AM_RANGE(0x01c00000, 0x01c00003) AM_READWRITE(ctrl0_r, ctrl0_w)
@@ -1059,8 +1291,8 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( model2c_crx_mem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00200000, 0x0023ffff) AM_RAM
 
-	AM_RANGE(0x00804000, 0x00804003) AM_READWRITE(geo_prg_r, geo_prg_w)
-	AM_RANGE(0x00884000, 0x00884003) AM_READWRITE(copro_prg_r, copro_prg_w)
+	AM_RANGE(0x00804000, 0x00807fff) AM_READWRITE(geo_prg_r, geo_prg_w)
+	AM_RANGE(0x00884000, 0x00887fff) AM_READWRITE(copro_prg_r, copro_prg_w)
 
 	AM_RANGE(0x00980000, 0x00980003) AM_WRITE( copro_ctl1_w )
 	AM_RANGE(0x00980008, 0x0098000b) AM_WRITE( geo_ctl1_w )
@@ -1388,17 +1620,32 @@ static struct MultiPCM_interface m1_multipcm_interface_2 =
 
 static READ32_HANDLER(copro_sharc_input_fifo_r)
 {
+	//printf("SHARC FIFOIN pop at %08X\n", activecpu_get_pc());
 	return copro_fifoin_pop();
 }
 
 static WRITE32_HANDLER(copro_sharc_output_fifo_w)
 {
+	//printf("SHARC FIFOOUT push %08X\n", data);
 	copro_fifoout_push(data);
+}
+
+static READ32_HANDLER(copro_sharc_buffer_r)
+{
+	return model2_bufferram[offset & 0x7fff];
+}
+
+static WRITE32_HANDLER(copro_sharc_buffer_w)
+{
+	//printf("sharc_buffer_w: %08X at %08X, %08X, %f\n", offset, activecpu_get_pc(), data, *(float*)&data);
+	model2_bufferram[offset & 0x7fff] = data;
 }
 
 static ADDRESS_MAP_START( copro_sharc_map, ADDRESS_SPACE_DATA, 32 )
 	AM_RANGE(0x0400000, 0x0bfffff) AM_READ(copro_sharc_input_fifo_r)
 	AM_RANGE(0x0c00000, 0x13fffff) AM_WRITE(copro_sharc_output_fifo_w)
+	AM_RANGE(0x1400000, 0x1bfffff) AM_READWRITE(copro_sharc_buffer_r, copro_sharc_buffer_w)
+	AM_RANGE(0x1c00000, 0x1dfffff) AM_ROM AM_REGION(REGION_USER5, 0)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( geo_sharc_map, ADDRESS_SPACE_DATA, 32 )
@@ -1498,9 +1745,11 @@ static MACHINE_DRIVER_START( model2b )
 	MDRV_CPU_CONFIG(sharc_cfg)
 	MDRV_CPU_DATA_MAP(copro_sharc_map, 0)
 
-	MDRV_CPU_ADD(ADSP21062, 40000000)
-	MDRV_CPU_CONFIG(sharc_cfg)
-	MDRV_CPU_DATA_MAP(geo_sharc_map, 0)
+	//MDRV_CPU_ADD(ADSP21062, 40000000)
+	//MDRV_CPU_CONFIG(sharc_cfg)
+	//MDRV_CPU_DATA_MAP(geo_sharc_map, 0)
+
+	MDRV_INTERLEAVE(300)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -1642,6 +1891,8 @@ ROM_START( zerogun )
 	ROM_LOAD32_WORD("mp20301.27",   0x000000, 0x200000, CRC(52010fb2) SHA1(8dce67c6f9e48d749c64b11d4569df413dc40e07))
 	ROM_LOAD32_WORD("mp20300.25",   0x000002, 0x200000, CRC(6f042792) SHA1(75db68e57ec3fbc7af377342eef81f26fae4e1c4))
 
+	ROM_REGION( 0x800000, REGION_USER5, 0 ) // Coprocessor Data ROM
+
 	ROM_REGION( 0x100000, REGION_CPU2, 0 ) // Sound program
 	ROM_LOAD16_WORD_SWAP("ep20302.31",   0x080000,  0x80000, CRC(44ff50d2) SHA1(6ffec81042fd5708e8a5df47b63f9809f93bf0f8))
 
@@ -1669,6 +1920,8 @@ ROM_START( zerogunj )
 	ROM_LOAD32_WORD("mp20301.27",   0x000000, 0x200000, CRC(52010fb2) SHA1(8dce67c6f9e48d749c64b11d4569df413dc40e07))
 	ROM_LOAD32_WORD("mp20300.25",   0x000002, 0x200000, CRC(6f042792) SHA1(75db68e57ec3fbc7af377342eef81f26fae4e1c4))
 
+	ROM_REGION( 0x800000, REGION_USER5, 0 ) // Coprocessor Data ROM
+
 	ROM_REGION( 0x100000, REGION_CPU2, 0 ) // Sound program
 	ROM_LOAD16_WORD_SWAP("ep20302.31",   0x080000,  0x80000, CRC(44ff50d2) SHA1(6ffec81042fd5708e8a5df47b63f9809f93bf0f8))
 
@@ -1688,7 +1941,7 @@ ROM_START( gunblade )
 	ROM_LOAD32_WORD("mp18976.9",    0x800000, 0x400000, CRC(c95c15eb) SHA1(892063e91b2ed20e0600d4b188da1e9f45a19692))
 	ROM_LOAD32_WORD("mp18977.10",   0x800002, 0x400000, CRC(db8f5b6f) SHA1(c11d2c9e1e215aa7b2ebb777639c8cd651901f52))
 
-	ROM_REGION( 0x800000, REGION_CPU3, 0 ) // TGPx4 program
+	ROM_REGION( 0x800000, REGION_USER5, 0 ) // Coprocessor Data ROM
 	ROM_LOAD32_WORD("mp18986.29",   0x000000, 0x400000, CRC(04820f7b) SHA1(5eb6682399b358d77658d82e612b02b724e3f3e1))
 	ROM_LOAD32_WORD("mp18987.30",   0x000002, 0x400000, CRC(2419367f) SHA1(0a04a1049d2da486dc9dbb97b383bd24259b78c8))
 
@@ -1983,7 +2236,7 @@ ROM_START( skytargt )
 	ROM_RELOAD     (               0x1e00002, 0x080000)
 	ROM_RELOAD     (               0x1f00002, 0x080000)
 
-	ROM_REGION( 0x400000, REGION_CPU3, 0 ) // TGP program? (COPRO socket)
+	ROM_REGION( 0x800000, REGION_USER5, 0 ) // Coprocessor Data ROM
         ROM_LOAD32_WORD( "mp18420.28",   0x000000, 0x200000, CRC(92b87817) SHA1(b6949b745d0bedeecd6d0240f8911cb345c16d8d) )
         ROM_LOAD32_WORD( "mp18419.29",   0x000002, 0x200000, CRC(74542d87) SHA1(37230e96dd526fb47fcbde5778e5466d8955a969) )
 
@@ -2176,6 +2429,8 @@ ROM_START( dynmcopb )
 	ROM_LOAD32_WORD("mp20810.27",  0x0800000, 0x400000, CRC(838a10a7) SHA1(a658f1864829058b1d419e7c001e47cd0ab06a20))
 	ROM_LOAD32_WORD("mp20808.26",  0x0800002, 0x400000, CRC(706bd495) SHA1(f857b303afda6301b19d97dfe5c313126261716e))
 
+	ROM_REGION( 0x800000, REGION_USER5, 0 ) // Coprocessor Data ROM
+
 	ROM_REGION( 0x100000, REGION_CPU2, 0 ) // Sound program
 	ROM_LOAD16_WORD_SWAP("ep20811.30",   0x080000,  0x80000, CRC(a154b83e) SHA1(2640c6b6966f4a888329e583b6b713bd0e779b6b))
 
@@ -2229,7 +2484,7 @@ ROM_START( schamp )
 	ROM_RELOAD     (               0x1e00002, 0x080000)
 	ROM_RELOAD     (               0x1f00002, 0x080000)
 
-	ROM_REGION( 0x400000, REGION_CPU3, 0 ) // TGPx4 program
+	ROM_REGION( 0x800000, REGION_USER5, 0 ) // Coprocessor Data ROM
 	ROM_LOAD32_WORD("mp19015.29",   0x000000, 0x200000, CRC(c74d99e3) SHA1(9914be9925b86af6af670745b5eba3a9e4f24af9))
 	ROM_LOAD32_WORD("mp19016.30",   0x000002, 0x200000, CRC(746ae931) SHA1(a6f0f589ad174a34493ee24dc0cb509ead3aed70))
 
@@ -2424,6 +2679,8 @@ ROM_START( lastbrnj )
 	ROM_LOAD32_WORD("mp19055.27",   0x000000, 0x200000, CRC(85a57d49) SHA1(99c49fe135dc46fa861337b5bac654ae8478778a))
 	ROM_LOAD32_WORD("mp19054.25",   0x000002, 0x200000, CRC(05366277) SHA1(f618e2b9b26a1f7eccebfc8f8e17ef8ad9029be8))
 
+	ROM_REGION( 0x800000, REGION_USER5, 0 ) // Coprocessor Data ROM
+
 	ROM_REGION( 0x100000, REGION_CPU2, 0 ) // Sound program
 	ROM_LOAD16_WORD_SWAP("mp19056.31",   0x080000,  0x80000, CRC(22a22918) SHA1(baa039cd86650b6cd81f295916c4d256e60cb29c))
 
@@ -2450,6 +2707,8 @@ ROM_START( lastbrnx )
 	ROM_REGION( 0x800000, REGION_USER3, 0 ) // Textures
 	ROM_LOAD32_WORD("mp19055.27",   0x000000, 0x200000, CRC(85a57d49) SHA1(99c49fe135dc46fa861337b5bac654ae8478778a))
 	ROM_LOAD32_WORD("mp19054.25",   0x000002, 0x200000, CRC(05366277) SHA1(f618e2b9b26a1f7eccebfc8f8e17ef8ad9029be8))
+
+	ROM_REGION( 0x800000, REGION_USER5, 0 ) // Coprocessor Data ROM
 
 	ROM_REGION( 0x100000, REGION_CPU2, 0 ) // Sound program
 	ROM_LOAD16_WORD_SWAP("mp19056.31",   0x080000,  0x80000, CRC(22a22918) SHA1(baa039cd86650b6cd81f295916c4d256e60cb29c))
@@ -2522,6 +2781,8 @@ ROM_START( pltkids )
 	ROM_LOAD32_WORD("mp21275.tx3", 0x0800000, 0x400000, CRC(c4870b7c) SHA1(feb8a34acb620a36ed5aea92d22622a76d7e1b29))
 	ROM_LOAD32_WORD("mp21273.tx2", 0x0800002, 0x400000, CRC(722ec8a2) SHA1(1a1dc92488cde6284a96acce80e47a9cceccde76))
 
+	ROM_REGION( 0x800000, REGION_USER5, 0 ) // Coprocessor Data ROM
+
 	ROM_REGION( 0x100000, REGION_CPU2, 0 ) // Sound program
 	ROM_LOAD16_WORD_SWAP("ep21276.sd0", 0x080000, 0x080000, CRC(8f415bc3) SHA1(4e8e1ccbe025deca42fcf2582f3da46fa34780b7))
 
@@ -2575,7 +2836,7 @@ ROM_START( indy500 )
 	ROM_RELOAD     (               0x1e00002, 0x080000)
 	ROM_RELOAD     (               0x1f00002, 0x080000)
 
-	ROM_REGION( 0x100000, REGION_CPU3, 0 ) // TGPx4 program
+	ROM_REGION( 0x800000, REGION_USER5, 0 ) // Coprocessor Data ROM
 	ROM_LOAD32_WORD("ep18249.29",   0x000000, 0x080000, CRC(a399f023) SHA1(8b453313c16d935701ed7dbf71c1607c40aede63))
 	ROM_LOAD32_WORD("ep18250.30",   0x000002, 0x080000, CRC(7479ad52) SHA1(d453e25709cd5970cd21bdc8b4785bc8eb5a50d7))
 
@@ -2786,6 +3047,8 @@ ROM_START( doa )
 	ROM_LOAD32_WORD("mp19321.27",   0x000000, 0x400000, CRC(9c49e845) SHA1(344839640d9814263fa5ed00c2043cd6f18d5cb2))
 	ROM_LOAD32_WORD("mp19320.25",   0x000002, 0x400000, CRC(190c017f) SHA1(4c3250b9abe39fc5c8fd0fcdb5fb7ea131434516))
 
+	ROM_REGION( 0x800000, REGION_USER5, 0 ) // Coprocessor Data ROM
+
 	ROM_REGION( 0x100000, REGION_CPU2, 0 ) // Sound program
 	ROM_LOAD16_WORD_SWAP("ep19328.30",   0x080000,  0x80000, CRC(400bdbfb) SHA1(54db969fa54cf3c502d77aa6a6aaeef5d7db9f04))
 
@@ -2815,6 +3078,8 @@ ROM_START( sgt24h )
 	ROM_LOAD32_WORD("mp19153.27",   0x000000, 0x200000, CRC(136adfd0) SHA1(70ce4e609c8b003ff04518044c18d29089e6a353))
 	ROM_LOAD32_WORD("mp19152.25",   0x000002, 0x200000, CRC(363769a2) SHA1(51b2f11a01fb72e151025771f8a8496993e605c2))
 
+	ROM_REGION( 0x800000, REGION_USER5, 0 ) // Coprocessor Data ROM
+
 	ROM_REGION( 0x20000, REGION_CPU5, 0) // Communication program
 	ROM_LOAD16_WORD_SWAP("ep18643a.7",   0x000000,  0x20000, CRC(b5e048ec) SHA1(8182e05a2ffebd590a936c1359c81e60caa79c2a))
 
@@ -2838,7 +3103,7 @@ ROM_START( von )
 	ROM_LOAD32_WORD("mp18650.9",    0x800000, 0x400000, CRC(89a855b9) SHA1(5096db1da1f7e175000e89fca2a1dd3fd53030ea))
 	ROM_LOAD32_WORD("mp18651.10",   0x800002, 0x400000, CRC(f4c23107) SHA1(f65984614111b12dd414db80751efe64fcf5ef16))
 
-	ROM_REGION( 0x400000, REGION_CPU3, 0 ) // TGPx4 program
+	ROM_REGION( 0x800000, REGION_USER5, 0 ) // Coprocessor Data ROM
 	ROM_LOAD32_WORD("mp18662.29",   0x000000, 0x200000, CRC(a33d3335) SHA1(991bbe9dcbef8bfa96682e9d142623fc9b7c0879))
 	ROM_LOAD32_WORD("mp18663.30",   0x000002, 0x200000, CRC(ea74a641) SHA1(a684e13c0afe2ef3f3108ae9b73389121368fc4e))
 
@@ -2878,7 +3143,7 @@ ROM_START( vonusa )
 	ROM_LOAD32_WORD("mp18650.9",    0x800000, 0x400000, CRC(89a855b9) SHA1(5096db1da1f7e175000e89fca2a1dd3fd53030ea))
 	ROM_LOAD32_WORD("mp18651.10",   0x800002, 0x400000, CRC(f4c23107) SHA1(f65984614111b12dd414db80751efe64fcf5ef16))
 
-	ROM_REGION( 0x400000, REGION_CPU3, 0 ) // TGPx4 program
+	ROM_REGION( 0x800000, REGION_USER5, 0 ) // Coprocessor Data ROM
 	ROM_LOAD32_WORD("mp18662.29",   0x000000, 0x200000, CRC(a33d3335) SHA1(991bbe9dcbef8bfa96682e9d142623fc9b7c0879))
 	ROM_LOAD32_WORD("mp18663.30",   0x000002, 0x200000, CRC(ea74a641) SHA1(a684e13c0afe2ef3f3108ae9b73389121368fc4e))
 
@@ -2929,6 +3194,8 @@ ROM_START( vstriker )
 	ROM_REGION( 0x400000, REGION_USER3, 0 ) // Textures
 	ROM_LOAD32_WORD("mp18062.27",   0x000000, 0x200000, CRC(126e7de3) SHA1(0810364934dee8d5035cef623d01dfbacc64bf2b))
 	ROM_LOAD32_WORD("mp18061.25",   0x000002, 0x200000, CRC(c37f1c67) SHA1(c917046c2d98af17c59ceb0ea4f89d215cc0ead8))
+
+	ROM_REGION( 0x800000, REGION_USER5, 0 ) // Coprocessor Data ROM
 
 	ROM_REGION( 0x100000, REGION_CPU2, 0 ) // Sound program
 	ROM_LOAD16_WORD_SWAP("ep18072.31",   0x080000,  0x20000, CRC(73eabb58) SHA1(4f6d70d6e0d7b469c5f2527efb08f208f4aa017e))
@@ -3055,7 +3322,7 @@ ROM_START( fvipers )
 	ROM_RELOAD     (               0x1e00002, 0x080000)
 	ROM_RELOAD     (               0x1f00002, 0x080000)
 
-	ROM_REGION( 0x400000, REGION_CPU3, 0 ) // TGPx4 program
+	ROM_REGION( 0x800000, REGION_USER5, 0 ) // Coprocessor Data ROM
 	ROM_LOAD32_WORD("mp18622.29",   0x000000, 0x200000, CRC(c74d99e3) SHA1(9914be9925b86af6af670745b5eba3a9e4f24af9))
 	ROM_LOAD32_WORD("mp18623.30",   0x000002, 0x200000, CRC(746ae931) SHA1(a6f0f589ad174a34493ee24dc0cb509ead3aed70))
 
@@ -3459,6 +3726,7 @@ GAME( 1995, vf2,             0, model2a, model2, 0, ROT0, "Sega", "Virtua Fighte
 GAME( 1995, vf2b,          vf2, model2a, model2, 0, ROT0, "Sega", "Virtua Fighter 2 (ver B)", GAME_NOT_WORKING|GAME_IMPERFECT_GRAPHICS )
 GAME( 1995, vf2o,          vf2, model2a, model2, 0, ROT0, "Sega", "Virtua Fighter 2 (original)", GAME_NOT_WORKING|GAME_IMPERFECT_GRAPHICS )
 GAME( 1995, vcop2,           0, model2a, model2, 0, ROT0, "Sega", "Virtua Cop 2", GAME_NOT_WORKING|GAME_IMPERFECT_GRAPHICS )
+GAME( 1995, skytargt,        0, model2a, model2, 0, ROT0, "Sega", "Sky Target", GAME_NOT_WORKING|GAME_IMPERFECT_GRAPHICS )
 GAME( 1996, dynamcop,        0, model2a, model2, genprot, ROT0, "Sega", "Dynamite Cop (Model 2A)", GAME_NOT_WORKING|GAME_IMPERFECT_GRAPHICS )
 GAME( 1996, dyndeka2, dynamcop, model2a, model2, genprot, ROT0, "Sega", "Dynamite Deka 2 (Japan, Model 2A)", GAME_NOT_WORKING|GAME_IMPERFECT_GRAPHICS )
 GAME( 1996, doaa,          doa, model2a, model2, doa, ROT0, "Sega", "Dead or Alive (Model 2A)", GAME_NOT_WORKING|GAME_IMPERFECT_GRAPHICS )
@@ -3471,7 +3739,6 @@ GAME( 1994, vstrikra, vstriker, model2b, model2, 0, ROT0, "Sega", "Virtua Strike
 GAME( 1995, fvipers,         0, model2b, model2, 0, ROT0, "Sega", "Fighting Vipers", GAME_NOT_WORKING|GAME_IMPERFECT_GRAPHICS )
 GAME( 1995, gunblade,        0, model2b, model2, 0, ROT0, "Sega", "Gunblade NY", GAME_NOT_WORKING|GAME_IMPERFECT_GRAPHICS )
 GAME( 1995, indy500,         0, model2b, model2, 0, ROT0, "Sega", "Indianapolis 500", GAME_NOT_WORKING|GAME_IMPERFECT_GRAPHICS )
-GAME( 1995, skytargt,        0, model2b, model2, 0, ROT0, "Sega", "Sky Target", GAME_NOT_WORKING|GAME_IMPERFECT_GRAPHICS )
 GAME( 1996, dynmcopb, dynamcop, model2b, model2, genprot, ROT0, "Sega", "Dynamite Cop (Model 2B)", GAME_NOT_WORKING|GAME_IMPERFECT_GRAPHICS )
 GAME( 1996, schamp,          0, model2b, model2, 0, ROT0, "Sega", "Sonic The Fighters", GAME_NOT_WORKING|GAME_IMPERFECT_GRAPHICS )
 GAME( 1996, lastbrnx,        0, model2b, model2, 0, ROT0, "Sega", "Last Bronx (Export, Rev A)", GAME_NOT_WORKING|GAME_IMPERFECT_GRAPHICS )

@@ -411,6 +411,7 @@ VIDEO_UPDATE( fromance )
 
 	tilemap_draw(bitmap,cliprect, bg_tilemap, 0, 0);
 	tilemap_draw(bitmap,cliprect, fg_tilemap, 0, 0);
+	return 0;
 }
 
 
@@ -425,4 +426,5 @@ VIDEO_UPDATE( pipedrm )
 
 	draw_sprites(bitmap,cliprect, 0);
 	draw_sprites(bitmap,cliprect, 1);
+	return 0;
 }

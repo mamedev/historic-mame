@@ -130,4 +130,5 @@ VIDEO_UPDATE( sengokmj )
 	draw_sprites(bitmap,cliprect, 0);
 	draw_sprites(bitmap,cliprect, 3);
 	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
+	return 0;
 }

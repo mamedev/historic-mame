@@ -223,4 +223,5 @@ VIDEO_UPDATE( ashnojoe )
 	tilemap_draw(bitmap,cliprect,joetilemap3,0,0);
 	tilemap_draw(bitmap,cliprect,joetilemap, 0,0);
 
+	return 0;
 }

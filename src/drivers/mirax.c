@@ -81,6 +81,7 @@ VIDEO_UPDATE(mirax)
 		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 	}
 #endif
+	return 0;
 }
 
 

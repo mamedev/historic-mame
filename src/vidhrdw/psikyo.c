@@ -600,6 +600,7 @@ VIDEO_UPDATE( psikyo )
 	if (layers_ctrl & 4)
 		psikyo_draw_sprites(bitmap,cliprect,(spr_ctrl & 4 ? 0 : 15));
 
+	return 0;
 }
 
 VIDEO_EOF( psikyo )

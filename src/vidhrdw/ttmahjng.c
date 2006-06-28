@@ -230,6 +230,7 @@ VIDEO_UPDATE( ttmahjng )
 
 	copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 	copybitmap(bitmap,tmpbitmap1,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_COLOR,0);
+	return 0;
 }
 
 /***************************************************************************

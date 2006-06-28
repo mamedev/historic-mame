@@ -157,6 +157,7 @@ VIDEO_START(starspnr)
 VIDEO_UPDATE(starspnr)
 {
 //  tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
+	return 0;
 }
 
 /* Memory Map */

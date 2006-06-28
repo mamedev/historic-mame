@@ -618,6 +618,7 @@ VIDEO_UPDATE( slikshot )
 		else
 			draw_crosshair(bitmap, 48, (crosshair_min + crosshair_max) / 2 + (curxpos * (crosshair_max - crosshair_min) / 0x100), cliprect, 0);
 	}
+	return 0;
 }
 
 

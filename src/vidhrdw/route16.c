@@ -314,6 +314,7 @@ VIDEO_UPDATE( route16 )
 		else
 			copybitmap(bitmap,tmpbitmap1,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_COLOR,0);
 	}
+	return 0;
 }
 
 /***************************************************************************

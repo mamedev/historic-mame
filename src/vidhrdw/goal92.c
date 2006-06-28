@@ -189,6 +189,7 @@ VIDEO_UPDATE( goal92 )
 	draw_sprites(bitmap,cliprect,0);
 	draw_sprites(bitmap,cliprect,3);
 	tilemap_draw(bitmap,cliprect,text_layer,0,0);
+	return 0;
 }
 
 VIDEO_EOF( goal92 )

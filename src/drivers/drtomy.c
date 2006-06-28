@@ -107,6 +107,7 @@ VIDEO_UPDATE( drtomy )
 	tilemap_draw(bitmap,cliprect,tilemap_bg,0,0);
 	tilemap_draw(bitmap,cliprect,tilemap_fg,0,0);
 	drtomy_draw_sprites(bitmap,cliprect);
+	return 0;
 }
 
 WRITE16_HANDLER( drtomy_vram_fg_w )

@@ -272,4 +272,5 @@ VIDEO_UPDATE( finalizr )
 					&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 		}
 	}
+	return 0;
 }

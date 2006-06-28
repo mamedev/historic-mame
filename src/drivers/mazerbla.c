@@ -238,6 +238,7 @@ VIDEO_UPDATE( test_vcu )
 		}
 	}
 
+	return 0;
 }
 #endif
 
@@ -260,6 +261,7 @@ VIDEO_UPDATE( greatgun )
 	copybitmap(bitmap,tmpbitmaps[2],0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_PEN, Machine->pens[color_base] );
 	copybitmap(bitmap,tmpbitmaps[1],0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_PEN, Machine->pens[color_base] );
 	copybitmap(bitmap,tmpbitmaps[0],0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_PEN, Machine->pens[color_base] );
+	return 0;
 }
 
 VIDEO_UPDATE( mazerbla )
@@ -279,6 +281,7 @@ VIDEO_UPDATE( mazerbla )
 	copybitmap(bitmap,tmpbitmaps[2],0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_PEN, Machine->pens[0] );
 	copybitmap(bitmap,tmpbitmaps[1],0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_PEN, Machine->pens[0] ); //haircross
 	copybitmap(bitmap,tmpbitmaps[0],0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_PEN, Machine->pens[0] ); //sprites
+	return 0;
 }
 
 

@@ -249,4 +249,5 @@ VIDEO_UPDATE( welltris )
 	welltris_drawbackground(bitmap, cliprect);
 	tilemap_draw(bitmap, cliprect, char_tilemap, 0, 0);
 	welltris_draw_sprites(bitmap, cliprect);
+	return 0;
 }

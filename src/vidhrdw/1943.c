@@ -262,4 +262,5 @@ VIDEO_UPDATE( 1943 )
 	if (sc1on) tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 	if (objon) c1943_draw_sprites(bitmap, cliprect, 1);
 	if (chon)  tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
+	return 0;
 }

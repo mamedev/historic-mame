@@ -195,4 +195,5 @@ VIDEO_UPDATE( dassault )
 	/* Draw sprites - two sprite generators, with selectable priority */
 	dassault_drawsprites(bitmap,deco16_priority);
 	deco16_tilemap_1_draw(bitmap,cliprect,0,0);
+	return 0;
 }

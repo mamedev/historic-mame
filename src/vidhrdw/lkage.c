@@ -216,4 +216,5 @@ VIDEO_UPDATE( lkage )
 		tilemap_draw( bitmap,cliprect,tx_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
 	}
 	draw_sprites( bitmap,cliprect );
-} /* VIDEO_UPDATE( lkage ) */
+	return 0;
+}

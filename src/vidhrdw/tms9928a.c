@@ -503,7 +503,7 @@ VIDEO_UPDATE( tms9928a )
        if there are no changes (sprite collision bit is lost) */
     tms.oldStatusReg = tms.StatusReg;
     tms.Change = 0;
-	return;
+	return 0;
 }
 
 int TMS9928A_interrupt () {

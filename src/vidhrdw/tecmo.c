@@ -262,4 +262,5 @@ VIDEO_UPDATE( tecmo )
 	tilemap_draw(bitmap,cliprect,tx_tilemap,0,4);
 
 	draw_sprites(bitmap,cliprect);
+	return 0;
 }

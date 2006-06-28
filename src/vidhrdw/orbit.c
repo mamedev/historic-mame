@@ -117,4 +117,5 @@ VIDEO_UPDATE( orbit )
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 
 	orbit_draw_sprites(bitmap, cliprect);
+	return 0;
 }

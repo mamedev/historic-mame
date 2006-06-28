@@ -64,26 +64,22 @@ WRITE8_HANDLER( tbowl_bg2videoram_w )
 
 WRITE8_HANDLER (tbowl_bgxscroll_lo)
 {
-tbowl_xscroll = (tbowl_xscroll & 0xff00) | data;
-tilemap_set_scrollx(bg_tilemap, 0, tbowl_xscroll );
+	tbowl_xscroll = (tbowl_xscroll & 0xff00) | data;
 }
 
 WRITE8_HANDLER (tbowl_bgxscroll_hi)
 {
-tbowl_xscroll = (tbowl_xscroll & 0x00ff) | (data << 8);
-tilemap_set_scrollx(bg_tilemap, 0, tbowl_xscroll );
+	tbowl_xscroll = (tbowl_xscroll & 0x00ff) | (data << 8);
 }
 
 WRITE8_HANDLER (tbowl_bgyscroll_lo)
 {
-tbowl_yscroll = (tbowl_yscroll & 0xff00) | data;
-tilemap_set_scrolly(bg_tilemap, 0, tbowl_yscroll );
+	tbowl_yscroll = (tbowl_yscroll & 0xff00) | data;
 }
 
 WRITE8_HANDLER (tbowl_bgyscroll_hi)
 {
-tbowl_yscroll = (tbowl_yscroll & 0x00ff) | (data << 8);
-tilemap_set_scrolly(bg_tilemap, 0, tbowl_yscroll );
+	tbowl_yscroll = (tbowl_yscroll & 0x00ff) | (data << 8);
 }
 
 /* Middle BG Layer (bg2) Tilemaps */
@@ -111,29 +107,25 @@ WRITE8_HANDLER( tbowl_bgvideoram_w )
 
 WRITE8_HANDLER (tbowl_bg2xscroll_lo)
 {
-tbowl_bg2xscroll = (tbowl_bg2xscroll & 0xff00) | data;
-tilemap_set_scrollx(bg2_tilemap, 0, tbowl_bg2xscroll );
+	tbowl_bg2xscroll = (tbowl_bg2xscroll & 0xff00) | data;
 }
 
 WRITE8_HANDLER (tbowl_bg2xscroll_hi)
 {
-tbowl_bg2xscroll = (tbowl_bg2xscroll & 0x00ff) | (data << 8);
-tilemap_set_scrollx(bg2_tilemap, 0, tbowl_bg2xscroll );
+	tbowl_bg2xscroll = (tbowl_bg2xscroll & 0x00ff) | (data << 8);
 }
 
 WRITE8_HANDLER (tbowl_bg2yscroll_lo)
 {
-tbowl_bg2yscroll = (tbowl_bg2yscroll & 0xff00) | data;
-tilemap_set_scrolly(bg2_tilemap, 0, tbowl_bg2yscroll );
+	tbowl_bg2yscroll = (tbowl_bg2yscroll & 0xff00) | data;
 }
 
 WRITE8_HANDLER (tbowl_bg2yscroll_hi)
 {
-tbowl_bg2yscroll = (tbowl_bg2yscroll & 0x00ff) | (data << 8);
-tilemap_set_scrolly(bg2_tilemap, 0, tbowl_bg2yscroll );
+	tbowl_bg2yscroll = (tbowl_bg2yscroll & 0x00ff) | (data << 8);
 }
 
-static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
+static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect, int xscroll)
 {
 	int offs;
 	static const UINT8 layout[8][8] =
@@ -173,6 +165,9 @@ static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 				{
 					int sx = xpos + 8*(flipx?(sizex-1-x):x);
 					int sy = ypos + 8*(flipy?(sizey-1-y):y);
+
+					sx -= xscroll;
+
 					drawgfx(bitmap,Machine->gfx[3],
 							code + layout[y][x],
 							color,
@@ -235,9 +230,35 @@ VIDEO_START( tbowl )
 
 VIDEO_UPDATE( tbowl )
 {
-	fillbitmap(bitmap,0x100,cliprect); /* is there a register controling the colour? looks odd when screen is blank */
-	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
-	draw_sprites(bitmap,cliprect);
-	tilemap_draw(bitmap,cliprect,bg2_tilemap,0,0);
-	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
+	if (screen == 0)
+	{
+		tilemap_set_scrollx(bg_tilemap,  0, tbowl_xscroll );
+		tilemap_set_scrolly(bg_tilemap,  0, tbowl_yscroll );
+		tilemap_set_scrollx(bg2_tilemap, 0, tbowl_bg2xscroll );
+		tilemap_set_scrolly(bg2_tilemap, 0, tbowl_bg2yscroll );
+		tilemap_set_scrollx(tx_tilemap,  0, 0 );
+		tilemap_set_scrolly(tx_tilemap,  0, 0 );
+
+		fillbitmap(bitmap,0x100,cliprect); /* is there a register controling the colour? looks odd when screen is blank */
+		tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+		draw_sprites(bitmap,cliprect, 0);
+		tilemap_draw(bitmap,cliprect,bg2_tilemap,0,0);
+		tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
+	}
+	else if (screen ==1)
+	{
+		tilemap_set_scrollx(bg_tilemap,  0, tbowl_xscroll+32*8 );
+		tilemap_set_scrolly(bg_tilemap,  0, tbowl_yscroll );
+		tilemap_set_scrollx(bg2_tilemap, 0, tbowl_bg2xscroll+32*8 );
+		tilemap_set_scrolly(bg2_tilemap, 0, tbowl_bg2yscroll );
+		tilemap_set_scrollx(tx_tilemap,  0, 32*8 );
+		tilemap_set_scrolly(tx_tilemap,  0, 0 );
+
+		fillbitmap(bitmap,0x100,cliprect); /* is there a register controling the colour? looks odd when screen is blank */
+		tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+		draw_sprites(bitmap,cliprect, 32*8);
+		tilemap_draw(bitmap,cliprect,bg2_tilemap,0,0);
+		tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
+	}
+	return 0;
 }

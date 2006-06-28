@@ -800,5 +800,6 @@ VIDEO_UPDATE( wgp )
 		}
 	}
 #endif
+	return 0;
 }
 

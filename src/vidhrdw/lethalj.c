@@ -204,4 +204,5 @@ VIDEO_UPDATE( lethalj )
 
 	if (cliprect->max_y == Machine->visible_area[0].max_y)
 		blank_palette = 0;
+	return 0;
 }

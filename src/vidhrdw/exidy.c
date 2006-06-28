@@ -529,4 +529,5 @@ VIDEO_UPDATE( exidy )
 
 	/* indicate that we already updated the background */
 	update_complete = 1;
+	return 0;
 }

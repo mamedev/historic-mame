@@ -145,6 +145,7 @@ VIDEO_UPDATE(twins)
 			count++;
 		}
 	}
+	return 0;
 }
 
 

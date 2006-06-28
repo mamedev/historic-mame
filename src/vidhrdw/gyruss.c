@@ -226,6 +226,7 @@ VIDEO_UPDATE( gyruss )
 					8*sx,8*sy,
 					&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 	}
+	return 0;
 }
 
 

@@ -643,6 +643,7 @@ VIDEO_UPDATE( macross )
 	draw_sprites(bitmap,cliprect,1);
 	draw_sprites(bitmap,cliprect,0);
 	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
+	return 0;
 }
 
 extern UINT16 *mcu_shared_ram;
@@ -784,6 +785,7 @@ VIDEO_UPDATE( tdragon )
 	draw_sprites(bitmap,cliprect,1);
 	draw_sprites(bitmap,cliprect,0);
 	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
+	return 0;
 }
 
 VIDEO_UPDATE( hachamf )
@@ -798,6 +800,7 @@ VIDEO_UPDATE( hachamf )
 	draw_sprites(bitmap,cliprect,1);
 	draw_sprites(bitmap,cliprect,0);
 	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
+	return 0;
 }
 
 VIDEO_UPDATE( manybloc )
@@ -810,6 +813,7 @@ VIDEO_UPDATE( manybloc )
 	manybloc_draw_sprites(bitmap,cliprect,1);
 	manybloc_draw_sprites(bitmap,cliprect,0);
 	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
+	return 0;
 }
 
 VIDEO_UPDATE( tharrier )
@@ -822,6 +826,7 @@ VIDEO_UPDATE( tharrier )
 	tharrier_draw_sprites(bitmap,cliprect,1);
 	tharrier_draw_sprites(bitmap,cliprect,0);
 	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
+	return 0;
 }
 
 VIDEO_UPDATE( gunnail )
@@ -835,6 +840,7 @@ VIDEO_UPDATE( gunnail )
 	tilemap_set_scrolly(bg_tilemap,0,gunnail_scrolly);
 
 	video_update_macross(screen,bitmap,cliprect);
+	return 0;
 }
 
 VIDEO_UPDATE( bioship )
@@ -886,6 +892,7 @@ VIDEO_UPDATE( bioship )
 	draw_sprites(bitmap,cliprect,1);
 	draw_sprites(bitmap,cliprect,0);
 	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
+	return 0;
 }
 
 VIDEO_UPDATE( strahl )
@@ -899,6 +906,7 @@ VIDEO_UPDATE( strahl )
 	draw_sprites(bitmap,cliprect,1);
 	draw_sprites(bitmap,cliprect,0);
 	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
+	return 0;
 }
 
 VIDEO_UPDATE( bjtwin )
@@ -910,6 +918,7 @@ VIDEO_UPDATE( bjtwin )
 	draw_sprites(bitmap,cliprect,2);
 	draw_sprites(bitmap,cliprect,1);
 	draw_sprites(bitmap,cliprect,0);
+	return 0;
 }
 
 VIDEO_EOF( nmk )

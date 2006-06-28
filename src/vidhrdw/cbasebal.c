@@ -187,4 +187,5 @@ VIDEO_UPDATE( cbasebal )
 
 	if (text_on)
 		tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
+	return 0;
 }

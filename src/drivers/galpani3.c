@@ -106,6 +106,7 @@ VIDEO_UPDATE(galpani3)
 	fillbitmap(bitmap, get_black_pen(), cliprect);
 
 	skns_drawsprites (bitmap,cliprect);
+	return 0;
 }
 
 

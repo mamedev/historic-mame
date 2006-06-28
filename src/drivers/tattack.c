@@ -44,6 +44,7 @@ VIDEO_UPDATE( tattack )
 {
 	tilemap_mark_all_tiles_dirty(tmap);
 	tilemap_draw(bitmap,cliprect,tmap, 0,0);
+	return 0;
 }
 
 VIDEO_START( tattack )

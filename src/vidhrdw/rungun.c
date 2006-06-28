@@ -144,4 +144,5 @@ VIDEO_UPDATE(rng)
 
 	tilemap_mark_all_tiles_dirty(ttl_tilemap);
 	tilemap_draw(bitmap, cliprect, ttl_tilemap, 0, 0);
+	return 0;
 }

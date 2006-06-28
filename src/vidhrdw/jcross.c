@@ -196,4 +196,5 @@ VIDEO_UPDATE( jcross )
 	draw_sprites( bitmap,cliprect, sprite_scrollx+23, sprite_scrolly+1 );
 	tilemap_draw( bitmap,cliprect,tx_tilemap,0 ,0);
 	draw_status( bitmap,cliprect );
+	return 0;
 }

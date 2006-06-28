@@ -77,6 +77,7 @@ VIDEO_UPDATE( mogura )
 	tilemap_set_scrollx(mogura_tilemap,0, -128);
 	tilemap_draw(bitmap,&clip,mogura_tilemap,0,0);
 
+	return 0;
 }
 
 WRITE8_HANDLER( mogura_tileram_w )

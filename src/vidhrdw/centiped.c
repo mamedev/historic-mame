@@ -408,6 +408,7 @@ VIDEO_UPDATE( centiped )
 		drawgfx(bitmap, Machine->gfx[1], code, color, flipx, flipy, x, y,
 				&spriteclip, TRANSPARENCY_PENS, penmask[color & 0x3f]);
 	}
+	return 0;
 }
 
 
@@ -452,6 +453,7 @@ VIDEO_UPDATE( warlords )
 		drawgfx(bitmap, Machine->gfx[1], code, color, flipx, flipy, x, y,
 				cliprect, TRANSPARENCY_PEN, 0);
 	}
+	return 0;
 }
 
 
@@ -482,4 +484,5 @@ VIDEO_UPDATE( bullsdrt )
 		drawgfx(bitmap, Machine->gfx[1], code, color & 0x3f, 1, flipy, x, y,
 				&spriteclip, TRANSPARENCY_PEN, 0);
 	}
+	return 0;
 }

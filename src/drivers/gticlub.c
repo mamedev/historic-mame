@@ -278,6 +278,7 @@ VIDEO_UPDATE( gticlub )
 	draw_7segment_led(bitmap, 9, 3, led_reg1);
 
 	cpunum_set_input_line(2, SHARC_INPUT_FLAG1, ASSERT_LINE);
+	return 0;
 }
 
 /******************************************************************/

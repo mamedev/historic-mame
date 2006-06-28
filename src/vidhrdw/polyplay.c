@@ -121,4 +121,5 @@ VIDEO_UPDATE( polyplay )
 	{
 		if (dirtycharacter[offs] == 2) dirtycharacter[offs] = 0;
 	}
+	return 0;
 }

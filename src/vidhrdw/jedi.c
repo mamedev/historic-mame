@@ -287,7 +287,7 @@ VIDEO_UPDATE( jedi )
 	if (video_off)
 	{
 		fillbitmap(bitmap, Machine->pens[1024], &Machine->visible_area[0]);
-		return;
+		return 0;
 	}
 
 	/* Return of the Jedi has a peculiar playfield/motion object priority system. That */
@@ -400,4 +400,5 @@ VIDEO_UPDATE( jedi )
 		bounds.max_y = y + (tall ? 31 : 15);
 		fillbitmap(mobitmap, 0, &bounds);
     }
+	return 0;
 }

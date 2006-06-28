@@ -210,4 +210,5 @@ VIDEO_UPDATE( goldstar )
 		copyscrollbitmap(bitmap,tmpbitmap3,0,0,64,scrolly,&visible3,TRANSPARENCY_NONE,0);
                 copybitmap(bitmap,tmpbitmap,0,0,0,0,&visible3,TRANSPARENCY_PEN,0);
 	}
+	return 0;
 }

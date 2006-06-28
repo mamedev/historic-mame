@@ -155,6 +155,7 @@ VIDEO_UPDATE(egghunt)
 {
 	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 	draw_sprites(bitmap,cliprect);
+	return 0;
 }
 
 WRITE8_HANDLER( egghunt_gfx_banking_w )

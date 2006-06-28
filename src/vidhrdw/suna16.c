@@ -217,4 +217,5 @@ VIDEO_UPDATE( suna16 )
 	/* I believe background is black */
 	fillbitmap(bitmap,get_black_pen(),&Machine->visible_area[0]);
 	suna16_draw_sprites(bitmap);
+	return 0;
 }

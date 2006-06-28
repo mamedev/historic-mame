@@ -307,4 +307,5 @@ VIDEO_UPDATE( redalert )
 	/* copy the character mapped graphics */
 	copybitmap(bitmap,tmpbitmap,flip,flip,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 
+	return 0;
 }

@@ -164,4 +164,5 @@ VIDEO_UPDATE( copsnrob )
             mask2 <<= 1;
         }
     }
+	return 0;
 }

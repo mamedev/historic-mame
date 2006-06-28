@@ -218,6 +218,7 @@ VIDEO_UPDATE( othldrby )
 	for (layer = 0;layer < 3;layer++)
 		tilemap_draw(bitmap,cliprect,bg_tilemap[layer],3,0);
 	draw_sprites(bitmap,cliprect,3);
+	return 0;
 }
 
 VIDEO_EOF( othldrby )

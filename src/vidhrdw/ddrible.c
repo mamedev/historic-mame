@@ -254,4 +254,5 @@ VIDEO_UPDATE( ddrible )
 	ddribble_draw_sprites(bitmap,cliprect,ddrible_spriteram_1,0x07d,2,ddribble_vregs[0][4] & 0x08);
 	ddribble_draw_sprites(bitmap,cliprect,ddrible_spriteram_2,0x140,3,ddribble_vregs[1][4] & 0x08);
 	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
+	return 0;
 }

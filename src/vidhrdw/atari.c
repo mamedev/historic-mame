@@ -799,6 +799,7 @@ VIDEO_UPDATE( atari )
 			ui_draw_text(atari_frame_message, 0, height - 10);
 		}
 	}
+	return 0;
 }
 
 static renderer_function antic_renderer = antic_mode_0_xx;

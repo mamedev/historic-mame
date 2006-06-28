@@ -181,6 +181,7 @@ VIDEO_UPDATE( shadfrce )
     shadfrce_videoregs[6]);
 */
 
+	return 0;
 }
 
 VIDEO_EOF( shadfrce )

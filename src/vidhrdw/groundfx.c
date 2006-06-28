@@ -284,4 +284,5 @@ VIDEO_UPDATE( groundfx )
 	}
 
 	TC0480SCP_tilemap_draw(bitmap,cliprect,layer[4],0,0);	/* TC0480SCP text layer */
+	return 0;
 }

@@ -249,6 +249,7 @@ VIDEO_UPDATE( blktiger )
 
 	if (chon)
 		tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
+	return 0;
 }
 
 VIDEO_EOF( blktiger )

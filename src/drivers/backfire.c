@@ -225,6 +225,7 @@ VIDEO_UPDATE(backfire)
 			ui_popup( "unknown right priority %08x", backfire_right_priority[0] );
 		}
 	}
+	return 0;
 }
 
 

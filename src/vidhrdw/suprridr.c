@@ -211,4 +211,5 @@ VIDEO_UPDATE( suprridr )
 		}
 		drawgfx(bitmap, Machine->gfx[2], code, color, fx, fy, x, y, cliprect, TRANSPARENCY_PEN, 0);
 	}
+	return 0;
 }

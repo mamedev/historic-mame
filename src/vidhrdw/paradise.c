@@ -269,7 +269,7 @@ if (code_pressed(KEYCODE_Z))
 	fillbitmap(bitmap,get_black_pen(),cliprect);
 
 	if (!(paradise_priority & 4))	/* Screen blanking */
-		return;
+		return 0;
 
 	if (paradise_priority & 1)
 		if (layers_ctrl&16)	draw_sprites(bitmap,cliprect);
@@ -290,6 +290,7 @@ if (code_pressed(KEYCODE_Z))
 		if (!(paradise_priority & 1))
 			if (layers_ctrl&16)	draw_sprites(bitmap,cliprect);
 	}
+	return 0;
 }
 
 /* no pix layer, no tilemap_0, different priority bits */
@@ -298,7 +299,7 @@ VIDEO_UPDATE( torus )
 	fillbitmap(bitmap,get_black_pen(),cliprect);
 
 	if (!(paradise_priority & 2))	/* Screen blanking */
-		return;
+		return 0;
 
 	if (paradise_priority & 1)
 		draw_sprites(bitmap,cliprect);
@@ -319,6 +320,7 @@ VIDEO_UPDATE( torus )
 		if (!(paradise_priority & 1))
 			draw_sprites(bitmap,cliprect);
 	}
+	return 0;
 }
 
 /* I don't know how the priority bits work on this one */
@@ -329,6 +331,7 @@ VIDEO_UPDATE( madball )
 	tilemap_draw(bitmap,cliprect, tilemap_1, 0,0);
 	tilemap_draw(bitmap,cliprect, tilemap_2, 0,0);
 	draw_sprites(bitmap,cliprect);
+	return 0;
 }
 
 

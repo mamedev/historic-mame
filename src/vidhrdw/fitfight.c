@@ -166,4 +166,5 @@ VIDEO_UPDATE(fitfight)
             fof_800000[0], fof_900000[0],
             fof_a00000[0] );
 */
+	return 0;
 }

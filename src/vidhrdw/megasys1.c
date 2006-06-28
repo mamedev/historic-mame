@@ -1020,4 +1020,5 @@ VIDEO_UPDATE( megasys1 )
 
 	if (active_layers & 0x08)
 		draw_sprites(bitmap,cliprect);
+	return 0;
 }

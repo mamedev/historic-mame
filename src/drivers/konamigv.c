@@ -846,6 +846,7 @@ static VIDEO_UPDATE( kdeadeye )
 
 	draw_crosshair( bitmap, kdeadeye_crosshair_x( 3 ), kdeadeye_crosshair_y( 4 ), cliprect, 0 );
 	draw_crosshair( bitmap, kdeadeye_crosshair_x( 5 ), kdeadeye_crosshair_y( 6 ), cliprect, 1 );
+	return 0;
 }
 
 static DRIVER_INIT( kdeadeye )

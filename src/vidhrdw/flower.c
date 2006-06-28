@@ -189,6 +189,7 @@ VIDEO_UPDATE( flower )
 
 	tilemap_draw(bitmap,cliprect,flower_text_tilemap,0,0);
 	tilemap_draw(bitmap,&myclip,flower_text_right_tilemap,0,0);
+	return 0;
 }
 
 WRITE8_HANDLER( flower_textram_w )

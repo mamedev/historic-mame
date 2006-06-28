@@ -452,6 +452,7 @@ VIDEO_UPDATE( bigtwin )
 		draw_bitmap(bitmap);
 	draw_sprites(bitmap,cliprect,4);
 	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
+	return 0;
 }
 
 VIDEO_UPDATE( excelsr )
@@ -463,6 +464,7 @@ VIDEO_UPDATE( excelsr )
 		draw_bitmap(bitmap);
 	tilemap_draw(bitmap,cliprect,tx_tilemap,0,4);
 	draw_sprites(bitmap,cliprect,2);
+	return 0;
 }
 
 VIDEO_UPDATE( wbeachvl )
@@ -487,6 +489,7 @@ VIDEO_UPDATE( wbeachvl )
 	tilemap_draw(bitmap,cliprect,fg_tilemap,0,2);
 	draw_sprites(bitmap,cliprect,0);
 	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
+	return 0;
 }
 
 VIDEO_UPDATE( hrdtimes )
@@ -505,4 +508,5 @@ VIDEO_UPDATE( hrdtimes )
 	{
 		fillbitmap(bitmap,get_black_pen(),cliprect);
 	}
+	return 0;
 }

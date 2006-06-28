@@ -800,6 +800,7 @@ VIDEO_UPDATE(skns)
 
 
 	skns_drawsprites(bitmap, cliprect);
+	return 0;
 }
 
 VIDEO_EOF(skns)

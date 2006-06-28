@@ -419,4 +419,5 @@ VIDEO_UPDATE( taitoair )
 			fill_poly(bitmap, &q);
 		}
 	}
+	return 0;
 }

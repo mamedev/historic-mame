@@ -176,4 +176,5 @@ VIDEO_UPDATE( sprcros2 )
 	tilemap_draw( bitmap,cliprect,sprcros2_bgtilemap,0,0 );
 	sprcros2_draw_sprites(bitmap,cliprect);
 	tilemap_draw( bitmap,cliprect,sprcros2_fgtilemap,0,0 );
+	return 0;
 }

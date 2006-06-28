@@ -200,4 +200,5 @@ VIDEO_UPDATE( ssozumo )
 	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
 	tilemap_draw(bitmap, &Machine->visible_area[0], fg_tilemap, 0, 0);
 	ssozumo_draw_sprites(bitmap);
+	return 0;
 }

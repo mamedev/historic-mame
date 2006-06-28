@@ -197,4 +197,5 @@ VIDEO_UPDATE( lemmings )
 	lemmings_drawsprites(bitmap,sprite_triple_buffer_1,1,0x2000);
 	tilemap_draw(bitmap,cliprect,vram_tilemap,0,0);
 	lemmings_drawsprites(bitmap,sprite_triple_buffer_0,0,0x2000);
+	return 0;
 }

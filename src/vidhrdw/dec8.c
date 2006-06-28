@@ -451,6 +451,7 @@ VIDEO_UPDATE( cobracom )
 	tilemap_draw(bitmap,cliprect,dec8_pf1_tilemap,0,0);
 	draw_sprites2(bitmap,cliprect,2);
 	tilemap_draw(bitmap,cliprect,dec8_fix_tilemap,0,0);
+	return 0;
 }
 
 /******************************************************************************/
@@ -541,6 +542,7 @@ VIDEO_UPDATE( ghostb )
 	tilemap_draw(bitmap,cliprect,dec8_pf0_tilemap,0,0);
 	draw_sprites1(bitmap,cliprect,0);
 	tilemap_draw(bitmap,cliprect,dec8_fix_tilemap,0,0);
+	return 0;
 }
 
 static void get_ghostb_fix_tile_info( int tile_index )
@@ -585,6 +587,7 @@ VIDEO_UPDATE( oscar )
 	draw_sprites2(bitmap,cliprect,0);
 	tilemap_draw(bitmap,cliprect,dec8_pf0_tilemap,TILEMAP_FRONT | 1,0);
 	tilemap_draw(bitmap,cliprect,dec8_fix_tilemap,0,0);
+	return 0;
 }
 
 static void get_oscar_fix_tile_info( int tile_index )
@@ -627,6 +630,7 @@ VIDEO_UPDATE( lastmiss )
 	tilemap_draw(bitmap,cliprect,dec8_pf0_tilemap,0,0);
 	draw_sprites1(bitmap,cliprect,0);
 	tilemap_draw(bitmap,cliprect,dec8_fix_tilemap,0,0);
+	return 0;
 }
 
 VIDEO_UPDATE( shackled )
@@ -640,6 +644,7 @@ VIDEO_UPDATE( shackled )
 	draw_sprites1(bitmap,cliprect,0);
 	tilemap_draw(bitmap,cliprect,dec8_pf0_tilemap,TILEMAP_FRONT | 1,0);
 	tilemap_draw(bitmap,cliprect,dec8_fix_tilemap,0,0);
+	return 0;
 }
 
 static UINT32 lastmiss_scan_rows(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
@@ -716,6 +721,7 @@ VIDEO_UPDATE( srdarwin )
 	tilemap_draw(bitmap,cliprect,dec8_pf0_tilemap,TILEMAP_FRONT,0);
 	srdarwin_drawsprites(bitmap,cliprect,1);
 	tilemap_draw(bitmap,cliprect,dec8_fix_tilemap,0,0);
+	return 0;
 }
 
 static void get_srdarwin_fix_tile_info( int tile_index )
@@ -779,6 +785,7 @@ VIDEO_UPDATE( gondo )
 	tilemap_draw(bitmap,cliprect,dec8_pf0_tilemap,TILEMAP_FRONT,0);
 	draw_sprites1(bitmap,cliprect,1);
 	tilemap_draw(bitmap,cliprect,dec8_fix_tilemap,0,0);
+	return 0;
 }
 
 VIDEO_UPDATE( garyoret )
@@ -790,6 +797,7 @@ VIDEO_UPDATE( garyoret )
 	draw_sprites1(bitmap,cliprect,0);
 	tilemap_draw(bitmap,cliprect,dec8_pf0_tilemap,1,0);
 	tilemap_draw(bitmap,cliprect,dec8_fix_tilemap,0,0);
+	return 0;
 }
 
 static void get_gondo_fix_tile_info( int tile_index )

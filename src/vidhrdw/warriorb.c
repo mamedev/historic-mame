@@ -140,4 +140,5 @@ VIDEO_UPDATE( warriorb )
 
 	// draw top(text) layer
 	TC0100SCN_tilemap_draw(bitmap,cliprect,screen,layer[2],0,0);
+	return 0;
 }

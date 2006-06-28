@@ -182,4 +182,5 @@ VIDEO_UPDATE( funkybee )
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 	funkybee_draw_sprites(bitmap, cliprect);
 	funkybee_draw_columns(bitmap, cliprect);
+	return 0;
 }

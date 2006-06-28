@@ -322,4 +322,5 @@ VIDEO_UPDATE( kangaroo )
 		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
 		copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_COLOR,16);
 	}
+	return 0;
 }

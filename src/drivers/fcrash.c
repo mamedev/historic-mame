@@ -183,6 +183,7 @@ VIDEO_UPDATE( fcrash )
 	fcrash_render_layer(bitmap,cliprect,1,0);
 	fcrash_render_high_layer(bitmap,cliprect,1); /* prepare mask for sprites */
 	fcrash_render_layer(bitmap,cliprect,0,0);
+	return 0;
 }
 
 #define CPS1_COINAGE_1 \

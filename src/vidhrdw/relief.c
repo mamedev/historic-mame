@@ -176,4 +176,5 @@ VIDEO_UPDATE( relief )
 					mo[x] = 0;
 				}
 		}
+	return 0;
 }

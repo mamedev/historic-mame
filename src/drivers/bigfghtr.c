@@ -266,6 +266,7 @@ VIDEO_UPDATE( bigfghtr )
 	tilemap_draw( bitmap, cliprect, tx_tilemap, 0, 0);
 	if( sprite_enable ) draw_sprites( bitmap, cliprect, 0 );
 
+	return 0;
 }
 
 

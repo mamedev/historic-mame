@@ -368,6 +368,7 @@ if (sy&1)
 		/* step1f: Adder to train and to RAM 13, CLOCK carry */
 		train[10] = RAM1[0x33] = ((add2) & 0x0f);
 		carry = ((add1+add2+carry) & 0x10) >> 4;
+	return 0;
 }
 else
 {
@@ -629,6 +630,7 @@ else
 #endif
 		}
 	}
+	return 0;
 }
 
 

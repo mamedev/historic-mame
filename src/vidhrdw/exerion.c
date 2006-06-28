@@ -450,4 +450,5 @@ VIDEO_UPDATE( exerion )
 				exerion_cocktail_flip, exerion_cocktail_flip, x, y,
 				cliprect, TRANSPARENCY_PEN, 0);
 		}
+	return 0;
 }

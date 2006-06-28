@@ -216,6 +216,7 @@ VIDEO_UPDATE( tnzs )
 							tnzs_vdcram + 0x0000, /*      y : f000 */
 							tnzs_objram + 0x1000, /*   ctrl : d000 */
 							tnzs_objram + 0x1200); /* color : d200 */
+	return 0;
 }
 
 VIDEO_EOF( tnzs )

@@ -99,6 +99,7 @@ VIDEO_UPDATE ( pipeline)
 {
 	tilemap_draw(bitmap,cliprect,tilemap1, 0,0);
 	tilemap_draw(bitmap,cliprect,tilemap2, 0,0);
+	return 0;
 }
 
 

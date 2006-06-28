@@ -160,6 +160,7 @@ VIDEO_UPDATE(go2000)
 			count++;
 		}
 	}
+	return 0;
 }
 static const gfx_decode gfxdecodeinfo[] =
 {

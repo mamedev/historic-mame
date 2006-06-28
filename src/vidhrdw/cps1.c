@@ -1958,6 +1958,7 @@ if (0 && code_pressed(KEYCODE_Z))
 		cps1_dump_video();
 	}
 #endif
+	return 0;
 }
 
 VIDEO_EOF( cps1 )

@@ -348,4 +348,5 @@ VIDEO_UPDATE( pacland )
 				plot_pixel(bitmap,x,y,pen);
 		}
 	}
+	return 0;
 }

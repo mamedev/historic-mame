@@ -387,6 +387,7 @@ static void screenrefresh(mame_bitmap *bitmap,const rectangle *clip)
 VIDEO_UPDATE( battlera )
 {
 	screenrefresh(bitmap,cliprect);
+	return 0;
 }
 
 /******************************************************************************/

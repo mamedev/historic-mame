@@ -250,6 +250,7 @@ VIDEO_UPDATE( bloodbro )
 	tilemap_draw(bitmap,cliprect,fg_tilemap,0,1);
 	bloodbro_draw_sprites(bitmap,cliprect);
 	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
+	return 0;
 }
 
 VIDEO_UPDATE( weststry )
@@ -265,6 +266,7 @@ VIDEO_UPDATE( weststry )
 	tilemap_draw(bitmap,cliprect,fg_tilemap,0,1);
 	weststry_draw_sprites(bitmap,cliprect);
 	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
+	return 0;
 }
 
 
@@ -281,6 +283,7 @@ VIDEO_UPDATE( skysmash )
 	tilemap_draw(bitmap,cliprect,fg_tilemap,0,1);
 	bloodbro_draw_sprites(bitmap,cliprect);
 	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
+	return 0;
 }
 
 

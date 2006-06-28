@@ -153,4 +153,5 @@ VIDEO_UPDATE( taxidrvr )
 				sx*8,sy*8,
 				cliprect,TRANSPARENCY_PEN,0);
 	}
+	return 0;
 }

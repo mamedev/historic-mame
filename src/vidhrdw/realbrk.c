@@ -354,7 +354,7 @@ if ( code_pressed(KEYCODE_Z) )
 	if (disable_video)
 	{
 		fillbitmap(bitmap,get_black_pen(),cliprect);
-		return;
+		return 0;
 	}
 	else
 		fillbitmap(bitmap,Machine->pens[realbrk_vregs[0xc/2] & 0x7fff],cliprect);
@@ -367,4 +367,5 @@ if ( code_pressed(KEYCODE_Z) )
 	if (layers_ctrl & 4)	tilemap_draw(bitmap,cliprect,tilemap_2,0,0);
 
 //  ui_popup("%04x",realbrk_vregs[0x8/2]);
+	return 0;
 }

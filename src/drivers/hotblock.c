@@ -151,6 +151,7 @@ VIDEO_UPDATE(hotblock)
 	}
 
 
+	return 0;
 }
 
 

@@ -54,6 +54,7 @@ typedef struct _win_video_config win_video_config;
 struct _win_video_config
 {
 	// performance options
+	int					fastforward;				// fast forward?
 	int					autoframeskip;				// autoframeskip?
 	int					frameskip;					// explicit frameskip
 	int					throttle;					// throttle speed?
@@ -66,6 +67,7 @@ struct _win_video_config
 	int					windowed;					// start windowed?
 	int					keepaspect;					// start windowed?
 	int					numscreens;					// number of screens
+	int					layerconfig;				// default configuration of layers
 
 	// per-window configuration
 	win_window_config	window[MAX_WINDOWS];		// configuration data per-window

@@ -1303,6 +1303,7 @@ VIDEO_UPDATE( captaven )
 		tilemap_draw(bitmap,cliprect,pf1_tilemap,0,0);
 	else
 		tilemap_draw(bitmap,cliprect,pf1a_tilemap,0,0);
+	return 0;
 }
 
 VIDEO_UPDATE( dragngun )
@@ -1387,6 +1388,7 @@ VIDEO_UPDATE( dragngun )
 		tilemap_draw(bitmap,cliprect,pf1_tilemap,0,0);
 	else
 		tilemap_draw(bitmap,cliprect,pf1a_tilemap,0,0);
+	return 0;
 }
 
 VIDEO_UPDATE( fghthist )
@@ -1433,6 +1435,7 @@ VIDEO_UPDATE( fghthist )
 	tilemap_draw(bitmap,cliprect,pf2_tilemap,0,16);
 	fghthist_drawsprites(bitmap, buffered_spriteram32,3,0, 0xf);
 	tilemap_draw(bitmap,cliprect,pf1_tilemap,0,0);
+	return 0;
 }
 
 /*
@@ -1661,4 +1664,5 @@ VIDEO_UPDATE( nslasher )
 	mixDualAlphaSprites(bitmap, Machine->gfx[3], Machine->gfx[4], alphaTilemap);
 
 	tilemap_draw(bitmap,cliprect,pf1_tilemap,0,0);
+	return 0;
 }

@@ -754,6 +754,7 @@ VIDEO_UPDATE( tubep )
 
 	/* copy the character mapped graphics */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_PEN, Machine->pens[0] );
+	return 0;
 }
 
 
@@ -926,5 +927,6 @@ VIDEO_UPDATE( rjammer )
 	/* copy the character mapped graphics */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_PEN, Machine->pens[0] );
 
+	return 0;
 }
 

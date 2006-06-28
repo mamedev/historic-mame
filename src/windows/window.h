@@ -70,6 +70,7 @@ struct _win_window_info
 	render_target *		target;
 	int					targetview;
 	int					targetorient;
+	int					targetlayerconfig;
 	const render_primitive_list *primlist;
 
 	// drawing data

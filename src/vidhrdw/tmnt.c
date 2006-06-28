@@ -635,6 +635,7 @@ VIDEO_UPDATE( mia )
 	tilemap_draw(bitmap,cliprect,K052109_tilemap[1],0,0);
 	if ((priorityflag & 1) == 0) K051960_sprites_draw(bitmap,cliprect,0,0);
 	tilemap_draw(bitmap,cliprect,K052109_tilemap[0],0,0);
+	return 0;
 }
 
 VIDEO_UPDATE( tmnt )
@@ -646,6 +647,7 @@ VIDEO_UPDATE( tmnt )
 	tilemap_draw(bitmap,cliprect,K052109_tilemap[1],0,0);
 	if ((priorityflag & 1) == 0) K051960_sprites_draw(bitmap,cliprect,0,0);
 	tilemap_draw(bitmap,cliprect,K052109_tilemap[0],0,0);
+	return 0;
 }
 
 
@@ -674,6 +676,7 @@ VIDEO_UPDATE( punkshot )
 	tilemap_draw(bitmap,cliprect,K052109_tilemap[sorted_layer[2]],0,4);
 
 	K051960_sprites_draw(bitmap,cliprect,-1,-1);
+	return 0;
 }
 
 
@@ -703,6 +706,7 @@ VIDEO_UPDATE( lgtnfght )
 	tilemap_draw(bitmap,cliprect,K052109_tilemap[sorted_layer[2]],0,4);
 
 	K053245_sprites_draw(0, bitmap,cliprect);
+	return 0;
 }
 
 static int glfgreat_pixel;
@@ -762,6 +766,7 @@ VIDEO_UPDATE( glfgreat )
 	}
 
 	K053245_sprites_draw(0, bitmap,cliprect);
+	return 0;
 }
 
 VIDEO_UPDATE( tmnt2 )
@@ -811,6 +816,7 @@ VIDEO_UPDATE( tmnt2 )
 	}
 
 	video_update_lgtnfght(screen,bitmap,cliprect);
+	return 0;
 }
 
 
@@ -840,6 +846,7 @@ VIDEO_UPDATE( thndrx2 )
 	tilemap_draw(bitmap,cliprect,K052109_tilemap[sorted_layer[2]],0,4);
 
 	K051960_sprites_draw(bitmap,cliprect,-1,-1);
+	return 0;
 }
 
 

@@ -226,6 +226,7 @@ VIDEO_UPDATE( acommand )
 		draw_led(bitmap, 3, 53, (led0 & 0xff00) >> 8);
 		ui_popup("%04x",led0);
 	#endif
+	return 0;
 }
 
 

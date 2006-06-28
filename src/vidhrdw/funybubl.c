@@ -118,4 +118,5 @@ VIDEO_UPDATE(funybubl)
         }
     }
 */
+	return 0;
 }

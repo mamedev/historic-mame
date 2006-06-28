@@ -155,4 +155,5 @@ VIDEO_UPDATE( gijoe )
 	K056832_tilemap_draw(bitmap,cliprect, layer[3], 0, 8);
 
 	K053247_sprites_draw(bitmap, cliprect);
+	return 0;
 }

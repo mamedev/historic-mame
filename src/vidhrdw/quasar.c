@@ -347,4 +347,5 @@ VIDEO_UPDATE( quasar )
             }
         }
     }
+	return 0;
 }

@@ -210,4 +210,5 @@ VIDEO_UPDATE( xxmissio )
 		}
 	}
 
+	return 0;
 }

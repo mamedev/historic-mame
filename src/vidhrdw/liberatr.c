@@ -402,4 +402,5 @@ VIDEO_UPDATE( liberatr )
 
 	/* draw the planet */
 	liberatr_draw_planet(bitmap);
+	return 0;
 }

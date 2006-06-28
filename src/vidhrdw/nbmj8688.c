@@ -716,6 +716,7 @@ VIDEO_UPDATE( mbmj8688 )
 	{
 		fillbitmap(bitmap, Machine->pens[0], 0);
 	}
+	return 0;
 }
 
 
@@ -752,4 +753,5 @@ VIDEO_UPDATE( mbmj8688_LCD )
 				plot_pixel(bitmap,16 + (8*x+b),16+y,(data & (1<<b)) ? 0x0000 : 0x18ff);
 		}
 	}
+	return 0;
 }

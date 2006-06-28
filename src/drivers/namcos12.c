@@ -1377,6 +1377,7 @@ static VIDEO_UPDATE( coh700g )
 
 	s12_draw_crosshair( bitmap, "IN3", "IN4", cliprect, 0 );
 	s12_draw_crosshair( bitmap, "IN5", "IN6", cliprect, 1 );
+	return 0;
 }
 
 static DRIVER_INIT( namcos12 )

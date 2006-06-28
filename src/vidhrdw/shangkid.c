@@ -175,6 +175,7 @@ VIDEO_UPDATE( shangkid )
 	tilemap_draw( bitmap,cliprect,background,0,0 );
 	draw_sprites( bitmap,cliprect );
 	tilemap_draw( bitmap,cliprect,background,1,0 ); /* high priority tiles */
+	return 0;
 }
 
 
@@ -301,4 +302,5 @@ VIDEO_UPDATE( dynamski )
 	dynamski_draw_background( bitmap,cliprect, 0 );
 	dynamski_draw_sprites( bitmap,cliprect );
 	dynamski_draw_background( bitmap,cliprect, 1 );
+	return 0;
 }

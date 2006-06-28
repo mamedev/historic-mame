@@ -56,7 +56,7 @@ static VIDEO_UPDATE( xtheball )
 	if (tms34010_io_display_blanked(0))
 	{
 		fillbitmap(bitmap, get_black_pen(), cliprect);
-		return;
+		return 0;
 	}
 
 	/* loop over scanlines */
@@ -90,6 +90,7 @@ static VIDEO_UPDATE( xtheball )
 			}
 		}
 	}
+	return 0;
 }
 
 

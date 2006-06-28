@@ -120,4 +120,5 @@ VIDEO_UPDATE( asterix )
 	K053245_sprites_draw(0, bitmap, cliprect);
 
 	K056832_tilemap_draw(bitmap, cliprect, 2, 0, 0);
+	return 0;
 }

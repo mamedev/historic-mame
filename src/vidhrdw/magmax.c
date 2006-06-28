@@ -369,4 +369,5 @@ VIDEO_UPDATE( magmax )
 					&Machine->visible_area[0], TRANSPARENCY_PEN, 15);
 		}
 	}
+	return 0;
 }

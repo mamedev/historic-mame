@@ -289,4 +289,5 @@ VIDEO_UPDATE( skyfox )
 	fillbitmap(bitmap,Machine->pens[255],&Machine->visible_area[0]);	// the bg is black
 	skyfox_draw_background(bitmap);
 	skyfox_draw_sprites(bitmap);
+	return 0;
 }

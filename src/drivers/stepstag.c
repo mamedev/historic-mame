@@ -119,6 +119,7 @@ VIDEO_START(stepstag)
 VIDEO_UPDATE(stepstag)
 {
 
+	return 0;
 }
 
 static MACHINE_DRIVER_START( stepstag )

@@ -266,7 +266,7 @@ ui_draw_text(buf,50,8*6);
 }
 #endif
 
-
+	return 0;
 }
 
 

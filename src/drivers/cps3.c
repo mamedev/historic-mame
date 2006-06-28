@@ -257,6 +257,7 @@ VIDEO_START(cps3)
 VIDEO_UPDATE(cps3)
 {
 
+	return 0;
 }
 
 static ADDRESS_MAP_START( cps3_map, ADDRESS_SPACE_PROGRAM, 32 )

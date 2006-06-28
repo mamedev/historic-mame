@@ -135,6 +135,7 @@ VIDEO_UPDATE( psikyo4 )
 		fillbitmap(bitmap, Machine->pens[0x1001], cliprect);
 		psikyo4_drawsprites(bitmap, cliprect, 0x2000);
 	}
+	return 0;
 }
 
 VIDEO_START( psikyo4 )

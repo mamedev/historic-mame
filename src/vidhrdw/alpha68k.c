@@ -153,6 +153,7 @@ VIDEO_UPDATE( alpha68k_II )
 	draw_sprites(bitmap,cliprect,0,0x0000,0x07c0);
 //ZT
 	tilemap_draw(bitmap,cliprect,fix_tilemap,0,0);
+	return 0;
 }
 
 /******************************************************************************/
@@ -305,6 +306,7 @@ VIDEO_UPDATE( alpha68k_V )
 	}
 
 	tilemap_draw(bitmap,cliprect,fix_tilemap,0,0);
+	return 0;
 }
 
 VIDEO_UPDATE( alpha68k_V_sb )
@@ -325,6 +327,7 @@ VIDEO_UPDATE( alpha68k_V_sb )
 	draw_sprites_V(bitmap,cliprect,0,0x0000,0x07c0,0x4000,0x8000,0x3fff);
 
 	tilemap_draw(bitmap,cliprect,fix_tilemap,0,0);
+	return 0;
 }
 
 /******************************************************************************/
@@ -366,6 +369,7 @@ VIDEO_UPDATE( alpha68k_I )
 	draw_sprites2(bitmap,cliprect,2,0x0800,yshift);
 	draw_sprites2(bitmap,cliprect,3,0x0c00,yshift);
 	draw_sprites2(bitmap,cliprect,1,0x0400,yshift);
+	return 0;
 }
 //ZT
 /******************************************************************************/
@@ -506,6 +510,7 @@ VIDEO_UPDATE( kyros )
 	kyros_draw_sprites(bitmap,cliprect,2,0x0800);
 	kyros_draw_sprites(bitmap,cliprect,3,0x0c00);
 	kyros_draw_sprites(bitmap,cliprect,1,0x0400);
+	return 0;
 }
 
 /******************************************************************************/
@@ -562,4 +567,5 @@ VIDEO_UPDATE( sstingry )
 	sstingry_draw_sprites(bitmap,cliprect,2,0x0800);
 	sstingry_draw_sprites(bitmap,cliprect,3,0x0c00);
 	sstingry_draw_sprites(bitmap,cliprect,1,0x0400);
+	return 0;
 }

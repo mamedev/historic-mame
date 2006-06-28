@@ -277,6 +277,7 @@ VIDEO_UPDATE( kungfut )
 	draw_foreground(bitmap, 0);
 	draw_sprites(bitmap, spriteram_2, 4, &Machine->visible_area[0]);
 	draw_sprites(bitmap, spriteram  , 5, &Machine->visible_area[0]);
+	return 0;
 }
 
 VIDEO_UPDATE( wiz )
@@ -294,6 +295,7 @@ VIDEO_UPDATE( wiz )
 
 	draw_sprites(bitmap, spriteram_2, 6,    visible_area);
 	draw_sprites(bitmap, spriteram  , bank, visible_area);
+	return 0;
 }
 
 
@@ -304,4 +306,5 @@ VIDEO_UPDATE( stinger )
 	draw_foreground(bitmap, 1);
 	draw_sprites(bitmap, spriteram_2, 4, &Machine->visible_area[0]);
 	draw_sprites(bitmap, spriteram  , 5, &Machine->visible_area[0]);
+	return 0;
 }

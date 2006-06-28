@@ -148,4 +148,5 @@ VIDEO_UPDATE( badlands )
 					mo[x] = 0;
 				}
 		}
+	return 0;
 }

@@ -211,4 +211,5 @@ VIDEO_UPDATE( gridlee )
 				ypos = 239 - ypos;
 		}
 	}
+	return 0;
 }

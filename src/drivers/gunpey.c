@@ -58,6 +58,7 @@ VIDEO_START( gunpey )
 VIDEO_UPDATE( gunpey )
 {
 
+	return 0;
 }
 
 static WRITE8_HANDLER(unk_w)

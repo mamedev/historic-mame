@@ -396,6 +396,7 @@ VIDEO_UPDATE(mystwarr)
 	sprite_colorbase = K055555_get_palette_index(4)<<5;
 
 	konamigx_mixer(bitmap, cliprect, 0, 0, 0, 0, blendmode);
+	return 0;
 }
 
 VIDEO_UPDATE(metamrph)
@@ -412,6 +413,7 @@ VIDEO_UPDATE(metamrph)
 	sprite_colorbase = K055555_get_palette_index(4)<<4;
 
 	konamigx_mixer(bitmap, cliprect, 0, GXSUB_K053250 | GXSUB_4BPP, 0, 0, 0);
+	return 0;
 }
 
 VIDEO_UPDATE(martchmp)
@@ -434,6 +436,7 @@ VIDEO_UPDATE(martchmp)
 	blendmode = (oinprion==0xef && K054338_read_register(K338_REG_PBLEND)) ? ((1<<16|GXMIX_BLEND_FORCE)<<2) : 0;
 
 	konamigx_mixer(bitmap, cliprect, 0, 0, 0, 0, blendmode);
+	return 0;
 }
 
 
@@ -596,4 +599,5 @@ VIDEO_UPDATE(dadandrn) /* and gaiapols */
 	}
 
 	konamigx_mixer(bitmap, cliprect, (roz_enable) ? ult_936_tilemap : 0, rozmode, 0, 0, 0);
+	return 0;
 }

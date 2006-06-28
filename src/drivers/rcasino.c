@@ -122,6 +122,7 @@ VIDEO_START(rcasino)
 VIDEO_UPDATE(rcasino)
 {
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
+	return 0;
 }
 
 static WRITE8_HANDLER( rcasino_port_10_w )

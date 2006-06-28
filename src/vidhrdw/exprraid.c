@@ -153,4 +153,5 @@ VIDEO_UPDATE( exprraid )
 	exprraid_draw_sprites(bitmap);
 	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 1, 0);
 	tilemap_draw(bitmap, &Machine->visible_area[0], fg_tilemap, 0, 0);
+	return 0;
 }

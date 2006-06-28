@@ -1492,6 +1492,7 @@ VIDEO_UPDATE(model1)
 	sys24_tile_draw(bitmap, cliprect, 2, 0, 0);
 	sys24_tile_draw(bitmap, cliprect, 1, 0, 0);
 	sys24_tile_draw(bitmap, cliprect, 0, 0, 0);
+	return 0;
 }
 
 VIDEO_EOF(model1)

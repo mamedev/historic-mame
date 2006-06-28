@@ -344,6 +344,7 @@ VIDEO_UPDATE( taitol )
 	}
 	else
 		fillbitmap(bitmap,Machine->pens[0],cliprect);
+	return 0;
 }
 
 

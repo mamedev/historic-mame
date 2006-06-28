@@ -546,4 +546,5 @@ VIDEO_UPDATE( tecmo16 )
 
 	/* mix & blend the tilemaps and sprites into a 32-bit bitmap */
 	blendbitmaps(bitmap, tile_bitmap_bg, tile_bitmap_fg, sprite_bitmap, 0, 0, cliprect);
+	return 0;
 }

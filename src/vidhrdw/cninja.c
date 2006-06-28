@@ -425,6 +425,7 @@ VIDEO_UPDATE( cninja )
 	deco16_tilemap_2_draw(bitmap,cliprect,TILEMAP_FRONT,4);
 	cninja_drawsprites(bitmap,cliprect);
 	deco16_tilemap_1_draw(bitmap,cliprect,0,0);
+	return 0;
 }
 
 VIDEO_UPDATE( edrandy )
@@ -443,6 +444,7 @@ VIDEO_UPDATE( edrandy )
 	deco16_tilemap_2_draw(bitmap,cliprect,0,4);
 	cninja_drawsprites(bitmap,cliprect);
 	deco16_tilemap_1_draw(bitmap,cliprect,0,0);
+	return 0;
 }
 
 VIDEO_UPDATE( robocop2 )
@@ -490,6 +492,7 @@ VIDEO_UPDATE( robocop2 )
 
 	robocop2_drawsprites(bitmap,cliprect);
 	deco16_tilemap_1_draw(bitmap,cliprect,0,0);
+	return 0;
 }
 
 VIDEO_UPDATE( mutantf )
@@ -534,4 +537,5 @@ VIDEO_UPDATE( mutantf )
 		mutantf_drawsprites(bitmap,cliprect,buffered_spriteram16,3);
 	}
 	deco16_tilemap_1_draw(bitmap,cliprect,0,0);
+	return 0;
 }

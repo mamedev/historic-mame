@@ -295,4 +295,5 @@ VIDEO_UPDATE( wwfwfest )
 		wwfwfest_drawsprites(bitmap,cliprect);
 		tilemap_draw(bitmap,cliprect,fg0_tilemap,0,0);
 	}
+	return 0;
 }

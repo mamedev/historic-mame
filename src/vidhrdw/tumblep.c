@@ -99,4 +99,5 @@ VIDEO_UPDATE(tumblep)
 	deco16_tilemap_1_draw(bitmap,cliprect,0,0);
 
 	tumblepop_drawsprites(bitmap,cliprect);
+	return 0;
 }

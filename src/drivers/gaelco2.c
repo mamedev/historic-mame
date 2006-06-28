@@ -21,13 +21,11 @@
 #include "driver.h"
 #include "cpu/m68000/m68000.h"
 #include "sound/gaelco.h"
+#include "render.h"
 
 extern UINT16 *gaelco_sndregs;
 extern UINT16 *gaelco2_vregs;
 extern UINT16 *snowboar_protection;
-
-/* comment this line to display 2 monitors for the dual monitor games */
-//#define ONE_MONITOR
 
 /* from machine/gaelco2.c */
 DRIVER_INIT( alighunt );
@@ -712,17 +710,10 @@ PORT_START	/* DSW #2 + 1P INPUTS */
 	PORT_DIPNAME( 0x0800, 0x0800, "Coin Slot" )
 	PORT_DIPSETTING(      0x0800, "Independent" )
 	PORT_DIPSETTING(      0x0000, "Common" )
-#ifdef ONE_MONITOR
-	PORT_DIPNAME( 0x3000, 0x3000, "Monitor Type" )
-	PORT_DIPSETTING(      0x0000, "Double monitor, 4 players" )
-	PORT_DIPSETTING(      0x2000, "Single monitor, 4 players" )
-	PORT_DIPSETTING(      0x3000, "Single monitor, 2 players" )
-#else
 	PORT_DIPNAME( 0x3000, 0x0000, "Monitor Type" )
 	PORT_DIPSETTING(      0x0000, "Double monitor, 4 players" )
 	PORT_DIPSETTING(      0x2000, "Single monitor, 4 players" )
 	PORT_DIPSETTING(      0x3000, "Single monitor, 2 players" )
-#endif
 	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x4000, DEF_STR( On ) )
@@ -817,20 +808,23 @@ static MACHINE_DRIVER_START( touchgo )
 	MDRV_CPU_PROGRAM_MAP(touchgo_readmem, touchgo_writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold, 1)
 
-	MDRV_FRAMES_PER_SECOND(59.1)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
-	MDRV_SCREEN_SIZE(64*16, 32*16)
-#ifdef ONE_MONITOR
-	MDRV_VISIBLE_AREA(0, 480-1, 16, 256-1)
-#else
-	MDRV_VISIBLE_AREA(0, 2*480-1, 16, 256-1)
-//  MDRV_ASPECT_RATIO(8,3)
-#endif
 	MDRV_GFXDECODE(gfxdecodeinfo_0x0400000)
 	MDRV_PALETTE_LENGTH(4096*16 - 16)	/* game's palette is 4096 but we allocate 15 more for shadows & highlights */
+	MDRV_DEFAULT_LAYOUT(layout_dualhsxs)
+
+	MDRV_SCREEN_ADD("left", 0x000)
+	MDRV_SCREEN_REFRESH_RATE(59.1)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(DEFAULT_REAL_60HZ_VBLANK_DURATION))
+	MDRV_SCREEN_SIZE(64*16, 32*16)
+	MDRV_VISIBLE_AREA(0, 480-1, 16, 256-1)
+
+	MDRV_SCREEN_ADD("right", 0x000)
+	MDRV_SCREEN_REFRESH_RATE(59.1)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(DEFAULT_REAL_60HZ_VBLANK_DURATION))
+	MDRV_SCREEN_SIZE(64*16, 32*16)
+	MDRV_VISIBLE_AREA(0, 480-1, 16, 256-1)
 
 	MDRV_VIDEO_START(gaelco2_dual)
 	MDRV_VIDEO_EOF(gaelco2)
@@ -839,9 +833,7 @@ static MACHINE_DRIVER_START( touchgo )
 	/* sound hardware */
 	/* the chip is stereo, but the game sound is mono because the right channel
        output is for cabinet 1 and the left channel output is for cabinet 2 */
-#ifndef ONE_MONITOR
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
-#endif
 	MDRV_SOUND_ADD(GAELCO_GAE1, 0)
 	MDRV_SOUND_CONFIG(touchgo_snd_interface)
 	MDRV_SOUND_ROUTE(0, "left", 1.0)
@@ -1187,15 +1179,9 @@ PORT_START	/* DIPSW #2 + 1P INPUTS */
 	PORT_DIPNAME( 0x1000, 0x1000, "Cabinet 2 Control Configuration" )
 	PORT_DIPSETTING(      0x0000, "Pot Wheel" )		/* TO-DO */
 	PORT_DIPSETTING(      0x1000, DEF_STR( Joystick ) )
-#ifdef ONE_MONITOR
-	PORT_DIPNAME( 0x2000, 0x0000, "Monitors" )
-	PORT_DIPSETTING(      0x0000, "One" )
-	PORT_DIPSETTING(      0x2000, "Two" )
-#else
 	PORT_DIPNAME( 0x2000, 0x2000, "Monitors" )
 	PORT_DIPSETTING(      0x0000, "One" )
 	PORT_DIPSETTING(      0x2000, "Two" )
-#endif
 	PORT_DIPNAME( 0xc000, 0xc000, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(      0x4000, DEF_STR( Easy ) )
 	PORT_DIPSETTING(      0xc000, DEF_STR( Normal ) )
@@ -1265,22 +1251,26 @@ static MACHINE_DRIVER_START( wrally2 )
 	MDRV_CPU_PROGRAM_MAP(wrally2_readmem, wrally2_writemem)
 	MDRV_CPU_VBLANK_INT(irq6_line_hold, 1)
 
-	MDRV_FRAMES_PER_SECOND(59.1)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-
 	MDRV_NVRAM_HANDLER(gaelco2)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_BUFFERS_SPRITERAM)
-	MDRV_SCREEN_SIZE(64*16, 32*16)
-#ifdef ONE_MONITOR
-	MDRV_VISIBLE_AREA(0, 384-1, 16, 256-1)
-#else
-	MDRV_VISIBLE_AREA(0, 2*384-1, 16, 256-1)
-//  MDRV_ASPECT_RATIO(8,3)
-#endif
 	MDRV_GFXDECODE(gfxdecodeinfo_0x0200000)
 	MDRV_PALETTE_LENGTH(4096*16 - 16)	/* game's palette is 4096 but we allocate 15 more for shadows & highlights */
+	MDRV_DEFAULT_LAYOUT(layout_dualhsxs)
+
+	MDRV_SCREEN_ADD("left", 0x000)
+	MDRV_SCREEN_REFRESH_RATE(59.1)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(DEFAULT_REAL_60HZ_VBLANK_DURATION))
+	MDRV_SCREEN_SIZE(384, 32*16)
+	MDRV_VISIBLE_AREA(0, 384-1, 16, 256-1)
+
+	MDRV_SCREEN_ADD("right", 0x000)
+	MDRV_SCREEN_REFRESH_RATE(59.1)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(DEFAULT_REAL_60HZ_VBLANK_DURATION))
+	MDRV_SCREEN_SIZE(384, 32*16)
+	MDRV_VISIBLE_AREA(0, 384-1, 16, 256-1)
+
 
 	MDRV_VIDEO_START(gaelco2_dual)
 	MDRV_VIDEO_EOF(gaelco2)
@@ -1289,9 +1279,7 @@ static MACHINE_DRIVER_START( wrally2 )
 	/* sound hardware */
 	/* the chip is stereo, but the game sound is mono because the right channel
        output is for cabinet 1 and the left channel output is for cabinet 2 */
-#ifndef ONE_MONITOR
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
-#endif
 	MDRV_SOUND_ADD(GAELCO_GAE1, 0)
 	MDRV_SOUND_CONFIG(wrally2_snd_interface)
 	MDRV_SOUND_ROUTE(0, "left", 1.0)

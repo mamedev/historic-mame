@@ -893,4 +893,5 @@ VIDEO_UPDATE( midtunit )
 		draw_scanline16(bitmap, xoffs, v, width, &local_videoram[offset], pen_map, -1);
 		offset = (offset + 512) & 0x3ffff;
 	}
+	return 0;
 }

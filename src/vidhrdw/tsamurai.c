@@ -231,6 +231,7 @@ VIDEO_UPDATE( tsamurai )
 	tilemap_draw(bitmap,cliprect,background,0,0);
 	draw_sprites(bitmap,cliprect);
 	tilemap_draw(bitmap,cliprect,foreground,0,0);
+	return 0;
 }
 
 /***************************************************************************
@@ -285,4 +286,5 @@ VIDEO_UPDATE( vsgongf )
 
 	tilemap_draw(bitmap,cliprect,foreground,0,0);
 	draw_sprites(bitmap,cliprect);
+	return 0;
 }

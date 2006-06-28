@@ -372,4 +372,5 @@ VIDEO_UPDATE( policetr )
 	beamx = ((readinputport(5) & 0xff) * Machine->drv->screen[0].maxwidth) >> 8;
 	beamy = ((readinputport(6) & 0xff) * Machine->drv->screen[0].maxheight) >> 8;
 	draw_crosshair(bitmap, beamx, beamy, cliprect, 1);
+	return 0;
 }

@@ -166,6 +166,7 @@ VIDEO_UPDATE(dderby)
 
 
 
+	return 0;
 }
 
 INTERRUPT_GEN( dderby_interrupt )

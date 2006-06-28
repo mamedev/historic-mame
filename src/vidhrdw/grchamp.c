@@ -488,4 +488,5 @@ VIDEO_UPDATE( grchamp ){
 	if( fog ){
 		draw_fog( bitmap,cliprect, fog );
 	}
+	return 0;
 }

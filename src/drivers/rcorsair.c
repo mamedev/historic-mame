@@ -114,6 +114,7 @@ VIDEO_START( rcorsair )
 VIDEO_UPDATE( rcorsair )
 {
 
+	return 0;
 }
 
 static MACHINE_DRIVER_START( rcorsair )

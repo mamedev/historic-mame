@@ -93,6 +93,7 @@ VIDEO_START(sliver)
 VIDEO_UPDATE(sliver)
 {
 
+	return 0;
 }
 
 INPUT_PORTS_START( sliver )

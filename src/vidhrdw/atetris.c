@@ -66,4 +66,5 @@ VIDEO_START( atetris )
 VIDEO_UPDATE( atetris )
 {
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0,0);
+	return 0;
 }

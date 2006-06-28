@@ -205,6 +205,7 @@ VIDEO_START( onetwo )
 VIDEO_UPDATE( onetwo )
 {
 	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
+	return 0;
 }
 
 static void irqhandler(int linestate)

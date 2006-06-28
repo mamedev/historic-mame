@@ -371,6 +371,7 @@ VIDEO_UPDATE( prosoccr )
 		tilemap_draw(bitmap,cliprect,background_tilemap,0,0);
 	boomrang_drawsprites(bitmap,0);
 	tilemap_draw(bitmap,cliprect,fix_tilemap,0,0);
+	return 0;
 }
 
 VIDEO_UPDATE( prosport )
@@ -396,6 +397,7 @@ VIDEO_UPDATE( prosport )
 				tile,1,0,0,248-8*mx,8*my,
 				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 	}
+	return 0;
 }
 
 VIDEO_UPDATE( boomrang )
@@ -413,6 +415,7 @@ VIDEO_UPDATE( boomrang )
 		tilemap_draw(bitmap,cliprect,background_tilemap,TILEMAP_FRONT,0);
 	boomrang_drawsprites(bitmap,0);
 	tilemap_draw(bitmap,cliprect,fix_tilemap,0,0);
+	return 0;
 }
 
 VIDEO_UPDATE( liberate )
@@ -427,4 +430,5 @@ VIDEO_UPDATE( liberate )
 
 	liberate_drawsprites(bitmap);
 	tilemap_draw(bitmap,cliprect,fix_tilemap,0,0);
+	return 0;
 }

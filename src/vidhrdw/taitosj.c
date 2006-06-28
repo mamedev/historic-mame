@@ -940,4 +940,5 @@ VIDEO_UPDATE( taitosj )
 	check_sprite_plane_collision();
 
 	/*check_plane_plane_collision();*/	/*not implemented !!!*/
+	return 0;
 }

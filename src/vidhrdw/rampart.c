@@ -125,6 +125,7 @@ VIDEO_UPDATE( rampart )
 					mo[x] = 0;
 				}
 		}
+	return 0;
 }
 
 

@@ -321,4 +321,5 @@ VIDEO_UPDATE( digdug )
 	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
 
 	draw_sprites(bitmap,cliprect);
+	return 0;
 }

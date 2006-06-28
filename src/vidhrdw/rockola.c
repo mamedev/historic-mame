@@ -210,6 +210,7 @@ VIDEO_UPDATE( rockola )
 {
 	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
 	tilemap_draw(bitmap, &Machine->visible_area[0], fg_tilemap, 0, 0);
+	return 0;
 }
 
 /* Satan of Saturn */

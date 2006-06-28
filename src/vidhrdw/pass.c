@@ -60,6 +60,7 @@ VIDEO_UPDATE( pass )
 	tilemap_draw(bitmap,cliprect,pass_bg_tilemap,0,0);
 	tilemap_draw(bitmap,cliprect,pass_fg_tilemap,0,0);
 
+	return 0;
 }
 
 VIDEO_START( pass )

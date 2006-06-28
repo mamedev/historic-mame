@@ -89,6 +89,7 @@ struct _texture_info
 	float					vstart, vstop;				// beginning/ending V coordinates
 	int						rawwidth, rawheight;		// raw width/height of the texture
 	int						type;						// what type of texture are we?
+	int						borderpix;					// do we have a 1 pixel border?
 	int						xprescale;					// what is our X prescale factor?
 	int						yprescale;					// what is our Y prescale factor?
 	d3d_texture *			d3dtex;						// Direct3D texture pointer
@@ -630,6 +631,9 @@ try_again:
 		fprintf(stderr, "Unable to create the Direct3D device (%08X)\n", (UINT32)result);
 		return 1;
 	}
+
+	// set the max texture size
+	render_target_set_max_texture_size(window->target, d3d->texture_max_width, d3d->texture_max_height);
 
 	verbose_printf("Direct3D: Device created at %dx%d\n", d3d->width, d3d->height);
 	return device_create_resources(d3d);
@@ -1606,7 +1610,8 @@ static void texture_compute_size(d3d_info *d3d, int texwidth, int texheight, tex
 	int finalwidth = texwidth;
 
 	// if we're not wrapping, add a 1 pixel border on all sides
-	if (!(texture->flags & PRIMFLAG_TEXWRAP_MASK))
+	texture->borderpix = !(texture->flags & PRIMFLAG_TEXWRAP_MASK);
+	if (texture->borderpix)
 	{
 		finalwidth += 2;
 		finalheight += 2;
@@ -1651,6 +1656,16 @@ static void texture_compute_size(d3d_info *d3d, int texwidth, int texheight, tex
 	while (finalheight < finalwidth && finalwidth / finalheight > d3d->texture_max_aspect)
 		finalheight *= 2;
 
+	// if we added pixels for the border, and that just barely pushed us over, take it back
+	if (texture->borderpix &&
+		((finalwidth > d3d->texture_max_width && finalwidth - 2 <= d3d->texture_max_width) ||
+		 (finalheight > d3d->texture_max_height && finalheight - 2 <= d3d->texture_max_height)))
+	{
+		texture->borderpix = FALSE;
+		finalwidth -= 2;
+		finalheight -= 2;
+	}
+
 	// if we're above the max width/height, do what?
 	if (finalwidth > d3d->texture_max_width || finalheight > d3d->texture_max_height)
 	{
@@ -1660,7 +1675,7 @@ static void texture_compute_size(d3d_info *d3d, int texwidth, int texheight, tex
 	}
 
 	// compute the U/V scale factors
-	if (!(texture->flags & PRIMFLAG_TEXWRAP_MASK))
+	if (texture->borderpix)
 	{
 		texture->ustart = 1.0f / (float)finalwidth;
 		texture->ustop = (float)(texwidth + 1) / (float)finalwidth;
@@ -1705,7 +1720,7 @@ static void texture_set_data(d3d_info *d3d, texture_info *texture, const render_
 		return;
 
 	// always fill non-wrapping textures with an extra pixel on the top
-	if (!(flags & PRIMFLAG_TEXWRAP_MASK))
+	if (texture->borderpix)
 	{
 		dst32 = (UINT32 *)((BYTE *)rect.pBits + 0 * rect.Pitch);
 		for (x = 0; x < texsource->width + 2; x++)
@@ -1719,7 +1734,7 @@ static void texture_set_data(d3d_info *d3d, texture_info *texture, const render_
 		UINT16 *src16;
 
 		// always fill non-wrapping textures with an extra pixel on the left
-		if (!(flags & PRIMFLAG_TEXWRAP_MASK))
+		if (texture->borderpix)
 		{
 			dst32 = (UINT32 *)((BYTE *)rect.pBits + (y + 1) * rect.Pitch);
 			*dst32++ = 0;
@@ -1764,12 +1779,12 @@ static void texture_set_data(d3d_info *d3d, texture_info *texture, const render_
 		}
 
 		// always fill non-wrapping textures with an extra pixel on the right
-		if (!(flags & PRIMFLAG_TEXWRAP_MASK))
+		if (texture->borderpix)
 			*dst32++ = 0;
 	}
 
 	// always fill non-wrapping textures with an extra pixel on the bottom
-	if (!(flags & PRIMFLAG_TEXWRAP_MASK))
+	if (texture->borderpix)
 	{
 		dst32 = (UINT32 *)((BYTE *)rect.pBits + (texsource->height + 1) * rect.Pitch);
 		for (x = 0; x < texsource->width + 2; x++)

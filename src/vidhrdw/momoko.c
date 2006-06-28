@@ -320,4 +320,5 @@ VIDEO_UPDATE( momoko )
 			}
 		}
 	}
+	return 0;
 }

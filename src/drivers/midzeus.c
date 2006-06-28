@@ -71,6 +71,7 @@ VIDEO_UPDATE( midzeus )
 		for (x = cliprect->min_x; x <= cliprect->max_x; x++)
 			dest[x] = src[x] & 0x7fff;
 	}
+	return 0;
 }
 
 /*

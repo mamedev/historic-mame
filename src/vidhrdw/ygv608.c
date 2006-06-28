@@ -753,7 +753,7 @@ VIDEO_UPDATE( ygv608 )
 	if (ygv608.page_x == 0 || ygv608.page_y == 0)
 	{
 		fillbitmap(bitmap, 0, cliprect);
-		return;
+		return 0;
 	}
 
 	if( ygv608.screen_resize )
@@ -948,6 +948,7 @@ VIDEO_UPDATE( ygv608 )
 	   ( ( (int)ygv608.scroll_data_table[1][0x01] & 0x0f ) << 8 ) );
   ui_draw_text( buffer, 0, 64 );
 #endif
+	return 0;
 }
 
 READ16_HANDLER( ygv608_r )

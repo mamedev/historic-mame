@@ -147,6 +147,14 @@ static UINT16 GET_ADDRESS(void)
 				tms.st0.arp = nar;
 				break;
 			}
+			case 0xd:	// *0+, ARn     ((CurrentAR) + INDX -> CurrentAR, NAR -> ARP)
+			{
+				ea = tms.ar[arp];
+				tms.ar[arp] += tms.indx;
+				tms.st1.arb = tms.st0.arp;
+				tms.st0.arp = nar;
+				break;
+			}
 
 			default:	fatalerror("32051: GET_ADDRESS: unimplemented indirect addressing mode %d\n", (tms.op >> 3) & 0xf);
 		}
@@ -601,7 +609,23 @@ static void op_sfrb(void)
 
 static void op_sub_mem(void)
 {
-	fatalerror("32051: unimplemented op sub mem at %08X", tms.pc-1);
+	INT32 d;
+	UINT16 ea = GET_ADDRESS();
+	UINT16 data = DM_READ16(ea);
+	int shift = (tms.op >> 8) & 0xf;
+
+	if (tms.st1.sxm)
+	{
+		d = (INT32)(INT16)(data) << shift;
+	}
+	else
+	{
+		d = (UINT32)(UINT16)(data) << shift;
+	}
+
+	tms.acc = SUB(tms.acc, d);
+
+	CYCLES(1);
 }
 
 static void op_sub_s16_mem(void)
@@ -912,7 +936,13 @@ static void op_retcd(void)
 
 static void op_retd(void)
 {
-	fatalerror("32051: unimplemented op retd at %08X", tms.pc-1);
+	UINT16 pc = POP_PC();
+
+	delay_slot(tms.pc);
+
+	CHANGE_PC(pc);
+
+	CYCLES(4);
 }
 
 static void op_rete(void)
@@ -932,7 +962,19 @@ static void op_trap(void)
 
 static void op_xc(void)
 {
-	fatalerror("32051: unimplemented op xc at %08X", tms.pc-1);
+	int n = ((tms.op >> 12) & 0x1) + 1;
+	int zlcv_condition = GET_ZLCV_CONDITION((tms.op >> 4) & 0xf, tms.op & 0xf);
+	int tp_condition = GET_TP_CONDITION((tms.op >> 8) & 0x3);
+
+	if (zlcv_condition && tp_condition)
+	{
+		CHANGE_PC(tms.pc + 1 + n);
+		CYCLES(1 + n);
+	}
+	else
+	{
+		CYCLES(1);
+	}
 }
 
 /*****************************************************************************/
@@ -1101,7 +1143,11 @@ static void op_tblw(void)
 
 static void op_apl_dbmr(void)
 {
-	fatalerror("32051: unimplemented op apl dbmr at %08X", tms.pc-1);
+	UINT16 ea = GET_ADDRESS();
+	UINT16 data = DM_READ16(ea);
+	data &= tms.dbmr;
+	DM_WRITE16(ea, data);
+	CYCLES(1);
 }
 
 static void op_apl_imm(void)
@@ -1134,7 +1180,11 @@ static void op_cpl_imm(void)
 
 static void op_opl_dbmr(void)
 {
-	fatalerror("32051: unimplemented op opl dbmr at %08X", tms.pc-1);
+	UINT16 ea = GET_ADDRESS();
+	UINT16 data = DM_READ16(ea);
+	data |= tms.dbmr;
+	DM_WRITE16(ea, data);
+	CYCLES(1);
 }
 
 static void op_opl_imm(void)

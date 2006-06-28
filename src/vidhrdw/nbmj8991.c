@@ -353,6 +353,7 @@ VIDEO_UPDATE( nbmj8991_type1 )
 	{
 		fillbitmap(bitmap, Machine->pens[0x00], 0);
 	}
+	return 0;
 }
 
 VIDEO_UPDATE( nbmj8991_type2 )
@@ -393,4 +394,5 @@ VIDEO_UPDATE( nbmj8991_type2 )
 	{
 		fillbitmap(bitmap, Machine->pens[0x00], 0);
 	}
+	return 0;
 }

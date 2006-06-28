@@ -198,6 +198,7 @@ VIDEO_UPDATE( dynduke )
 	tilemap_draw(bitmap,cliprect,fg_layer,0,0);
 	draw_sprites(bitmap,cliprect,3);
 	tilemap_draw(bitmap,cliprect,tx_layer,0,0);
+	return 0;
 }
 
 VIDEO_EOF( dynduke )

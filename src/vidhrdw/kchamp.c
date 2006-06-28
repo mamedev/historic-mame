@@ -142,10 +142,12 @@ VIDEO_UPDATE( kchamp )
 {
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 	kchamp_draw_sprites(bitmap);
+	return 0;
 }
 
 VIDEO_UPDATE( kchampvs )
 {
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 	kchampvs_draw_sprites(bitmap);
+	return 0;
 }

@@ -166,6 +166,7 @@ VIDEO_UPDATE(pturn)
 		}
 	}
 	tilemap_draw(bitmap,cliprect,pturn_fgmap,0,0);
+	return 0;
 }
 
 /*

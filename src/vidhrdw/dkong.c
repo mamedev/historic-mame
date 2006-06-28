@@ -340,12 +340,14 @@ VIDEO_UPDATE( radarscp )
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 	draw_grid(bitmap);
 	draw_sprites(bitmap, 0x40, 1);
+	return 0;
 }
 
 VIDEO_UPDATE( dkong )
 {
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 	draw_sprites(bitmap, 0x40, 1);
+	return 0;
 }
 
 VIDEO_UPDATE( pestplce )
@@ -367,6 +369,7 @@ VIDEO_UPDATE( pestplce )
 					cliprect,TRANSPARENCY_PEN,0);
 		}
 	}
+	return 0;
 }
 
 VIDEO_UPDATE( spclforc )
@@ -375,4 +378,5 @@ VIDEO_UPDATE( spclforc )
 
 	/* it uses spriteram[offs + 2] & 0x10 for sprite bank */
 	draw_sprites(bitmap, 0x10, 3);
+	return 0;
 }

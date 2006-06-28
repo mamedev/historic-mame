@@ -247,6 +247,7 @@ VIDEO_UPDATE(maxaflex)
 	if (lamps & 0x02) ui_draw_text("PLAY", 70, 216);
 	if (lamps & 0x04) ui_draw_text("START", 250, 216);
 	if (lamps & 0x08) ui_draw_text("OVER", 300, 216);
+	return 0;
 }
 
 int atari_input_disabled(void)

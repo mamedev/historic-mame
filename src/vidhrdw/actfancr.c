@@ -232,6 +232,7 @@ VIDEO_UPDATE( actfancr )
 	}
 
 	tilemap_draw(bitmap,cliprect,pf2_tilemap,0,0);
+	return 0;
 }
 
 VIDEO_UPDATE( triothep )
@@ -316,4 +317,5 @@ VIDEO_UPDATE( triothep )
 	}
 
 	tilemap_draw(bitmap,cliprect,pf2_tilemap,0,0);
+	return 0;
 }

@@ -300,4 +300,5 @@ VIDEO_UPDATE( ninjakid )
 	}
 
 
+	return 0;
 }

@@ -57,6 +57,7 @@ Mario Lemeux Hockey 171-5782    837-6963-59       610-0239-59          MPR-14376
 */
 #include "driver.h"
 #include "genesis.h"
+#include "render.h"
 
 /* Megatech BIOS specific */
 static unsigned int bios_port_ctrl;
@@ -456,14 +457,25 @@ static MACHINE_DRIVER_START( megatech )
 	MDRV_MACHINE_RESET(genesis)
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS)
+	MDRV_PALETTE_LENGTH(64+32) /* +32 for megatech bios vdp part */
 
 	MDRV_VIDEO_START(megatech)
 	MDRV_VIDEO_UPDATE(megatech)
+	MDRV_DEFAULT_LAYOUT(layout_dualhovu)
 
-//  MDRV_ASPECT_RATIO(4,6)
-	MDRV_SCREEN_SIZE(320,224+192) /* +192 for megatech BIOS screen/menu */
-	MDRV_VISIBLE_AREA(0, 319, 0, 223+192)
-	MDRV_PALETTE_LENGTH(64+32) /* +32 for megatech bios vdp part */
+	MDRV_SCREEN_ADD("top", 0x000)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC((int)(((262. - 224.) / 262.) * 1000000. / 60.)))
+	MDRV_SCREEN_MAXSIZE(256, 192)
+	MDRV_VISIBLE_AREA(0, 256-1, 0, 192-1)
+
+	MDRV_SCREEN_ADD("bottom", 0x000)
+	MDRV_SCREEN_REFRESH_RATE(30)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC((int)(((262. - 224.) / 262.) * 1000000. / 60.)))
+	MDRV_SCREEN_MAXSIZE(320, 256)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 224-1)
+
+
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(SN76496, MASTER_CLOCK/15)

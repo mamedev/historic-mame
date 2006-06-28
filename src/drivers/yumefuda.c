@@ -84,6 +84,7 @@ VIDEO_START( yumefuda )
 VIDEO_UPDATE( yumefuda )
 {
 	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	return 0;
 }
 
 /***************************************************************************************/

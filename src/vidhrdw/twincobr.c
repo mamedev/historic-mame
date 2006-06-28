@@ -530,6 +530,7 @@ VIDEO_UPDATE( toaplan0 )
 	twincobr_draw_sprites(bitmap,cliprect,0x0800);
 	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
 	twincobr_draw_sprites(bitmap,cliprect,0x0c00);
+	return 0;
 }
 
 

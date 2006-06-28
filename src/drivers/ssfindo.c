@@ -240,6 +240,7 @@ VIDEO_UPDATE(ssfindo)
 				}
 		}
 	}
+	return 0;
 }
 
 static WRITE32_HANDLER(FIFO_w)

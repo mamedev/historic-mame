@@ -201,5 +201,6 @@ VIDEO_UPDATE( dbz )
 	}
 
 	K053247_sprites_draw(bitmap, cliprect);
+	return 0;
 }
 

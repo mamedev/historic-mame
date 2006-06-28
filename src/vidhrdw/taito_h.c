@@ -444,6 +444,7 @@ VIDEO_UPDATE( syvalion )
 	TC0080VCO_tilemap_draw(bitmap,cliprect,1,0,0);
 	syvalion_draw_sprites (bitmap,cliprect);
 	TC0080VCO_tilemap_draw(bitmap,cliprect,2,0,0);
+	return 0;
 }
 
 
@@ -474,6 +475,7 @@ VIDEO_UPDATE( recordbr )
 #endif
 
 	TC0080VCO_tilemap_draw(bitmap,cliprect,2,0,0);
+	return 0;
 }
 
 
@@ -504,5 +506,6 @@ VIDEO_UPDATE( dleague )
 #endif
 
 	TC0080VCO_tilemap_draw(bitmap,cliprect,2,0,0);
+	return 0;
 }
 

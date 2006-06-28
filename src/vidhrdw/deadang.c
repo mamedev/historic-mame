@@ -157,4 +157,5 @@ VIDEO_UPDATE( deadang )
 	tilemap_draw(bitmap,cliprect,pf2_layer,0,4);
 	if (!(deadang_scroll_ram[0x68]&0x10)) draw_sprites(bitmap);
 	tilemap_draw(bitmap,cliprect,text_layer,0,0);
+	return 0;
 }

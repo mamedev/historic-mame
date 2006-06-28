@@ -665,4 +665,5 @@ VIDEO_UPDATE( namcona1 )
 		} /* next priority level */
 		draw_sprites( bitmap );
 	} /* gfx enabled */
-} /* namcona1_vh_screenrefresh */
+	return 0;
+}

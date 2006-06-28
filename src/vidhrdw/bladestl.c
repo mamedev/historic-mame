@@ -76,4 +76,5 @@ VIDEO_UPDATE( bladestl )
 	K007342_tilemap_draw( bitmap, cliprect, 1, 1 | TILEMAP_IGNORE_TRANSPARENCY ,0);
 	K007342_tilemap_draw( bitmap, cliprect, 0, 0 ,0);
 	K007342_tilemap_draw( bitmap, cliprect, 0, 1 ,0);
+	return 0;
 }

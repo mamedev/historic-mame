@@ -63,4 +63,5 @@ VIDEO_UPDATE( sbrkout )
 {
 	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
 	sbrkout_draw_balls(bitmap);
+	return 0;
 }

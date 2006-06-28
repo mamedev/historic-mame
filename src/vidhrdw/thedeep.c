@@ -248,4 +248,5 @@ VIDEO_UPDATE( thedeep )
 	tilemap_draw(bitmap,cliprect,tilemap_0,0,0);
 	draw_sprites(bitmap,cliprect);
 	tilemap_draw(bitmap,cliprect,tilemap_1,0,0);
+	return 0;
 }

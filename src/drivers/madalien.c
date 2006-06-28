@@ -355,6 +355,7 @@ VIDEO_UPDATE( madalien )
 		copybitmap(flip_bitmap, bitmap, 1, 1, 0, 0, &Machine->visible_area[0], TRANSPARENCY_NONE, 0);
 		copybitmap(bitmap, flip_bitmap, 0, 0, 0, 0, &Machine->visible_area[0], TRANSPARENCY_NONE, 0);
 	};
+	return 0;
 }
 
 

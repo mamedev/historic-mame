@@ -440,6 +440,7 @@ VIDEO_UPDATE(rabbit)
 			rabbit_drawsprite_bitmap(bitmap,cliprect); // copy bitmap to screen
 		}
 	}
+	return 0;
 }
 
 
@@ -1180,6 +1181,7 @@ VIDEO_UPDATE( tmmjprd )
 	tilemap_draw(bitmap,cliprect,rabbit_tilemap[2],0,0);
 	tilemap_draw(bitmap,cliprect,rabbit_tilemap[0],0,0);
 
+	return 0;
 }
 
 static INTERRUPT_GEN( tmmjprd_interrupt )

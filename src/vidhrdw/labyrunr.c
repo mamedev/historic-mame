@@ -249,4 +249,5 @@ VIDEO_UPDATE( labyrunr )
 
 		K007121_sprites_draw(0,bitmap,cliprect,spriteram,(K007121_ctrlram[0][6]&0x30)*2,40,0,(K007121_ctrlram[0][3] & 0x40) >> 5);
 	}
+	return 0;
 }

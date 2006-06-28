@@ -116,4 +116,5 @@ VIDEO_UPDATE( tankbatt )
 {
 	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
 	tankbatt_draw_bullets(bitmap);
+	return 0;
 }

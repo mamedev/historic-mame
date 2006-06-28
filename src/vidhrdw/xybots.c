@@ -169,4 +169,5 @@ VIDEO_UPDATE( xybots )
 
 	/* add the alpha on top */
 	tilemap_draw(bitmap, cliprect, atarigen_alpha_tilemap, 0, 0);
+	return 0;
 }

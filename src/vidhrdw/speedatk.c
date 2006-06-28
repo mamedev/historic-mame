@@ -116,4 +116,5 @@ VIDEO_START( speedatk )
 VIDEO_UPDATE( speedatk )
 {
 	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	return 0;
 }

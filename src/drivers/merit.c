@@ -533,6 +533,7 @@ VIDEO_START( merit )
 VIDEO_UPDATE( merit )
 {
 	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
+	return 0;
 }
 
 static const gfx_layout tiles8x8x3_layout =

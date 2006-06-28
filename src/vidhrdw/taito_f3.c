@@ -3319,4 +3319,5 @@ VIDEO_UPDATE( f3 )
 	f3_scanline_draw(bitmap,cliprect);
 
 //  print_debug_info(bitmap);
+	return 0;
 }

@@ -444,6 +444,7 @@ VIDEO_UPDATE(jchan)
 	fillbitmap(bitmap, get_black_pen(), cliprect);
 
 	skns_drawsprites (bitmap,cliprect);
+	return 0;
 }
 
 /***************************************************************************

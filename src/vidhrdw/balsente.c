@@ -328,4 +328,5 @@ VIDEO_UPDATE( balsente )
 
 		draw_crosshair(bitmap,beamx,beamy,cliprect,0);
 	}
+	return 0;
 }

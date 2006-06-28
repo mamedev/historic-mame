@@ -144,7 +144,7 @@ static VIDEO_UPDATE( lastfght )
 	{
 		cpunum_set_input_line(0, 7, PULSE_LINE);
 	}
-
+	return 0;
 }
 
 static WRITE16_HANDLER(colordac_w)

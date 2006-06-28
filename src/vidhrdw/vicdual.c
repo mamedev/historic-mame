@@ -184,4 +184,5 @@ VIDEO_UPDATE( vicdual )
 	{
 		if (dirtycharacter[offs] == 2) dirtycharacter[offs] = 0;
 	}
+	return 0;
 }

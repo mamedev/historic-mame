@@ -510,4 +510,5 @@ if (!code_pressed(KEYCODE_E))
 if (!code_pressed(KEYCODE_R))
 #endif
 	ms32_draw_sprites(bitmap,cliprect, ms32_spram, 0x40000);
+	return 0;
 }

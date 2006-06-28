@@ -1081,7 +1081,7 @@ $(OBJ)/sega.a: \
 	$(OBJ)/drivers/megaplay.o \
 	$(OBJ)/drivers/megatech.o \
 	$(OBJ)/drivers/model1.o $(OBJ)/machine/model1.o $(OBJ)/vidhrdw/model1.o \
-	$(OBJ)/drivers/model2.o \
+	$(OBJ)/drivers/model2.o $(OBJ)/vidhrdw/model2.o \
 	$(OBJ)/drivers/model3.o $(OBJ)/vidhrdw/model3.o $(OBJ)/machine/model3.o \
 	$(OBJ)/drivers/puckpkmn.o \
 	$(OBJ)/drivers/sega.o $(OBJ)/sndhrdw/sega.o $(OBJ)/vidhrdw/sega.o \
@@ -1519,4 +1519,21 @@ $(OBJ)/misc.a: \
 	$(OBJ)/drivers/wldarrow.o \
 	$(OBJ)/drivers/xyonix.o $(OBJ)/vidhrdw/xyonix.o \
 
- 
+
+
+#-------------------------------------------------
+# layout dependencies
+#-------------------------------------------------
+
+$(OBJ)/drivers/asteroid.o:	$(OBJ)/layout/astdelux.lh
+
+$(OBJ)/drivers/bzone.o:		$(OBJ)/layout/bzone.lh
+
+$(OBJ)/drivers/darius.o:	$(OBJ)/layout/darius.lh
+
+$(OBJ)/drivers/omegrace.o:	$(OBJ)/layout/omegrace.lh
+
+$(OBJ)/drivers/cinemat.o:	$(OBJ)/layout/solarq.lh \
+							$(OBJ)/layout/starcas.lh \
+							$(OBJ)/layout/sundance.lh \
+							$(OBJ)/layout/tailg.lh

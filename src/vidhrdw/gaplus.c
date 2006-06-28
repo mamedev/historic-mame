@@ -342,6 +342,7 @@ VIDEO_UPDATE( gaplus )
 	/* draw the high priority characters */
 	/* (I don't know if this feature is used by Gaplus, but it's shown in the schematics) */
 	tilemap_draw(bitmap,cliprect,bg_tilemap,1,0);
+	return 0;
 }
 
 

@@ -367,7 +367,7 @@ VIDEO_UPDATE( namcos1 )
 	if (new_clip.max_y > i) new_clip.max_y = i;
 
 	if (new_clip.max_x < new_clip.min_x || new_clip.max_y < new_clip.min_y)
-		return;
+		return 0;
 
 
 	/* set palette base */
@@ -407,6 +407,7 @@ VIDEO_UPDATE( namcos1 )
 	}
 
 	draw_sprites(bitmap, &new_clip);
+	return 0;
 }
 
 

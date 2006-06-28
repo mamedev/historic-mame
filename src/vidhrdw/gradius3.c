@@ -194,4 +194,5 @@ VIDEO_UPDATE( gradius3 )
 	}
 
 	K051960_sprites_draw(bitmap,cliprect,-1,-1);
+	return 0;
 }

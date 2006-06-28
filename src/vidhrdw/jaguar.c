@@ -773,7 +773,7 @@ VIDEO_UPDATE( cojag )
 	if (!(gpu_regs[VMODE] & 1))
 	{
 		fillbitmap(bitmap, 0, cliprect);
-		return;
+		return 0;
 	}
 
 	/* render the object list */
@@ -792,6 +792,7 @@ VIDEO_UPDATE( cojag )
 		get_crosshair_xy(1, &beamx, &beamy);
 		draw_crosshair(bitmap, beamx, beamy, cliprect, 1);
 	}
+	return 0;
 }
 
 

@@ -61,4 +61,5 @@ VIDEO_START(xyonix)
 VIDEO_UPDATE(xyonix)
 {
 	tilemap_draw(bitmap,cliprect,xyonix_tilemap,0,0);
+	return 0;
 }

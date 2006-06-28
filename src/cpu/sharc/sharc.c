@@ -104,6 +104,8 @@ typedef struct {
 	UINT32 ustat1;
 	UINT32 ustat2;
 
+	UINT32 flag[4];
+
 	UINT32 syscon;
 	UINT32 sysstat;
 
@@ -223,8 +225,19 @@ static void sharc_iop_w(UINT32 address, UINT32 data)
 		case 0x00: break;		// System configuration
 		case 0x02: break;		// External Memory Wait State Configuration
 
+		case 0x08: break;		// Message Register 0
+		case 0x09: break;		// Message Register 1
+		case 0x0a: break;		// Message Register 2
+		case 0x0b: break;		// Message Register 3
+		case 0x0c: break;		// Message Register 4
+		case 0x0d: break;		// Message Register 5
+		case 0x0e: break;		// Message Register 6
+		case 0x0f: break;		// Message Register 7
+
 		// DMA 6
 		case 0x1c: add_iop_latency_op(0x1c, data, 1); break;
+
+		case 0x20: break;
 
 		case 0x40: sharc.dma[6].int_index = data; return;
 		case 0x41: sharc.dma[6].int_modifier = data; return;
@@ -701,9 +714,48 @@ static void sharc_dma_exec(int channel)
 	}
 }
 
-void sharc_write_program_ram(UINT32 address, UINT64 data)
+void sharc_external_iop_write(UINT32 address, UINT32 data)
 {
-	pm_write48(address, data);
+	if (address == 0x1c)
+	{
+		if (data != 0)
+		{
+			sharc.dma[6].control = data;
+		}
+	}
+	else
+	{
+		printf("SHARC IOP write %08X, %08X\n", address, data);
+		sharc_iop_w(address, data);
+	}
+}
+
+void sharc_external_dma_write(UINT32 address, UINT64 data)
+{
+	switch ((sharc.dma[6].control >> 6) & 0x3)
+	{
+		case 2:			// 16/48 packing
+		{
+			int shift = address % 3;
+			UINT64 r = pm_read48(sharc.dma[6].int_index);
+
+			r &= ~((UINT64)(0xffff) << (shift*16));
+			r |= (data & 0xffff) << (shift*16);
+
+			pm_write48(sharc.dma[6].int_index, r);
+
+			if (shift == 2)
+			{
+
+				sharc.dma[6].int_index += sharc.dma[6].int_modifier;
+			}
+			break;
+		}
+		default:
+		{
+			fatalerror("sharc_external_dma_write: unimplemented packing mode %d\n", (sharc.dma[6].control >> 6) & 0x3);
+		}
+	}
 }
 
 /*****************************************************************************/
@@ -717,23 +769,6 @@ void sharc_write_program_ram(UINT32 address, UINT64 data)
 				iop_latency_op();			\
 			}								\
 		}
-
-static void sharc_set_flag_input(int flag_num, int state)
-{
-	if (flag_num >= 0 && flag_num < 4)
-	{
-		// Check if flag is set to input in MODE2 (bit == 0)
-		if ((sharc.mode2 & (1 << (flag_num+15))) == 0)
-		{
-			sharc.astat &= ~(1 << (flag_num+19));
-			sharc.astat |= (state != 0) ? (1 << (flag_num+19)) : 0;
-		}
-		else
-		{
-			fatalerror("sharc_set_flag_input: flag %d is set output!", flag_num);
-		}
-	}
-}
 
 static offs_t sharc_dasm(char *buffer, offs_t pc)
 {
@@ -753,6 +788,23 @@ static void check_interrupts(void);
 #include "sharcops.c"
 #include "sharcops.h"
 
+
+void sharc_set_flag_input(int flag_num, int state)
+{
+	if (flag_num >= 0 && flag_num < 4)
+	{
+		// Check if flag is set to input in MODE2 (bit == 0)
+		if ((sharc.mode2 & (1 << (flag_num+15))) == 0)
+		{
+			//printf("FLAG%d = %d at %08X\n", flag_num, state, activecpu_get_pc());
+			sharc.flag[flag_num] = state ? 1 : 0;
+		}
+		else
+		{
+			fatalerror("sharc_set_flag_input: flag %d is set output!", flag_num);
+		}
+	}
+}
 
 static void sharc_exit(void)
 {
@@ -821,6 +873,8 @@ static void sharc_init(int index, int clock, const void *_config, int (*irqcallb
 	sharc.internal_ram = auto_malloc(2 * 0x20000);
 	sharc.internal_ram_block0 = &sharc.internal_ram[0];
 	sharc.internal_ram_block1 = &sharc.internal_ram[0x20000/2];
+
+
 }
 
 static void sharc_reset(void)
@@ -888,14 +942,16 @@ static int sharc_execute(int num_cycles)
 				case 0:		/* arithmetic condition-based */
 					if(DO_CONDITION_CODE(cond))
 					{
-						DECODE_AND_EXEC_OPCODE();
 						POP_LOOP();
 						POP_PC();
+						DECODE_AND_EXEC_OPCODE();
+						//DELAY_SLOT();
 					}
 					else
 					{
-						DECODE_AND_EXEC_OPCODE();
 						sharc.npc = TOP_PC();
+						DECODE_AND_EXEC_OPCODE();
+						//DELAY_SLOT();
 					}
 					break;
 				case 1:		/* counter-based, length 1 */
@@ -905,14 +961,14 @@ static int sharc_execute(int num_cycles)
 					sharc.curlcntr--;
 					if(sharc.curlcntr == 0)
 					{
-						DECODE_AND_EXEC_OPCODE();
 						POP_LOOP();
 						POP_PC();
+						DECODE_AND_EXEC_OPCODE();
 					}
 					else
 					{
-						DECODE_AND_EXEC_OPCODE();
 						sharc.npc = TOP_PC();
+						DECODE_AND_EXEC_OPCODE();
 					}
 					break;
 			}
@@ -1110,6 +1166,12 @@ static int sharc_debug_readop(UINT32 offset, int size, UINT64 *value)
 }
 
 
+// This is just used to stop the debugger from complaining about executing from I/O space
+static ADDRESS_MAP_START( internal_pgm, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x20000, 0x7ffff) AM_RAM
+ADDRESS_MAP_END
+
+
 
 void sharc_get_info(UINT32 state, union cpuinfo *info)
 {
@@ -1217,6 +1279,7 @@ void sharc_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = sharc_win_layout;				break;
 		case CPUINFO_PTR_READ:							info->read = sharc_debug_read;			break;
 		case CPUINFO_PTR_READOP:						info->readop = sharc_debug_readop;		break;
+		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM: info->internal_map = construct_map_internal_pgm; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "SHARC"); break;

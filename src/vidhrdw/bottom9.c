@@ -100,4 +100,5 @@ VIDEO_UPDATE( bottom9 )
 		K051960_sprites_draw(bitmap,cliprect,2,3);
 		tilemap_draw(bitmap,cliprect,K052109_tilemap[1],0,0);
 	}
+	return 0;
 }

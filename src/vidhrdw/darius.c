@@ -166,4 +166,5 @@ VIDEO_UPDATE( darius )
 	tilemap_set_scrollx(fg_tilemap,0,0+xoffs);
 	tilemap_set_scrolly(fg_tilemap,0,-8);
 	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
+	return 0;
 }

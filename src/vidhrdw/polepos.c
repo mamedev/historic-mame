@@ -544,4 +544,5 @@ VIDEO_UPDATE( polepos )
 		lastin = in;
 	}
 #endif
+	return 0;
 }

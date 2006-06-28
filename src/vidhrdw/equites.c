@@ -393,6 +393,7 @@ VIDEO_UPDATE( equites )
 	plot_box(bitmap, cliprect->min_x, cliprect->min_y, maskwidth, maskheight, maskcolor);
 	plot_box(bitmap, cliprect->max_x-maskwidth+1, cliprect->min_y, maskwidth, maskheight, maskcolor);
 	tilemap_draw(bitmap, cliprect, charmap0, 0, 0);
+	return 0;
 }
 
 // Splendor Blast Hardware
@@ -579,6 +580,7 @@ VIDEO_UPDATE( splndrbt )
 	tilemap_draw(bitmap, cliprect, charmap1, 0, 0);
 	splndrbt_draw_sprites(bitmap, cliprect);
 	tilemap_draw(bitmap, cliprect, charmap0, 0, 0);
+	return 0;
 }
 
 /******************************************************************************/

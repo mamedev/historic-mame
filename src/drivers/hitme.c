@@ -110,12 +110,14 @@ static VIDEO_UPDATE(hitme)
 			}
 		}
 	}
+	return 0;
 }
 
 
 static VIDEO_UPDATE(barricad)
 {
 	tilemap_draw(bitmap,cliprect,hitme_tilemap,0,0);
+	return 0;
 }
 
 

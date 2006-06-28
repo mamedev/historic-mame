@@ -86,9 +86,6 @@ static tilemap *pant[2];
 
 int dual_monitor;
 
-/* comment this line to display 2 monitors for the dual monitor games */
-//#define ONE_MONITOR
-
 /***************************************************************************
 
     Callbacks for the TileMap code (single monitor games)
@@ -294,31 +291,6 @@ VIDEO_START( gaelco2 )
 	return 0;
 }
 
-#ifdef ONE_MONITOR
-
-VIDEO_START( gaelco2_dual )
-{
-	gaelco2_videoram = spriteram16;
-
-	/* create tilemaps */
-	pant[0] = tilemap_create(get_tile_info_gaelco2_screen0_dual,tilemap_scan_rows,TILEMAP_OPAQUE,16,16,64,32);
-	pant[1] = tilemap_create(get_tile_info_gaelco2_screen1_dual,tilemap_scan_rows,TILEMAP_OPAQUE,16,16,64,32);
-
-	if (!pant[0] || !pant[1]) return 1;
-
-	/* set tilemap properties */
-	tilemap_set_scroll_rows(pant[0], 512);
-	tilemap_set_scroll_cols(pant[0], 1);
-	tilemap_set_scroll_rows(pant[1], 512);
-	tilemap_set_scroll_cols(pant[1], 1);
-
-	dual_monitor = 1;
-
-	return 0;
-}
-
-#else
-
 VIDEO_START( gaelco2_dual )
 {
 	gaelco2_videoram = spriteram16;
@@ -343,7 +315,6 @@ VIDEO_START( gaelco2_dual )
 	return 0;
 }
 
-#endif
 /***************************************************************************
 
     Sprite Format
@@ -391,12 +362,6 @@ static void gaelco2_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect,
 
 	/* sprite offset is based on the visible area */
 	int spr_x_adjust = (Machine->visible_area[0].max_x - 320 + 1) - (511 - 320 - 1) - ((gaelco2_vregs[0] >> 4) & 0x01) + xoffs;
-
-#ifndef ONE_MONITOR
-	if (dual_monitor){
-		spr_x_adjust = ((Machine->visible_area[0].max_x/2) - 320 + 1) - (511 - 320 - 1) - ((gaelco2_vregs[0] >> 4) & 0x01) + xoffs;
-	}
-#endif
 
 	for (j = start_offset; j < end_offset; j += 8){
 		int data = buffered_spriteram16[(j/2) + 0];
@@ -508,6 +473,7 @@ VIDEO_UPDATE( gaelco2 )
 	tilemap_draw(bitmap, cliprect, pant[1], 0, 0);
 	tilemap_draw(bitmap, cliprect, pant[0], 0, 0);
 	gaelco2_draw_sprites(bitmap, cliprect, 0, 0);
+	return 0;
 }
 
 VIDEO_UPDATE( bang )
@@ -529,10 +495,8 @@ VIDEO_UPDATE( bang )
         posy = readinputport(6)*240/256;
         draw_crosshair(bitmap, posx, posy + 0x0c, cliprect, 1);
     }
+	return 0;
 }
-
-
-#ifdef ONE_MONITOR
 
 VIDEO_UPDATE( gaelco2_dual )
 {
@@ -554,64 +518,25 @@ VIDEO_UPDATE( gaelco2_dual )
 		tilemap_set_scrollx(pant[1], i & 0x1ff, (gaelco2_vregs[1] & 0x8000) ? (gaelco2_videoram[(0x2400/2) + i] + 0x10) & 0x3ff : scroll1x & 0x3ff);
 	}
 
-	if (readinputport(4) & 0x01){
+	/* draw screen */
+	fillbitmap(bitmap, Machine->pens[0], cliprect);
+
+	if (screen==1)
+	{
 		/* monitor 2 output */
 		tilemap_draw(bitmap,cliprect,pant[1], 0, 0);
 		gaelco2_draw_sprites(bitmap,cliprect, 0x8000, 0);
-	} else {
+	}
+	else if (screen==0)
+	{
 		/* monitor 1 output */
 		tilemap_draw(bitmap,cliprect,pant[0], 0, 0);
 		gaelco2_draw_sprites(bitmap,cliprect, 0x0000, 0);
 	}
+
+	return 0;
 }
 
-#else
-
-VIDEO_UPDATE( gaelco2_dual )
-{
-	int i;
-
-	/* read scroll values */
-	int scroll0x = gaelco2_videoram[0x2802/2] + 0x14;
-	int scroll1x = gaelco2_videoram[0x2806/2] + 0x10 - ((Machine->visible_area[0].max_x/2) + 1);
-	int scroll0y = gaelco2_videoram[0x2800/2] + 0x01;
-	int scroll1y = gaelco2_videoram[0x2804/2] + 0x01;
-
-	/* set y scroll registers */
-	tilemap_set_scrolly(pant[0], 0, scroll0y & 0x1ff);
-	tilemap_set_scrolly(pant[1], 0, scroll1y & 0x1ff);
-
-	/* set x linescroll registers */
-	for (i = 0; i < 512; i++){
-		tilemap_set_scrollx(pant[0], i & 0x1ff, (gaelco2_vregs[0] & 0x8000) ? (gaelco2_videoram[(0x2000/2) + i] + 0x14) & 0x3ff : scroll0x & 0x3ff);
-		tilemap_set_scrollx(pant[1], i & 0x1ff, (gaelco2_vregs[1] & 0x8000) ? (gaelco2_videoram[(0x2400/2) + i] + 0x10) & 0x3ff : scroll1x & 0x3ff);
-	}
-
-	/* draw screen */
-	fillbitmap(bitmap, Machine->pens[0], cliprect);
-	{
-		rectangle cliprect1, cliprect2;
-		cliprect1.min_x = 0;
-		cliprect1.max_x = Machine->visible_area[0].max_x/2;
-		cliprect1.min_y = 16;
-		cliprect1.max_y = 256-1;
-
-		cliprect2.min_x = (Machine->visible_area[0].max_x/2) + 1;
-		cliprect2.max_x = Machine->visible_area[0].max_x;
-		cliprect2.min_y = 16;
-		cliprect2.max_y = 256-1;
-
-		/* monitor 2 output */
-		tilemap_draw(bitmap,&cliprect2,pant[1], 0, 0);
-		gaelco2_draw_sprites(bitmap,&cliprect2, 0x8000, (Machine->visible_area[0].max_x/2) + 1);
-
-		/* monitor 1 output */
-		tilemap_draw(bitmap,&cliprect1,pant[0], 0, 0);
-		gaelco2_draw_sprites(bitmap,&cliprect1, 0x0000, 0);
-	}
-}
-
-#endif
 
 VIDEO_EOF( gaelco2 )
 {

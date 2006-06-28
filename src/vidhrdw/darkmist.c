@@ -227,6 +227,7 @@ VIDEO_UPDATE( darkmist)
 	}
 
 
+	return 0;
 }
 
 

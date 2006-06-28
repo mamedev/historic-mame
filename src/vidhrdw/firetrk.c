@@ -416,6 +416,7 @@ VIDEO_UPDATE( firetrk )
 	}
 
 	draw_text(bitmap, cliprect);
+	return 0;
 }
 
 

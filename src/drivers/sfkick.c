@@ -74,6 +74,7 @@ VIDEO_START( sfkick )
 VIDEO_UPDATE( sfkick )
 {
 
+	return 0;
 }
 
 static MACHINE_DRIVER_START( sfkick )

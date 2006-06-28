@@ -423,4 +423,5 @@ VIDEO_UPDATE( mcr )
 				render_sprites_91464(bitmap, cliprect, 0x00, 0x30, 0x00);
 			break;
 	}
+	return 0;
 }

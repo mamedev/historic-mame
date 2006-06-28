@@ -681,4 +681,5 @@ VIDEO_UPDATE( atarigt )
 			}
 		}
 	}
+	return 0;
 }

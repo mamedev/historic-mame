@@ -57,8 +57,8 @@ VIDEO_START( xmen )
 	return 0;
 }
 
-static mame_bitmap * screen_left;
 static mame_bitmap * screen_right;
+static mame_bitmap * screen_left;
 
 VIDEO_START( xmen6p )
 {
@@ -69,8 +69,8 @@ VIDEO_START( xmen6p )
 	if (K053247_vh_start(REGION_GFX2,53,-2,NORMAL_PLANE_ORDER,xmen_sprite_callback))
 		return 1;
 
-	screen_right = auto_bitmap_alloc_depth(128*8, 32*8, 16);
-	screen_left = auto_bitmap_alloc_depth(128*8, 32*8, 16);
+	screen_left = auto_bitmap_alloc_depth(64*8, 32*8, 16);
+	screen_right = auto_bitmap_alloc_depth(64*8, 32*8, 16);
 
 	return 0;
 }
@@ -130,6 +130,7 @@ VIDEO_UPDATE( xmen )
 
 	pdrawgfx_shadow_lowpri = 1;	/* fix shadows of boulders in front of feet */
 	K053247_sprites_draw(bitmap,cliprect);
+	return 0;
 }
 
 extern UINT16 xmen_current_frame;
@@ -153,19 +154,18 @@ VIDEO_UPDATE( xmen6p )
 		for(y=0;y<32*8;y++)
 		{
 			UINT16* line_dest = (UINT16 *)(bitmap->line[y]);
-			UINT16* line_src = (UINT16 *)(screen_right->line[y]);
-			UINT16* line_src2 = (UINT16 *)(screen_left->line[y]);
+			UINT16* line_src;
 
-			for (x=14*8;x<50*8;x++)
+			if (screen==0) line_src = (UINT16 *)(screen_left->line[y]);
+			else line_src = (UINT16 *)(screen_right->line[y]);
+
+			for (x=12*8;x<52*8;x++)
 			{
 				line_dest[x] = line_src[x];
 			}
-			for (x=16*8;x<52*8;x++)
-			{
-				line_dest[x+256] = line_src2[x];
-			}
 		}
 	}
+	return 0;
 }
 
 /* my lefts and rights are mixed up in several places.. */
@@ -178,10 +178,18 @@ VIDEO_EOF( xmen6p )
 
 	xmen_current_frame ^=0x8000;
 
-	cliprect.min_x = Machine->visible_area[0].min_x;
-	cliprect.max_x = Machine->visible_area[0].max_x;
-	cliprect.min_y = Machine->visible_area[0].min_y;
-	cliprect.max_y = Machine->visible_area[0].max_y;
+//  cliprect.min_x = Machine->visible_area[0].min_x;
+//  cliprect.max_x = Machine->visible_area[0].max_x;
+//  cliprect.min_y = Machine->visible_area[0].min_y;
+//  cliprect.max_y = Machine->visible_area[0].max_y;
+
+	cliprect.min_x = 0;
+	cliprect.max_x = 64*8-1;
+	cliprect.min_y = 2*8;
+	cliprect.max_y = 30*8-1;
+
+
+
 
 	if (xmen_current_frame&0x8000)
 	{
@@ -200,7 +208,7 @@ VIDEO_EOF( xmen6p )
 		}
 
 
-		renderbitmap = screen_left;
+		renderbitmap = screen_right;
 	}
 	else
 	{
@@ -221,7 +229,7 @@ VIDEO_EOF( xmen6p )
 
 
 
-		renderbitmap = screen_right;
+		renderbitmap = screen_left;
 	}
 
 

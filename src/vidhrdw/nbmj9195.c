@@ -528,4 +528,5 @@ VIDEO_UPDATE( nbmj9195 )
 			copyscrollbitmap(bitmap, nbmj9195_tmpbitmap[1], SCANLINE_MAX, nbmj9195_scrollx_raster[1], 1, &scrolly[1], &Machine->visible_area[0], TRANSPARENCY_PEN, Machine->pens[0x1ff]);
 		}
 	}
+	return 0;
 }

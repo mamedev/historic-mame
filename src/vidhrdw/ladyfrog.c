@@ -149,5 +149,6 @@ VIDEO_UPDATE( ladyfrog )
 {
     tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
     ladyfrog_draw_sprites(bitmap,cliprect);
+	return 0;
 }
 

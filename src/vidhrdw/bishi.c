@@ -93,4 +93,5 @@ VIDEO_UPDATE(bishi)
 			K056832_tilemap_draw(bitmap, cliprect, layers[i], 0, 1<<i);
 		}
 	}
+	return 0;
 }

@@ -228,4 +228,5 @@ VIDEO_UPDATE( megazone )
 			offs++;
 		}
 	}
+	return 0;
 }

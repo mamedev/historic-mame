@@ -246,6 +246,7 @@ VIDEO_UPDATE( williams )
 			dest[x+1] = pix & 0x0f;
 		}
 	}
+	return 0;
 }
 
 
@@ -282,6 +283,7 @@ VIDEO_UPDATE( blaster )
 			dest[x+1] = (pix & 0x0f) ? (pix & 0x0f) : blaster_color0;
 		}
 	}
+	return 0;
 }
 
 
@@ -312,6 +314,7 @@ VIDEO_UPDATE( williams2 )
 				dest[x+1] = basecolor + (pix & 0x0f);
 		}
 	}
+	return 0;
 }
 
 

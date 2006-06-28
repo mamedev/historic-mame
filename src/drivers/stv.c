@@ -2954,6 +2954,7 @@ static VIDEO_UPDATE(critcrsh)
 					  readinputport(8)*Machine->visible_area[0].max_y/46,
 					  cliprect,
 					  0);
+	return 0;
 }
 
 static MACHINE_DRIVER_START( stv )

@@ -90,4 +90,5 @@ VIDEO_UPDATE( chqflag )
 	K051316_zoom_draw_1(bitmap,cliprect,TILEMAP_FRONT,0);
 	K051960_sprites_draw(bitmap,cliprect,1,1);
 	K051316_zoom_draw_0(bitmap,cliprect,0,0);
+	return 0;
 }

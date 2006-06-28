@@ -98,4 +98,5 @@ VIDEO_UPDATE( canyon )
 
 	/* watchdog is disabled during service mode */
 		watchdog_enable(!(readinputport(2) & 0x10));
+	return 0;
 }

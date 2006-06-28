@@ -124,7 +124,7 @@ VIDEO_UPDATE( playch10 )
 		/* if the bit is not set, then we should display        */
 		/* the PPU portion.                                     */
 
-		if ( screen == 1 )
+		if ( screen == 0 )
 		{
 			if ( !pc10_dispmask )
 			{
@@ -192,4 +192,5 @@ VIDEO_UPDATE( playch10 )
 			}
 		}
 	}
+	return 0;
 }

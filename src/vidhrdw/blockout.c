@@ -141,4 +141,5 @@ VIDEO_UPDATE( blockout )
 			}
 		}
 	}
+	return 0;
 }

@@ -251,6 +251,7 @@ VIDEO_UPDATE( adder2 )
 			ui_draw_text("Door Open  ", 320, 284);
 	}
 	#endif
+	return 0;
 }
 
 

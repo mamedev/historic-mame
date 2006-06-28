@@ -142,6 +142,7 @@ VIDEO_UPDATE(igs)
 				plot_pixel( bitmap, x,y, layer[l][scr_addr] | (l << 8) );
 		}
 	}
+	return 0;
 }
 
 static READ16_HANDLER( igs_layers_r )

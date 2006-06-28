@@ -134,4 +134,5 @@ VIDEO_UPDATE( kopunch )
 				8*(sx+8)+scroll[0],8*(8+(gfxflip ? 15-sy : sy))+scroll[1],
 				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 	}
+	return 0;
 }

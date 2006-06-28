@@ -319,6 +319,7 @@ VIDEO_UPDATE( magic10 )
 	tilemap_draw(bitmap,cliprect,layer0_tilemap,0,0);
 	tilemap_draw(bitmap,cliprect,layer1_tilemap,0,0);
 	tilemap_draw(bitmap,cliprect,layer2_tilemap,0,0);
+	return 0;
 }
 
 static const gfx_layout tiles8x8_layout =

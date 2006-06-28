@@ -160,6 +160,7 @@ VIDEO_UPDATE(bestleag)
 	tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
 	draw_sprites(bitmap,cliprect);
 	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
+	return 0;
 }
 
 WRITE16_HANDLER( bestleag_txram_w )

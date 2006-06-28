@@ -277,6 +277,7 @@ VIDEO_UPDATE( geebee )
 	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 
 	draw_ball(bitmap,cliprect,1);
+	return 0;
 }
 
 
@@ -286,4 +287,5 @@ VIDEO_UPDATE( warpwarp )
 	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 
 	draw_ball(bitmap,cliprect,0xf6);
+	return 0;
 }

@@ -73,6 +73,7 @@ VIDEO_START(ampoker2)
 VIDEO_UPDATE(ampoker2)
 {
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
+	return 0;
 }
 
 static ADDRESS_MAP_START( ampoker2_map, ADDRESS_SPACE_PROGRAM, 8 )

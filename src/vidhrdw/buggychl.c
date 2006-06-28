@@ -276,4 +276,5 @@ VIDEO_UPDATE( buggychl )
 
 	for (code = 0;code < 256;code++)
 		dirtychar[code] = 0;
+	return 0;
 }

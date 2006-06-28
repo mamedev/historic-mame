@@ -301,4 +301,5 @@ VIDEO_UPDATE( thunderj )
 					mo[x] = 0;
 				}
 		}
+	return 0;
 }

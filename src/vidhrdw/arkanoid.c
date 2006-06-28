@@ -129,4 +129,5 @@ VIDEO_UPDATE( arkanoid )
 {
 	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
 	arkanoid_draw_sprites(bitmap);
+	return 0;
 }

@@ -122,4 +122,5 @@ VIDEO_UPDATE( arcadecl )
 					}
 			}
 	}
+	return 0;
 }

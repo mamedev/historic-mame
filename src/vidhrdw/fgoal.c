@@ -132,4 +132,5 @@ VIDEO_UPDATE( fgoal )
 			}
 		}
 	}
+	return 0;
 }

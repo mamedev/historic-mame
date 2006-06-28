@@ -294,5 +294,6 @@ if (code_pressed(KEYCODE_Z))
 	if (layers_ctrl1 & 8)	draw_sprites(bitmap,cliprect);
 	if (layers_ctrl1 & 4)	tilemap_draw(bitmap,cliprect, tx_tilemap, 0,0);
 
+	return 0;
 }
 

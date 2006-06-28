@@ -815,11 +815,11 @@ VIDEO_UPDATE( psx )
 #if defined( MAME_DEBUG )
 	if( DebugMeshDisplay( bitmap, cliprect ) )
 	{
-		return;
+		return 0;
 	}
 	if( DebugTextureDisplay( bitmap ) )
 	{
-		return;
+		return 0;
 	}
 #endif
 
@@ -941,6 +941,7 @@ VIDEO_UPDATE( psx )
 			}
 		}
 	}
+	return 0;
 }
 
 #define WRITE_PIXEL( p ) *( p_vram ) = p

@@ -548,6 +548,7 @@ static VIDEO_START( vegas_voodoo3 )
 static VIDEO_UPDATE( vegas )
 {
 	voodoo_update(0, bitmap, cliprect);
+	return 0;
 }
 
 

@@ -561,4 +561,5 @@ VIDEO_UPDATE( twin16 )
 	draw_layer( bitmap,0 );
 	draw_sprites( bitmap );
 	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
+	return 0;
 }

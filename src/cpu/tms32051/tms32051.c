@@ -8,7 +8,7 @@
 #include "tms32051.h"
 #include "debugger.h"
 
-
+static void delay_slot(UINT16 startpc);
 
 enum {
 	TMS32051_PC = 1,
@@ -63,6 +63,8 @@ typedef struct {
 	UINT16 brcr;
 	UINT16 paer;
 	UINT16 pasr;
+	UINT16 indx;
+	UINT16 dbmr;
 
 	struct
 	{
@@ -138,6 +140,18 @@ static void op_group_be(void)
 static void op_group_bf(void)
 {
 	tms32051_opcode_table_bf[tms.op & 0xff]();
+}
+
+static void delay_slot(UINT16 startpc)
+{
+	tms.op = ROPCODE();
+	tms32051_opcode_table[tms.op >> 8]();
+
+	if (tms.pc - startpc < 4)
+	{
+		tms.op = ROPCODE();
+		tms32051_opcode_table[tms.op >> 8]();
+	}
 }
 
 /*****************************************************************************/
@@ -272,6 +286,7 @@ static READ16_HANDLER( cpuregs_r )
 {
 	switch (offset)
 	{
+		case 0x00:	return 0;
 		case 0x04:	return tms.imr;
 		case 0x06:	return tms.ifr;
 
@@ -306,6 +321,7 @@ static WRITE16_HANDLER( cpuregs_w )
 {
 	switch (offset)
 	{
+		case 0x00:	break;
 		case 0x04:	tms.imr = data; break;
 		case 0x06:	tms.ifr = data; break;
 
@@ -323,6 +339,8 @@ static WRITE16_HANDLER( cpuregs_w )
 		}
 
 		case 0x09:	tms.brcr = data; break;
+		case 0x0f:	tms.dbmr = data; break;
+		case 0x18:	tms.indx = data; break;
 		case 0x1e:	tms.cbcr = data; break;
 		case 0x1f:	tms.bmar = data; break;
 		case 0x24:	tms.tim = data; break;

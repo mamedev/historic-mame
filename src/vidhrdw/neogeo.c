@@ -876,4 +876,5 @@ VIDEO_UPDATE( neogeo )
 		}  /* for count */
 	}
 	neogeo_draw_s_layer(bitmap,cliprect);
+	return 0;
 }

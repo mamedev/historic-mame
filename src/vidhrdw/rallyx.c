@@ -593,4 +593,5 @@ VIDEO_UPDATE( rallyx )
 	/* Rally X doesn't have the optional starfield generator */
 	if (video_type != TYPE_RALLYX)
 		if (stars_enable) draw_stars(bitmap,cliprect);
+	return 0;
 }

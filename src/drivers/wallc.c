@@ -141,6 +141,7 @@ VIDEO_START( wallc )
 VIDEO_UPDATE( wallc )
 {
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
+	return 0;
 }
 
 static WRITE8_HANDLER( wallc_coin_counter_w )

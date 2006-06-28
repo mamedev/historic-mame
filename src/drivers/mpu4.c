@@ -1104,6 +1104,7 @@ VIDEO_UPDATE( mpu4_vid )
 	draw_7segment_led_temp(bitmap, 348, 504, led_segs[6], 4, 0);
 	draw_7segment_led_temp(bitmap, 356, 504, led_segs[7], 4, 0);
 
+	return 0;
 }
 
 READ16_HANDLER( mpu4_vid_vidram_r )

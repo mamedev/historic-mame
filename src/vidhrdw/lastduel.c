@@ -258,6 +258,7 @@ VIDEO_UPDATE( lastduel )
 	tilemap_draw(bitmap,cliprect,fg_tilemap,TILEMAP_FRONT,0);
 	draw_sprites(bitmap,cliprect,1);
 	tilemap_draw(bitmap,cliprect,tx_tilemap,0,0);
+	return 0;
 }
 
 

@@ -373,6 +373,7 @@ VIDEO_START(magiccrd)
 VIDEO_UPDATE(funworld)
 {
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
+	return 0;
 }
 
 /* Read/Write Handlers */

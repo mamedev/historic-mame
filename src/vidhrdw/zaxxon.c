@@ -281,6 +281,7 @@ VIDEO_UPDATE( zaxxon )
 	zaxxon_draw_background(bitmap, cliprect);
 	zaxxon_draw_sprites(bitmap, cliprect);
 	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
+	return 0;
 }
 
 /* Razzmatazz */
@@ -360,6 +361,7 @@ VIDEO_UPDATE( razmataz )
 	razmataz_draw_background(bitmap, cliprect);
 	zaxxon_draw_sprites(bitmap, cliprect);
 	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
+	return 0;
 }
 
 /* Congo Bongo */
@@ -436,6 +438,7 @@ VIDEO_UPDATE( congo )
 	zaxxon_draw_background(bitmap, cliprect);
 	congo_draw_sprites(bitmap, cliprect);
 	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
+	return 0;
 }
 
 /* Future Spy */
@@ -474,4 +477,5 @@ VIDEO_UPDATE( futspy )
 	zaxxon_draw_background(bitmap, cliprect);
 	futspy_draw_sprites(bitmap, cliprect);
 	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
+	return 0;
 }

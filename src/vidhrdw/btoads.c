@@ -340,7 +340,7 @@ VIDEO_UPDATE( btoads )
 	if (tms34010_io_display_blanked(0))
 	{
 		fillbitmap(bitmap, get_black_pen(), cliprect);
-		return;
+		return 0;
 	}
 
 	/* loop over all scanlines */
@@ -494,4 +494,5 @@ VIDEO_UPDATE( btoads )
 
 	logerror("---VBLANK---\n");
 #endif
+	return 0;
 }

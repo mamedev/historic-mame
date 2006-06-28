@@ -75,4 +75,5 @@ VIDEO_UPDATE( rollerg )
 	fillbitmap(bitmap,Machine->pens[16 * bg_colorbase],cliprect);
 	K051316_zoom_draw_0(bitmap,cliprect,0,1);
 	K053245_sprites_draw(0,bitmap,cliprect);
+	return 0;
 }

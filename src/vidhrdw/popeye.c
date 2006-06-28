@@ -402,4 +402,5 @@ VIDEO_UPDATE( popeye )
 	popeye_draw_background(bitmap, cliprect);
 	popeye_draw_sprites(bitmap, cliprect);
 	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
+	return 0;
 }

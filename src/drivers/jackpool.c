@@ -157,6 +157,7 @@ VIDEO_UPDATE(jackpool)
 
 //  tilemap_draw(bitmap,cliprect,jackpool_layer2_tilemap,0,0); // is this actually a second display?
 
+	return 0;
 }
 
 

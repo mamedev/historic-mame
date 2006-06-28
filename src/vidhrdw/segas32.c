@@ -2462,7 +2462,7 @@ VIDEO_UPDATE( system32 )
 	if (!system32_displayenable[0])
 	{
 		fillbitmap(bitmap, get_black_pen(), cliprect);
-		return;
+		return 0;
 	}
 
 	/* update the tilemaps */
@@ -2623,6 +2623,7 @@ for (showclip = 0; showclip < 4; showclip++)
 #endif
 
 	print_mixer_data(0);
+	return 0;
 }
 
 
@@ -2640,7 +2641,7 @@ VIDEO_UPDATE( multi32 )
 	if (!system32_displayenable[screen])
 	{
 		fillbitmap(bitmap, get_black_pen(), cliprect);
-		return;
+		return 0;
 	}
 
 	/* update the tilemaps */
@@ -2684,6 +2685,7 @@ VIDEO_UPDATE( multi32 )
 }
 #endif
 
+	return 0;
 }
 
 

@@ -233,6 +233,7 @@ VIDEO_UPDATE(taotaido)
 	}
 
 	taotaido_drawsprites(bitmap,cliprect);
+	return 0;
 }
 
 VIDEO_EOF( taotaido )

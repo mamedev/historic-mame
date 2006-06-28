@@ -119,6 +119,7 @@ VIDEO_UPDATE(cm)
 {
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 //  chrmstr_draw_sprites(bitmap, cliprect);
+	return 0;
 }
 
 #if 0// For when NVRAM is hooked up

@@ -244,4 +244,5 @@ VIDEO_UPDATE( gomoku )
 	}
 
 	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
+	return 0;
 }

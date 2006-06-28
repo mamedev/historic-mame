@@ -370,6 +370,7 @@ VIDEO_UPDATE( jollyjgr )
 				cliprect,TRANSPARENCY_PEN,0);
 
 	}
+	return 0;
 }
 
 static const gfx_layout jollyjgr_charlayout =

@@ -346,6 +346,7 @@ VIDEO_UPDATE( aso )
 	bank = msbs>>6 & 1;
 	tnk3_draw_text(bitmap, bank, &textram[0]);
 	tnk3_draw_status(bitmap, bank, &textram[0x400]);
+	return 0;
 }
 
 

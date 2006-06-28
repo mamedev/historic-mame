@@ -238,4 +238,5 @@ VIDEO_UPDATE( cloak )
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 	copybitmap(bitmap, (bmap ? tmpbitmap2 : tmpbitmap),flip_screen,flip_screen,0,0,cliprect,TRANSPARENCY_COLOR,16);
 	cloak_draw_sprites(bitmap, cliprect);
+	return 0;
 }

@@ -262,6 +262,7 @@ VIDEO_UPDATE( exedexes )
 	{
 		tilemap_draw(bitmap, &Machine->visible_area[0], tx_tilemap, 0, 0);
 	}
+	return 0;
 }
 
 VIDEO_EOF( exedexes )

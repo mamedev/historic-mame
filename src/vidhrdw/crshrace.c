@@ -197,7 +197,7 @@ VIDEO_UPDATE( crshrace )
 	if (gfxctrl & 0x04)	/* display disable? */
 	{
 		fillbitmap(bitmap,get_black_pen(),cliprect);
-		return;
+		return 0;
 	}
 
 	fillbitmap(bitmap,Machine->pens[0x1ff],cliprect);
@@ -219,6 +219,7 @@ VIDEO_UPDATE( crshrace )
 ui_popup("gfxctrl = %02x",gfxctrl);
 			break;
 	}
+	return 0;
 }
 
 VIDEO_EOF( crshrace )

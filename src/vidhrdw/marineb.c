@@ -186,6 +186,7 @@ VIDEO_UPDATE( marineb )
 				sx,sy,
 				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 	}
+	return 0;
 }
 
 
@@ -268,6 +269,7 @@ VIDEO_UPDATE( changes )
 			flipx,flipy,
 			sx-256,sy,
 			&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+	return 0;
 }
 
 
@@ -330,6 +332,7 @@ VIDEO_UPDATE( springer )
 				sx,sy,
 				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 	}
+	return 0;
 }
 
 
@@ -376,6 +379,7 @@ VIDEO_UPDATE( hoccer )
 				sx,sy,
 				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 	}
+	return 0;
 }
 
 
@@ -437,4 +441,5 @@ VIDEO_UPDATE( hopprobo )
 				sx,sy,
 				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 	}
+	return 0;
 }

@@ -480,4 +480,5 @@ VIDEO_UPDATE( psychic5 )
 	psychic5_draw_background(bitmap, cliprect);
 	psychic5_draw_sprites(bitmap, cliprect);
 	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
+	return 0;
 }

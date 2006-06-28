@@ -199,6 +199,7 @@ VIDEO_UPDATE( galpanic )
 		galpanic_draw_sprites(sprites_bitmap);
 		copybitmap(bitmap,sprites_bitmap,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 	}
+	return 0;
 }
 
 VIDEO_UPDATE( comad )
@@ -219,4 +220,5 @@ VIDEO_UPDATE( comad )
 		comad_draw_sprites(sprites_bitmap);
 		copybitmap(bitmap,sprites_bitmap,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_PEN,0);
 	}
+	return 0;
 }

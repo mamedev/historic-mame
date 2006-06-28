@@ -396,4 +396,5 @@ VIDEO_UPDATE( irobot )
 						8*x,8*y,
 						&Machine->visible_area[0],TRANSPARENCY_COLOR,transp);
 			}
+	return 0;
 }

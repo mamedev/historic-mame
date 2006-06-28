@@ -555,6 +555,7 @@ VIDEO_UPDATE( tumblepb )
 	else
 		tilemap_draw(bitmap,cliprect,pf1_alt_tilemap,0,0);
 	tumblepb_drawsprites(bitmap,cliprect);
+	return 0;
 }
 
 VIDEO_UPDATE( jumpkids )
@@ -579,6 +580,7 @@ VIDEO_UPDATE( jumpkids )
 	else
 		tilemap_draw(bitmap,cliprect,pf1_alt_tilemap,0,0);
 	jumpkids_drawsprites(bitmap,cliprect);
+	return 0;
 }
 
 VIDEO_UPDATE( semicom )
@@ -603,6 +605,7 @@ VIDEO_UPDATE( semicom )
 	else
 		tilemap_draw(bitmap,cliprect,pf1_alt_tilemap,0,0);
 	jumpkids_drawsprites(bitmap,cliprect);
+	return 0;
 }
 
 VIDEO_UPDATE( semicom_altoffsets )
@@ -628,6 +631,7 @@ VIDEO_UPDATE( semicom_altoffsets )
 	else
 		tilemap_draw(bitmap,cliprect,pf1_alt_tilemap,0,0);
 	jumpkids_drawsprites(bitmap,cliprect);
+	return 0;
 }
 
 VIDEO_UPDATE( bcstory )
@@ -652,6 +656,7 @@ VIDEO_UPDATE( bcstory )
 	else
 		tilemap_draw(bitmap,cliprect,pf1_alt_tilemap,0,0);
 	jumpkids_drawsprites(bitmap,cliprect);
+	return 0;
 }
 
 VIDEO_UPDATE( semibase )
@@ -678,6 +683,7 @@ VIDEO_UPDATE( semibase )
 	else
 		tilemap_draw(bitmap,cliprect,pf1_alt_tilemap,0,0);
 	jumpkids_drawsprites(bitmap,cliprect);
+	return 0;
 }
 
 
@@ -705,6 +711,7 @@ VIDEO_UPDATE( fncywld )
 	else
 		tilemap_draw(bitmap,cliprect,pf1_alt_tilemap,0,0);
 	fncywld_drawsprites(bitmap,cliprect);
+	return 0;
 }
 
 
@@ -734,6 +741,7 @@ VIDEO_UPDATE( jumppop )
 //ui_popup("%04x %04x %04x %04x %04x %04x %04x %04x", jumppop_control[0],jumppop_control[1],jumppop_control[2],jumppop_control[3],jumppop_control[4],jumppop_control[5],jumppop_control[6],jumppop_control[7]);
 
 	jumpkids_drawsprites(bitmap,cliprect);
+	return 0;
 }
 
 
@@ -760,6 +768,7 @@ ui_popup("%04x %04x %04x %04x %04x %04x %04x %04x",
  suprtrio_control[7]);
 #endif
 
+	return 0;
 }
 
 VIDEO_UPDATE( pangpang )
@@ -784,6 +793,7 @@ VIDEO_UPDATE( pangpang )
 	else
 		tilemap_draw(bitmap,cliprect,pf1_alt_tilemap,0,0);
 	jumpkids_drawsprites(bitmap,cliprect);
+	return 0;
 }
 
 VIDEO_START( suprtrio )

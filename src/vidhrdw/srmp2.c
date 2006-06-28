@@ -459,6 +459,7 @@ VIDEO_UPDATE( srmp2 )
 {
 	fillbitmap(bitmap, Machine->pens[0x1f0], &Machine->visible_area[0]);
 	srmp2_draw_sprites(bitmap);
+	return 0;
 }
 
 
@@ -466,6 +467,7 @@ VIDEO_UPDATE( srmp3 )
 {
 	fillbitmap(bitmap, Machine->pens[0x1f0], &Machine->visible_area[0]);
 	srmp3_draw_sprites(bitmap);
+	return 0;
 }
 
 
@@ -473,4 +475,5 @@ VIDEO_UPDATE( mjyuugi )
 {
 	fillbitmap(bitmap, Machine->pens[0x1f0], &Machine->visible_area[0]);
 	mjyuugi_draw_sprites(bitmap);
+	return 0;
 }

@@ -222,4 +222,5 @@ VIDEO_UPDATE( amazon )
 	}
 	draw_sprites( bitmap,cliprect );
 	tilemap_draw( bitmap,cliprect, foreground, 0, 0 );
+	return 0;
 }

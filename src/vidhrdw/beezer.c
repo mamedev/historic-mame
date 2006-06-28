@@ -29,6 +29,7 @@ VIDEO_UPDATE( beezer )
 		}
 
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+	return 0;
 }
 
 WRITE8_HANDLER( beezer_map_w )

@@ -545,6 +545,7 @@ VIDEO_UPDATE( lastday )
 		draw_sprites(bitmap,0);
 
 	draw_tx(bitmap,-1);
+	return 0;
 }
 
 VIDEO_UPDATE( gulfstrm )
@@ -559,6 +560,7 @@ VIDEO_UPDATE( gulfstrm )
 
 	draw_sprites(bitmap,1);
 	draw_tx(bitmap,-1);
+	return 0;
 }
 
 VIDEO_UPDATE( pollux )
@@ -573,6 +575,7 @@ VIDEO_UPDATE( pollux )
 
 	draw_sprites(bitmap,2);
 	draw_tx(bitmap,0);
+	return 0;
 }
 
 VIDEO_UPDATE( flytiger )
@@ -598,6 +601,7 @@ VIDEO_UPDATE( flytiger )
 
 	draw_sprites(bitmap,4);
 	draw_tx(bitmap,0);
+	return 0;
 }
 
 
@@ -608,6 +612,7 @@ VIDEO_UPDATE( bluehawk )
 	draw_sprites(bitmap,3);
 	bluehawk_draw_layer2(bitmap,4,bluehawk_fg2scroll,memory_region(REGION_GFX5)+0x38000,TRANSPARENCY_PEN);
 	bluehawk_draw_tx(bitmap);
+	return 0;
 }
 
 VIDEO_UPDATE( primella )
@@ -616,6 +621,7 @@ VIDEO_UPDATE( primella )
 	if (tx_pri) bluehawk_draw_tx(bitmap);
 	bluehawk_draw_layer(bitmap,2,lastday_fgscroll,memory_region(REGION_GFX3)+memory_region_length(REGION_GFX3)-0x8000,TRANSPARENCY_PEN);
 	if (!tx_pri) bluehawk_draw_tx(bitmap);
+	return 0;
 }
 
 VIDEO_UPDATE( rshark )
@@ -625,12 +631,14 @@ VIDEO_UPDATE( rshark )
 	rshark_draw_layer(bitmap,2,rshark_scroll2,memory_region(REGION_GFX3),memory_region(REGION_GFX6)+0x20000,TRANSPARENCY_PEN);
 	rshark_draw_layer(bitmap,1,rshark_scroll1,memory_region(REGION_GFX2),memory_region(REGION_GFX6)+0x00000,TRANSPARENCY_PEN);
 	rshark_draw_sprites(bitmap);
+	return 0;
 }
 
 VIDEO_UPDATE( popbingo )
 {
 	popbingo_draw_layer(bitmap,1,popbingo_scroll,memory_region(REGION_GFX2),TRANSPARENCY_NONE);
 	rshark_draw_sprites(bitmap);
+	return 0;
 }
 
 

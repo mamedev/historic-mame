@@ -852,4 +852,5 @@ VIDEO_UPDATE( midyunit )
 		erase.max_x = leftscroll - 1;
 		fillbitmap(bitmap, get_black_pen(), &erase);
 	}
+	return 0;
 }

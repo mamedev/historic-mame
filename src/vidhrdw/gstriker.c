@@ -558,6 +558,7 @@ VIDEO_UPDATE(gstriker)
 		(UINT16)gs_mixer_regs[12], (UINT16)gs_mixer_regs[13], (UINT16)gs_mixer_regs[14], (UINT16)gs_mixer_regs[15]
 	);
 #endif
+	return 0;
 }
 
 VIDEO_START(gstriker)

@@ -214,4 +214,5 @@ if (code_pressed(KEYCODE_Z))
 	}
 
 	if (layers_ctrl & 0x8)	kaneko16_draw_sprites(bitmap, cliprect, 0xf);
+	return 0;
 }

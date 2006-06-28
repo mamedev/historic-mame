@@ -706,5 +706,6 @@ VIDEO_UPDATE( decocass )
 	tilemap_draw(bitmap,cliprect, fg_tilemap, 0, 0);
 	draw_sprites(bitmap,cliprect, (color_center_bot >> 1) & 1, 0, 0, decocass_fgvideoram, 0x20);
 	draw_missiles(bitmap,cliprect, 1, 0, decocass_colorram, 0x20);
+	return 0;
 }
 

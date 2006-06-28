@@ -703,7 +703,7 @@ static VIDEO_UPDATE(crystal)
 	for(y=0;y<240;y++)
 		for(x=0;x<320;x++)
 			plot_pixel_rgb(bitmap,x,y,srcline[y*512+x]);
-
+	return 0;
 }
 
 VIDEO_EOF(crystal)

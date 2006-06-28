@@ -166,6 +166,7 @@ VIDEO_UPDATE( suprslam )
 	suprslam_drawsprites(bitmap, cliprect);
 
 	tilemap_draw(bitmap,cliprect,suprslam_screen_tilemap,0,0);
+	return 0;
 }
 
 WRITE16_HANDLER (suprslam_bank_w)

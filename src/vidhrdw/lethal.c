@@ -152,4 +152,5 @@ VIDEO_UPDATE(lethalen)
 		}
 	}
 #endif
+	return 0;
 }

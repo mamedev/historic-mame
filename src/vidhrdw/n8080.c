@@ -226,6 +226,7 @@ VIDEO_UPDATE( spacefev )
 
 		pRAM += 32;
 	}
+	return 0;
 }
 
 
@@ -273,6 +274,7 @@ VIDEO_UPDATE( sheriff )
 
 		pRAM += 32;
 	}
+	return 0;
 }
 
 
@@ -371,6 +373,7 @@ VIDEO_UPDATE( helifire )
 
 	helifire_mv = saved_mv;
 	helifire_sc = saved_sc;
+	return 0;
 }
 
 

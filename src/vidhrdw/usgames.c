@@ -75,4 +75,5 @@ WRITE8_HANDLER( usg_charram_w )
 VIDEO_UPDATE(usg)
 {
 	tilemap_draw(bitmap,cliprect,usg_tilemap,0,0);
+	return 0;
 }

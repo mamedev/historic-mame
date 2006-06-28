@@ -373,6 +373,7 @@ VIDEO_UPDATE( marvins )
 		draw_status( bitmap,cliprect );
 	}
 	cpuintrf_pop_context();
+	return 0;
 }
 
 VIDEO_UPDATE( madcrash )
@@ -435,4 +436,5 @@ VIDEO_UPDATE( madcrash )
 		draw_status( bitmap,cliprect );
 	}
 	cpuintrf_pop_context();
+	return 0;
 }
