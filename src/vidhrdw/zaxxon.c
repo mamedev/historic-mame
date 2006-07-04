@@ -92,20 +92,14 @@ PALETTE_INIT( zaxxon )
 
 WRITE8_HANDLER( zaxxon_videoram_w )
 {
-	if (videoram[offset] != data)
-	{
-		videoram[offset] = data;
-		tilemap_mark_tile_dirty(fg_tilemap, offset);
-	}
+	videoram[offset] = data;
+	tilemap_mark_tile_dirty(fg_tilemap, offset);
 }
 
 WRITE8_HANDLER( congo_colorram_w )
 {
-	if (colorram[offset] != data)
-	{
-		colorram[offset] = data;
-		tilemap_mark_tile_dirty(fg_tilemap, offset);
-	}
+	colorram[offset] = data;
+	tilemap_mark_tile_dirty(fg_tilemap, offset);
 }
 
 
@@ -394,7 +388,7 @@ static void congo_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 {
 	int offs;
 	int i;
-	static unsigned int sprpri[0x100]; /* this really should not be more
+	unsigned int sprpri[0x100]; /* this really should not be more
                                     * than 0x1e, but I did not want to check
                                     * for 0xff which is set when sprite is off
                                     * -V-

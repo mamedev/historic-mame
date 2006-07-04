@@ -827,9 +827,15 @@ static int png_create_datastream(void *fp, mame_bitmap *bitmap)
 				{
 					color = ((UINT16 *)bitmap->line[i])[j];
 
+#ifdef NEW_RENDER
+					r = (color >> 10) & 0x1f;
+					g = (color >>  5) & 0x1f;
+					b = (color >>  0) & 0x1f;
+#else
 					r = (color & direct_rgb_components[0]) / (direct_rgb_components[0] / 0x1f);
 					g = (color & direct_rgb_components[1]) / (direct_rgb_components[1] / 0x1f);
 					b = (color & direct_rgb_components[2]) / (direct_rgb_components[2] / 0x1f);
+#endif
 
 					*ip++ = (r << 3) | (r >> 2);
 					*ip++ = (g << 3) | (g >> 2);
@@ -842,9 +848,15 @@ static int png_create_datastream(void *fp, mame_bitmap *bitmap)
 				{
 					color = ((UINT32 *)bitmap->line[i])[j];
 
+#ifdef NEW_RENDER
+					r = (color >> 16) & 0xff;
+					g = (color >>  8) & 0xff;
+					b = (color >>  0) & 0xff;
+#else
 					r = (color & direct_rgb_components[0]) / (direct_rgb_components[0] / 0xff);
 					g = (color & direct_rgb_components[1]) / (direct_rgb_components[1] / 0xff);
 					b = (color & direct_rgb_components[2]) / (direct_rgb_components[2] / 0xff);
+#endif
 
 					*ip++ = r;
 					*ip++ = g;

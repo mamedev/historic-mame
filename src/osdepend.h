@@ -111,13 +111,6 @@ int osd_update(mame_time emutime);
 
 
 /*
-  Provides a hook to allow the OSD system to override processing of a
-  snapshot.  This function will either return a new bitmap, for which the
-  caller is responsible for freeing.
-*/
-mame_bitmap *osd_override_snapshot(mame_bitmap *bitmap, rectangle *bounds);
-
-/*
   Returns a pointer to the text to display when the FPS display is toggled.
   This normally includes information about the frameskip, FPS, and percentage
   of full game speed.

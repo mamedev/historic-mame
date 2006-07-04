@@ -202,10 +202,9 @@
 #include "machine/atari_vg.h"
 #include "sound/pokey.h"
 #include "sound/custom.h"
-#include "artwork.h"
+#include "render.h"
 #include "bzone.h"
 
-extern const char layout_astdelux[];
 #include "bzone.lh"
 
 #define IN0_3KHZ (1<<7)
@@ -297,19 +296,6 @@ static READ8_HANDLER( redbaron_joy_r )
 {
 	return readinputport(rb_input_select ? 5 : 6);
 }
-
-
-
-/*************************************
- *
- *  Battle Zone overlay
- *
- *************************************/
-
-OVERLAY_START( bzone_overlay )
-	OVERLAY_RECT( 0.0, 0.0, 1.0, 0.2, MAKE_ARGB(0x04,0xff,0x20,0x20) )
-	OVERLAY_RECT( 0.0, 0.2, 1.0, 1.0, MAKE_ARGB(0x04,0x20,0xff,0x20) )
-OVERLAY_END
 
 
 
@@ -757,12 +743,6 @@ static WRITE8_HANDLER( analog_select_w )
 }
 
 
-static DRIVER_INIT( bzone )
-{
-	artwork_set_overlay(bzone_overlay);
-}
-
-
 static DRIVER_INIT( bradley )
 {
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x400, 0x7ff, 0, 0, MRA8_RAM);
@@ -775,16 +755,6 @@ static DRIVER_INIT( bradley )
 }
 
 
-static DRIVER_INIT( redbaron )
-{
-	OVERLAY_START( redbaron_overlay )
-		OVERLAY_RECT( 0.0, 0.0, 1.0, 1.0, MAKE_ARGB(0x04,0x88,0xff,0xff) )
-	OVERLAY_END
-
-	artwork_set_overlay(redbaron_overlay);
-}
-
-
 
 /*************************************
  *
@@ -792,8 +762,8 @@ static DRIVER_INIT( redbaron )
  *
  *************************************/
 
-GAMEL(1980, bzone,    0,     bzone,    bzone,    bzone,    ROT0, "Atari", "Battle Zone (set 1)", 0, layout_bzone )
-GAMEL(1980, bzone2,   bzone, bzone,    bzone,    bzone,    ROT0, "Atari", "Battle Zone (set 2)", 0, layout_bzone )
-GAMEL(1980, bzonec,   bzone, bzone,    bzone,    bzone,    ROT0, "Atari", "Battle Zone (cocktail)", GAME_NO_COCKTAIL, layout_bzone )
-GAME( 1980, bradley,  0,     bradley,  bradley,  bradley,  ROT0, "Atari", "Bradley Trainer", 0 )
-GAMEL(1980, redbaron, 0,     redbaron, redbaron, redbaron, ROT0, "Atari", "Red Baron", 0, layout_astdelux )
+GAMEL(1980, bzone,    0,     bzone,    bzone,    0,       ROT0, "Atari", "Battle Zone (set 1)", 0, layout_bzone )
+GAMEL(1980, bzone2,   bzone, bzone,    bzone,    0,       ROT0, "Atari", "Battle Zone (set 2)", 0, layout_bzone )
+GAMEL(1980, bzonec,   bzone, bzone,    bzone,    0,       ROT0, "Atari", "Battle Zone (cocktail)", GAME_NO_COCKTAIL, layout_bzone )
+GAME( 1980, bradley,  0,     bradley,  bradley,  bradley, ROT0, "Atari", "Bradley Trainer", 0 )
+GAMEL(1980, redbaron, 0,     redbaron, redbaron, 0,       ROT0, "Atari", "Red Baron", 0, layout_ho88ffff )

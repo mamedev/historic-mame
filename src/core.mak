@@ -95,6 +95,13 @@ $(OBJ)/render.o:	$(OBJ)/layout/dualhovu.lh \
 					$(OBJ)/layout/horizont.lh \
 					$(OBJ)/layout/triphsxs.lh \
 					$(OBJ)/layout/vertical.lh \
+					$(OBJ)/layout/ho20ffff.lh \
+					$(OBJ)/layout/ho2eff2e.lh \
+					$(OBJ)/layout/ho88ffff.lh \
+					$(OBJ)/layout/hoa0a0ff.lh \
+					$(OBJ)/layout/hoffe457.lh \
+					$(OBJ)/layout/hoffff20.lh \
+					$(OBJ)/layout/voffff20.lh \
 
 
 

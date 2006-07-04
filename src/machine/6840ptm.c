@@ -10,7 +10,9 @@
    'Re-Animator' and Mathis Rosenhauer.
 
     Todo:
-         Write handling for 'Single Shot' operation.
+         Confirm handling for 'Single Shot' operation.
+         (Datasheet suggests that output starts high, going low
+         on timeout, opposite of continuous case)
          Establish whether ptm6840_set_c? routines can replace
          hard coding of external clock frequencies.
 
@@ -62,6 +64,7 @@ struct _ptm6840
 			     enabled[3],
 			   interrupt[3],
 					mode[3],
+				   fired[3],
 			     t3_divisor,
 			     		IRQ,
 				 status_reg,
@@ -167,10 +170,15 @@ static UINT16 compute_counter(int counter, int which)
 
 	/* determine the clock frequency for this timer */
 	if (currptr->control_reg[counter] & 0x02)
-		freq = currptr->internal_freq;
+		{
+			freq = currptr->internal_freq;
+			PLOG(("MC6840 #%d: %d internal clock\n", which,counter));
+		}
 	else
-		freq = currptr->external_freq[counter];
-
+		{
+			freq = currptr->external_freq[counter];
+			PLOG(("MC6840 #%d: %d external clock\n", which,counter));
+		}
 	/* see how many are left */
 	switch (counter)
 	{
@@ -229,10 +237,15 @@ static void reload_count(int idx, int which)
 
 	/* determine the clock frequency for this timer */
 	if (currptr->control_reg[idx] & 0x02)
+	{
 		freq = currptr->internal_freq;
+		PLOG(("MC6840 #%d: %d internal clock\n", which,idx));
+	}
 	else
+	{
 		freq = currptr->external_freq[idx];
-
+		PLOG(("MC6840 #%d: %d external clock\n", which,idx));
+	}
 	/* determine the number of clock periods before we expire */
 	count = currptr->counter[idx].w;
 	if (currptr->control_reg[idx] & 0x04)
@@ -240,6 +253,22 @@ static void reload_count(int idx, int which)
 	else
 		count = count + 1;
 
+	currptr->fired[idx]=0;
+
+	if ((currptr->mode[idx] == 4)|(currptr->mode[idx] == 6))
+	{
+		currptr->output[idx] = 1;
+		switch (idx)
+		{
+			case 0:
+			if ( currptr->intf->out1_func ) currptr->intf->out1_func(0, currptr->output[0]);
+			case 1:
+			if ( currptr->intf->out2_func ) currptr->intf->out2_func(0, currptr->output[1]);
+			case 2:
+			if ( currptr->intf->out3_func ) currptr->intf->out3_func(0, currptr->output[2]);
+		}
+
+	}
 	/* set the timer */
 	PLOG(("MC6840 #%d: reload_count(%d): freq = %f  count = %d\n", which, idx, freq, count));
 	switch (idx)
@@ -361,6 +390,7 @@ void ptm6840_config(int which, const ptm6840_interface *intf)
 	state_save_register_item("6840ptm", which, currptr->clock[0]);
 	state_save_register_item("6840ptm", which, currptr->interrupt[0]);
 	state_save_register_item("6840ptm", which, currptr->mode[0]);
+	state_save_register_item("6840ptm", which, currptr->fired[0]);
 	state_save_register_item("6840ptm", which, currptr->enabled[0]);
 	state_save_register_item("6840ptm", which, currptr->external_freq[0]);
 	state_save_register_item("6840ptm", which, currptr->counter[0].w);
@@ -371,6 +401,7 @@ void ptm6840_config(int which, const ptm6840_interface *intf)
 	state_save_register_item("6840ptm", which, currptr->clock[1]);
 	state_save_register_item("6840ptm", which, currptr->interrupt[1]);
 	state_save_register_item("6840ptm", which, currptr->mode[1]);
+	state_save_register_item("6840ptm", which, currptr->fired[1]);
 	state_save_register_item("6840ptm", which, currptr->enabled[1]);
 	state_save_register_item("6840ptm", which, currptr->external_freq[1]);
 	state_save_register_item("6840ptm", which, currptr->counter[1].w);
@@ -381,6 +412,7 @@ void ptm6840_config(int which, const ptm6840_interface *intf)
 	state_save_register_item("6840ptm", which, currptr->clock[2]);
 	state_save_register_item("6840ptm", which, currptr->interrupt[2]);
 	state_save_register_item("6840ptm", which, currptr->mode[2]);
+	state_save_register_item("6840ptm", which, currptr->fired[2]);
 	state_save_register_item("6840ptm", which, currptr->enabled[2]);
 	state_save_register_item("6840ptm", which, currptr->external_freq[2]);
 	state_save_register_item("6840ptm", which, currptr->counter[2].w);
@@ -674,13 +706,26 @@ static void ptm6840_t1_timeout(int which)
 	{ // output enabled
 		if ( p->intf )
 		{
-			p->output[0] = p->output[0]?0:1;
-			PLOG(("**ptm6840 %d t1 output %d **\n", which, p->output[0]));
-			if ( p->intf->out1_func ) p->intf->out1_func(0, p->output[0]);
+			if ((p->mode[0] == 0)|(p->mode[0] == 2))
+			{
+				p->output[0] = p->output[0]?0:1;
+				PLOG(("**ptm6840 %d t1 output %d **\n", which, p->output[0]));
+				if ( p->intf->out1_func ) p->intf->out1_func(0, p->output[0]);
+			}
+			if ((p->mode[0] == 4)|(p->mode[0] == 6))
+			{
+				if (!p->fired[0])
+				{
+					p->output[0] = 0;
+					PLOG(("**ptm6840 %d t1 output %d **\n", which, p->output[0]));
+					if ( p->intf->out1_func ) p->intf->out1_func(0, p->output[0]);
+					p->fired[0]=1;//no changes in output until reinit
+				}
+			}
+
 		}
 	}
 }
-
 ///////////////////////////////////////////////////////////////////////////
 //                                                                       //
 // ptm6840_t2_timeout: called if timer2 is mature                        //
@@ -704,8 +749,23 @@ static void ptm6840_t2_timeout(int which)
 	{ // output enabled
 		if ( p->intf )
 		{
-			p->output[1] = p->output[1]?0:1;
-			if ( p->intf->out1_func ) p->intf->out1_func(0, p->output[0]);
+			if ((p->mode[1] == 0)|(p->mode[1] == 2))
+			{
+				p->output[1] = p->output[1]?0:1;
+				PLOG(("**ptm6840 %d t2 output %d **\n", which, p->output[1]));
+				if ( p->intf->out2_func ) p->intf->out2_func(0, p->output[1]);
+			}
+			if ((p->mode[1] == 4)|(p->mode[1] == 6))
+			{
+				if (!p->fired[1])
+				{
+					p->output[1] = 0;
+					PLOG(("**ptm6840 %d t2 output %d **\n", which, p->output[1]));
+					if ( p->intf->out2_func ) p->intf->out2_func(0, p->output[1]);
+					p->fired[1]=1;//no changes in output until reinit
+				}
+			}
+
 		}
 	}
 }
@@ -733,8 +793,23 @@ static void ptm6840_t3_timeout(int which)
 	{ // output enabled
 		if ( p->intf )
 		{
-			p->output[2] = p->output[2]?0:1;
-			if ( p->intf->out3_func ) p->intf->out3_func(0, p->output[2]);
+			if ((p->mode[2] == 0)|(p->mode[2] == 2))
+			{
+				p->output[2] = p->output[2]?0:1;
+				PLOG(("**ptm6840 %d t3 output %d **\n", which, p->output[2]));
+				if ( p->intf->out3_func ) p->intf->out3_func(0, p->output[2]);
+			}
+			if ((p->mode[2] == 4)|(p->mode[2] == 6))
+			{
+				if (!p->fired[2])
+				{
+					p->output[2] = 0;
+					PLOG(("**ptm6840 %d t3 output %d **\n", which, p->output[2]));
+					if ( p->intf->out3_func ) p->intf->out3_func(0, p->output[2]);
+					p->fired[2]=1;//no changes in output until reinit
+				}
+			}
+
 		}
 	}
 }

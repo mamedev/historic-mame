@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "artwork.h"
 #include "8080bw.h"
 #include <math.h>
 
@@ -40,22 +39,12 @@ static VIDEO_UPDATE( bowler );
 static void plot_pixel_8080(int x, int y, int col);
 
 /* smoothed colors, overlays are not so contrasted */
-#define OVERLAY_RED			MAKE_ARGB(0x08,0xff,0x20,0x20)
-#define OVERLAY_GREEN		MAKE_ARGB(0x08,0x20,0xff,0x20)
-#define OVERLAY_BLUE		MAKE_ARGB(0x08,0x20,0x20,0xff)
-#define OVERLAY_YELLOW		MAKE_ARGB(0x08,0xff,0xff,0x20)
-#define OVERLAY_CYAN		MAKE_ARGB(0x08,0x20,0xff,0xff)
-#define OVERLAY_LT_BLUE		MAKE_ARGB(0x08,0xa0,0xa0,0xff)
-
-
-OVERLAY_START( invaders_overlay )
-	OVERLAY_RECT(   8,   0,  64, 224, OVERLAY_GREEN )
-	OVERLAY_RECT(   0,  16,   8, 134, OVERLAY_GREEN )
-	OVERLAY_RECT( 184,   0, 216, 224, OVERLAY_RED )
-OVERLAY_END
-
 
 /*
+#define OVERLAY_RED         MAKE_ARGB(0x08,0xff,0x20,0x20)
+#define OVERLAY_GREEN       MAKE_ARGB(0x08,0x20,0xff,0x20)
+#define OVERLAY_YELLOW      MAKE_ARGB(0x08,0xff,0xff,0x20)
+
 OVERLAY_START( invdpt2m_overlay )
     OVERLAY_RECT(  16,   0,  72, 224, OVERLAY_GREEN )
     OVERLAY_RECT(   0,  16,  16, 134, OVERLAY_GREEN )
@@ -63,32 +52,6 @@ OVERLAY_START( invdpt2m_overlay )
     OVERLAY_RECT( 192,   0, 224, 224, OVERLAY_RED )
 OVERLAY_END
 */
-
-
-OVERLAY_START( invrvnge_overlay )
-	OVERLAY_RECT(   0,   0,  64, 224, OVERLAY_GREEN )
-	OVERLAY_RECT( 184,   0, 224, 224, OVERLAY_RED )
-OVERLAY_END
-
-
-OVERLAY_START( invad2ct_overlay )
-	OVERLAY_RECT(   0,   0,  48, 224, OVERLAY_YELLOW )
-	OVERLAY_RECT(  25,   0,  71, 224, OVERLAY_GREEN )
-	OVERLAY_RECT(  48,   0, 140, 224, OVERLAY_CYAN )
-	OVERLAY_RECT( 117,   0, 186, 224, OVERLAY_GREEN )
-	OVERLAY_RECT( 163,   0, 232, 224, OVERLAY_YELLOW )
-	OVERLAY_RECT( 209,   0, 256, 224, OVERLAY_RED )
-OVERLAY_END
-
-
-OVERLAY_START( phantom2_overlay )
-	OVERLAY_RECT(   0,   0, 240, 224, OVERLAY_LT_BLUE )
-OVERLAY_END
-
-
-OVERLAY_START( gunfight_overlay )
-	OVERLAY_RECT(   0,   0, 256, 224, OVERLAY_YELLOW )
-OVERLAY_END
 
 
 DRIVER_INIT( 8080bw )
@@ -101,28 +64,10 @@ DRIVER_INIT( 8080bw )
 	flip_screen_set(0);
 }
 
-DRIVER_INIT( invaders )
-{
-	init_8080bw();
-	artwork_set_overlay(invaders_overlay);
-}
-
 DRIVER_INIT( invaddlx )
 {
 	init_8080bw();
 /*  artwork_set_overlay(invdpt2m_overlay);*/
-}
-
-DRIVER_INIT( invrvnge )
-{
-	init_8080bw();
-	artwork_set_overlay(invrvnge_overlay);
-}
-
-DRIVER_INIT( invad2ct )
-{
-	init_8080bw();
-	artwork_set_overlay(invad2ct_overlay);
 }
 
 DRIVER_INIT( sstrngr2 )
@@ -201,13 +146,6 @@ DRIVER_INIT( phantom2 )
 {
 	init_8080bw();
 	videoram_w_p = phantom2_videoram_w;
-	artwork_set_overlay(phantom2_overlay);
-}
-
-DRIVER_INIT( gunfight )
-{
-	init_8080bw();
-	artwork_set_overlay(gunfight_overlay);
 }
 
 DRIVER_INIT( indianbt )

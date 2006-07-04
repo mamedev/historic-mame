@@ -221,10 +221,12 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "artwork.h"
 #include "vidhrdw/lazercmd.h"
 #include "cpu/s2650/s2650.h"
 #include "sound/dac.h"
+
+#include "render.h"
+#include "lazercmd.lh"
 
 
 int marker_x, marker_y;
@@ -424,26 +426,9 @@ static READ8_HANDLER( lazercmd_hardware_r )
 
 /*************************************************************
  *
- * Video overlay
+ * Memory maps
  *
  *************************************************************/
-
-#define JADE	MAKE_ARGB(0x04,0x2e,0xff,0x2e)
-#define MUSTARD MAKE_ARGB(0x04,0xff,0xb9,0x2e)
-
-OVERLAY_START( lazercmd_overlay )
-	OVERLAY_RECT(  0*HORZ_CHR,  0*VERT_CHR, 16*HORZ_CHR,  1*VERT_CHR, MUSTARD )
-	OVERLAY_RECT( 16*HORZ_CHR,  0*VERT_CHR, 32*HORZ_CHR,  1*VERT_CHR, JADE )
-	OVERLAY_RECT(  0*HORZ_CHR,  1*VERT_CHR, 16*HORZ_CHR, 22*VERT_CHR, JADE )
-	OVERLAY_RECT( 16*HORZ_CHR,  1*VERT_CHR, 32*HORZ_CHR, 22*VERT_CHR, MUSTARD )
-	OVERLAY_RECT(  0*HORZ_CHR, 22*VERT_CHR, 16*HORZ_CHR, 23*VERT_CHR, MUSTARD )
-	OVERLAY_RECT( 16*HORZ_CHR, 22*VERT_CHR, 32*HORZ_CHR, 23*VERT_CHR, JADE )
-OVERLAY_END
-
-OVERLAY_START( medlanes_overlay )
-	OVERLAY_RECT(  0*HORZ_CHR,  0*VERT_CHR, 32*HORZ_CHR, 24*VERT_CHR, JADE )
-OVERLAY_END
-
 
 static ADDRESS_MAP_START( lazercmd_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x0bff) AM_WRITE(MWA8_ROM)
@@ -528,9 +513,9 @@ INPUT_PORTS_START( lazercmd )
 	PORT_DIPNAME( 0x40, 0x40, "Marker Size" )
 	PORT_DIPSETTING(	0x00, "Small" )
 	PORT_DIPSETTING(	0x40, "Large" )
-	PORT_DIPNAME( 0x80, 0x80, "Color Overlay" )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
+//  PORT_DIPNAME( 0x80, 0x80, "Color Overlay" )
+//  PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+//  PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START					   /* IN3 coinage & start */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Coinage ) )
@@ -576,9 +561,9 @@ INPUT_PORTS_START( medlanes )
 	PORT_DIPNAME( 0x40, 0x00, "Marker Size" )
 	PORT_DIPSETTING(	0x00, "Small" )
 	PORT_DIPSETTING(	0x40, "Large" )
-	PORT_DIPNAME( 0x80, 0x80, "Color Overlay" )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
+//  PORT_DIPNAME( 0x80, 0x80, "Color Overlay" )
+//  PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+//  PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START					   /* IN3 coinage & start */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Coinage ) )
@@ -618,9 +603,9 @@ INPUT_PORTS_START( bbonk )
 	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x20, DEF_STR( On ) )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED)
-	PORT_DIPNAME( 0x80, 0x00, "Color Overlay" )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
+//  PORT_DIPNAME( 0x80, 0x00, "Color Overlay" )
+//  PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+//  PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
 	PORT_START					   /* IN3 coinage & start */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Coinage ) )
@@ -825,8 +810,6 @@ DRIVER_INIT( lazercmd )
 {
 int i, y;
 
-	artwork_set_overlay(lazercmd_overlay);
-
 /******************************************************************
  * The ROMs are 1K x 4 bit, so we have to mix
  * them into 8 bit bytes. The data is also inverted.
@@ -864,8 +847,6 @@ unsigned char *s = &memory_region(REGION_GFX1)[4 * 64 * 10 + i * VERT_FNT];
 DRIVER_INIT( medlanes )
 {
 int i, y;
-
-	artwork_set_overlay(medlanes_overlay);
 
 /******************************************************************
  * The ROMs are 1K x 4 bit, so we have to mix
@@ -941,6 +922,6 @@ unsigned char *s = &memory_region(REGION_GFX1)[4 * 64 * 10 + i * VERT_FNT];
 
 
 
-GAME( 1976, lazercmd, 0, lazercmd, lazercmd, lazercmd, ROT0, "Meadows Games, Inc.", "Lazer Command", 0 )
-GAME( 1977, medlanes, 0, medlanes, medlanes, medlanes, ROT0, "Meadows Games, Inc.", "Meadows Lanes", GAME_IMPERFECT_SOUND )
-GAME( 1976, bbonk,	  0, bbonk,    bbonk,	 bbonk,    ROT0, "Meadows Games, Inc.", "Bigfoot Bonkers", 0 )
+GAMEL( 1976, lazercmd, 0, lazercmd, lazercmd, lazercmd, ROT0, "Meadows Games, Inc.", "Lazer Command", 0, layout_lazercmd )
+GAMEL( 1977, medlanes, 0, medlanes, medlanes, medlanes, ROT0, "Meadows Games, Inc.", "Meadows Lanes", GAME_IMPERFECT_SOUND, layout_ho2eff2e )
+GAME ( 1976, bbonk,	  0, bbonk,    bbonk,	 bbonk,    ROT0, "Meadows Games, Inc.", "Bigfoot Bonkers", 0 )

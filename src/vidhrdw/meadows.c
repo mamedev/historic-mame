@@ -5,7 +5,6 @@
 ****************************************************************************/
 
 #include "driver.h"
-#include "artwork.h"
 #include "meadows.h"
 
 /* some constants to make life easier */

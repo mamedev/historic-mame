@@ -85,7 +85,7 @@
 #include "driver.h"
 #include "machine/z80ctc.h"
 #include "sndhrdw/mcr.h"
-#include "artwork.h"
+#include "render.h"
 #include "mcr.h"
 
 
@@ -389,7 +389,6 @@ static WRITE8_HANDLER( spyhunt_op4_w )
 	/* bit 5 = STR1 (J1-13) */
 	if (((last_op4 ^ data) & 0x20) && !(data & 0x20))
 	{
-#ifndef NEW_RENDER
 		static const char *lampname[8] =
 		{
 			"lamp0", "lamp1", "lamp2", "lamp3",
@@ -399,7 +398,8 @@ static WRITE8_HANDLER( spyhunt_op4_w )
 		/* bit 2 -> J1-11 (A2) */
 		/* bit 1 -> J1-10 (A1) */
 		/* bit 0 -> J1-12 (A0) */
-		artwork_show(lampname[data & 7], (data >> 3) & 1);
+#ifdef NEW_RENDER
+		render_view_item_set_state(lampname[data & 7], (data >> 3) & 1);
 #endif
 	}
 	last_op4 = data;

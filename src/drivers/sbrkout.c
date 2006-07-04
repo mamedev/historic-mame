@@ -29,8 +29,9 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "artwork.h"
 #include "sound/dac.h"
+
+#include "sbrkout.lh"
 
 extern WRITE8_HANDLER( sbrkout_serve_led_w );
 extern WRITE8_HANDLER( sbrkout_start_1_led_w );
@@ -47,21 +48,6 @@ extern WRITE8_HANDLER( sbrkout_videoram_w );
 
 extern VIDEO_START( sbrkout );
 extern VIDEO_UPDATE( sbrkout );
-
-
-/*************************************
- *
- *  Video overlay
- *
- *************************************/
-
-OVERLAY_START( sbrkout_overlay )
-	OVERLAY_RECT( 208,   8, 248, 218, MAKE_ARGB(0x04,0x20,0x20,0xff) )
-	OVERLAY_RECT( 176,   8, 208, 218, MAKE_ARGB(0x04,0xff,0x80,0x10) )
-	OVERLAY_RECT( 144,   8, 176, 218, MAKE_ARGB(0x04,0x20,0xff,0x20) )
-	OVERLAY_RECT(  96,   8, 144, 218, MAKE_ARGB(0x04,0xff,0xff,0x20) )
-	OVERLAY_RECT(  16,   8,  24, 218, MAKE_ARGB(0x04,0x20,0x20,0xff) )
-OVERLAY_END
 
 
 
@@ -324,21 +310,8 @@ ROM_END
 
 /*************************************
  *
- *  Driver initialization
- *
- *************************************/
-
-static DRIVER_INIT( sbrkout )
-{
-	artwork_set_overlay(sbrkout_overlay);
-}
-
-
-
-/*************************************
- *
  *  Game drivers
  *
  *************************************/
 
-GAME( 1978, sbrkout, 0, sbrkout, sbrkout, sbrkout, ROT270, "Atari", "Super Breakout", 0 )
+GAMEL( 1978, sbrkout, 0, sbrkout, sbrkout, 0, ROT270, "Atari", "Super Breakout", 0, layout_sbrkout )

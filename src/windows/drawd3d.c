@@ -34,16 +34,10 @@
 #include "window.h"
 
 
-// future caps to handle:
-//    if (d3d->caps.Caps2 & D3DCAPS2_FULLSCREENGAMMA)
-
-
 
 //============================================================
 //  DEBUGGING
 //============================================================
-
-#define DEBUG_MODE_SCORES	0
 
 extern void mtlog_add(const char *event);
 
@@ -130,6 +124,7 @@ struct _d3d_info
 	int						refresh;					// current refresh rate
 
 	d3d_device *			device;						// pointer to the Direct3DDevice object
+	int						gamma_supported;			// is full screen gamma supported?
 	d3d_present_parameters	presentation;				// set of presentation parameters
 	D3DDISPLAYMODE			origmode;					// original display mode for the adapter
 	D3DFORMAT				pixformat;					// pixel format we are using
@@ -631,11 +626,39 @@ try_again:
 		fprintf(stderr, "Unable to create the Direct3D device (%08X)\n", (UINT32)result);
 		return 1;
 	}
+	verbose_printf("Direct3D: Device created at %dx%d\n", d3d->width, d3d->height);
 
 	// set the max texture size
 	render_target_set_max_texture_size(window->target, d3d->texture_max_width, d3d->texture_max_height);
 
-	verbose_printf("Direct3D: Device created at %dx%d\n", d3d->width, d3d->height);
+	// set the gamma if we need to
+	if (window->fullscreen)
+	{
+		// only set the gamma if it's not 1.0f
+		float gamma = options_get_float("full_screen_gamma", TRUE);
+		if (gamma != 1.0f)
+		{
+			// warn if we can't do it
+			if (!d3d->gamma_supported)
+				fprintf(stderr, "Direct3D: Warning - device does not support full screen gamma correction.\n");
+			else
+			{
+				D3DGAMMARAMP ramp;
+				int i;
+
+				// create a standard ramp and set it
+				for (i = 0; i < 256; i++)
+				{
+					double val = ((float)i / 255.0) * gamma;
+					if (val > 1.0)
+						val = 1.0;
+					ramp.red[i] = ramp.green[i] = ramp.blue[i] = (WORD)(val * 65535.0);
+				}
+				(*d3dintf->device.set_gamma_ramp)(d3d->device, 0, &ramp);
+			}
+		}
+	}
+
 	return device_create_resources(d3d);
 }
 
@@ -884,10 +907,11 @@ static int device_verify_caps(d3d_info *d3d)
 		retval = 1;
 	}
 
-	// set a simpler flag to indicate we can use dynamic textures
+	// set a simpler flag to indicate we can use a gamma ramp
 	result = (*d3dintf->d3d.get_caps_dword)(d3dintf, d3d->adapter, D3DDEVTYPE_HAL, CAPS_CAPS2, &tempcaps);
 	if (result != D3D_OK) verbose_printf("Direct3D: Error %08X during get_caps_dword call\n", (int)result);
 	d3d->dynamic_supported = ((tempcaps & D3DCAPS2_DYNAMICTEXTURES) != 0);
+	d3d->gamma_supported = ((tempcaps & D3DCAPS2_FULLSCREENGAMMA) != 0);
 	if (d3d->dynamic_supported) verbose_printf("Direct3D: Using dynamic textures\n");
 
 	// set a simpler flag to indicate we can use StretchRect
@@ -946,11 +970,21 @@ static int device_test_cooperative(d3d_info *d3d)
 
 static int config_adapter_mode(win_window_info *window)
 {
+	d3d_adapter_identifier identifier;
 	d3d_info *d3d = window->dxdata;
 	HRESULT result;
 
 	// choose the monitor number
 	d3d->adapter = get_adapter_for_monitor(d3d, window->monitor);
+
+	// get the identifier
+	result = (*d3dintf->d3d.get_adapter_identifier)(d3dintf, d3d->adapter, 0, &identifier);
+	if (result != D3D_OK)
+	{
+		fprintf(stderr, "Error getting identifier for adapter #%d\n", d3d->adapter);
+		return 1;
+	}
+	verbose_printf("Direct3D: Configuring adapter #%d = %s\n", d3d->adapter, identifier.Description);
 
 	// get the current display mode
 	result = (*d3dintf->d3d.get_adapter_display_mode)(d3dintf, d3d->adapter, &d3d->origmode);
@@ -1063,6 +1097,7 @@ static void pick_best_mode(win_window_info *window)
 	maxmodes = (*d3dintf->d3d.get_adapter_mode_count)(d3dintf, d3d->adapter, D3DFMT_X8R8G8B8);
 
 	// enumerate all the video modes and find the best match
+	verbose_printf("Direct3D: Selecting video mode...\n");
 	for (modenum = 0; modenum < maxmodes; modenum++)
 	{
 		float size_score, refresh_score, final_score;
@@ -1081,10 +1116,6 @@ static void pick_best_mode(win_window_info *window)
 		// compute initial score based on difference between target and current
 		size_score = 1.0f / (1.0f + fabs(mode.Width - target_width) + fabs(mode.Height - target_height));
 
-		// if we're looking for a particular mode, that's a winner
-		if (mode.Width == window->maxwidth && mode.Height == window->maxheight)
-			size_score = 1.0f;
-
 		// if the mode is too small, give a big penalty
 		if (mode.Width < minwidth || mode.Height < minheight)
 			size_score *= 0.01f;
@@ -1092,6 +1123,10 @@ static void pick_best_mode(win_window_info *window)
 		// if mode is smaller than we'd like, it only scores up to 0.1
 		if (mode.Width < target_width || mode.Height < target_height)
 			size_score *= 0.1f;
+
+		// if we're looking for a particular mode, that's a winner
+		if (mode.Width == window->maxwidth && mode.Height == window->maxheight)
+			size_score = 1.0f;
 
 		// compute refresh score
 		refresh_score = 1.0f / (1.0f + fabs((double)mode.RefreshRate - Machine->refresh_rate[0]));
@@ -1107,11 +1142,8 @@ static void pick_best_mode(win_window_info *window)
 		// weight size highest, followed by depth and refresh
 		final_score = (size_score * 100.0 + refresh_score) / 101.0;
 
-#if DEBUG_MODE_SCORES
-		printf("%4dx%4d@%3d -> %f\n", mode.Width, mode.Height, mode.RefreshRate, final_score);
-#endif
-
 		// best so far?
+		verbose_printf("  %4dx%4d@%3dHz -> %f\n", mode.Width, mode.Height, mode.RefreshRate, final_score * 1000.0f);
 		if (final_score > best_score)
 		{
 			best_score = final_score;
@@ -1121,6 +1153,7 @@ static void pick_best_mode(win_window_info *window)
 			d3d->refresh = mode.RefreshRate;
 		}
 	}
+	verbose_printf("Direct3D: Mode selected = %4dx%4d@%3dHz\n", d3d->width, d3d->height, d3d->refresh);
 }
 
 

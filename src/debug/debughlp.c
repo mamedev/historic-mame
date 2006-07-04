@@ -306,12 +306,12 @@ static help_item static_help_list[] =
 	{
 		"snap",
 		"\n"
-		"  snap [<filename>]\n"
+		"  snap [[<filename>], <scrnum>]\n"
 		"\n"
 		"The snap command takes a snapshot of the current video display and saves it to the configured "
-		"snapshot directory. If <filename> is specified explicitly, it is saved under the requested "
-		"filename. If <filename> is omitted, it is saved using the same default rules as the \"save "
-		"snapshot\" key in MAME proper.\n"
+		"snapshot directory. If <filename> is specified explicitly, a single screenshot for <scrnum> is "
+		"saved under the requested filename. If <filename> is omitted, all screens are saved using the "
+		"same default rules as the \"save snapshot\" key in MAME proper.\n"
 		"\n"
 		"Examples:\n"
 		"\n"

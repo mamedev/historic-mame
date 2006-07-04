@@ -407,6 +407,7 @@ static UINT32 menu_tape_control(UINT32 state);
 
 static int sprintf_game_info(char *buf);
 
+static UINT32 ui_handler_startup(UINT32 state);
 static UINT32 ui_handler_menu(UINT32 state);
 static UINT32 ui_handler_osd(UINT32 state);
 static UINT32 ui_handler_disclaimer(UINT32 state);
@@ -414,6 +415,7 @@ static UINT32 ui_handler_warnings(UINT32 state);
 static UINT32 ui_handler_gameinfo(UINT32 state);
 static UINT32 ui_handler_showgfx(UINT32 state);
 
+static void showgfx_exit(void);
 
 #ifndef NEW_RENDER
 /* -- begin this stuff will go away with the new rendering system */
@@ -500,7 +502,7 @@ int ui_init(void)
 
 	/* reset globals */
 	single_step = FALSE;
-	ui_set_handler(NULL, 0);
+	ui_set_handler(ui_handler_startup, 0);
 
 	add_exit_callback(ui_exit);
 	return 0;
@@ -516,6 +518,9 @@ int ui_init(void)
 
 void ui_exit(void)
 {
+	// free the showgfx stuff
+	showgfx_exit();
+
 #ifdef NEW_RENDER
 	if (ui_font)
 		render_font_free(ui_font);
@@ -555,6 +560,7 @@ int ui_display_startup_screens(int show_disclaimer, int show_warnings, int show_
 #endif
 
 	/* loop over states */
+	ui_set_handler(NULL, 0);
 	for (state = 0; state < 3 && !mame_is_scheduled_event_pending(); state++)
 	{
 		/* pick the next state */
@@ -600,11 +606,11 @@ int ui_display_startup_screens(int show_disclaimer, int show_warnings, int show_
 			if (ui_handler_param == 1000)
 				break;
 		}
-	}
 
-	/* clear the handler and force one more update */
-	ui_set_handler(NULL, 0);
-	video_frame_update();
+		/* clear the handler and force an update */
+		ui_set_handler(NULL, 0);
+		video_frame_update();
+	}
 
 #ifndef NEW_RENDER
 	/* enable artwork now */
@@ -1487,7 +1493,7 @@ static void handle_keys(void)
 
 	/* handle a save snapshot request */
 	if (input_ui_pressed(IPT_UI_SNAPSHOT))
-		save_screen_snapshot(NULL);
+		snapshot_save_all_screens();
 
 	/* toggle pause */
 	if (input_ui_pressed(IPT_UI_PAUSE))
@@ -1520,6 +1526,38 @@ static void handle_keys(void)
 	/* toggle crosshair display */
 	if (input_ui_pressed(IPT_UI_TOGGLE_CROSSHAIR))
 		drawgfx_toggle_crosshair();
+}
+
+
+
+/*************************************
+ *
+ *  Initial startup handler
+ *
+ *************************************/
+
+static char startup_text[1024];
+
+void ui_set_startup_text(const char *text, int force)
+{
+	static cycles_t lastupdatetime = 0;
+	cycles_t curtime = osd_cycles();
+
+	strncpy(startup_text, text, sizeof(startup_text));
+
+	/* don't update more than 4 times/second */
+	if (force || (curtime - lastupdatetime) > osd_cycles_per_second() / 4)
+	{
+		lastupdatetime = curtime;
+		video_frame_update();
+	}
+}
+
+
+static UINT32 ui_handler_startup(UINT32 state)
+{
+	draw_multiline_text_box(startup_text, JUSTIFY_CENTER, 0.5, 0.5);
+	return 0;
 }
 
 
@@ -2876,13 +2914,6 @@ struct _showgfx_state
 {
 	UINT8		mode;				/* which mode are we in? */
 
-	/* key handling */
-	UINT8		last_openbrace;		/* last state of the open brace key */
-	UINT8		last_closebrace;	/* last state of the close brace key */
-	UINT8		last_minus;			/* last state of the minus key */
-	UINT8		last_equals;		/* last state of the equals key */
-	UINT8		last_r;				/* last state of the R key */
-
 	/* intermediate bitmaps */
 	UINT8		bitmap_dirty;		/* is the bitmap dirty? */
 	mame_bitmap *bitmap;			/* bitmap for drawing gfx and tilemaps */
@@ -2893,6 +2924,7 @@ struct _showgfx_state
 	{
 		int		which;
 		int		offset;
+		int		count;
 	} palette;
 
 	struct
@@ -2918,17 +2950,39 @@ struct _showgfx_state
 static showgfx_state showgfx;
 
 
+static void showgfx_exit(void)
+{
+	if (showgfx.texture != NULL)
+		render_texture_free(showgfx.texture);
+	showgfx.texture = NULL;
+
+	if (showgfx.bitmap != NULL)
+		bitmap_free(showgfx.bitmap);
+	showgfx.bitmap = NULL;
+}
+
+
 static void handle_palette_keys(showgfx_state *state)
 {
 	int total;
 
+	/* handle zoom (minus,plus) */
+	if (input_ui_pressed(IPT_UI_ZOOM_OUT))
+		state->palette.count /= 2;
+	if (input_ui_pressed(IPT_UI_ZOOM_IN))
+		state->palette.count *= 2;
+
+	/* clamp within range */
+	if (state->palette.count <= 4)
+		state->palette.count = 4;
+	if (state->palette.count > 64)
+		state->palette.count = 64;
+
 	/* handle colormap selection (open bracket,close bracket) */
-	if (!state->last_openbrace && code_pressed(KEYCODE_OPENBRACE))
+	if (input_ui_pressed(IPT_UI_PREV_GROUP))
 		state->palette.which--;
-	if (!state->last_closebrace && code_pressed(KEYCODE_CLOSEBRACE))
+	if (input_ui_pressed(IPT_UI_NEXT_GROUP))
 		state->palette.which++;
-	state->last_openbrace = code_pressed(KEYCODE_OPENBRACE);
-	state->last_closebrace = code_pressed(KEYCODE_CLOSEBRACE);
 
 	/* clamp within range */
 	if (state->palette.which < 0)
@@ -2941,21 +2995,21 @@ static void handle_palette_keys(showgfx_state *state)
 
 	/* handle keyboard navigation */
 	if (input_ui_pressed_repeat(IPT_UI_UP, 4))
-		state->palette.offset -= 0x10;
+		state->palette.offset -= state->palette.count;
 	if (input_ui_pressed_repeat(IPT_UI_DOWN, 4))
-		state->palette.offset += 0x10;
+		state->palette.offset += state->palette.count;
 	if (input_ui_pressed_repeat(IPT_UI_PAGE_UP, 6))
-		state->palette.offset -= 0x100;
+		state->palette.offset -= state->palette.count * state->palette.count;
 	if (input_ui_pressed_repeat(IPT_UI_PAGE_DOWN, 6))
-		state->palette.offset += 0x100;
+		state->palette.offset += state->palette.count * state->palette.count;
 	if (input_ui_pressed_repeat(IPT_UI_HOME, 4))
 		state->palette.offset = 0;
 	if (input_ui_pressed_repeat(IPT_UI_END, 4))
 		state->palette.offset = total;
 
 	/* clamp within range */
-	if (state->palette.offset + 0x100 > ((total + 0xf) & ~0xf))
-		state->palette.offset = ((total + 0xf) & ~0xf) - 0x100;
+	if (state->palette.offset + state->palette.count > ((total + state->palette.count - 1) / state->palette.count))
+		state->palette.offset = ((total + state->palette.count - 1) / state->palette.count) * state->palette.count - state->palette.count * state->palette.count;
 	if (state->palette.offset < 0)
 		state->palette.offset = 0;
 }
@@ -2974,6 +3028,10 @@ static void showgfx_palette_handler(showgfx_state *state)
 	render_bounds cellboxbounds;
 	render_bounds boxbounds;
 	int x, y, skip;
+
+	/* lazy init */
+	if (state->palette.count == 0)
+		state->palette.count = 16;
 
 	/* add a half character padding for the box */
 	chheight = UI_FONT_HEIGHT;
@@ -3015,43 +3073,53 @@ static void showgfx_palette_handler(showgfx_state *state)
 	}
 
 	/* compute the cell size */
-	cellwidth = (cellboxbounds.x1 - cellboxbounds.x0) * (1.0f / 16.0f);
-	cellheight = (cellboxbounds.y1 - cellboxbounds.y0) * (1.0f / 16.0f);
+	cellwidth = (cellboxbounds.x1 - cellboxbounds.x0) / (float)state->palette.count;
+	cellheight = (cellboxbounds.y1 - cellboxbounds.y0) / (float)state->palette.count;
 
 	/* draw the top column headers */
 	skip = (int)(chwidth / cellwidth);
-	for (x = 0; x < 16; x += 1 + skip)
+	for (x = 0; x < state->palette.count; x += 1 + skip)
 	{
-		x0 = boxbounds.x0 + 6.0f * chwidth + (float)x * cellwidth + 0.5f * (cellwidth - chwidth);
+		x0 = boxbounds.x0 + 6.0f * chwidth + (float)x * cellwidth;
 		y0 = boxbounds.y0 + 2.0f * chheight;
-		render_ui_add_char(x0, y0, chheight, render_get_ui_aspect(), ARGB_WHITE, ui_font, "0123456789ABCDEF"[x]);
+		render_ui_add_char(x0 + 0.5f * (cellwidth - chwidth), y0, chheight, render_get_ui_aspect(), ARGB_WHITE, ui_font, "0123456789ABCDEF"[x & 0xf]);
+
+		/* if we're skipping, draw a point between the character and the box to indicate which */
+		/* one it's referring to */
+		if (skip != 0)
+			render_ui_add_point(x0 + 0.5f * cellwidth, 0.5f * (y0 + chheight + cellboxbounds.y0), UI_LINE_WIDTH, ARGB_WHITE, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
 	}
 
 	/* draw the side column headers */
 	skip = (int)(chheight / cellheight);
-	for (y = 0; y < 16; y += 1 + skip)
+	for (y = 0; y < state->palette.count; y += 1 + skip)
 
 		/* only display if there is data to show */
-		if (state->palette.offset + y * 16 < total)
+		if (state->palette.offset + y * state->palette.count < total)
 		{
 			char buffer[10];
 
-			/* draw the row header */
-			sprintf(buffer, "%5X", state->palette.offset + y * 16);
+			/* if we're skipping, draw a point between the character and the box to indicate which */
+			/* one it's referring to */
 			x0 = boxbounds.x0 + 5.5f * chwidth;
-			y0 = boxbounds.y0 + 3.5f * chheight + (float)y * cellheight + 0.5f * (cellheight - chheight);
+			y0 = boxbounds.y0 + 3.5f * chheight + (float)y * cellheight;
+			if (skip != 0)
+				render_ui_add_point(0.5f * (x0 + cellboxbounds.x0), y0 + 0.5f * cellheight, UI_LINE_WIDTH, ARGB_WHITE, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+
+			/* draw the row header */
+			sprintf(buffer, "%5X", state->palette.offset + y * state->palette.count);
 			for (x = 4; x >= 0; x--)
 			{
 				x0 -= render_font_get_char_width(ui_font, chheight, render_get_ui_aspect(), buffer[x]);
-				render_ui_add_char(x0, y0, chheight, render_get_ui_aspect(), ARGB_WHITE, ui_font, buffer[x]);
+				render_ui_add_char(x0, y0 + 0.5f * (cellheight - chheight), chheight, render_get_ui_aspect(), ARGB_WHITE, ui_font, buffer[x]);
 			}
 		}
 
 	/* now add the rectangles for the colors */
-	for (y = 0; y < 16; y++)
-		for (x = 0; x < 16; x++)
+	for (y = 0; y < state->palette.count; y++)
+		for (x = 0; x < state->palette.count; x++)
 		{
-			int index = state->palette.offset + y * 16 + x;
+			int index = state->palette.offset + y * state->palette.count + x;
 			if (index < total)
 			{
 				pen_t pen = (pens != NULL) ? pens[index] : index;
@@ -3073,7 +3141,7 @@ static void handle_gfxset_keys(showgfx_state *state, int xcells, int ycells)
 	int temp, set;
 
 	/* handle gfxset selection (open bracket,close bracket) */
-	if (!state->last_openbrace && code_pressed(KEYCODE_OPENBRACE))
+	if (input_ui_pressed(IPT_UI_PREV_GROUP))
 	{
 		for (temp = state->gfxset.set - 1; temp >= 0; temp--)
 			if (Machine->gfx[temp] != NULL)
@@ -3081,7 +3149,7 @@ static void handle_gfxset_keys(showgfx_state *state, int xcells, int ycells)
 		if (temp >= 0)
 			state->gfxset.set = temp;
 	}
-	if (!state->last_closebrace && code_pressed(KEYCODE_CLOSEBRACE))
+	if (input_ui_pressed(IPT_UI_NEXT_GROUP))
 	{
 		for (temp = state->gfxset.set + 1; temp < MAX_GFX_ELEMENTS; temp++)
 			if (Machine->gfx[temp] != NULL)
@@ -3089,20 +3157,16 @@ static void handle_gfxset_keys(showgfx_state *state, int xcells, int ycells)
 		if (temp < MAX_GFX_ELEMENTS)
 			state->gfxset.set = temp;
 	}
-	state->last_openbrace = code_pressed(KEYCODE_OPENBRACE);
-	state->last_closebrace = code_pressed(KEYCODE_CLOSEBRACE);
 
 	/* cache some info in locals */
 	set = state->gfxset.set;
 	gfx = Machine->gfx[set];
 
 	/* handle cells per line (minus,plus) */
-	if (!state->last_minus && code_pressed(KEYCODE_MINUS))
+	if (input_ui_pressed(IPT_UI_ZOOM_OUT))
 		state->gfxset.count[set] = xcells - 1;
-	if (!state->last_equals && code_pressed(KEYCODE_EQUALS))
+	if (input_ui_pressed(IPT_UI_ZOOM_IN))
 		state->gfxset.count[set] = xcells + 1;
-	state->last_minus = code_pressed(KEYCODE_MINUS);
-	state->last_equals = code_pressed(KEYCODE_EQUALS);
 
 	/* clamp within range */
 	if (state->gfxset.count[set] < 2)
@@ -3111,9 +3175,8 @@ static void handle_gfxset_keys(showgfx_state *state, int xcells, int ycells)
 		state->gfxset.count[set] = 32;
 
 	/* handle rotation (R) */
-	if (!state->last_r && code_pressed(KEYCODE_R))
+	if (input_ui_pressed(IPT_UI_ROTATE))
 		state->gfxset.rotate[set] = orientation_add(ROT90, state->gfxset.rotate[set]);
-	state->last_r = code_pressed(KEYCODE_R);
 
 	/* handle navigation within the cells (up,down,pgup,pgdown) */
 	if (input_ui_pressed_repeat(IPT_UI_UP, 4))
@@ -3405,9 +3468,14 @@ static void showgfx_gfxset_handler(showgfx_state *state)
 	skip = (int)(chwidth / cellwidth);
 	for (x = 0; x < xcells; x += 1 + skip)
 	{
-		x0 = boxbounds.x0 + 6.0f * chwidth + (float)x * cellwidth + 0.5f * (cellwidth - chwidth);
+		x0 = boxbounds.x0 + 6.0f * chwidth + (float)x * cellwidth;
 		y0 = boxbounds.y0 + 2.0f * chheight;
-		render_ui_add_char(x0, y0, chheight, render_get_ui_aspect(), ARGB_WHITE, ui_font, "0123456789ABCDEF"[x & 0xf]);
+		render_ui_add_char(x0 + 0.5f * (cellwidth - chwidth), y0, chheight, render_get_ui_aspect(), ARGB_WHITE, ui_font, "0123456789ABCDEF"[x & 0xf]);
+
+		/* if we're skipping, draw a point between the character and the box to indicate which */
+		/* one it's referring to */
+		if (skip != 0)
+			render_ui_add_point(x0 + 0.5f * cellwidth, 0.5f * (y0 + chheight + boxbounds.y0 + 3.5f * chheight), UI_LINE_WIDTH, ARGB_WHITE, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
 	}
 
 	/* draw the side column headers */
@@ -3419,14 +3487,19 @@ static void showgfx_gfxset_handler(showgfx_state *state)
 		{
 			char buffer[10];
 
+			/* if we're skipping, draw a point between the character and the box to indicate which */
+			/* one it's referring to */
+			x0 = boxbounds.x0 + 5.5f * chwidth;
+			y0 = boxbounds.y0 + 3.5f * chheight + (float)y * cellheight;
+			if (skip != 0)
+				render_ui_add_point(0.5f * (x0 + boxbounds.x0 + 6.0f * chwidth), y0 + 0.5f * cellheight, UI_LINE_WIDTH, ARGB_WHITE, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+
 			/* draw the row header */
 			sprintf(buffer, "%5X", state->gfxset.offset[set] + y * xcells);
-			x0 = boxbounds.x0 + 5.5f * chwidth;
-			y0 = boxbounds.y0 + 3.5f * chheight + (float)y * cellheight + 0.5f * (cellheight - chheight);
 			for (x = 4; x >= 0; x--)
 			{
 				x0 -= render_font_get_char_width(ui_font, chheight, render_get_ui_aspect(), buffer[x]);
-				render_ui_add_char(x0, y0, chheight, render_get_ui_aspect(), ARGB_WHITE, ui_font, buffer[x]);
+				render_ui_add_char(x0, y0 + 0.5f * (cellheight - chheight), chheight, render_get_ui_aspect(), ARGB_WHITE, ui_font, buffer[x]);
 			}
 		}
 
@@ -3451,12 +3524,10 @@ static void handle_tilemap_keys(showgfx_state *state, int viswidth, int visheigh
 	int step;
 
 	/* handle tilemap selection (open bracket,close bracket) */
-	if (!state->last_openbrace && code_pressed(KEYCODE_OPENBRACE))
+	if (input_ui_pressed(IPT_UI_PREV_GROUP))
 		state->tilemap.which--;
-	if (!state->last_closebrace && code_pressed(KEYCODE_CLOSEBRACE))
+	if (input_ui_pressed(IPT_UI_NEXT_GROUP))
 		state->tilemap.which++;
-	state->last_openbrace = code_pressed(KEYCODE_OPENBRACE);
-	state->last_closebrace = code_pressed(KEYCODE_CLOSEBRACE);
 
 	/* clamp within range */
 	if (state->tilemap.which < 0)
@@ -3468,12 +3539,10 @@ static void handle_tilemap_keys(showgfx_state *state, int viswidth, int visheigh
 	tilemap_nb_size(state->tilemap.which, &mapwidth, &mapheight);
 
 	/* handle zoom (minus,plus) */
-	if (!state->last_minus && code_pressed(KEYCODE_MINUS))
+	if (input_ui_pressed(IPT_UI_ZOOM_OUT))
 		state->tilemap.zoom--;
-	if (!state->last_equals && code_pressed(KEYCODE_EQUALS))
+	if (input_ui_pressed(IPT_UI_ZOOM_IN))
 		state->tilemap.zoom++;
-	state->last_minus = code_pressed(KEYCODE_MINUS);
-	state->last_equals = code_pressed(KEYCODE_EQUALS);
 
 	/* clamp within range */
 	if (state->tilemap.zoom < 0)
@@ -3489,9 +3558,8 @@ static void handle_tilemap_keys(showgfx_state *state, int viswidth, int visheigh
 	}
 
 	/* handle rotation (R) */
-	if (!state->last_r && code_pressed(KEYCODE_R))
+	if (input_ui_pressed(IPT_UI_ROTATE))
 		state->tilemap.rotate = orientation_add(ROT90, state->tilemap.rotate);
-	state->last_r = code_pressed(KEYCODE_R);
 
 	/* handle navigation (up,down,left,right) */
 	step = 8;
@@ -5198,14 +5266,19 @@ static void add_filled_box(int x1, int y1, int x2, int y2)
 
 static void add_black_box(int x1, int y1, int x2, int y2)
 {
-	float hw = UI_LINE_WIDTH * 0.5f;
+	INT32 target_width, target_height;
+	float dw, dh;
 
-	render_ui_add_rect(0.0f, 0.0f, 1.0f, 1.0f, ARGB_BLACK, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+	render_target_get_bounds(render_get_ui_target(), &target_width, &target_height, NULL);
 
-	render_ui_add_line(0.0f + hw, 0.0f + hw, 1.0f - hw, 0.0f + hw, UI_LINE_WIDTH, ARGB_WHITE, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
-	render_ui_add_line(1.0f - hw, 0.0f + hw, 1.0f - hw, 1.0f - hw, UI_LINE_WIDTH, ARGB_WHITE, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
-	render_ui_add_line(1.0f - hw, 1.0f - hw, 0.0f + hw, 1.0f - hw, UI_LINE_WIDTH, ARGB_WHITE, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
-	render_ui_add_line(0.0f + hw, 1.0f - hw, 0.0f + hw, 0.0f + hw, UI_LINE_WIDTH, ARGB_WHITE, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+	dw = 1.0f / (float)target_width;
+	dw = MAX(dw, UI_LINE_WIDTH);
+
+	dh = 1.0f / (float)target_height;
+	dh = MAX(dh, UI_LINE_WIDTH);
+
+	render_ui_add_rect(0.0f, 0.0f, 1.0f, 1.0f, ARGB_WHITE, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+	render_ui_add_rect(0.0f + dw, 0.0f + dh, 1.0f - dw, 1.0f - dh, ARGB_BLACK, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
 }
 
 #endif

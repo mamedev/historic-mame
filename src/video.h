@@ -153,20 +153,20 @@ const performance_info *mame_get_performance_info(void);
 
 /*
   Save a screen shot of the game display. It is suggested to use the core
-  function save_screen_snapshot() or save_screen_snapshot_as(), so the format
+  function snapshot_save_all_screens() or snapshot_save_screen_indexed(), so the format
   of the screen shots will be consistent across ports. This hook is provided
   only to allow the display of a file requester to let the user choose the
   file name. This isn't scrictly necessary, so you can just call
-  save_screen_snapshot() to let the core automatically pick a default name.
+  snapshot_save_all_screens() to let the core automatically pick a default name.
 */
-void save_screen_snapshot_as(mame_file *fp, mame_bitmap *bitmap);
-void save_screen_snapshot(mame_bitmap *bitmap);
+void snapshot_save_screen_indexed(mame_file *fp, int scrnum);
+void snapshot_save_all_screens(void);
 
 /* Movie recording */
 void record_movie_start(const char *name);
 void record_movie_stop(void);
 void record_movie_toggle(void);
-void record_movie_frame(mame_bitmap *bitmap);
+void record_movie_frame(int scrnum);
 
 /* bitmap allocation */
 #define bitmap_alloc(w,h) bitmap_alloc_depth(w, h, Machine->color_depth)

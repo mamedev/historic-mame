@@ -35,6 +35,7 @@ Notes:
 
 #include "driver.h"
 #include "sound/ymz280b.h"
+#include "rocknms.lh"
 
 UINT16 tetrisp2_systemregs[0x10];
 UINT16 rocknms_sub_systemregs[0x10];
@@ -1180,18 +1181,27 @@ static MACHINE_DRIVER_START( rocknms )
 	MDRV_CPU_PROGRAM_MAP(rocknms_sub_readmem,rocknms_sub_writemem)
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-
 	MDRV_NVRAM_HANDLER(tetrisp2)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT)
-//  MDRV_ASPECT_RATIO(4, 7)
-	MDRV_SCREEN_SIZE(0x140, 0xe0+0x140)
-	MDRV_VISIBLE_AREA(0, 0x140-1, 0, 0xe0+0x140-1)
+
 	MDRV_GFXDECODE(rocknms_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(0x10000)
+	MDRV_DEFAULT_LAYOUT(layout_rocknms)
+
+	MDRV_SCREEN_ADD("left", 0x000)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(DEFAULT_60HZ_VBLANK_DURATION))
+	MDRV_SCREEN_SIZE(0x140, 0xe0)
+	MDRV_VISIBLE_AREA(0, 0x140-1, 0, 0xe0-1)
+
+	MDRV_SCREEN_ADD("right", 0x000)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(DEFAULT_60HZ_VBLANK_DURATION))
+	MDRV_SCREEN_SIZE(0x140, 0xe0)
+	MDRV_VISIBLE_AREA(0, 0x140-1, 0, 0xe0-1)
+
 
 	MDRV_VIDEO_START(rocknms)
 	MDRV_VIDEO_UPDATE(rocknms)
@@ -1622,6 +1632,6 @@ GAME( 1997, teplus2j, tetrisp2, tetrisp2, teplus2j, 0,       ROT0,   "Jaleco / T
 GAME( 1999, rockn,    0,        rockn,    rockn,   rockn,    ROT270, "Jaleco", "Rock'n Tread (Japan)", GAME_SUPPORTS_SAVE)
 GAME( 1999, rockna,   rockn,    rockn,    rockn,   rockn1,   ROT270, "Jaleco", "Rock'n Tread (Japan, alternate)", GAME_SUPPORTS_SAVE)
 GAME( 1999, rockn2,   0,        rockn2,   rockn,   rockn2,   ROT270, "Jaleco", "Rock'n Tread 2 (Japan)", GAME_SUPPORTS_SAVE)
-GAME( 1999, rocknms,  0,        rocknms,  rocknms, rocknms,  ROT0,   "Jaleco", "Rock'n MegaSession (Japan)", GAME_IMPERFECT_GRAPHICS | GAME_SUPPORTS_SAVE )
+GAME( 1999, rocknms,  0,        rocknms,  rocknms, rocknms,  ROT0, "Jaleco", "Rock'n MegaSession (Japan)", GAME_IMPERFECT_GRAPHICS | GAME_SUPPORTS_SAVE )
 GAME( 1999, rockn3,   0,        rockn2,   rockn,   rockn3,   ROT270, "Jaleco", "Rock'n 3 (Japan)", GAME_SUPPORTS_SAVE)
 GAME( 2000, rockn4,   0,        rockn2,   rockn,   rockn3,   ROT270, "Jaleco (PCCWJ)", "Rock'n 4 (Japan, prototype)", GAME_SUPPORTS_SAVE)

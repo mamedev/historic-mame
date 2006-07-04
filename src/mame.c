@@ -960,6 +960,7 @@ static void init_machine(void)
 	/* call the game driver's init function */
 	/* this is where decryption is done and memory maps are altered */
 	/* so this location in the init order is important */
+	ui_set_startup_text("Initializing...", TRUE);
 	if (Machine->gamedrv->driver_init != NULL)
 		(*Machine->gamedrv->driver_init)();
 

@@ -38,7 +38,6 @@ static void a800xl_mmu(UINT8 new_mmu);
 static void a600xl_mmu(UINT8 new_mmu);
 
 static void pokey_reset(void);
-static void atari_pia_reset(void);
 
 static void make_chksum(UINT8 * chksum, UINT8 data);
 static void clr_serout(int expect_data);
@@ -714,16 +713,6 @@ static void cart_reset(void)
 
 
 
-
-static void atari_pia_reset(void)
-{
-	pia_reset();
-	pia_0_w(1, 4);	/* HACK - not sure why this is necessary */
-	pia_0_w(3, 4);	/* HACK - not sure why this is necessary */
-}
-
-
-
 static UINT8 console_read(void)
 {
 	return readinputportbytag("console");
@@ -761,8 +750,8 @@ static void atari_machine_start(int type, const pia6821_interface *pia_intf, int
 	/* PIA */
 	if (pia_intf)
 	{
-		pia_config(0, PIA_STANDARD_ORDERING, pia_intf);
-		add_reset_callback(atari_pia_reset);
+		pia_config(0, PIA_ALTERNATE_ORDERING, pia_intf);
+		add_reset_callback(pia_reset);
 	}
 
 	/* ANTIC */

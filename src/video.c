@@ -470,7 +470,13 @@ static void decode_graphics(const gfx_decode *gfxdecodeinfo)
 					int num_to_decode = (j + 1024 < gfx->total_elements) ? 1024 : (gfx->total_elements - j);
 					decodegfx(gfx, region_base + gfxdecodeinfo[i].start, j, num_to_decode);
 					curgfx += num_to_decode;
-		/*          ui_display_decoding(artwork_get_ui_bitmap(), curgfx * 100 / totalgfx);*/
+#ifdef NEW_RENDER
+{
+	char buffer[200];
+	sprintf(buffer, "Decoding (%d%%)", curgfx * 100 / totalgfx);
+	ui_set_startup_text(buffer, FALSE);
+}
+#endif
 				}
 			}
 
@@ -686,11 +692,7 @@ void force_partial_update(int scrnum, int scanline)
 	LOG_PARTIAL_UPDATES(("Partial: force_partial_update(%d,%d): ", scrnum, scanline));
 
 	/* if skipping this frame, bail */
-#ifndef NEW_RENDER
-	if (osd_skip_this_frame())
-#else
-	if (skipping_this_frame)
-#endif
+	if (skip_this_frame())
 	{
 		LOG_PARTIAL_UPDATES(("skipped due to frameskipping\n"));
 		return;
@@ -770,11 +772,7 @@ void reset_partial_updates(void)
 
 void update_video_and_audio(void)
 {
-#ifndef NEW_RENDER
-	int skipped_it = osd_skip_this_frame();
-#else
-	int skipped_it = skipping_this_frame;
-#endif
+	int skipped_it = skip_this_frame();
 
 #if defined(MAME_DEBUG) && !defined(NEW_DEBUGGER)
 	debug_trace_delay = 0;
@@ -924,7 +922,7 @@ void video_frame_update(void)
 
 		/* update our movie recording state */
 		if (!paused)
-			record_movie_frame(scrbitmap[0][curbitmap[0]]);
+			record_movie_frame(0);
 
 #ifdef NEW_RENDER
 {
@@ -985,7 +983,8 @@ void video_frame_update(void)
 
 
 /*-------------------------------------------------
-    skip_this_frame -
+    skip_this_frame - accessor to determine if this
+    frame is being skipped
 -------------------------------------------------*/
 
 int skip_this_frame(void)
@@ -1019,15 +1018,112 @@ const performance_info *mame_get_performance_info(void)
 ***************************************************************************/
 
 /*-------------------------------------------------
+    rotate_snapshot - rotate the snapshot in
+    accordance with the orientation
+-------------------------------------------------*/
+
+static mame_bitmap *rotate_snapshot(mame_bitmap *bitmap, int orientation, rectangle *bounds)
+{
+	rectangle newbounds;
+	mame_bitmap *copy;
+	int x, y, w, h, t;
+
+	/* if we can send it in raw, no need to override anything */
+	if (orientation == 0)
+		return bitmap;
+
+	/* allocate a copy */
+	w = (orientation & ORIENTATION_SWAP_XY) ? bitmap->height : bitmap->width;
+	h = (orientation & ORIENTATION_SWAP_XY) ? bitmap->width : bitmap->height;
+	copy = auto_bitmap_alloc_depth(w, h, bitmap->depth);
+
+	/* populate the copy */
+	for (y = bounds->min_y; y <= bounds->max_y; y++)
+		for (x = bounds->min_x; x <= bounds->max_x; x++)
+		{
+			int tx = x, ty = y;
+
+			/* apply the rotation/flipping */
+			if ((orientation & ORIENTATION_SWAP_XY))
+			{
+				t = tx; tx = ty; ty = t;
+			}
+			if (orientation & ORIENTATION_FLIP_X)
+				tx = copy->width - tx - 1;
+			if (orientation & ORIENTATION_FLIP_Y)
+				ty = copy->height - ty - 1;
+
+			/* read the old pixel and copy to the new location */
+			switch (copy->depth)
+			{
+				case 15:
+				case 16:
+					*((UINT16 *)copy->base + ty * copy->rowpixels + tx) =
+							*((UINT16 *)bitmap->base + y * bitmap->rowpixels + x);
+					break;
+
+				case 32:
+					*((UINT32 *)copy->base + ty * copy->rowpixels + tx) =
+							*((UINT32 *)bitmap->base + y * bitmap->rowpixels + x);
+					break;
+			}
+		}
+
+	/* compute the oriented bounds */
+	newbounds = *bounds;
+
+	/* apply X/Y swap first */
+	if (orientation & ORIENTATION_SWAP_XY)
+	{
+		t = newbounds.min_x; newbounds.min_x = newbounds.min_y; newbounds.min_y = t;
+		t = newbounds.max_x; newbounds.max_x = newbounds.max_y; newbounds.max_y = t;
+	}
+
+	/* apply X flip */
+	if (orientation & ORIENTATION_FLIP_X)
+	{
+		t = copy->width - newbounds.min_x - 1;
+		newbounds.min_x = copy->width - newbounds.max_x - 1;
+		newbounds.max_x = t;
+	}
+
+	/* apply Y flip */
+	if (orientation & ORIENTATION_FLIP_Y)
+	{
+		t = copy->height - newbounds.min_y - 1;
+		newbounds.min_y = copy->height - newbounds.max_y - 1;
+		newbounds.max_y = t;
+	}
+
+	*bounds = newbounds;
+	return copy;
+}
+
+
+
+/*-------------------------------------------------
     save_frame_with - save a frame with a
     given handler for screenshots and movies
 -------------------------------------------------*/
 
-static void save_frame_with(mame_file *fp, mame_bitmap *bitmap, int (*write_handler)(mame_file *, mame_bitmap *))
+static void save_frame_with(mame_file *fp, int scrnum, int (*write_handler)(mame_file *, mame_bitmap *))
 {
+	mame_bitmap *bitmap;
+	int orientation;
 	rectangle bounds;
-	mame_bitmap *osdcopy;
+#ifndef NEW_RENDER
 	UINT32 saved_rgb_components[3];
+#endif
+
+	bitmap = scrbitmap[scrnum][curbitmap[scrnum]];
+	orientation = Machine->gamedrv->flags & ORIENTATION_MASK;
+
+#ifdef NEW_RENDER
+	orientation = orientation_add(orientation,
+		render_target_get_orientation(render_target_get_indexed(scrnum)));
+#endif
+
+	begin_resource_tracking();
 
 	/* allow the artwork system to override certain parameters */
 	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
@@ -1041,15 +1137,13 @@ static void save_frame_with(mame_file *fp, mame_bitmap *bitmap, int (*write_hand
 	{
 		bounds = Machine->visible_area[0];
 	}
-	memcpy(saved_rgb_components, direct_rgb_components, sizeof(direct_rgb_components));
 #ifndef NEW_RENDER
+	memcpy(saved_rgb_components, direct_rgb_components, sizeof(direct_rgb_components));
 	artwork_override_screenshot_params(&bitmap, &bounds, direct_rgb_components);
 #endif
 
-	/* allow the OSD system to muck with the screenshot */
-	osdcopy = osd_override_snapshot(bitmap, &bounds);
-	if (osdcopy)
-		bitmap = osdcopy;
+	/* rotate the snapshot, if necessary */
+	bitmap = rotate_snapshot(bitmap, orientation, &bounds);
 
 	/* now do the actual work */
 	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
@@ -1122,22 +1216,22 @@ static void save_frame_with(mame_file *fp, mame_bitmap *bitmap, int (*write_hand
 			bitmap_free(copy);
 		}
 	}
+#ifndef NEW_RENDER
 	memcpy(direct_rgb_components, saved_rgb_components, sizeof(saved_rgb_components));
+#endif
 
-	/* if the OSD system allocated a bitmap; free it */
-	if (osdcopy)
-		bitmap_free(osdcopy);
+	end_resource_tracking();
 }
 
 
- /*-------------------------------------------------
-    save_screen_snapshot_as - save a snapshot to
+/*-------------------------------------------------
+    snapshot_save_screen_indexed - save a snapshot to
     the given file handle
 -------------------------------------------------*/
 
-void save_screen_snapshot_as(mame_file *fp, mame_bitmap *bitmap)
+void snapshot_save_screen_indexed(mame_file *fp, int scrnum)
 {
-	save_frame_with(fp, bitmap, png_write_bitmap);
+	save_frame_with(fp, scrnum, png_write_bitmap);
 }
 
 
@@ -1169,12 +1263,16 @@ static mame_file *mame_fopen_next(int filetype)
 
 
 /*-------------------------------------------------
-    save_screen_snapshot - save a snapshot.
+    snapshot_save_all_screens - save a snapshot.
 -------------------------------------------------*/
 
-void save_screen_snapshot(mame_bitmap *bitmap)
+void snapshot_save_all_screens(void)
 {
+#ifdef NEW_RENDER
 	UINT32 screenmask = render_get_live_screens_mask();
+#else
+	UINT32 screenmask = 1;
+#endif
 	mame_file *fp;
 	int scrnum;
 
@@ -1183,7 +1281,7 @@ void save_screen_snapshot(mame_bitmap *bitmap)
 		if (screenmask & (1 << scrnum))
 			if ((fp = mame_fopen_next(FILETYPE_SCREENSHOT)) != NULL)
 			{
-				save_screen_snapshot_as(fp, scrbitmap[scrnum][curbitmap[scrnum]]);
+				snapshot_save_screen_indexed(fp, scrnum);
 				mame_fclose(fp);
 			}
 }
@@ -1235,15 +1333,15 @@ void record_movie_toggle(void)
 }
 
 
-void record_movie_frame(mame_bitmap *bitmap)
+void record_movie_frame(int scrnum)
 {
-	if (movie_file != NULL && bitmap != NULL)
+	if (movie_file != NULL)
 	{
 		profiler_mark(PROFILER_MOVIE_REC);
 
 		if (movie_frame++ == 0)
-			save_frame_with(movie_file, bitmap, mng_capture_start);
-		save_frame_with(movie_file, bitmap, mng_capture_frame);
+			save_frame_with(movie_file, scrnum, mng_capture_start);
+		save_frame_with(movie_file, scrnum, mng_capture_frame);
 
 		profiler_mark(PROFILER_END);
 	}

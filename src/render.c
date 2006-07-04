@@ -9,21 +9,15 @@
 
 ****************************************************************************
 
-    Things that are still broken:
-        * LEDs missing
-        * remember current video options in cfg file
-        * UI line drawing tends to overshoot or be offscreen at low resolutions
+    Still to-do:
         * controls for which screen the UI is displayed on
-        * listxml output needs to be cleaned up
+        * positioning of game screens
+        * brightness/contrast/gamma controls
+        * rewrite usrintrf to work in floating point once NEW_RENDER is gone
 
-    OSD-specific things that are busted:
-        * -full_screen_gamma
+    Windows-specific to-do:
         * no fallback if we run out of video memory
         * multiple windows on screen produces odd order and UI is not visible
-
-    To do features:
-        * optimize for elements that are empty
-        * positioning of game screens
 
 ****************************************************************************
 
@@ -189,12 +183,26 @@
     STANDARD LAYOUTS
 ***************************************************************************/
 
+/* single screen layouts */
 #include "horizont.lh"
 #include "vertical.lh"
+
+/* dual screen layouts */
 #include "dualhsxs.lh"
 #include "dualhovu.lh"
 #include "dualhuov.lh"
+
+/* triple screen layouts */
 #include "triphsxs.lh"
+
+/* generic color overlay layouts */
+#include "ho20ffff.lh"
+#include "ho2eff2e.lh"
+#include "ho88ffff.lh"
+#include "hoa0a0ff.lh"
+#include "hoffe457.lh"
+#include "voffff20.lh"
+#include "hoffff20.lh"
 
 
 
@@ -403,6 +411,9 @@ struct _render_target
 	float				pixel_aspect;		/* aspect ratio of individual pixels */
 	int					orientation;		/* orientation */
 	int					layerconfig;		/* layer configuration */
+	layout_view *		base_view;			/* the view at the time of first frame */
+	int					base_orientation;	/* the orientation at the time of first frame */
+	int					base_layerconfig;	/* the layer configuration at the time of first frame */
 	int					maxtexwidth;		/* maximum width of a texture */
 	int					maxtexheight;		/* maximum height of a texture */
 };
@@ -496,17 +507,17 @@ static void layout_element_draw_rect(mame_bitmap *dest, const rectangle *bounds,
 static void layout_element_draw_disk(mame_bitmap *dest, const rectangle *bounds, const render_color *color);
 
 /* layout file parsing */
-static layout_file *load_layout_file(const char *filename);
-static layout_element *load_layout_element(xml_data_node *elemnode);
-static element_component *load_element_component(xml_data_node *compnode);
+static layout_file *load_layout_file(const char *dirname, const char *filename);
+static layout_element *load_layout_element(xml_data_node *elemnode, const char *dirname);
+static element_component *load_element_component(xml_data_node *compnode, const char *dirname);
 static layout_view *load_layout_view(xml_data_node *viewnode, layout_element *elemlist);
 static view_item *load_view_item(xml_data_node *itemnode, layout_element *elemlist);
-static mame_bitmap *load_component_bitmap(const char *file, const char *alphafile, int *hasalpha);
-static int load_alpha_bitmap(const char *alphafile, mame_bitmap *bitmap, const png_info *original);
+static mame_bitmap *load_component_bitmap(const char *dirname, const char *file, const char *alphafile, int *hasalpha);
+static int load_alpha_bitmap(const char *dirname, const char *alphafile, mame_bitmap *bitmap, const png_info *original);
 static int load_bounds(xml_data_node *boundsnode, render_bounds *bounds);
 static int load_color(xml_data_node *colornode, render_color *color);
 static int load_orientation(xml_data_node *orientnode, int *orientation);
-static int open_and_read_png(const char *filename, png_info *png);
+static int open_and_read_png(const char *dirname, const char *filename, png_info *png);
 static void layout_file_free(layout_file *file);
 static void layout_view_free(layout_view *view);
 static void layout_element_free(layout_element *element);
@@ -939,31 +950,90 @@ static void render_exit(void)
 
 static void render_load(int config_type, xml_data_node *parentnode)
 {
-#if 0
-	xml_data_node *channelnode;
-	int mixernum;
+	xml_data_node *targetnode;
 
 	/* we only care about game files */
 	if (config_type != CONFIG_TYPE_GAME)
 		return;
 
 	/* might not have any data */
-	if (!parentnode)
+	if (parentnode == NULL)
 		return;
 
-	/* iterate over channel nodes */
-	for (channelnode = xml_get_sibling(parentnode->child, "channel"); channelnode; channelnode = xml_get_sibling(channelnode->next, "channel"))
+	/* iterate over target nodes */
+	for (targetnode = xml_get_sibling(parentnode->child, "target"); targetnode; targetnode = xml_get_sibling(targetnode->next, "channel"))
 	{
-		mixernum = xml_get_attribute_int(channelnode, "index", -1);
-		if (mixernum >= 0 && mixernum < MAX_MIXER_CHANNELS)
+		render_target *target = render_target_get_indexed(xml_get_attribute_int(targetnode, "index", -1));
+		if (target != NULL)
 		{
-			float defvol = xml_get_attribute_float(channelnode, "defvol", -1000.0);
-			float newvol = xml_get_attribute_float(channelnode, "newvol", -1000.0);
-			if (defvol == sound_get_default_gain(mixernum) && newvol != -1000.0)
-				sound_set_user_gain(mixernum, newvol);
+			const char *viewname = xml_get_attribute_string(targetnode, "view", NULL);
+			int viewnum, tmpint;
+
+			/* find the view */
+			if (viewname != NULL)
+				for (viewnum = 0; viewnum < 1000; viewnum++)
+				{
+					const char *testname = render_target_get_view_name(target, viewnum);
+					if (testname == NULL)
+						break;
+					if (!strcmp(viewname, testname))
+					{
+						render_target_set_view(target, viewnum);
+						break;
+					}
+				}
+
+			/* modify the artwork config */
+			tmpint = xml_get_attribute_int(targetnode, "backdrops", -1);
+			if (tmpint == 0)
+				render_target_set_layer_config(target, target->layerconfig & ~LAYER_CONFIG_ENABLE_BACKDROP);
+			else if (tmpint == 1)
+				render_target_set_layer_config(target, target->layerconfig | LAYER_CONFIG_ENABLE_BACKDROP);
+
+			tmpint = xml_get_attribute_int(targetnode, "overlays", -1);
+			if (tmpint == 0)
+				render_target_set_layer_config(target, target->layerconfig & ~LAYER_CONFIG_ENABLE_OVERLAY);
+			else if (tmpint == 1)
+				render_target_set_layer_config(target, target->layerconfig | LAYER_CONFIG_ENABLE_OVERLAY);
+
+			tmpint = xml_get_attribute_int(targetnode, "bezels", -1);
+			if (tmpint == 0)
+				render_target_set_layer_config(target, target->layerconfig & ~LAYER_CONFIG_ENABLE_BEZEL);
+			else if (tmpint == 1)
+				render_target_set_layer_config(target, target->layerconfig | LAYER_CONFIG_ENABLE_BEZEL);
+
+			tmpint = xml_get_attribute_int(targetnode, "zoom", -1);
+			if (tmpint == 0)
+				render_target_set_layer_config(target, target->layerconfig & ~LAYER_CONFIG_ZOOM_TO_SCREEN);
+			else if (tmpint == 1)
+				render_target_set_layer_config(target, target->layerconfig | LAYER_CONFIG_ZOOM_TO_SCREEN);
+
+			/* apply orientation */
+			tmpint = xml_get_attribute_int(targetnode, "rotate", -1);
+			if (tmpint != -1)
+			{
+				if (tmpint == 90)
+					tmpint = ROT90;
+				else if (tmpint == 180)
+					tmpint = ROT180;
+				else if (tmpint == 270)
+					tmpint = ROT270;
+				else
+					tmpint = ROT0;
+				render_target_set_orientation(target, orientation_add(tmpint, target->orientation));
+
+				/* apply the opposite orientation to the UI */
+				if (target == render_get_ui_target())
+				{
+					if (tmpint == ROT90)
+						tmpint = ROT270;
+					else if (tmpint == ROT270)
+						tmpint = ROT90;
+					render_container_set_orientation(ui_container, orientation_add(tmpint, ui_container->orientation));
+				}
+			}
 		}
 	}
-#endif
 }
 
 
@@ -974,32 +1044,56 @@ static void render_load(int config_type, xml_data_node *parentnode)
 
 static void render_save(int config_type, xml_data_node *parentnode)
 {
-#if 0
-	int mixernum;
+	render_target *target;
+	int targetnum = 0;
 
 	/* we only care about game files */
 	if (config_type != CONFIG_TYPE_GAME)
 		return;
 
-	/* iterate over mixer channels */
-	if (parentnode)
-		for (mixernum = 0; mixernum < MAX_MIXER_CHANNELS; mixernum++)
-		{
-			float defvol = sound_get_default_gain(mixernum);
-			float newvol = sound_get_user_gain(mixernum);
+	/* iterate over targets */
+	for (target = targetlist; target != NULL; target = target->next)
+	{
+		xml_data_node *targetnode;
 
-			if (defvol != newvol)
+		/* create a node */
+		targetnode = xml_add_child(parentnode, "target", NULL);
+		if (targetnode != NULL)
+		{
+			/* output the basics */
+			xml_set_attribute_int(targetnode, "index", targetnum);
+
+			/* output the view */
+			if (target->curview != target->base_view)
+				xml_set_attribute(targetnode, "view",  target->curview->name);
+
+			/* output the layer config */
+			if (target->layerconfig != target->base_layerconfig)
 			{
-				xml_data_node *channelnode = xml_add_child(parentnode, "channel", NULL);
-				if (channelnode)
-				{
-					xml_set_attribute_int(channelnode, "index", mixernum);
-					xml_set_attribute_float(channelnode, "defvol", defvol);
-					xml_set_attribute_float(channelnode, "newvol", newvol);
-				}
+				xml_set_attribute_int(targetnode, "backdrops", (target->layerconfig & LAYER_CONFIG_ENABLE_BACKDROP) != 0);
+				xml_set_attribute_int(targetnode, "overlays", (target->layerconfig & LAYER_CONFIG_ENABLE_OVERLAY) != 0);
+				xml_set_attribute_int(targetnode, "bezels", (target->layerconfig & LAYER_CONFIG_ENABLE_BEZEL) != 0);
+				xml_set_attribute_int(targetnode, "zoom", (target->layerconfig & LAYER_CONFIG_ZOOM_TO_SCREEN) != 0);
+			}
+
+			/* output rotation */
+			if (target->orientation != target->base_orientation)
+			{
+				int rotate = 0;
+				if (orientation_add(ROT90, target->base_orientation) == target->orientation)
+					rotate = 90;
+				else if (orientation_add(ROT180, target->base_orientation) == target->orientation)
+					rotate = 180;
+				else if (orientation_add(ROT270, target->base_orientation) == target->orientation)
+					rotate = 270;
+				assert(rotate != 0);
+				xml_set_attribute_int(targetnode, "rotate", rotate);
 			}
 		}
-#endif
+
+		/* bump the targetnum */
+		targetnum++;
+	}
 }
 
 
@@ -1101,6 +1195,8 @@ render_target *render_target_alloc(const char *layoutfile, int singleview)
 	target->pixel_aspect = 0.0f;
 	target->orientation = ROT0;
 	target->layerconfig = LAYER_CONFIG_ENABLE_BACKDROP | LAYER_CONFIG_ENABLE_OVERLAY | LAYER_CONFIG_ENABLE_BEZEL;
+	target->base_orientation = -1;
+	target->base_layerconfig = -1;
 	target->maxtexwidth = 65536;
 	target->maxtexheight = 65536;
 
@@ -1118,7 +1214,7 @@ render_target *render_target_alloc(const char *layoutfile, int singleview)
 	/* if there's an explicit file, load that first */
 	if (layoutfile != NULL)
 	{
-		*nextfile = load_layout_file(layoutfile);
+		*nextfile = load_layout_file(Machine->gamedrv->name, layoutfile);
 		if (*nextfile != NULL)
 			nextfile = &(*nextfile)->next;
 	}
@@ -1126,7 +1222,7 @@ render_target *render_target_alloc(const char *layoutfile, int singleview)
 	/* try to load a file based on the driver name */
 	if (!singleview || target->filelist == NULL)
 	{
-		*nextfile = load_layout_file(Machine->gamedrv->name);
+		*nextfile = load_layout_file(Machine->gamedrv->name, Machine->gamedrv->name);
 		if (*nextfile != NULL)
 			nextfile = &(*nextfile)->next;
 	}
@@ -1136,7 +1232,7 @@ render_target *render_target_alloc(const char *layoutfile, int singleview)
 	{
 		if (Machine->gamedrv->default_layout != NULL)
 		{
-			*nextfile = load_layout_file(Machine->gamedrv->default_layout);
+			*nextfile = load_layout_file(NULL, Machine->gamedrv->default_layout);
 			if (*nextfile != NULL)
 				nextfile = &(*nextfile)->next;
 		}
@@ -1145,7 +1241,7 @@ render_target *render_target_alloc(const char *layoutfile, int singleview)
 	{
 		if (Machine->drv->default_layout != NULL)
 		{
-			*nextfile = load_layout_file(Machine->drv->default_layout);
+			*nextfile = load_layout_file(NULL, Machine->drv->default_layout);
 			if (*nextfile != NULL)
 				nextfile = &(*nextfile)->next;
 		}
@@ -1157,7 +1253,7 @@ render_target *render_target_alloc(const char *layoutfile, int singleview)
 		const game_driver *cloneof = driver_get_clone(Machine->gamedrv);
 		if (cloneof != NULL)
 		{
-			*nextfile = load_layout_file(cloneof->name);
+			*nextfile = load_layout_file(cloneof->name, cloneof->name);
 			if (*nextfile != NULL)
 				nextfile = &(*nextfile)->next;
 		}
@@ -1167,9 +1263,9 @@ render_target *render_target_alloc(const char *layoutfile, int singleview)
 	if ((!singleview || target->filelist == NULL) && Machine->drv->screen[1].tag == NULL)
 	{
 		if (Machine->gamedrv->flags & ORIENTATION_SWAP_XY)
-			*nextfile = load_layout_file(layout_vertical);
+			*nextfile = load_layout_file(NULL, layout_vertical);
 		else
-			*nextfile = load_layout_file(layout_horizont);
+			*nextfile = load_layout_file(NULL, layout_horizont);
 		assert_always(*nextfile != NULL, "Couldn't parse default layout??");
 		nextfile = &(*nextfile)->next;
 	}
@@ -1534,6 +1630,14 @@ const render_primitive_list *render_target_get_primitives(render_target *target)
 	INT32 viswidth, visheight;
 	int layer, listnum;
 
+	/* remember the base values if this is the first frame */
+	if (target->base_view == NULL)
+		target->base_view = target->curview;
+	if (target->base_orientation == -1)
+		target->base_orientation = target->orientation;
+	if (target->base_layerconfig == -1)
+		target->base_layerconfig = target->layerconfig;
+
 	/* find a non-busy list to work with */
 	for (listnum = 0; listnum < NUM_PRIMLISTS; listnum++)
 		if (osd_lock_try(target->primlist[listnum].lock))
@@ -1567,51 +1671,52 @@ const render_primitive_list *render_target_get_primitives(render_target *target)
 	root_xform.orientation = target->orientation;
 
 	/* iterate over layers back-to-front */
-	for (layer = 0; layer < ITEM_LAYER_MAX; layer++)
-		if (target->curview->layenabled[layer])
-		{
-			int blendmode = BLENDMODE_ALPHA;
-			view_item *item;
-
-			/* pick a blendmode */
-			if (layer == ITEM_LAYER_SCREEN)
-				blendmode = BLENDMODE_ADD;
-			else if (layer == ITEM_LAYER_OVERLAY)
-				blendmode = BLENDMODE_RGB_MULTIPLY;
-
-			/* iterate over items in the layer */
-			itemcount[layer] = 0;
-			for (item = target->curview->itemlist[layer]; item != NULL; item = item->next)
+	if (mame_get_phase() >= MAME_PHASE_RESET)
+		for (layer = 0; layer < ITEM_LAYER_MAX; layer++)
+			if (target->curview->layenabled[layer])
 			{
-				object_transform item_xform;
-				render_bounds bounds;
+				int blendmode = BLENDMODE_ALPHA;
+				view_item *item;
 
-				/* first apply orientation to the bounds */
-				bounds = item->bounds;
-				apply_orientation(&bounds, root_xform.orientation);
-				normalize_bounds(&bounds);
+				/* pick a blendmode */
+				if (layer == ITEM_LAYER_SCREEN)
+					blendmode = BLENDMODE_ADD;
+				else if (layer == ITEM_LAYER_OVERLAY)
+					blendmode = BLENDMODE_RGB_MULTIPLY;
 
-				/* apply the transform to the item */
-				item_xform.xoffs = root_xform.xoffs + bounds.x0 * root_xform.xscale;
-				item_xform.yoffs = root_xform.yoffs + bounds.y0 * root_xform.yscale;
-				item_xform.xscale = (bounds.x1 - bounds.x0) * root_xform.xscale;
-				item_xform.yscale = (bounds.y1 - bounds.y0) * root_xform.yscale;
-				item_xform.color.r = item->color.r * root_xform.color.r;
-				item_xform.color.g = item->color.g * root_xform.color.g;
-				item_xform.color.b = item->color.b * root_xform.color.b;
-				item_xform.color.a = item->color.a * root_xform.color.a;
-				item_xform.orientation = orientation_add(item->orientation, root_xform.orientation);
+				/* iterate over items in the layer */
+				itemcount[layer] = 0;
+				for (item = target->curview->itemlist[layer]; item != NULL; item = item->next)
+				{
+					object_transform item_xform;
+					render_bounds bounds;
 
-				/* if there is no associated element, it must be a screen element */
-				if (item->element != NULL)
-					add_element_primitives(target, &target->primlist[listnum], &item_xform, item->element, item->state->curstate, blendmode);
-				else
-					add_container_primitives(target, &target->primlist[listnum], &item_xform, screen_container[item->index], blendmode);
+					/* first apply orientation to the bounds */
+					bounds = item->bounds;
+					apply_orientation(&bounds, root_xform.orientation);
+					normalize_bounds(&bounds);
 
-				/* keep track of how many items are in the layer */
-				itemcount[layer]++;
+					/* apply the transform to the item */
+					item_xform.xoffs = root_xform.xoffs + bounds.x0 * root_xform.xscale;
+					item_xform.yoffs = root_xform.yoffs + bounds.y0 * root_xform.yscale;
+					item_xform.xscale = (bounds.x1 - bounds.x0) * root_xform.xscale;
+					item_xform.yscale = (bounds.y1 - bounds.y0) * root_xform.yscale;
+					item_xform.color.r = item->color.r * root_xform.color.r;
+					item_xform.color.g = item->color.g * root_xform.color.g;
+					item_xform.color.b = item->color.b * root_xform.color.b;
+					item_xform.color.a = item->color.a * root_xform.color.a;
+					item_xform.orientation = orientation_add(item->orientation, root_xform.orientation);
+
+					/* if there is no associated element, it must be a screen element */
+					if (item->element != NULL)
+						add_element_primitives(target, &target->primlist[listnum], &item_xform, item->element, item->state->curstate, blendmode);
+					else
+						add_container_primitives(target, &target->primlist[listnum], &item_xform, screen_container[item->index], blendmode);
+
+					/* keep track of how many items are in the layer */
+					itemcount[layer]++;
+				}
 			}
-		}
 
 	/* process the UI if we are the UI target */
 	if (target == render_get_ui_target())
@@ -1786,7 +1891,6 @@ static void add_element_primitives(render_target *target, render_primitive_list 
 	INT32 width = round_nearest(xform->xscale);
 	INT32 height = round_nearest(xform->yscale);
 	render_texture *texture;
-	render_primitive *prim;
 
 	/* if we're out of range, bail */
 	if (state > element->maxstate)
@@ -1796,18 +1900,25 @@ static void add_element_primitives(render_target *target, render_primitive_list 
 
 	/* get a pointer to the relevant texture */
 	texture = element->elemtex[state].texture;
+	if (texture != NULL)
+	{
+		render_primitive *prim = alloc_render_primitive(RENDER_PRIMITIVE_QUAD);
 
-	/* now add the primitive */
-	prim = alloc_render_primitive(RENDER_PRIMITIVE_QUAD);
-	set_bounds_wh(&prim->bounds, round_nearest(xform->xoffs), round_nearest(xform->yoffs), width, height);
-	prim->color = xform->color;
-	prim->flags = PRIMFLAG_TEXORIENT(xform->orientation) | PRIMFLAG_BLENDMODE(blendmode) | PRIMFLAG_TEXFORMAT(texture->format);
-	if (xform->orientation & ORIENTATION_SWAP_XY)
-		ISWAP(width, height);
-	width = MIN(width, target->maxtexwidth);
-	height = MIN(height, target->maxtexheight);
-	render_texture_get_scaled(texture, width, height, &prim->texture, &list->reflist);
-	append_render_primitive(list, prim);
+		/* configure the basics */
+		prim->color = xform->color;
+		prim->flags = PRIMFLAG_TEXORIENT(xform->orientation) | PRIMFLAG_BLENDMODE(blendmode) | PRIMFLAG_TEXFORMAT(texture->format);
+
+		/* compute the bounds */
+		set_bounds_wh(&prim->bounds, round_nearest(xform->xoffs), round_nearest(xform->yoffs), width, height);
+		if (xform->orientation & ORIENTATION_SWAP_XY)
+			ISWAP(width, height);
+		width = MIN(width, target->maxtexwidth);
+		height = MIN(height, target->maxtexheight);
+
+		/* get the scaled texture and append it */
+		render_texture_get_scaled(texture, width, height, &prim->texture, &list->reflist);
+		append_render_primitive(list, prim);
+	}
 }
 
 
@@ -3410,7 +3521,7 @@ static float xml_get_attribute_float_with_subst(xml_data_node *node, const char 
     into a layout_file
 -------------------------------------------------*/
 
-static layout_file *load_layout_file(const char *filename)
+static layout_file *load_layout_file(const char *dirname, const char *filename)
 {
 	xml_data_node *rootnode, *mamelayoutnode, *elemnode, *viewnode;
 	layout_element **elemnext;
@@ -3425,7 +3536,7 @@ static layout_file *load_layout_file(const char *filename)
 	/* otherwise, assume it is a file */
 	else
 	{
-		mame_file *layoutfile = mame_fopen(Machine->gamedrv->name, filename, FILETYPE_ARTWORK, 0);
+		mame_file *layoutfile = mame_fopen(dirname, filename, FILETYPE_ARTWORK, 0);
 		if (layoutfile == NULL)
 			return NULL;
 		rootnode = xml_file_read(layoutfile, NULL);
@@ -3455,7 +3566,7 @@ static layout_file *load_layout_file(const char *filename)
 	elemnext = &file->elemlist;
 	for (elemnode = xml_get_sibling(mamelayoutnode->child, "element"); elemnode; elemnode = xml_get_sibling(elemnode->next, "element"))
 	{
-		layout_element *element = load_layout_element(elemnode);
+		layout_element *element = load_layout_element(elemnode, dirname);
 		if (element == NULL)
 			goto error;
 
@@ -3492,7 +3603,7 @@ error:
     node from the layout file
 -------------------------------------------------*/
 
-static layout_element *load_layout_element(xml_data_node *elemnode)
+static layout_element *load_layout_element(xml_data_node *elemnode, const char *dirname)
 {
 	render_bounds bounds = { 0 };
 	element_component **nextcomp;
@@ -3525,7 +3636,7 @@ static layout_element *load_layout_element(xml_data_node *elemnode)
 	for (compnode = elemnode->child; compnode; compnode = compnode->next)
 	{
 		/* allocate a new component */
-		element_component *component = load_element_component(compnode);
+		element_component *component = load_element_component(compnode, dirname);
 		if (component == NULL)
 			goto error;
 
@@ -3564,9 +3675,21 @@ static layout_element *load_layout_element(xml_data_node *elemnode)
 	element->elemtex = malloc_or_die((element->maxstate + 1) * sizeof(element->elemtex[0]));
 	for (state = 0; state <= element->maxstate; state++)
 	{
+		element_component *component;
+
 		element->elemtex[state].element = element;
-		element->elemtex[state].texture = render_texture_alloc(NULL, NULL, NULL, TEXFORMAT_ARGB32, layout_element_scale, &element->elemtex[state]);
 		element->elemtex[state].state = state;
+
+		/* look for at least one visible component in this state */
+		for (component = element->complist; component != NULL; component = component->next)
+			if (component->state == -1 || component->state == state)
+				break;
+
+		/* allocate a texture only if we have some visible components in this state */
+		if (component != NULL)
+			element->elemtex[state].texture = render_texture_alloc(NULL, NULL, NULL, TEXFORMAT_ARGB32, layout_element_scale, &element->elemtex[state]);
+		else
+			element->elemtex[state].texture = NULL;
 	}
 	return element;
 
@@ -3581,7 +3704,7 @@ error:
     XML node (image/rect/disk)
 -------------------------------------------------*/
 
-static element_component *load_element_component(xml_data_node *compnode)
+static element_component *load_element_component(xml_data_node *compnode, const char *dirname)
 {
 	element_component *component;
 
@@ -3604,7 +3727,7 @@ static element_component *load_element_component(xml_data_node *compnode)
 
 		/* load and allocate the bitmap */
 		component->type = COMPONENT_TYPE_IMAGE;
-		component->bitmap = load_component_bitmap(file, afile, &component->hasalpha);
+		component->bitmap = load_component_bitmap(dirname, file, afile, &component->hasalpha);
 		if (component->bitmap == NULL)
 			goto error;
 	}
@@ -3768,7 +3891,7 @@ error:
     with artwork for a component
 -------------------------------------------------*/
 
-static mame_bitmap *load_component_bitmap(const char *file, const char *alphafile, int *hasalpha)
+static mame_bitmap *load_component_bitmap(const char *dirname, const char *file, const char *alphafile, int *hasalpha)
 {
 	mame_bitmap *bitmap;
 	png_info png;
@@ -3779,7 +3902,7 @@ static mame_bitmap *load_component_bitmap(const char *file, const char *alphafil
 	*hasalpha = FALSE;
 
 	/* open and read the main png file */
-	if (open_and_read_png(file, &png))
+	if (open_and_read_png(dirname, file, &png))
 	{
 		logerror("Can't load PNG file: %s\n", file);
 		return NULL;
@@ -3850,7 +3973,7 @@ static mame_bitmap *load_component_bitmap(const char *file, const char *alphafil
 	/* now load the alpha bitmap if present */
 	if (alphafile != NULL)
 	{
-		if (load_alpha_bitmap(alphafile, bitmap, &png))
+		if (load_alpha_bitmap(dirname, alphafile, bitmap, &png))
 		{
 			bitmap_free(bitmap);
 			bitmap = NULL;
@@ -3866,14 +3989,14 @@ static mame_bitmap *load_component_bitmap(const char *file, const char *alphafil
     mask
 -------------------------------------------------*/
 
-static int load_alpha_bitmap(const char *alphafile, mame_bitmap *bitmap, const png_info *original)
+static int load_alpha_bitmap(const char *dirname, const char *alphafile, mame_bitmap *bitmap, const png_info *original)
 {
 	png_info png;
 	UINT8 *src;
 	int x, y;
 
 	/* open and read the alpha png file */
-	if (open_and_read_png(alphafile, &png))
+	if (open_and_read_png(dirname, alphafile, &png))
 	{
 		logerror("Can't load PNG file: %s\n", alphafile);
 		return 1;
@@ -4068,13 +4191,13 @@ static int load_orientation(xml_data_node *orientnode, int *orientation)
     it
 -------------------------------------------------*/
 
-static int open_and_read_png(const char *filename, png_info *png)
+static int open_and_read_png(const char *dirname, const char *filename, png_info *png)
 {
 	mame_file *file;
 	int result;
 
 	/* open the file */
-	file = mame_fopen(Machine->gamedrv->name, filename, FILETYPE_ARTWORK, 0);
+	file = mame_fopen(dirname, filename, FILETYPE_ARTWORK, 0);
 	if (file == NULL)
 		return 1;
 
@@ -4186,7 +4309,7 @@ static void layout_element_free(layout_element *element)
 
 		/* loop over all states and free their textures */
 		for (state = 0; state <= element->maxstate; state++)
-			if (element->elemtex[state].texture)
+			if (element->elemtex[state].texture != NULL)
 				render_texture_free(element->elemtex[state].texture);
 		free(element->elemtex);
 	}

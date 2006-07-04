@@ -163,6 +163,24 @@ static HRESULT d3d_get_adapter_display_mode(d3d *d3dptr, UINT adapter, D3DDISPLA
 }
 
 
+static HRESULT d3d_get_adapter_identifier(d3d *d3dptr, UINT adapter, DWORD flags, d3d_adapter_identifier *identifier)
+{
+	IDirect3D9 *d3d9 = (IDirect3D9 *)d3dptr->d3dobj;
+	D3DADAPTER_IDENTIFIER9 id;
+	HRESULT result = IDirect3D9_GetAdapterIdentifier(d3d9, adapter, flags, &id);
+	memcpy(identifier->Driver, id.Driver, sizeof(identifier->Driver));
+	memcpy(identifier->Description, id.Description, sizeof(identifier->Description));
+	identifier->DriverVersion = id.DriverVersion;
+	identifier->VendorId = id.VendorId;
+	identifier->DeviceId = id.DeviceId;
+	identifier->SubSysId = id.SubSysId;
+	identifier->Revision = id.Revision;
+	identifier->DeviceIdentifier = id.DeviceIdentifier;
+	identifier->WHQLLevel = id.WHQLLevel;
+	return result;
+}
+
+
 static UINT d3d_get_adapter_mode_count(d3d *d3dptr, UINT adapter, D3DFORMAT format)
 {
 	IDirect3D9 *d3d9 = (IDirect3D9 *)d3dptr->d3dobj;
@@ -220,6 +238,7 @@ static d3d_interface d3d9_interface =
 	d3d_enum_adapter_modes,
 	d3d_get_adapter_count,
 	d3d_get_adapter_display_mode,
+	d3d_get_adapter_identifier,
 	d3d_get_adapter_mode_count,
 	d3d_get_adapter_monitor,
 	d3d_get_caps_dword,
@@ -329,6 +348,13 @@ static HRESULT device_reset(d3d_device *dev, d3d_present_parameters *params)
 }
 
 
+static void device_set_gamma_ramp(d3d_device *dev, DWORD flags, const D3DGAMMARAMP *ramp)
+{
+	IDirect3DDevice9 *device = (IDirect3DDevice9 *)dev;
+	IDirect3DDevice9_SetGammaRamp(device, 0, flags, ramp);
+}
+
+
 static HRESULT device_set_render_state(d3d_device *dev, D3DRENDERSTATETYPE state, DWORD value)
 {
 	IDirect3DDevice9 *device = (IDirect3DDevice9 *)dev;
@@ -428,6 +454,7 @@ static d3d_device_interface d3d9_device_interface =
 	device_present,
 	device_release,
 	device_reset,
+	device_set_gamma_ramp,
 	device_set_render_state,
 	device_set_render_target,
 	device_set_stream_source,

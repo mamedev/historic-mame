@@ -7,12 +7,8 @@
 #include "driver.h"
 #include "machine/8255ppi.h"
 #include "turbo.h"
-#include "artwork.h"
 #include "sound/samples.h"
-
-#ifdef NEW_RENDER
 #include "render.h"
-#endif
 
 /* globals */
 UINT8 turbo_opa, turbo_opb, turbo_opc;
@@ -299,16 +295,7 @@ void turbo_update_segments(void)
 
 		if (segment_init || v_old != v_new)
 		{
-#ifndef NEW_RENDER
-			char buf_old[8];
-			char buf_new[8];
-
-			sprintf(buf_old, "LED%02d-%c", i, v_old >= 10 ? 'X' : '0' + v_old);
-			sprintf(buf_new, "LED%02d-%c", i, v_new >= 10 ? 'X' : '0' + v_new);
-
-			artwork_show(buf_old, 0);
-			artwork_show(buf_new, 1);
-#else
+#ifdef NEW_RENDER
 			char buf_new[8];
 
 			sprintf(buf_new, "led%02d", i);
@@ -360,19 +347,7 @@ WRITE8_HANDLER( turbo_coin_and_lamp_w )
 
 void turbo_update_tachometer(void)
 {
-#ifndef NEW_RENDER
-	int i;
-
-	char buf[8] = "Speed00";
-
-	for (i = 0; i < 16; i++)
-	{
-		buf[5] = '0' + i / 10;
-		buf[6] = '0' + i % 10;
-
-		artwork_show(buf, i == turbo_speed);
-	}
-#else
+#ifdef NEW_RENDER
 	render_view_item_set_state("speed", turbo_speed);
 #endif
 }

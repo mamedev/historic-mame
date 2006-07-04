@@ -30,6 +30,7 @@
 #include "osdepend.h"
 #include "driver.h"
 #include "winmain.h"
+#include "machine/generic.h"
 #ifndef NEW_RENDER
 #include "windold.h"
 #else
@@ -225,6 +226,7 @@ static INT32				gun_axis[MAX_DX_LIGHTGUNS][2];
 
 // led states
 static int					original_leds;
+static int					led_states;
 static HANDLE				hKbdDev;
 static int					ledmethod;
 
@@ -251,14 +253,14 @@ const options_entry input_opts[] =
 	{ "led_mode",                 "ps/2",     0,                 "LED mode (PS/2|USB)" },
 	{ "a2d_deadzone;a2d",         "0.3",      0,                 "minimal analog value for digital input" },
 	{ "ctrlr",                    NULL,       0,                 "preconfigure for specified controller" },
-	{ "paddle_device;paddle",     "keyboard", 0,                 "enable (keyboard|mouse|joystsick) if a paddle control is present" },
-	{ "adstick_device;adstick",   "keyboard", 0,                 "enable (keyboard|mouse|joystsick) if an analog joystick control is present" },
-	{ "pedal_device;pedal",       "keyboard", 0,                 "enable (keyboard|mouse|joystsick) if a pedal control is present" },
-	{ "dial_device;dial",         "keyboard", 0,                 "enable (keyboard|mouse|joystsick) if a dial control is present" },
-	{ "trackball_device;trackball","keyboard", 0,                "enable (keyboard|mouse|joystsick) if a trackball control is present" },
-	{ "lightgun_device",          "keyboard", 0,                 "enable (keyboard|mouse|joystsick) if a lightgun control is present" },
+	{ "paddle_device;paddle",     "keyboard", 0,                 "enable (keyboard|mouse|joystick) if a paddle control is present" },
+	{ "adstick_device;adstick",   "keyboard", 0,                 "enable (keyboard|mouse|joystick) if an analog joystick control is present" },
+	{ "pedal_device;pedal",       "keyboard", 0,                 "enable (keyboard|mouse|joystick) if a pedal control is present" },
+	{ "dial_device;dial",         "keyboard", 0,                 "enable (keyboard|mouse|joystick) if a dial control is present" },
+	{ "trackball_device;trackball","keyboard", 0,                "enable (keyboard|mouse|joystick) if a trackball control is present" },
+	{ "lightgun_device",          "keyboard", 0,                 "enable (keyboard|mouse|joystick) if a lightgun control is present" },
 #ifdef MESS
-	{ "mouse_device",             "mouse",    0,                 "enable (keyboard|mouse|joystsick) if a mouse control is present" },
+	{ "mouse_device",             "mouse",    0,                 "enable (keyboard|mouse|joystick) if a mouse control is present" },
 #endif
 	{ "digital",                  "none",     0,                 "mark certain joysticks or axes as digital (none|all|j<N>*|j<N>a<M>[,...])" },
 	{ NULL },
@@ -1235,6 +1237,7 @@ void wininput_poll(void)
 {
 	HWND focus = GetFocus();
 	HRESULT result = 1;
+	int newstate;
 	int i, j;
 
 	// remember when this happened
@@ -1290,6 +1293,14 @@ void wininput_poll(void)
 
 	// update the lagged keyboard
 	updatekeyboard();
+
+	// update the LED states
+	newstate = (get_led_status(0) << 0) | (get_led_status(1) << 1) | (get_led_status(2) << 2);
+	if (newstate != led_states)
+	{
+		led_states = newstate;
+		osd_set_leds(newstate);
+	}
 
 #ifndef NEW_DEBUGGER
 	// if the debugger is up and visible, don't bother with the rest
@@ -1474,8 +1485,6 @@ static void extract_input_config(void)
 	use_lightgun_dual = options_get_bool("dual_lightgun", TRUE);
 	use_lightgun_reload = options_get_bool("offscreen_reload", TRUE);
 	steadykey = options_get_bool("steadykey", TRUE);
-	use_keyboard_leds = options_get_bool("keyboard_leds", TRUE);
-	ledmode = options_get_string("led_mode", TRUE);
 	a2d_deadzone = options_get_float("a2d_deadzone", TRUE);
 	options.controller = options_get_string("ctrlr", TRUE);
 	parse_analog_select(ANALOG_TYPE_PADDLE, "paddle_device");
@@ -1488,13 +1497,6 @@ static void extract_input_config(void)
 	parse_analog_select(ANALOG_TYPE_MOUSE, "mouse_device");
 #endif
 	parse_digital("digital");
-
-	// sanity check values
-	if (strcmp(ledmode, "ps/2") != 0 && strcmp(ledmode, "usb") != 0)
-	{
-		fprintf(stderr, "Invalid ledmode value %s; reverting to ps/2\n", ledmode);
-		ledmode = "ps/2";
-	}
 }
 
 
@@ -2449,14 +2451,11 @@ void osd_set_leds(int state)
 		// Address first keyboard
 		InputBuffer.UnitId = 0;
 		InputBuffer.LedFlags = LedFlags;
-
 		DeviceIoControl(hKbdDev, IOCTL_KEYBOARD_SET_INDICATORS,
 						&InputBuffer, DataLength,
 						NULL, 0,
 						&ReturnedLength, NULL);
 	}
-
-	return;
 }
 
 
@@ -2469,8 +2468,17 @@ void start_led(void)
 {
 	OSVERSIONINFO osinfo = { sizeof(OSVERSIONINFO) };
 
+	// get LED options
+	use_keyboard_leds = options_get_bool("keyboard_leds", TRUE);
 	if (!use_keyboard_leds)
 		return;
+
+	ledmode = options_get_string("led_mode", TRUE);
+	if (strcmp(ledmode, "ps/2") != 0 && strcmp(ledmode, "usb") != 0)
+	{
+		fprintf(stderr, "Invalid ledmode value %s; reverting to ps/2\n", ledmode);
+		ledmode = "ps/2";
+	}
 
 	// retrive windows version
 	GetVersionEx(&osinfo);

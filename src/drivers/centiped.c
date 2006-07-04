@@ -282,10 +282,11 @@
 #include "sound/pokey.h"
 
 
-static int oldpos[4];
+static UINT8 oldpos[4];
 static UINT8 sign[4];
 static UINT8 dsw_select;
 static UINT8 *rambase;
+static mame_timer *interrupt_timer;
 
 
 /*************************************
@@ -304,13 +305,24 @@ static void generate_interrupt(int scanline)
 	scanline += 16;
 	if (scanline >= 256)
 		scanline = 0;
-	timer_set(cpu_getscanlinetime(scanline), scanline, generate_interrupt);
+
+	timer_adjust(interrupt_timer, cpu_getscanlinetime(scanline), scanline, 0);
+}
+
+
+static MACHINE_START( centiped )
+{
+	state_save_register_global_array(oldpos);
+	state_save_register_global_array(sign);
+	state_save_register_global(dsw_select);
+	return 0;
 }
 
 
 static MACHINE_RESET( centiped )
 {
-	timer_set(cpu_getscanlinetime(0), 0, generate_interrupt);
+	interrupt_timer=timer_alloc(generate_interrupt);
+	timer_adjust(interrupt_timer,cpu_getscanlinetime(0), 0, 0);
 	cpunum_set_input_line(0, 0, CLEAR_LINE);
 	dsw_select = 0;
 }
@@ -358,7 +370,7 @@ static WRITE8_HANDLER( irq_ack_w )
 
 INLINE int read_trackball(int idx, int switch_port)
 {
-	int newpos;
+	UINT8 newpos;
 
 	/* adjust idx if we're cocktail flipped */
 	if (centiped_flipscreen)
@@ -1297,6 +1309,7 @@ static MACHINE_DRIVER_START( centiped )
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(1460)
 
+	MDRV_MACHINE_START(centiped)
 	MDRV_MACHINE_RESET(centiped)
 	MDRV_NVRAM_HANDLER(atari_vg)
 
@@ -1642,15 +1655,15 @@ static DRIVER_INIT( bullsdrt )
  *
  *************************************/
 
-GAME( 1980, centiped, 0,        centiped, centiped, 0,        ROT270, "Atari",   "Centipede (revision 3)", 0 )
-GAME( 1980, centipd2, centiped, centiped, centiped, 0,        ROT270, "Atari",   "Centipede (revision 2)", 0 )
-GAME( 1980, centtime, centiped, centiped, centtime, 0,        ROT270, "Atari",   "Centipede (1 player, timed)", 0 )
-GAME( 1980, centipdb, centiped, centipdb, centiped, 0,        ROT270, "bootleg", "Centipede (bootleg)", 0 )
-GAME( 1980, caterplr, centiped, caterplr, caterplr, caterplr, ROT270, "bootleg", "Caterpillar", 0 )
-GAME( 1980, millpac,  centiped, centipdb, centiped, 0, 	      ROT270, "Valadon Automation", "Millpac", 0 )
-GAME( 1980, magworm,  centiped, magworm,  magworm,  magworm,  ROT270, "bootleg", "Magic Worm (bootleg)", 0 )
-GAME( 1982, milliped, 0,        milliped, milliped, 0,        ROT270, "Atari",   "Millipede", 0 )
+GAME( 1980, centiped, 0,        centiped, centiped, 0,        ROT270, "Atari",   "Centipede (revision 3)", GAME_SUPPORTS_SAVE)
+GAME( 1980, centipd2, centiped, centiped, centiped, 0,        ROT270, "Atari",   "Centipede (revision 2)", GAME_SUPPORTS_SAVE )
+GAME( 1980, centtime, centiped, centiped, centtime, 0,        ROT270, "Atari",   "Centipede (1 player, timed)", GAME_SUPPORTS_SAVE )
+GAME( 1980, centipdb, centiped, centipdb, centiped, 0,        ROT270, "bootleg", "Centipede (bootleg)", GAME_SUPPORTS_SAVE )
+GAME( 1980, caterplr, centiped, caterplr, caterplr, caterplr, ROT270, "bootleg", "Caterpillar", GAME_SUPPORTS_SAVE )
+GAME( 1980, millpac,  centiped, centipdb, centiped, 0,        ROT270, "Valadon Automation", "Millpac", GAME_SUPPORTS_SAVE )
+GAME( 1980, magworm,  centiped, magworm,  magworm,  magworm,  ROT270, "bootleg", "Magic Worm (bootleg)", GAME_SUPPORTS_SAVE )
+GAME( 1982, milliped, 0,        milliped, milliped, 0,        ROT270, "Atari",   "Millipede", GAME_SUPPORTS_SAVE )
 
-GAME( 1980, warlords, 0,        warlords, warlords, 0,        ROT0,   "Atari",   "Warlords", 0 )
+GAME( 1980, warlords, 0,        warlords, warlords, 0,        ROT0,   "Atari",   "Warlords", GAME_SUPPORTS_SAVE )
 
-GAME( 1985, bullsdrt, 0,        bullsdrt, bullsdrt, bullsdrt, ROT270, "Shinkai Inc. (Magic Eletronics Inc. licence)", "Bulls Eye Darts", GAME_IMPERFECT_COLORS )
+GAME( 1985, bullsdrt, 0,        bullsdrt, bullsdrt, bullsdrt, ROT270, "Shinkai Inc. (Magic Eletronics Inc. licence)", "Bulls Eye Darts", GAME_IMPERFECT_COLORS | GAME_SUPPORTS_SAVE )

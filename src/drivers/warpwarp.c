@@ -127,8 +127,10 @@ TODO:
 ***************************************************************************/
 
 #include "driver.h"
-#include "artwork.h"
 #include "sound/custom.h"
+#include "render.h"
+#include "geebee.lh"
+#include "sos.lh"
 
 
 /* from vidhrdw/warpwarp.c */
@@ -165,34 +167,6 @@ void *warpwarp_sh_start(int clock, const struct CustomSound_interface *config);
  * Gee Bee overlay
  *
  *******************************************************/
-
-#define PINK1	MAKE_ARGB(0x04,0xa0,0x00,0xe0)
-#define PINK2 	MAKE_ARGB(0x04,0xe0,0x00,0xf0)
-#define ORANGE	MAKE_ARGB(0x04,0xff,0xd0,0x00)
-#define BLUE	MAKE_ARGB(0x04,0x00,0x00,0xff)
-
-OVERLAY_START( geebee_overlay )
-	OVERLAY_RECT(  1*8,  0*8,  4*8, 28*8, PINK2 )
-	OVERLAY_RECT(  4*8,  0*8,  5*8,  4*8, PINK1 )
-	OVERLAY_RECT(  4*8, 24*8,  5*8, 28*8, PINK1 )
-	OVERLAY_RECT(  4*8,  4*8,  5*8, 24*8, ORANGE )
-	OVERLAY_RECT(  5*8,  0*8, 28*8,  1*8, PINK1 )
-	OVERLAY_RECT(  5*8, 27*8, 28*8, 28*8, PINK1 )
-	OVERLAY_RECT(  5*8,  1*8, 28*8,  4*8, BLUE )
-	OVERLAY_RECT(  5*8, 24*8, 28*8, 27*8, BLUE )
-	OVERLAY_RECT( 12*8, 13*8, 13*8, 15*8, BLUE )
-	OVERLAY_RECT( 21*8, 10*8, 23*8, 12*8, BLUE )
-	OVERLAY_RECT( 21*8, 16*8, 23*8, 18*8, BLUE )
-	OVERLAY_RECT( 28*8,  0*8, 29*8, 28*8, PINK2 )
-	OVERLAY_RECT( 29*8,  0*8, 32*8, 28*8, PINK1 )
-OVERLAY_END
-
-OVERLAY_START( sos_overlay )
-	OVERLAY_RECT(  1*8,  0*8,  33*8, 28*8, MAKE_ARGB(0x04,0x88,0x88,0xff) )
-OVERLAY_END
-
-
-
 
 static int handle_joystick;
 
@@ -1069,7 +1043,6 @@ static DRIVER_INIT( geebee )
 {
 	handle_joystick = 0;
 
-	artwork_set_overlay(geebee_overlay);
 	// turn off overlay in cocktail mode; this assumes that the cabinet dip switch
 	// is bit 0 of input port 2
 	geebee_handleoverlay = 1;
@@ -1109,7 +1082,6 @@ static DRIVER_INIT( sos )
 {
 	handle_joystick = 1;
 
-	artwork_set_overlay(sos_overlay);
 	geebee_handleoverlay = 0;
 
 	warpwarp_ball_sizex = 4;
@@ -1136,12 +1108,12 @@ static DRIVER_INIT( warpwarp )
 
 
 /* B & W games */
-GAME( 1978, geebee,   0,        geebee,   geebee,   geebee,   ROT90, "Namco", "Gee Bee", 0 )
-GAME( 1978, geebeeg,  geebee,   geebee,   geebee,   geebee,   ROT90, "[Namco] (Gremlin license)", "Gee Bee (Gremlin)", 0 )
+GAMEL(1978, geebee,   0,        geebee,   geebee,   geebee,   ROT90, "Namco", "Gee Bee", 0, layout_geebee )
+GAMEL(1978, geebeeg,  geebee,   geebee,   geebee,   geebee,   ROT90, "[Namco] (Gremlin license)", "Gee Bee (Gremlin)", 0, layout_geebee )
 GAME( 1980, navarone, 0,        navarone, navarone, navarone, ROT90, "Namco", "Navarone", GAME_IMPERFECT_SOUND )
 GAME( 1980, kaitei,   0,        navarone, kaitei,   kaitei,   ROT90, "Namco", "Kaitei Takara Sagashi", 0 )
 GAME( 1980, kaiteik,  kaitei,   navarone, kaiteik,  kaiteik,  ROT90, "K.K. Tokki", "Kaitei Takara Sagashi (K'K-Tokki)", 0 )
-GAME( 1980, sos,      0,        navarone, sos,      sos,      ROT90, "Namco", "SOS", GAME_IMPERFECT_SOUND )
+GAMEL(1980, sos,      0,        navarone, sos,      sos,      ROT90, "Namco", "SOS", GAME_IMPERFECT_SOUND, layout_sos )
 
 /* Color games */
 GAME( 1979, bombbee,  0,        bombbee,  bombbee,  bombbee,  ROT90, "Namco", "Bomb Bee", 0 )

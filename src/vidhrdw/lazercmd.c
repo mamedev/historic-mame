@@ -5,7 +5,6 @@
 /*************************************************************/
 
 #include "driver.h"
-#include "artwork.h"
 #include "vidhrdw/lazercmd.h"
 
 extern int marker_x, marker_y;
@@ -90,9 +89,6 @@ VIDEO_START( lazercmd )
 VIDEO_UPDATE( lazercmd )
 {
 	int i,x,y;
-
-	/* is overlay enabled? */
-	artwork_show(OVERLAY_TAG, (input_port_2_r(0) & 0x80) >> 7);
 
 	if (video_inverted != (input_port_2_r(0) & 0x20))
 	{

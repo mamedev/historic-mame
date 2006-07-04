@@ -62,7 +62,7 @@ PALETTE_INIT( arknoid2 )
 
 void tnzs_vh_draw_background(mame_bitmap *bitmap,unsigned char *m)
 {
-	int x,y,column,tot;
+	int x,y,column,tot,flag;
 	int scrollx, scrolly;
 	unsigned int upperbits;
 	int ctrl2	=	tnzs_objctrl[1];
@@ -72,6 +72,11 @@ void tnzs_vh_draw_background(mame_bitmap *bitmap,unsigned char *m)
 	{
 		m += 0x800;
 	}
+
+	if(tnzs_objctrl[1] & 0x80)
+		flag = TRANSPARENCY_PEN;
+	else
+		flag = TRANSPARENCY_NONE;
 
 
 	/* The byte at f200 is the y-scroll value for the first column.
@@ -122,7 +127,7 @@ void tnzs_vh_draw_background(mame_bitmap *bitmap,unsigned char *m)
 						color,
 						flipx,flipy,
 						sx + scrollx,(sy + scrolly) & 0xff,
-						0,TRANSPARENCY_PEN,0);
+						&Machine->visible_area[0],flag,0);
 
 				/* wrap around x */
 				drawgfx(bitmap,Machine->gfx[0],
@@ -130,7 +135,7 @@ void tnzs_vh_draw_background(mame_bitmap *bitmap,unsigned char *m)
 						color,
 						flipx,flipy,
 						sx + 512 + scrollx,(sy + scrolly) & 0xff,
-						0,TRANSPARENCY_PEN,0);
+						&Machine->visible_area[0],flag,0);
 			}
 		}
 
@@ -203,8 +208,8 @@ VIDEO_UPDATE( tnzs )
 	tnzs_screenflip = (tnzs_objctrl[0] & 0x40) >> 6;
 
 
-	/* Blank the background */
-	fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area[0]);
+	/* Fill the background */
+	fillbitmap(bitmap, Machine->pens[0x1f0], &Machine->visible_area[0]);
 
 	/* Redraw the background tiles (c400-c5ff) */
 	tnzs_vh_draw_background(bitmap, tnzs_objram + 0x400);

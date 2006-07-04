@@ -112,7 +112,9 @@
 
 extern rgb_t *game_palette;
 extern rgb_t *adjusted_palette;
+#ifndef NEW_RENDER
 extern UINT32 direct_rgb_components[3];
+#endif
 extern UINT16 *palette_shadow_table;
 
 

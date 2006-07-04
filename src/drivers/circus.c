@@ -28,9 +28,10 @@ D000      Paddle Position and Interrupt Reset
 ***************************************************************************/
 
 #include "driver.h"
-#include "artwork.h"
 #include "sound/samples.h"
 #include "circus.h"
+
+#include "circus.lh"
 
 #if 0
 static int circus_interrupt;
@@ -45,14 +46,6 @@ static READ8_HANDLER( ripcord_IN2_r )
 
 
 int circus_game;
-
-
-OVERLAY_START( circus_overlay )
-	OVERLAY_RECT(   0,  20, 248, 36, MAKE_ARGB(0x04,0x20,0x20,0xff) )
-	OVERLAY_RECT(   0,  36, 248, 48, MAKE_ARGB(0x04,0x20,0xff,0x20) )
-	OVERLAY_RECT(   0,  48, 248, 64, MAKE_ARGB(0x04,0xff,0xff,0x20) )
-OVERLAY_END
-
 
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -501,7 +494,6 @@ ROM_END
 
 static DRIVER_INIT( circus )
 {
-	artwork_set_overlay(circus_overlay);
 	circus_game = 1;
 }
 
@@ -519,7 +511,7 @@ static DRIVER_INIT( ripcord )
 }
 
 
-GAME( 1977, circus,   0, circus,   circus,   circus,   ROT0, "Exidy", "Circus", 0 )
+GAMEL(1977, circus,   0, circus,   circus,   circus,   ROT0, "Exidy", "Circus", 0, layout_circus )
 GAME( 1977, robotbwl, 0, robotbwl, robotbwl, robotbwl, ROT0, "Exidy", "Robot Bowl", GAME_IMPERFECT_SOUND )
 GAME( 1979, crash,    0, crash,    crash,    crash,    ROT0, "Exidy", "Crash", GAME_IMPERFECT_SOUND )
 GAME( 1979, ripcord,  0, ripcord,  ripcord,  ripcord,  ROT0, "Exidy", "Rip Cord", GAME_IMPERFECT_SOUND )

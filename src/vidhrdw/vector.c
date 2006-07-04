@@ -34,12 +34,7 @@
 #include "osinline.h"
 #include "driver.h"
 #include "vector.h"
-
-#ifdef NEW_RENDER
 #include "render.h"
-#else
-#include "artwork.h"
-#endif
 
 #define MAX_DIRTY_PIXELS (2*MAX_PIXELS)
 

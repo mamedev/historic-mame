@@ -1183,8 +1183,6 @@ VIDEO_UPDATE( sprtmtch )
 
 VIDEO_UPDATE( jantouki )
 {
-	rectangle cliprect1 = Machine->visible_area[0], cliprect2 = Machine->visible_area[0];
-	int middle_y = (Machine->visible_area[0].min_y + Machine->visible_area[0].max_y + 1) / 2;
 
 	int layers_ctrl = dynax_layer_enable;
 
@@ -1196,19 +1194,21 @@ VIDEO_UPDATE( jantouki )
 		Machine->pens[(dynax_blit_backpen & 0xff) + (dynax_blit_palbank & 1) * 256],
 		cliprect);
 
-	cliprect1.max_y = middle_y - 1;
-	cliprect2.min_y = middle_y;
-
-//  if (layers_ctrl & 0x01) jantouki_copylayer( bitmap, &cliprect2, 3, middle_y-16 );
-	if (layers_ctrl & 0x02)	jantouki_copylayer( bitmap, &cliprect2, 2, middle_y-16 );
-	if (layers_ctrl & 0x04)	jantouki_copylayer( bitmap, &cliprect2, 1, middle_y-16 );
-	if (layers_ctrl & 0x08)	jantouki_copylayer( bitmap, &cliprect2, 0, middle_y-16 );
-
-	if (layers_ctrl & 0x01)	jantouki_copylayer( bitmap, &cliprect1, 3, 0 );
-	if (layers_ctrl & 0x10)	jantouki_copylayer( bitmap, &cliprect1, 7, 0 );
-	if (layers_ctrl & 0x20)	jantouki_copylayer( bitmap, &cliprect1, 6, 0 );
-	if (layers_ctrl & 0x40)	jantouki_copylayer( bitmap, &cliprect1, 5, 0 );
-	if (layers_ctrl & 0x80)	jantouki_copylayer( bitmap, &cliprect1, 4, 0 );
+	if (screen==0)
+	{
+	//  if (layers_ctrl & 0x01) jantouki_copylayer( bitmap, cliprect, 3, 0 );
+		if (layers_ctrl & 0x02)	jantouki_copylayer( bitmap, cliprect, 2, 0 );
+		if (layers_ctrl & 0x04)	jantouki_copylayer( bitmap, cliprect, 1, 0 );
+		if (layers_ctrl & 0x08)	jantouki_copylayer( bitmap, cliprect, 0, 0 );
+	}
+	else if (screen==1)
+	{
+		if (layers_ctrl & 0x01)	jantouki_copylayer( bitmap, cliprect, 3, 0 );
+		if (layers_ctrl & 0x10)	jantouki_copylayer( bitmap, cliprect, 7, 0 );
+		if (layers_ctrl & 0x20)	jantouki_copylayer( bitmap, cliprect, 6, 0 );
+		if (layers_ctrl & 0x40)	jantouki_copylayer( bitmap, cliprect, 5, 0 );
+		if (layers_ctrl & 0x80)	jantouki_copylayer( bitmap, cliprect, 4, 0 );
+	}
 	return 0;
 }
 

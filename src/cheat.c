@@ -396,7 +396,6 @@ is selected
 
 #include "driver.h"
 #include "ui_text.h"
-#include "artwork.h"
 #include "machine/eeprom.h"
 #include <ctype.h>
 
@@ -2609,7 +2608,7 @@ static int EnableDisableCheatMenu(int selection, int firstTime)
 		}
 	}
 
-	if(UIPressedRepeatThrottle(IPT_UI_PAN_UP, kVerticalKeyRepeatRate))
+	if(UIPressedRepeatThrottle(IPT_UI_PAGE_UP, kVerticalKeyRepeatRate))
 	{
 		sel -= fullMenuPageHeight;
 
@@ -2619,7 +2618,7 @@ static int EnableDisableCheatMenu(int selection, int firstTime)
 		}
 	}
 
-	if(UIPressedRepeatThrottle(IPT_UI_PAN_DOWN, kVerticalKeyRepeatRate))
+	if(UIPressedRepeatThrottle(IPT_UI_PAGE_DOWN, kVerticalKeyRepeatRate))
 	{
 		sel += fullMenuPageHeight;
 
@@ -4350,7 +4349,7 @@ static int EditCheatMenu(CheatEntry * entry, int selection)
 		editActive = 0;
 	}
 
-	if(UIPressedRepeatThrottle(IPT_UI_PAN_UP, kVerticalKeyRepeatRate))
+	if(UIPressedRepeatThrottle(IPT_UI_PAGE_UP, kVerticalKeyRepeatRate))
 	{
 		sel -= fullMenuPageHeight;
 
@@ -4360,7 +4359,7 @@ static int EditCheatMenu(CheatEntry * entry, int selection)
 		editActive = 0;
 	}
 
-	if(UIPressedRepeatThrottle(IPT_UI_PAN_DOWN, kVerticalKeyRepeatRate))
+	if(UIPressedRepeatThrottle(IPT_UI_PAGE_DOWN, kVerticalKeyRepeatRate))
 	{
 		sel += fullMenuPageHeight;
 
@@ -4745,7 +4744,7 @@ static int DoSearchMenuClassic(int selection, int startNew)
 			sel = total - 1;
 	}
 
-	if(UIPressedRepeatThrottle(IPT_UI_PAN_UP, kVerticalKeyRepeatRate))
+	if(UIPressedRepeatThrottle(IPT_UI_PAGE_UP, kVerticalKeyRepeatRate))
 	{
 		sel -= fullMenuPageHeight;
 
@@ -4753,7 +4752,7 @@ static int DoSearchMenuClassic(int selection, int startNew)
 			sel = 0;
 	}
 
-	if(UIPressedRepeatThrottle(IPT_UI_PAN_DOWN, kVerticalKeyRepeatRate))
+	if(UIPressedRepeatThrottle(IPT_UI_PAGE_DOWN, kVerticalKeyRepeatRate))
 	{
 		sel += fullMenuPageHeight;
 
@@ -5136,7 +5135,7 @@ static int DoSearchMenu(int selection, int startNew)
 			sel = total - 1;
 	}
 
-	if(UIPressedRepeatThrottle(IPT_UI_PAN_UP, kVerticalKeyRepeatRate))
+	if(UIPressedRepeatThrottle(IPT_UI_PAGE_UP, kVerticalKeyRepeatRate))
 	{
 		sel -= fullMenuPageHeight;
 
@@ -5144,7 +5143,7 @@ static int DoSearchMenu(int selection, int startNew)
 			sel = 0;
 	}
 
-	if(UIPressedRepeatThrottle(IPT_UI_PAN_DOWN, kVerticalKeyRepeatRate))
+	if(UIPressedRepeatThrottle(IPT_UI_PAGE_DOWN, kVerticalKeyRepeatRate))
 	{
 		sel += fullMenuPageHeight;
 
@@ -5427,7 +5426,7 @@ static int AddEditCheatMenu(int selection)
 			sel = total - 1;
 	}
 
-	if(UIPressedRepeatThrottle(IPT_UI_PAN_UP, kVerticalKeyRepeatRate))
+	if(UIPressedRepeatThrottle(IPT_UI_PAGE_UP, kVerticalKeyRepeatRate))
 	{
 		sel -= fullMenuPageHeight;
 
@@ -5435,7 +5434,7 @@ static int AddEditCheatMenu(int selection)
 			sel = 0;
 	}
 
-	if(UIPressedRepeatThrottle(IPT_UI_PAN_DOWN, kVerticalKeyRepeatRate))
+	if(UIPressedRepeatThrottle(IPT_UI_PAGE_DOWN, kVerticalKeyRepeatRate))
 	{
 		sel += fullMenuPageHeight;
 
@@ -5710,12 +5709,12 @@ static int ViewSearchResults(int selection, int firstTime)
 		}
 	}
 
-	if(UIPressedRepeatThrottle(IPT_UI_PAN_UP, kHorizontalFastKeyRepeatRate))
+	if(UIPressedRepeatThrottle(IPT_UI_PAGE_UP, kHorizontalFastKeyRepeatRate))
 	{
 		goToPrevPage = 1;
 	}
 
-	if(UIPressedRepeatThrottle(IPT_UI_PAN_DOWN, kHorizontalFastKeyRepeatRate))
+	if(UIPressedRepeatThrottle(IPT_UI_PAGE_DOWN, kHorizontalFastKeyRepeatRate))
 	{
 		goToNextPage = 1;
 	}
@@ -5780,7 +5779,7 @@ static int ViewSearchResults(int selection, int firstTime)
 		}
 	}
 
-	if(UIPressedRepeatThrottle(IPT_UI_PAN_LEFT, kVerticalKeyRepeatRate))
+	if(UIPressedRepeatThrottle(IPT_UI_PREV_GROUP, kVerticalKeyRepeatRate))
 	{
 		search->currentRegionIdx--;
 
@@ -5788,7 +5787,7 @@ static int ViewSearchResults(int selection, int firstTime)
 			search->currentRegionIdx = search->regionListLength - 1;
 	}
 
-	if(UIPressedRepeatThrottle(IPT_UI_PAN_RIGHT, kVerticalKeyRepeatRate))
+	if(UIPressedRepeatThrottle(IPT_UI_NEXT_GROUP, kVerticalKeyRepeatRate))
 	{
 		search->currentRegionIdx++;
 
@@ -5928,7 +5927,7 @@ static int ChooseWatch(int selection)
 			sel = total - 1;
 	}
 
-	if(UIPressedRepeatThrottle(IPT_UI_PAN_UP, kVerticalKeyRepeatRate))
+	if(UIPressedRepeatThrottle(IPT_UI_PAGE_UP, kVerticalKeyRepeatRate))
 	{
 		sel -= fullMenuPageHeight;
 
@@ -5936,7 +5935,7 @@ static int ChooseWatch(int selection)
 			sel = 0;
 	}
 
-	if(UIPressedRepeatThrottle(IPT_UI_PAN_DOWN, kVerticalKeyRepeatRate))
+	if(UIPressedRepeatThrottle(IPT_UI_PAGE_DOWN, kVerticalKeyRepeatRate))
 	{
 		sel += fullMenuPageHeight;
 
@@ -6417,7 +6416,7 @@ static int EditWatch(WatchInfo * entry, int selection)
 		editActive = 0;
 	}
 
-	if(UIPressedRepeatThrottle(IPT_UI_PAN_UP, kVerticalKeyRepeatRate))
+	if(UIPressedRepeatThrottle(IPT_UI_PAGE_UP, kVerticalKeyRepeatRate))
 	{
 		sel -= fullMenuPageHeight;
 
@@ -6427,7 +6426,7 @@ static int EditWatch(WatchInfo * entry, int selection)
 		editActive = 0;
 	}
 
-	if(UIPressedRepeatThrottle(IPT_UI_PAN_DOWN, kVerticalKeyRepeatRate))
+	if(UIPressedRepeatThrottle(IPT_UI_PAGE_DOWN, kVerticalKeyRepeatRate))
 	{
 		sel += fullMenuPageHeight;
 
@@ -6632,7 +6631,7 @@ static int SelectSearchRegions(int selection, SearchInfo * search)
 			sel = total - 1;
 	}
 
-	if(UIPressedRepeatThrottle(IPT_UI_PAN_UP, kVerticalKeyRepeatRate))
+	if(UIPressedRepeatThrottle(IPT_UI_PAGE_UP, kVerticalKeyRepeatRate))
 	{
 		sel -= fullMenuPageHeight;
 
@@ -6640,7 +6639,7 @@ static int SelectSearchRegions(int selection, SearchInfo * search)
 			sel = 0;
 	}
 
-	if(UIPressedRepeatThrottle(IPT_UI_PAN_DOWN, kVerticalKeyRepeatRate))
+	if(UIPressedRepeatThrottle(IPT_UI_PAGE_DOWN, kVerticalKeyRepeatRate))
 	{
 		sel += fullMenuPageHeight;
 
@@ -6798,7 +6797,7 @@ static int SelectSearch(int selection)
 			sel = total - 1;
 	}
 
-	if(UIPressedRepeatThrottle(IPT_UI_PAN_UP, kVerticalKeyRepeatRate))
+	if(UIPressedRepeatThrottle(IPT_UI_PAGE_UP, kVerticalKeyRepeatRate))
 	{
 		sel -= fullMenuPageHeight;
 
@@ -6806,7 +6805,7 @@ static int SelectSearch(int selection)
 			sel = 0;
 	}
 
-	if(UIPressedRepeatThrottle(IPT_UI_PAN_DOWN, kVerticalKeyRepeatRate))
+	if(UIPressedRepeatThrottle(IPT_UI_PAGE_DOWN, kVerticalKeyRepeatRate))
 	{
 		sel += fullMenuPageHeight;
 

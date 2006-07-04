@@ -58,6 +58,7 @@ Buggy Boy Error Codes             TX-1 Error Codes
 #include "machine/8255ppi.h"
 #include "sound/ay8910.h"
 #include "cpu/i86/i86.h"
+#include "render.h"
 
 #define PRINT_CRT 0
 #define ROM_PATCHES 1
@@ -905,73 +906,97 @@ static MACHINE_RESET( tx1 )
 }
 
 static MACHINE_DRIVER_START( tx1 )
-        MDRV_CPU_ADD(I86,5000000 )
-        MDRV_CPU_PROGRAM_MAP(tx1_master,0)
-        MDRV_CPU_PERIODIC_INT(main_irq, TIME_IN_HZ(46) )        /* To do: measure HD46505 CUDISP output rate */
-//      MDRV_WATCHDOG_TIME_INIT(5)                  /* To do: measure watchdog time interval */
+	MDRV_CPU_ADD(I86,5000000 )
+	MDRV_CPU_PROGRAM_MAP(tx1_master,0)
+	MDRV_CPU_PERIODIC_INT(main_irq, TIME_IN_HZ(46) )        /* To do: measure HD46505 CUDISP output rate */
+	//MDRV_WATCHDOG_TIME_INIT(5)                  /* To do: measure watchdog time interval */
 
-        MDRV_CPU_ADD(I86,5000000 )
+	MDRV_CPU_ADD(I86,5000000 )
 	MDRV_CPU_PROGRAM_MAP(tx1_slave,0)
 
 	MDRV_CPU_ADD(Z80,3750000 )                  /* Guess */
-        /* audio CPU */
+	/* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(tx1_sound_prg,0)
 	MDRV_CPU_IO_MAP(tx1_sound_io,0)
-        MDRV_CPU_PERIODIC_INT(irq0_line_hold, TIME_IN_HZ(915.52734375/2) )         /* Guess */
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold, TIME_IN_HZ(915.52734375/2) )         /* Guess */
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_MACHINE_RESET(tx1)
 	MDRV_INTERLEAVE(100)
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-//  MDRV_ASPECT_RATIO(12,3)
-//      MDRV_SCREEN_SIZE(110*8, 256)
-	MDRV_SCREEN_SIZE(768, 256)
-       	MDRV_VISIBLE_AREA(0, 767, 0, 255)
 	MDRV_GFXDECODE(tx1_gfxdecodeinfo)
-
 	MDRV_PALETTE_LENGTH(32768)
+	MDRV_DEFAULT_LAYOUT(layout_triphsxs)
+
+	MDRV_SCREEN_ADD("left", 0x000)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(DEFAULT_60HZ_VBLANK_DURATION))
+	MDRV_SCREEN_MAXSIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0, 256-1)
+
+	MDRV_SCREEN_ADD("middle", 0x000)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(DEFAULT_60HZ_VBLANK_DURATION))
+	MDRV_SCREEN_MAXSIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0, 256-1)
+
+	MDRV_SCREEN_ADD("right", 0x000)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(DEFAULT_60HZ_VBLANK_DURATION))
+	MDRV_SCREEN_MAXSIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0, 256-1)
+
 	MDRV_VIDEO_START(tx1)
 	MDRV_VIDEO_UPDATE(tx1)
 
-       	MDRV_SPEAKER_STANDARD_MONO("Mono")                           /* Mono for the time being */
+	MDRV_SPEAKER_STANDARD_MONO("Mono")                           /* Mono for the time being */
 
-      	MDRV_SOUND_ADD(AY8910, 1875000)                              /* Guess */
+	MDRV_SOUND_ADD(AY8910, 1875000)                              /* Guess */
 	MDRV_SOUND_CONFIG(tx1_ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "Mono", 0.5)
-
 MACHINE_DRIVER_END
 
-
 static MACHINE_DRIVER_START( buggyboy )
-        MDRV_CPU_ADD(I86,5000000 )
-        MDRV_CPU_PROGRAM_MAP(buggyboy_master,0)
-        MDRV_CPU_PERIODIC_INT(main_irq, TIME_IN_HZ(46) )    /* To do: measure HD46505 CUDISP output rate */
-//      MDRV_WATCHDOG_TIME_INIT(5)                  /* To do: measure watchdog time interval */
+	MDRV_CPU_ADD(I86,5000000 )
+	MDRV_CPU_PROGRAM_MAP(buggyboy_master,0)
+	MDRV_CPU_PERIODIC_INT(main_irq, TIME_IN_HZ(46) )    /* To do: measure HD46505 CUDISP output rate */
+	//MDRV_WATCHDOG_TIME_INIT(5)                  /* To do: measure watchdog time interval */
 
-        MDRV_CPU_ADD(I86,5000000 )
+	MDRV_CPU_ADD(I86,5000000 )
 	MDRV_CPU_PROGRAM_MAP(buggyboy_slave,0)
 
-	MDRV_CPU_ADD(Z80,3750000 )
-        /* audio CPU */
+	MDRV_CPU_ADD(Z80,3750000 ) /* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(buggyboy_sound_prg,0)
-        MDRV_CPU_PERIODIC_INT(z80_irq, TIME_IN_HZ(915.52734375/2) )  /* To do: verify against real PCB */
+	MDRV_CPU_PERIODIC_INT(z80_irq, TIME_IN_HZ(915.52734375/2) )  /* To do: verify against real PCB */
 	MDRV_CPU_IO_MAP(buggyboy_sound_io,0)
 
-        MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_MACHINE_RESET(buggyboy)
 	MDRV_INTERLEAVE(100)
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-//  MDRV_ASPECT_RATIO(12,3)
-        MDRV_SCREEN_SIZE(110*8, 256)
-       	MDRV_VISIBLE_AREA(0, 800, 0, 255)
 	MDRV_GFXDECODE(bb_gfxdecodeinfo)
+	MDRV_DEFAULT_LAYOUT(layout_triphsxs)
+
+	MDRV_SCREEN_ADD("left", 0x000)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(DEFAULT_60HZ_VBLANK_DURATION))
+	MDRV_SCREEN_MAXSIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0, 256-1)
+
+	MDRV_SCREEN_ADD("middle", 0x000)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(DEFAULT_60HZ_VBLANK_DURATION))
+	MDRV_SCREEN_MAXSIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0, 256-1)
+
+	MDRV_SCREEN_ADD("right", 0x000)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(DEFAULT_60HZ_VBLANK_DURATION))
+	MDRV_SCREEN_MAXSIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0, 256-1)
 
 	MDRV_PALETTE_LENGTH(256)
-        MDRV_COLORTABLE_LENGTH(256+(256*4)+(2048*4))
+	MDRV_COLORTABLE_LENGTH(256+(256*4)+(2048*4))
 	MDRV_PALETTE_INIT(buggyboy)
 	MDRV_VIDEO_START(buggyboy)
 	MDRV_VIDEO_UPDATE(buggyboy)
@@ -992,33 +1017,32 @@ MACHINE_DRIVER_END
 
 /* Need to verify clocks on real PCB */
 static MACHINE_DRIVER_START( buggyb1 )
-        MDRV_CPU_ADD(I86,5000000 )
-        MDRV_CPU_PROGRAM_MAP(buggyb1_master,0)
-        MDRV_CPU_PERIODIC_INT(main_irq, TIME_IN_HZ(46) )    /* To do: measure HD46505 CUDISP output rate */
-//      MDRV_WATCHDOG_TIME_INIT(5)                  /* To do: measure watchdog time interval */
+	MDRV_CPU_ADD(I86,5000000 )
+	MDRV_CPU_PROGRAM_MAP(buggyb1_master,0)
+	MDRV_CPU_PERIODIC_INT(main_irq, TIME_IN_HZ(46) )    /* To do: measure HD46505 CUDISP output rate */
+	//MDRV_WATCHDOG_TIME_INIT(5)                  /* To do: measure watchdog time interval */
 
-        MDRV_CPU_ADD(I86,5000000 )
+	MDRV_CPU_ADD(I86,5000000 )
 	MDRV_CPU_PROGRAM_MAP(buggyboy_slave,0)
 
-	MDRV_CPU_ADD(Z80,3750000 )
-        /* audio CPU */
+	MDRV_CPU_ADD(Z80,3750000 ) /* audio CPU */
 	MDRV_CPU_PROGRAM_MAP(buggyb1_sound_prg,0)
-        MDRV_CPU_PERIODIC_INT(z80_irq, TIME_IN_HZ(915.52734375/2) )  /* To do: verify against real PCB*/
+	MDRV_CPU_PERIODIC_INT(z80_irq, TIME_IN_HZ(915.52734375/2) )  /* To do: verify against real PCB*/
 	MDRV_CPU_IO_MAP(buggyboy_sound_io,0)
 
-         /* Confirm this stuff */
+	/* Confirm this stuff */
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_MACHINE_RESET( buggyb1 )
 	MDRV_INTERLEAVE(100)                                    /* ? */
 
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-        MDRV_SCREEN_SIZE(256, 256)
-       	MDRV_VISIBLE_AREA(0, 255, 0, 239)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 255, 0, 239)
 	MDRV_GFXDECODE(bb_gfxdecodeinfo)
 
 	MDRV_PALETTE_LENGTH(256)
-        MDRV_COLORTABLE_LENGTH(256+(256*4)+(2048*4))     /* 256 for chars, 2048 for objects */
+	MDRV_COLORTABLE_LENGTH(256+(256*4)+(2048*4))     /* 256 for chars, 2048 for objects */
 	MDRV_PALETTE_INIT(buggyboy)
 	MDRV_VIDEO_START(buggyb1)
 	MDRV_VIDEO_UPDATE(buggyb1)
@@ -1034,7 +1058,6 @@ static MACHINE_DRIVER_START( buggyb1 )
 	MDRV_SOUND_ADD(AY8910, 1875000)
 	MDRV_SOUND_CONFIG(buggyboy_ay8910_interface_2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "Front Right", 0.15)
-
 MACHINE_DRIVER_END
 
 

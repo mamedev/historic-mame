@@ -450,9 +450,9 @@ $a00000 checks have been seen on the Final Lap boards.
 #include "namcos2.h"
 #include "cpu/m6809/m6809.h"
 #include "namcoic.h"
-#include "artwork.h"
 #include "sound/2151intf.h"
 #include "sound/c140.h"
+#include "render.h"
 
 
 /*************************************************************/
@@ -464,99 +464,67 @@ static UINT8 *namcos2_dpram;	/* 2Kx8 */
 static void
 GollyGhostUpdateLED_c4( int data )
 {
-	static char zip100[32];
-	static char zip10[32];
-	int i = 0;
-	for(;;)
-	{
-		artwork_show(zip100,i);
-		artwork_show(zip10,i);
-		if( i ) return;
-		sprintf( zip100, "zip100_%d",data>>4);
-		sprintf( zip10,  "zip10_%d", data&0xf);
-		i=1;
-	}
+#ifdef NEW_RENDER
+	render_view_item_set_state("zip100", data >> 4);
+	render_view_item_set_state("zip10", data & 0x0f);
+#endif
 }
 
 static void
 GollyGhostUpdateLED_c6( int data )
 {
-	static char zip1[32];
-	static char time10[32];
-	int i = 0;
-	for(;;)
-	{
-		artwork_show(zip1,i);
-		artwork_show(time10,i);
-		if( i ) return;
-		sprintf( zip1,   "zip1_%d",  data>>4);
-		sprintf( time10, "time10_%d",data&0xf);
-		i=1;
-	}
+#ifdef NEW_RENDER
+	render_view_item_set_state("zip1", data >> 4);
+	render_view_item_set_state("time10", data & 0x0f);
+#endif
 }
 
 static void
 GollyGhostUpdateLED_c8( int data )
 {
-	static char time1[32];
-	static char zap100[32];
-	int i = 0;
-	for(;;)
-	{
-		artwork_show(time1,i);
-		artwork_show(zap100,i);
-		if( i ) return;
-		sprintf( time1,  "time1_%d", data>>4);
-		sprintf( zap100, "zap100_%d",data&0xf);
-		i=1;
-	}
+#ifdef NEW_RENDER
+	render_view_item_set_state("time1", data >> 4);
+	render_view_item_set_state("zap100", data & 0x0f);
+#endif
 }
 
 static void
 GollyGhostUpdateLED_ca( int data )
 {
-	static char zap10[32];
-	static char zap1[32];
-	int i = 0;
-	for(;;)
-	{
-		artwork_show(zap10,i);
-		artwork_show(zap1,i);
-		if( i ) return;
-		sprintf( zap10,  "zap10_%d", data>>4);
-		sprintf( zap1,   "zap1_%d",  data&0xf);
-		i=1;
-	}
+#ifdef NEW_RENDER
+	render_view_item_set_state("zap10", data >> 4);
+	render_view_item_set_state("zap1", data & 0x0f);
+#endif
 }
 
 static void
 GollyGhostUpdateDiorama_c0( int data )
 {
+#ifdef NEW_RENDER
 	if( data&0x80 )
 	{
-		artwork_show("fulldark",0 );
-		artwork_show("dollhouse",1); /* diorama is lit up */
+		render_view_item_set_state("dollhouse", 1); /* diorama is lit up */
 
 		/* dollhouse controller; solenoids control physical components */
-		artwork_show("toybox",      data&0x01 );
-		artwork_show("bathroom",    data&0x02 );
-		artwork_show("bureau",      data&0x04 );
-		artwork_show("refrigerator",data&0x08 );
-		artwork_show("porch",       data&0x10 );
+		render_view_item_set_state("toybox",      (data >> 0) & 1);
+		render_view_item_set_state("bathroom",    (data >> 1) & 1);
+		render_view_item_set_state("bureau",      (data >> 2) & 1);
+		render_view_item_set_state("refrigerator",(data >> 3) & 1);
+		render_view_item_set_state("porch",       (data >> 4) & 1);
 		/* data&0x20 : player#1 (ZIP) force feedback
          * data&0x40 : player#2 (ZAP) force feedback
          */
 	}
 	else
 	{
-		artwork_show("fulldark",1 );
-		artwork_show("dollhouse",0);
-		artwork_show("toybox",0);
-		artwork_show("bathroom",0);
-		artwork_show("bureau",0);
-		artwork_show("refrigerator",0);
-		artwork_show("porch",0);
+		render_view_item_set_state("dollhouse",0);
+		render_view_item_set_state("toybox", 0);
+		render_view_item_set_state("bathroom", 0);
+		render_view_item_set_state("bureau", 0);
+		render_view_item_set_state("refrigerator", 0);
+		render_view_item_set_state("porch", 0);
 	}
+#endif
 }
 
 static READ16_HANDLER( namcos2_68k_dpram_word_r )

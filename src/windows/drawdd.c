@@ -33,8 +33,6 @@
 //  DEBUGGING
 //============================================================
 
-#define DEBUG_MODE_SCORES	0
-
 
 
 //============================================================
@@ -75,6 +73,7 @@ struct _dd_info
 	IDirectDrawSurface7 *	back;						// pointer to the back buffer surface object
 	IDirectDrawSurface7 *	blit;						// pointer to the blit surface object
 	IDirectDrawClipper *	clipper;					// pointer to the clipper object
+	IDirectDrawGammaControl *gamma;						// pointer to the gamma control object
 
 	DDSURFACEDESC2			primarydesc;				// description of the primary surface
 	DDSURFACEDESC2			blitdesc;					// description of the blitting surface
@@ -445,6 +444,7 @@ static int ddraw_create(win_window_info *window)
 			goto error;
 		}
 	}
+
 	return ddraw_create_surfaces(window);
 
 error:
@@ -516,6 +516,44 @@ static int ddraw_create_surfaces(win_window_info *window)
 	if (!window->fullscreen && create_clipper(window))
 		goto error;
 
+	// full screen mode: set the gamma
+	if (window->fullscreen)
+	{
+		// only set the gamma if it's not 1.0f
+		float gamma = options_get_float("full_screen_gamma", TRUE);
+		if (gamma != 1.0f)
+		{
+			// see if we can get a GammaControl object
+			result = IDirectDrawSurface_QueryInterface(dd->primary, &IID_IDirectDrawGammaControl, (void **)&dd->gamma);
+			if (result != DD_OK)
+			{
+				fprintf(stderr, "DirectDraw: Warning - device does not support full screen gamma correction.\n");
+				dd->gamma = NULL;
+			}
+
+			// proceed if we can
+			if (dd->gamma != NULL)
+			{
+				DDGAMMARAMP ramp;
+				int i;
+
+				// create a standard ramp and set it
+				for (i = 0; i < 256; i++)
+				{
+					double val = ((float)i / 255.0) * gamma;
+					if (val > 1.0)
+						val = 1.0;
+					ramp.red[i] = ramp.green[i] = ramp.blue[i] = (WORD)(val * 65535.0);
+				}
+
+				// attempt to set it
+				result = IDirectDrawGammaControl_SetGammaRamp(dd->gamma, 0, &ramp);
+				if (result != DD_OK)
+					verbose_printf("DirectDraw: Error %08X attempting to set gamma correction.\n", (int)result);
+			}
+		}
+	}
+
 	// force some updates
 	update_outer_rects(dd);
 	return 0;
@@ -561,6 +599,11 @@ static void ddraw_delete(win_window_info *window)
 static void ddraw_delete_surfaces(win_window_info *window)
 {
 	dd_info *dd = window->dxdata;
+
+	// release the gamma control
+	if (dd->gamma != NULL)
+		IDirectDrawGammaControl_Release(dd->gamma);
+	dd->gamma = NULL;
 
 	// release the clipper
 	if (dd->clipper != NULL)
@@ -789,12 +832,12 @@ static void compute_blit_surface_size(win_window_info *window)
 			// now that we've maxed out, see if backing off the maximally stretched one makes a better fit
 			if (rect_width(&client) - newwidth * xscale < rect_height(&client) - newheight * yscale)
 			{
-				while (better_mode(newwidth * xscale, newheight * yscale, newwidth * (xscale - 1), newheight * yscale, desired_aspect))
+				while (xscale > 1 && better_mode(newwidth * xscale, newheight * yscale, newwidth * (xscale - 1), newheight * yscale, desired_aspect))
 					xscale--;
 			}
 			else
 			{
-				while (better_mode(newwidth * xscale, newheight * yscale, newwidth * xscale, newheight * (yscale - 1), desired_aspect))
+				while (yscale > 1 && better_mode(newwidth * xscale, newheight * yscale, newwidth * xscale, newheight * (yscale - 1), desired_aspect))
 					yscale--;
 			}
 		}
@@ -988,6 +1031,7 @@ static void blit_to_primary(win_window_info *window, int srcwidth, int srcheight
 
 static int config_adapter_mode(win_window_info *window)
 {
+	DDDEVICEIDENTIFIER2 identifier;
 	dd_info *dd = window->dxdata;
 	HRESULT result;
 
@@ -1001,6 +1045,15 @@ static int config_adapter_mode(win_window_info *window)
 		verbose_printf("DirectDraw: Error %08X during DirectDrawCreateEx call\n", (int)result);
 		return 1;
 	}
+
+	// get the identifier
+	result = IDirectDraw7_GetDeviceIdentifier(dd->ddraw, &identifier, 0);
+	if (result != DD_OK)
+	{
+		fprintf(stderr, "Error getting identifier for device\n");
+		return 1;
+	}
+	verbose_printf("DirectDraw: Configuring device %s\n", identifier.szDescription);
 
 	// get the current display mode
 	memset(&dd->origmode, 0, sizeof(dd->origmode));
@@ -1117,10 +1170,6 @@ static HRESULT WINAPI enum_modes_callback(LPDDSURFACEDESC2 desc, LPVOID context)
 	// compute initial score based on difference between target and current
 	size_score = 1.0f / (1.0f + fabs((INT32)desc->dwWidth - einfo->target_width) + fabs((INT32)desc->dwHeight - einfo->target_height));
 
-	// if we're looking for a particular mode, that's a winner
-	if (desc->dwWidth == einfo->window->maxwidth && desc->dwHeight == einfo->window->maxheight)
-		size_score = 1.0f;
-
 	// if the mode is too small, give a big penalty
 	if (desc->dwWidth < einfo->minimum_width || desc->dwHeight < einfo->minimum_height)
 		size_score *= 0.01f;
@@ -1128,6 +1177,10 @@ static HRESULT WINAPI enum_modes_callback(LPDDSURFACEDESC2 desc, LPVOID context)
 	// if mode is smaller than we'd like, it only scores up to 0.1
 	if (desc->dwWidth < einfo->target_width || desc->dwHeight < einfo->target_height)
 		size_score *= 0.1f;
+
+	// if we're looking for a particular mode, that's a winner
+	if (desc->dwWidth == einfo->window->maxwidth && desc->dwHeight == einfo->window->maxheight)
+		size_score = 1.0f;
 
 	// compute refresh score
 	refresh_score = 1.0f / (1.0f + fabs((double)desc->dwRefreshRate - Machine->refresh_rate[0]));
@@ -1143,11 +1196,8 @@ static HRESULT WINAPI enum_modes_callback(LPDDSURFACEDESC2 desc, LPVOID context)
 	// weight size highest, followed by depth and refresh
 	final_score = (size_score * 100.0 + refresh_score) / 101.0;
 
-#if DEBUG_MODE_SCORES
-	printf("%4dx%4d@%3d -> %f\n", (int)desc->dwWidth, (int)desc->dwHeight, (int)desc->dwRefreshRate, final_score);
-#endif
-
 	// best so far?
+	verbose_printf("  %4dx%4d@%3dHz -> %f\n", (int)desc->dwWidth, (int)desc->dwHeight, (int)desc->dwRefreshRate, final_score * 1000.0f);
 	if (final_score > einfo->best_score)
 	{
 		einfo->best_score = final_score;
@@ -1199,8 +1249,10 @@ static void pick_best_mode(win_window_info *window)
 	einfo.best_score = 0.0f;
 
 	// enumerate the modes
+	verbose_printf("DirectDraw: Selecting video mode...\n");
 	result = IDirectDraw7_EnumDisplayModes(dd->ddraw, DDEDM_REFRESHRATES, NULL, &einfo, enum_modes_callback);
 	if (result != DD_OK) verbose_printf("DirectDraw: Error %08X during EnumDisplayModes call\n", (int)result);
+	verbose_printf("DirectDraw: Mode selected = %4dx%4d@%3dHz\n", dd->width, dd->height, dd->refresh);
 }
 
 

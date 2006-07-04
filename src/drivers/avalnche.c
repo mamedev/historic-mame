@@ -29,29 +29,9 @@
 
 #include "driver.h"
 #include "sound/discrete.h"
-#include "artwork.h"
 #include "avalnche.h"
 
-
-
-/*************************************
- *
- *  Overlay
- *
- *************************************/
-
-#define OVERLAY_CYAN		MAKE_ARGB(0x04,0x80,0xff,0xff)
-#define OVERLAY_BLUE		MAKE_ARGB(0x04,0x20,0x20,0xff)
-#define OVERLAY_YELLOW		MAKE_ARGB(0x04,0xff,0xff,0x20)
-#define OVERLAY_ORANGE		MAKE_ARGB(0x04,0xff,0x80,0x10)
-
-OVERLAY_START( avalnche_overlay )
-	OVERLAY_RECT(   0,   0, 256,  10, OVERLAY_CYAN )
-	OVERLAY_RECT(   0,  10, 256,  20, OVERLAY_BLUE )
-	OVERLAY_RECT(   0,  20, 256,  29, OVERLAY_YELLOW )
-	OVERLAY_RECT(   0,  29, 256,  40, OVERLAY_ORANGE )
-	OVERLAY_RECT(   0,  40, 256, 240, OVERLAY_CYAN )
-OVERLAY_END
+#include "avalnche.lh"
 
 
 
@@ -226,17 +206,6 @@ ROM_START( cascade )
 	ROM_LOAD( "10005.3b",     	0x7c00, 0x0400, CRC(bb243d96) SHA1(3a387a8c50cd9b0db37d12b94dc9e260892dbf21) )
 ROM_END
 
-/*************************************
- *
- *  Driver initialization
- *
- *************************************/
-
-static DRIVER_INIT( avalnche )
-{
-	artwork_set_overlay(avalnche_overlay);
-}
-
 
 
 /*************************************
@@ -245,5 +214,5 @@ static DRIVER_INIT( avalnche )
  *
  *************************************/
 
-GAME( 1978, avalnche, 0,        avalnche, avalnche, avalnche, ROT0, "Atari", "Avalanche", 0 )
-GAME( 1978, cascade,  avalnche, avalnche, cascade,  avalnche, ROT0, "Sidam", "Cascade", 0 )
+GAMEL( 1978, avalnche, 0,        avalnche, avalnche, 0, ROT0, "Atari", "Avalanche", 0, layout_avalnche )
+GAMEL( 1978, cascade,  avalnche, avalnche, cascade,  0, ROT0, "Sidam", "Cascade", 0, layout_avalnche )

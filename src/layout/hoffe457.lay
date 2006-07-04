@@ -3,7 +3,7 @@
 	<element name="overlay">
 		<rect>
 			<bounds left="0" top="0" right="1" bottom="1" />
-			<color red="1.0" green="1.0" blue="0.15" />
+			<color red="1.0" green="0.894" blue="0.341" />
 		</rect>
 	</element>
 

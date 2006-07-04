@@ -604,7 +604,7 @@ static void print_game_video(FILE* out, const game_driver* game)
 	int dx;
 	int dy;
 	int showxy;
-	int orientation;
+	int scrnum;
 
 	expand_machine_driver(game->drv, &driver);
 
@@ -620,28 +620,36 @@ static void print_game_video(FILE* out, const game_driver* game)
 		showxy = 1;
 	}
 
-	if (game->flags & ORIENTATION_SWAP_XY)
-	{
-		dx = driver.screen[0].default_visible_area.max_y - driver.screen[0].default_visible_area.min_y + 1;
-		dy = driver.screen[0].default_visible_area.max_x - driver.screen[0].default_visible_area.min_x + 1;
-		orientation = 1;
-	}
-	else
-	{
-		dx = driver.screen[0].default_visible_area.max_x - driver.screen[0].default_visible_area.min_x + 1;
-		dy = driver.screen[0].default_visible_area.max_y - driver.screen[0].default_visible_area.min_y + 1;
-		orientation = 0;
-	}
+	fprintf(out, " orientation=\"%s\">\n", (game->flags & ORIENTATION_SWAP_XY) ? "vertical" : "horizontal" );
 
-	fprintf(out, " orientation=\"%s\"", orientation ? "vertical" : "horizontal" );
-	if (showxy)
-	{
-		fprintf(out, " width=\"%d\"", dx);
-		fprintf(out, " height=\"%d\"", dy);
-	}
+	for (scrnum = 0; scrnum < MAX_SCREENS; scrnum++)
+		if (driver.screen[scrnum].tag != NULL)
+		{
+			if (game->flags & ORIENTATION_SWAP_XY)
+			{
+				dx = driver.screen[scrnum].default_visible_area.max_y - driver.screen[scrnum].default_visible_area.min_y + 1;
+				dy = driver.screen[scrnum].default_visible_area.max_x - driver.screen[scrnum].default_visible_area.min_x + 1;
+			}
+			else
+			{
+				dx = driver.screen[scrnum].default_visible_area.max_x - driver.screen[scrnum].default_visible_area.min_x + 1;
+				dy = driver.screen[scrnum].default_visible_area.max_y - driver.screen[scrnum].default_visible_area.min_y + 1;
+			}
 
-	fprintf(out, " refresh=\"%f\"", driver.screen[0].refresh_rate);
-	fprintf(out, "/>\n");
+			fprintf(out, "\t\t\t<screen");
+
+			if (showxy)
+			{
+				fprintf(out, " width=\"%d\"", dx);
+				fprintf(out, " height=\"%d\"", dy);
+			}
+
+			fprintf(out, " refresh=\"%f\"", driver.screen[scrnum].refresh_rate);
+
+			fprintf(out, " />\n");
+		}
+
+	fprintf(out, "\t\t</video>\n");
 }
 
 static void print_game_sound(FILE* out, const game_driver* game)
@@ -921,12 +929,13 @@ void print_mame_xml(FILE* out, const game_driver* const games[], const char *gam
 		"\t\t\t<!ATTLIST chip name CDATA #REQUIRED>\n"
 		"\t\t\t<!ATTLIST chip type (cpu|audio) #REQUIRED>\n"
 		"\t\t\t<!ATTLIST chip clock CDATA #IMPLIED>\n"
-		"\t\t<!ELEMENT video EMPTY>\n"
+		"\t\t<!ELEMENT video (screeninfo*)>\n"
 		"\t\t\t<!ATTLIST video screen (raster|vector) #REQUIRED>\n"
 		"\t\t\t<!ATTLIST video orientation (vertical|horizontal) #REQUIRED>\n"
-		"\t\t\t<!ATTLIST video width CDATA #IMPLIED>\n"
-		"\t\t\t<!ATTLIST video height CDATA #IMPLIED>\n"
-		"\t\t\t<!ATTLIST video refresh CDATA #REQUIRED>\n"
+		"\t\t\t<!ELEMENT screeninfo EMPTY>\n"
+		"\t\t\t\t<!ATTLIST video width CDATA #IMPLIED>\n"
+		"\t\t\t\t<!ATTLIST video height CDATA #IMPLIED>\n"
+		"\t\t\t\t<!ATTLIST video refresh CDATA #REQUIRED>\n"
 		"\t\t<!ELEMENT sound EMPTY>\n"
 		"\t\t\t<!ATTLIST sound channels CDATA #REQUIRED>\n"
 		"\t\t<!ELEMENT input EMPTY>\n"

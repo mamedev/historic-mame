@@ -367,9 +367,9 @@ void update_mpu68_interrupts(void)
 	if (scn2674_irq_state)//3
 		newstate = 3;
 
-	m6840_irq_state = 0;
-	m6850_irq_state = 0;
-	scn2674_irq_state = 0;
+//  m6840_irq_state = 0;
+//  m6850_irq_state = 0;
+//  scn2674_irq_state = 0;
 
 	/* set the new state of the IRQ lines */
 	if (newstate)
@@ -432,8 +432,8 @@ static MACHINE_RESET( mpu4_vid )
 
 static void cpu0_irq(int state)
 {
-	cpunum_set_input_line(0, M6809_IRQ_LINE, ASSERT_LINE);
-}
+	cpunum_set_input_line(0, M6809_IRQ_LINE, state? ASSERT_LINE:CLEAR_LINE);
+}//  signal_50hz = signal_50hz?0:1;
 
 
 ///////////////////////////////////////////////////////////////////////////
@@ -480,14 +480,13 @@ static const ptm6840_interface ptm_ic2_intf =
 static void cpu1_irq(int state)
 {
 	m6840_irq_state = state;
-	logerror("PTM IRQ triggered \n");
 	update_mpu68_interrupts();
 }
 
 static const ptm6840_interface ptm_vid_intf =
 {
 	1000000,
-	1000000,	1000000,	1000000,
+	0,	0,	0,
 	NULL, NULL, NULL,
 	cpu1_irq
 };
@@ -1751,8 +1750,8 @@ static ADDRESS_MAP_START( mpu4_vid_map, ADDRESS_SPACE_PROGRAM, 16 )
     AM_RANGE(0xff8002, 0xff8003) AM_READ(  vidcard_uart_rx_r )  // 6850 compatible uart read  data
     AM_RANGE(0xff8002, 0xff8003) AM_WRITE( vidcard_uart_tx_w )  // 6850 compatible uart write data
 
-	AM_RANGE(0xff9000, 0xff900f) AM_READ(  ptm6840_1_msb_r)  // 6840PTM IC2
-	AM_RANGE(0xff9000, 0xff900f) AM_WRITE( ptm6840_1_msb_w)  // 6840PTM IC2
+	AM_RANGE(0xff9000, 0xff900f) AM_READ(  ptm6840_1_lsb_r)  // 6840PTM IC2
+	AM_RANGE(0xff9000, 0xff900f) AM_WRITE( ptm6840_1_lsb_w)  // 6840PTM IC2
 
 	/* characterizer??? */
 //  AM_RANGE(0xffd000, 0xffd00f) AM_RAM // crmaze et al???
@@ -1962,15 +1961,15 @@ MACHINE_START( mpu4_vid )
 
 static INTERRUPT_GEN( gen_50hz )
 {
-  signal_50hz = signal_50hz?0:1;
+	signal_50hz = signal_50hz?0:1;
 
-  // update IC4 input port b
+	// update IC4 input port b
 
-  if ( signal_50hz ) ic4_input_b |=  0x04;
-  else               ic4_input_b &= ~0x04;
+	if ( signal_50hz ) ic4_input_b |=  0x04;
+	else               ic4_input_b &= ~0x04;
 
-  pia_set_input_ca1(1,signal_50hz);		  // signal is connected to IC4 CA2
-  pia_set_input_b(  1, ic4_input_b);	  // signal is connected to IC4 port
+	pia_set_input_ca1(1,signal_50hz);		  // signal is connected to IC4 CA2
+	pia_set_input_b(  1, ic4_input_b);	  // signal is connected to IC4 port
 }
 
 static MACHINE_DRIVER_START( mpu4_vid )

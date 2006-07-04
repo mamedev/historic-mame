@@ -77,6 +77,25 @@ struct _d3d_present_parameters
 
 
 //============================================================
+//  Abstracted device identifier
+//============================================================
+
+typedef struct _d3d_adapter_identifier d3d_adapter_identifier;
+struct _d3d_adapter_identifier
+{
+    char            Driver[512];
+    char            Description[512];
+    LARGE_INTEGER   DriverVersion;
+    DWORD           VendorId;
+    DWORD           DeviceId;
+    DWORD           SubSysId;
+    DWORD           Revision;
+    GUID            DeviceIdentifier;
+    DWORD           WHQLLevel;
+};
+
+
+//============================================================
 //  Caps enumeration
 //============================================================
 
@@ -112,6 +131,7 @@ struct _d3d_interface
 	HRESULT  (*enum_adapter_modes)(d3d *d3dptr, UINT adapter, D3DFORMAT format, UINT index, D3DDISPLAYMODE *mode);
 	UINT     (*get_adapter_count)(d3d *d3dptr);
 	HRESULT  (*get_adapter_display_mode)(d3d *d3dptr, UINT adapter, D3DDISPLAYMODE *mode);
+	HRESULT  (*get_adapter_identifier)(d3d *d3dptr, UINT adapter, DWORD flags, d3d_adapter_identifier *identifier);
 	UINT     (*get_adapter_mode_count)(d3d *d3dptr, UINT adapter, D3DFORMAT format);
 	HMONITOR (*get_adapter_monitor)(d3d *d3dptr, UINT adapter);
 	HRESULT  (*get_caps_dword)(d3d *d3dptr, UINT adapter, D3DDEVTYPE devtype, d3d_caps_index which, DWORD *value);
@@ -138,6 +158,7 @@ struct _d3d_device_interface
 	HRESULT (*present)(d3d_device *dev, const RECT *source, const RECT *dest, HWND override, RGNDATA *dirty, DWORD flags);
 	ULONG   (*release)(d3d_device *dev);
 	HRESULT (*reset)(d3d_device *dev, d3d_present_parameters *params);
+	void    (*set_gamma_ramp)(d3d_device *dev, DWORD flags, const D3DGAMMARAMP *ramp);
 	HRESULT (*set_render_state)(d3d_device *dev, D3DRENDERSTATETYPE state, DWORD value);
 	HRESULT (*set_render_target)(d3d_device *dev, DWORD index, d3d_surface *surf);
 	HRESULT (*set_stream_source)(d3d_device *dev, UINT number, d3d_vertex_buffer *vbuf, UINT stride);

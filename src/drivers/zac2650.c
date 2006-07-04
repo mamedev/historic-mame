@@ -9,8 +9,9 @@
  */
 
 #include "driver.h"
-#include "artwork.h"
 #include "cpu/s2650/s2650.h"
+
+#include "tinv2650.lh"
 
 extern UINT8 *s2636ram;
 
@@ -22,17 +23,6 @@ extern READ8_HANDLER( tinvader_port_0_r );
 
 extern VIDEO_START( tinvader );
 extern VIDEO_UPDATE( tinvader );
-
-#define WHITE           MAKE_ARGB(0x04,0xff,0xff,0xff)
-#define GREEN 			MAKE_ARGB(0x04,0x20,0xff,0x20)
-#define PURPLE			MAKE_ARGB(0x04,0xff,0x20,0xff)
-
-OVERLAY_START( tinv2650_overlay )
-	OVERLAY_RECT(   0,   0, 720, 768, WHITE )
-	OVERLAY_RECT(  48,   0, 216, 768, GREEN )
-	OVERLAY_RECT(   0, 144,  48, 402, GREEN )
-	OVERLAY_RECT( 576,   0, 627, 768, PURPLE )
-OVERLAY_END
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x17ff) AM_READ(MRA8_ROM)
@@ -408,12 +398,6 @@ ROM_START( dodgem )
 ROM_END
 
 
-static DRIVER_INIT( tinvader )
-{
-	artwork_set_overlay(tinv2650_overlay);
-}
-
-
-GAME( 1978, sia2650,  0,       tinvader, sinvader, 0,        ROT270, "Zaccaria/Zelco", "Super Invader Attack", GAME_NO_SOUND )
-GAME( 1978, tinv2650, sia2650, tinvader, tinvader, tinvader, ROT270, "Zaccaria/Zelco", "The Invaders",			GAME_NO_SOUND )
-GAME( 1979, dodgem,   0,       tinvader, dodgem,   0,        ROT0,   "Zaccaria",		"Dodgem",				GAME_NO_SOUND )
+GAME( 1978, sia2650,  0,       tinvader, sinvader, 0, ROT270, "Zaccaria/Zelco", "Super Invader Attack", GAME_NO_SOUND )
+GAMEL(1978, tinv2650, sia2650, tinvader, tinvader, 0, ROT270, "Zaccaria/Zelco", "The Invaders",			GAME_NO_SOUND, layout_tinv2650 )
+GAME( 1979, dodgem,   0,       tinvader, dodgem,   0, ROT0,   "Zaccaria",		"Dodgem",				GAME_NO_SOUND )

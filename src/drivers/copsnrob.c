@@ -53,8 +53,8 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "artwork.h"
 #include "copsnrob.h"
+#include "copsnrob.lh"
 
 
 
@@ -69,20 +69,6 @@ static PALETTE_INIT( copsnrob )
 	palette_set_color(0,0x00,0x00,0x00); /* black */
 	palette_set_color(1,0xff,0xff,0xff);  /* white */
 }
-
-
-
-/*************************************
- *
- *  Video overlay
- *
- *************************************/
-
-OVERLAY_START( copsnrob_overlay )
-	OVERLAY_RECT(   0,   0,  72, 208, MAKE_ARGB(0x04,0x40,0x40,0xc0) )
-	OVERLAY_RECT(  72,   0, 188, 208, MAKE_ARGB(0x04,0xf0,0xf0,0x30) )
-	OVERLAY_RECT( 188,   0, 256, 208, MAKE_ARGB(0x04,0xbd,0x9b,0x13) )
-OVERLAY_END
 
 
 
@@ -332,21 +318,8 @@ ROM_END
 
 /*************************************
  *
- *  Driver init
- *
- *************************************/
-
-static DRIVER_INIT( copsnrob )
-{
-	artwork_set_overlay(copsnrob_overlay);
-}
-
-
-
-/*************************************
- *
  *  Game drivers
  *
  *************************************/
 
-GAME( 1976, copsnrob, 0, copsnrob, copsnrob, copsnrob, ROT0, "Atari", "Cops'n Robbers", GAME_NO_SOUND )
+GAMEL( 1976, copsnrob, 0, copsnrob, copsnrob, 0, ROT0, "Atari", "Cops'n Robbers", GAME_NO_SOUND, layout_copsnrob )

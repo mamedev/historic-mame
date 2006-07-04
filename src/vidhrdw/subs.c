@@ -84,35 +84,41 @@ VIDEO_UPDATE( subs )
 				charcode = charcode & 0x3F;
 
 			/* Draw the left screen */
-			if ((left_enable || left_sonar_window) && (!right_sonar_window))
+			if (screen==0)
 			{
-				drawgfx(tmpbitmap,Machine->gfx[0],
-						charcode, 1,
-						0,0,sx,sy,
-						&Machine->visible_area[0],TRANSPARENCY_NONE,0);
-			}
-			else
-			{
-				drawgfx(tmpbitmap,Machine->gfx[0],
-						0, 1,
-						0,0,sx,sy,
-						&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+				if ((left_enable || left_sonar_window) && (!right_sonar_window))
+				{
+					drawgfx(tmpbitmap,Machine->gfx[0],
+							charcode, 1,
+							0,0,sx,sy,
+							&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+				}
+				else
+				{
+					drawgfx(tmpbitmap,Machine->gfx[0],
+							0, 1,
+							0,0,sx,sy,
+							&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+				}
 			}
 
 			/* Draw the right screen */
-			if ((right_enable || right_sonar_window) && (!left_sonar_window))
+			if (screen==1)
 			{
-				drawgfx(tmpbitmap,Machine->gfx[0],
-						charcode, 0,
-						0,0,sx+256,sy,
-						&Machine->visible_area[0],TRANSPARENCY_NONE,0);
-			}
-			else
-			{
-				drawgfx(tmpbitmap,Machine->gfx[0],
-						0, 0,
-						0,0,sx+256,sy,
-						&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+				if ((right_enable || right_sonar_window) && (!left_sonar_window))
+				{
+					drawgfx(tmpbitmap,Machine->gfx[0],
+							charcode, 0,
+							0,0,sx,sy,
+							&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+				}
+				else
+				{
+					drawgfx(tmpbitmap,Machine->gfx[0],
+							0, 0,
+							0,0,sx,sy,
+							&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+				}
 			}
 		}
 	}
@@ -140,23 +146,30 @@ VIDEO_UPDATE( subs )
 		charcode = (charcode >> 3) & 0x1F;
 
 		/* Left screen - special check for drawing right screen's sub */
-		if ((offs!=0) || (sub_enable))
+		if (screen==0)
 		{
-			drawgfx(bitmap,Machine->gfx[1],
-					charcode + 32 * prom_set,
-					0,
-					0,0,sx,sy,
-					&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+			if ((offs!=0) || (sub_enable))
+			{
+				drawgfx(bitmap,Machine->gfx[1],
+						charcode + 32 * prom_set,
+						0,
+						0,0,sx,sy,
+						&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+			}
 		}
 
+
 		/* Right screen - special check for drawing left screen's sub */
-		if ((offs!=1) || (sub_enable))
+		if (screen==1)
 		{
-			drawgfx(bitmap,Machine->gfx[1],
-					charcode + 32 * prom_set,
-					0,
-					0,0,sx + 256,sy,
-					&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+			if ((offs!=1) || (sub_enable))
+			{
+				drawgfx(bitmap,Machine->gfx[1],
+						charcode + 32 * prom_set,
+						0,
+						0,0,sx,sy,
+						&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+			}
 		}
 	}
 

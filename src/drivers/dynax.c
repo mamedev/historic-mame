@@ -79,6 +79,7 @@ TODO:
 #include "sound/3812intf.h"
 #include "sound/msm5205.h"
 #include "sound/2413intf.h"
+#include "render.h"
 
 /***************************************************************************
 
@@ -2927,18 +2928,29 @@ static MACHINE_DRIVER_START( jantouki )
 	MDRV_CPU_IO_MAP(jantouki_sound_readport,jantouki_sound_writeport)
 	MDRV_CPU_VBLANK_INT(jantouki_sound_vblank_interrupt,1)	/* IM 0 needs an opcode on the data bus */
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 	MDRV_MACHINE_RESET(adpcm)
 
 	MDRV_NVRAM_HANDLER(generic_0fill)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-//  MDRV_ASPECT_RATIO(4,6)
-	MDRV_SCREEN_SIZE(512, 512)
-	MDRV_VISIBLE_AREA(0, 512-1, 16, 16+240+240-1)
 	MDRV_PALETTE_LENGTH(512)
+	MDRV_DEFAULT_LAYOUT(layout_dualhuov)
+
+	MDRV_SCREEN_ADD("top", 0x000)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(DEFAULT_60HZ_VBLANK_DURATION))
+	MDRV_SCREEN_MAXSIZE(512, 256)
+	MDRV_VISIBLE_AREA(0, 512-1, 16, 256-1)
+
+	MDRV_SCREEN_ADD("bottom", 0x000)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(DEFAULT_60HZ_VBLANK_DURATION))
+	MDRV_SCREEN_MAXSIZE(512, 256)
+	MDRV_VISIBLE_AREA(0, 512-1, 16, 256-1)
+
+
+
 
 	MDRV_PALETTE_INIT(sprtmtch)			// static palette
 	MDRV_VIDEO_START(jantouki)

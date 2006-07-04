@@ -159,6 +159,8 @@ NMI causes a ROM/RAM test.
 #include "sound/sn76496.h"
 #include "sound/samples.h"
 
+static UINT8 razmataz_dial_pos[2];
+
 extern int zaxxon_vid_type;
 extern UINT8 *zaxxon_char_color_bank;
 extern UINT8 *zaxxon_background_position;
@@ -216,7 +218,6 @@ static READ8_HANDLER( razmataz_unknown2_r )
 
 static int razmataz_dial_r(int num)
 {
-	static UINT8 pos[2];
 	int delta,res;
 
 	delta = readinputport(num);
@@ -224,14 +225,14 @@ static int razmataz_dial_r(int num)
 	if (delta < 0x80)
 	{
 		// right
-		pos[num] -= delta;
-		res = (pos[num] << 1) | 1;
+		razmataz_dial_pos[num] -= delta;
+		res = (razmataz_dial_pos[num] << 1) | 1;
 	}
 	else
 	{
 		// left
-		pos[num] += delta;
-		res = (pos[num] << 1);
+		razmataz_dial_pos[num] += delta;
+		res = (razmataz_dial_pos[num] << 1);
 	}
 
 	return res;
@@ -1164,6 +1165,7 @@ MACHINE_RESET( futspy )
 	zaxxon_vid_type = 2;
 }
 
+
 /* Machine Drivers */
 
 static MACHINE_DRIVER_START( root )
@@ -1669,6 +1671,7 @@ static DRIVER_INIT( futspy )
 static DRIVER_INIT( razmataz )
 {
 	nprinces_decode();
+	state_save_register_global_array(razmataz_dial_pos);
 }
 
 static DRIVER_INIT( ixion )
@@ -1678,12 +1681,12 @@ static DRIVER_INIT( ixion )
 
 /* Game Drivers */
 
-GAME( 1982, zaxxon,   0,      zaxxon,   zaxxon,   0,        ROT90,  "Sega",    "Zaxxon (set 1)", 0 )
-GAME( 1982, zaxxon2,  zaxxon, zaxxon,   zaxxon,   0,        ROT90,  "Sega",    "Zaxxon (set 2)", 0 )
-GAME( 1982, zaxxonb,  zaxxon, zaxxon,   zaxxon,   zaxxonb,  ROT90,  "bootleg", "Jackson", 0 )
-GAME( 1982, szaxxon,  0,      zaxxon,   szaxxon,  szaxxon,  ROT90,  "Sega",    "Super Zaxxon", 0 )
-GAME( 1983, razmataz, 0,      razmataz, razmataz, razmataz, ROT270, "Sega",    "Razzmatazz", GAME_NO_SOUND )
-GAME( 1983, ixion,    0,      ixion,    ixion,    ixion,    ROT270, "Sega",    "Ixion (prototype)", GAME_NO_SOUND )
-GAME( 1983, congo,    0,	  congo,    congo,    0,        ROT90,  "Sega",    "Congo Bongo", 0 )
-GAME( 1983, tiptop,   congo,  congo,    tiptop,   0,        ROT90,  "Sega",    "Tip Top", 0 )
-GAME( 1984, futspy,   0,      futspy,   futspy,   futspy,   ROT270, "Sega",    "Future Spy", 0 )
+GAME( 1982, zaxxon,   0,      zaxxon,   zaxxon,   0,        ROT90,  "Sega",    "Zaxxon (set 1)", GAME_SUPPORTS_SAVE )
+GAME( 1982, zaxxon2,  zaxxon, zaxxon,   zaxxon,   0,        ROT90,  "Sega",    "Zaxxon (set 2)", GAME_SUPPORTS_SAVE )
+GAME( 1982, zaxxonb,  zaxxon, zaxxon,   zaxxon,   zaxxonb,  ROT90,  "bootleg", "Jackson", GAME_SUPPORTS_SAVE )
+GAME( 1982, szaxxon,  0,      zaxxon,   szaxxon,  szaxxon,  ROT90,  "Sega",    "Super Zaxxon", GAME_SUPPORTS_SAVE )
+GAME( 1983, razmataz, 0,      razmataz, razmataz, razmataz, ROT270, "Sega",    "Razzmatazz", GAME_NO_SOUND | GAME_SUPPORTS_SAVE )
+GAME( 1983, ixion,    0,      ixion,    ixion,    ixion,    ROT270, "Sega",    "Ixion (prototype)", GAME_NO_SOUND | GAME_SUPPORTS_SAVE)
+GAME( 1983, congo,    0,      congo,    congo,    0,        ROT90,  "Sega",    "Congo Bongo", GAME_SUPPORTS_SAVE )
+GAME( 1983, tiptop,   congo,  congo,    tiptop,   0,        ROT90,  "Sega",    "Tip Top", GAME_SUPPORTS_SAVE )
+GAME( 1984, futspy,   0,      futspy,   futspy,   futspy,   ROT270, "Sega",    "Future Spy", GAME_SUPPORTS_SAVE )

@@ -14,7 +14,6 @@
 #include "hash.h"
 #include "png.h"
 #include "harddisk.h"
-#include "artwork.h"
 #include "config.h"
 #include <stdarg.h>
 #include <ctype.h>
@@ -369,6 +368,27 @@ static void verify_length_and_hash(rom_load_data *romdata, const char *name, UIN
 
 
 /*-------------------------------------------------
+    display_loading_rom_message - display
+    messages about ROM loading to the user
+-------------------------------------------------*/
+
+static int display_loading_rom_message(const char *name, rom_load_data *romdata)
+{
+#ifdef NEW_RENDER
+	char buffer[200];
+
+	if (name != NULL)
+		sprintf(buffer, "Loading (%d%%)", 100 * romdata->romsloaded / romdata->romstotal);
+	else
+		sprintf(buffer, "Loading Complete");
+
+	ui_set_startup_text(buffer, FALSE);
+#endif
+	return osd_display_loading_rom_message(name, romdata);
+}
+
+
+/*-------------------------------------------------
     display_rom_load_results - display the final
     results of ROM loading
 -------------------------------------------------*/
@@ -378,7 +398,7 @@ static int display_rom_load_results(rom_load_data *romdata)
 	int region;
 
 	/* final status display */
-	osd_display_loading_rom_message(NULL, romdata);
+	display_loading_rom_message(NULL, romdata);
 
 	/* if we had errors, they are fatal */
 	if (romdata->errors)
@@ -470,7 +490,7 @@ static int open_rom_file(rom_load_data *romdata, const rom_entry *romp)
 	++romdata->romsloaded;
 
 	/* update status display */
-	if (osd_display_loading_rom_message(ROM_GETNAME(romp), romdata))
+	if (display_loading_rom_message(ROM_GETNAME(romp), romdata))
        return 0;
 
 	/* Attempt reading up the chain through the parents. It automatically also

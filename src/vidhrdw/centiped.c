@@ -67,6 +67,9 @@ VIDEO_START( centiped )
 		return 1;
 
 	centiped_flipscreen = 0;
+
+	state_save_register_global(centiped_flipscreen);
+	state_save_register_global(bullsdrt_sprites_bank);
 	return 0;
 }
 

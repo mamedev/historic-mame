@@ -707,8 +707,6 @@ VIDEO_UPDATE( mbmj8688 )
 		if (mjsikaku_flipscreen) scrolly =   mjsikaku_scrolly;
 		else                     scrolly = (-mjsikaku_scrolly) & 0xff;
 
-		if (cliprect->min_y > 64)	// kludge to compensate for LCD on top of screen
-			scrolly += 64;
 		copybitmap(bitmap, mjsikaku_tmpbitmap, 0, 0, 0, scrolly,       cliprect, TRANSPARENCY_NONE, 0);
 		copybitmap(bitmap, mjsikaku_tmpbitmap, 0, 0, 0, scrolly - 256, cliprect, TRANSPARENCY_NONE, 0);
 	}
@@ -724,34 +722,36 @@ VIDEO_UPDATE( mbmj8688 )
 VIDEO_UPDATE( mbmj8688_LCD )
 {
 	int x, y, b;
-	rectangle clip = *cliprect;
 
-	clip.min_y += 64;
-	clip.max_y -= 64;
-	video_update_mbmj8688(screen,bitmap,&clip);
-	clip.min_y -= 64;
-	clip.max_y += 64;
+	if(screen==0) video_update_mbmj8688(screen,bitmap,cliprect);
 
-	for (y = 0;y < 64;y++)
+	if (screen==1)
 	{
-		for (x = 0;x < 60;x++)
+		for (y = 0;y < 64;y++)
 		{
-			int data = HD61830B_ram[0][y * 60 + x];
+			for (x = 0;x < 60;x++)
+			{
+				int data = HD61830B_ram[0][y * 60 + x];
 
-			for (b = 0;b < 8;b++)
-				plot_pixel(bitmap,16 + 480-1-(8*x+b),224+16 + 64*2-1-y,(data & (1<<b)) ? 0x0000 : 0x18ff);
+				for (b = 0;b < 8;b++)
+					plot_pixel(bitmap,(8*x+b),y,(data & (1<<b)) ? 0x0000 : 0x18ff);
+			}
 		}
 	}
 
-	for (y = 0;y < 64;y++)
+	if (screen==2)
 	{
-		for (x = 0;x < 60;x++)
+		for (y = 0;y < 64;y++)
 		{
-			int data = HD61830B_ram[1][y * 60 + x];
+			for (x = 0;x < 60;x++)
+			{
+				int data = HD61830B_ram[1][y * 60 + x];
 
-			for (b = 0;b < 8;b++)
-				plot_pixel(bitmap,16 + (8*x+b),16+y,(data & (1<<b)) ? 0x0000 : 0x18ff);
+				for (b = 0;b < 8;b++)
+					plot_pixel(bitmap,(8*x+b),y,(data & (1<<b)) ? 0x0000 : 0x18ff);
+			}
 		}
 	}
+
 	return 0;
 }

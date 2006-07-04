@@ -344,17 +344,6 @@ Notes:
 #include "machine/eeprom.h"
 #include "sndhrdw/taito_en.h"
 
-/* from Machine.c */
-READ16_HANDLER(f3_68000_share_r);
-WRITE16_HANDLER(f3_68000_share_w);
-READ16_HANDLER(f3_68681_r);
-WRITE16_HANDLER(f3_68681_w);
-READ16_HANDLER(es5510_dsp_r);
-WRITE16_HANDLER(es5510_dsp_w);
-WRITE16_HANDLER(f3_volume_w);
-WRITE16_HANDLER(f3_es5505_bank_w);
-void f3_68681_reset(void);
-
 extern UINT32 *f3_shared_ram;
 
 static UINT32 *main_ram;
@@ -493,17 +482,25 @@ static void draw_object(mame_bitmap *bitmap, const rectangle *cliprect, UINT32 w
 	UINT8 *v;
 
 	address		= (w2 & 0x7fff) * 0x20;
+	if (w2 & 0x4000)
+		address |= 0x40000;
+
 	x			= ((w1 >>  0) & 0x3ff);
-	if (x & 0x200) x |= ~0x1ff;
+	if (x & 0x200)
+		x |= ~0x1ff;		// sign-extend
+
 	y			= ((w1 >> 16) & 0x3ff);
-	if (y & 0x200) y |= ~0x1ff;
+	if (y & 0x200)
+		y |= ~0x1ff;		// sign-extend
+
 	width		= ((w1 >>  8) & 0xfc) * 4;
 	height		= ((w1 >> 24) & 0xfc) * 4;
 	palette		= ((w2 >> 22) & 0x7f) << 8;
 
 	v = (UINT8*)&vram[address/4];
 
-	if (address >= 0xf8000) return;
+	if (address >= 0xf8000 || width == 0 || height == 0)
+		return;
 
 	x1 = x;
 	x2 = x + width;
@@ -515,6 +512,8 @@ static void draw_object(mame_bitmap *bitmap, const rectangle *cliprect, UINT32 w
 	{
 		return;
 	}
+
+//  printf("draw_object: %08X %08X, X: %d, Y: %d, W: %d, H: %d\n", w1, w2, x, y, width, height);
 
 	ix = 0;
 	iy = 0;
@@ -564,7 +563,7 @@ VIDEO_UPDATE( taitojc )
 	fillbitmap(bitmap, 0, cliprect);
 
 	//for (i=0; i < 0x400/4; i+=2)
-	for (i=(0xc00/4)-2; i >= 0; i-=2)
+	for (i=(0x400/4)-2; i >= 0; i-=2)
 	{
 		UINT32 w1 = vram[(0xff000/4) + i + 0];
 		UINT32 w2 = vram[(0xff000/4) + i + 1];
@@ -811,7 +810,7 @@ static READ32_HANDLER(dsp_shared_r)
 static int first_dsp_reset = 1;
 static WRITE32_HANDLER(dsp_shared_w)
 {
-//  printf("dsp_shared_ram: %08X, %04X\n", offset, data >> 16);
+	//printf("dsp_shared_ram: %08X, %04X at %08X\n", offset, data >> 16, activecpu_get_pc());
 	dsp_shared_ram[offset] = data >> 16;
 
 	if (offset == 0x1ffc/4)
@@ -835,10 +834,10 @@ static READ32_HANDLER(f3_share_r)
 {
 	switch (offset & 3)
 	{
-		case 0: return (f3_shared_ram[(offset/4)] >>  0) & 0xff000000;
+		case 0: return (f3_shared_ram[(offset/4)] <<  0) & 0xff000000;
 		case 1: return (f3_shared_ram[(offset/4)] <<  8) & 0xff000000;
-		case 2: return (f3_shared_ram[(offset/4)] >> 16) & 0xff000000;
-		case 3: return (f3_shared_ram[(offset/4)] >> 24) & 0xff000000;
+		case 2: return (f3_shared_ram[(offset/4)] << 16) & 0xff000000;
+		case 3: return (f3_shared_ram[(offset/4)] << 24) & 0xff000000;
 	}
 
 	return 0;
@@ -947,6 +946,12 @@ static WRITE16_HANDLER( dsp_texaddr_w )
 	dsp_addr1 = 0;
 }
 
+static WRITE16_HANDLER( dsp_unk_w )
+{
+//  printf("dsp_unk_w = %04X\n", data);
+}
+
+
 
 static ADDRESS_MAP_START( tms_program_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x4000, 0x7fff) AM_RAM
@@ -954,6 +959,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( tms_data_map, ADDRESS_SPACE_DATA, 16 )
 	//AM_RANGE(0x1400, 0x1401) AM_RAM
+	AM_RANGE(0x6b20, 0x6b20) AM_WRITE(dsp_unk_w)
 	AM_RANGE(0x6b22, 0x6b22) AM_WRITE(dsp_texture_w)
 	AM_RANGE(0x6b23, 0x6b23) AM_READWRITE(dsp_texaddr_r, dsp_texaddr_w)
 	AM_RANGE(0x6c00, 0x6c01) AM_READWRITE(dsp_rom_r, dsp_rom_w)
@@ -1000,13 +1006,12 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( dendeg )
 	PORT_START
-		PORT_BIT(0x80, IP_ACTIVE_LOW, IPT_COIN4)
-		PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_COIN3)
-		PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_COIN2)
+		PORT_BIT(0xe0, IP_ACTIVE_LOW, IPT_UNUSED)
 		PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_COIN1)
 		PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_SERVICE1 )
 
 	PORT_START
+		PORT_BIT(0xe0, IP_ACTIVE_LOW, IPT_UNUSED)
 		PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_START1)
 		PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_UNUSED)
 		PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_TILT)
@@ -1029,9 +1034,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( landgear )
 	PORT_START
-		PORT_BIT(0x80, IP_ACTIVE_LOW, IPT_COIN4)
-		PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_COIN3)
-		PORT_BIT(0x20, IP_ACTIVE_LOW, IPT_COIN2)
+		PORT_BIT(0xe0, IP_ACTIVE_LOW, IPT_UNUSED)
 		PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_COIN1)
 		PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_SERVICE1 )
 
@@ -1047,6 +1050,32 @@ INPUT_PORTS_START( landgear )
 
 	PORT_START
 		PORT_BIT(0xff, IP_ACTIVE_LOW, IPT_UNUSED)
+
+INPUT_PORTS_END
+
+INPUT_PORTS_START( sidebs )
+	PORT_START
+		PORT_BIT(0xe0, IP_ACTIVE_LOW, IPT_UNUSED)
+		PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_COIN1)
+		PORT_BIT(0x02, IP_ACTIVE_HIGH, IPT_SERVICE1 )
+		//PORT_SERVICE(0x02, 0x00)
+
+	PORT_START
+		PORT_BIT(0xe0, IP_ACTIVE_LOW, IPT_UNUSED)
+		PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_START1)
+		PORT_BIT(0x08, IP_ACTIVE_LOW, IPT_SERVICE3)
+		PORT_BIT(0x04, IP_ACTIVE_LOW, IPT_SERVICE2)
+		PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_UNUSED)
+		PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_TILT)
+
+	PORT_START
+		PORT_BIT(0xfe, IP_ACTIVE_LOW, IPT_UNUSED)
+		PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_BUTTON1)		// View button
+
+	PORT_START
+		PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_BUTTON2)		// Shift down
+		PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_BUTTON3)		// Shift up
+		PORT_BIT(0xfc, IP_ACTIVE_LOW, IPT_UNUSED)
 
 INPUT_PORTS_END
 
@@ -1535,6 +1564,6 @@ GAME( 1997, dendeg,   0,       taitojc, dendeg,   dendeg,   ROT0, "Taito", "Dens
 GAME( 1997, dendegx,  dendeg,  taitojc, dendeg,   dendegx,  ROT0, "Taito", "Densya De Go Ex", GAME_NOT_WORKING )
 GAME( 1998, dendeg2,  0,       taitojc, dendeg,   dendeg2,  ROT0, "Taito", "Densya De Go 2", GAME_NOT_WORKING )
 GAME( 1998, dendeg2x, dendeg2, taitojc, dendeg,   dendeg2x, ROT0, "Taito", "Densya De Go 2 Ex", GAME_NOT_WORKING )
-GAME( 1996, sidebs,   0,       taitojc, taitojc,  sidebs,   ROT0, "Taito", "Side By Side", GAME_NOT_WORKING )
-GAME( 1997, sidebs2,  0,       taitojc, taitojc,  sidebs2,  ROT0, "Taito", "Side By Side 2", GAME_NOT_WORKING )
+GAME( 1996, sidebs,   0,       taitojc, sidebs,   sidebs,   ROT0, "Taito", "Side By Side", GAME_NOT_WORKING )
+GAME( 1997, sidebs2,  0,       taitojc, sidebs,   sidebs2,  ROT0, "Taito", "Side By Side 2", GAME_NOT_WORKING )
 GAME( 1995, landgear, 0,       taitojc, landgear, landgear, ROT0, "Taito", "Landing Gear", GAME_NOT_WORKING )

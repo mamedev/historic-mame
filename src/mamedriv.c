@@ -2455,6 +2455,7 @@ V-V                           TP-027
 	DRIVER( ddsom )		/* 19/06/1996 (c) 1996 (Euro) */
 	DRIVER( ddsomr1 )	/* 23/02/1996 (c) 1996 (Euro) */
 	DRIVER( ddsomr2 )	/* 09/02/1996 (c) 1996 (Euro) */
+	DRIVER( ddsomr3 )	/* 08/02/1996 (c) 1996 (Euro) */
 	DRIVER( ddsomu )	/* 19/06/1996 (c) 1996 (US) */
 	DRIVER( ddsomur1 )	/* 09/02/1996 (c) 1996 (US) */
 	DRIVER( ddsomjr1 )	/* 06/02/1996 (c) 1996 (Japan) */
@@ -5532,6 +5533,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( crusnu40 )	/* (c) 1994 Midway */
 	DRIVER( crusnu21 )	/* (c) 1994 Midway */
 	DRIVER( crusnwld )	/* (c) 1996 Midway */
+	DRIVER( crusnw23 )	/* (c) 1996 Midway */
 	DRIVER( crusnw20 )	/* (c) 1996 Midway */
 	DRIVER( crusnw13 )	/* (c) 1996 Midway */
 	DRIVER( offroadc )	/* (c) 1997 Midway */

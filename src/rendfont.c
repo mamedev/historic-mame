@@ -508,8 +508,6 @@ static void font_scale(mame_bitmap *dest, const mame_bitmap *source, const recta
 			UINT8 row[20], col[20];
 			int x, y;
 
-			printf("Scale %dx%d -> %dx%d\n", source->width, source->height, dwidth, dheight);
-
 			/* if the width is larger, pad it */
 			if (dwidth >= source->width)
 			{

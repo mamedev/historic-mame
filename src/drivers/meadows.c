@@ -116,11 +116,13 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "artwork.h"
 #include "cpu/s2650/s2650.h"
 #include "meadows.h"
 #include "sound/dac.h"
 #include "sound/samples.h"
+
+#include "deadeye.lh"
+#include "gypsyjug.lh"
 
 
 
@@ -327,39 +329,6 @@ static INTERRUPT_GEN( sound_interrupt )
 	sound_sense_state ^= 1;
 	cpunum_set_input_line(1, 1, sound_sense_state ? ASSERT_LINE : CLEAR_LINE);
 }
-
-
-
-/*************************************
- *
- *  Overlays
- *
- *************************************/
-
-/* some constants to make life easier */
-#define SCR_HORZ        32
-#define SCR_VERT        28
-
-OVERLAY_START( deadeye_overlay )
-	OVERLAY_RECT(            0,    0, SCR_HORZ*8,        2*8, MAKE_ARGB(0x04, 32,192, 64))
-	OVERLAY_RECT(            0,  2*8, SCR_HORZ*8,        6*8, MAKE_ARGB(0x04, 64, 64,192))
-	OVERLAY_RECT(            0,  6*8, SCR_HORZ*8,        9*8, MAKE_ARGB(0x04,192,160, 32))
-	OVERLAY_RECT(            0,  9*8,        1*8,       24*8, MAKE_ARGB(0x04,192,160, 32))
-	OVERLAY_RECT( SCR_HORZ*8-8,  9*8, SCR_HORZ*8,       24*8, MAKE_ARGB(0x04,192,160, 32))
-	OVERLAY_RECT(            0, 24*8, SCR_HORZ*8, SCR_VERT*8, MAKE_ARGB(0x04, 64, 64,192))
-OVERLAY_END
-
-
-OVERLAY_START( gypsyjug_overlay )
-	OVERLAY_RECT(            0,    0, SCR_HORZ*8,        2*8, MAKE_ARGB(0x04, 32,192, 64))
-//  OVERLAY_RECT(            0,  2*8, SCR_HORZ*8,        6*8, MAKE_ARGB(0x04, 64, 64,192))
-	OVERLAY_RECT(            0,  2*8, SCR_HORZ*8,        3*8, MAKE_ARGB(0x04, 32,192, 64))
-	OVERLAY_RECT(            0,  3*8, SCR_HORZ*8,        6*8, MAKE_ARGB(0x04, 64, 64,192))
-	OVERLAY_RECT(            0,  6*8, SCR_HORZ*8,        9*8, MAKE_ARGB(0x04,192,160, 32))
-	OVERLAY_RECT(            0,  9*8,        1*8,       24*8, MAKE_ARGB(0x04,192,160, 32))
-	OVERLAY_RECT( SCR_HORZ*8-8,  9*8, SCR_HORZ*8,       24*8, MAKE_ARGB(0x04,192,160, 32))
-	OVERLAY_RECT(            0, 24*8, SCR_HORZ*8, SCR_VERT*8, MAKE_ARGB(0x04,192,160, 32))
-OVERLAY_END
 
 
 
@@ -779,12 +748,6 @@ ROM_END
  *
  *************************************/
 
-static DRIVER_INIT( deadeye )
-{
-	artwork_set_overlay(deadeye_overlay);
-}
-
-
 /* A fake for the missing ball sprites #3 and #4 */
 static DRIVER_INIT( gypsyjug )
 {
@@ -804,8 +767,6 @@ static DRIVER_INIT( gypsyjug )
 		memcpy(memory_region(REGION_GFX4) + i, ball, sizeof(ball));
 		memcpy(memory_region(REGION_GFX5) + i, ball, sizeof(ball));
 	}
-
-	artwork_set_overlay(gypsyjug_overlay);
 }
 
 
@@ -830,6 +791,6 @@ static DRIVER_INIT( minferno )
  *
  *************************************/
 
-GAME( 1978, deadeye,  0, meadows,  meadows,  deadeye,  ROT0, "Meadows", "Dead Eye", 0 )
-GAME( 1978, gypsyjug, 0, meadows,  meadows,  gypsyjug, ROT0, "Meadows", "Gypsy Juggler", 0 )
-GAME( 1978, minferno, 0, minferno, minferno, minferno, ROT0, "Meadows", "Inferno (S2650)", GAME_NO_SOUND )
+GAMEL( 1978, deadeye,  0, meadows,  meadows,  0,        ROT0, "Meadows", "Dead Eye", 0, layout_deadeye )
+GAMEL( 1978, gypsyjug, 0, meadows,  meadows,  gypsyjug, ROT0, "Meadows", "Gypsy Juggler", 0, layout_gypsyjug )
+GAME ( 1978, minferno, 0, minferno, minferno, minferno, ROT0, "Meadows", "Inferno (S2650)", GAME_NO_SOUND )

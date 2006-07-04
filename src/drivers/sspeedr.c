@@ -5,7 +5,7 @@ Taito Super Speed Race driver
 ***************************************************************************/
 
 #include "driver.h"
-#include "artwork.h"
+#include "render.h"
 
 extern WRITE8_HANDLER( sspeedr_driver_horz_w );
 extern WRITE8_HANDLER( sspeedr_driver_horz_2_w );
@@ -68,10 +68,10 @@ static WRITE8_HANDLER( sspeedr_int_ack_w )
 
 static WRITE8_HANDLER( sspeedr_lamp_w )
 {
-	artwork_show("lampGO",
-		data & 1);
-	artwork_show("lampEP",
-		data & 2);
+#ifdef NEW_RENDER
+	render_view_item_set_state("lampGO", (data >> 0) & 1);
+	render_view_item_set_state("lampEP", (data >> 1) & 1);
+#endif
 
 	coin_counter_w(0, data & 8);
 }
@@ -79,18 +79,12 @@ static WRITE8_HANDLER( sspeedr_lamp_w )
 
 static WRITE8_HANDLER( sspeedr_time_w )
 {
-	UINT8 prev = led_TIME[offset];
-
-	char buf_old[8];
-	char buf_new[8];
-
+#ifdef NEW_RENDER
+	char buf[10];
+	sprintf(buf, "LEDT%d", offset);
 	data = data & 15;
-
-	sprintf(buf_old, "LEDT%d-%c", offset, prev >= 10 ? 'X' : '0' + prev);
-	sprintf(buf_new, "LEDT%d-%c", offset, data >= 10 ? 'X' : '0' + data);
-
-	artwork_show(buf_old, 0);
-	artwork_show(buf_new, 1);
+	render_view_item_set_state(buf, (data >= 10) ? 10 : data);
+#endif
 
 	led_TIME[offset] = data;
 }
@@ -98,18 +92,12 @@ static WRITE8_HANDLER( sspeedr_time_w )
 
 static WRITE8_HANDLER( sspeedr_score_w )
 {
-	UINT8 prev = led_SCORE[offset];
-
-	char buf_old[8];
-	char buf_new[8];
-
+#ifdef NEW_RENDER
+	char buf[10];
+	sprintf(buf, "LED%02d", offset);
 	data = ~data & 15;
-
-	sprintf(buf_old, "LED%02d-%c", offset, prev >= 10 ? 'X' : '0' + prev);
-	sprintf(buf_new, "LED%02d-%c", offset, data >= 10 ? 'X' : '0' + data);
-
-	artwork_show(buf_old, 0);
-	artwork_show(buf_new, 1);
+	render_view_item_set_state(buf, (data >= 10) ? 10 : data);
+#endif
 
 	led_SCORE[offset] = data;
 }
