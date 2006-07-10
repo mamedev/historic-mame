@@ -335,21 +335,41 @@ static ADDRESS_MAP_START( mcu_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 /* seems the most logical way to do the gears */
-static UINT8 kikstart_gear;
+static UINT8 kikstart_gearP1;
+static UINT8 kikstart_gearP2;
 
-static READ8_HANDLER ( kikstart_gears_read )
+static READ8_HANDLER ( kikstart_gearsP1_read )
 {
 	/* gear MUST be 1, 2 or 3 */
 
 	int portreturn = readinputportbytag("IN3") & 0xf4;
 
-	if (readinputportbytag("FAKE") & 0x01) kikstart_gear = 1;
-	if (readinputportbytag("FAKE") & 0x02) kikstart_gear = 2;
-	if (readinputportbytag("FAKE") & 0x04) kikstart_gear = 3;
+	if (readinputportbytag("FAKE") & 0x01) kikstart_gearP1 = 1;
+	if (readinputportbytag("FAKE") & 0x02) kikstart_gearP1 = 2;
+	if (readinputportbytag("FAKE") & 0x04) kikstart_gearP1 = 3;
 
-	if (kikstart_gear == 1) portreturn |= (0x02);
-	if (kikstart_gear == 2) portreturn |= (0x03);
-	if (kikstart_gear == 3) portreturn |= (0x01);
+	if (kikstart_gearP1 == 1) portreturn |= (0x02);
+	if (kikstart_gearP1 == 2) portreturn |= (0x03);
+	if (kikstart_gearP1 == 3) portreturn |= (0x01);
+
+//ui_popup   ("Kikstart gear %02x",  kikstart_gear);
+//Is there a more attractive way to display this mid game?
+	return portreturn;
+}
+
+static READ8_HANDLER ( kikstart_gearsP2_read )
+{
+	/* gear MUST be 1, 2 or 3 */
+
+	int portreturn = readinputportbytag("IN4") & 0xf4;
+
+	if (readinputportbytag("FAKE") & 0x08) kikstart_gearP2 = 1;
+	if (readinputportbytag("FAKE") & 0x10) kikstart_gearP2 = 2;
+	if (readinputportbytag("FAKE") & 0x20) kikstart_gearP2 = 3;
+
+	if (kikstart_gearP2 == 1) portreturn |= (0x02);
+	if (kikstart_gearP2 == 2) portreturn |= (0x03);
+	if (kikstart_gearP2 == 3) portreturn |= (0x01);
 
 //ui_popup   ("Kikstart gear %02x",  kikstart_gear);
 //Is there a more attractive way to display this mid game?
@@ -371,8 +391,8 @@ static ADDRESS_MAP_START( kikstart_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xd409, 0xd409) AM_READ(input_port_1_r)     /* IN1 */
 	AM_RANGE(0xd40a, 0xd40a) AM_READ(input_port_5_r)     /* DSW1 */
 	AM_RANGE(0xd40b, 0xd40b) AM_READ(input_port_2_r)     /* IN2 */
-	AM_RANGE(0xd40c, 0xd40c) AM_READ(kikstart_gears_read)     /* Service */
-	AM_RANGE(0xd40d, 0xd40d) AM_READ(in5_r)
+	AM_RANGE(0xd40c, 0xd40c) AM_READ(kikstart_gearsP1_read)     /* IN3 */
+	AM_RANGE(0xd40d, 0xd40d) AM_READ(kikstart_gearsP2_read)		/* IN4 */
 	AM_RANGE(0xd40f, 0xd40f) AM_READ(AY8910_read_port_0_r)       /* DSW2 and DSW3 */
 	AM_RANGE(0xd800, 0xdfff) AM_READ(MRA8_RAM)
 	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_ROM)
@@ -1687,13 +1707,11 @@ INPUT_PORTS_START( kikstart )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_2WAY
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_2WAY
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
 
 	PORT_START_TAG("IN1")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_2WAY PORT_COCKTAIL
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_2WAY PORT_COCKTAIL
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_COCKTAIL
 
 	PORT_START_TAG("IN2")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1710,13 +1728,16 @@ INPUT_PORTS_START( kikstart )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SPECIAL ) // gear
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SPECIAL ) // gear
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_SERVICE1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_START_TAG("IN4")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SPECIAL ) // gear
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SPECIAL ) // gear
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SPECIAL ) // gear
 
 	PORT_START_TAG("DSW1")
 	PORT_DIPNAME(0x03, 0x01, "Gate Bonus" )
@@ -1762,9 +1783,12 @@ INPUT_PORTS_START( kikstart )
 
 	/* fake for handling the gears */
 	PORT_START_TAG("FAKE")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_NAME("1st Gear")
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_NAME("2nd Gear")
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON4 ) PORT_NAME("3rd Gear")
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_NAME("P1 1st Gear")
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_NAME("P1 2nd Gear")
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON4 ) PORT_NAME("P1 3rd Gear")
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_NAME("P2 1st Gear") PORT_COCKTAIL
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_NAME("P2 2nd Gear") PORT_COCKTAIL
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON4 ) PORT_NAME("P2 3rd Gear") PORT_COCKTAIL
 INPUT_PORTS_END
 
 
@@ -2604,14 +2628,16 @@ static DRIVER_INIT( junglhbr )
 
 static DRIVER_INIT( kikstart )
 {
-	kikstart_gear = 1;
+	kikstart_gearP1 = 1;
+	kikstart_gearP2 = 1;
 }
 
 void taitosj_register_main_savestate(void)
 {
 	state_save_register_global(sndnmi_disable);
 	state_save_register_global(in5);
-	state_save_register_global(kikstart_gear);
+	state_save_register_global(kikstart_gearP1);
+	state_save_register_global(kikstart_gearP2);
 	state_save_register_global(dac_out);
 	state_save_register_global(dac_vol);
 }

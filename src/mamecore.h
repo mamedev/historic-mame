@@ -398,6 +398,16 @@ INLINE void sect_rect(rectangle *dst, const rectangle *src)
 }
 
 
+/* compute the union of two rectangles */
+INLINE void union_rect(rectangle *dst, const rectangle *src)
+{
+	if (src->min_x < dst->min_x) dst->min_x = src->min_x;
+	if (src->max_x > dst->max_x) dst->max_x = src->max_x;
+	if (src->min_y < dst->min_y) dst->min_y = src->min_y;
+	if (src->max_y > dst->max_y) dst->max_y = src->max_y;
+}
+
+
 /* convert a series of 32 bits into a float */
 INLINE float u2f(UINT32 v)
 {

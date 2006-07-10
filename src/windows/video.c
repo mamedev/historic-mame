@@ -94,6 +94,8 @@ win_video_config video_config;
 win_monitor_info *win_monitor_list;
 static win_monitor_info *primary_monitor;
 
+static mame_bitmap *effect_bitmap;
+
 // average FPS calculation
 static cycles_t fps_start_time;
 static cycles_t fps_end_time;
@@ -158,6 +160,7 @@ static void update_autoframeskip(void);
 static void check_osd_inputs(void);
 
 static void extract_video_config(void);
+static void load_effect_overlay(const char *filename);
 static float get_aspect(const char *name, int report_error);
 static void get_resolution(const char *name, win_window_config *config, int report_error);
 
@@ -181,7 +184,7 @@ INLINE int effective_frameskip(void)
 
 INLINE int effective_throttle(void)
 {
-	return video_config.throttle && !video_config.fastforward;
+	return !video_config.fastforward && (video_config.throttle || mame_is_paused() || ui_is_setup_active() || ui_is_onscrd_active());
 }
 
 
@@ -208,42 +211,45 @@ const options_entry video_opts[] =
 
 	// global options
 	{ NULL,                       NULL,   OPTION_HEADER,  "GLOBAL VIDEO OPTIONS" },
+	{ "video",                    "d3d",  0,              "video output method: gdi, ddraw, or d3d" },
 	{ "window;w",                 "0",    OPTION_BOOLEAN, "enable window mode; otherwise, full screen mode is assumed" },
 	{ "maximize;max",             "1",    OPTION_BOOLEAN, "default to maximized windows; otherwise, windows will be minimized" },
 	{ "keepaspect;ka",            "1",    OPTION_BOOLEAN, "constrain to the proper aspect ratio" },
+	{ "prescale",                 "0",    0,              "screen bitmap prescaling amount" },
 	{ "numscreens",               "1",    0,              "number of screens to create; usually, you want just one" },
 	{ "extra_layout;layout",      NULL,   0,              "name of an extra layout file to parse" },
+	{ "effect",                   NULL,   0,              "name of a PNG file to use for visual effects" },
 
 	// per-window options
 	{ NULL,                       NULL,   OPTION_HEADER,  "PER-WINDOW VIDEO OPTIONS" },
 	{ "screen0;screen",           "auto", 0,              "explicit name of the first screen; 'auto' here will try to make a best guess" },
 	{ "aspect0;screen_aspect",    "auto", 0,              "aspect ratio of the first screen; 'auto' here will try to make a best guess" },
-	{ "resolution0;resolution;r", "auto", 0,              "preferred resolution of the first screen; format is <width>x<height>[x<depth>[@<refreshrate>]] or 'auto'" },
+	{ "resolution0;resolution;r0;r", "auto", 0,           "preferred resolution of the first screen; format is <width>x<height>[x<depth>[@<refreshrate>]] or 'auto'" },
 	{ "view0;view",               "auto", 0,              "preferred view for the first screen" },
 
 	{ "screen1",                  "auto", 0,              "explicit name of the second screen; 'auto' here will try to make a best guess" },
 	{ "aspect1",                  "auto", 0,              "aspect ratio of the second screen; 'auto' here will try to make a best guess" },
-	{ "resolution1",              "auto", 0,              "preferred resolution of the second screen; format is <width>x<height>[x<depth>[@<refreshrate>]] or 'auto'" },
+	{ "resolution1;r1",           "auto", 0,              "preferred resolution of the second screen; format is <width>x<height>[x<depth>[@<refreshrate>]] or 'auto'" },
 	{ "view1",                    "auto", 0,              "preferred view for the second screen" },
 
 	{ "screen2",                  "auto", 0,              "explicit name of the third screen; 'auto' here will try to make a best guess" },
 	{ "aspect2",                  "auto", 0,              "aspect ratio of the third screen; 'auto' here will try to make a best guess" },
-	{ "resolution2",              "auto", 0,              "preferred resolution of the third screen; format is <width>x<height>[x<depth>[@<refreshrate>]] or 'auto'" },
+	{ "resolution2;r2",           "auto", 0,              "preferred resolution of the third screen; format is <width>x<height>[x<depth>[@<refreshrate>]] or 'auto'" },
 	{ "view2",                    "auto", 0,              "preferred view for the third screen" },
 
 	{ "screen3",                  "auto", 0,              "explicit name of the fourth screen; 'auto' here will try to make a best guess" },
 	{ "aspect3",                  "auto", 0,              "aspect ratio of the fourth screen; 'auto' here will try to make a best guess" },
-	{ "resolution3",              "auto", 0,              "preferred resolution of the fourth screen; format is <width>x<height>[x<depth>[@<refreshrate>]] or 'auto'" },
+	{ "resolution3;r3",           "auto", 0,              "preferred resolution of the fourth screen; format is <width>x<height>[x<depth>[@<refreshrate>]] or 'auto'" },
 	{ "view3",                    "auto", 0,              "preferred view for the fourth screen" },
 
 	// directx options
 	{ NULL,                       NULL,   OPTION_HEADER,  "DIRECTX VIDEO OPTIONS" },
-	{ "video",                    "d3d",  0,              "video output method: gdi, ddraw, or d3d" },
 	{ "waitvsync",                "0",    OPTION_BOOLEAN, "enable waiting for the start of VBLANK before flipping screens; reduces tearing effects" },
 	{ "syncrefresh",              "0",    OPTION_BOOLEAN, "enable using the start of VBLANK for throttling instead of the game time" },
 	{ "triplebuffer;tb",          "0",    OPTION_BOOLEAN, "enable triple buffering" },
 	{ "switchres",                "0",    OPTION_BOOLEAN, "enable resolution switching" },
-	{ "prescale;d3dprescale",     "0",    0,              "screen texture prescaling amount" },
+	{ "full_screen_brightness;fsb","1.0", 0,              "brightness value in full screen mode" },
+	{ "full_screen_contrast;fsc", "1.0",  0,              "contrast value in full screen mode" },
 	{ "full_screen_gamma;fsg",    "1.0",  0,              "gamma value in full screen mode" },
 
 	{ NULL,                       NULL,   OPTION_HEADER,  "DIRECTDRAW-SPECIFIC OPTIONS" },
@@ -253,16 +259,6 @@ const options_entry video_opts[] =
 	{ "d3dversion",               "9",    0,              "specify the preferred Direct3D version (8 or 9)" },
 	{ "filter;d3dfilter;flt",     "1",    OPTION_BOOLEAN, "enable bilinear filtering on screen output" },
 
-	// deprecated junk
-	{ "direct3d;d3d",             "1",    OPTION_DEPRECATED, "(deprecated)" },
-	{ "ddraw",                    "0",    OPTION_DEPRECATED, "(deprecated)" },
-	{ "switchbpp",                "0",    OPTION_DEPRECATED, "(deprecated)" },
-	{ "effect",                   "0",    OPTION_DEPRECATED, "(deprecated)" },
-	{ "zoom",                     "0",    OPTION_DEPRECATED, "(deprecated)" },
-	{ "d3dtexmanage",             "0",    OPTION_DEPRECATED, "(deprecated)" },
-#ifndef NEW_RENDER
-	{ "d3dfilter",                "0",    OPTION_DEPRECATED, "(deprecated)" },
-#endif
 	{ NULL }
 };
 
@@ -325,6 +321,11 @@ error:
 
 static void video_exit(void)
 {
+	// free the overlay effect
+	if (effect_bitmap != NULL)
+		bitmap_free(effect_bitmap);
+	effect_bitmap = NULL;
+
 	// possibly kill the debug window
 #ifdef MAME_DEBUG
 	if (options.mame_debug)
@@ -442,7 +443,7 @@ int osd_update(mame_time emutime)
 	win_window_info *window;
 
 	// if we're throttling, paused, or if the UI is up, synchronize
-	if (effective_throttle() || mame_is_paused() || ui_is_setup_active() || ui_is_onscrd_active())
+	if (effective_throttle())
 		update_throttle(emutime);
 
 	// update the FPS computations
@@ -897,26 +898,29 @@ static void check_osd_inputs(void)
 static void extract_video_config(void)
 {
 	const char *stemp;
-	int itemp;
 
 	// performance options: extract the data
-	video_config.autoframeskip = options_get_bool ("autoframeskip", TRUE);
-	video_config.frameskip     = options_get_int  ("frameskip", TRUE);
-	video_config.throttle      = options_get_bool ("throttle", TRUE);
-	video_config.sleep         = options_get_bool ("sleep", TRUE);
+	video_config.autoframeskip = options_get_bool("autoframeskip", TRUE);
+	video_config.frameskip     = options_get_int_range("frameskip", TRUE, 0, FRAMESKIP_LEVELS);
+	video_config.throttle      = options_get_bool("throttle", TRUE);
+	video_config.sleep         = options_get_bool("sleep", TRUE);
 
 	// misc options: extract the data
-	video_config.framestorun   = options_get_int  ("frames_to_run", TRUE);
+	video_config.framestorun   = options_get_int("frames_to_run", TRUE);
 
 	// global options: extract the data
-	video_config.windowed      = options_get_bool ("window", TRUE);
-	video_config.keepaspect    = options_get_bool ("keepaspect", TRUE);
-	video_config.numscreens    = options_get_int  ("numscreens", TRUE);
+	video_config.windowed      = options_get_bool("window", TRUE);
+	video_config.prescale      = options_get_int("prescale", TRUE);
+	video_config.keepaspect    = options_get_bool("keepaspect", TRUE);
+	video_config.numscreens    = options_get_int_range("numscreens", TRUE, 1, MAX_WINDOWS);
 #ifdef MAME_DEBUG
 	// if we are in debug mode, never go full screen
 	if (options.mame_debug)
 		video_config.windowed = TRUE;
 #endif
+	stemp                      = options_get_string("effect", TRUE);
+	if (stemp != NULL)
+		load_effect_overlay(stemp);
 
 	// configure layers
 	video_config.layerconfig = LAYER_CONFIG_ENABLE_BACKDROP | LAYER_CONFIG_ENABLE_OVERLAY | LAYER_CONFIG_ENABLE_BEZEL;
@@ -945,51 +949,65 @@ static void extract_video_config(void)
 		fprintf(stderr, "Invalid video value %s; reverting to gdi\n", stemp);
 		video_config.mode = VIDEO_MODE_GDI;
 	}
-	video_config.waitvsync     = options_get_bool ("waitvsync", TRUE);
-	video_config.syncrefresh   = options_get_bool ("syncrefresh", TRUE);
-	video_config.triplebuf     = options_get_bool ("triplebuffer", TRUE);
-	video_config.switchres     = options_get_bool ("switchres", TRUE);
-	video_config.gamma         = options_get_float("full_screen_gamma", TRUE);
+	video_config.waitvsync     = options_get_bool("waitvsync", TRUE);
+	video_config.syncrefresh   = options_get_bool("syncrefresh", TRUE);
+	video_config.triplebuf     = options_get_bool("triplebuffer", TRUE);
+	video_config.switchres     = options_get_bool("switchres", TRUE);
 
 	// ddraw options: extract the data
-	video_config.hwstretch     = options_get_bool ("hwstretch", TRUE);
+	video_config.hwstretch     = options_get_bool("hwstretch", TRUE);
 
 	// d3d options: extract the data
-	video_config.filter        = options_get_bool ("filter", TRUE);
-	video_config.prescale      = options_get_int  ("prescale", TRUE);
+	video_config.filter        = options_get_bool("filter", TRUE);
 	if (video_config.prescale == 0)
 		video_config.prescale = 1;
 
-	// performance options: sanity check values
-	if (video_config.frameskip < 0 || video_config.frameskip > FRAMESKIP_LEVELS)
-	{
-		fprintf(stderr, "Invalid frameskip value %d; reverting to 0\n", video_config.frameskip);
-		video_config.frameskip = 0;
-	}
-
 	// misc options: sanity check values
-
-	// global options: sanity check values
-	if (video_config.numscreens < 1 || video_config.numscreens > MAX_WINDOWS)
-	{
-		fprintf(stderr, "Invalid numscreens value %d; reverting to 1\n", video_config.numscreens);
-		video_config.numscreens = 1;
-	}
 
 	// per-window options: sanity check values
 
 	// d3d options: sanity check values
-	itemp = options_get_int("d3dversion", TRUE);
-	if (itemp < 8 || itemp > 9)
+	options_get_int_range("d3dversion", TRUE, 8, 9);
+
+	options_get_float_range("full_screen_brightness", TRUE, 0.1f, 2.0f);
+	options_get_float_range("full_screen_contrast", TRUE, 0.1f, 2.0f);
+	options_get_float_range("full_screen_gamma", TRUE, 0.1f, 3.0f);
+}
+
+
+
+//============================================================
+//  load_effect_overlay
+//============================================================
+
+static void load_effect_overlay(const char *filename)
+{
+	char *tempstr = malloc_or_die(strlen(filename) + 5);
+	int scrnum;
+	char *dest;
+
+	// append a .PNG extension
+	strcpy(tempstr, filename);
+	dest = strrchr(tempstr, '.');
+	if (dest == NULL)
+		dest = &tempstr[strlen(tempstr)];
+	strcpy(dest, ".png");
+
+	// load the file
+	effect_bitmap = render_load_png(NULL, tempstr, NULL, NULL);
+	if (effect_bitmap == NULL)
 	{
-		fprintf(stderr, "Invalid d3dversion value %d; reverting to 9\n", itemp);
-		options_set_int("d3dversion", 9);
+		fprintf(stderr, "Unable to load PNG file '%s'\n", tempstr);
+		free(tempstr);
+		return;
 	}
-	if (video_config.gamma < 0.0 || video_config.gamma > 4.0)
-	{
-		fprintf(stderr, "Invalid full_screen_gamma value %f; reverting to 1.0\n", video_config.gamma);
-		video_config.gamma = 1.0;
-	}
+
+	// set the overlay on all screens
+	for (scrnum = 0; scrnum < MAX_SCREENS; scrnum++)
+		if (Machine->drv->screen[scrnum].tag != NULL)
+			render_container_set_overlay(render_container_get_screen(scrnum), effect_bitmap);
+
+	free(tempstr);
 }
 
 

@@ -15,6 +15,8 @@
 #include "driver.h"
 #include "osdepend.h"
 
+#include <math.h>
+
 
 
 /***************************************************************************
@@ -62,10 +64,8 @@
 /* render primitive types */
 enum
 {
-	RENDER_PRIMITIVE_CLIP_PUSH,
-	RENDER_PRIMITIVE_CLIP_POP,
-	RENDER_PRIMITIVE_LINE,
-	RENDER_PRIMITIVE_QUAD
+	RENDER_PRIMITIVE_LINE,							/* a single line */
+	RENDER_PRIMITIVE_QUAD							/* a rectilinear quad */
 };
 
 
@@ -102,7 +102,7 @@ enum
 #define PRIMFLAG_GET_TEXFORMAT(x)	(((x) & PRIMFLAG_TEXFORMAT_MASK) >> PRIMFLAG_TEXFORMAT_SHIFT)
 
 #define PRIMFLAG_BLENDMODE_SHIFT	8
-#define PRIMFLAG_BLENDMODE_MASK		(3 << PRIMFLAG_BLENDMODE_SHIFT)
+#define PRIMFLAG_BLENDMODE_MASK		(7 << PRIMFLAG_BLENDMODE_SHIFT)
 #define PRIMFLAG_BLENDMODE(x)		((x) << PRIMFLAG_BLENDMODE_SHIFT)
 #define PRIMFLAG_GET_BLENDMODE(x)	(((x) & PRIMFLAG_BLENDMODE_MASK) >> PRIMFLAG_BLENDMODE_SHIFT)
 
@@ -199,6 +199,34 @@ struct _render_color
 
 
 /*-------------------------------------------------
+    render_texuv - floating point set of UV
+    texture coordinates
+-------------------------------------------------*/
+
+typedef struct _render_texuv render_texuv;
+struct _render_texuv
+{
+	float				u;					/* U coodinate (0.0-1.0) */
+	float				v;					/* V coordinate (0.0-1.0) */
+};
+
+
+/*-------------------------------------------------
+    render_quad_texuv - floating point set of UV
+    texture coordinates
+-------------------------------------------------*/
+
+typedef struct _render_quad_texuv render_quad_texuv;
+struct _render_quad_texuv
+{
+	render_texuv		tl;					/* top-left UV coordinate */
+	render_texuv		tr;					/* top-right UV coordinate */
+	render_texuv		bl;					/* bottom-left UV coordinate */
+	render_texuv		br;					/* bottom-right UV coordinate */
+};
+
+
+/*-------------------------------------------------
     render_texinfo - texture information
 -------------------------------------------------*/
 
@@ -209,7 +237,7 @@ struct _render_texinfo
 	UINT32				rowpixels;			/* pixels per row */
 	UINT32				width;				/* width of the image */
 	UINT32				height;				/* height of the image */
-	rgb_t *				palette;			/* palette for PALETTE16 textures */
+	const rgb_t *		palette;			/* palette for PALETTE16 textures, LUTs for RGB15/RGB32 */
 	UINT32				seqid;				/* sequence ID */
 };
 
@@ -229,6 +257,7 @@ struct _render_primitive
 	UINT32				flags;				/* flags */
 	float				width;				/* width (for line primitives) */
 	render_texinfo		texture;			/* texture info (for quad primitives) */
+	render_quad_texuv	texcoords;			/* texture coordinates (for quad primitives) */
 };
 
 
@@ -255,6 +284,7 @@ struct _render_primitive_list
 void render_init(void);
 UINT32 render_get_live_screens_mask(void);
 float render_get_ui_aspect(void);
+void render_set_ui_target(render_target *target);
 render_target *render_get_ui_target(void);
 
 
@@ -299,6 +329,21 @@ void render_container_empty(render_container *container);
 int render_container_is_empty(render_container *container);
 int render_container_get_orientation(render_container *container);
 void render_container_set_orientation(render_container *container, int orientation);
+float render_container_get_brightness(render_container *container);
+void render_container_set_brightness(render_container *container, float brightness);
+float render_container_get_contrast(render_container *container);
+void render_container_set_contrast(render_container *container, float contrast);
+float render_container_get_gamma(render_container *container);
+void render_container_set_gamma(render_container *container, float gamma);
+float render_container_get_xscale(render_container *container);
+void render_container_set_xscale(render_container *container, float xscale);
+float render_container_get_yscale(render_container *container);
+void render_container_set_yscale(render_container *container, float yscale);
+float render_container_get_xoffset(render_container *container);
+void render_container_set_xoffset(render_container *container, float xoffset);
+float render_container_get_yoffset(render_container *container);
+void render_container_set_yoffset(render_container *container, float yoffset);
+void render_container_set_overlay(render_container *container, mame_bitmap *bitmap);
 render_container *render_container_get_ui(void);
 render_container *render_container_get_screen(int screen);
 void render_container_add_line(render_container *container, float x0, float y0, float x1, float y1, float width, rgb_t argb, UINT32 flags);
@@ -310,7 +355,8 @@ void render_container_add_char(render_container *container, float x0, float y0, 
 
 void render_resample_argb_bitmap_hq(void *dest, UINT32 drowpixels, UINT32 dwidth, UINT32 dheight, const mame_bitmap *source, const rectangle *sbounds, const render_color *color);
 int render_clip_line(render_bounds *bounds, const render_bounds *clip);
-int render_clip_quad(render_bounds *bounds, const render_bounds *clip, float *u, float *v);
+int render_clip_quad(render_bounds *bounds, const render_bounds *clip, render_quad_texuv *texcoords);
+mame_bitmap *render_load_png(const char *dirname, const char *filename, mame_bitmap *alphadest, int *hasalpha);
 
 
 
@@ -344,6 +390,75 @@ extern const char layout_voffff20[];	/* vertical 4:3 with FF,FF,20 color overlay
 /***************************************************************************
     INLINES
 ***************************************************************************/
+
+/*-------------------------------------------------
+    set_render_bounds_xy - cleaner way to set the
+    bounds
+-------------------------------------------------*/
+
+INLINE void set_render_bounds_xy(render_bounds *bounds, float x0, float y0, float x1, float y1)
+{
+	bounds->x0 = x0;
+	bounds->y0 = y0;
+	bounds->x1 = x1;
+	bounds->y1 = y1;
+}
+
+
+/*-------------------------------------------------
+    set_render_bounds_wh - cleaner way to set the
+    bounds
+-------------------------------------------------*/
+
+INLINE void set_render_bounds_wh(render_bounds *bounds, float x0, float y0, float width, float height)
+{
+	bounds->x0 = x0;
+	bounds->y0 = y0;
+	bounds->x1 = x0 + width;
+	bounds->y1 = y0 + height;
+}
+
+
+/*-------------------------------------------------
+    sect_render_bounds - compute the intersection
+    of two render_bounds
+-------------------------------------------------*/
+
+INLINE void sect_render_bounds(render_bounds *dest, const render_bounds *src)
+{
+	dest->x0 = (dest->x0 > src->x0) ? dest->x0 : src->x0;
+	dest->x1 = (dest->x1 < src->x1) ? dest->x1 : src->x1;
+	dest->y0 = (dest->y0 > src->y0) ? dest->y0 : src->y0;
+	dest->y1 = (dest->y1 < src->y1) ? dest->y1 : src->y1;
+}
+
+
+/*-------------------------------------------------
+    union_render_bounds - compute the union of two
+    render_bounds
+-------------------------------------------------*/
+
+INLINE void union_render_bounds(render_bounds *dest, const render_bounds *src)
+{
+	dest->x0 = (dest->x0 < src->x0) ? dest->x0 : src->x0;
+	dest->x1 = (dest->x1 > src->x1) ? dest->x1 : src->x1;
+	dest->y0 = (dest->y0 < src->y0) ? dest->y0 : src->y0;
+	dest->y1 = (dest->y1 > src->y1) ? dest->y1 : src->y1;
+}
+
+
+/*-------------------------------------------------
+    set_render_color - cleaner way to set a color
+-------------------------------------------------*/
+
+INLINE void set_render_color(render_color *color, float a, float r, float g, float b)
+{
+	color->a = a;
+	color->r = r;
+	color->g = g;
+	color->b = b;
+}
+
 
 /*-------------------------------------------------
     orientation_swap_flips - swap the X and Y
@@ -389,6 +504,43 @@ INLINE int orientation_add(int orientation1, int orientation2)
 	/* otherwise, we need to effectively swap the flip bits on the first transform */
 	else
 		return orientation_swap_flips(orientation1) ^ orientation2;
+}
+
+
+/*-------------------------------------------------
+    apply_brightness_contrast_gamma_fp - apply
+    brightness, contrast, and gamma controls to
+    a single RGB component
+-------------------------------------------------*/
+
+INLINE float apply_brightness_contrast_gamma_fp(float srcval, float brightness, float contrast, float gamma)
+{
+	/* first apply gamma */
+	srcval = pow(srcval, 1.0f / gamma);
+
+	/* then contrast/brightness */
+	srcval = (srcval * contrast) + brightness - 1.0f;
+
+	/* clamp and return */
+	if (srcval < 0.0f)
+		srcval = 0.0f;
+	if (srcval > 1.0f)
+		srcval = 1.0f;
+	return srcval;
+}
+
+
+/*-------------------------------------------------
+    apply_brightness_contrast_gamma - apply
+    brightness, contrast, and gamma controls to
+    a single RGB component
+-------------------------------------------------*/
+
+INLINE UINT8 apply_brightness_contrast_gamma(UINT8 src, float brightness, float contrast, float gamma)
+{
+	float srcval = (float)src * (1.0f / 255.0f);
+	float result = apply_brightness_contrast_gamma_fp(srcval, brightness, contrast, gamma);
+	return (UINT8)(result * 255.0f);
 }
 
 

@@ -18,9 +18,9 @@
 #define VERBOSE 0
 
 
-/*-------------------------------------------------
+/***************************************************************************
     CONSTANTS
--------------------------------------------------*/
+***************************************************************************/
 
 #define PEN_BRIGHTNESS_BITS		8
 #define MAX_PEN_BRIGHTNESS		(4 << PEN_BRIGHTNESS_BITS)
@@ -33,23 +33,33 @@ enum
 	DIRECT_RGB = DIRECT_15BIT | DIRECT_32BIT
 };
 
-/*-------------------------------------------------
-    GLOBAL VARIABLES
--------------------------------------------------*/
 
-#ifdef NEW_RENDER
+
+/***************************************************************************
+    TYPE DEFINITIONS
+***************************************************************************/
+
+typedef struct _callback_item callback_item;
+struct _callback_item
+{
+	callback_item *	next;
+	void *			param;
+	void 			(*notify)(void *param, int index, rgb_t newval);
+};
+
+
+
+/***************************************************************************
+    GLOBALS
+***************************************************************************/
+
+#ifndef NEW_RENDER
 UINT32 direct_rgb_components[3];
 #endif
 UINT16 *palette_shadow_table;
 
-
-
-/*-------------------------------------------------
-    LOCAL VARIABLES
--------------------------------------------------*/
-
 rgb_t *game_palette;				/* RGB palette as set by the driver */
-rgb_t *adjusted_palette;		/* actual RGB palette after brightness/gamma adjustments */
+rgb_t *adjusted_palette;			/* actual RGB palette after brightness/gamma adjustments */
 static UINT32 *dirty_palette;
 static UINT16 *pen_brightness;
 
@@ -57,7 +67,6 @@ static UINT8 adjusted_palette_dirty;
 static UINT8 debug_palette_dirty;
 
 static UINT16 shadow_factor, highlight_factor;
-static double global_brightness, global_brightness_adjust, global_gamma;
 
 static UINT8 colormode, highlight_method;
 static pen_t total_colors;
@@ -65,20 +74,25 @@ static pen_t total_colors_with_ui;
 
 static pen_t black_pen, white_pen;
 
-static UINT8 color_correct_table[(MAX_PEN_BRIGHTNESS * MAX_PEN_BRIGHTNESS) >> PEN_BRIGHTNESS_BITS];
+static callback_item *notify_callback_list;
 
 
 
-/*-------------------------------------------------
+/***************************************************************************
     PROTOTYPES
--------------------------------------------------*/
+***************************************************************************/
 
-static int palette_alloc(void);
+static void palette_exit(void);
+static void palette_alloc(void);
 static void palette_reset(void);
-static void recompute_adjusted_palette(int brightness_or_gamma_changed);
+static void recompute_adjusted_palette(void);
 static void internal_modify_pen(pen_t pen, rgb_t color, int pen_bright);
 
 
+
+/***************************************************************************
+    INLINES
+***************************************************************************/
 
 /*-------------------------------------------------
     rgb_to_direct15 - convert an RGB triplet to
@@ -123,9 +137,9 @@ INLINE UINT32 rgb_to_direct32(rgb_t rgb)
 
 INLINE rgb_t adjust_palette_entry(rgb_t entry, int pen_bright)
 {
-	int r = color_correct_table[(RGB_RED(entry) * pen_bright) >> PEN_BRIGHTNESS_BITS];
-	int g = color_correct_table[(RGB_GREEN(entry) * pen_bright) >> PEN_BRIGHTNESS_BITS];
-	int b = color_correct_table[(RGB_BLUE(entry) * pen_bright) >> PEN_BRIGHTNESS_BITS];
+	int r = (RGB_RED(entry) * pen_bright) >> PEN_BRIGHTNESS_BITS;
+	int g = (RGB_GREEN(entry) * pen_bright) >> PEN_BRIGHTNESS_BITS;
+	int b = (RGB_BLUE(entry) * pen_bright) >> PEN_BRIGHTNESS_BITS;
 	return MAKE_RGB(r,g,b);
 }
 
@@ -135,19 +149,22 @@ INLINE rgb_t adjust_palette_entry(rgb_t entry, int pen_bright)
     mark_pen_dirty - mark a given pen index dirty
 -------------------------------------------------*/
 
-INLINE void mark_pen_dirty(int pen)
+INLINE void mark_pen_dirty(int pen, rgb_t newval)
 {
+	callback_item *cb;
+	for (cb = notify_callback_list; cb; cb = cb->next)
+		(*cb->notify)(cb->param, pen, newval);
 	dirty_palette[pen / 32] |= 1 << (pen % 32);
 }
 
 
 
 /*-------------------------------------------------
-    palette_start - palette initialization that
+    palette_init - palette initialization that
     takes place before the display is created
 -------------------------------------------------*/
 
-int palette_start(void)
+void palette_init(void)
 {
 	/* init statics */
 	adjusted_palette_dirty = 1;
@@ -155,9 +172,9 @@ int palette_start(void)
 
 	shadow_factor = (int)(PALETTE_DEFAULT_SHADOW_FACTOR * (double)(1 << PEN_BRIGHTNESS_BITS));
 	highlight_factor = (int)(PALETTE_DEFAULT_HIGHLIGHT_FACTOR * (double)(1 << PEN_BRIGHTNESS_BITS));
-	global_brightness = (options.brightness > .001) ? options.brightness : 1.0;
-	global_brightness_adjust = 1.0;
-	global_gamma = (options.gamma > .001) ? options.gamma : 1.0;
+
+	notify_callback_list = NULL;
+	add_exit_callback(palette_exit);
 
 	/* determine the color mode */
 	if (Machine->color_depth == 15)
@@ -170,12 +187,8 @@ int palette_start(void)
 	highlight_method = 0;
 
 	/* ensure that RGB direct video modes don't have a colortable */
-	if ((Machine->drv->video_attributes & VIDEO_RGB_DIRECT) &&
-			Machine->drv->color_table_len)
-	{
-		logerror("Error: VIDEO_RGB_DIRECT requires color_table_len to be 0.\n");
-		return 1;
-	}
+	assert_always(!(Machine->drv->video_attributes & VIDEO_RGB_DIRECT) || Machine->drv->color_table_len == 0,
+		"Error: VIDEO_RGB_DIRECT requires color_table_len to be 0.");
 
 	/* compute the total colors, including shadows and highlights */
 	total_colors = Machine->drv->total_colors;
@@ -186,23 +199,52 @@ int palette_start(void)
 	total_colors_with_ui = total_colors;
 
 	/* make sure we still fit in 16 bits */
-	if (total_colors > 65536)
-	{
-		logerror("Error: palette has more than 65536 colors.\n");
-		return 1;
-	}
+	assert_always(total_colors <= 65536, "Error: palette has more than 65536 colors.");
 
 	/* allocate all the data structures */
-	if (palette_alloc())
-		return 1;
+	palette_alloc();
 
 	/* set up save/restore of the palette */
 	state_save_register_global_pointer(game_palette, total_colors);
 	state_save_register_global_pointer(pen_brightness, Machine->drv->total_colors);
 	state_save_register_func_postload(palette_reset);
-
-	return 0;
 }
+
+
+static void palette_exit(void)
+{
+	/* free the list of notifiers */
+	while (notify_callback_list != NULL)
+	{
+		callback_item *temp = notify_callback_list;
+		notify_callback_list = notify_callback_list->next;
+		free(temp);
+	}
+}
+
+
+/*-------------------------------------------------
+    palette_add_notifier - request a callback on
+    changing of a palette entry
+-------------------------------------------------*/
+
+void palette_add_notifier(void (*callback)(void *, int, rgb_t), void *param)
+{
+	callback_item *cb;
+
+	assert_always(mame_get_phase() == MAME_PHASE_INIT, "Can only call add_exit_callback at init time!");
+
+	/* allocate memory */
+	cb = malloc_or_die(sizeof(*cb));
+
+	/* add us to the head of the list */
+	cb->notify = callback;
+	cb->param = param;
+	cb->next = notify_callback_list;
+	notify_callback_list = cb;
+}
+
+
 
 
 //* 072703AT (last update)
@@ -513,7 +555,7 @@ void palette_set_highlight_method(int method)
     structures
 -------------------------------------------------*/
 
-static int palette_alloc(void)
+static void palette_alloc(void)
 {
 	int max_total_colors = total_colors + 2;
 	int i;
@@ -531,8 +573,9 @@ static int palette_alloc(void)
 	/* allocate memory for the dirty palette array */
 	dirty_palette = auto_malloc((max_total_colors + 31) / 32 * sizeof(dirty_palette[0]));
 	dirty_palette[(max_total_colors - 1) / 32] = 0; /* initialize all the bits of the last dirty entry */
-	for (i = 0; i < max_total_colors; i++)
-		mark_pen_dirty(i);
+	if (colormode == PALETTIZED_16BIT)
+		for (i = 0; i < max_total_colors; i++)
+			mark_pen_dirty(i, adjusted_palette[i]);
 
 	/* allocate memory for the pen table */
 	if (total_colors > 0)
@@ -665,23 +708,21 @@ static int palette_alloc(void)
 		palette_shadow_table = (UINT16*)shadow_table_base[0];
 	}
 #endif
-
-	return 0;
 }
 
 
 
 /*-------------------------------------------------
-    palette_init - palette initialization that
+    palette_config - palette initialization that
     takes place after the display is created
 -------------------------------------------------*/
 
-int palette_init(void)
+void palette_config(void)
 {
 	int i;
 
 	/* recompute the default palette and initalize the color correction table */
-	recompute_adjusted_palette(1);
+	recompute_adjusted_palette();
 
 	/* now let the driver modify the initial palette and colortable */
 	if (Machine->drv->init_palette)
@@ -750,9 +791,6 @@ int palette_init(void)
 		assert(color < total_colors);
 		Machine->remapped_colortable[i] = Machine->pens[color];
 	}
-
-	/* all done */
-	return 0;
 }
 
 
@@ -855,7 +893,7 @@ static void internal_modify_single_pen(pen_t pen, rgb_t color, int pen_bright)
 		{
 			/* 16-bit palettized: just mark it dirty for later */
 			case PALETTIZED_16BIT:
-				mark_pen_dirty(pen);
+				mark_pen_dirty(pen, adjusted_color);
 				break;
 
 			/* 15/32-bit direct: update the Machine->pens array */
@@ -989,17 +1027,9 @@ static void internal_modify_pen(pen_t pen, rgb_t color, int pen_bright) //* new 
     entire palette after some major event
 -------------------------------------------------*/
 
-static void recompute_adjusted_palette(int brightness_or_gamma_changed)
+static void recompute_adjusted_palette(void)
 {
 	int i;
-
-	/* regenerate the color correction table if needed */
-	if (brightness_or_gamma_changed)
-		for (i = 0; i < sizeof(color_correct_table); i++)
-		{
-			int value = (int)(255.0 * (global_brightness * global_brightness_adjust) * pow((double)i * (1.0 / 255.0), 1.0 / global_gamma) + 0.5);
-			color_correct_table[i] = (value < 0) ? 0 : (value > 255) ? 255 : value;
-		}
 
 	/* now update all the palette entries */
 	for (i = 0; i < Machine->drv->total_colors; i++)
@@ -1016,7 +1046,7 @@ static void recompute_adjusted_palette(int brightness_or_gamma_changed)
 static void palette_reset(void)
 {
 	/* recompute everything */
-	recompute_adjusted_palette(0);
+	recompute_adjusted_palette();
 }
 
 
@@ -1110,7 +1140,7 @@ void palette_set_shadow_factor(double factor)
 	if (shadow_factor != factorval)
 	{
 		shadow_factor = factorval;
-		recompute_adjusted_palette(0);
+		recompute_adjusted_palette();
 	}
 }
 
@@ -1132,83 +1162,8 @@ void palette_set_highlight_factor(double factor)
 	if (highlight_factor != factorval)
 	{
 		highlight_factor = factorval;
-		recompute_adjusted_palette(0);
+		recompute_adjusted_palette();
 	}
-}
-
-
-
-/*-------------------------------------------------
-    palette_set_global_gamma - set the global
-    gamma factor
--------------------------------------------------*/
-
-void palette_set_global_gamma(double _gamma)
-{
-	/* if the gamma changed, recompute */
-	if (global_gamma != _gamma)
-	{
-		global_gamma = _gamma;
-		recompute_adjusted_palette(1);
-	}
-}
-
-
-
-/*-------------------------------------------------
-    palette_get_global_gamma - return the global
-    gamma factor
--------------------------------------------------*/
-
-double palette_get_global_gamma(void)
-{
-	return global_gamma;
-}
-
-
-
-/*-------------------------------------------------
-    palette_set_global_brightness - set the global
-    brightness factor
--------------------------------------------------*/
-
-void palette_set_global_brightness(double brightness)
-{
-	/* if the gamma changed, recompute */
-	if (global_brightness != brightness)
-	{
-		global_brightness = brightness;
-		recompute_adjusted_palette(1);
-	}
-}
-
-
-
-/*-------------------------------------------------
-    palette_set_global_brightness_adjust - set
-    the global brightness adjustment factor
--------------------------------------------------*/
-
-void palette_set_global_brightness_adjust(double adjustment)
-{
-	/* if the gamma changed, recompute */
-	if (global_brightness_adjust != adjustment)
-	{
-		global_brightness_adjust = adjustment;
-		recompute_adjusted_palette(1);
-	}
-}
-
-
-
-/*-------------------------------------------------
-    palette_get_global_brightness - return the global
-    brightness factor
--------------------------------------------------*/
-
-double palette_get_global_brightness(void)
-{
-	return global_brightness;
 }
 
 

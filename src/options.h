@@ -68,6 +68,8 @@ const char *options_get_string(const char *name, int report_error);
 int options_get_bool(const char *name, int report_error);
 int options_get_int(const char *name, int report_error);
 float options_get_float(const char *name, int report_error);
+int options_get_int_range(const char *name, int report_error, int minval, int maxval);
+float options_get_float_range(const char *name, int report_error, float minval, float maxval);
 
 void options_set_string(const char *name, const char *value);
 void options_set_bool(const char *name, int value);

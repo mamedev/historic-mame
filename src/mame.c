@@ -223,6 +223,7 @@ const char *memory_region_names[REGION_MAX] =
 };
 
 
+
 /***************************************************************************
     PROTOTYPES
 ***************************************************************************/
@@ -901,6 +902,7 @@ static void init_machine(void)
 	state_init();
 	state_save_allow_registration(TRUE);
 	drawgfx_init();
+	palette_init();
 #ifdef NEW_RENDER
 	render_init();
 #endif

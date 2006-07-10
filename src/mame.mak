@@ -1518,6 +1518,7 @@ $(OBJ)/misc.a: \
 	$(OBJ)/drivers/vroulet.o \
 	$(OBJ)/drivers/wldarrow.o \
 	$(OBJ)/drivers/xyonix.o $(OBJ)/vidhrdw/xyonix.o \
+	$(OBJ)/drivers/magicfly.o \
 
 
 

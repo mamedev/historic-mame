@@ -10,25 +10,25 @@ Bellfruit scorpion1 driver, (under heavy construction !!!)
 The MPU4 BOARD is the driver board, originally designed to run Fruit Machines made by the Barcrest Group, but later
 licensed to other firms as a general purpose unit (even some old Photo-Me booths used the unit).
 
-This original board uses a 1Mhz 6809 CPU, and a number of PIA6821 chips for multiplexing inputs and the like. (all wired
+This original board uses a ~1.72 Mhz 6809B CPU, and a number of PIA6821 chips for multiplexing inputs and the like. (all wired
 through the one IRQ)
 
-A 6840PTM is used for internal timing, one of it's functions is to act with an AY8913 chip as a crude DAC device.
+A 6840PTM is used for internal timing, one of it's functions is to act with an AY8913 chip as a crude analogue sound device.
 
 A MPU4 GAME CARD (cartridge) plugs into the MPU4 board containing the game, and a protection PAL (the 'characteriser').
 This PAL, as well as protecting the games, also controlled some of the lamp address matrix for many games, and acted as
 an anti-tampering device which helped to prevent the hacking of certain titles in a manner which broke UK gaming laws.
 
 One of the advantages of the hardware setup was that the developer could change the nature of the game card
-up to a point, adding extra lamp support, different amounts of RAM, and (in many cases) an OKI MSM6376 and related PIA for
-improved ADPCM sample support (This was eventually endorsed in the most recent official 'MOD' of the board)
+up to a point, adding extra lamp support, different amounts of RAM, and (in many cases) an OKI MSM6376 and related PIA and PTM
+for improved ADPCM sample support (This was eventually endorsed in the most recent official 'MOD' of the board)
 
 For the Barcrest MPU4 Video system, the cartridge contains the MPU4 video bios in the usual ROM space, interface chips to connect
 an additional Video board, and a 6850 serial IO to communicate with the video board. This version of the game card does not
-have the OKI chip.
+have the OKI chip, or the characteriser.
 
 The VIDEO BOARD is driven by a 10mhz 68000 processor, and contains a 6840PTM, 6850 serial IO (the other end of the
-communications), an SAA1099 for stereo sound and SCN2674 gfx chip
+communications), an SAA1099 for stereo sound and SCN2674 gfx chip.
 
 The VIDEO CARTRIDGE plugs into the video board, and contains the program roms for the video based game. Like the MPU4 game
 card, in some cases an extra OKI sound chip is added to the video board's game card,as well as extra RAM.
@@ -47,8 +47,7 @@ Emulating the standalone MPU4 is a priority, unless this works, the video won't 
 Everything here is preliminary...  the boards are quite fussy with regards their self tests
 and the timing may have to be perfect for them to function correctly.  (as the comms are
 timer driven, the video is capable of various raster effects etc.)
-An new emulation the 6840 timer chip is being created from the existing, incomplete emulations, and is linked
-to here.
+The 6840 core linked to here should be powerful enough to cover the timing we need.
 
 Datasheets are available for the main components, The AGEMAME site mirrors a few of the harder-to-find ones.
 
@@ -76,7 +75,7 @@ Datasheets are available for the main components, The AGEMAME site mirrors a few
                                           b1 = ??
                                           b0 = ??
 -----------+---+-----------------+--------------------------------------------------------------------------
- 0850 ?    | W | ??????????????? | page latch (NV?)
+ 0850 ?    | W | ??????????????? | page latch (NV)
 -----------+---+-----------------+--------------------------------------------------------------------------
  08C0      |   |                 | MC6840 on sound board(NV?)
 -----------+---+-----------------+--------------------------------------------------------------------------
@@ -197,7 +196,7 @@ Datasheets are available for the main components, The AGEMAME site mirrors a few
                                           IRQB           connected to IRQ CPU
 
 -----------+---+-----------------+--------------------------------------------------------------------------
- 1000-FFFF | R | D D D D D D D D | ROM (can be banked switched by ??? in 8 banks of 64 k )
+ 1000-FFFF | R | D D D D D D D D | ROM (can be banked switched by 0x850 in 8 banks of 64 k ) (NV)
 -----------+---+-----------------+--------------------------------------------------------------------------
 
  4000, appears to be something special?
@@ -205,8 +204,6 @@ Datasheets are available for the main components, The AGEMAME site mirrors a few
  TODO: - get better memorymap.
        - Get MPU4 board working properly, so that video layer will operate.
        - Confirm that MC6850 emulation is sufficient.
-       - Confirm that MC6840 emulation actually works (it appears to, but there is no output,
-         or correct IRQ handling).
 
 */
 
@@ -415,17 +412,15 @@ static MACHINE_RESET( mpu4_vid )
 	vid_data_from_norm    = 0;
 	norm_data_from_vid    = 0;
 
-	#if 0
 // init rom bank ////////////////////////////////////////////////////////
 
-		{
-			UINT8 *rom = memory_region(REGION_CPU1);
+	{
+		UINT8 *rom = memory_region(REGION_CPU1);
 
-			memory_configure_bank(1, 0, 8, &rom[0x10000], 0x10000);
+		memory_configure_bank(1, 0, 8, &rom[0x01000], 0x10000);
 
-			memory_set_bank(1,data&0x03);//not correct
-		}
-	#endif
+		memory_set_bank(1,0);//?
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -433,23 +428,22 @@ static MACHINE_RESET( mpu4_vid )
 static void cpu0_irq(int state)
 {
 	cpunum_set_input_line(0, M6809_IRQ_LINE, state? ASSERT_LINE:CLEAR_LINE);
-}//  signal_50hz = signal_50hz?0:1;
+}
 
 
 ///////////////////////////////////////////////////////////////////////////
-#if 0
+
 static WRITE8_HANDLER( bankswitch_w )
 {
-	memory_set_bank(1,data & 0x03);//?
+//  memory_set_bank(1,data & 0x07);//BFM setting, may not be correct
+	logerror("Bank %d \n",data & 0x07);
 }
-#endif
 
 // IC2 6840 PTM handler ///////////////////////////////////////////////////////
 
 static WRITE8_HANDLER( ic2_o1_callback )
 {
 	ptm6840_set_c2(0,data);
-	logerror("PTM C2 triggered %d\n",data);
 	// copy output value to IC2 c2
 	// this output is the clock for timer2,
 	// the output from timer2 is the input clock for timer3
@@ -471,7 +465,7 @@ static WRITE8_HANDLER( ic2_o3_callback )
 
 static const ptm6840_interface ptm_ic2_intf =
 {
-	100000,
+	6880000/40,
 	0,	0,	0,
 	ic2_o1_callback, ic2_o2_callback, ic2_o3_callback,
 	cpu0_irq
@@ -1641,8 +1635,9 @@ WRITE16_HANDLER( ef9369_address_w )
 
 }
 
-/* 6840 emulation, see cchasm.c? */
+
 #if 0
+/* 6840 emulation, see cchasm.c? */
 READ16_HANDLER( mpu4_vid_6840_r )
 {
 	return 0xffff;
@@ -1767,6 +1762,8 @@ static ADDRESS_MAP_START( mpu4_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0801, 0x0801) AM_READ( mpu4_uart_rx_r)		// video uart receive  reg
 	AM_RANGE(0x0801, 0x0801) AM_WRITE(mpu4_uart_tx_w)		// video uart transmit reg
 
+	AM_RANGE(0x0850, 0x0850) AM_WRITE(bankswitch_w)	  // write bank (rom page select)
+
 	//AM_RANGE(0x0880, 0x0880) AM_READ(uart1stat_r)     // Could be a UART datalogger is here.
 	//AM_RANGE(0x0880, 0x0880) AM_WRITE(uart1ctrl_w)    // Or a PIA?
 	//AM_RANGE(0x0881, 0x0881) AM_READ(uart1data_r)
@@ -1800,8 +1797,9 @@ static ADDRESS_MAP_START( mpu4_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x4100, 0xBFFF) AM_RAM
 
 	//AM_RANGE(0xBE00, 0xBFFF) AM_RAM //00 written on startup
-	AM_RANGE(0xC000, 0xFFFF) AM_ROM
+//  AM_RANGE(0xC000, 0xFFFF) AM_ROM
 
+	AM_RANGE(0x1000, 0xffff) AM_READ(MRA8_BANK1)		  // 64k  paged ROM (4 pages)
 ADDRESS_MAP_END
 
 INPUT_PORTS_START( mpu4_vid )

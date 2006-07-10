@@ -211,6 +211,5 @@ static int drawgdi_window_draw(win_window_info *window, HDC dc, int update)
 #define DSTSHIFT_R			16
 #define DSTSHIFT_G			8
 #define DSTSHIFT_B			0
-#define NO_DEST_READ		1
 
 #include "rendersw.c"

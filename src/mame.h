@@ -209,13 +209,13 @@ struct _global_options
 	int		samplerate;		/* sound sample playback rate, in Hz */
 	int		use_samples;	/* 1 to enable external .wav samples */
 
-	float	brightness;		/* brightness of the display */
-	float	pause_bright;		/* additional brightness when in pause */
-	float	gamma;			/* gamma correction of the display */
+	float	brightness;		/* default brightness of the display */
+	float	contrast;		/* default brightness of the display */
+	float	gamma;			/* default gamma correction of the display */
+	float	pause_bright;	/* fractional brightness when in pause */
 
 	int		beam;			/* vector beam width */
 	float	vector_flicker;	/* vector beam flicker effect control */
-	float	vector_intensity;/* vector beam intensity */
 	int 	antialias;		/* 1 to enable antialiasing on vectors */
 
 	const char * savegame;	/* string representing a savegame to load; if one length then interpreted as a character */

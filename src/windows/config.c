@@ -121,7 +121,9 @@ static const options_entry config_opts[] =
 	{ "autorol",                  "0",    OPTION_BOOLEAN,    "automatically rotate screen counterclockwise 90 degrees if vertical" },
 	{ "flipx",                    "0",    OPTION_BOOLEAN,    "flip screen left-right" },
 	{ "flipy",                    "0",    OPTION_BOOLEAN,    "flip screen upside-down" },
-	{ "brightness",               "1.0",  0,                 "brightness correction" },
+	{ "brightness",               "1.0",  0,                 "default screen brightness correction" },
+	{ "contrast",                 "1.0",  0,                 "default screen contrast correction" },
+	{ "gamma",                    "1.0",  0,                 "default screen gamma correction" },
 	{ "pause_brightness",         "1.0",  0,                 "additional pause brightness" },
 
 	// vector options
@@ -129,7 +131,6 @@ static const options_entry config_opts[] =
 	{ "antialias;aa",             "1",    OPTION_BOOLEAN,    "use antialiasing when drawing vectors" },
 	{ "beam",                     "1.0",  0,                 "set vector beam width" },
 	{ "flicker",                  "1.0",  0,                 "set vector flicker effect" },
-	{ "intensity",                "1.0",  0,                 "set vector intensity" },
 
 	// sound options
 	{ NULL,                       NULL,   OPTION_HEADER,     "CORE SOUND OPTIONS" },
@@ -194,20 +195,6 @@ static const options_entry config_opts[] =
 	{ "verifysamples",            NULL,   OPTION_COMMAND,    "report samplesets that have problems" },
 	{ "romident",                 NULL,   OPTION_COMMAND,    "compare files with known MAME roms" },
 	{ "isknown",                  NULL,   OPTION_COMMAND,    "compare files with known MAME roms (brief)" },
-
-	// deprecated options
-	{ "translucency",             "1",    OPTION_DEPRECATED, "(deprecated)" },
-	{ "norotate",                 "0",    OPTION_DEPRECATED, "(deprecated)" },
-#ifdef NEW_RENDER
-	{ "cleanstretch",             "0",    OPTION_DEPRECATED, "(deprecated)" },
-	{ "scanlines",                "0",    OPTION_DEPRECATED, "(deprecated)" },
-	{ "matchrefresh",             "0",    OPTION_DEPRECATED, "(deprecated)" },
-	{ "refresh",                  "0",    OPTION_DEPRECATED, "(deprecated)" },
-	{ "gamma",                    "1.0",  OPTION_DEPRECATED, "(deprecated)" },
-	{ "artwork_resolution;artres","0",    OPTION_DEPRECATED, "(deprecated)" },
-#else
-	{ "gamma",                    "1.0",  0,                 "color gamma" },
-#endif
 
 	{ NULL }
 };
@@ -573,19 +560,15 @@ static void extract_options(const game_driver *driver, machine_config *drv)
 #endif
 
 	// brightness
-	options.brightness = options_get_float("brightness", TRUE);
-	options.pause_bright = options_get_float("pause_brightness", TRUE);
-#ifndef NEW_RENDER
-	options.gamma = options_get_float("gamma", TRUE);
-#else
-	options.gamma = 1.0f;
-#endif
+	options.brightness = options_get_float_range("brightness", TRUE, 0.1f, 2.0f);
+	options.contrast = options_get_float_range("contrast", TRUE, 0.1f, 2.0f);
+	options.pause_bright = options_get_float_range("pause_brightness", TRUE, 0.0f, 1.0f);
+	options.gamma = options_get_float_range("gamma", TRUE, 0.1f, 3.0f);
 
 	// vector options
 	options.antialias = options_get_bool("antialias", TRUE);
 	options.beam = (int)(options_get_float("beam", TRUE) * 65536.0f);
 	options.vector_flicker = (int)(options_get_float("flicker", TRUE) * 2.55f);
-	options.vector_intensity = options_get_float("intensity", TRUE);
 
 	// sound options
 	options.samplerate = options_get_bool("sound", TRUE) ? options_get_int("samplerate", TRUE) : 0;
@@ -647,15 +630,7 @@ static void extract_options(const game_driver *driver, machine_config *drv)
 
 	// thread priority
 	if (!options.mame_debug)
-	{
-		int priority = options_get_int("priority", TRUE);
-		if (priority < -15 || priority > 1)
-		{
-			fprintf(stderr, "Invalid priority value %d; reverting to 0\n", priority);
-			priority = 0;
-		}
-		SetThreadPriority(GetCurrentThread(), priority);
-	}
+		SetThreadPriority(GetCurrentThread(), options_get_int_range("priority", TRUE, -15, 1));
 }
 
 

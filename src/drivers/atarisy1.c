@@ -7,7 +7,7 @@
     Games supported:
         * Marble Madness (1984) [4 sets]
         * Peter Packrat (1984)
-        * Indiana Jones & the Temple of Doom (1985) [5 sets]
+        * Indiana Jones & the Temple of Doom (1985) [6 sets]
         * Road Runner (1985) [3 sets]
         * Road Blasters (1987) [10 sets]
 
@@ -1190,6 +1190,53 @@ ROM_START( indytem4 )
 ROM_END
 
 
+ROM_START( indytemc )
+	ROM_REGION( 0x88000, REGION_CPU1, 0 )	/* 8.5*64k for 68000 code & slapstic ROM */
+	ROM_LOAD16_BYTE( "136032.205",   0x00000, 0x04000, CRC(88d0be26) SHA1(d124045eccc562ff0423b23a240e27ad740fa0c9) )
+	ROM_LOAD16_BYTE( "136032.206",   0x00001, 0x04000, CRC(3c79ef05) SHA1(20fdca7131478e1ee12691bdafd2d5bb74cbd16f) )
+	ROM_LOAD16_BYTE( "136036.632",   0x10000, 0x08000, BAD_DUMP CRC(8af67d9b) SHA1(5777ed2048fe1a58a1cac8276185843396754d38) )
+	ROM_LOAD16_BYTE( "136036.631",   0x10001, 0x08000, CRC(9ac96ba8) SHA1(d80adabb4198461b5976577bdd8cc4e650de1c8e) )
+	ROM_LOAD16_BYTE( "136036.534",   0x20000, 0x08000, CRC(eae396be) SHA1(6d7a82a2fd43b91c6c1e2c07d33c81487b845bba) )
+	ROM_LOAD16_BYTE( "136036.533",   0x20001, 0x08000, CRC(06c66335) SHA1(848cd7d8c2d8da4d07ddc908676155e154ae764a) )
+	ROM_LOAD16_BYTE( "136036.568",   0x30000, 0x08000, CRC(2bbc16ed) SHA1(f20a07632679641f007caa44feb52272f8a2936d) )
+	ROM_LOAD16_BYTE( "136036.569",   0x30001, 0x08000, CRC(39270ade) SHA1(9d2d029eacfe4565972ed40a9f96970f42875608) )
+	ROM_LOAD16_BYTE( "136036.358",   0x80000, 0x04000, CRC(d9351106) SHA1(6a11cef7f93701d5bc08e0ce413999322a011d69) )
+	ROM_LOAD16_BYTE( "136036.359",   0x80001, 0x04000, CRC(e731caea) SHA1(71c1445804b5696078a49855852420e4046d77bb) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for 6502 code */
+	ROM_LOAD( "136036.153",   0x4000, 0x4000, CRC(95294641) SHA1(00f90a0d49d2c77d5288080036f81a74ad31f8bc) )
+	ROM_LOAD( "136036.170",   0x8000, 0x8000, BAD_DUMP CRC(8af67d9b) SHA1(5777ed2048fe1a58a1cac8276185843396754d38) )
+
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "136032.120",   0x00000, 0x04000, CRC(90a1950d) SHA1(fba32c255850312175d1e3c03d677ffb57e09e07) )  /* alpha font */
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE | ROMREGION_INVERT | ROMREGION_ERASEFF )
+	ROM_LOAD( "136036.135",   0x000000, 0x08000, CRC(ffa8749c) SHA1(b0bec9b8364a15606d9f4d11f674dea2ec25279f) )  /* bank 1, plane 0 */
+	ROM_LOAD( "136036.139",   0x010000, 0x08000, CRC(b682bfca) SHA1(21625ea29609560b31b28c669b2599cfcdab8ea7) )  /* bank 1, plane 1 */
+	ROM_LOAD( "136036.143",   0x020000, 0x08000, CRC(7697da26) SHA1(546b95467ca61fab9ac853635c8972a2dedb6581) )  /* bank 1, plane 2 */
+	ROM_LOAD( "136036.147",   0x030000, 0x08000, CRC(4e9d664c) SHA1(334c5f9e96e7a6fbf375bca58bd58fb18a68da6f) )  /* bank 1, plane 3 */
+
+	ROM_LOAD( "136036.136",   0x080000, 0x08000, CRC(b2b403aa) SHA1(ead88544d798d07c03fefadf84c87ed104036cfa) )  /* bank 2, plane 0 */
+	ROM_LOAD( "136036.140",   0x090000, 0x08000, CRC(ec0c19ca) SHA1(a787502e9db79a3c601964cd8c662ff7d0c2f636) )  /* bank 2, plane 1 */
+	ROM_LOAD( "136036.144",   0x0a0000, 0x08000, CRC(4407df98) SHA1(67eae09121e594bec965b78c44a964a39a2c8772) )  /* bank 2, plane 2 */
+	ROM_LOAD( "136036.148",   0x0b0000, 0x08000, CRC(70dce06d) SHA1(c50aa9ea9ea70e282ebed54cefa9e51da01d14ca) )  /* bank 2, plane 3 */
+
+	ROM_LOAD( "136036.137",   0x100000, 0x08000, CRC(3f352547) SHA1(2a3439bb1ca9cdb80c0bd61cbd5fce60d6ee1fef) )  /* bank 3, plane 0 */
+	ROM_LOAD( "136036.141",   0x110000, 0x08000, CRC(9cbdffd0) SHA1(ce36e7b9792e41d87f97901b8d0a473835017ae6) )  /* bank 3, plane 1 */
+	ROM_LOAD( "136036.145",   0x120000, 0x08000, CRC(e828e64b) SHA1(8ad19ee40e6c4caa3a102f967fe93e823c766b5a) )  /* bank 3, plane 2 */
+	ROM_LOAD( "136036.149",   0x130000, 0x08000, CRC(81503a23) SHA1(9a28ba78f8029395542067f03460d15cbcd7b315) )  /* bank 3, plane 3 */
+
+	ROM_LOAD( "136036.138",   0x180000, 0x08000, CRC(48c4d79d) SHA1(c4cd258cd1effbfd62e3270b626271db66095dcb) )  /* bank 4, plane 0 */
+	ROM_LOAD( "136036.142",   0x190000, 0x08000, CRC(7faae75f) SHA1(e3c3f77aa9ec91d4fcdd2fc5f0a22063eec1afe2) )  /* bank 4, plane 1 */
+	ROM_LOAD( "136036.146",   0x1a0000, 0x08000, CRC(8ae5a7b5) SHA1(97ddf916c41d6ddd23501e27611a83c912ec9ad2) )  /* bank 4, plane 2 */
+	ROM_LOAD( "136036.150",   0x1b0000, 0x08000, CRC(a10c4bd9) SHA1(3177f22aff9e18c0f003f3fd1fa4b258308eee07) )  /* bank 4, plane 3 */
+
+	ROM_REGION( 0x400, REGION_PROMS, 0 )	/* graphics mapping PROMs */
+	ROM_LOAD( "136036.152",   0x000, 0x200, CRC(4f96e57c) SHA1(271633a0aacd1d1efe2917728b73e90010c64d2c) )  /* remap */
+	ROM_LOAD( "136036.151",   0x200, 0x200, CRC(7daf351f) SHA1(95c13d81a47440f847af7b19632cc032380b9ff4) )  /* color */
+ROM_END
+
+
 ROM_START( indytemd )
 	ROM_REGION( 0x88000, REGION_CPU1, 0 )	/* 8.5*64k for 68000 code & slapstic ROM */
 	ROM_LOAD16_BYTE( "136032.205",   0x00000, 0x04000, CRC(88d0be26) SHA1(d124045eccc562ff0423b23a240e27ad740fa0c9) )
@@ -2182,6 +2229,7 @@ GAME( 1985, indytem2, indytemp, atarisy1, indytemp, indytemp, ROT0, "Atari Games
 GAME( 1985, indytem3, indytemp, atarisy1, indytemp, indytemp, ROT0, "Atari Games", "Indiana Jones and the Temple of Doom (set 3)", 0 )
 GAME( 1985, indytem4, indytemp, atarisy1, indytemp, indytemp, ROT0, "Atari Games", "Indiana Jones and the Temple of Doom (set 4)", 0 )
 GAME( 1985, indytemd, indytemp, atarisy1, indytemp, indytemp, ROT0, "Atari Games", "Indiana Jones and the Temple of Doom (German)", 0 )
+GAME( 1985, indytemc, indytemp, atarisy1, indytemp, indytemp, ROT0, "Atari Games", "Indiana Jones and the Temple of Doom (Cocktail)", 0 )
 
 GAME( 1985, roadrunn, 0,        atarisy1, roadrunn, roadrunn, ROT0, "Atari Games", "Road Runner (rev 2)", 0 )
 GAME( 1985, roadrun2, roadrunn, atarisy1, roadrunn, roadrunn, ROT0, "Atari Games", "Road Runner (rev 1+)", 0 )

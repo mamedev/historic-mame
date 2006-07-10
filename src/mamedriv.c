@@ -756,7 +756,8 @@ const game_driver * const drivers[] =
 	DRIVER( swcourt )	/* (c) 1992 (Japan) */
 	DRIVER( swcourtj )	/* (c) 1992 (Japan) */
 	DRIVER( emeralda )	/* (c) 1993 (Japan) */
-	DRIVER( emerldaa )	/* (c) 1993 (Japan) */
+	DRIVER( emeraldj )	/* (c) 1993 (Japan) */
+	DRIVER( emerldja )	/* (c) 1993 (Japan) */
 	DRIVER( numanath )	/* (c) 1993 (World) */
 	DRIVER( numanatj )	/* (c) 1993 (Japan) */
 	DRIVER( quiztou )	/* (c) 1993 (Japan) */
@@ -4619,6 +4620,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( indytem3 )	/* 136036           (c) 1985 */
 	DRIVER( indytem4 )	/* 136036           (c) 1985 */
 	DRIVER( indytemd )	/* 136036           (c) 1985 */
+	DRIVER( indytemc )	/* 136036           (c) 1985 */
 	/* Road Runner */
 	DRIVER( roadrunn )	/* 136040           (c) 1985 */
 	DRIVER( roadrun2 )	/* 136040           (c) 1985 */
@@ -7090,5 +7092,7 @@ Other Sun games
 	DRIVER( sexyboom )	/* (c) 1992 Sang Ho Soft */
 	DRIVER( sfkick )	/* (c) 199? HEC */
 	DRIVER( spinkick )	/* (c) 199? HEC */
+	DRIVER( 7mezzo )	/* (c) 198? Unknown */
+	DRIVER( magicfly )	/* (c) 198? P&A GAMES */
 
 #endif	/* DRIVER_RECURSIVE */

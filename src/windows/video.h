@@ -65,7 +65,8 @@ struct _win_video_config
 
 	// global configuration
 	int					windowed;					// start windowed?
-	int					keepaspect;					// start windowed?
+	int					prescale;					// prescale factor
+	int					keepaspect;					// keep aspect ratio
 	int					numscreens;					// number of screens
 	int					layerconfig;				// default configuration of layers
 
@@ -78,14 +79,12 @@ struct _win_video_config
 	int					syncrefresh;				// sync only to refresh rate
 	int					triplebuf;					// triple buffer
 	int					switchres;					// switch resolutions
-	float				gamma;						// full screen gamma
 
 	// ddraw options
 	int					hwstretch;					// stretch using the hardware
 
 	// d3d options
 	int					filter;						// enable filtering
-	int					prescale;					// prescale factor
 };
 
 

@@ -37,6 +37,7 @@ struct _options_data
 	const char *			names[MAX_ENTRY_NAMES]; /* array of possible names */
 	UINT32					flags;				/* flags from the entry */
 	const char *			data;				/* data for this item */
+	const char *			defdata;			/* default data for this item */
 	const char *			description;		/* description for this item */
 	void					(*callback)(const char *arg);	/* callback to be invoked when parsing */
 };
@@ -140,6 +141,7 @@ void options_add_entries(const options_entry *entrylist)
 			separate_names(entrylist->name, data->names, ARRAY_LENGTH(data->names));
 		data->flags = entrylist->flags;
 		data->data = copy_string(entrylist->defvalue, NULL);
+		data->defdata = entrylist->defvalue;
 		data->description = entrylist->description;
 
 		/* fill it in and add to the end of the list */
@@ -325,9 +327,9 @@ void options_output_ini_file(FILE *inifile)
 		else if ((data->flags & (OPTION_DEPRECATED | OPTION_COMMAND)) == 0 && data->names[0][0] != 0)
 		{
 			if (data->data != NULL)
-				fprintf(inifile, "%-20s%s\n", data->names[0], data->data);
+				fprintf(inifile, "%-25s %s\n", data->names[0], data->data);
 			else
-				fprintf(inifile, "# %-18s<NULL> (not set)\n", data->names[0]);
+				fprintf(inifile, "# %-23s <NULL> (not set)\n", data->names[0]);
 		}
 	}
 }
@@ -379,8 +381,16 @@ int options_get_bool(const char *name, int report_error)
 	options_data *data = find_entry_data(name, FALSE);
 	int value = FALSE;
 
-	if ((data == NULL || data->data == NULL || sscanf(data->data, "%d", &value) != 1 || value < 0 || value > 1) && report_error)
-		fprintf(stderr, "Illegal boolean value for %s = %s\n", (data == NULL) ? "??" : data->names[0], (data == NULL) ? "??" : data->data);
+	if (data == NULL || data->data == NULL || sscanf(data->data, "%d", &value) != 1 || value < 0 || value > 1)
+	{
+		if (data != NULL && data->defdata != NULL)
+		{
+			options_set_string(name, data->defdata);
+			sscanf(data->data, "%d", &value);
+		}
+		if (report_error)
+			fprintf(stderr, "Illegal boolean value for %s; reverting to %d\n", (data == NULL) ? "??" : data->names[0], value);
+	}
 	return value;
 }
 
@@ -395,8 +405,16 @@ int options_get_int(const char *name, int report_error)
 	options_data *data = find_entry_data(name, FALSE);
 	int value = 0;
 
-	if ((data == NULL || data->data == NULL || sscanf(data->data, "%d", &value) != 1) && report_error)
-		fprintf(stderr, "Illegal integer value for %s = %s\n", (data == NULL) ? "??" : data->names[0], (data == NULL) ? "??" : data->data);
+	if (data == NULL || data->data == NULL || sscanf(data->data, "%d", &value) != 1)
+	{
+		if (data != NULL && data->defdata != NULL)
+		{
+			options_set_string(name, data->defdata);
+			sscanf(data->data, "%d", &value);
+		}
+		if (report_error)
+			fprintf(stderr, "Illegal integer value for %s; reverting to %d\n", (data == NULL) ? "??" : data->names[0], value);
+	}
 	return value;
 }
 
@@ -411,8 +429,81 @@ float options_get_float(const char *name, int report_error)
 	options_data *data = find_entry_data(name, FALSE);
 	float value = 0;
 
-	if ((data == NULL || data->data == NULL || sscanf(data->data, "%f", &value) != 1) && report_error)
-		fprintf(stderr, "Illegal float value for %s = %s\n", (data == NULL) ? "??" : data->names[0], (data == NULL) ? "??" : data->data);
+	if (data == NULL || data->data == NULL || sscanf(data->data, "%f", &value) != 1)
+	{
+		if (data != NULL && data->defdata != NULL)
+		{
+			options_set_string(name, data->defdata);
+			sscanf(data->data, "%f", &value);
+		}
+		if (report_error)
+			fprintf(stderr, "Illegal float value for %s; reverting to %f\n", (data == NULL) ? "??" : data->names[0], (double)value);
+	}
+	return value;
+}
+
+
+/*-------------------------------------------------
+    options_get_int_range - return data formatted
+    as an integer and clamped to within the given
+    range
+-------------------------------------------------*/
+
+int options_get_int_range(const char *name, int report_error, int minval, int maxval)
+{
+	options_data *data = find_entry_data(name, FALSE);
+	int value = 0;
+
+	if (data == NULL || data->data == NULL || sscanf(data->data, "%d", &value) != 1)
+	{
+		if (data != NULL && data->defdata != NULL)
+		{
+			options_set_string(name, data->defdata);
+			value = options_get_int(name, FALSE);
+		}
+		if (report_error)
+			fprintf(stderr, "Illegal integer value for %s; reverting to %d\n", (data == NULL) ? "??" : data->names[0], value);
+	}
+	else if (value < minval || value > maxval)
+	{
+		options_set_string(name, data->defdata);
+		value = options_get_int(name, FALSE);
+		if (report_error)
+			fprintf(stderr, "Invalid %s value (must be between %d and %d); reverting to %d\n", (data == NULL) ? "??" : data->names[0], minval, maxval, value);
+	}
+
+	return value;
+}
+
+
+/*-------------------------------------------------
+    options_get_float_range - return data formatted
+    as a float and clamped to within the given
+    range
+-------------------------------------------------*/
+
+float options_get_float_range(const char *name, int report_error, float minval, float maxval)
+{
+	options_data *data = find_entry_data(name, FALSE);
+	float value = 0;
+
+	if (data == NULL || data->data == NULL || sscanf(data->data, "%f", &value) != 1)
+	{
+		if (data != NULL && data->defdata != NULL)
+		{
+			options_set_string(name, data->defdata);
+			value = options_get_float(name, FALSE);
+		}
+		if (report_error)
+			fprintf(stderr, "Illegal float value for %s; reverting to %f\n", (data == NULL) ? "??" : data->names[0], (double)value);
+	}
+	else if (value < minval || value > maxval)
+	{
+		options_set_string(name, data->defdata);
+		value = options_get_float(name, FALSE);
+		if (report_error)
+			fprintf(stderr, "Invalid %s value (must be between %f and %f); reverting to %f\n", (data == NULL) ? "??" : data->names[0], (double)minval, (double)maxval, (double)value);
+	}
 	return value;
 }
 

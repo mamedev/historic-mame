@@ -100,6 +100,7 @@ struct _poly_info
 	 UINT32					count;						// total number of primitives
 	 UINT32					numverts;					// total number of vertices
 	 UINT32					flags;						// rendering flags
+	 DWORD					modmode;					// texture modulation mode
 	 texture_info *			texture;					// pointer to texture info
 };
 
@@ -139,6 +140,8 @@ struct _d3d_info
 	texture_info *			texlist;					// list of active textures
 	int						dynamic_supported;			// are dynamic textures supported?
 	int						stretch_supported;			// is StretchRect with point filtering supported?
+	int						mod2x_supported;			// is D3DTOP_MODULATE2X supported?
+	int						mod4x_supported;			// is D3DTOP_MODULATE4X supported?
 	D3DFORMAT				screen_format;				// format to use for screen textures
 
 	DWORD					texture_caps;				// textureCaps field
@@ -148,9 +151,12 @@ struct _d3d_info
 
 	texture_info *			last_texture;				// previous texture
 	int						last_blendenable;			// previous blendmode
+	int						last_blendop;				// previous blendmode
 	int						last_blendsrc;				// previous blendmode
 	int						last_blenddst;				// previous blendmode
 	int						last_filter;				// previous texture filter
+	int						last_wrap;					// previous wrap state
+	DWORD					last_modmode;				// previous texture modulation
 };
 
 
@@ -223,10 +229,37 @@ INLINE void set_filter(d3d_info *d3d, int filter)
 }
 
 
+INLINE void set_wrap(d3d_info *d3d, int wrap)
+{
+	HRESULT result;
+	if (wrap != d3d->last_wrap)
+	{
+		d3d->last_wrap = wrap;
+		result = (*d3dintf->device.set_texture_stage_state)(d3d->device, 0, D3DTSS_ADDRESSU, wrap ? D3DTADDRESS_WRAP : D3DTADDRESS_CLAMP);
+		if (result != D3D_OK) verbose_printf("Direct3D: Error %08X during device set_texture_stage_state call\n", (int)result);
+		result = (*d3dintf->device.set_texture_stage_state)(d3d->device, 0, D3DTSS_ADDRESSV, wrap ? D3DTADDRESS_WRAP : D3DTADDRESS_CLAMP);
+		if (result != D3D_OK) verbose_printf("Direct3D: Error %08X during device set_texture_stage_state call\n", (int)result);
+	}
+}
+
+
+INLINE void set_modmode(d3d_info *d3d, DWORD modmode)
+{
+	HRESULT result;
+	if (modmode != d3d->last_modmode)
+	{
+		d3d->last_modmode = modmode;
+		result = (*d3dintf->device.set_texture_stage_state)(d3d->device, 0, D3DTSS_COLOROP, modmode);
+		if (result != D3D_OK) verbose_printf("Direct3D: Error %08X during device set_texture_stage_state call\n", (int)result);
+	}
+}
+
+
 INLINE void set_blendmode(d3d_info *d3d, int blendmode)
 {
 	HRESULT result;
 	int blendenable;
+	int blendop;
 	int blendsrc;
 	int blenddst;
 
@@ -234,10 +267,10 @@ INLINE void set_blendmode(d3d_info *d3d, int blendmode)
 	switch (blendmode)
 	{
 		default:
-		case BLENDMODE_NONE:			blendenable = FALSE;	blendsrc = D3DBLEND_SRCALPHA;	blenddst = D3DBLEND_INVSRCALPHA;	break;
-		case BLENDMODE_ALPHA:			blendenable = TRUE;		blendsrc = D3DBLEND_SRCALPHA;	blenddst = D3DBLEND_INVSRCALPHA;	break;
-		case BLENDMODE_RGB_MULTIPLY:	blendenable = TRUE;		blendsrc = D3DBLEND_DESTCOLOR;	blenddst = D3DBLEND_ZERO;			break;
-		case BLENDMODE_ADD:				blendenable = TRUE;		blendsrc = D3DBLEND_SRCALPHA;	blenddst = D3DBLEND_ONE;			break;
+		case BLENDMODE_NONE:			blendenable = FALSE;	blendop = D3DBLENDOP_ADD;		blendsrc = D3DBLEND_SRCALPHA;	blenddst = D3DBLEND_INVSRCALPHA;	break;
+		case BLENDMODE_ALPHA:			blendenable = TRUE;		blendop = D3DBLENDOP_ADD;		blendsrc = D3DBLEND_SRCALPHA;	blenddst = D3DBLEND_INVSRCALPHA;	break;
+		case BLENDMODE_RGB_MULTIPLY:	blendenable = TRUE;		blendop = D3DBLENDOP_ADD;		blendsrc = D3DBLEND_DESTCOLOR;	blenddst = D3DBLEND_ZERO;			break;
+		case BLENDMODE_ADD:				blendenable = TRUE;		blendop = D3DBLENDOP_ADD;		blendsrc = D3DBLEND_SRCALPHA;	blenddst = D3DBLEND_ONE;			break;
 	}
 
 	// adjust the bits that changed
@@ -245,6 +278,13 @@ INLINE void set_blendmode(d3d_info *d3d, int blendmode)
 	{
 		d3d->last_blendenable = blendenable;
 		result = (*d3dintf->device.set_render_state)(d3d->device, D3DRS_ALPHABLENDENABLE, blendenable);
+		if (result != D3D_OK) verbose_printf("Direct3D: Error %08X during device set_render_state call\n", (int)result);
+	}
+
+	if (blendop != d3d->last_blendop)
+	{
+		d3d->last_blendop = blendop;
+		result = (*d3dintf->device.set_render_state)(d3d->device, D3DRS_BLENDOP, blendop);
 		if (result != D3D_OK) verbose_printf("Direct3D: Error %08X during device set_render_state call\n", (int)result);
 	}
 
@@ -270,8 +310,10 @@ INLINE void reset_render_states(d3d_info *d3d)
 	d3d->last_texture = (texture_info *)~0;
 	d3d->last_filter = -1;
 	d3d->last_blendenable = -1;
+	d3d->last_blendop = -1;
 	d3d->last_blendsrc = -1;
 	d3d->last_blenddst = -1;
+	d3d->last_wrap = -1;
 }
 
 
@@ -302,8 +344,8 @@ static void pick_best_mode(win_window_info *window);
 static int update_window_size(win_window_info *window);
 
 // drawing
-static void draw_line(d3d_info *d3d, const render_primitive *prim, const render_bounds *clip);
-static void draw_quad(d3d_info *d3d, const render_primitive *prim, const render_bounds *clip);
+static void draw_line(d3d_info *d3d, const render_primitive *prim);
+static void draw_quad(d3d_info *d3d, const render_primitive *prim);
 
 // primitives
 static d3d_vertex *primitive_alloc(d3d_info *d3d, int numverts);
@@ -439,8 +481,6 @@ static const render_primitive_list *drawd3d_window_get_primitives(win_window_inf
 
 static int drawd3d_window_draw(win_window_info *window, HDC dc, int update)
 {
-	render_bounds clipstack[8];
-	render_bounds *clip = &clipstack[0];
 	d3d_info *d3d = window->dxdata;
 	const render_primitive *prim;
 	HRESULT result;
@@ -471,11 +511,6 @@ static int drawd3d_window_draw(win_window_info *window, HDC dc, int update)
 
 mtlog_add("drawd3d_window_draw: begin");
 
-	// set up the initial clipping rect
-	clip->x0 = clip->y0 = 0;
-	clip->x1 = (float)d3d->width;
-	clip->y1 = (float)d3d->height;
-
 	// first update any textures
 	osd_lock_acquire(window->primlist->lock);
 	for (prim = window->primlist->head; prim != NULL; prim = prim->next)
@@ -494,31 +529,12 @@ mtlog_add("drawd3d_window_draw: primitive loop begin");
 	for (prim = window->primlist->head; prim != NULL; prim = prim->next)
 		switch (prim->type)
 		{
-			case RENDER_PRIMITIVE_CLIP_PUSH:
-				clip++;
-				assert(clip - clipstack < ARRAY_LENGTH(clipstack));
-
-				/* extract the new clip */
-				*clip = prim->bounds;
-
-				/* clip against the main bounds */
-				if (clip->x0 < 0) clip->x0 = 0;
-				if (clip->y0 < 0) clip->y0 = 0;
-				if (clip->x1 > (float)d3d->width) clip->x1 = (float)d3d->width;
-				if (clip->y1 > (float)d3d->height) clip->y1 = (float)d3d->height;
-				break;
-
-			case RENDER_PRIMITIVE_CLIP_POP:
-				clip--;
-				assert(clip >= clipstack);
-				break;
-
 			case RENDER_PRIMITIVE_LINE:
-				draw_line(d3d, prim, clip);
+				draw_line(d3d, prim);
 				break;
 
 			case RENDER_PRIMITIVE_QUAD:
-				draw_quad(d3d, prim, clip);
+				draw_quad(d3d, prim);
 				break;
 		}
 mtlog_add("drawd3d_window_draw: primitive loop end");
@@ -635,8 +651,10 @@ try_again:
 	if (window->fullscreen)
 	{
 		// only set the gamma if it's not 1.0f
+		float brightness = options_get_float("full_screen_brightness", TRUE);
+		float contrast = options_get_float("full_screen_contrast", TRUE);
 		float gamma = options_get_float("full_screen_gamma", TRUE);
-		if (gamma != 1.0f)
+		if (brightness != 1.0f || contrast != 1.0f || gamma != 1.0f)
 		{
 			// warn if we can't do it
 			if (!d3d->gamma_supported)
@@ -648,12 +666,7 @@ try_again:
 
 				// create a standard ramp and set it
 				for (i = 0; i < 256; i++)
-				{
-					double val = ((float)i / 255.0) * gamma;
-					if (val > 1.0)
-						val = 1.0;
-					ramp.red[i] = ramp.green[i] = ramp.blue[i] = (WORD)(val * 65535.0);
-				}
+					ramp.red[i] = ramp.green[i] = ramp.blue[i] = apply_brightness_contrast_gamma(i, brightness, contrast, gamma) << 8;
 				(*d3dintf->device.set_gamma_ramp)(d3d->device, 0, &ramp);
 			}
 		}
@@ -710,7 +723,6 @@ static int device_create_resources(d3d_info *d3d)
 	result = (*d3dintf->device.set_render_state)(d3d->device, D3DRS_CLIPPING, TRUE);
 	result = (*d3dintf->device.set_render_state)(d3d->device, D3DRS_LIGHTING, FALSE);
 	result = (*d3dintf->device.set_render_state)(d3d->device, D3DRS_COLORVERTEX, TRUE);
-	result = (*d3dintf->device.set_render_state)(d3d->device, D3DRS_BLENDOP, D3DBLENDOP_ADD);
 
 	result = (*d3dintf->device.set_texture_stage_state)(d3d->device, 0, D3DTSS_COLOROP, D3DTOP_MODULATE);
 	result = (*d3dintf->device.set_texture_stage_state)(d3d->device, 0, D3DTSS_ALPHAOP, D3DTOP_MODULATE);
@@ -906,6 +918,10 @@ static int device_verify_caps(d3d_info *d3d)
 		verbose_printf("Direct3D: Warning - Device does not support texture modulation\n");
 		retval = 1;
 	}
+
+	// set a simpler flag to indicate mod2x and mod4x texture modes
+	d3d->mod2x_supported = ((tempcaps & D3DTEXOPCAPS_MODULATE2X) != 0);
+	d3d->mod4x_supported = ((tempcaps & D3DTEXOPCAPS_MODULATE4X) != 0);
 
 	// set a simpler flag to indicate we can use a gamma ramp
 	result = (*d3dintf->d3d.get_caps_dword)(d3dintf, d3d->adapter, D3DDEVTYPE_HAL, CAPS_CAPS2, &tempcaps);
@@ -1200,12 +1216,12 @@ static int update_window_size(win_window_info *window)
 //  draw_line
 //============================================================
 
-static void draw_line(d3d_info *d3d, const render_primitive *prim, const render_bounds *clip)
+static void draw_line(d3d_info *d3d, const render_primitive *prim)
 {
 	const line_aa_step *step = line_aa_4step;
 	float unitx, unity, effwidth;
-	render_bounds bounds;
 	d3d_vertex *vertex;
+	INT32 r, g, b, a;
 	poly_info *poly;
 	DWORD color;
 	int i;
@@ -1257,14 +1273,9 @@ static void draw_line(d3d_info *d3d, const render_primitive *prim, const render_
             D.y = p1.y + w * u.x + w * u.y
     */
 
-	// first we need to compute the clipped line
-	bounds = prim->bounds;
-	if (render_clip_line(&bounds, clip))
-		return;
-
 	// compute a vector from point 0 to point 1
-	unitx = bounds.x1 - bounds.x0;
-	unity = bounds.y1 - bounds.y0;
+	unitx = prim->bounds.x1 - prim->bounds.x0;
+	unity = prim->bounds.y1 - prim->bounds.y0;
 
 	// points just use a +1/+1 unit vector; this gives a nice diamond pattern
 	if (unitx == 0 && unity == 0)
@@ -1299,23 +1310,33 @@ static void draw_line(d3d_info *d3d, const render_primitive *prim, const render_
 			return;
 
 		// rotate the unit vector by 135 degrees and add to point 0
-		vertex[0].x = bounds.x0 - unitx - unity + step->xoffs;
-		vertex[0].y = bounds.y0 + unitx - unity + step->yoffs;
+		vertex[0].x = prim->bounds.x0 - unitx - unity + step->xoffs;
+		vertex[0].y = prim->bounds.y0 + unitx - unity + step->yoffs;
 
 		// rotate the unit vector by -135 degrees and add to point 0
-		vertex[1].x = bounds.x0 - unitx + unity + step->xoffs;
-		vertex[1].y = bounds.y0 - unitx - unity + step->yoffs;
+		vertex[1].x = prim->bounds.x0 - unitx + unity + step->xoffs;
+		vertex[1].y = prim->bounds.y0 - unitx - unity + step->yoffs;
 
 		// rotate the unit vector by 45 degrees and add to point 1
-		vertex[2].x = bounds.x1 + unitx - unity + step->xoffs;
-		vertex[2].y = bounds.y1 + unitx + unity + step->yoffs;
+		vertex[2].x = prim->bounds.x1 + unitx - unity + step->xoffs;
+		vertex[2].y = prim->bounds.y1 + unitx + unity + step->yoffs;
 
 		// rotate the unit vector by -45 degrees and add to point 1
-		vertex[3].x = bounds.x1 + unitx + unity + step->xoffs;
-		vertex[3].y = bounds.y1 - unitx + unity + step->yoffs;
+		vertex[3].x = prim->bounds.x1 + unitx + unity + step->xoffs;
+		vertex[3].y = prim->bounds.y1 - unitx + unity + step->yoffs;
+
+		// determine the color of the line
+		r = (INT32)(prim->color.r * step->weight * 255.0f);
+		g = (INT32)(prim->color.g * step->weight * 255.0f);
+		b = (INT32)(prim->color.b * step->weight * 255.0f);
+		a = (INT32)(prim->color.a * 255.0f);
+		if (r > 255) r = 255;
+		if (g > 255) g = 255;
+		if (b > 255) b = 255;
+		if (a > 255) a = 255;
+		color = D3DCOLOR_ARGB(a, r, g, b);
 
 		// set the color, Z parameters to standard values
-		color = D3DCOLOR_ARGB((DWORD)(prim->color.a * 255.0f * step->weight), (DWORD)(prim->color.r * 255.0f), (DWORD)(prim->color.g * 255.0f), (DWORD)(prim->color.b * 255.0f));
 		for (i = 0; i < 4; i++)
 		{
 			vertex[i].z = 0.0f;
@@ -1329,6 +1350,7 @@ static void draw_line(d3d_info *d3d, const render_primitive *prim, const render_
 		poly->count = 2;
 		poly->numverts = 4;
 		poly->flags = prim->flags;
+		poly->modmode = D3DTOP_MODULATE;
 		poly->texture = NULL;
 	}
 }
@@ -1339,79 +1361,74 @@ static void draw_line(d3d_info *d3d, const render_primitive *prim, const render_
 //  draw_quad
 //============================================================
 
-static void draw_quad(d3d_info *d3d, const render_primitive *prim, const render_bounds *clip)
+static void draw_quad(d3d_info *d3d, const render_primitive *prim)
 {
 	texture_info *texture = texture_find(d3d, prim);
+	DWORD color, modmode;
 	d3d_vertex *vertex;
-	render_bounds bounds;
+	INT32 r, g, b, a;
 	poly_info *poly;
-	DWORD color;
 	int i;
 
-	// make a copy of the bounds
-	bounds = prim->bounds;
-
-	// non-textured case
-	if (texture == NULL)
-	{
-		// apply clipping
-		if (render_clip_quad(&bounds, clip, NULL, NULL))
-			return;
-
-		// get a pointer to the vertex buffer
-		vertex = primitive_alloc(d3d, 4);
-		if (vertex == NULL)
-			return;
-	}
-
-	// textured case
-	else
-	{
-		float u[4], v[4];
-
-		// set the default coordinates
-		u[0] = texture->ustart;		v[0] = texture->vstart;
-		u[1] = texture->ustop; 		v[1] = texture->vstart;
-		u[2] = texture->ustart;		v[2] = texture->vstop;
-		u[3] = texture->ustop; 		v[3] = texture->vstop;
-
-		// apply orientation to the U/V coordinates
-		if (prim->flags & ORIENTATION_SWAP_XY) { FSWAP(u[1], u[2]); FSWAP(v[1], v[2]); }
-		if (prim->flags & ORIENTATION_FLIP_X) { FSWAP(u[0], u[1]); FSWAP(v[0], v[1]); FSWAP(u[2], u[3]); FSWAP(v[2], v[3]); }
-		if (prim->flags & ORIENTATION_FLIP_Y) { FSWAP(u[0], u[2]); FSWAP(v[0], v[2]); FSWAP(u[1], u[3]); FSWAP(v[1], v[3]); }
-
-		// apply clipping
-		if (render_clip_quad(&bounds, clip, u, v))
-			return;
-
-		// get a pointer to the vertex buffer
-		vertex = primitive_alloc(d3d, 4);
-		if (vertex == NULL)
-			return;
-
-		// set the final coordinates
-		vertex[0].u0 = u[0];
-		vertex[0].v0 = v[0];
-		vertex[1].u0 = u[1];
-		vertex[1].v0 = v[1];
-		vertex[2].u0 = u[2];
-		vertex[2].v0 = v[2];
-		vertex[3].u0 = u[3];
-		vertex[3].v0 = v[3];
-	}
+	// get a pointer to the vertex buffer
+	vertex = primitive_alloc(d3d, 4);
+	if (vertex == NULL)
+		return;
 
 	// fill in the vertexes clockwise
-	vertex[0].x = bounds.x0 - 0.5f;
-	vertex[0].y = bounds.y0 - 0.5f;
-	vertex[1].x = bounds.x1 - 0.5f;
-	vertex[1].y = bounds.y0 - 0.5f;
-	vertex[2].x = bounds.x0 - 0.5f;
-	vertex[2].y = bounds.y1 - 0.5f;
-	vertex[3].x = bounds.x1 - 0.5f;
-	vertex[3].y = bounds.y1 - 0.5f;
+	vertex[0].x = prim->bounds.x0 - 0.5f;
+	vertex[0].y = prim->bounds.y0 - 0.5f;
+	vertex[1].x = prim->bounds.x1 - 0.5f;
+	vertex[1].y = prim->bounds.y0 - 0.5f;
+	vertex[2].x = prim->bounds.x0 - 0.5f;
+	vertex[2].y = prim->bounds.y1 - 0.5f;
+	vertex[3].x = prim->bounds.x1 - 0.5f;
+	vertex[3].y = prim->bounds.y1 - 0.5f;
+
+	// set the texture coordinates
+	if (texture != NULL)
+	{
+		float du = texture->ustop - texture->ustart;
+		float dv = texture->vstop - texture->vstart;
+		vertex[0].u0 = texture->ustart + du * prim->texcoords.tl.u;
+		vertex[0].v0 = texture->vstart + dv * prim->texcoords.tl.v;
+		vertex[1].u0 = texture->ustart + du * prim->texcoords.tr.u;
+		vertex[1].v0 = texture->vstart + dv * prim->texcoords.tr.v;
+		vertex[2].u0 = texture->ustart + du * prim->texcoords.bl.u;
+		vertex[2].v0 = texture->vstart + dv * prim->texcoords.bl.v;
+		vertex[3].u0 = texture->ustart + du * prim->texcoords.br.u;
+		vertex[3].v0 = texture->vstart + dv * prim->texcoords.br.v;
+	}
+
+	// determine the color, allowing for over modulation
+	r = (INT32)(prim->color.r * 255.0f);
+	g = (INT32)(prim->color.g * 255.0f);
+	b = (INT32)(prim->color.b * 255.0f);
+	a = (INT32)(prim->color.a * 255.0f);
+	modmode = D3DTOP_MODULATE;
+	if (texture != NULL)
+	{
+		if (d3d->mod2x_supported && (r > 255 || g > 255 || b > 255))
+		{
+			if (d3d->mod4x_supported && (r > 2*255 || g > 2*255 || b > 2*255))
+			{
+				r >>= 2; g >>= 2; b >>= 2;
+				modmode = D3DTOP_MODULATE4X;
+			}
+			else
+			{
+				r >>= 1; g >>= 1; b >>= 1;
+				modmode = D3DTOP_MODULATE2X;
+			}
+		}
+	}
+	if (r > 255) r = 255;
+	if (g > 255) g = 255;
+	if (b > 255) b = 255;
+	if (a > 255) a = 255;
+	color = D3DCOLOR_ARGB(a, r, g, b);
 
 	// set the color, Z parameters to standard values
-	color = D3DCOLOR_ARGB((DWORD)(prim->color.a * 255.0f), (DWORD)(prim->color.r * 255.0f), (DWORD)(prim->color.g * 255.0f), (DWORD)(prim->color.b * 255.0f));
 	for (i = 0; i < 4; i++)
 	{
 		vertex[i].z = 0.0f;
@@ -1425,6 +1442,7 @@ static void draw_quad(d3d_info *d3d, const render_primitive *prim, const render_
 	poly->count = 2;
 	poly->numverts = 4;
 	poly->flags = prim->flags;
+	poly->modmode = modmode;
 	poly->texture = texture;
 }
 
@@ -1501,6 +1519,8 @@ static void primitive_flush_pending(d3d_info *d3d)
 			if (PRIMFLAG_GET_SCREENTEX(poly->flags))
 				newfilter = video_config.filter;
 			set_filter(d3d, newfilter);
+			set_wrap(d3d, PRIMFLAG_GET_TEXWRAP(poly->flags));
+			set_modmode(d3d, poly->modmode);
 		}
 
 		// set the blendmode if different
@@ -1787,23 +1807,45 @@ static void texture_set_data(d3d_info *d3d, texture_info *texture, const render_
 			case TEXFORMAT_PALETTE16:
 				src16 = (UINT16 *)texsource->base + y * texsource->rowpixels;
 				for (x = 0; x < texsource->width; x++)
-					*dst32++ = texsource->palette[*src16++] | 0xff000000;
+					*dst32++ = 0xff000000 | texsource->palette[*src16++];
 				break;
 
 			case TEXFORMAT_RGB15:
 				src16 = (UINT16 *)texsource->base + y * texsource->rowpixels;
-				for (x = 0; x < texsource->width; x++)
+				if (texsource->palette != NULL)
 				{
-					UINT16 pix = *src16++;
-					UINT32 color = ((pix & 0x7c00) << 9) | ((pix & 0x03e0) << 6) | ((pix & 0x001f) << 3);
-					*dst32++ = color | ((color >> 5) & 0x070707) | 0xff000000;
+					for (x = 0; x < texsource->width; x++)
+					{
+						UINT16 pix = *src16++;
+						*dst32++ = 0xff000000 | texsource->palette[0x40 + ((pix >> 10) & 0x1f)] | texsource->palette[0x20 + ((pix >> 5) & 0x1f)] | texsource->palette[0x00 + ((pix >> 0) & 0x1f)];
+					}
+				}
+				else
+				{
+					for (x = 0; x < texsource->width; x++)
+					{
+						UINT16 pix = *src16++;
+						UINT32 color = ((pix & 0x7c00) << 9) | ((pix & 0x03e0) << 6) | ((pix & 0x001f) << 3);
+						*dst32++ = 0xff000000 | color | ((color >> 5) & 0x070707);
+					}
 				}
 				break;
 
 			case TEXFORMAT_RGB32:
 				src32 = (UINT32 *)texsource->base + y * texsource->rowpixels;
-				for (x = 0; x < texsource->width; x++)
-					*dst32++ = *src32++ | 0xff000000;
+				if (texsource->palette != NULL)
+				{
+					for (x = 0; x < texsource->width; x++)
+					{
+						UINT32 srcpix = *src32++;
+						*dst32++ = 0xff000000 | texsource->palette[0x200 + RGB_RED(srcpix)] | texsource->palette[0x100 + RGB_GREEN(srcpix)] | texsource->palette[RGB_BLUE(srcpix)];
+					}
+				}
+				else
+				{
+					for (x = 0; x < texsource->width; x++)
+						*dst32++ = 0xff000000 | *src32++;
+				}
 				break;
 
 			default:

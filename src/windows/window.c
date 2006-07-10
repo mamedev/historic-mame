@@ -998,7 +998,7 @@ static int complete_create(win_window_info *window)
 						window->fullscreen ? FULLSCREEN_STYLE : WINDOW_STYLE,
 						monitorbounds.left + 20, monitorbounds.top + 20,
 						monitorbounds.left + 100, monitorbounds.top + 100,
-						(win_window_list != NULL) ? win_window_list->hwnd : NULL,
+						NULL,//(win_window_list != NULL) ? win_window_list->hwnd : NULL,
 						menu,
 						GetModuleHandle(NULL),
 						NULL);
@@ -1209,6 +1209,12 @@ LRESULT CALLBACK winwindow_video_window_proc(HWND wnd, UINT message, WPARAM wpar
 			maximize_window(window);
 			break;
 
+		// set focus: if we're not the primary window, switch back
+		case WM_SETFOCUS:
+			if (window != win_window_list && win_window_list != NULL)
+				SetFocus(win_window_list->hwnd);
+			break;
+
 		// everything else: defaults
 		default:
 			return DefWindowProc(wnd, message, wparam, lparam);
@@ -1235,7 +1241,7 @@ static void draw_video_contents(win_window_info *window, HDC dc, int update)
 	mtlog_add("draw_video_contents: render lock acquired");
 
 	// if we're iconic, don't bother
-	if (window->hwnd != NULL && !IsIconic(window->hwnd))// && window->resize_state == RESIZE_STATE_NORMAL)
+	if (window->hwnd != NULL && !IsIconic(window->hwnd))
 	{
 		// if no bitmap, just fill
 		if (window->primlist == NULL)

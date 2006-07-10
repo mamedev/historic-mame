@@ -52,7 +52,6 @@ static float vector_scale_y;              /* scaling to screen */
 
 static float gamma_correction = 1.2f;
 static float flicker_correction = 0.0f;
-static float intensity_correction = 1.5f;
 
 static int (*vector_aux_renderer)(point *start, int num_points) = NULL;
 
@@ -166,16 +165,6 @@ float vector_get_flicker(void)
 	return flicker_correction;
 }
 
-void vector_set_intensity(float _intensity)
-{
-	intensity_correction = _intensity;
-}
-
-float vector_get_intensity(void)
-{
-	return intensity_correction;
-}
-
 /*
  * Initializes vector game video emulation
  */
@@ -187,7 +176,6 @@ VIDEO_START( vector )
 	/* Grab the settings for this session */
 	antialias = options.antialias;
 	vector_set_flicker(options.vector_flicker);
-	vector_set_intensity(options.vector_intensity);
 	beam = options.beam;
 
 
@@ -489,7 +477,6 @@ void vector_add_point (int x, int y, rgb_t color, int intensity)
 {
 	point *newpoint;
 
-	intensity *= intensity_correction;
 	if (intensity > 0xff)
 		intensity = 0xff;
 
@@ -521,7 +508,6 @@ void vector_add_point_callback (int x, int y, rgb_t (*color_callback)(void), int
 {
 	point *newpoint;
 
-	intensity *= intensity_correction;
 	if (intensity > 0xff)
 		intensity = 0xff;
 

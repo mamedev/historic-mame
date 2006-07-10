@@ -396,10 +396,10 @@ static UINT32 menu_cheat(UINT32 state);
 static UINT32 menu_memory_card(UINT32 state);
 static UINT32 menu_video(UINT32 state);
 static UINT32 menu_reset_game(UINT32 state);
+static UINT32 menu_game_info(UINT32 state);
 
 #ifndef MESS
 static UINT32 menu_bookkeeping(UINT32 state);
-static UINT32 menu_game_info(UINT32 state);
 #else
 static UINT32 menu_file_manager(UINT32 state);
 static UINT32 menu_tape_control(UINT32 state);
@@ -433,7 +433,6 @@ static void render_ui(mame_bitmap *dest);
 #define add_fill(x0,y0,x1,y1,color) render_ui_add_rect(UI_UNSCALE_TO_FLOAT(x0), UI_UNSCALE_TO_FLOAT(y0), UI_UNSCALE_TO_FLOAT(x1), UI_UNSCALE_TO_FLOAT(y1), color, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA))
 #define add_char(x,y,ch,color)		render_ui_add_char(UI_UNSCALE_TO_FLOAT(x), UI_UNSCALE_TO_FLOAT(y), UI_FONT_HEIGHT, render_get_ui_aspect(), color, ui_font, ch)
 static void add_filled_box(int x1, int y1, int x2, int y2);
-static void add_black_box(int x1, int y1, int x2, int y2);
 
 INLINE void add_outlined_box_fp(float x0, float y0, float x1, float y1, rgb_t backcolor)
 {
@@ -670,7 +669,7 @@ void ui_update_and_render(void)
 	render_container_empty(render_container_get_ui());
 
 	/* if we're paused, dim the whole screen */
-	if (mame_is_paused())
+	if (mame_get_phase() >= MAME_PHASE_RESET && mame_is_paused())
 	{
 		int alpha = (1.0f - options.pause_bright) * 255.0f;
 		if (alpha > 255)
@@ -1503,9 +1502,6 @@ static void handle_keys(void)
 		{
 			single_step = TRUE;
 			mame_pause(FALSE);
-
-			/* bit of a kludge to prevent flash */
-			palette_set_global_brightness_adjust(options.pause_bright);
 		}
 		else
 			mame_pause(!mame_is_paused());
@@ -1660,10 +1656,12 @@ do { \
 #ifndef MESS
   	/* add bookkeeping menu */
 	ADD_MENU(UI_bookkeeping, menu_bookkeeping, 0);
+#endif
 
 	/* add game info menu */
 	ADD_MENU(UI_gameinfo, menu_game_info, 0);
-#else /* MESS */
+
+#ifdef MESS
   	/* add image info menu */
 	ADD_MENU(UI_imageinfo, ui_menu_image_info, 0);
 
@@ -1675,7 +1673,7 @@ do { \
 	if (device_find(Machine->devices, IO_CASSETTE))
 		ADD_MENU(UI_tapecontrol, menu_tape_control, 1);
 #endif /* HAS_WAVE */
-#endif /* !MESS */
+#endif /* MESS */
 
 #ifdef NEW_RENDER
 	/* add video options menu */
@@ -2489,7 +2487,6 @@ static UINT32 menu_bookkeeping(UINT32 state)
  *
  *************************************/
 
-#ifndef MESS
 static UINT32 menu_game_info(UINT32 state)
 {
 	char buf[2048];
@@ -2509,7 +2506,6 @@ static UINT32 menu_game_info(UINT32 state)
 	ui_menu_generic_keys(&selected, 1);
 	return selected;
 }
-#endif
 
 
 
@@ -2625,25 +2621,30 @@ static UINT32 menu_memory_card(UINT32 state)
 static UINT32 menu_video(UINT32 state)
 {
 	ui_menu_item item_list[100];
+	render_target *targetlist[16];
 	int curtarget = state >> 16;
 	int selected = state & 0xffff;
 	int menu_items = 0;
+	int targets;
 
 	/* reset the menu and string pool */
 	memset(item_list, 0, sizeof(item_list));
 	menu_string_pool_offset = 0;
 
+	/* find the targets */
+	for (targets = 0; targets < ARRAY_LENGTH(targetlist); targets++)
+	{
+		targetlist[targets] = render_target_get_indexed(targets);
+		if (targetlist[targets] == NULL)
+			break;
+	}
+
 	/* if we have a current target of 1000, we may need to select from multiple targets */
 	if (curtarget == 1000)
 	{
 		/* count up the targets, creating menu items for them */
-		for ( ; menu_items < ARRAY_LENGTH(item_list); menu_items++)
+		for ( ; menu_items < targets; menu_items++)
 		{
-			/* get the indexed target */
-			render_target *target = render_target_get_indexed(menu_items);
-			if (target == NULL)
-				break;
-
 			/* create a string for the item */
 			item_list[menu_items].text = &menu_string_pool[menu_string_pool_offset];
 			menu_string_pool_offset += sprintf(&menu_string_pool[menu_string_pool_offset], "%s%d", ui_getstring(UI_screen), menu_items) + 1;
@@ -2652,6 +2653,9 @@ static UINT32 menu_video(UINT32 state)
 		/* if we only ended up with one, auto-select it */
 		if (menu_items == 1)
 			return menu_video(0 << 16);
+
+		/* add an item for moving the UI */
+		item_list[menu_items++].text = "Move User Interface";
 
 		/* add an item to return */
 		item_list[menu_items++].text = ui_getstring(UI_returntomain);
@@ -2665,13 +2669,27 @@ static UINT32 menu_video(UINT32 state)
 
 		/* handle actions */
 		if (input_ui_pressed(IPT_UI_SELECT))
-			return ui_menu_stack_push(menu_video, (selected << 16) | render_target_get_view(render_target_get_indexed(selected)));
+		{
+			if (selected == menu_items - 2)
+			{
+				render_target *uitarget = render_get_ui_target();
+				int targnum;
+
+				for (targnum = 0; targnum < targets; targnum++)
+					if (targetlist[targnum] == uitarget)
+						break;
+				targnum = (targnum + 1) % targets;
+				render_set_ui_target(targetlist[targnum]);
+			}
+			else
+				return ui_menu_stack_push(menu_video, (selected << 16) | render_target_get_view(render_target_get_indexed(selected)));
+		}
 	}
 
 	/* otherwise, draw the list of layouts */
 	else
 	{
-		render_target *target = render_target_get_indexed(curtarget);
+		render_target *target = targetlist[curtarget];
 		int layermask;
 		assert(target != NULL);
 
@@ -4251,21 +4269,6 @@ static void showcharset(mame_bitmap *bitmap)
 #endif
 
 
-int ui_display_decoding(int percent)
-{
-	char buf[1000];
-	char *bufptr = buf;
-
-	bufptr += sprintf(bufptr, "%s: %d%%", ui_getstring(UI_decoding_gfx), percent);
-
-	ui_draw_message_window(buf);
-
-	update_video_and_audio();
-
-	return input_ui_pressed(IPT_UI_CANCEL);
-}
-
-
 static UINT32 ui_handler_disclaimer(UINT32 state)
 {
 	int ui_width, ui_height;
@@ -4281,7 +4284,9 @@ static UINT32 ui_handler_disclaimer(UINT32 state)
 
 	/* first draw a box around the whole screen */
 	ui_get_bounds(&ui_width, &ui_height);
+#ifndef NEW_RENDER
 	add_black_box(0, 0, ui_width - 1, ui_height - 1);
+#endif
 
 	ui_draw_message_window(giant_string_buffer);
 
@@ -4394,7 +4399,9 @@ static UINT32 ui_handler_warnings(UINT32 state)
 
 	/* first draw a box around the whole screen */
 	ui_get_bounds(&ui_width, &ui_height);
+#ifndef NEW_RENDER
 	add_black_box(0, 0, ui_width - 1, ui_height - 1);
+#endif
 
 	ui_draw_message_window(giant_string_buffer);
 
@@ -4447,7 +4454,9 @@ static UINT32 ui_handler_gameinfo(UINT32 state)
 
 	/* first draw a box around the whole screen */
 	ui_get_bounds(&ui_width, &ui_height);
+#ifndef NEW_RENDER
 	add_black_box(0, 0, ui_width - 1, ui_height - 1);
+#endif
 
 	/* draw the window */
 	ui_draw_message_window(giant_string_buffer);
@@ -4519,7 +4528,7 @@ static UINT32 ui_handler_osd(UINT32 state)
     drawbar - draw a thermometer bar
 -------------------------------------------------*/
 
-static void drawbar(int leftx, int topy, int width, int height, int percentage, int default_percentage)
+static void drawbar(int leftx, int topy, int width, int height, float percentage, float default_percentage)
 {
 	int current_x, default_x;
 	int bar_top, bar_bottom;
@@ -4527,8 +4536,8 @@ static void drawbar(int leftx, int topy, int width, int height, int percentage, 
 	/* compute positions */
 	bar_top = topy + (height + 7)/8;
 	bar_bottom = topy + (height - 1) - (height + 7)/8;
-	default_x = leftx + (width - 1) * default_percentage / 100;
-	current_x = leftx + (width - 1) * percentage / 100;
+	default_x = leftx + (width - 1) * default_percentage;
+	current_x = leftx + (width - 1) * percentage;
 
 	/* draw the top and bottom lines */
 	add_line(leftx, bar_top, leftx + width - 1, bar_top, ARGB_WHITE);
@@ -4544,8 +4553,10 @@ static void drawbar(int leftx, int topy, int width, int height, int percentage, 
 
 
 
-static void displayosd(const char *text,int percentage,int default_percentage)
+static void displayosd(const char *text, int minval, int maxval, int defval, int curval)
 {
+	float percentage = (float)(curval - minval) / (float)(maxval - minval);
+	float default_percentage = (float)(defval - minval) / (float)(maxval - minval);
 	int space_width = ui_get_char_width(' ');
 	int line_height = ui_get_line_height();
 	int ui_width, ui_height;
@@ -4595,7 +4606,7 @@ static void onscrd_adjuster(int increment,int arg)
 
 	sprintf(buf,"%s %d%%",in->name,value);
 
-	displayosd(buf,value,in->default_value >> 8);
+	displayosd(buf, 0, 100, in->default_value >> 8, value);
 }
 
 static void onscrd_volume(int increment,int arg)
@@ -4614,7 +4625,7 @@ static void onscrd_volume(int increment,int arg)
 	attenuation = osd_get_mastervolume();
 
 	sprintf(buf,"%s %3ddB", ui_getstring (UI_volume), attenuation);
-	displayosd(buf,100 * (attenuation + 32) / 32,100);
+	displayosd(buf, -32, 0, 0, attenuation);
 }
 
 static void onscrd_mixervol(int increment,int arg)
@@ -4697,48 +4708,168 @@ static void onscrd_mixervol(int increment,int arg)
 		sprintf(buf,"%s %s %4.2f", ui_getstring (UI_allchannels), ui_getstring (UI_volume), volume);
 	else
 		sprintf(buf,"%s %s %4.2f",sound_get_user_gain_name(arg), ui_getstring (UI_volume), volume);
-	displayosd(buf,volume*50,sound_get_default_gain(arg)*50);
+	displayosd(buf, 0, 200, sound_get_default_gain(arg) * 100, volume * 100);
 }
 
 static void onscrd_brightness(int increment,int arg)
 {
-	char buf[20];
-	double brightness;
-
+	render_container *container = render_container_get_screen(arg);
+	char buf[40];
+	int brightness;
 
 	if (increment)
 	{
-		brightness = palette_get_global_brightness();
-		brightness += 0.05 * increment;
-		if (brightness < 0.1) brightness = 0.1;
-		if (brightness > 1.0) brightness = 1.0;
-		palette_set_global_brightness(brightness);
+		brightness = floor(render_container_get_brightness(container) * 1000.0f + 0.5f);
+		brightness += 10 * increment;
+		if (brightness < 800) brightness = 800;
+		if (brightness > 1200) brightness = 1200;
+		render_container_set_brightness(container, (float)brightness / 1000.0f);
 	}
-	brightness = palette_get_global_brightness();
+	brightness = floor(render_container_get_brightness(container) * 1000.0f + 0.5f);
 
-	sprintf(buf,"%s %3d%%", ui_getstring (UI_brightness), (int)(brightness * 100));
-	displayosd(buf,brightness*100,100);
+	if (Machine->drv->screen[1].tag != NULL)
+		sprintf(buf,"Screen %d %s %3d%%", arg, ui_getstring (UI_brightness), brightness / 10);
+	else
+		sprintf(buf,"%s %3d%%", ui_getstring (UI_brightness), brightness / 10);
+	displayosd(buf, 800, 1200, 1000, brightness);
+}
+
+static void onscrd_contrast(int increment,int arg)
+{
+	render_container *container = render_container_get_screen(arg);
+	char buf[40];
+	int contrast;
+
+	if (increment)
+	{
+		contrast = floor(render_container_get_contrast(container) * 1000.0f + 0.5f);
+		contrast += 50 * increment;
+		if (contrast < 100) contrast = 100;
+		if (contrast > 2000) contrast = 2000;
+		render_container_set_contrast(container, (float)contrast / 1000.0f);
+	}
+	contrast = floor(render_container_get_contrast(container) * 1000.0f + 0.5f);
+
+	if (Machine->drv->screen[1].tag != NULL)
+		sprintf(buf,"Screen %d %s %3d%%", arg, ui_getstring (UI_contrast), contrast / 10);
+	else
+		sprintf(buf,"%s %3d%%", ui_getstring (UI_contrast), contrast / 10);
+	displayosd(buf, 100, 2000, 1000, contrast);
 }
 
 static void onscrd_gamma(int increment,int arg)
 {
-	char buf[20];
-	double gamma_correction;
+	render_container *container = render_container_get_screen(arg);
+	char buf[40];
+	int gamma;
 
 	if (increment)
 	{
-		gamma_correction = palette_get_global_gamma();
-
-		gamma_correction += 0.05 * increment;
-		if (gamma_correction < 0.5) gamma_correction = 0.5;
-		if (gamma_correction > 2.0) gamma_correction = 2.0;
-
-		palette_set_global_gamma(gamma_correction);
+		gamma = floor(render_container_get_gamma(container) * 1000.0f + 0.5f);
+		gamma += 50 * increment;
+		if (gamma < 500) gamma = 500;
+		if (gamma > 3000) gamma = 3000;
+		render_container_set_gamma(container, (float)gamma / 1000.0f);
 	}
-	gamma_correction = palette_get_global_gamma();
+	gamma = floor(render_container_get_gamma(container) * 1000.0f + 0.5f);
 
-	sprintf(buf,"%s %1.2f", ui_getstring (UI_gamma), gamma_correction);
-	displayosd(buf,100*(gamma_correction-0.5)/(2.0-0.5),100*(1.0-0.5)/(2.0-0.5));
+	if (Machine->drv->screen[1].tag != NULL)
+		sprintf(buf,"Screen %d %s %4.2f", arg, ui_getstring (UI_gamma), (double)gamma / 1000.0f);
+	else
+		sprintf(buf,"%s %4.2f", ui_getstring (UI_gamma), (double)gamma / 1000.0f);
+	displayosd(buf, 500, 3000, 1000, gamma);
+}
+
+static void onscrd_xscale(int increment,int arg)
+{
+	render_container *container = render_container_get_screen(arg);
+	char buf[40];
+	int xscale;
+
+	if (increment)
+	{
+		xscale = floor(render_container_get_xscale(container) * 1000.0f + 0.5f);
+		xscale += 2 * increment;
+		if (xscale < 800) xscale = 800;
+		if (xscale > 1200) xscale = 1200;
+		render_container_set_xscale(container, (float)xscale / 1000.0f);
+	}
+	xscale = floor(render_container_get_xscale(container) * 1000.0f + 0.5f);
+
+	if (Machine->drv->screen[1].tag != NULL)
+		sprintf(buf,"Screen %d %s %5.3f", arg, "Horiz stretch", (double)xscale / 1000.0f);
+	else
+		sprintf(buf,"%s %5.3f", "Horiz stretch", (double)xscale / 1000.0f);
+	displayosd(buf, 800, 1200, 1000, xscale);
+}
+
+static void onscrd_yscale(int increment,int arg)
+{
+	render_container *container = render_container_get_screen(arg);
+	char buf[40];
+	int yscale;
+
+	if (increment)
+	{
+		yscale = floor(render_container_get_yscale(container) * 1000.0f + 0.5f);
+		yscale += 2 * increment;
+		if (yscale < 800) yscale = 800;
+		if (yscale > 1200) yscale = 1200;
+		render_container_set_yscale(container, (float)yscale / 1000.0f);
+	}
+	yscale = floor(render_container_get_yscale(container) * 1000.0f + 0.5f);
+
+	if (Machine->drv->screen[1].tag != NULL)
+		sprintf(buf,"Screen %d %s %5.3f", arg, "Vert stretch", (double)yscale / 1000.0f);
+	else
+		sprintf(buf,"%s %5.3f", "Vert stretch", (double)yscale / 1000.0f);
+	displayosd(buf, 800, 1200, 1000, yscale);
+}
+
+static void onscrd_xoffset(int increment,int arg)
+{
+	render_container *container = render_container_get_screen(arg);
+	char buf[40];
+	int xoffset;
+
+	if (increment)
+	{
+		xoffset = floor(render_container_get_xoffset(container) * 1000.0f + 0.5f);
+		xoffset += 2 * increment;
+		if (xoffset < -200) xoffset = -200;
+		if (xoffset > 200) xoffset = 200;
+		render_container_set_xoffset(container, (float)xoffset / 1000.0f);
+	}
+	xoffset = floor(render_container_get_xoffset(container) * 1000.0f + 0.5f);
+
+	if (Machine->drv->screen[1].tag != NULL)
+		sprintf(buf,"Screen %d %s %5.3f", arg, "Horiz position", (double)xoffset / 1000.0f);
+	else
+		sprintf(buf,"%s %5.3f", "Horiz position", (double)xoffset / 1000.0f);
+	displayosd(buf, -200, 200, 0, xoffset);
+}
+
+static void onscrd_yoffset(int increment,int arg)
+{
+	render_container *container = render_container_get_screen(arg);
+	char buf[40];
+	int yoffset;
+
+	if (increment)
+	{
+		yoffset = floor(render_container_get_yoffset(container) * 1000.0f + 0.5f);
+		yoffset += 2 * increment;
+		if (yoffset < -200) yoffset = -200;
+		if (yoffset > 200) yoffset = 200;
+		render_container_set_yoffset(container, (float)yoffset / 1000.0f);
+	}
+	yoffset = floor(render_container_get_yoffset(container) * 1000.0f + 0.5f);
+
+	if (Machine->drv->screen[1].tag != NULL)
+		sprintf(buf,"Screen %d %s %5.3f", arg, "Vert position", (double)yoffset / 1000.0f);
+	else
+		sprintf(buf,"%s %5.3f", "Vert position", (double)yoffset / 1000.0f);
+	displayosd(buf, -200, 200, 0, yoffset);
 }
 
 static void onscrd_vector_flicker(int increment,int arg)
@@ -4762,30 +4893,8 @@ static void onscrd_vector_flicker(int increment,int arg)
 	flicker_correction = vector_get_flicker();
 
 	sprintf(buf,"%s %1.2f", ui_getstring (UI_vectorflicker), flicker_correction);
-	displayosd(buf,flicker_correction,0);
+	displayosd(buf, 0, 100, 0, flicker_correction);
 }
-
-static void onscrd_vector_intensity(int increment,int arg)
-{
-	char buf[30];
-	float intensity_correction;
-
-	if (increment)
-	{
-		intensity_correction = vector_get_intensity();
-
-		intensity_correction += 0.05 * increment;
-		if (intensity_correction < 0.5) intensity_correction = 0.5;
-		if (intensity_correction > 3.0) intensity_correction = 3.0;
-
-		vector_set_intensity(intensity_correction);
-	}
-	intensity_correction = vector_get_intensity();
-
-	sprintf(buf,"%s %1.2f", ui_getstring (UI_vectorintensity), intensity_correction);
-	displayosd(buf,100*(intensity_correction-0.5)/(3.0-0.5),100*(1.5-0.5)/(3.0-0.5));
-}
-
 
 static void onscrd_overclock(int increment,int arg)
 {
@@ -4816,7 +4925,7 @@ static void onscrd_overclock(int increment,int arg)
 		sprintf(buf,"%s %s %3d%%", ui_getstring (UI_allcpus), ui_getstring (UI_overclock), oc);
 	else
 		sprintf(buf,"%s %s%d %3d%%", ui_getstring (UI_overclock), ui_getstring (UI_cpu), arg, oc);
-	displayosd(buf,oc/2,100/2);
+	displayosd(buf, 1, 200, 100, oc);
 }
 
 static void onscrd_refresh(int increment,int arg)
@@ -4847,13 +4956,14 @@ static void onscrd_refresh(int increment,int arg)
 	}
 
 	sprintf(buf,"%s %.3f", ui_getstring (UI_refresh_rate), Machine->refresh_rate[0]);
-	displayosd(buf,(10 + delta) * 5,100/2);
+	displayosd(buf, -10, 10, 0, delta);
 }
 
 static void onscrd_init(void)
 {
 	input_port_entry *in;
 	int item,ch;
+	int scrnum;
 
 	item = 0;
 
@@ -4892,21 +5002,41 @@ static void onscrd_init(void)
 		item++;
 	}
 
-	onscrd_fnc[item] = onscrd_brightness;
-	onscrd_arg[item] = 0;
-	item++;
+	for (scrnum = 0; scrnum < MAX_SCREENS; scrnum++)
+		if (Machine->drv->screen[scrnum].tag != NULL)
+		{
+			onscrd_fnc[item] = onscrd_brightness;
+			onscrd_arg[item] = scrnum;
+			item++;
 
-	onscrd_fnc[item] = onscrd_gamma;
-	onscrd_arg[item] = 0;
-	item++;
+			onscrd_fnc[item] = onscrd_contrast;
+			onscrd_arg[item] = scrnum;
+			item++;
+
+			onscrd_fnc[item] = onscrd_gamma;
+			onscrd_arg[item] = scrnum;
+			item++;
+
+			onscrd_fnc[item] = onscrd_xscale;
+			onscrd_arg[item] = scrnum;
+			item++;
+
+			onscrd_fnc[item] = onscrd_yscale;
+			onscrd_arg[item] = scrnum;
+			item++;
+
+			onscrd_fnc[item] = onscrd_xoffset;
+			onscrd_arg[item] = scrnum;
+			item++;
+
+			onscrd_fnc[item] = onscrd_yoffset;
+			onscrd_arg[item] = scrnum;
+			item++;
+		}
 
 	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
 	{
 		onscrd_fnc[item] = onscrd_vector_flicker;
-		onscrd_arg[item] = 0;
-		item++;
-
-		onscrd_fnc[item] = onscrd_vector_intensity;
 		onscrd_arg[item] = 0;
 		item++;
 	}
@@ -5262,23 +5392,6 @@ static void add_filled_box(int x1, int y1, int x2, int y2)
 	add_line(x2, y1, x2, y2, ARGB_WHITE);
 	add_line(x2, y2, x1, y2, ARGB_WHITE);
 	add_line(x1, y2, x1, y1, ARGB_WHITE);
-}
-
-static void add_black_box(int x1, int y1, int x2, int y2)
-{
-	INT32 target_width, target_height;
-	float dw, dh;
-
-	render_target_get_bounds(render_get_ui_target(), &target_width, &target_height, NULL);
-
-	dw = 1.0f / (float)target_width;
-	dw = MAX(dw, UI_LINE_WIDTH);
-
-	dh = 1.0f / (float)target_height;
-	dh = MAX(dh, UI_LINE_WIDTH);
-
-	render_ui_add_rect(0.0f, 0.0f, 1.0f, 1.0f, ARGB_WHITE, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
-	render_ui_add_rect(0.0f + dw, 0.0f + dh, 1.0f - dw, 1.0f - dh, ARGB_BLACK, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
 }
 
 #endif

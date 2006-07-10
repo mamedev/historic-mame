@@ -81,6 +81,9 @@ struct _dd_info
 
 	DDCAPS					ddcaps;						// capabilities of the device
 	DDCAPS					helcaps;					// capabilities of the hardware
+
+	void *					membuffer;					// memory buffer for complex rendering
+	UINT32					membuffersize;				// current size of the memory buffer
 };
 
 
@@ -171,6 +174,10 @@ void drawdd_rgb888_draw_primitives(const render_primitive *primlist, void *dstda
 void drawdd_bgr888_draw_primitives(const render_primitive *primlist, void *dstdata, UINT32 width, UINT32 height, UINT32 pitch);
 void drawdd_rgb565_draw_primitives(const render_primitive *primlist, void *dstdata, UINT32 width, UINT32 height, UINT32 pitch);
 void drawdd_rgb555_draw_primitives(const render_primitive *primlist, void *dstdata, UINT32 width, UINT32 height, UINT32 pitch);
+void drawdd_rgb888_nr_draw_primitives(const render_primitive *primlist, void *dstdata, UINT32 width, UINT32 height, UINT32 pitch);
+void drawdd_bgr888_nr_draw_primitives(const render_primitive *primlist, void *dstdata, UINT32 width, UINT32 height, UINT32 pitch);
+void drawdd_rgb565_nr_draw_primitives(const render_primitive *primlist, void *dstdata, UINT32 width, UINT32 height, UINT32 pitch);
+void drawdd_rgb555_nr_draw_primitives(const render_primitive *primlist, void *dstdata, UINT32 width, UINT32 height, UINT32 pitch);
 
 
 
@@ -307,6 +314,8 @@ static const render_primitive_list *drawdd_window_get_primitives(win_window_info
 static int drawdd_window_draw(win_window_info *window, HDC dc, int update)
 {
 	dd_info *dd = window->dxdata;
+	const render_primitive *prim;
+	int usemembuffer = FALSE;
 	HRESULT result;
 
 	// if we haven't been created, just punt
@@ -345,27 +354,68 @@ static int drawdd_window_draw(win_window_info *window, HDC dc, int update)
 
 	// render to it
 	osd_lock_acquire(window->primlist->lock);
-	switch (dd->blitdesc.ddpfPixelFormat.dwRBitMask)
+
+	// scan the list of primitives for tricky stuff
+	for (prim = window->primlist->head; prim != NULL; prim = prim->next)
+		if (PRIMFLAG_GET_BLENDMODE(prim->flags) != BLENDMODE_NONE ||
+			(prim->texture.base != NULL && PRIMFLAG_GET_TEXFORMAT(prim->flags) == TEXFORMAT_ARGB32))
+		{
+			usemembuffer = TRUE;
+			break;
+		}
+
+	// if we're using the memory buffer, draw offscreen first and then copy
+	if (usemembuffer)
 	{
-		case 0x00ff0000:
-			drawdd_rgb888_draw_primitives(window->primlist->head, dd->blitdesc.lpSurface, dd->blitwidth, dd->blitheight, dd->blitdesc.lPitch / 4);
-			break;
+		int x, y;
 
-		case 0x000000ff:
-			drawdd_bgr888_draw_primitives(window->primlist->head, dd->blitdesc.lpSurface, dd->blitwidth, dd->blitheight, dd->blitdesc.lPitch / 4);
-			break;
+		// based on the target format, use one of our standard renderers
+		switch (dd->blitdesc.ddpfPixelFormat.dwRBitMask)
+		{
+			case 0x00ff0000: 	drawdd_rgb888_draw_primitives(window->primlist->head, dd->membuffer, dd->blitwidth, dd->blitheight, dd->blitwidth);	break;
+			case 0x000000ff:	drawdd_bgr888_draw_primitives(window->primlist->head, dd->membuffer, dd->blitwidth, dd->blitheight, dd->blitwidth);	break;
+			case 0xf800:		drawdd_rgb565_draw_primitives(window->primlist->head, dd->membuffer, dd->blitwidth, dd->blitheight, dd->blitwidth);	break;
+			case 0x7c00:		drawdd_rgb555_draw_primitives(window->primlist->head, dd->membuffer, dd->blitwidth, dd->blitheight, dd->blitwidth);	break;
+			default:
+				verbose_printf("DirectDraw: Unknown target mode: R=%08X G=%08X B=%08X\n", (int)dd->blitdesc.ddpfPixelFormat.dwRBitMask, (int)dd->blitdesc.ddpfPixelFormat.dwGBitMask, (int)dd->blitdesc.ddpfPixelFormat.dwBBitMask);
+				break;
+		}
 
-		case 0xf800:
-			drawdd_rgb565_draw_primitives(window->primlist->head, dd->blitdesc.lpSurface, dd->blitwidth, dd->blitheight, dd->blitdesc.lPitch / 2);
-			break;
+		// handle copying to both 16bpp and 32bpp destinations
+		for (y = 0; y < dd->blitheight; y++)
+		{
+			if (dd->blitdesc.ddpfPixelFormat.dwRGBBitCount == 32)
+			{
+				UINT32 *src = (UINT32 *)dd->membuffer + y * dd->blitwidth;
+				UINT32 *dst = (UINT32 *)((UINT8 *)dd->blitdesc.lpSurface + y * dd->blitdesc.lPitch);
+				for (x = 0; x < dd->blitwidth; x++)
+					*dst++ = *src++;
+			}
+			else if (dd->blitdesc.ddpfPixelFormat.dwRGBBitCount == 16)
+			{
+				UINT16 *src = (UINT16 *)dd->membuffer + y * dd->blitwidth;
+				UINT16 *dst = (UINT16 *)((UINT8 *)dd->blitdesc.lpSurface + y * dd->blitdesc.lPitch);
+				for (x = 0; x < dd->blitwidth; x++)
+					*dst++ = *src++;
+			}
+		}
 
-		case 0x7c00:
-			drawdd_rgb555_draw_primitives(window->primlist->head, dd->blitdesc.lpSurface, dd->blitwidth, dd->blitheight, dd->blitdesc.lPitch / 2);
-			break;
+	}
 
-		default:
-			verbose_printf("DirectDraw: Unknown target mode: R=%08X G=%08X B=%08X\n", (int)dd->blitdesc.ddpfPixelFormat.dwRBitMask, (int)dd->blitdesc.ddpfPixelFormat.dwGBitMask, (int)dd->blitdesc.ddpfPixelFormat.dwBBitMask);
-			break;
+	// otherwise, draw directly
+	else
+	{
+		// based on the target format, use one of our standard renderers
+		switch (dd->blitdesc.ddpfPixelFormat.dwRBitMask)
+		{
+			case 0x00ff0000: 	drawdd_rgb888_nr_draw_primitives(window->primlist->head, dd->blitdesc.lpSurface, dd->blitwidth, dd->blitheight, dd->blitdesc.lPitch / 4);	break;
+			case 0x000000ff:	drawdd_bgr888_nr_draw_primitives(window->primlist->head, dd->blitdesc.lpSurface, dd->blitwidth, dd->blitheight, dd->blitdesc.lPitch / 4);	break;
+			case 0xf800:		drawdd_rgb565_nr_draw_primitives(window->primlist->head, dd->blitdesc.lpSurface, dd->blitwidth, dd->blitheight, dd->blitdesc.lPitch / 2);	break;
+			case 0x7c00:		drawdd_rgb555_nr_draw_primitives(window->primlist->head, dd->blitdesc.lpSurface, dd->blitwidth, dd->blitheight, dd->blitdesc.lPitch / 2);	break;
+			default:
+				verbose_printf("DirectDraw: Unknown target mode: R=%08X G=%08X B=%08X\n", (int)dd->blitdesc.ddpfPixelFormat.dwRBitMask, (int)dd->blitdesc.ddpfPixelFormat.dwGBitMask, (int)dd->blitdesc.ddpfPixelFormat.dwBBitMask);
+				break;
+		}
 	}
 	osd_lock_release(window->primlist->lock);
 
@@ -512,6 +562,15 @@ static int ddraw_create_surfaces(win_window_info *window)
 	}
 	if (result != DD_OK) goto error;
 
+	// create a memory buffer for offscreen drawing
+	if (dd->membuffersize < dd->blitwidth * dd->blitheight * 4)
+	{
+		dd->membuffersize = dd->blitwidth * dd->blitheight * 4;
+		dd->membuffer = realloc(dd->membuffer, dd->membuffersize);
+	}
+	if (dd->membuffer == NULL)
+		goto error;
+
 	// create a clipper for windowed mode
 	if (!window->fullscreen && create_clipper(window))
 		goto error;
@@ -520,8 +579,10 @@ static int ddraw_create_surfaces(win_window_info *window)
 	if (window->fullscreen)
 	{
 		// only set the gamma if it's not 1.0f
+		float brightness = options_get_float("full_screen_brightness", TRUE);
+		float contrast = options_get_float("full_screen_contrast", TRUE);
 		float gamma = options_get_float("full_screen_gamma", TRUE);
-		if (gamma != 1.0f)
+		if (brightness != 1.0f || contrast != 1.0f || gamma != 1.0f)
 		{
 			// see if we can get a GammaControl object
 			result = IDirectDrawSurface_QueryInterface(dd->primary, &IID_IDirectDrawGammaControl, (void **)&dd->gamma);
@@ -539,12 +600,7 @@ static int ddraw_create_surfaces(win_window_info *window)
 
 				// create a standard ramp and set it
 				for (i = 0; i < 256; i++)
-				{
-					double val = ((float)i / 255.0) * gamma;
-					if (val > 1.0)
-						val = 1.0;
-					ramp.red[i] = ramp.green[i] = ramp.blue[i] = (WORD)(val * 65535.0);
-				}
+					ramp.red[i] = ramp.green[i] = ramp.blue[i] = apply_brightness_contrast_gamma(i, brightness, contrast, gamma) << 8;
 
 				// attempt to set it
 				result = IDirectDrawGammaControl_SetGammaRamp(dd->gamma, 0, &ramp);
@@ -609,6 +665,12 @@ static void ddraw_delete_surfaces(win_window_info *window)
 	if (dd->clipper != NULL)
 		IDirectDrawClipper_Release(dd->clipper);
 	dd->clipper = NULL;
+
+	// free the memory buffer
+	if (dd->membuffer != NULL)
+		free(dd->membuffer);
+	dd->membuffer = NULL;
+	dd->membuffersize = 0;
 
 	// release the blit surface
 	if (dd->blit != NULL)
@@ -1269,7 +1331,6 @@ static void pick_best_mode(win_window_info *window)
 #define DSTSHIFT_R			16
 #define DSTSHIFT_G			8
 #define DSTSHIFT_B			0
-#define NO_DEST_READ		1
 
 #include "rendersw.c"
 
@@ -1281,7 +1342,6 @@ static void pick_best_mode(win_window_info *window)
 #define DSTSHIFT_R			0
 #define DSTSHIFT_G			8
 #define DSTSHIFT_B			16
-#define NO_DEST_READ		1
 
 #include "rendersw.c"
 
@@ -1293,11 +1353,63 @@ static void pick_best_mode(win_window_info *window)
 #define DSTSHIFT_R			11
 #define DSTSHIFT_G			5
 #define DSTSHIFT_B			0
-#define NO_DEST_READ		1
 
 #include "rendersw.c"
 
 #define FUNC_PREFIX(x)		drawdd_rgb555_##x
+#define PIXEL_TYPE			UINT16
+#define SRCSHIFT_R			3
+#define SRCSHIFT_G			3
+#define SRCSHIFT_B			3
+#define DSTSHIFT_R			10
+#define DSTSHIFT_G			5
+#define DSTSHIFT_B			0
+
+#include "rendersw.c"
+
+
+
+//============================================================
+//  SOFTWARE RENDERING -- NO READING VARIANTS
+//============================================================
+
+#define FUNC_PREFIX(x)		drawdd_rgb888_nr_##x
+#define PIXEL_TYPE			UINT32
+#define SRCSHIFT_R			0
+#define SRCSHIFT_G			0
+#define SRCSHIFT_B			0
+#define DSTSHIFT_R			16
+#define DSTSHIFT_G			8
+#define DSTSHIFT_B			0
+#define NO_DEST_READ		1
+
+#include "rendersw.c"
+
+#define FUNC_PREFIX(x)		drawdd_bgr888_nr_##x
+#define PIXEL_TYPE			UINT32
+#define SRCSHIFT_R			0
+#define SRCSHIFT_G			0
+#define SRCSHIFT_B			0
+#define DSTSHIFT_R			0
+#define DSTSHIFT_G			8
+#define DSTSHIFT_B			16
+#define NO_DEST_READ		1
+
+#include "rendersw.c"
+
+#define FUNC_PREFIX(x)		drawdd_rgb565_nr_##x
+#define PIXEL_TYPE			UINT16
+#define SRCSHIFT_R			3
+#define SRCSHIFT_G			2
+#define SRCSHIFT_B			3
+#define DSTSHIFT_R			11
+#define DSTSHIFT_G			5
+#define DSTSHIFT_B			0
+#define NO_DEST_READ		1
+
+#include "rendersw.c"
+
+#define FUNC_PREFIX(x)		drawdd_rgb555_nr_##x
 #define PIXEL_TYPE			UINT16
 #define SRCSHIFT_R			3
 #define SRCSHIFT_G			3

@@ -12,7 +12,8 @@
         * The Empire Strikes Back
 
     Known bugs:
-        * none at this time
+        * the monitor "overdrive" effect is not simulated when you
+            get hit by enemy fire
 
 ****************************************************************************
 

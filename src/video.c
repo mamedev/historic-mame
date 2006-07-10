@@ -55,10 +55,12 @@ static int skipping_this_frame;
 static render_texture *scrtexture[MAX_SCREENS];
 static int scrformat[MAX_SCREENS];
 static int scrchanged[MAX_SCREENS];
+static render_bounds scrbounds[MAX_SCREENS];
 static
 #endif
 mame_bitmap *scrbitmap[MAX_SCREENS][2];
 static int curbitmap[MAX_SCREENS];
+static rectangle eff_visible_area[MAX_SCREENS];
 
 /* the active video display */
 #ifndef NEW_RENDER
@@ -109,6 +111,7 @@ static void decode_graphics(const gfx_decode *gfxdecodeinfo);
 static void scale_vectorgames(int gfx_width, int gfx_height, int *width, int *height);
 static int init_buffered_spriteram(void);
 static void recompute_fps(int skipped_it);
+static void recompute_visible_areas(void);
 
 
 
@@ -131,10 +134,6 @@ int video_init(void)
 	add_pause_callback(video_pause);
 #endif
 	add_exit_callback(video_exit);
-
-	/* first allocate the necessary palette structures */
-	if (palette_start())
-		return 1;
 
 #ifndef NEW_RENDER
 {
@@ -218,7 +217,7 @@ int video_init(void)
 				scrformat[scrnum] = TEXFORMAT_RGB32;
 
 			/* allocate a texture per screen */
-			scrtexture[scrnum] = render_texture_alloc(scrbitmap[scrnum][0], &Machine->visible_area[scrnum], &adjusted_palette[Machine->drv->screen[scrnum].palette_base], scrformat[scrnum], NULL, NULL);
+			scrtexture[scrnum] = render_texture_alloc(scrbitmap[scrnum][0], NULL, &adjusted_palette[Machine->drv->screen[scrnum].palette_base], scrformat[scrnum], NULL, NULL);
 
 			/* set the default refresh rate */
 			set_refresh_rate(scrnum, Machine->drv->screen[scrnum].refresh_rate);
@@ -266,8 +265,7 @@ int video_init(void)
 			return 1;
 
 	/* initialize the palette - must be done after osd_create_display() */
-	if (palette_init())
-		return 1;
+	palette_config();
 
 	/* force the first update to be full */
 	set_vh_global_attribute(NULL, 0);
@@ -290,6 +288,8 @@ int video_init(void)
 	/* initialize tilemaps */
 	if (tilemap_init() != 0)
 		fatalerror("tilemap_init failed");
+
+	recompute_visible_areas();
 	return 0;
 }
 
@@ -300,7 +300,6 @@ int video_init(void)
 
 static void video_pause(int pause)
 {
-	palette_set_global_brightness_adjust(pause ? options.pause_bright : 1.00);
 	schedule_full_refresh();
 }
 
@@ -687,7 +686,7 @@ void schedule_full_refresh(void)
 
 void force_partial_update(int scrnum, int scanline)
 {
-	rectangle clip = Machine->visible_area[scrnum];
+	rectangle clip = eff_visible_area[scrnum];
 
 	LOG_PARTIAL_UPDATES(("Partial: force_partial_update(%d,%d): ", scrnum, scanline));
 
@@ -918,7 +917,7 @@ void video_frame_update(void)
 		/* finish updating the screens */
 		for (scrnum = 0; scrnum < MAX_SCREENS; scrnum++)
 			if (Machine->drv->screen[scrnum].tag != NULL)
-				force_partial_update(scrnum, Machine->visible_area[scrnum].max_y);
+				force_partial_update(scrnum, eff_visible_area[scrnum].max_y);
 
 		/* update our movie recording state */
 		if (!paused)
@@ -935,15 +934,13 @@ void video_frame_update(void)
 				/* only update if empty and not a vector game; otherwise assume the driver did it directly */
 				if (render_container_is_empty(render_container_get_screen(scrnum)) && !(Machine->drv->video_attributes & VIDEO_TYPE_VECTOR))
 				{
+					mame_bitmap *bitmap = scrbitmap[scrnum][curbitmap[scrnum]];
 					if (!skipping_this_frame && scrchanged[scrnum])
 					{
-						rectangle visarea = Machine->visible_area[scrnum];
-						visarea.max_x++;
-						visarea.max_y++;
-						render_texture_set_bitmap(scrtexture[scrnum], scrbitmap[scrnum][curbitmap[scrnum]], &visarea, &adjusted_palette[Machine->drv->screen[scrnum].palette_base], scrformat[scrnum]);
+						render_texture_set_bitmap(scrtexture[scrnum], bitmap, NULL, &adjusted_palette[Machine->drv->screen[scrnum].palette_base], scrformat[scrnum]);
 						curbitmap[scrnum] = 1 - curbitmap[scrnum];
 					}
-					render_screen_add_quad(scrnum, 0.0f, 0.0f, 1.0f, 1.0f, MAKE_ARGB(0xff,0xff,0xff,0xff), scrtexture[scrnum], PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_SCREENTEX(1));
+					render_screen_add_quad(scrnum, scrbounds[scrnum].x0, scrbounds[scrnum].y0, scrbounds[scrnum].x1, scrbounds[scrnum].y1, MAKE_ARGB(0xff,0xff,0xff,0xff), scrtexture[scrnum], PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_SCREENTEX(1));
 				}
 			}
 
@@ -978,7 +975,79 @@ void video_frame_update(void)
 		/* reset partial updates if we're paused or if the debugger is active */
 		if (paused || mame_debug_is_active())
 			reset_partial_updates();
+
+		/* recompute visible areas */
+		recompute_visible_areas();
 	}
+}
+
+
+/*-------------------------------------------------
+    recompute_visible_areas - determine the
+    effective visible areas and screen bounds
+-------------------------------------------------*/
+
+static void recompute_visible_areas(void)
+{
+	int scrnum;
+
+	/* iterate over live screens */
+	for (scrnum = 0; scrnum < MAX_SCREENS; scrnum++)
+		if (Machine->drv->screen[scrnum].tag != NULL)
+		{
+#ifdef NEW_RENDER
+			render_container *scrcontainer = render_container_get_screen(scrnum);
+			float xoffs = render_container_get_xoffset(scrcontainer);
+			float yoffs = render_container_get_yoffset(scrcontainer);
+			float xscale = render_container_get_xscale(scrcontainer);
+			float yscale = render_container_get_yscale(scrcontainer);
+			rectangle visarea = Machine->visible_area[scrnum];
+			mame_bitmap *bitmap = scrbitmap[scrnum][curbitmap[scrnum]];
+			float viswidth, visheight;
+			float x0, y0, x1, y1;
+			float xrecip, yrecip;
+
+			/* adjust the max values so they are exclusive rather than inclusive */
+			visarea.max_x++;
+			visarea.max_y++;
+
+			/* based on the game-configured visible area, compute the bounds we will draw
+                the screen at so that a clipping at (0,0)-(1,1) will exactly result in
+                the requested visible area */
+			viswidth = (float)(visarea.max_x - visarea.min_x);
+			visheight = (float)(visarea.max_y - visarea.min_y);
+			xrecip = 1.0f / viswidth;
+			yrecip = 1.0f / visheight;
+			scrbounds[scrnum].x0 = 0.0f - (float)visarea.min_x * xrecip;
+			scrbounds[scrnum].x1 = 1.0f + (float)(bitmap->width - visarea.max_x) * xrecip;
+			scrbounds[scrnum].y0 = 0.0f - (float)visarea.min_y * yrecip;
+			scrbounds[scrnum].y1 = 1.0f + (float)(bitmap->height - visarea.max_y) * yrecip;
+
+			/* now apply the scaling/offset to the scrbounds */
+			x0 = (0.5f - 0.5f * xscale + xoffs) + xscale * scrbounds[scrnum].x0;
+			x1 = (0.5f - 0.5f * xscale + xoffs) + xscale * scrbounds[scrnum].x1;
+			y0 = (0.5f - 0.5f * yscale + yoffs) + yscale * scrbounds[scrnum].y0;
+			y1 = (0.5f - 0.5f * yscale + yoffs) + yscale * scrbounds[scrnum].y1;
+
+			/* scale these values by the texture size */
+			eff_visible_area[scrnum].min_x = floor((0.0f - x0) * viswidth);
+			eff_visible_area[scrnum].max_x = bitmap->width - floor((x1 - 1.0f) * viswidth);
+			eff_visible_area[scrnum].min_y = floor((0.0f - y0) * visheight);
+			eff_visible_area[scrnum].max_y = bitmap->height - floor((y1 - 1.0f) * visheight);
+
+			/* clamp against the width/height of the bitmaps */
+			if (eff_visible_area[scrnum].min_x < 0) eff_visible_area[scrnum].min_x = 0;
+			if (eff_visible_area[scrnum].max_x >= bitmap->width) eff_visible_area[scrnum].max_x = bitmap->width - 1;
+			if (eff_visible_area[scrnum].min_y < 0) eff_visible_area[scrnum].min_y = 0;
+			if (eff_visible_area[scrnum].max_y >= bitmap->height) eff_visible_area[scrnum].max_y = bitmap->height - 1;
+
+			/* union this with the actual visible_area in case any game drivers rely
+                on it */
+			union_rect(&eff_visible_area[scrnum], &Machine->visible_area[scrnum]);
+#else
+			eff_visible_area[scrnum] = Machine->visible_area[scrnum];
+#endif
+		}
 }
 
 
@@ -1115,12 +1184,15 @@ static void save_frame_with(mame_file *fp, int scrnum, int (*write_handler)(mame
 	UINT32 saved_rgb_components[3];
 #endif
 
+	assert((scrnum >= 0) && (scrnum < MAX_SCREENS));
+
 	bitmap = scrbitmap[scrnum][curbitmap[scrnum]];
-	orientation = Machine->gamedrv->flags & ORIENTATION_MASK;
+	assert(bitmap != NULL);
 
 #ifdef NEW_RENDER
-	orientation = orientation_add(orientation,
-		render_target_get_orientation(render_target_get_indexed(scrnum)));
+	orientation = render_container_get_orientation(render_container_get_screen(scrnum));
+#else
+	orientation = Machine->gamedrv->flags & ORIENTATION_MASK;
 #endif
 
 	begin_resource_tracking();

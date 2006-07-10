@@ -352,145 +352,165 @@ static void print_game_rom(FILE* out, const game_driver* game)
 	const rom_entry *region, *rom, *chunk;
 	const rom_entry *pregion, *prom, *fprom=NULL;
 	const game_driver *clone_of;
+	int rom_type;
 
 	if (!game->rom)
 		return;
 
 	clone_of = driver_get_clone(game);
-	for (region = rom_first_region(game); region; region = rom_next_region(region))
-		for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
-		{
-			int offset, length, in_parent, is_disk, is_bios, found_bios, i;
-			char name[100], bios_name[100];
-
-			strcpy(name,ROM_GETNAME(rom));
-			offset = ROM_GETOFFSET(rom);
-			is_disk = ROMREGION_ISDISKDATA(region);
-			is_bios = ROM_GETBIOSFLAGS(rom);
-
-			in_parent = 0;
-			length = 0;
-			for (chunk = rom_first_chunk(rom); chunk; chunk = rom_next_chunk(chunk))
-				length += ROM_GETLENGTH(chunk);
-
-			if (!ROM_NOGOODDUMP(rom) && clone_of)
+	for (rom_type = 0; rom_type < 3; rom_type++)
+	{
+		for (region = rom_first_region(game); region; region = rom_next_region(region))
+			for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
 			{
-				fprom=NULL;
-				for (pregion = rom_first_region(clone_of); pregion; pregion = rom_next_region(pregion))
-					for (prom = rom_first_file(pregion); prom; prom = rom_next_file(prom))
-						if (hash_data_is_equal(ROM_GETHASHDATA(rom), ROM_GETHASHDATA(prom), 0))
+				int offset, length, in_parent, is_disk, is_bios, found_bios, i;
+				char name[100], bios_name[100];
+
+				strcpy(name,ROM_GETNAME(rom));
+				offset = ROM_GETOFFSET(rom);
+				is_disk = ROMREGION_ISDISKDATA(region);
+				is_bios = ROM_GETBIOSFLAGS(rom);
+
+				switch (rom_type)
+				{
+					case 0:		/* rom_type 0 = BIOS */
+						if (is_disk || !is_bios)
+							continue;
+						break;
+					case 1:		/* rom_type 1 = ROM */
+						if (is_disk || is_bios)
+							continue;
+						break;
+					case 2:		/* rom_type 1 = DISK */
+						if (!is_disk || is_bios)
+							continue;
+						break;
+				}
+
+				in_parent = 0;
+				length = 0;
+				for (chunk = rom_first_chunk(rom); chunk; chunk = rom_next_chunk(chunk))
+					length += ROM_GETLENGTH(chunk);
+
+				if (!ROM_NOGOODDUMP(rom) && clone_of)
+				{
+					fprom=NULL;
+					for (pregion = rom_first_region(clone_of); pregion; pregion = rom_next_region(pregion))
+						for (prom = rom_first_file(pregion); prom; prom = rom_next_file(prom))
+							if (hash_data_is_equal(ROM_GETHASHDATA(rom), ROM_GETHASHDATA(prom), 0))
+							{
+								if (!fprom || !strcmp(ROM_GETNAME(prom), name))
+									fprom=prom;
+								in_parent = 1;
+							}
+				}
+
+				found_bios = 0;
+				if(!is_disk && is_bios && game->bios)
+				{
+					const bios_entry *thisbios = game->bios;
+
+					/* Match against bios short names */
+					while(!found_bios && !BIOSENTRY_ISEND(thisbios) )
+					{
+						if((is_bios-1) == thisbios->value) /* Note '-1' */
 						{
-							if (!fprom || !strcmp(ROM_GETNAME(prom), name))
-								fprom=prom;
-							in_parent = 1;
+							strcpy(bios_name,thisbios->_name);
+							found_bios = 1;
 						}
-			}
 
-			found_bios = 0;
-			if(!is_disk && is_bios && game->bios)
-			{
-				const bios_entry *thisbios = game->bios;
-
-				/* Match against bios short names */
-				while(!found_bios && !BIOSENTRY_ISEND(thisbios) )
-				{
-					if((is_bios-1) == thisbios->value) /* Note '-1' */
-					{
-						strcpy(bios_name,thisbios->_name);
-						found_bios = 1;
+						thisbios++;
 					}
-
-					thisbios++;
 				}
+
+
+				if (!is_disk)
+					fprintf(out, "\t\t<rom");
+				else
+					fprintf(out, "\t\t<disk");
+
+				if (*name)
+					fprintf(out, " name=\"%s\"", normalize_string(name));
+				if (in_parent)
+					fprintf(out, " merge=\"%s\"", normalize_string(ROM_GETNAME(fprom)));
+				if (!is_disk && found_bios)
+					fprintf(out, " bios=\"%s\"", normalize_string(bios_name));
+				if (!is_disk)
+					fprintf(out, " size=\"%d\"", length);
+
+				/* dump checksum information only if there is a known dump */
+				if (!hash_data_has_info(ROM_GETHASHDATA(rom), HASH_INFO_NO_DUMP))
+				{
+					for (i=0;i<HASH_NUM_FUNCTIONS;i++)
+					{
+						int func = 1<<i;
+						const char* func_name = hash_function_name(func);
+						char checksum[1000];
+
+						if (hash_data_extract_printable_checksum(ROM_GETHASHDATA(rom), func, checksum))
+						{
+							fprintf(out, " %s=\"%s\"", func_name, checksum);
+						}
+					}
+				}
+
+				switch (ROMREGION_GETTYPE(region))
+				{
+					case REGION_CPU1: fprintf(out, " region=\"cpu1\""); break;
+					case REGION_CPU2: fprintf(out, " region=\"cpu2\""); break;
+					case REGION_CPU3: fprintf(out, " region=\"cpu3\""); break;
+					case REGION_CPU4: fprintf(out, " region=\"cpu4\""); break;
+					case REGION_CPU5: fprintf(out, " region=\"cpu5\""); break;
+					case REGION_CPU6: fprintf(out, " region=\"cpu6\""); break;
+					case REGION_CPU7: fprintf(out, " region=\"cpu7\""); break;
+					case REGION_CPU8: fprintf(out, " region=\"cpu8\""); break;
+					case REGION_GFX1: fprintf(out, " region=\"gfx1\""); break;
+					case REGION_GFX2: fprintf(out, " region=\"gfx2\""); break;
+					case REGION_GFX3: fprintf(out, " region=\"gfx3\""); break;
+					case REGION_GFX4: fprintf(out, " region=\"gfx4\""); break;
+					case REGION_GFX5: fprintf(out, " region=\"gfx5\""); break;
+					case REGION_GFX6: fprintf(out, " region=\"gfx6\""); break;
+					case REGION_GFX7: fprintf(out, " region=\"gfx7\""); break;
+					case REGION_GFX8: fprintf(out, " region=\"gfx8\""); break;
+					case REGION_PROMS: fprintf(out, " region=\"proms\""); break;
+					case REGION_SOUND1: fprintf(out, " region=\"sound1\""); break;
+					case REGION_SOUND2: fprintf(out, " region=\"sound2\""); break;
+					case REGION_SOUND3: fprintf(out, " region=\"sound3\""); break;
+					case REGION_SOUND4: fprintf(out, " region=\"sound4\""); break;
+					case REGION_SOUND5: fprintf(out, " region=\"sound5\""); break;
+					case REGION_SOUND6: fprintf(out, " region=\"sound6\""); break;
+					case REGION_SOUND7: fprintf(out, " region=\"sound7\""); break;
+					case REGION_SOUND8: fprintf(out, " region=\"sound8\""); break;
+					case REGION_USER1: fprintf(out, " region=\"user1\""); break;
+					case REGION_USER2: fprintf(out, " region=\"user2\""); break;
+					case REGION_USER3: fprintf(out, " region=\"user3\""); break;
+					case REGION_USER4: fprintf(out, " region=\"user4\""); break;
+					case REGION_USER5: fprintf(out, " region=\"user5\""); break;
+					case REGION_USER6: fprintf(out, " region=\"user6\""); break;
+					case REGION_USER7: fprintf(out, " region=\"user7\""); break;
+					case REGION_USER8: fprintf(out, " region=\"user8\""); break;
+					case REGION_DISKS: fprintf(out, " region=\"disks\""); break;
+					default: fprintf(out, " region=\"0x%x\"", ROMREGION_GETTYPE(region));
 			}
 
+			if (hash_data_has_info(ROM_GETHASHDATA(rom), HASH_INFO_NO_DUMP))
+				fprintf(out, " status=\"nodump\"");
+			if (hash_data_has_info(ROM_GETHASHDATA(rom), HASH_INFO_BAD_DUMP))
+				fprintf(out, " status=\"baddump\"");
 
 			if (!is_disk)
-				fprintf(out, "\t\t<rom");
+			{
+				if (ROMREGION_GETFLAGS(region) & ROMREGION_DISPOSE)
+					fprintf(out, " dispose=\"yes\"");
+
+				fprintf(out, " offset=\"%x\"", offset);
+				fprintf(out, "/>\n");
+			}
 			else
-				fprintf(out, "\t\t<disk");
-
-			if (*name)
-				fprintf(out, " name=\"%s\"", normalize_string(name));
-			if (in_parent)
-				fprintf(out, " merge=\"%s\"", normalize_string(ROM_GETNAME(fprom)));
-			if (!is_disk && found_bios)
-				fprintf(out, " bios=\"%s\"", normalize_string(bios_name));
-			if (!is_disk)
-				fprintf(out, " size=\"%d\"", length);
-
-			/* dump checksum information only if there is a known dump */
-			if (!hash_data_has_info(ROM_GETHASHDATA(rom), HASH_INFO_NO_DUMP))
 			{
-				for (i=0;i<HASH_NUM_FUNCTIONS;i++)
-				{
-					int func = 1<<i;
-					const char* func_name = hash_function_name(func);
-					char checksum[1000];
-
-					if (hash_data_extract_printable_checksum(ROM_GETHASHDATA(rom), func, checksum))
-					{
-						fprintf(out, " %s=\"%s\"", func_name, checksum);
-					}
-				}
+				fprintf(out, " index=\"%x\"", DISK_GETINDEX(rom));
+				fprintf(out, "/>\n");
 			}
-
-			switch (ROMREGION_GETTYPE(region))
-			{
-				case REGION_CPU1: fprintf(out, " region=\"cpu1\""); break;
-				case REGION_CPU2: fprintf(out, " region=\"cpu2\""); break;
-				case REGION_CPU3: fprintf(out, " region=\"cpu3\""); break;
-				case REGION_CPU4: fprintf(out, " region=\"cpu4\""); break;
-				case REGION_CPU5: fprintf(out, " region=\"cpu5\""); break;
-				case REGION_CPU6: fprintf(out, " region=\"cpu6\""); break;
-				case REGION_CPU7: fprintf(out, " region=\"cpu7\""); break;
-				case REGION_CPU8: fprintf(out, " region=\"cpu8\""); break;
-				case REGION_GFX1: fprintf(out, " region=\"gfx1\""); break;
-				case REGION_GFX2: fprintf(out, " region=\"gfx2\""); break;
-				case REGION_GFX3: fprintf(out, " region=\"gfx3\""); break;
-				case REGION_GFX4: fprintf(out, " region=\"gfx4\""); break;
-				case REGION_GFX5: fprintf(out, " region=\"gfx5\""); break;
-				case REGION_GFX6: fprintf(out, " region=\"gfx6\""); break;
-				case REGION_GFX7: fprintf(out, " region=\"gfx7\""); break;
-				case REGION_GFX8: fprintf(out, " region=\"gfx8\""); break;
-				case REGION_PROMS: fprintf(out, " region=\"proms\""); break;
-				case REGION_SOUND1: fprintf(out, " region=\"sound1\""); break;
-				case REGION_SOUND2: fprintf(out, " region=\"sound2\""); break;
-				case REGION_SOUND3: fprintf(out, " region=\"sound3\""); break;
-				case REGION_SOUND4: fprintf(out, " region=\"sound4\""); break;
-				case REGION_SOUND5: fprintf(out, " region=\"sound5\""); break;
-				case REGION_SOUND6: fprintf(out, " region=\"sound6\""); break;
-				case REGION_SOUND7: fprintf(out, " region=\"sound7\""); break;
-				case REGION_SOUND8: fprintf(out, " region=\"sound8\""); break;
-				case REGION_USER1: fprintf(out, " region=\"user1\""); break;
-				case REGION_USER2: fprintf(out, " region=\"user2\""); break;
-				case REGION_USER3: fprintf(out, " region=\"user3\""); break;
-				case REGION_USER4: fprintf(out, " region=\"user4\""); break;
-				case REGION_USER5: fprintf(out, " region=\"user5\""); break;
-				case REGION_USER6: fprintf(out, " region=\"user6\""); break;
-				case REGION_USER7: fprintf(out, " region=\"user7\""); break;
-				case REGION_USER8: fprintf(out, " region=\"user8\""); break;
-				case REGION_DISKS: fprintf(out, " region=\"disks\""); break;
-				default: fprintf(out, " region=\"0x%x\"", ROMREGION_GETTYPE(region));
-		}
-
-		if (hash_data_has_info(ROM_GETHASHDATA(rom), HASH_INFO_NO_DUMP))
-			fprintf(out, " status=\"nodump\"");
-		if (hash_data_has_info(ROM_GETHASHDATA(rom), HASH_INFO_BAD_DUMP))
-			fprintf(out, " status=\"baddump\"");
-
-		if (!is_disk)
-		{
-			if (ROMREGION_GETFLAGS(region) & ROMREGION_DISPOSE)
-				fprintf(out, " dispose=\"yes\"");
-
-			fprintf(out, " offset=\"%x\"", offset);
-			fprintf(out, "/>\n");
-		}
-		else
-		{
-			fprintf(out, " index=\"%x\"", DISK_GETINDEX(rom));
-			fprintf(out, "/>\n");
 		}
 	}
 }
@@ -886,9 +906,9 @@ void print_mame_xml(FILE* out, const game_driver* const games[], const char *gam
 		"<!ELEMENT " XML_ROOT " (" XML_TOP "+)>\n"
 		"\t<!ATTLIST " XML_ROOT " build CDATA #IMPLIED>\n"
 #ifdef MESS
-		"\t<!ELEMENT " XML_TOP " (description, year?, manufacturer, biosset*, (rom | disk)*, sample*, chip*, video?, sound?, input?, dipswitch*, driver?, device*, ramoption*)>\n"
+		"\t<!ELEMENT " XML_TOP " (description, year?, manufacturer, biosset*, rom*, disk*, sample*, chip*, video?, sound?, input?, dipswitch*, driver?, device*, ramoption*)>\n"
 #else
-		"\t<!ELEMENT " XML_TOP " (description, year?, manufacturer, biosset*, (rom | disk)*, sample*, chip*, video?, sound?, input?, dipswitch*, driver?)>\n"
+		"\t<!ELEMENT " XML_TOP " (description, year?, manufacturer, biosset*, rom*, disk*, sample*, chip*, video?, sound?, input?, dipswitch*, driver?)>\n"
 #endif
 		"\t\t<!ATTLIST " XML_TOP " name CDATA #REQUIRED>\n"
 		"\t\t<!ATTLIST " XML_TOP " sourcefile CDATA #IMPLIED>\n"
