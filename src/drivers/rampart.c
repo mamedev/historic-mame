@@ -433,6 +433,14 @@ ROM_START( rampart )
 	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* ADPCM data */
 	ROM_LOAD( "082-1007.2d", 0x00000, 0x20000, CRC(c96a0fc3) SHA1(6e7e242d0afa4714ca31d77ccbf8ee487bbdb1e4) )
 	ROM_LOAD( "082-1008.1d", 0x20000, 0x20000, CRC(518218d9) SHA1(edf1b11579dcfa9a872fa4bd866dc2f95fac767d) )
+
+	ROM_REGION( 0x0c00, REGION_PLDS, ROMREGION_DISPOSE )
+	ROM_LOAD( "gal16v8-082-1000.1j",  0x0000, 0x0117, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "gal16v8-082-1001.4l",  0x0200, 0x0117, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "gal16v8-082-1002.7k",  0x0400, 0x0117, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "gal20v8-082-1003.8j",  0x0600, 0x0157, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "gal20v8-082-1004.4m",  0x0800, 0x0157, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "gal16v8-082-1006.12c", 0x0a00, 0x0117, NO_DUMP ) /* PAL is read protected */
 ROM_END
 
 

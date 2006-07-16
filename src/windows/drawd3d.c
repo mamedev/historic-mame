@@ -47,6 +47,8 @@ extern void mtlog_add(const char *event);
 //  CONSTANTS
 //============================================================
 
+#define ENABLE_BORDER_PIX	(0)
+
 #define VERTEX_FORMAT		(D3DFVF_XYZRHW | D3DFVF_DIFFUSE | D3DFVF_TEX1)
 #define VERTEX_BUFFER_SIZE	(2048*4)
 
@@ -1663,7 +1665,11 @@ static void texture_compute_size(d3d_info *d3d, int texwidth, int texheight, tex
 	int finalwidth = texwidth;
 
 	// if we're not wrapping, add a 1 pixel border on all sides
+#if ENABLE_BORDER_PIX
 	texture->borderpix = !(texture->flags & PRIMFLAG_TEXWRAP_MASK);
+#else
+	texture->borderpix = FALSE;
+#endif
 	if (texture->borderpix)
 	{
 		finalwidth += 2;

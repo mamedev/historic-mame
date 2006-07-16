@@ -666,6 +666,8 @@ $(M68000_GENERATED_FILES) $(M68000_GENERATED_HEADERS): $(OBJ)/cpu/m68000/m68kmak
 
 # rule to build the generator
 $(OBJ)/cpu/m68000/m68kmake$(EXE): $(OBJ)/cpu/m68000/m68kmake.o $(OSDBGOBJS)
+	@echo Linking $@...
+	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@
 
 # rule to ensure we build the header before building the core CPU file
 $(OBJ)/cpu/m68000/m68kcpu.o: $(M68000_GENERATED_HEADERS)

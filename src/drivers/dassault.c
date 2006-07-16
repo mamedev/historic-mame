@@ -690,6 +690,16 @@ ROM_START( dassault )
 	ROM_LOAD( "mb7128y.10m", 0x00000,  0x800,  CRC(bde780a2) SHA1(94ea9fe6c3a421e976d077e67f564ca5c37a5e88) )	/* Priority?  Unused */
 	ROM_LOAD( "mb7128y.16p", 0x00800,  0x800,  CRC(c44d2751) SHA1(7c195650689d5cbbdccba696e0e7d3dc5bb7c506) )	/* Timing??  Unused */
 	/* Above prom also at 16s and 17s */
+
+	ROM_REGION( 0x1000, REGION_PLDS, ROMREGION_DISPOSE )
+	ROM_LOAD( "pal16r8a 1h",  0x0000, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16l8b.7c",  0x0200, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16l8b.7d",  0x0400, 0x0104, CRC(199e83fd) SHA1(ebb5d66f29935b0a58e79b0db30611b5dce328a6) ) /* PAL is read protected */
+	ROM_LOAD( "pal16l8b.7e",  0x0600, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16l8b.7l",  0x0800, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16l8b.8e",  0x0a00, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16l8b.9d",  0x0c00, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16l8b.10c", 0x0e00, 0x0104, NO_DUMP ) /* PAL is read protected */
 ROM_END
 
 ROM_START( dassaul4 )
@@ -746,6 +756,16 @@ ROM_START( dassaul4 )
 	ROM_LOAD( "mb7128y.10m", 0x00000,  0x800,  CRC(bde780a2) SHA1(94ea9fe6c3a421e976d077e67f564ca5c37a5e88) )	/* Priority?  Unused */
 	ROM_LOAD( "mb7128y.16p", 0x00800,  0x800,  CRC(c44d2751) SHA1(7c195650689d5cbbdccba696e0e7d3dc5bb7c506) )	/* Timing??  Unused */
 	/* Above prom also at 16s and 17s */
+
+	ROM_REGION( 0x1000, REGION_PLDS, ROMREGION_DISPOSE )
+	ROM_LOAD( "pal16r8a 1h",  0x0000, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16l8b.7c",  0x0200, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16l8b.7d",  0x0400, 0x0104, CRC(199e83fd) SHA1(ebb5d66f29935b0a58e79b0db30611b5dce328a6) ) /* PAL is read protected */
+	ROM_LOAD( "pal16l8b.7e",  0x0600, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16l8b.7l",  0x0800, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16l8b.8e",  0x0a00, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16l8b.9d",  0x0c00, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16l8b.10c", 0x0e00, 0x0104, NO_DUMP ) /* PAL is read protected */
 ROM_END
 
 ROM_START( thndzone )
@@ -802,6 +822,16 @@ ROM_START( thndzone )
 	ROM_LOAD( "mb7128y.10m", 0x00000,  0x800,  CRC(bde780a2) SHA1(94ea9fe6c3a421e976d077e67f564ca5c37a5e88) )	/* Priority?  Unused */
 	ROM_LOAD( "mb7128y.16p", 0x00800,  0x800,  CRC(c44d2751) SHA1(7c195650689d5cbbdccba696e0e7d3dc5bb7c506) )	/* Timing??  Unused */
 	/* Above prom also at 16s and 17s */
+
+	ROM_REGION( 0x1000, REGION_PLDS, ROMREGION_DISPOSE )
+	ROM_LOAD( "pal16r8a 1h",  0x0000, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16l8b.7c",  0x0200, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16l8b.7d",  0x0400, 0x0104, CRC(199e83fd) SHA1(ebb5d66f29935b0a58e79b0db30611b5dce328a6) ) /* PAL is read protected */
+	ROM_LOAD( "pal16l8b.7e",  0x0600, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16l8b.7l",  0x0800, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16l8b.8e",  0x0a00, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16l8b.9d",  0x0c00, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16l8b.10c", 0x0e00, 0x0104, NO_DUMP ) /* PAL is read protected */
 ROM_END
 
 /**********************************************************************************/

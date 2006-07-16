@@ -56,8 +56,7 @@ struct _osd_create_params
   Attributes are the ones defined in driver.h, they can be used to perform
   optimizations, e.g. dirty rectangle handling if the game supports it, or faster
   blitting routines with fixed palette if the game doesn't change the palette at
-  run time. The VIDEO_PIXEL_ASPECT_RATIO flags should be honored to produce a
-  display of correct proportions.
+  run time.
   Orientation is the screen orientation (as defined in driver.h) which will be done
   by the core. This can be used to select thinner screen modes for vertical games
   (ORIENTATION_SWAP_XY set), or even to ask the user to rotate the monitor if it's

@@ -149,13 +149,6 @@
 /* Mish 181099:  See comments in vidhrdw/generic.c for details */
 #define VIDEO_BUFFERS_SPRITERAM			0x0040
 
-/* In most cases we assume pixels are square (1:1 aspect ratio) but some games need */
-/* different proportions, e.g. 1:2 for Blasteroids */
-#define VIDEO_PIXEL_ASPECT_RATIO_MASK	0x0300
-#define VIDEO_PIXEL_ASPECT_RATIO_1_1	0x0000
-#define VIDEO_PIXEL_ASPECT_RATIO_1_2	0x0100
-#define VIDEO_PIXEL_ASPECT_RATIO_2_1	0x0200
-
 
 
 /* ----- flags for game drivers ----- */

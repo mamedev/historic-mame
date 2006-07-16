@@ -255,6 +255,11 @@ ROM_START( dietgou )
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 ) /* Oki samples */
 	ROM_LOAD( "may03",    0x00000, 0x80000, CRC(b6e42bae) SHA1(c282cdf7db30fb63340cc609bf00f5ab63a75583) )
+
+	ROM_REGION( 0x0600, REGION_PLDS, ROMREGION_DISPOSE )
+	ROM_LOAD( "pal16l8b.6h",  0x0000, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16l8b.7h",  0x0200, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16r6a.11h", 0x0400, 0x0104, NO_DUMP ) /* PAL is read protected */
 ROM_END
 
 /*
@@ -284,6 +289,11 @@ ROM_START( dietgoe )
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 ) /* Oki samples */
 	ROM_LOAD( "may03",    0x00000, 0x80000, CRC(b6e42bae) SHA1(c282cdf7db30fb63340cc609bf00f5ab63a75583) )
+
+	ROM_REGION( 0x0600, REGION_PLDS, ROMREGION_DISPOSE )
+	ROM_LOAD( "pal16l8b.6h",  0x0000, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16l8b.7h",  0x0200, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16r6a.11h", 0x0400, 0x0104, NO_DUMP ) /* PAL is read protected */
 ROM_END
 
 ROM_START( dietgo )
@@ -303,6 +313,11 @@ ROM_START( dietgo )
 
 	ROM_REGION( 0x80000, REGION_SOUND1, 0 ) /* Oki samples */
 	ROM_LOAD( "may03",    0x00000, 0x80000, CRC(b6e42bae) SHA1(c282cdf7db30fb63340cc609bf00f5ab63a75583) )
+
+	ROM_REGION( 0x0600, REGION_PLDS, ROMREGION_DISPOSE )
+	ROM_LOAD( "pal16l8b.6h",  0x0000, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16l8b.7h",  0x0200, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16r6a.11h", 0x0400, 0x0104, NO_DUMP ) /* PAL is read protected */
 ROM_END
 
 /*

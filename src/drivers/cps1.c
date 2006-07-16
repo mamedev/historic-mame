@@ -3804,6 +3804,15 @@ ROM_START( forgottn )
 	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* Samples */
 	ROM_LOAD( "lw-03u",        0x00000, 0x20000, CRC(807d051f) SHA1(720e4733787b9b11f4d1cdce0892b69475802844) )
 	ROM_LOAD( "lw-04u",        0x20000, 0x20000, CRC(e6cd098e) SHA1(667f6e5736f76a1c4c450c4e2035574ea89d7910) )
+
+	ROM_REGION( 0x0e00, REGION_PLDS, ROMREGION_DISPOSE )
+	ROM_LOAD( "pal16l8.4a",  0x0000, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16l8.9j",  0x0200, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16l8.10f", 0x0400, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16l8.13j", 0x0600, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16l8.14j", 0x0800, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "epl16p8.15e", 0x0a00, 0x0107, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "epl16p8.3a",  0x0c00, 0x0107, NO_DUMP ) /* PAL is read protected */
 ROM_END
 
 ROM_START( lostwrld )

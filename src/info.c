@@ -126,13 +126,40 @@ static void print_game_switch(FILE* out, const game_driver* game)
 
 static void print_game_input(FILE* out, const game_driver* game)
 {
+enum {cjoy, cdoublejoy, cAD_stick, cdial, ctrackball, cpaddle, clightgun, cpedal, ENDCONTROLTYPES};
 	const input_port_entry* input;
 	int nplayer = 0;
-	const char* control = 0;
 	int nbutton = 0;
 	int ncoin = 0;
+	int controlsyes = 0;
+	int analogcontrol = 0;
+	int i;
 	const char* service = 0;
 	const char* tilt = 0;
+	const char* control_types[] = {"joy", "doublejoy", "stick", "dial", "trackball", "paddle", "lightgun", "pedal"};
+	static struct _input_info
+	{
+		const char *	type;			/* general type of input */
+		const char *	Xway;			/* 2, 4, or 8 way */
+		int				analog;
+		int				min;			/* analog minimum value */
+		int				max;			/* analog maximum value  */
+		int				sensitivity;	/* default analog sensitivity */
+		int				keydelta;		/* default analog keydelta */
+		int				reverse;		/* default analog reverse setting */
+	} control[ENDCONTROLTYPES];
+
+	for (i=0;i<ENDCONTROLTYPES;i++)
+	{
+		control[i].type = control_types[i];
+		control[i].Xway = 0;
+		control[i].analog = 0;
+		control[i].min = 0;
+		control[i].max = 0;
+		control[i].sensitivity = 0;
+		control[i].keydelta = 0;
+		control[i].reverse = 0;
+	}
 
 	begin_resource_tracking();
 
@@ -149,36 +176,38 @@ static void print_game_input(FILE* out, const game_driver* game)
 			case IPT_JOYSTICK_RIGHT:
 
 				/* if control not defined, start it off as horizontal 2-way */
-				if (!control)
-					control = "joy2way";
-				else if (strcmp(control,"joy2way") == 0)
+				if (!control[cjoy].Xway)
+					control[cjoy].Xway = "joy2way";
+				else if (strcmp(control[cjoy].Xway,"joy2way") == 0)
 					;
 				/* if already defined as vertical, make it 4 or 8 way */
-				else if (strcmp(control,"vjoy2way") == 0)
+				else if (strcmp(control[cjoy].Xway,"vjoy2way") == 0)
 				{
 					if (input->four_way)
-						control = "joy4way";
+						control[cjoy].Xway = "joy4way";
 					else
-						control = "joy8way";
+						control[cjoy].Xway = "joy8way";
 				}
+				controlsyes = 1;
 				break;
 
 			case IPT_JOYSTICK_UP:
 			case IPT_JOYSTICK_DOWN:
 
 				/* if control not defined, start it off as vertical 2-way */
-				if (!control)
-					control= "vjoy2way";
-				else if (strcmp(control,"vjoy2way") == 0)
+				if (!control[cjoy].Xway)
+					control[cjoy].Xway= "vjoy2way";
+				else if (strcmp(control[cjoy].Xway,"vjoy2way") == 0)
 					;
 				/* if already defined as horiz, make it 4 or 8way */
-				else if (strcmp(control,"joy2way")==0)
+				else if (strcmp(control[cjoy].Xway,"joy2way")==0)
 				{
 					if (input->four_way)
-						control = "joy4way";
+						control[cjoy].Xway = "joy4way";
 					else
-						control = "joy8way";
+						control[cjoy].Xway = "joy8way";
 				}
+				controlsyes = 1;
 				break;
 
 			case IPT_JOYSTICKRIGHT_UP:
@@ -187,18 +216,19 @@ static void print_game_input(FILE* out, const game_driver* game)
 			case IPT_JOYSTICKLEFT_DOWN:
 
 				/* if control not defined, start it off as vertical 2way */
-				if (!control)
-					control= "vdoublejoy2way";
-				else if (strcmp(control,"vdoublejoy2way") == 0)
+				if (!control[cdoublejoy].Xway)
+					control[cdoublejoy].Xway= "vdoublejoy2way";
+				else if (strcmp(control[cdoublejoy].Xway,"vdoublejoy2way") == 0)
 					;
 				/* if already defined as horiz, make it 4 or 8 way */
-				else if (strcmp(control,"doublejoy2way") == 0)
+				else if (strcmp(control[cdoublejoy].Xway,"doublejoy2way") == 0)
 				{
 					if (input->four_way)
-						control = "doublejoy4way";
+						control[cdoublejoy].Xway = "doublejoy4way";
 					else
-						control = "doublejoy8way";
+						control[cdoublejoy].Xway = "doublejoy8way";
 				}
+				controlsyes = 1;
 				break;
 
 			case IPT_JOYSTICKRIGHT_LEFT:
@@ -207,18 +237,44 @@ static void print_game_input(FILE* out, const game_driver* game)
 			case IPT_JOYSTICKLEFT_RIGHT:
 
 				/* if control not defined, start it off as horiz 2-way */
-				if (!control)
-					control="doublejoy2way";
-				else if (strcmp(control,"doublejoy2way") == 0)
+				if (!control[cdoublejoy].Xway)
+					control[cdoublejoy].Xway="doublejoy2way";
+				else if (strcmp(control[cdoublejoy].Xway,"doublejoy2way") == 0)
 					;
 				/* if already defined as vertical, make it 4 or 8 way */
-				else if (strcmp(control,"vdoublejoy2way") == 0)
+				else if (strcmp(control[cdoublejoy].Xway,"vdoublejoy2way") == 0)
 				{
 					if (input->four_way)
-						control = "doublejoy4way";
+						control[cdoublejoy].Xway = "doublejoy4way";
 					else
-						control = "doublejoy8way";
+						control[cdoublejoy].Xway = "doublejoy8way";
 				}
+				controlsyes = 1;
+				break;
+
+			/* mark as an analog input, and get analog stats after switch */
+			case IPT_PADDLE:
+				analogcontrol = cpaddle;
+				break;
+			case IPT_DIAL:
+				analogcontrol = cdial;
+				break;
+			case IPT_TRACKBALL_X:
+			case IPT_TRACKBALL_Y:
+				analogcontrol = ctrackball;
+				break;
+			case IPT_AD_STICK_X:
+			case IPT_AD_STICK_Y:
+				analogcontrol = cAD_stick;
+				break;
+			case IPT_LIGHTGUN_X:
+			case IPT_LIGHTGUN_Y:
+				analogcontrol = clightgun;
+				break;
+			case IPT_PEDAL:
+			case IPT_PEDAL2:
+			case IPT_PEDAL3:
+				analogcontrol = cpedal;
 				break;
 
 			case IPT_BUTTON1:
@@ -251,24 +307,7 @@ static void print_game_input(FILE* out, const game_driver* game)
 			case IPT_BUTTON10:
 				if (nbutton<10) nbutton = 10;
 				break;
-			case IPT_PADDLE:
-				control = "paddle";
-				break;
-			case IPT_DIAL:
-				control = "dial";
-				break;
-			case IPT_TRACKBALL_X:
-			case IPT_TRACKBALL_Y:
-				control = "trackball";
-				break;
-			case IPT_AD_STICK_X:
-			case IPT_AD_STICK_Y:
-				control = "stick";
-				break;
-			case IPT_LIGHTGUN_X:
-			case IPT_LIGHTGUN_Y:
-				control = "lightgun";
-				break;
+
 			case IPT_COIN1:
 				if (ncoin < 1) ncoin = 1;
 				break;
@@ -300,13 +339,32 @@ static void print_game_input(FILE* out, const game_driver* game)
 				tilt = "yes";
 				break;
 		}
+
+		/* get the analog stats */
+		if (analogcontrol)
+		{
+			controlsyes = 1;
+			control[analogcontrol].analog = 1;
+
+			if (input->analog.min)
+				control[analogcontrol].min = input->analog.min;
+			if (input->analog.max)
+				control[analogcontrol].max = input->analog.max;
+			if (input->analog.sensitivity)
+				control[analogcontrol].sensitivity = input->analog.sensitivity;
+			if (input->analog.delta)
+				control[analogcontrol].keydelta = input->analog.delta;
+			if (input->analog.reverse)
+				control[analogcontrol].reverse = 1;
+
+			analogcontrol = 0;
+		}
+
 		++input;
 	}
 
 	fprintf(out, "\t\t<input");
 	fprintf(out, " players=\"%d\"", nplayer );
-	if (control)
-		fprintf(out, " control=\"%s\"", normalize_string(control) );
 	if (nbutton)
 		fprintf(out, " buttons=\"%d\"", nbutton );
 	if (ncoin)
@@ -315,7 +373,31 @@ static void print_game_input(FILE* out, const game_driver* game)
 		fprintf(out, " service=\"%s\"", normalize_string(service) );
 	if (tilt)
 		fprintf(out, " tilt=\"%s\"", normalize_string(tilt) );
-	fprintf(out, "/>\n");
+	fprintf(out, ">\n");
+
+	for (i=0;i<ENDCONTROLTYPES;i++)
+	{
+		if (control[i].Xway)
+			fprintf(out, "\t\t\t<control type=\"%s\"/>\n", normalize_string(control[i].Xway) );
+		if (control[i].analog)
+		{
+			fprintf(out, "\t\t\t<control type=\"%s\"", normalize_string(control_types[i]) );
+			if (control[i].min || control[i].max)
+			{
+				fprintf(out, " minimum=\"%d\"", control[i].min);
+				fprintf(out, " maximum=\"%d\"", control[i].max);
+			}
+			if (control[i].sensitivity)
+				fprintf(out, " sensitivity=\"%d\"", control[i].sensitivity);
+			if (control[i].keydelta)
+				fprintf(out, " keydelta=\"%d\"", control[i].keydelta);
+			if (control[i].reverse)
+				fprintf(out, " reverse=\"Yes\"");
+
+			fprintf(out, "/>\n");
+		}
+	}
+	fprintf(out, "\t\t</input>\n");
 
 	end_resource_tracking();
 }
@@ -617,49 +699,55 @@ static void print_game_micro(FILE* out, const game_driver* game)
 	}
 }
 
-static void print_game_video(FILE* out, const game_driver* game)
+static void print_game_display(FILE* out, const game_driver* game)
 {
 	machine_config driver;
 
 	int dx;
 	int dy;
-	int showxy;
 	int scrnum;
 
 	expand_machine_driver(game->drv, &driver);
 
-	fprintf(out, "\t\t<video");
-	if (driver.video_attributes & VIDEO_TYPE_VECTOR)
-	{
-		fprintf(out, " screen=\"vector\"");
-		showxy = 0;
-	}
-	else
-	{
-		fprintf(out, " screen=\"raster\"");
-		showxy = 1;
-	}
-
-	fprintf(out, " orientation=\"%s\">\n", (game->flags & ORIENTATION_SWAP_XY) ? "vertical" : "horizontal" );
-
 	for (scrnum = 0; scrnum < MAX_SCREENS; scrnum++)
 		if (driver.screen[scrnum].tag != NULL)
 		{
-			if (game->flags & ORIENTATION_SWAP_XY)
-			{
-				dx = driver.screen[scrnum].default_visible_area.max_y - driver.screen[scrnum].default_visible_area.min_y + 1;
-				dy = driver.screen[scrnum].default_visible_area.max_x - driver.screen[scrnum].default_visible_area.min_x + 1;
+			fprintf(out, "\t\t<display");
+
+			fprintf(out, " type=\"%s\"", (driver.video_attributes & VIDEO_TYPE_VECTOR) ? "vector" : "raster" );
+
+			switch (game->flags & ORIENTATION_MASK) {
+				case ORIENTATION_FLIP_X:
+					fprintf(out, " rotate=\"0\" flipx=\"yes\"");
+					break;
+				case ORIENTATION_FLIP_Y:
+					fprintf(out, " rotate=\"0\" flipy=\"yes\"");
+					break;
+				case ORIENTATION_FLIP_X|ORIENTATION_FLIP_Y:
+					fprintf(out, " rotate=\"180\"");
+					break;
+				case ORIENTATION_SWAP_XY:
+					fprintf(out, " rotate=\"90\" flipx=\"yes\"");
+					break;
+				case ORIENTATION_SWAP_XY|ORIENTATION_FLIP_X:
+					fprintf(out, " rotate=\"90\"");
+					break;
+				case ORIENTATION_SWAP_XY|ORIENTATION_FLIP_Y:
+					fprintf(out, " rotate=\"270\"");
+					break;
+				case ORIENTATION_SWAP_XY|ORIENTATION_FLIP_X|ORIENTATION_FLIP_Y:
+					fprintf(out, " rotate=\"270\" flipx=\"yes\"");
+					break;
+				default:
+					fprintf(out, " rotate=\"0\"");
+					break;
 			}
-			else
+
+			/* output width and height only for games that are not vector */
+			if (! (driver.video_attributes & VIDEO_TYPE_VECTOR) )
 			{
 				dx = driver.screen[scrnum].default_visible_area.max_x - driver.screen[scrnum].default_visible_area.min_x + 1;
 				dy = driver.screen[scrnum].default_visible_area.max_y - driver.screen[scrnum].default_visible_area.min_y + 1;
-			}
-
-			fprintf(out, "\t\t\t<screen");
-
-			if (showxy)
-			{
 				fprintf(out, " width=\"%d\"", dx);
 				fprintf(out, " height=\"%d\"", dy);
 			}
@@ -668,8 +756,6 @@ static void print_game_video(FILE* out, const game_driver* game)
 
 			fprintf(out, " />\n");
 		}
-
-	fprintf(out, "\t\t</video>\n");
 }
 
 static void print_game_sound(FILE* out, const game_driver* game)
@@ -820,7 +906,7 @@ static void print_game_info(FILE* out, const game_driver* game)
 	print_game_rom(out, game);
 	print_game_sample(out, game);
 	print_game_micro(out, game);
-	print_game_video(out, game);
+	print_game_display(out, game);
 	print_game_sound(out, game);
 	print_game_input(out, game);
 	print_game_switch(out, game);
@@ -949,22 +1035,29 @@ void print_mame_xml(FILE* out, const game_driver* const games[], const char *gam
 		"\t\t\t<!ATTLIST chip name CDATA #REQUIRED>\n"
 		"\t\t\t<!ATTLIST chip type (cpu|audio) #REQUIRED>\n"
 		"\t\t\t<!ATTLIST chip clock CDATA #IMPLIED>\n"
-		"\t\t<!ELEMENT video (screeninfo*)>\n"
-		"\t\t\t<!ATTLIST video screen (raster|vector) #REQUIRED>\n"
-		"\t\t\t<!ATTLIST video orientation (vertical|horizontal) #REQUIRED>\n"
-		"\t\t\t<!ELEMENT screeninfo EMPTY>\n"
-		"\t\t\t\t<!ATTLIST video width CDATA #IMPLIED>\n"
-		"\t\t\t\t<!ATTLIST video height CDATA #IMPLIED>\n"
-		"\t\t\t\t<!ATTLIST video refresh CDATA #REQUIRED>\n"
+		"\t\t<!ELEMENT display EMPTY>\n"
+		"\t\t\t<!ATTLIST video type (raster|vector) #REQUIRED>\n"
+		"\t\t\t<!ATTLIST video rotate (0|90|180|270) #REQUIRED>\n"
+		"\t\t\t<!ATTLIST video flipx (yes|no) \"no\">\n"
+		"\t\t\t<!ATTLIST video flipy (yes|no) \"no\">\n"
+		"\t\t\t<!ATTLIST video width CDATA #IMPLIED>\n"
+		"\t\t\t<!ATTLIST video height CDATA #IMPLIED>\n"
+		"\t\t\t<!ATTLIST video refresh CDATA #REQUIRED>\n"
 		"\t\t<!ELEMENT sound EMPTY>\n"
 		"\t\t\t<!ATTLIST sound channels CDATA #REQUIRED>\n"
-		"\t\t<!ELEMENT input EMPTY>\n"
+		"\t\t<!ELEMENT input (control*)>\n"
 		"\t\t\t<!ATTLIST input service (yes|no) \"no\">\n"
 		"\t\t\t<!ATTLIST input tilt (yes|no) \"no\">\n"
 		"\t\t\t<!ATTLIST input players CDATA #REQUIRED>\n"
-		"\t\t\t<!ATTLIST input control CDATA #IMPLIED>\n"
 		"\t\t\t<!ATTLIST input buttons CDATA #IMPLIED>\n"
 		"\t\t\t<!ATTLIST input coins CDATA #IMPLIED>\n"
+		"\t\t\t<!ELEMENT control EMPTY>\n"
+		"\t\t\t\t<!ATTLIST control type CDATA #REQUIRED>\n"
+		"\t\t\t\t<!ATTLIST control minimum CDATA #IMPLIED>\n"
+		"\t\t\t\t<!ATTLIST control maximum CDATA #IMPLIED>\n"
+		"\t\t\t\t<!ATTLIST control sensitivity CDATA #IMPLIED>\n"
+		"\t\t\t\t<!ATTLIST control keydelta CDATA #IMPLIED>\n"
+		"\t\t\t\t<!ATTLIST control reverse (Yes|No) \"No\">\n"
 		"\t\t<!ELEMENT dipswitch (dipvalue*)>\n"
 		"\t\t\t<!ATTLIST dipswitch name CDATA #REQUIRED>\n"
 		"\t\t\t<!ELEMENT dipvalue EMPTY>\n"

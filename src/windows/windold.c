@@ -166,9 +166,6 @@ static int visible_area_set;
 // event handling
 static cycles_t last_event_check;
 
-// derived attributes
-static int pixel_aspect_ratio;
-
 // cached bounding rects
 static RECT non_fullscreen_bounds;
 static RECT non_maximized_bounds;
@@ -444,9 +441,6 @@ int win_create_window(int width, int height, int depth, int attributes, double a
 	last_bitmap = NULL;
 	visible_area_set = 0;
 
-	// extract useful parameters from the attributes
-	pixel_aspect_ratio	= (attributes & VIDEO_PIXEL_ASPECT_RATIO_MASK);
-
 	// handle failure if we couldn't create the video window
 	if (!win_video_window)
 		return 1;
@@ -495,20 +489,6 @@ int win_create_window(int width, int height, int depth, int attributes, double a
 	else
 	{
 		aspect_ratio = (double)width / (double)height;
-		if (pixel_aspect_ratio == VIDEO_PIXEL_ASPECT_RATIO_2_1)
-		{
-			if (!blit_swapxy)
-				aspect_ratio *= 2.0;
-			else
-				aspect_ratio /= 2.0;
-		}
-		else if (pixel_aspect_ratio == VIDEO_PIXEL_ASPECT_RATIO_1_2)
-		{
-			if (!blit_swapxy)
-				aspect_ratio /= 2.0;
-			else
-				aspect_ratio *= 2.0;
-		}
 	}
 
 	win_default_constraints = 0;
@@ -1041,20 +1021,6 @@ void win_adjust_window_for_visible(int min_x, int max_x, int min_y, int max_y)
 	if (win_use_directx != USE_D3D && (win_use_directx != USE_DDRAW || !win_dd_hw_stretch))
 	{
 		aspect_ratio = (double)win_visible_width / (double)win_visible_height;
-		if (pixel_aspect_ratio == VIDEO_PIXEL_ASPECT_RATIO_2_1)
-		{
-			if (!blit_swapxy)
-				aspect_ratio *= 2.0;
-			else
-				aspect_ratio /= 2.0;
-		}
-		else if (pixel_aspect_ratio == VIDEO_PIXEL_ASPECT_RATIO_1_2)
-		{
-			if (!blit_swapxy)
-				aspect_ratio /= 2.0;
-			else
-				aspect_ratio *= 2.0;
-		}
 	}
 
  	// if we are adjusting the size in windowed mode without stretch, use our own way of changing the window size
@@ -1661,34 +1627,6 @@ static void compute_multipliers_internal(const RECT *rect, int visible_width, in
 		*xmult = effect_table[win_blit_effect].max_xscale;
 	if (*ymult > effect_table[win_blit_effect].max_yscale)
 		*ymult = effect_table[win_blit_effect].max_yscale;
-
-	// adjust for pixel aspect ratio
-	if (pixel_aspect_ratio == VIDEO_PIXEL_ASPECT_RATIO_1_2)
-	{
-		if (!blit_swapxy)
-		{
-			if (*ymult > 1)
-				*ymult &= ~1;
-		}
-		else
-		{
-			if (*xmult > 1)
-				*xmult &= ~1;
-		}
-	}
-	if (pixel_aspect_ratio == VIDEO_PIXEL_ASPECT_RATIO_2_1)
-	{
-		if (!blit_swapxy)
-		{
-			if (*xmult > 1)
-				*xmult &= ~1;
-		}
-		else
-		{
-			if (*ymult > 1)
-				*ymult &= ~1;
-		}
-	}
 
 	// make sure we have at least 1
 	if (*xmult < 1)

@@ -239,64 +239,6 @@ static int					ledmethod;
 // prototypes
 static void extract_input_config(void);
 
-const options_entry input_opts[] =
-{
-	// video options
-	{ NULL,                       NULL,       OPTION_HEADER,     "INPUT DEVICE OPTIONS" },
-	{ "mouse",                    "0",        OPTION_BOOLEAN,    "enable mouse input" },
-	{ "joystick;joy",             "0",        OPTION_BOOLEAN,    "enable joystick input" },
-	{ "lightgun;gun",             "0",        OPTION_BOOLEAN,    "enable lightgun input" },
-	{ "dual_lightgun;dual",       "0",        OPTION_BOOLEAN,    "enable dual lightgun input" },
-	{ "offscreen_reload;reload",  "0",        OPTION_BOOLEAN,    "offscreen shots reload" },
-	{ "steadykey;steady",         "0",        OPTION_BOOLEAN,    "enable steadykey support" },
-	{ "keyboard_leds;leds",       "1",        OPTION_BOOLEAN,    "enable keyboard LED emulation" },
-	{ "led_mode",                 "ps/2",     0,                 "LED mode (PS/2|USB)" },
-	{ "a2d_deadzone;a2d",         "0.3",      0,                 "minimal analog value for digital input" },
-	{ "ctrlr",                    NULL,       0,                 "preconfigure for specified controller" },
-	{ "paddle_device;paddle",     "keyboard", 0,                 "enable (keyboard|mouse|joystick) if a paddle control is present" },
-	{ "adstick_device;adstick",   "keyboard", 0,                 "enable (keyboard|mouse|joystick) if an analog joystick control is present" },
-	{ "pedal_device;pedal",       "keyboard", 0,                 "enable (keyboard|mouse|joystick) if a pedal control is present" },
-	{ "dial_device;dial",         "keyboard", 0,                 "enable (keyboard|mouse|joystick) if a dial control is present" },
-	{ "trackball_device;trackball","keyboard", 0,                "enable (keyboard|mouse|joystick) if a trackball control is present" },
-	{ "lightgun_device",          "keyboard", 0,                 "enable (keyboard|mouse|joystick) if a lightgun control is present" },
-#ifdef MESS
-	{ "mouse_device",             "mouse",    0,                 "enable (keyboard|mouse|joystick) if a mouse control is present" },
-#endif
-	{ "digital",                  "none",     0,                 "mark certain joysticks or axes as digital (none|all|j<N>*|j<N>a<M>[,...])" },
-	{ NULL },
-};
-
-
-#if 0
-// global input options
-struct rc_option input_opts[] =
-{
-	/* name, shortname, type, dest, deflt, min, max, func, help */
-	{ "Input device options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
-	{ "mouse", NULL, rc_bool, &win_use_mouse, "0", 0, 0, NULL, "enable mouse input" },
-	{ "joystick", "joy", rc_bool, &use_joystick, "0", 0, 0, NULL, "enable  input" },
-	{ "lightgun", "gun", rc_bool, &use_lightgun, "0", 0, 0, NULL, "enable  input" },
-	{ "dual_lightgun", "dual", rc_bool, &use_lightgun_dual, "0", 0, 0, NULL, "enable  input" },
-	{ "offscreen_reload", "reload", rc_bool, &use_lightgun_reload, "0", 0, 0, NULL, "offscreen shots reload" },
-	{ "steadykey", "steady", rc_bool, &steadykey, "0", 0, 0, NULL, "enable steadykey support" },
-	{ "keyboard_leds", "leds", rc_bool, &use_keyboard_leds, "1", 0, 0, NULL, "enable keyboard LED emulation" },
-	{ "led_mode", NULL, rc_string, (char *)&ledmode, "ps/2", 0, 0, decode_ledmode, "LED mode (ps/2|usb)" },
-	{ "a2d_deadzone", "a2d", rc_float, &a2d_deadzone, "0.3", 0.0, 1.0, NULL, "minimal analog value for digital input" },
-	{ "ctrlr", NULL, rc_string, (char *)&options.controller, 0, 0, 0, NULL, "preconfigure for specified controller" },
-	{ "paddle_device", "paddle", rc_string, &dummy[0], "keyboard", ANALOG_TYPE_PADDLE, 0, decode_analog_select, "enable (keyboard|mouse|joystick) if a paddle control is present" },
-	{ "adstick_device", "adstick", rc_string, &dummy[1], "keyboard", ANALOG_TYPE_ADSTICK, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if an analog joystick control is present" },
-	{ "pedal_device", "pedal", rc_string, &dummy[2], "keyboard", ANALOG_TYPE_PEDAL, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if a pedal control is present" },
-	{ "dial_device", "dial", rc_string, &dummy[3], "keyboard", ANALOG_TYPE_DIAL, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if a dial control is present" },
-	{ "trackball_device", "trackball", rc_string, &dummy[4], "keyboard", ANALOG_TYPE_TRACKBALL, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if a trackball control is present" },
-	{ "lightgun_device", NULL, rc_string, &dummy[5], "keyboard", ANALOG_TYPE_LIGHTGUN, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if a lightgun control is present" },
-#ifdef MESS
-	{ "mouse_device", NULL, rc_string, &dummy[6], "mouse", ANALOG_TYPE_MOUSE, 0, decode_analog_select, "enable (keyboard|mouse|joystick|lightgun) if a mouse control is present" },
-#endif // MESS
-	{ "digital", NULL, rc_string, &dummy[7], "none", 1, 0, decode_digital, "mark certain joysticks or axes as digital (none|all|j<N>*|j<N>a<M>[,...])" },
-	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
-};
-#endif
-
 
 
 //============================================================
@@ -2130,7 +2072,7 @@ static void poll_lightguns(void)
 	// loop over players
 	for (player = 0; player < MAX_DX_LIGHTGUNS; player++)
 	{
-		// Hack - if button 2 is pressed on lightgun, then return 0,0 (off-screen) to simulate reload
+		// Hack - if button 2 is pressed on lightgun, then return 0,ANALOG_VALUE_MAX (off-screen) to simulate reload
 		if (use_lightgun_reload)
 		{
 			int return_offscreen=0;
@@ -2153,7 +2095,7 @@ static void poll_lightguns(void)
 			if (return_offscreen)
 			{
 				gun_axis[player][0] = ANALOG_VALUE_MIN;
-				gun_axis[player][1] = ANALOG_VALUE_MIN;
+				gun_axis[player][1] = ANALOG_VALUE_MAX;
 				continue;
 			}
 		}
@@ -3004,7 +2946,7 @@ static void win_read_raw_mouse(void)
 		if (use_lightgun_reload && mouse_state[i].rgbButtons[1] & 0x80)
 		{
 			mouse_state[i].lX = ANALOG_VALUE_MIN;
-			mouse_state[i].lY = ANALOG_VALUE_MIN;
+			mouse_state[i].lY = ANALOG_VALUE_MAX;
 			mouse_state[i].rgbButtons[0] = 0x80;
 		}
 

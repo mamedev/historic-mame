@@ -591,6 +591,12 @@ ROM_START( maniach )
 	ROM_LOAD( "prom.16",      0x0020, 0x0020, CRC(18836d26) SHA1(950e1ea5184355501b41548d40732b96c5516fd7) ) /* tile palette red and green components */
 	ROM_LOAD( "prom.3",       0x0040, 0x0020, CRC(c7925311) SHA1(6b997803eb630b79886cebbe3bc49db1c1ab3fd9) ) /* char palette blue component */
 	ROM_LOAD( "prom.17",      0x0060, 0x0020, CRC(41f51d49) SHA1(7cfaf308752cbfddf5a37a31140119afc3febaa7) ) /* tile palette blue component */
+
+	ROM_REGION( 0x0600, REGION_PLDS, ROMREGION_DISPOSE )
+	ROM_LOAD( "pal10l8.51",   0x0000, 0x002c, CRC(424547af) SHA1(d5e57729906ae0caa8606c52284622e26509e025) )
+	ROM_LOAD( "pal10l8.56",   0x0100, 0x002c, CRC(5f6fdf22) SHA1(af6c285c4b23a15b9f1d9db2166681e1b518cc11) )
+	ROM_LOAD( "pal16r4a.117", 0x0200, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16r4a.118", 0x0400, 0x0104, NO_DUMP ) /* PAL is read protected */
 ROM_END
 
 ROM_START( maniach2 )
@@ -645,6 +651,12 @@ ROM_START( maniach2 )
 	ROM_LOAD( "prom.16",      0x0020, 0x0020, CRC(18836d26) SHA1(950e1ea5184355501b41548d40732b96c5516fd7) ) /* tile palette red and green components */
 	ROM_LOAD( "prom.3",       0x0040, 0x0020, CRC(c7925311) SHA1(6b997803eb630b79886cebbe3bc49db1c1ab3fd9) ) /* char palette blue component */
 	ROM_LOAD( "prom.17",      0x0060, 0x0020, CRC(41f51d49) SHA1(7cfaf308752cbfddf5a37a31140119afc3febaa7) ) /* tile palette blue component */
+
+	ROM_REGION( 0x0600, REGION_PLDS, ROMREGION_DISPOSE )
+	ROM_LOAD( "pal10l8.51",   0x0000, 0x002c, CRC(424547af) SHA1(d5e57729906ae0caa8606c52284622e26509e025) )
+	ROM_LOAD( "pal10l8.56",   0x0100, 0x002c, CRC(5f6fdf22) SHA1(af6c285c4b23a15b9f1d9db2166681e1b518cc11) )
+	ROM_LOAD( "pal16r4a.117", 0x0200, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16r4a.118", 0x0400, 0x0104, NO_DUMP ) /* PAL is read protected */
 ROM_END
 
 

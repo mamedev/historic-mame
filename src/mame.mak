@@ -1468,6 +1468,7 @@ $(OBJ)/misc.a: \
 	$(OBJ)/drivers/ltcasino.o \
 	$(OBJ)/drivers/lucky8.o \
 	$(OBJ)/drivers/magic10.o \
+	$(OBJ)/drivers/magicfly.o \
 	$(OBJ)/drivers/malzak.o $(OBJ)/vidhrdw/malzak.o \
 	$(OBJ)/drivers/mcatadv.o $(OBJ)/vidhrdw/mcatadv.o \
 	$(OBJ)/drivers/micro3d.o $(OBJ)/vidhrdw/micro3d.o \
@@ -1518,7 +1519,6 @@ $(OBJ)/misc.a: \
 	$(OBJ)/drivers/vroulet.o \
 	$(OBJ)/drivers/wldarrow.o \
 	$(OBJ)/drivers/xyonix.o $(OBJ)/vidhrdw/xyonix.o \
-	$(OBJ)/drivers/magicfly.o \
 
 
 

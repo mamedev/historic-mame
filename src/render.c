@@ -14,7 +14,6 @@
 
     Windows-specific to-do:
         * no fallback if we run out of video memory
-        * multiple windows on screen produces odd order and UI is not visible
 
     Longer-term to do: (once old renderer is gone)
         * remove dirty_palette stuff
@@ -759,7 +758,10 @@ void render_init(void)
 		if (Machine->drv->screen[scrnum].tag != NULL)
 		{
 			screen_container[scrnum] = render_container_alloc();
-			screen_container[scrnum]->orientation = Machine->gamedrv->flags & ORIENTATION_MASK;
+			render_container_set_orientation(screen_container[scrnum], Machine->gamedrv->flags & ORIENTATION_MASK);
+			render_container_set_brightness(screen_container[scrnum], options.brightness);
+			render_container_set_contrast(screen_container[scrnum], options.contrast);
+			render_container_set_gamma(screen_container[scrnum], options.gamma);
 		}
 
 	/* register callbacks */
@@ -1898,6 +1900,7 @@ static void add_container_primitives(render_target *target, render_primitive_lis
 		{
 			case CONTAINER_ITEM_LINE:
 				/* adjust the color for brightness/contrast/gamma */
+				prim->color.a = apply_brightness_contrast_gamma_fp(prim->color.a, container->brightness, container->contrast, container->gamma);
 				prim->color.r = apply_brightness_contrast_gamma_fp(prim->color.r, container->brightness, container->contrast, container->gamma);
 				prim->color.g = apply_brightness_contrast_gamma_fp(prim->color.g, container->brightness, container->contrast, container->gamma);
 				prim->color.b = apply_brightness_contrast_gamma_fp(prim->color.b, container->brightness, container->contrast, container->gamma);
@@ -2639,9 +2642,9 @@ static render_container *render_container_alloc(void)
 	memset(container, 0, sizeof(*container));
 
 	/* default values */
-	container->brightness = options.brightness;
-	container->contrast = options.contrast;
-	container->gamma = options.gamma;
+	container->brightness = 1.0f;
+	container->contrast = 1.0f;
+	container->gamma = 1.0f;
 	container->xscale = 1.0f;
 	container->yscale = 1.0f;
 

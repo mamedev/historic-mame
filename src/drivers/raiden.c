@@ -380,6 +380,10 @@ ROM_START( raiden )
 
 	ROM_REGION( 0x10000, REGION_SOUND1, 0 )	 /* ADPCM samples */
 	ROM_LOAD( "rai7.bin", 0x00000, 0x10000, CRC(8f927822) SHA1(592f2719f2c448c3b4b239eeaec078b411e12dbb) )
+
+	ROM_REGION( 0x2000, REGION_PLDS, ROMREGION_DISPOSE )
+	ROM_LOAD( "ep910pc-1.bin", 0x0000, 0x0884, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "ep910pc-2.bin", 0x1000, 0x0884, NO_DUMP ) /* PAL is read protected */
 ROM_END
 
 ROM_START( raidena )

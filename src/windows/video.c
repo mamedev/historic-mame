@@ -190,81 +190,6 @@ INLINE int effective_throttle(void)
 
 
 //============================================================
-//  OPTIONS
-//============================================================
-
-const options_entry video_opts[] =
-{
-	// performance options
-	{ NULL,                       NULL,   OPTION_HEADER,  "PERFORMANCE OPTIONS" },
-	{ "autoframeskip;afs",        "1",    OPTION_BOOLEAN, "enable automatic frameskip selection" },
-	{ "frameskip;fs",             "0",    0,              "set frameskip to fixed value, 0-12 (autoframeskip must be disabled)" },
-	{ "throttle",                 "1",    OPTION_BOOLEAN, "enable throttling to keep game running in sync with real time" },
-	{ "sleep",                    "1",    OPTION_BOOLEAN, "enable sleeping, which gives time back to other applications when idle" },
-	{ "rdtsc",                    "0",    OPTION_BOOLEAN, "use the RDTSC instruction for timing; faster but may result in uneven performance" },
-	{ "priority",                 "0",    0,              "thread priority for the main game thread; range from -15 to 1" },
-
-	// misc options
-	{ NULL,                       NULL,   OPTION_HEADER,  "MISC VIDEO OPTIONS" },
-	{ "frames_to_run;ftr",        "0",    0,              "number of frames to run before automatically exiting" },
-	{ "mngwrite",                 NULL,   0,              "optional filename to write a MNG movie of the current session" },
-
-	// global options
-	{ NULL,                       NULL,   OPTION_HEADER,  "GLOBAL VIDEO OPTIONS" },
-	{ "video",                    "d3d",  0,              "video output method: gdi, ddraw, or d3d" },
-	{ "window;w",                 "0",    OPTION_BOOLEAN, "enable window mode; otherwise, full screen mode is assumed" },
-	{ "maximize;max",             "1",    OPTION_BOOLEAN, "default to maximized windows; otherwise, windows will be minimized" },
-	{ "keepaspect;ka",            "1",    OPTION_BOOLEAN, "constrain to the proper aspect ratio" },
-	{ "prescale",                 "0",    0,              "screen bitmap prescaling amount" },
-	{ "numscreens",               "1",    0,              "number of screens to create; usually, you want just one" },
-	{ "extra_layout;layout",      NULL,   0,              "name of an extra layout file to parse" },
-	{ "effect",                   NULL,   0,              "name of a PNG file to use for visual effects" },
-
-	// per-window options
-	{ NULL,                       NULL,   OPTION_HEADER,  "PER-WINDOW VIDEO OPTIONS" },
-	{ "screen0;screen",           "auto", 0,              "explicit name of the first screen; 'auto' here will try to make a best guess" },
-	{ "aspect0;screen_aspect",    "auto", 0,              "aspect ratio of the first screen; 'auto' here will try to make a best guess" },
-	{ "resolution0;resolution;r0;r", "auto", 0,           "preferred resolution of the first screen; format is <width>x<height>[x<depth>[@<refreshrate>]] or 'auto'" },
-	{ "view0;view",               "auto", 0,              "preferred view for the first screen" },
-
-	{ "screen1",                  "auto", 0,              "explicit name of the second screen; 'auto' here will try to make a best guess" },
-	{ "aspect1",                  "auto", 0,              "aspect ratio of the second screen; 'auto' here will try to make a best guess" },
-	{ "resolution1;r1",           "auto", 0,              "preferred resolution of the second screen; format is <width>x<height>[x<depth>[@<refreshrate>]] or 'auto'" },
-	{ "view1",                    "auto", 0,              "preferred view for the second screen" },
-
-	{ "screen2",                  "auto", 0,              "explicit name of the third screen; 'auto' here will try to make a best guess" },
-	{ "aspect2",                  "auto", 0,              "aspect ratio of the third screen; 'auto' here will try to make a best guess" },
-	{ "resolution2;r2",           "auto", 0,              "preferred resolution of the third screen; format is <width>x<height>[x<depth>[@<refreshrate>]] or 'auto'" },
-	{ "view2",                    "auto", 0,              "preferred view for the third screen" },
-
-	{ "screen3",                  "auto", 0,              "explicit name of the fourth screen; 'auto' here will try to make a best guess" },
-	{ "aspect3",                  "auto", 0,              "aspect ratio of the fourth screen; 'auto' here will try to make a best guess" },
-	{ "resolution3;r3",           "auto", 0,              "preferred resolution of the fourth screen; format is <width>x<height>[x<depth>[@<refreshrate>]] or 'auto'" },
-	{ "view3",                    "auto", 0,              "preferred view for the fourth screen" },
-
-	// directx options
-	{ NULL,                       NULL,   OPTION_HEADER,  "DIRECTX VIDEO OPTIONS" },
-	{ "waitvsync",                "0",    OPTION_BOOLEAN, "enable waiting for the start of VBLANK before flipping screens; reduces tearing effects" },
-	{ "syncrefresh",              "0",    OPTION_BOOLEAN, "enable using the start of VBLANK for throttling instead of the game time" },
-	{ "triplebuffer;tb",          "0",    OPTION_BOOLEAN, "enable triple buffering" },
-	{ "switchres",                "0",    OPTION_BOOLEAN, "enable resolution switching" },
-	{ "full_screen_brightness;fsb","1.0", 0,              "brightness value in full screen mode" },
-	{ "full_screen_contrast;fsc", "1.0",  0,              "contrast value in full screen mode" },
-	{ "full_screen_gamma;fsg",    "1.0",  0,              "gamma value in full screen mode" },
-
-	{ NULL,                       NULL,   OPTION_HEADER,  "DIRECTDRAW-SPECIFIC OPTIONS" },
-	{ "hwstretch;hws",            "1",    OPTION_BOOLEAN, "enable hardware stretching" },
-
-	{ NULL,                       NULL,   OPTION_HEADER,  "DIRECT3D-SPECIFIC OPTIONS" },
-	{ "d3dversion",               "9",    0,              "specify the preferred Direct3D version (8 or 9)" },
-	{ "filter;d3dfilter;flt",     "1",    OPTION_BOOLEAN, "enable bilinear filtering on screen output" },
-
-	{ NULL }
-};
-
-
-
-//============================================================
 //  winvideo_init
 //============================================================
 
@@ -919,7 +844,7 @@ static void extract_video_config(void)
 		video_config.windowed = TRUE;
 #endif
 	stemp                      = options_get_string("effect", TRUE);
-	if (stemp != NULL)
+	if (stemp != NULL && strcmp(stemp, "none") != 0)
 		load_effect_overlay(stemp);
 
 	// configure layers

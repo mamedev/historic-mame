@@ -269,27 +269,57 @@ static void reload_count(int idx, int which)
 		}
 
 	}
+
 	/* set the timer */
 	PLOG(("MC6840 #%d: reload_count(%d): freq = %f  count = %d\n", which, idx, freq, count));
+	if (currptr->interrupt[idx])
+	{
+		currptr->interrupt[idx] = 0;
+		update_interrupts(which);
+	}
 	switch (idx)
 	{
 	case 0:
 	timer_adjust(currptr->timer1, freq * (double)count, which, 0);
 	currptr->enabled[0] = 1;
 	timer_enable(currptr->timer1,TRUE);
-	PLOG(("TIMER GO(%d)\n", idx));
+
+	if (!currptr->control_reg[0] & 0x02)
+	{
+		if (!currptr->intf->external_clock1)
+		{
+			currptr->enabled[0] = 0;
+			timer_enable(currptr->timer1,FALSE);
+		}
+	}
 	break;
 	case 1:
 	timer_adjust(currptr->timer2, freq * (double)count, which, 0);
 	currptr->enabled[1] = 1;
 	timer_enable(currptr->timer2,TRUE);
-	PLOG(("TIMER GO(%d)\n", idx));
+
+	if (!currptr->control_reg[1] & 0x02)
+	{
+		if (!currptr->intf->external_clock2)
+		{
+			currptr->enabled[1] = 0;
+			timer_enable(currptr->timer3,FALSE);
+		}
+	}
 	break;
 	case 2:
 	timer_adjust(currptr->timer3, freq * (double)count/currptr->t3_divisor, which, 0);
 	currptr->enabled[2] = 1;
 	timer_enable(currptr->timer3,TRUE);
-	PLOG(("TIMER GO(%d)\n", idx));
+
+	if (!currptr->control_reg[2] & 0x02)
+	{
+		if (!currptr->intf->external_clock3)
+		{
+			currptr->enabled[2] = 0;
+			timer_enable(currptr->timer3,FALSE);
+		}
+	}
 	break;
 	}
 }
@@ -433,11 +463,12 @@ void ptm6840_reset(int which)
 	int i;
 	for ( i = 0; i < 3; i++ )
 	{
-		ptm[which].control_reg[i]	= 0x00;
-		ptm[which].control_reg[0]	= 0x01;
-		ptm[which].counter[i].w		= 0xffff;
-		ptm[which].latch[i].w		= 0xffff;
-		ptm[which].output[i]		= 0;
+		ptm[which].status_read_since_int	= 0x00;
+		ptm[which].control_reg[i]			= 0x00;
+		ptm[which].control_reg[0]			= 0x01;
+		ptm[which].counter[i].w				= 0xffff;
+		ptm[which].latch[i].w				= 0xffff;
+		ptm[which].output[i]				= 0;
 	}
 }
 
@@ -458,6 +489,8 @@ int ptm6840_read(int which, int offset)
 		break;
 
 		case PTM_6840_CTRL2 ://1
+		PLOG(("%06X: MC6840 #%d: Status read = %04X\n", activecpu_get_previouspc(), which, currptr->status_reg));
+		currptr->status_read_since_int |= currptr->status_reg & 0x07;
 		return currptr->status_reg;
 		break;
 
@@ -472,7 +505,7 @@ int ptm6840_read(int which, int offset)
 
 			currptr->counter[0].b.l = result & 0xff;
 
-			PLOG(("%06X: MC6840 #%d: Counter %d read = %04X\n", activecpu_get_previouspc(), which, 0, result));
+			PLOG(("%06X: MC6840 #%d: Counter %d read = %04X\n", activecpu_get_previouspc(), which, 0, result >> 8));
 			return result >> 8;
 		}
 
@@ -543,7 +576,7 @@ void ptm6840_write (int which, int offset, int data)
 		PLOG(("MC6840 #%d : Control register %d selected\n",which,idx));
 		PLOG(("operation mode   = %s\n", opmode[ currptr->mode[idx] ]));
 		PLOG(("value            = %04X\n", currptr->control_reg[idx]));
-
+		PLOG(("t3divisor        = %d\n", currptr->t3_divisor));
 		switch ( idx )
 		{
 			case 0:
@@ -716,7 +749,7 @@ static void ptm6840_t1_timeout(int which)
 			{
 				if (!p->fired[0])
 				{
-					p->output[0] = 0;
+					p->output[0] = 1;
 					PLOG(("**ptm6840 %d t1 output %d **\n", which, p->output[0]));
 					if ( p->intf->out1_func ) p->intf->out1_func(0, p->output[0]);
 					p->fired[0]=1;//no changes in output until reinit
@@ -759,7 +792,7 @@ static void ptm6840_t2_timeout(int which)
 			{
 				if (!p->fired[1])
 				{
-					p->output[1] = 0;
+					p->output[1] = 1;
 					PLOG(("**ptm6840 %d t2 output %d **\n", which, p->output[1]));
 					if ( p->intf->out2_func ) p->intf->out2_func(0, p->output[1]);
 					p->fired[1]=1;//no changes in output until reinit
@@ -803,7 +836,7 @@ static void ptm6840_t3_timeout(int which)
 			{
 				if (!p->fired[2])
 				{
-					p->output[2] = 0;
+					p->output[2] = 1;
 					PLOG(("**ptm6840 %d t3 output %d **\n", which, p->output[2]));
 					if ( p->intf->out3_func ) p->intf->out3_func(0, p->output[2]);
 					p->fired[2]=1;//no changes in output until reinit

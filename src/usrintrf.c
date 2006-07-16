@@ -4493,6 +4493,8 @@ static UINT32 ui_handler_gameinfo(UINT32 state)
 
 *********************************************************************/
 
+#define OSD_RESET_TO_DEFAULT	1000
+
 /*************************************
  *
  *  OSD handler
@@ -4507,6 +4509,8 @@ static UINT32 ui_handler_osd(UINT32 state)
 		increment = -1;
 	if (input_ui_pressed_repeat(IPT_UI_RIGHT,6))
 		increment = 1;
+	if (input_ui_pressed(IPT_UI_SELECT))
+		increment = OSD_RESET_TO_DEFAULT;
 
 	if (input_ui_pressed_repeat(IPT_UI_DOWN,6))
 		onscrd_state = (onscrd_state + 1) % onscrd_total_items;
@@ -4594,7 +4598,9 @@ static void onscrd_adjuster(int increment,int arg)
 	char buf[80];
 	int value;
 
-	if (increment)
+	if (increment == OSD_RESET_TO_DEFAULT)
+		in->default_value = (in->default_value & ~0xff) | (in->default_value >> 8);
+	else if (increment)
 	{
 		value = in->default_value & 0xff;
 		value += increment;
@@ -4614,7 +4620,9 @@ static void onscrd_volume(int increment,int arg)
 	char buf[20];
 	int attenuation;
 
-	if (increment)
+	if (increment == OSD_RESET_TO_DEFAULT)
+		osd_set_mastervolume(0);
+	else if (increment)
 	{
 		attenuation = osd_get_mastervolume();
 		attenuation += increment;
@@ -4640,13 +4648,25 @@ static void onscrd_mixervol(int increment,int arg)
 
 	if (code_pressed(KEYCODE_LSHIFT) || code_pressed(KEYCODE_RSHIFT))
 		doallchannels = 1;
-	if (!code_pressed(KEYCODE_LCONTROL) && !code_pressed(KEYCODE_RCONTROL))
-		increment *= 5;
 	if (code_pressed(KEYCODE_LALT) || code_pressed(KEYCODE_RALT))
 		proportional = 1;
 
-	if (increment)
+	if (increment == OSD_RESET_TO_DEFAULT)
 	{
+		if (doallchannels)
+		{
+			int num_vals = sound_get_user_gain_count();
+			for (ch = 0;ch < num_vals;ch++)
+				sound_set_user_gain(ch,sound_get_default_gain(ch));
+		}
+		else
+			sound_set_user_gain(arg,sound_get_default_gain(arg));
+	}
+	else if (increment)
+	{
+		if (!code_pressed(KEYCODE_LCONTROL) && !code_pressed(KEYCODE_RCONTROL))
+			increment *= 5;
+
 		if (proportional)
 		{
 			static float old_vol[100];
@@ -4717,7 +4737,9 @@ static void onscrd_brightness(int increment,int arg)
 	char buf[40];
 	int brightness;
 
-	if (increment)
+	if (increment == OSD_RESET_TO_DEFAULT)
+		render_container_set_brightness(container, 1.0f);
+	else if (increment)
 	{
 		brightness = floor(render_container_get_brightness(container) * 1000.0f + 0.5f);
 		brightness += 10 * increment;
@@ -4740,7 +4762,9 @@ static void onscrd_contrast(int increment,int arg)
 	char buf[40];
 	int contrast;
 
-	if (increment)
+	if (increment == OSD_RESET_TO_DEFAULT)
+		render_container_set_contrast(container, 1.0f);
+	else if (increment)
 	{
 		contrast = floor(render_container_get_contrast(container) * 1000.0f + 0.5f);
 		contrast += 50 * increment;
@@ -4763,7 +4787,9 @@ static void onscrd_gamma(int increment,int arg)
 	char buf[40];
 	int gamma;
 
-	if (increment)
+	if (increment == OSD_RESET_TO_DEFAULT)
+		render_container_set_gamma(container, 1.0f);
+	else if (increment)
 	{
 		gamma = floor(render_container_get_gamma(container) * 1000.0f + 0.5f);
 		gamma += 50 * increment;
@@ -4786,7 +4812,9 @@ static void onscrd_xscale(int increment,int arg)
 	char buf[40];
 	int xscale;
 
-	if (increment)
+	if (increment == OSD_RESET_TO_DEFAULT)
+		render_container_set_xscale(container, 1.0f);
+	else if (increment)
 	{
 		xscale = floor(render_container_get_xscale(container) * 1000.0f + 0.5f);
 		xscale += 2 * increment;
@@ -4809,7 +4837,9 @@ static void onscrd_yscale(int increment,int arg)
 	char buf[40];
 	int yscale;
 
-	if (increment)
+	if (increment == OSD_RESET_TO_DEFAULT)
+		render_container_set_yscale(container, 1.0f);
+	else if (increment)
 	{
 		yscale = floor(render_container_get_yscale(container) * 1000.0f + 0.5f);
 		yscale += 2 * increment;
@@ -4832,7 +4862,9 @@ static void onscrd_xoffset(int increment,int arg)
 	char buf[40];
 	int xoffset;
 
-	if (increment)
+	if (increment == OSD_RESET_TO_DEFAULT)
+		render_container_set_xoffset(container, 0.0f);
+	else if (increment)
 	{
 		xoffset = floor(render_container_get_xoffset(container) * 1000.0f + 0.5f);
 		xoffset += 2 * increment;
@@ -4855,7 +4887,9 @@ static void onscrd_yoffset(int increment,int arg)
 	char buf[40];
 	int yoffset;
 
-	if (increment)
+	if (increment == OSD_RESET_TO_DEFAULT)
+		render_container_set_yoffset(container, 0.0f);
+	else if (increment)
 	{
 		yoffset = floor(render_container_get_yoffset(container) * 1000.0f + 0.5f);
 		yoffset += 2 * increment;
@@ -4877,11 +4911,13 @@ static void onscrd_vector_flicker(int increment,int arg)
 	char buf[1000];
 	float flicker_correction;
 
-	if (!code_pressed(KEYCODE_LCONTROL) && !code_pressed(KEYCODE_RCONTROL))
-		increment *= 5;
-
-	if (increment)
+	if (increment == OSD_RESET_TO_DEFAULT)
+		vector_set_flicker(0);
+	else if (increment)
 	{
+		if (!code_pressed(KEYCODE_LCONTROL) && !code_pressed(KEYCODE_RCONTROL))
+			increment *= 5;
+
 		flicker_correction = vector_get_flicker();
 
 		flicker_correction += increment;
@@ -4904,10 +4940,18 @@ static void onscrd_overclock(int increment,int arg)
 
 	if (code_pressed(KEYCODE_LSHIFT) || code_pressed(KEYCODE_RSHIFT))
 		doallcpus = 1;
-	if (!code_pressed(KEYCODE_LCONTROL) && !code_pressed(KEYCODE_RCONTROL))
-		increment *= 5;
-	if( increment )
+	if (increment == OSD_RESET_TO_DEFAULT)
 	{
+		if( doallcpus )
+			for( cpu = 0; cpu < cpu_gettotalcpu(); cpu++ )
+				cpunum_set_clockscale(cpu, 1.0);
+		else
+			cpunum_set_clockscale(arg, 1.0);
+	}
+	else if( increment )
+	{
+		if (!code_pressed(KEYCODE_LCONTROL) && !code_pressed(KEYCODE_RCONTROL))
+			increment *= 5;
 		overclock = cpunum_get_clockscale(arg);
 		overclock += 0.01 * increment;
 		if (overclock < 0.01) overclock = 0.01;
@@ -4933,26 +4977,31 @@ static void onscrd_refresh(int increment,int arg)
 	float delta = Machine->refresh_rate[0] - Machine->drv->screen[0].refresh_rate;
 	char buf[30];
 
-	increment *= 1000;
-	if (code_pressed(KEYCODE_LSHIFT) || code_pressed(KEYCODE_RSHIFT))
-		increment /= 10;
-	if (code_pressed(KEYCODE_LCONTROL) || code_pressed(KEYCODE_RCONTROL))
-		increment /= 100;
-	if (code_pressed(KEYCODE_LALT) || code_pressed(KEYCODE_LALT))
-		increment /= 1000;
-	if (increment)
+	if (increment == OSD_RESET_TO_DEFAULT)
+		set_refresh_rate(0, Machine->drv->screen[0].refresh_rate);
+	else
 	{
-		float newrate;
-		delta += 0.001 * increment;
-		if (delta > 10)
-			delta = 10;
-		if (delta < -10)
-			delta = -10;
+		increment *= 1000;
+		if (code_pressed(KEYCODE_LSHIFT) || code_pressed(KEYCODE_RSHIFT))
+			increment /= 10;
+		if (code_pressed(KEYCODE_LCONTROL) || code_pressed(KEYCODE_RCONTROL))
+			increment /= 100;
+		if (code_pressed(KEYCODE_LALT) || code_pressed(KEYCODE_LALT))
+			increment /= 1000;
+		if (increment)
+		{
+			float newrate;
+			delta += 0.001 * increment;
+			if (delta > 10)
+				delta = 10;
+			if (delta < -10)
+				delta = -10;
 
-		newrate = Machine->drv->screen[0].refresh_rate;
-		if (delta != 0)
-			newrate = (floor(newrate * 1000) / 1000) + delta;
-		set_refresh_rate(0, newrate);
+			newrate = Machine->drv->screen[0].refresh_rate;
+			if (delta != 0)
+				newrate = (floor(newrate * 1000) / 1000) + delta;
+			set_refresh_rate(0, newrate);
+		}
 	}
 
 	sprintf(buf,"%s %.3f", ui_getstring (UI_refresh_rate), Machine->refresh_rate[0]);

@@ -2598,6 +2598,9 @@ ROM_START( kikstart )
 
 	ROM_REGION( 0x0100, REGION_PROMS, 0 )      /* layer PROM */
 	ROM_LOAD( "eb16.22",      0x0000, 0x0100, CRC(b833b5ea) SHA1(d233f1bf8a3e6cd876853ffd721b9b64c61c9047) )
+
+	ROM_REGION( 0x0200, REGION_PLDS, ROMREGION_DISPOSE )
+	ROM_LOAD( "pal16l8.28",   0x0000, 0x0104, NO_DUMP ) /* PAL is read protected */
 ROM_END
 
 static DRIVER_INIT( spacecr )

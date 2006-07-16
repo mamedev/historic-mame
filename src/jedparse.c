@@ -34,6 +34,19 @@
 
 
 /***************************************************************************
+    TYPE DEFINITIONS
+***************************************************************************/
+
+typedef struct _parse_info parse_info;
+struct _parse_info
+{
+	UINT16		checksum;				/* checksum value */
+	UINT32		explicit_numfuses;		/* explicitly specified number of fuses */
+};
+
+
+
+/***************************************************************************
     UTILITIES
 ***************************************************************************/
 
@@ -106,7 +119,7 @@ static UINT32 suck_number(const UINT8 **psrc)
     process_field - process a single JEDEC field
 -------------------------------------------------*/
 
-static void process_field(jed_data *data, const UINT8 *cursrc, const UINT8 *srcend, UINT16 *checksum)
+static void process_field(jed_data *data, const UINT8 *cursrc, const UINT8 *srcend, parse_info *pinfo)
 {
 	/* switch off of the field type */
 	switch (*cursrc)
@@ -118,7 +131,7 @@ static void process_field(jed_data *data, const UINT8 *cursrc, const UINT8 *srce
 				/* number of fuses */
 				case 'F':
 					cursrc++;
-					data->numfuses = suck_number(&cursrc);
+					pinfo->explicit_numfuses = data->numfuses = suck_number(&cursrc);
 					break;
 			}
 			break;
@@ -160,7 +173,11 @@ static void process_field(jed_data *data, const UINT8 *cursrc, const UINT8 *srce
 		case 'C':
 			cursrc++;
 			if (cursrc < srcend + 4 && ishex(cursrc[0]) && ishex(cursrc[1]) && ishex(cursrc[2]) && ishex(cursrc[3]))
-				*checksum = (hexval(cursrc[0]) << 12) | (hexval(cursrc[1]) << 8) | (hexval(cursrc[2]) << 4) | hexval(cursrc[3] << 0);
+			{
+				pinfo->checksum = 0;
+				while (ishex(*cursrc) && cursrc < srcend)
+					pinfo->checksum = (pinfo->checksum << 4) | hexval(*cursrc++);
+			}
 			break;
 	}
 }
@@ -177,11 +194,13 @@ int jed_parse(const void *data, size_t length, jed_data *result)
 	const UINT8 *cursrc = data;
 	const UINT8 *srcend = cursrc + length;
 	const UINT8 *scan;
-	UINT16 checksum, filesum = 0;
+	parse_info pinfo;
+	UINT16 checksum;
 	int i;
 
-	/* initialize the output */
+	/* initialize the output and the intermediate info struct */
 	memset(result, 0, sizeof(*result));
+	memset(&pinfo, 0, sizeof(pinfo));
 
 	/* first scan for the STX character; ignore anything prior */
 	while (cursrc < srcend && *cursrc != 0x02)
@@ -232,11 +251,15 @@ int jed_parse(const void *data, size_t length, jed_data *result)
 			return JEDERR_INVALID_DATA;
 
 		/* process the field */
-		process_field(result, cursrc, scan, &filesum);
+		process_field(result, cursrc, scan, &pinfo);
 
 		/* advance past it */
 		cursrc = scan + 1;
 	}
+
+	/* if we got an explicit fuse count, override our computed count */
+	if (pinfo.explicit_numfuses != 0)
+		result->numfuses = pinfo.explicit_numfuses;
 
 	/* clear out leftover bits */
 	if (result->numfuses % 8 != 0)
@@ -247,7 +270,7 @@ int jed_parse(const void *data, size_t length, jed_data *result)
 	checksum = 0;
 	for (i = 0; i < (result->numfuses + 7) / 8; i++)
 		checksum += result->fusemap[i];
-	if (filesum != 0 && checksum != filesum)
+	if (pinfo.checksum != 0 && checksum != pinfo.checksum)
 		return JEDERR_BAD_FUSE_SUM;
 
 	return JEDERR_NONE;

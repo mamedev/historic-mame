@@ -522,7 +522,7 @@ int winwindow_video_window_create(int index, win_monitor_info *monitor, const wi
 	window->render_lock = osd_lock_alloc();
 
 	// load the layout
-	window->target = render_target_alloc(options_get_string("extra_layout", TRUE), FALSE);
+	window->target = render_target_alloc(NULL, FALSE);
 	if (window->target == NULL)
 		goto error;
 	render_target_set_orientation(window->target, video_orientation);

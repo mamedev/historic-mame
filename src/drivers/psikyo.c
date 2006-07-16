@@ -1971,6 +1971,10 @@ ROM_START( btlkroad )
 	ROM_REGION( 0x040000, REGION_USER1, 0 )	/* Sprites LUT */
 	ROM_LOAD( "u3.bin",  0x000000, 0x040000, CRC(30d541ed) SHA1(6f7fb5f5ecbce7c086185392de164ebb6887e780) )
 
+	ROM_REGION( 0x0400, REGION_PLDS, 0 )
+	ROM_LOAD( "tibpal16l8.u69", 0x0000, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "tibpal16l8.u19", 0x0200, 0x0104, NO_DUMP ) /* PAL is read protected */
+
 ROM_END
 
 

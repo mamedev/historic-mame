@@ -1696,6 +1696,10 @@ ROM_START( pspikesk )
 
 	ROM_REGION( 0x100000, REGION_SOUND2, 0 ) /* sound samples */
 	ROM_LOAD( "o5b",          0x000000, 0x100000, CRC(07d6cbac) SHA1(d3d5778dbaca7b6cdceae959d0847d56df7b5cc1) )
+
+	ROM_REGION( 0x0400, REGION_PLDS, ROMREGION_DISPOSE )
+	ROM_LOAD( "peel18cv8-1101a-u15.53", 0x0000, 0x0155, CRC(c05e3bea) SHA1(b42e16f1f41ad9796ff3044c850d5331e7a0f91a) )
+	ROM_LOAD( "peel18cv8-1103-u112.76", 0x0200, 0x0155, CRC(786da44c) SHA1(02fd63083631abeced42714fb58a11b7d463285b) )
 ROM_END
 
 ROM_START( svolly91 )
@@ -1793,6 +1797,14 @@ ROM_START( spinlbrk )
 	ROM_REGION( 0x100000, REGION_SOUND2, 0 ) /* sound samples */
 	ROM_LOAD( "ic166",        0x000000, 0x80000, CRC(6e0d063a) SHA1(313983e69f9625814de033fef7f6e9564694117a) )
 	ROM_LOAD( "ic163",        0x080000, 0x80000, CRC(e6621dfb) SHA1(85ee77c4720b7eb20ecf293c16b3105c8dcb1114) )	//FIRST AND SECOND HALF IDENTICAL
+
+	ROM_REGION( 0x0c00, REGION_PLDS, ROMREGION_DISPOSE )
+	ROM_LOAD( "epl16p8bp.ic133", 0x0000, 0x0107, NO_DUMP )	/* read protected */
+	ROM_LOAD( "epl16p8bp.ic127", 0x0200, 0x0107, NO_DUMP )	/* read protected */
+	ROM_LOAD( "epl16p8bp.ic99",  0x0400, 0x0107, NO_DUMP )	/* read protected */
+	ROM_LOAD( "epl16p8bp.ic100", 0x0600, 0x0107, NO_DUMP )	/* read protected */
+	ROM_LOAD( "gal16v8a.ic95",   0x0800, 0x0117, NO_DUMP )	/* read protected */
+	ROM_LOAD( "gal16v8a.ic114",  0x0a00, 0x0117, NO_DUMP )	/* read protected */
 ROM_END
 
 ROM_START( spinlbru )
@@ -1835,6 +1847,14 @@ ROM_START( spinlbru )
 	ROM_REGION( 0x100000, REGION_SOUND2, 0 ) /* sound samples */
 	ROM_LOAD( "ic166",        0x000000, 0x80000, CRC(6e0d063a) SHA1(313983e69f9625814de033fef7f6e9564694117a) )
 	ROM_LOAD( "ic163",        0x080000, 0x80000, CRC(e6621dfb) SHA1(85ee77c4720b7eb20ecf293c16b3105c8dcb1114) )	//FIRST AND SECOND HALF IDENTICAL
+
+	ROM_REGION( 0x0c00, REGION_PLDS, ROMREGION_DISPOSE )
+	ROM_LOAD( "epl16p8bp.ic133", 0x0000, 0x0107, NO_DUMP )	/* read protected */
+	ROM_LOAD( "epl16p8bp.ic127", 0x0200, 0x0107, NO_DUMP )	/* read protected */
+	ROM_LOAD( "epl16p8bp.ic99",  0x0400, 0x0107, NO_DUMP )	/* read protected */
+	ROM_LOAD( "epl16p8bp.ic100", 0x0600, 0x0107, NO_DUMP )	/* read protected */
+	ROM_LOAD( "gal16v8a.ic95",   0x0800, 0x0117, NO_DUMP )	/* read protected */
+	ROM_LOAD( "gal16v8a.ic114",  0x0a00, 0x0117, NO_DUMP )	/* read protected */
 ROM_END
 
 ROM_START( spinlbrj )
@@ -1877,6 +1897,14 @@ ROM_START( spinlbrj )
 	ROM_REGION( 0x100000, REGION_SOUND2, 0 ) /* sound samples */
 	ROM_LOAD( "ic166",        0x000000, 0x80000, CRC(6e0d063a) SHA1(313983e69f9625814de033fef7f6e9564694117a) )
 	ROM_LOAD( "ic163",        0x080000, 0x80000, CRC(e6621dfb) SHA1(85ee77c4720b7eb20ecf293c16b3105c8dcb1114) )	//FIRST AND SECOND HALF IDENTICAL
+
+	ROM_REGION( 0x0c00, REGION_PLDS, ROMREGION_DISPOSE )
+	ROM_LOAD( "epl16p8bp.ic133", 0x0000, 0x0107, NO_DUMP )	/* read protected */
+	ROM_LOAD( "epl16p8bp.ic127", 0x0200, 0x0107, NO_DUMP )	/* read protected */
+	ROM_LOAD( "epl16p8bp.ic99",  0x0400, 0x0107, NO_DUMP )	/* read protected */
+	ROM_LOAD( "epl16p8bp.ic100", 0x0600, 0x0107, NO_DUMP )	/* read protected */
+	ROM_LOAD( "gal16v8a.ic95",   0x0800, 0x0117, NO_DUMP )	/* read protected */
+	ROM_LOAD( "gal16v8a.ic114",  0x0a00, 0x0117, NO_DUMP )	/* read protected */
 ROM_END
 
 ROM_START( karatblz )

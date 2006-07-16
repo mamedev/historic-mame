@@ -2504,6 +2504,9 @@ ROM_START( youjyudn )
 	                                                        /* sprites. Used at run time! */
 	ROM_LOAD( "yju_p-8d.bpr", 0x0620, 0x0200, CRC(6cef0fbd) SHA1(0c5c63a203e7bd852a3574c18f212487caf529ca) )	/* unknown */
 	ROM_LOAD( "yju_b-6f.bpr", 0x0820, 0x0100, CRC(82c20d12) SHA1(268903f7d9be58a70d030b02bf31a2d6b5b6e249) )	/* video timing - same as kungfum */
+
+	ROM_REGION( 0x200, REGION_PLDS, ROMREGION_DISPOSE )
+	ROM_LOAD( "yju_b-pal16r4a-8m.pal", 0x0000, 0x0104, CRC(3ece8e61) SHA1(f7b04b80455068123e171a46e79d4b940bc4033d) )
 ROM_END
 
 ROM_START( horizon )

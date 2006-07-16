@@ -2345,6 +2345,12 @@ ROM_START( captavne )
 
 	ROM_REGION(0x80000, REGION_SOUND1, 0 )
 	ROM_LOAD( "man-11.16k",	0x000000,  0x80000,  CRC(0dc60a4c) SHA1(4d0daa6a0272852a37f341a0cdc48baee0ad9dd8) )
+
+	ROM_REGION( 0x0800, REGION_PLDS, 0 )
+	ROM_LOAD( "pal16l8a.12l", 0x0000, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16l8a.4h",  0x0200, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16l8a.5h",  0x0400, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16r8b.14c", 0x0600, 0x0104, NO_DUMP ) /* PAL is read protected */
 ROM_END
 
 ROM_START( captavnu )
@@ -2605,6 +2611,10 @@ ROM_START( fghthstu )
 
 	ROM_REGION(512, REGION_PROMS, 0 )
 	ROM_LOAD( "mb7124h.8j",  0,  512,  CRC(7294354b) SHA1(14fe42ad5d26d022c0fe9a46a4a9017af2296f40) )
+
+	ROM_REGION( 0x0400, REGION_PLDS, ROMREGION_DISPOSE )
+	ROM_LOAD( "pal16l8b.3d",  0x0000, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16l8b.4d",  0x0200, 0x0104, NO_DUMP ) /* PAL is read protected */
 ROM_END
 
 ROM_START( fghthist )
@@ -2635,6 +2645,10 @@ ROM_START( fghthist )
 
 	ROM_REGION(512, REGION_PROMS, 0 )
 	ROM_LOAD( "mb7124h.8j",  0,  512,  CRC(7294354b) SHA1(14fe42ad5d26d022c0fe9a46a4a9017af2296f40) )
+
+	ROM_REGION( 0x0400, REGION_PLDS, ROMREGION_DISPOSE )
+	ROM_LOAD( "pal16l8b.3d",  0x0000, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16l8b.4d",  0x0200, 0x0104, NO_DUMP ) /* PAL is read protected */
 ROM_END
 
 ROM_START( fghthsta )
@@ -2665,6 +2679,10 @@ ROM_START( fghthsta )
 
 	ROM_REGION(512, REGION_PROMS, 0 )
 	ROM_LOAD( "mb7124h.8j",  0,  512,  CRC(7294354b) SHA1(14fe42ad5d26d022c0fe9a46a4a9017af2296f40) )
+
+	ROM_REGION( 0x0400, REGION_PLDS, ROMREGION_DISPOSE )
+	ROM_LOAD( "pal16l8b.3d",  0x0000, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16l8b.4d",  0x0200, 0x0104, NO_DUMP ) /* PAL is read protected */
 ROM_END
 
 ROM_START( lockload )

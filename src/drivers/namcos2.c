@@ -2351,6 +2351,11 @@ ROM_START( dsaber )
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 ) /* Sound voices */
 	ROM_LOAD( "voi1.bin",  0x000000, 0x080000, CRC(dadf6a57) SHA1(caba21fc6b62d140f6d8231411ce82ae0ad2837a) )
 	ROM_LOAD( "voi2.bin",  0x080000, 0x080000, CRC(81078e01) SHA1(adc70506b21b9a12eadd2f3fd1e920c2eb27c36e) )
+
+	ROM_REGION( 0x0500, REGION_PLDS, ROMREGION_DISPOSE )
+	ROM_LOAD( "pal16l8a.4g", 0x0000, 0x0104, CRC(660e1655) SHA1(ffb43238c5ffa3fa831975bc3cde72334c4c2540) )
+	ROM_LOAD( "pal16l8a.5f", 0x0200, 0x0104, CRC(18f43c22) SHA1(72849c5b842678bb9037541d26d4c99cdf879982) )
+	ROM_LOAD( "pal12l10.8d", 0x0400, 0x0040, CRC(e2379249) SHA1(ad4cdf2e0fd1304a135022eeafa2f61c5f5789cd) )
 ROM_END
 
 /* DRAGON SABER (JAPAN) */
@@ -3175,6 +3180,11 @@ ROM_START( metlhawk )
 
 	ROM_REGION( 0x2000, REGION_USER2, 0 ) /* sprite zoom lookup table */
 	ROM_LOAD( "mh5762.7p",    0x00000,  0x002000, CRC(90db1bf6) SHA1(dbb9e50a8efc3b4012fcf587cc87da9ef42a1b80) )
+
+	ROM_REGION( 0x0500, REGION_PLDS, ROMREGION_DISPOSE )
+	ROM_LOAD( "ampal16l8a-sys87b-1.4g", 0x0000, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "ampal16l8a-sys87b-2.5e", 0x0200, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal12l10-sys87b-3.8d",   0x0400, 0x0040, CRC(d3ae64a6) SHA1(8e56f447908246e84d5a79df1a1cd3d5c8a040fb) )
 ROM_END
 
 /* METAL HAWK (Japan) */
@@ -3238,6 +3248,11 @@ ROM_START( metlhwkj )
 
 	ROM_REGION( 0x2000, REGION_USER2, 0 ) /* sprite zoom lookup table */
 	ROM_LOAD( "mh5762.7p",    0x00000,  0x002000, CRC(90db1bf6) SHA1(dbb9e50a8efc3b4012fcf587cc87da9ef42a1b80) )
+
+	ROM_REGION( 0x0500, REGION_PLDS, ROMREGION_DISPOSE )
+	ROM_LOAD( "ampal16l8a-sys87b-1.4g", 0x0000, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "ampal16l8a-sys87b-2.5e", 0x0200, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal12l10-sys87b-3.8d",   0x0400, 0x0040, CRC(d3ae64a6) SHA1(8e56f447908246e84d5a79df1a1cd3d5c8a040fb) )
 ROM_END
 
 /* MIRAI NINJA */

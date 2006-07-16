@@ -6,341 +6,346 @@
 
 #include "driver.h"
 #include "ccastles.h"
-
-
-static mame_bitmap *sprite_bm;
-static mame_bitmap *maskbitmap;
-
-unsigned char *ccastles_screen_addr;
-unsigned char *ccastles_screen_inc;
-unsigned char *ccastles_screen_inc_enable;
-unsigned char *ccastles_sprite_bank;
-unsigned char *ccastles_scrollx;
-unsigned char *ccastles_scrolly;
-
-/***************************************************************************
-
-  Convert the color PROMs into a more useable format.
-
-  Crystal Castles doesn't have a color PROM. It uses RAM to dynamically
-  create the palette. The resolution is 9 bit (3 bits per gun). The palette
-  contains 32 entries, but it is accessed through a memory windows 64 bytes
-  long: writing to the first 32 bytes sets the msb of the red component to 0,
-  while writing to the last 32 bytes sets it to 1.
-  The first 16 entries are used for sprites; the last 16 for the background
-  bitmap.
-
-  I don't know the exact values of the resistors between the RAM and the
-  RGB output, I assumed the usual ones.
-  bit 8 -- inverter -- 220 ohm resistor  -- RED
-  bit 7 -- inverter -- 470 ohm resistor  -- RED
-        -- inverter -- 1  kohm resistor  -- RED
-        -- inverter -- 220 ohm resistor  -- BLUE
-        -- inverter -- 470 ohm resistor  -- BLUE
-        -- inverter -- 1  kohm resistor  -- BLUE
-        -- inverter -- 220 ohm resistor  -- GREEN
-        -- inverter -- 470 ohm resistor  -- GREEN
-  bit 0 -- inverter -- 1  kohm resistor  -- GREEN
-
-***************************************************************************/
-WRITE8_HANDLER( ccastles_paletteram_w )
-{
-	int r,g,b;
-	int bit0,bit1,bit2;
-
-
-	r = (data & 0xC0) >> 6;
-	b = (data & 0x38) >> 3;
-	g = (data & 0x07);
-	/* a write to offset 32-63 means to set the msb of the red component */
-	if (offset & 0x20) r += 4;
-
-	/* bits are inverted */
-	r = 7-r;
-	g = 7-g;
-	b = 7-b;
-
-	bit0 = (r >> 0) & 0x01;
-	bit1 = (r >> 1) & 0x01;
-	bit2 = (r >> 2) & 0x01;
-	r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-	bit0 = (g >> 0) & 0x01;
-	bit1 = (g >> 1) & 0x01;
-	bit2 = (g >> 2) & 0x01;
-	g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-	bit0 = (b >> 0) & 0x01;
-	bit1 = (b >> 1) & 0x01;
-	bit2 = (b >> 2) & 0x01;
-	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-
-	palette_set_color(offset & 0x1f,r,g,b);
-}
+#include "res_net.h"
 
 
 
-/***************************************************************************
+/*************************************
+ *
+ *  Globals
+ *
+ *************************************/
 
-  Start the video hardware emulation.
+static double rweights[3], gweights[3], bweights[3];
+static mame_bitmap *spritebitmap;
 
-***************************************************************************/
+static UINT8 video_control[8];
+static UINT8 hscroll;
+static UINT8 vscroll;
+
+static const UINT8 *syncprom;
+static const UINT8 *wpprom;
+static const UINT8 *priprom;
+
+
+
+/*************************************
+ *
+ *  Video startup
+ *
+ *************************************/
+
 VIDEO_START( ccastles )
 {
-	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight)) == 0)
-		return 1;
+	static const int resistances[3] = { 22000, 10000, 4700 };
 
-	if ((maskbitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight)) == 0)
-		return 1;
+	/* get pointers to our PROMs */
+	syncprom = memory_region(REGION_PROMS) + 0x000;
+	wpprom = memory_region(REGION_PROMS) + 0x200;
+	priprom = memory_region(REGION_PROMS) + 0x300;
 
-	if ((sprite_bm = auto_bitmap_alloc(8,16)) == 0)
-		return 1;
+	/* compute the color output resistor weights at startup */
+	compute_resistor_weights(0,	255, -1.0,
+			3,	resistances, rweights, 1000, 0,
+			3,	resistances, gweights, 1000, 0,
+			3,	resistances, bweights, 1000, 0);
 
+	/* allocate a bitmap for drawing sprites */
+	spritebitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
+
+	/* register for savestates */
+	state_save_register_global_array(video_control);
+	state_save_register_global(hscroll);
+	state_save_register_global(vscroll);
 	return 0;
 }
 
+
+
+/*************************************
+ *
+ *  Video control registers
+ *
+ *************************************/
+
+WRITE8_HANDLER( ccastles_hscroll_w )
+{
+	force_partial_update(0, cpu_getscanline());
+	hscroll = data;
+}
+
+
+WRITE8_HANDLER( ccastles_vscroll_w )
+{
+	vscroll = data;
+}
+
+
+WRITE8_HANDLER( ccastles_video_control_w )
+{
+	/* only D3 matters */
+	video_control[offset] = (data >> 3) & 1;
+}
+
+
+
+/*************************************
+ *
+ *  Palette RAM accesses
+ *
+ *************************************/
+
+WRITE8_HANDLER( ccastles_paletteram_w )
+{
+	int bit0, bit1, bit2;
+	int r, g, b;
+
+	/* extract the raw RGB bits */
+	r = ((data & 0xc0) >> 6) | ((offset & 0x20) >> 3);
+	b = (data & 0x38) >> 3;
+	g = (data & 0x07);
+
+	/* red component (inverted) */
+	bit0 = (~r >> 0) & 0x01;
+	bit1 = (~r >> 1) & 0x01;
+	bit2 = (~r >> 2) & 0x01;
+	r = combine_3_weights(rweights, bit0, bit1, bit2);
+
+	/* green component (inverted) */
+	bit0 = (~g >> 0) & 0x01;
+	bit1 = (~g >> 1) & 0x01;
+	bit2 = (~g >> 2) & 0x01;
+	g = combine_3_weights(gweights, bit0, bit1, bit2);
+
+	/* blue component (inverted) */
+	bit0 = (~b >> 0) & 0x01;
+	bit1 = (~b >> 1) & 0x01;
+	bit2 = (~b >> 2) & 0x01;
+	b = combine_3_weights(bweights, bit0, bit1, bit2);
+
+	palette_set_color(offset & 0x1f, r, g, b);
+}
+
+
+
+/*************************************
+ *
+ *  Video RAM access via the write
+ *  protect PROM
+ *
+ *************************************/
+
+INLINE void write_vram(UINT16 addr, UINT8 data, UINT8 bitmd, UINT8 pixba)
+{
+	UINT8 *dest = &videoram[addr & 0x7ffe];
+	UINT8 promaddr = 0;
+	UINT8 wpbits;
+
+	/*
+        Inputs to the write-protect PROM:
+
+        Bit 7 = BA1520 = 0 if (BA15-BA12 != 0), or 1 otherwise
+        Bit 6 = DRBA11
+        Bit 5 = DRBA10
+        Bit 4 = /BITMD
+        Bit 3 = GND
+        Bit 2 = BA0
+        Bit 1 = PIXB
+        Bit 0 = PIXA
+    */
+	promaddr |= ((addr & 0xf000) == 0) << 7;
+	promaddr |= (addr & 0x0c00) >> 5;
+	promaddr |= (!bitmd) << 4;
+	promaddr |= (addr & 0x0001) << 2;
+	promaddr |= (pixba << 0);
+
+	/* look up the PROM result */
+	wpbits = wpprom[promaddr];
+
+	/* write to the appropriate parts of VRAM depending on the result */
+	if (!(wpbits & 1))
+		dest[0] = (dest[0] & 0xf0) | (data & 0x0f);
+	if (!(wpbits & 2))
+		dest[0] = (dest[0] & 0x0f) | (data & 0xf0);
+	if (!(wpbits & 4))
+		dest[1] = (dest[1] & 0xf0) | (data & 0x0f);
+	if (!(wpbits & 8))
+		dest[1] = (dest[1] & 0x0f) | (data & 0xf0);
+}
+
+
+
+/*************************************
+ *
+ *  Autoincrement control for bit mode
+ *
+ *************************************/
+
+INLINE void bitmode_autoinc(void)
+{
+	/* auto increment in the x-direction if it's enabled */
+	if (!video_control[0])	/* /AX */
+	{
+		if (!video_control[2])	/* /XINC */
+			videoram[0]++;
+		else
+			videoram[0]--;
+	}
+
+	/* auto increment in the y-direction if it's enabled */
+	if (!video_control[1])	/* /AY */
+	{
+		if (!video_control[3])	/* /YINC */
+			videoram[1]++;
+		else
+			videoram[1]--;
+	}
+}
+
+
+
+/*************************************
+ *
+ *  Standard video RAM access
+ *
+ *************************************/
+
+WRITE8_HANDLER( ccastles_videoram_w )
+{
+	/* direct writes to VRAM go through the write protect PROM as well */
+	write_vram(offset, data, 0, 0);
+}
+
+
+
+/*************************************
+ *
+ *  Bit mode video RAM access
+ *
+ *************************************/
+
+WRITE8_HANDLER( ccastles_bitmode_w )
+{
+	/* in bitmode, the address comes from the autoincrement latches */
+	UINT16 addr = (videoram[1] << 7) | (videoram[0] >> 1);
+
+	/* the upper 4 bits of data are replicated to the lower 4 bits */
+	data = (data & 0xf0) | (data >> 4);
+
+	/* write through the generic VRAM routine, passing the low 2 X bits as PIXB/PIXA */
+	write_vram(addr, data, 1, videoram[0] & 3);
+
+	/* autoincrement because /BITMD was selected */
+	bitmode_autoinc();
+}
 
 
 READ8_HANDLER( ccastles_bitmode_r )
 {
-	int addr;
+	/* in bitmode, the address comes from the autoincrement latches */
+	UINT16 addr = (videoram[1] << 7) | (videoram[0] >> 1);
 
-	addr = (ccastles_screen_addr[1]<<7) | (ccastles_screen_addr[0]>>1);
+	/* the appropriate pixel is selected into the upper 4 bits */
+	UINT8 result = videoram[addr] << ((~videoram[0] & 1) * 4);
 
-	/* is the address in videoram? */
-	if ((addr >= 0x0c00) && (addr < 0x8000))
-	{
-		/* auto increment in the x-direction if it's enabled */
-		if (!ccastles_screen_inc_enable[0])
-		{
-			if (!ccastles_screen_inc[0])
-				ccastles_screen_addr[0] ++;
-			else
-				ccastles_screen_addr[0] --;
-		}
+	/* autoincrement because /BITMD was selected */
+	bitmode_autoinc();
 
-		/* auto increment in the y-direction if it's enabled */
-		if (!ccastles_screen_inc_enable[1])
-		{
-			if (!ccastles_screen_inc[1])
-				ccastles_screen_addr[1] ++;
-			else
-				ccastles_screen_addr[1] --;
-		}
-
-		addr -= 0xc00;
-		if (ccastles_screen_addr[0] & 0x01)
-			return ((videoram[addr] & 0x0f) << 4);
-		else
-			return (videoram[addr] & 0xf0);
-	}
-
-	return 0;
-}
-
-WRITE8_HANDLER( ccastles_bitmode_w )
-{
-	int addr;
-
-
-	addr = (ccastles_screen_addr[1] << 7) | (ccastles_screen_addr[0] >> 1);
-
-	/* is the address in videoram? */
-	if ((addr >= 0x0c00) && (addr < 0x8000))
-	{
-		int x,y,j;
-		int mode;
-
-		addr -= 0xc00;
-
-		if (ccastles_screen_addr[0] & 0x01)
-		{
-			mode = (data >> 4) & 0x0f;
-			videoram[addr] = (videoram[addr] & 0xf0) | mode;
-		}
-		else
-		{
-			mode = (data & 0xf0);
-			videoram[addr] = (videoram[addr] & 0x0f) | mode;
-		}
-
-		j = 2*addr;
-		x = j%256;
-		y = j/256;
-		if (!flip_screen)
-		{
-			plot_pixel(tmpbitmap, x  , y, Machine->pens[16 + ((videoram[addr] & 0xf0) >> 4)]);
-			plot_pixel(tmpbitmap, x+1, y, Machine->pens[16 +  (videoram[addr] & 0x0f)      ]);
-
-			/* if bit 3 of the pixel is set, background has priority over sprites when */
-			/* the sprite has the priority bit set. We use a second bitmap to remember */
-			/* which pixels have priority. */
-			plot_pixel(maskbitmap, x  , y, videoram[addr] & 0x80);
-			plot_pixel(maskbitmap, x+1, y, videoram[addr] & 0x08);
-		}
-		else
-		{
-			y = 231-y;
-			x = 254-x;
-			if (y >= 0)
-			{
-				plot_pixel(tmpbitmap, x+1, y, Machine->pens[16 + ((videoram[addr] & 0xf0) >> 4)]);
-				plot_pixel(tmpbitmap, x  , y, Machine->pens[16 +  (videoram[addr] & 0x0f)      ]);
-
-				/* if bit 3 of the pixel is set, background has priority over sprites when */
-				/* the sprite has the priority bit set. We use a second bitmap to remember */
-				/* which pixels have priority. */
-				plot_pixel(maskbitmap, x+1, y, videoram[addr] & 0x80);
-				plot_pixel(maskbitmap, x  , y, videoram[addr] & 0x08);
-			}
-		}
-	}
-
-	/* auto increment in the x-direction if it's enabled */
-	if (!ccastles_screen_inc_enable[0])
-	{
-		if (!ccastles_screen_inc[0])
-			ccastles_screen_addr[0] ++;
-		else
-			ccastles_screen_addr[0] --;
-	}
-
-	/* auto increment in the y-direction if it's enabled */
-	if (!ccastles_screen_inc_enable[1])
-	{
-		if (!ccastles_screen_inc[1])
-			ccastles_screen_addr[1] ++;
-		else
-			ccastles_screen_addr[1] --;
-	}
-
+	/* the low 4 bits of the data lines are not driven so make them all 1's */
+	return result | 0x0f;
 }
 
 
-/***************************************************************************
 
-  Draw the game screen in the given mame_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
-
-***************************************************************************/
-static void redraw_bitmap(void)
-{
-	int x, y;
-	int screen_addr0_save, screen_addr1_save, screen_inc_enable0_save, screen_inc_enable1_save;
-
-
-	/* save out registers */
-	screen_addr0_save = ccastles_screen_addr[0];
-	screen_addr1_save = ccastles_screen_addr[1];
-
-	screen_inc_enable0_save = ccastles_screen_inc_enable[0];
-	screen_inc_enable1_save = ccastles_screen_inc_enable[1];
-
-	ccastles_screen_inc_enable[0] = ccastles_screen_inc_enable[1] = 1;
-
-
-	/* redraw bitmap */
-	for (y = 0; y < 256; y++)
-	{
-		ccastles_screen_addr[1] = y;
-
-		for (x = 0; x < 256; x++)
-		{
-			ccastles_screen_addr[0] = x;
-
-			ccastles_bitmode_w(0, ccastles_bitmode_r(0));
-		}
-	}
-
-
-	/* restore registers */
-	ccastles_screen_addr[0] = screen_addr0_save;
-	ccastles_screen_addr[1] = screen_addr1_save;
-
-	ccastles_screen_inc_enable[0] = screen_inc_enable0_save;
-	ccastles_screen_inc_enable[1] = screen_inc_enable1_save;
-}
-
+/*************************************
+ *
+ *  Video updating
+ *
+ *************************************/
 
 VIDEO_UPDATE( ccastles )
 {
-	int offs;
-	unsigned char *spriteaddr;
-	int scrollx,scrolly;
+	UINT8 *spriteaddr = &spriteram[video_control[7] * 0x100];	/* BUF1/BUF2 */
+	int flip = video_control[4] ? 0xff : 0x00;	/* PLAYER2 */
+	pen_t black = get_black_pen();
+	int x, y, offs;
 
-
-	if (get_vh_global_attribute_changed())
+	/* draw the sprites */
+	fillbitmap(spritebitmap, 0x0f, cliprect);
+	for (offs = 0; offs < 0x100; offs += 4)
 	{
-		redraw_bitmap();
+		int x = spriteaddr[offs+3];
+		int y = 256 - 16 - spriteaddr[offs+1];
+		int which = spriteaddr[offs];
+		int color = spriteaddr[offs+2] >> 7;
+
+		drawgfx(spritebitmap, Machine->gfx[0], which, color, flip, flip, x, y, cliprect, TRANSPARENCY_PEN, 7);
 	}
 
-	scrollx = 255 - *ccastles_scrollx;
-	scrolly = 255 - *ccastles_scrolly;
-
-	if (flip_screen)
+	/* draw the bitmap to the screen, looping over Y */
+	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 	{
-		scrollx = 254 - scrollx;
-		scrolly = 231 - scrolly;
-	}
+		UINT16 *dst = (UINT16 *)bitmap->base + y * bitmap->rowpixels;
 
-	copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,
-				     cliprect,
-		   			 TRANSPARENCY_NONE,0);
-
-
-	if (*ccastles_sprite_bank)
-		spriteaddr = spriteram;
-	else
-		spriteaddr = spriteram_2;
-
-
-	/* Draw the sprites */
-	for (offs = 0; offs < spriteram_size; offs += 4)
-	{
-		int i,j;
-		int x,y;
-
-		/* Get the X and Y coordinates from the MOB RAM */
-		x = spriteaddr[offs+3];
-		y = 216 - spriteaddr[offs+1];
-
-		if (spriteaddr[offs+2] & 0x80)	/* background can have priority over the sprite */
+		/* if we're in the VBLANK region, just fill with black */
+		if (syncprom[y] & 1)
 		{
-			drawgfx(sprite_bm,Machine->gfx[0],
-					spriteaddr[offs],
-					0,
-					flip_screen,flip_screen,
-					0,0,
-					0,TRANSPARENCY_NONE,0);
-
-			for (j = 0;j < 16;j++)
-			{
-				if (y + j >= 0)	/* avoid accesses out of the bitmap boundaries */
-				{
-					for (i = 0;i < 8;i++)
-					{
-						int pixa,pixb;
-
-						pixa = read_pixel(sprite_bm, i, j);
-						pixb = read_pixel(maskbitmap, (x-scrollx+i+256)%256, (y-scrolly+j+232)%232);
-
-						/* if background has priority over sprite, make the */
-						/* temporary bitmap transparent */
-						if (pixb != 0 && (pixa != Machine->pens[0]))
-							plot_pixel(sprite_bm, i, j, Machine->pens[7]);
-					}
-				}
-			}
-
-			copybitmap(bitmap,sprite_bm,0,0,x,y,cliprect,TRANSPARENCY_PEN,Machine->pens[7]);
+			for (x = cliprect->min_x; x <= cliprect->max_x; x++)
+				dst[x] = black;
 		}
+
+		/* non-VBLANK region: merge the sprites and the bitmap */
 		else
 		{
-			drawgfx(bitmap,Machine->gfx[0],
-					spriteaddr[offs],
-					0,
-					flip_screen,flip_screen,
-					x,y,
-					cliprect,TRANSPARENCY_PEN,7);
+			UINT16 *mosrc = (UINT16 *)spritebitmap->base + y * spritebitmap->rowpixels;
+			int effy = (((y - ccastles_vblank_end) + (flip ? 0 : vscroll)) ^ flip) & 0xff;
+			UINT8 *src = &videoram[effy * 128];
+
+			/* loop over X */
+			for (x = cliprect->min_x; x <= cliprect->max_x; x++)
+			{
+				/* if we're in the HBLANK region, just store black */
+				if (x >= 256)
+					dst[x] = black;
+
+				/* otherwise, process normally */
+				else
+				{
+					int effx = (hscroll + (x ^ flip)) & 255;
+
+					/* low 4 bits = left pixel, high 4 bits = right pixel */
+					UINT8 pix = (src[effx / 2] >> ((effx & 1) * 4)) & 0x0f;
+					UINT8 mopix = mosrc[x];
+					UINT8 prindex, prvalue;
+
+					/* Inputs to the priority PROM:
+
+                        Bit 7 = GND
+                        Bit 6 = /CRAM
+                        Bit 5 = BA4
+                        Bit 4 = MV2
+                        Bit 3 = MV1
+                        Bit 2 = MV0
+                        Bit 1 = MPI
+                        Bit 0 = BIT3
+                    */
+					prindex = 0x40;
+					prindex |= (mopix & 7) << 2;
+					prindex |= (mopix & 8) >> 2;
+					prindex |= (pix & 8) >> 3;
+					prvalue = priprom[prindex];
+
+					/* Bit 1 of prvalue selects the low 4 bits of the final pixel */
+					if (prvalue & 2)
+						pix = mopix;
+
+					/* Bit 0 of prvalue selects bit 4 of the final color */
+					pix |= (prvalue & 1) << 4;
+
+					/* store the pixel value and also a priority value based on the topmost bit */
+					dst[x] = pix;
+				}
+			}
 		}
 	}
 	return 0;

@@ -58,9 +58,6 @@ int frontend_listdevices(FILE *output);
 
 void set_pathlist(int file_type, const char *new_rawpath);
 
-extern const options_entry fileio_opts[];
-extern const options_entry video_opts[];
-extern const options_entry input_opts[];
 #ifdef MESS
 extern const options_entry mess_opts[];
 #endif
@@ -107,94 +104,221 @@ static void set_old_video_options(const game_driver *driver);
 //============================================================
 
 // struct definitions
-static const options_entry config_opts[] =
+static const options_entry windows_opts[] =
 {
-	{ "",                         NULL,   0,                 NULL },
-	{ "help;h;?",                 NULL,   OPTION_COMMAND,    "show help message" },
+	{ "",                         NULL,       0,                 NULL },
 
-	// video options
-	{ NULL,                       NULL,   OPTION_HEADER,     "CORE VIDEO OPTIONS" },
-	{ "rotate",                   "1",    OPTION_BOOLEAN,    "rotate the game screen according to the game's orientation needs it" },
-	{ "ror",                      "0",    OPTION_BOOLEAN,    "rotate screen clockwise 90 degrees" },
-	{ "rol",                      "0",    OPTION_BOOLEAN,    "rotate screen counterclockwise 90 degrees" },
-	{ "autoror",                  "0",    OPTION_BOOLEAN,    "automatically rotate screen clockwise 90 degrees if vertical" },
-	{ "autorol",                  "0",    OPTION_BOOLEAN,    "automatically rotate screen counterclockwise 90 degrees if vertical" },
-	{ "flipx",                    "0",    OPTION_BOOLEAN,    "flip screen left-right" },
-	{ "flipy",                    "0",    OPTION_BOOLEAN,    "flip screen upside-down" },
-	{ "brightness",               "1.0",  0,                 "default screen brightness correction" },
-	{ "contrast",                 "1.0",  0,                 "default screen contrast correction" },
-	{ "gamma",                    "1.0",  0,                 "default screen gamma correction" },
-	{ "pause_brightness",         "1.0",  0,                 "additional pause brightness" },
+	// core commands
+	{ "help;h;?",                 NULL,       OPTION_COMMAND,    "show help message" },
+	{ "validate;valid",           NULL,       OPTION_COMMAND,    "perform driver validation on all game drivers" },
 
-	// vector options
-	{ NULL,                       NULL,   OPTION_HEADER,     "CORE VECTOR OPTIONS" },
-	{ "antialias;aa",             "1",    OPTION_BOOLEAN,    "use antialiasing when drawing vectors" },
-	{ "beam",                     "1.0",  0,                 "set vector beam width" },
-	{ "flicker",                  "1.0",  0,                 "set vector flicker effect" },
+	// configuration commands
+	{ "createconfig;cc",          NULL,       OPTION_COMMAND,    "create the default configuration file" },
+	{ "showconfig;sc",            NULL,       OPTION_COMMAND,    "display running parameters" },
+	{ "showusage;su",             NULL,       OPTION_COMMAND,    "show this help" },
 
-	// sound options
-	{ NULL,                       NULL,   OPTION_HEADER,     "CORE SOUND OPTIONS" },
-	{ "sound",                    "1",    OPTION_BOOLEAN,    "enable sound output" },
-	{ "samplerate;sr",            "48000",0,                 "set sound output sample rate" },
-	{ "samples",                  "1",    OPTION_BOOLEAN,    "enable the use of external samples if available" },
-	{ "volume",                   "0",    0,                 "sound volume in decibels (-32 min, 0 max)" },
-	{ "audio_latency",            "1",    0,                 "set audio latency (increase to reduce glitches)" },
-	{ "wavwrite",                 NULL,   0,                 "save sound in wav file" },
-
-	// misc options
-	{ NULL,                       NULL,   OPTION_HEADER,     "CORE MISC OPTIONS" },
-	{ "bios",                     "default", 0,              "select the system BIOS to use" },
-	{ "cheat;c",                  "0",    OPTION_BOOLEAN,    "enable cheat subsystem" },
-	{ "skip_gameinfo",            "0",    OPTION_BOOLEAN,    "skip displaying the information screen at startup" },
-	{ "artwork;art",              "1",    OPTION_BOOLEAN,    "enable external artwork, if available" },
-	{ "artwork_crop;artcrop",     "0",    OPTION_BOOLEAN,    "crop artwork to game screen size" },
-	{ "use_backdrops;backdrop",   "1",    OPTION_BOOLEAN,    "enable backdrops if artwork is enabled and available" },
-	{ "use_overlays;overlay",     "1",    OPTION_BOOLEAN,    "enable overlays if artwork is enabled and available" },
-	{ "use_bezels;bezel",         "1",    OPTION_BOOLEAN,    "enable bezels if artwork is enabled and available" },
-
-	// save states and input recording
-	{ NULL,                       NULL,   OPTION_HEADER,     "CORE STATE/PLAYBACK OPTIONS" },
-	{ "playback;pb",              NULL,   0,                 "playback an input file" },
-	{ "record;rec",               NULL,   0,                 "record an input file" },
-	{ "state",                    NULL,   0,                 "saved state to load" },
-	{ "autosave",                 "0",    OPTION_BOOLEAN,    "enable automatic restore at startup, and automatic save at exit time" },
-
-	// debugging options
-	{ NULL,                       NULL,   OPTION_HEADER,     "CORE DEBUGGING OPTIONS" },
-	{ "log",                      "0",    OPTION_BOOLEAN,    "generate an error.log file" },
-	{ "oslog",                    "0",    OPTION_BOOLEAN,    "output error.log data to the system debugger" },
-	{ "verbose;v",                "0",    OPTION_BOOLEAN,    "display additional diagnostic information" },
-	{ "validate;valid",           NULL,   OPTION_COMMAND,    "perform driver validation on all game drivers" },
-#ifdef MAME_DEBUG
-	{ "debug;d",                  "0",    OPTION_BOOLEAN,    "enable/disable debugger" },
-	{ "debugscript",              NULL,   0,                 "script for debugger" },
-#else
-	{ "debug;d",                  "0",    OPTION_DEPRECATED, "(debugger-only command)" },
-	{ "debugscript",              NULL,   OPTION_DEPRECATED, "(debugger-only command)" },
+	// frontend commands
+	{ "listxml;lx",               NULL,       OPTION_COMMAND,    "all available info on driver in XML format" },
+	{ "listfull;ll",              NULL,       OPTION_COMMAND,    "short name, full name" },
+	{ "listsource;ls",            NULL,       OPTION_COMMAND,    "driver sourcefile" },
+	{ "listclones;lc",            NULL,       OPTION_COMMAND,    "show clones" },
+	{ "listcrc",                  NULL,       OPTION_COMMAND,    "CRC-32s" },
+	{ "listroms",                 NULL,       OPTION_COMMAND,    "list required roms for a driver" },
+	{ "listsamples",              NULL,       OPTION_COMMAND,    "list     OPTIONal samples for a driver" },
+	{ "verifyroms",               NULL,       OPTION_COMMAND,    "report romsets that have problems" },
+	{ "verifysamples",            NULL,       OPTION_COMMAND,    "report samplesets that have problems" },
+	{ "romident",                 NULL,       OPTION_COMMAND,    "compare files with known MAME roms" },
+	{ "isknown",                  NULL,       OPTION_COMMAND,    "compare files with known MAME roms (brief)" },
+#ifdef MESS
+	{ "listdevices",              NULL,       OPTION_COMMAND,    "list available devices" },
 #endif
 
 	// config options
-	{ NULL,                       NULL,   OPTION_HEADER,     "CORE CONFIGURATION OPTIONS" },
-	{ "createconfig;cc",          NULL,   OPTION_COMMAND,    "create the default configuration file" },
-	{ "showconfig;sc",            NULL,   OPTION_COMMAND,    "display running parameters" },
-	{ "showusage;su",             NULL,   OPTION_COMMAND,    "show this help" },
-	{ "readconfig;rc",            "1",    OPTION_BOOLEAN,    "enable loading of configuration files" },
+	{ NULL,                       NULL,       OPTION_HEADER,     "CONFIGURATION OPTIONS" },
+	{ "readconfig;rc",            "1",        OPTION_BOOLEAN,    "enable loading of configuration files" },
+	{ "skip_gameinfo",            "0",        OPTION_BOOLEAN,    "skip displaying the information screen at startup" },
 
-	// frontend commands
-	{ "listxml;lx",               NULL,   OPTION_COMMAND,    "all available info on driver in XML format" },
-	{ "listfull;ll",              NULL,   OPTION_COMMAND,    "short name, full name" },
-	{ "listsource;ls",            NULL,   OPTION_COMMAND,    "driver sourcefile" },
-	{ "listclones;lc",            NULL,   OPTION_COMMAND,    "show clones" },
-	{ "listcrc",                  NULL,   OPTION_COMMAND,    "CRC-32s" },
-#ifdef MESS
-	{ "listdevices",              NULL,   OPTION_COMMAND,    "list available devices" },
+	// file and directory options
+	{ NULL,                       NULL,       OPTION_HEADER,     "PATH AND DIRECTORY OPTIONS" },
+#ifndef MESS
+	{ "rompath;rp",               "roms",     0,                 "path to ROMsets and hard disk images" },
+#else
+	{ "biospath;bp",              "bios",     0,                 "path to BIOS sets" },
+	{ "softwarepath;swp",         "software", 0,                 "path to software" },
+	{ "hash_directory;hash",      "hash",     0,                 "path to hash files" },
 #endif
-	{ "listroms",                 NULL,   OPTION_COMMAND,    "list required roms for a driver" },
-	{ "listsamples",              NULL,   OPTION_COMMAND,    "list optional samples for a driver" },
-	{ "verifyroms",               NULL,   OPTION_COMMAND,    "report romsets that have problems" },
-	{ "verifysamples",            NULL,   OPTION_COMMAND,    "report samplesets that have problems" },
-	{ "romident",                 NULL,   OPTION_COMMAND,    "compare files with known MAME roms" },
-	{ "isknown",                  NULL,   OPTION_COMMAND,    "compare files with known MAME roms (brief)" },
+	{ "samplepath;sp",            "samples",  0,                 "path to samplesets" },
+#ifdef __WIN32__
+	{ "inipath",                  ".;ini",    0,                 "path to ini files" },
+#else
+	{ "inipath",                  "$HOME/.mame;.;ini", 0,        "path to ini files" },
+#endif
+	{ "cfg_directory",            "cfg",      0,                 "directory to save configurations" },
+	{ "nvram_directory",          "nvram",    0,                 "directory to save nvram contents" },
+	{ "memcard_directory",        "memcard",  0,                 "directory to save memory card contents" },
+	{ "input_directory",          "inp",      0,                 "directory to save input device logs" },
+	{ "hiscore_directory",        "hi",       0,                 "directory to save hiscores" },
+	{ "state_directory",          "sta",      0,                 "directory to save states" },
+	{ "artpath;artwork_directory","artwork",  0,                 "path to artwork files" },
+	{ "snapshot_directory",       "snap",     0,                 "directory to save screenshots" },
+	{ "diff_directory",           "diff",     0,                 "directory to save hard drive image difference files" },
+	{ "ctrlrpath;ctrlr_directory","ctrlr",    0,                 "path to controller definitions" },
+	{ "comment_directory",        "comments", 0,                 "directory to save debugger comments" },
+	{ "cheat_file",               "cheat.dat",0,                 "cheat filename" },
+
+	// misc options
+	{ NULL,                       NULL,       OPTION_HEADER,     "MISC OPTIONS" },
+	{ "bios",                     "default",  0,                 "select the system BIOS to use" },
+	{ "cheat;c",                  "0",        OPTION_BOOLEAN,    "enable cheat subsystem" },
+
+	// state/playback options
+	{ NULL,                       NULL,       OPTION_HEADER,     "STATE/PLAYBACK OPTIONS" },
+	{ "state",                    NULL,       0,                 "saved state to load" },
+	{ "autosave",                 "0",        OPTION_BOOLEAN,    "enable automatic restore at startup, and automatic save at exit time" },
+	{ "playback;pb",              NULL,       0,                 "playback an input file" },
+	{ "record;rec",               NULL,       0,                 "record an input file" },
+	{ "mngwrite",                 NULL,       0,                 "optional filename to write a MNG movie of the current session" },
+	{ "wavwrite",                 NULL,       0,                 "optional filename to write a WAV file of the current session" },
+
+	// debugging options
+	{ NULL,                       NULL,       OPTION_HEADER,     "DEBUGGING OPTIONS" },
+	{ "log",                      "0",        OPTION_BOOLEAN,    "generate an error.log file" },
+	{ "oslog",                    "0",        OPTION_BOOLEAN,    "output error.log data to the system debugger" },
+	{ "verbose;v",                "0",        OPTION_BOOLEAN,    "display additional diagnostic information" },
+#ifdef MAME_DEBUG
+	{ "debug;d",                  "0",        OPTION_BOOLEAN,    "enable/disable debugger" },
+	{ "debugscript",              NULL,       0,                 "script for debugger" },
+#else
+	{ "debug;d",                  "0",        OPTION_DEPRECATED, "(debugger-only command)" },
+	{ "debugscript",              NULL,       OPTION_DEPRECATED, "(debugger-only command)" },
+#endif
+
+	// performance options
+	{ NULL,                       NULL,       OPTION_HEADER,     "PERFORMANCE OPTIONS" },
+	{ "autoframeskip;afs",        "0",        OPTION_BOOLEAN,    "enable automatic frameskip selection" },
+	{ "frameskip;fs",             "0",        0,                 "set frameskip to fixed value, 0-12 (autoframeskip must be disabled)" },
+	{ "frames_to_run;ftr",        "0",        0,                 "number of frames to run before automatically exiting" },
+	{ "throttle",                 "1",        OPTION_BOOLEAN,    "enable throttling to keep game running in sync with real time" },
+	{ "sleep",                    "1",        OPTION_BOOLEAN,    "enable sleeping, which gives time back to other applications when idle" },
+	{ "rdtsc",                    "0",        OPTION_BOOLEAN,    "use the RDTSC instruction for timing; faster but may result in uneven performance" },
+	{ "priority",                 "0",        0,                 "thread priority for the main game thread; range from -15 to 1" },
+
+	// video options
+	{ NULL,                       NULL,       OPTION_HEADER,     "VIDEO OPTIONS" },
+	{ "video",                    "d3d",      0,                 "video output method: gdi, ddraw, or d3d" },
+	{ "numscreens",               "1",        0,                 "number of screens to create; usually, you want just one" },
+	{ "window;w",                 "0",        OPTION_BOOLEAN,    "enable window mode; otherwise, full screen mode is assumed" },
+	{ "maximize;max",             "1",        OPTION_BOOLEAN,    "default to maximized windows; otherwise, windows will be minimized" },
+	{ "keepaspect;ka",            "1",        OPTION_BOOLEAN,    "constrain to the proper aspect ratio" },
+	{ "prescale",                 "1",        0,                 "scale screen rendering by this amount in software" },
+	{ "effect",                   "none",     0,                 "name of a PNG file to use for visual effects, or 'none'" },
+	{ "pause_brightness",         "0.65",     0,                 "amount to scale the screen brightness when paused" },
+	{ "waitvsync",                "0",        OPTION_BOOLEAN,    "enable waiting for the start of VBLANK before flipping screens; reduces tearing effects" },
+	{ "syncrefresh",              "0",        OPTION_BOOLEAN,    "enable using the start of VBLANK for throttling instead of the game time" },
+
+	// video rotation options
+	{ NULL,                       NULL,       OPTION_HEADER,     "VIDEO ROTATION OPTIONS" },
+	{ "rotate",                   "1",        OPTION_BOOLEAN,    "rotate the game screen according to the game's orientation needs it" },
+	{ "ror",                      "0",        OPTION_BOOLEAN,    "rotate screen clockwise 90 degrees" },
+	{ "rol",                      "0",        OPTION_BOOLEAN,    "rotate screen counterclockwise 90 degrees" },
+	{ "autoror",                  "0",        OPTION_BOOLEAN,    "automatically rotate screen clockwise 90 degrees if vertical" },
+	{ "autorol",                  "0",        OPTION_BOOLEAN,    "automatically rotate screen counterclockwise 90 degrees if vertical" },
+	{ "flipx",                    "0",        OPTION_BOOLEAN,    "flip screen left-right" },
+	{ "flipy",                    "0",        OPTION_BOOLEAN,    "flip screen upside-down" },
+
+	// DirectDraw-specific options
+	{ NULL,                       NULL,       OPTION_HEADER,     "DIRECTDRAW-SPECIFIC OPTIONS" },
+	{ "hwstretch;hws",            "1",        OPTION_BOOLEAN,    "enable hardware stretching" },
+
+	// Direct3D-specific options
+	{ NULL,                       NULL,       OPTION_HEADER,     "DIRECT3D-SPECIFIC OPTIONS" },
+	{ "d3dversion",               "9",        0,                 "specify the preferred Direct3D version (8 or 9)" },
+	{ "filter;d3dfilter;flt",     "1",        OPTION_BOOLEAN,    "enable bilinear filtering on screen output" },
+
+	// per-window options
+	{ NULL,                       NULL,       OPTION_HEADER,     "PER-WINDOW VIDEO OPTIONS" },
+	{ "screen0;screen",           "auto",     0,                 "explicit name of the first screen; 'auto' here will try to make a best guess" },
+	{ "aspect0;screen_aspect",    "auto",     0,                 "aspect ratio of the first screen; 'auto' here will try to make a best guess" },
+	{ "resolution0;resolution;r0;r", "auto",  0,                 "preferred resolution of the first screen; format is <width>x<height>[x<depth>[@<refreshrate>]] or 'auto'" },
+	{ "view0;view",               "auto",     0,                 "preferred view for the first screen" },
+
+	{ "screen1",                  "auto",     0,                 "explicit name of the second screen; 'auto' here will try to make a best guess" },
+	{ "aspect1",                  "auto",     0,                 "aspect ratio of the second screen; 'auto' here will try to make a best guess" },
+	{ "resolution1;r1",           "auto",     0,                 "preferred resolution of the second screen; format is <width>x<height>[x<depth>[@<refreshrate>]] or 'auto'" },
+	{ "view1",                    "auto",     0,                 "preferred view for the second screen" },
+
+	{ "screen2",                  "auto",     0,                 "explicit name of the third screen; 'auto' here will try to make a best guess" },
+	{ "aspect2",                  "auto",     0,                 "aspect ratio of the third screen; 'auto' here will try to make a best guess" },
+	{ "resolution2;r2",           "auto",     0,                 "preferred resolution of the third screen; format is <width>x<height>[x<depth>[@<refreshrate>]] or 'auto'" },
+	{ "view2",                    "auto",     0,                 "preferred view for the third screen" },
+
+	{ "screen3",                  "auto",     0,                 "explicit name of the fourth screen; 'auto' here will try to make a best guess" },
+	{ "aspect3",                  "auto",     0,                 "aspect ratio of the fourth screen; 'auto' here will try to make a best guess" },
+	{ "resolution3;r3",           "auto",     0,                 "preferred resolution of the fourth screen; format is <width>x<height>[x<depth>[@<refreshrate>]] or 'auto'" },
+	{ "view3",                    "auto",     0,                 "preferred view for the fourth screen" },
+
+	// full screen options
+	{ NULL,                       NULL,       OPTION_HEADER,     "FULL SCREEN OPTIONS" },
+	{ "triplebuffer;tb",          "0",        OPTION_BOOLEAN,    "enable triple buffering" },
+	{ "switchres",                "0",        OPTION_BOOLEAN,    "enable resolution switching" },
+	{ "full_screen_brightness;fsb","1.0",     0,                 "brightness value in full screen mode" },
+	{ "full_screen_contrast;fsc", "1.0",      0,                 "contrast value in full screen mode" },
+	{ "full_screen_gamma;fsg",    "1.0",      0,                 "gamma value in full screen mode" },
+
+	// game screen options
+	{ NULL,                       NULL,       OPTION_HEADER,     "GAME SCREEN OPTIONS" },
+	{ "brightness",               "1.0",      0,                 "default game screen brightness correction" },
+	{ "contrast",                 "1.0",      0,                 "default game screen contrast correction" },
+	{ "gamma",                    "1.0",      0,                 "default game screen gamma correction" },
+
+	// vector rendering options
+	{ NULL,                       NULL,       OPTION_HEADER,     "VECTOR RENDERING OPTIONS" },
+	{ "antialias;aa",             "1",        OPTION_BOOLEAN,    "use antialiasing when drawing vectors" },
+	{ "beam",                     "1.0",      0,                 "set vector beam width" },
+	{ "flicker",                  "1.0",      0,                 "set vector flicker effect" },
+
+	// artwork options
+	{ NULL,                       NULL,       OPTION_HEADER,     "ARTWORK OPTIONS" },
+	{ "artwork;art",              "1",        OPTION_BOOLEAN,    "enable external artwork, if available" },
+	{ "artwork_crop;artcrop",     "0",        OPTION_BOOLEAN,    "crop artwork to game screen size" },
+	{ "use_backdrops;backdrop",   "1",        OPTION_BOOLEAN,    "enable backdrops if artwork is enabled and available" },
+	{ "use_overlays;overlay",     "1",        OPTION_BOOLEAN,    "enable overlays if artwork is enabled and available" },
+	{ "use_bezels;bezel",         "1",        OPTION_BOOLEAN,    "enable bezels if artwork is enabled and available" },
+
+	// sound options
+	{ NULL,                       NULL,       OPTION_HEADER,     "SOUND OPTIONS" },
+	{ "sound",                    "1",        OPTION_BOOLEAN,    "enable sound output" },
+	{ "samplerate;sr",            "48000",    0,                 "set sound output sample rate" },
+	{ "samples",                  "1",        OPTION_BOOLEAN,    "enable the use of external samples if available" },
+	{ "volume",                   "0",        0,                 "sound volume in decibels (-32 min, 0 max)" },
+	{ "audio_latency",            "1",        0,                 "set audio latency (increase to reduce glitches)" },
+
+	// input options
+	{ NULL,                       NULL,       OPTION_HEADER,     "INPUT DEVICE OPTIONS" },
+	{ "ctrlr",                    NULL,       0,                 "preconfigure for specified controller" },
+	{ "mouse",                    "0",        OPTION_BOOLEAN,    "enable mouse input" },
+	{ "joystick;joy",             "0",        OPTION_BOOLEAN,    "enable joystick input" },
+	{ "lightgun;gun",             "0",        OPTION_BOOLEAN,    "enable lightgun input" },
+	{ "dual_lightgun;dual",       "0",        OPTION_BOOLEAN,    "enable dual lightgun input" },
+	{ "offscreen_reload;reload",  "0",        OPTION_BOOLEAN,    "offscreen shots reload" },
+	{ "steadykey;steady",         "0",        OPTION_BOOLEAN,    "enable steadykey support" },
+	{ "a2d_deadzone;a2d",         "0.3",      0,                 "minimal analog value for digital input" },
+	{ "digital",                  "none",     0,                 "mark certain joysticks or axes as digital (none|all|j<N>*|j<N>a<M>[,...])" },
+
+	{ NULL,                       NULL,       OPTION_HEADER,     "AUTOMATIC DEVICE SELECTION OPTIONS" },
+	{ "paddle_device;paddle",     "keyboard", 0,                 "enable (keyboard|mouse|joystick) if a paddle control is present" },
+	{ "adstick_device;adstick",   "keyboard", 0,                 "enable (keyboard|mouse|joystick) if an analog joystick control is present" },
+	{ "pedal_device;pedal",       "keyboard", 0,                 "enable (keyboard|mouse|joystick) if a pedal control is present" },
+	{ "dial_device;dial",         "keyboard", 0,                 "enable (keyboard|mouse|joystick) if a dial control is present" },
+	{ "trackball_device;trackball","keyboard", 0,                "enable (keyboard|mouse|joystick) if a trackball control is present" },
+	{ "lightgun_device",          "keyboard", 0,                 "enable (keyboard|mouse|joystick) if a lightgun control is present" },
+#ifdef MESS
+	{ "mouse_device",             "mouse",    0,                 "enable (keyboard|mouse|joystick) if a mouse control is present" },
+#endif
+
+	{ NULL,                       NULL,       OPTION_HEADER,     "OUTPUT DEVICE OPTIONS" },
+	{ "keyboard_leds;leds",       "1",        OPTION_BOOLEAN,    "enable keyboard LED emulation" },
+	{ "led_mode",                 "ps/2",     0,                 "LED mode (PS/2|USB)" },
 
 	{ NULL }
 };
@@ -231,10 +355,7 @@ int cli_frontend_init(int argc, char **argv)
 
 	// initialize the options manager
 	options_free_entries();
-	options_add_entries(fileio_opts);
-	options_add_entries(config_opts);
-	options_add_entries(input_opts);
-	options_add_entries(video_opts);
+	options_add_entries(windows_opts);
 #ifdef MESS
 	options_add_entries(mess_opts);
 	options_set_option_callback("", win_mess_driver_name_callback);

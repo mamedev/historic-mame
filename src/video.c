@@ -1225,24 +1225,12 @@ static void save_frame_with(mame_file *fp, int scrnum, int (*write_handler)(mame
 	else
 	{
 		mame_bitmap *copy;
-		int sizex, sizey, scalex, scaley;
+		int sizex, sizey;
 
 		sizex = bounds.max_x - bounds.min_x + 1;
 		sizey = bounds.max_y - bounds.min_y + 1;
 
-		scalex = (Machine->drv->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_2_1) ? 2 : 1;
-		scaley = (Machine->drv->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_1_2) ? 2 : 1;
-
-		if(Machine->gamedrv->flags & ORIENTATION_SWAP_XY)
-		{
-			int temp;
-
-			temp = scalex;
-			scalex = scaley;
-			scaley = temp;
-		}
-
-		copy = bitmap_alloc_depth(sizex * scalex,sizey * scaley,bitmap->depth);
+		copy = bitmap_alloc_depth(sizex,sizey,bitmap->depth);
 		if (copy)
 		{
 			int x,y,sx,sy;
@@ -1257,7 +1245,7 @@ static void save_frame_with(mame_file *fp, int scrnum, int (*write_handler)(mame
 				{
 					for (x = 0;x < copy->width;x++)
 					{
-						((UINT8 *)copy->line[y])[x] = ((UINT8 *)bitmap->line[sy+(y/scaley)])[sx +(x/scalex)];
+						((UINT8 *)copy->line[y])[x] = ((UINT8 *)bitmap->line[sy+y])[sx+x];
 					}
 				}
 				break;
@@ -1267,7 +1255,7 @@ static void save_frame_with(mame_file *fp, int scrnum, int (*write_handler)(mame
 				{
 					for (x = 0;x < copy->width;x++)
 					{
-						((UINT16 *)copy->line[y])[x] = ((UINT16 *)bitmap->line[sy+(y/scaley)])[sx +(x/scalex)];
+						((UINT16 *)copy->line[y])[x] = ((UINT16 *)bitmap->line[sy+y])[sx+x];
 					}
 				}
 				break;
@@ -1276,7 +1264,7 @@ static void save_frame_with(mame_file *fp, int scrnum, int (*write_handler)(mame
 				{
 					for (x = 0;x < copy->width;x++)
 					{
-						((UINT32 *)copy->line[y])[x] = ((UINT32 *)bitmap->line[sy+(y/scaley)])[sx +(x/scalex)];
+						((UINT32 *)copy->line[y])[x] = ((UINT32 *)bitmap->line[sy+y])[sx+x];
 					}
 				}
 				break;
