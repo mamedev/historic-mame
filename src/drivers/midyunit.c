@@ -1499,6 +1499,13 @@ ROM_START( hiimpact )
 	ROM_LOAD ( "la1u107.bin",  0x420000, 0x20000, CRC(ef48e8fa) SHA1(538de37cd8342085ec27f67292a7eeb1007e3b1f) )
 	ROM_LOAD ( "la1u108.bin",  0x440000, 0x20000, CRC(5f363e12) SHA1(da398c0204f785aad4c52007d2f25031ecc1c63f) )
 	ROM_LOAD ( "la1u109.bin",  0x460000, 0x20000, CRC(3689fbbc) SHA1(d95c0a2e3abf977ba7a899e419c22d004020c560) )
+
+	ROM_REGION( 0x1100, REGION_PLDS, ROMREGION_DISPOSE )
+	ROM_LOAD( "ep610.u8",    0x0000, 0x032f, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pls153a.u40", 0x0400, 0x00eb, CRC(69e5143f) SHA1(1a1e7b3233f7d5a1c161564710e8e984a9b0a16c) )
+	ROM_LOAD( "ep610.u51",   0x0500, 0x032f, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "ep610.u52",   0x0900, 0x032f, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "ep610.u65",   0x0d00, 0x032f, NO_DUMP ) /* PAL is read protected */
 ROM_END
 
 
@@ -1527,6 +1534,13 @@ ROM_START( hiimpac3 )
 	ROM_LOAD ( "la1u107.bin",  0x420000, 0x20000, CRC(ef48e8fa) SHA1(538de37cd8342085ec27f67292a7eeb1007e3b1f) )
 	ROM_LOAD ( "la1u108.bin",  0x440000, 0x20000, CRC(5f363e12) SHA1(da398c0204f785aad4c52007d2f25031ecc1c63f) )
 	ROM_LOAD ( "la1u109.bin",  0x460000, 0x20000, CRC(3689fbbc) SHA1(d95c0a2e3abf977ba7a899e419c22d004020c560) )
+
+	ROM_REGION( 0x1100, REGION_PLDS, ROMREGION_DISPOSE )
+	ROM_LOAD( "ep610.u8",    0x0000, 0x032f, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pls153a.u40", 0x0400, 0x00eb, CRC(69e5143f) SHA1(1a1e7b3233f7d5a1c161564710e8e984a9b0a16c) )
+	ROM_LOAD( "ep610.u51",   0x0500, 0x032f, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "ep610.u52",   0x0900, 0x032f, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "ep610.u65",   0x0d00, 0x032f, NO_DUMP ) /* PAL is read protected */
 ROM_END
 
 
@@ -1555,6 +1569,13 @@ ROM_START( hiimpacp )
 	ROM_LOAD ( "la1u107.bin",  0x420000, 0x20000, CRC(ef48e8fa) SHA1(538de37cd8342085ec27f67292a7eeb1007e3b1f) )
 	ROM_LOAD ( "la1u108.bin",  0x440000, 0x20000, CRC(5f363e12) SHA1(da398c0204f785aad4c52007d2f25031ecc1c63f) )
 	ROM_LOAD ( "la1u109.bin",  0x460000, 0x20000, CRC(3689fbbc) SHA1(d95c0a2e3abf977ba7a899e419c22d004020c560) )
+
+	ROM_REGION( 0x1100, REGION_PLDS, ROMREGION_DISPOSE )
+	ROM_LOAD( "ep610.u8",    0x0000, 0x032f, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pls153a.u40", 0x0400, 0x00eb, CRC(69e5143f) SHA1(1a1e7b3233f7d5a1c161564710e8e984a9b0a16c) )
+	ROM_LOAD( "ep610.u51",   0x0500, 0x032f, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "ep610.u52",   0x0900, 0x032f, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "ep610.u65",   0x0d00, 0x032f, NO_DUMP ) /* PAL is read protected */
 ROM_END
 
 

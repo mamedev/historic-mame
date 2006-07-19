@@ -392,7 +392,7 @@ enum {cjoy, cdoublejoy, cAD_stick, cdial, ctrackball, cpaddle, clightgun, cpedal
 			if (control[i].keydelta)
 				fprintf(out, " keydelta=\"%d\"", control[i].keydelta);
 			if (control[i].reverse)
-				fprintf(out, " reverse=\"Yes\"");
+				fprintf(out, " reverse=\"yes\"");
 
 			fprintf(out, "/>\n");
 		}
@@ -721,7 +721,7 @@ static void print_game_display(FILE* out, const game_driver* game)
 					fprintf(out, " rotate=\"0\" flipx=\"yes\"");
 					break;
 				case ORIENTATION_FLIP_Y:
-					fprintf(out, " rotate=\"0\" flipy=\"yes\"");
+					fprintf(out, " rotate=\"180\" flipx=\"yes\"");
 					break;
 				case ORIENTATION_FLIP_X|ORIENTATION_FLIP_Y:
 					fprintf(out, " rotate=\"180\"");
@@ -992,9 +992,9 @@ void print_mame_xml(FILE* out, const game_driver* const games[], const char *gam
 		"<!ELEMENT " XML_ROOT " (" XML_TOP "+)>\n"
 		"\t<!ATTLIST " XML_ROOT " build CDATA #IMPLIED>\n"
 #ifdef MESS
-		"\t<!ELEMENT " XML_TOP " (description, year?, manufacturer, biosset*, rom*, disk*, sample*, chip*, video?, sound?, input?, dipswitch*, driver?, device*, ramoption*)>\n"
+		"\t<!ELEMENT " XML_TOP " (description, year?, manufacturer, biosset*, rom*, disk*, sample*, chip*, display*, sound?, input?, dipswitch*, driver?, device*, ramoption*)>\n"
 #else
-		"\t<!ELEMENT " XML_TOP " (description, year?, manufacturer, biosset*, rom*, disk*, sample*, chip*, video?, sound?, input?, dipswitch*, driver?)>\n"
+		"\t<!ELEMENT " XML_TOP " (description, year?, manufacturer, biosset*, rom*, disk*, sample*, chip*, display*, sound?, input?, dipswitch*, driver?)>\n"
 #endif
 		"\t\t<!ATTLIST " XML_TOP " name CDATA #REQUIRED>\n"
 		"\t\t<!ATTLIST " XML_TOP " sourcefile CDATA #IMPLIED>\n"
@@ -1036,13 +1036,12 @@ void print_mame_xml(FILE* out, const game_driver* const games[], const char *gam
 		"\t\t\t<!ATTLIST chip type (cpu|audio) #REQUIRED>\n"
 		"\t\t\t<!ATTLIST chip clock CDATA #IMPLIED>\n"
 		"\t\t<!ELEMENT display EMPTY>\n"
-		"\t\t\t<!ATTLIST video type (raster|vector) #REQUIRED>\n"
-		"\t\t\t<!ATTLIST video rotate (0|90|180|270) #REQUIRED>\n"
-		"\t\t\t<!ATTLIST video flipx (yes|no) \"no\">\n"
-		"\t\t\t<!ATTLIST video flipy (yes|no) \"no\">\n"
-		"\t\t\t<!ATTLIST video width CDATA #IMPLIED>\n"
-		"\t\t\t<!ATTLIST video height CDATA #IMPLIED>\n"
-		"\t\t\t<!ATTLIST video refresh CDATA #REQUIRED>\n"
+		"\t\t\t<!ATTLIST display type (raster|vector) #REQUIRED>\n"
+		"\t\t\t<!ATTLIST display rotate (0|90|180|270) #REQUIRED>\n"
+		"\t\t\t<!ATTLIST display flipx (yes|no) \"no\">\n"
+		"\t\t\t<!ATTLIST display width CDATA #IMPLIED>\n"
+		"\t\t\t<!ATTLIST display height CDATA #IMPLIED>\n"
+		"\t\t\t<!ATTLIST display refresh CDATA #REQUIRED>\n"
 		"\t\t<!ELEMENT sound EMPTY>\n"
 		"\t\t\t<!ATTLIST sound channels CDATA #REQUIRED>\n"
 		"\t\t<!ELEMENT input (control*)>\n"
@@ -1057,7 +1056,7 @@ void print_mame_xml(FILE* out, const game_driver* const games[], const char *gam
 		"\t\t\t\t<!ATTLIST control maximum CDATA #IMPLIED>\n"
 		"\t\t\t\t<!ATTLIST control sensitivity CDATA #IMPLIED>\n"
 		"\t\t\t\t<!ATTLIST control keydelta CDATA #IMPLIED>\n"
-		"\t\t\t\t<!ATTLIST control reverse (Yes|No) \"No\">\n"
+		"\t\t\t\t<!ATTLIST control reverse (yes|no) \"no\">\n"
 		"\t\t<!ELEMENT dipswitch (dipvalue*)>\n"
 		"\t\t\t<!ATTLIST dipswitch name CDATA #REQUIRED>\n"
 		"\t\t\t<!ELEMENT dipvalue EMPTY>\n"

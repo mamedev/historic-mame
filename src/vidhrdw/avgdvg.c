@@ -106,8 +106,6 @@ extern int vector_updates; /* avgdvg_go_w()'s per Mame frame, should be 1 */
 #define NUM_BANKS (2)
 static unsigned char *vectorbank[NUM_BANKS];
 
-static rgb_t sparkle_callback(void);
-
 
 
 /*************************************
@@ -482,12 +480,6 @@ void avg_add_point(int x, int y, rgb_t color, int intensity)
 	vector_add_point(x, y, color, intensity);
 }
 
-void avg_add_point_callback(int x, int y, rgb_t (*color_callback)(void), int intensity)
-{
-	avg_apply_flipping_and_swapping(&x, &y);
-	vector_add_point_callback(x, y, color_callback, intensity);
-}
-
 /*************************************
  *
  *  AVG vector generator
@@ -654,7 +646,7 @@ static int avg_generate_vector_list(void)
 
 				/* add the new point */
 				if (sparkle)
-					avg_add_point_callback(currentx, currenty, sparkle_callback, z);
+					avg_add_point(currentx, currenty, vcolorram[16 + ((rand() >> 8) & 15)], z);
 				else
 					avg_add_point(currentx, currenty, vcolorram[color], z);
 				VGLOG(("VCTR x:%d y:%d z:%d statz:%d", x, y, z, statz));
@@ -687,7 +679,7 @@ static int avg_generate_vector_list(void)
 
 				/* add the new point */
 				if (sparkle)
-					avg_add_point_callback(currentx, currenty, sparkle_callback, z);
+					avg_add_point(currentx, currenty, vcolorram[16 + ((rand() >> 8) & 15)], z);
 				else
 					avg_add_point(currentx, currenty, vcolorram[color], z);
 				VGLOG(("SVEC x:%d y:%d z:%d statz:%d", x, y, z, statz));
@@ -1153,10 +1145,4 @@ WRITE16_HANDLER( quantum_colorram_w )
 
 		vcolorram[offset & 0x0f] = MAKE_RGB(r, g, b);
 	}
-}
-
-
-static rgb_t sparkle_callback(void)
-{
-	return vcolorram[16 + ((rand() >> 8) & 15)];
 }

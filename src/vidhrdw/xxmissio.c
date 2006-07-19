@@ -11,7 +11,6 @@ Video hardware driver by Uki
 #include "driver.h"
 
 UINT8 *xxmissio_fgram;
-size_t xxmissio_fgram_size;
 
 static UINT8 xxmissio_xscroll,xxmissio_yscroll;
 static UINT8 flipscreen;
@@ -36,15 +35,6 @@ WRITE8_HANDLER( xxmissio_flipscreen_w )
 	}
 }
 
-READ8_HANDLER( xxmissio_fgram_r )
-{
-	return xxmissio_fgram[offset];
-}
-WRITE8_HANDLER( xxmissio_fgram_w )
-{
-	xxmissio_fgram[offset] = data;
-}
-
 WRITE8_HANDLER( xxmissio_videoram_w )
 {
 	int offs = offset & 0x7e0;
@@ -65,13 +55,10 @@ READ8_HANDLER( xxmissio_videoram_r )
 
 WRITE8_HANDLER( xxmissio_paletteram_w )
 {
-	if (paletteram[offset] != data)
-	{
-		paletteram_BBGGRRII_w(offset,data);
+	paletteram_BBGGRRII_w(offset,data);
 
-		if (offset >= 0x200)
-			xxmissio_bg_redraw = 1;
-	}
+	if (offset >= 0x200)
+		xxmissio_bg_redraw = 1;
 }
 
 /****************************************************************************/

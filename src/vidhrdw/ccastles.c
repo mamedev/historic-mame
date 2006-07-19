@@ -20,6 +20,7 @@ static double rweights[3], gweights[3], bweights[3];
 static mame_bitmap *spritebitmap;
 
 static UINT8 video_control[8];
+static UINT8 bitmode_addr[2];
 static UINT8 hscroll;
 static UINT8 vscroll;
 
@@ -55,6 +56,7 @@ VIDEO_START( ccastles )
 
 	/* register for savestates */
 	state_save_register_global_array(video_control);
+	state_save_register_global_array(bitmode_addr);
 	state_save_register_global(hscroll);
 	state_save_register_global(vscroll);
 	return 0;
@@ -135,7 +137,7 @@ WRITE8_HANDLER( ccastles_paletteram_w )
  *
  *************************************/
 
-INLINE void write_vram(UINT16 addr, UINT8 data, UINT8 bitmd, UINT8 pixba)
+INLINE void ccastles_write_vram(UINT16 addr, UINT8 data, UINT8 bitmd, UINT8 pixba)
 {
 	UINT8 *dest = &videoram[addr & 0x7ffe];
 	UINT8 promaddr = 0;
@@ -187,18 +189,18 @@ INLINE void bitmode_autoinc(void)
 	if (!video_control[0])	/* /AX */
 	{
 		if (!video_control[2])	/* /XINC */
-			videoram[0]++;
+			bitmode_addr[0]++;
 		else
-			videoram[0]--;
+			bitmode_addr[0]--;
 	}
 
 	/* auto increment in the y-direction if it's enabled */
 	if (!video_control[1])	/* /AY */
 	{
 		if (!video_control[3])	/* /YINC */
-			videoram[1]++;
+			bitmode_addr[1]++;
 		else
-			videoram[1]--;
+			bitmode_addr[1]--;
 	}
 }
 
@@ -213,7 +215,7 @@ INLINE void bitmode_autoinc(void)
 WRITE8_HANDLER( ccastles_videoram_w )
 {
 	/* direct writes to VRAM go through the write protect PROM as well */
-	write_vram(offset, data, 0, 0);
+	ccastles_write_vram(offset, data, 0, 0);
 }
 
 
@@ -224,35 +226,43 @@ WRITE8_HANDLER( ccastles_videoram_w )
  *
  *************************************/
 
-WRITE8_HANDLER( ccastles_bitmode_w )
-{
-	/* in bitmode, the address comes from the autoincrement latches */
-	UINT16 addr = (videoram[1] << 7) | (videoram[0] >> 1);
-
-	/* the upper 4 bits of data are replicated to the lower 4 bits */
-	data = (data & 0xf0) | (data >> 4);
-
-	/* write through the generic VRAM routine, passing the low 2 X bits as PIXB/PIXA */
-	write_vram(addr, data, 1, videoram[0] & 3);
-
-	/* autoincrement because /BITMD was selected */
-	bitmode_autoinc();
-}
-
-
 READ8_HANDLER( ccastles_bitmode_r )
 {
 	/* in bitmode, the address comes from the autoincrement latches */
-	UINT16 addr = (videoram[1] << 7) | (videoram[0] >> 1);
+	UINT16 addr = (bitmode_addr[1] << 7) | (bitmode_addr[0] >> 1);
 
 	/* the appropriate pixel is selected into the upper 4 bits */
-	UINT8 result = videoram[addr] << ((~videoram[0] & 1) * 4);
+	UINT8 result = videoram[addr] << ((~bitmode_addr[0] & 1) * 4);
 
 	/* autoincrement because /BITMD was selected */
 	bitmode_autoinc();
 
 	/* the low 4 bits of the data lines are not driven so make them all 1's */
 	return result | 0x0f;
+}
+
+
+WRITE8_HANDLER( ccastles_bitmode_w )
+{
+	/* in bitmode, the address comes from the autoincrement latches */
+	UINT16 addr = (bitmode_addr[1] << 7) | (bitmode_addr[0] >> 1);
+
+	/* the upper 4 bits of data are replicated to the lower 4 bits */
+	data = (data & 0xf0) | (data >> 4);
+
+	/* write through the generic VRAM routine, passing the low 2 X bits as PIXB/PIXA */
+	ccastles_write_vram(addr, data, 1, bitmode_addr[0] & 3);
+
+	/* autoincrement because /BITMD was selected */
+	bitmode_autoinc();
+}
+
+
+WRITE8_HANDLER( ccastles_bitmode_addr_w )
+{
+	/* write through to video RAM and also to the addressing latches */
+	ccastles_write_vram(offset, data, 0, 0);
+	bitmode_addr[offset] = data;
 }
 
 
@@ -299,7 +309,12 @@ VIDEO_UPDATE( ccastles )
 		{
 			UINT16 *mosrc = (UINT16 *)spritebitmap->base + y * spritebitmap->rowpixels;
 			int effy = (((y - ccastles_vblank_end) + (flip ? 0 : vscroll)) ^ flip) & 0xff;
-			UINT8 *src = &videoram[effy * 128];
+			UINT8 *src;
+
+			/* the "POTATO" chip does some magic here; this is just a guess */
+			if (effy < 24)
+				effy = 24;
+			src = &videoram[effy * 128];
 
 			/* loop over X */
 			for (x = cliprect->min_x; x <= cliprect->max_x; x++)

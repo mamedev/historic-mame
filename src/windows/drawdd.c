@@ -1242,7 +1242,7 @@ static HRESULT WINAPI enum_modes_callback(LPDDSURFACEDESC2 desc, LPVOID context)
 
 	// if we're looking for a particular mode, that's a winner
 	if (desc->dwWidth == einfo->window->maxwidth && desc->dwHeight == einfo->window->maxheight)
-		size_score = 1.0f;
+		size_score = 2.0f;
 
 	// compute refresh score
 	refresh_score = 1.0f / (1.0f + fabs((double)desc->dwRefreshRate - Machine->refresh_rate[0]));

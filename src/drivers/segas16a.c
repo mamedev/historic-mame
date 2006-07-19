@@ -2054,6 +2054,11 @@ ROM_START( quartet )
 
 	ROM_REGION( 0x10000, REGION_CPU4, 0 )	/* protection MCU */
 	ROM_LOAD( "mcu.bin", 0x00000, 0x1000, NO_DUMP )
+
+	ROM_REGION( 0x0500, REGION_PLDS, ROMREGION_DISPOSE )
+	ROM_LOAD( "pal16r6a.22g", 0x0000, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16r6a.23g", 0x0200, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pls153.8j",    0x0400, 0x00eb, CRC(0fe1eefd) SHA1(38ba6f57006af8c0d4d7f74aa4778ac1ee2a21fc) )
 ROM_END
 
 /**************************************************************************************************************************
@@ -2098,6 +2103,11 @@ ROM_START( quartetj )
 
 	ROM_REGION( 0x10000, REGION_CPU4, 0 )	/* protection MCU */
 	ROM_LOAD( "mcu.bin", 0x00000, 0x1000, NO_DUMP )
+
+	ROM_REGION( 0x0500, REGION_PLDS, ROMREGION_DISPOSE )
+	ROM_LOAD( "pal16r6a.22g", 0x0000, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16r6a.23g", 0x0200, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pls153.8j",    0x0400, 0x00eb, CRC(0fe1eefd) SHA1(38ba6f57006af8c0d4d7f74aa4778ac1ee2a21fc) )
 ROM_END
 
 

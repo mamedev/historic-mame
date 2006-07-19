@@ -5253,6 +5253,11 @@ ROM_START( koshien )	/* Ah Eikou no Koshien */
 
 	ROM_REGION( 0x080000, REGION_SOUND2, 0 )	/* Delta-T samples */
 	ROM_LOAD( "c81-06.bin",  0x00000, 0x80000, CRC(927833b4) SHA1(c09240e4885d2eace1c64fa6425faeeea0296d98) )
+
+	ROM_REGION( 0x0600, REGION_PLDS, ROMREGION_DISPOSE )
+	ROM_LOAD( "pal16l8b-c81-07.bin", 0x0000, 0x0104, CRC(46341732) SHA1(af652621cb96f656fd1f9ed20daeb076641aeb08) )
+	ROM_LOAD( "pal16l8b-c81-08.bin", 0x0200, 0x0104, CRC(e7d2d300) SHA1(20a1a258230d5be73381c97509437a9e76de958c) )
+	ROM_LOAD( "pal16l8b-c81-09.bin", 0x0400, 0x0104, CRC(e4c012a1) SHA1(56746ce42fd64bf04e17132811de291a1bfa5451) )
 ROM_END
 
 ROM_START( yuyugogo )	/* Yuuyu no QUIZ de GO!GO! */
@@ -5380,7 +5385,8 @@ ROM_START( solfigtr )	/* Solitary Fighter */
 
 	/* no Delta-T samples */
 
-//Pals c74-06.48
+	ROM_REGION( 0x0200, REGION_PLDS, ROMREGION_DISPOSE )
+	ROM_LOAD( "pal16l8b-c74-06.ic48", 0x0000, 0x0104, CRC(c868dc16) SHA1(b9d12f2016c6a3017b497aafc96a7dbab4a50c8b) )
 ROM_END
 
 ROM_START( qzquest )	/* Quiz Quest */
@@ -5529,6 +5535,11 @@ ROM_START( qzchikyu )
 	ROM_LOAD( "d19-04.9",	0x000000, 0x080000, CRC(d3c44905) SHA1(d00bd4f11523b2123383dd852ee5484d907ff904) )
 
 	/* no Delta-T samples */
+
+	ROM_REGION( 0x0600, REGION_PLDS, ROMREGION_DISPOSE )
+	ROM_LOAD( "pal16l8b-d19-08.bin",    0x0000, 0x0104, CRC(c6240d10) SHA1(7b573ea4d04fc58303b4a044e0d983183112abda) )
+	ROM_LOAD( "pal16l8b-d19-09.bin",    0x0200, 0x0104, CRC(576f5db9) SHA1(110695b6d5a80b86df254c3eb970a735f510dfe8) )
+	ROM_LOAD( "pal16l8b-d19-10.bin",    0x0400, 0x0104, CRC(ea1232a5) SHA1(a13199339be00db93300049d36f35b4a32f53967) )
 ROM_END
 
 ROM_START( yesnoj )	/* Yes/No Sinri Tokimeki Chart */

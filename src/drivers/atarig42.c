@@ -632,6 +632,17 @@ ROM_START( guardian )
 	ROM_LOAD( "136092-1001.bin",  0x0000, 0x0200, CRC(b3251eeb) SHA1(5e83baa70aaa28f07f32657bf974fd87719972d3) )
 	ROM_LOAD( "136092-1002.bin",  0x0200, 0x0200, CRC(0c5314da) SHA1(a9c7ee3ab015c7f3ada4200acd2854eb9a5c74b0) )
 	ROM_LOAD( "136092-1003.bin",  0x0400, 0x0200, CRC(344b406a) SHA1(f4422f8c0d7004d0277a4fc77718d555f80fcf69) )
+
+	ROM_REGION( 0x1500, REGION_PLDS, ROMREGION_DISPOSE )
+	ROM_LOAD( "gal16v8a.3l",  0x0000, 0x0117, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "gal16v8a.7c",  0x0200, 0x0117, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "gal16v8a.13s", 0x0400, 0x0117, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "gal16v8a.16j", 0x0600, 0x0117, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "gal16v8a.17c", 0x0800, 0x0117, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "gal16v8a.18k", 0x0a00, 0x0117, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "gal16v8a.20c", 0x0c00, 0x0117, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "gal16v8a.22l", 0x0e00, 0x0117, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "gal6001b.15h", 0x1000, 0x0410, NO_DUMP ) /* PAL is read protected */
 ROM_END
 
 

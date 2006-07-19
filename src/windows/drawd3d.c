@@ -159,6 +159,9 @@ struct _d3d_info
 	int						last_filter;				// previous texture filter
 	int						last_wrap;					// previous wrap state
 	DWORD					last_modmode;				// previous texture modulation
+
+	mame_bitmap *			vector_bitmap;				// experimental: bitmap for vectors
+	texture_info *			vector_texture;				// experimental: texture for vectors
 };
 
 
@@ -269,10 +272,10 @@ INLINE void set_blendmode(d3d_info *d3d, int blendmode)
 	switch (blendmode)
 	{
 		default:
-		case BLENDMODE_NONE:			blendenable = FALSE;	blendop = D3DBLENDOP_ADD;		blendsrc = D3DBLEND_SRCALPHA;	blenddst = D3DBLEND_INVSRCALPHA;	break;
-		case BLENDMODE_ALPHA:			blendenable = TRUE;		blendop = D3DBLENDOP_ADD;		blendsrc = D3DBLEND_SRCALPHA;	blenddst = D3DBLEND_INVSRCALPHA;	break;
-		case BLENDMODE_RGB_MULTIPLY:	blendenable = TRUE;		blendop = D3DBLENDOP_ADD;		blendsrc = D3DBLEND_DESTCOLOR;	blenddst = D3DBLEND_ZERO;			break;
-		case BLENDMODE_ADD:				blendenable = TRUE;		blendop = D3DBLENDOP_ADD;		blendsrc = D3DBLEND_SRCALPHA;	blenddst = D3DBLEND_ONE;			break;
+		case BLENDMODE_NONE:			blendenable = FALSE;	blendop = D3DBLENDOP_ADD;	blendsrc = D3DBLEND_SRCALPHA;	blenddst = D3DBLEND_INVSRCALPHA;	break;
+		case BLENDMODE_ALPHA:			blendenable = TRUE;		blendop = D3DBLENDOP_ADD;	blendsrc = D3DBLEND_SRCALPHA;	blenddst = D3DBLEND_INVSRCALPHA;	break;
+		case BLENDMODE_RGB_MULTIPLY:	blendenable = TRUE;		blendop = D3DBLENDOP_ADD;	blendsrc = D3DBLEND_DESTCOLOR;	blenddst = D3DBLEND_ZERO;			break;
+		case BLENDMODE_ADD:				blendenable = TRUE;		blendop = D3DBLENDOP_ADD;	blendsrc = D3DBLEND_SRCALPHA;	blenddst = D3DBLEND_ONE;			break;
 	}
 
 	// adjust the bits that changed
@@ -423,6 +426,15 @@ static int drawd3d_window_init(win_window_info *window)
 	memset(d3d, 0, sizeof(*d3d));
 	window->dxdata = d3d;
 
+	// experimental: load a PNG to use for vector rendering; it is treated
+	// as a brightness map
+	d3d->vector_bitmap = render_load_png(NULL, "vector.png", NULL, NULL);
+	if (d3d->vector_bitmap != NULL)
+	{
+		fillbitmap(d3d->vector_bitmap, MAKE_ARGB(0xff,0xff,0xff,0xff), NULL);
+		d3d->vector_bitmap = render_load_png(NULL, "vector.png", d3d->vector_bitmap, NULL);
+	}
+
 	// configure the adapter for the mode we want
 	if (config_adapter_mode(window))
 		goto error;
@@ -455,6 +467,10 @@ static void drawd3d_window_destroy(win_window_info *window)
 
 	// delete the device
 	device_delete(d3d);
+
+	// experimental: free the vector PNG
+	if (d3d->vector_bitmap != NULL)
+		bitmap_free(d3d->vector_bitmap);
 
 	// free the memory in the window
 	free(d3d);
@@ -735,6 +751,23 @@ static int device_create_resources(d3d_info *d3d)
 	// clear the buffer
 	result = (*d3dintf->device.clear)(d3d->device, 0, NULL, D3DCLEAR_TARGET, D3DCOLOR_ARGB(0,0,0,0), 0, 0);
 	result = (*d3dintf->device.present)(d3d->device, NULL, NULL, NULL, NULL, 0);
+
+	// experimental: if we have a vector bitmap, create a texture for it
+	if (d3d->vector_bitmap != NULL)
+	{
+		render_texinfo texture;
+
+		// fake in the basic data so it looks like it came from render.c
+		texture.base = d3d->vector_bitmap->base;
+		texture.rowpixels = d3d->vector_bitmap->rowpixels;
+		texture.width = d3d->vector_bitmap->width;
+		texture.height = d3d->vector_bitmap->height;
+		texture.palette = NULL;
+		texture.seqid = 0;
+
+		// now create it
+		d3d->vector_texture = texture_create(d3d, &texture, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_TEXFORMAT(TEXFORMAT_ARGB32));
+	}
 
 	return 0;
 }
@@ -1144,7 +1177,7 @@ static void pick_best_mode(win_window_info *window)
 
 		// if we're looking for a particular mode, that's a winner
 		if (mode.Width == window->maxwidth && mode.Height == window->maxheight)
-			size_score = 1.0f;
+			size_score = 2.0f;
 
 		// compute refresh score
 		refresh_score = 1.0f / (1.0f + fabs((double)mode.RefreshRate - Machine->refresh_rate[0]));
@@ -1338,6 +1371,22 @@ static void draw_line(d3d_info *d3d, const render_primitive *prim)
 		if (a > 255) a = 255;
 		color = D3DCOLOR_ARGB(a, r, g, b);
 
+		// if we have a texture to use for the vectors, use it here
+		if (d3d->vector_texture != NULL)
+		{
+			vertex[0].u0 = d3d->vector_texture->ustart;
+			vertex[0].v0 = d3d->vector_texture->vstart;
+
+			vertex[2].u0 = d3d->vector_texture->ustop;
+			vertex[2].v0 = d3d->vector_texture->vstart;
+
+			vertex[1].u0 = d3d->vector_texture->ustart;
+			vertex[1].v0 = d3d->vector_texture->vstop;
+
+			vertex[3].u0 = d3d->vector_texture->ustop;
+			vertex[3].v0 = d3d->vector_texture->vstop;
+		}
+
 		// set the color, Z parameters to standard values
 		for (i = 0; i < 4; i++)
 		{
@@ -1353,7 +1402,7 @@ static void draw_line(d3d_info *d3d, const render_primitive *prim)
 		poly->numverts = 4;
 		poly->flags = prim->flags;
 		poly->modmode = D3DTOP_MODULATE;
-		poly->texture = NULL;
+		poly->texture = d3d->vector_texture;
 	}
 }
 
@@ -1915,8 +1964,8 @@ static void texture_prescale(d3d_info *d3d, texture_info *texture)
 
 		// set the source bounds
 		source.left = source.top = 0;
-		source.right = texture->texinfo.width + 2;
-		source.bottom = texture->texinfo.height + 2;
+		source.right = texture->texinfo.width + 2 * texture->borderpix;
+		source.bottom = texture->texinfo.height + 2 * texture->borderpix;
 
 		// set the target bounds
 		dest = source;
@@ -1959,22 +2008,22 @@ static void texture_prescale(d3d_info *d3d, texture_info *texture)
 		// configure the X/Y coordinates on the target surface
 		d3d->lockedbuf[0].x = -0.5f;
 		d3d->lockedbuf[0].y = -0.5f;
-		d3d->lockedbuf[1].x = (float)((texture->texinfo.width + 2) * texture->xprescale) - 0.5f;
+		d3d->lockedbuf[1].x = (float)((texture->texinfo.width + 2 * texture->borderpix) * texture->xprescale) - 0.5f;
 		d3d->lockedbuf[1].y = -0.5f;
 		d3d->lockedbuf[2].x = -0.5f;
-		d3d->lockedbuf[2].y = (float)((texture->texinfo.height + 2) * texture->yprescale) - 0.5f;
-		d3d->lockedbuf[3].x = (float)((texture->texinfo.width + 2) * texture->xprescale) - 0.5f;
-		d3d->lockedbuf[3].y = (float)((texture->texinfo.height + 2) * texture->yprescale) - 0.5f;
+		d3d->lockedbuf[2].y = (float)((texture->texinfo.height + 2 * texture->borderpix) * texture->yprescale) - 0.5f;
+		d3d->lockedbuf[3].x = (float)((texture->texinfo.width + 2 * texture->borderpix) * texture->xprescale) - 0.5f;
+		d3d->lockedbuf[3].y = (float)((texture->texinfo.height + 2 * texture->borderpix) * texture->yprescale) - 0.5f;
 
 		// configure the U/V coordintes on the source texture
 		d3d->lockedbuf[0].u0 = 0.0f;
 		d3d->lockedbuf[0].v0 = 0.0f;
-		d3d->lockedbuf[1].u0 = (float)(texture->texinfo.width + 2) / (float)texture->rawwidth;
+		d3d->lockedbuf[1].u0 = (float)(texture->texinfo.width + 2 * texture->borderpix) / (float)texture->rawwidth;
 		d3d->lockedbuf[1].v0 = 0.0f;
 		d3d->lockedbuf[2].u0 = 0.0f;
-		d3d->lockedbuf[2].v0 = (float)(texture->texinfo.height + 2) / (float)texture->rawheight;
-		d3d->lockedbuf[3].u0 = (float)(texture->texinfo.width + 2) / (float)texture->rawwidth;
-		d3d->lockedbuf[3].v0 = (float)(texture->texinfo.height + 2) / (float)texture->rawheight;
+		d3d->lockedbuf[2].v0 = (float)(texture->texinfo.height + 2 * texture->borderpix) / (float)texture->rawheight;
+		d3d->lockedbuf[3].u0 = (float)(texture->texinfo.width + 2 * texture->borderpix) / (float)texture->rawwidth;
+		d3d->lockedbuf[3].v0 = (float)(texture->texinfo.height + 2 * texture->borderpix) / (float)texture->rawheight;
 
 		// reset the remaining vertex parameters
 		for (i = 0; i < 4; i++)

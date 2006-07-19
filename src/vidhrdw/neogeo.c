@@ -243,7 +243,8 @@ void neogeo_set_lower_resolution( void )
 		!strcmp(Machine->gamedrv->name,"ms4plus") ||
 		!strcmp(Machine->gamedrv->name,"jockeygp") ||
 		!strcmp(Machine->gamedrv->name,"vliner") ||
-		!strcmp(Machine->gamedrv->name,"vlinero"))
+		!strcmp(Machine->gamedrv->name,"vlinero") ||
+		!strcmp(Machine->gamedrv->name,"diggerma"))
 				set_visible_area(0, 1*8,39*8-1,Machine->visible_area[0].min_y,Machine->visible_area[0].max_y);
 }
 

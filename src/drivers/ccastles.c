@@ -131,8 +131,11 @@
  *************************************/
 
 static const UINT8 *syncprom;
-static UINT8 irq_state;
 static mame_timer *irq_timer;
+
+static UINT8 irq_state;
+static UINT8 *nvram_stage;
+static UINT8 nvram_store[2];
 
 int ccastles_vblank_start;
 int ccastles_vblank_end;
@@ -216,8 +219,13 @@ static MACHINE_START( ccastles )
 	irq_state = 0;
 	schedule_next_irq(0);
 
+	/* allocate backing memory for the NVRAM */
+	generic_nvram = auto_malloc(generic_nvram_size);
+
 	/* setup for save states */
 	state_save_register_global(irq_state);
+	state_save_register_global_array(nvram_store);
+	state_save_register_global_pointer(generic_nvram, generic_nvram_size);
 
 	return 0;
 }
@@ -247,19 +255,19 @@ static WRITE8_HANDLER( irq_ack_w )
 }
 
 
-static WRITE8_HANDLER( ccastles_led_w )
+static WRITE8_HANDLER( led_w )
 {
 	set_led_status(offset, ~data & 1);
 }
 
 
-static WRITE8_HANDLER( ccastles_coin_counter_w )
+static WRITE8_HANDLER( ccounter_w )
 {
 	coin_counter_w(offset, data & 1);
 }
 
 
-static WRITE8_HANDLER( ccastles_bankswitch_w )
+static WRITE8_HANDLER( bankswitch_w )
 {
 	memory_set_bank(1, data & 1);
 }
@@ -274,30 +282,67 @@ static READ8_HANDLER( leta_r )
 
 /*************************************
  *
+ *  NVRAM handling
+ *
+ *************************************/
+
+static NVRAM_HANDLER( ccastles )
+{
+	if (read_or_write)
+	{
+		/* on power down, the EAROM is implicitly stored */
+		memcpy(generic_nvram, nvram_stage, generic_nvram_size);
+		mame_fwrite(file, generic_nvram, generic_nvram_size);
+	}
+	else if (file)
+		mame_fread(file, generic_nvram, generic_nvram_size);
+	else
+		memset(generic_nvram, 0, generic_nvram_size);
+}
+
+
+static WRITE8_HANDLER( nvram_recall_w )
+{
+	memcpy(nvram_stage, generic_nvram, generic_nvram_size);
+}
+
+
+static WRITE8_HANDLER( nvram_store_w )
+{
+	nvram_store[offset] = data & 1;
+	if (!nvram_store[0] && nvram_store[1])
+		memcpy(generic_nvram, nvram_stage, generic_nvram_size);
+}
+
+
+
+/*************************************
+ *
  *  Main CPU memory handlers
  *
  *************************************/
 
 /* complete memory map derived from schematics */
 static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0001) AM_WRITE(ccastles_bitmode_addr_w)
 	AM_RANGE(0x0002, 0x0002) AM_READWRITE(ccastles_bitmode_r, ccastles_bitmode_w)
 	AM_RANGE(0x0000, 0x7fff) AM_READWRITE(MRA8_RAM, ccastles_videoram_w) AM_BASE(&videoram)
 	AM_RANGE(0x8000, 0x8fff) AM_RAM
 	AM_RANGE(0x8e00, 0x8fff) AM_BASE(&spriteram)
-	AM_RANGE(0x9000, 0x90ff) AM_MIRROR(0x0300) AM_RAM AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
+	AM_RANGE(0x9000, 0x90ff) AM_MIRROR(0x0300) AM_RAM AM_BASE(&nvram_stage) AM_SIZE(&generic_nvram_size)
 	AM_RANGE(0x9400, 0x9403) AM_MIRROR(0x01fc) AM_READ(leta_r)
 	AM_RANGE(0x9600, 0x97ff) AM_READ(input_port_0_r)
 	AM_RANGE(0x9800, 0x980f) AM_MIRROR(0x01f0) AM_READWRITE(pokey1_r, pokey1_w)
 	AM_RANGE(0x9a00, 0x9a0f) AM_MIRROR(0x01f0) AM_READWRITE(pokey2_r, pokey2_w)
-	AM_RANGE(0x9c00, 0x9c7f) /* /RECALL */
+	AM_RANGE(0x9c00, 0x9c7f) AM_WRITE(nvram_recall_w)
 	AM_RANGE(0x9c80, 0x9cff) AM_WRITE(ccastles_hscroll_w)
 	AM_RANGE(0x9d00, 0x9d7f) AM_WRITE(ccastles_vscroll_w)
 	AM_RANGE(0x9d80, 0x9dff) AM_WRITE(irq_ack_w)
 	AM_RANGE(0x9e00, 0x9e7f) AM_WRITE(watchdog_reset_w)
-	AM_RANGE(0x9e80, 0x9e81) AM_MIRROR(0x0078) AM_WRITE(ccastles_led_w)
-	AM_RANGE(0x9e82, 0x9e83) AM_MIRROR(0x0078) /* STORE */
-	AM_RANGE(0x9e85, 0x9e86) AM_MIRROR(0x0078) AM_WRITE(ccastles_coin_counter_w)
-	AM_RANGE(0x9e87, 0x9e87) AM_MIRROR(0x0078) AM_WRITE(ccastles_bankswitch_w)
+	AM_RANGE(0x9e80, 0x9e81) AM_MIRROR(0x0078) AM_WRITE(led_w)
+	AM_RANGE(0x9e82, 0x9e83) AM_MIRROR(0x0078) AM_WRITE(nvram_store_w)
+	AM_RANGE(0x9e85, 0x9e86) AM_MIRROR(0x0078) AM_WRITE(ccounter_w)
+	AM_RANGE(0x9e87, 0x9e87) AM_MIRROR(0x0078) AM_WRITE(bankswitch_w)
 	AM_RANGE(0x9f00, 0x9f07) AM_MIRROR(0x0078) AM_WRITE(ccastles_video_control_w)
 	AM_RANGE(0x9f80, 0x9fbf) AM_MIRROR(0x0040) AM_WRITE(ccastles_paletteram_w)
 	AM_RANGE(0xa000, 0xdfff) AM_ROMBANK(1)
@@ -413,10 +458,10 @@ static MACHINE_DRIVER_START( ccastles )
 	MDRV_FRAMES_PER_SECOND((float)(MASTER_CLOCK/2) / 320.0f / 256.0f)
 	MDRV_VBLANK_DURATION(0)		/* VBLANK is handled manually */
 
-	MDRV_NVRAM_HANDLER(generic_0fill)
-	MDRV_WATCHDOG_VBLANK_INIT(8)
 	MDRV_MACHINE_START(ccastles)
 	MDRV_MACHINE_RESET(ccastles)
+	MDRV_NVRAM_HANDLER(ccastles)
+	MDRV_WATCHDOG_VBLANK_INIT(8)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)

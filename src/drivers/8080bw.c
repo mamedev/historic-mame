@@ -27,6 +27,23 @@
 /*                                                                          */
 /*  - Phantom II: verify clouds                                             */
 /*                                                                          */
+/*  - Space Chaser (schaser)                                                */
+/*    1. The "missile" sound is incorrect. This is how it should be:        */
+/*       It should be a constant "klunkity-klunk", and should only be       */
+/*       heard while missiles are seen to be moving.  When the red          */
+/*       missiles speed up, there should be more "klunks per second"        */
+/*       with the pitch staying constant.                                   */
+/*    2. If you select Cocktail mode, the screen inverts, but when          */
+/*       it is changed back, the screen won't flip back. You need           */
+/*       to restart MAME to fix it.                                         */
+/*    3. If "Hard" mode is selected, numerous bugs appear which             */
+/*       could be either an emulation fault or a bad rom. Some              */
+/*       bugs are:                                                          */
+/*       a. Graphic error halfway up the left side                          */
+/*       b. Score adds or subtracts random amounts                          */
+/*       c. Score not cleared when starting a new game                      */
+/*       d. Game begins on the wrong level                                  */
+/*                                                                          */
 /*                                                                          */
 /* Change Log:                                                              */
 /* ----------                                                               */
@@ -45,6 +62,9 @@
 /* 26 May 2001 - changed galxwars input port so the new sets work           */
 /*                                                                          */
 /* 30 Jul 2001 - added sstrngr2                                             */
+/*                                                                          */
+/* 17 Jul 2006 - schaser - connect up prom - fix dipswitches                */
+/*               schasrcv - allow bottom line to show on screen             */
 /*                                                                          */
 /*                                                                          */
 /****************************************************************************/
@@ -1562,9 +1582,13 @@ INPUT_PORTS_START( schaser )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_4WAY PORT_PLAYER(2)
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_4WAY PORT_PLAYER(2)
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(2)
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME(0x20, 0x20, "Dipswitch 5")
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME(0x40, 0x40, "Dipswitch 7")
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START_TAG("IN1")
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_4WAY
@@ -1576,29 +1600,32 @@ INPUT_PORTS_START( schaser )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
 
-	PORT_START_TAG("DSW0")
+	PORT_START_TAG("DSW0")	// port 2
+	// dipswitch 1 and 2
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "6" )
-	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	// dipswitch 3
+	PORT_DIPNAME( 0x04, 0x04, "Dipswitch 3")
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	// dipswitch 4
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Hard ) )
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	// Name Reset - if name of high scorer was rude, owner can press this button
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_OTHER ) PORT_NAME("Name Reset") PORT_CODE(KEYCODE_F1)
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_TILT )
+	// dipswitch 6
 	PORT_DIPNAME( 0x40, 0x00, "Number of Controllers" )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x40, "2" )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
+	// port 3 (all 8 bits) connected to custom chip MB14241 driven by out port 2 and 4
+	// To get cocktail mode, turn this on, and choose 2 controllers.
 	PORT_START_TAG("FAKE")		/* Dummy port for cocktail mode */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
@@ -1691,6 +1718,22 @@ INPUT_PORTS_START( schasrcv )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
+
+static MACHINE_DRIVER_START( schasrcv )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(8080bw)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(schaser_readmem,schaser_writemem)
+
+	/* video hardware */
+	MDRV_PALETTE_LENGTH(8)
+	MDRV_PALETTE_INIT(invadpt2)
+	MDRV_VISIBLE_AREA(0*8, 31*8-1, 4*8, 32*8-1)
+
+	/* sound hardware */
+MACHINE_DRIVER_END
+
 
 /*******************************************************/
 /*                                                     */
@@ -3876,7 +3919,7 @@ ROM_START( schaser )
 	ROM_LOAD( "rt21.bin",     0x4000, 0x0400, CRC(b368ac98) SHA1(6860efe0496955db67611183be0efecda92c9c98) )
 	ROM_LOAD( "rt22.bin",     0x4400, 0x0400, CRC(6e060dfb) SHA1(614e2ecf676c3ea2f9ea869125cfffef2f713684) )
 
-	ROM_REGION( 0x0400, REGION_PROMS, 0 )		/* background color map */
+	ROM_REGION( 0x0800, REGION_PROMS, 0 )		/* background color map */
 	ROM_LOAD( "rt06.ic2",     0x0000, 0x0400, CRC(950cf973) SHA1(d22df09b325835a0057ccd0d54f827b374254ac6) )
 ROM_END
 
@@ -4301,7 +4344,7 @@ ROM_END
 	  GAME( 1979, invadpt2, 0,        invadpt2, invadpt2, invadpt2, ROT270, "Taito", "Space Invaders Part II (Taito)", 0 )
 	  GAME( 1979, cosmo,    0,        cosmo,    cosmo,    cosmo,    ROT90,  "TDS & Mints", "Cosmo", GAME_NO_SOUND )
 	  GAME( 1979, schaser,  0,        schaser,  schaser,  schaser,  ROT270, "Taito", "Space Chaser", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_COLORS )
-	  GAME( 1979, schasrcv, schaser,  lupin3,   schasrcv, schaser,  ROT270, "Taito", "Space Chaser (CV version)", GAME_NO_SOUND | GAME_IMPERFECT_COLORS | GAME_NO_COCKTAIL )
+	  GAME( 1979, schasrcv, schaser,  schasrcv, schasrcv, schasrcv, ROT270, "Taito", "Space Chaser (CV version)", GAME_NO_SOUND | GAME_IMPERFECT_COLORS | GAME_NO_COCKTAIL )
 	  GAME( 1979, sflush,   0,        sflush,   sflush,   rollingc,	ROT270, "Taito", "Straight Flush",GAME_NO_SOUND| GAME_IMPERFECT_COLORS | GAME_NO_COCKTAIL)
 	  GAME( 1980, lupin3,   0,        lupin3,   lupin3,   lupin3,   ROT270, "Taito", "Lupin III", GAME_NO_SOUND | GAME_NO_COCKTAIL )
 	  GAME( 1980, polaris,  0,        polaris,  polaris,  polaris,  ROT270, "Taito", "Polaris (set 1)", 0 )

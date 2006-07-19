@@ -689,7 +689,7 @@ static void extract_options(const game_driver *driver, machine_config *drv)
 	// vector options
 	options.antialias = options_get_bool("antialias", TRUE);
 	options.beam = (int)(options_get_float("beam", TRUE) * 65536.0f);
-	options.vector_flicker = (int)(options_get_float("flicker", TRUE) * 2.55f);
+	options.vector_flicker = options_get_float("flicker", TRUE);
 
 	// sound options
 	options.samplerate = options_get_bool("sound", TRUE) ? options_get_int("samplerate", TRUE) : 0;

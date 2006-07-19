@@ -65,6 +65,7 @@ mame_timer *schaser_effect_555_timer;
 static double schaser_effect_555_time_remain;
 static int schaser_effect_555_is_low;
 static int explosion;
+int schaser_sx10;
 
 
 struct SN76477interface invaders_sn76477_interface =
@@ -1164,6 +1165,8 @@ static WRITE8_HANDLER( schaser_sh_port5_w )
 	sound_global_enable(data & 0x02);
 
 	coin_lockout_global_w(data & 0x04);
+
+	schaser_sx10 = data & 0x10;
 
 	c8080bw_flip_screen_w(data & 0x20);
 }

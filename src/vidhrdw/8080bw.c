@@ -14,6 +14,7 @@ static int screen_red;
 static int screen_red_enabled;		/* 1 for games that can turn the screen red */
 static int color_map_select;
 static int background_color;
+static int schaser_sx10_done;
 static UINT8 cloud_pos;
 static UINT8 bowler_bonus_display;
 
@@ -21,6 +22,7 @@ static write8_handler videoram_w_p;
 static UINT32 (*video_update_p)(int screen,mame_bitmap *bitmap,const rectangle *cliprect);
 
 static WRITE8_HANDLER( bw_videoram_w );
+static WRITE8_HANDLER( rollingc_videoram_w );
 static WRITE8_HANDLER( schaser_videoram_w );
 static WRITE8_HANDLER( lupin3_videoram_w );
 static WRITE8_HANDLER( polaris_videoram_w );
@@ -79,17 +81,39 @@ DRIVER_INIT( sstrngr2 )
 
 DRIVER_INIT( schaser )
 {
+	int i;
+	UINT8* promm = memory_region( REGION_PROMS );
+
 	schaser_effect_555_timer = timer_alloc(schaser_effect_555_cb);
 
 	init_8080bw();
 	videoram_w_p = schaser_videoram_w;
+	// make background palette same as foreground one
+	for (i = 0; i < 0x80; i++) promm[i] = 0;
+
+	for (i = 0x80; i < 0x400; i++)
+	{
+		if (promm[i] == 0x0c) promm[i] = 4;
+		if (promm[i] == 0x03) promm[i] = 2;
+	}
+
+	memcpy(promm+0x400,promm,0x400);
+
+	for (i = 0x500; i < 0x800; i++)
+		if (promm[i] == 4) promm[i] = 2;
+}
+
+DRIVER_INIT( schasrcv )
+{
+	init_8080bw();
+	videoram_w_p = rollingc_videoram_w;
 	background_color = 2;	/* blue */
 }
 
 DRIVER_INIT( rollingc )
 {
 	init_8080bw();
-	videoram_w_p = schaser_videoram_w;
+	videoram_w_p = rollingc_videoram_w;
 	background_color = 0;	/* black */
 }
 
@@ -260,7 +284,7 @@ static WRITE8_HANDLER( bw_videoram_w )
 	plot_byte(x, y, data, 1, 0);
 }
 
-static WRITE8_HANDLER( schaser_videoram_w )
+static WRITE8_HANDLER( rollingc_videoram_w )
 {
 	UINT8 x,y,col;
 
@@ -272,6 +296,39 @@ static WRITE8_HANDLER( schaser_videoram_w )
 	col = colorram[offset & 0x1f1f] & 0x07;
 
 	plot_byte(x, y, data, col, background_color);
+}
+
+static WRITE8_HANDLER( schaser_videoram_w )
+{
+	int x,y,z,proma,promb=0x400;	// promb = 0 for green band, promb = 400 for all blue
+	UINT8 col,chg=0;
+	UINT8* promm = memory_region( REGION_PROMS );
+	if (schaser_sx10 != schaser_sx10_done) chg++;
+	if (schaser_sx10) promb = 0;
+
+	if (chg)
+	{
+		for (y = 64; y < 224; y++)
+		{
+			for (x = 40; x < 200; x+=8)
+			{
+				z = y*32+x/8;
+				col = colorram[z & 0x1f1f] & 0x07;
+				proma = promb+((z%32)*32+y/8+93);
+				plot_byte(x, y, videoram[z], col, promm[proma&0x7ff]);
+			}
+		}
+		schaser_sx10_done = schaser_sx10;
+	}
+
+	videoram[offset] = data;
+
+	y = offset / 32;
+	x = 8 * (offset % 32);
+
+	col = colorram[offset & 0x1f1f] & 0x07;
+	proma = promb+((offset%32)*32+y/8+93);
+	plot_byte(x, y, data, col, promm[proma&0x7ff]);
 }
 
 static WRITE8_HANDLER( lupin3_videoram_w )

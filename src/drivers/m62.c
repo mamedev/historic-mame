@@ -2460,6 +2460,9 @@ ROM_START( spelunk2 )
 	                                                        /* sprites. Used at run time! */
 	ROM_LOAD( "sp2-r.8j",     0x0720, 0x0200, CRC(875cc442) SHA1(1117b6ae516c361b4cc4d0b7146ca98472ce2b21) )	/* unknown */
 	ROM_LOAD( "sp2-b.6f",     0x0920, 0x0100, CRC(34d88d3c) SHA1(727f4c5cfff33538886fa0a29fd119aa085d7008) )	/* video timing - common to the other games */
+
+	ROM_REGION( 0x0200, REGION_PLDS, ROMREGION_DISPOSE )
+	ROM_LOAD( "ampal16r4a-sp2-r-3h.bin", 0x0000, 0x0104, NO_DUMP ) /* PAL is read protected */
 ROM_END
 
 ROM_START( youjyudn )

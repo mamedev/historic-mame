@@ -786,7 +786,7 @@ VIDEO_UPDATE( vector )
 
 	curpoint = new_list;
 
-	render_screen_add_rect(screen, 0.0f, 0.0f, 1.0f, 1.0f, MAKE_ARGB(0xff,0x08,0x08,0x08), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+	render_screen_add_rect(screen, 0.0f, 0.0f, 1.0f, 1.0f, MAKE_ARGB(0xff,0x00,0x00,0x00), PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
 
 	clip.x0 = clip.y0 = 0.0f;
 	clip.x1 = clip.y1 = 1.0f;

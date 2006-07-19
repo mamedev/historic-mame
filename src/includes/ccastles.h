@@ -6,9 +6,6 @@
 
 /*----------- defined in vidhrdw/ccastles.c -----------*/
 
-extern UINT8 *ccastles_scrollx;
-extern UINT8 *ccastles_scrolly;
-
 extern int ccastles_vblank_start;
 extern int ccastles_vblank_end;
 

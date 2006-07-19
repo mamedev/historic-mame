@@ -1284,6 +1284,20 @@ ROM_START( trisport )
 	ROM_LOAD( "la2.h17", 0x20000, 0x20000, CRC(874cd237) SHA1(32983b7fcac3b1a53da3529c5239a1131bb64d4f) )
 	ROM_LOAD( "la2.h18", 0x40000, 0x20000, CRC(f7637a18) SHA1(21dbe2bed406908f17f5860cd2ca502b8f481f51) )
 	ROM_LOAD( "la2.h14", 0x60000, 0x20000, CRC(403f9401) SHA1(6ff027943016d894b758dc8f189850bec1ee9360) )
+
+	ROM_REGION( 0x1400, REGION_PLDS, ROMREGION_DISPOSE )
+	ROM_LOAD( "pal20l8.g5",   0x0000, 0x0144, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal20x10.f7",  0x0200, 0x00cc, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal20x10.e9",  0x0300, 0x00cc, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal20l8.d4",   0x0400, 0x0144, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16l8.d6",   0x0600, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16r4a.c11", 0x0800, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16r4.e10",  0x0a00, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pls153a.f14",  0x0c00, 0x00eb, CRC(48eed036) SHA1(146b47ecb341b074acad0e4da2d81ff921bbaf7a) )
+	ROM_LOAD( "pls153a.f15",  0x0d00, 0x00eb, CRC(761c3b56) SHA1(06c1717face55cc5b05ec45be9525a3d25419b85) )
+	ROM_LOAD( "pls153a.e19",  0x0e00, 0x00eb, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16l8.f8",   0x1000, 0x0104, NO_DUMP ) /* PAL is read protected */
+	ROM_LOAD( "pal16r6a.e11", 0x1200, 0x0104, NO_DUMP ) /* PAL is read protected */
 ROM_END
 
 

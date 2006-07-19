@@ -4605,6 +4605,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( cloakfr )	/* 136023           (c) 1983 */
 	DRIVER( cloakgr )	/* 136023           (c) 1983 */
 	DRIVER( cloud9 )	/* (proto)          (c) 1983 */
+	DRIVER( firebeas )	/* (proto)          (c) 1983 */
 	DRIVER( jedi )		/* 136030           (c) 1984 */
 
 	/* Atari System 1 games */
@@ -5233,11 +5234,13 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( samsh5sh )	/* 0272 (c) 2003 Playmore */
 	DRIVER( samsh5sn )	/* 0272 (c) 2003 Playmore */
 
-
 	/* The BreezaSoft games don't have proper ID codes */
 	DRIVER( jockeygp )
 	DRIVER( vliner )
 	DRIVER( vlinero )
+
+	/* Nor does Digger Man */
+	DRIVER( diggerma )  /* No Game ID (unlicensed), (c) 2000 Kyle Hodgetts, prototype */
 
 	/* Hyper NeoGeo 64 uses a 3 digit rom code? */
 
