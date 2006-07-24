@@ -158,6 +158,8 @@ static WRITE8_HANDLER( cloak_nvram_enable_w )
 	cloak_nvram_enabled = data & 0x01;
 }
 
+
+
 /*************************************
  *
  *  Main CPU memory handlers
@@ -205,6 +207,7 @@ static ADDRESS_MAP_START( slave_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x1400, 0x1400) AM_WRITE(cloak_custom_w)
 	AM_RANGE(0x2000, 0xffff) AM_ROM
 ADDRESS_MAP_END
+
 
 
 /*************************************
@@ -264,6 +267,8 @@ INPUT_PORTS_START( cloak )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
+
+
 /*************************************
  *
  *  Graphics definitions
@@ -300,6 +305,8 @@ static const gfx_decode gfxdecodeinfo[] =
 	{ -1 }
 };
 
+
+
 /*************************************
  *
  *  Sound interfaces
@@ -317,6 +324,8 @@ static struct POKEYinterface pokey_interface_2 =
 	{ 0 },
 	input_port_4_r
 };
+
+
 
 /*************************************
  *
@@ -362,6 +371,7 @@ static MACHINE_DRIVER_START( cloak )
 	MDRV_SOUND_CONFIG(pokey_interface_2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
+
 
 
 /*************************************
@@ -474,6 +484,111 @@ ROM_START( cloakgr )
 ROM_END
 
 
+ROM_START( agentx4 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "136401-023.bin",      0x4000, 0x2000, CRC(f7edac86) SHA1(80e8738460d408343cbae2a99bcdfd92664d13bb) )
+	ROM_LOAD( "136402-023.bin",      0x6000, 0x2000, CRC(db5e2382) SHA1(15196a588cb676254ed19fe019e4bab3708d5636) )
+	ROM_LOAD( "136403-023.bin",      0x8000, 0x4000, CRC(87de01b4) SHA1(5c79edc132a3b460a636e223387a8bbde54833dc) )
+	ROM_LOAD( "136404-023.bin",      0xc000, 0x4000, CRC(b97219dc) SHA1(39d1fcc76e112840f20443e2125478a33a102afc) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for code */
+	ROM_LOAD( "136409-023.bin",      0x2000, 0x2000, CRC(add4a749) SHA1(885a7175179d3e4201af24217d27f100479edc1b) )
+	ROM_LOAD( "136410-023.bin",      0x4000, 0x2000, CRC(b1e1c074) SHA1(ac0b39887c4e21db06160e0d097d17e00c47c784) )
+	ROM_LOAD( "136411-023.bin",      0x6000, 0x2000, CRC(6d0c1ee5) SHA1(62c7214df7cd4f5426d7fa2b28243acc31b356f2) )
+	ROM_LOAD( "136412-023.bin",      0x8000, 0x2000, CRC(815af543) SHA1(0ec8deb28d5f022e13c900d2b845f50fede1ef8e) )
+	ROM_LOAD( "136413-023.bin",      0xa000, 0x2000, CRC(2ad9e622) SHA1(ac5f5ce4cb0a04dff28d1575d0525a01b17364d9) )
+	ROM_LOAD( "136414-023.bin",      0xc000, 0x2000, CRC(cadf9ab0) SHA1(d5c4c86124033f21e065e5cd9cf7a1b31d3c11a6) )
+	ROM_LOAD( "136415-023.bin",      0xe000, 0x2000, CRC(f5024961) SHA1(99a8b02932b497588a011fe051465407531f8a0f) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "136105-023.bin",      0x0000, 0x1000, CRC(ee443909) SHA1(802c5839be9e9e33c75ca7318043ecdb7b82f721) )
+	ROM_LOAD( "136106-023.bin",      0x1000, 0x1000, CRC(d708b132) SHA1(d57acdcfb7b3de65f0162bdc041efff4c7eeff18) )
+
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "136107-023.bin",      0x0000, 0x1000, CRC(c42c84a4) SHA1(6f241e772f8b46c8d3acad2e967f1ab530886b11) )
+	ROM_LOAD( "136108-023.bin",      0x1000, 0x1000, CRC(4fe13d58) SHA1(b21a32b2ff5363ab35fd1438344a04deb4077dbc) )
+ROM_END
+
+
+ROM_START( agentx3 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "136301-023.bin",      0x4000, 0x2000, CRC(fba1d9de) SHA1(e8a72531f912a6ff1cd1c67a5c3fd0d18ede54f6) )
+	ROM_LOAD( "136302-023.bin",      0x6000, 0x2000, CRC(e5694c72) SHA1(45e143048f2bbfcb1a71eab63ccd61e2a227066c) )
+	ROM_LOAD( "136303-023.bin",      0x8000, 0x4000, CRC(70ef51c5) SHA1(4a2a15dc05eaf8481dfdb18e1aea81efb8f7e1d6) )
+	ROM_LOAD( "136304-023.bin",      0xc000, 0x4000, CRC(f4a86cda) SHA1(438c60e91948468f4ce3bafd471bc68b1a728c3b) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for code */
+	ROM_LOAD( "136309-023.bin",      0x2000, 0x2000, CRC(1c04282d) SHA1(ec50645220dae7f65aa2c0252088cb53de2e4610) )
+	ROM_LOAD( "136310-023.bin",      0x4000, 0x2000, CRC(a61eaa88) SHA1(6f00d5d8338a311b33a8ff748c13d25fa01feba7) )
+	ROM_LOAD( "136311-023.bin",      0x6000, 0x2000, CRC(a670f4b4) SHA1(235828c34710c901bffef85f208bc0c5abfd527a) )
+	ROM_LOAD( "136312-023.bin",      0x8000, 0x2000, CRC(e955af62) SHA1(a32862ed36db3ca0cdee7aadfb63938672e4fc14) )
+	ROM_LOAD( "136313-023.bin",      0xa000, 0x2000, CRC(b4b46d9d) SHA1(2eb67a4705e84c15231c15caa4e3e566b1ebfeb2) )
+	ROM_LOAD( "136314-023.bin",      0xc000, 0x2000, CRC(3138a3b2) SHA1(553f247a72fce176d80db7e4c7624cdb73c8c078) )
+	ROM_LOAD( "136315-023.bin",      0xe000, 0x2000, CRC(d12f5523) SHA1(53a7e4e360bd8c21c0e9bf408b6dd231f4fe025c) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "136105-023.bin",      0x0000, 0x1000, CRC(ee443909) SHA1(802c5839be9e9e33c75ca7318043ecdb7b82f721) )
+	ROM_LOAD( "136106-023.bin",      0x1000, 0x1000, CRC(d708b132) SHA1(d57acdcfb7b3de65f0162bdc041efff4c7eeff18) )
+
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "136107-023.bin",      0x0000, 0x1000, CRC(c42c84a4) SHA1(6f241e772f8b46c8d3acad2e967f1ab530886b11) )
+	ROM_LOAD( "136108-023.bin",      0x1000, 0x1000, CRC(4fe13d58) SHA1(b21a32b2ff5363ab35fd1438344a04deb4077dbc) )
+ROM_END
+
+
+ROM_START( agentx2 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "136201-023.bin",      0x4000, 0x2000, CRC(e6c7041f) SHA1(dd253b2a1417498b16c2986f7e2d885cfc11f8e9) )
+	ROM_LOAD( "136202-023.bin",      0x6000, 0x2000, CRC(4c94929e) SHA1(b67640cfdb7ccda80b8569d2c8607d0f0103226e) )
+	ROM_LOAD( "136203-023.bin",      0x8000, 0x4000, CRC(c7a59697) SHA1(a1735873290956c50fea34787003fe2ef9e23b6e) )
+	ROM_LOAD( "136204-023.bin",      0xc000, 0x4000, CRC(e6e06a9c) SHA1(91976a73742d5cb61f59e28917f5eb923c9ee8f5) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for code */
+	ROM_LOAD( "136209-023.bin",      0x2000, 0x2000, CRC(319772d8) SHA1(ef4cdb5f7d100410bc406b61857083c12cde21f6) )
+	ROM_LOAD( "136210-023.bin",      0x4000, 0x2000, CRC(6e95f628) SHA1(987a76447b6bda00223a8c94bdb741dce944c61f) )
+	ROM_LOAD( "136211-023.bin",      0x6000, 0x2000, CRC(8d936132) SHA1(461e1924e4fce337889377912311291947c432be) )
+	ROM_LOAD( "136212-023.bin",      0x8000, 0x2000, CRC(9a3074c8) SHA1(7edb677eb5815aa0417da239d76e7b9b29977711) )
+	ROM_LOAD( "136213-023.bin",      0xa000, 0x2000, CRC(15984981) SHA1(caff62801039139b8e186d619b4f7565b3ddabc8) )
+	ROM_LOAD( "136214-023.bin",      0xc000, 0x2000, CRC(dba311ec) SHA1(a825f013211e6eaac4c18a589b38a416dc633954) )
+	ROM_LOAD( "136215-023.bin",      0xe000, 0x2000, CRC(dc20c185) SHA1(5a1d3e65e543fe295c2f179f8b5c2193065af581) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "136105-023.bin",      0x0000, 0x1000, CRC(ee443909) SHA1(802c5839be9e9e33c75ca7318043ecdb7b82f721) )
+	ROM_LOAD( "136106-023.bin",      0x1000, 0x1000, CRC(d708b132) SHA1(d57acdcfb7b3de65f0162bdc041efff4c7eeff18) )
+
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "136107-023.bin",      0x0000, 0x1000, CRC(c42c84a4) SHA1(6f241e772f8b46c8d3acad2e967f1ab530886b11) )
+	ROM_LOAD( "136108-023.bin",      0x1000, 0x1000, CRC(4fe13d58) SHA1(b21a32b2ff5363ab35fd1438344a04deb4077dbc) )
+ROM_END
+
+
+ROM_START( agentx1 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "136101-023.bin",      0x4000, 0x2000, CRC(a12b9c22) SHA1(40fef20782bdb05ef5ef81327e69286abab6449c) )
+	ROM_LOAD( "136102-023.bin",      0x6000, 0x2000, CRC(e65d30df) SHA1(bad65c2bb434c43bd72a0b7f88adea4150e3cd66) )
+	ROM_LOAD( "136103-023.bin",      0x8000, 0x4000, CRC(c6f8a128) SHA1(feaf860b2226796643c107ac5821b0a9988d3367) )
+	ROM_LOAD( "136104-023.bin",      0xc000, 0x4000, CRC(db002945) SHA1(52c0d0e94e718e51cd744d3ceb10e1443f41a3d5) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for code */
+	ROM_LOAD( "136109-023.bin",      0x2000, 0x2000, CRC(31487f5d) SHA1(86d519fb7f352101780c2ed1a87cbabb2ff0dcd4) )
+	ROM_LOAD( "136110-023.bin",      0x4000, 0x2000, CRC(1ee38ecb) SHA1(44d3d7c0cffbdeb57231037cfbf7e4054dfc9349) )
+	ROM_LOAD( "136111-023.bin",      0x6000, 0x2000, CRC(ca6a6b0c) SHA1(3d8b62a6a7480032bce74d3a5dbdaa52fc8b33c0) )
+	ROM_LOAD( "136112-023.bin",      0x8000, 0x2000, CRC(933051bc) SHA1(4a6e04b268d874333cfa01783f1fc6603ef58a99) )
+	ROM_LOAD( "136113-023.bin",      0xa000, 0x2000, CRC(1706a674) SHA1(4aca238151d1b30aa22df5ea9525f16df2067a7d) )
+	ROM_LOAD( "136114-023.bin",      0xc000, 0x2000, CRC(7c7c905d) SHA1(eb417c5e80f1a3169c1385d7c843a3defa584b6e) )
+	ROM_LOAD( "136115-023.bin",      0xe000, 0x2000, CRC(7f36710c) SHA1(6d412f22e723999c641dde18a47c8d90d2ed07a3) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "136105-023.bin",      0x0000, 0x1000, CRC(ee443909) SHA1(802c5839be9e9e33c75ca7318043ecdb7b82f721) )
+	ROM_LOAD( "136106-023.bin",      0x1000, 0x1000, CRC(d708b132) SHA1(d57acdcfb7b3de65f0162bdc041efff4c7eeff18) )
+
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "136107-023.bin",      0x0000, 0x1000, CRC(c42c84a4) SHA1(6f241e772f8b46c8d3acad2e967f1ab530886b11) )
+	ROM_LOAD( "136108-023.bin",      0x1000, 0x1000, CRC(4fe13d58) SHA1(b21a32b2ff5363ab35fd1438344a04deb4077dbc) )
+ROM_END
+
+
+
 /*************************************
  *
  *  Game drivers
@@ -484,3 +599,7 @@ GAME( 1983, cloak,   0,     cloak, cloak, 0, ROT0, "Atari", "Cloak & Dagger (rev
 GAME( 1983, cloaksp, cloak, cloak, cloak, 0, ROT0, "Atari", "Cloak & Dagger (Spanish)", GAME_SUPPORTS_SAVE )
 GAME( 1983, cloakfr, cloak, cloak, cloak, 0, ROT0, "Atari", "Cloak & Dagger (French)", GAME_SUPPORTS_SAVE )
 GAME( 1983, cloakgr, cloak, cloak, cloak, 0, ROT0, "Atari", "Cloak & Dagger (German)", GAME_SUPPORTS_SAVE )
+GAME( 1983, agentx4, cloak, cloak, cloak, 0, ROT0, "Atari", "Agent X (prototype, rev 4)", GAME_SUPPORTS_SAVE )
+GAME( 1983, agentx3, cloak, cloak, cloak, 0, ROT0, "Atari", "Agent X (prototype, rev 3)", GAME_SUPPORTS_SAVE )
+GAME( 1983, agentx2, cloak, cloak, cloak, 0, ROT0, "Atari", "Agent X (prototype, rev 2)", GAME_SUPPORTS_SAVE )
+GAME( 1983, agentx1, cloak, cloak, cloak, 0, ROT0, "Atari", "Agent X (prototype, rev 1)", GAME_SUPPORTS_SAVE )

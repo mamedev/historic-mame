@@ -419,6 +419,32 @@ INPUT_PORTS_START( headon )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(30) /* PORT_RESETCPU */
 INPUT_PORTS_END
 
+INPUT_PORTS_START( supcrash )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_4WAY
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_UP) PORT_4WAY
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_4WAY
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
+    PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_4WAY
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK )
+    PORT_DIPNAME( 0x04, 0x04, "Rom Test" )
+    PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+    PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+    PORT_BIT( 0x7a, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(30) /* PORT_RESETCPU */
+INPUT_PORTS_END
+
 INPUT_PORTS_START( headon2 )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
@@ -1558,6 +1584,82 @@ ROM_START( headonb )
 	ROM_LOAD( "316-0138.u44", 0x0000, 0x0020, CRC(67104ea9) SHA1(26b6bd2a1973b83bb9af4e3385d8cb14cb3f62f2) )
 ROM_END
 
+/*
+
+Head On (Sidam) Notes
+
+Board made by Sidam, but no Sidam copyright notice
+
+---CPU:
+
+1x Z80CPU (main)
+1x oscillator 15.468MHz
+
+---ROMs:
+
+7x F2708
+2x N82S123N
+
+---Note:
+
+1x 22x2 edge connector
+1x trimmer (volume)
+
+*/
+
+ROM_START( headons )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "0.1a",         0x0000, 0x0400, CRC(4bb51259) SHA1(43411ffda3fe03b1d694f70791b0bab5786759c0) )
+	ROM_LOAD( "1.3a",         0x0400, 0x0400, CRC(aeac8c5f) SHA1(ef9ad63d13076a559ba12c6421ad61de21dd4c90) )
+	ROM_LOAD( "2.4a",         0x0800, 0x0400, CRC(f1a0cb72) SHA1(540b30225ef176c416ea5b142fe7dbb67b7a78fb) )
+	ROM_LOAD( "3.6a",         0x0c00, 0x0400, CRC(461c2658) SHA1(561ef24a20fb2cc3c05d836c06026069400be085) )
+	ROM_LOAD( "4.8a",         0x1000, 0x0400, CRC(79fc7f31) SHA1(835fbaa2bac8b955bc8fe5e932705c67e10308ac) )
+	ROM_LOAD( "5.9a",         0x1400, 0x0400, CRC(ed4666f2) SHA1(a12c22bfbb027eab3181627804b69129e89bd22c) )
+	ROM_LOAD( "6.11a",        0x1800, 0x0400, CRC(7a709d68) SHA1(c1f0178c7a8cb39948e52e91a841401cfd932271) )
+
+	ROM_REGION( 0x0060, REGION_PROMS, 0 )
+	ROM_LOAD( "316-0138.u44", 0x0000, 0x0020, CRC(67104ea9) SHA1(26b6bd2a1973b83bb9af4e3385d8cb14cb3f62f2) )    /* not in this dump, but colour prom so needed! */
+	ROM_LOAD( "82s123.15c",   0x0020, 0x0020, CRC(e60a7960) SHA1(b8b8716e859c57c35310efc4594262afedb84823) )	/* control PROM */
+	ROM_LOAD( "82s123.14c",   0x0040, 0x0020, CRC(a1506b9d) SHA1(037c3db2ea40eca459e8acba9d1506dd28d72d10) )	/* sequence PROM */
+ROM_END
+
+/*
+
+Super Crash notes
+
+---CPU:
+
+1x MK3880N-Z80CPU
+1x oscillator 14MHz
+
+---ROMs:
+
+3x TMS2716JL
+1x FA2708
+2x MMI6331
+
+---Note:
+
+1x 22x2 edge connector
+1x 4 switches dip
+1x trimmer (volume)
+
+*/
+
+ROM_START( supcrash )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "1-2-scrash.bin",         0x0000, 0x0800, CRC(789a8b73) SHA1(ce0b844729fc4d46ddc82635c8d5a49aa88a3797) )
+	ROM_LOAD( "3-4-scrash.bin",         0x0800, 0x0800, CRC(7a310527) SHA1(384c7ddc8da4282b705ad387ae3946a30f0fd05b) )
+	ROM_LOAD( "5-6-scrash.bin",         0x1000, 0x0800, CRC(62d33c09) SHA1(ade49f417380f64212491f6be16de39c0c00a364) )
+	ROM_LOAD( "7-8-scrash.bin",         0x1800, 0x0400, CRC(0f8ea335) SHA1(cf2d6cd54dbf689bc0f23aa908bffb0766e8bbd3) )
+
+	ROM_REGION( 0x0060, REGION_PROMS, 0 )
+	ROM_LOAD( "316-0138.u44", 0x0000, 0x0020, CRC(67104ea9) SHA1(26b6bd2a1973b83bb9af4e3385d8cb14cb3f62f2) )    /* not in this dump, but colour prom so needed! */
+	ROM_LOAD( "6331.3a",      0x0020, 0x0020, CRC(e60a7960) SHA1(b8b8716e859c57c35310efc4594262afedb84823) )	/* control PROM */
+	ROM_LOAD( "6331.3b",      0x0040, 0x0020, CRC(a1506b9d) SHA1(037c3db2ea40eca459e8acba9d1506dd28d72d10) )	/* sequence PROM */
+ROM_END
+
+
 ROM_START( headon2 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "u27.bin",      0x0000, 0x0400, CRC(fa47d2fb) SHA1(b3208f5bce228c453bdafbc9c1f2c8e1bd920d32) )
@@ -1849,6 +1951,76 @@ ROM_START( brdrline )
 	ROM_LOAD( "prom93427.2", 0x0000, 0x0100, CRC(bda82367) SHA1(1c96453c2ae372892c39b5657cf2b252a90a10a9) )
 ROM_END
 
+/*
+
+Notes on Sidam set
+
+This set isn't really very interesting, it just has the code to draw the status bar text patched out.
+Only one ROM is changed.  Supported because Sidam were a well known Italian bootlegger so this has
+some historical importance.  'Sidam' isn't displayed anywhere ingame, only on the PCB?.
+
+---CPU
+
+Lower board (label "BLC200681"):
+1x MK3880-Z80CPU (main)
+1x oscillator 10.000MHz
+
+---ROMs:
+
+Lower board (label "BLC200681"):
+16x F2708
+3x PROM 5610
+
+Upper board (label "BLC300681 MADE IN ITALY"):
+1x F2708
+1x PROM 82S123
+2x PROM 93427
+
+---Note:
+
+Lower board (label "BLC200681"):
+1x 22x2 edge connector
+1x 8 switches dip
+
+Upper board (label "BLC300681 MADE IN ITALY"):
+7x trimmer
+
+*/
+
+ROM_START( brdrlins )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "1.33",       0x0000, 0x0400, CRC(df182769) SHA1(2b1b70c6282b32e0a4ed80ab4e6b20f90630e910) )
+	ROM_LOAD( "2.32",       0x0400, 0x0400, CRC(98b26e2a) SHA1(ae1c3726827571ee1c2716e1044d6aae5608c0af) ) // 3 bytes changed in this rom
+	ROM_LOAD( "3.31",       0x0800, 0x0400, CRC(4ec4afa2) SHA1(dd5b97f1a37cd655064b773e4a755b87de4c6a3f) )
+	ROM_LOAD( "4.30",       0x0c00, 0x0400, CRC(88de95f6) SHA1(fe3388346785ad15dead89913e4ff36120a83599) )
+	ROM_LOAD( "5.29",       0x1000, 0x0400, CRC(2e4e13b9) SHA1(bdf31c11733127b8b77fa72933d3b9dc6834d5d8) )
+	ROM_LOAD( "6.28",       0x1400, 0x0400, CRC(c181e87a) SHA1(426e1ce15477039e4a19b536500f387518026efc) )
+	ROM_LOAD( "7.27",       0x1800, 0x0400, CRC(21180015) SHA1(b23f876db1a9a986f1087ead07a01e836d5ee842) )
+	ROM_LOAD( "8.26",       0x1c00, 0x0400, CRC(56a7fee0) SHA1(495efa91773fd3cf36da4e538893db08e64e5bab) )
+	ROM_LOAD( "9.8",        0x2000, 0x0400, CRC(bb532e63) SHA1(da511e0be58b13781897e6efb5a59a3558016b12) )
+	ROM_LOAD( "10.7",       0x2400, 0x0400, CRC(64793709) SHA1(fabfb783f1d93a3d9454fc345a64498e4b5b9138) )
+	ROM_LOAD( "11.6",       0x2800, 0x0400, CRC(2ae2f928) SHA1(afd99c800801d38ee59008344bd9a3901f72ff50) )
+	ROM_LOAD( "12.5",       0x2c00, 0x0400, CRC(e14cfaf5) SHA1(d159e93f703aae3c04da08102ff718d5a4ca7a91) )
+	ROM_LOAD( "13.4",       0x3000, 0x0400, CRC(605e0d27) SHA1(771de6d31ee7896a2441f1df4565027793d99989) )
+	ROM_LOAD( "14.3",       0x3400, 0x0400, CRC(93f5714f) SHA1(50a043be1e1cf8b1aeb846571a12fe70cbb3477e) )
+	ROM_LOAD( "15.2",       0x3800, 0x0400, CRC(2f8a9b1c) SHA1(853d5ca017b133c1f13f703cceb20f04199d4752) )
+	ROM_LOAD( "16.1",       0x3c00, 0x0400, CRC(cc138bed) SHA1(7d3eebdeaff19783d5ef20a7ececec00773434fc) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "5610.49",   0x0000, 0x0020, CRC(bc6be94e) SHA1(34e113ec25e19212b74907d35be5cb8714a8249c) )
+
+	ROM_REGION( 0x0800, REGION_CPU2, 0 )	/* sound ROM */
+	ROM_LOAD( "au.bin",       0x0000, 0x0400, CRC(a23e1d9f) SHA1(ce209571f6341aa6f036a015e666673098bc98ea) )
+
+	ROM_REGION( 0x0100, REGION_USER1, 0 )	/* misc PROM */
+	ROM_LOAD( "82s123.bin",   0x0000, 0x0020, CRC(c128d0ba) SHA1(0ce9febbb7e2f5388ed999a479e3d385dba0b342) )
+	ROM_LOAD( "5610.15",  0x0000, 0x0020, CRC(6449e678) SHA1(421c45c8fba3c2bc2a7ebbea2c837c8fa1a5a2f3) )
+	ROM_LOAD( "5610.14",  0x0000, 0x0020, CRC(55dcdef1) SHA1(6fbd041edc258b7e1b99bbe9526612cfb1b541f8) )
+	/* following 2 from sound board */
+	ROM_LOAD( "93427.1", 0x0000, 0x0100, CRC(64b98dc7) SHA1(f0bb7d0b4b56cc2936ce4cbec165394f3026ed6d) )
+	ROM_LOAD( "93427.2", 0x0000, 0x0100, CRC(bda82367) SHA1(1c96453c2ae372892c39b5657cf2b252a90a10a9) )
+ROM_END
+
 ROM_START( brdrlinb )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "border1.33",   0x0000, 0x0800, CRC(48387706) SHA1(b4db2f05e722812370b0b24cd15061d6fc578560) ) // karateco
@@ -2005,6 +2177,12 @@ static DRIVER_INIT( headon )
 	coin_port = 1; coin_bit = 0x80;
 }
 
+static DRIVER_INIT( supcrash )
+{
+	coin_port = 1; coin_bit = 0x80;
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x03, 0x03, 0, 0, input_port_0_r );
+}
+
 static DRIVER_INIT( headon2 )
 {
 	coin_port = 2; coin_bit = 0x80;
@@ -2108,6 +2286,8 @@ GAME( 1979, sspacatc, sspaceat, 3ports,   sspaceat, sspaceat,  ROT270, "Sega", "
 GAME( 1979, sspacaho, 0,        4ports,   sspacaho, sspacaho,  ROT270, "Sega", "Space Attack / Head On", GAME_NO_SOUND )
 GAME( 1979, headon,   0,        2ports,   headon,   headon,    ROT0,   "Gremlin", "Head On (2 players)", GAME_NO_SOUND )
 GAME( 1979, headonb,  headon,   2ports,   headon,   headon,    ROT0,   "Gremlin", "Head On (1 player)", GAME_NO_SOUND )
+GAME( 1979, headons,  headon,   2ports,   headon,   headon,    ROT0,   "[Gremlin] (Sidam bootleg)", "Head On (Sidam bootleg)", GAME_NO_SOUND )
+GAME( 1979, supcrash, headon,   2ports,   supcrash, supcrash,  ROT0,   "[Gremlim] (Video G Electronic Games bootleg)", "Super Crash (bootleg of Head On)", GAME_NO_SOUND ) // ports / inputs have changed
 GAME( 1979, headon2,  0,        3ports,   headon2,  headon2,   ROT0,   "Sega", "Head On 2", GAME_NO_SOUND )
 GAME( 1979, invho2,   0,        invinco4, invho2,   invho2,    ROT270, "Sega", "Invinco / Head On 2", GAME_IMPERFECT_SOUND )
 GAME( 1980, nsub,     0,        2ports,   nsub,     safari,    ROT270, "Sega", "N-Sub (upright)", GAME_WRONG_COLORS | GAME_NO_SOUND )
@@ -2120,7 +2300,8 @@ GAME( 1980, sptrekct, spacetrk, 4ports,   sptrekct, sptrekct,  ROT270, "Sega", "
 GAME( 1980, carnival, 0,        carnival, carnival, carnival,  ROT270, "Sega", "Carnival (upright)", 0 )
 GAME( 1980, carnvckt, carnival, carnival, carnvckt, carnival,  ROT270, "Sega", "Carnival (cocktail)", 0 )
 GAME( 1981, brdrline, 0,        carnival, brdrline, carnival,  ROT270, "Sega", "Borderline", 0 )
-GAME( 1981, brdrlinb, brdrline, carnival, brdrline, carnival,  ROT270, "bootleg", "Borderline (bootleg)", 0 )
+GAME( 1981, brdrlins, brdrline, carnival, brdrline, carnival,  ROT270, "[Sega] (Sidam bootleg)", "Borderline (Sidam bootleg)", 0 )
+GAME( 1981, brdrlinb, brdrline, carnival, brdrline, carnival,  ROT270, "[Sega] (Karateco bootleg)", "Borderline (Karateco bootleg)", 0 )
 GAME( 1980, digger,   0,        3ports,   digger,   digger,    ROT270, "Sega", "Digger", GAME_NO_SOUND )
 GAME( 1981, pulsar,   0,        pulsar,   pulsar,   pulsar,    ROT270, "Sega", "Pulsar", 0 )
 GAME( 1979, heiankyo, 0,        4ports,   heiankyo, heiankyo,  ROT270, "Denki Onkyo", "Heiankyo Alien", GAME_NO_SOUND )

@@ -760,9 +760,9 @@ WRITE8_HANDLER( paletteram_BBGGRRII_w )
 	int i = (data >> 0) & 3;
 
 	paletteram[offset] = data;
-	palette_set_color(offset, pal4bit((data >> 0) & 0x0c) | i,
-	                          pal4bit((data >> 2) & 0x0c) | i,
-	                          pal4bit((data >> 4) & 0x0c) | i);
+	palette_set_color(offset, pal4bit(((data >> 0) & 0x0c) | i),
+	                          pal4bit(((data >> 2) & 0x0c) | i),
+	                          pal4bit(((data >> 4) & 0x0c) | i));
 }
 
 

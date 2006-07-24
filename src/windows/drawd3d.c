@@ -487,7 +487,8 @@ static const render_primitive_list *drawd3d_window_get_primitives(win_window_inf
 {
 	RECT client;
 	GetClientRect(window->hwnd, &client);
-	render_target_set_bounds(window->target, rect_width(&client), rect_height(&client), winvideo_monitor_get_aspect(window->monitor));
+	if (rect_width(&client) > 0 && rect_height(&client) > 0)
+		render_target_set_bounds(window->target, rect_width(&client), rect_height(&client), winvideo_monitor_get_aspect(window->monitor));
 	return render_target_get_primitives(window->target);
 }
 

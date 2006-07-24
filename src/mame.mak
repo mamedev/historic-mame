@@ -466,7 +466,7 @@ $(OBJ)/atari.a: \
 	$(OBJ)/drivers/mediagx.o \
 	$(OBJ)/drivers/mgolf.o \
 	$(OBJ)/drivers/mhavoc.o $(OBJ)/machine/mhavoc.o \
-	$(OBJ)/drivers/missile.o $(OBJ)/vidhrdw/missile.o \
+	$(OBJ)/drivers/missile.o \
 	$(OBJ)/drivers/nitedrvr.o $(OBJ)/machine/nitedrvr.o $(OBJ)/sndhrdw/nitedrvr.o $(OBJ)/vidhrdw/nitedrvr.o \
 	$(OBJ)/drivers/offtwall.o $(OBJ)/vidhrdw/offtwall.o \
 	$(OBJ)/drivers/orbit.o $(OBJ)/sndhrdw/orbit.o $(OBJ)/vidhrdw/orbit.o \
@@ -604,6 +604,7 @@ $(OBJ)/dataeast.a: \
 	$(OBJ)/drivers/metlclsh.o $(OBJ)/vidhrdw/metlclsh.o \
 	$(OBJ)/drivers/pcktgal.o $(OBJ)/vidhrdw/pcktgal.o \
 	$(OBJ)/drivers/pktgaldx.o $(OBJ)/vidhrdw/pktgaldx.o \
+	$(OBJ)/drivers/progolf.o \
 	$(OBJ)/drivers/rohga.o $(OBJ)/vidhrdw/rohga.o \
 	$(OBJ)/drivers/shootout.o $(OBJ)/vidhrdw/shootout.o \
 	$(OBJ)/drivers/sidepckt.o $(OBJ)/vidhrdw/sidepckt.o \
@@ -1237,6 +1238,7 @@ $(OBJ)/taito.a: \
 	$(OBJ)/drivers/mexico86.o $(OBJ)/machine/mexico86.o $(OBJ)/vidhrdw/mexico86.o \
 	$(OBJ)/drivers/minivadr.o $(OBJ)/vidhrdw/minivadr.o \
 	$(OBJ)/drivers/missb2.o \
+	$(OBJ)/drivers/mlanding.o \
 	$(OBJ)/drivers/msisaac.o $(OBJ)/vidhrdw/msisaac.o \
 	$(OBJ)/drivers/ninjaw.o $(OBJ)/vidhrdw/ninjaw.o \
 	$(OBJ)/drivers/nycaptor.o $(OBJ)/machine/nycaptor.o $(OBJ)/vidhrdw/nycaptor.o \
@@ -1465,6 +1467,7 @@ $(OBJ)/misc.a: \
 	$(OBJ)/drivers/laserbas.o \
 	$(OBJ)/drivers/lastfght.o \
 	$(OBJ)/drivers/lethalj.o $(OBJ)/vidhrdw/lethalj.o \
+	$(OBJ)/drivers/limenko.o \
 	$(OBJ)/drivers/ltcasino.o \
 	$(OBJ)/drivers/lucky8.o \
 	$(OBJ)/drivers/magic10.o \

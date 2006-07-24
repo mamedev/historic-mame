@@ -12,37 +12,41 @@
 
 ****************************************************************************
 
-    Sync chain:
-      _   _   _   _   _   _   _   _   _   _   _   _   _   _
-    _| |_| |_| |_| |_| |_| |_| |_| |_| |_| |_| |_| |_| |_| |  10MHz
-      ___     ___     ___     ___     ___     ___     ___
-    _|   |___|   |___|   |___|   |___|   |___|   |___|   |__  5MHz, J@8L
-    _     ___     ___     ___     ___     ___     ___     __
-     |___|   |___|   |___|   |___|   |___|   |___|   |___|    /5MHz, /K@8L
-          _______         _______         _______         __
-    _____|       |_______|       |_______|       |_______|    Q@8L
-    _____         _______         _______         _______
-         |_______|       |_______|       |_______|       |__  /Q@8L, /1H = 2.5MHz
+    Horizontal sync chain:
 
-    Pixel clock = 5MHz
-    1H = 2.5MHz
-    HSYNC = 32H clocked by 16H fter 256H goes high, or at H=256+32+16=304
-    HBLANK = 256H
-    /HBLANK1 = HBLANK clocked by 4H, or at H=256+4=260
-    HBLANK2 = HBLANK1 clocked by /4H, or at H=260+4=264
+        A J/K flip flop @ 8L counts the 1H line, and cascades into a
+        4-bit binary counter @ 7M, which counts the 2H,4H,8H,16H lines.
+        This counter cascades into a 4-bit BCD decade counter @ 7N
+        which counts the 32H,64H,128H,HBLANK lines. The counter system
+        rolls over after counting to 320.
 
-    According to the schematics, there is no way to reset the horizontal
-    sync chain, which would count it up to 512 before resetting. But this
-    doesn't work out. On the assumption, then, that the falling edge of
-    HSYNC should reset the horizontal chain, that would happen at
-    H=304+16=320. This makes sense as 5MHz/320 = 15.625kHz, which is the
-    right frequency for a standard res. monitor.
+        Pixel clock = 5MHz
+        HBLANK ends at H = 0
+        HBLANK begins at H = 256
+        HSYNC begins at H = 304
+        HSYNC ends at H = 320
+        HTOTAL = 320
 
-    The vertical sync chain appears to just count 0..255 and wrap. The
-    PROM at 7k (.108) controls the IRQCK, VSYNC, and VBLANK signals. With
-    the standard PROM, VBLANK is held from V=0 through V=31. VSYNC is
-    held from V=4 through V=6. And the IRQ clock has a rising edge at
-    V=32, V=96, V=160, and V=224.
+    Vertical sync chain:
+
+        The HBLANK signal clocks a 4-bit binary counter @ 7P, which counts
+        the 1V,2V,4V,8V lines. This counter cascades into a second 4-bit
+        binary counter @ 7R which counts the 16V,32V,64V,128V lines. The
+        counter system rolls over after counting to 256.
+
+        VBLANK and VSYNC signals are controlled by a PROM at 8J. The
+        standard PROM maps as follows:
+
+        VBLANK ends at V = 24
+        VBLANK begins at V = 0
+        VSYNC begins at V = 4
+        VSYNC ends at V = 7
+        VTOTAL = 256
+
+    Interrupts:
+
+        /IRQ clocked by IRQCK signal from the PROM at 8J. The standard
+        PROM has a rising edge at V = 0,64,128,192.
 
 ****************************************************************************
 
@@ -168,6 +172,9 @@ static void clock_irq(int param)
 		cpunum_set_input_line(0, 0, ASSERT_LINE);
 		irq_state = 1;
 	}
+
+	/* force an update now */
+	force_partial_update(0, cpu_getscanline());
 
 	/* find the next edge */
 	schedule_next_irq(param);
@@ -493,7 +500,7 @@ MACHINE_DRIVER_END
  *************************************/
 
 ROM_START( ccastles )
-     ROM_REGION( 0x14000, REGION_CPU1, 0 )	/* 64k for code */
+     ROM_REGION( 0x14000, REGION_CPU1, 0 )
      ROM_LOAD( "136022-403.bin", 0x0a000, 0x2000, CRC(81471ae5) SHA1(8ec13b48119ecf8fe85207403c0a0de5240cded4) )
      ROM_LOAD( "136022-404.bin", 0x0c000, 0x2000, CRC(820daf29) SHA1(a2cff00e9ddce201344692b75038431e4241fedd) )
      ROM_LOAD( "136022-405.bin", 0x0e000, 0x2000, CRC(4befc296) SHA1(2e789a32903808014e9d5f3021d7eff57c3e2212) )
@@ -513,7 +520,7 @@ ROM_END
 
 
 ROM_START( ccastle3 )
-     ROM_REGION( 0x14000, REGION_CPU1, 0 )	/* 64k for code */
+     ROM_REGION( 0x14000, REGION_CPU1, 0 )
      ROM_LOAD( "136022-303.bin", 0x0a000, 0x2000, CRC(10e39fce) SHA1(5247f52e14ccf39f0ec699a39c8ebe35e61e07d2) )
      ROM_LOAD( "136022-304.bin", 0x0c000, 0x2000, CRC(74510f72) SHA1(d22550f308ff395d51869b52449bc0669a4e35e4) )
      ROM_LOAD( "136022-305.bin", 0x0e000, 0x2000, CRC(9418cf8a) SHA1(1f835db94270e4a16e721b2ac355fb7e7c052285) )
@@ -533,7 +540,7 @@ ROM_END
 
 
 ROM_START( ccastle2 )
-     ROM_REGION( 0x14000, REGION_CPU1, 0 )	/* 64k for code */
+     ROM_REGION( 0x14000, REGION_CPU1, 0 )
      ROM_LOAD( "136022-203.bin", 0x0a000, 0x2000, CRC(348a96f0) SHA1(76de7bf6a01ccb15a4fe7333c1209f623a2e0d1b) )
      ROM_LOAD( "136022-204.bin", 0x0c000, 0x2000, CRC(d48d8c1f) SHA1(8744182a3e2096419de63e341feb77dd8a8bcb34) )
      ROM_LOAD( "136022-205.bin", 0x0e000, 0x2000, CRC(0e4883cc) SHA1(a96abbf654e087409a90c1686d9dd553bd08c14e) )

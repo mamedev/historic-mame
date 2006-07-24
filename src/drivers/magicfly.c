@@ -1,15 +1,15 @@
 /******************************************************************************
 
-    Magic Fly
+    MAGIC FLY
     ----------
 
-    Preliminary driver by Roberto Fresca.
+    Driver by Roberto Fresca.
 
 
     Games running in this hardware:
 
-    - Magic Fly (P&A Games), 198?
-    - 7 e Mezzo (Unknown), 198?    (Not sure about the title. Only english text inside the program rom).
+    * Magic Fly (P&A Games), 198?
+    * 7 e Mezzo (Unknown),   198?    (Not sure about the title. Only english text inside the program rom).
 
 
     Hardware notes:
@@ -17,13 +17,13 @@
     - CPU 1x R6502P
     - 1x MC6845P
     - 1x oscillator 10.000MHz
-    - ROMs 1x AM27128 (NS3.1)
-    - 2x SEEQ DQ2764 (1, 2)
-    - 1x SGS M2764 (NS1)
-    - 1x PAL16R4A
-    - 1x 4 dipswitches
-    - 1x 30x2 connector
-    - 1x 10 legs connector
+    - ROMs: 1x AM27128 (NS3.1)
+            2x SEEQ DQ2764 (1, 2)
+            1x SGS M2764 (NS1)
+    - PLDs: 1x PAL16R4A
+    - 1x 4 DIP switches
+    - 1x 30x2 edge connector
+    - 1x 10 pins male connector
     - 1x trimmer (volume)
 
 
@@ -80,174 +80,95 @@
     |_________________________________________________________________|
 
 
-
-    (The following fuse maps are just for reference and will be deleted soon. These PLDs were converted to the new bin format)
-
-    Magic Fly PAL16R4A Fuse Map
-    ---------------------------
-
-    Device    AmPAL16R4A
-    *
-    QF2048*
-    F0*
-    L000000 11111111111111111111111111111111*
-    L000032 11111111111111111111111111111111*
-    L000064 11111111111111111111111111111111*
-    L000096 11111111111111111111111111111111*
-    L000128 11111111111111111111111111111111*
-    L000160 11111111111111111111111111111111*
-    L000192 11111111111111111111111111111111*
-    L000224 11111111111111111111111111111111*
-    L000256 11111111111111111111111111111111*
-    L000288 11111111111111111111111111111111*
-    L000320 11111111111111111111111111111111*
-    L000352 11111111111111111111111111111111*
-    L000384 11111111111111111111111111111111*
-    L000416 11111111111111111111111111111111*
-    L000448 11111111111111111111111111111111*
-    L000480 11111111111111111111111111111111*
-    L000512 11111111111111111111111111111111*
-    L000544 11111111111111111111111111111111*
-    L000576 11111111111111111111111111111111*
-    L000608 11111111111111111111111111111111*
-    L000640 11111111111111111111111111111111*
-    L000672 11111111111111111111111111111111*
-    L000704 11111111111111111111111111111111*
-    L000736 11111111111111111111111111111111*
-    L000768 11111111111111111111111111111111*
-    L000800 11111111111111111111111111111111*
-    L000832 11111111111111111111111111111111*
-    L000864 11111111111111111111111111111111*
-    L000896 11111111111111111111111111111111*
-    L000928 11111111111111111111111111111111*
-    L000960 11111111111111111111111111111111*
-    L000992 11111111111111111111111111111111*
-    L001024 00000000000000000000000000000000*
-    L001056 00000000000000000000000000000000*
-    L001088 00000000000000000000000000000000*
-    L001120 00000000000000000000000000000000*
-    L001152 00000000000000000000000000000000*
-    L001184 00000000000000000000000000000000*
-    L001216 00000000000000000000000000000000*
-    L001248 00000000000000000000000000000000*
-    L001280 00000000000000000000000000000000*
-    L001312 00000000000000000000000000000000*
-    L001344 00000000000000000000000000000000*
-    L001376 00000000000000000000000000000000*
-    L001408 00000000000000000000000000000000*
-    L001440 00000000000000000000000000000000*
-    L001472 00000000000000000000000000000000*
-    L001504 00000000000000000000000000000000*
-    L001536 00000000000000000000000000000000*
-    L001568 00000000000000000000000000000000*
-    L001600 00000000000000000000000000000000*
-    L001632 00000000000000000000000000000000*
-    L001664 00000000000000000000000000000000*
-    L001696 00000000000000000000000000000000*
-    L001728 00000000000000000000000000000000*
-    L001760 00000000000000000000000000000000*
-    L001792 00000000000000000000000000000000*
-    L001824 00000000000000000000000000000000*
-    L001856 00000000000000000000000000000000*
-    L001888 00000000000000000000000000000000*
-    L001920 00000000000000000000000000000000*
-    L001952 00000000000000000000000000000000*
-    L001984 00000000000000000000000000000000*
-    L002016 00000000000000000000000000000000*
-    C7F80*
+    NOTE: Magic Fly & 7 e Mezzo PAL16R4A Fuse Maps were converted to the new bin format and added to respective sets.
 
 
-    7 e Mezzo PAL16R4A Fuse Map
-    ---------------------------
+    Pinouts (7mezzo):
+    -----------------
+    ************ Edge connector ************
 
-    Device    AmPAL16R4A
-    *
-    QF2048*
-    F0*
-    L000000 01010101010101010101010101010101*
-    L000032 01010101010101010101010101010101*
-    L000064 11111111111111111111111111111111*
-    L000096 11111111111111111111111111111111*
-    L000128 11111111111111111111111111111111*
-    L000160 11111111111111111111111111111111*
-    L000192 11111111111111111111111111111111*
-    L000224 11111111111111111111111111111111*
-    L000256 11101110110011101111111111111111*
-    L000288 11101110110011101111111111111111*
-    L000320 11001100110011001111111111111111*
-    L000352 11001100110011001111111111111111*
-    L000384 11001100110011001111111111111111*
-    L000416 11001100110011001111111111111111*
-    L000448 11001100110011001111111111111111*
-    L000480 11001100110011001111111111111111*
-    L000512 11111111111111111111111111111111*
-    L000544 11111111111111111111111111111111*
-    L000576 11111111111111111111111111111111*
-    L000608 11111111111111111111111111111111*
-    L000640 11111111111111111111111111111111*
-    L000672 11111111111111111111111111111111*
-    L000704 11111111111111111111111111111111*
-    L000736 11111111111111111111111111111111*
-    L000768 11111111111111111111111111111111*
-    L000800 11111111111111111111111111111111*
-    L000832 11111111111111111111111111111111*
-    L000864 11111111111111111111111111111111*
-    L000896 11111111111111111111111111111111*
-    L000928 11111111111111111111111111111111*
-    L000960 11111111111111111111111111111111*
-    L000992 11111111111111111111111111111111*
-    L001024 11111111111111111111111111111111*
-    L001056 11111111111111111111111111111111*
-    L001088 11111111111111111111111111111111*
-    L001120 11111111111111111111111111111111*
-    L001152 11111111111111111111111111111111*
-    L001184 11111111111111111111111111111111*
-    L001216 11111111111111111111111111111111*
-    L001248 11111111111111111111111111111111*
-    L001280 11111111111111111111111111111111*
-    L001312 11111111111111111111111111111111*
-    L001344 11111111111111111111111111111111*
-    L001376 11111111111111111111111111111111*
-    L001408 11111111111111111111111111111111*
-    L001440 11111111111111111111111111111111*
-    L001472 11111111111111111111111111111111*
-    L001504 11111111111111111111111111111111*
-    L001536 11111111111111111111111111111111*
-    L001568 11111111111111111111111111111111*
-    L001600 11111111111111111111111111111111*
-    L001632 11111111111111111111111111111111*
-    L001664 11111111111111111111111111111111*
-    L001696 11111111111111111111111111111111*
-    L001728 11111111111111111111111111111111*
-    L001760 11111111111111111111111111111111*
-    L001792 11111111111111111111111111111111*
-    L001824 11111111111111111111111111111111*
-    L001856 11111111111111111111111111111111*
-    L001888 11111111111111111111111111111111*
-    L001920 11111111111111111111111111111111*
-    L001952 11111111111111111111111111111111*
-    L001984 11111111111111111111111111111111*
-    L002016 11111111111111111111111111111111*
-    CF0A0*
+    (Solder Side)               (Parts Side)
+
+    GND                 30      GND
+    +10v.               29      +10v.
+    +10v.               28      +10v.
+    unused              27      unused
+    unused              26      unused
+    GND                 25      GND
+    +12v.               24      +12v.
+    +12v.               23      +12v.
+    unused              22      unused
+    common C (3)        21      common A (1)
+    common D (4)        20      common B (2)
+    DEAL                19      DOUBLE
+    HOLD 1              18      (unreadable)
+    HOLD 2              17      HOLD 5
+    HOLD 3              16      HOLD 4
+    METER               15      BET
+    COUPON              14
+                        13      COIN 1
+    (unreadable)        12      COIN 2
+    TAKE                11      PAY
+    SMALL (play1)       10      BIG (play3)
+    unused              09      unused
+    unused              08      unused
+    unused              07      unused
+    (unreadable)        06      (unreadable)
+    sync                05      (unreadable)
+    GND                 04      GND
+    speaker+            03      speaker+
+    speaker- (GND)      02      speaker- (GND)
+    +5v.                01      +5v.
+
+    (1) = DOUBLE, DEAL, (unreadable), BET, METER
+    (2) = TAKE, SMALL, BIG, PAY
+    (3) = HOLD 1, HOLD 2, HOLD 3, HOLD 4, HOLD 5
+    (4) = COIN 1, COIN 2, COUPON
 
 
-    Memory Map (preliminary)
+    **** Pins connector ****
+
+    pin 01:
+    pin 02:
+    pin 03:
+    pin 04:
+    pin 05:  (soldered to pin 01)
+    pin 06:  (unreadable)
+    pin 07:  (unreadable)
+    pin 08:  (unreadable)
+    pin 09:  (unreadable)
+    pin 10:  common (GND)
+
+
+
+    Memory Map (magicfly)
     ------------------------
 
-    $0000 - $0fff    RAM
+    $0000 - $00FF    RAM    // Zero page (pointers and registers)
 
-                         ($0011            store the text lenght)
-                         ($0015 - $0016    pointer to video ram)
-                         ($0017 - $0018    pointer to color ram)
-                         ($0091 - $0091    ???)
-                         ($00ab - $00ab    ???)
-                         ($01fb - $01ff    ???)
+                         ($000D)            // Incremented each time a NMI is triggered.
+                         ($001D)            // in case of #$00, NMI do nothing and return.
+                         ($0011)            // Store lenghts for text handling.
+                         ($0012)            // Store values to be written in color RAM.
+                         ($0013 - $0014)    // Pointer to text offset.
+                         ($0015 - $0016)    // Pointer to video ram.
+                         ($0017 - $0018)    // Pointer to color ram.
+                         ($0019)            // Program loops waiting for a value to be written here through NMI. (see below at "other checks")
+                         ($003A - $003D)    // Store new read values from $2800 (input port) through NMI.
+                         ($003F - $0042)    // Store old read values from $2800 (input port) through NMI.
+                         ($005E - $005F)    // Store values to be written in video and color ram, respectively.
+                         ($0067 - $0067)    // Program compare the content with #$02, #$03, #$04, #$05 and #$E1.
+                                            // If #$E1 is found here, the machine hangs showing "I/O ERROR". (see below at "some clues")
+                         ($0096 - $0098)    // Store values from content of $2800 (input port) AND #$80, AND #$40, AND #$10.
+                         ($009B - $00A8)    // Text scroll buffer.
 
-    $0800 - $0801    mc6845?    // At begining, write 18 bytes sequentially in $0801, and the increment (x) in $0800.
+    $0100 - $01FF    RAM    // 6502 Stack Pointer.
 
-    $1000 - $13ff    Video RAM    // Initialized in subroutine starting at $cf83, filled with value stored in $5e.
-    $1800 - $1bff    Color RAM    // Initialized in subroutine starting at $cf83, filled with value stored in $5f.
-                                  // (in 7mezzo is located at $cb13 using $64 and $65 to store video ram and color ram values)
+    $0800 - $0801    (mc6845?)    // At begining, write 18 bytes sequentially in $0801, and the increment (x register) in $0800.
+
+    $1000 - $13FF    Video RAM    // Initialized in subroutine starting at $CF83, filled with value stored in $5E.
+    $1800 - $1BFF    Color RAM    // Initialized in subroutine starting at $CF83, filled with value stored in $5F.
+                                  // (In 7mezzo is located at $CB13 using $64 and $65 to store video and color ram values.)
 
                                      CF83: 48         pha
                                      CF84: 8A         txa
@@ -274,9 +195,10 @@
                                      CFAF: 68         pla
                                      CFB0: 60         rts
 
-    $1c00 - $27ff    RAM
+    $1C00 - $27FF    RAM
 
-    $2800 - $2800    ???    // suspected input port (code at $ce96). No writes, only reads.
+    $2800 - $2800    Input port    // Input port (code at $CE96). No writes, only reads.
+                                   // NMI routine read from here and store new values to $003A - $003D and copy old ones to $003F - $0042.
 
                                CE96: AD 00 28   lda  $2800
                                CE99: 29 80      and  #$80
@@ -288,11 +210,11 @@
                                CEA9: 29 10      and  #$10
                                CEAB: 8D 98 00   sta  $0098
 
-    $2801 - $2fff    RAM
+    $2801 - $2FFF    RAM
 
     $3000 - $3000    ???    // Something seems to be mapped here. Only writes, no reads.
-                            // Code at $c152 do a complex loop with boolean operations and write #$00/#$80 to $3000.
-                            // (actually the program execution stuck here)
+                            // Code at $C152 do a complex loop with boolean operations and write #$00/#$80 to $3000. Also NMI routine write another values.
+                            // (normally the program execution stuck here)
 
                                C152: 8A         txa
                                C153: 48         pha
@@ -329,9 +251,9 @@
                                C196: AA         tax
                                C197: 60         rts
 
-    $3001 - $bfff    RAM
+    $3001 - $BFFF    RAM
 
-    $c000 - $ffff    ROM
+    $C000 - $FFFF    ROM
 
     -------------------------------------------------
 
@@ -345,7 +267,7 @@
     C19B: D8         cld
     C19C: 20 70 CE   jsr  $CE70
     C19F: 20 0C DA   jsr  $DA0C
-    C1A2: AD 67 00   lda  $0067    ; if $0067 = #$E1, jump to $CE3C
+    C1A2: AD 67 00   lda  $0067    ; If $0067 = #$E1, jump to $CE3C.
     C1A5: D0 03      bne  $C1AA
     C1A7: 4C CD C1   jmp  $C1CD
     C1AA: C9 02      cmp  #$02
@@ -365,10 +287,10 @@
     C1CA: 4C 3C CE   jmp  $CE3C
     ...
     ...
-    CE3C: A9 00      lda  #$00     ; clean value at $0067
+    CE3C: A9 00      lda  #$00     ; Clean value at $0067.
     CE3E: 8D 1D 00   sta  $001D
     CE41: 8D 67 00   sta  $0067
-    CE44: A9 1F      lda  #$1F     ; clean the screen
+    CE44: A9 1F      lda  #$1F     ; Clean the screen.
     CE46: 8D 5F 00   sta  $005F
     CE49: A9 20      lda  #$20
     CE4B: 8D 5E 00   sta  $005E
@@ -379,13 +301,62 @@
     CE58: 8D 11 00   sta  $0011
     CE5B: A9 1B      lda  #$1B
     CE5D: 8D 12 00   sta  $0012
-    CE60: A9 D1      lda  #$D1     ; point to $D194 in $0013/$0014
-    CE62: 8D 14 00   sta  $0014    ; text: "I/O ERROR (TURN OFF TO RESET)"
+    CE60: A9 D1      lda  #$D1     ; Point to $D194 in $0013/$0014,
+    CE62: 8D 14 00   sta  $0014    ; text: "I/O ERROR (TURN OFF TO RESET)".
     CE65: A9 94      lda  #$94
     CE67: 8D 13 00   sta  $0013
-    CE6A: 20 03 C0   jsr  $C003    ; subroutine to write text in video ram
-    CE6D: 4C 6D CE   jmp  $CE6D    ; stuck here!!!
+    CE6A: 20 03 C0   jsr  $C003    ; Subroutine to write text in video ram.
+    CE6D: 4C 6D CE   jmp  $CE6D    ; Stuck here!!!
 
+    Other checks:
+
+    CA71: A9 00      lda  #$00     ; Write #$00 at $0019.
+    CA73: 8D 19 00   sta  $0019
+    CA76: AD 19 00   lda  $0019    ; Waiting for #$0a at $0019... (incremented through the NMI sub at $CCF6)
+    CA79: C9 0A      cmp  #$0A
+    CA7B: D0 F9      bne  $CA76
+    CA7D: 60         rts
+    CA7E: A9 00      lda  #$00     ; Here the same, but waiting for #$04.
+    CA80: 8D 19 00   sta  $0019
+    CA83: AD 19 00   lda  $0019
+    CA86: C9 04      cmp  #$04
+    CA88: D0 F9      bne  $CA83
+    CA8A: 60         rts
+    CA8B: A9 00      lda  #$00     ; Here the same, but waiting for #$32.
+    CA8D: 8D 19 00   sta  $0019    ; With the hack in driver init, the game stuck here
+    CA90: AD 19 00   lda  $0019    ; waiting for #$32 to be written at $0019.
+    CA93: C9 32      cmp  #$32
+    CA95: D0 F9      bne  $CA90
+    CA97: 60         rts
+
+    DA0C: A9 15      lda  #$15     ; Fill the video RAM with spaces (#$20),
+    DA0E: 8D 5F 00   sta  $005F    ; and color RAM with #$15
+    DA11: A9 20      lda  #$20
+    DA13: 8D 5E 00   sta  $005E
+    DA16: 20 83 CF   jsr  $CF83
+    DA19: AD 00 18   lda  $1800    ; Check the 1st position at color RAM
+    DA1C: 29 80      and  #$80     ; boolean AND with #$80
+    DA1E: D0 10      bne  $DA30    ; if not equal, jump to $DA30.
+
+    DA20: A9 1F      lda  #$1F     ; Fill the color RAM with #$1F
+    DA22: 8D 5F 00   sta  $005F
+    DA25: 20 83 CF   jsr  $CF83
+    DA28: AD 00 18   lda  $1800    ; Check the 1st position at color RAM
+    DA2B: 29 80      and  #$80     ; boolean AND with #$80
+    DA2D: F0 01      beq  $DA30    ; if equal, jump to $DA30.
+    DA2F: 60         rts
+
+    DA30: A9 00      lda  #$00     ; Fill video & color RAM
+    DA32: 8D 1D 00   sta  $001D    ; with calculated values
+    DA35: A9 FF      lda  #$FF     ; through $C111 subroutine
+    DA37: 20 11 C1   jsr  $C111
+    DA3A: 8D 5E 00   sta  $005E
+    DA3D: A9 20      lda  #$20
+    DA3F: 20 11 C1   jsr  $C111
+    DA42: 8D 5F 00   sta  $005F
+    DA45: 20 83 CF   jsr  $CF83
+    DA48: 20 77 DB   jsr  $DB77
+    DA4B: 4C 30 DA   jmp  $DA30    ; Jump to a loop
 
 
     TODO:
@@ -393,8 +364,8 @@
     - Map inputs & DIP switches.
     - Correct the GFX banks.
     - Hook properly the MC6845.
+    - Figure out the sound.
     - Clean and sort out a lot of things.
-
 
 
 *******************************************************************************/
@@ -460,8 +431,8 @@ VIDEO_UPDATE(magicfly)
 *************************/
 
 static ADDRESS_MAP_START( magicfly_map, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x01fa) AM_RAM
-	AM_RANGE(0x01fb, 0x01ff) AM_RAM
+	AM_RANGE(0x0000, 0x00ff) AM_RAM    // zero page (pointers and registers)
+	AM_RANGE(0x0100, 0x01ff) AM_RAM    // stack pointer
 	AM_RANGE(0x0200, 0x07ff) AM_RAM
 	AM_RANGE(0x0800, 0x0800) AM_WRITE(crtc6845_address_w)    // wrong
 	AM_RANGE(0x0801, 0x0801) AM_READWRITE(crtc6845_register_r, crtc6845_register_w)    // wrong
@@ -470,9 +441,9 @@ static ADDRESS_MAP_START( magicfly_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x1400, 0x17ff) AM_RAM
 	AM_RANGE(0x1800, 0x1bff) AM_RAM AM_WRITE(magicfly_colorram_w) AM_BASE(&colorram)
 	AM_RANGE(0x1c00, 0x27ff) AM_RAM
-	AM_RANGE(0x2800, 0x2800) AM_RAM    // suspected input
+	AM_RANGE(0x2800, 0x2800) AM_READ(input_port_0_r)
 	AM_RANGE(0x2801, 0x2fff) AM_RAM
-	AM_RANGE(0x3000, 0x3000) AM_WRITENOP    // code stuck writing $00/$80 here.
+	AM_RANGE(0x3000, 0x3000) AM_WRITENOP    // code loops writing #$00/#$80 here. NMI write other values.
 	AM_RANGE(0x3001, 0xbfff) AM_RAM
 	AM_RANGE(0xc000, 0xffff) AM_ROM
 ADDRESS_MAP_END
@@ -484,16 +455,16 @@ ADDRESS_MAP_END
 
 INPUT_PORTS_START( magicfly )
 
-//  PORT_START_TAG("IN0")
-//  PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Bit 0") PORT_CODE(KEYCODE_Q)
-//  PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Bit 1") PORT_CODE(KEYCODE_W)
-//  PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Bit 2") PORT_CODE(KEYCODE_E)
-//  PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Bit 3") PORT_CODE(KEYCODE_R)
-//  PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Bit 4") PORT_CODE(KEYCODE_T)
-//  PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Bit 5") PORT_CODE(KEYCODE_Y)
-//  PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Bit 6") PORT_CODE(KEYCODE_U)
-//  PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Bit 7") PORT_CODE(KEYCODE_I)
-//
+  PORT_START_TAG("IN0")
+  PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Bit 0") PORT_CODE(KEYCODE_Q)
+  PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Bit 1") PORT_CODE(KEYCODE_W)
+  PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Bit 2") PORT_CODE(KEYCODE_E)
+  PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Bit 3") PORT_CODE(KEYCODE_R)
+  PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Bit 4") PORT_CODE(KEYCODE_T)
+  PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Bit 5") PORT_CODE(KEYCODE_Y)
+  PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Bit 6") PORT_CODE(KEYCODE_U)
+  PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Bit 7") PORT_CODE(KEYCODE_I)
+
 //  PORT_START_TAG("IN1")
 //  PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Bit 0") PORT_CODE(KEYCODE_A)
 //  PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Bit 1") PORT_CODE(KEYCODE_S)
@@ -536,7 +507,6 @@ static const gfx_layout charlayout =
 	8*8
 };
 
-
 /******************************
 * Graphics Decode Information *
 ******************************/
@@ -557,7 +527,7 @@ static const gfx_decode gfxdecodeinfo[] =
 
 static MACHINE_DRIVER_START( magicfly )
 	// basic machine hardware
-	MDRV_CPU_ADD(M6502, 10000000/16)	// a guess
+	MDRV_CPU_ADD(M6502, 10000000/12)	// a guess
 	MDRV_CPU_PROGRAM_MAP(magicfly_map, 0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold, 1)
 
@@ -577,6 +547,48 @@ static MACHINE_DRIVER_START( magicfly )
 	MDRV_VIDEO_UPDATE(magicfly)
 
 MACHINE_DRIVER_END
+
+
+static DRIVER_INIT( magicfly )
+{
+
+/***************************************************************
+*
+* Temporary patch to avoid a loop of checks for debug purposes
+*
+* Code at 0xc19f:
+*
+*    C19F: 20 0C DA   jsr $DA0C
+*    (checks to $1800 and writing video & color RAM)
+*
+*   changed to :
+*
+*    C19F: EA         nop
+*    C1A0: EA         nop
+*    C1A1: EA         nop
+*
+***************************************************************/
+
+    UINT8 *ROM = memory_region(REGION_CPU1);
+
+//    ROM[0xc19f] = 0xea;
+//    ROM[0xc1a0] = 0xea;
+//    ROM[0xc1a1] = 0xea;
+
+    ROM[0xda30] = 0x60;    // just a rts to part of subroutine to allow work some registers.
+
+}
+
+static DRIVER_INIT( 7mezzo )
+{
+
+/* Similar to magicfly, but another offset */
+
+    UINT8 *ROM = memory_region(REGION_CPU1);
+
+    ROM[0xd21a] = 0x60;    // just a rts to part of subroutine.
+
+}
 
 
 /*************************
@@ -624,6 +636,6 @@ ROM_END
 *************************/
 
 //    YEAR  NAME      PARENT    MACHINE   INPUT     INIT            COMPANY        FULLNAME
-GAME( 198?, magicfly, 0,        magicfly, magicfly, 0,        ROT0, "P&A Games",  "Magic Fly",    GAME_NO_SOUND | GAME_NOT_WORKING )
-GAME( 198?, 7mezzo  , 0,        magicfly, magicfly, 0,        ROT0, "Unknown"  ,  "7 e Mezzo", 	  GAME_NO_SOUND | GAME_NOT_WORKING )
+GAME( 198?, magicfly, 0,        magicfly, magicfly, magicfly, ROT0, "P&A Games",  "Magic Fly",    GAME_NO_SOUND | GAME_NOT_WORKING )
+GAME( 198?, 7mezzo  , 0,        magicfly, magicfly, 7mezzo  , ROT0, "Unknown"  ,  "7 e Mezzo", 	  GAME_NO_SOUND | GAME_NOT_WORKING )
 

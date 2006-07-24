@@ -3829,6 +3829,26 @@ ROM_START( desterth )
 	ROM_RELOAD(  			  0x0400, 0x0400 )
 ROM_END
 
+ROM_START( lrescuem )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_LOAD( "48.ic36",    0x0000, 0x0400, CRC(bad5ba48) SHA1(6d8a2df172e058d16f196ad7f29430e9fd1fdaa8) )
+	ROM_LOAD( "49.ic35",    0x0400, 0x0400, CRC(a6dc23d6) SHA1(76b9105935bf239ae90b47900f64dac3032ceecd) )
+	ROM_LOAD( "50.ic34",    0x0800, 0x0400, CRC(90179fee) SHA1(35059f7399229b8d9588d34f79073fa4d3301614) )
+	ROM_LOAD( "51.ic33",    0x0c00, 0x0400, CRC(1d197d87) SHA1(21e049f9c2a0fe1c0403d9d1a2dc695c4ee764f9) )
+	ROM_LOAD( "52.ic32",    0x1000, 0x0400, CRC(4326d338) SHA1(ac31645bdf292f28dfcfcb9d5e158e5df7a6f95d) )
+	ROM_LOAD( "53.ic31",    0x1400, 0x0400, CRC(3b272372) SHA1(39b807c810d093d7a34b102eec16f3d9baeb21f1) )
+	ROM_LOAD( "54.ic42",    0x1800, 0x0400, CRC(a877c5b6) SHA1(862871c3dd18221d5713fe1fd2dc4f5b7cb913c1) )
+	ROM_LOAD( "55.ic41",    0x1c00, 0x0400, CRC(c9a93407) SHA1(604bcace8e3bec07db6ca8a8918b306b77643e14) )
+	ROM_LOAD( "56.ic40",    0x4000, 0x0400, CRC(3398798f) SHA1(d7dd9e65a1048df8edd217f4206b19cd01f143f4) )
+	ROM_LOAD( "57.ic39",    0x4400, 0x0400, CRC(37c5bfc6) SHA1(b0aec85e6f979cdf7a3a985830c8530302804837) )
+	ROM_LOAD( "58.ic38",    0x4800, 0x0400, CRC(1b7a5644) SHA1(d26530ea11ada86f7c99b11d6faf4416a8f5a9eb) )
+	ROM_LOAD( "59.ic37",    0x4c00, 0x0400, CRC(c342b907) SHA1(327da029420c4eedabc2a0534199a008a3f341b8) )
+
+	ROM_REGION( 0x0800, REGION_PROMS, 0 )		/* color maps player 1/player 2 - these don't really fit this game, but were on the PCB */
+	ROM_LOAD( "cv01-7643.2c",   0x0000, 0x0400, CRC(aac24f34) SHA1(ad110e776547fb48baac568bb50d61854537ca34) )
+	ROM_LOAD( "cv02-7643.1c",   0x0400, 0x0400, CRC(2bdf83a0) SHA1(01ffbd43964c41987e7d44816271308f9a70802b) )
+ROM_END
+
 ROM_START( cosmo )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
 	ROM_LOAD( "1.36",         0x0000, 0x0800, CRC(445c9a98) SHA1(89bce80a061e9c12544231f970d9dec801eb1b94) )
@@ -4339,6 +4359,7 @@ ROM_END
 	  GAMEL(1979, galxwart, galxwars, invaders, galxwars, 8080bw,   ROT270,	"Taito?", "Galaxy Wars (Taito?)" , 0, layout_invaders) /* Copyright Not Displayed */
 	  GAMEL(1979, starw,    galxwars, invaders, galxwars, 8080bw,   ROT270, "bootleg", "Star Wars", 0, layout_invaders )
 	  GAME( 1979, lrescue,  0,        invadpt2, lrescue,  invadpt2, ROT270, "Taito", "Lunar Rescue", 0 )
+	  GAME( 1978, lrescuem, lrescue,  invadpt2, lrescue,  invadpt2, ROT270, "Taito (Model Racing bootleg)", "Lunar Rescue (Model Racing bootleg)", 0 )
 	  GAME( 1979, grescue,  lrescue,  invadpt2, lrescue,  invadpt2, ROT270, "Taito (Universal license?)", "Galaxy Rescue", 0 )
 	  GAME( 1979, desterth, lrescue,  invadpt2, invrvnge, invadpt2, ROT270, "bootleg", "Destination Earth", 0 )
 	  GAME( 1979, invadpt2, 0,        invadpt2, invadpt2, invadpt2, ROT270, "Taito", "Space Invaders Part II (Taito)", 0 )
@@ -4380,7 +4401,7 @@ ROM_END
 	  GAMEL(19??, invrvnge, 0,        invrvnge, invrvnge, 8080bw,   ROT270, "Zenitone-Microsec Ltd.", "Invader's Revenge",  GAME_NO_SOUND, layout_invrvnge )
 	  GAMEL(19??, invrvnga, invrvnge, invrvnge, invrvnge, 8080bw,   ROT270, "Zenitone-Microsec Ltd. (Dutchford license)", "Invader's Revenge (Dutchford)", GAME_NO_SOUND, layout_invrvnge )
 	  GAME( 1980, spclaser, 0,        invaders, spclaser, invaddlx, ROT270, "GamePlan (Taito)", "Space Laser", 0 )
-	  GAME( 1980, laser,    spclaser, invaders, spclaser, invaddlx, ROT270, "<unknown>", "Laser", 0 )
+	  GAME( 1980, laser,    spclaser, invaders, spclaser, invaddlx, ROT270, "Leisure Time Electronics Inc.", "Astro Laser", 0 )
 	  GAME( 1979, spcewarl, spclaser, invaders, spcewarl, invaddlx, ROT270, "Leijac (Konami)","Space War (Leijac)", 0 )
 	  GAME( 1979, rollingc, 0,        rollingc, rollingc, rollingc, ROT270, "Nichibutsu", "Rolling Crash / Moon Base", GAME_NO_SOUND )
 	  GAME( 1979, ozmawars, 0,        invaders, ozmawars, 8080bw,   ROT270, "SNK", "Ozma Wars (set 1)", 0 )

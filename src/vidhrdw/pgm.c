@@ -192,7 +192,8 @@ static void pgm_drawsprites(int priority, mame_bitmap* bitmap)
        wwww wwwh hhhh hhhh
     */
 
-	const UINT16 *finish = pgm_spritebufferram+0xa00;
+
+	const UINT16 *finish = pgm_spritebufferram+(0xa00/2);
 
 	while( pgm_sprite_source<finish )
 	{

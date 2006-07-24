@@ -491,13 +491,21 @@ INPUT_PORTS_START( bombkick )
 	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_BIT(  0x0008, IP_ACTIVE_LOW,  IPT_UNKNOWN ) // keep it off --> otherwise it hangs when you select some levels
-	PORT_BIT(  0x0010, IP_ACTIVE_HIGH, IPT_UNKNOWN ) // keep it on  /
+	PORT_DIPNAME( 0x0008, 0x0008, "DON'T CHANGE IT!" ) // keep it off --> otherwise it hangs when you select some levels
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0000, "DON'T CHANGE IT!" ) // keep it on  --> otherwise it hangs when you select some levels
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_BIT(  0x0040, IP_ACTIVE_HIGH, IPT_UNKNOWN ) // keep it on  --> otherwise it doesn't boot
-	PORT_BIT(  0x0080, IP_ACTIVE_LOW,  IPT_UNKNOWN ) // keep it off /
+	PORT_DIPNAME( 0x0040, 0x0000, "DON'T CHANGE IT!"  ) // keep it on  --> otherwise it doesn't boot
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, "DON'T CHANGE IT!"  ) // keep it off --> otherwise it doesn't boot
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 	PORT_BIT(  0xff00, IP_ACTIVE_LOW,  IPT_UNUSED )
 
 INPUT_PORTS_END

@@ -62,7 +62,7 @@ static void get_tile_info_0(int tile_index)
 			TMAP_GFX,
 			code,
 			attr & 0xf,
-			0)
+			(attr & 0x20) ? TILE_FLIPX : 0)
 }
 
 static void get_tile_info_1(int tile_index)
@@ -73,7 +73,7 @@ static void get_tile_info_1(int tile_index)
 			TMAP_GFX,
 			code,
 			attr & 0xf,
-			0)
+			(attr & 0x20) ? TILE_FLIPX : 0)
 }
 
 WRITE16_HANDLER( yunsun16_vram_0_w )
@@ -238,17 +238,5 @@ VIDEO_UPDATE( yunsun16 )
 	}
 
 	yunsun16_draw_sprites(bitmap,cliprect);
-
-	/* tilemap.c only copes with screen widths which are a multiple of 8 pixels */
-	if ( (Machine->drv->screen[0].maxwidth-1-Machine->visible_area[0].max_x) & 7 )
-	{
-		rectangle clip;
-		clip.min_x = Machine->visible_area[0].max_x+1;
-		clip.max_x = Machine->drv->screen[0].maxwidth-1;
-		clip.min_y = Machine->visible_area[0].min_y;
-		clip.max_y = Machine->visible_area[0].max_y;
-		sect_rect(&clip,cliprect);
-		fillbitmap(bitmap,Machine->pens[0],&clip);
-	}
 	return 0;
 }

@@ -744,3 +744,19 @@ VIDEO_UPDATE( disco )
     drawsprites(bitmap, btime_palette, 0, 0, spriteram, 1);
 	return 0;
 }
+
+VIDEO_UPDATE( progolf )
+{
+	if (get_vh_global_attribute_changed())
+        memset(dirtybuffer,1,videoram_size);
+
+	decode_modified(spriteram, 1);
+
+	drawchars(tmpbitmap, TRANSPARENCY_NONE, /*btime_palette*/0, -1);
+
+	/* copy the temporary bitmap to the screen */
+    copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+
+//  drawsprites(bitmap, 0/*btime_palette*/, 0, 0, spriteram, 1);
+	return 0;
+}

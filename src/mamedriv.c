@@ -1096,6 +1096,7 @@ const game_driver * const drivers[] =
 	DRIVER( galxwart )
 	DRIVER( starw )
 	DRIVER( lrescue )	/* LR  (c) 1979 Taito */
+	DRIVER( lrescuem )	/* Model Racing bootleg */
 	DRIVER( grescue )	/* bootleg? */
 	DRIVER( desterth )	/* bootleg */
 	DRIVER( cosmicmo )	/* Universal */
@@ -1746,6 +1747,8 @@ const game_driver * const drivers[] =
 	/* Taito Air System games */
 	DRIVER( topland )	/* B62 (c) 1988 Taito Coporation Japan (World) */
 	DRIVER( ainferno )	/* C45 (c) 1990 Taito America Corporation (US) */
+
+	DRIVER( mlanding )	/* ??? (c) 1990 Taito America Corporation (US) */
 
 	/* enhanced Z-System hardware games */
 	DRIVER( gunbustr )	/* D27 (c) 1992 Taito Corporation (Japan) */
@@ -2912,6 +2915,8 @@ V-V                           TP-027
 	DRIVER( sspacaho )	/* ? epr00001.bin - epr00008.bin */
 	DRIVER( headon )	/* 163-167/192-193 (c) Gremlin */
 	DRIVER( headonb )	/* 163-167/192-193 (c) Gremlin */
+	DRIVER( headons )	/* Sidam bootleg */
+	DRIVER( supcrash )	/* bootleg */
 	DRIVER( headon2 )	/* ???-??? (c) 1979 Sega */
 				/* ???-??? Fortress */
 				/* ???-??? Gee Bee */
@@ -2929,7 +2934,8 @@ V-V                           TP-027
 	DRIVER( carnival )	/* 651-666 (c) 1980 Sega */
 	DRIVER( carnvckt )	/* 501-516 (c) 1980 Sega */
 	DRIVER( brdrline )	/* (c) 1980 Sega */
-	DRIVER( brdrlinb )	/* bootleg */
+	DRIVER( brdrlins )	/* Sidam bootleg */
+	DRIVER( brdrlinb )	/* Karateco bootleg */
 	DRIVER( digger )	/* 684-691 no copyright notice */
 	DRIVER( pulsar )	/* 790-805 (c) 1981 Sega */
 	DRIVER( heiankyo )	/* (c) [1979?] Denki Onkyo */
@@ -3737,6 +3743,8 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( sstarbtl )	/* bootleg */
 	DRIVER( tomahawk )	/* (c) [1980?] */
 	DRIVER( tomahaw5 )	/* (c) [1980?] */
+	DRIVER( progolf )	/* (c) 1981 */
+	DRIVER( progolfa )	/* (c) 1981 */
 	DRIVER( prosoccr )	/* (c) 1983 */
 	DRIVER( prosport )	/* (c) 1983 */
 	DRIVER( boomrang )	/* (c) 1983 */
@@ -4604,6 +4612,10 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( cloaksp )	/* 136023           (c) 1983 */
 	DRIVER( cloakfr )	/* 136023           (c) 1983 */
 	DRIVER( cloakgr )	/* 136023           (c) 1983 */
+	DRIVER( agentx4 )	/* 136023           (c) 1983 */
+	DRIVER( agentx3 )	/* 136023           (c) 1983 */
+	DRIVER( agentx2 )	/* 136023           (c) 1983 */
+	DRIVER( agentx1 )	/* 136023           (c) 1983 */
 	DRIVER( cloud9 )	/* (proto)          (c) 1983 */
 	DRIVER( firebeas )	/* (proto)          (c) 1983 */
 	DRIVER( jedi )		/* 136030           (c) 1984 */
@@ -6937,6 +6949,9 @@ Other Sun games
 	DRIVER( eggventr )	/* (c) 1997 The Game Room */
 	DRIVER( eggvent7 )	/* (c) 1997 The Game Room */
 	DRIVER( eggvntdx )	/* (c) 1997 The Game Room */
+	DRIVER( ripribit )	/* (c) 1997 LAI Games */
+	DRIVER( cfarm )		/* (c) 1999 LAI Games */
+	DRIVER( cclown )	/* (c) 1999 LAI Games */
 	DRIVER( rotaryf )
 	DRIVER( sbugger )	/* (c) 1981 Game-A-Tron */
 	DRIVER( portrait )	/* (c) 1983 Olympia */
@@ -6963,6 +6978,7 @@ Other Sun games
 	DRIVER( fort2b )	/* (c) 2001 Eolith */
 	DRIVER( fort2ba )	/* (c) 2001 Eolith */
 	DRIVER( klondkp )	/* (c) 1999 Eolith */
+	DRIVER( hidctch3 )	/* (c) 2000 Eolith */
 	DRIVER( xfiles )	/* (c) 1999 dgPIX Entertainment Inc */
 	DRIVER( kdynastg )	/* (c) 1999 EZ Graphics */
 	DRIVER( fmaniac3 )	/* (c) 2002 Saero Entertainment */
@@ -7097,5 +7113,8 @@ Other Sun games
 	DRIVER( spinkick )	/* (c) 199? HEC */
 	DRIVER( 7mezzo )	/* (c) 198? Unknown */
 	DRIVER( magicfly )	/* (c) 198? P&A GAMES */
+	DRIVER( sb2003 )	/* (c) 2003 Limenko */
+	DRIVER( sb2003a )	/* (c) 2003 Limenko */
+	DRIVER( legendoh )	/* (c) 2003 Limenko */
 
 #endif	/* DRIVER_RECURSIVE */

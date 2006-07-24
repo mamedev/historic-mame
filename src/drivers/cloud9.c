@@ -13,14 +13,42 @@
 
 ****************************************************************************
 
-    Cloud9 (prototype) driver.
+    Horizontal sync chain:
+
+        Appears to be the same as Crystal Castles. See ccastles.c for
+        details.
+
+        Pixel clock = 5MHz
+        HBLANK ends at H = 0
+        HBLANK begins at H = 256
+        HSYNC begins at H = 260 (? unconfirmed)
+        HSYNC ends at H = 288 (? unconfirmed)
+        HTOTAL = 320
+
+    Vertical sync chain:
+
+        Appears to be similar to Crystal Castles. The PROM at 10E seems
+        to have a similar layout to the SYNC PROM used by Crystal
+        Castles. The standard PROM maps as follows:
+
+        VBLANK ends at V = 23
+        VBLANK begins at V = 255
+        VSYNC begins at V = 3
+        VSYNC ends at V = 6
+        VTOTAL = 256
+
+    Interrupts:
+
+        IRQ is clocked by /32V, so IRQs are generated a V = 0,64,128,192.
+
+****************************************************************************
 
     This hardware is very similar to Crystal Castles. The primary
     difference is the lack of banked ROM and the mapping of the bitmap
-    layer into the lower 20k instead of the lower 32k. In order to do this,
-    the split the bitmap into two banks. Bank 0 holds pixels 0,1,4,5,...
-    while bank 1 holds pixels 2,3,6,7,... This is all handled transparently
-    by bitmode.
+    layer into the lower 20k instead of the lower 32k. In order to do
+    this, they split the bitmap into two banks. Bank 0 holds pixels
+    0,1,4,5,... while bank 1 holds pixels 2,3,6,7,... This is all handled
+    transparently by bitmode.
 
     The lower 24 lines of video RAM are used for working RAM. This amounts
     to $600 bytes at $0000. In order to provide more work RAM, the write
@@ -112,6 +140,9 @@ static void clock_irq(int param)
 		cpunum_set_input_line(0, 0, ASSERT_LINE);
 		irq_state = 1;
 	}
+
+	/* force an update now */
+	force_partial_update(0, cpu_getscanline());
 
 	/* find the next edge */
 	schedule_next_irq(param);

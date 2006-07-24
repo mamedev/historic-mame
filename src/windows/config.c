@@ -275,7 +275,7 @@ static const options_entry windows_opts[] =
 	{ NULL,                       NULL,       OPTION_HEADER,     "VECTOR RENDERING OPTIONS" },
 	{ "antialias;aa",             "1",        OPTION_BOOLEAN,    "use antialiasing when drawing vectors" },
 	{ "beam",                     "1.0",      0,                 "set vector beam width" },
-	{ "flicker",                  "1.0",      0,                 "set vector flicker effect" },
+	{ "flicker",                  "0",        0,                 "set vector flicker effect" },
 
 	// artwork options
 	{ NULL,                       NULL,       OPTION_HEADER,     "ARTWORK OPTIONS" },

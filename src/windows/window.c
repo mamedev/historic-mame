@@ -1023,13 +1023,14 @@ static int complete_create(win_window_info *window)
 		minimize_window(window);
 	adjust_window_position_after_major_change(window);
 
-	// finish off by trying to initialize DirectX; if we fail, ignore it
-	if ((*draw.window_init)(window))
-		return 1;
-
 	// show the window
 	if (!window->fullscreen || window->fullscreen_safe)
+	{
+		// finish off by trying to initialize DirectX; if we fail, ignore it
+		if ((*draw.window_init)(window))
+			return 1;
 		ShowWindow(window->hwnd, SW_SHOW);
+	}
 
 	// clear the window
 	dc = GetDC(window->hwnd);
@@ -1210,10 +1211,11 @@ LRESULT CALLBACK winwindow_video_window_proc(HWND wnd, UINT message, WPARAM wpar
 			break;
 
 		// set focus: if we're not the primary window, switch back
-		case WM_SETFOCUS:
-			if (window != win_window_list && win_window_list != NULL)
-				SetFocus(win_window_list->hwnd);
-			break;
+		// commented out ATM because this prevents us from resizing secondary windows
+//      case WM_SETFOCUS:
+//          if (window != win_window_list && win_window_list != NULL)
+//              SetFocus(win_window_list->hwnd);
+//          break;
 
 		// everything else: defaults
 		default:
