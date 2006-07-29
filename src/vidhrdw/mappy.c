@@ -248,7 +248,7 @@ static void mappy_get_tile_info(int tile_index)
 VIDEO_START( superpac )
 {
 	bg_tilemap = tilemap_create(superpac_get_tile_info,superpac_tilemap_scan,TILEMAP_TRANSPARENT_COLOR,8,8,36,28);
-	sprite_bitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight);
+	sprite_bitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
 
 	if (!bg_tilemap || !sprite_bitmap)
 		return 1;

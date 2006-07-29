@@ -41,10 +41,10 @@ WRITE8_HANDLER( minivadr_videoram_w )
 	x = (offset % 32) * 8;
 	y = (offset / 32);
 
-	if (x >= Machine->visible_area[0].min_x &&
-			x <= Machine->visible_area[0].max_x &&
-			y >= Machine->visible_area[0].min_y &&
-			y <= Machine->visible_area[0].max_y)
+	if (x >= Machine->screen[0].visarea.min_x &&
+			x <= Machine->screen[0].visarea.max_x &&
+			y >= Machine->screen[0].visarea.min_y &&
+			y <= Machine->screen[0].visarea.max_y)
 	{
 		for (i = 0; i < 8; i++)
 		{
@@ -67,6 +67,6 @@ VIDEO_UPDATE( minivadr )
 		for (offs = 0; offs < videoram_size; offs++)
 			minivadr_videoram_w(offs,videoram[offs]);
 	}
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
 	return 0;
 }

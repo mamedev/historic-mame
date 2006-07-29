@@ -186,9 +186,15 @@ static void draw_framebuffer(mame_bitmap *bitmap, const rectangle *cliprect)
 	if ( (width != frame_width || height != frame_height) &&
 		 (width > 1 && height > 1 && width <= 640 && height <= 480) )
 	{
+		rectangle visarea;
+
 		frame_width = width;
 		frame_height = height;
-		set_visible_area(0, 0, frame_width-1, 0, frame_height-1);
+
+		visarea.min_x = visarea.min_y = 0;
+		visarea.max_x = width - 1;
+		visarea.max_y = height - 1;
+		configure_screen(0, width, height, &visarea, Machine->screen[0].refresh);
 	}
 
 	if (disp_ctrl_reg[DC_OUTPUT_CFG] & 0x1)		// 8-bit mode

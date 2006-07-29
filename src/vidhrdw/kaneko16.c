@@ -154,15 +154,15 @@ VIDEO_START( kaneko16_1xVIEW2 )
 
 	kaneko16_tmap_3 = 0;
 
-	if ((sprites_bitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight)) == 0)
+	if ((sprites_bitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height)) == 0)
 		return 1;
 
 	if (	!kaneko16_tmap_0 || !kaneko16_tmap_1	)
 		return 1;
 
 	{
-		int dx, xdim = Machine->drv->screen[0].maxwidth;
-		int dy, ydim = Machine->drv->screen[0].maxheight;
+		int dx, xdim = Machine->screen[0].width;
+		int dy, ydim = Machine->screen[0].height;
 
 		switch (xdim)
 		{
@@ -170,7 +170,7 @@ VIDEO_START( kaneko16_1xVIEW2 )
 			case 256:	dx = 0x5b;	break;
 			default:	dx = 0;
 		}
-		switch (Machine->visible_area[0].max_y - Machine->visible_area[0].min_y + 1)
+		switch (Machine->screen[0].visarea.max_y - Machine->screen[0].visarea.min_y + 1)
 		{
 			case 240- 8:	dy = +0x08;	break;	/* blazeon */
 			case 240-16:	dy = -0x08;	break;	/* berlwall, bakubrk */
@@ -206,8 +206,8 @@ VIDEO_START( kaneko16_2xVIEW2 )
 	if (	!kaneko16_tmap_2 || !kaneko16_tmap_3	)
 		return 1;
 	{
-		int dx, xdim = Machine->drv->screen[0].maxwidth;
-		int dy, ydim = Machine->drv->screen[0].maxheight;
+		int dx, xdim = Machine->screen[0].width;
+		int dy, ydim = Machine->screen[0].height;
 
 		switch (xdim)
 		{
@@ -215,7 +215,7 @@ VIDEO_START( kaneko16_2xVIEW2 )
 			case 256:	dx = 0x5b;	break;
 			default:	dx = 0;
 		}
-		switch (Machine->visible_area[0].max_y - Machine->visible_area[0].min_y + 1)
+		switch (Machine->screen[0].visarea.max_y - Machine->screen[0].visarea.min_y + 1)
 		{
 			case 240- 8:	dy = +0x08;	break;
 			case 240-16:	dy = -0x08;	break;
@@ -432,12 +432,12 @@ int kaneko16_parse_sprite_type012(int i, struct tempsprite *s)
 if (kaneko16_sprite_flipy)
 {
 	s->yoffs		-=		kaneko16_sprites_regs[0x2/2];
-	s->yoffs		-=		Machine->visible_area[0].min_y<<6;
+	s->yoffs		-=		Machine->screen[0].visarea.min_y<<6;
 }
 else
 {
 	s->yoffs		-=		kaneko16_sprites_regs[0x2/2];
-	s->yoffs		+=		Machine->visible_area[0].min_y<<6;
+	s->yoffs		+=		Machine->screen[0].visarea.min_y<<6;
 }
 
 	return 					( (attr & 0x2000) ? USE_LATCHED_XY    : 0 ) |
@@ -588,7 +588,7 @@ void kaneko16_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, int p
        in a temp buffer, then draw the buffer's contents from last
        to first. */
 
-	int max	=	(Machine->drv->screen[0].maxwidth > 0x100) ? (0x200<<6) : (0x100<<6);
+	int max	=	(Machine->screen[0].width > 0x100) ? (0x200<<6) : (0x100<<6);
 
 	int i = 0;
 	struct tempsprite *s = spritelist.first_sprite;
@@ -1007,7 +1007,7 @@ if ( code_pressed(KEYCODE_Z) ||
 	if (msk != 0) layers_ctrl &= msk;
 
 #if 0
-	ui_popup(
+	popmessage(
 		"%04X %04X %04X %04X %04X %04X %04X %04X - %04X %04X %04X %04X %04X %04X %04X %04X",
 		kaneko16_layers_0_regs[0x0],kaneko16_layers_0_regs[0x1],
 		kaneko16_layers_0_regs[0x2],kaneko16_layers_0_regs[0x3],

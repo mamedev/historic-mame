@@ -87,7 +87,7 @@ static void aquarium_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect,
 	{
 		char buf[80];
 		sprintf(buf,"sprite rotate offs %04x ?",rotate);
-		ui_popup(buf);
+		popmessage(buf);
 	}
 #endif
 }

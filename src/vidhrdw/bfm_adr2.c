@@ -93,6 +93,7 @@ E000-FFFF  | R | D D D D D D D D | 8K ROM
 #include "machine/vacfdisp.h"  // vfd
 #include "vidhrdw/bfm_adr2.h"
 #include "bfm_sc2.h"
+#include "ui.h"
 
 int adder2_show_alpha_display;	  // flag, set if alpha display need to be displayed
 

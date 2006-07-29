@@ -4976,7 +4976,7 @@ static void cmd_set_key_repeat( void )
 
 	dbg_key_repeat = dtou( &cmd, NULL );
 	if( dbg_key_repeat == 0 )
-		dbg_key_repeat = Machine->refresh_rate[0] / 15;
+		dbg_key_repeat = Machine->screen[0].refresh / 15;
 
 	edit_cmds_reset();
 	dbg_update = 1;
@@ -5137,7 +5137,7 @@ void mame_debug_init(void)
 	}
 
 	/* set keyboard repeat rate based on the game's frame rate */
-	dbg_key_repeat = Machine->refresh_rate[0] / 15;
+	dbg_key_repeat = Machine->screen[0].refresh / 15;
 
 	/* create windows for the active CPU */
 	dbg_open_windows();
@@ -5321,8 +5321,8 @@ void mame_debug_hook(void)
 			}
 			else
 			{
-				if (dbg_trace_delay != 0x7fffffff)
-					update_video_and_audio();
+//              if (dbg_trace_delay != 0x7fffffff)
+//                  update_video_and_audio();
 				debug_trace_delay = dbg_trace_delay;
 				if( debug_key_pressed )
 				{

@@ -189,7 +189,7 @@ static void seta2_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 		switch (num & 0x0700)
 		{
 			default:
-				ui_popup("unknown gfxset %x",(num & 0x0700)>>8);
+				popmessage("unknown gfxset %x",(num & 0x0700)>>8);
 				gfx = rand()&3; break;
 			case 0x0700: 	// 8bpp tiles (76543210)
 				gfx = 3; break;

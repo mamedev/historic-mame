@@ -98,7 +98,7 @@ static void psikyo4_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect,
 
 			if((!scr && flipscreen1) || (scr && flipscreen2))
 			{
-				ypos = Machine->visible_area[0].max_y+1 - ypos - high*16; /* Screen Height depends on game */
+				ypos = Machine->screen[0].visarea.max_y+1 - ypos - high*16; /* Screen Height depends on game */
 				xpos = 40*8 - xpos - wide*16;
 				flipx = !flipx;
 				flipy = !flipy;

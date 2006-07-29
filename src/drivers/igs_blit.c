@@ -217,7 +217,7 @@ static WRITE16_HANDLER( igs_blit_flags_w )
 	int gfx_size	=	memory_region_length(REGION_GFX1);
 	int gfx2_size	=	memory_region_length(REGION_GFX2);
 
-	rectangle clip	=	Machine->visible_area[0];
+	rectangle clip	=	Machine->screen[0].visarea;
 
 	COMBINE_DATA(&blitter.flags);
 
@@ -644,7 +644,7 @@ static WRITE16_HANDLER( chmplst2_magic_w )
 			if ( igs_input_sel2 & ~0x7f )
 				logerror("%06x: warning, unknown bits written in igs_input_sel2 = %02x\n", activecpu_get_pc(), igs_input_sel2);
 
-//          ui_popup("sel2 %02x",igs_input_sel2&~0x1f);
+//          popmessage("sel2 %02x",igs_input_sel2&~0x1f);
 			break;
 
 		case 0x02:
@@ -658,7 +658,7 @@ static WRITE16_HANDLER( chmplst2_magic_w )
 			if ( chmplst2_pen_hi & ~0xf )
 				logerror("%06x: warning, unknown bits written in chmplst2_pen_hi = %02x\n", activecpu_get_pc(), chmplst2_pen_hi);
 
-//          ui_popup("oki %02x",chmplst2_pen_hi & 0x08);
+//          popmessage("oki %02x",chmplst2_pen_hi & 0x08);
 			break;
 
 		default:
@@ -735,7 +735,7 @@ static WRITE16_HANDLER( chindrag_magic_w )
 			break;
 
 		default:
-//          ui_popup("magic %x <- %04x",igs_magic[0],data);
+//          popmessage("magic %x <- %04x",igs_magic[0],data);
 			logerror("%06x: warning, writing to igs_magic %02x = %02x\n", activecpu_get_pc(), igs_magic[0], data);
 	}
 }
@@ -799,7 +799,7 @@ static WRITE16_HANDLER( grtwall_magic_w )
 			if (data & ~0x11)
 				logerror("%06x: warning, unknown bits written in coin counter = %02x\n", activecpu_get_pc(), data);
 
-//          ui_popup("coin %02x",data);
+//          popmessage("coin %02x",data);
 			break;
 
 		default:
@@ -854,7 +854,7 @@ static WRITE16_HANDLER( lhb_okibank_w )
 	if ( data & (~0x200) )
 		logerror("%06x: warning, unknown bits written in oki bank = %02x\n", activecpu_get_pc(), data);
 
-//  ui_popup("oki %04x",data);
+//  popmessage("oki %04x",data);
 }
 
 static WRITE16_HANDLER( lhb_input2_w )
@@ -871,7 +871,7 @@ static WRITE16_HANDLER( lhb_input2_w )
 	if ( igs_input_sel2 & (~0x7f) )
 		logerror("%06x: warning, unknown bits written in igs_input_sel2 = %02x\n", activecpu_get_pc(), igs_input_sel2);
 
-//  ui_popup("sel2 %02x",igs_input_sel2&~0x1f);
+//  popmessage("sel2 %02x",igs_input_sel2&~0x1f);
 }
 
 static READ16_HANDLER( lhb_input2_r )
@@ -917,7 +917,7 @@ static WRITE16_HANDLER( vbowl_magic_w )
 			break;
 
 		default:
-//          ui_popup("magic %x <- %04x",igs_magic[0],data);
+//          popmessage("magic %x <- %04x",igs_magic[0],data);
 			logerror("%06x: warning, writing to igs_magic %02x = %02x\n", activecpu_get_pc(), igs_magic[0], data);
 	}
 }
@@ -981,7 +981,7 @@ static WRITE16_HANDLER( xymg_magic_w )
 			if ( igs_input_sel2 & ~0x3f )
 				logerror("%06x: warning, unknown bits written in igs_input_sel2 = %02x\n", activecpu_get_pc(), igs_input_sel2);
 
-//          ui_popup("sel2 %02x",igs_input_sel2&~0x1f);
+//          popmessage("sel2 %02x",igs_input_sel2&~0x1f);
 			break;
 
 		default:

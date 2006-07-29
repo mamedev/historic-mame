@@ -1291,7 +1291,7 @@ void K007121_sprites_draw(int chip,mame_bitmap *bitmap,const rectangle *cliprect
 	int is_flakatck = K007121_ctrlram[chip][0x06] & 0x04;	/* WRONG!!!! */
 
 #if 0
-ui_popup("%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x  %02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x",
+popmessage("%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x  %02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x",
 	K007121_ctrlram[0][0x00],K007121_ctrlram[0][0x01],K007121_ctrlram[0][0x02],K007121_ctrlram[0][0x03],K007121_ctrlram[0][0x04],K007121_ctrlram[0][0x05],K007121_ctrlram[0][0x06],K007121_ctrlram[0][0x07],
 	K007121_ctrlram[1][0x00],K007121_ctrlram[1][0x01],K007121_ctrlram[1][0x02],K007121_ctrlram[1][0x03],K007121_ctrlram[1][0x04],K007121_ctrlram[1][0x05],K007121_ctrlram[1][0x06],K007121_ctrlram[1][0x07]);
 
@@ -1302,7 +1302,7 @@ if (code_pressed(KEYCODE_D))
 	if (fp)
 	{
 		fwrite(source, 0x800, 1, fp);
-		ui_popup("saved");
+		popmessage("saved");
 		fclose(fp);
 	}
 }
@@ -1377,7 +1377,7 @@ if (code_pressed(KEYCODE_D))
 				case 0x08: width = height = 4; number &= (~3); break;
 				default: width = 1; height = 1;
 //                  logerror("Unknown sprite size %02x\n",attr&0xe);
-//                  ui_popup("Unknown sprite size %02x\n",attr&0xe);
+//                  popmessage("Unknown sprite size %02x\n",attr&0xe);
 			}
 
 			for (y = 0;y < height;y++)
@@ -1629,7 +1629,7 @@ void K007342_tilemap_update(void)
 			break;
 
 		default:
-//          ui_popup("unknown scroll ctrl %02x",K007342_regs[2] & 0x1c);
+//          popmessage("unknown scroll ctrl %02x",K007342_regs[2] & 0x1c);
 			break;
 	}
 
@@ -1644,7 +1644,7 @@ void K007342_tilemap_update(void)
 		tilemap_set_enable(K007342_tilemap[current_layer], 1);
 		tilemap_set_enable(K007342_tilemap[!current_layer], 0);
 
-		ui_popup("regs:%02x %02x %02x %02x-%02x %02x %02x %02x:%02x",
+		popmessage("regs:%02x %02x %02x %02x-%02x %02x %02x %02x:%02x",
 			K007342_regs[0], K007342_regs[1], K007342_regs[2], K007342_regs[3],
 			K007342_regs[4], K007342_regs[5], K007342_regs[6], K007342_regs[7],
 			current_layer);
@@ -1857,7 +1857,7 @@ void K007420_sprites_draw(mame_bitmap *bitmap,const rectangle *cliprect)
 		if (code_pressed_memory(KEYCODE_Z)) current_sprite = (current_sprite+1) & ((K007420_SPRITERAM_SIZE/8)-1);
 		if (code_pressed_memory(KEYCODE_X)) current_sprite = (current_sprite-1) & ((K007420_SPRITERAM_SIZE/8)-1);
 
-		ui_popup("%02x:%02x %02x %02x %02x %02x %02x %02x %02x", current_sprite,
+		popmessage("%02x:%02x %02x %02x %02x %02x %02x %02x %02x", current_sprite,
 			K007420_ram[(current_sprite*8)+0], K007420_ram[(current_sprite*8)+1],
 			K007420_ram[(current_sprite*8)+2], K007420_ram[(current_sprite*8)+3],
 			K007420_ram[(current_sprite*8)+4], K007420_ram[(current_sprite*8)+5],
@@ -2096,7 +2096,7 @@ else
 		addr = (code << 5) + (offset & 0x1f);
 		addr &= memory_region_length(K052109_memory_region)-1;
 
-//  ui_popup("%04x: off%04x sub%02x (bnk%x) adr%06x",activecpu_get_pc(),offset,K052109_romsubbank,bank,addr);
+//  popmessage("%04x: off%04x sub%02x (bnk%x) adr%06x",activecpu_get_pc(),offset,K052109_romsubbank,bank,addr);
 
 		return memory_region(K052109_memory_region)[addr];
 	}
@@ -2125,7 +2125,7 @@ WRITE8_HANDLER( K052109_w )
 		{
 			if (K052109_scrollctrl != data)
 			{
-//ui_popup("scrollcontrol = %02x",data);
+//popmessage("scrollcontrol = %02x",data);
 //logerror("%04x: rowscrollcontrol = %02x\n",activecpu_get_pc(),data);
 				K052109_scrollctrl = data;
 			}
@@ -2244,7 +2244,7 @@ void K052109_tilemap_update(void)
 {
 #if 0
 {
-ui_popup("%x %x %x %x",
+popmessage("%x %x %x %x",
 	K052109_charrombank[0],
 	K052109_charrombank[1],
 	K052109_charrombank[2],
@@ -2389,7 +2389,7 @@ if ((K052109_scrollctrl & 0x03) == 0x01 ||
 		((K052109_scrollctrl & 0x04) && (K052109_scrollctrl & 0x03)) ||
 		((K052109_scrollctrl & 0x20) && (K052109_scrollctrl & 0x18)) ||
 		(K052109_scrollctrl & 0xc0) != 0)
-	ui_popup("scrollcontrol = %02x",K052109_scrollctrl);
+	popmessage("scrollcontrol = %02x",K052109_scrollctrl);
 
 if (code_pressed(KEYCODE_F))
 {
@@ -2398,7 +2398,7 @@ if (code_pressed(KEYCODE_F))
 	if (fp)
 	{
 		fwrite(K052109_ram, 0x6000, 1, fp);
-		ui_popup("saved");
+		popmessage("saved");
 		fclose(fp);
 	}
 }
@@ -2485,7 +2485,7 @@ int K051960_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int 
 
 #if VERBOSE
 	if (!(Machine->drv->video_attributes & VIDEO_HAS_SHADOWS))
-		ui_popup("driver should use VIDEO_HAS_SHADOWS");
+		popmessage("driver should use VIDEO_HAS_SHADOWS");
 #endif
 
 	/* prepare shadow draw table */
@@ -2521,7 +2521,7 @@ static int K051960_fetchromdata(int byte)
 	addr = (code << 7) | (off1 << 2) | byte;
 	addr &= memory_region_length(K051960_memory_region)-1;
 
-//  ui_popup("%04x: addr %06x",activecpu_get_pc(),addr);
+//  popmessage("%04x: addr %06x",activecpu_get_pc(),addr);
 
 	return memory_region(K051960_memory_region)[addr];
 }
@@ -2581,7 +2581,7 @@ WRITE8_HANDLER( K051937_w )
 	if (offset == 0)
 	{
 
-//if (data & 0xc2) ui_popup("051937 reg 00 = %02x",data);
+//if (data & 0xc2) popmessage("051937 reg 00 = %02x",data);
 
 		/* bit 0 is IRQ enable */
 		K051960_irq_enabled = (data & 0x01);
@@ -2602,7 +2602,7 @@ WRITE8_HANDLER( K051937_w )
 	}
 	else if (offset == 1)
 	{
-//  ui_popup("%04x: write %02x to 051937 address %x",activecpu_get_pc(),data,offset);
+//  popmessage("%04x: write %02x to 051937 address %x",activecpu_get_pc(),data,offset);
 //logerror("%04x: write %02x to unknown 051937 address %x\n",activecpu_get_pc(),data,offset);
 	}
 	else if (offset >= 2 && offset < 5)
@@ -2611,7 +2611,7 @@ WRITE8_HANDLER( K051937_w )
 	}
 	else
 	{
-//  ui_popup("%04x: write %02x to 051937 address %x",activecpu_get_pc(),data,offset);
+//  popmessage("%04x: write %02x to 051937 address %x",activecpu_get_pc(),data,offset);
 //logerror("%04x: write %02x to unknown 051937 address %x\n",activecpu_get_pc(),data,offset);
 	}
 }
@@ -2825,7 +2825,7 @@ if (code_pressed(KEYCODE_D))
 	if (fp)
 	{
 		fwrite(K051960_ram, 0x400, 1, fp);
-		ui_popup("saved");
+		popmessage("saved");
 		fclose(fp);
 	}
 }
@@ -2981,7 +2981,7 @@ int K053245_vh_start(int chip, int gfx_memory_region,int plane0,int plane1,int p
 
 #if VERBOSE
 	if (!(Machine->drv->video_attributes & VIDEO_HAS_SHADOWS))
-		ui_popup("driver should use VIDEO_HAS_SHADOWS");
+		popmessage("driver should use VIDEO_HAS_SHADOWS");
 #endif
 
 	/* prepare shadow draw table */
@@ -3072,7 +3072,7 @@ UINT8 K053244_chip_r (int chip, int offset)
 			| ((offset & 3) ^ 1);
 		addr &= memory_region_length(K053245_memory_region[chip])-1;
 
-//  ui_popup("%04x: offset %02x addr %06x",activecpu_get_pc(),offset&3,addr);
+//  popmessage("%04x: offset %02x addr %06x",activecpu_get_pc(),offset&3,addr);
 
 		return memory_region(K053245_memory_region[chip])[addr];
 	}
@@ -3100,7 +3100,7 @@ void K053244_chip_w(int chip, int offset, int data)
 	switch(offset) {
 	case 0x05: {
 //      if (data & 0xc8)
-//          ui_popup("053244 reg 05 = %02x",data);
+//          popmessage("053244 reg 05 = %02x",data);
 		/* bit 2 = unknown, Parodius uses it */
 		/* bit 5 = unknown, Rollergames uses it */
 //      logerror("%04x: write %02x to 053244 address 5\n",activecpu_get_pc(),data);
@@ -3400,7 +3400,7 @@ if (code_pressed(KEYCODE_D))
 	if (fp)
 	{
 		fwrite(K053245_buffer, 0x800, 1, fp);
-		ui_popup("saved");
+		popmessage("saved");
 		fclose(fp);
 	}
 }
@@ -3629,7 +3629,7 @@ if (code_pressed(KEYCODE_D))
 	if (fp)
 	{
 		fwrite(K053245_buffer, 0x800, 1, fp);
-		ui_popup("saved");
+		popmessage("saved");
 		fclose(fp);
 	}
 }
@@ -3734,12 +3734,12 @@ int K053247_vh_start(int gfx_memory_region, int dx, int dy, int plane0,int plane
 	if (Machine->color_depth == 32)
 	{
 		if ((Machine->drv->video_attributes & (VIDEO_HAS_SHADOWS|VIDEO_HAS_HIGHLIGHTS)) != VIDEO_HAS_SHADOWS+VIDEO_HAS_HIGHLIGHTS)
-			ui_popup("driver missing SHADOWS or HIGHLIGHTS flag");
+			popmessage("driver missing SHADOWS or HIGHLIGHTS flag");
 	}
 	else
 	{
 		if (!(Machine->drv->video_attributes & VIDEO_HAS_SHADOWS))
-			ui_popup("driver should use VIDEO_HAS_SHADOWS");
+			popmessage("driver should use VIDEO_HAS_SHADOWS");
 	}
 #endif
 
@@ -3898,7 +3898,7 @@ int K055673_vh_start(int gfx_memory_region, int layout, int dx, int dy, void (*c
 
 #if VERBOSE
 	if (!(Machine->drv->video_attributes & VIDEO_HAS_SHADOWS))
-		ui_popup("driver should use VIDEO_HAS_SHADOWS");
+		popmessage("driver should use VIDEO_HAS_SHADOWS");
 #endif
 
 	/* prepare shadow draw table */
@@ -4089,7 +4089,7 @@ READ8_HANDLER( K053246_r )
 		addr = (K053246_regs[6] << 17) | (K053246_regs[7] << 9) | (K053246_regs[4] << 1) | ((offset & 1) ^ 1);
 		addr &= memory_region_length(K053247_memory_region)-1;
 #if VERBOSE
-	ui_popup("%04x: offset %02x addr %06x",activecpu_get_pc(),offset,addr);
+	popmessage("%04x: offset %02x addr %06x",activecpu_get_pc(),offset,addr);
 #endif
 		return memory_region(K053247_memory_region)[addr];
 	}
@@ -4202,7 +4202,7 @@ void K053247_sprites_draw(mame_bitmap *bitmap,const rectangle *cliprect) //*
 	int offy = (short)((K053246_regs[2] << 8) | K053246_regs[3]);
 
 	int solidpens = K053247_gfx->color_granularity - 1;
-	int screen_width = Machine->drv->screen[0].maxwidth;
+	int screen_width = Machine->screen[0].width;
 
 	/*
         safeguard older drivers missing any of the following video attributes:
@@ -4765,7 +4765,7 @@ int K051316_rom_r(int chip, int offset)
 		if (K051316_bpp[chip] <= 4) addr /= 2;
 		addr &= memory_region_length(K051316_memory_region[chip])-1;
 
-//  ui_popup("%04x: offset %04x addr %04x",activecpu_get_pc(),offset,addr);
+//  popmessage("%04x: offset %04x addr %04x",activecpu_get_pc(),offset,addr);
 
 		return memory_region(K051316_memory_region[chip])[addr];
 	}
@@ -4850,7 +4850,7 @@ void K051316_zoom_draw(int chip, mame_bitmap *bitmap,const rectangle *cliprect,i
 			flags,priority);
 
 #if 0
-	ui_popup("%02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x",
+	popmessage("%02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x",
 			K051316_ctrlram[chip][0x00],
 			K051316_ctrlram[chip][0x01],
 			K051316_ctrlram[chip][0x02],
@@ -4988,7 +4988,7 @@ static void K053936_zoom_draw(int chip,UINT16 *ctrl,UINT16 *linectrl,mame_bitmap
 
 #if 0
 if (code_pressed(KEYCODE_D))
-	ui_popup("%04x %04x %04x %04x\n%04x %04x %04x %04x\n%04x %04x %04x %04x\n%04x %04x %04x %04x",
+	popmessage("%04x %04x %04x %04x\n%04x %04x %04x %04x\n%04x %04x %04x %04x\n%04x %04x %04x %04x",
 			ctrl[0x00],
 			ctrl[0x01],
 			ctrl[0x02],
@@ -7312,10 +7312,10 @@ void K054338_fill_backcolor(mame_bitmap *bitmap, int mode) // (see p.67)
 	UINT32 *dst_ptr, *pal_ptr;
 	register int bgcolor;
 
-	clipx = Machine->visible_area[0].min_x & ~3;
-	clipy = Machine->visible_area[0].min_y;
-	clipw = (Machine->visible_area[0].max_x - clipx + 4) & ~3;
-	cliph = Machine->visible_area[0].max_y - clipy + 1;
+	clipx = Machine->screen[0].visarea.min_x & ~3;
+	clipy = Machine->screen[0].visarea.min_y;
+	clipw = (Machine->screen[0].visarea.max_x - clipx + 4) & ~3;
+	cliph = Machine->screen[0].visarea.max_y - clipy + 1;
 
 	dst_ptr = (UINT32 *)bitmap->line[clipy];
 	dst_pitch = bitmap->rowpixels;
@@ -7427,7 +7427,7 @@ int K054338_set_alpha_level(int pblend)
 		alpha_set_level(mixlv);
 
 		#if VERBOSE
-			ui_popup("MIXSET%1d %s addition mode: %02x",pblend,(mixpri)?"dst":"src",mixset&0x1f);
+			popmessage("MIXSET%1d %s addition mode: %02x",pblend,(mixpri)?"dst":"src",mixset&0x1f);
 		#endif
 	}
 
@@ -7817,7 +7817,7 @@ void K053250_draw(mame_bitmap *bitmap, const rectangle *cliprect, int chip, int 
 	static int pmode[2] = {-1,-1};
 	static int kc=-1, kk=0, kxx=-105, kyy=0;
 
-	const rectangle area = Machine->visible_area[0];
+	const rectangle area = Machine->screen[0].visarea;
 	UINT16 *line;
 	int delta, dim1, dim1_max, dim2_max;
 	UINT32 mask1, mask2;
@@ -7902,7 +7902,7 @@ void K053250_draw(mame_bitmap *bitmap, const rectangle *cliprect, int chip, int 
 #if 0
 		if(kx) {
 			UINT16 *l1 = line + ((4*kc) & 0x7ff);
-			ui_popup("Line %d [%02x] (%04x %04x %04x %04x)", kc,
+			popmessage("Line %d [%02x] (%04x %04x %04x %04x)", kc,
 								K053250_info.chip[chip].regs[4],
 								l1[0],
 								l1[1],
@@ -7911,7 +7911,7 @@ void K053250_draw(mame_bitmap *bitmap, const rectangle *cliprect, int chip, int 
 		}
 
 		if(kkc)
-			ui_popup("(%d, %d)", kxx, kyy);
+			popmessage("(%d, %d)", kxx, kyy);
 #endif
 	}
 

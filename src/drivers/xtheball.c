@@ -184,7 +184,7 @@ static WRITE16_HANDLER( bit_controls_w )
 		}
 		bitvals[offset] = data & 1;
 	}
-//  ui_popup("%d%d%d%d-%d%d%d%d--%d%d%d%d-%d%d%d%d",
+//  popmessage("%d%d%d%d-%d%d%d%d--%d%d%d%d-%d%d%d%d",
 /*
         bitvals[0],
         bitvals[1],

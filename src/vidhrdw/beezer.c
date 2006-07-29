@@ -19,16 +19,16 @@ VIDEO_UPDATE( beezer )
 	int x, y;
 
 	if (get_vh_global_attribute_changed())
-		for (y = Machine->visible_area[0].min_y; y <= Machine->visible_area[0].max_y; y+=2)
+		for (y = Machine->screen[0].visarea.min_y; y <= Machine->screen[0].visarea.max_y; y+=2)
 		{
-			for (x = Machine->visible_area[0].min_x; x <= Machine->visible_area[0].max_x; x++)
+			for (x = Machine->screen[0].visarea.min_x; x <= Machine->screen[0].visarea.max_x; x++)
 			{
 				plot_pixel (tmpbitmap, x, y+1, Machine->pens[videoram[0x80*y+x] & 0x0f]);
 				plot_pixel (tmpbitmap, x, y, Machine->pens[(videoram[0x80*y+x] >> 4)& 0x0f]);
 			}
 		}
 
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
 	return 0;
 }
 
@@ -71,7 +71,7 @@ WRITE8_HANDLER( beezer_ram_w )
 	x = offset % 0x100;
 	y = (offset / 0x100) * 2;
 
-	if( (y >= Machine->visible_area[0].min_y) && (y <= Machine->visible_area[0].max_y) )
+	if( (y >= Machine->screen[0].visarea.min_y) && (y <= Machine->screen[0].visarea.max_y) )
 	{
 		plot_pixel (tmpbitmap, x, y+1, Machine->pens[data & 0x0f]);
 		plot_pixel (tmpbitmap, x, y, Machine->pens[(data >> 4)& 0x0f]);

@@ -39,7 +39,7 @@ PALETTE_INIT( snk_3bpp_shadow )
 	palette_init_RRRR_GGGG_BBBB(colortable, color_prom);
 
 	if(!(Machine->drv->video_attributes & VIDEO_HAS_SHADOWS))
-		ui_popup("driver should use VIDEO_HAS_SHADOWS");
+		popmessage("driver should use VIDEO_HAS_SHADOWS");
 
 	/* prepare shadow draw table */
 	for(i = 0; i <= 5; i++) gfx_drawmode_table[i] = DRAWMODE_SOURCE;
@@ -54,7 +54,7 @@ PALETTE_INIT( snk_4bpp_shadow )
 	palette_init_RRRR_GGGG_BBBB(colortable, color_prom);
 
 	if(!(Machine->drv->video_attributes & VIDEO_HAS_SHADOWS))
-		ui_popup("driver should use VIDEO_HAS_SHADOWS");
+		popmessage("driver should use VIDEO_HAS_SHADOWS");
 
 	/* prepare shadow draw table */
 	for(i = 0; i <= 13; i++) gfx_drawmode_table[i] = DRAWMODE_SOURCE;
@@ -83,7 +83,7 @@ static void tnk3_draw_background( mame_bitmap *bitmap, int scrollx, int scrolly,
 					int x_size, int y_size, int bg_type )
 {
 	const gfx_element *gfx = Machine->gfx[1];
-	rectangle *clip = &Machine->visible_area[0];
+	rectangle *clip = &Machine->screen[0].visarea;
 
 	int tile_number, attributes, color, sx, sy;
 	int offs, x, y;
@@ -125,7 +125,7 @@ static void tnk3_draw_background( mame_bitmap *bitmap, int scrollx, int scrolly,
 void tnk3_draw_text( mame_bitmap *bitmap, int bank, UINT8 *source )
 {
 	const gfx_element *gfx = Machine->gfx[0];
-	rectangle *clip = &Machine->visible_area[0];
+	rectangle *clip = &Machine->screen[0].visarea;
 
 	int tile_number, color, sx, sy;
 	int x, y;
@@ -152,7 +152,7 @@ void tnk3_draw_text( mame_bitmap *bitmap, int bank, UINT8 *source )
 void tnk3_draw_status_main( mame_bitmap *bitmap, int bank, UINT8 *source, int start )
 {
 	const gfx_element *gfx = Machine->gfx[0];
-	rectangle *clip = &Machine->visible_area[0];
+	rectangle *clip = &Machine->screen[0].visarea;
 
 	int tile_number, color, sx, sy;
 	int x, y;
@@ -184,7 +184,7 @@ void tnk3_draw_status( mame_bitmap *bitmap, int bank, UINT8 *source )
 void tnk3_draw_sprites( mame_bitmap *bitmap, int xscroll, int yscroll )
 {
 	const gfx_element *gfx = Machine->gfx[2];
-	rectangle *clip = &Machine->visible_area[0];
+	rectangle *clip = &Machine->screen[0].visarea;
 
 	int tile_number, attributes, color, sx, sy;
 	int offs;
@@ -270,7 +270,7 @@ VIDEO_START( sgladiat )
 static void sgladiat_draw_background( mame_bitmap *bitmap, int scrollx, int scrolly )
 {
 	const gfx_element *gfx = Machine->gfx[1];
-	rectangle *clip = &Machine->visible_area[0];
+	rectangle *clip = &Machine->screen[0].visarea;
 
 	int tile_number, color, sx, sy;
 	int offs, x, y;
@@ -322,7 +322,7 @@ VIDEO_UPDATE( sgladiat )
 static void ikari_draw_sprites( mame_bitmap *bitmap, int start, int xscroll, int yscroll,
 				UINT8 *source, int mode )
 {
-	rectangle *clip = &Machine->visible_area[0];
+	rectangle *clip = &Machine->screen[0].visarea;
 	gfx_element *gfx = Machine->gfx[mode];
 	int tile_number, attributes, color, sx, sy;
 	int which, finish;
@@ -394,7 +394,7 @@ static void tdfever_draw_bg( mame_bitmap *bitmap, int xscroll, int yscroll )
 {
 	const UINT8 *source = snk_rambase + 0x000;
 	const gfx_element *gfx = Machine->gfx[1];
-	rectangle *clip = &Machine->visible_area[0];
+	rectangle *clip = &Machine->screen[0].visarea;
 
 	int tile_number, attributes, color, sx, sy;
 	int offs, x, y;
@@ -453,7 +453,7 @@ static void tdfever_draw_sp( mame_bitmap *bitmap, int xscroll, int yscroll, int 
 {
 	const UINT8 *source = snk_rambase + ((mode==2)?0x1800:0x1000);
 	const gfx_element *gfx = Machine->gfx[(mode==1)?3:2];
-	rectangle *clip = &Machine->visible_area[0];
+	rectangle *clip = &Machine->screen[0].visarea;
 	int tile_number, attributes, sx, sy, color, pen_mode;
 	int which, finish, sp_size;
 
@@ -508,7 +508,7 @@ static void tdfever_draw_tx( mame_bitmap *bitmap, int attributes, int dx, int dy
 {
 	const UINT8 *source = snk_rambase - 0xd000 + base;
 	const gfx_element *gfx = Machine->gfx[0];
-	rectangle *clip = &Machine->visible_area[0];
+	rectangle *clip = &Machine->screen[0].visarea;
 
 	int tile_high = (attributes & 0xf0) << 4;
 	int color = attributes & 0xf;

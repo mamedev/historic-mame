@@ -289,7 +289,7 @@ WRITE8_HANDLER( nbmj8891_romsel_w )
 	if ((0x20000 * nbmj8891_gfxrom) > (memory_region_length(REGION_GFX1) - 1))
 	{
 #ifdef MAME_DEBUG
-		ui_popup("GFXROM BANK OVER!!");
+		popmessage("GFXROM BANK OVER!!");
 #endif
 		nbmj8891_gfxrom &= (memory_region_length(REGION_GFX1) / 0x20000 - 1);
 	}
@@ -310,14 +310,14 @@ void nbmj8891_vramflip(int vram)
 
 	vidram = vram ? nbmj8891_videoram1 : nbmj8891_videoram0;
 
-	for (y = 0; y < (Machine->drv->screen[0].maxheight / 2); y++)
+	for (y = 0; y < (Machine->screen[0].height / 2); y++)
 	{
-		for (x = 0; x < Machine->drv->screen[0].maxwidth; x++)
+		for (x = 0; x < Machine->screen[0].width; x++)
 		{
-			color1 = vidram[(y * Machine->drv->screen[0].maxwidth) + x];
-			color2 = vidram[((y ^ 0xff) * Machine->drv->screen[0].maxwidth) + (x ^ 0x1ff)];
-			vidram[(y * Machine->drv->screen[0].maxwidth) + x] = color2;
-			vidram[((y ^ 0xff) * Machine->drv->screen[0].maxwidth) + (x ^ 0x1ff)] = color1;
+			color1 = vidram[(y * Machine->screen[0].width) + x];
+			color2 = vidram[((y ^ 0xff) * Machine->screen[0].width) + (x ^ 0x1ff)];
+			vidram[(y * Machine->screen[0].width) + x] = color2;
+			vidram[((y ^ 0xff) * Machine->screen[0].width) + (x ^ 0x1ff)] = color1;
 		}
 	}
 
@@ -328,13 +328,13 @@ void nbmj8891_vramflip(int vram)
 
 static void update_pixel0(int x, int y)
 {
-	UINT8 color = nbmj8891_videoram0[(y * Machine->drv->screen[0].maxwidth) + x];
+	UINT8 color = nbmj8891_videoram0[(y * Machine->screen[0].width) + x];
 	plot_pixel(nbmj8891_tmpbitmap0, x, y, Machine->pens[color]);
 }
 
 static void update_pixel1(int x, int y)
 {
-	UINT8 color = nbmj8891_videoram1[(y * Machine->drv->screen[0].maxwidth) + x];
+	UINT8 color = nbmj8891_videoram1[(y * Machine->screen[0].width) + x];
 	plot_pixel(nbmj8891_tmpbitmap1, x, y, Machine->pens[color]);
 }
 
@@ -392,7 +392,7 @@ static void nbmj8891_gfxdraw(void)
 			if ((gfxaddr > (memory_region_length(REGION_GFX1) - 1)))
 			{
 #ifdef MAME_DEBUG
-				ui_popup("GFXROM ADDRESS OVER!!");
+				popmessage("GFXROM ADDRESS OVER!!");
 #endif
 				gfxaddr &= (memory_region_length(REGION_GFX1) - 1);
 			}
@@ -450,12 +450,12 @@ static void nbmj8891_gfxdraw(void)
 				// layer 1
 				if (color1 != 0xff)
 				{
-					nbmj8891_videoram0[(dy1 * Machine->drv->screen[0].maxwidth) + dx1] = color1;
+					nbmj8891_videoram0[(dy1 * Machine->screen[0].width) + dx1] = color1;
 					update_pixel0(dx1, dy1);
 				}
 				if (color2 != 0xff)
 				{
-					nbmj8891_videoram0[(dy1 * Machine->drv->screen[0].maxwidth) + dx2] = color2;
+					nbmj8891_videoram0[(dy1 * Machine->screen[0].width) + dx2] = color2;
 					update_pixel0(dx2, dy1);
 				}
 			}
@@ -467,21 +467,21 @@ static void nbmj8891_gfxdraw(void)
 					// transparent enable
 					if (color1 != 0xff)
 					{
-						nbmj8891_videoram1[(dy2 * Machine->drv->screen[0].maxwidth) + dx1] = color1;
+						nbmj8891_videoram1[(dy2 * Machine->screen[0].width) + dx1] = color1;
 						update_pixel1(dx1, dy2);
 					}
 					if (color2 != 0xff)
 					{
-						nbmj8891_videoram1[(dy2 * Machine->drv->screen[0].maxwidth) + dx2] = color2;
+						nbmj8891_videoram1[(dy2 * Machine->screen[0].width) + dx2] = color2;
 						update_pixel1(dx2, dy2);
 					}
 				}
 				else
 				{
 					// transparent disable
-					nbmj8891_videoram1[(dy2 * Machine->drv->screen[0].maxwidth) + dx1] = color1;
+					nbmj8891_videoram1[(dy2 * Machine->screen[0].width) + dx1] = color1;
 					update_pixel1(dx1, dy2);
-					nbmj8891_videoram1[(dy2 * Machine->drv->screen[0].maxwidth) + dx2] = color2;
+					nbmj8891_videoram1[(dy2 * Machine->screen[0].width) + dx2] = color2;
 					update_pixel1(dx2, dy2);
 				}
 			}
@@ -503,11 +503,11 @@ VIDEO_START( nbmj8891_1layer )
 	unsigned char *CLUT = memory_region(REGION_USER1);
 	int i;
 
-	if ((nbmj8891_tmpbitmap0 = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight)) == 0) return 1;
-	nbmj8891_videoram0 = auto_malloc(Machine->drv->screen[0].maxwidth * Machine->drv->screen[0].maxheight * sizeof(char));
+	if ((nbmj8891_tmpbitmap0 = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height)) == 0) return 1;
+	nbmj8891_videoram0 = auto_malloc(Machine->screen[0].width * Machine->screen[0].height * sizeof(char));
 	nbmj8891_palette = auto_malloc(0x200 * sizeof(char));
 	nbmj8891_clut = auto_malloc(0x800 * sizeof(char));
-	memset(nbmj8891_videoram0, 0xff, (Machine->drv->screen[0].maxwidth * Machine->drv->screen[0].maxheight * sizeof(char)));
+	memset(nbmj8891_videoram0, 0xff, (Machine->screen[0].width * Machine->screen[0].height * sizeof(char)));
 	gfxdraw_mode = 0;
 
 	if (nb1413m3_type == NB1413M3_TAIWANMB)
@@ -518,14 +518,14 @@ VIDEO_START( nbmj8891_1layer )
 
 VIDEO_START( nbmj8891_2layer )
 {
-	if ((nbmj8891_tmpbitmap0 = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight)) == 0) return 1;
-	if ((nbmj8891_tmpbitmap1 = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight)) == 0) return 1;
-	nbmj8891_videoram0 = auto_malloc(Machine->drv->screen[0].maxwidth * Machine->drv->screen[0].maxheight * sizeof(UINT8));
-	nbmj8891_videoram1 = auto_malloc(Machine->drv->screen[0].maxwidth * Machine->drv->screen[0].maxheight * sizeof(UINT8));
+	if ((nbmj8891_tmpbitmap0 = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height)) == 0) return 1;
+	if ((nbmj8891_tmpbitmap1 = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height)) == 0) return 1;
+	nbmj8891_videoram0 = auto_malloc(Machine->screen[0].width * Machine->screen[0].height * sizeof(UINT8));
+	nbmj8891_videoram1 = auto_malloc(Machine->screen[0].width * Machine->screen[0].height * sizeof(UINT8));
 	nbmj8891_palette = auto_malloc(0x200 * sizeof(UINT8));
 	nbmj8891_clut = auto_malloc(0x800 * sizeof(UINT8));
-	memset(nbmj8891_videoram0, 0xff, (Machine->drv->screen[0].maxwidth * Machine->drv->screen[0].maxheight * sizeof(UINT8)));
-	memset(nbmj8891_videoram1, 0xff, (Machine->drv->screen[0].maxwidth * Machine->drv->screen[0].maxheight * sizeof(UINT8)));
+	memset(nbmj8891_videoram0, 0xff, (Machine->screen[0].width * Machine->screen[0].height * sizeof(UINT8)));
+	memset(nbmj8891_videoram1, 0xff, (Machine->screen[0].width * Machine->screen[0].height * sizeof(UINT8)));
 	Machine->pens[0x07f] = 0xff;	/* palette_transparent_pen */
 	gfxdraw_mode = 1;
 	return 0;
@@ -542,18 +542,18 @@ VIDEO_UPDATE( nbmj8891 )
 	if (get_vh_global_attribute_changed() || nbmj8891_screen_refresh)
 	{
 		nbmj8891_screen_refresh = 0;
-		for (y = 0; y < Machine->drv->screen[0].maxheight; y++)
+		for (y = 0; y < Machine->screen[0].height; y++)
 		{
-			for (x = 0; x < Machine->drv->screen[0].maxwidth; x++)
+			for (x = 0; x < Machine->screen[0].width; x++)
 			{
 				update_pixel0(x, y);
 			}
 		}
 		if (gfxdraw_mode)
 		{
-			for (y = 0; y < Machine->drv->screen[0].maxheight; y++)
+			for (y = 0; y < Machine->screen[0].height; y++)
 			{
-				for (x = 0; x < Machine->drv->screen[0].maxwidth; x++)
+				for (x = 0; x < Machine->screen[0].width; x++)
 				{
 					update_pixel1(x, y);
 				}
@@ -569,12 +569,12 @@ VIDEO_UPDATE( nbmj8891 )
 
 		if (gfxdraw_mode)
 		{
-			copyscrollbitmap(bitmap, nbmj8891_tmpbitmap0, 0, 0, 0, 0, &Machine->visible_area[0], TRANSPARENCY_NONE, 0);
-			copyscrollbitmap(bitmap, nbmj8891_tmpbitmap1, 0, 0, 1, &scrolly, &Machine->visible_area[0], TRANSPARENCY_PEN, Machine->pens[0xff]);
+			copyscrollbitmap(bitmap, nbmj8891_tmpbitmap0, 0, 0, 0, 0, &Machine->screen[0].visarea, TRANSPARENCY_NONE, 0);
+			copyscrollbitmap(bitmap, nbmj8891_tmpbitmap1, 0, 0, 1, &scrolly, &Machine->screen[0].visarea, TRANSPARENCY_PEN, Machine->pens[0xff]);
 		}
 		else
 		{
-			copyscrollbitmap(bitmap, nbmj8891_tmpbitmap0, 0, 0, 1, &scrolly, &Machine->visible_area[0], TRANSPARENCY_NONE, 0);
+			copyscrollbitmap(bitmap, nbmj8891_tmpbitmap0, 0, 0, 1, &scrolly, &Machine->screen[0].visarea, TRANSPARENCY_NONE, 0);
 		}
 	}
 	else

@@ -129,6 +129,7 @@ struct _running_machine
 
 	/* video-related information */
 	gfx_element *			gfx[MAX_GFX_ELEMENTS];/* array of pointers to graphic sets (chars, sprites) */
+	screen_state			screen[MAX_SCREENS];/* current screen state */
 	rectangle 				visible_area[MAX_SCREENS]; /* current visible area */
 	float					refresh_rate[MAX_SCREENS]; /* current video refresh rate */
 	pen_t *					pens;				/* remapped palette pen numbers */
@@ -143,13 +144,6 @@ struct _running_machine
 	input_port_entry *		input_ports;		/* the input ports definition from the driver is copied here and modified */
 	mame_file *				record_file;		/* recording file (NULL if not recording) */
 	mame_file *				playback_file;		/* playback file (NULL if not recording) */
-
-#ifndef NEW_RENDER
-	rectangle				absolute_visible_area;
-
-	/* ui-related information */
-	int 					ui_orientation;		/* user interface orientation */
-#endif
 
 	/* debugger-related information */
 	int						debug_mode;			/* was debug mode enabled? */
@@ -169,9 +163,7 @@ struct _running_machine
 
 
 /***************************************************************************
-
-    Options passed from the frontend to the main core
-
+    OPTIONS PASSED FROM THE FRONTEND
 ***************************************************************************/
 
 #ifdef MESS
@@ -199,43 +191,33 @@ struct _global_options
 	mame_file *	language_file;	/* handle to file for localization */
 	mame_file *	logfile;		/* handle to file for debug logging */
 
-	int		mame_debug;		/* 1 to enable debugging */
-	int		cheat;			/* 1 to enable cheating */
-	int 	gui_host;		/* 1 to tweak some UI-related things for better GUI integration */
-	int 	skip_disclaimer;	/* 1 to skip the disclaimer screen at startup */
-	int 	skip_gameinfo;		/* 1 to skip the game info screen at startup */
-	int 	skip_warnings;		/* 1 to skip the warnings screen at startup */
+	UINT8		mame_debug;		/* 1 to enable debugging */
+	UINT8		cheat;			/* 1 to enable cheating */
+	UINT8 		skip_disclaimer;/* 1 to skip the disclaimer screen at startup */
+	UINT8 		skip_gameinfo;	/* 1 to skip the game info screen at startup */
+	UINT8 		skip_warnings;	/* 1 to skip the warnings screen at startup */
 
-	int		samplerate;		/* sound sample playback rate, in Hz */
-	int		use_samples;	/* 1 to enable external .wav samples */
+	int			samplerate;		/* sound sample playback rate, in Hz */
+	UINT8		use_samples;	/* 1 to enable external .wav samples */
 
-	float	brightness;		/* default brightness of the display */
-	float	contrast;		/* default brightness of the display */
-	float	gamma;			/* default gamma correction of the display */
-	float	pause_bright;	/* fractional brightness when in pause */
+	float		brightness;		/* default brightness of the display */
+	float		contrast;		/* default brightness of the display */
+	float		gamma;			/* default gamma correction of the display */
+	float		pause_bright;	/* fractional brightness when in pause */
 
-	int		beam;			/* vector beam width */
-	float	vector_flicker;	/* vector beam flicker effect control */
-	int 	antialias;		/* 1 to enable antialiasing on vectors */
+	int			beam;			/* vector beam width */
+	float		vector_flicker;	/* vector beam flicker effect control */
+	UINT8 		antialias;		/* 1 to enable antialiasing on vectors */
 
-	const char * savegame;	/* string representing a savegame to load; if one length then interpreted as a character */
-	int		auto_save;		/* 1 to automatically save/restore at startup/quitting time */
-	char *	bios;			/* specify system bios (if used), 0 is default */
+	const char * savegame;		/* string representing a savegame to load; if one length then interpreted as a character */
+	UINT8		auto_save;		/* 1 to automatically save/restore at startup/quitting time */
+	char *		bios;			/* specify system bios (if used), 0 is default */
 
-	int		debug_width;	/* requested width of debugger bitmap */
-	int		debug_height;	/* requested height of debugger bitmap */
-	int		debug_depth;	/* requested depth of debugger bitmap */
+	int			debug_width;	/* requested width of debugger bitmap */
+	int			debug_height;	/* requested height of debugger bitmap */
+	int			debug_depth;	/* requested depth of debugger bitmap */
 
 	const char *controller;	/* controller-specific cfg to load */
-
-#ifndef NEW_RENDER
-	int		vector_width;	/* requested width for vector games; 0 means default (640) */
-	int		vector_height;	/* requested height for vector games; 0 means default (480) */
-	int		ui_orientation;	/* orientation of the UI relative to the video */
-	int		artwork_res;	/* 1 for 1x game scaling, 2 for 2x */
-	int		use_artwork;	/* bitfield indicating which artwork pieces to use */
-	int		artwork_crop;	/* 1 to crop artwork to the game screen */
-#endif
 
 #ifdef MESS
 	UINT32	ram;
@@ -250,9 +232,7 @@ struct _global_options
 
 
 /***************************************************************************
-
-    Globals referencing the current machine and the global options
-
+    GLOBALS
 ***************************************************************************/
 
 extern global_options options;
@@ -339,6 +319,9 @@ UINT32 memory_region_flags(int num);
 
 
 /* ----- miscellaneous bits & pieces ----- */
+
+/* pop-up a user visible message */
+void CLIB_DECL popmessage(const char *text,...) ATTR_PRINTF(1,2);
 
 /* log to the standard error.log file */
 void CLIB_DECL logerror(const char *text,...) ATTR_PRINTF(1,2);

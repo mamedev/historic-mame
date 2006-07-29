@@ -371,7 +371,7 @@ static int blitter_drawgfx( int layer, int mask, int gfx, int src, int pen, int 
 	else
 		pen = (pen >> 4) & 0xf;
 
-if (flags & 0xf4) ui_popup("flags %02x",flags);
+if (flags & 0xf4) popmessage("flags %02x",flags);
 	if ( flags & 1 )
 	{
 		int start,len;
@@ -439,7 +439,7 @@ if (flags & 0xf4) ui_popup("flags %02x",flags);
 	{
 		if (src >= ROM_size)
 		{
-ui_popup("GFXROM OVER %08x",src);
+popmessage("GFXROM OVER %08x",src);
 			return src;
 		}
 		cmd = ROM[src++];
@@ -459,12 +459,12 @@ ui_popup("GFXROM OVER %08x",src);
 			break;
 
 		case 0xe:	// unused ? was "change dest mask" in the "rev1" blitter
-			ui_popup("Blitter unknown command %06X: %02X\n", src-1, cmd);
+			popmessage("Blitter unknown command %06X: %02X\n", src-1, cmd);
 
 		case 0xd:	// Skip X pixels
 			if (src >= ROM_size)
 			{
-ui_popup("GFXROM OVER %08x",src);
+popmessage("GFXROM OVER %08x",src);
 				return src;
 			}
 			x = sx + ROM[src++];
@@ -473,7 +473,7 @@ ui_popup("GFXROM OVER %08x",src);
 		case 0xc:	// Draw N pixels
 			if (src >= ROM_size)
 			{
-ui_popup("GFXROM OVER %08x",src);
+popmessage("GFXROM OVER %08x",src);
 				return src;
 			}
 			cmd = ROM[src++];
@@ -1082,7 +1082,7 @@ static int debug_viewer(mame_bitmap *bitmap,const rectangle *cliprect)
 			blitter_drawgfx(0,1,REGION_GFX1,i,0,cliprect->min_x,cliprect->min_y,3,0);
 		if (layer_layout != LAYOUT_MJDIALQ2)	hanamai_copylayer(bitmap, cliprect, 0);
 		else									mjdialq2_copylayer(bitmap,cliprect, 0);
-		ui_popup("%06X C%02X",i,c);
+		popmessage("%06X C%02X",i,c);
 
 		return 1;
 	}
@@ -1110,7 +1110,7 @@ VIDEO_UPDATE( hanamai )
 
 	switch (hanamai_priority)
 	{
-		default:	ui_popup("unknown priority %02x",hanamai_priority);
+		default:	popmessage("unknown priority %02x",hanamai_priority);
 		case 0x10:	lay[0] = 0; lay[1] = 1; lay[2] = 2; lay[3] = 3; break;
 		case 0x11:	lay[0] = 0; lay[1] = 3; lay[2] = 2; lay[3] = 1; break;
 		case 0x12:	lay[0] = 0; lay[1] = 1; lay[2] = 3; lay[3] = 2; break;
@@ -1145,7 +1145,7 @@ VIDEO_UPDATE( hnoridur )
 
 	if (pri > 7)
 	{
-		ui_popup("unknown priority %02x",hanamai_priority);
+		popmessage("unknown priority %02x",hanamai_priority);
 		pri = 0;
 	}
 

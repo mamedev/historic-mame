@@ -22,7 +22,7 @@ static void mark_all_dirty(void)
 
 VIDEO_START( volfied )
 {
-	pixel_layer = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
+	pixel_layer = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
 	if (pixel_layer == NULL)
 		return 1;
 
@@ -125,11 +125,11 @@ static void refresh_pixel_layer(void)
 		p += 0x20000;
 	}
 
-	for (y = 0; y < Machine->drv->screen[0].maxheight; y++)
+	for (y = 0; y < Machine->screen[0].height; y++)
 	{
 		if (line_dirty[y])
 		{
-			for (x = 1; x < Machine->drv->screen[0].maxwidth + 1; x++) // Hmm, 1 pixel offset is needed to align properly with sprites
+			for (x = 1; x < Machine->screen[0].width + 1; x++) // Hmm, 1 pixel offset is needed to align properly with sprites
 			{
 				int color = (p[x] << 2) & 0x700;
 

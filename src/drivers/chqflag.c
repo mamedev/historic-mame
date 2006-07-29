@@ -112,7 +112,7 @@ static WRITE8_HANDLER( chqflag_vreg_w )
 	}
 
 //if ((data & 0xf8) && (data & 0xf8) != 0x88)
-//  ui_popup("chqflag_vreg_w %02x",data);
+//  popmessage("chqflag_vreg_w %02x",data);
 
 
 	/* other bits unknown. bit 5 is used. */

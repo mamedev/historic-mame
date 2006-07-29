@@ -73,7 +73,7 @@ VIDEO_UPDATE( ace )
 	}
 
 	/* first of all, fill the screen with the background color */
-	fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area[0]);
+	fillbitmap(bitmap, Machine->pens[0], &Machine->screen[0].visarea);
 
 
 		drawgfx(bitmap,Machine->gfx[1],
@@ -81,21 +81,21 @@ VIDEO_UPDATE( ace )
 				0,
 				0,0,
 				objpos[0],objpos[1],
-				&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+				&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
 
 		drawgfx(bitmap,Machine->gfx[2],
 				0,
 				0,
 				0,0,
 				objpos[2],objpos[3],
-				&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+				&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
 
 		drawgfx(bitmap,Machine->gfx[3],
 				0,
 				0,
 				0,0,
 				objpos[4],objpos[5],
-				&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+				&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
 
 	for (offs = 0; offs < 8; offs++)
 	{
@@ -104,7 +104,7 @@ VIDEO_UPDATE( ace )
 				0,
 				0,0,
 				10*8+offs*16,256-16, /* ?? */
-				&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+				&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
 	}
 	return 0;
 }
@@ -129,7 +129,7 @@ static WRITE8_HANDLER( ace_characterram_w )
 		if (data&(~0x07))
 		{
 			logerror("write to %04x data=%02x\n", 0x8000+offset, data);
-			ui_popup("write to %04x data=%02x\n", 0x8000+offset, data);
+			popmessage("write to %04x data=%02x\n", 0x8000+offset, data);
 		}
 		ace_characterram[offset] = data;
 	}

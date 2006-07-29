@@ -485,7 +485,7 @@ static WRITE8_HANDLER( srmp3_input_1_w )
 		else if (data == 0x49) qqq49++;
 		else qqqzz++;
 
-//      ui_popup("%04X %04X %04X %04X", qqq01, qqq02, qqq49, qqqzz);
+//      popmessage("%04X %04X %04X %04X", qqq01, qqq02, qqq49, qqqzz);
 	}
 }
 

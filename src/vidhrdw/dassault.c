@@ -133,7 +133,7 @@ static void dassault_drawsprites(mame_bitmap *bitmap, int pf_priority)
 						colour,
 						fx,fy,
 						x,y + mult * multi,
-						&Machine->visible_area[0],trans,0,pmask,1<<bank, 1);
+						&Machine->screen[0].visarea,trans,0,pmask,1<<bank, 1);
 
 				multi--;
 			}
@@ -174,8 +174,8 @@ VIDEO_UPDATE( dassault )
 
 	/* Draw playfields/update priority bitmap */
 	deco16_clear_sprite_priority_bitmap();
-	fillbitmap(priority_bitmap,0,&Machine->visible_area[0]);
-	fillbitmap(bitmap,Machine->pens[3072],&Machine->visible_area[0]);
+	fillbitmap(priority_bitmap,0,&Machine->screen[0].visarea);
+	fillbitmap(bitmap,Machine->pens[3072],&Machine->screen[0].visarea);
 	deco16_tilemap_4_draw(bitmap,cliprect,TILEMAP_IGNORE_TRANSPARENCY,0);
 
 	/* The middle playfields can be swapped priority-wise */

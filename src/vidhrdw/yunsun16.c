@@ -153,8 +153,8 @@ static void yunsun16_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs;
 
-	int max_x		=	Machine->visible_area[0].max_x+1;
-	int max_y		=	Machine->visible_area[0].max_y+1;
+	int max_x		=	Machine->screen[0].visarea.max_x+1;
+	int max_y		=	Machine->screen[0].visarea.max_y+1;
 
 	int pri			=	*yunsun16_priority & 3;
 	int pri_mask;
@@ -214,7 +214,7 @@ VIDEO_UPDATE( yunsun16 )
 	tilemap_set_scrollx(tilemap_1, 0, yunsun16_scroll_1[ 0 ]);
 	tilemap_set_scrolly(tilemap_1, 0, yunsun16_scroll_1[ 1 ]);
 
-//  ui_popup("%04X", *yunsun16_priority);
+//  popmessage("%04X", *yunsun16_priority);
 
 	fillbitmap(priority_bitmap,0,cliprect);
 

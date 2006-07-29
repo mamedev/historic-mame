@@ -788,7 +788,7 @@ static void seta_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 
 		if (flip)
 		{
-			y = (0x100 - Machine->drv->screen[0].maxheight) + max_y - y;
+			y = (0x100 - Machine->screen[0].height) + max_y - y;
 			flipx = !flipx;
 			flipy = !flipy;
 		}
@@ -849,7 +849,7 @@ VIDEO_UPDATE( seta )
 	int order	= 	0;
 	int flip	=	(spriteram16[ 0x600/2 ] & 0x40) >> 6;
 
-	int vis_dimy = Machine->visible_area[0].max_y - Machine->visible_area[0].min_y + 1;
+	int vis_dimy = Machine->screen[0].visarea.max_y - Machine->screen[0].visarea.min_y + 1;
 
 	flip ^= tilemaps_flip;
 
@@ -918,8 +918,8 @@ if (code_pressed(KEYCODE_Z))
 	if (code_pressed(KEYCODE_A))	msk |= 8;
 	if (msk != 0) layers_ctrl &= msk;
 
-	if (tilemap_2)		ui_popup("VR:%04X-%04X-%04X L0:%04X L1:%04X",seta_vregs[0],seta_vregs[1],seta_vregs[2],seta_vctrl_0[4/2],seta_vctrl_2[4/2]);
-	else if (tilemap_0)	ui_popup("L0:%04X",seta_vctrl_0[4/2]);
+	if (tilemap_2)		popmessage("VR:%04X-%04X-%04X L0:%04X L1:%04X",seta_vregs[0],seta_vregs[1],seta_vregs[2],seta_vctrl_0[4/2],seta_vctrl_2[4/2]);
+	else if (tilemap_0)	popmessage("L0:%04X",seta_vctrl_0[4/2]);
 }
 #endif
 

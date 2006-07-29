@@ -764,7 +764,7 @@ VIDEO_START( atari )
 	LOG(("atari prio_init\n"));
     prio_init();
 
-	for( i = 0; i < Machine->drv->screen[0].maxheight; i++ )
+	for( i = 0; i < Machine->screen[0].height; i++ )
     {
 		antic.video[i] = auto_malloc(sizeof(VIDEO));
 		memset(antic.video[i], 0, sizeof(VIDEO));
@@ -788,15 +788,12 @@ VIDEO_UPDATE( atari )
 	if( tv_artifacts != new_tv_artifacts )
 	{
 		tv_artifacts = new_tv_artifacts;
-		schedule_full_refresh();
 	}
 	if( atari_frame_counter > 0 )
 	{
 		if( --atari_frame_counter )
 		{
-			int width, height;
-			ui_get_bounds(&width, &height);
-			ui_draw_text(atari_frame_message, 0, height - 10);
+//          ui_draw_text(atari_frame_message, 0, height - 10);
 		}
 	}
 	return 0;
@@ -961,7 +958,7 @@ static void antic_linerefresh(void)
 	UINT32 scanline[4 + (HCHARS * 2) + 4];
 
 	/* increment the scanline */
-    if( ++antic.scanline == Machine->drv->screen[0].maxheight )
+    if( ++antic.scanline == Machine->screen[0].height )
     {
         /* and return to the top if the frame was complete */
         antic.scanline = 0;
@@ -1064,7 +1061,7 @@ static void antic_linerefresh(void)
 #if VERBOSE
 static int cycle(void)
 {
-	return cpu_gethorzbeampos() * CYCLES_PER_LINE / Machine->drv->screen[0].maxwidth;
+	return cpu_gethorzbeampos() * CYCLES_PER_LINE / Machine->screen[0].width;
 }
 #endif
 
@@ -1367,7 +1364,7 @@ static void antic_scanline_dma(int param)
                         /* produce empty scanlines until vblank start */
 						antic.modelines = VBL_START + 1 - antic.scanline;
 						if( antic.modelines < 0 )
-							antic.modelines = Machine->drv->screen[0].maxheight - antic.scanline;
+							antic.modelines = Machine->screen[0].height - antic.scanline;
 						LOG(("           JVB $%04x\n", antic.dpage|antic.doffs));
 					}
 					else
@@ -1531,7 +1528,7 @@ static void generic_atari_interrupt(void (*handle_keyboard)(void), int button_co
 		handle_keyboard();
 
 		/* do nothing new for the rest of the frame */
-		antic.modelines = Machine->drv->screen[0].maxheight - VBL_START;
+		antic.modelines = Machine->screen[0].height - VBL_START;
 		antic_renderer = antic_mode_0_xx;
 
 		/* if the CPU want's to be interrupted at vertical blank... */

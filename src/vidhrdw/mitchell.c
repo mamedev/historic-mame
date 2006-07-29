@@ -167,7 +167,7 @@ logerror("PC %04x: pang_gfxctrl_w %02x\n",activecpu_get_pc(),data);
 {
 	char baf[40];
 	sprintf(baf,"%02x",data);
-//  ui_popup(baf);
+//  popmessage(baf);
 }
 
 	/* bit 0 is unknown (used, maybe back color enable?) */
@@ -202,7 +202,7 @@ logerror("PC %04x: pang_gfxctrl_w %02x\n",activecpu_get_pc(),data);
 {
 	char baf[40];
 	sprintf(baf,"%02x",data);
-//  ui_popup(baf);
+//  popmessage(baf);
 }
 
 	/* bit 0 is unknown (used, maybe back color enable?) */

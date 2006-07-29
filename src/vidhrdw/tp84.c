@@ -236,14 +236,14 @@ VIDEO_START( tp84 )
 static void tp84_draw_sprites(mame_bitmap *bitmap)
 {
 	const gfx_element *gfx = Machine->gfx[1];
-	rectangle clip = Machine->visible_area[0];
+	rectangle clip = Machine->screen[0].visarea;
 	int offs;
 	int line;
 	int coloffset = ((col0&0x07) << 4);
 
 	for (line = 0;line < 256;line++)
 	{
-		if (line >= Machine->visible_area[0].min_y && line <= Machine->visible_area[0].max_y)
+		if (line >= Machine->screen[0].visarea.min_y && line <= Machine->screen[0].visarea.max_y)
 		{
 			UINT8 *sr;
 
@@ -280,23 +280,23 @@ VIDEO_UPDATE( tp84 )
 {
 	rectangle clip;
 
-	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->screen[0].visarea, bg_tilemap, 0, 0);
 	tp84_draw_sprites(bitmap);
 
 	/* draw top fg_tilemap status layer part */
-	clip.min_x = Machine->visible_area[0].min_x;
-	clip.max_x = Machine->visible_area[0].min_x+15;
-	clip.min_y = Machine->visible_area[0].min_y;
-	clip.max_y = Machine->visible_area[0].max_y;
+	clip.min_x = Machine->screen[0].visarea.min_x;
+	clip.max_x = Machine->screen[0].visarea.min_x+15;
+	clip.min_y = Machine->screen[0].visarea.min_y;
+	clip.max_y = Machine->screen[0].visarea.max_y;
 	tilemap_draw(bitmap, &clip, fg_tilemap, 0, 0);
 
 	/* the middle part of fg_tilemap seems to be used as normal ram and is skipped */
 
 	/* draw bottom fg_tilemap status layer part */
-	clip.min_x = Machine->visible_area[0].max_x-15;
-	clip.max_x = Machine->visible_area[0].max_x;
-	clip.min_y = Machine->visible_area[0].min_y;
-	clip.max_y = Machine->visible_area[0].max_y;
+	clip.min_x = Machine->screen[0].visarea.max_x-15;
+	clip.max_x = Machine->screen[0].visarea.max_x;
+	clip.min_y = Machine->screen[0].visarea.min_y;
+	clip.max_y = Machine->screen[0].visarea.max_y;
 	tilemap_draw(bitmap, &clip, fg_tilemap, 0, 0);
 	return 0;
 }

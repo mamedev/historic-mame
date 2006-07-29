@@ -108,13 +108,13 @@ static void arkanoid_draw_sprites( mame_bitmap *bitmap )
 				((spriteram[offs + 2] & 0xf8) >> 3) + 32 * palettebank,
 				flip_screen_x,flip_screen_y,
 				sx,sy + (flip_screen_y ? 8 : -8),
-				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+				&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 		drawgfx(bitmap,Machine->gfx[0],
 				2 * code + 1,
 				((spriteram[offs + 2] & 0xf8) >> 3) + 32 * palettebank,
 				flip_screen_x,flip_screen_y,
 				sx,sy,
-				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+				&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 	}
 }
 
@@ -127,7 +127,7 @@ static void arkanoid_draw_sprites( mame_bitmap *bitmap )
 ***************************************************************************/
 VIDEO_UPDATE( arkanoid )
 {
-	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->screen[0].visarea, bg_tilemap, 0, 0);
 	arkanoid_draw_sprites(bitmap);
 	return 0;
 }

@@ -72,7 +72,7 @@ static void taitob_video_control (unsigned char data)
 {
 #if 0
 	if (data != video_control)
-		ui_popup("video control = %02x",data);
+		popmessage("video control = %02x",data);
 #endif
 
 	video_control = data;
@@ -526,7 +526,7 @@ profiler_mark(PROFILER_USER1);
 
 		if (video_control & 0x10)   /*flip screen*/
 		{
-			/*ui_popup("1. X[%3i;%3i] Y[%3i;%3i]", myclip.min_x, myclip.max_x, myclip.min_y, myclip.max_y);*/
+			/*popmessage("1. X[%3i;%3i] Y[%3i;%3i]", myclip.min_x, myclip.max_x, myclip.min_y, myclip.max_y);*/
 			for (y = myclip.min_y;y <= myclip.max_y;y++)
 			{
 				UINT16 *src = ((UINT16 *)framebuffer[framebuffer_page]->line[y]) + myclip.min_x;
@@ -568,7 +568,7 @@ profiler_mark(PROFILER_USER1);
 	{
 		if (video_control & 0x10)   /*flip screen*/
 		{
-			/*ui_popup("3. X[%3i;%3i] Y[%3i;%3i]", myclip.min_x, myclip.max_x, myclip.min_y, myclip.max_y);*/
+			/*popmessage("3. X[%3i;%3i] Y[%3i;%3i]", myclip.min_x, myclip.max_x, myclip.min_y, myclip.max_y);*/
 			for (y = myclip.min_y;y <= myclip.max_y;y++)
 			{
 				UINT16 *src = ((UINT16 *)framebuffer[framebuffer_page]->line[y]) + myclip.min_x;
@@ -644,11 +644,11 @@ VIDEO_UPDATE( taitob )
 VIDEO_EOF( taitob )
 {
   if (~video_control & 0x01)
-    fillbitmap(framebuffer[framebuffer_page],0,&Machine->visible_area[0]);
+    fillbitmap(framebuffer[framebuffer_page],0,&Machine->screen[0].visarea);
 
   if (~video_control & 0x80)
     framebuffer_page ^= 1;
 
-  taitob_draw_sprites(framebuffer[framebuffer_page],&Machine->visible_area[0]);
+  taitob_draw_sprites(framebuffer[framebuffer_page],&Machine->screen[0].visarea);
 }
 

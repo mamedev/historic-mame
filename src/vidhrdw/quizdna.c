@@ -206,6 +206,6 @@ VIDEO_UPDATE( quizdna )
 		tilemap_draw(bitmap, cliprect, quizdna_fg_tilemap, 0, 0);
 	}
 	else
-		fillbitmap(bitmap, get_black_pen(), &Machine->visible_area[0]);
+		fillbitmap(bitmap, get_black_pen(), &Machine->screen[0].visarea);
 	return 0;
 }

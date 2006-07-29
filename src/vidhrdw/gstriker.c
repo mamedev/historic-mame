@@ -251,10 +251,10 @@ void MB60553_draw(int numchip, mame_bitmap* screen, const rectangle* cliprect, i
 
 
 
-	clip.min_x = Machine->visible_area[0].min_x;
-	clip.max_x = Machine->visible_area[0].max_x;
-	clip.min_y = Machine->visible_area[0].min_y;
-	clip.max_y = Machine->visible_area[0].max_y;
+	clip.min_x = Machine->screen[0].visarea.min_x;
+	clip.max_x = Machine->screen[0].visarea.max_x;
+	clip.min_y = Machine->screen[0].visarea.min_y;
+	clip.max_y = Machine->screen[0].visarea.max_y;
 
 	for (line = 0; line < 224;line++)
 	{
@@ -546,14 +546,14 @@ VIDEO_UPDATE(gstriker)
 	CG10103_draw(0, bitmap, cliprect, 1);
 
 #if 0
-	ui_popup("%04x %04x %04x %04x %04x %04x %04x %04x",
+	popmessage("%04x %04x %04x %04x %04x %04x %04x %04x",
 		(UINT16)MB60553[0].regs[0], (UINT16)MB60553[0].regs[1], (UINT16)MB60553[0].regs[2], (UINT16)MB60553[0].regs[3],
 		(UINT16)MB60553[0].regs[4], (UINT16)MB60553[0].regs[5], (UINT16)MB60553[0].regs[6], (UINT16)MB60553[0].regs[7]
 	);
 #endif
 
 #if 0
-	ui_popup("%04x %04x %04x %04x %04x %04x %04x %04x",
+	popmessage("%04x %04x %04x %04x %04x %04x %04x %04x",
 		(UINT16)gs_mixer_regs[8], (UINT16)gs_mixer_regs[9], (UINT16)gs_mixer_regs[10], (UINT16)gs_mixer_regs[11],
 		(UINT16)gs_mixer_regs[12], (UINT16)gs_mixer_regs[13], (UINT16)gs_mixer_regs[14], (UINT16)gs_mixer_regs[15]
 	);

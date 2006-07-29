@@ -126,7 +126,7 @@ static void mixer_update(void *param, stream_sample_t **inputs, stream_sample_t 
 
 
 /***************************************************************************
-    INLINES
+    INLINE FUNCTIONS
 ***************************************************************************/
 
 /*-------------------------------------------------
@@ -797,7 +797,7 @@ int sound_scalebufferpos(int value)
 	/* clamp to protect against negative time */
 	if (elapsed.seconds < 0)
 		elapsed = time_zero;
-	result = (int)((double)value * mame_time_to_double(elapsed) * Machine->refresh_rate[0]);
+	result = (int)((double)value * mame_time_to_double(elapsed) * Machine->screen[0].refresh);
 
 	if (value >= 0)
 		return (result < value) ? result : value;

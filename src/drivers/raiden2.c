@@ -417,7 +417,7 @@ VIDEO_UPDATE (raiden2)
 			fg_col--;
 		}
 		if(mod || code_pressed(KEYCODE_L)) {
-			ui_popup("b:%x.%x m:%x.%x f:%x.%x %d%d%d", bg_bank, bg_col, mid_bank, mid_col, fg_bank, fg_col, info_1, info_2, info_3);
+			popmessage("b:%x.%x m:%x.%x f:%x.%x %d%d%d", bg_bank, bg_col, mid_bank, mid_col, fg_bank, fg_col, info_1, info_2, info_3);
 			tilemap_mark_all_tiles_dirty(background_layer);
 			tilemap_mark_all_tiles_dirty(midground_layer);
 			tilemap_mark_all_tiles_dirty(foreground_layer);

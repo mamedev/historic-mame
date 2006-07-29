@@ -69,7 +69,7 @@ VIDEO_START( system18 )
 		return 1;
 
 	/* create a temp bitmap to draw the VDP data into */
-	tempbitmap = auto_bitmap_alloc_depth(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight, 16);
+	tempbitmap = auto_bitmap_alloc_depth(Machine->screen[0].width, Machine->screen[0].height, 16);
 	if (!tempbitmap)
 		return 1;
 	return 0;

@@ -246,7 +246,7 @@ VIDEO_UPDATE( royalmah )
 			royalmah_videoram_w(offs, videoram[offs]);
 		}
 	}
-	copybitmap(bitmap,tmpbitmap,flip_screen_x,flip_screen_y,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,flip_screen_x,flip_screen_y,0,0,&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
 	return 0;
 }
 

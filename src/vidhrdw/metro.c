@@ -601,8 +601,8 @@ void metro_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 	unsigned char *base_gfx	=	memory_region(region);
 	unsigned char *gfx_max	=	base_gfx + memory_region_length(region);
 
-	int max_x				=	Machine->drv->screen[0].maxwidth;
-	int max_y				=	Machine->drv->screen[0].maxheight;
+	int max_x				=	Machine->screen[0].width;
+	int max_y				=	Machine->screen[0].height;
 
 	int max_sprites			=	spriteram_size / 8;
 	int sprites				=	metro_videoregs[0x00/2] % max_sprites;
@@ -803,17 +803,17 @@ void metro_tilemap_draw	(mame_bitmap *bitmap, const rectangle *cliprect, tilemap
 		clip.max_x	=	clip.min_x + (WIN_NX-1)*8 - 1;
 		clip.max_y	=	clip.min_y + (WIN_NY-1)*8 - 1;
 
-		if (clip.min_x > Machine->visible_area[0].max_x)	continue;
-		if (clip.min_y > Machine->visible_area[0].max_y)	continue;
+		if (clip.min_x > Machine->screen[0].visarea.max_x)	continue;
+		if (clip.min_y > Machine->screen[0].visarea.max_y)	continue;
 
-		if (clip.max_x < Machine->visible_area[0].min_x)	continue;
-		if (clip.max_y < Machine->visible_area[0].min_y)	continue;
+		if (clip.max_x < Machine->screen[0].visarea.min_x)	continue;
+		if (clip.max_y < Machine->screen[0].visarea.min_y)	continue;
 
-		if (clip.min_x < Machine->visible_area[0].min_x)	clip.min_x = Machine->visible_area[0].min_x;
-		if (clip.max_x > Machine->visible_area[0].max_x)	clip.max_x = Machine->visible_area[0].max_x;
+		if (clip.min_x < Machine->screen[0].visarea.min_x)	clip.min_x = Machine->screen[0].visarea.min_x;
+		if (clip.max_x > Machine->screen[0].visarea.max_x)	clip.max_x = Machine->screen[0].visarea.max_x;
 
-		if (clip.min_y < Machine->visible_area[0].min_y)	clip.min_y = Machine->visible_area[0].min_y;
-		if (clip.max_y > Machine->visible_area[0].max_y)	clip.max_y = Machine->visible_area[0].max_y;
+		if (clip.min_y < Machine->screen[0].visarea.min_y)	clip.min_y = Machine->screen[0].visarea.min_y;
+		if (clip.max_y > Machine->screen[0].visarea.max_y)	clip.max_y = Machine->screen[0].visarea.max_y;
 
 		/* The clip region's width must be a multiple of 8!
            This fact renderes the function useless, as far as
@@ -910,8 +910,8 @@ VIDEO_UPDATE( metro )
 		free(dirtyindex);
 	}
 
-	metro_sprite_xoffs	=	metro_videoregs[0x06/2] - Machine->drv->screen[0].maxwidth  / 2;
-	metro_sprite_yoffs	=	metro_videoregs[0x04/2] - Machine->drv->screen[0].maxheight / 2;
+	metro_sprite_xoffs	=	metro_videoregs[0x06/2] - Machine->screen[0].width  / 2;
+	metro_sprite_yoffs	=	metro_videoregs[0x04/2] - Machine->screen[0].height / 2;
 
 	/* The background color is selected by a register */
 	fillbitmap(priority_bitmap,0,cliprect);
@@ -959,7 +959,7 @@ if (code_pressed(KEYCODE_Z))
 	{	fillbitmap(bitmap,0,cliprect);
 		layers_ctrl &= msk;	}
 
-	ui_popup("l %x-%x-%x r %04x %04x %04x",
+	popmessage("l %x-%x-%x r %04x %04x %04x",
 				(metro_videoregs[0x10/2]&0x30)>>4,(metro_videoregs[0x10/2]&0xc)>>2,metro_videoregs[0x10/2]&3,
 				metro_videoregs[0x02/2], metro_videoregs[0x12/2],
 				*metro_screenctrl);					}

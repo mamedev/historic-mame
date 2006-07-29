@@ -276,25 +276,25 @@ READ32_HANDLER( policetr_video_r )
 	{
 		/* latch 0x00 is player 1's gun X coordinate */
 		case 0x00:
-			inputval = ((readinputport(3) & 0xff) * Machine->drv->screen[0].maxwidth) >> 8;
+			inputval = ((readinputport(3) & 0xff) * Machine->screen[0].width) >> 8;
 			inputval += 0x50;
 			return (inputval << 20) | 0x20000000;
 
 		/* latch 0x01 is player 1's gun Y coordinate */
 		case 0x01:
-			inputval = ((readinputport(4) & 0xff) * Machine->drv->screen[0].maxheight) >> 8;
+			inputval = ((readinputport(4) & 0xff) * Machine->screen[0].height) >> 8;
 			inputval += 0x17;
 			return (inputval << 20);
 
 		/* latch 0x02 is player 2's gun X coordinate */
 		case 0x02:
-			inputval = ((readinputport(5) & 0xff) * Machine->drv->screen[0].maxwidth) >> 8;
+			inputval = ((readinputport(5) & 0xff) * Machine->screen[0].width) >> 8;
 			inputval += 0x50;
 			return (inputval << 20) | 0x20000000;
 
 		/* latch 0x03 is player 2's gun Y coordinate */
 		case 0x03:
-			inputval = ((readinputport(6) & 0xff) * Machine->drv->screen[0].maxheight) >> 8;
+			inputval = ((readinputport(6) & 0xff) * Machine->screen[0].height) >> 8;
 			inputval += 0x17;
 			return (inputval << 20);
 
@@ -364,13 +364,13 @@ VIDEO_UPDATE( policetr )
 		draw_scanline8(bitmap, cliprect->min_x, y, width, &dstbitmap[DSTBITMAP_WIDTH * y + cliprect->min_x], NULL, -1);
 
 	/* draw player 1's crosshair */
-	beamx = ((readinputport(3) & 0xff) * Machine->drv->screen[0].maxwidth) >> 8;
-	beamy = ((readinputport(4) & 0xff) * Machine->drv->screen[0].maxheight) >> 8;
+	beamx = ((readinputport(3) & 0xff) * Machine->screen[0].width) >> 8;
+	beamy = ((readinputport(4) & 0xff) * Machine->screen[0].height) >> 8;
 	draw_crosshair(bitmap, beamx, beamy, cliprect, 0);
 
 	/* draw player 2's crosshair */
-	beamx = ((readinputport(5) & 0xff) * Machine->drv->screen[0].maxwidth) >> 8;
-	beamy = ((readinputport(6) & 0xff) * Machine->drv->screen[0].maxheight) >> 8;
+	beamx = ((readinputport(5) & 0xff) * Machine->screen[0].width) >> 8;
+	beamy = ((readinputport(6) & 0xff) * Machine->screen[0].height) >> 8;
 	draw_crosshair(bitmap, beamx, beamy, cliprect, 1);
 	return 0;
 }

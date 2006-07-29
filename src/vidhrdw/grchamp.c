@@ -268,7 +268,7 @@ static int collision_check( mame_bitmap *bitmap, int which )
 {
 	int bgcolor = Machine->pens[0];
 	int sprite_transp = Machine->pens[0x24];
-	const rectangle *clip = &Machine->visible_area[0];
+	const rectangle *clip = &Machine->screen[0].visarea;
 	int y0 = 240-grchamp_player_ypos;
 	int x0 = 256-grchamp_player_xpos;
 	int x,y,sx,sy;

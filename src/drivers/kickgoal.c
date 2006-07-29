@@ -130,7 +130,7 @@ static void kickgoal_play(int melody, int data)
 	int status = OKIM6295_status_0_r(0);
 
 	logerror("Playing sample %01x:%02x from command %02x\n",kickgoal_snd_bank,kickgoal_sound,data);
-	if (kickgoal_sound == 0) ui_popup("Unknown sound command %02x",kickgoal_sound);
+	if (kickgoal_sound == 0) popmessage("Unknown sound command %02x",kickgoal_sound);
 
 	if (melody) {
 		if (kickgoal_melody != kickgoal_sound) {
@@ -341,7 +341,7 @@ static INTERRUPT_GEN( kickgoal_interrupt )
 			m6295_bank += 0x01;
 			m6295_bank &= 0x03;
 			if (m6295_bank == 0x03) m6295_bank = 0x00;
-			ui_popup("Changing Bank to %02x",m6295_bank);
+			popmessage("Changing Bank to %02x",m6295_bank);
 			OKIM6295_set_bank_base(0, ((m6295_bank) * 0x40000));
 
 			if (m6295_key_delay == 0xffff) m6295_key_delay = 0x00;
@@ -357,7 +357,7 @@ static INTERRUPT_GEN( kickgoal_interrupt )
 			m6295_bank -= 0x01;
 			m6295_bank &= 0x03;
 			if (m6295_bank == 0x03) m6295_bank = 0x02;
-			ui_popup("Changing Bank to %02x",m6295_bank);
+			popmessage("Changing Bank to %02x",m6295_bank);
 			OKIM6295_set_bank_base(0, ((m6295_bank) * 0x40000));
 
 			if (m6295_key_delay == 0xffff) m6295_key_delay = 0x00;
@@ -377,7 +377,7 @@ static INTERRUPT_GEN( kickgoal_interrupt )
 			if (m6295_comm == 0x65) { OKIM6295_set_bank_base(0, (1 * 0x40000)); m6295_bank = 1; }
 			if (m6295_comm == 0x69) { OKIM6295_set_bank_base(0, (2 * 0x40000)); m6295_bank = 2; }
 			if (m6295_comm == 0x70) { OKIM6295_set_bank_base(0, (1 * 0x40000)); m6295_bank = 1; }
-			ui_popup("Sound test command %02x on Bank %02x",m6295_comm,m6295_bank);
+			popmessage("Sound test command %02x on Bank %02x",m6295_comm,m6295_bank);
 
 			if (m6295_key_delay == 0xffff) m6295_key_delay = 0x00;
 			else m6295_key_delay = (0x5d * oki_time_base);
@@ -396,7 +396,7 @@ static INTERRUPT_GEN( kickgoal_interrupt )
 			if (m6295_comm == 0x68) { OKIM6295_set_bank_base(0, (1 * 0x40000)); m6295_bank = 1; }
 			if (m6295_comm == 0x6c) { OKIM6295_set_bank_base(0, (2 * 0x40000)); m6295_bank = 2; }
 			if (m6295_comm == 0x76) { OKIM6295_set_bank_base(0, (1 * 0x40000)); m6295_bank = 1; }
-			ui_popup("Sound test command %02x on Bank %02x",m6295_comm,m6295_bank);
+			popmessage("Sound test command %02x on Bank %02x",m6295_comm,m6295_bank);
 
 			if (m6295_key_delay == 0xffff) m6295_key_delay = 0x00;
 			else m6295_key_delay = (0x5d * oki_time_base);
@@ -412,7 +412,7 @@ static INTERRUPT_GEN( kickgoal_interrupt )
 			OKIM6295_data_0_w(0,(0x80 | m6295_comm));
 			OKIM6295_data_0_w(0,0x11);
 
-			ui_popup("Playing sound %02x on Bank %02x",m6295_comm,m6295_bank);
+			popmessage("Playing sound %02x on Bank %02x",m6295_comm,m6295_bank);
 
 			if (m6295_key_delay == 0xffff) m6295_key_delay = 0x00;
 			else m6295_key_delay = (0x60 * oki_time_base);

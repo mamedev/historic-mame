@@ -406,24 +406,24 @@ VIDEO_START( cvs )
 
     /* Need 3 bitmaps for 2636 chips */
 
-	if ((s2636_1_bitmap = auto_bitmap_alloc_depth(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight,8)) == 0)
+	if ((s2636_1_bitmap = auto_bitmap_alloc_depth(Machine->screen[0].width,Machine->screen[0].height,8)) == 0)
 		return 1;
 
-	if ((s2636_2_bitmap = auto_bitmap_alloc_depth(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight,8)) == 0)
+	if ((s2636_2_bitmap = auto_bitmap_alloc_depth(Machine->screen[0].width,Machine->screen[0].height,8)) == 0)
 		return 1;
 
-	if ((s2636_3_bitmap = auto_bitmap_alloc_depth(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight,8)) == 0)
+	if ((s2636_3_bitmap = auto_bitmap_alloc_depth(Machine->screen[0].width,Machine->screen[0].height,8)) == 0)
 		return 1;
 
     /* 3 bitmaps for collision detection */
 
-	if ((collision_bitmap = auto_bitmap_alloc_depth(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight,8)) == 0)
+	if ((collision_bitmap = auto_bitmap_alloc_depth(Machine->screen[0].width,Machine->screen[0].height,8)) == 0)
 		return 1;
 
-	if ((collision_background = auto_bitmap_alloc_depth(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight,8)) == 0)
+	if ((collision_background = auto_bitmap_alloc_depth(Machine->screen[0].width,Machine->screen[0].height,8)) == 0)
 		return 1;
 
-	if ((scrolled_background = auto_bitmap_alloc_depth(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight,8)) == 0)
+	if ((scrolled_background = auto_bitmap_alloc_depth(Machine->screen[0].width,Machine->screen[0].height,8)) == 0)
 		return 1;
 
 	return 0;
@@ -538,8 +538,8 @@ VIDEO_UPDATE( cvs )
 
     /* Update screen - 8 regions, fixed scrolling area */
 
-	copyscrollbitmap(bitmap,tmpbitmap,0,0,8,scroll,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
-	copyscrollbitmap(scrolled_background,collision_background,0,0,8,scroll,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+	copyscrollbitmap(bitmap,tmpbitmap,0,0,8,scroll,&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
+	copyscrollbitmap(scrolled_background,collision_background,0,0,8,scroll,&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
 
     /* 2636's */
 
@@ -707,8 +707,8 @@ VIDEO_UPDATE( cvs )
 			x = ((stars[offs].x + stars_scroll) % 512) / 2;
 			y = (stars[offs].y + (stars_scroll + stars[offs].x) / 512) % 256;
 
-			if (y >= Machine->visible_area[0].min_y &&
-				y <= Machine->visible_area[0].max_y)
+			if (y >= Machine->screen[0].visarea.min_y &&
+				y <= Machine->screen[0].visarea.max_y)
 			{
 				if ((y & 1) ^ ((x >> 4) & 1))
 				{

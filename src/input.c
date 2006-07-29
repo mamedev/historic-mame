@@ -715,7 +715,7 @@ int code_pressed_memory_repeat(input_code code, int speed)
 		}
 
 		/* if this is an autorepeat case, set a 1x delay and leave pressed = 1 */
-		else if (++counter > keydelay * speed * Machine->refresh_rate[0] / 60)
+		else if (++counter > keydelay * speed * Machine->screen[0].refresh / 60)
 		{
 			keydelay = 1;
 			counter = 0;
@@ -1114,7 +1114,7 @@ INT32 seq_analog_value(const input_seq *seq, int *analogtype)
  *
  *************************************/
 
-void seq_name(const input_seq *seq, char *buffer, unsigned max)
+char *seq_name(const input_seq *seq, char *buffer, unsigned max)
 {
 	char *dest = buffer;
 	int codenum;
@@ -1156,6 +1156,8 @@ void seq_name(const input_seq *seq, char *buffer, unsigned max)
 		strcpy(dest, DEF_STR( None ));
 	else
 		*dest = 0;
+
+	return buffer;
 }
 
 

@@ -154,7 +154,7 @@ static int enable1=1,enable2=1,enable3=1;
 
 VIDEO_UPDATE(silkroad)
 {
-	fillbitmap(bitmap,0x7c0,&Machine->visible_area[0]);
+	fillbitmap(bitmap,0x7c0,&Machine->screen[0].visarea);
 
 	tilemap_set_scrollx( fg_tilemap, 0, ((silkroad_regs[0] & 0xffff0000) >> 16) );
 	tilemap_set_scrolly( fg_tilemap, 0, (silkroad_regs[0] & 0x0000ffff) >> 0 );
@@ -180,7 +180,7 @@ VIDEO_UPDATE(silkroad)
 	if(enable3)	tilemap_draw(bitmap,cliprect,fg3_tilemap,0,0);
 
 /*
-    ui_popup ("Regs %08x %08x %08x %08x %08x",
+    popmessage ("Regs %08x %08x %08x %08x %08x",
     silkroad_regs[0],
     silkroad_regs[1],
     silkroad_regs[2],

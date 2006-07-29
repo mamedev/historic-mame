@@ -216,7 +216,7 @@ WRITE8_HANDLER( pacman_flipscreen_w )
 VIDEO_UPDATE( pacman )
 {
 	if (bgpriority != 0)
-		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area[0]);
+		fillbitmap(bitmap,Machine->pens[0],&Machine->screen[0].visarea);
 	else
 		tilemap_draw(bitmap,cliprect,bg_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
 

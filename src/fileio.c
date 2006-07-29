@@ -91,7 +91,7 @@ struct _mame_file
 
 
 /***************************************************************************
-    GLOBALS
+    GLOBAL VARIABLES
 ***************************************************************************/
 
 #ifdef MESS
@@ -101,7 +101,7 @@ int mess_ghost_images;
 
 
 /***************************************************************************
-    PROTOTYPES
+    FUNCTION PROTOTYPES
 ***************************************************************************/
 
 static mame_file *generic_fopen(int pathtype, const char *gamename, const char *filename, const char *hash, UINT32 flags, osd_file_error *error);
@@ -174,9 +174,7 @@ mame_file *mame_fopen_error(const char *gamename, const char *filename, int file
 		case FILETYPE_HISTORY:
 		case FILETYPE_LANGUAGE:
 		case FILETYPE_CTRLR:
-#ifdef NEW_RENDER
 		case FILETYPE_FONT:
-#endif
 			if (openforwrite)
 			{
 				logerror("mame_fopen: type %02x write not supported\n", filetype);
@@ -204,9 +202,7 @@ mame_file *mame_fopen_error(const char *gamename, const char *filename, int file
 		case FILETYPE_CTRLR:
 		case FILETYPE_LANGUAGE:
 		case FILETYPE_HIGHSCORE_DB:
-#ifdef NEW_RENDER
 		case FILETYPE_FONT:
-#endif
 			return generic_fopen(filetype, NULL, filename, 0, openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD, error);
 
 		/* game-specific files that live in a single directory */
@@ -928,10 +924,8 @@ static const char *get_extension_for_filetype(int filetype)
 			break;
 
 		case FILETYPE_ARTWORK:		/* artwork files */
-#ifdef NEW_RENDER
 			extension = "lay";
 			break;
-#endif
 
 		case FILETYPE_SCREENSHOT:	/* screenshot files */
 			extension = "png";
@@ -984,11 +978,9 @@ static const char *get_extension_for_filetype(int filetype)
 			break;
 #endif
 
-#ifdef NEW_RENDER
 		case FILETYPE_FONT:
 			extension = "bdf";
 			break;
-#endif
 	}
 	return extension;
 }

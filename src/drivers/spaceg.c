@@ -215,7 +215,7 @@ static WRITE8_HANDLER( zvideoram_w )
 
 	col = unkram[0x400];
 
-	if (col>0x0f) ui_popup("color>0x0f =%2d",col);
+	if (col>0x0f) popmessage("color>0x0f =%2d",col);
 
 	col &=0x0f;
 
@@ -233,7 +233,7 @@ static WRITE8_HANDLER( zvideoram_w )
 
 	default:
 		logerror("mode =%02x pc=%04x\n",io9401,activecpu_get_pc() );
-		ui_popup("mode =%02x pc=%04x\n",io9401,activecpu_get_pc() );
+		popmessage("mode =%02x pc=%04x\n",io9401,activecpu_get_pc() );
 		return;
 		break;
 	}

@@ -127,7 +127,7 @@ static UINT32 mem[2];
 COMBINE_DATA(&mem[offset]);
 
 sprintf(t,"%08x %08x",mem[0],mem[1]);
-ui_popup(t);
+popmessage(t);
 }
 #endif
 

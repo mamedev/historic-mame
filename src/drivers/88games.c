@@ -62,7 +62,7 @@ static WRITE8_HANDLER( k88games_5f84_w )
 	zoomreadroms = data & 0x04;
 
 	if (data & 0xf8)
-		ui_popup("5f84 = %02x",data);
+		popmessage("5f84 = %02x",data);
 }
 
 static WRITE8_HANDLER( k88games_sh_irqtrigger_w )

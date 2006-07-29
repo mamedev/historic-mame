@@ -39,6 +39,9 @@ Note:   if MAME_DEBUG is defined, pressing Z with:
 ***************************************************************************/
 
 #include "driver.h"
+#ifdef MAME_DEBUG
+#include "ui.h"
+#endif
 
 /* Variables needed by drivers: */
 
@@ -233,8 +236,8 @@ static void afega_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect, UI
 {
 	int offs;
 
-	int max_x		=	Machine->drv->screen[0].maxwidth;
-	int max_y		=	Machine->drv->screen[0].maxheight;
+	int max_x		=	Machine->screen[0].width;
+	int max_y		=	Machine->screen[0].height;
 
 	for ( offs = 0; offs < spriteram_size/2; offs += 16/2 )
 	{

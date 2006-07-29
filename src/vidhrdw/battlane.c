@@ -206,7 +206,7 @@ static void battlane_draw_sprites( mame_bitmap *bitmap )
 				color,
 				flipx, flipy,
 				sx, sy,
-				&Machine->visible_area[0],
+				&Machine->screen[0].visarea,
 				TRANSPARENCY_PEN, 0);
 
 			if (attr & 0x10)  /* Double Y direction */
@@ -218,7 +218,7 @@ static void battlane_draw_sprites( mame_bitmap *bitmap )
 					color,
 					flipx, flipy,
 					sx, sy + dy,
-					&Machine->visible_area[0],
+					&Machine->screen[0].visarea,
 					TRANSPARENCY_PEN, 0);
 			}
 		}
@@ -254,7 +254,7 @@ VIDEO_UPDATE( battlane )
 {
 	tilemap_mark_all_tiles_dirty(bg_tilemap); // HACK
 
-	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->screen[0].visarea, bg_tilemap, 0, 0);
 	battlane_draw_sprites(bitmap);
 	battlane_draw_fg_bitmap(bitmap);
 	return 0;

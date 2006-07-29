@@ -217,10 +217,10 @@ VIDEO_UPDATE(taotaido)
 	int line;
 	rectangle clip;
 
-	clip.min_x = Machine->visible_area[0].min_x;
-	clip.max_x = Machine->visible_area[0].max_x;
-	clip.min_y = Machine->visible_area[0].min_y;
-	clip.max_y = Machine->visible_area[0].max_y;
+	clip.min_x = Machine->screen[0].visarea.min_x;
+	clip.max_x = Machine->screen[0].visarea.max_x;
+	clip.min_y = Machine->screen[0].visarea.min_y;
+	clip.max_y = Machine->screen[0].visarea.max_y;
 
 	for (line = 0; line < 224;line++)
 	{

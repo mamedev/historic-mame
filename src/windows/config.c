@@ -22,12 +22,8 @@
 #include "options.h"
 
 #include "winmain.h"
-#ifndef NEW_RENDER
-#include "videoold.h"
-#else
 #include "video.h"
 #include "render.h"
-#endif
 
 #ifdef NEW_DEBUGGER
 #include "debug/debugcpu.h"
@@ -93,10 +89,6 @@ static void setup_record(const char *filename, const game_driver *driver);
 static char *extract_base_name(const char *name, char *dest, int destsize);
 static char *extract_path(const char *name, char *dest, int destsize);
 
-#ifndef NEW_RENDER
-static void set_old_video_options(const game_driver *driver);
-#endif
-
 
 
 //============================================================
@@ -157,7 +149,6 @@ static const options_entry windows_opts[] =
 	{ "nvram_directory",          "nvram",    0,                 "directory to save nvram contents" },
 	{ "memcard_directory",        "memcard",  0,                 "directory to save memory card contents" },
 	{ "input_directory",          "inp",      0,                 "directory to save input device logs" },
-	{ "hiscore_directory",        "hi",       0,                 "directory to save hiscores" },
 	{ "state_directory",          "sta",      0,                 "directory to save states" },
 	{ "artpath;artwork_directory","artwork",  0,                 "path to artwork files" },
 	{ "snapshot_directory",       "snap",     0,                 "directory to save screenshots" },
@@ -656,9 +647,6 @@ static void extract_options(const game_driver *driver, machine_config *drv)
 	memset(&options, 0, sizeof(options));
 
 	// video options
-#ifndef NEW_RENDER
-	set_old_video_options(driver);
-#else
 	video_orientation = ROT0;
 
 	// override if no rotation requested
@@ -678,7 +666,6 @@ static void extract_options(const game_driver *driver, machine_config *drv)
 		video_orientation ^= ORIENTATION_FLIP_X;
 	if (options_get_bool("flipy", TRUE))
 		video_orientation ^= ORIENTATION_FLIP_Y;
-#endif
 
 	// brightness
 	options.brightness = options_get_float_range("brightness", TRUE, 0.1f, 2.0f);
@@ -867,96 +854,3 @@ static char *extract_path(const char *name, char *dest, int destsize)
 	}
 	return dest;
 }
-
-
-
-
-
-#ifndef NEW_RENDER
-static void set_old_video_options(const game_driver *driver)
-{
-	// first start with the game's built in orientation
-	int orientation = driver->flags & ORIENTATION_MASK;
-
-	options.ui_orientation = orientation;
-
-	if (options.ui_orientation & ORIENTATION_SWAP_XY)
-	{
-		// if only one of the components is inverted, switch them
-		if ((options.ui_orientation & ROT180) == ORIENTATION_FLIP_X ||
-				(options.ui_orientation & ROT180) == ORIENTATION_FLIP_Y)
-			options.ui_orientation ^= ROT180;
-	}
-
-	// override if no rotation requested
-	if (!options_get_bool("rotate", TRUE))
-		orientation = options.ui_orientation = ROT0;
-
-	// rotate right
-	if (options_get_bool("ror", TRUE))
-	{
-		// if only one of the components is inverted, switch them
-		if ((orientation & ROT180) == ORIENTATION_FLIP_X ||
-				(orientation & ROT180) == ORIENTATION_FLIP_Y)
-			orientation ^= ROT180;
-
-		orientation ^= ROT90;
-	}
-
-	// rotate left
-	if (options_get_bool("rol", TRUE))
-	{
-		// if only one of the components is inverted, switch them
-		if ((orientation & ROT180) == ORIENTATION_FLIP_X ||
-				(orientation & ROT180) == ORIENTATION_FLIP_Y)
-			orientation ^= ROT180;
-
-		orientation ^= ROT270;
-	}
-
-	// auto-rotate right (e.g. for rotating lcds), based on original orientation
-	if (options_get_bool("autoror", TRUE) && (driver->flags & ORIENTATION_SWAP_XY) )
-	{
-		// if only one of the components is inverted, switch them
-		if ((orientation & ROT180) == ORIENTATION_FLIP_X ||
-				(orientation & ROT180) == ORIENTATION_FLIP_Y)
-			orientation ^= ROT180;
-
-		orientation ^= ROT90;
-	}
-
-	// auto-rotate left (e.g. for rotating lcds), based on original orientation
-	if (options_get_bool("autorol", TRUE) && (driver->flags & ORIENTATION_SWAP_XY) )
-	{
-		// if only one of the components is inverted, switch them
-		if ((orientation & ROT180) == ORIENTATION_FLIP_X ||
-				(orientation & ROT180) == ORIENTATION_FLIP_Y)
-			orientation ^= ROT180;
-
-		orientation ^= ROT270;
-	}
-
-	// flip X/Y
-	if (options_get_bool("flipx", TRUE))
-		orientation ^= ORIENTATION_FLIP_X;
-	if (options_get_bool("flipy", TRUE))
-		orientation ^= ORIENTATION_FLIP_Y;
-
-	blit_flipx = ((orientation & ORIENTATION_FLIP_X) != 0);
-	blit_flipy = ((orientation & ORIENTATION_FLIP_Y) != 0);
-	blit_swapxy = ((orientation & ORIENTATION_SWAP_XY) != 0);
-
-	if( options.vector_width == 0 && options.vector_height == 0 )
-	{
-		options.vector_width = 640;
-		options.vector_height = 480;
-	}
-	if( blit_swapxy )
-	{
-		int temp;
-		temp = options.vector_width;
-		options.vector_width = options.vector_height;
-		options.vector_height = temp;
-	}
-}
-#endif

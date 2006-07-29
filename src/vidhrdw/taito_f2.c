@@ -648,7 +648,7 @@ static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect,int *prim
 			continue;
 		}
 
-//ui_popup("%04x",area);
+//popmessage("%04x",area);
 
 		/* check for extra scroll offset */
 		if ((spriteram_buffered[(offs+4)/2] & 0xf000) == 0xa000)

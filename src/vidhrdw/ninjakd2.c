@@ -28,7 +28,7 @@ VIDEO_START( ninjakd2 )
 
 	tilemap_set_transparent_pen(fg_tilemap, 15);
 
-	if ( (bitmap_sp = auto_bitmap_alloc (Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight ) ) == NULL )
+	if ( (bitmap_sp = auto_bitmap_alloc (Machine->screen[0].width, Machine->screen[0].height ) ) == NULL )
 		return 1;
 
 	return 0;
@@ -72,7 +72,7 @@ WRITE8_HANDLER( ninjakd2_sprite_overdraw_w )
 	sprite_overdraw_enabled = data & 1;
 
 	if(sprite_overdraw_enabled)
-		fillbitmap(bitmap_sp, 15, &Machine->visible_area[0]);
+		fillbitmap(bitmap_sp, 15, &Machine->screen[0].visarea);
 }
 
 void ninjakd2_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)

@@ -590,7 +590,7 @@ READ16_HANDLER( deco16_66_prot_r ) /* Mutant Fighter */
 	}
 
 #ifdef MAME_DEBUG
-	ui_popup("Deco66:  Read unmapped port %04x\n",offset*2);
+	popmessage("Deco66:  Read unmapped port %04x\n",offset*2);
 #endif
 
 	logerror("Protection PC %06x: warning - read unmapped memory address %04x\n",activecpu_get_pc(),offset<<1);
@@ -1694,7 +1694,7 @@ READ32_HANDLER( deco16_146_fghthist_prot_r )
 		)
 	{
 		logerror("Protection PC %06x: warning - read unmapped protection address %04x (ret %04x)\n", activecpu_get_pc(), addr, val);
-		ui_popup("Read protection port %04x", addr);
+		popmessage("Read protection port %04x", addr);
 	}
 	//  logerror("Protection PC %06x: warning - read unmapped protection address %04x (ret %04x)\n", activecpu_get_pc(), addr, val);
 

@@ -158,7 +158,7 @@ INLINE double get_verint_scanline_time(void)
 	/* we fire at the HBLANK signal */
 	result = cpu_getscanlinetime(scanline) + cpu_getscanlineperiod() * 0.9;
 	if (result < cpu_getscanlineperiod() * 10)
-		result += TIME_IN_HZ(Machine->refresh_rate[0]);
+		result += TIME_IN_HZ(Machine->screen[0].refresh);
 
 	return result;
 }

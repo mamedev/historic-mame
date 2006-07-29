@@ -22,17 +22,9 @@
 #include "driver.h"
 #include "osdepend.h"
 #include "sound/wavwrite.h"
-
 #include "winmain.h"
-#ifndef NEW_RENDER
-#include "windold.h"
-#include "videoold.h"
-extern int throttle;
-#else
 #include "window.h"
 #include "video.h"
-#define win_video_window		win_window_list->hwnd
-#endif
 
 
 //============================================================
@@ -167,7 +159,7 @@ int osd_start_audio_stream(int stereo)
 	osd_set_mastervolume(attenuation);
 
 	// determine the number of samples per frame
-	samples_per_frame = (double)Machine->sample_rate / (double)Machine->refresh_rate[0];
+	samples_per_frame = (double)Machine->sample_rate / (double)Machine->screen[0].refresh;
 
 	// compute how many samples to generate the first frame
 	samples_left_over = samples_per_frame;
@@ -196,7 +188,7 @@ int osd_start_audio_stream(int stereo)
 
 void sound_update_refresh_rate(float newrate)
 {
-	samples_per_frame = (double)Machine->sample_rate / (double)Machine->refresh_rate[0];
+	samples_per_frame = (double)Machine->sample_rate / (double)Machine->screen[0].refresh;
 }
 
 
@@ -241,11 +233,7 @@ static void update_sample_adjustment(int buffered)
 	static int consecutive_highs = 0;
 
 	// if we're not throttled don't bother
-#ifndef NEW_RENDER
-	if (!throttle)
-#else
 	if (!video_config.throttle)
-#endif
 	{
 		consecutive_lows = 0;
 		consecutive_mids = 0;
@@ -494,7 +482,7 @@ static int dsound_init(void)
 	}
 
 	// set the cooperative level
-	result = IDirectSound_SetCooperativeLevel(dsound, win_video_window, DSSCL_PRIORITY);
+	result = IDirectSound_SetCooperativeLevel(dsound, win_window_list->hwnd, DSSCL_PRIORITY);
 	if (result != DS_OK)
 	{
 		fprintf(stderr, "Error setting cooperative level: %08x\n", (UINT32)result);
@@ -512,7 +500,7 @@ static int dsound_init(void)
 	// compute the buffer sizes
 	stream_buffer_size = ((UINT64)MAX_BUFFER_SIZE * (UINT64)stream_format.nSamplesPerSec) / 44100;
 	stream_buffer_size = (stream_buffer_size * stream_format.nBlockAlign) / 4;
-	stream_buffer_size = (stream_buffer_size * 30) / Machine->refresh_rate[0];
+	stream_buffer_size = (stream_buffer_size * 30) / Machine->screen[0].refresh;
 	stream_buffer_size = (stream_buffer_size / 1024) * 1024;
 
 	// compute the upper/lower thresholds

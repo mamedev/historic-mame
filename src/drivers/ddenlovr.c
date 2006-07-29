@@ -149,7 +149,7 @@ VIDEO_START(ddenlovr)
 	for (i = 0; i < 8; i++)
 		pixmap[i] = auto_malloc(512*512);
 
-	if (!(framebuffer = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight))) return 1;
+	if (!(framebuffer = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height))) return 1;
 
 	extra_layers = 0;
 
@@ -180,7 +180,7 @@ static void dynax_blit_flip_w( UINT8 data )
 	if ((data ^ dynax_blit_flip) & 0xec)
 	{
 #ifdef MAME_DEBUG
-		ui_popup("warning dynax_blit_flip = %02x",data);
+		popmessage("warning dynax_blit_flip = %02x",data);
 #endif
 		logerror("warning dynax_blit_flip = %02x\n",data);
 	}
@@ -290,7 +290,7 @@ INLINE int fetch_bit(UINT8 *src_data,int src_len,int *bit_addr)
 	if (baddr/8 >= src_len)
 	{
 #ifdef MAME_DEBUG
-		ui_popup("GFX ROM OVER %06x",baddr/8);
+		popmessage("GFX ROM OVER %06x",baddr/8);
 #endif
 		return 1;
 	}
@@ -313,7 +313,7 @@ INLINE int fetch_word(UINT8 *src_data,int src_len,int *bit_addr,int word_len)
 
 INLINE void log_draw_error(int src, int cmd)
 {
-	ui_popup("%06x: warning unknown pixel command %02x",src,cmd);
+	popmessage("%06x: warning unknown pixel command %02x",src,cmd);
 	logerror("%06x: warning unknown pixel command %02x\n",src,cmd);
 }
 
@@ -343,7 +343,7 @@ static int blit_draw(int src,int sx)
 
 #ifdef MAME_DEBUG
 	if (pen_size > 4 || arg_size > 8)
-		ui_popup("warning: pen_size %d arg_size %d",pen_size,arg_size);
+		popmessage("warning: pen_size %d arg_size %d",pen_size,arg_size);
 #endif
 
 	x = sx;
@@ -424,7 +424,7 @@ static int hanakanz_blit_draw(int src,int sx)
 
 #ifdef MAME_DEBUG
 	if (pen_size > 4 || arg_size > 8)
-		ui_popup("warning: pen_size %d arg_size %d",pen_size,arg_size);
+		popmessage("warning: pen_size %d arg_size %d",pen_size,arg_size);
 #endif
 
 	x = sx;
@@ -499,7 +499,7 @@ static void blit_rect_xywh(void)
 
 #ifdef MAME_DEBUG
 //  if (dynax_clip_ctrl != 0x0f)
-//      ui_popup("RECT clipx=%03x clipy=%03x ctrl=%x",dynax_clip_x,dynax_clip_y,dynax_clip_ctrl);
+//      popmessage("RECT clipx=%03x clipy=%03x ctrl=%x",dynax_clip_x,dynax_clip_y,dynax_clip_ctrl);
 #endif
 
 	for (y = 0; y <= dynax_rect_height; y++)
@@ -526,7 +526,7 @@ static void blit_rect_yh(void)
 
 #ifdef MAME_DEBUG
 //  if (dynax_clip_ctrl != 0x0f)
-//      ui_popup("UNK8C clipx=%03x clipy=%03x ctrl=%x",dynax_clip_x,dynax_clip_y,dynax_clip_ctrl);
+//      popmessage("UNK8C clipx=%03x clipy=%03x ctrl=%x",dynax_clip_x,dynax_clip_y,dynax_clip_ctrl);
 #endif
 
 	if (start < 512*512)
@@ -564,7 +564,7 @@ static void blit_fill_xy(int x, int y)
 
 #ifdef MAME_DEBUG
 //  if (x || y)
-//      ui_popup("FILL command X %03x Y %03x",x,y);
+//      popmessage("FILL command X %03x Y %03x",x,y);
 #endif
 
 	if (dynax_dest_layer & 0x0001) memset(pixmap[0] + start,dynax_blit_pen,512*512 - start);
@@ -597,13 +597,13 @@ static void blit_horiz_line(void)
 	int i;
 
 #ifdef MAME_DEBUG
-	ui_popup("LINE X");
+	popmessage("LINE X");
 
 	if (dynax_clip_ctrl != 0x0f)
-		ui_popup("LINE X clipx=%03x clipy=%03x ctrl=%x",dynax_clip_x,dynax_clip_y,dynax_clip_ctrl);
+		popmessage("LINE X clipx=%03x clipy=%03x ctrl=%x",dynax_clip_x,dynax_clip_y,dynax_clip_ctrl);
 
 	if (dynax_blit_flip)
-		ui_popup("LINE X flip=%x",dynax_blit_flip);
+		popmessage("LINE X flip=%x",dynax_blit_flip);
 #endif
 
 	for (i = 0; i <= dynax_line_length; i++)
@@ -627,10 +627,10 @@ static void blit_vert_line(void)
 	int i;
 
 #ifdef MAME_DEBUG
-	ui_popup("LINE Y");
+	popmessage("LINE Y");
 
 	if (dynax_clip_ctrl != 0x0f)
-		ui_popup("LINE Y clipx=%03x clipy=%03x ctrl=%x",dynax_clip_x,dynax_clip_y,dynax_clip_ctrl);
+		popmessage("LINE Y clipx=%03x clipy=%03x ctrl=%x",dynax_clip_x,dynax_clip_y,dynax_clip_ctrl);
 #endif
 
 	for (i = 0; i <= dynax_line_length; i++)
@@ -780,7 +780,7 @@ profiler_mark(PROFILER_VIDEO);
 				default:
 							;
 				#ifdef MAME_DEBUG
-					ui_popup("unknown blitter command %02x",data);
+					popmessage("unknown blitter command %02x",data);
 					logerror("%06x: unknown blitter command %02x\n", activecpu_get_pc(), data);
 				#endif
 			}
@@ -951,7 +951,7 @@ profiler_mark(PROFILER_VIDEO);
 				default:
 							;
 				#ifdef MAME_DEBUG
-					ui_popup("unknown blitter command %02x",data);
+					popmessage("unknown blitter command %02x",data);
 					logerror("%06x: unknown blitter command %02x\n", activecpu_get_pc(), data);
 				#endif
 			}
@@ -1149,7 +1149,7 @@ profiler_mark(PROFILER_VIDEO);
 				default:
 							;
 				#ifdef MAME_DEBUG
-					ui_popup("unknown blitter command %02x",data);
+					popmessage("unknown blitter command %02x",data);
 					logerror("%06x: unknown blitter command %02x\n", activecpu_get_pc(), data);
 				#endif
 			}
@@ -1294,7 +1294,7 @@ VIDEO_EOF(ddenlovr)
 //  next = blit_draw(base,0);
 	next = hanakanz_blit_draw(base,0);
 if (code_pressed(KEYCODE_Z))
-	ui_popup("%06x",base);
+	popmessage("%06x",base);
 	if (code_pressed(KEYCODE_S)) base = next;
 	if (code_pressed_memory(KEYCODE_X)) base = next;
 	if (code_pressed(KEYCODE_C)) { base--; while ((memory_region(REGION_GFX1)[base] & 0xf0) != 0x30) base--; }
@@ -1303,7 +1303,7 @@ if (code_pressed(KEYCODE_Z))
 	if (code_pressed_memory(KEYCODE_F)) { base++; while ((memory_region(REGION_GFX1)[base] & 0xf0) != 0x30) base++; }
 #endif
 
-	fillbitmap(framebuffer,dynax_bgcolor,&Machine->visible_area[0]);
+	fillbitmap(framebuffer,dynax_bgcolor,&Machine->screen[0].visarea);
 
 #ifdef MAME_DEBUG
 	if (code_pressed(KEYCODE_Z))
@@ -1339,14 +1339,14 @@ if (code_pressed(KEYCODE_Z))
 
 		if (pri >= 24)
 		{
-			ui_popup("priority = %02x",pri);
+			popmessage("priority = %02x",pri);
 			pri = 0;
 		}
 
-		copylayer(framebuffer,&Machine->visible_area[0],order[pri][0]);
-		copylayer(framebuffer,&Machine->visible_area[0],order[pri][1]);
-		copylayer(framebuffer,&Machine->visible_area[0],order[pri][2]);
-		copylayer(framebuffer,&Machine->visible_area[0],order[pri][3]);
+		copylayer(framebuffer,&Machine->screen[0].visarea,order[pri][0]);
+		copylayer(framebuffer,&Machine->screen[0].visarea,order[pri][1]);
+		copylayer(framebuffer,&Machine->screen[0].visarea,order[pri][2]);
+		copylayer(framebuffer,&Machine->screen[0].visarea,order[pri][3]);
 
 	if (extra_layers)
 	{
@@ -1354,14 +1354,14 @@ if (code_pressed(KEYCODE_Z))
 
 		if (pri >= 24)
 		{
-			ui_popup("priority2 = %02x",pri);
+			popmessage("priority2 = %02x",pri);
 			pri = 0;
 		}
 
-		copylayer(framebuffer,&Machine->visible_area[0],order[pri][0]+4);
-		copylayer(framebuffer,&Machine->visible_area[0],order[pri][1]+4);
-		copylayer(framebuffer,&Machine->visible_area[0],order[pri][2]+4);
-		copylayer(framebuffer,&Machine->visible_area[0],order[pri][3]+4);
+		copylayer(framebuffer,&Machine->screen[0].visarea,order[pri][0]+4);
+		copylayer(framebuffer,&Machine->screen[0].visarea,order[pri][1]+4);
+		copylayer(framebuffer,&Machine->screen[0].visarea,order[pri][2]+4);
+		copylayer(framebuffer,&Machine->screen[0].visarea,order[pri][3]+4);
 	}
 
 	dynax_layer_enable = enab;
@@ -2402,7 +2402,7 @@ static WRITE8_HANDLER( hanakanz_coincounter_w )
 		logerror("%04x: warning, coin counter = %02x\n", activecpu_get_pc(), data);
 
 #ifdef MAME_DEBUG
-//      ui_popup("93 = %02x",data);
+//      popmessage("93 = %02x",data);
 #endif
 }
 
@@ -2628,7 +2628,7 @@ static WRITE8_HANDLER( mjchuuka_coincounter_w )
 		logerror("%04x: warning, coin counter = %02x\n", activecpu_get_pc(), data);
 
 #ifdef MAME_DEBUG
-//    ui_popup("40 = %02x",data);
+//    popmessage("40 = %02x",data);
 #endif
 }
 
@@ -2638,7 +2638,7 @@ static WRITE8_HANDLER( mjchuuka_oki_bank_w )
 	OKIM6295_set_bank_base(0, (data & 0x01) ? 0x40000 : 0);
 
 #ifdef MAME_DEBUG
-//    ui_popup("1e = %02x",data);
+//    popmessage("1e = %02x",data);
 #endif
 }
 
@@ -2755,7 +2755,7 @@ static WRITE8_HANDLER( mjmyster_coincounter_w )
 			coin_counter_w(0, (~data) & 0x01);	// coin in
 			coin_counter_w(0, (~data) & 0x02);	// coin out actually
 			#ifdef MAME_DEBUG
-//              ui_popup("cc: %02x",data);
+//              popmessage("cc: %02x",data);
 			#endif
 
 			break;

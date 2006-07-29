@@ -259,7 +259,7 @@ VIDEO_START( generic )
 	memset(dirtybuffer, 1, videoram_size);
 
 	/* allocate the temporary bitmap */
-	tmpbitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
+	tmpbitmap = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
 	if (tmpbitmap == NULL)
 		return 1;
 
@@ -277,7 +277,7 @@ VIDEO_START( generic )
 VIDEO_START( generic_bitmapped )
 {
 	/* allocate the temporary bitmap */
-	tmpbitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
+	tmpbitmap = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
 	if (tmpbitmap == NULL)
 		return 1;
 
@@ -294,7 +294,7 @@ VIDEO_START( generic_bitmapped )
 
 VIDEO_UPDATE( generic_bitmapped )
 {
-	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area[0], TRANSPARENCY_NONE, 0);
+	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->screen[0].visarea, TRANSPARENCY_NONE, 0);
 	return 0;
 }
 
@@ -513,33 +513,29 @@ void buffer_spriteram_2(UINT8 *ptr, int length)
 
 static void updateflip(void)
 {
-	int min_x,max_x,min_y,max_y;
+	screen_state *state = &Machine->screen[0];
+	rectangle visarea = state->visarea;
 
 	tilemap_set_flip(ALL_TILEMAPS,(TILEMAP_FLIPX & flip_screen_x) | (TILEMAP_FLIPY & flip_screen_y));
-
-	min_x = Machine->drv->screen[0].default_visible_area.min_x;
-	max_x = Machine->drv->screen[0].default_visible_area.max_x;
-	min_y = Machine->drv->screen[0].default_visible_area.min_y;
-	max_y = Machine->drv->screen[0].default_visible_area.max_y;
 
 	if (flip_screen_x)
 	{
 		int temp;
 
-		temp = Machine->drv->screen[0].maxwidth - min_x - 1;
-		min_x = Machine->drv->screen[0].maxwidth - max_x - 1;
-		max_x = temp;
+		temp = state->width - visarea.min_x - 1;
+		visarea.min_x = state->width - visarea.max_x - 1;
+		visarea.max_x = temp;
 	}
 	if (flip_screen_y)
 	{
 		int temp;
 
-		temp = Machine->drv->screen[0].maxheight - min_y - 1;
-		min_y = Machine->drv->screen[0].maxheight - max_y - 1;
-		max_y = temp;
+		temp = state->height - visarea.min_y - 1;
+		visarea.min_y = state->height - visarea.max_y - 1;
+		visarea.max_y = temp;
 	}
 
-	set_visible_area(0, min_x,max_x,min_y,max_y);
+	configure_screen(0, state->width, state->height, &visarea, state->refresh);
 }
 
 

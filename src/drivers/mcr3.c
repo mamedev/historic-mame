@@ -398,9 +398,7 @@ static WRITE8_HANDLER( spyhunt_op4_w )
 		/* bit 2 -> J1-11 (A2) */
 		/* bit 1 -> J1-10 (A1) */
 		/* bit 0 -> J1-12 (A0) */
-#ifdef NEW_RENDER
 		render_view_item_set_state(lampname[data & 7], (data >> 3) & 1);
-#endif
 	}
 	last_op4 = data;
 

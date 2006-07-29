@@ -378,8 +378,8 @@ VIDEO_UPDATE( jalmah )
 		sc_db--;
 	if(sc_db > 3)
 		sc_db = 3;
-	//ui_popup("%04x %04x %04x %04x %04x %04x",jm_vregs[0],jm_vregs[1],jm_vregs[2],jm_vregs[3],sc0bank,pri);
-	ui_popup("%04d %04d %04x %02x %01x",jm_scrollram[0+sc_db],jm_scrollram[4+sc_db],jm_vregs[0+sc_db],sc_db,pri);
+	//popmessage("%04x %04x %04x %04x %04x %04x",jm_vregs[0],jm_vregs[1],jm_vregs[2],jm_vregs[3],sc0bank,pri);
+	popmessage("%04d %04d %04x %02x %01x",jm_scrollram[0+sc_db],jm_scrollram[4+sc_db],jm_vregs[0+sc_db],sc_db,pri);
 	#endif
 	/*
     Case by case priorities:
@@ -477,7 +477,7 @@ WRITE16_HANDLER( jalmah_tilebank_w )
      xxxx ---- fg bank (used by suchipi)
      ---- xxxx Priority number (trusted,see mjzoomin)
     */
-	//ui_popup("Write to tilebank %02x",data);
+	//popmessage("Write to tilebank %02x",data);
 	if (ACCESSING_LSB)
 	{
 		if (sc0bank != ((data & 0xf0) >> 4))
@@ -518,7 +518,7 @@ static WRITE16_HANDLER( jalmah_scroll_w )
 		case (0x2a/2): jm_scrollram[5] = data; break;
 		case (0x32/2): jm_scrollram[6] = data; break;
 		case (0x3a/2): jm_scrollram[7] = data; break;
-		//default:    ui_popup("[%04x]<-%04x",offset+0x10,data);
+		//default:    popmessage("[%04x]<-%04x",offset+0x10,data);
 	}
 }
 
@@ -553,7 +553,7 @@ WRITE16_HANDLER( jalmah_flip_screen_w )
 	/*---- ----x flip screen*/
 	flip_screen_set(data & 1);
 
-//  ui_popup("%04x",data);
+//  popmessage("%04x",data);
 }
 
 static ADDRESS_MAP_START( jalmah, ADDRESS_SPACE_PROGRAM, 16 )
@@ -1358,7 +1358,7 @@ static WRITE16_HANDLER( urashima_mcu_w )
 	{
 		//jm_regs[0x30e/2] = ?
 
-		//ui_popup("%04x %02x",jm_regs[0x030e/2],data);
+		//popmessage("%04x %02x",jm_regs[0x030e/2],data);
 
 		/*******************************************************
         1st M68k code uploaded by the MCU (sound prg)
@@ -1892,7 +1892,7 @@ static READ16_HANDLER( kakumei_mcu_r )
 	res = resp[respcount++];
 	if (respcount >= sizeof(resp)/sizeof(resp[0])) respcount = 0;
 
-	//ui_popup("%04x: mcu_r %02x",activecpu_get_pc(),res);
+	//popmessage("%04x: mcu_r %02x",activecpu_get_pc(),res);
 
 	return res;
 }
@@ -1913,7 +1913,7 @@ static READ16_HANDLER( suchipi_mcu_r )
 	res = resp[respcount++];
 	if (respcount >= sizeof(resp)/sizeof(resp[0])) respcount = 0;
 
-	//ui_popup("%04x: mcu_r %02x",activecpu_get_pc(),res);
+	//popmessage("%04x: mcu_r %02x",activecpu_get_pc(),res);
 
 	return res;
 }

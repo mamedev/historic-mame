@@ -25,8 +25,8 @@ static void *setup_gun_timer;
 
 INLINE void get_crosshair_xy(int player, int *x, int *y)
 {
-	*x = ((readinputport(4 + player * 2) & 0xff) * Machine->drv->screen[0].maxwidth) >> 8;
-	*y = ((readinputport(5 + player * 2) & 0xff) * Machine->drv->screen[0].maxheight) >> 8;
+	*x = ((readinputport(4 + player * 2) & 0xff) * Machine->screen[0].width) >> 8;
+	*y = ((readinputport(5 + player * 2) & 0xff) * Machine->screen[0].height) >> 8;
 }
 
 
@@ -116,7 +116,7 @@ VIDEO_UPDATE( tickee )
 
 	/* determine the base of the videoram */
 	offset = (~tms34010_get_DPYSTRT(0) & 0xfff0) << 5;
-	offset += TOBYTE(0x1000) * (cliprect->min_y - Machine->visible_area[0].min_y);
+	offset += TOBYTE(0x1000) * (cliprect->min_y - Machine->screen[0].visarea.min_y);
 
 	/* determine how many pixels to copy */
 	xoffs = cliprect->min_x;

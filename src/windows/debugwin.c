@@ -26,14 +26,8 @@
 
 // MAMEOS headers
 #include "debugwin.h"
-#ifndef NEW_RENDER
-#include "windold.h"
-#include "videoold.h"
-#else
 #include "window.h"
 #include "video.h"
-#define win_video_window		win_window_list->hwnd
-#endif
 #include "config.h"
 
 
@@ -486,7 +480,7 @@ static debugwin_info *debug_window_create(LPCTSTR title, WNDPROC handler)
 	// create the window
 	info->handler = handler;
 	info->wnd = CreateWindowEx(DEBUG_WINDOW_STYLE_EX, TEXT("MAMEDebugWindow"), title, DEBUG_WINDOW_STYLE,
-			0, 0, 100, 100, win_video_window, create_standard_menubar(), GetModuleHandle(NULL), info);
+			0, 0, 100, 100, win_window_list->hwnd, create_standard_menubar(), GetModuleHandle(NULL), info);
 	if (!info->wnd)
 		goto cleanup;
 
@@ -2846,7 +2840,7 @@ static void smart_show_all(BOOL show)
 {
 	debugwin_info *info;
 	if (!show)
-		SetForegroundWindow(win_video_window);
+		SetForegroundWindow(win_window_list->hwnd);
 	for (info = window_list; info; info = info->next)
 		smart_show_window(info->wnd, show);
 }

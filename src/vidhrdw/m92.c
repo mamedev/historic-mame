@@ -620,9 +620,9 @@ VIDEO_UPDATE( m92 )
 	if (code_pressed_memory(KEYCODE_F1)) {
 		m92_raster_enable ^= 1;
 		if (m92_raster_enable)
-			ui_popup("Raster IRQ enabled");
+			popmessage("Raster IRQ enabled");
 		else
-			ui_popup("Raster IRQ disabled");
+			popmessage("Raster IRQ disabled");
 	}
 
 	/* Flipscreen appears hardwired to the dipswitch - strange */

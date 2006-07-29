@@ -200,7 +200,7 @@ VIDEO_UPDATE(backfire)
 		}
 		else
 		{
-			ui_popup( "unknown left priority %08x", backfire_left_priority[0] );
+			popmessage( "unknown left priority %08x", backfire_left_priority[0] );
 		}
 	}
 	else if (screen==1)
@@ -222,7 +222,7 @@ VIDEO_UPDATE(backfire)
 		}
 		else
 		{
-			ui_popup( "unknown right priority %08x", backfire_right_priority[0] );
+			popmessage( "unknown right priority %08x", backfire_right_priority[0] );
 		}
 	}
 	return 0;

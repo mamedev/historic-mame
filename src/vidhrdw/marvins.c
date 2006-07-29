@@ -170,7 +170,7 @@ VIDEO_START( marvins )
 		return 1;
 
 	{
-		tilemap_clip = Machine->visible_area[0];
+		tilemap_clip = Machine->screen[0].visarea;
 		if (snk_gamegroup != 1) // not Mad Crasher
 		{
 			tilemap_clip.max_x-=16;

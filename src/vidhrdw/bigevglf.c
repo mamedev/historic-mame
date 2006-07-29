@@ -61,10 +61,10 @@ READ8_HANDLER( bigevglf_vidram_r )
 
 VIDEO_START( bigevglf )
 {
-	tmp_bitmap[0] = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight);
-	tmp_bitmap[1] = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight);
-	tmp_bitmap[2] = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight);
-	tmp_bitmap[3] = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight);
+	tmp_bitmap[0] = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
+	tmp_bitmap[1] = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
+	tmp_bitmap[2] = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
+	tmp_bitmap[3] = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
 	vidram = auto_malloc(0x100*0x100 * 4);
 	return 0;
 }

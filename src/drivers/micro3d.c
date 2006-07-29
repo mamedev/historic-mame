@@ -148,7 +148,7 @@ INTERRUPT_GEN( micro3d_tms_vblank )
 
 	/* due to timing issues, we sometimes set the DPYADR just before we get here;
        in order to avoid trouncing that value, we look for the last scanline */
-	if (dpyadrscan < Machine->visible_area[0].max_y)
+	if (dpyadrscan < Machine->screen[0].visarea.max_y)
 		dpyadr = ~tms34010_io_register_r(REG_DPYSTRT, 0) & 0xfffc;
 	dpyadrscan = 0;
 
@@ -675,17 +675,17 @@ static READ32_HANDLER( am_uart_r )
 
 static WRITE16_HANDLER( mystery_w )
 {
-       ui_popup("Write to 900000: %x",data);
+       popmessage("Write to 900000: %x",data);
 }
 
 static WRITE16_HANDLER( mystery2_w )
 {
-       ui_popup("TMS Write to e00000: %x",data);
+       popmessage("TMS Write to e00000: %x",data);
 }
 
 static WRITE16_HANDLER( mystery3_w )
 {
-       ui_popup("TMS Write to 2600000: %x",data);
+       popmessage("TMS Write to 2600000: %x",data);
 }
 
 

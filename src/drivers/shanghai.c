@@ -603,7 +603,7 @@ rwp /= 2;
 		else
 {
 logerror("unsupported command\n");
-ui_popup("unsupported command %s (%04x)",instruction_name[fifo[0]>>10],fifo[0]);
+popmessage("unsupported command %s (%04x)",instruction_name[fifo[0]>>10],fifo[0]);
 }
 
 		fifo_counter = 0;

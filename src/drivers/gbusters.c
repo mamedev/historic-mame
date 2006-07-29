@@ -59,7 +59,7 @@ static WRITE8_HANDLER( gbusters_1f98_w )
 	/* other bits unused/unknown */
 	if (data & 0xfe){
 		//logerror("%04x: (1f98) write %02x\n",activecpu_get_pc(), data);
-		//ui_popup("$1f98 = %02x", data);
+		//popmessage("$1f98 = %02x", data);
 	}
 }
 
@@ -83,7 +83,7 @@ static WRITE8_HANDLER( gbusters_coin_counter_w )
 		char baf[40];
 		logerror("%04x: (ccount) write %02x\n",activecpu_get_pc(), data);
 		sprintf(baf,"ccnt = %02x", data);
-//      ui_popup(baf);
+//      popmessage(baf);
 	}
 }
 
@@ -94,7 +94,7 @@ static WRITE8_HANDLER( gbusters_unknown_w )
 {
 char baf[40];
 	sprintf(baf,"??? = %02x", data);
-//  ui_popup(baf);
+//  popmessage(baf);
 }
 }
 
@@ -113,7 +113,7 @@ static WRITE8_HANDLER( gbusters_snd_bankswitch_w )
 	{
 		char baf[40];
 		sprintf(baf,"snd_bankswitch = %02x", data);
-		ui_popup(baf);
+		popmessage(baf);
 	}
 #endif
 }
@@ -398,7 +398,7 @@ static void gbusters_banking( int lines )
 
 	if (lines & 0xf0){
 		//logerror("%04x: (lines) write %02x\n",activecpu_get_pc(), lines);
-		//ui_popup("lines = %02x", lines);
+		//popmessage("lines = %02x", lines);
 	}
 
 	/* other bits unknown */

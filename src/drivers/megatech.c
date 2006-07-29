@@ -328,7 +328,7 @@ static READ8_HANDLER (megatech_bios_port_dd_r)
 
 static WRITE8_HANDLER (megatech_bios_port_7f_w)
 {
-//  ui_popup("CPU #3: I/O port 0x7F write, data %02x",data);
+//  popmessage("CPU #3: I/O port 0x7F write, data %02x",data);
 }
 
 

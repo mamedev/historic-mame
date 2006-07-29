@@ -148,7 +148,7 @@ static void gaelco_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 				drawgfx(bitmap,gfx,number + x_offset[ex] + y_offset[ey],
 						0x20 + color,xflip,yflip,
 						sx-0x0f+x*16,sy+y*16,
-						&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+						&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 			}
 		}
 	}

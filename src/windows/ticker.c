@@ -17,10 +17,7 @@
 #include "driver.h"
 #include "x86drc.h"
 #include "options.h"
-
-#ifdef NEW_RENDER
 #include "video.h"
-#endif
 
 
 

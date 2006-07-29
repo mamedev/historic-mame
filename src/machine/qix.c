@@ -147,7 +147,7 @@ static const pia6821_interface qix_pia_5_intf =
 
 static WRITE8_HANDLER( pia_5_warning_w )
 {
-	ui_popup("PIA 5 write!!");
+	popmessage("PIA 5 write!!");
 }
 
 

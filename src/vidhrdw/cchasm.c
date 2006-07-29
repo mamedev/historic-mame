@@ -124,10 +124,10 @@ VIDEO_START( cchasm )
 {
 	int xmin, xmax, ymin, ymax;
 
-	xmin=Machine->visible_area[0].min_x;
-	ymin=Machine->visible_area[0].min_y;
-	xmax=Machine->visible_area[0].max_x;
-	ymax=Machine->visible_area[0].max_y;
+	xmin=Machine->screen[0].visarea.min_x;
+	ymin=Machine->screen[0].visarea.min_y;
+	xmax=Machine->screen[0].visarea.max_x;
+	ymax=Machine->screen[0].visarea.max_y;
 
 	xcenter=((xmax+xmin)/2) << 16;
 	ycenter=((ymax+ymin)/2) << 16;

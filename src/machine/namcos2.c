@@ -320,7 +320,7 @@ READ16_HANDLER( namcos2_68k_key_r )
 		{
 	//  case 3: return 0x142;
 		case 4: return 0x142;
-	//  case 3: ui_popup("blah %08x",activecpu_get_pc());
+	//  case 3: popmessage("blah %08x",activecpu_get_pc());
 		default: return mame_rand();
 		}
 		break;

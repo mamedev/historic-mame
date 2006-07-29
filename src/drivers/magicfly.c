@@ -164,206 +164,76 @@
 
     $0100 - $01FF    RAM    // 6502 Stack Pointer.
 
-    $0800 - $0801    (mc6845?)    // At begining, write 18 bytes sequentially in $0801, and the increment (x register) in $0800.
+    $0200 - $07FF    RAM
+
+    $0800 - $0801    MC6845    // MC6845 use $0800 for register addressing and $0801 for register values.
+                                // see code at CE86
+
+                                  *** MC6845 init ***
+
+                                  Register:   00    01    02    03    04    05    06    07    08    09    10    11    12    13    14    15    16    17
+                                  Value:     #$27  #$20  #$23  #$03  #$1F  #$04  #$1D  #$1E  #$00  #$07  #$00  #$00  #$00  #$00  #$00  #$00  #$00  #$00.
 
     $1000 - $13FF    Video RAM    // Initialized in subroutine starting at $CF83, filled with value stored in $5E.
+
     $1800 - $1BFF    Color RAM    // Initialized in subroutine starting at $CF83, filled with value stored in $5F.
                                   // (In 7mezzo is located at $CB13 using $64 and $65 to store video and color ram values.)
-
-                                     CF83: 48         pha
-                                     CF84: 8A         txa
-                                     CF85: 48         pha
-                                     CF86: 98         tya
-                                     CF87: 48         pha
-                                     CF88: A0 00      ldy  #$00
-                                     CF8A: AD 5E 00   lda  $005E
-                                     CF8D: 99 00 10   sta  $1000,y
-                                     CF90: 99 00 11   sta  $1100,y
-                                     CF93: 99 00 12   sta  $1200,y
-                                     CF96: 99 00 13   sta  $1300,y
-                                     CF99: AD 5F 00   lda  $005F
-                                     CF9C: 99 00 18   sta  $1800,y
-                                     CF9F: 99 00 19   sta  $1900,y
-                                     CFA2: 99 00 1A   sta  $1A00,y
-                                     CFA5: 99 00 1B   sta  $1B00,y
-                                     CFA8: 88         dey
-                                     CFA9: D0 DF      bne  $CF8A
-                                     CFAB: 68         pla
-                                     CFAC: A8         tay
-                                     CFAD: 68         pla
-                                     CFAE: AA         tax
-                                     CFAF: 68         pla
-                                     CFB0: 60         rts
+                                // see code at CF83
 
     $1C00 - $27FF    RAM
 
     $2800 - $2800    Input port    // Input port (code at $CE96). No writes, only reads.
                                    // NMI routine read from here and store new values to $003A - $003D and copy old ones to $003F - $0042.
-
-                               CE96: AD 00 28   lda  $2800
-                               CE99: 29 80      and  #$80
-                               CE9B: 8D 96 00   sta  $0096
-                               CE9E: AD 00 28   lda  $2800
-                               CEA1: 29 40      and  #$40
-                               CEA3: 8D 97 00   sta  $0097
-                               CEA6: AD 00 28   lda  $2800
-                               CEA9: 29 10      and  #$10
-                               CEAB: 8D 98 00   sta  $0098
+                                // see code at CE96 and CD0C
 
     $2801 - $2FFF    RAM
 
     $3000 - $3000    ???    // Something seems to be mapped here. Only writes, no reads.
                             // Code at $C152 do a complex loop with boolean operations and write #$00/#$80 to $3000. Also NMI routine write another values.
-                            // (normally the program execution stuck here)
 
-                               C152: 8A         txa
-                               C153: 48         pha
-                               C154: 98         tya
-                               C155: 48         pha
-                               C156: A9 00      lda  #$00
-                               C158: 8D 1D 00   sta  $001D
-                               C15B: AD 4D 00   lda  $004D
-                               C15E: F0 15      beq  $C175
-                               C160: AD 94 00   lda  $0094
-                               C163: 49 FF      eor  #$FF
-                               C165: 29 80      and  #$80
-                               C167: 8D 94 00   sta  $0094
-                               C16A: AD 39 00   lda  $0039
-                               C16D: 29 70      and  #$70
-                               C16F: 0D 94 00   ora  $0094
-                               C172: 8D 00 30   sta  $3000
-                               C175: 88         dey
-                               C176: D0 05      bne  $C17D
-                               C178: CE 4E 00   dec  $004E
-                               C17B: F0 09      beq  $C186
-                               C17D: CA         dex
-                               C17E: D0 F5      bne  $C175
-                               C180: AE 4D 00   ldx  $004D
-                               C183: 4C 5B C1   jmp  $C15B
-                               C186: AD 39 00   lda  $0039
-                               C189: 29 70      and  #$70
-                               C18B: 8D 00 30   sta  $3000
-                               C18E: A9 01      lda  #$01
-                               C190: 8D 1D 00   sta  $001D
-                               C193: 68         pla
-                               C194: A8         tay
-                               C195: 68         pla
-                               C196: AA         tax
-                               C197: 60         rts
+                                // see code at C152
 
     $3001 - $BFFF    RAM
 
-    $C000 - $FFFF    ROM
+    $C000 - $FFFF    ROM    // Program ROM.
 
-    -------------------------------------------------
+    -------------------------------------------------------------------------
 
+    Driver updates:
 
-    Some clues:
+    [2006-07-07]
+    - Initial release.
 
-    In part of the code you can find...
+    [2006-07-11]
+    - Corrected the total number of chars to decode by rom.
+    - Fixed the graphics offset for the text layer.
+    - Adjusted the gfx rom region bounds properly.
 
-    C198: A2 FF      ldx  #$FF     ; *** From Start ****
-    C19A: 9A         txs
-    C19B: D8         cld
-    C19C: 20 70 CE   jsr  $CE70
-    C19F: 20 0C DA   jsr  $DA0C
-    C1A2: AD 67 00   lda  $0067    ; If $0067 = #$E1, jump to $CE3C.
-    C1A5: D0 03      bne  $C1AA
-    C1A7: 4C CD C1   jmp  $C1CD
-    C1AA: C9 02      cmp  #$02
-    C1AC: D0 03      bne  $C1B1
-    C1AE: 4C 6A C3   jmp  $C36A
-    C1B1: C9 03      cmp  #$03
-    C1B3: D0 03      bne  $C1B8
-    C1B5: 4C F6 C4   jmp  $C4F6
-    C1B8: C9 04      cmp  #$04
-    C1BA: D0 03      bne  $C1BF
-    C1BC: 4C 3D C6   jmp  $C63D
-    C1BF: C9 05      cmp  #$05
-    C1C1: D0 03      bne  $C1C6
-    C1C3: 4C 5D C7   jmp  $C75D
-    C1C6: C9 E1      cmp  #$E1
-    C1C8: D0 03      bne  $C1CD
-    C1CA: 4C 3C CE   jmp  $CE3C
-    ...
-    ...
-    CE3C: A9 00      lda  #$00     ; Clean value at $0067.
-    CE3E: 8D 1D 00   sta  $001D
-    CE41: 8D 67 00   sta  $0067
-    CE44: A9 1F      lda  #$1F     ; Clean the screen.
-    CE46: 8D 5F 00   sta  $005F
-    CE49: A9 20      lda  #$20
-    CE4B: 8D 5E 00   sta  $005E
-    CE4E: 20 83 CF   jsr  $CF83
-    CE51: A9 01      lda  #$01
-    CE53: 8D 10 00   sta  $0010
-    CE56: A9 0A      lda  #$0A
-    CE58: 8D 11 00   sta  $0011
-    CE5B: A9 1B      lda  #$1B
-    CE5D: 8D 12 00   sta  $0012
-    CE60: A9 D1      lda  #$D1     ; Point to $D194 in $0013/$0014,
-    CE62: 8D 14 00   sta  $0014    ; text: "I/O ERROR (TURN OFF TO RESET)".
-    CE65: A9 94      lda  #$94
-    CE67: 8D 13 00   sta  $0013
-    CE6A: 20 03 C0   jsr  $C003    ; Subroutine to write text in video ram.
-    CE6D: 4C 6D CE   jmp  $CE6D    ; Stuck here!!!
+    [2006-07-21]
+    - Rewrote the technical info.
+    - Removed fuse maps and unaccurate things.
+    - Added new findings, pinouts, and pieces of code.
+    - Confirmed and partially mapped one input port.
+    - Added a little patch to pass over some checks (for debugging purposes).
 
-    Other checks:
-
-    CA71: A9 00      lda  #$00     ; Write #$00 at $0019.
-    CA73: 8D 19 00   sta  $0019
-    CA76: AD 19 00   lda  $0019    ; Waiting for #$0a at $0019... (incremented through the NMI sub at $CCF6)
-    CA79: C9 0A      cmp  #$0A
-    CA7B: D0 F9      bne  $CA76
-    CA7D: 60         rts
-    CA7E: A9 00      lda  #$00     ; Here the same, but waiting for #$04.
-    CA80: 8D 19 00   sta  $0019
-    CA83: AD 19 00   lda  $0019
-    CA86: C9 04      cmp  #$04
-    CA88: D0 F9      bne  $CA83
-    CA8A: 60         rts
-    CA8B: A9 00      lda  #$00     ; Here the same, but waiting for #$32.
-    CA8D: 8D 19 00   sta  $0019    ; With the hack in driver init, the game stuck here
-    CA90: AD 19 00   lda  $0019    ; waiting for #$32 to be written at $0019.
-    CA93: C9 32      cmp  #$32
-    CA95: D0 F9      bne  $CA90
-    CA97: 60         rts
-
-    DA0C: A9 15      lda  #$15     ; Fill the video RAM with spaces (#$20),
-    DA0E: 8D 5F 00   sta  $005F    ; and color RAM with #$15
-    DA11: A9 20      lda  #$20
-    DA13: 8D 5E 00   sta  $005E
-    DA16: 20 83 CF   jsr  $CF83
-    DA19: AD 00 18   lda  $1800    ; Check the 1st position at color RAM
-    DA1C: 29 80      and  #$80     ; boolean AND with #$80
-    DA1E: D0 10      bne  $DA30    ; if not equal, jump to $DA30.
-
-    DA20: A9 1F      lda  #$1F     ; Fill the color RAM with #$1F
-    DA22: 8D 5F 00   sta  $005F
-    DA25: 20 83 CF   jsr  $CF83
-    DA28: AD 00 18   lda  $1800    ; Check the 1st position at color RAM
-    DA2B: 29 80      and  #$80     ; boolean AND with #$80
-    DA2D: F0 01      beq  $DA30    ; if equal, jump to $DA30.
-    DA2F: 60         rts
-
-    DA30: A9 00      lda  #$00     ; Fill video & color RAM
-    DA32: 8D 1D 00   sta  $001D    ; with calculated values
-    DA35: A9 FF      lda  #$FF     ; through $C111 subroutine
-    DA37: 20 11 C1   jsr  $C111
-    DA3A: 8D 5E 00   sta  $005E
-    DA3D: A9 20      lda  #$20
-    DA3F: 20 11 C1   jsr  $C111
-    DA42: 8D 5F 00   sta  $005F
-    DA45: 20 83 CF   jsr  $CF83
-    DA48: 20 77 DB   jsr  $DB77
-    DA4B: 4C 30 DA   jmp  $DA30    ; Jump to a loop
+    [2006-07-26]
+    - Figured out the MC6845 (mapped at $0800-$0801)
+    - Fixed the screen size based on MC6845 registers.
+    - Fixed the visible area based on MC6845 registers.
+    - Corrected the gfx rom region.
+    - Solved the NMI/vblank issue. Now attract works.
+    - Changed CPU clock to 625khz. (text scroll looks so fast with the former value)
+    - Added new findings to the technical notes.
+    - Added version/revision number to magicfly.
+    - Marked magicfly PAL as NO_DUMP (read protected).
+    - Added flags GAME_IMPERFECT_GRAPHICS and GAME_WRONG_COLORS.
 
 
     TODO:
 
     - Map inputs & DIP switches.
     - Correct the GFX banks.
-    - Hook properly the MC6845.
+    - Figure out $3000 writes (???).
     - Figure out the sound.
     - Clean and sort out a lot of things.
 
@@ -411,7 +281,7 @@ static void get_bg_tile_info(int tile_index)
 VIDEO_START(magicfly)
 {
 	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows,
-		TILEMAP_OPAQUE, 8, 8, 32, 32);
+		TILEMAP_OPAQUE, 8, 8, 32, 29);
 
 	if ( !bg_tilemap )
 		return 1;
@@ -434,8 +304,8 @@ static ADDRESS_MAP_START( magicfly_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x00ff) AM_RAM    // zero page (pointers and registers)
 	AM_RANGE(0x0100, 0x01ff) AM_RAM    // stack pointer
 	AM_RANGE(0x0200, 0x07ff) AM_RAM
-	AM_RANGE(0x0800, 0x0800) AM_WRITE(crtc6845_address_w)    // wrong
-	AM_RANGE(0x0801, 0x0801) AM_READWRITE(crtc6845_register_r, crtc6845_register_w)    // wrong
+	AM_RANGE(0x0800, 0x0800) AM_WRITE(crtc6845_address_w)    // crtc6845 register addressing
+	AM_RANGE(0x0801, 0x0801) AM_READWRITE(crtc6845_register_r, crtc6845_register_w)    // crtc6845 register values
 	AM_RANGE(0x0802, 0x0fff) AM_RAM
 	AM_RANGE(0x1000, 0x13ff) AM_RAM AM_WRITE(magicfly_videoram_w) AM_BASE(&videoram)
 	AM_RANGE(0x1400, 0x17ff) AM_RAM
@@ -443,7 +313,7 @@ static ADDRESS_MAP_START( magicfly_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x1c00, 0x27ff) AM_RAM
 	AM_RANGE(0x2800, 0x2800) AM_READ(input_port_0_r)
 	AM_RANGE(0x2801, 0x2fff) AM_RAM
-	AM_RANGE(0x3000, 0x3000) AM_WRITENOP    // code loops writing #$00/#$80 here. NMI write other values.
+	AM_RANGE(0x3000, 0x3000) AM_WRITENOP    // main code write #$00/#$80 here. NMI write #$01, #$02, #$04, #$08.
 	AM_RANGE(0x3001, 0xbfff) AM_RAM
 	AM_RANGE(0xc000, 0xffff) AM_ROM
 ADDRESS_MAP_END
@@ -455,6 +325,7 @@ ADDRESS_MAP_END
 
 INPUT_PORTS_START( magicfly )
 
+  /* Code accept only bits 4, 6 & 7 as valid. If another bit is activated, will produce an I/O error. */
   PORT_START_TAG("IN0")
   PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Bit 0") PORT_CODE(KEYCODE_Q)
   PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Bit 1") PORT_CODE(KEYCODE_W)
@@ -515,8 +386,8 @@ static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x1800, &charlayout, 0, 16 },
 	{ REGION_GFX1, 0x1000, &charlayout, 0, 16 },
-	{ REGION_GFX2, 0x1800, &charlayout, 0, 16 },
-	{ REGION_GFX3, 0x1800, &charlayout, 0, 16 },
+	{ REGION_GFX1, 0x3800, &charlayout, 0, 16 },
+	{ REGION_GFX1, 0x5800, &charlayout, 0, 16 },
 	{ -1 }
 };
 
@@ -527,17 +398,17 @@ static const gfx_decode gfxdecodeinfo[] =
 
 static MACHINE_DRIVER_START( magicfly )
 	// basic machine hardware
-	MDRV_CPU_ADD(M6502, 10000000/12)	// a guess
+	MDRV_CPU_ADD(M6502, 10000000/16)	// a guess
 	MDRV_CPU_PROGRAM_MAP(magicfly_map, 0)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold, 1)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse, 1)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	// video hardware
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 32*8-1)
+	MDRV_SCREEN_SIZE((39+1)*8, (31+1)*8)           // Taken from MC6845 init, registers 00 & 04. Normally programmed with (value-1).
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 29*8-1)    // Taken from MC6845 init, registers 01 & 06.
 
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(16)
@@ -554,40 +425,27 @@ static DRIVER_INIT( magicfly )
 
 /***************************************************************
 *
-* Temporary patch to avoid a loop of checks for debug purposes
+* Temporary patch to avoid a loop of checks for debug purposes.
 *
-* Code at 0xc19f:
-*
-*    C19F: 20 0C DA   jsr $DA0C
-*    (checks to $1800 and writing video & color RAM)
+* After check the last bit of $1800, code jump into a loop ($DA30)
 *
 *   changed to :
 *
-*    C19F: EA         nop
-*    C1A0: EA         nop
-*    C1A1: EA         nop
+*    DA30: 60         rts
 *
 ***************************************************************/
 
-    UINT8 *ROM = memory_region(REGION_CPU1);
+	UINT8 *ROM = memory_region(REGION_CPU1);
 
-//    ROM[0xc19f] = 0xea;
-//    ROM[0xc1a0] = 0xea;
-//    ROM[0xc1a1] = 0xea;
-
-    ROM[0xda30] = 0x60;    // just a rts to part of subroutine to allow work some registers.
-
+	ROM[0xda30] = 0x60;
 }
+
 
 static DRIVER_INIT( 7mezzo )
 {
+	UINT8 *ROM = memory_region(REGION_CPU1);
 
-/* Similar to magicfly, but another offset */
-
-    UINT8 *ROM = memory_region(REGION_CPU1);
-
-    ROM[0xd21a] = 0x60;    // just a rts to part of subroutine.
-
+	ROM[0xd21a] = 0x60;    // Similar to magicfly, but another offset.
 }
 
 
@@ -599,17 +457,13 @@ ROM_START( magicfly )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "magicfly3.3",	 0xc000, 0x4000, CRC(c29798d5) SHA1(bf92ac93d650398569b3ab79d01344e74a6d35be) )
 
-	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x6000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "magicfly2.bin",	 0x0000, 0x2000, CRC(3596a45b) SHA1(7ec32ec767d0883d05606beb588d8f27ba8f10a4) )
+	ROM_LOAD( "magicfly1.bin",	 0x2000, 0x2000, CRC(724d330c) SHA1(cce3923ce48634b27f0e7d29979cd36e7394ab37) )
+	ROM_LOAD( "magicfly0.bin",	 0x4000, 0x2000, CRC(44e3c9d6) SHA1(677d25360d261bf2400f399b8015eeb529ad405e) )
 
-	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "magicfly0.bin",	 0x0000, 0x2000, CRC(44e3c9d6) SHA1(677d25360d261bf2400f399b8015eeb529ad405e) )
-
-	ROM_REGION( 0x2000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "magicfly1.bin",	 0x0000, 0x2000, CRC(724d330c) SHA1(cce3923ce48634b27f0e7d29979cd36e7394ab37) )
-
-	ROM_REGION( 0x0200, REGION_PLDS, 0 )
-	ROM_LOAD( "pal16r4a-magicfly.bin",   0x0000, 0x0104, CRC(bd76fb53) SHA1(2d0634e8edb3289a103719466465e9777606086e) )
+	ROM_REGION( 0x0200, REGION_PLDS, ROMREGION_DISPOSE )
+	ROM_LOAD( "pal16r4a-magicfly.bin",   0x0000, 0x0104, NO_DUMP )    /* PAL is read protected */
 
 ROM_END
 
@@ -617,16 +471,12 @@ ROM_START( 7mezzo )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "ns3.1",	 0xc000, 0x4000, CRC(b1867b76) SHA1(eb76cffb81c865352f4767015edade54801f6155) )
 
-	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "1.bin",	 0x0000, 0x2000, CRC(7983a41c) SHA1(68805ea960c2738d3cd2c7490ffed84f90da029b) )
+	ROM_REGION( 0x6000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "1.bin",	 0x0000, 0x2000, CRC(7983a41c) SHA1(68805ea960c2738d3cd2c7490ffed84f90da029b) )    // should be named ns2.bin regarding pcb location and content.
+	ROM_LOAD( "ns1.bin",	 0x2000, 0x2000, CRC(a6ada872) SHA1(7f531a76e73d479161e485bdcf816eb8eb9fdc62) )
+	ROM_LOAD( "2.bin",	 0x4000, 0x2000, CRC(e04fb210) SHA1(81e764e296fe387daf8ca67064d5eba2a4fc3c26) )    // should be named ns0.bin regarding pcb location and content.
 
-	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
-	ROM_LOAD( "2.bin",	 0x0000, 0x2000, CRC(e04fb210) SHA1(81e764e296fe387daf8ca67064d5eba2a4fc3c26) )
-
-	ROM_REGION( 0x2000, REGION_GFX3, ROMREGION_DISPOSE )
-	ROM_LOAD( "ns1.bin",	 0x0000, 0x2000, CRC(a6ada872) SHA1(7f531a76e73d479161e485bdcf816eb8eb9fdc62) )
-
-	ROM_REGION( 0x0200, REGION_PLDS, 0 )
+	ROM_REGION( 0x0200, REGION_PLDS, ROMREGION_DISPOSE )
 	ROM_LOAD( "pal16r4a-7mezzo.bin",   0x0000, 0x0104, CRC(61ac7372) SHA1(7560506468a7409075094787182ded24e2d0c0a3) )
 ROM_END
 
@@ -636,6 +486,6 @@ ROM_END
 *************************/
 
 //    YEAR  NAME      PARENT    MACHINE   INPUT     INIT            COMPANY        FULLNAME
-GAME( 198?, magicfly, 0,        magicfly, magicfly, magicfly, ROT0, "P&A Games",  "Magic Fly",    GAME_NO_SOUND | GAME_NOT_WORKING )
-GAME( 198?, 7mezzo  , 0,        magicfly, magicfly, 7mezzo  , ROT0, "Unknown"  ,  "7 e Mezzo", 	  GAME_NO_SOUND | GAME_NOT_WORKING )
+GAME( 198?, magicfly, 0,        magicfly, magicfly, magicfly, ROT0, "P&A Games",   "Magic Fly (Ver 0.3)", GAME_IMPERFECT_GRAPHICS | GAME_WRONG_COLORS | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAME( 198?, 7mezzo,   0,        magicfly, magicfly, 7mezzo,   ROT0, "Unknown",     "7 e Mezzo",           GAME_IMPERFECT_GRAPHICS | GAME_WRONG_COLORS | GAME_NO_SOUND | GAME_NOT_WORKING )
 

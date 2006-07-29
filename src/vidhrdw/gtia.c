@@ -146,7 +146,7 @@ static void gtia_state(void)
 
 static int is_ntsc(void)
 {
-	return Machine->drv->screen[0].refresh_rate > 55;
+	return Machine->screen[0].refresh > 55;
 }
 
 

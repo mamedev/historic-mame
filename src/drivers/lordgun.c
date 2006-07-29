@@ -105,7 +105,7 @@ static WRITE8_HANDLER(fake_w)
 }
 static WRITE8_HANDLER(fake2_w)
 {
-//  ui_popup("%02x",data);
+//  popmessage("%02x",data);
 }
 
 static READ8_HANDLER( lordgun_eeprom_r )
@@ -120,7 +120,7 @@ static WRITE8_HANDLER( lordgun_eeprom_w )
 
 	if (data & ~0xfd)
 	{
-//      ui_popup("EE: %02x", data);
+//      popmessage("EE: %02x", data);
 		logerror("PC %06X - Unknown EEPROM bit written %02X\n",activecpu_get_pc(),data);
 	}
 
@@ -148,7 +148,7 @@ static WRITE8_HANDLER( lordgun_eeprom_w )
 static WRITE16_HANDLER( lordgun_priority_w )
 {
 	COMBINE_DATA(&lordgun_priority);
-//  ui_popup("PR: %04x", data);
+//  popmessage("PR: %04x", data);
 }
 
 static READ16_HANDLER( lordgun_ppi8255_0_r )	{	return ppi8255_0_r(offset);	}
@@ -244,7 +244,7 @@ static WRITE8_HANDLER( lordgun_okibank_w )
 {
 	OKIM6295_set_bank_base(0, (data & 2) ? 0x40000 : 0);
 	if (data & ~3)	logerror("%04x: unknown okibank bits %02x\n", activecpu_get_pc(), data);
-//  ui_popup("OKI %x", data);
+//  popmessage("OKI %x", data);
 }
 
 static ADDRESS_MAP_START( lordgun_soundio_map, ADDRESS_SPACE_IO, 8 )

@@ -1472,7 +1472,7 @@ static void mark_tile_priority(int controller)
 			if (fg_tile_priority[controller][priority]) fg[controller]++;
 			if (top_tile_priority[controller][priority]) top[controller]++;
 		}
-		ui_popup("b=%2d:%2d f=%2d:%2d t=%2d:%2d",bg[0],bg[1],fg[0],fg[1],top[0],top[1]);
+		popmessage("b=%2d:%2d f=%2d:%2d t=%2d:%2d",bg[0],bg[1],fg[0],fg[1],top[0],top[1]);
 	}
 #endif
 }
@@ -1619,10 +1619,10 @@ VIDEO_UPDATE( batrider_0 )
 			draw_sprites(bitmap,cliprect,0,priority,1);	/* consider bank select */
 	}
 
-	clip.min_x = Machine->visible_area[0].min_x;
-	clip.max_x = Machine->visible_area[0].max_x;
-	clip.min_y = Machine->visible_area[0].min_y;
-	clip.max_y = Machine->visible_area[0].max_y;
+	clip.min_x = Machine->screen[0].visarea.min_x;
+	clip.max_x = Machine->screen[0].visarea.max_x;
+	clip.min_y = Machine->screen[0].visarea.min_y;
+	clip.max_y = Machine->screen[0].visarea.max_y;
 
 	/* used for 'for use in' and '8ing' screen on bbakraid, raizing on batrider */
 	for (line = 0; line < 256;line++)

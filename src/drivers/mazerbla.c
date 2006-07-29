@@ -103,10 +103,10 @@ static mame_bitmap * tmpbitmaps[4];
 
 VIDEO_START( mazerbla )
 {
-	tmpbitmaps[0] = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight);
-	tmpbitmaps[1] = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight);
-	tmpbitmaps[2] = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight);
-	tmpbitmaps[3] = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight);
+	tmpbitmaps[0] = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
+	tmpbitmaps[1] = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
+	tmpbitmaps[2] = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
+	tmpbitmaps[3] = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
 
 	if ((tmpbitmaps[0]==0) || (tmpbitmaps[1]==0) || (tmpbitmaps[2]==0) || (tmpbitmaps[3]==0))
 	{
@@ -147,21 +147,21 @@ VIDEO_UPDATE( test_vcu )
 
 
 	if (planes_enabled[3])
-		copybitmap(bitmap,tmpbitmaps[3],0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE, 0 );
+		copybitmap(bitmap,tmpbitmaps[3],0,0,0,0,&Machine->screen[0].visarea,TRANSPARENCY_NONE, 0 );
 
 
 	if (planes_enabled[2])
-		copybitmap(bitmap,tmpbitmaps[2],0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_PEN, Machine->pens[color_base] );
+		copybitmap(bitmap,tmpbitmaps[2],0,0,0,0,&Machine->screen[0].visarea,TRANSPARENCY_PEN, Machine->pens[color_base] );
 	fillbitmap(tmpbitmaps[2],Machine->pens[color_base],NULL);
 
 
 	if (planes_enabled[1])
-		copybitmap(bitmap,tmpbitmaps[1],0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_PEN, Machine->pens[color_base] );
+		copybitmap(bitmap,tmpbitmaps[1],0,0,0,0,&Machine->screen[0].visarea,TRANSPARENCY_PEN, Machine->pens[color_base] );
 	fillbitmap(tmpbitmaps[1],Machine->pens[color_base],NULL);
 
 
 	if (planes_enabled[0])
-		copybitmap(bitmap,tmpbitmaps[0],0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_PEN, Machine->pens[color_base] );
+		copybitmap(bitmap,tmpbitmaps[0],0,0,0,0,&Machine->screen[0].visarea,TRANSPARENCY_PEN, Machine->pens[color_base] );
 	fillbitmap(tmpbitmaps[0],Machine->pens[color_base],NULL);
 
 	if (code_pressed_memory(KEYCODE_1))	/* plane 1 */
@@ -257,10 +257,10 @@ VIDEO_UPDATE( greatgun )
 
 //fillbitmap(bitmap,0,NULL);
 
-	copybitmap(bitmap,tmpbitmaps[3],0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE, 0 );
-	copybitmap(bitmap,tmpbitmaps[2],0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_PEN, Machine->pens[color_base] );
-	copybitmap(bitmap,tmpbitmaps[1],0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_PEN, Machine->pens[color_base] );
-	copybitmap(bitmap,tmpbitmaps[0],0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_PEN, Machine->pens[color_base] );
+	copybitmap(bitmap,tmpbitmaps[3],0,0,0,0,&Machine->screen[0].visarea,TRANSPARENCY_NONE, 0 );
+	copybitmap(bitmap,tmpbitmaps[2],0,0,0,0,&Machine->screen[0].visarea,TRANSPARENCY_PEN, Machine->pens[color_base] );
+	copybitmap(bitmap,tmpbitmaps[1],0,0,0,0,&Machine->screen[0].visarea,TRANSPARENCY_PEN, Machine->pens[color_base] );
+	copybitmap(bitmap,tmpbitmaps[0],0,0,0,0,&Machine->screen[0].visarea,TRANSPARENCY_PEN, Machine->pens[color_base] );
 	return 0;
 }
 
@@ -277,10 +277,10 @@ VIDEO_UPDATE( mazerbla )
 
 //fillbitmap(bitmap,0,NULL);
 
-	copybitmap(bitmap,tmpbitmaps[3],0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE, 0 ); //text
-	copybitmap(bitmap,tmpbitmaps[2],0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_PEN, Machine->pens[0] );
-	copybitmap(bitmap,tmpbitmaps[1],0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_PEN, Machine->pens[0] ); //haircross
-	copybitmap(bitmap,tmpbitmaps[0],0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_PEN, Machine->pens[0] ); //sprites
+	copybitmap(bitmap,tmpbitmaps[3],0,0,0,0,&Machine->screen[0].visarea,TRANSPARENCY_NONE, 0 ); //text
+	copybitmap(bitmap,tmpbitmaps[2],0,0,0,0,&Machine->screen[0].visarea,TRANSPARENCY_PEN, Machine->pens[0] );
+	copybitmap(bitmap,tmpbitmaps[1],0,0,0,0,&Machine->screen[0].visarea,TRANSPARENCY_PEN, Machine->pens[0] ); //haircross
+	copybitmap(bitmap,tmpbitmaps[0],0,0,0,0,&Machine->screen[0].visarea,TRANSPARENCY_PEN, Machine->pens[0] ); //sprites
 	return 0;
 }
 
@@ -663,7 +663,7 @@ static WRITE8_HANDLER( VCU_video_reg_w )
 	if (VCU_video_reg[offset] != data)
 	{
 		VCU_video_reg[offset] = data;
-		//ui_popup("video_reg= %02x %02x %02x %02x", VCU_video_reg[0], VCU_video_reg[1], VCU_video_reg[2], VCU_video_reg[3] );
+		//popmessage("video_reg= %02x %02x %02x %02x", VCU_video_reg[0], VCU_video_reg[1], VCU_video_reg[2], VCU_video_reg[3] );
 		//logerror("video_reg= %02x %02x %02x %02x\n", VCU_video_reg[0], VCU_video_reg[1], VCU_video_reg[2], VCU_video_reg[3] );
 	}
 }
@@ -846,7 +846,7 @@ unsigned char * rom = memory_region(REGION_CPU3) + (gfx_rom_bank * 0x2000) + 0x1
 //}
 	break;
 	default:
-		ui_popup("not supported VCU drawing mode=%2x", mode);
+		popmessage("not supported VCU drawing mode=%2x", mode);
 	break;
 	}
 	return 0;
@@ -1035,13 +1035,13 @@ unsigned char * rom = memory_region(REGION_CPU3) + (gfx_rom_bank * 0x2000) + 0x1
 		break;
 
 		default:
-			ui_popup("not supported lookup/color write mode=%2x", ypos);
+			popmessage("not supported lookup/color write mode=%2x", ypos);
 		break;
 	}
 	break;
 
 	default:
-		ui_popup("not supported VCU color mode=%2x", mode);
+		popmessage("not supported VCU color mode=%2x", mode);
 	break;
 
 	}

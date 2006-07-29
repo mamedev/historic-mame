@@ -19,13 +19,8 @@
 
 // MAME headers
 #include "driver.h"
-#ifndef NEW_RENDER
-#include "windold.h"
-#include "videoold.h"
-#else
 #include "window.h"
 #include "video.h"
-#endif
 #include "input.h"
 #include "config.h"
 #include "osdepend.h"

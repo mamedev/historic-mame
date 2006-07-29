@@ -100,12 +100,12 @@ static void play_oki_sound(int game_sound, int data)
 void dogyuun_okisnd_w(int data)
 {
 	/* Need a board to determine the sound commands */
-//  ui_popup("Writing %04x to Sound CPU",data);
+//  popmessage("Writing %04x to Sound CPU",data);
 }
 
 void kbash_okisnd_w(int data)
 {
-//  ui_popup("Writing %04x to Sound CPU",data);
+//  popmessage("Writing %04x to Sound CPU",data);
 
 	if (data == 0)
 	{
@@ -119,7 +119,7 @@ void kbash_okisnd_w(int data)
 
 void fixeight_okisnd_w(int data)
 {
-//  ui_popup("Writing %04x to Sound CPU",data);
+//  popmessage("Writing %04x to Sound CPU",data);
 
 	if (data == 0)
 	{
@@ -133,7 +133,7 @@ void fixeight_okisnd_w(int data)
 
 void batsugun_okisnd_w(int data)
 {
-//  ui_popup("Writing %04x to Sound CPU",data);
+//  popmessage("Writing %04x to Sound CPU",data);
 
 	if (data == 0)
 	{

@@ -131,7 +131,7 @@ static void darkhors_draw_sprites(mame_bitmap *bitmap)
 		drawgfx(	bitmap,	Machine->gfx[0],
 					code/2,	color,
 					flipx,	flipy,	sx,	sy,
-					&Machine->visible_area[0], TRANSPARENCY_PEN, 0);
+					&Machine->screen[0].visarea, TRANSPARENCY_PEN, 0);
 	}
 }
 
@@ -183,7 +183,7 @@ VIDEO_UPDATE( darkhors )
 
 #ifdef MAME_DEBUG
 #if 0
-	ui_popup("%04X-%04X %04X-%04X %04X-%04X %04X-%04X %04X-%04X %04X-%04X",
+	popmessage("%04X-%04X %04X-%04X %04X-%04X %04X-%04X %04X-%04X %04X-%04X",
 		darkhors_tmapscroll[0] >> 16, darkhors_tmapscroll[0] & 0xffff,
 		darkhors_tmapscroll[1] >> 16, darkhors_tmapscroll[1] & 0xffff,
 		darkhors_tmapscroll[2] >> 16, darkhors_tmapscroll[2] & 0xffff,
@@ -281,7 +281,7 @@ static UINT32 input_sel;
 static WRITE32_HANDLER( darkhors_input_sel_w )
 {
 	COMBINE_DATA(&input_sel);
-//  if (ACCESSING_MSW32)    ui_popup("%04X",data >> 16);
+//  if (ACCESSING_MSW32)    popmessage("%04X",data >> 16);
 }
 
 static int mask_to_bit( int mask )
@@ -313,7 +313,7 @@ static READ32_HANDLER( darkhors_input_sel_r )
 static WRITE32_HANDLER( darkhors_unk1_w )
 {
 	// 0x1000 lockout
-//  if (ACCESSING_MSW32)    ui_popup("%04X",data >> 16);
+//  if (ACCESSING_MSW32)    popmessage("%04X",data >> 16);
 }
 
 static ADDRESS_MAP_START( darkhors_readmem, ADDRESS_SPACE_PROGRAM, 32 )

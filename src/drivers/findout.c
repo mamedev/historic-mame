@@ -48,7 +48,7 @@ static WRITE8_HANDLER( findout_bitmap_w )
 	sy = (sy + yadd) & 0xff;
 
 //if (mask != bits)
-//  ui_popup("color %02x bits %02x mask %02x\n",fg,bits,mask);
+//  popmessage("color %02x bits %02x mask %02x\n",fg,bits,mask);
 
 	if (mask & 0x80) plot_pixel(tmpbitmap,sx+0,sy,(bits & 0x80) ? fg : bg);
 	if (mask & 0x40) plot_pixel(tmpbitmap,sx+1,sy,(bits & 0x40) ? fg : bg);
@@ -87,7 +87,7 @@ static WRITE8_HANDLER( sound_w )
 	DAC_data_w(0,((data & 0x80) >> 7) * 255);
 
 //  logerror("%04x: sound_w %02x\n",activecpu_get_pc(),data);
-//  ui_popup("%02x",data);
+//  popmessage("%02x",data);
 }
 
 static ppi8255_interface ppi8255_intf =

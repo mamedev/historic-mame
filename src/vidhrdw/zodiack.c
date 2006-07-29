@@ -182,7 +182,7 @@ static void zodiack_draw_bullets( mame_bitmap *bitmap )
 			0,
 			0,0,
 			x,y,
-			&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+			&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 	}
 }
 
@@ -213,7 +213,7 @@ static void zodiack_draw_sprites( mame_bitmap *bitmap )
 			sx, sy,
 			//flip_screen[0] ? &spritevisibleareaflipx : &spritevisiblearea,TRANSPARENCY_PEN,0);
 			//&spritevisiblearea,TRANSPARENCY_PEN,0);
-			&Machine->visible_area[0], TRANSPARENCY_PEN, 0);
+			&Machine->screen[0].visarea, TRANSPARENCY_PEN, 0);
 	}
 }
 
@@ -226,8 +226,8 @@ VIDEO_UPDATE( zodiack )
 		tilemap_set_scrolly(fg_tilemap, i, zodiack_attributesram[i * 2]);
 	}
 
-	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
-	tilemap_draw(bitmap, &Machine->visible_area[0], fg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->screen[0].visarea, bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->screen[0].visarea, fg_tilemap, 0, 0);
 	zodiack_draw_bullets(bitmap);
 	zodiack_draw_sprites(bitmap);
 	return 0;

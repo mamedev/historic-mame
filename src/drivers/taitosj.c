@@ -352,7 +352,7 @@ static READ8_HANDLER ( kikstart_gearsP1_read )
 	if (kikstart_gearP1 == 2) portreturn |= (0x03);
 	if (kikstart_gearP1 == 3) portreturn |= (0x01);
 
-//ui_popup   ("Kikstart gear %02x",  kikstart_gear);
+//popmessage   ("Kikstart gear %02x",  kikstart_gear);
 //Is there a more attractive way to display this mid game?
 	return portreturn;
 }
@@ -371,7 +371,7 @@ static READ8_HANDLER ( kikstart_gearsP2_read )
 	if (kikstart_gearP2 == 2) portreturn |= (0x03);
 	if (kikstart_gearP2 == 3) portreturn |= (0x01);
 
-//ui_popup   ("Kikstart gear %02x",  kikstart_gear);
+//popmessage   ("Kikstart gear %02x",  kikstart_gear);
 //Is there a more attractive way to display this mid game?
 	return portreturn;
 }

@@ -242,7 +242,7 @@ VIDEO_START( dday )
 	text_tilemap = tilemap_create(get_text_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 	sl_tilemap   = tilemap_create(get_sl_tile_info,  tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32);
 
-	main_bitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight);
+	main_bitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
 
 	if (!bg_tilemap || !fg_tilemap || !text_tilemap || !sl_tilemap || !main_bitmap)
 		return 1;

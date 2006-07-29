@@ -294,7 +294,7 @@ static void draw_background(mame_bitmap *bitmap, int xpos, int ypos, int image)
 		flip_screen,
 		xpos,
 		ypos,
-		&Machine->visible_area[0],
+		&Machine->screen[0].visarea,
 		TRANSPARENCY_PEN, 0);
 
 	drawgfx(bitmap, Machine->gfx[image],
@@ -303,11 +303,11 @@ static void draw_background(mame_bitmap *bitmap, int xpos, int ypos, int image)
 		flip_screen,
 		xpos - 256,
 		ypos,
-		&Machine->visible_area[0],
+		&Machine->screen[0].visarea,
 		TRANSPARENCY_PEN, 0);
 
-	rect.min_x = Machine->visible_area[0].min_x;
-	rect.max_x = Machine->visible_area[0].max_x;
+	rect.min_x = Machine->screen[0].visarea.min_x;
+	rect.max_x = Machine->screen[0].visarea.max_x;
 
 	if (flip_screen)
 	{

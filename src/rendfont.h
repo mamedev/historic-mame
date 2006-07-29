@@ -9,8 +9,8 @@
 
 ***************************************************************************/
 
-#ifndef RENDFONT_H
-#define RENDFONT_H
+#ifndef __RENDFONT_H__
+#define __RENDFONT_H__
 
 #include "render.h"
 
@@ -27,4 +27,4 @@ float render_font_get_char_width(render_font *font, float height, float aspect, 
 float render_font_get_string_width(render_font *font, float height, float aspect, const char *string);
 float render_font_get_wstring_width(render_font *font, float height, float aspect, const UINT16 *wstring);
 
-#endif	/* RENDFONT_H */
+#endif	/* __RENDFONT_H__ */

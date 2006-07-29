@@ -606,7 +606,7 @@ static int vdp_control_r(void)
 		status |= 0x0008;
 
 	/* set the HBLANK bit */
-	if (beampos < Machine->visible_area[0].min_x || beampos > Machine->visible_area[0].max_x)
+	if (beampos < Machine->screen[0].visarea.min_x || beampos > Machine->screen[0].visarea.max_x)
 		status |= 0x0004;
 
 	return (status);
@@ -663,7 +663,7 @@ static void vdp_register_w(int data, int vblank)
 	{
 		case 0x01: /* video modes */
 			if (regdat & 8)
-				ui_popup("Video height = 240!");
+				popmessage("Video height = 240!");
 			break;
 
 		case 0x02: /* Scroll A Name Table Base */
@@ -717,10 +717,14 @@ static void vdp_register_w(int data, int vblank)
 					window_width=64;
 				break;
 			}
-			/* this gets called from the init! */
-			set_visible_area(genesis_screen_number, 0, scrwidth*8-1,
-				Machine->visible_area[genesis_screen_number].min_y,
-				Machine->visible_area[genesis_screen_number].max_y);
+			{
+				screen_state *state = &Machine->screen[genesis_screen_number];
+				rectangle visarea = state->visarea;
+
+				/* this gets called from the init! */
+				visarea.max_x = scrwidth*8-1;
+				configure_screen(genesis_screen_number, scrwidth*8, state->height, &visarea, state->refresh);
+			}
 			break;
 
 		case 0x0d: /* HScroll Base */

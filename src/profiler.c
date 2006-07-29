@@ -137,7 +137,6 @@ const char *profiler_get_text(void)
 		"Sound  ",
 		"Mixer  ",
 		"Callbck",
-		"Hiscore",
 		"Input  ",
 		"Movie  ",
 		"Logerr ",
@@ -186,7 +185,7 @@ const char *profiler_get_text(void)
 		}
 		if (computed || showdelay[i])
 		{
-			if (computed) showdelay[i] = Machine->refresh_rate[0];
+			if (computed) showdelay[i] = Machine->screen[0].refresh;
 			showdelay[i]--;
 
 			if (i < PROFILER_PROFILER)

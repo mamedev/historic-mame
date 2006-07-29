@@ -219,13 +219,13 @@ static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 	/* score covers sprites */
 	if (flipscreen)
 	{
-		if (clip.max_y > Machine->visible_area[0].max_y - 64)
-			clip.max_y = Machine->visible_area[0].max_y - 64;
+		if (clip.max_y > Machine->screen[0].visarea.max_y - 64)
+			clip.max_y = Machine->screen[0].visarea.max_y - 64;
 	}
 	else
 	{
-		if (clip.min_y < Machine->visible_area[0].min_y + 64)
-			clip.min_y = Machine->visible_area[0].min_y + 64;
+		if (clip.min_y < Machine->screen[0].visarea.min_y + 64)
+			clip.min_y = Machine->screen[0].visarea.min_y + 64;
 	}
 
 	for (i=0; i<4; i++)

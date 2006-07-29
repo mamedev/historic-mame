@@ -539,7 +539,7 @@ VIDEO_UPDATE( polepos )
 		static int lastin;
 
 		if ((in ^ lastin) & polepos_gear_bit)
-			ui_popup((in & polepos_gear_bit) ? "LO" : "HI");
+			popmessage((in & polepos_gear_bit) ? "LO" : "HI");
 
 		lastin = in;
 	}

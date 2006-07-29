@@ -404,7 +404,7 @@ READ16_HANDLER( hdc68k_wheel_r )
 
 	/* hack to display the wheel position */
 	if (code_pressed(KEYCODE_LSHIFT))
-		ui_popup("%04X", new_wheel);
+		popmessage("%04X", new_wheel);
 
 	/* if we crossed the center line, latch the edge bit */
 	if ((hdc68k_last_wheel / 0xf0) != (new_wheel / 0xf0))

@@ -340,7 +340,7 @@ static void psikyosh_drawbackground( mame_bitmap *bitmap, const rectangle *clipr
 
 #if 0
 #ifdef MAME_DEBUG
-	ui_popup	("Pri %d=%02x-%s %d=%02x-%s %d=%02x-%s",
+	popmessage	("Pri %d=%02x-%s %d=%02x-%s %d=%02x-%s",
 		0, BG_TYPE(0), BG_LAYER_ENABLE(0)?"y":"n",
  		1, BG_TYPE(1), BG_LAYER_ENABLE(1)?"y":"n",
 		2, BG_TYPE(2), BG_LAYER_ENABLE(2)?"y":"n");
@@ -378,7 +378,7 @@ static void psikyosh_drawbackground( mame_bitmap *bitmap, const rectangle *clipr
 					psikyosh_drawbglayerscroll(i, bitmap, cliprect);
 				break;
 			default:
-				ui_popup	("Unknown layer type %02x", BG_TYPE(i));
+				popmessage	("Unknown layer type %02x", BG_TYPE(i));
 		}
 	}
 }
@@ -1033,7 +1033,7 @@ static void psikyosh_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect
 					sprintf(buf, "%X",xdim/16); /* Display Zoom in 16.16 */
 					if (Machine->gamedrv->flags & ORIENTATION_SWAP_XY) {
 						x = ypos;
-						y = Machine->visible_area[0].max_x - xpos; /* ORIENTATION_FLIP_Y */
+						y = Machine->screen[0].visarea.max_x - xpos; /* ORIENTATION_FLIP_Y */
 					}
 					else {
 						x = xpos;
@@ -1058,7 +1058,7 @@ VIDEO_START( psikyosh )
 		return 1;
 
 	/* Need 16-bit z-buffer */
-	if ((z_bitmap = auto_bitmap_alloc_depth(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight, 16)) == 0)
+	if ((z_bitmap = auto_bitmap_alloc_depth(Machine->screen[0].width, Machine->screen[0].height, 16)) == 0)
 		return 1;
 
 	Machine->gfx[1]->color_granularity=16; /* 256 colour sprites with palette selectable on 16 colour boundaries */
@@ -1088,7 +1088,7 @@ static void psikyosh_prelineblend( mame_bitmap *bitmap, const rectangle *cliprec
 
 	if (bitmap->depth != 32)
 	{
-		ui_popup("psikyosh_prelineblend needs 32-bit depth");
+		popmessage("psikyosh_prelineblend needs 32-bit depth");
 		return;
 	}
 
@@ -1153,13 +1153,13 @@ VIDEO_EOF( psikyosh )
 	buffer_spriteram32_w(0,0,0);
 }
 
-/*ui_popup   ("Regs %08x %08x %08x\n     %08x %08x %08x",
+/*popmessage   ("Regs %08x %08x %08x\n     %08x %08x %08x",
     psikyosh_bgram[0x17f0/4], psikyosh_bgram[0x17f4/4], psikyosh_bgram[0x17f8/4],
     psikyosh_bgram[0x1ff0/4], psikyosh_bgram[0x1ff4/4], psikyosh_bgram[0x1ff8/4]);*/
-/*ui_popup   ("Regs %08x %08x %08x\n     %08x %08x %08x",
+/*popmessage   ("Regs %08x %08x %08x\n     %08x %08x %08x",
     psikyosh_bgram[0x13f0/4], psikyosh_bgram[0x13f4/4], psikyosh_bgram[0x13f8/4],
     psikyosh_bgram[0x1bf0/4], psikyosh_bgram[0x1bf4/4], psikyosh_bgram[0x1bf8/4]);*/
-/*ui_popup   ("Regs %08x %08x %08x %08x %08x %08x %08x %08x",
+/*popmessage   ("Regs %08x %08x %08x %08x %08x %08x %08x %08x",
     psikyosh_vidregs[0], psikyosh_vidregs[1],
     psikyosh_vidregs[2], psikyosh_vidregs[3],
     psikyosh_vidregs[4], psikyosh_vidregs[5],

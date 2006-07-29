@@ -48,9 +48,6 @@ endif
 # uncomment next line to use the new multiwindow debugger
 NEW_DEBUGGER = 1
 
-# uncomment next line to use the new rendering system
-NEW_RENDER = 1
-
 # uncomment next line to use DRC MIPS3 engine
 X86_MIPS3_DRC = 1
 
@@ -190,10 +187,6 @@ endif
 
 ifdef NEW_DEBUGGER
 DEFS += -DNEW_DEBUGGER
-endif
-
-ifdef NEW_RENDER
-DEFS += -DNEW_RENDER
 endif
 
 ifdef X86_VOODOO_DRC

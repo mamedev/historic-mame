@@ -21,6 +21,7 @@
 #include "sound/pokey.h"
 #include "machine/6821pia.h"
 #include "vidhrdw/gtia.h"
+#include "ui.h"
 
 
 /* Supervisor board emulation */

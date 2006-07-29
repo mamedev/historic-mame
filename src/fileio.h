@@ -43,9 +43,7 @@ enum
 	FILETYPE_COMMENT,
 	FILETYPE_DEBUGLOG,
 	FILETYPE_HASH,	/* MESS-specific */
-#ifdef NEW_RENDER
 	FILETYPE_FONT,
-#endif
 	FILETYPE_end 	/* dummy last entry */
 };
 

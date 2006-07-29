@@ -127,7 +127,7 @@ static WRITE8_HANDLER( MC6840_control_port_0_w )
 		{
 			S_TEMPO = MC6840_register0;
 #ifdef MAME_DEBUG
-			ui_popup("I0:0x%02X R0:0x%02X I1:0x%02X R1:0x%02X", MC6840_index0, MC6840_register0, MC6840_index1, MC6840_register1);
+			popmessage("I0:0x%02X R0:0x%02X I1:0x%02X R1:0x%02X", MC6840_index0, MC6840_register0, MC6840_index1, MC6840_register1);
 #endif
 		}
 		MC6809_FLAG = 1;

@@ -225,7 +225,7 @@ Driver by Takahiro Nogi (nogi@kt.rim.or.jp) 1999/11/06
 
 /* prototypes for functions in ../machine/tnzs.c */
 unsigned char *tnzs_objram, *tnzs_sharedram;
-unsigned char *tnzs_vdcram, *tnzs_scrollram, *tnzs_objctrl;
+unsigned char *tnzs_vdcram, *tnzs_scrollram, *tnzs_objctrl, *tnzs_bg_flag;
 DRIVER_INIT( plumpop );
 DRIVER_INIT( extrmatn );
 DRIVER_INIT( arknoid2 );
@@ -353,7 +353,7 @@ static WRITE8_HANDLER( kageki_csport_w )
 			sample_start_raw(0, sampledata[data], samplesize[data], 7000, 0);
 			sprintf(mess, "VOICE:%02X PLAY", data);
 		}
-	//  ui_popup(mess);
+	//  popmessage(mess);
 	}
 }
 
@@ -392,7 +392,7 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xf000, 0xf1ff) AM_WRITE(MWA8_RAM) AM_BASE(&tnzs_vdcram)
 	AM_RANGE(0xf200, 0xf2ff) AM_WRITE(MWA8_RAM) AM_BASE(&tnzs_scrollram) /* scrolling info */
 	AM_RANGE(0xf300, 0xf303) AM_MIRROR(0xfc) AM_WRITE(MWA8_RAM) AM_BASE(&tnzs_objctrl) /* control registers (0x80 mirror used by Arkanoid 2) */
-	AM_RANGE(0xf400, 0xf400) AM_WRITE(MWA8_NOP)	/* ? */
+	AM_RANGE(0xf400, 0xf400) AM_WRITE(MWA8_RAM) AM_BASE(&tnzs_bg_flag)	/* enable / disable background transparency */
 	AM_RANGE(0xf600, 0xf600) AM_WRITE(tnzs_bankswitch_w)
 	/* arknoid2, extrmatn, plumppop and drtoppel have PROMs instead of RAM */
 	/* drtoppel writes here anyway! (maybe leftover from tests during development) */
@@ -408,7 +408,7 @@ static ADDRESS_MAP_START( cpu0_type2, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xf000, 0xf1ff) AM_RAM AM_BASE(&tnzs_vdcram)
 	AM_RANGE(0xf200, 0xf2ff) AM_WRITE(MWA8_RAM) AM_BASE(&tnzs_scrollram) /* scrolling info */
 	AM_RANGE(0xf300, 0xf303) AM_MIRROR(0xfc) AM_WRITE(MWA8_RAM) AM_BASE(&tnzs_objctrl) /* control registers (0x80 mirror used by Arkanoid 2) */
-	AM_RANGE(0xf400, 0xf400) AM_WRITENOP	/* ? */
+	AM_RANGE(0xf400, 0xf400) AM_WRITE(MWA8_RAM) AM_BASE(&tnzs_bg_flag)	/* enable / disable background transparency */
 	AM_RANGE(0xf600, 0xf600) AM_WRITE(tnzs_bankswitch_w)
 	/* kabukiz still writes here but it's not used (it's paletteram in type1 map) */
 	AM_RANGE(0xf800, 0xfbff) AM_WRITENOP

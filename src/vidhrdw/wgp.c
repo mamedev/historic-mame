@@ -505,7 +505,7 @@ if (((spriteram16[i + 4]!=0xf800) && (spriteram16[i + 4]!=0xfff6))
 	{
 		char buf[80];
 		sprintf(buf,"sprite rotate offs %04x ?",rotate);
-		ui_popup(buf);
+		popmessage(buf);
 	}
 #endif
 }
@@ -702,25 +702,25 @@ VIDEO_UPDATE( wgp )
 	if (code_pressed_memory (KEYCODE_V))
 	{
 		dislayer[0] ^= 1;
-		ui_popup("piv0: %01x",dislayer[0]);
+		popmessage("piv0: %01x",dislayer[0]);
 	}
 
 	if (code_pressed_memory (KEYCODE_B))
 	{
 		dislayer[1] ^= 1;
-		ui_popup("piv1: %01x",dislayer[1]);
+		popmessage("piv1: %01x",dislayer[1]);
 	}
 
 	if (code_pressed_memory (KEYCODE_N))
 	{
 		dislayer[2] ^= 1;
-		ui_popup("piv2: %01x",dislayer[2]);
+		popmessage("piv2: %01x",dislayer[2]);
 	}
 
 	if (code_pressed_memory (KEYCODE_M))
 	{
 		dislayer[3] ^= 1;
-		ui_popup("TC0100SCN top bg layer: %01x",dislayer[3]);
+		popmessage("TC0100SCN top bg layer: %01x",dislayer[3]);
 	}
 #endif
 
@@ -783,7 +783,7 @@ VIDEO_UPDATE( wgp )
 		char buf[80];
 		sprintf(buf,"wgp_piv_ctrl_reg: %04x y zoom: %04x %04x %04x",wgp_piv_ctrl_reg,
 						wgp_piv_zoom[0],wgp_piv_zoom[1],wgp_piv_zoom[2]);
-		ui_popup(buf);
+		popmessage(buf);
 	}
 #endif
 

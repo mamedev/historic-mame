@@ -106,7 +106,7 @@ static WRITE8_HANDLER( coincntr_w )
 	flip_screen_set(data & 0x20);
 
 	/* other bit unknown */
-if ((data & 0xdc) != 0x10) ui_popup("coincntr %02x",data);
+if ((data & 0xdc) != 0x10) popmessage("coincntr %02x",data);
 }
 
 

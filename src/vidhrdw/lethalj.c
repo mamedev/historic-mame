@@ -33,8 +33,8 @@ static UINT8 blank_palette;
 
 INLINE void get_crosshair_xy(int player, int *x, int *y)
 {
-	*x = ((readinputport(2 + player * 2) & 0xff) * Machine->drv->screen[0].maxwidth) / 255;
-	*y = ((readinputport(3 + player * 2) & 0xff) * Machine->drv->screen[0].maxheight) / 255;
+	*x = ((readinputport(2 + player * 2) & 0xff) * Machine->screen[0].width) / 255;
+	*y = ((readinputport(3 + player * 2) & 0xff) * Machine->screen[0].height) / 255;
 }
 
 
@@ -202,7 +202,7 @@ VIDEO_UPDATE( lethalj )
 	get_crosshair_xy(1, &beamx, &beamy);
 	draw_crosshair(bitmap, beamx, beamy, cliprect, 1);
 
-	if (cliprect->max_y == Machine->visible_area[0].max_y)
+	if (cliprect->max_y == Machine->screen[0].visarea.max_y)
 		blank_palette = 0;
 	return 0;
 }
@@ -227,7 +227,7 @@ VIDEO_UPDATE( laigames )
 		}
 	}
 
-	if (cliprect->max_y == Machine->visible_area[0].max_y)
+	if (cliprect->max_y == Machine->screen[0].visarea.max_y)
 		blank_palette = 0;
 	return 0;
 }

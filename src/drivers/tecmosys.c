@@ -438,7 +438,7 @@ VIDEO_UPDATE(deroon)
 	{
 		soundlatch_w(0,command_data);
 		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
-		ui_popup("command write=%2x",command_data);
+		popmessage("command write=%2x",command_data);
 	}
 #endif
 

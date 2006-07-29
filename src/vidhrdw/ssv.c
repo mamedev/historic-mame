@@ -137,6 +137,9 @@ Note: press Z to show some info on each sprite (debug builds only)
 
 #include "driver.h"
 #include "seta.h"
+#ifdef MAME_DEBUG
+#include "ui.h"
+#endif
 
 int shadow_pen_mask, shadow_pen_shift;
 
@@ -409,7 +412,7 @@ WRITE16_HANDLER( paletteram16_xrgb_swap_word_w )
 	palette_set_color(offset>>1, r, g, b);
 
 	if (!(Machine->drv->video_attributes & VIDEO_NEEDS_6BITS_PER_GUN))
-		ui_popup("driver should use VIDEO_NEEDS_6BITS_PER_GUN flag");
+		popmessage("driver should use VIDEO_NEEDS_6BITS_PER_GUN flag");
 }
 
 /***************************************************************************
@@ -626,17 +629,17 @@ static void ssv_draw_row(mame_bitmap *bitmap, int sx, int sy, int scroll)
 
 	/* .. and clip it against the visible screen */
 
-	if (clip.min_x > Machine->visible_area[0].max_x)	return;
-	if (clip.min_y > Machine->visible_area[0].max_y)	return;
+	if (clip.min_x > Machine->screen[0].visarea.max_x)	return;
+	if (clip.min_y > Machine->screen[0].visarea.max_y)	return;
 
-	if (clip.max_x < Machine->visible_area[0].min_x)	return;
-	if (clip.max_y < Machine->visible_area[0].min_y)	return;
+	if (clip.max_x < Machine->screen[0].visarea.min_x)	return;
+	if (clip.max_y < Machine->screen[0].visarea.min_y)	return;
 
-	if (clip.min_x < Machine->visible_area[0].min_x)	clip.min_x = Machine->visible_area[0].min_x;
-	if (clip.max_x > Machine->visible_area[0].max_x)	clip.max_x = Machine->visible_area[0].max_x;
+	if (clip.min_x < Machine->screen[0].visarea.min_x)	clip.min_x = Machine->screen[0].visarea.min_x;
+	if (clip.max_x > Machine->screen[0].visarea.max_x)	clip.max_x = Machine->screen[0].visarea.max_x;
 
-	if (clip.min_y < Machine->visible_area[0].min_y)	clip.min_y = Machine->visible_area[0].min_y;
-	if (clip.max_y > Machine->visible_area[0].max_y)	clip.max_y = Machine->visible_area[0].max_y;
+	if (clip.min_y < Machine->screen[0].visarea.min_y)	clip.min_y = Machine->screen[0].visarea.min_y;
+	if (clip.max_y > Machine->screen[0].visarea.max_y)	clip.max_y = Machine->screen[0].visarea.max_y;
 
 	/* Get the scroll data */
 
@@ -728,7 +731,7 @@ static void ssv_draw_row(mame_bitmap *bitmap, int sx, int sy, int scroll)
 static void ssv_draw_layer(mame_bitmap *bitmap,int  nr)
 {
 	int sy;
-	for ( sy = 0; sy <= Machine->visible_area[0].max_y; sy += 0x40 )
+	for ( sy = 0; sy <= Machine->screen[0].visarea.max_y; sy += 0x40 )
 		ssv_draw_row(bitmap, 0, sy, nr);
 }
 
@@ -891,7 +894,7 @@ static void ssv_draw_sprites(mame_bitmap *bitmap)
 												color,
 												flipx, flipy,
 												sx + x * 16, sy + y * 8,
-												&Machine->visible_area[0], shadow	);
+												&Machine->screen[0].visarea, shadow	);
 					}
 				}
 
@@ -1088,7 +1091,7 @@ static void gdfs_draw_zooming_sprites(mame_bitmap *bitmap, int priority)
 									color,
 									flipx, flipy,
 									(sx + x * xdim) / 0x10000, (sy + y * ydim) / 0x10000,
-									&Machine->visible_area[0], TRANSPARENCY_PEN, 0,
+									&Machine->screen[0].visarea, TRANSPARENCY_PEN, 0,
 									xscale, yscale
 					);
 				}
@@ -1138,13 +1141,13 @@ VIDEO_UPDATE( gdfs )
 
 #if 0
 	draw_crosshair(bitmap,
-		Machine->visible_area[0].min_x + ((Machine->visible_area[0].max_x - Machine->visible_area[0].min_x) * readinputport(5)) / 255,
-		Machine->visible_area[0].min_y + ((Machine->visible_area[0].max_y - Machine->visible_area[0].min_y) * readinputport(6)) / 255,
+		Machine->screen[0].visarea.min_x + ((Machine->screen[0].visarea.max_x - Machine->screen[0].visarea.min_x) * readinputport(5)) / 255,
+		Machine->screen[0].visarea.min_y + ((Machine->screen[0].visarea.max_y - Machine->screen[0].visarea.min_y) * readinputport(6)) / 255,
 		cliprect,0);
 
 	draw_crosshair(bitmap,
-		Machine->visible_area[0].min_x + ((Machine->visible_area[0].max_x - Machine->visible_area[0].min_x) * readinputport(7)) / 255,
-		Machine->visible_area[0].min_y + ((Machine->visible_area[0].max_y - Machine->visible_area[0].min_y) * readinputport(8)) / 255,
+		Machine->screen[0].visarea.min_x + ((Machine->screen[0].visarea.max_x - Machine->screen[0].visarea.min_x) * readinputport(7)) / 255,
+		Machine->screen[0].visarea.min_y + ((Machine->screen[0].visarea.max_y - Machine->screen[0].visarea.min_y) * readinputport(8)) / 255,
 		cliprect,1);
 #endif
 	return 0;
@@ -1173,7 +1176,7 @@ VIDEO_UPDATE( ssv )
 	}
 
 	/* The background color is the first one in the palette */
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area[0]);
+	fillbitmap(bitmap,Machine->pens[0],&Machine->screen[0].visarea);
 
 	if (!enable_video)	return 0;
 

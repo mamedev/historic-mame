@@ -93,7 +93,7 @@ static void irem_adpcm_int(int data)
 static WRITE8_HANDLER( irem_analog_w )
 {
 #ifdef MAME_DEBUG
-if (data&0x0f) ui_popup("analog sound %x",data&0x0f);
+if (data&0x0f) popmessage("analog sound %x",data&0x0f);
 #endif
 }
 

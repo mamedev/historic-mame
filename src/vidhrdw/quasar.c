@@ -142,7 +142,7 @@ VIDEO_START( quasar )
 
 	memset(effectdirty,0,sizeof(effectdirty));
 
-	if ((effect_bitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight)) == 0)
+	if ((effect_bitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height)) == 0)
 		return 1;
 
 	return video_start_cvs();
@@ -214,8 +214,8 @@ VIDEO_UPDATE( quasar )
 
     /* Update screen */
 
-	copybitmap(bitmap,effect_bitmap,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+	copybitmap(bitmap,effect_bitmap,0,0,0,0,&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 
     /* 2636's */
 

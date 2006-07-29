@@ -966,7 +966,7 @@ static void PC080SN_ctrl_word_w(int chip,offs_t offset,UINT16 data,UINT32 mem_ma
 		}
 	}
 #if 0
-	ui_popup("PC080SN ctrl = %4x",data);
+	popmessage("PC080SN ctrl = %4x",data);
 #endif
 }
 
@@ -1287,7 +1287,7 @@ static void PC090OJ_word_w(offs_t offset,UINT16 data,UINT32 mem_mask)
 		PC090OJ_ctrl = data;
 
 #if 0
-	ui_popup("PC090OJ ctrl = %4x",data);
+	popmessage("PC090OJ ctrl = %4x",data);
 #endif
 	}
 }
@@ -1685,7 +1685,7 @@ WRITE16_HANDLER( TC0080VCO_word_w )
 			if (!TC0080VCO_has_tx)
 			{
 				if (TC0080VCO_ram[offset])
-				ui_popup_time(7,"Write non-zero to TC0080VCO char ram\nPlease report to MAMEDEV");
+				popmessage("Write non-zero to TC0080VCO char ram\nPlease report to MAMEDEV");
 			}
 #endif
 		}
@@ -1697,7 +1697,7 @@ WRITE16_HANDLER( TC0080VCO_word_w )
 			if (!TC0080VCO_has_tx)
 			{
 				if (TC0080VCO_ram[offset])
-				ui_popup_time(7,"Write non-zero to TC0080VCO fg0\nPlease report to MAMEDEV");
+				popmessage("Write non-zero to TC0080VCO fg0\nPlease report to MAMEDEV");
 			}
 #endif
 		}
@@ -1717,7 +1717,7 @@ WRITE16_HANDLER( TC0080VCO_word_w )
 			if (!TC0080VCO_has_tx)
 			{
 				if (TC0080VCO_ram[offset])
-				ui_popup_time(7,"Write non-zero to TC0080VCO char-hi ram\nPlease report to MAMEDEV");
+				popmessage("Write non-zero to TC0080VCO char-hi ram\nPlease report to MAMEDEV");
 			}
 #endif
 		}
@@ -1725,7 +1725,7 @@ WRITE16_HANDLER( TC0080VCO_word_w )
 		{
 #if 1
 			if (TC0080VCO_ram[offset])
-			ui_popup_time(7,"Write non-zero to mystery TC0080VCO area\nPlease report to MAMEDEV");
+			popmessage("Write non-zero to mystery TC0080VCO area\nPlease report to MAMEDEV");
 #endif
 		}
 		else if (offset < 0x1c000/2)	/* chain ram */
@@ -1847,7 +1847,7 @@ static void TC0080VCO_bg0_tilemap_draw(mame_bitmap *bitmap,const rectangle *clip
 {
 	char buf[100];
 	sprintf(buf,"xmin= %04x xmax= %04x ymin= %04x ymax= %04x",min_x,max_x,min_y,max_y);
-	ui_popup(buf);
+	popmessage(buf);
 }
 #endif
 
@@ -2031,7 +2031,7 @@ static void TC0080VCO_bg1_tilemap_draw(mame_bitmap *bitmap,const rectangle *clip
 			sx, sy,
 			zx, 0, 0, zy,
 			0,					/* why no wraparound ?? */
-			&Machine->visible_area[0],
+			&Machine->screen[0].visarea,
 			TRANSPARENCY_COLOR, 0, priority);
 	}
 }
@@ -2042,7 +2042,7 @@ void TC0080VCO_tilemap_draw(mame_bitmap *bitmap,const rectangle *cliprect,int la
 	int disable = 0x00;	/* possibly layer disable bits do exist ?? */
 
 #if 0
-	ui_popup("layer disable = %x",disable);
+	popmessage("layer disable = %x",disable);
 #endif
 
 	switch (layer)
@@ -2354,7 +2354,7 @@ int TC0100SCN_vh_start(int chips,int gfxnum,int x_offset,int y_offset,int flip_x
            Thundfox is the only one of those with two chips, and
            we're safe as it uses single width tilemaps. */
 
-		myclip = Machine->visible_area[(Machine->drv->screen[i].tag == NULL) ? 0 : i];
+		myclip = Machine->screen[(Machine->drv->screen[i].tag == NULL) ? 0 : i].visarea;
 
 		TC0100SCN_cliprect[i] = myclip;
 
@@ -2803,7 +2803,7 @@ int TC0100SCN_tilemap_draw(mame_bitmap *bitmap,const rectangle *cliprect,int chi
 
 #if 0
 if (disable != 0 && disable != 3 && disable != 7)
-	ui_popup("layer disable = %x",disable);
+	popmessage("layer disable = %x",disable);
 #endif
 
 	switch (layer)
@@ -2976,10 +2976,10 @@ WRITE8_HANDLER( TC0360PRI_w )
 	TC0360PRI_regs[offset] = data;
 
 if (offset >= 0x0a)
-	ui_popup("write %02x to unused TC0360PRI reg %x",data,offset);
+	popmessage("write %02x to unused TC0360PRI reg %x",data,offset);
 #if 0
 #define regs TC0360PRI_regs
-	ui_popup("%02x %02x  %02x %02x  %02x %02x %02x %02x %02x %02x",
+	popmessage("%02x %02x  %02x %02x  %02x %02x %02x %02x %02x %02x",
 		regs[0x00],regs[0x01],regs[0x02],regs[0x03],
 		regs[0x04],regs[0x05],regs[0x06],regs[0x07],
 		regs[0x08],regs[0x09]);
@@ -4239,36 +4239,36 @@ void TC0150ROD_draw(mame_bitmap *bitmap,const rectangle *cliprect,int y_offs,int
 	if (code_pressed_memory (KEYCODE_X))
 	{
 		dislayer[0] ^= 1;
-		ui_popup("RoadA body: %01x",dislayer[0]);
+		popmessage("RoadA body: %01x",dislayer[0]);
 	}
 
 	if (code_pressed_memory (KEYCODE_C))
 	{
 		dislayer[1] ^= 1;
-		ui_popup("RoadA l-edge: %01x",dislayer[1]);
+		popmessage("RoadA l-edge: %01x",dislayer[1]);
 	}
 
 	if (code_pressed_memory (KEYCODE_V))
 	{
 		dislayer[2] ^= 1;
-		ui_popup("RoadA r-edge: %01x",dislayer[2]);
+		popmessage("RoadA r-edge: %01x",dislayer[2]);
 	}
 
 	if (code_pressed_memory (KEYCODE_B))
 	{
 		dislayer[3] ^= 1;
-		ui_popup("RoadB body: %01x",dislayer[3]);
+		popmessage("RoadB body: %01x",dislayer[3]);
 	}
 
 	if (code_pressed_memory (KEYCODE_N))
 	{
 		dislayer[4] ^= 1;
-		ui_popup("RoadB l-edge: %01x",dislayer[4]);
+		popmessage("RoadB l-edge: %01x",dislayer[4]);
 	}
 	if (code_pressed_memory (KEYCODE_M))
 	{
 		dislayer[5] ^= 1;
-		ui_popup("RoadB r-edge: %01x",dislayer[5]);
+		popmessage("RoadB r-edge: %01x",dislayer[5]);
 	}
 #endif
 
@@ -4277,7 +4277,7 @@ void TC0150ROD_draw(mame_bitmap *bitmap,const rectangle *cliprect,int y_offs,int
 	{
 		char buf3[80];
 		sprintf(buf3,"road control: %04x",road_ctrl);
-		ui_popup(buf3);
+		popmessage(buf3);
 	}
 #endif
 
@@ -4765,7 +4765,7 @@ void TC0150ROD_draw(mame_bitmap *bitmap,const rectangle *cliprect,int y_offs,int
 	{
 		char buf2[80];
 		sprintf(buf2,"Road twinned for %04x lines",twin_road);
-		ui_popup(buf2);
+		popmessage(buf2);
 	}
 #endif
 }

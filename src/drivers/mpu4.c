@@ -232,7 +232,7 @@ Datasheets are available for the main components, The AGEMAME site mirrors a few
 #define LOG(x)
 #endif
 
-#define LOGSTUFF ui_popup
+#define LOGSTUFF popmessage
 
 #define LOG_IC3(x)	//logerror x
 
@@ -1086,7 +1086,7 @@ VIDEO_UPDATE( mpu4_vid )
 
 	}
 
-	ui_popup("%02x %02x %02x %02x %02x %02x",scn2674_screen1_l,scn2674_screen1_h,scn2674_cursor_l, scn2674_cursor_h,scn2674_screen2_l,scn2674_screen2_h);
+	popmessage("%02x %02x %02x %02x %02x %02x",scn2674_screen1_l,scn2674_screen1_h,scn2674_cursor_l, scn2674_cursor_h,scn2674_screen2_l,scn2674_screen2_h);
 
 	draw_7segment_led_temp(bitmap, 300, 504, led_segs[0], 4, 0);
 	draw_7segment_led_temp(bitmap, 308, 504, led_segs[1], 4, 0);

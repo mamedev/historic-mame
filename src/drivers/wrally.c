@@ -112,7 +112,7 @@ ADDRESS_MAP_END
 
 static WRITE16_HANDLER( unknown_w )
 {
-	ui_popup("write %04x to %04x", data, offset*2 + 0x6a);
+	popmessage("write %04x to %04x", data, offset*2 + 0x6a);
 }
 
 static ADDRESS_MAP_START( wrally_writemem, ADDRESS_SPACE_PROGRAM, 16 )

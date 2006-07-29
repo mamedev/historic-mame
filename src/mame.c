@@ -32,6 +32,9 @@
                 - calls state_init() [state.c] to initialize save state system
                 - calls state_save_allow_registration() [state.c] to allow registrations
                 - calls drawgfx_init() [drawgfx.c] to initialize rendering globals
+                - calls palette_init() [palette.c] to initialize palette system
+                - calls render_init() [render.c] to initialize the rendering system
+                - calls ui_init() [ui.c] to initialize the user interface
                 - calls generic_machine_init() [machine/generic.c] to initialize generic machine structures
                 - calls generic_video_init() [vidhrdw/generic.c] to initialize generic video structures
                 - calls osd_init() [osdepend.h] to do platform-specific initialization
@@ -42,7 +45,6 @@
                 - calls memory_init() [memory.c] to process the game's memory maps
                 - calls cpuexec_init() [cpuexec.c] to initialize the CPUs
                 - calls cpuint_init() [cpuint.c] to initialize the CPU interrupts
-                - calls hiscore_init() [hiscore.c] to initialize the hiscores
                 - calls saveload_init() [mame.c] to set up for save/load
                 - calls the driver's DRIVER_INIT callback
                 - calls sound_init() [sound.c] to start the audio system
@@ -54,7 +56,7 @@
 
             - calls config_load_settings() [config.c] to load the configuration file
             - calls nvram_load [machine/generic.c] to load NVRAM
-            - calls ui_init() [usrintrf.c] to initialize the user interface
+            - calls ui_init() [ui.c] to initialize the user interface
             - begins resource tracking (level 2)
             - calls soft_reset() [mame.c] to reset all systems
 
@@ -75,13 +77,10 @@
 #include "driver.h"
 #include "config.h"
 #include "cheat.h"
-#include "hiscore.h"
 #include "debugger.h"
 #include "profiler.h"
-
-#ifdef NEW_RENDER
 #include "render.h"
-#endif
+#include "ui.h"
 
 #if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
 #include "debug/debugcon.h"
@@ -130,7 +129,7 @@ struct _callback_item
 
 
 /***************************************************************************
-    GLOBALS
+    GLOBAL VARIABLES
 ***************************************************************************/
 
 /* the active machine */
@@ -225,7 +224,7 @@ const char *memory_region_names[REGION_MAX] =
 
 
 /***************************************************************************
-    PROTOTYPES
+    FUNCTION PROTOTYPES
 ***************************************************************************/
 
 extern int mame_validitychecks(int game);
@@ -245,9 +244,7 @@ static void logfile_callback(const char *buffer);
 
 
 /***************************************************************************
-
-    Core system management
-
+    CORE IMPLEMENTATION
 ***************************************************************************/
 
 /*-------------------------------------------------
@@ -730,6 +727,24 @@ void CLIB_DECL fatalerror(const char *text, ...)
 
 
 /*-------------------------------------------------
+    popmessage - pop up a user-visible message
+-------------------------------------------------*/
+
+void CLIB_DECL popmessage(const char *text, ...)
+{
+	va_list arg;
+
+	/* dump to the buffer */
+	va_start(arg, text);
+	vsnprintf(giant_string_buffer, GIANT_STRING_BUFFER_SIZE, text, arg);
+	va_end(arg);
+
+	/* pop it in the UI */
+	ui_popup("%s", giant_string_buffer);
+}
+
+
+/*-------------------------------------------------
     logerror - log to the debugger and any other
     OSD-defined output streams
 -------------------------------------------------*/
@@ -844,7 +859,7 @@ static void create_machine(int game)
 	Machine->drv = &internal_drv;
 	expand_machine_driver(Machine->gamedrv->drv, &internal_drv);
 	for (scrnum = 0; scrnum < MAX_SCREENS; scrnum++)
-		Machine->refresh_rate[scrnum] = Machine->drv->screen[scrnum].refresh_rate;
+		Machine->screen[scrnum] = Machine->drv->screen[scrnum].defstate;
 
 	/* copy some settings into easier-to-handle variables */
 	Machine->record_file = options.record;
@@ -858,17 +873,6 @@ static void create_machine(int game)
 
 	/* initialize the samplerate */
 	Machine->sample_rate = options.samplerate;
-
-#ifndef NEW_RENDER
-	/* update the vector width/height with defaults */
-	if (options.vector_width == 0)
-		options.vector_width = 640;
-	if (options.vector_height == 0)
-		options.vector_height = 480;
-
-	/* get orientation right */
-	Machine->ui_orientation = options.ui_orientation;
-#endif
 
 	/* add an exit callback to clear out the Machine on the way out */
 	add_exit_callback(destroy_machine);
@@ -903,9 +907,7 @@ static void init_machine(void)
 	state_save_allow_registration(TRUE);
 	drawgfx_init();
 	palette_init();
-#ifdef NEW_RENDER
 	render_init();
-#endif
 	ui_init();
 	generic_machine_init();
 	generic_video_init();
@@ -952,9 +954,6 @@ static void init_machine(void)
 	if (devices_init(Machine->gamedrv))
 		fatalerror("devices_init failed");
 #endif
-
-	/* start the hiscore system -- remove me */
-	hiscore_init(Machine->gamedrv->name);
 
 	/* start the save/load system */
 	saveload_init();

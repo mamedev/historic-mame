@@ -525,14 +525,14 @@ DRIVER_INIT(bakubaku)
 static READ32_HANDLER( groovef_hack1_r )
 {
 	if(activecpu_get_pc() == 0x6005e7e) stv_workram_h[0x0fffcc/4] = 0x00000000;
-//  ui_popup("1 %08x",activecpu_get_pc());
+//  popmessage("1 %08x",activecpu_get_pc());
 	return stv_workram_h[0x0fffcc/4];
 }
 
 static READ32_HANDLER( groovef_hack2_r )
 {
 	if(activecpu_get_pc() == 0x6005e88) stv_workram_h[0x0ca6cc/4] = 0x00000000;
-//  ui_popup("2 %08x",activecpu_get_pc());
+//  popmessage("2 %08x",activecpu_get_pc());
 	return stv_workram_h[0x0ca6cc/4];
 }
 

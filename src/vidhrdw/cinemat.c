@@ -8,10 +8,7 @@
 #include "vector.h"
 #include "cpu/ccpu/ccpu.h"
 #include "cinemat.h"
-
-#ifdef NEW_RENDER
 #include "render.h"
-#endif
 
 
 /*************************************
@@ -55,10 +52,10 @@ void cinemat_vector_callback(INT16 sx, INT16 sy, INT16 ex, INT16 ey, UINT8 shift
 	int intensity = 0xff;
 
 	/* adjust for slop */
-	sx = sx - Machine->visible_area[0].min_x;
-	ex = ex - Machine->visible_area[0].min_x;
-	sy = sy - Machine->visible_area[0].min_y;
-	ey = ey - Machine->visible_area[0].min_y;
+	sx = sx - Machine->screen[0].visarea.min_x;
+	ex = ex - Machine->screen[0].visarea.min_x;
+	sy = sy - Machine->screen[0].visarea.min_y;
+	ey = ey - Machine->screen[0].visarea.min_y;
 
 	/* point intensity is determined by the shift value */
 	if (sx == ex && sy == ey)
@@ -243,18 +240,6 @@ VIDEO_UPDATE( spacewar )
 	video_update_vector(screen, bitmap, cliprect);
 
 	/* set the state of the artwork */
-#ifndef NEW_RENDER
-	artwork_show("pressed3", (~sw_option >> 0) & 1);
-	artwork_show("pressed8", (~sw_option >> 1) & 1);
-	artwork_show("pressed4", (~sw_option >> 2) & 1);
-	artwork_show("pressed9", (~sw_option >> 3) & 1);
-	artwork_show("pressed1", (~sw_option >> 4) & 1);
-	artwork_show("pressed6", (~sw_option >> 5) & 1);
-	artwork_show("pressed2", (~sw_option >> 6) & 1);
-	artwork_show("pressed7", (~sw_option >> 7) & 1);
-	artwork_show("pressed5", (~sw_option >> 10) & 1);
-	artwork_show("pressed0", (~sw_option >> 11) & 1);
-#else
 	render_view_item_set_state("pressed3", (~sw_option >> 0) & 1);
 	render_view_item_set_state("pressed8", (~sw_option >> 1) & 1);
 	render_view_item_set_state("pressed4", (~sw_option >> 2) & 1);
@@ -265,7 +250,6 @@ VIDEO_UPDATE( spacewar )
 	render_view_item_set_state("pressed7", (~sw_option >> 7) & 1);
 	render_view_item_set_state("pressed5", (~sw_option >> 10) & 1);
 	render_view_item_set_state("pressed0", (~sw_option >> 11) & 1);
-#endif
 	return 0;
 }
 

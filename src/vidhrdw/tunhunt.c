@@ -233,7 +233,7 @@ static void draw_motion_object( mame_bitmap *bitmap )
 	int color;
 	int count,pen;
 	const unsigned char *source;
-	rectangle clip = Machine->visible_area[0];
+	rectangle clip = Machine->screen[0].visarea;
 
 	for( line=0; line<64; line++ )
 	{
@@ -366,7 +366,7 @@ static void draw_shell(
 					0, /* color */
 					0,0, /* flip */
 					sx,sy,
-					&Machine->visible_area[0],
+					&Machine->screen[0].visarea,
 					TRANSPARENCY_PEN,0 );
 			}
 		}
@@ -392,7 +392,7 @@ static void draw_shell(
 			0, /* color */
 			0,0, /* flip */
 			255-hposition-16,vstart-32,
-			&Machine->visible_area[0],
+			&Machine->screen[0].visarea,
 			TRANSPARENCY_PEN,0 );
 }
 

@@ -608,10 +608,10 @@ void segaic16_draw_virtual_tilemap(struct tilemap_info *info, mame_bitmap *bitma
 	int page;
 
 	/* which half/halves of the virtual tilemap do we intersect in the X direction? */
-	if (xscroll < 64*8 - Machine->drv->screen[0].maxwidth)
+	if (xscroll < 64*8 - Machine->screen[0].width)
 	{
 		leftmin = 0;
-		leftmax = Machine->drv->screen[0].maxwidth - 1;
+		leftmax = Machine->screen[0].width - 1;
 		rightmin = -1;
 	}
 	else if (xscroll < 64*8)
@@ -619,12 +619,12 @@ void segaic16_draw_virtual_tilemap(struct tilemap_info *info, mame_bitmap *bitma
 		leftmin = 0;
 		leftmax = 64*8 - xscroll - 1;
 		rightmin = leftmax + 1;
-		rightmax = Machine->drv->screen[0].maxwidth - 1;
+		rightmax = Machine->screen[0].width - 1;
 	}
-	else if (xscroll < 128*8 - Machine->drv->screen[0].maxwidth)
+	else if (xscroll < 128*8 - Machine->screen[0].width)
 	{
 		rightmin = 0;
-		rightmax = Machine->drv->screen[0].maxwidth - 1;
+		rightmax = Machine->screen[0].width - 1;
 		leftmin = -1;
 	}
 	else
@@ -632,14 +632,14 @@ void segaic16_draw_virtual_tilemap(struct tilemap_info *info, mame_bitmap *bitma
 		rightmin = 0;
 		rightmax = 128*8 - xscroll - 1;
 		leftmin = rightmax + 1;
-		leftmax = Machine->drv->screen[0].maxwidth - 1;
+		leftmax = Machine->screen[0].width - 1;
 	}
 
 	/* which half/halves of the virtual tilemap do we intersect in the Y direction? */
-	if (yscroll < 32*8 - Machine->drv->screen[0].maxheight)
+	if (yscroll < 32*8 - Machine->screen[0].height)
 	{
 		topmin = 0;
-		topmax = Machine->drv->screen[0].maxheight - 1;
+		topmax = Machine->screen[0].height - 1;
 		bottommin = -1;
 	}
 	else if (yscroll < 32*8)
@@ -647,12 +647,12 @@ void segaic16_draw_virtual_tilemap(struct tilemap_info *info, mame_bitmap *bitma
 		topmin = 0;
 		topmax = 32*8 - yscroll - 1;
 		bottommin = topmax + 1;
-		bottommax = Machine->drv->screen[0].maxheight - 1;
+		bottommax = Machine->screen[0].height - 1;
 	}
-	else if (yscroll < 64*8 - Machine->drv->screen[0].maxheight)
+	else if (yscroll < 64*8 - Machine->screen[0].height)
 	{
 		bottommin = 0;
-		bottommax = Machine->drv->screen[0].maxheight - 1;
+		bottommax = Machine->screen[0].height - 1;
 		topmin = -1;
 	}
 	else
@@ -660,7 +660,7 @@ void segaic16_draw_virtual_tilemap(struct tilemap_info *info, mame_bitmap *bitma
 		bottommin = 0;
 		bottommax = 64*8 - yscroll - 1;
 		topmin = bottommax + 1;
-		topmax = Machine->drv->screen[0].maxheight - 1;
+		topmax = Machine->screen[0].height - 1;
 	}
 
 	/* if the tilemap is flipped, we need to flip our sense within each quadrant */
@@ -669,26 +669,26 @@ void segaic16_draw_virtual_tilemap(struct tilemap_info *info, mame_bitmap *bitma
 		if (leftmin != -1)
 		{
 			int temp = leftmin;
-			leftmin = Machine->drv->screen[0].maxwidth - 1 - leftmax;
-			leftmax = Machine->drv->screen[0].maxwidth - 1 - temp;
+			leftmin = Machine->screen[0].width - 1 - leftmax;
+			leftmax = Machine->screen[0].width - 1 - temp;
 		}
 		if (rightmin != -1)
 		{
 			int temp = rightmin;
-			rightmin = Machine->drv->screen[0].maxwidth - 1 - rightmax;
-			rightmax = Machine->drv->screen[0].maxwidth - 1 - temp;
+			rightmin = Machine->screen[0].width - 1 - rightmax;
+			rightmax = Machine->screen[0].width - 1 - temp;
 		}
 		if (topmin != -1)
 		{
 			int temp = topmin;
-			topmin = Machine->drv->screen[0].maxheight - 1 - topmax;
-			topmax = Machine->drv->screen[0].maxheight - 1 - temp;
+			topmin = Machine->screen[0].height - 1 - topmax;
+			topmax = Machine->screen[0].height - 1 - temp;
 		}
 		if (bottommin != -1)
 		{
 			int temp = bottommin;
-			bottommin = Machine->drv->screen[0].maxheight - 1 - bottommax;
-			bottommax = Machine->drv->screen[0].maxheight - 1 - temp;
+			bottommin = Machine->screen[0].height - 1 - bottommax;
+			bottommax = Machine->screen[0].height - 1 - temp;
 		}
 	}
 
@@ -2921,7 +2921,7 @@ static void segaic16_road_hangon_draw(struct road_info *info, mame_bitmap *bitma
 		if (code_pressed(KEYCODE_L)) dx++;
 		if (code_pressed(KEYCODE_I)) dy--;
 		if (code_pressed(KEYCODE_K)) dy++;
-		ui_popup("X=%d Y=%d", dx, dy);
+		popmessage("X=%d Y=%d", dx, dy);
 
 		if (code_pressed(KEYCODE_D))
 		{

@@ -121,7 +121,7 @@ static void draw_sprites(mame_bitmap *bitmap)
 		pdrawgfx(bitmap,Machine->gfx[1],
 				sprite,
 				color,fx,fy,x,y,
-				&Machine->visible_area[0],TRANSPARENCY_PEN,15,pri);
+				&Machine->screen[0].visarea,TRANSPARENCY_PEN,15,pri);
 	}
 }
 

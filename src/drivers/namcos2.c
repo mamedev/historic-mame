@@ -464,43 +464,34 @@ static UINT8 *namcos2_dpram;	/* 2Kx8 */
 static void
 GollyGhostUpdateLED_c4( int data )
 {
-#ifdef NEW_RENDER
 	render_view_item_set_state("zip100", data >> 4);
 	render_view_item_set_state("zip10", data & 0x0f);
-#endif
 }
 
 static void
 GollyGhostUpdateLED_c6( int data )
 {
-#ifdef NEW_RENDER
 	render_view_item_set_state("zip1", data >> 4);
 	render_view_item_set_state("time10", data & 0x0f);
-#endif
 }
 
 static void
 GollyGhostUpdateLED_c8( int data )
 {
-#ifdef NEW_RENDER
 	render_view_item_set_state("time1", data >> 4);
 	render_view_item_set_state("zap100", data & 0x0f);
-#endif
 }
 
 static void
 GollyGhostUpdateLED_ca( int data )
 {
-#ifdef NEW_RENDER
 	render_view_item_set_state("zap10", data >> 4);
 	render_view_item_set_state("zap1", data & 0x0f);
-#endif
 }
 
 static void
 GollyGhostUpdateDiorama_c0( int data )
 {
-#ifdef NEW_RENDER
 	if( data&0x80 )
 	{
 		render_view_item_set_state("dollhouse", 1); /* diorama is lit up */
@@ -524,7 +515,6 @@ GollyGhostUpdateDiorama_c0( int data )
 		render_view_item_set_state("refrigerator", 0);
 		render_view_item_set_state("porch", 0);
 	}
-#endif
 }
 
 static READ16_HANDLER( namcos2_68k_dpram_word_r )

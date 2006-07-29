@@ -142,7 +142,7 @@ WRITE16_HANDLER( skullxbo_yscroll_w )
 		force_partial_update(0, scanline);
 
 	/* adjust the effective scroll for the current scanline */
-	if (scanline > Machine->visible_area[0].max_y)
+	if (scanline > Machine->screen[0].visarea.max_y)
 		scanline = 0;
 	effscroll = (newscroll >> 7) - scanline;
 

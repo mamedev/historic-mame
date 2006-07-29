@@ -1557,7 +1557,7 @@ static WRITE16_HANDLER( hwchamp_custom_io_w )
 
 				case 0x30/2:
 					/* bit 4 is GONG */
-			//      if (data & 0x10) ui_popup("GONG");
+			//      if (data & 0x10) popmessage("GONG");
 					/* are the following really lamps? */
 			//      set_led_status(1,data & 0x20);
 			//      set_led_status(2,data & 0x40);

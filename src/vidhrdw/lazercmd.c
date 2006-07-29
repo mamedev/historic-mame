@@ -118,10 +118,10 @@ VIDEO_UPDATE( lazercmd )
 					videoram[i], video_inverted ? 1 : 0,
 					0,0,
 					sx,sy,
-					&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+					&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
 		}
 	}
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
 
 	x = marker_x - 1;             /* normal video lags marker by 1 pixel */
 	y = vert_scale(marker_y) - VERT_CHR; /* first line used as scratch pad */

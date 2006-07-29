@@ -85,6 +85,9 @@
 
 #define SPR602_TCR			984		/* 602 */
 #define SPR602_IBR			986		/* 602 */
+#define SPR602_ESASRR		987		/* 602 */
+#define SPR602_SEBR			990		/* 602 */
+#define SPR602_SER			991		/* 602 */
 #define SPR602_SP			1021	/* 602 */
 #define SPR602_LT			1022	/* 602 */
 

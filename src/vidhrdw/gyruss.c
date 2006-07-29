@@ -120,14 +120,14 @@ READ8_HANDLER( gyruss_scanline_r )
 
 static void draw_sprites(mame_bitmap *bitmap)
 {
-	rectangle clip = Machine->visible_area[0];
+	rectangle clip = Machine->screen[0].visarea;
 	int offs;
 	int line;
 
 
 	for (line = 0;line < 256;line++)
 	{
-		if (line >= Machine->visible_area[0].min_y && line <= Machine->visible_area[0].max_y)
+		if (line >= Machine->screen[0].visarea.min_y && line <= Machine->screen[0].visarea.max_y)
 		{
 			unsigned char *sr;
 
@@ -188,13 +188,13 @@ VIDEO_UPDATE( gyruss )
 					colorram[offs] & 0x0f,
 					flipx,flipy,
 					8*sx,8*sy,
-					&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+					&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
 		}
 	}
 
 
 	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
 
 
 	draw_sprites(bitmap);
@@ -224,7 +224,7 @@ VIDEO_UPDATE( gyruss )
 					colorram[offs] & 0x0f,
 					flipx,flipy,
 					8*sx,8*sy,
-					&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+					&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
 	}
 	return 0;
 }

@@ -140,7 +140,7 @@ VIDEO_START( batman )
 void batman_scanline_update(int scanline)
 {
 	/* update the scanline parameters */
-	if (scanline <= Machine->visible_area[0].max_y && atarivc_state.rowscroll_enable)
+	if (scanline <= Machine->screen[0].visarea.max_y && atarivc_state.rowscroll_enable)
 	{
 		UINT16 *base = &atarigen_alpha[scanline / 8 * 64 + 48];
 		int scan, i;

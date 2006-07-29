@@ -46,12 +46,12 @@ VIDEO_UPDATE( missb2 )
 	/* the background character columns is stored in the area dd00-dd3f */
 
 	/* This clears & redraws the entire screen each pass */
-	fillbitmap(bitmap,Machine->pens[255],&Machine->visible_area[0]);
+	fillbitmap(bitmap,Machine->pens[255],&Machine->screen[0].visarea);
 
 	if (!bublbobl_video_enable) return 0;
 
 	/* background map register */
-	//ui_popup("%02x",(*missb2_bgvram) & 0x1f);
+	//popmessage("%02x",(*missb2_bgvram) & 0x1f);
 	for(bg_offs = ((*missb2_bgvram) << 4);bg_offs<(((*missb2_bgvram)<< 4)|0xf);bg_offs++)
 	{
 		drawgfx(bitmap,Machine->gfx[1],
@@ -59,7 +59,7 @@ VIDEO_UPDATE( missb2 )
 				1,
 				0,0,
 				0,(bg_offs & 0xf) * 0x10,
-				&Machine->visible_area[0],TRANSPARENCY_NONE,0xff);
+				&Machine->screen[0].visarea,TRANSPARENCY_NONE,0xff);
 	}
 
 
@@ -119,7 +119,7 @@ VIDEO_UPDATE( missb2 )
 						0,
 						flipx,flipy,
 						x,y,
-						&Machine->visible_area[0],TRANSPARENCY_PEN,0xff);
+						&Machine->screen[0].visarea,TRANSPARENCY_PEN,0xff);
 			}
 		}
 

@@ -52,7 +52,7 @@ VIDEO_START( ccastles )
 			3,	resistances, bweights, 1000, 0);
 
 	/* allocate a bitmap for drawing sprites */
-	spritebitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
+	spritebitmap = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
 
 	/* register for savestates */
 	state_save_register_global_array(video_control);

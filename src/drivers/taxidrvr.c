@@ -51,7 +51,7 @@ static WRITE8_HANDLER( p0c_w )
 
 	flip_screen_set(data & 8);
 
-//  ui_popup("%02x",data&0x0f);
+//  popmessage("%02x",data&0x0f);
 }
 
 static READ8_HANDLER( p1b_r )

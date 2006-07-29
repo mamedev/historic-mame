@@ -219,7 +219,7 @@ INTERRUPT_GEN( nb1413m3_interrupt )
 	cpunum_set_input_line(0, 0, HOLD_LINE);
 
 #if NB1413M3_DEBUG
-	ui_popup("NMI SW:%01X CLOCK:%02X COUNT:%02X", nb1413m3_nmi_enable, nb1413m3_nmi_clock, nb1413m3_nmi_count);
+	popmessage("NMI SW:%01X CLOCK:%02X COUNT:%02X", nb1413m3_nmi_enable, nb1413m3_nmi_clock, nb1413m3_nmi_count);
 	nb1413m3_nmi_count = 0;
 #endif
 
@@ -329,14 +329,14 @@ READ8_HANDLER( nb1413m3_sndrom_r )
 	offset += 0x08000 * rombank;
 
 #if NB1413M3_DEBUG
-	ui_popup("Sound ROM %02X:%05X [B1:%02X B2:%02X]", rombank, offset, nb1413m3_sndrombank1, nb1413m3_sndrombank2);
+	popmessage("Sound ROM %02X:%05X [B1:%02X B2:%02X]", rombank, offset, nb1413m3_sndrombank1, nb1413m3_sndrombank2);
 #endif
 
 	if (offset < memory_region_length(nb1413m3_sndromregion))
 		return memory_region(nb1413m3_sndromregion)[offset];
 	else
 	{
-		ui_popup("read past sound ROM length (%05x[%02X])",offset, rombank);
+		popmessage("read past sound ROM length (%05x[%02X])",offset, rombank);
 		return 0;
 	}
 }
@@ -703,7 +703,7 @@ WRITE8_HANDLER( nb1413m3_vcrctrl_w )
 {
 	if (data & 0x08)
 	{
-		ui_popup(" ** VCR CONTROL ** ");
+		popmessage(" ** VCR CONTROL ** ");
 		set_led_status(2, 1);
 	}
 	else

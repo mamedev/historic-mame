@@ -746,13 +746,13 @@ static void print_game_display(FILE* out, const game_driver* game)
 			/* output width and height only for games that are not vector */
 			if (! (driver.video_attributes & VIDEO_TYPE_VECTOR) )
 			{
-				dx = driver.screen[scrnum].default_visible_area.max_x - driver.screen[scrnum].default_visible_area.min_x + 1;
-				dy = driver.screen[scrnum].default_visible_area.max_y - driver.screen[scrnum].default_visible_area.min_y + 1;
+				dx = driver.screen[scrnum].defstate.visarea.max_x - driver.screen[scrnum].defstate.visarea.min_x + 1;
+				dy = driver.screen[scrnum].defstate.visarea.max_y - driver.screen[scrnum].defstate.visarea.min_y + 1;
 				fprintf(out, " width=\"%d\"", dx);
 				fprintf(out, " height=\"%d\"", dy);
 			}
 
-			fprintf(out, " refresh=\"%f\"", driver.screen[scrnum].refresh_rate);
+			fprintf(out, " refresh=\"%f\"", driver.screen[scrnum].defstate.refresh);
 
 			fprintf(out, " />\n");
 		}

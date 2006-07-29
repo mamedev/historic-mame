@@ -77,7 +77,7 @@ extern UINT16 *gotcha_fgvideoram,*gotcha_bgvideoram;
 static WRITE16_HANDLER( gotcha_lamps_w )
 {
 #if 0
-	ui_popup("%c%c%c%c %c%c%c%c %c%c%c%c",
+	popmessage("%c%c%c%c %c%c%c%c %c%c%c%c",
 			(data & 0x001) ? 'R' : '-',
 			(data & 0x002) ? 'G' : '-',
 			(data & 0x004) ? 'B' : '-',

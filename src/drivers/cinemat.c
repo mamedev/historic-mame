@@ -33,10 +33,7 @@
 #include "vidhrdw/vector.h"
 #include "cpu/ccpu/ccpu.h"
 #include "cinemat.h"
-
-#ifdef NEW_RENDER
 #include "render.h"
-#endif
 
 #include "starcas.lh"
 #include "solarq.lh"

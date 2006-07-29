@@ -297,7 +297,7 @@ static void docastle_draw_sprites( mame_bitmap *bitmap )
 				color,
 				flipx,flipy,
 				sx,sy,
-				&Machine->visible_area[0],TRANSPARENCY_COLOR,256,
+				&Machine->screen[0].visarea,TRANSPARENCY_COLOR,256,
 				0x00);
 
 		/* then draw the mask, behind the background but obscuring following sprites */
@@ -306,15 +306,15 @@ static void docastle_draw_sprites( mame_bitmap *bitmap )
 				color + 32,
 				flipx,flipy,
 				sx,sy,
-				&Machine->visible_area[0],TRANSPARENCY_COLOR,256,
+				&Machine->screen[0].visarea,TRANSPARENCY_COLOR,256,
 				0x02);
 	}
 }
 
 VIDEO_UPDATE( docastle )
 {
-	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->screen[0].visarea, bg_tilemap, 0, 0);
 	docastle_draw_sprites(bitmap);
-	tilemap_draw(bitmap, &Machine->visible_area[0], fg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->screen[0].visarea, fg_tilemap, 0, 0);
 	return 0;
 }

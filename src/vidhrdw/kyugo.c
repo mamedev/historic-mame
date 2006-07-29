@@ -149,7 +149,7 @@ WRITE8_HANDLER( kyugo_gfxctrl_w )
 	}
 
 	if (data & 0x9e)
-		ui_popup("%02x",data);
+		popmessage("%02x",data);
 }
 
 

@@ -236,13 +236,13 @@ static void brkthru_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect,
 						color,
 						flipscreen,flipscreen,
 						sx,flipscreen? sy + 16 : sy - 16,
-						&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+						&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 				drawgfx(bitmap,Machine->gfx[9],
 						code | 1,
 						color,
 						flipscreen,flipscreen,
 						sx,sy,
-						&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+						&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 
 				/* redraw with wraparound */
 				drawgfx(bitmap,Machine->gfx[9],
@@ -250,13 +250,13 @@ static void brkthru_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect,
 						color,
 						flipscreen,flipscreen,
 						sx,(flipscreen? sy + 16 : sy - 16) + 256,
-						&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+						&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 				drawgfx(bitmap,Machine->gfx[9],
 						code | 1,
 						color,
 						flipscreen,flipscreen,
 						sx,sy + 256,
-						&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+						&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 
 			}
 			else
@@ -266,7 +266,7 @@ static void brkthru_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect,
 						color,
 						flipscreen,flipscreen,
 						sx,sy,
-						&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+						&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 
 				/* redraw with wraparound */
 				drawgfx(bitmap,Machine->gfx[9],
@@ -274,7 +274,7 @@ static void brkthru_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect,
 						color,
 						flipscreen,flipscreen,
 						sx,sy + 256,
-						&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+						&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 
 			}
 			}

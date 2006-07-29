@@ -46,7 +46,7 @@ static WRITE8_HANDLER( kopunch_lamp_w )
 	set_led_status(0,~data & 0x80);
 
 //  if ((data & 0x7f) != 0x7f)
-//      ui_popup("port 38 = %02x",data);
+//      popmessage("port 38 = %02x",data);
 }
 
 static WRITE8_HANDLER( kopunch_coin_w )
@@ -55,7 +55,7 @@ static WRITE8_HANDLER( kopunch_coin_w )
 	coin_counter_w(1,~data & 0x40);
 
 //  if ((data & 0x3f) != 0x3f)
-//      ui_popup("port 34 = %02x",data);
+//      popmessage("port 34 = %02x",data);
 }
 
 

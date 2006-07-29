@@ -145,17 +145,17 @@ static VIDEO_UPDATE( coolpool )
 	cpuintrf_pop_context();
 
 	/* adjust drawing area based on blanking (9 ball shootout tweaks it) */
-	if (vsblnk > veblnk && vsblnk - veblnk < Machine->drv->screen[0].maxheight)
+	if (vsblnk > veblnk && vsblnk - veblnk < Machine->screen[0].height)
 	{
 		/* compute starting scanline offset (assume centered) */
-		scanoffs = ((Machine->visible_area[0].max_y - Machine->visible_area[0].min_y + 1) - (vsblnk - veblnk)) / 2;
+		scanoffs = ((Machine->screen[0].visarea.max_y - Machine->screen[0].visarea.min_y + 1) - (vsblnk - veblnk)) / 2;
 
 		/* adjust start/end scanlines */
-		if (startscan != Machine->visible_area[0].min_y)
+		if (startscan != Machine->screen[0].visarea.min_y)
 			startscan += scanoffs;
 		endscan += scanoffs;
-		if (endscan >= Machine->visible_area[0].max_y)
-			endscan = Machine->visible_area[0].max_y;
+		if (endscan >= Machine->screen[0].visarea.max_y)
+			endscan = Machine->screen[0].visarea.max_y;
 	}
 
 	/* compute the offset */
@@ -171,7 +171,7 @@ static VIDEO_UPDATE( coolpool )
 		UINT16 *dest = &((UINT16 *)bitmap->line[y])[cliprect->min_x];
 
 		/* if we're in outer bands, just clear */
-		if (y < Machine->visible_area[0].min_y + scanoffs || y > Machine->visible_area[0].max_y - scanoffs)
+		if (y < Machine->screen[0].visarea.min_y + scanoffs || y > Machine->screen[0].visarea.max_y - scanoffs)
 			memset(dest, 0, (cliprect->max_x - cliprect->min_x + 1) * 2);
 
 		/* render 8bpp data */
@@ -220,7 +220,7 @@ static void coolpool_dpyint_callback(int scanline)
 {
 	/* log when we got the DPYINT so that changes are tagged to this scanline */
 	last_dpyint = scanline + 1;
-	if (scanline < Machine->visible_area[0].max_y)
+	if (scanline < Machine->screen[0].visarea.max_y)
 		force_partial_update(0, scanline);
 }
 

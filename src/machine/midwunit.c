@@ -55,7 +55,7 @@ WRITE16_HANDLER( midwunit_cmos_w )
 	else
 	{
 		logerror("%08X:Unexpected CMOS W @ %05X\n", activecpu_get_pc(), offset);
-		ui_popup("Bad CMOS write");
+		popmessage("Bad CMOS write");
 	}
 }
 

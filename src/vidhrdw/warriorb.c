@@ -102,7 +102,7 @@ static void warriorb_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect,
 
 #ifdef MAME_DEBUG
 	if (unknown)
-		ui_popup("unknown sprite bits: %04x",unknown);
+		popmessage("unknown sprite bits: %04x",unknown);
 #endif
 }
 

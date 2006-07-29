@@ -205,8 +205,8 @@ void vindictr_scanline_update(int scanline)
 			{
 				/* a new vscroll latches the offset into a counter; we must adjust for this */
 				int offset = scanline;
-				if (offset > Machine->visible_area[0].max_y)
-					offset -= Machine->visible_area[0].max_y + 1;
+				if (offset > Machine->screen[0].visarea.max_y)
+					offset -= Machine->screen[0].visarea.max_y + 1;
 
 				if (playfield_yscroll != ((data - offset) & 0x1ff))
 				{

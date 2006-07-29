@@ -77,12 +77,12 @@ WRITE8_HANDLER( cloak_clearbmp_w )
 	{
 		if (bmap)
 		{
-			fillbitmap(tmpbitmap, Machine->pens[16], &Machine->visible_area[0]);
+			fillbitmap(tmpbitmap, Machine->pens[16], &Machine->screen[0].visarea);
 			memset(tmpvideoram, 0, 256*256);
 		}
 		else
 		{
-			fillbitmap(tmpbitmap2, Machine->pens[16], &Machine->visible_area[0]);
+			fillbitmap(tmpbitmap2, Machine->pens[16], &Machine->screen[0].visarea);
 			memset(tmpvideoram2, 0, 256*256);
 		}
 	}
@@ -189,10 +189,10 @@ VIDEO_START( cloak )
 	if ( !bg_tilemap )
 		return 1;
 
-	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight)) == 0)
+	if ((tmpbitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height)) == 0)
 		return 1;
 
-	if ((tmpbitmap2 = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight)) == 0)
+	if ((tmpbitmap2 = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height)) == 0)
 		return 1;
 
 	tmpvideoram = auto_malloc(256*256);

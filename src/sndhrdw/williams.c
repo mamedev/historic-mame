@@ -47,7 +47,7 @@ static UINT8 williams_pianum;
 
 
 /***************************************************************************
-    PROTOTYPES
+    FUNCTION PROTOTYPES
 ****************************************************************************/
 
 static void init_audio_state(void);

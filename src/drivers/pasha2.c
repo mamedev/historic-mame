@@ -201,7 +201,7 @@ static WRITE16_HANDLER( oki_1_bank_w )
 static WRITE16_HANDLER( pasha2_lamps_w )
 {
 	if(data)
-		ui_popup("1P: %c%c%c 2P: %c%c%c 3P: %c%c%c",
+		popmessage("1P: %c%c%c 2P: %c%c%c 3P: %c%c%c",
 				(data & 0x001) ? 'R' : '-',
 				(data & 0x002) ? 'G' : '-',
 				(data & 0x004) ? 'B' : '-',

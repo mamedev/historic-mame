@@ -178,13 +178,13 @@ static WRITE16_HANDLER( master_send )
 
 static READ16_HANDLER( slave_receive )
 {
-	ui_popup("CPU #1 (PC=%06x) CMD = %04x",activecpu_get_pc(),master_cmd);
+	popmessage("CPU #1 (PC=%06x) CMD = %04x",activecpu_get_pc(),master_cmd);
 	return master_cmd;
 }
 
 static READ16_HANDLER( master_receive )
 {
-	ui_popup("CPU #0 (PC=%06x) CMD = %04x",activecpu_get_pc(),slave_data[0x10/2]);
+	popmessage("CPU #0 (PC=%06x) CMD = %04x",activecpu_get_pc(),slave_data[0x10/2]);
 	return slave_data[0x10/2];
 }
 

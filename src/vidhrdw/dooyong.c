@@ -120,7 +120,7 @@ static void draw_layer(mame_bitmap *bitmap,int gfx,const unsigned char *scroll,
 				color,
 				flipx,flipy,
 				sx,sy,
-				&Machine->visible_area[0],transparency,15);
+				&Machine->screen[0].visarea,transparency,15);
 		/* wraparound */
 		if (scrolly & 0x1f)
 		{
@@ -129,7 +129,7 @@ static void draw_layer(mame_bitmap *bitmap,int gfx,const unsigned char *scroll,
 					color,
 					flipx,flipy,
 					sx,((sy + 0x20) & 0xff) - 0x20,
-					&Machine->visible_area[0],transparency,15);
+					&Machine->screen[0].visarea,transparency,15);
 		}
 	}
 }
@@ -168,7 +168,7 @@ static void bluehawk_draw_layer(mame_bitmap *bitmap,int gfx,const unsigned char 
 				color,
 				flipx,flipy,
 				sx,sy,
-				&Machine->visible_area[0],transparency,15);
+				&Machine->screen[0].visarea,transparency,15);
 		/* wraparound */
 		if (scrolly & 0x1f)
 		{
@@ -177,7 +177,7 @@ static void bluehawk_draw_layer(mame_bitmap *bitmap,int gfx,const unsigned char 
 					color,
 					flipx,flipy,
 					sx,((sy + 0x20) & 0xff) - 0x20,
-					&Machine->visible_area[0],transparency,15);
+					&Machine->screen[0].visarea,transparency,15);
 		}
 	}
 }
@@ -216,7 +216,7 @@ static void bluehawk_draw_layer2(mame_bitmap *bitmap,int gfx,const unsigned char
 				color,
 				flipx,flipy,
 				sx,sy,
-				&Machine->visible_area[0],transparency,15);
+				&Machine->screen[0].visarea,transparency,15);
 		/* wraparound */
 		if (scrolly & 0x1f)
 		{
@@ -225,7 +225,7 @@ static void bluehawk_draw_layer2(mame_bitmap *bitmap,int gfx,const unsigned char
 					color,
 					flipx,flipy,
 					sx,((sy + 0x20) & 0xff) - 0x20,
-					&Machine->visible_area[0],transparency,15);
+					&Machine->screen[0].visarea,transparency,15);
 		}
 	}
 }
@@ -266,7 +266,7 @@ static void rshark_draw_layer(mame_bitmap *bitmap,int gfx,UINT16 *scroll,
 				color,
 				flipx,flipy,
 				sx,sy,
-				&Machine->visible_area[0],transparency,15);
+				&Machine->screen[0].visarea,transparency,15);
 	}
 }
 
@@ -305,7 +305,7 @@ static void popbingo_draw_layer(mame_bitmap *bitmap,int gfx,UINT16 *scroll,
 				color,
 				flipx,flipy,
 				sx,sy,
-				&Machine->visible_area[0],transparency,15);
+				&Machine->screen[0].visarea,transparency,15);
 		/* wraparound */
 		if (scrolly & 0x1f)
 		{
@@ -314,7 +314,7 @@ static void popbingo_draw_layer(mame_bitmap *bitmap,int gfx,UINT16 *scroll,
 					color,
 					flipx,flipy,
 					sx,((sy + 0x20) & 0xff) - 0x20,
-					&Machine->visible_area[0],transparency,15);
+					&Machine->screen[0].visarea,transparency,15);
 		}
 	}
 
@@ -356,7 +356,7 @@ static void flytiger_draw_layer2(mame_bitmap *bitmap,int gfx,const unsigned char
 				color,
 				flipx,flipy,
 				sx,sy,
-				&Machine->visible_area[0],transparency,15);
+				&Machine->screen[0].visarea,transparency,15);
 		/* wraparound */
 		if (scrolly & 0x1f)
 		{
@@ -365,7 +365,7 @@ static void flytiger_draw_layer2(mame_bitmap *bitmap,int gfx,const unsigned char
 					color,
 					flipx,flipy,
 					sx,((sy + 0x20) & 0xff) - 0x20,
-					&Machine->visible_area[0],transparency,15);
+					&Machine->screen[0].visarea,transparency,15);
 		}
 	}
 }
@@ -392,7 +392,7 @@ static void draw_tx(mame_bitmap *bitmap,int yoffset)
 				(attr & 0xf0) >> 4,
 				flip_screen,flip_screen,
 				8*sx,8*(sy + yoffset),
-				&Machine->visible_area[0],TRANSPARENCY_PEN,15);
+				&Machine->screen[0].visarea,TRANSPARENCY_PEN,15);
 	}
 }
 
@@ -418,7 +418,7 @@ static void bluehawk_draw_tx(mame_bitmap *bitmap)
 				(attr & 0xf0) >> 4,
 				flip_screen,flip_screen,
 				8*sx,8*sy,
-				&Machine->visible_area[0],TRANSPARENCY_PEN,15);
+				&Machine->screen[0].visarea,TRANSPARENCY_PEN,15);
 	}
 }
 
@@ -480,7 +480,7 @@ static void draw_sprites(mame_bitmap *bitmap,int pollux_extensions)
 					color,
 					flipx,flipy,
 					sx,flipy ? sy + 16*(height-y) : sy + 16*y,
-					&Machine->visible_area[0],TRANSPARENCY_PEN,15);
+					&Machine->screen[0].visarea,TRANSPARENCY_PEN,15);
 		}
 	}
 }
@@ -521,7 +521,7 @@ static void rshark_draw_sprites(mame_bitmap *bitmap)
 							flipx,flipy,
 							flipx ? sx + 16*(width-x) : sx + 16*x,
 							flipy ? sy + 16*(height-y) : sy + 16*y,
-							&Machine->visible_area[0],TRANSPARENCY_PEN,15);
+							&Machine->screen[0].visarea,TRANSPARENCY_PEN,15);
 
 					code++;
 				}

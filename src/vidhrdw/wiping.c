@@ -122,10 +122,10 @@ VIDEO_UPDATE( wiping )
 					colorram[offs] & 0x3f,
 					flipscreen,flipscreen,
 					sx*8,sy*8,
-					&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+					&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
         	}
 	}
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
 
 	/* Note, we're counting up on purpose ! */
 	/* This way the vacuum cleaner is always on top */
@@ -152,7 +152,7 @@ VIDEO_UPDATE( wiping )
 			spriteram[offs+1] & 0x3f,
 			flipx,flipy,
 			sx,sy,
-			&Machine->visible_area[0],TRANSPARENCY_COLOR,0x1f);
+			&Machine->screen[0].visarea,TRANSPARENCY_COLOR,0x1f);
 	}
 
 	/* redraw high priority chars */
@@ -192,7 +192,7 @@ VIDEO_UPDATE( wiping )
 					colorram[offs] & 0x3f,
 					flipscreen,flipscreen,
 					sx*8,sy*8,
-					&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+					&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
         	}
 	}
 

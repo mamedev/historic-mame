@@ -81,7 +81,7 @@ static WRITE8_HANDLER( tankbust_e0xx_w )
 	e0xx_data[offset] = data;
 
 #if 0
-	ui_popup("e0: %x %x (%x cnt) %x %x %x %x",
+	popmessage("e0: %x %x (%x cnt) %x %x %x %x",
 		e0xx_data[0],e0xx_data[1],
 		e0xx_data[2],e0xx_data[3],
 		e0xx_data[4],e0xx_data[5],

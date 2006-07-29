@@ -10,6 +10,7 @@
     Games supported:
         * Star Wars
         * The Empire Strikes Back
+        * TomCat prototype on Star Wars hardware
 
     Known bugs:
         * the monitor "overdrive" effect is not simulated when you
@@ -476,6 +477,29 @@ ROM_START( starwars )
 	ROM_LOAD( "136021.113",   0x0c00, 0x0400, CRC(03f6acb2) SHA1(1bad540950575581067b97e3a1cadd479c68adf1) ) /* PROM 3 */
 ROM_END
 
+ROM_START( tomcatsw )
+	ROM_REGION( 0x12000, REGION_CPU1, 0 )
+	ROM_LOAD( "tcavg3.1l",    0x3000, 0x1000, CRC(27188aa9) SHA1(5d9a978a7ac1913b57586e81045a1b955db27b48) )
+	ROM_LOAD( "tc6.1f",       0x6000, 0x2000, CRC(56e284ff) SHA1(a5fda9db0f6b8f7d28a4a607976fe978e62158cf) )
+	ROM_LOAD( "tc8.1hj",      0x8000, 0x2000, CRC(7b7575e3) SHA1(bdb838603ffb12195966d0ce454900253bc0f43f) )
+	ROM_LOAD( "tca.1jk",      0xa000, 0x2000, CRC(a1020331) SHA1(128745a2ec771ac818a8fbba59a08f0cf5f28e8f) )
+	ROM_LOAD( "tce.1m",       0xe000, 0x2000, CRC(4a3de8a3) SHA1(e48fc17201326358317f6b428e583ecaa3ecb881) )
+
+	/* Sound ROMS */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "136021.107",   0x4000, 0x2000, NO_DUMP ) /* Sound ROM 0 */
+	ROM_RELOAD(               0xc000, 0x2000 )
+	ROM_LOAD( "136021.208",   0x6000, 0x2000, NO_DUMP ) /* Sound ROM 0 */
+	ROM_RELOAD(               0xe000, 0x2000 )
+
+	/* Mathbox PROMs */
+	ROM_REGION( 0x1000, REGION_PROMS, ROMREGION_DISPOSE )
+	ROM_LOAD( "136021.110",   0x0000, 0x0400, CRC(01061762) SHA1(199549ead9ff9a5d5db75a2d15aef0240feb1aca) ) /* PROM 0 */
+	ROM_LOAD( "136021.111",   0x0400, 0x0400, CRC(2e619b70) SHA1(f76132b884ffdf3a4fe58637238c5235aab50408) ) /* PROM 1 */
+	ROM_LOAD( "136021.112",   0x0800, 0x0400, CRC(6cfa3544) SHA1(be059bfffe6b5bfcb4af78e9e7a98870ccf21985) ) /* PROM 2 */
+	ROM_LOAD( "136021.113",   0x0c00, 0x0400, CRC(03f6acb2) SHA1(1bad540950575581067b97e3a1cadd479c68adf1) ) /* PROM 3 */
+ROM_END
+
 
 ROM_START( esb )
 	ROM_REGION( 0x22000, REGION_CPU1, 0 )     /* 64k for code and a buttload for the banked ROMs */
@@ -572,4 +596,5 @@ static DRIVER_INIT( esb )
 
 GAME( 1983, starwars, 0,        starwars, starwars, starwars, ROT0, "Atari", "Star Wars (rev 2)", 0 )
 GAME( 1983, starwar1, starwars, starwars, starwars, starwars, ROT0, "Atari", "Star Wars (rev 1)", 0 )
+GAME( 1983, tomcatsw, 0,        starwars, starwars, starwars, ROT0, "Atari", "TomCat (Star Wars hardware, prototype)", GAME_NO_SOUND )
 GAME( 1985, esb,      0,        starwars, esb,      esb,      ROT0, "Atari Games", "The Empire Strikes Back", 0 )

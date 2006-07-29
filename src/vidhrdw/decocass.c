@@ -582,11 +582,11 @@ VIDEO_START( decocass )
 	tilemap_set_transparent_pen( bg_tilemap_r, 0 );
 	tilemap_set_transparent_pen( fg_tilemap, 0 );
 
-	bg_tilemap_l_clip = Machine->visible_area[0];
-	bg_tilemap_l_clip.max_y = Machine->drv->screen[0].maxheight / 2;
+	bg_tilemap_l_clip = Machine->screen[0].visarea;
+	bg_tilemap_l_clip.max_y = Machine->screen[0].height / 2;
 
-	bg_tilemap_r_clip = Machine->visible_area[0];
-	bg_tilemap_r_clip.min_y = Machine->drv->screen[0].maxheight / 2;
+	bg_tilemap_r_clip = Machine->screen[0].visarea;
+	bg_tilemap_r_clip.min_y = Machine->screen[0].height / 2;
 
 	/* background videroam bits D0-D3 are shared with the tileram */
 	decocass_bgvideoram = decocass_tileram;
@@ -616,7 +616,7 @@ VIDEO_UPDATE( decocass )
 			tape_time = 0.0;
 		else if (tape_time > 999.9)
 			tape_time = 999.9;
-		ui_popup("%c%c [%05.1fs] %c%c",
+		popmessage("%c%c [%05.1fs] %c%c",
 			(tape_dir < 0 && tape_speed) ? '<' : ' ',
 			(tape_dir < 0) ? '<' : ' ',
 			tape_time,
@@ -630,7 +630,7 @@ VIDEO_UPDATE( decocass )
 		if (code_pressed_memory(KEYCODE_I))
 			showmsg ^= 1;
 		if (showmsg)
-			ui_popup_time(1, "mode:$%02x cm:$%02x ccb:$%02x h:$%02x vl:$%02x vr:$%02x ph:$%02x pv:$%02x ch:$%02x cv:$%02x",
+			popmessage("mode:$%02x cm:$%02x ccb:$%02x h:$%02x vl:$%02x vr:$%02x ph:$%02x pv:$%02x ch:$%02x cv:$%02x",
 				mode_set,
 				color_missiles,
 				color_center_bot,

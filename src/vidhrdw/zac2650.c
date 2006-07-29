@@ -81,10 +81,10 @@ int SpriteCollision(int first,int second)
 	    {
 		    for (y = fy; y < fy + Machine->gfx[expand]->height; y++)
             {
-			    if ((x < Machine->visible_area[0].min_x) ||
-			        (x > Machine->visible_area[0].max_x) ||
-			        (y < Machine->visible_area[0].min_y) ||
-			        (y > Machine->visible_area[0].max_y))
+			    if ((x < Machine->screen[0].visarea.min_x) ||
+			        (x > Machine->screen[0].visarea.max_x) ||
+			        (y < Machine->screen[0].visarea.min_y) ||
+			        (y > Machine->screen[0].visarea.max_y))
 			    {
 				    continue;
 			    }
@@ -108,10 +108,10 @@ int SpriteCollision(int first,int second)
 	    {
 		    for (y = fy; y < fy + Machine->gfx[expand]->height; y++)
             {
-			    if ((x < Machine->visible_area[0].min_x) ||
-			        (x > Machine->visible_area[0].max_x) ||
-			        (y < Machine->visible_area[0].min_y) ||
-			        (y > Machine->visible_area[0].max_y))
+			    if ((x < Machine->screen[0].visarea.min_x) ||
+			        (x > Machine->screen[0].visarea.max_x) ||
+			        (y < Machine->screen[0].visarea.min_y) ||
+			        (y > Machine->screen[0].visarea.max_y))
 			    {
 				    continue;
 			    }
@@ -148,10 +148,10 @@ VIDEO_START( tinvader )
 	if ( !bg_tilemap )
 		return 1;
 
-	if ((spritebitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight)) == 0)
+	if ((spritebitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height)) == 0)
 		return 1;
 
-	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight)) == 0)
+	if ((tmpbitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height)) == 0)
 		return 1;
 
 	return 0;
@@ -175,7 +175,7 @@ static void tinvader_draw_sprites( mame_bitmap *bitmap )
     CollisionBackground = 0;	/* Read from 0x1e80 bit 7 */
 
 	// for collision detection checking
-	copybitmap(tmpbitmap,bitmap,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+	copybitmap(tmpbitmap,bitmap,0,0,0,0,&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
 
     for(offs=0;offs<0x50;offs+=0x10)
     {
@@ -210,10 +210,10 @@ static void tinvader_draw_sprites( mame_bitmap *bitmap )
 	        {
 		        for (y = by; y < by + Machine->gfx[expand]->height; y++)
                 {
-			        if ((x < Machine->visible_area[0].min_x) ||
-			            (x > Machine->visible_area[0].max_x) ||
-			            (y < Machine->visible_area[0].min_y) ||
-			            (y > Machine->visible_area[0].max_y))
+			        if ((x < Machine->screen[0].visarea.min_x) ||
+			            (x > Machine->screen[0].visarea.max_x) ||
+			            (y < Machine->screen[0].visarea.min_y) ||
+			            (y > Machine->screen[0].visarea.max_y))
 			        {
 				        continue;
 			        }
@@ -247,7 +247,7 @@ static void tinvader_draw_sprites( mame_bitmap *bitmap )
 
 VIDEO_UPDATE( tinvader )
 {
-	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->screen[0].visarea, bg_tilemap, 0, 0);
 	tinvader_draw_sprites(bitmap);
 	return 0;
 }

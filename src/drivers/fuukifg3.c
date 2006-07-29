@@ -482,7 +482,7 @@ static INTERRUPT_GEN( fuuki32_interrupt )
 		if (code_pressed_memory(KEYCODE_F1))
 		{
 			fuuki32_raster_enable ^= 1;
-			ui_popup("raster effects %sabled",fuuki32_raster_enable ? "en" : "dis");
+			popmessage("raster effects %sabled",fuuki32_raster_enable ? "en" : "dis");
 		}
 	}
 

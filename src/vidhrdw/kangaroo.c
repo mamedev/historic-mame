@@ -60,13 +60,13 @@ PALETTE_INIT( kangaroo )
 
 VIDEO_START( kangaroo )
 {
-	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight)) == 0)
+	if ((tmpbitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height)) == 0)
 		return 1;
 
-	if ((tmpbitmap2 = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight)) == 0)
+	if ((tmpbitmap2 = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height)) == 0)
 		return 1;
 
-	videoram = auto_malloc(Machine->drv->screen[0].maxwidth*Machine->drv->screen[0].maxheight);
+	videoram = auto_malloc(Machine->screen[0].width*Machine->screen[0].height);
 
 	return 0;
 }
@@ -313,14 +313,14 @@ VIDEO_UPDATE( kangaroo )
 	if (*kangaroo_bank_select & 0x01)
 	{
 		/* Plane B is primary */
-		copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
-		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->visible_area[0],TRANSPARENCY_COLOR,8);
+		copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->screen[0].visarea,TRANSPARENCY_COLOR,8);
 	}
 	else
 	{
 		/* Plane A is primary */
-		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
-		copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_COLOR,16);
+		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
+		copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->screen[0].visarea,TRANSPARENCY_COLOR,16);
 	}
 	return 0;
 }

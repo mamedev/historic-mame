@@ -83,7 +83,7 @@ VIDEO_START( starshp1 )
 		val = (val << 1) | (bit & 1);
 	}
 
-	if ((helper = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight)) == 0)
+	if ((helper = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height)) == 0)
 	{
 		return 1;
 	}
@@ -97,10 +97,10 @@ READ8_HANDLER( starshp1_rng_r )
 	int x = cpu_gethorzbeampos();
 	int y = cpu_getscanline();
 
-	if (x > Machine->drv->screen[0].maxwidth - 1)
-		x = Machine->drv->screen[0].maxwidth - 1;
-	if (y > Machine->drv->screen[0].maxheight - 1)
-		y = Machine->drv->screen[0].maxheight - 1;
+	if (x > Machine->screen[0].width - 1)
+		x = Machine->screen[0].width - 1;
+	if (y > Machine->screen[0].height - 1)
+		y = Machine->screen[0].height - 1;
 
 	return LSFR[x + (UINT16) (512 * y)];
 }
@@ -427,12 +427,12 @@ VIDEO_EOF( starshp1 )
 	if (rect.max_y > helper->height - 1)
 		rect.max_y = helper->height - 1;
 
-	fillbitmap(helper, Machine->pens[0], &Machine->visible_area[0]);
+	fillbitmap(helper, Machine->pens[0], &Machine->screen[0].visarea);
 
 	if (starshp1_attract == 0)
-		draw_spaceship(helper, &Machine->visible_area[0]);
+		draw_spaceship(helper, &Machine->screen[0].visarea);
 
-	if (circle_collision(&Machine->visible_area[0]))
+	if (circle_collision(&Machine->screen[0].visarea))
 	{
 		starshp1_collision_latch |= 1;
 	}
@@ -444,7 +444,7 @@ VIDEO_EOF( starshp1 )
 	{
 		starshp1_collision_latch |= 4;
 	}
-	if (spaceship_collision(helper, &Machine->visible_area[0]))
+	if (spaceship_collision(helper, &Machine->screen[0].visarea))
 	{
 		starshp1_collision_latch |= 8;
 	}

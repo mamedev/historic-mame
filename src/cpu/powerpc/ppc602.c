@@ -1,3 +1,44 @@
+static void ppc_dsa(UINT32 op)
+{
+	UINT32 msr = ppc_get_msr();
+
+	msr &= ~(MSR_SA | MSR_EE | MSR_PR | MSR_AP);
+	if (ppc.esasrr & 0x8)	msr |= MSR_PR;
+	if (ppc.esasrr & 0x4)	msr |= MSR_AP;
+	if (ppc.esasrr & 0x2)	msr |= MSR_SA;
+	if (ppc.esasrr & 0x1)	msr |= MSR_EE;
+
+	ppc_set_msr(msr);
+}
+
+static void ppc_esa(UINT32 op)
+{
+	int sa, ee, pr, ap;
+	UINT32 msr = ppc_get_msr();
+
+	sa = (msr & MSR_SA) ? 1 : 0;
+	ee = (msr & MSR_EE) ? 1 : 0;
+	pr = (msr & MSR_PR) ? 1 : 0;
+	ap = (msr & MSR_AP) ? 1 : 0;
+
+	ppc.esasrr = (pr << 3) | (ap << 2) | (sa << 1) | (ee);
+
+	msr &= ~(MSR_EE | MSR_PR | MSR_AP);
+	msr |= MSR_SA;
+
+	ppc_set_msr(msr);
+}
+
+static void ppc_tlbli(UINT32 op)
+{
+
+}
+
+static void ppc_tlbld(UINT32 op)
+{
+
+}
+
 void ppc602_exception(int exception)
 {
 	switch( exception )

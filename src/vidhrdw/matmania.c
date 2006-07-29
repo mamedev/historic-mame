@@ -135,11 +135,11 @@ VIDEO_START( matmania )
 	memset(dirtybuffer2,1,matmania_videoram3_size);
 
 	/* Mat Mania has a virtual screen twice as large as the visible screen */
-	if ((tmpbitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,2* Machine->drv->screen[0].maxheight)) == 0)
+	if ((tmpbitmap = auto_bitmap_alloc(Machine->screen[0].width,2* Machine->screen[0].height)) == 0)
 		return 1;
 
 	/* Mat Mania has a virtual screen twice as large as the visible screen */
-	if ((tmpbitmap2 = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,2 * Machine->drv->screen[0].maxheight)) == 0)
+	if ((tmpbitmap2 = auto_bitmap_alloc(Machine->screen[0].width,2 * Machine->screen[0].height)) == 0)
 		return 1;
 
 	return 0;
@@ -227,9 +227,9 @@ VIDEO_UPDATE( matmania )
 
 		scrolly = -*matmania_scroll;
 		if (*matmania_pageselect)
-			copyscrollbitmap(bitmap,tmpbitmap2,0,0,1,&scrolly,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+			copyscrollbitmap(bitmap,tmpbitmap2,0,0,1,&scrolly,&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
 		else
-			copyscrollbitmap(bitmap,tmpbitmap,0,0,1,&scrolly,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+			copyscrollbitmap(bitmap,tmpbitmap,0,0,1,&scrolly,&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -243,7 +243,7 @@ VIDEO_UPDATE( matmania )
 					(spriteram[offs] & 0x08) >> 3,
 					spriteram[offs] & 0x04,spriteram[offs] & 0x02,
 					239 - spriteram[offs+3],(240 - spriteram[offs+2]) & 0xff,
-					&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+					&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 		}
 	}
 
@@ -262,7 +262,7 @@ VIDEO_UPDATE( matmania )
 				(matmania_colorram2[offs] & 0x30) >> 4,
 				0,0,
 				8*sx,8*sy,
-				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+				&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 	}
 	return 0;
 }
@@ -324,9 +324,9 @@ VIDEO_UPDATE( maniach )
 
 		scrolly = -*matmania_scroll;
 		if (*matmania_pageselect)
-			copyscrollbitmap(bitmap,tmpbitmap2,0,0,1,&scrolly,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+			copyscrollbitmap(bitmap,tmpbitmap2,0,0,1,&scrolly,&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
 		else
-			copyscrollbitmap(bitmap,tmpbitmap,0,0,1,&scrolly,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+			copyscrollbitmap(bitmap,tmpbitmap,0,0,1,&scrolly,&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -340,7 +340,7 @@ VIDEO_UPDATE( maniach )
 					(spriteram[offs] & 0x08) >> 3,
 					spriteram[offs] & 0x04,spriteram[offs] & 0x02,
 					239 - spriteram[offs+3],(240 - spriteram[offs+2]) & 0xff,
-					&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+					&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 		}
 	}
 
@@ -359,7 +359,7 @@ VIDEO_UPDATE( maniach )
 				(matmania_colorram2[offs] & 0x30) >> 4,
 				0,0,
 				8*sx,8*sy,
-				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+				&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 	}
 	return 0;
 }

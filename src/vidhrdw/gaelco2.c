@@ -361,7 +361,7 @@ static void gaelco2_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect,
 	int end_offset = start_offset + 0x1000;
 
 	/* sprite offset is based on the visible area */
-	int spr_x_adjust = (Machine->visible_area[0].max_x - 320 + 1) - (511 - 320 - 1) - ((gaelco2_vregs[0] >> 4) & 0x01) + xoffs;
+	int spr_x_adjust = (Machine->screen[0].visarea.max_x - 320 + 1) - (511 - 320 - 1) - ((gaelco2_vregs[0] >> 4) & 0x01) + xoffs;
 
 	for (j = start_offset; j < end_offset; j += 8){
 		int data = buffered_spriteram16[(j/2) + 0];

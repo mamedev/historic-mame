@@ -31,7 +31,7 @@ static int driver_lru[DRIVER_LRU_SIZE];
 
 
 /***************************************************************************
-    PROTOTYPES
+    FUNCTION PROTOTYPES
 ***************************************************************************/
 
 static int penalty_compare(const char *source, const char *target);

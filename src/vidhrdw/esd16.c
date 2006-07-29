@@ -192,8 +192,8 @@ static void esd16_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int offs;
 
-	int max_x		=	Machine->drv->screen[0].maxwidth;
-	int max_y		=	Machine->drv->screen[0].maxheight;
+	int max_x		=	Machine->screen[0].width;
+	int max_y		=	Machine->screen[0].height;
 
 	for ( offs = spriteram_size/2 - 8/2; offs >= 0 ; offs -= 8/2 )
 	{
@@ -248,8 +248,8 @@ static void hedpanic_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect
 {
 	int offs;
 
-	int max_x		=	Machine->drv->screen[0].maxwidth;
-	int max_y		=	Machine->drv->screen[0].maxheight;
+	int max_x		=	Machine->screen[0].width;
+	int max_y		=	Machine->screen[0].height;
 
 	for ( offs = spriteram_size/2 - 8/2; offs >= 0 ; offs -= 8/2 )
 	{
@@ -384,6 +384,6 @@ if ( code_pressed(KEYCODE_Z) )
 	if (layers_ctrl & 4)	hedpanic_draw_sprites(bitmap,cliprect);
 
 
-//  ui_popup("%04x %04x %04x %04x %04x",head_unknown1[0],head_layersize[0],head_unknown3[0],head_unknown4[0],head_unknown5[0]);
+//  popmessage("%04x %04x %04x %04x %04x",head_unknown1[0],head_layersize[0],head_unknown3[0],head_unknown4[0],head_unknown5[0]);
 	return 0;
 }

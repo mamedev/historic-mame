@@ -14,6 +14,7 @@ extern unsigned char *tnzs_objram;
 extern unsigned char *tnzs_vdcram;
 extern unsigned char *tnzs_scrollram;
 extern unsigned char *tnzs_objctrl;
+extern unsigned char *tnzs_bg_flag;
 
 static int tnzs_screenflip;
 
@@ -73,10 +74,10 @@ void tnzs_vh_draw_background(mame_bitmap *bitmap,unsigned char *m)
 		m += 0x800;
 	}
 
-	if(tnzs_objctrl[1] & 0x80)
-		flag = TRANSPARENCY_PEN;
-	else
+	if(tnzs_bg_flag[0] & 0x80)
 		flag = TRANSPARENCY_NONE;
+	else
+		flag = TRANSPARENCY_PEN;
 
 
 	/* The byte at f200 is the y-scroll value for the first column.
@@ -127,7 +128,7 @@ void tnzs_vh_draw_background(mame_bitmap *bitmap,unsigned char *m)
 						color,
 						flipx,flipy,
 						sx + scrollx,(sy + scrolly) & 0xff,
-						&Machine->visible_area[0],flag,0);
+						&Machine->screen[0].visarea,flag,0);
 
 				/* wrap around x */
 				drawgfx(bitmap,Machine->gfx[0],
@@ -135,7 +136,7 @@ void tnzs_vh_draw_background(mame_bitmap *bitmap,unsigned char *m)
 						color,
 						flipx,flipy,
 						sx + 512 + scrollx,(sy + scrolly) & 0xff,
-						&Machine->visible_area[0],flag,0);
+						&Machine->screen[0].visarea,flag,0);
 			}
 		}
 
@@ -189,7 +190,7 @@ void tnzs_vh_draw_foreground(mame_bitmap *bitmap,
 				color,
 				flipx,flipy,
 				sx,sy+2,
-				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+				&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 
 		/* wrap around x */
 		drawgfx(bitmap,Machine->gfx[0],
@@ -197,7 +198,7 @@ void tnzs_vh_draw_foreground(mame_bitmap *bitmap,
 				color,
 				flipx,flipy,
 				sx + 512,sy+2,
-				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+				&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 	}
 }
 
@@ -209,7 +210,7 @@ VIDEO_UPDATE( tnzs )
 
 
 	/* Fill the background */
-	fillbitmap(bitmap, Machine->pens[0x1f0], &Machine->visible_area[0]);
+	fillbitmap(bitmap, Machine->pens[0x1f0], &Machine->screen[0].visarea);
 
 	/* Redraw the background tiles (c400-c5ff) */
 	tnzs_vh_draw_background(bitmap, tnzs_objram + 0x400);

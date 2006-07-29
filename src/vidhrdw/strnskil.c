@@ -125,7 +125,7 @@ static void strnskil_draw_sprites( mame_bitmap *bitmap )
 			code, color,
 			flipx, flipy,
 			px, py,
-			&Machine->visible_area[0],
+			&Machine->screen[0].visarea,
 			TRANSPARENCY_COLOR, 0);
 	}
 }
@@ -150,7 +150,7 @@ VIDEO_UPDATE( strnskil )
 		}
 	}
 
-	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->screen[0].visarea, bg_tilemap, 0, 0);
 	strnskil_draw_sprites(bitmap);
 	return 0;
 }

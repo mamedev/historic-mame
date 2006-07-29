@@ -37,7 +37,7 @@
 // 0x364
 // 0x366                    mirrors tile bank
 // 0x36B                    controls which player is playing. (1 == player 2);
-// 0x3DC                    affects mole popup
+// 0x3DC                    affects mole popmessage
 // 0x3E5                    round point/passing point control?
 // 0x3E7                    round point/passing point control?
 

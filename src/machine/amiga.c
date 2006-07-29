@@ -185,7 +185,7 @@ void amiga_machine_config(const amiga_machine_interface *intf)
 	memset(&cia_intf, 0, sizeof(cia_intf));
 	cia_intf[0].type = CIA8520;
 	cia_intf[0].clock = O2_TIMER_RATE;
-	cia_intf[0].tod_clock = Machine->drv->screen[0].refresh_rate;
+	cia_intf[0].tod_clock = Machine->screen[0].refresh;
 	cia_intf[0].irq_func = amiga_cia_0_irq;
 	cia_intf[0].port[0].read = intf->cia_0_portA_r;
 	cia_intf[0].port[0].write = intf->cia_0_portA_w;
@@ -195,7 +195,7 @@ void amiga_machine_config(const amiga_machine_interface *intf)
 
 	cia_intf[1].type = CIA8520;
 	cia_intf[1].clock = O2_TIMER_RATE;
-	cia_intf[1].tod_clock = Machine->drv->screen[0].refresh_rate;
+	cia_intf[1].tod_clock = Machine->screen[0].refresh;
 	cia_intf[1].irq_func = amiga_cia_1_irq;
 	cia_intf[1].port[0].read = intf->cia_1_portA_r;
 	cia_intf[1].port[0].write = intf->cia_1_portA_w;

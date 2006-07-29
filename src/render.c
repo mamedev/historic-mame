@@ -9,17 +9,12 @@
 
 ****************************************************************************
 
-    Still to-do:
-        * vector sparkle effect is busted in tempest
-
     Windows-specific to-do:
         * no fallback if we run out of video memory
 
     Longer-term to do: (once old renderer is gone)
         * remove dirty_palette stuff
-        * rewrite usrintrf to work in floating point
         * make vector updates asynchronous
-        * make update_video_and_audio() static
 
 ****************************************************************************
 
@@ -371,7 +366,7 @@ struct _render_container
 
 
 /***************************************************************************
-    GLOBALS
+    GLOBAL VARIABLES
 ***************************************************************************/
 
 /* array of live targets */
@@ -411,7 +406,7 @@ static const render_quad_texuv oriented_texcoords[8] =
 
 
 /***************************************************************************
-    PROTOTYPES
+    FUNCTION PROTOTYPES
 ***************************************************************************/
 
 /* core system */
@@ -726,9 +721,7 @@ INLINE void free_render_ref(render_ref *ref)
 
 
 /***************************************************************************
-
-    Core system management
-
+    CORE IMPLEMENTATION
 ***************************************************************************/
 
 /*-------------------------------------------------
@@ -1185,11 +1178,8 @@ float render_get_ui_aspect(void)
 
 
 
-
 /***************************************************************************
-
-    Render targets
-
+    RENDER TARGETS
 ***************************************************************************/
 
 /*-------------------------------------------------
@@ -1609,10 +1599,10 @@ void render_target_get_minimum_size(render_target *target, INT32 *minwidth, INT3
 				/* we may be called very early, before Machine->visible_area is initialized; handle that case */
 				if ((Machine->drv->video_attributes & VIDEO_TYPE_VECTOR) != 0)
 					visarea = &vectorvis;
-				else if (Machine->visible_area[item->index].max_x > Machine->visible_area[item->index].min_x)
-					visarea = &Machine->visible_area[item->index];
+				else if (Machine->screen[item->index].visarea.max_x > Machine->screen[item->index].visarea.min_x)
+					visarea = &Machine->screen[item->index].visarea;
 				else
-					visarea = &Machine->drv->screen[item->index].default_visible_area;
+					visarea = &Machine->drv->screen[item->index].defstate.visarea;
 
 				/* apply target orientation to the bounds */
 				bounds = item->bounds;
@@ -2340,9 +2330,7 @@ done:
 
 
 /***************************************************************************
-
-    View item state tracking
-
+    VIEW ITEM STATES
 ***************************************************************************/
 
 /*-------------------------------------------------
@@ -2411,9 +2399,7 @@ void render_view_item_set_state(const char *itemname, int newstate)
 
 
 /***************************************************************************
-
-    Render references
-
+    RENDER REFERENCES
 ***************************************************************************/
 
 /*-------------------------------------------------
@@ -2441,9 +2427,7 @@ static void invalidate_all_render_ref(void *refptr)
 
 
 /***************************************************************************
-
-    Render textures
-
+    RENDER TEXTURES
 ***************************************************************************/
 
 /*-------------------------------------------------
@@ -2627,9 +2611,7 @@ void render_texture_hq_scale(mame_bitmap *dest, const mame_bitmap *source, const
 
 
 /***************************************************************************
-
-    Render containers
-
+    RENDER CONTAINERS
 ***************************************************************************/
 
 /*-------------------------------------------------
@@ -3096,9 +3078,7 @@ static void render_container_update_palette(void *param, int entry, rgb_t newval
 
 
 /***************************************************************************
-
-    Generic high-quality texture resampler
-
+    RENDER UTILITIES
 ***************************************************************************/
 
 /*-------------------------------------------------
@@ -3335,12 +3315,9 @@ static void resample_argb_bitmap_bilinear(UINT32 *dest, UINT32 drowpixels, UINT3
 }
 
 
-
-/***************************************************************************
-
-    Generic line clipper
-
-***************************************************************************/
+/*-------------------------------------------------
+    render_clip_line - clip a line to a rectangle
+-------------------------------------------------*/
 
 int render_clip_line(render_bounds *bounds, const render_bounds *clip)
 {
@@ -3425,12 +3402,9 @@ int render_clip_line(render_bounds *bounds, const render_bounds *clip)
 }
 
 
-
-/***************************************************************************
-
-    Generic quad clipper
-
-***************************************************************************/
+/*-------------------------------------------------
+    render_clip_line - clip a quad to a rectangle
+-------------------------------------------------*/
 
 int render_clip_quad(render_bounds *bounds, const render_bounds *clip, render_quad_texuv *texcoords)
 {
@@ -3507,17 +3481,106 @@ int render_clip_quad(render_bounds *bounds, const render_bounds *clip, render_qu
 }
 
 
+/*-------------------------------------------------
+    render_line_to_quad - convert a line and a
+    width to four points
+-------------------------------------------------*/
 
-/***************************************************************************
+void render_line_to_quad(const render_bounds *bounds, float width, render_bounds *bounds0, render_bounds *bounds1)
+{
+	float unitx, unity;
 
-    PNG file loader
+	/*
+        High-level logic -- due to math optimizations, this info is lost below.
 
-***************************************************************************/
+        Imagine a thick line of width (w), drawn from (p0) to (p1), with a unit
+        vector (u) indicating the direction from (p0) to (p1).
+
+          B                                                          C
+            +-----------------------  ...   -----------------------+
+            |                                               ^      |
+            |                                               |(w)   |
+            |                                               v      |
+            |<---->* (p0)        ------------>         (p1) *      |
+            |  (w)                    (u)                          |
+            |                                                      |
+            |                                                      |
+            +-----------------------  ...   -----------------------+
+          A                                                          D
+
+        To convert this into a quad, we need to compute the four points A, B, C
+        and D.
+
+        Starting with point A. We first multiply the unit vector by (w) and then
+        rotate the result 135 degrees. This points us in the right direction, but
+        needs to be scaled by a factor of sqrt(2) to reach A. Thus, we have:
+
+            A.x = p0.x + w * u.x * cos(135) * sqrt(2) - w * u.y * sin(135) * sqrt(2)
+            A.y = p0.y + w * u.y * sin(135) * sqrt(2) + w * u.y * cos(135) * sqrt(2)
+
+        Conveniently, sin(135) = 1/sqrt(2), and cos(135) = -1/sqrt(2), so this
+        simplifies to:
+
+            A.x = p0.x - w * u.x - w * u.y
+            A.y = p0.y + w * u.y - w * u.y
+
+        Working clockwise around the polygon, the same fallout happens all around as
+        we rotate the unit vector by -135 (B), -45 (C), and 45 (D) degrees:
+
+            B.x = p0.x - w * u.x + w * u.y
+            B.y = p0.y - w * u.x - w * u.y
+
+            C.x = p1.x + w * u.x + w * u.y
+            C.y = p1.y - w * u.x + w * u.y
+
+            D.x = p1.x + w * u.x - w * u.y
+            D.y = p1.y + w * u.x + w * u.y
+    */
+
+	/* compute a vector from point 0 to point 1 */
+	unitx = bounds->x1 - bounds->x0;
+	unity = bounds->y1 - bounds->y0;
+
+	/* points just use a +1/+1 unit vector; this gives a nice diamond pattern */
+	if (unitx == 0 && unity == 0)
+	{
+		unitx = 0.70710678f;
+		unity = 0.70710678f;
+	}
+
+	/* lines need to be divided by their length */
+	else
+	{
+		float invlength = 1.0f / sqrt(unitx * unitx + unity * unity);
+		unitx *= invlength;
+		unity *= invlength;
+	}
+
+	/* prescale unitx and unity by the length */
+	unitx *= width;
+	unity *= width;
+
+	/* rotate the unit vector by 135 degrees and add to point 0 */
+	bounds0->x0 = bounds->x0 - unitx - unity;
+	bounds0->y0 = bounds->y0 + unitx - unity;
+
+	/* rotate the unit vector by -135 degrees and add to point 0 */
+	bounds0->x1 = bounds->x0 - unitx + unity;
+	bounds0->y1 = bounds->y0 - unitx - unity;
+
+	/* rotate the unit vector by 45 degrees and add to point 1 */
+	bounds1->x0 = bounds->x1 + unitx - unity;
+	bounds1->y0 = bounds->y1 + unitx + unity;
+
+	/* rotate the unit vector by -45 degrees and add to point 1 */
+	bounds1->x1 = bounds->x1 + unitx + unity;
+	bounds1->y1 = bounds->y1 - unitx + unity;
+}
+
 
 /*-------------------------------------------------
     render_load_png - load a PNG file into a
-    freshly allocated mame_bitmap, or load it
-    into the alpha channel of an existing bitmap
+    mame_bitmap
 -------------------------------------------------*/
 
 mame_bitmap *render_load_png(const char *dirname, const char *filename, mame_bitmap *alphadest, int *hasalpha)
@@ -3699,9 +3762,7 @@ static void copy_png_alpha_to_bitmap(mame_bitmap *bitmap, const png_info *png, i
 
 
 /***************************************************************************
-
-    Layout views
-
+    LAYOUT VIEWS
 ***************************************************************************/
 
 /*-------------------------------------------------
@@ -3814,9 +3875,7 @@ static void layout_view_recompute(layout_view *view, int layerconfig)
 
 
 /***************************************************************************
-
-    Layout elements
-
+    LAYOUT ELEMENTS
 ***************************************************************************/
 
 /*-------------------------------------------------
@@ -3966,9 +4025,7 @@ static void layout_element_draw_disk(mame_bitmap *dest, const rectangle *bounds,
 
 
 /***************************************************************************
-
-    Layout file parsing
-
+    LAYOUT FILE PARSING
 ***************************************************************************/
 
 /*-------------------------------------------------
@@ -3988,8 +4045,8 @@ static int get_variable_value(const char *string, char **outputptr)
 		sprintf(temp, "~scr%dnativexaspect~", scrnum);
 		if (!strncmp(string, temp, strlen(temp)))
 		{
-			num = Machine->drv->screen[scrnum].default_visible_area.max_x + 1 - Machine->drv->screen[scrnum].default_visible_area.min_x;
-			den = Machine->drv->screen[scrnum].default_visible_area.max_y + 1 - Machine->drv->screen[scrnum].default_visible_area.min_y;
+			num = Machine->drv->screen[scrnum].defstate.visarea.max_x + 1 - Machine->drv->screen[scrnum].defstate.visarea.min_x;
+			den = Machine->drv->screen[scrnum].defstate.visarea.max_y + 1 - Machine->drv->screen[scrnum].defstate.visarea.min_y;
 			reduce_fraction(&num, &den);
 			*outputptr += sprintf(*outputptr, "%d", num);
 			return strlen(temp);
@@ -3999,8 +4056,8 @@ static int get_variable_value(const char *string, char **outputptr)
 		sprintf(temp, "~scr%dnativeyaspect~", scrnum);
 		if (!strncmp(string, temp, strlen(temp)))
 		{
-			num = Machine->drv->screen[scrnum].default_visible_area.max_x + 1 - Machine->drv->screen[scrnum].default_visible_area.min_x;
-			den = Machine->drv->screen[scrnum].default_visible_area.max_y + 1 - Machine->drv->screen[scrnum].default_visible_area.min_y;
+			num = Machine->drv->screen[scrnum].defstate.visarea.max_x + 1 - Machine->drv->screen[scrnum].defstate.visarea.min_x;
+			den = Machine->drv->screen[scrnum].defstate.visarea.max_y + 1 - Machine->drv->screen[scrnum].defstate.visarea.min_y;
 			reduce_fraction(&num, &den);
 			*outputptr += sprintf(*outputptr, "%d", den);
 			return strlen(temp);
@@ -4010,7 +4067,7 @@ static int get_variable_value(const char *string, char **outputptr)
 		sprintf(temp, "~scr%dwidth~", scrnum);
 		if (!strncmp(string, temp, strlen(temp)))
 		{
-			*outputptr += sprintf(*outputptr, "%d", Machine->drv->screen[scrnum].default_visible_area.max_x + 1 - Machine->drv->screen[0].default_visible_area.min_x);
+			*outputptr += sprintf(*outputptr, "%d", Machine->drv->screen[scrnum].defstate.visarea.max_x + 1 - Machine->drv->screen[0].defstate.visarea.min_x);
 			return strlen(temp);
 		}
 
@@ -4018,7 +4075,7 @@ static int get_variable_value(const char *string, char **outputptr)
 		sprintf(temp, "~scr%dheight~", scrnum);
 		if (!strncmp(string, temp, strlen(temp)))
 		{
-			*outputptr += sprintf(*outputptr, "%d", Machine->drv->screen[scrnum].default_visible_area.max_y + 1 - Machine->drv->screen[0].default_visible_area.min_y);
+			*outputptr += sprintf(*outputptr, "%d", Machine->drv->screen[scrnum].defstate.visarea.max_y + 1 - Machine->drv->screen[0].defstate.visarea.min_y);
 			return strlen(temp);
 		}
 	}

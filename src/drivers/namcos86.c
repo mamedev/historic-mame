@@ -316,7 +316,7 @@ static WRITE8_HANDLER( cus115_w )
 	/* make sure the expansion board is present */
 	if (!memory_region(REGION_USER1))
 	{
-		ui_popup("expansion board not present");
+		popmessage("expansion board not present");
 		return;
 	}
 

@@ -289,7 +289,7 @@ INTERRUPT_GEN( gdfs_interrupt )
 */
 static WRITE16_HANDLER( ssv_lockout_w )
 {
-//  ui_popup("%02X",data & 0xff);
+//  popmessage("%02X",data & 0xff);
 	if (ACCESSING_LSB)
 	{
 		coin_lockout_w(1,~data & 0x01);
@@ -304,7 +304,7 @@ static WRITE16_HANDLER( ssv_lockout_w )
 /* Same as above but with inverted lockout lines */
 static WRITE16_HANDLER( ssv_lockout_inv_w )
 {
-//  ui_popup("%02X",data & 0xff);
+//  popmessage("%02X",data & 0xff);
 	if (ACCESSING_LSB)
 	{
 		coin_lockout_w(1, data & 0x01);
@@ -815,7 +815,7 @@ static WRITE16_HANDLER( srmp7_sound_bank_w )
 		for (voice = 0; voice < 32; voice++)
 			ES5506_voice_bank_0_w(voice, bank);
 	}
-//  ui_popup("%04X",data);
+//  popmessage("%04X",data);
 }
 
 static READ16_HANDLER( srmp7_input_r )
@@ -904,7 +904,7 @@ static WRITE16_HANDLER( sxyreact_dial_w )
 
 static WRITE16_HANDLER( sxyreact_motor_w )
 {
-//  ui_popup("%04X",data);   // 8 = motor on; 0 = motor off
+//  popmessage("%04X",data);   // 8 = motor on; 0 = motor off
 }
 
 static ADDRESS_MAP_START( sxyreact_readmem, ADDRESS_SPACE_PROGRAM, 16 )

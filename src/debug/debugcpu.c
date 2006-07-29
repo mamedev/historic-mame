@@ -74,7 +74,7 @@ static UINT64 tempvar[NUM_TEMP_VARIABLES];
 
 
 /***************************************************************************
-    PROTOTYPES
+    FUNCTION PROTOTYPES
 ***************************************************************************/
 
 static void debug_cpu_exit(void);

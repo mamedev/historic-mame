@@ -202,7 +202,7 @@ static READ8_HANDLER( calorie_soundlatch_r )
 
 static WRITE8_HANDLER( bogus_w )
 {
-	ui_popup("written to 3rd sound chip: data = %02X port = %02X", data, offset);
+	popmessage("written to 3rd sound chip: data = %02X port = %02X", data, offset);
 }
 
 static ADDRESS_MAP_START( calorie_map, ADDRESS_SPACE_PROGRAM, 8 )

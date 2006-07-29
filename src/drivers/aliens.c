@@ -65,7 +65,7 @@ static WRITE8_HANDLER( aliens_coin_counter_w )
 {
 	char baf[40];
 	sprintf(baf,"%02x",data);
-	ui_popup(baf);
+	popmessage(baf);
 }
 #endif
 }

@@ -35,10 +35,10 @@ PALETTE_INIT( nyny )
 
 VIDEO_START( nyny )
 {
-	if ((tmpbitmap1 = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight)) == 0)
+	if ((tmpbitmap1 = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height)) == 0)
 		return 1;
 
-	if ((tmpbitmap2 = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight)) == 0)
+	if ((tmpbitmap2 = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height)) == 0)
 		return 1;
 
 	nyny_videoram = auto_malloc(0x4000);
@@ -149,7 +149,7 @@ WRITE8_HANDLER( nyny_videoram1_w )
 
 VIDEO_UPDATE( nyny )
 {
-	copybitmap(bitmap,tmpbitmap2,flip_screen,flip_screen,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
-	copybitmap(bitmap,tmpbitmap1,flip_screen,flip_screen,0,0,&Machine->visible_area[0],TRANSPARENCY_COLOR,0);
+	copybitmap(bitmap,tmpbitmap2,flip_screen,flip_screen,0,0,&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap1,flip_screen,flip_screen,0,0,&Machine->screen[0].visarea,TRANSPARENCY_COLOR,0);
 	return 0;
 }

@@ -1256,7 +1256,7 @@ static void v9938_interrupt_start_vblank (void)
 			{
 			fwrite (vdp.vram, 0x10000, 1, fp);
 			fclose (fp);
-			ui_popup("saved");
+			popmessage("saved");
 			}
 
 		for (i=0;i<24;i++) printf ("R#%d = %02x\n", i, vdp.contReg[i]);

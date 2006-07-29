@@ -129,7 +129,7 @@ WRITE8_HANDLER( gsword_videoctrl_w )
 {
 	if (data & 0x8f)
 	{
-		ui_popup("videoctrl %02x",data);
+		popmessage("videoctrl %02x",data);
 	}
 
 	/* bits 5-6 are char palette bank */
@@ -215,14 +215,14 @@ void gsword_draw_sprites(mame_bitmap *bitmap)
 					gsword_spritetile_ram[offs+1] & 0x3f,
 					flipx,flipy,
 					sx,sy,
-					&Machine->visible_area[0],TRANSPARENCY_COLOR, 0x8f);
+					&Machine->screen[0].visarea,TRANSPARENCY_COLOR, 0x8f);
 		}
 	}
 }
 
 VIDEO_UPDATE( gsword )
 {
-	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->screen[0].visarea, bg_tilemap, 0, 0);
 	gsword_draw_sprites(bitmap);
 	return 0;
 }

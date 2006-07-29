@@ -148,7 +148,7 @@ VIDEO_UPDATE( opwolf )
 
 //  if (input_port_5_word_r(0,0xffff))
 
-//  ui_popup("%d %d",input_port_5_word_r(0,0xffff),input_port_6_word_r(0,0xffff));
+//  popmessage("%d %d",input_port_5_word_r(0,0xffff),input_port_6_word_r(0,0xffff));
 
 	/* See if we should draw artificial gun targets */
 	if (1) //input_port_4_word_r(0,0) &0x1) /* Fake DSW */
@@ -237,7 +237,7 @@ VIDEO_UPDATE( jumping )
 	{
 		char buf[80];
 		sprintf(buf,"sprite_ctrl: %04x",sprite_ctrl);
-		ui_popup(buf);
+		popmessage(buf);
 	}
 #endif
 	return 0;

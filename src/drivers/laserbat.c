@@ -451,7 +451,7 @@ VIDEO_START( laserbat )
 	videoram = (UINT8 *)auto_malloc(0x400);
 	colorram = (UINT8 *)auto_malloc(0x400);
 
-	collision_bitmap = auto_bitmap_alloc_depth(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight,8);
+	collision_bitmap = auto_bitmap_alloc_depth(Machine->screen[0].width,Machine->screen[0].height,8);
 
 	if (!bg_tilemap || !collision_bitmap)
 		return 1;

@@ -66,7 +66,7 @@ VIDEO_UPDATE( rollrace )
 	int col;
 
 	/* fill in background colour*/
-	fillbitmap(bitmap,Machine->pens[ra_bkgpen],&Machine->visible_area[0]);
+	fillbitmap(bitmap,Machine->pens[ra_bkgpen],&Machine->screen[0].visarea);
 
 	/* draw road */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
@@ -93,7 +93,7 @@ VIDEO_UPDATE( rollrace )
 				ra_bkgcol,
 				ra_flipx,(ra_bkgflip^ra_flipy),
 				sx*8,sy*8,
-				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+				&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 
 
 		}
@@ -131,7 +131,7 @@ VIDEO_UPDATE( rollrace )
 			spriteram[offs+2] & 0x1f,
 			ra_flipx,!(s_flipy^ra_flipy),
 			sx,sy,
-			&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+			&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 		}
 	}
 
@@ -160,7 +160,7 @@ VIDEO_UPDATE( rollrace )
 			col,
 			ra_flipx,ra_flipy,
 			8*sx,scroll,
-			&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+			&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 
 	}
 

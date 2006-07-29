@@ -116,8 +116,8 @@ static void suna16_draw_sprites(mame_bitmap *bitmap)
 {
 	int offs;
 
-	int max_x	=	Machine->drv->screen[0].maxwidth	- 8;
-	int max_y	=	Machine->drv->screen[0].maxheight - 8;
+	int max_x	=	Machine->screen[0].width	- 8;
+	int max_y	=	Machine->screen[0].height - 8;
 
 	for ( offs = 0xfc00/2; offs < 0x10000/2 ; offs += 4/2 )
 	{
@@ -191,7 +191,7 @@ static void suna16_draw_sprites(mame_bitmap *bitmap)
 							attr + (color_bank ? 0x10 : 0),
 							tile_flipx, tile_flipy,
 							sx, sy,
-							&Machine->visible_area[0],TRANSPARENCY_PEN,15	);
+							&Machine->screen[0].visarea,TRANSPARENCY_PEN,15	);
 
 				tile_x += tile_xinc;
 			}
@@ -215,7 +215,7 @@ static void suna16_draw_sprites(mame_bitmap *bitmap)
 VIDEO_UPDATE( suna16 )
 {
 	/* I believe background is black */
-	fillbitmap(bitmap,get_black_pen(),&Machine->visible_area[0]);
+	fillbitmap(bitmap,get_black_pen(),&Machine->screen[0].visarea);
 	suna16_draw_sprites(bitmap);
 	return 0;
 }

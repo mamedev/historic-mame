@@ -2627,7 +2627,7 @@ static void mb87078_gain_changed(int channel, int percent)
 		sndti_set_output_gain(type, 0, 0, percent / 100.0);
 		sndti_set_output_gain(type, 1, 0, percent / 100.0);
 		sndti_set_output_gain(type, 2, 0, percent / 100.0);
-		//ui_popup("MB87078 gain ch#%i percent=%i",channel,percent);
+		//popmessage("MB87078 gain ch#%i percent=%i",channel,percent);
 	}
 }
 

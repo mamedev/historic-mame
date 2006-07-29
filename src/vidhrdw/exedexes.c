@@ -230,7 +230,7 @@ static void exedexes_draw_sprites(mame_bitmap *bitmap, int priority)
 					color,
 					flipx,flipy,
 					sx,sy,
-					&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+					&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 		}
 	}
 }
@@ -240,11 +240,11 @@ VIDEO_UPDATE( exedexes )
 	if (sc2on)
 	{
 		tilemap_set_scrollx(bg_tilemap, 0, ((exedexes_bg_scroll[1]) << 8) + exedexes_bg_scroll[0]);
-		tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
+		tilemap_draw(bitmap, &Machine->screen[0].visarea, bg_tilemap, 0, 0);
 	}
 	else
 	{
-		fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area[0]);
+		fillbitmap(bitmap, Machine->pens[0], &Machine->screen[0].visarea);
 	}
 
 	exedexes_draw_sprites(bitmap, 1);
@@ -253,14 +253,14 @@ VIDEO_UPDATE( exedexes )
 	{
 		tilemap_set_scrollx(fg_tilemap, 0, ((exedexes_nbg_yscroll[1]) << 8) + exedexes_nbg_yscroll[0]);
 		tilemap_set_scrolly(fg_tilemap, 0, ((exedexes_nbg_xscroll[1]) << 8) + exedexes_nbg_xscroll[0]);
-		tilemap_draw(bitmap, &Machine->visible_area[0], fg_tilemap, 0, 0);
+		tilemap_draw(bitmap, &Machine->screen[0].visarea, fg_tilemap, 0, 0);
 	}
 
 	exedexes_draw_sprites(bitmap, 0);
 
 	if (chon)
 	{
-		tilemap_draw(bitmap, &Machine->visible_area[0], tx_tilemap, 0, 0);
+		tilemap_draw(bitmap, &Machine->screen[0].visarea, tx_tilemap, 0, 0);
 	}
 	return 0;
 }

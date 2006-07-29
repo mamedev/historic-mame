@@ -78,10 +78,10 @@ VIDEO_START( flkatck )
 	if (!k007121_tilemap[0] || !k007121_tilemap[1])
 		return 1;
 
-	k007121_clip[0] = Machine->visible_area[0];
+	k007121_clip[0] = Machine->screen[0].visarea;
 	k007121_clip[0].min_x += 40;
 
-	k007121_clip[1] = Machine->visible_area[0];
+	k007121_clip[1] = Machine->screen[0].visarea;
 	k007121_clip[1].max_x = 39;
 	k007121_clip[1].min_x = 0;
 
@@ -149,7 +149,7 @@ VIDEO_UPDATE( flkatck )
 	rectangle final_clip[2];
 
 #if 0
-ui_popup("%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x  %02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x",
+popmessage("%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x  %02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x",
 	K007121_ctrlram[0][0x00],K007121_ctrlram[0][0x01],K007121_ctrlram[0][0x02],K007121_ctrlram[0][0x03],K007121_ctrlram[0][0x04],K007121_ctrlram[0][0x05],K007121_ctrlram[0][0x06],K007121_ctrlram[0][0x07],
 	K007121_ctrlram[1][0x00],K007121_ctrlram[1][0x01],K007121_ctrlram[1][0x02],K007121_ctrlram[1][0x03],K007121_ctrlram[1][0x04],K007121_ctrlram[1][0x05],K007121_ctrlram[1][0x06],K007121_ctrlram[1][0x07]);
 #endif

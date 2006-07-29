@@ -349,7 +349,7 @@ static WRITE16_HANDLER( raiga_protection_w )
 				if (raiga_jumppoints[jumpcode] == -1)
 				{
 					logerror("unknown jumpcode %02x\n",jumpcode);
-					ui_popup("unknown jumpcode %02x",jumpcode);
+					popmessage("unknown jumpcode %02x",jumpcode);
 					jumpcode = 0;
 				}
 				prot = 0x20;

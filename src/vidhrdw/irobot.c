@@ -115,13 +115,13 @@ WRITE8_HANDLER( irobot_paletteram_w )
 VIDEO_START( irobot )
 {
 	/* Setup 2 bitmaps for the polygon generator */
-	polybitmap1 = auto_malloc(BITMAP_WIDTH * Machine->drv->screen[0].maxheight);
-	polybitmap2 = auto_malloc(BITMAP_WIDTH * Machine->drv->screen[0].maxheight);
+	polybitmap1 = auto_malloc(BITMAP_WIDTH * Machine->screen[0].height);
+	polybitmap2 = auto_malloc(BITMAP_WIDTH * Machine->screen[0].height);
 
 	/* Set clipping */
 	ir_xmin = ir_ymin = 0;
-	ir_xmax = Machine->drv->screen[0].maxwidth;
-	ir_ymax = Machine->drv->screen[0].maxheight;
+	ir_xmax = Machine->screen[0].width;
+	ir_ymax = Machine->screen[0].height;
 
 	return 0;
 }
@@ -171,7 +171,7 @@ VIDEO_START( irobot )
 void irobot_poly_clear(void)
 {
 	UINT8 *bitmap_base = irobot_bufsel ? polybitmap2 : polybitmap1;
-	memset(bitmap_base, 0, BITMAP_WIDTH * Machine->drv->screen[0].maxheight);
+	memset(bitmap_base, 0, BITMAP_WIDTH * Machine->screen[0].height);
 }
 
 #define draw_pixel(x,y,c)		polybitmap[(y) * BITMAP_WIDTH + (x)] = (c)
@@ -378,7 +378,7 @@ VIDEO_UPDATE( irobot )
 	int x, y, offs;
 
 	/* copy the polygon bitmap */
-	for (y = Machine->visible_area[0].min_y; y <= Machine->visible_area[0].max_y; y++)
+	for (y = Machine->screen[0].visarea.min_y; y <= Machine->screen[0].visarea.max_y; y++)
 		draw_scanline8(bitmap, 0, y, BITMAP_WIDTH, &bitmap_base[y * BITMAP_WIDTH], Machine->pens, -1);
 
 	/* redraw the non-zero characters in the alpha layer */
@@ -394,7 +394,7 @@ VIDEO_UPDATE( irobot )
 						code, color,
 						0,0,
 						8*x,8*y,
-						&Machine->visible_area[0],TRANSPARENCY_COLOR,transp);
+						&Machine->screen[0].visarea,TRANSPARENCY_COLOR,transp);
 			}
 	return 0;
 }

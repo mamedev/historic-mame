@@ -283,7 +283,7 @@ WRITE32_HANDLER( stv_vdp1_regs_w )
 			if ( STV_VDP1_PTMR == 1 )
 			{
 				if ( vdp1_sprite_log ) logerror( "VDP1: Access to register PTMR = %1X\n", STV_VDP1_PTMR );
-				stv_vdp1_process_list( NULL, &Machine->visible_area[0] );
+				stv_vdp1_process_list( NULL, &Machine->screen[0].visarea );
 
 				if(!(stv_scu[40] & 0x2000)) /*Sprite draw end irq*/
 				{
@@ -338,7 +338,7 @@ WRITE32_HANDLER ( stv_vdp1_vram_w )
 
 WRITE32_HANDLER ( stv_vdp1_framebuffer0_w )
 {
-	//ui_popup ("STV VDP1 Framebuffer 0 WRITE offset %08x data %08x",offset, data);
+	//popmessage ("STV VDP1 Framebuffer 0 WRITE offset %08x data %08x",offset, data);
 	if ( STV_VDP1_TVM & 0 )
 	{
 		/* 8-bit mode */
@@ -360,7 +360,7 @@ WRITE32_HANDLER ( stv_vdp1_framebuffer0_w )
 READ32_HANDLER ( stv_vdp1_framebuffer0_r )
 {
 	UINT32 result = 0;
-	//ui_popup ("STV VDP1 Framebuffer 0 READ offset %08x",offset);
+	//popmessage ("STV VDP1 Framebuffer 0 READ offset %08x",offset);
 	if ( STV_VDP1_TVM & 0 )
 	{
 		/* 8-bit mode */
@@ -384,12 +384,12 @@ READ32_HANDLER ( stv_vdp1_framebuffer0_r )
 
 WRITE32_HANDLER ( stv_vdp1_framebuffer1_w )
 {
-	//ui_popup ("STV VDP1 Framebuffer 1 WRITE offset %08x data %08x",offset, data);
+	//popmessage ("STV VDP1 Framebuffer 1 WRITE offset %08x data %08x",offset, data);
 }
 
 READ32_HANDLER ( stv_vdp1_framebuffer1_r )
 {
-	//ui_popup ("STV VDP1 Framebuffer 1 READ offset %08x",offset);
+	//popmessage ("STV VDP1 Framebuffer 1 READ offset %08x",offset);
 	return 0xffff;
 }
 
@@ -745,7 +745,7 @@ INLINE void drawpixel(UINT16 *dest, int patterndata, int offsetcnt)
 					break;
 				default:
 					*dest = pix;
-					//ui_popup( "Unsupported VDP1 draw mode %x", stv2_current_sprite.CMDPMOD & 0x7 );
+					//popmessage( "Unsupported VDP1 draw mode %x", stv2_current_sprite.CMDPMOD & 0x7 );
 					break;
 			}
 		}
@@ -1722,5 +1722,5 @@ void video_update_vdp1(mame_bitmap *bitmap, const rectangle *cliprect)
 			logerror("Warning: Invalid PTM mode set for VDP1!\n");
 			break;
 	}
-	//ui_popup("%04x %04x",STV_VDP1_EWRR_X3,STV_VDP1_EWRR_Y3);
+	//popmessage("%04x %04x",STV_VDP1_EWRR_X3,STV_VDP1_EWRR_Y3);
 }

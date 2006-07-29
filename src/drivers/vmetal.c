@@ -104,7 +104,7 @@ READ16_HANDLER ( varia_crom_read )
 	offset = offset << 1;
 	offset |= (vmetal_videoregs[0x0ab/2]&0x7f) << 16;
 	retdat = ((cgrom[offset] <<8)| (cgrom[offset+1]))^0xffff; // invert because we inverted the data..
-//  ui_popup("varia romread offset %06x data %04x",offset, retdat);
+//  popmessage("varia romread offset %06x data %04x",offset, retdat);
 
 	return retdat;
 }

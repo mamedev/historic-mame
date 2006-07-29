@@ -72,13 +72,13 @@ UINT16 *f1gpstr2_ioready;
 #ifdef MAME_DEBUG
 #define SHOW_READ_ERROR(_format_,_offset_)\
 {\
-	ui_popup(_format_,_offset_);\
+	popmessage(_format_,_offset_);\
 	logerror("CPU #0 PC %06X : Warning, ",activecpu_get_pc()); \
 	logerror(_format_ "\n",_offset_);\
 }
 #define SHOW_WRITE_ERROR(_format_,_offset_,_data_)\
 {\
-	ui_popup(_format_,_offset_,_data_);\
+	popmessage(_format_,_offset_,_data_);\
 	logerror("CPU #0 PC %06X : Warning, ",activecpu_get_pc()); \
 	logerror(_format_ "\n",_offset_,_data_); \
 }
@@ -1144,7 +1144,7 @@ if ( code_pressed(KEYCODE_Z) || code_pressed(KEYCODE_X) ) \
 	if ( code_pressed(KEYCODE_Z) && code_pressed_memory(KEYCODE_U) ) \
 		show_unknown ^= 1; \
 	if (show_unknown) \
-		ui_popup("0:%04X 2:%04X 4:%04X 6:%04X c:%04X", \
+		popmessage("0:%04X 2:%04X 4:%04X 6:%04X c:%04X", \
 			megasys1_vregs[0],megasys1_vregs[1],megasys1_vregs[2],megasys1_vregs[3],megasys1_vregs[0xc/2] ); \
 }
 
@@ -1350,7 +1350,7 @@ if ( code_pressed(KEYCODE_Z) || code_pressed(KEYCODE_X) )
 
 	if (msk != 0) megasys1_active_layers &= msk;
 #if 1
-	ui_popup("Cmd: %04X Pos:%04X Lim:%04X Inp:%04X",
+	popmessage("Cmd: %04X Pos:%04X Lim:%04X Inp:%04X",
 						scudhamm_motor_command,
 						scudhamm_motor_pos_r(0,0),
 						scudhamm_motor_status_r(0,0),

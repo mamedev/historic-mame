@@ -90,7 +90,7 @@ static WRITE8_HANDLER(speedspn_banked_rom_change)
 		case 7: addr = 0x4c000; break;
 		case 8: addr = 0x50000; break;
 		default:
-			ui_popup ("Unmapped Bank Write %02x", data);
+			popmessage ("Unmapped Bank Write %02x", data);
 			addr = 0;
 			break;
 	}

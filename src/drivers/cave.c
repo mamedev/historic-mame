@@ -784,7 +784,7 @@ static UINT16 leds[2];
 static void show_leds(void)
 {
 #ifdef MAME_DEBUG
-//  ui_popup("led %04X eep %02X",leds[0],(leds[1] >> 8) & ~0x70);
+//  popmessage("led %04X eep %02X",leds[0],(leds[1] >> 8) & ~0x70);
 #endif
 }
 

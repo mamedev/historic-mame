@@ -556,7 +556,7 @@ fm->note = note;
 
 
 #if 0
-ui_popup("%02x %02x %02x %02x %02x %02x",
+popmessage("%02x %02x %02x %02x %02x %02x",
 		NMK004_state.fm_control[0].note,
 		NMK004_state.fm_control[1].note,
 		NMK004_state.fm_control[2].note,
@@ -565,7 +565,7 @@ ui_popup("%02x %02x %02x %02x %02x %02x",
 		NMK004_state.fm_control[5].note);
 #endif
 #if 0
-ui_popup("%02x %02x%02x%02x%02x %02x %02x%02x%02x%02x %02x %02x%02x%02x%02x",
+popmessage("%02x %02x%02x%02x%02x %02x %02x%02x%02x%02x %02x %02x%02x%02x%02x",
 		NMK004_state.fm_control[3].note,
 		NMK004_state.fm_control[3].voice_volume[0],
 		NMK004_state.fm_control[3].voice_volume[1],

@@ -31,13 +31,13 @@ static int cardline_lamps;
 					(colorram[index+offset]&0x80)>>7,\
 					0,0,\
 					x<<3, y<<3,\
-					&Machine->visible_area[0],\
+					&Machine->screen[0].visarea,\
 					transparency?TRANSPARENCY_PEN:TRANSPARENCY_NONE,transparency);
 
 VIDEO_UPDATE( cardline )
 {
 	int x,y;
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area[0]);
+	fillbitmap(bitmap,Machine->pens[0],&Machine->screen[0].visarea);
 	for(y=0;y<32;y++)
 	{
 		for(x=0;x<64;x++)
@@ -72,7 +72,7 @@ VIDEO_UPDATE( cardline )
 						0,
 						0,0,
 						104*i+(k+1)*8, 264,
-						&Machine->visible_area[0],
+						&Machine->screen[0].visarea,
 						TRANSPARENCY_NONE,0);
 				}
 			}

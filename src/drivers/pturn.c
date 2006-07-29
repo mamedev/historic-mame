@@ -132,7 +132,7 @@ VIDEO_UPDATE(pturn)
 	int sx, sy;
 	int flipx, flipy;
 
-	fillbitmap(bitmap, bgcolor, &Machine->visible_area[0]);
+	fillbitmap(bitmap, bgcolor, &Machine->screen[0].visarea);
 	tilemap_draw(bitmap,cliprect,pturn_bgmap,0,0);
 	for ( offs = 0x80-4 ; offs >=0 ; offs -= 4)
 	{
@@ -383,7 +383,7 @@ INPUT_PORTS_START( pturn )
 	PORT_BIT( 0xc8, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START_TAG("DSW1")
-	PORT_DIPNAME( 0x00, 0x01, DEF_STR( Lives ) )
+	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "5" )
 	PORT_DIPSETTING(    0x02, "7" )

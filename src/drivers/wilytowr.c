@@ -207,7 +207,7 @@ static void wilytowr_draw_sprites( mame_bitmap *bitmap )
 			code, color,
 			flipx, flipy,
 			sx, sy,
-			&Machine->visible_area[0],
+			&Machine->screen[0].visarea,
 			TRANSPARENCY_PEN, 0);
 	}
 }
@@ -219,9 +219,9 @@ VIDEO_UPDATE( wilytowr )
 	for (col = 0; col < 32; col++)
 		tilemap_set_scrolly(bg_tilemap, col, wilytowr_scrollram[col * 8]);
 
-	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->screen[0].visarea, bg_tilemap, 0, 0);
 	wilytowr_draw_sprites(bitmap);
-	tilemap_draw(bitmap, &Machine->visible_area[0], fg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->screen[0].visarea, fg_tilemap, 0, 0);
 	return 0;
 }
 

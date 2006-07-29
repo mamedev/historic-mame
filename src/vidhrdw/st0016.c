@@ -535,7 +535,7 @@ static void drawbgmap(mame_bitmap *bitmap,const rectangle *cliprect, int priorit
 										color,
 										flipx,flipy,
 										x*8+spr_dx,y*8+spr_dy,
-										&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+										&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 					}
 					else
 					{
@@ -638,7 +638,7 @@ VIDEO_UPDATE( st0016 )
 		}
 	}
 
-	fillbitmap(bitmap,Machine->pens[UNUSED_PEN],&Machine->visible_area[0]);
+	fillbitmap(bitmap,Machine->pens[UNUSED_PEN],&Machine->screen[0].visarea);
 	drawbgmap(bitmap,cliprect,0);
  	drawsprites(bitmap,cliprect);
 	drawbgmap(bitmap,cliprect,1);

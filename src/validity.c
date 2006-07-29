@@ -14,7 +14,7 @@
 #include "hash.h"
 #include <ctype.h>
 #include <stdarg.h>
-#include "ui_text.h"
+#include "uitext.h"
 #include <zlib.h>
 
 
@@ -592,7 +592,7 @@ static int validate_display(int drivnum, const machine_config *drv)
 	}
 
 	/* sanity check dimensions */
-	if ((drv->screen[0].maxwidth <= 0) || (drv->screen[0].maxheight <= 0))
+	if ((drv->screen[0].defstate.width <= 0) || (drv->screen[0].defstate.height <= 0))
 	{
 		printf("%s: %s has invalid display dimensions\n", driver->source_file, driver->name);
 		error = TRUE;
@@ -601,10 +601,10 @@ static int validate_display(int drivnum, const machine_config *drv)
 	/* sanity check display area */
 	if (!(drv->video_attributes & VIDEO_TYPE_VECTOR))
 	{
-		if ((drv->screen[0].default_visible_area.max_x < drv->screen[0].default_visible_area.min_x)
-			|| (drv->screen[0].default_visible_area.max_y < drv->screen[0].default_visible_area.min_y)
-			|| (drv->screen[0].default_visible_area.max_x >= drv->screen[0].maxwidth)
-			|| (drv->screen[0].default_visible_area.max_y >= drv->screen[0].maxheight))
+		if ((drv->screen[0].defstate.visarea.max_x < drv->screen[0].defstate.visarea.min_x)
+			|| (drv->screen[0].defstate.visarea.max_y < drv->screen[0].defstate.visarea.min_y)
+			|| (drv->screen[0].defstate.visarea.max_x >= drv->screen[0].defstate.width)
+			|| (drv->screen[0].defstate.visarea.max_y >= drv->screen[0].defstate.height))
 		{
 			printf("%s: %s has an invalid display area\n", driver->source_file, driver->name);
 			error = TRUE;

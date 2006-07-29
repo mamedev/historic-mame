@@ -481,7 +481,7 @@ void sys24_tile_draw(mame_bitmap *bitmap, const rectangle *cliprect, int layer, 
 
 		if(hscr & 0x8000) {
 			//#ifdef MAME_DEBUG
-			ui_popup("Linescroll with special mode %04x", ctrl);
+			popmessage("Linescroll with special mode %04x", ctrl);
 			//          return;
 			//#endif
 		} else {
@@ -524,7 +524,7 @@ void sys24_tile_draw(mame_bitmap *bitmap, const rectangle *cliprect, int layer, 
 		}
 		case 3:
 			//#ifdef MAME_DEBUG
-			ui_popup("Mode 3, please scream");
+			popmessage("Mode 3, please scream");
 			//#endif
 			break;
 		};

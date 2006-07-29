@@ -458,7 +458,7 @@ static void locomotn_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprec
 		int flip = spriteram[offs] & 2;
 
 		/* handle reduced visible area in some games */
-		if (flip_screen && Machine->drv->screen[0].default_visible_area.max_x == 32*8-1) sx += 32;
+		if (flip_screen && Machine->screen[0].visarea.max_x == 32*8-1) sx += 32;
 
 		pdrawgfx(bitmap,Machine->gfx[1],
 				((spriteram[offs] & 0x7c) >> 2) + 0x20*(spriteram[offs] & 0x01) + ((spriteram[offs] & 0x80) >> 1),
@@ -530,7 +530,7 @@ static void locomotn_draw_bullets( mame_bitmap *bitmap, const rectangle *cliprec
 		y = 252 - rallyx_radary[offs];
 
 		/* handle reduced visible area in some games */
-		if (flip_screen && Machine->drv->screen[0].default_visible_area.max_x == 32*8-1) x += 32;
+		if (flip_screen && Machine->screen[0].visarea.max_x == 32*8-1) x += 32;
 
 		drawgfx(bitmap,Machine->gfx[2],
 				(rallyx_radarattr[offs & 0x0f] & 0x07) ^ 0x07,

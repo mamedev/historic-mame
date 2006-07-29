@@ -146,10 +146,7 @@
 #include "asteroid.h"
 #include "sound/discrete.h"
 #include "sound/pokey.h"
-
-#ifdef NEW_RENDER
 #include "render.h"
-#endif
 
 
 
@@ -181,11 +178,7 @@ static WRITE8_HANDLER( llander_led_w )
     int i;
 
     for (i = 0; i < 5; i++)
-#ifndef NEW_RENDER
-		artwork_show(lampname[i], (data >> (4 - i)) & 1);
-#else
 		render_view_item_set_state(lampname[i], (data >> (4 - i)) & 1);
-#endif
 }
 
 

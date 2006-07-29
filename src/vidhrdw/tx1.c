@@ -375,7 +375,7 @@ static void draw_sky(mame_bitmap *bitmap)
 	int x,y,colour;
 	for (y = 0; y < 256; y++)
 	{
-		for (x = 0; x <= Machine->visible_area[0].max_x; x++)
+		for (x = 0; x <= Machine->screen[0].visarea.max_x; x++)
 		{
 		        colour = (((*bb_sky & 0x7f) + y)>>2)&0x3f;
 			plot_pixel(bitmap,x,y,Machine->pens[0x80 + colour]);

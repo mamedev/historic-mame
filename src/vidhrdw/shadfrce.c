@@ -171,7 +171,7 @@ VIDEO_UPDATE( shadfrce )
 	tilemap_draw(bitmap,cliprect,shadfrce_fgtilemap, 0,0);
 
 /*
-    ui_popup ("Regs %04x %04x %04x %04x %04x %04x %04x",
+    popmessage ("Regs %04x %04x %04x %04x %04x %04x %04x",
     shadfrce_videoregs[0],
     shadfrce_videoregs[1],
     shadfrce_videoregs[2],

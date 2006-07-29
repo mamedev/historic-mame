@@ -104,7 +104,7 @@ static void tigeroad_draw_sprites( mame_bitmap *bitmap, int priority )
 				color,
 				flipx, flipy,
 				sx, 240 - sy,
-				&Machine->visible_area[0],
+				&Machine->screen[0].visarea,
 				TRANSPARENCY_PEN, 15);
 		}
 
@@ -166,11 +166,11 @@ VIDEO_START( tigeroad )
 
 VIDEO_UPDATE( tigeroad )
 {
-	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, TILEMAP_BACK, 0);
+	tilemap_draw(bitmap, &Machine->screen[0].visarea, bg_tilemap, TILEMAP_BACK, 0);
 	tigeroad_draw_sprites(bitmap, 0);
-	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, TILEMAP_FRONT, 1);
+	tilemap_draw(bitmap, &Machine->screen[0].visarea, bg_tilemap, TILEMAP_FRONT, 1);
 	//tigeroad_draw_sprites(bitmap, 1); draw priority sprites?
-	tilemap_draw(bitmap, &Machine->visible_area[0], fg_tilemap, 0, 2);
+	tilemap_draw(bitmap, &Machine->screen[0].visarea, fg_tilemap, 0, 2);
 	return 0;
 }
 

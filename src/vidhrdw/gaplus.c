@@ -148,8 +148,8 @@ static void starfield_init( void )
 	int set = 0;
 	int width, height;
 
-	width = Machine->drv->screen[0].maxwidth;
-	height = Machine->drv->screen[0].maxheight;
+	width = Machine->screen[0].width;
+	height = Machine->screen[0].height;
 
 	total_stars = 0;
 
@@ -253,8 +253,8 @@ static void starfield_render( mame_bitmap *bitmap )
 	int i;
 	int width, height;
 
-	width = Machine->drv->screen[0].maxwidth;
-	height = Machine->drv->screen[0].maxheight;
+	width = Machine->screen[0].width;
+	height = Machine->screen[0].height;
 
 	/* check if we're running */
 	if ( ( gaplus_starfield_control[0] & 1 ) == 0 )
@@ -351,8 +351,8 @@ VIDEO_EOF( gaplus )	/* update starfields */
 	int i;
 	int width, height;
 
-	width = Machine->drv->screen[0].maxwidth;
-	height = Machine->drv->screen[0].maxheight;
+	width = Machine->screen[0].width;
+	height = Machine->screen[0].height;
 
 	/* check if we're running */
 	if ( ( gaplus_starfield_control[0] & 1 ) == 0 )

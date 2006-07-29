@@ -145,7 +145,7 @@ static INTERRUPT_GEN( fromanc2_interrupt )
 	if (fromanc2_playerside_old != fromanc2_playerside) {
 		fromanc2_playerside_old = fromanc2_playerside;
 
-		ui_popup("PLAYER-%01X SIDE", fromanc2_playerside + 1);
+		popmessage("PLAYER-%01X SIDE", fromanc2_playerside + 1);
 
 		if (!fromanc2_playerside) {
 		sound_set_user_gain(1, 0.75); // 1P (LEFT)

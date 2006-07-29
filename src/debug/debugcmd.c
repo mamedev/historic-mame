@@ -17,13 +17,9 @@
 #include "express.h"
 #include "debughlp.h"
 #include "debugvw.h"
-#include "artwork.h"
+#include "render.h"
 #include <stdarg.h>
 #include <ctype.h>
-
-#ifdef NEW_RENDER
-#include "render.h"
-#endif
 
 
 
@@ -48,7 +44,7 @@ static struct
 
 
 /***************************************************************************
-    PROTOTYPES
+    FUNCTION PROTOTYPES
 ***************************************************************************/
 
 static void debug_command_exit(void);
@@ -1961,11 +1957,7 @@ static void execute_snap(int ref, int params, const char *param[])
 		mame_file *fp;
 		const char *filename = param[0];
 		int scrnum = (params > 1) ? atoi(param[1]) : 0;
-#ifdef NEW_RENDER
 		UINT32 mask = render_get_live_screens_mask();
-#else
-		UINT32 mask = 1;
-#endif
 
 		if ((scrnum < 0) || (scrnum >= MAX_SCREENS)	|| !(mask & (1 << scrnum)))
 		{

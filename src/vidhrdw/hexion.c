@@ -87,7 +87,7 @@ WRITE8_HANDLER( hexion_bankswitch_w )
 
 	/* other bits unknown */
 if (data & 0x30)
-	ui_popup("bankswitch %02x",data&0xf0);
+	popmessage("bankswitch %02x",data&0xf0);
 
 //logerror("%04x: bankswitch_w %02x\n",activecpu_get_pc(),data);
 }

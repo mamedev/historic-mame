@@ -299,7 +299,7 @@ static void DebugMeshInit( void )
 	m_b_debugclear = 1;
 	m_n_debugcoord = 0;
 	m_n_debugskip = 0;
-	debugmesh = auto_bitmap_alloc_depth( Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight, 16 );
+	debugmesh = auto_bitmap_alloc_depth( Machine->screen[0].width, Machine->screen[0].height, 16 );
 }
 
 static void DebugMesh( int n_coordx, int n_coordy )
@@ -402,8 +402,8 @@ static void DebugMesh( int n_coordx, int n_coordy )
 		{
 			if( (INT16)n_x.w.h >= 0 &&
 				(INT16)n_y.w.h >= 0 &&
-				(INT16)n_x.w.h <= Machine->drv->screen[0].maxwidth - 1 &&
-				(INT16)n_y.w.h <= Machine->drv->screen[0].maxheight - 1 )
+				(INT16)n_x.w.h <= Machine->screen[0].width - 1 &&
+				(INT16)n_y.w.h <= Machine->screen[0].height - 1 )
 			{
 				if( read_pixel( debugmesh, n_x.w.h, n_y.w.h ) != 0xffff )
 				{
@@ -434,7 +434,7 @@ static void DebugCheckKeys( void )
 	}
 	if( m_b_debugmesh || m_b_debugtexture )
 	{
-		set_visible_area(0,  0, Machine->drv->screen[0].maxwidth - 1, 0, Machine->drv->screen[0].maxheight - 1 );
+		set_visible_area(0,  0, Machine->screen[0].width - 1, 0, Machine->screen[0].height - 1 );
 	}
 	else
 	{
@@ -452,15 +452,15 @@ static void DebugCheckKeys( void )
 			}
 			if( m_n_debuginterleave == -1 )
 			{
-				ui_popup_time( 1, "interleave off" );
+				popmessage( "interleave off" );
 			}
 			else if( m_n_debuginterleave == 0 )
 			{
-				ui_popup_time( 1, "4 bit interleave" );
+				popmessage( "4 bit interleave" );
 			}
 			else if( m_n_debuginterleave == 1 )
 			{
-				ui_popup_time( 1, "8 bit interleave" );
+				popmessage( "8 bit interleave" );
 			}
 		}
 		else
@@ -470,7 +470,7 @@ static void DebugCheckKeys( void )
 			{
 				m_n_debugskip = 0;
 			}
-			ui_popup_time( 1, "debug skip %d", m_n_debugskip );
+			popmessage( "debug skip %d", m_n_debugskip );
 		}
 	}
 
@@ -492,7 +492,7 @@ static void DebugCheckKeys( void )
 	if( code_pressed_memory( KEYCODE_S ) )
 	{
 		FILE *f;
-		ui_popup_time( 1, "saving..." );
+		popmessage( "saving..." );
 		f = fopen( "VRAM.BIN", "wb" );
 		for( n_y = 0; n_y < 1024; n_y++ )
 		{
@@ -503,7 +503,7 @@ static void DebugCheckKeys( void )
 	if( code_pressed_memory( KEYCODE_L ) )
 	{
 		FILE *f;
-		ui_popup_time( 1, "loading..." );
+		popmessage( "loading..." );
 		f = fopen( "VRAM.BIN", "rb" );
 		for( n_y = 0; n_y < 1024; n_y++ )
 		{
@@ -530,14 +530,14 @@ static int DebugTextureDisplay( mame_bitmap *bitmap )
 
 	if( m_b_debugtexture )
 	{
-		for( n_y = 0; n_y < Machine->drv->screen[0].maxheight; n_y++ )
+		for( n_y = 0; n_y < Machine->screen[0].height; n_y++ )
 		{
 			int n_x;
 			int n_xi;
 			int n_yi;
 			unsigned short p_n_interleave[ 1024 ];
 
-			for( n_x = 0; n_x < Machine->drv->screen[0].maxwidth; n_x++ )
+			for( n_x = 0; n_x < Machine->screen[0].width; n_x++ )
 			{
 				if( m_n_debuginterleave == 0 )
 				{
@@ -556,7 +556,7 @@ static int DebugTextureDisplay( mame_bitmap *bitmap )
 				}
 				p_n_interleave[ n_x ] = m_p_p_vram[ n_yi ][ n_xi ];
 			}
-			draw_scanline16( bitmap, 0, n_y, Machine->drv->screen[0].maxwidth, p_n_interleave, Machine->pens, -1 );
+			draw_scanline16( bitmap, 0, n_y, Machine->screen[0].width, p_n_interleave, Machine->pens, -1 );
 		}
 	}
 	return m_b_debugtexture;
@@ -566,10 +566,13 @@ static int DebugTextureDisplay( mame_bitmap *bitmap )
 
 static void updatevisiblearea( void )
 {
+	rectangle visarea;
+	float refresh;
+
 	if( ( m_n_gpustatus & ( 1 << 0x14 ) ) != 0 )
 	{
 		/* pal */
-		set_refresh_rate( 0, 50 );
+		refresh = 50;
 		switch( ( m_n_gpustatus >> 0x13 ) & 1 )
 		{
 		case 0:
@@ -583,7 +586,7 @@ static void updatevisiblearea( void )
 	else
 	{
 		/* ntsc */
-		set_refresh_rate( 0, 60 );
+		refresh = 60;
 		switch( ( m_n_gpustatus >> 0x13 ) & 1 )
 		{
 		case 0:
@@ -625,7 +628,10 @@ static void updatevisiblearea( void )
 		m_n_screenwidth = 640;
 		break;
 	}
-	set_visible_area(0,  0, m_n_screenwidth - 1, 0, m_n_screenheight - 1 );
+	visarea.min_x = visarea.min_y = 0;
+	visarea.max_x = m_n_screenwidth - 1;
+	visarea.max_y = m_n_screenheight - 1;
+	configure_screen(0, m_n_screenwidth, m_n_screenheight, &visarea, refresh);
 }
 
 static int psx_gpu_init( void )
@@ -646,13 +652,13 @@ static int psx_gpu_init( void )
 	m_n_lightgun_x = 0;
 	m_n_lightgun_y = 0;
 
-	m_n_vram_size = Machine->drv->screen[0].maxwidth * Machine->drv->screen[0].maxheight;
+	m_n_vram_size = Machine->screen[0].width * Machine->screen[0].height;
 	m_p_vram = auto_malloc( m_n_vram_size * 2 );
 	memset( m_p_vram, 0x00, m_n_vram_size * 2 );
 
 	for( n_line = 0; n_line < 1024; n_line++ )
 	{
-		m_p_p_vram[ n_line ] = &m_p_vram[ ( n_line % Machine->drv->screen[0].maxheight ) * Machine->drv->screen[0].maxwidth ];
+		m_p_p_vram[ n_line ] = &m_p_vram[ ( n_line % Machine->screen[0].height ) * Machine->screen[0].width ];
 	}
 
 	for( n_level = 0; n_level < MAX_LEVEL; n_level++ )
@@ -3661,7 +3667,7 @@ void psx_gpu_write( UINT32 *p_ram, INT32 n_size )
 			break;
 		default:
 #if defined( MAME_DEBUG )
-			ui_popup_time( 1, "unknown GPU packet %08x", m_packet.n_entry[ 0 ] );
+			popmessage( "unknown GPU packet %08x", m_packet.n_entry[ 0 ] );
 #endif
 			verboselog( 0, "unknown GPU packet %08x (%08x)\n", m_packet.n_entry[ 0 ], data );
 #if ( STOP_ON_ERROR )
@@ -3825,7 +3831,7 @@ WRITE32_HANDLER( psx_gpu_w )
 			break;
 		default:
 #if defined( MAME_DEBUG )
-			ui_popup_time( 1, "unknown GPU command %08x", data );
+			popmessage( "unknown GPU command %08x", data );
 #endif
 			verboselog( 0, "gpu_w( %08x ) unknown GPU command\n", data );
 			break;

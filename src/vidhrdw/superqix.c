@@ -248,14 +248,14 @@ VIDEO_UPDATE( pbillian )
 		curr_power = ((readinputport(4)&0x3f)*100)/0x3f;
 		if (last_power[0] != curr_power)
 		{
-			ui_popup	("Power %d%%", curr_power);
+			popmessage	("Power %d%%", curr_power);
 			last_power[0] = curr_power;
 		}
 
 		curr_power = ((readinputport(6)&0x3f)*100)/0x3f;
 		if (last_power[1] != curr_power)
 		{
-			ui_popup	("Power %d%%", curr_power);
+			popmessage	("Power %d%%", curr_power);
 			last_power[1] = curr_power;
 		}
 	}

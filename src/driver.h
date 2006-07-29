@@ -70,7 +70,6 @@
 #include "sound.h"
 #include "input.h"
 #include "inptport.h"
-#include "usrintrf.h"
 #include "tilemap.h"
 #include "state.h"
 #include "romload.h"
@@ -154,15 +153,6 @@
 /* ----- flags for game drivers ----- */
 
 #define ORIENTATION_MASK        		0x0007
-#define	ORIENTATION_FLIP_X				0x0001	/* mirror everything in the X direction */
-#define	ORIENTATION_FLIP_Y				0x0002	/* mirror everything in the Y direction */
-#define ORIENTATION_SWAP_XY				0x0004	/* mirror along the top-left/bottom-right diagonal */
-
-#define	ROT0							0
-#define	ROT90							(ORIENTATION_SWAP_XY | ORIENTATION_FLIP_X)	/* rotate clockwise 90 degrees */
-#define	ROT180							(ORIENTATION_FLIP_X | ORIENTATION_FLIP_Y)	/* rotate 180 degrees */
-#define	ROT270							(ORIENTATION_SWAP_XY | ORIENTATION_FLIP_Y)	/* rotate counter-clockwise 90 degrees */
-
 #define GAME_NOT_WORKING				0x0008
 #define GAME_UNEMULATED_PROTECTION		0x0010	/* game's protection not fully emulated */
 #define GAME_WRONG_COLORS				0x0020	/* colors are totally wrong */
@@ -252,13 +242,7 @@ struct _game_driver
 
 
 /***************************************************************************
-    MACROS
-***************************************************************************/
-
-/***************************************************************************
-
-    Macros for building machine drivers
-
+    MACROS FOR BUILDING MACHINE DRIVERS
 ***************************************************************************/
 
 /* use this to declare external references to a machine driver */
@@ -424,20 +408,20 @@ struct _game_driver
 	screen = driver_find_screen(machine, tag);							\
 
 #define MDRV_SCREEN_REFRESH_RATE(rate)									\
-	screen->refresh_rate = (rate);										\
+	screen->defstate.refresh = (rate);									\
 
 #define MDRV_SCREEN_VBLANK_TIME(time)									\
-	screen->vblank_time = (time);										\
+	screen->defstate.vblank = (time);									\
 
-#define MDRV_SCREEN_MAXSIZE(width, height)								\
-	screen->maxwidth = (width);											\
-	screen->maxheight = (height);										\
+#define MDRV_SCREEN_MAXSIZE(_width, _height)							\
+	screen->defstate.width = (_width);									\
+	screen->defstate.height = (_height);								\
 
 #define MDRV_SCREEN_VISIBLE_AREA(minx, maxx, miny, maxy)				\
-	screen->default_visible_area.min_x = (minx);						\
-	screen->default_visible_area.max_x = (maxx);						\
-	screen->default_visible_area.min_y = (miny);						\
-	screen->default_visible_area.max_y = (maxy);						\
+	screen->defstate.visarea.min_x = (minx);							\
+	screen->defstate.visarea.max_x = (maxx);							\
+	screen->defstate.visarea.min_y = (miny);							\
+	screen->defstate.visarea.max_y = (maxy);							\
 
 
 /* video backwards compatibility */
@@ -518,9 +502,7 @@ struct _game_driver
 
 
 /***************************************************************************
-
-    Macros for building game drivers
-
+    MACROS FOR BUILDING GAME DRIVERS
 ***************************************************************************/
 
 #define GAME(YEAR,NAME,PARENT,MACHINE,INPUT,INIT,MONITOR,COMPANY,FULLNAME,FLAGS)	\

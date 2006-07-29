@@ -245,36 +245,36 @@ VIDEO_UPDATE( undrfire )
 	if (code_pressed_memory (KEYCODE_X))
 	{
 		dislayer[5] ^= 1;
-		ui_popup("piv text: %01x",dislayer[5]);
+		popmessage("piv text: %01x",dislayer[5]);
 	}
 	if (code_pressed_memory (KEYCODE_C))
 	{
 		dislayer[0] ^= 1;
-		ui_popup("bg0: %01x",dislayer[0]);
+		popmessage("bg0: %01x",dislayer[0]);
 	}
 
 	if (code_pressed_memory (KEYCODE_V))
 	{
 		dislayer[1] ^= 1;
-		ui_popup("bg1: %01x",dislayer[1]);
+		popmessage("bg1: %01x",dislayer[1]);
 	}
 
 	if (code_pressed_memory (KEYCODE_B))
 	{
 		dislayer[2] ^= 1;
-		ui_popup("bg2: %01x",dislayer[2]);
+		popmessage("bg2: %01x",dislayer[2]);
 	}
 
 	if (code_pressed_memory (KEYCODE_N))
 	{
 		dislayer[3] ^= 1;
-		ui_popup("bg3: %01x",dislayer[3]);
+		popmessage("bg3: %01x",dislayer[3]);
 	}
 
 	if (code_pressed_memory (KEYCODE_M))
 	{
 		dislayer[4] ^= 1;
-		ui_popup("sprites: %01x",dislayer[4]);
+		popmessage("sprites: %01x",dislayer[4]);
 	}
 #endif
 
@@ -355,7 +355,7 @@ VIDEO_UPDATE( undrfire )
 
 	if (input_port_7_word_r(0,0) & 0x1)	/* Fake DSW */
 	{
-		ui_popup("Gunsights on");
+		popmessage("Gunsights on");
 	}
 
 /* Enable this to see rotation (?) control words */

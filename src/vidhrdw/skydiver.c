@@ -25,12 +25,10 @@ MACHINE_RESET( skydiver )
 	skydiver_lamp_k_w(0, 0);
 	skydiver_lamp_y_w(0, 0);
 	skydiver_lamp_d_w(0, 0);
-#ifdef NEW_RENDER
 	render_view_item_set_state("lampi", 0);
 	render_view_item_set_state("lampv", 0);
 	render_view_item_set_state("lampe", 0);
 	render_view_item_set_state("lampr", 0);
-#endif
 	skydiver_width_w(0, 0);
 	skydiver_coin_lockout_w(0, 0);
 }
@@ -116,30 +114,22 @@ WRITE8_HANDLER( skydiver_start_lamp_2_w )
 
 WRITE8_HANDLER( skydiver_lamp_s_w )
 {
-#ifdef NEW_RENDER
 	render_view_item_set_state("lamps", offset);
-#endif
 }
 
 WRITE8_HANDLER( skydiver_lamp_k_w )
 {
-#ifdef NEW_RENDER
 	render_view_item_set_state("lampk", offset);
-#endif
 }
 
 WRITE8_HANDLER( skydiver_lamp_y_w )
 {
-#ifdef NEW_RENDER
 	render_view_item_set_state("lampy", offset);
-#endif
 }
 
 WRITE8_HANDLER( skydiver_lamp_d_w )
 {
-#ifdef NEW_RENDER
 	render_view_item_set_state("lampd", offset);
-#endif
 }
 
 WRITE8_HANDLER( skydiver_2000_201F_w )
@@ -150,7 +140,6 @@ WRITE8_HANDLER( skydiver_2000_201F_w )
 
 	switch (offset & 0x0e)
 	{
-#ifdef NEW_RENDER
 		case (0x02):
 			render_view_item_set_state("lampi", bit);
 			break;
@@ -163,7 +152,6 @@ WRITE8_HANDLER( skydiver_2000_201F_w )
 		case (0x08):
 			render_view_item_set_state("lampr", bit);
 			break;
-#endif
 		case (0x0a):
 			discrete_sound_w(SKYDIVER_OCT1_EN, bit);
 			break;

@@ -597,7 +597,7 @@ INPUT_PORTS_END
 
 static void irqhandler(int irq)
 {
-ui_popup("irq");
+popmessage("irq");
 //  cpunum_set_input_line(2,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 

@@ -136,7 +136,7 @@ static void olibochu_draw_sprites( mame_bitmap *bitmap )
 			code, color,
 			flipx, flipy,
 			sx, sy,
-			&Machine->visible_area[0],
+			&Machine->screen[0].visarea,
 			TRANSPARENCY_PEN, 0);
 	}
 
@@ -164,14 +164,14 @@ static void olibochu_draw_sprites( mame_bitmap *bitmap )
 			code, color,
 			flipx, flipy,
 			sx, sy,
-			&Machine->visible_area[0],
+			&Machine->screen[0].visarea,
 			TRANSPARENCY_PEN, 0);
 	}
 }
 
 VIDEO_UPDATE( olibochu )
 {
-	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->screen[0].visarea, bg_tilemap, 0, 0);
 	olibochu_draw_sprites(bitmap);
 	return 0;
 }

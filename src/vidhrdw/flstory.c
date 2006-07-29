@@ -104,7 +104,7 @@ WRITE8_HANDLER( flstory_gfxctrl_w )
 
 	flip_screen_set(flipscreen);
 
-//ui_popup("%04x: gfxctrl = %02x\n",activecpu_get_pc(),data);
+//popmessage("%04x: gfxctrl = %02x\n",activecpu_get_pc(),data);
 
 }
 
@@ -122,7 +122,7 @@ WRITE8_HANDLER( victnine_gfxctrl_w )
 		flip_screen_set(flipscreen);
 	}
 
-//ui_popup("%04x: gfxctrl = %02x\n",activecpu_get_pc(),data);
+//popmessage("%04x: gfxctrl = %02x\n",activecpu_get_pc(),data);
 
 }
 

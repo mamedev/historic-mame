@@ -25,7 +25,7 @@ static void get_tile_info(int tile_index)
 
 VIDEO_START( sprint2 )
 {
-	helper = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
+	helper = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
 
 	if (helper == NULL)
 	{
@@ -160,14 +160,14 @@ VIDEO_EOF( sprint2 )
 		rect.max_x = get_sprite_x(i) + Machine->gfx[1]->width - 1;
 		rect.max_y = get_sprite_y(i) + Machine->gfx[1]->height - 1;
 
-		if (rect.min_x < Machine->visible_area[0].min_x)
-			rect.min_x = Machine->visible_area[0].min_x;
-		if (rect.min_y < Machine->visible_area[0].min_y)
-			rect.min_y = Machine->visible_area[0].min_y;
-		if (rect.max_x > Machine->visible_area[0].max_x)
-			rect.max_x = Machine->visible_area[0].max_x;
-		if (rect.max_y > Machine->visible_area[0].max_y)
-			rect.max_y = Machine->visible_area[0].max_y;
+		if (rect.min_x < Machine->screen[0].visarea.min_x)
+			rect.min_x = Machine->screen[0].visarea.min_x;
+		if (rect.min_y < Machine->screen[0].visarea.min_y)
+			rect.min_y = Machine->screen[0].visarea.min_y;
+		if (rect.max_x > Machine->screen[0].visarea.max_x)
+			rect.max_x = Machine->screen[0].visarea.max_x;
+		if (rect.max_y > Machine->screen[0].visarea.max_y)
+			rect.max_y = Machine->screen[0].visarea.max_y;
 
 		/* check for sprite-tilemap collisions */
 

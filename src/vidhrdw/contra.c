@@ -147,12 +147,12 @@ VIDEO_START( contra )
 	if (!bg_tilemap || !fg_tilemap || !tx_tilemap)
 		return 1;
 
-	bg_clip = Machine->visible_area[0];
+	bg_clip = Machine->screen[0].visarea;
 	bg_clip.min_x += 40;
 
 	fg_clip = bg_clip;
 
-	tx_clip = Machine->visible_area[0];
+	tx_clip = Machine->screen[0].visarea;
 	tx_clip.max_x = 39;
 	tx_clip.min_x = 0;
 

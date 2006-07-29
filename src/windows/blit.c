@@ -20,13 +20,8 @@
 // MAMEOS headers
 #include "blit.h"
 #include "winmain.h"
-#ifndef NEW_RENDER
-#include "videoold.h"
-#include "windold.h"
-#else
 #include "video.h"
 #include "window.h"
-#endif
 
 
 

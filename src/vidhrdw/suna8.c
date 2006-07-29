@@ -219,8 +219,8 @@ void suna8_draw_normal_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 	int i;
 	int mx = 0;	// multisprite x counter
 
-	int max_x	=	Machine->drv->screen[0].maxwidth	- 8;
-	int max_y	=	Machine->drv->screen[0].maxheight - 8;
+	int max_x	=	Machine->screen[0].width	- 8;
+	int max_y	=	Machine->screen[0].height - 8;
 
 	for (i = 0x1d00; i < 0x2000; i += 4)
 	{
@@ -349,8 +349,8 @@ void suna8_draw_text_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int i;
 
-	int max_x	=	Machine->drv->screen[0].maxwidth	- 8;
-	int max_y	=	Machine->drv->screen[0].maxheight - 8;
+	int max_x	=	Machine->screen[0].width	- 8;
+	int max_y	=	Machine->screen[0].height - 8;
 
 	/* Earlier games only */
 	if (!(suna8_text_dim > 0))	return;
@@ -445,7 +445,7 @@ VIDEO_UPDATE( suna8 )
 		tilemap_set_scrolly( bg_tilemap, 0, 0);
 		tilemap_draw(bitmap,cliprect, bg_tilemap, 0, 0);
 #if 1
-	ui_popup("%02X %02X %02X %02X - p%2X g%02X r%02X",
+	popmessage("%02X %02X %02X %02X - p%2X g%02X r%02X",
 						suna8_rombank, suna8_palettebank, suna8_spritebank, suna8_unknown,
 						page,tiles,rombank	);
 #endif

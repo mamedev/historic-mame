@@ -98,7 +98,6 @@ static const struct
 	{ FILETYPE_SAMPLE,		"samplepath" },
 	{ FILETYPE_ARTWORK,		"artpath" },
 	{ FILETYPE_NVRAM,		"nvram_directory" },
-	{ FILETYPE_HIGHSCORE,	"hiscore_directory" },
 	{ FILETYPE_CONFIG,		"cfg_directory" },
 	{ FILETYPE_INPUTLOG,	"input_directory" },
 	{ FILETYPE_STATE,		"state_directory" },

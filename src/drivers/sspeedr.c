@@ -68,37 +68,28 @@ static WRITE8_HANDLER( sspeedr_int_ack_w )
 
 static WRITE8_HANDLER( sspeedr_lamp_w )
 {
-#ifdef NEW_RENDER
 	render_view_item_set_state("lampGO", (data >> 0) & 1);
 	render_view_item_set_state("lampEP", (data >> 1) & 1);
-#endif
-
 	coin_counter_w(0, data & 8);
 }
 
 
 static WRITE8_HANDLER( sspeedr_time_w )
 {
-#ifdef NEW_RENDER
 	char buf[10];
 	sprintf(buf, "LEDT%d", offset);
 	data = data & 15;
 	render_view_item_set_state(buf, (data >= 10) ? 10 : data);
-#endif
-
 	led_TIME[offset] = data;
 }
 
 
 static WRITE8_HANDLER( sspeedr_score_w )
 {
-#ifdef NEW_RENDER
 	char buf[10];
 	sprintf(buf, "LED%02d", offset);
 	data = ~data & 15;
 	render_view_item_set_state(buf, (data >= 10) ? 10 : data);
-#endif
-
 	led_SCORE[offset] = data;
 }
 

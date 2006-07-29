@@ -489,9 +489,9 @@ static VIDEO_UPDATE( lghost )
 	int x3 = readinputportbytag("GUNX3");
 	int y3 = readinputportbytag("GUNY3");
 	video_update_system18(screen, bitmap, cliprect);
-	draw_crosshair(bitmap, x1 * (Machine->drv->screen[0].maxwidth - 1) / 255, y1 * (Machine->drv->screen[0].maxheight - 1) / 255, cliprect, 0);
-	draw_crosshair(bitmap, x2 * (Machine->drv->screen[0].maxwidth - 1) / 255, y2 * (Machine->drv->screen[0].maxheight - 1) / 255, cliprect, 1);
-	draw_crosshair(bitmap, x3 * (Machine->drv->screen[0].maxwidth - 1) / 255, y3 * (Machine->drv->screen[0].maxheight - 1) / 255, cliprect, 2);
+	draw_crosshair(bitmap, x1 * (Machine->screen[0].width - 1) / 255, y1 * (Machine->screen[0].height - 1) / 255, cliprect, 0);
+	draw_crosshair(bitmap, x2 * (Machine->screen[0].width - 1) / 255, y2 * (Machine->screen[0].height - 1) / 255, cliprect, 1);
+	draw_crosshair(bitmap, x3 * (Machine->screen[0].width - 1) / 255, y3 * (Machine->screen[0].height - 1) / 255, cliprect, 2);
 	return 0;
 }
 
@@ -1051,6 +1051,11 @@ static INPUT_PORTS_START( lghost )
 	PORT_BIT( 0x30, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(3)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(3)
+
+	PORT_MODIFY("P2")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN)
 
 	PORT_MODIFY("SERVICE")
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )

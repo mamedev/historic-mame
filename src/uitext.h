@@ -1,6 +1,6 @@
 /***************************************************************************
 
-    ui_text.h
+    uitext.h
 
     Functions used to retrieve text used by MAME, to aid in
     translation.
@@ -12,12 +12,12 @@
 
 #pragma once
 
-#ifndef __UI_TEXT_H__
-#define __UI_TEXT_H__
+#ifndef __uitext_H__
+#define __uitext_H__
 
 #include "mamecore.h"
 
-/* Important: this must match the default_text list in ui_text.c! */
+/* Important: this must match the default_text list in uitext.c! */
 enum
 {
 	UI_mame = 0,
@@ -45,7 +45,7 @@ enum
 	UI_stereo,
 	UI_vectorgame,
 	UI_screenres,
-	UI_text,
+	uitext,
 	UI_volume,
 	UI_relative,
 	UI_allchannels,
@@ -195,20 +195,18 @@ enum
 	UI_refresh_rate,
 	UI_decoding_gfx,
 
-#ifdef NEW_RENDER
 	UI_video,
 	UI_screen,
 	UI_rotate_clockwise,
 	UI_rotate_counterclockwise,
 	UI_flip_x,
 	UI_flip_y,
-#endif
 
 	UI_last_mame_entry
 };
 
 #ifdef MESS
-#include "mui_text.h"
+#include "muitext.h"
 #endif
 
 struct _lang_struct
@@ -229,5 +227,5 @@ int uistring_init (mame_file *language_file);
 
 const char * ui_getstring (int string_num);
 
-#endif /* __UI_TEXT_H__ */
+#endif /* __uitext_H__ */
 

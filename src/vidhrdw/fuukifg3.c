@@ -153,8 +153,8 @@ static void fuuki32_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int offs;
 
-	int max_x		=	Machine->visible_area[0].max_x+1;
-	int max_y		=	Machine->visible_area[0].max_y+1;
+	int max_x		=	Machine->screen[0].visarea.max_x+1;
+	int max_y		=	Machine->screen[0].visarea.max_y+1;
 
 	UINT32 *src = buffered_spriteram32_2; /* Use spriteram buffered by 2 frames, need palette buffered by one frame? */
 
@@ -364,8 +364,8 @@ VIDEO_UPDATE( fuuki32 )
 	fuuki32_draw_layer(bitmap,cliprect, tm_front,  0, 4);
 
 	// don't do the rasters on the sprites . its very slow and the hw might not anyway.
-	if (cliprect->max_y == Machine->visible_area[0].max_y)
-		fuuki32_draw_sprites(bitmap,&Machine->visible_area[0]);
+	if (cliprect->max_y == Machine->screen[0].visarea.max_y)
+		fuuki32_draw_sprites(bitmap,&Machine->screen[0].visarea);
 	return 0;
 }
 

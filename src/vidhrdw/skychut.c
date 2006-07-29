@@ -28,7 +28,7 @@ WRITE8_HANDLER( skychut_colorram_w )
 
 WRITE8_HANDLER( skychut_ctrl_w )
 {
-//ui_popup("%02x",data);
+//popmessage("%02x",data);
 
 	/* I have NO IDEA if this is correct or not */
 	bottomline = ~data & 0x20;
@@ -162,7 +162,7 @@ VIDEO_UPDATE( iremm15 )
 		}
 	}
 
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
 	return 0;
 }
 

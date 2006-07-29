@@ -216,12 +216,12 @@ static void zaxxon_draw_background( mame_bitmap *bitmap, const rectangle *clipre
 				scroll = -(2*(zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7))) - 2;
 		}
 
-		skew = 72 - (255 - Machine->visible_area[0].max_y);
+		skew = 72 - (255 - Machine->screen[0].visarea.max_y);
 
-		clip.min_x = Machine->visible_area[0].min_x;
-		clip.max_x = Machine->visible_area[0].max_x;
+		clip.min_x = Machine->screen[0].visarea.min_x;
+		clip.max_x = Machine->screen[0].visarea.max_x;
 
-		for (i = Machine->visible_area[0].max_y;i >= Machine->visible_area[0].min_y;i-=2)
+		for (i = Machine->screen[0].visarea.max_y;i >= Machine->screen[0].visarea.min_y;i-=2)
 		{
 			clip.min_y = i-1;
 			clip.max_y = i;
@@ -397,14 +397,15 @@ static void congo_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
 	/* Sprites actually start at 0xff * [0xc031], it seems to be static tho'*/
 	/* The number of active sprites is stored at 0xc032 */
 
+	for (i = 0; i < 0x100; i++)
+		sprpri[i] = 1;
 	for (offs = 0x1e * 0x20; offs >= 0x00; offs -= 0x20)
 		sprpri[spriteram[offs + 1]] = offs;
 
 	for (i = 0x1e; i >= 0; i--)
 	{
 		offs = sprpri[i];
-
-		if (spriteram[offs + 2] != 0xff)
+		if ((offs & 1) == 0 && spriteram[offs + 2] != 0xff)
 		{
 			int code = spriteram[offs + 2 + 1] & 0x7f;
 			int color = spriteram[offs + 2 + 2];

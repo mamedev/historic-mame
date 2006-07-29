@@ -236,14 +236,14 @@ static void liberate_drawsprites(mame_bitmap *bitmap)
 				color,
 				fx,fy,
 				sx,sy,
-				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+				&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
         if (multi)
     		drawgfx(bitmap,Machine->gfx[1],
 				code+1,
 				color,
 				fx,fy,
 				sx,sy2,
-				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+				&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 	}
 }
 
@@ -291,14 +291,14 @@ static void prosport_drawsprites(mame_bitmap *bitmap)
 				color,
 				fx,fy,
 				sx,sy,
-				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+				&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
         if (multi)
     		drawgfx(bitmap,Machine->gfx[1],
 				code2,
 				color,
 				fx,fy,
 				sx,sy2,
-				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+				&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 	}
 }
 
@@ -347,14 +347,14 @@ static void boomrang_drawsprites(mame_bitmap *bitmap, int pri)
 				color,
 				fx,fy,
 				sx,sy,
-				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+				&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
         if (multi)
     		drawgfx(bitmap,Machine->gfx[1],
 				code2,
 				color,
 				fx,fy,
 				sx,sy2,
-				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+				&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 	}
 }
 
@@ -366,7 +366,7 @@ VIDEO_UPDATE( prosoccr )
 	tilemap_set_scrollx(background_tilemap,0,-deco16_io_ram[0]);
 
 	if (background_disable)
-		fillbitmap(bitmap,Machine->pens[32],&Machine->visible_area[0]);
+		fillbitmap(bitmap,Machine->pens[32],&Machine->screen[0].visarea);
 	else
 		tilemap_draw(bitmap,cliprect,background_tilemap,0,0);
 	boomrang_drawsprites(bitmap,0);
@@ -378,7 +378,7 @@ VIDEO_UPDATE( prosport )
 {
 	int mx,my,tile,color,offs;
 
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area[0]);
+	fillbitmap(bitmap,Machine->pens[0],&Machine->screen[0].visarea);
 
 	prosport_drawsprites(bitmap);
 
@@ -395,7 +395,7 @@ VIDEO_UPDATE( prosport )
 
 		drawgfx(bitmap,Machine->gfx[0],
 				tile,1,0,0,248-8*mx,8*my,
-				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+				&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 	}
 	return 0;
 }
@@ -406,7 +406,7 @@ VIDEO_UPDATE( boomrang )
 	tilemap_set_scrollx(background_tilemap,0,-deco16_io_ram[0]);
 
 	if (background_disable)
-		fillbitmap(bitmap,Machine->pens[32],&Machine->visible_area[0]);
+		fillbitmap(bitmap,Machine->pens[32],&Machine->screen[0].visarea);
 	else
 		tilemap_draw(bitmap,cliprect,background_tilemap,TILEMAP_BACK,0);
 
@@ -424,7 +424,7 @@ VIDEO_UPDATE( liberate )
 	tilemap_set_scrollx(background_tilemap,0,-deco16_io_ram[0]);
 
 	if (background_disable)
-		fillbitmap(bitmap,Machine->pens[32],&Machine->visible_area[0]);
+		fillbitmap(bitmap,Machine->pens[32],&Machine->screen[0].visarea);
 	else
 		tilemap_draw(bitmap,cliprect,background_tilemap,0,0);
 

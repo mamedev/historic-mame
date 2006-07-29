@@ -743,9 +743,9 @@ VIDEO_UPDATE( ygv608 )
 
 	// clip to the current bitmap
 	finalclip.min_x = 0;
-	finalclip.max_x = Machine->drv->screen[0].maxwidth - 1;
+	finalclip.max_x = Machine->screen[0].width - 1;
 	finalclip.min_y = 0;
-	finalclip.max_y = Machine->drv->screen[0].maxheight - 1;
+	finalclip.max_y = Machine->screen[0].height - 1;
 	sect_rect(&finalclip, cliprect);
 	cliprect = &finalclip;
 
@@ -767,8 +767,8 @@ VIDEO_UPDATE( ygv608 )
 
 		if( work_bitmap )
 			bitmap_free( work_bitmap );
-		work_bitmap = bitmap_alloc_depth( Machine->drv->screen[0].maxwidth,
-										  Machine->drv->screen[0].maxheight,
+		work_bitmap = bitmap_alloc_depth( Machine->screen[0].width,
+										  Machine->screen[0].height,
 										  Machine->color_depth );
 
 		// reset resize flag
@@ -861,7 +861,7 @@ VIDEO_UPDATE( ygv608 )
 	{
 		// If the background tilemap is disabled, we need to clear the bitmap to black
 		fillbitmap (work_bitmap,Machine->pens[0],cliprect);
-//      fillbitmap (work_bitmap,1,&Machine->visible_area[0]);
+//      fillbitmap (work_bitmap,1,&Machine->screen[0].visarea);
 	}
 	else
 #endif
@@ -882,10 +882,10 @@ VIDEO_UPDATE( ygv608 )
 
   if( ygv608.regs.s.zron )
     copyrozbitmap( bitmap, work_bitmap,
-                   ( Machine->visible_area[0].min_x << 16 ) +
+                   ( Machine->screen[0].visarea.min_x << 16 ) +
                     ygv608.ax + 0x10000 * r *
                     ( -sin( alpha ) * cos_theta + cos( alpha ) * sin_theta ),
-                   ( Machine->visible_area[0].min_y << 16 ) +
+                   ( Machine->screen[0].visarea.min_y << 16 ) +
                     ygv608.ay + 0x10000 * r *
                     ( cos( alpha ) * cos_theta + sin( alpha ) * sin_theta ),
                    ygv608.dx, ygv608.dxy, ygv608.dyx, ygv608.dy, 0,
@@ -902,7 +902,7 @@ VIDEO_UPDATE( ygv608 )
   // - look at why this is the case?!?
   fillbitmap( work_bitmap,
               Machine->pens[0],
-              &Machine->visible_area[0] );
+              &Machine->screen[0].visarea );
 
 	if ((ygv608.regs.s.r11 & r11_prm) == PRM_ASBDEX ||
 		(ygv608.regs.s.r11 & r11_prm) == PRM_ASEBDX )
@@ -913,8 +913,8 @@ VIDEO_UPDATE( ygv608 )
 #ifdef _ENABLE_ROTATE_ZOOM
   if( ygv608.regs.s.zron )
     copyrozbitmap( bitmap, work_bitmap,
-                   ygv608.ax, // + ( Machine->visible_area[0].min_x << 16 ),
-                   ygv608.ay, // + ( Machine->visible_area[0].min_y << 16 ),
+                   ygv608.ax, // + ( Machine->screen[0].visarea.min_x << 16 ),
+                   ygv608.ay, // + ( Machine->screen[0].visarea.min_y << 16 ),
                    ygv608.dx, ygv608.dxy, ygv608.dyx, ygv608.dy, 0,
                    cliprect,
                    TRANSPARENCY_PEN, Machine->pens[0], 0 );

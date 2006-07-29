@@ -178,10 +178,10 @@ VIDEO_EOF( xmen6p )
 
 	xmen_current_frame ^=0x8000;
 
-//  cliprect.min_x = Machine->visible_area[0].min_x;
-//  cliprect.max_x = Machine->visible_area[0].max_x;
-//  cliprect.min_y = Machine->visible_area[0].min_y;
-//  cliprect.max_y = Machine->visible_area[0].max_y;
+//  cliprect.min_x = Machine->screen[0].visarea.min_x;
+//  cliprect.max_x = Machine->screen[0].visarea.max_x;
+//  cliprect.min_y = Machine->screen[0].visarea.min_y;
+//  cliprect.max_y = Machine->screen[0].visarea.max_y;
 
 	cliprect.min_x = 0;
 	cliprect.max_x = 64*8-1;

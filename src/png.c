@@ -827,15 +827,9 @@ static int png_create_datastream(void *fp, mame_bitmap *bitmap)
 				{
 					color = ((UINT16 *)bitmap->line[i])[j];
 
-#ifdef NEW_RENDER
 					r = (color >> 10) & 0x1f;
 					g = (color >>  5) & 0x1f;
 					b = (color >>  0) & 0x1f;
-#else
-					r = (color & direct_rgb_components[0]) / (direct_rgb_components[0] / 0x1f);
-					g = (color & direct_rgb_components[1]) / (direct_rgb_components[1] / 0x1f);
-					b = (color & direct_rgb_components[2]) / (direct_rgb_components[2] / 0x1f);
-#endif
 
 					*ip++ = (r << 3) | (r >> 2);
 					*ip++ = (g << 3) | (g >> 2);
@@ -848,15 +842,9 @@ static int png_create_datastream(void *fp, mame_bitmap *bitmap)
 				{
 					color = ((UINT32 *)bitmap->line[i])[j];
 
-#ifdef NEW_RENDER
 					r = (color >> 16) & 0xff;
 					g = (color >>  8) & 0xff;
 					b = (color >>  0) & 0xff;
-#else
-					r = (color & direct_rgb_components[0]) / (direct_rgb_components[0] / 0xff);
-					g = (color & direct_rgb_components[1]) / (direct_rgb_components[1] / 0xff);
-					b = (color & direct_rgb_components[2]) / (direct_rgb_components[2] / 0xff);
-#endif
 
 					*ip++ = r;
 					*ip++ = g;
@@ -929,7 +917,7 @@ int mng_capture_start(mame_file *fp, mame_bitmap *bitmap)
 	memset (mhdr, 0, 28);
 	convert_to_network_order(bitmap->width, mhdr);
 	convert_to_network_order(bitmap->height, mhdr+4);
-	convert_to_network_order(Machine->refresh_rate[0], mhdr+8);
+	convert_to_network_order(Machine->screen[0].refresh, mhdr+8);
 	convert_to_network_order(0x0041, mhdr+24); /* Simplicity profile */
 	/* frame count and play time unspecified because
        we don't know at this stage */

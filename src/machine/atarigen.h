@@ -52,7 +52,7 @@ struct atarivc_state_desc
 
 
 /*##########################################################################
-    GLOBALS
+    GLOBAL VARIABLES
 ##########################################################################*/
 
 extern UINT8			atarigen_scanline_int_state;

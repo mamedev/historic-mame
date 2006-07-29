@@ -309,7 +309,7 @@ int atarirle_init(int map, const struct atarirle_desc *desc)
 	mo->romlength     = memory_region_length(desc->region);
 	mo->objectcount   = count_objects(base, mo->romlength);
 
-	mo->cliprect      = Machine->visible_area[0];
+	mo->cliprect      = Machine->screen[0].visarea;
 	if (desc->rightclip)
 	{
 		mo->cliprect.min_x = desc->leftclip;
@@ -342,8 +342,8 @@ int atarirle_init(int map, const struct atarirle_desc *desc)
 	memset(mo->spriteram, 0, sizeof(mo->spriteram[0]) * mo->spriteramsize);
 
 	/* allocate bitmaps */
-	mo->vram[0][0] = auto_bitmap_alloc_depth(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight, 16);
-	mo->vram[0][1] = auto_bitmap_alloc_depth(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight, 16);
+	mo->vram[0][0] = auto_bitmap_alloc_depth(Machine->screen[0].width, Machine->screen[0].height, 16);
+	mo->vram[0][1] = auto_bitmap_alloc_depth(Machine->screen[0].width, Machine->screen[0].height, 16);
 	if (!mo->vram[0][0] || !mo->vram[0][1])
 		return 0;
 	fillbitmap(mo->vram[0][0], 0, NULL);
@@ -352,8 +352,8 @@ int atarirle_init(int map, const struct atarirle_desc *desc)
 	/* allocate alternate bitmaps if needed */
 	if (mo->vrammask.mask != 0)
 	{
-		mo->vram[1][0] = auto_bitmap_alloc_depth(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight, 16);
-		mo->vram[1][1] = auto_bitmap_alloc_depth(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight, 16);
+		mo->vram[1][0] = auto_bitmap_alloc_depth(Machine->screen[0].width, Machine->screen[0].height, 16);
+		mo->vram[1][1] = auto_bitmap_alloc_depth(Machine->screen[0].width, Machine->screen[0].height, 16);
 		if (!mo->vram[1][0] || !mo->vram[1][1])
 			return 0;
 		fillbitmap(mo->vram[1][0], 0, NULL);
@@ -852,27 +852,27 @@ if (hilite)
 			ey = sy + scaled_height - 1;
 
 			/* left edge clip */
-			if (sx < Machine->visible_area[0].min_x)
-				sx = Machine->visible_area[0].min_x;
-			if (sx > Machine->visible_area[0].max_x)
+			if (sx < Machine->screen[0].visarea.min_x)
+				sx = Machine->screen[0].visarea.min_x;
+			if (sx > Machine->screen[0].visarea.max_x)
 				break;
 
 			/* right edge clip */
-			if (ex > Machine->visible_area[0].max_x)
-				ex = Machine->visible_area[0].max_x;
-			else if (ex < Machine->visible_area[0].min_x)
+			if (ex > Machine->screen[0].visarea.max_x)
+				ex = Machine->screen[0].visarea.max_x;
+			else if (ex < Machine->screen[0].visarea.min_x)
 				break;
 
 			/* top edge clip */
-			if (sy < Machine->visible_area[0].min_y)
-				sy = Machine->visible_area[0].min_y;
-			else if (sy > Machine->visible_area[0].max_y)
+			if (sy < Machine->screen[0].visarea.min_y)
+				sy = Machine->screen[0].visarea.min_y;
+			else if (sy > Machine->screen[0].visarea.max_y)
 				break;
 
 			/* bottom edge clip */
-			if (ey > Machine->visible_area[0].max_y)
-				ey = Machine->visible_area[0].max_y;
-			else if (ey < Machine->visible_area[0].min_y)
+			if (ey > Machine->screen[0].visarea.max_y)
+				ey = Machine->screen[0].visarea.max_y;
+			else if (ey < Machine->screen[0].visarea.min_y)
 				break;
 
 			for (ty = sy; ty <= ey; ty++)
@@ -914,7 +914,7 @@ void draw_rle(struct atarirle_data *mo, mame_bitmap *bitmap, int code, int color
 	if (hflip)
 		scaled_xoffs = ((xscale * info->width) >> 12) - scaled_xoffs;
 
-//if (clip->min_y == Machine->visible_area[0].min_y)
+//if (clip->min_y == Machine->screen[0].visarea.min_y)
 //logerror("   Sprite: c=%04X l=%04X h=%d X=%4d (o=%4d w=%3d) Y=%4d (o=%4d h=%d) s=%04X\n",
 //  code, color, hflip,
 //  x, -scaled_xoffs, (xscale * info->width) >> 12,

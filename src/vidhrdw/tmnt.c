@@ -714,7 +714,7 @@ static int glfgreat_pixel;
 READ16_HANDLER( glfgreat_ball_r )
 {
 #ifdef MAME_DEBUG
-ui_popup("%04x",glfgreat_pixel);
+popmessage("%04x",glfgreat_pixel);
 #endif
 	/* if out of the ROZ layer palette range, it's in the water - return 0 */
 	if (glfgreat_pixel < 0x400 || glfgreat_pixel >= 0x500) return 0;

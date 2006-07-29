@@ -222,7 +222,7 @@ static void create_tilemaps(void);
 
 #define SHOW_WRITE_ERROR(_format_,_offset_,_data_)\
 { \
-	ui_popup(_format_,_offset_,_data_);\
+	popmessage(_format_,_offset_,_data_);\
 	logerror("CPU #0 PC %06X : Warning, ",activecpu_get_pc()); \
 	logerror(_format_,_offset_,_data_);\
 	logerror("\n");\
@@ -949,7 +949,7 @@ VIDEO_UPDATE( megasys1 )
 #ifdef MAME_DEBUG
 		if (pri == 0xfffff)
 		{
-			ui_popup("Pri: %04X - Flag: %04X", megasys1_active_layers, megasys1_sprite_flag);
+			popmessage("Pri: %04X - Flag: %04X", megasys1_active_layers, megasys1_sprite_flag);
 		}
 #endif
 

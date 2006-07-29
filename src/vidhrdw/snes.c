@@ -1817,7 +1817,7 @@ static void snes_refresh_scanline( mame_bitmap *bitmap, UINT16 curline )
 
 	if( snes_ram[INIDISP] & 0x80 ) /* screen is forced blank */
 	{
-		rectangle r = Machine->visible_area[0];
+		rectangle r = Machine->screen[0].visarea;
 		r.min_y = r.max_y = curline;
 		fillbitmap(bitmap, Machine->pens[0], &r);
 	}

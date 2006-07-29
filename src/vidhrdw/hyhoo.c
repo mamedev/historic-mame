@@ -98,7 +98,7 @@ WRITE8_HANDLER( hyhoo_romsel_w )
 	if ((0x20000 * hyhoo_gfxrom) > (memory_region_length(REGION_GFX1) - 1))
 	{
 #ifdef MAME_DEBUG
-		ui_popup("GFXROM BANK OVER!!");
+		popmessage("GFXROM BANK OVER!!");
 #endif
 		hyhoo_gfxrom &= (memory_region_length(REGION_GFX1) / 0x20000 - 1);
 	}
@@ -116,19 +116,19 @@ void hyhoo_vramflip(void)
 
 	if (hyhoo_flipscreen == hyhoo_flipscreen_old) return;
 
-	for (y = 0; y < (Machine->drv->screen[0].maxheight / 2); y++)
+	for (y = 0; y < (Machine->screen[0].height / 2); y++)
 	{
-		for (x = 0; x < Machine->drv->screen[0].maxwidth; x++)
+		for (x = 0; x < Machine->screen[0].width; x++)
 		{
-			color1 = hyhoo_videoram[(y * Machine->drv->screen[0].maxwidth) + x];
-			color2 = hyhoo_videoram[((y ^ 0xff) * Machine->drv->screen[0].maxwidth) + (x ^ 0x1ff)];
-			hyhoo_videoram[(y * Machine->drv->screen[0].maxwidth) + x] = color2;
-			hyhoo_videoram[((y ^ 0xff) * Machine->drv->screen[0].maxwidth) + (x ^ 0x1ff)] = color1;
+			color1 = hyhoo_videoram[(y * Machine->screen[0].width) + x];
+			color2 = hyhoo_videoram[((y ^ 0xff) * Machine->screen[0].width) + (x ^ 0x1ff)];
+			hyhoo_videoram[(y * Machine->screen[0].width) + x] = color2;
+			hyhoo_videoram[((y ^ 0xff) * Machine->screen[0].width) + (x ^ 0x1ff)] = color1;
 
-			color1 = hyhoo_videoworkram[(y * Machine->drv->screen[0].maxwidth) + x];
-			color2 = hyhoo_videoworkram[((y ^ 0xff) * Machine->drv->screen[0].maxwidth) + (x ^ 0x1ff)];
-			hyhoo_videoworkram[(y * Machine->drv->screen[0].maxwidth) + x] = color2;
-			hyhoo_videoworkram[((y ^ 0xff) * Machine->drv->screen[0].maxwidth) + (x ^ 0x1ff)] = color1;
+			color1 = hyhoo_videoworkram[(y * Machine->screen[0].width) + x];
+			color2 = hyhoo_videoworkram[((y ^ 0xff) * Machine->screen[0].width) + (x ^ 0x1ff)];
+			hyhoo_videoworkram[(y * Machine->screen[0].width) + x] = color2;
+			hyhoo_videoworkram[((y ^ 0xff) * Machine->screen[0].width) + (x ^ 0x1ff)] = color1;
 		}
 	}
 
@@ -200,7 +200,7 @@ void hyhoo_gfxdraw(void)
 			if ((gfxaddr > (memory_region_length(REGION_GFX1) - 1)))
 			{
 #ifdef MAME_DEBUG
-				ui_popup("GFXROM ADDRESS OVER!!");
+				popmessage("GFXROM ADDRESS OVER!!");
 #endif
 				gfxaddr = 0;
 			}
@@ -236,8 +236,8 @@ void hyhoo_gfxdraw(void)
 
 					if (color != 0xff)
 					{
-						hyhoo_videoram[(dy * Machine->drv->screen[0].maxwidth) + dx1] |= color;
-						hyhoo_videoram[(dy * Machine->drv->screen[0].maxwidth) + dx2] |= color;
+						hyhoo_videoram[(dy * Machine->screen[0].width) + dx1] |= color;
+						hyhoo_videoram[(dy * Machine->screen[0].width) + dx2] |= color;
 						update_pixel(dx1, dy);
 						update_pixel(dx2, dy);
 					}
@@ -258,8 +258,8 @@ void hyhoo_gfxdraw(void)
 
 					if (color != 0xff)
 					{
-						hyhoo_videoram[(dy * Machine->drv->screen[0].maxwidth) + dx1] = color;
-						hyhoo_videoram[(dy * Machine->drv->screen[0].maxwidth) + dx2] = color;
+						hyhoo_videoram[(dy * Machine->screen[0].width) + dx1] = color;
+						hyhoo_videoram[(dy * Machine->screen[0].width) + dx2] = color;
 						update_pixel(dx1, dy);
 						update_pixel(dx2, dy);
 					}
@@ -292,7 +292,7 @@ void hyhoo_gfxdraw(void)
 					b = (hyhoo_clut[color1] & 0xc0) >> 6;
 					color1 = ((b << (11 + 3)) | (g << (6 + 2)) | (r << (0 + 3)));
 
-					hyhoo_videoram[(dy * Machine->drv->screen[0].maxwidth) + dx1] = color1;
+					hyhoo_videoram[(dy * Machine->screen[0].width) + dx1] = color1;
 					update_pixel(dx1, dy);
 				}
 
@@ -306,7 +306,7 @@ void hyhoo_gfxdraw(void)
 					b = (hyhoo_clut[color2] & 0xc0) >> 6;
 					color2 = ((b << (11 + 3)) | (g << (6 + 2)) | (r << (0 + 3)));
 
-					hyhoo_videoram[(dy * Machine->drv->screen[0].maxwidth) + dx2] = color2;
+					hyhoo_videoram[(dy * Machine->screen[0].width) + dx2] = color2;
 					update_pixel(dx2, dy);
 				}
 			}
@@ -324,11 +324,11 @@ void hyhoo_gfxdraw(void)
 ******************************************************************************/
 VIDEO_START( hyhoo )
 {
-	hyhoo_tmpbitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
-	hyhoo_videoram = auto_malloc(Machine->drv->screen[0].maxwidth * Machine->drv->screen[0].maxheight * sizeof(UINT16));
-	hyhoo_videoworkram = auto_malloc(Machine->drv->screen[0].maxwidth * Machine->drv->screen[0].maxheight * sizeof(UINT16));
+	hyhoo_tmpbitmap = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
+	hyhoo_videoram = auto_malloc(Machine->screen[0].width * Machine->screen[0].height * sizeof(UINT16));
+	hyhoo_videoworkram = auto_malloc(Machine->screen[0].width * Machine->screen[0].height * sizeof(UINT16));
 	hyhoo_clut = auto_malloc(0x10 * sizeof(UINT8));
-	memset(hyhoo_videoram, 0x0000, (Machine->drv->screen[0].maxwidth * Machine->drv->screen[0].maxheight * sizeof(UINT16)));
+	memset(hyhoo_videoram, 0x0000, (Machine->screen[0].width * Machine->screen[0].height * sizeof(UINT16)));
 	return 0;
 }
 
@@ -344,9 +344,9 @@ VIDEO_UPDATE( hyhoo )
 	{
 		hyhoo_screen_refresh = 0;
 
-		for (y = 0; y < Machine->drv->screen[0].maxheight; y++)
+		for (y = 0; y < Machine->screen[0].height; y++)
 		{
-			for (x = 0; x < Machine->drv->screen[0].maxwidth; x++)
+			for (x = 0; x < Machine->screen[0].width; x++)
 			{
 				update_pixel(x, y);
 			}
@@ -355,7 +355,7 @@ VIDEO_UPDATE( hyhoo )
 
 	if (hyhoo_dispflag)
 	{
-		copyscrollbitmap(bitmap, hyhoo_tmpbitmap, 0, 0, 0, 0, &Machine->visible_area[0], TRANSPARENCY_NONE, 0);
+		copyscrollbitmap(bitmap, hyhoo_tmpbitmap, 0, 0, 0, 0, &Machine->screen[0].visarea, TRANSPARENCY_NONE, 0);
 	}
 	else
 	{

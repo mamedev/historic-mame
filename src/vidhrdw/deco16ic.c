@@ -141,6 +141,7 @@ Rowscroll style:
 
 #include "driver.h"
 #include "deco16ic.h"
+#include "ui.h"
 
 UINT16 *deco16_pf1_data,*deco16_pf2_data;
 UINT16 *deco16_pf3_data,*deco16_pf4_data;
@@ -527,7 +528,7 @@ WRITE16_HANDLER( deco16_pf4_data_w )
 
 static int deco16_video_init(int pf12_only, int split, int full_width)
 {
-	sprite_priority_bitmap = auto_bitmap_alloc_depth( Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight, -8 );
+	sprite_priority_bitmap = auto_bitmap_alloc_depth( Machine->screen[0].width, Machine->screen[0].height, -8 );
 
 	pf1_tilemap_16x16 =	tilemap_create(get_pf1_tile_info,   deco16_scan_rows, TILEMAP_TRANSPARENT,16,16,64,32);
 	pf1_tilemap_8x8 =	tilemap_create(get_pf1_tile_info_b, tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
@@ -615,7 +616,7 @@ int deco16_2_video_init_half_width(void) /* 2 times playfield generator chips */
 int deco_allocate_sprite_bitmap(void)
 {
 	/* Allow sprite bitmap to be used by Deco32 games as well */
-	sprite_priority_bitmap = auto_bitmap_alloc_depth( Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight, -8 );
+	sprite_priority_bitmap = auto_bitmap_alloc_depth( Machine->screen[0].width, Machine->screen[0].height, -8 );
 
 	return (sprite_priority_bitmap!=0);
 }
@@ -635,12 +636,12 @@ static int deco16_pf_update(
 
 	/* Toggle between 8x8 and 16x16 modes (and master enable bit) */
 	if (control1&0x80) {
-		if (!tilemap_8x8) ui_popup("Deco16: Playfield switched into 8x8 mode but no tilemap defined");
+		if (!tilemap_8x8) popmessage("Deco16: Playfield switched into 8x8 mode but no tilemap defined");
 
 		if (tilemap_8x8) tilemap_set_enable(tilemap_8x8,control0&0x80);
 		if (tilemap_16x16) tilemap_set_enable(tilemap_16x16,0);
 	} else {
-		if (!tilemap_16x16) ui_popup("Deco16: Playfield switched into 16x16 mode but no tilemap defined");
+		if (!tilemap_16x16) popmessage("Deco16: Playfield switched into 16x16 mode but no tilemap defined");
 
 		if (tilemap_8x8) tilemap_set_enable(tilemap_8x8,0);
 		if (tilemap_16x16) tilemap_set_enable(tilemap_16x16,control0&0x80);

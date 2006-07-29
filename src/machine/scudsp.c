@@ -655,7 +655,7 @@ static void dsp_dma( void )
 			else
 			{
 				data = 0;
-				//ui_popup( "Bad DSP DMA mem read = %08X", source );
+				//popmessage( "Bad DSP DMA mem read = %08X", source );
 #if DEBUG_DSP
 				fprintf( log_file, "/*Bad DSP DMA mem read = %08X*/\n", source );
 #endif

@@ -108,7 +108,7 @@ READ8_HANDLER( dogfgt_bitmapram_r )
 {
 	if (bm_plane > 2)
 	{
-		ui_popup("bitmapram_r offs %04x plane %d\n",offset,bm_plane);
+		popmessage("bitmapram_r offs %04x plane %d\n",offset,bm_plane);
 		return 0;
 	}
 
@@ -143,7 +143,7 @@ WRITE8_HANDLER( dogfgt_bitmapram_w )
 {
 	if (bm_plane > 2)
 	{
-		ui_popup("bitmapram_w offs %04x plane %d\n",offset,bm_plane);
+		popmessage("bitmapram_w offs %04x plane %d\n",offset,bm_plane);
 		return;
 	}
 

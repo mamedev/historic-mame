@@ -223,7 +223,7 @@ ADDRESS_MAP_END
 
 static READ8_HANDLER( s2650_data_r )
 {
-	ui_popup("S2650 data port read");
+	popmessage("S2650 data port read");
 	return 0xff;
 }
 

@@ -139,6 +139,7 @@ bits(7:4) and bit(24)), X, and Y:
 #include "profiler.h"
 #include "voodoo.h"
 #include "vooddefs.h"
+#include "ui.h"
 #include <math.h>
 
 
@@ -924,7 +925,7 @@ static void swap_buffers(voodoo_state *v)
 	/* update the statistics (debug) */
 	if (v->stats.display)
 	{
-		int screen_area = (Machine->visible_area[0].max_x - Machine->visible_area[0].min_x + 1) * (Machine->visible_area[0].max_y - Machine->visible_area[0].min_y + 1);
+		int screen_area = (Machine->screen[0].visarea.max_x - Machine->screen[0].visarea.min_x + 1) * (Machine->screen[0].visarea.max_y - Machine->screen[0].visarea.min_y + 1);
 		int pixelcount = v->stats.total_pixels_out;
 		char *statsptr = v->stats.buffer;
 		int i;
@@ -984,7 +985,7 @@ static void vblank_off_callback(void *param)
 		(*v->fbi.vblank_client)(FALSE);
 
 	/* go to the end of the next frame */
-	timer_adjust_ptr(v->fbi.vblank_timer, cpu_getscanlinetime(Machine->visible_area[0].max_y + 1), TIME_NEVER);
+	timer_adjust_ptr(v->fbi.vblank_timer, cpu_getscanlinetime(Machine->screen[0].visarea.max_y + 1), TIME_NEVER);
 }
 
 
@@ -2467,11 +2468,15 @@ static INT32 register_w(voodoo_state *v, offs_t offset, UINT32 data)
 		case videoDimensions:
 			if (v->type <= VOODOO_2 && (chips & 1))
 			{
+				rectangle visarea;
 				if (data & 0x3ff)
 					v->fbi.width = data & 0x3ff;
 				if (data & 0x3ff0000)
 					v->fbi.height = (data >> 16) & 0x3ff;
-				set_visible_area(0, 0, v->fbi.width - 1, 0, v->fbi.height - 1);
+				visarea.min_x = visarea.min_y = 0;
+				visarea.max_x = v->fbi.width - 1;
+				visarea.max_y = v->fbi.height - 1;
+				configure_screen(0, v->fbi.width, v->fbi.height, &visarea, Machine->screen[0].refresh);
 				timer_adjust_ptr(v->fbi.vblank_timer, cpu_getscanlinetime(v->fbi.height), TIME_NEVER);
 				recompute_video_memory(v);
 			}
@@ -2486,16 +2491,17 @@ static INT32 register_w(voodoo_state *v, offs_t offset, UINT32 data)
 				if (v->reg[hSync].u != 0 && v->reg[vSync].u != 0)
 				{
 					float vtotal = (v->reg[vSync].u >> 16) + (v->reg[vSync].u & 0xffff);
-					float stdfps = 15750 / vtotal, stddiff = fabs(stdfps - Machine->drv->screen[0].refresh_rate);
-					float medfps = 25000 / vtotal, meddiff = fabs(medfps - Machine->drv->screen[0].refresh_rate);
-					float vgafps = 31500 / vtotal, vgadiff = fabs(vgafps - Machine->drv->screen[0].refresh_rate);
+					float stdfps = 15750 / vtotal, stddiff = fabs(stdfps - Machine->screen[0].refresh);
+					float medfps = 25000 / vtotal, meddiff = fabs(medfps - Machine->screen[0].refresh);
+					float vgafps = 31500 / vtotal, vgadiff = fabs(vgafps - Machine->screen[0].refresh);
+					screen_state *state = &Machine->screen[0];
 
 					if (stddiff < meddiff && stddiff < vgadiff)
-						set_refresh_rate(0, stdfps);
+						configure_screen(0, state->width, state->height, &state->visarea, stdfps);
 					else if (meddiff < vgadiff)
-						set_refresh_rate(0, medfps);
+						configure_screen(0, state->width, state->height, &state->visarea, medfps);
 					else
-						set_refresh_rate(0, vgafps);
+						configure_screen(0, state->width, state->height, &state->visarea, vgafps);
 				}
 			}
 			break;

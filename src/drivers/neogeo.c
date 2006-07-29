@@ -787,7 +787,7 @@ static READ8_HANDLER( z80_port_r )
 {
 	char buf[80];
 	sprintf(buf,"%05x %05x %05x %05x",bank[0],bank[1],bank[2],bank[3]);
-	ui_popup(buf);
+	popmessage(buf);
 }
 #endif
 

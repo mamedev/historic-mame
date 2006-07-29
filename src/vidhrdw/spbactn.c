@@ -162,7 +162,7 @@ static int draw_sprites(mame_bitmap *bitmap, int priority)
 						color,
 						flipx, flipy,
 						x, y,
-						&Machine->visible_area[0], TRANSPARENCY_PEN, 0);
+						&Machine->screen[0].visarea, TRANSPARENCY_PEN, 0);
 				}
 			}
 
@@ -177,8 +177,8 @@ static int draw_sprites(mame_bitmap *bitmap, int priority)
 VIDEO_START( spbactn )
 {
 	/* allocate bitmaps */
-	tile_bitmap_bg = auto_bitmap_alloc_depth(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight, 16);
-	tile_bitmap_fg = auto_bitmap_alloc_depth(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight, 16);
+	tile_bitmap_bg = auto_bitmap_alloc_depth(Machine->screen[0].width, Machine->screen[0].height, 16);
+	tile_bitmap_fg = auto_bitmap_alloc_depth(Machine->screen[0].width, Machine->screen[0].height, 16);
 
 	if (!tile_bitmap_bg || !tile_bitmap_fg)
 		return 1;
@@ -207,7 +207,7 @@ VIDEO_UPDATE( spbactn )
 					colour,
 					0, 0,
 					16 * sx, 8 * sy,
-					&Machine->visible_area[0], TRANSPARENCY_NONE, 0);
+					&Machine->screen[0].visarea, TRANSPARENCY_NONE, 0);
 
 		sx++;
 		if (sx > 63)
@@ -234,7 +234,7 @@ VIDEO_UPDATE( spbactn )
 					colour,
 					0, 0,
 					16 * sx, 8 * sy,
-					&Machine->visible_area[0], TRANSPARENCY_PEN, 0);
+					&Machine->screen[0].visarea, TRANSPARENCY_PEN, 0);
 
 			sx++;
 			if (sx > 63)
@@ -268,7 +268,7 @@ VIDEO_UPDATE( spbactn )
 					colour,
 					0, 0,
 					16 * sx, 8 * sy,
-					&Machine->visible_area[0],TRANSPARENCY_PEN, 0);
+					&Machine->screen[0].visarea,TRANSPARENCY_PEN, 0);
 
 		sx++;
 		if (sx > 63)

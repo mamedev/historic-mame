@@ -59,13 +59,13 @@ static void bsktball_draw_sprites( mame_bitmap *bitmap )
         drawgfx(bitmap,Machine->gfx[1],
             pic, color,
 			flipx,0,sx,sy,
-			&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+			&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 	}
 }
 
 VIDEO_UPDATE( bsktball )
 {
-	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->screen[0].visarea, bg_tilemap, 0, 0);
 	bsktball_draw_sprites(bitmap);
 	return 0;
 }

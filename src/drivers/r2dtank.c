@@ -298,7 +298,7 @@ VIDEO_UPDATE( r2dtank )
 	}
 
 	/* Now copy the temp bitmap to the screen */
-	copybitmap(bitmap,tmpbitmap,r2dtank_video_flip,r2dtank_video_flip,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,r2dtank_video_flip,r2dtank_video_flip,0,0,&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
 	return 0;
 }
 

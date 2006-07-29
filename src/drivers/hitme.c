@@ -140,7 +140,7 @@ static UINT8 read_port_and_t0(int port)
 static UINT8 read_port_and_t0_and_hblank(int port)
 {
 	UINT8 val = read_port_and_t0(port);
-	if (cpu_gethorzbeampos() < (Machine->drv->screen[0].maxwidth * 9 / 10))
+	if (cpu_gethorzbeampos() < (Machine->screen[0].width * 9 / 10))
 		val ^= 0x04;
 	return val;
 }

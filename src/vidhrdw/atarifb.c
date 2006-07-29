@@ -6,6 +6,7 @@
 
 #include "driver.h"
 #include "atarifb.h"
+#include "ui.h"
 
 /* local */
 size_t atarifb_alphap1_vram_size;

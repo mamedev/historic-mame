@@ -148,7 +148,7 @@ WRITE8_HANDLER( dynax_blitter_rev1_start_w )
 			case 0xe:
 				if (blit_src >= romlen)
 				{
-					ui_popup("GFXROM OVER %06x",blit_src);
+					popmessage("GFXROM OVER %06x",blit_src);
 					return;
 				}
 				x = sx;
@@ -158,7 +158,7 @@ WRITE8_HANDLER( dynax_blitter_rev1_start_w )
 			case 0xd:
 				if (blit_src >= romlen)
 				{
-					ui_popup("GFXROM OVER %06x",blit_src);
+					popmessage("GFXROM OVER %06x",blit_src);
 					return;
 				}
 				x = sx + rom[blit_src++];
@@ -167,7 +167,7 @@ WRITE8_HANDLER( dynax_blitter_rev1_start_w )
 			case 0xc:
 				if (blit_src >= romlen)
 				{
-					ui_popup("GFXROM OVER %06x",blit_src);
+					popmessage("GFXROM OVER %06x",blit_src);
 					return;
 				}
 				cmd = rom[blit_src++];
@@ -193,7 +193,7 @@ WRITE8_HANDLER( dynax_blitter_rev1_start_w )
 		}
 	}
 
-	ui_popup("GFXROM OVER %06x",blit_src);
+	popmessage("GFXROM OVER %06x",blit_src);
 }
 
 WRITE8_HANDLER( dynax_blitter_rev1_clear_w )

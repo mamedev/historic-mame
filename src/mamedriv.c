@@ -2465,6 +2465,7 @@ V-V                           TP-027
 	DRIVER( ddsomjr1 )	/* 06/02/1996 (c) 1996 (Japan) */
 	DRIVER( ddsomj )	/* 19/06/1996 (c) 1996 (Japan) */
 	DRIVER( ddsoma )	/* 19/06/1996 (c) 1996 (Asia) */
+	DRIVER( ddsomb )	/* 23/02/1996 (c) 1996 (Brazil) */
 	DRIVER( sfa2 )		/* 06/03/1996 (c) 1996 (US) */
 	DRIVER( sfz2j )		/* 27/02/1996 (c) 1996 (Japan) */
 	DRIVER( sfz2a )		/* 27/02/1996 (c) 1996 (Asia) */
@@ -3789,6 +3790,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( pcktgal )	/* (c) 1987 Data East Corporation (Japan) */
 	DRIVER( pcktgalb )	/* bootleg */
 	DRIVER( pcktgal2 )	/* (c) 1989 Data East Corporation (World?) */
+	DRIVER( pokechmp )	/* Korean hack of Pocket Gal */
 	DRIVER( spool3 )	/* (c) 1989 Data East Corporation (World?) */
 	DRIVER( spool3i )	/* (c) 1990 Data East Corporation + I-Vics license */
 	DRIVER( battlera )	/* (c) 1988 Data East Corporation (World) */
@@ -4575,6 +4577,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( bwidow )	/* 136017           (c) 1982 */
 	DRIVER( starwars )	/* 136021           (c) 1983 */
 	DRIVER( starwar1 )	/* 136021           (c) 1983 */
+	DRIVER( tomcatsw )	/* (proto)          (c) 1983 */
 	DRIVER( mhavoc )	/* 136025           (c) 1983 */
 	DRIVER( mhavoc2 )	/* 136025           (c) 1983 */
 	DRIVER( mhavocp )	/* 136025           (c) 1983 */
@@ -4606,8 +4609,12 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( foodf2 )	/* 136020           (c) 1982 */	/* made by Gencomp */
 	DRIVER( foodfc )	/* 136020           (c) 1982 */	/* made by Gencomp */
 	DRIVER( ccastles )	/* 136022           (c) 1983 */
+	DRIVER( ccastleg )	/* 136022           (c) 1983 */
+	DRIVER( ccastlep )	/* 136022           (c) 1983 */
+	DRIVER( ccastlef )	/* 136022           (c) 1983 */
 	DRIVER( ccastle3 )	/* 136022           (c) 1983 */
 	DRIVER( ccastle2 )	/* 136022           (c) 1983 */
+	DRIVER( ccastle1 )	/* 136022           (c) 1983 */
 	DRIVER( cloak )		/* 136023           (c) 1983 */
 	DRIVER( cloaksp )	/* 136023           (c) 1983 */
 	DRIVER( cloakfr )	/* 136023           (c) 1983 */

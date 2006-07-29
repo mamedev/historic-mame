@@ -150,7 +150,7 @@ static void bogeyman_draw_sprites( mame_bitmap *bitmap )
 				code, color,
 				flipx, flipy,
 				sx, sy,
-				&Machine->visible_area[0],
+				&Machine->screen[0].visarea,
 				TRANSPARENCY_PEN, 0);
 
 			if (multi)
@@ -159,7 +159,7 @@ static void bogeyman_draw_sprites( mame_bitmap *bitmap )
 					code + 1, color,
 					flipx, flipy,
 					sx, sy + (flip_screen ? -16 : 16),
-					&Machine->visible_area[0],
+					&Machine->screen[0].visarea,
 					TRANSPARENCY_PEN, 0);
 			}
 		}
@@ -168,8 +168,8 @@ static void bogeyman_draw_sprites( mame_bitmap *bitmap )
 
 VIDEO_UPDATE( bogeyman )
 {
-	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->screen[0].visarea, bg_tilemap, 0, 0);
 	bogeyman_draw_sprites(bitmap);
-	tilemap_draw(bitmap, &Machine->visible_area[0], fg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->screen[0].visarea, fg_tilemap, 0, 0);
 	return 0;
 }

@@ -34,7 +34,7 @@
 #include <math.h>
 #include "sndintrf.h"
 #include "streams.h"
-#include "usrintrf.h"
+#include "ui.h"
 #include "qsound.h"
 
 /*

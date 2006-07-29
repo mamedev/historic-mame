@@ -413,8 +413,8 @@ static void hypr_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 	unsigned char *base_gfx	=	memory_region(region);
 	unsigned char *gfx_max	=	base_gfx + memory_region_length(region);
 
-	int max_x				=	Machine->drv->screen[0].maxwidth;
-	int max_y				=	Machine->drv->screen[0].maxheight;
+	int max_x				=	Machine->screen[0].width;
+	int max_y				=	Machine->screen[0].height;
 
 	int max_sprites			=	spriteram_size / 8;
 	int sprites				=	hyprduel_videoregs[0x00/2] % max_sprites;
@@ -648,8 +648,8 @@ VIDEO_UPDATE( hyprduel )
 		free(dirtyindex);
 	}
 
-	hyprduel_sprite_xoffs	=	hyprduel_videoregs[0x06/2] - Machine->drv->screen[0].maxwidth  / 2;
-	hyprduel_sprite_yoffs	=	hyprduel_videoregs[0x04/2] - Machine->drv->screen[0].maxheight / 2;
+	hyprduel_sprite_xoffs	=	hyprduel_videoregs[0x06/2] - Machine->screen[0].width  / 2;
+	hyprduel_sprite_yoffs	=	hyprduel_videoregs[0x04/2] - Machine->screen[0].height / 2;
 
 	/* The background color is selected by a register */
 	fillbitmap(priority_bitmap,0,cliprect);
@@ -684,7 +684,7 @@ if (code_pressed(KEYCODE_Z))
 	{	fillbitmap(bitmap,0,cliprect);
 		layers_ctrl &= msk;	}
 
-	ui_popup("%x-%x-%x:%04x %04x %04x",
+	popmessage("%x-%x-%x:%04x %04x %04x",
 				hyprduel_videoregs[0x10/2]&3,(hyprduel_videoregs[0x10/2]&0xc)>>2,(hyprduel_videoregs[0x10/2]&0x30)>>4,
 				hyprduel_videoregs[0x02/2],hyprduel_videoregs[0x08/2],
 				*hyprduel_screenctrl);}

@@ -110,7 +110,7 @@ static void draw_sprites(mame_bitmap *bitmap,int priority)
 						color,
 						flipx,flipy,
 						x,y,
-						&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+						&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 				}
 			}
 		}
@@ -124,7 +124,7 @@ VIDEO_UPDATE( galspnbl )
 
 
 	/* copy the temporary bitmap to the screen */
-	copyscrollbitmap(bitmap,tmpbitmap,1,&screenscroll,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+	copyscrollbitmap(bitmap,tmpbitmap,1,&screenscroll,0,0,&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
 
 	draw_sprites(bitmap,0);
 
@@ -146,7 +146,7 @@ VIDEO_UPDATE( galspnbl )
 					color,
 					0,0,
 					16*sx + screenscroll,8*sy,
-					&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+					&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 		}
 	}
 

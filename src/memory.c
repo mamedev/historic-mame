@@ -368,7 +368,7 @@ const char *address_space_names[ADDRESS_SPACES] = { "program", "data", "I/O" };
 
 
 /*-------------------------------------------------
-    PROTOTYPES
+    FUNCTION PROTOTYPES
 -------------------------------------------------*/
 
 static int init_cpudata(void);

@@ -262,7 +262,7 @@ static void force_update(int scanline)
 		force_partial_update(0, scanline - 1);
 
 	scanline += 64;
-	if (scanline >= Machine->visible_area[0].max_y)
+	if (scanline >= Machine->screen[0].visarea.max_y)
 		scanline = 0;
 	timer_set(cpu_getscanlinetime(scanline), scanline, force_update);
 }
@@ -346,7 +346,7 @@ int atarimo_init(int map, const struct atarimo_desc *desc)
 	mo->last_link     = -1;
 
 	/* allocate the temp bitmap */
-	mo->bitmap        = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
+	mo->bitmap        = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
 	VERIFYRETFREE(mo->bitmap, "atarimo_init: out of memory for temporary bitmap", 0)
 	fillbitmap(mo->bitmap, desc->transpen, NULL);
 
@@ -371,8 +371,8 @@ int atarimo_init(int map, const struct atarimo_desc *desc)
 		mo->colorlookup[i] = i;
 
 	/* allocate dirty grid */
-	mo->dirtywidth = (Machine->drv->screen[0].maxwidth >> mo->tilexshift) + 2;
-	mo->dirtyheight = (Machine->drv->screen[0].maxheight >> mo->tileyshift) + 2;
+	mo->dirtywidth = (Machine->screen[0].width >> mo->tilexshift) + 2;
+	mo->dirtyheight = (Machine->screen[0].height >> mo->tileyshift) + 2;
 	mo->dirtygrid = auto_malloc(mo->dirtywidth * mo->dirtyheight);
 
 	/* allocate the gfx lookup */
@@ -637,7 +637,7 @@ mame_bitmap *atarimo_render(int map, const rectangle *cliprect, struct atarimo_r
 
 			/* compute minimum Y and wrap around if necessary */
 			bandclip.min_y = ((band << mo->slipshift) - mo->yscroll + mo->slipoffset) & mo->bitmapymask;
-			if (bandclip.min_y > Machine->visible_area[0].max_y)
+			if (bandclip.min_y > Machine->screen[0].visarea.max_y)
 				bandclip.min_y -= mo->bitmapheight;
 
 			/* maximum Y is based on the minimum */
@@ -756,8 +756,8 @@ if ((temp & 0xff00) == 0xc800)
 	/* adjust the final coordinates */
 	xpos &= mo->bitmapxmask;
 	ypos &= mo->bitmapymask;
-	if (xpos > Machine->visible_area[0].max_x) xpos -= mo->bitmapwidth;
-	if (ypos > Machine->visible_area[0].max_y) ypos -= mo->bitmapheight;
+	if (xpos > Machine->screen[0].visarea.max_x) xpos -= mo->bitmapwidth;
+	if (ypos > Machine->screen[0].visarea.max_y) ypos -= mo->bitmapheight;
 
 	/* is this one special? */
 	if (mo->specialmask.mask != 0 && EXTRACT_DATA(entry, mo->specialmask) == mo->specialvalue)

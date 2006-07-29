@@ -559,7 +559,7 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
             ACTIVE LOW
             bit 4(0x10) - Enable Sound System
         */
-		//ui_popup("PDR2 = %02x",smpc_ram[0x77]);
+		//popmessage("PDR2 = %02x",smpc_ram[0x77]);
 		if(!(smpc_ram[0x77] & 0x10))
 		{
 			if(LOG_SMPC) logerror("SMPC: M68k on\n");
@@ -961,7 +961,7 @@ READ32_HANDLER ( stv_io_r32 )
 					case 0xef:  return 0xff000000 | (readinputport(11) << 16) | 0x0000ff00 | (readinputport(16));
 					/*Joystick panel*/
 					default:
-					//ui_popup("%02x MUX DATA",mux_data);
+					//popmessage("%02x MUX DATA",mux_data);
 				    return (readinputport(2) << 16) | (readinputport(3));
 				}
 			}
@@ -984,7 +984,7 @@ READ32_HANDLER ( stv_io_r32 )
 			}
 			//default:
 			default:
-			//ui_popup("%02x PORT SEL",port_sel);
+			//popmessage("%02x PORT SEL",port_sel);
 			return (readinputport(2) << 16) | (readinputport(3));
 		}
 		case 1:
@@ -1005,7 +1005,7 @@ READ32_HANDLER ( stv_io_r32 )
 			case 0x10:  return ((ioga[2] & 0xffff) << 16) | 0xffff;
 			case 0x60:  return 0xffffffff;/**/
 			default:
-			//ui_popup("offs: 2 %02x",port_sel);
+			//popmessage("offs: 2 %02x",port_sel);
 			return 0xffffffff;
 		}
 		break;
@@ -1014,7 +1014,7 @@ READ32_HANDLER ( stv_io_r32 )
 		{
 			case 0x60:  return ((ioga[2] & 0xffff) << 16) | 0xffff;
 			default:
-			//ui_popup("offs: 3 %02x",port_sel);
+			//popmessage("offs: 3 %02x",port_sel);
 			return 0xffffffff;
 		}
 		break;
@@ -1023,13 +1023,13 @@ READ32_HANDLER ( stv_io_r32 )
 		{
 			case 0x60:  return ioga[5];
 			default:
-			//ui_popup("offs: 6 %02x",port_sel);
+			//popmessage("offs: 6 %02x",port_sel);
 			return 0xffffffff;
 		}
 		break;
 		case 7:
 		if(LOG_IOGA) logerror("(PC %d=%06x) Warning: READ from PORT_AD\n",cpu_getactivecpu(), activecpu_get_pc());
-		ui_popup("Read from PORT_AD");
+		popmessage("Read from PORT_AD");
 		i++;
 		return port_ad[i & 7];
 		default:
@@ -1205,7 +1205,7 @@ static UINT32 scu_add_tmp;
 READ32_HANDLER( stv_scu_r32 )
 {
 	/*TODO: write only registers must return 0...*/
-	//ui_popup("%02x",DMA_STATUS);
+	//popmessage("%02x",DMA_STATUS);
 	//if (offset == 23)
 	//{
 		//Super Major League reads here???
@@ -2151,7 +2151,7 @@ static READ32_HANDLER( a_bus_ctrl_r )
 		{
 			logerror("A-Bus control protection read at %06x with data = %08x\n",activecpu_get_pc(),a_bus[3]);
 			#ifdef MAME_DEBUG
-			ui_popup("Prot read at %06x with data = %08x",activecpu_get_pc(),a_bus[3]);
+			popmessage("Prot read at %06x with data = %08x",activecpu_get_pc(),a_bus[3]);
 			#endif
 			switch(a_bus[3])
 			{
@@ -2304,7 +2304,7 @@ static WRITE32_HANDLER ( a_bus_ctrl_w )
 			case 0xffbf0000: ctrl_index = (0x1c40000/4)-1; break;
 		}
 	}
-	//ui_popup("%04x %04x",data,offset/4);
+	//popmessage("%04x %04x",data,offset/4);
 }
 
 extern WRITE32_HANDLER ( stv_vdp2_vram_w );
@@ -2950,8 +2950,8 @@ static VIDEO_UPDATE(critcrsh)
 	gun_y = readinputport(8);
 	if ( gun_y <= 46 )
 		draw_crosshair(bitmap,
-					  readinputport(7)*Machine->visible_area[0].max_x/64,
-					  readinputport(8)*Machine->visible_area[0].max_y/46,
+					  readinputport(7)*Machine->screen[0].visarea.max_x/64,
+					  readinputport(8)*Machine->screen[0].visarea.max_y/46,
 					  cliprect,
 					  0);
 	return 0;

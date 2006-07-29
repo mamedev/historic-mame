@@ -710,16 +710,16 @@ static void update_partial(int scanline, int render)
 		UINT32 offset;
 
 		/* autoerase the lines here */
-		starty = (last_update_scanline > Machine->visible_area[0].min_y) ? last_update_scanline : Machine->visible_area[0].min_y;
-		stopy = (scanline < Machine->visible_area[0].max_y) ? scanline : Machine->visible_area[0].max_y;
+		starty = (last_update_scanline > Machine->screen[0].visarea.min_y) ? last_update_scanline : Machine->screen[0].visarea.min_y;
+		stopy = (scanline < Machine->screen[0].visarea.max_y) ? scanline : Machine->screen[0].visarea.max_y;
 
 		/* determine the base of the videoram */
 		offset = (~tms34010_get_DPYSTRT(0) & 0x1ff0) << 5;
-		offset += 512 * (starty - Machine->visible_area[0].min_y);
+		offset += 512 * (starty - Machine->screen[0].visarea.min_y);
 
 		/* determine how many pixels to copy */
-		xoffs = Machine->visible_area[0].min_x;
-		width = Machine->visible_area[0].max_x - xoffs + 1;
+		xoffs = Machine->screen[0].visarea.min_x;
+		width = Machine->screen[0].visarea.max_x - xoffs + 1;
 		offset += xoffs;
 
 		/* loop over rows */
@@ -792,7 +792,7 @@ WRITE16_HANDLER( midyunit_io_register_w )
 VIDEO_EOF( midyunit )
 {
 	/* finish updating/autoerasing, even if we skipped a frame */
-	update_partial(Machine->visible_area[0].max_y, 0);
+	update_partial(Machine->screen[0].visarea.max_y, 0);
 }
 
 
@@ -820,14 +820,14 @@ VIDEO_UPDATE( midyunit )
 	cpuintrf_push_context(0);
 	heblnk = tms34010_io_register_r(REG_HEBLNK, 0);
 	hsblnk = tms34010_io_register_r(REG_HSBLNK, 0);
-	leftscroll = (Machine->visible_area[0].max_x + 1 - Machine->visible_area[0].min_x) - (hsblnk - heblnk) * 2;
+	leftscroll = (Machine->screen[0].visarea.max_x + 1 - Machine->screen[0].visarea.min_x) - (hsblnk - heblnk) * 2;
 	if (leftscroll < 0)
 		leftscroll = 0;
 	cpuintrf_pop_context();
 
 	/* determine the base of the videoram */
 	offset = (~tms34010_get_DPYSTRT(0) & 0x1ff0) << 5;
-	offset += 512 * (cliprect->min_y - Machine->visible_area[0].min_y);
+	offset += 512 * (cliprect->min_y - Machine->screen[0].visarea.min_y);
 
 	/* determine how many pixels to copy */
 	xoffs = cliprect->min_x;

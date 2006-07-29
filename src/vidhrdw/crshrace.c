@@ -216,7 +216,7 @@ VIDEO_UPDATE( crshrace )
 			draw_sprites(bitmap,cliprect);
 			break;
 		default:
-ui_popup("gfxctrl = %02x",gfxctrl);
+popmessage("gfxctrl = %02x",gfxctrl);
 			break;
 	}
 	return 0;

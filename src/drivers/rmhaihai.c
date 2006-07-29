@@ -75,7 +75,7 @@ VIDEO_START( rmhaihai )
 
 VIDEO_UPDATE( rmhaihai )
 {
-	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->screen[0].visarea, bg_tilemap, 0, 0);
 	return 0;
 }
 

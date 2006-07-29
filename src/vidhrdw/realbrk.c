@@ -222,8 +222,8 @@ static void realbrk_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int offs;
 
-	int max_x		=	Machine->drv->screen[0].maxwidth;
-	int max_y		=	Machine->drv->screen[0].maxheight;
+	int max_x		=	Machine->screen[0].width;
+	int max_y		=	Machine->screen[0].height;
 
 	for ( offs = 0x3000/2; offs < 0x3600/2; offs += 2/2 )
 	{
@@ -366,6 +366,6 @@ if ( code_pressed(KEYCODE_Z) )
 
 	if (layers_ctrl & 4)	tilemap_draw(bitmap,cliprect,tilemap_2,0,0);
 
-//  ui_popup("%04x",realbrk_vregs[0x8/2]);
+//  popmessage("%04x",realbrk_vregs[0x8/2]);
 	return 0;
 }

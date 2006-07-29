@@ -47,11 +47,11 @@ static int lastscan;
 
 VIDEO_START( gaelco3d )
 {
-	screenbits = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
+	screenbits = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
 	if (!screenbits)
 		return 1;
 
-	zbuffer = auto_bitmap_alloc_depth(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight, 16);
+	zbuffer = auto_bitmap_alloc_depth(Machine->screen[0].width, Machine->screen[0].height, 16);
 	if (!zbuffer)
 		return 1;
 
@@ -131,8 +131,8 @@ static int render_poly(UINT32 *polydata)
 	int yorigin = (INT32)(polydata[12] << 18) >> 18;
 
 	int color = (polydata[10] & 0x7f) << 8;
-	int midx = Machine->drv->screen[0].maxwidth/2;
-	int midy = Machine->drv->screen[0].maxheight/2;
+	int midx = Machine->screen[0].width/2;
+	int midy = Machine->screen[0].height/2;
 	struct poly_vertex vert[3];
 	rectangle clip;
 	int i;
@@ -166,10 +166,10 @@ static int render_poly(UINT32 *polydata)
 	}
 
 	/* compute the adjusted clip */
-	clip.min_x = Machine->visible_area[0].min_x - midx;
-	clip.min_y = Machine->visible_area[0].min_y - midy;
-	clip.max_x = Machine->visible_area[0].max_x - midx;
-	clip.max_y = Machine->visible_area[0].max_y - midy;
+	clip.min_x = Machine->screen[0].visarea.min_x - midx;
+	clip.min_y = Machine->screen[0].visarea.min_y - midy;
+	clip.max_x = Machine->screen[0].visarea.max_x - midx;
+	clip.max_y = Machine->screen[0].visarea.max_y - midy;
 
 	/* extract the first two vertices */
 	vert[0].x = (((INT32)polydata[13] >> 16) + (GAELCO3D_RESOLUTION_DIVIDE/2)) / GAELCO3D_RESOLUTION_DIVIDE;
@@ -418,7 +418,7 @@ void gaelco3d_render(void)
 #if DISPLAY_STATS
 {
 	int scan = cpu_getscanline();
-	ui_popup("Polys = %4d  Timeleft = %3d", polygons, (lastscan < scan) ? (scan - lastscan) : (scan + (lastscan - Machine->visible_area[0].max_y)));
+	popmessage("Polys = %4d  Timeleft = %3d", polygons, (lastscan < scan) ? (scan - lastscan) : (scan + (lastscan - Machine->screen[0].visarea.max_y)));
 }
 #endif
 
@@ -527,7 +527,7 @@ VIDEO_UPDATE( gaelco3d )
 					dest[x] = 0;
 			}
 		}
-		ui_popup("(%04X,%04X)", xv, yv);
+		popmessage("(%04X,%04X)", xv, yv);
 	}
 	else
 		copybitmap(bitmap, screenbits, 0,0, 0,0, cliprect, TRANSPARENCY_NONE, 0);

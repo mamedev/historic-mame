@@ -270,10 +270,8 @@ static void draw_ball(mame_bitmap *bitmap, const rectangle *cliprect,int color)
 VIDEO_UPDATE( geebee )
 {
 	/* use an overlay only in upright mode */
-#ifdef NEW_RENDER
 	if (geebee_handleoverlay)
 		render_view_item_set_state("overlay", (readinputport(2) & 0x01) == 0);
-#endif
 
 	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 

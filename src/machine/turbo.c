@@ -295,12 +295,10 @@ void turbo_update_segments(void)
 
 		if (segment_init || v_old != v_new)
 		{
-#ifdef NEW_RENDER
 			char buf_new[8];
 
 			sprintf(buf_new, "led%02d", i);
 			render_view_item_set_state(buf_new, (v_new >= 10) ? 10 : v_new);
-#endif
 		}
 	}
 
@@ -347,9 +345,7 @@ WRITE8_HANDLER( turbo_coin_and_lamp_w )
 
 void turbo_update_tachometer(void)
 {
-#ifdef NEW_RENDER
 	render_view_item_set_state("speed", turbo_speed);
-#endif
 }
 
 

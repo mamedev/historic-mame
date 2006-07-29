@@ -74,7 +74,7 @@ static READ8_HANDLER( hotblock_port4_r )
 static WRITE8_HANDLER( hotblock_port4_w )
 {
 //  printf("port4_w: pc = %06x : data %04x\n",activecpu_get_pc(),data);
-//  ui_popup("port4_w: pc = %06x : data %04x",activecpu_get_pc(),data);
+//  popmessage("port4_w: pc = %06x : data %04x",activecpu_get_pc(),data);
 	hotblock_port4=data;
 }
 
@@ -82,7 +82,7 @@ static WRITE8_HANDLER( hotblock_port4_w )
 
 WRITE8_HANDLER( hotblock_port0_w )
 {
-//  ui_popup("port4_w: pc = %06x : data %04x",activecpu_get_pc(),data);
+//  popmessage("port4_w: pc = %06x : data %04x",activecpu_get_pc(),data);
 	hotblock_port0=data;
 }
 

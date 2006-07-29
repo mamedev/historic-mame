@@ -30,7 +30,6 @@ COREOBJS = \
 	$(OBJ)/fileio.o \
 	$(OBJ)/harddisk.o \
 	$(OBJ)/hash.o \
-	$(OBJ)/hiscore.o \
 	$(OBJ)/info.o \
 	$(OBJ)/input.o \
 	$(OBJ)/inptport.o \
@@ -42,6 +41,8 @@ COREOBJS = \
 	$(OBJ)/options.o \
 	$(OBJ)/palette.o \
 	$(OBJ)/png.o \
+	$(OBJ)/render.o \
+	$(OBJ)/rendfont.o \
 	$(OBJ)/restrack.o \
 	$(OBJ)/romload.o \
 	$(OBJ)/sha1.o \
@@ -51,9 +52,11 @@ COREOBJS = \
 	$(OBJ)/streams.o \
 	$(OBJ)/tilemap.o \
 	$(OBJ)/timer.o \
-	$(OBJ)/ui_text.o \
+	$(OBJ)/ui.o \
+	$(OBJ)/uigfx.o \
+	$(OBJ)/uimenu.o \
+	$(OBJ)/uitext.o \
 	$(OBJ)/unzip.o \
-	$(OBJ)/usrintrf.o \
 	$(OBJ)/validity.o \
 	$(OBJ)/version.o \
 	$(OBJ)/video.o \
@@ -67,13 +70,6 @@ COREOBJS = \
 	$(OBJ)/sndhrdw/generic.o \
 	$(OBJ)/vidhrdw/generic.o \
 	$(OBJ)/vidhrdw/vector.o \
-
-ifdef NEW_RENDER
-COREOBJS += $(OBJ)/render.o \
-			$(OBJ)/rendfont.o
-else
-COREOBJS += $(OBJ)/artwork.o
-endif
 
 ifdef X86_MIPS3_DRC
 COREOBJS += $(OBJ)/x86drc.o

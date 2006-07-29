@@ -38,14 +38,14 @@ static void draw_layer(mame_bitmap *bitmap,unsigned char *scrollram)
 					color,
 					flip_screen,flip_screen,
 					sx,sy,
-					&Machine->visible_area[0],TRANSPARENCY_PEN,15);
+					&Machine->screen[0].visarea,TRANSPARENCY_PEN,15);
 			if (sx > 248)	/* wraparound */
 				drawgfx(bitmap,Machine->gfx[0],
 						code,
 						color,
 						flip_screen,flip_screen,
 						sx-256,sy,
-						&Machine->visible_area[0],TRANSPARENCY_PEN,15);
+						&Machine->screen[0].visarea,TRANSPARENCY_PEN,15);
 		}
 	}
 }
@@ -126,14 +126,14 @@ static int draw_layer_daikaiju(mame_bitmap *bitmap, int offs, int  * previd, int
 					color,
 					flip_screen,flip_screen,
 					sx,sy,
-					&Machine->visible_area[0],TRANSPARENCY_PEN,15);
+					&Machine->screen[0].visarea,TRANSPARENCY_PEN,15);
 			if (sx > 248)	/* wraparound */
 				drawgfx(bitmap,Machine->gfx[0],
 						code,
 						color,
 						flip_screen,flip_screen,
 						sx-256,sy,
-						&Machine->visible_area[0],TRANSPARENCY_PEN,15);
+						&Machine->screen[0].visarea,TRANSPARENCY_PEN,15);
 					}
 		}
 	}
@@ -188,20 +188,20 @@ static void draw_sprites(mame_bitmap *bitmap)
 				color,
 				flipx,flipy,
 				sx,sy,
-				&Machine->visible_area[0],TRANSPARENCY_PEN,15);
+				&Machine->screen[0].visarea,TRANSPARENCY_PEN,15);
 		/* wraparound */
 		drawgfx(bitmap,Machine->gfx[1],
 				code,
 				color,
 				flipx,flipy,
 				sx-256,sy,
-				&Machine->visible_area[0],TRANSPARENCY_PEN,15);
+				&Machine->screen[0].visarea,TRANSPARENCY_PEN,15);
 	}
 }
 
 VIDEO_UPDATE( lsasquad )
 {
-	fillbitmap(bitmap,Machine->pens[511],&Machine->visible_area[0]);
+	fillbitmap(bitmap,Machine->pens[511],&Machine->screen[0].visarea);
 
 	draw_layer(bitmap,lsasquad_scrollram + 0x000);
 	draw_layer(bitmap,lsasquad_scrollram + 0x080);
@@ -213,7 +213,7 @@ VIDEO_UPDATE( lsasquad )
 
 VIDEO_UPDATE( daikaiju )
 {
-	fillbitmap(bitmap,Machine->pens[511],&Machine->visible_area[0]);
+	fillbitmap(bitmap,Machine->pens[511],&Machine->screen[0].visarea);
 	drawbg(bitmap,0); // bottom
 	draw_sprites(bitmap);
 	drawbg(bitmap,1);	// top = pallete $d ?

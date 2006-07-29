@@ -395,7 +395,7 @@ static void watchdog_setup(int alloc_new)
              * The 3 seconds delay is targeted at qzshowby, which otherwise
              * would reset at the start of a game.
              */
-			watchdog_counter = 3 * Machine->refresh_rate[0];
+			watchdog_counter = 3 * Machine->screen[0].refresh;
 		}
 	}
 }
@@ -973,22 +973,27 @@ static void init_refresh_timer(void)
 void cpu_compute_scanline_timing(void)
 {
 	/* recompute the refresh period */
-	refresh_period = double_to_mame_time(1.0 / Machine->refresh_rate[0]);
+	refresh_period = double_to_mame_time(1.0 / Machine->screen[0].refresh);
 
 	/* recompute the vblank period */
-	vblank_period = double_to_mame_time(1.0 / (Machine->refresh_rate[0] * (vblank_multiplier ? vblank_multiplier : 1)));
+	vblank_period = double_to_mame_time(1.0 / (Machine->screen[0].refresh * (vblank_multiplier ? vblank_multiplier : 1)));
 	if (vblank_timer)
-		mame_timer_adjust(vblank_timer, mame_timer_timeleft(vblank_timer), 0, vblank_period);
+	{
+		mame_time remaining = mame_timer_timeleft(vblank_timer);
+		if (remaining.seconds == 0 && remaining.subseconds == 0)
+			remaining = vblank_period;
+		mame_timer_adjust(vblank_timer, remaining, 0, vblank_period);
+	}
 
 	/* recompute the scanline period */
 	scanline_period = refresh_period;
-	if (Machine->drv->screen[0].vblank_time != 0)
+	if (Machine->screen[0].vblank != 0)
 	{
-		scanline_period.subseconds -= DOUBLE_TO_SUBSECONDS(Machine->drv->screen[0].vblank_time);
-		scanline_period.subseconds /= Machine->drv->screen[0].default_visible_area.max_y - Machine->drv->screen[0].default_visible_area.min_y + 1;
+		scanline_period.subseconds -= DOUBLE_TO_SUBSECONDS(Machine->screen[0].vblank);
+		scanline_period.subseconds /= Machine->screen[0].visarea.max_y - Machine->screen[0].visarea.min_y + 1;
 	}
 	else
-		scanline_period.subseconds /= Machine->drv->screen[0].maxheight;
+		scanline_period.subseconds /= Machine->screen[0].height;
 
 	LOG(("cpu_compute_scanline_timing: refresh=%.9f vblank=%.9f scanline=%.9f\n", mame_time_to_double(refresh_period), mame_time_to_double(vblank_period), mame_time_to_double(scanline_period)));
 }
@@ -1086,7 +1091,7 @@ int cpu_gethorzbeampos(void)
 	mame_time elapsed_time = mame_timer_timeelapsed(refresh_timer);
 	int scanline = elapsed_time.subseconds / scanline_period.subseconds;
 	mame_time time_since_scanline = sub_subseconds_from_mame_time(elapsed_time, scanline * scanline_period.subseconds);
-	return time_since_scanline.subseconds * Machine->drv->screen[0].maxwidth / scanline_period.subseconds;
+	return time_since_scanline.subseconds * Machine->screen[0].width / scanline_period.subseconds;
 }
 
 
@@ -1435,7 +1440,7 @@ static void cpu_vblankcallback(int param)
 			video_frame_update();
 
 		/* Set the timer to update the screen */
-		mame_timer_adjust(update_timer, double_to_mame_time(Machine->drv->screen[0].vblank_time), 0, time_zero);
+		mame_timer_adjust(update_timer, double_to_mame_time(Machine->screen[0].vblank), 0, time_zero);
 
 		/* reset the globals */
 		cpu_vblankreset();
@@ -1579,7 +1584,7 @@ static void cpu_inittimers(void)
 	ipf = Machine->drv->cpu_slices_per_frame;
 	if (ipf <= 0)
 		ipf = 1;
-	timeslice_period = double_to_mame_time(1.0 / (Machine->refresh_rate[0] * ipf));
+	timeslice_period = double_to_mame_time(1.0 / (Machine->screen[0].refresh * ipf));
 	timeslice_timer = mame_timer_alloc(cpu_timeslicecallback);
 	mame_timer_adjust(timeslice_timer, timeslice_period, 0, timeslice_period);
 
@@ -1628,7 +1633,7 @@ static void cpu_inittimers(void)
 	}
 
 	/* allocate a vblank timer at the frame rate * the LCD number of interrupts per frame */
-	vblank_period = double_to_mame_time(1.0 / (Machine->refresh_rate[0] * vblank_multiplier));
+	vblank_period = double_to_mame_time(1.0 / (Machine->screen[0].refresh * vblank_multiplier));
 	vblank_timer = mame_timer_alloc(cpu_vblankcallback);
 	vblank_countdown = vblank_multiplier;
 
@@ -1648,7 +1653,7 @@ static void cpu_inittimers(void)
 		/* compute the average number of cycles per interrupt */
 		if (ipf <= 0)
 			ipf = 1;
-		cpu[cpunum].vblankint_period = double_to_mame_time(1.0 / (Machine->refresh_rate[0] * ipf));
+		cpu[cpunum].vblankint_period = double_to_mame_time(1.0 / (Machine->screen[0].refresh * ipf));
 		cpu[cpunum].vblankint_timer = mame_timer_alloc(NULL);
 
 		/* see if we need to allocate a CPU timer */
@@ -1663,7 +1668,7 @@ static void cpu_inittimers(void)
 	/* note that since we start the first frame on the refresh, we can't pulse starting
        immediately; instead, we back up one VBLANK period, and inch forward until we hit
        positive time. That time will be the time of the first VBLANK timer callback */
-	first_time = add_mame_times(double_to_mame_time(-Machine->drv->screen[0].vblank_time), vblank_period);
+	first_time = add_mame_times(double_to_mame_time(-Machine->screen[0].vblank), vblank_period);
 	while (compare_mame_times(first_time, time_zero) < 0)
 	{
 		cpu_vblankcallback(-1);

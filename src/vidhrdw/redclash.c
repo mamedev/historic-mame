@@ -200,14 +200,14 @@ static void redclash_draw_sprites( mame_bitmap *bitmap )
 								color,
 								0,0,
 								sx,sy - 16,
-								&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+								&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 						/* wraparound */
 						drawgfx(bitmap,Machine->gfx[3],
 								code,
 								color,
 								0,0,
 								sx - 256,sy - 16,
-								&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+								&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 						break;
 					}
 
@@ -222,7 +222,7 @@ static void redclash_draw_sprites( mame_bitmap *bitmap )
 									color,
 									0,0,
 									sx,sy - 16,
-									&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+									&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 						}
 						else
 						{
@@ -233,7 +233,7 @@ static void redclash_draw_sprites( mame_bitmap *bitmap )
 									color,
 									0,0,
 									sx,sy - 16,
-									&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+									&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 						}
 						break;
 
@@ -243,11 +243,11 @@ static void redclash_draw_sprites( mame_bitmap *bitmap )
 								color,
 								0,0,
 								sx,sy - 16,
-								&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+								&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 						break;
 
 					case 0:
-ui_popup("unknown sprite size 0");
+popmessage("unknown sprite size 0");
 						break;
 				}
 			}
@@ -270,8 +270,8 @@ static void redclash_draw_bullets( mame_bitmap *bitmap )
 			sx = 240 - sx;
 		}
 
-		if (sx >= Machine->visible_area[0].min_x && sx <= Machine->visible_area[0].max_x &&
-				sy >= Machine->visible_area[0].min_y && sy <= Machine->visible_area[0].max_y)
+		if (sx >= Machine->screen[0].visarea.min_x && sx <= Machine->screen[0].visarea.max_x &&
+				sy >= Machine->screen[0].visarea.min_y && sy <= Machine->screen[0].visarea.max_y)
 			plot_pixel(bitmap, sx, sy, Machine->pens[0x0e]);
 	}
 }
@@ -412,10 +412,10 @@ VIDEO_EOF( redclash )
 
 VIDEO_UPDATE( redclash )
 {
-	fillbitmap(bitmap, get_black_pen(), &Machine->visible_area[0]);
+	fillbitmap(bitmap, get_black_pen(), &Machine->screen[0].visarea);
 	redclash_draw_stars(bitmap, 32, 0, 0x00, 0xff);
 	redclash_draw_sprites(bitmap);
 	redclash_draw_bullets(bitmap);
-	tilemap_draw(bitmap, &Machine->visible_area[0], fg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->screen[0].visarea, fg_tilemap, 0, 0);
 	return 0;
 }

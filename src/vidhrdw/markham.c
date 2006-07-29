@@ -125,7 +125,7 @@ static void markham_draw_sprites( mame_bitmap *bitmap )
 			col,
 			fx,fy,
 			px,py,
-			&Machine->visible_area[0],TRANSPARENCY_COLOR,0);
+			&Machine->screen[0].visarea,TRANSPARENCY_COLOR,0);
 	}
 }
 
@@ -141,7 +141,7 @@ VIDEO_UPDATE( markham )
 			tilemap_set_scrollx(bg_tilemap, i, markham_xscroll[1]);
 	}
 
-	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->screen[0].visarea, bg_tilemap, 0, 0);
 	markham_draw_sprites(bitmap);
 	return 0;
 }

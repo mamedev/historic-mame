@@ -122,7 +122,7 @@ VIDEO_UPDATE( magmax )
 	/* copy the background graphics */
 	if (magmax_vreg & 0x40)		/* background disable */
 	{
-		fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area[0]);
+		fillbitmap(bitmap, Machine->pens[0], &Machine->screen[0].visarea);
 	}
 	else
 	{
@@ -132,7 +132,7 @@ VIDEO_UPDATE( magmax )
 		UINT32 scroll_v = (*magmax_scroll_y) & 0xff;
 
 		/*clear background-over-sprites bitmap*/
-		fillbitmap(tmpbitmap, 0, &Machine->visible_area[0]);
+		fillbitmap(tmpbitmap, 0, &Machine->screen[0].visarea);
 
 		for (v = 2*8; v < 30*8; v++) /*only for visible area*/
 		{
@@ -334,12 +334,12 @@ VIDEO_UPDATE( magmax )
 					color,
 					flipx, flipy,
 					sx, sy,
-					&Machine->visible_area[0], TRANSPARENCY_COLOR, 31);
+					&Machine->screen[0].visarea, TRANSPARENCY_COLOR, 31);
 		}
 	}
 	if (!(magmax_vreg & 0x40))		/* background disable */
 	{
-		copybitmap(bitmap, tmpbitmap, flipscreen,flipscreen,0,0, &Machine->visible_area[0], TRANSPARENCY_PEN, 0);
+		copybitmap(bitmap, tmpbitmap, flipscreen,flipscreen,0,0, &Machine->screen[0].visarea, TRANSPARENCY_PEN, 0);
 	}
 
 
@@ -366,7 +366,7 @@ VIDEO_UPDATE( magmax )
 					0,
 					flipscreen, flipscreen,
 					8 * sx, 8 * sy,
-					&Machine->visible_area[0], TRANSPARENCY_PEN, 15);
+					&Machine->screen[0].visarea, TRANSPARENCY_PEN, 15);
 		}
 	}
 	return 0;

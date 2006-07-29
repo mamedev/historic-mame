@@ -143,14 +143,14 @@ static void drawsprites(mame_bitmap *bitmap, int pri)
 				color,
 				fx,fy,
 				sx,sy,
-				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+				&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
         if (multi)
     		drawgfx(bitmap,Machine->gfx[1],
 				code2,
 				color,
 				fx,fy,
 				sx,sy2,
-				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+				&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 	}
 }
 

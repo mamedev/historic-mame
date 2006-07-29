@@ -13,7 +13,7 @@
  *
  */
 
-#include "usrintrf.h"
+#include "ui.h"
 #include "debugger.h"
 #include "psx.h"
 

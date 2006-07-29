@@ -604,6 +604,7 @@ $(OBJ)/dataeast.a: \
 	$(OBJ)/drivers/metlclsh.o $(OBJ)/vidhrdw/metlclsh.o \
 	$(OBJ)/drivers/pcktgal.o $(OBJ)/vidhrdw/pcktgal.o \
 	$(OBJ)/drivers/pktgaldx.o $(OBJ)/vidhrdw/pktgaldx.o \
+	$(OBJ)/drivers/pokechmp.o $(OBJ)/vidhrdw/pokechmp.o \
 	$(OBJ)/drivers/progolf.o \
 	$(OBJ)/drivers/rohga.o $(OBJ)/vidhrdw/rohga.o \
 	$(OBJ)/drivers/shootout.o $(OBJ)/vidhrdw/shootout.o \

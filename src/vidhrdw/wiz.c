@@ -192,7 +192,7 @@ static void draw_background(mame_bitmap *bitmap, int bank, int colortype)
 			col + 8 * palette_bank,
 			flipx,flipy,
 			8*sx,scroll,
-			&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+			&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 	}
 }
 
@@ -231,7 +231,7 @@ static void draw_foreground(mame_bitmap *bitmap, int colortype)
 			col + 8 * palette_bank,
 			flipx,flipy,
 			8*sx,scroll,
-			&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+			&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 	}
 }
 
@@ -272,11 +272,11 @@ static void draw_sprites(mame_bitmap *bitmap, unsigned char* sprite_ram,
 
 VIDEO_UPDATE( kungfut )
 {
-	fillbitmap(bitmap,Machine->pens[bgpen],&Machine->visible_area[0]);
+	fillbitmap(bitmap,Machine->pens[bgpen],&Machine->screen[0].visarea);
 	draw_background(bitmap, 2 + char_bank[0] , 0);
 	draw_foreground(bitmap, 0);
-	draw_sprites(bitmap, spriteram_2, 4, &Machine->visible_area[0]);
-	draw_sprites(bitmap, spriteram  , 5, &Machine->visible_area[0]);
+	draw_sprites(bitmap, spriteram_2, 4, &Machine->screen[0].visarea);
+	draw_sprites(bitmap, spriteram  , 5, &Machine->screen[0].visarea);
 	return 0;
 }
 
@@ -285,7 +285,7 @@ VIDEO_UPDATE( wiz )
 	int bank;
 	const rectangle* visible_area;
 
-	fillbitmap(bitmap,Machine->pens[bgpen],&Machine->visible_area[0]);
+	fillbitmap(bitmap,Machine->pens[bgpen],&Machine->screen[0].visarea);
 	draw_background(bitmap, 2 + ((char_bank[0] << 1) | char_bank[1]), 0);
 	draw_foreground(bitmap, 0);
 
@@ -301,10 +301,10 @@ VIDEO_UPDATE( wiz )
 
 VIDEO_UPDATE( stinger )
 {
-	fillbitmap(bitmap,Machine->pens[bgpen],&Machine->visible_area[0]);
+	fillbitmap(bitmap,Machine->pens[bgpen],&Machine->screen[0].visarea);
 	draw_background(bitmap, 2 + char_bank[0], 1);
 	draw_foreground(bitmap, 1);
-	draw_sprites(bitmap, spriteram_2, 4, &Machine->visible_area[0]);
-	draw_sprites(bitmap, spriteram  , 5, &Machine->visible_area[0]);
+	draw_sprites(bitmap, spriteram_2, 4, &Machine->screen[0].visarea);
+	draw_sprites(bitmap, spriteram  , 5, &Machine->screen[0].visarea);
 	return 0;
 }

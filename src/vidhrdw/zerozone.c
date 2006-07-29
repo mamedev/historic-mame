@@ -23,7 +23,7 @@ WRITE16_HANDLER( zerozone_tilemap_w )
 
 WRITE16_HANDLER(zerozone_tilebank_w)
 {
-//  ui_popup ("Data %04x",data);
+//  popmessage ("Data %04x",data);
 	zerozone_tilebank = data & 0x7;
 	tilemap_mark_all_tiles_dirty(zerozone_tilemap);
 }

@@ -145,7 +145,7 @@ static void gotya_draw_status_row( mame_bitmap *bitmap, int sx, int col )
 			gotya_videoram2[row * 32 + col + 0x10] & 0x0f,
 			flip_screen_x, flip_screen_y,
 			8 * sx, 8 * sy,
-			&Machine->visible_area[0],
+			&Machine->screen[0].visarea,
 			TRANSPARENCY_NONE, 0);
 	}
 }
@@ -170,7 +170,7 @@ static void gotya_draw_sprites( mame_bitmap *bitmap )
 			code, color,
 			flip_screen_x, flip_screen_y,
 			sx, sy,
-			&Machine->visible_area[0],
+			&Machine->screen[0].visarea,
 			TRANSPARENCY_PEN, 0);
 	}
 }
@@ -188,7 +188,7 @@ static void gotya_draw_status( mame_bitmap *bitmap )
 VIDEO_UPDATE( gotya )
 {
 	tilemap_set_scrollx(bg_tilemap, 0, -(*gotya_scroll + (scroll_bit_8 * 256)) - 2 * 8);
-	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->screen[0].visarea, bg_tilemap, 0, 0);
 	gotya_draw_sprites(bitmap);
 	gotya_draw_status(bitmap);
 	return 0;

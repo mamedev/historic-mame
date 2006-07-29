@@ -1251,14 +1251,14 @@ static HRESULT WINAPI enum_modes_callback(LPDDSURFACEDESC2 desc, LPVOID context)
 		size_score = 2.0f;
 
 	// compute refresh score
-	refresh_score = 1.0f / (1.0f + fabs((double)desc->dwRefreshRate - Machine->refresh_rate[0]));
+	refresh_score = 1.0f / (1.0f + fabs((double)desc->dwRefreshRate - Machine->screen[0].refresh));
 
 	// if we're looking for a particular refresh, make sure it matches
 	if (desc->dwRefreshRate == einfo->window->refresh)
 		refresh_score = 1.0f;
 
 	// if refresh is smaller than we'd like, it only scores up to 0.1
-	if ((double)desc->dwRefreshRate < Machine->refresh_rate[0])
+	if ((double)desc->dwRefreshRate < Machine->screen[0].refresh)
 		refresh_score *= 0.1;
 
 	// weight size highest, followed by depth and refresh

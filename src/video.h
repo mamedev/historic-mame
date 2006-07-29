@@ -28,6 +28,20 @@
 
 
 /*-------------------------------------------------
+    screen_state - current live state of a screen
+-------------------------------------------------*/
+
+typedef struct _screen_state screen_state;
+struct _screen_state
+{
+	int				width, height;				/* total width/height (HTOTAL, VTOTAL) */
+	rectangle		visarea;					/* visible area (HBLANK end/start, VBLANK end/start) */
+	float			refresh;					/* refresh rate */
+	double			vblank;						/* duration of a VBLANK */
+};
+
+
+/*-------------------------------------------------
     screen_config - configuration of a single
     screen
 -------------------------------------------------*/
@@ -35,73 +49,16 @@
 typedef struct _screen_config screen_config;
 struct _screen_config
 {
-	const char *		tag;				/* nametag for the screen */
-	UINT32				palette_base;		/* base palette entry for this screen */
-	float				refresh_rate;		/* refresh rate */
-	double				vblank_time;		/* duration of a VBLANK */
-	int					maxwidth, maxheight;/* maximum width/height in pixels */
-	rectangle			default_visible_area;/* default visible area */
+	const char *	tag;						/* nametag for the screen */
+	UINT32			palette_base;				/* base palette entry for this screen */
+	screen_state	defstate;					/* default state */
 };
 
 
-
-/***************************************************************************
-
-    Display state passed to the OSD layer for rendering
-
-***************************************************************************/
-
-#ifndef NEW_RENDER
-/* these flags are set in the mame_display struct to indicate that */
-/* a particular piece of state has changed since the last call to */
-/* osd_update_video_and_audio() */
-#define GAME_BITMAP_CHANGED			0x00000001
-#define GAME_PALETTE_CHANGED		0x00000002
-#define GAME_VISIBLE_AREA_CHANGED	0x00000004
-#define VECTOR_PIXELS_CHANGED		0x00000008
-#define DEBUG_BITMAP_CHANGED		0x00000010
-#define DEBUG_PALETTE_CHANGED		0x00000020
-#define DEBUG_FOCUS_CHANGED			0x00000040
-#define LED_STATE_CHANGED			0x00000080
-#define GAME_REFRESH_RATE_CHANGED	0x00000100
-
-
-/* the main mame_display structure, containing the current state of the */
-/* video display */
-/* in mamecore.h: typedef struct _mame_display mame_display; */
-struct _mame_display
-{
-	/* bitfield indicating which states have changed */
-	UINT32			changed_flags;
-
-	/* game bitmap and display information */
-	mame_bitmap *	game_bitmap;				/* points to game's bitmap */
-	rectangle		game_bitmap_update;			/* bounds that need to be updated */
-	const rgb_t *	game_palette;				/* points to game's adjusted palette */
-	UINT32			game_palette_entries;		/* number of palette entries in game's palette */
-	UINT32 *		game_palette_dirty;			/* points to game's dirty palette bitfield */
-	rectangle 		game_visible_area;			/* the game's visible area */
-	float			game_refresh_rate;			/* refresh rate */
-	void *			vector_dirty_pixels;		/* points to X,Y pairs of dirty vector pixels */
-
-	/* debugger bitmap and display information */
-	mame_bitmap *	debug_bitmap;				/* points to debugger's bitmap */
-	const rgb_t *	debug_palette;				/* points to debugger's palette */
-	UINT32			debug_palette_entries;		/* number of palette entries in debugger's palette */
-	UINT8			debug_focus;				/* set to 1 if debugger has focus */
-
-	/* other misc information */
-	UINT8			led_state;					/* bitfield of current LED states */
-};
-#endif
-
-
-
-/***************************************************************************
-
-    Performance data
-
-***************************************************************************/
+/*-------------------------------------------------
+    performance_info - information about the
+    current performance
+-------------------------------------------------*/
 
 struct _performance_info
 {
@@ -115,23 +72,19 @@ struct _performance_info
 
 
 /***************************************************************************
-
-    Function prototypes
-
+    FUNCTION PROTOTYPES
 ***************************************************************************/
 
 /* ----- screen rendering and management ----- */
 
+/* core initialization */
 int video_init(void);
 
-/* set the current visible area of the screen bitmap */
+/* set the resolution of a screen */
+void configure_screen(int scrnum, int width, int height, const rectangle *visarea, float refresh);
+
+/* set the visible area of a screen; this is a subset of configure_screen */
 void set_visible_area(int scrnum, int min_x, int max_x, int min_y, int max_y);
-
-/* set the current refresh rate of the video mode */
-void set_refresh_rate(int scrnum, float fps);
-
-/* force an erase and a complete redraw of the video next frame */
-void schedule_full_refresh(void);
 
 /* force a partial update of the screen up to and including the requested scanline */
 void force_partial_update(int scrnum, int scanline);
@@ -139,13 +92,10 @@ void force_partial_update(int scrnum, int scanline);
 /* reset the partial updating for a frame; generally only called by cpuexec.c */
 void reset_partial_updates(void);
 
-/* update the video by calling down to the OSD layer */
-void update_video_and_audio(void);
-
 /* update the screen, handling frame skipping and rendering */
 void video_frame_update(void);
 
-/* can we skip this frame? */
+/* are we skipping the current frame? */
 int skip_this_frame(void);
 
 /* return current performance data */
@@ -174,6 +124,5 @@ void record_movie_frame(int scrnum);
 mame_bitmap *bitmap_alloc_depth(int width, int height, int depth);
 mame_bitmap *auto_bitmap_alloc_depth(int width, int height, int depth);
 void bitmap_free(mame_bitmap *bitmap);
-
 
 #endif	/* __VIDEO_H__ */

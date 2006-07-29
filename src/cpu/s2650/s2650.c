@@ -637,7 +637,8 @@ static	int 	S2650_relative[0x100] =
 	{															\
 		dest = (before << 1) | (before >> 7);					\
 	}															\
-	SET_CC_OVF(dest,before);									\
+	SET_CC(dest);												\
+	S.psl = (S.psl & ~OVF) | (((dest ^ before) >> 5) & OVF);	\
 }
 
 /***************************************************************
@@ -655,8 +656,11 @@ static	int 	S2650_relative[0x100] =
 		dest = (before >> 1) | (c << 7);						\
 		S.psl |= (before & C) + (dest & IDC);					\
 	} else	dest = (before >> 1) | (before << 7);				\
-	SET_CC_OVF(dest,before);									\
+	SET_CC(dest);												\
+	S.psl = (S.psl & ~OVF) | (((dest ^ before) >> 5) & OVF);	\
 }
+
+// bxd() not necessary
 
 /***************************************************************
  * M_SPSU

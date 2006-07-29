@@ -74,7 +74,7 @@ static WRITE16_HANDLER( priority_reg_w )
 	priority_reg = data & 7;
 
 	if(priority_reg == 4 || priority_reg == 5 || priority_reg == 6)
-		ui_popup("unknown priority_reg value = %d\n",priority_reg);
+		popmessage("unknown priority_reg value = %d\n",priority_reg);
 }
 
 static WRITE8_HANDLER( oki_banking_w )

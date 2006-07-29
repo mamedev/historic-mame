@@ -254,7 +254,7 @@ static WRITE16_HANDLER( slapshot_msb_sound_w )
 
 #ifdef MAME_DEBUG
 	if (data & 0xff)
-		ui_popup("taito_msb_sound_w to low byte: %04x",data);
+		popmessage("taito_msb_sound_w to low byte: %04x",data);
 #endif
 }
 

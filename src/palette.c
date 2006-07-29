@@ -10,6 +10,7 @@
 ******************************************************************************/
 
 #include "driver.h"
+#include "ui.h"
 #include <math.h>
 #if defined(MAME_DEBUG) && !defined(NEW_DEBUGGER)
 #include "debug/mamedbg.h"
@@ -50,12 +51,9 @@ struct _callback_item
 
 
 /***************************************************************************
-    GLOBALS
+    GLOBAL VARIABLES
 ***************************************************************************/
 
-#ifndef NEW_RENDER
-UINT32 direct_rgb_components[3];
-#endif
 UINT16 *palette_shadow_table;
 
 rgb_t *game_palette;				/* RGB palette as set by the driver */
@@ -79,7 +77,7 @@ static callback_item *notify_callback_list;
 
 
 /***************************************************************************
-    PROTOTYPES
+    FUNCTION PROTOTYPES
 ***************************************************************************/
 
 static void palette_exit(void);
@@ -91,7 +89,7 @@ static void internal_modify_pen(pen_t pen, rgb_t color, int pen_bright);
 
 
 /***************************************************************************
-    INLINES
+    INLINE FUNCTIONS
 ***************************************************************************/
 
 /*-------------------------------------------------
@@ -101,13 +99,7 @@ static void internal_modify_pen(pen_t pen, rgb_t color, int pen_bright);
 
 INLINE UINT16 rgb_to_direct15(rgb_t rgb)
 {
-#ifndef NEW_RENDER
-	return  (  RGB_RED(rgb) >> 3) * (direct_rgb_components[0] / 0x1f) +
-			(RGB_GREEN(rgb) >> 3) * (direct_rgb_components[1] / 0x1f) +
-			( RGB_BLUE(rgb) >> 3) * (direct_rgb_components[2] / 0x1f);
-#else
 	return ((RGB_RED(rgb) >> 3) << 10) | ((RGB_GREEN(rgb) >> 3) << 5) | ((RGB_BLUE(rgb) >> 3) << 0);
-#endif
 }
 
 
@@ -119,13 +111,7 @@ INLINE UINT16 rgb_to_direct15(rgb_t rgb)
 
 INLINE UINT32 rgb_to_direct32(rgb_t rgb)
 {
-#ifndef NEW_RENDER
-	return    RGB_RED(rgb) * (direct_rgb_components[0] / 0xff) +
-			RGB_GREEN(rgb) * (direct_rgb_components[1] / 0xff) +
-			 RGB_BLUE(rgb) * (direct_rgb_components[2] / 0xff);
-#else
 	return rgb;
-#endif
 }
 
 
@@ -811,53 +797,6 @@ int palette_get_total_colors_with_ui(void)
 		result += 2;
 	return result;
 }
-
-
-
-/*-------------------------------------------------
-    palette_update_display - update the display
-    state with our latest info
--------------------------------------------------*/
-
-#ifndef NEW_RENDER
-
-void palette_update_display(mame_display *display)
-{
-	/* palettized case: point to the palette info */
-	if (colormode == PALETTIZED_16BIT)
-	{
-		display->game_palette = adjusted_palette;
-		display->game_palette_entries = total_colors_with_ui;
-		display->game_palette_dirty = dirty_palette;
-
-		if (adjusted_palette_dirty)
-			display->changed_flags |= GAME_PALETTE_CHANGED;
-	}
-
-	/* direct case: no palette mucking */
-	else
-	{
-		display->game_palette = NULL;
-		display->game_palette_entries = 0;
-		display->game_palette_dirty = NULL;
-	}
-
-	/* debugger always has a palette */
-#if defined(MAME_DEBUG) && !defined(NEW_DEBUGGER)
-	display->debug_palette = debugger_palette;
-	display->debug_palette_entries = DEBUGGER_TOTAL_COLORS;
-#endif
-
-	/* update the dirty state */
-	if (debug_palette_dirty)
-		display->changed_flags |= DEBUG_PALETTE_CHANGED;
-
-	/* clear the dirty flags */
-	adjusted_palette_dirty = 0;
-	debug_palette_dirty = 0;
-}
-
-#endif
 
 
 

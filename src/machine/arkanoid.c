@@ -177,7 +177,7 @@ READ8_HANDLER( paddle2_prot_r )
 		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00  /*25-32*/
 	};
 	UINT8 *RAM = memory_region(REGION_CPU1);
-//  ui_popup("%04x: %02x",activecpu_get_pc(),paddle2_prot);
+//  popmessage("%04x: %02x",activecpu_get_pc(),paddle2_prot);
 
 	switch (paddle2_prot)
 	{

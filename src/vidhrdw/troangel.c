@@ -186,7 +186,7 @@ static void draw_background( mame_bitmap *bitmap )
 			for (offs = 128;offs < 256;offs++) xscroll[offs] = -troangel_scroll[offs];
 		}
 
-		copyscrollbitmap(bitmap,tmpbitmap,256,xscroll,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,256,xscroll,0,0,&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
 	}
 }
 
@@ -224,7 +224,7 @@ static void draw_sprites( mame_bitmap *bitmap )
 			color,
 			flipx,flipy,
 			sx,sy,
-			&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+			&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 	}
 }
 

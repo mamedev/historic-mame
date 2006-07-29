@@ -122,7 +122,7 @@ VIDEO_START( exerion )
 	background_mixer = memory_region(REGION_PROMS) + 0x320;
 
 	/* allocate memory to track the background latches */
-	background_latches = auto_malloc(Machine->drv->screen[0].maxheight * 16);
+	background_latches = auto_malloc(Machine->screen[0].height * 16);
 
 	/* allocate memory for the decoded background graphics */
 	background_gfx[0] = auto_malloc(2 * 256 * 256 * 4);
@@ -211,13 +211,13 @@ WRITE8_HANDLER( exerion_video_latch_w )
 {
 	int ybeam = cpu_getscanline();
 
-	if (ybeam >= Machine->drv->screen[0].maxheight)
-		ybeam = Machine->drv->screen[0].maxheight - 1;
+	if (ybeam >= Machine->screen[0].height)
+		ybeam = Machine->screen[0].height - 1;
 
 	/* copy data up to and including the current scanline */
 	while (ybeam != last_scanline_update)
 	{
-		last_scanline_update = (last_scanline_update + 1) % Machine->drv->screen[0].maxheight;
+		last_scanline_update = (last_scanline_update + 1) % Machine->screen[0].height;
 		memcpy(&background_latches[last_scanline_update * 16], current_latches, 16);
 	}
 

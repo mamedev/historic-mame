@@ -812,7 +812,7 @@ WRITE32_HANDLER( graphics_w )
 				}
 {
 	static int count = 0;
-	ui_popup("WaveRAM writes = %X", ++count);
+	popmessage("WaveRAM writes = %X", ++count);
 }
 			}
 			break;

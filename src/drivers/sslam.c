@@ -217,7 +217,7 @@ static void sslam_play(int melody, int data)
 	int status = OKIM6295_status_0_r(0);
 
 	logerror("Playing sample %01x:%02x from command %02x\n",sslam_snd_bank,sslam_sound,data);
-	if (sslam_sound == 0) ui_popup("Unknown sound command %02x",sslam_sound);
+	if (sslam_sound == 0) popmessage("Unknown sound command %02x",sslam_sound);
 
 	if (melody) {
 		if (sslam_melody != sslam_sound) {

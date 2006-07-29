@@ -424,7 +424,7 @@ static READ8_HANDLER( bank_r )
 	{
 		int sel = (bios_bank >> 6) & 0x03;
 
-//      ui_popup("Reading from Bank %i",sel);
+//      popmessage("Reading from Bank %i",sel);
 
 		if(sel == 0)
 			return 0xff;
@@ -533,7 +533,7 @@ static WRITE8_HANDLER( megaplay_game_w )
 	{
 		bios_mode = MP_GAME;
 		readpos = 1;
-//      ui_popup("Game bank selected: 0x%03x",game_banksel);
+//      popmessage("Game bank selected: 0x%03x",game_banksel);
 		logerror("BIOS [0x%04x]: 68K address space bank selected: 0x%03x\n",activecpu_get_previouspc(),game_banksel);
 	}
 }

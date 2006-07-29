@@ -74,7 +74,7 @@ static mame_bitmap *rawbitmap;
 
 VIDEO_START( shangha3 )
 {
-	if ((rawbitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight)) == 0)
+	if ((rawbitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height)) == 0)
 		return 1;
 
 	if (shangha3_do_shadows)
@@ -102,7 +102,7 @@ WRITE16_HANDLER( shangha3_flipscreen_w )
 		/* bit 7 flips screen, the rest seems to always be set to 0x7e */
 		flip_screen_set(data & 0x80);
 
-		if ((data & 0x7f) != 0x7e) ui_popup("flipscreen_w %02x",data);
+		if ((data & 0x7f) != 0x7e) popmessage("flipscreen_w %02x",data);
 	}
 }
 
@@ -266,6 +266,6 @@ else
 
 VIDEO_UPDATE( shangha3 )
 {
-	copybitmap(bitmap,rawbitmap,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,rawbitmap,0,0,0,0,&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
 	return 0;
 }

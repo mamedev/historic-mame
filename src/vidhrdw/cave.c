@@ -545,8 +545,8 @@ static void get_sprite_info_cave(void)
 	int	glob_flipx	=	cave_videoregs[ 0 ] & 0x8000;
 	int	glob_flipy	=	cave_videoregs[ 1 ] & 0x8000;
 
-	int max_x		=	Machine->drv->screen[0].maxwidth;
-	int max_y		=	Machine->drv->screen[0].maxheight;
+	int max_x		=	Machine->screen[0].width;
+	int max_y		=	Machine->screen[0].height;
 
 	for (; source < finish; source+=8 )
 	{
@@ -666,8 +666,8 @@ static void get_sprite_info_donpachi(void)
 	int	glob_flipx	=	cave_videoregs[ 0 ] & 0x8000;
 	int	glob_flipy	=	cave_videoregs[ 1 ] & 0x8000;
 
-	int max_x		=	Machine->drv->screen[0].maxwidth;
-	int max_y		=	Machine->drv->screen[0].maxheight;
+	int max_x		=	Machine->screen[0].width;
+	int max_y		=	Machine->screen[0].height;
 
 	for (; source < finish; source+=8 )
 	{
@@ -732,8 +732,8 @@ static void get_sprite_info_donpachi(void)
 
 static int sprite_init_cave(void)
 {
-	screen_width = Machine->drv->screen[0].maxwidth;
-	screen_height = Machine->drv->screen[0].maxheight;
+	screen_width = Machine->screen[0].width;
+	screen_height = Machine->screen[0].height;
 
 	if (cave_spritetype == 0 || cave_spritetype == 2)	// most of the games
 	{
@@ -746,7 +746,7 @@ static int sprite_init_cave(void)
 		cave_spritetype2 = 0;
 	}
 
-	if(!(sprite_zbuf = auto_bitmap_alloc_depth( Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight, 16 ))) return 1;
+	if(!(sprite_zbuf = auto_bitmap_alloc_depth( Machine->screen[0].width, Machine->screen[0].height, 16 ))) return 1;
 	blit.baseaddr_zbuf = sprite_zbuf->line[0];
 	blit.line_offset_zbuf = ((UINT8 *)sprite_zbuf->line[1])-((UINT8 *)sprite_zbuf->line[0]);
 
@@ -815,7 +815,7 @@ static void cave_sprite_check( const rectangle *clip )
 				if(!mame_get_performance_info()->partial_updates_this_frame)
 				{
 					if(!(sprite_zbuf_baseval += MAX_SPRITE_NUM))
-						fillbitmap(sprite_zbuf,0,&Machine->visible_area[0]);
+						fillbitmap(sprite_zbuf,0,&Machine->screen[0].visarea);
 				}
 				break;
 
@@ -824,7 +824,7 @@ static void cave_sprite_check( const rectangle *clip )
 				if(!mame_get_performance_info()->partial_updates_this_frame)
 				{
 					if(!(sprite_zbuf_baseval += MAX_SPRITE_NUM))
-						fillbitmap(sprite_zbuf,0,&Machine->visible_area[0]);
+						fillbitmap(sprite_zbuf,0,&Machine->screen[0].visarea);
 				}
 				break;
 
@@ -1474,15 +1474,15 @@ VIDEO_UPDATE( cave )
 
 #if 1
 		/* Show the video registers (cave_videoregs) */
-		ui_popup("%04X %04X %04X %04X %04X %04X %04X %04X",
+		popmessage("%04X %04X %04X %04X %04X %04X %04X %04X",
 			cave_videoregs[0], cave_videoregs[1], cave_videoregs[2], cave_videoregs[3],
 			cave_videoregs[4], cave_videoregs[5], cave_videoregs[6], cave_videoregs[7] );
 #endif
 		/* Show the scroll / flags registers of the selected layer */
-		if ((tilemap_0)&&(msk&0x000f))	ui_popup("x:%04X y:%04X f:%04X",cave_vctrl_0[0],cave_vctrl_0[1],cave_vctrl_0[2]);
-		if ((tilemap_1)&&(msk&0x00f0))	ui_popup("x:%04X y:%04X f:%04X",cave_vctrl_1[0],cave_vctrl_1[1],cave_vctrl_1[2]);
-		if ((tilemap_2)&&(msk&0x0f00))	ui_popup("x:%04X y:%04X f:%04X",cave_vctrl_2[0],cave_vctrl_2[1],cave_vctrl_2[2]);
-		if ((tilemap_3)&&(msk&0xf000))	ui_popup("x:%04X y:%04X f:%04X",cave_vctrl_3[0],cave_vctrl_3[1],cave_vctrl_3[2]);
+		if ((tilemap_0)&&(msk&0x000f))	popmessage("x:%04X y:%04X f:%04X",cave_vctrl_0[0],cave_vctrl_0[1],cave_vctrl_0[2]);
+		if ((tilemap_1)&&(msk&0x00f0))	popmessage("x:%04X y:%04X f:%04X",cave_vctrl_1[0],cave_vctrl_1[1],cave_vctrl_1[2]);
+		if ((tilemap_2)&&(msk&0x0f00))	popmessage("x:%04X y:%04X f:%04X",cave_vctrl_2[0],cave_vctrl_2[1],cave_vctrl_2[2]);
+		if ((tilemap_3)&&(msk&0xf000))	popmessage("x:%04X y:%04X f:%04X",cave_vctrl_3[0],cave_vctrl_3[1],cave_vctrl_3[2]);
 	}
 
 	/* Show the row / "column" scroll enable flags, when they change state */
@@ -1497,7 +1497,7 @@ VIDEO_UPDATE( cave )
 						rasflag |= (cave_vctrl_3[1] & 0x4000) ? 0x2000 : 0;	}
 	if (rasflag != old_rasflag)
 	{
-		ui_popup("Line Effect: 0:%c%c 1:%c%c 2:%c%c 3:%c%c",
+		popmessage("Line Effect: 0:%c%c 1:%c%c 2:%c%c 3:%c%c",
 			(rasflag&0x0001)?'x':' ', (rasflag&0x0002)?'y':' ',
 			(rasflag&0x0010)?'x':' ', (rasflag&0x0020)?'y':' ',
 			(rasflag&0x0100)?'x':' ', (rasflag&0x0200)?'y':' ',

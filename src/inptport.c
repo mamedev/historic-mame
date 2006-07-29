@@ -96,6 +96,7 @@
 #include "config.h"
 #include "xmlfile.h"
 #include "profiler.h"
+#include "ui.h"
 #include <math.h>
 
 #ifdef MESS
@@ -2055,7 +2056,7 @@ profiler_mark(PROFILER_INPUT);
 		}
 
 		/* if this is an autorepeat case, set a 1x delay and leave pressed = 1 */
-		else if (++counter > keydelay * speed * Machine->refresh_rate[0] / 60)
+		else if (++counter > keydelay * speed * Machine->screen[0].refresh / 60)
 		{
 			keydelay = 1;
 			counter = 0;
@@ -2157,7 +2158,7 @@ void input_port_update_defaults(void)
 
 void input_port_vblank_start(void)
 {
-	int ui_visible = ui_is_setup_active() || ui_is_onscrd_active();
+	int ui_visible = ui_is_menu_active() || ui_is_slider_active();
 	int portnum, bitnum;
 
 profiler_mark(PROFILER_INPUT);
@@ -2180,7 +2181,7 @@ profiler_mark(PROFILER_INPUT);
 			if (info->port->type == IPT_VBLANK)
 			{
 				portinfo->vblank ^= info->port->mask;
-				if (Machine->drv->screen[0].vblank_time == 0)
+				if (Machine->screen[0].vblank == 0)
 					logerror("Warning: you are using IPT_VBLANK with vblank_time = 0. You need to increase vblank_time for IPT_VBLANK to work.\n");
 			}
 
@@ -2302,7 +2303,7 @@ profiler_mark(PROFILER_END);
 
 void input_port_vblank_end(void)
 {
-	int ui_visible = ui_is_setup_active() || ui_is_onscrd_active();
+	int ui_visible = ui_is_menu_active() || ui_is_slider_active();
 	int port;
 
 profiler_mark(PROFILER_INPUT);

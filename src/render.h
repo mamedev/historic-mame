@@ -278,7 +278,7 @@ struct _render_primitive_list
 
 
 /***************************************************************************
-    PROTOTYPES
+    FUNCTION PROTOTYPES
 ***************************************************************************/
 
 void render_init(void);
@@ -356,6 +356,7 @@ void render_container_add_char(render_container *container, float x0, float y0, 
 void render_resample_argb_bitmap_hq(void *dest, UINT32 drowpixels, UINT32 dwidth, UINT32 dheight, const mame_bitmap *source, const rectangle *sbounds, const render_color *color);
 int render_clip_line(render_bounds *bounds, const render_bounds *clip);
 int render_clip_quad(render_bounds *bounds, const render_bounds *clip, render_quad_texuv *texcoords);
+void render_line_to_quad(const render_bounds *bounds, float width, render_bounds *bounds0, render_bounds *bounds1);
 mame_bitmap *render_load_png(const char *dirname, const char *filename, mame_bitmap *alphadest, int *hasalpha);
 
 
@@ -388,7 +389,7 @@ extern const char layout_voffff20[];	/* vertical 4:3 with FF,FF,20 color overlay
 
 
 /***************************************************************************
-    INLINES
+    INLINE FUNCTIONS
 ***************************************************************************/
 
 /*-------------------------------------------------

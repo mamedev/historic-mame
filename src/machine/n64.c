@@ -476,7 +476,10 @@ WRITE32_HANDLER( n64_vi_reg_w )
 		case 0x00/4:		// VI_CONTROL_REG
 			if ((vi_control & 0x40) != (data & 0x40))
 			{
-				set_visible_area(0, 0, vi_width-1, 0, (data & 0x40) ? 479 : 239);
+				screen_state *state = &Machine->screen[0];
+				rectangle visarea = state->visarea;
+				visarea.max_y = (data & 0x40) ? 479 : 239;
+				configure_screen(0, state->width, visarea.max_y + 1, &visarea, Machine->screen[0].refresh);
 			}
 			vi_control = data;
 			break;
@@ -488,7 +491,10 @@ WRITE32_HANDLER( n64_vi_reg_w )
 		case 0x08/4:		// VI_WIDTH_REG
 			if (vi_width != data && data > 0)
 			{
-				set_visible_area(0, 0, data-1, 0, (vi_control & 0x40) ? 479 : 239);
+				screen_state *state = &Machine->screen[0];
+				rectangle visarea = state->visarea;
+				visarea.max_x = data-1;
+				configure_screen(0, visarea.max_x + 1, state->height, &visarea, Machine->screen[0].refresh);
 			}
 			vi_width = data;
 			break;

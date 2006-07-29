@@ -1365,8 +1365,8 @@ static void galaxian_draw_bullets(mame_bitmap *bitmap, int offs, int x, int y)
 	{
 		x--;
 
-		if (x >= Machine->visible_area[0].min_x &&
-			x <= Machine->visible_area[0].max_x)
+		if (x >= Machine->screen[0].visarea.min_x &&
+			x <= Machine->screen[0].visarea.max_x)
 		{
 			int color;
 
@@ -1390,8 +1390,8 @@ static void scramble_draw_bullets(mame_bitmap *bitmap, int offs, int x, int y)
 
 	x = x - 6;
 
-	if (x >= Machine->visible_area[0].min_x &&
-		x <= Machine->visible_area[0].max_x)
+	if (x >= Machine->screen[0].visarea.min_x &&
+		x <= Machine->screen[0].visarea.max_x)
 	{
 		/* yellow bullets */
 		plot_pixel(bitmap, x, y, Machine->pens[BULLETS_COLOR_BASE]);
@@ -1404,8 +1404,8 @@ static void darkplnt_draw_bullets(mame_bitmap *bitmap, int offs, int x, int y)
 
 	x = x - 6;
 
-	if (x >= Machine->visible_area[0].min_x &&
-		x <= Machine->visible_area[0].max_x)
+	if (x >= Machine->screen[0].visarea.min_x &&
+		x <= Machine->screen[0].visarea.max_x)
 	{
 		plot_pixel(bitmap, x, y, Machine->pens[32 + darkplnt_bullet_color]);
 	}
@@ -1421,8 +1421,8 @@ static void theend_draw_bullets(mame_bitmap *bitmap, int offs, int x, int y)
 	{
 		x--;
 
-		if (x >= Machine->visible_area[0].min_x &&
-			x <= Machine->visible_area[0].max_x)
+		if (x >= Machine->screen[0].visarea.min_x &&
+			x <= Machine->screen[0].visarea.max_x)
 		{
 			plot_pixel(bitmap, x, y, Machine->pens[BULLETS_COLOR_BASE]);
 		}
@@ -1435,18 +1435,18 @@ static void theend_draw_bullets(mame_bitmap *bitmap, int offs, int x, int y)
 static void galaxian_draw_background(mame_bitmap *bitmap)
 {
 	/* plain black background */
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area[0]);
+	fillbitmap(bitmap,Machine->pens[0],&Machine->screen[0].visarea);
 }
 
 static void scramble_draw_background(mame_bitmap *bitmap)
 {
 	if (background_enable)
 	{
-		fillbitmap(bitmap,Machine->pens[BACKGROUND_COLOR_BASE],&Machine->visible_area[0]);
+		fillbitmap(bitmap,Machine->pens[BACKGROUND_COLOR_BASE],&Machine->screen[0].visarea);
 	}
 	else
 	{
-		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area[0]);
+		fillbitmap(bitmap,Machine->pens[0],&Machine->screen[0].visarea);
 	}
 }
 
@@ -1454,7 +1454,7 @@ static void turtles_draw_background(mame_bitmap *bitmap)
 {
 	int color = (background_blue << 2) | (background_green << 1) | background_red;
 
-	fillbitmap(bitmap,Machine->pens[BACKGROUND_COLOR_BASE + color],&Machine->visible_area[0]);
+	fillbitmap(bitmap,Machine->pens[BACKGROUND_COLOR_BASE + color],&Machine->screen[0].visarea);
 }
 
 static void frogger_draw_background(mame_bitmap *bitmap)
@@ -1532,7 +1532,7 @@ static void minefld_draw_background(mame_bitmap *bitmap)
 	}
 	else
 	{
-		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area[0]);
+		fillbitmap(bitmap,Machine->pens[0],&Machine->screen[0].visarea);
 	}
 }
 
@@ -1557,7 +1557,7 @@ static void rescue_draw_background(mame_bitmap *bitmap)
 	}
 	else
 	{
-		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area[0]);
+		fillbitmap(bitmap,Machine->pens[0],&Machine->screen[0].visarea);
 	}
 }
 
@@ -1681,10 +1681,10 @@ void galaxian_init_stars(int colors_offset)
 
 static void plot_star(mame_bitmap *bitmap, int x, int y, int color)
 {
-	if (y < Machine->visible_area[0].min_y ||
-		y > Machine->visible_area[0].max_y ||
-		x < Machine->visible_area[0].min_x ||
-		x > Machine->visible_area[0].max_x)
+	if (y < Machine->screen[0].visarea.min_y ||
+		y > Machine->screen[0].visarea.max_y ||
+		x < Machine->screen[0].visarea.min_x ||
+		x > Machine->screen[0].visarea.max_x)
 		return;
 
 
@@ -1933,7 +1933,7 @@ static void stars_scroll_callback(int param)
 
 static void start_stars_scroll_timer()
 {
-	timer_adjust(stars_scroll_timer, TIME_IN_HZ(Machine->drv->screen[0].refresh_rate), 0, TIME_IN_HZ(Machine->drv->screen[0].refresh_rate));
+	timer_adjust(stars_scroll_timer, TIME_IN_HZ(Machine->screen[0].refresh), 0, TIME_IN_HZ(Machine->screen[0].refresh));
 }
 
 
@@ -1983,8 +1983,8 @@ static void draw_bullets_common(mame_bitmap *bitmap)
 		sy = 255 - galaxian_bulletsram[offs + 1];
 		sx = 255 - galaxian_bulletsram[offs + 3];
 
-		if (sy < Machine->visible_area[0].min_y ||
-			sy > Machine->visible_area[0].max_y)
+		if (sy < Machine->screen[0].visarea.min_y ||
+			sy > Machine->screen[0].visarea.max_y)
 			continue;
 
 		if (flipscreen_y)  sy = 255 - sy;

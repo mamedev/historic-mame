@@ -431,7 +431,7 @@ VIDEO_START( tubep )
 	spritemap = auto_malloc(256*256*2);
 	memset(spritemap,0,256*256*2);
 
-	tmpbitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth,Machine->drv->screen[0].maxheight);
+	tmpbitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
 
 	if (tmpbitmap == NULL)
 		return 1;
@@ -677,7 +677,7 @@ VIDEO_UPDATE( tubep )
 					((tubep_textram[offs+1]) & 0x0f) | color_A4,
 					0,0, /*flipscreen[0],flipscreen[1],*/
 					8*sx,8*sy,
-					&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+					&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
 		}
 	}
 
@@ -753,7 +753,7 @@ VIDEO_UPDATE( tubep )
 	}
 
 	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_PEN, Machine->pens[0] );
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->screen[0].visarea,TRANSPARENCY_PEN, Machine->pens[0] );
 	return 0;
 }
 
@@ -799,7 +799,7 @@ VIDEO_UPDATE( rjammer )
 					(tubep_textram[offs+1]) & 0x0f,
 					0,0, /*flipscreen[0],flipscreen[1],*/
 					8*sx,8*sy,
-					&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+					&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
 		}
 	}
 
@@ -925,7 +925,7 @@ VIDEO_UPDATE( rjammer )
 	}
 
 	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_PEN, Machine->pens[0] );
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->screen[0].visarea,TRANSPARENCY_PEN, Machine->pens[0] );
 
 	return 0;
 }

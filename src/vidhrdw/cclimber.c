@@ -421,7 +421,7 @@ VIDEO_UPDATE( cclimber )
 			}
 		}
 
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -457,7 +457,7 @@ VIDEO_UPDATE( cclimber )
 				spriteram[offs + 1] & 0x0f,
 				flipx,flipy,
 				sx,sy,
-				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+				&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 	}
 
 
@@ -538,7 +538,7 @@ VIDEO_UPDATE( swimmer )
 				scroll[offs] = -cclimber_column_scroll[offs];
 		}
 
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -574,7 +574,7 @@ VIDEO_UPDATE( swimmer )
 				(spriteram[offs + 1] & 0x0f) + 0x10 * palettebank,
 				flipx,flipy,
 				sx,sy,
-				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+				&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 	}
 
 
@@ -666,7 +666,7 @@ VIDEO_UPDATE( yamato )
 			}
 		}
 
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 	}
 
 
@@ -702,7 +702,7 @@ VIDEO_UPDATE( yamato )
 				spriteram[offs + 1] & 0x0f,
 				flipx,flipy,
 				sx,sy,
-				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+				&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 	}
 
 

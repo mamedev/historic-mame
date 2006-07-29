@@ -132,31 +132,31 @@ VIDEO_UPDATE( topspeed )
 	if (code_pressed_memory (KEYCODE_V))
 	{
 		dislayer[0] ^= 1;
-		ui_popup("bg: %01x",dislayer[0]);
+		popmessage("bg: %01x",dislayer[0]);
 	}
 
 	if (code_pressed_memory (KEYCODE_B))
 	{
 		dislayer[1] ^= 1;
-		ui_popup("fg: %01x",dislayer[1]);
+		popmessage("fg: %01x",dislayer[1]);
 	}
 
 	if (code_pressed_memory (KEYCODE_N))
 	{
 		dislayer[2] ^= 1;
-		ui_popup("bg2: %01x",dislayer[2]);
+		popmessage("bg2: %01x",dislayer[2]);
 	}
 
 	if (code_pressed_memory (KEYCODE_M))
 	{
 		dislayer[3] ^= 1;
-		ui_popup("fg2: %01x",dislayer[3]);
+		popmessage("fg2: %01x",dislayer[3]);
 	}
 
 	if (code_pressed_memory (KEYCODE_C))
 	{
 		dislayer[4] ^= 1;
-		ui_popup("sprites: %01x",dislayer[4]);
+		popmessage("sprites: %01x",dislayer[4]);
 	}
 #endif
 

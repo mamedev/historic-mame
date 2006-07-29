@@ -217,8 +217,8 @@ void hdgsp_read_from_shiftreg(UINT32 address, UINT16 *shiftreg)
 void hdgsp_display_update(UINT32 offs, int rowbytes, int scanline)
 {
 	if (scanline == 0) scanline--;
-	if (scanline <= 0 && last_rendered_scanline < Machine->visible_area[0].max_y)
-		force_partial_update(0, Machine->visible_area[0].max_y);
+	if (scanline <= 0 && last_rendered_scanline < Machine->screen[0].visarea.max_y)
+		force_partial_update(0, Machine->screen[0].visarea.max_y);
 	else
 		force_partial_update(0, scanline);
 	gfx_offset = offs >> hdgsp_multisync;

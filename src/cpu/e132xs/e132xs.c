@@ -212,7 +212,7 @@
 
 *********************************************************************/
 
-#include "usrintrf.h"
+#include "ui.h"
 #include "debugger.h"
 #include "e132xs.h"
 

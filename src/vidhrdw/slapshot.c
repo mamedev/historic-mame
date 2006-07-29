@@ -194,7 +194,7 @@ static void slapshot_draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect,
 			continue;
 		}
 
-//ui_popup("%04x",area);
+//popmessage("%04x",area);
 
 		/* check for extra scroll offset */
 		if ((spriteram_buffered[(offs+4)/2] & 0xf000) == 0xa000)
@@ -535,31 +535,31 @@ VIDEO_UPDATE( slapshot )
 	if (code_pressed_memory (KEYCODE_Z))
 	{
 		dislayer[0] ^= 1;
-		ui_popup("bg0: %01x",dislayer[0]);
+		popmessage("bg0: %01x",dislayer[0]);
 	}
 
 	if (code_pressed_memory (KEYCODE_X))
 	{
 		dislayer[1] ^= 1;
-		ui_popup("bg1: %01x",dislayer[1]);
+		popmessage("bg1: %01x",dislayer[1]);
 	}
 
 	if (code_pressed_memory (KEYCODE_C))
 	{
 		dislayer[2] ^= 1;
-		ui_popup("bg2: %01x",dislayer[2]);
+		popmessage("bg2: %01x",dislayer[2]);
 	}
 
 	if (code_pressed_memory (KEYCODE_V))
 	{
 		dislayer[3] ^= 1;
-		ui_popup("bg3: %01x",dislayer[3]);
+		popmessage("bg3: %01x",dislayer[3]);
 	}
 
 	if (code_pressed_memory (KEYCODE_B))
 	{
 		dislayer[4] ^= 1;
-		ui_popup("text: %01x",dislayer[4]);
+		popmessage("text: %01x",dislayer[4]);
 	}
 #endif
 

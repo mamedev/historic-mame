@@ -114,8 +114,8 @@ Offset:     Format:     Value:
 static void draw_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int i;
-	int max_x = Machine->drv->screen[0].maxwidth  - 1;
-	int max_y = Machine->drv->screen[0].maxheight - 1;
+	int max_x = Machine->screen[0].width  - 1;
+	int max_y = Machine->screen[0].height - 1;
 
 	for (i = 0; i < spriteram_size ; i += 4)
 	{

@@ -174,7 +174,7 @@ static debug_view *first_view;
 
 
 /***************************************************************************
-    PROTOTYPES
+    FUNCTION PROTOTYPES
 ***************************************************************************/
 
 static int console_alloc(debug_view *view);

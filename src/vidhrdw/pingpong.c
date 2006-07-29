@@ -161,7 +161,7 @@ static void pingpong_draw_sprites( mame_bitmap *bitmap )
 
 VIDEO_UPDATE( pingpong )
 {
-	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->screen[0].visarea, bg_tilemap, 0, 0);
 	pingpong_draw_sprites(bitmap);
 	return 0;
 }

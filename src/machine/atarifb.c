@@ -7,10 +7,7 @@
 #include "driver.h"
 #include "atarifb.h"
 #include "sound/discrete.h"
-
-#ifdef NEW_RENDER
 #include "render.h"
-#endif
 
 static int CTRLD;
 static int sign_x_1, sign_y_1;
@@ -91,24 +88,20 @@ WRITE8_HANDLER( atarifb_out3_w )
 		case 0x00:
 			/* Player 1 play select lamp */
 			atarifb_lamp1 = data;
-#ifdef NEW_RENDER
 			render_view_item_set_state("ledleft0", (atarifb_lamp1 >> 0) & 1);
 			render_view_item_set_state("ledleft1", (atarifb_lamp1 >> 1) & 1);
 			render_view_item_set_state("ledleft2", (atarifb_lamp1 >> 2) & 1);
 			render_view_item_set_state("ledleft3", (atarifb_lamp1 >> 3) & 1);
-#endif
 			break;
 		case 0x01:
 			break;
 		case 0x02:
 			/* Player 2 play select lamp */
 			atarifb_lamp2 = data;
-#ifdef NEW_RENDER
 			render_view_item_set_state("ledright0", (atarifb_lamp2 >> 0) & 1);
 			render_view_item_set_state("ledright1", (atarifb_lamp2 >> 1) & 1);
 			render_view_item_set_state("ledright2", (atarifb_lamp2 >> 2) & 1);
 			render_view_item_set_state("ledright3", (atarifb_lamp2 >> 3) & 1);
-#endif
 			break;
 		case 0x03:
 			break;

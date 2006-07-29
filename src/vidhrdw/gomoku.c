@@ -121,7 +121,7 @@ VIDEO_START( gomoku )
 	int bgdata;
 	int color;
 
-	gomoku_bg_bitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
+	gomoku_bg_bitmap = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
 
 	gomoku_bg_dirty = auto_malloc(0x100);
 

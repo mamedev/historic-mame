@@ -38,7 +38,7 @@ static void get_tile_info(int tile_index)
 
 VIDEO_START( triplhnt )
 {
-	helper = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
+	helper = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
 
 	if (helper == NULL)
 		return 1;

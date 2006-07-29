@@ -139,7 +139,7 @@ WRITE8_HANDLER( nbmj8991_blitter_w )
 	if ((0x20000 * nbmj8991_gfxrom) > (memory_region_length(REGION_GFX1) - 1))
 	{
 #ifdef MAME_DEBUG
-		ui_popup("GFXROM BANK OVER!!");
+		popmessage("GFXROM BANK OVER!!");
 #endif
 		nbmj8991_gfxrom &= (memory_region_length(REGION_GFX1) / 0x20000 - 1);
 	}
@@ -167,20 +167,20 @@ static void nbmj8991_vramflip(void)
 
 	if (nbmj8991_flipscreen == nbmj8991_flipscreen_old) return;
 
-	for (y = 0; y < Machine->drv->screen[0].maxheight / 2; y++)
+	for (y = 0; y < Machine->screen[0].height / 2; y++)
 	{
-		for (x = 0; x < Machine->drv->screen[0].maxwidth / 2; x++)
+		for (x = 0; x < Machine->screen[0].width / 2; x++)
 		{
 			// rotate 180 degrees (   0,   0) - ( 511, 511)
-			color1 = nbmj8991_videoram[(y * Machine->drv->screen[0].maxwidth) + x];
-			color2 = nbmj8991_videoram[(((Machine->drv->screen[0].maxheight - 1) - y) * Machine->drv->screen[0].maxwidth) + (((Machine->drv->screen[0].maxwidth / 2) - 1) - x)];
-			nbmj8991_videoram[(y * Machine->drv->screen[0].maxwidth) + x] = color2;
-			nbmj8991_videoram[(((Machine->drv->screen[0].maxheight - 1) - y) * Machine->drv->screen[0].maxwidth) + (((Machine->drv->screen[0].maxwidth / 2) - 1) - x)] = color1;
+			color1 = nbmj8991_videoram[(y * Machine->screen[0].width) + x];
+			color2 = nbmj8991_videoram[(((Machine->screen[0].height - 1) - y) * Machine->screen[0].width) + (((Machine->screen[0].width / 2) - 1) - x)];
+			nbmj8991_videoram[(y * Machine->screen[0].width) + x] = color2;
+			nbmj8991_videoram[(((Machine->screen[0].height - 1) - y) * Machine->screen[0].width) + (((Machine->screen[0].width / 2) - 1) - x)] = color1;
 			// rotate 180 degrees ( 512,   0) - (1023, 511)
-			color1 = nbmj8991_videoram[(y * Machine->drv->screen[0].maxwidth) + (x + (Machine->drv->screen[0].maxwidth / 2))];
-			color2 = nbmj8991_videoram[(((Machine->drv->screen[0].maxheight - 1) - y) * Machine->drv->screen[0].maxwidth) + ((((Machine->drv->screen[0].maxwidth / 2) - 1) - x) + (Machine->drv->screen[0].maxwidth / 2))];
-			nbmj8991_videoram[(y * Machine->drv->screen[0].maxwidth) + (x + (Machine->drv->screen[0].maxwidth / 2))] = color2;
-			nbmj8991_videoram[(((Machine->drv->screen[0].maxheight - 1) - y) * Machine->drv->screen[0].maxwidth) + ((((Machine->drv->screen[0].maxwidth / 2) - 1) - x) + (Machine->drv->screen[0].maxwidth / 2))] = color1;
+			color1 = nbmj8991_videoram[(y * Machine->screen[0].width) + (x + (Machine->screen[0].width / 2))];
+			color2 = nbmj8991_videoram[(((Machine->screen[0].height - 1) - y) * Machine->screen[0].width) + ((((Machine->screen[0].width / 2) - 1) - x) + (Machine->screen[0].width / 2))];
+			nbmj8991_videoram[(y * Machine->screen[0].width) + (x + (Machine->screen[0].width / 2))] = color2;
+			nbmj8991_videoram[(((Machine->screen[0].height - 1) - y) * Machine->screen[0].width) + ((((Machine->screen[0].width / 2) - 1) - x) + (Machine->screen[0].width / 2))] = color1;
 		}
 	}
 
@@ -190,7 +190,7 @@ static void nbmj8991_vramflip(void)
 
 static void update_pixel(int x, int y)
 {
-	UINT8 color = nbmj8991_videoram[(y * Machine->drv->screen[0].maxwidth) + x];
+	UINT8 color = nbmj8991_videoram[(y * Machine->screen[0].width) + x];
 	plot_pixel(nbmj8991_tmpbitmap, x, y, Machine->pens[color]);
 }
 
@@ -249,7 +249,7 @@ static void nbmj8991_gfxdraw(void)
 			if ((gfxaddr > (memory_region_length(REGION_GFX1) - 1)))
 			{
 #ifdef MAME_DEBUG
-				ui_popup("GFXROM ADDRESS OVER!!");
+				popmessage("GFXROM ADDRESS OVER!!");
 #endif
 				gfxaddr &= (memory_region_length(REGION_GFX1) - 1);
 			}
@@ -285,12 +285,12 @@ static void nbmj8991_gfxdraw(void)
 
 			if (color1 != 0xff)
 			{
-				nbmj8991_videoram[(dy * Machine->drv->screen[0].maxwidth) + dx1] = color1;
+				nbmj8991_videoram[(dy * Machine->screen[0].width) + dx1] = color1;
 				update_pixel(dx1, dy);
 			}
 			if (color2 != 0xff)
 			{
-				nbmj8991_videoram[(dy * Machine->drv->screen[0].maxwidth) + dx2] = color2;
+				nbmj8991_videoram[(dy * Machine->screen[0].width) + dx2] = color2;
 				update_pixel(dx2, dy);
 			}
 
@@ -308,10 +308,10 @@ static void nbmj8991_gfxdraw(void)
 ******************************************************************************/
 VIDEO_START( nbmj8991 )
 {
-	if ((nbmj8991_tmpbitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight)) == 0) return 1;
-	nbmj8991_videoram = auto_malloc(Machine->drv->screen[0].maxwidth * Machine->drv->screen[0].maxheight * sizeof(UINT8));
+	if ((nbmj8991_tmpbitmap = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height)) == 0) return 1;
+	nbmj8991_videoram = auto_malloc(Machine->screen[0].width * Machine->screen[0].height * sizeof(UINT8));
 	nbmj8991_clut = auto_malloc(0x800 * sizeof(UINT8));
-	memset(nbmj8991_videoram, 0x00, (Machine->drv->screen[0].maxwidth * Machine->drv->screen[0].maxheight * sizeof(UINT8)));
+	memset(nbmj8991_videoram, 0x00, (Machine->screen[0].width * Machine->screen[0].height * sizeof(UINT8)));
 	return 0;
 }
 
@@ -323,9 +323,9 @@ VIDEO_UPDATE( nbmj8991_type1 )
 	{
 		nbmj8991_screen_refresh = 0;
 
-		for (y = 0; y < Machine->drv->screen[0].maxheight; y++)
+		for (y = 0; y < Machine->screen[0].height; y++)
 		{
-			for (x = 0; x < Machine->drv->screen[0].maxwidth; x++)
+			for (x = 0; x < Machine->screen[0].width; x++)
 			{
 				update_pixel(x, y);
 			}
@@ -347,7 +347,7 @@ VIDEO_UPDATE( nbmj8991_type1 )
 			scrolly =  (( nbmj8991_scrolly) + 0x0f1) & 0x1ff;
 		}
 
-		copyscrollbitmap(bitmap, nbmj8991_tmpbitmap, 1, &scrollx, 1, &scrolly, &Machine->visible_area[0], TRANSPARENCY_NONE, 0);
+		copyscrollbitmap(bitmap, nbmj8991_tmpbitmap, 1, &scrollx, 1, &scrolly, &Machine->screen[0].visarea, TRANSPARENCY_NONE, 0);
 	}
 	else
 	{
@@ -364,9 +364,9 @@ VIDEO_UPDATE( nbmj8991_type2 )
 	{
 		nbmj8991_screen_refresh = 0;
 
-		for (y = 0; y < Machine->drv->screen[0].maxheight; y++)
+		for (y = 0; y < Machine->screen[0].height; y++)
 		{
-			for (x = 0; x < Machine->drv->screen[0].maxwidth; x++)
+			for (x = 0; x < Machine->screen[0].width; x++)
 			{
 				update_pixel(x, y);
 			}
@@ -388,7 +388,7 @@ VIDEO_UPDATE( nbmj8991_type2 )
 			scrolly =  (( nbmj8991_scrolly) + 0x0f1) & 0x1ff;
 		}
 
-		copyscrollbitmap(bitmap, nbmj8991_tmpbitmap, 1, &scrollx, 1, &scrolly, &Machine->visible_area[0], TRANSPARENCY_NONE, 0);
+		copyscrollbitmap(bitmap, nbmj8991_tmpbitmap, 1, &scrollx, 1, &scrolly, &Machine->screen[0].visarea, TRANSPARENCY_NONE, 0);
 	}
 	else
 	{

@@ -169,7 +169,7 @@ static WRITE16_HANDLER( rockn_adpcmbank_w )
 
 	if (bank > 7)
 	{
-		ui_popup("!!!!! ADPCM BANK OVER:%01X (%04X) !!!!!", bank, data);
+		popmessage("!!!!! ADPCM BANK OVER:%01X (%04X) !!!!!", bank, data);
 		bank = 0;
 	}
 
@@ -199,7 +199,7 @@ static WRITE16_HANDLER( rockn2_adpcmbank_w )
 
 	if (bank > 8)
 	{
-		ui_popup("!!!!! ADPCM BANK OVER:%01X (%04X) !!!!!", bank, data);
+		popmessage("!!!!! ADPCM BANK OVER:%01X (%04X) !!!!!", bank, data);
 		bank = 0;
 	}
 

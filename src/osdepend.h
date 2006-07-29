@@ -31,82 +31,7 @@ void osd_wait_for_debugger(void);
 
 ******************************************************************************/
 
-#ifndef NEW_RENDER
-
-/* these are the parameters passed into osd_create_display */
-/* In mamecore.h: typedef struct _osd_create_params osd_create_params; */
-struct _osd_create_params
-{
-	int width, height;			/* width and height */
-	int aspect_x, aspect_y;		/* aspect ratio X:Y */
-	int depth;					/* depth, either 16(palette), 15(RGB) or 32(RGB) */
-	int colors;					/* colors in the palette (including UI) */
-	float fps;					/* frame rate */
-	int video_attributes;		/* video flags from driver */
-};
-
-
-
-/*
-  Create a display screen, or window, of the given dimensions (or larger). It is
-  acceptable to create a smaller display if necessary, in that case the user must
-  have a way to move the visibility window around.
-
-  The params contains all the information the
-  Attributes are the ones defined in driver.h, they can be used to perform
-  optimizations, e.g. dirty rectangle handling if the game supports it, or faster
-  blitting routines with fixed palette if the game doesn't change the palette at
-  run time.
-  Orientation is the screen orientation (as defined in driver.h) which will be done
-  by the core. This can be used to select thinner screen modes for vertical games
-  (ORIENTATION_SWAP_XY set), or even to ask the user to rotate the monitor if it's
-  a pivot model. Note that the OS dependent code must NOT perform any rotation,
-  this is done entirely in the core.
-  Depth can be 8 or 16 for palettized modes, meaning that the core will store in the
-  bitmaps logical pens which will have to be remapped through a palette at blit time,
-  and 15 or 32 for direct mapped modes, meaning that the bitmaps will contain RGB
-  triplets (555 or 888). For direct mapped modes, the VIDEO_RGB_DIRECT flag is set
-  in the attributes field.
-
-  Returns 0 on success.
-*/
-int osd_create_display(const osd_create_params *params, UINT32 *rgb_components);
-void osd_close_display(void);
-
-
-/*
-  osd_skip_this_frame() must return 0 if the current frame will be displayed.
-  This can be used by drivers to skip cpu intensive processing for skipped
-  frames, so the function must return a consistent result throughout the
-  current frame. The function MUST NOT check timers and dynamically determine
-  whether to display the frame: such calculations must be done in
-  osd_update_video_and_audio(), and they must affect the FOLLOWING frames, not
-  the current one. At the end of osd_update_video_and_audio(), the code must
-  already know exactly whether the next frame will be skipped or not.
-*/
-int osd_skip_this_frame(void);
-
-
-/*
-  Update video and audio. game_bitmap contains the game display, while
-  debug_bitmap an image of the debugger window (if the debugger is active; NULL
-  otherwise). They can be shown one at a time, or in two separate windows,
-  depending on the OS limitations. If only one is shown, the user must be able
-  to toggle between the two by pressing IPT_UI_TOGGLE_DEBUG; moreover,
-  osd_debugger_focus() will be used by the core to force the display of a
-  specific bitmap, e.g. the debugger one when the debugger becomes active.
-
-  leds_status is a bitmask of lit LEDs, usually player start lamps. They can be
-  simulated using the keyboard LEDs, or in other ways e.g. by placing graphics
-  on the window title bar.
-*/
-void osd_update_video_and_audio(struct _mame_display *display);
-
-#else
-
 int osd_update(mame_time emutime);
-
-#endif
 
 
 /*
@@ -135,12 +60,12 @@ const char *osd_get_fps_text(const performance_info *performance);
 
   osd_start_audio_stream() and osd_update_audio_stream() must return the number
   of samples (or couples of samples, when using stereo) required for next frame.
-  This will be around Machine->sample_rate / Machine->drv->screen[0].refresh_rate,
+  This will be around Machine->sample_rate / Machine->screen[0].refresh,
   the code may adjust it by SMALL AMOUNTS to keep timing accurate and to
   maintain audio and video in sync when using vsync. Note that sound emulation,
   especially when DACs are involved, greatly depends on the number of samples
   per frame to be roughly constant, so the returned value must always stay close
-  to the reference value of Machine->sample_rate / Machine->drv->screen[0].refresh_rate.
+  to the reference value of Machine->sample_rate / Machine->screen[0].refresh.
   Of course that value is not necessarily an integer so at least a +/- 1
   adjustment is necessary to avoid drifting over time.
 */

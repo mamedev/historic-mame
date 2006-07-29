@@ -27,11 +27,9 @@
 #include "driver.h"
 #include "profiler.h"
 #include "vidhrdw/vector.h"
-
-#ifdef NEW_RENDER
 #include "render.h"
 #include "options.h"
-#endif
+#include "ui.h"
 
 // MAMEOS headers
 #include "winmain.h"
@@ -184,7 +182,7 @@ INLINE int effective_frameskip(void)
 
 INLINE int effective_throttle(void)
 {
-	return !video_config.fastforward && (video_config.throttle || mame_is_paused() || ui_is_setup_active() || ui_is_onscrd_active());
+	return !video_config.fastforward && (video_config.throttle || mame_is_paused() || ui_is_menu_active() || ui_is_slider_active());
 }
 
 
@@ -422,7 +420,7 @@ const char *osd_get_fps_text(const performance_info *performance)
 				effective_autoframeskip() ? "auto" : "fskp", effective_frameskip(),
 				(int)(performance->game_speed_percent + 0.5),
 				(int)(performance->frames_per_second + 0.5),
-				(int)(Machine->refresh_rate[0] + 0.5));
+				(int)(Machine->screen[0].refresh + 0.5));
 
 		/* for vector games, add the number of vector updates */
 		if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
@@ -655,7 +653,6 @@ static void update_fps(mame_time emutime)
 		fps_frames_displayed++;
 		if (fps_frames_displayed == video_config.framestorun)
 		{
-#ifndef NEW_RENDER
 			char name[20];
 			mame_file *fp;
 
@@ -665,10 +662,9 @@ static void update_fps(mame_time emutime)
 			// write out the screenshot
 			if ((fp = mame_fopen(Machine->gamedrv->name, name, FILETYPE_SCREENSHOT, 1)) != NULL)
 			{
-				save_screen_snapshot_as(fp, artwork_get_ui_bitmap());
+				snapshot_save_screen_indexed(fp, 0);
 				mame_fclose(fp);
 			}
-#endif
 			mame_schedule_exit();
 		}
 		fps_end_time = curr;

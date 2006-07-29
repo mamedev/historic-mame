@@ -84,7 +84,7 @@ static comment_group *debug_comments;
 
 
 /***************************************************************************
-    PROTOTYPES
+    FUNCTION PROTOTYPES
 ***************************************************************************/
 
 static void debug_comment_exit(void);

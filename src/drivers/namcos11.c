@@ -865,9 +865,9 @@ static int lightgunx( int port )
 	const int portmin = 0xd8;
 	const int portmax = 0x387;
 	int x = ( readinputport( port ) - portmin );
-	x *= ( Machine->visible_area[0].max_x - Machine->visible_area[0].min_x );
+	x *= ( Machine->screen[0].visarea.max_x - Machine->screen[0].visarea.min_x );
 	x /= ( portmax - portmin );
-	return Machine->visible_area[0].min_x + x;
+	return Machine->screen[0].visarea.min_x + x;
 }
 
 static int lightguny( int port )
@@ -875,9 +875,9 @@ static int lightguny( int port )
 	const int portmin = 0x2c;
 	const int portmax = 0x11b;
 	int y = ( readinputport( port ) - portmin );
-	y *= ( Machine->visible_area[0].max_y - Machine->visible_area[0].min_y );
+	y *= ( Machine->screen[0].visarea.max_y - Machine->screen[0].visarea.min_y );
 	y /= ( portmax - portmin );
-	return Machine->visible_area[0].min_y + y;
+	return Machine->screen[0].visarea.min_y + y;
 }
 
 static VIDEO_UPDATE( lightgun )

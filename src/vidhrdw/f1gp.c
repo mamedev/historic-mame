@@ -425,7 +425,7 @@ VIDEO_UPDATE( f1gp2 )
 				break;
 #ifdef MAME_DEBUG
 			case 3:
-				ui_popup("unsupported priority 3\n");
+				popmessage("unsupported priority 3\n");
 #endif
 		}
 	}

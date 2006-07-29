@@ -853,9 +853,9 @@ void amiga_render_scanline(int scanline)
 	if (cpu_getcurrentframe() % 64 == 0 && scanline == 0)
 	{
 		if (code_pressed(KEYCODE_Q))
-			ui_popup("%d", wait_offset -= 1);
+			popmessage("%d", wait_offset -= 1);
 		if (code_pressed(KEYCODE_W))
-			ui_popup("%d", wait_offset += 1);
+			popmessage("%d", wait_offset += 1);
 	}
 #endif
 }

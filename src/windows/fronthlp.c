@@ -519,8 +519,11 @@ int frontend_listsamples(FILE *output)
 {
 	const char *gamename = options_get_string("", FALSE);
 	const game_driver **gamedrv;
+
+#if (HAS_SAMPLES)
 	machine_config drv;
 	int sndnum;
+#endif
 
 	/* find the gamename */
 	for (gamedrv = (const game_driver **)&drivers[0]; *gamedrv != NULL; gamedrv++)
@@ -699,7 +702,11 @@ int frontend_verifysamples(FILE *output)
 	{
 		const char **samplenames = NULL;
 		machine_config drv;
-		int sndnum, res;
+		int res;
+
+#if (HAS_SAMPLES)
+		int sndnum;
+#endif
 
 		/* skip if we don't match */
 		if (mame_strwildcmp(gamename, drivers[drvindex]->name))

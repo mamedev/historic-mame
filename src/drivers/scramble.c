@@ -539,7 +539,7 @@ ADDRESS_MAP_END
 static WRITE8_HANDLER( scorpion_extra_sound_w )
 {
 	if(data != 0xff)
-		ui_popup("Played sample/speech %02X",data);
+		popmessage("Played sample/speech %02X",data);
 }
 
 static WRITE8_HANDLER( scorpion_sound_cmd_w )

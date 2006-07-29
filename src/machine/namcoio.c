@@ -826,7 +826,7 @@ static void handle_coins(int chip,int swap)
 	int credit_sub = 0;
 	int button;
 
-//ui_popup("%x %x %x %x %x %x %x %x",IORAM_READ(8),IORAM_READ(9),IORAM_READ(10),IORAM_READ(11),IORAM_READ(12),IORAM_READ(13),IORAM_READ(14),IORAM_READ(15));
+//popmessage("%x %x %x %x %x %x %x %x",IORAM_READ(8),IORAM_READ(9),IORAM_READ(10),IORAM_READ(11),IORAM_READ(12),IORAM_READ(13),IORAM_READ(14),IORAM_READ(15));
 
 	val = ~READ_PORT(0);	// pins 38-41
 	toggled = val ^ io[chip].lastcoins;
@@ -911,7 +911,7 @@ static void namco_customio_56XX_run(int chip)
 			IORAM_WRITE(2, ~READ_PORT(2));	// pins 26-29
 			IORAM_WRITE(3, ~READ_PORT(3));	// pins 30-33
 
-//ui_popup("%x %x %x %x %x %x %x %x",IORAM_READ(8),IORAM_READ(9),IORAM_READ(10),IORAM_READ(11),IORAM_READ(12),IORAM_READ(13),IORAM_READ(14),IORAM_READ(15));
+//popmessage("%x %x %x %x %x %x %x %x",IORAM_READ(8),IORAM_READ(9),IORAM_READ(10),IORAM_READ(11),IORAM_READ(12),IORAM_READ(13),IORAM_READ(14),IORAM_READ(15));
 
 			WRITE_PORT(0,IORAM_READ(9));	// output to pins 13-16 (motos, pacnpal, gaplus)
 			WRITE_PORT(1,IORAM_READ(10));	// output to pins 17-20 (gaplus)
@@ -1018,7 +1018,7 @@ static void namco_customio_58XX_run(int chip)
 			IORAM_WRITE(6, ~READ_PORT(2));	// pins 26-29
 			IORAM_WRITE(7, ~READ_PORT(3));	// pins 30-33
 
-//ui_popup("%x %x %x %x %x %x %x %x",IORAM_READ(8),IORAM_READ(9),IORAM_READ(10),IORAM_READ(11),IORAM_READ(12),IORAM_READ(13),IORAM_READ(14),IORAM_READ(15));
+//popmessage("%x %x %x %x %x %x %x %x",IORAM_READ(8),IORAM_READ(9),IORAM_READ(10),IORAM_READ(11),IORAM_READ(12),IORAM_READ(13),IORAM_READ(14),IORAM_READ(15));
 
 			WRITE_PORT(0,IORAM_READ(9));	// output to pins 13-16 (toypop)
 			WRITE_PORT(1,IORAM_READ(10));	// output to pins 17-20 (toypop)

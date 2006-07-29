@@ -517,7 +517,7 @@ else
 						ls195_latch>>=4;
 				}
 				if (ls163_u107 >= 256)
-					ui_popup("ERROR!!!!");
+					popmessage("ERROR!!!!");
 			}
 
 			if ( (sy>=cliprect->min_y) && (sy<=cliprect->max_y) )
@@ -847,7 +847,7 @@ static WRITE8_HANDLER( mem_device_select_w )
 
 	if(dev_sel > 3)
 	{
-		ui_popup("memory device selected = %i", dev_sel);
+		popmessage("memory device selected = %i", dev_sel);
 	}
 
 	mem_dev_selected = dev_sel * 0x800;
@@ -868,7 +868,7 @@ static WRITE8_HANDLER( mem_device_w )
 	memory_devices[mem_dev_selected + offset] = data;
 
     if((mem_dev_selected==0x800) & (offset>0x3f))
-		ui_popup("RAM1 offset=%4x",offset);
+		popmessage("RAM1 offset=%4x",offset);
 
 }
 static READ8_HANDLER( mem_device_r )
@@ -882,13 +882,13 @@ static READ8_HANDLER( mem_device_r )
 static WRITE8_HANDLER( slope_rom_addr_hi_w )
 {
 	slopeROM_bank = (data&3)<<9;
-//  ui_popup("bank = %04x", slopeROM_bank);
+//  popmessage("bank = %04x", slopeROM_bank);
 }
 
 static WRITE8_HANDLER( slope_rom_addr_lo_w )
 {
 	address = data;
-//    ui_popup("address = %04x", address);
+//    popmessage("address = %04x", address);
 }
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )

@@ -2188,16 +2188,16 @@ static void stv_vdp2_fill_rotation_parameter_table( UINT8 rot_parameter )
 
 		switch(debug.roz)
 		{
-	    	case 0: ui_popup( "Rotation parameter Table (%d)", rot_parameter ); break;
-	        case 1: ui_popup( "xst = %x, yst = %x, zst = %x", RP.xst, RP.yst, RP.zst ); break;
-	        case 2: ui_popup( "dxst = %x, dyst = %x", RP.dxst, RP.dyst ); break;
-	        case 3: ui_popup( "dx = %x, dy = %x", RP.dx, RP.dy ); break;
-	        case 4: ui_popup( "A = %x, B = %x, C = %x, D = %x, E = %x, F = %x", RP.A, RP.B, RP.C, RP.D, RP.E, RP.F ); break;
-	        case 5: ui_popup( "px = %x, py = %x, pz = %x", RP.px, RP.py, RP.pz ); break;
-			case 6:	ui_popup( "cx = %x, cy = %x, cz = %x", RP.cx, RP.cy, RP.cz ); break;
-			case 7:	ui_popup( "mx = %x, my = %x", RP.mx, RP.my ); break;
-			case 8:	ui_popup( "kx = %x, ky = %x", RP.kx, RP.ky ); break;
-	 		case 9:	ui_popup( "kast = %x, dkast = %x, dkax = %x", RP.kast, RP.dkast, RP.dkax ); break;
+	    	case 0: popmessage( "Rotation parameter Table (%d)", rot_parameter ); break;
+	        case 1: popmessage( "xst = %x, yst = %x, zst = %x", RP.xst, RP.yst, RP.zst ); break;
+	        case 2: popmessage( "dxst = %x, dyst = %x", RP.dxst, RP.dyst ); break;
+	        case 3: popmessage( "dx = %x, dy = %x", RP.dx, RP.dy ); break;
+	        case 4: popmessage( "A = %x, B = %x, C = %x, D = %x, E = %x, F = %x", RP.A, RP.B, RP.C, RP.D, RP.E, RP.F ); break;
+	        case 5: popmessage( "px = %x, py = %x, pz = %x", RP.px, RP.py, RP.pz ); break;
+			case 6:	popmessage( "cx = %x, cy = %x, cz = %x", RP.cx, RP.cy, RP.cz ); break;
+			case 7:	popmessage( "mx = %x, my = %x", RP.mx, RP.my ); break;
+			case 8:	popmessage( "kx = %x, ky = %x", RP.kx, RP.ky ); break;
+	 		case 9:	popmessage( "kast = %x, dkast = %x, dkax = %x", RP.kast, RP.dkast, RP.dkax ); break;
 			case 10: break;
 		}
 	}
@@ -2756,8 +2756,8 @@ static void stv_vdp2_drawgfx_rgb555( mame_bitmap *dest_bmp, unsigned int code, i
 static void stv_vdp2_draw_basic_bitmap(mame_bitmap *bitmap, const rectangle *cliprect)
 {
 //  if(LOG_VDP2) logerror ("bitmap enable %02x size %08x depth %08x\n", stv2_current_tilemap.layer_name, stv2_current_tilemap.bitmap_size, stv2_current_tilemap.colour_depth);
-//  ui_popup ("bitmap enable %02x size %08x depth %08x number %02x", stv2_current_tilemap.layer_name, stv2_current_tilemap.bitmap_size, stv2_current_tilemap.colour_depth,stv2_current_tilemap.bitmap_palette_number);
-	//ui_popup("%04x",STV_VDP2_SCRCTL);
+//  popmessage ("bitmap enable %02x size %08x depth %08x number %02x", stv2_current_tilemap.layer_name, stv2_current_tilemap.bitmap_size, stv2_current_tilemap.colour_depth,stv2_current_tilemap.bitmap_palette_number);
+	//popmessage("%04x",STV_VDP2_SCRCTL);
 
 	int xsize = 0, xsizemask = 0;
 	int ysize = 0, ysizemask = 0;
@@ -2809,7 +2809,7 @@ static void stv_vdp2_draw_basic_bitmap(mame_bitmap *bitmap, const rectangle *cli
 	);
 	gfxdatahigh = gfxdatalow + xlinesize*ysize;
 
-//  ui_popup("%04x %04x",stv2_current_tilemap.scrollx,stv2_current_tilemap.scrolly);
+//  popmessage("%04x %04x",stv2_current_tilemap.scrollx,stv2_current_tilemap.scrolly);
 
 	/*Enable fading bit*/
 	if(stv2_current_tilemap.fade_control & 1)
@@ -3034,7 +3034,7 @@ static void stv_vdp2_draw_basic_bitmap(mame_bitmap *bitmap, const rectangle *cli
         --------BBBBBBBBGGGGGGGGRRRRRRRR
         */
 		case 4:
-			//ui_popup("BITMAP type 4 enabled");
+			//popmessage("BITMAP type 4 enabled");
 			for (ycnt = 0; ycnt <ysize;ycnt++)
 			{
 				destline = (UINT16 *)(bitmap->line[ycnt]);
@@ -3460,8 +3460,8 @@ static void stv_vdp2_draw_basic_tilemap(mame_bitmap *bitmap, const rectangle *cl
 	plsize_dwords = plsize_bytes /4;
 	mpsize_dwords = mpsize_bytes /4;
 
-//  if (stv2_current_tilemap.layer_name==3) ui_popup ("well this is a bit  %08x", stv2_current_tilemap.map_offset[0]);
-//  if (stv2_current_tilemap.layer_name==3) ui_popup ("well this is a bit  %08x %08x %08x %08x", stv2_current_tilemap.plane_size, pgtiles_x, pltiles_x, mptiles_x);
+//  if (stv2_current_tilemap.layer_name==3) popmessage ("well this is a bit  %08x", stv2_current_tilemap.map_offset[0]);
+//  if (stv2_current_tilemap.layer_name==3) popmessage ("well this is a bit  %08x %08x %08x %08x", stv2_current_tilemap.plane_size, pgtiles_x, pltiles_x, mptiles_x);
 
 	if (!stv2_current_tilemap.enabled) return; // stop right now if its disabled ...
 
@@ -4850,7 +4850,7 @@ static void stv_vdp2_draw_back(mame_bitmap *bitmap, const rectangle *cliprect)
 	else
 	{
 		#ifdef MAME_DEBUG
-		//ui_popup("Back screen enabled %08x",STV_VDP2_BKTA);
+		//popmessage("Back screen enabled %08x",STV_VDP2_BKTA);
 		#endif
 		gfxdata+=((STV_VDP2_BKTA)<<1);
 
@@ -4937,7 +4937,7 @@ WRITE32_HANDLER ( stv_vdp2_cram_w )
 	int r,g,b;
 	COMBINE_DATA(&stv_vdp2_cram[offset]);
 
-//  ui_popup("%01x",STV_VDP2_CRMD);
+//  popmessage("%01x",STV_VDP2_CRMD);
 
 	switch( STV_VDP2_CRMD )
 	{
@@ -5093,7 +5093,7 @@ READ32_HANDLER ( stv_vdp2_regs_r )
 		case 0x8/4:
 		/*H/V Counter Register*/
 								     /*H-Counter                               V-Counter                                         */
-			stv_vdp2_regs[offset] = (((Machine->visible_area[0].max_x - 1)<<16)&0x3ff0000)|(((Machine->visible_area[0].max_y - 1)<<0)& ((STV_VDP2_LSMD == 3) ? 0x7ff : 0x3ff));
+			stv_vdp2_regs[offset] = (((Machine->screen[0].visarea.max_x - 1)<<16)&0x3ff0000)|(((Machine->screen[0].visarea.max_y - 1)<<0)& ((STV_VDP2_LSMD == 3) ? 0x7ff : 0x3ff));
 			if(LOG_VDP2) logerror("CPU #%d PC(%08x) = VDP2: H/V counter read : %08x\n",cpu_getactivecpu(),activecpu_get_pc(),stv_vdp2_regs[offset]);
 			stv_vdp2_regs[offset] = 0;
 		break;
@@ -5171,7 +5171,7 @@ static void stv_vdp2_dynamic_res_change()
 	}
 
 	set_visible_area(0, 0*8, horz-1,0*8, vert-1);
-	//if(LOG_VDP2) ui_popup("%04d %04d",horz-1,vert-1);
+	//if(LOG_VDP2) popmessage("%04d %04d",horz-1,vert-1);
 }
 
 /*This is for calculating the rgb brightness*/
@@ -5185,7 +5185,7 @@ static void	stv_vdp2_fade_effects()
 	INT16 t_r,t_g,t_b;
 	UINT8 r,g,b;
 	int i;
-	//ui_popup("%04x %04x",STV_VDP2_CLOFEN,STV_VDP2_CLOFSL);
+	//popmessage("%04x %04x",STV_VDP2_CLOFEN,STV_VDP2_CLOFSL);
 	for(i=0;i<2048;i++)
 	{
 		/*Fade A*/
@@ -5220,7 +5220,7 @@ static void	stv_vdp2_fade_effects()
 		b = t_b;
 		palette_set_color(i+(2048*2),r,g,b);
 	}
-	//ui_popup("%04x %04x %04x %04x %04x %04x",STV_VDP2_COAR,STV_VDP2_COAG,STV_VDP2_COAB,STV_VDP2_COBR,STV_VDP2_COBG,STV_VDP2_COBB);
+	//popmessage("%04x %04x %04x %04x %04x %04x",STV_VDP2_COAR,STV_VDP2_COAG,STV_VDP2_COAB,STV_VDP2_COBR,STV_VDP2_COBG,STV_VDP2_COBB);
 }
 
 /******************************************************************************************
@@ -5863,32 +5863,32 @@ VIDEO_UPDATE( stv_vdp2 )
 	if(code_pressed_memory(KEYCODE_T))
 	{
 		debug.l_en^=1;
-		ui_popup("NBG3 %sabled",debug.l_en & 1 ? "en" : "dis");
+		popmessage("NBG3 %sabled",debug.l_en & 1 ? "en" : "dis");
 	}
 	if(code_pressed_memory(KEYCODE_Y))
 	{
 		debug.l_en^=2;
-		ui_popup("NBG2 %sabled",debug.l_en & 2 ? "en" : "dis");
+		popmessage("NBG2 %sabled",debug.l_en & 2 ? "en" : "dis");
 	}
 	if(code_pressed_memory(KEYCODE_U))
 	{
 		debug.l_en^=4;
-		ui_popup("NBG1 %sabled",debug.l_en & 4 ? "en" : "dis");
+		popmessage("NBG1 %sabled",debug.l_en & 4 ? "en" : "dis");
 	}
 	if(code_pressed_memory(KEYCODE_I))
 	{
 		debug.l_en^=8;
-		ui_popup("NBG0 %sabled",debug.l_en & 8 ? "en" : "dis");
+		popmessage("NBG0 %sabled",debug.l_en & 8 ? "en" : "dis");
 	}
 	if(code_pressed_memory(KEYCODE_K))
 	{
 		debug.l_en^=0x10;
-		ui_popup("RBG0 %sabled",debug.l_en & 0x10 ? "en" : "dis");
+		popmessage("RBG0 %sabled",debug.l_en & 0x10 ? "en" : "dis");
 	}
 	if(code_pressed_memory(KEYCODE_O))
 	{
 		debug.l_en^=0x20;
-		ui_popup("SPRITE %sabled",debug.l_en & 0x20 ? "en" : "dis");
+		popmessage("SPRITE %sabled",debug.l_en & 0x20 ? "en" : "dis");
 	}
 	#endif
 
@@ -5922,7 +5922,7 @@ VIDEO_UPDATE( stv_vdp2 )
 		printf("Warning: Color RAM Coefficient Table Ctrl used\n");
 	}
 
-	/*ui_popup("N0 %02x %04x %02x %04x N1 %02x %04x %02x %04x"
+	/*popmessage("N0 %02x %04x %02x %04x N1 %02x %04x %02x %04x"
     ,STV_VDP2_N0ZMXI,STV_VDP2_N0ZMXD
     ,STV_VDP2_N0ZMYI,STV_VDP2_N0ZMYD
     ,STV_VDP2_N1ZMXI,STV_VDP2_N1ZMXD

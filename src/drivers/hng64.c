@@ -634,7 +634,7 @@ static WRITE32_HANDLER( hng64_pal_w )
 	// printf("Alpha : %d %d %d %d\n", a, b, g, r) ;
 
 	// if (a != 0)
-	//  ui_popup("Alpha is not zero!") ;
+	//  popmessage("Alpha is not zero!") ;
 
 	palette_set_color(offset,r,g,b);
 }
@@ -845,7 +845,7 @@ WRITE32_HANDLER( tcram_w )
     if (offset == 0x0000000b)
     {
         sprintf(writeString, "%s %.8x ", writeString, hng64_tcram[offset]) ;
-//      ui_popup("%s", writeString) ;
+//      popmessage("%s", writeString) ;
     }
 */
 }

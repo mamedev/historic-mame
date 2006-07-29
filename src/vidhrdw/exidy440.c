@@ -58,7 +58,7 @@ VIDEO_START( exidy440 )
 	topsecex_last_yscroll = 0;
 
 	/* allocate a bitmap */
-	tmpbitmap = auto_bitmap_alloc(Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight);
+	tmpbitmap = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
 	if (!tmpbitmap)
 		return 1;
 

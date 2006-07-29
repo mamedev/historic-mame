@@ -193,7 +193,7 @@ READ16_HANDLER( asic65_r )
 	switch (command)
 	{
 		case OP_UNKNOWN:	/* return bogus data */
-			ui_popup("ASIC65: Unknown cmd %02X", asic65_command);
+			popmessage("ASIC65: Unknown cmd %02X", asic65_command);
 			break;
 
 		case OP_REFLECT:	/* reflect data */

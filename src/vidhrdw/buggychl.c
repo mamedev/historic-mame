@@ -148,7 +148,7 @@ static void draw_bg(mame_bitmap *bitmap)
 	for (offs = 0;offs < 256;offs++)
 		scroll[offs] = -buggychl_scrollh[offs];
 
-	copyscrollbitmap(bitmap,tmpbitmap2,256,scroll,0,0,&Machine->visible_area[0],TRANSPARENCY_COLOR,32);
+	copyscrollbitmap(bitmap,tmpbitmap2,256,scroll,0,0,&Machine->screen[0].visarea,TRANSPARENCY_COLOR,32);
 }
 
 
@@ -174,7 +174,7 @@ static void draw_fg(mame_bitmap *bitmap)
 				0,
 				flip_screen_x,flip_screen_y,
 				8*sx,8*sy,
-				&Machine->visible_area[0],transp,0);
+				&Machine->screen[0].visarea,transp,0);
 	}
 }
 
@@ -258,7 +258,7 @@ VIDEO_UPDATE( buggychl )
 	if (sky_on)
 		draw_sky(bitmap);
 	else
-		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area[0]);
+		fillbitmap(bitmap,Machine->pens[0],&Machine->screen[0].visarea);
 
 	/* decode modified characters */
 	for (code = 0;code < 256;code++)

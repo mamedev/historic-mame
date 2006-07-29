@@ -284,7 +284,7 @@ static void captaven_drawsprites(mame_bitmap *bitmap, const UINT32 *spritedata, 
 						colour,
 						fx,fy,
 						sx + x_mult * (w-x),sy + y_mult * (h-y),
-						&Machine->visible_area[0],TRANSPARENCY_PEN,0,prival);
+						&Machine->screen[0].visarea,TRANSPARENCY_PEN,0,prival);
 			}
 		}
 	}
@@ -344,7 +344,7 @@ static void fghthist_drawsprites(mame_bitmap *bitmap, const UINT32 *spritedata, 
 					colour,
 					fx,fy,
 					x,y + mult * multi,
-					&Machine->visible_area[0],trans,0,pri,1<<gfxbank, 1);
+					&Machine->screen[0].visarea,trans,0,pri,1<<gfxbank, 1);
 
 			multi--;
 		}
@@ -460,7 +460,7 @@ static void nslasher_drawsprites(mame_bitmap *bitmap, const UINT32 *spritedata, 
 					colour,
 					fx,fy,
 					x,y + mult * multi,
-					&Machine->visible_area[0]);
+					&Machine->screen[0].visarea);
 
 			multi--;
 		}
@@ -818,7 +818,7 @@ static void dragngun_drawsprites(mame_bitmap *bitmap, const UINT32 *spritedata)
 						colour,
 						fx,fy,
 						xpos>>16,ypos>>16,
-						&Machine->visible_area[0],trans,15,zoomx,zoomy,NULL,0,
+						&Machine->screen[0].visarea,trans,15,zoomx,zoomy,NULL,0,
 						((xpos+(zoomx<<4))>>16) - (xpos>>16), ((ypos+(zoomy<<4))>>16) - (ypos>>16) );
 				else
 					drawgfx(bitmap,Machine->gfx[bank],
@@ -826,7 +826,7 @@ static void dragngun_drawsprites(mame_bitmap *bitmap, const UINT32 *spritedata)
 						colour,
 						fx,fy,
 						xpos>>16,ypos>>16,
-						&Machine->visible_area[0],trans,15);
+						&Machine->screen[0].visarea,trans,15);
 
 				if (fx)
 					xpos-=zoomx<<4;
@@ -1071,9 +1071,9 @@ VIDEO_START( nslasher )
 	pf1a_tilemap =0;
 	dirty_palette = auto_malloc(4096);
 
-	sprite0_mix_bitmap=auto_bitmap_alloc_depth( Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight, -16 );
-	sprite1_mix_bitmap=auto_bitmap_alloc_depth( Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight, -16 );
-	tilemap_alpha_bitmap=auto_bitmap_alloc_depth( Machine->drv->screen[0].maxwidth, Machine->drv->screen[0].maxheight, -16 );
+	sprite0_mix_bitmap=auto_bitmap_alloc_depth( Machine->screen[0].width, Machine->screen[0].height, -16 );
+	sprite1_mix_bitmap=auto_bitmap_alloc_depth( Machine->screen[0].width, Machine->screen[0].height, -16 );
+	tilemap_alpha_bitmap=auto_bitmap_alloc_depth( Machine->screen[0].width, Machine->screen[0].height, -16 );
 
 	if (!sprite1_mix_bitmap || !sprite0_mix_bitmap || !tilemap_alpha_bitmap || !pf1_tilemap || !pf2_tilemap || !pf3_tilemap || !pf4_tilemap)
 		return 1;
@@ -1204,7 +1204,7 @@ static void deco32_setup_scroll(tilemap *pf_tilemap, UINT16 height, UINT8 contro
 	/* Colscroll - not fully supported yet! */
 	if (control1&0x20 && coldata) {
 		sy+=coldata[0];
-		//ui_popup("%08x",coldata[0]);
+		//popmessage("%08x",coldata[0]);
 	}
 
 	/* Rowscroll enable */

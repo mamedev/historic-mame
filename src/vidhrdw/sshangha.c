@@ -49,7 +49,7 @@ WRITE16_HANDLER (sshangha_video_w)
 {
 	/* 0x4: Special video mode, other bits unknown */
 	sshangha_video_control=data;
-//  ui_popup("%04x",data);
+//  popmessage("%04x",data);
 }
 
 /******************************************************************************/
@@ -115,7 +115,7 @@ static void sshangha_drawsprites(mame_bitmap *bitmap, UINT16 *spritesrc, UINT16 
 					colour,
 					fx,fy,
 					x,y + mult * multi,
-					&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+					&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 
 			multi--;
 		}

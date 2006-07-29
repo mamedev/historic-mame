@@ -237,7 +237,7 @@ WRITE8_HANDLER( flower_sound2_w )
 	int base = offset & 0xf8;
 
 /*
-ui_popup("%02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x",
+popmessage("%02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x",
         flower_soundregs2[7 + 8*0],flower_soundregs1[7 + 8*0],
         flower_soundregs2[7 + 8*1],flower_soundregs1[7 + 8*1],
         flower_soundregs2[7 + 8*2],flower_soundregs1[7 + 8*2],

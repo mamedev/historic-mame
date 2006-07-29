@@ -103,7 +103,7 @@ static WRITE16_HANDLER( cps1_sound_command_w )
 
 WRITE16_HANDLER( cps1_coinctrl_w )
 {
-//  ui_popup("coinctrl %04x",data);
+//  popmessage("coinctrl %04x",data);
 
 	if (ACCESSING_MSB)
 	{
@@ -134,7 +134,7 @@ WRITE16_HANDLER( cpsq_coinctrl2_w )
     {
        char baf[40];
        sprintf(baf,"0xf1c004=%04x", data);
-       ui_popup(baf);
+       popmessage(baf);
        }
 */
     }
@@ -175,7 +175,7 @@ READ16_HANDLER( qsound_rom_r )
 	if (rom) return rom[offset] | 0xff00;
 	else
 	{
-		ui_popup("%06x: read sound ROM byte %04x",activecpu_get_pc(),offset);
+		popmessage("%06x: read sound ROM byte %04x",activecpu_get_pc(),offset);
 		return 0;
 	}
 }

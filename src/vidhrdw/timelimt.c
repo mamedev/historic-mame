@@ -152,7 +152,7 @@ static void drawsprites( mame_bitmap *bitmap )
 				attr & 7,
 				flipx,flipy,
 				sx,sy,
-				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+				&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 	}
 }
 
@@ -168,10 +168,10 @@ VIDEO_UPDATE( timelimt )
 {
 	tilemap_set_scrollx(bg_tilemap, 0, scrollx);
 	tilemap_set_scrolly(bg_tilemap, 0, scrolly);
-	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->screen[0].visarea, bg_tilemap, 0, 0);
 
 	drawsprites( bitmap );
 
-	tilemap_draw(bitmap, &Machine->visible_area[0], fg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->screen[0].visarea, fg_tilemap, 0, 0);
 	return 0;
 }

@@ -93,7 +93,7 @@ static void draw_chars(mame_bitmap *bitmap, int priority)
 				(col & 0x0f) | ((*ambush_colorbank & 0x03) << 4),
 				flip_screen,flip_screen,
 				8*sx, (8*sy + scroll) & 0xff,
-				&Machine->visible_area[0],transparency,0);
+				&Machine->screen[0].visarea,transparency,0);
 	}
 }
 
@@ -103,7 +103,7 @@ VIDEO_UPDATE( ambush )
 	int offs;
 
 
-	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area[0]);
+	fillbitmap(bitmap,Machine->pens[0],&Machine->screen[0].visarea);
 
 
 	/* Draw the background priority characters */
@@ -171,7 +171,7 @@ VIDEO_UPDATE( ambush )
 				code, col | ((*ambush_colorbank & 0x03) << 4),
 				flipx, flipy,
 				sx,sy,
-				&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+				&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 	}
 
 

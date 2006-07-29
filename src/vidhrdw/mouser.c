@@ -122,7 +122,7 @@ VIDEO_UPDATE( mouser )
 		}
 	}
 
-	copyscrollbitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area[0],TRANSPARENCY_NONE,0);
+	copyscrollbitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
 
 	/* There seem to be two sets of sprites, each decoded identically */
 
@@ -153,7 +153,7 @@ VIDEO_UPDATE( mouser )
 					spriteram[offs+1]%16,
 					flipx,flipy,
 					sx,sy,
-					&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+					&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 	}
 
 	/* This is the second set of 8 sprites */
@@ -183,7 +183,7 @@ VIDEO_UPDATE( mouser )
 					spriteram[offs+1]%16,
 					flipx,flipy,
 					sx,sy,
-					&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+					&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 	}
 
 	return 0;
