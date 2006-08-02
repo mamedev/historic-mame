@@ -642,11 +642,7 @@ try_again:
 	d3d->presentation.MultiSampleType				= D3DMULTISAMPLE_NONE;
 	d3d->presentation.SwapEffect					= D3DSWAPEFFECT_DISCARD;
 	d3d->presentation.hDeviceWindow					= window->hwnd;
-#ifdef MESS
-	d3d->presentation.Windowed						= video_config.windowed || win_has_menu(window);
-#else /* !MESS */
-	d3d->presentation.Windowed						= !window->fullscreen;
-#endif /* MESS */
+	d3d->presentation.Windowed						= !window->fullscreen || win_has_menu(window);
 	d3d->presentation.EnableAutoDepthStencil		= FALSE;
 	d3d->presentation.AutoDepthStencilFormat		= D3DFMT_D16;
 	d3d->presentation.Flags							= 0;
@@ -1047,7 +1043,7 @@ static int config_adapter_mode(win_window_info *window)
 	}
 
 	// choose a resolution: window mode case
-	if (!window->fullscreen)
+	if (!window->fullscreen || win_has_menu(window))
 	{
 		RECT client;
 
@@ -1183,16 +1179,16 @@ static void pick_best_mode(win_window_info *window)
 		// compute refresh score
 		refresh_score = 1.0f / (1.0f + fabs((double)mode.RefreshRate - Machine->screen[0].refresh));
 
-		// if we're looking for a particular refresh, make sure it matches
-		if (mode.RefreshRate == window->refresh)
-			refresh_score = 1.0f;
-
 		// if refresh is smaller than we'd like, it only scores up to 0.1
 		if ((double)mode.RefreshRate < Machine->screen[0].refresh)
 			refresh_score *= 0.1;
 
-		// weight size highest, followed by depth and refresh
-		final_score = (size_score * 100.0 + refresh_score) / 101.0;
+		// if we're looking for a particular refresh, make sure it matches
+		if (mode.RefreshRate == window->refresh)
+			refresh_score = 2.0f;
+
+		// weight size and refresh equally
+		final_score = size_score + refresh_score;
 
 		// best so far?
 		verbose_printf("  %4dx%4d@%3dHz -> %f\n", mode.Width, mode.Height, mode.RefreshRate, final_score * 1000.0f);

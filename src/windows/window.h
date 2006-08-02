@@ -61,7 +61,6 @@ struct _win_window_info
 	int					fullscreen;
 	int					fullscreen_safe;
 	int					maxwidth, maxheight;
-	int					depth;
 	int					refresh;
 	float				aspect;
 

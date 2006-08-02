@@ -164,13 +164,9 @@ static WRITE8_HANDLER( buckrog_back_palette_w )
 
 static WRITE8_HANDLER( buckrog_fore_palette_w )
 {
-	if ((data & 0x80) == 0x00)
-	{
-		/* this actually just touches bit 6 */
-		ppi8255_set_portC(0, 0x40);
+	/* OBF is connected to IRQ on the second CPU */
+	cpunum_set_input_line(1, 0, (data & 0x80) ? CLEAR_LINE : ASSERT_LINE);
 
-		cpunum_set_input_line(1, 0, HOLD_LINE);
-	}
 	buckrog_fchg = data & 0x07;
 }
 
@@ -246,7 +242,7 @@ MACHINE_RESET( buckrog )
 READ8_HANDLER( turbo_8279_r )
 {
 	if ((offset & 1) == 0)
-		return readinputport(1);  /* DSW 1 */
+		return ~readinputport(1);  /* DSW 1 - inverted! */
 	else
 	{
 		logerror("read 0xfc%02x\n", offset);
@@ -472,7 +468,7 @@ void turbo_rom_decode(void)
 
 READ8_HANDLER( buckrog_cpu2_command_r )
 {
-	/* this actually just touches bit 6 */
+	/* assert ACK */
 	ppi8255_set_portC(0, 0x00);
 
 	return buckrog_command;
@@ -508,4 +504,18 @@ READ8_HANDLER( buckrog_port_3_r )
 			(((inp1 >> 5) & 1) << 2) |
 			(((inp1 >> 2) & 1) << 1) |
 			(((inp1 >> 1) & 1) << 0);
+}
+
+
+static void delayed_ppi8255_w(int param)
+{
+    ppi8255_0_w(param >> 8, param & 0xff);
+}
+
+
+WRITE8_HANDLER( buckrog_ppi8255_0_w )
+{
+	/* the port C handshaking signals control the sub CPU IRQ, */
+	/* so we have to sync whenever we access this PPI */
+	timer_set(TIME_NOW, ((offset & 3) << 8) | (data & 0xff), delayed_ppi8255_w);
 }

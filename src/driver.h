@@ -407,6 +407,16 @@ struct _game_driver
 #define MDRV_SCREEN_MODIFY(tag)											\
 	screen = driver_find_screen(machine, tag);							\
 
+#define MDRV_SCREEN_RAW_PARAMS(pixclock, htotal, hbend, hbstart, vtotal, vbend, vbstart) \
+	screen->defstate.refresh = (float)(pixclock) / (float)(htotal) / (float)(vtotal); \
+	screen->defstate.vblank = ((float)((vtotal) - ((vbstart) - (vbend))) / (float)(vtotal) * TIME_IN_HZ(screen->defstate.refresh)); \
+	screen->defstate.width = (htotal);									\
+	screen->defstate.height = (vtotal);									\
+	screen->defstate.visarea.min_x = (hbend);							\
+	screen->defstate.visarea.max_x = (hbstart) - 1;						\
+	screen->defstate.visarea.min_y = (vbend);							\
+	screen->defstate.visarea.max_y = (vbstart) - 1;						\
+
 #define MDRV_SCREEN_REFRESH_RATE(rate)									\
 	screen->defstate.refresh = (rate);									\
 

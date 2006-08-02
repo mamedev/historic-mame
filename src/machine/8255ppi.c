@@ -228,36 +228,33 @@ static void ppi8255_input(ppi8255 *chip, int port, UINT8 data)
 {
 	int changed = 0;
 
-	if (chip->read[port] != data)
+	chip->read[port] = data;
+
+	/* port C is special */
+	if (port == 2)
 	{
-		chip->read[port] = data;
-
-		/* port C is special */
-		if (port == 2)
+		if (((chip->groupA_mode == 1) && (chip->portA_dir == 0)) || (chip->groupA_mode == 2))
 		{
-			if (((chip->groupA_mode == 1) && (chip->portA_dir == 0)) || (chip->groupA_mode == 2))
+			/* is !ACKA asserted? */
+			if (chip->obf_a && !(data & 0x40))
 			{
-				/* is !ACKA asserted? */
-				if ((data & 0x40) == 0x00)
-				{
-					chip->obf_a = 0;
-					changed = 1;
-				}
+				chip->obf_a = 0;
+				changed = 1;
 			}
-
-			if ((chip->groupB_mode == 1) && (chip->portB_dir == 0))
-			{
-				/* is !ACKB asserted? */
-				if ((data & 0x04) == 0x00)
-				{
-					chip->obf_b = 0;
-					changed = 1;
-				}
-			}
-
-			if (changed)
-				ppi8255_write_port(chip, 2);
 		}
+
+		if ((chip->groupB_mode == 1) && (chip->portB_dir == 0))
+		{
+			/* is !ACKB asserted? */
+			if (chip->obf_b && !(data & 0x04))
+			{
+				chip->obf_b = 0;
+				changed = 1;
+			}
+		}
+
+		if (changed)
+			ppi8255_write_port(chip, 2);
 	}
 }
 

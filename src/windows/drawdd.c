@@ -1253,16 +1253,16 @@ static HRESULT WINAPI enum_modes_callback(LPDDSURFACEDESC2 desc, LPVOID context)
 	// compute refresh score
 	refresh_score = 1.0f / (1.0f + fabs((double)desc->dwRefreshRate - Machine->screen[0].refresh));
 
-	// if we're looking for a particular refresh, make sure it matches
-	if (desc->dwRefreshRate == einfo->window->refresh)
-		refresh_score = 1.0f;
-
 	// if refresh is smaller than we'd like, it only scores up to 0.1
 	if ((double)desc->dwRefreshRate < Machine->screen[0].refresh)
 		refresh_score *= 0.1;
 
-	// weight size highest, followed by depth and refresh
-	final_score = (size_score * 100.0 + refresh_score) / 101.0;
+	// if we're looking for a particular refresh, make sure it matches
+	if (desc->dwRefreshRate == einfo->window->refresh)
+		refresh_score = 2.0f;
+
+	// weight size and refresh equally
+	final_score = size_score + refresh_score;
 
 	// best so far?
 	verbose_printf("  %4dx%4d@%3dHz -> %f\n", (int)desc->dwWidth, (int)desc->dwHeight, (int)desc->dwRefreshRate, final_score * 1000.0f);

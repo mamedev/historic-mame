@@ -109,6 +109,7 @@ int video_init(void)
 {
 	int scrnum;
 
+	memset(scrinfo, 0, sizeof(scrinfo));
 	movie_file = NULL;
 	movie_frame = 0;
 

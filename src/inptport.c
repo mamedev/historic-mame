@@ -2206,6 +2206,8 @@ profiler_mark(PROFILER_INPUT);
 						/* skip locked-out coin inputs */
 						if (port->type >= IPT_COIN1 && port->type <= IPT_COIN8 && coinlockedout[port->type - IPT_COIN1])
 							continue;
+						if (port->type >= IPT_SERVICE1 && port->type <= IPT_SERVICE4 && servicecoinlockedout[port->type - IPT_SERVICE1])
+							continue;
 
 						/* if this is a downward press and we're an impulse control, reset the count */
 						if (port->impulse)

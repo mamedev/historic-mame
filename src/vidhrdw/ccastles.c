@@ -282,7 +282,7 @@ VIDEO_UPDATE( ccastles )
 
 	/* draw the sprites */
 	fillbitmap(spritebitmap, 0x0f, cliprect);
-	for (offs = 0; offs < 0x100; offs += 4)
+	for (offs = 0; offs < 320/2; offs += 4)
 	{
 		int x = spriteaddr[offs+3];
 		int y = 256 - 16 - spriteaddr[offs+1];

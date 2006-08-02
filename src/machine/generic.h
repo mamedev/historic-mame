@@ -23,12 +23,12 @@
 ***************************************************************************/
 
 /* total # of coin counters */
-#define COIN_COUNTERS		8
+#define COIN_COUNTERS			8
 
 /* memory card actions */
-#define MEMCARD_CREATE		0
-#define MEMCARD_INSERT		1
-#define MEMCARD_EJECT		2
+#define MEMCARD_CREATE			0
+#define MEMCARD_INSERT			1
+#define MEMCARD_EJECT			2
 
 
 
@@ -39,6 +39,7 @@
 extern UINT32 dispensed_tickets;
 extern UINT32 coin_count[COIN_COUNTERS];
 extern UINT32 coinlockedout[COIN_COUNTERS];
+extern UINT32 servicecoinlockedout[COIN_COUNTERS];
 
 extern size_t generic_nvram_size;
 extern UINT8 *generic_nvram;
@@ -66,6 +67,9 @@ void coin_counter_w(int num, int on);
 
 /* enable/disable coin lockout for a particular coin */
 void coin_lockout_w(int num, int on);
+
+/* enable/disable coin lockout for a particular coin */
+void service_coin_lockout_w(int num, int on);
 
 /* enable/disable global coin lockout */
 void coin_lockout_global_w(int on);

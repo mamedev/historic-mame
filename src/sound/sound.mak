@@ -501,6 +501,18 @@ endif
 
 
 #-------------------------------------------------
+# Texas Instruments TMS3615 Octave Multiple Tone Synthesizer
+#-------------------------------------------------
+
+SOUNDDEFS += -DHAS_TMS3615=$(if $(filter TMS3615,$(SOUNDS)),1,0)
+
+ifneq ($(filter TMS3615,$(SOUNDS)),)
+SOUNDOBJS += $(OBJ)/sound/tms3615.o
+endif
+
+
+
+#-------------------------------------------------
 # Texas Instruments TMS5110 speech synthesizers
 #-------------------------------------------------
 

@@ -2107,6 +2107,36 @@ ROM_END
 
 ROM_START(viprp1)
 	ROM_REGION32_LE(0x200000, REGION_USER1, 0)	/* i386 program */
+	ROM_LOAD32_BYTE("seibu1.211", 0x000000, 0x80000, CRC(e5caf4ff) SHA1(7c87a4e8e8dacfb7cc0be8f778352bce2801e59b
+) )
+	ROM_LOAD32_BYTE("seibu2.212", 0x000001, 0x80000, CRC(688a998e) SHA1(0c48374b6800cd00e3ee96c0fb12119a680b091d) )
+	ROM_LOAD32_BYTE("seibu3.210", 0x000002, 0x80000, CRC(990fa76a) SHA1(7619a631d6f83b3677eb47f984aff684e9518d6d) )
+	ROM_LOAD32_BYTE("seibu4.29",  0x000003, 0x80000, CRC(13e3e343) SHA1(aac0c7450059847f53b5081e4abf26303a50f999) )
+
+	ROM_REGION( 0x30000, REGION_GFX1, 0)
+	ROM_LOAD24_WORD("v_5-n.413", 0x000000, 0x20000, CRC(5ece677c) SHA1(b782cf3296f866f79fafa69ff719211c9d4026df) )
+	ROM_LOAD24_BYTE("v_6-n.48",  0x000002, 0x10000, CRC(44844ef8) SHA1(bcbe24d2ffb64f9165ba4ab7de27f44b99b5ff5a) )
+
+	ROM_REGION( 0x600000, REGION_GFX2, 0)	/* background layer roms */
+	ROM_LOAD24_WORD("v_bg-11.415",  0x000000, 0x200000, CRC(6fc96736) SHA1(12df47d8af2c1febc1bce5bcf3218766447885bd) )
+	ROM_LOAD24_BYTE("v_bg-12.415",  0x000002, 0x100000, CRC(d3c7281c) SHA1(340bca1f31486609b3c34dd7830362a216ff648e) )
+	ROM_LOAD24_WORD("v_bg-21.410",  0x300000, 0x100000, CRC(d65b4318) SHA1(6522970d95ffa7fa2f32e0b5b4f0eb69e0286b36) )
+	ROM_LOAD24_BYTE("v_bg-22.416",  0x300002, 0x080000, CRC(24a0a23a) SHA1(0b0330717620e3f3274a25845d9edaf8023b9db2) )
+
+	ROM_REGION( 0xc00000, REGION_GFX3, 0)	/* sprites */
+	ROM_LOAD("v_obj-1.322",  0x000000, 0x400000, CRC(3be5b631) SHA1(fd1064428d28ca166a9267b968c0ba846cfed656) )
+	ROM_LOAD("v_obj-2.324",  0x400000, 0x400000, CRC(924153b4) SHA1(db5dadcfb4cd5e6efe9d995085936ce4f4eb4254) )
+	ROM_LOAD("v_obj-3.323",  0x800000, 0x400000, CRC(e9fb9062) SHA1(18e97b4c5cced2b529e6e72d8041c6f78fcec76e) )
+
+	ROM_REGION(0x200000, REGION_SOUND1, ROMREGION_ERASE00)
+
+	ROM_REGION(0x280000, REGION_USER2, ROMREGION_ERASE00)	/* sound roms */
+	ROM_LOAD("v_pcm.215",  0x000000, 0x080000, CRC(e3111b60) SHA1(f7a7747f29c392876e43efcb4e6c0741454082f2) )
+	ROM_CONTINUE(0x100000,0x80000) /* stops reading around 00ee8a6, rom is empty at this point, countdown continues anyway */
+ROM_END
+
+ROM_START(viprp1j)
+	ROM_REGION32_LE(0x200000, REGION_USER1, 0)	/* i386 program */
 	ROM_LOAD32_BYTE("v_1-n.211", 0x000000, 0x80000, CRC(55f10b72) SHA1(2a1ebaa969f346bf3659ed8b0f469dce9eaf3b4b) )
 	ROM_LOAD32_BYTE("v_2-n.212", 0x000001, 0x80000, CRC(0f888283) SHA1(7e5ac81279b9c7a06f07cb8ae76938cdd5c9beee) )
 	ROM_LOAD32_BYTE("v_3-n.210", 0x000002, 0x80000, CRC(842434ac) SHA1(982d219c1d329122789c552208db2f4aaa4af7e4) )
@@ -2768,7 +2798,8 @@ GAME( 1995, senkyua,   senkyu,  spi,      spi_3button, senkyua,  ROT0,   "Seibu 
 GAME( 1995, batlball,  senkyu,  spi,      spi_3button, batlball, ROT0,   "Seibu Kaihatsu (Tuning License)", "Battle Balls (Germany)",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
 GAME( 1995, batlbala,  senkyu,  spi,      spi_3button, batlball, ROT0,   "Seibu Kaihatsu (Metrotainment License)", "Battle Balls (Asia)",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
 
-GAME( 1995, viprp1,    0,       spi,      spi_3button, viprp1,  ROT270, "Seibu Kaihatsu", "Viper Phase 1 (Japan, New Version)",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
+GAME( 1995, viprp1,    0,       spi,      spi_3button, viprp1,  ROT270, "Seibu Kaihatsu", "Viper Phase 1 (World, New Version)",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
+GAME( 1995, viprp1j,   viprp1,  spi,      spi_3button, viprp1,  ROT270, "Seibu Kaihatsu", "Viper Phase 1 (Japan, New Version)",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
 GAME( 1995, viprp1s,   viprp1,  spi,      spi_3button, viprp1,  ROT270, "Seibu Kaihatsu", "Viper Phase 1 (Switzerland, New Version)",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )
 
 GAME( 1995, viprp1o,   viprp1,  spi,      spi_3button, viprp1o, ROT270, "Seibu Kaihatsu", "Viper Phase 1 (Japan)",  GAME_IMPERFECT_GRAPHICS|GAME_IMPERFECT_SOUND )

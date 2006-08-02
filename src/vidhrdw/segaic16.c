@@ -235,7 +235,7 @@
         315-5197:                                       xx          xx    xx    xx                           -- tilemap generator
         315-5211:                                                         xx                                 -- sprite generator
         315-5211A:                                                              xx                           -- sprite generator
-        315-5218:                                                   xx    xx                                 -- PCM sound controller
+        315-5218:                                                   xx    xx    xx    xx                     -- PCM sound controller
         315-5242:                                             xx    xx    xx    xx    xx    xx    xx    xx   -- color encoder
         315-5248:                                       xx                      x2    x3                     -- hardware multiplier
         315-5249:                                                               x2    x3                     -- hardware divider
@@ -301,8 +301,13 @@ Quick review of the system16 hardware:
     System 16b plus a genesis vdp.
 
   Outrun:
-    System 16b with sprites with better zooming capabilities, plus a
-    road generator able to handle two roads simultaneously.
+    System 16b tilemaps, frame buffered sprites with better zooming
+    capabilities, and a road generator able to handle two roads
+    simultaneously.
+
+  Super hang-on:
+    Outrun lite, with System 16b sprites instead of the frame buffered
+    sprites, and only one of the two roads is actually used.
 
   X-Board:
     Outrun with a better fillrate and an even more flexible road
@@ -310,13 +315,13 @@ Quick review of the system16 hardware:
 
   Y-Board:
     New design, with two sprite planes and no tilemaps.  The back
-    sprite planes has a huge fillrate and the capability to have its
+    sprite plane has a huge fillrate and the capability to have its
     frame buffer completely rotated.  Also, it has a palette
-    indirection capability to allows for easier palettes rotations.
-    The front sprite plane is 16b.
+    indirection capability to allows for easier palette rotations.
+    The front sprite plane is System 16b.
 
   System24:
-    The odd one out.  Medium resolution. Entirely ram-based, no
+    The odd one out.  Medium resolution.  Entirely ram-based, no
     graphics roms.  4-layer tilemap hardware in two pairs, selection
     on a 8-pixels basis.  Tile-based sprites(!) organised as a linked
     list.  The tilemap chip has been reused for model1 and model2,

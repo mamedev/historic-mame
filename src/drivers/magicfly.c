@@ -9,8 +9,15 @@
     Games running in this hardware:
 
     * Magic Fly (P&A Games), 198?
-    * 7 e Mezzo (Unknown),   198?    (Not sure about the title. Only english text inside the program rom).
+    * 7 e Mezzo (Unknown),   198?    (Not sure about the title. Only english text inside the game)
 
+
+    **** NOTE ****
+    You can find a complete hardware & software analysis here:
+    http://www.mameworld.net/robbie/magicfly
+
+
+*******************************************************************************
 
     Hardware notes:
 
@@ -153,12 +160,12 @@
                          ($0013 - $0014)    // Pointer to text offset.
                          ($0015 - $0016)    // Pointer to video ram.
                          ($0017 - $0018)    // Pointer to color ram.
-                         ($0019)            // Program loops waiting for a value to be written here through NMI. (see below at "other checks")
+                         ($0019)            // Program loops waiting for a value to be written here through NMI (see code at $CA71).
                          ($003A - $003D)    // Store new read values from $2800 (input port) through NMI.
                          ($003F - $0042)    // Store old read values from $2800 (input port) through NMI.
                          ($005E - $005F)    // Store values to be written in video and color ram, respectively.
                          ($0067 - $0067)    // Program compare the content with #$02, #$03, #$04, #$05 and #$E1.
-                                            // If #$E1 is found here, the machine hangs showing "I/O ERROR". (see below at "some clues")
+                                            // If #$E1 is found here, the machine hangs showing "I/O ERROR" (see code at $C1A2).
                          ($0096 - $0098)    // Store values from content of $2800 (input port) AND #$80, AND #$40, AND #$10.
                          ($009B - $00A8)    // Text scroll buffer.
 
@@ -166,8 +173,7 @@
 
     $0200 - $07FF    RAM
 
-    $0800 - $0801    MC6845    // MC6845 use $0800 for register addressing and $0801 for register values.
-                                // see code at CE86
+    $0800 - $0801    MC6845    // MC6845 use $0800 for register addressing and $0801 for register values (see code at $CE86).
 
                                   *** MC6845 init ***
 
@@ -178,20 +184,17 @@
 
     $1800 - $1BFF    Color RAM    // Initialized in subroutine starting at $CF83, filled with value stored in $5F.
                                   // (In 7mezzo is located at $CB13 using $64 and $65 to store video and color ram values.)
-                                // see code at CF83
 
     $1C00 - $27FF    RAM
 
     $2800 - $2800    Input port    // Input port (code at $CE96). No writes, only reads.
                                    // NMI routine read from here and store new values to $003A - $003D and copy old ones to $003F - $0042.
-                                // see code at CE96 and CD0C
+                                   // Code accept only bits 4, 6 & 7 as valid. If another bit is activated, will produce an I/O error. (code at $CD0C)
 
     $2801 - $2FFF    RAM
 
     $3000 - $3000    ???    // Something seems to be mapped here. Only writes, no reads.
                             // Code at $C152 do a complex loop with boolean operations and write #$00/#$80 to $3000. Also NMI routine write another values.
-
-                                // see code at C152
 
     $3001 - $BFFF    RAM
 

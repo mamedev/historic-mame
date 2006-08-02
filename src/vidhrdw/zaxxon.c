@@ -1,100 +1,263 @@
-/*
-
-    SEGA Zaxxon Hardware - Video
-
-    TODO:
-
-    - get rid of zaxxon_vid_type
-    - draw backgrounds as tilemaps
-    - convert skewing to use tilemap scrolling?
-    - zaxxon fg tilemap color calculation
-    - fix background size bug
-    - clean up background functions
-
-*/
-
-#include "driver.h"
-
-UINT8 *zaxxon_char_color_bank;
-UINT8 *zaxxon_background_position;
-UINT8 *zaxxon_background_color_bank;
-UINT8 *zaxxon_background_enable;
-static mame_bitmap *backgroundbitmap1,*backgroundbitmap2;
-static const UINT8 *color_codes;
-
-int zaxxon_vid_type;	/* set by init_machine; 0 = zaxxon; 1 = congobongo */
-
-#define ZAXXON_VID	0
-#define CONGO_VID	1
-#define FUTSPY_VID	2
-
-static tilemap *fg_tilemap;
-
 /***************************************************************************
 
-  Convert the color PROMs into a more useable format.
-
-  Zaxxon has one 256x8 palette PROM and one 256x4 PROM which contains the
-  color codes to use for characters on a per row/column basis (groups of
-  of 4 characters in the same row).
-  Congo Bongo has similar hardware, but it has color RAM instead of the
-  lookup PROM.
-
-  The palette PROM is connected to the RGB output this way:
-
-  bit 7 -- 220 ohm resistor  -- BLUE
-        -- 470 ohm resistor  -- BLUE
-        -- 220 ohm resistor  -- GREEN
-        -- 470 ohm resistor  -- GREEN
-        -- 1  kohm resistor  -- GREEN
-        -- 220 ohm resistor  -- RED
-        -- 470 ohm resistor  -- RED
-  bit 0 -- 1  kohm resistor  -- RED
+    Sega Zaxxon hardware
 
 ***************************************************************************/
+
+#include "driver.h"
+#include "zaxxon.h"
+#include "res_net.h"
+
+static const UINT8 *color_codes;
+
+static UINT8 bg_enable;
+static UINT8 bg_color;
+static UINT16 bg_position;
+static UINT8 fg_color;
+
+static UINT8 congo_fg_bank;
+static UINT8 congo_color_bank;
+static UINT8 congo_custom[4];
+
+static tilemap *fg_tilemap;
+static tilemap *bg_tilemap;
+
+
+
+/*************************************
+ *
+ *  Palette conversion
+ *
+ *************************************/
+
 PALETTE_INIT( zaxxon )
 {
+	static const int resistances[3] = { 1000, 470, 220 };
+	double rweights[3], gweights[3], bweights[2];
 	int i;
-	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
-	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
-	for (i = 0;i < Machine->drv->total_colors;i++)
+	/* compute the color output resistor weights */
+	compute_resistor_weights(0,	255, -1.0,
+			3,	&resistances[0], rweights, 470, 0,
+			3,	&resistances[0], gweights, 470, 0,
+			2,	&resistances[1], bweights, 470, 0);
+
+	/* initialize the palette with these colors */
+	for (i = 0; i < Machine->drv->total_colors; i++)
 	{
-		int bit0,bit1,bit2,r,g,b;
+		int bit0, bit1, bit2;
+		int r, g, b;
 
 		/* red component */
-		bit0 = (*color_prom >> 0) & 0x01;
-		bit1 = (*color_prom >> 1) & 0x01;
-		bit2 = (*color_prom >> 2) & 0x01;
-		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		/* green component */
-		bit0 = (*color_prom >> 3) & 0x01;
-		bit1 = (*color_prom >> 4) & 0x01;
-		bit2 = (*color_prom >> 5) & 0x01;
-		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		/* blue component */
-		bit0 = 0;
-		bit1 = (*color_prom >> 6) & 0x01;
-		bit2 = (*color_prom >> 7) & 0x01;
-		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		bit0 = (color_prom[i] >> 0) & 0x01;
+		bit1 = (color_prom[i] >> 1) & 0x01;
+		bit2 = (color_prom[i] >> 2) & 0x01;
+		r = combine_3_weights(rweights, bit0, bit1, bit2);
 
-		palette_set_color(i,r,g,b);
-		color_prom++;
+		/* green component */
+		bit0 = (color_prom[i] >> 3) & 0x01;
+		bit1 = (color_prom[i] >> 4) & 0x01;
+		bit2 = (color_prom[i] >> 5) & 0x01;
+		g = combine_3_weights(gweights, bit0, bit1, bit2);
+
+		/* blue component */
+		bit0 = (color_prom[i] >> 6) & 0x01;
+		bit1 = (color_prom[i] >> 7) & 0x01;
+		b = combine_2_weights(bweights, bit0, bit1);
+
+		palette_set_color(i, r, g, b);
 	}
 
 	/* color_prom now points to the beginning of the character color codes */
-	color_codes = color_prom;	/* we'll need it later */
-
-	/* all gfx elements use the same palette */
-	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = i;
+	color_codes = &color_prom[256];
 }
+
+
+
+/*************************************
+ *
+ *  Tilemap callbacks
+ *
+ *************************************/
+
+static void get_bg_tile_info(int tile_index)
+{
+	const UINT8 *source = memory_region(REGION_GFX4);
+	int size = memory_region_length(REGION_GFX4) / 2;
+	int eff_index = tile_index & (size - 1);
+	int code = source[eff_index] + 256 * (source[eff_index + size] & 3);
+	int color = source[eff_index + size] >> 4;
+	SET_TILE_INFO(1, code, color, 0);
+}
+
+
+static void zaxxon_get_fg_tile_info(int tile_index)
+{
+	int sx = tile_index % 32;
+	int sy = tile_index / 32;
+	int code = videoram[tile_index];
+	int color = color_codes[sx + 32 * (sy / 4)] & 0x0f;
+	SET_TILE_INFO(0, code, color * 2, 0)
+}
+
+
+static void razmataz_get_fg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index];
+	int color = color_codes[code] & 0x0f;
+	SET_TILE_INFO(0, code, color * 2, 0)
+}
+
+
+static void congo_get_fg_tile_info(int tile_index)
+{
+	int code = videoram[tile_index] + (congo_fg_bank << 8);
+	int color = colorram[tile_index] & 0x1f;
+	SET_TILE_INFO(0, code, color * 2, 0)
+}
+
+
+
+/*************************************
+ *
+ *  Video startup
+ *
+ *************************************/
+
+static int video_start_common(void (*fg_tile_info)(int))
+{
+	/* reset globals */
+	bg_enable = 0;
+	bg_color = 0;
+	bg_position = 0;
+	fg_color = 0;
+	congo_fg_bank = 0;
+	congo_color_bank = 0;
+	memset(congo_custom, 0, sizeof(congo_custom));
+
+	/* create a background and foreground tilemap */
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, TILEMAP_OPAQUE, 8,8, 32,512);
+	fg_tilemap = tilemap_create(fg_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8,8, 32,32);
+	if (fg_tilemap == NULL || bg_tilemap == NULL)
+		return 1;
+
+	/* configure the foreground tilemap */
+	tilemap_set_transparent_pen(fg_tilemap, 0);
+	tilemap_set_scrolldx(fg_tilemap, 0, Machine->screen[0].width - 256);
+	tilemap_set_scrolldy(fg_tilemap, 0, Machine->screen[0].height - 256);
+
+	/* register for save states */
+	state_save_register_global(bg_enable);
+	state_save_register_global(bg_color);
+	state_save_register_global(bg_position);
+	state_save_register_global(fg_color);
+	return 0;
+}
+
+
+VIDEO_START( zaxxon )
+{
+	return video_start_common(zaxxon_get_fg_tile_info);
+}
+
+
+VIDEO_START( razmataz )
+{
+	return video_start_common(razmataz_get_fg_tile_info);
+}
+
+
+VIDEO_START( congo )
+{
+	/* allocate our own spriteram since it is not accessible by the main CPU */
+	spriteram = auto_malloc(0x100);
+
+	/* register for save states */
+	state_save_register_global(congo_fg_bank);
+	state_save_register_global(congo_color_bank);
+	state_save_register_global_array(congo_custom);
+	state_save_register_global_pointer(spriteram, 0x100);
+
+	return video_start_common(congo_get_fg_tile_info);
+}
+
+
+
+/*************************************
+ *
+ *  Video latches and controls
+ *
+ *************************************/
+
+WRITE8_HANDLER( zaxxon_flipscreen_w )
+{
+	/* low bit controls flip; background and sprite flip are handled at render time */
+	flip_screen = ~data & 1;
+	tilemap_set_flip(fg_tilemap, flip_screen ? (TILEMAP_FLIPX | TILEMAP_FLIPY) : 0);
+}
+
+
+WRITE8_HANDLER( zaxxon_fg_color_w )
+{
+	/* low bit selects high color palette index */
+	fg_color = (data & 1) * 0x80;
+	tilemap_set_palette_offset(fg_tilemap, fg_color + (congo_color_bank << 8));
+}
+
+
+WRITE8_HANDLER( zaxxon_bg_position_w )
+{
+	/* 11 bits of scroll position are stored */
+	if (offset == 0)
+		bg_position = (bg_position & 0x700) | ((data << 0) & 0x0ff);
+	else
+		bg_position = (bg_position & 0x0ff) | ((data << 8) & 0x700);
+}
+
+
+WRITE8_HANDLER( zaxxon_bg_color_w )
+{
+	/* low bit selects high color palette index */
+	bg_color = (data & 1) * 0x80;
+}
+
+
+WRITE8_HANDLER( zaxxon_bg_enable_w )
+{
+	/* low bit enables/disables the background layer */
+	bg_enable = data & 1;
+}
+
+
+WRITE8_HANDLER( congo_fg_bank_w )
+{
+	/* low bit controls the topmost character bit */
+	congo_fg_bank = data & 1;
+	tilemap_mark_all_tiles_dirty(fg_tilemap);
+}
+
+
+WRITE8_HANDLER( congo_color_bank_w )
+{
+	/* low bit controls the topmost bit into the color PROM */
+	congo_color_bank = data & 1;
+	tilemap_set_palette_offset(fg_tilemap, fg_color + (congo_color_bank << 8));
+}
+
+
+
+/*************************************
+ *
+ *  Foreground tilemap access
+ *
+ *************************************/
 
 WRITE8_HANDLER( zaxxon_videoram_w )
 {
 	videoram[offset] = data;
 	tilemap_mark_tile_dirty(fg_tilemap, offset);
 }
+
 
 WRITE8_HANDLER( congo_colorram_w )
 {
@@ -103,374 +266,217 @@ WRITE8_HANDLER( congo_colorram_w )
 }
 
 
-static void create_background( mame_bitmap *dst_bm, mame_bitmap *src_bm, int col )
-{
-	int offs;
-	int sx,sy;
 
-	for (offs = 0;offs < 0x4000;offs++)
+/*************************************
+ *
+ *  Congo Bongo custom sprite DMA
+ *
+ *************************************/
+
+WRITE8_HANDLER( congo_sprite_custom_w )
+{
+	congo_custom[offset] = data;
+
+	/* seems to trigger on a write of 1 to the 4th byte */
+	if (offset == 3 && data == 0x01)
 	{
-		sy = 8 * (offs / 32);
-		sx = 8 * (offs % 32);
+		UINT16 saddr = congo_custom[0] | (congo_custom[1] << 8);
+		int count = congo_custom[2];
 
-		/* leave screenful of black pixels at end */
-		sy += 256;
+		/* count cycles (just a guess) */
+		activecpu_adjust_icount(-count * 5);
 
-		drawgfx(src_bm,Machine->gfx[1],
-				memory_region(REGION_GFX4)[offs] + 256 * (memory_region(REGION_GFX4)[0x4000 + offs] & 3),
-				col + (memory_region(REGION_GFX4)[0x4000 + offs] >> 4),
-				0,0,
-				sx,sy,
-				0,TRANSPARENCY_NONE,0);
-	}
-}
-
-static int zaxxon_create_background(void)
-{
-	mame_bitmap *prebitmap;
-	int width, height;
-
-	/* leave a screenful of black pixels at each end */
-	height = 256+4096+256, width = 256;
-
-	/* large bitmap for the precalculated background */
-	if ((backgroundbitmap1 = auto_bitmap_alloc(width,height)) == 0)
-		return 1;
-
-	if (zaxxon_vid_type == ZAXXON_VID || zaxxon_vid_type == FUTSPY_VID)
-	{
-		if ((backgroundbitmap2 = auto_bitmap_alloc(width,height)) == 0)
-			return 1;
-	}
-
-	prebitmap = backgroundbitmap1;
-
-	/* prepare the background */
-	create_background(backgroundbitmap1, prebitmap, 0);
-
-	if (zaxxon_vid_type == ZAXXON_VID || zaxxon_vid_type == FUTSPY_VID)
-	{
-		prebitmap = backgroundbitmap2;
-
-		/* prepare a second background with different colors, used in the death sequence */
-		create_background(backgroundbitmap2, prebitmap, 16);
-	}
-
-	return 0;
-}
-
-static void zaxxon_get_fg_tile_info(int tile_index)
-{
-	int sy = tile_index / 32;
-	int sx = tile_index % 32;
-	int code = videoram[tile_index];
-	int color = (color_codes[sx + 32 * (sy / 4)] & 0x0f) + 16 * (*zaxxon_char_color_bank & 1);
-	// not sure about the color code calculation - char_color_bank is used only in test mode
-
-	SET_TILE_INFO(0, code, color, 0)
-}
-
-VIDEO_START( zaxxon )
-{
-	if ( zaxxon_create_background() )
-		return 1;
-
-	fg_tilemap = tilemap_create(zaxxon_get_fg_tile_info, tilemap_scan_rows,
-		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
-
-	if ( !fg_tilemap )
-		return 1;
-
-	tilemap_set_transparent_pen(fg_tilemap, 0);
-
-	return 0;
-}
-
-static void zaxxon_draw_background( mame_bitmap *bitmap, const rectangle *cliprect )
-{
-	/* copy the background */
-	/* TODO: there's a bug here which shows only in test mode. The background doesn't */
-	/* cover the whole screen, so the image is not fully overwritten and part of the */
-	/* character color test screen remains on screen when it is replaced by the background */
-	/* color test. */
-	if (*zaxxon_background_enable)
-	{
-		int i,skew,scroll;
-		rectangle clip;
-
-		/* skew background up one pixel every 2 horizontal pixels */
-		if (!flip_screen_y)
+		/* this is just a guess; the chip is hardwired to the spriteram */
+		while (count-- >= 0)
 		{
-			if (zaxxon_vid_type == CONGO_VID)
-				scroll = 2050 + 2*(zaxxon_background_position[0] + 256*zaxxon_background_position[1])
-						- backgroundbitmap1->height + 256;
-			else
-				scroll = 2*(zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7))
-						- backgroundbitmap1->height + 256;
-		}
-		else
-		{
-			if (zaxxon_vid_type == CONGO_VID)
-				scroll = -(2*(zaxxon_background_position[0] + 256*zaxxon_background_position[1])) - 2052;
-			else
-				scroll = -(2*(zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7))) - 2;
-		}
-
-		skew = 72 - (255 - Machine->screen[0].visarea.max_y);
-
-		clip.min_x = Machine->screen[0].visarea.min_x;
-		clip.max_x = Machine->screen[0].visarea.max_x;
-
-		for (i = Machine->screen[0].visarea.max_y;i >= Machine->screen[0].visarea.min_y;i-=2)
-		{
-			clip.min_y = i-1;
-			clip.max_y = i;
-
-			if ((zaxxon_vid_type == ZAXXON_VID || zaxxon_vid_type == FUTSPY_VID)
-				 && (*zaxxon_background_color_bank & 1))
-				copybitmap(bitmap,backgroundbitmap2,flip_screen,flip_screen,skew,scroll,&clip,TRANSPARENCY_NONE,0);
-			else
-				copybitmap(bitmap,backgroundbitmap1,flip_screen,flip_screen,skew,scroll,&clip,TRANSPARENCY_NONE,0);
-
-			skew--;
+			UINT8 daddr = program_read_byte(saddr + 0) * 4;
+			spriteram[(daddr + 0) & 0xff] = program_read_byte(saddr + 1);
+			spriteram[(daddr + 1) & 0xff] = program_read_byte(saddr + 2);
+			spriteram[(daddr + 2) & 0xff] = program_read_byte(saddr + 3);
+			spriteram[(daddr + 3) & 0xff] = program_read_byte(saddr + 4);
+			saddr += 0x20;
 		}
 	}
-	else
-	{
-		fillbitmap(bitmap, get_black_pen(), cliprect);
-	}
 }
 
-static void zaxxon_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
+
+
+/*************************************
+ *
+ *  Background pixmap drawing
+ *
+ *************************************/
+
+static void zaxxon_draw_background(mame_bitmap *bitmap, const rectangle *cliprect, int skew)
 {
-	int offs;
-
-	for (offs = spriteram_size - 4; offs >= 0; offs -= 4)
+	/* only draw if enabled */
+	if (bg_enable)
 	{
-		if (spriteram[offs] != 0xff)
-		{
-			int code = spriteram[offs + 1] & 0x3f;
-			int color = spriteram[offs + 2] & 0x3f;
-			int flipx = spriteram[offs + 1] & 0x40;
-			int flipy = spriteram[offs + 1] & 0x80;
-			int sx = ((spriteram[offs + 3] + 16) & 0xff) - 32;
-			int sy = 255 - spriteram[offs] - 16;
+		mame_bitmap *pixmap = tilemap_get_pixmap(bg_tilemap);
+		int colorbase = bg_color + (congo_color_bank << 8);
+		int xmask = pixmap->width - 1;
+		int ymask = pixmap->height - 1;
+		int flipmask = flip_screen ? 0xff : 0x00;
+		int flipoffs = flip_screen ? 0x38 : 0x40;
+		int x, y;
 
-			if (flip_screen)
+		/* loop over visible rows */
+		for (y = cliprect->min_y; y <= cliprect->max_y; y++)
+		{
+			UINT16 *dst = (UINT16 *)bitmap->base + y * bitmap->rowpixels;
+			int srcx, srcy, vf;
+			UINT16 *src;
+
+			/* VF = flipped V signals */
+			vf = y ^ flipmask;
+
+			/* base of the source row comes from VF plus the scroll value */
+			/* this is done by the 3 4-bit adders at U56, U74, U75 */
+			srcy = vf + ((bg_position << 1) ^ 0xfff) + 1;
+			src = (UINT16 *)pixmap->base + (srcy & ymask) * pixmap->rowpixels;
+
+			/* loop over visible colums */
+			for (x = cliprect->min_x; x <= cliprect->max_x; x++)
 			{
-				flipx = !flipx;
-				flipy = !flipy;
-				sx = 223 - sx;
-				sy = 224 - sy;
-			}
+				/* start with HF = flipped H signals */
+				srcx = x ^ flipmask;
+				if (skew)
+				{
+					/* position within source row is a two-stage addition */
+					/* first stage is HF plus half the VF, done by the 2 4-bit */
+					/* adders at U53, U54 */
+					srcx += ((vf >> 1) ^ 0xff) + 1;
 
-			drawgfx(bitmap, Machine->gfx[2], code, color, flipx, flipy,
-				sx, sy, cliprect, TRANSPARENCY_PEN, 0);
+					/* second stage is first stage plus a constant based on the flip */
+					/* value is 0x40 for non-flipped, or 0x38 for flipped */
+					srcx += flipoffs;
+				}
+
+				dst[x] = src[srcx & xmask] + colorbase;
+			}
 		}
 	}
+
+	/* if not enabled, fill the background with black */
+	else
+		fillbitmap(bitmap, get_black_pen(), cliprect);
 }
+
+
+
+/*************************************
+ *
+ *  Sprite drawing
+ *
+ *************************************/
+
+INLINE int find_minimum_y(UINT8 value)
+{
+	int flipmask = flip_screen ? 0xff : 0x00;
+	int flipconst = flip_screen ? 0xef : 0xf1;
+	int y;
+
+	/* the sum of the Y position plus a constant based on the flip state */
+	/* is added to the current flipped VF; if the top 3 bits are 1, we hit */
+
+	/* first find a 16-pixel bucket where we hit */
+	for (y = 0; y < 256; y += 16)
+	{
+		int sum = (value + flipconst + 1) + (y ^ flipmask);
+		if ((sum & 0xe0) == 0xe0)
+			break;
+	}
+
+	/* then scan backwards until we no longer match */
+	while (1)
+	{
+		int sum = (value + flipconst + 1) + ((y - 1) ^ flipmask);
+		if ((sum & 0xe0) != 0xe0)
+			break;
+		y--;
+	}
+
+	/* add one line since we draw sprites on the previous line */
+	return (y + 1) & 0xff;
+}
+
+
+INLINE int find_minimum_x(UINT8 value)
+{
+	int flipmask = flip_screen ? 0xff : 0x00;
+	int x;
+
+	/* the sum of the X position plus a constant specifies the address within */
+	/* the line bufer; if we're flipped, we will write backwards */
+	x = (value + 0xef + 1) ^ flipmask;
+	if (flipmask)
+		x -= 31;
+	return x & 0xff;
+}
+
+
+static void zaxxon_draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect, UINT16 flipxmask, UINT16 flipymask)
+{
+	int flipmask = flip_screen ? 0xff : 0x00;
+	int offs;
+
+	/* only the lower half of sprite RAM is read during rendering */
+	for (offs = 0x7c; offs >= 0; offs -= 4)
+	{
+		int sy = find_minimum_y(spriteram[offs]);
+		int flipy = (spriteram[offs + (flipymask >> 8)] ^ flipmask) & flipymask;
+		int flipx = (spriteram[offs + (flipxmask >> 8)] ^ flipmask) & flipxmask;
+		int code = spriteram[offs + 1];
+		int color = (spriteram[offs + 2] & 0x1f) + (congo_color_bank << 5);
+		int sx = find_minimum_x(spriteram[offs + 3]);
+
+		/* draw with 256 pixel offsets to ensure we wrap properly */
+		drawgfx(bitmap, Machine->gfx[2], code, color, flipx, flipy, sx, sy, cliprect, TRANSPARENCY_PEN, 0);
+		drawgfx(bitmap, Machine->gfx[2], code, color, flipx, flipy, sx, sy - 0x100, cliprect, TRANSPARENCY_PEN, 0);
+		drawgfx(bitmap, Machine->gfx[2], code, color, flipx, flipy, sx - 0x100, sy, cliprect, TRANSPARENCY_PEN, 0);
+		drawgfx(bitmap, Machine->gfx[2], code, color, flipx, flipy, sx - 0x100, sy - 0x100, cliprect, TRANSPARENCY_PEN, 0);
+	}
+}
+
+
+
+/*************************************
+ *
+ *  Core video updates
+ *
+ *************************************/
 
 VIDEO_UPDATE( zaxxon )
 {
-	zaxxon_draw_background(bitmap, cliprect);
-	zaxxon_draw_sprites(bitmap, cliprect);
+	zaxxon_draw_background(bitmap, cliprect, TRUE);
+	zaxxon_draw_sprites(bitmap, cliprect, 0x140, 0x180);
 	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
 	return 0;
 }
 
-/* Razzmatazz */
-
-static void razmataz_get_fg_tile_info(int tile_index)
-{
-	int code = videoram[tile_index];
-	int color = (color_codes[code] & 0x0f) + 16 * (*zaxxon_char_color_bank & 0x01);
-
-	SET_TILE_INFO(0, code, color, 0)
-}
-
-VIDEO_START( razmataz )
-{
-	int offs;
-
-	/* large bitmap for the precalculated background */
-	if ((backgroundbitmap1 = auto_bitmap_alloc(256,4096)) == 0)
-		return 1;
-
-	if ((backgroundbitmap2 = auto_bitmap_alloc(256,4096)) == 0)
-		return 1;
-
-	/* prepare the background */
-	for (offs = 0;offs < 0x4000;offs++)
-	{
-		int sx,sy;
-
-		sy = 8 * (offs / 32);
-		sx = 8 * (offs % 32);
-
-		drawgfx(backgroundbitmap1,Machine->gfx[1],
-				memory_region(REGION_GFX4)[offs] + 256 * (memory_region(REGION_GFX4)[0x4000 + offs] & 3),
-				memory_region(REGION_GFX4)[0x4000 + offs] >> 4,
-				0,0,
-				sx,sy,
-				0,TRANSPARENCY_NONE,0);
-
-		drawgfx(backgroundbitmap2,Machine->gfx[1],
-				memory_region(REGION_GFX4)[offs] + 256 * (memory_region(REGION_GFX4)[0x4000 + offs] & 3),
-				16 + (memory_region(REGION_GFX4)[0x4000 + offs] >> 4),
-				0,0,
-				sx,sy,
-				0,TRANSPARENCY_NONE,0);
-	}
-
-	fg_tilemap = tilemap_create(razmataz_get_fg_tile_info, tilemap_scan_rows,
-		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
-
-	if ( !fg_tilemap )
-		return 1;
-
-	tilemap_set_transparent_pen(fg_tilemap, 0);
-
-	return 0;
-}
-
-static void razmataz_draw_background( mame_bitmap *bitmap, const rectangle *cliprect )
-{
-	if (*zaxxon_background_enable)
-	{
-		int scroll = 2 * (zaxxon_background_position[0] + 256 * (zaxxon_background_position[1] & 0x07));
-
-		if (*zaxxon_background_color_bank & 0x01)
-			copyscrollbitmap(bitmap,backgroundbitmap2,0,0,1,&scroll,cliprect,TRANSPARENCY_NONE,0);
-		else
-			copyscrollbitmap(bitmap,backgroundbitmap1,0,0,1,&scroll,cliprect,TRANSPARENCY_NONE,0);
-	}
-	else
-	{
-		fillbitmap(bitmap, get_black_pen(), cliprect);
-	}
-}
-
-VIDEO_UPDATE( razmataz )
-{
-	razmataz_draw_background(bitmap, cliprect);
-	zaxxon_draw_sprites(bitmap, cliprect);
-	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
-	return 0;
-}
-
-/* Congo Bongo */
-
-static void congo_get_fg_tile_info(int tile_index)
-{
-	int code = videoram[tile_index];
-	int color = colorram[tile_index] & 0x1f;
-
-	SET_TILE_INFO(0, code, color, 0)
-}
-
-VIDEO_START( congo )
-{
-	if ( zaxxon_create_background() )
-		return 1;
-
-	fg_tilemap = tilemap_create(congo_get_fg_tile_info, tilemap_scan_rows,
-		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
-
-	if ( !fg_tilemap )
-		return 1;
-
-	tilemap_set_transparent_pen(fg_tilemap, 0);
-
-	return 0;
-}
-
-static void congo_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
-{
-	int offs;
-	int i;
-	unsigned int sprpri[0x100]; /* this really should not be more
-                                    * than 0x1e, but I did not want to check
-                                    * for 0xff which is set when sprite is off
-                                    * -V-
-                                    */
-
-	/* Sprites actually start at 0xff * [0xc031], it seems to be static tho'*/
-	/* The number of active sprites is stored at 0xc032 */
-
-	for (i = 0; i < 0x100; i++)
-		sprpri[i] = 1;
-	for (offs = 0x1e * 0x20; offs >= 0x00; offs -= 0x20)
-		sprpri[spriteram[offs + 1]] = offs;
-
-	for (i = 0x1e; i >= 0; i--)
-	{
-		offs = sprpri[i];
-		if ((offs & 1) == 0 && spriteram[offs + 2] != 0xff)
-		{
-			int code = spriteram[offs + 2 + 1] & 0x7f;
-			int color = spriteram[offs + 2 + 2];
-			int flipx = spriteram[offs + 2 + 2] & 0x80;
-			int flipy = spriteram[offs + 2 + 1] & 0x80;
-			int sx = ((spriteram[offs + 2 + 3] + 16) & 0xff) - 31;
-			int sy = 255 - spriteram[offs + 2] - 15;
-
-			if (flip_screen)
-			{
-				flipx = !flipx;
-				flipy = !flipy;
-				sx = 223 - sx;
-				sy = 224 - sy;
-			}
-
-			drawgfx(bitmap, Machine->gfx[2], code, color, flipx, flipy,
-				sx, sy, cliprect, TRANSPARENCY_PEN, 0);
-		}
-	}
-}
-
-VIDEO_UPDATE( congo )
-{
-	zaxxon_draw_background(bitmap, cliprect);
-	congo_draw_sprites(bitmap, cliprect);
-	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
-	return 0;
-}
-
-/* Future Spy */
-
-static void futspy_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
-{
-	int offs;
-
-	for (offs = spriteram_size - 4; offs >= 0; offs -= 4)
-	{
-		if (spriteram[offs] != 0xff)
-		{
-			int code = spriteram[offs + 1] & 0x7f;
-			int color = spriteram[offs + 2] & 0x3f;
-			int flipx = spriteram[offs + 1] & 0x80;
-			int flipy = spriteram[offs + 1] & 0x80;
-			int sx = ((spriteram[offs + 3] + 16) & 0xff) - 32;
-			int sy = 255 - spriteram[offs] - 16;
-
-			if (flip_screen)
-			{
-				flipx = !flipx;
-				flipy = !flipy;
-				sx = 223 - sx;
-				sy = 224 - sy;
-			}
-
-			drawgfx(bitmap, Machine->gfx[2], code, color, flipx, flipy,
-				sx, sy, cliprect, TRANSPARENCY_PEN, 0);
-		}
-	}
-}
 
 VIDEO_UPDATE( futspy )
 {
-	zaxxon_draw_background(bitmap, cliprect);
-	futspy_draw_sprites(bitmap, cliprect);
+	zaxxon_draw_background(bitmap, cliprect, TRUE);
+	zaxxon_draw_sprites(bitmap, cliprect, 0x180, 0x180);
+	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
+	return 0;
+}
+
+
+VIDEO_UPDATE( razmataz )
+{
+	zaxxon_draw_background(bitmap, cliprect, FALSE);
+	zaxxon_draw_sprites(bitmap, cliprect, 0x140, 0x180);
+	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
+	return 0;
+}
+
+
+VIDEO_UPDATE( congo )
+{
+	zaxxon_draw_background(bitmap, cliprect, TRUE);
+	zaxxon_draw_sprites(bitmap, cliprect, 0x280, 0x180);
 	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
 	return 0;
 }

@@ -199,6 +199,7 @@ SOUNDS += NAMCO_54XX
 SOUNDS += NAMCO_63701X
 SOUNDS += NAMCONA
 SOUNDS += TMS36XX
+SOUNDS += TMS3615
 SOUNDS += TMS5110
 SOUNDS += TMS5220
 SOUNDS += VLM5030
@@ -1410,7 +1411,7 @@ $(OBJ)/yunsung.a: \
 
 $(OBJ)/zaccaria.a: \
 	$(OBJ)/drivers/galaxia.o \
-	$(OBJ)/drivers/laserbat.o \
+	$(OBJ)/drivers/laserbat.o $(OBJ)/sndhrdw/laserbat.o \
 	$(OBJ)/drivers/zac2650.o $(OBJ)/vidhrdw/zac2650.o \
 	$(OBJ)/drivers/zaccaria.o $(OBJ)/vidhrdw/zaccaria.o \
 

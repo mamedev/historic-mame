@@ -22,7 +22,10 @@ TODO:
 #include "vidhrdw/s2636.h"
 #include "sound/ay8910.h"
 #include "sound/sn76477.h"
-#include "sound/tms36xx.h"
+#include "sound/tms3615.h"
+
+extern WRITE8_HANDLER( laserbat_csound1_w );
+extern WRITE8_HANDLER( laserbat_csound2_w );
 
 static tilemap *bg_tilemap;
 static int laserbat_video_page = 0;
@@ -103,6 +106,85 @@ static READ8_HANDLER( laserbat_input_r )
 	return readinputport(0 + laserbat_input_mux);
 }
 
+static WRITE8_HANDLER( laserbat_cnteff_w )
+{
+	// 0x01 = _ABEFF1
+	// 0x02 = _ABEFF2
+	// 0x04 = MPX EFF2-_SW
+	// 0x08 = COLEFF 0
+	// 0x10 = COLEFF 1
+	// 0x20 = _NEG 1
+	// 0x40 = _NEG 2
+	// 0x80 = MPX P 1/2
+}
+
+static WRITE8_HANDLER( laserbat_cntmov_w )
+{
+	// 0x01 = AB MOVE
+	// 0x02 = CLH0
+	// 0x04 = CLH1
+	// 0x08 = LUM
+	// 0x10 = MPX BKEFF
+	// 0x20 = SHPA
+	// 0x40 = SHPB
+	// 0x80 = SHPC
+}
+
+/*
+
+    Color handling with 2716.14L and 82S100.10M
+
+    2716.14L address lines are connected as follows:
+
+    A0  4H
+    A1  8H
+    A2  16H
+    A3  1V
+    A4  2V
+    A5  4V
+    A6  8V
+    A7  16V
+    A8  SHPA
+    A9  SHPB
+    A10 SHPC
+
+    The output of the 2716.14L is sent to the 82S100.10M
+    thru a parallel-to-serial shift register that is clocked
+    on (1H && 2H). The serial data sent is as follows:
+
+    NAV0    D6, D4, D2, D0, 0, 0, 0, 0
+    NAV1    D7, D5, D3, D1, 0, 0, 0, 0
+
+    82S100.10M lines are connected as follows:
+
+    I0  NAV0
+    I1  NAV1
+    I2  CLH0
+    I3  CLH1
+    I4  LUM
+    I5  C1*
+    I6  C2*
+    I7  C3*
+    I8  BKR
+    I9  BKG
+    I10 BKB
+    I11 SHELL
+    I12 EFF1
+    I13 EFF2
+    I14 COLEFF0
+    I15 COLEFF1
+
+    F0  -> 820R -> RED
+    F1  -> 820R -> GREEN
+    F2  -> 820R -> BLUE
+    F3  -> 270R -> RED
+    F4  -> 270R -> GREEN
+    F5  -> 270R -> BLUE
+    F6  -> 1K -> RED
+    F7  -> 1K -> GREEN
+
+*/
+
 static ADDRESS_MAP_START( laserbat_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x13ff) AM_ROM
 	AM_RANGE(0x2000, 0x33ff) AM_ROM
@@ -120,12 +202,12 @@ static ADDRESS_MAP_START( laserbat_map, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( laserbat_io_map, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x00) AM_WRITENOP // unknown
+	AM_RANGE(0x00, 0x00) AM_WRITE(laserbat_cnteff_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(video_extra_w)
-	AM_RANGE(0x02, 0x02) AM_READ(laserbat_input_r) AM_WRITENOP // unknown
+	AM_RANGE(0x02, 0x02) AM_READ(laserbat_input_r) AM_WRITE(laserbat_csound1_w)
 	AM_RANGE(0x04, 0x05) AM_WRITE(sprite_x_y_w)
 	AM_RANGE(0x06, 0x06) AM_WRITE(laserbat_input_mux_w)
-	AM_RANGE(0x07, 0x07) AM_WRITENOP // unknown
+	AM_RANGE(0x07, 0x07) AM_WRITE(laserbat_csound2_w)
 	AM_RANGE(S2650_SENSE_PORT, S2650_SENSE_PORT) AM_READ(input_port_4_r)
 ADDRESS_MAP_END
 
@@ -483,37 +565,23 @@ VIDEO_UPDATE( laserbat )
 
 static struct SN76477interface sn76477_interface =
 {
-	0,		/*  4  noise_res         */
-	0,		/*  5  filter_res        */
-	0,		/*  6  filter_cap        */
-	0,		/*  7  decay_res         */
-	0,		/*  8  attack_decay_cap  */
-	0,		/* 10  attack_res        */
-	0,		/* 11  amplitude_res     */
-	0,		/* 12  feedback_res      */
-	0,		/* 16  vco_voltage       */
-	0,		/* 17  vco_cap           */
-	0,		/* 18  vco_res           */
-	0,		/* 19  pitch_voltage     */
-	0,		/* 20  slf_res           */
-	0,		/* 21  slf_cap           */
-	0,		/* 23  oneshot_cap       */
-	0		/* 24  oneshot_res       */
+	RES_K(47), 		/*  4  noise_res         R21    47K */
+	0,				/*  5  filter_res        */
+	CAP_P(1000),	/*  6  filter_cap        C21    1000 pF */
+	0,				/*  7  decay_res         */
+	0,				/*  8  attack_decay_cap  */
+	0,				/* 10  attack_res        */
+	RES_K(47),		/* 11  amplitude_res     R26    47K */
+	0,				/* 12  feedback_res      */
+	1.6,			/* 16  vco_voltage       */
+	0,				/* 17  vco_cap           */
+	0,				/* 18  vco_res           */
+	5,				/* 19  pitch_voltage     */
+	RES_K(27),		/* 20  slf_res           R54    27K */
+	CAP_U(4.7),		/* 21  slf_cap           C24    4.7 uF */
+	0,				/* 23  oneshot_cap       */
+	0				/* 24  oneshot_res       */
 };
-
-static struct TMS36XXinterface tms36xx_interface =
-{
-	TMS3615,	/* TMS36xx subtype(s) */
-	/*
-     * Decay times of the voices; NOTE: it's unknown if
-     * the the TMS3615 mixes more than one voice internally.
-     * A wav taken from Pop Flamer sounds like there
-     * are at least no 'odd' harmonics (5 1/3' and 2 2/3')
-     */
-	{0.33,0.33,0,0.33,0,0.33}  /* decay times of voices */
-//  {0.5,0.5,0.5,0.5,0.5,0.5}  /* decay times of voices */
-};
-
 
 /* Cat'N Mouse sound ***********************************/
 
@@ -617,12 +685,12 @@ static INTERRUPT_GEN( zaccaria_cb1_toggle )
 
 static MACHINE_DRIVER_START( laserbat )
 
-	MDRV_CPU_ADD(S2650, 14318000/4)	/* ? */
+	MDRV_CPU_ADD(S2650, 14318180/4) // ???
 	MDRV_CPU_PROGRAM_MAP(laserbat_map,0)
 	MDRV_CPU_IO_MAP(laserbat_io_map,0)
 	MDRV_CPU_VBLANK_INT(laserbat_interrupt,1)
 
-	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	/* video hardware */
@@ -640,17 +708,14 @@ static MACHINE_DRIVER_START( laserbat )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
-	MDRV_SOUND_ADD(SN76477, 0)
+	MDRV_SOUND_ADD(SN76477, 0) // output not connected
 	MDRV_SOUND_CONFIG(sn76477_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 
-	MDRV_SOUND_ADD(TMS36XX, 372) // ?
-	MDRV_SOUND_CONFIG(tms36xx_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_ADD(TMS3615, 4000000/8/2) // 250 kHz, from second chip's clock out
+	MDRV_SOUND_ROUTE(TMS3615_FOOTAGE_8, "mono", 1.0)
 
-	MDRV_SOUND_ADD(TMS36XX, 372) // ?
-	MDRV_SOUND_CONFIG(tms36xx_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_ADD(TMS3615, 4000000/8) // 500 kHz
+	MDRV_SOUND_ROUTE(TMS3615_FOOTAGE_8, "mono", 1.0)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( catnmous )
@@ -782,7 +847,7 @@ ROM_START( lazarian )
 	ROM_LOAD( "laz.14l",      0x0000, 0x0800, CRC(d29962d1) SHA1(5b6d0856c3ebbd5833b522f7c0240309cf3c9777) )
 
 	ROM_REGION( 0x0100, REGION_PLDS, 0 )
-	ROM_LOAD( "lz82s100.bin", 0x0000, 0x00f5, CRC(c3eb562a) SHA1(65dff81b2e5321d530e5171dab9aa3809ab38b4d) )
+	ROM_LOAD( "lz82s100.10m", 0x0000, 0x00f5, CRC(c3eb562a) SHA1(65dff81b2e5321d530e5171dab9aa3809ab38b4d) )
 ROM_END
 
 ROM_START( catnmous )
@@ -869,7 +934,7 @@ ROM_START( catmousa )
 ROM_END
 
 
-GAME( 1981, laserbat, 0,        laserbat, laserbat, 0, ROT0,  "Zaccaria", "Laser Battle",                    GAME_NO_SOUND | GAME_WRONG_COLORS | GAME_NO_COCKTAIL )
-GAME( 1981, lazarian, laserbat, laserbat, lazarian, 0, ROT0,  "Bally Midway (Zaccaria License)", "Lazarian", GAME_NO_SOUND | GAME_WRONG_COLORS | GAME_NO_COCKTAIL )
+GAME( 1981, laserbat, 0,        laserbat, laserbat, 0, ROT0,  "Zaccaria", "Laser Battle",                    GAME_IMPERFECT_SOUND | GAME_WRONG_COLORS | GAME_NO_COCKTAIL )
+GAME( 1981, lazarian, laserbat, laserbat, lazarian, 0, ROT0,  "Bally Midway (Zaccaria License)", "Lazarian", GAME_IMPERFECT_SOUND | GAME_WRONG_COLORS | GAME_NO_COCKTAIL )
 GAME( 1982, catnmous, 0,        catnmous, catnmous, 0, ROT90, "Zaccaria", "Cat and Mouse (set 1)",           GAME_NO_SOUND | GAME_WRONG_COLORS | GAME_NO_COCKTAIL )
 GAME( 1982, catmousa, catnmous, catnmous, catnmous, 0, ROT90, "Zaccaria", "Cat and Mouse (set 2)",           GAME_NO_SOUND | GAME_WRONG_COLORS | GAME_NO_COCKTAIL | GAME_NOT_WORKING )

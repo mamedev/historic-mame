@@ -503,7 +503,6 @@ int winwindow_video_window_create(int index, win_monitor_info *monitor, const wi
 	memset(window, 0, sizeof(*window));
 	window->maxwidth = config->width;
 	window->maxheight = config->height;
-	window->depth = config->depth;
 	window->refresh = config->refresh;
 	window->monitor = monitor;
 	window->fullscreen = !video_config.windowed;

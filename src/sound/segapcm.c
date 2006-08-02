@@ -11,7 +11,6 @@ struct segapcm
 	UINT8  *ram;
 	UINT8 low[16];
 	const UINT8 *rom;
-	UINT32 max_addr;
 	int bankshift;
 	int bankmask;
 	sound_stream * stream;
@@ -61,8 +60,7 @@ static void SEGAPCM_update(void *param, stream_sample_t **inputs, stream_sample_
 				}
 
 				/* fetch the sample */
-				if (addr < spcm->max_addr)
-					v = rom[addr >> 8] - 0x80;
+				v = rom[addr >> 8] - 0x80;
 
 				/* apply panning and advance */
 				buffer[0][i] += v * voll;
@@ -88,7 +86,6 @@ static void *segapcm_start(int sndindex, int clock, const void *config)
 	memset(spcm, 0, sizeof(*spcm));
 
 	spcm->rom = (const UINT8 *)memory_region(intf->region);
-	spcm->max_addr = memory_region_length(intf->region) << 8;
 	spcm->ram = auto_malloc(0x800);
 
 	memset(spcm->ram, 0xff, 0x800);

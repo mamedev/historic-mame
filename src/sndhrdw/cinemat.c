@@ -754,7 +754,7 @@ static void ripoff_sound_w(UINT8 sound_val, UINT8 bits_changed)
 	{
 		/* background - 0=on, 1=off, selected by bits 0x38 */
 		if ((((current_shift ^ last_shift) & 0x38) && !(current_shift & 0x04)) || SHIFTREG_FALLING_EDGE(0x04))
-			sample_start(5, 5 + ((current_shift >> 3) & 7), 1);
+			sample_start(5, 5 + ((current_shift >> 5) & 7), 1);
 		if (SHIFTREG_RISING_EDGE(0x04))
 			sample_stop(5);
 

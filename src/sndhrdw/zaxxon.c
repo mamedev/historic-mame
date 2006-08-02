@@ -69,6 +69,41 @@ FF3F Should be written an 0x80 for Mode 0
 #include "driver.h"
 #include "sound/samples.h"
 
+/* Sound Samples */
+
+static const char *zaxxon_sample_names[] =
+{
+	"*zaxxon",
+	"03.wav",   /* Homing Missile */
+	"02.wav",   /* Base Missile */
+	"01.wav",   /* Laser (force field) */
+	"00.wav",   /* Battleship (end of level boss) */
+	"11.wav",   /* S-Exp (enemy explosion) */
+	"10.wav",   /* M-Exp (ship explosion) */
+	"08.wav",   /* Cannon (ship fire) */
+	"23.wav",   /* Shot (enemy fire) */
+	"21.wav",   /* Alarm 2 (target lock) */
+	"20.wav",   /* Alarm 3 (low fuel) */
+	"05.wav",   /* initial background noise */
+	"04.wav",   /* looped asteroid noise */
+	0
+};
+
+static struct Samplesinterface zaxxon_samples_interface =
+{
+	12, /* 12 channels */
+	zaxxon_sample_names
+};
+
+MACHINE_DRIVER_START( zaxxon_samples )
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(zaxxon_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+MACHINE_DRIVER_END
+
+
+
+
 #define TOTAL_SOUNDS 22
 static int soundplaying[TOTAL_SOUNDS];
 
@@ -107,81 +142,131 @@ static const struct sa sa[TOTAL_SOUNDS] =
 	{ 11, 11, 1, 1, 1 },	/* background */
 };
 
-WRITE8_HANDLER( zaxxon_sound_w )
+WRITE8_HANDLER( zaxxon_sound_a_w )
 {
-	int line;
-	int noise;
-
-	switch (offset)
+	/* handle background rumble */
+	switch (data & 0x0c)
 	{
-	case 0:
-		/* handle background rumble */
-		switch (data & 0x0c)
-		{
-			case 0x04:
-				soundplaying[20] = 0;
-				sample_stop(sa[20].channel);
-				if (soundplaying[21] == 0)
-				{
-					soundplaying[21] = 1;
-					sample_start(sa[21].channel,sa[21].num,sa[21].looped);
-				}
-				sample_set_volume(sa[21].channel,0.5 + 0.157 * (data & 0x03));
-				break;
-			case 0x00:
-			case 0x08:
-				if (soundplaying[20] == 0)
-				{
-					soundplaying[20] = 1;
-					sample_start(sa[20].channel,sa[20].num,sa[20].looped);
-				}
-				sample_set_volume(sa[20].channel,0.5 + 0.157 * (data & 0x03));
-				soundplaying[21] = 0;
-				sample_stop(sa[21].channel);
-				break;
-			case 0x0c:
-				soundplaying[20] = 0;
-				sample_stop(sa[20].channel);
-				soundplaying[21] = 0;
-				sample_stop(sa[21].channel);
-				break;
-		}
-
-	case 1:
-	case 2:
-		for (line = 0;line < 8;line++)
-		{
-			noise = 8 * offset + line - 4;
-
-			/* the first four sound lines are handled separately */
-			if (noise >= 0)
+		case 0x04:
+			soundplaying[20] = 0;
+			sample_stop(sa[20].channel);
+			if (soundplaying[21] == 0)
 			{
-				if ((data & (1 << line)) == 0)
+				soundplaying[21] = 1;
+				sample_start(sa[21].channel,sa[21].num,sa[21].looped);
+			}
+			sample_set_volume(sa[21].channel,0.5 + 0.157 * (data & 0x03));
+			break;
+		case 0x00:
+		case 0x08:
+			if (soundplaying[20] == 0)
+			{
+				soundplaying[20] = 1;
+				sample_start(sa[20].channel,sa[20].num,sa[20].looped);
+			}
+			sample_set_volume(sa[20].channel,0.5 + 0.157 * (data & 0x03));
+			soundplaying[21] = 0;
+			sample_stop(sa[21].channel);
+			break;
+		case 0x0c:
+			soundplaying[20] = 0;
+			sample_stop(sa[20].channel);
+			soundplaying[21] = 0;
+			sample_stop(sa[21].channel);
+			break;
+	}
+}
+
+static void common_sound_w(int offset, UINT8 data)
+{
+	int line, noise;
+
+	for (line = 0;line < 8;line++)
+	{
+		noise = 8 * offset + line - 4;
+
+		/* the first four sound lines are handled separately */
+		if (noise >= 0)
+		{
+			if ((data & (1 << line)) == 0)
+			{
+				/* trigger sound */
+				if (soundplaying[noise] == 0)
 				{
-					/* trigger sound */
-					if (soundplaying[noise] == 0)
+					soundplaying[noise] = 1;
+					if (sa[noise].channel != -1)
 					{
-						soundplaying[noise] = 1;
-						if (sa[noise].channel != -1)
-						{
-							if (sa[noise].restartable || !sample_playing(sa[noise].channel))
-								sample_start(sa[noise].channel,sa[noise].num,sa[noise].looped);
-						}
-					}
-				}
-				else
-				{
-					if (soundplaying[noise])
-					{
-						soundplaying[noise] = 0;
-						if (sa[noise].channel != -1 && sa[noise].stoppable)
-							sample_stop(sa[noise].channel);
+						if (sa[noise].restartable || !sample_playing(sa[noise].channel))
+							sample_start(sa[noise].channel,sa[noise].num,sa[noise].looped);
 					}
 				}
 			}
+			else
+			{
+				if (soundplaying[noise])
+				{
+					soundplaying[noise] = 0;
+					if (sa[noise].channel != -1 && sa[noise].stoppable)
+						sample_stop(sa[noise].channel);
+				}
+			}
 		}
-	case 3:
-		// control byte
-		break;
+	}
+}
+
+WRITE8_HANDLER( zaxxon_sound_b_w )
+{
+	common_sound_w(1, data);
+}
+
+WRITE8_HANDLER( zaxxon_sound_c_w )
+{
+	common_sound_w(2, data);
+}
+
+
+
+static const char *congo_sample_names[] =
+{
+	"*congo",
+	"gorilla.wav",
+	"rim.wav",
+	"congah.wav",
+	"congal.wav",
+	"bass.wav",
+	0
+};
+
+static struct Samplesinterface congo_samples_interface =
+{
+	5,	/* 5 channels */
+	congo_sample_names
+};
+
+
+MACHINE_DRIVER_START( congo_samples )
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(congo_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+MACHINE_DRIVER_END
+
+
+
+WRITE8_HANDLER( congo_sound_b_w )
+{
+	/* bit 7 = mute */
+	if (data & 0x02) sample_start(0, 0, 0);	/* GORILLA */
+}
+
+WRITE8_HANDLER( congo_sound_c_w )
+{
+	data ^= 0xff;
+
+	if (data & 0x80)
+	{
+		if (data & 0x08) sample_start(1, 1, 0);	/* RIM */
+		if (data & 0x04) sample_start(2, 2, 0);	/* CONGA */
+		if (data & 0x02) sample_start(3, 3, 0);	/* CONGA */
+		if (data & 0x01) sample_start(4, 4, 0);	/* BASS DRUM */
 	}
 }

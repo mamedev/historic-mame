@@ -36,6 +36,7 @@ void turbo_update_segments(void);
 READ8_HANDLER( buckrog_cpu2_command_r );
 READ8_HANDLER( buckrog_port_2_r );
 READ8_HANDLER( buckrog_port_3_r );
+WRITE8_HANDLER( buckrog_ppi8255_0_w );
 
 
 /*----------- defined in sndhrdw/turbo.c -----------*/

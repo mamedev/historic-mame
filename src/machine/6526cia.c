@@ -91,6 +91,14 @@ struct _cia_state
 	UINT8			icr;
 	UINT8			ics;
 	UINT8			irq;
+
+	/* Serial */
+	UINT8			loaded;
+	UINT8			sdr;
+	UINT8			sp;
+	UINT8			cnt;
+	UINT8			shift;
+	UINT8			serial;
 };
 
 
@@ -283,6 +291,7 @@ INLINE int cia_timer_count(cia_timer *timer)
 static void cia_timer_proc(void *param)
 {
 	cia_timer *timer = param;
+	cia_state *cia = timer->cia;
 
 	/* clear the timer started flag */
 	timer->started = FALSE;
@@ -299,6 +308,35 @@ static void cia_timer_proc(void *param)
 		timer->mode &= 0xfe;
 	else
 		cia_timer_start(timer);
+
+	/* the first timer interracts with the serial line */
+	if ((timer->irq == 0x01) && (timer->mode & 0x40))
+	{
+		if (cia->shift || cia->loaded)
+		{
+			if (cia->cnt)
+			{
+				if (cia->shift == 0)
+				{
+					cia->loaded = 0;
+					cia->serial = cia->sdr;
+				}
+				cia->sp = (cia->serial & 0x80) ? 1 : 0;
+				cia->shift++;
+				cia->serial <<= 1;
+				cia->cnt = 0;
+			}
+			else
+			{
+				cia->cnt = 1;
+				if (cia->shift == 8)
+				{
+					cia->ics |= 0x08;
+					cia_update_interrupts(cia);
+				}
+			}
+		}
+	}
 }
 
 
@@ -391,6 +429,30 @@ void cia_issue_index(int which)
 }
 
 
+void cia_set_input_cnt(int which, int data)
+{
+	cia_state *cia = &cia_array[which];
+	if (!cia->cnt && data)
+	{
+		if (!(cia->timer[0].mode & 0x40))
+		{
+			cia->serial >>= 1;
+			if (cia->sp)
+				cia->serial |= 0x80;
+			if (++cia->shift == 8)
+			{
+				cia->sdr = cia->serial;
+				cia->serial = 0;
+				cia->shift = 0;
+				cia->ics |= 0x08;
+				cia_update_interrupts(cia);
+			}
+		}
+	}
+	cia->cnt = data ? 1 : 0;
+}
+
+
 UINT8 cia_read(int which, offs_t offset)
 {
 	cia_timer *timer;
@@ -450,6 +512,11 @@ UINT8 cia_read(int which, offs_t offset)
 				data = cia->tod_latch >> ((offset - CIA_TOD0) * 8);
 			else
 				data = cia->tod >> ((offset - CIA_TOD0) * 8);
+			break;
+
+		/* serial data ready */
+		case CIA_SDR:
+			data = cia->sdr;
 			break;
 
 		/* interrupt status/clear */
@@ -540,6 +607,13 @@ void cia_write(int which, offs_t offset, UINT8 data)
 				/* only enable the TOD once the LSB is written */
 				cia->tod_running = (shift == 0);
 			}
+			break;
+
+		/* serial data ready */
+		case CIA_SDR:
+			cia->sdr = data;
+			if (cia->timer[0].mode & 0x40)
+				cia->loaded = 1;
 			break;
 
 		/* interrupt control register */

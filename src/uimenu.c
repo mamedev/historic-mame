@@ -15,6 +15,11 @@
 #include "uimenu.h"
 #include "uitext.h"
 
+#ifdef MESS
+#include "uimess.h"
+#include "inputx.h"
+#endif /* MESS */
+
 
 
 /***************************************************************************

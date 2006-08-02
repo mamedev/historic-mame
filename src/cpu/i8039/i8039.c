@@ -106,7 +106,7 @@ typedef struct
 
 	UINT8	pending_irq, irq_executing, masterClock, regPtr;
 	UINT8	t_flag, timer, timerON, countON, xirq_en, tirq_en;
-	UINT16	A11, A11ff;
+	UINT16	A11;
 	UINT8	irq_state, irq_extra_cycles;
 	int		(*irq_callback)(int irqline);
 } I8039_Regs;
@@ -280,14 +280,14 @@ static void anld_p4_a(void)	 { port_w( 4, port_r(4) & M_RDMEM_OPCODE() ); }
 static void anld_p5_a(void)	 { port_w( 5, port_r(5) & M_RDMEM_OPCODE() ); }
 static void anld_p6_a(void)	 { port_w( 6, port_r(6) & M_RDMEM_OPCODE() ); }
 static void anld_p7_a(void)	 { port_w( 7, port_r(7) & M_RDMEM_OPCODE() ); }
-static void call(void)		 { UINT8 i=M_RDMEM_OPCODE(); M_CALL(i | R.A11); }
-static void call_1(void)	 { UINT8 i=M_RDMEM_OPCODE(); M_CALL(i | 0x100 | R.A11); }
-static void call_2(void)	 { UINT8 i=M_RDMEM_OPCODE(); M_CALL(i | 0x200 | R.A11); }
-static void call_3(void)	 { UINT8 i=M_RDMEM_OPCODE(); M_CALL(i | 0x300 | R.A11); }
-static void call_4(void)	 { UINT8 i=M_RDMEM_OPCODE(); M_CALL(i | 0x400 | R.A11); }
-static void call_5(void)	 { UINT8 i=M_RDMEM_OPCODE(); M_CALL(i | 0x500 | R.A11); }
-static void call_6(void)	 { UINT8 i=M_RDMEM_OPCODE(); M_CALL(i | 0x600 | R.A11); }
-static void call_7(void)	 { UINT8 i=M_RDMEM_OPCODE(); M_CALL(i | 0x700 | R.A11); }
+static void call(void)		 { UINT8 i=M_RDMEM_OPCODE(); UINT16 a11 = (R.irq_executing == I8039_NO_INT) ? R.A11 : 0; M_CALL(i | a11); }
+static void call_1(void)	 { UINT8 i=M_RDMEM_OPCODE(); UINT16 a11 = (R.irq_executing == I8039_NO_INT) ? R.A11 : 0; M_CALL(i | 0x100 | a11); }
+static void call_2(void)	 { UINT8 i=M_RDMEM_OPCODE(); UINT16 a11 = (R.irq_executing == I8039_NO_INT) ? R.A11 : 0; M_CALL(i | 0x200 | a11); }
+static void call_3(void)	 { UINT8 i=M_RDMEM_OPCODE(); UINT16 a11 = (R.irq_executing == I8039_NO_INT) ? R.A11 : 0; M_CALL(i | 0x300 | a11); }
+static void call_4(void)	 { UINT8 i=M_RDMEM_OPCODE(); UINT16 a11 = (R.irq_executing == I8039_NO_INT) ? R.A11 : 0; M_CALL(i | 0x400 | a11); }
+static void call_5(void)	 { UINT8 i=M_RDMEM_OPCODE(); UINT16 a11 = (R.irq_executing == I8039_NO_INT) ? R.A11 : 0; M_CALL(i | 0x500 | a11); }
+static void call_6(void)	 { UINT8 i=M_RDMEM_OPCODE(); UINT16 a11 = (R.irq_executing == I8039_NO_INT) ? R.A11 : 0; M_CALL(i | 0x600 | a11); }
+static void call_7(void)	 { UINT8 i=M_RDMEM_OPCODE(); UINT16 a11 = (R.irq_executing == I8039_NO_INT) ? R.A11 : 0; M_CALL(i | 0x700 | a11); }
 static void clr_a(void)		 { R.A=0; }
 static void clr_c(void)		 { CLR(C_FLAG); }
 static void clr_f0(void)	 { CLR(F_FLAG); }
@@ -333,16 +333,14 @@ static void inc_r7(void)	 { R7++; }
 static void inc_xr0(void)	 { intRAM[R0 & 0x7f]++; }
 static void inc_xr1(void)	 { intRAM[R1 & 0x7f]++; }
 
-/* static void jmp(void)     { UINT8 i=M_RDOP(R.PC.w.l); R.PC.w.l = i | R.A11; }
- */
-
 static void jmp(void)
 {
 	UINT8 i=M_RDOP(R.PC.w.l);
 	UINT16 oldpc,newpc;
+	UINT16 a11 = (R.irq_executing == I8039_NO_INT) ? R.A11 : 0;
 
 	oldpc = R.PC.w.l-1;
-	R.PC.w.l = i | R.A11;
+	R.PC.w.l = i | a11;
 	change_pc(R.PC.w.l);
 	newpc = R.PC.w.l;
 	if (newpc == oldpc) { if (i8039_ICount > 0) i8039_ICount = 0; } /* speed up busy loop */
@@ -350,13 +348,13 @@ static void jmp(void)
 		{ if (i8039_ICount > 0) i8039_ICount = 0; }
 }
 
-static void jmp_1(void)	 	 { UINT8 i=M_RDOP(R.PC.w.l); R.PC.w.l = i | 0x100 | R.A11; change_pc(R.PC.w.l); }
-static void jmp_2(void)	 	 { UINT8 i=M_RDOP(R.PC.w.l); R.PC.w.l = i | 0x200 | R.A11; change_pc(R.PC.w.l); }
-static void jmp_3(void)	 	 { UINT8 i=M_RDOP(R.PC.w.l); R.PC.w.l = i | 0x300 | R.A11; change_pc(R.PC.w.l); }
-static void jmp_4(void)	 	 { UINT8 i=M_RDOP(R.PC.w.l); R.PC.w.l = i | 0x400 | R.A11; change_pc(R.PC.w.l); }
-static void jmp_5(void)	 	 { UINT8 i=M_RDOP(R.PC.w.l); R.PC.w.l = i | 0x500 | R.A11; change_pc(R.PC.w.l); }
-static void jmp_6(void)	 	 { UINT8 i=M_RDOP(R.PC.w.l); R.PC.w.l = i | 0x600 | R.A11; change_pc(R.PC.w.l); }
-static void jmp_7(void)	 	 { UINT8 i=M_RDOP(R.PC.w.l); R.PC.w.l = i | 0x700 | R.A11; change_pc(R.PC.w.l); }
+static void jmp_1(void)	 	 { UINT8 i=M_RDOP(R.PC.w.l); UINT16 a11 = (R.irq_executing == I8039_NO_INT) ? R.A11 : 0; R.PC.w.l = i | 0x100 | a11; change_pc(R.PC.w.l); }
+static void jmp_2(void)	 	 { UINT8 i=M_RDOP(R.PC.w.l); UINT16 a11 = (R.irq_executing == I8039_NO_INT) ? R.A11 : 0; R.PC.w.l = i | 0x200 | a11; change_pc(R.PC.w.l); }
+static void jmp_3(void)	 	 { UINT8 i=M_RDOP(R.PC.w.l); UINT16 a11 = (R.irq_executing == I8039_NO_INT) ? R.A11 : 0; R.PC.w.l = i | 0x300 | a11; change_pc(R.PC.w.l); }
+static void jmp_4(void)	 	 { UINT8 i=M_RDOP(R.PC.w.l); UINT16 a11 = (R.irq_executing == I8039_NO_INT) ? R.A11 : 0; R.PC.w.l = i | 0x400 | a11; change_pc(R.PC.w.l); }
+static void jmp_5(void)	 	 { UINT8 i=M_RDOP(R.PC.w.l); UINT16 a11 = (R.irq_executing == I8039_NO_INT) ? R.A11 : 0; R.PC.w.l = i | 0x500 | a11; change_pc(R.PC.w.l); }
+static void jmp_6(void)	 	 { UINT8 i=M_RDOP(R.PC.w.l); UINT16 a11 = (R.irq_executing == I8039_NO_INT) ? R.A11 : 0; R.PC.w.l = i | 0x600 | a11; change_pc(R.PC.w.l); }
+static void jmp_7(void)	 	 { UINT8 i=M_RDOP(R.PC.w.l); UINT16 a11 = (R.irq_executing == I8039_NO_INT) ? R.A11 : 0; R.PC.w.l = i | 0x700 | a11; change_pc(R.PC.w.l); }
 static void jmpp_xa(void)	 { UINT16 addr = (R.PC.w.l & 0xf00) | R.A; R.PC.w.l = (R.PC.w.l & 0xf00) | M_RDMEM(addr); change_pc(R.PC.w.l); }
 static void jb_0(void)	 	 { UINT8 i=M_RDMEM_OPCODE(); if (R.A & 0x01) { R.PC.w.l = ((R.PC.w.l-1) & 0xf00) | i; change_pc(R.PC.w.l); } else ADJUST_CYCLES }
 static void jb_1(void)	 	 { UINT8 i=M_RDMEM_OPCODE(); if (R.A & 0x02) { R.PC.w.l = ((R.PC.w.l-1) & 0xf00) | i; change_pc(R.PC.w.l); } else ADJUST_CYCLES }
@@ -456,7 +454,6 @@ static void retr(void)
 	UINT8 i=pull();
 	R.PC.w.l = ((i & 0x0f) << 8) | pull();
 	change_pc(R.PC.w.l);
-//  R.A11 = R.A11ff;    /* NS990113 */
 	R.PSW = (R.PSW & 0x0f) | (i & 0xf0);	/* Stack is already changed by pull */
 	regPTR = ((M_By) ? 24 : 0);
 
@@ -476,8 +473,8 @@ static void rlc_a(void) 	 { UINT8 i=M_Cy; if (R.A & 0x80) SET(C_FLAG); else CLR(
 static void rr_a(void)		 { UINT8 i=R.A & 1; R.A >>= 1; if (i) R.A |= 0x80; else R.A &= 0x7f; }
 /* NS990113 */
 static void rrc_a(void)		 { UINT8 i=M_Cy; if (R.A & 1) SET(C_FLAG); else CLR(C_FLAG); R.A >>= 1; if (i) R.A |= 0x80; else R.A &= 0x7f; }
-static void sel_mb0(void)	{ R.A11 = 0; R.A11ff = 0; }
-static void sel_mb1(void)	 { R.A11ff = 0x800; if (R.irq_executing == I8039_NO_INT) R.A11 = 0x800; }
+static void sel_mb0(void)	 { R.A11 = 0x000; }
+static void sel_mb1(void)	 { R.A11 = 0x800; }
 static void sel_rb0(void)	 { CLR(B_FLAG); regPTR = 0;  }
 static void sel_rb1(void)	 { SET(B_FLAG); regPTR = 24; }
 static void stop_tcnt(void)	 { R.timerON = R.countON = 0; }
@@ -575,7 +572,6 @@ static void i8039_init (int index, int clock, const void *config, int (*irqcallb
 	state_save_register_item("i8039", index, R.xirq_en);
 	state_save_register_item("i8039", index, R.tirq_en);
 	state_save_register_item("i8039", index, R.A11);
-	state_save_register_item("i8039", index, R.A11ff);
 	state_save_register_item("i8039", index, R.irq_state);
 	state_save_register_item("i8039", index, R.irq_extra_cycles);
 }
@@ -596,7 +592,7 @@ static void i8039_reset (void)
 	R.irq_executing = I8039_NO_INT;
 	R.pending_irq	= I8039_NO_INT;
 
-	R.A11ff   = R.A11     = 0;
+	R.A11     = 0;
 	R.tirq_en = R.xirq_en = 0;
 	R.timerON = R.countON = 0;
 	R.timerON = 1;  /* Mario Bros. doesn't work without this */
@@ -627,8 +623,6 @@ static int Ext_IRQ(void)
 			push(R.PC.b.l);
 			push((R.PC.b.h & 0x0f) | (R.PSW & 0xf0));
 			R.PC.w.l = 0x03;
-			R.A11ff = R.A11;
-			R.A11   = 0;
 
 			extra_cycles = 2;		/* 2 clock cycles used */
 
@@ -654,8 +648,6 @@ static int Timer_IRQ(void)
 			push((R.PC.b.h & 0x0f) | (R.PSW & 0xf0));
 			R.PC.w.l = 0x07;
 			change_pc(0x07);
-			R.A11ff = R.A11;
-			R.A11	= 0;
 
 			extra_cycles = 2;		/* 2 clock cycles used */
 

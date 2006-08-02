@@ -157,35 +157,22 @@
  *
  *************************************/
 
-static ADDRESS_MAP_START( turbo_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xb000, 0xb1ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xe000, 0xe7ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xf000, 0xf7ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xf800, 0xf803) AM_READ(ppi8255_0_r)
-	AM_RANGE(0xf900, 0xf903) AM_READ(ppi8255_1_r)
-	AM_RANGE(0xfa00, 0xfa03) AM_READ(ppi8255_2_r)
-	AM_RANGE(0xfb00, 0xfb03) AM_READ(ppi8255_3_r)
-	AM_RANGE(0xfc00, 0xfcff) AM_READ(turbo_8279_r)
+static ADDRESS_MAP_START( turbo_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_ROM
+	AM_RANGE(0xa000, 0xa0ff) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xa800, 0xa807) AM_WRITE(turbo_coin_and_lamp_w)
+	AM_RANGE(0xb000, 0xb1ff) AM_RAM AM_BASE(&sega_sprite_position)
+	AM_RANGE(0xb800, 0xb800) AM_WRITE(MWA8_NOP)	/* resets the analog wheel value */
+	AM_RANGE(0xe000, 0xe7ff) AM_RAM AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xe800, 0xe800) AM_WRITE(turbo_collision_clear_w)
+	AM_RANGE(0xf000, 0xf7ff) AM_RAM
+	AM_RANGE(0xf800, 0xf803) AM_READWRITE(ppi8255_0_r, ppi8255_0_w)
+	AM_RANGE(0xf900, 0xf903) AM_READWRITE(ppi8255_1_r, ppi8255_1_w)
+	AM_RANGE(0xfa00, 0xfa03) AM_READWRITE(ppi8255_2_r, ppi8255_2_w)
+	AM_RANGE(0xfb00, 0xfb03) AM_READWRITE(ppi8255_3_r, ppi8255_3_w)
+	AM_RANGE(0xfc00, 0xfcff) AM_READWRITE(turbo_8279_r, turbo_8279_w)
 	AM_RANGE(0xfd00, 0xfdff) AM_READ(input_port_0_r)
 	AM_RANGE(0xfe00, 0xfeff) AM_READ(turbo_collision_r)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( turbo_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xa000, 0xa0ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
-	AM_RANGE(0xa800, 0xa807) AM_WRITE(turbo_coin_and_lamp_w)
-	AM_RANGE(0xb000, 0xb1ff) AM_WRITE(MWA8_RAM) AM_BASE(&sega_sprite_position)
-	AM_RANGE(0xb800, 0xb800) AM_WRITE(MWA8_NOP)	/* resets the analog wheel value */
-	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(MWA8_RAM) AM_BASE(&videoram) AM_SIZE(&videoram_size)
-	AM_RANGE(0xe800, 0xe800) AM_WRITE(turbo_collision_clear_w)
-	AM_RANGE(0xf000, 0xf7ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xf800, 0xf803) AM_WRITE(ppi8255_0_w)
-	AM_RANGE(0xf900, 0xf903) AM_WRITE(ppi8255_1_w)
-	AM_RANGE(0xfa00, 0xfa03) AM_WRITE(ppi8255_2_w)
-	AM_RANGE(0xfb00, 0xfb03) AM_WRITE(ppi8255_3_w)
-	AM_RANGE(0xfc00, 0xfcff) AM_WRITE(turbo_8279_w)
 ADDRESS_MAP_END
 
 
@@ -196,28 +183,18 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-static ADDRESS_MAP_START( subroc3d_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xa000, 0xa7ff) AM_READ(MRA8_RAM)
+static ADDRESS_MAP_START( subroc3d_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_ROM
+	AM_RANGE(0xa000, 0xa3ff) AM_RAM AM_BASE(&sega_sprite_position)
+	AM_RANGE(0xa400, 0xa7ff) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
 	AM_RANGE(0xa800, 0xa800) AM_READ(input_port_0_r)
 	AM_RANGE(0xa801, 0xa801) AM_READ(input_port_1_r)
 	AM_RANGE(0xa802, 0xa802) AM_READ(input_port_2_r)
 	AM_RANGE(0xa803, 0xa803) AM_READ(input_port_3_r)
-	AM_RANGE(0xb000, 0xb7ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xe000, 0xe7ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xe800, 0xe803) AM_READ(ppi8255_0_r)
-	AM_RANGE(0xf000, 0xf003) AM_READ(ppi8255_1_r)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( subroc3d_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xa000, 0xa3ff) AM_WRITE(MWA8_RAM) AM_BASE(&sega_sprite_position)
-	AM_RANGE(0xa400, 0xa7ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
-	AM_RANGE(0xb000, 0xb7ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(MWA8_RAM) AM_BASE(&videoram) AM_SIZE(&videoram_size)
-	AM_RANGE(0xe800, 0xe803) AM_WRITE(ppi8255_0_w)
-	AM_RANGE(0xf000, 0xf003) AM_WRITE(ppi8255_1_w)
+	AM_RANGE(0xb000, 0xb7ff) AM_RAM
+	AM_RANGE(0xe000, 0xe7ff) AM_RAM AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xe800, 0xe803) AM_READWRITE(ppi8255_0_r, ppi8255_0_w)
+	AM_RANGE(0xf000, 0xf003) AM_READWRITE(ppi8255_1_r, ppi8255_1_w)
 	AM_RANGE(0xf800, 0xf801) AM_WRITE(turbo_8279_w)
 ADDRESS_MAP_END
 
@@ -229,29 +206,19 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-static ADDRESS_MAP_START( buckrog_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xc800, 0xc803) AM_READ(ppi8255_0_r)
-	AM_RANGE(0xd000, 0xd003) AM_READ(ppi8255_1_r)
-	AM_RANGE(0xe000, 0xe1ff) AM_READ(MRA8_RAM)
+static ADDRESS_MAP_START( buckrog_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0xc000, 0xc7ff) AM_RAM AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xc800, 0xc803) AM_READWRITE(ppi8255_0_r, buckrog_ppi8255_0_w)
+	AM_RANGE(0xd000, 0xd003) AM_READWRITE(ppi8255_1_r, ppi8255_1_w)
+	AM_RANGE(0xd800, 0xd801) AM_WRITE(turbo_8279_w)
+	AM_RANGE(0xe000, 0xe1ff) AM_RAM AM_BASE(&sega_sprite_position)
+	AM_RANGE(0xe400, 0xe4ff) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
 	AM_RANGE(0xe800, 0xe800) AM_READ(input_port_0_r)
 	AM_RANGE(0xe801, 0xe801) AM_READ(input_port_1_r)
 	AM_RANGE(0xe802, 0xe802) AM_READ(buckrog_port_2_r)
 	AM_RANGE(0xe803, 0xe803) AM_READ(buckrog_port_3_r)
-	AM_RANGE(0xf800, 0xffff) AM_READ(MRA8_RAM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( buckrog_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM) AM_BASE(&videoram) AM_SIZE(&videoram_size)
-	AM_RANGE(0xc800, 0xc803) AM_WRITE(ppi8255_0_w)
-	AM_RANGE(0xd000, 0xd003) AM_WRITE(ppi8255_1_w)
-	AM_RANGE(0xd800, 0xd801) AM_WRITE(turbo_8279_w)
-	AM_RANGE(0xe000, 0xe1ff) AM_WRITE(MWA8_RAM) AM_BASE(&sega_sprite_position)
-	AM_RANGE(0xe400, 0xe4ff) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
-	AM_RANGE(0xf800, 0xffff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xf800, 0xffff) AM_RAM
 ADDRESS_MAP_END
 
 
@@ -261,17 +228,16 @@ static ADDRESS_MAP_START( buckrog_readmem2, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( buckrog_readport2, ADDRESS_SPACE_IO, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x00, 0x00) AM_READ(buckrog_cpu2_command_r)
-ADDRESS_MAP_END
-
-
 static ADDRESS_MAP_START( buckrog_writemem2, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0xdfff) AM_WRITE(buckrog_bitmap_w)
 	AM_RANGE(0xf000, 0xf7ff) AM_WRITE(MWA8_RAM)
 ADDRESS_MAP_END
 
+
+static ADDRESS_MAP_START( buckrog_readport2, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE(0x00, 0x00) AM_READ(buckrog_cpu2_command_r)
+ADDRESS_MAP_END
 
 
 
@@ -293,32 +259,37 @@ INPUT_PORTS_START( turbo )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START	/* DSW 1 */
-	PORT_DIPNAME( 0x03, 0x03, "Car On Extended Play" )
-	PORT_DIPSETTING( 0x03, "1" )
-	PORT_DIPSETTING( 0x02, "2" )
-	PORT_DIPSETTING( 0x01, "3" )
-	PORT_DIPSETTING( 0x00, "4" )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Game_Time ) )
-	PORT_DIPSETTING( 0x00, "Fixed (55 sec)" )
-	PORT_DIPSETTING( 0x04, "Adjustable" )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING( 0x00, DEF_STR( Easy ))
-	PORT_DIPSETTING( 0x08, DEF_STR( Hard ))
-	PORT_DIPNAME( 0x10, 0x00, "Game Mode" )
-	PORT_DIPSETTING( 0x10, "No Collisions (cheat)" )
-	PORT_DIPSETTING( 0x00, DEF_STR( Normal ) )
-	PORT_DIPNAME( 0x20, 0x00, "Initial Entry" )
-	PORT_DIPSETTING( 0x20, DEF_STR( Off ))
-	PORT_DIPSETTING( 0x00, DEF_STR( On ))
-	PORT_BIT( 0xc0, 0xc0, IPT_UNUSED )
+	PORT_DIPNAME( 0x03, 0x03, "Car On Extended Play" ) PORT_DIPLOCATION("SW1:1,2")
+	PORT_DIPSETTING( 0x00, "1" )
+	PORT_DIPSETTING( 0x01, "2" )
+	PORT_DIPSETTING( 0x02, "3" )
+	PORT_DIPSETTING( 0x03, "4" )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Game_Time ) ) PORT_DIPLOCATION("SW1:3")
+	PORT_DIPSETTING( 0x04, "Fixed (55 sec)" )
+	PORT_DIPSETTING( 0x00, "Adjustable" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Difficulty ) ) PORT_DIPLOCATION("SW1:4")
+	PORT_DIPSETTING( 0x08, DEF_STR( Easy ))
+	PORT_DIPSETTING( 0x00, DEF_STR( Hard ))
+	PORT_DIPNAME( 0x10, 0x10, "Game Mode" ) PORT_DIPLOCATION("SW1:5")
+	PORT_DIPSETTING( 0x00, "No Collisions (cheat)" )
+	PORT_DIPSETTING( 0x10, DEF_STR( Normal ) )
+	PORT_DIPNAME( 0x20, 0x20, "Initial Entry" ) PORT_DIPLOCATION("SW1:6")
+	PORT_DIPSETTING( 0x00, DEF_STR( Off ))
+	PORT_DIPSETTING( 0x20, DEF_STR( On ))
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) ) PORT_DIPLOCATION("SW1:7")
+	PORT_DIPSETTING( 0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) ) PORT_DIPLOCATION("SW1:8")
+	PORT_DIPSETTING( 0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
 
 	PORT_START	/* DSW 2 */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Game_Time ) )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Game_Time ) ) PORT_DIPLOCATION("SW2:1,2")
 	PORT_DIPSETTING( 0x00, "60 seconds" )
 	PORT_DIPSETTING( 0x01, "70 seconds" )
 	PORT_DIPSETTING( 0x02, "80 seconds" )
 	PORT_DIPSETTING( 0x03, "90 seconds" )
-	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Coin_B ))
+	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Coin_B )) PORT_DIPLOCATION("SW2:3,4,5")
 	PORT_DIPSETTING(	0x18, DEF_STR( 4C_1C ))
 	PORT_DIPSETTING(	0x14, DEF_STR( 3C_1C ))
 	PORT_DIPSETTING(	0x10, DEF_STR( 2C_1C ))
@@ -327,7 +298,7 @@ INPUT_PORTS_START( turbo )
 	PORT_DIPSETTING(	0x04, DEF_STR( 1C_2C ))
 	PORT_DIPSETTING(	0x08, DEF_STR( 1C_3C ))
 	PORT_DIPSETTING(	0x0c, DEF_STR( 1C_6C ))
-	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Coin_A ))
+	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Coin_A )) PORT_DIPLOCATION("SW2:6,7,8")
 	PORT_DIPSETTING(	0xc0, DEF_STR( 4C_1C ))
 	PORT_DIPSETTING(	0xa0, DEF_STR( 3C_1C ))
 	PORT_DIPSETTING(	0x80, DEF_STR( 2C_1C ))
@@ -337,13 +308,18 @@ INPUT_PORTS_START( turbo )
 	PORT_DIPSETTING(	0x40, DEF_STR( 1C_3C ))
 	PORT_DIPSETTING(	0x60, DEF_STR( 1C_6C ))
 
-	PORT_START	/* DSW 3 */
-	PORT_BIT( 0x0f, 0x00, IPT_UNUSED )		/* Merged with collision bits */
-	PORT_BIT( 0x30, 0x00, IPT_UNUSED )
-	PORT_DIPNAME( 0x40, 0x40, "Tachometer" )
+	PORT_START	/* Collision and DSW 3 */
+	PORT_BIT( 0x0f, 0x00, IPT_SPECIAL )	/* Merged with collision bits */
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) ) PORT_DIPLOCATION("SW3:1")
+	PORT_DIPSETTING( 0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) ) PORT_DIPLOCATION("SW3:2")
+	PORT_DIPSETTING( 0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, "Tachometer" ) PORT_DIPLOCATION("SW3:3")
 	PORT_DIPSETTING(	0x40, "Analog (Meter)")
-	PORT_DIPSETTING(	0x00, "Digital (led)")
-	PORT_DIPNAME( 0x80, 0x80, "Sound System" )
+	PORT_DIPSETTING(	0x00, "Digital (LED)")
+	PORT_DIPNAME( 0x80, 0x80, "Sound System" ) PORT_DIPLOCATION("SW3:4")
 	PORT_DIPSETTING(	0x80, DEF_STR( Upright ) )
 	PORT_DIPSETTING(	0x00, "Cockpit")
 
@@ -358,8 +334,8 @@ INPUT_PORTS_START( subroc3d )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
 
 	PORT_START
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_SERVICE_NO_TOGGLE( 0x10, 0x10 )
@@ -368,7 +344,7 @@ INPUT_PORTS_START( subroc3d )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START  /* DSW 2 */
-	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Coin_A ))
+	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Coin_A )) PORT_DIPLOCATION("SW2:1,2,3")
 	PORT_DIPSETTING(    0x07, DEF_STR( 5C_1C ) )
 	PORT_DIPSETTING(    0x06, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x05, DEF_STR( 3C_1C ) )
@@ -377,7 +353,7 @@ INPUT_PORTS_START( subroc3d )
 	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_6C ) )
-	PORT_DIPNAME( 0x38, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPNAME( 0x38, 0x00, DEF_STR( Coin_B ) ) PORT_DIPLOCATION("SW2:4,5,6")
 	PORT_DIPSETTING(    0x38, DEF_STR( 5C_1C ) )
 	PORT_DIPSETTING(    0x30, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x28, DEF_STR( 3C_1C ) )
@@ -386,34 +362,34 @@ INPUT_PORTS_START( subroc3d )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x18, DEF_STR( 1C_6C ) )
-	PORT_DIPNAME( 0xc0, 0x40, "Ships" )
+	PORT_DIPNAME( 0xc0, 0x40, DEF_STR( Lives ) ) PORT_DIPLOCATION("SW2:7,8")
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x40, "3" )
 	PORT_DIPSETTING(    0x80, "4" )
 	PORT_DIPSETTING(    0xc0, "5" )
 
 	PORT_START  /* DSW 3 */
-	PORT_DIPNAME( 0x03, 0x03, "Extra Ship" )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Bonus_Life ) ) PORT_DIPLOCATION("SW3:1,2")
 	PORT_DIPSETTING(    0x00, "20000" )
 	PORT_DIPSETTING(    0x01, "40000" )
 	PORT_DIPSETTING(    0x02, "60000" )
 	PORT_DIPSETTING(    0x03, "80000" )
-	PORT_DIPNAME( 0x04, 0x04, "Initial Input" )
-	PORT_DIPSETTING(    0x00, "Disable" )
-	PORT_DIPSETTING(    0x04, "Enable" )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x00, "Difficult" )
+	PORT_DIPNAME( 0x04, 0x04, "Initial Entry" ) PORT_DIPLOCATION("SW3:3")
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Difficulty ) ) PORT_DIPLOCATION("SW3:4")
 	PORT_DIPSETTING(    0x08, DEF_STR( Normal ) )
-	PORT_DIPNAME( 0x10, 0x10, "Play" )
-	PORT_DIPSETTING(    0x00, "Free" )
-	PORT_DIPSETTING(    0x10, DEF_STR( Normal ) )
-	PORT_DIPNAME( 0x20, 0x20, "Motion" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Free_Play ) ) PORT_DIPLOCATION("SW3:5")
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "Motion" ) PORT_DIPLOCATION("SW3:6")
 	PORT_DIPSETTING(    0x00, "Stop" )
 	PORT_DIPSETTING(    0x20, DEF_STR( Normal ) )
-	PORT_DIPNAME( 0x40, 0x00, "Screen" )
+	PORT_DIPNAME( 0x40, 0x00, "Screen" ) PORT_DIPLOCATION("SW3:7")
 	PORT_DIPSETTING(    0x00, DEF_STR( Mono ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Stereo ) )
-	PORT_DIPNAME( 0x80, 0x80, "Game" )
+	PORT_DIPNAME( 0x80, 0x80, "Game" ) PORT_DIPLOCATION("SW3:8")
 	PORT_DIPSETTING(    0x00, "Endless" )
 	PORT_DIPSETTING(    0x80, DEF_STR( Normal ) )
 
@@ -440,7 +416,7 @@ INPUT_PORTS_START( buckrog )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START  /* DSW 1 */
-	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Coin_A ))
+	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Coin_A )) PORT_DIPLOCATION("SW1:1,2,3")
 	PORT_DIPSETTING(    0x07, DEF_STR( 5C_1C ) )
 	PORT_DIPSETTING(    0x06, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x05, DEF_STR( 3C_1C ) )
@@ -449,7 +425,7 @@ INPUT_PORTS_START( buckrog )
 	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_6C ) )
-	PORT_DIPNAME( 0x38, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPNAME( 0x38, 0x00, DEF_STR( Coin_B ) ) PORT_DIPLOCATION("SW1:4,5,6")
 	PORT_DIPSETTING(    0x38, DEF_STR( 5C_1C ) )
 	PORT_DIPSETTING(    0x30, DEF_STR( 4C_1C ) )
 	PORT_DIPSETTING(    0x28, DEF_STR( 3C_1C ) )
@@ -458,29 +434,36 @@ INPUT_PORTS_START( buckrog )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x18, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) ) PORT_DIPLOCATION("SW1:7")
+	PORT_DIPSETTING( 0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) ) PORT_DIPLOCATION("SW1:8")
+	PORT_DIPSETTING( 0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
+
 
 	PORT_START  /* DSW 2 */
-	PORT_DIPNAME( 0x01, 0x00, "Collisions" )
+	PORT_DIPNAME( 0x01, 0x00, "Collisions" ) PORT_DIPLOCATION("SW2:1")
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, "Accel by" )
+	PORT_DIPNAME( 0x02, 0x02, "Accel by" ) PORT_DIPLOCATION("SW2:2")
 	PORT_DIPSETTING(    0x00, "Pedal" )
 	PORT_DIPSETTING(    0x02, "Button" )
-	PORT_DIPNAME( 0x04, 0x00, "Best 5 Scores" )
+	PORT_DIPNAME( 0x04, 0x00, "Best 5 Scores" ) PORT_DIPLOCATION("SW2:3")
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x00, "Score Display" )
+	PORT_DIPNAME( 0x08, 0x00, "Score Display" ) PORT_DIPLOCATION("SW2:4")
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x00, "Difficult" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Difficulty ) ) PORT_DIPLOCATION("SW2:5")
 	PORT_DIPSETTING(    0x10, DEF_STR( Normal ) )
-	PORT_DIPNAME( 0x60, 0x00, "Extra Ships" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
+	PORT_DIPNAME( 0x60, 0x00, DEF_STR( Lives ) ) PORT_DIPLOCATION("SW2:6,7")
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x20, "4" )
 	PORT_DIPSETTING(    0x40, "5" )
 	PORT_DIPSETTING(    0x60, "6" )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) ) PORT_DIPLOCATION("SW2:8")
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x80, "Cockpit" )
 INPUT_PORTS_END
@@ -508,6 +491,7 @@ static const char *turbo_sample_names[]=
 	0
 };
 
+
 static struct Samplesinterface turbo_samples_interface =
 {
 	8,			/* eight channels */
@@ -531,6 +515,7 @@ static const char *buckrog_sample_names[]=
 	"shipsnd3.wav",
 	0
 };
+
 
 static struct Samplesinterface buckrog_samples_interface =
 {
@@ -556,11 +541,13 @@ static const char *subroc3d_sample_names[] =
 	0
 };
 
+
 static struct Samplesinterface subroc3d_samples_interface =
 {
 	8,          /* eight channels */
 	subroc3d_sample_names
 };
+
 
 
 /*************************************
@@ -573,7 +560,7 @@ static MACHINE_DRIVER_START( turbo )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 5000000)
-	MDRV_CPU_PROGRAM_MAP(turbo_readmem,turbo_writemem)
+	MDRV_CPU_PROGRAM_MAP(turbo_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -604,7 +591,7 @@ static MACHINE_DRIVER_START( subroc3d )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 5000000)
-	MDRV_CPU_PROGRAM_MAP(subroc3d_readmem,subroc3d_writemem)
+	MDRV_CPU_PROGRAM_MAP(subroc3d_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -634,7 +621,7 @@ static MACHINE_DRIVER_START( buckrog )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 5000000)
-	MDRV_CPU_PROGRAM_MAP(buckrog_readmem,buckrog_writemem)
+	MDRV_CPU_PROGRAM_MAP(buckrog_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_CPU_ADD(Z80, 5000000)
@@ -978,7 +965,7 @@ ROM_START( zoom909 )
 	ROM_LOAD( "5203.91", 0x0000, 0x2000, CRC(631f5b65) SHA1(ce8b23cf97f7e08a13f426964ef140a20a884335) )
 
 	ROM_REGION( 0x0a40, REGION_PROMS, 0 )	/* various PROMs */
-	ROM_LOAD( "pr-5199.95", 0x0000, 0x0400, CRC(f3cd9254) SHA1(5fc5e4137fa260f5463395719449e4a542f1b08c) ) /* sprite colortable */
+	ROM_LOAD( "pr-5199.95", 0x0000, 0x0400, BAD_DUMP CRC(f3cd9254) SHA1(5fc5e4137fa260f5463395719449e4a542f1b08c) ) /* sprite colortable */
 	ROM_LOAD( "5198.93",    0x0400, 0x0200, CRC(32e74bc8) SHA1(dd2c812efd7b8f6b31a45e698d6453ea6bec132e) ) /* char colortable */
 
 	/* unknown */
@@ -986,8 +973,9 @@ ROM_START( zoom909 )
 	ROM_LOAD( "pr-5195.53", 0x0620, 0x0020, CRC(181c6d23) SHA1(4749b205cbaa513ee65a644946235d2cfe275648) )
 	ROM_LOAD( "pr-5196.10", 0x0640, 0x0200, CRC(04204bcf) SHA1(5636eb184463ac58fcfd20012d13d14fb0769124) )
 	ROM_LOAD( "pr-5197.78", 0x0840, 0x0200, CRC(a42674af) SHA1(db3590dd0d0f8a85d4ba32ac4ee33f2f4ee4c348) )
-
 ROM_END
+
+
 
 /*************************************
  *
@@ -1019,5 +1007,5 @@ GAME( 1981, turboa,   turbo,   turbo,    turbo,    decode_turbo,   ROT270,      
 GAME( 1981, turbob,   turbo,   turbo,    turbo,    decode_turbo,   ROT270,             "Sega", "Turbo (encrypted set 2)", GAME_NO_COCKTAIL )
 GAME( 1982, subroc3d, 0,       subroc3d, subroc3d, 0,              ORIENTATION_FLIP_X, "Sega", "Subroc-3D", 0 )
 GAME( 1982, buckrog,  0,       buckrog,  buckrog,  decode_buckrog, ROT0,               "Sega", "Buck Rogers: Planet of Zoom", 0 )
-GAME( 1982, zoom909,  buckrog, buckrog,  buckrog,  decode_buckrog, ROT0,               "Sega", "Zoom 909", 0 )
+GAME( 1982, zoom909,  buckrog, buckrog,  buckrog,  decode_buckrog, ROT0,               "Sega", "Zoom 909", GAME_IMPERFECT_COLORS ) // bad PROM
 GAME( 1982, buckrogn, buckrog, buckrog,  buckrog,  0,              ROT0,               "Sega", "Buck Rogers: Planet of Zoom (not encrypted)", 0 )

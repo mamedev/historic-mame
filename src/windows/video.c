@@ -959,9 +959,9 @@ static void get_resolution(const char *name, win_window_config *config, int repo
 {
 	const char *data = options_get_string(name, report_error);
 
-	config->width = config->height = config->depth = config->refresh = 0;
+	config->width = config->height = config->refresh = 0;
 	if (strcmp(data, "auto") == 0)
 		return;
-	else if (sscanf(data, "%dx%dx%d@%d", &config->width, &config->height, &config->depth, &config->refresh) < 2 && report_error)
+	else if (sscanf(data, "%dx%d@%d", &config->width, &config->height, &config->refresh) < 2 && report_error)
 		fprintf(stderr, "Illegal resolution value for %s = %s\n", name, data);
 }

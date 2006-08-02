@@ -4068,6 +4068,36 @@ ROM_START( wbmlb )
 	ROM_LOAD( "pr5317.37",    0x0300, 0x0100, CRC(648350b8) SHA1(c7986aa9127ef5b50b845434cb4e81dff9861cd2) ) /* timing? (not used) */
 ROM_END
 
+ROM_START( wbmlbg )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 256k for code */
+	ROM_LOAD( "galaxy.ic90",  0x20000, 0x8000, CRC(66482638) SHA1(887f93015f0effa2d0fa1f1f59082f75ac072221) ) /* Unencrypted opcodes */
+	ROM_CONTINUE(             0x00000, 0x8000 )             /* Now load the operands in RAM */
+	ROM_LOAD( "galaxy.ic91",  0x30000, 0x8000, CRC(89a8ab93) SHA1(11389604017e15aed9a8fcef60e42740acd79917) ) /* Unencrypted opcodes */
+	ROM_CONTINUE(             0x10000, 0x8000 )
+	ROM_LOAD( "galaxy.ic92",  0x38000, 0x8000, CRC(39e07286) SHA1(70192f03e52dd34c9fe5698a5ec1c24d3c58543c) ) /* Unencrypted opcodes */
+	ROM_RELOAD(               0x18000, 0x8000 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for sound cpu */
+	ROM_LOAD( "epr11037.126", 0x0000, 0x8000, CRC(7a4ee585) SHA1(050436106cced5dcbf40a3d94d48202eedddc3ad) )
+
+	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "galaxy.ic4",   0x00000, 0x8000, CRC(ab75d056) SHA1(d90d9c723536d0ec21900dc70b51715300b01fe7) )
+	ROM_LOAD( "galaxy.ic5",   0x08000, 0x8000, CRC(3c11d151) SHA1(7b0c6792ae919ac309a709ca0c89006487e1d6e9) )
+	ROM_LOAD( "galaxy.ic6",   0x10000, 0x8000, CRC(6bb5e601) SHA1(465d67dcde4e775d1b93640ef1a300e958cbe707) )
+
+	ROM_REGION( 0x20000, REGION_GFX2, 0 ) /* 128k for sprites data */
+	ROM_LOAD( "epr11028.87",  0x00000, 0x8000, CRC(af0b3972) SHA1(413825f66b84c7e45aa1855131482abead8f7f3b) )
+	ROM_LOAD( "epr11027.86",  0x08000, 0x8000, CRC(277d8f1d) SHA1(7854673503ed03d276abe971805a11f8c992f6d6) )
+	ROM_LOAD( "epr11030.89",  0x10000, 0x8000, CRC(f05ffc76) SHA1(f3dbb518240f86430840c3d4cda04bac79c20f69) )
+	ROM_LOAD( "epr11029.88",  0x18000, 0x8000, CRC(cedc9c61) SHA1(dbe5744f9b6f2a406b52b910dd4e133db7bce6b2) )
+
+	ROM_REGION( 0x0400, REGION_PROMS, 0 )
+	ROM_LOAD( "pr11026.20",   0x0000, 0x0100, CRC(27057298) SHA1(654be7abb937bb0720263ee6512e31194662effe) )
+	ROM_LOAD( "pr11025.14",   0x0100, 0x0100, CRC(41e4d86b) SHA1(a86e8bb0a465d01b04410edfbb82eb96f12b909f) )
+	ROM_LOAD( "pr11024.8",    0x0200, 0x0100, CRC(08d71954) SHA1(df045dbfb3d669e4d42fbdba1e7191cd046f7b47) )
+	ROM_LOAD( "pr5317.37",    0x0300, 0x0100, CRC(648350b8) SHA1(c7986aa9127ef5b50b845434cb4e81dff9861cd2) ) /* timing? (not used) */
+ROM_END
+
 ROM_START( dakkochn )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 ) /* 128k for code */
 	ROM_LOAD( "epr11224.90",  0x00000, 0x8000, CRC(9fb1972b) SHA1(1bb61c6ec2b5b8eb39f74f20d5bcd0f14501bd21) ) /* encrypted */
@@ -4331,7 +4361,7 @@ GAME( 1985, hvymetal, 0,        hvymetal, hvymetal, hvymetal, ROT0,   "Sega", 		
 GAME( 1985, myhero,   0,        system1,  myhero,   0,        ROT0,   "Sega", 			 	   "My Hero (US)", GAME_SUPPORTS_SAVE )
 GAME( 1985, sscandal, myhero,   system1,  myhero,   myheroj,  ROT0,   "Coreland / Sega", 	   "Seishun Scandal (Japan)", GAME_SUPPORTS_SAVE )
 GAME( 1985, myherok,  myhero,   system1,  myhero,   myherok,  ROT0,   "Coreland / Sega", 	   "My Hero (Korea)", GAME_SUPPORTS_SAVE )
-GAME( 1985, shtngmst, 0,        chplft,   chplft,   0,        ROT0,   "Sega", 			 	   "Shooting Master", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )	/* 8751 protection, mcu = 315-5159 */
+GAME( 1985, shtngmst, 0,        chplft,   chplft,   0,        ROT0,   "Sega", 			 	   "Shooting Master", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING | GAME_SUPPORTS_SAVE)	/* 8751 protection, mcu = 315-5159 */
 GAME( 1985, chplft,   0,        chplft,   chplft,   0,        ROT0,   "Sega", 			 	   "Choplifter", GAME_UNEMULATED_PROTECTION | GAME_SUPPORTS_SAVE)	/* 8751 protection */
 GAME( 1985, chplftb,  chplft,   chplft,   chplft,   0,        ROT0,   "Sega", 			 	   "Choplifter (alternate)", GAME_SUPPORTS_SAVE )
 GAME( 1985, chplftbl, chplft,   chplft,   chplft,   0,        ROT0,   "bootleg", 		 	   "Choplifter (bootleg)", GAME_SUPPORTS_SAVE )
@@ -4347,15 +4377,16 @@ GAME( 1986, wboyu,    wboy,     system1,  wboyu,    0,        ROT0,   "Sega (Esc
 GAME( 1986, wboysys2, wboy,     wbml,     wboysys2, wboy,     ROT0,   "Sega (Escape license)", "Wonder Boy (system 2)", GAME_SUPPORTS_SAVE )
 GAME( 1986, wbdeluxe, wboy,     system1,  wbdeluxe, 0,        ROT0,   "Sega (Escape license)", "Wonder Boy Deluxe", GAME_SUPPORTS_SAVE )
 GAME( 1986, gardia,   0,        brain,    gardia,   gardia,   ROT270, "Sega / Coreland", 	   "Gardia", GAME_NO_COCKTAIL | GAME_SUPPORTS_SAVE)
-GAME( 1986, gardiab,  gardia,   brain,    gardia,   gardiab,  ROT270, "bootleg", 		 	   "Gardia (bootleg)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAME( 1986, gardiab,  gardia,   brain,    gardia,   gardiab,  ROT270, "bootleg", 		 	   "Gardia (bootleg)", GAME_NOT_WORKING | GAME_NO_COCKTAIL | GAME_SUPPORTS_SAVE )
 GAME( 1986, noboranb, 0,        noboranb, noboranb, noboranb, ROT270, "bootleg", 		 	   "Noboranka (Japan)", GAME_SUPPORTS_SAVE )
-GAME( 1987, blockgal, 0,        blockgal, blockgal, 0,        ROT90,  "Sega / Vic Tokai",	   "Block Gal", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAME( 1987, blockgal, 0,        blockgal, blockgal, 0,        ROT90,  "Sega / Vic Tokai",	   "Block Gal", GAME_NOT_WORKING | GAME_NO_COCKTAIL | GAME_SUPPORTS_SAVE)
 GAME( 1987, blckgalb, blockgal, blockgal, blockgal, bootleg,  ROT90,  "bootleg", 		 	   "Block Gal (bootleg)", GAME_NO_COCKTAIL | GAME_SUPPORTS_SAVE )
 GAME( 1987, tokisens, 0,        wbml,     tokisens, 0,        ROT90,  "Sega", 			 	   "Toki no Senshi - Chrono Soldier", GAME_NO_COCKTAIL | GAME_SUPPORTS_SAVE )
 GAME( 1987, wbml,     0,        wbml,     wbml,     wbml,     ROT0,   "Sega / Westone",  	   "Wonder Boy in Monster Land (Japan New Ver.)", GAME_NO_COCKTAIL | GAME_SUPPORTS_SAVE )
 GAME( 1987, wbmljo,   wbml,     wbml,     wbml,     wbml,     ROT0,   "Sega / Westone",  	   "Wonder Boy in Monster Land (Japan Old Ver.)", GAME_NO_COCKTAIL | GAME_SUPPORTS_SAVE )
 GAME( 1987, wbmljb,   wbml,     wbml,     wbml,     bootlegb, ROT0,   "bootleg", 		 	   "Wonder Boy in Monster Land (Japan not encrypted)", GAME_NO_COCKTAIL | GAME_SUPPORTS_SAVE )
-GAME( 1987, wbmlb,    wbml,     wbml,     wbml,     bootlegb, ROT0,   "bootleg", 		 	   "Wonder Boy in Monster Land", GAME_NO_COCKTAIL | GAME_SUPPORTS_SAVE)
-GAME( 1987, dakkochn, 0,        chplft,   chplft,   0,        ROT0,   "Sega", 			 	   "DakkoChan Jansoh", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAME( 1987, wbmlb,    wbml,     wbml,     wbml,     bootlegb, ROT0,   "bootleg", 		 	   "Wonder Boy in Monster Land (English bootleg)", GAME_NO_COCKTAIL | GAME_SUPPORTS_SAVE)
+GAME( 1987, wbmlbg,   wbml,     wbml,     wbml,     bootlegb, ROT0,   "bootleg", 		 	   "Wonder Boy in Monster Land (Galaxy Electronics English bootleg)", GAME_NO_COCKTAIL | GAME_SUPPORTS_SAVE)
+GAME( 1987, dakkochn, 0,        chplft,   chplft,   0,        ROT0,   "Sega", 			 	   "DakkoChan Jansoh", GAME_NOT_WORKING | GAME_NO_COCKTAIL | GAME_SUPPORTS_SAVE )
 GAME( 1988, ufosensi, 0,        ufosensi, ufosensi, ufosensi, ROT0,   "Sega", 			 	   "Ufo Senshi Yohko Chan", GAME_SUPPORTS_SAVE )
 GAME( 1988, ufosensb, ufosensi, ufosensi, ufosensi, bootlegb, ROT0,   "bootleg", 			   "Ufo Senshi Yohko Chan (not encrypted)", GAME_SUPPORTS_SAVE )

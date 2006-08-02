@@ -378,6 +378,10 @@ int mame_stricmp(const char *s1, const char *s2);
 #undef stricmp
 #define stricmp !MUST_USE_MAME_STRICMP_INSTEAD!
 
+/* this macro prevents people from using strcasecmp directly */
+#undef strcasecmp
+#define strcasecmp !MUST_USE_MAME_STRICMP_INSTEAD!
+
 
 /* since strnicmp is not part of the standard, we use this instead */
 int mame_strnicmp(const char *s1, const char *s2, size_t n);
@@ -385,6 +389,10 @@ int mame_strnicmp(const char *s1, const char *s2, size_t n);
 /* this macro prevents people from using strnicmp directly */
 #undef strnicmp
 #define strnicmp !MUST_USE_MAME_STRNICMP_INSTEAD!
+
+/* this macro prevents people from using strncasecmp directly */
+#undef strncasecmp
+#define strncasecmp !MUST_USE_MAME_STRNICMP_INSTEAD!
 
 
 /* additional string compare helper */

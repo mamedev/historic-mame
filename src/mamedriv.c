@@ -3043,6 +3043,7 @@ V-V                           TP-027
 	DRIVER( wbmljo )	/* (c) 1987 Sega/Westone (S2) */
 	DRIVER( wbmljb )	/* (c) 1987 Sega/Westone (S2) */
 	DRIVER( wbmlb )		/* bootleg? (S2) */
+	DRIVER( wbmlbg )	/* bootleg (Galaxy Electronics) */
 	DRIVER( dakkochn )	/* 836-6483? (S2) */
 	DRIVER( ufosensi )	/* 834-6659 (S2) */
 	DRIVER( ufosensb )	/* bootleg */
@@ -3087,7 +3088,7 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( endurobl )	/* (c) 1985 (Herb bootleg) */
 	DRIVER( hangon )	/* (c) 1985 */
 	DRIVER( sharrier )	/* (c) 1985 */
-	DRIVER( sharrirb )	/* (c) 1985 */
+	DRIVER( sharrir1 )	/* (c) 1985 */
 	DRIVER( shangupb )	/* (c) 1992 (but bootleg, hangon hw?) */
 
 	/* Pre-16 */
@@ -3097,9 +3098,9 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( dumpmtmt )	/* (c) 1986 (Japan) */
 	DRIVER( mjleague )	/* (c) 1985 */
 	DRIVER( quartet )	/* (c) 1986 (8751) */
-	DRIVER( quartetj )	/* (c) 1986 (8751) */
-	DRIVER( quartet2 )	/* (c) 1986 (8751) */
-	DRIVER( quartt2j )	/* (c) 1986 (8751) */
+	DRIVER( quartet1 )	/* (c) 1986 (8751) */
+	DRIVER( quart21 )	/* (c) 1986 (8751) */
+	DRIVER( quart2 )	/* (c) 1986 */
 
 	/* System16A */
 	DRIVER( afighter )	/* (c) 1986 (FD1089A, decrypted) */
@@ -3253,7 +3254,7 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( aburner )	/* (c) 1987 */
 	DRIVER( aburner2 )	/* (c) 1987 */
 	DRIVER( thndrbld )	/* (c) 1987 (FD1094, decrypted) */
-	DRIVER( thndrbdj )	/* (c) 1987 */
+	DRIVER( thndrbd1 )	/* (c) 1987 */
 	DRIVER( loffire )	/* (c) 1989 (FD1094, decrypted) */
 	DRIVER( loffireu )	/* (c) 1989 (FD1094, decrypted) */
 	DRIVER( loffirej )	/* (c) 1989 (FD1094, decrypted) */
@@ -3457,7 +3458,7 @@ Sep.1994 Quiz Ghost Hunter
 
 	/* Model 2B-CRX (SHARC, SCSP sound board) */
 	DRIVER( vstriker )	/* 1994 */
-	DRIVER( vstrikra )	/* 1994 */
+	DRIVER( vstrikro )	/* 1994 */
 	DRIVER( fvipers )	/* 1995 */
 	DRIVER( gunblade )	/* 1995 */
 	DRIVER( indy500 )	/* 1995 */
@@ -5735,6 +5736,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( batlbala )	/* (c) 1995 Seibu Kaihatsu (Metrotainment License) */
 
 	DRIVER( viprp1 )	/* (c) 1995 Seibu Kaihatsu */
+	DRIVER( viprp1j )	/* (c) 1995 Seibu Kaihatsu */
 	DRIVER( viprp1s )	/* (c) 1995 Seibu Kaihatsu */
 	DRIVER( viprp1o )	/* (c) 1995 Seibu Kaihatsu */
 	DRIVER( viprp1ot )	/* (c) 1995 Seibu Kaihatsu (Tuning License) */
@@ -6066,6 +6068,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( galpanib )	/* (c) 1990 Kaneko */
 	DRIVER( galpania )	/* (c) 1990 Kaneko */
 	DRIVER( galpani2 )	/* (c) 1993 Kaneko */
+	DRIVER( galpan2t )	/* (c) 1993 Kaneko */
 	DRIVER( gpan2qiz )	/* (c) 1993 Kaneko */
 	DRIVER( jchan )		/* (c) 1995 Kaneko */
 	DRIVER( jchan2 )	/* (c) 1995 Kaneko */

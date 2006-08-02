@@ -214,7 +214,7 @@ void _AYWriteReg(struct AY8910 *PSG, int r, int v)
 			if (PSG->PortAwrite)
 				(*PSG->PortAwrite)(0, PSG->Regs[AY_PORTA]);
 			else
-				logerror("PC %04x: warning - write %02x to 8910 #%d Port A\n",activecpu_get_pc(),PSG->Regs[AY_PORTA],PSG->index);
+				logerror("warning - write %02x to 8910 #%d Port A\n",PSG->Regs[AY_PORTA],PSG->index);
 		}
 		else
 		{
@@ -227,7 +227,7 @@ void _AYWriteReg(struct AY8910 *PSG, int r, int v)
 			if (PSG->PortBwrite)
 				(*PSG->PortBwrite)(0, PSG->Regs[AY_PORTB]);
 			else
-				logerror("PC %04x: warning - write %02x to 8910 #%d Port B\n",activecpu_get_pc(),PSG->Regs[AY_PORTB],PSG->index);
+				logerror("warning - write %02x to 8910 #%d Port B\n",PSG->Regs[AY_PORTB],PSG->index);
 		}
 		else
 		{

@@ -42,6 +42,7 @@ UINT8 cia_read(int which, offs_t offset);
 void cia_write(int which, offs_t offset, UINT8 data);
 void cia_clock_tod(int which);
 void cia_issue_index(int which);
+void cia_set_input_cnt(int which, int data);
 
 /* accessors */
 UINT8 cia_get_output_a(int which);

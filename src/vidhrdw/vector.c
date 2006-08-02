@@ -36,6 +36,11 @@
 #include "vector.h"
 #include "render.h"
 
+
+
+#define VECTOR_WIDTH_DENOM			1024
+
+
 #define MAX_POINTS	10000
 
 #define VECTOR_TEAM \
@@ -51,6 +56,73 @@
 	"Andrew Caldwell (anti-aliasing)\n" \
 	"- *** -\n"
 
+#if 0
+
+#define TEXTURE_LENGTH_BUCKETS		32
+#define TEXTURE_INTENSITY_BUCKETS	4
+#define TEXTURE_WIDTH				16
+
+#define MAX_INTENSITY				2
+#define VECTOR_BLEED				(0.25f)
+#define VECTOR_INT_SCALE			(255.0f * 1.5f)
+
+
+typedef struct _vector_texture vector_texture;
+struct _vector_texture
+{
+	render_texture *	texture;
+	mame_bitmap *		bitmap;
+};
+
+static vector_texture *vectortex[TEXTURE_INTENSITY_BUCKETS][TEXTURE_LENGTH_BUCKETS];
+
+
+static render_texture *get_vector_texture(float dx, float dy, float intensity)
+{
+	float length = sqrt(dx * dx + dy * dy);
+	int lbucket = length * (float)TEXTURE_LENGTH_BUCKETS;
+	int ibucket = (intensity / (float)MAX_INTENSITY) * (float)TEXTURE_INTENSITY_BUCKETS;
+	vector_texture *tex;
+	int height, x, y;
+	float totalint;
+
+	if (lbucket > TEXTURE_LENGTH_BUCKETS)
+		lbucket = TEXTURE_LENGTH_BUCKETS;
+	if (ibucket > TEXTURE_INTENSITY_BUCKETS)
+		ibucket = TEXTURE_INTENSITY_BUCKETS;
+
+	tex = &vectortex[ibucket][lbucket];
+	if (tex->texture != NULL)
+		return tex->texture;
+
+	height = lbucket * VECTOR_WIDTH_DENOM / TEXTURE_LENGTH_BUCKETS;
+	tex->bitmap = bitmap_alloc_depth(TEXTURE_WIDTH, height, 32);
+	fillbitmap(tex->bitmap, NULL, MAKE_ARGB(0xff,0xff,0xff,0xff));
+
+	totalint = 1.0f;
+	for (x = TEXTURE_WIDTH / 2 - 1; x >= 0; x--)
+	{
+		int intensity = (int)(totalint * (1.0f - VECTOR_BLEED) * VECTOR_INT_SCALE);
+		intensity = MIN(255, intensity);
+		totalint -= (float)intensity * (1.0f / VECTOR_INT_SCALE);
+
+		for (y = 0; y < height; y++)
+		{
+			UINT32 *pix;
+
+			pix = (UINT32 *)bitmap->base + y * bitmap->rowpixels + x;
+			*pix = MAKE_ARGB((RGB_ALPHA(*pix) * intensity) >> 8,0xff,0xff,0xff);
+
+			pix = (UINT32 *)bitmap->base + y * bitmap->rowpixels + (TEXTURE_WIDTH - 1 - x);
+			*pix = MAKE_ARGB((RGB_ALPHA(*pix) * intensity) >> 8,0xff,0xff,0xff);
+		}
+	}
+
+	tex->texture = render_texture_create();
+	return tex->texture;
+}
+
+#endif
 
 #define VCLEAN  0
 #define VDIRTY  1
@@ -220,7 +292,7 @@ VIDEO_UPDATE( vector )
 			if (curpoint->intensity != 0)
 				if (!render_clip_line(&coords, &clip))
 					render_screen_add_line(screen, coords.x0, coords.y0, coords.x1, coords.y1,
-							(float)options.beam * (1.0f / (65536.0f * 1024.0f)),
+							(float)options.beam * (1.0f / (65536.0f * (float)VECTOR_WIDTH_DENOM)),
 							(curpoint->intensity << 24) | (curpoint->col & 0xffffff),
 							flags);
 

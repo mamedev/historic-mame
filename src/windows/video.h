@@ -45,7 +45,6 @@ struct _win_window_config
 	float				aspect;						// decoded aspect ratio
 	int					width;						// decoded width
 	int					height;						// decoded height
-	int					depth;						// decoded depth
 	int					refresh;					// decoded refresh
 };
 

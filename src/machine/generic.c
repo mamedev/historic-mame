@@ -25,6 +25,7 @@
 UINT32 dispensed_tickets;
 UINT32 coin_count[COIN_COUNTERS];
 UINT32 coinlockedout[COIN_COUNTERS];
+UINT32 servicecoinlockedout[COIN_COUNTERS];
 static UINT32 lastcoin[COIN_COUNTERS];
 
 /* generic NVRAM */
@@ -56,9 +57,7 @@ static void interrupt_reset(void);
 
 
 /***************************************************************************
-
-    Initialization
-
+    INITIALIZATION
 ***************************************************************************/
 
 /*-------------------------------------------------
@@ -75,6 +74,7 @@ void generic_machine_init(void)
 	{
 		lastcoin[counternum] = 0;
 		coinlockedout[counternum] = 0;
+		servicecoinlockedout[counternum] = 0;
 	}
 
 	/* reset NVRAM size and pointers */
@@ -104,9 +104,7 @@ void generic_machine_init(void)
 
 
 /***************************************************************************
-
-    Coin counters
-
+    COIN COUNTERS
 ***************************************************************************/
 
 /*-------------------------------------------------
@@ -212,6 +210,18 @@ void coin_lockout_w(int num,int on)
 
 
 /*-------------------------------------------------
+    service_coin_lockout_w - locks out one coin input
+-------------------------------------------------*/
+
+void service_coin_lockout_w(int num,int on)
+{
+	if (num >= COIN_COUNTERS) return;
+
+	servicecoinlockedout[num] = on;
+}
+
+
+/*-------------------------------------------------
     coin_lockout_global_w - locks out all the coin
     inputs
 -------------------------------------------------*/
@@ -229,9 +239,7 @@ void coin_lockout_global_w(int on)
 
 
 /***************************************************************************
-
-    NVRAM management
-
+    NVRAM MANAGEMENT
 ***************************************************************************/
 
 /*-------------------------------------------------
@@ -342,9 +350,7 @@ void nvram_handler_generic_randfill(mame_file *file, int read_or_write)
 
 
 /***************************************************************************
-
-    Memory card management
-
+    MEMORY CARD MANAGEMENT
 ***************************************************************************/
 
 /*-------------------------------------------------
@@ -479,9 +485,7 @@ int memcard_present(void)
 
 
 /***************************************************************************
-
-    LED code
-
+    LED CODE
 ***************************************************************************/
 
 /*-------------------------------------------------
@@ -509,9 +513,7 @@ void set_led_status(int num, int on)
 
 
 /***************************************************************************
-
-    Interrupt enable and vector helpers
-
+    INTERRUPT ENABLE AND VECTOR HELPERS
 ***************************************************************************/
 
 /*-------------------------------------------------
@@ -592,9 +594,7 @@ READ8_HANDLER( interrupt_enable_r )
 
 
 /***************************************************************************
-
-    Interrupt generation callback helpers
-
+    INTERRUPT GENERATION CALLBACK HELPERS
 ***************************************************************************/
 
 /*-------------------------------------------------
@@ -657,9 +657,7 @@ INTERRUPT_GEN( irq7_line_assert )	{ irqn_line_set(7, ASSERT_LINE); }
 
 
 /***************************************************************************
-
-    Watchdog read/write helpers
-
+    WATCHDOG READ/WRITE HELPERS
 ***************************************************************************/
 
 /*-------------------------------------------------
@@ -688,9 +686,7 @@ READ32_HANDLER( watchdog_reset32_r ) { watchdog_reset(); return 0xffffffff; }
 
 
 /***************************************************************************
-
-    Port reading helpers
-
+    PORT READING HELPERS
 ***************************************************************************/
 
 /*-------------------------------------------------
