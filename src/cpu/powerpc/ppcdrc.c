@@ -127,6 +127,8 @@ static UINT32		ppc_field_xlat[256];
 #define XER_OV			0x40000000
 #define XER_CA			0x20000000
 
+#define MSR_AP			0x00800000	/* Access privilege state (PPC602) */
+#define MSR_SA			0x00400000	/* Supervisor access mode (PPC602) */
 #define MSR_POW			0x00040000	/* Power Management Enable */
 #define MSR_WE			0x00040000
 #define MSR_CE			0x00020000
@@ -214,6 +216,13 @@ typedef struct {
 	UINT32 dsisr;
 	UINT32 dar;
 	UINT32 ear;
+	UINT32 dmiss;
+	UINT32 dcmp;
+	UINT32 hash1;
+	UINT32 hash2;
+	UINT32 imiss;
+	UINT32 icmp;
+	UINT32 rpa;
 
 	BATENT ibat[4];
 	BATENT dbat[4];
@@ -279,6 +288,9 @@ typedef struct {
 	UINT32 lt;
 	UINT32 sp;
 	UINT32 ibr;
+	UINT32 esasrr;
+	UINT32 sebr;
+	UINT32 ser;
 
 	/* PowerPC function pointers for memory accesses/exceptions */
 	UINT8 (*read8)(offs_t address);
@@ -524,6 +536,17 @@ INLINE void ppc_set_spr(int spr, UINT32 value)
 				ppc.hid1 = value;
 				return;
 
+			case SPR603E_DSISR:			ppc.dsisr = value; return;
+			case SPR603E_DAR:			ppc.dar = value; return;
+			case SPR603E_EAR:			ppc.ear = value; return;
+			case SPR603E_DMISS:			ppc.dmiss = value; return;
+			case SPR603E_DCMP:			ppc.dcmp = value; return;
+			case SPR603E_HASH1:			ppc.hash1 = value; return;
+			case SPR603E_HASH2:			ppc.hash2 = value; return;
+			case SPR603E_IMISS:			ppc.imiss = value; return;
+			case SPR603E_ICMP:			ppc.icmp = value; return;
+			case SPR603E_RPA:			ppc.rpa = value; return;
+
 			case SPR603E_IBAT0L:		ppc.ibat[0].l = value; return;
 			case SPR603E_IBAT0U:		ppc.ibat[0].u = value; return;
 			case SPR603E_IBAT1L:		ppc.ibat[1].l = value; return;
@@ -554,10 +577,12 @@ INLINE void ppc_set_spr(int spr, UINT32 value)
 	if (ppc.is602) {
 		switch(spr)
 		{
-			case SPR602_LT:			printf("ppc: LT = %08X\n", value); ppc.lt = value; return;
-			case SPR602_IBR:		printf("ppc: IBR = %08X\n", value); ppc.ibr = value; return;
-			case SPR602_SP:			printf("ppc: SP = %08X\n", value); ppc.sp = value; return;
-			case SPR602_TCR:		printf("ppc: TCR = %08X\n", value); ppc.tcr = value; return;
+			case SPR602_LT:			ppc.lt = value; return;
+			case SPR602_IBR:		ppc.ibr = value; return;
+			case SPR602_SP:			ppc.sp = value; return;
+			case SPR602_SEBR:		ppc.sebr = value; return;
+			case SPR602_SER:		ppc.ser = value; return;
+			case SPR602_TCR:		ppc.tcr = value; return;
 		}
 	}
 #endif
@@ -662,6 +687,9 @@ INLINE UINT32 ppc_get_spr(int spr)
 		{
 			case SPR602_LT:			return ppc.lt;
 			case SPR602_IBR:		return ppc.ibr;
+			case SPR602_ESASRR:		return ppc.esasrr;
+			case SPR602_SEBR:		return ppc.sebr;
+			case SPR602_SER:		return ppc.ser;
 			case SPR602_SP:			return ppc.sp;
 			case SPR602_TCR:		return ppc.tcr;
 		}
@@ -800,6 +828,10 @@ static UINT32 (* optable[64])(drc_core *, UINT32);
 
 #if (HAS_PPC403)
 #include "ppc403.c"
+#endif
+
+#if (HAS_PPC602)
+#include "ppc602.c"
 #endif
 
 /********************************************************************/
@@ -1278,6 +1310,12 @@ static void ppcdrc602_init(int index, int clock, const void *_config, int (*irqc
 			((i & 0x02) ? 0x000000F0 : 0) |
 			((i & 0x01) ? 0x0000000F : 0);
 	}
+
+	// PPC602 specific opcodes
+	optable31[596] = recompile_esa;
+	optable31[628] = recompile_dsa;
+	optable31[1010] = recompile_tlbli;
+	optable31[978] = recompile_tlbld;
 
 	ppc.is603 = 0;
 	ppc.is602 = 1;

@@ -220,6 +220,7 @@ const game_driver * const drivers[] =
 	DRIVER( trvchlng )	/* Senko */
 	DRIVER( luctoday )	/* 1980 Sigma */
 	DRIVER( chewing )	/* ?? unknown */
+	DRIVER( catacomb )	/* 1982 MTM Games */
 
 	/* Has some similarities with Moon Cresta but Board is very different */
 	DRIVER( rockclim )	/* (c)1981 Taito */
@@ -576,6 +577,7 @@ const game_driver * const drivers[] =
 	DRIVER( galagao )	/* (c) 1981 */
 	DRIVER( galagamw )	/* (c) 1981 Midway */
 	DRIVER( galagamk )	/* (c) 1981 Midway */
+	DRIVER( galagamf )	/* (c) 1981 Midway / hack */
 	DRIVER( gallag )	/* bootleg */
 	DRIVER( gatsbee )	/* (c) 1984 Uchida / hack */
 	DRIVER( digdug )	/* (c) 1982 */
@@ -2964,6 +2966,7 @@ V-V                           TP-027
 	DRIVER( monsterb )	/* (c) 1982 */
 	DRIVER( monster2 )	/* (c) 1982 */
 	DRIVER( spaceod )	/* (c) 1981 */
+	DRIVER( spaceod2 )	/* (c) 1981 */
 	DRIVER( pignewt )	/* (c) 1983 */
 	DRIVER( pignewta )	/* (c) 1983 */
 	DRIVER( sindbadm )	/* 834-5244 (c) 1983 Sega */
@@ -3103,6 +3106,7 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( quart2 )	/* (c) 1986 */
 
 	/* System16A */
+	DRIVER( aceattaa )	/* (c) 1988 (FD1094, decrypted) */
 	DRIVER( afighter )	/* (c) 1986 (FD1089A, decrypted) */
 	DRIVER( alexkidd )	/* (c) 1986 (FD1089A, decrypted) */
 	DRIVER( alexkid1 )	/* (c) 1986 */
@@ -4389,6 +4393,9 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 
 	/* GX Type 4 */
 	DRIVER( vsnetscr )	/* GX627 (c) 1996 */
+	DRIVER( vsnetseb )	/* GX627 (c) 1996 */
+	DRIVER( vsnetscu )	/* GX627 (c) 1996 */
+	DRIVER( vsnetsca )	/* GX627 (c) 1996 */
 	DRIVER( vsnetscj )	/* GX627 (c) 1996 */
 	DRIVER( rungun2 )	/* GX505 (c) 1996 */
 	DRIVER( slamdnk2 )	/* GX505 (c) 1996 */
@@ -5817,6 +5824,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( cischeat )	/* (c) 1990 Jaleco */
 	DRIVER( f1gpstar )	/* (c) 1991 Jaleco */
 	DRIVER( armchmp2 )	/* (c) 1992 Jaleco */
+	DRIVER( armchm2o )	/* (c) 1992 Jaleco */
 	DRIVER( wildplt )	/* (c) 1992 Jaleco */
 	DRIVER( f1gpstr2 )	/* (c) 1993 Jaleco */
 	DRIVER( scudhamm )	/* (c) 1994 Jaleco */
@@ -7030,11 +7038,13 @@ Other Sun games
 	DRIVER( cardline )	/* (c) 199? Veltmeijer */
 	DRIVER( bmcbowl )	/* (c) 1994 BMC */
 	DRIVER( pitboss )	/* (c) 1983 Merit */
+	DRIVER( casino5 )	/* (c) 1983 Merit */
 	DRIVER( trvwhzho )	/* (c) 1985 Merit */
 	DRIVER( trvwhzha )	/* (c) 1985 Merit */
 	DRIVER( trvwhzve )	/* (c) 1985 Merit */
 	DRIVER( trvwhzva )	/* (c) 1985 Merit */
 	DRIVER( trvwhzii )	/* (c) 1985 Merit */
+	DRIVER( trvwziii )	/* (c) 1985 Merit */
 	DRIVER( trvwhziv )	/* (c) 1985 Merit */
 	DRIVER( tictac )	/* (c) 1985 Merit */
 	DRIVER( phrcraze )	/* (c) 1986 Merit */

@@ -90,7 +90,7 @@ static int drawgdi_window_init(win_window_info *window)
 	// allocate memory for our structures
 	gdi = malloc_or_die(sizeof(*gdi));
 	memset(gdi, 0, sizeof(*gdi));
-	window->gdidata = gdi;
+	window->drawdata = gdi;
 
 	// fill in the bitmap info header
 	gdi->bminfo.bmiHeader.biSize			= sizeof(gdi->bminfo.bmiHeader);
@@ -122,7 +122,7 @@ static int drawgdi_window_init(win_window_info *window)
 
 static void drawgdi_window_destroy(win_window_info *window)
 {
-	gdi_info *gdi = window->gdidata;
+	gdi_info *gdi = window->drawdata;
 
 	// skip if nothing
 	if (gdi == NULL)
@@ -132,7 +132,7 @@ static void drawgdi_window_destroy(win_window_info *window)
 	if (gdi->bmdata != NULL)
 		free(gdi->bmdata);
 	free(gdi);
-	window->gdidata = NULL;
+	window->drawdata = NULL;
 }
 
 
@@ -157,7 +157,7 @@ static const render_primitive_list *drawgdi_window_get_primitives(win_window_inf
 
 static int drawgdi_window_draw(win_window_info *window, HDC dc, int update)
 {
-	gdi_info *gdi = window->gdidata;
+	gdi_info *gdi = window->drawdata;
 	int width, height, pitch;
 	RECT bounds;
 

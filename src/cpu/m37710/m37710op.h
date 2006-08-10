@@ -1418,40 +1418,60 @@ INLINE uint EA_SIY(void)   {return MAKE_UINT_16(read_16_SIY(REG_S + OPER_8_IMM()
 			SRC = OPER_8_IMM()<<16;											\
 			REG_DB = DST;	\
 			REG_A |= REG_B;													\
-			CLK((REG_A+1)<<3);												\
-			for(;(int)REG_A >= 0;REG_A--)									\
+			CLK(7);												\
+			if (REG_A > 0)								\
 			{																\
 				write_8_NORM(DST | REG_Y, read_8_NORM(SRC | REG_X));		\
 				REG_X = MAKE_UINT_8(REG_X+1);								\
 				REG_Y = MAKE_UINT_8(REG_Y+1);								\
+				REG_A--;								\
+				if ((REG_A&0xffff) != 0) \
+				{\
+				  	REG_PC -= 3; \
+				}\
+				else \
+				{ \
+					if (FLAG_M) \
+					{ \
+						REG_A = 0xff; \
+						REG_B = 0xff00; \
 			}																\
-			if(!FLAG_M)														\
+					else \
 			{																\
 				REG_A = 0xffff;												\
-				BREAKOUT;													\
 			}																\
-			REG_A = 0x00ff;													\
-			REG_B = 0xff00
+				} \
+			}
 #else
 #define OP_MVN()															\
 			DST = OPER_8_IMM()<<16;											\
 			SRC = OPER_8_IMM()<<16;											\
 			REG_DB = DST;	\
 			REG_A |= REG_B;													\
-			CLK((REG_A+1)<<3);												\
-			for(;(int)REG_A >= 0;REG_A--)									\
+			CLK(7);												\
+			if (REG_A > 0)								\
 			{																\
 				write_8_NORM(DST | REG_Y, read_8_NORM(SRC | REG_X));		\
 				REG_X = MAKE_UINT_16(REG_X+1);								\
 				REG_Y = MAKE_UINT_16(REG_Y+1);								\
+				REG_A--;								\
+				if ((REG_A&0xffff) != 0) \
+				{\
+				  	REG_PC -= 3; \
+				}\
+				else \
+				{ \
+					if (FLAG_M) \
+					{ \
+						REG_A = 0xff; \
+						REG_B = 0xff00; \
 			}																\
-			if(!FLAG_M)														\
+					else \
 			{																\
 				REG_A = 0xffff;												\
-				BREAKOUT;													\
 			}																\
-			REG_A = 0x00ff;													\
-			REG_B = 0xff00
+				} \
+			}
 #endif
 
 /* M37710  Move Block Positive */
@@ -1462,40 +1482,60 @@ INLINE uint EA_SIY(void)   {return MAKE_UINT_16(read_16_SIY(REG_S + OPER_8_IMM()
 			SRC = OPER_8_IMM()<<16;											\
 			REG_DB = DST;	\
 			REG_A |= REG_B;													\
-			CLK((REG_A+1)<<3);												\
-			for(;(int)REG_A >= 0;REG_A--)									\
+			CLK(7);												\
+			if (REG_A > 0)									\
 			{																\
 				write_8_NORM(DST | REG_Y, read_8_NORM(SRC | REG_X));		\
 				REG_X = MAKE_UINT_8(REG_X-1);								\
 				REG_Y = MAKE_UINT_8(REG_Y-1);								\
+				REG_A--;								\
+				if ((REG_A&0xffff) != 0) \
+				{\
+				  	REG_PC -= 3; \
+				}\
+				else \
+				{ \
+					if (FLAG_M) \
+					{ \
+						REG_A = 0xff; \
+						REG_B = 0xff00; \
 			}																\
-			if(!FLAG_M)														\
+					else \
 			{																\
 				REG_A = 0xffff;												\
-				BREAKOUT;													\
 			}																\
-			REG_A = 0x00ff;													\
-			REG_B = 0xff00
+				} \
+			}
 #else
 #define OP_MVP()															\
 			DST = OPER_8_IMM()<<16;											\
 			SRC = OPER_8_IMM()<<16;											\
 			REG_DB = DST;	\
 			REG_A |= REG_B;													\
-			CLK((REG_A+1)<<3);												\
-			for(;(int)REG_A >= 0;REG_A--)									\
+			CLK(7);												\
+			if (REG_A > 0)									\
 			{																\
 				write_8_NORM(DST | REG_Y, read_8_NORM(SRC | REG_X));		\
 				REG_X = MAKE_UINT_16(REG_X-1);								\
 				REG_Y = MAKE_UINT_16(REG_Y-1);								\
+				REG_A--;								\
+				if ((REG_A&0xffff) != 0) \
+				{\
+				  	REG_PC -= 3; \
+				}\
+				else \
+				{ \
+					if (FLAG_M) \
+					{ \
+						REG_A = 0xff; \
+						REG_B = 0xff00; \
 			}																\
-			if(!FLAG_M)														\
+					else \
 			{																\
 				REG_A = 0xffff;												\
-				BREAKOUT;													\
 			}																\
-			REG_A = 0x00ff;													\
-			REG_B = 0xff00
+				} \
+			}
 #endif
 
 /* M37710   No Operation */

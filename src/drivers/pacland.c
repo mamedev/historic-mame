@@ -18,9 +18,7 @@ CUS29    sprite line buffer and sprite/tilemap mixer
 CUS30    sound control
 CUS34A   address decoder
 CUS36    dual tilemap generator
-CUS60    MCU (63701) [1]
-
-[1] 60A1 found in at least one version
+CUS60    MCU (63701) aka 60A1
 
 
 Memory map
@@ -469,8 +467,8 @@ ROM_START( pacland )
 	ROM_LOAD( "pl3_06.bin",   0x1c000, 0x4000, CRC(2ffe3319) SHA1(c2540321cd5a1fe29ecb077abdf8f997893192e9) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for code */
-	ROM_LOAD( "pl1-7",        0x8000, 0x2000, CRC(8c5becae) SHA1(14d67136395c4c64472980a69648ce2d479ae67f) ) /* sub program for the mcu */
-	ROM_LOAD( "cus60",        0xf000, 0x1000, CRC(6ef08fb3) SHA1(4842590d60035a0059b0899eb2d5f58ae72c2529) ) /* microcontroller */
+	ROM_LOAD( "pl1-7",          0x8000, 0x2000, CRC(8c5becae) SHA1(14d67136395c4c64472980a69648ce2d479ae67f) ) /* sub program for the mcu */
+	ROM_LOAD( "cus60-60a1.mcu", 0xf000, 0x1000, CRC(076ea82a) SHA1(22b5e62e26390d7d5cacc0503c7aa5ed524204df) ) /* Internal code from the MCU */
 
 	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "pl2_12.bin",   0x00000, 0x2000, CRC(a63c8726) SHA1(b15903fa2267375280af03af0a7157e1b0bcb86d) )	/* chars */
@@ -503,8 +501,8 @@ ROM_START( pacland2 )
 	ROM_LOAD( "pl1-6",        0x1c000, 0x4000, CRC(b01e59a9) SHA1(e5b093852d33a4d09969d111fa6e42e964aa4dac) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for code */
-	ROM_LOAD( "pl1-7",        0x8000, 0x2000, CRC(8c5becae) SHA1(14d67136395c4c64472980a69648ce2d479ae67f) ) /* sub program for the mcu */
-	ROM_LOAD( "cus60",        0xf000, 0x1000, CRC(6ef08fb3) SHA1(4842590d60035a0059b0899eb2d5f58ae72c2529) ) /* microcontroller */
+	ROM_LOAD( "pl1-7",          0x8000, 0x2000, CRC(8c5becae) SHA1(14d67136395c4c64472980a69648ce2d479ae67f) ) /* sub program for the mcu */
+	ROM_LOAD( "cus60-60a1.mcu", 0xf000, 0x1000, CRC(076ea82a) SHA1(22b5e62e26390d7d5cacc0503c7aa5ed524204df) ) /* Internal code from the MCU */
 
 	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "pl0_12.bin",   0x00000, 0x2000, CRC(c8cb61ab) SHA1(ec33d64949a8c011430e889f55f54816b33c4218) )	/* chars */
@@ -537,8 +535,8 @@ ROM_START( pacland3 )
 	ROM_LOAD( "pl1-6",        0x1c000, 0x4000, CRC(b01e59a9) SHA1(e5b093852d33a4d09969d111fa6e42e964aa4dac) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for code */
-	ROM_LOAD( "pl1-7",        0x8000, 0x2000, CRC(8c5becae) SHA1(14d67136395c4c64472980a69648ce2d479ae67f) ) /* sub program for the mcu */
-	ROM_LOAD( "cus60",        0xf000, 0x1000, CRC(6ef08fb3) SHA1(4842590d60035a0059b0899eb2d5f58ae72c2529) ) /* microcontroller */
+	ROM_LOAD( "pl1-7",          0x8000, 0x2000, CRC(8c5becae) SHA1(14d67136395c4c64472980a69648ce2d479ae67f) ) /* sub program for the mcu */
+	ROM_LOAD( "cus60-60a1.mcu", 0xf000, 0x1000, CRC(076ea82a) SHA1(22b5e62e26390d7d5cacc0503c7aa5ed524204df) ) /* Internal code from the MCU */
 
 	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "pl1-12",       0x00000, 0x2000, CRC(c159fbce) SHA1(b0326c85b7df407f3e94c38a5971f911968d7b27) )	/* chars */
@@ -571,8 +569,8 @@ ROM_START( paclandm )
 	ROM_LOAD( "pl1-6",        0x1c000, 0x4000, CRC(b01e59a9) SHA1(e5b093852d33a4d09969d111fa6e42e964aa4dac) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for code */
-	ROM_LOAD( "pl1-7",        0x8000, 0x2000, CRC(8c5becae) SHA1(14d67136395c4c64472980a69648ce2d479ae67f) ) /* sub program for the mcu */
-	ROM_LOAD( "cus60",        0xf000, 0x1000, CRC(6ef08fb3) SHA1(4842590d60035a0059b0899eb2d5f58ae72c2529) ) /* microcontroller */
+	ROM_LOAD( "pl1-7",          0x8000, 0x2000, CRC(8c5becae) SHA1(14d67136395c4c64472980a69648ce2d479ae67f) ) /* sub program for the mcu */
+	ROM_LOAD( "cus60-60a1.mcu", 0xf000, 0x1000, CRC(076ea82a) SHA1(22b5e62e26390d7d5cacc0503c7aa5ed524204df) ) /* Internal code from the MCU */
 
 	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "pl1-12",       0x00000, 0x2000, CRC(c159fbce) SHA1(b0326c85b7df407f3e94c38a5971f911968d7b27) )	/* chars */

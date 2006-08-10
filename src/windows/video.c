@@ -48,18 +48,6 @@
 
 
 //============================================================
-//  IMPORTS
-//============================================================
-
-// from sound.c
-extern void sound_update_refresh_rate(float newrate);
-
-// from wind3dfx.c
-extern struct rc_option win_d3d_opts[];
-
-
-
-//============================================================
 //  CONSTANTS
 //============================================================
 
@@ -410,10 +398,7 @@ const char *osd_get_fps_text(const performance_info *performance)
 
 	// if we're paused, display less info
 	if (mame_is_paused())
-		dest += sprintf(dest, "%s%2d%4d/%d fps",
-				effective_autoframeskip() ? "auto" : "fskp", effective_frameskip(),
-				(int)(performance->frames_per_second + 0.5),
-				PAUSED_REFRESH_RATE);
+		dest += sprintf(dest, "Paused");
 	else
 	{
 		dest += sprintf(dest, "%s%2d%4d%%%4d/%d fps",
@@ -505,15 +490,20 @@ static BOOL CALLBACK monitor_enum_callback(HMONITOR handle, HDC dc, LPRECT rect,
 
 static win_monitor_info *pick_monitor(int index)
 {
+	const char *scrname, *scrname2;
 	win_monitor_info *monitor;
-	const char *scrname;
 	int moncount = 0;
 	char option[20];
 	float aspect;
 
 	// get the screen option
+	scrname = options_get_string("screen", TRUE);
 	sprintf(option, "screen%d", index);
-	scrname = options_get_string(option, TRUE);
+	scrname2 = options_get_string(option, TRUE);
+
+	// decide which one we want to use
+	if (scrname2 != NULL && strcmp(scrname2, "auto") != 0)
+		scrname = scrname2;
 
 	// get the aspect ratio
 	sprintf(option, "aspect%d", index);
@@ -848,7 +838,6 @@ static void extract_video_config(void)
 	if (!options_get_bool("use_backdrops", TRUE)) video_config.layerconfig &= ~LAYER_CONFIG_ENABLE_BACKDROP;
 	if (!options_get_bool("use_overlays", TRUE)) video_config.layerconfig &= ~LAYER_CONFIG_ENABLE_OVERLAY;
 	if (!options_get_bool("use_bezels", TRUE)) video_config.layerconfig &= ~LAYER_CONFIG_ENABLE_BEZEL;
-	if (!options_get_bool("artwork", TRUE)) video_config.layerconfig = 0;
 	if (options_get_bool("artwork_crop", TRUE)) video_config.layerconfig |= LAYER_CONFIG_ZOOM_TO_SCREEN;
 
 	// per-window options: extract the data
@@ -857,7 +846,7 @@ static void extract_video_config(void)
 	get_resolution("resolution2", &video_config.window[2], TRUE);
 	get_resolution("resolution3", &video_config.window[3], TRUE);
 
-	// d3d options: extract the data
+	// video options: extract the data
 	stemp = options_get_string("video", TRUE);
 	if (strcmp(stemp, "d3d") == 0)
 		video_config.mode = VIDEO_MODE_D3D;
@@ -865,6 +854,12 @@ static void extract_video_config(void)
 		video_config.mode = VIDEO_MODE_DDRAW;
 	else if (strcmp(stemp, "gdi") == 0)
 		video_config.mode = VIDEO_MODE_GDI;
+	else if (strcmp(stemp, "none") == 0)
+	{
+		video_config.mode = VIDEO_MODE_NONE;
+		if (video_config.framestorun == 0)
+			fprintf(stderr, "Warning: -video none doesn't make much sense without -frames_to_run\n");
+	}
 	else
 	{
 		fprintf(stderr, "Invalid video value %s; reverting to gdi\n", stemp);
@@ -939,12 +934,17 @@ static void load_effect_overlay(const char *filename)
 
 static float get_aspect(const char *name, int report_error)
 {
+	const char *defdata = options_get_string("aspect", FALSE);
 	const char *data = options_get_string(name, report_error);
 	int num = 0, den = 1;
 
 	if (strcmp(data, "auto") == 0)
-		return 0;
-	else if (sscanf(data, "%d:%d", &num, &den) != 2 && report_error)
+	{
+		if (strcmp(defdata, "auto") == 0)
+			return 0;
+		data = defdata;
+	}
+	if (sscanf(data, "%d:%d", &num, &den) != 2 && report_error)
 		fprintf(stderr, "Illegal aspect ratio value for %s = %s\n", name, data);
 	return (float)num / (float)den;
 }
@@ -957,11 +957,16 @@ static float get_aspect(const char *name, int report_error)
 
 static void get_resolution(const char *name, win_window_config *config, int report_error)
 {
+	const char *defdata = options_get_string("resolution", FALSE);
 	const char *data = options_get_string(name, report_error);
 
 	config->width = config->height = config->refresh = 0;
 	if (strcmp(data, "auto") == 0)
-		return;
-	else if (sscanf(data, "%dx%d@%d", &config->width, &config->height, &config->refresh) < 2 && report_error)
+	{
+		if (strcmp(defdata, "auto") == 0)
+			return;
+		data = defdata;
+	}
+	if (sscanf(data, "%dx%d@%d", &config->width, &config->height, &config->refresh) < 2 && report_error)
 		fprintf(stderr, "Illegal resolution value for %s = %s\n", name, data);
 }

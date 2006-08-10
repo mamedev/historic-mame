@@ -8,11 +8,7 @@
 
 /*----------- defined in machine/cchasm.c -----------*/
 
-READ16_HANDLER( cchasm_6840_r );
-WRITE16_HANDLER( cchasm_6840_w );
-
 WRITE16_HANDLER( cchasm_led_w );
-
 
 /*----------- defined in sndhrdw/cchasm.c -----------*/
 

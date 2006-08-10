@@ -424,7 +424,7 @@ static int drawd3d_window_init(win_window_info *window)
 	// allocate memory for our structures
 	d3d = malloc_or_die(sizeof(*d3d));
 	memset(d3d, 0, sizeof(*d3d));
-	window->dxdata = d3d;
+	window->drawdata = d3d;
 
 	// experimental: load a PNG to use for vector rendering; it is treated
 	// as a brightness map
@@ -459,7 +459,7 @@ error:
 
 static void drawd3d_window_destroy(win_window_info *window)
 {
-	d3d_info *d3d = window->dxdata;
+	d3d_info *d3d = window->drawdata;
 
 	// skip if nothing
 	if (d3d == NULL)
@@ -474,7 +474,7 @@ static void drawd3d_window_destroy(win_window_info *window)
 
 	// free the memory in the window
 	free(d3d);
-	window->dxdata = NULL;
+	window->drawdata = NULL;
 }
 
 
@@ -500,7 +500,7 @@ static const render_primitive_list *drawd3d_window_get_primitives(win_window_inf
 
 static int drawd3d_window_draw(win_window_info *window, HDC dc, int update)
 {
-	d3d_info *d3d = window->dxdata;
+	d3d_info *d3d = window->drawdata;
 	const render_primitive *prim;
 	HRESULT result;
 
@@ -586,7 +586,7 @@ mtlog_add("drawd3d_window_draw: present end");
 
 static int device_create(win_window_info *window)
 {
-	d3d_info *d3d = window->dxdata;
+	d3d_info *d3d = window->drawdata;
 	HRESULT result;
 	int verify;
 
@@ -1019,7 +1019,7 @@ static int device_test_cooperative(d3d_info *d3d)
 static int config_adapter_mode(win_window_info *window)
 {
 	d3d_adapter_identifier identifier;
-	d3d_info *d3d = window->dxdata;
+	d3d_info *d3d = window->drawdata;
 	HRESULT result;
 
 	// choose the monitor number
@@ -1125,7 +1125,7 @@ static int get_adapter_for_monitor(d3d_info *d3d, win_monitor_info *monitor)
 static void pick_best_mode(win_window_info *window)
 {
 	INT32 target_width, target_height;
-	d3d_info *d3d = window->dxdata;
+	d3d_info *d3d = window->drawdata;
 	INT32 minwidth, minheight;
 	float best_score = 0.0;
 	int maxmodes;
@@ -1212,7 +1212,7 @@ static void pick_best_mode(win_window_info *window)
 
 static int update_window_size(win_window_info *window)
 {
-	d3d_info *d3d = window->dxdata;
+	d3d_info *d3d = window->drawdata;
 	RECT client;
 
 	// get the current window bounds

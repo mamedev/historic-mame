@@ -150,6 +150,7 @@ static INT32 slider_yscale(INT32 newval, char *buffer, int arg);
 static INT32 slider_xoffset(INT32 newval, char *buffer, int arg);
 static INT32 slider_yoffset(INT32 newval, char *buffer, int arg);
 static INT32 slider_flicker(INT32 newval, char *buffer, int arg);
+static INT32 slider_beam(INT32 newval, char *buffer, int arg);
 
 
 
@@ -462,6 +463,8 @@ void ui_draw_text_full(const char *origs, float x, float y, float wrapwidth, int
 	/* if we don't want wrapping, guarantee a huge wrapwidth */
 	if (wrap == WRAP_NEVER)
 		wrapwidth = 1000000.0f;
+	if (wrapwidth <= 0)
+		return;
 
 	/* loop over lines */
 	while (*s)
@@ -1331,6 +1334,7 @@ static void slider_init(void)
 	{
 		/* add flicker control */
 		slider_config(&slider_list[slider_count++], 0, 0, 1000, 10, slider_flicker, 0);
+		slider_config(&slider_list[slider_count++], 10, 100, 1000, 10, slider_beam, 0);
 	}
 }
 
@@ -1612,4 +1616,20 @@ static INT32 slider_flicker(INT32 newval, char *buffer, int arg)
 		sprintf(buffer, "%s %1.2f", ui_getstring(UI_vectorflicker), vector_get_flicker());
 	}
 	return floor(vector_get_flicker() * 10.0f + 0.5f);
+}
+
+
+/*-------------------------------------------------
+    slider_beam - vector beam width slider
+    callback
+-------------------------------------------------*/
+
+static INT32 slider_beam(INT32 newval, char *buffer, int arg)
+{
+	if (buffer != NULL)
+	{
+		vector_set_beam((float)newval * 0.01f);
+		sprintf(buffer, "%s %1.2f", "Beam Width", vector_get_beam());
+	}
+	return floor(vector_get_beam() * 100.0f + 0.5f);
 }

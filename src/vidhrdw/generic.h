@@ -72,6 +72,21 @@ extern int flip_screen_x, flip_screen_y;
 
 
 /***************************************************************************
+    COMMON GRAPHICS LAYOUTS
+***************************************************************************/
+
+extern const gfx_layout gfx_8x8x1;
+extern const gfx_layout gfx_8x8x2_planar;
+extern const gfx_layout gfx_8x8x3_planar;
+extern const gfx_layout gfx_8x8x4_planar;
+extern const gfx_layout gfx_8x8x5_planar;
+extern const gfx_layout gfx_8x8x6_planar;
+
+extern const gfx_layout gfx_16x16x4_planar;
+
+
+
+/***************************************************************************
     FUNCTION PROTOTYPES
 ***************************************************************************/
 

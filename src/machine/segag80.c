@@ -5,7 +5,7 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "segar.h"
+#include "segag80r.h"
 
 UINT8 (*sega_decrypt)(offs_t,UINT8);
 

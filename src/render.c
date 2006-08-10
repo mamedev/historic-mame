@@ -3488,6 +3488,7 @@ int render_clip_quad(render_bounds *bounds, const render_bounds *clip, render_qu
 
 void render_line_to_quad(const render_bounds *bounds, float width, render_bounds *bounds0, render_bounds *bounds1)
 {
+	render_bounds modbounds = *bounds;
 	float unitx, unity;
 
 	/*
@@ -3496,85 +3497,86 @@ void render_line_to_quad(const render_bounds *bounds, float width, render_bounds
         Imagine a thick line of width (w), drawn from (p0) to (p1), with a unit
         vector (u) indicating the direction from (p0) to (p1).
 
-          B                                                          C
-            +-----------------------  ...   -----------------------+
-            |                                               ^      |
-            |                                               |(w)   |
-            |                                               v      |
-            |<---->* (p0)        ------------>         (p1) *      |
-            |  (w)                    (u)                          |
-            |                                                      |
-            |                                                      |
-            +-----------------------  ...   -----------------------+
-          A                                                          D
+          B                                              C
+            +----------------  ...   ------------------+
+            |                                        ^ |
+            |                                        | |
+            |                                        | |
+            * (p0)        ------------>           (w)| * (p1)
+            |                  (u)                   | |
+            |                                        | |
+            |                                        v |
+            +----------------  ...   ------------------+
+          A                                              D
 
         To convert this into a quad, we need to compute the four points A, B, C
         and D.
 
-        Starting with point A. We first multiply the unit vector by (w) and then
-        rotate the result 135 degrees. This points us in the right direction, but
-        needs to be scaled by a factor of sqrt(2) to reach A. Thus, we have:
+        Starting with point A. We first multiply the unit vector by 0.5w and then
+        rotate the result 90 degrees. Thus, we have:
 
-            A.x = p0.x + w * u.x * cos(135) * sqrt(2) - w * u.y * sin(135) * sqrt(2)
-            A.y = p0.y + w * u.y * sin(135) * sqrt(2) + w * u.y * cos(135) * sqrt(2)
+            A.x = p0.x + 0.5 * w * u.x * cos(90) - 0.5 * w * u.y * sin(90)
+            A.y = p0.y + 0.5 * w * u.x * sin(90) + 0.5 * w * u.y * cos(90)
 
-        Conveniently, sin(135) = 1/sqrt(2), and cos(135) = -1/sqrt(2), so this
-        simplifies to:
+        Conveniently, sin(90) = 1, and cos(90) = 0, so this simplifies to:
 
-            A.x = p0.x - w * u.x - w * u.y
-            A.y = p0.y + w * u.y - w * u.y
+            A.x = p0.x - 0.5 * w * u.y
+            A.y = p0.y + 0.5 * w * u.x
 
         Working clockwise around the polygon, the same fallout happens all around as
-        we rotate the unit vector by -135 (B), -45 (C), and 45 (D) degrees:
+        we rotate the unit vector by -90 (B), -90 (C), and 90 (D) degrees:
 
-            B.x = p0.x - w * u.x + w * u.y
-            B.y = p0.y - w * u.x - w * u.y
+            B.x = p0.x + 0.5 * w * u.y
+            B.y = p0.y - 0.5 * w * u.x
 
-            C.x = p1.x + w * u.x + w * u.y
-            C.y = p1.y - w * u.x + w * u.y
+            C.x = p1.x - 0.5 * w * u.y
+            C.y = p1.y + 0.5 * w * u.x
 
-            D.x = p1.x + w * u.x - w * u.y
-            D.y = p1.y + w * u.x + w * u.y
+            D.x = p1.x + 0.5 * w * u.y
+            D.y = p1.y - 0.5 * w * u.x
     */
 
+	/* we only care about the half-width */
+	width *= 0.5f;
+
 	/* compute a vector from point 0 to point 1 */
-	unitx = bounds->x1 - bounds->x0;
-	unity = bounds->y1 - bounds->y0;
+	unitx = modbounds.x1 - modbounds.x0;
+	unity = modbounds.y1 - modbounds.y0;
 
 	/* points just use a +1/+1 unit vector; this gives a nice diamond pattern */
 	if (unitx == 0 && unity == 0)
 	{
-		unitx = 0.70710678f;
-		unity = 0.70710678f;
+		unitx = unity = 0.70710678f * width;
+		modbounds.x0 -= 0.5f * unitx;
+		modbounds.y0 -= 0.5f * unity;
+		modbounds.x1 += 0.5f * unitx;
+		modbounds.y1 += 0.5f * unity;
 	}
 
 	/* lines need to be divided by their length */
 	else
 	{
-		float invlength = 1.0f / sqrt(unitx * unitx + unity * unity);
+		/* prescale unitx and unity by the half-width */
+		float invlength = width / sqrt(unitx * unitx + unity * unity);
 		unitx *= invlength;
 		unity *= invlength;
 	}
 
-	/* prescale unitx and unity by the length */
-	unitx *= width;
-	unity *= width;
+	/* rotate the unit vector by 90 degrees and add to point 0 */
+	bounds0->x0 = modbounds.x0 - unity;
+	bounds0->y0 = modbounds.y0 + unitx;
 
-	/* rotate the unit vector by 135 degrees and add to point 0 */
-	bounds0->x0 = bounds->x0 - unitx - unity;
-	bounds0->y0 = bounds->y0 + unitx - unity;
+	/* rotate the unit vector by -90 degrees and add to point 0 */
+	bounds0->x1 = modbounds.x0 + unity;
+	bounds0->y1 = modbounds.y0 - unitx;
 
-	/* rotate the unit vector by -135 degrees and add to point 0 */
-	bounds0->x1 = bounds->x0 - unitx + unity;
-	bounds0->y1 = bounds->y0 - unitx - unity;
+	/* rotate the unit vector by 90 degrees and add to point 1 */
+	bounds1->x0 = modbounds.x1 - unity;
+	bounds1->y0 = modbounds.y1 + unitx;
 
-	/* rotate the unit vector by 45 degrees and add to point 1 */
-	bounds1->x0 = bounds->x1 + unitx - unity;
-	bounds1->y0 = bounds->y1 + unitx + unity;
-
-	/* rotate the unit vector by -45 degrees and add to point 1 */
-	bounds1->x1 = bounds->x1 + unitx + unity;
-	bounds1->y1 = bounds->y1 - unitx + unity;
+	/* rotate the unit vector by -09 degrees and add to point 1 */
+	bounds1->x1 = modbounds.x1 + unity;
+	bounds1->y1 = modbounds.y1 - unitx;
 }
 
 

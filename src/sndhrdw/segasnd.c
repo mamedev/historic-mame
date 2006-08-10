@@ -11,12 +11,14 @@
 
 #include "driver.h"
 #include "streams.h"
-#include "sega.h"
+#include "segag80v.h"
 #include "cpu/i8039/i8039.h"
 #include "sound/sp0250.h"
 #include "segasnd.h"
 #include <math.h>
 
+
+#define LOG(x)		/* logerror x */
 
 
 /***************************************************************************
@@ -169,7 +171,7 @@ static READ8_HANDLER( speech_p1_r )
 
 static READ8_HANDLER( speech_rom_r )
 {
-	return memory_region(REGION_CPU2)[0x800 + 0x100 * (speech_p2 & 0x3f) + offset];
+	return memory_region(REGION_SOUND1)[0x100 * (speech_p2 & 0x3f) + offset];
 }
 
 static WRITE8_HANDLER( speech_p1_w )
@@ -228,7 +230,7 @@ WRITE8_HANDLER( sega_speech_data_w )
 
 WRITE8_HANDLER( sega_speech_control_w )
 {
-	logerror("Speech control = %X\n", data);
+	LOG(("Speech control = %X\n", data));
 }
 
 
@@ -240,7 +242,7 @@ WRITE8_HANDLER( sega_speech_control_w )
  *************************************/
 
 static ADDRESS_MAP_START( speech_map, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x07ff) AM_ROM
+	AM_RANGE(0x0000, 0x07ff) AM_MIRROR(0x0800) AM_ROM
 ADDRESS_MAP_END
 
 
@@ -328,7 +330,7 @@ void sega_usb_reset(UINT8 t1_clock_mask)
 
 READ8_HANDLER( sega_usb_status_r )
 {
-	logerror("%04X:usb_data_r = %02X\n", activecpu_get_pc(), (usb.out_latch & 0x81) | (usb.in_latch & 0x7e));
+	LOG(("%04X:usb_data_r = %02X\n", activecpu_get_pc(), (usb.out_latch & 0x81) | (usb.in_latch & 0x7e)));
 
 	activecpu_adjust_icount(-200);
 
@@ -354,7 +356,7 @@ static void delayed_usb_data_w(int data)
 
 WRITE8_HANDLER( sega_usb_data_w )
 {
-	logerror("%04X:usb_data_w = %02X\n", activecpu_get_pc(), data);
+	LOG(("%04X:usb_data_w = %02X\n", activecpu_get_pc(), data));
 	timer_set(TIME_NOW, data, delayed_usb_data_w);
 
 	/* boost the interleave so that sequences can be sent */
@@ -373,7 +375,7 @@ WRITE8_HANDLER( sega_usb_ram_w )
 	if (usb.in_latch & 0x80)
 		usb.program_ram[offset] = data;
 	else
-		logerror("%04X:sega_usb_ram_w(%03X) = %02X while /LOAD disabled\n", activecpu_get_pc(), offset, data);
+		LOG(("%04X:sega_usb_ram_w(%03X) = %02X while /LOAD disabled\n", activecpu_get_pc(), offset, data));
 }
 
 
@@ -388,7 +390,7 @@ static READ8_HANDLER( usb_p1_r )
 {
 	/* bits 0-6 are inputs and map to bits 0-6 of the input latch */
 	if ((usb.in_latch & 0x7f) != 0)
-		logerror("%03X: P1 read = %02X\n", activecpu_get_pc(), usb.in_latch & 0x7f);
+		LOG(("%03X: P1 read = %02X\n", activecpu_get_pc(), usb.in_latch & 0x7f));
 	return usb.in_latch & 0x7f;
 }
 
@@ -397,7 +399,7 @@ static WRITE8_HANDLER( usb_p1_w )
 {
 	/* bit 7 maps to bit 0 on the output latch */
 	usb.out_latch = (usb.out_latch & 0xfe) | (data >> 7);
-	logerror("%03X: P1 write = %02X\n", activecpu_get_pc(), data);
+	LOG(("%03X: P1 write = %02X\n", activecpu_get_pc(), data));
 }
 
 
@@ -419,7 +421,7 @@ static WRITE8_HANDLER( usb_p2_w )
 	if ((old & 0x80) && !(data & 0x80))
 		usb.t1_clock = 0;
 
-	logerror("%03X: P2 write -> bank=%d ready=%d clock=%d\n", activecpu_get_pc(), data & 3, (data >> 6) & 1, (data >> 7) & 1);
+	LOG(("%03X: P2 write -> bank=%d ready=%d clock=%d\n", activecpu_get_pc(), data & 3, (data >> 6) & 1, (data >> 7) & 1));
 }
 
 
@@ -635,10 +637,10 @@ static void usb_stream_update(void *param, stream_sample_t **inputs, stream_samp
 }
 
 
-void *usb_start(int clock, const struct CustomSound_interface *config)
+static void *usb_start(int clock, const struct CustomSound_interface *config)
 {
 	filter_state temp;
-	int group;
+	int tchan, tgroup;
 
 	/* find the CPU we are associated with */
 	usb.cpunum = mame_find_cpu_index("usb");
@@ -653,9 +655,9 @@ void *usb_start(int clock, const struct CustomSound_interface *config)
 	/* initialize state */
 	usb.noise_shift = 0x15555;
 
-	for (group = 0; group < 3; group++)
+	for (tgroup = 0; tgroup < 3; tgroup++)
 	{
-		timer8253 *g = &usb.timer_group[group];
+		timer8253 *g = &usb.timer_group[tgroup];
 		configure_filter(&g->chan_filter[0], 10e3, 1e-6);
 		configure_filter(&g->chan_filter[1], 10e3, 1e-6);
 		configure_filter(&g->gate1, 100e3, 0.01e-6);
@@ -678,6 +680,50 @@ void *usb_start(int clock, const struct CustomSound_interface *config)
 	configure_filter(&usb.noise_filters[4], 33e3, 0.1e-6);
 
 	configure_filter(&usb.final_filter, 100e3, 4.7e-6);
+
+	/* register for save states */
+	state_save_register_item("usb", 0, usb.in_latch);
+	state_save_register_item("usb", 0, usb.out_latch);
+	state_save_register_item("usb", 0, usb.last_p2_value);
+	state_save_register_item("usb", 0, usb.work_ram_bank);
+	state_save_register_item("usb", 0, usb.t1_clock);
+
+	for (tgroup = 0; tgroup < 3; tgroup++)
+	{
+		timer8253 *group = &usb.timer_group[tgroup];
+		for (tchan = 0; tchan < 3; tchan++)
+		{
+			timer8253_channel *channel = &group->chan[tchan];
+			state_save_register_item("usb", tgroup * 3 + tchan, channel->holding);
+			state_save_register_item("usb", tgroup * 3 + tchan, channel->latchmode);
+			state_save_register_item("usb", tgroup * 3 + tchan, channel->latchtoggle);
+			state_save_register_item("usb", tgroup * 3 + tchan, channel->clockmode);
+			state_save_register_item("usb", tgroup * 3 + tchan, channel->bcdmode);
+			state_save_register_item("usb", tgroup * 3 + tchan, channel->output);
+			state_save_register_item("usb", tgroup * 3 + tchan, channel->lastgate);
+			state_save_register_item("usb", tgroup * 3 + tchan, channel->gate);
+			state_save_register_item("usb", tgroup * 3 + tchan, channel->subcount);
+			state_save_register_item("usb", tgroup * 3 + tchan, channel->count);
+			state_save_register_item("usb", tgroup * 3 + tchan, channel->remain);
+		}
+		state_save_register_item_array("usb", tgroup, group->env);
+		state_save_register_item("usb", tgroup, group->chan_filter[0].capval);
+		state_save_register_item("usb", tgroup, group->chan_filter[1].capval);
+		state_save_register_item("usb", tgroup, group->gate1.capval);
+		state_save_register_item("usb", tgroup, group->gate2.capval);
+		state_save_register_item("usb", tgroup, group->config);
+	}
+
+	state_save_register_item_array("usb", 0, usb.timer_mode);
+	state_save_register_item("usb", 0, usb.noise_shift);
+	state_save_register_item("usb", 0, usb.noise_state);
+	state_save_register_item("usb", 0, usb.noise_subcount);
+	state_save_register_item("usb", 0, usb.final_filter.capval);
+	state_save_register_item("usb", 0, usb.noise_filters[0].capval);
+	state_save_register_item("usb", 0, usb.noise_filters[1].capval);
+	state_save_register_item("usb", 0, usb.noise_filters[2].capval);
+	state_save_register_item("usb", 0, usb.noise_filters[3].capval);
+	state_save_register_item("usb", 0, usb.noise_filters[4].capval);
 
 	return usb.stream;
 }

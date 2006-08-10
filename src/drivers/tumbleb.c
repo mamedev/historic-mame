@@ -26,9 +26,6 @@
   If you reset the game while pressing START1 and START2, "VER 0.00 JAPAN"
   is put into tile ram then MAME crashes !
 
-  One of the Jump Kids Sprite roms is bad, same with
-  the Sound CPU code, there's one unknown ROM.
-
   Sometimes a garbage sprite gets left after the SemiCom logo in Hatch
   Catch - other semicom games on different hw do this too, might just
   be a bug in their code

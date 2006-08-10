@@ -786,12 +786,22 @@ static void gfxset_draw_item(const gfx_element *gfx, int index, mame_bitmap *bit
 			UINT8 *s;
 
 			/* compute effective x,y values after rotation */
-			if (rotate & ORIENTATION_FLIP_X)
-				effx = gfx->width - 1 - effx;
-			if (rotate & ORIENTATION_FLIP_Y)
-				effy = gfx->height - 1 - effy;
-			if (rotate & ORIENTATION_SWAP_XY)
-				{ int temp = effx; effx = effy; effy = temp; }
+			if (!(rotate & ORIENTATION_SWAP_XY))
+			{
+				if (rotate & ORIENTATION_FLIP_X)
+					effx = gfx->width - 1 - effx;
+				if (rotate & ORIENTATION_FLIP_Y)
+					effy = gfx->height - 1 - effy;
+			}
+			else
+			{
+				int temp;
+				if (rotate & ORIENTATION_FLIP_X)
+					effx = gfx->height - 1 - effx;
+				if (rotate & ORIENTATION_FLIP_Y)
+					effy = gfx->width - 1 - effy;
+				temp = effx; effx = effy; effy = temp;
+			}
 
 			/* get a pointer to the start of this source row */
 			s = src + effy * gfx->line_modulo;

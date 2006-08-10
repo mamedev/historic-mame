@@ -220,7 +220,7 @@
     - Added a little patch to pass over some checks (for debugging purposes).
 
     [2006-07-26]
-    - Figured out the MC6845 (mapped at $0800-$0801)
+    - Figured out the MC6845 (mapped at $0800-$0801).
     - Fixed the screen size based on MC6845 registers.
     - Fixed the visible area based on MC6845 registers.
     - Corrected the gfx rom region.
@@ -231,11 +231,17 @@
     - Marked magicfly PAL as NO_DUMP (read protected).
     - Added flags GAME_IMPERFECT_GRAPHICS and GAME_WRONG_COLORS.
 
+    [2006-08-06]
+    - Figured out how the gfx banks works.
+    - Fixed the gfx layers.
+    - Fixed the gfx decode.
+    - Removed flag GAME_IMPERFECT_GRAPHICS.
+
 
     TODO:
 
     - Map inputs & DIP switches.
-    - Correct the GFX banks.
+    - Correct colors.
     - Figure out $3000 writes (???).
     - Figure out the sound.
     - Clean and sort out a lot of things.
@@ -274,11 +280,20 @@ WRITE8_HANDLER( magicfly_colorram_w )
 
 static void get_bg_tile_info(int tile_index)
 {
+//  ...x ....   tiles bank.
+//  .... xxxx   tiles color.
+
 	int attr = colorram[tile_index];
 	int code = videoram[tile_index];
-	int color = attr & 0xff;
+	int bank = (attr & 0x10) >> 4;    // bit 4 switch the gfx banks.
+	int color = attr & 0x0f;          // bits 0-3 for color.
 
-	SET_TILE_INFO(0, code, color, 0)
+	if (bank == 1)	// gfx banks are inverted.
+		bank = 0;
+	else
+		bank = 1;
+
+	SET_TILE_INFO(bank, code, color, 0)
 }
 
 VIDEO_START(magicfly)
@@ -381,16 +396,25 @@ static const gfx_layout charlayout =
 	8*8
 };
 
+static const gfx_layout tilelayout =
+{
+	8, 8,
+	256,
+	3,
+	{ 0, (0x2800*8), (0x4800*8) },    // bitplanes are separated.
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8
+};
+
 /******************************
 * Graphics Decode Information *
 ******************************/
 
 static const gfx_decode gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x1800, &charlayout, 0, 16 },
-	{ REGION_GFX1, 0x1000, &charlayout, 0, 16 },
-	{ REGION_GFX1, 0x3800, &charlayout, 0, 16 },
-	{ REGION_GFX1, 0x5800, &charlayout, 0, 16 },
+	{ REGION_GFX1,	0x1800,	&charlayout, 2, 16 },
+	{ REGION_GFX1,	0x1000,	&tilelayout, 0, 16 },
 	{ -1 }
 };
 
@@ -458,29 +482,29 @@ static DRIVER_INIT( 7mezzo )
 
 ROM_START( magicfly )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-	ROM_LOAD( "magicfly3.3",	 0xc000, 0x4000, CRC(c29798d5) SHA1(bf92ac93d650398569b3ab79d01344e74a6d35be) )
+	ROM_LOAD( "magicfly3.3",    0xc000, 0x4000, CRC(c29798d5) SHA1(bf92ac93d650398569b3ab79d01344e74a6d35be) )
 
 	ROM_REGION( 0x6000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "magicfly2.bin",	 0x0000, 0x2000, CRC(3596a45b) SHA1(7ec32ec767d0883d05606beb588d8f27ba8f10a4) )
-	ROM_LOAD( "magicfly1.bin",	 0x2000, 0x2000, CRC(724d330c) SHA1(cce3923ce48634b27f0e7d29979cd36e7394ab37) )
-	ROM_LOAD( "magicfly0.bin",	 0x4000, 0x2000, CRC(44e3c9d6) SHA1(677d25360d261bf2400f399b8015eeb529ad405e) )
+	ROM_LOAD( "magicfly2.bin",    0x0000, 0x2000, CRC(3596a45b) SHA1(7ec32ec767d0883d05606beb588d8f27ba8f10a4) )
+	ROM_LOAD( "magicfly1.bin",    0x2000, 0x2000, CRC(724d330c) SHA1(cce3923ce48634b27f0e7d29979cd36e7394ab37) )
+	ROM_LOAD( "magicfly0.bin",    0x4000, 0x2000, CRC(44e3c9d6) SHA1(677d25360d261bf2400f399b8015eeb529ad405e) )
 
 	ROM_REGION( 0x0200, REGION_PLDS, ROMREGION_DISPOSE )
-	ROM_LOAD( "pal16r4a-magicfly.bin",   0x0000, 0x0104, NO_DUMP )    /* PAL is read protected */
+	ROM_LOAD( "pal16r4a-magicfly.bin",    0x0000, 0x0104, NO_DUMP )    /* PAL is read protected */
 
 ROM_END
 
 ROM_START( 7mezzo )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
-	ROM_LOAD( "ns3.1",	 0xc000, 0x4000, CRC(b1867b76) SHA1(eb76cffb81c865352f4767015edade54801f6155) )
+	ROM_LOAD( "ns3.1",      0xc000, 0x4000, CRC(b1867b76) SHA1(eb76cffb81c865352f4767015edade54801f6155) )
 
 	ROM_REGION( 0x6000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "1.bin",	 0x0000, 0x2000, CRC(7983a41c) SHA1(68805ea960c2738d3cd2c7490ffed84f90da029b) )    // should be named ns2.bin regarding pcb location and content.
-	ROM_LOAD( "ns1.bin",	 0x2000, 0x2000, CRC(a6ada872) SHA1(7f531a76e73d479161e485bdcf816eb8eb9fdc62) )
-	ROM_LOAD( "2.bin",	 0x4000, 0x2000, CRC(e04fb210) SHA1(81e764e296fe387daf8ca67064d5eba2a4fc3c26) )    // should be named ns0.bin regarding pcb location and content.
+	ROM_LOAD( "1.bin",      0x0000, 0x2000, CRC(7983a41c) SHA1(68805ea960c2738d3cd2c7490ffed84f90da029b) )    // should be named ns2.bin regarding pcb location and content.
+	ROM_LOAD( "ns1.bin",    0x2000, 0x2000, CRC(a6ada872) SHA1(7f531a76e73d479161e485bdcf816eb8eb9fdc62) )
+	ROM_LOAD( "2.bin",      0x4000, 0x2000, CRC(e04fb210) SHA1(81e764e296fe387daf8ca67064d5eba2a4fc3c26) )    // should be named ns0.bin regarding pcb location and content.
 
 	ROM_REGION( 0x0200, REGION_PLDS, ROMREGION_DISPOSE )
-	ROM_LOAD( "pal16r4a-7mezzo.bin",   0x0000, 0x0104, CRC(61ac7372) SHA1(7560506468a7409075094787182ded24e2d0c0a3) )
+	ROM_LOAD( "pal16r4a-7mezzo.bin",    0x0000, 0x0104, CRC(61ac7372) SHA1(7560506468a7409075094787182ded24e2d0c0a3) )
 ROM_END
 
 
@@ -488,7 +512,7 @@ ROM_END
 *      Game Drivers      *
 *************************/
 
-//    YEAR  NAME      PARENT    MACHINE   INPUT     INIT            COMPANY        FULLNAME
-GAME( 198?, magicfly, 0,        magicfly, magicfly, magicfly, ROT0, "P&A Games",   "Magic Fly (Ver 0.3)", GAME_IMPERFECT_GRAPHICS | GAME_WRONG_COLORS | GAME_NO_SOUND | GAME_NOT_WORKING )
-GAME( 198?, 7mezzo,   0,        magicfly, magicfly, 7mezzo,   ROT0, "Unknown",     "7 e Mezzo",           GAME_IMPERFECT_GRAPHICS | GAME_WRONG_COLORS | GAME_NO_SOUND | GAME_NOT_WORKING )
+//    YEAR  NAME      PARENT    MACHINE   INPUT     INIT             COMPANY        FULLNAME
+GAME( 198?, magicfly, 0,        magicfly, magicfly, magicfly, ROT0, "P&A Games",   "Magic Fly (Ver 0.3)", GAME_WRONG_COLORS | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAME( 198?, 7mezzo,   0,        magicfly, magicfly, 7mezzo,   ROT0, "Unknown",     "7 e Mezzo",           GAME_WRONG_COLORS | GAME_NO_SOUND | GAME_NOT_WORKING )
 

@@ -552,12 +552,12 @@ INLINE void ppc_set_spr(int spr, UINT32 value)
 	if (ppc.is602) {
 		switch(spr)
 		{
-			case SPR602_LT:			printf("ppc: LT = %08X\n", value); ppc.lt = value; return;
-			case SPR602_IBR:		printf("ppc: IBR = %08X\n", value); ppc.ibr = value; return;
-			case SPR602_SEBR:		printf("ppc: SEBR = %08X\n", value); ppc.sebr = value; return;
-			case SPR602_SER:		printf("ppc: SER = %08X\n", value); ppc.ser = value; return;
-			case SPR602_SP:			printf("ppc: SP = %08X\n", value); ppc.sp = value; return;
-			case SPR602_TCR:		printf("ppc: TCR = %08X\n", value); ppc.tcr = value; return;
+			case SPR602_LT:			ppc.lt = value; return;
+			case SPR602_IBR:		ppc.ibr = value; return;
+			case SPR602_SEBR:		ppc.sebr = value; return;
+			case SPR602_SER:		ppc.ser = value; return;
+			case SPR602_SP:			ppc.sp = value; return;
+			case SPR602_TCR:		ppc.tcr = value; return;
 		}
 	}
 #endif
@@ -1574,6 +1574,7 @@ static void ppc602_set_info(UINT32 state, union cpuinfo *info)
 	}
 	switch(state)
 	{
+		case CPUINFO_INT_INPUT_STATE + PPC_INPUT_LINE_SMI:	ppc602_set_smi_line(info->i);	break;
 		default:	ppc_set_info(state, info);		break;
 	}
 }

@@ -7,11 +7,9 @@ Driver by Manuel Abadia <manu@teleline.es>
 
 Notes:
 -----
-- skykidd: the MCU external program expects a different version of the
-  internal ROM, which hasn't been dumped. 0xffed should be 0xfd, while it is
-  0xff in the available dump. To get the game running, we patch the ROM.
-  Apart from the different MCU code (and the required checksum adjustments),
-  this version is identical to skykido.
+- Sky Kid sets:
+  There are 2 basic versions, one with CUS63 and rom prefix "SK2" and
+  the other which uses CUS60 and has the rom prefix "SK1"
 
 ***************************************************************************/
 
@@ -405,17 +403,16 @@ static MACHINE_DRIVER_START( skykid )
 MACHINE_DRIVER_END
 
 
-
 ROM_START( skykid )
 	ROM_REGION( 0x14000, REGION_CPU1, 0 )	/* 6809 code */
-	ROM_LOAD( "sk1_2.6c",     0x08000, 0x4000, CRC(ea8a5822) SHA1(5b13133410bcb7d647e662b476dbfd2edab8aac0) )
+	ROM_LOAD( "sk2_2.6c",     0x08000, 0x4000, CRC(ea8a5822) SHA1(5b13133410bcb7d647e662b476dbfd2edab8aac0) )
 	ROM_LOAD( "sk1-1c.6b",    0x0c000, 0x4000, CRC(7abe6c6c) SHA1(7d2631cc6149fa3e02b1355cb899de5474ff5d0a) )
 	ROM_LOAD( "sk1_3.6d",     0x10000, 0x4000, CRC(314b8765) SHA1(d90a8a853ce672fe5ee190f07bcb33262c73df3b) )	/* banked ROM */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* MCU code */
-	ROM_LOAD( "sk1_4.3c",     0x8000, 0x2000, CRC(a460d0e0) SHA1(7124ffeb3b84b282940dcbf9421ae4934bcce1c8) )	/* subprogram for the MCU */
-	ROM_LOAD( "cus60",        0xf000, 0x1000, CRC(6ef08fb3) SHA1(4842590d60035a0059b0899eb2d5f58ae72c2529) )	/* MCU internal code */
-																/* Using Pacland code (probably similar) */
+	ROM_LOAD( "sk2_4.3c",       0x8000, 0x2000, CRC(a460d0e0) SHA1(7124ffeb3b84b282940dcbf9421ae4934bcce1c8) )	/* subprogram for the MCU */
+	ROM_LOAD( "cus63-63a1.mcu", 0xf000, 0x1000, CRC(6ef08fb3) SHA1(4842590d60035a0059b0899eb2d5f58ae72c2529) )	/* MCU internal code */
+
 	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "sk1_6.6l",     0x0000, 0x2000, CRC(58b731b9) SHA1(40f7be85914833ce02a734c20d68c0db8b77911d) )	/* chars */
 
@@ -438,14 +435,14 @@ ROM_END
 
 ROM_START( skykido )
 	ROM_REGION( 0x14000, REGION_CPU1, 0 )	/* 6809 code */
-	ROM_LOAD( "sk1_2.6c",     0x08000, 0x4000, CRC(ea8a5822) SHA1(5b13133410bcb7d647e662b476dbfd2edab8aac0) )
+	ROM_LOAD( "sk2_2.6c",     0x08000, 0x4000, CRC(ea8a5822) SHA1(5b13133410bcb7d647e662b476dbfd2edab8aac0) )
 	ROM_LOAD( "sk1_1.6b",     0x0c000, 0x4000, CRC(070a49d4) SHA1(4b994bde3e34b574bd927843804d2fb1a08d1bdf) )
 	ROM_LOAD( "sk1_3.6d",     0x10000, 0x4000, CRC(314b8765) SHA1(d90a8a853ce672fe5ee190f07bcb33262c73df3b) )	/* banked ROM */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* MCU code */
-	ROM_LOAD( "sk1_4.3c",     0x8000, 0x2000, CRC(a460d0e0) SHA1(7124ffeb3b84b282940dcbf9421ae4934bcce1c8) )	/* subprogram for the MCU */
-	ROM_LOAD( "cus60",        0xf000, 0x1000, CRC(6ef08fb3) SHA1(4842590d60035a0059b0899eb2d5f58ae72c2529) )	/* MCU internal code */
-																/* Using Pacland code (probably similar) */
+	ROM_LOAD( "sk2_4.3c",       0x8000, 0x2000, CRC(a460d0e0) SHA1(7124ffeb3b84b282940dcbf9421ae4934bcce1c8) )	/* subprogram for the MCU */
+	ROM_LOAD( "cus63-63a1.mcu", 0xf000, 0x1000, CRC(6ef08fb3) SHA1(4842590d60035a0059b0899eb2d5f58ae72c2529) )	/* MCU internal code */
+
 	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "sk1_6.6l",     0x0000, 0x2000, CRC(58b731b9) SHA1(40f7be85914833ce02a734c20d68c0db8b77911d) )	/* chars */
 
@@ -468,13 +465,13 @@ ROM_END
 
 ROM_START( skykidd )
 	ROM_REGION( 0x14000, REGION_CPU1, 0 )	/* 6809 code */
-	ROM_LOAD( "sk1_2x.6c",    0x08000, 0x4000, CRC(8370671a) SHA1(7038f952ebfc4482440b73ee4027fa908561d122) )
+	ROM_LOAD( "sk1_2.6c",     0x08000, 0x4000, CRC(8370671a) SHA1(7038f952ebfc4482440b73ee4027fa908561d122) )
 	ROM_LOAD( "sk1_1.6b",     0x0c000, 0x4000, CRC(070a49d4) SHA1(4b994bde3e34b574bd927843804d2fb1a08d1bdf) )
 	ROM_LOAD( "sk1_3.6d",     0x10000, 0x4000, CRC(314b8765) SHA1(d90a8a853ce672fe5ee190f07bcb33262c73df3b) )	/* banked ROM */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* MCU code */
-	ROM_LOAD( "sk1_4x.3c",    0x8000, 0x2000, CRC(887137cc) SHA1(dd0f66afb78833c4da73539b692854346f448c0d) )	/* subprogram for the MCU */
-	ROM_LOAD( "cus60a1",      0xf000, 0x1000, BAD_DUMP CRC(6ef08fb3) SHA1(4842590d60035a0059b0899eb2d5f58ae72c2529) )	/* MCU internal code */
+	ROM_LOAD( "sk1_4.3c",       0x8000, 0x2000, CRC(887137cc) SHA1(dd0f66afb78833c4da73539b692854346f448c0d) )	/* subprogram for the MCU */
+	ROM_LOAD( "cus60-60a1.mcu", 0xf000, 0x1000, CRC(076ea82a) SHA1(22b5e62e26390d7d5cacc0503c7aa5ed524204df) )	/* MCU internal code */
 
 	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "sk1_6.6l",     0x0000, 0x2000, CRC(58b731b9) SHA1(40f7be85914833ce02a734c20d68c0db8b77911d) )	/* chars */
@@ -503,9 +500,9 @@ ROM_START( drgnbstr )
 	ROM_LOAD( "db1_3.6d",     0x10000, 0x04000, CRC(6da169ae) SHA1(235211c26562fef0660e3fde1e87f2e52626d119) )	/* banked ROM */
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* MCU code */
-	ROM_LOAD( "db1_4.3c",     0x8000, 0x02000, CRC(8a0b1fc1) SHA1(c2861d0da63e2d17f2d1ad46dccf753ecd902ce3) )	/* subprogram for the MCU */
-	ROM_LOAD( "cus60",        0xf000, 0x01000, CRC(6ef08fb3) SHA1(4842590d60035a0059b0899eb2d5f58ae72c2529) )	/* The MCU internal code is missing */
-																/* Using Pacland code (probably similar) */
+	ROM_LOAD( "db1_4.3c",       0x8000, 0x02000, CRC(8a0b1fc1) SHA1(c2861d0da63e2d17f2d1ad46dccf753ecd902ce3) )	/* subprogram for the MCU */
+	ROM_LOAD( "cus60-60a1.mcu", 0xf000, 0x01000, CRC(076ea82a) SHA1(22b5e62e26390d7d5cacc0503c7aa5ed524204df) )	/* MCU internal code */
+
 	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "db1_6.6l",     0x0000, 0x2000, CRC(c080b66c) SHA1(05dcd45274d0bd12ef8ae7fd10c8719e679b3e7b) )	/* tiles */
 
@@ -544,18 +541,7 @@ static DRIVER_INIT( skykid )
 	}
 }
 
-static DRIVER_INIT( skykidd )
-{
-	init_skykid();
-
-	/* patch the MCU internal ROM to make the game boot */
-	memory_region(REGION_CPU2)[0xffed] -= 2;	// value expected by the external ROM
-	memory_region(REGION_CPU2)[0xffec] += 2;	// to keep the same chksum
-}
-
-
-
 GAME( 1984, drgnbstr, 0,      skykid, drgnbstr, skykid,  ROT0,   "Namco", "Dragon Buster", 0 )
-GAME( 1985, skykid,   0,      skykid, skykid,   skykid,  ROT180, "Namco", "Sky Kid (New Ver.)", 0 )
-GAME( 1985, skykido,  skykid, skykid, skykid,   skykid,  ROT180, "Namco", "Sky Kid (Old Ver.)", 0 )
-GAME( 1985, skykidd,  skykid, skykid, skykid,   skykidd, ROT180, "Namco", "Sky Kid (60A1 Ver.)", 0 )
+GAME( 1985, skykid,   0,      skykid, skykid,   skykid,  ROT180, "Namco", "Sky Kid (New Ver.)", 0 ) /* Uses CUS63 aka 63a1 */
+GAME( 1985, skykido,  skykid, skykid, skykid,   skykid,  ROT180, "Namco", "Sky Kid (Old Ver.)", 0 ) /* Uses CUS63 aka 63a1 */
+GAME( 1985, skykidd,  skykid, skykid, skykid,   skykid,  ROT180, "Namco", "Sky Kid (CUS60 Ver.)", 0 ) /* Uses CUS60 aka 60a1 */

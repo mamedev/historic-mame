@@ -48,6 +48,8 @@ static UINT8 gfxbank[5];
 static UINT8 flipscreen_x;
 static UINT8 flipscreen_y;
 static UINT8 color_mask;
+static tilemap *dambustr_tilemap2;
+static UINT8 *dambustr_videoram2;
 static void (*modify_charcode)(UINT16 *code,UINT8 x);		/* function to call to do character banking */
 static void  gmgalax_modify_charcode(UINT16 *code,UINT8 x);
 static void mooncrst_modify_charcode(UINT16 *code,UINT8 x);
@@ -59,6 +61,7 @@ static void mimonkey_modify_charcode(UINT16 *code,UINT8 x);
 static void  batman2_modify_charcode(UINT16 *code,UINT8 x);
 static void  mariner_modify_charcode(UINT16 *code,UINT8 x);
 static void  jumpbug_modify_charcode(UINT16 *code,UINT8 x);
+static void dambustr_modify_charcode(UINT16 *code,UINT8 x);
 
 static void (*modify_spritecode)(UINT8 *spriteram,int*,int*,int*,int);	/* function to call to do sprite banking */
 static void  gmgalax_modify_spritecode(UINT8 *spriteram,int *code,int *flipx,int *flipy,int offs);
@@ -73,6 +76,7 @@ static void  batman2_modify_spritecode(UINT8 *spriteram,int *code,int *flipx,int
 static void  jumpbug_modify_spritecode(UINT8 *spriteram,int *code,int *flipx,int *flipy,int offs);
 static void dkongjrm_modify_spritecode(UINT8 *spriteram,int *code,int *flipx,int *flipy,int offs);
 static void   ad2083_modify_spritecode(UINT8 *spriteram,int *code,int *flipx,int *flipy,int offs);
+static void dambustr_modify_spritecode(UINT8 *spriteram,int *code,int *flipx,int *flipy,int offs);
 
 static void (*modify_color)(UINT8 *color);	/* function to call to do modify how the color codes map to the PROM */
 static void frogger_modify_color(UINT8 *color);
@@ -120,6 +124,7 @@ static void gteikob2_draw_bullets(mame_bitmap *bitmap, int offs, int x, int y);
 static void scramble_draw_bullets(mame_bitmap *bitmap, int offs, int x, int y);
 static void   theend_draw_bullets(mame_bitmap *bitmap, int offs, int x, int y);
 static void darkplnt_draw_bullets(mame_bitmap *bitmap, int offs, int x, int y);
+static void dambustr_draw_bullets(mame_bitmap *bitmap, int offs, int x, int y);
 
 /* background circuit */
 static UINT8 background_enable;
@@ -133,9 +138,16 @@ static void  frogger_draw_background(mame_bitmap *bitmap);
 static void stratgyx_draw_background(mame_bitmap *bitmap);
 static void  minefld_draw_background(mame_bitmap *bitmap);
 static void   rescue_draw_background(mame_bitmap *bitmap);
+static void dambustr_draw_background(mame_bitmap *bitmap);
 
 static UINT16 rockclim_v;
 static UINT16 rockclim_h;
+static int dambustr_bg_split_line;
+static int dambustr_bg_color_1;
+static int dambustr_bg_color_2;
+static int dambustr_bg_priority;
+static int dambustr_char_bank;
+static mame_bitmap *dambustr_tmpbitmap;
 
 
 
@@ -447,6 +459,33 @@ PALETTE_INIT( mariner )
 		palette_set_color(BACKGROUND_COLOR_BASE+i,r,g,b);
 	}
 }
+
+
+PALETTE_INIT( dambustr )
+{
+	int i;
+
+	palette_init_galaxian(colortable, color_prom);
+
+
+	/*
+    Assumption (not clear from the schematics):
+    The background color generator is connected this way:
+
+        RED   - 470 ohm resistor
+        GREEN - 470 ohm resistor
+        BLUE  - 470 ohm resistor */
+
+
+	for (i = 0; i < 8; i++)
+	{
+		int r = BIT(i,0) * 0x47;
+		int g = BIT(i,1) * 0x47;
+		int b = BIT(i,2) * 0x4f;
+		palette_set_color(BACKGROUND_COLOR_BASE+i,r,g,b);
+	}
+}
+
 
 
 /***************************************************************************
@@ -1012,6 +1051,62 @@ VIDEO_START( bongo )
 	return ret;
 }
 
+static void dambustr_get_tile_info2(int tile_index)
+{
+	UINT8 x = tile_index & 0x1f;
+
+	UINT16 code = dambustr_videoram2[tile_index];
+	UINT8 color = galaxian_attributesram[(x << 1) | 1] & color_mask;
+
+	if (modify_charcode)
+	{
+		modify_charcode(&code, x);
+	}
+
+	if (modify_color)
+	{
+		modify_color(&color);
+	}
+
+	SET_TILE_INFO(0, code, color, 0)
+}
+
+VIDEO_START( dambustr )
+{
+	int ret = video_start_galaxian();
+
+	dambustr_bg_split_line = 0;
+	dambustr_bg_color_1 = 0;
+	dambustr_bg_color_2 = 0;
+	dambustr_bg_priority = 0;
+	dambustr_char_bank = 0;
+
+	draw_background = dambustr_draw_background;
+
+	modify_charcode   = dambustr_modify_charcode;
+	modify_spritecode = dambustr_modify_spritecode;
+
+	draw_bullets = dambustr_draw_bullets;
+
+	/* allocate the temporary bitmap for the background priority */
+	dambustr_tmpbitmap = auto_bitmap_alloc(Machine->screen[0].width, Machine->screen[0].height);
+	if (dambustr_tmpbitmap == NULL)
+		return 1;
+
+	/* make a copy of the tilemap to emulate background priority */
+	dambustr_videoram2 = auto_malloc(0x0400);
+	if (!dambustr_videoram2)
+		return 1;
+	dambustr_tilemap2 = tilemap_create(dambustr_get_tile_info2,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+
+	if (!dambustr_tilemap2)
+		return 1;
+
+	tilemap_set_transparent_pen(dambustr_tilemap2,0);
+
+	return ret;
+}
+
 
 WRITE8_HANDLER( galaxian_videoram_w )
 {
@@ -1171,6 +1266,22 @@ READ8_HANDLER( rockclim_videoram_r )
 }
 
 
+WRITE8_HANDLER( dambustr_bg_split_line_w )
+{
+	dambustr_bg_split_line = data;
+}
+
+
+WRITE8_HANDLER( dambustr_bg_color_w )
+{
+	dambustr_bg_color_1 = (BIT(data,2)<<2) | (BIT(data,1)<<1) | BIT(data,0);
+	dambustr_bg_color_2 = (BIT(data,6)<<2) | (BIT(data,5)<<1) | BIT(data,4);
+	dambustr_bg_priority = BIT(data,3);
+	dambustr_char_bank = BIT(data,7);
+	tilemap_mark_all_tiles_dirty(bg_tilemap);
+}
+
+
 
 /* character banking functions */
 
@@ -1245,6 +1356,21 @@ static void jumpbug_modify_charcode(UINT16 *code,UINT8 x)
 					   ((~gfxbank[4] & 0x01) << 8);
 	}
 }
+
+
+static void dambustr_modify_charcode(UINT16 *code,UINT8 x)
+{
+	if (dambustr_char_bank == 0) {	// text mode
+		*code |= 0x0300;
+	}
+	else {				// graphics mode
+		if (x == 28)		// only line #28 stays in text mode
+			*code |= 0x0300;
+		else
+			*code &= 0x00ff;
+	};
+}
+
 
 
 /* sprite banking functions */
@@ -1328,6 +1454,12 @@ static void ad2083_modify_spritecode(UINT8 *spriteram,int *code,int *flipx,int *
 	*code = (spriteram[offs + 1] & 0x7f) | ((spriteram[offs + 2] & 0x30) << 2);
 	*flipx = 0;
 }
+
+static void dambustr_modify_spritecode(UINT8 *spriteram,int *code,int *flipx,int *flipy,int offs)
+{
+	*code += 0x40;
+}
+
 
 /* color PROM mapping functions */
 
@@ -1428,6 +1560,36 @@ static void theend_draw_bullets(mame_bitmap *bitmap, int offs, int x, int y)
 		}
 	}
 }
+
+static void dambustr_draw_bullets(mame_bitmap *bitmap, int offs, int x, int y)
+{
+	int i, color;
+
+	if (flip_screen_x)  x++;
+
+	x = x - 6;
+
+	/* bullets are 2 pixels wide */
+	for (i = 0; i < 2; i++)
+	{
+		if (offs < 4*4)
+		{
+			color = BULLETS_COLOR_BASE;
+			y--;
+		}
+		else {
+			color = BULLETS_COLOR_BASE + 1;
+			x--;
+		}
+
+		if (x >= Machine->screen[0].visarea.min_x &&
+			x <= Machine->screen[0].visarea.max_x)
+		{
+			plot_pixel(bitmap, x, y, Machine->pens[color]);
+		}
+	}
+}
+
 
 
 /* background drawing functions */
@@ -1604,6 +1766,47 @@ static void mariner_draw_background(mame_bitmap *bitmap)
 		}
 	}
 }
+
+static void dambustr_draw_background(mame_bitmap *bitmap)
+{
+	int col1 = BACKGROUND_COLOR_BASE + dambustr_bg_color_1;
+	int col2 = BACKGROUND_COLOR_BASE + dambustr_bg_color_2;
+
+	if (flip_screen_x)
+	{
+		plot_box(bitmap,   0, 0, 256-dambustr_bg_split_line, 256, Machine->pens[col2]);
+		plot_box(bitmap, 256-dambustr_bg_split_line, 0, dambustr_bg_split_line, 256, Machine->pens[col1]);
+	}
+	else
+	{
+		plot_box(bitmap,   0, 0, 256-dambustr_bg_split_line, 256, Machine->pens[col1]);
+		plot_box(bitmap, 256-dambustr_bg_split_line, 0, dambustr_bg_split_line, 256, Machine->pens[col2]);
+	}
+
+}
+
+static void dambustr_draw_upper_background(mame_bitmap *bitmap)
+{
+	static rectangle clip = { 0, 0, 0, 0 };
+
+	if (flip_screen_x)
+	{
+		clip.min_x = 254 - dambustr_bg_split_line;
+		clip.max_x = dambustr_bg_split_line;
+		clip.min_y = 0;
+		clip.max_y = 255;
+		copybitmap(bitmap, dambustr_tmpbitmap, 0, 0, 0, 0, &clip, TRANSPARENCY_NONE, 0);
+	}
+	else
+	{
+		clip.min_x = 0;
+		clip.max_x = 254 - dambustr_bg_split_line;
+		clip.min_y = 0;
+		clip.max_y = 255;
+		copybitmap(bitmap, dambustr_tmpbitmap, 0, 0, 0, 0, &clip, TRANSPARENCY_NONE, 0);
+	}
+}
+
 
 
 /* star drawing functions */
@@ -2088,3 +2291,50 @@ VIDEO_UPDATE( galaxian )
 	}
 	return 0;
 }
+
+
+VIDEO_UPDATE( dambustr )
+{
+	int i, j;
+	UINT8 color;
+
+	draw_background(bitmap);
+
+	if (galaxian_stars_on)
+	{
+		draw_stars(bitmap);
+	}
+
+	/* save the background for drawing it again later, if background has priority over characters */
+	copybitmap(dambustr_tmpbitmap, bitmap, 0, 0, 0, 0, &Machine->screen[0].visarea, TRANSPARENCY_NONE, 0);
+
+	tilemap_draw(bitmap, 0, bg_tilemap, 0, 0);
+
+	if (draw_bullets)
+	{
+		draw_bullets_common(bitmap);
+	}
+
+	draw_sprites(bitmap, galaxian_spriteram, galaxian_spriteram_size);
+
+	if (dambustr_bg_priority)
+	{
+		/* draw the upper part of the background, as it has priority */
+		dambustr_draw_upper_background(bitmap);
+
+		/* only rows with color code > 3 are stronger than the background */
+		memset(dambustr_videoram2, 0x20, 0x0400);
+		for (i=0; i<32; i++) {
+			color = galaxian_attributesram[(i << 1) | 1] & color_mask;
+			if (color > 3) {
+				for (j=0; j<32; j++)
+					dambustr_videoram2[32*j+i] = galaxian_videoram[32*j+i];
+			};
+		};
+		tilemap_mark_all_tiles_dirty(dambustr_tilemap2);
+		tilemap_draw(bitmap, 0, dambustr_tilemap2, 0, 0);
+	};
+
+	return 0;
+}
+

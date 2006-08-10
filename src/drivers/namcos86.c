@@ -1222,8 +1222,8 @@ ROM_START( skykiddx )
 	ROM_LOAD( "sk3-5.6u",     0x1400, 0x0020, CRC(e4130804) SHA1(e1a3e1383186d036fba6dc8a8681f48f24f59281) )	/* tile address decoder (used at runtime) */
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )
-	ROM_LOAD( "sk3_4.6b",     0x8000, 0x4000, CRC(e6cae2d6) SHA1(b6598aaee0136b0980e13326cb2835aadadd9543) )
-	ROM_LOAD( "cus60",        0xf000, 0x1000, CRC(6ef08fb3) SHA1(4842590d60035a0059b0899eb2d5f58ae72c2529) )
+	ROM_LOAD( "sk3_4.6b",       0x8000, 0x4000, CRC(e6cae2d6) SHA1(b6598aaee0136b0980e13326cb2835aadadd9543) )	/* subprogram for the MCU */
+	ROM_LOAD( "cus60-60a1.mcu", 0xf000, 0x1000, CRC(076ea82a) SHA1(22b5e62e26390d7d5cacc0503c7aa5ed524204df) )	/* MCU internal code */
 
 	/* the ROM/voice expansion board is not present in this game */
 ROM_END
@@ -1258,8 +1258,8 @@ ROM_START( skykiddo )
 	ROM_LOAD( "sk3-5.6u",     0x1400, 0x0020, CRC(e4130804) SHA1(e1a3e1383186d036fba6dc8a8681f48f24f59281) )	/* tile address decoder (used at runtime) */
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )
-	ROM_LOAD( "sk3_4.6b",     0x8000, 0x4000, CRC(e6cae2d6) SHA1(b6598aaee0136b0980e13326cb2835aadadd9543) )
-	ROM_LOAD( "cus60",        0xf000, 0x1000, CRC(6ef08fb3) SHA1(4842590d60035a0059b0899eb2d5f58ae72c2529) )
+	ROM_LOAD( "sk3_4.6b",       0x8000, 0x4000, CRC(e6cae2d6) SHA1(b6598aaee0136b0980e13326cb2835aadadd9543) )	/* subprogram for the MCU */
+	ROM_LOAD( "cus60-60a1.mcu", 0xf000, 0x1000, CRC(076ea82a) SHA1(22b5e62e26390d7d5cacc0503c7aa5ed524204df) )	/* MCU internal code */
 
 	/* the ROM/voice expansion board is not present in this game */
 ROM_END
@@ -1293,8 +1293,8 @@ ROM_START( hopmappy )
 	ROM_LOAD( "hm1-5.6u",     0x1400, 0x0020, CRC(475bf500) SHA1(7e6a91e57d3709a5c70786c8e3ed545ee6026d03) )	/* tile address decoder (used at runtime) */
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )
-	ROM_LOAD( "hm1_3.6b",     0x8000, 0x2000, CRC(6496e1db) SHA1(f990fb3b2f93295282e8dee4488a4c3fc5ef83d1) )
-	ROM_LOAD( "cus60",        0xf000, 0x1000, CRC(6ef08fb3) SHA1(4842590d60035a0059b0899eb2d5f58ae72c2529) )
+	ROM_LOAD( "hm1_3.6b",       0x8000, 0x2000, CRC(6496e1db) SHA1(f990fb3b2f93295282e8dee4488a4c3fc5ef83d1) )	/* subprogram for the MCU */
+	ROM_LOAD( "cus60-60a1.mcu", 0xf000, 0x1000, CRC(076ea82a) SHA1(22b5e62e26390d7d5cacc0503c7aa5ed524204df) )	/* MCU internal code */
 
 	/* the ROM/voice expansion board is not present in this game */
 ROM_END
@@ -1334,9 +1334,9 @@ ROM_START( roishtar )
 	ROM_LOAD( "ri1-5.6u",     0x1400, 0x0020, CRC(e2188075) SHA1(be079ace2070433d4d90c757aef3e415b4e21455) )	/* tile address decoder (used at runtime) */
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )
-	ROM_LOAD( "ri1_4.6b",     0x0000, 0x4000, CRC(552172b8) SHA1(18b35cb116baba362831fc046241895198b07a53) )
-	ROM_CONTINUE(             0x8000, 0x4000 )
-	ROM_LOAD( "cus60",        0xf000, 0x1000, CRC(6ef08fb3) SHA1(4842590d60035a0059b0899eb2d5f58ae72c2529) )
+	ROM_LOAD( "ri1_4.6b",       0x0000, 0x4000, CRC(552172b8) SHA1(18b35cb116baba362831fc046241895198b07a53) )	/* subprogram for the MCU */
+	ROM_CONTINUE(               0x8000, 0x4000 )
+	ROM_LOAD( "cus60-60a1.mcu", 0xf000, 0x1000, CRC(076ea82a) SHA1(22b5e62e26390d7d5cacc0503c7aa5ed524204df) )	/* MCU internal code */
 
 	/* the ROM/voice expansion board is not present in this game */
 ROM_END
@@ -1376,8 +1376,8 @@ ROM_START( genpeitd )
 	ROM_LOAD( "gt1-5.6u",     0x1400, 0x0020, CRC(e4130804) SHA1(e1a3e1383186d036fba6dc8a8681f48f24f59281) )	/* tile address decoder (used at runtime) */
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )
-	ROM_LOAD( "gt1_3.6b",     0x4000, 0x8000, CRC(315cd988) SHA1(87b1a90b2a53571f7d8f9a475125f3f31ed3cb5d) )
-	ROM_LOAD( "cus60",        0xf000, 0x1000, CRC(6ef08fb3) SHA1(4842590d60035a0059b0899eb2d5f58ae72c2529) )
+	ROM_LOAD( "gt1_3.6b",       0x4000, 0x8000, CRC(315cd988) SHA1(87b1a90b2a53571f7d8f9a475125f3f31ed3cb5d) )	/* subprogram for the MCU */
+	ROM_LOAD( "cus60-60a1.mcu", 0xf000, 0x1000, CRC(076ea82a) SHA1(22b5e62e26390d7d5cacc0503c7aa5ed524204df) )	/* MCU internal code */
 
 	ROM_REGION( 0x40000, REGION_USER1, 0 ) /* bank switched data for CPU1 */
 	ROM_LOAD( "gt1_10b.f1",   0x00000, 0x10000, CRC(5721ad0d) SHA1(f16afb3f468957a9de270366605592e14837b8c2) )
@@ -1427,8 +1427,8 @@ ROM_START( rthunder )
 	ROM_LOAD( "rt1-5.6u",     0x1400, 0x0020, CRC(e4130804) SHA1(e1a3e1383186d036fba6dc8a8681f48f24f59281) )	/* tile address decoder (used at runtime) */
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )
-	ROM_LOAD( "rt3_4.6b",     0x4000, 0x8000, CRC(00cf293f) SHA1(bc441d21bb4c54a01d2393fbe99201714cd4439d) )
-	ROM_LOAD( "cus60",        0xf000, 0x1000, CRC(6ef08fb3) SHA1(4842590d60035a0059b0899eb2d5f58ae72c2529) )
+	ROM_LOAD( "rt3_4.6b",       0x4000, 0x8000, CRC(00cf293f) SHA1(bc441d21bb4c54a01d2393fbe99201714cd4439d) )	/* subprogram for the MCU */
+	ROM_LOAD( "cus60-60a1.mcu", 0xf000, 0x1000, CRC(076ea82a) SHA1(22b5e62e26390d7d5cacc0503c7aa5ed524204df) )	/* MCU internal code */
 
 	ROM_REGION( 0x40000, REGION_USER1, 0 ) /* bank switched data for CPU1 */
 	ROM_LOAD( "rt1_17.f1",    0x00000, 0x10000, CRC(766af455) SHA1(8c71772795e783d6c4b88af9a311d55e363c298a) )
@@ -1478,8 +1478,8 @@ ROM_START( rthundro )
 	ROM_LOAD( "rt1-5.6u",     0x1400, 0x0020, CRC(e4130804) SHA1(e1a3e1383186d036fba6dc8a8681f48f24f59281) )	/* tile address decoder (used at runtime) */
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )
-	ROM_LOAD( "r4",           0x4000, 0x8000, CRC(0387464f) SHA1(ce7f521bc2ecc6525880da2551daf595a394a275) )
-	ROM_LOAD( "cus60",        0xf000, 0x1000, CRC(6ef08fb3) SHA1(4842590d60035a0059b0899eb2d5f58ae72c2529) )
+	ROM_LOAD( "r4",             0x4000, 0x8000, CRC(0387464f) SHA1(ce7f521bc2ecc6525880da2551daf595a394a275) )	/* subprogram for the MCU */
+	ROM_LOAD( "cus60-60a1.mcu", 0xf000, 0x1000, CRC(076ea82a) SHA1(22b5e62e26390d7d5cacc0503c7aa5ed524204df) )	/* MCU internal code */
 
 	ROM_REGION( 0x40000, REGION_USER1, 0 ) /* bank switched data for CPU1 */
 	ROM_LOAD( "rt1_17.f1",    0x00000, 0x10000, CRC(766af455) SHA1(8c71772795e783d6c4b88af9a311d55e363c298a) )
@@ -1529,8 +1529,8 @@ ROM_START( wndrmomo )
 	ROM_LOAD( "wm1-5.6u",     0x1400, 0x0020, CRC(e4130804) SHA1(e1a3e1383186d036fba6dc8a8681f48f24f59281) )	/* tile address decoder (used at runtime) */
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )
-	ROM_LOAD( "wm1_3.6b",     0x4000, 0x8000, CRC(55f01df7) SHA1(c11574a8b51bf965790b97895452e9fa9ab6b752) )
-	ROM_LOAD( "cus60",        0xf000, 0x1000, CRC(6ef08fb3) SHA1(4842590d60035a0059b0899eb2d5f58ae72c2529) )
+	ROM_LOAD( "wm1_3.6b",       0x4000, 0x8000, CRC(55f01df7) SHA1(c11574a8b51bf965790b97895452e9fa9ab6b752) )	/* subprogram for the MCU */
+	ROM_LOAD( "cus60-60a1.mcu", 0xf000, 0x1000, CRC(076ea82a) SHA1(22b5e62e26390d7d5cacc0503c7aa5ed524204df) )	/* MCU internal code */
 
 	ROM_REGION( 0x40000, REGION_USER1, 0 ) /* bank switched data for CPU1 */
 	ROM_LOAD( "wm1_16.f1",    0x00000, 0x10000, CRC(e565f8f3) SHA1(e1f417003ef9f700f9d5ed091484463c704c8b9f) )

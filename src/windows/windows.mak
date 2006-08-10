@@ -149,6 +149,7 @@ OSOBJS = \
 	$(OBJ)/$(MAMEOS)/drawd3d.o \
 	$(OBJ)/$(MAMEOS)/drawdd.o \
 	$(OBJ)/$(MAMEOS)/drawgdi.o \
+	$(OBJ)/$(MAMEOS)/drawnone.o \
 	$(OBJ)/$(MAMEOS)/fileio.o \
 	$(OBJ)/$(MAMEOS)/fronthlp.o \
 	$(OBJ)/$(MAMEOS)/input.o \

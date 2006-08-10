@@ -47,7 +47,6 @@ write:
 
     - the cross hatch pattern test in service mode is too fast, each phase
       should take 15 seconds according to the service manual
-    - the two AY-3-8910's should be clocked independently at 2H and 4H
 
 */
 
@@ -256,22 +255,12 @@ INPUT_PORTS_END
 
 /* Graphics Layouts */
 
-static const gfx_layout charlayout =
-{
-	8,8,	/* 8*8 characters */
-	512,	/* 512 characters */
-	2,	/* 2 bits per pixel */
-	{ 512*8*8, 0 },	/* the bitplanes are separated */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every char takes 8 consecutive bytes */
-};
 static const gfx_layout spritelayout =
 {
 	8,16,	/* 8*16 sprites */
-	256,	/* 256 sprites */
+	RGN_FRAC(1,3),	/* 256 sprites */
 	3,	/* 3 bits per pixel */
-	{ 2*128*16*16, 128*16*16, 0 },	/* the bitplanes are separated */
+	{ RGN_FRAC(2,3), RGN_FRAC(1,3), 0 },	/* the bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
@@ -282,8 +271,8 @@ static const gfx_layout spritelayout =
 
 static const gfx_decode gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout,       0, 128 },
-	{ REGION_GFX2, 0, &spritelayout, 128*4,   1 },
+	{ REGION_GFX1, 0, &gfx_8x8x2_planar,     0, 128 },
+	{ REGION_GFX2, 0, &spritelayout,     128*4,   1 },
 	{ -1 }
 };
 

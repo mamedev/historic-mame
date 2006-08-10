@@ -234,16 +234,6 @@ static void FUNC_PREFIX(draw_line)(const render_primitive *prim, void *dstdata, 
 	x2 = (int)(prim->bounds.x1 * 65536.0f);
 	y2 = (int)(prim->bounds.y1 * 65536.0f);
 
-	/* clamp just in case */
-	if (x1 < 0) x1 = 0;
-	if (x1 >= ((width - 1) << 16)) x1 = (width - 1) << 16;
-	if (x2 < 0) x2 = 0;
-	if (x2 >= ((width - 1) << 16)) x2 = (width - 1) << 16;
-	if (y1 < 0) y1 = 0;
-	if (y1 >= ((height - 1) << 16)) y1 = (height - 1) << 16;
-	if (y2 < 0) y2 = 0;
-	if (y2 >= ((height - 1) << 16)) y2 = (height - 1) << 16;
-
 	/* handle color and intensity */
 	col = MAKE_RGB((int)(255.0f * prim->color.r * prim->color.a), (int)(255.0f * prim->color.g * prim->color.a), (int)(255.0f * prim->color.b * prim->color.a));
 
@@ -277,15 +267,25 @@ static void FUNC_PREFIX(draw_line)(const render_primitive *prim, void *dstdata, 
 			y1 -= bwidth >> 1; /* start back half the diameter */
 			for (;;)
 			{
-				dx = bwidth;    /* init diameter of beam */
-				dy = y1 >> 16;
-				FUNC_PREFIX(draw_aa_pixel)(dstdata, pitch, x1, dy++, Tinten(0xff & (~y1 >> 8), col));
-				dx -= 0x10000 - (0xffff & y1); /* take off amount plotted */
-				a1 = (dx >> 8) & 0xff;   /* calc remainder pixel */
-				dx >>= 16;                   /* adjust to pixel (solid) count */
-				while (dx--)                 /* plot rest of pixels */
-					FUNC_PREFIX(draw_aa_pixel)(dstdata, pitch, x1, dy++, col);
-				FUNC_PREFIX(draw_aa_pixel)(dstdata, pitch, x1, dy, Tinten(a1,col));
+				if (x1 >= 0 && x1 < width)
+				{
+					dx = bwidth;    /* init diameter of beam */
+					dy = y1 >> 16;
+					if (dy >= 0 && dy < height)
+						FUNC_PREFIX(draw_aa_pixel)(dstdata, pitch, x1, dy, Tinten(0xff & (~y1 >> 8), col));
+					dy++;
+					dx -= 0x10000 - (0xffff & y1); /* take off amount plotted */
+					a1 = (dx >> 8) & 0xff;   /* calc remainder pixel */
+					dx >>= 16;                   /* adjust to pixel (solid) count */
+					while (dx--)                 /* plot rest of pixels */
+					{
+						if (dy >= 0 && dy < height)
+							FUNC_PREFIX(draw_aa_pixel)(dstdata, pitch, x1, dy, col);
+						dy++;
+					}
+					if (dy >= 0 && dy < height)
+						FUNC_PREFIX(draw_aa_pixel)(dstdata, pitch, x1, dy, Tinten(a1,col));
+				}
 				if (x1 == xx) break;
 				x1 += sx;
 				y1 += sy;
@@ -303,15 +303,25 @@ static void FUNC_PREFIX(draw_line)(const render_primitive *prim, void *dstdata, 
 			x1 -= bwidth >> 1; /* start back half the width */
 			for (;;)
 			{
-				dy = bwidth;    /* calc diameter of beam */
-				dx = x1 >> 16;
-				FUNC_PREFIX(draw_aa_pixel)(dstdata, pitch, dx++, y1, Tinten(0xff & (~x1 >> 8), col));
-				dy -= 0x10000 - (0xffff & x1); /* take off amount plotted */
-				a1 = (dy >> 8) & 0xff;   /* remainder pixel */
-				dy >>= 16;                   /* adjust to pixel (solid) count */
-				while (dy--)                 /* plot rest of pixels */
-					FUNC_PREFIX(draw_aa_pixel)(dstdata, pitch, dx++, y1, col);
-				FUNC_PREFIX(draw_aa_pixel)(dstdata, pitch, dx, y1, Tinten(a1, col));
+				if (y1 >= 0 && y1 < height)
+				{
+					dy = bwidth;    /* calc diameter of beam */
+					dx = x1 >> 16;
+					if (dx >= 0 && dx < width)
+						FUNC_PREFIX(draw_aa_pixel)(dstdata, pitch, dx, y1, Tinten(0xff & (~x1 >> 8), col));
+					dx++;
+					dy -= 0x10000 - (0xffff & x1); /* take off amount plotted */
+					a1 = (dy >> 8) & 0xff;   /* remainder pixel */
+					dy >>= 16;                   /* adjust to pixel (solid) count */
+					while (dy--)                 /* plot rest of pixels */
+					{
+						if (dx >= 0 && dx < width)
+							FUNC_PREFIX(draw_aa_pixel)(dstdata, pitch, dx, y1, col);
+						dx++;
+					}
+					if (dx >= 0 && dx < width)
+						FUNC_PREFIX(draw_aa_pixel)(dstdata, pitch, dx, y1, Tinten(a1, col));
+				}
 				if (y1 == yy) break;
 				y1 += sy;
 				x1 += sx;
@@ -336,7 +346,8 @@ static void FUNC_PREFIX(draw_line)(const render_primitive *prim, void *dstdata, 
 		{
 			for (;;)
 			{
-				FUNC_PREFIX(draw_aa_pixel)(dstdata, pitch, x1, y1, col);
+				if (x1 >= 0 && x1 < width && y1 >= 0 && y1 < height)
+					FUNC_PREFIX(draw_aa_pixel)(dstdata, pitch, x1, y1, col);
 				if (x1 == x2) break;
 				x1 += sx;
 				cx -= dy;
@@ -351,7 +362,8 @@ static void FUNC_PREFIX(draw_line)(const render_primitive *prim, void *dstdata, 
 		{
 			for (;;)
 			{
-				FUNC_PREFIX(draw_aa_pixel)(dstdata, pitch, x1, y1, col);
+				if (x1 >= 0 && x1 < width && y1 >= 0 && y1 < height)
+					FUNC_PREFIX(draw_aa_pixel)(dstdata, pitch, x1, y1, col);
 				if (y1 == y2) break;
 				y1 += sy;
 				cy -= dx;

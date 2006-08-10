@@ -320,6 +320,13 @@ static void zaxxon_draw_background(mame_bitmap *bitmap, const rectangle *cliprec
 		int flipoffs = flip_screen ? 0x38 : 0x40;
 		int x, y;
 
+		/* the starting X value is offset by 1 pixel (normal) or 7 pixels */
+		/* (flipped) due to a delay in the loading */
+		if (!flip_screen)
+			flipoffs -= 1;
+		else
+			flipoffs += 7;
+
 		/* loop over visible rows */
 		for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 		{
@@ -352,6 +359,7 @@ static void zaxxon_draw_background(mame_bitmap *bitmap, const rectangle *cliprec
 					srcx += flipoffs;
 				}
 
+				/* store the pixel, offset by the color offset */
 				dst[x] = src[srcx & xmask] + colorbase;
 			}
 		}

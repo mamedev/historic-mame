@@ -430,22 +430,9 @@ INPUT_PORTS_END
  *
  *************************************/
 
-static const gfx_layout spritelayout =
-{
-	16,16,
-	RGN_FRAC(1,4),
-	4,
-	{ RGN_FRAC(3,4), RGN_FRAC(2,4), RGN_FRAC(1,4), RGN_FRAC(0,4) },
-	{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 },
-	{ 0*8, 2*8, 4*8, 6*8, 8*8, 10*8, 12*8, 14*8,
-			16*8, 18*8, 20*8, 22*8, 24*8, 26*8, 28*8, 30*8 },
-	32*8
-};
-
-
 static const gfx_decode gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x0000, &spritelayout, 0, 4 },
+	{ REGION_GFX1, 0x0000, &gfx_16x16x4_planar, 0, 4 },
 	{ -1 }
 };
 

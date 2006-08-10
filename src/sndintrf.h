@@ -19,10 +19,9 @@
 #include "state.h"
 #include "timer.h"
 
+
 /***************************************************************************
-
-    Constants
-
+    CONSTANTS
 ***************************************************************************/
 
 /* Enum listing all the sound chips */
@@ -156,9 +155,7 @@ enum
 
 
 /***************************************************************************
-
-    Type definitions
-
+    TYPE DEFINITIONS
 ***************************************************************************/
 
 typedef union _sndinfo sndinfo;
@@ -178,9 +175,7 @@ union _sndinfo
 
 
 /***************************************************************************
-
-    Sound chip interfaces by index
-
+    CHIP INTERFACES BY INDEX
 ***************************************************************************/
 
 /* get info accessors */
@@ -208,9 +203,7 @@ void *sndnum_token(int sndnum);
 
 
 /***************************************************************************
-
-    Sound chip interfaces by (type,index) pair
-
+    CHIP INTERFACES BY (TYPE,INDEX) PAIR
 ***************************************************************************/
 
 /* get info accessors */
@@ -238,9 +231,7 @@ void *sndti_token(int sndtype, int sndindex);
 
 
 /***************************************************************************
-
-    Sound chip interfaces by type
-
+    CHIP INTERFACES BY TYPE
 ***************************************************************************/
 
 /* get info accessors */
@@ -258,9 +249,7 @@ const char *sndtype_get_info_string(int sndtype, UINT32 state);
 
 
 /***************************************************************************
-
-    Sound chip interfaces by (type,index) pair
-
+    FUNCTION PROTOTYPES
 ***************************************************************************/
 
 /* Initialization/Tear down */

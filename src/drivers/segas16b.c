@@ -3089,7 +3089,7 @@ ROM_START( aceattac )
 	ROM_LOAD16_BYTE( "epr11490.a2", 0x020001, 0x10000, CRC(38cb3a41) SHA1(1d74cc69907cdff2d85e965b80bf3f551465257e) )
 
 	ROM_REGION( 0x2000, REGION_USER1, 0 ) /* decryption key */
-	ROM_LOAD( "317-0060.key", 0x0000, 0x2000, BAD_DUMP CRC(f4ee940f) SHA1(13cca3f19bd9761d484185a3476bec3c8c18efcf) ) // cpu seems dead, key is corrupt
+	ROM_LOAD( "317-0059.key", 0x0000, 0x2000, NO_DUMP )
 
 	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "epr11493.b9",  0x00000, 0x10000, CRC(654485d9) SHA1(b431270564c4e33fd70c8c85af1fcbff8b59ba49) )
@@ -5994,7 +5994,7 @@ static DRIVER_INIT( snapper )
  *
  *************************************/
 
-GAME( 1988, aceattac, 0,        system16b,      generic,  generic_5358,  ROT0,   "Sega",           "Ace Attacker (FD1094 317-0060)", GAME_NOT_WORKING )
+GAME( 1988, aceattac, 0,        system16b,      generic,  generic_5358,  ROT0,   "Sega",           "Ace Attacker (FD1094 317-unknown)", GAME_NOT_WORKING )
 GAME( 1987, aliensyn, 0,        system16b,      aliensyn, generic_5358,  ROT0,   "Sega",           "Alien Syndrome (set 4, System 16B, unprotected)", 0 )
 GAME( 1987, aliensy3, aliensyn, system16b,      aliensyn, aliensy3_5358, ROT0,   "Sega",           "Alien Syndrome (set 3, System 16B, FD1089A 317-0033)", 0 )
 GAME( 1988, altbeast, 0,        system16b_8751, altbeast, altbeast_5521, ROT0,   "Sega",           "Altered Beast (set 7, 8751 317-0078)", 0 )

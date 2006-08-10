@@ -241,6 +241,7 @@ void neogeo_set_lower_resolution( void )
 		!strcmp(Machine->gamedrv->name,"bangbead") ||
 		!strcmp(Machine->gamedrv->name,"mslug4") ||
 		!strcmp(Machine->gamedrv->name,"ms4plus") ||
+		!strcmp(Machine->gamedrv->name,"ms5pcb") ||
 		!strcmp(Machine->gamedrv->name,"jockeygp") ||
 		!strcmp(Machine->gamedrv->name,"vliner") ||
 		!strcmp(Machine->gamedrv->name,"vlinero") ||

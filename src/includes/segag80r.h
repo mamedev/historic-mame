@@ -17,29 +17,56 @@ WRITE8_HANDLER( segar_w );
 
 /*----------- defined in sndhrdw/segar.c -----------*/
 
+MACHINE_DRIVER_EXTERN( monsterb_sound );
+
 WRITE8_HANDLER( astrob_audio_ports_w );
 WRITE8_HANDLER( spaceod_audio_ports_w );
 WRITE8_HANDLER( monsterb_audio_8255_w );
  READ8_HANDLER( monsterb_audio_8255_r );
 
- READ8_HANDLER( monsterb_sh_rom_r );
- READ8_HANDLER( monsterb_sh_t1_r );
- READ8_HANDLER( monsterb_sh_command_r );
-WRITE8_HANDLER( monsterb_sh_dac_w );
-WRITE8_HANDLER( monsterb_sh_busy_w );
-WRITE8_HANDLER( monsterb_sh_offset_a0_a3_w );
-WRITE8_HANDLER( monsterb_sh_offset_a4_a7_w );
-WRITE8_HANDLER( monsterb_sh_offset_a8_a11_w );
-WRITE8_HANDLER( monsterb_sh_rom_select_w );
-
 /* sample names */
 extern const char *astrob_sample_names[];
 extern const char *s005_sample_names[];
-extern const char *monsterb_sample_names[];
 extern const char *spaceod_sample_names[];
 
 
 /*----------- defined in vidhrdw/segar.c -----------*/
+
+INTERRUPT_GEN( segar_vblank_start );
+
+READ8_HANDLER( segar_videoram_r );
+WRITE8_HANDLER( segar_videoram_w );
+
+READ8_HANDLER( segar_video_port_r );
+WRITE8_HANDLER( segar_video_port_w );
+
+VIDEO_START( segar );
+VIDEO_UPDATE( segar );
+
+
+READ8_HANDLER( spaceod_back_port_r );
+WRITE8_HANDLER( spaceod_back_port_w );
+
+VIDEO_START( spaceod );
+VIDEO_UPDATE( spaceod );
+
+
+READ8_HANDLER( monsterb_videoram_r );
+WRITE8_HANDLER( monsterb_videoram_w );
+WRITE8_HANDLER( monsterb_back_port_w );
+
+VIDEO_START( monsterb );
+VIDEO_UPDATE( monsterb );
+
+
+READ8_HANDLER( pignewt_videoram_r );
+WRITE8_HANDLER( pignewt_videoram_w );
+WRITE8_HANDLER( pignewt_back_port_w );
+WRITE8_HANDLER( pignewt_back_color_w );
+
+VIDEO_START( pignewt );
+VIDEO_UPDATE( pignewt );
+
 
 extern UINT8 *segar_characterram;
 extern UINT8 *segar_characterram2;
@@ -50,12 +77,6 @@ WRITE8_HANDLER( segar_characterram_w );
 WRITE8_HANDLER( segar_characterram2_w );
 WRITE8_HANDLER( segar_colortable_w );
 WRITE8_HANDLER( segar_bcolortable_w );
-
-WRITE8_HANDLER( segar_video_port_w );
-
-PALETTE_INIT( segar );
-VIDEO_START( segar );
-VIDEO_UPDATE( segar );
 
 WRITE8_HANDLER( monsterb_back_port_w );
 WRITE8_HANDLER( monster2_b9_back_port_w );

@@ -18,6 +18,10 @@
 #include "chd.h"
 
 
+/***************************************************************************
+    TYPE DEFINITIONS
+***************************************************************************/
+
 typedef struct _hard_disk_file hard_disk_file;
 
 struct _hard_disk_info
@@ -31,11 +35,9 @@ typedef struct _hard_disk_info hard_disk_info;
 
 
 
-/*************************************
- *
- *  Prototypes
- *
- *************************************/
+/***************************************************************************
+    FUNCTION PROTOTYPES
+***************************************************************************/
 
 hard_disk_file *hard_disk_open(chd_file *chd);
 void hard_disk_close(hard_disk_file *file);

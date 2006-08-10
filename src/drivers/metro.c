@@ -4729,6 +4729,13 @@ PCB uses a Xlinix XC9536 istead of the Altera EMP7032LC44 PLD.
 Did Limenko license this or bootleg it?  The board doesn't look like a
 bootleg and has all original parts on it..
 
+Limenko's web site states:
+
+ 1998  6 Developed LM2D-Y00-LM
+      10 Contract the technology and products in cooperation with Metro Ltd.
+ 1999 11 Begin to sell Battle Bubble internally
+      12 Received an overseas order for Battle Bubble
+
 ***************************************************************************/
 
 ROM_START( bangball )

@@ -6,7 +6,7 @@
 		</screen>
 	</view>
 
-	<view name="Native (~scr0nativeyaspect~:~scr0nativexaspect~)">
+	<view name="Pixel Aspect (~scr0nativeyaspect~:~scr0nativexaspect~)">
 		<screen index="0">
 			<bounds left="0" top="0" right="~scr0height~" bottom="~scr0width~" />
 		</screen>

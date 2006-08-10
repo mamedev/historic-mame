@@ -14,6 +14,7 @@
 
 #include "driver.h"
 #include "vidhrdw/vector.h"
+#include "machine/6840ptm.h"
 #include "machine/z80ctc.h"
 #include "cchasm.h"
 #include "sound/custom.h"
@@ -29,7 +30,7 @@
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x00ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x040000, 0x04000f) AM_READ(cchasm_6840_r)
+	AM_RANGE(0x040000, 0x04000f) AM_READ(ptm6840_0_lsb_r)
 	AM_RANGE(0x060000, 0x060001) AM_READ(input_port_0_word_r)
 	AM_RANGE(0xf80000, 0xf800ff) AM_READ(cchasm_io_r)
 	AM_RANGE(0xffb000, 0xffffff) AM_READ(MRA16_RAM)
@@ -38,7 +39,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x00ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x040000, 0x04000f) AM_WRITE(cchasm_6840_w)
+	AM_RANGE(0x040000, 0x04000f) AM_WRITE(ptm6840_0_lsb_w)
 	AM_RANGE(0x050000, 0x050001) AM_WRITE(cchasm_refresh_control_w)
 	AM_RANGE(0x060000, 0x060001) AM_WRITE(cchasm_led_w)
 	AM_RANGE(0x070000, 0x070001) AM_WRITE(watchdog_reset16_w)
@@ -81,7 +82,17 @@ static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x00, 0x03) AM_WRITE(z80ctc_0_w)
 ADDRESS_MAP_END
 
-
+static void cchasm_6840_irq(int state)
+{
+	cpunum_set_input_line(0, 4, state?ASSERT_LINE:CLEAR_LINE);
+}
+static const ptm6840_interface cchasm_6840_intf =
+{
+	8000000/10,
+	0,8000000/10,0,
+	0, 0, 0,
+	cchasm_6840_irq
+};
 
 /*************************************
  *
@@ -135,7 +146,11 @@ INPUT_PORTS_START( cchasm )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNUSED ) /* Test 3, not used in cchasm */
 INPUT_PORTS_END
 
-
+MACHINE_START( cchasm )
+{
+	ptm6840_config(0, &cchasm_6840_intf );
+	return 0;
+}
 
 /*************************************
  *
@@ -172,6 +187,7 @@ static struct z80_irq_daisy_chain daisy_chain[] =
 
 static MACHINE_DRIVER_START( cchasm )
 
+	MDRV_MACHINE_START(cchasm)
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000,8000000)	/* 8 MHz (from schematics) */
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)

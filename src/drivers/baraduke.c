@@ -20,9 +20,7 @@ CUS41    address decoder
 CUS42    dual scrolling tilemap address generator
 CUS43    dual tilemap generator
 CUS48    sprite address generator
-CUS60    MCU (63701) [1]
-
-[1] 60A1 found in at least one version
+CUS60    MCU (63701) aka 60A1
 
 
 Baraduke
@@ -481,9 +479,9 @@ ROM_START( baraduke )
 	ROM_LOAD( "prg3.9b",	0xc000, 0x04000, CRC(383e5458) SHA1(091f25e287f0a81649c9a4fa196ebe4112a82295) )
 
 	ROM_REGION(  0x10000 , REGION_CPU2, 0 ) /* MCU code */
-	ROM_LOAD( "prg4.3b",	0x8000, 0x4000, CRC(abda0fe7) SHA1(f7edcb5f9fa47bb38a8207af5678cf4ccc243547) )	/* subprogram for the MCU */
-	ROM_LOAD( "cus60",      0xf000, 0x1000, CRC(6ef08fb3) SHA1(4842590d60035a0059b0899eb2d5f58ae72c2529) )	/* The MCU internal code is missing */
-															/* Using Pacland code (probably similar) */
+	ROM_LOAD( "prg4.3b",	    0x8000, 0x4000, CRC(abda0fe7) SHA1(f7edcb5f9fa47bb38a8207af5678cf4ccc243547) )	/* subprogram for the MCU */
+	ROM_LOAD( "cus60-60a1.mcu", 0xf000, 0x1000, CRC(076ea82a) SHA1(22b5e62e26390d7d5cacc0503c7aa5ed524204df) )	/* MCU internal code */
+
 	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "ch1.3j",		0x00000, 0x2000, CRC(706b7fee) SHA1(e5694289bd4346c1a3a004feaa940710cea755c6) )	/* characters */
 
@@ -511,9 +509,9 @@ ROM_START( baraduka )
 	ROM_LOAD( "bd1_2.9b",	0xc000, 0x04000, CRC(40617fcd) SHA1(51d17f3a2fc96e13c8ef5952efece526e0fb33f4) )
 
 	ROM_REGION(  0x10000 , REGION_CPU2, 0 ) /* MCU code */
-	ROM_LOAD( "bd1_4b.3b",	0x8000, 0x4000, CRC(a47ecd32) SHA1(a2a75e65deb28224a5729ed134ee4d5ea8c50706) )	/* subprogram for the MCU */
-	ROM_LOAD( "cus60",      0xf000, 0x1000, CRC(6ef08fb3) SHA1(4842590d60035a0059b0899eb2d5f58ae72c2529) )	/* The MCU internal code is missing */
-															/* Using Pacland code (probably similar) */
+	ROM_LOAD( "bd1_4b.3b",	    0x8000, 0x4000, CRC(a47ecd32) SHA1(a2a75e65deb28224a5729ed134ee4d5ea8c50706) )	/* subprogram for the MCU */
+	ROM_LOAD( "cus60-60a1.mcu", 0xf000, 0x1000, CRC(076ea82a) SHA1(22b5e62e26390d7d5cacc0503c7aa5ed524204df) )	/* MCU internal code */
+
 	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "ch1.3j",		0x00000, 0x2000, CRC(706b7fee) SHA1(e5694289bd4346c1a3a004feaa940710cea755c6) )	/* characters */
 
@@ -541,9 +539,9 @@ ROM_START( metrocrs )
 	ROM_LOAD( "mc1-2.9b",	0xc000, 0x04000, CRC(5c846f35) SHA1(3c98a0f1131f2e2477fc75a588123c57ff5350ad) )
 
 	ROM_REGION(  0x10000 , REGION_CPU2, 0 ) /* MCU code */
-	ROM_LOAD( "mc1-4.3b",	0x8000, 0x2000, CRC(9c88f898) SHA1(d6d0345002b70c5aca41c664f34181715cd87669) )	/* subprogram for the MCU */
-	ROM_LOAD( "cus60",      0xf000, 0x1000, CRC(6ef08fb3) SHA1(4842590d60035a0059b0899eb2d5f58ae72c2529) )	/* The MCU internal code is missing */
-															/* Using Pacland code (probably similar) */
+	ROM_LOAD( "mc1-4.3b",	    0x8000, 0x2000, CRC(9c88f898) SHA1(d6d0345002b70c5aca41c664f34181715cd87669) )	/* subprogram for the MCU */
+	ROM_LOAD( "cus60-60a1.mcu", 0xf000, 0x1000, CRC(076ea82a) SHA1(22b5e62e26390d7d5cacc0503c7aa5ed524204df) )	/* MCU internal code */
+
 	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "mc1-5.3j",	0x00000, 0x2000, CRC(9b5ea33a) SHA1(a8108e71e3440b645ebdb5cdbd87712151299789) )	/* characters */
 
@@ -569,9 +567,9 @@ ROM_START( metrocra )
 	ROM_LOAD( "mc2-2.9a",	0xc000, 0x04000, CRC(db9b0e6d) SHA1(2772b59fe7dc0e78ee29dd001a6bba75b94e0334) )
 
 	ROM_REGION(  0x10000 , REGION_CPU2, 0 ) /* MCU code */
-	ROM_LOAD( "mc1-4.3b",	0x8000, 0x2000, CRC(9c88f898) SHA1(d6d0345002b70c5aca41c664f34181715cd87669) )	/* subprogram for the MCU */
-	ROM_LOAD( "cus60",      0xf000, 0x1000, CRC(6ef08fb3) SHA1(4842590d60035a0059b0899eb2d5f58ae72c2529) )	/* The MCU internal code is missing */
-															/* Using Pacland code (probably similar) */
+	ROM_LOAD( "mc1-4.3b",	    0x8000, 0x2000, CRC(9c88f898) SHA1(d6d0345002b70c5aca41c664f34181715cd87669) )	/* subprogram for the MCU */
+	ROM_LOAD( "cus60-60a1.mcu", 0xf000, 0x1000, CRC(076ea82a) SHA1(22b5e62e26390d7d5cacc0503c7aa5ed524204df) )	/* MCU internal code */
+
 	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "mc1-5.3j",	0x00000, 0x2000, CRC(9b5ea33a) SHA1(a8108e71e3440b645ebdb5cdbd87712151299789) )	/* characters */
 
@@ -589,7 +587,6 @@ ROM_START( metrocra )
 	ROM_LOAD( "mc1-1.1n",	0x0000, 0x0800, CRC(32a78a8b) SHA1(545a59bc3c5868ac1749d2947210110205fb3da2) )	/* Blue + Green palette */
 	ROM_LOAD( "mc1-2.2m",	0x0800, 0x0800, CRC(6f4dca7b) SHA1(781134c02853aded2cba63719c0e4c78b227da1c) )	/* Red palette */
 ROM_END
-
 
 
 static DRIVER_INIT( baraduke )

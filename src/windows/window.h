@@ -73,8 +73,7 @@ struct _win_window_info
 	const render_primitive_list *primlist;
 
 	// drawing data
-	void *				gdidata;
-	void *				dxdata;
+	void *				drawdata;
 };
 
 

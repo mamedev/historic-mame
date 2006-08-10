@@ -16,11 +16,15 @@ extern size_t vectorram_size;
 VIDEO_START( vector );
 VIDEO_UPDATE( vector );
 
-void vector_clear_list (void);
-void vector_add_point (int x, int y, rgb_t color, int intensity);
-void vector_add_clip (int minx, int miny, int maxx, int maxy);
+void vector_clear_list(void);
+void vector_add_point(int x, int y, rgb_t color, int intensity);
+void vector_add_clip(int minx, int miny, int maxx, int maxy);
+
 void vector_set_flicker(float _flicker);
 float vector_get_flicker(void);
+
+void vector_set_beam(float _beam);
+float vector_get_beam(void);
 
 #endif
 

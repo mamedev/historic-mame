@@ -5,7 +5,6 @@
   driver by Pierpaolo Prazzoli
 
   Games known to be needed:
-  - Triv Whiz (Edition 3) - (c) Merit 1985
   - Some other missing categories romsets and new / old revision
 
   TODO:
@@ -126,6 +125,7 @@ WRITE8_HANDLER( phrcraze_bg_w )
 	tilemap_mark_tile_dirty(bg_tilemap,offset);
 }
 
+// I think this looks more like a colortable than a palette
 static WRITE8_HANDLER( palette_w )
 {
 	int i;
@@ -669,6 +669,23 @@ ROM_START( pitboss )
 	ROM_LOAD( "u40.rom",   0x0000, 0x2000, CRC(52298162) SHA1(79aa6c4ab6bec6450d882615e64f61cfef934153) )
 ROM_END
 
+ROM_START( casino5 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "u5",           0x0000, 0x2000, CRC(abe240d8) SHA1(296eb3251dd51147d6984a8c08c3be22e5ed8e86) )
+	ROM_LOAD( "u6",           0x2000, 0x4000, CRC(4d9f0c57) SHA1(d19b4b4f42d329ea35907d17c15a55b954b07295) )
+	ROM_LOAD( "u7",           0x6000, 0x4000, CRC(d3bc510d) SHA1(6222badabf629dd6334591867596f811883aed52) )
+
+	ROM_REGION( 0x6000, REGION_GFX1, 0 )
+	ROM_LOAD( "u39",          0x0000, 0x2000, CRC(6662f607) SHA1(6b423f8de011d196700839af0be37effbf87383f) )
+	ROM_LOAD( "u38",          0x2000, 0x2000, CRC(a014b44f) SHA1(906d426b1de75f26030c19dcd599b6570909f510) )
+	ROM_LOAD( "u37",          0x4000, 0x2000, CRC(cb12e139) SHA1(06fe91281faae5d0c0ae4b3cd8ad103bd3995c38) )
+
+	ROM_REGION( 0x2000, REGION_GFX2, 0 )
+	ROM_LOAD( "u40",          0x0000, 0x2000, CRC(b13a3fb1) SHA1(25760aa27c88b8be248a87df724bf8797d179e7a) )
+ROM_END
+
+
+
 ROM_START( trvwhzho )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
 	ROM_LOAD( "trivia.u5",    0x0000, 0x2000, CRC(731fd5b1) SHA1(1074780321029446da0e6765b9e036b06b067a48) )
@@ -775,6 +792,31 @@ ROM_START( trvwhzii )
 	ROM_LOAD( "spo_101.03a",  0x78000, 0x8000, CRC(3d69c3a3) SHA1(9f16d45660f3cb15e44e9fc0d940a7b2b12819e8) )
 	ROM_LOAD( "sex-101.01a",  0x88000, 0x8000, CRC(301d65c2) SHA1(48d260077e9c9ed82f6dfa176b1103723dc9e19a) )
 	ROM_LOAD( "sex-101.02a",  0x98000, 0x8000, CRC(2596091b) SHA1(7fbb9c2c3f74e12714513928c8cf3769bf29fc8b) )
+ROM_END
+
+ROM_START( trvwziii )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "u5",           0x0000, 0x2000, CRC(ad4ab519) SHA1(80e99f4e5542115e34074b41bbc69906e01a408f) )
+	ROM_LOAD( "u6",           0x2000, 0x2000, CRC(21a44014) SHA1(331f8b4fa3f837de070b68b959c818122aedc68a) )
+
+	ROM_REGION( 0x6000, REGION_GFX1, 0 )
+	ROM_LOAD( "u39",          0x0000, 0x2000, CRC(f8a5f5fb) SHA1(a511e1a2b5e887ef00dc919e9e664ccec2d36cfa) )
+	ROM_LOAD( "u38",          0x2000, 0x2000, CRC(27621e52) SHA1(a7e88d329e2e774fef9bd8c5cefb4d8f1cfcba4c) )
+	ROM_LOAD( "u37",          0x4000, 0x2000, CRC(f739b5dc) SHA1(fbf469b7f4cab50e06ec2def9344e3b9801a275e) )
+
+	ROM_REGION( 0x2000, REGION_GFX2, 0 )
+	ROM_LOAD( "u40",          0x0000, 0x2000, CRC(e829473f) SHA1(ba754d9377d955b409970494e1a14dbe1d359ee5) )
+
+	ROM_REGION( 0xa0000, REGION_USER1, ROMREGION_ERASEFF ) // questions
+	ROM_LOAD( "7",            0x08000, 0x8000, CRC(974dca96) SHA1(eb4a745c84307a1bbb220659877f97c28cd515ac) )
+	ROM_LOAD( "8",            0x18000, 0x8000, CRC(e15ef8d0) SHA1(51c946311ffe507aa9031044bc34e5ae8d3473ab) )
+	ROM_LOAD( "9",            0x28000, 0x8000, CRC(503115a1) SHA1(5e6630191465b3d2a590fab08b4f47f7408ecc44) )
+	ROM_LOAD( "10",           0x38000, 0x8000, CRC(0e4fe73d) SHA1(9aee22a5837637ec5e360b72e71555942df1d26f) )
+	ROM_LOAD( "11",           0x48000, 0x8000, CRC(f56c0935) SHA1(8e16133ad90829bbc0e0f2e9ee9c26e9d0c5057e) )
+	ROM_LOAD( "12",           0x58000, 0x8000, CRC(057f6676) SHA1(a93a7a76fc8b8263568a50b00a57f3abe76c9aa3) )
+	ROM_LOAD( "13",           0x68000, 0x8000, CRC(1fa46b86) SHA1(16d54d0932fe342399faf303eafa3c0b7ba2e202) )
+	ROM_LOAD( "14",           0x78000, 0x8000, CRC(b395cd97) SHA1(a42c7c1687eaba64a725888cd6413568cc90b010) )
+	ROM_LOAD( "15",           0x88000, 0x8000, CRC(b064876b) SHA1(588300fb6603f334de41a9685b1fcf8c642b5c16) )
 ROM_END
 
 ROM_START( trvwhziv )
@@ -899,38 +941,40 @@ ROM_START( phrcrazs )
 ROM_END
 
 
-DRIVER_INIT( trvwhiz )
+DRIVER_INIT( key_0 )
 {
 	decryption_key = 0;
 }
 
-DRIVER_INIT( trvwhzii )
+DRIVER_INIT( key_2 )
 {
 	decryption_key = 2;
 }
 
-DRIVER_INIT( trvwhziv )
-{
-	decryption_key = 5;
-}
-
-DRIVER_INIT( tictac )
+DRIVER_INIT( key_4 )
 {
 	decryption_key = 4;
 }
 
-DRIVER_INIT( phrcraze )
+DRIVER_INIT( key_5 )
+{
+	decryption_key = 5;
+}
+
+DRIVER_INIT( key_7 )
 {
 	decryption_key = 7;
 }
 
-GAME( 1983, pitboss,  0,       pitboss,  pitboss,  0,        ROT0,  "Merit", "Pit Boss",                                    GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
-GAME( 1985, trvwhzho, 0,       trvwhiz,  tictac,   trvwhiz,  ROT0,  "Merit", "Trivia ? Whiz (Horizontal - Question set 1)", GAME_WRONG_COLORS )
-GAME( 1985, trvwhzha, trvwhzho,trvwhiz,  tictac,   trvwhiz,  ROT0,  "Merit", "Trivia ? Whiz (Horizontal - Question set 2)", GAME_WRONG_COLORS )
-GAME( 1985, trvwhzve, 0,       trvwhiz,  tictac,   trvwhiz,  ROT90, "Merit", "Trivia ? Whiz (Vertical - Question set 1)",   GAME_WRONG_COLORS )
-GAME( 1985, trvwhzva, trvwhzve,trvwhiz,  tictac,   trvwhiz,  ROT90, "Merit", "Trivia ? Whiz (Vertical - Question set 2)",   GAME_WRONG_COLORS )
-GAME( 1985, trvwhzii, 0,       trvwhiz,  tictac,   trvwhzii, ROT90, "Merit", "Trivia ? Whiz (Edition 2)",                   GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS )
-GAME( 1985, trvwhziv, 0,       trvwhziv, tictac,   trvwhziv, ROT90, "Merit", "Trivia ? Whiz (Edition 4)",                   GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS )
-GAME( 1985, tictac,   0,       tictac,   tictac,   tictac,   ROT0,  "Merit", "Tic Tac Trivia",                              GAME_WRONG_COLORS )
-GAME( 1986, phrcraze, 0,       phrcraze, phrcraze, phrcraze, ROT0,  "Merit", "Phraze Craze",                                GAME_WRONG_COLORS )
-GAME( 1986, phrcrazs, 0,       phrcraze, phrcrazs, phrcraze, ROT90, "Merit", "Phraze Craze (Sex Kit)",                      GAME_WRONG_COLORS )
+GAME( 1983, pitboss,  0,       pitboss,  pitboss,  0,      ROT0,  "Merit", "Pit Boss",                                    GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
+GAME( 1983, casino5,  0,       pitboss,  pitboss,  0,      ROT0,  "Merit", "Casino 5",                                    GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
+GAME( 1985, trvwhzho, 0,       trvwhiz,  tictac,   key_0,  ROT0,  "Merit", "Trivia ? Whiz (Horizontal - Question set 1)", GAME_WRONG_COLORS )
+GAME( 1985, trvwhzha, trvwhzho,trvwhiz,  tictac,   key_0,  ROT0,  "Merit", "Trivia ? Whiz (Horizontal - Question set 2)", GAME_WRONG_COLORS )
+GAME( 1985, trvwhzve, 0,       trvwhiz,  tictac,   key_0,  ROT90, "Merit", "Trivia ? Whiz (Vertical - Question set 1)",   GAME_WRONG_COLORS )
+GAME( 1985, trvwhzva, trvwhzve,trvwhiz,  tictac,   key_0,  ROT90, "Merit", "Trivia ? Whiz (Vertical - Question set 2)",   GAME_WRONG_COLORS )
+GAME( 1985, trvwhzii, 0,       trvwhiz,  tictac,   key_2, ROT90, "Merit", "Trivia ? Whiz (Edition 2)",                   GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS )
+GAME( 1985, trvwziii, 0,       trvwhiz,  tictac,   key_0,  ROT0,  "Merit", "Trivia ? Whiz (Edition 3)",                   GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS )
+GAME( 1985, trvwhziv, 0,       trvwhziv, tictac,   key_5, ROT90, "Merit", "Trivia ? Whiz (Edition 4)",                   GAME_WRONG_COLORS | GAME_IMPERFECT_GRAPHICS )
+GAME( 1985, tictac,   0,       tictac,   tictac,   key_4,   ROT0,  "Merit", "Tic Tac Trivia",                              GAME_WRONG_COLORS )
+GAME( 1986, phrcraze, 0,       phrcraze, phrcraze, key_7, ROT0,  "Merit", "Phraze Craze",                                GAME_WRONG_COLORS )
+GAME( 1986, phrcrazs, 0,       phrcraze, phrcrazs, key_7, ROT90, "Merit", "Phraze Craze (Sex Kit)",                      GAME_WRONG_COLORS )

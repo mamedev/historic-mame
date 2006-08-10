@@ -567,7 +567,7 @@ Perormance options
 Video options
 -------------
 
--video <gdi|ddraw|d3d>
+-video <gdi|ddraw|d3d|none>
 
 	Specifies which video subsystem to use for drawing. By specifying 'gdi'
 	here, you tell MAME to render video using standard Windows graphics
@@ -578,8 +578,10 @@ Video options
 	older or low-power video cards, but has a noticeably lower output
 	quality. Specifying 'd3d' tells MAME to use Direct3D for rendering. This
 	produces the highest quality output and enables all rendering options.
-	It is recommended if you have a recent (2002+) video card. The default
-	is d3d.
+	It is recommended if you have a recent (2002+) video card. The final
+	option 'none' displays no windows and does no drawing. This is primarily
+	present for doing CPU benchmarks without the overhead of the video
+	system. The default is d3d.
 	
 -numscreens <count>
 
@@ -755,7 +757,8 @@ Direct3D-specific options
 Per-window options
 ------------------
 
--screen0 <display> / -screen <display>
+-screen <display>
+-screen0 <display>
 -screen1 <display>
 -screen2 <display>
 -screen3 <display>
@@ -770,7 +773,12 @@ Per-window options
 	first window is placed on the first display, the second window on the
 	second display, etc.
 	
--aspect0 <width:height> / -screen_aspect <num:den>
+	The -screen0, -screen1, -screen2, -screen3 parameters apply to the
+	specific window. The -screen parameter applies to all windows. The
+	window-specific options override values from the all window option.
+
+-aspect <width:height> / -screen_aspect <num:den>
+-aspect0 <width:height>
 -aspect1 <width:height>
 -aspect2 <width:height>
 -aspect3 <width:height>
@@ -784,8 +792,12 @@ Per-window options
 	is proportional to the number of pixels in the desktop video mode for
 	each monitor.
 	
--resolution0 <widthxheight[@refresh]> / -resolution <widthxheight[@refresh]> /
-	-r <widthxheight[@refresh]> / -r0 <widthxheight[@refresh]>
+	The -aspect0, -aspect1, -aspect2, -aspect3 parameters apply to the
+	specific window. The -aspect parameter applies to all windows. The
+	window-specific options override values from the all window option.
+	
+-resolution <widthxheight[@refresh]> / -r <widthxheight[@refresh]>
+-resolution0 <widthxheight[@refresh]> / -r0 <widthxheight[@refresh]>
 -resolution1 <widthxheight[@refresh]> / -r1 <widthxheight[@refresh]>
 -resolution2 <widthxheight[@refresh]> / -r2 <widthxheight[@refresh]>
 -resolution3 <widthxheight[@refresh]> / -r3 <widthxheight[@refresh]>
@@ -802,8 +814,14 @@ Per-window options
 	requires the -switchres option as well in order to actually enable
 	resolution switching with -video ddraw or -video d3d. The default
 	value for these options is 'auto'.
+	
+	The -resolution0, -resolution1, -resolution2, -resolution3 parameters 
+	apply to the specific window. The -resolution parameter applies to all
+	windows. The window-specific options override values from the all 
+	window option.
 
--view0 <viewname> / -view <viewname>	
+-view <viewname>
+-view0 <viewname>	
 -view1 <viewname>
 -view2 <viewname>
 -view3 <viewname>
@@ -815,6 +833,10 @@ Per-window options
 	it is not a perfect match. The value 'auto' is also supported, and
 	requests that MAME perform a default selection. The default value for
 	these options is 'auto'.
+	
+	The -view0, -view1, -view2, -view3 parameters apply to the
+	specific window. The -view parameter applies to all windows. The
+	window-specific options override values from the all window option.
 
 
 
@@ -935,11 +957,6 @@ Vector rendering options
 
 Artwork options
 ---------------
-
--[no]artwork / -[no]art
-
-	Enable or disable usage of additional artwork (backdrops, overlays,
-	etc.). The default is ON (-artwork).
 
 -[no]artwork_crop / -[no]artcrop
 

@@ -7,7 +7,7 @@
 #include "driver.h"
 #include "avgdvg.h"
 #include "vector.h"
-#include "includes/sega.h"
+#include "includes/segag80v.h"
 #include <math.h>
 
 #define VECTOR_CLOCK		15468480			/* master clock */
@@ -17,7 +17,7 @@
 #define IRQ_CLOCK			(U34_CLOCK/0x1f788)	/* 40Hz interrupt */
 
 
-static int width, height, cent_x, cent_y, min_x, min_y, max_x, max_y;
+static int min_x, min_y;
 
 
 /*
@@ -330,12 +330,6 @@ VIDEO_START( sega )
 		return 1;
 	min_x =Machine->screen[0].visarea.min_x;
 	min_y =Machine->screen[0].visarea.min_y;
-	max_x =Machine->screen[0].visarea.max_x;
-	max_y =Machine->screen[0].visarea.max_y;
-	width =max_x-min_x;
-	height=max_y-min_y;
-	cent_x=(max_x+min_x)/2;
-	cent_y=(max_y+min_y)/2;
 
 	return video_start_vector();
 }

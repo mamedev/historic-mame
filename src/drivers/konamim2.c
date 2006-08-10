@@ -118,8 +118,6 @@ VIDEO_UPDATE( m2 )
 		fb_start = *(UINT32*)&main_ram[(vdl0_address - 0x40000000) / 8] - 0x40000000;
 	}
 
-
-
 	if (fb_start <= 0x800000)
 	{
 		UINT16 *frame = (UINT16*)&main_ram[fb_start/8];
@@ -162,13 +160,34 @@ static READ64_HANDLER(unk3_r)
 	return unk3;
 }
 
+static UINT32 unk20004 = 0;
 static READ64_HANDLER(unk4_r)
 {
+	UINT64 r = 0;
+	logerror("unk4_r: %08X, %08X%08X at %08X\n", offset, (UINT32)(mem_mask>>32), (UINT32)(mem_mask), activecpu_get_pc());
+
 	if (!(mem_mask & U64(0xffffffff00000000)))
 	{
-		return ((UINT64)0 << (13+32)) | ((UINT64)5 << (10+32));
+		// MCfg
+		r |= (UINT64)((0 << 13) | (5 << 10)) << 32;
 	}
-	return 0;
+	if (!(mem_mask & U64(0x00000000ffffffff)))
+	{
+		r |= unk20004;
+	}
+	return r;
+}
+
+static WRITE64_HANDLER(unk4_w)
+{
+	logerror("unk4_w: %08X%08X, %08X, %08X%08X at %08X\n", (UINT32)(data >> 32), (UINT32)(data),
+		offset, (UINT32)(mem_mask>>32), (UINT32)(mem_mask), activecpu_get_pc());
+
+	if (!(mem_mask & U64(0x00000000ffffffff)))
+	{
+		unk20004 = (UINT32)(data);
+		return;
+	}
 }
 
 static int counter1 = 0;
@@ -178,19 +197,36 @@ static READ64_HANDLER(unk30000_r)
 	return (UINT64)(counter1 & 0x7f) << 32;
 }
 
+static READ64_HANDLER(unk30030_r)
+{
+	if (!(mem_mask & U64(0x00000000ffffffff)))
+	{
+		return 1;
+	}
+	return 0;
+}
+
 static READ64_HANDLER(unk4000280_r)
 {
-	//return (UINT64)(0x03640000) << 32;
-	//return (UINT64)(0x0364ffff) << 32;
-	UINT32 sys_config = 0x03640000;
+	// SysCfg
 
-	sys_config |= 0x00000000;		// Bit 0:       PAL/NTSC switch (default is selected by encoder)
+	UINT32 sys_config = 0x03600000;
+
+	sys_config |= 0 << 0;			// Bit 0:       PAL/NTSC switch (default is selected by encoder)
 	sys_config |= 0 << 2;			// Bit 2-3:     Video Encoder (0 = MEIENC, 1 = VP536, 2 = BT9103, 3 = DENC)
-	sys_config |= 0 << 11;			// Bit 11-12:   Country
-	sys_config |= 3 << 15;
-	sys_config |= 1 << 29;			// Bit 29-30:   Audio chip (1 = CS4216, 3 = Asahi AK4309)
+	sys_config |= 3 << 11;			// Bit 11-12:   Country
+									//              0 = ???
+									//              1 = UK
+									//              2 = Japan
+									//              3 = US
+	sys_config |= 0xb << 15;		// Bit 15-18:   0x8 = AC-DevCard
+									//              0xb = AC-CoreBoard
+									//              0xc = DevCard (not allowed)
+									//              0xe = Upgrade (not allowed)
+									//              0xf = Multiplayer (not allowed)
+	sys_config |= 3 << 29;			// Bit 29-30:   Audio chip (1 = CS4216, 3 = Asahi AK4309)
 
-	return (UINT64)(sys_config) << 32;
+	return ((UINT64)(sys_config) << 32);
 
 }
 
@@ -234,21 +270,138 @@ static WRITE64_HANDLER(video_w)
 	}
 }
 
+
+static int cde_num_status_bytes = 0;
+
+static READ64_HANDLER(cde_r)
+{
+	UINT32 r = 0;
+	int reg = offset * 2;
+
+	if (!(mem_mask & U64(0x00000000ffffffff)))
+		reg++;
+
+	switch (reg)
+	{
+		case 0x000/4:
+		{
+			r = (0x01) << 16;	// Device identifier, 1 = CDE
+			break;
+		}
+		case 0x018/4:
+		{
+			r = 0x100038;
+			break;
+		}
+		case 0x02c/4:
+		{
+			r = 3;
+			if (cde_num_status_bytes > 0)
+			{
+				r |= 0x100;
+			}
+			cde_num_status_bytes--;
+			break;
+		}
+
+		case 0x2a0/4:
+		{
+			r = 0x20;
+			break;
+		}
+
+		default:
+		{
+	//      printf("cde_r: %08X at %08X\n", reg*4, activecpu_get_pc());
+			break;
+		}
+	}
+
+	if (reg & 1)
+	{
+		return (UINT64)(r);
+	}
+	else
+	{
+		return (UINT64)(r) << 32;
+	}
+}
+
+static WRITE64_HANDLER(cde_w)
+{
+	int reg = offset * 2;
+	UINT32 d;
+
+	if (!(mem_mask & U64(0x00000000ffffffff)))
+	{
+		reg++;
+		d = (UINT32)(data);
+	}
+	else
+	{
+		d = (UINT32)(data >> 32);
+	}
+
+	switch (reg)
+	{
+		case 0x028/4:		// Command write
+		{
+			if (d != 0x180 && d != 0)
+			{
+				//printf("CDE: command %08X\n", d);
+			}
+
+			switch (d)
+			{
+				case 0x83:		cde_num_status_bytes = 0xc; break;
+				case 0x0180:	break;
+				default:		break;
+			}
+			break;
+		}
+		case 0x418/4:		// ???
+		{
+			break;
+		}
+
+		default:
+		{
+
+	//      printf("cde_w: %08X, %08X at %08X\n", d, reg*4, activecpu_get_pc());
+			break;
+		}
+	}
+}
+
+static READ64_HANDLER(cpu_r)
+{
+	UINT64 r = 0;
+
+	if (!(mem_mask & U64(0xffffffff00000000)))
+	{
+		r = (UINT64)(cpu_getactivecpu() ? 0x80000000 : 0);
+		//r |= 0x40000000;  // sets Video-LowRes !?
+		return r << 32;
+	}
+
+	return 0;
+}
+
 static ADDRESS_MAP_START( m2_main, ADDRESS_SPACE_PROGRAM, 64 )
-	AM_RANGE(0x00020000, 0x00020007) AM_READ(unk4_r)
-//  AM_RANGE(0x00020000, 0x00020007) AM_WRITENOP
+	AM_RANGE(0x00020000, 0x00020007) AM_READWRITE(unk4_r, unk4_w)
 	AM_RANGE(0x00030000, 0x00030007) AM_READ(unk30000_r)
 	AM_RANGE(0x00030010, 0x00030017) AM_WRITE(video_w)
+	AM_RANGE(0x00030030, 0x00030037) AM_READ(unk30030_r)
+	AM_RANGE(0x01000000, 0x01000fff) AM_READWRITE(cde_r, cde_w)
 	AM_RANGE(0x04000010, 0x04000017) AM_WRITE(unk4000010_w)
 	AM_RANGE(0x04000018, 0x0400001f) AM_READ(unk1_r)
 	AM_RANGE(0x04000020, 0x04000027) AM_WRITE(reset_w)
 	AM_RANGE(0x04000418, 0x0400041f) AM_WRITE(unk4000418_w)
 	AM_RANGE(0x04000208, 0x0400020f) AM_READ(unk3_r)
 	AM_RANGE(0x04000280, 0x04000287) AM_READ(unk4000280_r)
-//  AM_RANGE(0x10000000, 0x10000007) AM_RAM
+	AM_RANGE(0x10000000, 0x10000007) AM_READ(cpu_r)
 	AM_RANGE(0x20000000, 0x201fffff) AM_ROM AM_SHARE(2)
-	AM_RANGE(0x40000000, 0x407fffff) AM_RAM AM_BASE(&main_ram)
-	AM_RANGE(0xff000000, 0xff000fff) AM_RAM//AM_READ(unk1_r)
+	AM_RANGE(0x40000000, 0x407fffff) AM_RAM AM_SHARE(3) AM_BASE(&main_ram)
 	AM_RANGE(0xfff00000, 0xffffffff) AM_ROM AM_REGION(REGION_USER1, 0) AM_SHARE(2)
 ADDRESS_MAP_END
 
@@ -265,7 +418,6 @@ static ppc_config ppc602_config =
 
 static INTERRUPT_GEN(m2)
 {
-
 	//cpunum_set_input_line(0, INPUT_LINE_IRQ1, ASSERT_LINE);
 }
 
@@ -276,6 +428,10 @@ static MACHINE_DRIVER_START( m2 )
 	MDRV_CPU_CONFIG(ppc602_config)
 	MDRV_CPU_PROGRAM_MAP(m2_main, 0)
 	MDRV_CPU_VBLANK_INT(m2, 1)
+
+	MDRV_CPU_ADD(PPC602, 33000000)	/* actually PPC602, 66MHz */
+	MDRV_CPU_CONFIG(ppc602_config)
+	MDRV_CPU_PROGRAM_MAP(m2_main, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(0)
@@ -346,8 +502,6 @@ static DRIVER_INIT( polystar )
 
 static DRIVER_INIT( btltryst )
 {
-	UINT32 *rom = (UINT32*)memory_region(REGION_USER1);
-	rom[(0x16508^4) / 4] = 0x60000000;
 }
 
 static DRIVER_INIT( m2 )

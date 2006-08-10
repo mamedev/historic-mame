@@ -23,11 +23,9 @@
 
 
 
-/*************************************
- *
- *  Constants
- *
- *************************************/
+/***************************************************************************
+    CONSTANTS
+***************************************************************************/
 
 #define MAX_INPUT_PORTS		30
 #define MAX_PLAYERS			8
@@ -398,11 +396,9 @@ enum
 
 
 
-/*************************************
- *
- *  Type definitions
- *
- *************************************/
+/***************************************************************************
+    TYPE DEFINITIONS
+***************************************************************************/
 
 /* this is an opaque type */
 typedef struct _input_port_init_params input_port_init_params;
@@ -505,11 +501,9 @@ struct _input_port_entry
 
 
 
-/*************************************
- *
- *  Macros for building input ports
- *
- *************************************/
+/***************************************************************************
+    MACROS FOR BUILDING INPUT PORTS
+***************************************************************************/
 
 #define IP_NAME_DEFAULT 	NULL
 
@@ -653,11 +647,14 @@ struct _input_port_entry
 
 
 
-/*************************************
- *
- *  Helper macros
- *
- *************************************/
+/***************************************************************************
+    HELPER MACROS
+***************************************************************************/
+
+#define PORT_SERVICE_DIPLOC(mask,default,loc)	\
+	PORT_BIT(    mask, mask & default, IPT_DIPSWITCH_NAME ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2) PORT_TOGGLE PORT_DIPLOCATION(loc)	\
+	PORT_DIPSETTING(    mask & default, DEF_STR( Off ) )	\
+	PORT_DIPSETTING(    mask &~default, DEF_STR( On ) )
 
 #define PORT_SERVICE(mask,default)	\
 	PORT_BIT(    mask, mask & default, IPT_DIPSWITCH_NAME ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2) PORT_TOGGLE	\
@@ -669,11 +666,9 @@ struct _input_port_entry
 
 
 
-/*************************************
- *
- *  Global variables
- *
- *************************************/
+/***************************************************************************
+    GLOBAL VARIABLES
+***************************************************************************/
 
 extern const char *input_port_default_strings[];
 
@@ -681,11 +676,9 @@ extern const char *input_port_default_strings[];
 
 
 
-/*************************************
- *
- *  Function prototypes
- *
- *************************************/
+/***************************************************************************
+    FUNCTION PROTOTYPES
+***************************************************************************/
 
 int input_port_init(void (*construct_ipt)(input_port_init_params *));
 

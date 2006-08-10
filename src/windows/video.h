@@ -17,9 +17,10 @@
 
 #define MAX_WINDOWS			4
 
-#define VIDEO_MODE_GDI		0
-#define VIDEO_MODE_DDRAW	1
-#define VIDEO_MODE_D3D		2
+#define VIDEO_MODE_NONE		0
+#define VIDEO_MODE_GDI		1
+#define VIDEO_MODE_DDRAW	2
+#define VIDEO_MODE_D3D		3
 
 
 

@@ -387,7 +387,7 @@ static READ8_HANDLER( sound_data_r )
 }
 
 
-WRITE8_HANDLER( n7751_command_w )
+static WRITE8_HANDLER( n7751_command_w )
 {
 	/*
         Z80 7751 control port
@@ -424,7 +424,7 @@ static WRITE8_HANDLER( n7751_control_w )
 }
 
 
-WRITE8_HANDLER( n7751_rom_offset_w )
+static WRITE8_HANDLER( n7751_rom_offset_w )
 {
 	/* P4 - address lines 0-3 */
 	/* P5 - address lines 4-7 */
@@ -436,14 +436,14 @@ WRITE8_HANDLER( n7751_rom_offset_w )
 }
 
 
-READ8_HANDLER( n7751_rom_r )
+static READ8_HANDLER( n7751_rom_r )
 {
 	/* read from BUS */
 	return memory_region(REGION_SOUND1)[n7751_rom_address];
 }
 
 
-READ8_HANDLER( n7751_command_r )
+static READ8_HANDLER( n7751_command_r )
 {
 	/* read from P2 - 8255's PC0-2 connects to 7751's S0-2 (P24-P26 on an 8048) */
 	/* bit 0x80 is an alternate way to control the sample on/off; doesn't appear to be used */
@@ -451,7 +451,7 @@ READ8_HANDLER( n7751_command_r )
 }
 
 
-WRITE8_HANDLER( n7751_busy_w )
+static WRITE8_HANDLER( n7751_busy_w )
 {
 	/* write to P2 */
 	/* output of bit $80 indicates we are ready (1) or busy (0) */
@@ -459,7 +459,7 @@ WRITE8_HANDLER( n7751_busy_w )
 }
 
 
-READ8_HANDLER( n7751_t1_r )
+static READ8_HANDLER( n7751_t1_r )
 {
 	/* T1 - labelled as "TEST", connected to ground */
 	return 0;
@@ -1600,6 +1600,58 @@ MACHINE_DRIVER_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
+    Ace Attacker, Sega System 16A
+    CPU: FD1094 317-0060
+*/
+ROM_START( aceattaa )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "epr-11573.43", 0x00000, 0x10000, CRC(ca116367) SHA1(ca09b01568dafec48354072267accb73a97a670f) )
+	ROM_LOAD16_BYTE( "epr-11571.26", 0x00001, 0x10000, CRC(5631d1d6) SHA1(08a2d375e3e4caf392cf2da2dc5497fd1142ab15) )
+	ROM_LOAD16_BYTE( "epr-11574.42",  0x20000, 0x10000, CRC(8d3ed7bd) SHA1(0cb947a796071b0b787638a85fce39135ad8d3cb) )
+	ROM_LOAD16_BYTE( "epr-11572.25",  0x20001, 0x10000, CRC(35c27c25) SHA1(ac983db30edb4c4b71f04359cd22c663940435f5) )
+
+	ROM_REGION( 0x2000, REGION_USER1, 0 ) /* decryption key */
+	ROM_LOAD( "317-0060.key", 0x0000, 0x2000, CRC(f4ee940f) SHA1(13cca3f19bd9761d484185a3476bec3c8c18efcf) ) // came from a s16b pcb ?!
+
+	ROM_REGION( 0x30000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD( "epr-11575.95", 0x00000, 0x10000, CRC(bab9fbf3) SHA1(53d78dfc003e04730c7679c830cc086cbf3e3548) )
+	ROM_LOAD( "epr-11576.94", 0x10000, 0x10000, CRC(067ed682) SHA1(13e2e1f812e5a3994a0f1d35eb210881645e74cd) )
+	ROM_LOAD( "epr-11577.93", 0x20000, 0x10000, CRC(f67cf331) SHA1(457b9e618dfa678ae374cdeb25488af3de2e8949) )
+
+	ROM_REGION16_BE( 0x080000, REGION_GFX2, 0 ) /* sprites */
+	ROM_LOAD16_BYTE( "epr-11501.10", 0x00001, 0x08000, CRC(09179ead) SHA1(3e6bf04e1e9ea867d087a47ff04ad0a064a8e299) )
+	ROM_CONTINUE(                   0x40001, 0x08000 )
+	ROM_LOAD16_BYTE( "epr-11505.11", 0x00000, 0x08000, CRC(b67f1ecf) SHA1(3a26cdf91e5a1a11c1a8857e713a9e00cc1bfce0) )
+	ROM_CONTINUE(                   0x40000, 0x08000 )
+	ROM_LOAD16_BYTE( "epr-11502.17", 0x10001, 0x08000, CRC(7464bae4) SHA1(c6b6ca240cee72e7fbd17bad5ca2d5cfe8e835c6) )
+	ROM_CONTINUE(                   0x50001, 0x08000 )
+	ROM_LOAD16_BYTE( "epr-11506.18", 0x10000, 0x08000, CRC(b0104def) SHA1(c81a66ec3a600c1d4c5d058caef15936c59b2574) )
+	ROM_CONTINUE(                   0x50000, 0x08000 )
+	ROM_LOAD16_BYTE( "epr-11503.23", 0x20001, 0x08000, CRC(344c0692) SHA1(3125701f6bb91d8f64515e214b571e169c30a444) )
+	ROM_CONTINUE(                   0x60001, 0x08000 )
+	ROM_LOAD16_BYTE( "epr-11507.24", 0x20000, 0x08000, CRC(a2af710a) SHA1(1c8b75b72797146c2eb788511f8cb1b367fc3e0d) )
+	ROM_CONTINUE(                   0x60000, 0x08000 )
+	ROM_LOAD16_BYTE( "epr-11504.29", 0x30001, 0x08000, CRC(42b4a5f8) SHA1(efb7beee7b45023861711f56b7cc907400cb266e) )
+	ROM_CONTINUE(                   0x70001, 0x08000 )
+	ROM_LOAD16_BYTE( "epr-11508.30", 0x30000, 0x08000, CRC(5cbb833c) SHA1(dc7041b6a4fa75d050bfc2176d0f9e242b55a0b8) )
+	ROM_CONTINUE(                   0x70000, 0x08000 )
+
+	ROM_REGION( 0x20000, REGION_CPU2, 0 ) /* sound CPU */
+	ROM_LOAD( "epr-11578.12", 0x0000, 0x8000, CRC(3d58e39a) SHA1(3e3591ac96903376698cf95d1b1a5f5db590db3c) )
+
+	ROM_REGION( 0x1000, REGION_CPU3, 0 )      /* 4k for 7751 onboard ROM */
+	ROM_LOAD( "7751.bin",     0x0000, 0x0400, CRC(6a9534fc) SHA1(67ad94674db5c2aab75785668f610f6f4eccd158) ) /* 7751 - U34 */
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* 7751 sound data */
+	ROM_LOAD( "epr-11579.1", 0x0000, 0x8000, CRC(1a994135) SHA1(f42444521a878d32b189876f8854f6363e1b353b) )
+	ROM_LOAD( "epr-11580.2", 0x0000, 0x8000, CRC(961646ed) SHA1(4c8f87a10ffd7035145dedba86deb373368b0e49) )
+	ROM_LOAD( "epr-11581.4", 0x0000, 0x8000, CRC(d271a6e5) SHA1(de303f70abfa28e599e5eb0c2b314f43faa1b484) )
+	ROM_LOAD( "epr-11582.5", 0x0000, 0x8000, CRC(bcbe3d8a) SHA1(2e4bb0ebffdd594b192c5b854ea425029d92fdb1) )
+ROM_END
+
+/**************************************************************************************************************************
+ **************************************************************************************************************************
+ **************************************************************************************************************************
     Action Fighter, Sega System 16A
     CPU: FD1089A 317-0018
  */
@@ -2705,6 +2757,7 @@ GAME( 1986, quart21,  quartet,  system16a_8751,   quart2,   quartet,     ROT0,  
 GAME( 1986, quart2,   quartet,  system16a,        quart2,   generic_16a, ROT0,   "Sega",           "Quartet 2 (unprotected)", 0 )
 
 /* System 16A */
+GAME( 1986, aceattaa, aceattac, system16a       , shinobi,  generic_16a, ROT270, "Sega",           "Ace Attacker (System 16A, FD1094 317-0060)", GAME_NOT_WORKING )
 GAME( 1986, afighter, 0,        system16a_no7751, afighter, afighter,    ROT270, "Sega",           "Action Fighter, FD1089A 317-0018", 0 )
 GAME( 1986, alexkidd, 0,        system16a,        alexkidd, generic_16a, ROT0,   "Sega",           "Alex Kidd: The Lost Stars (set 2, unprotected)", 0 )
 GAME( 1986, alexkid1, alexkidd, system16a,        alexkidd, alexkid1,    ROT0,   "Sega",           "Alex Kidd: The Lost Stars (set 1, FD1089A 317-unknown)", 0 )

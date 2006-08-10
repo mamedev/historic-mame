@@ -190,7 +190,7 @@ static void (* tms32051_opcode_table_bf[256])(void) =
 	op_invalid,		op_invalid,		op_invalid,		op_invalid,
 	/* 0x40 - 0x4f */
 	op_invalid,		op_invalid,		op_invalid,		op_invalid,
-	op_invalid,		op_invalid,		op_invalid,		op_invalid,
+	op_cmpr,		op_cmpr,		op_cmpr,		op_cmpr,
 	op_invalid,		op_invalid,		op_invalid,		op_invalid,
 	op_invalid,		op_invalid,		op_invalid,		op_invalid,
 	/* 0x50 - 0x5f */

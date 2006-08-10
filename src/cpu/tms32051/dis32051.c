@@ -68,13 +68,7 @@ static void print(const char *fmt, ...)
 
 static UINT16 FETCH(void)
 {
-	UINT16 w;
-
-	npc+=1;
-	w = cpu_readop_arg16((npc-1) * 2);
-
-	return w;
-	//return (UINT16)((w >> 8) | (w << 8));
+	return program_read_word_16be((npc++) << 1);
 }
 
 static char *GET_ADDRESS(int addr_mode, int address)
@@ -235,6 +229,18 @@ static void dasm_group_bf(UINT16 opcode)
 			break;
 		}
 
+		case 0x4:
+		{
+			switch (opcode & 0x3)
+			{
+				case 0: print("cmpr    ar = arcr"); break;
+				case 1: print("cmpr    ar < arcr"); break;
+				case 2: print("cmpr    ar > arcr"); break;
+				case 3: print("cmpr    ar != arcr"); break;
+			}
+			break;
+		}
+
 		case 0x8:	print("lacc    #%04X", FETCH() << shift); break;
 		case 0x9:	print("add     #%04X", FETCH() << shift); break;
 		case 0xa:	print("sub     #%04X", FETCH() << shift); break;
@@ -267,7 +273,7 @@ int tms32051_dasm_one(char *buffer, offs_t pc)
 		case 0x00: case 0x01: case 0x02: case 0x03:
 		case 0x04: case 0x05: case 0x06: case 0x07:
 		{
-			print("lar     AR%d, %s", (opcode >> 8)	& 0x7, GET_ADDRESS(addr_mode, address));
+			print("lar     ar%d, %s", (opcode >> 8)	& 0x7, GET_ADDRESS(addr_mode, address));
 			break;
 		}
 		case 0x08:	print("lamm    %s", GET_ADDRESS(addr_mode, address)); break;
@@ -344,6 +350,7 @@ int tms32051_dasm_one(char *buffer, offs_t pc)
 		case 0x6a:	print("lacc    %s << 16", GET_ADDRESS(addr_mode, address)); break;
 		case 0x6b:	print("lact    %s", GET_ADDRESS(addr_mode, address)); break;
 		case 0x6c:	print("xor     %s", GET_ADDRESS(addr_mode, address)); break;
+		case 0x6d:	print("or      %s", GET_ADDRESS(addr_mode, address)); break;
 		case 0x6e:	print("and     %s", GET_ADDRESS(addr_mode, address)); break;
 		case 0x6f:	print("bitt    %s", GET_ADDRESS(addr_mode, address)); break;
 
@@ -355,19 +362,36 @@ int tms32051_dasm_one(char *buffer, offs_t pc)
 		case 0x75:	print("lph     %s", GET_ADDRESS(addr_mode, address)); break;
 		case 0x76:	print("pshd    %s", GET_ADDRESS(addr_mode, address)); break;
 		case 0x77:	print("dmov    %s", GET_ADDRESS(addr_mode, address)); break;
+		case 0x78:	print("adrk    #%02X", opcode & 0xff); break;
 		case 0x79:	print("b       %04X, %s", FETCH(), GET_ADDRESS(1, address)); break;
+		case 0x7a:	print("call    %04X, %s", FETCH(), GET_ADDRESS(1, address)); break;
+		case 0x7b:	print("banz    %04X, %s", FETCH(), GET_ADDRESS(1, address)); break;
 		case 0x7c:	print("sbrk    #%02X", opcode & 0xff); break;
+		case 0x7d:	print("bd      %04X, %s", FETCH(), GET_ADDRESS(1, address)); break;
+		case 0x7e:	print("calld   %04X, %s", FETCH(), GET_ADDRESS(1, address)); break;
+		case 0x7f:	print("banzd   %04X, %s", FETCH(), GET_ADDRESS(1, address)); break;
 
 		case 0x80: case 0x81: case 0x82: case 0x83:
 		case 0x84: case 0x85: case 0x86: case 0x87:
 		{
-			print("sar     AR%d, %s", (opcode >> 8) & 0x7, GET_ADDRESS(addr_mode, address));
+			print("sar     ar%d, %s", (opcode >> 8) & 0x7, GET_ADDRESS(addr_mode, address));
 			break;
 		}
 		case 0x88:	print("samm    %s", GET_ADDRESS(addr_mode, address)); break;
 		case 0x89:	print("lmmr    %s, #%04X", GET_ADDRESS(addr_mode, address), FETCH()); break;
 		case 0x8a:	print("popd    %s", GET_ADDRESS(addr_mode, address)); break;
-		case 0x8b:	print("mar     %s", GET_ADDRESS(addr_mode, address)); break;
+		case 0x8b:
+		{
+			if ((opcode & 0xff) == 0)
+			{
+				print("nop");
+			}
+			else
+			{
+				print("mar     %s", GET_ADDRESS(addr_mode, address));
+			}
+			break;
+		}
 		case 0x8c:	print("spl     %s", GET_ADDRESS(addr_mode, address)); break;
 		case 0x8d:	print("sph     %s", GET_ADDRESS(addr_mode, address)); break;
 		case 0x8e:	print("sst     0, %s", GET_ADDRESS(addr_mode, address)); break;
@@ -405,7 +429,7 @@ int tms32051_dasm_one(char *buffer, offs_t pc)
 		case 0xb0: case 0xb1: case 0xb2: case 0xb3:
 		case 0xb4: case 0xb5: case 0xb6: case 0xb7:
 		{
-			print("lar     AR%d, #%02X", (opcode >> 8) & 0x7, opcode & 0xff);
+			print("lar     ar%d, #%02X", (opcode >> 8) & 0x7, opcode & 0xff);
 			break;
 		}
 		case 0xb8:	print("add     #%02X", opcode & 0xff); break;

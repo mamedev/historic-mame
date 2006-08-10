@@ -3639,3 +3639,37 @@ static UINT32 recompile_fnmsubsx(drc_core *drc, UINT32 op)
 
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
+
+// PPC602
+
+static UINT32 recompile_esa(drc_core *drc, UINT32 op)
+{
+	_mov_m32abs_r32(&ppc_icount, REG_EBP);
+	_push_imm(op);
+	_call((genf *)ppc_esa);
+	_add_r32_imm(REG_ESP, 4);
+	_mov_r32_m32abs(REG_EBP, &ppc_icount);
+
+	return RECOMPILE_SUCCESSFUL_CP(1,4);
+}
+
+static UINT32 recompile_dsa(drc_core *drc, UINT32 op)
+{
+	_mov_m32abs_r32(&ppc_icount, REG_EBP);
+	_push_imm(op);
+	_call((genf *)ppc_dsa);
+	_add_r32_imm(REG_ESP, 4);
+	_mov_r32_m32abs(REG_EBP, &ppc_icount);
+
+	return RECOMPILE_SUCCESSFUL_CP(1,4);
+}
+
+static UINT32 recompile_tlbli(drc_core *drc, UINT32 op)
+{
+	return RECOMPILE_SUCCESSFUL_CP(1,4);
+}
+
+static UINT32 recompile_tlbld(drc_core *drc, UINT32 op)
+{
+	return RECOMPILE_SUCCESSFUL_CP(1,4);
+}

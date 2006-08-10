@@ -39,6 +39,7 @@ static void ppc_tlbld(UINT32 op)
 
 }
 
+#ifndef PPC_DRC
 void ppc602_exception(int exception)
 {
 	switch( exception )
@@ -133,6 +134,30 @@ void ppc602_exception(int exception)
 			}
 			break;
 
+		case EXCEPTION_SMI:
+			if( ppc_get_msr() & MSR_EE ) {
+				UINT32 msr = ppc_get_msr();
+
+				SRR0 = ppc.npc;
+				SRR1 = msr & 0xff73;
+
+				msr &= ~(MSR_POW | MSR_EE | MSR_PR | MSR_FP | MSR_FE0 | MSR_SE | MSR_BE | MSR_FE1 | MSR_IR | MSR_DR | MSR_RI);
+				if( msr & MSR_ILE )
+					msr |= MSR_LE;
+				else
+					msr &= ~MSR_LE;
+				ppc_set_msr(msr);
+
+				if( msr & MSR_IP )
+					ppc.npc = 0xfff00000 | 0x1400;
+				else
+					ppc.npc = ppc.ibr | 0x1400;
+
+				ppc.interrupt_pending &= ~0x4;
+				change_pc(ppc.npc);
+			}
+			break;
+
 
 		default:
 			fatalerror("ppc: Unhandled exception %d", exception);
@@ -151,6 +176,13 @@ static void ppc602_set_irq_line(int irqline, int state)
 	}
 }
 
+static void ppc602_set_smi_line(int state)
+{
+	if( state ) {
+		ppc.interrupt_pending |= 0x4;
+	}
+}
+
 INLINE void ppc602_check_interrupts(void)
 {
 	if (MSR & MSR_EE)
@@ -164,6 +196,10 @@ INLINE void ppc602_check_interrupts(void)
 			else if (ppc.interrupt_pending & 0x2)
 			{
 				ppc602_exception(EXCEPTION_DECREMENTER);
+			}
+			else if (ppc.interrupt_pending & 0x4)
+			{
+				ppc602_exception(EXCEPTION_SMI);
 			}
 		}
 	}
@@ -252,3 +288,4 @@ static int ppc602_execute(int cycles)
 
 	return cycles - ppc_icount;
 }
+#endif	// PPC_DRC

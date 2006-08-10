@@ -183,17 +183,6 @@ int osd_start_audio_stream(int stereo)
 
 
 //============================================================
-//  sound_update_refresh_rate
-//============================================================
-
-void sound_update_refresh_rate(float newrate)
-{
-	samples_per_frame = (double)Machine->sample_rate / (double)Machine->screen[0].refresh;
-}
-
-
-
-//============================================================
 //  osd_stop_audio_stream
 //============================================================
 
@@ -392,6 +381,9 @@ int osd_update_audio_stream(INT16 *buffer)
 	}
 }
 #endif
+
+	// determine the number of samples per frame
+	samples_per_frame = (double)Machine->sample_rate / (double)Machine->screen[0].refresh;
 
 	// compute how many samples to generate next frame
 	samples_left_over += samples_per_frame;

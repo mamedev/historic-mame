@@ -352,6 +352,8 @@ static UINT16 *dsp_shared_ram;
 static UINT32 *vram;
 static UINT32 *palette_ram;
 
+static UINT8 *texture;
+
 static int taitojc_gfx_index;
 
 static UINT8 *taitojc_dirty_map;
@@ -423,6 +425,8 @@ VIDEO_START( taitojc )
 		Machine->gfx[taitojc_gfx_index]->colortable = Machine->pens;
 		Machine->gfx[taitojc_gfx_index]->total_colors = Machine->drv->total_colors / 16;
 	}
+
+	texture = auto_malloc(0x400000);
 
 	return 0;
 }
@@ -540,7 +544,7 @@ static void draw_object(mame_bitmap *bitmap, const rectangle *cliprect, UINT32 w
 
 	for (j=y1; j < y2; j++)
 	{
-		UINT16 *d = bitmap->line[j];
+		UINT32 *d = bitmap->line[j];
 		int index = (iy * width) + ix;
 
 		for (i=x1; i < x2; i++)
@@ -563,7 +567,7 @@ VIDEO_UPDATE( taitojc )
 	fillbitmap(bitmap, 0, cliprect);
 
 	//for (i=0; i < 0x400/4; i+=2)
-	for (i=(0x400/4)-2; i >= 0; i-=2)
+	for (i=(0xc00/4)-2; i >= 0; i-=2)
 	{
 		UINT32 w1 = vram[(0xff000/4) + i + 0];
 		UINT32 w2 = vram[(0xff000/4) + i + 1];
@@ -813,6 +817,15 @@ static WRITE32_HANDLER(dsp_shared_w)
 	//printf("dsp_shared_ram: %08X, %04X at %08X\n", offset, data >> 16, activecpu_get_pc());
 	dsp_shared_ram[offset] = data >> 16;
 
+	if (offset >= 0x1fc0/4)
+	{
+		//printf("dsp_shared_ram: %08X, %04X at %08X\n", offset, data >> 16, activecpu_get_pc());
+		if (offset == 0x1fc0/4)
+		{
+			//printf("\n");
+		}
+	}
+
 	if (offset == 0x1ffc/4)
 	{
 		if ((data & 0x80000) == 0)
@@ -893,6 +906,9 @@ ADDRESS_MAP_END
 
 /*****************************************************************************/
 
+static int texture_x;
+static int texture_y;
+
 UINT32 dsp_rom_pos = 0;
 
 static READ16_HANDLER( dsp_rom_r )
@@ -920,17 +936,19 @@ static WRITE16_HANDLER( dsp_rom_w )
 static UINT16 dsp_addr1 = 0;
 static UINT16 dsp_texaddr;
 
-
 static WRITE16_HANDLER( dsp_texture_w )
 {
-	//printf("texture write %08X\n", dsp_addr1);
+	int index;
+	int x, y;
+	//printf("texture write %08X, %04X\n", dsp_addr1, data);
+
+	x = (dsp_addr1 >> 0) & 0x1f;
+	y = (dsp_addr1 >> 5) & 0x1f;
+
+	index = (((texture_y * 32) + y) * 2048) + ((texture_x * 32) + x);
+	texture[index] = data & 0xff;
+
 	dsp_addr1++;
-	/*{
-        FILE *file = fopen("dspdata1.bin", "a+b");
-        fputc((data >> 8) & 0xff, file);
-        fputc((data >> 0) & 0xff, file);
-        fclose(file);
-    }*/
 }
 
 static READ16_HANDLER( dsp_texaddr_r )
@@ -941,7 +959,10 @@ static READ16_HANDLER( dsp_texaddr_r )
 static WRITE16_HANDLER( dsp_texaddr_w )
 {
 	dsp_texaddr = data;
-	//printf("texaddr = %08X\n", data);
+//  printf("texaddr = %08X at %08X\n", data, activecpu_get_pc());
+
+	texture_x = (((data >> 0) & 0x1f) << 1) | ((data >> 12) & 0x1);
+	texture_y = (((data >> 5) & 0x1f) << 1) | ((data >> 13) & 0x1);
 
 	dsp_addr1 = 0;
 }
@@ -1128,8 +1149,8 @@ static MACHINE_DRIVER_START( taitojc )
 
 	MDRV_GFXDECODE(gfxdecodeinfo)
 
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN)
-	MDRV_SCREEN_SIZE(512, 512)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT)
+	MDRV_SCREEN_SIZE(512, 400)
 	MDRV_VISIBLE_AREA(0, 511, 0, 399)
 	MDRV_PALETTE_LENGTH(32768)
 

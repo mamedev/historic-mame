@@ -22,9 +22,7 @@
 
 
 /***************************************************************************
-
-    Common types
-
+    COMMON TYPES
 ***************************************************************************/
 
 /* FPTR is a type that can be used to cast a pointer to a scalar */
@@ -157,9 +155,7 @@ typedef union
 
 
 /***************************************************************************
-
-    Common constants
-
+    COMMON CONSTANTS
 ***************************************************************************/
 
 /* Ensure that TRUE/FALSE are defined */
@@ -192,9 +188,7 @@ typedef union
 
 
 /***************************************************************************
-
-    Common macros
-
+    COMMON MACROS
 ***************************************************************************/
 
 /* Standard MAME assertion macros */
@@ -366,9 +360,7 @@ typedef union
 
 
 /***************************************************************************
-
-    Common functions
-
+    COMMON FUNCTIONS
 ***************************************************************************/
 
 /* since stricmp is not part of the standard, we use this instead */
@@ -480,9 +472,7 @@ INLINE UINT64 d2u(double d)
 
 
 /***************************************************************************
-
-    Inline math helpers
-
+    INLINE MATH HELPERS
 ***************************************************************************/
 
 /* If the OSD layer wants to override these in osd_cpu.h, they can by #defining */
@@ -522,9 +512,7 @@ INLINE INT32 fixed_mul_shift(INT32 val1, INT32 val2, UINT8 shift)
 
 
 /***************************************************************************
-
-    Binary coded decimal
-
+    BINARY CODED DECIMAL HELPERS
 ***************************************************************************/
 
 INLINE int bcd_adjust(int value)
@@ -551,9 +539,7 @@ INLINE int bcd_2_dec(int a)
 
 
 /***************************************************************************
-
-    Gregorian calendar code
-
+    GROGARIAN CALENDAR HELPERS
 ***************************************************************************/
 
 INLINE int gregorian_is_leap_year(int year)
@@ -576,9 +562,7 @@ INLINE int gregorian_days_in_month(int month, int year)
 
 
 /***************************************************************************
-
-    Compiler-specific nastiness
-
+    COMPILER-SPECIFIC NASTINESS
 ***************************************************************************/
 
 /* Suppress warnings about redefining the macro 'PPC' on LinuxPPC. */
@@ -623,9 +607,7 @@ INLINE int gregorian_days_in_month(int month, int year)
 
 
 /***************************************************************************
-
-    Function prototypes
-
+    FUNCTION PROTOTYPES
 ***************************************************************************/
 
 /* Used by assert(), so definition here instead of mame.h */

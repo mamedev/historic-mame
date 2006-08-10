@@ -14,9 +14,20 @@
 
 #include "mamecore.h"
 
+
+/***************************************************************************
+    TYPE DEFINITIONS
+***************************************************************************/
+
 typedef struct _sound_stream sound_stream;
 
 typedef void (*stream_callback)(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int samples);
+
+
+
+/***************************************************************************
+    FUNCTION PROTOTYPES
+***************************************************************************/
 
 int streams_init(void);
 void streams_set_tag(void *streamtag);

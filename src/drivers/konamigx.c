@@ -95,7 +95,6 @@
  */
 
 #define GX_DEBUG     0
-#define GX_SKIPIDLE  1
 
 #include "driver.h"
 
@@ -793,11 +792,23 @@ static READ32_HANDLER( sound020_r )
 		case 4:	// Rushing Heroes
 			if (activecpu_get_pc() == 0x20eda6) rv = 0xc0c0c0c0;
 			break;
-		case 5:	// Vs. Net Soccer
+		case 5:	// Vs. Net Soccer ver. UAB
 			if (activecpu_get_pc() == 0x24c63e) rv = 0xc0c0c0c0;
 			break;
 		case 6: // Slam Dunk 2
 			if (activecpu_get_pc() == 0x24f21c) rv = 0xc0c0c0c0;
+			break;
+		case 7:	// Vs. Net Soccer ver. AAA
+			if (activecpu_get_pc() == 0x24c722) rv = 0xc0c0c0c0;
+			break;
+		case 8:	// Vs. Net Soccer ver. EAD
+			if (activecpu_get_pc() == 0x24c482) rv = 0xc0c0c0c0;
+			break;
+		case 9:	// Vs. Net Soccer ver. EAB
+			if (activecpu_get_pc() == 0x24c46c) rv = 0xc0c0c0c0;
+			break;
+		case 10: // Vs. Net Soccer ver. JAB
+			if (activecpu_get_pc() == 0x24c5f0) rv = 0xc0c0c0c0;
 			break;
 	}
 
@@ -1032,6 +1043,8 @@ static WRITE32_HANDLER( type4_prot_w )
 		{
 			if (last_prot_op != -1)
 			{
+
+//              printf("type 4 prot command: %x\n", last_prot_op);
 				/*
                     known commands:
                     rng2   rushhero  vsnet  winspike   what
@@ -1039,8 +1052,8 @@ static WRITE32_HANDLER( type4_prot_w )
                         0a56   0d96  0d14   0d1c       memcpy from c01000 to c01400 for 0x400 bytes
                     0b16                               generate sprite list at c01000 or c08400 (not sure entirely, see routine at 209922 in rungun2)
                            0d97  0515              parse big DMA list at c10200
+                                 57a       copy 4 bytes from c00f10 to c10f00 and 4 bytes from c00f30 to c0fe00
                 */
-
 				if ((last_prot_op == 0xa56) || (last_prot_op == 0xd96) || (last_prot_op == 0xd14) || (last_prot_op == 0xd1c))
 				{
 					// memcpy from c01000 to c01400 for 0x400 bytes (startup check for type 4 games)
@@ -2839,8 +2852,88 @@ ROM_START( soccersa )
 	ROM_LOAD( "427a16.9r", 0x000000, 2*1024*1024,  CRC(39547265) SHA1(c0efd68c0c1ea59141045150842f36d43e1f01d8) )
 ROM_END
 
-/* Vs. Net Soccer (ver UAB) */
+/* Vs. Net Soccer (ver EAD) */
 ROM_START(vsnetscr)
+	/* main program */
+	ROM_REGION( 0x800000, REGION_CPU1, 0 )
+	GX_BIOS
+        ROM_LOAD32_WORD_SWAP( "627ead03.29m", 0x200000, 0x080000, CRC(2da707e2) SHA1(3273c671e417abc4e82cd0d4f5d01dd4c9c432f9) )
+        ROM_LOAD32_WORD_SWAP( "627ead02.31m", 0x200002, 0x080000, CRC(01ab336a) SHA1(6e7ab03a82548cc5bd17938df0baf47381dd86aa) )
+
+	/* data roms */
+	ROM_LOAD32_WORD_SWAP( "627a05.31r", 0x400000, 1024*1024, CRC(be4e7b3c) SHA1(f44e7b1913aa54f759bd31bb86fdedbb9747b2d5) )
+	ROM_LOAD32_WORD_SWAP( "627a04.29r", 0x400002, 1024*1024, CRC(17334e9a) SHA1(82cdba016c29160550c43feee7a4feff6e1184aa) )
+
+	/* sound program */
+	ROM_REGION( 0x40000, REGION_CPU2, 0 )
+	ROM_LOAD16_BYTE("627b06.9m", 0x000000, 128*1024, CRC(c8337b9d) SHA1(574c674676f493ca4b5a135728ce01e664d1293d) )
+	ROM_LOAD16_BYTE("627b07.7m", 0x000001, 128*1024, CRC(d7d92579) SHA1(929b8e90cfef2ef14d84173267b637e4efdb6867) )
+
+	/* tiles */
+	ROM_REGION( 0x500000, REGION_GFX1, ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE( "627a21.11r", 0x000000, 1024*1024, CRC(d0755fb8) SHA1(de37ea2a7969a97b6f2abccb7dc2a58950482bf0) )
+	ROM_LOAD16_BYTE( "627a20.11m", 0x000001, 1024*1024, CRC(f68b28f2) SHA1(1463717ed581494fcab77a80dc6ffd3ab82ab1fa) )
+
+	/* sprites */
+	ROM_REGION( 0xc00000, REGION_GFX2, ROMREGION_ERASE00 )
+	ROM_LOAD32_WORD( "627a19.14r", 0x000000, 2*1024*1024, CRC(5efaa3bc) SHA1(95314c1054ccf5b9626f0b06f9e1c857a127e2ca) )
+	ROM_LOAD32_WORD( "627a15.18r", 0x000002, 2*1024*1024, CRC(5180ca06) SHA1(d5569f6fc6b0374cd111f8313f635e4b7c49351f) )
+	ROM_LOAD32_WORD( "627a13.21r", 0x400000, 2*1024*1024, CRC(af48849d) SHA1(c43981883ef042968444b6d993a640edc429daae) )
+	ROM_LOAD32_WORD( "627a17.16r", 0x400002, 2*1024*1024, CRC(ca99d29c) SHA1(919dfb029dbc7d2c5e420d54df36eef3ec3bb1a2) )
+	ROM_LOAD32_WORD( "627a11.23r", 0x800000, 2*1024*1024, CRC(a2e507f2) SHA1(ceaaccbac22fecef32fa34f887568bb18464265d) )
+	ROM_LOAD32_WORD( "627a09.25r", 0x800002, 2*1024*1024, CRC(312cf8a4) SHA1(107456fc1a1906a60b5b50f4ca6b7e8cd258e6ee) )
+
+	/* PSAC2 tiles */
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_ERASE00)
+	ROM_LOAD( "627a24.22h", 0x000000, 0x200000, CRC(2cd73305) SHA1(5a46148c08198499639adc4b6936af0b2b530bc9) )
+
+	/* sound data */
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )
+	ROM_LOAD( "627a23.7r", 0x000000, 0x400000, CRC(0917d7de) SHA1(f2447637b396a9c92553b2c1dbf4edecc55ccc24) )
+ROM_END
+
+/* Vs. Net Soccer (ver EAB) */
+ROM_START(vsnetseb)
+	/* main program */
+	ROM_REGION( 0x800000, REGION_CPU1, 0 )
+	GX_BIOS
+        ROM_LOAD32_WORD_SWAP( "627eab03.29m", 0x200000, 0x080000, CRC(878b2369) SHA1(c92783ef1eb33c0596a9354e97f30f8c017e842c) )
+        ROM_LOAD32_WORD_SWAP( "627eab02.31m", 0x200002, 0x080000, CRC(cc76bce8) SHA1(54a4047412a98a5c4f64a8bc2fd3cda9c07e58b3) )
+
+	/* data roms */
+	ROM_LOAD32_WORD_SWAP( "627a05.31r", 0x400000, 1024*1024, CRC(be4e7b3c) SHA1(f44e7b1913aa54f759bd31bb86fdedbb9747b2d5) )
+	ROM_LOAD32_WORD_SWAP( "627a04.29r", 0x400002, 1024*1024, CRC(17334e9a) SHA1(82cdba016c29160550c43feee7a4feff6e1184aa) )
+
+	/* sound program */
+	ROM_REGION( 0x40000, REGION_CPU2, 0 )
+	ROM_LOAD16_BYTE("627b06.9m", 0x000000, 128*1024, CRC(c8337b9d) SHA1(574c674676f493ca4b5a135728ce01e664d1293d) )
+	ROM_LOAD16_BYTE("627b07.7m", 0x000001, 128*1024, CRC(d7d92579) SHA1(929b8e90cfef2ef14d84173267b637e4efdb6867) )
+
+	/* tiles */
+	ROM_REGION( 0x500000, REGION_GFX1, ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE( "627a21.11r", 0x000000, 1024*1024, CRC(d0755fb8) SHA1(de37ea2a7969a97b6f2abccb7dc2a58950482bf0) )
+	ROM_LOAD16_BYTE( "627a20.11m", 0x000001, 1024*1024, CRC(f68b28f2) SHA1(1463717ed581494fcab77a80dc6ffd3ab82ab1fa) )
+
+	/* sprites */
+	ROM_REGION( 0xc00000, REGION_GFX2, ROMREGION_ERASE00 )
+	ROM_LOAD32_WORD( "627a19.14r", 0x000000, 2*1024*1024, CRC(5efaa3bc) SHA1(95314c1054ccf5b9626f0b06f9e1c857a127e2ca) )
+	ROM_LOAD32_WORD( "627a15.18r", 0x000002, 2*1024*1024, CRC(5180ca06) SHA1(d5569f6fc6b0374cd111f8313f635e4b7c49351f) )
+	ROM_LOAD32_WORD( "627a13.21r", 0x400000, 2*1024*1024, CRC(af48849d) SHA1(c43981883ef042968444b6d993a640edc429daae) )
+	ROM_LOAD32_WORD( "627a17.16r", 0x400002, 2*1024*1024, CRC(ca99d29c) SHA1(919dfb029dbc7d2c5e420d54df36eef3ec3bb1a2) )
+	ROM_LOAD32_WORD( "627a11.23r", 0x800000, 2*1024*1024, CRC(a2e507f2) SHA1(ceaaccbac22fecef32fa34f887568bb18464265d) )
+	ROM_LOAD32_WORD( "627a09.25r", 0x800002, 2*1024*1024, CRC(312cf8a4) SHA1(107456fc1a1906a60b5b50f4ca6b7e8cd258e6ee) )
+
+	/* PSAC2 tiles */
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_ERASE00)
+	ROM_LOAD( "627a24.22h", 0x000000, 0x200000, CRC(2cd73305) SHA1(5a46148c08198499639adc4b6936af0b2b530bc9) )
+
+	/* sound data */
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )
+	ROM_LOAD( "627a23.7r", 0x000000, 0x400000, CRC(0917d7de) SHA1(f2447637b396a9c92553b2c1dbf4edecc55ccc24) )
+ROM_END
+
+/* Vs. Net Soccer (ver UAB) */
+ROM_START(vsnetscu)
 	/* main program */
 	ROM_REGION( 0x800000, REGION_CPU1, 0 )
 	GX_BIOS
@@ -2886,6 +2979,46 @@ ROM_START(vsnetscj)
 	GX_BIOS
 	ROM_LOAD32_WORD_SWAP( "627jab03.29m", 0x200000, 512*1024, CRC(68c4bb17) SHA1(db109998221d0cc41d3fd5c9339773c7077edbf4) )
 	ROM_LOAD32_WORD_SWAP( "627jab02.31m", 0x200002, 512*1024, CRC(f10929d7) SHA1(304001d44ed762682a4606a849305a9352e9bec3) )
+
+	/* data roms */
+	ROM_LOAD32_WORD_SWAP( "627a05.31r", 0x400000, 1024*1024, CRC(be4e7b3c) SHA1(f44e7b1913aa54f759bd31bb86fdedbb9747b2d5) )
+	ROM_LOAD32_WORD_SWAP( "627a04.29r", 0x400002, 1024*1024, CRC(17334e9a) SHA1(82cdba016c29160550c43feee7a4feff6e1184aa) )
+
+	/* sound program */
+	ROM_REGION( 0x40000, REGION_CPU2, 0 )
+	ROM_LOAD16_BYTE("627b06.9m", 0x000000, 128*1024, CRC(c8337b9d) SHA1(574c674676f493ca4b5a135728ce01e664d1293d) )
+	ROM_LOAD16_BYTE("627b07.7m", 0x000001, 128*1024, CRC(d7d92579) SHA1(929b8e90cfef2ef14d84173267b637e4efdb6867) )
+
+	/* tiles */
+	ROM_REGION( 0x500000, REGION_GFX1, ROMREGION_ERASE00 )
+	ROM_LOAD16_BYTE( "627a21.11r", 0x000000, 1024*1024, CRC(d0755fb8) SHA1(de37ea2a7969a97b6f2abccb7dc2a58950482bf0) )
+	ROM_LOAD16_BYTE( "627a20.11m", 0x000001, 1024*1024, CRC(f68b28f2) SHA1(1463717ed581494fcab77a80dc6ffd3ab82ab1fa) )
+
+	/* sprites */
+	ROM_REGION( 0xc00000, REGION_GFX2, ROMREGION_ERASE00 )
+	ROM_LOAD32_WORD( "627a19.14r", 0x000000, 2*1024*1024, CRC(5efaa3bc) SHA1(95314c1054ccf5b9626f0b06f9e1c857a127e2ca) )
+	ROM_LOAD32_WORD( "627a15.18r", 0x000002, 2*1024*1024, CRC(5180ca06) SHA1(d5569f6fc6b0374cd111f8313f635e4b7c49351f) )
+	ROM_LOAD32_WORD( "627a13.21r", 0x400000, 2*1024*1024, CRC(af48849d) SHA1(c43981883ef042968444b6d993a640edc429daae) )
+	ROM_LOAD32_WORD( "627a17.16r", 0x400002, 2*1024*1024, CRC(ca99d29c) SHA1(919dfb029dbc7d2c5e420d54df36eef3ec3bb1a2) )
+	ROM_LOAD32_WORD( "627a11.23r", 0x800000, 2*1024*1024, CRC(a2e507f2) SHA1(ceaaccbac22fecef32fa34f887568bb18464265d) )
+	ROM_LOAD32_WORD( "627a09.25r", 0x800002, 2*1024*1024, CRC(312cf8a4) SHA1(107456fc1a1906a60b5b50f4ca6b7e8cd258e6ee) )
+
+	/* PSAC2 tiles */
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_ERASE00)
+	ROM_LOAD( "627a24.22h", 0x000000, 0x200000, CRC(2cd73305) SHA1(5a46148c08198499639adc4b6936af0b2b530bc9) )
+
+	/* sound data */
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 )
+	ROM_LOAD( "627a23.7r", 0x000000, 0x400000, CRC(0917d7de) SHA1(f2447637b396a9c92553b2c1dbf4edecc55ccc24) )
+ROM_END
+
+/* Vs. Net Soccer (ver AAA) */
+ROM_START(vsnetsca)
+	/* main program */
+	ROM_REGION( 0x800000, REGION_CPU1, 0 )
+	GX_BIOS
+        ROM_LOAD32_WORD_SWAP( "627aaa03.29m", 0x200000, 0x080000, CRC(50e23a50) SHA1(82cf1b051cfb2f94567c5a4199802960798c1152) )
+        ROM_LOAD32_WORD_SWAP( "627aaa02.31m", 0x200002, 0x080000, CRC(e3d21afe) SHA1(28c213106087da425f85bb7f3398aca98964ea38) )
 
 	/* data roms */
 	ROM_LOAD32_WORD_SWAP( "627a05.31r", 0x400000, 1024*1024, CRC(be4e7b3c) SHA1(f44e7b1913aa54f759bd31bb86fdedbb9747b2d5) )
@@ -3276,13 +3409,57 @@ MACHINE_RESET(konamigx)
 	}
 }
 
-static DRIVER_INIT(konamigx)
+typedef struct
 {
+	const char *romname;
+	UINT32 cfgport;
+	UINT32 sndhack;
+	UINT32 special;
+	UINT32 readback;
+} GXGameInfoT;
+
+#define BPP4  0
 #define BPP5  1
 #define BPP6  2
 #define BPP66 3
 
-//  int i;
+static GXGameInfoT gameDefs[] =
+{
+	{ "racinfrc", 11, 0, 0, BPP4 },
+	{ "opengolf", 11, 0, 0, BPP4 },
+	{ "le2",      13, 1, 1, BPP4 },
+	{ "le2u",     13, 1, 1, BPP4 },
+	{ "gokuparo",  7, 0, 0, BPP5 },
+	{ "fantjour",  7, 0, 0, BPP5 },
+	{ "puzldama",  7, 0, 0, BPP5 },
+	{ "tbyahhoo",  7, 0, 8, BPP5 },
+	{ "tkmmpzdm",  7, 0, 2, BPP6 },
+	{ "dragoonj",  7, 0, 3, BPP4 },
+	{ "dragoona",  7, 0, 3, BPP4 },
+	{ "sexyparo",  7, 0, 4, BPP5 },
+	{ "daiskiss",  7, 0, 5, BPP5 },
+	{ "tokkae",    7, 0, 0, BPP5 },
+	{ "salmndr2",  7, 0, 6, BPP66 },
+	{ "winspike",  8, 2, 7, BPP4 },
+	{ "winspikj",  8, 2, 7, BPP4 },
+	{ "soccerss",  7, 0, 0, BPP4 },
+	{ "soccersa",  7, 0, 0, BPP4 },
+	{ "soccersj",  7, 0, 0, BPP4 },
+	{ "vsnetscr",  7, 8, 0, BPP4 },
+	{ "vsnetscu",  7, 5, 0, BPP4 },
+	{ "vsnetscj",  7, 10, 0, BPP4 },
+	{ "vsnetsca",  7, 7, 0, BPP4 },
+	{ "vsnetseb",  7, 9, 0, BPP4 },
+	{ "rungun2",   7, 3, 0, BPP4 },
+	{ "slamdnk2",  7, 6, 0, BPP4 },
+	{ "rushhero",  7, 4, 0, BPP4 },
+	{ "",         -1, -1, -1, -1 },
+};
+
+
+static DRIVER_INIT(konamigx)
+{
+	int i, match;
 	int readback = 0;
 
 	adc083x_init( 0, ADC0834, adc0834_callback );
@@ -3297,62 +3474,24 @@ static DRIVER_INIT(konamigx)
 
 	dmadelay_timer = timer_alloc(dmaend_callback);
 
-	// running down the list is not a good idea but easier than maintaining individual drivers
-	if (!strcmp(Machine->gamedrv->name, "racinfrc"))
+	i = match = 0;
+	while ((gameDefs[i].cfgport != -1) && (!match))
 	{
-		konamigx_cfgport = 11;
-	}
-
-	else if (!strcmp(Machine->gamedrv->name, "opengolf"))
+		if (!strcmp(Machine->gamedrv->name, gameDefs[i].romname))
 	{
-		konamigx_cfgport = 11;
-	}
+			match = 1;
+			konamigx_cfgport = gameDefs[i].cfgport;
+			snd020_hack = gameDefs[i].sndhack;
+			readback = gameDefs[i].readback;
 
-	else if (!strcmp(Machine->gamedrv->name, "le2") || !strcmp(Machine->gamedrv->name, "le2u"))
+			switch (gameDefs[i].special)
 	{
-		#if GX_SKIPIDLE
-			ADD_SKIPPER32(0x2010f0, 0xc00000, 0xfe, 0x13f, -1, 0xff)
-		#endif
-
+				case 1:	// LE2 guns
 		memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0xd44000, 0xd44003, 0, 0, le2_gun_H_r );
 		memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0xd44004, 0xd44007, 0, 0, le2_gun_V_r );
+					break;
 
-		snd020_hack = 1;
-		konamigx_cfgport = 13;
-	}
-
-	else if (!strcmp(Machine->gamedrv->name, "gokuparo") || !strcmp(Machine->gamedrv->name, "fantjour"))
-	{
-		#if GX_SKIPIDLE
-			ADD_SKIPPER32(0x2a0a66, 0xc00000, 0xd400, 0xd400, 0, 0xffff0000)
-		#endif
-
-		readback = BPP5;
-		konamigx_cfgport = 7;
-	}
-
-	else if (!strcmp(Machine->gamedrv->name, "puzldama"))
-	{
-		#if GX_SKIPIDLE
-		#endif
-			ADD_SKIPPER32(0x20d494, 0xc00000, 0x540, 0x6ff, -1, 0xffff)
-
-		readback = BPP5;
-		konamigx_cfgport = 7;
-	}
-
-	else if (!strcmp(Machine->gamedrv->name, "tbyahhoo"))
-	{
-		#if GX_SKIPIDLE
-			ADD_SKIPPER32(0x297b9a, 0xc00000, 0xf800, 0xf800, 0, 0xffff0000)
-		#endif
-
-		esc_cb = tbyahhoo_esc;
-		readback = BPP5;
-		konamigx_cfgport = 7;
-	}
-
-	else if (!strcmp(Machine->gamedrv->name, "tkmmpzdm"))
+				case 2:	// tkmmpzdm hack
 	{
 		UINT32 *rom = (UINT32*)memory_region(REGION_CPU1);
 
@@ -3364,99 +3503,37 @@ static DRIVER_INIT(konamigx)
 		rom[0x810f1] &= ~1;      // fix checksum
 		rom[0x872ea] |= 0xe0000; // enable plane B,C,D
 
-		#if GX_SKIPIDLE
-			ADD_SKIPPER32(0x2060d4, 0xc00000, 0x13e48, 0x14027, 0, -1)
-		#endif
-
 		esc_cb = tkmmpzdm_esc;
-		readback = BPP6;
-		konamigx_cfgport = 7;
 	}
+					break;
 
-	else if ((!strcmp(Machine->gamedrv->name, "dragoonj")) || (!strcmp(Machine->gamedrv->name, "dragoona")))
-	{
+				case 3: // dragoon might
 		esc_cb = dragoonj_esc;
-		konamigx_cfgport = 7;
-	}
+					break;
 
-	else if (!strcmp(Machine->gamedrv->name, "sexyparo"))
-	{
-		#if GX_SKIPIDLE
-			ADD_SKIPPER32(0x289baa, 0xc00000, 0x10204, 0x10204, 0, 0xffff0000)
-		#endif
-
+				case 4:	// sexyparo
 		esc_cb = sexyparo_esc;
-		readback = BPP5;
-		konamigx_cfgport = 7;
-	}
+					break;
 
-	else if (!strcmp(Machine->gamedrv->name, "daiskiss"))
-	{
-		#if GX_SKIPIDLE
-			ADD_SKIPPER32(0x28707e, 0xc00000, 0x8400, 0x8400, 0, 0xffff0000)
-		#endif
-
+				case 5: // daiskiss
 		esc_cb = daiskiss_esc;
-		readback = BPP5;
-		konamigx_cfgport = 7;
-	}
+					break;
 
-	else if (!strcmp(Machine->gamedrv->name, "tokkae"))
-	{
-		#if GX_SKIPIDLE
-			ADD_SKIPPER32(0x206b94, 0xc00000, 0x142ac, 0x142ac, 0, 0xff000000)
-		#endif
-
-		readback = BPP5;
-		konamigx_cfgport = 7;
-	}
-
-	else if (!strcmp(Machine->gamedrv->name, "salmndr2"))
-	{
-		#if GX_SKIPIDLE
-			ADD_SKIPPER32(0x220070, 0xc00000, 0xbe8, 0xbe8, 0, 0x0000ffff)
-		#endif
-
+				case 6: // salamander 2
 		esc_cb = sal2_esc;
-		readback = BPP66;
-		konamigx_cfgport = 7;
-	}
+					break;
 
-	else if ((!strcmp(Machine->gamedrv->name, "winspike")) || (!strcmp(Machine->gamedrv->name, "winspikj")))
-	{
-		snd020_hack = 2;
-		konamigx_cfgport = 8;
-		// Winning Spike uses the type 4 Xilinx protection
+				case 7:	// install type 4 Xilinx protection for non-type 3/4 games
 		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0xcc0000, 0xcc0007, 0, 0, type4_prot_w );
+					break;
+
+				case 8: // tbyahhoo
+					esc_cb = tbyahhoo_esc;
+					break;
+	}
 	}
 
-	else if (!strcmp(Machine->gamedrv->name, "soccerss"))
-	{
-		konamigx_cfgport = 7;
-	}
-
-	else if ((!strcmp(Machine->gamedrv->name, "vsnetscr")) || (!strcmp(Machine->gamedrv->name, "vsnetscj")))
-	{
-		snd020_hack = 5;
-		konamigx_cfgport = 7;
-	}
-
-	else if (!strcmp(Machine->gamedrv->name, "rungun2"))
-	{
-		snd020_hack = 3;
-		konamigx_cfgport = 7;
-	}
-
-	else if (!strcmp(Machine->gamedrv->name, "slamdnk2"))
-	{
-		snd020_hack = 6;
-		konamigx_cfgport = 7;
-	}
-
-	else if (!strcmp(Machine->gamedrv->name, "rushhero"))
-	{
-		snd020_hack = 4;
-		konamigx_cfgport = 7;
+		i++;
 	}
 
 	switch (readback)
@@ -3517,15 +3594,16 @@ GAME( 1997, winspikj, winspike, winspike, konamigx, konamigx, ROT0, "Konami", "W
 /* this game is unplayable due to protection */
 GAME( 1994, fantjour, gokuparo, konamigx, gokuparo, konamigx, ROT0, "Konami", "Fantastic Journey", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION )
 
-
 /* Type 3: dual monitor output and 53936 on the ROM board, external palette RAM */
 GAME( 1994, soccerss, konamigx, gxtype3,  type3, konamigx, ROT0, "Konami", "Soccer Superstars (ver EAA)", GAME_NOT_WORKING )
 GAME( 1994, soccersj, soccerss, gxtype3,  type3, konamigx, ROT0, "Konami", "Soccer Superstars (ver JAA)", GAME_NOT_WORKING )
 GAME( 1994, soccersa, soccerss, gxtype3,  type3, konamigx, ROT0, "Konami", "Soccer Superstars (ver AAA)", GAME_NOT_WORKING )
 
-
 /* Type 4: dual monitor output and 53936 on the ROM board, external palette RAM, DMA protection */
-GAME( 1996, vsnetscr, konamigx, gxtype4, type3, konamigx, ROT0, "Konami", "Versus Net Soccer (ver UAB)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION )
+GAME( 1996, vsnetscr, konamigx, gxtype4, type3, konamigx, ROT0, "Konami", "Versus Net Soccer (ver EAD)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION )
+GAME( 1996, vsnetseb, vsnetscr, gxtype4, type3, konamigx, ROT0, "Konami", "Versus Net Soccer (ver EAB)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION )
+GAME( 1996, vsnetscu, vsnetscr, gxtype4, type3, konamigx, ROT0, "Konami", "Versus Net Soccer (ver UAB)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION )
+GAME( 1996, vsnetsca, vsnetscr, gxtype4, type3, konamigx, ROT0, "Konami", "Versus Net Soccer (ver AAA)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION )
 GAME( 1996, vsnetscj, vsnetscr, gxtype4, type3, konamigx, ROT0, "Konami", "Versus Net Soccer (ver JAB)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION )
 GAME( 1996, rungun2,  konamigx, gxtype4, type3, konamigx, ROT0, "Konami", "Run and Gun 2 (ver UAA)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION )
 GAME( 1996, slamdnk2, rungun2,  gxtype4, type3, konamigx, ROT0, "Konami", "Slam Dunk 2 (ver JAA)", GAME_NOT_WORKING|GAME_UNEMULATED_PROTECTION )

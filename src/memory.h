@@ -19,9 +19,7 @@
 
 
 /***************************************************************************
-
-    Parameters
-
+    PARAMETERS
 ***************************************************************************/
 
 #ifdef MAME_DEBUG
@@ -41,11 +39,7 @@
 
 
 /***************************************************************************
-
-    Basic type definitions
-
-    These types are used for data access handlers.
-
+    BASIC TYPE DEFINITIONS
 ***************************************************************************/
 
 /* ----- typedefs for data and offset types ----- */
@@ -80,9 +74,7 @@ typedef struct _data_accessors data_accessors;
 
 
 /***************************************************************************
-
-    Basic macros
-
+    BASIC MACROS
 ***************************************************************************/
 
 /* ----- macros for declaring the various common data access handlers ----- */
@@ -128,12 +120,10 @@ typedef struct _data_accessors data_accessors;
 
 
 /***************************************************************************
-
-    Address array constants
-
+    ADDRESS ARRAY CONSTANTS
+****************************************************************************
     These apply to values in the array of read/write handlers that is
     declared within each driver.
-
 ***************************************************************************/
 
 /* ----- definitions for the flags in the address maps ----- */
@@ -217,14 +207,12 @@ typedef struct _data_accessors data_accessors;
 
 
 /***************************************************************************
-
-    Constants for static entries in address map read/write arrays
-
+    STATIC ENTRY CONSTANTS
+****************************************************************************
     The first 32 entries in the address lookup table are reserved for
     "static" handlers. These are internal handlers for RAM, ROM, banks,
     and unmapped areas in the address space. The following definitions
     are the properly-casted versions of the STATIC_ constants above.
-
 ***************************************************************************/
 
 /* 8-bit reads */
@@ -534,9 +522,8 @@ typedef struct _data_accessors data_accessors;
 
 
 /***************************************************************************
-
-    Address space array type definitions
-
+    ADDRESS SPACE ARRAY TYPE DEFINITIONS
+****************************************************************************
     Note that the data access handlers are not passed the actual address
     where the operation takes place, but the offset from the beginning
     of the block they are assigned to. This makes handling of mirror
@@ -546,7 +533,6 @@ typedef struct _data_accessors data_accessors;
     the beginning of the memory block assigned to the handler. You may
     also provide a pointer to "size": it will be set to the length of
     the memory area processed by the handler.
-
 ***************************************************************************/
 
 typedef struct _handler_data handler_data;
@@ -608,9 +594,7 @@ typedef struct _address_space address_space;
 
 
 /***************************************************************************
-
-    Address map array constructors
-
+    ADDRESS MAP ARRAY CONSTRUCTORS
 ***************************************************************************/
 
 /* ----- a typedef for pointers to these functions ----- */
@@ -700,9 +684,7 @@ address_map *construct_map_##_name(address_map *map)					\
 
 
 /***************************************************************************
-
-    Address map array helper macros
-
+    ADDRESS MAP ARRAY HELPER MACROS
 ***************************************************************************/
 
 /* ----- macros for identifying address map struct markers ----- */
@@ -715,11 +697,7 @@ address_map *construct_map_##_name(address_map *map)					\
 
 
 /***************************************************************************
-
-    Address map lookup constants
-
-    These apply to values in the internal lookup table.
-
+    ADDRESS MAP LOOKUP CONSTANTS
 ***************************************************************************/
 
 /* ----- address spaces ----- */
@@ -749,11 +727,7 @@ extern const char *address_space_names[ADDRESS_SPACES];
 
 
 /***************************************************************************
-
-    Address map lookup macros
-
-    These are used for accessing the internal lookup table.
-
+    ADDRESS MAP LOOKUP MACROS
 ***************************************************************************/
 
 /* ----- table lookup helpers ----- */
@@ -763,9 +737,7 @@ extern const char *address_space_names[ADDRESS_SPACES];
 
 
 /***************************************************************************
-
-    Function prototypes for core readmem/writemem routines
-
+    FUNCTION PROTOTYPES FOR CORE READ/WRITE ROUTINES
 ***************************************************************************/
 
 /* ----- declare program address space handlers ----- */
@@ -909,9 +881,7 @@ void io_write_qword_64le(offs_t address, UINT64 data);
 
 
 /***************************************************************************
-
-    Function prototypes for core memory functions
-
+    FUNCTION PROTOTYPES FOR CORE MEMORY FUNCTIONS
 ***************************************************************************/
 
 /* ----- memory setup function ----- */
@@ -975,9 +945,7 @@ const char *memory_get_handler_string(int read0_or_write1, int cpunum, int space
 
 
 /***************************************************************************
-
-    Global variables
-
+    GLOBAL VARIABLES
 ***************************************************************************/
 
 extern UINT8 			opcode_entry;				/* current entry for opcode fetching */
@@ -992,9 +960,7 @@ extern address_map *	construct_map_0(address_map *map);
 
 
 /***************************************************************************
-
-    Helper macros and inlines
-
+    HELPER MACROS AND INLINES
 ***************************************************************************/
 
 /* ----- 16/32-bit memory accessing ----- */

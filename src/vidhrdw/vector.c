@@ -38,7 +38,7 @@
 
 
 
-#define VECTOR_WIDTH_DENOM			1024
+#define VECTOR_WIDTH_DENOM			512
 
 
 #define MAX_POINTS	10000
@@ -146,11 +146,12 @@ size_t vectorram_size;
 static int flicker;                              /* beam flicker value     */
 static float flicker_correction = 0.0f;
 
+static float beam_width;
+
 static point *vector_list;
 static int vector_index;
 
 
-/* MLR 990316 new gamma handling added */
 void vector_set_flicker(float _flicker)
 {
 	flicker_correction = _flicker;
@@ -162,12 +163,24 @@ float vector_get_flicker(void)
 	return flicker_correction;
 }
 
+void vector_set_beam(float _beam)
+{
+	beam_width = _beam;
+}
+
+float vector_get_beam(void)
+{
+	return beam_width;
+}
+
 /*
  * Initializes vector game video emulation
  */
 
 VIDEO_START( vector )
 {
+	beam_width = (float)options.beam / 65536.0f;
+
 	/* Grab the settings for this session */
 	vector_set_flicker(options.vector_flicker);
 
@@ -292,7 +305,7 @@ VIDEO_UPDATE( vector )
 			if (curpoint->intensity != 0)
 				if (!render_clip_line(&coords, &clip))
 					render_screen_add_line(screen, coords.x0, coords.y0, coords.x1, coords.y1,
-							(float)options.beam * (1.0f / (65536.0f * (float)VECTOR_WIDTH_DENOM)),
+							beam_width * (1.0f / (float)VECTOR_WIDTH_DENOM),
 							(curpoint->intensity << 24) | (curpoint->col & 0xffffff),
 							flags);
 

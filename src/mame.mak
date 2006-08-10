@@ -1087,11 +1087,11 @@ $(OBJ)/sega.a: \
 	$(OBJ)/drivers/model2.o $(OBJ)/vidhrdw/model2.o \
 	$(OBJ)/drivers/model3.o $(OBJ)/vidhrdw/model3.o $(OBJ)/machine/model3.o \
 	$(OBJ)/drivers/puckpkmn.o \
-	$(OBJ)/drivers/sega.o $(OBJ)/sndhrdw/sega.o $(OBJ)/vidhrdw/sega.o \
 	$(OBJ)/drivers/segac2.o \
+	$(OBJ)/drivers/segag80r.o $(OBJ)/machine/segag80.o $(OBJ)/sndhrdw/segag80r.o $(OBJ)/vidhrdw/segag80r.o \
+	$(OBJ)/drivers/segag80v.o $(OBJ)/sndhrdw/segag80v.o $(OBJ)/vidhrdw/segag80v.o \
 	$(OBJ)/drivers/segahang.o $(OBJ)/vidhrdw/segahang.o \
 	$(OBJ)/drivers/segaorun.o $(OBJ)/vidhrdw/segaorun.o \
-	$(OBJ)/drivers/segar.o $(OBJ)/machine/segar.o $(OBJ)/sndhrdw/segar.o $(OBJ)/vidhrdw/segar.o \
 	$(OBJ)/drivers/segas16a.o $(OBJ)/vidhrdw/segas16a.o \
 	$(OBJ)/drivers/segas16b.o \
 	$(OBJ)/drivers/segas16b.o $(OBJ)/vidhrdw/segas16b.o \

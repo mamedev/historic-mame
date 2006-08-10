@@ -2707,7 +2707,7 @@ INPUT_PORTS_START( aquajack )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x80, "Cockpit" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) ) /* Dip 2 shown as "Must Remain in "Off" Position" in manual */
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x20, IP_ACTIVE_LOW )
@@ -2719,11 +2719,11 @@ INPUT_PORTS_START( aquajack )
 	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_B ) )	/* The Romstar (US version) manual list this as "Continue Pricing" */
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_2C ) )	/* Same pricing as Coin A */
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_3C ) )	/* 1 Coin to Continue  */
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_4C ) )	/* 2 Coins to Continue */
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) )	/* 3 Coins to Continue */
 
 	PORT_START /* DSW B */
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Difficulty ) )
@@ -2741,12 +2741,12 @@ INPUT_PORTS_START( aquajack )
 	PORT_DIPSETTING(    0x04, "2" )
 	PORT_DIPSETTING(    0x0c, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unused ) ) /* Dips 7 & 8 shown as "Do Not Touch" in manual */
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unused ) ) /* Dips 7 & 8 shown as "Do Not Touch" in non US manuals */
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) ) /* The Romstar (US version) manual list this as "Endless Game" - Has no effect on "World" version */
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )    /* Normal Game  */
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )     /* Endless Game */
 
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
