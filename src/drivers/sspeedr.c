@@ -5,7 +5,8 @@ Taito Super Speed Race driver
 ***************************************************************************/
 
 #include "driver.h"
-#include "render.h"
+
+#include "sspeedr.lh"
 
 extern WRITE8_HANDLER( sspeedr_driver_horz_w );
 extern WRITE8_HANDLER( sspeedr_driver_horz_2_w );
@@ -68,8 +69,8 @@ static WRITE8_HANDLER( sspeedr_int_ack_w )
 
 static WRITE8_HANDLER( sspeedr_lamp_w )
 {
-	render_view_item_set_state("lampGO", (data >> 0) & 1);
-	render_view_item_set_state("lampEP", (data >> 1) & 1);
+	output_set_value("lampGO", (data >> 0) & 1);
+	output_set_value("lampEP", (data >> 1) & 1);
 	coin_counter_w(0, data & 8);
 }
 
@@ -79,7 +80,7 @@ static WRITE8_HANDLER( sspeedr_time_w )
 	char buf[10];
 	sprintf(buf, "LEDT%d", offset);
 	data = data & 15;
-	render_view_item_set_state(buf, (data >= 10) ? 10 : data);
+	output_set_value(buf, (data >= 10) ? 10 : data);
 	led_TIME[offset] = data;
 }
 
@@ -89,7 +90,7 @@ static WRITE8_HANDLER( sspeedr_score_w )
 	char buf[10];
 	sprintf(buf, "LED%02d", offset);
 	data = ~data & 15;
-	render_view_item_set_state(buf, (data >= 10) ? 10 : data);
+	output_set_value(buf, (data >= 10) ? 10 : data);
 	led_SCORE[offset] = data;
 }
 
@@ -251,4 +252,4 @@ ROM_START( sspeedr )
 ROM_END
 
 
-GAME( 1979, sspeedr, 0, sspeedr, sspeedr, 0, ROT270, "Midway", "Super Speed Race", GAME_NO_SOUND )
+GAMEL( 1979, sspeedr, 0, sspeedr, sspeedr, 0, ROT270, "Midway", "Super Speed Race", GAME_NO_SOUND, layout_sspeedr )

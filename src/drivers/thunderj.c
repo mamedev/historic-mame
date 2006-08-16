@@ -102,7 +102,7 @@ static WRITE16_HANDLER( latch_w )
 		/* bits 2-5 are the alpha bank */
 		if (thunderj_alpha_tile_bank != ((data >> 2) & 7))
 		{
-			force_partial_update(0, cpu_getscanline());
+			video_screen_update_partial(0, cpu_getscanline());
 			tilemap_mark_all_tiles_dirty(atarigen_alpha_tilemap);
 			thunderj_alpha_tile_bank = (data >> 2) & 7;
 		}

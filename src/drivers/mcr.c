@@ -288,7 +288,6 @@
 #include "machine/z80sio.h"
 #include "sndhrdw/mcr.h"
 #include "sound/samples.h"
-#include "render.h"
 #include "mcr.h"
 
 
@@ -449,7 +448,7 @@ static WRITE8_HANDLER( dotron_op4_w )
     */
 	/* bit 7 = FL1 (J1-3) on flasher control board */
 	/* bit 6 = FL0 (J1-4) on flasher control board */
-	render_view_item_set_state("backlight", (data >> 6) & 1);
+	output_set_value("backlight", (data >> 6) & 1);
 
 	/*
         Lamp Sequencer:

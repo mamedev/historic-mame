@@ -20,7 +20,7 @@
 
 
 #include "driver.h"
-#include "render.h"
+#include "rendlay.h"
 #include "machine/atarigen.h"
 #include "sndhrdw/atarijsa.h"
 #include "cyberbal.h"

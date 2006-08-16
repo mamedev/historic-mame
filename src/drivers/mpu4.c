@@ -1,6 +1,12 @@
 /***************************************************************************
 MPU4 highly preliminary driver
 
+  11-08-2006: It appears that the PIA IRQ's are not connected after all - but even
+              disabling these won't get around the PTM issues.
+              It also looks like the video card CHR is just a word-based version
+              of the original, byte-based chip, meaning that should be fairly simple
+              to emulate too, when the time comes.
+
   04-08-2006: El Condor
   28-04-2006: El Condor
   20-05-2004: Re-Animator
@@ -10,8 +16,7 @@ MPU4 highly preliminary driver
 The MPU4 BOARD is the driver board, originally designed to run Fruit Machines made by the Barcrest Group, but later
 licensed to other firms as a general purpose unit (even some old Photo-Me booths used the unit).
 
-This original board uses a ~1.72 Mhz 6809B CPU, and a number of PIA6821 chips for multiplexing inputs and the like. (all wired
-through the one IRQ).
+This original board uses a ~1.72 Mhz 6809B CPU, and a number of PIA6821 chips for multiplexing inputs and the like.
 
 A 6840PTM is used for internal timing, one of it's functions is to act with an AY8913 chip as a crude analogue sound device.
 
@@ -288,19 +293,15 @@ static int alpha_data_line;
 static int alpha_clock;
 static int ay8910_address;
 //static int expansion_latch;
-//static int global_volume;
-
+//static int global_volume; OKI chip only
+static int serial_data;
 static int signal_50hz;
 static int ic4_input_b;
-static int IC23G2A;
-static int IC23G23;
-static int IC23G1;
-
-static UINT8 m6840_irq_state;
-extern UINT8 m6850_irq_state; // referenced in machine/6850acia.c
-static UINT8 scn2674_irq_state;
-static void update_irq(void);
-
+static int IC23GC;
+static int IC23GB;
+static int IC23GA;
+//static int prot_row; Needed for CHR emulation
+//static int prot_col;
 
 // user interface stuff ///////////////////////////////////////////////////
 
@@ -314,9 +315,12 @@ static UINT16 lamp_strobe;
 static UINT8  lamp_data;
 
 static UINT8  IC3ca1;
+static UINT8  yamdata;
 
 //static int   led_mux_strobe;
+//static UINT8 chr_data[16][8];
 static UINT8 led_segs[8];
+
 /*
 LED Segments related to pins (5 is not connected):
    _9_
@@ -335,6 +339,10 @@ static int    input_strobe;	  // IC23 74LS138 A = CA2 IC7, B = CA2 IC4, C = CA2 
 static int    output_strobe;  // same
 
 // \MPU4
+
+static UINT8 m6840_irq_state;
+extern UINT8 m6850_irq_state; // referenced in machine/6850acia.c
+static UINT8 scn2674_irq_state;
 
 static int mpu4_gfx_index;
 static UINT16 * mpu4_vid_vidram;
@@ -419,9 +427,9 @@ static MACHINE_RESET( mpu4_vid )
 	lamp_strobe    = 0;
 	lamp_data      = 0;
 
-	IC23G2A    = 0;
-	IC23G23    = 0;
-	IC23G1     = 1;
+	IC23GC    = 0;
+	IC23GB    = 0;
+	IC23GA    = 0;
 
 	uart1_status  = 0x02; // MC6850 transmit buffer empty !!!
 	uart2_status  = 0x02; // MC6850 transmit buffer empty !!!
@@ -618,7 +626,6 @@ static const pia6821_interface pia_ic3_intf =
 	/*irqs   : A/B             */ 0, 0
 };
 
-static UINT8 IC23GC, IC23GB, IC23GA;
 static WRITE8_HANDLER( pia_ic4_porta_w )
 {
 	if (!IC23GC)
@@ -652,7 +659,6 @@ static WRITE8_HANDLER( pia_ic4_porta_w )
 	LOG(("%04x IC4 PIA Port A Set to %2x\n", activecpu_get_previouspc(),data));
 }
 
-static UINT8 serial_data;
 static READ8_HANDLER( pia_ic4_portb_r )
 {
 
@@ -741,7 +747,7 @@ static const pia6821_interface pia_ic4_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, pia_ic4_portb_r, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ pia_ic4_porta_w, 0, pia_ic4_ca2_w, pia_ic4_cb2_w,
-	/*irqs   : A/B             */ cpu0_irq, cpu0_irq
+	/*irqs   : A/B             */ 0, 0
 };
 
 static READ8_HANDLER( pia_ic5_porta_r )
@@ -839,7 +845,7 @@ static const pia6821_interface pia_ic5_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ pia_ic5_porta_r, pia_ic5_portb_r, 0, 0, 0, 0,//CB1 connected to PB7 Aux 2
 	/*outputs: A/B,CA/B2       */ 0, 0, pia_ic5_ca2_w,  pia_ic5_cb2_w,
-	/*irqs   : A/B             */ cpu0_irq, cpu0_irq
+	/*irqs   : A/B             */ 0, 0
 };
 
 /* ---------------------------------------
@@ -865,36 +871,37 @@ BDIR BC1       |
 */
 /* PSG function selected */
 
-static UINT8 yamdata;
 static void update_yam(void)
 {
   switch (ay8910_address)
 	{
-  	case 0x00:
-	{
-	/* Inactive */
-    }
-	break;
-  	case 0x01:
-	{	/* CA2 = 1 CB2 = 0? : Read from selected PSG register and make the register data available to Port A */
-		yamdata = AY8910_read_port_0_r(0);
-		pia_set_input_a(3, yamdata);
-  	}
-	break;
-  	case 0x02:
-	{/* CA2 = 0 CB2 = 1? : Write to selected PSG register and write data to Port A */
-  		AY8910_write_port_0_w(0, yamdata);
-  	}
-	break;
-  	case 0x03:
-	{/* CA2 = 1 CB2 = 1? : The register will now be selected and the user can read from or write to it.  The register will remain selected until another is chosen.*/
-  		AY8910_control_port_0_w(0, yamdata);
-  	}
-	break;
-  	default:
-	{
-    }
-	break;
+  		case 0x00:
+		{
+			/* Inactive */
+			break;
+	    }
+	  	case 0x01:
+		{	/* CA2 = 1 CB2 = 0? : Read from selected PSG register and make the register data available to Port A */
+			pia_set_input_a(3, AY8910_read_port_0_r(0));
+			LOG(("Yamaha Read \n"));
+			break;
+	  	}
+	  	case 0x02:
+		{/* CA2 = 0 CB2 = 1? : Write to selected PSG register and write data to Port A */
+	  		AY8910_write_port_0_w(0, pia_get_output_a(3));
+			LOG(("Yamaha Write \n"));
+			break;
+	  	}
+	  	case 0x03:
+		{/* CA2 = 1 CB2 = 1? : The register will now be selected and the user can read from or write to it.  The register will remain selected until another is chosen.*/
+	  		AY8910_control_port_0_w(0, pia_get_output_a(3));
+			LOG(("Yamaha Select \n"));
+			break;
+	  	}
+		default:
+		{
+			LOG(("Yamaha error \n"));
+		}
 	}
 }
 
@@ -969,7 +976,7 @@ static const pia6821_interface pia_ic6_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ pia_ic6_porta_r, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ pia_ic6_porta_w, pia_ic6_portb_w, pia_ic6_ca2_w, pia_ic6_cb2_w,
-	/*irqs   : A/B             */ cpu0_irq, cpu0_irq
+	/*irqs   : A/B             */ 0, 0
 };
 
 static WRITE8_HANDLER( pia_ic7_porta_w )
@@ -1028,7 +1035,7 @@ static const pia6821_interface pia_ic7_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
 	/*outputs: A/B,CA/B2       */ pia_ic7_porta_w, pia_ic7_portb_w, pia_ic7_ca2_w, pia_ic7_cb2_w,
-	/*irqs   : A/B             */ cpu0_irq, cpu0_irq
+	/*irqs   : A/B             */ 0,0
 };
 
 static READ8_HANDLER( pia_ic8_porta_r )
@@ -1109,7 +1116,7 @@ static const pia6821_interface pia_ic8_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ pia_ic8_porta_r, 0, 0, 0, pia_ic8_ca2_r, pia_ic8_cb2_r,
 	/*outputs: A/B,CA/B2       */ 0, pia_ic8_portb_w, pia_ic8_ca2_w, pia_ic8_cb2_w,
-	/*irqs   : A/B             */ cpu0_irq, cpu0_irq
+	/*irqs   : A/B             */ 0,0
 };
 
 // \MPU4

@@ -32,7 +32,7 @@ TODO:
 #include "sound/dac.h"
 #include "sound/ay8910.h"
 #include "sound/3812intf.h"
-#include "render.h"
+#include "rendlay.h"
 #include "nbmj8688.lh"
 
 #define SIGNED_DAC	0		// 0:unsigned DAC, 1:signed DAC

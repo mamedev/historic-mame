@@ -527,7 +527,7 @@ int winwindow_video_window_create(int index, win_monitor_info *monitor, const wi
 	window->render_lock = osd_lock_alloc();
 
 	// load the layout
-	window->target = render_target_alloc(NULL, FALSE);
+	window->target = render_target_alloc(NULL, 0);
 	if (window->target == NULL)
 		goto error;
 	render_target_set_orientation(window->target, video_orientation);
@@ -736,11 +736,6 @@ static int create_window_class(void)
 #endif
 		wc.hCursor			= LoadCursor(NULL, IDC_ARROW);
 		wc.hIcon			= LoadIcon(NULL, IDI_APPLICATION);
-		wc.lpszMenuName		= NULL;
-		wc.hbrBackground	= NULL;
-		wc.style			= 0;
-		wc.cbClsExtra		= 0;
-		wc.cbWndExtra		= 0;
 
 		// register the class; fail if we can't
 		if (!RegisterClass(&wc))

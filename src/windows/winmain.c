@@ -22,9 +22,13 @@
 #include "window.h"
 #include "video.h"
 #include "input.h"
+#include "output.h"
 #include "config.h"
 #include "osdepend.h"
 
+#ifdef MESS
+#include "parallel.h"
+#endif
 
 #define ENABLE_PROFILER		0
 #define DEBUG_SLOW_LOCKS	0
@@ -76,7 +80,6 @@ static const char helpfile[] = "mess.chm";
 //============================================================
 
 static int check_for_double_click_start(int argc);
-static void osd_exit(void);
 static LONG CALLBACK exception_filter(struct _EXCEPTION_POINTERS *info);
 static const char *lookup_symbol(UINT32 address);
 static int get_code_base_size(UINT32 *base, UINT32 *size);
@@ -94,7 +97,11 @@ static void stop_profiler(void);
 #define main main_
 #endif
 
+#ifdef MESS
+int __declspec(dllexport) DECL_SPEC main_(int argc, char **argv)
+#else
 int main(int argc, char **argv)
+#endif
 {
 	int game_index;
 	char *ext;
@@ -128,9 +135,6 @@ int main(int argc, char **argv)
 	// parse config and cmdline options
 	game_index = cli_frontend_init(argc, argv);
 
-	// remember the initial LED states and init keyboard handle
-	start_led();
-
 	// have we decided on a game?
 	if (game_index != -1)
 	{
@@ -155,8 +159,7 @@ int main(int argc, char **argv)
 			timeEndPeriod(caps.wPeriodMin);
 	}
 
-	// restore the original LED state and close keyboard handle
-	stop_led();
+	// one last pass at events
 	winwindow_process_events(0);
 
 	// close errorlog, input and playback
@@ -206,26 +209,18 @@ int osd_init(void)
 	if (result == 0)
 		result = wininput_init();
 
-	add_exit_callback(osd_exit);
+	if (result == 0)
+		winoutput_init();
+
+#ifdef MESS
+	if (result == 0)
+		result = win_parallel_init();
+#endif
 
 	if (win_erroroslog)
 		add_logerror_callback(output_oslog);
 
 	return result;
-}
-
-
-
-//============================================================
-//  osd_exit
-//============================================================
-
-static void osd_exit(void)
-{
-	extern void win_shutdown_input(void);
-
-	win_shutdown_input();
-	osd_set_leds(0);
 }
 
 

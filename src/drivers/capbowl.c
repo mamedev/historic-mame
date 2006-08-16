@@ -124,7 +124,7 @@ static INTERRUPT_GEN( capbowl_interrupt )
 
 static void capbowl_update(int scan)
 {
-	force_partial_update(0, scan - 1);
+	video_screen_update_partial(0, scan - 1);
 	scan += 32;
 	if (scan > 240) scan = 32;
 	timer_set(cpu_getscanlinetime(scan), scan, capbowl_update);

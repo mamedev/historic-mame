@@ -69,14 +69,14 @@ static void pokechmp_draw_sprites( mame_bitmap *bitmap )
 					(spriteram[offs+1] & 0x70) >> 4,
 					flipx,flipy,
 					sx,sy,
-					&Machine->visible_area[0],TRANSPARENCY_PEN,0);
+					&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 		}
 	}
 }
 
 VIDEO_UPDATE( pokechmp )
 {
-	tilemap_draw(bitmap, &Machine->visible_area[0], bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, &Machine->screen[0].visarea, bg_tilemap, 0, 0);
 	pokechmp_draw_sprites(bitmap);
 	return 0;
 }

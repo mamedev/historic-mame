@@ -111,7 +111,7 @@ Colscroll effects?
 ***************************************************************************/
 
 #include "driver.h"
-#include "render.h"
+#include "rendlay.h"
 #include "cpu/m68000/m68000.h"
 #include "vidhrdw/taitoic.h"
 #include "sndhrdw/taitosnd.h"

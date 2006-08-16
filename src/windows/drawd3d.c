@@ -27,6 +27,7 @@
 
 // MAME headers
 #include "render.h"
+#include "rendutil.h"
 #include "options.h"
 
 // OSD headers

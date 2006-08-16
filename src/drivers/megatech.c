@@ -57,7 +57,7 @@ Mario Lemeux Hockey 171-5782    837-6963-59       610-0239-59          MPR-14376
 */
 #include "driver.h"
 #include "genesis.h"
-#include "render.h"
+#include "rendlay.h"
 
 /* Megatech BIOS specific */
 static unsigned int bios_port_ctrl;

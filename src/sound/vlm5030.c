@@ -604,7 +604,7 @@ void VLM5030_ST(int pin )
 #if 0
 /* show unsupported parameter message */
 if( chip->interp_step != 1)
-	ui_popup("No %d %dBPS parameter",table/2,chip->interp_step*2400);
+	popmessage("No %d %dBPS parameter",table/2,chip->interp_step*2400);
 #endif
 				}
 				VLM5030_update(chip);

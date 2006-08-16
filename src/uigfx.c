@@ -12,6 +12,7 @@
 #include "ui.h"
 #include "render.h"
 #include "rendfont.h"
+#include "rendutil.h"
 
 
 
@@ -974,9 +975,9 @@ static void tilemap_handle_keys(ui_gfx_state *state, int viswidth, int visheight
 	if (state->tilemap.zoom != oldstate.tilemap.zoom)
 	{
 		if (state->tilemap.zoom != 0)
-			ui_popup("Zoom = %d", state->tilemap.zoom);
+			popmessage("Zoom = %d", state->tilemap.zoom);
 		else
-			ui_popup("Zoom Auto");
+			popmessage("Zoom Auto");
 	}
 
 	/* handle rotation (R) */

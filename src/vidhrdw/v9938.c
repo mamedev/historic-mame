@@ -1293,9 +1293,9 @@ static void v9938_interrupt_start_vblank (void)
 	if (vdp.size != vdp.size_old)
 		{
 		if (vdp.size == RENDER_HIGH)
-			set_visible_area (0, 0, 512 + 32 - 1, 0, 424 + 56 - 1);
+			video_screen_set_visarea (0, 0, 512 + 32 - 1, 0, 424 + 56 - 1);
 		else
-			set_visible_area (0, 0, 256 + 16 - 1, 0, 212 + 28 - 1);
+			video_screen_set_visarea (0, 0, 256 + 16 - 1, 0, 212 + 28 - 1);
 
 		vdp.size_old = vdp.size;
 		}

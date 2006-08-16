@@ -73,8 +73,9 @@
 #include "8080bw.h"
 #include "includes/circus.h"
 #include "cpu/i8039/i8039.h"
-#include "render.h"
+#include "rendlay.h"
 
+#include "clowns.lh"
 #include "invaders.lh"
 #include "invad2ct.lh"
 #include "invrvnge.lh"
@@ -4324,7 +4325,7 @@ ROM_END
 /* 597 */ GAMEL(1975, gunfight, 0,        gunfight, gunfight, 8080bw,   ROT0,   "Midway", "Gun Fight", GAME_NO_SOUND, layout_hoffff20 )
 /* 605 */ GAME( 1976, tornbase, 0,        8080bw,   tornbase, 8080bw,	ROT0,   "Midway", "Tornado Baseball", GAME_NO_SOUND )
 /* 610 */ GAME( 1976, 280zzzap, 0,        280zzzap, 280zzzap, 8080bw,	ROT0,   "Midway", "Datsun 280 Zzzap", GAME_NO_SOUND )
-/* 611 */ GAME( 1976, maze,     0,        8080bw,   maze,     8080bw,	ROT0,   "Midway", "Amazing Maze", GAME_NO_SOUND )
+/* 611 */ GAMEL(1976, maze,     0,        8080bw,   maze,     8080bw,	ROT0,   "Midway", "Amazing Maze", GAME_NO_SOUND, layout_ho4f893d )
 /* 612 */ GAME( 1977, boothill, 0,        boothill, boothill, 8080bw,   ROT0,   "Midway", "Boot Hill" , GAME_IMPERFECT_SOUND )
 /* 615 */ GAME( 1977, checkmat, 0,        checkmat, checkmat, 8080bw,	ROT0,   "Midway", "Checkmate", GAME_NO_SOUND )
 /* 618 */ GAME( 1977, desertgu, 0,        desertgu, desertgu, desertgu,	ROT0,   "Midway", "Desert Gun", GAME_NO_SOUND )
@@ -4332,8 +4333,8 @@ ROM_END
 /* 622 */ GAME( 1977, lagunar,  0,        280zzzap, lagunar,  8080bw,   ROT90,  "Midway", "Laguna Racer", GAME_NO_SOUND )
 /* 623 */ GAME( 1977, gmissile, 0,        m4,       gmissile, 8080bw,   ROT0,   "Midway", "Guided Missile", GAME_NO_SOUND )
 /* 626 */ GAME( 1977, m4,       0,        m4,       m4,       8080bw,   ROT0,   "Midway", "M-4", GAME_NO_SOUND )
-/* 630 */ GAME( 1978, clowns,   0,        clowns,   clowns,   8080bw,   ROT0,   "Midway", "Clowns (rev. 2)", GAME_IMPERFECT_SOUND )
-/* 630 */ GAME( 1978, clowns1,  clowns,   clowns,   clowns1,  8080bw,   ROT0,   "Midway", "Clowns (rev. 1)", GAME_IMPERFECT_SOUND )
+/* 630 */ GAMEL(1978, clowns,   0,        clowns,   clowns,   8080bw,   ROT0,   "Midway", "Clowns (rev. 2)", GAME_IMPERFECT_SOUND, layout_clowns )
+/* 630 */ GAMEL(1978, clowns1,  clowns,   clowns,   clowns1,  8080bw,   ROT0,   "Midway", "Clowns (rev. 1)", GAME_IMPERFECT_SOUND, layout_clowns )
 /* 640                                                                          "Midway", "Space Walk" */
 /* 642 */ GAME( 1978, einnings, 0,        m4,       einnings, 8080bw,	ROT0,   "Midway", "Extra Inning", GAME_NO_SOUND )
 /* 643 */ GAME( 1978, shuffle,  0,        shuffle,  shuffle,  8080bw,	ROT90,  "Midway", "Shuffleboard", GAME_NO_SOUND )

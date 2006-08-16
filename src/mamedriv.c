@@ -2118,6 +2118,7 @@ V-V                           TP-027
 	DRIVER( tornado1 )	/* bootleg */
 	DRIVER( tornado2 )	/* bootleg */
 	DRIVER( zero )		/* bootleg */
+	DRIVER( zero2 )		/* bootleg */
 	DRIVER( defcmnd )	/* bootleg */
 	DRIVER( defence )	/* bootleg */
 	DRIVER( startrkd )	/* bootleg */
@@ -4562,6 +4563,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( asterock )	/* Sidam bootleg    (c) 1979 */
 	DRIVER( meteorts )	/* VCC bootleg      (c) 1979 */
 	DRIVER( astdelux )	/* 0351xx           (c) 1980 */
+	DRIVER( astdelu2 )	/* 0351xx           (c) 1980 */
 	DRIVER( astdelu1 )	/* 0351xx           (c) 1980 */
 	DRIVER( bzone )		/* 0364xx           (c) 1980 */
 	DRIVER( bzone2 )	/* 0364xx           (c) 1980 */
@@ -6314,6 +6316,7 @@ Other Sun games
 	DRIVER( hardhea2 )	/* (c) 1991 SunA */
 	DRIVER( brickzn )	/* (c) 1992 SunA */
 	DRIVER( brickzn3 )	/* (c) 1992 SunA */
+	DRIVER( sunaq )		/* (c) 1994 SunA */
 	DRIVER( bssoccer )	/* (c) 1996 SunA */
 	DRIVER( uballoon )	/* (c) 1996 SunA */
 
@@ -7017,6 +7020,7 @@ Other Sun games
 	DRIVER( lottof2 )	/* (c) 1993 HAR */
 	DRIVER( fredmem )	/* (c) 1993 HAR */
 	DRIVER( f15se )		/* (c) 1991 Microprose */
+	DRIVER( f15se21 )	/* (c) 1991 Microprose */
 	DRIVER( botss )		/* (c) 1992 Microprose */
 	DRIVER( stankatk )	/* (c) 1992 Microprose */
 	DRIVER( dynadice )	/* ? */

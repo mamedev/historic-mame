@@ -21,7 +21,7 @@ extern void decrypt156(void);
 #include "sound/ymz280b.h"
 #include "cpu/arm/arm.h"
 #include "deco16ic.h"
-#include "render.h"
+#include "rendlay.h"
 
 UINT32 *backfire_spriteram32_1;
 UINT32 *backfire_spriteram32_2;

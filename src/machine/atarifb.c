@@ -7,7 +7,6 @@
 #include "driver.h"
 #include "atarifb.h"
 #include "sound/discrete.h"
-#include "render.h"
 
 static int CTRLD;
 static int sign_x_1, sign_y_1;
@@ -87,21 +86,21 @@ WRITE8_HANDLER( atarifb_out3_w )
 	{
 		case 0x00:
 			/* Player 1 play select lamp */
-			atarifb_lamp1 = data;
-			render_view_item_set_state("ledleft0", (atarifb_lamp1 >> 0) & 1);
-			render_view_item_set_state("ledleft1", (atarifb_lamp1 >> 1) & 1);
-			render_view_item_set_state("ledleft2", (atarifb_lamp1 >> 2) & 1);
-			render_view_item_set_state("ledleft3", (atarifb_lamp1 >> 3) & 1);
+			output_set_value("ledleft0", (data >> 0) & 1);
+			output_set_value("ledleft1", (data >> 1) & 1);
+			output_set_value("ledleft2", (data >> 2) & 1);
+			output_set_value("ledleft3", (data >> 3) & 1);
+			output_set_value("ledleft4", (data >> 4) & 1);
 			break;
 		case 0x01:
 			break;
 		case 0x02:
 			/* Player 2 play select lamp */
-			atarifb_lamp2 = data;
-			render_view_item_set_state("ledright0", (atarifb_lamp2 >> 0) & 1);
-			render_view_item_set_state("ledright1", (atarifb_lamp2 >> 1) & 1);
-			render_view_item_set_state("ledright2", (atarifb_lamp2 >> 2) & 1);
-			render_view_item_set_state("ledright3", (atarifb_lamp2 >> 3) & 1);
+			output_set_value("ledright0", (data >> 0) & 1);
+			output_set_value("ledright1", (data >> 1) & 1);
+			output_set_value("ledright2", (data >> 2) & 1);
+			output_set_value("ledright3", (data >> 3) & 1);
+			output_set_value("ledright4", (data >> 4) & 1);
 			break;
 		case 0x03:
 			break;

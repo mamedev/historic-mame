@@ -250,7 +250,7 @@ static void williams_va11_callback(int scanline)
 	pia_1_cb1_w(0, scanline & 0x20);
 
 	/* update the screen while we're here */
-	force_partial_update(0, scanline - 1);
+	video_screen_update_partial(0, scanline - 1);
 
 	/* set a timer for the next update */
 	scanline += 8;
@@ -351,7 +351,7 @@ static void williams2_va11_callback(int scanline)
 	pia_1_ca1_w(0, scanline & 0x20);
 
 	/* update the screen while we're here */
-	force_partial_update(0, scanline);
+	video_screen_update_partial(0, scanline);
 
 	/* set a timer for the next update */
 	scanline += 8;

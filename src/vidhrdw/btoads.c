@@ -77,7 +77,7 @@ WRITE16_HANDLER( btoads_display_control_w )
 	if (ACCESSING_MSB)
 	{
 		/* allow multiple changes during display */
-		force_partial_update(0, cpu_getscanline() - 1);
+		video_screen_update_partial(0, cpu_getscanline() - 1);
 
 		/* bit 15 controls which page is rendered and which page is displayed */
 		if (data & 0x8000)
@@ -107,7 +107,7 @@ WRITE16_HANDLER( btoads_display_control_w )
 WRITE16_HANDLER( btoads_scroll0_w )
 {
 	/* allow multiple changes during display */
-	force_partial_update(0, cpu_getscanline() - 1);
+	video_screen_update_partial(0, cpu_getscanline() - 1);
 
 	/* upper bits are Y scroll, lower bits are X scroll */
 	if (ACCESSING_MSB)
@@ -120,7 +120,7 @@ WRITE16_HANDLER( btoads_scroll0_w )
 WRITE16_HANDLER( btoads_scroll1_w )
 {
 	/* allow multiple changes during display */
-	force_partial_update(0, cpu_getscanline() - 1);
+	video_screen_update_partial(0, cpu_getscanline() - 1);
 
 	/* upper bits are Y scroll, lower bits are X scroll */
 	if (ACCESSING_MSB)

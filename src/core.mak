@@ -39,10 +39,13 @@ COREOBJS = \
 	$(OBJ)/md5.o \
 	$(OBJ)/memory.o \
 	$(OBJ)/options.o \
+	$(OBJ)/output.o \
 	$(OBJ)/palette.o \
 	$(OBJ)/png.o \
 	$(OBJ)/render.o \
 	$(OBJ)/rendfont.o \
+	$(OBJ)/rendlay.o \
+	$(OBJ)/rendutil.o \
 	$(OBJ)/restrack.o \
 	$(OBJ)/romload.o \
 	$(OBJ)/sha1.o \
@@ -85,7 +88,7 @@ endif
 # core layouts
 #-------------------------------------------------
 
-$(OBJ)/render.o:	$(OBJ)/layout/dualhovu.lh \
+$(OBJ)/rendlay.o:	$(OBJ)/layout/dualhovu.lh \
 					$(OBJ)/layout/dualhsxs.lh \
 					$(OBJ)/layout/dualhuov.lh \
 					$(OBJ)/layout/horizont.lh \
@@ -93,11 +96,14 @@ $(OBJ)/render.o:	$(OBJ)/layout/dualhovu.lh \
 					$(OBJ)/layout/vertical.lh \
 					$(OBJ)/layout/ho20ffff.lh \
 					$(OBJ)/layout/ho2eff2e.lh \
+					$(OBJ)/layout/ho4f893d.lh \
 					$(OBJ)/layout/ho88ffff.lh \
 					$(OBJ)/layout/hoa0a0ff.lh \
 					$(OBJ)/layout/hoffe457.lh \
 					$(OBJ)/layout/hoffff20.lh \
 					$(OBJ)/layout/voffff20.lh \
+
+$(OBJ)/video.o:		$(OBJ)/layout/snap.lh
 
 
 
@@ -132,4 +138,4 @@ endif
 # set of tool targets
 #-------------------------------------------------
 
-TOOLS = romcmp$(EXE) chdman$(EXE) jedutil$(EXE)
+TOOLS += romcmp$(EXE) chdman$(EXE) jedutil$(EXE)

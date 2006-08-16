@@ -72,7 +72,7 @@ VIDEO_START( ccastles )
 
 WRITE8_HANDLER( ccastles_hscroll_w )
 {
-	force_partial_update(0, cpu_getscanline());
+	video_screen_update_partial(0, cpu_getscanline());
 	hscroll = data;
 }
 

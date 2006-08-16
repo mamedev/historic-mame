@@ -464,7 +464,7 @@ static struct IremGA20_interface iremGA20_interface =
 static INTERRUPT_GEN( m107_interrupt )
 {
 	m107_vblank=0;
-	force_partial_update(0, 248+128);
+	video_screen_update_partial(0, 248+128);
 	cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, m107_IRQ_0); /* VBL */
 }
 
@@ -482,7 +482,7 @@ static INTERRUPT_GEN( m107_raster_interrupt )
 
 	/* Raster interrupt */
 	if (raster_enable && line==m107_raster_irq_position) {
-		force_partial_update(0, line);
+		video_screen_update_partial(0, line);
 		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, m107_IRQ_2);
 	}
 
@@ -494,7 +494,7 @@ static INTERRUPT_GEN( m107_raster_interrupt )
 
 	/* Redraw screen, then set vblank and trigger the VBL interrupt */
 	else if (line==248) {
-		force_partial_update(0, 248);
+		video_screen_update_partial(0, 248);
 		m107_vblank=1;
 		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, m107_IRQ_0);
 	}

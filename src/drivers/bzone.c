@@ -202,7 +202,7 @@
 #include "machine/atari_vg.h"
 #include "sound/pokey.h"
 #include "sound/custom.h"
-#include "render.h"
+#include "rendlay.h"
 #include "bzone.h"
 
 #include "bzone.lh"

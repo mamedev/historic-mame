@@ -606,33 +606,42 @@ static int BD1_setdata(int id, int segdata, int data)
 void draw_16seg(mame_bitmap *bitmap,int x,int y,int vfd, int col_on, int col_off )
 {
 	int cursor;
-	int i;
 
 	for (cursor = 0; cursor < 16; cursor++)
 	{
-		plot_box(bitmap, x+(7*cursor), y+1, 1, 9.5, (vfd_get_segments(vfd)[cursor] & 0x0001) ? col_on : col_off);//0
-		plot_box(bitmap, x+4+(7*cursor), y+1, 1, 9.5, (vfd_get_segments(vfd)[cursor] & 0x0002) ? col_on : col_off);//1
-		plot_box(bitmap, x+(7*cursor), y, 4, 1, (vfd_get_segments(vfd)[cursor] & 0x0004) ? col_on : col_off);//2
-		plot_box(bitmap, x+2+(7*cursor), y+1, 1, 9.5, (vfd_get_segments(vfd)[cursor] & 0x0008) ? col_on : col_off);//3
-		plot_box(bitmap, x+4+(7*cursor), y+10.5, 1, 9.5, (vfd_get_segments(vfd)[cursor] & 0x0020) ? col_on : col_off);//5
+		plot_box(bitmap, x+(18*cursor), y+2, 1, 9, (vfd_get_segments(vfd)[cursor] & 0x0001) ? col_on : col_off);//0
+		plot_box(bitmap, x+12+(18*cursor), y+2, 1, 9, (vfd_get_segments(vfd)[cursor] & 0x0002) ? col_on : col_off);//1
+		plot_box(bitmap, x+1+(18*cursor), y, 9, 1, (vfd_get_segments(vfd)[cursor] & 0x0004) ? col_on : col_off);//2
+		plot_box(bitmap, x+6+(18*cursor), y+2, 1, 9, (vfd_get_segments(vfd)[cursor] & 0x0008) ? col_on : col_off);//3
 
-		for (i = 0; i < 11; i++)
-		{
-			plot_box(bitmap, x+0+(i/5)+(7*cursor), y+20-(i*0.95), 1, 1, (vfd_get_segments(vfd)[cursor] & 0x0010) ? col_on : col_off);//4
-			plot_box(bitmap, x+2-(i/5)+(7*cursor), y+10.5-(i*0.95), 1, 1, (vfd_get_segments(vfd)[cursor] & 0x0040) ? col_on : col_off);//6
-			plot_box(bitmap, x+2+(i/5)+(7*cursor), y+10.5-(i*0.95), 1, 1, (vfd_get_segments(vfd)[cursor] & 0x0080) ? col_on : col_off);//7
-			plot_box(bitmap, x+4-(i/5)+(7*cursor), y+20-(i*0.95), 1, 1, (vfd_get_segments(vfd)[cursor] & 0x0800) ? col_on : col_off);//11
-		}
+		plot_box(bitmap, x+5+(18*cursor), y+14, 1, 2, (vfd_get_segments(vfd)[cursor] & 0x0010) ? col_on : col_off);//4
+		plot_box(bitmap, x+4+(18*cursor), y+16, 1, 5, (vfd_get_segments(vfd)[cursor] & 0x0010) ? col_on : col_off);//4 first step
+		plot_box(bitmap, x+3+(18*cursor), y+21, 1, 3, (vfd_get_segments(vfd)[cursor] & 0x0010) ? col_on : col_off);//4 second step
 
-		plot_box(bitmap, x+(7*cursor), y+20, 4, 1, (vfd_get_segments(vfd)[cursor] & 0x0200) ? col_on : col_off);//8
-		plot_box(bitmap, x+2+(7*cursor), y+11.5, 1, 9.5, (vfd_get_segments(vfd)[cursor] & 0x0400) ? col_on : col_off);//10
-		plot_box(bitmap, x+5+(7*cursor), y+18, 1, 3, (vfd_get_segments(vfd)[cursor] & 0x1000) ? col_on : col_off);//12
-		plot_box(bitmap, x+6+(7*cursor), y+19, 1, 3, (vfd_get_segments(vfd)[cursor] & 0x1000) ? col_on : col_off);//12
-		plot_box(bitmap, x+7+(7*cursor), y+22, 1, 1, (vfd_get_segments(vfd)[cursor] & 0x1000) ? col_on : col_off);//12
-		plot_box(bitmap, x+(7*cursor), y+10.5, 1, 9.5, (vfd_get_segments(vfd)[cursor] & 0x2000) ? col_on : col_off);//13
+		plot_box(bitmap, x+12+(18*cursor), y+15, 1, 9, (vfd_get_segments(vfd)[cursor] & 0x0020) ? col_on : col_off);//5
 
-		plot_box(bitmap, x+2+(7*cursor), y+10.5, 2, 1, (vfd_get_segments(vfd)[cursor] & 0x4000) ? col_on : col_off);//14
-		plot_box(bitmap, x+(7*cursor), y+10.5, 2, 1, (vfd_get_segments(vfd)[cursor] & 0x8000) ? col_on : col_off);//15
+		plot_box(bitmap, x+5+(18*cursor), y+10, 1, 2, (vfd_get_segments(vfd)[cursor] & 0x0040) ? col_on : col_off);//6
+		plot_box(bitmap, x+4+(18*cursor), y+9, 1, 5, (vfd_get_segments(vfd)[cursor] & 0x0040) ? col_on : col_off);//6 first step
+		plot_box(bitmap, x+3+(18*cursor), y+4, 1, 3, (vfd_get_segments(vfd)[cursor] & 0x0040) ? col_on : col_off);//6 second step
+
+		plot_box(bitmap, x+7+(18*cursor), y+10, 1, 2, (vfd_get_segments(vfd)[cursor] & 0x0080) ? col_on : col_off);//7
+		plot_box(bitmap, x+8+(18*cursor), y+9, 1, 5, (vfd_get_segments(vfd)[cursor] & 0x0080) ? col_on : col_off);//7
+		plot_box(bitmap, x+9+(18*cursor), y+4, 1, 3, (vfd_get_segments(vfd)[cursor] & 0x0080) ? col_on : col_off);//7
+
+		plot_box(bitmap, x+7+(18*cursor), y+14, 1, 2, (vfd_get_segments(vfd)[cursor] & 0x0800) ? col_on : col_off);//7
+		plot_box(bitmap, x+8+(18*cursor), y+16, 1, 5, (vfd_get_segments(vfd)[cursor] & 0x0800) ? col_on : col_off);//7
+		plot_box(bitmap, x+9+(18*cursor), y+21, 1, 3, (vfd_get_segments(vfd)[cursor] & 0x0800) ? col_on : col_off);//7
+		plot_box(bitmap, x+6+(18*cursor), y+14, 1, 9, (vfd_get_segments(vfd)[cursor] & 0x0400) ? col_on : col_off);//10
+
+		plot_box(bitmap, x+(18*cursor), y+14, 1, 9, (vfd_get_segments(vfd)[cursor] & 0x2000) ? col_on : col_off);//13
+		plot_box(bitmap, x+15+(18*cursor), y+24, 1, 3, (vfd_get_segments(vfd)[cursor] & 0x1000) ? col_on : col_off);//12
+		plot_box(bitmap, x+16+(18*cursor), y+25, 1, 3, (vfd_get_segments(vfd)[cursor] & 0x1000) ? col_on : col_off);//12
+		plot_box(bitmap, x+17+(18*cursor), y+28, 1, 1, (vfd_get_segments(vfd)[cursor] & 0x1000) ? col_on : col_off);//12
+
+		plot_box(bitmap, x+(18*cursor), y+24, 10, 1, (vfd_get_segments(vfd)[cursor] & 0x0200) ? col_on : col_off);//8
+
+		plot_box(bitmap, x+7+(18*cursor), y+13, 4, 1, (vfd_get_segments(vfd)[cursor] & 0x4000) ? col_on : col_off);//14
+		plot_box(bitmap, x+(18*cursor), y+13, 4, 1, (vfd_get_segments(vfd)[cursor] & 0x8000) ? col_on : col_off);//15
 
 		if (vfd_get_segments(vfd)[cursor] & 0x0100)
 				{
@@ -642,6 +651,5 @@ void draw_16seg(mame_bitmap *bitmap,int x,int y,int vfd, int col_on, int col_off
 				{
 					//deactivate flashing (unimplemented)
 				}
-
 	}
 }

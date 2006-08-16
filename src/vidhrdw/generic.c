@@ -309,6 +309,9 @@ void generic_video_init(void)
 	dirtybuffer32 = NULL;
 	tmpbitmap = NULL;
 	flip_screen_x = flip_screen_y = 0;
+
+	/* force the first update to be full */
+	set_vh_global_attribute(NULL, 0);
 }
 
 
@@ -606,7 +609,7 @@ static void updateflip(void)
 		visarea.max_y = temp;
 	}
 
-	configure_screen(0, state->width, state->height, &visarea, state->refresh);
+	video_screen_configure(0, state->width, state->height, &visarea, state->refresh);
 }
 
 

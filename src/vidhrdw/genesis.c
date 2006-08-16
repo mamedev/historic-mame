@@ -277,7 +277,7 @@ int start_system18_vdp(void)
 void segac2_enable_display(int enable)
 {
 	if (!cpu_getvblank())
-		force_partial_update(0, cpu_getscanline());
+		video_screen_update_partial(0, cpu_getscanline());
 	display_enable = enable;
 }
 
@@ -511,7 +511,7 @@ static void vdp_data_w(int data)
 			if (!cpu_getvblank() &&
 				vdp_address >= vdp_hscrollbase &&
 				vdp_address < vdp_hscrollbase + vdp_hscrollsize)
-				force_partial_update(0, cpu_getscanline());
+				video_screen_update_partial(0, cpu_getscanline());
 
 			/* write to VRAM */
 			if (vdp_address & 1)
@@ -539,7 +539,7 @@ static void vdp_data_w(int data)
 
 			/* if the vscroll RAM is changing during screen refresh, force an update */
 			if (!cpu_getvblank())
-				force_partial_update(0, cpu_getscanline());
+				video_screen_update_partial(0, cpu_getscanline());
 
 			/* write to VSRAM */
 			if (vdp_address & 1)
@@ -655,7 +655,7 @@ static void vdp_register_w(int data, int vblank)
 	/* these are mostly important writes; force an update if they */
 	/* are written during a screen refresh */
 	if (!vblank && is_important[regnum])
-		force_partial_update(0, cpu_getscanline());
+		video_screen_update_partial(0, cpu_getscanline());
 
 	/* For quite a few of the registers its a good idea to set a couple of variable based
        upon the writes here */
@@ -723,7 +723,7 @@ static void vdp_register_w(int data, int vblank)
 
 				/* this gets called from the init! */
 				visarea.max_x = scrwidth*8-1;
-				configure_screen(genesis_screen_number, scrwidth*8, state->height, &visarea, state->refresh);
+				video_screen_configure(genesis_screen_number, scrwidth*8, state->height, &visarea, state->refresh);
 			}
 			break;
 

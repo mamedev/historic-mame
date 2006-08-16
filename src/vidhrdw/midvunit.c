@@ -1071,7 +1071,7 @@ WRITE32_HANDLER( midvunit_page_control_w )
 		polycount = pixelcount = 0;
 		framecount++;
 #endif
-		force_partial_update(0, cpu_getscanline() - 1);
+		video_screen_update_partial(0, cpu_getscanline() - 1);
 	}
 	page_control = data;
 }

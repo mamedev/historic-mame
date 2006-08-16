@@ -140,15 +140,13 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "rendlay.h"
 #include "vidhrdw/vector.h"
 #include "vidhrdw/avgdvg.h"
 #include "machine/atari_vg.h"
 #include "asteroid.h"
 #include "sound/discrete.h"
 #include "sound/pokey.h"
-#include "render.h"
-
-
 
 /*************************************
  *
@@ -178,7 +176,7 @@ static WRITE8_HANDLER( llander_led_w )
     int i;
 
     for (i = 0; i < 5; i++)
-		render_view_item_set_state(lampname[i], (data >> (4 - i)) & 1);
+		output_set_value(lampname[i], (data >> (4 - i)) & 1);
 }
 
 
@@ -692,7 +690,6 @@ ROM_START( asteroid )
 	ROM_LOAD( "035127.02",    0x5000, 0x0800, CRC(8b71fd9e) SHA1(8cd5005e531eafa361d6b7e9eed159d164776c70) )
 ROM_END
 
-
 ROM_START( asteroi1 )
 	ROM_REGION( 0x8000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "035145.01",    0x6800, 0x0800, CRC(e9bfda64) SHA1(291dc567ebb31b35df83d9fb87f4080f251ff9c8) )
@@ -702,7 +699,6 @@ ROM_START( asteroi1 )
 	ROM_LOAD( "035127.01",    0x5000, 0x0800, CRC(99699366) SHA1(9b2828fc1cef7727f65fa65e1e11e309b7c98792) )
 ROM_END
 
-
 ROM_START( asteroib )
 	ROM_REGION( 0x8000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "035145ll.bin", 0x6800, 0x0800, CRC(605fc0f2) SHA1(8d897a3b75bd1f2537470f0a34a97a8c0853ee08) )
@@ -711,7 +707,6 @@ ROM_START( asteroib )
 	/* Vector ROM */
 	ROM_LOAD( "035127.02",    0x5000, 0x0800, CRC(8b71fd9e) SHA1(8cd5005e531eafa361d6b7e9eed159d164776c70) )
 ROM_END
-
 
 ROM_START( asterock )
 	ROM_REGION( 0x8000, REGION_CPU1, 0 )	/* 64k for code */
@@ -725,7 +720,6 @@ ROM_START( asterock )
 	ROM_LOAD( "sidamas.0",    0x5000, 0x0400, CRC(6bd2053f) SHA1(790f2858f44bbb1854e2d9d549e29f4815c4665b) )
 	ROM_LOAD( "sidamas.1",    0x5400, 0x0400, CRC(231ce201) SHA1(710f4c19864d725ba1c9ea447a97e84001a679f7) )
 ROM_END
-
 
 ROM_START( meteorts )
 	ROM_REGION( 0x8000, REGION_CPU1, 0 )	/* 64k for code */
@@ -751,13 +745,64 @@ ROM_START( astdelux )
 	ROM_LOAD( "034602.bin",   0x0000, 0x0100, CRC(97953db8) SHA1(8cbded64d1dd35b18c4d5cece00f77e7b2cab2ad) )
 ROM_END
 
-
-ROM_START( astdelu1 )
+ROM_START( astdelu2 )
 	ROM_REGION( 0x8000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "036430.01",    0x6000, 0x0800, CRC(8f5dabc6) SHA1(5d7543e19acab99ddb63c0ffd60f54d7a0f267f5) )
 	ROM_LOAD( "036431.01",    0x6800, 0x0800, CRC(157a8516) SHA1(9041d8c2369d004f198681e02b59a923fa8f70c9) )
 	ROM_LOAD( "036432.01",    0x7000, 0x0800, CRC(fdea913c) SHA1(ded0138a20d80317d67add5bb2a64e6274e0e409) )
 	ROM_LOAD( "036433.02",    0x7800, 0x0800, CRC(d8db74e3) SHA1(52b64e867df98d14742eb1817b59931bb7f941d9) )
+	/* Vector ROM */
+	ROM_LOAD( "036800.01",    0x4800, 0x0800, CRC(3b597407) SHA1(344fea2e5d84acce365d76daed61e96b9b6b37cc) )
+	ROM_LOAD( "036799.01",    0x5000, 0x0800, CRC(7d511572) SHA1(1956a12bccb5d3a84ce0c1cc10c6ad7f64e30b40) )
+
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )
+	ROM_LOAD( "034602.bin",   0x0000, 0x0100, CRC(97953db8) SHA1(8cbded64d1dd35b18c4d5cece00f77e7b2cab2ad) )
+ROM_END
+
+/***************************************************************************
+
+Asteroids Deluxe revision 1 romset
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+I have had a number of Asteroids deluxe pcbs pass through my hands, every one i have come across has had
+a revision -01 marked romset apart from the rom at J1, this is always marked -02.
+
+This revision 2 rom in that location works fine, and i believe was a
+factory upgrade, and production fit on 99% of pcbs.
+
+This pcb was from a cabinet with a serial number of 000967, so its an early one, and
+it has a completely -01 romset on the pcb.
+
+Coincidentally i went through a pile of my manuals and came across some service bulletins which might
+explain why there is this mismatch in revision numbers, it seems Atari released the game, and found
+they needed to change default settings becasue of earnings potential in their default
+first set (revision 1), not once, but twice! then they changed the romset altogether. The documents
+in question are CO-174-02 (2 pages, 3 sides). this document shows what i think was the final revision
+of roms to be produced, they consist of a wholly -02 romset, with the expection being a -03 rom at
+location J1.
+
+So, anyhow, find in this file, the FIRST revision of rom -01 in J1. This pcb contained the following
+roms in the following locations :
+
+all roms are TMS 2516, marked with silver atari labels 'ATARI 8105 ' then the info below:
+
+R2   = 036800 01E
+N/P2 = 036799 01E
+J1   = 036433 01E
+F/H1 = 036432 01E
+E/F1 = 036431 01E
+D1   = 036430 01E
+
+Dumped 24/08/05
+by Andy Welburn
+www.andys-arcade.com
+*/
+ROM_START( astdelu1 )
+	ROM_REGION( 0x8000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "036430.01",    0x6000, 0x0800, CRC(8f5dabc6) SHA1(5d7543e19acab99ddb63c0ffd60f54d7a0f267f5) )
+	ROM_LOAD( "036431.01",    0x6800, 0x0800, CRC(157a8516) SHA1(9041d8c2369d004f198681e02b59a923fa8f70c9) )
+	ROM_LOAD( "036432.01",    0x7000, 0x0800, CRC(fdea913c) SHA1(ded0138a20d80317d67add5bb2a64e6274e0e409) )
+	ROM_LOAD( "036433.01",    0x7800, 0x0800, CRC(ef09bac7) SHA1(6a4b37dbfe4e6badc4e81036b1430da2e9cb8ca4) )
 	/* Vector ROM */
 	ROM_LOAD( "036800.01",    0x4800, 0x0800, CRC(3b597407) SHA1(344fea2e5d84acce365d76daed61e96b9b6b37cc) )
 	ROM_LOAD( "036799.01",    0x5000, 0x0800, CRC(7d511572) SHA1(1956a12bccb5d3a84ce0c1cc10c6ad7f64e30b40) )
@@ -780,7 +825,6 @@ ROM_START( llander )
 	/* Unfortunately, is it not currently available. */
 	ROM_LOAD( "034597.01",    0x5800, 0x0800, NO_DUMP )
 ROM_END
-
 
 ROM_START( llander1 )
 	ROM_REGION( 0x8000, REGION_CPU1, 0 )	/* 64k for code */
@@ -813,7 +857,6 @@ static DRIVER_INIT( asteroib )
 
 static DRIVER_INIT( asterock )
 {
-
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x2007, 0, 0, asterock_IN0_r);
 }
 
@@ -830,7 +873,8 @@ GAME( 1979, asteroi1, asteroid, asteroid, asteroid, 0,        ROT0, "Atari", "As
 GAME( 1979, asteroib, asteroid, asteroid, asteroib, asteroib, ROT0, "bootleg", "Asteroids (bootleg on Lunar Lander hardware)", 0 )
 GAME( 1979, asterock, asteroid, asterock, asterock, asterock, ROT0, "Sidam", "Asterock", 0 )
 GAME( 1979, meteorts, asteroid, asteroid, asteroid, 0,        ROT0, "VGG",   "Meteorites", 0 )
-GAMEL(1980, astdelux, 0,        astdelux, astdelux, 0,        ROT0, "Atari", "Asteroids Deluxe (rev 2)", 0, layout_ho88ffff )
+GAMEL(1980, astdelux, 0,        astdelux, astdelux, 0,        ROT0, "Atari", "Asteroids Deluxe (rev 3)", 0, layout_ho88ffff )
+GAMEL(1980, astdelu2, astdelux, astdelux, astdelux, 0,        ROT0, "Atari", "Asteroids Deluxe (rev 2)", 0, layout_ho88ffff )
 GAMEL(1980, astdelu1, astdelux, astdelux, astdelux, 0,        ROT0, "Atari", "Asteroids Deluxe (rev 1)", 0, layout_ho88ffff )
 GAME( 1979, llander,  0,        llander,  llander,  0,        ROT0, "Atari", "Lunar Lander (rev 2)", 0 )
 GAME( 1979, llander1, llander,  llander,  llander1, 0,        ROT0, "Atari", "Lunar Lander (rev 1)", 0 )

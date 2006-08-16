@@ -221,7 +221,7 @@ static void coolpool_dpyint_callback(int scanline)
 	/* log when we got the DPYINT so that changes are tagged to this scanline */
 	last_dpyint = scanline + 1;
 	if (scanline < Machine->screen[0].visarea.max_y)
-		force_partial_update(0, scanline);
+		video_screen_update_partial(0, scanline);
 }
 
 

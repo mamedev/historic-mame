@@ -498,7 +498,7 @@ void segaic16_set_display_enable(int enable)
 	enable = (enable != 0);
 	if (segaic16_display_enable != enable)
 	{
-		force_partial_update(0, cpu_getscanline());
+		video_screen_update_partial(0, cpu_getscanline());
 		segaic16_display_enable = enable;
 	}
 }
@@ -1349,7 +1349,7 @@ void segaic16_tilemap_set_bank(int which, int banknum, int offset)
 
 	if (info->bank[banknum] != offset)
 	{
-		force_partial_update(0, cpu_getscanline());
+		video_screen_update_partial(0, cpu_getscanline());
 		info->bank[banknum] = offset;
 		tilemap_mark_all_tiles_dirty(NULL);
 	}
@@ -1371,7 +1371,7 @@ void segaic16_tilemap_set_flip(int which, int flip)
 	flip = (flip != 0);
 	if (info->flip != flip)
 	{
-		force_partial_update(0, cpu_getscanline());
+		video_screen_update_partial(0, cpu_getscanline());
 		info->flip = flip;
 		tilemap_set_flip(info->textmap, flip ? (TILEMAP_FLIPX | TILEMAP_FLIPY) : 0);
 		for (pagenum = 0; pagenum < info->numpages; pagenum++)
@@ -1394,7 +1394,7 @@ void segaic16_tilemap_set_rowscroll(int which, int enable)
 	enable = (enable != 0);
 	if (info->rowscroll != enable)
 	{
-		force_partial_update(0, cpu_getscanline());
+		video_screen_update_partial(0, cpu_getscanline());
 		info->rowscroll = enable;
 	}
 }
@@ -1414,7 +1414,7 @@ void segaic16_tilemap_set_colscroll(int which, int enable)
 	enable = (enable != 0);
 	if (info->colscroll != enable)
 	{
-		force_partial_update(0, cpu_getscanline());
+		video_screen_update_partial(0, cpu_getscanline());
 		info->colscroll = enable;
 	}
 }
@@ -1438,7 +1438,7 @@ WRITE16_HANDLER( segaic16_textram_0_w )
 {
 	/* certain ranges need immediate updates */
 	if (offset >= 0xe80/2)
-		force_partial_update(0, cpu_getscanline());
+		video_screen_update_partial(0, cpu_getscanline());
 
 	COMBINE_DATA(&segaic16_textram_0[offset]);
 	tilemap_mark_tile_dirty(bg_tilemap[0].textmap, offset);
@@ -2765,7 +2765,7 @@ void segaic16_sprites_set_bank(int which, int banknum, int offset)
 
 	if (info->bank[banknum] != offset)
 	{
-		force_partial_update(0, cpu_getscanline());
+		video_screen_update_partial(0, cpu_getscanline());
 		info->bank[banknum] = offset;
 	}
 }
@@ -2785,7 +2785,7 @@ void segaic16_sprites_set_flip(int which, int flip)
 	flip = (flip != 0);
 	if (info->flip != flip)
 	{
-		force_partial_update(0, cpu_getscanline());
+		video_screen_update_partial(0, cpu_getscanline());
 		info->flip = flip;
 	}
 }
@@ -2805,7 +2805,7 @@ void segaic16_sprites_set_shadow(int which, int shadow)
 	shadow = (shadow != 0);
 	if (info->shadow != shadow)
 	{
-		force_partial_update(0, cpu_getscanline());
+		video_screen_update_partial(0, cpu_getscanline());
 		info->shadow = shadow;
 	}
 }

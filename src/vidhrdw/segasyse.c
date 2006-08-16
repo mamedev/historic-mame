@@ -395,7 +395,7 @@ void segae_drawscanline(int line, int chips, int blank)
 
 	UINT8* dest;
 
-	if (skip_this_frame())
+	if (video_skip_this_frame())
 		return;
 
 	dest = cache_bitmap + (16+256+16) * line;

@@ -434,11 +434,11 @@ static void DebugCheckKeys( void )
 	}
 	if( m_b_debugmesh || m_b_debugtexture )
 	{
-		set_visible_area(0,  0, Machine->screen[0].width - 1, 0, Machine->screen[0].height - 1 );
+		video_screen_set_visarea(0,  0, Machine->screen[0].width - 1, 0, Machine->screen[0].height - 1 );
 	}
 	else
 	{
-		set_visible_area(0,  0, m_n_screenwidth - 1, 0, m_n_screenheight - 1 );
+		video_screen_set_visarea(0,  0, m_n_screenwidth - 1, 0, m_n_screenheight - 1 );
 	}
 
 	if( code_pressed_memory( KEYCODE_I ) )
@@ -631,7 +631,7 @@ static void updatevisiblearea( void )
 	visarea.min_x = visarea.min_y = 0;
 	visarea.max_x = m_n_screenwidth - 1;
 	visarea.max_y = m_n_screenheight - 1;
-	configure_screen(0, m_n_screenwidth, m_n_screenheight, &visarea, refresh);
+	video_screen_configure(0, m_n_screenwidth, m_n_screenheight, &visarea, refresh);
 }
 
 static int psx_gpu_init( void )

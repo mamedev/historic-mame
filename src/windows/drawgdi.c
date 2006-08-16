@@ -47,7 +47,7 @@ static const render_primitive_list *drawgdi_window_get_primitives(win_window_inf
 static int drawgdi_window_draw(win_window_info *window, HDC dc, int update);
 
 // rendering
-void drawgdi_rgb888_draw_primitives(const render_primitive *primlist, void *dstdata, UINT32 width, UINT32 height, UINT32 pitch);
+static void drawgdi_rgb888_draw_primitives(const render_primitive *primlist, void *dstdata, UINT32 width, UINT32 height, UINT32 pitch);
 
 
 

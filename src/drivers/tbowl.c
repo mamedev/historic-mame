@@ -16,7 +16,7 @@ Might be some priority glitches
 #include "cpu/z80/z80.h"
 #include "sound/3812intf.h"
 #include "sound/msm5205.h"
-#include "render.h"
+#include "rendlay.h"
 
 /* in vidhrdw/tbowl.c */
 extern UINT8 *tbowl_txvideoram, *tbowl_bgvideoram, *tbowl_bg2videoram;

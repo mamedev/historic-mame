@@ -85,7 +85,6 @@
 #include "driver.h"
 #include "machine/z80ctc.h"
 #include "sndhrdw/mcr.h"
-#include "render.h"
 #include "mcr.h"
 
 
@@ -398,7 +397,7 @@ static WRITE8_HANDLER( spyhunt_op4_w )
 		/* bit 2 -> J1-11 (A2) */
 		/* bit 1 -> J1-10 (A1) */
 		/* bit 0 -> J1-12 (A0) */
-		render_view_item_set_state(lampname[data & 7], (data >> 3) & 1);
+		output_set_value(lampname[data & 7], (data >> 3) & 1);
 	}
 	last_op4 = data;
 

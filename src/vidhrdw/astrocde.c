@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "render.h"
 #include "cpu/z80/z80.h"
 #include "includes/astrocde.h"
 #include <math.h> /* for sin() and cos() */
@@ -183,7 +182,7 @@ static void interrupt_common(void)
 {
 	int i,next;
 
-	force_partial_update(0, CurrentScan);
+	video_screen_update_partial(0, CurrentScan);
 
 	next = (CurrentScan + 1) % MAX_INT_PER_FRAME;
 	for (i = 0;i < 8;i++)
@@ -816,12 +815,12 @@ READ8_HANDLER( gorf_io_2_r )
 
 	switch (offset)
 	{
-	case 0x00: render_view_item_set_state("lamp0", !data); break;
-	case 0x01: render_view_item_set_state("lamp1", !data); break;
-	case 0x02: render_view_item_set_state("lamp2", !data); break;
-	case 0x03: render_view_item_set_state("lamp3", !data); break;
-	case 0x04: render_view_item_set_state("lamp4", !data); break;
-	case 0x05: render_view_item_set_state("lamp5", !data); break;
+	case 0x00: output_set_value("lamp0", !data); break;
+	case 0x01: output_set_value("lamp1", !data); break;
+	case 0x02: output_set_value("lamp2", !data); break;
+	case 0x03: output_set_value("lamp3", !data); break;
+	case 0x04: output_set_value("lamp4", !data); break;
+	case 0x05: output_set_value("lamp5", !data); break;
 #ifdef VERBOSE
 	default:
 		logerror("%04x: Latch IO2 %02x set to %d\n",activecpu_get_pc(),offset,data);
@@ -1125,11 +1124,11 @@ READ8_HANDLER( profpac_io_1_r )
 
 READ8_HANDLER( profpac_io_2_r )
 {
-	if(offset & 0x0100) render_view_item_set_state("left lamp A", 1); else render_view_item_set_state("left lamp A", 0);
-	if(offset & 0x0200) render_view_item_set_state("left lamp B", 1); else render_view_item_set_state("left lamp B", 0);
-	if(offset & 0x0400) render_view_item_set_state("left lamp C", 1); else render_view_item_set_state("left lamp C", 0);
-	if(offset & 0x1000) render_view_item_set_state("right lamp A", 1); else render_view_item_set_state("right lamp A", 0);
-	if(offset & 0x2000) render_view_item_set_state("right lamp B", 1); else render_view_item_set_state("right lamp B", 0);
-	if(offset & 0x4000) render_view_item_set_state("right lamp C", 1); else render_view_item_set_state("right lamp C", 0);
+	if(offset & 0x0100) output_set_value("left lamp A", 1); else output_set_value("left lamp A", 0);
+	if(offset & 0x0200) output_set_value("left lamp B", 1); else output_set_value("left lamp B", 0);
+	if(offset & 0x0400) output_set_value("left lamp C", 1); else output_set_value("left lamp C", 0);
+	if(offset & 0x1000) output_set_value("right lamp A", 1); else output_set_value("right lamp A", 0);
+	if(offset & 0x2000) output_set_value("right lamp B", 1); else output_set_value("right lamp B", 0);
+	if(offset & 0x4000) output_set_value("right lamp C", 1); else output_set_value("right lamp C", 0);
 	return 0;
 }

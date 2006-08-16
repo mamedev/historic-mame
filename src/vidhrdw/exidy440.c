@@ -181,7 +181,7 @@ READ8_HANDLER( exidy440_vertical_pos_r )
 
 WRITE8_HANDLER( exidy440_spriteram_w )
 {
-	force_partial_update(0, cpu_getscanline());
+	video_screen_update_partial(0, cpu_getscanline());
 	spriteram[offset] = data;
 }
 

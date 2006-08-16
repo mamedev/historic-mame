@@ -1394,17 +1394,21 @@ ROM_START( pdrift )
 	ROM_LOAD( "epr-11899.102",  0x000000, 0x10000, CRC(ed9fa889) SHA1(25d1a069254b34c31d8ee82d301ada895e8dc391) )
 
 	ROM_REGION( 0x200000, REGION_SOUND1, ROMREGION_ERASEFF )	/* SegaPCM samples */
+	// this one is probably a bad read, the last part only 99% matches the split roms in USER1
+	//ROM_LOAD( "11754.mpr",  0x000000, 0x80000, CRC(cad59f39) SHA1(7890e22c0b039ab75a38095473b572c887094f53) )
 	ROM_LOAD( "mpr-11754.107",  0x000000, 0x80000, CRC(ebeb8484) SHA1(269f33cb1a9be126bada858e25291385d48686a2) )
 	ROM_LOAD( "epr-11755.105",  0x080000, 0x20000, CRC(12e43f8a) SHA1(0f9a11ba6b7c1a352daa1146a01ce147945e91e4) )
 	ROM_RELOAD(                 0x0a0000, 0x20000 )
 	ROM_RELOAD(                 0x0c0000, 0x20000 )
 	ROM_RELOAD(                 0x0e0000, 0x20000 )
-	ROM_LOAD( "epr-11756.106",  0x100000, 0x20000, BAD_DUMP CRC(6ab0646e) SHA1(1a02466e617644e0d7b0311297b2bd128829ba4e) ) /* 1/2 of epr-11898 below & 1/2 0xff */
+	// was 'pd11755.bin' but should be 'epr11756.106'
+	ROM_LOAD( "pd11756.106",  0x100000, 0x20000, CRC(c2db1244) SHA1(c98fe17c9f04a639a862cc2a86fab17d1f5d025c) )
 	ROM_RELOAD(                 0x120000, 0x20000 )
 	ROM_RELOAD(                 0x140000, 0x20000 )
 	ROM_RELOAD(                 0x160000, 0x20000 )
 
-	ROM_REGION( 0x100000, REGION_USER1, 0 )	/* ??? other roms in this set */
+	ROM_REGION( 0x100000, REGION_USER1, 0 )
+	/* These are mpr-11754.107 split into 4 roms, for alternate sound board config? */
 	ROM_LOAD( "epr-11895.bin", 0x000000, 0x20000, CRC(ee99a6fd) SHA1(4444826e751d9186e6d46b081e47cd99ee3cf853) ) /* These are believed to be the same data */
 	ROM_LOAD( "epr-11896.bin", 0x000000, 0x20000, CRC(4bebc015) SHA1(307022ea1c1ee87c9ef3782526888c48c3c69fd2) ) /* as found in mpr-11754.107 but split in */
 	ROM_LOAD( "epr-11897.bin", 0x000000, 0x20000, CRC(4463cb95) SHA1(e86fd4611cf83fe72d59950a60fc8c3a7381a1c7) ) /* 4 seperate roms.  Would be located on  */
@@ -1473,17 +1477,21 @@ ROM_START( pdrifta ) /* Alt or ealier set based on eprom numbers */
 	ROM_LOAD( "epr-11899.102",  0x000000, 0x10000, CRC(ed9fa889) SHA1(25d1a069254b34c31d8ee82d301ada895e8dc391) )
 
 	ROM_REGION( 0x200000, REGION_SOUND1, ROMREGION_ERASEFF )	/* SegaPCM samples */
+	// this one is probably a bad read, the last part only 99% matches the split roms in USER1
+	//ROM_LOAD( "11754.mpr",  0x000000, 0x80000, CRC(cad59f39) SHA1(7890e22c0b039ab75a38095473b572c887094f53) )
 	ROM_LOAD( "mpr-11754.107",  0x000000, 0x80000, CRC(ebeb8484) SHA1(269f33cb1a9be126bada858e25291385d48686a2) )
 	ROM_LOAD( "epr-11755.105",  0x080000, 0x20000, CRC(12e43f8a) SHA1(0f9a11ba6b7c1a352daa1146a01ce147945e91e4) )
 	ROM_RELOAD(                 0x0a0000, 0x20000 )
 	ROM_RELOAD(                 0x0c0000, 0x20000 )
 	ROM_RELOAD(                 0x0e0000, 0x20000 )
-	ROM_LOAD( "epr-11756.106",  0x100000, 0x20000, BAD_DUMP CRC(6ab0646e) SHA1(1a02466e617644e0d7b0311297b2bd128829ba4e) ) /* 1/2 of epr-11898 below & 1/2 0xff */
+	// was 'pd11755.bin' but should be 'epr11756.106'
+	ROM_LOAD( "pd11756.106",  0x100000, 0x20000, CRC(c2db1244) SHA1(c98fe17c9f04a639a862cc2a86fab17d1f5d025c) )
 	ROM_RELOAD(                 0x120000, 0x20000 )
 	ROM_RELOAD(                 0x140000, 0x20000 )
 	ROM_RELOAD(                 0x160000, 0x20000 )
 
-	ROM_REGION( 0x100000, REGION_USER1, 0 )	/* ??? other roms in this set */
+	ROM_REGION( 0x100000, REGION_USER1, 0 )
+	/* These are mpr-11754.107 split into 4 roms, for alternate sound board config? */
 	ROM_LOAD( "epr-11895.bin", 0x000000, 0x20000, CRC(ee99a6fd) SHA1(4444826e751d9186e6d46b081e47cd99ee3cf853) ) /* These are believed to be the same data */
 	ROM_LOAD( "epr-11896.bin", 0x000000, 0x20000, CRC(4bebc015) SHA1(307022ea1c1ee87c9ef3782526888c48c3c69fd2) ) /* as found in mpr-11754.107 but split in */
 	ROM_LOAD( "epr-11897.bin", 0x000000, 0x20000, CRC(4463cb95) SHA1(e86fd4611cf83fe72d59950a60fc8c3a7381a1c7) ) /* 4 seperate roms.  Would be located on  */
@@ -1556,17 +1564,21 @@ ROM_START( pdriftj )
 	ROM_LOAD( "epr-11899.102",  0x000000, 0x10000, CRC(ed9fa889) SHA1(25d1a069254b34c31d8ee82d301ada895e8dc391) )
 
 	ROM_REGION( 0x200000, REGION_SOUND1, ROMREGION_ERASEFF )	/* SegaPCM samples */
+	// this one is probably a bad read, the last part only 99% matches the split roms in USER1
+	//ROM_LOAD( "11754.mpr",  0x000000, 0x80000, CRC(cad59f39) SHA1(7890e22c0b039ab75a38095473b572c887094f53) )
 	ROM_LOAD( "mpr-11754.107",  0x000000, 0x80000, CRC(ebeb8484) SHA1(269f33cb1a9be126bada858e25291385d48686a2) )
 	ROM_LOAD( "epr-11755.105",  0x080000, 0x20000, CRC(12e43f8a) SHA1(0f9a11ba6b7c1a352daa1146a01ce147945e91e4) )
 	ROM_RELOAD(                 0x0a0000, 0x20000 )
 	ROM_RELOAD(                 0x0c0000, 0x20000 )
 	ROM_RELOAD(                 0x0e0000, 0x20000 )
-	ROM_LOAD( "epr-11756.106",  0x100000, 0x20000, BAD_DUMP CRC(6ab0646e) SHA1(1a02466e617644e0d7b0311297b2bd128829ba4e) ) /* 1/2 of epr-11898 below & 1/2 0xff */
+	// was 'pd11755.bin' but should be 'epr11756.106'
+	ROM_LOAD( "pd11756.106",  0x100000, 0x20000, CRC(c2db1244) SHA1(c98fe17c9f04a639a862cc2a86fab17d1f5d025c) )
 	ROM_RELOAD(                 0x120000, 0x20000 )
 	ROM_RELOAD(                 0x140000, 0x20000 )
 	ROM_RELOAD(                 0x160000, 0x20000 )
 
-	ROM_REGION( 0x100000, REGION_USER1, 0 )	/* ??? other roms in this set */
+	ROM_REGION( 0x100000, REGION_USER1, 0 )
+	/* These are mpr-11754.107 split into 4 roms, for alternate sound board config? */
 	ROM_LOAD( "epr-11895.bin", 0x000000, 0x20000, CRC(ee99a6fd) SHA1(4444826e751d9186e6d46b081e47cd99ee3cf853) ) /* These are believed to be the same data */
 	ROM_LOAD( "epr-11896.bin", 0x000000, 0x20000, CRC(4bebc015) SHA1(307022ea1c1ee87c9ef3782526888c48c3c69fd2) ) /* as found in mpr-11754.107 but split in */
 	ROM_LOAD( "epr-11897.bin", 0x000000, 0x20000, CRC(4463cb95) SHA1(e86fd4611cf83fe72d59950a60fc8c3a7381a1c7) ) /* 4 seperate roms.  Would be located on  */

@@ -411,7 +411,7 @@ void gaelco3d_render(void)
 	int i;
 
 	/* if frameskip is engaged, skip it */
-	if (!skip_this_frame())
+	if (!video_skip_this_frame())
 		for (i = 0; i < polydata_count; )
 			i += render_poly(&polydata_buffer[i]);
 

@@ -178,7 +178,7 @@ static void clock_irq(int param)
 	}
 
 	/* force an update now */
-	force_partial_update(0, cpu_getscanline());
+	video_screen_update_partial(0, cpu_getscanline());
 
 	/* find the next edge */
 	schedule_next_irq(param);
@@ -226,7 +226,7 @@ static MACHINE_START( ccastles )
 	visarea.max_x = 255;
 	visarea.min_y = ccastles_vblank_end;
 	visarea.max_y = ccastles_vblank_start - 1;
-	configure_screen(0, 320, 256, &visarea, (float)PIXEL_CLOCK / (float)VTOTAL / (float)HTOTAL);
+	video_screen_configure(0, 320, 256, &visarea, (float)PIXEL_CLOCK / (float)VTOTAL / (float)HTOTAL);
 
 	/* configure the ROM banking */
 	memory_configure_bank(1, 0, 2, memory_region(REGION_CPU1) + 0xa000, 0x6000);

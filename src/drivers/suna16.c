@@ -12,8 +12,9 @@ Sound:  YM2151  +  DAC x 4
 ---------------------------------------------------------------------------
 Year + Game                 By      Hardware
 ---------------------------------------------------------------------------
-96  Back Street Soccer      SunA    68000 + Z80 x 3 + YM2151 + DAC x 4
+94  Suna Quiz 6000          SunA    68000 + Z80 x 2 + YM2151 + DAC x 2
 96  Ultra Balloon           SunA    68000 + Z80 x 2 + YM2151 + DAC x 2
+96  Back Street Soccer      SunA    68000 + Z80 x 3 + YM2151 + DAC x 4
 ---------------------------------------------------------------------------
 
 
@@ -147,7 +148,31 @@ static ADDRESS_MAP_START( uballoon_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xa00000, 0xa0ffff) AM_WRITE(MWA16_NOP					)	// Protection
 ADDRESS_MAP_END
 
+/***************************************************************************
+                                Suna Quiz 6000
+***************************************************************************/
 
+static ADDRESS_MAP_START( sunaq_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM 				)	// ROM
+	AM_RANGE(0x500000, 0x500001) AM_READ(input_port_0_word_r		)	// P1 + Coins
+	AM_RANGE(0x500002, 0x500003) AM_READ(input_port_1_word_r		)	// P2 + Coins
+	AM_RANGE(0x500004, 0x500005) AM_READ(input_port_2_word_r		)	// DSW
+	AM_RANGE(0x500006, 0x500007) AM_READ(input_port_3_word_r		)	// (unused?)
+	AM_RANGE(0x540000, 0x5401ff) AM_READ(suna16_paletteram16_r	)	// Banked Palette
+	AM_RANGE(0x540200, 0x540fff) AM_READ(MRA16_RAM 				)	// RAM
+	AM_RANGE(0x580000, 0x583fff) AM_READ(MRA16_RAM 				)	// RAM
+	AM_RANGE(0x5c0000, 0x5dffff) AM_READ(MRA16_RAM 				)	// RAM
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( sunaq_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM 				)	// ROM
+	AM_RANGE(0x500000, 0x500001) AM_WRITE(suna16_soundlatch_w		)	// To Sound CPU
+	AM_RANGE(0x500002, 0x500003) AM_WRITE(suna16_flipscreen_w		)	// Flip Screen
+	AM_RANGE(0x540000, 0x5401ff) AM_WRITE(suna16_paletteram16_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x540200, 0x540fff) AM_WRITE(MWA16_RAM                 )   // RAM
+	AM_RANGE(0x580000, 0x583fff) AM_WRITE(MWA16_RAM 				)	// RAM
+	AM_RANGE(0x5c0000, 0x5dffff) AM_WRITE(uballoon_spriteram16_w) AM_BASE(&spriteram16 )	// Sprites
+ADDRESS_MAP_END
 
 /***************************************************************************
 
@@ -199,7 +224,24 @@ static ADDRESS_MAP_START( uballoon_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xfc00, 0xfc00) AM_WRITE(soundlatch2_w				)	// To PCM Z80
 ADDRESS_MAP_END
 
+/***************************************************************************
+                                Suna Quiz 6000
+***************************************************************************/
 
+static ADDRESS_MAP_START( sunaq_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xe82f) AM_READ(MRA8_ROM					)	// ROM
+	AM_RANGE(0xe830, 0xf7ff) AM_READ(MRA8_RAM					)	// RAM
+	AM_RANGE(0xf801, 0xf801) AM_READ(YM2151_status_port_0_r	)	// YM2151
+	AM_RANGE(0xfc00, 0xfc00) AM_READ(soundlatch_r				)	// From Main CPU
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( sunaq_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xe82f) AM_WRITE(MWA8_ROM					)	// ROM
+	AM_RANGE(0xe830, 0xf7ff) AM_WRITE(MWA8_RAM					)	// RAM (writes to efxx, could be a program bug tho)
+	AM_RANGE(0xf800, 0xf800) AM_WRITE(YM2151_register_port_0_w	)	// YM2151
+	AM_RANGE(0xf801, 0xf801) AM_WRITE(YM2151_data_port_0_w		)	//
+	AM_RANGE(0xfc00, 0xfc00) AM_WRITE(soundlatch2_w				)	// To PCM Z80
+ADDRESS_MAP_END
 
 /***************************************************************************
 
@@ -327,6 +369,7 @@ static ADDRESS_MAP_START( uballoon_pcm_1_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x03, 0x03) AM_WRITE(uballoon_pcm_1_bankswitch_w	)	// Rom Bank
 ADDRESS_MAP_END
 
+
 /***************************************************************************
 
 
@@ -378,7 +421,7 @@ INPUT_PORTS_START( bssoccer )
 	PORT_DIPSETTING(	  0x0010, DEF_STR( Easy )     )
 	PORT_DIPSETTING(	  0x0018, DEF_STR( Normal )   )
 	PORT_DIPSETTING(	  0x0008, DEF_STR( Hard )     )
-	PORT_DIPSETTING(	  0x0000, "Hardest?" )
+	PORT_DIPSETTING(	  0x0000, "Hardest?"  )
 	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(	  0x0000, DEF_STR( Off ) )
 	PORT_DIPSETTING(	  0x0020, DEF_STR( On ) )
@@ -524,7 +567,57 @@ INPUT_PORTS_START( uballoon )
 
 INPUT_PORTS_END
 
+/***************************************************************************
+                                Suna Quiz 6000
+***************************************************************************/
 
+INPUT_PORTS_START( sunaq )
+	PORT_START	// Player 1
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(1)
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_START1   )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_COIN1    )
+
+
+	PORT_START	// Player 2
+	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_PLAYER(2)
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_START2   )
+	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_COIN2    )
+
+	PORT_START	// Single 8 switch DSW
+	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(	  0x0000, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(	  0x0001, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(	  0x0002, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(	  0x0003, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(	  0x0007, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(	  0x0006, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(	  0x0005, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(	  0x0004, DEF_STR( 1C_4C ) )
+	PORT_DIPNAME( 0x0018, 0x0008, DEF_STR( Difficulty ) )	/* Should this be Difficulty or Lives ?? */
+	PORT_DIPSETTING(	  0x0000, DEF_STR( Easy ) )	/* 5 Hearts */
+	PORT_DIPSETTING(	  0x0008, DEF_STR( Normal ) )	/* 5 Hearts */
+	PORT_DIPSETTING(	  0x0010, DEF_STR( Hard ) )	/* 4 Hearts */
+	PORT_DIPSETTING(	  0x0018, DEF_STR( Hardest ) )	/* 3 Hearts */
+	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(	  0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(	  0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(	  0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(	  0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+INPUT_PORTS_END
 
 /***************************************************************************
 
@@ -686,6 +779,57 @@ static MACHINE_DRIVER_START( uballoon )
 MACHINE_DRIVER_END
 
 /***************************************************************************
+                                Suna Quiz 6000
+***************************************************************************/
+
+static MACHINE_DRIVER_START( sunaq )
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 24000000/4)
+	MDRV_CPU_PROGRAM_MAP(sunaq_readmem,sunaq_writemem)
+	MDRV_CPU_VBLANK_INT(irq1_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 14318000/4)
+	/* audio CPU */
+	MDRV_CPU_PROGRAM_MAP(sunaq_sound_readmem,sunaq_sound_writemem)
+
+
+	MDRV_CPU_ADD(Z80, 24000000/4)		/* Z80B */
+	/* audio CPU */
+	MDRV_CPU_PROGRAM_MAP(bssoccer_pcm_1_readmem,bssoccer_pcm_1_writemem)
+	MDRV_CPU_IO_MAP(bssoccer_pcm_1_readport,bssoccer_pcm_1_writeport)
+
+	/* 2nd PCM Z80 missing */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(256, 256)
+	MDRV_VISIBLE_AREA(0, 256-1, 0+16, 256-16-1)
+	MDRV_GFXDECODE(suna16_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
+
+	MDRV_VIDEO_START(suna16)
+	MDRV_VIDEO_UPDATE(suna16)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(YM2151, 14318000/4)
+	MDRV_SOUND_ROUTE(0, "left", 0.50)
+	MDRV_SOUND_ROUTE(1, "right", 0.50)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 0.50)
+
+	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 0.50)
+MACHINE_DRIVER_END
+
+
+/***************************************************************************
 
 
                                 ROMs Loading
@@ -799,6 +943,41 @@ DRIVER_INIT( uballoon )
 	RAM[0x126a0/2] = 0x4e71;	// bne $1267a (ROM test)
 }
 
+/***************************************************************************
+                                Suna Quiz 6000
+
+  KRB-0027A mainboard
+
+  68000 6 MHz
+  Z80B x 2
+  Actel A1020B
+  OSC: 24.000 MHz, 14.318 MHz
+  YM2151, YM3012
+  RAM:
+  62256 x 3
+  6264 x 2
+  6116 x 5
+  Single 8 switch DSW
+
+***************************************************************************/
+
+ROM_START( sunaq )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) 	/* 68000 Code */
+	ROM_LOAD16_BYTE( "prog2.bin", 0x000000, 0x080000, CRC(a92bce45) SHA1(258b2a21c27effa1d3380e4c08558542b1d05175) )
+	ROM_LOAD16_BYTE( "prog1.bin", 0x000001, 0x080000, CRC(ff690e7e) SHA1(43b9c67f8d8d791be922966632613a077807b755) )
+
+	ROM_REGION( 0x010000, REGION_CPU2, 0 ) 	/* Z80 #1 - Music */
+	ROM_LOAD( "audio1.bin", 0x000000, 0x010000, CRC(3df42f82) SHA1(91c1037c9d5d1ec82ed4cdfb35de5a6d626ecb3b) )
+
+	ROM_REGION( 0x080000, REGION_CPU3, 0 ) 	/* Z80 #2 - PCM */
+	ROM_LOAD( "audio2.bin", 0x000000, 0x080000, CRC(cac85ba9) SHA1(e5fbe813022c17d9eaf2a57184341666e2af365a) )
+
+	/* There's no Z80 #3 - PCM */
+
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )	/* Sprites */
+	ROM_LOAD( "gfx1.bin", 0x000000, 0x080000, CRC(0bde5acf) SHA1(a9befb5f9a663bf48537471313f606853ea1f274) )
+	ROM_LOAD( "gfx2.bin", 0x100000, 0x080000, CRC(24b74826) SHA1(cb3f665d1b1f5c9d385a3a3193866c9cae6c7002) )
+ROM_END
 
 
 /***************************************************************************
@@ -811,3 +990,5 @@ DRIVER_INIT( uballoon )
 
 GAME( 1996, bssoccer, 0, bssoccer, bssoccer, 0,        ROT0, "SunA", "Back Street Soccer", 0 )
 GAME( 1996, uballoon, 0, uballoon, uballoon, uballoon, ROT0, "SunA", "Ultra Balloon", 0 )
+// Date/Version on-screen is 940620-6, but in the program rom it's 1994,6,30  K.H.T  V6.00
+GAME( 1994, sunaq,    0, sunaq,    sunaq,    0,        ROT0, "SunA", "SunA Quiz 6000 Academy (940620-6)", 0 )

@@ -98,7 +98,6 @@ E000-FFFF  | R | D D D D D D D D | 8K ROM
 int adder2_show_alpha_display;	  // flag, set if alpha display need to be displayed
 
 //#define LOG_CTRL // show UART information
-#define FAKE_VIDEO // show alpha display and door
 
 // local prototypes ///////////////////////////////////////////////////////
 
@@ -106,8 +105,8 @@ int adder2_show_alpha_display;	  // flag, set if alpha display need to be displa
 
 // local vars /////////////////////////////////////////////////////////////
 
-#define SL_DISPLAY    0x02	// displayed screen,  1=screen1 0=screen0
-#define SL_ACCESS     0x01	// accessable screen, 1=screen1 0=screen0
+#define SL_DISPLAY    0x02	// displayed Adder screen,  1=screen1 0=screen0
+#define SL_ACCESS     0x01	// accessable Adder screen, 1=screen1 0=screen0
 
 
 
@@ -236,25 +235,34 @@ static rectangle visible1 = { 0, 400,  0,  280 };  //minx,maxx, miny,maxy
 
 VIDEO_UPDATE( adder2 )
 {
-	if (adder2_screen_page_reg & SL_DISPLAY) tilemap_draw(bitmap, &visible1, tilemap1, 0, 0);
-	else                                     tilemap_draw(bitmap, &visible1, tilemap0, 0, 0);
-
-	#ifdef FAKE_VIDEO
-
-	if ( adder2_show_alpha_display )
-			draw_16seg(bitmap,10, 280,0,3,1);
-
-	if ( sc2_show_door )
+	if (screen == 0)
 	{
-		if ( Scorpion2_GetSwitchState(sc2_door_state>>4, sc2_door_state & 0x0F) )
-			ui_draw_text("Door Closed", 320, 284);
-		else
-			ui_draw_text("Door Open  ", 320, 284);
+		adder2_update(bitmap);
 	}
-	#endif
+
+	if (screen == 1)
+	{
+		if ( adder2_show_alpha_display )
+			draw_16seg(bitmap,0,0,0,3,1);
+
+		#if 0 //Better to wait for new textbox
+		if ( sc2_show_door )
+		{
+			if ( Scorpion2_GetSwitchState(sc2_door_state>>4, sc2_door_state & 0x0F) )
+				popmessage("Door Closed");
+			else
+				popmessage("Door Open  ");
+		}
+		#endif
+	}
 	return 0;
 }
 
+void adder2_update(mame_bitmap *bitmap)
+{
+	if (adder2_screen_page_reg & SL_DISPLAY) tilemap_draw(bitmap, &visible1, tilemap1, 0, 0);
+	else                                     tilemap_draw(bitmap, &visible1, tilemap0, 0, 0);
+}
 
 // adder2 palette initialisation //////////////////////////////////////////
 

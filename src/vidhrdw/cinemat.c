@@ -8,7 +8,6 @@
 #include "vector.h"
 #include "cpu/ccpu/ccpu.h"
 #include "cinemat.h"
-#include "render.h"
 
 
 /*************************************
@@ -240,16 +239,16 @@ VIDEO_UPDATE( spacewar )
 	video_update_vector(screen, bitmap, cliprect);
 
 	/* set the state of the artwork */
-	render_view_item_set_state("pressed3", (~sw_option >> 0) & 1);
-	render_view_item_set_state("pressed8", (~sw_option >> 1) & 1);
-	render_view_item_set_state("pressed4", (~sw_option >> 2) & 1);
-	render_view_item_set_state("pressed9", (~sw_option >> 3) & 1);
-	render_view_item_set_state("pressed1", (~sw_option >> 4) & 1);
-	render_view_item_set_state("pressed6", (~sw_option >> 5) & 1);
-	render_view_item_set_state("pressed2", (~sw_option >> 6) & 1);
-	render_view_item_set_state("pressed7", (~sw_option >> 7) & 1);
-	render_view_item_set_state("pressed5", (~sw_option >> 10) & 1);
-	render_view_item_set_state("pressed0", (~sw_option >> 11) & 1);
+	output_set_value("pressed3", (~sw_option >> 0) & 1);
+	output_set_value("pressed8", (~sw_option >> 1) & 1);
+	output_set_value("pressed4", (~sw_option >> 2) & 1);
+	output_set_value("pressed9", (~sw_option >> 3) & 1);
+	output_set_value("pressed1", (~sw_option >> 4) & 1);
+	output_set_value("pressed6", (~sw_option >> 5) & 1);
+	output_set_value("pressed2", (~sw_option >> 6) & 1);
+	output_set_value("pressed7", (~sw_option >> 7) & 1);
+	output_set_value("pressed5", (~sw_option >> 10) & 1);
+	output_set_value("pressed0", (~sw_option >> 11) & 1);
 	return 0;
 }
 

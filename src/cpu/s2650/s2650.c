@@ -178,10 +178,10 @@ static void s2650_set_sense(int state);
  ***************************************************************/
 #define SET_CC_OVF(result,value)                                \
 	S.psl = (S.psl & ~(OVF+CC)) |								\
-		ccc[result + ( ( (result^value) << 1) & 256 )]
+		ccc[result + (((value) & 0x80) << 1)]
 
-#define SET_CC_OVF_ADD(result,value1,value2) SET_CC_OVF(result,value1)
-#define SET_CC_OVF_SUB(result,value1,value2) SET_CC_OVF(result,value1)
+#define SET_CC_OVF_ADD(result,value1,value2) SET_CC_OVF(result,~((value1) ^ (value2)) & ((value1) ^ (result)))
+#define SET_CC_OVF_SUB(result,value1,value2) SET_CC_OVF(result,~((value1) ^ (value2)) & ((value1) ^ (result)))
 
 /***************************************************************
  * ROP
@@ -563,8 +563,9 @@ static	int 	S2650_relative[0x100] =
  * Add source to destination
  * Add with carry if WC flag of PSL is set
  ***************************************************************/
-#define M_ADD(dest,source)										\
+#define M_ADD(dest,_source)										\
 {																\
+	UINT8 source = _source;										\
 	UINT8 before = dest;										\
 	/* add source; carry only if WC is set */					\
 	UINT16 res = dest + source + ((S.psl >> 3) & S.psl & C);	\
@@ -580,8 +581,9 @@ static	int 	S2650_relative[0x100] =
  * Subtract source from destination
  * Subtract with borrow if WC flag of PSL is set
  ***************************************************************/
-#define M_SUB(dest,source)										\
+#define M_SUB(dest,_source)										\
 {																\
+	UINT8 source = _source;										\
 	UINT8 before = dest;										\
 	/* subtract source; borrow only if WC is set */ 			\
 	UINT16 res = dest - source - ((S.psl >> 3) & (S.psl ^ C) & C);	\

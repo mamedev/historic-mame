@@ -113,9 +113,6 @@ int memcard_present(void);
 
 /* ----- miscellaneous bits & pieces ----- */
 
-/* get the status of the LEDs */
-int get_led_status(int num);
-
 /* set the status of an LED */
 void set_led_status(int num, int value);
 

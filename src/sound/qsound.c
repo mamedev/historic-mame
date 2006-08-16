@@ -34,7 +34,6 @@
 #include <math.h>
 #include "sndintrf.h"
 #include "streams.h"
-#include "ui.h"
 #include "qsound.h"
 
 /*
@@ -287,7 +286,7 @@ void qsound_set_command(struct qsound_info *chip, int data, int value)
 			chip->channel[ch].bank /= LENGTH_DIV;
 #ifdef MAME_DEBUG
 			if (!value & 0x8000)
-				ui_popup("Register3=%04x",value);
+				popmessage("Register3=%04x",value);
 #endif
 
 			break;
@@ -315,7 +314,7 @@ void qsound_set_command(struct qsound_info *chip, int data, int value)
 			chip->channel[ch].reg3=value;
 #ifdef MAME_DEBUG
 			if (value != 0x8000)
-				ui_popup("Register3=%04x",value);
+				popmessage("Register3=%04x",value);
 #endif
 			break;
 		case 4: /* loop offset */
@@ -351,7 +350,7 @@ void qsound_set_command(struct qsound_info *chip, int data, int value)
 
 		case 7:  /* unused */
 #ifdef MAME_DEBUG
-				ui_popup("UNUSED QSOUND REG 7=%04x",value);
+				popmessage("UNUSED QSOUND REG 7=%04x",value);
 #endif
 
 			break;
@@ -376,7 +375,7 @@ void qsound_set_command(struct qsound_info *chip, int data, int value)
 			chip->channel[ch].reg9=value;
 /*
 #ifdef MAME_DEBUG
-            ui_popup("QSOUND REG 9=%04x",value);
+            popmessage("QSOUND REG 9=%04x",value);
 #endif
 */
 			break;

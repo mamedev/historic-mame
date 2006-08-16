@@ -221,7 +221,7 @@
 #include "vidhrdw/avgdvg.h"
 #include "sound/ay8910.h"
 
-#include "render.h"
+#include "rendlay.h"
 
 
 

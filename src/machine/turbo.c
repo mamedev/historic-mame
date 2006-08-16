@@ -8,7 +8,6 @@
 #include "machine/8255ppi.h"
 #include "turbo.h"
 #include "sound/samples.h"
-#include "render.h"
 
 /* globals */
 UINT8 turbo_opa, turbo_opb, turbo_opc;
@@ -294,7 +293,7 @@ void turbo_update_segments(void)
 			char buf_new[8];
 
 			sprintf(buf_new, "led%02d", i);
-			render_view_item_set_state(buf_new, (v_new >= 10) ? 10 : v_new);
+			output_set_value(buf_new, (v_new >= 10) ? 10 : v_new);
 		}
 	}
 
@@ -341,7 +340,7 @@ WRITE8_HANDLER( turbo_coin_and_lamp_w )
 
 void turbo_update_tachometer(void)
 {
-	render_view_item_set_state("speed", turbo_speed);
+	output_set_value("speed", turbo_speed);
 }
 
 

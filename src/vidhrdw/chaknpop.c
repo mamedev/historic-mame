@@ -243,7 +243,7 @@ static void chaknpop_draw_sprites(mame_bitmap *bitmap)
 				color,
 				flipx, flipy,
 				sx, sy,
-				&Machine -> visible_area[0],
+				&Machine -> screen[0] . visarea,
 				TRANSPARENCY_PEN, 0);
 	}
 }

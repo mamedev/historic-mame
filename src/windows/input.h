@@ -11,31 +11,12 @@
 #define __INPUT_H
 
 //============================================================
-//  MACROS
-//============================================================
-
-// Define the keyboard indicators.
-// (Definitions borrowed from ntddkbd.h)
-//
-
-#define IOCTL_KEYBOARD_SET_INDICATORS        CTL_CODE(FILE_DEVICE_KEYBOARD, 0x0002, METHOD_BUFFERED, FILE_ANY_ACCESS)
-#define IOCTL_KEYBOARD_QUERY_TYPEMATIC       CTL_CODE(FILE_DEVICE_KEYBOARD, 0x0008, METHOD_BUFFERED, FILE_ANY_ACCESS)
-#define IOCTL_KEYBOARD_QUERY_INDICATORS      CTL_CODE(FILE_DEVICE_KEYBOARD, 0x0010, METHOD_BUFFERED, FILE_ANY_ACCESS)
-
-
-//============================================================
 //  PARAMETERS
 //============================================================
 
 #define KEYBOARD_CAPS_LOCK_ON     4
 #define KEYBOARD_NUM_LOCK_ON      2
 #define KEYBOARD_SCROLL_LOCK_ON   1
-
-typedef struct _KEYBOARD_INDICATOR_PARAMETERS {
-    USHORT UnitId;		// Unit identifier.
-    USHORT LedFlags;		// LED indicator state.
-
-} KEYBOARD_INDICATOR_PARAMETERS, *PKEYBOARD_INDICATOR_PARAMETERS;
 
 // table entry indices
 #define MAME_KEY		0
@@ -56,14 +37,9 @@ void wininput_poll(void);
 
 BOOL win_raw_mouse_update(HANDLE in_device_handle);
 
-int osd_get_leds(void);
-void osd_set_leds(int state);
-
-void start_led(void);
-void stop_led(void);
 void input_mouse_button_down(int button, int x, int y);
 void input_mouse_button_up(int button);
 
 int win_is_mouse_captured(void);
 
-#endif /* ifndef __INPUTD_H */
+#endif /* __INPUT_H */

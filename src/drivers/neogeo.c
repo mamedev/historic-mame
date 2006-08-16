@@ -605,7 +605,7 @@ static WRITE16_HANDLER( neogeo_video_w )
 	int line = RASTER_LINES - cpu_getiloops();
 
 	/* If Video RAM changes force a partial update to the previous line */
-	force_partial_update(0, line-24); // tuned by ssideki4 / msyogui
+	video_screen_update_partial(0, line-24); // tuned by ssideki4 / msyogui
 
 
 	offset &=0x7;

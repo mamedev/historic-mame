@@ -212,7 +212,6 @@
 
 *********************************************************************/
 
-#include "ui.h"
 #include "debugger.h"
 #include "e132xs.h"
 
@@ -1383,7 +1382,7 @@ static void decode_registers(void)
 
 			if(GET_H)
 				if(S_BIT == 0 && D_BIT == 0)
-					ui_popup("MOV with hflag and 2 GRegs! PC = %08X\n",PPC);
+					popmessage("MOV with hflag and 2 GRegs! PC = %08X\n",PPC);
 
 		break;
 
@@ -3331,7 +3330,7 @@ static void hyperstone_ldxx2(void)
 			case 0: // LDBS.N
 
 				if(SAME_SRC_DST)
-					ui_popup("LDBS.N denoted same regs @ %08X",PPC);
+					popmessage("LDBS.N denoted same regs @ %08X",PPC);
 
 				load = READ_B(DREG);
 				load |= (load & 0x80) ? 0xffffff00 : 0;
@@ -3345,7 +3344,7 @@ static void hyperstone_ldxx2(void)
 			case 1: // LDBU.N
 
 				if(SAME_SRC_DST)
-					ui_popup("LDBU.N denoted same regs @ %08X",PPC);
+					popmessage("LDBU.N denoted same regs @ %08X",PPC);
 
 				load = READ_B(DREG);
 				SET_SREG(load);
@@ -3364,7 +3363,7 @@ static void hyperstone_ldxx2(void)
 					load |= (load & 0x8000) ? 0xffff0000 : 0;
 
 					if(SAME_SRC_DST)
-						ui_popup("LDHS.N denoted same regs @ %08X",PPC);
+						popmessage("LDHS.N denoted same regs @ %08X",PPC);
 				}
 				/*
                 else          // LDHU.N
@@ -3385,7 +3384,7 @@ static void hyperstone_ldxx2(void)
 				if( (EXTRA_S & 3) == 3 )      // LDW.S
 				{
 					if(SAME_SRC_DST)
-						ui_popup("LDW.S denoted same regs @ %08X",PPC);
+						popmessage("LDW.S denoted same regs @ %08X",PPC);
 
 					if(DREG < SP)
 						SET_SREG(READ_W(DREG));
@@ -3404,7 +3403,7 @@ static void hyperstone_ldxx2(void)
 				else if( (EXTRA_S & 3) == 1 ) // LDD.N
 				{
 					if(SAME_SRC_DST || SAME_SRCF_DST)
-						ui_popup("LDD.N denoted same regs @ %08X",PPC);
+						popmessage("LDD.N denoted same regs @ %08X",PPC);
 
 					load = READ_W(DREG);
 					SET_SREG(load);
@@ -3420,7 +3419,7 @@ static void hyperstone_ldxx2(void)
 				else                      // LDW.N
 				{
 					if(SAME_SRC_DST)
-						ui_popup("LDW.N denoted same regs @ %08X",PPC);
+						popmessage("LDW.N denoted same regs @ %08X",PPC);
 
 					load = READ_W(DREG);
 					SET_SREG(load);
@@ -3625,7 +3624,7 @@ static void hyperstone_stxx2(void)
 					else
 					{
 						if(((DREG & 0xfc) >> 2) == ((current_regs.src + GET_FP) % 64) && S_BIT == LOCAL)
-							ui_popup("STW.S denoted the same local register @ %08X\n",PPC);
+							popmessage("STW.S denoted the same local register @ %08X\n",PPC);
 
 						SET_ABS_L_REG((DREG & 0xfc) >> 2,SREG);
 					}
@@ -4498,7 +4497,7 @@ static void hyperstone_lddp(void)
 	}
 	else
 	{
-		ui_popup("LDD.P denoted same regs @ %08X",PPC);
+		popmessage("LDD.P denoted same regs @ %08X",PPC);
 	}
 
 	hyperstone_ICount -= 2;

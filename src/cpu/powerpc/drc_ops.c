@@ -3642,6 +3642,7 @@ static UINT32 recompile_fnmsubsx(drc_core *drc, UINT32 op)
 
 // PPC602
 
+#if (HAS_PPC602)
 static UINT32 recompile_esa(drc_core *drc, UINT32 op)
 {
 	_mov_m32abs_r32(&ppc_icount, REG_EBP);
@@ -3673,3 +3674,5 @@ static UINT32 recompile_tlbld(drc_core *drc, UINT32 op)
 {
 	return RECOMPILE_SUCCESSFUL_CP(1,4);
 }
+#endif /* HAS_PPC602 */
+

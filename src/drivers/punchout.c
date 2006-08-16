@@ -99,7 +99,7 @@ write:
 #include "sound/vlm5030.h"
 #include "sound/nes_apu.h"
 
-#include "render.h"
+#include "rendlay.h"
 
 
 extern UINT8 *punchout_videoram2;

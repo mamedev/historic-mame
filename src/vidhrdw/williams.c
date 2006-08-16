@@ -409,7 +409,7 @@ WRITE8_HANDLER( williams2_paletteram_w )
 
 WRITE8_HANDLER( williams2_fg_select_w )
 {
-	force_partial_update(0, cpu_getscanline());
+	video_screen_update_partial(0, cpu_getscanline());
 	williams2_fg_color = data & 0x3f;
 }
 
@@ -476,7 +476,7 @@ static void get_tile_info(int tile_index)
 
 WRITE8_HANDLER( williams2_bg_select_w )
 {
-	force_partial_update(0, cpu_getscanline());
+	video_screen_update_partial(0, cpu_getscanline());
 
 	/* based on the tilemap config, only certain bits are used */
 	/* the rest are determined by other factors */
@@ -510,7 +510,7 @@ WRITE8_HANDLER( williams2_tileram_w )
 
 WRITE8_HANDLER( williams2_xscroll_low_w )
 {
-	force_partial_update(0, cpu_getscanline());
+	video_screen_update_partial(0, cpu_getscanline());
 	tilemap_xscroll = (tilemap_xscroll & ~0x00f) | ((data & 0x80) >> 4) | (data & 0x07);
 	tilemap_set_scrollx(bg_tilemap, 0, (tilemap_xscroll & 7) + ((tilemap_xscroll >> 3) * 6));
 }
@@ -518,7 +518,7 @@ WRITE8_HANDLER( williams2_xscroll_low_w )
 
 WRITE8_HANDLER( williams2_xscroll_high_w )
 {
-	force_partial_update(0, cpu_getscanline());
+	video_screen_update_partial(0, cpu_getscanline());
 	tilemap_xscroll = (tilemap_xscroll & 0x00f) | (data << 4);
 	tilemap_set_scrollx(bg_tilemap, 0, (tilemap_xscroll & 7) + ((tilemap_xscroll >> 3) * 6));
 }
@@ -533,7 +533,7 @@ WRITE8_HANDLER( williams2_xscroll_high_w )
 
 WRITE8_HANDLER( blaster_remap_select_w )
 {
-	force_partial_update(0, cpu_getscanline());
+	video_screen_update_partial(0, cpu_getscanline());
 	blitter_remap_index = data;
 	blitter_remap = blitter_remap_lookup + data * 256;
 }
@@ -541,14 +541,14 @@ WRITE8_HANDLER( blaster_remap_select_w )
 
 WRITE8_HANDLER( blaster_video_control_w )
 {
-	force_partial_update(0, cpu_getscanline());
+	video_screen_update_partial(0, cpu_getscanline());
 	blaster_video_control = data;
 }
 
 
 WRITE8_HANDLER( blaster_scanline_control_w )
 {
-	force_partial_update(0, cpu_getscanline());
+	video_screen_update_partial(0, cpu_getscanline());
 	blaster_scanline_control[offset] = data;
 }
 
@@ -557,7 +557,7 @@ WRITE8_HANDLER( blaster_palette_0_w )
 {
 	rgb_t color = palette_lookup[data ^ 0xff];
 
-	force_partial_update(0, cpu_getscanline());
+	video_screen_update_partial(0, cpu_getscanline());
 	blaster_palette_0[offset] = data;
 	palette_set_color(16 + offset, RGB_RED(color), RGB_GREEN(color), RGB_BLUE(color));
 }

@@ -4895,15 +4895,15 @@ static int DoSearchMenuClassic(int selection, int startNew)
 		UpdateSearch(search);
 
 		if(willHaveResults || !startNew)
-			ui_popup("%d results found", search->numResults);
+			popmessage("%d results found", search->numResults);
 		else
-			ui_popup("saved all memory regions");
+			popmessage("saved all memory regions");
 
 		if(search->numResults == 1)
 		{
 			AddCheatFromFirstResult(search);
 
-			ui_popup("1 result found, added to list");
+			popmessage("1 result found, added to list");
 		}
 	}
 
@@ -5275,13 +5275,13 @@ static int DoSearchMenu(int selection, int startNew)
 
 					UpdateSearch(search);
 
-					ui_popup("%d results found", search->numResults);
+					popmessage("%d results found", search->numResults);
 
 					if(search->numResults == 1)
 					{
 						AddCheatFromFirstResult(search);
 
-						ui_popup("1 result found, added to list");
+						popmessage("1 result found, added to list");
 					}
 					break;
 
@@ -5293,7 +5293,7 @@ static int DoSearchMenu(int selection, int startNew)
 
 					UpdateSearch(search);
 
-					ui_popup("saved all memory regions");
+					popmessage("saved all memory regions");
 					break;
 			}
 		}
@@ -8420,7 +8420,7 @@ static void HandleLocalCommandCheat(UINT32 type, UINT32 address, UINT32 data, UI
 
 					refresh /= 65536.0;
 
-					configure_screen(0, state->width, state->height, &state->visarea, refresh);
+					video_screen_configure(0, state->width, state->height, &state->visarea, refresh);
 				}
 				break;
 			}

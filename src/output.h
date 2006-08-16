@@ -1,0 +1,52 @@
+/***************************************************************************
+
+    output.h
+
+    General purpose output routines.
+
+    Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
+    Visit http://mamedev.org for licensing and usage restrictions.
+
+***************************************************************************/
+
+#ifndef __OUTPUT_H__
+#define __OUTPUT_H__
+
+#include "mamecore.h"
+
+
+/***************************************************************************
+    TYPE DEFINITIONS
+***************************************************************************/
+
+typedef void (*output_notifier)(const char *outname, INT32 value, void *param);
+
+
+
+/***************************************************************************
+    FUNCTION PROTOTYPES
+***************************************************************************/
+
+/* core initialization */
+void output_init(void);
+
+/* set the value for a given output */
+void output_set_value(const char *outname, INT32 value);
+
+/* return the current value for a given output */
+INT32 output_get_value(const char *outname);
+
+/* set a notifier on a particular output, or globally if NULL */
+void output_set_notifier(const char *outname, output_notifier callback, void *param);
+
+/* set a notifier on a particular output, or globally if NULL */
+void output_notify_all(output_notifier callback, void *param);
+
+/* map a name to a unique ID */
+UINT32 output_name_to_id(const char *outname);
+
+/* map a unique ID back to a name */
+const char *output_id_to_name(UINT32 id);
+
+
+#endif	/* __OUTPUT_H__ */

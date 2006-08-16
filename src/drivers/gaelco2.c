@@ -21,7 +21,7 @@
 #include "driver.h"
 #include "cpu/m68000/m68000.h"
 #include "sound/gaelco.h"
-#include "render.h"
+#include "rendlay.h"
 
 extern UINT16 *gaelco_sndregs;
 extern UINT16 *gaelco2_vregs;

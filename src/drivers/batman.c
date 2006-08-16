@@ -96,7 +96,7 @@ static WRITE16_HANDLER( latch_w )
 	/* alpha bank is selected by the upper 4 bits */
 	if ((oldword ^ latch_data) & 0x7000)
 	{
-		force_partial_update(0, cpu_getscanline());
+		video_screen_update_partial(0, cpu_getscanline());
 		tilemap_mark_all_tiles_dirty(atarigen_alpha_tilemap);
 		batman_alpha_tile_bank = (latch_data >> 12) & 7;
 	}

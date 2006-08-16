@@ -173,7 +173,7 @@ WRITE16_HANDLER( toobin_xscroll_w )
 
 	/* if anything has changed, force a partial update */
 	if (newscroll != oldscroll)
-		force_partial_update(0, cpu_getscanline());
+		video_screen_update_partial(0, cpu_getscanline());
 
 	/* update the playfield scrolling - hscroll is clocked on the following scanline */
 	tilemap_set_scrollx(atarigen_playfield_tilemap, 0, newscroll >> 6);
@@ -192,7 +192,7 @@ WRITE16_HANDLER( toobin_yscroll_w )
 
 	/* if anything has changed, force a partial update */
 	if (newscroll != oldscroll)
-		force_partial_update(0, cpu_getscanline());
+		video_screen_update_partial(0, cpu_getscanline());
 
 	/* if bit 4 is zero, the scroll value is clocked in right away */
 	tilemap_set_scrolly(atarigen_playfield_tilemap, 0, newscroll >> 6);
@@ -218,7 +218,7 @@ WRITE16_HANDLER( toobin_slip_w )
 
 	/* if the SLIP is changing, force a partial update first */
 	if (oldslip != newslip)
-		force_partial_update(0, cpu_getscanline());
+		video_screen_update_partial(0, cpu_getscanline());
 
 	/* update the data */
 	atarimo_0_slipram_w(offset, data, mem_mask);

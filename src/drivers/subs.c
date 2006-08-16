@@ -20,7 +20,7 @@
 #include "driver.h"
 #include "subs.h"
 #include "sound/discrete.h"
-#include "render.h"
+#include "rendlay.h"
 
 /*************************************
  *

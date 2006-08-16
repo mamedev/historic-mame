@@ -24,6 +24,7 @@
 #include "winmain.h"
 #include "video.h"
 #include "render.h"
+#include "rendutil.h"
 
 #ifdef NEW_DEBUGGER
 #include "debug/debugcpu.h"
@@ -310,10 +311,6 @@ static const options_entry windows_opts[] =
 #ifdef MESS
 	{ "mouse_device",             "mouse",    0,                 "enable (keyboard|mouse|joystick) if a mouse control is present" },
 #endif
-
-	{ NULL,                       NULL,       OPTION_HEADER,     "OUTPUT DEVICE OPTIONS" },
-	{ "keyboard_leds;leds",       "1",        OPTION_BOOLEAN,    "enable keyboard LED emulation" },
-	{ "led_mode",                 "ps/2",     0,                 "LED mode (PS/2|USB)" },
 
 	{ NULL }
 };

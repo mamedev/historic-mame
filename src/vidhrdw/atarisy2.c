@@ -159,7 +159,7 @@ WRITE16_HANDLER( atarisy2_xscroll_w )
 
 	/* if anything has changed, force a partial update */
 	if (newscroll != oldscroll)
-		force_partial_update(0, cpu_getscanline());
+		video_screen_update_partial(0, cpu_getscanline());
 
 	/* update the playfield scrolling - hscroll is clocked on the following scanline */
 	tilemap_set_scrollx(atarigen_playfield_tilemap, 0, newscroll >> 6);
@@ -190,7 +190,7 @@ WRITE16_HANDLER( atarisy2_yscroll_w )
 
 	/* if anything has changed, force a partial update */
 	if (newscroll != oldscroll)
-		force_partial_update(0, cpu_getscanline());
+		video_screen_update_partial(0, cpu_getscanline());
 
 	/* if bit 4 is zero, the scroll value is clocked in right away */
 	if (!(newscroll & 0x10))
@@ -301,7 +301,7 @@ WRITE16_HANDLER( atarisy2_videoram_w )
 	{
 		/* force an update if the link of object 0 is about to change */
 		if (offs == 0x0c03)
-			force_partial_update(0, cpu_getscanline());
+			video_screen_update_partial(0, cpu_getscanline());
 		atarimo_0_spriteram_w(offs - 0x0c00, data, mem_mask);
 	}
 

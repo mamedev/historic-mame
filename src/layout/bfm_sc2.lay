@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<mamelayout version="2">
+	<view name="Full Output">
+		<screen index="0">
+			<bounds x="0" y="0" width="400" height="280" />
+		</screen>
+		<screen index="1">
+			<bounds x="0" y="251" width="288" height="29" />
+		</screen>
+	</view>
+	<view name="Adder 2 Output Only (4:3)">
+		<screen index="0">
+			<bounds left="0" top="0" right="4" bottom="3" />
+		</screen>
+	</view>
+	<view name="VFD Only (288:29)">
+		<screen index="1">
+			<bounds x="0" y="0" width="288" height="29" />
+		</screen>
+	</view>
+</mamelayout>
+

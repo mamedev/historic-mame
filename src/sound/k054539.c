@@ -432,7 +432,7 @@ else
 			gc_msg[4] = gc_chip + '0';
 			gc_msg[gc_i  ] = '[';
 			gc_msg[gc_i+3] = ']';
-			ui_popup("%s", gc_msg);
+			popmessage("%s", gc_msg);
 			gc_msg[gc_i+3] = gc_msg[gc_i] = ' ';
 		}
 	}

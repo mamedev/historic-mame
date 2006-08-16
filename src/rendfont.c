@@ -10,6 +10,7 @@
 ***************************************************************************/
 
 #include "rendfont.h"
+#include "rendutil.h"
 
 
 /***************************************************************************
@@ -432,6 +433,41 @@ render_texture *render_font_get_char_texture_and_bounds(render_font *font, float
 
 	/* return the texture */
 	return ch->texture;
+}
+
+
+/*-------------------------------------------------
+    render_font_draw_string_to_bitmap - draw a
+    string to a bitmap
+-------------------------------------------------*/
+
+void render_font_get_scaled_bitmap_and_bounds(render_font *font, mame_bitmap *dest, float height, float aspect, UINT16 chnum, rectangle *bounds)
+{
+	render_font_char *ch = get_char(font, chnum);
+	float scale = font->scale * height;
+	INT32 origwidth, origheight;
+
+	/* on entry, assume x0,y0 are the top,left coordinate of the cell and add */
+	/* the character bounding box to that position */
+	bounds->min_x = (float)ch->xoffs * scale * aspect;
+	bounds->min_y = 0;
+
+	/* compute x1,y1 from there based on the bitmap size */
+	bounds->max_x = bounds->min_x + (float)ch->bmwidth * scale * aspect;
+	bounds->max_y = bounds->min_y + (float)font->height * scale;
+
+	/* if the bitmap isn't big enough, bail */
+	if (dest->width < bounds->max_x - bounds->min_x || dest->height < bounds->max_y - bounds->min_y)
+		return;
+
+	/* scale the font */
+	origwidth = dest->width;
+	origheight = dest->height;
+	dest->width = bounds->max_x - bounds->min_x;
+	dest->height = bounds->max_y - bounds->min_y;
+	font_scale(dest, ch->bitmap, NULL, NULL);
+	dest->width = origwidth;
+	dest->height = origheight;
 }
 
 

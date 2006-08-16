@@ -19,7 +19,7 @@ likewise be a 2 screen game
 #include "cpu/z80/z80.h"
 #include "sound/2151intf.h"
 #include "sound/k054539.h"
-#include "render.h"
+#include "rendlay.h"
 
 VIDEO_START( xmen );
 VIDEO_START( xmen6p );

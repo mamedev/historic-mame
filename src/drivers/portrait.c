@@ -84,7 +84,6 @@ DM81LS95 = TriState buffer
 **************************************************************************/
 
 #include "driver.h"
-#include "render.h"
 #include "cpu/i8039/i8039.h"
 #include "sound/5220intf.h"
 
@@ -111,7 +110,7 @@ static WRITE8_HANDLER( portrait_ctrl_w )
 	set_led_status(1, data & 0x40);
 
 	/* shows the black and white photo from the camera */
-	render_view_item_set_state("photo", (data >> 7) & 1);
+	output_set_value("photo", (data >> 7) & 1);
 }
 
 static WRITE8_HANDLER( portrait_positive_scroll_w )

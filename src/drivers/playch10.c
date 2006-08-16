@@ -297,7 +297,7 @@ Notes & Todo:
 #include "sound/dac.h"
 #include "sound/nes_apu.h"
 
-#include "render.h"
+#include "rendlay.h"
 
 /* clock frequency */
 #define N2A03_DEFAULTCLOCK (21477272.724 / 12)

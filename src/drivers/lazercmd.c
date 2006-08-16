@@ -225,7 +225,7 @@
 #include "cpu/s2650/s2650.h"
 #include "sound/dac.h"
 
-#include "render.h"
+#include "rendlay.h"
 #include "lazercmd.lh"
 
 

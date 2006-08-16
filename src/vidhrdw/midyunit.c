@@ -700,7 +700,7 @@ static void update_partial(int scanline, int render)
 {
 	/* force a partial refresh */
 	if (render)
-		force_partial_update(0, scanline);
+		video_screen_update_partial(0, scanline);
 
 	/* if no autoerase is enabled, quit now */
 	if (autoerase_enable)

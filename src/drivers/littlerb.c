@@ -16,6 +16,46 @@ the list?
 maybe the vdp 'commands' can be used to store and get back
 write addresses?
 
+Dip sw.1
+--------
+             | Coin 1 | Coin 2  |
+              1  2  3   4  5  6   7  8   Coin  Play
+---------------------------------------------------
+ Coins        -  -  -   -  -  -           1     4
+              +  -  -   +  -  -           1     3
+              -  +  -   -  +  -           1     2
+              +  +  -   +  +  -           1     1
+              -  -  +   -  -  +           2     1
+              +  -  +   +  -  +           3     1
+              -  +  +   -  +  +           4     1
+              +  +  +   +  +  +           5     1
+ Player                           -  -    2
+                                  +  -    3
+                                  -  +    4
+                                  +  +    5
+
+
+Dip sw.2
+--------          1  2  3  4  5  6  7  8
+-----------------------------------------------------------
+ Demo Sound       -                        Yes
+                  +                        No
+ Mode                -                     Test Mode
+                     +                     Game Mode
+ Difficulty             -  -  -            0 (Easy)
+                        +  -  -            1
+                        -  +  -            2 (Normal)
+                        +  +  -            3
+                        -  -  +            4
+                        +  -  +            5
+                        -  +  +            6
+                        +  +  +            7 (Hardest)
+ Bonus                           -  -      Every 150000
+                                 +  -      Every 200000
+                                 -  +      Every 300000
+                                 +  +      No Bonus
+
+
 */
 
 #include "driver.h"

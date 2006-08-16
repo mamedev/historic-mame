@@ -37,9 +37,6 @@ UINT32 *generic_nvram32;
 /* memory card status */
 static int memcard_inserted;
 
-/* LED status */
-static UINT32 leds_status;
-
 /* interrupt status */
 static UINT8 interrupt_enable[MAX_CPU];
 
@@ -489,25 +486,21 @@ int memcard_present(void)
 ***************************************************************************/
 
 /*-------------------------------------------------
-    get_led_status - set the state of a given LED
--------------------------------------------------*/
-
-int get_led_status(int num)
-{
-	return (leds_status >> num) & 1;
-}
-
-
-/*-------------------------------------------------
     set_led_status - set the state of a given LED
 -------------------------------------------------*/
 
 void set_led_status(int num, int on)
 {
-	if (on)
-		leds_status |=	(1 << num);
-	else
-		leds_status &= ~(1 << num);
+	char temp[20];
+	char *dest = temp;
+	*dest++ = 'l';
+	*dest++ = 'e';
+	*dest++ = 'd';
+	if (num > 100) *dest++ = '0' + ((num / 100) % 10);
+	if (num > 10) *dest++ = '0' + ((num / 10) % 10);
+	*dest++ = '0' + (num % 10);
+	*dest++ = 0;
+	output_set_value(temp, on ? 1 : 0);
 }
 
 

@@ -383,7 +383,7 @@ void atarirle_control_w(int map, UINT8 bits)
 		return;
 
 	/* force a partial update first */
-	force_partial_update(0, scanline);
+	video_screen_update_partial(0, scanline);
 
 	/* if the erase flag was set, erase the front map */
 	if (oldbits & ATARIRLE_CONTROL_ERASE)

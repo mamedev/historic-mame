@@ -130,7 +130,7 @@ Changes:
 ***************************************************************************/
 
 #include "driver.h"
-#include "render.h"
+#include "rendlay.h"
 #include "vidhrdw/ppu2c03b.h"
 #include "machine/rp5h01.h"
 #include "sound/dac.h"

@@ -21,7 +21,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "ui.h"
 #include <zlib.h>
 
 
@@ -868,7 +867,7 @@ int state_save_load_begin(mame_file *file)
 	mame_fread(ss_dump_file, ss_dump_array, ss_dump_size);
 
 	/* verify the header and report an error if it doesn't match */
-	if (validate_header(ss_dump_array, NULL, get_signature(), ui_popup, "Error: "))
+	if (validate_header(ss_dump_array, NULL, get_signature(), popmessage, "Error: "))
 	{
 		free(ss_dump_array);
 		return 1;

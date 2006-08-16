@@ -28,6 +28,7 @@
 #include "profiler.h"
 #include "vidhrdw/vector.h"
 #include "render.h"
+#include "rendutil.h"
 #include "options.h"
 #include "ui.h"
 
@@ -213,7 +214,7 @@ int winvideo_init(void)
 	// start recording movie
 	stemp = options_get_string("mngwrite", TRUE);
 	if (stemp != NULL)
-		record_movie_start(stemp);
+		video_movie_begin_recording(stemp);
 
 	// if we're running < 5 minutes, allow us to skip warnings to facilitate benchmarking/validation testing
 	if (video_config.framestorun > 0 && video_config.framestorun < 60*60*5)
@@ -652,7 +653,7 @@ static void update_fps(mame_time emutime)
 			// write out the screenshot
 			if ((fp = mame_fopen(Machine->gamedrv->name, name, FILETYPE_SCREENSHOT, 1)) != NULL)
 			{
-				snapshot_save_screen_indexed(fp, 0);
+				video_screen_save_snapshot(fp, 0);
 				mame_fclose(fp);
 			}
 			mame_schedule_exit();
@@ -834,7 +835,7 @@ static void extract_video_config(void)
 		load_effect_overlay(stemp);
 
 	// configure layers
-	video_config.layerconfig = LAYER_CONFIG_ENABLE_BACKDROP | LAYER_CONFIG_ENABLE_OVERLAY | LAYER_CONFIG_ENABLE_BEZEL;
+	video_config.layerconfig = LAYER_CONFIG_DEFAULT;
 	if (!options_get_bool("use_backdrops", TRUE)) video_config.layerconfig &= ~LAYER_CONFIG_ENABLE_BACKDROP;
 	if (!options_get_bool("use_overlays", TRUE)) video_config.layerconfig &= ~LAYER_CONFIG_ENABLE_OVERLAY;
 	if (!options_get_bool("use_bezels", TRUE)) video_config.layerconfig &= ~LAYER_CONFIG_ENABLE_BEZEL;

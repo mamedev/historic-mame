@@ -79,7 +79,7 @@ TODO:
 #include "sound/3812intf.h"
 #include "sound/msm5205.h"
 #include "sound/2413intf.h"
-#include "render.h"
+#include "rendlay.h"
 
 /***************************************************************************
 

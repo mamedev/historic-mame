@@ -1,8 +1,39 @@
 /*
+
+   YMF278B  FM + Wave table Synthesizer (OPL4)
+
    Timer and PCM YMF278B.  The FM will be shared with the ymf262, eventually.
 
    This chip roughly splits the difference between the Sega 315-5560 MultiPCM
    (Multi32, Model 1/2) and YMF 292-F SCSP (later Model 2, STV, Saturn, Model 3).
+
+   Features as listed in LSI-4MF2782 data sheet:
+    FM Synthesis (same as YMF262)
+     1. Sound generation mode
+         Two-operater mode
+          Generates eighteen voices or fifteen voices plus five rhythm sounds simultaneously
+         Four-operator mode
+          Generates six voices in four-operator mode plus six voices in two-operator mode simultaneously,
+          or generates six voices in four-operator mode plus three voices in two-operator mode plus five
+          rhythm sounds simultaneously
+     2. Eight selectable waveforms
+     3. Stereo output
+    Wave Table Synthesis
+     1. Generates twenty-four voices simultaneously
+     2. 44.1kHz sampling rate for output sound data
+     3. Selectable from 8-bit, 12-bit and 16-bit word lengths for wave data
+     4. Stereo output (16-stage panpot for each voice)
+    Wave Data
+     1. Accepts 32M bit external memory at maximum
+     2. Up to 512 wave tables
+     3. External ROM or SRAM can be connected. With SRAM connected, the CPU can download wave data
+     4. Outputs chip select signals for 1Mbit, 4Mbit, 8Mbit or 16Mbit memory
+     5. Can be directly connected to the Yamaha YRW801 (Wave data ROM)
+        Features of YRW801 as listed in LSI 4RW801A2
+          Built-in wave data of tones which comply with GM system Level 1
+           Melody tone ....... 128 tones
+           Percussion tone ...  47 tones
+          16Mbit capacity (2,097,152word x 8)
 
    By R. Belmont and O. Galibert.
 

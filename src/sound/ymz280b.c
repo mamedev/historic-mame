@@ -1,9 +1,24 @@
-/**********************************************************************************************
- *
- *   Yamaha YMZ280B driver
- *   by Aaron Giles
- *
- **********************************************************************************************/
+/*
+
+ Yamaha YMZ280B driver
+  by Aaron Giles
+
+  YMZ280B 8-Channel PCMD8 PCM/ADPCM Decoder
+
+ Features as listed in LSI-4MZ280B3 data sheet:
+  Voice data stored in external memory can be played back simultaneously for up to eight voices
+  Voice data format can be selected from 4-bit ADPCM, 8-bit PCM and 16-bit PCM
+  Control of voice data external memory
+   Up to 16M bytes of ROM or SRAM (x 8 bits, access time 150ms max) can be connected
+   Continuous access is possible
+   Loop playback between selective addresses is possible
+  Voice data playback frequency control
+   4-bit ADPCM ................ 0.172 to 44.1kHz in 256 steps
+   8-bit PCM, 16-bit PCM ...... 0.172 to 88.2kHz in 512 steps
+  256 steps total level and 16 steps panpot can be set
+  Voice signal is output in stereo 16-bit 2's complement MSB-first format
+
+*/
 
 
 #include <math.h>

@@ -11,7 +11,6 @@
 *************************************************************************/
 
 #include "driver.h"
-#include "render.h"
 #include "videopin.h"
 #include "sound/discrete.h"
 
@@ -127,10 +126,10 @@ static WRITE8_HANDLER( videopin_led_w )
 		{ "LED19", "LED14", "LED12", "-" }
 	};
 
-	render_view_item_set_state(matrix[i][0], (data >> 0) & 1);
-	render_view_item_set_state(matrix[i][1], (data >> 1) & 1);
-	render_view_item_set_state(matrix[i][2], (data >> 2) & 1);
-	render_view_item_set_state(matrix[i][3], (data >> 3) & 1);
+	output_set_value(matrix[i][0], (data >> 0) & 1);
+	output_set_value(matrix[i][1], (data >> 1) & 1);
+	output_set_value(matrix[i][2], (data >> 2) & 1);
+	output_set_value(matrix[i][3], (data >> 3) & 1);
 
 	if (i == 7)
 	{

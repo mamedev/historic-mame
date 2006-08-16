@@ -10,7 +10,7 @@
 *********************************************************************/
 
 #include "ui.h"
-#include "render.h"
+#include "rendutil.h"
 #include "cheat.h"
 #include "uimenu.h"
 #include "uitext.h"
@@ -1047,28 +1047,28 @@ static UINT32 menu_memory_card(UINT32 state)
 		{
 			if (memcard_insert(cardnum) == 0)
 			{
-				ui_popup("%s", ui_getstring(UI_loadok));
+				popmessage("%s", ui_getstring(UI_loadok));
 				ui_menu_stack_reset();
 				return 0;
 			}
 			else
-				ui_popup("%s", ui_getstring(UI_loadfailed));
+				popmessage("%s", ui_getstring(UI_loadfailed));
 		}
 
 		/* handle eject */
 		else if (selected == ejectindex)
 		{
 			memcard_eject();
-			ui_popup("%s", ui_getstring(UI_cardejected));
+			popmessage("%s", ui_getstring(UI_cardejected));
 		}
 
 		/* handle create */
 		else if (selected == createindex)
 		{
 			if (memcard_create(cardnum, FALSE) == 0)
-				ui_popup("%s", ui_getstring(UI_cardcreated));
+				popmessage("%s", ui_getstring(UI_cardcreated));
 			else
-				ui_popup("%s\n%s", ui_getstring(UI_cardcreatedfailed), ui_getstring(UI_cardcreatedfailed2));
+				popmessage("%s\n%s", ui_getstring(UI_cardcreatedfailed), ui_getstring(UI_cardcreatedfailed2));
 		}
 	}
 

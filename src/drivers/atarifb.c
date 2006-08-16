@@ -106,9 +106,12 @@
 #include "atarifb.h"
 #include "sound/discrete.h"
 
+#include "atarifb.lh"
+#include "atarifb4.lh"
+#include "abaseb.lh"
+
 
 int atarifb_game;
-int atarifb_lamp1, atarifb_lamp2;
 
 
 
@@ -536,7 +539,7 @@ static MACHINE_DRIVER_START( atarifb )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(38*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 38*8-1, 0*8, 31*8-1)
+	MDRV_VISIBLE_AREA(0*8, 38*8-1, 1*8, 31*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(4)
 	MDRV_COLORTABLE_LENGTH(sizeof(colortable_source) / sizeof(colortable_source[0]))
@@ -551,16 +554,6 @@ static MACHINE_DRIVER_START( atarifb )
 	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
 	MDRV_SOUND_CONFIG(atarifb_discrete_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
-MACHINE_DRIVER_END
-
-
-static MACHINE_DRIVER_START( atarifb4 )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(atarifb)
-
-	/* video hardware */
-	MDRV_VISIBLE_AREA(0*8, 38*8-1, 0*8, 32*8-1)
 MACHINE_DRIVER_END
 
 
@@ -784,9 +777,9 @@ static DRIVER_INIT( soccer )
  *************************************/
 
 /*    YEAR  NAME      PARENT   MACHINE   INPUT     INIT      MONITOR  */
-GAME( 1978, atarifb,  0,       atarifb,  atarifb,  atarifb,  ROT0, "Atari", "Atari Football (revision 2)", 0 )
-GAME( 1978, atarifb1, atarifb, atarifb,  atarifb,  atarifb,  ROT0, "Atari", "Atari Football (revision 1)", 0 )
-GAME( 1979, atarifb4, atarifb, atarifb4, atarifb4, atarifb4, ROT0, "Atari", "Atari Football (4 players)", 0 )
-GAME( 1979, abaseb,   0,       abaseb,   abaseb,   abaseb,   ROT0, "Atari", "Atari Baseball (set 1)", 0 )
-GAME( 1979, abaseb2,  abaseb,  abaseb,   abaseb,   abaseb,   ROT0, "Atari", "Atari Baseball (set 2)", 0 )
-GAME( 1980, soccer,   0,       soccer,   soccer,   soccer,   ROT0, "Atari", "Atari Soccer", 0 )
+GAMEL( 1978, atarifb,  0,       atarifb,  atarifb,  atarifb,  ROT0, "Atari", "Atari Football (revision 2)", 0, layout_atarifb )
+GAMEL( 1978, atarifb1, atarifb, atarifb,  atarifb,  atarifb,  ROT0, "Atari", "Atari Football (revision 1)", 0, layout_atarifb )
+GAMEL( 1979, atarifb4, atarifb, atarifb,  atarifb4, atarifb4, ROT0, "Atari", "Atari Football (4 players)", 0, layout_atarifb4 )
+GAMEL( 1979, abaseb,   0,       abaseb,   abaseb,   abaseb,   ROT0, "Atari", "Atari Baseball (set 1)", 0, layout_abaseb )
+GAMEL( 1979, abaseb2,  abaseb,  abaseb,   abaseb,   abaseb,   ROT0, "Atari", "Atari Baseball (set 2)", 0, layout_abaseb )
+GAME ( 1980, soccer,   0,       soccer,   soccer,   soccer,   ROT0, "Atari", "Atari Soccer", 0 )

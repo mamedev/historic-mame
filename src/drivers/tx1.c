@@ -58,7 +58,7 @@ Buggy Boy Error Codes             TX-1 Error Codes
 #include "machine/8255ppi.h"
 #include "sound/ay8910.h"
 #include "cpu/i86/i86.h"
-#include "render.h"
+#include "rendlay.h"
 
 #define PRINT_CRT 0
 #define ROM_PATCHES 1

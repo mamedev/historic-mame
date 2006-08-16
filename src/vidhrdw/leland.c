@@ -103,7 +103,7 @@ WRITE8_HANDLER( leland_gfx_port_w )
     	case -1:
     		if (gfxbank != data)
     		{
-				force_partial_update(0, leland_last_scanline_int);
+				video_screen_update_partial(0, leland_last_scanline_int);
 	    		gfxbank = data;
 			}
     		break;
@@ -111,7 +111,7 @@ WRITE8_HANDLER( leland_gfx_port_w )
 		case 0:
 			if ((xscroll & 0xff) != data)
 			{
-				force_partial_update(0, leland_last_scanline_int);
+				video_screen_update_partial(0, leland_last_scanline_int);
 				xscroll = (xscroll & 0xff00) | (data & 0x00ff);
 			}
 			break;
@@ -119,7 +119,7 @@ WRITE8_HANDLER( leland_gfx_port_w )
 		case 1:
 			if ((xscroll >> 8) != data)
 			{
-				force_partial_update(0, leland_last_scanline_int);
+				video_screen_update_partial(0, leland_last_scanline_int);
 				xscroll = (xscroll & 0x00ff) | ((data << 8) & 0xff00);
 			}
 			break;
@@ -127,7 +127,7 @@ WRITE8_HANDLER( leland_gfx_port_w )
 		case 2:
 			if ((yscroll & 0xff) != data)
 			{
-				force_partial_update(0, leland_last_scanline_int);
+				video_screen_update_partial(0, leland_last_scanline_int);
 				yscroll = (yscroll & 0xff00) | (data & 0x00ff);
 			}
 			break;
@@ -135,7 +135,7 @@ WRITE8_HANDLER( leland_gfx_port_w )
 		case 3:
 			if ((yscroll >> 8) != data)
 			{
-				force_partial_update(0, leland_last_scanline_int);
+				video_screen_update_partial(0, leland_last_scanline_int);
 				yscroll = (yscroll & 0x00ff) | ((data << 8) & 0xff00);
 			}
 			break;

@@ -1137,25 +1137,3 @@ Automatic device selection options
 	enable mouse controls just as if you had explicitly specified -mouse.
 	Note that these controls override the values of -[no]mouse,
 	-[no]joystick, etc.
-
-
-
-Output device options
----------------------
-
--[no]keyboard_leds / -[no]leds
-
-	Since MAME uses an input device (keyboard) for output, this sort of
-	belongs here. Using this option enables/disables simulation of the game
-	LEDs by the keyboard LEDs. This works fine, but can lead to problems
-	after exiting MAME (i.e. CAPS LOCK remains ON), so you can disable it
-	here. The default is ON (-keyboard_leds).
-
--led_mode <ps/2|usb>
-
-	For Windows NT and later systems, determines how LEDs on the keyboard
-	are controlled. In PS/2 mode, MAME uses the low-level keyboard driver
-	directly to control the LEDs. In USB mode, MAME attempts to post fake
-	keypresses on the Caps Lock, Scroll Lock, and Num Lock keys in order to
-	induce the LEDs to change. If you have a PS/2 keyboard, PS/2 mode is the
-	more reliable approach. Default is PS/2.

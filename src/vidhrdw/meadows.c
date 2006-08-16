@@ -67,7 +67,7 @@ WRITE8_HANDLER( meadows_videoram_w )
 WRITE8_HANDLER( meadows_spriteram_w )
 {
 	if (spriteram[offset] != data)
-		force_partial_update(0, cpu_getscanline());
+		video_screen_update_partial(0, cpu_getscanline());
 	spriteram[offset] = data;
 }
 

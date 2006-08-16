@@ -400,7 +400,7 @@ static void msm5232_write(MSM5232 *chip, int ofst, int data)
                 logerror("msm5232: control1 ctrl=%x OE=%x\n", data&0xf0, data&0x0f);*/
 
 			/*if (data & 0x10)
-                ui_popup("msm5232: control1 ctrl=%2x\n", data);*/
+                popmessage("msm5232: control1 ctrl=%2x\n", data);*/
 
 			chip->control1 = data;
 
@@ -420,7 +420,7 @@ static void msm5232_write(MSM5232 *chip, int ofst, int data)
                 logerror("msm5232: control2 ctrl=%x OE=%x\n", data&0xf0, data&0x0f);*/
 
 			/*if (data & 0x10)
-                ui_popup("msm5232: control2 ctrl=%2x\n", data);*/
+                popmessage("msm5232: control2 ctrl=%2x\n", data);*/
 
 			chip->control2 = data;
 

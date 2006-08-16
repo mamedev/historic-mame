@@ -83,43 +83,57 @@ struct _performance_info
 /* core initialization */
 int video_init(void);
 
-/* set the resolution of a screen */
-void configure_screen(int scrnum, int width, int height, const rectangle *visarea, float refresh);
+/* core VBLANK callback */
+void video_vblank_start(void);
 
-/* set the visible area of a screen; this is a subset of configure_screen */
-void set_visible_area(int scrnum, int min_x, int max_x, int min_y, int max_y);
+/* set the resolution of a screen */
+void video_screen_configure(int scrnum, int width, int height, const rectangle *visarea, float refresh);
+
+/* set the visible area of a screen; this is a subset of video_screen_configure */
+void video_screen_set_visarea(int scrnum, int min_x, int max_x, int min_y, int max_y);
 
 /* force a partial update of the screen up to and including the requested scanline */
-void force_partial_update(int scrnum, int scanline);
+void video_screen_update_partial(int scrnum, int scanline);
+
+/* return the current vertical or horizontal position of the beam for a screen */
+int video_screen_get_vpos(int scrnum);
+int video_screen_get_hpos(int scrnum);
+
+/* return the current vertical or horizontal blanking state for a screen */
+int video_screen_get_vblank(int scrnum);
+int video_screen_get_hblank(int scrnum);
 
 /* reset the partial updating for a frame; generally only called by cpuexec.c */
-void reset_partial_updates(void);
+void video_reset_partial_updates(void);
+
+/* are we skipping the current frame? */
+int video_skip_this_frame(void);
 
 /* update the screen, handling frame skipping and rendering */
 void video_frame_update(void);
 
-/* are we skipping the current frame? */
-int skip_this_frame(void);
-
 /* return current performance data */
 const performance_info *mame_get_performance_info(void);
 
-/*
-  Save a screen shot of the game display. It is suggested to use the core
-  function snapshot_save_all_screens() or snapshot_save_screen_indexed(), so the format
-  of the screen shots will be consistent across ports. This hook is provided
-  only to allow the display of a file requester to let the user choose the
-  file name. This isn't scrictly necessary, so you can just call
-  snapshot_save_all_screens() to let the core automatically pick a default name.
-*/
-void snapshot_save_screen_indexed(mame_file *fp, int scrnum);
-void snapshot_save_all_screens(void);
+
+/* ----- snapshots ----- */
+
+/* save a snapshot of a given screen */
+void video_screen_save_snapshot(mame_file *fp, int scrnum);
+
+/* save a snapshot of all the active screens */
+void video_save_active_screen_snapshots(void);
+
+
+/* ----- movie recording ----- */
 
 /* Movie recording */
-void record_movie_start(const char *name);
-void record_movie_stop(void);
-void record_movie_toggle(void);
-void record_movie_frame(int scrnum);
+int video_is_movie_active(void);
+void video_movie_begin_recording(const char *name);
+void video_movie_end_recording(void);
+
+
+/* ----- bitmap allocation ----- */
 
 /* bitmap allocation */
 #define bitmap_alloc(w,h) bitmap_alloc_depth(w, h, Machine->color_depth)

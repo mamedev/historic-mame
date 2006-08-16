@@ -452,7 +452,6 @@ $a00000 checks have been seen on the Final Lap boards.
 #include "namcoic.h"
 #include "sound/2151intf.h"
 #include "sound/c140.h"
-#include "render.h"
 
 
 /*************************************************************/
@@ -464,29 +463,29 @@ static UINT8 *namcos2_dpram;	/* 2Kx8 */
 static void
 GollyGhostUpdateLED_c4( int data )
 {
-	render_view_item_set_state("zip100", data >> 4);
-	render_view_item_set_state("zip10", data & 0x0f);
+	output_set_value("zip100", data >> 4);
+	output_set_value("zip10", data & 0x0f);
 }
 
 static void
 GollyGhostUpdateLED_c6( int data )
 {
-	render_view_item_set_state("zip1", data >> 4);
-	render_view_item_set_state("time10", data & 0x0f);
+	output_set_value("zip1", data >> 4);
+	output_set_value("time10", data & 0x0f);
 }
 
 static void
 GollyGhostUpdateLED_c8( int data )
 {
-	render_view_item_set_state("time1", data >> 4);
-	render_view_item_set_state("zap100", data & 0x0f);
+	output_set_value("time1", data >> 4);
+	output_set_value("zap100", data & 0x0f);
 }
 
 static void
 GollyGhostUpdateLED_ca( int data )
 {
-	render_view_item_set_state("zap10", data >> 4);
-	render_view_item_set_state("zap1", data & 0x0f);
+	output_set_value("zap10", data >> 4);
+	output_set_value("zap1", data & 0x0f);
 }
 
 static void
@@ -494,26 +493,26 @@ GollyGhostUpdateDiorama_c0( int data )
 {
 	if( data&0x80 )
 	{
-		render_view_item_set_state("dollhouse", 1); /* diorama is lit up */
+		output_set_value("dollhouse", 1); /* diorama is lit up */
 
 		/* dollhouse controller; solenoids control physical components */
-		render_view_item_set_state("toybox",      (data >> 0) & 1);
-		render_view_item_set_state("bathroom",    (data >> 1) & 1);
-		render_view_item_set_state("bureau",      (data >> 2) & 1);
-		render_view_item_set_state("refrigerator",(data >> 3) & 1);
-		render_view_item_set_state("porch",       (data >> 4) & 1);
+		output_set_value("toybox",      (data >> 0) & 1);
+		output_set_value("bathroom",    (data >> 1) & 1);
+		output_set_value("bureau",      (data >> 2) & 1);
+		output_set_value("refrigerator",(data >> 3) & 1);
+		output_set_value("porch",       (data >> 4) & 1);
 		/* data&0x20 : player#1 (ZIP) force feedback
          * data&0x40 : player#2 (ZAP) force feedback
          */
 	}
 	else
 	{
-		render_view_item_set_state("dollhouse",0);
-		render_view_item_set_state("toybox", 0);
-		render_view_item_set_state("bathroom", 0);
-		render_view_item_set_state("bureau", 0);
-		render_view_item_set_state("refrigerator", 0);
-		render_view_item_set_state("porch", 0);
+		output_set_value("dollhouse",0);
+		output_set_value("toybox", 0);
+		output_set_value("bathroom", 0);
+		output_set_value("bureau", 0);
+		output_set_value("refrigerator", 0);
+		output_set_value("porch", 0);
 	}
 }
 

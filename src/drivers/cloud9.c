@@ -145,7 +145,7 @@ static void clock_irq(int param)
 	}
 
 	/* force an update now */
-	force_partial_update(0, cpu_getscanline());
+	video_screen_update_partial(0, cpu_getscanline());
 
 	/* find the next edge */
 	schedule_next_irq(param);
@@ -193,7 +193,7 @@ static MACHINE_START( cloud9 )
 	visarea.max_x = 255;
 	visarea.min_y = cloud9_vblank_end + 1;
 	visarea.max_y = cloud9_vblank_start;
-	configure_screen(0, 320, 256, &visarea, (float)PIXEL_CLOCK / (float)VTOTAL / (float)HTOTAL);
+	video_screen_configure(0, 320, 256, &visarea, (float)PIXEL_CLOCK / (float)VTOTAL / (float)HTOTAL);
 
 	/* create a timer for IRQs and set up the first callback */
 	irq_timer = timer_alloc(clock_irq);

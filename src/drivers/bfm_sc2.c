@@ -129,8 +129,6 @@ Adder hardware:
 
     Known issues:
         * Need to find the 'missing' game numbers
-        * To determine whether or not the VFD and door status are drawn on screen, change the
-          comment status of the FAKE_VIDEO definition in bfm_adr2.c
 
 ***************************************************************************/
 
@@ -153,6 +151,7 @@ Adder hardware:
 #include "machine/mmtr.h"
 #include "bfm_sc2.h"
 
+#include "bfm_sc2.lh"
 //#define LOG_SERIAL      // log serial communication between mainboard (scorpion2) and videoboard (adder2)
 #define  BFM_DEBUG //enable debug options on certain games
 //#define  UART_LOG //enable UART data logging
@@ -2662,42 +2661,49 @@ INPUT_PORTS_END
 
 static MACHINE_DRIVER_START( scorpion2_vid )
 
-  MDRV_MACHINE_RESET( adder2_init_vid )					// main scorpion2 board initialisation
+	MDRV_MACHINE_RESET( adder2_init_vid )				// main scorpion2 board initialisation
 
-  MDRV_INTERLEAVE(16)									// needed for serial communication !!
+	MDRV_INTERLEAVE(16)									// needed for serial communication !!
 
-  MDRV_CPU_ADD_TAG("main", M6809, 2000000 )				// 6809 CPU at 2 Mhz
+	MDRV_CPU_ADD_TAG("main", M6809, 2000000 )				// 6809 CPU at 2 Mhz
 
-  MDRV_CPU_PROGRAM_MAP(memmap_vid,0)					// setup scorpion2 board memorymap
+	MDRV_CPU_PROGRAM_MAP(memmap_vid,0)					// setup scorpion2 board memorymap
 
-  MDRV_CPU_PERIODIC_INT(timer_irq, TIME_IN_HZ(1000) )	// generate 1000 IRQ's per second
+	MDRV_CPU_PERIODIC_INT(timer_irq, TIME_IN_HZ(1000) )	// generate 1000 IRQ's per second
 
-  MDRV_NVRAM_HANDLER(nvram)
+	MDRV_NVRAM_HANDLER(nvram)
+	MDRV_DEFAULT_LAYOUT(layout_bfm_sc2)
 
-  MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-  MDRV_SCREEN_SIZE( 400, 300)
-  MDRV_VISIBLE_AREA(  0, 400-1, 0, 300-1)
-  MDRV_FRAMES_PER_SECOND(50)
-  MDRV_VIDEO_START( adder2)
-  MDRV_VIDEO_RESET( adder2)
-  MDRV_VIDEO_UPDATE(adder2)
+	MDRV_SCREEN_ADD("ADDER", 0x000)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE( 400, 280)
+	MDRV_VISIBLE_AREA(  0, 400-1, 0, 280-1)
+	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_VIDEO_START( adder2)
+	MDRV_VIDEO_RESET( adder2)
+	MDRV_VIDEO_UPDATE(adder2)
 
-  MDRV_PALETTE_LENGTH(16)
-  MDRV_COLORTABLE_LENGTH(16)
-  MDRV_PALETTE_INIT(adder2)
-  MDRV_GFXDECODE(adder2_gfxdecodeinfo)
+	MDRV_SCREEN_ADD("VFD", 0x000)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE( 288, 29)
+	MDRV_VISIBLE_AREA(  0, 288-1, 0, 29-1)
 
-  MDRV_CPU_ADD_TAG("adder2", M6809, 2000000 )			// adder2 board 6809 CPU at 2 Mhz
-  MDRV_CPU_PROGRAM_MAP(adder2_memmap,0)					// setup adder2 board memorymap
-  MDRV_CPU_VBLANK_INT(adder2_vbl, 1);					// board has a VBL IRQ
+	MDRV_PALETTE_LENGTH(16)
+	MDRV_COLORTABLE_LENGTH(16)
+	MDRV_PALETTE_INIT(adder2)
+	MDRV_GFXDECODE(adder2_gfxdecodeinfo)
 
-  MDRV_SPEAKER_STANDARD_MONO("mono")
-  MDRV_SOUND_ADD(UPD7759, UPD7759_STANDARD_CLOCK)
-  MDRV_SOUND_CONFIG(upd7759_interface)
-  MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	MDRV_CPU_ADD_TAG("adder2", M6809, 2000000 )			// adder2 board 6809 CPU at 2 Mhz
+	MDRV_CPU_PROGRAM_MAP(adder2_memmap,0)				// setup adder2 board memorymap
+	MDRV_CPU_VBLANK_INT(adder2_vbl, 1);					// board has a VBL IRQ
 
-  MDRV_SOUND_ADD(YM2413, 3579545)
-  MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(UPD7759, UPD7759_STANDARD_CLOCK)
+	MDRV_SOUND_CONFIG(upd7759_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+
+	MDRV_SOUND_ADD(YM2413, 3579545)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 
 MACHINE_DRIVER_END
 

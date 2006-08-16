@@ -1342,6 +1342,9 @@ static void cpu_vblankreset(void)
 {
 	int cpunum;
 
+	/* notify the video system of a VBLANK start */
+	video_vblank_start();
+
 	/* read keyboard & update the status of the input ports */
 	input_port_vblank_start();
 
@@ -1480,7 +1483,7 @@ static void cpu_updatecallback(int param)
 	mame_timer_adjust(refresh_timer, time_never, 0, time_never);
 
 	/* reset partial updates */
-	reset_partial_updates();
+	video_reset_partial_updates();
 }
 
 

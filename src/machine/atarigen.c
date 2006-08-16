@@ -1027,7 +1027,7 @@ static void atarivc_common_w(offs_t offset, UINT16 newword)
 			/* check for palette banking */
 			if (atarivc_state.palette_bank != (((newword & 0x0400) >> 10) ^ 1))
 			{
-				force_partial_update(0, cpu_getscanline());
+				video_screen_update_partial(0, cpu_getscanline());
 				atarivc_state.palette_bank = ((newword & 0x0400) >> 10) ^ 1;
 			}
 			break;

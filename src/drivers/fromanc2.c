@@ -26,6 +26,7 @@ Memo:
 #include "cpu/z80/z80.h"
 #include "machine/eeprom.h"
 #include "sound/2610intf.h"
+#include "rendlay.h"
 
 
 VIDEO_UPDATE( fromanc2 );
@@ -68,10 +69,7 @@ WRITE16_HANDLER( fromanc4_gfxreg_0_w );
 WRITE16_HANDLER( fromanc4_gfxreg_1_w );
 WRITE16_HANDLER( fromanc4_gfxreg_2_w );
 
-void fromanc2_set_dispvram_w(int vram);
 
-
-static int fromanc2_playerside;
 static int fromanc2_portselect;
 static UINT16 fromanc2_datalatch1;
 static UINT8 fromanc2_datalatch_2h, fromanc2_datalatch_2l;
@@ -105,8 +103,6 @@ static DRIVER_INIT( fromanc2 )
 	fromanc2_subcpu_nmi_flag = 1;
 	fromanc2_subcpu_int_flag = 1;
 	fromanc2_sndcpu_nmi_flag = 1;
-
-	fromanc2_playerside = 0;
 }
 
 static DRIVER_INIT( fromancr )
@@ -114,15 +110,11 @@ static DRIVER_INIT( fromancr )
 	fromanc2_subcpu_nmi_flag = 1;
 	fromanc2_subcpu_int_flag = 1;
 	fromanc2_sndcpu_nmi_flag = 1;
-
-	fromanc2_playerside = 0;
 }
 
 static DRIVER_INIT( fromanc4 )
 {
 	fromanc2_sndcpu_nmi_flag = 1;
-
-	fromanc2_playerside = 0;
 }
 
 
@@ -132,33 +124,6 @@ static DRIVER_INIT( fromanc4 )
 
 static INTERRUPT_GEN( fromanc2_interrupt )
 {
-	static int fromanc2_playerside_old = -1;
-	static int key_F1_old = 0;
-
-	if (code_pressed(KEYCODE_F1)) {
-		if (key_F1_old != 1) {
-			key_F1_old = 1;
-			fromanc2_playerside ^= 1;
-		}
-	} else key_F1_old = 0;
-
-	if (fromanc2_playerside_old != fromanc2_playerside) {
-		fromanc2_playerside_old = fromanc2_playerside;
-
-		popmessage("PLAYER-%01X SIDE", fromanc2_playerside + 1);
-
-		if (!fromanc2_playerside) {
-		sound_set_user_gain(1, 0.75); // 1P (LEFT)
-		sound_set_user_gain(2, 0.00); // 2P (RIGHT)
-		}
-		else {
-		sound_set_user_gain(1, 0.00); // 1P (LEFT)
-		sound_set_user_gain(2, 0.75); // 2P (RIGHT)
-		}
-
-		fromanc2_set_dispvram_w(fromanc2_playerside);
-	}
-
 	cpunum_set_input_line(0, 1, HOLD_LINE);
 }
 
@@ -198,8 +163,6 @@ static READ16_HANDLER( fromanc2_keymatrix_r )
 					logerror("PC:%08X unknown %02X\n", activecpu_get_pc(), fromanc2_portselect);
 					break;
 	}
-
-	if (fromanc2_playerside) ret = ((ret & 0xff00) >> 8) | ((ret & 0x00ff) << 8);
 
 	return ret;
 }
@@ -756,18 +719,28 @@ static MACHINE_DRIVER_START( fromanc2 )
 	MDRV_CPU_PROGRAM_MAP(fromanc2_readmem_sub,fromanc2_writemem_sub)
 	MDRV_CPU_IO_MAP(fromanc2_readport_sub,fromanc2_writeport_sub)
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
 
 	MDRV_MACHINE_RESET(fromanc2)
 	MDRV_NVRAM_HANDLER(93C46)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(512, 512)
-	MDRV_VISIBLE_AREA(0, 352-1, 0, 240-1)
 	MDRV_GFXDECODE(fromanc2_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(4096)
+	MDRV_DEFAULT_LAYOUT(layout_dualhsxs)
+
+	MDRV_SCREEN_ADD("left", 0x000)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(DEFAULT_60HZ_VBLANK_DURATION))
+	MDRV_SCREEN_SIZE(512, 512)
+	MDRV_VISIBLE_AREA(0, 352-1, 0, 240-1)
+
+	MDRV_SCREEN_ADD("right", 0x000)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(DEFAULT_60HZ_VBLANK_DURATION))
+	MDRV_SCREEN_SIZE(512, 512)
+	MDRV_VISIBLE_AREA(0, 352-1, 0, 240-1)
+
 
 	MDRV_VIDEO_START(fromanc2)
 	MDRV_VIDEO_UPDATE(fromanc2)
@@ -798,18 +771,27 @@ static MACHINE_DRIVER_START( fromancr )
 	MDRV_CPU_PROGRAM_MAP(fromanc2_readmem_sub,fromanc2_writemem_sub)
 	MDRV_CPU_IO_MAP(fromanc2_readport_sub,fromanc2_writeport_sub)
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-
 	MDRV_MACHINE_RESET(fromancr)
 	MDRV_NVRAM_HANDLER(93C46)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(512, 512)
-	MDRV_VISIBLE_AREA(0, 352-1, 0, 240-1)
 	MDRV_GFXDECODE(fromancr_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(4096)
+	MDRV_DEFAULT_LAYOUT(layout_dualhsxs)
+
+	MDRV_SCREEN_ADD("left", 0x000)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(DEFAULT_60HZ_VBLANK_DURATION))
+	MDRV_SCREEN_SIZE(512, 512)
+	MDRV_VISIBLE_AREA(0, 352-1, 0, 240-1)
+
+	MDRV_SCREEN_ADD("right", 0x000)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(DEFAULT_60HZ_VBLANK_DURATION))
+	MDRV_SCREEN_SIZE(512, 512)
+	MDRV_VISIBLE_AREA(0, 352-1, 0, 240-1)
+
 
 	MDRV_VIDEO_START(fromancr)
 	MDRV_VIDEO_UPDATE(fromanc2)
@@ -836,18 +818,28 @@ static MACHINE_DRIVER_START( fromanc4 )
 	MDRV_CPU_PROGRAM_MAP(fromanc2_readmem_sound,fromanc2_writemem_sound)
 	MDRV_CPU_IO_MAP(fromanc2_readport_sound,fromanc2_writeport_sound)
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-
 	MDRV_MACHINE_RESET(fromanc4)
 	MDRV_NVRAM_HANDLER(93C46)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(2048, 256)
-	MDRV_VISIBLE_AREA(0, 352-1, 0, 240-1)
 	MDRV_GFXDECODE(fromancr_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(4096)
+
+	MDRV_DEFAULT_LAYOUT(layout_dualhsxs)
+
+	MDRV_SCREEN_ADD("left", 0x000)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(DEFAULT_60HZ_VBLANK_DURATION))
+	MDRV_SCREEN_SIZE(2048, 256)
+	MDRV_VISIBLE_AREA(0, 352-1, 0, 240-1)
+
+	MDRV_SCREEN_ADD("right", 0x000)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(DEFAULT_60HZ_VBLANK_DURATION))
+	MDRV_SCREEN_SIZE(512, 512)
+	MDRV_VISIBLE_AREA(0, 352-1, 0, 240-1)
+
 
 	MDRV_VIDEO_START(fromanc4)
 	MDRV_VIDEO_UPDATE(fromanc2)

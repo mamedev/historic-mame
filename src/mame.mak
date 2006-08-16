@@ -1531,13 +1531,20 @@ $(OBJ)/misc.a: \
 # layout dependencies
 #-------------------------------------------------
 
-$(OBJ)/drivers/8080bw.o:	$(OBJ)/layout/invaders.lh \
+$(OBJ)/drivers/8080bw.o:	$(OBJ)/layout/clowns.lh \
+							$(OBJ)/layout/invaders.lh \
 							$(OBJ)/layout/invad2ct.lh \
 							$(OBJ)/layout/invrvnge.lh
+
+$(OBJ)/drivers/atarifb.o:	$(OBJ)/layout/atarifb.lh \
+							$(OBJ)/layout/atarifb4.lh \
+							$(OBJ)/layout/abaseb.lh
 
 $(OBJ)/drivers/avalnche.o:	$(OBJ)/layout/avalnche.lh
 
 $(OBJ)/drivers/bzone.o:		$(OBJ)/layout/bzone.lh
+
+$(OBJ)/drivers/bfm_sc2.o:	$(OBJ)/layout/bfm_sc2.lh
 
 $(OBJ)/drivers/cinemat.o:	$(OBJ)/layout/solarq.lh \
 							$(OBJ)/layout/starcas.lh
@@ -1550,6 +1557,8 @@ $(OBJ)/drivers/darius.o:	$(OBJ)/layout/darius.lh
 
 $(OBJ)/drivers/lazercmd.o:	$(OBJ)/layout/lazercmd.lh
 
+$(OBJ)/drivers/maxaflex.o:	$(OBJ)/layout/maxaflex.lh
+
 $(OBJ)/drivers/meadows.o:	$(OBJ)/layout/deadeye.lh \
 							$(OBJ)/layout/gypsyjug.lh
 
@@ -1557,7 +1566,13 @@ $(OBJ)/drivers/nbmj8688.o:	$(OBJ)/layout/nbmj8688.lh
 
 $(OBJ)/drivers/sbrkout.o:	$(OBJ)/layout/sbrkout.lh
 
+$(OBJ)/drivers/sspeedr.o:	$(OBJ)/layout/sspeedr.lh
+
 $(OBJ)/drivers/tetrisp2.o:	$(OBJ)/layout/rocknms.lh
+
+$(OBJ)/drivers/turbo.o:		$(OBJ)/layout/turbo.lh \
+							$(OBJ)/layout/subroc3d.lh \
+							$(OBJ)/layout/buckrog.lh
 
 $(OBJ)/drivers/warpwarp.o:	$(OBJ)/layout/geebee.lh \
 							$(OBJ)/layout/sos.lh

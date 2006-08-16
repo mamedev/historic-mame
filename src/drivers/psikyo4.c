@@ -63,7 +63,7 @@ NOTE: The version number (A/B) on Lode Runner: The Dig Fight is ONLY displayed w
 #include "cpu/sh2/sh2.h"
 #include "machine/eeprom.h"
 #include "sound/ymf278b.h"
-#include "render.h"
+#include "rendlay.h"
 
 #define ROMTEST 0 /* Does necessary stuff to perform rom test, uses RAM as it doesn't dispose of GFX after decoding */
 

@@ -23,6 +23,8 @@
 #include "vidhrdw/gtia.h"
 #include "ui.h"
 
+#include "maxaflex.lh"
+
 
 /* Supervisor board emulation */
 
@@ -31,8 +33,6 @@ static UINT8 portB_in,portB_out,ddrB;
 static UINT8 portC_in,portC_out,ddrC;
 static UINT8 tdr,tcr;
 static mame_timer *mcu_timer;
-static INT8 digitA, digitB, digitC;
-static UINT8 lamps;
 
 /* Port A:
     0   (in)  DSW
@@ -82,7 +82,10 @@ WRITE8_HANDLER( mcu_portB_w )
 	/* latch for lamps */
 	if ( (data & (1<<6)) == 0 )
 	{
-		lamps = portC_out & 0xf;
+		output_set_value("lamp0", (portC_out >> 0) & 1);
+		output_set_value("lamp1", (portC_out >> 1) & 1);
+		output_set_value("lamp2", (portC_out >> 2) & 1);
+		output_set_value("lamp3", (portC_out >> 3) & 1);
 	}
 	/* RES600 */
 	if ( (data & (1<<4)) == 0 )
@@ -95,7 +98,6 @@ WRITE8_HANDLER( mcu_portB_w )
 	}
 	if ( (data & 0x3) == 0x3 )
 	{
-		/*digitA = digitB = digitC = -1;*/
 	}
 }
 
@@ -116,9 +118,9 @@ WRITE8_HANDLER( mcu_portC_w )
 	/* displays */
 	switch( portB_out & 0x3 )
 	{
-		case 0x0: digitC = portC_out; break;
-		case 0x1: digitB = portC_out; break;
-		case 0x2: digitA = portC_out; break;
+		case 0x0: output_set_value("digit0", portC_out); break;
+		case 0x1: output_set_value("digit1", portC_out); break;
+		case 0x2: output_set_value("digit2", portC_out); break;
 		case 0x3: break;
 	}
 
@@ -206,9 +208,15 @@ static MACHINE_RESET(supervisor_board)
 	portB_in = portB_out = ddrB	= 0;
 	portC_in = portC_out = ddrC	= 0;
 	tdr = tcr = 0;
-	digitA = digitB = digitC = -1;
-	lamps = 0;
 	mcu_timer = timer_alloc( mcu_timer_proc );
+
+	output_set_value("lamp0", 0);
+	output_set_value("lamp1", 0);
+	output_set_value("lamp2", 0);
+	output_set_value("lamp3", 0);
+	output_set_value("digit0", 10);
+	output_set_value("digit1", 10);
+	output_set_value("digit2", 10);
 }
 
 void supervisor_board_check_coin_input(void)
@@ -223,32 +231,6 @@ static MACHINE_START(maxaflex)
 {
 	add_reset_callback(machine_reset_supervisor_board);
 	return machine_start_a600xl();
-}
-
-VIDEO_UPDATE(maxaflex)
-{
-	static char text[100];
-
-	video_update_atari(screen,bitmap,cliprect);
-
-	if ( digitA != -1 )
-	{
-		sprintf(text, "%d%d%d", digitA, digitB, digitC );
-	}
-	else if ( digitB != -1 )
-	{
-		sprintf(text, " %d%d", digitB, digitC );
-	}
-	else if ( digitC != -1 )
-	{
-		sprintf(text, "  %d", digitC );
-	}
-	ui_draw_text(text, 160, 216 );
-	if (lamps & 0x01) ui_draw_text("COIN", 20, 216);
-	if (lamps & 0x02) ui_draw_text("PLAY", 70, 216);
-	if (lamps & 0x04) ui_draw_text("START", 250, 216);
-	if (lamps & 0x08) ui_draw_text("OVER", 300, 216);
-	return 0;
 }
 
 int atari_input_disabled(void)
@@ -489,9 +471,10 @@ static MACHINE_DRIVER_START( a600xl )
 	MDRV_PALETTE_INIT(atari)
 	MDRV_FRAMES_PER_SECOND(FRAME_RATE_60HZ)
 	MDRV_SCREEN_SIZE(HWIDTH*8, TOTAL_LINES_60HZ)
+	MDRV_DEFAULT_LAYOUT(layout_maxaflex)
 
 	MDRV_VIDEO_START(atari)
-	MDRV_VIDEO_UPDATE(maxaflex)
+	MDRV_VIDEO_UPDATE(atari)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")

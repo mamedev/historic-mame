@@ -1649,6 +1649,20 @@ ROM_START( zero )
 	ROM_LOAD( "defend.snd",   0xf800, 0x0800, CRC(fefd5b48) SHA1(ceb0d18483f0691978c604db94417e6941ad7ff2) )
 ROM_END
 
+ROM_START( zero2 )
+	ROM_REGION( 0x19000, REGION_CPU1, 0 )
+	ROM_LOAD( "15me.1a", 0x0d000, 0x1000, CRC(9323eee5) SHA1(727eaf669162a39c763203b925ab6b2cdb4626c1) )
+	ROM_LOAD( "to16.3a", 0x0e000, 0x1000, CRC(a79213b2) SHA1(ff9a59cb1d28af396a7b93df82a4bb825581bcce) )
+	ROM_LOAD( "17m5.4a", 0x0f000, 0x1000, CRC(16a3c0dd) SHA1(df11e4c7a62db85638d1fdda3602735b0d3f7f80) )
+	ROM_LOAD( "21.4c",   0x10000, 0x1000, CRC(7ca35cfd) SHA1(9afa4f6641082f73bfc3e2b800acf82dcc2bafb3) )
+	ROM_LOAD( "20m5.3b", 0x11000, 0x1000, CRC(7473955b) SHA1(b27515ca3fd2f938706415425226c4d7113eb276) )
+	ROM_LOAD( "to19.1b", 0x12000, 0x1000, CRC(f2bef850) SHA1(78e50c790e3a8ebc4b65f2d827be8bd375bf4ef4) )
+	ROM_LOAD( "18m5.4b", 0x16000, 0x1000, CRC(7e4afe43) SHA1(7a4f2128e48ed4d5e83885a3a72756822769fe5d) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "to4.6b",   0xf800, 0x0800, CRC(cb79ae42) SHA1(d22bef68ef62aa012f1919338a33621138c2278b) )
+ROM_END
+
 ROM_START( defcmnd )
 	ROM_REGION( 0x19000, REGION_CPU1, 0 )
 	ROM_LOAD( "defcmnda.1",   0x0d000, 0x1000, CRC(68effc1d) SHA1(459fd95cdf94233e1a4302d1c166e0f7cc239579) )
@@ -2715,6 +2729,7 @@ GAME( 1980, defndjeu, defender, defender, defender, defndjeu, ROT0,   "Jeutel", 
 GAME( 1980, tornado1, defender, defender, defender, defndjeu, ROT0,   "Jeutel", "Tornado (bootleg set 1)", GAME_SUPPORTS_SAVE )
 GAME( 1980, tornado2, defender, defender, defender, defndjeu, ROT0,   "Jeutel", "Tornado (bootleg set 2)", GAME_NOT_WORKING | GAME_SUPPORTS_SAVE ) // bad dump?
 GAME( 1980, zero,     defender, defender, defender, defndjeu, ROT0,   "Jeutel", "Zero", GAME_SUPPORTS_SAVE )
+GAME( 1980, zero2,    defender, defender, defender, defndjeu, ROT0,   "Amtec", "Zero (set 2)", GAME_SUPPORTS_SAVE )
 GAME( 1980, defcmnd,  defender, defender, defender, defender, ROT0,   "bootleg", "Defense Command (set 1)", GAME_SUPPORTS_SAVE )
 GAME( 1981, defence,  defender, defender, defender, defender, ROT0,   "Outer Limits", "Defence Command", GAME_SUPPORTS_SAVE )
 GAME( 1981, startrkd, defender, defender, defender, defender, ROT0,   "bootleg", "Star Trek (Defender bootleg)", GAME_SUPPORTS_SAVE )

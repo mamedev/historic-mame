@@ -246,7 +246,7 @@ static void snes_hblank_tick(int ref)
 			if( snes_ram[HDMAEN] )
 				snes_hdma();
 
-			force_partial_update(0, snes_ppu.beam.current_vert-1);
+			video_screen_update_partial(0, snes_ppu.beam.current_vert-1);
 		}
 	}
 
@@ -1043,7 +1043,7 @@ WRITE8_HANDLER( snes_w_io )
 				else
 					visarea.max_x = SNES_SCR_WIDTH - 1;
 #endif
-				configure_screen(0, visarea.max_x + 1, visarea.max_y + 1, &visarea, Machine->screen[0].refresh);
+				video_screen_configure(0, visarea.max_x + 1, visarea.max_y + 1, &visarea, Machine->screen[0].refresh);
 			}
 
 			snes_ppu.layer[0].tile_size = (data >> 4) & 0x1;

@@ -12,7 +12,6 @@
 #ifndef DECLARE
 
 #include "driver.h"
-#include "ui.h"
 #include "profiler.h"
 
 
@@ -1331,7 +1330,7 @@ void copyrozbitmap(mame_bitmap *dest,mame_bitmap *src,
 
 	if (transparency != TRANSPARENCY_PEN)
 	{
-		ui_popup("copyrozbitmap unsupported trans %02x",transparency);
+		popmessage("copyrozbitmap unsupported trans %02x",transparency);
 		return;
 	}
 
@@ -1438,7 +1437,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 			&& transparency != TRANSPARENCY_ALPHA && transparency != TRANSPARENCY_ALPHARANGE
 			&& transparency != TRANSPARENCY_NONE)
 	{
-		ui_popup("drawgfxzoom unsupported trans %02x",transparency);
+		popmessage("drawgfxzoom unsupported trans %02x",transparency);
 		return;
 	}
 
@@ -5342,9 +5341,9 @@ DECLARE(drawgfx_core,(
 
 			default:
 				if (pribuf)
-					ui_popup("pdrawgfx pen mode not supported");
+					popmessage("pdrawgfx pen mode not supported");
 				else
-					ui_popup("drawgfx pen mode not supported");
+					popmessage("drawgfx pen mode not supported");
 				break;
 		}
 	}
@@ -5429,7 +5428,7 @@ DECLARE(copybitmap_core,(
 				break;
 
 			default:
-				ui_popup("copybitmap pen mode not supported");
+				popmessage("copybitmap pen mode not supported");
 				break;
 		}
 	}

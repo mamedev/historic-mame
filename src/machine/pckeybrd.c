@@ -353,7 +353,7 @@ void at_keyboard_reset(void)
 }
 
 /* set initial scan set */
-void	at_keyboard_set_scan_code_set(int set)
+void at_keyboard_set_scan_code_set(int set)
 {
 	keyboard.scan_code_set = set;
 }

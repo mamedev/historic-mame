@@ -259,7 +259,7 @@ INLINE void init_gfxelement(struct atarimo_data *mo, int idx)
 static void force_update(int scanline)
 {
 	if (scanline > 0)
-		force_partial_update(0, scanline - 1);
+		video_screen_update_partial(0, scanline - 1);
 
 	scanline += 64;
 	if (scanline >= Machine->screen[0].visarea.max_y)

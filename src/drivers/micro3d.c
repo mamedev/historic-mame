@@ -14,6 +14,9 @@
 /* o Video emulation needs to be checked over                         */
 /* o No sound.                                                        */
 /*                                                                    */
+/* F15SE v2.2 was missing the math & sound boards, so those may need  */
+/* to be redumped!!!                                                  */
+/*                                                                    */
 /* It complains about bad object ROM checksums in the MFR test?       */
 /* BOTSS and STANKATK crash when entering TMS monitor mode ?          */
 /*====================================================================*/
@@ -130,7 +133,7 @@ void data_from_i8031(int data)
 WRITE16_HANDLER( micro3d_34010_io_register_w )
 {
 	if (offset == REG_DPYADR || offset == REG_DPYTAP)
-		force_partial_update(0, cpu_getscanline());
+		video_screen_update_partial(0, cpu_getscanline());
 	tms34010_io_register_w(offset, data, mem_mask);
 
 	if (offset == REG_DPYADR)
@@ -194,7 +197,13 @@ static DRIVER_INIT( botss )
 
 static DRIVER_INIT( f15se )
 {
+//       UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
+}
+
+static DRIVER_INIT( f15se21 )
+{
        UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
+
        rom[0x2A8B3]=0x6006;                          //055166: 6606                     bne     5516e -> bra
        rom[0x2A8BF]=0x4E71;                          //05517E: 6704                     beq     55184 -> nop
        rom[0x28AD1]=0x4E71;                          //0515A2: 67F8                     beq     5159c -> nop
@@ -991,7 +1000,7 @@ ROM_START( stankatk )
 
 ROM_END
 
-ROM_START( f15se )
+ROM_START( f15se21 )	// rev 2.1 02/04/91
 	/* HST - Host PCB            (MPG DW-00011C-0011-01)    */
 	ROM_REGION( 0x140000, REGION_CPU1, 0 ) /* 68000 Code */
 	ROM_LOAD16_BYTE( "500.hst", 0x000001, 0x20000, CRC(6c26806d) SHA1(7cfd2b3b92b0fc6627c92a2013a317ca5abc66a0) )
@@ -1009,6 +1018,7 @@ ROM_START( f15se )
 	/* Video Graphics PCB  (MPG DW-010-00003-001) */
 //  ROM_REGION( 0x40000, REGION_CPU2, 0 )         /* TMS34010 dummy region */
 
+	// TI ROM version 1.0a, 28-November-90
 	ROM_REGION16_LE( 0x40000, REGION_USER1, 0 )
 	ROM_LOAD16_BYTE( "001.vgb", 0x000000, 0x20000, CRC(810c142d) SHA1(d37e5ecd716dda65d43cec7bca524c59d3dc9803) )
 	ROM_LOAD16_BYTE( "004.vgb", 0x000001, 0x20000, CRC(b69e1260) SHA1(1a2b69ea7c96b0293b24d87ea46bd4b1d4c56a66) )
@@ -1047,6 +1057,64 @@ ROM_START( f15se )
 	ROM_LOAD( "3-001.snd", 0x000000, 0x40000, CRC(af84b635) SHA1(844e5987a66e9e3ab2d2fe05b93a4da3512776bb) )
 ROM_END
 
-GAME( 1991, f15se,    0, micro3d, f15se, f15se, ROT0, "Microprose", "F-15 Strike Eagle (rev. 2.1)", GAME_NOT_WORKING )
+ROM_START( f15se )	// rev 2.2 02/25/91
+	/* HST - Host PCB            (MPG DW-00011C-0011-01)    */
+	ROM_REGION( 0x140000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_BYTE( "host.u67", 0x000001, 0x20000, CRC(8f495ceb) SHA1(90998ad67e76928ed1a6cae56038b98d1aa2e7b0) )
+	ROM_LOAD16_BYTE( "host.u91", 0x000000, 0x20000, CRC(dfae5ec3) SHA1(29306eed5047e39a0a2350e61ab7126a84cb710b) )
+	ROM_LOAD16_BYTE( "host.u68", 0x040001, 0x20000, CRC(685fc355) SHA1(5bfe015a8deccb66e3317154d715f490f00ace74) )
+	ROM_LOAD16_BYTE( "host.u92", 0x040000, 0x20000, CRC(8f7bb2eb) SHA1(1923d55d66da0fbc158b4f90bcc98c88955953ea) )
+
+        ROM_LOAD16_BYTE( "004.hst", 0x080001, 0x20000, CRC(81671ce1) SHA1(51ff641ccbc9dea640a62944910abe73d796b062) )
+	ROM_LOAD16_BYTE( "005.hst", 0x080000, 0x20000, CRC(bdaa7db5) SHA1(52cd832cdd44e609e8cd269469b806e2cd27d63d) )
+	ROM_LOAD16_BYTE( "host.u70",0x0c0001, 0x20000, CRC(251e92d2) SHA1(a20279089af1f738ba912f90a4d048d4e58795fe)  )
+	ROM_LOAD16_BYTE( "007.hst", 0x0c0000, 0x20000, CRC(36e06cba) SHA1(5ffee5da6f475978be10fa5e1a2c24f00497ea5f) )
+	ROM_LOAD16_BYTE( "008.hst", 0x100001, 0x20000, CRC(d96fd4e2) SHA1(001af758da437e955b4ee914eabeb9739ebc4454) )
+	ROM_LOAD16_BYTE( "009.hst", 0x100000, 0x20000, CRC(33e3b473) SHA1(66deda79ba94f0ed722b399b3fc6062dcdd1a6c9) )
+
+	/* Video Graphics PCB  (MPG DW-010-00003-001) */
+//  ROM_REGION( 0x40000, REGION_CPU2, 0 )         /* TMS34010 dummy region */
+
+	// TI ROM version 1.0c, 28-November-90
+	ROM_REGION16_LE( 0x40000, REGION_USER1, 0 )
+	ROM_LOAD16_BYTE( "vgb_u101.bin", 0x000000, 0x20000, CRC(e99fac71) SHA1(98d1d2134fabc1bad637cbe42cbe9cdc20b32126) )
+	ROM_LOAD16_BYTE( "vgb_u097.bin", 0x000001, 0x20000, CRC(78b9b7c7) SHA1(4bce993dd3aea126e3a9d42ee8c68b8ab47fdba7) )
+
+	ROM_REGION16_LE( 0xC0000, REGION_GFX1, 0 )
+	ROM_LOAD16_BYTE( "005.vgb", 0x000000, 0x20000, CRC(7b1852f0) SHA1(d21525e59b3112313ea9783ac3dd988a4c1d5f87) )
+	ROM_LOAD16_BYTE( "006.vgb", 0x000001, 0x20000, CRC(9d031636) SHA1(b7c7b57d547f2ce2eeb97126e961f3b5f35823f7) )
+	ROM_LOAD16_BYTE( "007.vgb", 0x040000, 0x20000, CRC(15326070) SHA1(ec4484d4515694742d3fd3b944f342f052463988) )
+	ROM_LOAD16_BYTE( "008.vgb", 0x040001, 0x20000, CRC(ca0e86d8) SHA1(a7b4b02d100a7875d5a184cdb76d507e926d1ca3) )
+	ROM_LOAD16_BYTE( "003.vgb", 0x080000, 0x20000, CRC(4d8e8f54) SHA1(d8a23b5fd00ab919dc6d63fc72824d1293073813) )
+	ROM_LOAD16_BYTE( "002.vgb", 0x080001, 0x20000, CRC(f6488e31) SHA1(d2f9304cc59f5523007592ae76ddd56107cc29e8) )
+
+	/*  DTH - Dr Math PCB         (MPG 010-00002-001) */
+	ROM_REGION32_BE( 0x80000, REGION_USER2, 0 )
+//  ROM_LOAD("drmath.rom", 0x00000, 0x40000, CRC(28dd9107) SHA1(3d571de81109e805cc0b133eefc3ea419e6a337b) )         // Cheat
+
+	ROM_LOAD( "120.dth", 0x000000, 0x08000, CRC(5fb9836d) SHA1(d511aa9f02972a7f475c82c6f57d1f3fd4f118fa) )
+	ROM_LOAD( "119.dth", 0x008000, 0x08000, CRC(b1c966e5) SHA1(9703bb1f9bdf6a779b59daebb39df2926727fa76) )
+	ROM_LOAD( "121.dth", 0x000006, 0x08000, CRC(392e5c43) SHA1(455cf3bb3c16217e58d6eea51d8f49a5bed1955e) )
+	ROM_LOAD( "118.dth", 0x000007, 0x08000, CRC(cc895c20) SHA1(140ef47536914fe1441778e759894c2cdd893276) )
+	ROM_LOAD( "014.dth", 0x000000, 0x20000, CRC(5ca7713f) SHA1(ac7b9629684b99ecfb1945176b06eb6be284ba93) )
+	ROM_LOAD( "015.dth", 0x000001, 0x20000, CRC(beae31bb) SHA1(1ab80a6b99eea6d5bf9b1bce58ecca13042c77a6) )
+	ROM_LOAD( "016.dth", 0x000002, 0x20000, CRC(5db4f677) SHA1(25a6fe4c562e4fa4225aa4687dd41920b614e591) )
+	ROM_LOAD( "017.dth", 0x000003, 0x20000, CRC(47f9a868) SHA1(7c8a9355893e4a3f3846fd05e0237ffd1404ffee) )
+	ROM_LOAD( "122.dth", 0x000000, 0x08000, CRC(9d2032cf) SHA1(8430816756ea92bbe86b94eaa24a6071bf0ef879) )
+	ROM_LOAD( "123.dth", 0x020000, 0x08000, CRC(54d5544f) SHA1(d039ee39991b947a7483111359ab245fc104e060) )
+	ROM_LOAD( "124.dth", 0x000000, 0x08000, CRC(7be96646) SHA1(a6733f75c0404282d71e8c1a287546ef4d9d42ad) )
+	ROM_LOAD( "125.dth", 0x020000, 0x08000, CRC(7718487c) SHA1(609106f55601f84095b64ce2484107779da89149) )
+
+
+	/* SND - Sound PCB           (MPG 010-00018-002) */
+	ROM_REGION( 0x08000, REGION_CPU3, 0 )
+	ROM_LOAD( "4-001.snd", 0x000000, 0x08000, CRC(705685a9) SHA1(311f7cac126a19e8bd555ebf31ff4ec4680ddfa4) )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )
+	ROM_LOAD( "3-001.snd", 0x000000, 0x40000, CRC(af84b635) SHA1(844e5987a66e9e3ab2d2fe05b93a4da3512776bb) )
+ROM_END
+
+GAME( 1991, f15se,    0,     micro3d, f15se, f15se, ROT0, "Microprose", "F-15 Strike Eagle (rev. 2.2 02/25/91)", GAME_NOT_WORKING )
+GAME( 1991, f15se21 , f15se, micro3d, f15se, f15se21, ROT0, "Microprose", "F-15 Strike Eagle (rev. 2.1 02/04/91)", GAME_NOT_WORKING )
 GAME( 1992, botss,    0, micro3d, botss, botss, ROT0, "Microprose", "Battle of the Solar System (rev. 1.1)", GAME_NOT_WORKING )
 GAME( 1992, stankatk, 0, micro3d, stankatk, stankatk, ROT0, "Microprose", "Super Tank Attack (prototype rev. 4/21/92 )", GAME_NOT_WORKING )

@@ -31,10 +31,9 @@
  **************************************************************************** */
 
 #include <math.h>
-#include "osinline.h"
-#include "driver.h"
+#include "rendutil.h"
 #include "vector.h"
-#include "render.h"
+#include "osinline.h"
 
 
 

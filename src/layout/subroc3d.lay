@@ -1,0 +1,123 @@
+<?xml version="1.0"?>
+<mamelayout version="2">
+	<element name="digit" defstate="10">
+		<led7seg pattern="1110111" state="0">
+			<color red="1.0" green="0.3" blue="0.0" />
+		</led7seg>
+		<led7seg pattern="0010010" state="1">
+			<color red="1.0" green="0.3" blue="0.0" />
+		</led7seg>
+		<led7seg pattern="1011101" state="2">
+			<color red="1.0" green="0.3" blue="0.0" />
+		</led7seg>
+		<led7seg pattern="1011011" state="3">
+			<color red="1.0" green="0.3" blue="0.0" />
+		</led7seg>
+		<led7seg pattern="0111010" state="4">
+			<color red="1.0" green="0.3" blue="0.0" />
+		</led7seg>
+		<led7seg pattern="1101011" state="5">
+			<color red="1.0" green="0.3" blue="0.0" />
+		</led7seg>
+		<led7seg pattern="1101111" state="6">
+			<color red="1.0" green="0.3" blue="0.0" />
+		</led7seg>
+		<led7seg pattern="1010010" state="7">
+			<color red="1.0" green="0.3" blue="0.0" />
+		</led7seg>
+		<led7seg pattern="1111111" state="8">
+			<color red="1.0" green="0.3" blue="0.0" />
+		</led7seg>
+		<led7seg pattern="1111011" state="9">
+			<color red="1.0" green="0.3" blue="0.0" />
+		</led7seg>
+		<led7seg pattern="0000000" state="10">
+			<color red="1.0" green="0.3" blue="0.0" />
+		</led7seg>
+	</element>
+	
+	<view name="Simple LEDs">
+		<bounds left="0" top="-0.472" right="4" bottom="3" />
+
+		<screen index="0">
+			<bounds left="0" top="0" right="4" bottom="3" />
+		</screen>
+
+		<bezel name="led04" element="digit">
+			<bounds left="0.166" top="-0.336" right="0.300" bottom="-0.136" />
+		</bezel>
+		<bezel name="led05" element="digit">
+			<bounds left="0.350" top="-0.336" right="0.484" bottom="-0.136" />
+		</bezel>
+		<bezel name="led02" element="digit">
+			<bounds left="0.534" top="-0.336" right="0.668" bottom="-0.136" />
+		</bezel>
+		<bezel name="led03" element="digit">
+			<bounds left="0.718" top="-0.336" right="0.852" bottom="-0.136" />
+		</bezel>
+		<bezel name="led00" element="digit">
+			<bounds left="0.902" top="-0.336" right="1.036" bottom="-0.136" />
+		</bezel>
+		<bezel name="led01" element="digit">
+			<bounds left="1.0860" top="-0.336" right="1.220" bottom="-0.136" />
+		</bezel>
+
+		<bezel name="led10" element="digit">
+			<bounds left="1.454" top="-0.306" right="1.554" bottom="-0.136" />
+		</bezel>
+		<bezel name="led11" element="digit">
+			<bounds left="1.565" top="-0.306" right="1.666" bottom="-0.136" />
+		</bezel>
+		<bezel name="led08" element="digit">
+			<bounds left="1.677" top="-0.306" right="1.778" bottom="-0.136" />
+		</bezel>
+		<bezel name="led09" element="digit">
+			<bounds left="1.790" top="-0.306" right="1.890" bottom="-0.136" />
+		</bezel>
+		<bezel name="led06" element="digit">
+			<bounds left="1.902" top="-0.306" right="2.002" bottom="-0.136" />
+		</bezel>
+		<bezel name="led07" element="digit">
+			<bounds left="2.014" top="-0.306" right="2.114" bottom="-0.136" />
+		</bezel>
+
+		<bezel name="led16" element="digit">
+			<bounds left="2.333" top="-0.306" right="2.433" bottom="-0.136" />
+		</bezel>
+		<bezel name="led17" element="digit">
+			<bounds left="2.445" top="-0.306" right="2.545" bottom="-0.136" />
+		</bezel>
+		<bezel name="led14" element="digit">
+			<bounds left="2.557" top="-0.306" right="2.657" bottom="-0.136" />
+		</bezel>
+		<bezel name="led15" element="digit">
+			<bounds left="2.669" top="-0.306" right="2.769" bottom="-0.136" />
+		</bezel>
+		<bezel name="led12" element="digit">
+			<bounds left="2.781" top="-0.306" right="2.881" bottom="-0.136" />
+		</bezel>
+		<bezel name="led13" element="digit">
+			<bounds left="2.893" top="-0.306" right="2.993" bottom="-0.136" />
+		</bezel>
+
+		<bezel name="led22" element="digit">
+			<bounds left="3.211" top="-0.306" right="3.311" bottom="-0.136" />
+		</bezel>
+		<bezel name="led23" element="digit">
+			<bounds left="3.323" top="-0.306" right="3.423" bottom="-0.136" />
+		</bezel>
+		<bezel name="led20" element="digit">
+			<bounds left="3.435" top="-0.306" right="3.535" bottom="-0.136" />
+		</bezel>
+		<bezel name="led21" element="digit">
+			<bounds left="3.547" top="-0.306" right="3.647" bottom="-0.136" />
+		</bezel>
+		<bezel name="led18" element="digit">
+			<bounds left="3.658" top="-0.306" right="3.758" bottom="-0.136" />
+		</bezel>
+		<bezel name="led19" element="digit">
+			<bounds left="3.770" top="-0.306" right="3.870" bottom="-0.136" />
+		</bezel>
+
+	</view>	
+</mamelayout>

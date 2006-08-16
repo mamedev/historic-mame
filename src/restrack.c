@@ -63,7 +63,11 @@ void *_malloc_or_die(size_t size, const char *file, int line)
 		fatalerror("Attempted to malloc zero bytes (%s:%d)", file, line);
 
 	/* allocate and return if we succeeded */
+#ifdef MALLOC_DEBUG
+	result = malloc_file_line(size, file, line);
+#else
 	result = malloc(size);
+#endif
 	if (result != NULL)
 	{
 #ifdef MAME_DEBUG

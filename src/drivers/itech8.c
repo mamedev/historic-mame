@@ -638,7 +638,7 @@ static MACHINE_RESET( itech8 )
 	/* set the visible area */
 	if (visarea)
 	{
-		set_visible_area(0, visarea->min_x, visarea->max_x, visarea->min_y, visarea->max_y);
+		video_screen_set_visarea(0, visarea->min_x, visarea->max_x, visarea->min_y, visarea->max_y);
 		visarea = NULL;
 	}
 }
@@ -657,7 +657,7 @@ static void behind_the_beam_update(int scanline_plus_interval)
 	int interval = scanline_plus_interval & 0xff;
 
 	/* force a partial update to the current scanline */
-	force_partial_update(0, scanline);
+	video_screen_update_partial(0, scanline);
 
 	/* advance by the interval, and wrap to 0 */
 	scanline += interval;

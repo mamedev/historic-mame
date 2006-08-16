@@ -313,7 +313,7 @@ static void clock_irq(int curv)
 	cpunum_set_input_line(0, 0, irq_state ? ASSERT_LINE : CLEAR_LINE);
 
 	/* force an update while we're here */
-	force_partial_update(0, v_to_scanline(curv));
+	video_screen_update_partial(0, v_to_scanline(curv));
 
 	/* find the next edge */
 	schedule_next_irq(curv);

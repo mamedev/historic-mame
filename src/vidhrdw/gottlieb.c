@@ -109,7 +109,7 @@ WRITE8_HANDLER( gottlieb_video_outputs_w )
 	/* in Q*Bert Qubes only, bit 4 controls the sprite bank */
 	spritebank = (data & 0x10) >> 4;
 
-	if (!(last_video_outputs&0x20) && (data&0x20)) gottlieb_knocker();
+	output_set_value("knocker0", (data >> 5) & 1);
 
 	last_video_outputs = data;
 }

@@ -869,7 +869,7 @@ static void swap_buffers(voodoo_state *v)
 	if (LOG_VBLANK_SWAP) logerror("--- swap_buffers @ %d\n", cpu_getscanline());
 
 	/* force a partial update */
-	force_partial_update(0, cpu_getscanline());
+	video_screen_update_partial(0, cpu_getscanline());
 
 	/* keep a history of swap intervals */
 	count = v->fbi.vblank_count;
@@ -2476,7 +2476,7 @@ static INT32 register_w(voodoo_state *v, offs_t offset, UINT32 data)
 				visarea.min_x = visarea.min_y = 0;
 				visarea.max_x = v->fbi.width - 1;
 				visarea.max_y = v->fbi.height - 1;
-				configure_screen(0, v->fbi.width, v->fbi.height, &visarea, Machine->screen[0].refresh);
+				video_screen_configure(0, v->fbi.width, v->fbi.height, &visarea, Machine->screen[0].refresh);
 				timer_adjust_ptr(v->fbi.vblank_timer, cpu_getscanlinetime(v->fbi.height), TIME_NEVER);
 				recompute_video_memory(v);
 			}
@@ -2497,11 +2497,11 @@ static INT32 register_w(voodoo_state *v, offs_t offset, UINT32 data)
 					screen_state *state = &Machine->screen[0];
 
 					if (stddiff < meddiff && stddiff < vgadiff)
-						configure_screen(0, state->width, state->height, &state->visarea, stdfps);
+						video_screen_configure(0, state->width, state->height, &state->visarea, stdfps);
 					else if (meddiff < vgadiff)
-						configure_screen(0, state->width, state->height, &state->visarea, medfps);
+						video_screen_configure(0, state->width, state->height, &state->visarea, medfps);
 					else
-						configure_screen(0, state->width, state->height, &state->visarea, vgafps);
+						video_screen_configure(0, state->width, state->height, &state->visarea, vgafps);
 				}
 			}
 			break;
@@ -4308,7 +4308,7 @@ static void banshee_io_w(voodoo_state *v, offs_t offset, UINT32 data, UINT32 mem
 				v->fbi.width = data & 0xfff;
 			if (data & 0xfff000)
 				v->fbi.height = (data >> 12) & 0xfff;
-			set_visible_area(0, 0, v->fbi.width - 1, 0, v->fbi.height - 1);
+			video_screen_set_visarea(0, 0, v->fbi.width - 1, 0, v->fbi.height - 1);
 			timer_adjust_ptr(v->fbi.vblank_timer, cpu_getscanlinetime(v->fbi.height), TIME_NEVER);
 			if (LOG_REGISTERS)
 				logerror("%08X:banshee_io_w(%s) = %08X & %08X\n", activecpu_get_pc(), banshee_io_reg_name[offset], data, ~mem_mask);

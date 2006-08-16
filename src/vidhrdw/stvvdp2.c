@@ -5170,7 +5170,7 @@ static void stv_vdp2_dynamic_res_change()
 		case 7: horz = 704; vert = 480; break;
 	}
 
-	set_visible_area(0, 0*8, horz-1,0*8, vert-1);
+	video_screen_set_visarea(0, 0*8, horz-1,0*8, vert-1);
 	//if(LOG_VDP2) popmessage("%04d %04d",horz-1,vert-1);
 }
 

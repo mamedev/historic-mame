@@ -3078,7 +3078,7 @@ MACHINE_DRIVER_END
  **************************************************************************************************************************
  **************************************************************************************************************************
     Ace Attacker, Sega System 16B
-    CPU: FD1094 (317-????)
+    CPU: FD1094 (317-0059)
     ROM Board: 171-5358
 */
 ROM_START( aceattac )
@@ -5994,7 +5994,7 @@ static DRIVER_INIT( snapper )
  *
  *************************************/
 
-GAME( 1988, aceattac, 0,        system16b,      generic,  generic_5358,  ROT0,   "Sega",           "Ace Attacker (FD1094 317-unknown)", GAME_NOT_WORKING )
+GAME( 1988, aceattac, 0,        system16b,      generic,  generic_5358,  ROT0,   "Sega",           "Ace Attacker (FD1094 317-0059)", GAME_NOT_WORKING )
 GAME( 1987, aliensyn, 0,        system16b,      aliensyn, generic_5358,  ROT0,   "Sega",           "Alien Syndrome (set 4, System 16B, unprotected)", 0 )
 GAME( 1987, aliensy3, aliensyn, system16b,      aliensyn, aliensy3_5358, ROT0,   "Sega",           "Alien Syndrome (set 3, System 16B, FD1089A 317-0033)", 0 )
 GAME( 1988, altbeast, 0,        system16b_8751, altbeast, altbeast_5521, ROT0,   "Sega",           "Altered Beast (set 7, 8751 317-0078)", 0 )

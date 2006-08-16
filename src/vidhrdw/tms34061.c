@@ -191,7 +191,7 @@ static WRITE8_HANDLER( register_w )
 	/* certain registers affect the display directly */
 	if ((regnum >= TMS34061_HORENDSYNC && regnum <= TMS34061_DISPSTART) ||
 		(regnum == TMS34061_CONTROL2))
-		force_partial_update(0, cpu_getscanline());
+		video_screen_update_partial(0, cpu_getscanline());
 
 	/* store the hi/lo half */
 	if (offset & 0x02)

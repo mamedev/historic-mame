@@ -5,7 +5,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "render.h"
 #include "skydiver.h"
 #include "sound/discrete.h"
 
@@ -25,10 +24,10 @@ MACHINE_RESET( skydiver )
 	skydiver_lamp_k_w(0, 0);
 	skydiver_lamp_y_w(0, 0);
 	skydiver_lamp_d_w(0, 0);
-	render_view_item_set_state("lampi", 0);
-	render_view_item_set_state("lampv", 0);
-	render_view_item_set_state("lampe", 0);
-	render_view_item_set_state("lampr", 0);
+	output_set_value("lampi", 0);
+	output_set_value("lampv", 0);
+	output_set_value("lampe", 0);
+	output_set_value("lampr", 0);
 	skydiver_width_w(0, 0);
 	skydiver_coin_lockout_w(0, 0);
 }
@@ -114,22 +113,22 @@ WRITE8_HANDLER( skydiver_start_lamp_2_w )
 
 WRITE8_HANDLER( skydiver_lamp_s_w )
 {
-	render_view_item_set_state("lamps", offset);
+	output_set_value("lamps", offset);
 }
 
 WRITE8_HANDLER( skydiver_lamp_k_w )
 {
-	render_view_item_set_state("lampk", offset);
+	output_set_value("lampk", offset);
 }
 
 WRITE8_HANDLER( skydiver_lamp_y_w )
 {
-	render_view_item_set_state("lampy", offset);
+	output_set_value("lampy", offset);
 }
 
 WRITE8_HANDLER( skydiver_lamp_d_w )
 {
-	render_view_item_set_state("lampd", offset);
+	output_set_value("lampd", offset);
 }
 
 WRITE8_HANDLER( skydiver_2000_201F_w )
@@ -141,16 +140,16 @@ WRITE8_HANDLER( skydiver_2000_201F_w )
 	switch (offset & 0x0e)
 	{
 		case (0x02):
-			render_view_item_set_state("lampi", bit);
+			output_set_value("lampi", bit);
 			break;
 		case (0x04):
-			render_view_item_set_state("lampv", bit);
+			output_set_value("lampv", bit);
 			break;
 		case (0x06):
-			render_view_item_set_state("lampe", bit);
+			output_set_value("lampe", bit);
 			break;
 		case (0x08):
-			render_view_item_set_state("lampr", bit);
+			output_set_value("lampr", bit);
 			break;
 		case (0x0a):
 			discrete_sound_w(SKYDIVER_OCT1_EN, bit);

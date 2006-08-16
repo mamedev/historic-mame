@@ -1545,7 +1545,7 @@ void cave_get_sprite_info(void)
 {
 	if(cave_kludge == 3)	/* mazinger metmqstr */
 	{
-		if (skip_this_frame() == 0)
+		if (video_skip_this_frame() == 0)
 		{
 			spriteram_bank = spriteram_bank_delay;
 			(*get_sprite_info)();
@@ -1554,7 +1554,7 @@ void cave_get_sprite_info(void)
 	}
 	else
 	{
-		if (skip_this_frame() == 0)
+		if (video_skip_this_frame() == 0)
 		{
 			spriteram_bank = cave_videoregs[ 4 ] & 1;
 			(*get_sprite_info)();
