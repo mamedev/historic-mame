@@ -138,7 +138,8 @@
   The following games use a different encryption algorithm:
 
   315-5162      4D Warriors &          used I'm Sorry for k.p.a.
-                Rafflesia
+                Rafflesia &
+                Wonder Boy (set 4)
   315-5177      Astro Flash &
                 Wonder Boy (set 1)
   315-5178      Wonder Boy (set 2)     unencrypted version available

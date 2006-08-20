@@ -246,27 +246,28 @@ static WRITE8_HANDLER( vectorram_w ) { vectorram[decrypt_offset(offset)] = data;
  *
  *************************************/
 
-static UINT8 sega_ports_demangle(offs_t offset)
+INLINE UINT8 demangle(UINT8 d7d6, UINT8 d5d4, UINT8 d3d2, UINT8 d1d0)
 {
-	/* The input ports are odd. Neighboring lines are read via a mux chip  */
-	/* one bit at a time. This means that one bank of DIP switches will be */
-	/* read as two bits from each of 4 ports. For this reason, the input   */
-	/* ports have been organized logically, and are demangled at runtime.  */
-	/* 8 input ports each provide 4 bits of information. */
-	return (((readinputportbytag("D7") >> (offset & 3)) << 7) & 0x80) |
-	       (((readinputportbytag("D6") >> (offset & 3)) << 6) & 0x40) |
-	       (((readinputportbytag("D5") >> (offset & 3)) << 5) & 0x20) |
-	       (((readinputportbytag("D4") >> (offset & 3)) << 4) & 0x10) |
-	       (((readinputportbytag("D3") >> (offset & 3)) << 3) & 0x08) |
-	       (((readinputportbytag("D2") >> (offset & 3)) << 2) & 0x04) |
-	       (((readinputportbytag("D1") >> (offset & 3)) << 1) & 0x02) |
-	       (((readinputportbytag("D0") >> (offset & 3)) << 0) & 0x01);
+	return ((d7d6 << 7) & 0x80) | ((d7d6 << 2) & 0x40) |
+		   ((d5d4 << 5) & 0x20) | ((d5d4 << 0) & 0x10) |
+		   ((d3d2 << 3) & 0x08) | ((d3d2 >> 2) & 0x04) |
+		   ((d1d0 << 1) & 0x02) | ((d1d0 >> 4) & 0x01);
 }
 
 
 static READ8_HANDLER( mangled_ports_r )
 {
-	return sega_ports_demangle(offset);
+	/* The input ports are odd. Neighboring lines are read via a mux chip  */
+	/* one bit at a time. This means that one bank of DIP switches will be */
+	/* read as two bits from each of 4 ports. For this reason, the input   */
+	/* ports have been organized logically, and are demangled at runtime.  */
+	/* 4 input ports each provide 8 bits of information. */
+	UINT8 d7d6 = readinputportbytag("D7D6");
+	UINT8 d5d4 = readinputportbytag("D5D4");
+	UINT8 d3d2 = readinputportbytag("D3D2");
+	UINT8 d1d0 = readinputportbytag("D1D0");
+	int shift = offset & 3;
+	return demangle(d7d6 >> shift, d5d4 >> shift, d3d2 >> shift, d1d0 >> shift);
 }
 
 

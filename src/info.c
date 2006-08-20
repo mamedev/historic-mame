@@ -14,6 +14,7 @@
 #include "driver.h"
 #include "sound/samples.h"
 #include "info.h"
+#include "xmlfile.h"
 #include "hash.h"
 
 /* MESS/MAME configuration */
@@ -31,56 +32,6 @@ void print_game_ramoptions(FILE* out, const game_driver* game);
 #endif /* MESS */
 
 /* Print a free format string */
-static const char *normalize_string(const char* s)
-{
-	static char buffer[1024];
-	char *d = &buffer[0];
-
-	if (s)
-	{
-		while (*s)
-		{
-			switch (*s)
-			{
-				case '\"' : d += sprintf(d, "&quot;"); break;
-				case '&'  : d += sprintf(d, "&amp;"); break;
-				case '<'  : d += sprintf(d, "&lt;"); break;
-				case '>'  : d += sprintf(d, "&gt;"); break;
-				default:
-					if (*s>=' ' && *s<='~')
-						*d++ = *s;
-					else
-						d += sprintf(d, "&#%d;", (unsigned)(unsigned char)*s);
-			}
-			++s;
-		}
-	}
-	*d++ = 0;
-	return buffer;
-}
-
-static void print_free_string(FILE *out, const char* s)
-{
-	if (s)
-	{
-		while (*s)
-		{
-			switch (*s)
-			{
-				case '\"' : fprintf(out, "&quot;"); break;
-				case '&'  : fprintf(out, "&amp;"); break;
-				case '<'  : fprintf(out, "&lt;"); break;
-				case '>'  : fprintf(out, "&gt;"); break;
-				default:
-					if (*s>=' ' && *s<='~')
-						fprintf(out, "%c", *s);
-					else
-						fprintf(out, "&#%d;", (unsigned)(unsigned char)*s);
-			}
-			++s;
-		}
-	}
-}
 
 static void print_game_switch(FILE* out, const game_driver* game)
 {
@@ -98,7 +49,7 @@ static void print_game_switch(FILE* out, const game_driver* game)
 
 			fprintf(out, "\t\t<dipswitch");
 
-			fprintf(out, " name=\"%s\"", normalize_string(input->name));
+			fprintf(out, " name=\"%s\"", xml_normalize_string(input->name));
 			++input;
 
 			fprintf(out, ">\n");
@@ -106,7 +57,7 @@ static void print_game_switch(FILE* out, const game_driver* game)
 			while (input->type==IPT_DIPSWITCH_SETTING)
 			{
 				fprintf(out, "\t\t\t<dipvalue");
-				fprintf(out, " name=\"%s\"", normalize_string(input->name));
+				fprintf(out, " name=\"%s\"", xml_normalize_string(input->name));
 				if (def == input->default_value)
 					fprintf(out, " default=\"yes\"");
 
@@ -370,18 +321,18 @@ enum {cjoy, cdoublejoy, cAD_stick, cdial, ctrackball, cpaddle, clightgun, cpedal
 	if (ncoin)
 		fprintf(out, " coins=\"%d\"", ncoin );
 	if (service)
-		fprintf(out, " service=\"%s\"", normalize_string(service) );
+		fprintf(out, " service=\"%s\"", xml_normalize_string(service) );
 	if (tilt)
-		fprintf(out, " tilt=\"%s\"", normalize_string(tilt) );
+		fprintf(out, " tilt=\"%s\"", xml_normalize_string(tilt) );
 	fprintf(out, ">\n");
 
 	for (i=0;i<ENDCONTROLTYPES;i++)
 	{
 		if (control[i].Xway)
-			fprintf(out, "\t\t\t<control type=\"%s\"/>\n", normalize_string(control[i].Xway) );
+			fprintf(out, "\t\t\t<control type=\"%s\"/>\n", xml_normalize_string(control[i].Xway) );
 		if (control[i].analog)
 		{
-			fprintf(out, "\t\t\t<control type=\"%s\"", normalize_string(control_types[i]) );
+			fprintf(out, "\t\t\t<control type=\"%s\"", xml_normalize_string(control_types[i]) );
 			if (control[i].min || control[i].max)
 			{
 				fprintf(out, " minimum=\"%d\"", control[i].min);
@@ -417,9 +368,9 @@ static void print_game_bios(FILE* out, const game_driver* game)
 		fprintf(out, "\t\t<biosset");
 
 		if (thisbios->_name)
-			fprintf(out, " name=\"%s\"", normalize_string(thisbios->_name));
+			fprintf(out, " name=\"%s\"", xml_normalize_string(thisbios->_name));
 		if (thisbios->_description)
-			fprintf(out, " description=\"%s\"", normalize_string(thisbios->_description));
+			fprintf(out, " description=\"%s\"", xml_normalize_string(thisbios->_description));
 		if (thisbios->value == 0)
 			fprintf(out, " default=\"yes\"");
 
@@ -512,11 +463,11 @@ static void print_game_rom(FILE* out, const game_driver* game)
 					fprintf(out, "\t\t<disk");
 
 				if (*name)
-					fprintf(out, " name=\"%s\"", normalize_string(name));
+					fprintf(out, " name=\"%s\"", xml_normalize_string(name));
 				if (in_parent)
-					fprintf(out, " merge=\"%s\"", normalize_string(ROM_GETNAME(fprom)));
+					fprintf(out, " merge=\"%s\"", xml_normalize_string(ROM_GETNAME(fprom)));
 				if (!is_disk && found_bios)
-					fprintf(out, " bios=\"%s\"", normalize_string(bios_name));
+					fprintf(out, " bios=\"%s\"", xml_normalize_string(bios_name));
 				if (!is_disk)
 					fprintf(out, " size=\"%d\"", length);
 
@@ -616,7 +567,7 @@ static void print_game_sampleof(FILE* out, const game_driver* game)
 			{
 				/* output sampleof only if different from game name */
 				if (strcmp(samplenames[k] + 1, game->name)!=0)
-					fprintf(out, " sampleof=\"%s\"", normalize_string(samplenames[k] + 1));
+					fprintf(out, " sampleof=\"%s\"", xml_normalize_string(samplenames[k] + 1));
 				++k;
 			}
 		}
@@ -651,7 +602,7 @@ static void print_game_sample(FILE* out, const game_driver* game)
 					while (l<k && strcmp(samplenames[k],samplenames[l])!=0)
 						++l;
 					if (l==k)
-						fprintf(out, "\t\t<sample name=\"%s\"/>\n", normalize_string(samplenames[k]));
+						fprintf(out, "\t\t<sample name=\"%s\"/>\n", xml_normalize_string(samplenames[k]));
 				}
 				++k;
 			}
@@ -678,7 +629,7 @@ static void print_game_micro(FILE* out, const game_driver* game)
 			fprintf(out, "\t\t<chip");
 			fprintf(out, " type=\"cpu\"");
 
-			fprintf(out, " name=\"%s\"", normalize_string(cputype_name(cpu[j].cpu_type)));
+			fprintf(out, " name=\"%s\"", xml_normalize_string(cputype_name(cpu[j].cpu_type)));
 
 			fprintf(out, " clock=\"%d\"", cpu[j].cpu_clock);
 			fprintf(out, "/>\n");
@@ -691,7 +642,7 @@ static void print_game_micro(FILE* out, const game_driver* game)
 		{
 			fprintf(out, "\t\t<chip");
 			fprintf(out, " type=\"audio\"");
-			fprintf(out, " name=\"%s\"", normalize_string(sndtype_name(sound[j].sound_type)));
+			fprintf(out, " name=\"%s\"", xml_normalize_string(sndtype_name(sound[j].sound_type)));
 			if (sound[j].clock)
 				fprintf(out, " clock=\"%d\"", sound[j].clock);
 			fprintf(out, "/>\n");
@@ -872,35 +823,35 @@ static void print_game_info(FILE* out, const game_driver* game)
 
 	fprintf(out, "\t<" XML_TOP);
 
-	fprintf(out, " name=\"%s\"", normalize_string(game->name) );
+	fprintf(out, " name=\"%s\"", xml_normalize_string(game->name) );
 
 	start = strrchr(game->source_file, '/');
 	if (!start)
 		start = strrchr(game->source_file, '\\');
 	if (!start)
 		start = game->source_file - 1;
-	fprintf(out, " sourcefile=\"%s\"", normalize_string(start + 1));
+	fprintf(out, " sourcefile=\"%s\"", xml_normalize_string(start + 1));
 
 	clone_of = driver_get_clone(game);
 	if (clone_of && !(clone_of->flags & NOT_A_DRIVER))
-		fprintf(out, " cloneof=\"%s\"", normalize_string(clone_of->name));
+		fprintf(out, " cloneof=\"%s\"", xml_normalize_string(clone_of->name));
 
 	if (clone_of)
-		fprintf(out, " romof=\"%s\"", normalize_string(clone_of->name));
+		fprintf(out, " romof=\"%s\"", xml_normalize_string(clone_of->name));
 
 	print_game_sampleof(out, game);
 
 	fprintf(out, ">\n");
 
 	if (game->description)
-		fprintf(out, "\t\t<description>%s</description>\n", normalize_string(game->description));
+		fprintf(out, "\t\t<description>%s</description>\n", xml_normalize_string(game->description));
 
 	/* print the year only if is a number */
 	if (game->year && strspn(game->year,"0123456789")==strlen(game->year))
-		fprintf(out, "\t\t<year>%s</year>\n", normalize_string(game->year) );
+		fprintf(out, "\t\t<year>%s</year>\n", xml_normalize_string(game->year) );
 
 	if (game->manufacturer)
-		fprintf(out, "\t\t<manufacturer>%s</manufacturer>\n", normalize_string(game->manufacturer));
+		fprintf(out, "\t\t<manufacturer>%s</manufacturer>\n", xml_normalize_string(game->manufacturer));
 
 	print_game_bios(out, game);
 	print_game_rom(out, game);
@@ -937,26 +888,26 @@ static void print_resource_info(FILE* out, const game_driver* game)
 	/* games marked as runnable=no cannot be started. */
 	fprintf(out, "\t<" XML_TOP " runnable=\"no\"");
 
-	fprintf(out, " name=\"%s\"", normalize_string(game->name) );
+	fprintf(out, " name=\"%s\"", xml_normalize_string(game->name) );
 
 	start = strrchr(game->source_file, '/');
 	if (!start)
 		start = strrchr(game->source_file, '\\');
 	if (!start)
 		start = game->source_file - 1;
-	fprintf(out, " sourcefile=\"%s\"", normalize_string(start + 1));
+	fprintf(out, " sourcefile=\"%s\"", xml_normalize_string(start + 1));
 
 	fprintf(out, ">\n");
 
 	if (game->description)
-		fprintf(out, "\t\t<description>%s</description>\n", normalize_string(game->description));
+		fprintf(out, "\t\t<description>%s</description>\n", xml_normalize_string(game->description));
 
 	/* print the year only if it's a number */
 	if (game->year && strspn(game->year,"0123456789")==strlen(game->year))
-		fprintf(out, "\t\t<year>%s</year>\n", normalize_string(game->year) );
+		fprintf(out, "\t\t<year>%s</year>\n", xml_normalize_string(game->year) );
 
 	if (game->manufacturer)
-		fprintf(out, "\t\t<manufacturer>%s</manufacturer>\n", normalize_string(game->manufacturer));
+		fprintf(out, "\t\t<manufacturer>%s</manufacturer>\n", xml_normalize_string(game->manufacturer));
 
 	print_game_bios(out, game);
 	print_game_rom(out, game);
@@ -1086,7 +1037,7 @@ void print_mame_xml(FILE* out, const game_driver* const games[], const char *gam
 #endif
 		"]>\n\n"
 		"<" XML_ROOT " build=\"%s\">\n",
-		normalize_string(build_version)
+		xml_normalize_string(build_version)
 	);
 
 	print_mame_data(out, games, gamename);

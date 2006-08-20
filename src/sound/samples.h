@@ -28,6 +28,7 @@ void sample_set_freq(int channel,int freq);
 void sample_set_volume(int channel,float volume);
 void sample_set_pause(int channel,int pause);
 void sample_stop(int channel);
+int sample_get_base_freq(int channel);
 int sample_playing(int channel);
 int sample_loaded(int samplenum);
 

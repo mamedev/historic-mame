@@ -1110,7 +1110,7 @@ static UINT32 menu_video(UINT32 state)
 
 		/* if we only ended up with one, auto-select it */
 		if (menu_items == 1)
-			return menu_video(0 << 16);
+			return menu_video(0 << 16 | render_target_get_view(render_target_get_indexed(0)));
 
 		/* add an item for moving the UI */
 		item_list[menu_items++].text = "Move User Interface";

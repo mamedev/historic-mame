@@ -115,6 +115,7 @@ struct _debug_view_disasm
 	UINT8 *			last_opcode_base;			/* last opcode base */
 	UINT8 *			last_opcode_arg_base;		/* last opcode arg base */
 	UINT32			last_change_count;			/* last comment change count */
+	UINT32			last_backward_pc;			/* pc that the view->top_row is pointing to */
 	int				divider1, divider2;			/* left and right divider columns */
 	int				divider3;					/* comment divider column */
 	UINT8			live_tracking;				/* track the value of the live expression? */
@@ -1263,6 +1264,7 @@ static int disasm_alloc(debug_view *view)
 	dasmdata->right_column = (total_comments > 0) ? DVP_DASM_RIGHTCOL_COMMENTS : DVP_DASM_RIGHTCOL_RAW;
 	dasmdata->backwards_steps = 3;
 	dasmdata->dasm_width = DEFAULT_DASM_WIDTH;
+	dasmdata->last_backward_pc = 0;
 
 	/* stash the extra data pointer */
 	view->total_rows = DEFAULT_DASM_LINES;
@@ -1602,7 +1604,7 @@ static void disasm_recompute(debug_view *view, offs_t pc, int startline, int lin
 	/* update opcode base information */
 	dasmdata->last_opcode_base = opcode_base;
 	dasmdata->last_opcode_arg_base = opcode_arg_base;
-	dasmdata->last_change_count = debug_comment_get_change_count(dasmdata->cpunum);
+	dasmdata->last_change_count = debug_comment_all_change_count();
 
 	/* now longer need to recompute */
 	dasmdata->recompute = FALSE;
@@ -1682,7 +1684,7 @@ static void disasm_update(debug_view *view)
 		dasmdata->recompute = TRUE;
 
 	/* if the comments have changed, redo it */
-	if (dasmdata->last_change_count != debug_comment_get_change_count(dasmdata->cpunum))
+	if (dasmdata->last_change_count != debug_comment_all_change_count())
 		dasmdata->recompute = TRUE;
 
 	/* if we need to recompute, do it */
@@ -1691,12 +1693,24 @@ static void disasm_update(debug_view *view)
 		/* determine the addresses of what we will display */
 		offs_t backpc = disasm_back_up(dasmdata->cpunum, cpuinfo, (UINT32)dasmdata->last_result, dasmdata->backwards_steps);
 
-		/* put ourselves back in the top left */
-		view->top_row = 0;
-		view->left_col = 0;
-
 		/* recompute the view */
-		disasm_recompute(view, backpc, 0, view->total_rows, original_cpunum);
+		if (dasmdata->last_change_count != debug_comment_all_change_count())
+		{
+			/* smoosh us against the left column, but not the top row */
+			view->left_col = 0;
+
+			/* recompute from where we last recomputed! */
+			disasm_recompute(view, dasmdata->last_backward_pc, 0, view->total_rows, original_cpunum);
+		}
+		else
+		{
+			/* put ourselves back in the top left */
+			view->top_row = 0;
+			view->left_col = 0;
+
+			disasm_recompute(view, backpc, 0, view->total_rows, original_cpunum);
+			dasmdata->last_backward_pc = backpc ;
+		}
 	}
 
 	/* loop over visible rows */

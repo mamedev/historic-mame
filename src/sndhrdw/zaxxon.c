@@ -83,25 +83,25 @@ static UINT8 sound_state[3];
 static const char *zaxxon_sample_names[] =
 {
 	"*zaxxon",
-	"03.wav",   /* Homing Missile */
-	"02.wav",   /* Base Missile */
-	"01.wav",   /* Laser (force field) */
-	"00.wav",   /* Battleship (end of level boss) */
-	"11.wav",   /* S-Exp (enemy explosion) */
-	"10.wav",   /* M-Exp (ship explosion) */
-	"08.wav",   /* Cannon (ship fire) */
-	"23.wav",   /* Shot (enemy fire) */
-	"21.wav",   /* Alarm 2 (target lock) */
-	"20.wav",   /* Alarm 3 (low fuel) */
-	"05.wav",   /* initial background noise */
-	"04.wav",   /* looped asteroid noise */
+	"03.wav",   /* 0 - Homing Missile */
+	"02.wav",   /* 1 - Base Missile */
+	"01.wav",   /* 2 - Laser (force field) */
+	"00.wav",   /* 3 - Battleship (end of level boss) */
+	"11.wav",   /* 4 - S-Exp (enemy explosion) */
+	"10.wav",   /* 5 - M-Exp (ship explosion) */
+	"08.wav",   /* 6 - Cannon (ship fire) */
+	"23.wav",   /* 7 - Shot (enemy fire) */
+	"21.wav",   /* 8 - Alarm 2 (target lock) */
+	"20.wav",   /* 9 - Alarm 3 (low fuel) */
+	"05.wav",   /* 10 - initial background noise */
+	"04.wav",   /* 11 - looped asteroid noise */
 	0
 };
 
 
 static struct Samplesinterface zaxxon_samples_interface =
 {
-	12, /* 12 channels */
+	12,
 	zaxxon_sample_names
 };
 
@@ -196,11 +196,11 @@ WRITE8_HANDLER( zaxxon_sound_c_w )
 static const char *congo_sample_names[] =
 {
 	"*congo",
-	"gorilla.wav",
-	"bass.wav",
-	"congal.wav",
-	"congah.wav",
-	"rim.wav",
+	"gorilla.wav",	/* 0 */
+	"bass.wav",		/* 1 */
+	"congal.wav",	/* 2 */
+	"congah.wav",	/* 3 */
+	"rim.wav",		/* 4 */
 	0
 };
 

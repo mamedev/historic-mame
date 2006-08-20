@@ -383,7 +383,7 @@ xml_data_node *xml_file_read(mame_file *file, xml_parse_options *opts)
 		if (XML_Parse(parse_info.parser, tempbuf, bytes, done) == XML_STATUS_ERROR)
 		{
 			if (opts && opts->error)
-		{
+			{
 				opts->error->error_message = XML_ErrorString(XML_GetErrorCode(parse_info.parser));
 				opts->error->error_line = XML_GetCurrentLineNumber(parse_info.parser);
 				opts->error->error_column = XML_GetCurrentColumnNumber(parse_info.parser);
@@ -428,7 +428,7 @@ xml_data_node *xml_string_read(const char *string, xml_parse_options *opts)
 			opts->error->error_message = XML_ErrorString(XML_GetErrorCode(parse_info.parser));
 			opts->error->error_line = XML_GetCurrentLineNumber(parse_info.parser);
 			opts->error->error_column = XML_GetCurrentColumnNumber(parse_info.parser);
-	}
+		}
 
 		xml_file_free(parse_info.rootnode);
 		XML_ParserFree(parse_info.parser);
@@ -782,4 +782,40 @@ void xml_delete_node(xml_data_node *node)
 
 	/* now free ourselves and our children */
 	xml_free_node_recursive(node);
+}
+
+
+
+/*************************************
+ *
+ *  Delete a node
+ *
+ *************************************/
+
+const char *xml_normalize_string(const char *string)
+{
+	static char buffer[1024];
+	char *d = &buffer[0];
+
+	if (string != NULL)
+	{
+		while (*string)
+		{
+			switch (*string)
+			{
+				case '\"' : d += sprintf(d, "&quot;"); break;
+				case '&'  : d += sprintf(d, "&amp;"); break;
+				case '<'  : d += sprintf(d, "&lt;"); break;
+				case '>'  : d += sprintf(d, "&gt;"); break;
+				default:
+					if (*string >= ' ' && *string <= '~')
+						*d++ = *string;
+					else
+						d += sprintf(d, "&#%d;", (unsigned)(unsigned char)*string);
+			}
+			++string;
+		}
+	}
+	*d++ = 0;
+	return buffer;
 }

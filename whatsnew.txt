@@ -1,3 +1,58 @@
+0.108
+-----
+
+
+MAMETesters Bugs Fixed
+----------------------
+darius2056gre [robiza]
+
+
+
+Source Changes
+--------------
+Fixed bug that prevented in-game MNG recording from working.
+[Rene Single]
+
+Added more extensive documentation to several of the Sega 16-bit
+drivers. [Brian Troha]
+
+Fixed color decoding in Cheeky Mouse. [Nicola Salmoria]
+
+Improved DIP switches for headoni and spacbeam. [wolf676]
+
+More debugger comments fixes: [Andrew Gardner]
+ - adding a comment no longer redefines the disasm range.
+ - comments properly save and load special characters (&,", etc)
+
+Added sample_get_base_freq() to allow for querying to the base
+frequency of samples. [Aaron Giles]
+
+More G80 work: [Aaron Giles]
+ - finished video cleanup
+ - fixed Space Odyssey controls
+ - added crude support for Astro Blaster attack rate
+ - hooked up 005 melody generator, but missing sound PROM
+ - finished sound cleanup
+
+Changed debugger to default to 'on' in debug builds. [Aaron Giles]
+
+
+
+New games added or promoted from NOT_WORKING status
+---------------------------------------------------
+Konek-Gorbunok [Eugene Sandulenko]
+
+
+
+New clones added
+----------------
+Teenage Mutant Hero Turtles (UK 2 Players, set 2) [Patrik Styrnell]
+Teenage Mutant Hero Turtles - Turtles in Time (2 Players ver EBA)
+   [Patrik Styrnell]
+Wonder Boy (set 4) [Nicola Salmoria]
+
+
+
 0.107u4
 -------
 
@@ -230,7 +285,6 @@ Galaga (Midway set 1 with fast shoot hack) [David Widel]
 Versus Net Soccer (3 new versions) [R. Belmont, f205v]
 Ace Attacker (System 16A) [Arzeno Fabrice]
 Arm Champs II v2.6 [Gerald Coy]
-Ace Attacker (System 16A) [Arzeno Fabrice]
 
 
 

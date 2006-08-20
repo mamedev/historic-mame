@@ -23,7 +23,6 @@ int debug_comment_init(void);
 /* load and save */
 int debug_comment_save(void);
 int debug_comment_load(void);
-static int debug_comment_save_xml(mame_file *file);
 static int debug_comment_load_xml(mame_file *file);
 
 /* comment interface functions */
@@ -33,6 +32,7 @@ int debug_comment_remove(int cpu_num, offs_t addr, UINT32 c_crc);
 const char *debug_comment_get_text(int cpu_num, offs_t addr, UINT32 c_crc);
 int debug_comment_get_count(int cpu_num);
 UINT32 debug_comment_get_change_count(int cpu_num);
+UINT32 debug_comment_all_change_count(void);
 
 /* local functionality */
 UINT32 debug_comment_get_opcode_crc32(offs_t address);	/* pull a crc for the opcode at a given address */

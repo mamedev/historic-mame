@@ -1123,7 +1123,7 @@ static UINT32 handler_ingame(UINT32 state)
 	/* toggle movie recording */
 	if (input_ui_pressed(IPT_UI_RECORD_MOVIE))
 	{
-		if (video_is_movie_active())
+		if (!video_is_movie_active())
 		{
 			video_movie_begin_recording(NULL);
 			popmessage("REC START");

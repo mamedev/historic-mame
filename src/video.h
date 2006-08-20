@@ -15,6 +15,7 @@
 #define __VIDEO_H__
 
 #include "mamecore.h"
+#include "timer.h"
 
 
 /***************************************************************************
@@ -102,6 +103,9 @@ int video_screen_get_hpos(int scrnum);
 /* return the current vertical or horizontal blanking state for a screen */
 int video_screen_get_vblank(int scrnum);
 int video_screen_get_hblank(int scrnum);
+
+/* return the time when the beam will reach a particular H,V position */
+mame_time video_screen_get_time_until_pos(int scrnum, int vpos, int hpos);
 
 /* reset the partial updating for a frame; generally only called by cpuexec.c */
 void video_reset_partial_updates(void);

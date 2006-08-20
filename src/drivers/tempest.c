@@ -171,6 +171,93 @@
       before entering self-test mode or powering down; otherwise, you
       might erase or corrupt the high score table.
 
+-----------------------------------------
+
+Atari Bulletin, December 4, 1981
+
+Tempest Program Bug
+
+Tempest Uprights Prior to Serial #17426
+
+  If the score on your Tempest(tm) is greater then 170,000, there
+is a 12% chance that a program bug may award 40 credits for one
+quarter.
+
+  The ROM (#136002-217) in this package, replaces the ROM in
+location J-1 on the main PCB and will correcct the problem.
+
+  All cabaret and cocktail cabinets will have the correct ROM
+Installed.
+
+Thank you,
+
+Fred McCord
+Field Service Manager
+
+Tech Tip, December 11, 1981
+
+Tempest(tm) ROM #136002-117
+
+We have found that the above part number in location J1 should be replaced with part
+number 136002-217 in the main board in order to eliminate the possibility of receiving
+extra bonus plays after 170,000 points.
+
+RMA# T1700
+
+Exchange offer expires on March 15, 1982
+
+-----------------------------------------
+
+Skill-Step(tm) feature of your new Tempest(tm) game:
+
+I. Player rating mode
+
+  1. Occurs at beginning of every game
+  2. Player is given 10 seconds to choose his starting level
+  3. Player may choose from those levels displayed at bottom of screen
+  4. Player chooses level by:
+   a. spinning knob until white box surrounds desired level and then
+   b. pressing fire or superzapper (or start 1 or start 2 if remaining
+      time is less then 8 seconds), or by waiting until timer expires
+  5. Player is given a 3 second warning
+  6. Level choices are determined by several factors
+   a. If the game has been idle for 1 or more attract mode cycles
+      since the last game, then the choices are levels 1,3,5,7,9
+   b. If a player has just finished a game and pressed start before
+      the attract mode has finished its play mode, then the choices
+      depend on the highest level reached in that previous game as
+      follows
+
+Highest level
+reached in
+last game            Level choices this game
+-------------        -----------------------
+1 through 11         1,3,5,7,9
+12 or 13             1,3,5,7,9,11
+14 or 15             1,3,5,7,9,11,13
+16 or 17             1,3,5,7,9,11,13,15
+18, 19 or 20         1,3,5,7,9,11,13,15,17
+21 or 22             1,3,5,7,9,11,13,15,17,20
+23 or 24             1,3,5,7,9,11,13,15,17,20,22
+25 or 26             1,3,5,7,9,11,13,15,17,20,22,24
+27 or 28             1,3,5,7,9,11,13,15,17,20,22,24,26
+29, 30 or 31         1,3,5,7,9,11,13,15,17,20,22,24,26,28
+32 or 33             1,3,5,7,9,11,13,15,17,20,22,24,26,28,31
+34, 35 or 36         1,3,5,7,9,11,13,15,17,20,22,24,26,28,31,33
+37,38,39,40          1,3,5,7,9,11,13,15,17,20,22,24,26,28,31,33,36
+41,42,43,44          1,3,5,7,9,11,13,15,17,20,22,24,26,28,31,33,36,40
+45, 46 or 47         1,3,5,7,9,11,13,15,17,20,22,24,26,28,31,33,36,40,44
+48 or 49             1,3,5,7,9,11,13,15,17,20,22,24,26,28,31,33,36,40,44,47
+50, 51 or 52         1,3,5,7,9,11,13,15,17,20,22,24,26,28,31,33,36,40,44,47,49
+53,54,55,56          1,3,5,7,9,11,13,15,17,20,22,24,26,28,31,33,36,40,44,47,49,52
+57,58,59,60          1,3,5,7,9,11,13,15,17,20,22,24,26,28,31,33,36,40,44,47,49,52,56
+61, 62 or 63         1,3,5,7,9,11,13,15,17,20,22,24,26,28,31,33,36,40,44,47,49,52,56,60
+64 or 65             1,3,5,7,9,11,13,15,17,20,22,24,26,28,31,33,36,40,44,47,49,52,56,60,63
+66 through 73        1,3,5,7,9,11,13,15,17,20,22,24,26,28,31,33,36,40,44,47,49,52,56,60,63,65
+74 through 81        1,3,5,7,9,11,13,15,17,20,22,24,26,28,31,33,36,40,44,47,49,52,56,60,63,65,73
+82 through 99        1,3,5,7,9,11,13,15,17,20,22,24,26,28,31,33,36,40,44,47,49,52,56,60,63,65,73,81
+
+
 ***************************************************************************/
 
 #include "driver.h"

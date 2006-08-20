@@ -1535,6 +1535,7 @@ const game_driver * const drivers[] =
 	DRIVER( halleys )	/* A62 (c) 1986 Taito America Corporation + Coin It (US) */
 	DRIVER( halleysc )	/* A62 (c) 1986 Taito Corporation (Japan) */
 	DRIVER( halleycj )	/* A62 (c) 1986 Taito Corporation (Japan) */
+	DRIVER( halley87 )	/* A62 (c) 1986 Taito Corporation (Japan) */
 	DRIVER( lsasquad )	/* A64 (c) 1986 Taito Corporation / Taito America (dip switch) */
 	DRIVER( storming )	/* A64 (c) 1986 Taito Corporation */
 	DRIVER( daikaiju )	/* A74 (c) 1986 Taito */
@@ -3034,6 +3035,7 @@ V-V                           TP-027
 	DRIVER( wboy2 )		/* 834-5984 (c) 1986 + Escape license (S1) */
 	DRIVER( wboy2u )	/* 834-5984 (c) 1986 + Escape license (S1) */
 	DRIVER( wboy3 )		/* 834-5984 (c) 1986 + Escape license (S1) */
+	DRIVER( wboy4 )		/* 834-5984 (c) 1986 + Escape license (S1) */
 	DRIVER( wboyu )		/* 834-5753 (? maybe a conversion) (c) 1986 + Escape license (S1) */
 	DRIVER( wbdeluxe )	/* (c) 1986 + Escape license (S1) */
 	DRIVER( wboysys2 )      /* 834-5984  (c) 1986 + Escape license (S1) */
@@ -4271,6 +4273,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( tmht )		/* GX963 (c) 1989 (UK) */
 	DRIVER( tmntj )		/* GX963 (c) 1990 (Japan) */
 	DRIVER( tmht2p )	/* GX963 (c) 1989 (UK) */
+	DRIVER( tmht2pa )	/* GX963 (c) 1989 (UK) */
 	DRIVER( tmnt2pj )	/* GX963 (c) 1990 (Japan) */
 	DRIVER( tmnt2po )	/* GX963 (c) 1989 (Oceania) */
 	DRIVER( punkshot )	/* GX907 (c) 1990 (US) */
@@ -4284,8 +4287,9 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( glfgreat )	/* GX061 (c) 1991 */
 	DRIVER( glfgretj )	/* GX061 (c) 1991 (Japan) */
 	DRIVER( tmnt2 )		/* GX063 (c) 1991 (US) */
-	DRIVER( tmnt22p )	/* GX063 (c) 1991 (US) */
 	DRIVER( tmnt2a )	/* GX063 (c) 1991 (Asia) */
+	DRIVER( tmht22pe )	/* GX063 (c) 1991 (UK) */
+	DRIVER( tmnt22pu )	/* GX063 (c) 1991 (US) */
 	DRIVER( ssriders )	/* GX064 (c) 1991 (World) */
 	DRIVER( ssrdrebd )	/* GX064 (c) 1991 (World) */
 	DRIVER( ssrdrebc )	/* GX064 (c) 1991 (World) */
@@ -5671,6 +5675,9 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( timelimt )	/* (c) 1983 Chuo Co. Ltd */
 	DRIVER( progress )	/* (c) 1984 Chuo Co. Ltd */
 	DRIVER( rtriv )		/* (c) 198? Romar */
+
+	/* TIA-MC1 hardware games */
+	DRIVER( konek )		/* (c) 1988 Terminal */
 
 	/* Valadon Automation games */
 	DRIVER( bagman )	/* (c) 1982 */

@@ -12,6 +12,7 @@ struct sample_channel
 	UINT32		pos;
 	UINT32		frac;
 	UINT32		step;
+	UINT32		basefreq;
 	UINT8		loop;
 	UINT8		paused;
 };
@@ -244,7 +245,8 @@ void sample_start(int channel,int samplenum,int loop)
 	chan->source_num = sample->data ? samplenum : -1;
 	chan->pos = 0;
 	chan->frac = 0;
-	chan->step = ((INT64)sample->frequency << FRAC_BITS) / Machine->sample_rate;
+	chan->basefreq = sample->frequency;
+	chan->step = ((INT64)chan->basefreq << FRAC_BITS) / Machine->sample_rate;
 	chan->loop = loop;
 }
 
@@ -268,7 +270,8 @@ void sample_start_raw(int channel,INT16 *sampledata,int samples,int frequency,in
 	chan->source_num = -1;
 	chan->pos = 0;
 	chan->frac = 0;
-	chan->step = ((INT64)frequency << FRAC_BITS) / Machine->sample_rate;
+	chan->basefreq = frequency;
+	chan->step = ((INT64)chan->basefreq << FRAC_BITS) / Machine->sample_rate;
 	chan->loop = loop;
 }
 
@@ -335,6 +338,22 @@ void sample_stop(int channel)
 	stream_update(chan->stream, 0);
 	chan->source = NULL;
 	chan->source_num = -1;
+}
+
+int sample_get_base_freq(int channel)
+{
+	struct samples_info *info = sndti_token(SOUND_SAMPLES, 0);
+	struct sample_channel *chan = &info->channel[channel];
+
+	if (channel >= info->numchannels)
+	{
+		logerror("error: sample_playing() called with channel = %d, but only %d channels allocated\n",channel,info->numchannels);
+		return 0;
+	}
+
+	/* force an update before we start */
+	stream_update(chan->stream, 0);
+	return chan->basefreq;
 }
 
 int sample_playing(int channel)

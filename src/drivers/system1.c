@@ -3737,6 +3737,40 @@ ROM_START( wboy3 )
 	ROM_LOAD( "pr-5317.76",		0x0000, 0x0100, CRC(648350b8) SHA1(c7986aa9127ef5b50b845434cb4e81dff9861cd2) ) /* timing? (not used) */
 ROM_END
 
+/*
+This wonderboy romset runs on a system1 1985 pcb with some flying wires.
+Serial number of the pcb is 257
+
+There are 2 piggyback boards:
+
+The first is marked "SEGA 834-5764"  and it is placed on the socket of the sega sys1 protection chip and on a eprom socket.
+there are IC2 and IC3 eproms (I can't read the codes because the stickers are damaged)
+There is also a 40 pin socket in which they have put an unknown 42 NEC cpu (they have scratched the codes) with pin 21 and 22 cut!
+
+The second piggyback is marked "SEGA 834-5755" and it contains proms and some logic.
+*/
+
+ROM_START( wboy4 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
+	ROM_LOAD( "ic2.bin",	0x0000, 0x8000, CRC(48b2c006) SHA1(35492330dae71d410712380466b4c09b81df8559) ) /* encrypted */
+	ROM_LOAD( "ic3.bin",	0x8000, 0x8000, CRC(466cae31) SHA1(e47e9084c83796a0a0dfeaa1f8f868cadd5f32c7) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for sound cpu */
+	ROM_LOAD( "7583.126", 0x0000, 0x8000, CRC(99334b3c) SHA1(dfc09f63082b7666fa2152e22810c0455a7e5051) )	// epr7583.ic120
+
+	ROM_REGION( 0xc000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "epr7610.ic62",	0x0000, 0x4000, CRC(1685d26a) SHA1(d30d08d61d789fd5a0eb7ef2998eb9728dabf4c9) )
+	ROM_LOAD( "epr7609.ic64",	0x4000, 0x4000, CRC(87ecba53) SHA1(b904d5af25e0c1f8c8ca8dc11a3bed508c868f19) )
+	ROM_LOAD( "epr7608.ic66",	0x8000, 0x4000, CRC(e812b3ec) SHA1(3eebeaf3480a0370aa5ee031c25768ada17ad8a2) )
+
+	ROM_REGION( 0x10000, REGION_GFX2, 0 ) /* 64k for sprites data */
+	ROM_LOAD( "7578.87",  0x00000, 0x8000, CRC(6ff1637f) SHA1(9a6ddbd7b8d53273b30c3529b028c1f28bf3c63b) )	// epr7577.ic110
+	ROM_LOAD( "7577.86",  0x08000, 0x8000, CRC(58b3705e) SHA1(1a8ff3f1765a3b21145bd1a6c85441f806f7b17d) )	// epr7576.ic117
+
+	ROM_REGION( 0x0100, REGION_USER1, 0 ) /* misc PROMs, but no color so don't use REGION_PROMS! */
+	ROM_LOAD( "pr-5317.76",		0x0000, 0x0100, CRC(648350b8) SHA1(c7986aa9127ef5b50b845434cb4e81dff9861cd2) ) /* timing? (not used) */
+ROM_END
+
 ROM_START( wboyu )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* 64k for code */
 	ROM_LOAD( "ic116_89.bin",	0x0000, 0x4000, CRC(73d8cef0) SHA1(a6f1f8de44a88f995836ce03b5a073306c56aaeb) )
@@ -3763,7 +3797,6 @@ ROM_START( wboyu )
 	ROM_REGION( 0x0100, REGION_USER1, 0 ) /* misc PROMs, but no color so don't use REGION_PROMS! */
 	ROM_LOAD( "pr-5317.76",		0x0000, 0x0100, CRC(648350b8) SHA1(c7986aa9127ef5b50b845434cb4e81dff9861cd2) ) /* timing? (not used) */
 ROM_END
-
 
 ROM_START( wboysys2 )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 ) /* 256k for code */
@@ -4373,6 +4406,7 @@ GAME( 1986, wboyo,    wboy,     system1,  wboy,     hvymetal, ROT0,   "Sega (Esc
 GAME( 1986, wboy2,    wboy,     system1,  wboy,     wboy2,    ROT0,   "Sega (Escape license)", "Wonder Boy (set 2)", GAME_SUPPORTS_SAVE )
 GAME( 1986, wboy2u,   wboy,     system1,  wboy,     0,        ROT0,   "Sega (Escape license)", "Wonder Boy (set 2 not encrypted)", GAME_SUPPORTS_SAVE )
 GAME( 1986, wboy3,    wboy,     system1,  wboy,     hvymetal, ROT0,   "Sega (Escape license)", "Wonder Boy (set 3)", GAME_SUPPORTS_SAVE )
+GAME( 1986, wboy4,    wboy,     system1,  wboy,     4dwarrio, ROT0,   "Sega (Escape license)", "Wonder Boy (set 4)", GAME_SUPPORTS_SAVE )
 GAME( 1986, wboyu,    wboy,     system1,  wboyu,    0,        ROT0,   "Sega (Escape license)", "Wonder Boy (not encrypted)", GAME_SUPPORTS_SAVE )
 GAME( 1986, wboysys2, wboy,     wbml,     wboysys2, wboy,     ROT0,   "Sega (Escape license)", "Wonder Boy (system 2)", GAME_SUPPORTS_SAVE )
 GAME( 1986, wbdeluxe, wboy,     system1,  wbdeluxe, 0,        ROT0,   "Sega (Escape license)", "Wonder Boy Deluxe", GAME_SUPPORTS_SAVE )

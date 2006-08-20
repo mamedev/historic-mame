@@ -337,11 +337,18 @@ static OPBASE_HANDLER(spc_opbase)
 	return ~0;
 }
 
+static OPBASE_HANDLER(snes_opbase)
+{
+	opcode_base = opcode_arg_base = snes_ram;
+	return ~0;
+}
+
 MACHINE_START( snes )
 {
 	snes_vram = auto_malloc(SNES_VRAM_SIZE);
 	snes_cgram = auto_malloc(SNES_CGRAM_SIZE);
 	snes_oam = auto_malloc(SNES_OAM_SIZE);
+	memory_set_opbase_handler(0, snes_opbase);
 	memory_set_opbase_handler(1, spc_opbase);
 	return 0;
 }
@@ -1031,19 +1038,16 @@ WRITE8_HANDLER( snes_w_io )
 		case BGMODE:	/* BG mode and character size settings */
 			snes_ppu.mode = data & 0x7;
 			{
-				screen_state *state = &Machine->screen[0];
-				rectangle visarea = state->visarea;
-				visarea.min_x = visarea.min_y = 0;
-				visarea.max_y = snes_ppu.beam.last_visible_line - 1;
+				int max_x;
 #ifdef SNES_DBG_VIDHRDW
-				visarea.max_x = (SNES_SCR_WIDTH * 2 * 1.75) - 1;
+				max_x = (SNES_SCR_WIDTH * 2 * 1.75) - 1;
 #else
 				if( snes_ppu.mode == 5 || snes_ppu.mode == 6 )
-					visarea.max_x = (SNES_SCR_WIDTH * 2) - 1;
+					max_x = (SNES_SCR_WIDTH * 2) - 1;
 				else
-					visarea.max_x = SNES_SCR_WIDTH - 1;
+					max_x = SNES_SCR_WIDTH - 1;
 #endif
-				video_screen_configure(0, visarea.max_x + 1, visarea.max_y + 1, &visarea, Machine->screen[0].refresh);
+				video_screen_set_visarea(0, 0, max_x, 0, snes_ppu.beam.last_visible_line - 1);
 			}
 
 			snes_ppu.layer[0].tile_size = (data >> 4) & 0x1;

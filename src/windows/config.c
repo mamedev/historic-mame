@@ -178,10 +178,10 @@ static const options_entry windows_opts[] =
 	{ "oslog",                    "0",        OPTION_BOOLEAN,    "output error.log data to the system debugger" },
 	{ "verbose;v",                "0",        OPTION_BOOLEAN,    "display additional diagnostic information" },
 #ifdef MAME_DEBUG
-	{ "debug;d",                  "0",        OPTION_BOOLEAN,    "enable/disable debugger" },
+	{ "debug;d",                  "1",        OPTION_BOOLEAN,    "enable/disable debugger" },
 	{ "debugscript",              NULL,       0,                 "script for debugger" },
 #else
-	{ "debug;d",                  "0",        OPTION_DEPRECATED, "(debugger-only command)" },
+	{ "debug;d",                  "1",        OPTION_DEPRECATED, "(debugger-only command)" },
 	{ "debugscript",              NULL,       OPTION_DEPRECATED, "(debugger-only command)" },
 #endif
 

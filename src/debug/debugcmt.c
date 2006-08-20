@@ -25,6 +25,7 @@
 #include "debugcmt.h"
 #include "debugcpu.h"
 #include "debugvw.h"
+#include "info.h"
 #include <zlib.h>
 
 
@@ -276,6 +277,21 @@ UINT32 debug_comment_get_change_count(int cpu_num)
 	return debug_comments[cpu_num].change_count;
 }
 
+/*-------------------------------------------------------------------------
+    debug_comment_all_change_count - returns the change counter
+    for all cpu's
+-------------------------------------------------------------------------*/
+
+UINT32 debug_comment_all_change_count(void)
+{
+	int i ;
+	UINT32 retVal = 0;
+
+	for (i = 0; i < cpu_gettotalcpu(); i++)
+		retVal += debug_comments[i].change_count ;
+
+	return retVal;
+}
 
 /*-------------------------------------------------------------------------
     debug_comment_get_opcode_crc32 - magic function that takes all the
@@ -404,7 +420,7 @@ int debug_comment_save(void)
 
 		for (j = 0; j < debug_comments[i].comment_count; j++)
 		{
-			xml_data_node *datanode = xml_add_child(curnode, "comment", debug_comments[i].comment_info[j]->text);
+			xml_data_node *datanode = xml_add_child(curnode, "comment", xml_normalize_string(debug_comments[i].comment_info[j]->text));
 			if (!datanode)
 				goto error;
 			xml_set_attribute_int(datanode, "address", debug_comments[i].comment_info[j]->address);

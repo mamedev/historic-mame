@@ -771,7 +771,7 @@ static void gfxset_draw_item(const gfx_element *gfx, int index, mame_bitmap *bit
 	if (Machine->game_colortable != NULL)
 		colortable = &Machine->game_colortable[(gfx->colortable - Machine->remapped_colortable) + color * gfx->color_granularity];
 	else
-		palette += color * gfx->color_granularity;
+		palette += (gfx->colortable - Machine->remapped_colortable) + color * gfx->color_granularity;
 
 	/* loop over rows in the cell */
 	for (y = 0; y < height; y++)

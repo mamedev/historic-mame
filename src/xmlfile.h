@@ -102,4 +102,6 @@ xml_attribute_node *xml_set_attribute_int(xml_data_node *node, const char *name,
 xml_attribute_node *xml_set_attribute_float(xml_data_node *node, const char *name, float value);
 void xml_delete_node(xml_data_node *node);
 
+const char *xml_normalize_string(const char *string);
+
 #endif	/* __XMLFILE_H__ */

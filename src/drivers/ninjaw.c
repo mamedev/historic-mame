@@ -762,7 +762,7 @@ static MACHINE_DRIVER_START( darius2 )
 	MDRV_CPU_PROGRAM_MAP(darius2_cpub_readmem,darius2_cpub_writemem)
 	MDRV_CPU_VBLANK_INT(irq4_line_hold,1)
 
-	MDRV_INTERLEAVE(10)	/* CPU slices */
+	MDRV_INTERLEAVE(100)	/* CPU slices */
 
 	MDRV_MACHINE_START(ninjaw)
 	MDRV_MACHINE_RESET(ninjaw)

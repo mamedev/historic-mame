@@ -940,6 +940,12 @@ MACHINE_DRIVER_END
  **************************************************************************************************************************
     Outrun
     CPU: 68000
+     GAME BD  834-6065-02 (or 834-6065-04)
+     CPU BD   837-6063-02
+     VIDEO BD 837-6064-02
+
+Note: GAME BD 834-6065-01 (or 834-6065-03) & CPU BD  837-6063-01
+      Use EPR-10331 to EPR-10334 for the Main 68000 code, it's unknown if they are the same... they are not currently dumped
 */
 ROM_START( outrun )
 	ROM_REGION( 0x60000, REGION_CPU1, 0 ) /* 68000 code */
@@ -997,6 +1003,9 @@ ROM_END
 /**************************************************************************************************************************
     Outrun
     CPU: 68000
+     GAME BD  834-6065-02 (or 834-6065-04)
+     CPU BD   837-6063-02
+     VIDEO BD 837-6064-02
 */
 ROM_START( outrun2 )
 	ROM_REGION( 0x60000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1054,10 +1063,13 @@ ROM_END
 /**************************************************************************************************************************
     Outrun
     CPU: 68000 (317-????)
+     GAME BD  834-6065 Rev A
+     CPU BD   837-6063
+     VIDEO BD 837-6064-01
 
     Sega Outrun Japan version
     -------------------------
-
+    GAME Board (834-6065 Revision A)
     CPU Board (837-6063)
     ---------
     EPR10173 - IC66 - 5826
@@ -1078,7 +1090,7 @@ ROM_END
     EPR10263 - IC132 - 905E
     EPR10264 - IC133 - 8498
 
-    Video Board (834-6065 Revision A)
+    Video Board (837-6064-01)
     -----------
     EPR10194 - IC26 - 8C35
     EPR10195 - IC27 - 4012
@@ -1290,8 +1302,10 @@ ROM_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-    Turbo Outrun
+    Turbo Outrun (Out Run upgrade set)
     CPU: FD1094 (317-0118)
+     CPU BD   837-6905-12
+     VIDEO BD 837-6906-02
 */
 ROM_START( toutrun )
 	ROM_REGION( 0x60000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1317,6 +1331,7 @@ ROM_START( toutrun )
 	ROM_LOAD( "opr12325.104", 0x20000, 0x10000, CRC(1405137a) SHA1(367db88d36852e35c5e839f692be5ea8c8e072d2) )
 
 	ROM_REGION32_LE( 0x100000, REGION_GFX2, 0 ) /* sprites */
+	/* Video BD 837-6906-2, Mask Roms twice the size as EPR/OPR counterparts */
 	ROM_LOAD32_BYTE( "mpr12336.9",   0x00000, 0x20000, CRC(dda465c7) SHA1(83acc12a387b004986f084f25964c15a9f88a41a) )
 	ROM_LOAD32_BYTE( "mpr12337.10",  0x00001, 0x20000, CRC(828233d1) SHA1(d73a200af4245d590e1fd3ac436723f99cc50452) )
 	ROM_LOAD32_BYTE( "mpr12338.11",  0x00002, 0x20000, CRC(46b4b5f4) SHA1(afeb2e5ac6792edafe7328993fe8dfcd4bce1924) )
@@ -1327,7 +1342,7 @@ ROM_START( toutrun )
 	ROM_LOAD32_BYTE( "mpr12367.16",  0x80003, 0x20000, CRC(4930254a) SHA1(00f24be3bf02b143fa554f4d32e283bdac79af6a) )
 
 	ROM_REGION( 0x10000, REGION_GFX3, 0 ) /* road gfx (2 identical roms, 1 for each road) */
-	ROM_LOAD( "epr12299.47", 0x0000, 0x8000, CRC(fc9bc41b) SHA1(9af73e096253cf2c4f283f227530110a4b37fcee) )
+	ROM_LOAD( "epr12299.47", 0x0000, 0x8000, CRC(fc9bc41b) SHA1(9af73e096253cf2c4f283f227530110a4b37fcee) ) /* Manual shows both as EPR-12298 */
 	ROM_LOAD( "epr12298.11", 0x8000, 0x8000, CRC(fc9bc41b) SHA1(9af73e096253cf2c4f283f227530110a4b37fcee) )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* sound CPU */
@@ -1345,6 +1360,8 @@ ROM_END
 /**************************************************************************************************************************
     Turbo Outrun
     CPU: FD1094 (317-????)
+     CPU BD   837-6905-12
+     VIDEO BD 837-6906-01
 */
 ROM_START( toutrun2 )
 	ROM_REGION( 0x60000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1388,7 +1405,7 @@ ROM_START( toutrun2 )
 	ROM_LOAD32_BYTE( "opr12322.24", 0xc0003, 0x10000, CRC(8b812492) SHA1(bf1f9e059c093c0991c7caf1b01c739ed54b8357) )
 
 	ROM_REGION( 0x10000, REGION_GFX3, 0 ) /* road gfx (2 identical roms, 1 for each road) */
-	ROM_LOAD( "epr12299.47", 0x0000, 0x8000, CRC(fc9bc41b) SHA1(9af73e096253cf2c4f283f227530110a4b37fcee) )
+	ROM_LOAD( "epr12299.47", 0x0000, 0x8000, CRC(fc9bc41b) SHA1(9af73e096253cf2c4f283f227530110a4b37fcee) ) /* Manual shows both as EPR-12298 */
 	ROM_LOAD( "epr12298.11", 0x8000, 0x8000, CRC(fc9bc41b) SHA1(9af73e096253cf2c4f283f227530110a4b37fcee) )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* sound CPU */
@@ -1406,6 +1423,8 @@ ROM_END
 /**************************************************************************************************************************
     Turbo Outrun
     CPU: FD1094 (317-????)
+     CPU BD   837-6905-12
+     VIDEO BD 837-6906-01
 */
 ROM_START( toutrun1 )
 	ROM_REGION( 0x60000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1446,7 +1465,7 @@ ROM_START( toutrun1 )
 	ROM_LOAD32_BYTE( "opr12322.24", 0xc0003, 0x10000, CRC(8b812492) SHA1(bf1f9e059c093c0991c7caf1b01c739ed54b8357) )
 
 	ROM_REGION( 0x10000, REGION_GFX3, 0 ) /* road gfx (2 identical roms, 1 for each road) */
-	ROM_LOAD( "epr12299.47", 0x0000, 0x8000, CRC(fc9bc41b) SHA1(9af73e096253cf2c4f283f227530110a4b37fcee) )
+	ROM_LOAD( "epr12299.47", 0x0000, 0x8000, CRC(fc9bc41b) SHA1(9af73e096253cf2c4f283f227530110a4b37fcee) ) /* Manual shows both as EPR-12298 */
 	ROM_LOAD( "epr12298.11", 0x8000, 0x8000, CRC(fc9bc41b) SHA1(9af73e096253cf2c4f283f227530110a4b37fcee) )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* sound CPU */
@@ -1467,6 +1486,8 @@ ROM_END
  **************************************************************************************************************************
     Super Hangon
     CPU: 68000 (317-????)
+     CPU BD SUPER HANG-ON   837-6278-01 (or 837-6278-03)
+     VIDEO BD SUPER HANG-ON 837-6279-01
 */
 ROM_START( shangon )
 	ROM_REGION( 0x60000, REGION_CPU1, 0 ) /* 68000 code */
@@ -1487,7 +1508,8 @@ ROM_START( shangon )
 	ROM_LOAD( "epr10650.56",        0x10000, 0x08000, CRC(b236a403) SHA1(af02b8122794c083a66f2ab35d2c73b84b2df0be) )
 
 	ROM_REGION16_BE( 0x100000, REGION_GFX2, 0 ) /* sprites */
-	ROM_LOAD16_BYTE( "mpr10794.8",	0x000001, 0x020000, CRC(7c958e63) SHA1(ef79614e94280607a6cdf6e13db051accfd2add0) )
+	/* Super Hang-On Video board 837-6279-01 (mask rom type), same data but mask roms twice the size as "EPR" counterparts */
+	ROM_LOAD16_BYTE( "mpr10794.8",	 0x000001, 0x020000, CRC(7c958e63) SHA1(ef79614e94280607a6cdf6e13db051accfd2add0) )
 	ROM_LOAD16_BYTE( "mpr10798.16",  0x000000, 0x020000, CRC(7d58f807) SHA1(783c9929d27a0270b3f7d5eb799cee6b2e5b7ae5) )
 	ROM_LOAD16_BYTE( "mpr10795.6",   0x040001, 0x020000, CRC(d9d31f8c) SHA1(3ce07b83e3aa2d8834c1a449fa31e003df5486a3) )
 	ROM_LOAD16_BYTE( "mpr10799.14",  0x040000, 0x020000, CRC(96d90d3d) SHA1(6572cbce8f98a1a7a8e59b0c502ab274f78d2819) )
@@ -1517,6 +1539,8 @@ ROM_END
 /**************************************************************************************************************************
     Super Hangon
     CPU: FD1089B (317-0034)
+     CPU BD SUPER HANG-ON   837-6278-01 (or 837-6278-03)
+     VIDEO BD SUPER HANG-ON 837-6279 (or 837-6279-02, roms would be "OPR")
 */
 ROM_START( shangon3 )
 	ROM_REGION( 0x60000, REGION_CPU1, 0 ) /* 68000 code - protected */
@@ -1537,7 +1561,7 @@ ROM_START( shangon3 )
 	ROM_LOAD( "epr10650.56",        0x10000, 0x08000, CRC(b236a403) SHA1(af02b8122794c083a66f2ab35d2c73b84b2df0be) )
 
 	ROM_REGION16_BE( 0x0e0000, REGION_GFX2, 0 ) /* sprites */
-	ROM_LOAD16_BYTE( "epr10675.8",	0x000001, 0x010000, CRC(d6ac012b) SHA1(305023b1a0a9d84cfc081ffc2ad7578b53d562f2) )
+	ROM_LOAD16_BYTE( "epr10675.8",	 0x000001, 0x010000, CRC(d6ac012b) SHA1(305023b1a0a9d84cfc081ffc2ad7578b53d562f2) )
 	ROM_LOAD16_BYTE( "epr10682.16",  0x000000, 0x010000, CRC(d9d83250) SHA1(f8ca3197edcdf53643a5b335c3c044ddc1310cd4) )
 	ROM_LOAD16_BYTE( "epr10676.7",   0x020001, 0x010000, CRC(25ebf2c5) SHA1(abcf673ae4e280417dd9f46d18c0ec7c0e4802ae) )
 	ROM_LOAD16_BYTE( "epr10683.15",  0x020000, 0x010000, CRC(6365d2e9) SHA1(688e2ba194e859f86cd3486c2575ebae257e975a) )
@@ -1573,6 +1597,8 @@ ROM_END
 /**************************************************************************************************************************
     Super Hangon
     CPU: FD1089B (317-0034)
+     CPU BD SUPER HANG-ON   837-6278-01 (or 837-6278-03)
+     VIDEO BD SUPER HANG-ON 837-6279 (or 837-6279-02, roms would be "OPR")
 */
 ROM_START( shangon2 )
 	ROM_REGION( 0x60000, REGION_CPU1, 0 ) /* 68000 code - protected */
@@ -1593,7 +1619,7 @@ ROM_START( shangon2 )
 	ROM_LOAD( "epr10650.56",        0x10000, 0x08000, CRC(b236a403) SHA1(af02b8122794c083a66f2ab35d2c73b84b2df0be) )
 
 	ROM_REGION16_BE( 0x0e0000, REGION_GFX2, 0 ) /* sprites */
-	ROM_LOAD16_BYTE( "epr10675.8",	0x000001, 0x010000, CRC(d6ac012b) SHA1(305023b1a0a9d84cfc081ffc2ad7578b53d562f2) )
+	ROM_LOAD16_BYTE( "epr10675.8",	 0x000001, 0x010000, CRC(d6ac012b) SHA1(305023b1a0a9d84cfc081ffc2ad7578b53d562f2) )
 	ROM_LOAD16_BYTE( "epr10682.16",  0x000000, 0x010000, CRC(d9d83250) SHA1(f8ca3197edcdf53643a5b335c3c044ddc1310cd4) )
 	ROM_LOAD16_BYTE( "epr10676.7",   0x020001, 0x010000, CRC(25ebf2c5) SHA1(abcf673ae4e280417dd9f46d18c0ec7c0e4802ae) )
 	ROM_LOAD16_BYTE( "epr10683.15",  0x020000, 0x010000, CRC(6365d2e9) SHA1(688e2ba194e859f86cd3486c2575ebae257e975a) )
@@ -1629,6 +1655,8 @@ ROM_END
 /**************************************************************************************************************************
     Super Hangon
     CPU: FD1089B (317-0034)
+     CPU BD SUPER HANG-ON   837-6278-01 (or 837-6278-03)
+     VIDEO BD SUPER HANG-ON 837-6279 (or 837-6279-02, roms would be "OPR")
 */
 ROM_START( shangon1 )
 	ROM_REGION( 0x60000, REGION_CPU1, 0 ) /* 68000 code - protected */
@@ -1649,7 +1677,7 @@ ROM_START( shangon1 )
 	ROM_LOAD( "epr10650.56",        0x10000, 0x08000, CRC(b236a403) SHA1(af02b8122794c083a66f2ab35d2c73b84b2df0be) )
 
 	ROM_REGION16_BE( 0x0e0000, REGION_GFX2, 0 ) /* sprites */
-	ROM_LOAD16_BYTE( "epr10675.8",	0x000001, 0x010000, CRC(d6ac012b) SHA1(305023b1a0a9d84cfc081ffc2ad7578b53d562f2) )
+	ROM_LOAD16_BYTE( "epr10675.8",	 0x000001, 0x010000, CRC(d6ac012b) SHA1(305023b1a0a9d84cfc081ffc2ad7578b53d562f2) )
 	ROM_LOAD16_BYTE( "epr10682.16",  0x000000, 0x010000, CRC(d9d83250) SHA1(f8ca3197edcdf53643a5b335c3c044ddc1310cd4) )
 	ROM_LOAD16_BYTE( "epr10676.7",   0x020001, 0x010000, CRC(25ebf2c5) SHA1(abcf673ae4e280417dd9f46d18c0ec7c0e4802ae) )
 	ROM_LOAD16_BYTE( "epr10683.15",  0x020000, 0x010000, CRC(6365d2e9) SHA1(688e2ba194e859f86cd3486c2575ebae257e975a) )
@@ -1685,6 +1713,8 @@ ROM_END
 /**************************************************************************************************************************
     Limited Edition Hangon
     CPU: 68000 (317-????)
+     CPU BD SUPER HANG-ON   837-6278-01 (or 837-6278-03)
+     VIDEO BD SUPER HANG-ON 837-6279 (or 837-6279-02, rom would be "OPR")
 */
 ROM_START( shangnle )
 	ROM_REGION( 0x60000, REGION_CPU1, 0 ) /* 68000 code  */
@@ -1705,7 +1735,7 @@ ROM_START( shangnle )
 	ROM_LOAD( "epr10650.56",        0x10000, 0x08000, CRC(b236a403) SHA1(af02b8122794c083a66f2ab35d2c73b84b2df0be) )
 
 	ROM_REGION16_BE( 0x0e0000, REGION_GFX2, 0 ) /* sprites */
-	ROM_LOAD16_BYTE( "epr10675.8",	0x000001, 0x010000, CRC(d6ac012b) SHA1(305023b1a0a9d84cfc081ffc2ad7578b53d562f2) )
+	ROM_LOAD16_BYTE( "epr10675.8",	 0x000001, 0x010000, CRC(d6ac012b) SHA1(305023b1a0a9d84cfc081ffc2ad7578b53d562f2) )
 	ROM_LOAD16_BYTE( "epr10682.16",  0x000000, 0x010000, CRC(d9d83250) SHA1(f8ca3197edcdf53643a5b335c3c044ddc1310cd4) )
 	ROM_LOAD16_BYTE( "epr13945.7",   0x020001, 0x010000, CRC(fbb1eef9) SHA1(2798df2f25706e0d3be01d945274f478d7e5a2ae) )
 	ROM_LOAD16_BYTE( "epr13946.15",  0x020000, 0x010000, CRC(03144930) SHA1(c20f4883ee2de35cd0b67949de0e41464f2c5fae) )

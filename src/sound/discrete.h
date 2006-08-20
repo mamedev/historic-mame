@@ -2184,21 +2184,21 @@
  *                                 |
  *                       .---------+
  *                       |         |
- *                       Z         |
+ *                       Z         |8
  *                    R1 Z     .---------.
- *                       |     |  Vcc    |
+ *                       |    7|  Vcc    |
  *                       +-----|Discharge|
  *                       |     |         |
- *                       Z     |   555   |
+ *                       Z     |   555   |3
  *                    R2 Z     |      Out|---> Netlist Node
- *                       |     |         |
+ *                       |    6|         |
  *                       +-----|Threshold|
  *                       |     |         |
  *                       +-----|Trigger  |
- *                       |     |         |---< Control Voltage
- *                       |     |  Reset  |
+ *                       |    2|         |---< Control Voltage
+ *                       |     |  Reset  |5
  *                       |     '---------'
- *                      ---         |
+ *                      ---        4|
  *                    C ---         |
  *                       |          ^
  *                      gnd       Reset
