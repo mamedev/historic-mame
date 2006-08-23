@@ -992,7 +992,7 @@ $(OBJ)/nintendo.a: \
 	$(OBJ)/machine/drakton.o \
 	$(OBJ)/machine/rp5h01.o \
 	$(OBJ)/machine/strtheat.o \
-	$(OBJ)/vidhrdw/ppu2c03b.o \
+	$(OBJ)/vidhrdw/ppu2c0x.o \
 
 $(OBJ)/nix.a: \
 	$(OBJ)/drivers/fitfight.o $(OBJ)/vidhrdw/fitfight.o \
@@ -1339,7 +1339,7 @@ $(OBJ)/thepit.a: \
 	$(OBJ)/drivers/timelimt.o $(OBJ)/vidhrdw/timelimt.o \
 
 $(OBJ)/tiamc1.a: \
-	$(OBJ)/drivers/tiamc1.o $(OBJ)/vidhrdw/tiamc1.o \
+	$(OBJ)/drivers/tiamc1.o $(OBJ)/vidhrdw/tiamc1.o $(OBJ)/sndhrdw/tiamc1.o \
 
 $(OBJ)/toaplan.a: \
 	$(OBJ)/drivers/mjsister.o $(OBJ)/vidhrdw/mjsister.o \

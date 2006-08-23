@@ -158,23 +158,43 @@
 
 /*************************************
  *
+ *  Constants
+ *
+ *************************************/
+
+#define MASTER_CLOCK		(20000000)
+
+#define PIXEL_CLOCK			(MASTER_CLOCK/4)
+
+#define HTOTAL				(320)
+#define HBEND				(0)
+#define HBSTART				(256)
+
+#define VTOTAL				(264)
+#define VBEND				(0)
+#define VBSTART				(224)
+
+
+
+/*************************************
+ *
  *  Turbo CPU memory handlers
  *
  *************************************/
 
 static ADDRESS_MAP_START( turbo_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x5fff) AM_ROM
-	AM_RANGE(0xa000, 0xa0ff) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
-	AM_RANGE(0xa800, 0xa807) AM_WRITE(turbo_coin_and_lamp_w)
-	AM_RANGE(0xb000, 0xb1ff) AM_RAM AM_BASE(&sega_sprite_position)
-	AM_RANGE(0xb800, 0xb800) AM_WRITE(MWA8_NOP)	/* resets the analog wheel value */
-	AM_RANGE(0xe000, 0xe7ff) AM_RAM AM_BASE(&videoram) AM_SIZE(&videoram_size)
-	AM_RANGE(0xe800, 0xe800) AM_WRITE(turbo_collision_clear_w)
+	AM_RANGE(0xa000, 0xa0ff) AM_MIRROR(0x0700) AM_MASK(0x0f7) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xa800, 0xa807) AM_MIRROR(0x07f8) AM_WRITE(turbo_coin_and_lamp_w)
+	AM_RANGE(0xb000, 0xb3ff) AM_MIRROR(0x0400) AM_RAM AM_BASE(&sega_sprite_position)
+	AM_RANGE(0xb800, 0xb8ff) AM_WRITE(MWA8_NOP)	/* resets the analog wheel value */
+	AM_RANGE(0xe000, 0xe7ff) AM_READWRITE(MRA8_RAM, turbo_videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0xe800, 0xe8ff) AM_WRITE(turbo_collision_clear_w)
 	AM_RANGE(0xf000, 0xf7ff) AM_RAM
-	AM_RANGE(0xf800, 0xf803) AM_READWRITE(ppi8255_0_r, ppi8255_0_w)
-	AM_RANGE(0xf900, 0xf903) AM_READWRITE(ppi8255_1_r, ppi8255_1_w)
-	AM_RANGE(0xfa00, 0xfa03) AM_READWRITE(ppi8255_2_r, ppi8255_2_w)
-	AM_RANGE(0xfb00, 0xfb03) AM_READWRITE(ppi8255_3_r, ppi8255_3_w)
+	AM_RANGE(0xf800, 0xf803) AM_MIRROR(0x00fc) AM_READWRITE(ppi8255_0_r, ppi8255_0_w)
+	AM_RANGE(0xf900, 0xf903) AM_MIRROR(0x00fc) AM_READWRITE(ppi8255_1_r, ppi8255_1_w)
+	AM_RANGE(0xfa00, 0xfa03) AM_MIRROR(0x00fc) AM_READWRITE(ppi8255_2_r, ppi8255_2_w)
+	AM_RANGE(0xfb00, 0xfb03) AM_MIRROR(0x00fc) AM_READWRITE(ppi8255_3_r, ppi8255_3_w)
 	AM_RANGE(0xfc00, 0xfcff) AM_READWRITE(turbo_8279_r, turbo_8279_w)
 	AM_RANGE(0xfd00, 0xfdff) AM_READ(input_port_0_r)
 	AM_RANGE(0xfe00, 0xfeff) AM_READ(turbo_collision_r)
@@ -557,6 +577,20 @@ static struct Samplesinterface subroc3d_samples_interface =
 
 /*************************************
  *
+ *  Graphics definitions
+ *
+ *************************************/
+
+static const gfx_decode gfxdecodeinfo[] =
+{
+	{ REGION_GFX2, 0, &gfx_8x8x2_planar, 0, 64 },
+	{ -1 }
+};
+
+
+
+/*************************************
+ *
  *  Machine drivers
  *
  *************************************/
@@ -564,23 +598,23 @@ static struct Samplesinterface subroc3d_samples_interface =
 static MACHINE_DRIVER_START( turbo )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 5000000)
+	MDRV_CPU_ADD(Z80, MASTER_CLOCK/4)
 	MDRV_CPU_PROGRAM_MAP(turbo_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_MACHINE_RESET(turbo)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(1*8, 32*8-1, 1*8, 27*8-1)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_ALWAYS_UPDATE)
+	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(512)
+
+	MDRV_SCREEN_ADD("main", 0)
+	MDRV_SCREEN_RAW_PARAMS(PIXEL_CLOCK, HTOTAL, HBEND, HBSTART, VTOTAL, VBEND, VBSTART)
 
 	MDRV_PALETTE_INIT(turbo)
 	MDRV_VIDEO_START(turbo)
-	MDRV_VIDEO_EOF(turbo)
 	MDRV_VIDEO_UPDATE(turbo)
 
 	/* sound hardware */
@@ -595,19 +629,20 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( subroc3d )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 5000000)
+	MDRV_CPU_ADD(Z80, MASTER_CLOCK/4)
 	MDRV_CPU_PROGRAM_MAP(subroc3d_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_MACHINE_RESET(subroc3d)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 30*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(512)
+
+	MDRV_SCREEN_ADD("main", 0)
+	MDRV_SCREEN_RAW_PARAMS(PIXEL_CLOCK, HTOTAL, HBEND, HBSTART, VTOTAL, VBEND, VBSTART)
 
 	MDRV_PALETTE_INIT(subroc3d)
 	MDRV_VIDEO_START(subroc3d)
@@ -625,24 +660,25 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( buckrog )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 5000000)
+	MDRV_CPU_ADD(Z80, MASTER_CLOCK/4)
 	MDRV_CPU_PROGRAM_MAP(buckrog_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_CPU_ADD(Z80, 5000000)
+	MDRV_CPU_ADD(Z80, MASTER_CLOCK/4)
 	MDRV_CPU_PROGRAM_MAP(buckrog_readmem2,buckrog_writemem2)
 	MDRV_CPU_IO_MAP(buckrog_readport2,0)
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 	MDRV_INTERLEAVE(10)
 	MDRV_MACHINE_RESET(buckrog)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 28*8-1)
+	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(1024+512+256)
+
+	MDRV_SCREEN_ADD("main", 0)
+	MDRV_SCREEN_RAW_PARAMS(PIXEL_CLOCK, HTOTAL, HBEND, HBSTART, VTOTAL, VBEND, VBSTART)
 
 	MDRV_PALETTE_INIT(buckrog)
 	MDRV_VIDEO_START(buckrog)
@@ -688,7 +724,7 @@ ROM_START( turbo )
 	ROM_LOAD( "epr1257.rom", 0x1c000, 0x2000, CRC(4ca984ce) SHA1(99f294fb203f23929b44baa2dd1825c67dde08a1) )	/* level 7 */
 	ROM_LOAD( "epr1258.rom", 0x1e000, 0x2000, CRC(aee6e05e) SHA1(99b9b1ec996746ddf713ed38192f350f1f32a847) )
 
-	ROM_REGION( 0x1000, REGION_GFX2, 0 )	/* foreground data */
+	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )	/* foreground data */
 	ROM_LOAD( "epr1244.rom", 0x0000, 0x0800, CRC(17f67424) SHA1(6126562510f1509f3487faaa3b9d7470ab600a2c) )
 	ROM_LOAD( "epr1245.rom", 0x0800, 0x0800, CRC(2ba0b46b) SHA1(5d4d4f19ad7a911c7b37db190a420faf665546b4) )
 
@@ -713,7 +749,7 @@ ROM_START( turbo )
 	ROM_LOAD( "pr1115.bin",	 0x0b40, 0x0020, CRC(5394092c) SHA1(129ff61104979ff6a3c3af8bf81c04ae9b133c9e) )	/* road collision/enable */
 	ROM_LOAD( "pr1116.bin",	 0x0b60, 0x0020, CRC(3956767d) SHA1(073aaf57175526660fcf7af2e16e7f1d1aaba9a9) )	/* collision detection */
 	ROM_LOAD( "sndprom.bin", 0x0b80, 0x0020, CRC(b369a6ae) SHA1(dda7c6cf58ce5173f29a3084c85393c0c4587086) )
-	ROM_LOAD( "pr-1119.bin", 0x0c00, 0x0200, CRC(628d3f1d) SHA1(570f8999603d02e52106ec2df203f63edfb883dd) )	/* timing - not used */
+	ROM_LOAD( "pr-1119.bin", 0x0c00, 0x0200, CRC(628d3f1d) SHA1(570f8999603d02e52106ec2df203f63edfb883dd) )	/* sprite Y scaling */
 	ROM_LOAD( "pr-1120.bin", 0x0e00, 0x0200, CRC(591b6a68) SHA1(85de39d9e14a1f0c65c1308c27a106e3c2dd9b5b) )	/* timing - not used */
 ROM_END
 
@@ -742,7 +778,7 @@ ROM_START( turboa )
 	ROM_LOAD( "epr1257.rom", 0x1c000, 0x2000, CRC(4ca984ce) SHA1(99f294fb203f23929b44baa2dd1825c67dde08a1) )	/* level 7 */
 	ROM_LOAD( "epr1258.rom", 0x1e000, 0x2000, CRC(aee6e05e) SHA1(99b9b1ec996746ddf713ed38192f350f1f32a847) )
 
-	ROM_REGION( 0x1000, REGION_GFX2, 0 )	/* foreground data */
+	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )	/* foreground data */
 	ROM_LOAD( "epr1244.rom", 0x0000, 0x0800, CRC(17f67424) SHA1(6126562510f1509f3487faaa3b9d7470ab600a2c) )
 	ROM_LOAD( "epr1245.rom", 0x0800, 0x0800, CRC(2ba0b46b) SHA1(5d4d4f19ad7a911c7b37db190a420faf665546b4) )
 
@@ -767,7 +803,7 @@ ROM_START( turboa )
 	ROM_LOAD( "pr1115.bin",	 0x0b40, 0x0020, CRC(5394092c) SHA1(129ff61104979ff6a3c3af8bf81c04ae9b133c9e) )	/* road collision/enable */
 	ROM_LOAD( "pr1116.bin",	 0x0b60, 0x0020, CRC(3956767d) SHA1(073aaf57175526660fcf7af2e16e7f1d1aaba9a9) )	/* collision detection */
 	ROM_LOAD( "sndprom.bin", 0x0b80, 0x0020, CRC(b369a6ae) SHA1(dda7c6cf58ce5173f29a3084c85393c0c4587086) )
-	ROM_LOAD( "pr-1119.bin", 0x0c00, 0x0200, CRC(628d3f1d) SHA1(570f8999603d02e52106ec2df203f63edfb883dd) )	/* timing - not used */
+	ROM_LOAD( "pr-1119.bin", 0x0c00, 0x0200, CRC(628d3f1d) SHA1(570f8999603d02e52106ec2df203f63edfb883dd) )	/* sprite Y scaling */
 	ROM_LOAD( "pr-1120.bin", 0x0e00, 0x0200, CRC(591b6a68) SHA1(85de39d9e14a1f0c65c1308c27a106e3c2dd9b5b) )	/* timing - not used */
 ROM_END
 
@@ -796,7 +832,7 @@ ROM_START( turbob )
 	ROM_LOAD( "epr1257.rom", 0x1c000, 0x2000, CRC(4ca984ce) SHA1(99f294fb203f23929b44baa2dd1825c67dde08a1) )	/* level 7 */
 	ROM_LOAD( "epr1258.rom", 0x1e000, 0x2000, CRC(aee6e05e) SHA1(99b9b1ec996746ddf713ed38192f350f1f32a847) )
 
-	ROM_REGION( 0x1000, REGION_GFX2, 0 )	/* foreground data */
+	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )	/* foreground data */
 	ROM_LOAD( "epr1244.rom", 0x0000, 0x0800, CRC(17f67424) SHA1(6126562510f1509f3487faaa3b9d7470ab600a2c) )
 	ROM_LOAD( "epr1245.rom", 0x0800, 0x0800, CRC(2ba0b46b) SHA1(5d4d4f19ad7a911c7b37db190a420faf665546b4) )
 
@@ -821,7 +857,7 @@ ROM_START( turbob )
 	ROM_LOAD( "pr1115.bin",	 0x0b40, 0x0020, CRC(5394092c) SHA1(129ff61104979ff6a3c3af8bf81c04ae9b133c9e) )	/* road collision/enable */
 	ROM_LOAD( "pr1116.bin",	 0x0b60, 0x0020, CRC(3956767d) SHA1(073aaf57175526660fcf7af2e16e7f1d1aaba9a9) )	/* collision detection */
 	ROM_LOAD( "sndprom.bin", 0x0b80, 0x0020, CRC(b369a6ae) SHA1(dda7c6cf58ce5173f29a3084c85393c0c4587086) )
-	ROM_LOAD( "pr-1119.bin", 0x0c00, 0x0200, CRC(628d3f1d) SHA1(570f8999603d02e52106ec2df203f63edfb883dd) )	/* timing - not used */
+	ROM_LOAD( "pr-1119.bin", 0x0c00, 0x0200, CRC(628d3f1d) SHA1(570f8999603d02e52106ec2df203f63edfb883dd) )	/* sprite Y scaling */
 	ROM_LOAD( "pr-1120.bin", 0x0e00, 0x0200, CRC(591b6a68) SHA1(85de39d9e14a1f0c65c1308c27a106e3c2dd9b5b) )	/* timing - not used */
 ROM_END
 
@@ -858,7 +894,7 @@ ROM_START( subroc3d )
 	ROM_LOAD( "epr1440.40",  0x3c000, 0x2000, CRC(3a0e659c) SHA1(51e64b2417cf3b599aa9ecc84457462a5dca2a61) )
 	ROM_LOAD( "epr1439.39",  0x3e000, 0x2000, CRC(3d051668) SHA1(aa4f6152235f07ad39019c46dfacf69d70a7fdcc) )
 
-	ROM_REGION( 0x01000, REGION_GFX2, 0 )	/* foreground data */
+	ROM_REGION( 0x01000, REGION_GFX2, ROMREGION_DISPOSE )	/* foreground data */
 	ROM_LOAD( "epr1618.82",  0x0000, 0x0800, CRC(a25fea71) SHA1(283efee3951d081119d756114f9f49c2996de5f2) )
 	ROM_LOAD( "epr1617.83",  0x0800, 0x0800, CRC(f70c678e) SHA1(1fabf0011fa4fefd29daf18d4ed6b2cbec14e7b7) )
 
@@ -894,7 +930,7 @@ ROM_START( buckrog )
 	ROM_LOAD( "ic91",      0x38000, 0x4000, CRC(221f4ced) SHA1(07498c9105c4c4589b19c2bc36abafb176de7bda) )	/* level 7 */
 	ROM_LOAD( "5238.90",   0x3c000, 0x2000, CRC(7aff0886) SHA1(09ed9fa973257bb23b488e02ef9e02d867e4c366) )
 
-	ROM_REGION( 0x01000, REGION_GFX2, 0 )	/* foreground data */
+	ROM_REGION( 0x01000, REGION_GFX2, ROMREGION_DISPOSE )	/* foreground data */
 	ROM_LOAD( "5201.102",  0x0000, 0x0800, CRC(7f21b0a4) SHA1(b6d784031ffecb36863ae1d81eeaaf8f76ab83df) )
 	ROM_LOAD( "5202.103",  0x0800, 0x0800, CRC(43f3e5a7) SHA1(2714943b6720311c5d226db3b6fe95d072677793) )
 
@@ -928,7 +964,7 @@ ROM_START( buckrogn )
 	ROM_LOAD( "ic91",      0x38000, 0x4000, CRC(221f4ced) SHA1(07498c9105c4c4589b19c2bc36abafb176de7bda) )	/* level 7 */
 	ROM_LOAD( "5238.90",   0x3c000, 0x2000, CRC(7aff0886) SHA1(09ed9fa973257bb23b488e02ef9e02d867e4c366) )
 
-	ROM_REGION( 0x01000, REGION_GFX2, 0 )	/* foreground data */
+	ROM_REGION( 0x01000, REGION_GFX2, ROMREGION_DISPOSE )	/* foreground data */
 	ROM_LOAD( "5201.102",  0x0000, 0x0800, CRC(7f21b0a4) SHA1(b6d784031ffecb36863ae1d81eeaaf8f76ab83df) )
 	ROM_LOAD( "5202.103",  0x0800, 0x0800, CRC(43f3e5a7) SHA1(2714943b6720311c5d226db3b6fe95d072677793) )
 
@@ -962,7 +998,7 @@ ROM_START( zoom909 )
 	ROM_LOAD( "epr-5215.91", 0x38000, 0x4000, CRC(f5dacc53) SHA1(fe536d16ccb249c26a046f60dc804f5d3be430dc) )	/* level 7 */
 	ROM_LOAD( "epr-5214.90", 0x3c000, 0x2000, CRC(68306dd6) SHA1(63644e38b36512d93464280d73344c97d9ec1f78) )
 
-	ROM_REGION( 0x01000, REGION_GFX2, 0 )	/* foreground data */
+	ROM_REGION( 0x01000, REGION_GFX2, ROMREGION_DISPOSE )	/* foreground data */
 	ROM_LOAD( "5201.102",  0x0000, 0x0800, CRC(7f21b0a4) SHA1(b6d784031ffecb36863ae1d81eeaaf8f76ab83df) )
 	ROM_LOAD( "5202.103",  0x0800, 0x0800, CRC(43f3e5a7) SHA1(2714943b6720311c5d226db3b6fe95d072677793) )
 

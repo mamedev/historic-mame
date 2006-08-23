@@ -131,7 +131,7 @@ INLINE void schedule_next_irq(int curscanline)
 	curscanline = (curscanline + 64) & 255;
 
 	/* next one at the start of this scanline */
-	timer_adjust(irq_timer, cpu_getscanlinetime(curscanline), curscanline, 0);
+	mame_timer_adjust(irq_timer, video_screen_get_time_until_pos(0, curscanline, 0), curscanline, time_zero);
 }
 
 
@@ -145,7 +145,7 @@ static void clock_irq(int param)
 	}
 
 	/* force an update now */
-	video_screen_update_partial(0, cpu_getscanline());
+	video_screen_update_partial(0, video_screen_get_vpos(0));
 
 	/* find the next edge */
 	schedule_next_irq(param);
@@ -154,7 +154,7 @@ static void clock_irq(int param)
 
 static UINT32 get_vblank(void *param)
 {
-	int scanline = cpu_getscanline();
+	int scanline = video_screen_get_vpos(0);
 	return (~syncprom[scanline & 0xff] >> 1) & 1;
 }
 

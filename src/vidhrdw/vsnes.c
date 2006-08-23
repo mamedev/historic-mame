@@ -1,5 +1,5 @@
 #include "driver.h"
-#include "vidhrdw/ppu2c03b.h"
+#include "vidhrdw/ppu2c0x.h"
 
 /* from machine */
 extern int vsnes_gun_controller;
@@ -7,13 +7,13 @@ extern int vsnes_gun_controller;
 
 PALETTE_INIT( vsnes )
 {
-	ppu2c03b_init_palette( 0 );
+	ppu2c0x_init_palette( 0 );
 }
 
 PALETTE_INIT( vsdual )
 {
-	ppu2c03b_init_palette( 0 );
-	ppu2c03b_init_palette( 64 );
+	ppu2c0x_init_palette( 0 );
+	ppu2c0x_init_palette( 64 );
 }
 
 static void ppu_irq( int num, int *ppu_regs )
@@ -22,8 +22,9 @@ static void ppu_irq( int num, int *ppu_regs )
 }
 
 /* our ppu interface                                            */
-static const ppu2c03b_interface ppu_interface =
+static const ppu2c0x_interface ppu_interface =
 {
+	PPU_2C04,				/* type */
 	1,						/* num */
 	{ REGION_GFX1 },		/* vrom gfx region */
 	{ 0 },					/* gfxlayout num */
@@ -33,8 +34,9 @@ static const ppu2c03b_interface ppu_interface =
 };
 
 /* our ppu interface for dual games                             */
-static const ppu2c03b_interface ppu_dual_interface =
+static const ppu2c0x_interface ppu_dual_interface =
 {
+	PPU_2C04,								/* type */
 	2,										/* num */
 	{ REGION_GFX1, REGION_GFX2 },			/* vrom gfx region */
 	{ 0, 1 },								/* gfxlayout num */
@@ -45,13 +47,13 @@ static const ppu2c03b_interface ppu_dual_interface =
 
 VIDEO_START( vsnes )
 {
-	ppu2c03b_init( &ppu_interface );
+	ppu2c0x_init( &ppu_interface );
 	return 0;
 }
 
 VIDEO_START( vsdual )
 {
-	ppu2c03b_init( &ppu_dual_interface );
+	ppu2c0x_init( &ppu_dual_interface );
 	return 0;
 }
 
@@ -63,7 +65,7 @@ VIDEO_START( vsdual )
 VIDEO_UPDATE( vsnes )
 {
 	/* render the ppu */
-	ppu2c03b_render( 0, bitmap, 0, 0, 0, 0 );
+	ppu2c0x_render( 0, bitmap, 0, 0, 0, 0 );
 
 		/* if this is a gun game, draw a simple crosshair */
 		if ( vsnes_gun_controller )
@@ -82,6 +84,6 @@ VIDEO_UPDATE( vsnes )
 VIDEO_UPDATE( vsdual )
 {
 	/* render the ppu's */
-	ppu2c03b_render( screen, bitmap, 0, 0, 0, 0 );
+	ppu2c0x_render( screen, bitmap, 0, 0, 0, 0 );
 	return 0;
 }

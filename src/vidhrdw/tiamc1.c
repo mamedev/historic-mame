@@ -17,6 +17,8 @@ UINT8 *tiamc1_spriteram_y;
 UINT8 *tiamc1_spriteram_a;
 UINT8 *tiamc1_spriteram_n;
 int tiamc1_layers_ctrl;
+int tiamc1_bg_vshift;
+int tiamc1_bg_hshift;
 
 static tilemap *bg_tilemap1, *bg_tilemap2;
 
@@ -53,22 +55,29 @@ WRITE8_HANDLER( tiamc1_bankswitch_w )
 
 WRITE8_HANDLER( tiamc1_sprite_x_w )
 {
-  tiamc1_spriteram_x[offset] = data;
+	tiamc1_spriteram_x[offset] = data;
 }
 
 WRITE8_HANDLER( tiamc1_sprite_y_w )
 {
-  tiamc1_spriteram_y[offset] = data;
+	tiamc1_spriteram_y[offset] = data;
 }
 
 WRITE8_HANDLER( tiamc1_sprite_a_w )
 {
-  tiamc1_spriteram_a[offset] = data;
+	tiamc1_spriteram_a[offset] = data;
 }
 
 WRITE8_HANDLER( tiamc1_sprite_n_w )
 {
-  tiamc1_spriteram_n[offset] = data;
+	tiamc1_spriteram_n[offset] = data;
+}
+
+WRITE8_HANDLER( tiamc1_bg_vshift_w ) {
+	tiamc1_bg_vshift = data;
+}
+WRITE8_HANDLER( tiamc1_bg_hshift_w ) {
+	tiamc1_bg_hshift = data;
 }
 
 #define COLOR(gfxn,offs) (Machine->gfx[gfxn]->colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
@@ -86,24 +95,20 @@ PALETTE_INIT( tiamc1 )
 	//const float g_v[8]={1.05f,0.87f,0.81f,0.62f,0.44f,0.25f,0.19f,0.00f};
 	//const float r_v[8]={1.37f,1.13f,1.00f,0.75f,0.63f,0.38f,0.25f,0.00f};
 	//const float b_v[4]={1.16f,0.75f,0.42f,0.00f};
-	//const float max_v=1.37f;
 
 	// Voltage adjusted by Shiru
 	const float g_v[8] = { 1.2071f,0.9971f,0.9259f,0.7159f,0.4912f,0.2812f,0.2100f,0.0000f};
 	const float r_v[8] = { 1.5937f,1.3125f,1.1562f,0.8750f,0.7187f,0.4375f,0.2812f,0.0000f};
 	const float b_v[4] = { 1.3523f,0.8750f,0.4773f,0.0000f};
-	//const float max_v=1.5937f;
 
 	int col;
 	int r, g, b, ir, ig, ib;
 	float tcol;
 
-	for(col = 0; col < 256; col++)
-	{
+	for (col = 0; col < 256; col++) {
 		ir = (col >> 3) & 7;
 		ig = col & 7;
 		ib = (col >> 6) & 3;
-
 		tcol = 255.0f * r_v[ir] / r_v[0];
 		r = 255 - (((int)tcol) & 255);
 		tcol = 255.0f * g_v[ig] / g_v[0];
@@ -120,7 +125,7 @@ static void get_bg1_tile_info(int tile_index)
 	int code = tiamc1_tileram[tile_index];
 
 	decodechar(Machine->gfx[0], code, tiamc1_charram,
-                Machine->drv->gfxdecodeinfo[0].gfxlayout);
+		   Machine->drv->gfxdecodeinfo[0].gfxlayout);
 
 	SET_TILE_INFO(0, code, 0, 0)
 }
@@ -130,7 +135,7 @@ static void get_bg2_tile_info(int tile_index)
 	int code = tiamc1_tileram[tile_index + 1024];
 
 	decodechar(Machine->gfx[0], code, tiamc1_charram,
-                Machine->drv->gfxdecodeinfo[0].gfxlayout);
+		   Machine->drv->gfxdecodeinfo[0].gfxlayout);
 
 	SET_TILE_INFO(0, code, 0, 0)
 }
@@ -148,6 +153,9 @@ VIDEO_START( tiamc1 )
 
 	if ( !bg_tilemap2 )
 		return 1;
+
+	tiamc1_bg_vshift = 0;
+	tiamc1_bg_hshift = 0;
 
 	return 0;
 }
@@ -178,6 +186,22 @@ static void tiamc1_draw_sprites( mame_bitmap *bitmap )
 
 VIDEO_UPDATE( tiamc1 )
 {
+#if 0
+	int i;
+
+	for (i = 0; i < 32; i++)
+	{
+		tilemap_set_scrolly(bg_tilemap1, i, tiamc1_bg_vshift ^ 0xff);
+		tilemap_set_scrolly(bg_tilemap2, i, tiamc1_bg_vshift ^ 0xff);
+	}
+
+	for (i = 0; i < 32; i++)
+	{
+		tilemap_set_scrollx(bg_tilemap1, i, tiamc1_bg_hshift ^ 0xff);
+		tilemap_set_scrollx(bg_tilemap2, i, tiamc1_bg_hshift ^ 0xff);
+	}
+#endif
+
 	if (tiamc1_layers_ctrl & 0x80)
 		tilemap_draw(bitmap, &Machine->screen[0].visarea, bg_tilemap2, 0, 0);
 	else

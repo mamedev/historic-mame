@@ -1596,6 +1596,12 @@ static WRITE8_HANDLER( mcu_port5_w )
 	// prop cycle outputs:
 	// bit 1 = fan
 	// bit 2 = button light
+
+	if (!strcmp(Machine->gamedrv->name, "propcycl"))
+	{
+		output_set_value("fan0", data & 1);
+		set_led_status(0, data & 2);
+	}
 }
 
 static READ8_HANDLER( mcu_port6_r )
@@ -1781,27 +1787,8 @@ static READ8_HANDLER( mcu_port4_s22_r )
 	return p4 | 0x10;	// for C74, 0x10 selects sound MCU role, 0x00 selects control-reading role
 }
 
-static READ8_HANDLER( mcu_port5_s22_r )
-{
-	return 0xff;
-}
-
-static READ8_HANDLER( mcu_port6_s22_r )
-{
-	return 0;
-}
-
-static READ8_HANDLER( mcu_port7_s22_r )
-{
-	return 0;
-}
-
 static ADDRESS_MAP_START( mcu_s22_io, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(M37710_PORT4, M37710_PORT4) AM_READ( mcu_port4_s22_r ) //AM_WRITE( mcu_port4_w )
-//  AM_RANGE(M37710_PORT5, M37710_PORT5) AM_READ( mcu_port5_s22_r ) AM_WRITE( mcu_port5_w )
-//  AM_RANGE(M37710_PORT6, M37710_PORT6) AM_READ( mcu_port6_s22_r ) AM_WRITENOP
-//  AM_RANGE(M37710_PORT7, M37710_PORT7) AM_READ( mcu_port7_s22_r )
-//  AM_RANGE(0x10, 0x1f) AM_NOP
+	AM_RANGE(M37710_PORT4, M37710_PORT4) AM_READ( mcu_port4_s22_r )
 ADDRESS_MAP_END
 
 static INTERRUPT_GEN( mcu_interrupt )
@@ -1863,10 +1850,10 @@ static MACHINE_DRIVER_START( namcos22s )
 
 	MDRV_SOUND_ADD(C352, SS22_MASTER_CLOCK/3)
 	MDRV_SOUND_CONFIG(c352_interface)
-	MDRV_SOUND_ROUTE(0, "right", 0.60)
-	MDRV_SOUND_ROUTE(1, "left", 0.60)
-	MDRV_SOUND_ROUTE(2, "right", 0.60)
-	MDRV_SOUND_ROUTE(3, "left", 0.60)
+	MDRV_SOUND_ROUTE(0, "right", 1.00)
+	MDRV_SOUND_ROUTE(1, "left", 1.00)
+	MDRV_SOUND_ROUTE(2, "right", 1.00)
+	MDRV_SOUND_ROUTE(3, "left", 1.00)
 MACHINE_DRIVER_END
 
 /*********************************************************************************/
@@ -2275,10 +2262,10 @@ static MACHINE_DRIVER_START( namcos22 )
 
 	MDRV_SOUND_ADD(C352, SS22_MASTER_CLOCK/3)
 	MDRV_SOUND_CONFIG(c352_interface)
-	MDRV_SOUND_ROUTE(0, "right", 0.60)
-	MDRV_SOUND_ROUTE(1, "left", 0.60)
-	MDRV_SOUND_ROUTE(2, "right", 0.60)
-	MDRV_SOUND_ROUTE(3, "left", 0.60)
+	MDRV_SOUND_ROUTE(0, "right", 1.00)
+	MDRV_SOUND_ROUTE(1, "left", 1.00)
+	MDRV_SOUND_ROUTE(2, "right", 1.00)
+	MDRV_SOUND_ROUTE(3, "left", 1.00)
 MACHINE_DRIVER_END
 
 /*********************************************************************************/
@@ -2297,7 +2284,6 @@ ROM_START( airco22b )
 	ROM_LOAD16_WORD( "c71.bin", 0,0x1000*2, CRC(47c623ab) SHA1(e363ac50f5556f83308d4cc191b455e9b62bcfc8) )
 
 	ROM_REGION( 0x080000, REGION_CPU4, 0 ) /* S22-BIOS ver1.30 */
-	ROM_LOAD( "c74.bin", 0x0000, 0x4000, NO_DUMP )
 
 	ROM_REGION( 0x080000, REGION_USER4, 0 ) /* MCU BIOS */
 	ROM_LOAD( "acs1data.8k", 0, 0x080000, CRC(33824bc9) SHA1(80ec63883770e5eec1f5f1ddc16a85ef8f22a48b) )
@@ -2355,7 +2341,6 @@ ROM_START( alpinerc )
 	ROM_LOAD16_WORD( "c71.bin", 0,0x1000*2, CRC(47c623ab) SHA1(e363ac50f5556f83308d4cc191b455e9b62bcfc8) )
 
 	ROM_REGION( 0x080000, REGION_CPU4, 0 ) /* S22-BIOS ver1.30 */
-	ROM_LOAD( "c74.bin", 0x0000, 0x4000, NO_DUMP )
 
 	ROM_REGION( 0x080000, REGION_USER4, 0 ) /* MCU BIOS */
 	ROM_LOAD( "ar1datab.8k", 0, 0x080000, CRC(c26306f8) SHA1(6d8d993c076d5ced523143a86bd0938b3794478d) )
@@ -2518,7 +2503,6 @@ ROM_START( alpinerd )
 	ROM_LOAD16_WORD( "c71.bin", 0,0x1000*2, CRC(47c623ab) SHA1(e363ac50f5556f83308d4cc191b455e9b62bcfc8) )
 
 	ROM_REGION( 0x080000, REGION_CPU4, 0 ) /* S22-BIOS ver1.30 */
-	ROM_LOAD( "c74.bin", 0x0000, 0x4000, NO_DUMP )
 
 	ROM_REGION16_LE( 0x080000, REGION_USER4, 0 ) /* MCU BIOS */
 	ROM_LOAD( "ar1datab.8k", 0, 0x080000, CRC(c26306f8) SHA1(6d8d993c076d5ced523143a86bd0938b3794478d) )
@@ -2575,7 +2559,6 @@ ROM_START( alpinr2b )
 	ROM_LOAD16_WORD( "c71.bin", 0,0x1000*2, CRC(47c623ab) SHA1(e363ac50f5556f83308d4cc191b455e9b62bcfc8) )
 
 	ROM_REGION( 0x080000, REGION_CPU4, 0 ) /* S22-BIOS ver1.30 */
-	ROM_LOAD( "c74.bin", 0x0000, 0x4000, NO_DUMP )
 
 	ROM_REGION16_LE( 0x080000, REGION_USER4, 0 ) /* MCU BIOS */
         ROM_LOAD( "ars2data.8k",  0x000000, 0x080000, CRC(29b36dcb) SHA1(70fde130c11789c822829493a70ecefb077c0c15) )
@@ -2630,7 +2613,6 @@ ROM_START( alpinesa )
 	ROM_LOAD16_WORD( "c71.bin", 0,0x1000*2, CRC(47c623ab) SHA1(e363ac50f5556f83308d4cc191b455e9b62bcfc8) )
 
 	ROM_REGION( 0x080000, REGION_CPU4, 0 ) /* S22-BIOS ver1.41 */
-	ROM_LOAD( "c74.bin", 0x0000, 0x4000, NO_DUMP )
 
 	ROM_REGION16_LE( 0x080000, REGION_USER4, 0 ) /* MCU BIOS */
         ROM_LOAD( "af1data.8k",   0x000000, 0x080000, CRC(ef13ebe8) SHA1(5d3f697994d4b5b19ee7fea1e2aef8e39449b68e) )
@@ -2675,7 +2657,6 @@ ROM_START( cybrcomm )
 	ROM_LOAD16_WORD( "c71.bin", 0,0x1000*2, CRC(47c623ab) SHA1(e363ac50f5556f83308d4cc191b455e9b62bcfc8) )
 
 	ROM_REGION( 0x080000, REGION_CPU4, 0 ) /* BIOS */
-	ROM_LOAD( "c74.bin", 0x0000, 0x4000, CRC(a3dce360) SHA1(8f3248b1890abb2e649927240ae46f73bb171e3b) )
 
 	ROM_REGION16_LE( 0x100000, REGION_USER4, 0 ) /* MCU BIOS */
 	ROM_LOAD( "cy1data.6r", 0, 0x020000, CRC(10d0005b) SHA1(10508eeaf74d24a611b44cd3bb12417ceb78904f) )
@@ -2734,7 +2715,6 @@ ROM_START( cybrcycc )
 	ROM_LOAD16_WORD( "c71.bin", 0,0x1000*2, CRC(47c623ab) SHA1(e363ac50f5556f83308d4cc191b455e9b62bcfc8) )
 
 	ROM_REGION( 0x080000, REGION_CPU4, 0 ) /* S22-BIOS ver1.30 */
-	ROM_LOAD( "c74.bin", 0x0000, 0x4000, NO_DUMP )
 
 	ROM_REGION16_LE( 0x080000, REGION_USER4, 0 ) /* MCU BIOS */
 	ROM_LOAD( "cb1datab.8k", 0, 0x080000, CRC(e2404221) SHA1(b88810dd45aee8a5475c30806cdfded25fa14e0e) )
@@ -2788,7 +2768,6 @@ ROM_START( propcycl )
 	ROM_LOAD16_WORD( "c71.bin", 0,0x1000*2, CRC(47c623ab) SHA1(e363ac50f5556f83308d4cc191b455e9b62bcfc8) )
 
 	ROM_REGION( 0x080000, REGION_CPU4, 0 ) /* SS22-BIOS ver1.41 */
-	ROM_LOAD( "c74.bin", 0x0000, 0x4000, NO_DUMP )
 
 	ROM_REGION16_LE( 0x080000, REGION_USER4, 0 ) /* MCU BIOS */
 	ROM_LOAD( "pr1data.8k", 0, 0x080000, CRC(2e5767a4) SHA1(390bf05c90044d841fe2dd4a427177fa1570b9a6) )
@@ -3151,7 +3130,7 @@ ROM_START( ridgera2 )
 	ROM_LOAD16_WORD( "c71.bin", 0,0x1000*2, CRC(47c623ab) SHA1(e363ac50f5556f83308d4cc191b455e9b62bcfc8) )
 
 	ROM_REGION( 0x80000, REGION_CPU4, 0 ) /* BIOS */
-	ROM_LOAD( "c74.bin", 0x0000, 0x4000, NO_DUMP )
+	ROM_LOAD( "c74.bin", 0x0000, 0x4000, CRC(a3dce360) SHA1(8f3248b1890abb2e649927240ae46f73bb171e3b) )
 
 	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "rrs1data.6r", 0, 0x080000, CRC(b7063aa8) SHA1(08ff689e8dd529b91eee423c93f084945c6de417) )
@@ -3202,7 +3181,7 @@ ROM_START( ridger2a )
 	ROM_LOAD16_WORD( "c71.bin", 0,0x1000*2, CRC(47c623ab) SHA1(e363ac50f5556f83308d4cc191b455e9b62bcfc8) )
 
 	ROM_REGION( 0x80000, REGION_CPU4, 0 ) /* BIOS */
-	ROM_LOAD( "c74.bin", 0x0000, 0x4000, NO_DUMP )
+	ROM_LOAD( "c74.bin", 0x0000, 0x4000, CRC(a3dce360) SHA1(8f3248b1890abb2e649927240ae46f73bb171e3b) )
 
 	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "rrs1data.6r", 0, 0x080000, CRC(b7063aa8) SHA1(08ff689e8dd529b91eee423c93f084945c6de417) )
@@ -3360,7 +3339,6 @@ ROM_START( ridgeraj )
 
 	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
 	ROM_LOAD( "rr1data.6r", 0, 0x080000, CRC(18f5f748) SHA1(e0d149a66de36156edd9b55f604c9a9801aaefa8) )
-	ROM_LOAD( "c74.bin", 0x08c000, 0x4000, CRC(a3dce360) SHA1(8f3248b1890abb2e649927240ae46f73bb171e3b) )
 
    ROM_REGION( 0x200000*8, REGION_TEXTURE_TILE, ROMREGION_DISPOSE) /* 16x16x8bpp texture tiles */
 	ROM_LOAD( "rr1cg0.bin", 0x200000*0x4, 0x200000, CRC(b557a795) SHA1(f345486ffbe797246ad80a55d3c4a332ed6e2888) )//,CRC(d1b0eec6) SHA1(f66922c324dfc3ff408db7556c587ef90ca64c3b) )
@@ -3408,7 +3386,6 @@ ROM_START( timecris )
 	ROM_LOAD16_WORD( "c71.bin", 0,0x1000*2, CRC(47c623ab) SHA1(e363ac50f5556f83308d4cc191b455e9b62bcfc8) )
 
 	ROM_REGION( 0x80000, REGION_CPU4, 0 ) /* BIOS */
-	ROM_LOAD( "c74.bin", 0x0000, 0x4000, NO_DUMP )
 
 	ROM_REGION16_LE( 0x080000, REGION_USER4, 0 ) /* MCU BIOS */
 	ROM_LOAD( "ts1data.8k", 0, 0x080000, CRC(e68aa973) SHA1(663e80d249be5d5841139d98a9d72e2396851272) )
@@ -3462,7 +3439,6 @@ ROM_START( timecrsa )
 	ROM_LOAD16_WORD( "c71.bin", 0,0x1000*2, CRC(47c623ab) SHA1(e363ac50f5556f83308d4cc191b455e9b62bcfc8) )
 
 	ROM_REGION( 0x80000, REGION_CPU4, 0 ) /* BIOS */
-	ROM_LOAD( "c74.bin", 0x0000, 0x4000, NO_DUMP )
 
 	ROM_REGION16_LE( 0x080000, REGION_USER4, 0 ) /* MCU BIOS */
 	ROM_LOAD( "ts1data.8k", 0, 0x080000, CRC(e68aa973) SHA1(663e80d249be5d5841139d98a9d72e2396851272) )

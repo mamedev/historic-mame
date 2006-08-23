@@ -2294,7 +2294,7 @@ GAME( 1980, nsub,     0,        2ports,   nsub,     safari,    ROT270, "Sega", "
 GAME( 1980, samurai,  0,        4ports,   samurai,  samurai,   ROT270, "Sega", "Samurai", GAME_NO_SOUND )
 GAME( 1979, invinco,  0,        invinco3, invinco,  invinco,   ROT270, "Sega", "Invinco", 0 )
 GAME( 1979, invds,    0,        invinco4, invds,    invds,     ROT270, "Sega", "Invinco / Deep Scan", GAME_IMPERFECT_SOUND )
-GAME( 1980, tranqgun, 0,        4ports,   tranqgun, tranqgun,  ROT270, "Sega", "Tranquilizer Gun", GAME_NO_SOUND )
+GAME( 1980, tranqgun, 0,        4ports,   tranqgun, tranqgun,  ROT270, "Sega", "Tranquillizer Gun", GAME_NO_SOUND )
 GAME( 1980, spacetrk, 0,        4ports,   spacetrk, spacetrk,  ROT270, "Sega", "Space Trek (upright)", GAME_NO_SOUND )
 GAME( 1980, sptrekct, spacetrk, 4ports,   sptrekct, sptrekct,  ROT270, "Sega", "Space Trek (cocktail)", GAME_NO_SOUND )
 GAME( 1980, carnival, 0,        carnival, carnival, carnival,  ROT270, "Sega", "Carnival (upright)", 0 )

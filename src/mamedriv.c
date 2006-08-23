@@ -1719,6 +1719,7 @@ const game_driver * const drivers[] =
 	DRIVER( sbm )		/* C69 (c) 1990 Taito Corporation (Japan) */
 	DRIVER( selfeena )	/* ??? (c) 1991 East Technology */
 	DRIVER( silentd )	/* ??? (c) 1992 Taito Corporation Japan (World) */
+	DRIVER( silentdu )	/* ??? (c) 1992 Taito Corporation Japan (World) */
 	DRIVER( silentdj )	/* ??? (c) 1992 Taito Corporation (Japan) */
 	DRIVER( ryujin )	/* ??? (c) 1993 Taito Corporation (Japan) */
 	DRIVER( qzshowby )	/* D72 (c) 1993 Taito Corporation (Japan) */
@@ -4038,6 +4039,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( shadowwa )	/* 6215 - (c) 1988 Tecmo (World) */
 	DRIVER( gaiden )	/* 6215 - (c) 1988 Tecmo (US) */
 	DRIVER( ryukendn )	/* 6215 - (c) 1989 Tecmo (Japan) */
+	DRIVER( ryukenda )	/* 6215 - (c) 1989 Tecmo (Japan) */
 	DRIVER( wildfang )	/* (c) 1989 Tecmo */
 	DRIVER( tknight )	/* (c) 1989 Tecmo */
 	DRIVER( stratof )	/* (c) 1991 Tecmo */
@@ -4085,6 +4087,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( atlantol )	/* bootleg */
 	DRIVER( wizzquiz )	/* (c) 1985 Konami */
 	DRIVER( wizzquza )	/* (c) 1985 Zilec-Zenitone */
+	DRIVER( reaktor )	/* (c) 1985 Zilec */
 	DRIVER( mastkin )	/* (c) 1988 Du Tech */
 	DRIVER( rocnrope )	/* GX364 (c) 1983 */
 	DRIVER( rocnropk )	/* GX364 (c) 1983 + Kosuka */
@@ -6982,6 +6985,7 @@ Other Sun games
 	DRIVER( cclown )	/* (c) 1999 LAI Games */
 	DRIVER( rotaryf )
 	DRIVER( sbugger )	/* (c) 1981 Game-A-Tron */
+	DRIVER( sbuggera )	/* (c) 1981 Game-A-Tron */
 	DRIVER( portrait )	/* (c) 1983 Olympia */
 	DRIVER( portrata )	/* (c) 1983 Olympia */
 	DRIVER( enigma2 )	/* (c) 1981 Game Plan (Zilec Electronics license) */

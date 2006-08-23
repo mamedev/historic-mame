@@ -360,6 +360,7 @@
 #define CALLBACK_RESET_INSTR  m68ki_cpu.reset_instr_callback
 #define CALLBACK_CMPILD_INSTR m68ki_cpu.cmpild_instr_callback
 #define CALLBACK_RTE_INSTR    m68ki_cpu.rte_instr_callback
+#define CALLBACK_TAS_INSTR    m68ki_cpu.tas_instr_callback
 #define CALLBACK_PC_CHANGED   m68ki_cpu.pc_changed_callback
 #define CALLBACK_SET_FC       m68ki_cpu.set_fc_callback
 #define CALLBACK_INSTR_HOOK   m68ki_cpu.instr_hook_callback
@@ -479,6 +480,17 @@
 #else
 	#define m68ki_rte_callback()
 #endif /* M68K_RTE_HAS_CALLBACK */
+
+#if M68K_TAS_HAS_CALLBACK
+	#if M68K_TAS_HAS_CALLBACK == OPT_SPECIFY_HANDLER
+		#define m68ki_tas_callback() M68K_TAS_CALLBACK()
+	#else
+		#define m68ki_tas_callback() CALLBACK_TAS_INSTR()
+	#endif
+#else
+	#define m68ki_tas_callback()
+#endif /* M68K_TAS_HAS_CALLBACK */
+
 
 #if M68K_INSTRUCTION_HOOK
 	#if M68K_INSTRUCTION_HOOK == OPT_SPECIFY_HANDLER
@@ -890,6 +902,7 @@ typedef struct
 	void (*reset_instr_callback)(void);               /* Called when a RESET instruction is encountered */
 	void (*cmpild_instr_callback)(unsigned int, int); /* Called when a CMPI.L #v, Dn instruction is encountered */
 	void (*rte_instr_callback)(void);                 /* Called when a RTE instruction is encountered */
+	int  (*tas_instr_callback)(void);                 /* Called when a TAS instruction is encountered, allows / disallows writeback */
 	void (*pc_changed_callback)(unsigned int new_pc); /* Called when the PC changes by a large amount */
 	void (*set_fc_callback)(unsigned int new_fc);     /* Called when the CPU function code changes */
 	void (*instr_hook_callback)(void);                /* Called every instruction cycle prior to execution */

@@ -240,6 +240,14 @@ void m68k_set_cmpild_instr_callback(void  (*callback)(unsigned int val, int reg)
  */
 void m68k_set_rte_instr_callback(void  (*callback)(void));
 
+/* Set the callback for the TAS instruction.
+ * You must enable M68K_TAS_HAS_CALLBACK in m68kconf.h.
+ * The CPU calls this callback every time it encounters a TAS instruction.
+ * Default behavior: return 1, allow writeback.
+ */
+void m68k_set_tas_instr_callback(int  (*callback)(void));
+
+
 
 /* Set the callback for informing of a large PC change.
  * You must enable M68K_MONITOR_PC in m68kconf.h.

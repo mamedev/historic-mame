@@ -10,6 +10,26 @@
     Known bugs:
         * the ERROR message in Asteroids Deluxe self test is related to a pokey problem
 
+Information from a Tech Tip:
+
+Asteroids Modification:
+
+As a result of inquires regarding the achievement of extremely high scores on Asteroids,
+we have developed a modification that will accomplish the following:
+  When the small flying saucer enters the screen, it fires immediately in the direction
+    of the player. The missiles also have a wraparound capability.
+  Originally, the program was entered so that the saucer would go one-sixth of the way
+    across the screen before firing, without the wraparound capability.
+
+There are two revisions currently in the field, ROM revision 02 has the flip-flop capability,
+  version 01 does not.
+Kits are available immediately from your Atari Distributor.  To determine which kit you
+  require, check ROMs on your Asteroids PCB.  If ROM code is "-01" order kit no. 08-0303009.
+  If ROM code is "-02", order no. 08-0303008.
+
+*** It looks like both current sets are the older "easier" version.  We need dumps of the updates
+    for both sets.
+
     Asteroids-deluxe state-prom added by HIGHWAYMAN.
     The prom pcb location is:C8 and is 256x4
     (i need to update the dump, this one is read in 8bit-mode)

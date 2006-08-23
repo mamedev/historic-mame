@@ -882,6 +882,7 @@ static MACHINE_DRIVER_START( spaceod )
 	MDRV_IMPORT_FROM(g80r_base)
 
 	/* background board changes */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_ALWAYS_UPDATE)
 	MDRV_GFXDECODE(spaceod_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(64+64)
 

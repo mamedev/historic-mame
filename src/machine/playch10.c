@@ -1,5 +1,5 @@
 #include "driver.h"
-#include "vidhrdw/ppu2c03b.h"
+#include "vidhrdw/ppu2c0x.h"
 #include "machine/rp5h01.h"
 
 /* Globals */
@@ -48,9 +48,9 @@ MACHINE_RESET( pc10 )
 	RP5H01_enable_w( 0, 1 );
 
 	/* reset the ppu */
-	ppu2c03b_reset( 0, /* cpu_getscanlineperiod() * */ 1 );
+	ppu2c0x_reset( 0, /* cpu_getscanlineperiod() * */ 1 );
 
-	ppu2c03b_set_mirroring( 0, mirroring );
+	ppu2c0x_set_mirroring( 0, mirroring );
 }
 
 /*************************************
@@ -112,7 +112,7 @@ WRITE8_HANDLER( pc10_GAMESTOP_w )
 WRITE8_HANDLER( pc10_PPURES_w )
 {
 	if ( data & 1 )
-		ppu2c03b_reset( 0, /* cpu_getscanlineperiod() * */ 1 );
+		ppu2c0x_reset( 0, /* cpu_getscanlineperiod() * */ 1 );
 }
 
 READ8_HANDLER( pc10_detectclr_r )
@@ -227,10 +227,10 @@ READ8_HANDLER( pc10_in1_r )
 		ret |= 0x08;
 
 		/* get the pixel at the gun position */
-		pix = ppu2c03b_get_pixel( 0, x, y );
+		pix = ppu2c0x_get_pixel( 0, x, y );
 
 		/* get the color base from the ppu */
-		color_base = ppu2c03b_get_colorbase( 0 );
+		color_base = ppu2c0x_get_colorbase( 0 );
 
 		/* look at the screen and see if the cursor is over a bright pixel */
 		if ( ( pix == pens[color_base+0x20] ) || ( pix == pens[color_base+0x30] ) ||
@@ -381,17 +381,17 @@ static WRITE8_HANDLER( mmc1_rom_switch_w )
 					}
 
 					/* apply mirroring */
-					ppu2c03b_set_mirroring( 0, _mirroring );
+					ppu2c0x_set_mirroring( 0, _mirroring );
 				}
 			break;
 
 			case 1:	/* video rom banking - bank 0 - 4k or 8k */
-				ppu2c03b_set_videorom_bank( 0, 0, ( vrom4k ) ? 4 : 8, ( mmc1_shiftreg & 0x1f ), 256 );
+				ppu2c0x_set_videorom_bank( 0, 0, ( vrom4k ) ? 4 : 8, ( mmc1_shiftreg & 0x1f ), 256 );
 			break;
 
 			case 2: /* video rom banking - bank 1 - 4k only */
 				if ( vrom4k )
-					ppu2c03b_set_videorom_bank( 0, 4, 4, ( mmc1_shiftreg & 0x1f ), 256 );
+					ppu2c0x_set_videorom_bank( 0, 4, 4, ( mmc1_shiftreg & 0x1f ), 256 );
 			break;
 
 			case 3:	/* program banking */
@@ -429,7 +429,7 @@ static WRITE8_HANDLER( mmc1_rom_switch_w )
 
 static WRITE8_HANDLER( aboard_vrom_switch_w )
 {
-	ppu2c03b_set_videorom_bank( 0, 0, 8, ( data & 3 ), 512 );
+	ppu2c0x_set_videorom_bank( 0, 0, 8, ( data & 3 ), 512 );
 }
 
 DRIVER_INIT( pcaboard )
@@ -477,7 +477,7 @@ DRIVER_INIT( pcbboard )
 
 static WRITE8_HANDLER( cboard_vrom_switch_w )
 {
-	ppu2c03b_set_videorom_bank( 0, 0, 8, ( ( data >> 1 ) & 1 ), 512 );
+	ppu2c0x_set_videorom_bank( 0, 0, 8, ( ( data >> 1 ) & 1 ), 512 );
 }
 
 DRIVER_INIT( pccboard )
@@ -530,22 +530,22 @@ static void mapper9_latch( offs_t offset )
 	if( (offset & 0x1ff0) == 0x0fd0 && MMC2_bank_latch[0] != 0xfd )
 	{
 		MMC2_bank_latch[0] = 0xfd;
-		ppu2c03b_set_videorom_bank( 0, 0, 4, MMC2_bank[0], 256 );
+		ppu2c0x_set_videorom_bank( 0, 0, 4, MMC2_bank[0], 256 );
 	}
 	else if( (offset & 0x1ff0) == 0x0fe0 && MMC2_bank_latch[0] != 0xfe )
 	{
 		MMC2_bank_latch[0] = 0xfe;
-		ppu2c03b_set_videorom_bank( 0, 0, 4, MMC2_bank[1], 256 );
+		ppu2c0x_set_videorom_bank( 0, 0, 4, MMC2_bank[1], 256 );
 	}
 	else if( (offset & 0x1ff0) == 0x1fd0 && MMC2_bank_latch[1] != 0xfd )
 	{
 		MMC2_bank_latch[1] = 0xfd;
-		ppu2c03b_set_videorom_bank( 0, 4, 4, MMC2_bank[2], 256 );
+		ppu2c0x_set_videorom_bank( 0, 4, 4, MMC2_bank[2], 256 );
 	}
 	else if( (offset & 0x1ff0) == 0x1fe0 && MMC2_bank_latch[1] != 0xfe )
 	{
 		MMC2_bank_latch[1] = 0xfe;
-		ppu2c03b_set_videorom_bank( 0, 4, 4, MMC2_bank[3], 256 );
+		ppu2c0x_set_videorom_bank( 0, 4, 4, MMC2_bank[3], 256 );
 	}
 }
 
@@ -564,29 +564,29 @@ static WRITE8_HANDLER( eboard_rom_switch_w )
 		case 0x3000: /* gfx bank 0 - 4k */
 			MMC2_bank[0] = data;
 			if( MMC2_bank_latch[0] == 0xfd )
-				ppu2c03b_set_videorom_bank( 0, 0, 4, data, 256 );
+				ppu2c0x_set_videorom_bank( 0, 0, 4, data, 256 );
 		break;
 
 		case 0x4000: /* gfx bank 0 - 4k */
 			MMC2_bank[1] = data;
 			if( MMC2_bank_latch[0] == 0xfe )
-				ppu2c03b_set_videorom_bank( 0, 0, 4, data, 256 );
+				ppu2c0x_set_videorom_bank( 0, 0, 4, data, 256 );
 		break;
 
 		case 0x5000: /* gfx bank 1 - 4k */
 			MMC2_bank[2] = data;
 			if( MMC2_bank_latch[1] == 0xfd )
-				ppu2c03b_set_videorom_bank( 0, 4, 4, data, 256 );
+				ppu2c0x_set_videorom_bank( 0, 4, 4, data, 256 );
 		break;
 
 		case 0x6000: /* gfx bank 1 - 4k */
 			MMC2_bank[3] = data;
 			if( MMC2_bank_latch[1] == 0xfe )
-				ppu2c03b_set_videorom_bank( 0, 4, 4, data, 256 );
+				ppu2c0x_set_videorom_bank( 0, 4, 4, data, 256 );
 		break;
 
 		case 0x7000: /* mirroring */
-			ppu2c03b_set_mirroring( 0, data ? PPU_MIRROR_HORZ : PPU_MIRROR_VERT );
+			ppu2c0x_set_mirroring( 0, data ? PPU_MIRROR_HORZ : PPU_MIRROR_VERT );
 
 		break;
 	}
@@ -717,7 +717,7 @@ static WRITE8_HANDLER( gboard_rom_switch_w )
 					case 1: /* char banking */
 						data &= 0xfe;
 						page ^= ( cmd << 1 );
-						ppu2c03b_set_videorom_bank( 0, page, 2, data, 64 );
+						ppu2c0x_set_videorom_bank( 0, page, 2, data, 64 );
 					break;
 
 					case 2: /* char banking */
@@ -725,7 +725,7 @@ static WRITE8_HANDLER( gboard_rom_switch_w )
 					case 4: /* char banking */
 					case 5: /* char banking */
 						page ^= cmd + 2;
-						ppu2c03b_set_videorom_bank( 0, page, 1, data, 64 );
+						ppu2c0x_set_videorom_bank( 0, page, 1, data, 64 );
 					break;
 
 					case 6: /* program banking */
@@ -766,9 +766,9 @@ static WRITE8_HANDLER( gboard_rom_switch_w )
 			if( !gboard_4screen )
 			{
 				if ( data & 0x40 )
-					ppu2c03b_set_mirroring( 0, PPU_MIRROR_HIGH );
+					ppu2c0x_set_mirroring( 0, PPU_MIRROR_HIGH );
 				else
-					ppu2c03b_set_mirroring( 0, ( data & 1 ) ? PPU_MIRROR_HORZ : PPU_MIRROR_VERT );
+					ppu2c0x_set_mirroring( 0, ( data & 1 ) ? PPU_MIRROR_HORZ : PPU_MIRROR_VERT );
 			}
 		break;
 
@@ -785,11 +785,11 @@ static WRITE8_HANDLER( gboard_rom_switch_w )
 		break;
 
 		case 0x6000: /* disable irqs */
-			ppu2c03b_set_scanline_callback( 0, 0 );
+			ppu2c0x_set_scanline_callback( 0, 0 );
 		break;
 
 		case 0x6001: /* enable irqs */
-			ppu2c03b_set_scanline_callback( 0, gboard_scanline_cb );
+			ppu2c0x_set_scanline_callback( 0, gboard_scanline_cb );
 		break;
 	}
 }
@@ -836,9 +836,9 @@ static WRITE8_HANDLER( iboard_rom_switch_w )
 	int bank = data & 7;
 
 	if ( data & 0x10 )
-		ppu2c03b_set_mirroring( 0, PPU_MIRROR_HIGH );
+		ppu2c0x_set_mirroring( 0, PPU_MIRROR_HIGH );
 	else
-		ppu2c03b_set_mirroring( 0, PPU_MIRROR_LOW );
+		ppu2c0x_set_mirroring( 0, PPU_MIRROR_LOW );
 
 	memcpy( &memory_region( REGION_CPU2 )[0x08000], &memory_region( REGION_CPU2 )[bank * 0x8000 + 0x10000], 0x8000 );
 }

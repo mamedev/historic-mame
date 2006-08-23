@@ -31,6 +31,9 @@
 #define M68K_RTE_HAS_CALLBACK       OPT_ON
 #define M68K_RTE_CALLBACK()
 
+#define M68K_TAS_HAS_CALLBACK       OPT_ON
+#define M68K_TAS_CALLBACK()
+
 #define M68K_EMULATE_FC             OPT_OFF
 #define M68K_SET_FC_CALLBACK(A)
 

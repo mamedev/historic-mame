@@ -5041,7 +5041,7 @@ GAME( 19??, crush4,   crush,    crush4,   crush4,   0,        ROT90,  "Kural TWT
 GAME( 1981, maketrax, crush,    pacman,   maketrax, maketrax, ROT270, "[Kural] (Williams license)", "Make Trax (set 1)", GAME_SUPPORTS_SAVE )
 GAME( 1981, maketrxb, crush,    pacman,   maketrax, maketrax, ROT270, "[Kural] (Williams license)", "Make Trax (set 2)", GAME_SUPPORTS_SAVE )
 GAME( 1981, korosuke, crush,    pacman,   korosuke, korosuke, ROT90,  "Kural Electric", "Korosuke Roller", GAME_SUPPORTS_SAVE )
-GAME( 1981, mbrush,   crush,    pacman,   mbrush,   0,        ROT90,  "bootleg", "Magic Brush", GAME_SUPPORTS_SAVE )
+GAME( 1981, mbrush,   crush,    pacman,   mbrush,   maketrax, ROT90,  "bootleg", "Magic Brush", GAME_SUPPORTS_SAVE )
 GAME( 1981, paintrlr, crush,    pacman,   paintrlr, 0,        ROT90,  "bootleg", "Paint Roller", GAME_SUPPORTS_SAVE )
 GAME( 1982, pacplus,  0,        pacman,   pacman,   pacplus,  ROT90,  "[Namco] (Midway license)", "Pac-Man Plus", GAME_SUPPORTS_SAVE )
 GAME( 1982, joyman,   puckman,  pacman,   pacman,   0,        ROT90,  "hack", "Joyman", GAME_SUPPORTS_SAVE )

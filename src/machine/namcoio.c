@@ -27,7 +27,7 @@ Pole Position / PP II   51XX  53XX  52XX  54XX
 16XX interface:
 ---------------
 Super Pac Man           56XX  56XX  ----  ----
-Pac & Pal               56XX  ????  ----  ----
+Pac & Pal               56XX  59XX  ----  ----
 Mappy                   58XX  58XX  ----  ----
 Phozon                  58XX  56XX  ----  ----
 The Tower of Druaga     58XX  56XX  ----  ----
@@ -86,8 +86,7 @@ For the 52XX, see sound/namco52.c
 For the 54XX, see sound/namco54.c
 
 
-Namco custom I/O chips 56XX and 58XX
-(plus an unknown one used only by Pac & Pal - could be "57XX", I guess).
+Namco custom I/O chips 56XX, 58XX, 59XX
 
 These chips work together with a 16XX, that interfaces them with the buffer
 RAM. Each chip uses 16 nibbles of memory; the 16XX supports up to 4 chips,
@@ -976,10 +975,10 @@ static void namco_customio_56XX_run(int chip)
 
 
 
-static void namco_customio_pacnpal_run(int chip)
+static void namco_customio_59XX_run(int chip)
 {
 #if VERBOSE
-	logerror("execute PACNPAL %d mode %d\n",chip,IORAM_READ(8));
+	logerror("execute 59XX %d mode %d\n",chip,IORAM_READ(8));
 #endif
 
 	switch (IORAM_READ(8))
@@ -1161,8 +1160,8 @@ static void namcoio_run(int param)
 		case NAMCOIO_58XX:
 			namco_customio_58XX_run(param);
 			break;
-		case NAMCOIO_PACNPAL:
-			namco_customio_pacnpal_run(param);
+		case NAMCOIO_59XX:
+			namco_customio_59XX_run(param);
 			break;
 	}
 }

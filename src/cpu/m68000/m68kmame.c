@@ -607,6 +607,7 @@ static void m68000_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_M68K_RESET_CALLBACK:		m68k_set_reset_instr_callback(info->f);		break;
 		case CPUINFO_PTR_M68K_CMPILD_CALLBACK:		m68k_set_cmpild_instr_callback((void (*)(unsigned int,int))(info->f));		break;
 		case CPUINFO_PTR_M68K_RTE_CALLBACK:			m68k_set_rte_instr_callback(info->f);		break;
+		case CPUINFO_PTR_M68K_TAS_CALLBACK:			m68k_set_tas_instr_callback((int (*)(void))(info->f));		break;
 	}
 }
 

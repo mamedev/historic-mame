@@ -149,6 +149,9 @@
 /* Mish 181099:  See comments in vidhrdw/generic.c for details */
 #define VIDEO_BUFFERS_SPRITERAM			0x0040
 
+/* force VIDEO_UPDATE to be called even for skipped frames */
+#define VIDEO_ALWAYS_UPDATE				0x0080
+
 
 
 /* ----- flags for game drivers ----- */

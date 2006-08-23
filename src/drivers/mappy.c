@@ -645,10 +645,10 @@ static DRIVER_INIT( 56out_56 )
 	namcoio_init(1, NAMCOIO_56XX, &intf1);
 }
 
-static DRIVER_INIT( 56out_PP )
+static DRIVER_INIT( 56out_59 )
 {
 	namcoio_init(0, NAMCOIO_56XX, &intf0_lamps);
-	namcoio_init(1, NAMCOIO_PACNPAL, &intf1);
+	namcoio_init(1, NAMCOIO_59XX, &intf1);
 }
 
 static DRIVER_INIT( 58_58 )
@@ -2126,9 +2126,9 @@ static DRIVER_INIT( digdug2 )
 /* 2x6809, static tilemap, 2bpp sprites (Super Pacman type)  */
 GAME( 1982, superpac, 0,        superpac, superpac, 56_56,    ROT90, "Namco", "Super Pac-Man", 0 )
 GAME( 1982, superpcm, superpac, superpac, superpac, 56_56,    ROT90, "[Namco] (Bally Midway license)", "Super Pac-Man (Midway)", 0 )
-GAME( 1983, pacnpal,  0,        superpac, pacnpal,  56out_PP, ROT90, "Namco", "Pac & Pal", 0 )
-GAME( 1983, pacnpal2, pacnpal,  superpac, pacnpal,  56out_PP, ROT90, "Namco", "Pac & Pal (older)", 0 )
-GAME( 1983, pacnchmp, pacnpal,  superpac, pacnpal,  56out_PP, ROT90, "Namco", "Pac-Man & Chomp Chomp", 0 )
+GAME( 1983, pacnpal,  0,        superpac, pacnpal,  56out_59, ROT90, "Namco", "Pac & Pal", 0 )
+GAME( 1983, pacnpal2, pacnpal,  superpac, pacnpal,  56out_59, ROT90, "Namco", "Pac & Pal (older)", 0 )
+GAME( 1983, pacnchmp, pacnpal,  superpac, pacnpal,  56out_59, ROT90, "Namco", "Pac-Man & Chomp Chomp", 0 )
 GAME( 1984, grobda,   0,        grobda,   grobda,   grobda,   ROT90, "Namco", "Grobda (New Ver.)", 0 )
 GAME( 1984, grobda2,  grobda,   grobda,   grobda,   grobda,   ROT90, "Namco", "Grobda (Old Ver. set 1)", 0 )
 GAME( 1984, grobda3,  grobda,   grobda,   grobda,   grobda,   ROT90, "Namco", "Grobda (Old Ver. set 2)", 0 )

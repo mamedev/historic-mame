@@ -56,8 +56,7 @@ struct _internal_screen_info
 	int					last_partial_scanline;
 	subseconds_t		scantime;
 	subseconds_t		pixeltime;
-	mame_timer *		vblank_timer;
-	mame_timer *		refresh_timer;
+	mame_time 			vblank_time;
 };
 
 
@@ -133,9 +132,8 @@ int video_init(void)
 			/* configure the screen with the default parameters */
 			video_screen_configure(scrnum, state->width, state->height, &state->visarea, state->refresh);
 
-			/* create timers for VBLANK and refresh */
-			info->vblank_timer = mame_timer_alloc(NULL);
-			info->refresh_timer = mame_timer_alloc(NULL);
+			/* reset VBLANK timing */
+			info->vblank_time = time_zero;
 		}
 
 	/* create spriteram buffers if necessary */
@@ -227,12 +225,12 @@ static void video_exit(void)
 
 void video_vblank_start(void)
 {
+	mame_time curtime = mame_timer_get_time();
 	int scrnum;
 
 	/* reset VBLANK timers for each screen -- fix me */
 	for (scrnum = 0; scrnum < MAX_SCREENS; scrnum++)
-		if (Machine->drv->screen[scrnum].tag != NULL)
-			mame_timer_reset(scrinfo[scrnum].vblank_timer, time_zero);
+		scrinfo[scrnum].vblank_time = curtime;
 }
 
 
@@ -517,24 +515,28 @@ void video_screen_update_partial(int scrnum, int scanline)
 
 	LOG_PARTIAL_UPDATES(("Partial: video_screen_update_partial(%d,%d): ", scrnum, scanline));
 
-	/* if skipping this frame, bail */
-	if (video_skip_this_frame())
+	/* these two checks only apply if we're allowed to skip frames */
+	if (!(Machine->drv->video_attributes & VIDEO_ALWAYS_UPDATE))
 	{
-		LOG_PARTIAL_UPDATES(("skipped due to frameskipping\n"));
-		return;
+		/* if skipping this frame, bail */
+		if (video_skip_this_frame())
+		{
+			LOG_PARTIAL_UPDATES(("skipped due to frameskipping\n"));
+			return;
+		}
+
+		/* skip if this screen is not visible anywhere */
+		if (!(render_get_live_screens_mask() & (1 << scrnum)))
+		{
+			LOG_PARTIAL_UPDATES(("skipped because screen not live\n"));
+			return;
+		}
 	}
 
 	/* skip if less than the lowest so far */
 	if (scanline < screen->last_partial_scanline)
 	{
 		LOG_PARTIAL_UPDATES(("skipped because less than previous\n"));
-		return;
-	}
-
-	/* skip if this screen is not visible anywhere */
-	if (!(render_get_live_screens_mask() & (1 << scrnum)))
-	{
-		LOG_PARTIAL_UPDATES(("skipped because screen not live\n"));
 		return;
 	}
 
@@ -572,7 +574,7 @@ void video_screen_update_partial(int scrnum, int scanline)
 
 int video_screen_get_vpos(int scrnum)
 {
-	mame_time delta = mame_timer_timeelapsed(scrinfo[scrnum].vblank_timer);
+	mame_time delta = sub_mame_times(mame_timer_get_time(), scrinfo[scrnum].vblank_time);
 	int vpos;
 
 	assert(delta.seconds == 0);
@@ -589,7 +591,7 @@ int video_screen_get_vpos(int scrnum)
 
 int video_screen_get_hpos(int scrnum)
 {
-	mame_time delta = mame_timer_timeelapsed(scrinfo[scrnum].vblank_timer);
+	mame_time delta = sub_mame_times(mame_timer_get_time(), scrinfo[scrnum].vblank_time);
 	int vpos, hpos;
 
 	assert(delta.seconds == 0);
@@ -631,13 +633,17 @@ int video_screen_get_hblank(int scrnum)
 
 mame_time video_screen_get_time_until_pos(int scrnum, int vpos, int hpos)
 {
-	mame_time curdelta = mame_timer_timeelapsed(scrinfo[scrnum].vblank_timer);
+	mame_time curdelta = sub_mame_times(mame_timer_get_time(), scrinfo[scrnum].vblank_time);
 	subseconds_t targetdelta;
 
 	assert(curdelta.seconds == 0);
 
+	/* since we measure time relative to VBLANK, compute the scanline offset from VBLANK */
+	vpos += Machine->screen[scrnum].height - (Machine->screen[scrnum].visarea.max_y + 1);
+	vpos %= Machine->screen[scrnum].height;
+
 	/* compute the delta for the given X,Y position */
-	targetdelta = vpos * scrinfo[scrnum].scantime + hpos * scrinfo[scrnum].pixeltime;
+	targetdelta = (subseconds_t)vpos * scrinfo[scrnum].scantime + (subseconds_t)hpos * scrinfo[scrnum].pixeltime;
 
 	/* if we're past that time, head to the next frame */
 	if (targetdelta <= curdelta.subseconds)

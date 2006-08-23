@@ -8,7 +8,7 @@ Nintendo VS UniSystem and DualSystem - (c) 1984 Nintendo of America
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/ppu2c03b.h"
+#include "vidhrdw/ppu2c0x.h"
 
 /* Globals */
 int vsnes_gun_controller;
@@ -222,11 +222,11 @@ MACHINE_RESET( vsnes )
 	input_latch[2] = input_latch[3] = 0;
 
 	/* reset the ppu */
-	ppu2c03b_reset( 0, 1 );
+	ppu2c0x_reset( 0, 1 );
 
 	/* if we need to remap, install the callback */
 	if ( remapped_colortable )
-		ppu2c03b_set_vidaccess_callback( 0, remap_colors );
+		ppu2c0x_set_vidaccess_callback( 0, remap_colors );
 }
 
 /*************************************
@@ -240,14 +240,14 @@ MACHINE_RESET( vsdual )
 	input_latch[2] = input_latch[3] = 0;
 
 	/* reset the ppu */
-	ppu2c03b_reset( 0,1);
-	ppu2c03b_reset( 1,1 );
+	ppu2c0x_reset( 0,1);
+	ppu2c0x_reset( 1,1 );
 
 	/* if we need to remap, install the callback */
 	if ( remapped_colortable )
 	{
-		ppu2c03b_set_vidaccess_callback( 0, remap_colors );
-		ppu2c03b_set_vidaccess_callback( 1, remap_colors );
+		ppu2c0x_set_vidaccess_callback( 0, remap_colors );
+		ppu2c0x_set_vidaccess_callback( 1, remap_colors );
 	}
 }
 
@@ -274,7 +274,7 @@ DRIVER_INIT( vsnes )
 static WRITE8_HANDLER( vsnormal_vrom_banking )
 {
 	/* switch vrom */
-	ppu2c03b_set_videorom_bank( 0, 0, 8, ( data & 4 ) ? 1 : 0, 512 );
+	ppu2c0x_set_videorom_bank( 0, 0, 8, ( data & 4 ) ? 1 : 0, 512 );
 
 	/* bit 1 ( data & 2 ) enables writes to extra ram, we ignore it */
 
@@ -297,11 +297,11 @@ static WRITE8_HANDLER( ppuRC2C05_protection )
 
 	if ( offset == 0 )
 	{
-		ppu2c03b_0_w( 1, data );
+		ppu2c0x_0_w( 1, data );
 		return;
 	}
 
-	ppu2c03b_0_w( 0, data );
+	ppu2c0x_0_w( 0, data );
 }
 
 /**********************************************************************************/
@@ -337,7 +337,7 @@ static WRITE8_HANDLER( gun_in0_w )
 	if (vsnes_do_vrom_bank)
 	{
 		/* switch vrom */
-		ppu2c03b_set_videorom_bank( 0, 0, 8, ( data & 4 ) ? 1 : 0, 512 );
+		ppu2c0x_set_videorom_bank( 0, 0, 8, ( data & 4 ) ? 1 : 0, 512 );
 	}
 
 	/* here we do things a little different */
@@ -356,10 +356,10 @@ static WRITE8_HANDLER( gun_in0_w )
 			pen_t *pens = Machine->pens;
 
 			/* get the pixel at the gun position */
-			pix = ppu2c03b_get_pixel( 0, x, y );
+			pix = ppu2c0x_get_pixel( 0, x, y );
 
 			/* get the color base from the ppu */
-			color_base = ppu2c03b_get_colorbase( 0 );
+			color_base = ppu2c0x_get_colorbase( 0 );
 
 			/* look at the screen and see if the cursor is over a bright pixel */
 			if ( ( pix == pens[color_base+0x20] ) || ( pix == pens[color_base+0x30] ) ||
@@ -419,11 +419,11 @@ static WRITE8_HANDLER( goonies_rom_banking )
 		break;
 
 		case 6: /* vrom bank 0 */
-			ppu2c03b_set_videorom_bank( 0, 0, 4, data, 256 );
+			ppu2c0x_set_videorom_bank( 0, 0, 4, data, 256 );
 		break;
 
 		case 7: /* vrom bank 1 */
-			ppu2c03b_set_videorom_bank( 0, 4, 4, data, 256 );
+			ppu2c0x_set_videorom_bank( 0, 4, 4, data, 256 );
 		break;
 	}
 }
@@ -498,7 +498,7 @@ DRIVER_INIT( hogalley )
 static READ8_HANDLER( vsgshoe_security_r )
 {
 	/* low part must be 0x1c */
-	return ppu2c03b_0_r( 2 ) | 0x1c;
+	return ppu2c0x_0_r( 2 ) | 0x1c;
 }
 
 static WRITE8_HANDLER( vsgshoe_gun_in0_w )
@@ -608,17 +608,17 @@ static WRITE8_HANDLER( drmario_rom_banking )
 					}
 
 					/* apply mirroring */
-					ppu2c03b_set_mirroring( 0, mirroring );
+					ppu2c0x_set_mirroring( 0, mirroring );
 				}
 			break;
 
 			case 1:	/* video rom banking - bank 0 - 4k or 8k */
-				ppu2c03b_set_videorom_bank( 0, 0, ( vrom4k ) ? 4 : 8, drmario_shiftreg, ( vrom4k ) ? 256 : 512 );
+				ppu2c0x_set_videorom_bank( 0, 0, ( vrom4k ) ? 4 : 8, drmario_shiftreg, ( vrom4k ) ? 256 : 512 );
 			break;
 
 			case 2: /* video rom banking - bank 1 - 4k only */
 				if ( vrom4k )
-					ppu2c03b_set_videorom_bank( 0, 4, 4, drmario_shiftreg, 256 );
+					ppu2c0x_set_videorom_bank( 0, 4, 4, drmario_shiftreg, 256 );
 			break;
 
 			case 3:	/* program banking */
@@ -773,7 +773,7 @@ DRIVER_INIT( cstlevna )
 static READ8_HANDLER( topgun_security_r )
 {
 	/* low part must be 0x1b */
-	return ppu2c03b_0_r( 2 ) | 0x1b;
+	return ppu2c0x_0_r( 2 ) | 0x1b;
 }
 
 DRIVER_INIT( topgun )
@@ -820,12 +820,12 @@ static void mapper4_set_prg (void)
 static void mapper4_set_chr (void)
 {
 	UINT8 chr_page = (MMC3_cmd & 0x80) >> 5;
-	ppu2c03b_set_videorom_bank(0, chr_page ^ 0, 2, MMC3_chr[0], 1);
-	ppu2c03b_set_videorom_bank(0, chr_page ^ 2, 2, MMC3_chr[1], 1);
-	ppu2c03b_set_videorom_bank(0, chr_page ^ 4, 1, MMC3_chr[2], 1);
-	ppu2c03b_set_videorom_bank(0, chr_page ^ 5, 1, MMC3_chr[3], 1);
-	ppu2c03b_set_videorom_bank(0, chr_page ^ 6, 1, MMC3_chr[4], 1);
-	ppu2c03b_set_videorom_bank(0, chr_page ^ 7, 1, MMC3_chr[5], 1);
+	ppu2c0x_set_videorom_bank(0, chr_page ^ 0, 2, MMC3_chr[0], 1);
+	ppu2c0x_set_videorom_bank(0, chr_page ^ 2, 2, MMC3_chr[1], 1);
+	ppu2c0x_set_videorom_bank(0, chr_page ^ 4, 1, MMC3_chr[2], 1);
+	ppu2c0x_set_videorom_bank(0, chr_page ^ 5, 1, MMC3_chr[3], 1);
+	ppu2c0x_set_videorom_bank(0, chr_page ^ 6, 1, MMC3_chr[4], 1);
+	ppu2c0x_set_videorom_bank(0, chr_page ^ 7, 1, MMC3_chr[5], 1);
 }
 
 #define BOTTOM_VISIBLE_SCANLINE	239		/* The bottommost visible scanline */
@@ -900,13 +900,13 @@ static WRITE8_HANDLER( mapper4_w )
 		}
 		case 0x2000: /* $a000 */
 			if (data & 0x40)
-				ppu2c03b_set_mirroring(0, PPU_MIRROR_HIGH);
+				ppu2c0x_set_mirroring(0, PPU_MIRROR_HIGH);
 			else
 			{
 				if (data & 0x01)
-					ppu2c03b_set_mirroring(0, PPU_MIRROR_HORZ);
+					ppu2c0x_set_mirroring(0, PPU_MIRROR_HORZ);
 				else
-					ppu2c03b_set_mirroring(0, PPU_MIRROR_VERT);
+					ppu2c0x_set_mirroring(0, PPU_MIRROR_VERT);
 			}
 			break;
 
@@ -929,13 +929,13 @@ static WRITE8_HANDLER( mapper4_w )
 			IRQ_enable = 0;
 			IRQ_count = IRQ_count_latch;
 
-			ppu2c03b_set_scanline_callback (0, 0);
+			ppu2c0x_set_scanline_callback (0, 0);
 
 			break;
 
 		case 0x6001: /* $e001 - Enable IRQs */
 			IRQ_enable = 1;
-			ppu2c03b_set_scanline_callback (0, mapper4_irq);
+			ppu2c0x_set_scanline_callback (0, mapper4_irq);
 
 			break;
 
@@ -1128,19 +1128,19 @@ static WRITE8_HANDLER( mapper68_rom_banking ){
 	switch (offset & 0x7000)
 	{
 		case 0x0000:
-		ppu2c03b_set_videorom_bank(0,0,2,data,128);
+		ppu2c0x_set_videorom_bank(0,0,2,data,128);
 
 		break;
 		case 0x1000:
-		ppu2c03b_set_videorom_bank(0,2,2,data,128);
+		ppu2c0x_set_videorom_bank(0,2,2,data,128);
 
 		break;
 		case 0x2000:
-		ppu2c03b_set_videorom_bank(0,4,2,data,128);
+		ppu2c0x_set_videorom_bank(0,4,2,data,128);
 
 		break;
 		case 0x3000: /* ok? */
-		ppu2c03b_set_videorom_bank(0,6,2,data,128);
+		ppu2c0x_set_videorom_bank(0,6,2,data,128);
 
 		break;
 
@@ -1212,7 +1212,7 @@ DRIVER_INIT( bnglngby )
 static READ8_HANDLER( jajamaru_security_r )
 {
 	/* low part must be 0x40 */
-	return ppu2c03b_0_r( 2 ) | 0x40;
+	return ppu2c0x_0_r( 2 ) | 0x40;
 }
 
 DRIVER_INIT( jajamaru )
@@ -1239,7 +1239,7 @@ DRIVER_INIT( jajamaru )
 static READ8_HANDLER( mightybj_security_r )
 {
 	/* low part must be 0x3d */
-	return ppu2c03b_0_r( 2 ) | 0x3d;
+	return ppu2c0x_0_r( 2 ) | 0x3d;
 }
 
 DRIVER_INIT( mightybj )
@@ -1260,7 +1260,7 @@ static WRITE8_HANDLER( vstennis_vrom_banking )
 	int other_cpu = cpu_getactivecpu() ^ 1;
 
 	/* switch vrom */
-	ppu2c03b_set_videorom_bank( cpu_getactivecpu(), 0, 8, ( data & 4 ) ? 1 : 0, 512 );
+	ppu2c0x_set_videorom_bank( cpu_getactivecpu(), 0, 8, ( data & 4 ) ? 1 : 0, 512 );
 
 	/* bit 1 ( data & 2 ) triggers irq on the other cpu */
 	cpunum_set_input_line( other_cpu, 0, ( data & 2 ) ? CLEAR_LINE : ASSERT_LINE );

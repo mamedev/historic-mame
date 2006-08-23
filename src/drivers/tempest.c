@@ -9,6 +9,9 @@
     Known bugs:
         * none at this time
 
+    To do:
+        * correctly hook up player 2 controls in cocktail mode
+
 ****************************************************************************
 
     TEMPEST
@@ -184,7 +187,7 @@ is a 12% chance that a program bug may award 40 credits for one
 quarter.
 
   The ROM (#136002-217) in this package, replaces the ROM in
-location J-1 on the main PCB and will correcct the problem.
+location J-1 on the main PCB and will correct the problem.
 
   All cabaret and cocktail cabinets will have the correct ROM
 Installed.
@@ -257,6 +260,26 @@ last game            Level choices this game
 74 through 81        1,3,5,7,9,11,13,15,17,20,22,24,26,28,31,33,36,40,44,47,49,52,56,60,63,65,73
 82 through 99        1,3,5,7,9,11,13,15,17,20,22,24,26,28,31,33,36,40,44,47,49,52,56,60,63,65,73,81
 
+Rom revisions and bug fixes / effects:
+
+Revision 2
+136002-217.j1  Fixes the score cheat (see tech notes above)
+136002-222.r1  In test mode, changes spinner letters to a line, described in Tempest manual C0-190-01 New Roms
+
+Revision 3
+136002-316.h1  Fixes screen collapse between players when using newer deflection board
+
+Note: Roms for Tempest Analog Vector-Generator PCB Assembly A037383-03 or A037383-04 are twice
+      the size as those for Tempest Analog Vector-Generator PCB Assembly A037383-01 or A037383-02
+
+Known roms (listed in the manual) currently not dumped:
+
+Version 1 for Tempest Analog Vector-Generator PCB Assembly A037383-01 or A037383-02
+ 136002-137.p1
+ 136002-135.j1
+
+Prom for sync???
+ 136003-125 at D7
 
 ***************************************************************************/
 
@@ -542,96 +565,102 @@ MACHINE_DRIVER_END
 
 ROM_START( tempest ) /* rev 3 */
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "136002.113",   0x9000, 0x0800, CRC(65d61fe7) SHA1(38a1e8a8f65b7887cf3e190269fe4ce2c6f818aa) )
-	ROM_LOAD( "136002.114",   0x9800, 0x0800, CRC(11077375) SHA1(ed8ff0ca969da6672a7683b93d4fcf2935a0d903) )
-	ROM_LOAD( "136002.115",   0xa000, 0x0800, CRC(f3e2827a) SHA1(bd04fcfbbba995e08c3144c1474fcddaaeb1c700) )
-	ROM_LOAD( "136002.316",   0xa800, 0x0800, CRC(aeb0f7e9) SHA1(a5cc25015b98692673cfc1c7c2e9634efd750870) )
-	ROM_LOAD( "136002.217",   0xb000, 0x0800, CRC(ef2eb645) SHA1(b1a2c969e8897e335d5354de6ae04a65d4b2a1e4) )
-	ROM_LOAD( "136002.118",   0xb800, 0x0800, CRC(beb352ab) SHA1(f213166d3970e0bd0f29d8dea8d6afa6990cce38) )
-	ROM_LOAD( "136002.119",   0xc000, 0x0800, CRC(a4de050f) SHA1(ea302e43a313a5a18115e74ddbaaedde0fbecda7) )
-	ROM_LOAD( "136002.120",   0xc800, 0x0800, CRC(35619648) SHA1(48f1e8bed7ec6afa0b4c549a30e5ec331c071e40) )
-	ROM_LOAD( "136002.121",   0xd000, 0x0800, CRC(73d38e47) SHA1(9980606376a79ba94f8e2a325871a6c8d10d83fc) )
-	ROM_LOAD( "136002.222",   0xd800, 0x0800, CRC(707bd5c3) SHA1(2f0af6fb7154c244c794f7247e5c16a1e06ddf7d) )
-	ROM_RELOAD(             0xf800, 0x0800 ) /* for reset/interrupt vectors */
+	/* Roms are for Tempest Analog Vector-Generator PCB Assembly A037383-01 or A037383-02 */
+	ROM_LOAD( "136002-113.d1",   0x9000, 0x0800, CRC(65d61fe7) SHA1(38a1e8a8f65b7887cf3e190269fe4ce2c6f818aa) )
+	ROM_LOAD( "136002-114.e1",   0x9800, 0x0800, CRC(11077375) SHA1(ed8ff0ca969da6672a7683b93d4fcf2935a0d903) )
+	ROM_LOAD( "136002-115.f1",   0xa000, 0x0800, CRC(f3e2827a) SHA1(bd04fcfbbba995e08c3144c1474fcddaaeb1c700) )
+	ROM_LOAD( "136002-316.h1",   0xa800, 0x0800, CRC(aeb0f7e9) SHA1(a5cc25015b98692673cfc1c7c2e9634efd750870) )
+	ROM_LOAD( "136002-217.j1",   0xb000, 0x0800, CRC(ef2eb645) SHA1(b1a2c969e8897e335d5354de6ae04a65d4b2a1e4) )
+	ROM_LOAD( "136002-118.k1",   0xb800, 0x0800, CRC(beb352ab) SHA1(f213166d3970e0bd0f29d8dea8d6afa6990cce38) )
+	ROM_LOAD( "136002-119.lm1",  0xc000, 0x0800, CRC(a4de050f) SHA1(ea302e43a313a5a18115e74ddbaaedde0fbecda7) )
+	ROM_LOAD( "136002-120.mn1",  0xc800, 0x0800, CRC(35619648) SHA1(48f1e8bed7ec6afa0b4c549a30e5ec331c071e40) )
+	ROM_LOAD( "136002-121.p1",   0xd000, 0x0800, CRC(73d38e47) SHA1(9980606376a79ba94f8e2a325871a6c8d10d83fc) )
+	ROM_LOAD( "136002-222.r1",   0xd800, 0x0800, CRC(707bd5c3) SHA1(2f0af6fb7154c244c794f7247e5c16a1e06ddf7d) )
+	ROM_RELOAD(                  0xf800, 0x0800 ) /* for reset/interrupt vectors */
 	/* Mathbox ROMs */
-	ROM_LOAD( "136002.123",   0x3000, 0x0800, CRC(29f7e937) SHA1(686c8b9b8901262e743497cee7f2f7dd5cb3af7e) )
-	ROM_LOAD( "136002.124",   0x3800, 0x0800, CRC(c16ec351) SHA1(a30a3662c740810c0f20e3712679606921b8ca06) )
+	ROM_LOAD( "136002-123.np3",  0x3000, 0x0800, CRC(29f7e937) SHA1(686c8b9b8901262e743497cee7f2f7dd5cb3af7e) ) /* May be labeled "136002-111", same data */
+	ROM_LOAD( "136002-124.r3",   0x3800, 0x0800, CRC(c16ec351) SHA1(a30a3662c740810c0f20e3712679606921b8ca06) ) /* May be labeled "136002-112", same data */
 ROM_END
 
 
 ROM_START( tempest1 ) /* rev 1 */
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "136002.113",   0x9000, 0x0800, CRC(65d61fe7) SHA1(38a1e8a8f65b7887cf3e190269fe4ce2c6f818aa) )
-	ROM_LOAD( "136002.114",   0x9800, 0x0800, CRC(11077375) SHA1(ed8ff0ca969da6672a7683b93d4fcf2935a0d903) )
-	ROM_LOAD( "136002.115",   0xa000, 0x0800, CRC(f3e2827a) SHA1(bd04fcfbbba995e08c3144c1474fcddaaeb1c700) )
-	ROM_LOAD( "136002.116",   0xa800, 0x0800, CRC(7356896c) SHA1(a013ede292189a8f5a907de882ee1a573d784b3c) )
-	ROM_LOAD( "136002.117",   0xb000, 0x0800, CRC(55952119) SHA1(470d914fa52fce3786cb6330889876d3547dca65) )
-	ROM_LOAD( "136002.118",   0xb800, 0x0800, CRC(beb352ab) SHA1(f213166d3970e0bd0f29d8dea8d6afa6990cce38) )
-	ROM_LOAD( "136002.119",   0xc000, 0x0800, CRC(a4de050f) SHA1(ea302e43a313a5a18115e74ddbaaedde0fbecda7) )
-	ROM_LOAD( "136002.120",   0xc800, 0x0800, CRC(35619648) SHA1(48f1e8bed7ec6afa0b4c549a30e5ec331c071e40) )
-	ROM_LOAD( "136002.121",   0xd000, 0x0800, CRC(73d38e47) SHA1(9980606376a79ba94f8e2a325871a6c8d10d83fc) )
-	ROM_LOAD( "136002.122",   0xd800, 0x0800, CRC(796a9918) SHA1(c862a0d4ea330161e4c3cc8e5e9ad38893fffbd4) )
-	ROM_RELOAD(             0xf800, 0x0800 ) /* for reset/interrupt vectors */
+	/* Roms are for Tempest Analog Vector-Generator PCB Assembly A037383-01 or A037383-02 */
+	ROM_LOAD( "136002-113.d1",   0x9000, 0x0800, CRC(65d61fe7) SHA1(38a1e8a8f65b7887cf3e190269fe4ce2c6f818aa) )
+	ROM_LOAD( "136002-114.e1",   0x9800, 0x0800, CRC(11077375) SHA1(ed8ff0ca969da6672a7683b93d4fcf2935a0d903) )
+	ROM_LOAD( "136002-115.f1",   0xa000, 0x0800, CRC(f3e2827a) SHA1(bd04fcfbbba995e08c3144c1474fcddaaeb1c700) )
+	ROM_LOAD( "136002-116.h1",   0xa800, 0x0800, CRC(7356896c) SHA1(a013ede292189a8f5a907de882ee1a573d784b3c) )
+	ROM_LOAD( "136002-117.j1",   0xb000, 0x0800, CRC(55952119) SHA1(470d914fa52fce3786cb6330889876d3547dca65) )
+	ROM_LOAD( "136002-118.k1",   0xb800, 0x0800, CRC(beb352ab) SHA1(f213166d3970e0bd0f29d8dea8d6afa6990cce38) )
+	ROM_LOAD( "136002-119.lm1",  0xc000, 0x0800, CRC(a4de050f) SHA1(ea302e43a313a5a18115e74ddbaaedde0fbecda7) )
+	ROM_LOAD( "136002-120.mn1",  0xc800, 0x0800, CRC(35619648) SHA1(48f1e8bed7ec6afa0b4c549a30e5ec331c071e40) )
+	ROM_LOAD( "136002-121.p1",   0xd000, 0x0800, CRC(73d38e47) SHA1(9980606376a79ba94f8e2a325871a6c8d10d83fc) )
+	ROM_LOAD( "136002-122.r1",   0xd800, 0x0800, CRC(796a9918) SHA1(c862a0d4ea330161e4c3cc8e5e9ad38893fffbd4) )
+	ROM_RELOAD(                  0xf800, 0x0800 ) /* for reset/interrupt vectors */
 	/* Mathbox ROMs */
-	ROM_LOAD( "136002.123",   0x3000, 0x0800, CRC(29f7e937) SHA1(686c8b9b8901262e743497cee7f2f7dd5cb3af7e) )
-	ROM_LOAD( "136002.124",   0x3800, 0x0800, CRC(c16ec351) SHA1(a30a3662c740810c0f20e3712679606921b8ca06) )
+	ROM_LOAD( "136002-123.np3",  0x3000, 0x0800, CRC(29f7e937) SHA1(686c8b9b8901262e743497cee7f2f7dd5cb3af7e) ) /* May be labeled "136002-111", same data */
+	ROM_LOAD( "136002-124.r3",   0x3800, 0x0800, CRC(c16ec351) SHA1(a30a3662c740810c0f20e3712679606921b8ca06) ) /* May be labeled "136002-112", same data */
 ROM_END
 
 
 ROM_START( tempest2 ) /* rev 2 */
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "136002.113",   0x9000, 0x0800, CRC(65d61fe7) SHA1(38a1e8a8f65b7887cf3e190269fe4ce2c6f818aa) )
-	ROM_LOAD( "136002.114",   0x9800, 0x0800, CRC(11077375) SHA1(ed8ff0ca969da6672a7683b93d4fcf2935a0d903) )
-	ROM_LOAD( "136002.115",   0xa000, 0x0800, CRC(f3e2827a) SHA1(bd04fcfbbba995e08c3144c1474fcddaaeb1c700) )
-	ROM_LOAD( "136002.116",   0xa800, 0x0800, CRC(7356896c) SHA1(a013ede292189a8f5a907de882ee1a573d784b3c) )
-	ROM_LOAD( "136002.217",   0xb000, 0x0800, CRC(ef2eb645) SHA1(b1a2c969e8897e335d5354de6ae04a65d4b2a1e4) )
-	ROM_LOAD( "136002.118",   0xb800, 0x0800, CRC(beb352ab) SHA1(f213166d3970e0bd0f29d8dea8d6afa6990cce38) )
-	ROM_LOAD( "136002.119",   0xc000, 0x0800, CRC(a4de050f) SHA1(ea302e43a313a5a18115e74ddbaaedde0fbecda7) )
-	ROM_LOAD( "136002.120",   0xc800, 0x0800, CRC(35619648) SHA1(48f1e8bed7ec6afa0b4c549a30e5ec331c071e40) )
-	ROM_LOAD( "136002.121",   0xd000, 0x0800, CRC(73d38e47) SHA1(9980606376a79ba94f8e2a325871a6c8d10d83fc) )
-	ROM_LOAD( "136002.222",   0xd800, 0x0800, CRC(707bd5c3) SHA1(2f0af6fb7154c244c794f7247e5c16a1e06ddf7d) )
-	ROM_RELOAD(             0xf800, 0x0800 ) /* for reset/interrupt vectors */
+	/* Roms are for Tempest Analog Vector-Generator PCB Assembly A037383-01 or A037383-02 */
+	ROM_LOAD( "136002-113.d1",   0x9000, 0x0800, CRC(65d61fe7) SHA1(38a1e8a8f65b7887cf3e190269fe4ce2c6f818aa) )
+	ROM_LOAD( "136002-114.e1",   0x9800, 0x0800, CRC(11077375) SHA1(ed8ff0ca969da6672a7683b93d4fcf2935a0d903) )
+	ROM_LOAD( "136002-115.f1",   0xa000, 0x0800, CRC(f3e2827a) SHA1(bd04fcfbbba995e08c3144c1474fcddaaeb1c700) )
+	ROM_LOAD( "136002-116.h1",   0xa800, 0x0800, CRC(7356896c) SHA1(a013ede292189a8f5a907de882ee1a573d784b3c) )
+	ROM_LOAD( "136002-217.j1",   0xb000, 0x0800, CRC(ef2eb645) SHA1(b1a2c969e8897e335d5354de6ae04a65d4b2a1e4) )
+	ROM_LOAD( "136002-118.k1",   0xb800, 0x0800, CRC(beb352ab) SHA1(f213166d3970e0bd0f29d8dea8d6afa6990cce38) )
+	ROM_LOAD( "136002-119.lm1",  0xc000, 0x0800, CRC(a4de050f) SHA1(ea302e43a313a5a18115e74ddbaaedde0fbecda7) )
+	ROM_LOAD( "136002-120.mn1",  0xc800, 0x0800, CRC(35619648) SHA1(48f1e8bed7ec6afa0b4c549a30e5ec331c071e40) )
+	ROM_LOAD( "136002-121.p1",   0xd000, 0x0800, CRC(73d38e47) SHA1(9980606376a79ba94f8e2a325871a6c8d10d83fc) )
+	ROM_LOAD( "136002-222.r1",   0xd800, 0x0800, CRC(707bd5c3) SHA1(2f0af6fb7154c244c794f7247e5c16a1e06ddf7d) )
+	ROM_RELOAD(                  0xf800, 0x0800 ) /* for reset/interrupt vectors */
 	/* Mathbox ROMs */
-	ROM_LOAD( "136002.123",   0x3000, 0x0800, CRC(29f7e937) SHA1(686c8b9b8901262e743497cee7f2f7dd5cb3af7e) )
-	ROM_LOAD( "136002.124",   0x3800, 0x0800, CRC(c16ec351) SHA1(a30a3662c740810c0f20e3712679606921b8ca06) )
+	ROM_LOAD( "136002-123.np3",  0x3000, 0x0800, CRC(29f7e937) SHA1(686c8b9b8901262e743497cee7f2f7dd5cb3af7e) ) /* May be labeled "136002-111", same data */
+	ROM_LOAD( "136002-124.r3",   0x3800, 0x0800, CRC(c16ec351) SHA1(a30a3662c740810c0f20e3712679606921b8ca06) ) /* May be labeled "136002-112", same data */
 ROM_END
 
 
-ROM_START( tempest3 ) /* rev ? */
+ROM_START( tempest3 ) /* rev 2 */
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "237.002",      0x9000, 0x1000, CRC(1d0cc503) SHA1(7bef95db9b1102d6b1166bda0ccb276ef4cc3764) )
-	ROM_LOAD( "136.002",      0xa000, 0x1000, CRC(c88e3524) SHA1(89144baf1efc703b2336774793ce345b37829ee7) )
-	ROM_LOAD( "235.002",      0xb000, 0x1000, CRC(a4b2ce3f) SHA1(a5f5fb630a48c5d25346f90d4c13aaa98f60b228) )
-	ROM_LOAD( "134.002",      0xc000, 0x1000, CRC(65a9a9f9) SHA1(73aa7d6f4e7093ccb2d97f6344f354872bcfd72a) )
-	ROM_LOAD( "133.002",      0xd000, 0x1000, CRC(de4e9e34) SHA1(04be074e45bf5cd95a852af97cd04e35b7f27fc4) )
-	ROM_RELOAD(               0xf000, 0x1000 ) /* for reset/interrupt vectors */
+	/* Roms are for Tempest Analog Vector-Generator PCB Assembly A037383-03 or A037383-04 */
+	ROM_LOAD( "136002-237.p1",  0x9000, 0x1000, CRC(1d0cc503) SHA1(7bef95db9b1102d6b1166bda0ccb276ef4cc3764) )
+	ROM_LOAD( "136002-136.lm1", 0xa000, 0x1000, CRC(c88e3524) SHA1(89144baf1efc703b2336774793ce345b37829ee7) )
+	ROM_LOAD( "136002-235.j1",  0xb000, 0x1000, CRC(a4b2ce3f) SHA1(a5f5fb630a48c5d25346f90d4c13aaa98f60b228) )
+	ROM_LOAD( "136002-134.f1",  0xc000, 0x1000, CRC(65a9a9f9) SHA1(73aa7d6f4e7093ccb2d97f6344f354872bcfd72a) )
+	ROM_LOAD( "136002-133.d1",  0xd000, 0x1000, CRC(de4e9e34) SHA1(04be074e45bf5cd95a852af97cd04e35b7f27fc4) )
+	ROM_RELOAD(                 0xf000, 0x1000 ) /* for reset/interrupt vectors */
 	/* Mathbox ROMs */
-	ROM_LOAD( "138.002",      0x3000, 0x1000, CRC(9995256d) SHA1(2b725ee1a57d423c7d7377a1744f48412e0f2f69) )
+	ROM_LOAD( "136002-138.np3", 0x3000, 0x1000, CRC(9995256d) SHA1(2b725ee1a57d423c7d7377a1744f48412e0f2f69) )
 ROM_END
 
 
 ROM_START( temptube )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "136002.113",   0x9000, 0x0800, CRC(65d61fe7) SHA1(38a1e8a8f65b7887cf3e190269fe4ce2c6f818aa) )
-	ROM_LOAD( "136002.114",   0x9800, 0x0800, CRC(11077375) SHA1(ed8ff0ca969da6672a7683b93d4fcf2935a0d903) )
-	ROM_LOAD( "136002.115",   0xa000, 0x0800, CRC(f3e2827a) SHA1(bd04fcfbbba995e08c3144c1474fcddaaeb1c700) )
-	ROM_LOAD( "136002.316",   0xa800, 0x0800, CRC(aeb0f7e9) SHA1(a5cc25015b98692673cfc1c7c2e9634efd750870) )
-	ROM_LOAD( "136002.217",   0xb000, 0x0800, CRC(ef2eb645) SHA1(b1a2c969e8897e335d5354de6ae04a65d4b2a1e4) )
-	ROM_LOAD( "tube.118",     0xb800, 0x0800, CRC(cefb03f0) SHA1(41ddfa4991fa49a31d4740a04551556acca66196) )
-	ROM_LOAD( "136002.119",   0xc000, 0x0800, CRC(a4de050f) SHA1(ea302e43a313a5a18115e74ddbaaedde0fbecda7) )
-	ROM_LOAD( "136002.120",   0xc800, 0x0800, CRC(35619648) SHA1(48f1e8bed7ec6afa0b4c549a30e5ec331c071e40) )
-	ROM_LOAD( "136002.121",   0xd000, 0x0800, CRC(73d38e47) SHA1(9980606376a79ba94f8e2a325871a6c8d10d83fc) )
-	ROM_LOAD( "136002.222",   0xd800, 0x0800, CRC(707bd5c3) SHA1(2f0af6fb7154c244c794f7247e5c16a1e06ddf7d) )
-	ROM_RELOAD(             0xf800, 0x0800 ) /* for reset/interrupt vectors */
+	/* Roms are for Tempest Analog Vector-Generator PCB Assembly A037383-01 or A037383-02 */
+	ROM_LOAD( "136002-113.d1",   0x9000, 0x0800, CRC(65d61fe7) SHA1(38a1e8a8f65b7887cf3e190269fe4ce2c6f818aa) )
+	ROM_LOAD( "136002-114.e1",   0x9800, 0x0800, CRC(11077375) SHA1(ed8ff0ca969da6672a7683b93d4fcf2935a0d903) )
+	ROM_LOAD( "136002-115.f1",   0xa000, 0x0800, CRC(f3e2827a) SHA1(bd04fcfbbba995e08c3144c1474fcddaaeb1c700) )
+	ROM_LOAD( "136002-316.h1",   0xa800, 0x0800, CRC(aeb0f7e9) SHA1(a5cc25015b98692673cfc1c7c2e9634efd750870) )
+	ROM_LOAD( "136002-217.j1",   0xb000, 0x0800, CRC(ef2eb645) SHA1(b1a2c969e8897e335d5354de6ae04a65d4b2a1e4) )
+	ROM_LOAD( "tube-118.k1",     0xb800, 0x0800, CRC(cefb03f0) SHA1(41ddfa4991fa49a31d4740a04551556acca66196) )
+	ROM_LOAD( "136002-119.lm1",  0xc000, 0x0800, CRC(a4de050f) SHA1(ea302e43a313a5a18115e74ddbaaedde0fbecda7) )
+	ROM_LOAD( "136002-120.mn1",  0xc800, 0x0800, CRC(35619648) SHA1(48f1e8bed7ec6afa0b4c549a30e5ec331c071e40) )
+	ROM_LOAD( "136002-121.p1",   0xd000, 0x0800, CRC(73d38e47) SHA1(9980606376a79ba94f8e2a325871a6c8d10d83fc) )
+	ROM_LOAD( "136002-222.r1",   0xd800, 0x0800, CRC(707bd5c3) SHA1(2f0af6fb7154c244c794f7247e5c16a1e06ddf7d) )
+	ROM_RELOAD(                  0xf800, 0x0800 ) /* for reset/interrupt vectors */
 	/* Mathbox ROMs */
-	ROM_LOAD( "136002.123",   0x3000, 0x0800, CRC(29f7e937) SHA1(686c8b9b8901262e743497cee7f2f7dd5cb3af7e) )
-	ROM_LOAD( "136002.124",   0x3800, 0x0800, CRC(c16ec351) SHA1(a30a3662c740810c0f20e3712679606921b8ca06) )
+	ROM_LOAD( "136002-123.np3",  0x3000, 0x0800, CRC(29f7e937) SHA1(686c8b9b8901262e743497cee7f2f7dd5cb3af7e) ) /* May be labeled "136002-111", same data */
+	ROM_LOAD( "136002-124.r3",   0x3800, 0x0800, CRC(c16ec351) SHA1(a30a3662c740810c0f20e3712679606921b8ca06) ) /* May be labeled "136002-112", same data */
 ROM_END
 
 
 #if 0 /* identical to rom_tempest, only different rom sizes */
 ROM_START( tempest3 )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	/* Roms are for Tempest Analog Vector-Generator PCB Assembly A037383-03 or A037383-04 */
 	ROM_LOAD( "tempest.x",    0x9000, 0x1000, NO_DUMP )
 	ROM_LOAD( "tempest.1",    0xa000, 0x1000, NO_DUMP )
 	ROM_LOAD( "tempest.3",    0xb000, 0x1000, NO_DUMP )
@@ -654,5 +683,5 @@ ROM_END
 GAME( 1980, tempest,  0,       tempest, tempest, 0, ROT270, "Atari", "Tempest (rev 3)", 0 )
 GAME( 1980, tempest1, tempest, tempest, tempest, 0, ROT270, "Atari", "Tempest (rev 1)", 0 )
 GAME( 1980, tempest2, tempest, tempest, tempest, 0, ROT270, "Atari", "Tempest (rev 2)", 0 )
-GAME( 1980, tempest3, tempest, tempest, tempest, 0, ROT270, "Atari", "Tempest (rev ?)", 0 )
+GAME( 1980, tempest3, tempest, tempest, tempest, 0, ROT270, "Atari", "Tempest (rev 2, Revised Hardware)", 0 )
 GAME( 1980, temptube, tempest, tempest, tempest, 0, ROT270, "hack", "Tempest Tubes", 0 )

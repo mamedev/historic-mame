@@ -3,6 +3,13 @@
 Championship Bowling
 Romstar Inc., 1989
 
+Driver by Pierpaolo Prazzoli
+
+To Do:
+  Hook up player 2 controls for cocktail mode
+
+-----------------------------------------------------------
+
 This game runs on Seta Hardware.
 
 PCB Layout
@@ -93,7 +100,53 @@ Notes:
             AB003002.3-2   2M MaskROM (DIP32)   |
             AB003003.3-3   2M MaskROM (DIP32)   /
 
-  Driver by Pierpaolo Prazzoli
+
+
+                          Main Jamma Connector
+          Solder Side            |             Parts Side
+------------------------------------------------------------------
+             GND             | A | 1 |             GND
+             GND             | B | 2 |             GND
+             +5V             | C | 3 |             +5V
+             +5V             | D | 4 |             +5V
+             -5V             | E | 5 |             -5V
+             +12V            | F | 6 |             +12V
+------------ KEY ------------| H | 7 |------------ KEY -----------
+       Coin Counter 2        | J | 8 |      Coin Counter 1
+       Coin Lock Out 2       | K | 9 |      Coin Lock Out 1
+         Speaker (-)         | L | 10|        Speaker (+)
+                             | M | 11|
+        Video Green          | N | 12|        Video Red
+        Video Sync           | P | 13|        Video Blue
+        Service SW           | R | 14|        Video GND
+        Tilt Switch          | S | 15|        Test Switch
+        Coin Switch 2        | T | 16|        Coin Switch 1
+        Player 2 Start       | U | 17|        Player 1 Start
+  #2 Trackball X Direction*  | V | 18|      #1 Trackball X Direction
+  #2 Trackball Y Direction*  | W | 19|      #1 Trackball Y Direction
+  #2 Trackball X Clock*      | X | 20|      #1 Trackball X Clock
+  #2 Trackball Y Clock*      | Y | 21|      #1 Trackball Y Clock
+  Player 2 Hook Right*       | Z | 22|      Player 1 Hook Right
+  Player 2 Hook Left*        | a | 23|      Player 1 Hook Left
+                             | b | 24|        Player Select
+                             | c | 25|
+                             | d | 26|
+             GND             | e | 27|             GND
+             GND             | f | 28|             GND
+
+* Cocktail Mode only.
+
+ Standard 6 pin Trackball connector
+
+  Pin  Wire  Funtion
+------------------------------
+   1 | BLK | Ground
+   2 | RED | +5 Volts DC
+   3 | YEL | Y Clock
+   4 | GRN | Y Direction
+   5 | BLU | X Direction
+   6 | PUR | X Clock
+
 
 */
 
@@ -204,14 +257,14 @@ INPUT_PORTS_START( champbwl )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START
-	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Free_Play ) )
+	PORT_SERVICE_DIPLOC( 0x01, IP_ACTIVE_LOW, "SW1:1" )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Cabinet ) ) PORT_DIPLOCATION("SW1:2")
+	PORT_DIPSETTING(    0x02, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Free_Play ) ) PORT_DIPLOCATION("SW1:3")
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) ) PORT_DIPLOCATION("SW1:4")
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
@@ -228,13 +281,13 @@ INPUT_PORTS_START( champbwl )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) ) PORT_DIPLOCATION("SW1:5")
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) ) PORT_DIPLOCATION("SW1:6")
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0c, 0x0c, "License" )
+	PORT_DIPNAME( 0x0c, 0x0c, "License" ) PORT_DIPLOCATION("SW1:7,8")
 	PORT_DIPSETTING(    0x00, "Romstar (1)")
 	PORT_DIPSETTING(    0x04, "Romstar (2)")
 	PORT_DIPSETTING(    0x08, "Seta U.S.A, Romstar License" )

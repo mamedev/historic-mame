@@ -131,7 +131,7 @@ Changes:
 
 #include "driver.h"
 #include "rendlay.h"
-#include "vidhrdw/ppu2c03b.h"
+#include "vidhrdw/ppu2c0x.h"
 #include "machine/rp5h01.h"
 #include "sound/dac.h"
 #include "sound/nes_apu.h"
@@ -198,10 +198,16 @@ extern WRITE8_HANDLER( vsnes_in0_1_w );
 static UINT8 *work_ram, *work_ram_1;
 static int coin;
 
-static WRITE8_HANDLER( sprite_dma_w )
+static WRITE8_HANDLER( sprite_dma_0_w )
 {
-	int source = ( data & 7 );
-	ppu2c03b_spriteram_dma( source );
+    int source = ( data & 7 );
+     ppu2c0x_spriteram_dma( 0, source );
+}
+
+static WRITE8_HANDLER( sprite_dma_1_w )
+{
+    int source = ( data & 7 );
+    ppu2c0x_spriteram_dma( 1, source );
 }
 
 static WRITE8_HANDLER( vsnes_coin_counter_w )
@@ -264,10 +270,10 @@ static WRITE8_HANDLER( psg1_4017_w )
 
 static ADDRESS_MAP_START( vsnes_cpu1_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x07ff) AM_MIRROR(0x1800) AM_RAM AM_BASE(&work_ram)
-	AM_RANGE(0x2000, 0x3fff) AM_READWRITE(ppu2c03b_0_r, ppu2c03b_0_w)
+	AM_RANGE(0x2000, 0x3fff) AM_READWRITE(ppu2c0x_0_r, ppu2c0x_0_w)
 	AM_RANGE(0x4011, 0x4011) AM_WRITE(DAC_0_data_w)
 	AM_RANGE(0x4000, 0x4013) AM_READWRITE(NESPSG_0_r, NESPSG_0_w)
-	AM_RANGE(0x4014, 0x4014) AM_WRITE(sprite_dma_w)
+	AM_RANGE(0x4014, 0x4014) AM_WRITE(sprite_dma_0_w)
 	AM_RANGE(0x4015, 0x4015) AM_READWRITE(psg_4015_r, psg_4015_w)  /* PSG status / first control register */
 	AM_RANGE(0x4016, 0x4016) AM_READWRITE(vsnes_in0_r, vsnes_in0_w)
 	AM_RANGE(0x4017, 0x4017) AM_READWRITE(vsnes_in1_r, psg_4017_w) /* IN1 - input port 2 / PSG second control register */
@@ -277,10 +283,10 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( vsnes_cpu2_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x07ff) AM_MIRROR(0x1800) AM_RAM AM_BASE(&work_ram_1)
-	AM_RANGE(0x2000, 0x3fff) AM_READWRITE(ppu2c03b_1_r, ppu2c03b_1_w)
+	AM_RANGE(0x2000, 0x3fff) AM_READWRITE(ppu2c0x_1_r, ppu2c0x_1_w)
 	AM_RANGE(0x4011, 0x4011) AM_WRITE(DAC_1_data_w)
 	AM_RANGE(0x4000, 0x4013) AM_READWRITE(NESPSG_1_r, NESPSG_1_w)
-	AM_RANGE(0x4014, 0x4014) AM_WRITE(sprite_dma_w)
+	AM_RANGE(0x4014, 0x4014) AM_WRITE(sprite_dma_1_w)
 	AM_RANGE(0x4015, 0x4015) AM_READWRITE(psg1_4015_r, psg1_4015_w)	/* PSG status / first control register */
 	AM_RANGE(0x4016, 0x4016) AM_READWRITE(vsnes_in0_1_r, vsnes_in0_1_w)
 	AM_RANGE(0x4017, 0x4017) AM_READWRITE(vsnes_in1_1_r, psg1_4017_w) /* IN1 - input port 2 / PSG second control register */

@@ -311,12 +311,14 @@ void turbo_update_segments(void)
 
 READ8_HANDLER( turbo_collision_r )
 {
+	video_screen_update_partial(0, video_screen_get_vpos(0));
 	return readinputport(3) | (turbo_collision & 15);
 }
 
 
 WRITE8_HANDLER( turbo_collision_clear_w )
 {
+	video_screen_update_partial(0, video_screen_get_vpos(0));
 	turbo_collision = 0;
 }
 

@@ -218,6 +218,8 @@ static int game_id, init_success, blitter_busy, collision_count, stars_enabled, 
 static int mVectorType, sndnmi_mask, firq_level;
 static void *blitter_reset_timer;
 
+static offs_t halleys_collision_detection;
+
 
 //**************************************************************************
 // MB1551x Blitter Functions
@@ -1038,7 +1040,7 @@ static READ8_HANDLER( collision_id_r )
     UPDATE: re-implemented pixel collision to accompany the hack method.
 */
 
-	if (game_id==GAME_HALLEYS && activecpu_get_pc()==0xb114) // HACK: collision detection bypass
+	if (game_id==GAME_HALLEYS && activecpu_get_pc()==halleys_collision_detection) // HACK: collision detection bypass
 	{
 		if (collision_count) { collision_count--; return(collision_list[collision_count]); }
 
@@ -2244,6 +2246,15 @@ static DRIVER_INIT( benberob )
 static DRIVER_INIT( halleys )
 {
 	game_id = GAME_HALLEYS;
+	halleys_collision_detection = 0xb114;
+
+	init_success = init_common();
+}
+
+static DRIVER_INIT( halley87 )
+{
+	game_id = GAME_HALLEYS;
+	halleys_collision_detection = 0xb10d;
 
 	init_success = init_common();
 }
@@ -2252,8 +2263,8 @@ static DRIVER_INIT( halleys )
 //**************************************************************************
 // Game Definitions
 
-GAME( 1984, benberob, 0,       benberob, benberob, benberob, ROT0, "Taito", "Ben Bero Beh (Japan)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_COLORS )
-GAME( 1986, halleys,  0,       halleys, halleys, halleys,  ROT90, "Taito America Corporation (Coin-It license)", "Halley's Comet (US)", GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
-GAME( 1986, halleysc, halleys, halleys, halleys, halleys,  ROT90, "Taito Corporation", "Halley's Comet (Japan, Newer)", GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
-GAME( 1986, halleycj, halleys, halleys, halleys, halleys,  ROT90, "Taito Corporation", "Halley's Comet (Japan, Older)", GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
-GAME( 1986, halley87, halleys, halleys, halleys, halleys,  ROT90, "Taito Corporation", "Halley's Comet '87", GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL | GAME_NOT_WORKING ) /* No Collision detection */
+GAME( 1984, benberob, 0,       benberob, benberob, benberob,  ROT0,  "Taito", "Ben Bero Beh (Japan)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_COLORS )
+GAME( 1986, halleys,  0,       halleys,  halleys,  halleys,   ROT90, "Taito America Corporation (Coin-It license)", "Halley's Comet (US)", GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
+GAME( 1986, halleysc, halleys, halleys,  halleys,  halleys,   ROT90, "Taito Corporation", "Halley's Comet (Japan, Newer)", GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
+GAME( 1986, halleycj, halleys, halleys,  halleys,  halleys,   ROT90, "Taito Corporation", "Halley's Comet (Japan, Older)", GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )
+GAME( 1986, halley87, halleys, halleys,  halleys,  halley87,  ROT90, "Taito Corporation", "Halley's Comet '87", GAME_IMPERFECT_GRAPHICS | GAME_NO_COCKTAIL )

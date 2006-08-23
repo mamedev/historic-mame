@@ -1,5 +1,5 @@
 #include "driver.h"
-#include "vidhrdw/ppu2c03b.h"
+#include "vidhrdw/ppu2c0x.h"
 
 /* from machine */
 extern int pc10_sdcs;			/* ShareD Chip Select */
@@ -62,7 +62,7 @@ PALETTE_INIT( playch10 )
 		color_prom++;
 	}
 
-	ppu2c03b_init_palette( 256 );
+	ppu2c0x_init_palette( 256 );
 }
 
 static void ppu_irq( int num, int *ppu_regs )
@@ -73,10 +73,11 @@ static void ppu_irq( int num, int *ppu_regs )
 
 /* our ppu interface                                            */
 /* things like mirroring and wether to use vrom or vram         */
-/* can be set by calling 'ppu2c03b_override_hardware_options'   */
+/* can be set by calling 'ppu2c0x_override_hardware_options'   */
 
-static const ppu2c03b_interface ppu_interface =
+static const ppu2c0x_interface ppu_interface =
 {
+	PPU_2C03B,				/* type */
 	1,						/* num */
 	{ REGION_GFX2 },		/* vrom gfx region */
 	{ 1 },					/* gfxlayout num */
@@ -102,7 +103,7 @@ VIDEO_START( playch10 )
 	if ( !bg_tilemap )
 		return 1;
 
-	ppu2c03b_init( &ppu_interface );
+	ppu2c0x_init( &ppu_interface );
 
 	return 0;
 }
@@ -129,7 +130,7 @@ VIDEO_UPDATE( playch10 )
 			if ( !pc10_dispmask )
 			{
 				/* render the ppu */
-				ppu2c03b_render( 0, bitmap, 0, 0, 0, 0 );
+				ppu2c0x_render( 0, bitmap, 0, 0, 0, 0 );
 
 				/* if this is a gun game, draw a simple crosshair */
 				if ( pc10_gun_controller )
@@ -171,7 +172,7 @@ VIDEO_UPDATE( playch10 )
 		if ( pc10_game_mode )
 		{
 			/* render the ppu */
-			ppu2c03b_render( 0, bitmap, 0, 0, 0, 0 );
+			ppu2c0x_render( 0, bitmap, 0, 0, 0, 0 );
 
 			/* if this is a gun game, draw a simple crosshair */
 			if ( pc10_gun_controller )

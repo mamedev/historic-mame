@@ -60,9 +60,10 @@ WRITE8_HANDLER( buckrog_sound_B_w );
 extern UINT8 *sega_sprite_position;
 extern UINT8 turbo_collision;
 
+WRITE8_HANDLER( turbo_videoram_w );
+
 PALETTE_INIT( turbo );
 VIDEO_START( turbo );
-VIDEO_EOF( turbo );
 VIDEO_UPDATE( turbo );
 
 PALETTE_INIT( subroc3d );

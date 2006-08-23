@@ -10180,12 +10180,20 @@ M68KMAKE_OP(tas, 8, ., .)
 {
 	uint ea = M68KMAKE_GET_EA_AY_8;
 	uint dst = m68ki_read_8(ea);
+	uint allow_writeback;
 
 	FLAG_Z = dst;
 	FLAG_N = NFLAG_8(dst);
 	FLAG_V = VFLAG_CLEAR;
 	FLAG_C = CFLAG_CLEAR;
-	m68ki_write_8(ea, dst | 0x80);
+
+	/* The Genesis/Megadrive games Gargoyles and Ex-Mutants need the TAS writeback
+       disabled in order to function properly.  Some Amiga software may also rely
+       on this, but only when accessing specific addresses so additional functionality
+       will be needed. */
+	allow_writeback = m68ki_tas_callback();
+
+	if (allow_writeback==1) m68ki_write_8(ea, dst | 0x80);
 }
 
 
