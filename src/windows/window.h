@@ -127,6 +127,9 @@ void winwindow_toggle_full_screen(void);
 void winwindow_process_events_periodic(void);
 void winwindow_process_events(int ingame);
 
+void winwindow_ui_pause_from_window_thread(int pause);
+void winwindow_ui_pause_from_main_thread(int pause);
+
 #if HAS_WINDOW_MENU
 int win_create_menu(HMENU *menus);
 #endif

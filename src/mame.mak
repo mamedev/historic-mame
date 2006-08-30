@@ -1110,7 +1110,7 @@ $(OBJ)/sega.a: \
 	$(OBJ)/drivers/system18.o \
 	$(OBJ)/drivers/system24.o $(OBJ)/machine/system24.o $(OBJ)/vidhrdw/system24.o \
 	$(OBJ)/drivers/topshoot.o \
-	$(OBJ)/drivers/turbo.o $(OBJ)/machine/turbo.o $(OBJ)/sndhrdw/turbo.o $(OBJ)/vidhrdw/turbo.o \
+	$(OBJ)/drivers/turbo.o $(OBJ)/sndhrdw/turbo.o $(OBJ)/vidhrdw/turbo.o \
 	$(OBJ)/drivers/vicdual.o $(OBJ)/sndhrdw/vicdual.o $(OBJ)/vidhrdw/vicdual.o \
 	$(OBJ)/drivers/zaxxon.o $(OBJ)/sndhrdw/zaxxon.o $(OBJ)/vidhrdw/zaxxon.o \
 	$(OBJ)/machine/fd1089.o \
@@ -1437,6 +1437,7 @@ $(OBJ)/misc.a: \
 	$(OBJ)/drivers/aztarac.o $(OBJ)/sndhrdw/aztarac.o $(OBJ)/vidhrdw/aztarac.o \
 	$(OBJ)/drivers/beaminv.o $(OBJ)/vidhrdw/beaminv.o \
 	$(OBJ)/drivers/bmcbowl.o \
+	$(OBJ)/drivers/carrera.o \
 	$(OBJ)/drivers/cave.o $(OBJ)/vidhrdw/cave.o \
 	$(OBJ)/drivers/cherrym.o \
 	$(OBJ)/drivers/coinmstr.o \

@@ -194,6 +194,7 @@ static const options_entry windows_opts[] =
 	{ "sleep",                    "1",        OPTION_BOOLEAN,    "enable sleeping, which gives time back to other applications when idle" },
 	{ "rdtsc",                    "0",        OPTION_BOOLEAN,    "use the RDTSC instruction for timing; faster but may result in uneven performance" },
 	{ "priority",                 "0",        0,                 "thread priority for the main game thread; range from -15 to 1" },
+	{ "multithreading;mt",        "0",        OPTION_BOOLEAN,    "enable multithreading; this enables rendering and blitting on a separate thread" },
 
 	// video options
 	{ NULL,                       NULL,       OPTION_HEADER,     "VIDEO OPTIONS" },

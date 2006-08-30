@@ -336,10 +336,12 @@ void options_output_ini_file(FILE *inifile)
 		/* otherwise, output entries for all non-deprecated and non-command items */
 		else if ((data->flags & (OPTION_DEPRECATED | OPTION_COMMAND)) == 0 && data->names[0][0] != 0)
 		{
-			if (data->data != NULL)
-				fprintf(inifile, "%-25s %s\n", data->names[0], data->data);
-			else
+			if (data->data == NULL)
 				fprintf(inifile, "# %-23s <NULL> (not set)\n", data->names[0]);
+			else if (strchr(data->data, ' '))
+				fprintf(inifile, "%-25s \"%s\"\n", data->names[0], data->data);
+			else
+				fprintf(inifile, "%-25s %s\n", data->names[0], data->data);
 		}
 	}
 }
@@ -364,10 +366,12 @@ void options_output_ini_mame_file(mame_file *inifile)
 		/* otherwise, output entries for all non-deprecated and non-command items */
 		else if ((data->flags & (OPTION_DEPRECATED | OPTION_COMMAND)) == 0 && data->names[0][0] != 0)
 		{
-			if (data->data != NULL)
-				mame_fprintf(inifile, "%-25s %s\n", data->names[0], data->data);
-			else
+			if (data->data == NULL)
 				mame_fprintf(inifile, "# %-23s <NULL> (not set)\n", data->names[0]);
+			else if (strchr(data->data, ' '))
+				mame_fprintf(inifile, "%-25s \"%s\"\n", data->names[0], data->data);
+			else
+				mame_fprintf(inifile, "%-25s %s\n", data->names[0], data->data);
 		}
 	}
 }

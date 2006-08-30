@@ -1124,7 +1124,7 @@ ROM_START( spaceod )
 	ROM_LOAD( "spod943a.prom-u3",  0x1800, 0x0800, CRC(0d87a8f3) SHA1(04aaa5f58f4b656d058b116da118bd5731c3fad8) )
 	ROM_LOAD( "spod944a.prom-u4",  0x2000, 0x0800, CRC(9c79f505) SHA1(219a1ae73711b485d7b97801d8b25f31046826b0) )
 	ROM_LOAD( "spod945a.prom-u5",  0x2800, 0x0800, CRC(375681e4) SHA1(3c79b43f5e91e8f13788e7f11abdcc33ef12d90a) )
-	ROM_LOAD( "spod946a.prom-u6",  0x3000, 0x0800, BAD_DUMP CRC(8ccb4d54) SHA1(d203d93559c08525c332e756e3ebfd66af4fc056) )
+	ROM_LOAD( "spod946a.prom-u6",  0x3000, 0x0800, BAD_DUMP CRC(4a27ff64) SHA1(bec51c734dfab2fad1be1ddc992bc954e4a1fc81) )
 	ROM_LOAD( "spod947a.prom-u7",  0x3800, 0x0800, CRC(6170de1c) SHA1(5939c5a7fbd0d7b73d4d20a6c641753042682293) )
 	ROM_LOAD( "spod948a.prom-u8",  0x4000, 0x0800, CRC(44fbbc87) SHA1(199b9214a44bda053d711348329cea80209cbaf1) )
 	ROM_LOAD( "spod949a.prom-u9",  0x4800, 0x0800, CRC(b2705596) SHA1(fc02a929b28985fcf6995aa2ccfb5a361183c1be) )
@@ -1566,7 +1566,7 @@ GAME( 1981, astrob1,  astrob,  astrob,   astrob1,  astrob,   ROT270, "Sega", "As
 GAME( 1981, 005,      0,       005,      005,      005,      ROT270, "Sega", "005", GAME_IMPERFECT_SOUND )
 
 /* basic G-80 system with individual background boards */
-GAME( 1981, spaceod,  0,       spaceod,  spaceod,  spaceod,  ROT270, "Sega", "Space Odyssey (version 2)", GAME_NOT_WORKING )
+GAME( 1981, spaceod,  0,       spaceod,  spaceod,  spaceod,  ROT270, "Sega", "Space Odyssey (version 2)", 0 )
 GAME( 1981, spaceod2, spaceod, spaceod,  spaceod,  spaceod,  ROT270, "Sega", "Space Odyssey (version 1)", 0 )
 GAME( 1982, monsterb, 0,       monsterb, monsterb, monsterb, ROT270, "Sega", "Monster Bash", 0 )
 

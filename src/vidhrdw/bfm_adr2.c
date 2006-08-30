@@ -93,7 +93,7 @@ E000-FFFF  | R | D D D D D D D D | 8K ROM
 #include "machine/vacfdisp.h"  // vfd
 #include "vidhrdw/bfm_adr2.h"
 #include "bfm_sc2.h"
-#include "ui.h"
+#include "rendlay.h"
 
 int adder2_show_alpha_display;	  // flag, set if alpha display need to be displayed
 
@@ -238,22 +238,18 @@ VIDEO_UPDATE( adder2 )
 	if (screen == 0)
 	{
 		adder2_update(bitmap);
+		if ( sc2_show_door )
+		{
+			output_set_value("door",( Scorpion2_GetSwitchState(sc2_door_state>>4, sc2_door_state & 0x0F) ) );
+		}
 	}
 
 	if (screen == 1)
 	{
 		if ( adder2_show_alpha_display )
-			draw_16seg(bitmap,0,0,0,3,1);
-
-		#if 0 //Better to wait for new textbox
-		if ( sc2_show_door )
 		{
-			if ( Scorpion2_GetSwitchState(sc2_door_state>>4, sc2_door_state & 0x0F) )
-				popmessage("Door Closed");
-			else
-				popmessage("Door Open  ");
+			draw_14seg(bitmap,0,3,1);
 		}
-		#endif
 	}
 	return 0;
 }

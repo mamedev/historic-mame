@@ -202,7 +202,8 @@ int winvideo_init(void)
 	for (index = 0; index < video_config.numscreens; index++)
 		if (winwindow_video_window_create(index, pick_monitor(index), &video_config.window[index]))
 			goto error;
-	SetForegroundWindow(win_window_list->hwnd);
+	if (video_config.mode != VIDEO_MODE_NONE)
+		SetForegroundWindow(win_window_list->hwnd);
 
 	// possibly create the debug window, but don't show it yet
 #ifdef MAME_DEBUG

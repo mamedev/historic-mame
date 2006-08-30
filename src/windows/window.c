@@ -7,7 +7,7 @@
 //
 //============================================================
 
-#define ENABLE_THREADS		0
+#define LOG_THREADS			0
 
 // Needed for RAW Input
 #define _WIN32_WINNT 0x501
@@ -106,12 +106,16 @@ static int in_background;
 static int ui_temp_pause;
 static int ui_temp_was_paused;
 
+static int multithreading_enabled;
+
 static HANDLE window_thread;
 static DWORD window_threadid;
 
 static DWORD last_update_time;
 
 static win_draw_callbacks draw;
+
+static HANDLE ui_pause_event;
 
 
 
@@ -127,7 +131,6 @@ static unsigned __stdcall thread_entry(void *param);
 static int complete_create(win_window_info *window);
 static int create_window_class(void);
 static void set_starting_view(int index, win_window_info *window, const char *view);
-static void temp_pause_ui(int pause);
 
 static void constrain_to_aspect_ratio(win_window_info *window, RECT *rect, int adjustment);
 static void get_min_bounds(win_window_info *window, RECT *bounds, int constrain);
@@ -141,7 +144,7 @@ static void set_fullscreen(win_window_info *window, int fullscreen);
 
 
 // temporary hacks
-#if ENABLE_THREADS
+#if LOG_THREADS
 struct _mtlog
 {
 	cycles_t	timestamp;
@@ -189,7 +192,10 @@ void mtlog_add(const char *event) { }
 
 int winwindow_init(void)
 {
-	// get the main thread ID
+	// determine if we are using multithreading or not
+	multithreading_enabled = options_get_bool("multithreading", FALSE);
+
+	// get the main thread ID before anything else
 	main_threadid = GetCurrentThreadId();
 
 	// ensure we get called on the way out
@@ -199,21 +205,30 @@ int winwindow_init(void)
 	if (create_window_class())
 		return 1;
 
-#if ENABLE_THREADS
-{
-	// create a thread to run the windows from
-	size_t temp = _beginthreadex(NULL, 0, thread_entry, NULL, 0, (unsigned *)&window_threadid);
-	window_thread = (HANDLE)temp;
-	if (window_thread == NULL)
+	// create an event to signal UI pausing
+	ui_pause_event = CreateEvent(NULL, TRUE, FALSE, NULL);
+	if (!ui_pause_event)
 		return 1;
 
-	// set the thread priority equal to the main MAME thread
-	SetThreadPriority(window_thread, GetThreadPriority(GetCurrentThread()));
-}
-#else
-	window_thread = GetCurrentThread();
-	window_threadid = main_threadid;
-#endif
+	// if multithreading, create a thread to run the windows
+	if (multithreading_enabled)
+	{
+		// create a thread to run the windows from
+		size_t temp = _beginthreadex(NULL, 0, thread_entry, NULL, 0, (unsigned *)&window_threadid);
+		window_thread = (HANDLE)temp;
+		if (window_thread == NULL)
+			return 1;
+
+		// set the thread priority equal to the main MAME thread
+		SetThreadPriority(window_thread, GetThreadPriority(GetCurrentThread()));
+	}
+
+	// otherwise, treat the window thread as the main thread
+	else
+	{
+		window_thread = GetCurrentThread();
+		window_threadid = main_threadid;
+	}
 
 	// initialize the drawers
 	if (video_config.mode == VIDEO_MODE_D3D)
@@ -264,13 +279,19 @@ static void winwindow_exit(void)
 	// kill the drawers
 	(*draw.exit)();
 
-#if ENABLE_THREADS
-	// kill the window thread
-	PostThreadMessage(window_threadid, WM_USER_SELF_TERMINATE, 0, 0);
-	WaitForSingleObject(window_thread, INFINITE);
+	// if we're multithreaded, clean up the window thread
+	if (multithreading_enabled)
+	{
+		PostThreadMessage(window_threadid, WM_USER_SELF_TERMINATE, 0, 0);
+		WaitForSingleObject(window_thread, INFINITE);
 
-	mtlog_dump();
+#if (LOG_THREADS)
+		mtlog_dump();
 #endif
+	}
+
+	// kill the UI pause event
+	CloseHandle(ui_pause_event);
 }
 
 
@@ -319,91 +340,99 @@ void winwindow_process_events(int ingame)
 	// remember the last time we did this
 	last_event_check = osd_cycles();
 
-	// loop over all messages in the queue
-	while (PeekMessage(&message, NULL, 0, 0, PM_REMOVE))
+	do
 	{
-		int dispatch = TRUE;
+		// if we are paused, lets wait for a message
+		if (ui_temp_pause > 0)
+			WaitMessage();
 
-		switch (message.message)
+		// loop over all messages in the queue
+		while (PeekMessage(&message, NULL, 0, 0, PM_REMOVE))
 		{
-			// ignore keyboard messages
-			case WM_SYSKEYUP:
-			case WM_SYSKEYDOWN:
+			int dispatch = TRUE;
+
+			switch (message.message)
+			{
+				// ignore keyboard messages
+				case WM_SYSKEYUP:
+				case WM_SYSKEYDOWN:
 #ifndef MESS
-			case WM_KEYUP:
-			case WM_KEYDOWN:
-			case WM_CHAR:
+				case WM_KEYUP:
+				case WM_KEYDOWN:
+				case WM_CHAR:
 #endif
-				dispatch = is_debugger_visible;
-				break;
+					dispatch = is_debugger_visible;
+					break;
 
-			// special case for quit
-			case WM_QUIT:
-				fatalerror("Unexpected WM_QUIT message\n");
-				break;
+				// special case for quit
+				case WM_QUIT:
+					fatalerror("Unexpected WM_QUIT message\n");
+					break;
 
-			// temporary pause from the window thread
-			case WM_USER_UI_TEMP_PAUSE:
-				temp_pause_ui(message.wParam);
-				dispatch = FALSE;
-				break;
+				// temporary pause from the window thread
+				case WM_USER_UI_TEMP_PAUSE:
+					winwindow_ui_pause_from_main_thread(message.wParam);
+					dispatch = FALSE;
+					break;
 
-			// request exit from the window thread
-			case WM_USER_REQUEST_EXIT:
-				mame_schedule_exit();
-				dispatch = FALSE;
-				break;
+				// request exit from the window thread
+				case WM_USER_REQUEST_EXIT:
+					mame_schedule_exit();
+					dispatch = FALSE;
+					break;
 
-			// forward mouse button downs to the input system
-			case WM_LBUTTONDOWN:
-				input_mouse_button_down(0, GET_X_LPARAM(message.lParam), GET_Y_LPARAM(message.lParam));
-				dispatch = is_debugger_visible;
-				break;
+				// forward mouse button downs to the input system
+				case WM_LBUTTONDOWN:
+					input_mouse_button_down(0, GET_X_LPARAM(message.lParam), GET_Y_LPARAM(message.lParam));
+					dispatch = is_debugger_visible;
+					break;
 
-			case WM_RBUTTONDOWN:
-				input_mouse_button_down(1, GET_X_LPARAM(message.lParam), GET_Y_LPARAM(message.lParam));
-				dispatch = is_debugger_visible;
-				break;
+				case WM_RBUTTONDOWN:
+					input_mouse_button_down(1, GET_X_LPARAM(message.lParam), GET_Y_LPARAM(message.lParam));
+					dispatch = is_debugger_visible;
+					break;
 
-			case WM_MBUTTONDOWN:
-				input_mouse_button_down(2, GET_X_LPARAM(message.lParam), GET_Y_LPARAM(message.lParam));
-				dispatch = is_debugger_visible;
-				break;
+				case WM_MBUTTONDOWN:
+					input_mouse_button_down(2, GET_X_LPARAM(message.lParam), GET_Y_LPARAM(message.lParam));
+					dispatch = is_debugger_visible;
+					break;
 
-			case WM_XBUTTONDOWN:
-				input_mouse_button_down(3, GET_X_LPARAM(message.lParam), GET_Y_LPARAM(message.lParam));
-				dispatch = is_debugger_visible;
-				break;
+				case WM_XBUTTONDOWN:
+					input_mouse_button_down(3, GET_X_LPARAM(message.lParam), GET_Y_LPARAM(message.lParam));
+					dispatch = is_debugger_visible;
+					break;
 
-			// forward mouse button ups to the input system
-			case WM_LBUTTONUP:
-				input_mouse_button_up(0);
-				dispatch = is_debugger_visible;
-				break;
+				// forward mouse button ups to the input system
+				case WM_LBUTTONUP:
+					input_mouse_button_up(0);
+					dispatch = is_debugger_visible;
+					break;
 
-			case WM_RBUTTONUP:
-				input_mouse_button_up(1);
-				dispatch = is_debugger_visible;
-				break;
+				case WM_RBUTTONUP:
+					input_mouse_button_up(1);
+					dispatch = is_debugger_visible;
+					break;
 
-			case WM_MBUTTONUP:
-				input_mouse_button_up(2);
-				dispatch = is_debugger_visible;
-				break;
+				case WM_MBUTTONUP:
+					input_mouse_button_up(2);
+					dispatch = is_debugger_visible;
+					break;
 
-			case WM_XBUTTONUP:
-				input_mouse_button_up(3);
-				dispatch = is_debugger_visible;
-				break;
-		}
+				case WM_XBUTTONUP:
+					input_mouse_button_up(3);
+					dispatch = is_debugger_visible;
+					break;
+			}
 
-		// dispatch if necessary
-		if (dispatch)
-		{
-			TranslateMessage(&message);
-			DispatchMessage(&message);
+			// dispatch if necessary
+			if (dispatch)
+			{
+				TranslateMessage(&message);
+				DispatchMessage(&message);
+			}
 		}
 	}
+	while(ui_temp_pause > 0);
 }
 
 
@@ -552,13 +581,16 @@ int winwindow_video_window_create(int index, win_monitor_info *monitor, const wi
 	window->startmaximized = options_get_bool("maximize", TRUE);
 
 	// finish the window creation on the window thread
-#if ENABLE_THREADS
-	PostThreadMessage(window_threadid, WM_USER_FINISH_CREATE_WINDOW, 0, (LPARAM)window);
-	while (window->init_state == 0)
-		Sleep(1);
-#else
-	window->init_state = complete_create(window) ? -1 : 1;
-#endif
+	if (multithreading_enabled)
+	{
+		PostThreadMessage(window_threadid, WM_USER_FINISH_CREATE_WINDOW, 0, (LPARAM)window);
+		while (window->init_state == 0)
+			Sleep(1);
+	}
+	else
+		window->init_state = complete_create(window) ? -1 : 1;
+
+	// handle error conditions
 	if (window->init_state == -1)
 		goto error;
 	return 0;
@@ -668,11 +700,10 @@ void winwindow_video_window_update(win_window_info *window)
 			// post a redraw request with the primitive list as a parameter
 			last_update_time = timeGetTime();
 			mtlog_add("winwindow_video_window_update: PostMessage start");
-#if ENABLE_THREADS
-			PostMessage(window->hwnd, WM_USER_REDRAW, 0, (LPARAM)primlist);
-#else
-			SendMessage(window->hwnd, WM_USER_REDRAW, 0, (LPARAM)primlist);
-#endif
+			if (multithreading_enabled)
+				PostMessage(window->hwnd, WM_USER_REDRAW, 0, (LPARAM)primlist);
+			else
+				SendMessage(window->hwnd, WM_USER_REDRAW, 0, (LPARAM)primlist);
 			mtlog_add("winwindow_video_window_update: PostMessage end");
 		}
 	}
@@ -833,12 +864,14 @@ static void set_starting_view(int index, win_window_info *window, const char *vi
 
 
 //============================================================
-//  temp_pause_ui
+//  winwindow_ui_pause_from_main_thread
 //  (main thread)
 //============================================================
 
-static void temp_pause_ui(int pause)
+void winwindow_ui_pause_from_main_thread(int pause)
 {
+	assert(GetCurrentThreadId() == main_threadid);
+
 	// if we're pausing, increment the pause counter
 	if (pause)
 	{
@@ -848,7 +881,10 @@ static void temp_pause_ui(int pause)
 			// only call mame_pause if we weren't already paused due to some external reason
 			ui_temp_was_paused = mame_is_paused();
 			if (!ui_temp_was_paused)
+			{
 				mame_pause(TRUE);
+				SetEvent(ui_pause_event);
+			}
 		}
 	}
 
@@ -860,9 +896,39 @@ static void temp_pause_ui(int pause)
 		{
 			// but only do it if we were the ones who initiated it
 			if (!ui_temp_was_paused)
+			{
 				mame_pause(FALSE);
+				ResetEvent(ui_pause_event);
+			}
 		}
 	}
+}
+
+
+
+//============================================================
+//  winwindow_ui_pause_from_window_thread
+//  (window thread)
+//============================================================
+
+void winwindow_ui_pause_from_window_thread(int pause)
+{
+	assert(GetCurrentThreadId() == window_threadid);
+
+	// if we're multithreaded, we have to request a pause on the main thread
+	if (multithreading_enabled)
+	{
+		// request a pause from the main thread
+		PostThreadMessage(main_threadid, WM_USER_UI_TEMP_PAUSE, pause, 0);
+
+		// if we're pausing, block until it happens
+		if (pause)
+			WaitForSingleObject(ui_pause_event, INFINITE);
+	}
+
+	// otherwise, we just do it directly
+	else
+		winwindow_ui_pause_from_main_thread(pause);
 }
 
 
@@ -1097,22 +1163,14 @@ LRESULT CALLBACK winwindow_video_window_proc(HWND wnd, UINT message, WPARAM wpar
 		case WM_ENTERSIZEMOVE:
 			window->resize_state = RESIZE_STATE_RESIZING;
 		case WM_ENTERMENULOOP:
-#if ENABLE_THREADS
-			PostThreadMessage(main_threadid, WM_USER_UI_TEMP_PAUSE, TRUE, 0);
-#else
-			temp_pause_ui(TRUE);
-#endif
+			winwindow_ui_pause_from_window_thread(TRUE);
 			break;
 
 		// unpause the system when we stop a menu or resize and force a redraw
 		case WM_EXITSIZEMOVE:
 			window->resize_state = RESIZE_STATE_PENDING;
 		case WM_EXITMENULOOP:
-#if ENABLE_THREADS
-			PostThreadMessage(main_threadid, WM_USER_UI_TEMP_PAUSE, FALSE, 0);
-#else
-			temp_pause_ui(FALSE);
-#endif
+			winwindow_ui_pause_from_window_thread(FALSE);
 			InvalidateRect(wnd, NULL, FALSE);
 			break;
 
@@ -1165,11 +1223,10 @@ LRESULT CALLBACK winwindow_video_window_proc(HWND wnd, UINT message, WPARAM wpar
 
 		// close: cause MAME to exit
 		case WM_CLOSE:
-#if ENABLE_THREADS
-			PostThreadMessage(main_threadid, WM_USER_REQUEST_EXIT, 0, 0);
-#else
-			mame_schedule_exit();
-#endif
+			if (multithreading_enabled)
+				PostThreadMessage(main_threadid, WM_USER_REQUEST_EXIT, 0, 0);
+			else
+				mame_schedule_exit();
 			break;
 
 		// destroy: clean up all attached rendering bits and NULL out our hwnd

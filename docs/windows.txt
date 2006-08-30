@@ -562,6 +562,14 @@ Perormance options
 	The valid range is -15 to 1, with 1 being the highest priority. The 
 	default is 0 (NORMAL priority).
 
+-[no]multithreading / -[no]mt
+
+	Enables multithreading within MAME. At the moment, this causes the window
+	and all DirectDraw/Direct3D code to execute on a second thread, which
+	can improve performance on hyperthreaded and multicore systems. Consider
+	this switch experimental for the moment. The default is OFF 
+	(-nomultithreading).
+
 
 
 Video options

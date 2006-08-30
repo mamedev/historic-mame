@@ -77,6 +77,20 @@ f205v
 |                                                                      |
 ------------------------------------------------------------------------
 
+
+*** Notes by Roberto Fresca ***
+
+- Added Muroge Monaco (set 2).
+- Added the missing 74s288 dump (32x8 PROM located at 1B) from the new set.
+- Confirmed the MC6845 at $4000/$4001.
+- Corrected screen size acording to MC6845 registers.
+- Corrected visible area acording to MC6845 registers. The last characters line looks odd, but should be visible.
+- There are not illegal opcodes. The above mentioned are in fact strings (plain ASCII text).
+
+MC6845 registers:
+reg (hex):  00  01  02  03  04  05  06  07  08  09  0A  0B  0C  0D  0E  0F  10  11
+val (hex):  27  20  22  04  26  00  20  20  00  07  00  00  80  00  00  00  ns  ns
+
 */
 
 #include "driver.h"
@@ -86,8 +100,8 @@ static UINT8 *murogem_videoram;
 
 static ADDRESS_MAP_START( murogem_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x007f) AM_RAM
-	AM_RANGE(0x4000, 0x4000) AM_WRITE(crtc6845_address_w)// i think
-	AM_RANGE(0x4001, 0x4001) AM_WRITE(crtc6845_register_w)// i think
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(crtc6845_address_w)
+	AM_RANGE(0x4001, 0x4001) AM_WRITE(crtc6845_register_w)
 	AM_RANGE(0x5000, 0x5000) AM_READ(input_port_0_r)
 	AM_RANGE(0x5800, 0x5800) AM_READ(input_port_1_r)
 	AM_RANGE(0x7000, 0x7000) AM_WRITE(MWA8_NOP) // sound? payout?
@@ -148,6 +162,10 @@ static const gfx_decode gfxdecodeinfo[] =
 	{ -1 }
 };
 
+
+PALETTE_INIT(murogem)
+{}
+
 VIDEO_START(murogem)
 {
 	return 0;
@@ -190,11 +208,12 @@ static MACHINE_DRIVER_START( murogem )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER )
-	MDRV_SCREEN_SIZE(256, 256)
-	MDRV_VISIBLE_AREA(0, 256-1, 0, 256-16-1)
+	MDRV_SCREEN_SIZE((39+1)*8, (38+1)*8)           // Taken from MC6845 init, registers 00 & 04. Normally programmed with (value-1).
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 32*8-1)    // Taken from MC6845 init, registers 01 & 06.
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(0x100)
 
+	MDRV_PALETTE_INIT(murogem)
 	MDRV_VIDEO_START(murogem)
 	MDRV_VIDEO_UPDATE(murogem)
 MACHINE_DRIVER_END
@@ -208,7 +227,24 @@ ROM_START( murogem )
 	ROM_REGION( 0x400, REGION_GFX1, 0 )
 	ROM_LOAD( "a2.6e", 0x000, 0x400, CRC(86e053da) SHA1(b7cdddca273204513c818384860883bf54cf9434)  )
 
+	ROM_REGION( 0x20, REGION_PROMS, 0 )
+	ROM_LOAD( "a3.1b", 0x0000, 0x0020, CRC(abddfb6b) SHA1(ed78b93701b5a3bf2053d2584e9a354fb6cec203) )	/* 74s288 at 1B */
+
+ROM_END
+
+ROM_START( murogema )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "poker.02", 0xf000, 0x0800, CRC(e82a5bed) SHA1(556a041cd90e628b6c26824e58cee679dfd59f50)  )
+	ROM_LOAD( "poker.03", 0xf800, 0x0800, CRC(f3fe3f12) SHA1(9c73fbaee20098c734431c6af3168986630dcb67)  )
+
+	ROM_REGION( 0x400, REGION_GFX1, 0 )
+	ROM_LOAD( "poker.01", 0x000, 0x400, CRC(164d7443) SHA1(1421a3d32d1296a2544da16b51ade94a58e8ba03)  )
+
+	ROM_REGION( 0x20, REGION_PROMS, 0 )
+	ROM_LOAD( "a3.1b", 0x0000, 0x0020, CRC(abddfb6b) SHA1(ed78b93701b5a3bf2053d2584e9a354fb6cec203) )	/* 74s288 at 1B. Originally named 6336.pkr */
+
 ROM_END
 
 
-GAME( 198?, murogem, 0, murogem, murogem, 0, ROT0, "unknown", "Muroge Monaco",GAME_NO_SOUND|GAME_WRONG_COLORS )
+GAME( 198?,	murogem, 0, murogem, murogem, 0, ROT0, "unknown", "Muroge Monaco (set 1)",GAME_NO_SOUND|GAME_WRONG_COLORS )
+GAME( 198?, murogema, murogem, murogem, murogem, 0, ROT0, "unknown", "Muroge Monaco (set 2)",GAME_NO_SOUND|GAME_WRONG_COLORS )

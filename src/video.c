@@ -134,6 +134,10 @@ int video_init(void)
 
 			/* reset VBLANK timing */
 			info->vblank_time = time_zero;
+
+			/* register for save states */
+			state_save_register_item("video", scrnum, info->vblank_time.seconds);
+			state_save_register_item("video", scrnum, info->vblank_time.subseconds);
 		}
 
 	/* create spriteram buffers if necessary */
@@ -744,6 +748,7 @@ void video_frame_update(void)
 		sound_frame_update();
 
 		/* finish updating the screens */
+		if (!paused)
 		for (scrnum = 0; scrnum < MAX_SCREENS; scrnum++)
 			if (Machine->drv->screen[scrnum].tag != NULL)
 				video_screen_update_partial(scrnum, Machine->screen[scrnum].visarea.max_y);

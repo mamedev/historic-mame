@@ -395,7 +395,7 @@ int audit_verify_roms (int game, verify_printf_proc verify_printf)
 				!audit_is_rom_used (clone_of, aud[i].exphash))
 			{
 				uniqueRomsFound++;
-				if (aud[i].status != AUD_ROM_NOT_FOUND)
+				if (aud[i].status != AUD_ROM_NOT_FOUND && aud[i].status != AUD_DISK_NOT_FOUND)
 					cloneRomsFound++;
 			}
 

@@ -1,22 +1,37 @@
 <?xml version="1.0"?>
 <mamelayout version="2">
+	<element name="door0" defstate="1">
+		<rect state="0">
+			<color red="0.0" green="0.0" blue="0.0" />
+		</rect>
+		<text string="DOOR OPEN" state="0">
+			<color red="1.0" green="1.0" blue="1.0" />
+			<bounds x="0" y="0.1" width="1" height="0.8" />
+		</text>
+	</element>
+
 	<view name="Full Output">
+		<bezel name="door" element="door0">
+			<bounds x="370" y="270" width="30" height="10" />
+		</bezel>
 		<screen index="0">
 			<bounds x="0" y="0" width="400" height="280" />
 		</screen>
 		<screen index="1">
-			<bounds x="0" y="251" width="288" height="29" />
+			<bounds x="0" y="266" width="144" height="14" />
 		</screen>
 	</view>
-	<view name="Adder 2 Output Only (4:3)">
+	<view name="Adder 2 Output Only (400:280)">
 		<screen index="0">
-			<bounds left="0" top="0" right="4" bottom="3" />
+			<bounds left="0" top="0" right="400" bottom="280" />
 		</screen>
 	</view>
-	<view name="VFD Only (288:29)">
+	<view name="VFD Only (144:17)">
 		<screen index="1">
-			<bounds x="0" y="0" width="288" height="29" />
+			<bounds x="0" y="0" width="144" height="17" />
 		</screen>
 	</view>
 </mamelayout>
+
+
 
