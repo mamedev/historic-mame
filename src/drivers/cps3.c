@@ -342,7 +342,10 @@ ROM_END
 
 ROM_START( sfiii3 )
 	ROM_REGION( 0x080000, REGION_USER1, 0 ) /* bios region */
-	ROM_LOAD( "29f400.u2", 0x000000, 0x080000, CRC(74205250) SHA1(c3e83ace7121d32da729162662ec6b5285a31211) )
+	/* why was this loading the sfiii.zip bios?? mistake? or does it work with both? */
+//  ROM_LOAD( "29f400.u2", 0x000000, 0x080000, CRC(74205250) SHA1(c3e83ace7121d32da729162662ec6b5285a31211) ) // uuh, this is the sfiii bios...
+	/* this one is from a usa version of sf3 3rd strike */
+	ROM_LOAD( "sf33usa.bin", 0x000000, 0x080000, CRC(ecc545c1) SHA1(e39083820aae914fd8b80c9765129bedb745ceba) )
 
 	#ifdef LOAD_CD_CONTENT
 	/* Note: These regions contains the rom data extracted from the cd.

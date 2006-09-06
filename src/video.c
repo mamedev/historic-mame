@@ -20,9 +20,6 @@
 
 #include "snap.lh"
 
-#if defined(MAME_DEBUG) && !defined(NEW_DEBUGGER)
-#include "mamedbg.h"
-#endif
 
 
 /***************************************************************************
@@ -787,10 +784,6 @@ void video_frame_update(void)
 
 	/* draw the user interface */
 	ui_update_and_render();
-
-#if defined(MAME_DEBUG) && !defined(NEW_DEBUGGER)
-	debug_trace_delay = 0;
-#endif
 
 	/* call the OSD to update */
 	skipping_this_frame = osd_update(mame_timer_get_time());

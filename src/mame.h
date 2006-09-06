@@ -145,17 +145,14 @@ struct _running_machine
 
 	/* debugger-related information */
 	int						debug_mode;			/* was debug mode enabled? */
-#if defined(MAME_DEBUG) && !defined(NEW_DEBUGGER)
-	mame_bitmap *			debug_bitmap;		/* bitmap where the debugger is rendered */
-	pen_t *					debug_pens;			/* pen array for the debugger, analagous to the pens above */
-	pen_t *					debug_remapped_colortable;/* colortable mapped through the pens, as for the game */
-	gfx_element *			debugger_font;		/* font used by the debugger */
-#endif
 
 	/* MESS-specific information */
 #ifdef MESS
 	struct IODevice *		devices;
 #endif /* MESS */
+
+	/* driver-specific information */
+	void *					driver_data;		/* drivers can hang data off of here instead of using globals */
 };
 
 

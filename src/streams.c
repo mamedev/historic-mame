@@ -598,6 +598,13 @@ static void stream_generate_samples(sound_stream *stream, int samples)
 
 	/* okay, all the inputs are up-to-date ... call the callback */
 	VPRINTF(("  callback(%p, %d)\n", stream, samples));
+
+	/* aye, a bug is lurking here; sometimes we have extreme sample counts */
+	if (samples > stream->sample_rate)
+	{
+		logerror("samples > sample rate?! %d %d\n", samples, stream->sample_rate);
+		samples = stream->sample_rate;
+	}
 	(*stream->callback)(stream->param, stream->input_array, stream->output_array, samples);
 	VPRINTF(("  callback done\n"));
 }

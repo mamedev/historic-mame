@@ -115,7 +115,8 @@ struct _debug_view_disasm
 	UINT8 *			last_opcode_base;			/* last opcode base */
 	UINT8 *			last_opcode_arg_base;		/* last opcode arg base */
 	UINT32			last_change_count;			/* last comment change count */
-	UINT32			last_backward_pc;			/* pc that the view->top_row is pointing to */
+	offs_t			last_pcbyte;				/* last PC byte value */
+	UINT32			active_address;				/* the address cursor_row is pointing to */
 	int				divider1, divider2;			/* left and right divider columns */
 	int				divider3;					/* comment divider column */
 	UINT8			live_tracking;				/* track the value of the live expression? */
@@ -513,6 +514,11 @@ void debug_view_set_property(debug_view *view, int property, debug_property_info
 				view->cursor_row = value.i;
 				view->update_pending = TRUE;
 				debug_view_end_update(view);
+			}
+			if (view->type == DVT_DISASSEMBLY)
+			{
+				debug_view_disasm *dasmdata = view->extra_data;
+				dasmdata->active_address = dasmdata->address[view->cursor_row];
 			}
 			break;
 
@@ -1264,11 +1270,15 @@ static int disasm_alloc(debug_view *view)
 	dasmdata->right_column = (total_comments > 0) ? DVP_DASM_RIGHTCOL_COMMENTS : DVP_DASM_RIGHTCOL_RAW;
 	dasmdata->backwards_steps = 3;
 	dasmdata->dasm_width = DEFAULT_DASM_WIDTH;
-	dasmdata->last_backward_pc = 0;
+	dasmdata->active_address = 0;
 
 	/* stash the extra data pointer */
 	view->total_rows = DEFAULT_DASM_LINES;
 	view->extra_data = dasmdata;
+
+	/* we support cursors */
+	view->supports_cursor = TRUE;
+
 	return 1;
 }
 
@@ -1521,7 +1531,7 @@ static void disasm_recompute(debug_view *view, offs_t pc, int startline, int lin
 		pcbyte = ADDR2BYTE_MASKED(pc, cpuinfo, ADDRESS_SPACE_PROGRAM);
 
 		/* convert back and set the address of this instruction */
-		dasmdata->address[instr] = pcbyte;
+		dasmdata->address[instr] = pcbyte; // ! This might make more sense as the following : BYTE2ADDR(pcbyte, cpuinfo, ADDRESS_SPACE_PROGRAM); !
 		sprintf(&destbuf[0], " %0*X  ", cpuinfo->space[ADDRESS_SPACE_PROGRAM].logchars, BYTE2ADDR(pcbyte, cpuinfo, ADDRESS_SPACE_PROGRAM));
 
 		/* make sure we can translate the address */
@@ -1700,7 +1710,7 @@ static void disasm_update(debug_view *view)
 			view->left_col = 0;
 
 			/* recompute from where we last recomputed! */
-			disasm_recompute(view, dasmdata->last_backward_pc, 0, view->total_rows, original_cpunum);
+			disasm_recompute(view, BYTE2ADDR(dasmdata->address[0], cpuinfo, ADDRESS_SPACE_PROGRAM), 0, view->total_rows, original_cpunum);
 		}
 		else
 		{
@@ -1709,8 +1719,25 @@ static void disasm_update(debug_view *view)
 			view->left_col = 0;
 
 			disasm_recompute(view, backpc, 0, view->total_rows, original_cpunum);
-			dasmdata->last_backward_pc = backpc ;
 		}
+	}
+
+	/* if the PC is different from last time, reset the cursor to match */
+	if (pcbyte != dasmdata->last_pcbyte)
+	{
+		/* find the row with the PC on it */
+		for (row = 0; row < view->visible_rows; row++)
+		{
+			UINT32 effrow = view->top_row + row;
+			if (effrow >= dasmdata->allocated_rows)
+				break;
+			if (pcbyte == dasmdata->address[effrow])
+			{
+				view->cursor_row = effrow;
+				dasmdata->active_address = pcbyte;
+			}
+		}
+		dasmdata->last_pcbyte = pcbyte;
 	}
 
 	/* loop over visible rows */
@@ -1733,6 +1760,13 @@ static void disasm_update(debug_view *view)
 			{
 				attrib = DCA_CURRENT;
 				disasm_recompute(view, pc, effrow, 1, original_cpunum);
+
+				/* if the PC is different from last time, reset the cursor to match */
+				if (pcbyte != dasmdata->last_pcbyte)
+				{
+					view->cursor_row =
+					dasmdata->active_address = pcbyte;
+				}
 			}
 
 			/* if we're on a line with a breakpoint, tag it changed */
@@ -1741,6 +1775,13 @@ static void disasm_update(debug_view *view)
 				for (bp = cpuinfo->first_bp; bp; bp = bp->next)
 					if (dasmdata->address[effrow] == ADDR2BYTE_MASKED(bp->address, cpuinfo, ADDRESS_SPACE_PROGRAM))
 						attrib = DCA_CHANGED;
+			}
+
+			/* if we're on the active column and everything is couth, highlight it */
+			if (view->cursor_visible && effrow == view->cursor_row)
+			{
+				if (dasmdata->active_address == dasmdata->address[effrow])
+					attrib |= DCA_SELECTED;
 			}
 
 			/* get the effective string */
@@ -1753,7 +1794,8 @@ static void disasm_update(debug_view *view)
 				dest->attrib = (effcol <= dasmdata->divider1 || effcol >= dasmdata->divider2) ? (attrib | DCA_ANCILLARY) : attrib;
 
 				/* comments are just green for now - maybe they shouldn't even be this? */
-				if (effcol >= dasmdata->divider2 && dasmdata->right_column == DVP_DASM_RIGHTCOL_COMMENTS) attrib |= DCA_COMMENT;
+				if (effcol >= dasmdata->divider2 && dasmdata->right_column == DVP_DASM_RIGHTCOL_COMMENTS)
+					attrib |= DCA_COMMENT;
 
 				dest++;
 				col++;
@@ -1772,6 +1814,84 @@ static void disasm_update(debug_view *view)
 
 	/* restore the original CPU context */
 	cpuintrf_pop_context();
+}
+
+
+/*-------------------------------------------------
+    disasm_handle_char - handle a character typed
+    within the current view
+-------------------------------------------------*/
+
+static void disasm_handle_char(debug_view *view, char chval)
+{
+	debug_view_disasm *dasmdata = view->extra_data;
+	UINT8 end_buffer = 3;
+	INT32 temp;
+
+	switch (chval)
+	{
+		case DCH_UP:
+			if (view->cursor_row > 0)
+				view->cursor_row--;
+			break;
+
+		case DCH_DOWN:
+			if (view->cursor_row < view->total_rows - 1)
+				view->cursor_row++;
+			break;
+
+		case DCH_PUP:
+			temp = view->cursor_row - (view->visible_rows - end_buffer);
+
+			if (temp < 0)
+				view->cursor_row = 0;
+			else
+				view->cursor_row = temp;
+			break;
+
+		case DCH_PDOWN:
+			temp = view->cursor_row + (view->visible_rows - end_buffer);
+
+			if (temp > (view->total_rows - 1))
+				view->cursor_row = (view->total_rows - 1);
+			else
+				view->cursor_row = temp;
+			break;
+
+		case DCH_HOME:				/* set the active column to the PC */
+		{
+			const debug_cpu_info *cpuinfo = debug_get_cpu_info(dasmdata->cpunum);
+			offs_t pc = cpunum_get_reg(dasmdata->cpunum, REG_PC);
+			int i;
+
+			pc = ADDR2BYTE_MASKED(pc, cpuinfo, ADDRESS_SPACE_PROGRAM);
+
+			/* figure out which row the pc is on */
+			for (i = 0; i < dasmdata->allocated_rows; i++)
+			{
+				if (dasmdata->address[i] == pc)
+					view->cursor_row = i;
+			}
+			break;
+		}
+
+		case DCH_CTRLHOME:
+			view->cursor_row = 0;
+			break;
+
+		case DCH_CTRLEND:
+			view->cursor_row = view->total_rows - 1;
+			break;
+	}
+
+	/* get the address under the cursor_row */
+	dasmdata->active_address = dasmdata->address[view->cursor_row];
+
+	/* scroll if out of range */
+	if (view->cursor_row < view->top_row)
+		view->top_row = view->cursor_row;
+	if (view->cursor_row >= view->top_row + view->visible_rows - end_buffer)
+		view->top_row = view->cursor_row - view->visible_rows + end_buffer;
 }
 
 
@@ -1810,6 +1930,10 @@ static void	disasm_getprop(debug_view *view, UINT32 property, debug_property_inf
 			value->i = dasmdata->dasm_width;
 			break;
 
+		case DVP_DASM_ACTIVE_ADDRESS:
+			value->i = dasmdata->active_address;
+			break;
+
 		default:
 			fatalerror("Attempt to get invalid property %d on debug view type %d", property, view->type);
 			break;
@@ -1818,7 +1942,7 @@ static void	disasm_getprop(debug_view *view, UINT32 property, debug_property_inf
 
 
 /*-------------------------------------------------
-    disasm_getprop - set the value
+    disasm_setprop - set the value
     of a given property
 -------------------------------------------------*/
 
@@ -1900,6 +2024,20 @@ static void	disasm_setprop(debug_view *view, UINT32 property, debug_property_inf
 				view->update_pending = TRUE;
 				debug_view_end_update(view);
 			}
+			break;
+
+		case DVP_CHARACTER:
+			debug_view_begin_update(view);
+			disasm_handle_char(view, value.i);
+			view->update_pending = TRUE;
+			debug_view_end_update(view);
+			break;
+
+		case DVP_DASM_ACTIVE_ADDRESS:
+			debug_view_begin_update(view);
+			dasmdata->active_address = value.i;
+			view->update_pending = TRUE;
+			debug_view_end_update(view);
 			break;
 
 		default:
@@ -2079,6 +2217,7 @@ static void memory_set_cursor_pos(debug_view *view, offs_t address, UINT8 shift)
 	debug_view_memory *memdata = view->extra_data;
 	UINT32 bytes_per_row;
 	int curx, cury;
+	UINT8 end_buffer = 2;
 
 	/* offset the address by the byte offset */
 	address -= memdata->byte_offset;
@@ -2128,14 +2267,14 @@ static void memory_set_cursor_pos(debug_view *view, offs_t address, UINT8 shift)
 	}
 
 	/* set the position, clamping to the window bounds */
-	view->cursor_col = (curx < 0) ? 0 : (curx >= view->total_cols) ? (view->total_cols - 1) : curx;
-	view->cursor_row = (cury < 0) ? 0 : (cury >= view->total_rows) ? (view->total_rows - 1) : cury;
+	view->cursor_col = (curx < 0) ? 0 : (curx >= view->total_cols) ? (view->total_cols - end_buffer) : curx;
+	view->cursor_row = (cury < 0) ? 0 : (cury >= view->total_rows) ? (view->total_rows - end_buffer) : cury;
 
 	/* scroll if out of range */
 	if (view->cursor_row < view->top_row)
 		view->top_row = view->cursor_row;
-	if (view->cursor_row >= view->top_row + view->visible_rows)
-		view->top_row = view->cursor_row - view->visible_rows + 1;
+	if (view->cursor_row >= view->top_row + view->visible_rows - end_buffer)
+		view->top_row = view->cursor_row - view->visible_rows + end_buffer;
 }
 
 
@@ -2325,6 +2464,7 @@ static void memory_handle_char(debug_view *view, char chval)
 	static const char hexvals[] = "0123456789abcdef";
 	char *hexchar = strchr(hexvals, tolower(chval));
 	UINT32 bytes_per_row;
+	UINT32 tempaddr;
 	offs_t maxaddr;
 	offs_t address;
 	UINT8 shift;
@@ -2336,12 +2476,68 @@ static void memory_handle_char(debug_view *view, char chval)
 	if (!memory_get_cursor_pos(view, &address, &shift))
 		return;
 
+	/* handle the incoming key */
 	/* up/down work the same regardless */
 	bytes_per_row = memdata->chunks_displayed * memdata->bytes_per_chunk;
-	if (chval == DCH_UP && view->cursor_row > 0)
-		address -= bytes_per_row;
-	if (chval == DCH_DOWN && view->cursor_row < view->total_rows - 1)
-		address += bytes_per_row;
+
+	switch (chval)
+	{
+		case DCH_UP:
+			if (view->cursor_row > 0)
+				address -= bytes_per_row;
+			break;
+
+		case DCH_DOWN:
+			if (view->cursor_row < view->total_rows - 1)
+				address += bytes_per_row;
+			break;
+
+		case DCH_PUP:
+			tempaddr = address - (bytes_per_row * (view->visible_rows-2)) ;
+			if (tempaddr > address)						/* unsigned wraparound */
+				address = address % bytes_per_row;
+			else
+				address = tempaddr;
+			break;
+
+		case DCH_PDOWN:
+			tempaddr = address + (bytes_per_row * (view->visible_rows-2)) ;
+			if (tempaddr > maxaddr)
+				address = (maxaddr - (bytes_per_row-1)) + (address % bytes_per_row);
+			else
+				address = tempaddr;
+			break;
+
+		case DCH_HOME:
+			address -= address % bytes_per_row;
+			shift = (memdata->bytes_per_chunk * 8) - 1;
+			break;
+
+		case DCH_CTRLHOME:
+			address = 0;
+			shift = (memdata->bytes_per_chunk * 8) - 1;
+			break;
+
+		case DCH_END:
+			address += (bytes_per_row - (address % bytes_per_row) - 1);
+			shift = 0;
+			break;
+
+		case DCH_CTRLEND:
+			address = maxaddr;
+			shift = 0;
+			break;
+
+		case DCH_CTRLRIGHT:
+			if (address < maxaddr-memdata->bytes_per_chunk)
+				address += memdata->bytes_per_chunk;
+			break;
+
+		case DCH_CTRLLEFT:
+			if (address >= memdata->bytes_per_chunk)
+				address -= memdata->bytes_per_chunk;
+			break;
+	}
 
 	/* switch off of the current chunk size */
 	cpuintrf_push_context(memdata->cpunum);

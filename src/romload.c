@@ -125,7 +125,7 @@ const rom_entry *rom_first_chunk(const rom_entry *romp)
 const rom_entry *rom_next_chunk(const rom_entry *romp)
 {
 	romp++;
-	return (ROMENTRY_ISCONTINUE(romp)) ? romp : NULL;
+	return (ROMENTRY_ISCONTINUE(romp) || ROMENTRY_ISIGNORE(romp)) ? romp : NULL;
 }
 
 
@@ -731,6 +731,13 @@ static int process_rom_entries(rom_load_data *romdata, const rom_entry *romp)
 			goto fatalerror;
 		}
 
+		/* if this is an ignore entry, it's invalid */
+		if (ROMENTRY_ISIGNORE(romp))
+		{
+			printf("Error in RomModule definition: ROM_IGNORE not preceded by ROM_LOAD\n");
+			goto fatalerror;
+		}
+
 		/* if this is a reload entry, it's invalid */
 		if (ROMENTRY_ISRELOAD(romp))
 		{
@@ -768,7 +775,7 @@ static int process_rom_entries(rom_load_data *romdata, const rom_entry *romp)
 				/* loop until we run out of reloads */
 				do
 				{
-					/* loop until we run out of continues */
+					/* loop until we run out of continues/ignores */
 					do
 					{
 						rom_entry modified_romp = *romp++;
@@ -783,11 +790,14 @@ static int process_rom_entries(rom_load_data *romdata, const rom_entry *romp)
 						explength += ROM_GETLENGTH(&modified_romp);
 
 						/* attempt to read using the modified entry */
-						readresult = read_rom_data(romdata, &modified_romp);
-						if (readresult == -1)
-							goto fatalerror;
+						if (!ROMENTRY_ISIGNORE(&modified_romp))
+						{
+							readresult = read_rom_data(romdata, &modified_romp);
+							if (readresult == -1)
+								goto fatalerror;
+						}
 					}
-					while (ROMENTRY_ISCONTINUE(romp));
+					while (ROMENTRY_ISCONTINUE(romp) || ROMENTRY_ISIGNORE(romp));
 
 					/* if this was the first use of this file, verify the length and CRC */
 					if (baserom)

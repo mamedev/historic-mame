@@ -26,7 +26,7 @@
 #define CMDFLAG_NONE						(0x0000)
 #define CMDFLAG_KEEP_QUOTES					(0x0001)
 
-/* values for the error code in an command error */
+/* values for the error code in a command error */
 #define CMDERR_NONE							(0)
 #define CMDERR_UNKNOWN_COMMAND				(1)
 #define CMDERR_AMBIGUOUS_COMMAND			(2)

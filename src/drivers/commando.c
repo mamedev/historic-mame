@@ -384,6 +384,50 @@ ROM_START( commandj )
 	ROM_LOAD( "vtb6.6e",  0x0500, 0x0100, CRC(0eaf5158) SHA1(bafd4108708f66cd7b280e47152b108f3e254fc9) )	/* video timing (not used) */
 ROM_END
 
+ROM_START( commandb )
+	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
+	ROM_LOAD( "commandb_04_9m_27256.bin",  0x0000, 0x8000, CRC(348a7654) SHA1(f3668c47c154a9c7d7afeabb0259c9bc56e847ac) )
+	ROM_LOAD( "cm03.8m",  0x8000, 0x4000, CRC(35486542) SHA1(531a85c9e03970ce037be84f2240c2df6f6e3ec1) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "cm02.9f",  0x0000, 0x4000, CRC(f9cc4a74) SHA1(ee8dd73919c6f47f62cc6d999de9510db9f79b8f) )
+
+	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "vt01.5d",  0x0000, 0x4000, CRC(505726e0) SHA1(2435c87c9c9d78a6e703cf0e1f6a0288207fcd4c) )	// characters
+
+	ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "vt11.5a",  0x00000, 0x4000, CRC(7b2e1b48) SHA1(5d49e1d8146e4ef744445b68f35677302e875a85) )	// SCR X (tiles)
+	ROM_LOAD( "vt12.6a",  0x04000, 0x4000, CRC(81b417d3) SHA1(5ec7e3f0c8069384a5f6eb39232c228b9d7b8c0c) )	// SCR X
+	ROM_LOAD( "vt13.7a",  0x08000, 0x4000, CRC(5612dbd2) SHA1(9e4e1a22b6cbf60607b9a81dae34482ae55f7c47) )	// SCR Y
+	ROM_LOAD( "vt14.8a",  0x0c000, 0x4000, CRC(2b2dee36) SHA1(8792278464fa3da47176582025f6673a15a581e2) )	// SCR Y
+	ROM_LOAD( "vt15.9a",  0x10000, 0x4000, CRC(de70babf) SHA1(6717e23baf55f84d3143fb432140a7c3e102ac26) )	// SCR Z
+	ROM_LOAD( "vt16.10a", 0x14000, 0x4000, CRC(14178237) SHA1(f896e71c7004349c9a46155edfd9f0aaa186065d) )	// SCR Z
+
+	ROM_REGION( 0x18000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "vt05.7e",  0x00000, 0x4000, CRC(79f16e3d) SHA1(04e1f03a4d6b4cc2b81bce3a290bbb95de900d35) )	// sprites
+	ROM_LOAD( "vt06.8e",  0x04000, 0x4000, CRC(26fee521) SHA1(2fbfc73ee860f72a20229a01d4da9f5cc2e858d3) )
+	ROM_LOAD( "vt07.9e",  0x08000, 0x4000, CRC(ca88bdfd) SHA1(548b05460bc7983cc81f15c70e87f47d10db2812) )
+	ROM_LOAD( "vt08.7h",  0x0c000, 0x4000, CRC(2019c883) SHA1(883c0156ceab99f4849fe36972c4162b4ac8c216) )
+	ROM_LOAD( "vt09.8h",  0x10000, 0x4000, CRC(98703982) SHA1(ba9a9b0dcadd4f52502828408c4a19b0bd518351) )
+	ROM_LOAD( "vt10.9h",  0x14000, 0x4000, CRC(f069d2f8) SHA1(2c92300a9407470b34965021de882f1f7a84730c) )
+
+        /* I did not dumped the PROMs of the bootleg board, I'm just adding the parent ones, it has the same
+           number of PROMs on the same board locations as the original board. */
+	ROM_REGION( 0x600, REGION_PROMS, 0 )
+	ROM_LOAD( "vtb1.1d",  0x0000, 0x0100, CRC(3aba15a1) SHA1(8b057f6e26155dd9e48bde182e680fce4519f600) )	/* red */
+	ROM_LOAD( "vtb2.2d",  0x0100, 0x0100, CRC(88865754) SHA1(ca6dddca98baf00a65b2fb70b69cf4704ef8c831) )	/* green */
+	ROM_LOAD( "vtb3.3d",  0x0200, 0x0100, CRC(4c14c3f6) SHA1(644ac17c7413f094ec9a15cba87bbd421b26321f) )	/* blue */
+	ROM_LOAD( "vtb4.1h",  0x0300, 0x0100, CRC(b388c246) SHA1(038f9851699331ad887b6281a9df053dca3db8fd) )	/* palette selector (not used) */
+	ROM_LOAD( "vtb5.6l",  0x0400, 0x0100, CRC(712ac508) SHA1(5349d722ab6733afdda65f6e0a98322f0d515e86) )	/* interrupt timing (not used) */
+	ROM_LOAD( "vtb6.6e",  0x0500, 0x0100, CRC(0eaf5158) SHA1(bafd4108708f66cd7b280e47152b108f3e254fc9) )	/* video timing (not used) */
+
+        /* There's a 16L8A PAL (with a 74LS244P and a 74LS367AP) on a tiny sub-board between the CPU1 ROMs
+           and the CPU1 (a Z80 compatible NEC D780C-1). This sub-board is plugged on what seems to be
+           a ROM socket. */
+	ROM_REGION( 0x0200, REGION_PLDS, ROMREGION_DISPOSE )
+	ROM_LOAD( "commandb_pal16l8a.bin", 0x0000, 0x0104, NO_DUMP ) /* I Didn't try to dump it... */
+ROM_END
+
 ROM_START( sinvasn )
 	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )	/* 64k for code + 64k for decrypted opcodes */
 	ROM_LOAD( "sp04.9m",  0x0000, 0x8000, CRC(33f9601e) SHA1(71182227b77fccbbc1d89b5828aa86dcc64ca05e) )
@@ -500,5 +544,6 @@ static DRIVER_INIT( spaceinv )
 GAME( 1985, commando, 0,        commando, commando, commando, ROT90, "Capcom", "Commando (World)", 0 )
 GAME( 1985, commandu, commando, commando, commandu, commando, ROT90, "Capcom (Data East USA license)", "Commando (US)", 0 )
 GAME( 1985, commandj, commando, commando, commando, commando, ROT90, "Capcom", "Senjou no Ookami", 0 )
+GAME( 1985, commandb, commando, commando, commando, spaceinv, ROT90, "bootleg", "Commando (bootleg)", 0 )
 GAME( 1985, sinvasn,  commando, commando, commando, commando, ROT90, "Capcom", "Space Invasion (Europe)", 0 )
 GAME( 1985, sinvasnb, commando, commando, commando, spaceinv, ROT90, "bootleg", "Space Invasion (bootleg)", 0 )

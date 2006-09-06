@@ -322,7 +322,7 @@ int driver_get_index(const char *name)
 
 	/* scan the LRU list first */
 	for (lurnum = 0; lurnum < DRIVER_LRU_SIZE; lurnum++)
-                if (mame_stricmp(drivers[driver_lru[lurnum]]->name, name) == 0)
+		if (mame_stricmp(drivers[driver_lru[lurnum]]->name, name) == 0)
 		{
 			/* if not first, swap with the head */
 			if (lurnum != 0)
@@ -336,7 +336,7 @@ int driver_get_index(const char *name)
 
 	/* scan for a match in the drivers -- slow! */
 	for (drvnum = 0; drivers[drvnum] != NULL; drvnum++)
-                if (mame_stricmp(drivers[drvnum]->name, name) == 0)
+		if (mame_stricmp(drivers[drvnum]->name, name) == 0)
 		{
 			memmove((void *)&driver_lru[1], (void *)&driver_lru[0], sizeof(driver_lru[0]) * (DRIVER_LRU_SIZE - 1));
 			driver_lru[0] = drvnum;
@@ -436,7 +436,7 @@ static int penalty_compare(const char *source, const char *target)
 	int last = 1;
 
 	/* scan the strings */
-	for (; *source && *target; target++)
+	for ( ; *source && *target; target++)
 	{
 		/* do a case insensitive match */
 		int match = (tolower(*source) == tolower(*target));

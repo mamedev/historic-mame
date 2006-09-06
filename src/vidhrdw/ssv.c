@@ -292,6 +292,8 @@ char eaglshot_dirty, *eaglshot_dirty_tile;
     CRT controller, registers that are written
     (resolution, visible area, flipping etc. ?)
 
+
+
                 1c0060-7f:
 
     drifto94:   0000 0025 00cd 01c6 - 0001 0013 0101 0106
@@ -814,6 +816,7 @@ static void ssv_draw_sprites(mame_bitmap *bitmap)
 					case 0x4940:	sy += 0x60;		break;		// srmp4
 					case 0x5940:	sy -= 0x20;		break;		// drifto94, dynagear, eaglshot, keithlcy, mslider, stmblade
 					case 0x5950:	sy += 0xdf;		break;		// gdfs
+					case 0x7940:	sy -= 0x10;		break;		// ultrax, twineag2
 				}
 
 				ssv_draw_row(bitmap, sx, sy, scroll);
@@ -867,10 +870,15 @@ static void ssv_draw_sprites(mame_bitmap *bitmap)
 				if (ssv_scroll[0x74/2] == 0x6500)	// vasara
 					sy = 0xe8 - sy;
 
-				if (ssv_scroll[0x74/2] & 0x8000)	// srmp7, twineag2, ultrax
+				if (ssv_scroll[0x74/2] & 0x8000)		// srmp7, twineag2, ultrax
 				{
-					sx	=	ssv_sprites_offsx + sx;
-					sy	=	ssv_sprites_offsy + sy;
+					if (ssv_scroll[0x76/2] & 0x4000) {					// twineag2, ultrax
+						sx	=	ssv_sprites_offsx + sx - (xnum-1) * 8;
+						sy	=	ssv_sprites_offsy + sy - (ynum * 8) / 2;
+					} else {									// srmp7
+						sx	=	ssv_sprites_offsx + sx;
+						sy	=	ssv_sprites_offsy + sy;
+					}
 				}
 				else if (ssv_scroll[0x76/2] & 0x1000)	// eaglshot
 				{

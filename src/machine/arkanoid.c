@@ -8,15 +8,21 @@
 ***************************************************************************/
 
 #include "driver.h"
+#include "arkanoid.h"
 
+
+/* To log specific reads and writes of the bootlegs */
+#define ARKANOID_BOOTLEG_VERBOSE 1
 
 
 UINT8 arkanoid_paddle_select;
+UINT8 arkanoid_paddle_value;
 
 static UINT8 z80write,fromz80,m68705write,toz80;
 
 static UINT8 portA_in,portA_out,ddrA;
 static UINT8 portC_out,ddrC;
+
 
 MACHINE_START( arkanoid )
 {
@@ -132,90 +138,397 @@ READ8_HANDLER( arkanoid_input_2_r )
 {
 	if (arkanoid_paddle_select)
 	{
-		return input_port_3_r(offset);
+		arkanoid_paddle_value = input_port_3_r(offset);
 	}
 	else
 	{
-		return input_port_2_r(offset);
+		arkanoid_paddle_value = input_port_2_r(offset);
 	}
+
+	return arkanoid_paddle_value;
 }
+
 
 /*
 
-    Paddle 2 MCU simulation
+Bootlegs stuff
 
-    TODO:
-    \-Fix crashes and level finishing.
-    \-Finish the level pointer table & check the real thing for true level pattern...
-    \-(track_kludge_r)Find a better way to handle the paddle inputs.
-    \-Code optimizations + add this into machine/arkanoid.c
+The bootlegs simulate the missing MCU behaviour with writes to 0xd018 and reads value back from 0xf002.
+Fortunately, 'arkangc', 'arkbloc2' and 'arkblock' has patched code not to bother with that.
+So I've fixed 'arkbl3' and 'paddle2' to return the expected values (code is strongly similar).
 
-    Notes:
-    \-This game is an Arkanoid 1 bootleg but with level edited to match the Arkanoid 2 ones.
-    \-Returning the right values for commands 0x38,0xff and 0x8a gives the level that has to
-    be played,but I don't have any clue about the true level pattern used.Checking Arkanoid 2
-    doesn't help much BTW...
+Some bootlegs also test some bits from 0xd008 after reading the paddle value at 0xd018.
+Their effect is completely unknown but I need to set some bits to 1 so the games are playable :
+
+  - 'arkangc'  : NO read from 0xd008 !
+  - 'arkblock' : NO read from 0xd008 !
+  - 'arkbloc2' :
+       * bit 5 must sometimes be set to 1 or you can't reach right side of the screen
+         nor select all levels at the begining of the game
+  - 'arkgcbl' :
+       * bit 1 must be set to 1 or you enter sort of endless "demo mode" when you start :
+           . you can't select your starting level (it always starts at level 1)
+           . you can't control the paddle (it automoves by following the ball)
+           . you can use the "fire" button (the game never shoots)
+           . you are awarded points as in a normal game
+           . sounds are played
+       * bit 5 must sometimes be set to 1 or you can't reach right side of the screen
+         nor select all levels at the begining of the game
+  - 'paddle2' :
+       * bits 0 and 1 must be set to 1 or the paddle goes up   (joystick issue ?)
+       * bits 2 and 3 must be set to 1 or the paddle goes down (joystick issue ?)
+       * bit 5 must sometimes be set to 1 or you can't reach right side of the screen
+         nor select all levels at the begining of the game
+
+
+TO DO (2006.09.05) :
+
+  - understand reads from 0xd008 (even if the games are playable)
+  - try to document writes to 0xd018 with unknown effect
 
 */
 
-static int paddle2_prot;
 
-READ8_HANDLER( paddle2_prot_r )
+#if ARKANOID_BOOTLEG_VERBOSE
+#define LOG_F002_R logerror("%04x: arkanoid_bootleg_f002_r - cmd = %02x - val = %02x\n",activecpu_get_pc(),arkanoid_bootleg_cmd,arkanoid_bootleg_val);
+#define LOG_D018_W logerror("%04x: arkanoid_bootleg_d018_w - data = %02x - cmd = %02x\n",activecpu_get_pc(),data,arkanoid_bootleg_cmd);
+#define LOG_D008_R logerror("%04x: arkanoid_bootleg_d008_r - val = %02x\n",activecpu_get_pc(),arkanoid_bootleg_d008_val);
+#else
+#define LOG_F002_R
+#define LOG_D018_W
+#define LOG_D008_R
+#endif
+
+
+static UINT8 arkanoid_bootleg_cmd;
+
+/* Kludge for some bootlegs that read this address */
+READ8_HANDLER( arkanoid_bootleg_f002_r )
 {
-	static UINT8 level_table_a[] =
-	{
-		0xf3,0xf7,0xf9,0xfb,0xfd,0xff,0xf5,0xe3, /* 1- 8*/
-		0xe5,0xe7,0xe9,0xeb,0xed,0xef,0xf1,0xf7, /* 9-16*/
-		0xf9,0xfb,0xfd,0xff,0x00,0x00,0x00,0x00, /*17-24*/
-		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00  /*25-32*/
-	};
-	static UINT8 level_table_b[] =
-	{
-		0x52,0x52,0x52,0x52,0x52,0x52,0x0e,0x0e, /* 1- 8*/
-		0x0e,0x0e,0x0e,0x0e,0x0e,0x0e,0x0e,0x0e, /* 9-16*/
-		0x0e,0x0e,0x0e,0x0e,0x00,0x00,0x00,0x00, /*17-24*/
-		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00  /*25-32*/
-	};
-	UINT8 *RAM = memory_region(REGION_CPU1);
-//  popmessage("%04x: %02x",activecpu_get_pc(),paddle2_prot);
+	UINT8 arkanoid_bootleg_val = 0x00;
 
-	switch (paddle2_prot)
+	switch (arkanoid_bootleg_id)
 	{
-		case 0xc3: return 0x1d;
-		case 0x24: return 0x9b;
-		/* Level pointer table */
-		case 0x38:
-		if(RAM[0xed83] == 0)    return level_table_a[RAM[0xed72]];
-		else					return RAM[0xed83];
-		case 0xff:
-		if(RAM[0xed83] == 0)	return level_table_b[RAM[0xed72]];
-		else 					return RAM[0xed83];
-		/* Guess this is used for building level       */
-		/* pointers too,but I haven't tested yet...    */
-		case 0x8a: return 0x0a;
-		/* Goes into sub-routine $2050,controls level finishing(WRONG!!!) */
-		case 0xe3:
-		if(RAM[0xed83] != 0)	return 0xff;
-		else					return 0;
-		/* Gives BAD HW message otherwise */
-		case 0x36: return 0x2d;
-		case 0xf7: return 0;
-		default: return paddle2_prot;
+		case ARKANGC:
+		case ARKBLOCK:
+			switch (arkanoid_bootleg_cmd)
+			{
+				default:
+					break;
+			}
+			LOG_F002_R
+			break;
+		case ARKBLOC2:
+			switch (arkanoid_bootleg_cmd)
+			{
+				default:
+					break;
+			}
+			LOG_F002_R
+			break;
+		case ARKGCBL:
+			switch (arkanoid_bootleg_cmd)
+			{
+				case 0x8a:  /* Current level (fixed routine) */
+					arkanoid_bootleg_val = 0xa5;
+					break;
+				case 0xff:  /* Avoid "BAD HARDWARE    " message (fixed routine) */
+					arkanoid_bootleg_val = 0xe2;
+					break;
+				default:
+					break;
+			}
+			LOG_F002_R
+			break;
+		case PADDLE2:
+			switch (arkanoid_bootleg_cmd)
+			{
+				case 0x24:  /* Avoid bad jump to 0x0066 */
+					arkanoid_bootleg_val = 0x9b;
+					break;
+				case 0x36:  /* Avoid "BAD HARDWARE    " message */
+					arkanoid_bootleg_val = 0x2d;
+					break;
+				case 0x38:  /* Start of levels table (fixed offset) */
+					arkanoid_bootleg_val = 0xf3;
+					break;
+				case 0x8a:  /* Current level (fixed routine) */
+					arkanoid_bootleg_val = 0xa5;
+					break;
+				case 0xc3:  /* Avoid bad jump to 0xf000 */
+					arkanoid_bootleg_val = 0x1d;
+					break;
+				case 0xe3:  /* Number of bricks left (fixed offset) */
+					arkanoid_bootleg_val = 0x61;
+					break;
+				case 0xf7:  /* Avoid "U69" message */
+					arkanoid_bootleg_val = 0x00;
+					break;
+				case 0xff:  /* Avoid "BAD HARDWARE    " message (fixed routine) */
+					arkanoid_bootleg_val = 0xe2;
+					break;
+				default:
+					break;
+			}
+			LOG_F002_R
+			break;
+		default:
+			logerror("%04x: arkanoid_bootleg_f002_r - cmd = %02x - unknown bootleg !\n",activecpu_get_pc(),arkanoid_bootleg_cmd);
+			break;
+	}
+
+	return arkanoid_bootleg_val;
+}
+
+/* Kludge for some bootlegs that write this address */
+WRITE8_HANDLER( arkanoid_bootleg_d018_w )
+{
+	arkanoid_bootleg_cmd = 0x00;
+
+	switch (arkanoid_bootleg_id)
+	{
+		case ARKANGC:
+		case ARKBLOCK:
+			switch (data)
+			{
+				case 0x36:  /* unneeded value : no call 0x2050, unused A and overwritten HL (0x0313 -> 0x0340) */
+					if (activecpu_get_pc() == 0x7c47)
+						arkanoid_bootleg_cmd = 0x00;
+					break;
+				case 0x38:  /* unneeded value : no call 0x2050, unused A and fixed HL (0x7bd5) */
+					if (activecpu_get_pc() == 0x7b87)
+						arkanoid_bootleg_cmd = 0x00;
+					break;
+				case 0x8a:  /* unneeded value : no call 0x2050, unused A and overwritten HL (0x7b77 -> 0x7c1c) */
+					if (activecpu_get_pc() == 0x9661)
+						arkanoid_bootleg_cmd = 0x00;
+					break;
+				case 0xe3:  /* unneeded value : call 0x2050 but fixed A (0x00) and fixed HL (0xed83) */
+					if (activecpu_get_pc() == 0x67e3)
+						arkanoid_bootleg_cmd = 0x00;
+					break;
+				case 0xf7:  /* unneeded value : 3 * 'NOP' at 0x034f + 2 * 'NOP' at 0x35b */
+					if (activecpu_get_pc() == 0x0349)
+						arkanoid_bootleg_cmd = 0x00;
+					break;
+				case 0xff:  /* unneeded value : no call 0x2050, unused A and overwritten HL (0x7c4f -> 0x7d31) */
+					if (activecpu_get_pc() == 0x9670)
+						arkanoid_bootleg_cmd = 0x00;
+					break;
+				default:
+					arkanoid_bootleg_cmd = 0x00;
+					break;
+			}
+			LOG_D018_W
+			break;
+		case ARKBLOC2:
+			switch (data)
+			{
+				case 0x36:  /* unneeded value : call 0x2050 but fixed A (0x2d) */
+					if (activecpu_get_pc() == 0x7c4c)
+						arkanoid_bootleg_cmd = 0x00;
+					break;
+				case 0x38:  /* unneeded value : call 0x2050 but fixed A (0xf3) */
+					if (activecpu_get_pc() == 0x7b87)
+						arkanoid_bootleg_cmd = 0x00;
+					break;
+				case 0x88:  /* unneeded value : no read back */
+					if (activecpu_get_pc() == 0x67e3)
+						arkanoid_bootleg_cmd = 0x00;
+					if (activecpu_get_pc() == 0x7c47)
+						arkanoid_bootleg_cmd = 0x00;
+					break;
+				case 0x89:  /* unneeded value : no read back */
+					if (activecpu_get_pc() == 0x67e5)
+						arkanoid_bootleg_cmd = 0x00;
+					break;
+				case 0x8a:  /* unneeded value : call 0x2050 but unused HL and fixed DE (0x7c1c) */
+					if (activecpu_get_pc() == 0x9661)
+						arkanoid_bootleg_cmd = 0x00;
+					break;
+				case 0xc0:  /* unneeded value : no read back */
+					if (activecpu_get_pc() == 0x67e7)
+						arkanoid_bootleg_cmd = 0x00;
+					break;
+				case 0xe3:  /* unneeded value : call 0x2050 but fixed A (0x61) */
+					if (activecpu_get_pc() == 0x67e9)
+						arkanoid_bootleg_cmd = 0x00;
+					break;
+				case 0xf7:  /* unneeded value : call 0x2050 but never called (check code at 0x0340) */
+					if (activecpu_get_pc() == 0x0349)
+						arkanoid_bootleg_cmd = 0x00;
+					break;
+				case 0xff:  /* unneeded value : no call 0x2050, unused A and fixed HL (0x7d31) */
+					if (activecpu_get_pc() == 0x9670)
+						arkanoid_bootleg_cmd = 0x00;
+					break;
+				default:
+					arkanoid_bootleg_cmd = 0x00;
+					break;
+			}
+			LOG_D018_W
+			break;
+		case ARKGCBL:
+			switch (data)
+			{
+				case 0x36:  /* unneeded value : call 0x2050 but fixed A (0x2d) */
+					if (activecpu_get_pc() == 0x7c4c)
+						arkanoid_bootleg_cmd = 0x00;
+					break;
+				case 0x38:  /* unneeded value : call 0x2050 but fixed A (0xf3) */
+					if (activecpu_get_pc() == 0x7b87)
+						arkanoid_bootleg_cmd = 0x00;
+					break;
+				case 0x88:  /* unneeded value : no read back */
+					if (activecpu_get_pc() == 0x67e3)
+						arkanoid_bootleg_cmd = 0x00;
+					if (activecpu_get_pc() == 0x7c47)
+						arkanoid_bootleg_cmd = 0x00;
+				case 0x89:  /* unneeded value : no read back */
+					if (activecpu_get_pc() == 0x67e5)
+						arkanoid_bootleg_cmd = 0x00;
+					break;
+				case 0x8a:  /* call 0x2050 with A read from 0xf002 and wrong HL */
+					if (activecpu_get_pc() == 0x9661)
+						arkanoid_bootleg_cmd = data;
+					break;
+				case 0xc0:  /* unneeded value : no read back */
+					if (activecpu_get_pc() == 0x67e7)
+						arkanoid_bootleg_cmd = 0x00;
+					break;
+				case 0xe3:  /* unneeded value : call 0x2050 but fixed A (0x61) */
+					if (activecpu_get_pc() == 0x67e9)
+						arkanoid_bootleg_cmd = 0x00;
+					break;
+				case 0xf7:  /* unneeded value : 3 * 'NOP' at 0x034f + 'JR NZ,$035D' at 0x35b */
+					if (activecpu_get_pc() == 0x0349)
+						arkanoid_bootleg_cmd = 0x00;
+					break;
+				case 0xff:  /* call 0x2050 with A read from 0xf002 and wrong HL */
+					if (activecpu_get_pc() == 0x9670)
+						arkanoid_bootleg_cmd = data;
+					break;
+				default:
+					arkanoid_bootleg_cmd = 0x00;
+					break;
+			}
+			LOG_D018_W
+			break;
+		case PADDLE2:
+			switch (data)
+			{
+				case 0x24:  /* A read from 0xf002 (expected to be 0x9b) */
+					if (activecpu_get_pc() == 0xbd7a)
+						arkanoid_bootleg_cmd = data;
+					break;
+				case 0x36:  /* call 0x2050 with A read from 0xf002 and wrong HL */
+					if (activecpu_get_pc() == 0x7c4c)
+						arkanoid_bootleg_cmd = data;
+					break;
+				case 0x38:  /* call 0x2050 with A read from 0xf002 and wrong HL */
+					if (activecpu_get_pc() == 0x7b87)
+						arkanoid_bootleg_cmd = data;
+					break;
+				case 0x88:  /* unneeded value : no read back */
+					if (activecpu_get_pc() == 0x67e3)
+						arkanoid_bootleg_cmd = 0x00;
+					if (activecpu_get_pc() == 0x7c47)
+						arkanoid_bootleg_cmd = 0x00;
+				case 0x89:  /* unneeded value : no read back */
+					if (activecpu_get_pc() == 0x67e5)
+						arkanoid_bootleg_cmd = 0x00;
+					break;
+				case 0x8a:  /* call 0x2050 with A read from 0xf002 and wrong HL */
+					if (activecpu_get_pc() == 0x9661)
+						arkanoid_bootleg_cmd = data;
+					break;
+				case 0xc0:  /* unneeded value : no read back */
+					if (activecpu_get_pc() == 0x67e7)
+						arkanoid_bootleg_cmd = 0x00;
+					break;
+				case 0xc3:  /* A read from 0xf002 (expected to be 0x1d) */
+					if (activecpu_get_pc() == 0xbd8a)
+						arkanoid_bootleg_cmd = data;
+					break;
+				case 0xe3:  /* call 0x2050 with A read from 0xf002 and wrong HL */
+					if (activecpu_get_pc() == 0x67e9)
+						arkanoid_bootleg_cmd = data;
+					break;
+				case 0xf7:  /* call 0x2050 with A read from 0xf002 and wrong HL */
+					if (activecpu_get_pc() == 0x0349)
+						arkanoid_bootleg_cmd = data;
+					break;
+				case 0xff:  /* call 0x2050 with A read from 0xf002 and wrong HL */
+					if (activecpu_get_pc() == 0x9670)
+						arkanoid_bootleg_cmd = data;
+					break;
+				default:
+					arkanoid_bootleg_cmd = 0x00;
+					break;
+			}
+			LOG_D018_W
+			break;
+		default:
+			logerror("%04x: arkanoid_bootleg_d018_w - data = %02x - unknown bootleg !\n",activecpu_get_pc(),data);
+			break;
 	}
 }
 
-WRITE8_HANDLER( paddle2_prot_w )
+/* Kludge for some bootlegs that read this address */
+READ8_HANDLER( arkanoid_bootleg_d008_r )
 {
-	logerror("%04x: prot_w %02x\n",activecpu_get_pc(),data);
-	paddle2_prot = data;
+	UINT8 arkanoid_bootleg_d008_bit[8];
+	UINT8 arkanoid_bootleg_d008_val;
+	int b;
+
+	arkanoid_bootleg_d008_bit[4] = arkanoid_bootleg_d008_bit[6] = arkanoid_bootleg_d008_bit[7] = 0;  /* untested bits */
+
+	switch (arkanoid_bootleg_id)
+	{
+		case ARKANGC:
+		case ARKBLOCK:
+			arkanoid_bootleg_d008_bit[0] = 0;  /* untested bit */
+			arkanoid_bootleg_d008_bit[1] = 0;  /* untested bit */
+			arkanoid_bootleg_d008_bit[2] = 0;  /* untested bit */
+			arkanoid_bootleg_d008_bit[3] = 0;  /* untested bit */
+			arkanoid_bootleg_d008_bit[5] = 0;  /* untested bit */
+			break;
+		case ARKBLOC2:
+			arkanoid_bootleg_d008_bit[0] = 0;  /* untested bit */
+			arkanoid_bootleg_d008_bit[1] = 0;  /* untested bit */
+			arkanoid_bootleg_d008_bit[2] = 0;  /* untested bit */
+			arkanoid_bootleg_d008_bit[3] = 0;  /* untested bit */
+			arkanoid_bootleg_d008_bit[5] = (arkanoid_paddle_value < 0x40);  /* check code at 0x96b0 */
+			break;
+		case ARKGCBL:
+			arkanoid_bootleg_d008_bit[0] = 0;  /* untested bit */
+			arkanoid_bootleg_d008_bit[1] = 1;  /* check code at 0x0cad */
+			arkanoid_bootleg_d008_bit[2] = 0;  /* untested bit */
+			arkanoid_bootleg_d008_bit[3] = 0;  /* untested bit */
+			arkanoid_bootleg_d008_bit[5] = (arkanoid_paddle_value < 0x40);  /* check code at 0x96b0 */
+			break;
+		case PADDLE2:
+			arkanoid_bootleg_d008_bit[0] = 1;  /* check code at 0x7d65 */
+			arkanoid_bootleg_d008_bit[1] = 1;  /* check code at 0x7d65 */
+			arkanoid_bootleg_d008_bit[2] = 1;  /* check code at 0x7d65 */
+			arkanoid_bootleg_d008_bit[3] = 1;  /* check code at 0x7d65 */
+			arkanoid_bootleg_d008_bit[5] = (arkanoid_paddle_value < 0x40);  /* check code at 0x96b0 */
+			break;
+		default:
+			arkanoid_bootleg_d008_bit[0] = 0;  /* untested bit */
+			arkanoid_bootleg_d008_bit[1] = 0;  /* untested bit */
+			arkanoid_bootleg_d008_bit[2] = 0;  /* untested bit */
+			arkanoid_bootleg_d008_bit[3] = 0;  /* untested bit */
+			arkanoid_bootleg_d008_bit[5] = 0;  /* untested bit */
+			logerror("%04x: arkanoid_bootleg_d008_r - unknown bootleg !\n",activecpu_get_pc());
+			break;
+	}
+
+	arkanoid_bootleg_d008_val = 0;
+	for (b=0; b<8; b++)
+		arkanoid_bootleg_d008_val |= (arkanoid_bootleg_d008_bit[b] << b);
+	LOG_D008_R
+
+	return arkanoid_bootleg_d008_val;
 }
 
-READ8_HANDLER( paddle2_track_kludge_r )
-{
-	int track = readinputport(2);
-
-	/* temp kludge,needed to get the right side of the screen */
-	if(track < 0x44)
-		return 0x23;
-	return 0x03;
-}

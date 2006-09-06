@@ -49,49 +49,35 @@ static READ8_HANDLER( solomon_0xe603_r )
 }
 
 
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xc000, 0xcfff) AM_READ(MRA8_RAM)	/* RAM */
-	AM_RANGE(0xd000, 0xdfff) AM_READ(MRA8_RAM)	/* video + color + bg */
-	AM_RANGE(0xe000, 0xe07f) AM_READ(MRA8_RAM)	/* spriteram  */
-	AM_RANGE(0xe400, 0xe5ff) AM_READ(MRA8_RAM)	/* paletteram */
+static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_ROM
+	AM_RANGE(0xc000, 0xcfff) AM_RAM
+	AM_RANGE(0xd000, 0xd3ff) AM_READWRITE(MRA8_RAM, solomon_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xd400, 0xd7ff) AM_READWRITE(MRA8_RAM, solomon_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xd800, 0xdbff) AM_READWRITE(MRA8_RAM, solomon_colorram2_w) AM_BASE(&solomon_colorram2)
+	AM_RANGE(0xdc00, 0xdfff) AM_READWRITE(MRA8_RAM, solomon_videoram2_w) AM_BASE(&solomon_videoram2)
+	AM_RANGE(0xe000, 0xe07f) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xe400, 0xe5ff) AM_READWRITE(MRA8_RAM, paletteram_xxxxBBBBGGGGRRRR_le_w) AM_BASE(&paletteram)
 	AM_RANGE(0xe600, 0xe600) AM_READ(input_port_0_r)
 	AM_RANGE(0xe601, 0xe601) AM_READ(input_port_1_r)
 	AM_RANGE(0xe602, 0xe602) AM_READ(input_port_2_r)
 	AM_RANGE(0xe603, 0xe603) AM_READ(solomon_0xe603_r)
 	AM_RANGE(0xe604, 0xe604) AM_READ(input_port_3_r)	/* DSW1 */
 	AM_RANGE(0xe605, 0xe605) AM_READ(input_port_4_r)	/* DSW2 */
-	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xd000, 0xd3ff) AM_WRITE(solomon_colorram_w) AM_BASE(&colorram)
-	AM_RANGE(0xd400, 0xd7ff) AM_WRITE(solomon_videoram_w) AM_BASE(&videoram)
-	AM_RANGE(0xd800, 0xdbff) AM_WRITE(solomon_colorram2_w) AM_BASE(&solomon_colorram2)
-	AM_RANGE(0xdc00, 0xdfff) AM_WRITE(solomon_videoram2_w) AM_BASE(&solomon_videoram2)
-	AM_RANGE(0xe000, 0xe07f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
-	AM_RANGE(0xe400, 0xe5ff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_le_w) AM_BASE(&paletteram)
 	AM_RANGE(0xe600, 0xe600) AM_WRITE(interrupt_enable_w)
 	AM_RANGE(0xe604, 0xe604) AM_WRITE(solomon_flipscreen_w)
 	AM_RANGE(0xe800, 0xe800) AM_WRITE(solomon_sh_command_w)
-	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xf000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( solomon_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x4000, 0x47ff) AM_READ(MRA8_RAM)
+static ADDRESS_MAP_START( sound_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_ROM
+	AM_RANGE(0x4000, 0x47ff) AM_RAM
 	AM_RANGE(0x8000, 0x8000) AM_READ(soundlatch_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( solomon_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x4000, 0x47ff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0xffff, 0xffff) AM_WRITE(MWA8_NOP)	/* watchdog? */
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( solomon_sound_writeport, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( sound_portmap, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x10, 0x10) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x11, 0x11) AM_WRITE(AY8910_write_port_0_w)
@@ -220,13 +206,12 @@ static MACHINE_DRIVER_START( solomon )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 4000000)	/* 4.0 MHz (?????) */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
 	MDRV_CPU_ADD(Z80, 3072000)
-	/* audio CPU */
-	MDRV_CPU_PROGRAM_MAP(solomon_sound_readmem,solomon_sound_writemem)
-	MDRV_CPU_IO_MAP(0,solomon_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(sound_map,0)
+	MDRV_CPU_IO_MAP(sound_portmap,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2)	/* ??? */
 						/* NMIs are caused by the main CPU */
 	MDRV_FRAMES_PER_SECOND(60)
@@ -263,6 +248,33 @@ MACHINE_DRIVER_END
 
 ROM_START( solomon )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "6.3f",  0x00000, 0x4000, CRC(645eb0f3) SHA1(b911aa157ad94aa539dbe329a197d8902860c809) )
+	ROM_LOAD( "7.3h",  0x08000, 0x4000, CRC(1bf5c482) SHA1(3b6a8dde72cddf95438539c5dc4622c95f932a04) )
+	ROM_CONTINUE(      0x04000, 0x4000 )
+	ROM_LOAD( "8.3jk", 0x0f000, 0x1000, CRC(0a6cdefc) SHA1(101acaa19b779cb8b4fffddbe63fe011c7d4b6e9) )
+	ROM_IGNORE(                 0x7000 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "1.3jk",  0x0000, 0x4000, CRC(fa6e562e) SHA1(713036c0a80b623086aa674bb5f8a135b6fedb01) )
+
+	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "12.3t",  0x00000, 0x08000, CRC(b371291c) SHA1(27302898c64330870c47025e61bd5acbd9483865) )	/* characters */
+	ROM_LOAD( "11.3r",  0x08000, 0x08000, CRC(6f94d2af) SHA1(2e070c0fd5b9d7eb9b7e0d53f25b1a5063ef3095) )
+
+	ROM_REGION( 0x10000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "10.3p",  0x00000, 0x08000, CRC(8310c2a1) SHA1(8cc87ab8faacdb1973791d207bb25ea9b444b66d) )
+	ROM_LOAD( "9.3m",   0x08000, 0x08000, CRC(ab7e6c42) SHA1(0fc3b4a0bd2b17b79e2d1f7d4fe445c09ce4e730) )
+
+	ROM_REGION( 0x10000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "2.5lm",  0x00000, 0x04000, CRC(80fa2be3) SHA1(8e7a78186473a6b5c42577ac9e4591ee2d1151f2) )	/* sprites */
+	ROM_LOAD( "3.6lm",  0x04000, 0x04000, CRC(236106b4) SHA1(8eaf3150568c407bd8dc1cdf874b8417e5cca3d2) )
+	ROM_LOAD( "4.7lm",  0x08000, 0x04000, CRC(088fe5d9) SHA1(e29ffb9fcff50ce982d5e502e10a8e29a4c47390) )
+	ROM_LOAD( "5.8lm",  0x0c000, 0x04000, CRC(8366232a) SHA1(1c7a01dab056ec7d787a6f55772b9fa6fe67305a) )
+ROM_END
+
+
+ROM_START( solomonj )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "slmn_06.bin",  0x00000, 0x4000, CRC(e4d421ff) SHA1(9599fa6e2d42bf0cfe77d62c6b162f56eae5efff) )
 	ROM_LOAD( "slmn_07.bin",  0x08000, 0x4000, CRC(d52d7e38) SHA1(8439eeeedd1e47d2b9719a05c85a05283c11d7a8) )
 	ROM_CONTINUE(             0x04000, 0x4000 )
@@ -288,4 +300,5 @@ ROM_END
 
 
 
-GAME( 1986, solomon, 0, solomon, solomon, 0, ROT0, "Tecmo", "Solomon's Key (Japan)", 0 )
+GAME( 1986, solomon,  0,       solomon, solomon, 0, ROT0, "Tecmo", "Solomon's Key (US)", 0 )
+GAME( 1986, solomonj, solomon, solomon, solomon, 0, ROT0, "Tecmo", "Solomon's Key (Japan)", 0 )

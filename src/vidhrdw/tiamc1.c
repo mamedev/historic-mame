@@ -16,9 +16,11 @@ UINT8 *tiamc1_spriteram_x;
 UINT8 *tiamc1_spriteram_y;
 UINT8 *tiamc1_spriteram_a;
 UINT8 *tiamc1_spriteram_n;
-int tiamc1_layers_ctrl;
-int tiamc1_bg_vshift;
-int tiamc1_bg_hshift;
+UINT8 tiamc1_layers_ctrl;
+UINT8 tiamc1_bg_vshift;
+UINT8 tiamc1_bg_hshift;
+
+UINT8 tiamc1_colormap[16];
 
 static tilemap *bg_tilemap1, *bg_tilemap2;
 
@@ -86,6 +88,9 @@ WRITE8_HANDLER( tiamc1_palette_w )
 {
 	COLOR(0, offset) = data;
 	COLOR(1, offset) = data;
+
+	tiamc1_colormap[offset] = data;
+
 	tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 }
 
@@ -140,6 +145,16 @@ static void get_bg2_tile_info(int tile_index)
 	SET_TILE_INFO(0, code, 0, 0)
 }
 
+static void restore_colormap(void)
+{
+	int i;
+
+	for (i = 0; i < 16; i++) {
+		COLOR(0, i) = tiamc1_colormap[i];
+		COLOR(1, i) = tiamc1_colormap[i];
+	}
+}
+
 VIDEO_START( tiamc1 )
 {
 	bg_tilemap1 = tilemap_create(get_bg1_tile_info, tilemap_scan_rows,
@@ -156,6 +171,13 @@ VIDEO_START( tiamc1 )
 
 	tiamc1_bg_vshift = 0;
 	tiamc1_bg_hshift = 0;
+
+	state_save_register_global(tiamc1_layers_ctrl);
+	state_save_register_global(tiamc1_bg_vshift);
+	state_save_register_global(tiamc1_bg_hshift);
+	state_save_register_global_pointer(tiamc1_colormap, 16);
+
+	state_save_register_func_postload(restore_colormap);
 
 	return 0;
 }

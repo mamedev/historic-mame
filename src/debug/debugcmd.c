@@ -981,7 +981,7 @@ static void execute_bpset(int ref, int params, const char *param[])
 
 	/* set the breakpoint */
 	bpnum = debug_breakpoint_set(cpu_getactivecpu(), address, condition, action);
-	debug_console_printf("Breakpoint %d set\n", bpnum);
+	debug_console_printf("Breakpoint %X set\n", bpnum);
 }
 
 
@@ -1155,7 +1155,7 @@ static void execute_wpset(int ref, int params, const char *param[])
 
 	/* set the watchpoint */
 	wpnum = debug_watchpoint_set(cpu_getactivecpu(), ref, type, address, length, condition, action);
-	debug_console_printf("Watchpoint %d set\n", wpnum);
+	debug_console_printf("Watchpoint %X set\n", wpnum);
 }
 
 

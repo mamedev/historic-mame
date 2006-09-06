@@ -1248,12 +1248,6 @@ void wininput_poll(void)
 	// update the lagged keyboard
 	updatekeyboard();
 
-#ifndef NEW_DEBUGGER
-	// if the debugger is up and visible, don't bother with the rest
-	if (win_debug_window != NULL && IsWindowVisible(win_debug_window))
-		return;
-#endif
-
 	// poll all joysticks
 	for (i = 0; i < joystick_count; i++)
 	{
@@ -1504,7 +1498,7 @@ static int is_key_pressed(os_code keycode)
 		return result;
 	}
 
-#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+#ifdef MAME_DEBUG
 	// if the debugger is visible and we don't have focus, the key is not pressed
 	if (debugwin_is_debugger_visible() && GetFocus() != win_window_list->hwnd)
 		return 0;

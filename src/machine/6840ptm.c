@@ -27,7 +27,8 @@
 
     If the external clock frequencies are not fixed, they should be
     entered as '0', and the ptm6840_set_c?(which, state) functions
-    should be used instead if necessary.
+    should be used instead if necessary (This should allow the VBLANK
+    clock on the MCR units to operate).
 
 **********************************************************************/
 
@@ -110,6 +111,18 @@ static const char *opmode[] =
 	"111 pulse width comparison mode"
 };
 #endif
+
+///////////////////////////////////////////////////////////////////////////
+//                                                                       //
+// Get enabled status                                                    //
+//                                                                       //
+///////////////////////////////////////////////////////////////////////////
+
+int ptm6840_get_status(int which, int clock)
+{
+	ptm6840 *p = ptm + which;
+	return p->enabled[clock-1];
+}
 
 ///////////////////////////////////////////////////////////////////////////
 //                                                                       //
@@ -352,8 +365,6 @@ static void reload_count(int idx, int which)
 		case 0:
 		timer_adjust(currptr->timer1, TIME_IN_HZ(freq/((double)count)), which, 0);
 		PLOG(("MC6840 #%d: reload_count(%d): output = %lf\n", which, idx, freq/((double)count)));
-		currptr->enabled[0] = 1;
-		timer_enable(currptr->timer1,TRUE);
 
 		if (!currptr->control_reg[0] & 0x02)
 		{
@@ -363,12 +374,15 @@ static void reload_count(int idx, int which)
 				timer_enable(currptr->timer1,FALSE);
 			}
 		}
+		else
+		{
+			currptr->enabled[0] = 1;
+			timer_enable(currptr->timer1,TRUE);
+		}
 		break;
 		case 1:
 		timer_adjust(currptr->timer2, TIME_IN_HZ(freq/((double)count)), which, 0);
 		PLOG(("MC6840 #%d: reload_count(%d): output = %lf\n", which, idx, freq/((double)count)));
-		currptr->enabled[1] = 1;
-		timer_enable(currptr->timer2,TRUE);
 
 		if (!currptr->control_reg[1] & 0x02)
 		{
@@ -378,12 +392,15 @@ static void reload_count(int idx, int which)
 				timer_enable(currptr->timer2,FALSE);
 			}
 		}
+		else
+		{
+			currptr->enabled[1] = 1;
+			timer_enable(currptr->timer2,TRUE);
+		}
 		break;
 		case 2:
 		timer_adjust(currptr->timer3, (TIME_IN_HZ(freq/((double)count)))*currptr->t3_divisor, which, 0);
 		PLOG(("MC6840 #%d: reload_count(%d): output = %lf\n", which, idx, (freq/((double)count))*currptr->t3_divisor));
-		currptr->enabled[2] = 1;
-		timer_enable(currptr->timer3,TRUE);
 
 		if (!currptr->control_reg[2] & 0x02)
 		{
@@ -393,6 +410,12 @@ static void reload_count(int idx, int which)
 				timer_enable(currptr->timer3,FALSE);
 			}
 		}
+		else
+		{
+			currptr->enabled[2] = 1;
+			timer_enable(currptr->timer3,TRUE);
+		}
+
 		break;
 	}
 }
@@ -868,6 +891,8 @@ static void ptm6840_t1_timeout(int which)
 			}
 		}
 	}
+	p->enabled[0]= 0;
+	reload_count(0,which);
 }
 ///////////////////////////////////////////////////////////////////////////
 //                                                                       //
@@ -911,6 +936,8 @@ static void ptm6840_t2_timeout(int which)
 
 		}
 	}
+	p->enabled[1]= 0;
+	reload_count(1,which);
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -955,6 +982,8 @@ static void ptm6840_t3_timeout(int which)
 
 		}
 	}
+	p->enabled[2]= 0;
+	reload_count(2,which);
 }
 
 ///////////////////////////////////////////////////////////////////////////

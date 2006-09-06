@@ -142,6 +142,162 @@
     VBlank triggers IRQ, handled with interrupt mode 1
     NMI causes a ROM/RAM test.
 
+    ----------------------------------------------------------------------
+
+    There are two different Congo Bongo boardsets. One is a 3-stack (which I have)
+    and the other is a 2-stack.
+
+    The smaller third board is just a dedicated sound board, then later they started
+    making 2-stack boardset versions with merged sound circuits built into the control
+    board.
+
+    The schematic name for the control board on the two-stack set is "Control Board II"
+    my boardset uses control board 1.
+
+    The ROMs that are dumped for MAME are from the 3-stack boardset.
+    The ROMs on control board II are in different socket assignments than the ROMs
+    found on control board 1.
+
+    For example:
+    MAME congo1.bin = ROM 1 at location U35 on the 3-stack control board 1
+    MAME congo1.bin = ROM 1 at location U21 on the 2-stack control board II
+
+    So the locations are different between the two boardsets but they appear to use
+    the same ROM.
+
+    The Video boards are exactly the same between the two boardset versions (bottom
+    board) nothing changed with the video boards.
+
+    The biggest difference to me seems to be the ROM at U87 on Control Board II,
+    The part number for this ROM is different on the control board 1 three-stack
+    set at U68.
+
+    Schematic part number for U68 (3-stack) is TBP28S42 PR-5308, and the chip has a
+    decal with "MR020" on it.
+
+    The 2-stack U87 ROM numbers are TBP28L22 PR-5315. Unknown what the decal or the
+    top of that chip reads. Schematic shows only U87 and the part number.
+
+    ROM locations are different with ROMs 1-5 on control board II and a different
+    numbered ROM in U87.
+
+    Possibly an undumped ROM or just a larger capacity bipolar PROM... (?)
+
+    3-stack control board U68 MR020 =   TBP28S42 PR-5308
+
+    2-stack control board U87 unknown = TBP28L22 PR-5315 *BIPOLAR PROM* Xref=National 74LS471
+
+
+    some pinout differences between the two:
+
+    512*8
+       +------+
+    A0 |1   20| Vcc
+    A1 |2   19| A8
+    A2 |3   18| A7
+    A3 |4   17| A6
+    A4 |5   16| A5
+    O1 |6   15| CE/
+    O2 |7   14| O8
+    O3 |8   13| O7
+    O4 |9   12| O6
+    GND|10  11| O5
+       +------+
+
+    cross ref:
+       Signetics     MMI     TI       Harris  Raytheon  AMD      National  Intel   Fujitsu
+       ---------     ---     --       ------  --------  ---      --------  -----   -------
+    TS 82S147 (60ns) 6349-1  28S42    7649-5  29621     -        74S472    -       TS MB7124
+       82S147A(45ns) 6349-2  -        7649A-5 29621A    27S29    74S472A   -
+                     63S481
+    OC -             -       -        -       -         -        74S473
+
+
+    ----------------------------------------------------------------------
+
+    256*8
+       +------+
+    A0 |1   20| Vcc
+    A1 |2   19| A7
+    A2 |3   18| A6
+    A3 |4   17| A5
+    A4 |5   16| CE1/
+    O1 |6   15| CE2/
+    O2 |7   14| O8
+    O3 |8   13| O7
+    O4 |9   12| O6
+    GND|10  11| O5
+       +------+
+
+    cross ref:
+       Signetics     MMI     TI       Harris  Raytheon  AMD      National  Intel
+       ---------     ---     --       ------  --------  ---      --------  -----
+    TS 82S135 (45ns) 6309-1  18S22    -       -         -        -         -
+       82LS135(100ns)-       28L22    -       -         -        74LS471   -
+
+
+    ----ROM--NAMES-------------------------------------
+
+
+    THREE STACK BOARDSET
+    control board = 834-5166
+    video board = 834-5167
+    sound board = 834-5168
+
+
+    Current MAME      Schematic Board
+       Names       Names     Location (3-stack)
+    ------------      ---------     -------------------
+
+    congo.u68    =    MR020     U68  control board
+    congo1.bin   =    ROM 1     U35  control board
+    congo2.bin   =    ROM 2     U34  control board
+    congo3.bin   =    ROM 3     U33  control board
+    congo4.bin   =    ROM 4     U32  control board
+    congo5.bin   =    ROM 5     U76  control board
+    congo6.bin   =    ROM 6     U57  video board
+    congo7.bin   =    ROM 7     U58  video board
+    congo8.bin   =    ROM 8     U93  video board
+    congo9.bin   =    ROM 9     U94  video board
+    congo10.bin  =    ROM 10    U95  video board
+    congo11.bin  =    ROM 11    U77  video board
+    congo12.bin  =    ROM 12    U78  video board
+    congo13.bin  =    ROM 13    U79  video board
+    congo14.bin  =    ROM 14    U104 video board
+    congo15.bin  =    ROM 15    U105 video board
+    congo16.bin  =    ROM 16    U106 video board
+    congo17.bin  =    ROM 17    U11  sound board
+
+
+
+    TWO STACK BOARDSET
+    control board II = 834-5212
+    video board = 834-5167
+
+
+    Current MAME      Schematic Board
+       Names       Names     Location (2-stack)
+    ------------      ---------     -------------------
+
+    not dumped (?)          U87  control board
+    congo1.bin   =    ROM 1     U21  control board
+    congo2.bin   =    ROM 2     U22  control board
+    congo3.bin   =    ROM 3     U23  control board
+    congo4.bin   =    ROM 4     U24  control board
+    congo5.bin   =    ROM 5     U77  control board
+    congo6.bin   =    ROM 6     U57  video board
+    congo7.bin   =    ROM 7     U58  video board
+    congo8.bin   =    ROM 8     U93  video board
+    congo9.bin   =    ROM 9     U94  video board
+    congo10.bin  =    ROM 10    U95  video board
+    congo11.bin  =    ROM 11    U77  video board
+    congo12.bin  =    ROM 12    U78  video board
+    congo13.bin  =    ROM 13    U79  video board
+    congo14.bin  =    ROM 14    U104 video board
+    congo15.bin  =    ROM 15    U105 video board
+    congo16.bin  =    ROM 16    U106 video board
+    congo17.bin  =    ROM 17    U19  control board
+
 ***************************************************************************/
 
 #include "driver.h"

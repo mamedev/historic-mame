@@ -43,37 +43,160 @@
     player will die for no reason.
 
 
+Stephh's notes (based on the games Z80 code and some tests) :
+
+1) "Game Corporation" bootlegs and assimilated ones.
+
+  - Region = 0x76 (Japan).
+  - All bootlegs are based on a (bootleg) version we don't have.
+  - Team credits have been replaced by bootleggers code.
+
+1a) 'arkangc'
+
+  - "(c)  Game Corporation 1986".
+  - Displays the "Arkanoid" title but routine to display "BLOCK" with bricks exists.
+  - No hardware test and no "NOTICE" screen.
+  - All reads from 0xf002 are patched.
+  - No reads from 0xd008.
+  - "Continue" Dip Switch has been replaced by sort of "Debug" Dip Switch :
+      * affects ball speed at start of level (0x06 or 0x08)
+      * affects level 2 (same as normal version or same as level 30)
+  - You can select your starting level (between 1 and 30)
+    but they aren't displayed like in the original Japanese set we have ('arknoidj').
+  - Level 30 differs from original Japanese version
+  - There seems to be code to edit levels (check code at 0x8082), but the routines
+    don't seem to be called anymore.
+  - Known bugs :
+      * The paddle isn't centered when starting a new life and / or level;
+        it doesn't "backup" the paddle position when a life is lost as well
+        (I can't tell at the moment if it's an ingame bug or not)
+        So the paddle can sometimes appear in the left wall !
+      * You are told be to able to select your starting level from level 1 to level 32
+        (ingame bug - check code at 0x3425)
+
+1b) 'arkblock'
+
+  - Same as 'arkangc', the only difference is that it displays "BLOCK" with bricks
+    instead of displaying the "Arkanoid" title :
+
+      Z:\MAME\dasm>diff arkangc.asm arkbloc2.asm
+      8421,8422c8421,8424
+      < 32EF: 21 80 03      ld   hl,$0380
+      < 32F2: CD D1 20      call $20D1
+      ---
+      > 32EF: F3            di
+      > 32F0: CD 90 7C      call $7C90
+      > 32F3: C9            ret
+      > 32F4: 14            inc  d
+
+1c) 'arkbloc2'
+
+  - "(c)  Game Corporation 1986".
+  - Displays "BLOCK" with bricks.
+  - No hardware test and no "NOTICE" screen.
+  - All reads from 0xf002 are patched.
+  - Reads bit 5 from 0xd008.
+  - You can select your starting level (between 1 and 30) but they aren't displayed
+    like in the original Japanese set we have ('arknoidj').
+  - "Continue" Dip Switch has been replaced by sort of "Debug" Dip Switch :
+      * affects ball speed at start of level (0x06 or 0x08)
+      * affects level 2 (same as normal version or same as level 30)
+  - You can select your starting level (between 1 and 30)
+    but they aren't displayed like in the original Japanese set we have ('arknoidj').
+  - Level 30 differs from original Japanese version (also differs from 'arkangc')
+  - Known bugs :
+      * You can go from one side of the screen to the other through the walls
+        (I can't tell at the moment if it's an ingame bug or not)
+      * You are told be to able to select your starting level from level 1 to level 32
+        (ingame bug - check code at 0x3425)
+
+1d) 'arkgcbl'
+
+  - "1986    ARKANOID    1986".
+  - Displays the "Arkanoid" title but routine to display "BLOCK" with bricks exists.
+  - No hardware test and no "NOTICE" screen.
+  - Most reads from 0xf002 are patched. I need to fix the remaining ones (0x8a and 0xff).
+  - Reads bits 1 and 5 from 0xd008.
+  - "Continue" Dip Switch has been replaced by "Round Select" Dip Switch
+    ("debug" functions from 'arkangc' have been patched).
+  - Different "Bonus Lives" Dip Switch :
+      * "60K 100K 60K+" or "60K" when you start a new game
+      * "20K 60K 60K+"  or "20K" when you continue
+  - Different "Lives" Dip Switch (check table at 0x9a28)
+  - Specific coinage (always 2C_1C)
+  - If Dip Switch is set, you can select your starting level (between 1 and 30)
+    but they aren't displayed like in the original Japanese set we have ('arknoidj').
+  - Same level 30 as original Japanese version
+  - Known bugs :
+      * You can go from one side of the screen to the other through the walls
+        (I can't tell at the moment if it's an ingame bug or not)
+      * You are told be to able to select your starting level from level 1 to level 32
+        (ingame bug - check code at 0x3425)
+      * Sound in "Demo Mode" if 1 coin is inserted (ingame bug - check code at 0x0283)
+      * Red square on upper middle left "led" when it is supposed to be yellow (ingame bug)
+
+1e) 'paddle2'
+
+  - Different title, year, and inside texts but routine to display "BLOCK" with bricks exists.
+  - No hardware test and no "NOTICE" screen.
+  - I need to fix ALL reads from 0xf002.
+  - Reads bits 0 to 3 and 5 from 0xd008.
+  - "Continue" Dip Switch has been replaced by "Round Select" Dip Switch
+    ("debug" functions from 'arkangc' have been patched).
+  - No more "Service Mode" Dip Switch (even if code is still there for it).
+    This Dip Switch now selects how spinners are handled :
+      * bit 2 = 0 => read from 0xd018 only
+      * bit 2 = 1 => read from 0xd018 + read from 0xd008
+    I set its default to 1 as parts of the game still branch to 0x96b0.
+  - Different "Bonus Lives" Dip Switch :
+      * "60K 100K 60K+" or "60K" when you start a new game
+      * "20K 60K 60K+"  or "20K" when you continue
+  - Different "Lives" Dip Switch (check table at 0x9a28)
+  - If Dip Switch is set, you can select your starting level (between 1 and 30)
+    but they aren't displayed like in the original Japanese set we have ('arknoidj').
+  - Levels are based on the ones from "Arkanoid II".
+  - Known bugs :
+      * You can go from one side of the screen to the other through the walls
+        (I can't tell at the moment if it's an ingame bug or not)
+      * You can't correctly enter your initials at the end of the game
+        (ingame bug ? check code at 0xa23e and difference at 0xa273)
+      * On intro and last screen, colour around main ship is yellow instead of red
+        (ingame bug due to numerous patches)
+
+
+TO DO (2006.09.05) :
+
+  - Check the following bootlegs (adresses, routines and Dip Switches) :
+      * 'arkatayt'
+      * 'arkmcubl'
+  - Try to include the bootlegs I found
+  - Add notes about main addresses and routines in the Z80
+
+
+Stephh's log (2006.09.05) :
+
+  - Interverted 'arkblock' and 'arkbloc2' sets for better comparaison
+  - Renamed sets :
+      * 'arkbl2'   -> 'arkmcubl'
+      * 'arkbl3'   -> 'arkgcbl'
+  - Changed some games descriptions
+  - Removed flags from the following sets :
+      * 'arkbloc2' (old 'arkblock')
+      * 'arkgcbl'  (old 'arkbl3')
+      * 'paddle2'
+    This way, even if emulation isn't perfect, people can try them and report bugs.
+
+
 ***************************************************************************/
 
 #include "driver.h"
+#include "arkanoid.h"
 #include "sound/ay8910.h"
 
-extern WRITE8_HANDLER( arkanoid_videoram_w );
-extern VIDEO_START( arkanoid );
-extern VIDEO_UPDATE( arkanoid );
+int arkanoid_bootleg_id;
 
-extern MACHINE_START( arkanoid );
-extern MACHINE_RESET( arkanoid );
 
-extern WRITE8_HANDLER( arkanoid_d008_w );
-
-extern READ8_HANDLER( arkanoid_Z80_mcu_r );
-extern WRITE8_HANDLER( arkanoid_Z80_mcu_w );
-
-extern READ8_HANDLER( arkanoid_68705_portA_r );
-extern WRITE8_HANDLER( arkanoid_68705_portA_w );
-extern WRITE8_HANDLER( arkanoid_68705_ddrA_w );
-
-extern READ8_HANDLER( arkanoid_68705_portC_r );
-extern WRITE8_HANDLER( arkanoid_68705_portC_w );
-extern WRITE8_HANDLER( arkanoid_68705_ddrC_w );
-
-extern READ8_HANDLER( arkanoid_68705_input_0_r );
-extern READ8_HANDLER( arkanoid_input_2_r );
-
-extern READ8_HANDLER( paddle2_prot_r );
-extern WRITE8_HANDLER( paddle2_prot_w );
-extern READ8_HANDLER( paddle2_track_kludge_r );
+/***************************************************************************/
 
 /* Memory Maps */
 
@@ -118,7 +241,12 @@ static ADDRESS_MAP_START( mcu_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0080, 0x07ff) AM_ROM
 ADDRESS_MAP_END
 
+
+/***************************************************************************/
+
+
 /* Input Ports */
+
 #define ARKNOI_IN0\
 	PORT_START_TAG("IN0")\
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )\
@@ -238,6 +366,53 @@ INPUT_PORTS_START( arkatayt )
 	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
+
+INPUT_PORTS_START( arkangc )
+	PORT_INCLUDE(arknoidj)
+
+	PORT_MODIFY("DSW")
+	PORT_DIPNAME( 0x01, 0x01, "Ball Speed" )            /* Speed at 0xc462 (code at 0x18aa) - Also affects level 2 (code at 0x7b82) */
+	PORT_DIPSETTING(    0x01, DEF_STR( Normal ) )       /* 0xc462 = 0x06 - Normal level 2 */
+	PORT_DIPSETTING(    0x00, "Faster" )                /* 0xc462 = 0x08 - Level 2 same as level 30 */
+INPUT_PORTS_END
+
+INPUT_PORTS_START( arkgcbl )
+	PORT_INCLUDE(arknoidj)
+
+	PORT_MODIFY("DSW")
+	PORT_DIPNAME( 0x01, 0x00, "Round Select" )          /* Check code at 0x7bc2 - Speed at 0xc462 (code at 0x18aa) */
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )          /* 0xc462 = 0x06 */
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )           /* 0xc462 = 0x06 */
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Bonus_Life ) )  /* "ld a,$60" at 0x93bd and "ld a,$20" at 0x9c7f and 0x9c9b */
+	PORT_DIPSETTING(    0x10, "60K 100K 60K+" )        /* But "20K 60K 60K+" when continue */
+	PORT_DIPSETTING(    0x00, "60K" )                  /* But "20K" when continue */
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x20, "3" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )       /* Always 2C_1C - check code at 0x7d5e */
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( paddle2 )
+	PORT_INCLUDE(arknoidj)
+
+	PORT_MODIFY("DSW")
+	PORT_DIPNAME( 0x01, 0x00, "Round Select" )          /* Check code at 0x7bc2 - Speed at 0xc462 (code at 0x18aa) */
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )          /* 0xc462 = 0x06 */
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )           /* 0xc462 = 0x06 */
+	PORT_DIPNAME( 0x04, 0x04, "Controls ?" )            /* Check code at 0x96a1 and read notes */
+	PORT_DIPSETTING(    0x04, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Alternate ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Bonus_Life ) )  /* "ld a,$60" at 0x93bd and "ld a,$20" at 0x9c7f and 0x9c9b */
+	PORT_DIPSETTING(    0x10, "60K 100K 60K+" )        /* But "20K 60K 60K+" when continue */
+	PORT_DIPSETTING(    0x00, "60K" )                  /* But "20K" when continue */
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x20, "3" )
+INPUT_PORTS_END
+
+
 INPUT_PORTS_START( tetrsark )
 	/* most of these probably just aren't connected rather than being dipswitches */
 	PORT_START_TAG("IN0")
@@ -304,6 +479,9 @@ INPUT_PORTS_START( tetrsark )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
 INPUT_PORTS_END
+
+
+/***************************************************************************/
 
 /* Graphics Layouts */
 
@@ -381,6 +559,9 @@ static MACHINE_DRIVER_START( bootleg )
 
 	MDRV_CPU_REMOVE("mcu")
 MACHINE_DRIVER_END
+
+
+/***************************************************************************/
 
 /* ROMs */
 
@@ -479,7 +660,7 @@ ROM_START( arknoidj )
 	ROM_LOAD( "a75-09.bpr",    0x0400, 0x0200, CRC(a7c6c277) SHA1(adaa003dcd981576ea1cc5f697d709b2d6b2ea29) )	/* blue component */
 ROM_END
 
-ROM_START( arkbl2 )
+ROM_START( arkmcubl )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "e1.6d",        0x0000, 0x8000, CRC(dd4f2b72) SHA1(399a8636030a702dafc1da926f115df6f045bef1) )
 	ROM_LOAD( "e2.6f",        0x8000, 0x8000, CRC(bbc33ceb) SHA1(e9b6fef98d0d20e77c7a1c25eff8e9a8c668a258) )
@@ -498,7 +679,55 @@ ROM_START( arkbl2 )
 	ROM_LOAD( "a75-09.bpr",    0x0400, 0x0200, CRC(a7c6c277) SHA1(adaa003dcd981576ea1cc5f697d709b2d6b2ea29) )	/* blue component */
 ROM_END
 
-ROM_START( arkbl3 )
+ROM_START( arkangc )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "arkgc.1",      0x0000, 0x8000, CRC(c54232e6) SHA1(beb759cee68009a06824b755d2aa26d7d436b5b0) )
+	ROM_LOAD( "arkgc.2",      0x8000, 0x8000, CRC(9f0d4754) SHA1(731c9224616a338084edd6944c754d68eabba7f2) )
+
+	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "a75-03.rom",   0x00000, 0x8000, CRC(038b74ba) SHA1(ac053cc4908b4075f918748b89570e07a0ba5116) )
+	ROM_LOAD( "a75-04.rom",   0x08000, 0x8000, CRC(71fae199) SHA1(5d253c46ccf4cd2976a5fb8b8713f0f345443d06) )
+	ROM_LOAD( "a75-05.rom",   0x10000, 0x8000, CRC(c76374e2) SHA1(7520dd48de20db60a2038f134dcaa454988e7874) )
+
+	ROM_REGION( 0x0600, REGION_PROMS, 0 )
+	ROM_LOAD( "a75-07.bpr",    0x0000, 0x0200, CRC(0af8b289) SHA1(6bc589e8a609b4cf450aebedc8ce02d5d45c970f) )	/* red component */
+	ROM_LOAD( "a75-08.bpr",    0x0200, 0x0200, CRC(abb002fb) SHA1(c14f56b8ef103600862e7930709d293b0aa97a73) )	/* green component */
+	ROM_LOAD( "a75-09.bpr",    0x0400, 0x0200, CRC(a7c6c277) SHA1(adaa003dcd981576ea1cc5f697d709b2d6b2ea29) )	/* blue component */
+ROM_END
+
+ROM_START( arkblock )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "ark-6.bin",    0x0000, 0x8000, CRC(0be015de) SHA1(f4209085b59d2c96a62ac9657c7bf097da55362b) )
+	ROM_LOAD( "arkgc.2",      0x8000, 0x8000, CRC(9f0d4754) SHA1(731c9224616a338084edd6944c754d68eabba7f2) )
+
+	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "a75-03.rom",   0x00000, 0x8000, CRC(038b74ba) SHA1(ac053cc4908b4075f918748b89570e07a0ba5116) )
+	ROM_LOAD( "a75-04.rom",   0x08000, 0x8000, CRC(71fae199) SHA1(5d253c46ccf4cd2976a5fb8b8713f0f345443d06) )
+	ROM_LOAD( "a75-05.rom",   0x10000, 0x8000, CRC(c76374e2) SHA1(7520dd48de20db60a2038f134dcaa454988e7874) )
+
+	ROM_REGION( 0x0600, REGION_PROMS, 0 )
+	ROM_LOAD( "a75-07.bpr",    0x0000, 0x0200, CRC(0af8b289) SHA1(6bc589e8a609b4cf450aebedc8ce02d5d45c970f) )	/* red component */
+	ROM_LOAD( "a75-08.bpr",    0x0200, 0x0200, CRC(abb002fb) SHA1(c14f56b8ef103600862e7930709d293b0aa97a73) )	/* green component */
+	ROM_LOAD( "a75-09.bpr",    0x0400, 0x0200, CRC(a7c6c277) SHA1(adaa003dcd981576ea1cc5f697d709b2d6b2ea29) )	/* blue component */
+ROM_END
+
+ROM_START( arkbloc2 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "block01.bin",  0x0000, 0x8000, CRC(5be667e1) SHA1(fbc5c97d836c404a2e6c007c3836e36b52ae75a1) )
+	ROM_LOAD( "block02.bin",  0x8000, 0x8000, CRC(4f883ef1) SHA1(cb090a57fc75f17a3e2ba637f0e3ec93c1d02cea) )
+
+	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "a75-03.rom",   0x00000, 0x8000, CRC(038b74ba) SHA1(ac053cc4908b4075f918748b89570e07a0ba5116) )
+	ROM_LOAD( "a75-04.rom",   0x08000, 0x8000, CRC(71fae199) SHA1(5d253c46ccf4cd2976a5fb8b8713f0f345443d06) )
+	ROM_LOAD( "a75-05.rom",   0x10000, 0x8000, CRC(c76374e2) SHA1(7520dd48de20db60a2038f134dcaa454988e7874) )
+
+	ROM_REGION( 0x0600, REGION_PROMS, 0 )
+	ROM_LOAD( "a75-07.bpr",    0x0000, 0x0200, CRC(0af8b289) SHA1(6bc589e8a609b4cf450aebedc8ce02d5d45c970f) )	/* red component */
+	ROM_LOAD( "a75-08.bpr",    0x0200, 0x0200, CRC(abb002fb) SHA1(c14f56b8ef103600862e7930709d293b0aa97a73) )	/* green component */
+	ROM_LOAD( "a75-09.bpr",    0x0400, 0x0200, CRC(a7c6c277) SHA1(adaa003dcd981576ea1cc5f697d709b2d6b2ea29) )	/* blue component */
+ROM_END
+
+ROM_START( arkgcbl )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "arkanunk.1",   0x0000, 0x8000, CRC(b0f73900) SHA1(2c9a36cc1d2a3f33ec81d63c1c325554b818d2d3) )
 	ROM_LOAD( "arkanunk.2",   0x8000, 0x8000, CRC(9827f297) SHA1(697874e73e045eb5a7bf333d7310934b239c0adf) )
@@ -546,54 +775,6 @@ ROM_START( arkatayt )
 	ROM_LOAD( "ic75.13e",    0x0400, 0x0200, CRC(a7c6c277) SHA1(adaa003dcd981576ea1cc5f697d709b2d6b2ea29) )	/* blue component */
 ROM_END
 
-ROM_START( arkblock )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "block01.bin",  0x0000, 0x8000, CRC(5be667e1) SHA1(fbc5c97d836c404a2e6c007c3836e36b52ae75a1) )
-	ROM_LOAD( "block02.bin",  0x8000, 0x8000, CRC(4f883ef1) SHA1(cb090a57fc75f17a3e2ba637f0e3ec93c1d02cea) )
-
-	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "a75-03.rom",   0x00000, 0x8000, CRC(038b74ba) SHA1(ac053cc4908b4075f918748b89570e07a0ba5116) )
-	ROM_LOAD( "a75-04.rom",   0x08000, 0x8000, CRC(71fae199) SHA1(5d253c46ccf4cd2976a5fb8b8713f0f345443d06) )
-	ROM_LOAD( "a75-05.rom",   0x10000, 0x8000, CRC(c76374e2) SHA1(7520dd48de20db60a2038f134dcaa454988e7874) )
-
-	ROM_REGION( 0x0600, REGION_PROMS, 0 )
-	ROM_LOAD( "a75-07.bpr",    0x0000, 0x0200, CRC(0af8b289) SHA1(6bc589e8a609b4cf450aebedc8ce02d5d45c970f) )	/* red component */
-	ROM_LOAD( "a75-08.bpr",    0x0200, 0x0200, CRC(abb002fb) SHA1(c14f56b8ef103600862e7930709d293b0aa97a73) )	/* green component */
-	ROM_LOAD( "a75-09.bpr",    0x0400, 0x0200, CRC(a7c6c277) SHA1(adaa003dcd981576ea1cc5f697d709b2d6b2ea29) )	/* blue component */
-ROM_END
-
-ROM_START( arkbloc2 )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "ark-6.bin",    0x0000, 0x8000, CRC(0be015de) SHA1(f4209085b59d2c96a62ac9657c7bf097da55362b) )
-	ROM_LOAD( "arkgc.2",      0x8000, 0x8000, CRC(9f0d4754) SHA1(731c9224616a338084edd6944c754d68eabba7f2) )
-
-	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "a75-03.rom",   0x00000, 0x8000, CRC(038b74ba) SHA1(ac053cc4908b4075f918748b89570e07a0ba5116) )
-	ROM_LOAD( "a75-04.rom",   0x08000, 0x8000, CRC(71fae199) SHA1(5d253c46ccf4cd2976a5fb8b8713f0f345443d06) )
-	ROM_LOAD( "a75-05.rom",   0x10000, 0x8000, CRC(c76374e2) SHA1(7520dd48de20db60a2038f134dcaa454988e7874) )
-
-	ROM_REGION( 0x0600, REGION_PROMS, 0 )
-	ROM_LOAD( "a75-07.bpr",    0x0000, 0x0200, CRC(0af8b289) SHA1(6bc589e8a609b4cf450aebedc8ce02d5d45c970f) )	/* red component */
-	ROM_LOAD( "a75-08.bpr",    0x0200, 0x0200, CRC(abb002fb) SHA1(c14f56b8ef103600862e7930709d293b0aa97a73) )	/* green component */
-	ROM_LOAD( "a75-09.bpr",    0x0400, 0x0200, CRC(a7c6c277) SHA1(adaa003dcd981576ea1cc5f697d709b2d6b2ea29) )	/* blue component */
-ROM_END
-
-ROM_START( arkangc )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "arkgc.1",      0x0000, 0x8000, CRC(c54232e6) SHA1(beb759cee68009a06824b755d2aa26d7d436b5b0) )
-	ROM_LOAD( "arkgc.2",      0x8000, 0x8000, CRC(9f0d4754) SHA1(731c9224616a338084edd6944c754d68eabba7f2) )
-
-	ROM_REGION( 0x18000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "a75-03.rom",   0x00000, 0x8000, CRC(038b74ba) SHA1(ac053cc4908b4075f918748b89570e07a0ba5116) )
-	ROM_LOAD( "a75-04.rom",   0x08000, 0x8000, CRC(71fae199) SHA1(5d253c46ccf4cd2976a5fb8b8713f0f345443d06) )
-	ROM_LOAD( "a75-05.rom",   0x10000, 0x8000, CRC(c76374e2) SHA1(7520dd48de20db60a2038f134dcaa454988e7874) )
-
-	ROM_REGION( 0x0600, REGION_PROMS, 0 )
-	ROM_LOAD( "a75-07.bpr",    0x0000, 0x0200, CRC(0af8b289) SHA1(6bc589e8a609b4cf450aebedc8ce02d5d45c970f) )	/* red component */
-	ROM_LOAD( "a75-08.bpr",    0x0200, 0x0200, CRC(abb002fb) SHA1(c14f56b8ef103600862e7930709d293b0aa97a73) )	/* green component */
-	ROM_LOAD( "a75-09.bpr",    0x0400, 0x0200, CRC(a7c6c277) SHA1(adaa003dcd981576ea1cc5f697d709b2d6b2ea29) )	/* blue component */
-ROM_END
-
 /* the other Dr. Korea game (Hexa, hexa.c) also appears to be derived from Arkanoid hardware */
 
 ROM_START( tetrsark )
@@ -612,14 +793,46 @@ ROM_START( tetrsark )
 	ROM_LOAD( "a75-09.bpr",    0x0400, 0x0200, CRC(a7c6c277) SHA1(adaa003dcd981576ea1cc5f697d709b2d6b2ea29) )	/* blue component */
 ROM_END
 
+
 /* Driver Initialization */
+
+static void arkanoid_bootleg_init( void )
+{
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xf002, 0xf002, 0, 0, arkanoid_bootleg_f002_r );
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd018, 0xd018, 0, 0, arkanoid_bootleg_d018_w );
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd008, 0xd008, 0, 0, arkanoid_bootleg_d008_r );
+}
+
+static DRIVER_INIT( arkangc )
+{
+	arkanoid_bootleg_id = ARKANGC;
+	arkanoid_bootleg_init();
+}
+
+static DRIVER_INIT( arkblock )
+{
+	arkanoid_bootleg_id = ARKBLOCK;
+	arkanoid_bootleg_init();
+}
+
+static DRIVER_INIT( arkbloc2 )
+{
+	arkanoid_bootleg_id = ARKBLOC2;
+	arkanoid_bootleg_init();
+}
+
+static DRIVER_INIT( arkgcbl )
+{
+	arkanoid_bootleg_id = ARKGCBL;
+	arkanoid_bootleg_init();
+}
 
 static DRIVER_INIT( paddle2 )
 {
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xf002, 0xf002, 0, 0, paddle2_prot_r );
-	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd018, 0xd018, 0, 0, paddle2_prot_w );
-	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd008, 0xd008, 0, 0, paddle2_track_kludge_r );
+	arkanoid_bootleg_id = PADDLE2;
+	arkanoid_bootleg_init();
 }
+
 
 static DRIVER_INIT( tetrsark )
 {
@@ -632,18 +845,20 @@ static DRIVER_INIT( tetrsark )
 	}
 }
 
+
 /* Game Drivers */
 
-GAME( 1986, arkanoid, 0,        arkanoid, arkanoid, 0,       ROT90, "Taito Corporation Japan", "Arkanoid (World)", GAME_SUPPORTS_SAVE )
-GAME( 1986, arknoidu, arkanoid, arkanoid, arkanoid, 0,       ROT90, "Taito America Corporation (Romstar license)", "Arkanoid (US)", GAME_SUPPORTS_SAVE )
-GAME( 1986, arknoiuo, arkanoid, arkanoid, arkanoid, 0,       ROT90, "Taito America Corporation (Romstar license)", "Arkanoid (US, older)", GAME_SUPPORTS_SAVE )
-GAME( 1986, arknoidj, arkanoid, arkanoid, arknoidj, 0,       ROT90, "Taito Corporation", "Arkanoid (Japan)", GAME_SUPPORTS_SAVE )
-GAME( 1986, arkbl2,   arkanoid, arkanoid, arknoidj, 0,       ROT90, "bootleg", "Arkanoid (Japanese bootleg Set 2)", GAME_NOT_WORKING )
-GAME( 1986, arkbl3,   arkanoid, bootleg,  arknoidj, paddle2, ROT90, "bootleg", "Arkanoid (Japanese bootleg Set 3)", GAME_NOT_WORKING )
-GAME( 1988, paddle2,  arkanoid, bootleg,  arknoidj, paddle2, ROT90, "bootleg", "Paddle 2", GAME_UNEMULATED_PROTECTION | GAME_SUPPORTS_SAVE )
-GAME( 1986, arkatayt, arkanoid, bootleg,  arkatayt, 0,       ROT90, "bootleg", "Arkanoid (Tayto bootleg, Japanese)", GAME_SUPPORTS_SAVE )
-GAME( 1986, arkblock, arkanoid, bootleg,  arknoidj, 0,       ROT90, "bootleg", "Block (bootleg, Japanese)", GAME_NOT_WORKING )
-GAME( 1986, arkbloc2, arkanoid, bootleg,  arknoidj, 0,       ROT90, "bootleg", "Block (Game Corporation bootleg)", GAME_SUPPORTS_SAVE )
-GAME( 1986, arkangc,  arkanoid, bootleg,  arknoidj, 0,       ROT90, "bootleg", "Arkanoid (Game Corporation bootleg)", GAME_SUPPORTS_SAVE )
-GAME( 1987, arkatour, arkanoid, arkanoid, arkanoid, 0,       ROT90, "Taito America Corporation (Romstar license)", "Tournament Arkanoid (US)", GAME_SUPPORTS_SAVE )
-GAME( 19??, tetrsark, 0,        bootleg,  tetrsark, tetrsark,ROT0,  "D.R. Korea", "Tetris (D.R. Korea)", GAME_SUPPORTS_SAVE | GAME_WRONG_COLORS )
+GAME( 1986, arkanoid, 0,        arkanoid, arkanoid, 0,        ROT90, "Taito Corporation Japan", "Arkanoid (World)", GAME_SUPPORTS_SAVE )
+GAME( 1986, arknoidu, arkanoid, arkanoid, arkanoid, 0,        ROT90, "Taito America Corporation (Romstar license)", "Arkanoid (US)", GAME_SUPPORTS_SAVE )
+GAME( 1986, arknoiuo, arkanoid, arkanoid, arkanoid, 0,        ROT90, "Taito America Corporation (Romstar license)", "Arkanoid (US, older)", GAME_SUPPORTS_SAVE )
+GAME( 1986, arknoidj, arkanoid, arkanoid, arknoidj, 0,        ROT90, "Taito Corporation", "Arkanoid (Japan)", GAME_SUPPORTS_SAVE )
+GAME( 1986, arkmcubl, arkanoid, arkanoid, arknoidj, 0,        ROT90, "bootleg", "Arkanoid (bootleg with MCU)", GAME_NOT_WORKING )
+GAME( 1986, arkangc,  arkanoid, bootleg,  arkangc,  arkangc,  ROT90, "bootleg", "Arkanoid (Game Corporation bootleg)", GAME_SUPPORTS_SAVE )
+GAME( 1986, arkblock, arkanoid, bootleg,  arkangc,  arkblock, ROT90, "bootleg", "Block (Game Corporation bootleg, set 1)", GAME_SUPPORTS_SAVE )
+GAME( 1986, arkbloc2, arkanoid, bootleg,  arkangc,  arkbloc2, ROT90, "bootleg", "Block (Game Corporation bootleg, set 2)", GAME_SUPPORTS_SAVE )
+GAME( 1986, arkgcbl,  arkanoid, bootleg,  arkgcbl,  arkgcbl,  ROT90, "bootleg", "Arkanoid (bootleg on Block hardware)", GAME_SUPPORTS_SAVE )
+GAME( 1988, paddle2,  arkanoid, bootleg,  paddle2,  paddle2,  ROT90, "bootleg", "Paddle 2 (bootleg on Block hardware)", GAME_SUPPORTS_SAVE )
+GAME( 1986, arkatayt, arkanoid, bootleg,  arkatayt, 0,        ROT90, "bootleg", "Arkanoid (Tayto bootleg)", GAME_SUPPORTS_SAVE )
+GAME( 1987, arkatour, arkanoid, arkanoid, arkanoid, 0,        ROT90, "Taito America Corporation (Romstar license)", "Tournament Arkanoid (US)", GAME_SUPPORTS_SAVE )
+GAME( 19??, tetrsark, 0,        bootleg,  tetrsark, tetrsark, ROT0,  "D.R. Korea", "Tetris (D.R. Korea)", GAME_SUPPORTS_SAVE | GAME_WRONG_COLORS )
+

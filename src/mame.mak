@@ -354,7 +354,6 @@ $(OBJ)/shared.a: \
 	$(OBJ)/machine/6526cia.o \
 	$(OBJ)/machine/6821pia.o \
 	$(OBJ)/machine/6840ptm.o \
-	$(OBJ)/machine/6850acia.o \
 	$(OBJ)/machine/7474.o \
 	$(OBJ)/machine/74123.o \
 	$(OBJ)/machine/74148.o \
@@ -1496,6 +1495,7 @@ $(OBJ)/misc.a: \
 	$(OBJ)/drivers/pass.o $(OBJ)/vidhrdw/pass.o \
 	$(OBJ)/drivers/pipeline.o \
 	$(OBJ)/drivers/pkscram.o \
+	$(OBJ)/drivers/pmpoker.o \
 	$(OBJ)/drivers/pntnpuzl.o \
 	$(OBJ)/drivers/policetr.o $(OBJ)/vidhrdw/policetr.o \
 	$(OBJ)/drivers/polyplay.o $(OBJ)/sndhrdw/polyplay.o $(OBJ)/vidhrdw/polyplay.o \
@@ -1563,6 +1563,8 @@ $(OBJ)/drivers/darius.o:	$(OBJ)/layout/darius.lh
 $(OBJ)/drivers/lazercmd.o:	$(OBJ)/layout/lazercmd.lh
 
 $(OBJ)/drivers/maxaflex.o:	$(OBJ)/layout/maxaflex.lh
+
+$(OBJ)/drivers/mpu4.o:		$(OBJ)/layout/mpu4.lh \
 
 $(OBJ)/drivers/meadows.o:	$(OBJ)/layout/deadeye.lh \
 							$(OBJ)/layout/gypsyjug.lh

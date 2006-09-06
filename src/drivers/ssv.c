@@ -135,6 +135,10 @@ To Do:
                 tilemap sprites use the yoffset specified in the sprites-list?
                 (see the 8 pixel gap between the backgrounds and the black rows)
 
+- keithlcy  :   Backgrounds are offset by $20 pixels, so they're kludged to work; there is a
+                x&y offsets in the sprite list but in a same frame there are sprite with yoffset = 0
+                and sprite with a yoffset = $7c but for all sprite the offset must be the same ($20)
+
 - srmp4     :   Backgrounds are offset by $60 pixels, so they're kludged to work
 
 - srmp7     :   Needs interrupts by the sound chip (not properly hooked up yet). Kludged to work.
@@ -143,10 +147,11 @@ To Do:
                 there till the end of the game (a piece of sky to the left of the screen).
                 It seems that the x&y offsets in the sprite list should be apllied
                 to it (-$200,-$200) to move it off screen. But currently those offsets
-                are ignored for "tilemap" sprites. This may be related to the kludge for srmp4.
+                are ignored for "tilemap" sprites. This may be related to the kludge for srmp4
+                and to the kludge for keithlcy;
 
-- ultrax    :   bad gfx offsets and wrong visible area
-- twineag2  :   bad gfx offsets on some scenes
+- ultrax    :   Backgrounds are offset by $10 pixels, so they're kludged to work
+
 
     code @ $e75cdc
 
@@ -3344,7 +3349,7 @@ DRIVER_INIT( survarts )		{	init_ssv();
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xef;	}
 DRIVER_INIT( dynagear )		{	init_ssv();
 								ssv_sprites_offsx = -8;	ssv_sprites_offsy = +0xec;
-								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xec;	}
+								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xef;	}
 DRIVER_INIT( sxyreact )		{	init_ssv_hypreac2();	// different
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xe8;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xef;	}
@@ -3352,11 +3357,11 @@ DRIVER_INIT( sxyreac2 )		{	init_ssv_hypreac2();
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xe8;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xef;	}
 DRIVER_INIT( twineag2 )		{	init_ssv();interrupt_ultrax=1;
-								ssv_sprites_offsx = -6; ssv_sprites_offsy = -7;
-								ssv_tilemap_offsx = -10;ssv_tilemap_offsy = -8; }
+								ssv_sprites_offsx = -6; ssv_sprites_offsy = +0x01;
+								ssv_tilemap_offsx = -2; ssv_tilemap_offsy = +0x00;	}
 DRIVER_INIT( ultrax )		{	init_ssv();interrupt_ultrax=1;
-								ssv_sprites_offsx = -8;	ssv_sprites_offsy = 0;
-								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = 0;	}
+								ssv_sprites_offsx = -8;	ssv_sprites_offsy = +0x01;
+								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = +0x00;	}
 DRIVER_INIT( vasara )		{	init_ssv();
 								ssv_sprites_offsx = +0;	ssv_sprites_offsy = +0xf0;
 								ssv_tilemap_offsx = +0;	ssv_tilemap_offsy = -0xf8;	}
@@ -5244,7 +5249,7 @@ GAME( 1993,  survartu, survarts, survarts, survarts, survarts, ROT0,   "American
 GAME( 1994,  drifto94, 0,        drifto94, drifto94, drifto94, ROT0,   "Visco",              "Drift Out '94 - The Hard Order (Japan)",           GAME_NO_COCKTAIL )
 GAME( 1994,  eaglshot, 0,        eaglshot, eaglshot, eaglshot, ROT0,   "Sammy",              "Eagle Shot Golf",                                  GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
 GAME( 1995,  hypreact, 0,        hypreact, hypreact, hypreact, ROT0,   "Sammy",              "Mahjong Hyper Reaction (Japan)",                   GAME_NO_COCKTAIL )
-GAME( 1994,  twineag2, 0,        twineag2, twineag2, twineag2, ROT270, "Seta",               "Twin Eagle II - The Rescue Mission",               GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
+GAME( 1994,  twineag2, 0,        twineag2, twineag2, twineag2, ROT270, "Seta",               "Twin Eagle II - The Rescue Mission",               GAME_NO_COCKTAIL )
 GAME( 1995,  gdfs,     0,        gdfs,     gdfs,     gdfs,     ROT0,   "Banpresto",          "Mobil Suit Gundam Final Shooting (Japan)",         GAME_NO_COCKTAIL )
 GAME( 1995,  ultrax,   0,        ultrax,   ultrax,   ultrax,   ROT270, "Banpresto + Tsuburaya Prod.", "Ultra X Weapons / Ultra Keibitai",        GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )
 GAME( 1996,  janjans1, 0,        janjans1, janjans1, janjans1, ROT0,   "Visco",              "Lovely Pop Mahjong JangJang Shimasho (Japan)",     GAME_NO_COCKTAIL | GAME_IMPERFECT_GRAPHICS )

@@ -38,10 +38,7 @@
 #include "window.h"
 #include "input.h"
 #include "options.h"
-
-#ifdef NEW_DEBUGGER
 #include "debugwin.h"
-#endif
 
 #ifdef MESS
 #include "menu.h"

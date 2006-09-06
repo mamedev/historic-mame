@@ -15,7 +15,7 @@
 #include "profiler.h"
 #include "debugger.h"
 
-#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+#ifdef MAME_DEBUG
 #include "debug/debugcpu.h"
 #endif
 
@@ -550,14 +550,6 @@ void cpuexec_timeslice(void)
 
 	/* update the global time */
 	mame_timer_set_global_time(target);
-
-	/* huh? something for the debugger */
-	#if defined(MAME_DEBUG) && !defined(NEW_DEBUGGER)
-	{
-		extern int debug_key_delay;
-		debug_key_delay = 0x7ffe;
-	}
-	#endif
 }
 
 
@@ -1451,7 +1443,7 @@ static void cpu_vblankcallback(int param)
 		/* reset the counter */
 		vblank_countdown = vblank_multiplier;
 
-#if defined(MAME_DEBUG) && defined(NEW_DEBUGGER)
+#ifdef MAME_DEBUG
 		/* notify the debugger */
 		debug_vblank_hook();
 #endif

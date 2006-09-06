@@ -17,12 +17,9 @@
 
 // MAME headers
 #include "driver.h"
-
-#ifdef NEW_DEBUGGER
 #include "debug/debugvw.h"
 #include "debug/debugcon.h"
 #include "debug/debugcpu.h"
-#endif
 
 // MAMEOS headers
 #include "debugwin.h"
@@ -93,7 +90,9 @@ enum
 
 	ID_SHOW_RAW,
 	ID_SHOW_ENCRYPTED,
-	ID_SHOW_COMMENTS
+	ID_SHOW_COMMENTS,
+	ID_RUN_TO_CURSOR,
+	ID_TOGGLE_BREAKPOINT
 };
 
 
@@ -903,6 +902,7 @@ static void debug_view_draw_contents(debugview_info *view, HDC windc)
 					if (viewdata[col].attrib & DCA_ANCILLARY) bgcolor = RGB(0xe0,0xe0,0xe0);
 					if (viewdata[col].attrib & DCA_SELECTED) bgcolor = RGB(0xff,0x80,0x80);
 					if (viewdata[col].attrib & DCA_CURRENT) bgcolor = RGB(0xff,0xff,0x00);
+					if ((viewdata[col].attrib & DCA_SELECTED) && (viewdata[col].attrib & DCA_CURRENT)) bgcolor = RGB(0xff,0xc0,0x80);
 					if (viewdata[col].attrib & DCA_CHANGED) fgcolor = RGB(0xff,0x00,0x00);
 					if (viewdata[col].attrib & DCA_INVALID) fgcolor = RGB(0x00,0x00,0xff);
 					if (viewdata[col].attrib & DCA_DISABLED) fgcolor = RGB((GetRValue(fgcolor) + GetRValue(bgcolor)) / 2, (GetGValue(fgcolor) + GetGValue(bgcolor)) / 2, (GetBValue(fgcolor) + GetBValue(bgcolor)) / 2);
@@ -1267,6 +1267,7 @@ static void debug_view_next_view(debugwin_info *info, debugview_info *curview)
 		else if (curindex >= 0 && info->view[curindex].wnd != NULL && debug_view_get_property_UINT32(info->view[curindex].view, DVP_SUPPORTS_CURSOR))
 		{
 			SetFocus(info->view[curindex].wnd);
+			InvalidateRect(info->view[curindex].wnd, NULL, FALSE);
 			break;
 		}
 	}
@@ -1316,23 +1317,60 @@ static LRESULT CALLBACK debug_view_proc(HWND wnd, UINT message, WPARAM wparam, L
 						debug_view_set_property_UINT32(info->view, DVP_CHARACTER, DCH_UP);
 						info->owner->ignore_char_lparam = lparam >> 16;
 						break;
+
 					case VK_DOWN:
 						debug_view_set_property_UINT32(info->view, DVP_CHARACTER, DCH_DOWN);
 						info->owner->ignore_char_lparam = lparam >> 16;
 						break;
+
 					case VK_LEFT:
-						debug_view_set_property_UINT32(info->view, DVP_CHARACTER, DCH_LEFT);
+						if (GetAsyncKeyState(VK_CONTROL) & 0x8000)
+							debug_view_set_property_UINT32(info->view, DVP_CHARACTER, DCH_CTRLLEFT);
+						else
+							debug_view_set_property_UINT32(info->view, DVP_CHARACTER, DCH_LEFT);
 						info->owner->ignore_char_lparam = lparam >> 16;
 						break;
+
 					case VK_RIGHT:
-						debug_view_set_property_UINT32(info->view, DVP_CHARACTER, DCH_RIGHT);
+						if (GetAsyncKeyState(VK_CONTROL) & 0x8000)
+							debug_view_set_property_UINT32(info->view, DVP_CHARACTER, DCH_CTRLRIGHT);
+						else
+							debug_view_set_property_UINT32(info->view, DVP_CHARACTER, DCH_RIGHT);
 						info->owner->ignore_char_lparam = lparam >> 16;
 						break;
+
+					case VK_PRIOR:
+						debug_view_set_property_UINT32(info->view, DVP_CHARACTER, DCH_PUP);
+						info->owner->ignore_char_lparam = lparam >> 16;
+						break;
+
+					case VK_NEXT:
+						debug_view_set_property_UINT32(info->view, DVP_CHARACTER, DCH_PDOWN);
+						info->owner->ignore_char_lparam = lparam >> 16;
+						break;
+
+					case VK_HOME:
+						if (GetAsyncKeyState(VK_CONTROL) & 0x8000)
+							debug_view_set_property_UINT32(info->view, DVP_CHARACTER, DCH_CTRLHOME);
+						else
+							debug_view_set_property_UINT32(info->view, DVP_CHARACTER, DCH_HOME);
+						info->owner->ignore_char_lparam = lparam >> 16;
+						break;
+
+					case VK_END:
+						if (GetAsyncKeyState(VK_CONTROL) & 0x8000)
+							debug_view_set_property_UINT32(info->view, DVP_CHARACTER, DCH_CTRLEND);
+						else
+							debug_view_set_property_UINT32(info->view, DVP_CHARACTER, DCH_END);
+						info->owner->ignore_char_lparam = lparam >> 16;
+						break;
+
 					case VK_ESCAPE:
 						if (info->owner->focuswnd != NULL)
 							SetFocus(info->owner->focuswnd);
 						info->owner->ignore_char_lparam = lparam >> 16;
 						break;
+
 					case VK_TAB:
 						if (GetAsyncKeyState(VK_SHIFT) & 0x8000)
 							debug_view_prev_view(info->owner, info);
@@ -2075,6 +2113,9 @@ static void disasm_create_window(void)
 
 	// create the options menu
 	optionsmenu = CreatePopupMenu();
+	AppendMenu(optionsmenu, MF_ENABLED, ID_TOGGLE_BREAKPOINT, "Set breakpoint at cursor\tF9");
+	AppendMenu(optionsmenu, MF_ENABLED, ID_RUN_TO_CURSOR, "Run to cursor\tF4");
+	AppendMenu(optionsmenu, MF_DISABLED | MF_SEPARATOR, 0, "");
 	AppendMenu(optionsmenu, MF_ENABLED, ID_SHOW_RAW, "Raw opcodes\tCtrl+R");
 	AppendMenu(optionsmenu, MF_ENABLED, ID_SHOW_ENCRYPTED, "Encrypted opcodes\tCtrl+E");
 	AppendMenu(optionsmenu, MF_ENABLED, ID_SHOW_COMMENTS, "Comments\tCtrl+C");
@@ -2239,6 +2280,9 @@ static void disasm_update_checkmarks(debugwin_info *info)
 
 static int disasm_handle_command(debugwin_info *info, WPARAM wparam, LPARAM lparam)
 {
+	char command[64];
+	UINT32 active_address = 0x00;
+
 	switch (HIWORD(wparam))
 	{
 		// combo box selection changed
@@ -2297,6 +2341,49 @@ static int disasm_handle_command(debugwin_info *info, WPARAM wparam, LPARAM lpar
 					disasm_update_checkmarks(info);
 					(*info->recompute_children)(info);
 					return 1;
+
+				case ID_RUN_TO_CURSOR:
+					if (debug_view_get_property_UINT32(info->view[0].view, DVP_CURSOR_VISIBLE))
+					{
+						active_address = debug_view_get_property_UINT32(info->view[0].view, DVP_DASM_ACTIVE_ADDRESS);
+						sprintf(command, "go %X", active_address);
+						debug_console_execute_command(command, 1);
+					}
+					return 1;
+
+				case ID_TOGGLE_BREAKPOINT:
+					if (debug_view_get_property_UINT32(info->view[0].view, DVP_CURSOR_VISIBLE))
+					{
+						UINT32 cpu_num = 0;
+						debug_cpu_info *cpuinfo ;
+						debug_cpu_breakpoint *bp;
+						INT8 bp_exists = 0;
+						UINT32 bp_num = 0;
+
+						/* what address are we dealing with? */
+						active_address = debug_view_get_property_UINT32(info->view[0].view, DVP_DASM_ACTIVE_ADDRESS);
+
+						/* is there already a breakpoint there? */
+						cpu_num = debug_view_get_property_UINT32(info->view[0].view, DVP_DASM_CPUNUM);
+						cpuinfo = (debug_cpu_info*)debug_get_cpu_info(cpu_num);
+
+						for (bp = cpuinfo->first_bp; bp; bp = bp->next)
+						{
+							if (BYTE2ADDR(active_address, cpuinfo, ADDRESS_SPACE_PROGRAM) == bp->address)
+							{
+								bp_exists = 1;
+								bp_num = bp->index;
+							}
+						}
+
+						/* Toggle */
+						if (!bp_exists)
+							sprintf(command, "bpset %X", BYTE2ADDR(active_address, cpuinfo, ADDRESS_SPACE_PROGRAM));
+						else
+							sprintf(command, "bpclear %X", bp_num);
+						debug_console_execute_command(command, 1);
+					}
+					return 1;
 			}
 			break;
 	}
@@ -2328,6 +2415,27 @@ static int disasm_handle_key(debugwin_info *info, WPARAM wparam, LPARAM lparam)
 				return 1;
 		}
 	}
+
+	switch (wparam)
+	{
+		/* ajg - steals the F4 from the global key handler - but ALT+F4 didn't work anyways ;) */
+		case VK_F4:
+			SendMessage(info->wnd, WM_COMMAND, ID_RUN_TO_CURSOR, 0);
+			return 1;
+
+		case VK_F9:
+			SendMessage(info->wnd, WM_COMMAND, ID_TOGGLE_BREAKPOINT, 0);
+			return 1;
+
+		case VK_RETURN:
+			if (debug_view_get_property_UINT32(info->view[0].view, DVP_CURSOR_VISIBLE))
+			{
+				SendMessage(info->wnd, WM_COMMAND, ID_STEP, 0);
+				return 1;
+			}
+			break;
+	}
+
 	return global_handle_key(info, wparam, lparam);
 }
 
@@ -2382,6 +2490,9 @@ void console_create_window(void)
 
 	// create the options menu
 	optionsmenu = CreatePopupMenu();
+	AppendMenu(optionsmenu, MF_ENABLED, ID_TOGGLE_BREAKPOINT, "Set breakpoint at cursor\tF9");
+	AppendMenu(optionsmenu, MF_ENABLED, ID_RUN_TO_CURSOR, "Run to cursor\tF4");
+	AppendMenu(optionsmenu, MF_DISABLED | MF_SEPARATOR, 0, "");
 	AppendMenu(optionsmenu, MF_ENABLED, ID_SHOW_RAW, "Raw opcodes\tCtrl+R");
 	AppendMenu(optionsmenu, MF_ENABLED, ID_SHOW_ENCRYPTED, "Encrypted opcodes\tCtrl+E");
 	AppendMenu(optionsmenu, MF_ENABLED, ID_SHOW_COMMENTS, "Comments\tCtrl+C");
@@ -2715,6 +2826,7 @@ static int global_handle_key(debugwin_info *info, WPARAM wparam, LPARAM lparam)
 		case VK_F4:
 			if (GetAsyncKeyState(VK_MENU) & 0x8000)
 			{
+				/* ajg - never gets here since 'alt' seems to be captured somewhere else - menu maybe? */
 				SendMessage(info->wnd, WM_COMMAND, ID_EXIT, 0);
 				return 1;
 			}

@@ -56,6 +56,7 @@
 #define   DVP_DASM_RIGHTCOL_COMMENTS		(3)
 #define DVP_DASM_BACKWARD_STEPS				(104)	/* r/w - UINT32 */
 #define DVP_DASM_WIDTH						(105)	/* r/w - UINT32 */
+#define DVP_DASM_ACTIVE_ADDRESS				(112)	/* r/w - UINT32 */
 
 /* properties available for memory views */
 #define DVP_MEM_CPUNUM						(100)	/* r/w - UINT32 */
@@ -89,7 +90,14 @@
 #define DCH_DOWN							(2)		/* down arrow */
 #define DCH_LEFT							(3)		/* left arrow */
 #define DCH_RIGHT							(4)		/* right arrow */
-
+#define DCH_PUP								(5)		/* page up */
+#define DCH_PDOWN							(6)		/* page down */
+#define DCH_HOME							(7)		/* home */
+#define DCH_CTRLHOME						(8)		/* ctrl+home */
+#define DCH_END								(9)		/* end */
+#define DCH_CTRLEND							(10)	/* ctrl+end */
+#define DCH_CTRLRIGHT						(11)	/* ctrl+right */
+#define DCH_CTRLLEFT						(12)	/* ctrl+left */
 
 
 /***************************************************************************

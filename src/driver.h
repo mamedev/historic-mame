@@ -187,6 +187,8 @@
 /* In mamecore.h: typedef struct _machine_config machine_config; */
 struct _machine_config
 {
+	UINT32				driver_data_size;			/* amount of memory needed for driver_data */
+
 	cpu_config			cpu[MAX_CPU];				/* array of CPUs in the system */
 	UINT32				cpu_slices_per_frame;		/* number of times to interleave execution per frame */
 	INT32				watchdog_vblank_count;		/* number of VBLANKs until the watchdog kills us */
@@ -343,6 +345,9 @@ struct _game_driver
 
 
 /* core parameters */
+#define MDRV_DRIVER_DATA(_struct)										\
+	machine->driver_data_size = sizeof(_struct);						\
+
 #define MDRV_INTERLEAVE(interleave)										\
 	machine->cpu_slices_per_frame = (interleave);						\
 

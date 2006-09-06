@@ -14,7 +14,7 @@
       * Istrebitel'
       * Kot-Rybolov
       * Kotigoroshko
-      * Ostrov Srakona
+      * Ostrov Drakona
       * Ostrov Sokrovisch
       * Perehvatchik
       * Snezhnaja Koroleva
@@ -162,7 +162,16 @@ MACHINE_RESET( tiamc1 )
 	tiamc1_spriteram_a = video_ram + 0x3030;
 
 	tiamc1_bankswitch_w(0, 0);
+
+	state_save_register_global_pointer(video_ram, 0x3040);
 }
+
+WRITE8_HANDLER( tiamc1_control_w )
+{
+	coin_lockout_w(0, ~data & 0x02);
+	coin_counter_w(0, data & 0x04);
+}
+
 
 static ADDRESS_MAP_START( tiamc1_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0xdfff) AM_READ(MRA8_ROM)
@@ -187,7 +196,7 @@ static ADDRESS_MAP_START( tiamc1_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0xbe, 0xbe) AM_WRITE(tiamc1_bankswitch_w) /* VRAM selector */
 	AM_RANGE(0xbf, 0xbf) AM_WRITENOP                 /* charset control */
 	AM_RANGE(0xc0, 0xc3) AM_WRITE(tiamc1_timer0_w)   /* timer 0 */
-	AM_RANGE(0xd2, 0xd2) AM_WRITENOP                 /* coin counter and lockout */
+	AM_RANGE(0xd2, 0xd2) AM_WRITE(tiamc1_control_w)  /* coin counter and lockout */
 	AM_RANGE(0xd3, 0xd3) AM_WRITENOP                 /* 8255 ctrl. Used for i/o ports */
 	AM_RANGE(0xd4, 0xd7) AM_WRITE(tiamc1_timer1_w)   /* timer 1 */
 	AM_RANGE(0xda, 0xda) AM_WRITE(tiamc1_timer1_gate_w) /* timer 1 gate control */
@@ -223,9 +232,9 @@ INPUT_PORTS_START( tiamc1 )
 
 	PORT_START_TAG("IN2")
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* RAZR ??? */
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SPECIAL ) /* OUT:coin counter 1 */
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SPECIAL ) /* OUT:coin lockout */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SPECIAL )  /* OUT:coin lockout */
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SPECIAL ) /* OUT:game counter */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* RAZR ??? */
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_NAME("Player 1 Kick")
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_NAME("Player 1 Jump")
@@ -325,4 +334,4 @@ ROM_START( konek )
 
 ROM_END
 
-GAME( 1988, konek, 0, tiamc1, tiamc1, 0, ROT0, "Terminal", "Konek-Gorbunok", GAME_IMPERFECT_GRAPHICS )
+GAME( 1988, konek, 0, tiamc1, tiamc1, 0, ROT0, "Terminal", "Konek-Gorbunok", GAME_IMPERFECT_GRAPHICS | GAME_SUPPORTS_SAVE )

@@ -116,6 +116,7 @@ static DWORD last_update_time;
 static win_draw_callbacks draw;
 
 static HANDLE ui_pause_event;
+static HANDLE window_thread_ready_event;
 
 
 
@@ -192,6 +193,8 @@ void mtlog_add(const char *event) { }
 
 int winwindow_init(void)
 {
+	size_t temp;
+
 	// determine if we are using multithreading or not
 	multithreading_enabled = options_get_bool("multithreading", FALSE);
 
@@ -213,8 +216,13 @@ int winwindow_init(void)
 	// if multithreading, create a thread to run the windows
 	if (multithreading_enabled)
 	{
+		// create an event to signal when the window thread is ready
+		window_thread_ready_event = CreateEvent(NULL, TRUE, FALSE, NULL);
+		if (!window_thread_ready_event)
+			return 1;
+
 		// create a thread to run the windows from
-		size_t temp = _beginthreadex(NULL, 0, thread_entry, NULL, 0, (unsigned *)&window_threadid);
+		temp = _beginthreadex(NULL, 0, thread_entry, NULL, 0, (unsigned *)&window_threadid);
 		window_thread = (HANDLE)temp;
 		if (window_thread == NULL)
 			return 1;
@@ -291,7 +299,12 @@ static void winwindow_exit(void)
 	}
 
 	// kill the UI pause event
-	CloseHandle(ui_pause_event);
+	if (ui_pause_event)
+		CloseHandle(ui_pause_event);
+
+	// kill the window thread ready event
+	if (window_thread_ready_event)
+		CloseHandle(window_thread_ready_event);
 }
 
 
@@ -583,6 +596,9 @@ int winwindow_video_window_create(int index, win_monitor_info *monitor, const wi
 	// finish the window creation on the window thread
 	if (multithreading_enabled)
 	{
+		// wait until the window thread is ready to respond to events
+		WaitForSingleObject(window_thread_ready_event, INFINITE);
+
 		PostThreadMessage(window_threadid, WM_USER_FINISH_CREATE_WINDOW, 0, (LPARAM)window);
 		while (window->init_state == 0)
 			Sleep(1);
@@ -934,6 +950,17 @@ void winwindow_ui_pause_from_window_thread(int pause)
 
 
 //============================================================
+//  winwindow_ui_is_paused
+//============================================================
+
+int winwindow_ui_is_paused(void)
+{
+	return mame_is_paused() && ui_temp_was_paused;
+}
+
+
+
+//============================================================
 //  wnd_extra_width
 //  (window thread)
 //============================================================
@@ -979,6 +1006,9 @@ static unsigned __stdcall thread_entry(void *param)
 
 	// attach our input to the main thread
 	AttachThreadInput(main_threadid, window_threadid, TRUE);
+
+	// signal to the main thread that we are ready to receive events
+	SetEvent(window_thread_ready_event);
 
 	// run the message pump
 	while (GetMessage(&message, NULL, 0, 0))

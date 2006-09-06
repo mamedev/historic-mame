@@ -42,11 +42,6 @@ static void lethalen_sprite_callback(int *code, int *color, int *priority_mask)
 
 static void lethalen_tile_callback(int layer, int *code, int *color)
 {
-	/* where are the flip bits? lethal enforcers needs them on reload and p2 start screen */
-	/* they don't seem to be anywhere in the ram we're looking at... */
-//  tile_info.flags = TILE_FLIPYX(1);;
-
-
 	*color = layer_colorbase[layer] + ((*color & 0x3c)<<2);
 }
 
@@ -72,21 +67,21 @@ VIDEO_START(lethalen)
 	K056832_SetExtLinescroll();
 
 	// the US and Japanese cabinets apparently use different mirror setups
-	if (!strcmp(Machine->gamedrv->name, "lethalen"))
+	if (!strcmp(Machine->gamedrv->name, "lethalej"))
 	{
+		K056832_set_LayerOffset(0, -196, 0);
+		K056832_set_LayerOffset(1, -194, 0);
+		K056832_set_LayerOffset(2, -192, 0);
+		K056832_set_LayerOffset(3, -190, 0);
+		K053245_set_SpriteOffset(0, -105, 0);
+	}
+	else
+	{ /* fixme */
  		K056832_set_LayerOffset(0, 188, 0);
 		K056832_set_LayerOffset(1, 190, 0);
 		K056832_set_LayerOffset(2, 192, 0);
 		K056832_set_LayerOffset(3, 194, 0);
 		K053245_set_SpriteOffset(0, 95, 0);
-	}
-	else
-	{ /* fixme */
- 		K056832_set_LayerOffset(0, 64, 0);
-		K056832_set_LayerOffset(1, 64, 0);
-		K056832_set_LayerOffset(2, 64, 0);
-		K056832_set_LayerOffset(3, 64, 0);
-		K053245_set_SpriteOffset(0, -96, 8);
 	}
 
 	layer_colorbase[0] = 0x00;
@@ -137,8 +132,17 @@ VIDEO_UPDATE(lethalen)
 	// force "A" layer over top of everything
 	K056832_tilemap_draw(bitmap, cliprect, 0, 0, 0);
 
-	draw_crosshair(bitmap, GUNX(2)+216, 240-GUNY(3), cliprect, 0);
-	draw_crosshair(bitmap, GUNX(4)+216, 240-GUNY(5), cliprect, 1);
+	if (!strcmp(Machine->gamedrv->name, "lethalej"))
+	{
+		draw_crosshair(bitmap, GUNX(2)+224, 245-GUNY(3), cliprect, 0);
+		draw_crosshair(bitmap, GUNX(4)+224, 245-GUNY(5), cliprect, 1);
+	}
+	else
+	{
+		draw_crosshair(bitmap, GUNX(2)+216, 240-GUNY(3), cliprect, 0);
+		draw_crosshair(bitmap, GUNX(4)+216, 240-GUNY(5), cliprect, 1);
+	}
+
 
 #if 0
 	{

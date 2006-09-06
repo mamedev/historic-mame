@@ -129,6 +129,7 @@ void winwindow_process_events(int ingame);
 
 void winwindow_ui_pause_from_window_thread(int pause);
 void winwindow_ui_pause_from_main_thread(int pause);
+int winwindow_ui_is_paused(void);
 
 #if HAS_WINDOW_MENU
 int win_create_menu(HMENU *menus);

@@ -1579,13 +1579,13 @@ const game_driver * const drivers[] =
 	DRIVER( arknoidu )	/* A75 (c) 1986 Taito America Corporation + Romstar license (US) */
 	DRIVER( arknoiuo )	/* A75 (c) 1986 Taito America Corporation + Romstar license (US) */
 	DRIVER( arknoidj )	/* A75 (c) 1986 Taito Corporation (Japan) */
-	DRIVER( arkbl2 )	/* bootleg */
-	DRIVER( arkbl3 )	/* bootleg */
-	DRIVER( paddle2 )	/* bootleg */
-	DRIVER( arkatayt )	/* bootleg */
+	DRIVER( arkmcubl )	/* bootleg */
+	DRIVER( arkangc )	/* bootleg */
 	DRIVER( arkblock )	/* bootleg */
 	DRIVER( arkbloc2 )	/* bootleg */
-	DRIVER( arkangc )	/* bootleg */
+	DRIVER( arkgcbl )	/* bootleg */
+	DRIVER( paddle2 )	/* bootleg */
+	DRIVER( arkatayt )	/* bootleg */
 	DRIVER( arkatour )	/* ??? (c) 1987 Taito America Corporation + Romstar license (US) */
 	DRIVER( tetrsark )	/* ??? (c) D.R.Korea */
 	DRIVER( sqix )		/* B03 1987 */
@@ -2175,6 +2175,7 @@ V-V                           TP-027
 	DRIVER( commando )	/*  5/1985 (c) 1985 (World) */
 	DRIVER( commandu )	/*  5/1985 (c) 1985 + Data East license (US) */
 	DRIVER( commandj )	/*  5/1985 (c) 1985 (Japan) */
+	DRIVER( commandb )	/* bootleg */
 	DRIVER( sinvasn )	/* Europe original? */
 	DRIVER( sinvasnb )	/* bootleg */
 	DRIVER( gng )		/*  9/1985 (c) 1985 */
@@ -4027,6 +4028,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( gridiron )	/* (c) 1985 Tehkan */
 	DRIVER( teedoff )	/* 6102 - (c) 1986 Tecmo */
 	DRIVER( solomon )	/* (c) 1986 Tecmo */
+	DRIVER( solomonj )	/* (c) 1986 Tecmo */
 	DRIVER( rygar )		/* 6002 - (c) 1986 Tecmo */
 	DRIVER( rygar2 )	/* 6002 - (c) 1986 Tecmo */
 	DRIVER( rygarj )	/* 6002 - (c) 1986 Tecmo */
@@ -6817,6 +6819,9 @@ Other Sun games
 	DRIVER( sltblgp1 )	/* 1996 */
 	DRIVER( gldncrwn )	/* 1997 */
 
+	/* MPU4 Non-Video SWPs */
+	DRIVER( connect4 )  /* Dolbeck Systems */
+
 	/* MPU4+Video Board Games */
 	DRIVER( bctvidbs )
 	DRIVER( crmaze )	/* 1994 */
@@ -6930,6 +6935,7 @@ Other Sun games
 	DRIVER( flower )	/* (c) 1986 Komax */
 	DRIVER( flowerbl )	/* bootleg but (c) 1986 Sega/Alpha */
 	DRIVER( beaminv )	/* Tekunon Kougyou */
+	DRIVER( beaminva )	/* Tekunon Kougyou */
 	DRIVER( mcatadv )	/* (c) 1993 Wintechno */
 	DRIVER( mcatadvj )	/* (c) 1993 Wintechno */
 	DRIVER( catt )		/* (c) 1993 Wintechno */
@@ -7157,5 +7163,7 @@ Other Sun games
 	DRIVER( sb2003a )	/* (c) 2003 Limenko */
 	DRIVER( legendoh )	/* (c) 2003 Limenko */
 	DRIVER( carrera )	/* (c) 19?? BS Electronics */
+	DRIVER( pmpoker )	/* (c) 198? PlayMan? */
+	DRIVER( bigboy )	/* (c) 198? Bonanza? */
 
 #endif	/* DRIVER_RECURSIVE */

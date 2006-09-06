@@ -165,57 +165,17 @@
 #define TURBO_MASTER_CLOCK	(20000000)
 #define SUBROC_MASTER_CLOCK	(19968000)
 
-#define TURBO_PIXEL_CLOCK	(TURBO_MASTER_CLOCK/4)
-#define SUBROC_PIXEL_CLOCK	(SUBROC_MASTER_CLOCK/4)
+#define TURBO_PIXEL_CLOCK	(TURBO_MASTER_CLOCK/4*TURBO_X_SCALE)
+#define SUBROC_PIXEL_CLOCK	(SUBROC_MASTER_CLOCK/4*TURBO_X_SCALE)
 
-#define HTOTAL				(320)
+#define HTOTAL				(320*TURBO_X_SCALE)
 #define HBEND				(0)
-#define HBSTART				(256)
+#define HBSTART				(256*TURBO_X_SCALE)
 
 #define VTOTAL				(264)
 #define VBEND				(0)
 #define VBSTART				(224)
 
-
-
-/*************************************
- *
- *  Types
- *
- *************************************/
-
-typedef struct _i8279_state i8279_state;
-struct _i8279_state
-{
-	UINT8		command;
-	UINT8		mode;
-	UINT8		prescale;
-	UINT8		inhibit;
-	UINT8		clear;
-	UINT8		ram[16];
-};
-
-
-
-/*************************************
- *
- *  Globals
- *
- *************************************/
-
-UINT8 turbo_opa, turbo_opb, turbo_opc;
-UINT8 turbo_ipa, turbo_ipb, turbo_ipc;
-UINT8 turbo_fbpla, turbo_fbcol;
-UINT8 turbo_speed;
-
-UINT8 subroc3d_col, subroc3d_ply, subroc3d_flip;
-
-UINT8 buckrog_fchg, buckrog_mov, buckrog_obch;
-
-/* local data */
-static UINT8 buckrog_command;
-static i8279_state i8279;
-static UINT8 turbo_last_analog;
 
 
 static READ8_HANDLER( turbo_analog_r );
@@ -230,7 +190,8 @@ static READ8_HANDLER( turbo_analog_r );
 
 static MACHINE_RESET( buckrog )
 {
-	buckrog_command = 0x00;
+	turbo_state *state = Machine->driver_data;
+	state->buckrog_command = 0x00;
 }
 
 
@@ -252,42 +213,48 @@ static MACHINE_RESET( buckrog )
 static WRITE8_HANDLER( turbo_ppi0a_w )
 {
 	/* bit0-7 = 0PA0-7 */
-	turbo_opa = data;
+	turbo_state *state = Machine->driver_data;
+	state->turbo_opa = data;
 }
 
 
 static WRITE8_HANDLER( turbo_ppi0b_w )
 {
 	/* bit0-7 = 0PB0-7 */
-	turbo_opb = data;
+	turbo_state *state = Machine->driver_data;
+	state->turbo_opb = data;
 }
 
 
 static WRITE8_HANDLER( turbo_ppi0c_w )
 {
 	/* bit0-7 = 0PC0-7 */
-	turbo_opc = data;
+	turbo_state *state = Machine->driver_data;
+	state->turbo_opc = data;
 }
 
 
 static WRITE8_HANDLER( turbo_ppi1a_w )
 {
 	/* bit0-7 = 1PA0-7 */
-	turbo_ipa = data;
+	turbo_state *state = Machine->driver_data;
+	state->turbo_ipa = data;
 }
 
 
 static WRITE8_HANDLER( turbo_ppi1b_w )
 {
 	/* bit0-7 = 1PB0-7 */
-	turbo_ipb = data;
+	turbo_state *state = Machine->driver_data;
+	state->turbo_ipb = data;
 }
 
 
 static WRITE8_HANDLER( turbo_ppi1c_w )
 {
 	/* bit0-7 = 1PC0-7 */
-	turbo_ipc = data;
+	turbo_state *state = Machine->driver_data;
+	state->turbo_ipc = data;
 }
 
 
@@ -296,8 +263,9 @@ static WRITE8_HANDLER( turbo_ppi3c_w )
 	/* bit 0-3 = PLA0-3 */
 	/* bit 4-6 = COL0-2 */
 	/* bit   7 = n/c */
-	turbo_fbpla = data & 0x0f;
-	turbo_fbcol = (data >> 4) & 0x07;
+	turbo_state *state = Machine->driver_data;
+	state->turbo_fbpla = data & 0x0f;
+	state->turbo_fbcol = (data >> 4) & 0x07;
 }
 
 
@@ -318,14 +286,16 @@ static WRITE8_HANDLER( subroc3d_ppi0a_w )
 {
 	/* bit 0-3 = PLY0-3 */
 	/* bit 4-7 = n/c */
-	subroc3d_ply = data & 0x0f;
+	turbo_state *state = Machine->driver_data;
+	state->subroc3d_ply = data & 0x0f;
 }
 
 
 static WRITE8_HANDLER( subroc3d_ppi0c_w )
 {
 	/* bit 0-3 = COL0-3 */
-	subroc3d_col = data & 0x0f;
+	turbo_state *state = Machine->driver_data;
+	state->subroc3d_col = data & 0x0f;
 }
 
 
@@ -336,10 +306,11 @@ static WRITE8_HANDLER( subroc3d_ppi0b_w )
 	/* bit 2 = STLA (START LAMP) */
 	/* bit 3 = NOUSE (n/c) */
 	/* bit 4 = FLIP (not really flip, just offset) */
+	turbo_state *state = Machine->driver_data;
 	coin_counter_w(0, data & 0x01);
 	coin_counter_w(1, data & 0x02);
 	set_led_status(0, data & 0x04);
-	subroc3d_flip = (data >> 4) & 1;
+	state->subroc3d_flip = (data >> 4) & 1;
 }
 
 
@@ -353,7 +324,8 @@ static WRITE8_HANDLER( subroc3d_ppi0b_w )
 static WRITE8_HANDLER( buckrog_ppi0a_w )
 {
 	/* bit 0-7 = data to be read on the /IOREQ */
-	buckrog_command = data;
+	turbo_state *state = Machine->driver_data;
+	state->buckrog_command = data;
 }
 
 
@@ -361,7 +333,8 @@ static WRITE8_HANDLER( buckrog_ppi0b_w )
 {
 	/* bit 0-5 = MOV0-5 */
 	/* bit 6-7 = n/c */
-	buckrog_mov = data & 0x3f;
+	turbo_state *state = Machine->driver_data;
+	state->buckrog_mov = data & 0x3f;
 }
 
 
@@ -371,7 +344,8 @@ static WRITE8_HANDLER( buckrog_ppi0c_w )
 	/* bit 3-5 = n/c */
 	/* bit   6 = /IOREQ on the 2nd CPU */
 	/* bit   7 = /INT on the 2nd CPU */
-	buckrog_fchg = data & 0x07;
+	turbo_state *state = Machine->driver_data;
+	state->buckrog_fchg = data & 0x07;
 	cpunum_set_input_line(1, 0, (data & 0x80) ? CLEAR_LINE : ASSERT_LINE);
 }
 
@@ -384,7 +358,8 @@ static WRITE8_HANDLER( buckrog_ppi1c_w )
 	/* bit   5 = COM2 (COIN METER 2) */
 	/* bit   6 = STLA (START LAMP) */
 	/* bit   7 = NOUSE (BODY SONIC) */
-	buckrog_obch = data & 0x07;
+	turbo_state *state = Machine->driver_data;
+	state->buckrog_obch = data & 0x07;
 	coin_counter_w(0, data & 0x10);
 	coin_counter_w(1, data & 0x20);
 	set_led_status(0, data & 0x40);
@@ -428,7 +403,8 @@ static void update_outputs(i8279_state *chip, UINT16 which)
 
 static READ8_HANDLER( turbo_8279_r )
 {
-	i8279_state *chip = &i8279;
+	turbo_state *state = Machine->driver_data;
+	i8279_state *chip = &state->i8279;
 	UINT8 result = 0xff;
 	UINT8 addr;
 
@@ -468,7 +444,8 @@ static READ8_HANDLER( turbo_8279_r )
 
 static WRITE8_HANDLER( turbo_8279_w )
 {
-	i8279_state *chip = &i8279;
+	turbo_state *state = Machine->driver_data;
+	i8279_state *chip = &state->i8279;
 	UINT8 addr;
 
 	/* write data */
@@ -571,27 +548,31 @@ static WRITE8_HANDLER( turbo_8279_w )
 
 static READ8_HANDLER( turbo_collision_r )
 {
+	turbo_state *state = Machine->driver_data;
 	video_screen_update_partial(0, video_screen_get_vpos(0));
-	return readinputport(3) | (turbo_collision & 15);
+	return readinputport(3) | (state->turbo_collision & 15);
 }
 
 
 static WRITE8_HANDLER( turbo_collision_clear_w )
 {
+	turbo_state *state = Machine->driver_data;
 	video_screen_update_partial(0, video_screen_get_vpos(0));
-	turbo_collision = 0;
+	state->turbo_collision = 0;
 }
 
 
 static READ8_HANDLER( turbo_analog_r )
 {
-	return readinputport(4) - turbo_last_analog;
+	turbo_state *state = Machine->driver_data;
+	return readinputport(4) - state->turbo_last_analog;
 }
 
 
 static WRITE8_HANDLER( turbo_analog_reset_w )
 {
-	turbo_last_analog = readinputport(4);
+	turbo_state *state = Machine->driver_data;
+	state->turbo_last_analog = readinputport(4);
 }
 
 
@@ -614,7 +595,8 @@ static WRITE8_HANDLER( turbo_coin_and_lamp_w )
 
 void turbo_update_tachometer(void)
 {
-	output_set_value("speed", turbo_speed);
+	turbo_state *state = Machine->driver_data;
+	output_set_value("speed", state->turbo_speed);
 }
 
 
@@ -628,8 +610,9 @@ void turbo_update_tachometer(void)
 static READ8_HANDLER( buckrog_cpu2_command_r )
 {
 	/* assert ACK */
+	turbo_state *state = Machine->driver_data;
 	ppi8255_set_portC(0, 0x00);
-	return buckrog_command;
+	return state->buckrog_command;
 }
 
 
@@ -688,11 +671,11 @@ static WRITE8_HANDLER( buckrog_ppi8255_0_w )
 
 static ADDRESS_MAP_START( turbo_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x5fff) AM_ROM
-	AM_RANGE(0xa000, 0xa0ff) AM_MIRROR(0x0700) AM_MASK(0x0f7) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xa000, 0xa0ff) AM_MIRROR(0x0700) AM_MASK(0x0f7) AM_RAM AM_BASE_MEMBER(turbo_state, spriteram)
 	AM_RANGE(0xa800, 0xa807) AM_MIRROR(0x07f8) AM_WRITE(turbo_coin_and_lamp_w)
-	AM_RANGE(0xb000, 0xb3ff) AM_MIRROR(0x0400) AM_RAM AM_BASE(&sega_sprite_position)
+	AM_RANGE(0xb000, 0xb3ff) AM_MIRROR(0x0400) AM_RAM AM_BASE_MEMBER(turbo_state, sprite_position)
 	AM_RANGE(0xb800, 0xbfff) AM_WRITE(turbo_analog_reset_w)
-	AM_RANGE(0xe000, 0xe7ff) AM_READWRITE(MRA8_RAM, turbo_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xe000, 0xe7ff) AM_READWRITE(MRA8_RAM, turbo_videoram_w) AM_BASE_MEMBER(turbo_state, videoram)
 	AM_RANGE(0xe800, 0xefff) AM_WRITE(turbo_collision_clear_w)
 	AM_RANGE(0xf000, 0xf7ff) AM_RAM
 	AM_RANGE(0xf800, 0xf803) AM_MIRROR(0x00fc) AM_READWRITE(ppi8255_0_r, ppi8255_0_w)
@@ -714,15 +697,15 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( subroc3d_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x9fff) AM_ROM
-	AM_RANGE(0xa000, 0xa3ff) AM_RAM AM_BASE(&sega_sprite_position)					// CONT RAM
-	AM_RANGE(0xa400, 0xa7ff) AM_RAM AM_BASE(&spriteram)								// CONT RAM
+	AM_RANGE(0xa000, 0xa3ff) AM_RAM AM_BASE_MEMBER(turbo_state, sprite_position)	// CONT RAM
+	AM_RANGE(0xa400, 0xa7ff) AM_RAM AM_BASE_MEMBER(turbo_state, spriteram)			// CONT RAM
 	AM_RANGE(0xa800, 0xa800) AM_MIRROR(0x07fc) AM_READ(input_port_0_r)				// INPUT 253
 	AM_RANGE(0xa801, 0xa801) AM_MIRROR(0x07fc) AM_READ(input_port_1_r)				// INPUT 253
 	AM_RANGE(0xa802, 0xa802) AM_MIRROR(0x07fc) AM_READ(input_port_2_r)				// INPUT 253
 	AM_RANGE(0xa803, 0xa803) AM_MIRROR(0x07fc) AM_READ(input_port_3_r)				// INPUT 253
 	AM_RANGE(0xb000, 0xb7ff) AM_RAM 												// SCRATCH
 	AM_RANGE(0xb800, 0xbfff) 														// HANDLE CL
-	AM_RANGE(0xe000, 0xe7ff) AM_READWRITE(MRA8_RAM, turbo_videoram_w) AM_BASE(&videoram)	// FIX PAGE
+	AM_RANGE(0xe000, 0xe7ff) AM_READWRITE(MRA8_RAM, turbo_videoram_w) AM_BASE_MEMBER(turbo_state, videoram)	// FIX PAGE
 	AM_RANGE(0xe800, 0xe803) AM_MIRROR(0x07fc) AM_READWRITE(ppi8255_0_r, ppi8255_0_w)
 	AM_RANGE(0xf000, 0xf003) AM_MIRROR(0x07fc) AM_READWRITE(ppi8255_1_r, ppi8255_1_w)
 	AM_RANGE(0xf800, 0xf801) AM_MIRROR(0x07fe) AM_READWRITE(turbo_8279_r, turbo_8279_w)
@@ -739,12 +722,12 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( buckrog_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_ROM
 	AM_RANGE(0x8000, 0xbfff) AM_ROM
-	AM_RANGE(0xc000, 0xc7ff) AM_READWRITE(MRA8_RAM, turbo_videoram_w) AM_BASE(&videoram)		// FIX PAGE
+	AM_RANGE(0xc000, 0xc7ff) AM_READWRITE(MRA8_RAM, turbo_videoram_w) AM_BASE_MEMBER(turbo_state, videoram)		// FIX PAGE
 	AM_RANGE(0xc800, 0xc803) AM_MIRROR(0x07fc) AM_READWRITE(ppi8255_0_r, buckrog_ppi8255_0_w)	// 8255
 	AM_RANGE(0xd000, 0xd003) AM_MIRROR(0x07fc) AM_READWRITE(ppi8255_1_r, ppi8255_1_w)			// 8255
 	AM_RANGE(0xd800, 0xd801) AM_MIRROR(0x07fe) AM_READWRITE(turbo_8279_r, turbo_8279_w)			// 8279
-	AM_RANGE(0xe000, 0xe3ff) AM_RAM AM_BASE(&sega_sprite_position)								// CONT RAM
-	AM_RANGE(0xe400, 0xe7ff) AM_RAM AM_BASE(&spriteram)											// CONT RAM
+	AM_RANGE(0xe000, 0xe3ff) AM_RAM AM_BASE_MEMBER(turbo_state, sprite_position)				// CONT RAM
+	AM_RANGE(0xe400, 0xe7ff) AM_RAM AM_BASE_MEMBER(turbo_state, spriteram)						// CONT RAM
 	AM_RANGE(0xe800, 0xe800) AM_MIRROR(0x07fc) AM_READ(input_port_0_r)							// INPUT
 	AM_RANGE(0xe801, 0xe801) AM_MIRROR(0x07fc) AM_READ(input_port_1_r)
 	AM_RANGE(0xe802, 0xe802) AM_MIRROR(0x07fc) AM_READ(buckrog_port_2_r)
@@ -1106,6 +1089,7 @@ static const gfx_decode gfxdecodeinfo[] =
  *************************************/
 
 static MACHINE_DRIVER_START( turbo )
+	MDRV_DRIVER_DATA(turbo_state)
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, TURBO_MASTER_CLOCK/4)
@@ -1115,7 +1099,7 @@ static MACHINE_DRIVER_START( turbo )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_ALWAYS_UPDATE)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(512)
+	MDRV_PALETTE_LENGTH(256)
 
 	MDRV_SCREEN_ADD("main", 0)
 	MDRV_SCREEN_RAW_PARAMS(TURBO_PIXEL_CLOCK, HTOTAL, HBEND, HBSTART, VTOTAL, VBEND, VBSTART)
@@ -1134,6 +1118,7 @@ MACHINE_DRIVER_END
 
 
 static MACHINE_DRIVER_START( subroc3d )
+	MDRV_DRIVER_DATA(turbo_state)
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, SUBROC_MASTER_CLOCK/4)
@@ -1141,9 +1126,9 @@ static MACHINE_DRIVER_START( subroc3d )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_ALWAYS_UPDATE)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(512)
+	MDRV_PALETTE_LENGTH(256)
 
 	MDRV_SCREEN_ADD("main", 0)
 	MDRV_SCREEN_RAW_PARAMS(SUBROC_PIXEL_CLOCK, HTOTAL, HBEND, HBSTART, VTOTAL, VBEND, VBSTART)
@@ -1162,6 +1147,7 @@ MACHINE_DRIVER_END
 
 
 static MACHINE_DRIVER_START( buckrog )
+	MDRV_DRIVER_DATA(turbo_state)
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, TURBO_MASTER_CLOCK/4)
@@ -1249,7 +1235,7 @@ ROM_START( turbo )
 	ROM_LOAD( "pr-1117.prom-ic21",  0x0060, 0x0020, CRC(f06d9907) SHA1(f11db7800f41b03e79f5eef8d7ef3ae0a6277518) )	/* road green/blue color table */
 	ROM_LOAD( "pr-1118.cpu-ic99",   0x0100, 0x0100, CRC(07324cfd) SHA1(844abc2042d6810fa34d84ff1ed57744886c6ea6) )	/* background color table */
 	ROM_LOAD( "pr-1119.cpu-ic50",   0x0200, 0x0200, CRC(57ebd4bc) SHA1(932649da3537666f95833a8a8aff506217bd9aa1) )	/* sprite Y scaling */
-	ROM_LOAD( "pr-1120.cpu-ic62",   0x0400, 0x0200, BAD_DUMP CRC(591b6a68) SHA1(85de39d9e14a1f0c65c1308c27a106e3c2dd9b5b) )	/* video timing */
+	ROM_LOAD( "pr-1120.cpu-ic62",   0x0400, 0x0200, CRC(8dd4c8a8) SHA1(e8d9cf08f115d57c44746fa0ff28f47b064b4193) )	/* video timing */
 	ROM_LOAD( "pr-1121.prom-ic29",  0x0600, 0x0200, CRC(7692f497) SHA1(42468c0705df9928e15ff8deb7e793a6c0c04353) )	/* palette */
 	ROM_LOAD( "pr-1122.prom-ic11",  0x0800, 0x0400, CRC(1a86ce70) SHA1(cab708b9a089b2e28f2298c1e4fae6e200923527) )	/* sprite priorities */
 	ROM_LOAD( "pr-1123.prom-ic12",  0x0c00, 0x0400, CRC(02d2cb52) SHA1(c34d6b60355747ce20fcb8d322df0e188d187f10) )	/* sprite/road/background priorities */
@@ -1303,7 +1289,7 @@ ROM_START( turboa )
 	ROM_LOAD( "pr-1117.prom-ic21",  0x0060, 0x0020, CRC(f06d9907) SHA1(f11db7800f41b03e79f5eef8d7ef3ae0a6277518) )	/* road green/blue color table */
 	ROM_LOAD( "pr-1118.cpu-ic99",   0x0100, 0x0100, CRC(07324cfd) SHA1(844abc2042d6810fa34d84ff1ed57744886c6ea6) )	/* background color table */
 	ROM_LOAD( "pr-1119.cpu-ic50",   0x0200, 0x0200, CRC(57ebd4bc) SHA1(932649da3537666f95833a8a8aff506217bd9aa1) )	/* sprite Y scaling */
-	ROM_LOAD( "pr-1120.cpu-ic62",   0x0400, 0x0200, BAD_DUMP CRC(591b6a68) SHA1(85de39d9e14a1f0c65c1308c27a106e3c2dd9b5b) )	/* video timing */
+	ROM_LOAD( "pr-1120.cpu-ic62",   0x0400, 0x0200, CRC(8dd4c8a8) SHA1(e8d9cf08f115d57c44746fa0ff28f47b064b4193) )	/* video timing */
 	ROM_LOAD( "pr-1121.prom-ic29",  0x0600, 0x0200, CRC(7692f497) SHA1(42468c0705df9928e15ff8deb7e793a6c0c04353) )	/* palette */
 	ROM_LOAD( "pr-1122.prom-ic11",  0x0800, 0x0400, CRC(1a86ce70) SHA1(cab708b9a089b2e28f2298c1e4fae6e200923527) )	/* sprite priorities */
 	ROM_LOAD( "pr-1123.prom-ic12",  0x0c00, 0x0400, CRC(02d2cb52) SHA1(c34d6b60355747ce20fcb8d322df0e188d187f10) )	/* sprite/road/background priorities */
@@ -1357,7 +1343,7 @@ ROM_START( turbob )
 	ROM_LOAD( "pr-1117.prom-ic21",  0x0060, 0x0020, CRC(f06d9907) SHA1(f11db7800f41b03e79f5eef8d7ef3ae0a6277518) )	/* road green/blue color table */
 	ROM_LOAD( "pr-1118.cpu-ic99",   0x0100, 0x0100, CRC(07324cfd) SHA1(844abc2042d6810fa34d84ff1ed57744886c6ea6) )	/* background color table */
 	ROM_LOAD( "pr-1119.cpu-ic50",   0x0200, 0x0200, CRC(57ebd4bc) SHA1(932649da3537666f95833a8a8aff506217bd9aa1) )	/* sprite Y scaling */
-	ROM_LOAD( "pr-1120.cpu-ic62",   0x0400, 0x0200, BAD_DUMP CRC(591b6a68) SHA1(85de39d9e14a1f0c65c1308c27a106e3c2dd9b5b) )	/* video timing */
+	ROM_LOAD( "pr-1120.cpu-ic62",   0x0400, 0x0200, CRC(8dd4c8a8) SHA1(e8d9cf08f115d57c44746fa0ff28f47b064b4193) )	/* video timing */
 	ROM_LOAD( "pr-1121.prom-ic29",  0x0600, 0x0200, CRC(7692f497) SHA1(42468c0705df9928e15ff8deb7e793a6c0c04353) )	/* palette */
 	ROM_LOAD( "pr-1122.prom-ic11",  0x0800, 0x0400, CRC(1a86ce70) SHA1(cab708b9a089b2e28f2298c1e4fae6e200923527) )	/* sprite priorities */
 	ROM_LOAD( "pr-1123.prom-ic12",  0x0c00, 0x0400, CRC(02d2cb52) SHA1(c34d6b60355747ce20fcb8d322df0e188d187f10) )	/* sprite/road/background priorities */
@@ -1441,7 +1427,7 @@ ROM_START( buckrog )
 	ROM_LOAD( "epr-5203.cpu-ic91", 0x0000, 0x2000, CRC(631f5b65) SHA1(ce8b23cf97f7e08a13f426964ef140a20a884335) )
 
 	ROM_REGION( 0x0b00, REGION_PROMS, 0 )	/* various PROMs */
-	ROM_LOAD( "pr-5194.cpu-ic39", 0x0000, 0x0020, CRC(bc88cced) SHA1(5055362710c0f58823c05fb4c0e0eec638b91e3d) )
+	ROM_LOAD( "pr-5194.cpu-ic39", 0x0000, 0x0020, CRC(bc88cced) SHA1(5055362710c0f58823c05fb4c0e0eec638b91e3d) )  /* char layer X shift */
 	ROM_LOAD( "pr-5195.cpu-ic53", 0x0020, 0x0020, CRC(181c6d23) SHA1(4749b205cbaa513ee65a644946235d2cfe275648) )  /* sprite state machine */
 	ROM_LOAD( "pr-5196.cpu-ic10", 0x0100, 0x0200, CRC(04204bcf) SHA1(5636eb184463ac58fcfd20012d13d14fb0769124) )  /* sprite Y scaling */
 	ROM_LOAD( "pr-5197.cpu-ic78", 0x0300, 0x0200, CRC(a42674af) SHA1(db3590dd0d0f8a85d4ba32ac4ee33f2f4ee4c348) )  /* video timing */

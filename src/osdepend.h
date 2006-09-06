@@ -20,9 +20,9 @@
 
 int osd_init(void);
 
-#ifdef NEW_DEBUGGER
+
 void osd_wait_for_debugger(void);
-#endif
+
 
 
 /******************************************************************************

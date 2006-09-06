@@ -287,7 +287,8 @@ WRITE8_HANDLER( turbo_sound_C_w )
         2PC6 = SPEED2
         2PC7 = SPEED3
     */
-	turbo_speed = (data >> 4) & 0x0f;
+	turbo_state *state = Machine->driver_data;
+	state->turbo_speed = (data >> 4) & 0x0f;
 	bsel = (data >> 2) & 3;
 	osel = (osel & 1) | ((data & 3) << 1);
 	turbo_update_samples();

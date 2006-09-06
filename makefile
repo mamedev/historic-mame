@@ -45,9 +45,6 @@ endif
 # uncomment next line to include the debugger
 # DEBUG = 1
 
-# uncomment next line to use the new multiwindow debugger
-NEW_DEBUGGER = 1
-
 # uncomment next line to use DRC MIPS3 engine
 X86_MIPS3_DRC = 1
 

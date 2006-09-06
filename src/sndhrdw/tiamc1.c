@@ -21,9 +21,9 @@
       clk0           |
       ---------------+
 
-  in0-in3 comes from port #da
-  clk0    comes from divider 16000000/4/16/16/2 = 7812Hz
-  clk1    comes from 8224 and equals to 1777777Hz, i.e. processor clock
+  in0-in2 comes from port #da
+  clk0    comes from 8224 and equals to 1777777Hz, i.e. processor clock
+  clk1    comes from divider 16000000/4/16/16/2 = 7812Hz
 
   ********************
 
@@ -38,21 +38,19 @@
 #define CLOCK_DIVIDER 16
 #define BUF_LEN 100000
 
-#define SQUARE_VOL 1
-
 static sound_stream *channel;
 static int timer1_divider;
 
 struct timer8253chan {
-	unsigned short count;
-	unsigned short cnval;
-	char bcdMode;
-	int cntMode;
-	int valMode;
-	char gate;
-	char output;
-	int loadCnt;
-	char enable;
+	UINT16 count;
+	UINT16 cnval;
+	UINT8 bcdMode;
+	UINT8 cntMode;
+	UINT8 valMode;
+	UINT8 gate;
+	UINT8 output;
+	UINT8 loadCnt;
+	UINT8 enable;
 };
 
 struct timer8253struct {
@@ -215,14 +213,14 @@ void timer8253_wr(struct timer8253struct *t, int reg, unsigned char val)
 	}
 }
 
-void timer8253_set_gate(struct timer8253struct *t,int chn, char gate)
+void timer8253_set_gate(struct timer8253struct *t, int chn, UINT8 gate)
 {
-	t->channel[chn].gate=gate;
+	t->channel[chn].gate = gate;
 }
 
 
 
-char timer8253_get_output(struct timer8253struct *t,int chn)
+char timer8253_get_output(struct timer8253struct *t, int chn)
 {
 	return t->channel[chn].output;
 }
@@ -269,9 +267,9 @@ static void tiamc1_sound_update(void *param, stream_sample_t **inputs, stream_sa
 		timer8253_tick(&timer0, 1);
 		timer8253_tick(&timer0, 2);
 
-		o0 = timer8253_get_output(&timer0, 0) ? SQUARE_VOL : 0;
-		o1 = timer8253_get_output(&timer0, 1) ? SQUARE_VOL : 0;
-		o2 = timer8253_get_output(&timer0, 2) ? SQUARE_VOL : 0;
+		o0 = timer8253_get_output(&timer0, 0) ? 1 : 0;
+		o1 = timer8253_get_output(&timer0, 1) ? 1 : 0;
+		o2 = timer8253_get_output(&timer0, 2) ? 1 : 0;
 
 		or = (or << 1) | (((o0 | o1) ^ 0xff) & o2);
 
@@ -284,6 +282,8 @@ static void tiamc1_sound_update(void *param, stream_sample_t **inputs, stream_sa
 
 void *tiamc1_sh_start(int clock, const struct CustomSound_interface *config)
 {
+	int i, j;
+
 	timer8253_reset(&timer0);
 	timer8253_reset(&timer1);
 
@@ -291,5 +291,24 @@ void *tiamc1_sh_start(int clock, const struct CustomSound_interface *config)
 
 	timer1_divider = 0;
 
+	for (i = 0; i < 2; i++) {
+		struct timer8253struct *t = (i ? &timer1 : &timer0);
+
+		for (j = 0; j < 3; j++) {
+			state_save_register_item("channel", i * 3 + j, t->channel[j].count);
+			state_save_register_item("channel", i * 3 + j, t->channel[j].cnval);
+			state_save_register_item("channel", i * 3 + j, t->channel[j].bcdMode);
+			state_save_register_item("channel", i * 3 + j, t->channel[j].cntMode);
+			state_save_register_item("channel", i * 3 + j, t->channel[j].valMode);
+			state_save_register_item("channel", i * 3 + j, t->channel[j].gate);
+			state_save_register_item("channel", i * 3 + j, t->channel[j].output);
+			state_save_register_item("channel", i * 3 + j, t->channel[j].loadCnt);
+			state_save_register_item("channel", i * 3 + j, t->channel[j].enable);
+		}
+	}
+
+	state_save_register_global(timer1_divider);
+
 	return channel;
 }
+

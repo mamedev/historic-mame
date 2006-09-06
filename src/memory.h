@@ -667,8 +667,16 @@ address_map *construct_map_##_name(address_map *map)					\
 #define AM_BASE(_base)													\
 	map->base = (void **)(base = _base);								\
 
+#define AM_BASE_MEMBER(_struct, _member)								\
+	if (Machine != NULL && Machine->driver_data != NULL)				\
+		map->base = (void **)(base = &((_struct *)Machine->driver_data)->_member);\
+
 #define AM_SIZE(_size)													\
 	map->size = _size;													\
+
+#define AM_SIZE_MEMBER(_struct, _member)								\
+	if (Machine != NULL && Machine->driver_data != NULL)				\
+		map->size = &((_struct *)Machine->driver_data)->(_member);		\
 
 /* ----- common shortcuts ----- */
 #define AM_READWRITE(_read,_write)			AM_READ(_read) AM_WRITE(_write)

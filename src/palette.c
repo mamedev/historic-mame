@@ -11,9 +11,6 @@
 
 #include "driver.h"
 #include <math.h>
-#if defined(MAME_DEBUG) && !defined(NEW_DEBUGGER)
-#include "debug/mamedbg.h"
-#endif
 
 #define VERBOSE 0
 
@@ -590,21 +587,6 @@ static void palette_alloc(void)
 		Machine->game_colortable = NULL;
 		Machine->remapped_colortable = Machine->pens;	/* straight 1:1 mapping from palette to colortable */
 	}
-
-#if defined(MAME_DEBUG) && !defined(NEW_DEBUGGER)
-	/* allocate memory for the debugger pens */
-	Machine->debug_pens = auto_malloc(DEBUGGER_TOTAL_COLORS * sizeof(Machine->debug_pens[0]));
-	for (i = 0; i < DEBUGGER_TOTAL_COLORS; i++)
-		Machine->debug_pens[i] = i;
-
-	/* allocate memory for the debugger colortable */
-	Machine->debug_remapped_colortable = auto_malloc(2 * DEBUGGER_TOTAL_COLORS * DEBUGGER_TOTAL_COLORS * sizeof(Machine->debug_remapped_colortable[0]));
-	for (i = 0; i < DEBUGGER_TOTAL_COLORS * DEBUGGER_TOTAL_COLORS; i++)
-	{
-		Machine->debug_remapped_colortable[2*i+0] = i / DEBUGGER_TOTAL_COLORS;
-		Machine->debug_remapped_colortable[2*i+1] = i % DEBUGGER_TOTAL_COLORS;
-	}
-#endif
 
 #if 0 //* for reference, do not remove
 	/* allocate the shadow lookup table for 16bpp modes */
