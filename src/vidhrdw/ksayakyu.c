@@ -32,7 +32,7 @@ WRITE8_HANDLER(ksayakyu_videoctrl_w)
 
 PALETTE_INIT( ksayakyu )
 {
-	int i,j,r,g,b,b1,b2;
+	int i,j,b1,b2;
 	for(j=0;j<16;j++)
 		for(i=0;i<8;i++)
 		{
@@ -40,11 +40,7 @@ PALETTE_INIT( ksayakyu )
 			b2=memory_region(REGION_PROMS)[j*16+i+8];
 
 			b1=b2|(b1<<8);
-			g=(b1&31)<<3;
-			b=((b1>>5)&31)<<3;
-			r=((b1>>10)&31)<<3;
-
-			palette_set_color(j*8+i,r,g,b);
+			palette_set_color(machine,j*8+i,pal5bit(b1 >> 10),pal5bit(b1 >> 0),pal5bit(b1 >> 5));
 		}
 }
 

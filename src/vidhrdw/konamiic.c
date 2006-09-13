@@ -4380,14 +4380,14 @@ void K053247_sprites_draw(mame_bitmap *bitmap,const rectangle *cliprect) //*
 			color = 0;
 			shadow = -1;
 			for (temp=1; temp<solidpens; temp++) gfx_drawmode_table[temp] = DRAWMODE_SHADOW;
-			palette_set_shadow_mode(0);
+			palette_set_shadow_mode(Machine, 0);
 		}
 		else
 		{
 			if (shdmask >= 0)
 			{
 				shadow = (color & K053247_CUSTOMSHADOW) ? (color>>K053247_SHDSHIFT) : (shadow>>10);
-				if (shadow &= 3) palette_set_shadow_mode((shadow-1) & shdmask);
+				if (shadow &= 3) palette_set_shadow_mode(Machine, (shadow-1) & shdmask);
 			}
 			else
 				shadow = 0;
@@ -7279,9 +7279,9 @@ void K054338_update_all_shadows(void)
 		K054338_shdRGB[i] = d;
 	}
 
-	palette_set_shadow_dRGB32(0, K054338_shdRGB[0], K054338_shdRGB[1], K054338_shdRGB[2], noclip);
-	palette_set_shadow_dRGB32(1, K054338_shdRGB[3], K054338_shdRGB[4], K054338_shdRGB[5], noclip);
-	palette_set_shadow_dRGB32(2, K054338_shdRGB[6], K054338_shdRGB[7], K054338_shdRGB[8], noclip);
+	palette_set_shadow_dRGB32(Machine, 0, K054338_shdRGB[0], K054338_shdRGB[1], K054338_shdRGB[2], noclip);
+	palette_set_shadow_dRGB32(Machine, 1, K054338_shdRGB[3], K054338_shdRGB[4], K054338_shdRGB[5], noclip);
+	palette_set_shadow_dRGB32(Machine, 2, K054338_shdRGB[6], K054338_shdRGB[7], K054338_shdRGB[8], noclip);
 }
 
 // K054338 BG color fill

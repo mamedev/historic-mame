@@ -41,12 +41,12 @@ WRITE8_HANDLER( wolfpack_ship_size_w )
 	if (data & 0x40) color += 0x3A;
 	if (data & 0x80) color += 0x48;
 
-	palette_set_color(3,
+	palette_set_color(Machine,3,
 		color,
 		color,
 		color);
 
-	palette_set_color(7,
+	palette_set_color(Machine,7,
 		color < 0xb8 ? color + 0x48 : 0xff,
 		color < 0xb8 ? color + 0x48 : 0xff,
 		color < 0xb8 ? color + 0x48 : 0xff);

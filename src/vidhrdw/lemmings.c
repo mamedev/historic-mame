@@ -179,7 +179,7 @@ VIDEO_UPDATE( lemmings )
 		}
 	}
 
-	fillbitmap(bitmap,get_black_pen(),cliprect);
+	fillbitmap(bitmap,get_black_pen(machine),cliprect);
 	lemmings_drawsprites(bitmap,sprite_triple_buffer_1,1,0x0000);
 
 	/* Pixel layer can be windowed in hardware (two player mode) */

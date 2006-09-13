@@ -942,7 +942,7 @@ WRITE16_HANDLER( avgdvg_reset_word_w )
  *
  ************************************/
 
-int avgdvg_init(int vector_type)
+int avgdvg_init(running_machine *machine, int vector_type)
 {
 	int i;
 
@@ -1006,7 +1006,7 @@ int avgdvg_init(int vector_type)
 	else
 		swap_xy = 0;
 
-	return video_start_vector();
+	return video_start_vector(machine);
 }
 
 
@@ -1019,55 +1019,55 @@ int avgdvg_init(int vector_type)
 
 VIDEO_START( dvg )
 {
-	return avgdvg_init(USE_DVG);
+	return avgdvg_init(machine, USE_DVG);
 }
 
 
 VIDEO_START( avg )
 {
-	return avgdvg_init(USE_AVG);
+	return avgdvg_init(machine, USE_AVG);
 }
 
 
 VIDEO_START( avg_starwars )
 {
-	return avgdvg_init(USE_AVG_SWARS);
+	return avgdvg_init(machine, USE_AVG_SWARS);
 }
 
 
 VIDEO_START( avg_tempest )
 {
-	return avgdvg_init(USE_AVG_TEMPEST);
+	return avgdvg_init(machine, USE_AVG_TEMPEST);
 }
 
 
 VIDEO_START( avg_mhavoc )
 {
-	return avgdvg_init(USE_AVG_MHAVOC);
+	return avgdvg_init(machine, USE_AVG_MHAVOC);
 }
 
 
 VIDEO_START( avg_alphaone )
 {
-	return avgdvg_init(USE_AVG_ALPHAONE);
+	return avgdvg_init(machine, USE_AVG_ALPHAONE);
 }
 
 
 VIDEO_START( avg_bzone )
 {
-	return avgdvg_init(USE_AVG_BZONE);
+	return avgdvg_init(machine, USE_AVG_BZONE);
 }
 
 
 VIDEO_START( avg_quantum )
 {
-	return avgdvg_init(USE_AVG_QUANTUM);
+	return avgdvg_init(machine, USE_AVG_QUANTUM);
 }
 
 
 VIDEO_START( avg_redbaron )
 {
-	return avgdvg_init(USE_AVG_RBARON);
+	return avgdvg_init(machine, USE_AVG_RBARON);
 }
 
 

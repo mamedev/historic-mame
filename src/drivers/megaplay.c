@@ -66,7 +66,7 @@ static MACHINE_RESET( megaplay )
 	memory_set_bankptr(2, &ic36_ram[0]);
 	memory_set_bankptr(3, &genesis_68k_ram[0]);
 
-	machine_reset_genesis();
+	machine_reset_genesis(machine);
 }
 
 

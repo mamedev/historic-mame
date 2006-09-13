@@ -96,7 +96,7 @@ static READ32_HANDLER( eeprom_r )
         bit 9 = ???
     */
 
-	return (readinputport(0) & ~0x308) | (EEPROM_read_bit() << 3) | (mame_rand() & 0x300);
+	return (readinputport(0) & ~0x308) | (EEPROM_read_bit() << 3) | (mame_rand(Machine) & 0x300);
 }
 
 static WRITE32_HANDLER( systemcontrol_w )

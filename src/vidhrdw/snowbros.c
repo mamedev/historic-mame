@@ -183,7 +183,7 @@ VIDEO_UPDATE( wintbob )
 {
 	int offs;
 
-	fillbitmap(bitmap,get_black_pen(),&Machine->screen[0].visarea);
+	fillbitmap(bitmap,get_black_pen(machine),&Machine->screen[0].visarea);
 
 	for (offs = 0;offs < spriteram_size/2;offs += 8)
 	{
@@ -251,7 +251,7 @@ VIDEO_UPDATE( snowbro3 )
 
 	/* This clears & redraws the entire screen each pass */
 
-	fillbitmap(bitmap,get_black_pen(),&Machine->screen[0].visarea);
+	fillbitmap(bitmap,get_black_pen(machine),&Machine->screen[0].visarea);
 
 	for (offs = 0;offs < spriteram_size/2;offs += 8)
 	{

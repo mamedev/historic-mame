@@ -1721,11 +1721,11 @@ static void memory_determine_combo_items(void)
 	for (rgnnum = 0; rgnnum < MAX_MEMORY_REGIONS; rgnnum++)
 	{
 		UINT8 *base = memory_region(rgnnum);
-		UINT32 type = memory_region_type(rgnnum);
+		UINT32 type = memory_region_type(Machine, rgnnum);
 		if (base != NULL && type > REGION_INVALID && (type - REGION_INVALID) < ARRAY_LENGTH(memory_region_names))
 		{
 			memorycombo_item *ci = malloc_or_die(sizeof(*ci));
-			UINT32 flags = memory_region_flags(rgnnum);
+			UINT32 flags = memory_region_flags(Machine, rgnnum);
 			UINT8 width, little_endian;
 			memset(ci, 0, sizeof(*ci));
 			ci->base = base;
@@ -2783,16 +2783,16 @@ static int global_handle_command(debugwin_info *info, WPARAM wparam, LPARAM lpar
 				return 1;
 
 			case ID_HARD_RESET:
-				mame_schedule_hard_reset();
+				mame_schedule_hard_reset(Machine);
 				return 1;
 
 			case ID_SOFT_RESET:
-				mame_schedule_soft_reset();
+				mame_schedule_soft_reset(Machine);
 				debug_cpu_go(~0);
 				return 1;
 
 			case ID_EXIT:
-				mame_schedule_exit();
+				mame_schedule_exit(Machine);
 				return 1;
 		}
 

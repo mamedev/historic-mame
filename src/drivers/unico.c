@@ -662,7 +662,7 @@ struct EEPROM_interface zeropnt2_eeprom_interface =
 //  "*10010xxxx"    // erase all    1 00 10xxxx
 };
 
-void nvram_handler_zeropnt2(mame_file *file,int read_or_write)
+NVRAM_HANDLER( zeropnt2 )
 {
 	if (read_or_write)
 		EEPROM_save(file);
@@ -721,7 +721,7 @@ MACHINE_DRIVER_END
 
 MACHINE_RESET( zeropt )
 {
-	machine_reset_unico();
+	machine_reset_unico(machine);
 	unico_has_lightgun = 1;
 }
 

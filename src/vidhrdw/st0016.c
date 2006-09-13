@@ -100,17 +100,12 @@ READ8_HANDLER (st0016_palette_ram_r)
 WRITE8_HANDLER (st0016_palette_ram_w)
 {
 	int color=(ST0016_PAL_BANK_SIZE*st0016_pal_bank+offset)/2;
-	int r,g,b,val;
+	int val;
 	st0016_paletteram[ST0016_PAL_BANK_SIZE*st0016_pal_bank+offset]=data;
 	val=st0016_paletteram[color*2]+(st0016_paletteram[color*2+1]<<8);
-	r=(val&31)<<3;
-	val>>=5;
-	g=(val&31)<<3;
-	val>>=5;
-	b=(val&31)<<3;
 	if(!color)
-		palette_set_color(UNUSED_PEN,r,g,b); /* same as color 0 - bg ? */
-	palette_set_color(color,r,g,b);
+		palette_set_color(Machine,UNUSED_PEN,pal5bit(val >> 0),pal5bit(val >> 5),pal5bit(val >> 10)); /* same as color 0 - bg ? */
+	palette_set_color(Machine,color,pal5bit(val >> 0),pal5bit(val >> 5),pal5bit(val >> 10));
 }
 
 READ8_HANDLER(st0016_character_ram_r)
@@ -148,7 +143,7 @@ READ8_HANDLER(st0016_vregs_r)
 	{
 		case 0:
 		case 1:
-			return mame_rand();
+			return mame_rand(Machine);
 	}
 
 	return st0016_vregs[offset];

@@ -8,18 +8,11 @@ UINT8 *flower_textram, *flower_bg0ram, *flower_bg1ram, *flower_bg0_scroll, *flow
 
 PALETTE_INIT( flower )
 {
-	int i, r, g, b;
+	int i;
 
 	for (i=0; i<256; i++)
 	{
-		r = color_prom[i] & 0xf;
-		r = (r << 4) + r;
-		g = color_prom[i+0x100] & 0xf;
-		g = (g << 4) + g;
-		b = color_prom[i+0x200] & 0xf;
-		b = (b << 4) + b;
-
-		palette_set_color(i, r, g, b);
+		palette_set_color(machine, i, pal4bit(color_prom[i]), pal4bit(color_prom[i+0x100]), pal4bit(color_prom[i+0x200]));
 		colortable[i] = i;
 	}
 }

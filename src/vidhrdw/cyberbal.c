@@ -267,11 +267,7 @@ INLINE void set_palette_entry(int entry, UINT16 value)
 	g = ((value >> 4) & 0x3e) | ((value >> 15) & 1);
 	b = ((value << 1) & 0x3e) | ((value >> 15) & 1);
 
-	r = (r << 2) | (r >> 4);
-	g = (g << 2) | (g >> 4);
-	b = (b << 2) | (b >> 4);
-
-	palette_set_color(entry, r, g, b);
+	palette_set_color(Machine, entry, pal6bit(r), pal6bit(g), pal6bit(b));
 }
 
 

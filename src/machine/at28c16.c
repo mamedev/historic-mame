@@ -58,7 +58,7 @@ static void at28c16_init( int chip )
 	state_save_register_item( "at28c16", chip, c->a9_12v );
 }
 
-static void nvram_handler_at28c16( int chip, mame_file *file, int read_or_write )
+static void nvram_handler_at28c16( running_machine *machine, int chip, mame_file *file, int read_or_write )
 {
 	struct at28c16_chip *c;
 	if( chip >= MAX_AT28C16_CHIPS )
@@ -84,10 +84,10 @@ static void nvram_handler_at28c16( int chip, mame_file *file, int read_or_write 
 	}
 }
 
-NVRAM_HANDLER( at28c16_0 ) { nvram_handler_at28c16( 0, file, read_or_write ); }
-NVRAM_HANDLER( at28c16_1 ) { nvram_handler_at28c16( 1, file, read_or_write ); }
-NVRAM_HANDLER( at28c16_2 ) { nvram_handler_at28c16( 2, file, read_or_write ); }
-NVRAM_HANDLER( at28c16_3 ) { nvram_handler_at28c16( 3, file, read_or_write ); }
+NVRAM_HANDLER( at28c16_0 ) { nvram_handler_at28c16( machine, 0, file, read_or_write ); }
+NVRAM_HANDLER( at28c16_1 ) { nvram_handler_at28c16( machine, 1, file, read_or_write ); }
+NVRAM_HANDLER( at28c16_2 ) { nvram_handler_at28c16( machine, 2, file, read_or_write ); }
+NVRAM_HANDLER( at28c16_3 ) { nvram_handler_at28c16( machine, 3, file, read_or_write ); }
 
 /* read / write */
 

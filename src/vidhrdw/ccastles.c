@@ -125,7 +125,7 @@ WRITE8_HANDLER( ccastles_paletteram_w )
 	bit2 = (~b >> 2) & 0x01;
 	b = combine_3_weights(bweights, bit0, bit1, bit2);
 
-	palette_set_color(offset & 0x1f, r, g, b);
+	palette_set_color(Machine, offset & 0x1f, r, g, b);
 }
 
 
@@ -277,7 +277,7 @@ VIDEO_UPDATE( ccastles )
 {
 	UINT8 *spriteaddr = &spriteram[video_control[7] * 0x100];	/* BUF1/BUF2 */
 	int flip = video_control[4] ? 0xff : 0x00;	/* PLAYER2 */
-	pen_t black = get_black_pen();
+	pen_t black = get_black_pen(machine);
 	int x, y, offs;
 
 	/* draw the sprites */

@@ -170,7 +170,7 @@ INLINE const char *CLIB_DECL menu_string_pool_add(const char *format, ...)
     ui_menu_init - initialize the menu system
 -------------------------------------------------*/
 
-void ui_menu_init(void)
+void ui_menu_init(running_machine *machine)
 {
 	ui_menu_stack_reset();
 }
@@ -1058,7 +1058,7 @@ static UINT32 menu_memory_card(UINT32 state)
 		/* handle eject */
 		else if (selected == ejectindex)
 		{
-			memcard_eject();
+			memcard_eject(Machine);
 			popmessage("%s", ui_getstring(UI_cardejected));
 		}
 
@@ -1257,7 +1257,7 @@ static UINT32 menu_video(UINT32 state)
 static UINT32 menu_reset_game(UINT32 state)
 {
 	/* request a reset */
-	mame_schedule_soft_reset();
+	mame_schedule_soft_reset(Machine);
 
 	/* reset the menu stack */
 	ui_menu_stack_reset();

@@ -37,11 +37,7 @@ WRITE16_HANDLER( alpha68k_paletteram_w )
 	g = ((newword >> 3) & 0x1e) | ((newword >> 13) & 0x01);
 	b = ((newword << 1) & 0x1e) | ((newword >> 12) & 0x01);
 
-	r = (r << 3) | (r >> 2);
-	g = (g << 3) | (g >> 2);
-	b = (b << 3) | (b >> 2);
-
-	palette_set_color(offset,r,g,b);
+	palette_set_color(Machine,offset,pal5bit(r),pal5bit(g),pal5bit(b));
 }
 
 /******************************************************************************/
@@ -398,7 +394,7 @@ PALETTE_INIT( kyros )
 		bit3 = (color_prom[0x200] >> 3) & 0x01;
 		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 		color_prom++;
 	}
 
@@ -435,7 +431,7 @@ PALETTE_INIT( paddlem )
 		bit3 = (color_prom[0x200] >> 3) & 0x01;
 		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 		color_prom++;
 	}
 

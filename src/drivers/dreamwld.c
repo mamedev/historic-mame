@@ -133,7 +133,7 @@ VIDEO_START(dreamwld)
 VIDEO_UPDATE(dreamwld)
 {
 	tilemap_draw(bitmap,cliprect,dreamwld_bg_tilemap,0,0);
-//  fillbitmap(bitmap, get_black_pen(), cliprect);
+//  fillbitmap(bitmap, get_black_pen(machine), cliprect);
 
 	dreamwld_drawsprites(bitmap,cliprect);
 
@@ -143,7 +143,7 @@ VIDEO_UPDATE(dreamwld)
 
 static READ32_HANDLER( dreamwld_random_read)
 {
-	return mame_rand();
+	return mame_rand(Machine);
 }
 
 static READ32_HANDLER( inputs_r_1 )
@@ -156,7 +156,7 @@ static READ32_HANDLER( inputs_r_1 )
 
 	logerror("Protection Read Offset %08x, Mem_mask %08x\n",offset*4, mem_mask);
 
-	return mame_rand()^ (mame_rand()<<16);
+	return mame_rand(Machine)^ (mame_rand(Machine)<<16);
 }
 
 

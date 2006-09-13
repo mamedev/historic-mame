@@ -16,7 +16,7 @@ WRITE8_HANDLER( jcross_palettebank_w )
 }
 
 
-static void stuff_palette( int source_index, int dest_index, int num_colors )
+static void stuff_palette( running_machine *machine, int source_index, int dest_index, int num_colors )
 {
 	UINT8 *color_prom = memory_region(REGION_PROMS) + source_index;
 	int i;
@@ -43,7 +43,7 @@ static void stuff_palette( int source_index, int dest_index, int num_colors )
 		bit3 = (color_prom[0x400] >> 1) & 0x01;
 		blue = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-		palette_set_color( dest_index++, red, green, blue );
+		palette_set_color( machine, dest_index++, red, green, blue );
 		color_prom++;
 	}
 }
@@ -52,7 +52,7 @@ static void update_palette( int type )
 {
 	if( fg_color!=old_fg_color )
 	{
-		stuff_palette( 128+16*(fg_color&0x7), (0x10+type)*16, 16 );
+		stuff_palette( Machine, 128+16*(fg_color&0x7), (0x10+type)*16, 16 );
 		old_fg_color = fg_color;
 	}
 }
@@ -93,8 +93,8 @@ VIDEO_START( jcross )
 {
 	flipscreen = -1;  old_fg_color = -1;
 
-	stuff_palette( 0, 0, 16*8 );
-	stuff_palette( 16*8*3, 16*8, 16*8 );
+	stuff_palette( machine, 0, 0, 16*8 );
+	stuff_palette( machine, 16*8*3, 16*8, 16*8 );
 
 	bg_tilemap = tilemap_create(get_bg_tilemap_info,tilemap_scan_cols,TILEMAP_OPAQUE,8,8,64,64);
 	tx_tilemap = tilemap_create(get_tx_tilemap_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,32,32);

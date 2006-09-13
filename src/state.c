@@ -149,7 +149,7 @@ static void (*ss_conv[])(UINT8 *, UINT32) = { 0, 0, ss_c2, 0, ss_c4, 0, 0, 0, ss
     all registrations
 -------------------------------------------------*/
 
-void state_init(void)
+void state_init(running_machine *machine)
 {
 	ss_illegal_regs = 0;
 	ss_current_tag = 0;

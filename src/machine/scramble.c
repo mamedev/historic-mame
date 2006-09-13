@@ -111,7 +111,7 @@ MACHINE_RESET( devilfsg )
 
 MACHINE_RESET( scramble )
 {
-	machine_reset_galaxian();
+	machine_reset_galaxian(machine);
 
 	if (cpu_gettotalcpu() > 1)
 	{
@@ -121,7 +121,7 @@ MACHINE_RESET( scramble )
 
 MACHINE_RESET( sfx )
 {
-	machine_reset_scramble();
+	machine_reset_scramble(machine);
 
 	sfx_sh_init();
 }
@@ -131,7 +131,7 @@ MACHINE_RESET( explorer )
 	UINT8 *RAM = memory_region(REGION_CPU1);
 	RAM[0x47ff] = 0; /* If not set, it doesn't reset after the 1st time */
 
-	machine_reset_galaxian();
+	machine_reset_galaxian(machine);
 }
 
 WRITE8_HANDLER( galaxian_coin_lockout_w )
@@ -753,7 +753,7 @@ DRIVER_INIT( mooncrst )
 	for (i = 0;i < memory_region_length(REGION_CPU1);i++)
 		rom[i] = decode_mooncrst(rom[i],i);
 
-	init_mooncrsu();
+	init_mooncrsu(machine);
 }
 
 DRIVER_INIT( mooncrgx )
@@ -840,7 +840,7 @@ Pin layout is such that links can replace the PAL if encryption is not used.
 
 DRIVER_INIT( gteikob2 )
 {
-	init_pisces();
+	init_pisces(machine);
 
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x7006, 0x7006, 0, 0, gteikob2_flip_screen_x_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x7007, 0x7007, 0, 0, gteikob2_flip_screen_y_w);
@@ -848,7 +848,7 @@ DRIVER_INIT( gteikob2 )
 
 DRIVER_INIT( azurian )
 {
-	init_pisces();
+	init_pisces(machine);
 
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6800, 0x6800, 0, 0, azurian_IN1_r);
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x7000, 0x7000, 0, 0, azurian_IN2_r);
@@ -896,21 +896,21 @@ DRIVER_INIT( scramble_ppi )
 
 DRIVER_INIT( scobra )
 {
-	init_scramble_ppi();
+	init_scramble_ppi(machine);
 
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa803, 0xa803, 0, 0, scramble_background_enable_w);
 }
 
 DRIVER_INIT( atlantis )
 {
-	init_scramble_ppi();
+	init_scramble_ppi(machine);
 
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6803, 0x6803, 0, 0, scramble_background_enable_w);
 }
 
 DRIVER_INIT( scramble )
 {
-	init_atlantis();
+	init_atlantis(machine);
 
 	ppi8255_set_portCread (1, scramble_protection_r);
 	ppi8255_set_portCwrite(1, scramble_protection_w);
@@ -918,7 +918,7 @@ DRIVER_INIT( scramble )
 
 DRIVER_INIT( scrambls )
 {
-	init_atlantis();
+	init_atlantis(machine);
 
 	ppi8255_set_portCread(0, scrambls_input_port_2_r);
 	ppi8255_set_portCread(1, scrambls_protection_r);
@@ -927,14 +927,14 @@ DRIVER_INIT( scrambls )
 
 DRIVER_INIT( theend )
 {
-	init_scramble_ppi();
+	init_scramble_ppi(machine);
 
 	ppi8255_set_portCwrite(0, theend_coin_counter_w);
 }
 
 DRIVER_INIT( stratgyx )
 {
-	init_scramble_ppi();
+	init_scramble_ppi(machine);
 
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb000, 0xb000, 0, 0, scramble_background_green_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb002, 0xb002, 0, 0, scramble_background_blue_w);
@@ -946,14 +946,14 @@ DRIVER_INIT( stratgyx )
 
 DRIVER_INIT( tazmani2 )
 {
-	init_scramble_ppi();
+	init_scramble_ppi(machine);
 
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb002, 0xb002, 0, 0, scramble_background_enable_w);
 }
 
 DRIVER_INIT( amidar )
 {
-	init_scramble_ppi();
+	init_scramble_ppi(machine);
 
 	/* Amidar has a the DIP switches connected to port C of the 2nd 8255 */
 	ppi8255_set_portCread(1, input_port_3_r);
@@ -961,7 +961,7 @@ DRIVER_INIT( amidar )
 
 DRIVER_INIT( ckongs )
 {
-	init_scramble_ppi();
+	init_scramble_ppi(machine);
 
 	ppi8255_set_portBread(0, ckongs_input_port_1_r);
 	ppi8255_set_portCread(0, ckongs_input_port_2_r);
@@ -969,7 +969,7 @@ DRIVER_INIT( ckongs )
 
 DRIVER_INIT( mariner )
 {
-	init_scramble_ppi();
+	init_scramble_ppi(machine);
 
 	/* extra ROM */
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5800, 0x67ff, 0, 0, MRA8_BANK1);
@@ -989,7 +989,7 @@ DRIVER_INIT( frogger )
 	UINT8 *ROM;
 
 
-	init_scramble_ppi();
+	init_scramble_ppi(machine);
 
 
 	/* the first ROM of the second CPU has data lines D0 and D1 swapped. Decode it. */
@@ -1009,7 +1009,7 @@ DRIVER_INIT( froggers )
 	UINT8 *ROM;
 
 
-	init_scramble_ppi();
+	init_scramble_ppi(machine);
 
 	/* the first ROM of the second CPU has data lines D0 and D1 swapped. Decode it. */
 	ROM = memory_region(REGION_CPU2);
@@ -1023,7 +1023,7 @@ DRIVER_INIT( devilfsh )
 	UINT8 *RAM;
 
 
-	init_scramble_ppi();
+	init_scramble_ppi(machine);
 
 
 	/* Address lines are scrambled on the main CPU */
@@ -1052,7 +1052,7 @@ DRIVER_INIT( devilfsh )
 
 DRIVER_INIT( mars )
 {
-	init_devilfsh();
+	init_devilfsh(machine);
 
 	/* extra port */
 	ppi8255_set_portCread(1, input_port_3_r);
@@ -1069,7 +1069,7 @@ DRIVER_INIT( cavelon )
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
 
-	init_scramble_ppi();
+	init_scramble_ppi(machine);
 
 	/* banked ROM */
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, 0, MRA8_BANK1);
@@ -1088,7 +1088,7 @@ DRIVER_INIT( cavelon )
 
 DRIVER_INIT( moonwar )
 {
-	init_scramble_ppi();
+	init_scramble_ppi(machine);
 
 	/* special handler for the spinner */
 	ppi8255_set_portAread (0, moonwar_input_port_0_r);
@@ -1099,7 +1099,7 @@ DRIVER_INIT( moonwar )
 
 DRIVER_INIT( darkplnt )
 {
-	init_scramble_ppi();
+	init_scramble_ppi(machine);
 
 	/* special handler for the spinner */
 	ppi8255_set_portBread(0, darkplnt_input_port_1_r);
@@ -1140,21 +1140,21 @@ DRIVER_INIT( mimonkey )
 		ctr++;
 	}
 
-	init_scramble_ppi();
+	init_scramble_ppi(machine);
 
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa804, 0xa804, 0, 0, scramble_background_enable_w);
 }
 
 DRIVER_INIT( mimonsco )
 {
-	init_scramble_ppi();
+	init_scramble_ppi(machine);
 
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa804, 0xa804, 0, 0, scramble_background_enable_w);
 }
 
 DRIVER_INIT( mimonscr )
 {
-	init_scramble_ppi();
+	init_scramble_ppi(machine);
 
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6804, 0x6804, 0, 0, scramble_background_enable_w);
 }
@@ -1173,7 +1173,7 @@ DRIVER_INIT( anteater )
 	UINT8 *scratch;
 
 
-	init_scobra();
+	init_scobra(machine);
 
 	/*
     *   Code To Decode Lost Tomb by Mirko Buffoni
@@ -1212,7 +1212,7 @@ DRIVER_INIT( rescue )
 	UINT8 *scratch;
 
 
-	init_scobra();
+	init_scobra(machine);
 
 	/*
     *   Code To Decode Lost Tomb by Mirko Buffoni
@@ -1251,7 +1251,7 @@ DRIVER_INIT( minefld )
 	UINT8 *scratch;
 
 
-	init_scobra();
+	init_scobra(machine);
 
 	/*
     *   Code To Decode Minefield by Mike Balfour and Nicola Salmoria
@@ -1290,7 +1290,7 @@ DRIVER_INIT( losttomb )
 	UINT8 *scratch;
 
 
-	init_scramble();
+	init_scramble(machine);
 
 	/*
     *   Code To Decode Lost Tomb by Mirko Buffoni
@@ -1328,7 +1328,7 @@ DRIVER_INIT( superbon )
 	UINT8 *RAM;
 
 
-	init_scramble();
+	init_scramble(machine);
 
 	/* Deryption worked out by hand by Chris Hardy. */
 
@@ -1361,7 +1361,7 @@ DRIVER_INIT( hustler )
 	offs_t A;
 
 
-	init_scramble_ppi();
+	init_scramble_ppi(machine);
 
 
 	for (A = 0;A < 0x4000;A++)
@@ -1403,7 +1403,7 @@ DRIVER_INIT( billiard )
 	offs_t A;
 
 
-	init_scramble_ppi();
+	init_scramble_ppi(machine);
 
 
 	for (A = 0;A < 0x4000;A++)
@@ -1458,7 +1458,7 @@ memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6002, 0x6002, 0, 0, ga
 
 DRIVER_INIT( mrkougar )
 {
-	init_devilfsh();
+	init_devilfsh(machine);
 
 	/* no sound enabled bit */
 	ppi8255_set_portBwrite(1, mrkougar_sh_irqtrigger_w);
@@ -1466,7 +1466,7 @@ DRIVER_INIT( mrkougar )
 
 DRIVER_INIT( mrkougb )
 {
-	init_scramble_ppi();
+	init_scramble_ppi(machine);
 
 	/* no sound enabled bit */
 	ppi8255_set_portBwrite(1, mrkougar_sh_irqtrigger_w);

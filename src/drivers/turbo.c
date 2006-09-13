@@ -593,13 +593,6 @@ static WRITE8_HANDLER( turbo_coin_and_lamp_w )
 }
 
 
-void turbo_update_tachometer(void)
-{
-	turbo_state *state = Machine->driver_data;
-	output_set_value("speed", state->turbo_speed);
-}
-
-
 
 /*************************************
  *
@@ -990,86 +983,6 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *  Sound interfaces
- *
- *************************************/
-
-static const char *turbo_sample_names[]=
-{
-	"*turbo",
-	"01.wav",		/* Trig1 */
-	"02.wav",		/* Trig2 */
-	"03.wav",		/* Trig3 */
-	"04.wav",		/* Trig4 */
-	"05.wav",		/* Screech */
-	"06.wav",		/* Crash */
-	"skidding.wav",	/* Spin */
-	"idle.wav",		/* Idle */
-	"ambulanc.wav",	/* Ambulance */
-	0
-};
-
-
-static struct Samplesinterface turbo_samples_interface =
-{
-	8,			/* eight channels */
-	turbo_sample_names
-};
-
-
-static const char *buckrog_sample_names[]=
-{
-	"*buckrog",
-	"alarm0.wav",
-	"alarm1.wav",
-	"alarm2.wav",
-	"alarm3.wav",
-	"exp.wav",
-	"fire.wav",
-	"rebound.wav",
-	"hit.wav",
-	"shipsnd1.wav",
-	"shipsnd2.wav",
-	"shipsnd3.wav",
-	0
-};
-
-
-static struct Samplesinterface buckrog_samples_interface =
-{
-	6,          /* 6 channels */
-	buckrog_sample_names
-};
-
-
-static const char *subroc3d_sample_names[] =
-{
-	"*subroc3d",
-	"01.wav",   /* enemy missile */
-	"02.wav",   /* enemy torpedo */
-	"03.wav",   /* enemy fighter */
-	"04.wav",   /* explosion in sky */
-	"05.wav",   /* explosion on sea */
-	"06.wav",   /* missile shoot */
-	"07.wav",   /* torpedo shoot */
-	"08.wav",   /* my ship expl */
-	"09.wav",   /* prolog sound */
-	"11.wav",   /* alarm 0 */
-	"12.wav",   /* alarm 1 */
-	0
-};
-
-
-static struct Samplesinterface subroc3d_samples_interface =
-{
-	8,          /* eight channels */
-	subroc3d_sample_names
-};
-
-
-
-/*************************************
- *
  *  Graphics definitions
  *
  *************************************/
@@ -1109,11 +1022,7 @@ static MACHINE_DRIVER_START( turbo )
 	MDRV_VIDEO_UPDATE(turbo)
 
 	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_MONO("mono")
-
-	MDRV_SOUND_ADD(SAMPLES, 0)
-	MDRV_SOUND_CONFIG(turbo_samples_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	MDRV_IMPORT_FROM(turbo_samples)
 MACHINE_DRIVER_END
 
 
@@ -1138,11 +1047,7 @@ static MACHINE_DRIVER_START( subroc3d )
 	MDRV_VIDEO_UPDATE(subroc3d)
 
 	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_MONO("mono")
-
-	MDRV_SOUND_ADD(SAMPLES, 0)
-	MDRV_SOUND_CONFIG(subroc3d_samples_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+	MDRV_IMPORT_FROM(subroc3d_samples)
 MACHINE_DRIVER_END
 
 
@@ -1174,11 +1079,7 @@ static MACHINE_DRIVER_START( buckrog )
 	MDRV_VIDEO_UPDATE(buckrog)
 
 	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_MONO("mono")
-
-	MDRV_SOUND_ADD(SAMPLES, 0)
-	MDRV_SOUND_CONFIG(buckrog_samples_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+	MDRV_IMPORT_FROM(buckrog_samples)
 MACHINE_DRIVER_END
 
 
@@ -1633,9 +1534,9 @@ static DRIVER_INIT( turbo )
 		{ NULL,          NULL,          NULL,            turbo_analog_r },
 		{ NULL,          NULL,          NULL,            input_port_2_r },
 		{ NULL,          NULL,          NULL,            NULL },
-		{ turbo_ppi0a_w, turbo_ppi1a_w, turbo_sound_A_w, NULL },
-		{ turbo_ppi0b_w, turbo_ppi1b_w, turbo_sound_B_w, NULL },
-		{ turbo_ppi0c_w, turbo_ppi1c_w, turbo_sound_C_w, turbo_ppi3c_w }
+		{ turbo_ppi0a_w, turbo_ppi1a_w, turbo_sound_a_w, NULL },
+		{ turbo_ppi0b_w, turbo_ppi1b_w, turbo_sound_b_w, NULL },
+		{ turbo_ppi0c_w, turbo_ppi1c_w, turbo_sound_c_w, turbo_ppi3c_w }
 	};
 	ppi8255_init(&turbo_8255_intf);
 }
@@ -1643,7 +1544,7 @@ static DRIVER_INIT( turbo )
 static DRIVER_INIT( turbo_enc )
 {
 	turbo_rom_decode();
-	init_turbo();
+	init_turbo(machine);
 }
 
 
@@ -1655,9 +1556,9 @@ static DRIVER_INIT( subroc3d )
 		{ NULL,             NULL },
 		{ NULL,             NULL },
 		{ NULL,             NULL },
-		{ subroc3d_ppi0a_w, subroc3d_sound_A_w },
-		{ subroc3d_ppi0b_w, subroc3d_sound_B_w },
-		{ subroc3d_ppi0c_w, subroc3d_sound_C_w }
+		{ subroc3d_ppi0a_w, subroc3d_sound_a_w },
+		{ subroc3d_ppi0b_w, subroc3d_sound_b_w },
+		{ subroc3d_ppi0c_w, subroc3d_sound_c_w }
 	};
 	ppi8255_init(&subroc3d_8255_intf);
 }
@@ -1671,8 +1572,8 @@ static DRIVER_INIT( buckrog )
 		{ NULL,            NULL },
 		{ NULL,            NULL },
 		{ NULL,            NULL },
-		{ buckrog_ppi0a_w, buckrog_sound_A_w },
-		{ buckrog_ppi0b_w, buckrog_sound_B_w },
+		{ buckrog_ppi0a_w, buckrog_sound_a_w },
+		{ buckrog_ppi0b_w, buckrog_sound_b_w },
 		{ buckrog_ppi0c_w, buckrog_ppi1c_w }
 	};
 	ppi8255_init(&buckrog_8255_intf);
@@ -1681,7 +1582,7 @@ static DRIVER_INIT( buckrog )
 static DRIVER_INIT( buckrog_enc )
 {
 	buckrog_decode();
-	init_buckrog();
+	init_buckrog(machine);
 }
 
 

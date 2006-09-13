@@ -225,7 +225,7 @@ static void extract_input_config(void);
 //  PROTOTYPES
 //============================================================
 
-static void wininput_exit(void);
+static void wininput_exit(running_machine *machine);
 static void updatekeyboard(void);
 static void update_joystick_axes(void);
 static void init_keycodes(void);
@@ -947,13 +947,13 @@ out_of_joysticks:
 //  wininput_init
 //============================================================
 
-int wininput_init(void)
+int wininput_init(running_machine *machine)
 {
 	const input_port_entry *inp;
 	HRESULT result;
 
-	add_pause_callback(win_pause_input);
-	add_exit_callback(wininput_exit);
+	add_pause_callback(machine, win_pause_input);
+	add_exit_callback(machine, wininput_exit);
 
 	// allocate a lock
 	raw_mouse_lock = osd_lock_alloc();
@@ -1066,7 +1066,7 @@ cant_create_dinput:
 //  wininput_exit
 //============================================================
 
-static void wininput_exit(void)
+static void wininput_exit(running_machine *machine)
 {
 	int i;
 
@@ -1129,7 +1129,7 @@ static void wininput_exit(void)
 //  win_pause_input
 //============================================================
 
-void win_pause_input(int paused)
+void win_pause_input(running_machine *machine, int paused)
 {
 	int i;
 
@@ -1970,7 +1970,7 @@ static INT32 get_joycode_value(os_code joycode)
 			if (!mouse_active && win_use_mouse && !win_has_menu(win_window_list))
 			{
 				mouse_active = 1;
-				win_pause_input(0);
+				win_pause_input(Machine, 0);
 			}
 
 			if (win_use_raw_mouse && (raw_mouse_device[joynum].flags != MOUSE_MOVE_RELATIVE))
@@ -2067,7 +2067,7 @@ static void poll_lightguns(void)
 	if (!mouse_active && (win_use_mouse || use_lightgun) && !win_has_menu(win_window_list))
 	{
 		mouse_active = 1;
-		win_pause_input(0);
+		win_pause_input(Machine, 0);
 	}
 
 	// if out of range, skip it

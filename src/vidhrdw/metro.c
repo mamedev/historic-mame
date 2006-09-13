@@ -128,16 +128,9 @@ UINT32 tilemap_scan_gstrik2( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num
 
 WRITE16_HANDLER( metro_paletteram_w )
 {
-	int r,g,b;
-
 	data = COMBINE_DATA(&paletteram16[offset]);
-
-	b = (data >>  1) & 0x1f;
-	r = (data >>  6) & 0x1f;
-	g = (data >> 11) & 0x1f;
-
 	/* We need the ^0xff because we had to invert the pens in the gfx */
-	palette_set_color(offset^0xff,(r << 3) | (r >> 2),(g << 3) | (g >> 2),(b << 3) | (b >> 2));
+	palette_set_color(Machine,offset^0xff,pal5bit(data >> 6),pal5bit(data >> 11),pal5bit(data >> 1));
 }
 
 
@@ -488,7 +481,7 @@ VIDEO_START( metro_14300 )
 
 VIDEO_START( blzntrnd )
 {
-	if (video_start_metro_14220())
+	if (video_start_metro_14220(machine))
 		return 1;
 
 	has_zoom = 1;
@@ -511,7 +504,7 @@ VIDEO_START( blzntrnd )
 
 VIDEO_START( gstrik2 )
 {
-	if (video_start_metro_14220())
+	if (video_start_metro_14220(machine))
 		return 1;
 
 	has_zoom = 1;

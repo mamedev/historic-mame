@@ -643,7 +643,7 @@ static void *usb_start(int clock, const struct CustomSound_interface *config)
 	int tchan, tgroup;
 
 	/* find the CPU we are associated with */
-	usb.cpunum = mame_find_cpu_index("usb");
+	usb.cpunum = mame_find_cpu_index(Machine, "usb");
 	assert(usb.cpunum != (UINT8)-1);
 
 	/* allocate work RAM */

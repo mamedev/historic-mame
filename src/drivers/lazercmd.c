@@ -644,9 +644,9 @@ static unsigned short colortable_source[] =
 };
 static PALETTE_INIT( lazercmd )
 {
-	palette_set_color(0,0x00,0x00,0x00); 	/* black */
-	palette_set_color(1,0xb0,0xb0,0xb0); 	/* white */
-	palette_set_color(2,0xff,0xff,0xff);	/* bright white */
+	palette_set_color(machine,0,0x00,0x00,0x00); 	/* black */
+	palette_set_color(machine,1,0xb0,0xb0,0xb0); 	/* white */
+	palette_set_color(machine,2,0xff,0xff,0xff);	/* bright white */
 	memcpy(colortable,colortable_source,sizeof(colortable_source));
 }
 

@@ -132,7 +132,7 @@ VIDEO_UPDATE( bmcbowl )
 */
 
 	int x,y,z,pixdat;
-	fillbitmap(bitmap,get_black_pen(),cliprect);
+	fillbitmap(bitmap,get_black_pen(machine),cliprect);
 
 	z=0;
 	for (y=0;y<230;y++)
@@ -176,7 +176,7 @@ VIDEO_UPDATE( bmcbowl )
 
 static READ16_HANDLER( bmc_random_read )
 {
-	return mame_rand();
+	return mame_rand(Machine);
 }
 
 static READ16_HANDLER( bmc_protection_r )
@@ -193,7 +193,7 @@ static READ16_HANDLER( bmc_protection_r )
 			break;
 	}
 	logerror("Protection read @ %X\n",activecpu_get_previouspc());
-	return mame_rand();
+	return mame_rand(Machine);
 }
 
 static WRITE16_HANDLER( bmc_RAMDAC_offset_w )
@@ -204,7 +204,7 @@ static WRITE16_HANDLER( bmc_RAMDAC_offset_w )
 static WRITE16_HANDLER( bmc_RAMDAC_color_w )
 {
 		colorram[clr_offset]=data;
-		palette_set_color(clr_offset/3,colorram[(clr_offset/3)*3]*4,colorram[(clr_offset/3)*3+1]*4,colorram[(clr_offset/3)*3+2]*4);
+		palette_set_color(Machine,clr_offset/3,pal6bit(colorram[(clr_offset/3)*3]),pal6bit(colorram[(clr_offset/3)*3+1]),pal6bit(colorram[(clr_offset/3)*3+2]));
 		clr_offset=(clr_offset+1)%768;
 }
 

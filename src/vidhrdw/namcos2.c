@@ -286,7 +286,7 @@ UpdatePalette( void )
 			int r = namcos2_68k_palette_ram[offset | 0x0000] & 0x00ff;
 			int g = namcos2_68k_palette_ram[offset | 0x0800] & 0x00ff;
 			int b = namcos2_68k_palette_ram[offset | 0x1000] & 0x00ff;
-			palette_set_color(pen++,r,g,b);
+			palette_set_color(Machine,pen++,r,g,b);
 			offset++;
 		}
 	}
@@ -307,7 +307,7 @@ DrawSpriteInit( void )
 	gfx_drawmode_table[255] = DRAWMODE_NONE;
 	for( i = 0; i<16*256; i++ )
 	{
-		palette_shadow_table[i] = i+0x2000;
+		Machine->shadow_table[i] = i+0x2000;
 	}
 }
 
@@ -405,7 +405,7 @@ VIDEO_UPDATE( namcos2_default )
 	int pri;
 
 	UpdatePalette();
-	fillbitmap( bitmap, get_black_pen(), cliprect );
+	fillbitmap( bitmap, get_black_pen(machine), cliprect );
 	ApplyClip( &clip, cliprect );
 
 	/* HACK: enable ROZ layer only if it has priority > 0 */
@@ -447,7 +447,7 @@ VIDEO_UPDATE( finallap )
 	int pri;
 
 	UpdatePalette();
-	fillbitmap( bitmap, get_black_pen(), cliprect );
+	fillbitmap( bitmap, get_black_pen(machine), cliprect );
 	ApplyClip( &clip, cliprect );
 
 	for( pri=0; pri<16; pri++ )
@@ -488,7 +488,7 @@ VIDEO_UPDATE( luckywld )
 	int pri;
 
 	UpdatePalette();
-	fillbitmap( bitmap, get_black_pen(), cliprect );
+	fillbitmap( bitmap, get_black_pen(machine), cliprect );
 	ApplyClip( &clip, cliprect );
 
 	for( pri=0; pri<16; pri++ )
@@ -526,7 +526,7 @@ VIDEO_UPDATE( sgunner )
 	int pri;
 
 	UpdatePalette();
-	fillbitmap( bitmap, get_black_pen(), cliprect );
+	fillbitmap( bitmap, get_black_pen(machine), cliprect );
 	ApplyClip( &clip, cliprect );
 
 	for( pri=0; pri<8; pri++ )
@@ -557,7 +557,7 @@ VIDEO_UPDATE( metlhawk )
 	int pri;
 
 	UpdatePalette();
-	fillbitmap( bitmap, get_black_pen(), cliprect );
+	fillbitmap( bitmap, get_black_pen(machine), cliprect );
 	ApplyClip( &clip, cliprect );
 
 	for( pri=0; pri<16; pri++ )

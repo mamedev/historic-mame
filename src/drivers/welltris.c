@@ -731,7 +731,7 @@ static struct YM2610interface ym2610_interface =
 
 
 
-static void init_welltris(void)
+static DRIVER_INIT( welltris )
 {
 #if WELLTRIS_4P_HACK
 	/* A Hack which shows 4 player mode in code which is disabled */
@@ -741,7 +741,7 @@ static void init_welltris(void)
 #endif
 }
 
-static void init_quiz18k(void)
+static DRIVER_INIT( quiz18k )
 {
 	;
 }

@@ -77,7 +77,7 @@ static UINT64 tempvar[NUM_TEMP_VARIABLES];
     FUNCTION PROTOTYPES
 ***************************************************************************/
 
-static void debug_cpu_exit(void);
+static void debug_cpu_exit(running_machine *machine);
 static void perform_trace(debug_cpu_info *info);
 static void prepare_for_step_overout(void);
 static void process_source_file(void);
@@ -106,16 +106,16 @@ static void check_hotspots(int cpunum, int spacenum, offs_t address);
     mame_debug_init - start up all subsections
 -------------------------------------------------*/
 
-void mame_debug_init(void)
+void mame_debug_init(running_machine *machine)
 {
 	/* initialize the various subsections */
-	debug_cpu_init();
-	debug_command_init();
-	debug_console_init();
-	debug_view_init();
-	debug_comment_init();
+	debug_cpu_init(machine);
+	debug_command_init(machine);
+	debug_console_init(machine);
+	debug_view_init(machine);
+	debug_comment_init(machine);
 	atexit(debug_flush_traces);
-	add_logerror_callback(debug_errorlog_write_line);
+	add_logerror_callback(machine, debug_errorlog_write_line);
 }
 
 
@@ -149,7 +149,7 @@ int mame_debug_is_active(void)
     information for debugging
 -------------------------------------------------*/
 
-void debug_cpu_init(void)
+void debug_cpu_init(running_machine *machine)
 {
 	int cpunum, spacenum, regnum;
 
@@ -276,7 +276,7 @@ void debug_cpu_init(void)
 		}
 	}
 
-	add_exit_callback(debug_cpu_exit);
+	add_exit_callback(machine, debug_cpu_exit);
 }
 
 
@@ -284,7 +284,7 @@ void debug_cpu_init(void)
     debug_cpu_exit - free all memory
 -------------------------------------------------*/
 
-static void debug_cpu_exit(void)
+static void debug_cpu_exit(running_machine *machine)
 {
 	int cpunum, spacenum;
 
@@ -816,7 +816,7 @@ void mame_debug_hook(void)
 			process_source_file();
 
 			/* if an event got scheduled, resume */
-			if (mame_is_scheduled_event_pending())
+			if (mame_is_scheduled_event_pending(Machine))
 				execution_state = EXECUTION_STATE_RUNNING;
 		}
 		osd_sound_enable(1);
@@ -2103,7 +2103,7 @@ void debug_source_script(const char *file)
 		debug_source_file = fopen(file, "r");
 		if (!debug_source_file)
 		{
-			if (mame_get_phase() == MAME_PHASE_RUNNING)
+			if (mame_get_phase(Machine) == MAME_PHASE_RUNNING)
 				debug_console_printf("Cannot open command file '%s'\n", file);
 			else
 				fatalerror("Cannot open command file '%s'", file);

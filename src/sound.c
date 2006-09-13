@@ -113,9 +113,9 @@ static wav_file *wavfile;
     FUNCTION PROTOTYPES
 ***************************************************************************/
 
-static void sound_reset(void);
-static void sound_pause(int pause);
-static void sound_exit(void);
+static void sound_reset(running_machine *machine);
+static void sound_pause(running_machine *machine, int pause);
+static void sound_exit(running_machine *machine);
 static void sound_load(int config_type, xml_data_node *parentnode);
 static void sound_save(int config_type, xml_data_node *parentnode);
 static int start_sound_chips(void);
@@ -170,7 +170,7 @@ INLINE sound_info *find_sound_by_tag(const char *tag)
     sound_init - start up the sound system
 -------------------------------------------------*/
 
-int sound_init(void)
+int sound_init(running_machine *machine)
 {
 	/* handle -nosound */
 	nosound_mode = (Machine->sample_rate == 0);
@@ -222,9 +222,9 @@ int sound_init(void)
 
 	/* register callbacks */
 	config_register("mixer", sound_load, sound_save);
-	add_pause_callback(sound_pause);
-	add_reset_callback(sound_reset);
-	add_exit_callback(sound_exit);
+	add_pause_callback(machine, sound_pause);
+	add_reset_callback(machine, sound_reset);
+	add_exit_callback(machine, sound_exit);
 
 	return 0;
 }
@@ -234,7 +234,7 @@ int sound_init(void)
     sound_exit - clean up after ourselves
 -------------------------------------------------*/
 
-static void sound_exit(void)
+static void sound_exit(running_machine *machine)
 {
 	int sndnum;
 
@@ -523,7 +523,7 @@ static int route_sound(void)
     sound_reset - reset all sound chips
 -------------------------------------------------*/
 
-static void sound_reset(void)
+static void sound_reset(running_machine *machine)
 {
 	int sndnum;
 
@@ -538,7 +538,7 @@ static void sound_reset(void)
     sound_pause - pause sound output
 -------------------------------------------------*/
 
-static void sound_pause(int pause)
+static void sound_pause(running_machine *machine, int pause)
 {
 	osd_sound_enable(!pause);
 }
@@ -650,7 +650,7 @@ void sound_frame_update(void)
 	memset(rightmix, 0, samples_this_frame * sizeof(*rightmix));
 
 	/* if we're not paused, keep the sounds going */
-	if (!mame_is_paused())
+	if (!mame_is_paused(Machine))
 	{
 		/* force all the speaker streams to generate the proper number of samples */
 		for (spknum = 0; spknum < totalspeakers; spknum++)
@@ -724,7 +724,7 @@ void sound_frame_update(void)
 		finalmix[sample*2+1] = samp;
 	}
 
-	if (wavfile && !mame_is_paused())
+	if (wavfile && !mame_is_paused(Machine))
 		wav_add_data_16(wavfile, finalmix, samples_this_frame * 2);
 
 	/* play the result */

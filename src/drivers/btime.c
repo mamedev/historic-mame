@@ -1841,7 +1841,7 @@ static DRIVER_INIT( zoar )
        I'm NOPing it out for now. */
 	memset(&rom[0xd50a],0xea,8);
 
-    init_btime();
+    init_btime(machine);
 }
 
 static DRIVER_INIT( lnc )
@@ -1852,14 +1852,14 @@ static DRIVER_INIT( lnc )
 static DRIVER_INIT( cookrace )
 {
 	memcpy(&sound_rambase[0x200], memory_region(REGION_CPU2) + 0xf200, 0x200);
-	init_lnc();
+	init_lnc(machine);
 }
 
 static DRIVER_INIT( wtennis )
 {
 	memcpy(&sound_rambase[0x200], memory_region(REGION_CPU2) + 0xf200, 0x200);
 	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc15f, 0xc15f, 0, 0, wtennis_reset_hack_r);
-	init_lnc();
+	init_lnc(machine);
 }
 
 static DRIVER_INIT( sdtennis )

@@ -33,6 +33,7 @@ endif
 
 SOUNDDEFS += -DHAS_DAC=$(if $(filter DAC,$(SOUNDS)),1,0)
 SOUNDDEFS += -DHAS_DMADAC=$(if $(filter DMADAC,$(SOUNDS)),1,0)
+SOUNDDEFS += -DHAS_SPEAKER=$(if $(filter SPEAKER,$(SOUNDS)),1,0)
 
 ifneq ($(filter DAC,$(SOUNDS)),)
 SOUNDOBJS += $(OBJ)/sound/dac.o
@@ -40,6 +41,10 @@ endif
 
 ifneq ($(filter DMADAC,$(SOUNDS)),)
 SOUNDOBJS += $(OBJ)/sound/dmadac.o
+endif
+
+ifneq ($(filter SPEAKER,$(SOUNDS)),)
+SOUNDOBJS += $(OBJ)/sound/speaker.o
 endif
 
 

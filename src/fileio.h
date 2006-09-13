@@ -52,8 +52,8 @@ enum
 /* samples. If 'write' is not 0, the file is opened for write. Otherwise */
 /* it is opened for read. */
 
-void fileio_init(void);
-void fileio_exit(void);
+void fileio_init(running_machine *machine);
+void fileio_exit(running_machine *machine);
 
 int mame_faccess(const char *filename, int filetype);
 mame_file *mame_fopen(const char *gamename, const char *filename, int filetype, int openforwrite);

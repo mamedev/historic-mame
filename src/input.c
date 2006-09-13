@@ -517,7 +517,7 @@ static UINT8 record_analog;						/* are we recording an analog sequence? */
  *
  *************************************/
 
-int code_init(void)
+int code_init(running_machine *machine)
 {
 	const os_code_info *codelist = osd_get_code_list();
 	const os_code_info *info;

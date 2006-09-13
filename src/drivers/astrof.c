@@ -67,7 +67,7 @@ static int abattle_count;
 static READ8_HANDLER( shoot_r )
 {
 	/* not really sure about this */
-	return mame_rand() & 8;
+	return mame_rand(Machine) & 8;
 }
 static READ8_HANDLER( abattle_coin_prot_r )
 {

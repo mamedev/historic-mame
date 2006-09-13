@@ -800,7 +800,7 @@ static WRITE16_HANDLER( random_number_16_w )
 
 static READ16_HANDLER( random_number_16_r )
 {
-	return mame_rand();
+	return mame_rand(Machine);
 }
 
 static WRITE32_HANDLER( random_number_32_w )
@@ -810,7 +810,7 @@ static WRITE32_HANDLER( random_number_32_w )
 
 static READ32_HANDLER( random_number_32_r )
 {
-	return mame_rand() ^ (mame_rand() << 16);
+	return mame_rand(Machine) ^ (mame_rand(Machine) << 16);
 }
 
 

@@ -251,20 +251,11 @@ static WRITE16_HANDLER( dsp_HOLDA_signal_w )
 
 static WRITE16_HANDLER( airsys_paletteram16_w )	/* xxBBBBxRRRRxGGGG */
 {
-	int a,r,g,b;
+	int a;
 	COMBINE_DATA(&paletteram16[offset]);
 
 	a = paletteram16[offset];
-
-	r = (a >> 0) & 0x0f;
-	g = (a >> 5) & 0x0f;
-	b = (a >> 10) & 0x0f;
-
-	r = (r << 4) | r;
-	g = (g << 4) | g;
-	b = (b << 4) | b;
-
-	palette_set_color(offset,r,g,b);
+	palette_set_color(Machine,offset,pal4bit(a >> 0),pal4bit(a >> 5),pal4bit(a >> 10));
 }
 
 
@@ -335,96 +326,57 @@ static MACHINE_START( taitoair )
              MEMORY STRUCTURES
 ***********************************************************/
 
-static ADDRESS_MAP_START( airsys_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x0bffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x0c0000, 0x0cffff) AM_READ(MRA16_RAM)			/* 68000 RAM */
-	AM_RANGE(0x180000, 0x183fff) AM_READ(MRA16_RAM)			/* "gradiation ram (0)" */
-	AM_RANGE(0x184000, 0x187fff) AM_READ(MRA16_RAM)			/* "gradiation ram (1)" */
-	AM_RANGE(0x188000, 0x18bfff) AM_READ(paletteram16_word_r)/* "color ram" */
-	AM_RANGE(0x800000, 0x820fff) AM_READ(TC0080VCO_word_r)	/* tilemaps, sprites */
-	AM_RANGE(0x908000, 0x90ffff) AM_READ(MRA16_RAM)			/* "line ram" */
-	AM_RANGE(0x910000, 0x91ffff) AM_READ(MRA16_RAM)			/* "dsp common ram" (TMS320C25) */
+static ADDRESS_MAP_START( airsys_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x0bffff) AM_ROM
+	AM_RANGE(0x0c0000, 0x0cffff) AM_RAM AM_BASE(&taitoh_68000_mainram)
+	AM_RANGE(0x140000, 0x140001) AM_WRITE(system_control_w)	/* Pause the TMS32025 */
+	AM_RANGE(0x180000, 0x183fff) AM_RAM              		/* "gradiation ram (0)" */
+	AM_RANGE(0x184000, 0x187fff) AM_RAM            			/* "gradiation ram (1)" */
+	AM_RANGE(0x188000, 0x18bfff) AM_READWRITE(paletteram16_word_r, airsys_paletteram16_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x800000, 0x820fff) AM_READWRITE(TC0080VCO_word_r, TC0080VCO_word_w)	/* tilemaps, sprites */
+	AM_RANGE(0x908000, 0x90ffff) AM_RAM AM_BASE(&taitoair_line_ram)	/* "line ram" */
+	AM_RANGE(0x910000, 0x91ffff) AM_RAM	AM_BASE(&dsp_ram)	/* "dsp common ram" (TMS320C25) */
 	AM_RANGE(0xa00000, 0xa00007) AM_READ(stick_input_r)
 	AM_RANGE(0xa00100, 0xa00107) AM_READ(stick2_input_r)
-	AM_RANGE(0xa00200, 0xa0020f) AM_READ(TC0220IOC_halfword_r)	/* other I/O */
-	AM_RANGE(0xa80000, 0xa80001) AM_READ(MRA16_NOP)
-	AM_RANGE(0xa80002, 0xa80003) AM_READ(taitosound_comm16_lsb_r)
-	AM_RANGE(0xb00000, 0xb007ff) AM_READ(MRA16_RAM)			/* "power common ram" (mecha drive) */
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( airsys_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x0bffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x0c0000, 0x0cffff) AM_WRITE(MWA16_RAM) AM_BASE(&taitoh_68000_mainram)
-	AM_RANGE(0x140000, 0x140001) AM_WRITE(system_control_w)	/* Pause the TMS32025 */
-	AM_RANGE(0x180000, 0x183fff) AM_WRITE(MWA16_RAM)			/* "gradiation ram (0)" */
-	AM_RANGE(0x184000, 0x187fff) AM_WRITE(MWA16_RAM)			/* "gradiation ram (1)" */
-	AM_RANGE(0x188000, 0x18bfff) AM_WRITE(airsys_paletteram16_w) AM_BASE(&paletteram16)
-//  AM_RANGE(0x188000, 0x18bfff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
-	AM_RANGE(0x800000, 0x820fff) AM_WRITE(TC0080VCO_word_w)		/* tilemaps, sprites */
-	AM_RANGE(0x908000, 0x90ffff) AM_WRITE(MWA16_RAM) AM_BASE(&taitoair_line_ram)	/* "line ram" */
-	AM_RANGE(0x910000, 0x91ffff) AM_WRITE(MWA16_RAM) AM_BASE(&dsp_ram)	/* "dsp common ram" (TMS320C25) */
-	AM_RANGE(0xa00200, 0xa0020f) AM_WRITE(TC0220IOC_halfword_w)	/* I/O */
-	AM_RANGE(0xa80000, 0xa80001) AM_WRITE(taitosound_port16_lsb_w)
-	AM_RANGE(0xa80002, 0xa80003) AM_WRITE(taitosound_comm16_lsb_w)
-	AM_RANGE(0xb00000, 0xb007ff) AM_WRITE(MWA16_RAM)			/* "power common ram" (mecha drive) */
+	AM_RANGE(0xa00200, 0xa0020f) AM_READWRITE(TC0220IOC_halfword_r, TC0220IOC_halfword_w)	/* other I/O */
+	AM_RANGE(0xa80000, 0xa80001) AM_READWRITE(MRA16_NOP, taitosound_port16_lsb_w)
+	AM_RANGE(0xa80002, 0xa80003) AM_READWRITE(taitosound_comm16_lsb_r, taitosound_comm16_lsb_w)
+	AM_RANGE(0xb00000, 0xb007ff) AM_RAM						/* "power common ram" (mecha drive) */
 ADDRESS_MAP_END
 
 /************************** Z80 ****************************/
 
-static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)
-	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xe000, 0xe000) AM_READ(YM2610_status_port_0_A_r)
-	AM_RANGE(0xe001, 0xe001) AM_READ(YM2610_read_port_0_r)
-	AM_RANGE(0xe002, 0xe002) AM_READ(YM2610_status_port_0_B_r)
-	AM_RANGE(0xe200, 0xe200) AM_READ(MRA8_NOP)
-	AM_RANGE(0xe201, 0xe201) AM_READ(taitosound_slave_comm_r)
-	AM_RANGE(0xea00, 0xea00) AM_READ(MRA8_NOP)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xe000, 0xe000) AM_WRITE(YM2610_control_port_0_A_w)
-	AM_RANGE(0xe001, 0xe001) AM_WRITE(YM2610_data_port_0_A_w)
-	AM_RANGE(0xe002, 0xe002) AM_WRITE(YM2610_control_port_0_B_w)
+static ADDRESS_MAP_START( sound_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_ROM
+	AM_RANGE(0x4000, 0x7fff) AM_ROMBANK(1)
+	AM_RANGE(0xc000, 0xdfff) AM_RAM
+	AM_RANGE(0xe000, 0xe000) AM_READWRITE(YM2610_status_port_0_A_r, YM2610_control_port_0_A_w)
+	AM_RANGE(0xe001, 0xe001) AM_READWRITE(YM2610_read_port_0_r, YM2610_data_port_0_A_w)
+	AM_RANGE(0xe002, 0xe002) AM_READWRITE(YM2610_status_port_0_B_r, YM2610_control_port_0_B_w)
 	AM_RANGE(0xe003, 0xe003) AM_WRITE(YM2610_data_port_0_B_w)
-	AM_RANGE(0xe200, 0xe200) AM_WRITE(taitosound_slave_port_w)
-	AM_RANGE(0xe201, 0xe201) AM_WRITE(taitosound_slave_comm_w)
+	AM_RANGE(0xe200, 0xe200) AM_READWRITE(MRA8_NOP, taitosound_slave_port_w)
+	AM_RANGE(0xe201, 0xe201) AM_READWRITE(taitosound_slave_comm_r, taitosound_slave_comm_w)
 	AM_RANGE(0xe400, 0xe403) AM_WRITE(MWA8_NOP)		/* pan control */
+	AM_RANGE(0xea00, 0xea00) AM_READ(MRA8_NOP)
 	AM_RANGE(0xee00, 0xee00) AM_WRITE(MWA8_NOP) 		/* ? */
 	AM_RANGE(0xf000, 0xf000) AM_WRITE(MWA8_NOP) 		/* ? */
 	AM_RANGE(0xf200, 0xf200) AM_WRITE(sound_bankswitch_w)
 ADDRESS_MAP_END
 
 /********************************** TMS32025 ********************************/
-static ADDRESS_MAP_START( DSP_read_program, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA16_ROM)
+static ADDRESS_MAP_START( DSP_map_program, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x0000, 0x1fff) AM_ROM
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( DSP_write_program, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA16_ROM)
+static ADDRESS_MAP_START( DSP_map_data, ADDRESS_SPACE_DATA, 16 )
+	AM_RANGE(0x4000, 0x7fff) AM_READWRITE(lineram_r, lineram_w)
+	AM_RANGE(0x8000, 0xffff) AM_READWRITE(dspram_r, dspram_w)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( DSP_read_data, ADDRESS_SPACE_DATA, 16 )
-	AM_RANGE(0x4000, 0x7fff) AM_READ(lineram_r)
-	AM_RANGE(0x8000, 0xffff) AM_READ(dspram_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( DSP_write_data, ADDRESS_SPACE_DATA, 16 )
-	AM_RANGE(0x4000, 0x7fff) AM_WRITE(lineram_w)
-	AM_RANGE(0x8000, 0xffff) AM_WRITE(dspram_w)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( DSP_read_io, ADDRESS_SPACE_IO, 16 )
+static ADDRESS_MAP_START( DSP_map_io, ADDRESS_SPACE_IO, 16 )
 	AM_RANGE(TMS32025_HOLD, TMS32025_HOLD) AM_READ(dsp_HOLD_signal_r)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( DSP_write_io, ADDRESS_SPACE_IO, 16 )
 	AM_RANGE(TMS32025_HOLDA, TMS32025_HOLDA) AM_WRITE(dsp_HOLDA_signal_w)
 ADDRESS_MAP_END
-
 
 
 /************************************************************
@@ -649,16 +601,16 @@ static MACHINE_DRIVER_START( airsys )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(M68000,24000000 / 2)		/* 12 MHz ??? */
-	MDRV_CPU_PROGRAM_MAP(airsys_readmem,airsys_writemem)
+	MDRV_CPU_PROGRAM_MAP(airsys_map, 0)
 	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
 
 	MDRV_CPU_ADD(Z80,8000000 / 2)			/* 4 MHz ??? */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
+	MDRV_CPU_PROGRAM_MAP(sound_map, 0)
 
 	MDRV_CPU_ADD(TMS32025,24000000)			/* 24 MHz ??? *///
-	MDRV_CPU_PROGRAM_MAP(DSP_read_program,DSP_write_program)
-	MDRV_CPU_DATA_MAP(DSP_read_data,DSP_write_data)
-	MDRV_CPU_IO_MAP(DSP_read_io,DSP_write_io)
+	MDRV_CPU_PROGRAM_MAP(DSP_map_program, 0)
+	MDRV_CPU_DATA_MAP(DSP_map_data, 0)
+	MDRV_CPU_IO_MAP(DSP_map_io, 0)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)

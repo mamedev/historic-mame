@@ -144,7 +144,7 @@ VIDEO_UPDATE(dwarfd)
 	int x,y;
 	int count=0;
 
-	fillbitmap(bitmap, get_black_pen(), cliprect);
+	fillbitmap(bitmap, get_black_pen(machine), cliprect);
 
 	for (y=0;y<128;y++)
 	{

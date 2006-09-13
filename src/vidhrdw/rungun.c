@@ -135,7 +135,7 @@ VIDEO_START(rng)
 
 VIDEO_UPDATE(rng)
 {
-	fillbitmap(bitmap, get_black_pen(), cliprect);
+	fillbitmap(bitmap, get_black_pen(machine), cliprect);
 	fillbitmap(priority_bitmap, 0, cliprect);
 
 	K053936_0_zoom_draw(bitmap, cliprect, rng_936_tilemap, 0, 0);

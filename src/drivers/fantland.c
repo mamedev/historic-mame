@@ -774,7 +774,7 @@ static MACHINE_RESET( borntofi )
 {
 	int voice;
 
-	machine_reset_fantland();
+	machine_reset_fantland(machine);
 
 	for (voice = 0; voice < 4; voice++)
 		borntofi_adpcm_stop(voice);

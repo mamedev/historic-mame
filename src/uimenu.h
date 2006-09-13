@@ -50,7 +50,7 @@ struct _ui_menu_item
 ***************************************************************************/
 
 /* initialization */
-void ui_menu_init(void);
+void ui_menu_init(running_machine *machine);
 
 /* draw a menu */
 void ui_menu_draw(const ui_menu_item *items, int numitems, int selected);

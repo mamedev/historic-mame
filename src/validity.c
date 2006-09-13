@@ -963,8 +963,8 @@ int mame_validitychecks(int game)
 	if (sizeof(UINT64) != 8)	{ printf("UINT64 must be 64 bits\n"); error = TRUE; }
 
 	/* make sure the CPU and sound interfaces are up and running */
-	cpuintrf_init();
-	sndintrf_init();
+	cpuintrf_init(NULL);
+	sndintrf_init(NULL);
 
 	init_resource_tracking();
 	begin_resource_tracking();

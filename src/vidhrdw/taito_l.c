@@ -90,7 +90,7 @@ VIDEO_START( taitol )
 	tilemap_set_transparent_pen(ch1a_tilemap,0);
 
 	for (i=0;i<256;i++)
-		palette_set_color(i, 0, 0, 0);
+		palette_set_color(machine, i, 0, 0, 0);
 
 	tilemap_set_scrolldx(ch1a_tilemap,-8,-8);
 	tilemap_set_scrolldx(bg18_tilemap,28,-11);

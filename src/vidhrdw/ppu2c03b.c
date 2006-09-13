@@ -165,7 +165,7 @@ void ppu2c03b_init_palette( int first_entry ) {
 				B = 255;
 
 			/* Round, and set the value */
-			palette_set_color(first_entry++, floor(R+.5), floor(G+.5), floor(B+.5));
+			palette_set_color(Machine,first_entry++, floor(R+.5), floor(G+.5), floor(B+.5));
 		}
 	}
 

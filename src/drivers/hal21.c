@@ -163,7 +163,7 @@ PALETTE_INIT( aso )
 		bit3 = (color_prom[i + num_colors] >> 1) & 0x01;
 		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 	}
 
 	/* prepare shadow draw table */
@@ -333,7 +333,7 @@ VIDEO_UPDATE( aso )
 
 		attr = snk_blink_parity;
 		snk_blink_parity ^= 0xdf;
-		for (i=6; i<0x80; i+=8) { palette_set_color(i, attr, attr, attr); }
+		for (i=6; i<0x80; i+=8) { palette_set_color(machine, i, attr, attr, attr); }
 
 		hal21_draw_sprites(bitmap, spsx, spsy, Machine->gfx[2]);
 	}

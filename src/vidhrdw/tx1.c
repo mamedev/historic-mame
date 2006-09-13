@@ -120,7 +120,7 @@ PALETTE_INIT( buggyboy )
 		bit4 = (color_prom[i+0x300]) & 1;
                 b = 0x06 * bit4 + 0x0d * bit0 + 0x1e * bit1 + 0x41 * bit2 + 0x8a * bit3;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 	}
 
 

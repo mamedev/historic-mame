@@ -71,10 +71,7 @@ WRITE16_HANDLER( galpani2_bg8_##_n_##_w ) \
 WRITE16_HANDLER( galpani2_palette_##_n_##_w ) \
 { \
 	UINT16 newword = COMBINE_DATA(&galpani2_palette_##_n_[offset]); \
-	int r = (newword >>  5) & 0x1f; \
-	int g = (newword >> 10) & 0x1f; \
-	int b = (newword >>  0) & 0x1f; \
-	palette_set_color( offset + 0x4000 + _n_ * 0x100, (r << 3) | (r >> 2),(g << 3) | (g >> 2),(b << 3) | (b >> 2) ); \
+	palette_set_color( Machine, offset + 0x4000 + _n_ * 0x100, pal5bit(newword >> 5), pal5bit(newword >> 10), pal5bit(newword >> 0) ); \
 }
 
 galpani2_BG8_REGS_R( 0 )
@@ -129,17 +126,7 @@ PALETTE_INIT( galpani2 )
 
 	/* initialize 555 RGB lookup */
 	for (i = 0; i < 0x8000; i++)
-	{
-		int r,g,b;
-		r = (i >>  5) & 0x1f;
-		g = (i >> 10) & 0x1f;
-		b = (i >>  0) & 0x1f;
-
-		r = (r << 3) | (r >> 2);
-		g = (g << 3) | (g >> 2);
-		b = (b << 3) | (b >> 2);
-		palette_set_color(0x4200+i,r,g,b);
-	}
+		palette_set_color(machine,0x4200+i,pal5bit(i >> 5),pal5bit(i >> 10),pal5bit(i >> 0));
 }
 
 VIDEO_START( galpani2 )
@@ -149,7 +136,7 @@ VIDEO_START( galpani2 )
 	if ((galpani2_bg8_bitmap_0 = auto_bitmap_alloc_depth(512, 256, 16)) == 0)	return 1;
 	if ((galpani2_bg8_bitmap_1 = auto_bitmap_alloc_depth(512, 256, 16)) == 0)	return 1;
 
-	return video_start_kaneko16_sprites();
+	return video_start_kaneko16_sprites(machine);
 }
 
 

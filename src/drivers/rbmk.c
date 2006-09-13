@@ -66,7 +66,7 @@ static UINT16 tilebank=0;
 
 static READ16_HANDLER( gms_read )
 {
-	return mame_rand();
+	return mame_rand(Machine);
 }
 
 
@@ -483,7 +483,7 @@ VIDEO_UPDATE(rbmk)
 	return 0;
 }
 
-void nvram_handler_syf(mame_file *file,int read_or_write)
+NVRAM_HANDLER( syf )
 {
 	if (read_or_write)
 		EEPROM_save(file);

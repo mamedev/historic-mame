@@ -183,7 +183,7 @@ int main(int argc, char **argv)
 //  output_oslog
 //============================================================
 
-static void output_oslog(const char *buffer)
+static void output_oslog(running_machine *machine, const char *buffer)
 {
 	extern int win_erroroslog;
 	if (win_erroroslog)
@@ -196,21 +196,19 @@ static void output_oslog(const char *buffer)
 //  osd_init
 //============================================================
 
-int osd_init(void)
+int osd_init(running_machine *machine)
 {
-	extern int wininput_init(void);
-	extern void win_blit_init(void);
 	extern int win_erroroslog;
 	int result = 0;
 
 	if (result == 0)
-		result = winvideo_init();
+		result = winvideo_init(machine);
 
 	if (result == 0)
-		result = wininput_init();
+		result = wininput_init(machine);
 
 	if (result == 0)
-		winoutput_init();
+		winoutput_init(machine);
 
 #ifdef MESS
 	if (result == 0)
@@ -218,7 +216,7 @@ int osd_init(void)
 #endif
 
 	if (win_erroroslog)
-		add_logerror_callback(output_oslog);
+		add_logerror_callback(machine, output_oslog);
 
 	return result;
 }

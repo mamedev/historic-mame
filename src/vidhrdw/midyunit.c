@@ -106,7 +106,7 @@ static VIDEO_START( common )
 
 VIDEO_START( midyunit_4bit )
 {
-	int result = video_start_common();
+	int result = video_start_common(machine);
 	int i;
 
 	/* handle failure */
@@ -124,7 +124,7 @@ VIDEO_START( midyunit_4bit )
 
 VIDEO_START( midyunit_6bit )
 {
-	int result = video_start_common();
+	int result = video_start_common(machine);
 	int i;
 
 	/* handle failure */
@@ -142,7 +142,7 @@ VIDEO_START( midyunit_6bit )
 
 VIDEO_START( mkyawdim )
 {
-	int result = video_start_midyunit_6bit();
+	int result = video_start_midyunit_6bit(machine);
 	yawdim_dma = 1;
 	return result;
 }
@@ -150,7 +150,7 @@ VIDEO_START( mkyawdim )
 
 VIDEO_START( midzunit )
 {
-	int result = video_start_common();
+	int result = video_start_common(machine);
 	int i;
 
 	/* handle failure */
@@ -305,20 +305,11 @@ WRITE16_HANDLER( midyunit_control_w )
 
 WRITE16_HANDLER( midyunit_paletteram_w )
 {
-	int newword, r, g, b;
+	int newword;
 
 	COMBINE_DATA(&paletteram16[offset]);
 	newword = paletteram16[offset];
-
-	r = (newword >> 10) & 0x1f;
-	g = (newword >>  5) & 0x1f;
-	b = (newword      ) & 0x1f;
-
-	r = (r << 3) | (r >> 2);
-	g = (g << 3) | (g >> 2);
-	b = (b << 3) | (b >> 2);
-
-	palette_set_color(offset & palette_mask, r, g, b);
+	palette_set_color(Machine, offset & palette_mask, pal5bit(newword >> 10), pal5bit(newword >> 5), pal5bit(newword >> 0));
 }
 
 
@@ -850,7 +841,7 @@ VIDEO_UPDATE( midyunit )
 	{
 		rectangle erase = *cliprect;
 		erase.max_x = leftscroll - 1;
-		fillbitmap(bitmap, get_black_pen(), &erase);
+		fillbitmap(bitmap, get_black_pen(machine), &erase);
 	}
 	return 0;
 }

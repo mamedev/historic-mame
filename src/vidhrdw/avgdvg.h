@@ -20,7 +20,7 @@ WRITE8_HANDLER( avgdvg_go_w );
 WRITE8_HANDLER( avgdvg_reset_w );
 WRITE16_HANDLER( avgdvg_go_word_w );
 WRITE16_HANDLER( avgdvg_reset_word_w );
-int avgdvg_init(int vgType);
+int avgdvg_init(running_machine *machine, int vgType);
 
 /* Tempest and Quantum use this capability */
 void avg_set_flip_x(int flip);

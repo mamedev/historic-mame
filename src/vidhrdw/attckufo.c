@@ -57,7 +57,7 @@ static UINT16 mono[2];
 VIDEO_START( attckufo )
 {
 	mono[0]=0;
-	return video_start_generic_bitmapped();
+	return video_start_generic_bitmapped(machine);
 }
 
 

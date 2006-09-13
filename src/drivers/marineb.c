@@ -61,13 +61,13 @@ VIDEO_UPDATE( hopprobo );
 static MACHINE_RESET( marineb )
 {
 	marineb_active_low_flipscreen = 0;
-	machine_reset_espial();
+	machine_reset_espial(machine);
 }
 
 static MACHINE_RESET( springer )
 {
 	marineb_active_low_flipscreen = 1;
-	machine_reset_espial();
+	machine_reset_espial(machine);
 }
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )

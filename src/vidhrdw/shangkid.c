@@ -188,14 +188,7 @@ PALETTE_INIT( dynamski )
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
 		int data = color_prom[i] + 256 * color_prom[i+32];
-		int r = (data >>  1) & 0x1f;
-		int g = (data >>  6) & 0x1f;
-		int b = (data >> 11) & 0x1f;
-
-		palette_set_color(i,
-			(r << 3) | (r >> 2),
-			(g << 3) | (g >> 2),
-			(b << 3) | (b >> 2));
+		palette_set_color(machine,i,pal5bit(data >> 1),pal5bit(data >> 6),pal5bit(data >> 11));
 	}
 
 	color_prom += 2*Machine->drv->total_colors;

@@ -56,9 +56,9 @@ PALETTE_INIT( clshroad )
 {
 	int i;
 	for (i = 0;i < 256;i++)
-		palette_set_color(i,	color_prom[i + 256 * 0] * 0x11,
-								color_prom[i + 256 * 1] * 0x11,
-								color_prom[i + 256 * 2] * 0x11	);
+		palette_set_color(machine,i,	pal4bit(color_prom[i + 256 * 0]),
+								        pal4bit(color_prom[i + 256 * 1]),
+								        pal4bit(color_prom[i + 256 * 2]));
 }
 
 PALETTE_INIT( firebatl )
@@ -93,7 +93,7 @@ PALETTE_INIT( firebatl )
 		bit3 = (color_prom[i + 2*256] >> 3) & 0x01;
 		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 	}
 #endif
 

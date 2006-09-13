@@ -135,14 +135,14 @@ VIDEO_START( namcos1 )
 	memset(namcos1_paletteram, 0, 0x8000);
 	memset(namcos1_cus116, 0, 0x10);
 	for (i = 0; i < 0x2000; i++)
-		palette_set_color(i, 0, 0, 0);
+		palette_set_color(machine, i, 0, 0, 0);
 
 	/* all palette entries are not affected by shadow sprites... */
 	for (i = 0;i < 0x2000;i++)
-		palette_shadow_table[Machine->pens[i]] = Machine->pens[i];
+		machine->shadow_table[machine->pens[i]] = machine->pens[i];
 	/* ... except for tilemap colors */
 	for (i = 0x0800;i < 0x1000;i++)
-		palette_shadow_table[Machine->pens[i]] = Machine->pens[i + 0x0800];
+		machine->shadow_table[machine->pens[i]] = machine->pens[i + 0x0800];
 
 	spriteram = &namcos1_spriteram[0x800];
 
@@ -200,7 +200,7 @@ WRITE8_HANDLER( namcos1_paletteram_w )
 		r = namcos1_paletteram[offset];
 		g = namcos1_paletteram[offset + 0x0800];
 		b = namcos1_paletteram[offset + 0x1000];
-		palette_set_color(color,r,g,b);
+		palette_set_color(Machine,color,r,g,b);
 	}
 	else
 	{
@@ -354,7 +354,7 @@ VIDEO_UPDATE( namcos1 )
 
 
 	/* background color */
-	fillbitmap(bitmap, get_black_pen(), cliprect);
+	fillbitmap(bitmap, get_black_pen(machine), cliprect);
 
 	/* berabohm uses asymmetrical visibility windows to iris on the character */
 	i = ((namcos1_cus116[0] << 8) | namcos1_cus116[1]) - 1;			// min x

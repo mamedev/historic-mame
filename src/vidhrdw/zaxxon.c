@@ -65,7 +65,7 @@ PALETTE_INIT( zaxxon )
 		bit1 = (color_prom[i] >> 7) & 0x01;
 		b = combine_2_weights(bweights, bit0, bit1);
 
-		palette_set_color(i, r, g, b);
+		palette_set_color(machine, i, r, g, b);
 	}
 
 	/* color_prom now points to the beginning of the character color codes */
@@ -367,7 +367,7 @@ static void zaxxon_draw_background(mame_bitmap *bitmap, const rectangle *cliprec
 
 	/* if not enabled, fill the background with black */
 	else
-		fillbitmap(bitmap, get_black_pen(), cliprect);
+		fillbitmap(bitmap, get_black_pen(Machine), cliprect);
 }
 
 

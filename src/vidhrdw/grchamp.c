@@ -81,7 +81,7 @@ PALETTE_INIT( grchamp )
 		g = rg_bits[(data & 56) >> 3];
 		/* blue component */
 		b = b_bits[(data & 192) >> 6];
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 	}
 
 	/* The two color proms uses the same DAC to controll RGB, but second prom has less resolution, */
@@ -98,7 +98,7 @@ PALETTE_INIT( grchamp )
 		//and is used in the collision check (on the real board)
 		//objects[i]=(data&8)?0:1;
 
-		palette_set_color(i+0x20,r,g,b);
+		palette_set_color(machine,i+0x20,r,g,b);
 	}
 
 	/* Fog pens*/
@@ -109,17 +109,20 @@ PALETTE_INIT( grchamp )
 		//logerror("fog_level %d\n",fog_level);
 		for( i=0; i<0x40; i++ )
 		{
-			palette_get_color(i, &r, &g, &b);
+			rgb_t color = palette_get_color(machine, i);
+			r = RGB_RED(color);
+			g = RGB_GREEN(color);
+			b = RGB_BLUE(color);
 
 			add_fog(fog_level, &r);
 			add_fog(fog_level, &g);
 			add_fog(fog_level, &b);
-			palette_set_color(i+(j+1)*0x40,r,g,b);
+			palette_set_color(machine,i+(j+1)*0x40,r,g,b);
 		}
 	}
 
-	palette_set_shadow_mode(1); // highlights
-	palette_set_highlight_method(2); // 2=addition
+//  palette_set_shadow_mode(machine, 1); // highlights
+//  palette_set_highlight_method(machine, 2); // 2=addition
 
 	gfx_drawmode_table[0] = DRAWMODE_NONE; // - transparent
 	for( i=1; i<0x20; i++ )
@@ -324,7 +327,7 @@ static void draw_rain( mame_bitmap *bitmap, const rectangle *cliprect ){
 		int scrolly = grchamp_rain_ypos;
 		int sx,sy;
 
-		palette_set_highlight_factor32(1.7);
+//      palette_set_highlight_factor32(Machine, 1.7);
 
 		for( sy=0; sy<256; sy+=16 ){
 			for( sx=0; sx<256; sx+=16 ){
@@ -369,10 +372,12 @@ static void draw_headlights( mame_bitmap *bitmap, const rectangle *cliprect, int
 	if(!fog)
 	{
 		code +=2;
-		palette_set_highlight_factor32(1.7);
+//      palette_set_highlight_factor32(Machine, 1.7);
 	}
 	else
-		palette_set_highlight_factor32(1.3);
+	{
+//      palette_set_highlight_factor32(Machine, 1.3);
+	}
 
 	// TODO - fog headlights should have highlights without blue component
 	// i.e if(fog) palette_set_shadow_dRGB32(1,10,10,0,0);, but that appears

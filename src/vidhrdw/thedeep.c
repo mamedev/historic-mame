@@ -103,12 +103,7 @@ PALETTE_INIT( thedeep )
 {
 	int i;
 	for (i = 0;i < 512;i++)
-	{
-		int b = ((color_prom[0x200 + i] >> 0) & 0xf) * 0x11;
-		int g = ((color_prom[0x400 + i] >> 4) & 0xf) * 0x11;
-		int r = ((color_prom[0x400 + i] >> 0) & 0xf) * 0x11;
-		palette_set_color(i,r,g,b);
-	}
+		palette_set_color(machine,i,pal4bit(color_prom[0x400 + i] >> 0),pal4bit(color_prom[0x400 + i] >> 4),pal4bit(color_prom[0x200 + i] >> 0));
 }
 
 /***************************************************************************
@@ -243,7 +238,7 @@ VIDEO_UPDATE( thedeep )
 		tilemap_set_scrolly(tilemap_0, x, y + scrolly);
 	}
 
-	fillbitmap(bitmap,get_black_pen(),cliprect);
+	fillbitmap(bitmap,get_black_pen(machine),cliprect);
 
 	tilemap_draw(bitmap,cliprect,tilemap_0,0,0);
 	draw_sprites(bitmap,cliprect);

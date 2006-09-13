@@ -95,22 +95,13 @@ draw_sprites( mame_bitmap *bitmap,const rectangle *cliprect )
 
 WRITE8_HANDLER( djboy_paletteram_w )
 {
-	int r,g,b;
 	int val;
 
 	paletteram[offset] = data;
 	offset &= ~1;
 	val = (paletteram[offset]<<8) | paletteram[offset+1];
 
-	r = (val >> 8) & 0xf;
-	g = (val >> 4) & 0xf;
-	b = (val >> 0) & 0xf;
-
-	palette_set_color(
-		offset/2,
-		(r * 0xff) / 0xf,
-		(g * 0xff) / 0xf,
-		(b * 0xff) / 0xf );
+	palette_set_color(Machine,offset/2,pal4bit(val >> 8),pal4bit(val >> 4),pal4bit(val >> 0));
 }
 
 VIDEO_UPDATE( djboy )

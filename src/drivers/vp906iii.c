@@ -114,7 +114,7 @@ PALETTE_INIT( vp906iii )
 
 		color_prom++;
 
-		palette_set_color(i, r, g, b);
+		palette_set_color(machine, i, r, g, b);
 	}
 #endif
 }

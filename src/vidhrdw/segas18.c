@@ -212,7 +212,7 @@ VIDEO_UPDATE( system18 )
 	/* if no drawing is happening, fill with black and get out */
 	if (!segaic16_display_enable)
 	{
-		fillbitmap(bitmap, get_black_pen(), cliprect);
+		fillbitmap(bitmap, get_black_pen(machine), cliprect);
 		return 0;
 	}
 
@@ -249,7 +249,7 @@ VIDEO_UPDATE( system18 )
 #if DEBUG_VDP
 	if (vdp_enable && code_pressed(KEYCODE_V))
 	{
-		fillbitmap(bitmap, get_black_pen(), cliprect);
+		fillbitmap(bitmap, get_black_pen(machine), cliprect);
 		update_system18_vdp(bitmap, cliprect);
 	}
 	if (vdp_enable && code_pressed(KEYCODE_B))

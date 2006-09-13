@@ -55,18 +55,18 @@ READ16_HANDLER( wheelfir_rand1 )
 
 	toggle_bit ^= 0x8000; // must toggle..
 
-	return readinputport(0)^toggle_bit;// mame_rand();
+	return readinputport(0)^toggle_bit;// mame_rand(Machine);
 }
 
 READ16_HANDLER( wheelfir_rand2 )
 {
-	return readinputport(1);// mame_rand();
+	return readinputport(1);// mame_rand(Machine);
 }
 
 
 READ16_HANDLER( wheelfir_rand4 )
 {
-	return mame_rand();
+	return mame_rand(Machine);
 }
 
 static UINT16 *wheelfir_myram;
@@ -271,7 +271,7 @@ VIDEO_UPDATE(wheelfir)
 	int x,y;
 	static int base = 0;
 	if ( code_pressed_memory(KEYCODE_W) )
-		fillbitmap(wheelfir_tmp_bitmap, get_black_pen(), cliprect);
+		fillbitmap(wheelfir_tmp_bitmap, get_black_pen(machine), cliprect);
 
 	if ( code_pressed_memory(KEYCODE_E) )
 		base += 512*512;
@@ -311,7 +311,7 @@ VIDEO_UPDATE(wheelfir)
 		r = wheelfir_palette[x];
 		g = wheelfir_palette[x+1];
 		b = wheelfir_palette[x+2];
-		palette_set_color(x/3,r,g,b);
+		palette_set_color(machine,x/3,r,g,b);
 
 	}
 
@@ -517,8 +517,8 @@ INPUT_PORTS_END
 static INTERRUPT_GEN( wheelfir_irq )
 {
 
-//  wheelfir_myram[0x1cb8]=mame_rand()&1;
-	wheelfir_myram[0x1cb9]=mame_rand()&1; // hack!
+//  wheelfir_myram[0x1cb8]=mame_rand(Machine)&1;
+	wheelfir_myram[0x1cb9]=mame_rand(Machine)&1; // hack!
 	switch (  cpu_getiloops() )
 	{
 		case 0:

@@ -229,8 +229,8 @@ void supervisor_board_check_coin_input(void)
 
 static MACHINE_START(maxaflex)
 {
-	add_reset_callback(machine_reset_supervisor_board);
-	return machine_start_a600xl();
+	add_reset_callback(Machine, machine_reset_supervisor_board);
+	return machine_start_a600xl(machine);
 }
 
 int atari_input_disabled(void)
@@ -440,7 +440,7 @@ static unsigned short atari_colortable[] =
 /* Initialise the palette */
 static PALETTE_INIT( atari )
 {
-	palette_set_colors(0, atari_palette, sizeof(atari_palette) / 3);
+	palette_set_colors(machine, 0, atari_palette, sizeof(atari_palette) / 3);
 	memcpy(colortable,atari_colortable,sizeof(atari_colortable));
 }
 

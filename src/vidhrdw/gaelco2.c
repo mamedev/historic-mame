@@ -240,12 +240,12 @@ WRITE16_HANDLER( gaelco2_palette_w )
 	g = (color >>  5) & 0x1f;
 	b = (color >>  0) & 0x1f;
 
-	r = (r << 3) | (r >> 2);
-	g = (g << 3) | (g >> 2);
-	b = (b << 3) | (b >> 2);
+	r = pal5bit(r);
+	g = pal5bit(g);
+	b = pal5bit(b);
 
 	/* update game palette */
-	palette_set_color(4096*0 + offset, r, g, b);
+	palette_set_color(Machine, 4096*0 + offset, r, g, b);
 
 	/* update shadow/highligh palettes */
 	for (i = 1; i < 16; i++){
@@ -257,7 +257,7 @@ WRITE16_HANDLER( gaelco2_palette_w )
 		auxg = ADJUST_COLOR(g + pen_color_adjust[i]);
 		auxb = ADJUST_COLOR(b + pen_color_adjust[i]);
 
-		palette_set_color(4096*i + offset, auxr, auxg, auxb);
+		palette_set_color(Machine, 4096*i + offset, auxr, auxg, auxb);
 	}
 }
 
@@ -479,7 +479,7 @@ VIDEO_UPDATE( gaelco2 )
 VIDEO_UPDATE( bang )
 {
     /* standard rendering on this hardware */
-    video_update_gaelco2(screen, bitmap, cliprect);
+    video_update_gaelco2(machine, screen, bitmap, cliprect);
 
     /* draw crosshairs */
     {

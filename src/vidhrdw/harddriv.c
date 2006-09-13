@@ -405,7 +405,7 @@ INLINE void gsp_palette_change(int offset)
 	int red = (hdgsp_paletteram_lo[offset] >> 8) & 0xff;
 	int green = hdgsp_paletteram_lo[offset] & 0xff;
 	int blue = hdgsp_paletteram_hi[offset] & 0xff;
-	palette_set_color(offset, red, green, blue);
+	palette_set_color(Machine, offset, red, green, blue);
 }
 
 
@@ -482,7 +482,7 @@ VIDEO_EOF( harddriv )
 VIDEO_UPDATE( harddriv )
 {
 	pen_t *pens = &Machine->pens[gfx_palettebank * 256];
-	pen_t black = get_black_pen();
+	pen_t black = get_black_pen(machine);
 	offs_t adjusted_offs;
 	int start, end, x, y;
 	int lzero, rzero, draw;

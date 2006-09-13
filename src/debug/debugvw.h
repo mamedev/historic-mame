@@ -139,8 +139,8 @@ typedef union _debug_property_info debug_property_info;
 ***************************************************************************/
 
 /* initialization */
-void				debug_view_init(void);
-void				debug_view_exit(void);
+void				debug_view_init(running_machine *machine);
+void				debug_view_exit(running_machine *machine);
 
 /* view creation/deletion */
 debug_view *		debug_view_alloc(int type);

@@ -73,7 +73,7 @@ WRITE8_HANDLER( yunsung8_videoram_w )
 	{
 		int bank = yunsung8_videobank & 2;
 		unsigned char *RAM;
-		int r,g,b,color;
+		int color;
 
 		if (bank)	RAM = yunsung8_videoram_0;
 		else		RAM = yunsung8_videoram_1;
@@ -82,11 +82,7 @@ WRITE8_HANDLER( yunsung8_videoram_w )
 		color = RAM[offset & ~1] | (RAM[offset | 1] << 8);
 
 		/* BBBBBGGGGGRRRRRx */
-		r = (color >>  0) & 0x1f;
-		g = (color >>  5) & 0x1f;
-		b = (color >> 10) & 0x1f;
-
-		palette_set_color(offset/2 + (bank ? 0x400:0), (r << 3)|(r >> 2), (g << 3)|(g >> 2), (b << 3)|(b >> 2));
+		palette_set_color(Machine, offset/2 + (bank ? 0x400:0), pal5bit(color >> 0), pal5bit(color >> 5), pal5bit(color >> 10));
 	}
 	else
 	{

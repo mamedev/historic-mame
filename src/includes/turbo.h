@@ -35,6 +35,10 @@ struct _turbo_state
 	/* machine states */
 	i8279_state	i8279;
 
+	/* sound state */
+	UINT8		turbo_osel, turbo_bsel;
+	UINT8		sound_state[3];
+
 	/* video state */
 	tilemap *	fg_tilemap;
 
@@ -45,13 +49,19 @@ struct _turbo_state
 	UINT8		turbo_speed;
 	UINT8		turbo_collision;
 	UINT8		turbo_last_analog;
+	UINT8		turbo_accel;
 
 	/* Subroc-specific states */
 	UINT8		subroc3d_col, subroc3d_ply, subroc3d_flip;
+	UINT8		subroc3d_mdis, subroc3d_mdir;
+	UINT8		subroc3d_tdis, subroc3d_tdir;
+	UINT8		subroc3d_fdis, subroc3d_fdir;
+	UINT8		subroc3d_hdis, subroc3d_hdir;
 
 	/* Buck Rogers-specific states */
 	UINT8		buckrog_fchg, buckrog_mov, buckrog_obch;
 	UINT8		buckrog_command;
+	UINT8		buckrog_myship;
 };
 
 
@@ -64,18 +74,20 @@ void turbo_update_segments(void);
 
 /*----------- defined in sndhrdw/turbo.c -----------*/
 
-extern discrete_sound_block turbo_sound_interface[];
+MACHINE_DRIVER_EXTERN( turbo_samples );
+MACHINE_DRIVER_EXTERN( subroc3d_samples );
+MACHINE_DRIVER_EXTERN( buckrog_samples );
 
-WRITE8_HANDLER( turbo_sound_A_w );
-WRITE8_HANDLER( turbo_sound_B_w );
-WRITE8_HANDLER( turbo_sound_C_w );
+WRITE8_HANDLER( turbo_sound_a_w );
+WRITE8_HANDLER( turbo_sound_b_w );
+WRITE8_HANDLER( turbo_sound_c_w );
 
-WRITE8_HANDLER( subroc3d_sound_A_w );
-WRITE8_HANDLER( subroc3d_sound_B_w );
-WRITE8_HANDLER( subroc3d_sound_C_w );
+WRITE8_HANDLER( subroc3d_sound_a_w );
+WRITE8_HANDLER( subroc3d_sound_b_w );
+WRITE8_HANDLER( subroc3d_sound_c_w );
 
-WRITE8_HANDLER( buckrog_sound_A_w );
-WRITE8_HANDLER( buckrog_sound_B_w );
+WRITE8_HANDLER( buckrog_sound_a_w );
+WRITE8_HANDLER( buckrog_sound_b_w );
 
 
 /*----------- defined in vidhrdw/turbo.c -----------*/

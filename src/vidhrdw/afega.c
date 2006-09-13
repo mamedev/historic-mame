@@ -61,10 +61,10 @@ WRITE16_HANDLER( afega_palette_w )
 {
 	int r,g,b;
 	data = COMBINE_DATA(&paletteram16[offset]);
-	b = ((data & 0x00F0) >> 0) + ((data & 0x0002) << 2);
-	g = ((data & 0x0F00) >> 4) + ((data & 0x0004) << 1);
-	r = ((data & 0xF000) >> 8) + ((data & 0x0008) << 0);
-	palette_set_color( offset, r , g , b );
+	b = ((data & 0x00F0) >> 3 ) + ((data & 0x0002) >> 1);
+	g = ((data & 0x0F00) >> 7 ) + ((data & 0x0004) >> 2);
+	r = ((data & 0xF000) >> 11) + ((data & 0x0008) >> 3);
+	palette_set_color( Machine, offset, pal5bit(r) , pal5bit(g) , pal5bit(b) );
 }
 
 /* This game uses 8 bit tiles, so it ignores the color codes and just
@@ -339,7 +339,7 @@ if ( code_pressed(KEYCODE_Z) )
 #endif
 
 	if (layers_ctrl & 1)	tilemap_draw(bitmap,cliprect,tilemap_0,0,0);
-	else					fillbitmap(bitmap,get_black_pen(),cliprect);
+	else					fillbitmap(bitmap,get_black_pen(Machine),cliprect);
 
 	if (layers_ctrl & 4) 	afega_draw_sprites(bitmap,cliprect, attr_mask);
 

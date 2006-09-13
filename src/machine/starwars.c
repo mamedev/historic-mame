@@ -387,7 +387,7 @@ READ8_HANDLER( swmathbx_prng_r )
      */
 
 	/* Use MAME's PRNG for now */
-	return mame_rand();
+	return mame_rand(Machine);
 }
 
 

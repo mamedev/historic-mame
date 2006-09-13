@@ -18,12 +18,12 @@ int sprint4_collision[4];
 
 PALETTE_INIT( sprint4 )
 {
-	palette_set_color(0, 0x00, 0x00, 0x00); /* black  */
-	palette_set_color(1, 0xfc, 0xdf, 0x80); /* peach  */
-	palette_set_color(2, 0xf0, 0x00, 0xf0); /* violet */
-	palette_set_color(3, 0x00, 0xf0, 0x0f); /* green  */
-	palette_set_color(4, 0x30, 0x4f, 0xff); /* blue   */
-	palette_set_color(5, 0xff, 0xff, 0xff); /* white  */
+	palette_set_color(machine, 0, 0x00, 0x00, 0x00); /* black  */
+	palette_set_color(machine, 1, 0xfc, 0xdf, 0x80); /* peach  */
+	palette_set_color(machine, 2, 0xf0, 0x00, 0xf0); /* violet */
+	palette_set_color(machine, 3, 0x00, 0xf0, 0x0f); /* green  */
+	palette_set_color(machine, 4, 0x30, 0x4f, 0xff); /* blue   */
+	palette_set_color(machine, 5, 0xff, 0xff, 0xff); /* white  */
 
 	colortable[0] = 0;
 	colortable[2] = 0;
@@ -41,10 +41,10 @@ PALETTE_INIT( sprint4 )
 
 PALETTE_INIT( ultratnk )
 {
-	palette_set_color(0, 0x00, 0x00, 0x00);
-	palette_set_color(1, 0xa4, 0xa4, 0xa4);
-	palette_set_color(2, 0x5b, 0x5b, 0x5b);
-	palette_set_color(3, 0xff, 0xff, 0xff);
+	palette_set_color(machine, 0, 0x00, 0x00, 0x00);
+	palette_set_color(machine, 1, 0xa4, 0xa4, 0xa4);
+	palette_set_color(machine, 2, 0x5b, 0x5b, 0x5b);
+	palette_set_color(machine, 3, 0xff, 0xff, 0xff);
 
 	colortable[0] = color_prom[0x00] & 3;
 	colortable[2] = color_prom[0x00] & 3;

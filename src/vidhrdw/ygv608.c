@@ -1225,10 +1225,10 @@ WRITE16_HANDLER( ygv608_w )
 			if (++p3_state == 3)
 			{
 				p3_state = 0;
-				palette_set_color(ygv608.regs.s.cc,
-			    	ygv608.colour_palette[ygv608.regs.s.cc][0] << 2,
-			    	ygv608.colour_palette[ygv608.regs.s.cc][1] << 2,
-			    	ygv608.colour_palette[ygv608.regs.s.cc][2] << 2 );
+				palette_set_color(Machine,ygv608.regs.s.cc,
+			    	pal6bit(ygv608.colour_palette[ygv608.regs.s.cc][0]),
+			    	pal6bit(ygv608.colour_palette[ygv608.regs.s.cc][1]),
+			    	pal6bit(ygv608.colour_palette[ygv608.regs.s.cc][2]) );
 				if (ygv608.regs.s.r2 & r2_cpaw)
 					ygv608.regs.s.cc++;
 			}

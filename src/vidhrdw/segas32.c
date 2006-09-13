@@ -412,24 +412,12 @@ INLINE UINT16 xBGRBBBBGGGGRRRR_to_xBBBBBGGGGGRRRRR(UINT16 value)
 
 INLINE void update_color(int offset, UINT16 data)
 {
-	int r, g, b;
-
 	/* note that since we use this RAM directly, we don't technically need */
 	/* to call palette_set_color() at all; however, it does give us that */
 	/* nice display when you hit F4, which is useful for debugging */
 
-	/* extract RGB */
-	r = (data >> 0) & 0x1f;
-	g = (data >> 5) & 0x1f;
-	b = (data >> 10) & 0x1f;
-
-	/* up to 8 bits */
-	r = (r << 3) | (r >> 2);
-	g = (g << 3) | (g >> 2);
-	b = (b << 3) | (b >> 2);
-
 	/* set the color */
-	palette_set_color(offset, r, g, b);
+	palette_set_color(Machine, offset, pal5bit(data >> 0), pal5bit(data >> 5), pal5bit(data >> 10));
 }
 
 
@@ -2461,7 +2449,7 @@ VIDEO_UPDATE( system32 )
 	/* if the display is off, punt */
 	if (!system32_displayenable[0])
 	{
-		fillbitmap(bitmap, get_black_pen(), cliprect);
+		fillbitmap(bitmap, get_black_pen(machine), cliprect);
 		return 0;
 	}
 
@@ -2586,7 +2574,7 @@ for (showclip = 0; showclip < 4; showclip++)
 				if (clips & (1 << i))
 				{
 					rectangle rect;
-					pen_t white = get_white_pen();
+					pen_t white = get_white_pen(machine);
 					if (!flip)
 					{
 						rect.min_x = system32_videoram[0x1ff60/2 + i * 4] & 0x1ff;
@@ -2640,7 +2628,7 @@ VIDEO_UPDATE( multi32 )
 	/* if the display is off, punt */
 	if (!system32_displayenable[screen])
 	{
-		fillbitmap(bitmap, get_black_pen(), cliprect);
+		fillbitmap(bitmap, get_black_pen(machine), cliprect);
 		return 0;
 	}
 

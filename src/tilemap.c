@@ -755,7 +755,7 @@ INLINE tilemap_draw_func pick_draw_func( mame_bitmap *dest )
 
 /***********************************************************************************/
 
-int tilemap_init( void )
+int tilemap_init( running_machine *machine )
 {
 	screen_width	= Machine->screen[0].width;
 	screen_height	= Machine->screen[0].height;
@@ -765,13 +765,13 @@ int tilemap_init( void )
 	if( priority_bitmap )
 	{
 		priority_bitmap_pitch_line = ((UINT8 *)priority_bitmap->line[1]) - ((UINT8 *)priority_bitmap->line[0]);
-		add_exit_callback(tilemap_exit);
+		add_exit_callback(machine, tilemap_exit);
 		return 0;
 	}
 	return -1;
 }
 
-void tilemap_exit( void )
+void tilemap_exit( running_machine *machine )
 {
 	tilemap *next;
 

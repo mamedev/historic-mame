@@ -43,7 +43,7 @@
 ***************************************************************************/
 
 /* initialize the debugger */
-void mame_debug_init(void);
+void mame_debug_init(running_machine *machine);
 
 /* call this once per instruction from CPU cores */
 void mame_debug_hook(void);
@@ -61,7 +61,7 @@ int mame_debug_is_active(void);
 ***************************************************************************/
 
 #ifndef MAME_DEBUG
-#define mame_debug_init() do { } while (0)
+#define mame_debug_init(m) do { } while (0)
 #define mame_debug_hook() do { } while (0)
 #define mame_debug_break() do { } while (0)
 #define mame_debug_is_active() FALSE

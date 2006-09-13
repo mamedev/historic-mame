@@ -145,7 +145,7 @@ VIDEO_START(cshooter)
 
 VIDEO_UPDATE(cshooter)
 {
-	fillbitmap(bitmap, 0/*get_black_pen()*/, &Machine->screen[0].visarea);
+	fillbitmap(bitmap, 0/*get_black_pen(machine)*/, &Machine->screen[0].visarea);
 	tilemap_mark_all_tiles_dirty(cshooter_txtilemap);
 
 	//sprites
@@ -247,25 +247,16 @@ WRITE8_HANDLER ( bank_w )
 
 static WRITE8_HANDLER(pal_w)
 {
-	int r,g,b;
 	paletteram[offset]=data;
 	offset&=0xff;
-	b=paletteram[offset+0x100]&0xf;
-	r=(paletteram[offset])>>4;
-	g=paletteram[offset]&0x0f;
-	palette_set_color(offset, r * 0x11, g * 0x11, b * 0x11);
-
+	palette_set_color(Machine, offset, pal4bit(paletteram[offset] >> 4), pal4bit(paletteram[offset]), pal4bit(paletteram[offset+0x100]));
 }
 
 static WRITE8_HANDLER(pal2_w)
 {
-	int r,g,b; //guess
 	paletteram[offset]=data;
 	offset&=0x1ff;
-	b=paletteram[offset+0x200]&0xf;
-	r=(paletteram[offset])>>4;
-	g=paletteram[offset]&0x0f;
-	palette_set_color(offset, r * 0x11, g * 0x11, b * 0x11);
+	palette_set_color(Machine, offset, pal4bit(paletteram[offset] >> 4), pal4bit(paletteram[offset]), pal4bit(paletteram[offset+0x200]));
 }
 
 static READ8_HANDLER(pal_r)

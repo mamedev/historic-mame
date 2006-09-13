@@ -155,7 +155,7 @@ static WRITE32_HANDLER( color_ram_w )
 		g = (a &0xff00) >> 8;
 		b = (a &0xff);
 
-		palette_set_color(offset,r,g,b);
+		palette_set_color(Machine,offset,r,g,b);
 	}
 }
 

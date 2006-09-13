@@ -248,7 +248,7 @@ VIDEO_UPDATE( inufuku )
 {
 	int i;
 
-	fillbitmap(bitmap, get_black_pen(), cliprect);
+	fillbitmap(bitmap, get_black_pen(machine), cliprect);
 	fillbitmap(priority_bitmap, 0, NULL);
 
 	if (inufuku_bg_raster) {

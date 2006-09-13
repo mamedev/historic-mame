@@ -124,7 +124,7 @@ static HANDLE window_thread_ready_event;
 //  PROTOTYPES
 //============================================================
 
-static void winwindow_exit(void);
+static void winwindow_exit(running_machine *machine);
 static void winwindow_video_window_destroy(win_window_info *window);
 static void draw_video_contents(win_window_info *window, HDC dc, int update);
 
@@ -191,7 +191,7 @@ void mtlog_add(const char *event) { }
 //  (main thread)
 //============================================================
 
-int winwindow_init(void)
+int winwindow_init(running_machine *machine)
 {
 	size_t temp;
 
@@ -202,7 +202,7 @@ int winwindow_init(void)
 	main_threadid = GetCurrentThreadId();
 
 	// ensure we get called on the way out
-	add_exit_callback(winwindow_exit);
+	add_exit_callback(machine, winwindow_exit);
 
 	// set up window class and register it
 	if (create_window_class())
@@ -272,7 +272,7 @@ int winwindow_init(void)
 //  (main thread)
 //============================================================
 
-static void winwindow_exit(void)
+static void winwindow_exit(running_machine *machine)
 {
 	assert(GetCurrentThreadId() == main_threadid);
 
@@ -390,7 +390,7 @@ void winwindow_process_events(int ingame)
 
 				// request exit from the window thread
 				case WM_USER_REQUEST_EXIT:
-					mame_schedule_exit();
+					mame_schedule_exit(Machine);
 					dispatch = FALSE;
 					break;
 
@@ -895,10 +895,10 @@ void winwindow_ui_pause_from_main_thread(int pause)
 		if (ui_temp_pause++ == 0)
 		{
 			// only call mame_pause if we weren't already paused due to some external reason
-			ui_temp_was_paused = mame_is_paused();
+			ui_temp_was_paused = mame_is_paused(Machine);
 			if (!ui_temp_was_paused)
 			{
-				mame_pause(TRUE);
+				mame_pause(Machine, TRUE);
 				SetEvent(ui_pause_event);
 			}
 		}
@@ -913,7 +913,7 @@ void winwindow_ui_pause_from_main_thread(int pause)
 			// but only do it if we were the ones who initiated it
 			if (!ui_temp_was_paused)
 			{
-				mame_pause(FALSE);
+				mame_pause(Machine, FALSE);
 				ResetEvent(ui_pause_event);
 			}
 		}
@@ -955,7 +955,7 @@ void winwindow_ui_pause_from_window_thread(int pause)
 
 int winwindow_ui_is_paused(void)
 {
-	return mame_is_paused() && ui_temp_was_paused;
+	return mame_is_paused(Machine) && ui_temp_was_paused;
 }
 
 
@@ -1256,7 +1256,7 @@ LRESULT CALLBACK winwindow_video_window_proc(HWND wnd, UINT message, WPARAM wpar
 			if (multithreading_enabled)
 				PostThreadMessage(main_threadid, WM_USER_REQUEST_EXIT, 0, 0);
 			else
-				mame_schedule_exit();
+				mame_schedule_exit(Machine);
 			break;
 
 		// destroy: clean up all attached rendering bits and NULL out our hwnd

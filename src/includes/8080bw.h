@@ -36,6 +36,7 @@ READ8_HANDLER( desertgu_port_1_r );
 MACHINE_RESET( invaders );
 MACHINE_RESET( sstrangr );
 MACHINE_RESET( invad2ct );
+MACHINE_RESET( spcewars );
 MACHINE_RESET( gunfight );
 MACHINE_RESET( boothill );
 MACHINE_RESET( phantom2 );

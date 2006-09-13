@@ -63,12 +63,12 @@ PALETTE_INIT( xevious )
 		bit3 = (color_prom[2*256] >> 3) & 0x01;
 		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 		color_prom++;
 	}
 
 	/* color 0x80 is used by sprites to mark transparency */
-	palette_set_color(0x80,0,0,0);
+	palette_set_color(machine,0x80,0,0,0);
 
 	color_prom += 128;  /* the bottom part of the PROM is unused */
 	color_prom += 2*256;
@@ -136,12 +136,12 @@ PALETTE_INIT( battles )
 		bit3 = (color_prom[2*256] >> 3) & 0x01;
 		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 		color_prom++;
 	}
 
 	/* color 0x80 is used by sprites to mark transparency */
-	palette_set_color(0x80,0,0,0);
+	palette_set_color(machine,0x80,0,0,0);
 
 	color_prom += 128;  /* the bottom part of the PROM is unused */
 	color_prom += 2*256;

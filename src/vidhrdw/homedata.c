@@ -350,11 +350,7 @@ PALETTE_INIT( mrokumei )
 		g = ((color >>  7) & 0x1e) | ((color >> 2) & 1);
 		b = ((color >>  3) & 0x1e) | ((color >> 1) & 1);
 
-		r = (r << 3) | (r >> 2);
-		g = (g << 3) | (g >> 2);
-		b = (b << 3) | (b >> 2);
-
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,pal5bit(r),pal5bit(g),pal5bit(b));
 	}
 }
 
@@ -376,11 +372,7 @@ PALETTE_INIT( reikaids )
 		r = ((color >>  7) & 0x1e) | ((color >> 2) & 1);
 		b = ((color >>  3) & 0x1e) | ((color >> 1) & 1);
 
-		r = (r << 3) | (r >> 2);
-		g = (g << 3) | (g >> 2);
-		b = (b << 3) | (b >> 2);
-
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,pal5bit(r),pal5bit(g),pal5bit(b));
 	}
 }
 
@@ -402,11 +394,7 @@ PALETTE_INIT( pteacher )
 		r = ((color >>  6) & 0x1f);
 		b = ((color >>  1) & 0x1f);
 
-		r = (r << 3) | (r >> 2);
-		g = (g << 3) | (g >> 2);
-		b = (b << 3) | (b >> 2);
-
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,pal5bit(r),pal5bit(g),pal5bit(b));
 	}
 }
 
@@ -723,7 +711,7 @@ VIDEO_UPDATE( mrokumei )
 	/* blank screen */
 	if (homedata_vreg[0x3] == 0xc1 && homedata_vreg[0x4] == 0xc0 && homedata_vreg[0x5] == 0xff)
 	{
-		fillbitmap(bitmap,get_black_pen(),cliprect);
+		fillbitmap(bitmap,get_black_pen(machine),cliprect);
 		return 0;
 	}
 
@@ -784,7 +772,7 @@ VIDEO_UPDATE( reikaids )
     }
 
 
-    fillbitmap(bitmap,get_black_pen(),cliprect);
+    fillbitmap(bitmap,get_black_pen(machine),cliprect);
 
     pri = (blitter_bank & 0x70) >> 4;
     for (i = 0;i < 4;i++)
@@ -830,7 +818,7 @@ VIDEO_UPDATE( reikaids )
 	}
 
 
-	fillbitmap(bitmap,get_black_pen(),cliprect);
+	fillbitmap(bitmap,get_black_pen(machine),cliprect);
 
 	pri = (blitter_bank & 0x70) >> 4;
 	for (i = 0;i < 4;i++)
@@ -847,7 +835,7 @@ VIDEO_UPDATE( pteacher )
 	/* blank screen */
 	if (homedata_vreg[0x3] == 0xc1 && homedata_vreg[0x4] == 0xc0 && homedata_vreg[0x5] == 0xff)
 	{
-		fillbitmap(bitmap,get_black_pen(),cliprect);
+		fillbitmap(bitmap,get_black_pen(machine),cliprect);
 		return 0;
 	}
 

@@ -128,18 +128,7 @@ VIDEO_START( mcr )
 
 static void mcr_set_color(int index, int data)
 {
-	/* 3 bits each, RGB */
-	int r = (data >> 6) & 7;
-	int g = (data >> 0) & 7;
-	int b = (data >> 3) & 7;
-
-	/* up to 8 bits */
-	r = (r << 5) | (r << 2) | (r >> 1);
-	g = (g << 5) | (g << 2) | (g >> 1);
-	b = (b << 5) | (b << 2) | (b >> 1);
-
-	/* set the color */
-	palette_set_color(index, r, g, b);
+	palette_set_color(Machine, index, pal3bit(data >> 6), pal3bit(data >> 0), pal3bit(data >> 3));
 }
 
 
@@ -156,7 +145,7 @@ static void journey_set_color(int index, int data)
 	b = (b << 5) | (b << 1);
 
 	/* set the BG color */
-	palette_set_color(index, r, g, b);
+	palette_set_color(Machine, index, r, g, b);
 
 	/* if this is an odd entry in the upper palette bank, the hardware */
 	/* hard-codes a low 1 bit -- this is used for better grayscales */
@@ -168,7 +157,7 @@ static void journey_set_color(int index, int data)
 	}
 
 	/* set the FG color */
-	palette_set_color(index + 64, r, g, b);
+	palette_set_color(Machine, index + 64, r, g, b);
 }
 
 

@@ -249,7 +249,7 @@ static WRITE32_HANDLER(FIFO_w)
 
 	if(!(data>>28))
 	{
-		palette_set_color(PS7500_FIFO[1]&0xff, data&0xff,(data>>8)&0xff,(data>>16)&0xff);
+		palette_set_color(Machine, PS7500_FIFO[1]&0xff, data&0xff,(data>>8)&0xff,(data>>16)&0xff);
 		PS7500_FIFO[1]++; //autoinc
 	}
 }
@@ -314,7 +314,7 @@ static READ32_HANDLER(PS7500_IO_r)
 	switch(offset)
 	{
 		case MSECR:
-			return mame_rand();
+			return mame_rand(Machine);
 		break;
 
 		case IOLINES: //TODO: eeprom  24c01
@@ -325,7 +325,7 @@ static READ32_HANDLER(PS7500_IO_r)
 		if(flashType==1)
 			return 0;
 		else
-			return mame_rand();
+			return mame_rand(Machine);
 
 		case IRQSTA:
 			return (PS7500_IO[offset]&(~2))|0x80;
@@ -353,7 +353,7 @@ static READ32_HANDLER(PS7500_IO_r)
 		//default:
 			//printf("ior %i @%x\n",offset,activecpu_get_pc());
 	}
-	return mame_rand();//PS7500_IO[offset];
+	return mame_rand(Machine);//PS7500_IO[offset];
 }
 
 static WRITE32_HANDLER(PS7500_IO_w)
@@ -475,17 +475,17 @@ static WRITE32_HANDLER(debug_w)
 
 static READ32_HANDLER(ff4_r)
 {
-	return mame_rand()&0x20;
+	return mame_rand(Machine)&0x20;
 }
 
 static READ32_HANDLER(SIMPLEIO_r)
 {
-	return mame_rand()&1;
+	return mame_rand(Machine)&1;
 }
 
 static READ32_HANDLER(randomized_r)
 {
-	return mame_rand();
+	return mame_rand(Machine);
 }
 
 static ADDRESS_MAP_START( ssfindo_map, ADDRESS_SPACE_PROGRAM, 32 )

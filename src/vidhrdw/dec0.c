@@ -130,7 +130,7 @@ static void update_24bitcol(int offset)
 	g = (paletteram16[offset] >> 8) & 0xff;
 	b = (paletteram16_2[offset] >> 0) & 0xff;
 
-	palette_set_color(offset,r,g,b);
+	palette_set_color(Machine,offset,r,g,b);
 }
 
 WRITE16_HANDLER( dec0_paletteram_rg_w )
@@ -726,7 +726,7 @@ VIDEO_START( dec0_nodma )
 
 VIDEO_START( dec0 )
 {
-	video_start_dec0_nodma();
+	video_start_dec0_nodma(machine);
 	dec0_spriteram=auto_malloc(0x800);
 
 	return 0;

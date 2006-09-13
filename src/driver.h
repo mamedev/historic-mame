@@ -19,24 +19,24 @@
     MACROS (must be *before* the includes below)
 ***************************************************************************/
 
-#define DRIVER_INIT(name)		void init_##name(void)
+#define DRIVER_INIT(name)		void init_##name(running_machine *machine)
 
-#define NVRAM_HANDLER(name)		void nvram_handler_##name(mame_file *file, int read_or_write)
+#define NVRAM_HANDLER(name)		void nvram_handler_##name(running_machine *machine, mame_file *file, int read_or_write)
 
-#define MEMCARD_HANDLER(name)	void memcard_handler_##name(mame_file *file, int action)
+#define MEMCARD_HANDLER(name)	void memcard_handler_##name(running_machine *machine, mame_file *file, int action)
 
-#define MACHINE_START(name)		int machine_start_##name(void)
-#define MACHINE_RESET(name)		void machine_reset_##name(void)
+#define MACHINE_START(name)		int machine_start_##name(running_machine *machine)
+#define MACHINE_RESET(name)		void machine_reset_##name(running_machine *machine)
 
-#define SOUND_START(name)		int sound_start_##name(void)
-#define SOUND_RESET(name)		void sound_reset_##name(void)
+#define SOUND_START(name)		int sound_start_##name(running_machine *machine)
+#define SOUND_RESET(name)		void sound_reset_##name(running_machine *machine)
 
-#define VIDEO_START(name)		int video_start_##name(void)
-#define VIDEO_RESET(name)		void video_reset_##name(void)
+#define VIDEO_START(name)		int video_start_##name(running_machine *machine)
+#define VIDEO_RESET(name)		void video_reset_##name(running_machine *machine)
 
-#define PALETTE_INIT(name)		void palette_init_##name(UINT16 *colortable, const UINT8 *color_prom)
-#define VIDEO_EOF(name)			void video_eof_##name(void)
-#define VIDEO_UPDATE(name)		UINT32 video_update_##name(int screen, mame_bitmap *bitmap, const rectangle *cliprect)
+#define PALETTE_INIT(name)		void palette_init_##name(running_machine *machine, UINT16 *colortable, const UINT8 *color_prom)
+#define VIDEO_EOF(name)			void video_eof_##name(running_machine *machine)
+#define VIDEO_UPDATE(name)		UINT32 video_update_##name(running_machine *machine, int screen, mame_bitmap *bitmap, const rectangle *cliprect)
 
 /* NULL versions */
 #define init_NULL				NULL
@@ -194,11 +194,11 @@ struct _machine_config
 	INT32				watchdog_vblank_count;		/* number of VBLANKs until the watchdog kills us */
 	double				watchdog_time;				/* length of time until the watchdog kills us */
 
-	int 				(*machine_start)(void);		/* one-time machine start callback */
-	void 				(*machine_reset)(void);		/* machine reset callback */
+	int 				(*machine_start)(running_machine *machine);		/* one-time machine start callback */
+	void 				(*machine_reset)(running_machine *machine);		/* machine reset callback */
 
-	void 				(*nvram_handler)(mame_file *file, int read_or_write); /* NVRAM save/load callback  */
-	void 				(*memcard_handler)(mame_file *file, int action); /* memory card save/load callback  */
+	void 				(*nvram_handler)(running_machine *machine, mame_file *file, int read_or_write); /* NVRAM save/load callback  */
+	void 				(*memcard_handler)(running_machine *machine, mame_file *file, int action); /* memory card save/load callback  */
 
 	UINT32				video_attributes;			/* flags describing the video system */
 	const gfx_decode *	gfxdecodeinfo;				/* pointer to graphics decoding information */
@@ -207,17 +207,17 @@ struct _machine_config
 	const char *		default_layout;				/* default layout for this machine */
 	screen_config		screen[MAX_SCREENS];		/* total number of screens */
 
-	void 				(*init_palette)(UINT16 *colortable, const UINT8 *color_prom); /* one-time palette init callback  */
-	int					(*video_start)(void);		/* one-time video start callback */
-	void				(*video_reset)(void);		/* video reset callback */
-	void				(*video_eof)(void);			/* end-of-frame video callback */
-	UINT32				(*video_update)(int screen, mame_bitmap *bitmap, const rectangle *cliprect); /* video update callback */
+	void 				(*init_palette)(running_machine *machine, UINT16 *colortable, const UINT8 *color_prom); /* one-time palette init callback  */
+	int					(*video_start)(running_machine *machine);		/* one-time video start callback */
+	void				(*video_reset)(running_machine *machine);		/* video reset callback */
+	void				(*video_eof)(running_machine *machine);			/* end-of-frame video callback */
+	UINT32				(*video_update)(running_machine *machine, int screen, mame_bitmap *bitmap, const rectangle *cliprect); /* video update callback */
 
 	sound_config		sound[MAX_SOUND];			/* array of sound chips in the system */
 	speaker_config		speaker[MAX_SPEAKER];		/* array of speakers in the system */
 
-	int					(*sound_start)(void);		/* one-time sound start callback */
-	void				(*sound_reset)(void);		/* sound reset callback */
+	int					(*sound_start)(running_machine *machine);		/* one-time sound start callback */
+	void				(*sound_reset)(running_machine *machine);		/* sound reset callback */
 };
 
 
@@ -233,7 +233,7 @@ struct _game_driver
 	const char *		manufacturer;				/* manufacturer of the game */
 	void 				(*drv)(machine_config *);	/* machine driver constructor */
 	void 				(*construct_ipt)(input_port_init_params *param); /* input port constructor */
-	void				(*driver_init)(void);		/* DRIVER_INIT callback */
+	void				(*driver_init)(running_machine *machine); /* DRIVER_INIT callback */
 	const rom_entry *	rom;						/* pointer to list of ROMs for the game */
 
 #ifdef MESS

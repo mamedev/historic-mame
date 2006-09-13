@@ -923,14 +923,14 @@ INPUT_PORTS_END
 
 static PALETTE_INIT( gameplan )
 {
-	palette_set_color(0,0x00,0x00,0x00); /* 0 BLACK   */
-	palette_set_color(1,0xff,0x00,0x00); /* 1 RED     */
-	palette_set_color(2,0x00,0xff,0x00); /* 2 GREEN   */
-	palette_set_color(3,0xff,0xff,0x00); /* 3 YELLOW  */
-	palette_set_color(4,0x00,0x00,0xff); /* 4 BLUE    */
-	palette_set_color(5,0xff,0x00,0xff); /* 5 MAGENTA */
-	palette_set_color(6,0x00,0xff,0xff); /* 6 CYAN    */
-	palette_set_color(7,0xff,0xff,0xff); /* 7 WHITE   */
+	palette_set_color(machine,0,0x00,0x00,0x00); /* 0 BLACK   */
+	palette_set_color(machine,1,0xff,0x00,0x00); /* 1 RED     */
+	palette_set_color(machine,2,0x00,0xff,0x00); /* 2 GREEN   */
+	palette_set_color(machine,3,0xff,0xff,0x00); /* 3 YELLOW  */
+	palette_set_color(machine,4,0x00,0x00,0xff); /* 4 BLUE    */
+	palette_set_color(machine,5,0xff,0x00,0xff); /* 5 MAGENTA */
+	palette_set_color(machine,6,0x00,0xff,0xff); /* 6 CYAN    */
+	palette_set_color(machine,7,0xff,0xff,0xff); /* 7 WHITE   */
 }
 
 

@@ -295,9 +295,9 @@ VIDEO_UPDATE( genesis )
 VIDEO_UPDATE( segac2 )
 {
 	if (!display_enable)
-		fillbitmap(bitmap, get_black_pen(), cliprect);
+		fillbitmap(bitmap, get_black_pen(machine), cliprect);
 	else
-		video_update_genesis(screen, bitmap, cliprect);
+		video_update_genesis(machine, screen, bitmap, cliprect);
 	return 0;
 }
 
@@ -523,15 +523,7 @@ static void vdp_data_w(int data)
 		case 0x03:		/* Palette write */
 			{
 				int offset = (vdp_address/2) % CRAM_SIZE;
-				int r = (data >> 1) & 0x07;
-				int g = (data >> 5) & 0x07;
-				int b = (data >> 9) & 0x07;
-
-				r = (r << 5) | (r << 2) | (r >> 1);
-				g = (g << 5) | (g << 2) | (g >> 1);
-				b = (b << 5) | (b << 2) | (b >> 1);
-
-				palette_set_color(offset + genesis_palette_base, r, g, b);
+				palette_set_color(Machine, offset + genesis_palette_base, pal3bit(data >> 1), pal3bit(data >> 5), pal3bit(data >> 9));
 			}
 			break;
 

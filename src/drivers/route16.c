@@ -645,7 +645,7 @@ DRIVER_INIT( route16 )
 	rom[0x0755] = 0x63;
 	rom[0x0756] = 0x07;
 
-	init_route16b();
+	init_route16b(machine);
 }
 
 DRIVER_INIT( route16a )
@@ -668,7 +668,7 @@ DRIVER_INIT( route16a )
 	ROM[0x0748] = 0x56;
 	ROM[0x0749] = 0x07;
 
-	init_route16b();
+	init_route16b(machine);
 }
 
 

@@ -525,7 +525,7 @@ VIDEO_START( seta_no_layers )
 
 VIDEO_START( oisipuzl_2_layers )
 {
-	if (video_start_seta_2_layers())
+	if (video_start_seta_2_layers(machine))
 		return 1;
 	tilemaps_flip = 1;
 	return 0;
@@ -609,21 +609,12 @@ PALETTE_INIT( usclssic )
 	/* DECODE PROM */
 	for (x = 0x000; x < 0x200 ; x++)
 	{
-		int r,g,b;
 		int data;
 
 		data = (color_prom[x*2] <<8) | color_prom[x*2+1];
 
-		r = (data >> 10) & 0x1f;
-		g = (data >>  5) & 0x1f;
-		b = (data >>  0) & 0x1f;
-
-		r = (r << 3) | (r >> 2);
-		g = (g << 3) | (g >> 2);
-		b = (b << 3) | (b >> 2);
-
-		if (x>=0x100) palette_set_color(x,r,g,b);
-		else palette_set_color(x+0x300,r,g,b);
+		if (x>=0x100) palette_set_color(machine,x,pal5bit(data >> 10),pal5bit(data >> 5),pal5bit(data >> 0));
+		else palette_set_color(machine,x+0x300,pal5bit(data >> 10),pal5bit(data >> 5),pal5bit(data >> 0));
 	}
 
 	for( color = 0; color < 32; color++ )

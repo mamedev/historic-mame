@@ -119,10 +119,6 @@ static void palette_notifier(int addr)
 	unsigned char byte0 = *p++;
 	unsigned char byte1 = *p;
 
-	unsigned int b = (byte1 & 0xf) * 0x11;
-	unsigned int g = ((byte0 & 0xf0)>>4) * 0x11;
-	unsigned int r = (byte0 & 0xf) * 0x11;
-
 	//  addr &= 0x1ff;
 
 	if(addr > 0x200)
@@ -132,7 +128,7 @@ logerror("Large palette ? %03x (%04x)\n", addr, activecpu_get_pc());
 	else
 	{
 		//      r = g = b = ((addr & 0x1e) != 0)*255;
-		palette_set_color(addr/2, r, g, b);
+		palette_set_color(Machine, addr/2, pal4bit(byte0), pal4bit(byte0 >> 4), pal4bit(byte1));
 	}
 }
 

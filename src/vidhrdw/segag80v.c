@@ -331,7 +331,7 @@ VIDEO_START( sega )
 	min_x =Machine->screen[0].visarea.min_x;
 	min_y =Machine->screen[0].visarea.min_y;
 
-	return video_start_vector();
+	return video_start_vector(machine);
 }
 
 
@@ -347,6 +347,6 @@ VIDEO_START( sega )
 VIDEO_UPDATE( sega )
 {
 	sega_generate_vector_list();
-	video_update_vector(screen,bitmap,0);
+	video_update_vector(machine,screen,bitmap,cliprect);
 	return 0;
 }

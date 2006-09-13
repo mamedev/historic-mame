@@ -1792,7 +1792,7 @@ UpdatePaletteS( void ) /* for Super System22 - apply gamma correction and prelim
 				int r = nthbyte(paletteram32,which+0x00000);
 				int g = nthbyte(paletteram32,which+0x08000);
 				int b = nthbyte(paletteram32,which+0x10000);
-				palette_set_color( which,r,g,b );
+				palette_set_color( Machine,which,r,g,b );
 			}
 			dirtypal[i] = 0;
 		}
@@ -1813,7 +1813,7 @@ UpdatePalette( void ) /* for System22 - ignore gamma/fader effects for now */
 				int r = nthbyte(paletteram32,which+0x00000);
 				int g = nthbyte(paletteram32,which+0x08000);
 				int b = nthbyte(paletteram32,which+0x10000);
-				palette_set_color( which,r,g,b );
+				palette_set_color( Machine,which,r,g,b );
 			}
 			dirtypal[i] = 0;
 		}
@@ -2663,7 +2663,7 @@ VIDEO_UPDATE( namcos22s )
 VIDEO_UPDATE( namcos22 )
 {
 	UpdateVideoMixer();
-   fillbitmap( bitmap, get_black_pen(), cliprect );
+   fillbitmap( bitmap, get_black_pen(machine), cliprect );
 	UpdatePalette();
 	DrawCharacterLayer( bitmap, cliprect );
    DrawPolygons( bitmap );

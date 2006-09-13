@@ -30,6 +30,7 @@ static struct
 {
 	UINT8	type,				// type of alpha display
 								// VFDTYPE_BFMBD1 or VFDTYPE_MSC1937
+			reversed,			// Allows for the data being written from right to left, not left to right.
 
 			changed,			// flag <>0, if vfd contents are changed
 			window_start,		// display window start pos 0-15
@@ -259,7 +260,7 @@ static unsigned int OKIcharset[]=
 	0x01407, //  0  0 0001 0100 0000 0111 ?.
 };
 
-static const int poslut1937[]=
+static const int poslut1937invert[]=
 {
 	14,
 	13,
@@ -278,13 +279,35 @@ static const int poslut1937[]=
 	0,
 	15
 };
+
+static const int poslut1937[]=
+{
+   0, // (1111)
+   1, // (0000)
+   2, // (0001)
+   3, // (0010)
+   4, // (0011)
+   5, // (0100)
+   6, // (0101)
+   7, // (0110)
+   8, // (0111)
+   9, // (1000)
+  10, // (1001)
+  11, // (1010)
+  12, // (1011)
+  13, // (1100)
+  14, // (1101)
+  15 // (1110)
+};
+
 ///////////////////////////////////////////////////////////////////////////
 
-void vfd_init(int id, int type )
+void vfd_init(int id, int type ,int reversed)
 {
 	memset( &vfds[id], 0, sizeof(vfds[0]));
 
 	vfds[id].type = type;
+	vfds[id].reversed = reversed;
 
 	vfd_reset(id);
 }
@@ -330,7 +353,14 @@ UINT16 *vfd_set_outputs(int id)
 		{
 			for (cursor = 0; cursor < 16; cursor++)
 			{
-				vfds[id].outputs[cursor] = vfd_get_segments(id)[cursor];
+				if (vfds[id].reversed)
+				{
+					vfds[id].outputs[cursor] = vfd_get_segments(id)[poslut1937invert[cursor]];
+				}
+				else
+				{
+					vfds[id].outputs[cursor] = vfd_get_segments(id)[poslut1937[cursor]];
+				}
 			}
 		}
 		break;
@@ -838,7 +868,7 @@ void plot_vfd(mame_bitmap *bitmap,int vfd,int segs,int color, int col_off )
 
 				plot_box(bitmap, 15+(curwidth*cursor), 27, 1, 6, (vfd_get_outputs(vfd)[cursor] & 0x10000) ? color : col_off);//17
 				plot_box(bitmap, 16+(curwidth*cursor), 27, 1, 3, (vfd_get_outputs(vfd)[cursor] & 0x10000) ? color : col_off);//17
-				plot_box(bitmap, 15+(curwidth*cursor), 23, 2, 2, (vfd_get_outputs(vfd)[cursor] & 0x10000) ? color : col_off);//18
+				plot_box(bitmap, 15+(curwidth*cursor), 23, 2, 2, (vfd_get_outputs(vfd)[cursor] & 0x20000) ? color : col_off);//18
 
 				break;
 			}

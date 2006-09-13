@@ -453,15 +453,10 @@ static const gfx_decode gfxdecodeinfo[] =
 
 static PALETTE_INIT( snes )
 {
-	int i, r, g, b;
+	int i;
 
 	for( i = 0; i < 32768; i++ )
-	{
-		r = (i & 0x1F) << 3;
-		g = ((i >> 5) & 0x1F) << 3;
-		b = ((i >> 10) & 0x1F) << 3;
-		palette_set_color( i, r, g, b );
-	}
+		palette_set_color( machine, i, pal5bit(i >> 0), pal5bit(i >> 5), pal5bit(i >> 10) );
 
 	/* The colortable can be black */
 	for( i = 0; i < 256; i++ )

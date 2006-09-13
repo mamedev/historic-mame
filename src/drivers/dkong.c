@@ -309,7 +309,7 @@ static MACHINE_RESET( strtheat )
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
 
-	machine_reset_dkong();
+	machine_reset_dkong(machine);
 
 	/* The initial state of the counter is 0x08 */
 	memory_configure_bank(1, 0, 4, &ROM[0x10000], 0x4000);
@@ -321,7 +321,7 @@ static MACHINE_RESET( drakton )
 {
 	UINT8 *ROM = memory_region(REGION_CPU1);
 
-	machine_reset_dkong();
+	machine_reset_dkong(machine);
 
 	/* The initial state of the counter is 0x09 */
 	memory_configure_bank(1, 0, 4, &ROM[0x10000], 0x4000);

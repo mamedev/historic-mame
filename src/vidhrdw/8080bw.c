@@ -19,7 +19,7 @@ static UINT8 cloud_pos;
 static UINT8 bowler_bonus_display;
 
 static write8_handler videoram_w_p;
-static UINT32 (*video_update_p)(int screen,mame_bitmap *bitmap,const rectangle *cliprect);
+static UINT32 (*video_update_p)(running_machine *machine,int screen,mame_bitmap *bitmap,const rectangle *cliprect);
 
 static WRITE8_HANDLER( bw_videoram_w );
 static WRITE8_HANDLER( rollingc_videoram_w );
@@ -68,13 +68,13 @@ DRIVER_INIT( 8080bw )
 
 DRIVER_INIT( invaddlx )
 {
-	init_8080bw();
+	init_8080bw(machine);
 /*  artwork_set_overlay(invdpt2m_overlay);*/
 }
 
 DRIVER_INIT( sstrngr2 )
 {
-	init_8080bw();
+	init_8080bw(machine);
 	videoram_w_p = sstrngr2_videoram_w;
 	screen_red_enabled = 1;
 }
@@ -86,7 +86,7 @@ DRIVER_INIT( schaser )
 
 	schaser_effect_555_timer = timer_alloc(schaser_effect_555_cb);
 
-	init_8080bw();
+	init_8080bw(machine);
 	videoram_w_p = schaser_videoram_w;
 	// make background palette same as foreground one
 	for (i = 0; i < 0x80; i++) promm[i] = 0;
@@ -105,82 +105,82 @@ DRIVER_INIT( schaser )
 
 DRIVER_INIT( schasrcv )
 {
-	init_8080bw();
+	init_8080bw(machine);
 	videoram_w_p = rollingc_videoram_w;
 	background_color = 2;	/* blue */
 }
 
 DRIVER_INIT( rollingc )
 {
-	init_8080bw();
+	init_8080bw(machine);
 	videoram_w_p = rollingc_videoram_w;
 	background_color = 0;	/* black */
 }
 
 DRIVER_INIT( polaris )
 {
-	init_8080bw();
+	init_8080bw(machine);
 	videoram_w_p = polaris_videoram_w;
 }
 
 DRIVER_INIT( lupin3 )
 {
-	init_8080bw();
+	init_8080bw(machine);
 	videoram_w_p = lupin3_videoram_w;
 }
 
 DRIVER_INIT( invadpt2 )
 {
-	init_8080bw();
+	init_8080bw(machine);
 	videoram_w_p = invadpt2_videoram_w;
 	screen_red_enabled = 1;
 }
 
 DRIVER_INIT( cosmo )
 {
-	init_8080bw();
+	init_8080bw(machine);
 	videoram_w_p = cosmo_videoram_w;
 }
 
 DRIVER_INIT( seawolf )
 {
-	init_8080bw();
+	init_8080bw(machine);
 	video_update_p = video_update_seawolf;
 }
 
 DRIVER_INIT( blueshrk )
 {
-	init_8080bw();
+	init_8080bw(machine);
 	video_update_p = video_update_blueshrk;
 }
 
 DRIVER_INIT( desertgu )
 {
-	init_8080bw();
+	init_8080bw(machine);
 	video_update_p = video_update_desertgu;
 }
 
 DRIVER_INIT( bowler )
 {
-	init_8080bw();
+	init_8080bw(machine);
 	video_update_p = video_update_bowler;
 }
 
 DRIVER_INIT( phantom2 )
 {
-	init_8080bw();
+	init_8080bw(machine);
 	videoram_w_p = phantom2_videoram_w;
 }
 
 DRIVER_INIT( indianbt )
 {
-	init_8080bw();
+	init_8080bw(machine);
 	videoram_w_p = invadpt2_videoram_w;
 }
 
 DRIVER_INIT( shuttlei )
 {
-	init_8080bw();
+	init_8080bw(machine);
 	videoram_w_p = shuttlei_videoram_w;
 }
 
@@ -503,7 +503,7 @@ static WRITE8_HANDLER( shuttlei_videoram_w )
 ***************************************************************************/
 VIDEO_UPDATE( 8080bw )
 {
-	video_update_p(screen, bitmap, cliprect);
+	video_update_p(machine, screen, bitmap, cliprect);
 	return 0;
 }
 
@@ -592,7 +592,7 @@ static void draw_sight(mame_bitmap *bitmap,const rectangle *cliprect,int x_cente
 static VIDEO_UPDATE( seawolf )
 {
 	/* update the bitmap (and erase old cross) */
-	video_update_8080bw_common(screen, bitmap, cliprect);
+	video_update_8080bw_common(machine, screen, bitmap, cliprect);
 
     draw_sight(bitmap,cliprect,((input_port_0_r(0) & 0x1f) * 8) + 4, 63);
     return 0;
@@ -601,7 +601,7 @@ static VIDEO_UPDATE( seawolf )
 static VIDEO_UPDATE( blueshrk )
 {
 	/* update the bitmap (and erase old cross) */
-	video_update_8080bw_common(screen, bitmap, cliprect);
+	video_update_8080bw_common(machine, screen, bitmap, cliprect);
 
     draw_sight(bitmap,cliprect,((input_port_0_r(0) & 0x7f) * 2) - 12, 63);
     return 0;
@@ -610,7 +610,7 @@ static VIDEO_UPDATE( blueshrk )
 static VIDEO_UPDATE( desertgu )
 {
 	/* update the bitmap (and erase old cross) */
-	video_update_8080bw_common(screen, bitmap, cliprect);
+	video_update_8080bw_common(machine, screen, bitmap, cliprect);
 
 	draw_sight(bitmap,cliprect,
 			   ((input_port_0_r(0) & 0x7f) * 2) - 30,
@@ -633,7 +633,7 @@ static VIDEO_UPDATE( bowler )
 {
 
 	/* update the bitmap */
-	video_update_8080bw_common(screen, bitmap, cliprect);
+	video_update_8080bw_common(machine, screen, bitmap, cliprect);
 
 
 	/* draw the current bonus value - on the original game this
@@ -695,10 +695,7 @@ PALETTE_INIT( invadpt2 )
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
 		/* this bit arrangment is a little unusual but are confirmed by screen shots */
-		int r = 0xff * ((i >> 0) & 1);
-		int g = 0xff * ((i >> 2) & 1);
-		int b = 0xff * ((i >> 1) & 1);
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,pal1bit(i >> 0),pal1bit(i >> 2),pal1bit(i >> 1));
 	}
 }
 
@@ -711,12 +708,9 @@ PALETTE_INIT( sflush )
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
 		/* this bit arrangment is a little unusual but are confirmed by screen shots */
-		int r = 0xff * ((i >> 0) & 1);
-		int g = 0xff * ((i >> 2) & 1);
-		int b = 0xff * ((i >> 1) & 1);
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,pal1bit(i >> 0),pal1bit(i >> 2),pal1bit(i >> 1));
 	}
-	palette_set_color(0,0x80,0x80,0xff);
+	palette_set_color(machine,0,0x80,0x80,0xff);
 }
 
 PALETTE_INIT( indianbt )
@@ -725,10 +719,7 @@ PALETTE_INIT( indianbt )
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int r = 0xff * ((i >> 0) & 1);
-		int b = 0xff * ((i >> 2) & 1);
-		int g = 0xff * ((i >> 1) & 1);
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,pal1bit(i >> 0),pal1bit(i >> 1),pal1bit(i >> 2));
 	}
 
 }
@@ -764,10 +755,7 @@ PALETTE_INIT( cosmo )
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int r = 0xff * ((i >> 0) & 1);
-		int g = 0xff * ((i >> 1) & 1);
-		int b = 0xff * ((i >> 2) & 1);
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,pal1bit(i >> 0),pal1bit(i >> 1),pal1bit(i >> 2));
 	}
 }
 

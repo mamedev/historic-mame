@@ -137,12 +137,7 @@ WRITE32_HANDLER( beathead_palette_w )
 	int r = ((newword >> 9) & 0x3e) | ((newword >> 15) & 0x01);
 	int g = ((newword >> 4) & 0x3e) | ((newword >> 15) & 0x01);
 	int b = ((newword << 1) & 0x3e) | ((newword >> 15) & 0x01);
-
-	r = (r << 2) | (r >> 4);
-	g = (g << 2) | (g >> 4);
-	b = (b << 2) | (b >> 4);
-
-	palette_set_color(offset, r, g, b);
+	palette_set_color(Machine, offset, pal6bit(r), pal6bit(g), pal6bit(b));
 }
 
 

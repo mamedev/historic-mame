@@ -364,22 +364,11 @@ VIDEO_START( prmrsocr )
 
 WRITE16_HANDLER( tmnt_paletteram_word_w )
 {
-	int r,g,b;
-
 	COMBINE_DATA(paletteram16 + offset);
 	offset &= ~1;
 
 	data = (paletteram16[offset] << 8) | paletteram16[offset+1];
-
-	r = (data >>  0) & 0x1f;
-	g = (data >>  5) & 0x1f;
-	b = (data >> 10) & 0x1f;
-
-	r = (r << 3) | (r >> 2);
-	g = (g << 3) | (g >> 2);
-	b = (b << 3) | (b >> 2);
-
-	palette_set_color(offset / 2,r,g,b);
+	palette_set_color(Machine,offset / 2,pal5bit(data >> 0),pal5bit(data >> 5),pal5bit(data >> 10));
 }
 
 
@@ -798,24 +787,24 @@ VIDEO_UPDATE( tmnt2 )
 
 		// dim all colors before it
 		for (i=0; i<cb; i++)
-			palette_set_brightness(i,brt);
+			palette_set_brightness(machine,i,brt);
 
 		// reset all colors in range
 		for (i=cb; i<ce; i++)
-			palette_set_brightness(i,1.0);
+			palette_set_brightness(machine,i,1.0);
 
 		// dim all colors after it
 		for (i=ce; i<2048; i++)
-			palette_set_brightness(i,brt);
+			palette_set_brightness(machine,i,brt);
 
 		// toggle shadow/highlight
 		if (~dim_c & 0x10)
-			palette_set_shadow_mode(1);
+			palette_set_shadow_mode(machine, 1);
 		else
-			palette_set_shadow_mode(0);
+			palette_set_shadow_mode(machine, 0);
 	}
 
-	video_update_lgtnfght(screen,bitmap,cliprect);
+	video_update_lgtnfght(machine,screen,bitmap,cliprect);
 	return 0;
 }
 

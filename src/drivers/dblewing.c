@@ -274,7 +274,7 @@ READ16_HANDLER ( dlbewing_prot_r )
 
 	printf("dblewing prot r %08x, %04x, %04x\n",activecpu_get_pc(), offset*2, mem_mask);
 
-	return 0;//mame_rand();
+	return 0;//mame_rand(Machine);
 }
 
 WRITE16_HANDLER( dblewing_prot_w )

@@ -93,7 +93,7 @@ extern const gfx_layout gfx_16x16x4_planar;
 /* ----- initialization ----- */
 
 /* set up all the common systems */
-void generic_video_init(void);
+void generic_video_init(running_machine *machine);
 
 /* generic video start with dirty buffers */
 VIDEO_START( generic );
@@ -158,8 +158,8 @@ int get_vh_global_attribute_changed(void);
 
 /* ----- generic palette init routines ----- */
 
-void palette_init_black_and_white(UINT16 *colortable, const UINT8 *color_prom);
-void palette_init_RRRR_GGGG_BBBB(UINT16 *colortable, const UINT8 *color_prom);
+PALETTE_INIT( black_and_white );
+PALETTE_INIT( RRRR_GGGG_BBBB );
 
 
 

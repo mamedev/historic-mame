@@ -327,7 +327,7 @@ static MACHINE_RESET( itech32 )
 
 static MACHINE_RESET( drivedge )
 {
-	machine_reset_itech32();
+	machine_reset_itech32(machine);
 
 	cpunum_set_input_line(2, INPUT_LINE_RESET, ASSERT_LINE);
 	cpunum_set_input_line(3, INPUT_LINE_RESET, ASSERT_LINE);
@@ -815,8 +815,8 @@ static NVRAM_HANDLER( itech020 )
 
 static NVRAM_HANDLER( gt3dt )
 {
-	nvram_handler_itech020( file, read_or_write );
-	nvram_handler_timekeeper_0( file, read_or_write );
+	nvram_handler_itech020( machine, file, read_or_write );
+	nvram_handler_timekeeper_0( machine, file, read_or_write );
 }
 
 /*************************************
@@ -3537,7 +3537,7 @@ ROM_END
  *
  *************************************/
 
-static void init_program_rom(void)
+static void init_program_rom(running_machine *machine)
 {
 	memcpy(main_ram, main_rom, 0x80);
 }
@@ -3545,7 +3545,7 @@ static void init_program_rom(void)
 
 static DRIVER_INIT( timekill )
 {
-	init_program_rom();
+	init_program_rom(machine);
 	via_config(0, &via_interface);
 	via_set_clock(0, CLOCK_8MHz/4);
 	itech32_vram_height = 512;
@@ -3556,7 +3556,7 @@ static DRIVER_INIT( timekill )
 
 static DRIVER_INIT( hardyard )
 {
-	init_program_rom();
+	init_program_rom(machine);
 	via_config(0, &via_interface);
 	via_set_clock(0, CLOCK_8MHz/4);
 	itech32_vram_height = 1024;
@@ -3567,7 +3567,7 @@ static DRIVER_INIT( hardyard )
 
 static DRIVER_INIT( bloodstm )
 {
-	init_program_rom();
+	init_program_rom(machine);
 	via_config(0, &via_interface);
 	via_set_clock(0, CLOCK_8MHz/4);
 	itech32_vram_height = 1024;
@@ -3578,7 +3578,7 @@ static DRIVER_INIT( bloodstm )
 
 static DRIVER_INIT( drivedge )
 {
-	init_program_rom();
+	init_program_rom(machine);
 	via_config(0, &drivedge_via_interface);
 	via_set_clock(0, CLOCK_8MHz/4);
 	itech32_vram_height = 1024;
@@ -3592,7 +3592,7 @@ static DRIVER_INIT( drivedge )
 
 static DRIVER_INIT( wcbowl )
 {
-	init_program_rom();
+	init_program_rom(machine);
 	via_config(0, &via_interface);
 	via_set_clock(0, CLOCK_8MHz/4);
 	itech32_vram_height = 1024;
@@ -3606,9 +3606,9 @@ static DRIVER_INIT( wcbowl )
 }
 
 
-static void init_sftm_common(int prot_addr)
+static void init_sftm_common(running_machine *machine, int prot_addr)
 {
-	init_program_rom();
+	init_program_rom(machine);
 	itech32_vram_height = 1024;
 	itech32_planes = 1;
 	is_drivedge = 0;
@@ -3622,24 +3622,24 @@ static void init_sftm_common(int prot_addr)
 
 static DRIVER_INIT( sftm )
 {
-	init_sftm_common(0x7a6a);
+	init_sftm_common(machine, 0x7a6a);
 }
 
 
 static DRIVER_INIT( sftm110 )
 {
-	init_sftm_common(0x7a66);
+	init_sftm_common(machine, 0x7a66);
 }
 
 
-static void init_shuffle_bowl_common(int prot_addr)
+static void init_shuffle_bowl_common(running_machine *machine, int prot_addr)
 {
 	/*
         The newest versions of World Class Bowling are on the same exact
         platform as Shuffle Shot. So We'll use the same general INIT
         routine for these two programs.  IE: PCB P/N 1082 Rev 2
     */
-	init_program_rom();
+	init_program_rom(machine);
 	itech32_vram_height = 1024;
 	itech32_planes = 1;
 	is_drivedge = 0;
@@ -3655,29 +3655,29 @@ static void init_shuffle_bowl_common(int prot_addr)
 
 static DRIVER_INIT( shufshot )	/* PIC 16C54 labeled as ITSHF-1 (ITBWL-4 for WCB Deluxe) */
 {
-	init_shuffle_bowl_common(0x111a);
+	init_shuffle_bowl_common(machine, 0x111a);
 }
 
 
 static DRIVER_INIT( wcbowln )	/* PIC 16C54 labeled as ITBWL-3 */
 {
 	/* The security PROM is NOT interchangable between the Deluxe and "normal" versions. */
-	init_shuffle_bowl_common(0x1116);
+	init_shuffle_bowl_common(machine, 0x1116);
 }
 
 static DRIVER_INIT( wcbowlt )	/* PIC 16C54 labeled as ITBWL-4 */
 {
 	/* Tournament Version */
-	init_shuffle_bowl_common(0x111a);
+	init_shuffle_bowl_common(machine, 0x111a);
 
 	timekeeper_init( 0, TIMEKEEPER_M48T02, NULL );
 	memory_install_read32_handler (0, ADDRESS_SPACE_PROGRAM, 0x681000, 0x6817ff, 0, 0, timekeeper_0_32be_r);
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x681000, 0x6817ff, 0, 0, timekeeper_0_32be_w);
 }
 
-static void init_gt_common(void)
+static void init_gt_common(running_machine *machine)
 {
-	init_program_rom();
+	init_program_rom(machine);
 	itech32_vram_height = 1024;
 	itech32_planes = 2;
 	is_drivedge = 0;
@@ -3696,7 +3696,7 @@ static DRIVER_INIT( gt3d )
         through GTClassic. This is _NOT_ a factory modification
     */
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x200000, 0x200003, 0, 0, trackball32_8bit_r);
-	init_gt_common();
+	init_gt_common(machine);
 }
 
 
@@ -3710,7 +3710,7 @@ static DRIVER_INIT( aama )
     */
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x180800, 0x180803, 0, 0, trackball32_4bit_r);
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x181000, 0x181003, 0, 0, trackball32_4bit_p2_r);
-	init_gt_common();
+	init_gt_common(machine);
 }
 
 
@@ -3719,7 +3719,7 @@ static DRIVER_INIT( aamat )
 	/*
         Tournament Version
     */
-	init_aama();
+	init_aama(machine);
 	timekeeper_init( 0, TIMEKEEPER_M48T02, NULL );
 	memory_install_read32_handler (0, ADDRESS_SPACE_PROGRAM, 0x681000, 0x6817ff, 0, 0, timekeeper_0_32be_r);
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x681000, 0x6817ff, 0, 0, timekeeper_0_32be_w);
@@ -3735,7 +3735,7 @@ static DRIVER_INIT( s_ver )
         Trackball info is read through 200202 (actually 200203).
     */
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x200200, 0x200203, 0, 0, trackball32_4bit_r);
-	init_gt_common();
+	init_gt_common(machine);
 }
 
 
@@ -3749,7 +3749,7 @@ static DRIVER_INIT( gt3dl )
         Player 2 trackball read through 200002
     */
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x200000, 0x200003, 0, 0, trackball32_4bit_combined_r);
-	init_gt_common();
+	init_gt_common(machine);
 }
 
 
@@ -3757,7 +3757,7 @@ static DRIVER_INIT( gtclassp )
 {
 	/* a little extra protection */
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x680000, 0x680003, 0, 0, gtclass_prot_result_r);
-	init_aama();
+	init_aama(machine);
 
 	/* The protection code is:
 

@@ -451,12 +451,12 @@ static unsigned short CartRAM[0x1000];
 
 void pvc_w8(unsigned int offset, unsigned char data)
 {
-	*(((unsigned char*)CartRAM)+offset)=data;
+	*(((unsigned char*)CartRAM)+BYTE_XOR_LE(offset))=data;
 }
 
 unsigned char pvc_r8(unsigned int offset)
 {
-	return *(((unsigned char*)CartRAM)+offset);
+	return *(((unsigned char*)CartRAM)+BYTE_XOR_LE(offset));
 }
 
 void pvc_prot1( void )
@@ -486,9 +486,9 @@ void pvc_write_bankswitch( void )
 {
 	UINT32 bankaddress;
 	bankaddress = ((CartRAM[0xff8]>>8)|(CartRAM[0xff9]<<8));
-	*(((unsigned char *)CartRAM) + 0x1ff0) = 0xA0;
-	*(((unsigned char *)CartRAM) + 0x1ff1) &= 0xFE;
-	*(((unsigned char *)CartRAM) + 0x1ff3) &= 0x7F;
+	*(((unsigned char *)CartRAM) + BYTE_XOR_LE(0x1ff0)) = 0xA0;
+	*(((unsigned char *)CartRAM) + BYTE_XOR_LE(0x1ff1)) &= 0xFE;
+	*(((unsigned char *)CartRAM) + BYTE_XOR_LE(0x1ff3)) &= 0x7F;
 	neogeo_set_cpu1_second_bank(bankaddress+0x100000);
 }
 

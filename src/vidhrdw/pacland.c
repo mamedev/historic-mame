@@ -64,7 +64,7 @@ static int scroll0,scroll1;
 
 ***************************************************************************/
 
-static void switch_palette(void)
+static void switch_palette(running_machine *machine)
 {
 	int i;
 	const UINT8 *color_prom = pacland_color_prom + 256 * palette_bank;
@@ -92,7 +92,7 @@ static void switch_palette(void)
 
 		color_prom++;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 	}
 }
 
@@ -123,7 +123,7 @@ PALETTE_INIT( pacland )
 	}
 
 	palette_bank = 0;
-	switch_palette();
+	switch_palette(machine);
 }
 
 
@@ -236,7 +236,7 @@ WRITE8_HANDLER( pacland_bankswitch_w )
 	if (palette_bank != ((data & 0x18) >> 3))
 	{
 		palette_bank = (data & 0x18) >> 3;
-		switch_palette();
+		switch_palette(Machine);
 	}
 }
 

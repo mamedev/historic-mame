@@ -45,7 +45,7 @@ PALETTE_INIT( stfight )
 
 
 	/* unique color for transparency */
-	palette_set_color(256,0x04,0x04,0x04);
+	palette_set_color(machine,256,0x04,0x04,0x04);
 
 	/* text uses colors 192-207 */
 	for (i = 0;i < TOTAL_COLORS(0);i++)

@@ -107,15 +107,11 @@ static UINT8 *supertnk_videoram;
 
 PALETTE_INIT( supertnk )
 {
-	int i, r, g, b;
+	int i;
 
 	for (i = 0;i < 0x20;i++)
 	{
-		r = (*color_prom & 0x04) ? 0xff : 0x00;  /* red component   */
-		g = (*color_prom & 0x20) ? 0xff : 0x00;  /* green component */
-		b = (*color_prom & 0x40) ? 0xff : 0x00;  /* blue component  */
-
-		palette_set_color(i, r, g, b);
+		palette_set_color(machine, i, pal1bit(*color_prom >> 2), pal1bit(*color_prom >> 5), pal1bit(*color_prom >> 6));
 		color_prom++;
 	}
 }
@@ -128,7 +124,7 @@ VIDEO_START( supertnk )
 
 	memset(supertnk_videoram, 0, 0x6000);
 
-	return video_start_generic_bitmapped();
+	return video_start_generic_bitmapped(machine);
 }
 
 

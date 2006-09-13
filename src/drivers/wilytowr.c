@@ -64,7 +64,7 @@ PALETTE_INIT( wilytowr )
 		bit3 = (color_prom[i + 2*256] >> 3) & 0x01;
 		b =  0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 	}
 
 	color_prom += 3*256;
@@ -88,7 +88,7 @@ PALETTE_INIT( wilytowr )
 		bit1 = (color_prom[i] >> 7) & 0x01;
 		b = 0x4f * bit0 + 0xa8 * bit1;
 
-		palette_set_color(i+256,r,g,b);
+		palette_set_color(machine,i+256,r,g,b);
 	}
 }
 

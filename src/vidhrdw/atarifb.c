@@ -48,7 +48,7 @@ WRITE8_HANDLER( atarifb_scroll_w )
 
 VIDEO_START( atarifb )
 {
-	if (video_start_generic())
+	if (video_start_generic(machine))
 		return 1;
 
 	memset(dirtybuffer, 1, videoram_size);

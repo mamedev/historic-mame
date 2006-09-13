@@ -69,7 +69,7 @@ namcofl_install_palette( void )
 
 			for( byte_offset=0; byte_offset<4; byte_offset++ )
 			{
-				palette_set_color( pen++, r&0xff, g&0xff, b&0xff);
+				palette_set_color( Machine, pen++, r&0xff, g&0xff, b&0xff);
 				r>>=8; g>>=8; b>>=8;
 			}
 		}
@@ -145,7 +145,7 @@ VIDEO_UPDATE( namcofl )
 	handle_mcu();
 	namcofl_install_palette();
 
-	fillbitmap( bitmap, get_black_pen(), cliprect );
+	fillbitmap( bitmap, get_black_pen(machine), cliprect );
 
 	for( pri=0; pri<16; pri++ )
 	{

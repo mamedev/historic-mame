@@ -488,7 +488,7 @@ static VIDEO_UPDATE( lghost )
 	int y2 = readinputportbytag("GUNY2");
 	int x3 = readinputportbytag("GUNX3");
 	int y3 = readinputportbytag("GUNY3");
-	video_update_system18(screen, bitmap, cliprect);
+	video_update_system18(machine, screen, bitmap, cliprect);
 	draw_crosshair(bitmap, x1 * (Machine->screen[0].width - 1) / 255, y1 * (Machine->screen[0].height - 1) / 255, cliprect, 0);
 	draw_crosshair(bitmap, x2 * (Machine->screen[0].width - 1) / 255, y2 * (Machine->screen[0].height - 1) / 255, cliprect, 1);
 	draw_crosshair(bitmap, x3 * (Machine->screen[0].width - 1) / 255, y3 * (Machine->screen[0].height - 1) / 255, cliprect, 2);
@@ -2237,20 +2237,20 @@ static DRIVER_INIT( generic_5987 )
 
 static DRIVER_INIT( ddcrew )
 {
-	init_generic_5987();
+	init_generic_5987(machine);
 	custom_io_r = ddcrew_custom_io_r;
 }
 
 static DRIVER_INIT( lghost )
 {
-	init_generic_5987();
+	init_generic_5987(machine);
 	custom_io_r = lghost_custom_io_r;
 	custom_io_w = lghost_custom_io_w;
 }
 
 static DRIVER_INIT( wwally )
 {
-	init_generic_5987();
+	init_generic_5987(machine);
 	custom_io_r = wwally_custom_io_r;
 	custom_io_w = wwally_custom_io_w;
 }

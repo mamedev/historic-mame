@@ -146,7 +146,7 @@ static void update_24bitcol(int offset)
 	g = (paletteram16[offset] >> 8) & 0xff;
 	b = (paletteram16_2[offset] >> 0) & 0xff;
 
-	palette_set_color(offset,r,g,b);
+	palette_set_color(Machine,offset,r,g,b);
 }
 
 WRITE16_HANDLER( darkseal_palette_24bit_rg_w )

@@ -87,7 +87,7 @@ static VIDEO_UPDATE( amerdart )
 	/* if we're blank, just blank the screen */
 	if (tms34010_io_display_blanked(0))
 	{
-		fillbitmap(bitmap, get_black_pen(), cliprect);
+		fillbitmap(bitmap, get_black_pen(machine), cliprect);
 		return 0;
 	}
 
@@ -95,10 +95,7 @@ static VIDEO_UPDATE( amerdart )
 	for (x = 0; x < 16; x++)
 	{
 		UINT16 pal = vram_base[x];
-		int r = (pal >> 4) & 0x0f;
-		int g = (pal >> 8) & 0x0f;
-		int b = (pal >> 12) & 0x0f;
-		palette_set_color(x, (r << 4) | r, (g << 4) | g, (b << 4) | b);
+		palette_set_color(machine, x, pal4bit(pal >> 4), pal4bit(pal >> 8), pal4bit(pal >> 12));
 	}
 
 	/* loop over scanlines */
@@ -130,7 +127,7 @@ static VIDEO_UPDATE( coolpool )
 	/* if we're blank, just blank the screen */
 	if (tms34010_io_display_blanked(0))
 	{
-		fillbitmap(bitmap, get_black_pen(), cliprect);
+		fillbitmap(bitmap, get_black_pen(machine), cliprect);
 		return 0;
 	}
 

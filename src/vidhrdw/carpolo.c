@@ -121,12 +121,12 @@ PALETTE_INIT( carpolo )
 		b = ((b_voltage[*color_prom & 0x03       ] - MIN_VOLTAGE) / (MAX_VOLTAGE - MIN_VOLTAGE)) * 255.;
 
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 
 		// score color is same as net color
 		if (i == NET_COLOR)
 		{
-			palette_set_color(SCORE_COLOR,r,g,b);
+			palette_set_color(machine,SCORE_COLOR,r,g,b);
 		}
 
 		color_prom++;

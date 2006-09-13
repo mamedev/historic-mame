@@ -179,7 +179,7 @@ PALETTE_INIT( stactics )
         /* blue component */
         b = 0xff * bit2;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
     }
 
     /* The color prom in Space Tactics is used for both   */

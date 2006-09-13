@@ -591,9 +591,9 @@ WRITE16_HANDLER( segaic16_paletteram_w )
 	b = ((newval >> 14) & 0x01) | ((newval >> 7) & 0x1e);
 
 	/* normal colors */
-	palette_set_color(offset + 0 * palette.entries, palette.normal[r],  palette.normal[g],  palette.normal[b]);
-	palette_set_color(offset + 1 * palette.entries, palette.shadow[r],  palette.shadow[g],  palette.shadow[b]);
-	palette_set_color(offset + 2 * palette.entries, palette.hilight[r], palette.hilight[g], palette.hilight[b]);
+	palette_set_color(Machine, offset + 0 * palette.entries, palette.normal[r],  palette.normal[g],  palette.normal[b]);
+	palette_set_color(Machine, offset + 1 * palette.entries, palette.shadow[r],  palette.shadow[g],  palette.shadow[b]);
+	palette_set_color(Machine, offset + 2 * palette.entries, palette.hilight[r], palette.hilight[g], palette.hilight[b]);
 }
 
 
@@ -2930,11 +2930,11 @@ static void segaic16_road_hangon_draw(struct road_info *info, mame_bitmap *bitma
 
 		if (code_pressed(KEYCODE_D))
 		{
-			palette_set_color(0, 0, 0, 255);
-			palette_set_color(1, 0, 255, 0);
-			palette_set_color(2, 255, 0, 0);
-			palette_set_color(3, 255, 0, 255);
-			palette_set_color(7, 255, 255, 255);
+			palette_set_color(Machine, 0, 0, 0, 255);
+			palette_set_color(Machine, 1, 0, 255, 0);
+			palette_set_color(Machine, 2, 255, 0, 0);
+			palette_set_color(Machine, 3, 255, 0, 255);
+			palette_set_color(Machine, 7, 255, 255, 255);
 
 			for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 			{
@@ -3226,16 +3226,16 @@ static void segaic16_road_outrun_draw(struct road_info *info, mame_bitmap *bitma
 	{
 		if (code_pressed(KEYCODE_D))
 		{
-			palette_set_color(info->colorbase1 ^ 0, 0, 0, 255);
-			palette_set_color(info->colorbase1 ^ 1, 0, 0, 255);
-			palette_set_color(info->colorbase1 ^ 2, 0, 255, 0);
-			palette_set_color(info->colorbase1 ^ 3, 0, 255, 0);
-			palette_set_color(info->colorbase1 ^ 4, 255, 0, 0);
-			palette_set_color(info->colorbase1 ^ 5, 255, 0, 0);
-			palette_set_color(info->colorbase1 ^ 6, 255, 255, 255);
-			palette_set_color(info->colorbase1 ^ 7, 255, 255, 255);
+			palette_set_color(Machine, info->colorbase1 ^ 0, 0, 0, 255);
+			palette_set_color(Machine, info->colorbase1 ^ 1, 0, 0, 255);
+			palette_set_color(Machine, info->colorbase1 ^ 2, 0, 255, 0);
+			palette_set_color(Machine, info->colorbase1 ^ 3, 0, 255, 0);
+			palette_set_color(Machine, info->colorbase1 ^ 4, 255, 0, 0);
+			palette_set_color(Machine, info->colorbase1 ^ 5, 255, 0, 0);
+			palette_set_color(Machine, info->colorbase1 ^ 6, 255, 255, 255);
+			palette_set_color(Machine, info->colorbase1 ^ 7, 255, 255, 255);
 			for (x = 0; x < 16; x++)
-				palette_set_color(info->colorbase2 ^ x, 255, 0, 255);
+				palette_set_color(Machine, info->colorbase2 ^ x, 255, 0, 255);
 		}
 		else
 		{

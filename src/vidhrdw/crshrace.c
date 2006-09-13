@@ -196,7 +196,7 @@ VIDEO_UPDATE( crshrace )
 {
 	if (gfxctrl & 0x04)	/* display disable? */
 	{
-		fillbitmap(bitmap,get_black_pen(),cliprect);
+		fillbitmap(bitmap,get_black_pen(machine),cliprect);
 		return 0;
 	}
 

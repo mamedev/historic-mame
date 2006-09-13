@@ -41,16 +41,7 @@ PALETTE_INIT( trucocl )
 	int i;
 
 	for (i = 0;i < 32;i++)
-	{
-		int r,g,b;
-
-		r = (color_prom[i] & 0x0f);
-		g = color_prom[i+32] & 0x0f;
-		b = (color_prom[i+32] & 0xf0)>>4;
-
-		palette_set_color(i,r<<4,g<<4,b<<4);
-	}
-
+		palette_set_color(machine,i,pal4bit(color_prom[i] >> 0),pal4bit(color_prom[i+32] >> 0),pal4bit(color_prom[i+32] >> 4));
 }
 
 WRITE8_HANDLER( trucocl_videoram_w )

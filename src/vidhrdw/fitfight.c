@@ -124,7 +124,7 @@ VIDEO_UPDATE(fitfight)
 	vblank = (fof_700000[0] & 0x8000);
 
 	if (vblank > 0)
-		fillbitmap(bitmap, get_black_pen(), cliprect);
+		fillbitmap(bitmap, get_black_pen(machine), cliprect);
 	else {
 //      if (code_pressed(KEYCODE_Q))
 //          scrollbak = ((fof_a00000[0]&0xff00) >> 5) - ((fof_700000[0] & 0x0038) >> 3);

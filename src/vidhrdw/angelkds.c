@@ -256,20 +256,13 @@ static void draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect, int en
 
 WRITE8_HANDLER( angelkds_paletteram_w )
 {
-	int no, r,g,b;
+	int no;
 
 
 	paletteram[offset] = data;
 
 	no=offset & 0xff;
-
-	g = (paletteram[no] & 0xf0)<< 0;
-
-	r = (paletteram[no] & 0x0f) << 4;
-
-	b = (paletteram[no+0x100] & 0x0f) << 4;
-
-	palette_set_color(no,r,g,b);
+	palette_set_color(Machine,no,pal4bit(paletteram[no]),pal4bit(paletteram[no]>>4),pal4bit(paletteram[no+0x100]));
 }
 
 /*** Video Start & Update

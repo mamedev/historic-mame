@@ -133,10 +133,10 @@ static const unsigned short colortable_source[] =
 
 static PALETTE_INIT( atarifb )
 {
-	palette_set_color(0,0x00,0x00,0x00); /* black  */
-	palette_set_color(1,0x80,0x80,0x80); /* grey  */
-	palette_set_color(2,0xff,0xff,0xff); /* white  */
-	palette_set_color(3,0x40,0x40,0x40); /* dark grey (?) - used in Soccer only */
+	palette_set_color(machine,0,0x00,0x00,0x00); /* black  */
+	palette_set_color(machine,1,0x80,0x80,0x80); /* grey  */
+	palette_set_color(machine,2,0xff,0xff,0xff); /* white  */
+	palette_set_color(machine,3,0x40,0x40,0x40); /* dark grey (?) - used in Soccer only */
 	memcpy(colortable,colortable_source,sizeof(colortable_source));
 }
 

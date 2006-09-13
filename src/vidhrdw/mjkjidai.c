@@ -137,7 +137,7 @@ VIDEO_UPDATE( mjkjidai )
 {
 	if (!display_enable)
 	{
-		fillbitmap(bitmap,get_black_pen(),cliprect);
+		fillbitmap(bitmap,get_black_pen(machine),cliprect);
 	}
 	else
 	{

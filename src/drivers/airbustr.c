@@ -340,7 +340,6 @@ static WRITE8_HANDLER( soundcommand2_w )
 
 static WRITE8_HANDLER( airbustr_paletteram_w )
 {
-	int r, g, b;
 	int val;
 
 	/*  ! byte 1 ! ! byte 0 !   */
@@ -350,11 +349,7 @@ static WRITE8_HANDLER( airbustr_paletteram_w )
 	paletteram[offset] = data;
 	val = (paletteram[offset | 1] << 8) | paletteram[offset & ~1];
 
-	g = (val >> 10) & 0x1f;
-	r = (val >>  5) & 0x1f;
-	b = (val >>  0) & 0x1f;
-
-	palette_set_color(offset/2, (r * 0xff) / 0x1f, (g * 0xff) / 0x1f, (b * 0xff) / 0x1f);
+	palette_set_color(Machine, offset/2, pal5bit(val >> 5), pal5bit(val >> 10), pal5bit(val >> 0));
 }
 
 static WRITE8_HANDLER( airbustr_coin_counter_w )

@@ -36,7 +36,7 @@ int snk_blink_parity = 0;
 PALETTE_INIT( snk_3bpp_shadow )
 {
 	int i;
-	palette_init_RRRR_GGGG_BBBB(colortable, color_prom);
+	palette_init_RRRR_GGGG_BBBB(machine, colortable, color_prom);
 
 	if(!(Machine->drv->video_attributes & VIDEO_HAS_SHADOWS))
 		popmessage("driver should use VIDEO_HAS_SHADOWS");
@@ -51,7 +51,7 @@ PALETTE_INIT( snk_3bpp_shadow )
 PALETTE_INIT( snk_4bpp_shadow )
 {
 	int i;
-	palette_init_RRRR_GGGG_BBBB(colortable, color_prom);
+	palette_init_RRRR_GGGG_BBBB(machine, colortable, color_prom);
 
 	if(!(Machine->drv->video_attributes & VIDEO_HAS_SHADOWS))
 		popmessage("driver should use VIDEO_HAS_SHADOWS");
@@ -417,7 +417,7 @@ static void tdfever_draw_bg( mame_bitmap *bitmap, int xscroll, int yscroll )
 
 			// intercept overflown tile indices
 			if(tile_number >= gfx->total_elements)
-				plot_box(tmpbitmap, sx, sy, gfx->width, gfx->height, get_black_pen());
+				plot_box(tmpbitmap, sx, sy, gfx->width, gfx->height, get_black_pen(Machine));
 			else
 				drawgfx(tmpbitmap,gfx,tile_number,color,0,0,sx,sy,0,TRANSPARENCY_NONE,0);
 		}
@@ -497,7 +497,7 @@ static void tdfever_draw_sp( mame_bitmap *bitmap, int xscroll, int yscroll, int 
 				tile_number |= attributes<<3 & 0x300;
 				color = attributes & 0x0f;
 				if (snk_gamegroup == 7) // ftsoccer
-					palette_set_shadow_mode(((attributes & 0x6f) == 0x60) ? 1 : 0);
+					palette_set_shadow_mode(Machine, ((attributes & 0x6f) == 0x60) ? 1 : 0);
 		}
 
 		drawgfx(bitmap,gfx,tile_number,color,0,0,sx,sy,clip,pen_mode,15);
@@ -564,7 +564,7 @@ VIDEO_UPDATE( tdfever )
 		gfx_drawmode_table[13] = DRAWMODE_SHADOW;
 		gfx_drawmode_table[14] = DRAWMODE_SOURCE;
 
-		for (i=0x10e; i<0x200; i+=0x10) palette_set_color(i,snk_blink_parity,snk_blink_parity,snk_blink_parity);
+		for (i=0x10e; i<0x200; i+=0x10) palette_set_color(machine,i,snk_blink_parity,snk_blink_parity,snk_blink_parity);
 		snk_blink_parity ^= 0x7f;
 	}
 	tdfever_draw_sp( bitmap, sp_scroll_x, sp_scroll_y, 0 );

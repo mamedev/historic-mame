@@ -194,7 +194,7 @@ WRITE16_HANDLER( deco16_nonbuffered_palette_w )
 	g = (paletteram16[offset+1] >> 8) & 0xff;
 	r = (paletteram16[offset+1] >> 0) & 0xff;
 
-	palette_set_color(offset/2,r,g,b);
+	palette_set_color(Machine,offset/2,r,g,b);
 }
 
 WRITE16_HANDLER( deco16_buffered_palette_w )
@@ -216,7 +216,7 @@ WRITE16_HANDLER( deco16_palette_dma_w )
 			g = (paletteram16[i*2+1] >> 8) & 0xff;
 			r = (paletteram16[i*2+1] >> 0) & 0xff;
 
-			palette_set_color(i,r,g,b);
+			palette_set_color(Machine,i,r,g,b);
 		}
 	}
 }

@@ -113,10 +113,10 @@ static WRITE16_HANDLER( pasha2_palette_w )
 	offset &= 0xff;
 
 	color = (paletteram16[offset] >> 8) | (paletteram16[offset+0x100] & 0xff00);
-	palette_set_color(offset*2+0,pal5bit(color),pal5bit(color >> 5),pal5bit(color >> 10));
+	palette_set_color(Machine,offset*2+0,pal5bit(color),pal5bit(color >> 5),pal5bit(color >> 10));
 
 	color = (paletteram16[offset] & 0xff) | ((paletteram16[offset+0x100] & 0xff) << 8);
-	palette_set_color(offset*2+1,pal5bit(color),pal5bit(color >> 5),pal5bit(color >> 10));
+	palette_set_color(Machine,offset*2+1,pal5bit(color),pal5bit(color >> 5),pal5bit(color >> 10));
 }
 
 static WRITE16_HANDLER( vbuffer_set_w )

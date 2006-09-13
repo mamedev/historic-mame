@@ -1148,7 +1148,7 @@ VIDEO_START( cps )
 {
 	int i;
 
-    machine_reset_cps();
+    machine_reset_cps(machine);
 
 	cps1_bg_tilemap[0] = tilemap_create(get_tile0_info,tilemap0_scan,TILEMAP_SPLIT, 8, 8,64,64);
 	cps1_bg_tilemap[1] = tilemap_create(get_tile1_info,tilemap1_scan,TILEMAP_SPLIT,16,16,64,64);
@@ -1167,7 +1167,7 @@ VIDEO_START( cps )
 	memset(cps1_old_palette, 0x00, cps1_palette_size);
 	for (i = 0;i < cps1_palette_entries*16;i++)
 	{
-		palette_set_color(i,0,0,0);
+		palette_set_color(machine,i,0,0,0);
 	}
 
     cps1_buffered_obj = auto_malloc (cps1_obj_size);
@@ -1220,7 +1220,7 @@ VIDEO_START( cps )
 VIDEO_START( cps1 )
 {
     cps_version=1;
-    return video_start_cps();
+    return video_start_cps(machine);
 }
 
 VIDEO_START( cps2 )
@@ -1229,7 +1229,7 @@ VIDEO_START( cps2 )
     {
         cps_version=2;
     }
-    return video_start_cps();
+    return video_start_cps(machine);
 }
 
 /***************************************************************************
@@ -1270,7 +1270,7 @@ void cps1_build_palette(void)
 				blue  = ((palette>>0)&0x0f) * bright;
 			}
 
-			palette_set_color (offset, red, green, blue);
+			palette_set_color (Machine, offset, red, green, blue);
 			cps1_old_palette[offset] = palette;
 		}
 	}

@@ -126,7 +126,7 @@ extern double sec_to_cycles[];
     FUNCTION PROTOTYPES
 ***************************************************************************/
 
-void timer_init(void);
+void timer_init(running_machine *machine);
 void timer_free(void);
 int timer_count_anonymous(void);
 

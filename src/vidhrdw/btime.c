@@ -72,7 +72,7 @@ PALETTE_INIT( btime )
 		bit2 = (color_prom[i] >> 7) & 0x01;
 		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 	}
 }
 
@@ -117,7 +117,7 @@ PALETTE_INIT( lnc )
 		bit2 = (color_prom[i] >> 0) & 0x01;
 		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 	}
 }
 
@@ -135,7 +135,7 @@ Start the video hardware emulation.
 ***************************************************************************/
 VIDEO_START( bnj )
 {
-    if (video_start_generic() != 0)
+    if (video_start_generic(machine) != 0)
         return 1;
 
     dirtybuffer2 = auto_malloc(bnj_backgroundram_size);
@@ -156,7 +156,7 @@ VIDEO_START( btime )
     bnj_scroll1 = 0;
     bnj_scroll2 = 0;
 
-    return video_start_generic();
+    return video_start_generic(machine);
 }
 
 

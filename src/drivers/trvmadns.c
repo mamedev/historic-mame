@@ -163,7 +163,7 @@ static WRITE8_HANDLER( trvmadns_palette_w )
 	g = (paletteram[offset | 1] & 0xf0) >> 4;
 	b = paletteram[offset | 1] & 0xf;
 
-	palette_set_color(offset >> 1, r | (r << 4), g | (g << 4), b | (b << 4));
+	palette_set_color(Machine, offset >> 1, pal4bit(r), pal4bit(g), pal4bit(b));
 }
 
 static WRITE8_HANDLER( w2 )

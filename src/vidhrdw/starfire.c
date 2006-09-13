@@ -76,9 +76,6 @@ WRITE8_HANDLER( starfire_colorram_w )
 	if ((offset & 0xe0) == 0)
 	{
 		int palette_index = (offset & 0x1f) | ((offset & 0x200) >> 4);
-		int r = ((data << 1) & 0x06) | ((offset >> 8) & 0x01);
-		int b = (data >> 2) & 0x07;
-		int g = (data >> 5) & 0x07;
 
 		/* set RAM regardless */
 		starfire_colorram[offset & ~0x100] = data;
@@ -89,11 +86,7 @@ WRITE8_HANDLER( starfire_colorram_w )
 		if (!(starfire_vidctrl1 & 0x40))
 			return;
 
-		/* modify the pen */
-		r = (r << 5) | (r << 2) | (r >> 1);
-		b = (b << 5) | (b << 2) | (b >> 1);
-		g = (g << 5) | (g << 2) | (g >> 1);
-		palette_set_color(palette_index, r, g, b);
+		palette_set_color(Machine, palette_index, pal3bit((data << 1) & 0x06) | ((offset >> 8) & 0x01), pal3bit(data >> 5), pal3bit(data >> 2));
 	}
 
 	/* handle writes to the rest of color RAM */

@@ -339,7 +339,7 @@ VIDEO_UPDATE( btoads )
 	/* check for disabled video */
 	if (tms34010_io_display_blanked(0))
 	{
-		fillbitmap(bitmap, get_black_pen(), cliprect);
+		fillbitmap(bitmap, get_black_pen(machine), cliprect);
 		return 0;
 	}
 

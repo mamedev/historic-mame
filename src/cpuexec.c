@@ -159,8 +159,8 @@ static mame_timer *watchdog_timer;
  *
  *************************************/
 
-static void cpuexec_exit(void);
-static void cpuexec_reset(void);
+static void cpuexec_exit(running_machine *machine);
+static void cpuexec_reset(running_machine *machine);
 static void init_refresh_timer(void);
 static void cpu_inittimers(void);
 static void cpu_vblankreset(void);
@@ -196,7 +196,7 @@ static void watchdog_setup(int alloc_new);
  *
  *************************************/
 
-int cpuexec_init(void)
+int cpuexec_init(running_machine *machine)
 {
 	int cpunum;
 
@@ -259,8 +259,8 @@ int cpuexec_init(void)
 				fatalerror("CPU #%d (%s) did not register any state to save!", cpunum, cputype_name(cputype));
 		}
 	}
-	add_reset_callback(cpuexec_reset);
-	add_exit_callback(cpuexec_exit);
+	add_reset_callback(machine, cpuexec_reset);
+	add_exit_callback(machine, cpuexec_exit);
 
 	/* compute the perfect interleave factor */
 	compute_perfect_interleave();
@@ -284,7 +284,7 @@ int cpuexec_init(void)
  *
  *************************************/
 
-static void cpuexec_reset(void)
+static void cpuexec_reset(running_machine *machine)
 {
 	int cpunum;
 
@@ -323,7 +323,7 @@ static void cpuexec_reset(void)
  *
  *************************************/
 
-static void cpuexec_exit(void)
+static void cpuexec_exit(running_machine *machine)
 {
 	int cpunum;
 
@@ -349,7 +349,7 @@ static void cpuexec_exit(void)
 static void watchdog_callback(int param)
 {
 	logerror("reset caused by the (time) watchdog\n");
-	mame_schedule_soft_reset();
+	mame_schedule_soft_reset(Machine);
 }
 
 
@@ -1346,7 +1346,7 @@ static void cpu_vblankreset(void)
 		if (--watchdog_counter == 0)
 		{
 			logerror("reset caused by the (vblank) watchdog\n");
-			mame_schedule_soft_reset();
+			mame_schedule_soft_reset(Machine);
 		}
 	}
 

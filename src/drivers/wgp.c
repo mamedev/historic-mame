@@ -1491,7 +1491,7 @@ DRIVER_INIT( wgp2 )
 	ROM[0x8008 / 2] = 0x0;
 	ROM[0x8010 / 2] = 0x0;
 
-	init_wgp();
+	init_wgp(machine);
 }
 
 /* Working Games with some graphics problems - e.g. missing rotation */

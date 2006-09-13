@@ -381,7 +381,7 @@ void jaguar_set_palette(UINT16 vmode)
 		case 0x000:
 		{
 			/* set color 0 to black */
-			palette_set_color(colors++, 0, 0, 0);
+			palette_set_color(Machine, colors++, 0, 0, 0);
 
 			/* due to the way YCC colorspace maps onto RGB, there are multiple entries for black */
 			/* take advantage of this so we don't have to use all 64k colors */
@@ -396,7 +396,7 @@ void jaguar_set_palette(UINT16 vmode)
 				else
 				{
 					pen_table[i] = colors;
-					palette_set_color(colors++, r, g, b);
+					palette_set_color(Machine, colors++, r, g, b);
 				}
 			}
 			break;
@@ -407,7 +407,7 @@ void jaguar_set_palette(UINT16 vmode)
 		case 0x107:
 		{
 			/* set color 0 to black */
-			palette_set_color(colors++, 0, 0, 0);
+			palette_set_color(Machine, colors++, 0, 0, 0);
 
 			/* due to the way YCC colorspace maps onto RGB, there are multiple entries for black */
 			/* take advantage of this so we don't have to use all 64k colors */
@@ -433,7 +433,7 @@ void jaguar_set_palette(UINT16 vmode)
 				else
 				{
 					pen_table[i] = colors;
-					palette_set_color(colors++, r, g, b);
+					palette_set_color(Machine, colors++, r, g, b);
 				}
 			}
 			break;
@@ -443,9 +443,9 @@ void jaguar_set_palette(UINT16 vmode)
 		case 0x006:
 		{
 			/* we cheat a little here to squeeze into 65534 colors */
-			palette_set_color(colors++, 0,  0, 0);
-			palette_set_color(colors++, 0,  8, 0);
-			palette_set_color(colors++, 0, 16, 0);
+			palette_set_color(Machine, colors++, 0,  0, 0);
+			palette_set_color(Machine, colors++, 0,  8, 0);
+			palette_set_color(Machine, colors++, 0, 16, 0);
 			pen_table[0] = 0;
 			pen_table[1] = 1;
 			pen_table[2] = 1;
@@ -455,15 +455,8 @@ void jaguar_set_palette(UINT16 vmode)
 			/* map the remaining colors normally */
 			for (i = 5; i < 65536; i++)
 			{
-				UINT8 r = (i >> 11) & 31;
-				UINT8 g = i & 63;
-				UINT8 b = (i >> 6) & 31;
-				r = (r << 3) | (r >> 2);
-				g = (g << 2) | (g >> 4);
-				b = (b << 3) | (b >> 2);
-
 				pen_table[i] = colors;
-				palette_set_color(colors++, r, g, b);
+				palette_set_color(Machine, colors++, pal5bit(i >> 11), pal6bit(i >> 0), pal5bit(i >> 6));
 			}
 			break;
 		}

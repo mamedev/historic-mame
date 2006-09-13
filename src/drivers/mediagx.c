@@ -134,7 +134,7 @@ static VIDEO_START(mediagx)
 	int i;
 	for (i=0; i < 16; i++)
 	{
-		palette_set_color(i, cga_palette[i][0], cga_palette[i][1], cga_palette[i][2]);
+		palette_set_color(machine, i, cga_palette[i][0], cga_palette[i][1], cga_palette[i][2]);
 	}
 	return 0;
 }
@@ -829,7 +829,7 @@ static READ32_HANDLER ( a51site4_speedup5_r )
 
 static DRIVER_INIT( a51site4 )
 {
-	init_mediagx();
+	init_mediagx(machine);
 
 #if SPEEDUP_HACKS
 	// 55038+14

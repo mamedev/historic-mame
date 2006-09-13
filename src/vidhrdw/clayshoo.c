@@ -18,8 +18,8 @@
 
 PALETTE_INIT( clayshoo )
 {
-	palette_set_color(0,0x00,0x00,0x00); /* black */
-	palette_set_color(1,0xff,0xff,0xff);  /* white */
+	palette_set_color(machine,0,0x00,0x00,0x00); /* black */
+	palette_set_color(machine,1,0xff,0xff,0xff);  /* white */
 }
 
 

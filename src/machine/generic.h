@@ -56,7 +56,7 @@ extern UINT32 *generic_nvram32;
 /* ----- initialization ----- */
 
 /* set up all the common systems */
-void generic_machine_init(void);
+void generic_machine_init(running_machine *machine);
 
 
 
@@ -85,13 +85,13 @@ void nvram_load(void);
 void nvram_save(void);
 
 /* generic NVRAM handler that defaults to a 0 fill */
-void nvram_handler_generic_0fill(mame_file *file, int read_or_write);
+NVRAM_HANDLER( generic_0fill );
 
 /* generic NVRAM handler that defaults to a 1 fill */
-void nvram_handler_generic_1fill(mame_file *file, int read_or_write);
+NVRAM_HANDLER( generic_1fill );
 
 /* generic NVRAM handler that defaults to a random fill */
-void nvram_handler_generic_randfill(mame_file *file, int read_or_write);
+NVRAM_HANDLER( generic_randfill );
 
 
 
@@ -104,7 +104,7 @@ int memcard_create(int index, int overwrite);
 int memcard_insert(int index);
 
 /* "eject" a memory card and save its data */
-void memcard_eject(void);
+void memcard_eject(running_machine *machine);
 
 /* returns the index of the current memory card, or -1 if none */
 int memcard_present(void);

@@ -75,7 +75,7 @@ WRITE8_HANDLER( thief_color_map_w ){
 	int r = intensity[(data & 0x03) >> 0];
     int g = intensity[(data & 0x0C) >> 2];
     int b = intensity[(data & 0x30) >> 4];
-	palette_set_color( offset,r,g,b );
+	palette_set_color( Machine,offset,r,g,b );
 }
 
 /***************************************************************************/

@@ -140,7 +140,7 @@ VIDEO_START(bigstrkb)
 
 VIDEO_UPDATE(bigstrkb)
 {
-//  fillbitmap(bitmap,get_black_pen(),cliprect);
+//  fillbitmap(bitmap,get_black_pen(machine),cliprect);
 
 	tilemap_set_scrollx(bsb_tilemap2,0, bsb_vidreg1[0]+(256-14));
 	tilemap_set_scrolly(bsb_tilemap2,0, bsb_vidreg2[0]);

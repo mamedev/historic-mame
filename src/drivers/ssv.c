@@ -446,7 +446,7 @@ static UINT16 *ssv_input_sel;
 
 static READ16_HANDLER( drifto94_rand_r )
 {
-	return mame_rand() & 0xffff;
+	return mame_rand(Machine) & 0xffff;
 }
 
 static ADDRESS_MAP_START( drifto94_readmem, ADDRESS_SPACE_PROGRAM, 16 )

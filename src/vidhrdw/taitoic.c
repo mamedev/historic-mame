@@ -2765,7 +2765,7 @@ static void TC0100SCN_tilemap_draw_fg(mame_bitmap *bitmap,const rectangle *clipr
 
 	src_y=(TC0100SCN_fgscrolly[chip] + scrolly_delta)&height_mask;
 	if (TC0100SCN_ctrl[chip][0x7]&1) // Flipscreen
-		src_y=256-src_y;
+		src_y=(256-src_y)&height_mask;
 
 	//We use cliprect->max_y and cliprect->max_x to support games which use more than 1 screen
 
@@ -2773,7 +2773,7 @@ static void TC0100SCN_tilemap_draw_fg(mame_bitmap *bitmap,const rectangle *clipr
 	for (y=0; y<=cliprect->max_y; y++) {
 		src_x=(TC0100SCN_fgscrollx[chip] - TC0100SCN_fgscroll_ram[chip][(y + scrolly_delta)&0x1ff] + scrollx_delta + cliprect->min_x)&width_mask;
 		if (TC0100SCN_ctrl[chip][0x7]&1) // Flipscreen
-			src_x=256 - 64 - src_x;
+			src_x=(256 - 64 - src_x)&width_mask;
 
 		// Col offsets are 'tilemap' space 0-511, and apply to blocks of 8 pixels at once
 		for (x=0; x<=(cliprect->max_x - cliprect->min_x); x++) {
@@ -4792,41 +4792,30 @@ void TC0110PCR_restore_colors(int chip)
 
 			case 0x00:
 			{
-				r = (color >>  0) & 0x1f;
-				g = (color >>  5) & 0x1f;
-				b = (color >> 10) & 0x1f;
-
-				r = (r << 3) | (r >> 2);
-				g = (g << 3) | (g >> 2);
-				b = (b << 3) | (b >> 2);
+				r = pal5bit(color >>  0);
+				g = pal5bit(color >>  5);
+				b = pal5bit(color >> 10);
 				break;
 			}
 
 			case 0x01:
 			{
-				b = (color >>  0) & 0x1f;
-				g = (color >>  5) & 0x1f;
-				r = (color >> 10) & 0x1f;
-
-				r = (r << 3) | (r >> 2);
-				g = (g << 3) | (g >> 2);
-				b = (b << 3) | (b >> 2);
+				b = pal5bit(color >>  0);
+				g = pal5bit(color >>  5);
+				r = pal5bit(color >> 10);
 				break;
 			}
 
 			case 0x02:
 			{
-				r = (color >> 0) & 0xf;
-				g = (color >> 4) & 0xf;
-				b = (color >> 8) & 0xf;
-
-				r = (r << 4) | r;
-				g = (g << 4) | g;
-				b = (b << 4) | b;
+				r = pal4bit(color >> 0);
+				g = pal4bit(color >> 4);
+				b = pal4bit(color >> 8);
+				break;
 			}
 		}
 
-		palette_set_color( i + (chip << 12),r,g,b);
+		palette_set_color(Machine, i + (chip << 12),r,g,b);
 	}
 }
 
@@ -4914,19 +4903,8 @@ WRITE16_HANDLER( TC0110PCR_word_w )
 
 		case 1:
 		{
-			int r,g,b;   /* data = palette BGR value */
-
 			TC0110PCR_ram[0][(TC0110PCR_addr[0])] = data & 0xffff;
-
-			r = (data >>  0) & 0x1f;
-			g = (data >>  5) & 0x1f;
-			b = (data >> 10) & 0x1f;
-
-			r = (r << 3) | (r >> 2);
-			g = (g << 3) | (g >> 2);
-			b = (b << 3) | (b >> 2);
-
-			palette_set_color(TC0110PCR_addr[0],r,g,b);
+			palette_set_color(Machine,TC0110PCR_addr[0],pal5bit(data >> 0),pal5bit(data >> 5),pal5bit(data >> 10));
 			break;
 		}
 
@@ -4947,19 +4925,8 @@ WRITE16_HANDLER( TC0110PCR_step1_word_w )
 
 		case 1:
 		{
-			int r,g,b;   /* data = palette BGR value */
-
 			TC0110PCR_ram[0][(TC0110PCR_addr[0])] = data & 0xffff;
-
-			r = (data >>  0) & 0x1f;
-			g = (data >>  5) & 0x1f;
-			b = (data >> 10) & 0x1f;
-
-			r = (r << 3) | (r >> 2);
-			g = (g << 3) | (g >> 2);
-			b = (b << 3) | (b >> 2);
-
-			palette_set_color(TC0110PCR_addr[0],r,g,b);
+			palette_set_color(Machine,TC0110PCR_addr[0],pal5bit(data >> 0),pal5bit(data >> 5),pal5bit(data >> 10));
 			break;
 		}
 
@@ -4980,20 +4947,9 @@ WRITE16_HANDLER( TC0110PCR_step1_word_1_w )
 
 		case 1:
 		{
-			int r,g,b;   /* data = palette RGB value */
-
 			TC0110PCR_ram[1][(TC0110PCR_addr[1])] = data & 0xffff;
-
-			r = (data >>  0) & 0x1f;
-			g = (data >>  5) & 0x1f;
-			b = (data >> 10) & 0x1f;
-
-			r = (r << 3) | (r >> 2);
-			g = (g << 3) | (g >> 2);
-			b = (b << 3) | (b >> 2);
-
 			/* change a color in the second color area (4096-8191) */
-			palette_set_color(TC0110PCR_addr[1] + 4096,r,g,b);
+			palette_set_color(Machine,TC0110PCR_addr[1] + 4096,pal5bit(data >> 0),pal5bit(data >> 5),pal5bit(data >> 10));
 			break;
 		}
 
@@ -5014,20 +4970,9 @@ WRITE16_HANDLER( TC0110PCR_step1_word_2_w )
 
 		case 1:
 		{
-			int r,g,b;   /* data = palette RGB value */
-
 			TC0110PCR_ram[2][(TC0110PCR_addr[2])] = data & 0xffff;
-
-			r = (data >>  0) & 0x1f;
-			g = (data >>  5) & 0x1f;
-			b = (data >> 10) & 0x1f;
-
-			r = (r << 3) | (r >> 2);
-			g = (g << 3) | (g >> 2);
-			b = (b << 3) | (b >> 2);
-
 			/* change a color in the second color area (8192-12288) */
-			palette_set_color(TC0110PCR_addr[2] + 8192,r,g,b);
+			palette_set_color(Machine,TC0110PCR_addr[2] + 8192,pal5bit(data >> 0),pal5bit(data >> 5),pal5bit(data >> 10));
 			break;
 		}
 
@@ -5050,19 +4995,8 @@ WRITE16_HANDLER( TC0110PCR_step1_rbswap_word_w )
 
 		case 1:
 		{
-			int r,g,b;   /* data = palette RGB value */
-
 			TC0110PCR_ram[0][(TC0110PCR_addr[0])] = data & 0xffff;
-
-			b = (data >>  0) & 0x1f;
-			g = (data >>  5) & 0x1f;
-			r = (data >> 10) & 0x1f;
-
-			r = (r << 3) | (r >> 2);
-			g = (g << 3) | (g >> 2);
-			b = (b << 3) | (b >> 2);
-
-			palette_set_color(TC0110PCR_addr[0],r,g,b);
+			palette_set_color(Machine,TC0110PCR_addr[0],pal5bit(data >> 10),pal5bit(data >> 5),pal5bit(data >> 0));
 			break;
 		}
 
@@ -5085,19 +5019,8 @@ WRITE16_HANDLER( TC0110PCR_step1_4bpg_word_w )
 
 		case 1:
 		{
-			int r,g,b;   /* data = palette BGR value */
-
 			TC0110PCR_ram[0][(TC0110PCR_addr[0])] = data & 0xffff;
-
-			r = (data >> 0) & 0xf;
-			g = (data >> 4) & 0xf;
-			b = (data >> 8) & 0xf;
-
-			r = (r << 4) | r;
-			g = (g << 4) | g;
-			b = (b << 4) | b;
-
-			palette_set_color(TC0110PCR_addr[0],r,g,b);
+			palette_set_color(Machine,TC0110PCR_addr[0],pal4bit(data >> 0),pal4bit(data >> 4),pal4bit(data >> 8));
 			break;
 		}
 

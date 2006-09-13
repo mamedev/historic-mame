@@ -161,6 +161,13 @@ Some bootlegs also test some bits from 0xd008 after reading the paddle value at 
 Their effect is completely unknown but I need to set some bits to 1 so the games are playable :
 
   - 'arkangc'  : NO read from 0xd008 !
+  - 'arkangc2' :
+       * bit 1 must be set to 1 or you enter sort of endless "demo mode" when you start :
+           . you can't select your starting level (it always starts at level 1)
+           . you can't control the paddle (it automoves by following the ball)
+           . you can use the "fire" button (the game never shoots)
+           . you are awarded points as in a normal game
+           . sounds are played
   - 'arkblock' : NO read from 0xd008 !
   - 'arkbloc2' :
        * bit 5 must sometimes be set to 1 or you can't reach right side of the screen
@@ -181,7 +188,7 @@ Their effect is completely unknown but I need to set some bits to 1 so the games
          nor select all levels at the begining of the game
 
 
-TO DO (2006.09.05) :
+TO DO (2006.09.12) :
 
   - understand reads from 0xd008 (even if the games are playable)
   - try to document writes to 0xd018 with unknown effect
@@ -211,6 +218,14 @@ READ8_HANDLER( arkanoid_bootleg_f002_r )
 	{
 		case ARKANGC:
 		case ARKBLOCK:
+			switch (arkanoid_bootleg_cmd)
+			{
+				default:
+					break;
+			}
+			LOG_F002_R
+			break;
+		case ARKANGC2:  /* There are no reads from 0xf002 in this bootleg */
 			switch (arkanoid_bootleg_cmd)
 			{
 				default:
@@ -312,6 +327,49 @@ WRITE8_HANDLER( arkanoid_bootleg_d018_w )
 						arkanoid_bootleg_cmd = 0x00;
 					break;
 				case 0xff:  /* unneeded value : no call 0x2050, unused A and overwritten HL (0x7c4f -> 0x7d31) */
+					if (activecpu_get_pc() == 0x9670)
+						arkanoid_bootleg_cmd = 0x00;
+					break;
+				default:
+					arkanoid_bootleg_cmd = 0x00;
+					break;
+			}
+			LOG_D018_W
+			break;
+		case ARKANGC2:
+			switch (data)
+			{
+				case 0x36:  /* unneeded value : call 0x2050 but fixed A (0x2d) */
+					if (activecpu_get_pc() == 0x7c4c)
+						arkanoid_bootleg_cmd = 0x00;
+					break;
+				case 0x38:  /* unneeded value : call 0x2050 but fixed A (0xf3) */
+					if (activecpu_get_pc() == 0x7b87)
+						arkanoid_bootleg_cmd = 0x00;
+					break;
+				case 0x88:  /* unneeded value : no read back */
+					if (activecpu_get_pc() == 0x67e3)
+						arkanoid_bootleg_cmd = 0x00;
+					if (activecpu_get_pc() == 0x7c47)
+						arkanoid_bootleg_cmd = 0x00;
+					break;
+				case 0x89:  /* unneeded value : no read back */
+					if (activecpu_get_pc() == 0x67e5)
+						arkanoid_bootleg_cmd = 0x00;
+					break;
+				case 0x8a:  /* unneeded value : call 0x2050 but fixed A (0xa5) */
+					if (activecpu_get_pc() == 0x9661)
+						arkanoid_bootleg_cmd = 0x00;
+					break;
+				case 0xc0:  /* unneeded value : no read back */
+					if (activecpu_get_pc() == 0x67e7)
+						arkanoid_bootleg_cmd = 0x00;
+					break;
+				case 0xe3:  /* unneeded value : call 0x2050 but fixed A (0x61) */
+					if (activecpu_get_pc() == 0x67e9)
+						arkanoid_bootleg_cmd = 0x00;
+					break;
+				case 0xff:  /* unneeded value : call 0x2050 but fixed A (0xe2) */
 					if (activecpu_get_pc() == 0x9670)
 						arkanoid_bootleg_cmd = 0x00;
 					break;
@@ -489,6 +547,13 @@ READ8_HANDLER( arkanoid_bootleg_d008_r )
 		case ARKBLOCK:
 			arkanoid_bootleg_d008_bit[0] = 0;  /* untested bit */
 			arkanoid_bootleg_d008_bit[1] = 0;  /* untested bit */
+			arkanoid_bootleg_d008_bit[2] = 0;  /* untested bit */
+			arkanoid_bootleg_d008_bit[3] = 0;  /* untested bit */
+			arkanoid_bootleg_d008_bit[5] = 0;  /* untested bit */
+			break;
+		case ARKANGC2:
+			arkanoid_bootleg_d008_bit[0] = 0;  /* untested bit */
+			arkanoid_bootleg_d008_bit[1] = 1;  /* check code at 0x0cad */
 			arkanoid_bootleg_d008_bit[2] = 0;  /* untested bit */
 			arkanoid_bootleg_d008_bit[3] = 0;  /* untested bit */
 			arkanoid_bootleg_d008_bit[5] = 0;  /* untested bit */

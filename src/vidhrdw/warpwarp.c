@@ -46,7 +46,7 @@ PALETTE_INIT( geebee )
 {
 	int i;
 	for (i = 0; i < sizeof(geebee_palette)/3; i++)
-		palette_set_color(i,geebee_palette[i*3+0],geebee_palette[i*3+1],geebee_palette[i*3+2]);
+		palette_set_color(machine,i,geebee_palette[i*3+0],geebee_palette[i*3+1],geebee_palette[i*3+2]);
 	memcpy(colortable, geebee_colortable, sizeof (geebee_colortable));
 }
 
@@ -55,7 +55,7 @@ PALETTE_INIT( navarone )
 {
 	int i;
 	for (i = 0; i < sizeof(geebee_palette)/3; i++)
-		palette_set_color(i,geebee_palette[i*3+0],geebee_palette[i*3+1],geebee_palette[i*3+2]);
+		palette_set_color(machine,i,geebee_palette[i*3+0],geebee_palette[i*3+1],geebee_palette[i*3+2]);
 	memcpy(colortable, navarone_colortable, sizeof (navarone_colortable));
 }
 
@@ -106,7 +106,7 @@ PALETTE_INIT( warpwarp )
 		bit2 = (i >> 7) & 0x01;
 		b = 0x1f * bit0 + 0x3c * bit1 + 0xa4 * bit2;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 	}
 
 	for (i = 0;i < Machine->drv->color_table_len;i += 2)

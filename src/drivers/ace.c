@@ -112,8 +112,8 @@ VIDEO_UPDATE( ace )
 
 static PALETTE_INIT( ace )
 {
-	palette_set_color(0,0x10,0x20,0xd0); /* light bluish */
-	palette_set_color(1,0xff,0xff,0xff); /* white */
+	palette_set_color(machine,0,0x10,0x20,0xd0); /* light bluish */
+	palette_set_color(machine,1,0xff,0xff,0xff); /* white */
 }
 
 

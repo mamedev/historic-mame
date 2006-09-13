@@ -150,7 +150,7 @@ VIDEO_UPDATE( deadang )
 	tilemap_set_enable(pf2_layer,!(deadang_scroll_ram[0x68]&4));
 	flip_screen_set( deadang_scroll_ram[0x68]&0x40 );
 
-	fillbitmap(bitmap,get_black_pen(),cliprect);
+	fillbitmap(bitmap,get_black_pen(machine),cliprect);
 	fillbitmap(priority_bitmap,0,cliprect);
 	tilemap_draw(bitmap,cliprect,pf3_layer,0,1);
 	tilemap_draw(bitmap,cliprect,pf1_layer,0,2);

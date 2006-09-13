@@ -16,7 +16,6 @@ WRITE8_HANDLER ( funybubl_paldatawrite )
 	int colchanged ;
 
 	UINT32 coldat;
-	int r,g,b;
 
 	funybubl_paletteram[offset] = data;
 
@@ -24,11 +23,7 @@ WRITE8_HANDLER ( funybubl_paldatawrite )
 
 	coldat = funybubl_paletteram[colchanged*4] | (funybubl_paletteram[colchanged*4+1] << 8) | (funybubl_paletteram[colchanged*4+2] << 16) | (funybubl_paletteram[colchanged*4+3] << 24);
 
-	g = coldat & 0x003f;
-	b = (coldat >> 6) & 0x3f;
-	r = (coldat >> 12) & 0x3f;
-
-	palette_set_color(colchanged,r<<2,g<<2,b<<2);
+	palette_set_color(Machine,colchanged,pal6bit(coldat >> 12),pal6bit(coldat >> 0),pal6bit(coldat >> 6));
 }
 
 
@@ -87,7 +82,7 @@ VIDEO_UPDATE(funybubl)
 
 	offs = 0;
 
-	fillbitmap(bitmap, get_black_pen(), cliprect);
+	fillbitmap(bitmap, get_black_pen(machine), cliprect);
 
 
 	/* tilemap .. convert it .. banking makes it slightly more annoying but still easy */

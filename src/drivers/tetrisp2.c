@@ -1040,25 +1040,25 @@ DRIVER_INIT( rockn_timer )
 
 DRIVER_INIT( rockn )
 {
-	init_rockn_timer();
+	init_rockn_timer(machine);
 	rockn_protectdata = 1;
 }
 
 DRIVER_INIT( rockn1 )
 {
-	init_rockn_timer();
+	init_rockn_timer(machine);
 	rockn_protectdata = 1;
 }
 
 DRIVER_INIT( rockn2 )
 {
-	init_rockn_timer();
+	init_rockn_timer(machine);
 	rockn_protectdata = 2;
 }
 
 DRIVER_INIT( rocknms )
 {
-	init_rockn_timer();
+	init_rockn_timer(machine);
 
 	timer_pulse(TIME_IN_MSEC(32), 0, rockn_timer_sub_level1_callback);
 	rockn_timer_sub_l4 = timer_alloc(rockn_timer_sub_level4_callback);
@@ -1069,7 +1069,7 @@ DRIVER_INIT( rocknms )
 
 DRIVER_INIT( rockn3 )
 {
-	init_rockn_timer();
+	init_rockn_timer(machine);
 	rockn_protectdata = 4;
 }
 

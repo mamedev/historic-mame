@@ -323,18 +323,8 @@ void K037122_tile_draw(mame_bitmap *bitmap, const rectangle *cliprect)
 
 static void update_palette_color(UINT32 palette_base, int color)
 {
-	int r,g,b;
 	UINT32 data = K037122_tile_ram[(palette_base/4) + color];
-
-	r = ((data >> 6) & 0x1f);
-	g = ((data >> 0) & 0x3f);
-	b = ((data >> 11) & 0x1f);
-
-	b = (b << 3) | (b >> 2);
-	g = (g << 2) | (g >> 3);
-	r = (r << 3) | (r >> 2);
-
-	palette_set_color(color, r, g, b);
+	palette_set_color(Machine, color, pal5bit(data >> 6), pal5bit(data >> 0), pal5bit(data >> 11));
 }
 
 READ32_HANDLER(K037122_sram_r)
@@ -1062,7 +1052,7 @@ static DRIVER_INIT(gradius4)
 	backup_ram[0x0f] = 0xd7;	// checksum
 
 	voodoo_version = 0;
-	init_hornet();
+	init_hornet(machine);
 }
 
 static DRIVER_INIT(nbapbp)
@@ -1096,7 +1086,7 @@ static DRIVER_INIT(nbapbp)
 	backup_ram[0x0f] = (checksum >> 0) & 0xff;	// checksum
 
 	voodoo_version = 0;
-	init_hornet();
+	init_hornet(machine);
 }
 
 static DRIVER_INIT(sscope)
@@ -1130,7 +1120,7 @@ static DRIVER_INIT(sscope)
 	backup_ram[0x0f] = (checksum >> 0) & 0xff;	// checksum
 
 	voodoo_version = 0;
-	init_hornet_2board();
+	init_hornet_2board(machine);
 }
 
 static DRIVER_INIT(sscope2)
@@ -1192,7 +1182,7 @@ static DRIVER_INIT(sscope2)
 	backup_ram[0x1f4f] = (checksum >> 0) & 0xff;	// checksum
 
 	voodoo_version = 1;
-	init_hornet_2board();
+	init_hornet_2board(machine);
 }
 
 /*****************************************************************************/

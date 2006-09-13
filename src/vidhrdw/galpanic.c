@@ -29,18 +29,7 @@ PALETTE_INIT( galpanic )
 
 	/* initialize 555 RGB lookup */
 	for (i = 0;i < 32768;i++)
-	{
-		int r,g,b;
-
-		r = (i >>  5) & 0x1f;
-		g = (i >> 10) & 0x1f;
-		b = (i >>  0) & 0x1f;
-
-		r = (r << 3) | (r >> 2);
-		g = (g << 3) | (g >> 2);
-		b = (b << 3) | (b >> 2);
-		palette_set_color(i+1024,r,g,b);
-	}
+		palette_set_color(machine,i+1024,pal5bit(i >> 5),pal5bit(i >> 10),pal5bit(i >> 0));
 }
 
 
@@ -60,20 +49,9 @@ WRITE16_HANDLER( galpanic_bgvideoram_w )
 
 WRITE16_HANDLER( galpanic_paletteram_w )
 {
-	int r,g,b;
-
 	data = COMBINE_DATA(&paletteram16[offset]);
-
-	r = (data >>  6) & 0x1f;
-	g = (data >> 11) & 0x1f;
-	b = (data >>  1) & 0x1f;
 	/* bit 0 seems to be a transparency flag for the front bitmap */
-
-	r = (r << 3) | (r >> 2);
-	g = (g << 3) | (g >> 2);
-	b = (b << 3) | (b >> 2);
-
-	palette_set_color(offset,r,g,b);
+	palette_set_color(Machine,offset,pal5bit(data >> 6),pal5bit(data >> 11),pal5bit(data >> 1));
 }
 
 

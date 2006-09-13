@@ -198,7 +198,7 @@ PALETTE_INIT( dynadice )
 {
 	int i;
 	for(i=0;i<8;i++)
-		palette_set_color(i,(i&2)?255:0,(i&4)?255:0,(i&1)?255:0);
+		palette_set_color(machine,i,pal1bit(i >> 1),pal1bit(i >> 2),pal1bit(i >> 0));
 }
 
 static MACHINE_DRIVER_START( dynadice )

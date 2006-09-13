@@ -142,7 +142,7 @@ VIDEO_START( kaneko16_sprites )
 
 VIDEO_START( kaneko16_1xVIEW2 )
 {
-	if (	video_start_kaneko16_sprites()	)
+	if (	video_start_kaneko16_sprites(machine)	)
 		return 1;
 
 	kaneko16_tmap_0 = tilemap_create(	get_tile_info_0, tilemap_scan_rows,
@@ -195,7 +195,7 @@ VIDEO_START( kaneko16_1xVIEW2 )
 
 VIDEO_START( kaneko16_2xVIEW2 )
 {
-	if (	video_start_kaneko16_1xVIEW2()	)
+	if (	video_start_kaneko16_1xVIEW2(machine)	)
 		return 1;
 
 	kaneko16_tmap_2 = tilemap_create(	get_tile_info_2, tilemap_scan_rows,
@@ -240,7 +240,7 @@ VIDEO_START( kaneko16_2xVIEW2 )
 
 VIDEO_START( sandscrp_1xVIEW2 )
 {
-	if (	video_start_kaneko16_1xVIEW2()	)
+	if (	video_start_kaneko16_1xVIEW2(machine)	)
 		return 1;
 
 	tilemap_set_scrolldy( kaneko16_tmap_0, 0, 256 - 1 );
@@ -259,19 +259,7 @@ PALETTE_INIT( berlwall )
 
 	/* initialize 555 RGB lookup */
 	for (i = 0; i < 32768; i++)
-	{
-		int r,g,b;
-
-		r = (i >>  5) & 0x1f;
-		g = (i >> 10) & 0x1f;
-		b = (i >>  0) & 0x1f;
-
-		r = (r << 3) | (r >> 2);
-		g = (g << 3) | (g >> 2);
-		b = (b << 3) | (b >> 2);
-
-		palette_set_color(2048 + i,r,g,b);
-	}
+		palette_set_color(machine,2048 + i,pal5bit(i >> 5),pal5bit(i >> 10),pal5bit(i >> 0));
 }
 
 VIDEO_START( berlwall )
@@ -320,7 +308,7 @@ VIDEO_START( berlwall )
 						Machine->pens[2048 + ((g << 10) | (r << 5) | b)] );
 	  }
 
-	return video_start_kaneko16_1xVIEW2();
+	return video_start_kaneko16_1xVIEW2(machine);
 }
 
 

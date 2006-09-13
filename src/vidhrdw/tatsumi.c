@@ -48,7 +48,7 @@ WRITE8_HANDLER(roundup5_vram_w)
 WRITE8_HANDLER(roundup5_palette_w)
 {
 //  static int hack=0;
-	int r,g,b,word;
+	int word;
 
 	paletteram[offset]=data;
 
@@ -73,16 +73,12 @@ bit 0:  3.9kOhm resistor
 
 	offset&=~3;
 	word=(paletteram[offset]<<8)|(paletteram[offset+2]);
-	r = ((word >>10) & 0x1f)*8;
-	g = ((word >> 5) & 0x1f)*8;
-	b = ((word >> 0) & 0x1f)*8;
-
-	palette_set_color(offset/4,r,g,b);
+	palette_set_color(Machine,offset/4,pal5bit(word >> 10),pal5bit(word >> 5),pal5bit(word >> 0));
 }
 WRITE8_HANDLER(apache3_palette_w)
 {
 //  static int hack=0;
-	int r,g,b,word;
+	int word;
 
 	paletteram[offset]=data;
 
@@ -107,11 +103,7 @@ bit 0:  3.9kOhm resistor
 
 	offset&=~1;
 	word=(paletteram[offset+1]<<8)|(paletteram[offset]);
-	r = ((word >>10) & 0x1f)*8;
-	g = ((word >> 5) & 0x1f)*8;
-	b = ((word >> 0) & 0x1f)*8;
-
-	palette_set_color(offset/2,r,g,b);
+	palette_set_color(Machine,offset/2,pal5bit(word >> 10),pal5bit(word >> 5),pal5bit(word >> 0));
 }
 
 
@@ -949,34 +941,34 @@ static void update_cluts(int fake_palette_offset, int object_base, int length)
         draw routines.  We also note down any uses of the 'shadow' pen (index 255).
     */
 	int i;
-	UINT8 r,g,b;
+	rgb_t color;
 	const UINT8* bank1=tatsumi_rom_clut0;
 	const UINT8* bank2=tatsumi_rom_clut1;
 	for (i=0; i<length; i+=8) {
-		palette_get_color(bank1[1]+object_base,&r,&g,&b);
-		palette_set_color(fake_palette_offset+i+0,r,g,b);
+		color = palette_get_color(Machine,bank1[1]+object_base);
+		palette_set_color(Machine,fake_palette_offset+i+0,RGB_RED(color),RGB_GREEN(color),RGB_BLUE(color));
 		shadow_pen_array[i+0]=(bank1[1]==255);
-		palette_get_color(bank1[0]+object_base,&r,&g,&b);
-		palette_set_color(fake_palette_offset+i+1,r,g,b);
+		color = palette_get_color(Machine,bank1[0]+object_base);
+		palette_set_color(Machine,fake_palette_offset+i+1,RGB_RED(color),RGB_GREEN(color),RGB_BLUE(color));
 		shadow_pen_array[i+1]=(bank1[0]==255);
-		palette_get_color(bank1[3]+object_base,&r,&g,&b);
-		palette_set_color(fake_palette_offset+i+2,r,g,b);
+		color = palette_get_color(Machine,bank1[3]+object_base);
+		palette_set_color(Machine,fake_palette_offset+i+2,RGB_RED(color),RGB_GREEN(color),RGB_BLUE(color));
 		shadow_pen_array[i+2]=(bank1[3]==255);
-		palette_get_color(bank1[2]+object_base,&r,&g,&b);
-		palette_set_color(fake_palette_offset+i+3,r,g,b);
+		color = palette_get_color(Machine,bank1[2]+object_base);
+		palette_set_color(Machine,fake_palette_offset+i+3,RGB_RED(color),RGB_GREEN(color),RGB_BLUE(color));
 		shadow_pen_array[i+3]=(bank1[2]==255);
 
-		palette_get_color(bank2[1]+object_base,&r,&g,&b);
-		palette_set_color(fake_palette_offset+i+4,r,g,b);
+		color = palette_get_color(Machine,bank2[1]+object_base);
+		palette_set_color(Machine,fake_palette_offset+i+4,RGB_RED(color),RGB_GREEN(color),RGB_BLUE(color));
 		shadow_pen_array[i+4]=(bank2[1]==255);
-		palette_get_color(bank2[0]+object_base,&r,&g,&b);
-		palette_set_color(fake_palette_offset+i+5,r,g,b);
+		color = palette_get_color(Machine,bank2[0]+object_base);
+		palette_set_color(Machine,fake_palette_offset+i+5,RGB_RED(color),RGB_GREEN(color),RGB_BLUE(color));
 		shadow_pen_array[i+5]=(bank2[0]==255);
-		palette_get_color(bank2[3]+object_base,&r,&g,&b);
-		palette_set_color(fake_palette_offset+i+6,r,g,b);
+		color = palette_get_color(Machine,bank2[3]+object_base);
+		palette_set_color(Machine,fake_palette_offset+i+6,RGB_RED(color),RGB_GREEN(color),RGB_BLUE(color));
 		shadow_pen_array[i+6]=(bank2[3]==255);
-		palette_get_color(bank2[2]+object_base,&r,&g,&b);
-		palette_set_color(fake_palette_offset+i+7,r,g,b);
+		color = palette_get_color(Machine,bank2[2]+object_base);
+		palette_set_color(Machine,fake_palette_offset+i+7,RGB_RED(color),RGB_GREEN(color),RGB_BLUE(color));
 		shadow_pen_array[i+7]=(bank2[2]==255);
 
 		bank1+=4;

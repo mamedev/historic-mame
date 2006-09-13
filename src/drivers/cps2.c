@@ -1355,7 +1355,7 @@ static READ16_HANDLER( pl2_port_0_word_r )
 
 static DRIVER_INIT ( puzloop2 )
 {
-	init_cps2();
+	init_cps2(machine);
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x804000, 0x804001, 0, 0, pl2_port_0_word_r);
 }
 

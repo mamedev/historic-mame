@@ -66,7 +66,7 @@ struct _speaker_config
 ***************************************************************************/
 
 /* core interfaces */
-int sound_init(void);
+int sound_init(running_machine *machine);
 void sound_frame_update(void);
 int sound_scalebufferpos(int value);
 

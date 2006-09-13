@@ -48,7 +48,7 @@ static DRIVER_INIT( pastelg )
 {
 	nb1413m3_type = NB1413M3_PASTELG;
 
-	init_nb1413m3();
+	init_nb1413m3(machine);
 }
 
 static READ8_HANDLER( pastelg_sndrom_r )

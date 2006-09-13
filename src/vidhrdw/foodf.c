@@ -97,7 +97,7 @@ WRITE16_HANDLER( foodf_paletteram_w )
 	bit2 = (newword >> 7) & 0x01;
 	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-	palette_set_color(offset, r, g, b);
+	palette_set_color(Machine, offset, r, g, b);
 }
 
 

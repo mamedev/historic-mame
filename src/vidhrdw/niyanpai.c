@@ -67,7 +67,7 @@ WRITE16_HANDLER( niyanpai_palette_w )
 			g  = ((niyanpai_palette[(0x080 + (offs_h * 0x180) + offs_l)] & 0xff00) >> 8);
 			b  = ((niyanpai_palette[(0x100 + (offs_h * 0x180) + offs_l)] & 0xff00) >> 8);
 
-			palette_set_color(((offs_h << 8) + (offs_l << 1) + 0), r, g, b);
+			palette_set_color(Machine, ((offs_h << 8) + (offs_l << 1) + 0), r, g, b);
 		}
 
 		if (ACCESSING_LSB16)
@@ -76,7 +76,7 @@ WRITE16_HANDLER( niyanpai_palette_w )
 			g  = ((niyanpai_palette[(0x080 + (offs_h * 0x180) + offs_l)] & 0x00ff) >> 0);
 			b  = ((niyanpai_palette[(0x100 + (offs_h * 0x180) + offs_l)] & 0x00ff) >> 0);
 
-			palette_set_color(((offs_h << 8) + (offs_l << 1) + 1), r, g, b);
+			palette_set_color(Machine, ((offs_h << 8) + (offs_l << 1) + 1), r, g, b);
 		}
 	}
 }

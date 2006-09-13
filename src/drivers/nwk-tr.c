@@ -18,20 +18,9 @@ WRITE32_HANDLER(pci_3dfx_w);
 
 static WRITE32_HANDLER( paletteram32_w )
 {
-	int r,g,b;
-
 	COMBINE_DATA(&paletteram32[offset]);
 	data = paletteram32[offset];
-
-	b = ((data >> 0) & 0x1f);
-	g = ((data >> 5) & 0x1f);
-	r = ((data >> 10) & 0x1f);
-
-	b = (b << 3) | (b >> 2);
-	g = (g << 3) | (g >> 2);
-	r = (r << 3) | (r >> 2);
-
-	palette_set_color(offset, r, g, b);
+	palette_set_color(Machine, offset, pal5bit(data >> 10), pal5bit(data >> 5), pal5bit(data >> 0));
 }
 
 
@@ -730,7 +719,7 @@ static DRIVER_INIT(thrilld)
 	backup_ram[0x0e] = (checksum >> 8) & 0xff;	// checksum
 	backup_ram[0x0f] = (checksum >> 0) & 0xff;	// checksum
 
-	init_nwktr();
+	init_nwktr(machine);
 }
 
 static DRIVER_INIT(racingj)
@@ -764,7 +753,7 @@ static DRIVER_INIT(racingj)
 	backup_ram[0x0e] = (checksum >> 8) & 0xff;	// checksum
 	backup_ram[0x0f] = (checksum >> 0) & 0xff;	// checksum
 
-	init_nwktr();
+	init_nwktr(machine);
 }
 
 static DRIVER_INIT(racingj2)
@@ -798,7 +787,7 @@ static DRIVER_INIT(racingj2)
 	backup_ram[0x0e] = (checksum >> 8) & 0xff;	// checksum
 	backup_ram[0x0f] = (checksum >> 0) & 0xff;	// checksum
 
-	init_nwktr();
+	init_nwktr(machine);
 }
 
 

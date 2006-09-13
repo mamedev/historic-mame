@@ -123,7 +123,7 @@ VIDEO_UPDATE( eolith16 )
 	return 0;
 }
 
-void nvram_handler_eolith16_eeprom(mame_file *file,int read_or_write)
+static NVRAM_HANDLER( eolith16_eeprom )
 {
 	if (read_or_write)
 		EEPROM_save(file);
@@ -154,7 +154,7 @@ PALETTE_INIT( eolith16 )
 		bit1 = (c >> 7) & 0x01;
 		b = 0x55 * bit0 + 0xaa * bit1;
 
-		palette_set_color(c,r,g,b);
+		palette_set_color(machine,c,r,g,b);
 	}
 }
 

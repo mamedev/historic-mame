@@ -48,7 +48,7 @@ WRITE8_HANDLER(homerun_color_w)
 	bit1 = (data >> 6) & 0x01;
 	bit2 = (data >> 7) & 0x01;
 	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-	palette_set_color(offset,r,g,b);
+	palette_set_color(Machine,offset,r,g,b);
 }
 
 static void get_homerun_tile_info(int tile_index)

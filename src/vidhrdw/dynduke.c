@@ -11,27 +11,17 @@ static int back_enable,fore_enable,sprite_enable;
 
 WRITE8_HANDLER( dynduke_paletteram_w )
 {
-	int r,g,b;
 	int color;
 
 	paletteram[offset]=data;
 	color=paletteram[offset&0xffe]|(paletteram[offset|1]<<8);
-
-	r = (color >> 0) & 0x0f;
-	g = (color >> 4) & 0x0f;
-	b = (color >> 8) & 0x0f;
-
-	r = (r << 4) | r;
-	g = (g << 4) | g;
-	b = (b << 4) | b;
-
-	palette_set_color(offset/2,r,g,b);
+	palette_set_color(Machine,offset/2,pal4bit(color >> 0),pal4bit(color >> 4),pal4bit(color >> 8));
 
 	/* This is a kludge to handle 5bpp graphics but 4bpp palette data */
 	/* the 5th bit is actually transparency, so I should use TILEMAP_BITMASK */
 	if (offset<1024) {
-		palette_set_color(((offset&0x1f)/2) | (offset&0xffe0) | 2048,r,g,b);
-		palette_set_color(((offset&0x1f)/2) | (offset&0xffe0) | 2048 | 16,r,g,b);
+		palette_set_color(Machine,((offset&0x1f)/2) | (offset&0xffe0) | 2048,pal4bit(color >> 0),pal4bit(color >> 4),pal4bit(color >> 8));
+		palette_set_color(Machine,((offset&0x1f)/2) | (offset&0xffe0) | 2048 | 16,pal4bit(color >> 0),pal4bit(color >> 4),pal4bit(color >> 8));
 	}
 }
 
@@ -189,7 +179,7 @@ VIDEO_UPDATE( dynduke )
 	if (back_enable)
 		tilemap_draw(bitmap,cliprect,bg_layer,TILEMAP_BACK,0);
 	else
-		fillbitmap(bitmap,get_black_pen(),cliprect);
+		fillbitmap(bitmap,get_black_pen(machine),cliprect);
 
 	draw_sprites(bitmap,cliprect,0); // Untested: does anything use it? Could be behind background
 	draw_sprites(bitmap,cliprect,1);

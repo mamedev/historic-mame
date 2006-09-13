@@ -29,7 +29,7 @@ static tilemap *bg_tilemap, *fg_tilemap;
   bit 0 -- 390 ohm resistor  -- BLUE
 
 ***************************************************************************/
-static void convert_color_prom(unsigned short *colortable,const unsigned char *color_prom,
+static void convert_color_prom(running_machine *machine,unsigned short *colortable,const unsigned char *color_prom,
 		int priority)
 {
 	int i,j;
@@ -58,15 +58,15 @@ static void convert_color_prom(unsigned short *colortable,const unsigned char *c
 		bit2 = (*color_prom >> 1) & 0x01;
 		b = 0x23 * bit0 + 0x4b * bit1 + 0x91 * bit2;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 		color_prom++;
 	}
 
 	/* reserve one color for the transparent pen (none of the game colors can have */
 	/* these RGB components) */
-	palette_set_color(256,1,1,1);
+	palette_set_color(machine,256,1,1,1);
 	/* and the last color for the sprite covering pen */
-	palette_set_color(257,2,2,2);
+	palette_set_color(machine,257,2,2,2);
 
 
 	/* characters */
@@ -131,12 +131,12 @@ static void convert_color_prom(unsigned short *colortable,const unsigned char *c
 
 PALETTE_INIT( docastle )
 {
-	convert_color_prom(colortable,color_prom,0);
+	convert_color_prom(machine,colortable,color_prom,0);
 }
 
 PALETTE_INIT( dorunrun )
 {
-	convert_color_prom(colortable,color_prom,1);
+	convert_color_prom(machine,colortable,color_prom,1);
 }
 
 WRITE8_HANDLER( docastle_videoram_w )

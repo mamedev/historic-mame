@@ -596,7 +596,7 @@ static WRITE32_HANDLER( taitojc_palette_w )
 	g = (color >> 16) & 0xff;
 	b = (color >>  0) & 0xff;
 
-	palette_set_color(offset, r, g, b);
+	palette_set_color(Machine,offset, r, g, b);
 }
 
 static READ32_HANDLER ( jc_control_r )
@@ -1172,28 +1172,28 @@ static DRIVER_INIT( dendeg )
 
 	//rom[(0x12bec2 / 2) ^ 1] = 0xffff;     // enable debug mode
 
-	init_taitojc();
+	init_taitojc(machine);
 }
 
 static DRIVER_INIT( dendegx )
 {
 	//UINT16 *rom = (UINT16*)memory_region(REGION_CPU1);
 
-	init_taitojc();
+	init_taitojc(machine);
 }
 
 static DRIVER_INIT( dendeg2 )
 {
 	//UINT16 *rom = (UINT16*)memory_region(REGION_CPU1);
 
-	init_taitojc();
+	init_taitojc(machine);
 }
 
 static DRIVER_INIT( dendeg2x )
 {
 	//UINT16 *rom = (UINT16*)memory_region(REGION_CPU1);
 
-	init_taitojc();
+	init_taitojc(machine);
 }
 
 static DRIVER_INIT( sidebs )
@@ -1202,21 +1202,21 @@ static DRIVER_INIT( sidebs )
 
 	//rom[((0x100000 + 0x33c30) / 2) ^ 1] = 0xffff;     // enable debug mode
 
-	init_taitojc();
+	init_taitojc(machine);
 }
 
 static DRIVER_INIT( sidebs2 )
 {
 	//UINT16 *rom = (UINT16*)memory_region(REGION_CPU1);
 
-	init_taitojc();
+	init_taitojc(machine);
 }
 
 static DRIVER_INIT( landgear )
 {
 	//UINT16 *rom = (UINT16*)memory_region(REGION_CPU1);
 
-	init_taitojc();
+	init_taitojc(machine);
 }
 
 ROM_START( sidebs )

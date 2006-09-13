@@ -518,7 +518,7 @@ typedef struct _input_seq input_seq;
 ***************************************************************************/
 
 /* single code functions */
-int code_init(void);
+int code_init(running_machine *machine);
 
 INT32 code_analog_value(input_code code);
 int code_pressed(input_code code);

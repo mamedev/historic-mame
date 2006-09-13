@@ -208,7 +208,7 @@ static void update_palette( void )
 		green	= APPLY_SHADE(green,shade);
 		blue	= APPLY_SHADE(blue,shade);
 
-		palette_set_color( i,red,green,blue );
+		palette_set_color( Machine,i,red,green,blue );
 	}
 }
 

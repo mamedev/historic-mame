@@ -71,18 +71,18 @@ static PALETTE_INIT( fgoal )
 		int g = (i >> 2) & 3;
 		int b = (i >> 0) & 3;
 
-		palette_set_color(i,
+		palette_set_color(machine,i,
 			intensity(r),
 			intensity(g),
 			intensity(b));
 	}
 
-	palette_set_color(0x40,
+	palette_set_color(machine,0x40,
 		0x2e,
 		0x80,
 		0x2e);
 
-	palette_set_color(0x41,
+	palette_set_color(machine,0x41,
 		0x2e,
 		0x2e,
 		0x2e);

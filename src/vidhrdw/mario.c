@@ -59,7 +59,7 @@ PALETTE_INIT( mario )
 		bit1 = (*color_prom >> 1) & 1;
 		b = 255 - (0x55 * bit0 + 0xaa * bit1);
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 		color_prom++;
 	}
 

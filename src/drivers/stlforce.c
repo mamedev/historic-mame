@@ -222,7 +222,7 @@ static UINT8 twinbrat_default_eeprom[128] = {
 };
 
 
-void nvram_handler_stlforce(mame_file *file,int read_or_write)
+static NVRAM_HANDLER( stlforce )
 {
 	if (read_or_write)
 		EEPROM_save(file);

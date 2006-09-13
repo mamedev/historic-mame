@@ -201,10 +201,10 @@ static ppi8255_interface single_ppi_intf =
  *
  *************************************/
 
-static void system16a_generic_init(void)
+static void system16a_generic_init(running_machine *machine)
 {
 	/* call the generic init */
-	machine_reset_sys16_onetime();
+	machine_reset_sys16_onetime(machine);
 
 	/* init the FD1094 */
 	fd1094_driver_init();
@@ -222,7 +222,7 @@ static void system16a_generic_init(void)
 
 static void suspend_i8751(ATTR_UNUSED int param)
 {
-	cpunum_suspend(mame_find_cpu_index("mcu"), SUSPEND_REASON_DISABLE, 1);
+	cpunum_suspend(mame_find_cpu_index(Machine, "mcu"), SUSPEND_REASON_DISABLE, 1);
 }
 
 
@@ -2660,14 +2660,14 @@ ROM_END
 
 static DRIVER_INIT( generic_16a )
 {
-	system16a_generic_init();
+	system16a_generic_init(machine);
 }
 
 
 static DRIVER_INIT( afighter )
 {
 	void fd1089_decrypt_0018(void);
-	system16a_generic_init();
+	system16a_generic_init(machine);
 	fd1089_decrypt_0018();
 }
 
@@ -2675,7 +2675,7 @@ static DRIVER_INIT( afighter )
 static DRIVER_INIT( alexkid1 )
 {
 	void fd1089_decrypt_alexkidd(void);
-	system16a_generic_init();
+	system16a_generic_init(machine);
 	fd1089_decrypt_alexkidd();
 }
 
@@ -2683,14 +2683,14 @@ static DRIVER_INIT( alexkid1 )
 static DRIVER_INIT( aliensy1 )
 {
 	void fd1089_decrypt_0033(void);
-	system16a_generic_init();
+	system16a_generic_init(machine);
 	fd1089_decrypt_0033();
 }
 
 
 static DRIVER_INIT( bodyslam )
 {
-	system16a_generic_init();
+	system16a_generic_init(machine);
 	i8751_vblank_hook = bodyslam_i8751_sim;
 }
 
@@ -2699,14 +2699,14 @@ static DRIVER_INIT( mjleague )
 {
 	UINT16 *rombase = (UINT16 *)memory_region(REGION_CPU1);
 	rombase[0xbd42/2] = (rombase[0xbd42/2] & 0x00ff) | 0x6600;
-	system16a_generic_init();
+	system16a_generic_init(machine);
 	custom_io_r = mjleague_custom_io_r;
 }
 
 
 static DRIVER_INIT( quartet )
 {
-	system16a_generic_init();
+	system16a_generic_init(machine);
 	i8751_vblank_hook = quartet_i8751_sim;
 }
 
@@ -2714,7 +2714,7 @@ static DRIVER_INIT( quartet )
 static DRIVER_INIT( sdi )
 {
 	void fd1089_decrypt_0027(void);
-	system16a_generic_init();
+	system16a_generic_init(machine);
 	fd1089_decrypt_0027();
 	custom_io_r = sdi_custom_io_r;
 }
@@ -2723,7 +2723,7 @@ static DRIVER_INIT( sdi )
 static DRIVER_INIT( sjryukoa )
 {
 	void fd1089_decrypt_5021(void);
-	system16a_generic_init();
+	system16a_generic_init(machine);
 	fd1089_decrypt_5021();
 	custom_io_r = sjryuko_custom_io_r;
 	lamp_changed_w = sjryuko_lamp_changed_w;
@@ -2733,7 +2733,7 @@ static DRIVER_INIT( sjryukoa )
 static DRIVER_INIT( timesca1 )
 {
 	void fd1089_decrypt_0024(void);
-	system16a_generic_init();
+	system16a_generic_init(machine);
 	fd1089_decrypt_0024();
 }
 

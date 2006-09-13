@@ -110,7 +110,7 @@ static int (*drv_irq_callbacks[MAX_CPU])(int);
  *
  *************************************/
 
-int cpuint_init(void)
+int cpuint_init(running_machine *machine)
 {
 	int cpunum;
 	int line;

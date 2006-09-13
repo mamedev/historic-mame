@@ -394,7 +394,7 @@ MACHINE_START( zwackery )
 	pia_config(2, PIA_STANDARD_ORDERING, &zwackery_pia_2_intf);
 	pia_config(3, PIA_STANDARD_ORDERING, &zwackery_pia_3_intf);
 	pia_config(4, PIA_STANDARD_ORDERING, &zwackery_pia_4_intf);
-	return machine_start_mcr68();
+	return machine_start_mcr68(machine);
 }
 
 

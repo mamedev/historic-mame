@@ -91,11 +91,11 @@ WRITE16_HANDLER( powerins_paletteram16_w )
 
 	UINT16 newword = COMBINE_DATA(&paletteram16[offset]);
 
-	int r = ((newword >> 8) & 0xF0 ) | ((newword << 0) & 0x08);
-	int g = ((newword >> 4) & 0xF0 ) | ((newword << 1) & 0x08);
-	int b = ((newword >> 0) & 0xF0 ) | ((newword << 2) & 0x08);
+	int r = ((newword >> 11) & 0x1E ) | ((newword >> 3) & 0x01);
+	int g = ((newword >>  7) & 0x1E ) | ((newword >> 2) & 0x01);
+	int b = ((newword >>  3) & 0x1E ) | ((newword >> 1) & 0x01);
 
-	palette_set_color( offset, r,g,b );
+	palette_set_color( Machine,offset, pal5bit(r),pal5bit(g),pal5bit(b) );
 }
 
 

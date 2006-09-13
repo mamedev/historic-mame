@@ -410,7 +410,7 @@ VIDEO_UPDATE(rabbit)
 {
 	int prilevel;
 
-	fillbitmap(bitmap,get_black_pen(),cliprect);
+	fillbitmap(bitmap,get_black_pen(machine),cliprect);
 
 //  popmessage("%08x %08x", rabbit_viewregs0[0], rabbit_viewregs0[1]);
 //  popmessage("%08x %08x %08x %08x %08x %08x", rabbit_tilemap_regs[0][0],rabbit_tilemap_regs[0][1],rabbit_tilemap_regs[0][2],rabbit_tilemap_regs[0][3],rabbit_tilemap_regs[0][4],rabbit_tilemap_regs[0][5]);
@@ -473,7 +473,7 @@ static WRITE32_HANDLER( rabbit_paletteram_dword_w )
 	r = ((paletteram32[offset] & 0x0000ff00) >>8);
 	g = ((paletteram32[offset] & 0x00ff0000) >>16);
 
-	palette_set_color(offset^0xff,r,g,b);
+	palette_set_color(Machine,offset^0xff,r,g,b);
 }
 
 READ32_HANDLER( rabbit_tilemap0_r )
@@ -498,7 +498,7 @@ READ32_HANDLER( rabbit_tilemap3_r )
 
 READ32_HANDLER( randomrabbits )
 {
-	return mame_rand();
+	return mame_rand(Machine);
 }
 
 static ADDRESS_MAP_START( rabbit_readmem, ADDRESS_SPACE_PROGRAM, 32 )
@@ -792,7 +792,7 @@ static WRITE32_HANDLER( tmmjprd_paletteram_dword_w )
 	r = ((paletteram32[offset] & 0x0000ff00) >>8);
 	g = ((paletteram32[offset] & 0x00ff0000) >>16);
 
-	palette_set_color((offset^0xff)+0x2000,r,g,b);
+	palette_set_color(Machine,(offset^0xff)+0x2000,r,g,b);
 }
 
 
@@ -1175,7 +1175,7 @@ VIDEO_UPDATE( tmmjprd )
 
 //  popmessage("%08x %08x %08x %08x %08x", rabbit_viewregs10[0],rabbit_viewregs10[1],rabbit_viewregs10[2],rabbit_viewregs10[3],rabbit_viewregs10[4]);
 
-	fillbitmap(bitmap,get_black_pen(),cliprect);
+	fillbitmap(bitmap,get_black_pen(machine),cliprect);
 	tilemap_draw(bitmap,cliprect,rabbit_tilemap[3],0,0);
 	tilemap_draw(bitmap,cliprect,rabbit_tilemap[1],0,0); //same as 3?
 	tilemap_draw(bitmap,cliprect,rabbit_tilemap[2],0,0);
@@ -1214,7 +1214,7 @@ DRIVER_INIT( rabbit_common )
 
 DRIVER_INIT(rabbit)
 {
-	init_rabbit_common();
+	init_rabbit_common(machine);
 	rabbit_banking = 1;
 	rabbit_vblirqlevel = 6;
 	rabbit_bltirqlevel = 4;
@@ -1223,7 +1223,7 @@ DRIVER_INIT(rabbit)
 
 DRIVER_INIT(tmmjprd)
 {
-	init_rabbit_common();
+	init_rabbit_common(machine);
 	rabbit_banking = 0;
 	rabbit_vblirqlevel = 5;
 	rabbit_bltirqlevel = 3; // actually palette related?

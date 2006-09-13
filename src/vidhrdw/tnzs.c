@@ -39,15 +39,12 @@ static int tnzs_screenflip;
 ***************************************************************************/
 PALETTE_INIT( arknoid2 )
 {
-	int i,col,r,g,b;
+	int i,col;
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
 		col = (color_prom[i]<<8)+color_prom[i+512];
-		r =  (col & 0x7c00)>>7;	/* Red */
-		g =  (col & 0x03e0)>>2;	/* Green */
-		b =  (col & 0x001f)<<3;	/* Blue */
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,pal5bit(col >> 10),pal5bit(col >> 5),pal5bit(col >> 0));
 	}
 }
 

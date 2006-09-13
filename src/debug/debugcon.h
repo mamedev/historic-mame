@@ -76,8 +76,8 @@ typedef UINT32 CMDERR;
 ***************************************************************************/
 
 /* initialization */
-void				debug_console_init(void);
-void				debug_console_exit(void);
+void				debug_console_init(running_machine *machine);
+void				debug_console_exit(running_machine *machine);
 
 /* command handling */
 CMDERR				debug_console_execute_command(const char *command, int echo);
@@ -91,7 +91,7 @@ void CLIB_DECL		debug_console_printf_wrap(int wrapcol, const char *format, ...) 
 text_buffer *		debug_console_get_textbuf(void);
 
 /* errorlog management */
-void				debug_errorlog_write_line(const char *line);
+void				debug_errorlog_write_line(running_machine *machine, const char *line);
 text_buffer *		debug_errorlog_get_textbuf(void);
 
 #endif

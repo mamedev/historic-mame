@@ -141,7 +141,7 @@ static void prepare_shadows(void)
 /* 32 colour codes for the tiles */
 VIDEO_START( cischeat )
 {
-	if (video_start_megasys1())	return 1;
+	if (video_start_megasys1(machine))	return 1;
 
  	megasys1_bits_per_color_code = 5;
 
@@ -157,7 +157,7 @@ VIDEO_START( cischeat )
 /* 16 colour codes for the tiles */
 VIDEO_START( f1gpstar )
 {
-	if (video_start_cischeat())	return 1;
+	if (video_start_cischeat(machine))	return 1;
 
  	megasys1_bits_per_color_code = 4;
 
@@ -166,7 +166,7 @@ VIDEO_START( f1gpstar )
 
 VIDEO_START( bigrun )
 {
-	return video_start_f1gpstar();
+	return video_start_f1gpstar(machine);
 }
 
 

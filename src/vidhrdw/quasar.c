@@ -68,7 +68,7 @@ PALETTE_INIT( quasar )
 
 	for(col = 0;col < 8; col++)
 	{
-		palette_set_color(col,(col & 1) * 255,((col >> 1) & 1) * 255,((col >> 2) & 1) * 255);
+		palette_set_color(machine,col,pal1bit(col >> 0),pal1bit(col >> 1),pal1bit(col >> 2));
 	}
 
 	// Address 0-2 from graphic rom
@@ -108,13 +108,13 @@ PALETTE_INIT( quasar )
 		b = 0x4f * bit0 + 0xa8 * bit1;
 
 		// Intensity 1
-  	    palette_set_color(256+i,r>>2,g>>2,b>>2);
+  	    palette_set_color(machine,256+i,r>>2,g>>2,b>>2);
 
 		// Intensity 2
- 	    palette_set_color(512+i,(r>>2)+(r>>3),(g>>2)+(g>>3),(b>>2)+(b>>2));
+ 	    palette_set_color(machine,512+i,(r>>2)+(r>>3),(g>>2)+(g>>3),(b>>2)+(b>>2));
 
 		// Intensity 3
-  	    palette_set_color(768+i,r>>1,g>>1,b>>1);
+  	    palette_set_color(machine,768+i,r>>1,g>>1,b>>1);
 	}
 
     /* Sprites */
@@ -145,7 +145,7 @@ VIDEO_START( quasar )
 	if ((effect_bitmap = auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height)) == 0)
 		return 1;
 
-	return video_start_cvs();
+	return video_start_cvs(machine);
 }
 
 VIDEO_UPDATE( quasar )

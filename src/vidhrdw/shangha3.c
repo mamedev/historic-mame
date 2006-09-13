@@ -87,7 +87,7 @@ VIDEO_START( shangha3 )
 			gfx_drawmode_table[i] = DRAWMODE_SOURCE;
 		gfx_drawmode_table[14] = DRAWMODE_SHADOW;
 		for (i = 0;i < 128;i++)
-			palette_shadow_table[Machine->pens[i]] = Machine->pens[i+128];
+			Machine->shadow_table[Machine->pens[i]] = Machine->pens[i+128];
 	}
 
 	return 0;

@@ -167,7 +167,7 @@ static TMS9928A tms;
 */
 static PALETTE_INIT( tms9928a )
 {
-	palette_set_colors(0, TMS9928A_palette, TMS9928A_PALETTE_SIZE);
+	palette_set_colors(machine, 0, TMS9928A_palette, TMS9928A_PALETTE_SIZE);
 }
 
 
@@ -460,7 +460,7 @@ VIDEO_UPDATE( tms9928a )
         c = tms.Regs[7] & 15; if (!c) c=1;
         if (tms.BackColour != c) {
             tms.BackColour = c;
-            palette_set_color (0,
+            palette_set_color (machine, 0,
                 TMS9928A_palette[c * 3], TMS9928A_palette[c * 3 + 1],
                 TMS9928A_palette[c * 3 + 2]);
         }

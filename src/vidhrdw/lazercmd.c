@@ -79,7 +79,7 @@ static void plot_pattern(mame_bitmap *bitmap, int x, int y)
 
 VIDEO_START( lazercmd )
 {
-	if( video_start_generic() )
+	if( video_start_generic(machine) )
 		return 1;
 
 	return 0;

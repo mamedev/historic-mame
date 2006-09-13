@@ -85,7 +85,7 @@ PALETTE_INIT( mbmj8688_8bit )
 		bit2 = ((i >> 7) & 0x01);
 		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-		palette_set_color(i, r, g, b);
+		palette_set_color(machine, i, r, g, b);
 	}
 }
 
@@ -102,11 +102,7 @@ PALETTE_INIT( mbmj8688_12bit )
 		g = ((i & 0x38) >> 2) | (((i >> 8) & 0x02) >> 1);
 		b = ((i & 0xc0) >> 4) | (((i >> 8) & 0x0c) >> 2);
 
-		r = ((r << 4) | r);
-		g = ((g << 4) | g);
-		b = ((b << 4) | b);
-
-		palette_set_color(i, r, g, b);
+		palette_set_color(machine, i, pal4bit(r), pal4bit(g), pal4bit(b));
 	}
 }
 
@@ -122,11 +118,7 @@ PALETTE_INIT( mbmj8688_16bit )
 		g = (((i & 0x3800) >>  9) | ((i & 0x0018) >>  3));	// G 5bit
 		b = (((i & 0xc000) >> 11) | ((i & 0x00e0) >>  5));	// B 5bit
 
-		r = ((r << 2) | (r >> 4));
-		g = ((g << 3) | (g >> 2));
-		b = ((b << 3) | (b >> 2));
-
-		palette_set_color(i, r, g, b);
+		palette_set_color(machine, i, pal6bit(r), pal5bit(g), pal5bit(b));
 	}
 }
 
@@ -723,7 +715,7 @@ VIDEO_UPDATE( mbmj8688_LCD )
 {
 	int x, y, b;
 
-	if(screen==0) video_update_mbmj8688(screen,bitmap,cliprect);
+	if(screen==0) video_update_mbmj8688(machine,screen,bitmap,cliprect);
 
 	if (screen==1)
 	{

@@ -70,7 +70,7 @@ static void set_color(pen_t pen, int i)
 	bit3 = (fastfred_color_prom[i + 0x200] >> 3) & 0x01;
 	b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-	palette_set_color(pen,r,g,b);
+	palette_set_color(Machine,pen,r,g,b);
 }
 
 PALETTE_INIT( fastfred )
@@ -403,8 +403,8 @@ VIDEO_START( imago )
 	galaxian_stars_on = 1;
 
 	/* web colors */
-	palette_set_color(256+64+0,0x50,0x00,0x00);
-	palette_set_color(256+64+1,0x00,0x00,0x00);
+	palette_set_color(machine,256+64+0,0x50,0x00,0x00);
+	palette_set_color(machine,256+64+1,0x00,0x00,0x00);
 
 	return 0;
 }

@@ -29,7 +29,7 @@ VIDEO_START( goldstar )
 {
 //        int i;
 
-	if (video_start_generic() != 0)
+	if (video_start_generic(machine) != 0)
 		return 1;
 
 	dirtybuffer1 = auto_malloc(3 * goldstar_video_size * sizeof(UINT8));

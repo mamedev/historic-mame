@@ -166,7 +166,7 @@ VIDEO_UPDATE( capbowl )
 	/* if we're blanked, just fill with black */
 	if (state.blanked)
 	{
-		fillbitmap(bitmap, get_black_pen(), cliprect);
+		fillbitmap(bitmap, get_black_pen(machine), cliprect);
 		return 0;
 	}
 
@@ -180,10 +180,8 @@ VIDEO_UPDATE( capbowl )
 		/* first update the palette for this scanline */
 		for (x = 0; x < 16; x++)
 		{
-			int r = *src++ & 0x0f;
-			int g = *src >> 4;
-			int b = *src++ & 0x0f;
-			palette_set_color(ybase + x, (r << 4) | r, (g << 4) | g, (b << 4) | b);
+			palette_set_color(machine, ybase + x, pal4bit(src[0]), pal4bit(src[0] >> 4), pal4bit(src[1]));
+			src += 2;
 		}
 
 		/* expand row to 8bpp */

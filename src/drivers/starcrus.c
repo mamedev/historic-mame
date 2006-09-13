@@ -158,8 +158,8 @@ static unsigned short colortable_source[] =
 };
 static PALETTE_INIT( starcrus )
 {
-	palette_set_color(0,0x00,0x00,0x00); /* Black */
-    palette_set_color(1,0xff,0xff,0xff); /* White */
+	palette_set_color(machine,0,0x00,0x00,0x00); /* Black */
+    palette_set_color(machine,1,0xff,0xff,0xff); /* White */
 	memcpy(colortable,colortable_source,sizeof(colortable_source));
 }
 

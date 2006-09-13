@@ -20,29 +20,29 @@ void tank8_collision_callback(int index)
 }
 
 
-static void fill_palette(int team)
+static void fill_palette(running_machine *machine, int team)
 {
 	if (team)
 	{
-		palette_set_color(0, 0xff, 0x00, 0x00); /* red     */
-		palette_set_color(2, 0xff, 0x00, 0x00); /* red     */
-		palette_set_color(4, 0xff, 0x00, 0x00); /* red     */
-		palette_set_color(6, 0xff, 0x00, 0x00); /* red     */
-		palette_set_color(1, 0x00, 0x00, 0xff); /* blue    */
-		palette_set_color(3, 0x00, 0x00, 0xff); /* blue    */
-		palette_set_color(5, 0x00, 0x00, 0xff); /* blue    */
-		palette_set_color(7, 0x00, 0x00, 0xff); /* blue    */
+		palette_set_color(machine,0, 0xff, 0x00, 0x00); /* red     */
+		palette_set_color(machine,2, 0xff, 0x00, 0x00); /* red     */
+		palette_set_color(machine,4, 0xff, 0x00, 0x00); /* red     */
+		palette_set_color(machine,6, 0xff, 0x00, 0x00); /* red     */
+		palette_set_color(machine,1, 0x00, 0x00, 0xff); /* blue    */
+		palette_set_color(machine,3, 0x00, 0x00, 0xff); /* blue    */
+		palette_set_color(machine,5, 0x00, 0x00, 0xff); /* blue    */
+		palette_set_color(machine,7, 0x00, 0x00, 0xff); /* blue    */
 	}
 	else
 	{
-		palette_set_color(0, 0xff, 0x00, 0x00); /* red     */
-		palette_set_color(1, 0x00, 0x00, 0xff); /* blue    */
-		palette_set_color(2, 0xff, 0xff, 0x00); /* yellow  */
-		palette_set_color(3, 0x00, 0xff, 0x00); /* green   */
-		palette_set_color(4, 0xff, 0x00, 0xff); /* magenta */
-		palette_set_color(5, 0xe0, 0xc0, 0x70); /* puce    */
-		palette_set_color(6, 0x00, 0xff, 0xff); /* cyan    */
-		palette_set_color(7, 0xff, 0xaa, 0xaa); /* pink    */
+		palette_set_color(machine,0, 0xff, 0x00, 0x00); /* red     */
+		palette_set_color(machine,1, 0x00, 0x00, 0xff); /* blue    */
+		palette_set_color(machine,2, 0xff, 0xff, 0x00); /* yellow  */
+		palette_set_color(machine,3, 0x00, 0xff, 0x00); /* green   */
+		palette_set_color(machine,4, 0xff, 0x00, 0xff); /* magenta */
+		palette_set_color(machine,5, 0xe0, 0xc0, 0x70); /* puce    */
+		palette_set_color(machine,6, 0x00, 0xff, 0xff); /* cyan    */
+		palette_set_color(machine,7, 0xff, 0xaa, 0xaa); /* pink    */
 	}
 }
 
@@ -51,10 +51,10 @@ static PALETTE_INIT( tank8 )
 {
 	int i;
 
-	fill_palette(0);
+	fill_palette(machine,0);
 
-	palette_set_color(8, 0x00, 0x00, 0x00);
-	palette_set_color(9, 0xff, 0xff, 0xff);
+	palette_set_color(machine, 8, 0x00, 0x00, 0x00);
+	palette_set_color(machine, 9, 0xff, 0xff, 0xff);
 
 	for (i = 0; i < 8; i++)
 	{
@@ -88,7 +88,7 @@ static WRITE8_HANDLER( tank8_lockout_w )
 
 static WRITE8_HANDLER( tank8_team_w )
 {
-	fill_palette(~data & 1);
+	fill_palette(Machine,~data & 1);
 }
 
 

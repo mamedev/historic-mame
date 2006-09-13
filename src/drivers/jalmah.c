@@ -244,7 +244,7 @@ static void daireika_mcu_run(void)
 		MCU_READ(3,0x0002,0x000/2,0x13);/*CHI   (trusted)*/
 		MCU_READ(2,0x0004,0x000/2,0x14);/*START1*/
 	}
-	jm_regs[0x00c/2] = mame_rand() & 0xffff;
+	jm_regs[0x00c/2] = mame_rand(Machine) & 0xffff;
 	prg_prot++;
 	if(prg_prot > 0x10) { prg_prot = 0; }
 	jm_regs[0x00e/2] = prg_prot;
@@ -289,7 +289,7 @@ static void urashima_mcu_run(void)
 		MCU_READ(3,0x0002,0x300/2,0x13);/*CHI   (trusted)*/
 		MCU_READ(2,0x0004,0x300/2,0x14);/*START1*/
 	}
-	jm_regs[0x30c/2] = mame_rand() & 0xffff;
+	jm_regs[0x30c/2] = mame_rand(Machine) & 0xffff;
 	prg_prot++;
 	if(prg_prot > 0x10) { prg_prot = 0; }
 	jm_regs[0x30e/2] = prg_prot;
@@ -330,7 +330,7 @@ static void second_mcu_run(void)
 
 //      MCU_READ(2,0x0004,0x7b8/2,0x03);/*START1(correct?)  */
 	}
-	jm_regs[0x20c/2] = mame_rand() & 0xffff; //kakumei2
+	jm_regs[0x20c/2] = mame_rand(Machine) & 0xffff; //kakumei2
 
 }
 

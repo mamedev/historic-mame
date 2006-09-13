@@ -263,15 +263,8 @@ static WRITE32_HANDLER(backfire_eeprom_w)
 
 static WRITE32_HANDLER(wcvol95_nonbuffered_palette_w)
 {
-	int r,g,b;
-
 	COMBINE_DATA(&paletteram32[offset]);
-
-	b = (paletteram32[offset] >>10) & 0x1f;
-	g = (paletteram32[offset] >> 5) & 0x1f;
-	r = (paletteram32[offset] >> 0) & 0x1f;
-
-	palette_set_color(offset,r<<3,g<<3,b<<3);
+	palette_set_color(Machine,offset,pal5bit(paletteram32[offset] >> 0),pal5bit(paletteram32[offset] >> 5),pal5bit(paletteram32[offset] >> 10));
 }
 
 
@@ -318,12 +311,12 @@ READ32_HANDLER( backfire_unknown_wheel_r )
 
 READ32_HANDLER( backfire_wheel1_r )
 {
-	return mame_rand();
+	return mame_rand(Machine);
 }
 
 READ32_HANDLER( backfire_wheel2_r )
 {
-	return mame_rand();
+	return mame_rand(Machine);
 }
 
 

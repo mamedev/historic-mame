@@ -768,7 +768,7 @@ VIDEO_UPDATE(skns)
 		}
 	}
 
-	fillbitmap(bitmap, get_black_pen(), cliprect);
+	fillbitmap(bitmap, get_black_pen(machine), cliprect);
 
 	{
 		int supernova_pri_a;

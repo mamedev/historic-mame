@@ -470,41 +470,15 @@ static void argus_write_dummy_rams( int dramoffs, int vromoffs )
 
 static void bombsa_change_palette(int color, int data)
 {
-	int r, g, b;//, a;
-
-	r = (data >> 12) & 0x0f;
-	g = (data >>  8) & 0x0f;
-	b = (data >>  4) & 0x0f;
-//  a = (data      ) & 0x0f;
-
-	r = (r << 4) | r;
-	g = (g << 4) | g;
-	b = (b << 4) | b;
-//  a = (a << 4) | a;
-
-//  jal_blend_table[color] = a ;
-
-	palette_set_color(color, r, g, b);
+	palette_set_color(Machine, color, pal4bit(data >> 12), pal4bit(data >> 8), pal4bit(data >> 4));
 }
 
 
 static void argus_change_palette(int color, int data)
 {
-	int r, g, b, a;
+	jal_blend_table[color] = data & 0x0f ;
 
-	r = (data >> 12) & 0x0f;
-	g = (data >>  8) & 0x0f;
-	b = (data >>  4) & 0x0f;
-	a = (data      ) & 0x0f;
-
-	r = (r << 4) | r;
-	g = (g << 4) | g;
-	b = (b << 4) | b;
-	a = (a << 4) | a;
-
-	jal_blend_table[color] = a ;
-
-	palette_set_color(color, r, g, b);
+	palette_set_color(Machine, color, pal4bit(data >> 12), pal4bit(data >> 8), pal4bit(data >> 4));
 }
 
 static void argus_change_bg_palette(int color, int data)
@@ -532,11 +506,7 @@ static void argus_change_bg_palette(int color, int data)
 			g = 0;
 	}
 
-	r = (r << 4) | r;
-	g = (g << 4) | g;
-	b = (b << 4) | b;
-
-	palette_set_color(color, r, g, b);
+	palette_set_color(Machine, color, pal4bit(r), pal4bit(g), pal4bit(b));
 }
 
 

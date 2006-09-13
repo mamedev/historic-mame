@@ -49,7 +49,7 @@ PALETTE_INIT( gotya )
 
 		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-		palette_set_color(i, r, g, b);
+		palette_set_color(machine, i, r, g, b);
 
 		color_prom++;
 	}
@@ -107,10 +107,18 @@ static void get_bg_tile_info(int tile_index)
 	SET_TILE_INFO(0, code, color, 0)
 }
 
+UINT32 tilemap_scan_rows_thehand( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
+{
+	/* logical (col,row) -> memory offset */
+	row = 31-row;
+	col = 63-col;
+	return ((row)*(num_cols>>1)) + (col&31) + ((col>>5)*0x400);
+}
+
 VIDEO_START( gotya )
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows_flip_xy,
-		TILEMAP_OPAQUE, 8, 8, 32, 32);
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows_thehand,
+		TILEMAP_OPAQUE, 8, 8, 64, 32);
 
 	if ( !bg_tilemap )
 		return 1;

@@ -15,7 +15,7 @@ I've not had a chance to wire up the board yet, but it might be possible to writ
 
 static READ8_HANDLER( unk_r )
 {
-	return mame_rand();
+	return mame_rand(Machine);
 }
 
 UINT8 *intrscti_ram;
@@ -71,7 +71,7 @@ VIDEO_UPDATE(intrscti)
 	int y,x;
 	int count;
 
-	fillbitmap(bitmap, get_black_pen(), cliprect);
+	fillbitmap(bitmap, get_black_pen(machine), cliprect);
 
 	count = 0;
 	for (y=0;y<64;y++)

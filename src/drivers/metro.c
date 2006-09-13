@@ -4588,7 +4588,7 @@ int i;
 for (i = 0;i < (0x20000*3)/2;i++)
 	RAM[i] = rand();
 
-	init_metro();
+	init_metro(machine);
 }
 
 static DRIVER_INIT( daitorid )

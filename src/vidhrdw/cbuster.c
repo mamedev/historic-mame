@@ -45,7 +45,7 @@ static void update_24bitcol(int offset)
 	g = (UINT8)((float)((paletteram16[offset] >> 8) & 0xff)*1.75);
 	b = (UINT8)((float)((paletteram16_2[offset] >> 0) & 0xff)*1.75);
 
-	palette_set_color(offset,r,g,b);
+	palette_set_color(Machine,offset,r,g,b);
 }
 
 WRITE16_HANDLER( twocrude_palette_24bit_rg_w )

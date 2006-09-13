@@ -68,7 +68,7 @@ static void input_callback(int dummy)
 }
 
 
-static void fill_palette(int team)
+static void fill_palette(running_machine *machine, int team)
 {
 	int i;
 
@@ -76,30 +76,30 @@ static void fill_palette(int team)
 	{
 		if (team)
 		{
-			palette_set_color(i + 0, 0xff, 0x00, 0x00); /* red     */
-			palette_set_color(i + 1, 0x00, 0x00, 0xff); /* blue    */
-			palette_set_color(i + 2, 0xff, 0x00, 0x00); /* red     */
-			palette_set_color(i + 3, 0x00, 0x00, 0xff); /* blue    */
-			palette_set_color(i + 4, 0xff, 0x00, 0x00); /* red     */
-			palette_set_color(i + 5, 0x00, 0x00, 0xff); /* blue    */
-			palette_set_color(i + 6, 0xff, 0x00, 0x00); /* red     */
-			palette_set_color(i + 7, 0x00, 0x00, 0xff); /* blue    */
+			palette_set_color(machine, i + 0, 0xff, 0x00, 0x00); /* red     */
+			palette_set_color(machine, i + 1, 0x00, 0x00, 0xff); /* blue    */
+			palette_set_color(machine, i + 2, 0xff, 0x00, 0x00); /* red     */
+			palette_set_color(machine, i + 3, 0x00, 0x00, 0xff); /* blue    */
+			palette_set_color(machine, i + 4, 0xff, 0x00, 0x00); /* red     */
+			palette_set_color(machine, i + 5, 0x00, 0x00, 0xff); /* blue    */
+			palette_set_color(machine, i + 6, 0xff, 0x00, 0x00); /* red     */
+			palette_set_color(machine, i + 7, 0x00, 0x00, 0xff); /* blue    */
 		}
 		else
 		{
-			palette_set_color(i + 0, 0xff, 0x00, 0x00); /* red     */
-			palette_set_color(i + 1, 0x00, 0x00, 0xff); /* blue    */
-			palette_set_color(i + 2, 0xff, 0xff, 0x00); /* yellow  */
-			palette_set_color(i + 3, 0x00, 0xff, 0x00); /* green   */
-			palette_set_color(i + 4, 0xff, 0x00, 0xff); /* magenta */
-			palette_set_color(i + 5, 0xe0, 0xc0, 0x70); /* puce    */
-			palette_set_color(i + 6, 0x00, 0xff, 0xff); /* cyan    */
-			palette_set_color(i + 7, 0xff, 0xaa, 0xaa); /* pink    */
+			palette_set_color(machine, i + 0, 0xff, 0x00, 0x00); /* red     */
+			palette_set_color(machine, i + 1, 0x00, 0x00, 0xff); /* blue    */
+			palette_set_color(machine, i + 2, 0xff, 0xff, 0x00); /* yellow  */
+			palette_set_color(machine, i + 3, 0x00, 0xff, 0x00); /* green   */
+			palette_set_color(machine, i + 4, 0xff, 0x00, 0xff); /* magenta */
+			palette_set_color(machine, i + 5, 0xe0, 0xc0, 0x70); /* puce    */
+			palette_set_color(machine, i + 6, 0x00, 0xff, 0xff); /* cyan    */
+			palette_set_color(machine, i + 7, 0xff, 0xaa, 0xaa); /* pink    */
 		}
 	}
 
-	palette_set_color(16, 0x00, 0x00, 0x00);
-	palette_set_color(17, 0xff, 0xff, 0xff);
+	palette_set_color(machine, 16, 0x00, 0x00, 0x00);
+	palette_set_color(machine, 17, 0xff, 0xff, 0xff);
 }
 
 
@@ -107,7 +107,7 @@ static PALETTE_INIT( sprint8 )
 {
 	int i;
 
-	fill_palette(0);
+	fill_palette(machine, 0);
 
 	for (i = 0; i < 16; i++)
 	{
@@ -162,7 +162,7 @@ static WRITE8_HANDLER( sprint8_lockout_w )
 
 static WRITE8_HANDLER( sprint8_team_w )
 {
-	fill_palette(!(data & 1));
+	fill_palette(Machine, !(data & 1));
 }
 
 

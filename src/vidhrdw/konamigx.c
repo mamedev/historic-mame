@@ -506,7 +506,7 @@ WRITE32_HANDLER( konamigx_palette_w )
 	g = (paletteram32[offset] >> 8) & 0xff;
 	b = (paletteram32[offset] >> 0) & 0xff;
 
-	palette_set_color(offset,r,g,b);
+	palette_set_color(Machine,offset,r,g,b);
 }
 
 WRITE32_HANDLER( konamigx_palette2_w )
@@ -523,7 +523,7 @@ WRITE32_HANDLER( konamigx_palette2_w )
 	g = (paletteram32[offset] >> 8) & 0xff;
 	b = (paletteram32[offset] >> 0) & 0xff;
 
-	palette_set_color(offset,r,g,b);
+	palette_set_color(Machine,offset,r,g,b);
 }
 
 // main monitor for type 3

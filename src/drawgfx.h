@@ -155,7 +155,7 @@ extern int pdrawgfx_shadow_lowpri;
 #define read_pixel(bm,x,y)		(*(bm)->read)(bm,x,y)
 #define plot_box(bm,x,y,w,h,p)	(*(bm)->plot_box)(bm,x,y,w,h,p)
 
-void drawgfx_init(void);
+void drawgfx_init(running_machine *machine);
 
 void decodechar(gfx_element *gfx,int num,const unsigned char *src,const gfx_layout *gl);
 gfx_element *allocgfx(const gfx_layout *gl);

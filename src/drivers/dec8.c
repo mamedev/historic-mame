@@ -3157,8 +3157,8 @@ static DRIVER_INIT( meikyuh )
 
 static DRIVER_INIT( ghostb )
 {
-	init_deco222();
-	init_meikyuh();
+	init_deco222(machine);
+	init_meikyuh(machine);
 }
 
 /******************************************************************************/

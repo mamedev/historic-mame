@@ -136,7 +136,7 @@ VIDEO_UPDATE(igs)
 
 #ifdef MAME_DEBUG
 			if ((layer_enable != -1) && (pri_addr == 0xff))
-				plot_pixel( bitmap, x,y, get_black_pen() );
+				plot_pixel( bitmap, x,y, get_black_pen(machine) );
 			else
 #endif
 				plot_pixel( bitmap, x,y, layer[l][scr_addr] | (l << 8) );
@@ -353,21 +353,12 @@ IGS_INPUT_RW( 5 )
 
 static WRITE16_HANDLER( igs_palette_w )
 {
-	int r,g,b, rgb;
+	int rgb;
 
 	COMBINE_DATA(&paletteram16[offset]);
 
 	rgb = (paletteram16[offset & 0x7ff] & 0xff) | ((paletteram16[offset | 0x800] & 0xff) << 8);
-
-	r	=	(rgb >>  0) & 0x1f;
-	g	=	(rgb >>  5) & 0x1f;
-	b	=	(rgb >> 10) & 0x1f;
-
-	r	=	(r << 3) | (r >> 2);
-	g	=	(g << 3) | (g >> 2);
-	b	=	(b << 3) | (b >> 2);
-
-	palette_set_color(offset & 0x7ff,r,g,b);
+	palette_set_color(Machine,offset & 0x7ff,pal5bit(rgb >> 0),pal5bit(rgb >> 5),pal5bit(rgb >> 10));
 }
 
 

@@ -33,7 +33,7 @@ PALETTE_INIT( mogura )
 		bit2 = (color_prom[i] >> 7) & 0x01;
 		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-		palette_set_color(j,r,g,b);
+		palette_set_color(machine,j,r,g,b);
 		j+=4;
 		if (j>31) j-=31;
 	}

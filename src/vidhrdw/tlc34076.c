@@ -50,11 +50,11 @@ static void update_palette(int which)
 			int b = local_paletteram[3 * i + 2];
 			if (dacbits == 6)
 			{
-				r = (r << 2) | (r >> 4);
-				g = (g << 2) | (g >> 4);
-				b = (b << 2) | (b >> 4);
+				r = pal6bit(r);
+				g = pal6bit(g);
+				b = pal6bit(b);
 			}
-			palette_set_color(i, r, g, b);
+			palette_set_color(Machine, i, r, g, b);
 		}
 }
 

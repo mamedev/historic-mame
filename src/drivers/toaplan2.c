@@ -392,7 +392,7 @@ static MACHINE_RESET( ghox )
 	old_p1_paddle_h = 0;
 	old_p2_paddle_h = 0;
 
-	machine_reset_toaplan2();
+	machine_reset_toaplan2(machine);
 }
 
 static MACHINE_RESET( dogyuun )
@@ -409,7 +409,7 @@ static MACHINE_RESET( batrider )
 {
 	current_bank = 2;
 
-	machine_reset_toaplan2();
+	machine_reset_toaplan2(machine);
 }
 
 static DRIVER_INIT( T2_Z80 )		/* init_t2_Z80(); */

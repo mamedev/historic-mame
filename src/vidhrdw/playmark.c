@@ -281,11 +281,7 @@ WRITE16_HANDLER( bigtwin_paletteram_w )
 	g |= ((val & 0x04) >> 2);
 	b |= ((val & 0x02) >> 1);
 
-	r = (r << 3) | (r >> 2);
-	g = (g << 3) | (g >> 2);
-	b = (b << 3) | (b >> 2);
-
-	palette_set_color(offset,r,g,b);
+	palette_set_color(Machine,offset,pal5bit(r),pal5bit(g),pal5bit(b));
 }
 
 WRITE16_HANDLER( bigtwin_scroll_w )
@@ -506,7 +502,7 @@ VIDEO_UPDATE( hrdtimes )
 	}
 	else
 	{
-		fillbitmap(bitmap,get_black_pen(),cliprect);
+		fillbitmap(bitmap,get_black_pen(machine),cliprect);
 	}
 	return 0;
 }

@@ -109,14 +109,14 @@ MACHINE_RESET( kaneko16 )
 
 static MACHINE_RESET( berlwall )
 {
-	machine_reset_kaneko16();
+	machine_reset_kaneko16(machine);
 
 	kaneko16_sprite_type = 2;	// like type 0, but using 16 instead of 8 bytes
 }
 
 static MACHINE_RESET( blazeon )
 {
-	machine_reset_kaneko16();
+	machine_reset_kaneko16(machine);
 
 	kaneko16_sprite_xoffs = 0x10000 - 0x680;
 	kaneko16_sprite_yoffs = 0x000;
@@ -168,7 +168,7 @@ static MACHINE_RESET( bonkadv )
 
 static MACHINE_RESET( bakubrkr )
 {
-	machine_reset_kaneko16();
+	machine_reset_kaneko16(machine);
 
 	kaneko16_priority.sprite[0] = 8;	// above all
 	kaneko16_priority.sprite[1] = 8;	// above all
@@ -180,7 +180,7 @@ static MACHINE_RESET( bakubrkr )
 
 static MACHINE_RESET( gtmr )
 {
-	machine_reset_kaneko16();
+	machine_reset_kaneko16(machine);
 
 	kaneko16_sprite_type = 1;
 
@@ -192,7 +192,7 @@ static MACHINE_RESET( gtmr )
 
 static MACHINE_RESET( mgcrystl )
 {
-	machine_reset_kaneko16();
+	machine_reset_kaneko16(machine);
 /*
     Sx = Sprites with priority x, x = tiles with priority x,
     Sprites - Tiles Order:
@@ -219,7 +219,7 @@ static MACHINE_RESET( mgcrystl )
 
 static MACHINE_RESET( sandscrp )
 {
-	machine_reset_kaneko16();
+	machine_reset_kaneko16(machine);
 
 	kaneko16_sprite_type = 3;	// "different" sprites layout
 
@@ -228,7 +228,7 @@ static MACHINE_RESET( sandscrp )
 
 static MACHINE_RESET( shogwarr )
 {
-	machine_reset_kaneko16();
+	machine_reset_kaneko16(machine);
 
 	calc3_mcu_init();
 }
@@ -244,7 +244,7 @@ static MACHINE_RESET( shogwarr )
 
 READ16_HANDLER( kaneko16_rnd_r )
 {
-	return mame_rand() & 0xffff;
+	return mame_rand(Machine) & 0xffff;
 }
 
 WRITE16_HANDLER( kaneko16_coin_lockout_w )
@@ -3649,7 +3649,7 @@ ROM_END
 
 DRIVER_INIT( shogwarr )
 {
-	init_kaneko16();
+	init_kaneko16(machine);
 
 /*
     ROM test at 2237e:

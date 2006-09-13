@@ -39,7 +39,7 @@ typedef unsigned char (*OPL_PORTHANDLER_R)(void *param);
 
 #if BUILD_YM3812
 
-void *YM3812Init(int clock, int rate);
+void *YM3812Init(int sndindex, UINT32 clock, UINT32 rate);
 void YM3812Shutdown(void *chip);
 void YM3812ResetChip(void *chip);
 int  YM3812Write(void *chip, int a, int v);
@@ -63,7 +63,7 @@ void YM3812SetUpdateHandler(void *chip, OPL_UPDATEHANDLER UpdateHandler, void *p
 ** 'clock' is the chip clock in Hz
 ** 'rate' is sampling rate
 */
-void *YM3526Init(int clock, int rate);
+void *YM3526Init(int sndindex, UINT32 clock, UINT32 rate);
 /* shutdown the YM3526 emulators*/
 void YM3526Shutdown(void *chip);
 void YM3526ResetChip(void *chip);
@@ -93,7 +93,7 @@ void Y8950SetPortHandler(void *chip, OPL_PORTHANDLER_W PortHandler_w, OPL_PORTHA
 void Y8950SetKeyboardHandler(void *chip, OPL_PORTHANDLER_W KeyboardHandler_w, OPL_PORTHANDLER_R KeyboardHandler_r, void *param);
 void Y8950SetDeltaTMemory(void *chip, void * deltat_mem_ptr, int deltat_mem_size );
 
-void * Y8950Init (int clock, int rate);
+void * Y8950Init (int sndindex, UINT32 clock, UINT32 rate);
 void Y8950Shutdown (void *chip);
 void Y8950ResetChip (void *chip);
 int  Y8950Write (void *chip, int a, int v);

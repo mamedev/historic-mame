@@ -274,7 +274,7 @@ INLINE void signal_delayed_interrupt(struct ide_state *ide, double time, int buf
  *
  *************************************/
 
-static void ide_controller_exit(void)
+static void ide_controller_exit(running_machine *machine)
 {
 	int i;
 
@@ -294,8 +294,8 @@ int ide_controller_init_custom(int which, struct ide_interface *intf, chd_file *
 	const hard_disk_info *hdinfo;
 
 	/* must be called during init phase */
-	assert_always(mame_get_phase() == MAME_PHASE_INIT, "ide_controller_init can only be called at init time");
-	add_exit_callback(ide_controller_exit);
+	assert_always(mame_get_phase(Machine) == MAME_PHASE_INIT, "ide_controller_init can only be called at init time");
+	add_exit_callback(Machine, ide_controller_exit);
 
 	/* NULL interface is immediate failure */
 	if (!intf)

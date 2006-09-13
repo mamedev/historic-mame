@@ -54,7 +54,7 @@ PALETTE_INIT( spacefb )
 		if (bit1 | bit2)
 			bit0 = 1;
 		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 	}
 
 	for (i = 0;i < 4 * 8;i++)
@@ -63,10 +63,10 @@ PALETTE_INIT( spacefb )
 		else colortable[i] = 0;
 	}
 	// RGB background colour flash.. Only red background is actually used
-	palette_set_color(32,0x47,0,0);			/* Red */
-	palette_set_color(33,0,0,0x47);			/* Blue */
-	palette_set_color(34,0x47,0,0x47);		/* Red+Blue */
-	palette_set_color(35,0x47,0x47,0x47);	/* White */
+	palette_set_color(machine,32,0x47,0,0);			/* Red */
+	palette_set_color(machine,33,0,0,0x47);			/* Blue */
+	palette_set_color(machine,34,0x47,0,0x47);		/* Red+Blue */
+	palette_set_color(machine,35,0x47,0x47,0x47);	/* White */
 
 }
 

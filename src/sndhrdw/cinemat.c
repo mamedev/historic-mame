@@ -93,10 +93,10 @@ WRITE8_HANDLER( cinemat_sound_control_w )
  *
  *************************************/
 
-static void generic_init(void (*callback)(UINT8, UINT8))
+static void generic_init(running_machine *machine, void (*callback)(UINT8, UINT8))
 {
 	/* call the standard init */
-	machine_reset_cinemat();
+	machine_reset_cinemat(machine);
 
 	/* set the sound handler */
 	sound_handler = callback;
@@ -197,7 +197,7 @@ static void spacewar_sound_w(UINT8 sound_val, UINT8 bits_changed)
 
 static MACHINE_RESET( spacewar )
 {
-	generic_init(spacewar_sound_w);
+	generic_init(machine, spacewar_sound_w);
 }
 
 MACHINE_DRIVER_START( spacewar_sound )
@@ -250,7 +250,7 @@ static void barrier_sound_w(UINT8 sound_val, UINT8 bits_changed)
 
 static MACHINE_RESET( barrier )
 {
-	generic_init(barrier_sound_w);
+	generic_init(machine, barrier_sound_w);
 }
 
 MACHINE_DRIVER_START( barrier_sound )
@@ -308,7 +308,7 @@ static void speedfrk_sound_w(UINT8 sound_val, UINT8 bits_changed)
 
 static MACHINE_RESET( speedfrk )
 {
-	generic_init(speedfrk_sound_w);
+	generic_init(machine, speedfrk_sound_w);
 }
 
 MACHINE_DRIVER_START( speedfrk_sound )
@@ -382,7 +382,7 @@ static void starhawk_sound_w(UINT8 sound_val, UINT8 bits_changed)
 
 static MACHINE_RESET( starhawk )
 {
-	generic_init(starhawk_sound_w);
+	generic_init(machine, starhawk_sound_w);
 }
 
 MACHINE_DRIVER_START( starhawk_sound )
@@ -450,7 +450,7 @@ static void sundance_sound_w(UINT8 sound_val, UINT8 bits_changed)
 
 static MACHINE_RESET( sundance )
 {
-	generic_init(sundance_sound_w);
+	generic_init(machine, sundance_sound_w);
 }
 
 MACHINE_DRIVER_START( sundance_sound )
@@ -537,7 +537,7 @@ static void tailg_sound_w(UINT8 sound_val, UINT8 bits_changed)
 
 static MACHINE_RESET( tailg )
 {
-	generic_init(tailg_sound_w);
+	generic_init(machine, tailg_sound_w);
 }
 
 MACHINE_DRIVER_START( tailg_sound )
@@ -604,7 +604,7 @@ static void warrior_sound_w(UINT8 sound_val, UINT8 bits_changed)
 
 static MACHINE_RESET( warrior )
 {
-	generic_init(warrior_sound_w);
+	generic_init(machine, warrior_sound_w);
 }
 
 MACHINE_DRIVER_START( warrior_sound )
@@ -697,7 +697,7 @@ static void armora_sound_w(UINT8 sound_val, UINT8 bits_changed)
 
 static MACHINE_RESET( armora )
 {
-	generic_init(armora_sound_w);
+	generic_init(machine, armora_sound_w);
 }
 
 MACHINE_DRIVER_START( armora_sound )
@@ -787,7 +787,7 @@ static void ripoff_sound_w(UINT8 sound_val, UINT8 bits_changed)
 
 static MACHINE_RESET( ripoff )
 {
-	generic_init(ripoff_sound_w);
+	generic_init(machine, ripoff_sound_w);
 }
 
 MACHINE_DRIVER_START( ripoff_sound )
@@ -899,7 +899,7 @@ static void starcas_sound_w(UINT8 sound_val, UINT8 bits_changed)
 
 static MACHINE_RESET( starcas )
 {
-	generic_init(starcas_sound_w);
+	generic_init(machine, starcas_sound_w);
 }
 
 MACHINE_DRIVER_START( starcas_sound )
@@ -1034,7 +1034,7 @@ static void solarq_sound_w(UINT8 sound_val, UINT8 bits_changed)
 
 static MACHINE_RESET( solarq )
 {
-	generic_init(solarq_sound_w);
+	generic_init(machine, solarq_sound_w);
 }
 
 MACHINE_DRIVER_START( solarq_sound )
@@ -1167,7 +1167,7 @@ static void boxingb_sound_w(UINT8 sound_val, UINT8 bits_changed)
 
 static MACHINE_RESET( boxingb )
 {
-	generic_init(boxingb_sound_w);
+	generic_init(machine, boxingb_sound_w);
 }
 
 MACHINE_DRIVER_START( boxingb_sound )
@@ -1279,7 +1279,7 @@ static void wotw_sound_w(UINT8 sound_val, UINT8 bits_changed)
 
 static MACHINE_RESET( wotw )
 {
-	generic_init(wotw_sound_w);
+	generic_init(machine, wotw_sound_w);
 }
 
 MACHINE_DRIVER_START( wotw_sound )
@@ -1391,7 +1391,7 @@ static void wotwc_sound_w(UINT8 sound_val, UINT8 bits_changed)
 
 static MACHINE_RESET( wotwc )
 {
-	generic_init(wotwc_sound_w);
+	generic_init(machine, wotwc_sound_w);
 }
 
 MACHINE_DRIVER_START( wotwc_sound )
@@ -1505,7 +1505,7 @@ static z80ctc_interface demon_z80ctc_interface =
 static MACHINE_RESET( demon_sound )
 {
 	/* generic init */
-	generic_init(demon_sound_w);
+	generic_init(machine, demon_sound_w);
 
 	/* initialize the CTC interface */
 	demon_z80ctc_interface.baseclock = Machine->drv->cpu[1].cpu_clock;
@@ -1593,7 +1593,7 @@ static WRITE8_HANDLER( qb3_sound_w )
 
 static MACHINE_RESET( qb3_sound )
 {
-	machine_reset_demon_sound();
+	machine_reset_demon_sound(machine);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x04, 0x04, 0, 0, qb3_sound_w);
 
 	/* this patch prevents the sound ROM from eating itself when command $0A is sent */

@@ -76,7 +76,7 @@ VIDEO_START( leland )
 VIDEO_START( ataxx )
 {
 	/* first do the standard stuff */
-	if (video_start_leland())
+	if (video_start_leland(machine))
 		return 1;
 
 	/* allocate memory */

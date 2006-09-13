@@ -1009,7 +1009,7 @@ static MACHINE_RESET( pballoon )
 	// 40.3 Hz update (measured)
 	rockola_set_music_clock(1 / 40.3);
 
-	machine_reset_fantasy();
+	machine_reset_fantasy(machine);
 }
 
 /* Machine Drivers */

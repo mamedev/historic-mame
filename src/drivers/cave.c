@@ -4066,7 +4066,7 @@ DRIVER_INIT( cave )
 
 DRIVER_INIT( agallet )
 {
-	init_cave();
+	init_cave(machine);
 
 	sailormn_unpack_tiles( REGION_GFX4 );
 
@@ -4082,7 +4082,7 @@ DRIVER_INIT( agallet )
 
 DRIVER_INIT( dfeveron )
 {
-	init_cave();
+	init_cave(machine);
 
 	cave_default_eeprom = cave_default_eeprom_type1;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type1);
@@ -4094,7 +4094,7 @@ DRIVER_INIT( dfeveron )
 
 DRIVER_INIT( feversos )
 {
-	init_cave();
+	init_cave(machine);
 
 	cave_default_eeprom = cave_default_eeprom_type1feversos;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type1feversos);
@@ -4106,7 +4106,7 @@ DRIVER_INIT( feversos )
 
 DRIVER_INIT( ddonpach )
 {
-	init_cave();
+	init_cave(machine);
 
 	cave_default_eeprom = cave_default_eeprom_type2;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type2);
@@ -4119,7 +4119,7 @@ DRIVER_INIT( ddonpach )
 
 DRIVER_INIT( donpachi )
 {
-	init_cave();
+	init_cave(machine);
 
 	cave_default_eeprom = cave_default_eeprom_type2;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type2);
@@ -4134,7 +4134,7 @@ DRIVER_INIT( donpachi )
 
 DRIVER_INIT( esprade )
 {
-	init_cave();
+	init_cave(machine);
 
 	cave_default_eeprom = cave_default_eeprom_type2;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type2);
@@ -4153,7 +4153,7 @@ DRIVER_INIT( esprade )
 
 DRIVER_INIT( gaia )
 {
-	init_cave();
+	init_cave(machine);
 
 	/* No EEPROM */
 
@@ -4164,7 +4164,7 @@ DRIVER_INIT( gaia )
 
 DRIVER_INIT( guwange )
 {
-	init_cave();
+	init_cave(machine);
 
 	cave_default_eeprom = cave_default_eeprom_type1;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type1);
@@ -4176,7 +4176,7 @@ DRIVER_INIT( guwange )
 
 DRIVER_INIT( hotdogst )
 {
-	init_cave();
+	init_cave(machine);
 
 	cave_default_eeprom = cave_default_eeprom_type4;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type4);
@@ -4193,7 +4193,7 @@ DRIVER_INIT( mazinger )
 	UINT8 *src = memory_region(REGION_GFX1);
 	int len = memory_region_length(REGION_GFX1);
 
-	init_cave();
+	init_cave(machine);
 
 	/* decrypt sprites */
 	if ((buffer = malloc(len)))
@@ -4221,7 +4221,7 @@ DRIVER_INIT( mazinger )
 
 DRIVER_INIT( metmqstr )
 {
-	init_cave();
+	init_cave(machine);
 
 	unpack_sprites();
 	cave_spritetype = 2;	// Normal sprites with different position handling
@@ -4237,7 +4237,7 @@ DRIVER_INIT( pwrins2j )
 	int len = memory_region_length(REGION_GFX1);
 	int i, j;
 
-	init_cave();
+	init_cave(machine);
 
 	if ((buffer = malloc(len)))
 	{
@@ -4264,7 +4264,7 @@ DRIVER_INIT( pwrinst2 )
 {
 	/* this patch fixes on of the moves, why is it needed? is the rom bad or is there another
        problem? does the Japan set need it or not? */
-	init_pwrins2j();
+	init_pwrins2j(machine);
 
 #if 1		//ROM PATCH
 	{
@@ -4282,7 +4282,7 @@ DRIVER_INIT( sailormn )
 	UINT8 *src = memory_region(REGION_GFX1);
 	int len = memory_region_length(REGION_GFX1);
 
-	init_cave();
+	init_cave(machine);
 
 	/* decrypt sprites */
 	if ((buffer = malloc(len)))
@@ -4308,7 +4308,7 @@ DRIVER_INIT( sailormn )
 
 DRIVER_INIT( uopoko )
 {
-	init_cave();
+	init_cave(machine);
 
 	cave_default_eeprom = cave_default_eeprom_type3;
 	cave_default_eeprom_length = sizeof(cave_default_eeprom_type4);
@@ -4321,7 +4321,7 @@ DRIVER_INIT( uopoko )
 
 DRIVER_INIT( korokoro )
 {
-	init_cave();
+	init_cave(machine);
 
 	irq_level = 2;
 

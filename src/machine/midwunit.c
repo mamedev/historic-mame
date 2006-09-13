@@ -566,7 +566,7 @@ MACHINE_RESET( midwunit )
 
 MACHINE_RESET( midxunit )
 {
-	machine_reset_midwunit();
+	machine_reset_midwunit(machine);
 	dcs_set_io_callbacks(midxunit_dcs_output_full, NULL);
 }
 

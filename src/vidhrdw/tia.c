@@ -132,7 +132,7 @@ PALETTE_INIT( tia_NTSC )
 			if (G > 1) G = 1;
 			if (B > 1) B = 1;
 
-			palette_set_color(8 * i + j,
+			palette_set_color(machine,8 * i + j,
 				(UINT8) (255 * R + 0.5),
 				(UINT8) (255 * G + 0.5),
 				(UINT8) (255 * B + 0.5));
@@ -190,7 +190,7 @@ PALETTE_INIT( tia_PAL )
 			if (G > 1) G = 1;
 			if (B > 1) B = 1;
 
-			palette_set_color(8 * i + j,
+			palette_set_color(machine,8 * i + j,
 				(UINT8) (255 * R + 0.5),
 				(UINT8) (255 * G + 0.5),
 				(UINT8) (255 * B + 0.5));

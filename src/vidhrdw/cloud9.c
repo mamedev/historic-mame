@@ -112,7 +112,7 @@ WRITE8_HANDLER( cloud9_paletteram_w )
 	bit2 = (~b >> 2) & 0x01;
 	b = combine_3_weights(bweights, bit0, bit1, bit2);
 
-	palette_set_color(offset & 0x3f, r, g, b);
+	palette_set_color(Machine, offset & 0x3f, r, g, b);
 }
 
 
@@ -257,7 +257,7 @@ VIDEO_UPDATE( cloud9 )
 {
 	UINT8 *spriteaddr = spriteram;
 	int flip = video_control[5] ? 0xff : 0x00;	/* PLAYER2 */
-	pen_t black = get_black_pen();
+	pen_t black = get_black_pen(machine);
 	int x, y, offs;
 
 	/* draw the sprites */

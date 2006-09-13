@@ -18,17 +18,8 @@ Driver by Takahiro Nogi (nogi@kt.rim.or.jp) 1999/12/15 -
 *******************************************************************/
 WRITE8_HANDLER( dotrikun_color_w )
 {
-	int r, g, b;
-
-	r = ((data & 0x08) ? 0xff : 0x00);
-	g = ((data & 0x10) ? 0xff : 0x00);
-	b = ((data & 0x20) ? 0xff : 0x00);
-	palette_set_color(0, r, g, b);		// BG color
-
-	r = ((data & 0x01) ? 0xff : 0x00);
-	g = ((data & 0x02) ? 0xff : 0x00);
-	b = ((data & 0x04) ? 0xff : 0x00);
-	palette_set_color(1, r, g, b);		// DOT color
+	palette_set_color(Machine, 0, pal1bit(data >> 3), pal1bit(data >> 4), pal1bit(data >> 5));		// BG color
+	palette_set_color(Machine, 1, pal1bit(data >> 0), pal1bit(data >> 1), pal1bit(data >> 2));		// DOT color
 }
 
 

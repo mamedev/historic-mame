@@ -145,7 +145,7 @@ PALETTE_INIT( rallyx )
 			b = 0x50 * bit0 + 0xab * bit1;
 		}
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 
 		color_prom++;
 	}
@@ -178,7 +178,7 @@ PALETTE_INIT( rallyx )
 			bits = (i >> 4) & 0x03;
 			b = map[bits];
 
-			palette_set_color(i + 32,r,g,b);
+			palette_set_color(machine,i + 32,r,g,b);
 		}
 	}
 }
@@ -284,9 +284,9 @@ VIDEO_START( rallyx )
 	rallyx_radary = rallyx_radarx + 0x800;
 
 	for (i = 0;i < 16;i++)
-		palette_shadow_table[i] = i+16;
+		Machine->shadow_table[i] = i+16;
 	for (i = 16;i < 32;i++)
-		palette_shadow_table[i] = i;
+		Machine->shadow_table[i] = i;
 	for (i = 0;i < 3;i++)
 		gfx_drawmode_table[i] = DRAWMODE_SHADOW;
 	gfx_drawmode_table[3] = DRAWMODE_NONE;

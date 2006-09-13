@@ -104,7 +104,7 @@ void littlerb_data_write(UINT16 data)
 			r = littlerb_region2[x+1];
 			g = littlerb_region2[x+2];
 
-			palette_set_color(x/3,r,g,b);
+			palette_set_color(Machine,x/3,r,g,b);
 		}
 
 
@@ -297,7 +297,7 @@ PALETTE_INIT( littlerb )
 {
 	int i;
 	for(i = 0; i < 256; i++)
-		palette_set_color(i,i,i,i);
+		palette_set_color(machine,i,i,i,i);
 }
 
 VIDEO_START(littlerb)
@@ -348,7 +348,7 @@ VIDEO_UPDATE(littlerb)
 	int x,y,offs, code;
 	int xsize,ysize;
 	UINT16* spriteregion = &littlerb_region4[0x400];
-	fillbitmap(bitmap, get_black_pen(), cliprect);
+	fillbitmap(bitmap, get_black_pen(machine), cliprect);
 
 	/* the spriteram format is something like this .. */
 	for (offs=0x26/2;offs<0xc00;offs+=6) // start at 00x26?

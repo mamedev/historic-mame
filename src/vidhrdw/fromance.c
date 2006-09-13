@@ -163,7 +163,6 @@ READ8_HANDLER( fromance_paletteram_r )
 WRITE8_HANDLER( fromance_paletteram_w )
 {
 	int palword;
-	int r, g, b;
 
 	/* adjust for banking and modify */
 	offset |= selected_paletteram << 11;
@@ -171,15 +170,7 @@ WRITE8_HANDLER( fromance_paletteram_w )
 
 	/* compute R,G,B */
 	palword = (local_paletteram[offset | 1] << 8) | local_paletteram[offset & ~1];
-	r = (palword >> 10) & 0x1f;
-	g = (palword >>  5) & 0x1f;
-	b = (palword >>  0) & 0x1f;
-
-	/* up to 8 bits */
-	r = (r << 3) | (r >> 2);
-	g = (g << 3) | (g >> 2);
-	b = (b << 3) | (b >> 2);
-	palette_set_color(offset / 2, r, g, b);
+	palette_set_color(Machine, offset / 2, pal5bit(palword >> 10), pal5bit(palword >> 5), pal5bit(palword >> 0));
 }
 
 

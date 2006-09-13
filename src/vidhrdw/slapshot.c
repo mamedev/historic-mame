@@ -74,7 +74,7 @@ VIDEO_START( slapshot )
 {
 	taito_hide_pixels = 3;
 	taito_sprite_type = 2;
-	return video_start_slapshot_core();
+	return video_start_slapshot_core(machine);
 }
 
 

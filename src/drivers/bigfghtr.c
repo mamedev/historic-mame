@@ -257,7 +257,7 @@ VIDEO_UPDATE( bigfghtr )
 	}
 	else
 	{
-		fillbitmap( bitmap, get_black_pen(), cliprect );
+		fillbitmap( bitmap, get_black_pen(machine), cliprect );
 	}
 
 	if( sprite_enable ) draw_sprites( bitmap, cliprect, 2 );

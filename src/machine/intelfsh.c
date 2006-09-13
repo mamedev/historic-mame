@@ -382,7 +382,7 @@ void intelflash_write(int chip, UINT32 address, UINT32 data)
 	}
 }
 
-void nvram_handler_intelflash(int chip,mame_file *file,int read_or_write)
+void nvram_handler_intelflash(running_machine *machine, int chip,mame_file *file,int read_or_write)
 {
 	struct flash_chip *c;
 	if( chip >= FLASH_CHIPS_MAX )

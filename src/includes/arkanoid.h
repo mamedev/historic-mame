@@ -2,6 +2,7 @@
 enum {
 	ARKUNK=0,  /* unknown bootlegs for inclusion of possible new sets */
 	ARKANGC,
+	ARKANGC2,
 	ARKBLOCK,
 	ARKBLOC2,
 	ARKGCBL,

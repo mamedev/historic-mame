@@ -370,7 +370,7 @@ static VIDEO_UPDATE( rchase )
 	int y1 = readinputportbytag("ADC1");
 	int x2 = readinputportbytag("ADC2");
 	int y2 = readinputportbytag("ADC3");
-	video_update_yboard(screen, bitmap, cliprect);
+	video_update_yboard(machine, screen, bitmap, cliprect);
 	draw_crosshair(bitmap, x1 * (Machine->screen[0].width - 1) / 255, y1 * (Machine->screen[0].height - 1) / 255, cliprect, 0);
 	draw_crosshair(bitmap, x2 * (Machine->screen[0].width - 1) / 255, y2 * (Machine->screen[0].height - 1) / 255, cliprect, 1);
 	return 0;

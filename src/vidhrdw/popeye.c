@@ -57,7 +57,7 @@ static tilemap *fg_tilemap;
   The bootleg is the same, but the outputs are not inverted.
 
 ***************************************************************************/
-static void convert_color_prom(unsigned short *colortable,const unsigned char *color_prom)
+static void convert_color_prom(running_machine *machine,unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i,pal_index;
 
@@ -89,7 +89,7 @@ static void convert_color_prom(unsigned short *colortable,const unsigned char *c
 		bit2 = ((color_prom[prom_offs] ^ invertmask) >> 7) & 0x01;
 		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-		palette_set_color(pal_index++,r,g,b);
+		palette_set_color(machine,pal_index++,r,g,b);
 	}
 
 	color_prom += 32;
@@ -116,7 +116,7 @@ static void convert_color_prom(unsigned short *colortable,const unsigned char *c
 		bit2 = ((color_prom[256] ^ invertmask) >> 3) & 0x01;
 		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-		palette_set_color(pal_index++,r,g,b);
+		palette_set_color(machine,pal_index++,r,g,b);
 
 		color_prom++;
 	}
@@ -140,17 +140,17 @@ PALETTE_INIT( popeye )
 {
 	invertmask = 0xff;
 
-	convert_color_prom(colortable,color_prom);
+	convert_color_prom(machine,colortable,color_prom);
 }
 
 PALETTE_INIT( popeyebl )
 {
 	invertmask = 0x00;
 
-	convert_color_prom(colortable,color_prom);
+	convert_color_prom(machine,colortable,color_prom);
 }
 
-static void set_background_palette(int bank)
+static void set_background_palette(running_machine *machine,int bank)
 {
 	int i;
 	UINT8 *color_prom = memory_region(REGION_PROMS) + 16 * bank;
@@ -182,7 +182,7 @@ static void set_background_palette(int bank)
 		}
 		b = 0x1c * bit0 + 0x31 * bit1 + 0x47 * bit2;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 
 		color_prom++;
 	}
@@ -318,7 +318,7 @@ static void popeye_draw_background(mame_bitmap *bitmap, const rectangle *cliprec
 		lastflip = flip_screen;
 	}
 
-	set_background_palette((*popeye_palettebank & 0x08) >> 3);
+	set_background_palette(Machine, (*popeye_palettebank & 0x08) >> 3);
 
 	if (popeye_background_pos[1] == 0)	/* no background */
 	{

@@ -68,6 +68,25 @@
         cases, e.g. to support alpha blending.
         MachineDriver->video_attributes must contain VIDEO_RGB_DIRECT.
 
+
+    Shadows(Highlights) Quick Reference
+    -----------------------------------
+
+    1) declare MDRV_VIDEO_ATTRIBUTES( ... VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS ... )
+
+    2) set gfx_drawmode_table[0-n] to DRAWMODE_NONE, DRAWMODE_SOURCE or DRAWMODE_SHADOW
+
+    3) (optional) set shadow darkness or highlight brightness by
+        palette_set_shadow_factor(0.0-1.0) or
+        palette_set_highlight_factor(1.0-n.n)
+
+    4) before calling drawgfx use
+        palette_set_shadow_mode(0) to arm shadows or
+        palette_set_shadow_mode(1) to arm highlights
+
+    5) call drawgfx with the TRANSPARENCY_PEN_TABLE flag
+        drawgfx( ..., cliprect, TRANSPARENCY_PEN_TABLE, transparent_color )
+
 ******************************************************************************/
 
 #pragma once
@@ -84,9 +103,6 @@
 
 #define PALETTE_DEFAULT_SHADOW_FACTOR (0.6)
 #define PALETTE_DEFAULT_HIGHLIGHT_FACTOR (1/PALETTE_DEFAULT_SHADOW_FACTOR)
-
-#define PALETTE_DEFAULT_SHADOW_FACTOR32 (0.6)
-#define PALETTE_DEFAULT_HIGHLIGHT_FACTOR32 (1/PALETTE_DEFAULT_SHADOW_FACTOR32)
 
 
 
@@ -107,61 +123,30 @@
 
 
 /***************************************************************************
-    GLOBAL VARIABLES
-***************************************************************************/
-
-extern rgb_t *game_palette;
-extern rgb_t *adjusted_palette;
-extern UINT16 *palette_shadow_table;
-
-
-
-/***************************************************************************
     FUNCTION PROTOTYPES
 ***************************************************************************/
 
-void palette_init(void);
-void palette_config(void);
-void palette_add_notifier(void (*callback)(void *, int, rgb_t), void *param);
-int palette_get_total_colors_with_ui(void);
+void palette_init(running_machine *machine);
+void palette_config(running_machine *machine);
+void palette_add_notifier(running_machine *machine, void (*callback)(void *, int, rgb_t), void *param);
+int palette_get_total_colors_with_ui(running_machine *machine);
 
-void palette_update_display(mame_display *display);
+rgb_t *palette_get_raw_colors(running_machine *machine);
+rgb_t *palette_get_adjusted_colors(running_machine *machine);
 
-void palette_set_color(pen_t pen, UINT8 r, UINT8 g, UINT8 b);
-void palette_get_color(pen_t pen, UINT8 *r, UINT8 *g, UINT8 *b);
-void palette_set_colors(pen_t color_base, const UINT8 *colors, int color_count);
+void palette_set_color(running_machine *machine, pen_t pen, UINT8 r, UINT8 g, UINT8 b);
+rgb_t palette_get_color(running_machine *machine, pen_t pen);
+void palette_set_colors(running_machine *machine, pen_t color_base, const UINT8 *colors, int color_count);
 
-void palette_set_brightness(pen_t pen, double bright);
-void palette_set_shadow_factor(double factor);
-void palette_set_highlight_factor(double factor);
+void palette_set_brightness(running_machine *machine, pen_t pen, double bright);
+void palette_set_shadow_factor(running_machine *machine, double factor);
+void palette_set_highlight_factor(running_machine *machine, double factor);
 
-/*
-    Shadows(Highlights) Quick Reference
-    -----------------------------------
+void palette_set_shadow_mode(running_machine *machine, int mode);
+void palette_set_shadow_dRGB32(running_machine *machine, int mode, int dr, int dg, int db, int noclip);
 
-    1) declare MDRV_VIDEO_ATTRIBUTES( ... VIDEO_HAS_SHADOWS | VIDEO_HAS_HIGHLIGHTS ... )
-
-    2) set gfx_drawmode_table[0-n] to DRAWMODE_NONE, DRAWMODE_SOURCE or DRAWMODE_SHADOW
-
-    3) (optional) set shadow darkness or highlight brightness by
-        palette_set_shadow_factor32(0.0-1.0) or
-        palette_set_highlight_factor32(1.0-n.n)
-
-    4) before calling drawgfx use
-        palette_set_shadow_mode(0) to arm shadows or
-        palette_set_shadow_mode(1) to arm highlights
-
-    5) call drawgfx with the TRANSPARENCY_PEN_TABLE flag
-        drawgfx( ..., cliprect, TRANSPARENCY_PEN_TABLE, transparent_color )
-*/
-void palette_set_shadow_mode(int mode);
-void palette_set_shadow_factor32(double factor);
-void palette_set_highlight_factor32(double factor);
-void palette_set_shadow_dRGB32(int mode, int dr, int dg, int db, int noclip);
-void palette_set_highlight_method(int method); //0=default, 1=multiplication with flooding, 2=addition
-
-pen_t get_black_pen(void);
-pen_t get_white_pen(void);
+pen_t get_black_pen(running_machine *machine);
+pen_t get_white_pen(running_machine *machine);
 
 
 

@@ -48,13 +48,13 @@ extern INTERRUPT_GEN( espial_sound_nmi_gen );
 static MACHINE_RESET( zodiack )
 {
 	percuss_hardware = 0;
-	machine_reset_espial();
+	machine_reset_espial(machine);
 }
 
 static MACHINE_RESET( percuss )
 {
 	percuss_hardware = 1;
-	machine_reset_espial();
+	machine_reset_espial(machine);
 }
 
 

@@ -103,7 +103,7 @@ VIDEO_START(polygonet_vh_start)
 VIDEO_UPDATE(polygonet_vh_screenrefresh)
 {
 	fillbitmap(priority_bitmap, 0, NULL);
-	fillbitmap(bitmap, get_black_pen(), &Machine->screen[0].visarea);
+	fillbitmap(bitmap, get_black_pen(machine), &Machine->screen[0].visarea);
 
 	tilemap_draw(bitmap, cliprect, ttl_tilemap, 0, 1<<0);
 	return 0;

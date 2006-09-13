@@ -22,7 +22,7 @@ PALETTE_INIT( nyny )
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		palette_set_color(i,((i >> 0) & 1) * 0xff,((i >> 1) & 1) * 0xff,((i >> 2) & 1) * 0xff);
+		palette_set_color(machine,i,pal1bit(i >> 0),pal1bit(i >> 1),pal1bit(i >> 2));
 	}
 }
 

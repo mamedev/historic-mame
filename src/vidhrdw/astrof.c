@@ -67,7 +67,7 @@ static void modify_palette(void)
 
 		col_index++;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(Machine,i,r,g,b);
 	}
 }
 
@@ -80,7 +80,7 @@ static void modify_palette(void)
 VIDEO_START( astrof )
 {
 	colorram = auto_malloc(videoram_size);
-	if (video_start_generic())
+	if (video_start_generic(machine))
 		return 1;
 
 	do_modify_palette = 0;

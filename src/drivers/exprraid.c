@@ -594,7 +594,7 @@ static DRIVER_INIT( exprraid )
 	rom[0xffff] = rom[0xfff2];
 
 	/* HACK!: Implement custom opcode as regular with a mapped io read */
-	init_wexpress();
+	init_wexpress(machine);
 }
 
 static DRIVER_INIT( wexpresb )

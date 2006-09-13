@@ -558,7 +558,7 @@ VIDEO_UPDATE( slikshot )
 	int temp, i;
 
 	/* draw the normal video first */
-	video_update_itech8_2page(screen, bitmap, cliprect);
+	video_update_itech8_2page(machine, screen, bitmap, cliprect);
 
 	/* add the current X,Y positions to the list */
 	xbuffer[ybuffer_next % YBUFFER_COUNT] = readinputportbytag_safe("FAKEX", 0);

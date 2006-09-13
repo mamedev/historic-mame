@@ -130,7 +130,7 @@ VIDEO_UPDATE( warriorb )
 	nodraw  = TC0100SCN_tilemap_draw(bitmap,cliprect,screen,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);	/* left */
 
 	/* Ensure screen blanked even when bottom layers not drawn due to disable bit */
-	if(nodraw) fillbitmap(bitmap, get_black_pen(), cliprect);
+	if(nodraw) fillbitmap(bitmap, get_black_pen(machine), cliprect);
 
 	// draw middle layer
 	TC0100SCN_tilemap_draw(bitmap,cliprect,screen,layer[1],0,1);

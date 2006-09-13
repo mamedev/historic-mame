@@ -170,7 +170,7 @@ static WRITE16_HANDLER( color_ram_word_w )
 		g = (color_ram[offset] &0xff00) >> 8;
 		b = (color_ram[offset] &0xff);
 
-		palette_set_color(offset/2,r,g,b);
+		palette_set_color(Machine,offset/2,r,g,b);
 	}
 }
 

@@ -533,7 +533,7 @@ static void rshark_draw_sprites(mame_bitmap *bitmap)
 
 VIDEO_UPDATE( lastday )
 {
-	fillbitmap(bitmap, get_black_pen(), cliprect);
+	fillbitmap(bitmap, get_black_pen(machine), cliprect);
 
 	if(!(lastday_bgscroll[6] & 0x10))
 		draw_layer(bitmap,2,lastday_bgscroll,memory_region(REGION_GFX5),TRANSPARENCY_NONE);
@@ -550,7 +550,7 @@ VIDEO_UPDATE( lastday )
 
 VIDEO_UPDATE( gulfstrm )
 {
-	fillbitmap(bitmap, get_black_pen(), cliprect);
+	fillbitmap(bitmap, get_black_pen(machine), cliprect);
 
 	if(!(lastday_bgscroll[6] & 0x10))
 		draw_layer(bitmap,2,lastday_bgscroll,memory_region(REGION_GFX5),TRANSPARENCY_NONE);
@@ -565,7 +565,7 @@ VIDEO_UPDATE( gulfstrm )
 
 VIDEO_UPDATE( pollux )
 {
-	fillbitmap(bitmap, get_black_pen(), cliprect);
+	fillbitmap(bitmap, get_black_pen(machine), cliprect);
 
 	if(!(lastday_bgscroll[6] & 0x10))
 		draw_layer(bitmap,2,lastday_bgscroll,memory_region(REGION_GFX5),TRANSPARENCY_NONE);
@@ -580,7 +580,7 @@ VIDEO_UPDATE( pollux )
 
 VIDEO_UPDATE( flytiger )
 {
-	fillbitmap(bitmap, get_black_pen(), cliprect);
+	fillbitmap(bitmap, get_black_pen(machine), cliprect);
 
 	if(flytiger_pri)
 	{

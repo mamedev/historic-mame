@@ -43,13 +43,13 @@ WRITE8_HANDLER( avalnche_output_w )
 		case 0x02:		/* VIDEO INVERT */
 			if (bit)
 			{
-				palette_set_color(0,0,0,0);
-				palette_set_color(1,255,255,255);
+				palette_set_color(Machine,0,0,0,0);
+				palette_set_color(Machine,1,255,255,255);
 			}
 			else
 			{
-				palette_set_color(0,255,255,255);
-				palette_set_color(1,0,0,0);
+				palette_set_color(Machine,0,255,255,255);
+				palette_set_color(Machine,1,0,0,0);
 			}
 			break;
 		case 0x03:		/* 2 CREDIT LAMP */

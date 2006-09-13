@@ -209,7 +209,7 @@ PALETTE_INIT( galaxian )
 		bit1 = BIT(*color_prom,7);
 		b = 0x4f * bit0 + 0xa8 * bit1;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 		color_prom++;
 	}
 
@@ -218,26 +218,26 @@ PALETTE_INIT( galaxian )
 
 
 	/* bullets - yellow and white */
-	palette_set_color(BULLETS_COLOR_BASE+0,0xef,0xef,0x00);
-	palette_set_color(BULLETS_COLOR_BASE+1,0xef,0xef,0xef);
+	palette_set_color(machine,BULLETS_COLOR_BASE+0,0xef,0xef,0x00);
+	palette_set_color(machine,BULLETS_COLOR_BASE+1,0xef,0xef,0xef);
 }
 
 PALETTE_INIT( scramble )
 {
-	palette_init_galaxian(colortable, color_prom);
+	palette_init_galaxian(machine, colortable, color_prom);
 
 
 	/* blue background - 390 ohm resistor */
-	palette_set_color(BACKGROUND_COLOR_BASE,0,0,0x56);
+	palette_set_color(machine,BACKGROUND_COLOR_BASE,0,0,0x56);
 }
 
 PALETTE_INIT( moonwar )
 {
-	palette_init_scramble(colortable, color_prom);
+	palette_init_scramble(machine, colortable, color_prom);
 
 
 	/* wire mod to connect the bullet blue output to the 220 ohm resistor */
-	palette_set_color(BULLETS_COLOR_BASE+0,0xef,0xef,0x97);
+	palette_set_color(machine,BULLETS_COLOR_BASE+0,0xef,0xef,0x97);
 }
 
 PALETTE_INIT( turtles )
@@ -245,7 +245,7 @@ PALETTE_INIT( turtles )
 	int i;
 
 
-	palette_init_galaxian(colortable, color_prom);
+	palette_init_galaxian(machine, colortable, color_prom);
 
 
 	/*  The background color generator is connected this way:
@@ -260,7 +260,7 @@ PALETTE_INIT( turtles )
 		int g = BIT(i,1) * 0x47;
 		int b = BIT(i,2) * 0x55;
 
-		palette_set_color(BACKGROUND_COLOR_BASE+i,r,g,b);
+		palette_set_color(machine,BACKGROUND_COLOR_BASE+i,r,g,b);
 	}
 }
 
@@ -269,7 +269,7 @@ PALETTE_INIT( stratgyx )
 	int i;
 
 
-	palette_init_galaxian(colortable, color_prom);
+	palette_init_galaxian(machine, colortable, color_prom);
 
 
 	/*  The background color generator is connected this way:
@@ -284,17 +284,17 @@ PALETTE_INIT( stratgyx )
 		int g = BIT(i,1) * 0x3c;
 		int b = BIT(i,2) * 0x47;
 
-		palette_set_color(BACKGROUND_COLOR_BASE+i,r,g,b);
+		palette_set_color(machine,BACKGROUND_COLOR_BASE+i,r,g,b);
 	}
 }
 
 PALETTE_INIT( frogger )
 {
-	palette_init_galaxian(colortable, color_prom);
+	palette_init_galaxian(machine, colortable, color_prom);
 
 
 	/* blue background - 470 ohm resistor */
-	palette_set_color(BACKGROUND_COLOR_BASE,0,0,0x47);
+	palette_set_color(machine,BACKGROUND_COLOR_BASE,0,0,0x47);
 }
 
 PALETTE_INIT( rockclim )
@@ -323,7 +323,7 @@ PALETTE_INIT( rockclim )
 		bit1 = BIT(*color_prom,7);
 		b = 0x4f * bit0 + 0xa8 * bit1;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 		color_prom++;
 	}
 }
@@ -369,14 +369,14 @@ PALETTE_INIT( darkplnt )
 		bit2 = BIT(*color_prom,5);
 		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 		color_prom++;
 	}
 
 
 	/* bullets - red and blue */
-	palette_set_color(BULLETS_COLOR_BASE+0,0xef,0x00,0x00);
-	palette_set_color(BULLETS_COLOR_BASE+1,0x00,0x00,0xef);
+	palette_set_color(machine,BULLETS_COLOR_BASE+0,0xef,0x00,0x00);
+	palette_set_color(machine,BULLETS_COLOR_BASE+1,0x00,0x00,0xef);
 }
 
 PALETTE_INIT( minefld )
@@ -384,7 +384,7 @@ PALETTE_INIT( minefld )
 	int i;
 
 
-	palette_init_galaxian(colortable, color_prom);
+	palette_init_galaxian(machine, colortable, color_prom);
 
 
 	/* set up background colors */
@@ -396,7 +396,7 @@ PALETTE_INIT( minefld )
 		int r = 0;
 		int g = i;
 		int b = i * 2;
-		palette_set_color(BACKGROUND_COLOR_BASE+i,r,g,b);
+		palette_set_color(machine,BACKGROUND_COLOR_BASE+i,r,g,b);
 	}
 
 	/* graduated brown */
@@ -406,7 +406,7 @@ PALETTE_INIT( minefld )
 		int r = i * 1.5;
 		int g = i * 0.75;
 		int b = i / 2;
-		palette_set_color(BACKGROUND_COLOR_BASE+128+i,r,g,b);
+		palette_set_color(machine,BACKGROUND_COLOR_BASE+128+i,r,g,b);
 	}
 }
 
@@ -415,7 +415,7 @@ PALETTE_INIT( rescue )
 	int i;
 
 
-	palette_init_galaxian(colortable, color_prom);
+	palette_init_galaxian(machine, colortable, color_prom);
 
 
 	/* set up background colors */
@@ -427,7 +427,7 @@ PALETTE_INIT( rescue )
 		int r = 0;
 		int g = i;
 		int b = i * 2;
-		palette_set_color(BACKGROUND_COLOR_BASE+i,r,g,b);
+		palette_set_color(machine,BACKGROUND_COLOR_BASE+i,r,g,b);
 	}
 }
 
@@ -436,7 +436,7 @@ PALETTE_INIT( mariner )
 	int i;
 
 
-	palette_init_galaxian(colortable, color_prom);
+	palette_init_galaxian(machine, colortable, color_prom);
 
 
 	/* set up background colors */
@@ -456,7 +456,7 @@ PALETTE_INIT( mariner )
 		g = 0;
 		b = 0x0e * BIT(i,0) + 0x1f * BIT(i,1) + 0x43 * BIT(i,2) + 0x8f * BIT(i,3);
 
-		palette_set_color(BACKGROUND_COLOR_BASE+i,r,g,b);
+		palette_set_color(machine,BACKGROUND_COLOR_BASE+i,r,g,b);
 	}
 }
 
@@ -465,7 +465,7 @@ PALETTE_INIT( dambustr )
 {
 	int i;
 
-	palette_init_galaxian(colortable, color_prom);
+	palette_init_galaxian(machine, colortable, color_prom);
 
 
 	/*
@@ -482,7 +482,7 @@ PALETTE_INIT( dambustr )
 		int r = BIT(i,0) * 0x47;
 		int g = BIT(i,1) * 0x47;
 		int b = BIT(i,2) * 0x4f;
-		palette_set_color(BACKGROUND_COLOR_BASE+i,r,g,b);
+		palette_set_color(machine,BACKGROUND_COLOR_BASE+i,r,g,b);
 	}
 }
 
@@ -565,7 +565,7 @@ VIDEO_START( galaxian_plain )
 
 VIDEO_START( galaxian )
 {
-	int ret = video_start_galaxian_plain();
+	int ret = video_start_galaxian_plain(machine);
 
 	draw_stars = galaxian_draw_stars;
 
@@ -576,7 +576,7 @@ VIDEO_START( galaxian )
 
 VIDEO_START( gmgalax )
 {
-	int ret = video_start_galaxian();
+	int ret = video_start_galaxian(machine);
 
 	modify_charcode   = gmgalax_modify_charcode;
 	modify_spritecode = gmgalax_modify_spritecode;
@@ -587,7 +587,7 @@ VIDEO_START( gmgalax )
 
 VIDEO_START( mooncrst )
 {
-	int ret = video_start_galaxian();
+	int ret = video_start_galaxian(machine);
 
 	modify_charcode   = mooncrst_modify_charcode;
 	modify_spritecode = mooncrst_modify_spritecode;
@@ -597,7 +597,7 @@ VIDEO_START( mooncrst )
 
 VIDEO_START( mooncrgx )
 {
-	int ret = video_start_galaxian();
+	int ret = video_start_galaxian(machine);
 
 	modify_charcode   = mooncrgx_modify_charcode;
 	modify_spritecode = mooncrgx_modify_spritecode;
@@ -607,7 +607,7 @@ VIDEO_START( mooncrgx )
 
 VIDEO_START( moonqsr )
 {
-	int ret = video_start_galaxian();
+	int ret = video_start_galaxian(machine);
 
 	modify_charcode   = moonqsr_modify_charcode;
 	modify_spritecode = moonqsr_modify_spritecode;
@@ -617,7 +617,7 @@ VIDEO_START( moonqsr )
 
 VIDEO_START( mshuttle )
 {
-	int ret = video_start_galaxian();
+	int ret = video_start_galaxian(machine);
 
 	modify_charcode   = mshuttle_modify_charcode;
 	modify_spritecode = mshuttle_modify_spritecode;
@@ -627,7 +627,7 @@ VIDEO_START( mshuttle )
 
 VIDEO_START( pisces )
 {
-	int ret = video_start_galaxian();
+	int ret = video_start_galaxian(machine);
 
 	modify_charcode   = pisces_modify_charcode;
 	modify_spritecode = pisces_modify_spritecode;
@@ -637,7 +637,7 @@ VIDEO_START( pisces )
 
 VIDEO_START( gteikob2 )
 {
-	int ret = video_start_pisces();
+	int ret = video_start_pisces(machine);
 
 	draw_bullets = gteikob2_draw_bullets;
 
@@ -646,7 +646,7 @@ VIDEO_START( gteikob2 )
 
 VIDEO_START( batman2 )
 {
-	int ret = video_start_galaxian();
+	int ret = video_start_galaxian(machine);
 
 	modify_charcode   = batman2_modify_charcode;
 	modify_spritecode = batman2_modify_spritecode;
@@ -656,7 +656,7 @@ VIDEO_START( batman2 )
 
 VIDEO_START( scramble )
 {
-	int ret = video_start_galaxian_plain();
+	int ret = video_start_galaxian_plain(machine);
 
 	draw_stars = scramble_draw_stars;
 
@@ -685,7 +685,7 @@ VIDEO_START( sfx )
 
 VIDEO_START( turtles )
 {
-	int ret = video_start_galaxian_plain();
+	int ret = video_start_galaxian_plain(machine);
 
 	draw_background = turtles_draw_background;
 
@@ -694,7 +694,7 @@ VIDEO_START( turtles )
 
 VIDEO_START( theend )
 {
-	int ret = video_start_galaxian();
+	int ret = video_start_galaxian(machine);
 
 	draw_bullets = theend_draw_bullets;
 
@@ -703,7 +703,7 @@ VIDEO_START( theend )
 
 VIDEO_START( darkplnt )
 {
-	int ret = video_start_galaxian_plain();
+	int ret = video_start_galaxian_plain(machine);
 
 	draw_bullets = darkplnt_draw_bullets;
 
@@ -712,7 +712,7 @@ VIDEO_START( darkplnt )
 
 VIDEO_START( rescue )
 {
-	int ret = video_start_scramble();
+	int ret = video_start_scramble(machine);
 
 	draw_stars = rescue_draw_stars;
 
@@ -723,7 +723,7 @@ VIDEO_START( rescue )
 
 VIDEO_START( minefld )
 {
-	int ret = video_start_scramble();
+	int ret = video_start_scramble(machine);
 
 	draw_stars = rescue_draw_stars;
 
@@ -734,7 +734,7 @@ VIDEO_START( minefld )
 
 VIDEO_START( stratgyx )
 {
-	int ret = video_start_galaxian_plain();
+	int ret = video_start_galaxian_plain(machine);
 
 	draw_background = stratgyx_draw_background;
 
@@ -743,7 +743,7 @@ VIDEO_START( stratgyx )
 
 VIDEO_START( ckongs )
 {
-	int ret = video_start_scramble();
+	int ret = video_start_scramble(machine);
 
 	modify_spritecode = mshuttle_modify_spritecode;
 
@@ -752,7 +752,7 @@ VIDEO_START( ckongs )
 
 VIDEO_START( calipso )
 {
-	int ret = video_start_galaxian_plain();
+	int ret = video_start_galaxian_plain(machine);
 
 	draw_bullets = scramble_draw_bullets;
 
@@ -765,7 +765,7 @@ VIDEO_START( calipso )
 
 VIDEO_START( mariner )
 {
-	int ret = video_start_galaxian_plain();
+	int ret = video_start_galaxian_plain(machine);
 
 	draw_stars = mariner_draw_stars;
 
@@ -780,7 +780,7 @@ VIDEO_START( mariner )
 
 VIDEO_START( froggers )
 {
-	int ret = video_start_galaxian_plain();
+	int ret = video_start_galaxian_plain(machine);
 
 	draw_background = frogger_draw_background;
 	modify_color = frogger_modify_color;
@@ -790,7 +790,7 @@ VIDEO_START( froggers )
 
 VIDEO_START( frogger )
 {
-	int ret = video_start_froggers();
+	int ret = video_start_froggers(machine);
 
 	modify_ypos = frogger_modify_ypos;
 
@@ -799,7 +799,7 @@ VIDEO_START( frogger )
 
 VIDEO_START( jumpbug )
 {
-	int ret = video_start_scramble();
+	int ret = video_start_scramble(machine);
 
 	draw_stars = jumpbug_draw_stars;
 
@@ -811,7 +811,7 @@ VIDEO_START( jumpbug )
 
 VIDEO_START( azurian )
 {
-	int ret = video_start_galaxian_plain();
+	int ret = video_start_galaxian_plain(machine);
 
 	draw_stars = galaxian_draw_stars;
 	draw_bullets = scramble_draw_bullets; /* Shots are yellow like in Scramble */
@@ -821,7 +821,7 @@ VIDEO_START( azurian )
 
 VIDEO_START( mimonkey )
 {
-	int ret = video_start_scramble();
+	int ret = video_start_scramble(machine);
 
 	modify_charcode   = mimonkey_modify_charcode;
 	modify_spritecode = mimonkey_modify_spritecode;
@@ -831,7 +831,7 @@ VIDEO_START( mimonkey )
 
 VIDEO_START( dkongjrm )
 {
-	int ret = video_start_galaxian_plain();
+	int ret = video_start_galaxian_plain(machine);
 
 	modify_charcode   = pisces_modify_charcode;
 	modify_spritecode = dkongjrm_modify_spritecode;
@@ -843,7 +843,7 @@ VIDEO_START( dkongjrm )
 
 VIDEO_START( newsin7 )
 {
-	int ret = video_start_scramble();
+	int ret = video_start_scramble(machine);
 
 	spritevisiblearea      = &_spritevisibleareaflipx;
 	spritevisibleareaflipx = &_spritevisiblearea;
@@ -853,7 +853,7 @@ VIDEO_START( newsin7 )
 
 VIDEO_START( scorpion )
 {
-	int ret = video_start_scramble();
+	int ret = video_start_scramble(machine);
 
 	modify_spritecode = batman2_modify_spritecode;
 
@@ -872,7 +872,7 @@ static void rockclim_modify_spritecode(UINT8 *spriteram,int *code,int *flipx,int
 
 VIDEO_START( rockclim )
 {
-	int ret = video_start_galaxian();
+	int ret = video_start_galaxian(machine);
 	rockclim_tilemap = tilemap_create(rockclim_get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,64,32);
 	draw_background = rockclim_draw_background;
 	modify_charcode = mooncrst_modify_charcode;
@@ -1044,7 +1044,7 @@ VIDEO_START( racknrol )
 
 VIDEO_START( bongo )
 {
-	int ret = video_start_galaxian_plain();
+	int ret = video_start_galaxian_plain(machine);
 
 	modify_spritecode = batman2_modify_spritecode;
 
@@ -1073,7 +1073,7 @@ static void dambustr_get_tile_info2(int tile_index)
 
 VIDEO_START( dambustr )
 {
-	int ret = video_start_galaxian();
+	int ret = video_start_galaxian(machine);
 
 	dambustr_bg_split_line = 0;
 	dambustr_bg_color_1 = 0;
@@ -1838,7 +1838,7 @@ void galaxian_init_stars(int colors_offset)
 		g = map[bits];
 		bits = (i >> 4) & 0x03;
 		b = map[bits];
-		palette_set_color(colors_offset+i,r,g,b);
+		palette_set_color(Machine,colors_offset+i,r,g,b);
 	}
 
 

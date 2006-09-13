@@ -250,10 +250,10 @@ static const gfx_decode flyball_gfx_decode_info[] =
 
 PALETTE_INIT( flyball )
 {
-	palette_set_color(0, 0x3F, 0x3F, 0x3F);  /* tiles, ball */
-	palette_set_color(1, 0xFF, 0xFF, 0xFF);
-	palette_set_color(2, 0xFF ,0xFF, 0xFF);  /* sprites */
-	palette_set_color(3, 0x00, 0x00, 0x00);
+	palette_set_color(machine, 0, 0x3F, 0x3F, 0x3F);  /* tiles, ball */
+	palette_set_color(machine, 1, 0xFF, 0xFF, 0xFF);
+	palette_set_color(machine, 2, 0xFF ,0xFF, 0xFF);  /* sprites */
+	palette_set_color(machine, 3, 0x00, 0x00, 0x00);
 }
 
 

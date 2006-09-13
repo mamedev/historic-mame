@@ -94,13 +94,9 @@ READ16_HANDLER( suna16_paletteram16_r )
 
 WRITE16_HANDLER( suna16_paletteram16_w )
 {
-	int r,g,b;
 	if (color_bank)	data = COMBINE_DATA(&paletteram16_2[offset]);
 	else			data = COMBINE_DATA(&paletteram16[offset]);
-	r = (data >>  0) & 0x1F;
-	g = (data >>  5) & 0x1F;
-	b = (data >> 10) & 0x1F;
-	palette_set_color( offset + (color_bank ? 0x100 : 0),(r<<3)|(r>>2),(g<<3)|(g>>2),(b<<3)|(b>>2));
+	palette_set_color( Machine, offset + (color_bank ? 0x100 : 0),pal5bit(data >> 0),pal5bit(data >> 5),pal5bit(data >> 10));
 }
 
 

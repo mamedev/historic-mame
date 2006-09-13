@@ -51,12 +51,7 @@ PALETTE_INIT( irobot )
 	/* the palette will be initialized by the game. We just set it to some */
 	/* pre-cooked values so the startup copyright notice can be displayed. */
 	for (i = 0;i < 64;i++)
-	{
-		int r = ((i & 1) >> 0) * 0xff;
-		int g = ((i & 2) >> 1) * 0xff;
-		int b = ((i & 4) >> 2) * 0xff;
-		palette_set_color(i,r,g,b);
-	}
+		palette_set_color(machine,i,pal1bit(i >> 0),pal1bit(i >> 1),pal1bit(i >> 2));
 
 	/* Convert the color prom for the text palette */
 	for (i = 0;i < 32;i++)
@@ -73,7 +68,7 @@ PALETTE_INIT( irobot )
 	    g = 28 * bits * intensity;
 	    bits = (color >> 2) & 0x03;
 	    b = 28 * bits * intensity;
-		palette_set_color(i+64,r,g,b);
+		palette_set_color(machine,i+64,r,g,b);
 		color_prom++;
 	}
 
@@ -103,7 +98,7 @@ WRITE8_HANDLER( irobot_paletteram_w )
     g = 12 * bits * intensity;
     bits = (color >> 7) & 0x03;
     r = 12 * bits * intensity;
-    palette_set_color((offset >> 1) & 0x3F,r,g,b);
+    palette_set_color(Machine,(offset >> 1) & 0x3F,r,g,b);
 }
 
 

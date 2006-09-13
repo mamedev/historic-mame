@@ -1373,7 +1373,7 @@ static void s12_draw_crosshair( mame_bitmap *bitmap, const char *xtag, const cha
 
 static VIDEO_UPDATE( coh700g )
 {
-	video_update_psx( screen, bitmap, cliprect );
+	video_update_psx( machine, screen, bitmap, cliprect );
 
 	s12_draw_crosshair( bitmap, "IN3", "IN4", cliprect, 0 );
 	s12_draw_crosshair( bitmap, "IN5", "IN6", cliprect, 1 );
@@ -1389,7 +1389,7 @@ static DRIVER_INIT( namcos12 )
 
 static DRIVER_INIT( ptblank2 )
 {
-	init_namcos12();
+	init_namcos12(machine);
 
 	/* patch out wait for dma 5 to complete */
 	*( (UINT32 *)( memory_region( REGION_USER1 ) + 0x331c4 ) ) = 0;
@@ -1407,7 +1407,7 @@ static DRIVER_INIT( ptblank2 )
 
 static DRIVER_INIT( ghlpanic )
 {
-	init_namcos12();
+	init_namcos12(machine);
 
 	system11gun_install();
 
@@ -1422,7 +1422,7 @@ static DRIVER_INIT( ghlpanic )
 
 static DRIVER_INIT( golgo13 )
 {
-	init_namcos12();
+	init_namcos12(machine);
 
 	gunxmin = 0x9c;
 	gunxmax = 0x29b;

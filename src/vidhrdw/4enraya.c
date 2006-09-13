@@ -30,7 +30,7 @@ static void get_tile_info(int tile_index)
 VIDEO_START( 4enraya )
 {
 	bg_tilemap = tilemap_create( get_tile_info,tilemap_scan_rows,TILEMAP_OPAQUE,8,8,32,32 );
-	return video_start_generic();
+	return video_start_generic(machine);
 }
 
 VIDEO_UPDATE( 4enraya)

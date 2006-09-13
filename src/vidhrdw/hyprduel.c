@@ -81,16 +81,9 @@ static UINT16 *hypr_tiletable_old;
 
 WRITE16_HANDLER( hyprduel_paletteram_w )
 {
-	int r,g,b;
-
 	data = COMBINE_DATA(&paletteram16[offset]);
-
-	b = (data >>  1) & 0x1f;
-	r = (data >>  6) & 0x1f;
-	g = (data >> 11) & 0x1f;
-
 	/* We need the ^0xff because we had to invert the pens in the gfx */
-	palette_set_color(offset^0xff,(r << 3) | (r >> 2),(g << 3) | (g >> 2),(b << 3) | (b >> 2));
+	palette_set_color(Machine,offset^0xff,pal5bit(data >> 6),pal5bit(data >> 11),pal5bit(data >> 1));
 }
 
 

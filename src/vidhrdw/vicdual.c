@@ -53,32 +53,11 @@ PALETTE_INIT( vicdual )
 
 	for (i = 0;i < Machine->drv->total_colors / 2;i++)
 	{
-		int bit,r,g,b;
+		/* background components */
+		palette_set_color(machine,2*i,pal1bit(color_prom[i] >> 3),pal1bit(color_prom[i] >> 1),pal1bit(color_prom[i] >> 2));
 
-
-		/* background red component */
-		bit = (color_prom[i] >> 3) & 0x01;
-		r = 0xff * bit;
-		/* background green component */
-		bit = (color_prom[i] >> 1) & 0x01;
-		g = 0xff * bit;
-		/* background blue component */
-		bit = (color_prom[i] >> 2) & 0x01;
-		b = 0xff * bit;
-
-		palette_set_color(2*i,r,g,b);
-
-		/* foreground red component */
-		bit = (color_prom[i] >> 7) & 0x01;
-		r = 0xff * bit;
-		/* foreground green component */
-		bit = (color_prom[i] >> 5) & 0x01;
-		g = 0xff * bit;
-		/* foreground blue component */
-		bit = (color_prom[i] >> 6) & 0x01;
-		b = 0xff * bit;
-
-		palette_set_color(2*i+1,r,g,b);
+		/* foreground components */
+		palette_set_color(machine,2*i+1,pal1bit(color_prom[i] >> 7),pal1bit(color_prom[i] >> 5),pal1bit(color_prom[i] >> 6));
 	}
 
 	palette_bank = 0;

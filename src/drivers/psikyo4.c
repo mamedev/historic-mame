@@ -189,8 +189,8 @@ static WRITE32_HANDLER( ps4_paletteram32_RRRRRRRRGGGGGGGGBBBBBBBBxxxxxxxx_dword_
 	g = ((paletteram32[offset] & 0x00ff0000) >>16);
 	r = ((paletteram32[offset] & 0xff000000) >>24);
 
-	palette_set_color(offset,r,g,b);
-	palette_set_color(offset+0x800,r,g,b); // For screen 2
+	palette_set_color(Machine,offset,r,g,b);
+	palette_set_color(Machine,offset+0x800,r,g,b); // For screen 2
 }
 
 static WRITE32_HANDLER( ps4_bgpen_1_dword_w )
@@ -202,7 +202,7 @@ static WRITE32_HANDLER( ps4_bgpen_1_dword_w )
 	g = ((bgpen_1[0] & 0x00ff0000) >>16);
 	r = ((bgpen_1[0] & 0xff000000) >>24);
 
-	palette_set_color(0x1000,r,g,b); // Clear colour for screen 1
+	palette_set_color(Machine,0x1000,r,g,b); // Clear colour for screen 1
 }
 
 static WRITE32_HANDLER( ps4_bgpen_2_dword_w )
@@ -214,7 +214,7 @@ static WRITE32_HANDLER( ps4_bgpen_2_dword_w )
 	g = ((bgpen_2[0] & 0x00ff0000) >>16);
 	r = ((bgpen_2[0] & 0xff000000) >>24);
 
-	palette_set_color(0x1001,r,g,b); // Clear colour for screen 2
+	palette_set_color(Machine,0x1001,r,g,b); // Clear colour for screen 2
 }
 
 static WRITE32_HANDLER( ps4_screen1_brt_w )
@@ -232,7 +232,7 @@ static WRITE32_HANDLER( ps4_screen1_brt_w )
 			int i;
 
 			for (i = 0; i < 0x800; i++)
-				palette_set_brightness(i,brt1);
+				palette_set_brightness(Machine,i,brt1);
 
 			oldbrt1 = brt1;
 		}
@@ -259,7 +259,7 @@ static WRITE32_HANDLER( ps4_screen2_brt_w )
 			int i;
 
 			for (i = 0x800; i < 0x1000; i++)
-				palette_set_brightness(i,brt2);
+				palette_set_brightness(Machine,i,brt2);
 
 			oldbrt2 = brt2;
 		}

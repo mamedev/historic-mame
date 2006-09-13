@@ -227,7 +227,7 @@ static ADDRESS_MAP_START( io_map, ADDRESS_SPACE_IO, 32 )
 ADDRESS_MAP_END
 
 
-void nvram_handler_flashroms(mame_file *file,int read_or_write)
+NVRAM_HANDLER( flashroms )
 {
 	if (read_or_write)
 	{

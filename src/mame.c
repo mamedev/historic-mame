@@ -119,11 +119,44 @@ struct _callback_item
 	callback_item *	next;
 	union
 	{
-		void		(*exit)(void);
-		void		(*reset)(void);
-		void		(*pause)(int);
-		void		(*log)(const char *);
+		void		(*exit)(running_machine *);
+		void		(*reset)(running_machine *);
+		void		(*pause)(running_machine *, int);
+		void		(*log)(running_machine *, const char *);
 	} func;
+};
+
+
+/* typedef struct _mame_private mame_private; */
+struct _mame_private
+{
+	/* system state */
+	int				current_phase;
+	UINT8			paused;
+	UINT8			hard_reset_pending;
+	UINT8			exit_pending;
+	char *			saveload_pending_file;
+	mame_timer *	soft_reset_timer;
+
+	/* callbacks */
+	callback_item *	reset_callback_list;
+	callback_item *	pause_callback_list;
+	callback_item *	exit_callback_list;
+	callback_item *	logerror_callback_list;
+
+	/* load/save */
+	void 			(*saveload_schedule_callback)(running_machine *);
+	mame_time		saveload_schedule_time;
+
+	/* array of memory regions */
+	region_info		mem_region[MAX_MEMORY_REGIONS];
+
+	/* error recovery and exiting */
+	jmp_buf			fatal_error_jmpbuf;
+	int				fatal_error_jmpbuf_valid;
+
+	/* random number seed */
+	UINT32			rand_seed;
 };
 
 
@@ -133,40 +166,10 @@ struct _callback_item
 ***************************************************************************/
 
 /* the active machine */
-static machine_config internal_drv;
-static running_machine active_machine;
 running_machine *Machine;
 
 /* various game options filled in by the OSD */
 global_options options;
-
-/* system state statics */
-static int current_phase;
-static UINT8 mame_paused;
-static UINT8 hard_reset_pending;
-static UINT8 exit_pending;
-static char *saveload_pending_file;
-static mame_timer *soft_reset_timer;
-
-/* load/save statics */
-static void (*saveload_schedule_callback)(void);
-static mame_time saveload_schedule_time;
-
-/* error recovery and exiting */
-static callback_item *reset_callback_list;
-static callback_item *pause_callback_list;
-static callback_item *exit_callback_list;
-static jmp_buf fatal_error_jmpbuf;
-static int fatal_error_jmpbuf_valid;
-
-/* array of memory regions */
-static region_info mem_region[MAX_MEMORY_REGIONS];
-
-/* random number seed */
-static UINT32 rand_seed;
-
-/* logerror calback info */
-static callback_item *logerror_callback_list;
 
 /* the "disclaimer" that should be printed when run with no parameters */
 const char *mame_disclaimer =
@@ -227,18 +230,18 @@ const char *memory_region_names[REGION_MAX] =
 
 extern int mame_validitychecks(int game);
 
-static void create_machine(int game);
-static void destroy_machine(void);
-static void init_machine(void);
+static running_machine *create_machine(int game);
+static void destroy_machine(running_machine *machine);
+static void init_machine(running_machine *machine);
 static void soft_reset(int param);
 static void free_callback_list(callback_item **cb);
 
-static void saveload_init(void);
-static void handle_save(void);
-static void handle_load(void);
+static void saveload_init(running_machine *machine);
+static void handle_save(running_machine *machine);
+static void handle_load(running_machine *machine);
 
+static void logfile_callback(running_machine *machine, const char *buffer);
 
-static void logfile_callback(const char *buffer);
 
 
 /***************************************************************************
@@ -251,47 +254,53 @@ static void logfile_callback(const char *buffer);
 
 int run_game(int game)
 {
+	running_machine *machine;
+	mame_private *mame;
 	callback_item *cb;
 	int error = 0;
 
+	/* create the machine structure and driver */
+	machine = create_machine(game);
+	mame = machine->mame_data;
+
+	/* looooong term: remove this */
+	Machine = machine;
+
 	/* start in the "pre-init phase" */
-	current_phase = MAME_PHASE_PREINIT;
+	mame->current_phase = MAME_PHASE_PREINIT;
 
 	/* perform validity checks before anything else */
 	if (mame_validitychecks(game) != 0)
 		return 1;
 
 	/* loop across multiple hard resets */
-	exit_pending = FALSE;
-	while (error == 0 && !exit_pending)
+	mame->exit_pending = FALSE;
+	while (error == 0 && !mame->exit_pending)
 	{
 		init_resource_tracking();
 		add_free_resources_callback(timer_free);
 		add_free_resources_callback(state_save_free);
 
 		/* use setjmp/longjmp for deep error recovery */
-		fatal_error_jmpbuf_valid = TRUE;
-		error = setjmp(fatal_error_jmpbuf);
+		mame->fatal_error_jmpbuf_valid = TRUE;
+		error = setjmp(mame->fatal_error_jmpbuf);
 		if (error == 0)
 		{
 			int settingsloaded;
 
 			/* move to the init phase */
-			current_phase = MAME_PHASE_INIT;
+			mame->current_phase = MAME_PHASE_INIT;
 
 			/* start tracking resources for real */
 			begin_resource_tracking();
 
 			/* if we have a logfile, set up the callback */
-			logerror_callback_list = NULL;
+			mame->logerror_callback_list = NULL;
 			if (options.logfile)
-				add_logerror_callback(logfile_callback);
-
-			/* create the Machine structure and driver */
-			create_machine(game);
+				add_logerror_callback(machine, logfile_callback);
 
 			/* then finish setting up our local machine */
-			init_machine();
+			init_machine(machine);
 
 			/* load the configuration settings and NVRAM */
 			settingsloaded = config_load_settings();
@@ -312,13 +321,13 @@ int run_game(int game)
 			soft_reset(0);
 
 			/* run the CPUs until a reset or exit */
-			hard_reset_pending = FALSE;
-			while ((!hard_reset_pending && !exit_pending) || saveload_pending_file != NULL)
+			mame->hard_reset_pending = FALSE;
+			while ((!mame->hard_reset_pending && !mame->exit_pending) || mame->saveload_pending_file != NULL)
 			{
 				profiler_mark(PROFILER_EXTRA);
 
 				/* execute CPUs if not paused */
-				if (!mame_paused)
+				if (!mame->paused)
 					cpuexec_timeslice();
 
 				/* otherwise, just pump video updates through */
@@ -326,14 +335,14 @@ int run_game(int game)
 					video_frame_update();
 
 				/* handle save/load */
-				if (saveload_schedule_callback)
-					(*saveload_schedule_callback)();
+				if (mame->saveload_schedule_callback)
+					(*mame->saveload_schedule_callback)(machine);
 
 				profiler_mark(PROFILER_END);
 			}
 
 			/* and out via the exit phase */
-			current_phase = MAME_PHASE_EXIT;
+			mame->current_phase = MAME_PHASE_EXIT;
 
 			/* stop tracking resources at this level */
 			end_resource_tracking();
@@ -342,20 +351,23 @@ int run_game(int game)
 			nvram_save();
 			config_save_settings();
 		}
-		fatal_error_jmpbuf_valid = FALSE;
+		mame->fatal_error_jmpbuf_valid = FALSE;
 
 		/* call all exit callbacks registered */
-		for (cb = exit_callback_list; cb; cb = cb->next)
-			(*cb->func.exit)();
+		for (cb = mame->exit_callback_list; cb; cb = cb->next)
+			(*cb->func.exit)(machine);
 
 		/* close all inner resource tracking */
 		exit_resource_tracking();
 
 		/* free our callback lists */
-		free_callback_list(&exit_callback_list);
-		free_callback_list(&reset_callback_list);
-		free_callback_list(&pause_callback_list);
+		free_callback_list(&mame->exit_callback_list);
+		free_callback_list(&mame->reset_callback_list);
+		free_callback_list(&mame->pause_callback_list);
 	}
+
+	/* destroy the machine */
+	destroy_machine(machine);
 
 	/* return an error */
 	return error;
@@ -367,9 +379,10 @@ int run_game(int game)
     phase
 -------------------------------------------------*/
 
-int mame_get_phase(void)
+int mame_get_phase(running_machine *machine)
 {
-	return current_phase;
+	mame_private *mame = machine->mame_data;
+	return mame->current_phase;
 }
 
 
@@ -378,19 +391,20 @@ int mame_get_phase(void)
     termination
 -------------------------------------------------*/
 
-void add_exit_callback(void (*callback)(void))
+void add_exit_callback(running_machine *machine, void (*callback)(running_machine *))
 {
+	mame_private *mame = machine->mame_data;
 	callback_item *cb;
 
-	assert_always(mame_get_phase() == MAME_PHASE_INIT, "Can only call add_exit_callback at init time!");
+	assert_always(mame_get_phase(machine) == MAME_PHASE_INIT, "Can only call add_exit_callback at init time!");
 
 	/* allocate memory */
 	cb = malloc_or_die(sizeof(*cb));
 
 	/* add us to the head of the list */
 	cb->func.exit = callback;
-	cb->next = exit_callback_list;
-	exit_callback_list = cb;
+	cb->next = mame->exit_callback_list;
+	mame->exit_callback_list = cb;
 }
 
 
@@ -399,11 +413,12 @@ void add_exit_callback(void (*callback)(void))
     reset
 -------------------------------------------------*/
 
-void add_reset_callback(void (*callback)(void))
+void add_reset_callback(running_machine *machine, void (*callback)(running_machine *))
 {
+	mame_private *mame = machine->mame_data;
 	callback_item *cb, **cur;
 
-	assert_always(mame_get_phase() == MAME_PHASE_INIT, "Can only call add_reset_callback at init time!");
+	assert_always(mame_get_phase(machine) == MAME_PHASE_INIT, "Can only call add_reset_callback at init time!");
 
 	/* allocate memory */
 	cb = malloc_or_die(sizeof(*cb));
@@ -411,7 +426,7 @@ void add_reset_callback(void (*callback)(void))
 	/* add us to the end of the list */
 	cb->func.reset = callback;
 	cb->next = NULL;
-	for (cur = &reset_callback_list; *cur; cur = &(*cur)->next) ;
+	for (cur = &mame->reset_callback_list; *cur; cur = &(*cur)->next) ;
 	*cur = cb;
 }
 
@@ -421,11 +436,12 @@ void add_reset_callback(void (*callback)(void))
     pause
 -------------------------------------------------*/
 
-void add_pause_callback(void (*callback)(int))
+void add_pause_callback(running_machine *machine, void (*callback)(running_machine *, int))
 {
+	mame_private *mame = machine->mame_data;
 	callback_item *cb, **cur;
 
-	assert_always(mame_get_phase() == MAME_PHASE_INIT, "Can only call add_pause_callback at init time!");
+	assert_always(mame_get_phase(machine) == MAME_PHASE_INIT, "Can only call add_pause_callback at init time!");
 
 	/* allocate memory */
 	cb = malloc_or_die(sizeof(*cb));
@@ -433,7 +449,7 @@ void add_pause_callback(void (*callback)(int))
 	/* add us to the end of the list */
 	cb->func.pause = callback;
 	cb->next = NULL;
-	for (cur = &pause_callback_list; *cur; cur = &(*cur)->next) ;
+	for (cur = &mame->pause_callback_list; *cur; cur = &(*cur)->next) ;
 	*cur = cb;
 }
 
@@ -447,13 +463,14 @@ void add_pause_callback(void (*callback)(int))
     mame_schedule_exit - schedule a clean exit
 -------------------------------------------------*/
 
-void mame_schedule_exit(void)
+void mame_schedule_exit(running_machine *machine)
 {
-	exit_pending = TRUE;
+	mame_private *mame = machine->mame_data;
+	mame->exit_pending = TRUE;
 
 	/* if we're autosaving on exit, schedule a save as well */
-	if (options.auto_save && (Machine->gamedrv->flags & GAME_SUPPORTS_SAVE))
-		mame_schedule_save(Machine->gamedrv->name);
+	if (options.auto_save && (machine->gamedrv->flags & GAME_SUPPORTS_SAVE))
+		mame_schedule_save(machine, machine->gamedrv->name);
 }
 
 
@@ -462,9 +479,10 @@ void mame_schedule_exit(void)
     reset of the system
 -------------------------------------------------*/
 
-void mame_schedule_hard_reset(void)
+void mame_schedule_hard_reset(running_machine *machine)
 {
-	hard_reset_pending = TRUE;
+	mame_private *mame = machine->mame_data;
+	mame->hard_reset_pending = TRUE;
 }
 
 
@@ -473,12 +491,14 @@ void mame_schedule_hard_reset(void)
     reset of the system
 -------------------------------------------------*/
 
-void mame_schedule_soft_reset(void)
+void mame_schedule_soft_reset(running_machine *machine)
 {
-	mame_timer_adjust(soft_reset_timer, time_zero, 0, time_zero);
+	mame_private *mame = machine->mame_data;
+
+	mame_timer_adjust(mame->soft_reset_timer, time_zero, 0, time_zero);
 
 	/* we can't be paused since the timer needs to fire */
-	mame_pause(FALSE);
+	mame_pause(machine, FALSE);
 }
 
 
@@ -487,19 +507,21 @@ void mame_schedule_soft_reset(void)
     occur as soon as possible
 -------------------------------------------------*/
 
-void mame_schedule_save(const char *filename)
+void mame_schedule_save(running_machine *machine, const char *filename)
 {
+	mame_private *mame = machine->mame_data;
+
 	/* free any existing request and allocate a copy of the requested name */
-	if (saveload_pending_file != NULL)
-		free(saveload_pending_file);
-	saveload_pending_file = mame_strdup(filename);
+	if (mame->saveload_pending_file != NULL)
+		free(mame->saveload_pending_file);
+	mame->saveload_pending_file = mame_strdup(filename);
 
 	/* note the start time and set a timer for the next timeslice to actually schedule it */
-	saveload_schedule_callback = handle_save;
-	saveload_schedule_time = mame_timer_get_time();
+	mame->saveload_schedule_callback = handle_save;
+	mame->saveload_schedule_time = mame_timer_get_time();
 
 	/* we can't be paused since we need to clear out anonymous timers */
-	mame_pause(FALSE);
+	mame_pause(machine, FALSE);
 }
 
 
@@ -508,19 +530,21 @@ void mame_schedule_save(const char *filename)
     occur as soon as possible
 -------------------------------------------------*/
 
-void mame_schedule_load(const char *filename)
+void mame_schedule_load(running_machine *machine, const char *filename)
 {
+	mame_private *mame = machine->mame_data;
+
 	/* free any existing request and allocate a copy of the requested name */
-	if (saveload_pending_file != NULL)
-		free(saveload_pending_file);
-	saveload_pending_file = mame_strdup(filename);
+	if (mame->saveload_pending_file != NULL)
+		free(mame->saveload_pending_file);
+	mame->saveload_pending_file = mame_strdup(filename);
 
 	/* note the start time and set a timer for the next timeslice to actually schedule it */
-	saveload_schedule_callback = handle_load;
-	saveload_schedule_time = mame_timer_get_time();
+	mame->saveload_schedule_callback = handle_load;
+	mame->saveload_schedule_time = mame_timer_get_time();
 
 	/* we can't be paused since we need to clear out anonymous timers */
-	mame_pause(FALSE);
+	mame_pause(machine, FALSE);
 }
 
 
@@ -529,11 +553,12 @@ void mame_schedule_load(const char *filename)
     scheduled event pending?
 -------------------------------------------------*/
 
-int mame_is_scheduled_event_pending(void)
+int mame_is_scheduled_event_pending(running_machine *machine)
 {
 	/* we can't check for saveload_pending_file here because it will bypass */
 	/* required UI screens if a state is queued from the command line */
-	return exit_pending || hard_reset_pending;
+	mame_private *mame = machine->mame_data;
+	return mame->exit_pending || mame->hard_reset_pending;
 }
 
 
@@ -541,18 +566,19 @@ int mame_is_scheduled_event_pending(void)
     mame_pause - pause or resume the system
 -------------------------------------------------*/
 
-void mame_pause(int pause)
+void mame_pause(running_machine *machine, int pause)
 {
+	mame_private *mame = machine->mame_data;
 	callback_item *cb;
 
 	/* ignore if nothing has changed */
-	if (mame_paused == pause)
+	if (mame->paused == pause)
 		return;
-	mame_paused = pause;
+	mame->paused = pause;
 
 	/* call all registered pause callbacks */
-	for (cb = pause_callback_list; cb; cb = cb->next)
-		(*cb->func.pause)(mame_paused);
+	for (cb = mame->pause_callback_list; cb; cb = cb->next)
+		(*cb->func.pause)(machine, mame->paused);
 }
 
 
@@ -560,9 +586,10 @@ void mame_pause(int pause)
     mame_is_paused - the system paused?
 -------------------------------------------------*/
 
-int mame_is_paused(void)
+int mame_is_paused(running_machine *machine)
 {
-	return (current_phase != MAME_PHASE_RUNNING) || mame_paused;
+	mame_private *mame = machine->mame_data;
+	return (mame->current_phase != MAME_PHASE_RUNNING) || mame->paused;
 }
 
 
@@ -576,7 +603,7 @@ int mame_is_paused(void)
     given either an index or a REGION_* identifier
 -------------------------------------------------*/
 
-int memory_region_to_index(int num)
+static int memory_region_to_index(mame_private *mame, int num)
 {
 	int i;
 
@@ -586,7 +613,7 @@ int memory_region_to_index(int num)
 
 	/* scan for a match */
 	for (i = 0; i < MAX_MEMORY_REGIONS; i++)
-		if (mem_region[i].type == num)
+		if (mame->mem_region[i].type == num)
 			return i;
 
 	return -1;
@@ -598,25 +625,26 @@ int memory_region_to_index(int num)
     region
 -------------------------------------------------*/
 
-int new_memory_region(int type, size_t length, UINT32 flags)
+int new_memory_region(running_machine *machine, int type, size_t length, UINT32 flags)
 {
+	mame_private *mame = machine->mame_data;
     int num;
 
     assert(type >= MAX_MEMORY_REGIONS);
 
     /* find a free slot */
 	for (num = 0; num < MAX_MEMORY_REGIONS; num++)
-		if (mem_region[num].base == NULL)
+		if (mame->mem_region[num].base == NULL)
 			break;
 	if (num < 0)
 		return 1;
 
     /* allocate the region */
-	mem_region[num].length = length;
-	mem_region[num].type = type;
-	mem_region[num].flags = flags;
-	mem_region[num].base = malloc(length);
-	return (mem_region[num].base == NULL) ? 1 : 0;
+	mame->mem_region[num].length = length;
+	mame->mem_region[num].type = type;
+	mame->mem_region[num].flags = flags;
+	mame->mem_region[num].base = malloc(length);
+	return (mame->mem_region[num].base == NULL) ? 1 : 0;
 }
 
 
@@ -625,16 +653,18 @@ int new_memory_region(int type, size_t length, UINT32 flags)
     region
 -------------------------------------------------*/
 
-void free_memory_region(int num)
+void free_memory_region(running_machine *machine, int num)
 {
+	mame_private *mame = machine->mame_data;
+
 	/* convert to an index and bail if invalid */
-	num = memory_region_to_index(num);
+	num = memory_region_to_index(mame, num);
 	if (num < 0)
 		return;
 
 	/* free the region in question */
-	free(mem_region[num].base);
-	memset(&mem_region[num], 0, sizeof(mem_region[num]));
+	free(mame->mem_region[num].base);
+	memset(&mame->mem_region[num], 0, sizeof(mame->mem_region[num]));
 }
 
 
@@ -645,9 +675,12 @@ void free_memory_region(int num)
 
 UINT8 *memory_region(int num)
 {
+	running_machine *machine = Machine;
+	mame_private *mame = machine->mame_data;
+
 	/* convert to an index and return the result */
-	num = memory_region_to_index(num);
-	return (num >= 0) ? mem_region[num].base : NULL;
+	num = memory_region_to_index(mame, num);
+	return (num >= 0) ? mame->mem_region[num].base : NULL;
 }
 
 
@@ -658,9 +691,12 @@ UINT8 *memory_region(int num)
 
 size_t memory_region_length(int num)
 {
+	running_machine *machine = Machine;
+	mame_private *mame = machine->mame_data;
+
 	/* convert to an index and return the result */
-	num = memory_region_to_index(num);
-	return (num >= 0) ? mem_region[num].length : 0;
+	num = memory_region_to_index(mame, num);
+	return (num >= 0) ? mame->mem_region[num].length : 0;
 }
 
 
@@ -669,11 +705,13 @@ size_t memory_region_length(int num)
     memory region
 -------------------------------------------------*/
 
-UINT32 memory_region_type(int num)
+UINT32 memory_region_type(running_machine *machine, int num)
 {
+	mame_private *mame = machine->mame_data;
+
 	/* convert to an index and return the result */
-	num = memory_region_to_index(num);
-	return (num >= 0) ? mem_region[num].type : 0;
+	num = memory_region_to_index(mame, num);
+	return (num >= 0) ? mame->mem_region[num].type : 0;
 }
 
 
@@ -682,11 +720,13 @@ UINT32 memory_region_type(int num)
     memory region
 -------------------------------------------------*/
 
-UINT32 memory_region_flags(int num)
+UINT32 memory_region_flags(running_machine *machine, int num)
 {
+	mame_private *mame = machine->mame_data;
+
 	/* convert to an index and return the result */
-	num = memory_region_to_index(num);
-	return (num >= 0) ? mem_region[num].flags : 0;
+	num = memory_region_to_index(mame, num);
+	return (num >= 0) ? mame->mem_region[num].flags : 0;
 }
 
 
@@ -702,6 +742,7 @@ UINT32 memory_region_flags(int num)
 
 void CLIB_DECL fatalerror(const char *text, ...)
 {
+	running_machine *machine = Machine;
 	va_list arg;
 
 	/* dump to the buffer; assume no one writes >2k lines this way */
@@ -711,8 +752,8 @@ void CLIB_DECL fatalerror(const char *text, ...)
 
 	/* output and return */
 	printf("%s\n", giant_string_buffer);
-	if (fatal_error_jmpbuf_valid)
-  		longjmp(fatal_error_jmpbuf, 1);
+	if (machine != NULL && machine->mame_data != NULL && machine->mame_data->fatal_error_jmpbuf_valid)
+  		longjmp(machine->mame_data->fatal_error_jmpbuf, 1);
 	else
 		exit(-1);
 }
@@ -744,10 +785,12 @@ void CLIB_DECL popmessage(const char *text, ...)
 
 void CLIB_DECL logerror(const char *text, ...)
 {
+	running_machine *machine = Machine;
+	mame_private *mame = machine->mame_data;
 	callback_item *cb;
 
 	/* process only if there is a target */
-	if (logerror_callback_list)
+	if (mame->logerror_callback_list != NULL)
 	{
 		va_list arg;
 
@@ -759,8 +802,8 @@ void CLIB_DECL logerror(const char *text, ...)
 		va_end(arg);
 
 		/* log to all callbacks */
-		for (cb = logerror_callback_list; cb; cb = cb->next)
-			cb->func.log(giant_string_buffer);
+		for (cb = mame->logerror_callback_list; cb; cb = cb->next)
+			(*cb->func.log)(machine, giant_string_buffer);
 
 		profiler_mark(PROFILER_END);
 	}
@@ -772,17 +815,18 @@ void CLIB_DECL logerror(const char *text, ...)
     called on logerror()
 -------------------------------------------------*/
 
-void add_logerror_callback(void (*callback)(const char *))
+void add_logerror_callback(running_machine *machine, void (*callback)(running_machine *, const char *))
 {
+	mame_private *mame = machine->mame_data;
 	callback_item *cb, **cur;
 
-	assert_always(mame_get_phase() == MAME_PHASE_INIT, "Can only call add_logerror_callback at init time!");
+	assert_always(mame_get_phase(machine) == MAME_PHASE_INIT, "Can only call add_logerror_callback at init time!");
 
 	cb = auto_malloc(sizeof(*cb));
 	cb->func.log = callback;
 	cb->next = NULL;
 
-	for (cur = &logerror_callback_list; *cur; cur = &(*cur)->next) ;
+	for (cur = &mame->logerror_callback_list; *cur; cur = &(*cur)->next) ;
 	*cur = cb;
 }
 
@@ -792,7 +836,7 @@ void add_logerror_callback(void (*callback)(const char *))
     logfile
 -------------------------------------------------*/
 
-static void logfile_callback(const char *buffer)
+static void logfile_callback(running_machine *machine, const char *buffer)
 {
 	if (options.logfile)
 		mame_fputs(options.logfile, buffer);
@@ -804,12 +848,12 @@ static void logfile_callback(const char *buffer)
     given CPU, or -1 if not found
 -------------------------------------------------*/
 
-int mame_find_cpu_index(const char *tag)
+int mame_find_cpu_index(running_machine *machine, const char *tag)
 {
 	int cpunum;
 
 	for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
-		if (Machine->drv->cpu[cpunum].tag && strcmp(Machine->drv->cpu[cpunum].tag, tag) == 0)
+		if (machine->drv->cpu[cpunum].tag && strcmp(machine->drv->cpu[cpunum].tag, tag) == 0)
 			return cpunum;
 
 	return -1;
@@ -820,10 +864,11 @@ int mame_find_cpu_index(const char *tag)
     mame_rand - standardized random numbers
 -------------------------------------------------*/
 
-UINT32 mame_rand(void)
+UINT32 mame_rand(running_machine *machine)
 {
-	rand_seed = 1664525 * rand_seed + 1013904223;
-	return rand_seed;
+	mame_private *mame = machine->mame_data;
+	mame->rand_seed = 1664525 * mame->rand_seed + 1013904223;
+	return mame->rand_seed;
 }
 
 
@@ -837,53 +882,81 @@ UINT32 mame_rand(void)
     object and initialize it based on options
 -------------------------------------------------*/
 
-static void create_machine(int game)
+static running_machine *create_machine(int game)
 {
+	running_machine *machine;
 	int scrnum;
 
-	/* first give the machine a good cleaning */
-	Machine = &active_machine;
-	memset(Machine, 0, sizeof(*Machine));
+	/* allocate memory for the machine */
+	machine = malloc(sizeof(*machine));
+	if (machine == NULL)
+		goto error;
+	memset(machine, 0, sizeof(*machine));
 
-	/* initialize the driver-related variables in the Machine */
-	Machine->gamedrv = drivers[game];
-	Machine->drv = &internal_drv;
-	expand_machine_driver(Machine->gamedrv->drv, &internal_drv);
-	for (scrnum = 0; scrnum < MAX_SCREENS; scrnum++)
-		Machine->screen[scrnum] = Machine->drv->screen[scrnum].defstate;
+	/* allocate memory for the internal mame_data */
+	machine->mame_data = malloc(sizeof(*machine->mame_data));
+	if (machine->mame_data == NULL)
+		goto error;
+	memset(machine->mame_data, 0, sizeof(*machine->mame_data));
 
-	/* copy some settings into easier-to-handle variables */
-	Machine->record_file = options.record;
-	Machine->playback_file = options.playback;
-	Machine->debug_mode = options.mame_debug;
+	/* initialize the driver-related variables in the machine */
+	machine->gamedrv = drivers[game];
+	machine->drv = malloc(sizeof(*machine->drv));
+	if (machine->drv == NULL)
+		goto error;
+	expand_machine_driver(machine->gamedrv->drv, (machine_config *)machine->drv);
 
 	/* allocate the driver data */
-	if (internal_drv.driver_data_size != 0)
+	if (machine->drv->driver_data_size != 0)
 	{
-		Machine->driver_data = auto_malloc(internal_drv.driver_data_size);
-		memset(Machine->driver_data, 0, internal_drv.driver_data_size);
+		machine->driver_data = malloc(machine->drv->driver_data_size);
+		if (machine->driver_data == NULL)
+			goto error;
+		memset(machine->driver_data, 0, machine->drv->driver_data_size);
 	}
 
 	/* determine the color depth */
-	Machine->color_depth = 16;
-	if (Machine->drv->video_attributes & VIDEO_RGB_DIRECT)
-		Machine->color_depth = (Machine->drv->video_attributes & VIDEO_NEEDS_6BITS_PER_GUN) ? 32 : 15;
+	machine->color_depth = 16;
+	if (machine->drv->video_attributes & VIDEO_RGB_DIRECT)
+		machine->color_depth = (machine->drv->video_attributes & VIDEO_NEEDS_6BITS_PER_GUN) ? 32 : 15;
+	for (scrnum = 0; scrnum < MAX_SCREENS; scrnum++)
+		machine->screen[scrnum] = machine->drv->screen[scrnum].defstate;
 
-	/* initialize the samplerate */
-	Machine->sample_rate = options.samplerate;
+	/* convert some options into live state */
+	machine->sample_rate = options.samplerate;
+	machine->record_file = options.record;
+	machine->playback_file = options.playback;
+	machine->debug_mode = options.mame_debug;
 
-	/* add an exit callback to clear out the Machine on the way out */
-	add_exit_callback(destroy_machine);
+	return machine;
+
+error:
+	if (machine->driver_data != NULL)
+		free(machine->driver_data);
+	if (machine->drv != NULL)
+		free((machine_config *)machine->drv);
+	if (machine->mame_data != NULL)
+		free(machine->mame_data);
+	if (machine != NULL)
+		free(machine);
+	return NULL;
 }
 
 
 /*-------------------------------------------------
-    destroy_machine - "destroy" the Machine by
-    NULLing it out
+    destroy_machine - free the machine data
 -------------------------------------------------*/
 
-static void destroy_machine(void)
+static void destroy_machine(running_machine *machine)
 {
+	assert(machine == Machine);
+	if (machine->driver_data != NULL)
+		free(machine->driver_data);
+	if (machine->drv != NULL)
+		free((machine_config *)machine->drv);
+	if (machine->mame_data != NULL)
+		free(machine->mame_data);
+	free(machine);
 	Machine = NULL;
 }
 
@@ -892,107 +965,108 @@ static void destroy_machine(void)
     init_machine - initialize the emulated machine
 -------------------------------------------------*/
 
-static void init_machine(void)
+static void init_machine(running_machine *machine)
 {
+	mame_private *mame = machine->mame_data;
 	int num;
 
 	/* initialize basic can't-fail systems here */
-	cpuintrf_init();
-	sndintrf_init();
-	fileio_init();
-	config_init();
-	output_init();
-	state_init();
+	cpuintrf_init(machine);
+	sndintrf_init(machine);
+	fileio_init(machine);
+	config_init(machine);
+	output_init(machine);
+	state_init(machine);
 	state_save_allow_registration(TRUE);
-	drawgfx_init();
-	palette_init();
-	render_init();
-	ui_init();
-	generic_machine_init();
-	generic_video_init();
-	rand_seed = 0x9d14abd7;
+	drawgfx_init(machine);
+	palette_init(machine);
+	render_init(machine);
+	ui_init(machine);
+	generic_machine_init(machine);
+	generic_video_init(machine);
+	mame->rand_seed = 0x9d14abd7;
 
 	/* init the osd layer */
-	if (osd_init() != 0)
+	if (osd_init(machine) != 0)
 		fatalerror("osd_init failed");
 
 	/* initialize the input system */
 	/* this must be done before the input ports are initialized */
-	if (code_init() != 0)
+	if (code_init(machine) != 0)
 		fatalerror("code_init failed");
 
 	/* initialize the input ports for the game */
 	/* this must be done before memory_init in order to allow specifying */
 	/* callbacks based on input port tags */
-	if (input_port_init(Machine->gamedrv->construct_ipt) != 0)
+	if (input_port_init(machine, machine->gamedrv->construct_ipt) != 0)
 		fatalerror("input_port_init failed");
 
 	/* load the ROMs if we have some */
 	/* this must be done before memory_init in order to allocate memory regions */
-	if (rom_init(Machine->gamedrv->rom) != 0)
+	if (rom_init(machine, machine->gamedrv->rom) != 0)
 		fatalerror("rom_init failed");
 
 	/* initialize the timers and allocate a soft_reset timer */
 	/* this must be done before cpu_init so that CPU's can allocate timers */
-	timer_init();
-	soft_reset_timer = timer_alloc(soft_reset);
+	timer_init(machine);
+	mame->soft_reset_timer = timer_alloc(soft_reset);
 
 	/* initialize the memory system for this game */
 	/* this must be done before cpu_init so that set_context can look up the opcode base */
-	if (memory_init() != 0)
+	if (memory_init(machine) != 0)
 		fatalerror("memory_init failed");
 
 	/* now set up all the CPUs */
-	if (cpuexec_init() != 0)
+	if (cpuexec_init(machine) != 0)
 		fatalerror("cpuexec_init failed");
-	if (cpuint_init() != 0)
+	if (cpuint_init(machine) != 0)
 		fatalerror("cpuint_init failed");
 
 #ifdef MESS
 	/* initialize the devices */
-	if (devices_init(Machine->gamedrv))
+	if (devices_init(machine->gamedrv))
 		fatalerror("devices_init failed");
 #endif
 
 	/* start the save/load system */
-	saveload_init();
+	saveload_init(machine);
 
 	/* call the game driver's init function */
 	/* this is where decryption is done and memory maps are altered */
 	/* so this location in the init order is important */
 	ui_set_startup_text("Initializing...", TRUE);
-	if (Machine->gamedrv->driver_init != NULL)
-		(*Machine->gamedrv->driver_init)();
+	if (machine->gamedrv->driver_init != NULL)
+		(*machine->gamedrv->driver_init)(machine);
 
 	/* start the audio system */
-	if (sound_init() != 0)
+	if (sound_init(machine) != 0)
 		fatalerror("sound_init failed");
 
 	/* start the video hardware */
-	if (video_init() != 0)
+	if (video_init(machine) != 0)
 		fatalerror("video_init failed");
 
 	/* start the cheat engine */
 	if (options.cheat)
-		cheat_init();
+		cheat_init(machine);
 
 	/* call the driver's _START callbacks */
-	if (Machine->drv->machine_start != NULL && (*Machine->drv->machine_start)() != 0)
+	if (machine->drv->machine_start != NULL && (*machine->drv->machine_start)(machine) != 0)
 		fatalerror("Unable to start machine emulation");
-	if (Machine->drv->sound_start != NULL && (*Machine->drv->sound_start)() != 0)
+	if (machine->drv->sound_start != NULL && (*machine->drv->sound_start)(machine) != 0)
 		fatalerror("Unable to start sound emulation");
-	if (Machine->drv->video_start != NULL && (*Machine->drv->video_start)() != 0)
+	if (machine->drv->video_start != NULL && (*machine->drv->video_start)(machine) != 0)
 		fatalerror("Unable to start video emulation");
 
 	/* free memory regions allocated with REGIONFLAG_DISPOSE (typically gfx roms) */
 	for (num = 0; num < MAX_MEMORY_REGIONS; num++)
-		if (mem_region[num].flags & ROMREGION_DISPOSE)
-			free_memory_region(num);
+		if (mame->mem_region[num].flags & ROMREGION_DISPOSE)
+			free_memory_region(machine, num);
 
 #ifdef MAME_DEBUG
 	/* initialize the debugger */
-	if (Machine->debug_mode)
-		mame_debug_init();
+	if (machine->debug_mode)
+		mame_debug_init(machine);
 #endif
 }
 
@@ -1004,12 +1078,14 @@ static void init_machine(void)
 
 static void soft_reset(int param)
 {
+	running_machine *machine = Machine;
+	mame_private *mame = machine->mame_data;
 	callback_item *cb;
 
 	logerror("Soft reset\n");
 
 	/* temporarily in the reset phase */
-	current_phase = MAME_PHASE_RESET;
+	mame->current_phase = MAME_PHASE_RESET;
 
 	/* a bit gross -- back off of the resource tracking, and put it back at the end */
 	assert(get_resource_tag() == 2);
@@ -1025,22 +1101,22 @@ static void soft_reset(int param)
 	cpuint_reset();
 
 	/* run the driver's reset callbacks */
-	if (Machine->drv->machine_reset != NULL)
-		(*Machine->drv->machine_reset)();
-	if (Machine->drv->sound_reset != NULL)
-		(*Machine->drv->sound_reset)();
-	if (Machine->drv->video_reset != NULL)
-		(*Machine->drv->video_reset)();
+	if (machine->drv->machine_reset != NULL)
+		(*machine->drv->machine_reset)(machine);
+	if (machine->drv->sound_reset != NULL)
+		(*machine->drv->sound_reset)(machine);
+	if (machine->drv->video_reset != NULL)
+		(*machine->drv->video_reset)(machine);
 
 	/* call all registered reset callbacks */
-	for (cb = reset_callback_list; cb; cb = cb->next)
-		(*cb->func.reset)();
+	for (cb = machine->mame_data->reset_callback_list; cb; cb = cb->next)
+		(*cb->func.reset)(machine);
 
 	/* disallow save state registrations starting here */
 	state_save_allow_registration(FALSE);
 
 	/* now we're running */
-	current_phase = MAME_PHASE_RUNNING;
+	mame->current_phase = MAME_PHASE_RUNNING;
 
 	/* set the global time to the current time */
 	/* this allows 0-time queued callbacks to run before any CPUs execute */
@@ -1072,7 +1148,7 @@ static void free_callback_list(callback_item **cb)
     saveload_init - initialize the save/load logic
 -------------------------------------------------*/
 
-static void saveload_init(void)
+static void saveload_init(running_machine *machine)
 {
 	/* if we're coming in with a savegame request, process it now */
 	if (options.savegame)
@@ -1081,16 +1157,16 @@ static void saveload_init(void)
 
 		if (strlen(options.savegame) == 1)
 		{
-			sprintf(name, "%s-%c", Machine->gamedrv->name, options.savegame[0]);
-			mame_schedule_load(name);
+			sprintf(name, "%s-%c", machine->gamedrv->name, options.savegame[0]);
+			mame_schedule_load(machine, name);
 		}
 		else
-			mame_schedule_load(options.savegame);
+			mame_schedule_load(machine, options.savegame);
 	}
 
 	/* if we're in autosave mode, schedule a load */
-	else if (options.auto_save && (Machine->gamedrv->flags & GAME_SUPPORTS_SAVE))
-		mame_schedule_load(Machine->gamedrv->name);
+	else if (options.auto_save && (machine->gamedrv->flags & GAME_SUPPORTS_SAVE))
+		mame_schedule_load(machine, machine->gamedrv->name);
 }
 
 
@@ -1098,14 +1174,15 @@ static void saveload_init(void)
     handle_save - attempt to perform a save
 -------------------------------------------------*/
 
-static void handle_save(void)
+static void handle_save(running_machine *machine)
 {
+	mame_private *mame = machine->mame_data;
 	mame_file *file;
 
 	/* if no name, bail */
-	if (saveload_pending_file == NULL)
+	if (mame->saveload_pending_file == NULL)
 	{
-		saveload_schedule_callback = NULL;
+		mame->saveload_schedule_callback = NULL;
 		return;
 	}
 
@@ -1113,7 +1190,7 @@ static void handle_save(void)
 	if (timer_count_anonymous() > 0)
 	{
 		/* if more than a second has passed, we're probably screwed */
-		if (sub_mame_times(mame_timer_get_time(), saveload_schedule_time).seconds > 0)
+		if (sub_mame_times(mame_timer_get_time(), mame->saveload_schedule_time).seconds > 0)
 		{
 			popmessage("Unable to save due to pending anonymous timers. See error.log for details.");
 			goto cancel;
@@ -1122,7 +1199,7 @@ static void handle_save(void)
 	}
 
 	/* open the file */
-	file = mame_fopen(Machine->gamedrv->name, saveload_pending_file, FILETYPE_STATE, 1);
+	file = mame_fopen(machine->gamedrv->name, mame->saveload_pending_file, FILETYPE_STATE, 1);
 	if (file)
 	{
 		int cpunum;
@@ -1161,7 +1238,7 @@ static void handle_save(void)
 		mame_fclose(file);
 
 		/* pop a warning if the game doesn't support saves */
-		if (!(Machine->gamedrv->flags & GAME_SUPPORTS_SAVE))
+		if (!(machine->gamedrv->flags & GAME_SUPPORTS_SAVE))
 			popmessage("State successfully saved.\nWarning: Save states are not officially supported for this game.");
 		else
 			popmessage("State successfully saved.");
@@ -1171,9 +1248,9 @@ static void handle_save(void)
 
 cancel:
 	/* unschedule the save */
-	free(saveload_pending_file);
-	saveload_pending_file = NULL;
-	saveload_schedule_callback = NULL;
+	free(mame->saveload_pending_file);
+	mame->saveload_pending_file = NULL;
+	mame->saveload_schedule_callback = NULL;
 }
 
 
@@ -1181,14 +1258,15 @@ cancel:
     handle_load - attempt to perform a load
 -------------------------------------------------*/
 
-static void handle_load(void)
+static void handle_load(running_machine *machine)
 {
+	mame_private *mame = machine->mame_data;
 	mame_file *file;
 
 	/* if no name, bail */
-	if (saveload_pending_file == NULL)
+	if (mame->saveload_pending_file == NULL)
 	{
-		saveload_schedule_callback = NULL;
+		mame->saveload_schedule_callback = NULL;
 		return;
 	}
 
@@ -1197,7 +1275,7 @@ static void handle_load(void)
 	if (timer_count_anonymous() > 0)
 	{
 		/* if more than a second has passed, we're probably screwed */
-		if (sub_mame_times(mame_timer_get_time(), saveload_schedule_time).seconds > 0)
+		if (sub_mame_times(mame_timer_get_time(), mame->saveload_schedule_time).seconds > 0)
 		{
 			popmessage("Unable to load due to pending anonymous timers. See error.log for details.");
 			goto cancel;
@@ -1206,7 +1284,7 @@ static void handle_load(void)
 	}
 
 	/* open the file */
-	file = mame_fopen(Machine->gamedrv->name, saveload_pending_file, FILETYPE_STATE, 0);
+	file = mame_fopen(machine->gamedrv->name, mame->saveload_pending_file, FILETYPE_STATE, 0);
 	if (file)
 	{
 		/* start loading */
@@ -1251,7 +1329,7 @@ static void handle_load(void)
 
 cancel:
 	/* unschedule the load */
-	free(saveload_pending_file);
-	saveload_pending_file = NULL;
-	saveload_schedule_callback = NULL;
+	free(mame->saveload_pending_file);
+	mame->saveload_pending_file = NULL;
+	mame->saveload_schedule_callback = NULL;
 }

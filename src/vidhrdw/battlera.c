@@ -52,17 +52,13 @@ VIDEO_START( battlera )
 
 WRITE8_HANDLER( battlera_palette_w )
 {
-	int r,g,b,pal_word;
+	int pal_word;
 
 	paletteram[offset]=data;
 	if (offset%2) offset-=1;
 
 	pal_word=paletteram[offset] | (paletteram[offset+1]<<8);
-
-	r = ((pal_word >> 3) & 7) << 5;
-	g = ((pal_word >> 6) & 7) << 5;
-	b = ((pal_word >> 0) & 7) << 5;
-	palette_set_color(offset/2, r, g, b);
+	palette_set_color(Machine, offset/2, pal3bit(pal_word >> 3), pal3bit(pal_word >> 6), pal3bit(pal_word >> 0));
 }
 
 /******************************************************************************/

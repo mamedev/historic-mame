@@ -114,11 +114,11 @@ static void g80_set_palette_entry(int entry, UINT8 data)
 	bit1 = (b >> 1) & 0x01;
 	b = combine_2_weights(bweights, bit0, bit1);
 
-	palette_set_color(entry, r, g, b);
+	palette_set_color(Machine, entry, r, g, b);
 }
 
 
-static void spaceod_bg_init_palette(void)
+static void spaceod_bg_init_palette(running_machine *machine)
 {
 	static const int resistances[2] = { 1800, 1200 };
 	double trweights[2], tgweights[2], tbweights[2];
@@ -156,7 +156,7 @@ static void spaceod_bg_init_palette(void)
 		bit1 = (b >> 1) & 0x01;
 		b = combine_2_weights(tbweights, bit0, bit1);
 
-		palette_set_color(64 + i, r, g, b);
+		palette_set_color(machine, 64 + i, r, g, b);
 	}
 }
 
@@ -225,7 +225,7 @@ VIDEO_START( segag80r )
 		/* create a fixed background palette and two tilemaps, one horizontally scrolling */
 		/* and one vertically scrolling */
 		case G80_BACKGROUND_SPACEOD:
-			spaceod_bg_init_palette();
+			spaceod_bg_init_palette(machine);
 			spaceod_bg_htilemap = tilemap_create(spaceod_get_tile_info, spaceod_scan_rows, TILEMAP_OPAQUE, 8,8, 128,32);
 			spaceod_bg_vtilemap = tilemap_create(spaceod_get_tile_info, spaceod_scan_rows, TILEMAP_OPAQUE, 8,8, 32,128);
 			break;

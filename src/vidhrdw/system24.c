@@ -34,7 +34,7 @@ VIDEO_UPDATE(system24)
 	int order[12], spri[4];
 
 	if(sys24_mixer_get_reg(13) & 1) {
-		fillbitmap(bitmap, get_black_pen(), 0);
+		fillbitmap(bitmap, get_black_pen(machine), 0);
 		return 0;
 	}
 

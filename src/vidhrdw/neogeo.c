@@ -312,11 +312,7 @@ static void set_palettebank_on_postload(void)
 		g = ((newword >> 3) & 0x1e) | ((newword >> 13) & 0x01);
 		b = ((newword << 1) & 0x1e) | ((newword >> 12) & 0x01);
 
-		r = (r << 3) | (r >> 2);
-		g = (g << 3) | (g >> 2);
-		b = (b << 3) | (b >> 2);
-
-		palette_set_color(i, r, g, b);
+		palette_set_color(Machine, i, pal5bit(r), pal5bit(g), pal5bit(b));
 	}
 }
 
@@ -384,11 +380,7 @@ static void swap_palettes(void)
 		g = ((newword >> 3) & 0x1e) | ((newword >> 13) & 0x01);
 		b = ((newword << 1) & 0x1e) | ((newword >> 12) & 0x01);
 
-		r = (r << 3) | (r >> 2);
-		g = (g << 3) | (g >> 2);
-		b = (b << 3) | (b >> 2);
-
-		palette_set_color(i, r, g, b);
+		palette_set_color(Machine, i, pal5bit(r), pal5bit(g), pal5bit(b));
 	}
 }
 
@@ -438,11 +430,7 @@ WRITE16_HANDLER( neogeo_paletteram16_w )
 	g = ((newword >> 3) & 0x1e) | ((newword >> 13) & 0x01) ;
 	b = ((newword << 1) & 0x1e) | ((newword >> 12) & 0x01) ;
 
-	r = (r << 3) | (r >> 2);
-	g = (g << 3) | (g >> 2);
-	b = (b << 3) | (b >> 2);
-
-	palette_set_color(offset, r, g, b);
+	palette_set_color(Machine, offset, pal5bit(r), pal5bit(g), pal5bit(b));
 }
 
 /******************************************************************************/

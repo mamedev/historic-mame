@@ -71,7 +71,7 @@ PALETTE_INIT( zaccaria )
          */
 		if (((i % 64) / 8) == 0)
 		{
-			palette_set_color(i,0,0,0);
+			palette_set_color(machine,i,0,0,0);
 		}
 		else
 		{
@@ -89,7 +89,7 @@ PALETTE_INIT( zaccaria )
 			bit0 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
 			bit1 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
 			b = 0x66 * bit0 + 0x96 * bit1;
-			palette_set_color(i,r,g,b);
+			palette_set_color(machine,i,r,g,b);
 		}
 
 		color_prom++;

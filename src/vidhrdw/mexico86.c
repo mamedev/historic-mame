@@ -190,7 +190,7 @@ VIDEO_UPDATE( kikikai )
 	int goffs,code,color,y;
 	int tx, ty;
 
-	fillbitmap(bitmap, get_black_pen(), &Machine->screen[0].visarea);
+	fillbitmap(bitmap, get_black_pen(machine), &Machine->screen[0].visarea);
 	sx = 0;
 	for (offs=0; offs<mexico86_objectram_size; offs+=4)
 	{

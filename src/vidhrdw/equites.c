@@ -53,7 +53,7 @@ static void video_init_common(void)
 	// set defaults
 	maskwidth = 8;
 	maskheight = Machine->screen[0].visarea.max_y - Machine->screen[0].visarea.min_y + 1;
-	maskcolor = get_black_pen();
+	maskcolor = get_black_pen(Machine);
 	scrollx = scrolly = 0;
 	for (i=0; i<4; i++) bgcolor[i] = 0;
 
@@ -78,18 +78,11 @@ static void video_init_common(void)
 PALETTE_INIT( equites )
 {
 	UINT8 *clut_ptr;
-	int i, r, g, b;
+	int i;
 
 	for (i=0; i<256; i++)
 	{
-		r = color_prom[i] & 0xf;
-		r = (r << 4) + r;
-		g = color_prom[i+0x100] & 0xf;
-		g = (g << 4) + g;
-		b = color_prom[i+0x200] & 0xf;
-		b = (b << 4) + b;
-
-		palette_set_color(i, r, g, b);
+		palette_set_color(machine, i, pal4bit(color_prom[i]), pal4bit(color_prom[i+0x100]), pal4bit(color_prom[i+0x200]));
 		colortable[i] = i;
 	}
 
@@ -127,18 +120,11 @@ VIDEO_START( equites )
 PALETTE_INIT( splndrbt )
 {
 	UINT8 *prom_ptr;
-	int i, r, g, b;
+	int i;
 
 	for (i=0; i<0x100; i++)
 	{
-		r = color_prom[i] & 0xf;
-		r = (r << 4) + r;
-		g = color_prom[i+0x100] & 0xf;
-		g = (g << 4) + g;
-		b = color_prom[i+0x200] & 0xf;
-		b = (b << 4) + b;
-
-		palette_set_color(i, r, g, b);
+		palette_set_color(machine, i, pal4bit(color_prom[i]), pal4bit(color_prom[i+0x100]), pal4bit(color_prom[i+0x200]));
 		colortable[i] = (i & 3 || (i > 0x3f && i < 0x80) || i > 0xbf) ? i : 0;
 
 	}

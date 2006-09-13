@@ -602,7 +602,7 @@ WRITE32_HANDLER( hng64_videoram_w )
 
 READ32_HANDLER( hng64_random_reader )
 {
-	return 0 ; // return mame_rand()&0xffffffff;
+	return 0 ; // return mame_rand(Machine)&0xffffffff;
 }
 
 
@@ -630,13 +630,13 @@ static WRITE32_HANDLER( hng64_pal_w )
 	a = ((paletteram32[offset] & 0xff000000) >>24);
 
 	// a sure ain't alpha ???
-	// alpha_set_level(mame_rand()) ;
+	// alpha_set_level(mame_rand(Machine)) ;
 	// printf("Alpha : %d %d %d %d\n", a, b, g, r) ;
 
 	// if (a != 0)
 	//  popmessage("Alpha is not zero!") ;
 
-	palette_set_color(offset,r,g,b);
+	palette_set_color(Machine,offset,r,g,b);
 }
 
 
@@ -649,7 +649,7 @@ static READ32_HANDLER( hng64_port_read )
  	if(offset==0x441)
  		return hng64_interrupt_level_request;
 
-	return 0 ; // return mame_rand();
+	return 0 ; // return mame_rand(Machine);
 }
 
 
@@ -1291,13 +1291,13 @@ DRIVER_INIT( hng64 )
 DRIVER_INIT(hng64_fght)
 {
 	no_machine_error_code=0x01010101;
-	init_hng64();
+	init_hng64(machine);
 }
 
 DRIVER_INIT(hng64_race)
 {
 	no_machine_error_code=0x02020202;
-	init_hng64();
+	init_hng64(machine);
 }
 
 

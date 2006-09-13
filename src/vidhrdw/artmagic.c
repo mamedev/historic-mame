@@ -362,7 +362,7 @@ VIDEO_UPDATE( artmagic )
 	vram = address_to_vram(&offset);
 	if (!vram || tms34010_io_display_blanked(0))
 	{
-		fillbitmap(bitmap, get_black_pen(), cliprect);
+		fillbitmap(bitmap, get_black_pen(machine), cliprect);
 		return 0;
 	}
 	offset += cliprect->min_y * TOWORD(0x2000);

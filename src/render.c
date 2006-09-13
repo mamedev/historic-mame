@@ -240,7 +240,7 @@ static const render_quad_texuv oriented_texcoords[8] =
 ***************************************************************************/
 
 /* core system */
-static void render_exit(void);
+static void render_exit(running_machine *machine);
 static void render_load(int config_type, xml_data_node *parentnode);
 static void render_save(int config_type, xml_data_node *parentnode);
 
@@ -459,12 +459,12 @@ INLINE void free_render_ref(render_ref *ref)
     the rendering system
 -------------------------------------------------*/
 
-void render_init(void)
+void render_init(running_machine *machine)
 {
 	int scrnum;
 
 	/* make sure we clean up after ourselves */
-	add_exit_callback(render_exit);
+	add_exit_callback(machine, render_exit);
 
 	/* set up the list of render targets */
 	targetlist = NULL;
@@ -500,7 +500,7 @@ void render_init(void)
     render_exit - free all rendering data
 -------------------------------------------------*/
 
-static void render_exit(void)
+static void render_exit(running_machine *machine)
 {
 	int screen;
 
@@ -1364,7 +1364,7 @@ const render_primitive_list *render_target_get_primitives(render_target *target)
 		layer_order = alternate_order;
 
 	/* iterate over layers back-to-front, but only if we're running */
-	if (mame_get_phase() >= MAME_PHASE_RESET)
+	if (mame_get_phase(Machine) >= MAME_PHASE_RESET)
 		for (layernum = 0; layernum < ITEM_LAYER_MAX; layernum++)
 		{
 			int layer = layer_order[layernum];
@@ -2304,7 +2304,7 @@ static render_container *render_container_alloc(void)
 
 	/* allocate a notifier */
 	render_container_recompute_lookups(container);
-	palette_add_notifier(render_container_update_palette, container);
+	palette_add_notifier(Machine, render_container_update_palette, container);
 	return container;
 }
 
@@ -2692,7 +2692,8 @@ static void render_container_overlay_scale(mame_bitmap *dest, const mame_bitmap 
 
 static void render_container_recompute_lookups(render_container *container)
 {
-	int colors = palette_get_total_colors_with_ui();
+	pen_t *adjusted_palette = palette_get_adjusted_colors(Machine);
+	int colors = palette_get_total_colors_with_ui(Machine);
 	int i;
 
 	/* recompute the 256 entry lookup table */

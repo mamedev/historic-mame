@@ -62,7 +62,7 @@ Notes:
 
 READ16_HANDLER( sliver_rand )
 {
-	return mame_rand();
+	return mame_rand(Machine);
 }
 
 static ADDRESS_MAP_START( sliver_map, ADDRESS_SPACE_PROGRAM, 16 )

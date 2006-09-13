@@ -85,7 +85,7 @@ WRITE8_HANDLER( gottlieb_paletteram_w )
 
 	b = 0x10 * bit0 + 0x21 * bit1 + 0x46 * bit2 + 0x88 * bit3;
 
-	palette_set_color(offset / 2, r, g, b);
+	palette_set_color(Machine, offset / 2, r, g, b);
 }
 
 WRITE8_HANDLER( gottlieb_video_outputs_w )

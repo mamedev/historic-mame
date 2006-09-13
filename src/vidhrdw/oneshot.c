@@ -185,7 +185,7 @@ static void oneshot_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect 
 
 VIDEO_UPDATE( oneshot )
 {
-	fillbitmap(bitmap, get_black_pen(), cliprect);
+	fillbitmap(bitmap, get_black_pen(machine), cliprect);
 
 	tilemap_set_scrollx(oneshot_mid_tilemap,0, oneshot_scroll[0]-0x1f5);
 	tilemap_set_scrolly(oneshot_mid_tilemap,0, oneshot_scroll[1]);
@@ -200,7 +200,7 @@ VIDEO_UPDATE( oneshot )
 
 VIDEO_UPDATE( maddonna )
 {
-	fillbitmap(bitmap, get_black_pen(), cliprect);
+	fillbitmap(bitmap, get_black_pen(machine), cliprect);
 
 	tilemap_set_scrolly(oneshot_mid_tilemap,0, oneshot_scroll[1]); // other registers aren't used so we don't know which layers they relate to
 

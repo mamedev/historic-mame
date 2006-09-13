@@ -186,26 +186,26 @@ static PALETTE_INIT( spaceg )
 	int i;
 
 	for (i=0; i<128; i++)
-		palette_set_color (i, 0x00,0x00,0x00);
+		palette_set_color (machine, i, 0x00,0x00,0x00);
 
 
-	palette_set_color (0, 0x00,0x00,0x00);	//ok czarny
-	palette_set_color (1, 0x7f,0x00,0x00);//???
-	palette_set_color (2, 0xff,0xff,0xff);	//ok+ bialy
-	palette_set_color (3, 0xff,0x00,0x00);	//ok j.czerw.
-	palette_set_color (4, 0x3f,0x3f,0xff);	//ok j.niebieski
-	palette_set_color (5, 0x3f,0xff,0x3f);	//ok j.zielony
-	palette_set_color (6, 0xff,0xbf,0xbf);	//ok+ 'majtki'
-	palette_set_color (7, 0xff,0xff,0x00);	//ok+ zolty
+	palette_set_color (machine,0, 0x00,0x00,0x00);	//ok czarny
+	palette_set_color (machine,1, 0x7f,0x00,0x00);//???
+	palette_set_color (machine,2, 0xff,0xff,0xff);	//ok+ bialy
+	palette_set_color (machine,3, 0xff,0x00,0x00);	//ok j.czerw.
+	palette_set_color (machine,4, 0x3f,0x3f,0xff);	//ok j.niebieski
+	palette_set_color (machine,5, 0x3f,0xff,0x3f);	//ok j.zielony
+	palette_set_color (machine,6, 0xff,0xbf,0xbf);	//ok+ 'majtki'
+	palette_set_color (machine,7, 0xff,0xff,0x00);	//ok+ zolty
 
-	palette_set_color (8, 0xff,0x7f,0x00);	//ok+ pomaranczowy
-	palette_set_color (9, 0x3f,0xbf,0xff);	//ok j.niebieski (ciemniejszy od 13)
-	palette_set_color (10,0x3f,0xbf,0x3f);	//ok+ c.zielony
-	palette_set_color (11,0x00,0xff,0x00);	//ok j.zielony
-	palette_set_color (12,0x7f,0x00,0x00);	//ok brazowy (c.czerw)
-	palette_set_color (13,0x7f,0xbf,0xff);	//ok j.niebieski (jasniejszy od 9)
-	palette_set_color (14,0x00,0xff,0xff);//???
-	palette_set_color (15,0x7f,0x7f,0x7f);//???
+	palette_set_color (machine,8, 0xff,0x7f,0x00);	//ok+ pomaranczowy
+	palette_set_color (machine,9, 0x3f,0xbf,0xff);	//ok j.niebieski (ciemniejszy od 13)
+	palette_set_color (machine,10,0x3f,0xbf,0x3f);	//ok+ c.zielony
+	palette_set_color (machine,11,0x00,0xff,0x00);	//ok j.zielony
+	palette_set_color (machine,12,0x7f,0x00,0x00);	//ok brazowy (c.czerw)
+	palette_set_color (machine,13,0x7f,0xbf,0xff);	//ok j.niebieski (jasniejszy od 9)
+	palette_set_color (machine,14,0x00,0xff,0xff);//???
+	palette_set_color (machine,15,0x7f,0x7f,0x7f);//???
 
 }
 
@@ -272,23 +272,15 @@ int rgbcolor;
 		if ((offset>=0x200) && (offset<0x220)) /* 0xa200- 0xa21f */
 		{
 			/* palette 1 */
-			int r,g,b,col_ind;
-			r = (rgbcolor >> 0) & 7;
-			b = (rgbcolor >> 3) & 7;
-			g = (rgbcolor >> 6) & 7;
-			col_ind = offset & 0x1f;
-			palette_set_color(0x10 + 0x00 + col_ind, r*(255.0/7), g*(255.0/7), b*(255.0/7));
+			int col_ind = offset & 0x1f;
+			palette_set_color(Machine, 0x10 + 0x00 + col_ind, pal3bit(rgbcolor >> 0), pal3bit(rgbcolor >> 6), pal3bit(rgbcolor >> 3));
 		}
 		else
 		if ((offset>=0x300) && (offset<0x320)) /* 0xa300- 0xa31f */
 		{
 			/* palette 2 */
-			int r,g,b,col_ind;
-			r = (rgbcolor >> 0) & 7;
-			b = (rgbcolor >> 3) & 7;
-			g = (rgbcolor >> 6) & 7;
-			col_ind = offset & 0x1f;
-			palette_set_color(0x10 + 0x00 + col_ind, r*(255.0/7), g*(255.0/7), b*(255.0/7));
+			int col_ind = offset & 0x1f;
+			palette_set_color(Machine, 0x10 + 0x00 + col_ind, pal3bit(rgbcolor >> 0), pal3bit(rgbcolor >> 6), pal3bit(rgbcolor >> 3));
 		}
 		else
 			logerror("palette? read from unkram offset = %04x\n",offset);

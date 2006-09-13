@@ -651,7 +651,7 @@ ROM_END
 /*  Decode a simple PAL encryption
  */
 
-static void init_cska(void)
+static DRIVER_INIT( cska )
 {
 	int A;
 	unsigned char *rom = memory_region(REGION_CPU1);

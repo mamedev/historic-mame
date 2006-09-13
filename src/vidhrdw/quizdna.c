@@ -137,11 +137,7 @@ WRITE8_HANDLER( paletteram_xBGR_RRRR_GGGG_BBBB_w )
 	g = ((d0 >> 3) & 0x1e) | ((d1 >> 5) & 1);
 	b = ((d0 << 1) & 0x1e) | ((d1 >> 6) & 1);
 
-	r = (r << 3) | (r >> 2);
-	g = (g << 3) | (g >> 2);
-	b = (b << 3) | (b >> 2);
-
-	palette_set_color(offs/2,r,g,b);
+	palette_set_color(Machine,offs/2,pal5bit(r),pal5bit(g),pal5bit(b));
 }
 
 static void quizdna_drawsprites(mame_bitmap *bitmap, const rectangle *cliprect)
@@ -206,6 +202,6 @@ VIDEO_UPDATE( quizdna )
 		tilemap_draw(bitmap, cliprect, quizdna_fg_tilemap, 0, 0);
 	}
 	else
-		fillbitmap(bitmap, get_black_pen(), &Machine->screen[0].visarea);
+		fillbitmap(bitmap, get_black_pen(machine), &Machine->screen[0].visarea);
 	return 0;
 }

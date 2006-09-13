@@ -565,7 +565,7 @@ INLINE void zdrawgfxzoom32GP( mame_bitmap *bitmap, const gfx_element *gfx, const
 	src_base  = gfx->gfxdata + (code % gfx->total_elements) * gfx->char_modulo;
 
 	pal_base  = gfx->colortable + (color % gfx->total_colors) * granularity;
-	shd_base  = (UINT32 *)palette_shadow_table;
+	shd_base  = Machine->shadow_table;
 
 	dst_ptr   = bitmap->base;
 	dst_pitch = GX_BMPPW;
@@ -1254,7 +1254,7 @@ int konamigx_mixer_init(int objdma)
 	else
 		gx_spriteram = K053247_ram;
 
-	palette_set_shadow_dRGB32(3,-80,-80,-80, 0);
+	palette_set_shadow_dRGB32(Machine, 3,-80,-80,-80, 0);
 	K054338_invert_alpha(1);
 
 	return(0);
@@ -1720,7 +1720,7 @@ void konamigx_mixer(mame_bitmap *bitmap, const rectangle *cliprect,
 		}
 		color &= K055555_COLORMASK;
 
-		if (drawmode >= 4) palette_set_shadow_mode(order & 0x0f);
+		if (drawmode >= 4) palette_set_shadow_mode(Machine, order & 0x0f);
 
 		if (!(mixerflags & GXMIX_NOZBUF))
 		{
@@ -1991,7 +1991,7 @@ WRITE16_HANDLER( K055550_word_w )
 				else
 					if (dy < 0) i = 0x80;
 				else
-					i = mame_rand() & 0xff; // vector direction indeterminate
+					i = mame_rand(Machine) & 0xff; // vector direction indeterminate
 
 				prot_data[0x10] = i;
 			break;

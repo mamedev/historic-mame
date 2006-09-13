@@ -31,7 +31,7 @@ WRITE8_HANDLER( marvins_palette_bank_w )
 	fg_color = data&0xf;
 }
 
-static void stuff_palette( int source_index, int dest_index, int num_colors )
+static void stuff_palette( running_machine *machine, int source_index, int dest_index, int num_colors )
 {
 	UINT8 *color_prom = memory_region(REGION_PROMS) + source_index;
 	int i;
@@ -58,7 +58,7 @@ static void stuff_palette( int source_index, int dest_index, int num_colors )
 		bit3 = (color_prom[0x400] >> 1) & 0x01;
 		blue = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-		palette_set_color( dest_index++, red, green, blue );
+		palette_set_color( machine, dest_index++, red, green, blue );
 		color_prom++;
 	}
 
@@ -72,13 +72,13 @@ static void update_palette( int type )
 {
 	if( bg_color!=old_bg_color )
 	{
-		stuff_palette( 256+16*(bg_color&0x7), (0x11-type)*16, 16 );
+		stuff_palette( Machine, 256+16*(bg_color&0x7), (0x11-type)*16, 16 );
 		old_bg_color = bg_color;
 	}
 
 	if( fg_color!=old_fg_color )
 	{
-		stuff_palette( 128+16*(fg_color&0x7), (0x10+type)*16, 16 );
+		stuff_palette( Machine, 128+16*(fg_color&0x7), (0x10+type)*16, 16 );
 		old_fg_color = fg_color;
 	}
 }
@@ -159,8 +159,8 @@ VIDEO_START( marvins )
 {
 	flipscreen = -1; old_bg_color = old_fg_color = -1;
 
-	stuff_palette( 0, 0, 16*8 ); /* load sprite colors */
-	stuff_palette( 16*8*3, 16*8, 16*8 ); /* load text colors */
+	stuff_palette( machine, 0, 0, 16*8 ); /* load sprite colors */
+	stuff_palette( machine, 16*8*3, 16*8, 16*8 ); /* load text colors */
 
 	fg_tilemap = tilemap_create(get_fg_tilemap_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,64,32);
 	bg_tilemap = tilemap_create(get_bg_tilemap_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,64,32);

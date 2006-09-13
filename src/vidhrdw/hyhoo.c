@@ -37,21 +37,12 @@ static void hyhoo_gfxdraw(void);
 PALETTE_INIT( hyhoo )
 {
 	int i;
-	int r, g, b;
 
 	/* initialize 655 RGB lookup */
 	for (i = 0; i < 65536; i++)
 	{
 		// bbbbbggg_ggrrrrrr
-		r = ((i >>  0) & 0x3f);
-		g = ((i >>  6) & 0x1f);
-		b = ((i >> 11) & 0x1f);
-
-		r = ((r << 2) | (r >> 3));
-		g = ((g << 3) | (g >> 2));
-		b = ((b << 3) | (b >> 2));
-
-		palette_set_color(i, r, g, b);
+		palette_set_color(machine, i, pal6bit(i >> 0), pal5bit(i >> 6), pal5bit(i >> 11));
 	}
 }
 

@@ -53,21 +53,19 @@ static PALETTE_INIT( wolfpack )
 {
 	int i;
 
-	palette_set_color(0, 0x00, 0x00, 0x00);
-	palette_set_color(1, 0xc1, 0xc1, 0xc1);
-	palette_set_color(2, 0x81, 0x81, 0x81);
-	palette_set_color(3, 0x48, 0x48, 0x48);
+	palette_set_color(machine, 0, 0x00, 0x00, 0x00);
+	palette_set_color(machine, 1, 0xc1, 0xc1, 0xc1);
+	palette_set_color(machine, 2, 0x81, 0x81, 0x81);
+	palette_set_color(machine, 3, 0x48, 0x48, 0x48);
 
 	for (i = 0; i < 4; i++)
 	{
-		UINT8 r, g, b;
+		rgb_t color = palette_get_color(machine, i);
 
-		palette_get_color(i, &r, &g, &b);
-
-		palette_set_color(4 + i,
-			r < 0xb8 ? r + 0x48 : 0xff,
-			g < 0xb8 ? g + 0x48 : 0xff,
-			b < 0xb8 ? b + 0x48 : 0xff);
+		palette_set_color(machine, 4 + i,
+			RGB_RED(color) < 0xb8   ? RGB_RED(color)   + 0x48 : 0xff,
+			RGB_GREEN(color) < 0xb8 ? RGB_GREEN(color) + 0x48 : 0xff,
+			RGB_BLUE(color) < 0xb8  ? RGB_BLUE(color)  + 0x48 : 0xff);
 	}
 
 	colortable[0] = 0;

@@ -140,18 +140,8 @@ VIDEO_UPDATE(silkroad);
 
 static WRITE32_HANDLER( paletteram32_xRRRRRGGGGGBBBBB_dword_w )
 {
-	int r,g,b;
 	COMBINE_DATA(&paletteram32[offset]);
-
-	r = (paletteram32[offset] & 0x7c000000) >> (10+16);
-	g = (paletteram32[offset] & 0x03e00000) >> (5+16);
-	b = (paletteram32[offset] & 0x001f0000) >> (0+16);
-
-	b = b << 3;
-	r = r << 3;
-	g = g << 3;
-
-	palette_set_color(offset,r,g,b);
+	palette_set_color(Machine,offset,pal5bit(paletteram32[offset] >> (10+16)),pal5bit(paletteram32[offset] >> (5+16)),pal5bit(paletteram32[offset] >> (0+16)));
 }
 
 /* player inputs */

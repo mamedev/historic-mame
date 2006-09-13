@@ -261,18 +261,11 @@ static UINT16 m_p_n_b1g1[ 0x10000 ];
 
 PALETTE_INIT( psx )
 {
-	UINT32 n_r;
-	UINT32 n_g;
-	UINT32 n_b;
 	UINT32 n_colour;
 
 	for( n_colour = 0; n_colour < 0x10000; n_colour++ )
 	{
-		n_r = ( ( n_colour & 0x1f ) * 0xff ) / 0x1f;
-		n_g = ( ( ( n_colour >> 5 ) & 0x1f ) * 0xff ) / 0x1f;
-		n_b = ( ( ( n_colour >> 10 ) & 0x1f ) * 0xff ) / 0x1f;
-
-		palette_set_color( n_colour, n_r, n_g, n_b );
+		palette_set_color( machine, n_colour, pal5bit(n_colour >> 0), pal5bit(n_colour >> 5), pal5bit(n_colour >> 10) );
 	}
 }
 

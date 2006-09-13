@@ -22,7 +22,7 @@
 ***************************************************************************/
 
 /* initialization */
-void ui_gfx_init(void);
+void ui_gfx_init(running_machine *machine);
 
 /* master handler */
 UINT32 ui_gfx_ui_handler(UINT32 state);

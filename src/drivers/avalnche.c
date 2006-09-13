@@ -44,8 +44,8 @@
 static PALETTE_INIT( avalnche )
 {
 	/* 2 colors in the palette: black & white */
-	palette_set_color(0,0x00,0x00,0x00);
-	palette_set_color(1,0xff,0xff,0xff);
+	palette_set_color(machine,0,0x00,0x00,0x00);
+	palette_set_color(machine,1,0xff,0xff,0xff);
 }
 
 

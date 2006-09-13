@@ -55,15 +55,15 @@ PALETTE_INIT( suprloco )
 		bit2 = (color_prom[i] >> 7) & 0x01;
 		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 
 		/* hack: generate a second bank of sprite palette with red changed to purple */
 		if (i >= 256)
 		{
 			if ((i & 0x0f) == 0x09)
-				palette_set_color(i+256,r,g,0xff);
+				palette_set_color(machine,i+256,r,g,0xff);
 			else
-				palette_set_color(i+256,r,g,b);
+				palette_set_color(machine,i+256,r,g,b);
 		}
 	}
 }

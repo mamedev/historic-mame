@@ -78,7 +78,7 @@ PALETTE_INIT( tp84 )
 		bit3 = (color_prom[2*Machine->drv->total_colors] >> 3) & 0x01;
 		b = 0x0e * bit0 + 0x1f * bit1 + 0x42 * bit2 + 0x90 * bit3;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 
 		color_prom++;
 	}

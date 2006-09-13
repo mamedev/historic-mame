@@ -34,13 +34,13 @@ PALETTE_INIT( mermaid )
 		int g = 0x21 * BIT(*color_prom, 3) + 0x47 * BIT(*color_prom, 4) + 0x97 * BIT(*color_prom, 5);
 		int b =                              0x47 * BIT(*color_prom, 6) + 0x97 * BIT(*color_prom, 7);
 
-		palette_set_color(i, r, g, b);
+		palette_set_color(machine, i, r, g, b);
 
 		color_prom++;
 	}
 
 	// blue background
-	palette_set_color(TOTAL_COLORS(0), 0, 0, 0xff);
+	palette_set_color(machine, TOTAL_COLORS(0), 0, 0, 0xff);
 
 	// set up background palette
     COLOR(2,0) = 32;

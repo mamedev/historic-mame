@@ -1562,8 +1562,8 @@ static NVRAM_HANDLER( spi )
 		}
 	}
 
-	nvram_handler_intelflash(0, file, read_or_write);
-	nvram_handler_intelflash(1, file, read_or_write);
+	nvram_handler_intelflash(machine, 0, file, read_or_write);
+	nvram_handler_intelflash(machine, 1, file, read_or_write);
 }
 
 /* this is a 93C46 but with reset delay */
@@ -1824,28 +1824,28 @@ static DRIVER_INIT( rdft )
 {
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00298d0, 0x00298d3, 0, 0, rdft_speedup_r );
 
-	init_spi();
+	init_spi(machine);
 }
 
 static DRIVER_INIT( senkyu )
 {
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0018cb4, 0x0018cb7, 0, 0, senkyu_speedup_r );
 
-	init_spi();
+	init_spi(machine);
 }
 
 static DRIVER_INIT( senkyua )
 {
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0018c9c, 0x0018c9f, 0, 0, senkyua_speedup_r );
 
-	init_spi();
+	init_spi(machine);
 }
 
 static DRIVER_INIT( batlball )
 {
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0018db4, 0x0018db7, 0, 0, batlball_speedup_r );
 
-	init_spi();
+	init_spi(machine);
 }
 
 static DRIVER_INIT( ejanhs )
@@ -1853,21 +1853,21 @@ static DRIVER_INIT( ejanhs )
 //  idle skip doesn't work properly?
 //  memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x002d224, 0x002d227, 0, 0, ejanhs_speedup_r );
 
-	init_spi();
+	init_spi(machine);
 }
 
 static DRIVER_INIT( viprp1 )
 {
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x001e2e0, 0x001e2e3, 0, 0, viprp1_speedup_r );
 
-	init_spi();
+	init_spi(machine);
 }
 
 static DRIVER_INIT( viprp1o )
 {
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x001d49c, 0x001d49f, 0, 0, viprp1o_speedup_r );
 
-	init_spi();
+	init_spi(machine);
 }
 
 
@@ -1887,12 +1887,12 @@ static DRIVER_INIT( rf2 )
 
 static DRIVER_INIT( rdft2 )
 {
-	init_rf2();
+	init_rf2(machine);
 }
 
 static DRIVER_INIT( rdft2us )
 {
-	init_rf2();
+	init_rf2(machine);
 }
 
 
@@ -1913,7 +1913,7 @@ static DRIVER_INIT( rfjet )
 
 static DRIVER_INIT( rdft22kc )
 {
-	init_rf2();
+	init_rf2(machine);
 }
 
 static MACHINE_RESET( seibu386 )

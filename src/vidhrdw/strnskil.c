@@ -21,11 +21,11 @@ PALETTE_INIT( strnskil )
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
-		int r = color_prom[0]*0x11;
-		int g = color_prom[Machine->drv->total_colors]*0x11;
-		int b = color_prom[2*Machine->drv->total_colors]*0x11;
+		int r = color_prom[0];
+		int g = color_prom[Machine->drv->total_colors];
+		int b = color_prom[2*Machine->drv->total_colors];
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,pal4bit(r),pal4bit(g),pal4bit(b));
 		color_prom++;
 	}
 

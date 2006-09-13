@@ -82,7 +82,7 @@ struct _performance_info
 /* ----- screen rendering and management ----- */
 
 /* core initialization */
-int video_init(void);
+int video_init(running_machine *machine);
 
 /* core VBLANK callback */
 void video_vblank_start(void);

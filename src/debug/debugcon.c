@@ -75,7 +75,7 @@ static debug_command *commandlist;
     system
 -------------------------------------------------*/
 
-void debug_console_init(void)
+void debug_console_init(running_machine *machine)
 {
 	/* allocate text buffers */
 	console_textbuf = text_buffer_alloc(CONSOLE_BUF_SIZE, CONSOLE_MAX_LINES);
@@ -91,7 +91,7 @@ void debug_console_init(void)
 	debug_console_printf("Currently targeting %s (%s)\n", Machine->gamedrv->name, Machine->gamedrv->description);
 
 	/* request callback upon exiting */
-	add_exit_callback(debug_console_exit);
+	add_exit_callback(machine, debug_console_exit);
 }
 
 
@@ -100,7 +100,7 @@ void debug_console_init(void)
     system
 -------------------------------------------------*/
 
-void debug_console_exit(void)
+void debug_console_exit(running_machine *machine)
 {
 	/* free allocated memory */
 	if (console_textbuf)
@@ -511,7 +511,7 @@ text_buffer *debug_console_get_textbuf(void)
     the errorlog ring buffer
 -------------------------------------------------*/
 
-void debug_errorlog_write_line(const char *line)
+void debug_errorlog_write_line(running_machine *machine, const char *line)
 {
 	if (errorlog_textbuf)
 		text_buffer_print(errorlog_textbuf, line);

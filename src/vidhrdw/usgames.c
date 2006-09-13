@@ -22,7 +22,7 @@ PALETTE_INIT(usg)
 		g = 0x7f * g * (i + 1);
 		b = 0x7f * b * (i + 1);
 
-		palette_set_color(j,r,g,b);
+		palette_set_color(machine,j,r,g,b);
 	}
 
 	for (j = 0;j < 256;j++)

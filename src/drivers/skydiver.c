@@ -110,9 +110,9 @@ static unsigned short colortable_source[] =
 
 static PALETTE_INIT( skydiver )
 {
-	palette_set_color(0,0x00,0x00,0x00); /* black */
-	palette_set_color(1,0xff,0xff,0xff); /* white */
-	palette_set_color(2,0xa0,0xa0,0xa0); /* grey */
+	palette_set_color(machine,0,0x00,0x00,0x00); /* black */
+	palette_set_color(machine,1,0xff,0xff,0xff); /* white */
+	palette_set_color(machine,2,0xa0,0xa0,0xa0); /* grey */
 
 	memcpy(colortable,colortable_source,sizeof(colortable_source));
 }

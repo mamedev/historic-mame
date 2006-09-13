@@ -470,7 +470,7 @@ DrawPoly( mame_bitmap *bitmap, const UINT32 *pSource, int n, int bNew )
 
 VIDEO_UPDATE( ss23 )
 {
-	fillbitmap(bitmap, get_black_pen(), cliprect);
+	fillbitmap(bitmap, get_black_pen(machine), cliprect);
 	fillbitmap(priority_bitmap, 0, cliprect);
 
 	tilemap_mark_all_tiles_dirty(bgtilemap);
@@ -570,7 +570,7 @@ INLINE void UpdatePalette( int entry )
 		int r = nthbyte(paletteram32,which+0x00001);
 		int g = nthbyte(paletteram32,which+0x08001);
 		int b = nthbyte(paletteram32,which+0x18001);
-		palette_set_color( which,r,g,b );
+		palette_set_color( Machine,which,r,g,b );
 	}
 }
 

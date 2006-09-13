@@ -52,15 +52,11 @@ WRITE8_HANDLER( nbmj8891_palette_type1_w )
 
 	offset &= 0x1fe;
 
-	r = ((nbmj8891_palette[offset + 0] & 0x0f) << 4);
-	g = ((nbmj8891_palette[offset + 1] & 0xf0) << 0);
-	b = ((nbmj8891_palette[offset + 1] & 0x0f) << 4);
+	r = ((nbmj8891_palette[offset + 0] & 0x0f) >> 0);
+	g = ((nbmj8891_palette[offset + 1] & 0xf0) >> 4);
+	b = ((nbmj8891_palette[offset + 1] & 0x0f) >> 0);
 
-	r = (r | (r >> 4));
-	g = (g | (g >> 4));
-	b = (b | (b >> 4));
-
-	palette_set_color((offset >> 1), r, g, b);
+	palette_set_color(Machine, (offset >> 1), pal4bit(r), pal4bit(g), pal4bit(b));
 }
 
 READ8_HANDLER( nbmj8891_palette_type2_r )
@@ -78,15 +74,11 @@ WRITE8_HANDLER( nbmj8891_palette_type2_w )
 
 	offset &= 0x0ff;
 
-	r = ((nbmj8891_palette[offset + 0x000] & 0x0f) << 4);
-	g = ((nbmj8891_palette[offset + 0x000] & 0xf0) << 0);
-	b = ((nbmj8891_palette[offset + 0x100] & 0x0f) << 4);
+	r = ((nbmj8891_palette[offset + 0x000] & 0x0f) >> 0);
+	g = ((nbmj8891_palette[offset + 0x000] & 0xf0) >> 4);
+	b = ((nbmj8891_palette[offset + 0x100] & 0x0f) >> 0);
 
-	r = (r | (r >> 4));
-	g = (g | (g >> 4));
-	b = (b | (b >> 4));
-
-	palette_set_color((offset & 0x0ff), r, g, b);
+	palette_set_color(Machine, (offset & 0x0ff), pal4bit(r), pal4bit(g), pal4bit(b));
 }
 
 READ8_HANDLER( nbmj8891_palette_type3_r )
@@ -104,15 +96,11 @@ WRITE8_HANDLER( nbmj8891_palette_type3_w )
 
 	offset &= 0x1fe;
 
-	r = ((nbmj8891_palette[offset + 1] & 0x0f) << 4);
-	g = ((nbmj8891_palette[offset + 0] & 0xf0) << 0);
-	b = ((nbmj8891_palette[offset + 0] & 0x0f) << 4);
+	r = ((nbmj8891_palette[offset + 1] & 0x0f) >> 0);
+	g = ((nbmj8891_palette[offset + 0] & 0xf0) >> 4);
+	b = ((nbmj8891_palette[offset + 0] & 0x0f) >> 0);
 
-	r = (r | (r >> 4));
-	g = (g | (g >> 4));
-	b = (b | (b >> 4));
-
-	palette_set_color((offset >> 1), r, g, b);
+	palette_set_color(Machine, (offset >> 1), pal4bit(r), pal4bit(g), pal4bit(b));
 }
 
 WRITE8_HANDLER( nbmj8891_clutsel_w )

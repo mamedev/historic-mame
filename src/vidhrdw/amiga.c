@@ -125,7 +125,7 @@ PALETTE_INIT( amiga )
 	int i;
 
 	for (i = 0; i < 0x1000; i++)
-		palette_set_color(i, pal4bit(i >> 8), pal4bit(i >> 4), pal4bit(i));
+		palette_set_color(machine, i, pal4bit(i >> 8), pal4bit(i >> 4), pal4bit(i));
 }
 
 
@@ -150,7 +150,7 @@ VIDEO_START( amiga )
 		separate_bitplanes[1][j] = pf2pix ? (pf2pix + 8) : pf1pix;
 	}
 
-	return video_start_generic_bitmapped();
+	return video_start_generic_bitmapped(machine);
 }
 
 

@@ -39,7 +39,7 @@ PALETTE_INIT( redclash )
 		bit1 = (color_prom[i] >> 4) & 0x01;
 		bit2 = (color_prom[i] >> 7) & 0x01;
 		b = 0x47 * bit1 + 0x97 * bit2;
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 	}
 
 	/* This is for the stars colors */
@@ -55,7 +55,7 @@ PALETTE_INIT( redclash )
 			g = 0x47 * bit1 + 0x97 * bit2;
 			bit1 = i & 0x01;
 			r = 0x47 * bit1;
-			palette_set_color(i,r,g,b);
+			palette_set_color(machine,i,r,g,b);
 	}
 
 	/* characters */
@@ -412,7 +412,7 @@ VIDEO_EOF( redclash )
 
 VIDEO_UPDATE( redclash )
 {
-	fillbitmap(bitmap, get_black_pen(), &Machine->screen[0].visarea);
+	fillbitmap(bitmap, get_black_pen(machine), &Machine->screen[0].visarea);
 	redclash_draw_stars(bitmap, 32, 0, 0x00, 0xff);
 	redclash_draw_sprites(bitmap);
 	redclash_draw_bullets(bitmap);

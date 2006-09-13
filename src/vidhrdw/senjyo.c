@@ -350,8 +350,8 @@ VIDEO_UPDATE( senjyo )
 
 
 	/* two colors for the radar dots (verified on the real board) */
-	palette_set_color(512,0xff,0x00,0x00);	/* red for enemies */
-	palette_set_color(513,0xff,0xff,0x00);	/* yellow for player */
+	palette_set_color(machine,512,0xff,0x00,0x00);	/* red for enemies */
+	palette_set_color(machine,513,0xff,0xff,0x00);	/* yellow for player */
 
 	{
 		int scrollx,scrolly;

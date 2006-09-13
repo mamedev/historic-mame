@@ -127,17 +127,12 @@ VIDEO_UPDATE(hotblock)
 	int i;
 	static int xxx=320,yyy=204;
 
-	fillbitmap(bitmap, get_black_pen(), 0);
+	fillbitmap(bitmap, get_black_pen(machine), 0);
 
 	for (i=0;i<256;i++)
 	{
-		int dat,r,g,b;
-		dat=(hotblock_pal[i*2+1]<<8)|hotblock_pal[i*2];
-
-		b = (dat>>10)&0x1f;
-		g = (dat>>5)&0x1f;
-		r = (dat>>0)&0x1f;
-		palette_set_color(i,r*8,g*8,b*8);
+		int dat=(hotblock_pal[i*2+1]<<8)|hotblock_pal[i*2];
+		palette_set_color(machine,i,pal5bit(dat>>0),pal5bit(dat>>5),pal5bit(dat>>10));
 	}
 
 	count=0;

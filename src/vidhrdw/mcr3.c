@@ -91,10 +91,10 @@ static void spyhunt_get_alpha_tile_info(int tile_index)
 PALETTE_INIT( spyhunt )
 {
 	/* alpha colors are hard-coded */
-	palette_set_color(4*16+0,0x00,0x00,0x00);
-	palette_set_color(4*16+1,0x00,0xff,0x00);
-	palette_set_color(4*16+2,0x00,0x00,0xff);
-	palette_set_color(4*16+3,0xff,0xff,0xff);
+	palette_set_color(machine,4*16+0,0x00,0x00,0x00);
+	palette_set_color(machine,4*16+1,0x00,0xff,0x00);
+	palette_set_color(machine,4*16+2,0x00,0x00,0xff);
+	palette_set_color(machine,4*16+3,0xff,0xff,0xff);
 }
 
 
@@ -156,22 +156,11 @@ VIDEO_START( spyhunt )
 
 WRITE8_HANDLER( mcr3_paletteram_w )
 {
-	int r, g, b;
-
 	paletteram[offset] = data;
 	offset &= 0x7f;
 
 	/* high bit of red comes from low bit of address */
-	r = ((offset & 1) << 2) + (data >> 6);
-	g = (data >> 0) & 7;
-	b = (data >> 3) & 7;
-
-	/* up to 8 bits */
-	r = (r << 5) | (r << 2) | (r >> 1);
-	g = (g << 5) | (g << 2) | (g >> 1);
-	b = (b << 5) | (b << 2) | (b >> 1);
-
-	palette_set_color(offset / 2, r, g, b);
+	palette_set_color(Machine, offset / 2, pal3bit(((offset & 1) << 2) + (data >> 6)), pal3bit(data >> 0), pal3bit(data >> 3));
 }
 
 

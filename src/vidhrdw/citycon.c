@@ -154,18 +154,8 @@ static void draw_sprites(mame_bitmap *bitmap, const rectangle *cliprect)
 
 INLINE void changecolor_RRRRGGGGBBBBxxxx(int color,int indx)
 {
-	int r,g,b;
 	int data = paletteram[2*indx | 1] | (paletteram[2*indx] << 8);
-
-	r = (data >> 12) & 0x0f;
-	g = (data >>  8) & 0x0f;
-	b = (data >>  4) & 0x0f;
-
-	r = (r << 4) | r;
-	g = (g << 4) | g;
-	b = (b << 4) | b;
-
-	palette_set_color(color,r,g,b);
+	palette_set_color(Machine,color,pal4bit(data >> 12),pal4bit(data >> 8),pal4bit(data >> 4));
 }
 
 VIDEO_UPDATE( citycon )

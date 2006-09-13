@@ -201,7 +201,7 @@ VIDEO_START( ssv )
 
 VIDEO_START( eaglshot )
 {
-	if ( video_start_ssv() )
+	if ( video_start_ssv(machine) )
 		return 1;
 
 	eaglshot_gfxram		=	(UINT16*)auto_malloc(16 * 0x40000);
@@ -227,7 +227,7 @@ WRITE16_HANDLER( gdfs_tmapram_w )
 
 VIDEO_START( gdfs )
 {
-	if ( video_start_ssv() )
+	if ( video_start_ssv(machine) )
 		return 1;
 
 	Machine->gfx[2]->color_granularity = 64; /* 256 colour sprites with palette selectable on 64 colour boundaries */
@@ -411,7 +411,7 @@ WRITE16_HANDLER( paletteram16_xrgb_swap_word_w )
 	g = data1 >> 8;
 	b = data1 & 0xff;
 
-	palette_set_color(offset>>1, r, g, b);
+	palette_set_color(Machine, offset>>1, r, g, b);
 
 	if (!(Machine->drv->video_attributes & VIDEO_NEEDS_6BITS_PER_GUN))
 		popmessage("driver should use VIDEO_NEEDS_6BITS_PER_GUN flag");
@@ -951,7 +951,7 @@ VIDEO_UPDATE( eaglshot )
 		}
 	}
 
-	video_update_ssv(screen, bitmap, cliprect);
+	video_update_ssv(machine, screen, bitmap, cliprect);
 	return 0;
 }
 
@@ -1122,7 +1122,7 @@ VIDEO_UPDATE( gdfs )
 {
 	int tile, pri;
 
-	video_update_ssv(screen, bitmap, cliprect);
+	video_update_ssv(machine, screen, bitmap, cliprect);
 
 	// Decode zooming sprites tiles from ram
 	if (eaglshot_dirty)

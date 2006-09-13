@@ -368,7 +368,7 @@ VIDEO_START( seta2 )
 
 VIDEO_START( seta2_offset )
 {
-	video_start_seta2();
+	video_start_seta2(machine);
 
 	yoffset = 0x10;
 	return 0;

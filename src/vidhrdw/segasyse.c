@@ -171,7 +171,7 @@ int	segae_vdp_start( UINT8 chip )
 	/*- Black the Palette -*/
 
 	for (temp=0;temp<32;temp++)
-		palette_set_color(temp + 32*chip+segasyse_palettebase, 0, 0, 0);
+		palette_set_color(Machine, temp + 32*chip+segasyse_palettebase, 0, 0, 0);
 
 	/* Save State Stuff (based on vidhrdw/taitoic.c) */
 
@@ -271,11 +271,11 @@ void segae_vdp_data_w ( UINT8 chip, UINT8 data )
 		segae_vdp_cram[chip][segae_vdp_accessaddr[chip]] = data;
 
 		if (temp != data) {
-			r = (segae_vdp_cram[chip][segae_vdp_accessaddr[chip]] & 0x03) << 6;
-			g = (segae_vdp_cram[chip][segae_vdp_accessaddr[chip]] & 0x0c) << 4;
-			b = (segae_vdp_cram[chip][segae_vdp_accessaddr[chip]] & 0x30) << 2;
+			r = (segae_vdp_cram[chip][segae_vdp_accessaddr[chip]] & 0x03) >> 0;
+			g = (segae_vdp_cram[chip][segae_vdp_accessaddr[chip]] & 0x0c) >> 2;
+			b = (segae_vdp_cram[chip][segae_vdp_accessaddr[chip]] & 0x30) >> 4;
 
-			palette_set_color(segae_vdp_accessaddr[chip] + 32*chip+segasyse_palettebase, r, g, b);
+			palette_set_color(Machine, segae_vdp_accessaddr[chip] + 32*chip+segasyse_palettebase, pal2bit(r), pal2bit(g), pal2bit(b));
 		}
 
 		segae_vdp_accessaddr[chip] += 1;

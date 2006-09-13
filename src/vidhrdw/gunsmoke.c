@@ -54,7 +54,7 @@ PALETTE_INIT( gunsmoke )
 
 		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-		palette_set_color(i, r, g, b);
+		palette_set_color(machine, i, r, g, b);
 		color_prom++;
 	}
 
@@ -215,7 +215,7 @@ VIDEO_UPDATE( gunsmoke )
 	if (bgon)
 		tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 	else
-		fillbitmap(bitmap, get_black_pen(), cliprect);
+		fillbitmap(bitmap, get_black_pen(machine), cliprect);
 
 	if (objon) gunsmoke_draw_sprites(bitmap, cliprect);
 	if (chon)  tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);

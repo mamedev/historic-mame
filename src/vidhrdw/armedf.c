@@ -347,7 +347,7 @@ VIDEO_UPDATE( armedf )
     }
     else
     {
-        fillbitmap( bitmap, get_black_pen()&0x0f, cliprect );
+        fillbitmap( bitmap, get_black_pen(machine)&0x0f, cliprect );
     }*/
 
 	if ((mcu_mode&0x0030)==0x0030) tilemap_draw( bitmap, cliprect, armedf_tx_tilemap, 0, 0);

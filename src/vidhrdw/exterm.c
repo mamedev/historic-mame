@@ -25,19 +25,7 @@ PALETTE_INIT( exterm )
 
 	/* initialize 555 RGB lookup */
 	for (i = 0; i < 32768; i++)
-	{
-		int r,g,b;
-
-		r = (i >> 10) & 0x1f;
-		g = (i >>  5) & 0x1f;
-		b = (i >>  0) & 0x1f;
-
-		r = (r << 3) | (r >> 2);
-		g = (g << 3) | (g >> 2);
-		b = (b << 3) | (b >> 2);
-
-		palette_set_color(i+4096,r,g,b);
-	}
+		palette_set_color(machine, i+4096, pal5bit(i >> 10), pal5bit(i >> 5), pal5bit(i >> 0));
 }
 
 
@@ -86,7 +74,7 @@ VIDEO_UPDATE( exterm )
 	/* if the display is blanked, fill with black */
 	if (tms34010_io_display_blanked(0))
 	{
-		fillbitmap(bitmap, get_black_pen(), cliprect);
+		fillbitmap(bitmap, get_black_pen(machine), cliprect);
 		return 0;
 	}
 

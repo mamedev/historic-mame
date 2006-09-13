@@ -159,16 +159,9 @@ static WRITE32_HANDLER( avengrs_eprom_w )
 
 static WRITE32_HANDLER( avengrs_palette_w )
 {
-	int r,g,b;
-
 	COMBINE_DATA(&paletteram32[offset]);
-
 	/* x bbbbb ggggg rrrrr */
-	b = (paletteram32[offset] >> 10) & 0x1f;
-	g = (paletteram32[offset] >> 5) & 0x1f;
-	r = (paletteram32[offset] >> 0) & 0x1f;
-
-	palette_set_color(offset,r*8,g*8,b*8);
+	palette_set_color(Machine,offset,pal5bit(paletteram32[offset] >> 0),pal5bit(paletteram32[offset] >> 5),pal5bit(paletteram32[offset] >> 10));
 }
 
 static READ32_HANDLER( avengrs_sound_r )

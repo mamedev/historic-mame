@@ -296,7 +296,7 @@ PALETTE_INIT(ertictac)
  		g = ((c & 0x20) >> 3) | ((c & 0x40) >> 3) | i;
  		b = ((c & 0x08) >> 1) | ((c & 0x80) >> 4) | i;
 
- 		palette_set_color(c, r * 0x11, g * 0x11, b * 0x11);
+ 		palette_set_color(machine, c, pal4bit(r), pal4bit(g), pal4bit(b));
 	}
 }
 

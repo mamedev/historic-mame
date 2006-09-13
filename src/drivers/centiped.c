@@ -347,7 +347,7 @@ static MACHINE_RESET( centiped )
 
 static MACHINE_RESET( magworm )
 {
-	machine_reset_centiped();
+	machine_reset_centiped(machine);
 
 	/* kludge: clear RAM so that magworm can be reset cleanly */
 	memset(rambase, 0, 0x400);
@@ -462,7 +462,7 @@ static WRITE8_HANDLER( led_w )
 
 static READ8_HANDLER( caterplr_rand_r )
 {
-	return mame_rand() % 0xff;
+	return mame_rand(Machine) % 0xff;
 }
 
 

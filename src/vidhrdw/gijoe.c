@@ -146,7 +146,7 @@ VIDEO_UPDATE( gijoe )
 
 	sortlayers(layer, layer_pri);
 
-	fillbitmap(bitmap, get_black_pen(), cliprect);
+	fillbitmap(bitmap, get_black_pen(machine), cliprect);
 	fillbitmap(priority_bitmap, 0, cliprect);
 
 	K056832_tilemap_draw(bitmap,cliprect, layer[0], 0, 1);

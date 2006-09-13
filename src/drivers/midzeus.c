@@ -48,12 +48,7 @@ VIDEO_START( midzeus )
 		return 1;
 
 	for (i = 0; i < 32768; i++)
-	{
-		int r = (i >> 10) & 0x1f;
-		int g = (i >> 5) & 0x1f;
-		int b = (i >> 0) & 0x1f;
-		palette_set_color(i, (r << 3) | (r >> 2), (g << 3) | (g >> 2), (b << 3) | (b >> 2));
-	}
+		palette_set_color(machine, i, pal5bit(i >> 10), pal5bit(i >> 5), pal5bit(i >> 0));
 	return 0;
 }
 

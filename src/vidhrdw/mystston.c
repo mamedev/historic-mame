@@ -62,7 +62,7 @@ PALETTE_INIT( mystston )
 
 		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-		palette_set_color(i + 24, r, g, b);	// first 24 colors are from RAM
+		palette_set_color(machine, i + 24, r, g, b);	// first 24 colors are from RAM
 
 		color_prom++;
 	}

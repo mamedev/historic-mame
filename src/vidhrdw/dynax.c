@@ -36,10 +36,7 @@ PALETTE_INIT( sprtmtch )
 		int r = BITSWAP8((x >>  0) & 0x1f, 7,6,5, 0,1,2,3,4 );
 		int g = BITSWAP8((x >>  5) & 0x1f, 7,6,5, 0,1,2,3,4 );
 		int b = BITSWAP8((x >> 10) & 0x1f, 7,6,5, 0,1,2,3,4 );
-		r =  (r << 3) | (r >> 2);
-		g =  (g << 3) | (g >> 2);
-		b =  (b << 3) | (b >> 2);
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,pal5bit(r),pal5bit(g),pal5bit(b));
 	}
 }
 
@@ -745,7 +742,7 @@ VIDEO_START( hnoridur )
 
 VIDEO_START( mcnpshnt )
 {
-	if (video_start_hnoridur())	return 1;
+	if (video_start_hnoridur(machine))	return 1;
 	priority_table = priority_mcnpshnt;
 	return 0;
 }
@@ -807,7 +804,7 @@ VIDEO_START( mjdialq2 )
 
 VIDEO_START( mjelctrn )
 {
-	if (video_start_hnoridur())	return 1;
+	if (video_start_hnoridur(machine))	return 1;
 
 	priority_table = priority_mjelctrn;
 	update_irq_func = mjelctrn_update_irq;
@@ -817,7 +814,7 @@ VIDEO_START( mjelctrn )
 
 VIDEO_START( neruton )
 {
-	if (video_start_hnoridur())	return 1;
+	if (video_start_hnoridur(machine))	return 1;
 
 //  priority_table = priority_mjelctrn;
 	update_irq_func = neruton_update_irq;

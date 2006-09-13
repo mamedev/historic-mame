@@ -433,7 +433,7 @@ static const gfx_decode malzak_gfxdecodeinfo[] =
 
 static PALETTE_INIT( malzak )
 {
-	palette_set_colors(0, saa5050_palette, sizeof(saa5050_palette) / 3);
+	palette_set_colors(machine, 0, saa5050_palette, sizeof(saa5050_palette) / 3);
 	memcpy(colortable, saa5050_colortable, sizeof (saa5050_colortable));
 }
 

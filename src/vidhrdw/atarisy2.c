@@ -241,7 +241,7 @@ WRITE16_HANDLER( atarisy2_paletteram_w )
 	red = (color_table[(newword >> 12) & 15] * inten) >> 4;
 	green = (color_table[(newword >> 8) & 15] * inten) >> 4;
 	blue = (color_table[(newword >> 4) & 15] * inten) >> 4;
-	palette_set_color(offset, red, green, blue);
+	palette_set_color(Machine, offset, red, green, blue);
 }
 
 

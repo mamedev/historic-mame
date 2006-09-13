@@ -270,7 +270,7 @@ VIDEO_UPDATE(carrera)
 
 static READ8_HANDLER( unknown_r )
 {
-	return mame_rand();
+	return mame_rand(Machine);
 }
 
 /* these are set as input, but I have no idea which input port it uses is for the AY */
@@ -286,14 +286,7 @@ PALETTE_INIT(carrera)
 	UINT8 *src = memory_region ( REGION_PROMS );
 
 	for (x=0;x<32;x++)
-	{
-		int r,g,b;
-		r = (src[x]&0x07)>>0;
-		g = (src[x]&0x38)>>3;
-		b = (src[x]&0xc0)>>5;
-		palette_set_color(x, r<<5, g<<5, b<<5);
-	}
-
+		palette_set_color(machine, x, pal3bit(src[x] >> 0), pal3bit(src[x] >> 3), pal2bit(src[x] >> 6));
 }
 
 static MACHINE_DRIVER_START( carrera )

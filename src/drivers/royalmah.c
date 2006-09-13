@@ -156,7 +156,7 @@ PALETTE_INIT( royalmah )
 		bit2 = (*color_prom >> 7) & 0x01;
 		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 		color_prom++;
 	}
 }
@@ -176,7 +176,7 @@ PALETTE_INIT( mjderngr )
 		r =  (r << 3) | (r >> 2);
 		g =  (g << 3) | (g >> 2);
 		b =  (b << 3) | (b >> 2);
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 	}
 }
 

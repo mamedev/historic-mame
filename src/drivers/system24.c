@@ -901,7 +901,7 @@ static READ16_HANDLER(irq_r)
 		if (activecpu_get_pc()==0x0084aa)
 		{
 			ggground_kludge = 1;
-			return mame_rand();
+			return mame_rand(Machine);
 
 		}
 		if (activecpu_get_pc()==0x084ba)

@@ -88,7 +88,7 @@ static comment_group *debug_comments;
     FUNCTION PROTOTYPES
 ***************************************************************************/
 
-static void debug_comment_exit(void);
+static void debug_comment_exit(running_machine *machine);
 static void debug_comment_free(void);
 
 
@@ -104,7 +104,7 @@ static void debug_comment_free(void);
                          loads any existing comment file
 -------------------------------------------------------------------------*/
 
-int debug_comment_init(void)
+int debug_comment_init(running_machine *machine)
 {
 	/* allocate enough comment groups for the total # of cpu's */
 	debug_comments = (comment_group*) auto_malloc(cpu_gettotalcpu() * sizeof(comment_group));
@@ -113,7 +113,7 @@ int debug_comment_init(void)
 	/* automatically load em up */
 	debug_comment_load();
 
-	add_exit_callback(debug_comment_exit);
+	add_exit_callback(machine, debug_comment_exit);
 
 	return 1;
 }
@@ -532,7 +532,7 @@ error:
     debug_comment_exit - saves the comments and frees memory
 -------------------------------------------------------------------------*/
 
-static void debug_comment_exit(void)
+static void debug_comment_exit(running_machine *machine)
 {
 	debug_comment_save();
 	debug_comment_free();

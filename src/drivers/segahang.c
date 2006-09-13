@@ -88,7 +88,7 @@ static void hangon_generic_init(void)
 
 static void suspend_i8751(ATTR_UNUSED int param)
 {
-	cpunum_suspend(mame_find_cpu_index("mcu"), SUSPEND_REASON_DISABLE, 1);
+	cpunum_suspend(mame_find_cpu_index(Machine, "mcu"), SUSPEND_REASON_DISABLE, 1);
 }
 
 

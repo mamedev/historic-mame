@@ -127,7 +127,7 @@ VIDEO_UPDATE(srmp6)
 	const UINT16 *finish = source+spriteram_size/2;
 	const gfx_element *gfx = Machine->gfx[0];
 
-	fillbitmap(bitmap, get_black_pen(), cliprect);
+	fillbitmap(bitmap, get_black_pen(machine), cliprect);
 
 	// parse sprite list
 	while( source<finish )

@@ -229,11 +229,11 @@ static const debug_view_callbacks callback_table[] =
     debug_view_init - initializes the view system
 -------------------------------------------------*/
 
-void debug_view_init(void)
+void debug_view_init(running_machine *machine)
 {
 	/* reset the initial list */
 	first_view = NULL;
-	add_exit_callback(debug_view_exit);
+	add_exit_callback(machine, debug_view_exit);
 }
 
 
@@ -241,7 +241,7 @@ void debug_view_init(void)
     debug_view_exit - exits the view system
 -------------------------------------------------*/
 
-void debug_view_exit(void)
+void debug_view_exit(running_machine *machine)
 {
 	/* kill all the views */
 	while (first_view != NULL)

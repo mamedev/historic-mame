@@ -528,7 +528,7 @@ static UINT8 read_vram(offs_t address)
 
 VIDEO_UPDATE( missile )
 {
-	pen_t black = get_black_pen();
+	pen_t black = get_black_pen(machine);
 	int x, y;
 
 	/* draw the bitmap to the screen, looping over Y */
@@ -621,7 +621,7 @@ static WRITE8_HANDLER( missile_w )
 
 	/* color RAM */
 	else if (offset >= 0x4b00 && offset < 0x4c00)
-		palette_set_color(offset & 7, pal1bit(~data >> 3), pal1bit(~data >> 2), pal1bit(~data >> 1));
+		palette_set_color(Machine, offset & 7, pal1bit(~data >> 3), pal1bit(~data >> 2), pal1bit(~data >> 1));
 
 	/* watchdog */
 	else if (offset >= 0x4c00 && offset < 0x4d00)

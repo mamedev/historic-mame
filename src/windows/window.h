@@ -112,7 +112,7 @@ extern int			win_use_raw_mouse;
 //============================================================
 
 // core initialization
-int winwindow_init(void);
+int winwindow_init(running_machine *machine);
 
 // creation/deletion of windows
 int winwindow_video_window_create(int index, win_monitor_info *monitor, const win_window_config *config);

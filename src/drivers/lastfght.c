@@ -82,7 +82,7 @@ static VIDEO_UPDATE( lastfght )
 	int count;
 	static int base = 0;
 
-	fillbitmap( bitmap, get_black_pen(), cliprect );
+	fillbitmap( bitmap, get_black_pen(machine), cliprect );
 	fillbitmap( priority_bitmap, 0, cliprect );
 
 	if ( code_pressed_memory(KEYCODE_Z) )
@@ -152,7 +152,7 @@ static WRITE16_HANDLER(colordac_w)
 	if(ACCESSING_LSB)
 	{
 		colorram[clr_offset]=data;
-		palette_set_color(clr_offset/3,colorram[(clr_offset/3)*3]*4,colorram[(clr_offset/3)*3+1]*4,colorram[(clr_offset/3)*3+2]*4);
+		palette_set_color(Machine,clr_offset/3,pal6bit(colorram[(clr_offset/3)*3]),pal6bit(colorram[(clr_offset/3)*3+1]),pal6bit(colorram[(clr_offset/3)*3+2]));
 		clr_offset=(clr_offset+1)%768;
 	}
 

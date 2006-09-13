@@ -8,7 +8,7 @@
 
 READ16_HANDLER( mlanding_unk_r )
 {
-	return mame_rand();
+	return mame_rand(Machine);
 }
 
 WRITE16_HANDLER( mlanding_unk_w )

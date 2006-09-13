@@ -372,7 +372,7 @@ WRITE8_HANDLER( williams_paletteram_w )
 {
 	rgb_t color = palette_lookup[data];
 	paletteram[offset] = data;
-	palette_set_color(offset, RGB_RED(color), RGB_GREEN(color), RGB_BLUE(color));
+	palette_set_color(Machine, offset, RGB_RED(color), RGB_GREEN(color), RGB_BLUE(color));
 }
 
 
@@ -403,7 +403,7 @@ WRITE8_HANDLER( williams2_paletteram_w )
 	b = ((entry_hi >> 0) & 15) * i;
 	g = ((entry_lo >> 4) & 15) * i;
 	r = ((entry_lo >> 0) & 15) * i;
-	palette_set_color(offset / 2, r, g, b);
+	palette_set_color(Machine, offset / 2, r, g, b);
 }
 
 
@@ -559,7 +559,7 @@ WRITE8_HANDLER( blaster_palette_0_w )
 
 	video_screen_update_partial(0, cpu_getscanline());
 	blaster_palette_0[offset] = data;
-	palette_set_color(16 + offset, RGB_RED(color), RGB_GREEN(color), RGB_BLUE(color));
+	palette_set_color(Machine, 16 + offset, RGB_RED(color), RGB_GREEN(color), RGB_BLUE(color));
 }
 
 

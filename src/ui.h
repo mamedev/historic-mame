@@ -79,7 +79,7 @@ enum
 ***************************************************************************/
 
 /* main init/exit routines */
-int ui_init(void);
+int ui_init(running_machine *machine);
 
 /* display the startup screens */
 int ui_display_startup_screens(int show_disclaimer, int show_warnings, int show_gameinfo);

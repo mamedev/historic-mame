@@ -91,7 +91,7 @@ static UINT32 leds_status;
     FUNCTION PROTOTYPES
 ***************************************************************************/
 
-static void video_exit(void);
+static void video_exit(running_machine *machine);
 static void allocate_graphics(const gfx_decode *gfxdecodeinfo);
 static void decode_graphics(const gfx_decode *gfxdecodeinfo);
 static void scale_vectorgames(int gfx_width, int gfx_height, int *width, int *height);
@@ -110,21 +110,21 @@ static void rgb888_draw_primitives(const render_primitive *primlist, void *dstda
     video_init - start up the video system
 -------------------------------------------------*/
 
-int video_init(void)
+int video_init(running_machine *machine)
 {
 	int scrnum;
 
-	add_exit_callback(video_exit);
+	add_exit_callback(machine, video_exit);
 
 	/* reset globals */
 	memset(scrinfo, 0, sizeof(scrinfo));
 
 	/* configure all of the screens */
 	for (scrnum = 0; scrnum < MAX_SCREENS; scrnum++)
-		if (Machine->drv->screen[scrnum].tag != NULL)
+		if (machine->drv->screen[scrnum].tag != NULL)
 		{
 			internal_screen_info *info = &scrinfo[scrnum];
-			screen_state *state = &Machine->screen[scrnum];
+			screen_state *state = &machine->screen[scrnum];
 
 			/* configure the screen with the default parameters */
 			video_screen_configure(scrnum, state->width, state->height, &state->visarea, state->refresh);
@@ -138,26 +138,26 @@ int video_init(void)
 		}
 
 	/* create spriteram buffers if necessary */
-	if (Machine->drv->video_attributes & VIDEO_BUFFERS_SPRITERAM)
+	if (machine->drv->video_attributes & VIDEO_BUFFERS_SPRITERAM)
 		init_buffered_spriteram();
 
 	/* convert the gfx ROMs into character sets. This is done BEFORE calling the driver's */
-	/* palette_init() routine because it might need to check the Machine->gfx[] data */
-	if (Machine->drv->gfxdecodeinfo != NULL)
-		allocate_graphics(Machine->drv->gfxdecodeinfo);
+	/* palette_init() routine because it might need to check the machine->gfx[] data */
+	if (machine->drv->gfxdecodeinfo != NULL)
+		allocate_graphics(machine->drv->gfxdecodeinfo);
 
 	/* configure the palette */
-	palette_config();
+	palette_config(machine);
 
 	/* actually decode the graphics */
-	if (Machine->drv->gfxdecodeinfo != NULL)
-		decode_graphics(Machine->drv->gfxdecodeinfo);
+	if (machine->drv->gfxdecodeinfo != NULL)
+		decode_graphics(machine->drv->gfxdecodeinfo);
 
 	/* reset performance data */
 	last_fps_time = osd_cycles();
 	rendered_frames_since_last_fps = frames_since_last_fps = 0;
 	performance.game_speed_percent = 100;
-	performance.frames_per_second = Machine->screen[0].refresh;
+	performance.frames_per_second = machine->screen[0].refresh;
 	performance.vector_updates_last_second = 0;
 
 	/* reset video statics and get out of here */
@@ -165,7 +165,7 @@ int video_init(void)
 	leds_status = 0;
 
 	/* initialize tilemaps */
-	if (tilemap_init() != 0)
+	if (tilemap_init(machine) != 0)
 		fatalerror("tilemap_init failed");
 
 	/* create a render target for snapshots */
@@ -184,7 +184,7 @@ int video_init(void)
     video_exit - close down the video system
 -------------------------------------------------*/
 
-static void video_exit(void)
+static void video_exit(running_machine *machine)
 {
 	int scrnum;
 	int i;
@@ -195,8 +195,8 @@ static void video_exit(void)
 	/* free all the graphics elements */
 	for (i = 0; i < MAX_GFX_ELEMENTS; i++)
 	{
-		freegfx(Machine->gfx[i]);
-		Machine->gfx[i] = 0;
+		freegfx(machine->gfx[i]);
+		machine->gfx[i] = 0;
 	}
 
 	/* free all the textures and bitmaps */
@@ -463,7 +463,7 @@ void video_screen_configure(int scrnum, int width, int height, const rectangle *
 			/* allocate new stuff */
 			info->bitmap[0] = bitmap_alloc_depth(curwidth, curheight, Machine->color_depth);
 			info->bitmap[1] = bitmap_alloc_depth(curwidth, curheight, Machine->color_depth);
-			info->texture = render_texture_alloc(info->bitmap[0], visarea, &adjusted_palette[config->palette_base], info->format, NULL, NULL);
+			info->texture = render_texture_alloc(info->bitmap[0], visarea, palette_get_adjusted_colors(Machine) + config->palette_base, info->format, NULL, NULL);
 		}
 	}
 
@@ -554,7 +554,7 @@ void video_screen_update_partial(int scrnum, int scanline)
 
 		profiler_mark(PROFILER_VIDEO);
 		LOG_PARTIAL_UPDATES(("updating %d-%d\n", clip.min_y, clip.max_y));
-		flags = (*Machine->drv->video_update)(scrnum, screen->bitmap[screen->curbitmap], &clip);
+		flags = (*Machine->drv->video_update)(Machine, scrnum, screen->bitmap[screen->curbitmap], &clip);
 		performance.partial_updates_this_frame++;
 		profiler_mark(PROFILER_END);
 
@@ -733,8 +733,8 @@ int video_skip_this_frame(void)
 void video_frame_update(void)
 {
 	int skipped_it = video_skip_this_frame();
-	int paused = mame_is_paused();
-	int phase = mame_get_phase();
+	int paused = mame_is_paused(Machine);
+	int phase = mame_get_phase(Machine);
 	int livemask;
 	int scrnum;
 
@@ -770,7 +770,7 @@ void video_frame_update(void)
 						rectangle fixedvis = Machine->screen[scrnum].visarea;
 						fixedvis.max_x++;
 						fixedvis.max_y++;
-						render_texture_set_bitmap(screen->texture, bitmap, &fixedvis, &adjusted_palette[Machine->drv->screen[scrnum].palette_base], screen->format);
+						render_texture_set_bitmap(screen->texture, bitmap, &fixedvis, palette_get_adjusted_colors(Machine) + Machine->drv->screen[scrnum].palette_base, screen->format);
 						screen->curbitmap = 1 - screen->curbitmap;
 					}
 					render_screen_add_quad(scrnum, 0.0f, 0.0f, 1.0f, 1.0f, MAKE_ARGB(0xff,0xff,0xff,0xff), screen->texture, PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA) | PRIMFLAG_SCREENTEX(1));
@@ -807,7 +807,7 @@ void video_frame_update(void)
 		else if (Machine->drv->video_eof != NULL)
 		{
 			profiler_mark(PROFILER_VIDEO);
-			(*Machine->drv->video_eof)();
+			(*Machine->drv->video_eof)(Machine);
 			profiler_mark(PROFILER_END);
 		}
 	}

@@ -734,7 +734,7 @@ struct WatchInfo
 	INT8			dataShift;
 	UINT32			xor;
 
-	UINT16			x, y;
+	float			x, y;
 
 	CheatEntry *	linkedCheat;
 
@@ -1124,7 +1124,7 @@ static const char * kWatchDisplayTypeStringList[] =
 /**** Function Prototypes ****************************************************/
 
 static void 	cheat_periodic(int param);
-static void 	cheat_exit(void);
+static void 	cheat_exit(running_machine *machine);
 
 static int		ShiftKeyPressed(void);
 static int		ControlKeyPressed(void);
@@ -1748,7 +1748,7 @@ static INT32 DoEditDecField(INT32 data, INT32 min, INT32 max)
 	return data;
 }
 
-void cheat_init(void)
+void cheat_init(running_machine *machine)
 {
 	he_did_cheat =			0;
 
@@ -1791,10 +1791,10 @@ void cheat_init(void)
 	periodic_timer = timer_alloc(cheat_periodic);
 	timer_adjust(periodic_timer, TIME_IN_HZ(Machine->screen[0].refresh), 0, TIME_IN_HZ(Machine->screen[0].refresh));
 
-	add_exit_callback(cheat_exit);
+	add_exit_callback(machine, cheat_exit);
 }
 
-static void cheat_exit(void)
+static void cheat_exit(running_machine *machine)
 {
 	int	i;
 
@@ -6095,12 +6095,12 @@ static int EditWatch(WatchInfo * entry, int selection)
 	menuSubItem[total] = kWatchDisplayTypeStringList[entry->displayType];
 	total++;
 
-	sprintf(buf[total], "%d", entry->x);
+	sprintf(buf[total], "%f", entry->x);
 	menuItem[total] = "X";
 	menuSubItem[total] = buf[total];
 	total++;
 
-	sprintf(buf[total], "%d", entry->y);
+	sprintf(buf[total], "%f", entry->y);
 	menuItem[total] = "Y";
 	menuSubItem[total] = buf[total];
 	total++;
@@ -6221,11 +6221,11 @@ static int EditWatch(WatchInfo * entry, int selection)
 				break;
 
 			case kMenu_XPosition:
-				entry->x--;
+				entry->x -= 0.01;
 				break;
 
 			case kMenu_YPosition:
-				entry->y--;
+				entry->y -= 0.01;
 				break;
 
 			case kMenu_Skip:
@@ -6316,11 +6316,11 @@ static int EditWatch(WatchInfo * entry, int selection)
 				break;
 
 			case kMenu_XPosition:
-				entry->x += increment;
+				entry->x += 0.01;
 				break;
 
 			case kMenu_YPosition:
-				entry->y += increment;
+				entry->y += 0.01;
 				break;
 
 			case kMenu_Skip:

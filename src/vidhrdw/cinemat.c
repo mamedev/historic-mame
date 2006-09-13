@@ -180,35 +180,35 @@ WRITE8_HANDLER(cinemat_vector_control_w)
 VIDEO_START( cinemat_bilevel )
 {
 	color_mode = COLOR_BILEVEL;
-	return video_start_vector();
+	return video_start_vector(machine);
 }
 
 
 VIDEO_START( cinemat_16level )
 {
 	color_mode = COLOR_16LEVEL;
-	return video_start_vector();
+	return video_start_vector(machine);
 }
 
 
 VIDEO_START( cinemat_64level )
 {
 	color_mode = COLOR_64LEVEL;
-	return video_start_vector();
+	return video_start_vector(machine);
 }
 
 
 VIDEO_START( cinemat_color )
 {
 	color_mode = COLOR_RGB;
-	return video_start_vector();
+	return video_start_vector(machine);
 }
 
 
 VIDEO_START( cinemat_qb3color )
 {
 	color_mode = COLOR_QB3;
-	return video_start_vector();
+	return video_start_vector(machine);
 }
 
 
@@ -236,7 +236,7 @@ VIDEO_UPDATE( spacewar )
 {
 	int sw_option = readinputportbytag("INPUTS");
 
-	video_update_vector(screen, bitmap, cliprect);
+	video_update_vector(machine, screen, bitmap, cliprect);
 
 	/* set the state of the artwork */
 	output_set_value("pressed3", (~sw_option >> 0) & 1);

@@ -53,7 +53,7 @@ PALETTE_INIT( ladybug )
 		bit1 = (~color_prom[i] >> 4) & 0x01;
 		bit2 = (~color_prom[i] >> 7) & 0x01;
 		b = 0x47 * bit1 + 0x97 * bit2;
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 	}
 
 	/* characters */
@@ -105,7 +105,7 @@ PALETTE_INIT( sraider )
 		bit1 = (~color_prom[i] >> 7) & 0x01;
 		bit2 = (~color_prom[i] >> 6) & 0x01;
 		b = 0x47 * bit1 + 0x97 * bit2;
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 	}
 
 	/* This is for the stars colors */
@@ -122,11 +122,11 @@ PALETTE_INIT( sraider )
 			g = 0x47 * bit1 + 0x97 * bit2;
 			bit1 = i & 0x01;
 			r = 0x47 * bit1;
-			palette_set_color(i,r,g,b);
+			palette_set_color(machine,i,r,g,b);
 	}
 
 	/* This is reserved for the grid color */
-	palette_set_color(64,0,0,0);
+	palette_set_color(machine,64,0,0,0);
 
 	/* characters */
 	for (i = 0;i < 8;i++)
@@ -294,7 +294,7 @@ WRITE8_HANDLER( sraider_io_w )
 		tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 	}
 
-	palette_set_color(64,
+	palette_set_color(Machine,64,
 		              ((data&0x40)>>6)*0xff,
 		              ((data&0x20)>>5)*0xff,
 		              ((data&0x10)>>4)*0xff);

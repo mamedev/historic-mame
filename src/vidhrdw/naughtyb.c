@@ -107,7 +107,7 @@ PALETTE_INIT( naughtyb )
 		/*b = 0x55 * bit0 + 0xaa * bit1;*/
 		b = combine_2_weights(weights_b, bit0, bit1);
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 		color_prom++;
 	}
 

@@ -260,7 +260,7 @@ void equites_8404init(void)
 
 	timer_pulse(TIME_IN_HZ(106.0), 0, equites_synth_callback); // hand tuned
 
-	seedMT(mame_rand());
+	seedMT(mame_rand(Machine));
 }
 
 void equites_8404rule(unsigned pc, int offset, int data)

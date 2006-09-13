@@ -475,7 +475,7 @@ logerror("%04x: 68705 unknown write to address %04x\n",activecpu_get_pc(),addres
 	if ((ddrB & 0x20) && (~data & 0x20) && (portB_out & 0x20))
 	{
 		/* hack to get random EXTEND letters (who is supposed to do this? 68705? PAL?) */
-		bublbobl_mcu_sharedram[0x7c] = mame_rand()%6;
+		bublbobl_mcu_sharedram[0x7c] = mame_rand(Machine)%6;
 
 		cpunum_set_input_line_vector(0,0,bublbobl_mcu_sharedram[0]);
 		cpunum_set_input_line(0,0,HOLD_LINE);

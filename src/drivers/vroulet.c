@@ -60,7 +60,7 @@ static WRITE8_HANDLER(vroulet_paletteram_w)
 		{
 			a=paletteram[((i*8+j)*2)&0xff ];
 			b=paletteram[((i*8+j)*2+1)&0xff ];
-			palette_set_color(i*16+j,(b&0xf)<<4,(b&0xf0),(a&0xf)<<4);
+			palette_set_color(Machine,i*16+j,pal4bit(b),pal4bit(b>>4),pal4bit(a));
 		}
 	}
 }

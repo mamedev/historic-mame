@@ -46,7 +46,7 @@ VIDEO_START( othunder )
        alignment, but the bg layers [or one of them] are wrong */
 
 	taito_hide_pixels = 4;
-	return video_start_othunder_core();
+	return video_start_othunder_core(machine);
 }
 
 

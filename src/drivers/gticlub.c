@@ -39,20 +39,9 @@ rectangle K001005_cliprect;
 
 static WRITE32_HANDLER( paletteram32_w )
 {
-	int r,g,b;
-
 	COMBINE_DATA(&paletteram32[offset]);
 	data = paletteram32[offset];
-
-	b = ((data >> 0) & 0x1f);
-	g = ((data >> 5) & 0x1f);
-	r = ((data >> 10) & 0x1f);
-
-	b = (b << 3) | (b >> 2);
-	g = (g << 3) | (g >> 2);
-	r = (r << 3) | (r >> 2);
-
-	palette_set_color(offset, r, g, b);
+	palette_set_color(Machine, offset, pal5bit(data >> 10), pal5bit(data >> 5), pal5bit(data >> 0));
 }
 
 #define MAX_K001006_CHIPS		2

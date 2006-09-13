@@ -48,14 +48,14 @@ static DRIVER_INIT( hyhoo )
 {
 	nb1413m3_type = NB1413M3_HYHOO;
 
-	init_nb1413m3();
+	init_nb1413m3(machine);
 }
 
 static DRIVER_INIT( hyhoo2 )
 {
 	nb1413m3_type = NB1413M3_HYHOO2;
 
-	init_nb1413m3();
+	init_nb1413m3(machine);
 }
 
 

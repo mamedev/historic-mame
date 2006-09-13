@@ -197,20 +197,11 @@ WRITE32_HANDLER( palette_dma_start_w )
 	int i;
 	for (i=0; i < ((video_dma_length+1) * 2) / 4; i++)
 	{
-		int r1,g1,b1,r2,g2,b2;
-
 		UINT32 color = spimainram[(video_dma_address / 4) + i - 0x200];
 		if (palette_ram[i] != color) {
 			palette_ram[i] = color;
-			b1 = ((palette_ram[i] & 0x7c000000) >>26) << 3;
-			g1 = ((palette_ram[i] & 0x03e00000) >>21) << 3;
-			r1 = ((palette_ram[i] & 0x001f0000) >>16) << 3;
-			b2 = ((palette_ram[i] & 0x00007c00) >>10) << 3;
-			g2 = ((palette_ram[i] & 0x000003e0) >>5) << 3;
-			r2 = ((palette_ram[i] & 0x0000001f) >>0) << 3;
-
-			palette_set_color( (i * 2), r2, g2, b2 );
-			palette_set_color( (i * 2) + 1, r1, g1, b1 );
+			palette_set_color( Machine, (i * 2), pal5bit(palette_ram[i] >> 0), pal5bit(palette_ram[i] >> 5), pal5bit(palette_ram[i] >> 10) );
+			palette_set_color( Machine, (i * 2) + 1, pal5bit(palette_ram[i] >> 16), pal5bit(palette_ram[i] >> 21), pal5bit(palette_ram[i] >> 26) );
 		}
 	}
 }
@@ -496,7 +487,7 @@ VIDEO_START( spi )
 	memset(sprite_ram, 0, 0x1000);
 
 	for (i=0; i < 6144; i++) {
-		palette_set_color(i, 0, 0, 0);
+		palette_set_color(machine, i, 0, 0, 0);
 	}
 
 	memset(alpha_table, 0, 6144 * sizeof(UINT8));

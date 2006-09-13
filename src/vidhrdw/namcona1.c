@@ -79,20 +79,11 @@ static void
 UpdatePalette( int offset )
 {
 	UINT16 color;
-	int r,g,b;
 
 	color = paletteram16[offset];
 
 	/* -RRRRRGGGGGBBBBB */
-	r = (color>>10)&0x1f;
-	g = (color>>5)&0x1f;
-	b = (color)&0x1f;
-
-	r = (r<<3)|(r>>2);
-	g = (g<<3)|(g>>2);
-	b = (b<<3)|(b>>2);
-
-	palette_set_color( offset, r,g,b );
+	palette_set_color( Machine, offset, pal5bit(color >> 10), pal5bit(color >> 5), pal5bit(color >> 0));
 } /* namcona1_paletteram_w */
 
 READ16_HANDLER( namcona1_paletteram_r )

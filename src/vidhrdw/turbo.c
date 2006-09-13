@@ -74,7 +74,7 @@ PALETTE_INIT( turbo )
 		bit1 = (i >> 7) & 1;
 		b = combine_2_weights(bweights, bit0, bit1);
 
-		palette_set_color(i, r, g, b);
+		palette_set_color(machine, i, r, g, b);
 	}
 }
 
@@ -113,7 +113,7 @@ PALETTE_INIT( subroc3d )
 		bit1 = (i >> 7) & 1;
 		b = combine_2_weights(bweights, bit0, bit1);
 
-		palette_set_color(i, r, g, b);
+		palette_set_color(machine, i, r, g, b);
 	}
 }
 
@@ -154,7 +154,7 @@ PALETTE_INIT( buckrog )
 		bit3 = (i >> 7) & 1;
 		b = combine_4_weights(bweights, bit0, bit1, bit2, bit3);
 
-		palette_set_color(i, r, g, b);
+		palette_set_color(machine, i, r, g, b);
 	}
 }
 

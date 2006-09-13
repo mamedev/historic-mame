@@ -68,7 +68,7 @@ static UINT					om_mame_get_id_string;
 //  FUNCTION PROTOTYPES
 //============================================================
 
-static void winoutput_exit(void);
+static void winoutput_exit(running_machine *machine);
 static int create_window_class(void);
 static LRESULT CALLBACK output_window_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam);
 static LRESULT register_client(HWND hwnd, LPARAM id);
@@ -82,12 +82,12 @@ static void notifier_callback(const char *outname, INT32 value, void *param);
 //  winoutput_init
 //============================================================
 
-void winoutput_init(void)
+void winoutput_init(running_machine *machine)
 {
 	int result;
 
 	// ensure we get cleaned up
-	add_exit_callback(winoutput_exit);
+	add_exit_callback(machine, winoutput_exit);
 
 	// reset globals
 	clientlist = NULL;
@@ -137,7 +137,7 @@ void winoutput_init(void)
 //  winoutput_exit
 //============================================================
 
-static void winoutput_exit(void)
+static void winoutput_exit(running_machine *machine)
 {
 	// free all the clients
 	while (clientlist != NULL)

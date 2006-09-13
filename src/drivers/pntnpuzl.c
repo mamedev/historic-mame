@@ -273,7 +273,7 @@ WRITE16_HANDLER( pntnpuzl_palette_w )
 		rgb[sub++] = data & 0xff;
 		if (sub == 3)
 		{
-			palette_set_color(indx++,rgb[0]<<2,rgb[1]<<2,rgb[2]<<2);
+			palette_set_color(Machine,indx++,pal6bit(rgb[0]),pal6bit(rgb[1]),pal6bit(rgb[2]));
 			sub = 0;
 			if (indx == 256) indx = 0;
 		}
@@ -284,7 +284,7 @@ WRITE16_HANDLER( pntnpuzl_palette_w )
 
 READ16_HANDLER ( pntnpuzl_random_r )
 {
-	return mame_rand();
+	return mame_rand(Machine);
 }
 
 READ16_HANDLER( pntnpuzl_vid_r )

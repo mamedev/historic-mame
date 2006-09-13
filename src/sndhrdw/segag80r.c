@@ -250,30 +250,30 @@ WRITE8_HANDLER( astrob_sound_w )
 	switch (offset)
 	{
 		case 0:
-			/* INVADER-1 */
+			/* INVADER-1: channel 0 */
 			if ((diff & 0x01) && !(data & 0x01)) sample_start(0, (data & 0x80) ? 0 : 1, TRUE);
 			if ((data & 0x01) && sample_playing(0)) sample_stop(0);
 
-			/* INVADER-2 */
+			/* INVADER-2: channel 1 */
 			if ((diff & 0x02) && !(data & 0x02)) sample_start(1, (data & 0x80) ? 2 : 3, TRUE);
 			if ((data & 0x02) && sample_playing(1)) sample_stop(1);
 
-			/* INVADER-3 */
+			/* INVADER-3: channel 2 */
 			if ((diff & 0x04) && !(data & 0x04)) sample_start(2, (data & 0x80) ? 4 : 5, TRUE);
 			if ((data & 0x04) && sample_playing(2)) sample_stop(2);
 
-			/* INVADER-4 */
+			/* INVADER-4: channel 3 */
 			if ((diff & 0x08) && !(data & 0x08)) sample_start(3, (data & 0x80) ? 6 : 7, TRUE);
 			if ((data & 0x08) && sample_playing(3)) sample_stop(3);
 
-			/* ASTROIDS */
+			/* ASTROIDS: channel 4 */
 			if ((diff & 0x10) && !(data & 0x10)) sample_start(4, 8, TRUE);
 			if ((data & 0x10) && sample_playing(4)) sample_stop(4);
 
 			/* MUTE */
 			sound_global_enable(!(data & 0x20));
 
-			/* REFILL */
+			/* REFILL: channel 5 */
 			if (!(data & 0x40) && !sample_playing(5)) sample_start(5, 9, FALSE);
 			if ( (data & 0x40) && sample_playing(5))  sample_stop(5);
 
@@ -288,16 +288,16 @@ WRITE8_HANDLER( astrob_sound_w )
 			break;
 
 		case 1:
-			/* LASER #1 */
+			/* LASER #1: channel 6 */
 			if ((diff & 0x01) && !(data & 0x01)) sample_start(6, 10, FALSE);
 
-			/* LASER #2 */
+			/* LASER #2: channel 7 */
 			if ((diff & 0x02) && !(data & 0x02)) sample_start(7, 11, FALSE);
 
-			/* SHORT EXPL */
+			/* SHORT EXPL: channel 8 */
 			if ((diff & 0x04) && !(data & 0x04)) sample_start(8, 12, FALSE);
 
-			/* LONG EXPL */
+			/* LONG EXPL: channel 8 */
 			if ((diff & 0x08) && !(data & 0x08)) sample_start(8, 13, FALSE);
 
 			/* ATTACK RATE */
@@ -306,10 +306,10 @@ WRITE8_HANDLER( astrob_sound_w )
 			/* RATE RESET */
 			if (!(data & 0x20)) sound_rate = 0;
 
-			/* BONUS */
+			/* BONUS: channel 9 */
 			if ((diff & 0x40) && !(data & 0x40)) sample_start(9, 14, FALSE);
 
-			/* SONAR */
+			/* SONAR: channel 10 */
 			if ((diff & 0x80) && !(data & 0x80)) sample_start(10, 15, FALSE);
 			break;
 	}
@@ -482,26 +482,26 @@ WRITE8_HANDLER( sega005_sound_a_w )
 	UINT8 diff = data ^ sound_state[0];
 	sound_state[0] = data;
 
-	/* LARGE EXPL */
+	/* LARGE EXPL: channel 0 */
 	if ((diff & 0x01) && !(data & 0x01)) sample_start(0, 0, FALSE);
 
-	/* SMALL EXPL */
+	/* SMALL EXPL: channel 1 */
 	if ((diff & 0x02) && !(data & 0x02)) sample_start(1, 1, FALSE);
 
-	/* DROP BOMB */
+	/* DROP BOMB: channel 2 */
 	if ((diff & 0x04) && !(data & 0x04)) sample_start(2, 2, FALSE);
 
-	/* SHOOT PISTOL */
+	/* SHOOT PISTOL: channel 3 */
 	if ((diff & 0x08) && !(data & 0x08)) sample_start(3, 3, FALSE);
 
-	/* MISSILE */
+	/* MISSILE: channel 4 */
 	if ((diff & 0x10) && !(data & 0x10)) sample_start(4, 4, FALSE);
 
-	/* HELICOPTER */
+	/* HELICOPTER: channel 5 */
 	if ((diff & 0x20) && !(data & 0x20) && !sample_playing(5)) sample_start(5, 5, TRUE);
 	if ((diff & 0x20) &&  (data & 0x20)) sample_stop(5);
 
-	/* WHISTLE */
+	/* WHISTLE: channel 6 */
 	if ((diff & 0x40) && !(data & 0x40) && !sample_playing(6)) sample_start(6, 6, TRUE);
 	if ((diff & 0x40) &&  (data & 0x40)) sample_stop(6);
 }
@@ -699,40 +699,40 @@ WRITE8_HANDLER( spaceod_sound_w )
 	switch (offset)
 	{
 		case 0:
-			/* BACK G */
+			/* BACK G: channel 0 */
 			if ((diff & 0x01) && !(data & 0x01) && !sample_playing(0)) sample_start(0, 7, TRUE);
 			if ((diff & 0x01) &&  (data & 0x01)) sample_stop(0);
 
-			/* SHORT EXP */
+			/* SHORT EXP: channel 1 */
 			if ((diff & 0x04) && !(data & 0x04)) sample_start(1, 2, FALSE);
 
-			/* ACCELERATE */
+			/* ACCELERATE: channel 2 */
 			if ((diff & 0x10) && !(data & 0x10)) sample_start(2, 8, FALSE);
 
-			/* BATTLE STAR */
+			/* BATTLE STAR: channel 3 */
 			if ((diff & 0x20) && !(data & 0x20)) sample_start(3, 10, FALSE);
 
-			/* D BOMB */
+			/* D BOMB: channel 4 */
 			if ((diff & 0x40) && !(data & 0x40)) sample_start(4, 1, FALSE);
 
-			/* LONG EXP */
+			/* LONG EXP: channel 5 */
 			if ((diff & 0x80) && !(data & 0x80)) sample_start(5, 3, FALSE);
 			break;
 
 		case 1:
-			/* SHOT */
+			/* SHOT: channel 6 */
 			if ((diff & 0x01) && !(data & 0x01)) sample_start(6, 0, FALSE);
 
-			/* BONUS UP */
+			/* BONUS UP: channel 7 */
 			if ((diff & 0x02) && !(data & 0x02)) sample_start(7, 6, FALSE);
 
-			/* WARP */
+			/* WARP: channel 8 */
 			if ((diff & 0x08) && !(data & 0x08)) sample_start(8, 4, FALSE);
 
-			/* APPEARANCE UFO */
+			/* APPEARANCE UFO: channel 9 */
 			if ((diff & 0x40) && !(data & 0x40)) sample_start(9, 5, FALSE);
 
-			/* BLACK HOLE */
+			/* BLACK HOLE: channel 10 */
 			if ((diff & 0x80) && !(data & 0x80)) sample_start(10, 9, FALSE);
 			break;
 	}
@@ -905,10 +905,10 @@ static WRITE8_HANDLER( monsterb_sound_b_w )
 	UINT8 diff = data ^ sound_state[1];
 	sound_state[1] = data;
 
-	/* SHOT */
+	/* SHOT: channel 0 */
 	if ((diff & 0x01) && !(data & 0x01)) sample_start(0, 0, FALSE);
 
-	/* DIVE */
+	/* DIVE: channel 1 */
 	if ((diff & 0x02) && !(data & 0x02)) sample_start(1, 1, FALSE);
 
     /* TODO: D7 on Port B might affect TMS3617 output (mute?) */

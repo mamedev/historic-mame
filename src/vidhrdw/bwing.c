@@ -153,7 +153,7 @@ WRITE8_HANDLER( bwing_paletteram_w )
 		if (b > 0xff) b = 0xff;
 	}
 
-	palette_set_color(offset, r, g, b);
+	palette_set_color(Machine, offset, r, g, b);
 
 	#if BW_DEBUG
 		paletteram[offset+0x40] = palatch;
@@ -276,7 +276,7 @@ VIDEO_UPDATE( bwing )
 		tilemap_draw(bitmap, cliprect, bgmap, 0, 0);
 	}
 	else
-		fillbitmap(bitmap, get_black_pen(), cliprect);
+		fillbitmap(bitmap, get_black_pen(machine), cliprect);
 
 	// draw low priority sprites
 	bwing_drawsprites(bitmap, cliprect, buffered_spriteram, 0);

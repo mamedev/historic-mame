@@ -159,7 +159,7 @@ VIDEO_START( suprslam )
 
 VIDEO_UPDATE( suprslam )
 {
-	fillbitmap(bitmap,get_black_pen(),cliprect);
+	fillbitmap(bitmap,get_black_pen(machine),cliprect);
 
 	K053936_0_zoom_draw(bitmap,cliprect,suprslam_bg_tilemap,0,0);
 

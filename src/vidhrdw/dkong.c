@@ -71,7 +71,7 @@ PALETTE_INIT( dkong )
 		bit1 = (color_prom[0] >> 1) & 1;
 		b = 255 - (0x55 * bit0 + 0xaa * bit1);
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 		color_prom++;
 	}
 
@@ -141,7 +141,7 @@ PALETTE_INIT( dkong3 )
 		bit3 = (color_prom[256] >> 3) & 0x01;
 		b = 255 - (0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3);
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 		color_prom++;
 	}
 
@@ -224,8 +224,8 @@ WRITE8_HANDLER( radarscp_grid_color_w )
 	r = ((~data >> 0) & 0x01) * 0xff;
 	g = ((~data >> 1) & 0x01) * 0xff;
 	b = ((~data >> 2) & 0x01) * 0xff;
-//  palette_set_color(257,r,g,b);
-	palette_set_color(257,0x00,0x00,0xff);
+//  palette_set_color(Machine,257,r,g,b);
+	palette_set_color(Machine,257,0x00,0x00,0xff);
 }
 
 WRITE8_HANDLER( dkong_flipscreen_w )
@@ -335,7 +335,7 @@ static void draw_grid(mame_bitmap *bitmap)
 
 VIDEO_UPDATE( radarscp )
 {
-	palette_set_color(256,0xff,0x00,0x00);	/* stars */
+	palette_set_color(Machine,256,0xff,0x00,0x00);	/* stars */
 
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 	draw_grid(bitmap);

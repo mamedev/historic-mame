@@ -119,8 +119,12 @@ extern const char *memory_region_names[REGION_MAX];
     TYPE DEFINITIONS
 ***************************************************************************/
 
+/* forward type declarations */
+typedef struct _palette_private palette_private;
+typedef struct _mame_private mame_private;
+
 /* description of the currently-running machine */
-typedef struct _running_machine running_machine;
+/* typedef struct _running_machine running_machine; -- in mamecore.h */
 struct _running_machine
 {
 	/* game-related information */
@@ -130,10 +134,13 @@ struct _running_machine
 	/* video-related information */
 	gfx_element *			gfx[MAX_GFX_ELEMENTS];/* array of pointers to graphic sets (chars, sprites) */
 	screen_state			screen[MAX_SCREENS];/* current screen state */
+
+	/* palette-related information */
 	pen_t *					pens;				/* remapped palette pen numbers */
 	UINT16 *				game_colortable;	/* lookup table used to map gfx pen numbers to color numbers */
 	pen_t *					remapped_colortable;/* the above, already remapped through Machine->pens */
 	int						color_depth;		/* video color depth: 16, 15 or 32 */
+	pen_t *					shadow_table;		/* table for looking up a shadowed pen */
 
 	/* audio-related information */
 	int						sample_rate;		/* the digital audio sample rate */
@@ -150,6 +157,10 @@ struct _running_machine
 #ifdef MESS
 	struct IODevice *		devices;
 #endif /* MESS */
+
+	/* internal core information */
+	mame_private *			mame_data;			/* internal data from mame.c */
+	palette_private *		palette_data;		/* internal data from palette.c */
 
 	/* driver-specific information */
 	void *					driver_data;		/* drivers can hang data off of here instead of using globals */
@@ -250,54 +261,54 @@ extern char build_version[];
 int run_game(int game);
 
 /* return the current phase */
-int mame_get_phase(void);
+int mame_get_phase(running_machine *machine);
 
 /* request callback on termination */
-void add_exit_callback(void (*callback)(void));
+void add_exit_callback(running_machine *machine, void (*callback)(running_machine *));
 
 /* request callback on reset */
-void add_reset_callback(void (*callback)(void));
+void add_reset_callback(running_machine *machine, void (*callback)(running_machine *));
 
 /* request callback on pause */
-void add_pause_callback(void (*callback)(int));
+void add_pause_callback(running_machine *machine, void (*callback)(running_machine *, int));
 
 
 
 /* ----- global system states ----- */
 
 /* schedule an exit */
-void mame_schedule_exit(void);
+void mame_schedule_exit(running_machine *machine);
 
 /* schedule a hard reset */
-void mame_schedule_hard_reset(void);
+void mame_schedule_hard_reset(running_machine *machine);
 
 /* schedule a soft reset */
-void mame_schedule_soft_reset(void);
+void mame_schedule_soft_reset(running_machine *machine);
 
 /* schedule a save */
-void mame_schedule_save(const char *filename);
+void mame_schedule_save(running_machine *machine, const char *filename);
 
 /* schedule a load */
-void mame_schedule_load(const char *filename);
+void mame_schedule_load(running_machine *machine, const char *filename);
 
 /* is a scheduled event pending? */
-int mame_is_scheduled_event_pending(void);
+int mame_is_scheduled_event_pending(running_machine *machine);
 
 /* pause the system */
-void mame_pause(int pause);
+void mame_pause(running_machine *machine, int pause);
 
 /* get the current pause state */
-int mame_is_paused(void);
+int mame_is_paused(running_machine *machine);
 
 
 
 /* ----- memory region management ----- */
 
 /* allocate a new memory region */
-int new_memory_region(int type, size_t length, UINT32 flags);
+int new_memory_region(running_machine *machine, int type, size_t length, UINT32 flags);
 
 /* free an allocated memory region */
-void free_memory_region(int num);
+void free_memory_region(running_machine *machine, int num);
 
 /* return a pointer to a specified memory region */
 UINT8 *memory_region(int num);
@@ -306,10 +317,10 @@ UINT8 *memory_region(int num);
 size_t memory_region_length(int num);
 
 /* return the type of a specified memory region */
-UINT32 memory_region_type(int num);
+UINT32 memory_region_type(running_machine *machine, int num);
 
 /* return the flags (defined in romload.h) for a specified memory region */
-UINT32 memory_region_flags(int num);
+UINT32 memory_region_flags(running_machine *machine, int num);
 
 
 
@@ -322,13 +333,13 @@ void CLIB_DECL popmessage(const char *text,...) ATTR_PRINTF(1,2);
 void CLIB_DECL logerror(const char *text,...) ATTR_PRINTF(1,2);
 
 /* adds a callback to be called on logerror() */
-void add_logerror_callback(void (*callback)(const char *));
+void add_logerror_callback(running_machine *machine, void (*callback)(running_machine *, const char *));
 
 /* standardized random number generator */
-UINT32 mame_rand(void);
+UINT32 mame_rand(running_machine *machine);
 
 /* return the index of the given CPU, or -1 if not found */
-int mame_find_cpu_index(const char *tag);
+int mame_find_cpu_index(running_machine *machine, const char *tag);
 
 
 

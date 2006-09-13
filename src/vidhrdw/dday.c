@@ -63,7 +63,7 @@ PALETTE_INIT( dday )
 	int i;
 
 
-	palette_set_shadow_factor(1.0/8);	/* this matches the previos version of the driver (>>3) */
+	palette_set_shadow_factor(machine, 1.0/8);	/* this matches the previos version of the driver (>>3) */
 
 	for (i = 0; i < Machine->drv->total_colors; i++)
 	{
@@ -89,7 +89,7 @@ PALETTE_INIT( dday )
 		bit3 = (color_prom[i + 2*Machine->drv->total_colors] >> 3) & 0x01;
 		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 	}
 
 

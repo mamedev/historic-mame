@@ -92,7 +92,7 @@ static void *ym3812_start(int sndindex, int clock, const void *config)
 	rate = clock/72;
 
 	/* stream system initialize */
-	info->chip = YM3812Init(clock,rate);
+	info->chip = YM3812Init(sndindex,clock,rate);
 	if (!info->chip)
 		return NULL;
 
@@ -263,7 +263,7 @@ static void *ym3526_start(int sndindex, int clock, const void *config)
 	rate = clock/72;
 
 	/* stream system initialize */
-	info->chip = YM3526Init(clock,rate);
+	info->chip = YM3526Init(sndindex,clock,rate);
 	if (!info->chip)
 		return NULL;
 
@@ -461,7 +461,7 @@ static void *y8950_start(int sndindex, int clock, const void *config)
 	rate = clock/72;
 
 	/* stream system initialize */
-	info->chip = Y8950Init(clock,rate);
+	info->chip = Y8950Init(sndindex,clock,rate);
 	if (!info->chip)
 		return NULL;
 

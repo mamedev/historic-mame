@@ -136,11 +136,7 @@ WRITE8_HANDLER( gladiatr_paletteram_w )
 	g = (g << 1) + ((paletteram[offset + 0x400] >> 5) & 0x01);
 	b = (b << 1) + ((paletteram[offset + 0x400] >> 6) & 0x01);
 
-	r = (r << 3) | (r >> 2);
-	g = (g << 3) | (g >> 2);
-	b = (b << 3) | (b >> 2);
-
-	palette_set_color(offset,r,g,b);
+	palette_set_color(Machine,offset,pal5bit(r),pal5bit(g),pal5bit(b));
 }
 
 
@@ -327,6 +323,6 @@ VIDEO_UPDATE( gladiatr )
 		tilemap_draw(bitmap,cliprect,fg_tilemap,0,0);
 	}
 	else
-		fillbitmap( bitmap, get_black_pen(), cliprect );
+		fillbitmap( bitmap, get_black_pen(machine), cliprect );
 	return 0;
 }

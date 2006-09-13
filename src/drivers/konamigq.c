@@ -218,7 +218,7 @@ static READ32_HANDLER( pcmram_r )
 
 static VIDEO_UPDATE( konamigq )
 {
-	video_update_psx( screen, bitmap, cliprect );
+	video_update_psx( machine, screen, bitmap, cliprect );
 
 	draw_crosshair( bitmap, GUNX( 5 ), GUNY( 6 ), cliprect, 0 );
 	draw_crosshair( bitmap, GUNX( 7 ), GUNY( 8 ), cliprect, 1 );

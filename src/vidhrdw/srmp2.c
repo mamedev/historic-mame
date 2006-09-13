@@ -23,19 +23,11 @@ PALETTE_INIT( srmp2 )
 
 	for (i = 0; i < Machine->drv->total_colors; i++)
 	{
-		int col, r, g, b;
+		int col;
 
 		col = (color_prom[i] << 8) + color_prom[i + Machine->drv->total_colors];
 
-		r = (col & 0x7c00) >> 10;
-		g = (col & 0x03e0) >> 5;
-		b = (col & 0x001f);
-
-		r = (r << 3) | (r >> 2);
-		g = (g << 3) | (g >> 2);
-		b = (b << 3) | (b >> 2);
-
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,pal5bit(col >> 10),pal5bit(col >> 5),pal5bit(col >> 0));
 	}
 
 	for (i = 0; i < Machine->drv->total_colors; i++)
@@ -51,19 +43,10 @@ PALETTE_INIT( srmp3 )
 
 	for (i = 0; i < Machine->drv->total_colors; i++)
 	{
-		int col, r, g, b;
+		int col;
 
 		col = (color_prom[i] << 8) + color_prom[i + Machine->drv->total_colors];
-
-		r = (col & 0x7c00) >> 10;
-		g = (col & 0x03e0) >> 5;
-		b = (col & 0x001f);
-
-		r = (r << 3) | (r >> 2);
-		g = (g << 3) | (g >> 2);
-		b = (b << 3) | (b >> 2);
-
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,pal5bit(col >> 10),pal5bit(col >> 5),pal5bit(col >> 0));
 	}
 }
 

@@ -680,7 +680,7 @@ extern const char *input_port_default_strings[];
     FUNCTION PROTOTYPES
 ***************************************************************************/
 
-int input_port_init(void (*construct_ipt)(input_port_init_params *));
+int input_port_init(running_machine *machine, void (*construct_ipt)(input_port_init_params *));
 
 input_port_entry *input_port_initialize(input_port_init_params *params, UINT32 type, const char *tag, UINT32 mask);
 input_port_entry *input_port_allocate(void (*construct_ipt)(input_port_init_params *), input_port_entry *memory);

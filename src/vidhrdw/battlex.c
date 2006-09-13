@@ -14,9 +14,9 @@ PALETTE_INIT( battlex )
 		for (i = 0;i < 16;i++)
 		{
 			int data = i | col;
-			int g = ((data & 1) >> 0) * 0xff;
-			int b = ((data & 2) >> 1) * 0xff;
-			int r = ((data & 4) >> 2) * 0xff;
+			int g = pal1bit(data >> 0);
+			int b = pal1bit(data >> 1);
+			int r = pal1bit(data >> 2);
 
 #if 0
 			/* from Tim's shots, bit 3 seems to have no effect (see e.g. Laser Ship on title screen) */
@@ -28,18 +28,14 @@ PALETTE_INIT( battlex )
 			}
 #endif
 
-			palette_set_color(i + 16 * col,r,g,b);
+			palette_set_color(machine, i + 16 * col,r,g,b);
 		}
 	}
 }
 
 WRITE8_HANDLER( battlex_palette_w )
 {
-	int g = ((data & 1) >> 0) * 0xff;
-	int b = ((data & 2) >> 1) * 0xff;
-	int r = ((data & 4) >> 2) * 0xff;
-
-	palette_set_color(16*8 + offset,r,g,b);
+	palette_set_color(Machine,16*8 + offset,pal1bit(data >> 2),pal1bit(data >> 0),pal1bit(data >> 1));
 }
 
 WRITE8_HANDLER( battlex_scroll_x_lsb_w )

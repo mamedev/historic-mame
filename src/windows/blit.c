@@ -110,7 +110,7 @@ static void generate_blitter(const win_blit_params *blit);
 //  win_blit_exit
 //============================================================
 
-static void win_blit_exit(void)
+static void win_blit_exit(running_machine *machine)
 {
 	drc_exit(drc);
 }
@@ -121,7 +121,7 @@ static void win_blit_exit(void)
 //  win_blit_init
 //============================================================
 
-void win_blit_init(void)
+void win_blit_init(running_machine *machine)
 {
 	drc_config drconfig;
 	UINT32 features;

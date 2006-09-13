@@ -37,8 +37,10 @@
 #include "sound/discrete.h"
 #include "sound/dac.h"
 #include "sound/custom.h"
+#include "sound/speaker.h"
 
 static WRITE8_HANDLER( invad2ct_sh_port1_w );
+static WRITE8_HANDLER( spcewars_sh_port3_w );
 static WRITE8_HANDLER( invaders_sh_port3_w );
 static WRITE8_HANDLER( invaders_sh_port5_w );
 static WRITE8_HANDLER( invad2ct_sh_port7_w );
@@ -193,6 +195,19 @@ MACHINE_RESET( invaders )
 	SN76477_vco_w(0, 1);
 }
 
+MACHINE_RESET( spcewars )
+{
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x03, 0x03, 0, 0, spcewars_sh_port3_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x05, 0x05, 0, 0, invaders_sh_port5_w);
+
+	SN76477_envelope_1_w(0, 1);
+	SN76477_envelope_2_w(0, 0);
+	SN76477_mixer_a_w(0, 0);
+	SN76477_mixer_b_w(0, 0);
+	SN76477_mixer_c_w(0, 0);
+	SN76477_vco_w(0, 1);
+}
+
 MACHINE_RESET( sstrangr )
 {
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x42, 0x42, 0, 0, invaders_sh_port3_w);
@@ -208,7 +223,7 @@ MACHINE_RESET( sstrangr )
 
 MACHINE_RESET( invad2ct )
 {
-	machine_reset_invaders();
+	machine_reset_invaders(machine);
 
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x01, 0x01, 0, 0, invad2ct_sh_port1_w);
 	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x07, 0x07, 0, 0, invad2ct_sh_port7_w);
@@ -285,6 +300,33 @@ static void invaders_sh_2_w(int board, int data, unsigned char *last)
 	*last = data;
 }
 
+static void spcewars_sh_1_w(int board, int data, unsigned char *last)
+{
+	int base_channel, base_sample;
+
+	base_channel = 4 * board;
+	base_sample  = 9 * board;
+
+	SN76477_enable_w(board, !(data & 0x01));				/* Saucer Sound */
+
+	if (data & 0x02 && ~*last & 0x02)
+		sample_start (base_channel+0, base_sample+0, 0);	/* Shot Sound */
+
+	if (data & 0x04 && ~*last & 0x04)
+		sample_start (base_channel+1, base_sample+1, 0);	/* Base Hit */
+
+	if (~data & 0x04 && *last & 0x04)
+		sample_stop (base_channel+1);
+
+	if (data & 0x08 && ~*last & 0x08)
+		sample_start (base_channel+0, base_sample+2, 0);	/* Invader Hit */
+
+	speaker_level_w(0, (data & 0x10) ? 1 : 0);		/* Various bitstream tunes */
+
+	c8080bw_screen_red_w(data & 0x04);
+
+	*last = data;
+}
 
 static WRITE8_HANDLER( invad2ct_sh_port1_w )
 {
@@ -300,6 +342,13 @@ static WRITE8_HANDLER( invaders_sh_port3_w )
 	invaders_sh_1_w(0, data, &last);
 }
 
+static WRITE8_HANDLER( spcewars_sh_port3_w )
+{
+	static unsigned char last = 0;
+
+	spcewars_sh_1_w(0, data, &last);
+}
+
 static WRITE8_HANDLER( invaders_sh_port5_w )
 {
 	static unsigned char last = 0;
@@ -313,7 +362,6 @@ static WRITE8_HANDLER( invad2ct_sh_port7_w )
 
 	invaders_sh_2_w(1, data, &last);
 }
-
 
 /*******************************************************/
 /*                                                     */

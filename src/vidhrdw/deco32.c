@@ -150,7 +150,7 @@ static void updateAceRam(void)
 			r = (UINT8)((float)r + (((float)fadeptr - (float)r) * (float)fadepsr/255.0f));
 		}
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(Machine,i,r,g,b);
 	}
 }
 
@@ -169,7 +169,7 @@ WRITE32_HANDLER( deco32_nonbuffered_palette_w )
 	g = (paletteram32[offset] >> 8) & 0xff;
 	r = (paletteram32[offset] >> 0) & 0xff;
 
-	palette_set_color(offset,r,g,b);
+	palette_set_color(Machine,offset,r,g,b);
 }
 
 WRITE32_HANDLER( deco32_buffered_palette_w )
@@ -197,7 +197,7 @@ WRITE32_HANDLER( deco32_palette_dma_w )
 				g = (paletteram32[i] >> 8) & 0xff;
 				r = (paletteram32[i] >> 0) & 0xff;
 
-				palette_set_color(i,r,g,b);
+				palette_set_color(Machine,i,r,g,b);
 			}
 		}
 	}
@@ -1277,7 +1277,7 @@ VIDEO_UPDATE( captaven )
 		if (pf3_enable)
 			tilemap_draw(bitmap,cliprect,pf3_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
 		else
-			fillbitmap(bitmap,get_black_pen(),cliprect);
+			fillbitmap(bitmap,get_black_pen(machine),cliprect);
 
 		if (deco32_raster_display_position)
 			tilemap_raster_draw(bitmap,cliprect,0,1);
@@ -1291,7 +1291,7 @@ VIDEO_UPDATE( captaven )
 				tilemap_draw(bitmap,cliprect,pf2_tilemap,0,0);
 		}
 		else
-			fillbitmap(bitmap,get_black_pen(),cliprect);
+			fillbitmap(bitmap,get_black_pen(machine),cliprect);
 
 		tilemap_draw(bitmap,cliprect,pf3_tilemap,0,1);
 	}
@@ -1342,7 +1342,7 @@ VIDEO_UPDATE( dragngun )
 	tilemap_set_enable(pf4_tilemap, deco32_pf34_control[5]&0x8000);
 
 	if ((deco32_pf34_control[5]&0x8000)==0)
-		fillbitmap(bitmap,get_black_pen(),cliprect);
+		fillbitmap(bitmap,get_black_pen(machine),cliprect);
 
 	tilemap_draw(bitmap,cliprect,pf4_tilemap,0,0);
 	tilemap_draw(bitmap,cliprect,pf3_tilemap,0,0);

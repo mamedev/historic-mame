@@ -39,20 +39,11 @@ WRITE8_HANDLER( sichuan2_bankswitch_w )
 
 WRITE8_HANDLER( sichuan2_paletteram_w )
 {
-	int r, g, b;
-
 	paletteram[offset] = data;
 
 	offset &= 0xff;
 
-	r = paletteram[offset + 0x000] & 0x1f;
-	g = paletteram[offset + 0x100] & 0x1f;
-	b = paletteram[offset + 0x200] & 0x1f;
-	r = (r << 3) | (r >> 2);
-	g = (g << 3) | (g >> 2);
-	b = (b << 3) | (b >> 2);
-
-	palette_set_color(offset, r, g, b);
+	palette_set_color(Machine, offset, pal5bit(paletteram[offset + 0x000]), pal5bit(paletteram[offset + 0x100]), pal5bit(paletteram[offset + 0x200]));
 }
 
 static void get_bg_tile_info(int tile_index)

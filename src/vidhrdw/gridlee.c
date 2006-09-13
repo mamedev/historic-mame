@@ -46,10 +46,7 @@ PALETTE_INIT( gridlee )
 
 	for (i = 0; i < Machine->drv->total_colors; i++)
 	{
-		int r = color_prom[0x0000] | (color_prom[0x0000] << 4);
-		int g = color_prom[0x0800] | (color_prom[0x0800] << 4);
-		int b = color_prom[0x1000] | (color_prom[0x1000] << 4);
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,pal4bit(color_prom[0x0000]),pal4bit(color_prom[0x0800]),pal4bit(color_prom[0x1000]));
 		color_prom++;
 	}
 }

@@ -63,7 +63,7 @@ PALETTE_INIT( cclimber )
 		bit2 = (*color_prom >> 7) & 0x01;
 		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 		color_prom++;
 	}
 
@@ -154,7 +154,7 @@ PALETTE_INIT( swimmer )
 		bit2 = (color_prom[i+256] >> 3) & 0x01;
 		b = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 
 		/* side panel */
 		if (i % 8)
@@ -194,20 +194,20 @@ PALETTE_INIT( swimmer )
 		bit2 = (color_prom[i] >> 7) & 0x01;
 		b = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
 
-		palette_set_color(i+256,r,g,b);
+		palette_set_color(machine,i+256,r,g,b);
 
 		if (i % 8 == 0) COLOR(2,i) = BGPEN;  /* enforce transparency */
 		else COLOR(2,i) = i+256;
 	}
 
 	/* background */
-	palette_set_color(BGPEN,0,0,0);
+	palette_set_color(machine,BGPEN,0,0,0);
 	/* side panel background color */
 #if 0
 	// values calculated from the resistors don't seem to match the real board
-	palette_set_color(SIDEPEN,0x24,0x5d,0x4e);
+	palette_set_color(machine,SIDEPEN,0x24,0x5d,0x4e);
 #endif
-	palette_set_color(SIDEPEN,0x20,0x98,0x79);
+	palette_set_color(machine,SIDEPEN,0x20,0x98,0x79);
 }
 
 
@@ -252,7 +252,7 @@ WRITE8_HANDLER( swimmer_bgcolor_w )
 	bit2 = (data >> 2) & 0x01;
 	b = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
 
-	palette_set_color(BGPEN,r,g,b);
+	palette_set_color(Machine,BGPEN,r,g,b);
 }
 
 

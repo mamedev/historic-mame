@@ -1062,7 +1062,7 @@ static PALETTE_INIT( halleys )
 	for (count=0; count<1024; count++)
 	{
 		pal_ptr[count] = 0;
-		palette_set_color(count, 0, 0, 0);
+		palette_set_color(machine, count, 0, 0, 0);
 	}
 
 	// 00-31: palette RAM(ffc0-ffdf)
@@ -1083,7 +1083,7 @@ static PALETTE_INIT( halleys )
 			g = r + count + BG_MONO;
 			r += i;
 			pal_ptr[g] = d;
-			palette_set_color(g, r, r, r);
+			palette_set_color(machine, g, r, r, r);
 		}
 	}
 
@@ -1094,11 +1094,11 @@ static PALETTE_INIT( halleys )
 		pal_ptr[j] = j;
 
 		i = d>>6 & 0x03;
-		r = d>>2 & 0x0c; r |= i;  r = r<<4 | r;
-		g = d    & 0x0c; g |= i;  g = g<<4 | g;
-		b = d<<2 & 0x0c; b |= i;  b = b<<4 | b;
+		r = d>>2 & 0x0c; r |= i;
+		g = d    & 0x0c; g |= i;
+		b = d<<2 & 0x0c; b |= i;
 
-		palette_set_color(j, r, g, b);
+		palette_set_color(machine, j, pal4bit(r), pal4bit(g), pal4bit(b));
 	}
 }
 
@@ -1166,13 +1166,13 @@ static WRITE8_HANDLER( halleys_paletteram_IIRRGGBB_w )
 	g = d    & 0x0c; g |= i;  g = g<<4 | g;
 	b = d<<2 & 0x0c; b |= i;  b = b<<4 | b;
 
-	palette_set_color(offset, r, g, b);
-	palette_set_color(offset+SP_2BACK, r, g, b);
-	palette_set_color(offset+SP_ALPHA, r, g, b);
-	palette_set_color(offset+SP_COLLD, r, g, b);
+	palette_set_color(Machine, offset, r, g, b);
+	palette_set_color(Machine, offset+SP_2BACK, r, g, b);
+	palette_set_color(Machine, offset+SP_ALPHA, r, g, b);
+	palette_set_color(Machine, offset+SP_COLLD, r, g, b);
 
 	halleys_decode_rgb(&r, &g, &b, offset, 0);
-	palette_set_color(offset+0x20, r, g, b);
+	palette_set_color(Machine, offset+0x20, r, g, b);
 }
 
 
@@ -1938,7 +1938,7 @@ static MACHINE_RESET( halleys )
 	blitter_busy    = 0;
 	collision_count = 0;
 	stars_enabled   = 0;
-	bgcolor         = get_black_pen();
+	bgcolor         = get_black_pen(machine);
 	fftail = ffhead = ffcount = 0;
 
 	memset(io_ram, 0xff, io_ramsize);

@@ -127,7 +127,7 @@ static UINT8		bloxeed_sound;		/* use kludge for bloxeed sound? */
 
 static MACHINE_START( segac2 )
 {
-	if (machine_start_genesis())
+	if (machine_start_genesis(machine))
 		return 1;
 	state_save_register_global_array(misc_io_data);
 	state_save_register_global(prot_write_buf);
@@ -139,7 +139,7 @@ static MACHINE_START( segac2 )
 MACHINE_RESET( segac2 )
 {
 	/* set up interrupts and such */
-	machine_reset_genesis();
+	machine_reset_genesis(machine);
 
 	/* determine how many sound banks */
 	sound_banks = 0;
@@ -272,15 +272,12 @@ static WRITE16_HANDLER( palette_w )
 	newword = paletteram16[offset];
 
 	/* up to 8 bits */
-	r = ((newword << 4) & 0xf0) | ((newword >>  9) & 0x08);
-	g = ((newword >> 0) & 0xf0) | ((newword >> 10) & 0x08);
-	b = ((newword >> 4) & 0xf0) | ((newword >> 11) & 0x08);
-	r |= r >> 5;
-	g |= g >> 5;
-	b |= b >> 5;
+	r = ((newword << 1) & 0x1e) | ((newword >> 12) & 0x01);
+	g = ((newword >> 3) & 0x1e) | ((newword >> 13) & 0x01);
+	b = ((newword >> 7) & 0x1e) | ((newword >> 14) & 0x01);
 
 	/* set the color */
-	palette_set_color(offset, r, g, b);
+	palette_set_color(Machine, offset, pal5bit(r), pal5bit(g), pal5bit(b));
 }
 
 

@@ -170,17 +170,7 @@ WRITE8_HANDLER( victory_charram_w )
 
 WRITE8_HANDLER( victory_paletteram_w )
 {
-	int red = ((offset & 0x80) >> 5) | ((data & 0xc0) >> 6);
-	int blue = (data & 0x38) >> 3;
-	int green = data & 0x07;
-
-	/* shift up to 8 bits */
-	red   = (red << 5)   | (red << 2)   | (red >> 1);
-	green = (green << 5) | (green << 2) | (green >> 1);
-	blue  = (blue << 5)  | (blue << 2)  | (blue >> 1);
-
-	/* set the color */
-	palette_set_color(offset & 0x3f, red, green, blue);
+	palette_set_color(Machine, offset & 0x3f, pal3bit(((offset & 0x80) >> 5) | ((data & 0xc0) >> 6)), pal3bit(data >> 0), pal3bit(data >> 3));
 }
 
 

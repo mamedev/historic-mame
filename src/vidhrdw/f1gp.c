@@ -402,7 +402,7 @@ VIDEO_UPDATE( f1gp2 )
 {
 	if (gfxctrl & 4)	/* blank screen */
 	{
-		fillbitmap(bitmap, get_black_pen(), cliprect);
+		fillbitmap(bitmap, get_black_pen(machine), cliprect);
 	}
 	else
 	{

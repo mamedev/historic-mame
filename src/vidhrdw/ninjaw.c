@@ -55,7 +55,7 @@ static VIDEO_START( ninjaw_core )
 VIDEO_START( ninjaw )
 {
 	taito_hide_pixels = 22;
-	return video_start_ninjaw_core();
+	return video_start_ninjaw_core(machine);
 }
 
 /************************************************************
@@ -160,7 +160,7 @@ VIDEO_UPDATE( ninjaw )
 	nodraw  = TC0100SCN_tilemap_draw(bitmap,cliprect,screen,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);	/* left */
 
 	/* Ensure screen blanked even when bottom layers not drawn due to disable bit */
-	if (nodraw) fillbitmap(bitmap, get_black_pen(), cliprect);
+	if (nodraw) fillbitmap(bitmap, get_black_pen(machine), cliprect);
 
 	/* Sprites can be under/over the layer below text layer */
 	ninjaw_draw_sprites(bitmap,cliprect,1,xoffs,8); // draw sprites with priority 1 which are under the mid layer

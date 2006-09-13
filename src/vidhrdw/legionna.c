@@ -298,7 +298,7 @@ VIDEO_UPDATE( legionna )
 
 //  if ((legionna_enable&1)!=1)
 
-	fillbitmap(bitmap,get_black_pen(),cliprect);	/* wrong color? */
+	fillbitmap(bitmap,get_black_pen(machine),cliprect);	/* wrong color? */
 
 #ifdef MAME_DEBUG
 	if (dislayer[2]==0)
@@ -332,7 +332,7 @@ VIDEO_UPDATE( godzilla )
 	tilemap_set_scrollx( text_layer, 0, 0 );
 	tilemap_set_scrolly( text_layer, 0, 112 );
 
-	fillbitmap(bitmap,get_black_pen(),cliprect);
+	fillbitmap(bitmap,get_black_pen(machine),cliprect);
 
 	tilemap_draw(bitmap,cliprect,background_layer,0,0);
 	draw_sprites(bitmap,cliprect,2);
@@ -357,7 +357,7 @@ VIDEO_UPDATE( sdgndmrb )
 //  tilemap_set_scrollx( text_layer, 0, 128 /* legionna_scrollram16[6] */);
 //  tilemap_set_scrolly( text_layer, 0, 0 /* legionna_scrollram16[7] */ );
 
-	fillbitmap(bitmap,get_black_pen(),cliprect);
+	fillbitmap(bitmap,get_black_pen(machine),cliprect);
 
 	tilemap_draw(bitmap,cliprect,background_layer,0,0);
 	draw_sprites(bitmap,cliprect,2);

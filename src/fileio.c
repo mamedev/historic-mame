@@ -135,10 +135,10 @@ static chd_interface mame_chd_interface =
     call mame_fopen before fileio_init
 -------------------------------------------------*/
 
-void fileio_init(void)
+void fileio_init(running_machine *machine)
 {
 	chd_set_interface(&mame_chd_interface);
-	add_exit_callback(fileio_exit);
+	add_exit_callback(machine, fileio_exit);
 }
 
 
@@ -146,7 +146,7 @@ void fileio_init(void)
     fileio_exit - clean up behind ourselves
 -------------------------------------------------*/
 
-void fileio_exit(void)
+void fileio_exit(running_machine *machine)
 {
 	unzip_cache_clear();
 }

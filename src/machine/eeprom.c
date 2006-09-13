@@ -91,7 +91,7 @@ struct EEPROM_interface eeprom_interface_93C46 =
 };
 
 
-void nvram_handler_93C46(mame_file *file,int read_or_write)
+NVRAM_HANDLER( 93C46 )
 {
 	if (read_or_write)
 		EEPROM_save(file);

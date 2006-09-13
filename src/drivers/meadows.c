@@ -340,8 +340,8 @@ static INTERRUPT_GEN( sound_interrupt )
 
 static PALETTE_INIT( meadows )
 {
-	palette_set_color(0,0x00,0x00,0x00); /* BLACK */
-	palette_set_color(1,0xff,0xff,0xff); /* WHITE */
+	palette_set_color(machine,0,0x00,0x00,0x00); /* BLACK */
+	palette_set_color(machine,1,0xff,0xff,0xff); /* WHITE */
 }
 
 

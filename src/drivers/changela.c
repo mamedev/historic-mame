@@ -664,7 +664,7 @@ static WRITE8_HANDLER (colors_w)
 	bit2 = (c >> 8) & 0x01;
 	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-	palette_set_color(color_index,r,g,b);
+	palette_set_color(Machine,color_index,r,g,b);
 }
 
 static READ8_HANDLER( mcu_r )

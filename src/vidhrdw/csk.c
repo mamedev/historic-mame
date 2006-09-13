@@ -38,22 +38,12 @@ WRITE8_HANDLER( cpk_palette_w )
 
 WRITE8_HANDLER( cpk_palette2_w )
 {
-	int r,g,b,newword;
+	int newword;
 
 	cpk_palette2[offset] = data;
 
 	newword = cpk_palette[offset] + 256 * cpk_palette2[offset];
-
-	b = ((newword >> 10) & 0x1f);
-	g = ((newword >> 5) & 0x1f);
-	r = ((newword >> 0) & 0x1f);
-	/* bit 15 is never used */
-
-	r = (r << 3) | (r >> 2);
-	g = (g << 3) | (g >> 2);
-	b = (b << 3) | (b >> 2);
-
-	palette_set_color(offset,r,g,b);
+	palette_set_color(Machine,offset,pal5bit(newword >> 0),pal5bit(newword >> 5),pal5bit(newword >> 10));
 }
 
 /* Video handling */

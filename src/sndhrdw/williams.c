@@ -252,7 +252,7 @@ void williams_cvsd_init(int pianum)
 	int bank;
 
 	/* configure the CPU */
-	sound_cpunum = mame_find_cpu_index("cvsd");
+	sound_cpunum = mame_find_cpu_index(Machine, "cvsd");
 	soundalt_cpunum = -1;
 
 	/* configure the PIA */
@@ -284,8 +284,8 @@ void williams_narc_init(void)
 	int bank;
 
 	/* configure the CPU */
-	sound_cpunum = mame_find_cpu_index("narc1");
-	soundalt_cpunum = mame_find_cpu_index("narc2");
+	sound_cpunum = mame_find_cpu_index(Machine, "narc1");
+	soundalt_cpunum = mame_find_cpu_index(Machine, "narc2");
 
 	/* configure master CPU banks */
 	ROM = memory_region(REGION_CPU1 + sound_cpunum);
@@ -326,7 +326,7 @@ void williams_adpcm_init(void)
 	UINT8 *ROM;
 
 	/* configure the CPU */
-	sound_cpunum = mame_find_cpu_index("adpcm");
+	sound_cpunum = mame_find_cpu_index(Machine, "adpcm");
 	soundalt_cpunum = -1;
 
 	/* configure banks */

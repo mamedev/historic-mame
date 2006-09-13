@@ -124,11 +124,7 @@ static WRITE32_HANDLER( paletteram32_xRRRRRGGGGGBBBBB_dword_w )
 		g = (paletteram32[offset] & 0x03e00000) >> (5+16);
 		b = (paletteram32[offset] & 0x001f0000) >> (0+16);
 
-		b = b << 3;
-		r = r << 3;
-		g = g << 3;
-
-		palette_set_color(offset*2,r,g,b);
+		palette_set_color(Machine,offset*2,pal5bit(r),pal5bit(g),pal5bit(b));
 	}
 
 	if(ACCESSING_LSW32)
@@ -140,11 +136,7 @@ static WRITE32_HANDLER( paletteram32_xRRRRRGGGGGBBBBB_dword_w )
 		g = (paletteram32[offset] & 0x000003e0) >> (5);
 		b = (paletteram32[offset] & 0x0000001f) >> (0);
 
-		b = b << 3;
-		r = r << 3;
-		g = g << 3;
-
-		palette_set_color(offset*2+1,r,g,b);
+		palette_set_color(Machine,offset*2+1,pal5bit(r),pal5bit(g),pal5bit(b));
 	}
 }
 

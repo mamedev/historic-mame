@@ -229,7 +229,7 @@ static void copro_fifoout_push(UINT32 data)
 
 static NVRAM_HANDLER( model2 )
 {
-	nvram_handler_93C46(file, read_or_write);
+	nvram_handler_93C46(machine, file, read_or_write);
 
 	if (read_or_write)
 	{
@@ -333,7 +333,7 @@ static MACHINE_RESET(model2o)
 
 static MACHINE_RESET(model2)
 {
-	machine_reset_model2o();
+	machine_reset_model2o(machine);
 
 	memory_set_bankptr(4, memory_region(REGION_SOUND1) + 0x200000);
 	memory_set_bankptr(5, memory_region(REGION_SOUND1) + 0x600000);
@@ -344,7 +344,7 @@ static MACHINE_RESET(model2)
 
 static MACHINE_RESET(model2b)
 {
-	machine_reset_model2();
+	machine_reset_model2(machine);
 
 	cpunum_set_input_line(2, INPUT_LINE_HALT, ASSERT_LINE);
 	//cpunum_set_input_line(3, INPUT_LINE_HALT, ASSERT_LINE);
@@ -357,17 +357,7 @@ static MACHINE_RESET(model2b)
 
 static void chcolor(pen_t color, UINT16 data)
 {
-	int r,g,b;
-
-	r = (data >>  0) & 0x1f;
-	g = (data >>  5) & 0x1f;
-	b = (data >> 10) & 0x1f;
-
-	r = (r << 3) | (r >> 2);
-	g = (g << 3) | (g >> 2);
-	b = (b << 3) | (b >> 2);
-
-	palette_set_color(color,r,g,b);
+	palette_set_color(Machine,color,pal5bit(data >> 0),pal5bit(data >> 5),pal5bit(data >> 10));
 }
 
 static WRITE32_HANDLER(pal32_w)

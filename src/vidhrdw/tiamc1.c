@@ -121,7 +121,7 @@ PALETTE_INIT( tiamc1 )
 		tcol = 255.0f * b_v[ib] / b_v[0];
 		b = 255 - (((int)tcol) & 255);
 
-		palette_set_color(col,r,g,b);
+		palette_set_color(machine,col,r,g,b);
 	}
 }
 

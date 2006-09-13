@@ -1277,7 +1277,7 @@ MACHINE_RESET( coh1000ta )
 
 static NVRAM_HANDLER( coh1000ta )
 {
-	nvram_handler_at28c16_0( file, read_or_write );
+	nvram_handler_at28c16_0( machine, file, read_or_write );
 	if (read_or_write)
 	{
 		mame_fwrite(file, taitofx1_eeprom1, taitofx1_eeprom_size1);
@@ -1420,7 +1420,7 @@ MACHINE_RESET( coh1000tb )
 
 static NVRAM_HANDLER( coh1000tb )
 {
-	nvram_handler_at28c16_0( file, read_or_write );
+	nvram_handler_at28c16_0( machine, file, read_or_write );
 	if (read_or_write)
 	{
 		mame_fwrite(file, taitofx1_eeprom1, taitofx1_eeprom_size1);

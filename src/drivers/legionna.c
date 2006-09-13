@@ -83,20 +83,10 @@ static UINT16 *mcu_ram;
 
 static WRITE16_HANDLER( legionna_paletteram16_w )	/* xBBBBxRRRRxGGGGx */
 {
-	int a,r,g,b;
+	int a;
 	COMBINE_DATA(&paletteram16[offset]);
-
 	a = paletteram16[offset];
-
-	r = (a >> 1) & 0x0f;
-	g = (a >> 6) & 0x0f;
-	b = (a >> 11) & 0x0f;
-
-	r = (r << 4) | r;
-	g = (g << 4) | g;
-	b = (b << 4) | b;
-
-	palette_set_color(offset,r,g,b);
+	palette_set_color(Machine,offset,pal4bit(a >> 1),pal4bit(a >> 6),pal4bit(a >> 11));
 }
 
 /* Mcu reads in attract in Legionnaire game demo

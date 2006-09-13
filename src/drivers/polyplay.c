@@ -268,7 +268,7 @@ static WRITE8_HANDLER( polyplay_start_timer2 )
 
 static READ8_HANDLER( polyplay_random_read )
 {
-	return mame_rand() & 0xff;
+	return mame_rand(Machine) & 0xff;
 }
 
 /* graphic structures */

@@ -36,10 +36,10 @@ static unsigned short colortable_source[] =
 
 static PALETTE_INIT( subs )
 {
-	palette_set_color(0,0x00,0x00,0x00); /* BLACK - modified on video invert */
-	palette_set_color(1,0xff,0xff,0xff); /* WHITE - modified on video invert */
-	palette_set_color(2,0x00,0x00,0x00); /* BLACK - modified on video invert */
-	palette_set_color(3,0xff,0xff,0xff); /* WHITE - modified on video invert*/
+	palette_set_color(machine,0,0x00,0x00,0x00); /* BLACK - modified on video invert */
+	palette_set_color(machine,1,0xff,0xff,0xff); /* WHITE - modified on video invert */
+	palette_set_color(machine,2,0x00,0x00,0x00); /* BLACK - modified on video invert */
+	palette_set_color(machine,3,0xff,0xff,0xff); /* WHITE - modified on video invert*/
 	memcpy(colortable,colortable_source,sizeof(colortable_source));
 }
 

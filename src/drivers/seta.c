@@ -1750,19 +1750,8 @@ WRITE16_HANDLER( usclssic_lockout_w )
 
 INLINE void usc_changecolor_xRRRRRGGGGGBBBBB(pen_t color,int data)
 {
-	int r,g,b;
-
-
-	r = (data >> 10) & 0x1f;
-	g = (data >>  5) & 0x1f;
-	b = (data >>  0) & 0x1f;
-
-	r = (r << 3) | (r >> 2);
-	g = (g << 3) | (g >> 2);
-	b = (b << 3) | (b >> 2);
-
-	if (color>=0x100) palette_set_color(color-0x100,r,g,b);
-	else palette_set_color(color+0x200,r,g,b);
+	if (color>=0x100) palette_set_color(Machine,color-0x100,pal5bit(data >> 10),pal5bit(data >> 5),pal5bit(data >> 0));
+	else palette_set_color(Machine,color+0x200,pal5bit(data >> 10),pal5bit(data >> 5),pal5bit(data >> 0));
 }
 
 WRITE16_HANDLER( usc_paletteram16_xRRRRRGGGGGBBBBB_word_w )
@@ -9076,7 +9065,7 @@ DRIVER_INIT( crazyfgt )
 	seta_vregs = (UINT16*)auto_malloc(sizeof(UINT16)*3);
 	seta_vregs[0] = seta_vregs[1] = seta_vregs[2] = 0;
 
-	init_blandia();
+	init_blandia(machine);
 }
 
 /***************************************************************************

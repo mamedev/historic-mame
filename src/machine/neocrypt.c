@@ -669,8 +669,12 @@ void svcpcb_gfx_decrypt( void )
 	}
 	for( i = 0; i < rom_size; i += 4 )
 	{
-		UINT32 *rom32 = (UINT32*)&rom[ i ];
-		*rom32 = BITSWAP32( *rom32, 0x09, 0x0d, 0x13, 0x00, 0x17, 0x0f, 0x03, 0x05, 0x04, 0x0c, 0x11, 0x1e, 0x12, 0x15, 0x0b, 0x06, 0x1b, 0x0a, 0x1a, 0x1c, 0x14, 0x02, 0x0e, 0x1d, 0x18, 0x08, 0x01, 0x10, 0x19, 0x1f, 0x07, 0x16 );
+		UINT32 rom32 = rom[i] | rom[i+1]<<8 | rom[i+2]<<16 | rom[i+3]<<24;
+		rom32 = BITSWAP32( rom32, 0x09, 0x0d, 0x13, 0x00, 0x17, 0x0f, 0x03, 0x05, 0x04, 0x0c, 0x11, 0x1e, 0x12, 0x15, 0x0b, 0x06, 0x1b, 0x0a, 0x1a, 0x1c, 0x14, 0x02, 0x0e, 0x1d, 0x18, 0x08, 0x01, 0x10, 0x19, 0x1f, 0x07, 0x16 );
+		rom[i] = rom32&0xff;
+		rom[i+1] = (rom32>>8)&0xff;
+		rom[i+2] = (rom32>>16)&0xff;
+		rom[i+3] = (rom32>>24)&0xff;
 	}
 	memcpy( buf, rom, rom_size );
 	for( i = 0; i < rom_size / 4; i++ )
@@ -1028,16 +1032,20 @@ void mslug5_decrypt_68k(void)
 
 	for( i = 0; i < 0x100000; i++ )
 	{
-		rom[ i ] ^= xor1[ (i % 0x20) ];
+		rom[ i ] ^= xor1[ (BYTE_XOR_LE(i) % 0x20) ];
 	}
 	for( i = 0x100000; i < 0x800000; i++ )
 	{
-		rom[ i ] ^= xor2[ (i % 0x20) ];
+		rom[ i ] ^= xor2[ (BYTE_XOR_LE(i) % 0x20) ];
 	}
+
 	for( i = 0x100000; i < 0x0800000; i += 4 )
 	{
-		UINT16 *rom16 = (UINT16*)&rom[ i + 1 ];
-		*rom16 = BITSWAP16( *rom16, 15, 14, 13, 12, 10, 11, 8, 9, 6, 7, 4, 5, 3, 2, 1, 0 );
+		UINT16 rom16;
+		rom16 = rom[BYTE_XOR_LE(i+1)] | rom[BYTE_XOR_LE(i+2)]<<8;
+		rom16 = BITSWAP16( rom16, 15, 14, 13, 12, 10, 11, 8, 9, 6, 7, 4, 5, 3, 2, 1, 0 );
+		rom[BYTE_XOR_LE(i+1)] = rom16&0xff;
+		rom[BYTE_XOR_LE(i+2)] = rom16>>8;
 	}
 	memcpy( buf, rom, rom_size );
 	for( i = 0; i < 0x0100000 / 0x10000; i++ )
@@ -1068,16 +1076,20 @@ void svcchaos_px_decrypt(void)
 
 	for( i = 0; i < 0x100000; i++ )
 	{
-		rom[ i ] ^= xor1[ (i % 0x20) ];
+		rom[ i ] ^= xor1[ (BYTE_XOR_LE(i) % 0x20) ];
 	}
 	for( i = 0x100000; i < 0x800000; i++ )
 	{
-		rom[ i ] ^= xor2[ (i % 0x20) ];
+		rom[ i ] ^= xor2[ (BYTE_XOR_LE(i) % 0x20) ];
 	}
-	for( i = 0x100000; i < 0x800000; i += 4 )
+
+	for( i = 0x100000; i < 0x0800000; i += 4 )
 	{
-		UINT16 *rom16 = (UINT16*)&rom[ i + 1 ];
-		*rom16 = BITSWAP16( *rom16, 15, 14, 13, 12, 10, 11, 8, 9, 6, 7, 4, 5, 3, 2, 1, 0 );
+		UINT16 rom16;
+		rom16 = rom[BYTE_XOR_LE(i+1)] | rom[BYTE_XOR_LE(i+2)]<<8;
+		rom16 = BITSWAP16( rom16, 15, 14, 13, 12, 10, 11, 8, 9, 6, 7, 4, 5, 3, 2, 1, 0 );
+		rom[BYTE_XOR_LE(i+1)] = rom16&0xff;
+		rom[BYTE_XOR_LE(i+2)] = rom16>>8;
 	}
 	memcpy( buf, rom, rom_size );
 	for( i = 0; i < 0x0100000 / 0x10000; i++ )
@@ -1139,16 +1151,19 @@ void kf2k3pcb_decrypt_68k( void )
 
 	for (i = 0; i < 0x100000; i++)
 	{
-		rom[ 0x800000 + i ] ^= rom[ 0x100002 | i ];
+		rom[ 0x800000 + i ] ^= rom[ 0x100002 | BYTE_XOR_LE(i) ];
 	}
 	for( i = 0x100000; i < 0x800000; i++ )
 	{
-		rom[ i ] ^= xor2[ (i % 0x20) ];
+		rom[ i ] ^= xor2[ (BYTE_XOR_LE(i) % 0x20) ];
 	}
 	for( i = 0x100000; i < 0x800000; i += 4 )
 	{
-		UINT16 *rom16 = (UINT16*)&rom[ i + 1 ];
-		*rom16 = BITSWAP16( *rom16, 15, 14, 13, 12, 4, 5, 6, 7, 8, 9, 10, 11, 3, 2, 1, 0 );
+		UINT16 rom16;
+		rom16 = rom[BYTE_XOR_LE(i+1)] | rom[BYTE_XOR_LE(i+2)]<<8;
+		rom16 = BITSWAP16( rom16, 15, 14, 13, 12, 4, 5, 6, 7, 8, 9, 10, 11, 3, 2, 1, 0 );
+		rom[BYTE_XOR_LE(i+1)] = rom16&0xff;
+		rom[BYTE_XOR_LE(i+2)] = rom16>>8;
 	}
 	for( i = 0; i < 0x0100000 / 0x10000; i++ )
 	{
@@ -1180,20 +1195,23 @@ void kof2003_decrypt_68k( void )
 
 	for (i = 0; i < 0x100000; i++)
 	{
-		rom[ 0x800000 + i ] ^= rom[ 0x100002 | i ];
+		rom[ 0x800000 + i ] ^= rom[ 0x100002 | BYTE_XOR_LE(i) ];
 	}
 	for( i = 0; i < 0x100000; i++)
 	{
-		rom[ i ] ^= xor1[ (i % 0x20) ];
+		rom[ i ] ^= xor1[ (BYTE_XOR_LE(i) % 0x20) ];
 	}
 	for( i = 0x100000; i < 0x800000; i++)
 	{
-		rom[ i ] ^= xor2[ (i % 0x20) ];
+		rom[ i ] ^= xor2[ (BYTE_XOR_LE(i) % 0x20) ];
 	}
 	for( i = 0x100000; i < 0x800000; i += 4)
 	{
-		UINT16 *rom16 = (UINT16*)&rom[i + 1];
-		*rom16 = BITSWAP16( *rom16, 15, 14, 13, 12, 5, 4, 7, 6, 9, 8, 11, 10, 3, 2, 1, 0 );
+		UINT16 rom16;
+		rom16 = rom[BYTE_XOR_LE(i+1)] | rom[BYTE_XOR_LE(i+2)]<<8;
+		rom16 = BITSWAP16( rom16, 15, 14, 13, 12, 5, 4, 7, 6, 9, 8, 11, 10, 3, 2, 1, 0 );
+		rom[BYTE_XOR_LE(i+1)] = rom16&0xff;
+		rom[BYTE_XOR_LE(i+2)] = rom16>>8;
 	}
 	for( i = 0; i < 0x0100000 / 0x10000; i++ )
 	{
@@ -1238,12 +1256,18 @@ void kof2003biosdecode(void)
 		for (a=0;a<0x80000/2;a++)
 		{
 			//data xor
+			#ifdef LSB_FIRST
 			if (src[a] & 0x0004)	src[a] ^= 0x0001;
 			if (src[a] & 0x0010)	src[a] ^= 0x0002;
 			if (src[a] & 0x0020)	src[a] ^= 0x0008;
+			#else
+			if (src[a] & 0x0400)	src[a] ^= 0x0100;
+			if (src[a] & 0x1000)	src[a] ^= 0x0200;
+			if (src[a] & 0x2000)	src[a] ^= 0x0800;
+			#endif
 			//address xor
 			addr  = a & ~0xff;
-			addr |= address[a & 0x7f];
+			addr |= address[BYTE_XOR_LE(a & 0x7f)];
 			if ( a & 0x00008)	addr ^= 0x0008;
 			if ( a & 0x00080)	addr ^= 0x0080;
 			if ( a & 0x00200)	addr ^= 0x0100;

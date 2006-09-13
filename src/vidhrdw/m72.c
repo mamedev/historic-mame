@@ -17,19 +17,19 @@ static int irqbase;
 MACHINE_RESET( m72 )
 {
 	irqbase = 0x20;
-	machine_reset_m72_sound();
+	machine_reset_m72_sound(machine);
 }
 
 MACHINE_RESET( xmultipl )
 {
 	irqbase = 0x08;
-	machine_reset_m72_sound();
+	machine_reset_m72_sound(machine);
 }
 
 MACHINE_RESET( kengo )
 {
 	irqbase = 0x18;
-	machine_reset_m72_sound();
+	machine_reset_m72_sound(machine);
 }
 
 INTERRUPT_GEN( m72_interrupt )
@@ -221,7 +221,7 @@ VIDEO_START( rtype2 )
 
 VIDEO_START( poundfor )
 {
-	int res = video_start_rtype2();
+	int res = video_start_rtype2(machine);
 
 	xadjust = -6;
 
@@ -320,11 +320,7 @@ READ8_HANDLER( m72_palette2_r )
 
 INLINE void changecolor(int color,int r,int g,int b)
 {
-	r = (r << 3) | (r >> 2);
-	g = (g << 3) | (g >> 2);
-	b = (b << 3) | (b >> 2);
-
-	palette_set_color(color,r,g,b);
+	palette_set_color(Machine,color,pal5bit(r),pal5bit(g),pal5bit(b));
 }
 
 WRITE8_HANDLER( m72_palette1_w )
@@ -603,7 +599,7 @@ VIDEO_UPDATE( m72 )
 {
 	if (video_off)
 	{
-		fillbitmap(bitmap,get_black_pen(),cliprect);
+		fillbitmap(bitmap,get_black_pen(machine),cliprect);
 		return 0;
 	}
 
@@ -628,7 +624,7 @@ VIDEO_UPDATE( majtitle )
 
 	if (video_off)
 	{
-		fillbitmap(bitmap,get_black_pen(),cliprect);
+		fillbitmap(bitmap,get_black_pen(machine),cliprect);
 		return 0;
 	}
 

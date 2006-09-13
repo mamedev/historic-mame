@@ -1646,7 +1646,7 @@ void stv_vdp1_process_list(mame_bitmap *bitmap, const rectangle *cliprect)
 	if (vdp1_sprite_log) logerror ("End of list processing!\n");
 }
 
-void video_update_vdp1(mame_bitmap *bitmap, const rectangle *cliprect)
+void video_update_vdp1(running_machine *machine, mame_bitmap *bitmap, const rectangle *cliprect)
 {
 	int framebufer_changed = 0;
 

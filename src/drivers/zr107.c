@@ -17,28 +17,10 @@ static UINT8 led_reg0 = 0x7f, led_reg1 = 0x7f;
 
 static WRITE32_HANDLER( paletteram32_w )
 {
-	int r,g,b;
-	int r2,g2,b2;
-
 	COMBINE_DATA(&paletteram32[offset]);
 	data = paletteram32[offset];
-
-	b = ((data >> 16) & 0x1f);
-	g = ((data >> 21) & 0x1f);
-	r = ((data >> 26) & 0x1f);
-	b2 = ((data >> 0) & 0x1f);
-	g2 = ((data >> 5) & 0x1f);
-	r2 = ((data >> 10) & 0x1f);
-
-	b = (b << 3) | (b >> 2);
-	g = (g << 3) | (g >> 2);
-	r = (r << 3) | (r >> 2);
-	b2 = (b2 << 3) | (b2 >> 2);
-	g2 = (g2 << 3) | (g2 >> 2);
-	r2 = (r2 << 3) | (r2 >> 2);
-
-	palette_set_color((offset * 2) + 0, r, g, b);
-	palette_set_color((offset * 2) + 1, r2, g2, b2);
+	palette_set_color(Machine, (offset * 2) + 0, pal5bit(data >> 26), pal5bit(data >> 21), pal5bit(data >> 16));
+	palette_set_color(Machine, (offset * 2) + 1, pal5bit(data >> 10), pal5bit(data >> 5), pal5bit(data >> 0));
 }
 
 #define NUM_LAYERS	2
@@ -432,7 +414,7 @@ static DRIVER_INIT(zr107)
 
 static DRIVER_INIT(midnrun)
 {
-	init_zr107();
+	init_zr107(machine);
 }
 
 

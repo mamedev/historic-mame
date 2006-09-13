@@ -75,26 +75,14 @@ static INTERRUPT_GEN( gunbustr_interrupt )
 
 static WRITE32_HANDLER( gunbustr_palette_w )
 {
-	int a,r,g,b;
+	int a;
 	COMBINE_DATA(&paletteram32[offset]);
 
 	a = paletteram32[offset] >> 16;
-	r = (a &0x7c00) >> 10;
-	g = (a &0x03e0) >> 5;
-	b = (a &0x001f);
-	r = (r << 3) | (r >> 2);
-	g = (g << 3) | (g >> 2);
-	b = (b << 3) | (b >> 2);
-	palette_set_color(offset*2,r,g,b);
+	palette_set_color(Machine,offset*2,pal5bit(a >> 10),pal5bit(a >> 5),pal5bit(a >> 0));
 
 	a = paletteram32[offset] &0xffff;
-	r = (a &0x7c00) >> 10;
-	g = (a &0x03e0) >> 5;
-	b = (a &0x001f);
-	r = (r << 3) | (r >> 2);
-	g = (g << 3) | (g >> 2);
-	b = (b << 3) | (b >> 2);
-	palette_set_color(offset*2+1,r,g,b);
+	palette_set_color(Machine,offset*2+1,pal5bit(a >> 10),pal5bit(a >> 5),pal5bit(a >> 0));
 }
 
 static READ32_HANDLER( gunbustr_input_r )

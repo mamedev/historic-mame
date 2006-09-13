@@ -135,7 +135,7 @@ update_palette( void )
 		g = data1&0xff;
 		b = data2&0xff;
 
-		palette_set_color( i, r,g,b );
+		palette_set_color( Machine,i, r,g,b );
 	}
 } /* update_palette */
 
@@ -147,7 +147,7 @@ VIDEO_UPDATE( namcos21_default )
 	update_palette();
 
 	/* paint background */
-	fillbitmap( bitmap, get_black_pen(), cliprect );
+	fillbitmap( bitmap, get_black_pen(machine), cliprect );
 
 	/* draw low priority 2d sprites */
 	for( pri=0; pri<pivot; pri++ )

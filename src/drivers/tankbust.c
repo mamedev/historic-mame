@@ -173,7 +173,7 @@ PALETTE_INIT( tankbust )
 		r = 0x55 * bit0 + 0xaa * bit1;
 #endif
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 	}
 }
 

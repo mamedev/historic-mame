@@ -162,7 +162,7 @@ VIDEO_START(ddenlovr)
 
 VIDEO_START(mmpanic)
 {
-	if (video_start_ddenlovr())
+	if (video_start_ddenlovr(machine))
 		return 1;
 
 	extra_layers = 1;
@@ -1468,11 +1468,7 @@ static WRITE8_HANDLER( rongrong_palette_w )
 	/* what were they smoking??? */
 	b = ((d1 & 0xe0) >> 5) | (d2 & 0xc0) >> 3;
 
-	r =  (r << 3) | (r >> 2);
-	g =  (g << 3) | (g >> 2);
-	b =  (b << 3) | (b >> 2);
-
-	palette_set_color(indx,r,g,b);
+	palette_set_color(Machine,indx,pal5bit(r),pal5bit(g),pal5bit(b));
 }
 
 static WRITE16_HANDLER( ddenlovr_palette_w )
@@ -2422,11 +2418,7 @@ static WRITE8_HANDLER( hanakanz_palette_w )
 		int g = dynax_blit_reg & 0x1f;
 		int r = data & 0x1f;
 		int b = ((data & 0xe0) >> 5) | ((dynax_blit_reg & 0x60) >> 2);
-		r =  (r << 3) | (r >> 2);
-		g =  (g << 3) | (g >> 2);
-		b =  (b << 3) | (b >> 2);
-
-		palette_set_color((palette_index++)&0x1ff,r,g,b);
+		palette_set_color(Machine,(palette_index++)&0x1ff,pal5bit(r),pal5bit(g),pal5bit(b));
 	}
 }
 
@@ -2437,7 +2429,7 @@ static WRITE8_HANDLER( hanakanz_oki_bank_w )
 
 static READ8_HANDLER( hanakanz_rand_r )
 {
-	return mame_rand();
+	return mame_rand(Machine);
 }
 
 static ADDRESS_MAP_START( hanakanz_readport, ADDRESS_SPACE_IO, 8 )	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
@@ -2606,11 +2598,7 @@ static WRITE8_HANDLER( mjchuuka_palette_w )
 		int r = (rgb >> 0) & 0x1f;
 		int g = (rgb >> 8) & 0x1f;
 		int b = ((rgb >> 5) & 0x07) | ((rgb & 0x6000) >> 10);
-		r =  (r << 3) | (r >> 2);
-		g =  (g << 3) | (g >> 2);
-		b =  (b << 3) | (b >> 2);
-
-		palette_set_color((palette_index++)&0x1ff,r,g,b);
+		palette_set_color(Machine,(palette_index++)&0x1ff,pal5bit(r),pal5bit(g),pal5bit(b));
 	}
 }
 

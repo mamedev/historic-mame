@@ -20,7 +20,7 @@ PALETTE_INIT( buggychl )
 
 	/* arbitrary blue shading for the sky */
 	for (i = 0;i < 128;i++)
-		palette_set_color(i+128,0,i,2*i);
+		palette_set_color(machine,i+128,0,i,2*i);
 }
 
 

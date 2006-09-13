@@ -439,7 +439,7 @@ bit0=0;
 //      *(palette++) = 0x92 * bit0 + 0x46 * bit1 + 0x27 * bit2;
 		b = 0x27 * bit0 + 0x46 * bit1 + 0x92 * bit2;
 
-		palette_set_color(i, r, g, b);
+		palette_set_color(machine, i, r, g, b);
 	}
 }
 

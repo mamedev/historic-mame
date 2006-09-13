@@ -113,7 +113,7 @@ VIDEO_UPDATE(pktgaldb)
 	int tileno;
 	int colour;
 
-	fillbitmap(bitmap, get_black_pen(), cliprect);
+	fillbitmap(bitmap, get_black_pen(machine), cliprect);
 
 	/* the bootleg seems to treat the tilemaps as sprites */
 	for (offset = 0;offset<0x1600/2;offset+=8)

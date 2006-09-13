@@ -189,9 +189,9 @@ PALETTE_INIT( liberate )
 		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
 		color_prom++;
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 	}
-	palette_set_color(32,0,0,0); /* Allocate black for when no background is displayed */
+	palette_set_color(machine,32,0,0,0); /* Allocate black for when no background is displayed */
 }
 
 /***************************************************************************/

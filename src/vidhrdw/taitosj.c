@@ -176,7 +176,7 @@ WRITE8_HANDLER( taitosj_paletteram_w )
 	bit2 = (~val >> 2) & 0x01;
 	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-	palette_set_color(offset / 2,r,g,b);
+	palette_set_color(Machine,offset / 2,r,g,b);
 }
 
 static void taitosj_postload(void)
@@ -207,7 +207,7 @@ VIDEO_START( taitosj )
 	dirtybuffer3  = dirtybuffer2 = 0;
 
 
-	if (video_start_generic() != 0)
+	if (video_start_generic(machine) != 0)
 		return 1;
 
 	dirtybuffer2 = auto_malloc(videoram_size);

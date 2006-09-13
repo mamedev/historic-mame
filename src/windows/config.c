@@ -602,8 +602,8 @@ static void execute_commands(const char *argv0)
 			int result;
 
 			init_resource_tracking();
-			cpuintrf_init();
-			sndintrf_init();
+			cpuintrf_init(NULL);
+			sndintrf_init(NULL);
 			result = (*frontend_options[i].function)(stdout);
 			exit_resource_tracking();
 			exit(result);

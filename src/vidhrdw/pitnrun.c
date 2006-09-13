@@ -148,7 +148,7 @@ PALETTE_INIT (pitnrun)
 		bit2 = (color_prom[i] >> 7) & 0x01;
 		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 	}
 
 	/* fake bg palette for lightning effect*/
@@ -170,7 +170,7 @@ PALETTE_INIT (pitnrun)
 		g/=3;
 		b/=3;
 
-		palette_set_color(i+16,(r>0xff)?0xff:r,(g>0xff)?0xff:g,(b>0xff)?0xff:b);
+		palette_set_color(machine,i+16,(r>0xff)?0xff:r,(g>0xff)?0xff:g,(b>0xff)?0xff:b);
 
 	}
 }
@@ -185,7 +185,7 @@ VIDEO_START(pitnrun)
 	tmp_bitmap[2] = auto_bitmap_alloc(128,128);
 	tmp_bitmap[3] = auto_bitmap_alloc(128,128);
 	pitnrun_spotlights();
-	return video_start_generic();
+	return video_start_generic(machine);
 }
 
 static void pitnrun_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )

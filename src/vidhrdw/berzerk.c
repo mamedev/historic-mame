@@ -40,7 +40,7 @@ PALETTE_INIT( berzerk )
 		int g = (i & 2) ? 0xff : bk;
 		int b = (i & 4) ? 0xff : bk;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 	}
 }
 
@@ -266,7 +266,7 @@ VIDEO_START( berzerk )
 	shifters_and_floppers_init();
 	alu_init();
 
-	return video_start_generic_bitmapped();
+	return video_start_generic_bitmapped(machine);
 }
 
 

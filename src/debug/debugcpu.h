@@ -165,7 +165,7 @@ extern symbol_table *global_symtable;
 ***************************************************************************/
 
 /* initialization */
-void				debug_cpu_init(void);
+void				debug_cpu_init(running_machine *machine);
 
 /* utilities */
 const debug_cpu_info *debug_get_cpu_info(int cpunum);

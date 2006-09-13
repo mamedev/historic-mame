@@ -136,7 +136,7 @@ static void cia_timer_proc(void *param);
 
 ***************************************************************************/
 
-static void cia_exit(void)
+static void cia_exit(running_machine *machine)
 {
 	memset(cia_array, 0, sizeof(*cia_array));
 }
@@ -149,7 +149,7 @@ void cia_config(int which, const cia6526_interface *intf)
 	cia_state *cia = &cia_array[which];
 
 	/* sanity checks */
-	assert_always(mame_get_phase() == MAME_PHASE_INIT, "Can only call cia_config at init time!");
+	assert_always(mame_get_phase(Machine) == MAME_PHASE_INIT, "Can only call cia_config at init time!");
 	assert_always((which >= 0) && (which < (sizeof(cia_array) / sizeof(cia_array[0]))),
 		"cia_config called on an invalid CIA!");
 
@@ -182,7 +182,7 @@ void cia_config(int which, const cia6526_interface *intf)
 
 	/* special case; for the first CIA, set up an exit handler to clear things out */
 	if (which == 0)
-		add_exit_callback(cia_exit);
+		add_exit_callback(Machine, cia_exit);
 }
 
 

@@ -58,8 +58,8 @@ PALETTE_INIT(sbugger)
 		int b = rand()|0x80;
 		if (i == 0) r = g = b = 0;
 
-		palette_set_color(i*2+1,r,g,b);
-		palette_set_color(i*2,0,0,0);
+		palette_set_color(machine,i*2+1,r,g,b);
+		palette_set_color(machine,i*2,0,0,0);
 
 	}
 

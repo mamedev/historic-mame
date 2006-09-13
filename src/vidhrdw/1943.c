@@ -54,7 +54,7 @@ PALETTE_INIT( 1943 )
 
 		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-		palette_set_color(i, r, g, b);
+		palette_set_color(machine, i, r, g, b);
 	}
 
 	color_prom += 3*Machine->drv->total_colors;
@@ -256,7 +256,7 @@ VIDEO_UPDATE( 1943 )
 	if (sc2on)
 		tilemap_draw(bitmap, cliprect, bg2_tilemap, 0, 0);
 	else
-		fillbitmap(bitmap, get_black_pen(), cliprect);
+		fillbitmap(bitmap, get_black_pen(machine), cliprect);
 
 	if (objon) c1943_draw_sprites(bitmap, cliprect, 0);
 	if (sc1on) tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);

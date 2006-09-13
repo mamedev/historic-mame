@@ -254,7 +254,7 @@ WRITE8_HANDLER( centiped_paletteram_w )
 	/* any palette changes unless the write is to a palette RAM address */
 	/* that is actually used */
 	if (offset & 4)
-		palette_set_color(((offset >> 1) & 4) | (offset & 3), r, g, b);
+		palette_set_color(Machine, ((offset >> 1) & 4) | (offset & 3), r, g, b);
 }
 
 
@@ -289,7 +289,7 @@ PALETTE_INIT( warlords )
 			int grey = (r * 0x4d / 0xff) + (g * 0x96 / 0xff) + (b * 0x1c / 0xff);
 			r = g = b = grey;
 		}
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 		color_prom++;
 	}
 
@@ -373,7 +373,7 @@ WRITE8_HANDLER( milliped_paletteram_w )
 	bit2 = (~data >> 2) & 0x01;
 	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-	palette_set_color(offset, r, g, b);
+	palette_set_color(Machine, offset, r, g, b);
 }
 
 

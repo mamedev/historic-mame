@@ -77,41 +77,23 @@ READ16_HANDLER( fromanc2_paletteram_1_r )
 WRITE16_HANDLER( fromanc2_paletteram_0_w )
 {
 	UINT16 color;
-	UINT8 r, g, b;
 
 	COMBINE_DATA(&fromanc2_paletteram[0][offset]);
 
 	// GGGG_GRRR_RRBB_BBBx
-	r = (data >>  6) & 0x1f;
-	g = (data >> 11) & 0x1f;
-	b = (data >>  1) & 0x1f;
-
-	r = (r << 3) | (r >> 2);
-	g = (g << 3) | (g >> 2);
-	b = (b << 3) | (b >> 2);
-
 	color = ((offset & 0x0700) << 1) + (offset & 0x00ff);
-	palette_set_color(0x000 + color, r, g, b);
+	palette_set_color(Machine, 0x000 + color, pal5bit(data >> 6), pal5bit(data >> 11), pal5bit(data >> 1));
 }
 
 WRITE16_HANDLER( fromanc2_paletteram_1_w )
 {
 	UINT16 color;
-	UINT8 r, g, b;
 
 	COMBINE_DATA(&fromanc2_paletteram[1][offset]);
 
 	// GGGG_GRRR_RRBB_BBBx
-	r = (data >>  6) & 0x1f;
-	g = (data >> 11) & 0x1f;
-	b = (data >>  1) & 0x1f;
-
-	r = (r << 3) | (r >> 2);
-	g = (g << 3) | (g >> 2);
-	b = (b << 3) | (b >> 2);
-
 	color = ((offset & 0x0700) << 1) + (offset & 0x00ff);
-	palette_set_color(0x100 + color, r, g, b);
+	palette_set_color(Machine, 0x100 + color, pal5bit(data >> 6), pal5bit(data >> 11), pal5bit(data >> 1));
 }
 
 
@@ -128,41 +110,23 @@ READ16_HANDLER( fromancr_paletteram_1_r )
 WRITE16_HANDLER( fromancr_paletteram_0_w )
 {
 	UINT16 color;
-	UINT8 r, g, b;
 
 	COMBINE_DATA(&fromanc2_paletteram[0][offset]);
 
 	// xGGG_GGRR_RRRB_BBBB
-	r = (data >>  5) & 0x1f;
-	g = (data >> 10) & 0x1f;
-	b = (data >>  0) & 0x1f;
-
-	r = (r << 3) | (r >> 2);
-	g = (g << 3) | (g >> 2);
-	b = (b << 3) | (b >> 2);
-
 	color = ((offset & 0x0700) << 1) + (offset & 0x00ff);
-	palette_set_color(0x000 + color, r, g, b);
+	palette_set_color(Machine, 0x000 + color, pal5bit(data >> 5), pal5bit(data >> 10), pal5bit(data >> 0));
 }
 
 WRITE16_HANDLER( fromancr_paletteram_1_w )
 {
 	UINT16 color;
-	UINT8 r, g, b;
 
 	COMBINE_DATA(&fromanc2_paletteram[1][offset]);
 
 	// xGGG_GGRR_RRRB_BBBB
-	r = (data >>  5) & 0x1f;
-	g = (data >> 10) & 0x1f;
-	b = (data >>  0) & 0x1f;
-
-	r = (r << 3) | (r >> 2);
-	g = (g << 3) | (g >> 2);
-	b = (b << 3) | (b >> 2);
-
 	color = ((offset & 0x0700) << 1) + (offset & 0x00ff);
-	palette_set_color(0x100 + color, r, g, b);
+	palette_set_color(Machine, 0x100 + color, pal5bit(data >> 5), pal5bit(data >> 10), pal5bit(data >> 0));
 }
 
 
@@ -179,41 +143,23 @@ READ16_HANDLER( fromanc4_paletteram_1_r )
 WRITE16_HANDLER( fromanc4_paletteram_0_w )
 {
 	UINT16 color;
-	UINT8 r, g, b;
 
 	COMBINE_DATA(&fromanc2_paletteram[0][offset]);
 
 	// xRRR_RRGG_GGGB_BBBB
-	r = (data >> 10) & 0x1f;
-	g = (data >>  5) & 0x1f;
-	b = (data >>  0) & 0x1f;
-
-	r = (r << 3) | (r >> 2);
-	g = (g << 3) | (g >> 2);
-	b = (b << 3) | (b >> 2);
-
 	color = ((offset & 0x0700) << 1) + (offset & 0x00ff);
-	palette_set_color(0x000 + color, r, g, b);
+	palette_set_color(Machine, 0x000 + color, pal5bit(data >> 10), pal5bit(data >> 5), pal5bit(data >> 0));
 }
 
 WRITE16_HANDLER( fromanc4_paletteram_1_w )
 {
 	UINT16 color;
-	UINT8 r, g, b;
 
 	COMBINE_DATA(&fromanc2_paletteram[1][offset]);
 
 	// xRRR_RRGG_GGGB_BBBB
-	r = (data >> 10) & 0x1f;
-	g = (data >>  5) & 0x1f;
-	b = (data >>  0) & 0x1f;
-
-	r = (r << 3) | (r >> 2);
-	g = (g << 3) | (g >> 2);
-	b = (b << 3) | (b >> 2);
-
 	color = ((offset & 0x0700) << 1) + (offset & 0x00ff);
-	palette_set_color(0x100 + color, r, g, b);
+	palette_set_color(Machine, 0x100 + color, pal5bit(data >> 10), pal5bit(data >> 5), pal5bit(data >> 0));
 }
 
 

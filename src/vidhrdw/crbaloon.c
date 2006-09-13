@@ -47,7 +47,7 @@ PALETTE_INIT( crbaloon )
 		g = intensity * ((~i >> 1) & 1);
 		/* blue component */
 		b = intensity * ((~i >> 2) & 1);
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 	}
 
 	for (i = 0;i < TOTAL_COLORS(0);i += 2)

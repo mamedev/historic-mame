@@ -139,7 +139,7 @@ PALETTE_INIT( exidy )
 		int i;
 
 		for (i = 0; i < PALETTE_LEN; i++)
-			palette_set_color(i,exidy_palette[i*3+0],exidy_palette[i*3+1],exidy_palette[i*3+2]);
+			palette_set_color(machine,i,exidy_palette[i*3+0],exidy_palette[i*3+1],exidy_palette[i*3+2]);
 	}
 	memcpy(colortable, exidy_colortable, COLORTABLE_LEN * sizeof(colortable[0]));
 }
@@ -154,7 +154,7 @@ PALETTE_INIT( exidy )
 
 VIDEO_START( exidy )
 {
-    if (video_start_generic())
+    if (video_start_generic(machine))
         return 1;
 
 	motion_object_1_vid = auto_bitmap_alloc(16, 16);
@@ -250,12 +250,7 @@ WRITE8_HANDLER( exidy_color_w )
 	color_latch[offset] = data;
 
 	for (i = 0; i < 8; i++)
-	{
-		int b = ((color_latch[0] >> i) & 0x01) * 0xff;
-		int g = ((color_latch[1] >> i) & 0x01) * 0xff;
-		int r = ((color_latch[2] >> i) & 0x01) * 0xff;
-		palette_set_color(i, r, g, b);
-	}
+		palette_set_color(Machine, i, pal1bit(color_latch[2] >> i), pal1bit(color_latch[1] >> i), pal1bit(color_latch[0] >> i));
 }
 
 

@@ -351,9 +351,9 @@ static void f14(void)
 	}
 
 	if(r == 4) {
-		cmat[9] += mame_rand();
-		cmat[10] += mame_rand();
-		cmat[11] += mame_rand();
+		cmat[9] += mame_rand(Machine);
+		cmat[10] += mame_rand(Machine);
+		cmat[11] += mame_rand(Machine);
 	}
 
 	next_fn();
@@ -699,7 +699,7 @@ static void f42(void)
 	(void)b;
 	(void)c;
 	logerror("TGP f42 %f, %f, %f (%x)\n", a, b, c, activecpu_get_pc());
-	//  fifoout_push_f((mame_rand() % 1000) - 500);
+	//  fifoout_push_f((mame_rand(Machine) % 1000) - 500);
 	fifoout_push_f(0);
 	fifoout_push_f(0);
 	fifoout_push_f(0);
@@ -1550,7 +1550,7 @@ static void f100(void)
 	int i;
 	logerror("TGP f100 get list (%x)\n", activecpu_get_pc());
 	for(i=0; i<list_length; i++)
-		fifoout_push_f((mame_rand() % 1000)/100.0);
+		fifoout_push_f((mame_rand(Machine) % 1000)/100.0);
 	next_fn();
 }
 

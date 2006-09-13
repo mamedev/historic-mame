@@ -520,9 +520,9 @@ WRITE16_HANDLER( sys16_paletteram_w )
 		gh = combine_6_weights(weights[1][1], g0, g1, g2, g3, g4, 1);
 		bh = combine_6_weights(weights[1][2], b0, b1, b2, b3, b4, 1);
 
-		palette_set_color( offset, r, g, b );
+		palette_set_color( Machine, offset, r, g, b );
 
-		palette_set_color( offset+Machine->drv->total_colors/2,rs,gs,bs);
+		palette_set_color( Machine, offset+Machine->drv->total_colors/2,rs,gs,bs);
 	}
 }
 
@@ -793,7 +793,7 @@ VIDEO_START( system16 ){
 		/* initialize all entries to black - needed for Golden Axe*/
 		int i;
 		for( i=0; i<Machine->drv->total_colors; i++ ){
-			palette_set_color( i, 0,0,0 );
+			palette_set_color( machine, i, 0,0,0 );
 		}
 
 		if(sys16_bg1_trans) tilemap_set_transparent_pen( background, 0 );
@@ -865,7 +865,7 @@ VIDEO_START( system18old ){
 
 
 	if( background2 && foreground2 ){
-		if( video_start_system16()==0 ){
+		if( video_start_system16(machine)==0 ){
 			tilemap_set_transparent_pen( foreground2, 0 );
 
 			if(sys18_splittab_fg_x){
@@ -1083,7 +1083,7 @@ VIDEO_UPDATE( system18old ){
 	if (!sys16_refreshenable)
 	{
 		/* should it REALLY not clear the bitmap? ddcrew vdp gfx look ugly if i don't do it like this */
-		fillbitmap(bitmap,get_black_pen(),cliprect);
+		fillbitmap(bitmap,get_black_pen(machine),cliprect);
 		return 0;
 	}
 

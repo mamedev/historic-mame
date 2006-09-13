@@ -778,7 +778,12 @@ static int png_create_datastream(void *fp, mame_bitmap *bitmap)
 		memset (p.palette, 0, 3*256);
 		/* get palette */
 		for (i = 0; i < Machine->drv->total_colors; i++)
-			palette_get_color(i,&p.palette[3*i],&p.palette[3*i+1],&p.palette[3*i+2]);
+		{
+			rgb_t color = palette_get_color(Machine,i);
+			p.palette[3*i] = RGB_RED(color);
+			p.palette[3*i+1] = RGB_GREEN(color);
+			p.palette[3*i+2] = RGB_BLUE(color);
+		}
 
 		p.num_palette = 256;
 		if((p.image = (UINT8 *)malloc (p.height*p.width))==NULL)
@@ -817,8 +822,10 @@ static int png_create_datastream(void *fp, mame_bitmap *bitmap)
 			for (i = 0; i < p.height; i++)
 				for (j = 0; j < p.width; j++)
 				{
-					palette_get_color(((UINT16 *)bitmap->line[i])[j],ip, ip+1, ip+2);
-					ip += 3;
+					rgb_t color = palette_get_color(Machine,((UINT16 *)bitmap->line[i])[j]);
+					*ip++ = RGB_RED(color);
+					*ip++ = RGB_GREEN(color);
+					*ip++ = RGB_BLUE(color);
 				}
 			break;
 		case 15: /* DIRECT_15BIT */

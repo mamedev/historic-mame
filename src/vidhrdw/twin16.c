@@ -51,22 +51,11 @@ WRITE16_HANDLER( twin16_videoram2_w )
 
 WRITE16_HANDLER( twin16_paletteram_word_w )
 { // identical to tmnt_paletteram_w
-	int r, g, b;
-
 	COMBINE_DATA(paletteram16 + offset);
 	offset &= ~1;
 
 	data = ((paletteram16[offset] & 0xff) << 8) | (paletteram16[offset + 1] & 0xff);
-
-	r = (data >>  0) & 0x1f;
-	g = (data >>  5) & 0x1f;
-	b = (data >> 10) & 0x1f;
-
-	r = (r << 3) | (r >> 2);
-	g = (g << 3) | (g >> 2);
-	b = (b << 3) | (b >> 2);
-
-	palette_set_color(offset / 2, r, g, b);
+	palette_set_color(Machine, offset / 2, pal5bit(data >> 0), pal5bit(data >> 5), pal5bit(data >> 10));
 }
 
 WRITE16_HANDLER( fround_gfx_bank_w )

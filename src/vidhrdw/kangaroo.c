@@ -42,12 +42,7 @@ PALETTE_INIT( kangaroo )
 	int i;
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
-	{
-		int r = ((i & 4) >> 2) * 0xff;
-		int g = ((i & 2) >> 1) * 0xff;
-		int b = ((i & 1) >> 0) * 0xff;
-		palette_set_color(i,r,g,b);
-	}
+		palette_set_color(machine,i,pal1bit(i >> 2),pal1bit(i >> 1),pal1bit(i >> 0));
 }
 
 
@@ -124,7 +119,7 @@ WRITE8_HANDLER( kangaroo_color_mask_w )
 		g = ((i & 2) >> 1) * ((data & 0x10) ? 0xff : 0x7f);
 		b = ((i & 1) >> 0) * ((data & 0x08) ? 0xff : 0x7f);
 
-		palette_set_color(8+i,r,g,b);
+		palette_set_color(Machine,8+i,r,g,b);
 	}
 
 	/* color mask for B plane */
@@ -137,7 +132,7 @@ WRITE8_HANDLER( kangaroo_color_mask_w )
 		g = ((i & 2) >> 1) * ((data & 0x02) ? 0xff : 0x7f);
 		b = ((i & 1) >> 0) * ((data & 0x01) ? 0xff : 0x7f);
 
-		palette_set_color(16+i,r,g,b);
+		palette_set_color(Machine,16+i,r,g,b);
 	}
 }
 

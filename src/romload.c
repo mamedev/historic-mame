@@ -410,7 +410,7 @@ static int display_rom_load_results(rom_load_data *romdata)
 	/* clean up any regions */
 	if (romdata->errors)
 		for (region = 0; region < MAX_MEMORY_REGIONS; region++)
-			free_memory_region(region);
+			free_memory_region(Machine, region);
 
 	/* return true if we had any errors */
 	return (romdata->errors != 0);
@@ -950,7 +950,7 @@ static int process_disk_entries(rom_load_data *romdata, const rom_entry *romp)
     loading system
 -------------------------------------------------*/
 
-int rom_init(const rom_entry *romp)
+int rom_init(running_machine *machine, const rom_entry *romp)
 {
 	const rom_entry *regionlist[REGION_MAX];
 	const rom_entry *region;
@@ -989,7 +989,7 @@ int rom_init(const rom_entry *romp)
 		}
 
 		/* allocate memory for the region */
-		if (new_memory_region(regiontype, ROMREGION_GETLENGTH(region), ROMREGION_GETFLAGS(region)) != 0)
+		if (new_memory_region(machine, regiontype, ROMREGION_GETLENGTH(region), ROMREGION_GETFLAGS(region)) != 0)
 		{
 			printf("Error: unable to allocate memory for region %d\n", regiontype);
 			return 1;
@@ -1044,7 +1044,7 @@ int rom_init(const rom_entry *romp)
 	/* display the results and exit */
 	total_rom_load_warnings = romdata.warnings;
 
-	add_exit_callback(rom_exit);
+	add_exit_callback(machine, rom_exit);
 	return display_rom_load_results(&romdata);
 }
 
@@ -1053,13 +1053,13 @@ int rom_init(const rom_entry *romp)
     rom_exit - clean up after ourselves
 -------------------------------------------------*/
 
-void rom_exit(void)
+void rom_exit(running_machine *machine)
 {
 	int i;
 
 	/* free the memory allocated for various regions */
 	for (i = 0; i < MAX_MEMORY_REGIONS; i++)
-		free_memory_region(i);
+		free_memory_region(machine, i);
 
 	/* close all hard drives */
 	chd_close_all();

@@ -95,7 +95,7 @@ namconb1_install_palette( void )
 
 			for( byte_offset=0; byte_offset<4; byte_offset++ )
 			{
-				palette_set_color( pen++, r>>24, g>>24, b>>24 );
+				palette_set_color( Machine, pen++, r>>24, g>>24, b>>24 );
 				r<<=8; g<<=8; b<<=8;
 			}
 		}
@@ -159,7 +159,7 @@ handle_mcu( void )
 } /* handle_mcu */
 
 static void
-video_update_common( mame_bitmap *bitmap, const rectangle *cliprect, int bROZ )
+video_update_common(running_machine *machine, mame_bitmap *bitmap, const rectangle *cliprect, int bROZ )
 {
 	int pri;
 	handle_mcu();
@@ -207,9 +207,9 @@ VIDEO_UPDATE( namconb1 )
 	if( clip.max_x > cliprect->max_x ){ clip.max_x = cliprect->max_x; }
 	if( clip.max_y > cliprect->max_y ){ clip.max_y = cliprect->max_y; }
 
-	fillbitmap( bitmap, get_black_pen(), cliprect );
+	fillbitmap( bitmap, get_black_pen(machine), cliprect );
 
-	video_update_common( bitmap, &clip, 0 );
+	video_update_common( machine, bitmap, &clip, 0 );
 
 	if( namcos2_gametype == NAMCONB1_GUNBULET )
 	{
@@ -260,14 +260,14 @@ VIDEO_UPDATE( namconb2 )
 	if( clip.max_x > cliprect->max_x ){ clip.max_x = cliprect->max_x; }
 	if( clip.max_y > cliprect->max_y ){ clip.max_y = cliprect->max_y; }
 
-	fillbitmap( bitmap, get_black_pen(), cliprect );
+	fillbitmap( bitmap, get_black_pen(machine), cliprect );
 
 	if( memcmp(tilemap_tile_bank,namconb1_tilebank32,sizeof(tilemap_tile_bank))!=0 )
 	{
 		namco_tilemap_invalidate();
 		memcpy(tilemap_tile_bank,namconb1_tilebank32,sizeof(tilemap_tile_bank));
 	}
-	video_update_common( bitmap, &clip, 1 );
+	video_update_common( machine, bitmap, &clip, 1 );
 	return 0;
 }
 

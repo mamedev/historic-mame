@@ -249,7 +249,7 @@ VIDEO_START( wwfwfest )
 
 VIDEO_START( wwfwfstb )
 {
-	if(video_start_wwfwfest())
+	if(video_start_wwfwfest(machine))
 		return 1;
 
 	sprite_xoff = 2;

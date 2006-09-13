@@ -49,12 +49,7 @@ PALETTE_INIT( thepit )
 	/* first of all, allocate primary colors for the background and foreground */
 	/* this is wrong, but I don't know where to pick the colors from */
 	for (i = 0;i < 8;i++)
-	{
-		int r = 0xff * ((i >> 2) & 1);
-		int g = 0xff * ((i >> 1) & 1);
-		int b = 0xff * ((i >> 0) & 1);
-		palette_set_color(i,r,g,b);
-	}
+		palette_set_color(machine,i,pal1bit(i >> 2),pal1bit(i >> 1),pal1bit(i >> 0));
 
 	for (i = 0;i < Machine->drv->total_colors-8;i++)
 	{
@@ -73,7 +68,7 @@ PALETTE_INIT( thepit )
 		bit1 = (color_prom[i] >> 6) & 0x01;
 		bit2 = (color_prom[i] >> 7) & 0x01;
 		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		palette_set_color(i+8,r,g,b);
+		palette_set_color(machine,i+8,r,g,b);
 	}
 
 	for (i = 0;i < Machine->drv->color_table_len;i++)
@@ -98,12 +93,7 @@ PALETTE_INIT( suprmous )
 	/* first of all, allocate primary colors for the background and foreground */
 	/* this is wrong, but I don't know where to pick the colors from */
 	for (i = 0;i < 8;i++)
-	{
-		int r = 0xff * ((i >> 2) & 1);
-		int g = 0xff * ((i >> 1) & 1);
-		int b = 0xff * ((i >> 0) & 1);
-		palette_set_color(i,r,g,b);
-	}
+		palette_set_color(machine,i,pal1bit(i >> 2),pal1bit(i >> 1),pal1bit(i >> 0));
 
 	for (i = 0;i < Machine->drv->total_colors-8;i++)
 	{
@@ -128,7 +118,7 @@ PALETTE_INIT( suprmous )
 		bit3 = (color_prom[i] >> 6) & 0x01;
 		bit4 = (color_prom[i] >> 7) & 0x01;
 		b = 0x50 * bit0 + 0x40 * bit1 + 0x30 * bit2 + 0x20 * bit3 + 0x10 * bit4;
-		palette_set_color(i+8,r,g,b);
+		palette_set_color(machine,i+8,r,g,b);
 	}
 
 	for (i = 0;i < Machine->drv->color_table_len;i++)

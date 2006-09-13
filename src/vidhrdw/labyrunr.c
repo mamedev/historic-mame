@@ -154,7 +154,7 @@ VIDEO_UPDATE( labyrunr )
 	rectangle finalclip0, finalclip1;
 
 	fillbitmap(priority_bitmap,0,cliprect);
-	fillbitmap(bitmap,get_black_pen(),cliprect);
+	fillbitmap(bitmap,get_black_pen(machine),cliprect);
 
 	if(~K007121_ctrlram[0][3] & 0x20)
 	{

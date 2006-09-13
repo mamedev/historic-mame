@@ -56,7 +56,7 @@ VIDEO_UPDATE(ttchamp)
 //  int i;
 	static int xxx=320,yyy=204;
 
-	fillbitmap(bitmap, get_black_pen(), 0);
+	fillbitmap(bitmap, get_black_pen(machine), 0);
 
 //  for (i=0;i<256;i++)
 //  {
@@ -66,7 +66,7 @@ VIDEO_UPDATE(ttchamp)
 //      b = (dat>>10)&0x1f;
 //      g = (dat>>5)&0x1f;
 //      r = (dat>>0)&0x1f;
-//      palette_set_color(i,r*8,g*8,b*8);
+//      palette_set_color(machine,i,pal5bit(r),pal5bit(g),pal5bit(b));
 //  }
 
 	count=0;
@@ -117,7 +117,6 @@ static WRITE8_HANDLER( paldat_h_w )
 {
 	int paldat;
 	int paloff;
-	int r,g,b;
 
 	paldat_h = data;
 
@@ -125,11 +124,7 @@ static WRITE8_HANDLER( paldat_h_w )
 	paloff = (paloff_h <<8)|paloff_l;
 	paloff &=0x7fff;
 
-	b = (paldat>>10)&0x1f;
-	g = (paldat>>5)&0x1f;
-	r = (paldat>>0)&0x1f;
-
-	palette_set_color(paloff,r*8,g*8,b*8);
+	palette_set_color(Machine,paloff,pal5bit(paldat>>0),pal5bit(paldat>>5),pal5bit(paldat>>10));
 }
 
 static READ8_HANDLER( peno_rand )

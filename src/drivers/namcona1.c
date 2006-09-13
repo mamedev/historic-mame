@@ -747,7 +747,7 @@ static READ16_HANDLER( custom_key_r )
 	old_count = count;
 	do
 	{
-		count = mame_rand();
+		count = mame_rand(Machine);
 	} while( old_count == count );
 
 	switch( namcona1_gametype )
@@ -818,7 +818,7 @@ static READ16_HANDLER( custom_key_r )
 	default:
 		return 0;
 	}
-	return mame_rand()&0xffff;
+	return mame_rand(Machine)&0xffff;
 } /* custom_key_r */
 
 static WRITE16_HANDLER( custom_key_w )

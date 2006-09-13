@@ -73,7 +73,7 @@ static ui_gfx_state ui_gfx;
     FUNCTION PROTOTYPES
 ***************************************************************************/
 
-static void ui_gfx_exit(void);
+static void ui_gfx_exit(running_machine *machine);
 
 /* palette handling */
 static void palette_handle_keys(ui_gfx_state *state);
@@ -100,13 +100,13 @@ static void tilemap_handler(ui_gfx_state *state);
     ui_gfx_init - initialize the menu system
 -------------------------------------------------*/
 
-void ui_gfx_init(void)
+void ui_gfx_init(running_machine *machine)
 {
 	ui_gfx_state *state = &ui_gfx;
 	int gfx;
 
 	/* make sure we clean up after ourselves */
-	add_exit_callback(ui_gfx_exit);
+	add_exit_callback(machine, ui_gfx_exit);
 
 	/* initialize our global state */
 	memset(state, 0, sizeof(*state));
@@ -130,7 +130,7 @@ void ui_gfx_init(void)
     ui_gfx_exit - clean up after ourselves
 -------------------------------------------------*/
 
-static void ui_gfx_exit(void)
+static void ui_gfx_exit(running_machine *machine)
 {
 	/* free the texture */
 	if (ui_gfx.texture != NULL)
@@ -157,7 +157,7 @@ UINT32 ui_gfx_ui_handler(UINT32 uistate)
 		goto cancel;
 
 	/* if we're not paused, mark the bitmap dirty */
-	if (!mame_is_paused())
+	if (!mame_is_paused(Machine))
 		state->bitmap_dirty = TRUE;
 
 	/* switch off the state to display something */
@@ -206,7 +206,7 @@ again:
 	}
 
 	if (input_ui_pressed(IPT_UI_PAUSE))
-		mame_pause(!mame_is_paused());
+		mame_pause(Machine, !mame_is_paused(Machine));
 
 	if (input_ui_pressed(IPT_UI_CANCEL) || input_ui_pressed(IPT_UI_SHOW_GFX))
 		goto cancel;
@@ -215,7 +215,7 @@ again:
 
 cancel:
 	if (!uistate)
-		mame_pause(FALSE);
+		mame_pause(Machine, FALSE);
 	state->bitmap_dirty = TRUE;
 	return UI_HANDLER_CANCEL;
 }
@@ -236,6 +236,7 @@ static void palette_handler(ui_gfx_state *state)
 	int total = state->palette.which ? Machine->drv->color_table_len : Machine->drv->total_colors;
 	UINT16 *pens = state->palette.which ? Machine->game_colortable : NULL;
 	const char *title = state->palette.which ? "COLORTABLE" : "PALETTE";
+	rgb_t *raw_color = palette_get_raw_colors(Machine);
 	render_font *ui_font = ui_get_font();
 	float cellwidth, cellheight;
 	float chwidth, chheight;
@@ -337,7 +338,7 @@ static void palette_handler(ui_gfx_state *state)
 				pen_t pen = (pens != NULL) ? pens[index] : index;
 				render_ui_add_rect(cellboxbounds.x0 + x * cellwidth, cellboxbounds.y0 + y * cellheight,
 									cellboxbounds.x0 + (x + 1) * cellwidth, cellboxbounds.y0 + (y + 1) * cellheight,
-									0xff000000 | game_palette[pen], PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
+									0xff000000 | raw_color[pen], PRIMFLAG_BLENDMODE(BLENDMODE_ALPHA));
 			}
 		}
 
@@ -762,8 +763,8 @@ static void gfxset_draw_item(const gfx_element *gfx, int index, mame_bitmap *bit
 {
 	int width = (rotate & ORIENTATION_SWAP_XY) ? gfx->height : gfx->width;
 	int height = (rotate & ORIENTATION_SWAP_XY) ? gfx->width : gfx->height;
+	const pen_t *palette = palette_get_raw_colors(Machine);
 	UINT32 rowpixels = bitmap->rowpixels;
-	const pen_t *palette = game_palette;
 	const UINT16 *colortable = NULL;
 	int x, y;
 
@@ -1050,7 +1051,7 @@ static void tilemap_update_bitmap(ui_gfx_state *state, int width, int height)
 
 		/* allocate new stuff */
 		state->bitmap = bitmap_alloc_depth(width, height, Machine->color_depth);
-		state->texture = render_texture_alloc(state->bitmap, NULL, adjusted_palette, format, NULL, NULL);
+		state->texture = render_texture_alloc(state->bitmap, NULL, palette_get_adjusted_colors(Machine), format, NULL, NULL);
 
 		/* force a redraw */
 		state->bitmap_dirty = TRUE;
@@ -1062,7 +1063,7 @@ static void tilemap_update_bitmap(ui_gfx_state *state, int width, int height)
 		tilemap_nb_draw(state->bitmap, state->tilemap.which, state->tilemap.xoffs, state->tilemap.yoffs);
 
 		/* reset the texture to force an update */
-		render_texture_set_bitmap(state->texture, state->bitmap, NULL, adjusted_palette, format);
+		render_texture_set_bitmap(state->texture, state->bitmap, NULL, palette_get_adjusted_colors(Machine), format);
 		state->bitmap_dirty = FALSE;
 	}
 }

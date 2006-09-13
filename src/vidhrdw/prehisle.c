@@ -11,7 +11,7 @@
 
 UINT16 *prehisle_bg_videoram16;
 
-static int invert_controls;
+static UINT16 invert_controls;
 
 static tilemap *bg2_tilemap, *bg_tilemap, *fg_tilemap;
 
@@ -61,7 +61,7 @@ WRITE16_HANDLER( prehisle_control16_w )
 	case 0x08: tilemap_set_scrollx(bg_tilemap, 0, scroll); break;
 	case 0x10: tilemap_set_scrolly(bg2_tilemap, 0, scroll); break;
 	case 0x18: tilemap_set_scrollx(bg2_tilemap, 0, scroll); break;
-	case 0x23: invert_controls = data ? 0xff : 0x00; break;
+	case 0x23: invert_controls = data ? 0x00ff : 0x0000; break;
 	case 0x28: coin_counter_w(0, data & 1); break;
 	case 0x29: coin_counter_w(1, data & 1); break;
 	case 0x30: flip_screen_set(data & 0x01); break;
@@ -123,10 +123,13 @@ VIDEO_START( prehisle )
 	tilemap_set_transparent_pen(bg_tilemap, 15);
 	tilemap_set_transparent_pen(fg_tilemap, 15);
 
+	/* register for saving */
+	state_save_register_global(invert_controls);
+
 	return 0;
 }
 
-static void prehisle_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect )
+static void prehisle_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprect, int foreground )
 {
 	int offs;
 
@@ -135,6 +138,7 @@ static void prehisle_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprec
 		int attr = spriteram16[offs + 2];
 		int code = attr & 0x1fff;
 		int color = spriteram16[offs + 3] >> 12;
+		int priority = (color < 0x4);
 		int flipx = attr & 0x4000;
 		int flipy = attr & 0x8000;
 		int sx = spriteram16[offs + 1];
@@ -150,16 +154,20 @@ static void prehisle_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprec
 			flipy = !flipy;
 		}
 
-		drawgfx(bitmap, Machine->gfx[3], code, color, flipx, flipy, sx, sy,
-			cliprect, TRANSPARENCY_PEN, 15);
+		if ((foreground && priority) || (!foreground && !priority))
+		{
+			drawgfx(bitmap, Machine->gfx[3], code, color, flipx, flipy, sx, sy,
+				cliprect, TRANSPARENCY_PEN, 15);
+		}
 	}
 }
 
 VIDEO_UPDATE( prehisle )
 {
 	tilemap_draw(bitmap, cliprect, bg2_tilemap, 0, 0);
+	prehisle_draw_sprites(bitmap, cliprect, 0);
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
-	prehisle_draw_sprites(bitmap, cliprect);
+	prehisle_draw_sprites(bitmap, cliprect, 1);
 	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
 	return 0;
 }

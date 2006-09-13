@@ -69,7 +69,7 @@ PALETTE_INIT( timeplt )
 		bit4 = (color_prom[i] >> 7) & 0x01;
 		b = 0x19 * bit0 + 0x24 * bit1 + 0x35 * bit2 + 0x40 * bit3 + 0x4d * bit4;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 	}
 
 	color_prom += 2*Machine->drv->total_colors;

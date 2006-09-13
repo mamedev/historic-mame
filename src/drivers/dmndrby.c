@@ -42,7 +42,7 @@ static UINT8* dderby_vid;
 
 static READ8_HANDLER( dderby_random_reader )
 {
-	return mame_rand();
+	return mame_rand(Machine);
 }
 
 static ADDRESS_MAP_START( memmap, ADDRESS_SPACE_PROGRAM, 8 )
@@ -145,7 +145,7 @@ VIDEO_UPDATE(dderby)
 	int x,y,count;
 	const gfx_element *gfx = Machine->gfx[0];
 
-	fillbitmap(bitmap, get_black_pen(), cliprect);
+	fillbitmap(bitmap, get_black_pen(machine), cliprect);
 
 	count=0;
 	for (y=0;y<32;y++)

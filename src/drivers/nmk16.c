@@ -188,7 +188,7 @@ static MACHINE_RESET( NMK004 )
 
 static MACHINE_RESET( mustang_sound )
 {
-	machine_reset_seibu_sound_1();
+	machine_reset_seibu_sound_1(machine);
 }
 
 WRITE16_HANDLER ( ssmissin_sound_w )
@@ -4838,7 +4838,7 @@ static DRIVER_INIT( mustang )
 
 static DRIVER_INIT( bjtwin )
 {
-	init_nmk();
+	init_nmk(machine);
 
 	/* Patch rom to enable test mode */
 

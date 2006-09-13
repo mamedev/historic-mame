@@ -238,13 +238,6 @@ VIDEO_UPDATE( ttmahjng )
  ***************************************************************************/
 static void modify_pen(int pen, int colorindex)
 {
-	int r,g,b,color;
-
-	color = ttmahjng_color_prom[colorindex];
-
-	b = ((color & 1) ? 0xff : 0x00);
-	g = ((color & 2) ? 0xff : 0x00);
-	r = ((color & 4) ? 0xff : 0x00);
-
-	palette_set_color(pen,r,g,b);
+	int color = ttmahjng_color_prom[colorindex];
+	palette_set_color(Machine,pen,pal1bit(color >> 2),pal1bit(color >> 1),pal1bit(color >> 0));
 }

@@ -7,8 +7,9 @@
 
 #define VFDTYPE_BFMBD1	0 // Bellfruit BD1 display
 #define VFDTYPE_MSC1937 1 // OKI MSC1937   display
+#define REVERSED 1 // display is reversed
 
-void	vfd_init(  int id, int type );		// setup a vfd
+void	vfd_init(  int id, int type, int reversed );		// setup a vfd
 
 void	vfd_reset( int id);					// reset the vfd
 

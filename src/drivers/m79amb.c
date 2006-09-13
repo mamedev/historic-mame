@@ -109,13 +109,13 @@ INPUT_PORTS_END
 
 static PALETTE_INIT( m79amb )
 {
-	palette_set_color(0,0x00,0x00,0x00); /* BLACK */
-	palette_set_color(1,0xff,0xff,0xff); /* WHITE */
-	palette_set_color(2,0xff,0x20,0x20); /* RED */
-	palette_set_color(3,0x20,0xff,0x20); /* GREEN */
-	palette_set_color(4,0xff,0xff,0x20); /* YELLOW */
-	palette_set_color(5,0x20,0xff,0xff); /* CYAN */
-	palette_set_color(6,0xff,0x20,0xff); /* PURPLE */
+	palette_set_color(machine,0,0x00,0x00,0x00); /* BLACK */
+	palette_set_color(machine,1,0xff,0xff,0xff); /* WHITE */
+	palette_set_color(machine,2,0xff,0x20,0x20); /* RED */
+	palette_set_color(machine,3,0x20,0xff,0x20); /* GREEN */
+	palette_set_color(machine,4,0xff,0xff,0x20); /* YELLOW */
+	palette_set_color(machine,5,0x20,0xff,0xff); /* CYAN */
+	palette_set_color(machine,6,0xff,0x20,0xff); /* PURPLE */
 }
 
 static INTERRUPT_GEN( M79_interrupt )

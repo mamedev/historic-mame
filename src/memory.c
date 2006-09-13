@@ -415,7 +415,7 @@ static void mem_dump(void)
     memory_init - initialize the memory system
 -------------------------------------------------*/
 
-int memory_init(void)
+int memory_init(running_machine *machine)
 {
 	int i;
 
@@ -437,7 +437,7 @@ int memory_init(void)
 	/* init the CPUs */
 	if (!init_cpudata())
 		return 1;
-	add_exit_callback(memory_exit);
+	add_exit_callback(machine, memory_exit);
 
 	/* preflight the memory handlers and check banks */
 	if (!preflight_memory())
@@ -465,7 +465,7 @@ int memory_init(void)
     memory_exit - free memory
 -------------------------------------------------*/
 
-void memory_exit(void)
+void memory_exit(running_machine *machine)
 {
 	int cpunum, spacenum;
 
@@ -1506,7 +1506,7 @@ static void install_mem_handler(addrspace_data *space, int iswrite, int databits
 
 	/* sanity check */
 	if (HANDLER_IS_RAM(handler))
-		assert_always(mame_get_phase() == MAME_PHASE_INIT, "RAM/ROM memory handlers can only be installed at init time");
+		assert_always(mame_get_phase(Machine) == MAME_PHASE_INIT, "RAM/ROM memory handlers can only be installed at init time");
 
 	/* translate ROM to RAM/UNMAP here */
 	if (HANDLER_IS_ROM(handler))

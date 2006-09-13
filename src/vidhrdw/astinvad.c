@@ -97,7 +97,7 @@ VIDEO_START( astinvad )
 {
 	astinvad_adjust = 0x80;
 
-	return video_start_generic_bitmapped();
+	return video_start_generic_bitmapped(machine);
 }
 
 
@@ -105,7 +105,7 @@ VIDEO_START( spcking2 )
 {
 	astinvad_adjust = 0;
 
-	return video_start_generic_bitmapped();
+	return video_start_generic_bitmapped(machine);
 }
 
 
@@ -114,7 +114,7 @@ VIDEO_START( spaceint )
 	colorram = auto_malloc(0x2000);
 	memset(colorram, 0, 0x2000);
 
-	return video_start_generic_bitmapped();
+	return video_start_generic_bitmapped(machine);
 }
 
 

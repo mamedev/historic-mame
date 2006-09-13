@@ -425,7 +425,7 @@ VIDEO_UPDATE (raiden2)
 	}
 #endif
 
-	fillbitmap(bitmap, get_black_pen(), cliprect);
+	fillbitmap(bitmap, get_black_pen(machine), cliprect);
 
 	if(!code_pressed(KEYCODE_Q))
 		tilemap_draw(bitmap,cliprect,background_layer,0,0);

@@ -286,7 +286,7 @@ if (code_pressed(KEYCODE_Z))
 
 	if (lordgun_whitescreen)
 	{
-		fillbitmap( bitmap, get_white_pen(), cliprect );
+		fillbitmap( bitmap, get_white_pen(machine), cliprect );
 		return 0;
 	}
 

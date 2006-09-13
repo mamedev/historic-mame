@@ -144,10 +144,10 @@ void vrender0_get_info(void *token, UINT32 state, sndinfo *info);
 void votrax_get_info(void *token, UINT32 state, sndinfo *info);
 void es8712_get_info(void *token, UINT32 state, sndinfo *info);
 void rf5c400_get_info(void *token, UINT32 state, sndinfo *info);
+void speaker_get_info(void *token, UINT32 state, sndinfo *info);
 
 #ifdef MESS
 void beep_get_info(void *token, UINT32 state, sndinfo *info);
-void speaker_get_info(void *token, UINT32 state, sndinfo *info);
 void wave_get_info(void *token, UINT32 state, sndinfo *info);
 void sid6581_get_info(void *token, UINT32 state, sndinfo *info);
 void sid8580_get_info(void *token, UINT32 state, sndinfo *info);
@@ -399,13 +399,13 @@ static const struct
 #if (HAS_RF5C400)
 	{ SOUND_RF5C400, rf5c400_get_info },
 #endif
+#if (HAS_SPEAKER)
+	{ SOUND_SPEAKER, speaker_get_info },
+#endif
 
 #ifdef MESS
 #if (HAS_BEEP)
 	{ SOUND_BEEP, beep_get_info },
-#endif
-#if (HAS_SPEAKER)
-	{ SOUND_SPEAKER, speaker_get_info },
 #endif
 #if (HAS_WAVE)
 	{ SOUND_WAVE, wave_get_info },
@@ -461,7 +461,7 @@ static int totalsnd;
     (type,index) pairs for the current Machine
 -------------------------------------------------*/
 
-void sndintrf_init(void)
+void sndintrf_init(running_machine *machine)
 {
 	int mapindex;
 

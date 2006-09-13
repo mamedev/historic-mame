@@ -255,7 +255,7 @@ VIDEO_START( taitob_color_order0 )
   b_sp_color_base = 0x40*16;	/*sprites   */
   b_tx_color_base = 0x00;		/*text      */
 
-  return video_start_taitob_core();
+  return video_start_taitob_core(machine);
 }
 
 VIDEO_START( taitob_color_order1 )
@@ -266,7 +266,7 @@ VIDEO_START( taitob_color_order1 )
   b_sp_color_base = 0x80*16;
   b_tx_color_base = 0xc0;
 
-  return video_start_taitob_core();
+  return video_start_taitob_core(machine);
 }
 
 VIDEO_START( taitob_color_order2 )
@@ -277,13 +277,13 @@ VIDEO_START( taitob_color_order2 )
   b_sp_color_base = 0x10*16;
   b_tx_color_base = 0x00;
 
-  return video_start_taitob_core();
+  return video_start_taitob_core(machine);
 }
 
 
 VIDEO_START( hitice )
 {
-  if (video_start_taitob_color_order0())
+  if (video_start_taitob_color_order0(machine))
     return 1;
 
   pixel_bitmap = auto_bitmap_alloc(1024,512);

@@ -429,11 +429,11 @@ INPUT_PORTS_END
 
 static NVRAM_HANDLER( simpbowl )
 {
-	nvram_handler_konamigv_93C46( file, read_or_write );
-	nvram_handler_intelflash( 0, file, read_or_write );
-	nvram_handler_intelflash( 1, file, read_or_write );
-	nvram_handler_intelflash( 2, file, read_or_write );
-	nvram_handler_intelflash( 3, file, read_or_write );
+	nvram_handler_konamigv_93C46( machine, file, read_or_write );
+	nvram_handler_intelflash( machine, 0, file, read_or_write );
+	nvram_handler_intelflash( machine, 1, file, read_or_write );
+	nvram_handler_intelflash( machine, 2, file, read_or_write );
+	nvram_handler_intelflash( machine, 3, file, read_or_write );
 }
 
 static int flash_address;
@@ -541,7 +541,7 @@ static DRIVER_INIT( simpbowl )
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f6800c0, 0x1f6800c7, 0, 0, trackball_r );
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f6800c8, 0x1f6800cb, 0, 0, unknown_r ); /* ?? */
 
-	init_konamigv();
+	init_konamigv(machine);
 }
 
 static MACHINE_DRIVER_START( simpbowl )
@@ -676,8 +676,8 @@ static WRITE32_HANDLER( btc_trackball_w )
 
 static NVRAM_HANDLER( btchamp )
 {
-	nvram_handler_konamigv_93C46( file, read_or_write );
-	nvram_handler_intelflash( 0, file, read_or_write );
+	nvram_handler_konamigv_93C46( machine, file, read_or_write );
+	nvram_handler_intelflash( machine, 0, file, read_or_write );
 }
 
 static DRIVER_INIT( btchamp )
@@ -690,7 +690,7 @@ static DRIVER_INIT( btchamp )
 	memory_install_read32_handler (0, ADDRESS_SPACE_PROGRAM, 0x1f380000, 0x1f3fffff, 0, 0, btcflash_r );
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f380000, 0x1f3fffff, 0, 0, btcflash_w );
 
-	init_konamigv();
+	init_konamigv(machine);
 }
 
 static MACHINE_DRIVER_START( btchamp )
@@ -842,7 +842,7 @@ static int kdeadeye_crosshair_y( int port )
 
 static VIDEO_UPDATE( kdeadeye )
 {
-	video_update_psx( screen, bitmap, cliprect );
+	video_update_psx( machine, screen, bitmap, cliprect );
 
 	draw_crosshair( bitmap, kdeadeye_crosshair_x( 3 ), kdeadeye_crosshair_y( 4 ), cliprect, 0 );
 	draw_crosshair( bitmap, kdeadeye_crosshair_x( 5 ), kdeadeye_crosshair_y( 6 ), cliprect, 1 );
@@ -862,7 +862,7 @@ static DRIVER_INIT( kdeadeye )
 	memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1f380000, 0x1f3fffff, 0, 0, btcflash_r );
 	memory_install_write32_handler( 0, ADDRESS_SPACE_PROGRAM, 0x1f380000, 0x1f3fffff, 0, 0, btcflash_w );
 
-	init_konamigv();
+	init_konamigv(machine);
 }
 
 static MACHINE_DRIVER_START( kdeadeye )

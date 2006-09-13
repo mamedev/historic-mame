@@ -241,7 +241,7 @@ typedef struct{
 	UINT8	vib;		/* LFO Phase Modulation enable flag (active high)*/
 
 	/* waveform select */
-	unsigned int wavetable;
+	UINT16	wavetable;
 } OPL_SLOT;
 
 typedef struct{
@@ -281,7 +281,7 @@ typedef struct fm_opl_f {
 
 	UINT8	wavesel;				/* waveform select enable flag  */
 
-	int		T[2];					/* timer counters               */
+	UINT32	T[2];					/* timer counters               */
 	UINT8	st[2];					/* timer enable                 */
 
 #if BUILD_Y8950
@@ -314,8 +314,8 @@ typedef struct fm_opl_f {
 	UINT8 statusmask;				/* status mask                  */
 	UINT8 mode;						/* Reg.08 : CSM,notesel,etc.    */
 
-	int clock;						/* master clock  (Hz)           */
-	int rate;						/* sampling rate (Hz)           */
+	UINT32 clock;					/* master clock  (Hz)           */
+	UINT32 rate;					/* sampling rate (Hz)           */
 	double freqbase;				/* frequency base               */
 	double TimerBase;				/* Timer base time (==sampling time)*/
 } FM_OPL;
@@ -1819,10 +1819,165 @@ static void OPLResetChip(FM_OPL *OPL)
 #endif
 }
 
+
+static void OPL_postload(void *param)
+{
+	FM_OPL *OPL = (FM_OPL *)param;
+	int slot, ch;
+
+	for( ch=0 ; ch < 9 ; ch++ )
+	{
+		OPL_CH *CH = &OPL->P_CH[ch];
+
+		/* Look up key scale level */
+		UINT32 block_fnum = CH->block_fnum;
+		CH->ksl_base = ksl_tab[block_fnum >> 6];
+		CH->fc       = OPL->fn_tab[block_fnum & 0x03ff] >> (7 - (block_fnum >> 10));
+
+		for( slot=0 ; slot < 2 ; slot++ )
+		{
+			OPL_SLOT *SLOT = &CH->SLOT[slot];
+
+			/* Calculate key scale rate */
+			SLOT->ksr = CH->kcode >> SLOT->KSR;
+
+			/* Calculate attack, decay and release rates */
+			if ((SLOT->ar + SLOT->ksr) < 16+62)
+			{
+				SLOT->eg_sh_ar  = eg_rate_shift [SLOT->ar + SLOT->ksr ];
+				SLOT->eg_sel_ar = eg_rate_select[SLOT->ar + SLOT->ksr ];
+			}
+			else
+			{
+				SLOT->eg_sh_ar  = 0;
+				SLOT->eg_sel_ar = 13*RATE_STEPS;
+			}
+			SLOT->eg_sh_dr  = eg_rate_shift [SLOT->dr + SLOT->ksr ];
+			SLOT->eg_sel_dr = eg_rate_select[SLOT->dr + SLOT->ksr ];
+			SLOT->eg_sh_rr  = eg_rate_shift [SLOT->rr + SLOT->ksr ];
+			SLOT->eg_sel_rr = eg_rate_select[SLOT->rr + SLOT->ksr ];
+
+			/* Calculate phase increment */
+			SLOT->Incr = CH->fc * SLOT->mul;
+
+			/* Total level */
+			SLOT->TLL = SLOT->TL + (CH->ksl_base >> SLOT->ksl);
+
+			/* Connect output */
+			SLOT->connect1 = SLOT->CON ? &output[0] : &phase_modulation;
+		}
+	}
+#if BUILD_Y8950
+	if ( (OPL->type & OPL_TYPE_ADPCM) && (OPL->deltat) )
+	{
+		// We really should call the postlod function for the YM_DELTAT, but it's hard without registers
+		// (see the way the YM2610 does it)
+		//YM_DELTAT_postload(OPL->deltat, REGS);
+	}
+#endif
+}
+
+
+static void OPLsave_state_channel(const char *name, int num, OPL_CH *CH)
+{
+	int slot, ch;
+	char state_name[20];
+	static const char slot_array[2] = { 1, 2 };
+
+	for( ch=0 ; ch < 9 ; ch++, CH++ )
+	{
+		/* channel */
+		sprintf(state_name, "%s.CH%d", name,ch);
+		state_save_register_item(state_name, num, CH->block_fnum);
+		state_save_register_item(state_name, num, CH->kcode);
+		/* slots */
+		for( slot=0 ; slot < 2 ; slot++ )
+		{
+			OPL_SLOT *SLOT = &CH->SLOT[slot];
+
+			sprintf(state_name, "%s.CH%d.SLOT%d", name, ch, slot_array[slot]);
+
+			state_save_register_item(state_name, num, SLOT->ar);
+			state_save_register_item(state_name, num, SLOT->dr);
+			state_save_register_item(state_name, num, SLOT->rr);
+			state_save_register_item(state_name, num, SLOT->KSR);
+			state_save_register_item(state_name, num, SLOT->ksl);
+			state_save_register_item(state_name, num, SLOT->mul);
+
+			state_save_register_item(state_name, num, SLOT->Cnt);
+			state_save_register_item(state_name, num, SLOT->FB);
+			state_save_register_item_array(state_name, num, SLOT->op1_out);
+			state_save_register_item(state_name, num, SLOT->CON);
+
+			state_save_register_item(state_name, num, SLOT->eg_type);
+			state_save_register_item(state_name, num, SLOT->state);
+			state_save_register_item(state_name, num, SLOT->TL);
+			state_save_register_item(state_name, num, SLOT->volume);
+			state_save_register_item(state_name, num, SLOT->sl);
+			state_save_register_item(state_name, num, SLOT->key);
+
+			state_save_register_item(state_name, num, SLOT->AMmask);
+			state_save_register_item(state_name, num, SLOT->vib);
+
+			state_save_register_item(state_name, num, SLOT->wavetable);
+		}
+	}
+}
+
+
+/* Register savestate for a virtual YM3812/YM3526Y8950 */
+
+static void OPL_save_state(FM_OPL *OPL, const char *statename, int index)
+{
+	OPLsave_state_channel(statename, index, OPL->P_CH);
+
+	state_save_register_item(statename, index, OPL->eg_cnt);
+	state_save_register_item(statename, index, OPL->eg_timer);
+
+	state_save_register_item(statename, index, OPL->rhythm);
+
+	state_save_register_item(statename, index, OPL->lfo_am_depth);
+	state_save_register_item(statename, index, OPL->lfo_pm_depth_range);
+	state_save_register_item(statename, index, OPL->lfo_am_cnt);
+	state_save_register_item(statename, index, OPL->lfo_pm_cnt);
+
+	state_save_register_item(statename, index, OPL->noise_rng);
+	state_save_register_item(statename, index, OPL->noise_p);
+
+	if( OPL->type & OPL_TYPE_WAVESEL )
+	{
+		state_save_register_item(statename, index, OPL->wavesel);
+	}
+
+	state_save_register_item_array(statename, index, OPL->T);
+	state_save_register_item_array(statename, index, OPL->st);
+
+#if BUILD_Y8950
+	if ( (OPL->type & OPL_TYPE_ADPCM) && (OPL->deltat) )
+	{
+		YM_DELTAT_savestate(statename, index, OPL->deltat);
+	}
+
+	if ( OPL->type & OPL_TYPE_IO )
+	{
+		state_save_register_item(statename, index, OPL->portDirection);
+		state_save_register_item(statename, index, OPL->portLatch);
+	}
+#endif
+
+	state_save_register_item(statename, index, OPL->address);
+	state_save_register_item(statename, index, OPL->status);
+	state_save_register_item(statename, index, OPL->statusmask);
+	state_save_register_item(statename, index, OPL->mode);
+
+	state_save_register_func_postload_ptr(OPL_postload, OPL);
+}
+
+
 /* Create one of virtual YM3812/YM3526/Y8950 */
 /* 'clock' is chip clock in Hz  */
 /* 'rate'  is sampling rate  */
-static FM_OPL *OPLCreate(int type, int clock, int rate)
+static FM_OPL *OPLCreate(int type, UINT32 clock, UINT32 rate)
 {
 	char *ptr;
 	FM_OPL *OPL;
@@ -2015,12 +2170,15 @@ static int OPLTimerOver(FM_OPL *OPL,int c)
 
 #if (BUILD_YM3812)
 
-void * YM3812Init(int clock, int rate)
+void * YM3812Init(int sndindex, UINT32 clock, UINT32 rate)
 {
 	/* emulator create */
 	FM_OPL *YM3812 = OPLCreate(OPL_TYPE_YM3812,clock,rate);
 	if (YM3812)
+	{
+		OPL_save_state(YM3812, "YM3812", sndindex);
 		YM3812ResetChip(YM3812);
+	}
 	return YM3812;
 }
 
@@ -2148,12 +2306,15 @@ void YM3812UpdateOne(void *chip, OPLSAMPLE *buffer, int length)
 
 #if (BUILD_YM3526)
 
-void *YM3526Init(int clock, int rate)
+void *YM3526Init(int sndindex, UINT32 clock, UINT32 rate)
 {
 	/* emulator create */
 	FM_OPL *YM3526 = OPLCreate(OPL_TYPE_YM3526,clock,rate);
 	if (YM3526)
+	{
+		OPL_save_state(YM3526, "YM3526", sndindex);
 		YM3526ResetChip(YM3526);
+	}
 	return YM3526;
 }
 
@@ -2292,7 +2453,7 @@ static void Y8950_deltat_status_reset(void *chip, UINT8 changebits)
 	OPL_STATUS_RESET(Y8950, changebits);
 }
 
-void *Y8950Init(int clock, int rate)
+void *Y8950Init(int sndindex, UINT32 clock, UINT32 rate)
 {
 	/* emulator create */
 	FM_OPL *Y8950 = OPLCreate(OPL_TYPE_Y8950,clock,rate);
@@ -2307,6 +2468,7 @@ void *Y8950Init(int clock, int rate)
 		/*Y8950->deltat->write_time = 10.0 / clock;*/		/* a single byte write takes 10 cycles of main clock */
 		/*Y8950->deltat->read_time  = 8.0 / clock;*/		/* a single byte read takes 8 cycles of main clock */
 		/* reset */
+		OPL_save_state(Y8950, "Y8950", sndindex);
 		Y8950ResetChip(Y8950);
 	}
 

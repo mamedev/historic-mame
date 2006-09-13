@@ -72,7 +72,7 @@ do {																					\
     FUNCTION PROTOTYPES
 ***************************************************************************/
 
-void state_init(void);
+void state_init(running_machine *machine);
 
 /* Initializes the save state registrations */
 void state_save_free(void);

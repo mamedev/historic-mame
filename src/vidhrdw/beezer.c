@@ -62,7 +62,7 @@ WRITE8_HANDLER( beezer_map_w )
 	bit1 = (data >> 7) & 0x01;
 	b = 0x5f * bit0 + 0xa0 * bit1;
 
-	palette_set_color(offset, r, g, b);
+	palette_set_color(Machine, offset, r, g, b);
 }
 
 WRITE8_HANDLER( beezer_ram_w )

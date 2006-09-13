@@ -466,7 +466,7 @@ void ptm6840_config(int which, const ptm6840_interface *intf)
 {
 	ptm6840 *currptr = ptm + which;
 
-	assert_always(mame_get_phase() == MAME_PHASE_INIT, "Can only call ptm6840_config at init time!");
+	assert_always(mame_get_phase(Machine) == MAME_PHASE_INIT, "Can only call ptm6840_config at init time!");
 	assert_always((which >= 0) && (which < PTM_6840_MAX), "ptm6840_config called on an invalid PTM!");
 	assert_always(intf, "ptm6840_config called with an invalid interface!");
 	ptm[which].intf = intf;

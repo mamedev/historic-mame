@@ -28,7 +28,7 @@ PALETTE_INIT( leprechn )
 		int g = (i & 2) ? 0xff : bk;
 		int b = (i & 4) ? 0xff : bk;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 	}
 }
 
@@ -41,7 +41,7 @@ VIDEO_START( leprechn )
 	/* allocate our own dirty buffer */
 	videoram = auto_malloc(videoram_size);
 
-	return video_start_generic_bitmapped();
+	return video_start_generic_bitmapped(machine);
 }
 
 

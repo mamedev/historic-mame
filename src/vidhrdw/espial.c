@@ -67,7 +67,7 @@ PALETTE_INIT( espial )
 		bit2 = (color_prom[i + Machine->drv->total_colors] >> 3) & 0x01;
 		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 	}
 }
 

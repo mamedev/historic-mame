@@ -55,16 +55,16 @@ static INTERRUPT_GEN( starshp1_interrupt )
 }
 
 
-static void starshp1_write_palette(int inverse)
+static void starshp1_write_palette(running_machine *machine, int inverse)
 {
-	palette_set_color(inverse ? 7 : 0, 0x00, 0x00, 0x00);
-	palette_set_color(inverse ? 6 : 1, 0x1e, 0x1e, 0x1e);
-	palette_set_color(inverse ? 5 : 2, 0x4e, 0x4e, 0x4e);
-	palette_set_color(inverse ? 4 : 3, 0x6c, 0x6c, 0x6c);
-	palette_set_color(inverse ? 3 : 4, 0x93, 0x93, 0x93);
-	palette_set_color(inverse ? 2 : 5, 0xb1, 0xb1, 0xb1);
-	palette_set_color(inverse ? 1 : 6, 0xe1, 0xe1, 0xe1);
-	palette_set_color(inverse ? 0 : 7, 0xff, 0xff, 0xff);
+	palette_set_color(machine, inverse ? 7 : 0, 0x00, 0x00, 0x00);
+	palette_set_color(machine, inverse ? 6 : 1, 0x1e, 0x1e, 0x1e);
+	palette_set_color(machine, inverse ? 5 : 2, 0x4e, 0x4e, 0x4e);
+	palette_set_color(machine, inverse ? 4 : 3, 0x6c, 0x6c, 0x6c);
+	palette_set_color(machine, inverse ? 3 : 4, 0x93, 0x93, 0x93);
+	palette_set_color(machine, inverse ? 2 : 5, 0xb1, 0xb1, 0xb1);
+	palette_set_color(machine, inverse ? 1 : 6, 0xe1, 0xe1, 0xe1);
+	palette_set_color(machine, inverse ? 0 : 7, 0xff, 0xff, 0xff);
 }
 
 
@@ -79,7 +79,7 @@ static PALETTE_INIT( starshp1 )
 		0, 6, 6, 7  /* for the spaceship (EXPLODE=1) */
 	};
 
-	starshp1_write_palette(0);
+	starshp1_write_palette(machine, 0);
 
 	memcpy(colortable, colortable_source, sizeof(colortable_source));
 }
@@ -209,7 +209,7 @@ static WRITE8_HANDLER( starshp1_misc_w )
 		starshp1_starfield_kill = data;
 		break;
 	case 4:
-		starshp1_write_palette(data);
+		starshp1_write_palette(Machine, data);
 		break;
 	case 5:
 		/* BLACK HOLE, not used */

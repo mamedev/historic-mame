@@ -856,7 +856,7 @@ char *cpuintrf_temp_str(void)
  *
  *************************************/
 
-void cpuintrf_init(void)
+void cpuintrf_init(running_machine *machine)
 {
 	int mapindex;
 

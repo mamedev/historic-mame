@@ -44,12 +44,8 @@ static WRITE16_HANDLER( layer2_videoram_w )
 
 static WRITE16_HANDLER( paletteram_w )
 {
-	int r,g,b;
 	data = COMBINE_DATA(&paletteram16[offset]);
-	g = (data >> 0) & 0xF;
-	r = (data >> 4) & 0xF;
-	b = (data >> 8) & 0xF;
-	palette_set_color( offset, r * 0x11, g * 0x11, b * 0x11 );
+	palette_set_color( Machine, offset, pal4bit(data >> 4), pal4bit(data >> 0), pal4bit(data >> 8));
 }
 
 static WRITE16_HANDLER( magic10_misc_w )

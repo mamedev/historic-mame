@@ -179,7 +179,7 @@ WRITE8_HANDLER( balsente_paletteram_w )
 	r = paletteram[(offset & ~3) + 0];
 	g = paletteram[(offset & ~3) + 1];
 	b = paletteram[(offset & ~3) + 2];
-	palette_set_color(offset / 4, (r << 4) | r, (g << 4) | g, (b << 4) | b);
+	palette_set_color(Machine, offset / 4, pal4bit(r), pal4bit(g), pal4bit(b));
 }
 
 /*************************************
@@ -304,7 +304,7 @@ VIDEO_UPDATE( balsente )
 	update_palette();
 
 	/* make sure color 1024 is white for our crosshair */
-	palette_set_color(1024, 0xff, 0xff, 0xff);
+	palette_set_color(machine, 1024, 0xff, 0xff, 0xff);
 
 	/* draw any dirty scanlines from the VRAM directly */
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)

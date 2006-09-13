@@ -856,7 +856,7 @@ static READ16_HANDLER( thndzone_main_skip )
 	return ret;
 }
 
-static void init_dassault(void)
+static DRIVER_INIT( dassault )
 {
 	const UINT8 *src = memory_region(REGION_GFX1);
 	UINT8 *dst = memory_region(REGION_GFX2);
@@ -876,7 +876,7 @@ static void init_dassault(void)
 	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x3f8000, 0x3f8001, 0, 0, dassault_main_skip);
 }
 
-static void init_thndzone(void)
+static DRIVER_INIT( thndzone )
 {
 	const UINT8 *src = memory_region(REGION_GFX1);
 	UINT8 *dst = memory_region(REGION_GFX2);

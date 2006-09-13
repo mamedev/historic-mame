@@ -117,7 +117,7 @@ VIDEO_UPDATE(twins)
 	int i;
 	static int xxx=320,yyy=204;
 
-	fillbitmap(bitmap, get_black_pen(), 0);
+	fillbitmap(bitmap, get_black_pen(machine), 0);
 
 	for (i=0;i<0x100;i++)
 	{
@@ -133,7 +133,7 @@ VIDEO_UPDATE(twins)
 		b = (dat>>10) & 0x1f;
 		b = BITSWAP8(b,7,6,5,0,1,2,3,4);
 
-		palette_set_color(i, r*8,g*8,b*8);
+		palette_set_color(machine,i, pal5bit(r),pal5bit(g),pal5bit(b));
 	}
 
 	count=0;

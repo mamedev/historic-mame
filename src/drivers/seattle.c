@@ -553,12 +553,12 @@ static MACHINE_RESET( seattle )
 	cpu_stalled_on_voodoo = FALSE;
 
 	/* reset either the DCS2 board or the CAGE board */
-	if (mame_find_cpu_index("dcs2") != -1)
+	if (mame_find_cpu_index(machine, "dcs2") != -1)
 	{
 		dcs_reset_w(1);
 		dcs_reset_w(0);
 	}
-	else if (mame_find_cpu_index("cage") != -1)
+	else if (mame_find_cpu_index(machine, "cage") != -1)
 	{
 		cage_control_w(0);
 		cage_control_w(3);

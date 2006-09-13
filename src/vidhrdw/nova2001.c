@@ -56,7 +56,7 @@ PALETTE_INIT( nova2001 )
 		/* blue component */
 		b = (((*color_prom >> 4) & 0x0c) | intensity) * 0x11;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 		color_prom++;
 	}
 

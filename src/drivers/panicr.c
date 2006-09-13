@@ -68,7 +68,7 @@ PALETTE_INIT( panicr )
 	int i;
 
 
-	palette_init_RRRR_GGGG_BBBB(colortable, color_prom);
+	palette_init_RRRR_GGGG_BBBB(machine, colortable, color_prom);
 	color_prom += 256*3;
 
 	// txt lookup table
@@ -181,7 +181,7 @@ VIDEO_UPDATE( panicr)
 		mainram[0x4a2]++;
 	}
 
-	fillbitmap(bitmap,get_black_pen(),cliprect);
+	fillbitmap(bitmap,get_black_pen(machine),cliprect);
 	tilemap_mark_all_tiles_dirty( txttilemap );
 	tilemap_set_scrollx( bgtilemap,0, ((scrollram[0x02]&0x0f)<<12)+((scrollram[0x02]&0xf0)<<4)+((scrollram[0x04]&0x7f)<<1)+((scrollram[0x04]&0x80)>>7) );
 	tilemap_draw(bitmap,cliprect,bgtilemap,0,0);

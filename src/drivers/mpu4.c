@@ -1,15 +1,48 @@
 /***************************************************************************
 MPU4 highly preliminary driver
 
+  07-09-2006: It appears that the video firmware is intended to be a 16k EPROM, not 64k as dumped.
+              In fact, the current dump is just the code repeated 4 times, when nothing earlier than
+              0xC000 is ever called. Presumably, the ROM is loaded into C000, and the remainder of the
+              'ROM' space is in fact the extra 32k of RAM apparently needed to hold the video board data.
+              For now, we'll continue to use the old dump, as I am unsure as to how to map this in MAME.
+              Changed Turn Over's name, it's either 12 Pound or 20 Pound Turn Over, depending on settings.
+
+              Not that I know how to hook this up, but the O3 pin from IC2 seems to be able to influence
+              the audio filter in some way - see the circuit diagram on my site for the layout.
+
+              At this stage, I cannot see how to progress any further with the emulation, so I have transferred
+              a non-AWP version of this driver to MAME for further study.
+
+  06-09-2006: Connect 4 added - VFD is currently reversed, although it looks to me like
+              that's the correct behaviour, and that my 'correction' for Old Timer was wrong.
+              Yamaha sound does work, but is horrendous - presumably there's a filter on the
+              sound that I haven't spotted. Trackball is apparently connected to AUX1, via
+              Schmitt triggers - I wish I had a clue what this meant (El Condor).
+
+  05-09-2006: And the award for most bone-headed bug goes to.. me! the 6840 handler wasn't
+              resetting the clocks after timeout, so the wave frequencies were way off.
+              Machines now hang on reset due to a lack of reel support.
+              CHR decoding now included, but still requires knowledge of the data table
+              location - this should be present in the ROMs somewhere.
+              6850 ACIA code now taken from the SAC-1, with a few alterations for the clocking
+              in and out - doesn't seem to be copying the right data, though.
+
   11-08-2006: It appears that the PIA IRQ's are not connected after all - but even
               disabling these won't get around the PTM issues.
               It also looks like the video card CHR is just a word-based version
               of the original, byte-based chip, meaning that should be fairly simple
               to emulate too, when the time comes.
 
-  04-08-2006: El Condor
+  08-07-2006: Revised mapping of peripherals, and found method of calculating CHR
+              values - although their use is still unknown.
+
+  11-05-2006: El Condor, working from schematics and photos at present
   28-04-2006: El Condor
   20-05-2004: Re-Animator
+
+  See http://www.mameworld.net/agemame/techinfo/mpu4main.php for map.
+  See http://www.mameworld.net/agemame/techinfo/mpu4.php for Video Card information.
 
 --- Board Setup ---
 
@@ -19,6 +52,7 @@ licensed to other firms as a general purpose unit (even some old Photo-Me booths
 This original board uses a ~1.72 Mhz 6809B CPU, and a number of PIA6821 chips for multiplexing inputs and the like.
 
 A 6840PTM is used for internal timing, one of it's functions is to act with an AY8913 chip as a crude analogue sound device.
+(Data is transmitted through a PIA, with a square wave from the PTM being used as part of the filtering process)
 
 A MPU4 GAME CARD (cartridge) plugs into the MPU4 board containing the game, and a protection PAL (the 'characteriser').
 This PAL, as well as protecting the games, also controlled some of the lamp address matrix for many games, and acted as
@@ -28,8 +62,8 @@ One of the advantages of the hardware setup was that the developer could change 
 up to a point, adding extra lamp support, different amounts of RAM, and (in many cases) an OKI MSM6376 and related PIA and PTM
 for improved ADPCM sample support (This was eventually endorsed in the most recent official 'MOD' of the board)
 
-For the Barcrest MPU4 Video system, the cartridge contains the MPU4 video bios in the usual ROM space, interface chips to connect
-an additional Video board, and a 6850 serial IO to communicate with said board. This version of the game card does not
+For the Barcrest MPU4 Video system, the cartridge contains the MPU4 video bios in the usual ROM space (occupying 16k), interface chips
+to connect an additional Video board, and a 6850 serial IO to communicate with said board. This version of the game card does not
 have the OKI chip, or the characteriser.
 
 The VIDEO BOARD is driven by a 10mhz 68000 processor, and contains a 6840PTM, 6850 serial IO (the other end of the
@@ -38,7 +72,7 @@ communications), an SAA1099 for stereo sound and SCN2674 gfx chip.
 The VIDEO CARTRIDGE plugs into the video board, and contains the program roms for the video based game. Like the MPU4 game
 card, in some cases an extra OKI sound chip is added to the video board's game card,as well as extra RAM.
 There is a protection chip similar to and replacing the MPU4 Characteriser, which is often fed question data to descramble
-(unknown how it works).
+(unknown how it works). In non-question cases, however, the protection chip works near identically to the original.
 
 A decent schematic for the MPU4 board, amongst other info is available,
 see http://www.mameworld.net/agemame/techinfo/mpu4.php .
@@ -47,22 +81,19 @@ see http://www.mameworld.net/agemame/techinfo/mpu4.php .
 IC3 causes an infinite loop if IRQA is connected)
 
 No video card schematics ever left the PCB factory, but some decent scans of the board have been made,
-and will be made available at some stage.
+now also available for review.
 
 Additional: 68k HALT line is tied to the reset circuit of the MPU4.
 
 Emulating the standalone MPU4 is a priority, unless this works, the video won't run.
-The copy of this driver held by AGEMAME is currently set up to run a standalone
-game (Celebration Club), as well as a title using one of the later 'mods' (Old Timer,
+The copy of this driver held by AGEMAME is currently set up to run two UK standalone
+games (Celebration Club and Connect 4), as well as a title using one of the later 'mods' (Old Timer,
 a Dutch machine). Interestingly, on the Video card version of the MPU4, the 6840 IRQ
 is in fact the FIRQ, in order to help with communications.
 
 Everything here is preliminary...  the boards are quite fussy with regards their self tests
 and the timing may have to be perfect for them to function correctly.  (as the comms are
 timer driven, the video is capable of various raster effects etc.)
-The 6840 core linked to here should be powerful enough to cover the timing we need, but
-Celebration Club currently reports BAD IRQ PULS ALM - meaning that timer 1 on the PTM
-is not outputting at 500Hz +- 10% (although the 6840 core claims it is).
 
 Datasheets are available for the main components, The AGEMAME site mirrors a few of the harder-to-find ones.
 
@@ -222,9 +253,7 @@ IRQ line connected to CPU
  1000-FFFF | R | D D D D D D D D | ROM (can be banked switched by 0x850 in 8 banks of 64 k ) (NV)
 -----------+---+-----------------+--------------------------------------------------------------------------
 
- 4000, appears to be something special?
-
- TODO: - get better memorymap.
+ TODO: - confirm map, based on 6809 code.
        - Get MPU4 board working properly, so that video layer will operate.
        - Confirm that MC6850 emulation is sufficient.
 
@@ -440,22 +469,22 @@ VIDEO_UPDATE( mpu4 )
 
 PALETTE_INIT( mpu4 )
 {
-	palette_set_color( 0,0x00,0x00,0x00);
-	palette_set_color( 1,0x00,0x00,0xFF);
-	palette_set_color( 2,0x00,0xFF,0x00);
-	palette_set_color( 3,0x00,0xFF,0xFF);
-	palette_set_color( 4,0xFF,0x00,0x00);
-	palette_set_color( 5,0xFF,0x00,0xFF);
-	palette_set_color( 6,0xFF,0xFF,0x00);
-	palette_set_color( 7,0xFF,0xFF,0xFF);
-	palette_set_color( 8,0x80,0x80,0x80);
-	palette_set_color( 9,0x00,0x00,0x80);
-	palette_set_color(10,0x00,0x80,0x00);
-	palette_set_color(11,0x00,0x80,0x80);
-	palette_set_color(12,0x80,0x00,0x00);
-	palette_set_color(13,0x80,0x00,0x80);
-	palette_set_color(14,0x80,0x80,0x00);
-	palette_set_color(15,0x80,0x80,0x80);
+	palette_set_color(machine, 0,0x00,0x00,0x00);
+	palette_set_color(machine, 1,0x00,0x00,0xFF);
+	palette_set_color(machine, 2,0x00,0xFF,0x00);
+	palette_set_color(machine, 3,0x00,0xFF,0xFF);
+	palette_set_color(machine, 4,0xFF,0x00,0x00);
+	palette_set_color(machine, 5,0xFF,0x00,0xFF);
+	palette_set_color(machine, 6,0xFF,0xFF,0x00);
+	palette_set_color(machine, 7,0xFF,0xFF,0xFF);
+	palette_set_color(machine, 8,0x80,0x80,0x80);
+	palette_set_color(machine, 9,0x00,0x00,0x80);
+	palette_set_color(machine,10,0x00,0x80,0x00);
+	palette_set_color(machine,11,0x00,0x80,0x80);
+	palette_set_color(machine,12,0x80,0x00,0x00);
+	palette_set_color(machine,13,0x80,0x00,0x80);
+	palette_set_color(machine,14,0x80,0x80,0x00);
+	palette_set_color(machine,15,0x80,0x80,0x80);
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -485,6 +514,7 @@ static MACHINE_RESET( mpu4 )
 	IC23GC    = 0;
 	IC23GB    = 0;
 	IC23GA    = 0;
+	prot_col  = 0;
 
 // init rom bank ////////////////////////////////////////////////////////
 
@@ -523,6 +553,7 @@ static MACHINE_RESET( mpu4_vid )
 	IC23GC    = 0;
 	IC23GB    = 0;
 	IC23GA    = 0;
+	prot_col  = 0;
 
 // init rom bank ////////////////////////////////////////////////////////
 
@@ -1848,7 +1879,7 @@ READ16_HANDLER( mpu4_vid_scn2674_r )
 
 		case 1:
 			LOGSTUFF(("Read Status Register %06x\n",activecpu_get_pc()));
-			return mame_rand();//scn2674_irq_register;
+			return mame_rand(Machine);//scn2674_irq_register;
 
 		case 2: LOGSTUFF(("Read Screen1_l Register %06x\n",activecpu_get_pc()));return scn2674_screen1_l;
 		case 3: LOGSTUFF(("Read Screen1_h Register %06x\n",activecpu_get_pc()));return scn2674_screen1_h;
@@ -1899,7 +1930,7 @@ WRITE16_HANDLER( mpu4_vid_scn2674_w )
 READ16_HANDLER( mpu4_vid_unmap_r )
 {
 	//logerror("Data %s Offset %s", data, offset);
-	return mame_rand();
+	return mame_rand(Machine);
 }
 
 WRITE16_HANDLER( mpu4_vid_unmap_w )
@@ -1954,7 +1985,6 @@ UINT8 ef9369_counter;
 WRITE16_HANDLER( ef9369_data_w )
 {
 	int color;
-	int r,g,b;
 	UINT16 coldat;
 
 	data &=0x00ff;
@@ -1963,12 +1993,7 @@ WRITE16_HANDLER( ef9369_data_w )
 
 	color = ef9369_counter/2;
 	coldat = (ef9369_palette[color*2+1]<<8)|ef9369_palette[color*2];
-
-	r = (coldat & 0x000f)>>0;
-	b = (coldat & 0x00f0)>>4;
-	g = (coldat & 0x0f00)>>8;
-
-	palette_set_color(color,r<<4,g<<4,b<<4);
+	palette_set_color(Machine,color,pal4bit(coldat >> 0),pal4bit(coldat >> 8),pal4bit(coldat >> 4));
 
 	ef9369_counter++;
 	if (ef9369_counter>31) ef9369_counter = 31;
@@ -2349,7 +2374,7 @@ MACHINE_START( mpu4_vid )
 
 // setup the standard oki MSC1937 display ///////////////////////////////
 
-	vfd_init(0, VFDTYPE_MSC1937);   // ?
+	vfd_init(0, VFDTYPE_MSC1937,0);   // ?
 
 	return 0;
 }
@@ -2388,7 +2413,7 @@ static MACHINE_START( mpu4 )
 
 // setup the standard oki MSC1937 display ///////////////////////////////
 
-	vfd_init(0, VFDTYPE_MSC1937);	// does oldtimer use a OKI MSC1937 alpha display controller ?
+	vfd_init(0, VFDTYPE_MSC1937,0);	// does oldtimer use a OKI MSC1937 alpha display controller ?
 
 	return 0;
 }

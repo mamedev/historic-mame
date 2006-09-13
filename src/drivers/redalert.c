@@ -323,15 +323,15 @@ static unsigned short colortable_source[] =
 static PALETTE_INIT( redalert )
 {
 	/* Arbitrary colors */
-	palette_set_color(0,0x40,0x80,0xff);	/* Background */
-	palette_set_color(1,0x00,0x00,0xff);	/* Blue */
-	palette_set_color(2,0xff,0x00,0xff);	/* Magenta */
-	palette_set_color(3,0x00,0xff,0xff);	/* Cyan */
-	palette_set_color(4,0xff,0x00,0x00);	/* Red */
-	palette_set_color(5,0xff,0x80,0x00);	/* Orange */
-	palette_set_color(6,0xff,0xff,0x00);	/* Yellow */
-	palette_set_color(7,0xff,0xff,0xff);	/* White */
-	palette_set_color(8,0x00,0x00,0x00);	/* Black */
+	palette_set_color(machine,0,0x40,0x80,0xff);	/* Background */
+	palette_set_color(machine,1,0x00,0x00,0xff);	/* Blue */
+	palette_set_color(machine,2,0xff,0x00,0xff);	/* Magenta */
+	palette_set_color(machine,3,0x00,0xff,0xff);	/* Cyan */
+	palette_set_color(machine,4,0xff,0x00,0x00);	/* Red */
+	palette_set_color(machine,5,0xff,0x80,0x00);	/* Orange */
+	palette_set_color(machine,6,0xff,0xff,0x00);	/* Yellow */
+	palette_set_color(machine,7,0xff,0xff,0xff);	/* White */
+	palette_set_color(machine,8,0x00,0x00,0x00);	/* Black */
 
 	memcpy(colortable,colortable_source,sizeof(colortable_source));
 }

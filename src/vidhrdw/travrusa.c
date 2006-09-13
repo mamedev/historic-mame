@@ -71,7 +71,7 @@ PALETTE_INIT( travrusa )
 		bit2 = (color_prom[i] >> 2) & 0x01;
 		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 	}
 
 	color_prom += 256;
@@ -98,7 +98,7 @@ PALETTE_INIT( travrusa )
 		bit2 = (color_prom[i] >> 2) & 0x01;
 		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-		palette_set_color(i+128,r,g,b);
+		palette_set_color(machine,i+128,r,g,b);
 	}
 
 	color_prom += 32;
@@ -139,7 +139,7 @@ PALETTE_INIT( shtrider )
 		bit2 = (color_prom[i+256] >> 2) & 0x01;
 		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 	}
 
 	color_prom += 512;
@@ -167,7 +167,7 @@ PALETTE_INIT( shtrider )
 		bit2 = (color_prom[i] >> 2) & 0x01;
 		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-		palette_set_color(i+128,r,g,b);
+		palette_set_color(machine,i+128,r,g,b);
 	}
 
 	color_prom += 32;

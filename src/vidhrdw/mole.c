@@ -15,13 +15,9 @@ static tilemap *bg_tilemap;
 PALETTE_INIT( mole )
 {
 	int i;
-	int r, g, b;
 
 	for (i = 0; i < 8; i++) {
-		r = (i & 1) ? 0xff : 0x00;
-		g = (i & 4) ? 0xff : 0x00;
-		b = (i & 2) ? 0xff : 0x00;
-		palette_set_color(i, r, g, b);
+		palette_set_color(machine, i, pal1bit(i >> 0), pal1bit(i >> 2), pal1bit(i >> 1));
 	}
 }
 

@@ -715,7 +715,7 @@ static MACHINE_RESET( bayroute )
 static DRIVER_INIT( bayrtbl1 )
 {
 	int i;
-	machine_reset_sys16_onetime();
+	machine_reset_sys16_onetime(machine);
 	/* invert the graphics bits on the tiles */
 	for (i = 0; i < 0x30000; i++)
 		memory_region(REGION_GFX1)[i] ^= 0xff;
@@ -877,7 +877,7 @@ static DRIVER_INIT( dduxbl )
 		0,2,0,0
 	};
 
-	machine_reset_sys16_onetime();
+	machine_reset_sys16_onetime(machine);
 	sys16_video_config(dduxbl_update_proc, -0x48, bank);
 }
 /***************************************************************************/
@@ -1007,7 +1007,7 @@ static MACHINE_RESET( eswatbl )
 
 static DRIVER_INIT( eswatbl )
 {
-	machine_reset_sys16_onetime();
+	machine_reset_sys16_onetime(machine);
 	sys16_rowscroll_scroll=0x8000;
 	sys18_splittab_fg_x=&sys16_textram[0x0f80];
 }
@@ -1131,7 +1131,7 @@ static MACHINE_RESET( fpointbl )
 
 static DRIVER_INIT( fpointbl )
 {
-	machine_reset_sys16_onetime();
+	machine_reset_sys16_onetime(machine);
 	sys16_video_config(fpoint_update_proc, -0xb8, NULL);
 }
 /***************************************************************************/
@@ -1367,7 +1367,7 @@ static DRIVER_INIT( goldnabl )
 {
 	int i;
 
-	machine_reset_sys16_onetime();
+	machine_reset_sys16_onetime(machine);
 
 	/* invert the graphics bits on the tiles */
 	for (i = 0; i < 0x60000; i++)
@@ -1584,14 +1584,14 @@ static MACHINE_RESET( passht4b )
 
 static DRIVER_INIT( passsht )
 {
-	machine_reset_sys16_onetime();
+	machine_reset_sys16_onetime(machine);
 }
 
 static DRIVER_INIT( passht4b )
 {
 	int i;
 
-	machine_reset_sys16_onetime();
+	machine_reset_sys16_onetime(machine);
 
 	/* invert the graphics bits on the tiles */
 	for (i = 0; i < 0x30000; i++)
@@ -1762,7 +1762,7 @@ MACHINE_DRIVER_END
 
 static DRIVER_INIT( shinobi )
 {
-	machine_reset_sys16_onetime();
+	machine_reset_sys16_onetime(machine);
 }
 
 /***************************************************************************/
@@ -1934,7 +1934,7 @@ static MACHINE_RESET( tetrisbl )
 
 static DRIVER_INIT( tetrisbl )
 {
-	machine_reset_sys16_onetime();
+	machine_reset_sys16_onetime(machine);
 }
 
 
@@ -2141,7 +2141,7 @@ static DRIVER_INIT( tturfbl )
 	UINT8 *mem;
 	int i;
 
-	machine_reset_sys16_onetime();
+	machine_reset_sys16_onetime(machine);
 
 	/* invert the graphics bits on the tiles */
 	for (i = 0; i < 0x30000; i++)
@@ -2309,7 +2309,7 @@ static DRIVER_INIT( wb3bbl )
 {
 	int i;
 
-	machine_reset_sys16_onetime();
+	machine_reset_sys16_onetime(machine);
 
 	/* invert the graphics bits on the tiles */
 	for (i = 0; i < 0x30000; i++)

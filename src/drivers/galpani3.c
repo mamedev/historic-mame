@@ -103,7 +103,7 @@ extern void skns_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect );
 
 VIDEO_UPDATE(galpani3)
 {
-	fillbitmap(bitmap, get_black_pen(), cliprect);
+	fillbitmap(bitmap, get_black_pen(machine), cliprect);
 
 	skns_drawsprites (bitmap,cliprect);
 	return 0;

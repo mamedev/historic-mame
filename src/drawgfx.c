@@ -93,7 +93,7 @@ INLINE int readbit(const UINT8 *src, int bitnum)
     INITIALIZATION
 ***************************************************************************/
 
-void drawgfx_init(void)
+void drawgfx_init(running_machine *machine)
 {
 	int lev, byte;
 
@@ -794,9 +794,9 @@ int pdrawgfx_shadow_lowpri = 0;
 
 /* 32-bit version */
 //* AAT032503: added limited 32-bit shadow and highlight support
-INLINE UINT32 SHADOW32(UINT32 c) {
+INLINE UINT32 SHADOW32(pen_t *shadow_table, UINT32 c) {
 	c = (c>>9&0x7c00) | (c>>6&0x03e0) | (c>>3&0x001f);
-	return(((UINT32*)palette_shadow_table)[c]); }
+	return(shadow_table[c]); }
 
 #define DATA_TYPE UINT32
 #define DEPTH 32
@@ -816,7 +816,7 @@ INLINE UINT32 SHADOW32(UINT32 c) {
 #define COLOR_ARG unsigned int colorbase,UINT8 *pridata,UINT32 pmask
 #define INCREMENT_DST(n) {dstdata+=(n);pridata += (n);}
 #define LOOKUP(n) (colorbase + (n))
-#define SETPIXELCOLOR(dest,n) { UINT8 r8=pridata[dest]; if(!(1<<(r8&0x1f)&pmask)){ if(afterdrawmask){ r8&=0x7f; r8|=0x1f; dstdata[dest]=(n); pridata[dest]=r8; } else if(!(r8&0x80)){ dstdata[dest]=SHADOW32(n); pridata[dest]|=0x80; } } }
+#define SETPIXELCOLOR(dest,n) { UINT8 r8=pridata[dest]; if(!(1<<(r8&0x1f)&pmask)){ if(afterdrawmask){ r8&=0x7f; r8|=0x1f; dstdata[dest]=(n); pridata[dest]=r8; } else if(!(r8&0x80)){ dstdata[dest]=SHADOW32(palette_shadow_table,n); pridata[dest]|=0x80; } } }
 #define DECLARE_SWAP_RAW_PRI(function,args,body) void function##_raw_pri32 args body
 #include "drawgfx.c"
 #undef DECLARE_SWAP_RAW_PRI
@@ -826,7 +826,7 @@ INLINE UINT32 SHADOW32(UINT32 c) {
 
 #define COLOR_ARG const pen_t *paldata,UINT8 *pridata,UINT32 pmask
 #define LOOKUP(n) (paldata[n])
-#define SETPIXELCOLOR(dest,n) { UINT8 r8=pridata[dest]; if(!(1<<(r8&0x1f)&pmask)){ if(afterdrawmask){ r8&=0x7f; r8|=0x1f; dstdata[dest]=(n); pridata[dest]=r8; } else if(!(r8&0x80)){ dstdata[dest]=SHADOW32(n); pridata[dest]|=0x80; } } }
+#define SETPIXELCOLOR(dest,n) { UINT8 r8=pridata[dest]; if(!(1<<(r8&0x1f)&pmask)){ if(afterdrawmask){ r8&=0x7f; r8|=0x1f; dstdata[dest]=(n); pridata[dest]=r8; } else if(!(r8&0x80)){ dstdata[dest]=SHADOW32(palette_shadow_table,n); pridata[dest]|=0x80; } } }
 #define DECLARE_SWAP_RAW_PRI(function,args,body) void function##_pri32 args body
 #include "drawgfx.c"
 #undef DECLARE_SWAP_RAW_PRI
@@ -1928,6 +1928,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 					/* case 4: TRANSPARENCY_PEN_TABLE */
 					if (transparency == TRANSPARENCY_PEN_TABLE)
 					{
+						pen_t *palette_shadow_table = Machine->shadow_table;
 						if (pri_buffer)
 						{
 							for( y=sy; y<ey; y++ )
@@ -2001,6 +2002,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 					/* case 4b: TRANSPARENCY_PEN_TABLE_RAW */
 					if (transparency == TRANSPARENCY_PEN_TABLE_RAW)
 					{
+						pen_t *palette_shadow_table = Machine->shadow_table;
 						if (pri_buffer)
 						{
 							for( y=sy; y<ey; y++ )
@@ -2521,6 +2523,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 					/* case 4: TRANSPARENCY_PEN_TABLE */
 					if (transparency == TRANSPARENCY_PEN_TABLE)
 					{
+						pen_t *palette_shadow_table = Machine->shadow_table;
 						if (pri_buffer)
 						{
 							for( y=sy; y<ey; y++ )
@@ -2595,6 +2598,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 					/* case 4b: TRANSPARENCY_PEN_TABLE_RAW */
 					if (transparency == TRANSPARENCY_PEN_TABLE_RAW)
 					{
+						pen_t *palette_shadow_table = Machine->shadow_table;
 						if (pri_buffer)
 						{
 							for( y=sy; y<ey; y++ )
@@ -3187,6 +3191,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 					/* case 4: TRANSPARENCY_PEN_TABLE */
 					if (transparency == TRANSPARENCY_PEN_TABLE)
 					{
+						pen_t *palette_shadow_table = Machine->shadow_table;
 						UINT8 *source, *pri;
 						UINT32 *dest;
 						int c, x, x_index;
@@ -3225,7 +3230,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 										}
 										else if (!(ah & 0x80))
 										{
-											ebx = SHADOW32(dest[x]);
+											ebx = SHADOW32(palette_shadow_table,dest[x]);
 											pri[x] |= 0x80;
 											dest[x] = ebx;
 										}
@@ -3251,7 +3256,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 									if (gfx_drawmode_table[c] == DRAWMODE_SOURCE)
 										dest[x] = pal[c];
 									else
-										dest[x] = SHADOW32(dest[x]);
+										dest[x] = SHADOW32(palette_shadow_table,dest[x]);
 								}
 							}
 						}
@@ -3260,6 +3265,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 					/* case 4b: TRANSPARENCY_PEN_TABLE_RAW */
 					if (transparency == TRANSPARENCY_PEN_TABLE_RAW)
 					{
+						pen_t *palette_shadow_table = Machine->shadow_table;
 						UINT8 *source, *pri;
 						UINT32 *dest;
 						int c, x, x_index;
@@ -3298,7 +3304,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 										}
 										else if (!(ah & 0x80))
 										{
-											ebx = SHADOW32(dest[x]);
+											ebx = SHADOW32(palette_shadow_table,dest[x]);
 											pri[x] |= 0x80;
 											dest[x] = ebx;
 										}
@@ -3324,7 +3330,7 @@ INLINE void common_drawgfxzoom( mame_bitmap *dest_bmp,const gfx_element *gfx,
 									if (gfx_drawmode_table[c] == DRAWMODE_SOURCE)
 										dest[x] = color + c;
 									else
-										dest[x] = SHADOW32(dest[x]);
+										dest[x] = SHADOW32(palette_shadow_table,dest[x]);
 								}
 							}
 						}
@@ -3553,7 +3559,7 @@ void draw_crosshair(mame_bitmap *bitmap,int x,int y,const rectangle *clip,int pl
 	if (!crosshair_enable)
 		return;
 
-	white = get_white_pen();
+	white = get_white_pen(Machine);
 
 	for (i = 1;i < 6;i++)
 	{
@@ -3655,7 +3661,10 @@ void draw_crosshair(mame_bitmap *bitmap,int x,int y,const rectangle *clip,int pl
 DECLARE_SWAP_RAW_PRI(blockmove_8toN_opaque,(COMMON_ARGS,
 		COLOR_ARG),
 {
+	pen_t *palette_shadow_table = Machine->shadow_table;
 	ADJUST_8
+
+	(void)palette_shadow_table;
 
 	if (flipx)
 	{
@@ -3726,7 +3735,10 @@ DECLARE_SWAP_RAW_PRI(blockmove_8toN_opaque,(COMMON_ARGS,
 DECLARE_SWAP_RAW_PRI(blockmove_4toN_opaque,(COMMON_ARGS,
 		COLOR_ARG),
 {
+	pen_t *palette_shadow_table = Machine->shadow_table;
 	ADJUST_4
+
+	(void)palette_shadow_table;
 
 	if (flipx)
 	{
@@ -3819,7 +3831,10 @@ DECLARE_SWAP_RAW_PRI(blockmove_4toN_opaque,(COMMON_ARGS,
 DECLARE_SWAP_RAW_PRI(blockmove_8toN_transpen,(COMMON_ARGS,
 		COLOR_ARG,int transpen),
 {
+	pen_t *palette_shadow_table = Machine->shadow_table;
 	ADJUST_8
+
+	(void)palette_shadow_table;
 
 	if (flipx)
 	{
@@ -3928,7 +3943,10 @@ DECLARE_SWAP_RAW_PRI(blockmove_8toN_transpen,(COMMON_ARGS,
 DECLARE_SWAP_RAW_PRI(blockmove_4toN_transpen,(COMMON_ARGS,
 		COLOR_ARG,int transpen),
 {
+	pen_t *palette_shadow_table = Machine->shadow_table;
 	ADJUST_4
+
+	(void)palette_shadow_table;
 
 	if (flipx)
 	{
@@ -4001,7 +4019,10 @@ DECLARE_SWAP_RAW_PRI(blockmove_4toN_transpen,(COMMON_ARGS,
 DECLARE_SWAP_RAW_PRI(blockmove_8toN_transblend,(COMMON_ARGS,
 		COLOR_ARG,int transpen),
 {
+	pen_t *palette_shadow_table = Machine->shadow_table;
 	ADJUST_8
+
+	(void)palette_shadow_table;
 
 	if (flipx)
 	{
@@ -4113,7 +4134,10 @@ DECLARE_SWAP_RAW_PRI(blockmove_8toN_transblend,(COMMON_ARGS,
 DECLARE_SWAP_RAW_PRI(blockmove_8toN_transmask,(COMMON_ARGS,
 		COLOR_ARG,int transmask),
 {
+	pen_t *palette_shadow_table = Machine->shadow_table;
 	ADJUST_8
+
+	(void)palette_shadow_table;
 
 	if (flipx)
 	{
@@ -4216,7 +4240,10 @@ DECLARE_SWAP_RAW_PRI(blockmove_8toN_transmask,(COMMON_ARGS,
 DECLARE_SWAP_RAW_PRI(blockmove_8toN_transcolor,(COMMON_ARGS,
 		COLOR_ARG,const UINT16 *colortable,int transcolor),
 {
+	pen_t *palette_shadow_table = Machine->shadow_table;
 	ADJUST_8
+
+	(void)palette_shadow_table;
 
 	if (flipx)
 	{
@@ -4261,7 +4288,10 @@ DECLARE_SWAP_RAW_PRI(blockmove_8toN_transcolor,(COMMON_ARGS,
 DECLARE_SWAP_RAW_PRI(blockmove_4toN_transcolor,(COMMON_ARGS,
 		COLOR_ARG,const UINT16 *colortable,int transcolor),
 {
+	pen_t *palette_shadow_table = Machine->shadow_table;
 	ADJUST_4
+
+	(void)palette_shadow_table;
 
 	if (flipx)
 	{
@@ -4335,7 +4365,10 @@ DECLARE_SWAP_RAW_PRI(blockmove_4toN_transcolor,(COMMON_ARGS,
 DECLARE_SWAP_RAW_PRI(blockmove_8toN_pen_table,(COMMON_ARGS,
 		COLOR_ARG,int transcolor),
 {
+	pen_t *palette_shadow_table = Machine->shadow_table;
 	ADJUST_8
+
+	(void)palette_shadow_table;
 
 	if (flipx)
 	{
@@ -4410,9 +4443,12 @@ DECLARE_SWAP_RAW_PRI(blockmove_8toN_pen_table,(COMMON_ARGS,
 DECLARE_SWAP_RAW_PRI(blockmove_8toN_pen_table,(COMMON_ARGS,
 		COLOR_ARG,int transcolor),
 {
+	pen_t *palette_shadow_table = Machine->shadow_table;
 	int eax = (pdrawgfx_shadow_lowpri) ? 0 : 0x80;
 
 	ADJUST_8
+
+	(void)palette_shadow_table;
 
 	if (flipx)
 	{
@@ -4450,6 +4486,7 @@ DECLARE_SWAP_RAW_PRI(blockmove_8toN_pen_table,(COMMON_ARGS,
 	}
 	else
 	{
+		pen_t *palette_shadow_table = Machine->shadow_table;
 		DATA_TYPE *end;
 
 		while (dstheight)
@@ -4489,7 +4526,10 @@ DECLARE_SWAP_RAW_PRI(blockmove_8toN_pen_table,(COMMON_ARGS,
 DECLARE_SWAP_RAW_PRI(blockmove_8toN_alphaone,(COMMON_ARGS,
 		COLOR_ARG,int transpen, int alphapen),
 {
+	pen_t *palette_shadow_table = Machine->shadow_table;
 	ADJUST_8
+
+	(void)palette_shadow_table;
 
 	if (flipx)
 	{
@@ -4672,7 +4712,10 @@ DECLARE_SWAP_RAW_PRI(blockmove_8toN_alphaone,(COMMON_ARGS,
 DECLARE_SWAP_RAW_PRI(blockmove_8toN_alpha,(COMMON_ARGS,
 		COLOR_ARG,int transpen),
 {
+	pen_t *palette_shadow_table = Machine->shadow_table;
 	ADJUST_8
+
+	(void)palette_shadow_table;
 
 	if (flipx)
 	{
@@ -4782,7 +4825,10 @@ DECLARE_SWAP_RAW_PRI(blockmove_8toN_alpha,(COMMON_ARGS,
 DECLARE_SWAP_RAW_PRI(blockmove_8toN_alpharange,(COMMON_ARGS,
 		COLOR_ARG,int transpen),
 {
+	pen_t *palette_shadow_table = Machine->shadow_table;
 	ADJUST_8
+
+	(void)palette_shadow_table;
 
 	if (flipx)
 	{

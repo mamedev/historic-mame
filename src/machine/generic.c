@@ -49,7 +49,7 @@ static UINT8 interrupt_enable[MAX_CPU];
 
 static void counters_load(int config_type, xml_data_node *parentnode);
 static void counters_save(int config_type, xml_data_node *parentnode);
-static void interrupt_reset(void);
+static void interrupt_reset(running_machine *machine);
 
 
 
@@ -62,7 +62,7 @@ static void interrupt_reset(void);
     register for save states
 -------------------------------------------------*/
 
-void generic_machine_init(void)
+void generic_machine_init(running_machine *machine)
 {
 	int counternum;
 
@@ -84,17 +84,17 @@ void generic_machine_init(void)
 	memcard_inserted = -1;
 
 	/* register a reset callback and save state for interrupt enable */
-	add_reset_callback(interrupt_reset);
+	add_reset_callback(machine, interrupt_reset);
 	state_save_register_item_array("cpu", 0, interrupt_enable);
 
 	/* register for configuration */
 	config_register("counters", counters_load, counters_save);
 
 	/* for memory cards, request save state and an exit callback */
-	if (Machine->drv->memcard_handler != NULL)
+	if (machine->drv->memcard_handler != NULL)
 	{
 		state_save_register_global(memcard_inserted);
-		add_exit_callback(memcard_eject);
+		add_exit_callback(machine, memcard_eject);
 	}
 }
 
@@ -266,7 +266,7 @@ void nvram_load(void)
 	if (Machine->drv->nvram_handler != NULL)
 	{
 		mame_file *nvram_file = mame_fopen(Machine->gamedrv->name, 0, FILETYPE_NVRAM, 0);
-		(*Machine->drv->nvram_handler)(nvram_file, 0);
+		(*Machine->drv->nvram_handler)(Machine, nvram_file, 0);
 		if (nvram_file != NULL)
 			mame_fclose(nvram_file);
 	}
@@ -284,7 +284,7 @@ void nvram_save(void)
 		mame_file *nvram_file = mame_fopen(Machine->gamedrv->name, 0, FILETYPE_NVRAM, 1);
 		if (nvram_file != NULL)
 		{
-			(*Machine->drv->nvram_handler)(nvram_file, 1);
+			(*Machine->drv->nvram_handler)(Machine, nvram_file, 1);
 			mame_fclose(nvram_file);
 		}
 	}
@@ -296,7 +296,7 @@ void nvram_save(void)
     with a 0 fill
 -------------------------------------------------*/
 
-void nvram_handler_generic_0fill(mame_file *file, int read_or_write)
+NVRAM_HANDLER( generic_0fill )
 {
 	if (read_or_write)
 		mame_fwrite(file, nvram_select(), generic_nvram_size);
@@ -312,7 +312,7 @@ void nvram_handler_generic_0fill(mame_file *file, int read_or_write)
     with a 1 fill
 -------------------------------------------------*/
 
-void nvram_handler_generic_1fill(mame_file *file, int read_or_write)
+NVRAM_HANDLER( generic_1fill )
 {
 	if (read_or_write)
 		mame_fwrite(file, nvram_select(), generic_nvram_size);
@@ -328,7 +328,7 @@ void nvram_handler_generic_1fill(mame_file *file, int read_or_write)
     with a random fill
 -------------------------------------------------*/
 
-void nvram_handler_generic_randfill(mame_file *file, int read_or_write)
+NVRAM_HANDLER( generic_randfill )
 {
 	int i;
 
@@ -392,7 +392,7 @@ int memcard_create(int index, int overwrite)
 
 	/* initialize and then save the card */
 	if (Machine->drv->memcard_handler)
-		(*Machine->drv->memcard_handler)(file, MEMCARD_CREATE);
+		(*Machine->drv->memcard_handler)(Machine, file, MEMCARD_CREATE);
 
 	/* close the file */
 	mame_fclose(file);
@@ -412,7 +412,7 @@ int memcard_insert(int index)
 
 	/* if a card is already inserted, eject it first */
 	if (memcard_inserted != -1)
-		memcard_eject();
+		memcard_eject(Machine);
 	assert(memcard_inserted == -1);
 
 	/* create a name */
@@ -425,7 +425,7 @@ int memcard_insert(int index)
 
 	/* initialize and then load the card */
 	if (Machine->drv->memcard_handler)
-		(*Machine->drv->memcard_handler)(file, MEMCARD_INSERT);
+		(*Machine->drv->memcard_handler)(Machine, file, MEMCARD_INSERT);
 
 	/* close the file */
 	mame_fclose(file);
@@ -439,7 +439,7 @@ int memcard_insert(int index)
     its contents along the way
 -------------------------------------------------*/
 
-void memcard_eject(void)
+void memcard_eject(running_machine *machine)
 {
 	mame_file *file;
 	char name[16];
@@ -452,7 +452,7 @@ void memcard_eject(void)
 	memcard_name(memcard_inserted, name);
 
 	/* open the file; if we can't, it's an error */
-	file = mame_fopen(Machine->gamedrv->name, name, FILETYPE_MEMCARD, TRUE);
+	file = mame_fopen(machine->gamedrv->name, name, FILETYPE_MEMCARD, TRUE);
 	if (file == NULL)
 	{
 		mame_fclose(file);
@@ -460,8 +460,8 @@ void memcard_eject(void)
 	}
 
 	/* initialize and then load the card */
-	if (Machine->drv->memcard_handler)
-		(*Machine->drv->memcard_handler)(file, MEMCARD_EJECT);
+	if (machine->drv->memcard_handler)
+		(*machine->drv->memcard_handler)(machine, file, MEMCARD_EJECT);
 
 	/* close the file */
 	mame_fclose(file);
@@ -514,7 +514,7 @@ void set_led_status(int num, int on)
     states on a reset
 -------------------------------------------------*/
 
-static void interrupt_reset(void)
+static void interrupt_reset(running_machine *machine)
 {
 	int cpunum;
 

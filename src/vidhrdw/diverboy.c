@@ -48,7 +48,7 @@ static void diverboy_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect
 
 VIDEO_UPDATE(diverboy)
 {
-//  fillbitmap(bitmap,get_black_pen(),cliprect);
+//  fillbitmap(bitmap,get_black_pen(machine),cliprect);
 	diverboy_drawsprites(bitmap,cliprect);
 	return 0;
 }

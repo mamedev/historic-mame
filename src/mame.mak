@@ -244,6 +244,7 @@ SOUNDS += VRENDER0
 #SOUNDS += VOTRAX
 SOUNDS += ES8712
 SOUNDS += RF5C400
+SOUNDS += SPEAKER
 
 
 
@@ -1227,7 +1228,7 @@ $(OBJ)/taito.a: \
 	$(OBJ)/drivers/fgoal.o $(OBJ)/vidhrdw/fgoal.o \
 	$(OBJ)/drivers/flstory.o $(OBJ)/machine/flstory.o $(OBJ)/vidhrdw/flstory.o \
 	$(OBJ)/drivers/gladiatr.o $(OBJ)/vidhrdw/gladiatr.o \
-	$(OBJ)/drivers/grchamp.o $(OBJ)/machine/grchamp.o $(OBJ)/sndhrdw/grchamp.o $(OBJ)/vidhrdw/grchamp.o \
+	$(OBJ)/drivers/grchamp.o $(OBJ)/sndhrdw/grchamp.o $(OBJ)/vidhrdw/grchamp.o \
 	$(OBJ)/drivers/groundfx.o $(OBJ)/vidhrdw/groundfx.o \
 	$(OBJ)/drivers/gsword.o $(OBJ)/machine/tait8741.o $(OBJ)/vidhrdw/gsword.o \
 	$(OBJ)/drivers/gunbustr.o $(OBJ)/vidhrdw/gunbustr.o \

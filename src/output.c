@@ -63,7 +63,7 @@ static UINT32 uniqueid = 12345;
     FUNCTION PROTOTYPES
 ***************************************************************************/
 
-static void output_exit(void);
+static void output_exit(running_machine *machine);
 
 
 
@@ -143,10 +143,10 @@ INLINE output_item *create_new_item(const char *outname, INT32 value)
     output_init - initialize everything
 -------------------------------------------------*/
 
-void output_init(void)
+void output_init(running_machine *machine)
 {
 	/* get a callback when done */
-	add_exit_callback(output_exit);
+	add_exit_callback(machine, output_exit);
 
 	/* reset the lists */
 	memset(itemtable, 0, sizeof(itemtable));
@@ -158,7 +158,7 @@ void output_init(void)
     output_exit - cleanup on exit
 -------------------------------------------------*/
 
-static void output_exit(void)
+static void output_exit(running_machine *machine)
 {
 	output_notify *notify;
 	output_item *item;

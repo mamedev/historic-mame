@@ -18,6 +18,6 @@
 ***************************************************************************/
 
 /* initialization */
-void				debug_command_init(void);
+void				debug_command_init(running_machine *machine);
 
 #endif

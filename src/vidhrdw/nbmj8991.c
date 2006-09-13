@@ -46,15 +46,11 @@ WRITE8_HANDLER( nbmj8991_palette_type1_w )
 
 	offset &= 0x1fe;
 
-	r = ((paletteram[offset + 0] & 0x0f) << 4);
-	g = ((paletteram[offset + 1] & 0xf0) << 0);
-	b = ((paletteram[offset + 1] & 0x0f) << 4);
+	r = ((paletteram[offset + 0] & 0x0f) >> 0);
+	g = ((paletteram[offset + 1] & 0xf0) >> 4);
+	b = ((paletteram[offset + 1] & 0x0f) >> 0);
 
-	r = (r | (r >> 4));
-	g = (g | (g >> 4));
-	b = (b | (b >> 4));
-
-	palette_set_color((offset >> 1), r, g, b);
+	palette_set_color(Machine, (offset >> 1), pal4bit(r), pal4bit(g), pal4bit(b));
 }
 
 WRITE8_HANDLER( nbmj8991_palette_type2_w )
@@ -71,11 +67,7 @@ WRITE8_HANDLER( nbmj8991_palette_type2_w )
 	g = (((paletteram[offset + 0] & 0x03) << 3) | ((paletteram[offset + 1] & 0xe0) >> 5));
 	b = ((paletteram[offset + 1] & 0x1f) >> 0);
 
-	r = ((r << 3) | (r >> 2));
-	g = ((g << 3) | (g >> 2));
-	b = ((b << 3) | (b >> 2));
-
-	palette_set_color((offset / 2), r, g, b);
+	palette_set_color(Machine, (offset / 2), pal5bit(r), pal5bit(g), pal5bit(b));
 }
 
 WRITE8_HANDLER( nbmj8991_palette_type3_w )
@@ -88,15 +80,11 @@ WRITE8_HANDLER( nbmj8991_palette_type3_w )
 
 	offset &= 0x1fe;
 
-	r = ((paletteram[offset + 1] & 0x0f) << 4);
-	g = ((paletteram[offset + 0] & 0xf0) << 0);
-	b = ((paletteram[offset + 0] & 0x0f) << 4);
+	r = ((paletteram[offset + 1] & 0x0f) >> 0);
+	g = ((paletteram[offset + 0] & 0xf0) >> 4);
+	b = ((paletteram[offset + 0] & 0x0f) >> 0);
 
-	r = (r | (r >> 4));
-	g = (g | (g >> 4));
-	b = (b | (b >> 4));
-
-	palette_set_color((offset >> 1), r, g, b);
+	palette_set_color(Machine, (offset >> 1), pal4bit(r), pal4bit(g), pal4bit(b));
 }
 
 /******************************************************************************

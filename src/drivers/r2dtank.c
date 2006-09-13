@@ -260,14 +260,14 @@ PALETTE_INIT( r2dtank )
 {
 	/* colours derived from tim's screenshots */
 
-	palette_set_color(0x0,0,0,0);		// background
-	palette_set_color(0x1,0,255,0); 	// credits
-	palette_set_color(0x2,0,0,251); 	// presented by sigma
-	palette_set_color(0x3,0,214,255); 	// per points etc.
-	palette_set_color(0x4,255,0,0); 	// r2dtank logo
-	palette_set_color(0x5,255,255,128); // unused?
-	palette_set_color(0x6,255,0,255); 	// pink tank
-	palette_set_color(0x7,236,141,181); // sigma (c)
+	palette_set_color(machine,0x0,0,0,0);		// background
+	palette_set_color(machine,0x1,0,255,0); 	// credits
+	palette_set_color(machine,0x2,0,0,251); 	// presented by sigma
+	palette_set_color(machine,0x3,0,214,255); 	// per points etc.
+	palette_set_color(machine,0x4,255,0,0); 	// r2dtank logo
+	palette_set_color(machine,0x5,255,255,128); // unused?
+	palette_set_color(machine,0x6,255,0,255); 	// pink tank
+	palette_set_color(machine,0x7,236,141,181); // sigma (c)
 
 }
 

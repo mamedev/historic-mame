@@ -120,7 +120,7 @@ static void update_color(int color)
 		b = ((ms32_palram[color*2+1] & 0x00ff) >>0 );
 	}
 
-	palette_set_color(color,r,g,b);
+	palette_set_color(Machine,color,r,g,b);
 }
 
 WRITE32_HANDLER( ms32_brightness_w )

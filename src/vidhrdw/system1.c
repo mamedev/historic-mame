@@ -98,18 +98,12 @@ WRITE8_HANDLER( system1_paletteram_w )
 	}
 	else
 	{
-		val = (data >> 0) & 0x07;
-		r = (val << 5) | (val << 2) | (val >> 1);
-
-		val = (data >> 3) & 0x07;
-		g = (val << 5) | (val << 2) | (val >> 1);
-
-		val = (data >> 5) & 0x06;
-		if (val) val++;
-		b = (val << 5) | (val << 2) | (val >> 1);
+		r = pal3bit(data >> 0);
+		g = pal3bit(data >> 3);
+		b = pal2bit(data >> 6);
 	}
 
-	palette_set_color(offset,r,g,b);
+	palette_set_color(Machine,offset,r,g,b);
 }
 
 void system1_postload(void)

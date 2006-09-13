@@ -12,18 +12,7 @@ PALETTE_INIT( galspnbl )
 
 	/* initialize 555 RGB lookup */
 	for (i = 0;i < 32768;i++)
-	{
-		int r,g,b;
-
-		r = (i >>  5) & 0x1f;
-		g = (i >> 10) & 0x1f;
-		b = (i >>  0) & 0x1f;
-
-		r = (r << 3) | (r >> 2);
-		g = (g << 3) | (g >> 2);
-		b = (b << 3) | (b >> 2);
-		palette_set_color(i+1024,r,g,b);
-	}
+		palette_set_color(machine,i+1024,pal5bit(i >> 5),pal5bit(i >> 10),pal5bit(i >> 0));
 }
 
 

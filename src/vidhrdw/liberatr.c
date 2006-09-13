@@ -133,7 +133,7 @@ WRITE8_HANDLER( liberatr_colorram_w )
 		offset ^= 0x0f;
 	}
 
-	palette_set_color(offset,r,g,b);
+	palette_set_color(Machine,offset,r,g,b);
 }
 
 

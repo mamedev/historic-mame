@@ -71,24 +71,14 @@ WRITE16_HANDLER( tetrisp2_palette_w )
 {
 	data = COMBINE_DATA(&paletteram16[offset]);
 	if ((offset & 1) == 0)
-	{
-		int r = (data >>  1) & 0x1f;
-		int g = (data >>  6) & 0x1f;
-		int b = (data >> 11) & 0x1f;
-		palette_set_color(offset/2,(r << 3) | (r >> 2),(g << 3) | (g >> 2),(b << 3) | (b >> 2));
-	}
+		palette_set_color(Machine,offset/2,pal5bit(data >> 1),pal5bit(data >> 6),pal5bit(data >> 11));
 }
 
 WRITE16_HANDLER( rocknms_sub_palette_w )
 {
 	data = COMBINE_DATA(&paletteram16_2[offset]);
 	if ((offset & 1) == 0)
-	{
-		int r = (data >>  1) & 0x1f;
-		int g = (data >>  6) & 0x1f;
-		int b = (data >> 11) & 0x1f;
-		palette_set_color((0x8000 + (offset/2)),(r << 3) | (r >> 2),(g << 3) | (g >> 2),(b << 3) | (b >> 2));
-	}
+		palette_set_color(Machine,(0x8000 + (offset/2)),pal5bit(data >> 1),pal5bit(data >> 6),pal5bit(data >> 11));
 }
 
 

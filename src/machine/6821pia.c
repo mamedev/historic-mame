@@ -95,7 +95,7 @@ static const UINT8 swizzle_address[4] = { 0, 2, 1, 3 };
 
 void pia_config(int which, int addressing, const pia6821_interface *intf)
 {
-	assert_always(mame_get_phase() == MAME_PHASE_INIT, "Can only call pia_config at init time!");
+	assert_always(mame_get_phase(Machine) == MAME_PHASE_INIT, "Can only call pia_config at init time!");
 	assert_always((which >= 0) && (which < MAX_PIA), "pia_config called on an invalid PIA!");
 	assert_always(intf, "pia_config called with an invalid interface!");
 

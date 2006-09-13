@@ -44,7 +44,7 @@ static mame_timer *blitter_timer;
 
 PALETTE_INIT( dcheese )
 {
-	UINT16 *src = (UINT16 *)memory_region(REGION_USER1);
+	const UINT16 *src = (UINT16 *)memory_region(REGION_USER1);
 	int i;
 
 	/* really 65536 colors, but they don't use the later ones so we can stay */
@@ -52,15 +52,7 @@ PALETTE_INIT( dcheese )
 	for (i = 0; i < 65534; i++)
 	{
 		int data = *src++;
-		int b = (data >> 11) & 0x1f;
-		int g = (data >> 6) & 0x1f;
-		int r = (data >> 0) & 0x3f;
-
-		/* up to 8 bits */
-		r = (r << 2) | (r >> 4);
-		g = (g << 3) | (g >> 2);
-		b = (b << 3) | (b >> 2);
-		palette_set_color(i, r, g, b);
+		palette_set_color(machine, i, pal6bit(data >> 0), pal5bit(data >> 6), pal5bit(data >> 11));
 	}
 }
 

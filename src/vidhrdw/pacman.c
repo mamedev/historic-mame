@@ -100,7 +100,7 @@ PALETTE_INIT( pacman )
 		bit1 = (color_prom[i] >> 6) & 0x01;
 		bit2 = (color_prom[i] >> 7) & 0x01;
 		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 	}
 
 	/* color_prom now points to the beginning of the lookup table */
@@ -348,7 +348,7 @@ Van Van
 WRITE8_HANDLER( vanvan_bgcolor_w )
 {
 	int c = 0xaa * (data & 1);
-	palette_set_color(0,c,c,c);
+	palette_set_color(Machine,0,c,c,c);
 }
 
 

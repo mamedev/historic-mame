@@ -2945,7 +2945,7 @@ static struct SCSPinterface scsp_interface =
 static VIDEO_UPDATE(critcrsh)
 {
 	int gun_x, gun_y;
-	video_update_stv_vdp2(screen, bitmap, cliprect);
+	video_update_stv_vdp2(machine, screen, bitmap, cliprect);
 	gun_x = readinputport(7);
 	gun_y = readinputport(8);
 	if ( gun_y <= 46 )
@@ -3919,7 +3919,7 @@ DRIVER_INIT( sfish2 )
 	rom[0xf10/4] = (rom[0xf10/4] & 0xff000000)|((rom[0xf10/4]/2)&0x00ffffff);
 	rom[0xf20/4] = (rom[0xf20/4] & 0xff000000)|((rom[0xf20/4]/2)&0x00ffffff);
 	rom[0xf30/4] = (rom[0xf30/4] & 0xff000000)|((rom[0xf30/4]/2)&0x00ffffff);
-	init_stv();
+	init_stv(machine);
 }
 
 DRIVER_INIT( sfish2j )
@@ -3929,7 +3929,7 @@ DRIVER_INIT( sfish2j )
 	rom[0xf10/4] = (rom[0xf10/4] & 0xff000000)|((rom[0xf10/4]/2)&0x00ffffff);
 	rom[0xf20/4] = (rom[0xf20/4] & 0xff000000)|((rom[0xf20/4]/2)&0x00ffffff);
 	rom[0xf30/4] = (rom[0xf30/4] & 0xff000000)|((rom[0xf30/4]/2)&0x00ffffff);
-	init_stv();
+	init_stv(machine);
 }
 
 

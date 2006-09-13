@@ -111,11 +111,7 @@ WRITE8_HANDLER( gundealr_paletteram_w )
 	b = (val >> 4) & 0x0f;
 	/* TODO: the bottom 4 bits are used as well, but I'm not sure about the meaning */
 
-	r = 0x11 * r;
-	g = 0x11 * g;
-	b = 0x11 * b;
-
-	palette_set_color(offset / 2,r,g,b);
+	palette_set_color(Machine,offset / 2,pal4bit(r),pal4bit(g),pal4bit(b));
 }
 
 WRITE8_HANDLER( gundealr_fg_scroll_w )

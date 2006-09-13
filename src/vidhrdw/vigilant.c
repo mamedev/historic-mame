@@ -40,7 +40,7 @@ static mame_bitmap *bg_bitmap;
 
 VIDEO_START( vigilant )
 {
-	video_start_generic();
+	video_start_generic(machine);
 
 	if ((bg_bitmap = auto_bitmap_alloc(512*4,256)) == 0)
 		return 1;
@@ -114,7 +114,7 @@ WRITE8_HANDLER( vigilant_paletteram_w )
 	g = (paletteram[bank + offset + 0x100] << 3) & 0xFF;
 	b = (paletteram[bank + offset + 0x200] << 3) & 0xFF;
 
-	palette_set_color((bank >> 2) + offset,r,g,b);
+	palette_set_color(Machine, (bank >> 2) + offset,r,g,b);
 }
 
 
@@ -299,13 +299,13 @@ VIDEO_UPDATE( vigilant )
 		g = (paletteram[0x500 + 16 * rear_color + i] << 3) & 0xFF;
 		b = (paletteram[0x600 + 16 * rear_color + i] << 3) & 0xFF;
 
-		palette_set_color(512 + i,r,g,b);
+		palette_set_color(machine,512 + i,r,g,b);
 
 		r = (paletteram[0x400 + 16 * rear_color + 32 + i] << 3) & 0xFF;
 		g = (paletteram[0x500 + 16 * rear_color + 32 + i] << 3) & 0xFF;
 		b = (paletteram[0x600 + 16 * rear_color + 32 + i] << 3) & 0xFF;
 
-		palette_set_color(512 + 16 + i,r,g,b);
+		palette_set_color(machine,512 + 16 + i,r,g,b);
 	}
 
 	if (rear_disable)	 /* opaque foreground */

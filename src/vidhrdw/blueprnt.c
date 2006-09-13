@@ -27,7 +27,7 @@ PALETTE_INIT( blueprnt )
 		int r = ((i >> 0) & 1) * ((i & 0x08) ? 0xbf : 0xff);
 		int g = ((i >> 2) & 1) * ((i & 0x08) ? 0xbf : 0xff);
 		int b = ((i >> 1) & 1) * ((i & 0x08) ? 0xbf : 0xff);
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 	}
 
 	/* chars */
@@ -136,7 +136,7 @@ VIDEO_UPDATE( blueprnt )
 		for (i = 0; i < 32; i++)
 			tilemap_set_scrolly(bg_tilemap, i, blueprnt_scrollram[30 - i]);
 
-	fillbitmap(bitmap, get_black_pen(), cliprect);
+	fillbitmap(bitmap, get_black_pen(machine), cliprect);
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 	blueprnt_draw_sprites(bitmap, cliprect);
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 1, 0);

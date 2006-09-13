@@ -71,7 +71,7 @@ static void lasso_set_color(int i, int data)
 	bit1 = (data >> 7) & 0x01;
 	b = 0x4f * bit0 + 0xa8 * bit1;
 
-	palette_set_color( i,r,g,b );
+	palette_set_color( Machine,i,r,g,b );
 }
 
 PALETTE_INIT( lasso )
@@ -90,7 +90,7 @@ PALETTE_INIT( wwjgtin )
 {
 	int color, pen;
 
-	palette_init_lasso(colortable,color_prom);
+	palette_init_lasso(machine,colortable,color_prom);
 
 	for( color = 0; color < 0x10; color++ )
 		for( pen = 0; pen < 16; pen++ )

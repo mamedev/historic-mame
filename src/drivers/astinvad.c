@@ -40,12 +40,7 @@ static PALETTE_INIT( astinvad )
 	int i;
 
 	for (i = 0; i < 8; i++)
-	{
-		palette_set_color(i,
-			(i & 1) ? 0xff : 0,
-			(i & 4) ? 0xff : 0,
-			(i & 2) ? 0xff : 0);
-	}
+		palette_set_color(machine, i, pal1bit(i >> 0), pal1bit(i >> 2), pal1bit(i >> 1));
 }
 
 

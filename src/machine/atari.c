@@ -37,7 +37,7 @@ static int a800_cart_is_16k = 0;
 static void a800xl_mmu(UINT8 new_mmu);
 static void a600xl_mmu(UINT8 new_mmu);
 
-static void pokey_reset(void);
+static void pokey_reset(running_machine *machine);
 
 static void make_chksum(UINT8 * chksum, UINT8 data);
 static void clr_serout(int expect_data);
@@ -696,14 +696,14 @@ static void a800_setbank(int n)
 
 
 
-static void pokey_reset(void)
+static void pokey_reset(running_machine *machine)
 {
 	pokey1_w(15,0);
 }
 
 
 
-static void cart_reset(void)
+static void cart_reset(running_machine *machine)
 {
 #ifdef MESS
 	if (a800_cart_loaded)
@@ -729,6 +729,16 @@ static void console_write(UINT8 data)
 }
 
 
+static void _pia_reset(running_machine *machine)
+{
+	pia_reset();
+}
+
+static void _antic_reset(running_machine *machine)
+{
+	antic_reset();
+}
+
 
 static void atari_machine_start(int type, const pia6821_interface *pia_intf, int has_cart)
 {
@@ -745,21 +755,21 @@ static void atari_machine_start(int type, const pia6821_interface *pia_intf, int
 	gtia_init(&gtia_intf);
 
 	/* pokey */
-	add_reset_callback(pokey_reset);
+	add_reset_callback(Machine, pokey_reset);
 
 	/* PIA */
 	if (pia_intf)
 	{
 		pia_config(0, PIA_ALTERNATE_ORDERING, pia_intf);
-		add_reset_callback(pia_reset);
+		add_reset_callback(Machine, _pia_reset);
 	}
 
 	/* ANTIC */
-	add_reset_callback(antic_reset);
+	add_reset_callback(Machine, _antic_reset);
 
 	/* cartridge */
 	if (has_cart)
-		add_reset_callback(cart_reset);
+		add_reset_callback(Machine, cart_reset);
 
 #ifdef MESS
 	{

@@ -44,6 +44,13 @@
 /*       c. Score not cleared when starting a new game                      */
 /*       d. Game begins on the wrong level                                  */
 /*                                                                          */
+/*  - Space War (Sanritsu)                                                  */
+/*                                                                          */
+/*    1. Game misbehaves frequently, usually on level 2                     */
+/*    2. I seem to recall that the flashing ufo had its own sample          */
+/*       sound, a sort of rattling noise. Unable to find evidence           */
+/*       of this in the hardware.                                           */
+/*                                                                          */
 /*                                                                          */
 /* Change Log:                                                              */
 /* ----------                                                               */
@@ -65,6 +72,10 @@
 /*                                                                          */
 /* 17 Jul 2006 - schaser - connect up prom - fix dipswitches                */
 /*               schasrcv - allow bottom line to show on screen             */
+/*                                                                          */
+/*                                                                          */
+/* 10 Sep 2006 - invadpt2 - add name reset button                           */
+/*               spcewars - add bitstream circuit, fix dipswitches          */
 /*                                                                          */
 /*                                                                          */
 /****************************************************************************/
@@ -280,7 +291,8 @@ INPUT_PORTS_START( invadpt2 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW,  IPT_UNKNOWN )	/* otherwise high score entry ends right away */
+	// Name Reset - if name of high scorer was rude, owner can press this button
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_OTHER ) PORT_NAME("Name Reset") PORT_CODE(KEYCODE_F1)
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START_TAG("IN1")
@@ -330,6 +342,80 @@ static MACHINE_DRIVER_START( invadpt2 )
 	MDRV_PALETTE_INIT(invadpt2)
 MACHINE_DRIVER_END
 
+/*******************************************************/
+/*                                                     */
+/* Space Wars (Sanritsu)                               */
+/*                                                     */
+/*******************************************************/
+
+INPUT_PORTS_START( spcewars )
+	PORT_START_TAG("IN0")
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START_TAG("IN1")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY
+	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
+
+	PORT_START_TAG("DSW0")
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_TILT )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "1500" )
+	PORT_DIPSETTING(    0x08, "2000" )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY PORT_PLAYER(2)
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY PORT_PLAYER(2)
+	PORT_DIPNAME( 0x80, 0x00, "Coin Info" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START_TAG("FAKE")		/* Dummy port for cocktail mode */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+INPUT_PORTS_END
+
+static MACHINE_DRIVER_START( spcewars )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(8080bw)
+	MDRV_CPU_MODIFY("main")
+	MDRV_MACHINE_RESET(spcewars)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(invaders_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(SN76477, 0)
+	MDRV_SOUND_CONFIG(invaders_sn76477_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	/* extra audio channel */
+	MDRV_SOUND_ADD(SPEAKER, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+MACHINE_DRIVER_END
 
 /*******************************************************/
 /*                                                     */
@@ -2248,9 +2334,9 @@ INPUT_PORTS_END
 
 static PALETTE_INIT( phantom2 )
 {
-	palette_set_color(0,0x00,0x00,0x00); /* black */
-	palette_set_color(1,0xff,0xff,0xff); /* white */
-	palette_set_color(2,0xc0,0xc0,0xc0); /* grey */
+	palette_set_color(machine,0,0x00,0x00,0x00); /* black */
+	palette_set_color(machine,1,0xff,0xff,0xff); /* white */
+	palette_set_color(machine,2,0xc0,0xc0,0xc0); /* grey */
 }
 
 
@@ -4386,7 +4472,7 @@ ROM_END
 	  GAMEL(19??, tst_invd, invaders, invaders, invaders, 8080bw,   ROT0,   "Test ROM", "Space Invaders Test ROM", 0, layout_invaders )
 	  GAMEL(19??, alieninv, invaders, invaders, earthinv, 8080bw,   ROT270, "bootleg", "Alien Invasion Part II", 0, layout_invaders )
 	  GAMEL(1978, spceking, invaders, invaders, spceking, 8080bw,   ROT270, "Leijac (Konami)","Space King", 0, layout_invaders )
-	  GAMEL(1978, spcewars, invaders, invaders, invadpt2, 8080bw,   ROT270, "Sanritsu", "Space War (Sanritsu)", 0, layout_invaders )
+	  GAMEL(1978, spcewars, invaders, spcewars, spcewars, 8080bw,   ROT270, "Sanritsu", "Space War (Sanritsu)", 0, layout_invaders )
 	  GAMEL(1978, spacewr3, invaders, invaders, spacewr3, 8080bw,   ROT270, "bootleg", "Space War Part 3", 0, layout_invaders )
 	  GAMEL(1978, invaderl, invaders, invaders, invaders, 8080bw,   ROT270, "bootleg", "Space Invaders (Logitec)", 0, layout_invaders )
 	  GAMEL(1978, invader4, invaders, invaders, invaders, 8080bw,   ROT270, "bootleg", "Space Invaders Part Four", 0, layout_invaders )

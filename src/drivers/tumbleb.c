@@ -619,7 +619,7 @@ ADDRESS_MAP_END
 
 READ16_HANDLER( semibase_unknown_r )
 {
-	return mame_rand();
+	return mame_rand(Machine);
 }
 static ADDRESS_MAP_START( htchctch_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
@@ -3186,7 +3186,7 @@ DRIVER_INIT( suprtrio )
 
 DRIVER_INIT( chokchok )
 {
-	init_htchctch();
+	init_htchctch(machine);
 
 	/* different palette format, closer to tumblep -- is this controlled by a register? the palette was right with the hatch catch trojan */
 	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x140000, 0x140fff, 0, 0, paletteram16_xxxxBBBBGGGGRRRR_word_w);

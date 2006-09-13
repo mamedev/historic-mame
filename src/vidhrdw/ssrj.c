@@ -276,7 +276,7 @@ PALETTE_INIT( ssrj )
 	int i,j;
 	for(i=0;i<4*4;i++)
 	 for(j=0;j<8;j++)
-	  palette_set_color(i*8+j,fakecols[i][j][0],fakecols[i][j][1],fakecols[i][j][2]);
+	  palette_set_color(machine,i*8+j,fakecols[i][j][0],fakecols[i][j][1],fakecols[i][j][2]);
 }
 
 VIDEO_UPDATE( ssrj )

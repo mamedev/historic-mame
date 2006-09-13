@@ -55,7 +55,7 @@ PALETTE_INIT( ojankoy )
 		bit4 = (color_prom[Machine->drv->total_colors] >> 4) & 0x01;
 		b = 0x08 * bit0 + 0x11 * bit1 + 0x21 * bit2 + 0x43 * bit3 + 0x82 * bit4;
 
-		palette_set_color(i, r, g, b);
+		palette_set_color(machine, i, r, g, b);
 		color_prom++;
 	}
 }
@@ -78,11 +78,7 @@ WRITE8_HANDLER( ojankohs_palette_w )
 			((ojankohs_paletteram[offset + 1] & 0xe0) >> 5);
 	b = (ojankohs_paletteram[offset + 1] & 0x1f) >> 0;
 
-	r = (r << 3) | (r >> 2);
-	g = (g << 3) | (g >> 2);
-	b = (b << 3) | (b >> 2);
-
-	palette_set_color(offset >> 1, r, g, b);
+	palette_set_color(Machine,offset >> 1, pal5bit(r), pal5bit(g), pal5bit(b));
 }
 
 WRITE8_HANDLER( ccasino_palette_w )
@@ -101,11 +97,7 @@ WRITE8_HANDLER( ccasino_palette_w )
 			((ojankohs_paletteram[offset + 1] & 0xe0) >> 5);
 	b = (ojankohs_paletteram[offset + 1] & 0x1f) >> 0;
 
-	r = (r << 3) | (r >> 2);
-	g = (g << 3) | (g >> 2);
-	b = (b << 3) | (b >> 2);
-
-	palette_set_color(offset >> 1, r, g, b);
+	palette_set_color(Machine,offset >> 1, pal5bit(r), pal5bit(g), pal5bit(b));
 }
 
 WRITE8_HANDLER( ojankoc_palette_w )
@@ -123,11 +115,7 @@ WRITE8_HANDLER( ojankoc_palette_w )
 	g = (color >>  5) & 0x1f;
 	b = (color >>  0) & 0x1f;
 
-	r = (r << 3) | (r >> 2);
-	g = (g << 3) | (g >> 2);
-	b = (b << 3) | (b >> 2);
-
-	palette_set_color(offset >> 1, r, g, b);
+	palette_set_color(Machine,offset >> 1, pal5bit(r), pal5bit(g), pal5bit(b));
 }
 
 

@@ -1267,7 +1267,7 @@ void amiga_add_autoconfig(amiga_autoconfig_device *device)
 	autoconfig_device *dev, **d;
 
 	/* validate the data */
-	assert_always(mame_get_phase() == MAME_PHASE_INIT, "Can only call amiga_add_autoconfig at init time!");
+	assert_always(mame_get_phase(Machine) == MAME_PHASE_INIT, "Can only call amiga_add_autoconfig at init time!");
 	assert_always((device->size & (device->size - 1)) == 0, "device->size must be power of 2!");
 
 	/* allocate memory and link it in at the end of the list */

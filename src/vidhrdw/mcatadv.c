@@ -167,7 +167,7 @@ VIDEO_UPDATE( mcatadv )
 {
 	int i, scrollx, scrolly, flip;
 
-	fillbitmap(bitmap, get_black_pen(), cliprect);
+	fillbitmap(bitmap, get_black_pen(machine), cliprect);
 	fillbitmap(priority_bitmap, 0, cliprect);
 
 	if(mcatadv_scroll[2] != palette_bank1) {

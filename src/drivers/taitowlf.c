@@ -32,7 +32,7 @@ static VIDEO_START(taitowlf)
 	int i;
 	for (i=0; i < 16; i++)
 	{
-		palette_set_color(i, cga_palette[i][0], cga_palette[i][1], cga_palette[i][2]);
+		palette_set_color(machine, i, cga_palette[i][0], cga_palette[i][1], cga_palette[i][2]);
 	}
 	return 0;
 }

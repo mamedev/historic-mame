@@ -44,6 +44,7 @@
 #include <string.h>
 
 // MAME output header file
+typedef void running_machine;
 #include "output.h"
 
 

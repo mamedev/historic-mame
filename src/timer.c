@@ -245,7 +245,7 @@ INLINE void timer_list_remove(mame_timer *timer)
     timer_init - initialize the timer system
 -------------------------------------------------*/
 
-void timer_init(void)
+void timer_init(running_machine *machine)
 {
 	int i;
 

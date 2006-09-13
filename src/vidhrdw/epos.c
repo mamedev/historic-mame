@@ -51,7 +51,7 @@ PALETTE_INIT( epos )
 		bit1 = (*color_prom >> 0) & 0x01;
 		b = 0xad * bit0 + 0x52 * bit1;
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 
 		color_prom++;
 	}

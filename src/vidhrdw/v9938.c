@@ -112,19 +112,11 @@ b0 is set if b2 and b1 are set (remember, color bus is 3 bits)
 
 PALETTE_INIT( v9938 )
 {
-	int	i, red, green, blue;
+	int	i;
 
 	/* create the full 512 colour palette */
 	for (i=0;i<512;i++)
-	{
-		red = (i >> 6) & 7;		/* red */
-		red = (red << 5) | (red << 2) | (red >> 1);			/* convert to 8 bits */
-		green = (i >> 3) & 7;	/* green */
-		green = (green << 5) | (green << 2) | (green >> 1);	/* convert to 8 bits */
-		blue = i & 7;			/* blue */
-		blue = (blue << 5) | (blue << 2) | (blue >> 1);		/* convert to 8 bits */
-		palette_set_color(i, red, green, blue);
-	}
+		palette_set_color(machine, i, pal3bit(i >> 6), pal3bit(i >> 3), pal3bit(i >> 0));
 }
 
 /*
@@ -144,7 +136,7 @@ PALETTE_INIT( v9958 )
 	unsigned char pal[19268*3];
 
 	/* init v9938 512-color palette */
-	palette_init_v9938(colortable, color_prom);
+	palette_init_v9938(machine, colortable, color_prom);
 
 	/* set up YJK table */
 	if (!pal_indYJK)
@@ -187,7 +179,7 @@ PALETTE_INIT( v9958 )
 			pal[i*3+0] = r;
 			pal[i*3+1] = g;
 			pal[i*3+2] = b;
-			palette_set_color(i+512, r, g, b);
+			palette_set_color(machine, i+512, r, g, b);
 			pal_indYJK[y | j << 5 | k << (5 + 6)] = i + 512;
 			i++;
 		}
@@ -415,7 +407,7 @@ WRITE8_HANDLER (v9938_command_w)
 
 ***************************************************************************/
 
-int v9938_init (int model, int vram_size, void (*callback)(int) )
+int v9938_init (running_machine *machine, int model, int vram_size, void (*callback)(int) )
 {
 	memset (&vdp, 0, sizeof (vdp) );
 
@@ -442,7 +434,7 @@ int v9938_init (int model, int vram_size, void (*callback)(int) )
 	else
 		vdp.vram_exp = NULL;
 
-	return video_start_generic_bitmapped();
+	return video_start_generic_bitmapped(machine);
 }
 
 void v9938_reset (void)

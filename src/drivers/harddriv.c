@@ -3183,14 +3183,14 @@ ROM_END
 /* COMMON INIT: find all the CPUs */
 static void find_cpus(void)
 {
-	hdcpu_main = mame_find_cpu_index("main");
-	hdcpu_gsp = mame_find_cpu_index("gsp");
-	hdcpu_msp = mame_find_cpu_index("msp");
-	hdcpu_adsp = mame_find_cpu_index("adsp");
-	hdcpu_sound = mame_find_cpu_index("sound");
-	hdcpu_sounddsp = mame_find_cpu_index("sounddsp");
-	hdcpu_jsa = mame_find_cpu_index("jsa");
-	hdcpu_dsp32 = mame_find_cpu_index("dsp32");
+	hdcpu_main = mame_find_cpu_index(Machine, "main");
+	hdcpu_gsp = mame_find_cpu_index(Machine, "gsp");
+	hdcpu_msp = mame_find_cpu_index(Machine, "msp");
+	hdcpu_adsp = mame_find_cpu_index(Machine, "adsp");
+	hdcpu_sound = mame_find_cpu_index(Machine, "sound");
+	hdcpu_sounddsp = mame_find_cpu_index(Machine, "sounddsp");
+	hdcpu_jsa = mame_find_cpu_index(Machine, "jsa");
+	hdcpu_dsp32 = mame_find_cpu_index(Machine, "dsp32");
 }
 
 

@@ -138,41 +138,21 @@ VIDEO_START( zwackery )
 
 WRITE16_HANDLER( mcr68_paletteram_w )
 {
-	int newword, r, g, b;
+	int newword;
 
 	COMBINE_DATA(&paletteram16[offset]);
 	newword = paletteram16[offset];
-
-	r = (newword >> 6) & 7;
-	b = (newword >> 3) & 7;
-	g = (newword >> 0) & 7;
-
-	/* up to 8 bits */
-	r = (r << 5) | (r << 2) | (r >> 1);
-	g = (g << 5) | (g << 2) | (g >> 1);
-	b = (b << 5) | (b << 2) | (b >> 1);
-
-	palette_set_color(offset, r, g, b);
+	palette_set_color(Machine, offset, pal3bit(newword >> 6), pal3bit(newword >> 0), pal3bit(newword >> 3));
 }
 
 
 WRITE16_HANDLER( zwackery_paletteram_w )
 {
-	int newword, r, g, b;
+	int newword;
 
 	COMBINE_DATA(&paletteram16[offset]);
 	newword = paletteram16[offset];
-
-	r = (~newword >> 10) & 31;
-	b = (~newword >> 5) & 31;
-	g = (~newword >> 0) & 31;
-
-	/* up to 8 bits */
-	r = (r << 3) | (r >> 2);
-	g = (g << 3) | (g >> 2);
-	b = (b << 3) | (b >> 2);
-
-	palette_set_color(offset, r, g, b);
+	palette_set_color(Machine, offset, pal5bit(~newword >> 10), pal5bit(~newword >> 0), pal5bit(~newword >> 5));
 }
 
 

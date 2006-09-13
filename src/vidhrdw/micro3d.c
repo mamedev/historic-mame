@@ -55,17 +55,7 @@ extern UINT8 ti_uart[8];
 
 void changecolor_BBBBBRRRRRGGGGGG(pen_t color,int data)
 {
-	int r,g,b;
-
-	r = (data >>  6) & 0x1f;
-	g = (data >>  1) & 0x1f;
-	b = (data >>  11) & 0x1f;
-
-	r = (r << 3) | (r >> 2);
-	g = (g << 3) | (g >> 2);
-	b = (b << 3) | (b >> 2);
-
-	palette_set_color(color,r,g,b);
+	palette_set_color(Machine,color,pal5bit(data >> 6),pal5bit(data >> 1),pal5bit(data >> 11));
 }
 
 WRITE16_HANDLER( paletteram16_BBBBBRRRRRGGGGGG_word_w )
@@ -101,7 +91,7 @@ static int bank=0;
 if(keyboard_pressed(KEYCODE_F1))
 {
   UINT8 transmit=0;
-                mame_pause(1);
+                mame_pause(Machine, 1);
 
                 do
             {
@@ -145,7 +135,7 @@ if(keyboard_pressed(KEYCODE_F1))
       M68681.RBA=transmit<<8;
       M68681.SRA|=0x100;
 
-    mame_pause(0);
+    mame_pause(Machine, 0);
     return 0;
 }
 */

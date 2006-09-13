@@ -53,9 +53,9 @@ WRITE8_HANDLER( paradise_palette_w )
 {
 	paletteram[offset] = data;
 	offset %= 0x800;
-	palette_set_color(offset,	paletteram[offset + 0x800 * 0],
-								paletteram[offset + 0x800 * 1],
-								paletteram[offset + 0x800 * 2]	);
+	palette_set_color(Machine,offset,	paletteram[offset + 0x800 * 0],
+										paletteram[offset + 0x800 * 1],
+										paletteram[offset + 0x800 * 2]	);
 }
 
 /***************************************************************************
@@ -89,9 +89,9 @@ WRITE8_HANDLER( paradise_palbank_w )
 	int bank2 = (data & 0xf0);
 
 	for (i = 0; i < 15; i++)
-		palette_set_color(0x800+i,	paletteram[0x200 + bank2 + i + 0x800 * 0],
-									paletteram[0x200 + bank2 + i + 0x800 * 1],
-									paletteram[0x200 + bank2 + i + 0x800 * 2]	);
+		palette_set_color(Machine,0x800+i,	paletteram[0x200 + bank2 + i + 0x800 * 0],
+											paletteram[0x200 + bank2 + i + 0x800 * 1],
+											paletteram[0x200 + bank2 + i + 0x800 * 2]	);
 	if (paradise_palbank != bank1)
 	{
 		paradise_palbank = bank1;
@@ -266,7 +266,7 @@ if (code_pressed(KEYCODE_Z))
 }
 #endif
 
-	fillbitmap(bitmap,get_black_pen(),cliprect);
+	fillbitmap(bitmap,get_black_pen(machine),cliprect);
 
 	if (!(paradise_priority & 4))	/* Screen blanking */
 		return 0;
@@ -296,7 +296,7 @@ if (code_pressed(KEYCODE_Z))
 /* no pix layer, no tilemap_0, different priority bits */
 VIDEO_UPDATE( torus )
 {
-	fillbitmap(bitmap,get_black_pen(),cliprect);
+	fillbitmap(bitmap,get_black_pen(machine),cliprect);
 
 	if (!(paradise_priority & 2))	/* Screen blanking */
 		return 0;
@@ -326,7 +326,7 @@ VIDEO_UPDATE( torus )
 /* I don't know how the priority bits work on this one */
 VIDEO_UPDATE( madball )
 {
-	fillbitmap(bitmap,get_black_pen(),cliprect);
+	fillbitmap(bitmap,get_black_pen(machine),cliprect);
 	tilemap_draw(bitmap,cliprect, tilemap_0, 0,0);
 	tilemap_draw(bitmap,cliprect, tilemap_1, 0,0);
 	tilemap_draw(bitmap,cliprect, tilemap_2, 0,0);

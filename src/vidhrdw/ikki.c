@@ -18,20 +18,14 @@ PALETTE_INIT( ikki )
 
 	for (i = 0; i<256; i++)
 	{
-		int r,g,b;
-
-		r = color_prom[0]*0x11;
-		g = color_prom[256]*0x11;
-		b = color_prom[2*256]*0x11;
-
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,pal4bit(color_prom[0]),pal4bit(color_prom[256]),pal4bit(color_prom[2*256]));
 
 		color_prom++;
 	}
 
 	/* 256th color is not drawn on screen */
 	/* this is used for special transparent function */
-	palette_set_color(256,0,0,1);
+	palette_set_color(machine,256,0,0,1);
 
 	color_prom += 2*256;
 

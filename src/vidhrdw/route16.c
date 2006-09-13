@@ -322,13 +322,9 @@ VIDEO_UPDATE( route16 )
  ***************************************************************************/
 static void modify_pen(int pen, int colorindex)
 {
-	int r,g,b,color;
+	int color;
 
 	color = route16_color_prom[colorindex];
 
-	r = ((color & 1) ? 0xff : 0x00);
-	g = ((color & 2) ? 0xff : 0x00);
-	b = ((color & 4) ? 0xff : 0x00);
-
-	palette_set_color(pen,r,g,b);
+	palette_set_color(Machine,pen,pal1bit(color >> 0),pal1bit(color >> 1),pal1bit(color >> 2));
 }

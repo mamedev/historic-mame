@@ -69,7 +69,7 @@ VIDEO_START( jedi )
 		return 1;
 
 	/* reserve color 1024 for black (disabled display) */
-	palette_set_color(1024, 0, 0, 0);
+	palette_set_color(machine, 1024, 0, 0, 0);
 
 	/* register for saving */
 	state_save_register_global(jedi_vscroll);
@@ -126,7 +126,7 @@ WRITE8_HANDLER( jedi_paletteram_w )
 	bits = (color >> 0) & 7;
 	b = 5 * bits * intensity;
 
-	palette_set_color(offset & 0x3ff, r, g, b);
+	palette_set_color(Machine, offset & 0x3ff, r, g, b);
 }
 
 

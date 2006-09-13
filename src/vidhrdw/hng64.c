@@ -1051,7 +1051,6 @@ static void plotTilemap3Line(mame_bitmap *tilemapBitmap,
 							 INT32 screenY, mame_bitmap *bitmap)
 {
 	int i ;
-	UINT8 r, g, b ;
 
 	int numPix ;
 	UINT16 penList[0x1000] ;			// 4k of pixels to be safe
@@ -1081,9 +1080,8 @@ static void plotTilemap3Line(mame_bitmap *tilemapBitmap,
 	{
 		// Nearest-neighbor interpolation for now (but i doubt it does linear)
 		UINT16 tmPen = penList[(int)pixOffset] ;
-		palette_get_color(tmPen, &r, &g, &b);
 
-		((UINT32 *)(bitmap->line[screenY]))[i] = MAKE_ARGB((UINT8)255, (UINT8)r, (UINT8)g, (UINT8)b) ;
+		((UINT32 *)(bitmap->line[screenY]))[i] = palette_get_color(Machine, tmPen) | 0xff000000;
 
 		pixOffset += pixStride ;
 	}
@@ -1238,7 +1236,7 @@ static void hng64_drawtilemap1( mame_bitmap *bitmap, const rectangle *cliprect )
 
 VIDEO_UPDATE( hng64 )
 {
-	fillbitmap(bitmap, get_black_pen(), 0);
+	fillbitmap(bitmap, get_black_pen(machine), 0);
 
 	// Debug
 //  for (int iii = 0; iii < 0x0f; iii++)

@@ -80,7 +80,7 @@ READ16_HANDLER(galpanib_calc_r)
 			return (((UINT32)hit.mult_a * (UINT32)hit.mult_b) & 0xffff);
 
 		case 0x14/2:
-			return (mame_rand() & 0xffff);
+			return (mame_rand(Machine) & 0xffff);
 
 		default:
 			logerror("CPU #0 PC %06x: warning - read unmapped calc address %06x\n",activecpu_get_pc(),offset<<1);

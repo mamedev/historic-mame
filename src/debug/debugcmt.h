@@ -18,7 +18,7 @@
 #define DEBUG_COMMENT_MAX_NUM (0x10000)		/* 64k comments should be good for awhile */
 
 /* init and exit */
-int debug_comment_init(void);
+int debug_comment_init(running_machine *machine);
 
 /* load and save */
 int debug_comment_save(void);

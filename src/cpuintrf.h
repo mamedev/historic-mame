@@ -438,7 +438,7 @@ typedef struct _cpu_interface cpu_interface;
  *************************************/
 
 /* reset the internal CPU tracking */
-void cpuintrf_init(void);
+void cpuintrf_init(running_machine *machine);
 
 /* set up the interface for one CPU of a given type */
 int	cpuintrf_init_cpu(int cpunum, int cputype, int clock, const void *config, int (*irqcallback)(int));

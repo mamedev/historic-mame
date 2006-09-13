@@ -77,7 +77,7 @@ PALETTE_INIT(darkmist)
 	int i;
 
 	/* black color */
-	palette_set_color(0x100, 0,0,0);
+	palette_set_color(machine, 0x100, 0,0,0);
 
 	/* color lookup tables */
 
@@ -120,15 +120,9 @@ PALETTE_INIT(darkmist)
 
 WRITE8_HANDLER(darkmist_palette_w)
 {
-	int r,g,b;
-
 	paletteram[offset]=data;
 	offset&=0xff;
-	r=paletteram[offset+0x200]&0xf;
-	g=(paletteram[offset])>>4;
-	b=paletteram[offset]&0x0f;
-
-	palette_set_color(offset, r * 0x11, g * 0x11, b * 0x11);
+	palette_set_color(Machine, offset, pal4bit(paletteram[offset+0x200]), pal4bit(paletteram[offset] >> 4), pal4bit(paletteram[offset]));
 }
 
 READ8_HANDLER(darkmist_palette_r)
@@ -162,7 +156,7 @@ VIDEO_UPDATE( darkmist)
 	tilemap_set_scrollx(fgtilemap, 0, DM_GETSCROLL(0xa));
 	tilemap_set_scrolly(fgtilemap, 0, DM_GETSCROLL(0xe));
 
-	fillbitmap(bitmap, get_black_pen(), &Machine->screen[0].visarea);
+	fillbitmap(bitmap, get_black_pen(machine), &Machine->screen[0].visarea);
 
 	if(darkmist_hw & DISPLAY_BG)
 	{

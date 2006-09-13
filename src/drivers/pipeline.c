@@ -192,7 +192,7 @@ static WRITE8_HANDLER(vram2_w)
 		 if(offset<0x300)
 		 {
 		 	offset&=0xff;
-		 	palette_set_color(offset, palram[offset]<<2, palram[offset+0x100]<<2, palram[offset+0x200]<<2);
+		 	palette_set_color(Machine, offset, pal6bit(palram[offset]), pal6bit(palram[offset+0x100]), pal6bit(palram[offset+0x200]));
 		 }
 	}
 }
@@ -349,7 +349,7 @@ static PALETTE_INIT(pipeline)
 		r*=36;
 		g*=36;
 		b*=85;
-		palette_set_color(0x100+i, r, g, b);
+		palette_set_color(machine, 0x100+i, r, g, b);
 	}
 }
 

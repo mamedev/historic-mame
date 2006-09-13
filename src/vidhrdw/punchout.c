@@ -42,7 +42,7 @@ static UINT8 top_palette_bank,bottom_palette_bank;
   bit 0 -- 2  kohm resistor -- inverter  -- RED/GREEN/BLUE
 
 ***************************************************************************/
-static void convert_palette(const UINT8 *color_prom)
+static void convert_palette(running_machine *machine,const UINT8 *color_prom)
 {
 	int i;
 
@@ -68,13 +68,13 @@ static void convert_palette(const UINT8 *color_prom)
 		bit3 = (color_prom[2*1024] >> 3) & 0x01;
 		b = 255 - (0x10 * bit0 + 0x21 * bit1 + 0x46 * bit2 + 0x88 * bit3);
 
-		palette_set_color(i,r,g,b);
+		palette_set_color(machine,i,r,g,b);
 		color_prom++;
 	}
 
 	/* reserve the last color for the transparent pen (none of the game colors has */
 	/* these RGB components) */
-	palette_set_color(1024,240,240,240);
+	palette_set_color(machine,1024,240,240,240);
 }
 
 
@@ -88,7 +88,7 @@ PALETTE_INIT( punchout )
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + (offs)])
 
 
-	convert_palette(color_prom);
+	convert_palette(machine,color_prom);
 
 
 	/* top monitor chars */
@@ -121,7 +121,7 @@ PALETTE_INIT( armwrest )
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + (offs)])
 
 
-	convert_palette(color_prom);
+	convert_palette(machine,color_prom);
 
 
 	/* top monitor / bottom monitor backround chars */

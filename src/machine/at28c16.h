@@ -16,10 +16,10 @@ extern void at28c16_a9_12v( int chip, int a9_12v );
 
 /* nvram handlers */
 
-extern void nvram_handler_at28c16_0( mame_file *file, int read_or_write );
-extern void nvram_handler_at28c16_1( mame_file *file, int read_or_write );
-extern void nvram_handler_at28c16_2( mame_file *file, int read_or_write );
-extern void nvram_handler_at28c16_3( mame_file *file, int read_or_write );
+NVRAM_HANDLER( at28c16_0 );
+NVRAM_HANDLER( at28c16_1 );
+NVRAM_HANDLER( at28c16_2 );
+NVRAM_HANDLER( at28c16_3 );
 
 /* 16bit memory handlers */
 

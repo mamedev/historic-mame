@@ -591,7 +591,7 @@ static WRITE8_HANDLER(cfb_backgnd_color_w)
 		bit0 = (data >> 0) & 0x01;
 		b = combine_3_weights(weights_b, bit0, bit1, bit2);
 
-		palette_set_color(255, r, g, b);
+		palette_set_color(Machine, 255, r, g, b);
 		//logerror("background color (port 01) write=%02x\n",data);
 	}
 }
@@ -984,7 +984,7 @@ unsigned char * rom = memory_region(REGION_CPU3) + (gfx_rom_bank * 0x2000) + 0x1
 						b = combine_3_weights(weights_b, bit0, bit1, bit2);
 
 						if ((x+y*16)<255)//keep color 255 free for use as background color
-							palette_set_color(x+y*16, r, g, b);
+							palette_set_color(Machine, x+y*16, r, g, b);
 
 						lookup_RAM[ lookup_offs + x + y*16 ] = colour;
 					}

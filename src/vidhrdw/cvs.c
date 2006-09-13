@@ -233,7 +233,7 @@ WRITE8_HANDLER( cvs_bullet_w )
 		data ^= 0xff;
 
 		paletteram[offset] = data;
-		palette_set_color(offset, pal2bit(data >> 0), pal3bit(data >> 2), pal3bit(data >> 5));
+		palette_set_color(Machine, offset, pal2bit(data >> 0), pal3bit(data >> 2), pal3bit(data >> 5));
     }
 }
 
@@ -369,7 +369,7 @@ VIDEO_START( cvs )
 	colorram = auto_malloc(0x400);
 	paletteram = auto_malloc(0x100);
 
-	video_start_generic();
+	video_start_generic(machine);
 
 	/* precalculate the star background */
 

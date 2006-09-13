@@ -27,7 +27,7 @@ gtia_struct gtia;
 #define CHECK_GRACTL	0
 #define VERBOSE			0
 
-static void gtia_reset(void);
+static void gtia_reset(running_machine *machine);
 static void gtia_state(void);
 static void gtia_state_postload(void);
 
@@ -68,7 +68,7 @@ void gtia_init(const gtia_interface *intf)
 	memset(&gtia, 0, sizeof(gtia));
 	gtia.intf = *intf;
 
-	add_reset_callback(gtia_reset);
+	add_reset_callback(Machine, gtia_reset);
 
 	/* state saves */
 	gtia_state();
@@ -151,7 +151,7 @@ static int is_ntsc(void)
 
 
 
-static void gtia_reset(void)
+static void gtia_reset(running_machine *machine)
 {
 	int i;
     /* reset the GTIA read/write/helper registers */

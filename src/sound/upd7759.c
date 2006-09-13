@@ -164,12 +164,12 @@ struct upd7759_chip
 	void (*drqcallback)(int param);			/* drq callback */
 
 	/* internal state machine */
-	int			state;						/* current overall chip state */
-	int			clocks_left;				/* number of clocks left in this state */
-	int			nibbles_left;				/* number of ADPCM nibbles left to process */
-	int			repeat_count;				/* number of repeats remaining in current repeat block */
-	int			post_drq_state;				/* state we will be in after the DRQ line is dropped */
-	int			post_drq_clocks;			/* clocks that will be left after the DRQ line is dropped */
+	INT8		state;						/* current overall chip state */
+	INT32		clocks_left;				/* number of clocks left in this state */
+	UINT16		nibbles_left;				/* number of ADPCM nibbles left to process */
+	UINT8		repeat_count;				/* number of repeats remaining in current repeat block */
+	INT8		post_drq_state;				/* state we will be in after the DRQ line is dropped */
+	INT32		post_drq_clocks;			/* clocks that will be left after the DRQ line is dropped */
 	UINT8		req_sample;					/* requested sample number */
 	UINT8		last_sample;				/* last sample number available */
 	UINT8		block_header;				/* header byte */
@@ -186,6 +186,7 @@ struct upd7759_chip
 	/* ROM access */
 	UINT8 *		rom;						/* pointer to ROM data or NULL for slave mode */
 	UINT8 *		rombase;					/* pointer to ROM data or NULL for slave mode */
+	UINT32		romoffset;					/* ROM offset to make save/restore easier */
 };
 
 
@@ -404,7 +405,7 @@ static void advance_state(struct upd7759_chip *chip)
 		/* The expected response will be the first data byte */
 		case STATE_NIBBLE_COUNT:
 			chip->nibbles_left = (chip->rom ? chip->rom[chip->offset++ & 0x1ffff] : chip->fifo_in) + 1;
-			if (DEBUG_STATES) DEBUG_METHOD("UPD7759: nibble_count = %d, requesting next byte\n", chip->nibbles_left);
+			if (DEBUG_STATES) DEBUG_METHOD("UPD7759: nibble_count = %u, requesting next byte\n", (unsigned)chip->nibbles_left);
 			chip->drq = 1;
 
 			/* 36?? cycles later, we will latch this value and request another byte */
@@ -578,6 +579,47 @@ static void upd7759_reset(struct upd7759_chip *chip)
 }
 
 
+static void upd7759_postload(void *param)
+{
+	struct upd7759_chip *chip = (struct upd7759_chip *)param;
+	chip->rom = chip->rombase + chip->romoffset;
+}
+
+
+static void register_for_save(struct upd7759_chip *chip, int index)
+{
+	state_save_register_item("upd7759", index, chip->pos);
+	state_save_register_item("upd7759", index, chip->step);
+	state_save_register_item("upd7759", index, chip->clock_period);
+
+	state_save_register_item("upd7759", index, chip->fifo_in);
+	state_save_register_item("upd7759", index, chip->reset);
+	state_save_register_item("upd7759", index, chip->start);
+	state_save_register_item("upd7759", index, chip->drq);
+
+	state_save_register_item("upd7759", index, chip->state);
+	state_save_register_item("upd7759", index, chip->clocks_left);
+	state_save_register_item("upd7759", index, chip->nibbles_left);
+	state_save_register_item("upd7759", index, chip->repeat_count);
+	state_save_register_item("upd7759", index, chip->post_drq_state);
+	state_save_register_item("upd7759", index, chip->post_drq_clocks);
+	state_save_register_item("upd7759", index, chip->req_sample);
+	state_save_register_item("upd7759", index, chip->last_sample);
+	state_save_register_item("upd7759", index, chip->block_header);
+	state_save_register_item("upd7759", index, chip->sample_rate);
+	state_save_register_item("upd7759", index, chip->first_valid_header);
+	state_save_register_item("upd7759", index, chip->offset);
+	state_save_register_item("upd7759", index, chip->repeat_offset);
+
+	state_save_register_item("upd7759", index, chip->adpcm_state);
+	state_save_register_item("upd7759", index, chip->adpcm_data);
+	state_save_register_item("upd7759", index, chip->sample);
+
+	state_save_register_item("upd7759", index, chip->romoffset);
+	state_save_register_func_postload_ptr(upd7759_postload, chip);
+}
+
+
 static void *upd7759_start(int sndindex, int clock, const void *config)
 {
 	const struct upd7759_interface *intf = config;
@@ -613,6 +655,8 @@ static void *upd7759_start(int sndindex, int clock, const void *config)
 
 	/* toggle the reset line to finish the reset */
 	upd7759_reset(chip);
+
+	register_for_save(chip, sndindex);
 
 	return chip;
 }
@@ -684,6 +728,7 @@ void upd7759_set_bank_base(int which, UINT32 base)
 {
 	struct upd7759_chip *chip = sndti_token(SOUND_UPD7759, which);
 	chip->rom = chip->rombase + base;
+	chip->romoffset = base;
 }
 
 

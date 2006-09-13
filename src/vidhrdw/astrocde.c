@@ -114,7 +114,7 @@ PALETTE_INIT( astrocde )
 				B = 255;
 
 			/* Round, and set the value */
-			palette_set_color(i*8+j,floor(R+.5),floor(G+.5),floor(B+.5));
+			palette_set_color(machine,i*8+j,floor(R+.5),floor(G+.5),floor(B+.5));
 		}
 	}
 }
@@ -336,19 +336,19 @@ WRITE8_HANDLER( profpac_screenram_ctrl_w )
 {
 	switch (offset)
 	{
-		UINT8 r, g, b;
+		rgb_t color;
 
 		case 0: /* port 0xC0 - red component */
-			palette_get_color( (data>>4)&0x0f, &r, &g, &b);
-			palette_set_color( (data>>4)&0x0f, (data&0x0f)*0x11, g, b );
+			color = palette_get_color(Machine, (data>>4)&0x0f);
+			palette_set_color(Machine, (data>>4)&0x0f, pal4bit(data), RGB_GREEN(color), RGB_BLUE(color) );
 		break;
 		case 1: /* port 0xC1 - green component */
-			palette_get_color( (data>>4)&0x0f, &r, &g, &b);
-			palette_set_color( (data>>4)&0x0f, r, (data&0x0f)*0x11, b );
+			color = palette_get_color(Machine, (data>>4)&0x0f);
+			palette_set_color(Machine, (data>>4)&0x0f, RGB_RED(color), pal4bit(data), RGB_BLUE(color) );
 		break;
 		case 2: /* port 0xC2 - blue component */
-			palette_get_color( (data>>4)&0x0f, &r, &g, &b);
-			palette_set_color( (data>>4)&0x0f, r, g, (data&0x0f)*0x11 );
+			color = palette_get_color(Machine, (data>>4)&0x0f);
+			palette_set_color(Machine, (data>>4)&0x0f, RGB_RED(color), RGB_GREEN(color), pal4bit(data) );
 		break;
 		case 3: /* port 0xC3 - set 2bpp to 4bpp mapping */
 			profpac_color_mapping[(data>>4)&0x03] = data&0x0f;
@@ -923,7 +923,7 @@ VIDEO_START( astrocde_stars )
 {
 	int res;
 
-	res = video_start_astrocde();
+	res = video_start_astrocde(machine);
 
 	sparkle[0][0] = 1;	/* wow doesn't initialize this */
 	init_star_field();
@@ -1066,7 +1066,7 @@ VIDEO_UPDATE( seawolf2 )
 	int player = program_read_byte(0xc1fb);
 
 
-	video_update_astrocde(screen,bitmap,cliprect);
+	video_update_astrocde(machine,screen,bitmap,cliprect);
 
 
 	/* Draw a sight */

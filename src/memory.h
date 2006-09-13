@@ -893,8 +893,8 @@ void io_write_qword_64le(offs_t address, UINT64 data);
 ***************************************************************************/
 
 /* ----- memory setup function ----- */
-int			memory_init(void);
-void		memory_exit(void);
+int			memory_init(running_machine *machine);
+void		memory_exit(running_machine *machine);
 void		memory_set_context(int activecpu);
 
 /* ----- address map functions ----- */

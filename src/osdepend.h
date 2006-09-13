@@ -18,7 +18,7 @@
 #include "timer.h"
 #include <stdarg.h>
 
-int osd_init(void);
+int osd_init(running_machine *machine);
 
 
 void osd_wait_for_debugger(void);
