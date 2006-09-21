@@ -3513,18 +3513,10 @@ ROM_END
 /*
 
 Shooting Master (EVG)
-
-Anno
-
-1985
-Produttore
-
-E.V.G. SRL Milano made in Italy (Sega license)
-
-N.revisione
+Year: 1985
+Manufacturer: E.V.G. SRL Milano made in Italy (Sega license)
 
 CPU
-
 1x Z8400AB1-Z80ACPU-Y28548 (main board)
 1x iC8751H-88-L5310039 (main board)
 1x AMD P8255A-8526YP (main board)
@@ -3533,17 +3525,15 @@ CPU
 1x SEGA 315-5049-8551PX (main board)
 1x SEGA 315-5139-8537-CK2605-V-J (main board)
 1x oscillator 20.000MHz (main board)
-
 1x SYS Z8400AB1-Z80ACPU-Y28535 (upper board)
 1x NEC D8255AC-2 (upper board)
 1x oscillator 4.9152MHz (upper board)
-ROMs
 
+ROMs
 1x HN27256G-25 (7043)(main board close to Z80)
 2x HN27256G-25 (7101-7102)(main board close to C8751)
 3x HN27256G-25 (7040-7041-7042)(main board close to 315-5049)
 2x PAL16R4A (315-5137 and 315-5138)
-
 1x HN27256G-25 (7100)(upper board close to oscillator)
 7x HN27256G-25 (7104 to 7110)(upper board close to Z80 and 8255)
 
@@ -3562,7 +3552,7 @@ ROMs
 7109.25 = epr7109       Shooting Master
 7110.26 = epr7110       Shooting Master
 8751.74.bad.dump NO MATCH
-pal16r4a(315-5137).jed NOT A ROM
+pal16r4a(315-5137).jed NOT A ROM  --> converted into bin format on 20060915
 pal16r4a(315-5138).jed = pal16r4a.ic9  Choplifter
              = pal16r4a.ic9  Choplifter (bootleg)
 
@@ -3598,11 +3588,10 @@ ROM_START( shtngmsa )
 	ROM_LOAD( "epr7112",      0x0100, 0x0100, CRC(46fbd351) SHA1(1fca7fbc5d5f8e13e58bbac735511bd0af392446) ) /* palette green component */
 	ROM_LOAD( "epr7111",      0x0200, 0x0100, CRC(8123b6b9) SHA1(fb2c5498f0603b5cd270402a738c891a85453666) ) /* palette blue component */
 	ROM_LOAD( "epr5317",      0x0300, 0x0100, CRC(648350b8) SHA1(c7986aa9127ef5b50b845434cb4e81dff9861cd2) ) /* timing? (not used) */
-	ROM_REGION( 0x0b5c, REGION_PLDS, ROMREGION_DISPOSE )
-	ROM_LOAD( "pal16r4a.ic9",  0x0000, 0x0104, CRC(dd223015) SHA1(8d70f91b118e8653dda1efee3eaea287ae63809f) )
 
-	/* convert this! */
-	ROM_LOAD( "pal16r4a(315-5137).jed",  0x0000, 0x0b5c, CRC(6a54e399) SHA1(ad6ec6a14aa76e5f4791c42e8351788458fbfcaf) )
+	ROM_REGION( 0x0400, REGION_PLDS, ROMREGION_DISPOSE )
+	ROM_LOAD( "pal16r4a.ic9",  0x0000, 0x0104, CRC(dd223015) SHA1(8d70f91b118e8653dda1efee3eaea287ae63809f) ) /* label on chip is: 315-5137 */
+	ROM_LOAD( "pal16r4a(315-5137).bin",  0x0200, 0x0104, CRC(6ffd9e6f) SHA1(a60a3a2ec5bc256b18bfff0fec0172ee2e4fd955) )
 ROM_END
 
 
@@ -4637,7 +4626,7 @@ GAME( 1985, hvymetal, 0,        hvymetal, hvymetal, hvymetal, ROT0,   "Sega", 		
 GAME( 1985, myhero,   0,        system1,  myhero,   0,        ROT0,   "Sega", 			 	   "My Hero (US)", GAME_SUPPORTS_SAVE )
 GAME( 1985, sscandal, myhero,   system1,  myhero,   myheroj,  ROT0,   "Coreland / Sega", 	   "Seishun Scandal (Japan)", GAME_SUPPORTS_SAVE )
 GAME( 1985, myherok,  myhero,   system1,  myhero,   myherok,  ROT0,   "Coreland / Sega", 	   "My Hero (Korea)", GAME_SUPPORTS_SAVE )
-GAME( 1985, shtngmst, 0,        shtngmst, shtngmst, 0,        ROT0,   "Sega", 			 	   "Shooting Master", GAME_IMPERFECT_GRAPHICS | GAME_SUPPORTS_SAVE)	/* 8751 protection, mcu = 315-5159 */
+GAME( 1985, shtngmst, 0,        shtngmst, shtngmst, 0,        ROT0,   "Sega", 			 	   "Shooting Master", GAME_IMPERFECT_GRAPHICS | GAME_SUPPORTS_SAVE | GAME_NOT_WORKING )	/* 8751 protection, mcu = 315-5159 */
 GAME( 1985, shtngmsa, shtngmst, shtngmst, shtngmst, 0,        ROT0,   "Sega [EVG]",	   "Shooting Master (EVG)", GAME_IMPERFECT_GRAPHICS | GAME_SUPPORTS_SAVE | GAME_NOT_WORKING )	/* 8751 protection, mcu = 315-5159 */
 GAME( 1985, chplft,   0,        chplft,   chplft,   0,        ROT0,   "Sega", 			 	   "Choplifter", GAME_UNEMULATED_PROTECTION | GAME_SUPPORTS_SAVE | GAME_NOT_WORKING )	/* 8751 protection */
 GAME( 1985, chplftb,  chplft,   chplft,   chplft,   0,        ROT0,   "Sega", 			 	   "Choplifter (alternate)", GAME_SUPPORTS_SAVE )

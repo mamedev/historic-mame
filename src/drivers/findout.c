@@ -1,5 +1,6 @@
 /***************************************************************************
 
+Reel Fun    (c) 1986
 Find Out    (c) 1987
 Trivia      (c) 1984 / 1986
 Quiz        (c) 1991
@@ -69,16 +70,21 @@ static READ8_HANDLER( portC_r )
 
 static WRITE8_HANDLER( lamps_w )
 {
-	set_led_status(0,data & 0x01);
-	set_led_status(1,data & 0x02);
-	set_led_status(2,data & 0x04);
-	set_led_status(3,data & 0x08);
-	set_led_status(4,data & 0x10);
+	set_led_status(0,data & 0x01);	// button 1
+	set_led_status(1,data & 0x02);	// button 2
+	set_led_status(2,data & 0x04);	// button 3
+	set_led_status(3,data & 0x08);	// button 4
+	set_led_status(4,data & 0x10);	// button 5
+	set_led_status(5,data & 0x20);	// lamp 6 in gt507 in attract mode
+	set_led_status(6,data & 0x40);	// lamp 7 in gt507 in attract mode
+	set_led_status(7,data & 0x80);	// lamp 8 in gt507 in attract mode
 }
 
 static WRITE8_HANDLER( sound_w )
 {
-	/* bit 3 used but unknown */
+	/* controls lamp6 in Trivia/Quiz Test Modes, set to lamp 10 as in getrivia.c
+    seems to be coin lockout, off while booting, in service mode and in game */
+	set_led_status(9,data & 0x08);
 
 	/* bit 6 enables NMI */
 	interrupt_enable_w(0,data & 0x40);
@@ -198,7 +204,28 @@ ADDRESS_MAP_END
 
 
 
-#define FINDOUT_STANDARD_INPUT \
+#define REELFUN_STANDARD_INPUT \
+	PORT_START_TAG("IN0") \
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(2) \
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 ) PORT_IMPULSE(2) \
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
+	PORT_SERVICE( 0x08, IP_ACTIVE_LOW ) \
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
+\
+	PORT_START	/* IN1 */\
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_NAME("1 Left A-Z") \
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_NAME("2 Right A-Z") \
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_NAME("3 Select Letter") \
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_NAME("4 Start")\
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_NAME("5 Solve Puzzle") \
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+#define TRIVIA_STANDARD_INPUT \
 	PORT_START \
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(2) \
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
@@ -208,7 +235,7 @@ ADDRESS_MAP_END
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
-	PORT_START \
+ 	PORT_START \
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) \
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) \
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 ) \
@@ -218,37 +245,7 @@ ADDRESS_MAP_END
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-INPUT_PORTS_START( findout )
-	PORT_START
-	PORT_DIPNAME( 0x07, 0x01, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(    0x07, DEF_STR( 7C_1C ) )
-	PORT_DIPSETTING(    0x06, DEF_STR( 6C_1C ) )
-	PORT_DIPSETTING(    0x05, DEF_STR( 5C_1C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(    0x03, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
-	PORT_DIPNAME( 0x08, 0x00, "Game Repetition" )
-	PORT_DIPSETTING( 0x08, DEF_STR( No ) )
-	PORT_DIPSETTING( 0x00, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x10, 0x10, "Orientation" )
-	PORT_DIPSETTING( 0x10, "Horizontal" )
-	PORT_DIPSETTING( 0x00, "Vertical" )
-	PORT_DIPNAME( 0x20, 0x20, "Buy Letter" )
-	PORT_DIPSETTING( 0x20, DEF_STR( No ) )
-	PORT_DIPSETTING( 0x00, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x40, 0x40, "Starting Letter" )
-	PORT_DIPSETTING( 0x40, DEF_STR( No ) )
-	PORT_DIPSETTING( 0x00, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x80, 0x80, "Bonus Letter" )
-	PORT_DIPSETTING( 0x80, DEF_STR( No ) )
-	PORT_DIPSETTING( 0x00, DEF_STR( Yes ) )
-
-	FINDOUT_STANDARD_INPUT
-INPUT_PORTS_END
-
-INPUT_PORTS_START( gt103 )
+INPUT_PORTS_START( reelfun )
 	PORT_START
 	PORT_DIPNAME( 0x07, 0x01, "Coinage Multiplier" )
 	PORT_DIPSETTING(    0x07, "7" )
@@ -275,28 +272,59 @@ INPUT_PORTS_START( gt103 )
 	PORT_DIPSETTING( 0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
 
-	FINDOUT_STANDARD_INPUT
+	REELFUN_STANDARD_INPUT
 INPUT_PORTS_END
 
-INPUT_PORTS_START( gt507uk )
-	PORT_START
-	PORT_DIPNAME( 0x01, 0x00, "If Ram Error" )
-	PORT_DIPSETTING( 0x01, "Freeze" )
-	PORT_DIPSETTING( 0x00, "Play" )
-	PORT_DIPNAME( 0x04, 0x04, "Payout Hardware" )
-	PORT_DIPSETTING( 0x04, "Hopper" )
-	PORT_DIPSETTING( 0x00, "Solenoid" )
-	PORT_DIPNAME( 0x0a, 0x08, "Payout" )    /* 0x02+0x08 */\
-	PORT_DIPSETTING( 0x0a, "Bank" )
-	PORT_DIPSETTING( 0x08, "N/A" )
-	PORT_DIPSETTING( 0x02, "Credit" )
-	PORT_DIPSETTING( 0x00, "Direct" )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING( 0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING( 0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
+INPUT_PORTS_START( findout )
+	PORT_START      /* DSW A */
+	PORT_DIPNAME( 0x07, 0x01, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 7C_1C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x08, 0x00, "Game Repetition" )
+	PORT_DIPSETTING( 0x08, DEF_STR( No ) )
+	PORT_DIPSETTING( 0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x10, 0x10, "Orientation" )
+	PORT_DIPSETTING( 0x10, "Horizontal" )
+	PORT_DIPSETTING( 0x00, "Vertical" )
+	PORT_DIPNAME( 0x20, 0x20, "Buy Letter" )
+	PORT_DIPSETTING( 0x20, DEF_STR( No ) )
+	PORT_DIPSETTING( 0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x40, 0x40, "Starting Letter" )
+	PORT_DIPSETTING( 0x40, DEF_STR( No ) )
+	PORT_DIPSETTING( 0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x80, 0x80, "Bonus Letter" )
+	PORT_DIPSETTING( 0x80, DEF_STR( No ) )
+	PORT_DIPSETTING( 0x00, DEF_STR( Yes ) )
+
+	REELFUN_STANDARD_INPUT
+INPUT_PORTS_END
+
+INPUT_PORTS_START( gt103 )
+	PORT_START      /* DSW A */
+	PORT_DIPNAME( 0x07, 0x01, "Coinage Multiplier" )
+	PORT_DIPSETTING(    0x07, "7" )
+	PORT_DIPSETTING(    0x06, "6" )
+	PORT_DIPSETTING(    0x05, "5" )
+	PORT_DIPSETTING(    0x04, "4" )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x02, "2" )
+	PORT_DIPSETTING(    0x01, "1" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Coinage ) )
+	PORT_DIPSETTING( 0x08, "Credits per Coin" )
+	PORT_DIPSETTING( 0x00, "Coins per Credit" )
+	PORT_DIPNAME( 0x10, 0x10, "Screen" )
+	PORT_DIPSETTING( 0x10, "Horizontal" )
+	PORT_DIPSETTING( 0x00, "Vertical" )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING( 0x20, DEF_STR( Upright ) )
+	PORT_DIPSETTING( 0x00, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
 	PORT_DIPSETTING( 0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
@@ -304,11 +332,11 @@ INPUT_PORTS_START( gt507uk )
 	PORT_DIPSETTING( 0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
 
-	FINDOUT_STANDARD_INPUT
+	TRIVIA_STANDARD_INPUT
 INPUT_PORTS_END
 
-INPUT_PORTS_START( quiz )
-	PORT_START
+INPUT_PORTS_START( gt103a )
+	PORT_START      /* DSW A */
 	PORT_DIPNAME( 0x03, 0x01, "Questions" )
 	PORT_DIPSETTING(    0x00, "4" )
 	PORT_DIPSETTING(    0x01, "5" )
@@ -317,7 +345,7 @@ INPUT_PORTS_START( quiz )
 	PORT_DIPNAME( 0x04, 0x00, "Show Answer" )
 	PORT_DIPSETTING(    0x04, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x08, 0x08, "Max Coins" )
+	PORT_DIPNAME( 0x08, 0x00, "Max Coins" )
 	PORT_DIPSETTING(    0x08, "30" )
 	PORT_DIPSETTING(    0x00, "10" )
 	PORT_DIPNAME( 0x10, 0x00, "Timeout" )
@@ -333,7 +361,47 @@ INPUT_PORTS_START( quiz )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	FINDOUT_STANDARD_INPUT
+	TRIVIA_STANDARD_INPUT
+INPUT_PORTS_END
+
+INPUT_PORTS_START( quiz )
+	PORT_INCLUDE( gt103a )
+
+	PORT_MODIFY("IN0")
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* no coin 2 */
+INPUT_PORTS_END
+
+INPUT_PORTS_START( gt507uk )
+	PORT_START      /* DSW A */
+	PORT_DIPNAME( 0x01, 0x00, "If Ram Error" )
+	PORT_DIPSETTING( 0x01, "Freeze" )
+	PORT_DIPSETTING( 0x00, "Play" )
+	PORT_DIPNAME( 0x0a, 0x08, "Payout" )
+	PORT_DIPSETTING( 0x0a, "Bank" )
+	PORT_DIPSETTING( 0x08, "N/A" )
+	PORT_DIPSETTING( 0x02, "Credit" )
+	PORT_DIPSETTING( 0x00, "Direct" )
+	PORT_DIPNAME( 0x04, 0x04, "Payout Hardware" )
+	PORT_DIPSETTING( 0x04, "Hopper" )
+	PORT_DIPSETTING( 0x00, "Solenoid" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING( 0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING( 0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING( 0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING( 0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
+
+	REELFUN_STANDARD_INPUT
+	PORT_MODIFY("IN0")
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN3 ) PORT_IMPULSE(2)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 ) PORT_IMPULSE(2)	/* coin 3, 2, 4 order verified in test mode */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN4 ) PORT_IMPULSE(2)
 INPUT_PORTS_END
 
 
@@ -374,6 +442,17 @@ MACHINE_DRIVER_END
   Game driver(s)
 
 ***************************************************************************/
+
+ROM_START( reelfun ) /* v7.01 */
+	ROM_REGION( 0x38000, REGION_CPU1, 0 )
+	ROM_LOAD( "reelfun.cnt",          0x00000, 0x4000, CRC(d9d1e92b) SHA1(337f66a37b3734d565b3ff3d912e0f690fd7c445) )
+	ROM_LOAD( "reelfun.prg",          0x08000, 0x2000, CRC(615d846a) SHA1(ffa1c47393f4f364aa34d14cf3ac2f56d9eaecb0) )	/* banked */
+	ROM_LOAD( "reelfun-1-title",      0x10000, 0x8000, CRC(0e165fbc) SHA1(a3a5b7db72ab86efe973f649f5dfe5133830e3fc) )	/* banked ROMs for solution data */
+	ROM_LOAD( "reelfun-2-place",      0x18000, 0x8000, CRC(a0066bfd) SHA1(b6f031ab50eb396be79e79e06f2101400683ec3e) )
+	ROM_LOAD( "reelfun-3-phrase",     0x20000, 0x8000, CRC(199e36b0) SHA1(d9dfe39c9a4fca1169150f8941f8ebc499dfbaf5) )
+	ROM_LOAD( "reelfun-4-person",     0x28000, 0x8000, CRC(49b0710b) SHA1(a38b3251bcb8683d43bdb903036970140a9735e6) )
+	ROM_LOAD( "reelfun-5-song_title", 0x30000, 0x8000, CRC(cce01c45) SHA1(c484f5828928edf39335cedf21acab0b9e2a6881) )
+ROM_END
 
 ROM_START( findout )
 	ROM_REGION( 0x38000, REGION_CPU1, 0 )
@@ -529,26 +608,26 @@ ROM_END
 When game is first run a RAM error will occur because the nvram needs initialising.
 
 gt507uk - Press F2 to get into test mode, then press control/fire1 to continue
-gt103 - When RAM Error appears press F3 to reset and the game will start
-gt103a - When ERROR appears, press F2, then F3 to reset, then F2 again and the game will start
+gt103   - When RAM Error appears press F3 to reset and the game will start
+gt103a  - When ERROR appears, press F2, then F3 to reset, then F2 again and the game will start
 
 */
 
 GAME( 1986, gt507uk,  0,      findout, gt507uk, 0, ROT0, "Grayhound Electronics", "Trivia (UK Version 5.07)",               GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 GAME( 1986, gt103,    0,      findout, gt103,   0, ROT0, "Grayhound Electronics", "Trivia (Version 1.03)",                  GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
-GAME( 1986, gt5,      0,      findout, quiz,    0, ROT0, "Grayhound Electronics", "Trivia (Version 5)",                     GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAME( 1986, gt5,      0,      findout, gt103a,  0, ROT0, "Grayhound Electronics", "Trivia (Version 5)",                     GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 
-GAME( 1984, gt103a,   0,      findout, quiz,    0, ROT0, "Greyhound Electronics", "Trivia (Version 1.03a)",                 GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
-GAME( 1984, gt103a1,  gt103a, findout, quiz,    0, ROT0, "Greyhound Electronics", "Trivia (Version 1.03a) (alt 1)",         GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
-GAME( 1984, gt103a2,  gt103a, findout, quiz,    0, ROT0, "Greyhound Electronics", "Trivia (Version 1.03a) (alt 2)",         GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
-GAME( 1984, gt103a3,  gt103a, findout, quiz,    0, ROT0, "Greyhound Electronics", "Trivia (Version 1.03a) (alt 3)",         GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
-GAME( 1984, gt103aa,  gt103a, findout, quiz,    0, ROT0, "Greyhound Electronics", "Trivia (Version 1.03a Alt questions 1)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
-GAME( 1984, gt103ab,  gt103a, findout, quiz,    0, ROT0, "Greyhound Electronics", "Trivia (Version 1.03a Alt questions 2)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
-GAME( 1984, gt103asx, gt103a, findout, quiz,    0, ROT0, "Greyhound Electronics", "Trivia (Version 1.03a Sex questions)",   GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1984, gt103a,   0,      findout, gt103a,  0, ROT0, "Greyhound Electronics", "Trivia (Version 1.03a)",                 GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1984, gt103a1,  gt103a, findout, gt103a,  0, ROT0, "Greyhound Electronics", "Trivia (Version 1.03a) (alt 1)",         GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1984, gt103a2,  gt103a, findout, gt103a,  0, ROT0, "Greyhound Electronics", "Trivia (Version 1.03a) (alt 2)",         GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1984, gt103a3,  gt103a, findout, gt103a,  0, ROT0, "Greyhound Electronics", "Trivia (Version 1.03a) (alt 3)",         GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1984, gt103aa,  gt103a, findout, gt103a,  0, ROT0, "Greyhound Electronics", "Trivia (Version 1.03a Alt questions 1)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1984, gt103ab,  gt103a, findout, gt103a,  0, ROT0, "Greyhound Electronics", "Trivia (Version 1.03a Alt questions 2)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1984, gt103asx, gt103a, findout, gt103a,  0, ROT0, "Greyhound Electronics", "Trivia (Version 1.03a Sex questions)",   GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 
 GAME( 1986, quiz,     0,      findout, quiz,    0, ROT0, "Italian bootleg",       "Quiz (Revision 2)",                      GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 
+GAME( 1986, reelfun,  0,      findout, reelfun, 0, ROT0, "Grayhound Electronics", "Real Fun (Version 7.01)",                GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 GAME( 1987, findout,  0,      findout, findout, 0, ROT0, "Elettronolo",           "Find Out (Version 4.04)",                GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 
-GAME( 1991, quiz211,  0,      findout, quiz,    0, ROT0, "Elettronolo",           "Quiz (Revision 2.1)",                    GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
-
+GAME( 1991, quiz211,  0,      findout, quiz,    0, ROT0, "Elettronolo",           "Quiz (Revision 2.11)",                   GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )

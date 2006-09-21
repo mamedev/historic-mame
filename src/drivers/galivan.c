@@ -2,7 +2,6 @@
 
 TODO:
 - Find out how layers are enabled\disabled
-- sprite/char priority
 - dangar input ports
 - wrong title screen in ninjemak
 - bit 3 of ninjemak_gfxbank_w, there currently is a kludge to clear text RAM
@@ -910,11 +909,11 @@ ROM_END
 
 
 
-GAME( 1985, galivan,  0,        galivan,  galivan,  0, ROT270, "Nichibutsu", "Galivan - Cosmo Police (12/16/1985)", 0 )
-GAME( 1985, galivan2, galivan,  galivan,  galivan,  0, ROT270, "Nichibutsu", "Galivan - Cosmo Police (12/11/1985)", 0 )
-GAME( 1986, dangar,   0,        galivan,  dangar,   0, ROT270, "Nichibutsu", "Dangar - Ufo Robo (12/1/1986)", 0 )
-GAME( 1986, dangar2,  dangar,   galivan,  dangar2,  0, ROT270, "Nichibutsu", "Dangar - Ufo Robo (9/26/1986)", 0 )
-GAME( 1986, dangarb,  dangar,   galivan,  dangarb,  0, ROT270, "bootleg", "Dangar - Ufo Robo (bootleg)", 0 )
-GAME( 1986, ninjemak, 0,        ninjemak, ninjemak, 0, ROT270, "Nichibutsu", "Ninja Emaki (US)", 0 )
-GAME( 1986, youma,    ninjemak, ninjemak, ninjemak, 0, ROT270, "Nichibutsu", "Youma Ninpou Chou (Japan)", 0 )
+GAME( 1985, galivan,  0,        galivan,  galivan,  0, ROT270, "Nichibutsu", "Galivan - Cosmo Police (12/16/1985)", GAME_SUPPORTS_SAVE )
+GAME( 1985, galivan2, galivan,  galivan,  galivan,  0, ROT270, "Nichibutsu", "Galivan - Cosmo Police (12/11/1985)", GAME_SUPPORTS_SAVE )
+GAME( 1986, dangar,   0,        galivan,  dangar,   0, ROT270, "Nichibutsu", "Dangar - Ufo Robo (12/1/1986)", GAME_SUPPORTS_SAVE )
+GAME( 1986, dangar2,  dangar,   galivan,  dangar2,  0, ROT270, "Nichibutsu", "Dangar - Ufo Robo (9/26/1986)", GAME_SUPPORTS_SAVE )
+GAME( 1986, dangarb,  dangar,   galivan,  dangarb,  0, ROT270, "bootleg", "Dangar - Ufo Robo (bootleg)", GAME_SUPPORTS_SAVE )
+GAME( 1986, ninjemak, 0,        ninjemak, ninjemak, 0, ROT270, "Nichibutsu", "Ninja Emaki (US)", GAME_SUPPORTS_SAVE )
+GAME( 1986, youma,    ninjemak, ninjemak, ninjemak, 0, ROT270, "Nichibutsu", "Youma Ninpou Chou (Japan)", GAME_SUPPORTS_SAVE )
 

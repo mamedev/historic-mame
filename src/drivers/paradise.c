@@ -15,7 +15,7 @@ Year + Game          Board#
 94+ Paradise         YS-1600
 94+ Paradise Deluxe  YS-1604
 95  Target Ball      YS-2002
-96  Torus            ?
+96  Torus            YS-0402? Looks identical
 98  Mad Ball         YS-0402
 ---------------------------------------------------------------------------
 
@@ -26,44 +26,6 @@ paradise: I'm not sure it's working correctly:
 - The high scores table can't be entered !?
 - The chance to play a bonus game is very slim. I think I got to play
   a couple in total. Is there a way to trigger them !?
-
-Target Ball
-Yunsung, 1995
-
-PCB Layout
-----------
-
-YS-2002 YUNSUNG
-|---------------------------------------------------------|
-|  M6295  M6295   Z80              4MHz       YUNSUNG.110 |
-| YUNSUNG.113   YUNSUNG.128                   YUNSUNG.111 |
-| YUNSUNG.85     6264                                     |
-|                                             YUNSUNG.92  |
-|                                             YUNSUNG.93  |
-|                                                         |
-|                6116                                     |
-|                6116              6116                   |
-|J               6116                                     |
-|A                                                        |
-|M                                            6116        |
-|M                                            6116        |
-|A                            |-------|                   |
-|                             | ACTEL |                   |
-|                             |A1020B |                   |
-|DSW1(8)                      |PLCC84 |                   |
-|         12MHz               |-------|                   |
-|                           4464                          |
-|                           4464     YUNSUNG.114          |
-|                           4464     YUNSUNG.115          |
-|DSW2(8)                    4464                          |
-|                                                         |
-|---------------------------------------------------------|
-Notes:
-      Z80 clock: 6.000MHz
-     6295 clock: 1.000MHz (both), sample rate = 1000000/132 (both)
-          VSync: 54Hz
-
- note even with these settings game runs slightly faster in Mame than real PCB
 
 ***************************************************************************/
 
@@ -749,6 +711,50 @@ ROM_START( paradlx )
 	ROM_LOAD( "9.u113", 0x00000, 0x80000, CRC(9c5337f0) SHA1(4d7a8069be4551aad9d7d32d835dcf91be079359) )
 ROM_END
 
+/***************************************************************************
+
+                          Target Ball
+
+Yunsung, 1995
+
+PCB Layout
+----------
+
+YS-2002 YUNSUNG
+|---------------------------------------------------------|
+|  M6295  M6295   Z80              4MHz       YUNSUNG.110 |
+| YUNSUNG.113   YUNSUNG.128                   YUNSUNG.111 |
+| YUNSUNG.85     6264                                     |
+|                                             YUNSUNG.92  |
+|                                             YUNSUNG.93  |
+|                                                         |
+|                6116                                     |
+|                6116              6116                   |
+|J               6116                                     |
+|A                                                        |
+|M                                            6116        |
+|M                                            6116        |
+|A                            |-------|                   |
+|                             | ACTEL |                   |
+|                             |A1020B |                   |
+|DSW1(8)                      |PLCC84 |                   |
+|         12MHz               |-------|                   |
+|                           4464                          |
+|                           4464     YUNSUNG.114          |
+|                           4464     YUNSUNG.115          |
+|DSW2(8)                    4464                          |
+|                                                         |
+|---------------------------------------------------------|
+Notes:
+      Z80 clock: 6.000MHz
+     6295 clock: 1.000MHz (both), sample rate = 1000000/132 (both)
+          VSync: 54Hz
+
+ note even with these settings game runs slightly faster in Mame than real PCB
+
+
+***************************************************************************/
+
 ROM_START( tgtball )
 	ROM_REGION( 0x44000, REGION_CPU1, 0 )		/* Z80 Code */
 	ROM_LOAD( "rom7.bin", 0x00000, 0x0c000, CRC(8dbeab12) SHA1(7181c23459990aecbe2d13377aaf19f65108eac6) )
@@ -803,7 +809,7 @@ ROM_START( tgtballa )
 	ROM_LOAD( "yunsung.113", 0x00000, 0x40000, CRC(150a6cc6) SHA1(b435fcf8ba48006f506db6b63ba54a30a6b3eade) )
 ROM_END
 
-ROM_START( torus )
+ROM_START( torus ) /* Board looks identical to the YS-0402 but has no number printed on the PCB */
 	ROM_REGION( 0x14000, REGION_CPU1, 0 )		/* Z80 Code */
 	ROM_LOAD( "bc13.bin",     0x00000, 0xc000, CRC(55d3ef3e) SHA1(195463271fdb3f9f5c19068efd1c99105f761fe9) )
 	ROM_CONTINUE(             0x10000, 0x4000 )
@@ -835,7 +841,7 @@ PCB: YS-0402
 
 Z80A
 AD-65 (OKI M6295)
-Actel A1020B PLC84C
+Actel A1020B PLC84C (or compatible QuickLogic QL12X16B-XPL84C)
 OSC: 12.000 MHz, 4.000Mhz
 
 RAM 4 Hyundai HY62256ALP-70
@@ -936,4 +942,4 @@ GAME( 1995,  tgtball,  0,       tgtball,  tgtball,  tgtball,  ROT0,  "Yun Sung",
 GAME( 1995,  tgtballa, tgtball, tgtball,  tgtball,  tgtball,  ROT0,  "Yun Sung", "Target Ball", 0 )
 GAME( 1996,  torus,    0,       torus,    torus,    torus,    ROT90, "Yun Sung", "Torus", 0 )
 GAME( 1998,  madball,  0,       madball,  madball,  tgtball,  ROT0,  "Yun Sung", "Mad Ball V2.0", 0 )
-GAME( 1997,  madballn, madball, madball,  madball,  tgtball,  ROT0,  "Yun Sung", "Mad Ball V2.0 (hack? With Nudity)", 0 )
+GAME( 1997,  madballn, madball, madball,  madball,  tgtball,  ROT0,  "Yun Sung", "Mad Ball V2.0 (With Nudity)", 0 )

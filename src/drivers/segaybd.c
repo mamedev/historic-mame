@@ -784,7 +784,7 @@ static INPUT_PORTS_START( pdrift )
 INPUT_PORTS_END
 
 
-static INPUT_PORTS_START( pdrifta )
+static INPUT_PORTS_START( pdrifte )
 	PORT_INCLUDE( pdrift )
 
 	PORT_MODIFY("DSW")
@@ -1407,14 +1407,94 @@ ROM_START( pdrift )
 	ROM_RELOAD(                 0x160000, 0x20000 )
 
 	ROM_REGION( 0x100000, REGION_USER1, 0 )
-	/* These are mpr-11754.107 split into 4 roms, for alternate sound board config. They would be located on seperate daughter card. */
-	ROM_LOAD( "epr-11895.bin", 0x000000, 0x20000, CRC(ee99a6fd) SHA1(4444826e751d9186e6d46b081e47cd99ee3cf853) )
-	ROM_LOAD( "epr-11896.bin", 0x000000, 0x20000, CRC(4bebc015) SHA1(307022ea1c1ee87c9ef3782526888c48c3c69fd2) )
-	ROM_LOAD( "epr-11897.bin", 0x000000, 0x20000, CRC(4463cb95) SHA1(e86fd4611cf83fe72d59950a60fc8c3a7381a1c7) )
-	ROM_LOAD( "epr-11898.bin", 0x000000, 0x20000, CRC(5d19d767) SHA1(d335cd3ef57c75e388df04b04fc3e2881a3902cf) )
+	/* These are mpr-11754.107 split into 4 roms. They would be located on a Sega 839-0221 daughter card. */
+	ROM_LOAD( "epr-11895.ic1", 0x000000, 0x20000, CRC(ee99a6fd) SHA1(4444826e751d9186e6d46b081e47cd99ee3cf853) )
+	ROM_LOAD( "epr-11896.ic2", 0x000000, 0x20000, CRC(4bebc015) SHA1(307022ea1c1ee87c9ef3782526888c48c3c69fd2) )
+	ROM_LOAD( "epr-11897.ic3", 0x000000, 0x20000, CRC(4463cb95) SHA1(e86fd4611cf83fe72d59950a60fc8c3a7381a1c7) )
+	ROM_LOAD( "epr-11898.ic4", 0x000000, 0x20000, CRC(5d19d767) SHA1(d335cd3ef57c75e388df04b04fc3e2881a3902cf) )
 ROM_END
 
-ROM_START( pdrifta ) /* Earlier set based on eprom numbers & Sega Eprom/Mask Rom Locations sheet 421-7708 */
+ROM_START( pdrifta )
+	ROM_REGION( 0x080000, REGION_CPU1, 0 ) // M
+	ROM_LOAD16_BYTE( "epr-12017.25",  0x000000, 0x20000, CRC(31190322) SHA1(18df4bd6078b1c76c7061c05a476a7cbf7d0b37b) )
+	ROM_LOAD16_BYTE( "epr-12016.24",  0x000001, 0x20000, CRC(499f64a6) SHA1(506652bdb0f3d23a2cf7ff29732b8ec77c389b46) )
+	ROM_LOAD16_BYTE( "epr-11748.27",  0x040000, 0x20000, CRC(82a76cab) SHA1(f8d3fe059e18896cd0e64711f1a3ee8b6372b4e0) )
+	ROM_LOAD16_BYTE( "epr-11747.26",  0x040001, 0x20000, CRC(9796ece5) SHA1(f84f5689c2edc0853ff173ce20f93f89758b2f31) )
+
+	ROM_REGION( 0x040000, REGION_CPU2, 0 ) // X
+	ROM_LOAD16_BYTE( "epr-11905.81",  0x000000, 0x20000, CRC(1cf68109) SHA1(198c1f9d4278586d1e0f50acaaf08e60ba464f8a) )
+	ROM_LOAD16_BYTE( "epr-11904.80",  0x000001, 0x20000, CRC(bb993681) SHA1(c5107e8d52cba3a0fc813ffa9e3752e0f9c3c0df) )
+
+	ROM_REGION( 0x040000, REGION_CPU3, 0 ) // Y
+	ROM_LOAD16_BYTE( "epr-12019.54", 0x000000, 0x20000, CRC(e514d7b6) SHA1(27ae99f5f3e8d2f248916f7a252e2c0686638df5) )
+	ROM_LOAD16_BYTE( "epr-12018.53", 0x000001, 0x20000, CRC(0a3f7faf) SHA1(fe20a164a7a2c9e9bf0e7aade75b0488bdc93d79) )
+
+	ROM_REGION16_BE( 0x080000, REGION_GFX2, 0 )
+	ROM_LOAD16_BYTE( "epr-11789.16",  0x000000, 0x20000, CRC(b86f8d2b) SHA1(a053f2021841fd0ef89fd3f28050a698b36c435e) )
+	ROM_LOAD16_BYTE( "epr-11791.14",  0x000001, 0x20000, CRC(36b2910a) SHA1(9948b91837f944a7a606542fa685525e74bbe398) )
+	ROM_LOAD16_BYTE( "epr-11790.17",  0x040000, 0x20000, CRC(2a564e66) SHA1(5f30fc15bfd017d75cfffe1e9e62ed0bcf32a98e) )
+	ROM_LOAD16_BYTE( "epr-11792.15",  0x040001, 0x20000, CRC(c85caf6e) SHA1(2411ea99ec7f6e2b0b4f219e86ff2172539ad2c4) )
+
+	ROM_REGION64_BE( 0x400000, REGION_GFX1, 0)
+	ROMX_LOAD( "epr-11757.67",  0x000000, 0x20000, CRC(e46dc478) SHA1(baf79e230aef3d63fb50373b2b1626f7c56ee94f), ROM_SKIP(7) )
+	ROMX_LOAD( "epr-11758.75",  0x000001, 0x20000, CRC(5b435c87) SHA1(6b42b08e73957c36cd8faa896ca14461d00afd29), ROM_SKIP(7) )
+	ROMX_LOAD( "epr-11773.63",  0x000002, 0x20000, CRC(1b5d5758) SHA1(54f58a274740a0566e0553d145c0c284ffd1d36b), ROM_SKIP(7) )
+	ROMX_LOAD( "epr-11774.71",  0x000003, 0x20000, CRC(2ca0c170) SHA1(7de74c045bf084659ba70da9458d720125ff25ae), ROM_SKIP(7) )
+	ROMX_LOAD( "epr-11759.86",  0x000004, 0x20000, CRC(ac8111f6) SHA1(6412716dc97ae697b438d9c9cd554d1087416bc2), ROM_SKIP(7) )
+	ROMX_LOAD( "epr-11760.114", 0x000005, 0x20000, CRC(91282af9) SHA1(fddee7982949b7da724c7830e7bd139aeb84672d), ROM_SKIP(7) )
+	ROMX_LOAD( "epr-11775.82",  0x000006, 0x20000, CRC(48225793) SHA1(ee003c2ea24c14e0968da94bac139735660932fe), ROM_SKIP(7) )
+	ROMX_LOAD( "epr-11776.110", 0x000007, 0x20000, CRC(78c46198) SHA1(d299e631843da47cb7a46103d52a3dabfab71746), ROM_SKIP(7) )
+
+	ROMX_LOAD( "epr-11761.66",  0x100000, 0x20000, CRC(baa5d065) SHA1(56dc71814e3f0f327781b0c1587038351c60f7b7), ROM_SKIP(7) )
+	ROMX_LOAD( "epr-11762.74",  0x100001, 0x20000, CRC(1d1af7a5) SHA1(86c02565b5aca201588c98678fb0c54faa8d4d6b), ROM_SKIP(7) )
+	ROMX_LOAD( "epr-11777.62",  0x100002, 0x20000, CRC(9662dd32) SHA1(454ec914b6c936f692bf90d2232c8169acec470a), ROM_SKIP(7) )
+	ROMX_LOAD( "epr-11778.70",  0x100003, 0x20000, CRC(2dfb7494) SHA1(4b9f1609e425c5e634e95dbc2d0ca820dd9212bc), ROM_SKIP(7) )
+	ROMX_LOAD( "epr-11763.85",  0x100004, 0x20000, CRC(1ee23407) SHA1(776c868e0e4e601fd6d0a83561b064b4be0560e2), ROM_SKIP(7) )
+	ROMX_LOAD( "epr-11764.113", 0x100005, 0x20000, CRC(e859305e) SHA1(aafcc3209a4fb6e0e8169ae6cce386b370b824f7), ROM_SKIP(7) )
+	ROMX_LOAD( "epr-11779.81",  0x100006, 0x20000, CRC(a49cd793) SHA1(efe77949be39a2ff88b50bfb2b4664b9267d9a09), ROM_SKIP(7) )
+	ROMX_LOAD( "epr-11780.109", 0x100007, 0x20000, CRC(d514ed81) SHA1(fbac3ad085363972a79e77aebb7fdae2200e7cda), ROM_SKIP(7) )
+
+	ROMX_LOAD( "epr-11765.65",  0x200000, 0x20000, CRC(649e2dff) SHA1(a6c61b71d08b31a0ca175ab0404e2eaf1d09ccc2), ROM_SKIP(7) )
+	ROMX_LOAD( "epr-11766.73",  0x200001, 0x20000, CRC(d92fb7fc) SHA1(2f5c2d88ae0766351b9efe8ffcbebc88fc3a6c59), ROM_SKIP(7) )
+	ROMX_LOAD( "epr-11781.61",  0x200002, 0x20000, CRC(9692d4cd) SHA1(967351ba2c781ca865e3c1ee9eeef1aad2247c27), ROM_SKIP(7) )
+	ROMX_LOAD( "epr-11782.69",  0x200003, 0x20000, CRC(c913bb43) SHA1(9bc15a3180cf4c3134bb55e99e6092f0faf95c56), ROM_SKIP(7) )
+	ROMX_LOAD( "epr-11767.84",  0x200004, 0x20000, CRC(1f8ad054) SHA1(289f5795116ee29540f28e35c3b4f72adeca7891), ROM_SKIP(7) )
+	ROMX_LOAD( "epr-11768.112", 0x200005, 0x20000, CRC(db2c4053) SHA1(a5b6daa6deb7afb0019e289acb81c82d507ec93a), ROM_SKIP(7) )
+	ROMX_LOAD( "epr-11783.80",  0x200006, 0x20000, CRC(6d189007) SHA1(dd871ea3166fdcb59d49707d35dde8b6c7fdc76b), ROM_SKIP(7) )
+	ROMX_LOAD( "epr-11784.108", 0x200007, 0x20000, CRC(57f5fd64) SHA1(6aff54d3f3f76ce0f1a93485d1a35a3987d456d9), ROM_SKIP(7) )
+
+	ROMX_LOAD( "epr-11769.64",  0x300000, 0x20000, CRC(28f0ab51) SHA1(d7cb7b83e5d85eb59d34cfd5c0d8e6c7ff81e24c), ROM_SKIP(7) )
+	ROMX_LOAD( "epr-11770.72",  0x300001, 0x20000, CRC(d7557ea9) SHA1(62430505d399ee2cc0f94e03144860056345573c), ROM_SKIP(7) )
+	ROMX_LOAD( "epr-11785.60",  0x300002, 0x20000, CRC(e6ef32c4) SHA1(869ba3816f5e3125f613f3b284fec74cd19db79e), ROM_SKIP(7) )
+	ROMX_LOAD( "epr-11786.68",  0x300003, 0x20000, CRC(2066b49d) SHA1(905ce70c921043d07591422a87fedd6e897ff38e), ROM_SKIP(7) )
+	ROMX_LOAD( "epr-11771.83",  0x300004, 0x20000, CRC(67635618) SHA1(f690ace026130ecb95532c92f2ad3741d0d167c1), ROM_SKIP(7) )
+	ROMX_LOAD( "epr-11772.111", 0x300005, 0x20000, CRC(0f798d3a) SHA1(71565ce28b93ae50d64af8c965fba6408a07f031), ROM_SKIP(7) )
+	ROMX_LOAD( "epr-11787.79",  0x300006, 0x20000, CRC(e631dc12) SHA1(3fd6db2eb297890b35dec566b6a90fc2d96bd085), ROM_SKIP(7) )
+	ROMX_LOAD( "epr-11788.107", 0x300007, 0x20000, CRC(8464c66e) SHA1(af93cbcc50acbd929d0298fb9a75da0369e13ff7), ROM_SKIP(7) )
+
+	ROM_REGION( 0x10000, REGION_CPU4, 0 )		/* Z80 sound CPU */
+	ROM_LOAD( "epr-11899.102",  0x000000, 0x10000, CRC(ed9fa889) SHA1(25d1a069254b34c31d8ee82d301ada895e8dc391) )
+
+	ROM_REGION( 0x200000, REGION_SOUND1, ROMREGION_ERASEFF )	/* SegaPCM samples */
+	ROM_LOAD( "mpr-11754.107",  0x000000, 0x80000, CRC(ebeb8484) SHA1(269f33cb1a9be126bada858e25291385d48686a2) )
+	ROM_LOAD( "epr-11755.105",  0x080000, 0x20000, CRC(12e43f8a) SHA1(0f9a11ba6b7c1a352daa1146a01ce147945e91e4) )
+	ROM_RELOAD(                 0x0a0000, 0x20000 )
+	ROM_RELOAD(                 0x0c0000, 0x20000 )
+	ROM_RELOAD(                 0x0e0000, 0x20000 )
+	ROM_LOAD( "epr-11756.106",  0x100000, 0x20000, CRC(c2db1244) SHA1(c98fe17c9f04a639a862cc2a86fab17d1f5d025c) )
+	ROM_RELOAD(                 0x120000, 0x20000 )
+	ROM_RELOAD(                 0x140000, 0x20000 )
+	ROM_RELOAD(                 0x160000, 0x20000 )
+
+	ROM_REGION( 0x100000, REGION_USER1, 0 )
+	/* These are mpr-11754.107 split into 4 roms. They would be located on a Sega 839-0221 daughter card. */
+	ROM_LOAD( "epr-11895.ic1", 0x000000, 0x20000, CRC(ee99a6fd) SHA1(4444826e751d9186e6d46b081e47cd99ee3cf853) )
+	ROM_LOAD( "epr-11896.ic2", 0x000000, 0x20000, CRC(4bebc015) SHA1(307022ea1c1ee87c9ef3782526888c48c3c69fd2) )
+	ROM_LOAD( "epr-11897.ic3", 0x000000, 0x20000, CRC(4463cb95) SHA1(e86fd4611cf83fe72d59950a60fc8c3a7381a1c7) )
+	ROM_LOAD( "epr-11898.ic4", 0x000000, 0x20000, CRC(5d19d767) SHA1(d335cd3ef57c75e388df04b04fc3e2881a3902cf) )
+ROM_END
+
+ROM_START( pdrifte ) /* Earlier set based on eprom numbers & Sega Eprom/Mask Rom Locations sheet 421-7708 */
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) // M
 	ROM_LOAD16_BYTE( "epr-11901.25",  0x000000, 0x20000, CRC(16744be8) SHA1(51d06f1b590621d37b2eb8f6cc88f17b248402ad) )
 	ROM_LOAD16_BYTE( "epr-11900.24",  0x000001, 0x20000, CRC(0a170d06) SHA1(525dec21708fb33c6c7e6d86cb82fd16f6bddfa0) )
@@ -1487,11 +1567,11 @@ ROM_START( pdrifta ) /* Earlier set based on eprom numbers & Sega Eprom/Mask Rom
 	ROM_RELOAD(                 0x160000, 0x20000 )
 
 	ROM_REGION( 0x100000, REGION_USER1, 0 )
-	/* These are mpr-11754.107 split into 4 roms, for alternate sound board config. They would be located on seperate daughter card. */
-	ROM_LOAD( "epr-11895.bin", 0x000000, 0x20000, CRC(ee99a6fd) SHA1(4444826e751d9186e6d46b081e47cd99ee3cf853) )
-	ROM_LOAD( "epr-11896.bin", 0x000000, 0x20000, CRC(4bebc015) SHA1(307022ea1c1ee87c9ef3782526888c48c3c69fd2) )
-	ROM_LOAD( "epr-11897.bin", 0x000000, 0x20000, CRC(4463cb95) SHA1(e86fd4611cf83fe72d59950a60fc8c3a7381a1c7) )
-	ROM_LOAD( "epr-11898.bin", 0x000000, 0x20000, CRC(5d19d767) SHA1(d335cd3ef57c75e388df04b04fc3e2881a3902cf) )
+	/* These are mpr-11754.107 split into 4 roms. They would be located on a Sega 839-0221 daughter card. */
+	ROM_LOAD( "epr-11895.ic1", 0x000000, 0x20000, CRC(ee99a6fd) SHA1(4444826e751d9186e6d46b081e47cd99ee3cf853) )
+	ROM_LOAD( "epr-11896.ic2", 0x000000, 0x20000, CRC(4bebc015) SHA1(307022ea1c1ee87c9ef3782526888c48c3c69fd2) )
+	ROM_LOAD( "epr-11897.ic3", 0x000000, 0x20000, CRC(4463cb95) SHA1(e86fd4611cf83fe72d59950a60fc8c3a7381a1c7) )
+	ROM_LOAD( "epr-11898.ic4", 0x000000, 0x20000, CRC(5d19d767) SHA1(d335cd3ef57c75e388df04b04fc3e2881a3902cf) )
 ROM_END
 
 /**************************************************************************************************************************
@@ -1573,11 +1653,11 @@ ROM_START( pdriftj )
 	ROM_RELOAD(                 0x160000, 0x20000 )
 
 	ROM_REGION( 0x100000, REGION_USER1, 0 )
-	/* These are mpr-11754.107 split into 4 roms, for alternate sound board config. They would be located on seperate daughter card. */
-	ROM_LOAD( "epr-11895.bin", 0x000000, 0x20000, CRC(ee99a6fd) SHA1(4444826e751d9186e6d46b081e47cd99ee3cf853) )
-	ROM_LOAD( "epr-11896.bin", 0x000000, 0x20000, CRC(4bebc015) SHA1(307022ea1c1ee87c9ef3782526888c48c3c69fd2) )
-	ROM_LOAD( "epr-11897.bin", 0x000000, 0x20000, CRC(4463cb95) SHA1(e86fd4611cf83fe72d59950a60fc8c3a7381a1c7) )
-	ROM_LOAD( "epr-11898.bin", 0x000000, 0x20000, CRC(5d19d767) SHA1(d335cd3ef57c75e388df04b04fc3e2881a3902cf) )
+	/* These are mpr-11754.107 split into 4 roms. They would be located on a Sega 839-0221 daughter card. */
+	ROM_LOAD( "epr-11895.ic1", 0x000000, 0x20000, CRC(ee99a6fd) SHA1(4444826e751d9186e6d46b081e47cd99ee3cf853) )
+	ROM_LOAD( "epr-11896.ic2", 0x000000, 0x20000, CRC(4bebc015) SHA1(307022ea1c1ee87c9ef3782526888c48c3c69fd2) )
+	ROM_LOAD( "epr-11897.ic3", 0x000000, 0x20000, CRC(4463cb95) SHA1(e86fd4611cf83fe72d59950a60fc8c3a7381a1c7) )
+	ROM_LOAD( "epr-11898.ic4", 0x000000, 0x20000, CRC(5d19d767) SHA1(d335cd3ef57c75e388df04b04fc3e2881a3902cf) )
 ROM_END
 
 
@@ -1743,8 +1823,9 @@ GAME( 1988, gforce2,  0,       yboard, gforce2,  generic_yboard, ROT0, "Sega", "
 GAME( 1988, gforce2j, gforce2, yboard, gforce2,  generic_yboard, ROT0, "Sega", "Galaxy Force 2 (Japan)" , GAME_SUPPORTS_SAVE )
 GAME( 1990, gloc,     0,       yboard, gloc,     generic_yboard, ROT0, "Sega", "G-LOC Air Battle (US)" , GAME_SUPPORTS_SAVE )
 GAME( 1990, glocr360, gloc,    yboard, glocr360, generic_yboard, ROT0, "Sega", "G-LOC R360", GAME_SUPPORTS_SAVE )
-GAME( 1988, pdrift,   0,       yboard, pdrift,   generic_yboard, ROT0, "Sega", "Power Drift (World)", GAME_SUPPORTS_SAVE )
-GAME( 1988, pdrifta,  pdrift,  yboard, pdrifta,  generic_yboard, ROT0, "Sega", "Power Drift (World, Earlier)", GAME_SUPPORTS_SAVE )
+GAME( 1988, pdrift,   0,       yboard, pdrift,   generic_yboard, ROT0, "Sega", "Power Drift (World, Rev A)", GAME_SUPPORTS_SAVE )
+GAME( 1988, pdrifta,  pdrift,  yboard, pdrift,   generic_yboard, ROT0, "Sega", "Power Drift (World)", GAME_SUPPORTS_SAVE )
+GAME( 1988, pdrifte,  pdrift,  yboard, pdrifte,  generic_yboard, ROT0, "Sega", "Power Drift (World, Earlier)", GAME_SUPPORTS_SAVE )
 GAME( 1988, pdriftj,  pdrift,  yboard, pdriftj,  generic_yboard, ROT0, "Sega", "Power Drift (Japan)", GAME_SUPPORTS_SAVE )
 GAME( 1991, rchase,   0,       rchase, rchase,   generic_yboard, ROT0, "Sega", "Rail Chase (Japan)", GAME_SUPPORTS_SAVE )
 GAME( 1991, strkfgtr, 0,       yboard, strkfgtr, generic_yboard, ROT0, "Sega", "Strike Fighter (Japan)", GAME_SUPPORTS_SAVE )

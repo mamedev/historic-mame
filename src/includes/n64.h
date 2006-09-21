@@ -24,7 +24,7 @@ extern void rdp_process_list(void);
 #define SP_STATUS_DMAFULL		0x0008
 #define SP_STATUS_IOFULL		0x0010
 #define SP_STATUS_SSTEP			0x0020
-#define SP_STATUS_INT_ON_BRK		0x0040
+#define SP_STATUS_INTR_BREAK	0x0040
 #define SP_STATUS_SIGNAL0		0x0080
 #define SP_STATUS_SIGNAL1		0x0100
 #define SP_STATUS_SIGNAL2		0x0200

@@ -628,7 +628,7 @@ cant_set_primary_format:
 	IDirectSoundBuffer_Release(primary_buffer);
 cant_create_primary:
 	primary_buffer = NULL;
-	return 0;
+	return 1;
 }
 
 

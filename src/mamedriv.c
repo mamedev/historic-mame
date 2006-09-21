@@ -744,6 +744,7 @@ const game_driver * const drivers[] =
 	/* Namco FL games */
 	DRIVER( speedrcr )	/* (c) 1995 */
 	DRIVER( finalapr )	/* (c) 1995 */
+	DRIVER( finalapb )	/* (c) 1995 */
 	DRIVER( finalapo )	/* (c) 1995 */
 
 	/* Namco NA-1 / NA-2 System games */
@@ -1048,6 +1049,9 @@ const game_driver * const drivers[] =
 	DRIVER( nss_fzer )
 	DRIVER( nss_sten )
 
+	/* SNES-based hacks */
+	DRIVER( kinstb )
+
 	/* Midway 8080 b/w games */
 	DRIVER( seawolf )	/* 596 [1976] */
 	DRIVER( gunfight )	/* 597 [1975] */
@@ -1281,9 +1285,10 @@ const game_driver * const drivers[] =
 	DRIVER( mpatrol )	/* M52 (c) 1982 */
 	DRIVER( mpatrolw )	/* M52 (c) 1982 + Williams license */
 	DRIVER( troangel )	/* (c) 1983 */
-	DRIVER( yard )		/* (c) 1983 */
-	DRIVER( vsyard )	/* (c) 1983/1984 */
-	DRIVER( vsyard2 )	/* (c) 1983/1984 */
+	DRIVER( 10yard )	/* (c) 1983 */
+	DRIVER( 10yardj )	/* (c) 1983 */
+	DRIVER( vs10yard )	/* (c) 1983/1984 */
+	DRIVER( vs10yarj )	/* (c) 1983/1984 */
 	DRIVER( travrusa )	/* (c) 1983 */
 	DRIVER( motorace )	/* (c) 1983 Williams license */
 	DRIVER( shtrider )	/* (c) 1984 Seibu Kaihatsu */
@@ -2691,6 +2696,7 @@ V-V                           TP-027
 	DRIVER( xevi3dg )	/* Xevious 3D/G (XV31/VER.A) */
 	DRIVER( primglex )	/* Prime Goal EX (PG1/VER.A) */
 	DRIVER( danceyes )	/* Dancing Eyes (DC1/VER.A) */
+	DRIVER( pocketrc )	/* Pocket Racer (PKR1/VER.B) */
 	DRIVER( starswep )	/* Star Sweep (STP1/VER.A) */
 	DRIVER( myangel3 )	/* Kosodate Quiz My Angel 3 (KQT1/VER.A) */
 	DRIVER( ptblnk2a )	/* Point Blank 2 (GNB3/VER.A) */
@@ -2826,6 +2832,7 @@ V-V                           TP-027
 	DRIVER( wcbwl165 )	/* (c) 1995 Incredible Technologies */
 	DRIVER( wcbwl161 )	/* (c) 1995 Incredible Technologies */
 	DRIVER( wcbwl140 )	/* (c) 1995 Incredible Technologies */
+	DRIVER( wcbwl15 )	/* (c) 1995 Incredible Technologies */
 	DRIVER( wcbwl12 )	/* (c) 1995 Incredible Technologies */
 	DRIVER( sftm )		/* (c) 1995 Capcom/Incredible Technologies */
 	DRIVER( sftm110 )	/* (c) 1995 Capcom/Incredible Technologies */
@@ -3293,6 +3300,7 @@ DokiDoki Penguin Land *not confirmed
 	DRIVER( strkfgtr )	/* (c) 1991 */
 	DRIVER( pdrift )	/* (c) 1988 */
 	DRIVER( pdrifta )	/* (c) 1988 */
+	DRIVER( pdrifte )	/* (c) 1988 */
 	DRIVER( pdriftj )	/* (c) 1988 */
 	DRIVER( rchase )	/* (c) 1991 */
 
@@ -3423,7 +3431,7 @@ Sep.1994 Quiz Ghost Hunter
 	DRIVER( rsgun )		/* (c) 1998 Treasure */
 	DRIVER( sandor )	/* (c) 1995 */
 	DRIVER( thunt )		/* (c) 1995 Sega (Deniam License) */
-	DRIVER( sassisu )	/* (c) 1992 */
+	DRIVER( sasissu )	/* (c) 1992 */
 	DRIVER( seabass )	/* (c) 1998 A wave Inc (Able License) */
 	DRIVER( shanhigw )	/* (c) 1996 */
 	DRIVER( shienryu )	/* (c) 1997 Warashi */
@@ -4145,6 +4153,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( contraj )	/* GX633 (c) 1987 (Japan) */
 	DRIVER( contrajb )	/* bootleg */
 	DRIVER( gryzor )	/* GX633 (c) 1987 */
+	DRIVER( gryzora )	/* GX633 (c) 1987 */
 	DRIVER( combasc )	/* GX611 (c) 1988 */
 	DRIVER( combasct )	/* GX611 (c) 1987 */
 	DRIVER( combascj )	/* GX611 (c) 1987 (Japan) */
@@ -5983,6 +5992,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( s1945a )	/* (c) 1995 */
 	DRIVER( s1945j )	/* (c) 1995 */
 	DRIVER( s1945jn )	/* (c) 1995 */
+	DRIVER( s1945k )	/* (c) 1995 */
 	DRIVER( tengai )	/* (c) 1996 */
 	DRIVER( s1945ii )	/* (c) 1997 */
 	DRIVER( soldivid )	/* (c) 1997 */
@@ -6915,6 +6925,7 @@ Other Sun games
 	DRIVER( gt103asx )	/* (c) 1984 Greyhound Electronics */
 	DRIVER( gt103aa )	/* (c) 1984 Greyhound Electronics */
 	DRIVER( gt103ab )	/* (c) 1984 Greyhound Electronics */
+	DRIVER( reelfun )	/* (c) 1986 Grayhound Electronics */
 	DRIVER( findout )	/* (c) 1987 [Elettronolo] */
 	DRIVER( quiz )		/* (c) 1986 Italian bootleg */
 	DRIVER( quiz211 )	/* (c) 1986 Italian bootleg */
@@ -7172,6 +7183,8 @@ Other Sun games
 	DRIVER( legendoh )	/* (c) 2003 Limenko */
 	DRIVER( carrera )	/* (c) 19?? BS Electronics */
 	DRIVER( pmpoker )	/* (c) 198? PlayMan? */
-	DRIVER( bigboy )	/* (c) 198? Bonanza? */
+	DRIVER( goldnpkr )	/* (c) 198? Bonanza? */
+	DRIVER( jokerpkr )	/* (c) 198? Coinmaster-Gaming */
+	DRIVER( pottnpkr )	/* (c) 198? ???? */
 
 #endif	/* DRIVER_RECURSIVE */

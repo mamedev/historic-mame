@@ -71,16 +71,25 @@ static WRITE8_HANDLER( getrivia_bitmap_w )
 
 static WRITE8_HANDLER( lamps_w )
 {
-	set_led_status(0,data & 0x01);
-	set_led_status(1,data & 0x02);
-	set_led_status(2,data & 0x04);
-	set_led_status(3,data & 0x08);
-	set_led_status(4,data & 0x10);
+	set_led_status(0,data & 0x01);	//button1
+	set_led_status(1,data & 0x02);	//button2
+	set_led_status(2,data & 0x04);	//button3
+	set_led_status(3,data & 0x08);	//button4
+	set_led_status(4,data & 0x10);	//button5
+	set_led_status(7,data & 0x20);	//button8
+	set_led_status(5,data & 0x40);	//button6
+	set_led_status(6,data & 0x80);	//button7
+
+	/* lamp 8, 6, 7 order verified in poker/selection games self test;
+    selection has 13 lamps in test mode, where are 9-13 mapped ? */
 }
 
 static WRITE8_HANDLER( sound_w )
 {
-	/* bit 3 used but unknown */
+	/* bit 3 enables lamp10 (Poker) or lamp6 (Trivia), verified in test modes,
+    seems to be coin lockout, lamp off while booting, in service mode and in game,
+    in Selection bit 3 is always on */
+	set_led_status(9,data & 0x08);
 
 	/* bit 6 enables NMI */
 	interrupt_enable_w(0,data & 0x40);
@@ -186,55 +195,10 @@ static ADDRESS_MAP_START( gepoker_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xc000, 0xffff) AM_READWRITE(MRA8_RAM, getrivia_bitmap_w) AM_BASE(&videoram)
 ADDRESS_MAP_END
 
-INPUT_PORTS_START( getrivia )
-	PORT_START
-	PORT_DIPNAME( 0x03, 0x03, "Questions" )
-	PORT_DIPSETTING(    0x00, "4" )
-	PORT_DIPSETTING(    0x01, "5" )
-//  PORT_DIPSETTING(    0x02, "5" )
-	PORT_DIPSETTING(    0x03, "6" )
-	PORT_DIPNAME( 0x04, 0x04, "Show Answer" )
-	PORT_DIPSETTING(    0x04, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x08, 0x08, "Max Coins" )
-	PORT_DIPSETTING(    0x00, "10" )
-	PORT_DIPSETTING(    0x08, "30" )
-	PORT_DIPNAME( 0x10, 0x10, "Timeout" )
-	PORT_DIPSETTING(    0x10, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x20, 0x20, "Tickets" )
-	PORT_DIPSETTING(    0x20, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x40, 0x40, "No Coins" )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(2)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_SERVICE( 0x08, IP_ACTIVE_LOW )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_IMPULSE(2)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_IMPULSE(2)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_IMPULSE(2)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_IMPULSE(2)
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_IMPULSE(2)
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-INPUT_PORTS_END
 
 INPUT_PORTS_START( gselect )
-	PORT_START
+	PORT_START      /* DSW A */
 	PORT_DIPNAME( 0x01, 0x01, "Poker: Discard Cards" )
 	PORT_DIPSETTING(    0x01, "5" )
 	PORT_DIPSETTING(    0x00, "3" )
@@ -259,7 +223,7 @@ INPUT_PORTS_START( gselect )
 	PORT_DIPSETTING(    0x20, "65" )
 	PORT_DIPSETTING(    0x00, "70" )
 
-	PORT_START
+	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(2)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 ) PORT_IMPULSE(2)
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -269,19 +233,84 @@ INPUT_PORTS_START( gselect )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_IMPULSE(2)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_IMPULSE(2)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_IMPULSE(2)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_IMPULSE(2)
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_IMPULSE(2)
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON6 ) PORT_IMPULSE(2) PORT_NAME("Deal")
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON7 ) PORT_IMPULSE(2) PORT_NAME("Cancel")
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON8 ) PORT_IMPULSE(2) PORT_NAME("Stand")
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON5 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON8 ) PORT_NAME("Deal")
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON6 ) PORT_NAME("Cancel")
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON7 ) PORT_NAME("Stand")
+/*  Button 8, 6, 7 order verified in test mode switch test */
 
 	PORT_START
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
+
+INPUT_PORTS_START( gepoker )
+	PORT_INCLUDE( gselect )
+
+	PORT_MODIFY("IN0")
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* no coin 2 */
+INPUT_PORTS_END
+
+INPUT_PORTS_START( getrivia )
+	PORT_START      /* DSW A */
+	PORT_DIPNAME( 0x03, 0x01, "Questions" )
+	PORT_DIPSETTING(    0x00, "4" )
+	PORT_DIPSETTING(    0x01, "5" )
+/*  PORT_DIPSETTING(    0x02, "5" )*/
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_DIPNAME( 0x04, 0x00, "Show Answer" )
+	PORT_DIPSETTING(    0x04, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x08, 0x00, "Max Coins" )
+	PORT_DIPSETTING(    0x00, "10" )
+	PORT_DIPSETTING(    0x08, "30" )
+	PORT_DIPNAME( 0x10, 0x00, "Timeout" )
+	PORT_DIPSETTING(    0x10, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x20, 0x20, "Tickets" )
+	PORT_DIPSETTING(    0x20, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x40, 0x40, "No Coins" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START_TAG("IN0")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(2)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 ) PORT_IMPULSE(2)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_SERVICE( 0x08, IP_ACTIVE_LOW )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON5 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+INPUT_PORTS_END
+
+INPUT_PORTS_START( sextriv1 )
+	PORT_INCLUDE( getrivia )
+
+	PORT_MODIFY("IN0")
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* no coin 2 */
+INPUT_PORTS_END
+
+
 
 static ppi8255_interface getrivia_ppi8255_intf =
 {
@@ -565,19 +594,19 @@ ROM_START( gepoker3 ) /* v50.02 with control dated 9-30-84 */
 ROM_END
 
 
-GAME( 1982, gs4002,   0,       gselect,  gselect,  0, ROT0, "G.E.I.", "Selection (Version 40.02TMB) set 1", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
-GAME( 1982, gs4002a,  gs4002,  gselect,  gselect,  0, ROT0, "G.E.I.", "Selection (Version 40.02TMB) set 2", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1982, gs4002,   0,        gselect,  gselect,  0, ROT0, "Greyhound Electronics", "Selection (Version 40.02TMB) set 1",     GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1982, gs4002a,  gs4002,   gselect,  gselect,  0, ROT0, "Greyhound Electronics", "Selection (Version 40.02TMB) set 2",     GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 
-GAME( 1984, gepoker,  0,       gepoker,  gselect,  0, ROT0, "Greyhound Electronics", "Poker (Version 50.02 ICB)",              GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
-GAME( 1984, gepoker1, 0,       gepoker,  gselect,  0, ROT0, "Greyhound Electronics", "Poker (Version 50.08 IAM)",              GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
-GAME( 1984, gepoker2, gepoker, gepoker,  gselect,  0, ROT0, "Greyhound Electronics", "Poker (Version 50.02 ICB set 2)",        GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
-GAME( 1984, gepoker3, gepoker, gepoker,  gselect,  0, ROT0, "Greyhound Electronics", "Poker (Version 50.02 ICB set 3)",        GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1984, gepoker,  0,        gepoker,  gepoker,  0, ROT0, "Greyhound Electronics", "Poker (Version 50.02 ICB)",              GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1984, gepoker1, 0,        gepoker,  gepoker,  0, ROT0, "Greyhound Electronics", "Poker (Version 50.08 IAM)",              GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAME( 1984, gepoker2, gepoker,  gepoker,  gepoker,  0, ROT0, "Greyhound Electronics", "Poker (Version 50.02 ICB set 2)",        GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1984, gepoker3, gepoker,  gepoker,  gepoker,  0, ROT0, "Greyhound Electronics", "Poker (Version 50.02 ICB set 3)",        GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 
-GAME( 1984, gt102c,   0,      getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02C)",                 GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
-GAME( 1984, gt102b,   0,      getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02B)",                 GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
-GAME( 1985, gt102c1,  gt102c, getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02C Alt questions 1)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
-GAME( 1985, gt102c2,  gt102c, getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02C Alt questions 2)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
-GAME( 1985, gt102c3,  gt102c, getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02C Alt questions 3)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1984, gt102b,   0,        getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02B)",                 GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1984, gt102c,   0,        getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02C)",                 GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1985, gt102c1,  gt102c,   getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02C Alt questions 1)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1985, gt102c2,  gt102c,   getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02C Alt questions 2)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1985, gt102c3,  gt102c,   getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02C Alt questions 3)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 
-GAME( 1985, sextriv1, 0,        getrivia, getrivia, 0, ROT0, "Kinky Kit and Game Co.", "Sexual Trivia (Version 1.02SB set 1)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
-GAME( 1985, sextriv2, sextriv1, getrivia, getrivia, 0, ROT0, "Kinky Kit and Game Co.", "Sexual Trivia (Version 1.02SB set 2)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1985, sextriv1, 0,        getrivia, sextriv1, 0, ROT0, "Kinky Kit and Game Co.", "Sexual Trivia (Version 1.02SB set 1)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1985, sextriv2, sextriv1, getrivia, sextriv1, 0, ROT0, "Kinky Kit and Game Co.", "Sexual Trivia (Version 1.02SB set 2)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )

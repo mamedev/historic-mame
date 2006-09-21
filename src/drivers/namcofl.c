@@ -174,7 +174,7 @@ static ADDRESS_MAP_START( sysfl_mem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000000, 0x000fffff) AM_READWRITE(MRA32_BANK1, MWA32_BANK1)
 	AM_RANGE(0x10000000, 0x100fffff) AM_READWRITE(MRA32_BANK2, MWA32_BANK2)
 	AM_RANGE(0x20000000, 0x201fffff) AM_ROM AM_REGION(REGION_USER1, 0)	/* data */
-	AM_RANGE(0x30000000, 0x30001fff) AM_RAM	AM_BASE((UINT32 **)&generic_nvram) AM_SIZE(&generic_nvram_size) /* nvram */
+	AM_RANGE(0x30000000, 0x30001fff) AM_RAM	AM_BASE(&generic_nvram32) AM_SIZE(&generic_nvram_size) /* nvram */
 	AM_RANGE(0x30100000, 0x30100003) AM_WRITE(namcofl_spritebank_w)
 	AM_RANGE(0x30284000, 0x3028bfff) AM_RAM	AM_BASE(&namcofl_mcuram) /* shared RAM with C75 MCU */
 	AM_RANGE(0x30300000, 0x30303fff) AM_RAM /* COMRAM */
@@ -387,7 +387,7 @@ ROM_START( speedrcr )
 	ROM_LOAD("se1_voi.23s",   0x000000, 0x400000, CRC(b95e2ffb) SHA1(7669232d772caa9afa4c7593d018e8b6e534114a) )
 ROM_END
 
-ROM_START( finalapr )
+ROM_START( finalapb )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 ) // i960 program
 	ROM_LOAD32_WORD("flr2mpeb.19a",   0x000000, 0x080000, CRC(8bfe615f) SHA1(7b867eb261268a83177f1f873689f77d1b6c47ca) )
 	ROM_LOAD32_WORD("flr2mpob.18a",   0x000002, 0x080000, CRC(91c14e4f) SHA1(934a86daaef0e3e2c2b3066f4677ccb3aaab6eaf) )
@@ -461,6 +461,43 @@ ROM_START( finalapo )
 	ROM_LOAD("flr1voi.23s",   0x000000, 0x200000, CRC(ff6077cd) SHA1(73c289125ddeae3e43153e4c570549ca04501262) )
 ROM_END
 
+ROM_START( finalapr )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 ) // i960 program
+        ROM_LOAD32_WORD("flr1_mpec.19a", 0x000000, 0x080000, CRC(52735494) SHA1(db9873cb39bcfdd3dbe2e5079249fecac2c46df9) )
+        ROM_LOAD32_WORD("flr1_mpoc.18a", 0x000002, 0x080000, CRC(b11fe577) SHA1(70b51a1e66a3bb92f027aad7ba0f358c0e139b3c) )
+
+	ROM_REGION( 0x200000, REGION_USER1, ROMREGION_ERASEFF ) // Data
+
+	ROM_REGION( 0x200000, NAMCONB1_ROTGFXREGION, 0 )	// "RCHAR" (roz characters)
+	ROM_LOAD("flr1rch0.19j",   0x000000, 0x100000, CRC(f413f50d) SHA1(cdd8073dda4feaea78e3b94520cf20a9799fd04d) )
+	ROM_LOAD("flr1rch1.18j",   0x100000, 0x100000, CRC(4654d519) SHA1(f8bb473013cdca48dd98df0de2f78c300c156e91) )
+
+	ROM_REGION( 0x400000, NAMCONB1_TILEGFXREGION, 0 ) // "SCHAR" (regular BG characters)
+	ROM_LOAD("flr1sch0.21p",   0x000000, 0x100000, CRC(7169efca) SHA1(66c7aa1b50b236b4700b07be0dca7aebdabedb8c) )
+	ROM_LOAD("flr1sch1.20p",   0x100000, 0x100000, CRC(aa233a02) SHA1(0011329f585658d90f820daf0ba08ce2735bddfc) )
+	ROM_LOAD("flr1sch2.19p",   0x200000, 0x100000, CRC(9b6b7abd) SHA1(5cdec70db1b46bc5d0866ca155b520157fef3adf) )
+	ROM_LOAD("flr1sch3.18p",   0x300000, 0x100000, CRC(50a14f54) SHA1(ab9c2f2e11f006a9dc7e5aedd5788d7d67166d36) )
+
+	ROM_REGION( 0x800000, NAMCONB1_SPRITEGFXREGION, 0 )	// OBJ
+	ROM_LOAD16_BYTE("flr1obj0l.ic1", 0x000001, 0x200000, CRC(364a902c) SHA1(4a1ea48eee86d410e36096cc100b4c9a5a645034) )
+	ROM_LOAD16_BYTE("flr1obj0u.ic2", 0x000000, 0x200000, CRC(a5c7b80e) SHA1(4e0e863cfdd8c051c3c4594bb21e11fb93c28f0c) )
+	ROM_LOAD16_BYTE("flr1obj1l.ic3", 0x400001, 0x200000, CRC(51fd8de7) SHA1(b1571c45e8c33d746716fd790c704a3361d02bdc) )
+	ROM_LOAD16_BYTE("flr1obj1u.ic4", 0x400000, 0x200000, CRC(1737aa3c) SHA1(8eaf0dc5d60a270d2c1626f54f5edbddbb0a59c8) )
+
+	ROM_REGION( 0x80000, NAMCONB1_ROTMASKREGION, 0 ) // "RSHAPE" (roz mask like NB-1?)
+	ROM_LOAD("flr1rsh.14k",    0x000000, 0x080000, CRC(037c0983) SHA1(c48574a8ad125cedfaf2538c5ff824e121204629) )
+
+	ROM_REGION( 0x80000, NAMCONB1_TILEMASKREGION, 0 ) // "SSHAPE" (mask for other tiles?)
+	ROM_LOAD("flr1ssh.18u",    0x000000, 0x080000, CRC(f70cb2bf) SHA1(dbddda822287783a43415172b81d0382a8ac43d8) )
+
+	ROM_REGION( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_LOAD("flr1spr.21l",   0x000000,  0x20000, CRC(69bb0f5e) SHA1(6831d618de42a165e508ad37db594d3aa290c530) )
+	NAMCO_C7X_BIOS
+
+	ROM_REGION( 0x200000, REGION_SOUND1, 0 ) // Samples
+	ROM_LOAD("flr1voi.23s",   0x000000, 0x200000, CRC(ff6077cd) SHA1(73c289125ddeae3e43153e4c570549ca04501262) )
+ROM_END
+
 static void namcofl_common_init(void)
 {
 	namcofl_workram = auto_malloc(0x100000);
@@ -485,5 +522,6 @@ static DRIVER_INIT(finalapr)
 }
 
 GAME( 1995, speedrcr,        0, sysfl, sysfl, speedrcr, ROT0, "Namco", "Speed Racer", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAME( 1995, finalapr,        0, sysfl, sysfl, finalapr, ROT0, "Namco", "Final Lap R (Rev B)", GAME_IMPERFECT_SOUND )
+GAME( 1995, finalapr,        0, sysfl, sysfl, finalapr, ROT0, "Namco", "Final Lap R (Japan Rev. C)", GAME_IMPERFECT_SOUND )
+GAME( 1995, finalapb, finalapr, sysfl, sysfl, finalapr, ROT0, "Namco", "Final Lap R (Rev. B)", GAME_IMPERFECT_SOUND )
 GAME( 1995, finalapo, finalapr, sysfl, sysfl, finalapr, ROT0, "Namco", "Final Lap R", GAME_IMPERFECT_SOUND )

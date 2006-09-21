@@ -1199,7 +1199,7 @@ INPUT_PORTS_START( s1945 )
 
     Came from a Japan board apparently!!!
     Japan is listed in the code but how do you activate it?
-    No effect on set s1945j
+    No effect on set s1945j or s1945k
 
     ************************************************/
 
@@ -2162,6 +2162,36 @@ ROM_START( s1945j )
 
 ROM_END
 
+ROM_START( s1945k ) /* Same MCU as the current parent set, region dip has no effect on this set */
+
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* Main CPU Code */
+	ROM_LOAD32_WORD_SWAP( "10.u40", 0x000000, 0x040000, CRC(5a32af36) SHA1(2eada37fd043c097a11bcf4e3e0bebb473bbc0df) ) // 1&0
+	ROM_LOAD32_WORD_SWAP( "9.u41",  0x000002, 0x040000, CRC(29cc6d7d) SHA1(aeee9e88922c25c75885483d115e064c6b71540b) ) // 3&2
+
+	ROM_REGION( 0x030000, REGION_CPU2, 0 )		/* Sound CPU Code */
+	ROM_LOAD( "3-u63.bin", 0x00000, 0x20000, CRC(42d40ae1) SHA1(530a5a3f78ac489b84a631ea6ce21010a4f4d31b) )
+	ROM_RELOAD(            0x10000, 0x20000             )
+
+	ROM_REGION( 0x000100, REGION_CPU3, 0 )		/* MCU */
+	ROM_LOAD( "4-u59.bin", 0x00000, 0x00100, NO_DUMP )
+
+	ROM_REGION( 0x800000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_LOAD( "u20.bin",  0x000000, 0x200000, CRC(28a27fee) SHA1(913f3bc4d0c6fb6b776a020c8099bf96f16fd06f) )
+	ROM_LOAD( "u22.bin",  0x200000, 0x200000, CRC(ca152a32) SHA1(63efee83cb5982c77ca473288b3d1a96b89e6388) )
+	ROM_LOAD( "u21.bin",  0x400000, 0x200000, CRC(c5d60ea9) SHA1(e5ce90788211c856172e5323b01b2c7ab3d3fe50) )
+	ROM_LOAD( "u23.bin",  0x600000, 0x200000, CRC(48710332) SHA1(db38b732a09b31ce55a96ec62987baae9b7a00c1) )
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 + 1 */
+	ROM_LOAD( "u34.bin",  0x000000, 0x200000, CRC(aaf83e23) SHA1(1c75d09ff42c0c215f8c66c699ca75688c95a05e) )
+
+	ROM_REGION( 0x200000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "u61.bin",  0x000000, 0x200000, CRC(a839cf47) SHA1(e179eb505c80d5bb3ccd9e228f2cf428c62b72ee) )	// 8 bit signed pcm (16KHz)
+
+	ROM_REGION( 0x040000, REGION_USER1, 0 )	/* */
+	ROM_LOAD( "u1.bin",  0x000000, 0x040000, CRC(dee22654) SHA1(5df05b0029ff7b1f7f04b41da7823d2aa8034bd2) )
+
+ROM_END
+
 DRIVER_INIT( s1945 )
 {
 	/* input ports */
@@ -2284,14 +2314,15 @@ DRIVER_INIT( tengai )
 ***************************************************************************/
 
 /* Working Games */
-GAME( 1993, samuraia, 0,        sngkace,  samuraia, sngkace,  ROT270, "Psikyo", "Samurai Aces (World)"  , 0) // Banpresto?
-GAME( 1993, sngkace,  samuraia, sngkace,  sngkace,  sngkace,  ROT270, "Psikyo", "Sengoku Ace (Japan)"   , 0) // Banpresto?
-GAME( 1994, gunbird,  0,        gunbird,  gunbird,  gunbird,  ROT270, "Psikyo", "Gunbird (World)"     , 0 )
-GAME( 1994, gunbirdk, gunbird,  gunbird,  gunbirdj, gunbird,  ROT270, "Psikyo", "Gunbird (Korea)"     , 0 )
-GAME( 1994, gunbirdj, gunbird,  gunbird,  gunbirdj, gunbird,  ROT270, "Psikyo", "Gunbird (Japan)"     , 0 )
+GAME( 1993, samuraia, 0,        sngkace,  samuraia, sngkace,  ROT270, "Psikyo", "Samurai Aces (World)", 0) // Banpresto?
+GAME( 1993, sngkace,  samuraia, sngkace,  sngkace,  sngkace,  ROT270, "Psikyo", "Sengoku Ace (Japan)", 0) // Banpresto?
+GAME( 1994, gunbird,  0,        gunbird,  gunbird,  gunbird,  ROT270, "Psikyo", "Gunbird (World)", 0 )
+GAME( 1994, gunbirdk, gunbird,  gunbird,  gunbirdj, gunbird,  ROT270, "Psikyo", "Gunbird (Korea)", 0 )
+GAME( 1994, gunbirdj, gunbird,  gunbird,  gunbirdj, gunbird,  ROT270, "Psikyo", "Gunbird (Japan)", 0 )
 GAME( 1994, btlkroad, 0,        gunbird,  btlkroad, gunbird,  ROT0,   "Psikyo", "Battle K-Road", 0 )
 GAME( 1995, s1945,    0,        s1945,    s1945,    s1945,    ROT270, "Psikyo", "Strikers 1945", 0 )
-GAME( 1995, s1945a,   s1945,    s1945,    s1945a,   s1945a,   ROT270, "Psikyo", "Strikers 1945 (Alt)" , 0) // Region dip - 0x0f=Japan, anything else=World
+GAME( 1995, s1945a,   s1945,    s1945,    s1945a,   s1945a,   ROT270, "Psikyo", "Strikers 1945 (Alt)", 0) // Region dip - 0x0f=Japan, anything else=World
 GAME( 1995, s1945j,   s1945,    s1945,    s1945j,   s1945j,   ROT270, "Psikyo", "Strikers 1945 (Japan)", 0 )
 GAME( 1995, s1945jn,  s1945,    gunbird,  s1945j,   s1945jn,  ROT270, "Psikyo", "Strikers 1945 (Japan, unprotected)", 0 )
+GAME( 1995, s1945k,   s1945,    s1945,    s1945j,   s1945,    ROT270, "Psikyo", "Strikers 1945 (Korea)", 0 )
 GAME( 1996, tengai,   0,        s1945,    tengai,   tengai,   ROT0,   "Psikyo", "Tengai / Sengoku Blade: Sengoku Ace Episode II", 0 )

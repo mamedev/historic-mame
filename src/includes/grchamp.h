@@ -6,6 +6,37 @@
 
 #include "sound/discrete.h"
 
+typedef struct _grchamp_state grchamp_state;
+struct _grchamp_state
+{
+	UINT8		cpu0_out[16];
+	UINT8		cpu1_out[16];
+
+	UINT8		comm_latch;
+	UINT8		comm_latch2[4];
+
+	UINT16		ledlatch;
+	UINT8		ledaddr;
+	UINT16		ledram[8];
+
+	UINT16		collide;
+
+	UINT8 *		radarram;
+	UINT8 *		videoram;
+	UINT8 *		leftram;
+	UINT8 *		centerram;
+	UINT8 *		rightram;
+	UINT8 *		spriteram;
+
+	mame_bitmap *work_bitmap;
+	tilemap *	text_tilemap;
+	tilemap *	left_tilemap;
+	tilemap *	center_tilemap;
+	tilemap *	right_tilemap;
+
+	rgb_t		bgcolor[0x20];
+};
+
 /* Discrete Sound Input Nodes */
 #define GRCHAMP_ENGINE_CS_EN				NODE_01
 #define GRCHAMP_SIFT_DATA					NODE_02
@@ -21,43 +52,13 @@
 
 extern discrete_sound_block grchamp_discrete_interface[];
 
-/*----------- defined in vidhrdw/grchamp.c -----------*/
+WRITE8_HANDLER( grchamp_sound_w );
 
-extern UINT8 grchamp_videoreg0;
-extern UINT8 grchamp_player_ypos;
-extern int grchamp_collision;
-extern UINT8 grchamp_vreg1[0x10];
-extern UINT8 *grchamp_videoram;
-extern UINT8 *grchamp_radar;
+/*----------- defined in vidhrdw/grchamp.c -----------*/
 
 PALETTE_INIT( grchamp );
 VIDEO_START( grchamp );
 VIDEO_UPDATE( grchamp );
-WRITE8_HANDLER( grchamp_videoram_w );
-
-WRITE8_HANDLER( grchamp_player_xpos_w );
-WRITE8_HANDLER( grchamp_player_ypos_w );
-WRITE8_HANDLER( grchamp_tile_select_w );
-WRITE8_HANDLER( grchamp_rain_xpos_w );
-WRITE8_HANDLER( grchamp_rain_ypos_w );
-
-/*----------- defined in machine/grchamp.c -----------*/
-
-extern int grchamp_cpu_irq_enable[2];
-
-DRIVER_INIT( grchamp );
-READ8_HANDLER( grchamp_port_0_r );
-READ8_HANDLER( grchamp_port_1_r );
-WRITE8_HANDLER( grchamp_port_1_w );
-
-WRITE8_HANDLER( grchamp_control0_w );
-WRITE8_HANDLER( grchamp_coinled_w );
-WRITE8_HANDLER( grchamp_sound_w );
-WRITE8_HANDLER( grchamp_comm_w );
-
-WRITE8_HANDLER( grchamp_portA_0_w );
-WRITE8_HANDLER( grchamp_portB_0_w );
-WRITE8_HANDLER( grchamp_portA_1_w );
-WRITE8_HANDLER( grchamp_portB_1_w );
-WRITE8_HANDLER( grchamp_portA_2_w );
-WRITE8_HANDLER( grchamp_portB_2_w );
+WRITE8_HANDLER( grchamp_left_w );
+WRITE8_HANDLER( grchamp_center_w );
+WRITE8_HANDLER( grchamp_right_w );

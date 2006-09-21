@@ -74,31 +74,26 @@ READ8_HANDLER( mcu_portB_r )
 
 WRITE8_HANDLER( mcu_portB_w )
 {
+	UINT8 diff = data ^ portB_out;
 	portB_out = data;
+
 	if ( data & 0x4 )
 	{
 		cpunum_set_input_line( 1, M6805_IRQ_LINE, CLEAR_LINE );
 	}
+
 	/* latch for lamps */
-	if ( (data & (1<<6)) == 0 )
+	if ((diff & 0x40) && !(data & 0x40))
 	{
-		output_set_value("lamp0", (portC_out >> 0) & 1);
-		output_set_value("lamp1", (portC_out >> 1) & 1);
-		output_set_value("lamp2", (portC_out >> 2) & 1);
-		output_set_value("lamp3", (portC_out >> 3) & 1);
+		output_set_lamp_value(0, (portC_out >> 0) & 1);
+		output_set_lamp_value(1, (portC_out >> 1) & 1);
+		output_set_lamp_value(2, (portC_out >> 2) & 1);
+		output_set_lamp_value(3, (portC_out >> 3) & 1);
 	}
+
 	/* RES600 */
-	if ( (data & (1<<4)) == 0 )
-	{
-		cpunum_set_input_line( 0, INPUT_LINE_RESET, ASSERT_LINE );
-	}
-	else
-	{
-		cpunum_set_input_line( 0, INPUT_LINE_RESET, CLEAR_LINE );
-	}
-	if ( (data & 0x3) == 0x3 )
-	{
-	}
+	if (diff & 0x10)
+		cpunum_set_input_line(0, INPUT_LINE_RESET, (data & 0x10) ? CLEAR_LINE : ASSERT_LINE);
 }
 
 /* Port C:
@@ -106,6 +101,7 @@ WRITE8_HANDLER( mcu_portB_w )
     1   (out)   lamp PLAY
     2   (out)   lamp START
     3   (out)   lamp OVER */
+
 READ8_HANDLER( mcu_portC_r )
 {
 	return (portC_in & ~ddrC) | (portC_out & ddrC);
@@ -113,17 +109,20 @@ READ8_HANDLER( mcu_portC_r )
 
 WRITE8_HANDLER( mcu_portC_w )
 {
+	/* guessing that this is an LS48 */
+	static const UINT8 ls48_map[16] =
+		{ 0x3f,0x06,0x5b,0x4f,0x66,0x6d,0x7c,0x07,0x7f,0x67,0x58,0x4c,0x62,0x69,0x78,0x00 };
+
 	portC_out = data & 0x0f;
 
 	/* displays */
 	switch( portB_out & 0x3 )
 	{
-		case 0x0: output_set_value("digit0", portC_out); break;
-		case 0x1: output_set_value("digit1", portC_out); break;
-		case 0x2: output_set_value("digit2", portC_out); break;
+		case 0x0: output_set_digit_value(0, ls48_map[portC_out]); break;
+		case 0x1: output_set_digit_value(1, ls48_map[portC_out]); break;
+		case 0x2: output_set_digit_value(2, ls48_map[portC_out]); break;
 		case 0x3: break;
 	}
-
 }
 
 READ8_HANDLER( mcu_ddr_r )
@@ -313,7 +312,7 @@ INPUT_PORTS_START( a600xl )
 	PORT_BIT(0x1, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START	/* IN5 DSW */
-	PORT_DIPNAME(0xf, 0x0, "Coin/Time" )
+	PORT_DIPNAME(0xf, 0x9, "Coin/Time" )
 	PORT_DIPSETTING( 0x0, "30 sec" )
 	PORT_DIPSETTING( 0x1, "60 sec" )
 	PORT_DIPSETTING( 0x2, "90 sec" )

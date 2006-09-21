@@ -290,7 +290,21 @@ Prom for sync???
 #include "machine/atari_vg.h"
 #include "sound/pokey.h"
 
+#define MASTER_CLOCK (12096000)
+#define CLOCK_3KHZ  (MASTER_CLOCK / 4096)
 
+
+/*************************************
+ *
+ *  Interrupt ack
+ *
+ *************************************/
+
+static WRITE8_HANDLER( wdclr_w )
+{
+	cpunum_set_input_line(0, 0, CLEAR_LINE);
+	watchdog_reset();
+}
 
 /*************************************
  *
@@ -357,42 +371,30 @@ static WRITE8_HANDLER( tempest_coin_w )
  *
  *************************************/
 
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)
+static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_RAM
+	AM_RANGE(0x0800, 0x080f) AM_WRITE(MWA8_RAM) AM_BASE(&tempest_colorram)
 	AM_RANGE(0x0c00, 0x0c00) AM_READ(tempest_IN0_r)	/* IN0 */
 	AM_RANGE(0x0d00, 0x0d00) AM_READ(input_port_3_r)	/* DSW1 */
 	AM_RANGE(0x0e00, 0x0e00) AM_READ(input_port_4_r)	/* DSW2 */
-	AM_RANGE(0x2000, 0x2fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x2000, 0x2fff) AM_RAM AM_BASE(&vectorram) AM_SIZE(&vectorram_size) AM_REGION(REGION_CPU1, 0x2000)
 	AM_RANGE(0x3000, 0x3fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x6040, 0x6040) AM_READ(mb_status_r)
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(tempest_coin_w)
+	AM_RANGE(0x4800, 0x4800) AM_WRITE(avgdvg_go_w)
+	AM_RANGE(0x5000, 0x5000) AM_WRITE(wdclr_w)
+	AM_RANGE(0x5800, 0x5800) AM_WRITE(avgdvg_reset_w)
+	AM_RANGE(0x6000, 0x603f) AM_WRITE(atari_vg_earom_w)
+	AM_RANGE(0x6040, 0x6040) AM_READWRITE(mb_status_r, atari_vg_earom_ctrl_w)
 	AM_RANGE(0x6050, 0x6050) AM_READ(atari_vg_earom_r)
 	AM_RANGE(0x6060, 0x6060) AM_READ(mb_lo_r)
 	AM_RANGE(0x6070, 0x6070) AM_READ(mb_hi_r)
-	AM_RANGE(0x60c0, 0x60cf) AM_READ(pokey1_r)
-	AM_RANGE(0x60d0, 0x60df) AM_READ(pokey2_r)
-	AM_RANGE(0x9000, 0xdfff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_ROM)	/* for the reset / interrupt vectors */
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x0800, 0x080f) AM_WRITE(tempest_colorram_w)
-	AM_RANGE(0x2000, 0x2fff) AM_WRITE(MWA8_RAM) AM_BASE(&vectorram) AM_SIZE(&vectorram_size) AM_REGION(REGION_CPU1, 0x2000)
-	AM_RANGE(0x3000, 0x3fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x4000, 0x4000) AM_WRITE(tempest_coin_w)
-	AM_RANGE(0x4800, 0x4800) AM_WRITE(avgdvg_go_w)
-	AM_RANGE(0x5000, 0x5000) AM_WRITE(watchdog_reset_w)
-	AM_RANGE(0x5800, 0x5800) AM_WRITE(avgdvg_reset_w)
-	AM_RANGE(0x6000, 0x603f) AM_WRITE(atari_vg_earom_w)
-	AM_RANGE(0x6040, 0x6040) AM_WRITE(atari_vg_earom_ctrl_w)
 	AM_RANGE(0x6080, 0x609f) AM_WRITE(mb_go_w)
-	AM_RANGE(0x60c0, 0x60cf) AM_WRITE(pokey1_w)
-	AM_RANGE(0x60d0, 0x60df) AM_WRITE(pokey2_w)
+	AM_RANGE(0x60c0, 0x60cf) AM_READWRITE(pokey1_r, pokey1_w)
+	AM_RANGE(0x60d0, 0x60df) AM_READWRITE(pokey2_r, pokey2_w)
 	AM_RANGE(0x60e0, 0x60e0) AM_WRITE(tempest_led_w)
-	AM_RANGE(0x9000, 0xdfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x9000, 0xdfff) AM_ROM
+	AM_RANGE(0xf000, 0xffff) AM_ROM	/* for the reset / interrupt vectors */
 ADDRESS_MAP_END
-
 
 
 /*************************************
@@ -526,10 +528,10 @@ static struct POKEYinterface pokey_interface_2 =
 static MACHINE_DRIVER_START( tempest )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M6502, 12096000/8)			/* 1.512 MHz */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,4)	/* 4.1ms */
-
+	MDRV_CPU_ADD(M6502, MASTER_CLOCK / 8)
+	MDRV_CPU_PROGRAM_MAP(main_map, 0)
+	MDRV_CPU_PERIODIC_INT(irq0_line_assert, TIME_IN_HZ(CLOCK_3KHZ / 12))
+	MDRV_WATCHDOG_TIME_INIT(TIME_IN_HZ(CLOCK_3KHZ / 256))
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_NVRAM_HANDLER(atari_vg)
 
@@ -539,7 +541,6 @@ static MACHINE_DRIVER_START( tempest )
 	MDRV_VISIBLE_AREA(0, 580, 0, 570)
 	MDRV_PALETTE_LENGTH(256)
 
-	MDRV_PALETTE_INIT(avg_multi)
 	MDRV_VIDEO_START(avg_tempest)
 	MDRV_VIDEO_UPDATE(vector)
 
@@ -580,6 +581,10 @@ ROM_START( tempest ) /* rev 3 */
 	/* Mathbox ROMs */
 	ROM_LOAD( "136002-123.np3",  0x3000, 0x0800, CRC(29f7e937) SHA1(686c8b9b8901262e743497cee7f2f7dd5cb3af7e) ) /* May be labeled "136002-111", same data */
 	ROM_LOAD( "136002-124.r3",   0x3800, 0x0800, CRC(c16ec351) SHA1(a30a3662c740810c0f20e3712679606921b8ca06) ) /* May be labeled "136002-112", same data */
+
+    /* AVG PROM */
+    ROM_REGION( 0x100, REGION_PROMS, 0 )
+    ROM_LOAD( "136002-125.d7",   0x0000, 0x0100, CRC(5903af03) SHA1(24bc0366f394ad0ec486919212e38be0f08d0239) )
 ROM_END
 
 
@@ -600,6 +605,10 @@ ROM_START( tempest1 ) /* rev 1 */
 	/* Mathbox ROMs */
 	ROM_LOAD( "136002-123.np3",  0x3000, 0x0800, CRC(29f7e937) SHA1(686c8b9b8901262e743497cee7f2f7dd5cb3af7e) ) /* May be labeled "136002-111", same data */
 	ROM_LOAD( "136002-124.r3",   0x3800, 0x0800, CRC(c16ec351) SHA1(a30a3662c740810c0f20e3712679606921b8ca06) ) /* May be labeled "136002-112", same data */
+
+    /* AVG PROM */
+    ROM_REGION( 0x100, REGION_PROMS, 0 )
+    ROM_LOAD( "136002-125.d7",   0x0000, 0x0100, CRC(5903af03) SHA1(24bc0366f394ad0ec486919212e38be0f08d0239) )
 ROM_END
 
 
@@ -620,6 +629,10 @@ ROM_START( tempest2 ) /* rev 2 */
 	/* Mathbox ROMs */
 	ROM_LOAD( "136002-123.np3",  0x3000, 0x0800, CRC(29f7e937) SHA1(686c8b9b8901262e743497cee7f2f7dd5cb3af7e) ) /* May be labeled "136002-111", same data */
 	ROM_LOAD( "136002-124.r3",   0x3800, 0x0800, CRC(c16ec351) SHA1(a30a3662c740810c0f20e3712679606921b8ca06) ) /* May be labeled "136002-112", same data */
+
+    /* AVG PROM */
+    ROM_REGION( 0x100, REGION_PROMS, 0 )
+    ROM_LOAD( "136002-125.d7",   0x0000, 0x0100, CRC(5903af03) SHA1(24bc0366f394ad0ec486919212e38be0f08d0239) )
 ROM_END
 
 
@@ -634,6 +647,10 @@ ROM_START( tempest3 ) /* rev 2 */
 	ROM_RELOAD(                 0xf000, 0x1000 ) /* for reset/interrupt vectors */
 	/* Mathbox ROMs */
 	ROM_LOAD( "136002-138.np3", 0x3000, 0x1000, CRC(9995256d) SHA1(2b725ee1a57d423c7d7377a1744f48412e0f2f69) )
+
+    /* AVG PROM */
+    ROM_REGION( 0x100, REGION_PROMS, 0 )
+    ROM_LOAD( "136002-125.d7",   0x0000, 0x0100, CRC(5903af03) SHA1(24bc0366f394ad0ec486919212e38be0f08d0239) )
 ROM_END
 
 
@@ -654,6 +671,10 @@ ROM_START( temptube )
 	/* Mathbox ROMs */
 	ROM_LOAD( "136002-123.np3",  0x3000, 0x0800, CRC(29f7e937) SHA1(686c8b9b8901262e743497cee7f2f7dd5cb3af7e) ) /* May be labeled "136002-111", same data */
 	ROM_LOAD( "136002-124.r3",   0x3800, 0x0800, CRC(c16ec351) SHA1(a30a3662c740810c0f20e3712679606921b8ca06) ) /* May be labeled "136002-112", same data */
+
+    /* AVG PROM */
+    ROM_REGION( 0x100, REGION_PROMS, 0 )
+    ROM_LOAD( "136002-125.d7",   0x0000, 0x0100, CRC(5903af03) SHA1(24bc0366f394ad0ec486919212e38be0f08d0239) )
 ROM_END
 
 

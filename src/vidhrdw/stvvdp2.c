@@ -2112,11 +2112,7 @@ static struct _stv_rbg_cache_data
 
 } stv_rbg_cache_data;
 
-INLINE INT32 mul_fixed32( INT32 a, INT32 b )
-{
-	INT64 result = (INT64)a * b;
-	return (INT32)((result >> 16) & 0xffffffff);
-}
+#define mul_fixed32( a, b ) fixed_mul_shift( a, b, 16 )
 
 static void stv_vdp2_fill_rotation_parameter_table( UINT8 rot_parameter )
 {
@@ -2242,6 +2238,30 @@ static UINT8 stv_vdp2_are_map_registers_equal(void)
 	return 1;
 }
 
+static void stv_vdp2_check_fade_control_for_layer(void)
+{
+	if ( stv2_current_tilemap.fade_control & 1 )
+	{
+		if ( stv2_current_tilemap.fade_control & 2 )
+		{
+			if ((STV_VDP2_COBR & 0x1ff) == 0 &&
+				(STV_VDP2_COBG & 0x1ff) == 0 &&
+				(STV_VDP2_COBB & 0x1ff) == 0 )
+			{
+				stv2_current_tilemap.fade_control = 0;
+			}
+		}
+		else
+		{
+			if ((STV_VDP2_COAR & 0x1ff) == 0 &&
+				(STV_VDP2_COAG & 0x1ff) == 0 &&
+				(STV_VDP2_COAB & 0x1ff) == 0 )
+			{
+				stv2_current_tilemap.fade_control = 0;
+			}
+		}
+	}
+}
 
 #define STV_VDP2_CP_NBG0_PNMDR		0x0
 #define STV_VDP2_CP_NBG1_PNMDR		0x1
@@ -3997,7 +4017,7 @@ static void stv_vdp2_copy_roz_bitmap(mame_bitmap *bitmap,
 
 		line = (UINT16*)bitmap->line[vcnt];
 
-		if ( !use_coeff_table || RP.dkast == 0 )
+		if ( !use_coeff_table || RP.dkax == 0 )
 		{
 			if ( use_coeff_table )
 			{
@@ -4252,6 +4272,7 @@ static void stv_vdp2_draw_NBG0(mame_bitmap *bitmap, const rectangle *cliprect)
 	stv2_current_tilemap.plane_size = STV_VDP2_N0PLSZ;
 	stv2_current_tilemap.colour_ram_address_offset = STV_VDP2_N0CAOS;
 	stv2_current_tilemap.fade_control = (STV_VDP2_N0COEN * 1) | (STV_VDP2_N0COSL * 2);
+	stv_vdp2_check_fade_control_for_layer();
 	stv2_current_tilemap.window_control = (STV_VDP2_N0LOG * 0x01) |
 										  (STV_VDP2_N0W0E * 0x02) |
 										  (STV_VDP2_N0W1E * 0x04) |
@@ -4340,6 +4361,7 @@ static void stv_vdp2_draw_NBG1(mame_bitmap *bitmap, const rectangle *cliprect)
 	stv2_current_tilemap.plane_size = STV_VDP2_N1PLSZ;
 	stv2_current_tilemap.colour_ram_address_offset = STV_VDP2_N1CAOS;
 	stv2_current_tilemap.fade_control = (STV_VDP2_N1COEN * 1) | (STV_VDP2_N1COSL * 2);
+	stv_vdp2_check_fade_control_for_layer();
 	stv2_current_tilemap.window_control = (STV_VDP2_N1LOG * 0x01) |
 										  (STV_VDP2_N1W0E * 0x02) |
 										  (STV_VDP2_N1W1E * 0x04) |
@@ -4436,6 +4458,7 @@ static void stv_vdp2_draw_NBG2(mame_bitmap *bitmap, const rectangle *cliprect)
 
 	stv2_current_tilemap.colour_ram_address_offset = STV_VDP2_N2CAOS;
 	stv2_current_tilemap.fade_control = (STV_VDP2_N2COEN * 1) | (STV_VDP2_N2COSL * 2);
+	stv_vdp2_check_fade_control_for_layer();
 	stv2_current_tilemap.window_control = (STV_VDP2_N2LOG * 0x01) |
 										  (STV_VDP2_N2W0E * 0x02) |
 										  (STV_VDP2_N2W1E * 0x04) |
@@ -4534,6 +4557,7 @@ static void stv_vdp2_draw_NBG3(mame_bitmap *bitmap, const rectangle *cliprect)
 
 	stv2_current_tilemap.colour_ram_address_offset = STV_VDP2_N3CAOS;
 	stv2_current_tilemap.fade_control = (STV_VDP2_N3COEN * 1) | (STV_VDP2_N3COSL * 2);
+	stv_vdp2_check_fade_control_for_layer();
 	stv2_current_tilemap.window_control = (STV_VDP2_N3LOG * 0x01) |
 										  (STV_VDP2_N3W0E * 0x02) |
 										  (STV_VDP2_N3W1E * 0x04) |
@@ -4793,6 +4817,7 @@ static void stv_vdp2_draw_RBG0(mame_bitmap *bitmap, const rectangle *cliprect)
 
 	stv2_current_tilemap.colour_ram_address_offset = STV_VDP2_R0CAOS;
 	stv2_current_tilemap.fade_control = (STV_VDP2_R0COEN * 1) | (STV_VDP2_R0COSL * 2);
+	stv_vdp2_check_fade_control_for_layer();
 	stv2_current_tilemap.window_control = (STV_VDP2_R0LOG * 0x01) |
 										  (STV_VDP2_R0W0E * 0x02) |
 										  (STV_VDP2_R0W1E * 0x04) |

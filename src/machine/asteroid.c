@@ -12,6 +12,7 @@
 #include "vidhrdw/avgdvg.h"
 #include "asteroid.h"
 
+UINT8 *asteroid_ram1, *asteroid_ram2;
 
 INTERRUPT_GEN( asteroid_interrupt )
 {
@@ -130,24 +131,17 @@ READ8_HANDLER( asteroid_DSW1_r )
 
 WRITE8_HANDLER( asteroid_bank_switch_w )
 {
-	static int asteroid_bank = 0;
-	int asteroid_newbank;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	asteroid_newbank = (data >> 2) & 1;
-	if (asteroid_bank != asteroid_newbank) {
-		/* Perform bankswitching on page 2 and page 3 */
-		int temp;
-		int i;
-
-		asteroid_bank = asteroid_newbank;
-		for (i = 0; i < 0x100; i++) {
-			temp = RAM[0x200 + i];
-			RAM[0x200 + i] = RAM[0x300 + i];
-			RAM[0x300 + i] = temp;
-		}
+	if (data & 4)
+	{
+		memory_set_bankptr(1, asteroid_ram2);
+		memory_set_bankptr(2, asteroid_ram1);
 	}
+	else
+	{
+		memory_set_bankptr(1, asteroid_ram1);
+		memory_set_bankptr(2, asteroid_ram2);
+	}
+
 	set_led_status (0, ~data & 0x02);
 	set_led_status (1, ~data & 0x01);
 }
@@ -155,23 +149,15 @@ WRITE8_HANDLER( asteroid_bank_switch_w )
 
 WRITE8_HANDLER( astdelux_bank_switch_w )
 {
-	static int astdelux_bank = 0;
-	int astdelux_newbank;
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
-
-	astdelux_newbank = (data >> 7) & 1;
-	if (astdelux_bank != astdelux_newbank) {
-		/* Perform bankswitching on page 2 and page 3 */
-		int temp;
-		int i;
-
-		astdelux_bank = astdelux_newbank;
-		for (i = 0; i < 0x100; i++) {
-			temp = RAM[0x200 + i];
-			RAM[0x200 + i] = RAM[0x300 + i];
-			RAM[0x300 + i] = temp;
-		}
+	if (data & 0x80)
+	{
+		memory_set_bankptr(1, asteroid_ram2);
+		memory_set_bankptr(2, asteroid_ram1);
+	}
+	else
+	{
+		memory_set_bankptr(1, asteroid_ram1);
+		memory_set_bankptr(2, asteroid_ram2);
 	}
 }
 
@@ -185,6 +171,7 @@ WRITE8_HANDLER( astdelux_led_w )
 MACHINE_RESET( asteroid )
 {
 	asteroid_bank_switch_w (0,0);
+	avgdvg_reset_w (0,0);
 }
 
 

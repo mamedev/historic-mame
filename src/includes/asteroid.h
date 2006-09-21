@@ -26,6 +26,7 @@ MACHINE_RESET( asteroid );
 
 READ8_HANDLER( llander_IN0_r );
 
+extern UINT8 *asteroid_ram1, *asteroid_ram2;
 
 /*----------- defined in sndhrdw/asteroid.c -----------*/
 

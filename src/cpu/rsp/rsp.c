@@ -13,6 +13,13 @@
 #define SAVE_DISASM						0
 #define SAVE_DMEM						0
 
+#define PRINT_VECREG(x)		printf("V%d: %04X|%04X|%04X|%04X|%04X|%04X|%04X|%04X\n", (x), \
+							(UINT16)VREG_S((x),0), (UINT16)VREG_S((x),1), \
+							(UINT16)VREG_S((x),2), (UINT16)VREG_S((x),3), \
+							(UINT16)VREG_S((x),4), (UINT16)VREG_S((x),5), \
+							(UINT16)VREG_S((x),6), (UINT16)VREG_S((x),7))
+
+
 extern offs_t rsp_dasm_one(char *buffer, offs_t pc, UINT32 op);
 
 #if LOG_INSTRUCTION_EXECUTION
@@ -277,6 +284,7 @@ static void unimplemented_opcode(UINT32 op)
 
 #if SAVE_DISASM
 	{
+		char string[200];
 		int i;
 		FILE *dasm;
 		dasm = fopen("rsp_disasm.txt", "wt");
@@ -294,11 +302,11 @@ static void unimplemented_opcode(UINT32 op)
 	{
 		int i;
 		FILE *dmem;
-		dmem = fopen("rsp_dmem.txt", "wt");
+		dmem = fopen("rsp_dmem.bin", "wb");
 
-		for (i=0; i < 0x1000; i+=4)
+		for (i=0; i < 0x1000; i++)
 		{
-			fprintf(dmem, "%08X: %08X\n", 0x04000000 + i, READ32(0x04000000 + i));
+			fputc(READ8(0x04000000 + i), dmem);
 		}
 		fclose(dmem);
 	}
@@ -378,13 +386,23 @@ static void rsp_exit(void)
 #endif
 #if SAVE_DMEM
 	{
+		/*int i;
+        FILE *dmem;
+        dmem = fopen("rsp_dmem.txt", "wt");
+
+        for (i=0; i < 0x1000; i+=4)
+        {
+            fprintf(dmem, "%08X: %08X\n", 0x04000000 + i, READ32(0x04000000 + i));
+        }
+        fclose(dmem);*/
+
 		int i;
 		FILE *dmem;
-		dmem = fopen("rsp_dmem.txt", "wt");
+		dmem = fopen("rsp_dmem.bin", "wb");
 
-		for (i=0; i < 0x1000; i+=4)
+		for (i=0; i < 0x1000; i++)
 		{
-			fprintf(dmem, "%08X: %08X\n", 0x04000000 + i, READ32(0x04000000 + i));
+			fputc(READ8(0x04000000 + i), dmem);
 		}
 		fclose(dmem);
 	}
@@ -1026,9 +1044,23 @@ INLINE UINT16 SATURATE_ACCUM(int accum, int slice, UINT16 negative, UINT16 posit
 	return 0;
 }
 
+#define WRITEBACK_RESULT() 					\
+	do {									\
+		VREG_S(VDREG, 0) = vres[0];			\
+		VREG_S(VDREG, 1) = vres[1];			\
+		VREG_S(VDREG, 2) = vres[2];			\
+		VREG_S(VDREG, 3) = vres[3];			\
+		VREG_S(VDREG, 4) = vres[4];			\
+		VREG_S(VDREG, 5) = vres[5];			\
+		VREG_S(VDREG, 6) = vres[6];			\
+		VREG_S(VDREG, 7) = vres[7];			\
+	} while(0)
+
+
 static void handle_vector_ops(UINT32 op)
 {
 	int i;
+	INT16 vres[8];
 
 	// Opcode legend:
 	//    E = VS2 element type
@@ -1059,7 +1091,7 @@ static void handle_vector_ops(UINT32 op)
 					ACCUM_H(del) = 0;
 					ACCUM_M(del) = -32768;
 					ACCUM_L(del) = -32768;
-					VREG_S(VDREG, del) = 0x7fff;
+					vres[del] = 0x7fff;
 				}
 				else
 				{
@@ -1068,9 +1100,11 @@ static void handle_vector_ops(UINT32 op)
 					ACCUM_H(del) = (r < 0) ? 0xffff : 0;		// sign-extend to 48-bit
 					ACCUM_M(del) = (INT16)(r >> 16);
 					ACCUM_L(del) = (UINT16)(r);
-					VREG_S(VDREG, del) = ACCUM_M(del);
+					vres[del] = ACCUM_M(del);
 				}
 			}
+			WRITEBACK_RESULT();
+
 			break;
 		}
 
@@ -1097,17 +1131,18 @@ static void handle_vector_ops(UINT32 op)
 
 				if (r < 0)
 				{
-					VREG_S(VDREG, del) = 0;
+					vres[del] = 0;
 				}
 				else if (((INT16)(ACCUM_H(del)) ^ (INT16)(ACCUM_M(del))) < 0)
 				{
-					VREG_S(VDREG, del) = -1;
+					vres[del] = -1;
 				}
 				else
 				{
-					VREG_S(VDREG, del) = ACCUM_M(del);
+					vres[del] = ACCUM_M(del);
 				}
 			}
+			WRITEBACK_RESULT();
 			break;
 		}
 
@@ -1134,8 +1169,9 @@ static void handle_vector_ops(UINT32 op)
 				ACCUM_M(del) = 0;
 				ACCUM_L(del) = (UINT16)(r >> 16);
 
-				VREG_S(VDREG, del) = ACCUM_L(del);
+				vres[del] = ACCUM_L(del);
 			}
+			WRITEBACK_RESULT();
 			break;
 		}
 
@@ -1162,8 +1198,9 @@ static void handle_vector_ops(UINT32 op)
 				ACCUM_M(del) = (INT16)(r >> 16);
 				ACCUM_L(del) = (UINT16)(r);
 
-				VREG_S(VDREG, del) = ACCUM_M(del);
+				vres[del] = ACCUM_M(del);
 			}
+			WRITEBACK_RESULT();
 			break;
 
 		}
@@ -1191,8 +1228,9 @@ static void handle_vector_ops(UINT32 op)
 				ACCUM_M(del) = (INT16)(r >> 16);
 				ACCUM_L(del) = (UINT16)(r);
 
-				VREG_S(VDREG, del) = ACCUM_L(del);
+				vres[del] = ACCUM_L(del);
 			}
+			WRITEBACK_RESULT();
 			break;
 		}
 
@@ -1221,8 +1259,9 @@ static void handle_vector_ops(UINT32 op)
 
 				if (r < -32768) r = -32768;
 				if (r >  32767)	r = 32767;
-				VREG_S(VDREG, del) = (INT16)(r);
+				vres[del] = (INT16)(r);
 			}
+			WRITEBACK_RESULT();
 			break;
 		}
 
@@ -1248,8 +1287,9 @@ static void handle_vector_ops(UINT32 op)
 				ACCUM(del) += (INT64)(r) << 17;
 				res = SATURATE_ACCUM(del, 1, 0x8000, 0x7fff);
 
-				VREG_S(VDREG, del) = res;
+				vres[del] = res;
 			}
+			WRITEBACK_RESULT();
 			break;
 		}
 
@@ -1300,8 +1340,9 @@ static void handle_vector_ops(UINT32 op)
 					}
 				}
 
-				VREG_S(VDREG, del) = res;
+				vres[del] = res;
 			}
+			WRITEBACK_RESULT();
 			break;
 		}
 
@@ -1333,8 +1374,9 @@ static void handle_vector_ops(UINT32 op)
 
 				res = SATURATE_ACCUM(del, 0, 0x0000, 0xffff);
 
-				VREG_S(VDREG, del) = res;
+				vres[del] = res;
 			}
+			WRITEBACK_RESULT();
 			break;
 		}
 
@@ -1368,8 +1410,9 @@ static void handle_vector_ops(UINT32 op)
 
 				res = SATURATE_ACCUM(del, 1, 0x8000, 0x7fff);
 
-				VREG_S(VDREG, del) = res;
+				vres[del] = res;
 			}
+			WRITEBACK_RESULT();
 			break;
 		}
 
@@ -1403,8 +1446,9 @@ static void handle_vector_ops(UINT32 op)
 
 				res = SATURATE_ACCUM(del, 0, 0x0000, 0xffff);
 
-				VREG_S(VDREG, del) = res;
+				vres[del] = res;
 			}
+			WRITEBACK_RESULT();
 			break;
 		}
 
@@ -1432,8 +1476,9 @@ static void handle_vector_ops(UINT32 op)
 
 				res = SATURATE_ACCUM(del, 1, 0x8000, 0x7fff);
 
-				VREG_S(VDREG, del) = res;
+				vres[del] = res;
 			}
+			WRITEBACK_RESULT();
 			break;
 		}
 
@@ -1460,10 +1505,11 @@ static void handle_vector_ops(UINT32 op)
 
 				if (r > 32767) r = 32767;
 				if (r < -32768) r = -32768;
-				VREG_S(VDREG, del) = (INT16)(r);
+				vres[del] = (INT16)(r);
 			}
 			CLEAR_ZERO_FLAGS();
 			CLEAR_CARRY_FLAGS();
+			WRITEBACK_RESULT();
 			break;
 		}
 
@@ -1491,10 +1537,11 @@ static void handle_vector_ops(UINT32 op)
 				if (r > 32767) r = 32767;
 				if (r < -32768) r = -32768;
 
-				VREG_S(VDREG, del) = (INT16)(r);
+				vres[del] = (INT16)(r);
 			}
 			CLEAR_ZERO_FLAGS();
 			CLEAR_CARRY_FLAGS();
+			WRITEBACK_RESULT();
 			break;
 		}
 
@@ -1519,24 +1566,25 @@ static void handle_vector_ops(UINT32 op)
 				{
 					if (s2 == -32768)
 					{
-						VREG_S(VDREG, del) = 32767;
+						vres[del] = 32767;
 					}
 					else
 					{
-						VREG_S(VDREG, del) = -s2;
+						vres[del] = -s2;
 					}
 				}
 				else if (s1 > 0)
 				{
-					VREG_S(VDREG, del) = s2;
+					vres[del] = s2;
 				}
 				else
 				{
-					VREG_S(VDREG, del) = 0;
+					vres[del] = 0;
 				}
 
-				ACCUM_L(del) = VREG_S(VDREG, del);
+				ACCUM_L(del) = vres[del];
 			}
+			WRITEBACK_RESULT();
 			break;
 		}
 
@@ -1562,7 +1610,7 @@ static void handle_vector_ops(UINT32 op)
 				INT32 s2 = (UINT32)(UINT16)VREG_S(VS2REG, sel);
 				INT32 r = s1 + s2;
 
-				VREG_S(VDREG, del) = (INT16)(r);
+				vres[del] = (INT16)(r);
 				ACCUM_L(del) = (INT16)(r);
 
 				if (r & 0xffff0000)
@@ -1570,6 +1618,7 @@ static void handle_vector_ops(UINT32 op)
 					SET_CARRY_FLAG(del);
 				}
 			}
+			WRITEBACK_RESULT();
 			break;
 		}
 
@@ -1595,7 +1644,7 @@ static void handle_vector_ops(UINT32 op)
 				INT32 s2 = (UINT32)(UINT16)VREG_S(VS2REG, sel);
 				INT32 r = s1 - s2;
 
-				VREG_S(VDREG, del) = (INT16)(r);
+				vres[del] = (INT16)(r);
 				ACCUM_L(del) = (UINT16)(r);
 
 				if ((UINT16)(r) != 0)
@@ -1607,6 +1656,7 @@ static void handle_vector_ops(UINT32 op)
 					SET_CARRY_FLAG(del);
 				}
 			}
+			WRITEBACK_RESULT();
 			break;
 		}
 
@@ -1669,12 +1719,12 @@ static void handle_vector_ops(UINT32 op)
 
 				if (VREG_S(VS1REG, del) < VREG_S(VS2REG, sel))
 				{
-					VREG_S(VDREG, del) = VREG_S(VS1REG, del);
+					vres[del] = VREG_S(VS1REG, del);
 					SET_COMPARE_FLAG(del);
 				}
 				else if (VREG_S(VS1REG, del) == VREG_S(VS2REG, sel))
 				{
-					VREG_S(VDREG, del) = VREG_S(VS1REG, del);
+					vres[del] = VREG_S(VS1REG, del);
 					if (ZERO_FLAG(del) != 0 && CARRY_FLAG(del) != 0)
 					{
 						SET_COMPARE_FLAG(del);
@@ -1682,14 +1732,15 @@ static void handle_vector_ops(UINT32 op)
 				}
 				else
 				{
-					VREG_S(VDREG, del) = VREG_S(VS2REG, sel);
+					vres[del] = VREG_S(VS2REG, sel);
 				}
 
-				ACCUM_L(del) = VREG_S(VDREG, del);
+				ACCUM_L(del) = vres[del];
 			}
 
 			CLEAR_ZERO_FLAGS();
 			CLEAR_CARRY_FLAGS();
+			WRITEBACK_RESULT();
 			break;
 		}
 
@@ -1710,8 +1761,8 @@ static void handle_vector_ops(UINT32 op)
 				int del = VEC_EL_1(EL, i);
 				int sel = VEC_EL_2(EL, del);
 
-				VREG_S(VDREG, del) = VREG_S(VS2REG, sel);
-				ACCUM_L(del) = VREG_S(VDREG, del);
+				vres[del] = VREG_S(VS2REG, sel);
+				ACCUM_L(del) = vres[del];
 
 				if (VREG_S(VS1REG, del) == VREG_S(VS2REG, sel))
 				{
@@ -1724,6 +1775,7 @@ static void handle_vector_ops(UINT32 op)
 
 			CLEAR_ZERO_FLAGS();
 			CLEAR_CARRY_FLAGS();
+			WRITEBACK_RESULT();
 			break;
 		}
 
@@ -1744,8 +1796,8 @@ static void handle_vector_ops(UINT32 op)
 				int del = VEC_EL_1(EL, i);
 				int sel = VEC_EL_2(EL, del);
 
-				VREG_S(VDREG, del) = VREG_S(VS1REG, del);
-				ACCUM_L(del) = VREG_S(VS1REG, del);
+				vres[del] = VREG_S(VS1REG, del);
+				ACCUM_L(del) = vres[del];
 
 				if (VREG_S(VS1REG, del) != VREG_S(VS2REG, sel))
 				{
@@ -1762,6 +1814,7 @@ static void handle_vector_ops(UINT32 op)
 
 			CLEAR_ZERO_FLAGS();
 			CLEAR_CARRY_FLAGS();
+			WRITEBACK_RESULT();
 			break;
 		}
 
@@ -1796,18 +1849,19 @@ static void handle_vector_ops(UINT32 op)
 
 				if (COMPARE_FLAG(del) != 0)
 				{
-					VREG_S(VDREG, del) = VREG_S(VS1REG, del);
+					vres[del] = VREG_S(VS1REG, del);
 				}
 				else
 				{
-					VREG_S(VDREG, del) = VREG_S(VS2REG, sel);
+					vres[del] = VREG_S(VS2REG, sel);
 				}
 
-				ACCUM_L(del) = VREG_S(VDREG, del);
+				ACCUM_L(del) = vres[del];
 			}
 
 			CLEAR_ZERO_FLAGS();
 			CLEAR_CARRY_FLAGS();
+			WRITEBACK_RESULT();
 			break;
 		}
 
@@ -1898,11 +1952,12 @@ static void handle_vector_ops(UINT32 op)
 					}
 				}
 
-				VREG_S(VDREG, del) = ACCUM_L(del);
+				vres[del] = ACCUM_L(del);
 			}
 			CLEAR_ZERO_FLAGS();
 			CLEAR_CARRY_FLAGS();
 			rsp.flag[2] = 0;
+			WRITEBACK_RESULT();
 			break;
 		}
 
@@ -1942,11 +1997,11 @@ static void handle_vector_ops(UINT32 op)
 							rsp.flag[2] |= (1 << (del));
 						}
 						SET_COMPARE_FLAG(del);
-						VREG_S(VDREG, del) = -((UINT16)s2);
+						vres[del] = -((UINT16)s2);
 					}
 					else
 					{
-						VREG_S(VDREG, del) = s1;
+						vres[del] = s1;
 					}
 
 					if (s1 + s2 != 0)
@@ -1966,11 +2021,11 @@ static void handle_vector_ops(UINT32 op)
 					if (s1 - s2 >= 0)
 					{
 						rsp.flag[1] |= (1 << (8+del));
-						VREG_S(VDREG, del) = s2;
+						vres[del] = s2;
 					}
 					else
 					{
-						VREG_S(VDREG, del) = s1;
+						vres[del] = s1;
 					}
 
 					if ((s1 - s2) != 0)
@@ -1982,8 +2037,9 @@ static void handle_vector_ops(UINT32 op)
 					}
 				}
 
-				ACCUM_L(del) = VREG_S(VDREG, del);
+				ACCUM_L(del) = vres[del];
 			}
+			WRITEBACK_RESULT();
 			break;
 		}
 
@@ -2040,8 +2096,9 @@ static void handle_vector_ops(UINT32 op)
 					}
 				}
 
-				VREG_S(VDREG, del) = ACCUM_L(del);
+				vres[del] = ACCUM_L(del);
 			}
+			WRITEBACK_RESULT();
 			break;
 		}
 
@@ -2056,15 +2113,20 @@ static void handle_vector_ops(UINT32 op)
 
 			for (i=0; i < 8; i++)
 			{
-				if (COMPARE_FLAG(i) != 0)
+				int del = VEC_EL_1(EL, i);
+				int sel = VEC_EL_2(EL, del);
+				if (COMPARE_FLAG(del) != 0)
 				{
-					VREG_S(VDREG, i) = VREG_S(VS1REG, i);
+					vres[del] = VREG_S(VS1REG, del);
 				}
 				else
 				{
-					VREG_S(VDREG, i) = VREG_S(VS2REG, VEC_EL_2(EL, i));
+					vres[del] = VREG_S(VS2REG, VEC_EL_2(EL, sel));
 				}
+
+				ACCUM_L(del) = vres[del];
 			}
+			WRITEBACK_RESULT();
 			break;
 		}
 		case 0x28:		/* VAND */
@@ -2080,9 +2142,10 @@ static void handle_vector_ops(UINT32 op)
 			{
 				int del = VEC_EL_1(EL, i);
 				int sel = VEC_EL_2(EL, del);
-				VREG_S(VDREG, del) = VREG_S(VS1REG, del) & VREG_S(VS2REG, sel);
-				ACCUM_L(del) = VREG_S(VDREG, del);
+				vres[del] = VREG_S(VS1REG, del) & VREG_S(VS2REG, sel);
+				ACCUM_L(del) = vres[del];
 			}
+			WRITEBACK_RESULT();
 			break;
 		}
 		case 0x29:		/* VNAND */
@@ -2098,9 +2161,10 @@ static void handle_vector_ops(UINT32 op)
 			{
 				int del = VEC_EL_1(EL, i);
 				int sel = VEC_EL_2(EL, del);
-				VREG_S(VDREG, i) = ~(VREG_S(VS1REG, del) & VREG_S(VS2REG, sel));
-				ACCUM_L(del) = VREG_S(VDREG, del);
+				vres[del] = ~((VREG_S(VS1REG, del) & VREG_S(VS2REG, sel)));
+				ACCUM_L(del) = vres[del];
 			}
+			WRITEBACK_RESULT();
 			break;
 		}
 		case 0x2a:		/* VOR */
@@ -2116,9 +2180,10 @@ static void handle_vector_ops(UINT32 op)
 			{
 				int del = VEC_EL_1(EL, i);
 				int sel = VEC_EL_2(EL, del);
-				VREG_S(VDREG, del) = VREG_S(VS1REG, del) | VREG_S(VS2REG, sel);
-				ACCUM_L(del) = VREG_S(VDREG, del);
+				vres[del] = VREG_S(VS1REG, del) | VREG_S(VS2REG, sel);
+				ACCUM_L(del) = vres[del];
 			}
+			WRITEBACK_RESULT();
 			break;
 		}
 		case 0x2b:		/* VNOR */
@@ -2134,9 +2199,10 @@ static void handle_vector_ops(UINT32 op)
 			{
 				int del = VEC_EL_1(EL, i);
 				int sel = VEC_EL_2(EL, del);
-				VREG_S(VDREG, del) = ~(VREG_S(VS1REG, del) | VREG_S(VS2REG, sel));
-				ACCUM_L(del) = VREG_S(VDREG, del);
+				vres[del] = ~((VREG_S(VS1REG, del) | VREG_S(VS2REG, sel)));
+				ACCUM_L(del) = vres[del];
 			}
+			WRITEBACK_RESULT();
 			break;
 		}
 		case 0x2c:		/* VXOR */
@@ -2152,9 +2218,10 @@ static void handle_vector_ops(UINT32 op)
 			{
 				int del = VEC_EL_1(EL, i);
 				int sel = VEC_EL_2(EL, del);
-				VREG_S(VDREG, del) = VREG_S(VS1REG, del) ^ VREG_S(VS2REG, sel);
-				ACCUM_L(del) = VREG_S(VDREG, del);
+				vres[del] = VREG_S(VS1REG, del) ^ VREG_S(VS2REG, sel);
+				ACCUM_L(del) = vres[del];
 			}
+			WRITEBACK_RESULT();
 			break;
 		}
 		case 0x2d:		/* VNXOR */
@@ -2170,9 +2237,10 @@ static void handle_vector_ops(UINT32 op)
 			{
 				int del = VEC_EL_1(EL, i);
 				int sel = VEC_EL_2(EL, del);
-				VREG_S(VDREG, del) = ~(VREG_S(VS1REG, del) ^ VREG_S(VS2REG, sel));
-				ACCUM_L(del) = VREG_S(VDREG, del);
+				vres[del] = ~((VREG_S(VS1REG, del) ^ VREG_S(VS2REG, sel)));
+				ACCUM_L(del) = vres[del];
 			}
+			WRITEBACK_RESULT();
 			break;
 		}
 
@@ -2456,10 +2524,7 @@ static int rsp_execute(int cycles)
 
 	rsp_icount = cycles;
 
-	if (rsp.pc < 0x4001000 || rsp.pc >= 0x4002000)
-	{
-		fatalerror("rsp: PC = %08X\n", rsp.pc);
-	}
+	rsp.pc = 0x4001000 | (rsp.pc & 0xfff);
 
 	while (rsp_icount > 0)
 	{
@@ -2536,7 +2601,8 @@ static int rsp_execute(int cycles)
 			case 0x07:	/* BGTZ */		if ((INT32)RSVAL > 0) JUMP_REL(SIMM16); break;
 			case 0x08:	/* ADDI */		if (RTREG) RTVAL = (INT32)(RSVAL + SIMM16); break;
 			case 0x09:	/* ADDIU */		if (RTREG) RTVAL = (INT32)(RSVAL + SIMM16); break;
-			case 0x0b:	/* SLTIU */		if (RTREG) RTVAL = (UINT32)(RTVAL) < (UINT32)((INT32)SIMM16); break;
+			case 0x0a:	/* SLTI */		if (RTREG) RTVAL = (INT32)(RSVAL) < ((INT32)SIMM16); break;
+			case 0x0b:	/* SLTIU */		if (RTREG) RTVAL = (UINT32)(RSVAL) < (UINT32)((INT32)SIMM16); break;
 			case 0x0c:	/* ANDI */		if (RTREG) RTVAL = RSVAL & UIMM16; break;
 			case 0x0d:	/* ORI */		if (RTREG) RTVAL = RSVAL | UIMM16; break;
 			case 0x0e:	/* XORI */		if (RTREG) RTVAL = RSVAL ^ UIMM16; break;

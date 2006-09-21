@@ -443,21 +443,133 @@ DRIVER_INIT(cotton2)
 	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(50);
 }
 
+static int dnmtdeka_pending_commands;
+
 static READ32_HANDLER( dnmtdeka_speedup_r )
 {
-	if (activecpu_get_pc()==0x6027c93) cpu_spinuntil_time(TIME_IN_USEC(20));
-
+	if (activecpu_get_pc()==0x6027c92) cpu_spinuntil_int();//cpu_spinuntil_time(TIME_IN_USEC(20));
 	return stv_workram_h[0x0985a0/4];
+}
+
+static WRITE32_HANDLER(dnmtdeka_cmd_write)
+{
+	COMBINE_DATA(&stv_workram_h[0x0e0ad4/4 + offset]);
+	if ( (cpu_getactivecpu() == 0) && (activecpu_get_pc() == 0x00000d06) )
+		return;
+
+	if ( data != 0 ) dnmtdeka_pending_commands++;
+	//logerror( "CMD: Written by cpu=%d, at = %08X, offset = %08X, data = %08X, commands = %d\n", cpu_getactivecpu(), activecpu_get_pc(), offset, data, dnmtdeka_pending_commands );
+	cpu_trigger(1000);
+}
+
+static READ32_HANDLER(dnmtdeka_cmd_read)
+{
+	//logerror( "CMD: Read by cpu=%d, at = %08X, offset = %08X, data = %08X, commands = %d\n", cpu_getactivecpu(), activecpu_get_pc(), offset, stv_workram_h[0xe0bd0/4 + offset], dnmtdeka_pending_commands );
+	if ( activecpu_get_pc() == 0x060051f4 )
+	{
+		if ( stv_workram_h[0x0e0ad4/4 + offset] == 0 )
+		{
+			if ( dnmtdeka_pending_commands == 0 )
+				cpu_spinuntil_trigger(1000);
+		}
+		else
+		{
+			dnmtdeka_pending_commands--;
+		}
+	}
+
+	return stv_workram_h[0x0e0ad4/4 + offset];
 }
 
 
 DRIVER_INIT(dnmtdeka)
 {
-//      memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60985a0, 0x60985a3, 0, 0, dnmtdeka_speedup_r ); // idle loop of main cpu
+	dnmtdeka_pending_commands = 0;
+
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60985a0, 0x60985a3, 0, 0, dnmtdeka_speedup_r ); // idle loop of main cpu
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x060e0ad4, 0x060e0bab, 0, 0, dnmtdeka_cmd_write );
+	memory_install_read32_handler(1, ADDRESS_SPACE_PROGRAM, 0x060e0ad4, 0x060e0bab, 0, 0, dnmtdeka_cmd_read );
 
 	init_ic13(machine);
 }
 
+static int diehard_pending_commands;
+
+static READ32_HANDLER(diehard_speedup_r)
+{
+	if ( activecpu_get_pc() == 0x06027c9a ) cpu_spinuntil_int();
+	return stv_workram_h[0x000986ac/4];
+}
+
+static WRITE32_HANDLER(diehard_cmd_write)
+{
+	COMBINE_DATA(&stv_workram_h[0xe0bd0/4 + offset]);
+	if ( (cpu_getactivecpu() == 0) && (activecpu_get_pc() == 0x00000d06) )
+		return;
+
+	if ( data != 0 ) diehard_pending_commands++;
+	//logerror( "CMD: Written by cpu=%d, at = %08X, offset = %08X, data = %08X, commands = %d\n", cpu_getactivecpu(), activecpu_get_pc(), offset, data, diehard_pending_commands );
+	cpu_trigger(1000);
+}
+
+static READ32_HANDLER(diehard_cmd_read)
+{
+	//logerror( "CMD: Read by cpu=%d, at = %08X, offset = %08X, data = %08X, commands = %d\n", cpu_getactivecpu(), activecpu_get_pc(), offset, stv_workram_h[0xe0bd0/4 + offset], diehard_pending_commands );
+	if ( activecpu_get_pc() == 0x060051f4 )
+	{
+		if ( stv_workram_h[0xe0bd0/4 + offset] == 0 )
+		{
+			if ( diehard_pending_commands == 0 )
+				cpu_spinuntil_trigger(1000);
+		}
+	}
+
+	return stv_workram_h[0xe0bd0/4 + offset];
+}
+
+static READ32_HANDLER(diehard_cmd_ack_read)
+{
+	//logerror( "CMDACK: Read by cpu=%d, at = %08X, offset = %08X, data = %08X, commands = %d\n", cpu_getactivecpu(), activecpu_get_pc(), offset, stv_workram_h[0x000e0dd8/4], diehard_pending_commands );
+	if ( (stv_workram_h[0x000e0dd8/4] & 0xff000000) == 0 &&
+		 diehard_pending_commands == 0 )
+	{
+		cpu_trigger(1000);
+	}
+	return stv_workram_h[0x000e0dd8/4];
+}
+
+static WRITE32_HANDLER(diehard_cmd_ack_write)
+{
+	//logerror( "CMDACK: Write by cpu=%d, at = %08X, offset = %08X, data = %08X, commands = %d\n", cpu_getactivecpu(), activecpu_get_pc(), offset, data, diehard_pending_commands );
+	if ( diehard_pending_commands > 0 )
+	{
+		diehard_pending_commands--;
+	}
+	COMBINE_DATA(&stv_workram_h[0x000e0dd8/4]);
+}
+
+static WRITE32_HANDLER(diehard_cmd_ack_write_cpu0)
+{
+	//logerror( "CMDACK: Write by cpu=%d, at = %08X, offset = %08X, data = %08X, commands = %d\n", cpu_getactivecpu(), activecpu_get_pc(), offset, data, diehard_pending_commands );
+	COMBINE_DATA(&stv_workram_h[0x000e0dd8/4]);
+	cpu_trigger(1000);
+}
+
+DRIVER_INIT(diehard)
+{
+	diehard_pending_commands = 0;
+
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x060986ac, 0x060986af, 0, 0, diehard_speedup_r );
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x060e0bd0, 0x060e0ca7, 0, 0, diehard_cmd_write );
+	memory_install_read32_handler(1, ADDRESS_SPACE_PROGRAM, 0x060e0bd0, 0x060e0ca7, 0, 0, diehard_cmd_read );
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x060e0dd8, 0x060e0dd8, 0, 0, diehard_cmd_ack_read );
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x060e0dd8, 0x060e0dd8, 0, 0, diehard_cmd_ack_write_cpu0 );
+	memory_install_write32_handler(1, ADDRESS_SPACE_PROGRAM, 0x060e0dd8, 0x060e0dd8, 0, 0, diehard_cmd_ack_write );
+
+
+	init_ic13(machine);
+
+}
 
 static READ32_HANDLER( fhboxers_speedup_r )
 {
@@ -931,30 +1043,6 @@ DRIVER_INIT(vfremix)
 	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(20);
 }
 
-static READ32_HANDLER(diehard_speedup_r)
-{
-	if ( activecpu_get_pc() == 0x06027c9a ) cpu_spinuntil_int();
-	return stv_workram_h[0x000986ac/4];
-}
-
-static READ32_HANDLER(diehard_slave_speedup_r)
-{
-	if ( activecpu_get_pc() == 0x060051f4 )
-		if (stv_workram_h[0x000e0be0/4] == 0)
-			cpunum_spinuntil_trigger(1, 1000);
-
-	return stv_workram_h[0x000986ac/4];
-}
-
-DRIVER_INIT(diehard)
-{
-	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x060986ac, 0x060986af, 0, 0, diehard_speedup_r );
-	//memory_install_read32_handler(1, ADDRESS_SPACE_PROGRAM, 0x060e0be0, 0x060e0be3, 0, 0, diehard_slave_speedup_r );
-
-	init_ic13(machine);
-
-	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(50);
-}
 
 static READ32_HANDLER(sss_speedup_r)
 {
@@ -1007,16 +1095,16 @@ DRIVER_INIT(othellos)
 
 }
 
-static void sassisu_slave_speedup( UINT32 data )
+static void sasissu_slave_speedup( UINT32 data )
 {
 	if ( activecpu_get_pc() == 0x060710C0 )
 		if ( (data & 0x00800000) == 0 )
 			cpunum_spinuntil_trigger(1, 1000);
 }
 
-DRIVER_INIT(sassisu)
+DRIVER_INIT(sasissu)
 {
-	cpunum_set_info_fct(1, CPUINFO_PTR_SH2_FTCSR_READ_CALLBACK, (genf*)sassisu_slave_speedup );
+	cpunum_set_info_fct(1, CPUINFO_PTR_SH2_FTCSR_READ_CALLBACK, (genf*)sasissu_slave_speedup );
 
 	init_ic13(machine);
 

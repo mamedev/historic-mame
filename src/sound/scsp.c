@@ -233,6 +233,15 @@ static unsigned char DecodeSCI(struct _SCSP *SCSP,unsigned char irq)
 	return SCI;
 }
 
+static void ResetInterrupts(struct _SCSP *SCSP)
+{
+	UINT32 reset = SCSP->udata.data[0x22/2];
+	if (reset & 0x40)
+		SCSP->Int68kCB(-SCSP->IrqTimA);
+	if (reset & 0xc0)
+		SCSP->Int68kCB(-SCSP->IrqTimBC);
+}
+
 static void CheckPendingIRQ(struct _SCSP *SCSP)
 {
 	UINT32 pend=SCSP->udata.data[0x20/2];
@@ -615,7 +624,7 @@ static void SCSP_UpdateReg(struct _SCSP *SCSP, int reg)
 			if(SCSP->Master)
 			{
 				SCSP->udata.data[0x20/2]&=~SCSP->udata.data[0x22/2];
-				CheckPendingIRQ(SCSP);
+				ResetInterrupts(SCSP);
 			}
 			break;
 		case 0x24:

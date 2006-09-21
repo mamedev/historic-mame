@@ -491,16 +491,7 @@ int memcard_present(void)
 
 void set_led_status(int num, int on)
 {
-	char temp[20];
-	char *dest = temp;
-	*dest++ = 'l';
-	*dest++ = 'e';
-	*dest++ = 'd';
-	if (num > 100) *dest++ = '0' + ((num / 100) % 10);
-	if (num > 10) *dest++ = '0' + ((num / 10) % 10);
-	*dest++ = '0' + (num % 10);
-	*dest++ = 0;
-	output_set_value(temp, on ? 1 : 0);
+	output_set_led_value(num, on);
 }
 
 

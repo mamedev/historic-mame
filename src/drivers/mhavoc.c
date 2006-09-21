@@ -244,39 +244,26 @@ static WRITE8_HANDLER( mhavoc_gammaram_w )
  *
  *************************************/
 
-static ADDRESS_MAP_START( alpha_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x01ff) AM_READ(MRA8_RAM)			/* 0.5K Program Ram */
-	AM_RANGE(0x0200, 0x07ff) AM_READ(MRA8_BANK1)			/* 3K Paged Program RAM */
-	AM_RANGE(0x0800, 0x09ff) AM_READ(MRA8_RAM)			/* 0.5K Program RAM */
-	AM_RANGE(0x1000, 0x1000) AM_READ(mhavoc_gamma_r)		/* Gamma Read Port */
-	AM_RANGE(0x1200, 0x1200) AM_READ(mhavoc_port_0_r)	/* Alpha Input Port 0 */
-	AM_RANGE(0x1800, 0x1fff) AM_READ(MRA8_RAM)			/* Shared Beta Ram */
-	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_BANK2)			/* Paged Program ROM (32K) */
-	AM_RANGE(0x4000, 0x4fff) AM_READ(MRA8_RAM) 			/* Vector RAM (4K) */
-	AM_RANGE(0x5000, 0x5fff) AM_READ(MRA8_ROM)			/* Vector ROM (4K) */
-	AM_RANGE(0x6000, 0x7fff) AM_READ(MRA8_BANK3)			/* Paged Vector ROM (32K) */
-	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)			/* Program ROM (32K) */
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( alpha_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x01ff) AM_WRITE(MWA8_RAM)			/* 0.5K Program Ram */
-	AM_RANGE(0x0200, 0x07ff) AM_WRITE(MWA8_BANK1)			/* 3K Paged Program RAM */
-	AM_RANGE(0x0800, 0x09ff) AM_WRITE(MWA8_RAM)			/* 0.5K Program RAM */
-	AM_RANGE(0x1200, 0x1200) AM_WRITE(MWA8_NOP)			/* don't care */
-	AM_RANGE(0x1400, 0x141f) AM_WRITE(mhavoc_colorram_w)	/* ColorRAM */
-	AM_RANGE(0x1600, 0x1600) AM_WRITE(mhavoc_out_0_w)		/* Control Signals */
-	AM_RANGE(0x1640, 0x1640) AM_WRITE(avgdvg_go_w)		/* Vector Generator GO */
-	AM_RANGE(0x1680, 0x1680) AM_WRITE(watchdog_reset_w)	/* Watchdog Clear */
-	AM_RANGE(0x16c0, 0x16c0) AM_WRITE(avgdvg_reset_w)		/* Vector Generator Reset */
-	AM_RANGE(0x1700, 0x1700) AM_WRITE(mhavoc_alpha_irq_ack_w)/* IRQ ack */
-	AM_RANGE(0x1740, 0x1740) AM_WRITE(mhavoc_rom_banksel_w)/* Program ROM Page Select */
-	AM_RANGE(0x1780, 0x1780) AM_WRITE(mhavoc_ram_banksel_w)/* Program RAM Page Select */
-	AM_RANGE(0x17c0, 0x17c0) AM_WRITE(mhavoc_gamma_w)		/* Gamma Communication Write Port */
-	AM_RANGE(0x1800, 0x1fff) AM_WRITE(MWA8_RAM)			/* Shared Beta Ram */
-	AM_RANGE(0x2000, 0x3fff) AM_WRITE(MWA8_ROM)			/* Major Havoc writes here.*/
-	AM_RANGE(0x4000, 0x4fff) AM_WRITE(MWA8_RAM) AM_BASE(&vectorram) AM_SIZE(&vectorram_size) AM_REGION(REGION_CPU1, 0x4000)/* Vector Generator RAM */
-	AM_RANGE(0x6000, 0xffff) AM_WRITE(MWA8_ROM)
+static ADDRESS_MAP_START( alpha_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_RAM                           /* 0.5K Program Ram */
+	AM_RANGE(0x0200, 0x07ff) AM_RAMBANK(1)                    /* 3K Paged Program RAM */
+	AM_RANGE(0x0800, 0x09ff) AM_RAM                           /* 0.5K Program RAM */
+	AM_RANGE(0x1000, 0x1000) AM_READ(mhavoc_gamma_r)          /* Gamma Read Port */
+	AM_RANGE(0x1200, 0x1200) AM_READWRITE(mhavoc_port_0_r, MWA8_NOP) /* Alpha Input Port 0 */
+	AM_RANGE(0x1400, 0x141f) AM_RAM AM_BASE(&mhavoc_colorram)        /* ColorRAM */
+	AM_RANGE(0x1600, 0x1600) AM_WRITE(mhavoc_out_0_w)         /* Control Signals */
+	AM_RANGE(0x1640, 0x1640) AM_WRITE(avgdvg_go_w)		      /* Vector Generator GO */
+	AM_RANGE(0x1680, 0x1680) AM_WRITE(watchdog_reset_w)	      /* Watchdog Clear */
+	AM_RANGE(0x16c0, 0x16c0) AM_WRITE(avgdvg_reset_w)		  /* Vector Generator Reset */
+	AM_RANGE(0x1700, 0x1700) AM_WRITE(mhavoc_alpha_irq_ack_w) /* IRQ ack */
+	AM_RANGE(0x1740, 0x1740) AM_WRITE(mhavoc_rom_banksel_w)   /* Program ROM Page Select */
+	AM_RANGE(0x1780, 0x1780) AM_WRITE(mhavoc_ram_banksel_w)   /* Program RAM Page Select */
+	AM_RANGE(0x17c0, 0x17c0) AM_WRITE(mhavoc_gamma_w)		  /* Gamma Communication Write Port */
+	AM_RANGE(0x1800, 0x1fff) AM_RAM			                  /* Shared Beta Ram */
+	AM_RANGE(0x2000, 0x3fff) AM_ROMBANK(2)			          /* Paged Program ROM (32K) */
+	AM_RANGE(0x4000, 0x4fff) AM_RAM AM_BASE(&vectorram) AM_SIZE(&vectorram_size) AM_REGION(REGION_CPU1, 0x4000)/* Vector Generator RAM */
+	AM_RANGE(0x5000, 0x7fff) AM_ROM			                  /* Vector ROM */
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)			      /* Program ROM (32K) */
 ADDRESS_MAP_END
 
 
@@ -287,27 +274,18 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-static ADDRESS_MAP_START( gamma_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)			/* Program RAM (2K) */
-	AM_RANGE(0x0800, 0x1fff) AM_READ(mhavoc_gammaram_r)	/* wraps to 0x000-0x7ff */
-	AM_RANGE(0x2000, 0x203f) AM_READ(quad_pokey_r)		/* Quad Pokey read  */
-	AM_RANGE(0x2800, 0x2800) AM_READ(mhavoc_port_1_r)	/* Gamma Input Port */
-	AM_RANGE(0x3000, 0x3000) AM_READ(mhavoc_alpha_r)		/* Alpha Comm. Read Port*/
-	AM_RANGE(0x3800, 0x3803) AM_READ(input_port_2_r)		/* Roller Controller Input*/
-	AM_RANGE(0x4000, 0x4000) AM_READ(input_port_4_r)		/* DSW at 8S */
-	AM_RANGE(0x6000, 0x61ff) AM_READ(MRA8_RAM)			/* EEROM        */
-	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)			/* Program ROM (16K)    */
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( gamma_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_RAM)			/* Program RAM (2K) */
-	AM_RANGE(0x0800, 0x1fff) AM_WRITE(mhavoc_gammaram_w) AM_BASE(&gammaram)	/* wraps to 0x000-0x7ff */
-	AM_RANGE(0x2000, 0x203f) AM_WRITE(quad_pokey_w)		/* Quad Pokey write */
-	AM_RANGE(0x4000, 0x4000) AM_WRITE(mhavoc_gamma_irq_ack_w)	/* IRQ Acknowledge  */
-	AM_RANGE(0x4800, 0x4800) AM_WRITE(mhavoc_out_1_w)		/* Coin Counters    */
-	AM_RANGE(0x5000, 0x5000) AM_WRITE(mhavoc_alpha_w)		/* Alpha Comm. Write Port */
-	AM_RANGE(0x6000, 0x61ff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)	/* EEROM        */
+static ADDRESS_MAP_START( gamma_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x07ff) AM_RAM			                  /* Program RAM (2K) */
+	AM_RANGE(0x0800, 0x1fff) AM_READWRITE(mhavoc_gammaram_r, mhavoc_gammaram_w) AM_BASE(&gammaram)	/* wraps to 0x000-0x7ff */
+	AM_RANGE(0x2000, 0x203f) AM_READWRITE(quad_pokey_r, quad_pokey_w) /* Quad Pokey read  */
+	AM_RANGE(0x2800, 0x2800) AM_READ(mhavoc_port_1_r)         /* Gamma Input Port */
+	AM_RANGE(0x3000, 0x3000) AM_READ(mhavoc_alpha_r)          /* Alpha Comm. Read Port*/
+	AM_RANGE(0x3800, 0x3803) AM_READ(input_port_2_r)          /* Roller Controller Input*/
+	AM_RANGE(0x4000, 0x4000) AM_READWRITE(input_port_4_r, mhavoc_gamma_irq_ack_w) /* DSW at 8S, IRQ Acknowledge*/
+	AM_RANGE(0x4800, 0x4800) AM_WRITE(mhavoc_out_1_w)         /* Coin Counters    */
+	AM_RANGE(0x5000, 0x5000) AM_WRITE(mhavoc_alpha_w)         /* Alpha Comm. Write Port */
+	AM_RANGE(0x6000, 0x61ff) AM_RAM AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size) /* EEROM        */
+	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)                /* Program ROM (16K)    */
 ADDRESS_MAP_END
 
 
@@ -318,41 +296,27 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-static ADDRESS_MAP_START( alphaone_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x01ff) AM_READ(MRA8_RAM)			/* 0.5K Program Ram */
-	AM_RANGE(0x0200, 0x07ff) AM_READ(MRA8_BANK1)			/* 3K Paged Program RAM */
-	AM_RANGE(0x0800, 0x09ff) AM_READ(MRA8_RAM)			/* 0.5K Program RAM */
-	AM_RANGE(0x1020, 0x103f) AM_READ(dual_pokey_r)
-	AM_RANGE(0x1040, 0x1040) AM_READ(alphaone_port_0_r)	/* Alpha Input Port 0 */
-	AM_RANGE(0x1060, 0x1060) AM_READ(input_port_1_r)		/* Gamma Input Port */
-	AM_RANGE(0x1080, 0x1080) AM_READ(input_port_2_r)		/* Roller Controller Input*/
-	AM_RANGE(0x1800, 0x18ff) AM_READ(MRA8_RAM)			/* EEROM        */
-	AM_RANGE(0x2000, 0x3fff) AM_READ(MRA8_BANK2)			/* Paged Program ROM (32K) */
-	AM_RANGE(0x4000, 0x4fff) AM_READ(MRA8_RAM) 			/* Vector RAM (4K) */
-	AM_RANGE(0x5000, 0x5fff) AM_READ(MRA8_ROM)			/* Vector ROM (4K) */
-	AM_RANGE(0x6000, 0x7fff) AM_READ(MRA8_BANK3)			/* Paged Vector ROM (32K) */
-	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)			/* Program ROM (32K) */
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( alphaone_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x01ff) AM_WRITE(MWA8_RAM)			/* 0.5K Program Ram */
-	AM_RANGE(0x0200, 0x07ff) AM_WRITE(MWA8_BANK1)			/* 3K Paged Program RAM */
-	AM_RANGE(0x0800, 0x09ff) AM_WRITE(MWA8_RAM)			/* 0.5K Program RAM */
-	AM_RANGE(0x1020, 0x103f) AM_WRITE(dual_pokey_w)
-	AM_RANGE(0x1040, 0x1040) AM_WRITE(MWA8_NOP)			/* Nothing here */
-	AM_RANGE(0x10a0, 0x10a0) AM_WRITE(alphaone_out_0_w)	/* Control Signals */
-	AM_RANGE(0x10a4, 0x10a4) AM_WRITE(avgdvg_go_w)		/* Vector Generator GO */
-	AM_RANGE(0x10a8, 0x10a8) AM_WRITE(watchdog_reset_w)	/* Watchdog Clear */
-	AM_RANGE(0x10ac, 0x10ac) AM_WRITE(avgdvg_reset_w)		/* Vector Generator Reset */
-	AM_RANGE(0x10b0, 0x10b0) AM_WRITE(mhavoc_alpha_irq_ack_w)	/* IRQ ack */
+static ADDRESS_MAP_START( alphaone_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x01ff) AM_RAM                           /* 0.5K Program Ram */
+	AM_RANGE(0x0200, 0x07ff) AM_RAMBANK(1)                    /* 3K Paged Program RAM */
+	AM_RANGE(0x0800, 0x09ff) AM_RAM                           /* 0.5K Program RAM */
+	AM_RANGE(0x1020, 0x103f) AM_READWRITE(dual_pokey_r, dual_pokey_w)
+	AM_RANGE(0x1040, 0x1040) AM_READWRITE(alphaone_port_0_r, MWA8_NOP) /* Alpha Input Port 0 */
+	AM_RANGE(0x1060, 0x1060) AM_READ(input_port_1_r)          /* Gamma Input Port */
+	AM_RANGE(0x1080, 0x1080) AM_READ(input_port_2_r)          /* Roller Controller Input*/
+	AM_RANGE(0x10a0, 0x10a0) AM_WRITE(alphaone_out_0_w)       /* Control Signals */
+	AM_RANGE(0x10a4, 0x10a4) AM_WRITE(avgdvg_go_w)            /* Vector Generator GO */
+	AM_RANGE(0x10a8, 0x10a8) AM_WRITE(watchdog_reset_w)       /* Watchdog Clear */
+	AM_RANGE(0x10ac, 0x10ac) AM_WRITE(avgdvg_reset_w)         /* Vector Generator Reset */
+	AM_RANGE(0x10b0, 0x10b0) AM_WRITE(mhavoc_alpha_irq_ack_w) /* IRQ ack */
 	AM_RANGE(0x10b4, 0x10b4) AM_WRITE(mhavoc_rom_banksel_w)
 	AM_RANGE(0x10b8, 0x10b8) AM_WRITE(mhavoc_ram_banksel_w)
-	AM_RANGE(0x10e0, 0x10ff) AM_WRITE(mhavoc_colorram_w)	/* ColorRAM */
-	AM_RANGE(0x1800, 0x18ff) AM_WRITE(MWA8_RAM) AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)	/* EEROM        */
-	AM_RANGE(0x2000, 0x3fff) AM_WRITE(MWA8_ROM)			/* Major Havoc writes here.*/
-	AM_RANGE(0x4000, 0x4fff) AM_WRITE(MWA8_RAM) AM_BASE(&vectorram) AM_SIZE(&vectorram_size) AM_REGION(REGION_CPU1, 0x4000)/* Vector Generator RAM */
-	AM_RANGE(0x6000, 0xffff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x10e0, 0x10ff) AM_WRITE(MWA8_RAM) AM_BASE(&mhavoc_colorram) /* ColorRAM */
+	AM_RANGE(0x1800, 0x18ff) AM_RAM AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size) /* EEROM        */
+	AM_RANGE(0x2000, 0x3fff) AM_ROMBANK(2)                    /* Paged Program ROM (32K) */
+	AM_RANGE(0x4000, 0x4fff) AM_RAM AM_BASE(&vectorram) AM_SIZE(&vectorram_size) AM_REGION(REGION_CPU1, 0x4000) /* Vector Generator RAM */
+	AM_RANGE(0x5000, 0x7fff) AM_ROM                           /* Vector ROM */
+	AM_RANGE(0x8000, 0xffff) AM_ROM                           /* Program ROM (32K) */
 ADDRESS_MAP_END
 
 
@@ -549,10 +513,10 @@ static MACHINE_DRIVER_START( mhavoc )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("alpha", M6502, MHAVOC_CLOCK_2_5M)		/* 2.5 MHz */
-	MDRV_CPU_PROGRAM_MAP(alpha_readmem,alpha_writemem)
+	MDRV_CPU_PROGRAM_MAP(alpha_map, 0)
 
 	MDRV_CPU_ADD_TAG("gamma", M6502, MHAVOC_CLOCK_1_25M)	/* 1.25 MHz */
-	MDRV_CPU_PROGRAM_MAP(gamma_readmem,gamma_writemem)
+	MDRV_CPU_PROGRAM_MAP(gamma_map, 0)
 
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_MACHINE_RESET(mhavoc)
@@ -564,7 +528,6 @@ static MACHINE_DRIVER_START( mhavoc )
 	MDRV_VISIBLE_AREA(0, 300, 0, 260)
 	MDRV_PALETTE_LENGTH(32768)
 
-	MDRV_PALETTE_INIT(avg_multi)
 	MDRV_VIDEO_START(avg_mhavoc)
 	MDRV_VIDEO_UPDATE(vector)
 
@@ -591,12 +554,10 @@ static MACHINE_DRIVER_START( alphaone )
 	/* basic machine hardware */
 	MDRV_IMPORT_FROM(mhavoc)
 	MDRV_CPU_MODIFY("alpha")
-	MDRV_CPU_PROGRAM_MAP(alphaone_readmem,alphaone_writemem)
+	MDRV_CPU_PROGRAM_MAP(alphaone_map, 0)
 	MDRV_CPU_REMOVE("gamma")
 
-	/* video hardware */
 	MDRV_VISIBLE_AREA(0, 580, 0, 500)
-	MDRV_VIDEO_START(avg_alphaone)
 
 	/* sound hardware */
 	MDRV_SOUND_REPLACE("pokey.1", POKEY, MHAVOC_CLOCK_1_25M)
@@ -649,6 +610,11 @@ ROM_START( mhavoc )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 16k for code */
 	ROM_LOAD( "136025.108",   0x08000, 0x4000, CRC(93faf210) SHA1(7744368a1d520f986d1c4246113a7e24fcdd6d04) )
 	ROM_RELOAD(               0x0c000, 0x4000 ) /* reset+interrupt vectors */
+
+    /* AVG PROM */
+    ROM_REGION( 0x100, REGION_PROMS, 0 )
+    ROM_LOAD( "036408-01.b1",   0x0000, 0x0100, CRC(5903af03) SHA1(24bc0366f394ad0ec486919212e38be0f08d0239) )
+
 ROM_END
 
 
@@ -676,6 +642,10 @@ ROM_START( mhavoc2 )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 16k for code */
 	ROM_LOAD( "136025.108",   0x08000, 0x4000, CRC(93faf210) SHA1(7744368a1d520f986d1c4246113a7e24fcdd6d04) )
 	ROM_RELOAD(               0x0c000, 0x4000 ) /* reset+interrupt vectors */
+
+    /* AVG PROM */
+    ROM_REGION( 0x100, REGION_PROMS, 0 )
+    ROM_LOAD( "036408-01.b1",   0x0000, 0x0100, CRC(5903af03) SHA1(24bc0366f394ad0ec486919212e38be0f08d0239) )
 ROM_END
 
 
@@ -701,6 +671,10 @@ ROM_START( mhavocrv )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 16k for code */
 	ROM_LOAD( "136025.908",   0x08000, 0x4000, CRC(c52ec664) SHA1(08120a385f71b17ec02a3c2ef856ff835a91773e) )
 	ROM_RELOAD(               0x0c000, 0x4000 ) /* reset+interrupt vectors */
+
+    /* AVG PROM */
+    ROM_REGION( 0x100, REGION_PROMS, 0 )
+    ROM_LOAD( "036408-01.b1",   0x0000, 0x0100, CRC(5903af03) SHA1(24bc0366f394ad0ec486919212e38be0f08d0239) )
 ROM_END
 
 
@@ -728,6 +702,10 @@ ROM_START( mhavocp )
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 16k for code */
 	ROM_LOAD( "136025.008",   0x8000, 0x4000, CRC(22ea7399) SHA1(eeda8cc40089506063835a62c3273e7dd3918fd5) )
 	ROM_RELOAD(               0xc000, 0x4000 )/* reset+interrupt vectors */
+
+    /* AVG PROM */
+    ROM_REGION( 0x100, REGION_PROMS, 0 )
+    ROM_LOAD( "036408-01.b1",   0x0000, 0x0100, CRC(5903af03) SHA1(24bc0366f394ad0ec486919212e38be0f08d0239) )
 ROM_END
 
 
@@ -751,6 +729,10 @@ ROM_START( alphaone )
 	ROM_LOAD( "vec_pg23.tw",  0x1c000, 0x4000, CRC(1ff74292) SHA1(90e61c48544c62d905e207bba5c67ae7694e86a5) )
 
 	/* the last 0x1000 is used for the 2 RAM pages */
+
+    /* AVG PROM */
+    ROM_REGION( 0x100, REGION_PROMS, 0 )
+    ROM_LOAD( "036408-01.b1",   0x0000, 0x0100, CRC(5903af03) SHA1(24bc0366f394ad0ec486919212e38be0f08d0239) )
 ROM_END
 
 
@@ -774,6 +756,10 @@ ROM_START( alphaona )
 	ROM_LOAD( "vec_pg23.tw",  0x1c000, 0x4000, CRC(1ff74292) SHA1(90e61c48544c62d905e207bba5c67ae7694e86a5) )
 
 	/* the last 0x1000 is used for the 2 RAM pages */
+
+    /* AVG PROM */
+    ROM_REGION( 0x100, REGION_PROMS, 0 )
+    ROM_LOAD( "136002-125.6c",   0x0000, 0x0100, CRC(5903af03) SHA1(24bc0366f394ad0ec486919212e38be0f08d0239) )
 ROM_END
 
 

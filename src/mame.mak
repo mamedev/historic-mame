@@ -981,6 +981,7 @@ $(OBJ)/nichibut.a: \
 
 $(OBJ)/nintendo.a: \
 	$(OBJ)/drivers/dkong.o $(OBJ)/sndhrdw/dkong.o $(OBJ)/vidhrdw/dkong.o \
+	$(OBJ)/drivers/kinstb.o \
 	$(OBJ)/drivers/mario.o $(OBJ)/sndhrdw/mario.o $(OBJ)/vidhrdw/mario.o \
 	$(OBJ)/drivers/n8080.o $(OBJ)/sndhrdw/n8080.o $(OBJ)/vidhrdw/n8080.o \
 	$(OBJ)/drivers/nss.o $(OBJ)/machine/snes.o $(OBJ)/sndhrdw/snes.o $(OBJ)/vidhrdw/snes.o \

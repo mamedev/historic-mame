@@ -221,7 +221,7 @@ DRIVER_INIT(vfremix);
 DRIVER_INIT(diehard);
 DRIVER_INIT(sss);
 DRIVER_INIT(othellos);
-DRIVER_INIT(sassisu);
+DRIVER_INIT(sasissu);
 DRIVER_INIT(gaxeduel);
 DRIVER_INIT(suikoenb);
 DRIVER_INIT(sokyugrt);
@@ -2924,10 +2924,14 @@ static void scsp_irq(int irq)
 		return;
 	}
 
-	if (irq)
+	if (irq > 0)
 	{
 		scsp_last_line = irq;
 		cpunum_set_input_line(2, irq, ASSERT_LINE);
+	}
+	else if (irq < 0)
+	{
+		cpunum_set_input_line(2, -irq, CLEAR_LINE);
 	}
 	else
 	{
@@ -3549,7 +3553,7 @@ ROM_START( thunt )
 	ROM_LOAD16_WORD_SWAP( "th-e-5.ic5",   0x1000000, 0x0400000, CRC(3914b805) SHA1(1331ce82ba0bdfc76fe3456a5252e69c00e2cf1f) )
 ROM_END
 
-ROM_START( sassisu )
+ROM_START( sasissu )
 	STV_BIOS
 
 	ROM_REGION32_BE( 0x3000000, REGION_USER1, 0 ) /* SH2 code */
@@ -3964,9 +3968,9 @@ GAMEB( 1996, colmns97,  stvbios, stvbios, stv, stv,  colmns97,  ROT0,   "Sega", 
 GAMEB( 1997, cotton2,   stvbios, stvbios, stv, stv,  cotton2,   ROT0,   "Success",  				  "Cotton 2 (JUET 970902 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1998, cottonbm,  stvbios, stvbios, stv, stv,  cottonbm,  ROT0,   "Success",  				  "Cotton Boomerang (JUET 980709 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1995, critcrsh,  stvbios, stvbios, critcrsh, critcrsh, ic13, ROT0, "Sega", 	     			  "Critter Crusher (EA 951204 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEB( 1999, danchih,   stvbios, stvbios, stv, stvmp,danchih,   ROT0,   "Altron (Tecmo license)", 	  "Danchi de Hanafuoda (J 990607 V1.400)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEB( 1996, diehard,   stvbios, stvbios, stv, stv,  diehard,   ROT0,   "Sega", 	 				  "Die Hard Arcade (UET 960515 V1.000)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS  )
-GAMEB( 1996, dnmtdeka,  diehard, stvbios, stv, stv,  dnmtdeka,  ROT0,   "Sega", 	 				  "Dynamite Deka (J 960515 V1.000)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS  )
+GAMEB( 1999, danchih,   stvbios, stvbios, stv, stvmp,danchih,   ROT0,   "Altron (Tecmo license)", 	  "Danchi de Hanafuda (J 990607 V1.400)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEB( 1996, diehard,   stvbios, stvbios, stv, stv,  diehard,   ROT0,   "Sega", 	 				  "Die Hard Arcade (UET 960515 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS  )
+GAMEB( 1996, dnmtdeka,  diehard, stvbios, stv, stv,  dnmtdeka,  ROT0,   "Sega", 	 				  "Dynamite Deka (J 960515 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS  )
 GAMEB( 1995, ejihon,    stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 				  "Ejihon Tantei Jimusyo (J 950613 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1995, fhboxers,  stvbios, stvbios, stv, stv,  fhboxers,  ROT0,   "Sega", 	 				  "Funky Head Boxers (JUETBKAL 951218 V1.000)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1994, gaxeduel,  stvbios, stvbios, stv, stv,  gaxeduel,	ROT0,   "Sega", 	     			  "Golden Axe - The Duel (JUETL 950117 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
@@ -3982,7 +3986,7 @@ GAMEB( 1995, pblbeach,  stvbios, stvbios, stv, stv,  pblbeach,  ROT0,   "T&E Sof
 GAMEB( 1996, prikura,   stvbios, stvbios, stv, stv,  prikura,   ROT0,   "Atlus",    				  "Princess Clara Daisakusen (J 960910 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1996, puyosun,   stvbios, stvbios, stv, stv,  puyosun,   ROT0,   "Compile",  				  "Puyo Puyo Sun (J 961115 V0.001)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1998, rsgun,     stvbios, stvbios, stv, stv,  rsgun,     ROT0,   "Treasure",   				  "Radiant Silvergun (JUET 980523 V1.000)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEB( 1996, sassisu,   stvbios, stvbios, stv, stv,  sassisu,   ROT0,   "Sega", 	     			  "Taisen Tanto-R Sashissu!! (J 980216 V1.000)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEB( 1996, sasissu,   stvbios, stvbios, stv, stv,  sasissu,   ROT0,   "Sega", 	     			  "Taisen Tanto-R Sashissu!! (J 980216 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1998, seabass,   stvbios, stvbios, stv, stv,  seabass,   ROT0,   "A wave inc. (Able license)","Sea Bass Fishing (JUET 971110 V0.001)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1995, shanhigw,  stvbios, stvbios, stv, stv,  shanhigw,	ROT0,   "Sunsoft / Activision", 	  "Shanghai - The Great Wall / Shanghai Triple Threat (JUE 950623 V1.005)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1997, shienryu,  stvbios, stvbios, stv, stv,  shienryu,  ROT270, "Warashi",  				  "Shienryu (JUET 961226 V1.000)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
@@ -3991,9 +3995,9 @@ GAMEB( 1995, finlarch,  smleague,stvbios, stv, stv,  finlarch,  ROT0,   "Sega", 
 GAMEB( 1998, sss,       stvbios, stvbios, stv, stv,  sss,       ROT0,   "Capcom / Cave / Victor",	  "Steep Slope Sliders (JUET 981110 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1995, sandor,    stvbios, stvbios, stv, stv,  sandor,    ROT0,   "Sega", 	     			  "Sando-R (J 951114 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1996, sokyugrt,  stvbios, stvbios, stv, stv,  sokyugrt,  ROT0,   "Raizing / 8ing",    		  "Soukyugurentai / Terra Diver (JUET 960821 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEB( 1995, suikoenb,  stvbios, stvbios, stv, stv,  suikoenb,  ROT0,   "Data East",  				  "Suikoenbu (J 950314 V2.001)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEB( 1995, suikoenb,  stvbios, stvbios, stv, stv,  suikoenb,  ROT0,   "Data East",  				  "Suikoenbu / Outlaws of the Lost Dynasty (JUETL 950314 V2.001)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1995, thunt,     sandor,  stvbios, stv, stv,  thunt,     ROT0,   "Sega (Deniam license?)",	  "Treasure Hunt (JUET 970901 V2.00E)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEB( 1996, vfkids,    stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 				  "Virtua Fighter Kids (JUET 960319 V0.000)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEB( 1996, vfkids,    stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 				  "Virtua Fighter Kids (JUET 960319 V0.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1997, winterht,  stvbios, stvbios, stv, stv,  winterht,  ROT0,   "Sega", 	 				  "Winter Heat (JUET 971012 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 
 /* Almost */

@@ -1577,10 +1577,14 @@ static int scsp_last_line = 0;
 
 static void scsp_irq(int irq)
 {
-	if (irq)
+	if (irq > 0)
 	{
 		scsp_last_line = irq;
 		cpunum_set_input_line(1, irq, ASSERT_LINE);
+	}
+	else if ( irq < 0)
+	{
+		cpunum_set_input_line(1, irq, CLEAR_LINE);
 	}
 	else
 	{

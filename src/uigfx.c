@@ -761,18 +761,29 @@ static void gfxset_update_bitmap(ui_gfx_state *state, int xcells, int ycells, gf
 
 static void gfxset_draw_item(const gfx_element *gfx, int index, mame_bitmap *bitmap, int dstx, int dsty, int color, int rotate)
 {
+	static const pen_t default_palette[] =
+	{
+		MAKE_RGB(0,0,0), MAKE_RGB(0,0,255), MAKE_RGB(0,255,0), MAKE_RGB(0,255,255),
+		MAKE_RGB(255,0,0), MAKE_RGB(255,0,255), MAKE_RGB(255,255,0), MAKE_RGB(255,255,255)
+	};
 	int width = (rotate & ORIENTATION_SWAP_XY) ? gfx->height : gfx->width;
 	int height = (rotate & ORIENTATION_SWAP_XY) ? gfx->width : gfx->height;
-	const pen_t *palette = palette_get_raw_colors(Machine);
+	const pen_t *palette = (Machine->drv->total_colors != 0) ? palette_get_raw_colors(Machine) : NULL;
 	UINT32 rowpixels = bitmap->rowpixels;
 	const UINT16 *colortable = NULL;
+	UINT32 palette_mask = ~0;
 	int x, y;
 
 	/* select either the raw palette or the colortable */
 	if (Machine->game_colortable != NULL)
 		colortable = &Machine->game_colortable[(gfx->colortable - Machine->remapped_colortable) + color * gfx->color_granularity];
-	else
+	else if (palette != NULL)
 		palette += (gfx->colortable - Machine->remapped_colortable) + color * gfx->color_granularity;
+	else
+	{
+		palette = default_palette;
+		palette_mask = 7;
+	}
 
 	/* loop over rows in the cell */
 	for (y = 0; y < height; y++)
@@ -815,7 +826,7 @@ static void gfxset_draw_item(const gfx_element *gfx, int index, mame_bitmap *bit
 				pixel = s[effx];
 			if (colortable != NULL)
 				pixel = colortable[pixel];
-			*dest++ = 0xff000000 | palette[pixel];
+			*dest++ = 0xff000000 | palette[pixel & palette_mask];
 		}
 	}
 }

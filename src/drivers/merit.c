@@ -158,9 +158,14 @@ static WRITE8_HANDLER( misc_w )
 
 static WRITE8_HANDLER( led_w )
 {
-	set_led_status(0,~data & 0x80);
-
-	// other bits unknown
+	set_led_status(0,~data & 0x01);	// button 1
+	set_led_status(1,~data & 0x02);	// button 2
+	set_led_status(2,~data & 0x04);	// button 3
+	set_led_status(3,~data & 0x08);	// button 4
+	set_led_status(4,~data & 0x10);	// button 5
+	set_led_status(5,~data & 0x20);	// unknown/unused
+	set_led_status(6,~data & 0x40);	// unknown/unused
+	set_led_status(7,~data & 0x80);	// flashes on coin1 or coin2 insert
 }
 
 static ADDRESS_MAP_START( pitboss_map, ADDRESS_SPACE_PROGRAM, 8 )
@@ -252,12 +257,13 @@ static ADDRESS_MAP_START( trvwhziv_map, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 
-// To enter hidden test-mode: goto "Service Mode",
-// enable "Enable Test Mode", enable "Reset High Scores"
+
+// in service mode:
 // keep service test button pressed to clear the coin counter.
-// keep it for other 5 seconds to clear all the memory.
+// keep it pressed for 10 seconds to clear all the memory.
+// to enter hidden test mode enable "Enable Test Mode", enable "Reset High Scores"
 INPUT_PORTS_START( phrcraze )
-	PORT_START
+	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 )
@@ -269,7 +275,7 @@ INPUT_PORTS_START( phrcraze )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START
+	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_SERVICE_NO_TOGGLE( 0x04, IP_ACTIVE_LOW )
@@ -309,7 +315,7 @@ INPUT_PORTS_START( phrcraze )
 	PORT_DIPNAME( 0x04, 0x04, "Topic \"8\"" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Coinage ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_1C ) )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
@@ -325,10 +331,10 @@ INPUT_PORTS_START( phrcraze )
 //  PORT_DIPSETTING(    0x40, "Upright 1 Player" )
 INPUT_PORTS_END
 
-// To enter hidden test-mode: goto "Service Mode",
-// enable "Enable Test Mode", enable "Reset High Scores"
+// in service mode:
 // keep service test button pressed to clear the coin counter.
-// keep it for other 5 seconds to clear all the memory.
+// keep it pressed for 10 seconds to clear all the memory.
+// to enter hidden test mode enable "Enable Test Mode", enable "Reset High Scores"
 INPUT_PORTS_START( phrcrazs )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -467,7 +473,7 @@ INPUT_PORTS_START( tictac )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( trivia )
-	PORT_START
+	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 )
@@ -477,7 +483,7 @@ INPUT_PORTS_START( trivia )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START
+	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_SERVICE_NO_TOGGLE( 0x04, IP_ACTIVE_LOW )
@@ -497,7 +503,7 @@ INPUT_PORTS_START( trivia )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START
+	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_COCKTAIL
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_COCKTAIL
@@ -507,7 +513,7 @@ INPUT_PORTS_START( trivia )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START
+	PORT_START_TAG("DSWA")
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -517,7 +523,7 @@ INPUT_PORTS_START( trivia )
 	PORT_DIPNAME( 0x04, 0x04, "On 0 Points" )
 	PORT_DIPSETTING(    0x04, "Continue" )
 	PORT_DIPSETTING(    0x00, "Game Over" )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Coinage ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_1C ) )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
@@ -534,75 +540,16 @@ INPUT_PORTS_START( trivia )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
+// in service mode:
 // keep service test button pressed to clear the coin counter.
-// keep it for other 5 seconds to clear all the memory.
-// To enter hidden test-mode: goto service mode,
-// enable "Reset High Scores" and press "Service Mode"
+// keep it pressed for 10 seconds to clear all the memory.
+// to enter hidden test mode enable "Enable Test Mode", enable "Reset High Scores"
 INPUT_PORTS_START( trvwhziv )
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON5 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_INCLUDE( trivia )
 
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_SERVICE_NO_TOGGLE( 0x04, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x08, 0x08, "Reset High Scores" )
+	PORT_MODIFY("DSWA")
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )	/* no coinage DSW */
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
-	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_COCKTAIL
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_COCKTAIL
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_COCKTAIL
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_COCKTAIL
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START
-	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, "On 0 Points" )
-	PORT_DIPSETTING(    0x04, "Continue" )
-	PORT_DIPSETTING(    0x00, "Game Over" )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
@@ -645,6 +592,8 @@ INPUT_PORTS_START( pitboss )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
+
+
 
 static void get_tile_info_bg(int tile_index)
 {

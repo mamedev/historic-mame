@@ -566,23 +566,26 @@ mame_bitmap *render_load_png(const char *dirname, const char *filename, mame_bit
 	/* read the PNG data */
 	result = png_read_file(file, &png);
 	mame_fclose(file);
-	if (result == 0)
+	if (result != PNGERR_NONE)
 		return NULL;
 
 	/* verify we can handle this PNG */
 	if (png.bit_depth > 8)
 	{
 		logerror("%s: Unsupported bit depth %d (8 bit max)\n", filename, png.bit_depth);
+		png_free(&png);
 		return NULL;
 	}
 	if (png.interlace_method != 0)
 	{
 		logerror("%s: Interlace unsupported\n", filename);
+		png_free(&png);
 		return NULL;
 	}
 	if (png.color_type != 0 && png.color_type != 3 && png.color_type != 2 && png.color_type != 6)
 	{
 		logerror("%s: Unsupported color type %d\n", filename, png.color_type);
+		png_free(&png);
 		return NULL;
 	}
 
@@ -608,10 +611,7 @@ mame_bitmap *render_load_png(const char *dirname, const char *filename, mame_bit
 	}
 
 	/* free PNG data */
-	if (png.palette != NULL)
-		free(png.palette);
-	free(png.image);
-
+	png_free(&png);
 	return bitmap;
 }
 

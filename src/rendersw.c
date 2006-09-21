@@ -154,7 +154,11 @@ INLINE int vec_div(int parm1, int parm2)
 /* source 15-bit pixels are in MAME standardized format */
 #define SOURCE15_R(pix)		(((pix) >> (7 + SRCSHIFT_R)) & (0xf8 >> SRCSHIFT_R))
 #define SOURCE15_G(pix)		(((pix) >> (2 + SRCSHIFT_G)) & (0xf8 >> SRCSHIFT_G))
+#if (SRCSHIFT_B < 3)
 #define SOURCE15_B(pix)		(((pix) << (3 - SRCSHIFT_B)) & (0xf8 >> SRCSHIFT_B))
+#else
+#define SOURCE15_B(pix)		(((pix) >> (SRCSHIFT_B - 3)) & (0xf8 >> SRCSHIFT_B))
+#endif
 
 /* source 32-bit pixels are in MAME standardized format */
 #define SOURCE32_R(pix)		(((pix) >> (16 + SRCSHIFT_R)) & (0xff >> SRCSHIFT_R))

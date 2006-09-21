@@ -31,7 +31,7 @@
     1860-187f Mathbox RAM
 
     2000-2fff Vector generator RAM
-    3000-37ff Mathbox ROM
+    3000-37ff Vector Generator ROM
     5000-7fff ROM
 
     Battlezone settings:
@@ -109,7 +109,7 @@
     1860-187f Mathbox RAM
 
     2000-2fff Vector generator RAM
-    3000-37ff Mathbox ROM
+    3000-37ff Vector generator ROM
     5000-7fff ROM
 
     RED BARON DIP SWITCH SETTINGS
@@ -209,6 +209,9 @@
 
 #define IN0_3KHZ (1<<7)
 #define IN0_VG_HALT (1<<6)
+
+#define MASTER_CLOCK (12096000)
+#define CLOCK_3KHZ  (MASTER_CLOCK / 4096)
 
 
 static UINT8 analog_data;
@@ -570,9 +573,9 @@ static struct CustomSound_interface redbaron_custom_interface =
 static MACHINE_DRIVER_START( bzone )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD_TAG("main", M6502, 1500000)
+	MDRV_CPU_ADD_TAG("main", M6502, MASTER_CLOCK / 8)
 	MDRV_CPU_PROGRAM_MAP(bzone_map,0)
-	MDRV_CPU_VBLANK_INT(bzone_interrupt,6) /* 4.1ms */
+	MDRV_CPU_PERIODIC_INT(bzone_interrupt, TIME_IN_HZ(CLOCK_3KHZ / 12))
 
 	MDRV_FRAMES_PER_SECOND(40)
 
@@ -584,14 +587,13 @@ static MACHINE_DRIVER_START( bzone )
 	MDRV_VISIBLE_AREA(0, 580, 0, 400)
 	MDRV_PALETTE_LENGTH(32768)
 
-	MDRV_PALETTE_INIT(avg_white)
 	MDRV_VIDEO_START(avg_bzone)
 	MDRV_VIDEO_UPDATE(vector)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
-	MDRV_SOUND_ADD_TAG("pokey",  POKEY, 1500000)
+	MDRV_SOUND_ADD_TAG("pokey",  POKEY, MASTER_CLOCK / 8)
 	MDRV_SOUND_CONFIG(bzone_pokey_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 
@@ -607,7 +609,7 @@ static MACHINE_DRIVER_START( bradley )
 	MDRV_IMPORT_FROM(bzone)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("pokey", POKEY, 1500000)
+	MDRV_SOUND_REPLACE("pokey", POKEY,  MASTER_CLOCK / 8)
 	MDRV_SOUND_CONFIG(bzone_pokey_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
@@ -619,17 +621,17 @@ static MACHINE_DRIVER_START( redbaron )
 	MDRV_IMPORT_FROM(bzone)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(redbaron_map,0)
-	MDRV_CPU_VBLANK_INT(bzone_interrupt,4) /* 5.4ms */
+	MDRV_CPU_PERIODIC_INT(bzone_interrupt, TIME_IN_HZ(CLOCK_3KHZ / 12))
 
 	MDRV_MACHINE_START(redbaron)
 
-	MDRV_FRAMES_PER_SECOND(45)
+	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_NVRAM_HANDLER(atari_vg)
 
 	/* video hardware */
 	MDRV_VISIBLE_AREA(0, 520, 0, 400)
 
-	MDRV_VIDEO_START(avg_redbaron)
+	MDRV_VIDEO_START(avg_bzone)
 
 	/* sound hardware */
 	MDRV_SOUND_REPLACE("pokey", POKEY, 1500000)
@@ -657,9 +659,13 @@ ROM_START( bzone )
 	ROM_LOAD( "036411.01",  0x6800, 0x0800, CRC(ad281297) SHA1(54c5e06b2e69eb731a6c9b1704e4340f493e7ea5) )
 	ROM_LOAD( "036410.01",  0x7000, 0x0800, CRC(0b7bfaa4) SHA1(33ae0f68b4e2eae9f3aecbee2d0b29003ce460b2) )
 	ROM_LOAD( "036409.01",  0x7800, 0x0800, CRC(1e14e919) SHA1(448fab30535e6fad7e0ab4427bc06bbbe075e797) )
-	/* Mathbox ROMs */
+	/* Vector Generator ROMs */
 	ROM_LOAD( "036422.01",  0x3000, 0x0800, CRC(7414177b) SHA1(147d97a3b475e738ce00b1a7909bbd787ad06eda) )
 	ROM_LOAD( "036421.01",  0x3800, 0x0800, CRC(8ea8f939) SHA1(b71e0ab0e220c3e64dc2b094c701fb1a960b64e4) )
+
+    /* AVG PROM */
+    ROM_REGION( 0x100, REGION_PROMS, 0 )
+    ROM_LOAD( "036498-01.k7",   0x0000, 0x0100, CRC(5903af03) SHA1(24bc0366f394ad0ec486919212e38be0f08d0239) )
 ROM_END
 
 
@@ -671,9 +677,13 @@ ROM_START( bzone2 )
 	ROM_LOAD( "036411.01",  0x6800, 0x0800, CRC(ad281297) SHA1(54c5e06b2e69eb731a6c9b1704e4340f493e7ea5) )
 	ROM_LOAD( "036410.01",  0x7000, 0x0800, CRC(0b7bfaa4) SHA1(33ae0f68b4e2eae9f3aecbee2d0b29003ce460b2) )
 	ROM_LOAD( "036409.01",  0x7800, 0x0800, CRC(1e14e919) SHA1(448fab30535e6fad7e0ab4427bc06bbbe075e797) )
-	/* Mathbox ROMs */
+	/* Vector Generator ROMs */
 	ROM_LOAD( "036422.01",  0x3000, 0x0800, CRC(7414177b) SHA1(147d97a3b475e738ce00b1a7909bbd787ad06eda) )
 	ROM_LOAD( "036421.01",  0x3800, 0x0800, CRC(8ea8f939) SHA1(b71e0ab0e220c3e64dc2b094c701fb1a960b64e4) )
+
+    /* AVG PROM */
+    ROM_REGION( 0x100, REGION_PROMS, 0 )
+    ROM_LOAD( "036498-01.k7",   0x0000, 0x0100, CRC(5903af03) SHA1(24bc0366f394ad0ec486919212e38be0f08d0239) )
 ROM_END
 
 
@@ -686,9 +696,13 @@ ROM_START( bzonec ) /* cocktail version */
 	ROM_LOAD( "bz1c6800",   0x6800, 0x0800, CRC(5adc64bd) SHA1(4574e4fe375d4ab3151a988235efa11e8744e2c6) )
 	ROM_LOAD( "bz1b7000",   0x7000, 0x0800, CRC(ed8a860e) SHA1(316a3c4870ba44bb3e9cb9fc5200eb081318facf) )
 	ROM_LOAD( "bz1a7800",   0x7800, 0x0800, CRC(04babf45) SHA1(a59da5ff49fc398ca4a948e28f05250af776b898) )
-	/* Mathbox ROMs */
+	/* Vector Generator ROMs */
 	ROM_LOAD( "036422.01",  0x3000, 0x0800, CRC(7414177b) SHA1(147d97a3b475e738ce00b1a7909bbd787ad06eda) )	// bz3a3000
 	ROM_LOAD( "bz3b3800",   0x3800, 0x0800, CRC(76cf57f6) SHA1(1b8f3fcd664ed04ce60d94fdf27e56b20d52bdbd) )
+
+    /* AVG PROM */
+    ROM_REGION( 0x100, REGION_PROMS, 0 )
+    ROM_LOAD( "036498-01.k7",   0x0000, 0x0100, CRC(5903af03) SHA1(24bc0366f394ad0ec486919212e38be0f08d0239) )
 ROM_END
 
 
@@ -702,9 +716,13 @@ ROM_START( bradley )
 	ROM_LOAD( "btk1.bin",   0x6800, 0x0800, CRC(f5c2904e) SHA1(f2cbf720c4f5ce0fc912dbc2f0445cb2c51ffac1) )
 	ROM_LOAD( "btlm.bin",   0x7000, 0x0800, CRC(7d0313bf) SHA1(17e3d8df62b332cf889133f1943c8f27308df027) )
 	ROM_LOAD( "btn1.bin",   0x7800, 0x0800, CRC(182c8c64) SHA1(511af60d86551291d2dc28442970b4863c62624a) )
-	/* Mathbox ROMs */
+	/* Vector Generator ROMs */
 	ROM_LOAD( "btb3.bin",   0x3000, 0x0800, CRC(88206304) SHA1(6a2e2ff35a929acf460f244db7968f3978b1d239) )
 	ROM_LOAD( "bta3.bin",   0x3800, 0x0800, CRC(d669d796) SHA1(ad606882320cd13612c7962d4718680fe5a35dd3) )
+
+    /* AVG PROM */
+    ROM_REGION( 0x100, REGION_PROMS, 0 )
+    ROM_LOAD( "036498-01.k7",   0x0000, 0x0100, CRC(5903af03) SHA1(24bc0366f394ad0ec486919212e38be0f08d0239) )
 ROM_END
 
 
@@ -717,9 +735,13 @@ ROM_START( redbaron )
 	ROM_LOAD( "036997.01e", 0x6800, 0x0800, CRC(7434acb4) SHA1(c950c4c12ab556b5051ad356ab4a0ed6b779ba1f) )
 	ROM_LOAD( "036996.01e", 0x7000, 0x0800, CRC(c0e7589e) SHA1(c1aedc95966afffd860d7e0009d5a43e8b292036) )
 	ROM_LOAD( "036995.01e", 0x7800, 0x0800, CRC(ad81d1da) SHA1(8bd66e5f34fc1c75f31eb6b168607e52aa3aa4df) )
-	/* Mathbox ROMs */
+	/* Vector Generator ROMs */
 	ROM_LOAD( "037006.01e", 0x3000, 0x0800, CRC(9fcffea0) SHA1(69b76655ee75742fcaa0f39a4a1cf3aa58088343) )
 	ROM_LOAD( "037007.01e", 0x3800, 0x0800, CRC(60250ede) SHA1(9c48952bd69863bee0c6dce09f3613149e0151ef) )
+
+    /* AVG PROM */
+    ROM_REGION( 0x100, REGION_PROMS, 0 )
+    ROM_LOAD( "036408-01.k7",   0x0000, 0x0100, CRC(5903af03) SHA1(24bc0366f394ad0ec486919212e38be0f08d0239) )
 ROM_END
 
 

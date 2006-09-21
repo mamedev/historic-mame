@@ -608,11 +608,57 @@ why they would want to */
 
 extern UINT32* stv_vdp2_cram;
 
-INLINE void drawpixel(UINT16 *dest, int patterndata, int offsetcnt)
+static UINT8* gfxdata;
+static UINT16 sprite_colorbank;
+
+
+void (*drawpixel)(int x, int y, int patterndata, int offsetcnt);
+
+void drawpixel_poly(int x, int y, int patterndata, int offsetcnt)
 {
-	int pix,mode,transmask,spd = stv2_current_sprite.CMDPMOD & 0x40;
-	UINT8* gfxdata = stv_vdp1_gfx_decode;
+	stv_framebuffer_draw_lines[y][x] = stv2_current_sprite.CMDCOLR;
+}
+
+void drawpixel_8bpp(int x, int y, int patterndata, int offsetcnt)
+{
+	UINT16 pix;
+
+	pix = gfxdata[patterndata+offsetcnt];
+	if ( pix & 0xff )
+	{
+		stv_framebuffer_draw_lines[y][x] = pix | sprite_colorbank;
+	}
+};
+
+void drawpixel_4bpp_notrans(int x, int y, int patterndata, int offsetcnt)
+{
+	UINT16 pix;
+
+	pix = gfxdata[patterndata+offsetcnt/2];
+	pix = offsetcnt&1 ? (pix & 0x0f):((pix & 0xf0)>>4) ;
+	stv_framebuffer_draw_lines[y][x] = pix | sprite_colorbank;
+}
+
+void drawpixel_4bpp_trans(int x, int y, int patterndata, int offsetcnt)
+{
+	UINT16 pix;
+
+	pix = gfxdata[patterndata+offsetcnt/2];
+	pix = offsetcnt&1 ? (pix & 0x0f):((pix & 0xf0)>>4) ;
+	if ( pix )
+		stv_framebuffer_draw_lines[y][x] = pix | sprite_colorbank;
+}
+
+void drawpixel_generic(int x, int y, int patterndata, int offsetcnt)
+{
+	int pix,mode,transmask, spd = stv2_current_sprite.CMDPMOD & 0x40;
+	int mesh = stv2_current_sprite.CMDPMOD & 0x100;
 	int pix2;
+
+	if ( mesh && !((x ^ y) & 1) )
+	{
+		return;
+	}
 
 	if ( stv2_current_sprite.ispoly )
 	{
@@ -686,6 +732,7 @@ INLINE void drawpixel(UINT16 *dest, int patterndata, int offsetcnt)
 			case 0x0028: // mode 5 32,768 colour RGB mode (16bits)
 				pix = gfxdata[patterndata+offsetcnt*2+1] | (gfxdata[patterndata+offsetcnt*2]<<8) ;
 				mode = 5;
+				//transmask = 0x7fff;
 				transmask = 0x8000;
 				break;
 			default: // other settings illegal
@@ -709,7 +756,7 @@ INLINE void drawpixel(UINT16 *dest, int patterndata, int offsetcnt)
 	{
 		if ( (pix & transmask) || spd )
 		{
-			*dest = pix;
+			stv_framebuffer_draw_lines[y][x] = pix;
 		}
 	}
 	else
@@ -719,38 +766,81 @@ INLINE void drawpixel(UINT16 *dest, int patterndata, int offsetcnt)
 			switch( stv2_current_sprite.CMDPMOD & 0x7 )
 			{
 				case 0:	/* replace */
-					*dest = pix;
+					stv_framebuffer_draw_lines[y][x] = pix;
 					break;
 				case 1: /* shadow */
-					if ( *dest & 0x8000 )
+					if ( stv_framebuffer_draw_lines[y][x] & 0x8000 )
 					{
-						*dest = ((*dest & ~0x8421) >> 1) | 0x8000;
+						stv_framebuffer_draw_lines[y][x] = ((stv_framebuffer_draw_lines[y][x] & ~0x8421) >> 1) | 0x8000;
 					}
 					break;
 				case 2: /* half luminance */
-					*dest = ((pix & ~0x8421) >> 1) | 0x8000;
+					stv_framebuffer_draw_lines[y][x] = ((pix & ~0x8421) >> 1) | 0x8000;
 					break;
 				case 3: /* half transparent */
-					if ( *dest & 0x8000 )
+					if ( stv_framebuffer_draw_lines[y][x] & 0x8000 )
 					{
-						*dest = alpha_blend_r16( *dest, pix, 0x80 ) | 0x8000;
+						stv_framebuffer_draw_lines[y][x] = alpha_blend_r16( stv_framebuffer_draw_lines[y][x], pix, 0x80 ) | 0x8000;
 					}
 					else
 					{
-						*dest = pix;
+						stv_framebuffer_draw_lines[y][x] = pix;
 					}
 					break;
 				case 4: /* Gouraud shading */
-					*dest = stv_apply_gouraud_shading( pix );
+					stv_framebuffer_draw_lines[y][x] = stv_apply_gouraud_shading( pix );
 					break;
 				default:
-					*dest = pix;
-					//popmessage( "Unsupported VDP1 draw mode %x", stv2_current_sprite.CMDPMOD & 0x7 );
+					stv_framebuffer_draw_lines[y][x] = pix;
 					break;
 			}
 		}
 	}
+}
 
+
+static void stv_vdp1_set_drawpixel(void)
+{
+	int sprite_type = stv2_current_sprite.CMDCTRL & 0x000f;
+	int sprite_mode = stv2_current_sprite.CMDPMOD&0x0038;
+	int spd = stv2_current_sprite.CMDPMOD & 0x40;
+	int mesh = stv2_current_sprite.CMDPMOD & 0x100;
+
+	gfxdata = stv_vdp1_gfx_decode;
+
+	if ( mesh )
+	{
+		drawpixel = drawpixel_generic;
+		return;
+	}
+
+	if (sprite_type == 4 )
+	{
+		drawpixel = drawpixel_poly;
+	}
+	else if ((sprite_type == 2) &&
+		     (sprite_mode == 0x20) )
+	{
+		/* distorted sprite, 8bpp */
+		sprite_colorbank = (stv2_current_sprite.CMDCOLR&0xff00);
+		drawpixel = drawpixel_8bpp;
+	}
+	else if ((sprite_type == 1) &&
+			 (sprite_mode == 0x00) &&
+			 spd)
+	{
+		sprite_colorbank = (stv2_current_sprite.CMDCOLR&0xfff0);
+		drawpixel = drawpixel_4bpp_notrans;
+	}
+	else if (sprite_mode == 0x00 && !spd )
+	{
+		sprite_colorbank = (stv2_current_sprite.CMDCOLR&0xfff0);
+		drawpixel = drawpixel_4bpp_trans;
+	}
+	else
+	{
+		drawpixel = drawpixel_generic;
+	}
 }
 
 
@@ -851,7 +941,7 @@ static void vdp1_fill_slope(mame_bitmap *bitmap, const rectangle *cliprect, int 
 					xx2 = cliprect->max_x;
 
 				while(xx1 <= xx2) {
-					drawpixel(stv_framebuffer_draw_lines[_y1]+xx1,
+					drawpixel(xx1,_y1,
 							  patterndata,
 							  (v>>FRAC_SHIFT)*xsize+(u>>FRAC_SHIFT));
 					xx1++;
@@ -905,7 +995,7 @@ static void vdp1_fill_line(mame_bitmap *bitmap, const rectangle *cliprect, int p
 			xx2 = cliprect->max_x;
 
 		while(xx1 <= xx2) {
-			drawpixel(stv_framebuffer_draw_lines[y]+xx1,
+			drawpixel(xx1,y,
 					  patterndata,
 					  (v>>FRAC_SHIFT)*xsize+(u>>FRAC_SHIFT));
 			xx1++;
@@ -1087,6 +1177,68 @@ void stv_vdp1_draw_line( mame_bitmap *bitmap, const rectangle *cliprect)
 	q[0].v = q[1].v = q[2].v = q[3].v = 0;
 
 	vdp1_fill_quad(bitmap, cliprect, 0, 1, q);
+}
+
+void stv_vdp1_draw_poly_line( mame_bitmap *bitmap, const rectangle *cliprect)
+{
+	struct spoint q[4];
+
+	q[0].x = x2s(stv2_current_sprite.CMDXA);
+	q[0].y = y2s(stv2_current_sprite.CMDYA);
+	q[1].x = x2s(stv2_current_sprite.CMDXB);
+	q[1].y = y2s(stv2_current_sprite.CMDYB);
+	q[2].x = x2s(stv2_current_sprite.CMDXA);
+	q[2].y = y2s(stv2_current_sprite.CMDYA);
+	q[3].x = x2s(stv2_current_sprite.CMDXB);
+	q[3].y = y2s(stv2_current_sprite.CMDYB);
+
+	q[0].u = q[3].u = q[1].u = q[2].u = 0;
+	q[0].v = q[1].v = q[2].v = q[3].v = 0;
+
+	vdp1_fill_quad(bitmap, cliprect, 0, 1, q);
+
+	q[0].x = x2s(stv2_current_sprite.CMDXB);
+	q[0].y = y2s(stv2_current_sprite.CMDYB);
+	q[1].x = x2s(stv2_current_sprite.CMDXC);
+	q[1].y = y2s(stv2_current_sprite.CMDYC);
+	q[2].x = x2s(stv2_current_sprite.CMDXB);
+	q[2].y = y2s(stv2_current_sprite.CMDYB);
+	q[3].x = x2s(stv2_current_sprite.CMDXC);
+	q[3].y = y2s(stv2_current_sprite.CMDYC);
+
+	q[0].u = q[3].u = q[1].u = q[2].u = 0;
+	q[0].v = q[1].v = q[2].v = q[3].v = 0;
+
+	vdp1_fill_quad(bitmap, cliprect, 0, 1, q);
+
+	q[0].x = x2s(stv2_current_sprite.CMDXC);
+	q[0].y = y2s(stv2_current_sprite.CMDYC);
+	q[1].x = x2s(stv2_current_sprite.CMDXD);
+	q[1].y = y2s(stv2_current_sprite.CMDYD);
+	q[2].x = x2s(stv2_current_sprite.CMDXC);
+	q[2].y = y2s(stv2_current_sprite.CMDYC);
+	q[3].x = x2s(stv2_current_sprite.CMDXD);
+	q[3].y = y2s(stv2_current_sprite.CMDYD);
+
+	q[0].u = q[3].u = q[1].u = q[2].u = 0;
+	q[0].v = q[1].v = q[2].v = q[3].v = 0;
+
+	vdp1_fill_quad(bitmap, cliprect, 0, 1, q);
+
+	q[0].x = x2s(stv2_current_sprite.CMDXD);
+	q[0].y = y2s(stv2_current_sprite.CMDYD);
+	q[1].x = x2s(stv2_current_sprite.CMDXA);
+	q[1].y = y2s(stv2_current_sprite.CMDYA);
+	q[2].x = x2s(stv2_current_sprite.CMDXD);
+	q[2].y = y2s(stv2_current_sprite.CMDYD);
+	q[3].x = x2s(stv2_current_sprite.CMDXA);
+	q[3].y = y2s(stv2_current_sprite.CMDYA);
+
+	q[0].u = q[3].u = q[1].u = q[2].u = 0;
+	q[0].v = q[1].v = q[2].v = q[3].v = 0;
+
+	vdp1_fill_quad(bitmap, cliprect, 0, 1, q);
+
 }
 
 void stv_vpd1_draw_distorted_sprite(mame_bitmap *bitmap, const rectangle *cliprect)
@@ -1365,7 +1517,7 @@ void stv_vpd1_draw_normal_sprite(mame_bitmap *bitmap, const rectangle *cliprect,
 			su = u;
 			for (drawxpos = x; drawxpos <= maxdrawxpos; drawxpos++ )
 			{
-				drawpixel( destline + drawxpos, patterndata, u );
+				drawpixel( drawxpos, drawypos, patterndata, u );
 				u += dux;
 			}
 			u = su + duy;
@@ -1408,7 +1560,7 @@ void stv_vpd1_draw_normal_sprite(mame_bitmap *bitmap, const rectangle *cliprect,
 
 						offsetcnt = ycnt*xsize+xcnt;
 
-						drawpixel(destline+drawxpos, patterndata, offsetcnt);
+						drawpixel(drawxpos, drawypos, patterndata, offsetcnt);
 					} // drawxpos
 					stv_compute_shading_for_next_point();
 
@@ -1560,6 +1712,8 @@ void stv_vdp1_process_list(mame_bitmap *bitmap, const rectangle *cliprect)
 		/* continue to draw this sprite only if the command wasn't to skip it */
 		if (draw_this_sprite ==1)
 		{
+			stv_vdp1_set_drawpixel();
+
 			switch (stv2_current_sprite.CMDCTRL & 0x000f)
 			{
 				case 0x0000:
@@ -1598,6 +1752,8 @@ void stv_vdp1_process_list(mame_bitmap *bitmap, const rectangle *cliprect)
 
 				case 0x0005:
 					if (vdp1_sprite_log) logerror ("Sprite List Polyline\n");
+					stv2_current_sprite.ispoly = 1;
+					stv_vdp1_draw_poly_line(bitmap,cliprect);
 					break;
 
 				case 0x0006:

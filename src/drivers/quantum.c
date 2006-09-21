@@ -48,6 +48,8 @@
 #include "vidhrdw/avgdvg.h"
 #include "sound/pokey.h"
 
+#define MASTER_CLOCK (12096000)
+#define CLOCK_3KHZ  (MASTER_CLOCK / 4096)
 
 
 /*************************************
@@ -133,41 +135,27 @@ static READ16_HANDLER( pokey_word_r )
 }
 
 
-
 /*************************************
  *
  *  Main CPU memory handlers
  *
  *************************************/
 
-ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x013fff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x018000, 0x01cfff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x800000, 0x801fff) AM_READ(MRA16_RAM)
-	AM_RANGE(0x840000, 0x84003f) AM_READ(pokey_word_r)
-	AM_RANGE(0x900000, 0x9001ff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x013fff) AM_ROM
+	AM_RANGE(0x018000, 0x01cfff) AM_RAM
+	AM_RANGE(0x800000, 0x801fff) AM_RAM AM_BASE(&quantum_vectorram) AM_SIZE(&vectorram_size)
+	AM_RANGE(0x840000, 0x84003f) AM_READWRITE(pokey_word_r, pokey_word_w)
+	AM_RANGE(0x900000, 0x9001ff) AM_RAM AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
 	AM_RANGE(0x940000, 0x940001) AM_READ(trackball_r) /* trackball */
 	AM_RANGE(0x948000, 0x948001) AM_READ(switches_r)
-	AM_RANGE(0x978000, 0x978001) AM_READ(MRA16_NOP)	/* ??? */
-ADDRESS_MAP_END
-
-
-ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x013fff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x018000, 0x01cfff) AM_WRITE(MWA16_RAM)
-	AM_RANGE(0x800000, 0x801fff) AM_WRITE(MWA16_RAM) AM_BASE((UINT16 **)&vectorram) AM_SIZE(&vectorram_size)
-	AM_RANGE(0x840000, 0x84003f) AM_WRITE(pokey_word_w)
-	AM_RANGE(0x900000, 0x9001ff) AM_WRITE(MWA16_RAM) AM_BASE(&generic_nvram16) AM_SIZE(&generic_nvram_size)
-	AM_RANGE(0x950000, 0x95001f) AM_WRITE(quantum_colorram_w)
+	AM_RANGE(0x950000, 0x95001f) AM_WRITE(MWA16_RAM) AM_BASE(&quantum_colorram)
 	AM_RANGE(0x958000, 0x958001) AM_WRITE(led_w)
-	AM_RANGE(0x960000, 0x960001) AM_WRITE(MWA16_NOP)	/* enable NVRAM? */
+	AM_RANGE(0x960000, 0x960001) AM_WRITE(MWA16_NOP)
 	AM_RANGE(0x968000, 0x968001) AM_WRITE(avgdvg_reset_word_w)
-//  AM_RANGE(0x970000, 0x970001) AM_WRITE(avgdvg_go_w)
-//  AM_RANGE(0x978000, 0x978001) AM_WRITE(watchdog_reset_w)
-	/* the following is wrong, but it's the only way I found to fix the service mode */
-	AM_RANGE(0x978000, 0x978001) AM_WRITE(avgdvg_go_word_w)
+    AM_RANGE(0x970000, 0x970001) AM_WRITE(avgdvg_go_word_w)
+	AM_RANGE(0x978000, 0x978001) AM_READWRITE(MRA16_NOP, watchdog_reset16_w)
 ADDRESS_MAP_END
-
 
 
 /*************************************
@@ -249,9 +237,9 @@ static struct POKEYinterface pokey_interface_2 =
 static MACHINE_DRIVER_START( quantum )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000,6000000)
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
-	MDRV_CPU_VBLANK_INT(irq1_line_hold,3)	/* IRQ rate = 750kHz/4096 */
+	MDRV_CPU_ADD(M68000, MASTER_CLOCK / 2)
+	MDRV_CPU_PROGRAM_MAP(main_map, 0)
+	MDRV_CPU_PERIODIC_INT(irq1_line_hold, TIME_IN_HZ(CLOCK_3KHZ / 12))
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_NVRAM_HANDLER(generic_1fill)
@@ -262,7 +250,6 @@ static MACHINE_DRIVER_START( quantum )
 	MDRV_VISIBLE_AREA(0, 900, 0, 600)
 	MDRV_PALETTE_LENGTH(32768)
 
-	MDRV_PALETTE_INIT(avg_multi)
 	MDRV_VIDEO_START(avg_quantum)
 	MDRV_VIDEO_UPDATE(vector)
 
@@ -298,6 +285,10 @@ ROM_START( quantum )
     ROM_LOAD16_BYTE( "136016.109",   0x00C001, 0x002000, CRC(d2894424) SHA1(5390025136b677b66d948c8cf6ea5e20203a4bae) )
     ROM_LOAD16_BYTE( "136016.105",   0x010000, 0x002000, CRC(13ec512c) SHA1(22a0395135b83ba47eacb5129f34fc97aa1b70a1) )
     ROM_LOAD16_BYTE( "136016.110",   0x010001, 0x002000, CRC(acb50363) SHA1(9efa9ca88efdd2d5e212bd537903892b67b4fe53) )
+
+    /* AVG PROM */
+    ROM_REGION( 0x100, REGION_PROMS, 0 )
+    ROM_LOAD( "136002-125.6h",   0x0000, 0x0100, CRC(5903af03) SHA1(24bc0366f394ad0ec486919212e38be0f08d0239) )
 ROM_END
 
 
@@ -313,6 +304,10 @@ ROM_START( quantum1 )
     ROM_LOAD16_BYTE( "136016.109",   0x00C001, 0x002000, CRC(d2894424) SHA1(5390025136b677b66d948c8cf6ea5e20203a4bae) )
     ROM_LOAD16_BYTE( "136016.105",   0x010000, 0x002000, CRC(13ec512c) SHA1(22a0395135b83ba47eacb5129f34fc97aa1b70a1) )
     ROM_LOAD16_BYTE( "136016.110",   0x010001, 0x002000, CRC(acb50363) SHA1(9efa9ca88efdd2d5e212bd537903892b67b4fe53) )
+
+    /* AVG PROM */
+    ROM_REGION( 0x100, REGION_PROMS, 0 )
+    ROM_LOAD( "136002-125.6h",   0x0000, 0x0100, CRC(5903af03) SHA1(24bc0366f394ad0ec486919212e38be0f08d0239) )
 ROM_END
 
 
@@ -328,6 +323,10 @@ ROM_START( quantump )
     ROM_LOAD16_BYTE( "quantump.3k",  0x00C001, 0x002000, CRC(1aac576c) SHA1(28bdb5fcbd8cccc657d6e00ace3c083c21015564) )
     ROM_LOAD16_BYTE( "quantump.2l",  0x010000, 0x002000, CRC(1285b5e7) SHA1(0e01e361da2d9cf1fac1896f8f44c4c2e75a3061) )
     ROM_LOAD16_BYTE( "quantump.3l",  0x010001, 0x002000, CRC(e19de844) SHA1(cb4f9d80807b26d6b95405b2d830799984667f54) )
+
+    /* AVG PROM */
+    ROM_REGION( 0x100, REGION_PROMS, 0 )
+    ROM_LOAD( "136002-125.6h",   0x0000, 0x0100, CRC(5903af03) SHA1(24bc0366f394ad0ec486919212e38be0f08d0239) )
 ROM_END
 
 

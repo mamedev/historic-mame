@@ -33,6 +33,9 @@ void output_init(running_machine *machine);
 /* set the value for a given output */
 void output_set_value(const char *outname, INT32 value);
 
+/* set an indexed value for an output (concatenates basename + index) */
+void output_set_indexed_value(const char *basename, int index, int value);
+
 /* return the current value for a given output */
 INT32 output_get_value(const char *outname);
 
@@ -47,6 +50,29 @@ UINT32 output_name_to_id(const char *outname);
 
 /* map a unique ID back to a name */
 const char *output_id_to_name(UINT32 id);
+
+
+
+/***************************************************************************
+    INLINES
+***************************************************************************/
+
+INLINE void output_set_led_value(int index, int value)
+{
+	output_set_indexed_value("led", index, value ? 1 : 0);
+}
+
+
+INLINE void output_set_lamp_value(int index, int value)
+{
+	output_set_indexed_value("lamp", index, value);
+}
+
+
+INLINE void output_set_digit_value(int index, int value)
+{
+	output_set_indexed_value("digit", index, value);
+}
 
 
 #endif	/* __OUTPUT_H__ */

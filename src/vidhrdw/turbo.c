@@ -330,7 +330,7 @@ static void turbo_prepare_sprites(turbo_state *state, UINT8 y, sprite_info *info
 			info->plb[level] = 0;
 			info->offset[level] = offset;
 			info->frac[level] = 0;
-			info->step[level] = sprite_xscale(xscale, 10.0e3 * readinputportbytag("VR1") / 100.0, 10.0e3 * readinputportbytag("VR2") / 100.0, 100e-12);
+			info->step[level] = sprite_xscale(xscale, 1.0e3 * readinputportbytag("VR1") / 100.0, 1.0e3 * readinputportbytag("VR2") / 100.0, 100e-12);
 		}
 	}
 }
@@ -1007,7 +1007,7 @@ VIDEO_UPDATE( buckrog )
 			foreraw = fore[(pr5194[((xx >> 3) - 1) & 0x1f] << 3) | (xx & 0x07)];
 			offs = ((foreraw & 0x03) << 0) |			/* A0-A1: BIT0-1 */
 				   ((foreraw & 0xf8) >> 1) |			/* A2-A6: BANK3-7 */
-				   ((state->buckrog_fchg & 0x07) << 7);	/* A7-A9: FCHG0-2 */
+				   ((state->buckrog_fchg & 0x03) << 7);	/* A7-A9: FCHG0-2 */
 			forebits = pr5198[offs];
 
 			/* fetch the STAR bit */

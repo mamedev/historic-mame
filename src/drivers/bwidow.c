@@ -220,6 +220,8 @@
 #include "sound/pokey.h"
 #include "bzone.h"
 
+#define MASTER_CLOCK (12096000)
+#define CLOCK_3KHZ  (MASTER_CLOCK / 4096)
 
 #define IN_LEFT	(1 << 0)
 #define IN_RIGHT (1 << 1)
@@ -316,6 +318,16 @@ WRITE8_HANDLER( bwidow_misc_w )
 	lastdata = data;
 }
 
+/*************************************
+ *
+ *  Interrupt ack
+ *
+ *************************************/
+
+static WRITE8_HANDLER( irq_ack_w )
+{
+	cpunum_set_input_line(0, 0, CLEAR_LINE);
+}
 
 
 /*************************************
@@ -337,7 +349,7 @@ static ADDRESS_MAP_START( bwidow_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x8800, 0x8800) AM_WRITE(bwidow_misc_w) /* coin counters, leds */
 	AM_RANGE(0x8840, 0x8840) AM_WRITE(avgdvg_go_w)
 	AM_RANGE(0x8880, 0x8880) AM_WRITE(avgdvg_reset_w)
-	AM_RANGE(0x88c0, 0x88c0) AM_WRITE(MWA8_NOP) /* interrupt acknowledge */
+	AM_RANGE(0x88c0, 0x88c0) AM_WRITE(irq_ack_w) /* interrupt acknowledge */
 	AM_RANGE(0x8900, 0x8900) AM_WRITE(atari_vg_earom_ctrl_w)
 	AM_RANGE(0x8940, 0x897f) AM_WRITE(atari_vg_earom_w)
 	AM_RANGE(0x8980, 0x89ed) AM_WRITE(MWA8_NOP) /* watchdog clear */
@@ -355,7 +367,7 @@ static ADDRESS_MAP_START( spacduel_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0c80, 0x0c80) AM_WRITE(avgdvg_go_w)
 	AM_RANGE(0x0d00, 0x0d00) AM_WRITE(MWA8_NOP) /* watchdog clear */
 	AM_RANGE(0x0d80, 0x0d80) AM_WRITE(avgdvg_reset_w)
-	AM_RANGE(0x0e00, 0x0e00) AM_WRITE(MWA8_NOP) /* interrupt acknowledge */
+	AM_RANGE(0x0e00, 0x0e00) AM_WRITE(irq_ack_w) /* interrupt acknowledge */
 	AM_RANGE(0x0e80, 0x0e80) AM_WRITE(atari_vg_earom_ctrl_w)
 	AM_RANGE(0x0f00, 0x0f3f) AM_WRITE(atari_vg_earom_w)
 	AM_RANGE(0x1000, 0x100f) AM_READWRITE(pokey1_r, pokey1_w)
@@ -671,9 +683,9 @@ static struct POKEYinterface pokey_interface_2 =
 static MACHINE_DRIVER_START( bwidow )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD_TAG("main", M6502, 1500000)	/* 1.5 MHz */
+	MDRV_CPU_ADD_TAG("main", M6502, MASTER_CLOCK / 8)
 	MDRV_CPU_PROGRAM_MAP(bwidow_map,0)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,4) 		/* 4.1ms */
+	MDRV_CPU_PERIODIC_INT(irq0_line_assert, TIME_IN_HZ(CLOCK_3KHZ / 12))
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_NVRAM_HANDLER(atari_vg)
@@ -684,18 +696,17 @@ static MACHINE_DRIVER_START( bwidow )
 	MDRV_VISIBLE_AREA(0, 480, 0, 440)
 	MDRV_PALETTE_LENGTH(32768)
 
-	MDRV_PALETTE_INIT(avg_multi)
 	MDRV_VIDEO_START(avg)
 	MDRV_VIDEO_UPDATE(vector)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
-	MDRV_SOUND_ADD(POKEY, 1500000)
+	MDRV_SOUND_ADD(POKEY, MASTER_CLOCK / 8)
 	MDRV_SOUND_CONFIG(pokey_interface_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 
-	MDRV_SOUND_ADD(POKEY, 1500000)
+	MDRV_SOUND_ADD(POKEY, MASTER_CLOCK / 8)
 	MDRV_SOUND_CONFIG(pokey_interface_2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
@@ -761,6 +772,10 @@ ROM_START( bwidow )
 	ROM_LOAD( "136017.105",   0xd000, 0x1000, CRC(1fdf801c) SHA1(33da2ba3cefa3d0dddc8647f9b6caf5d5bfe9b3b) )
 	ROM_LOAD( "136017.106",   0xe000, 0x1000, CRC(ccc9b26c) SHA1(f1398e3ff2b62af1509bc117028845b671ff1ca2) )
 	ROM_RELOAD(               0xf000, 0x1000 )	/* for reset/interrupt vectors */
+
+    /* AVG PROM */
+    ROM_REGION( 0x100, REGION_PROMS, 0 )
+    ROM_LOAD( "136002-125.n4",   0x0000, 0x0100, CRC(5903af03) SHA1(24bc0366f394ad0ec486919212e38be0f08d0239) )
 ROM_END
 
 ROM_START( gravitar )
@@ -778,6 +793,10 @@ ROM_START( gravitar )
 	ROM_LOAD( "136010.305",   0xd000, 0x1000, CRC(840603af) SHA1(4a7124f91d3ee940686c51374a861efe6cb5d282) )
 	ROM_LOAD( "136010.306",   0xe000, 0x1000, CRC(3f3805ad) SHA1(baf080deaa8eea43af2f3be71dacc63e4666c453) )
 	ROM_RELOAD(              0xf000, 0x1000 )	/* for reset/interrupt vectors */
+
+    /* AVG PROM */
+    ROM_REGION( 0x100, REGION_PROMS, 0 )
+    ROM_LOAD( "136002-125.n4",   0x0000, 0x0100, CRC(5903af03) SHA1(24bc0366f394ad0ec486919212e38be0f08d0239) )
 ROM_END
 
 ROM_START( gravitr2 )
@@ -795,6 +814,10 @@ ROM_START( gravitr2 )
 	ROM_LOAD( "136010.205",   0xd000, 0x1000, CRC(0db1ff34) SHA1(288d9ffff9d18025621be249ea25a7444f58f3a9) )
 	ROM_LOAD( "136010.206",   0xe000, 0x1000, CRC(4521ca48) SHA1(5770cb46c4ac28d632ad5910723a9edda8283ce5) )
 	ROM_RELOAD(              0xf000, 0x1000 )	/* for reset/interrupt vectors */
+
+    /* AVG PROM */
+    ROM_REGION( 0x100, REGION_PROMS, 0 )
+    ROM_LOAD( "136002-125.n4",   0x0000, 0x0100, CRC(5903af03) SHA1(24bc0366f394ad0ec486919212e38be0f08d0239) )
 ROM_END
 
 ROM_START( gravp )
@@ -812,6 +835,10 @@ ROM_START( gravp )
 	ROM_LOAD( "kl1.bin",  0xd000, 0x1000, CRC(032b5806) SHA1(b719792a177e74ec49e6952e445b9cdeaca7505f) )
 	ROM_LOAD( "m1.bin",   0xe000, 0x1000, CRC(47fe97a0) SHA1(7cbde4b59abde679c28d7547700b342f25762e4a) )
 	ROM_RELOAD(           0xf000, 0x1000 )	/* for reset/interrupt vectors */
+
+    /* AVG PROM */
+    ROM_REGION( 0x100, REGION_PROMS, 0 )
+    ROM_LOAD( "136002-125.n4",   0x0000, 0x0100, CRC(5903af03) SHA1(24bc0366f394ad0ec486919212e38be0f08d0239) )
 ROM_END
 
 ROM_START( lunarbat )
@@ -828,6 +855,10 @@ ROM_START( lunarbat )
 	ROM_LOAD( "005.010",      0xd000, 0x1000, CRC(4feb6f81) SHA1(b852f1093e56343225c1b2b2554a93c88fc58637) )
 	ROM_LOAD( "006.010",      0xe000, 0x1000, CRC(f8ad139d) SHA1(e9e0dcb0872b19af09825a979f8b3747c9632091) )
 	ROM_RELOAD(               0xf000, 0x1000 )	/* for reset/interrupt vectors */
+
+    /* AVG PROM */
+    ROM_REGION( 0x100, REGION_PROMS, 0 )
+    ROM_LOAD( "136002-125.n4",   0x0000, 0x0100, CRC(5903af03) SHA1(24bc0366f394ad0ec486919212e38be0f08d0239) )
 ROM_END
 
 ROM_START( lunarba1 )
@@ -848,6 +879,10 @@ ROM_START( lunarba1 )
 	ROM_RELOAD(              0xd000, 0x1000 )
 	ROM_RELOAD(              0xe000, 0x1000 )
 	ROM_RELOAD(              0xf000, 0x1000 )	/* for reset/interrupt vectors */
+
+    /* AVG PROM */
+    ROM_REGION( 0x100, REGION_PROMS, 0 )
+    ROM_LOAD( "136002-125.n4",   0x0000, 0x0100, CRC(5903af03) SHA1(24bc0366f394ad0ec486919212e38be0f08d0239) )
 ROM_END
 
 ROM_START( spacduel )
@@ -867,7 +902,12 @@ ROM_START( spacduel )
 	ROM_RELOAD(              0xc000, 0x1000 )
 	ROM_RELOAD(              0xd000, 0x1000 )
 	ROM_RELOAD(              0xe000, 0x1000 )
+
 	ROM_RELOAD(              0xf000, 0x1000 )	/* for reset/interrupt vectors */
+
+    /* AVG PROM */
+    ROM_REGION( 0x100, REGION_PROMS, 0 )
+    ROM_LOAD( "136002-125.n4 ",   0x0000, 0x0100, CRC(5903af03) SHA1(24bc0366f394ad0ec486919212e38be0f08d0239) )
 ROM_END
 
 

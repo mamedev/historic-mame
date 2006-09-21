@@ -4,10 +4,11 @@
   =====================================
   Driver by smf & Ryan Holtz
   Board notes by The Guru
-  Thanks to R Belmont & The Zinc Team.
+  Sound by R Belmont
+  Thanks to the original Zinc Team.
 
   Issues:
-   There is no sound as the Namco C76 (Mitsubishi M37702) & Namco C352 are not emulated.
+   The C76 internal rom is not dumped, we use the sound program from Prop Cycle and patch the inputs.
    Random draw list corruption in soul edge v2 & dunkmania.
    soul edge, dunk mania & prime goal ex try to access joypads/memory cards. It is unknown what they would do if they found one.
 
@@ -15,36 +16,38 @@ Known Dumps
 -----------
 
 Game       Description                             CPU board           Mother board             Daughter board          Keycus   ROM0L
+--------------------------------------------------------------------------------------------------------------------------------------
+tekken     Tekken (TE4/VER.C)                      COH-100             SYSTEM11 MOTHER PCB      SYSTEM11 ROM8 PCB       none     5
+tekkena    Tekken (TE2/VER.C)                      COH-100             "                        "                       "        "
+tekkenb    Tekken (TE2/VER.B)                      COH-100             "                        "                       "        "
+tekkenc    Tekken (TE1/VER.B)                      COH-100             "                        "                       "        "
+tekken2    Tekken 2 Ver.B (TES3/VER.B)             COH-100             SYSTEM11 MOTHER PCB      SYSTEM11 ROM8 PCB       C406     6
+tekken2a   Tekken 2 Ver.B (TES2/VER.B)             COH-100             "                        "                       "        "
+tekken2b   Tekken 2 (TES2/VER.A)                   COH-100             "                        "                       "        "
+souledge   Soul Edge Ver. II (SO4/VER.C)           COH-100 / COH-110   SYSTEM11 MOTHER PCB      SYSTEM11 ROM8 PCB       C409     6
+souledga   Soul Edge Ver. II (SO3/VER.C)           COH-100 / COH-110   "                        "                       "        "
+souledgb   Soul Edge (SO3/VER.A)                   COH-100 / COH-110   "                        "                       "        "
+souledgc   Soul Edge (SO1/VER.A)                   COH-100 / COH-110   "                        "                       "        "
+dunkmnia   Dunk Mania (DM2/VER.C)                  COH-100 / COH-110   SYSTEM11 MOTHER PCB      SYSTEM11 ROM8 PCB       C410     5
+dunkmnic   Dunk Mania (DM1/VER.C)                  COH-100 / COH-110   SYSTEM11 MOTHER PCB      SYSTEM11 ROM8 PCB       C410     5
+xevi3dg    Xevious 3D/G (XV31/VER.A)               COH-100 / COH-110   SYSTEM11 MOTHER PCB      SYSTEM11 ROM8 PCB       C430     5
+primglex   Prime Goal EX (PG1/VER.A)               COH-100 / COH-110   SYSTEM11 MOTHER PCB      SYSTEM11 ROM8 PCB       C411     6
+danceyes   Dancing Eyes (DC1/VER.A)                COH-100 / COH-110   SYSTEM11 MOTHER PCB      SYSTEM11 ROM8 PCB       C431     5
+pocketrc   Pocket Racer (PKR1/VER.B)               COH-110             SYSTEM11 MOTHER PCB      SYSTEM11 ROM8 PCB       C432     5
+starswep   Star Sweep (STP1/VER.A)                 COH-100 / COH-110   SYSTEM11 MOTHER(B) PCB                           C442     -
+myangel3   Kosodate Quiz My Angel 3 (KQT1/VER.A)   COH-110             SYSTEM11 MOTHER(B) PCB   SYSTEM11 ROM8(64) PCB   C443     2
+ptblnk2a   Point Blank 2 (GNB3/VER.A)              COH-100 / COH-110   SYSTEM11 MOTHER PCB      SYSTEM11 ROM8(64) PCB   C443     2
 
-tekken     Tekken (TE4/VER.C)                      COH 100             SYSTEM11 MOTHER PCB      SYSTEM11 ROM8 PCB       none     5
-tekkena    Tekken (TE2/VER.C)                      COH 100             "                        "                       "        "
-tekkenb    Tekken (TE2/VER.B)                      COH 100             "                        "                       "        "
-tekkenc    Tekken (TE1/VER.B)                      COH 100             "                        "                       "        "
-tekken2    Tekken 2 Ver.B (TES3/VER.B)             COH 100             SYSTEM11 MOTHER PCB      SYSTEM11 ROM8 PCB       C406     6
-tekken2a   Tekken 2 Ver.B (TES2/VER.B)             COH 100             "                        "                       "        "
-tekken2b   Tekken 2 (TES2/VER.A)                   COH 100             "                        "                       "        "
-souledge   Soul Edge Ver. II (SO4/VER.C)           COH 100 / COH 110   SYSTEM11 MOTHER PCB      SYSTEM11 ROM8 PCB       C409     6
-souledga   Soul Edge Ver. II (SO3/VER.C)           COH 100 / COH 110   "                        "                       "        "
-souledgb   Soul Edge (SO3/VER.A)                   COH 100 / COH 110   "                        "                       "        "
-souledgc   Soul Edge (SO1/VER.A)                   COH 100 / COH 110   "                        "                       "        "
-dunkmnia   Dunk Mania (DM2/VER.C)                  COH 100 / COH 110   SYSTEM11 MOTHER PCB      SYSTEM11 ROM8 PCB       C410     5
-dunkmnic   Dunk Mania (DM1/VER.C)                  COH 100 / COH 110   SYSTEM11 MOTHER PCB      SYSTEM11 ROM8 PCB       C410     5
-xevi3dg    Xevious 3D/G (XV31/VER.A)               COH 100 / COH 110   SYSTEM11 MOTHER PCB      SYSTEM11 ROM8 PCB       C430     5
-primglex   Prime Goal EX (PG1/VER.A)               COH 100 / COH 110   SYSTEM11 MOTHER PCB      SYSTEM11 ROM8 PCB       C411     6
-danceyes   Dancing Eyes (DC1/VER.A)                COH 100 / COH 110   SYSTEM11 MOTHER PCB      SYSTEM11 ROM8 PCB       C431     5
-starswep   Star Sweep (STP1/VER.A)                 COH 100 / COH 110   SYSTEM11 MOTHER(B) PCB                           C442     -
-myangel3   Kosodate Quiz My Angel 3 (KQT1/VER.A)   COH 110             SYSTEM11 MOTHER(B) PCB   SYSTEM11 ROM8(64) PCB   C443     2
-ptblnk2a   Point Blank 2 (GNB3/VER.A)              COH 110 / COH 110   SYSTEM11 MOTHER PCB      SYSTEM11 ROM8(64) PCB   C443     2
 
 Not Dumped Yet
 --------------
-
 Don Bear Near           (C) Namco, 1996
-Pocket Racer            (C) Namco, 1996
 Point Blank 3           (C) Namco, 2001
 Soul Edge Ver. III      (C) Namco, 1996
 Tekken Ver.C            (C) Namco, 1995
 Tekken II Ver.C         (C) Namco, 1995
+
+If you can help with the remaining undumped S11 games, please contact http://www.mameworld.net/gurudumps/comments.html
 
 
 The Namco System 11 system comprises 3 PCB's....
@@ -95,8 +98,8 @@ Notes:
       C195     - Namco custom (QFP160)
       C384     - Namco custom (QFP48)
       C352     - Namco custom C352 PCM sound chip (QFP100)
-      AT28C16  - 2K x8 EEPROM (DIP28)
-      61C256   - 32K x8 SRAM (x2, SOJ28)
+      AT28C16  - 2k x8 EEPROM (DIP28)
+      61C256   - 32k x8 SRAM (x2, SOJ28)
       2061ASC-1- IC Designs 2061ASC-1 programmable clock generator (SOIC16)
       S11MOT*  - Standard System 11 PALs (DIP20)
       WAVE.8K  - Sound samples, 42 pin DIP MASKROM, either 16MBit or 32MBit. If 32MBit, it is programmed in Byte Mode.
@@ -122,7 +125,7 @@ Notes:
       Dunk Mania                DM           C410
       Kosodate Quiz My Angel 3  KQT          C443
       Prime Goal EX             PG           C411
-      Pocket Racer
+      Pocket Racer              PKR          C432
       Point Blank 2             GNB          C443
       Point Blank 3
       Soul Edge                 SO           C409
@@ -279,7 +282,7 @@ INLINE void verboselog( int n_level, const char *s_fmt, ... )
 		va_start( v, s_fmt );
 		vsprintf( buf, s_fmt, v );
 		va_end( v );
-		logerror( "%08x: %s", activecpu_get_pc(), buf );
+		logerror( "%02x:%08x: %s", cpu_getactivecpu(), safe_activecpu_get_pc(), buf );
 	}
 }
 
@@ -464,6 +467,39 @@ static READ32_HANDLER( keycus_c431_r )
 	return data;
 }
 
+/* pocket racer */
+static READ32_HANDLER( keycus_c432_r )
+{
+	UINT32 data;
+	UINT16 n_value;
+
+	if( ( namcos11_keycus[ 3 ] & 0x0000ffff ) == 0x00002f15 )
+	{
+		n_value = namcos11_keycus[ 1 ] & 0x0000ffff;
+	}
+	else
+	{
+		n_value = 432;
+	}
+
+	data = namcos11_keycus[ offset ];
+	switch( offset )
+	{
+	case 1:
+		data = ( data & 0xffff0000 ) | ( ( ( n_value / 10 ) % 10 ) << 8 ) | ( ( n_value / 1 ) % 10 );
+		break;
+	case 2:
+		data = ( data & 0xffff0000 ) | ( ( ( n_value / 1000 ) % 10 ) << 8 ) | ( ( n_value / 100 ) % 10 );
+		break;
+	case 3:
+		data = ( data & 0xffff0000 ) | ( ( ( n_value / 100000 ) % 10 ) << 8 ) | ( ( n_value / 10000 ) % 10 );
+		break;
+	}
+
+	verboselog( 1, "keycus_c432_r( %08x, %08x, %08x )\n", offset, data, mem_mask );
+	return data;
+}
+
 /* star sweep */
 static READ32_HANDLER( keycus_c442_r )
 {
@@ -532,42 +568,73 @@ static READ32_HANDLER( sharedram_r )
 
 #define SHRAM( x ) namcos11_sharedram[ ( x - 0x4000 ) / 4 ]
 
+static UINT16 m_n_oldcoin;
+
 static INTERRUPT_GEN( namcos11_vblank )
 {
 	UINT16 n_coin;
 	UINT32 n_input;
-	static UINT16 n_oldcoin = 0;
 
-	n_input = readinputport( 0 ) | ( readinputport( 1 ) << 16 );
-	SHRAM( 0xbd00 ) = n_input | ( ( n_input & ~SHRAM( 0xbd00 ) ) >> 8 );
+	n_input = ( readinputportbytag( "PLAYER1" ) << 16 );
+	SHRAM( 0xbd00 ) = n_input | ( ( n_input & ~SHRAM( 0xbd00 ) ) >> 8 ) | ( SHRAM( 0xbd00 ) & 0x0000ffff );
 
-	n_input = readinputport( 2 ) | ( readinputport( 3 ) << 16 );
+	n_input = readinputportbytag( "PLAYER2" ) | ( readinputportbytag( "PLAYER3" ) << 16 );
 	SHRAM( 0xbd04 ) = n_input | ( ( n_input & ~SHRAM( 0xbd04 ) ) >> 8 );
 
-	n_input = readinputport( 4 );
-	SHRAM( 0xbd08 ) = n_input | ( ( n_input & ~SHRAM( 0xbd08 ) ) >> 8 );
+	n_input = readinputportbytag( "PLAYER4" );
+	SHRAM( 0xbd08 ) = n_input | ( ( n_input & ~SHRAM( 0xbd08 ) ) >> 8 ) | ( SHRAM( 0xbd08 ) & 0xffff0000 );
 
-	n_coin = readinputport( 5 );
+	n_coin = readinputportbytag( "COIN" );
 
-	if( ( n_coin & n_oldcoin & 0x08 ) != 0 )
+	if( ( n_coin & m_n_oldcoin & 0x08 ) != 0 )
 	{
 		SHRAM( 0xbd1c ) = ( SHRAM( 0xbd1c ) & 0x0000ffff ) | ( ( SHRAM( 0xbd1c ) + 0x00010000 ) & 0xffff0000 );
 	}
-	if( ( n_coin & n_oldcoin & 0x04 ) != 0 )
+	if( ( n_coin & m_n_oldcoin & 0x04 ) != 0 )
 	{
 		SHRAM( 0xbd20 ) = ( SHRAM( 0xbd20 ) & 0xffff0000 ) | ( ( SHRAM( 0xbd20 ) + 0x00000001 ) & 0x0000ffff );
 	}
-	if( ( n_coin & n_oldcoin & 0x02 ) != 0 )
+	if( ( n_coin & m_n_oldcoin & 0x02 ) != 0 )
 	{
 		SHRAM( 0xbd20 ) = ( SHRAM( 0xbd20 ) & 0x0000ffff ) | ( ( SHRAM( 0xbd20 ) + 0x00010000 ) & 0xffff0000 );
 	}
-	if( ( n_coin & n_oldcoin & 0x01 ) != 0 )
+	if( ( n_coin & m_n_oldcoin & 0x01 ) != 0 )
 	{
 		SHRAM( 0xbd24 ) = ( SHRAM( 0xbd24 ) & 0xffff0000 ) | ( ( SHRAM( 0xbd24 ) + 0x00000001 ) & 0x0000ffff );
 	}
-	n_oldcoin = ~n_coin;
+	m_n_oldcoin = ~n_coin;
 
 	psx_vblank();
+
+	if( strcmp( Machine->gamedrv->name, "pocketrc" ) == 0 )
+ 	{
+		if( g_p_n_psxram[ 0x12c74 / 4 ] == 0x1440fff9 )
+		{
+			g_p_n_psxram[ 0x12c74 / 4 ] = 0;
+		}
+		if( g_p_n_psxram[ 0x64694 / 4 ] == 0x1443000c )
+		{
+			g_p_n_psxram[ 0x64694 / 4 ] = 0;
+		}
+
+		if( ( SHRAM( 0xbe88 ) & 0x0000ffff ) == 2 )
+		{
+			cpunum_set_input_line( 0, INPUT_LINE_RESET, PULSE_LINE );
+			memset( namcos11_keycus, 0, namcos11_keycus_size );
+
+			SHRAM( 0xbe88 ) = ( SHRAM( 0xbe88 ) & 0xffff0000 );
+		}
+
+		SHRAM( 0xbd30 ) = ( SHRAM( 0xbd30 ) & 0x0000ffff ) | ( 0x0080 << 16 );
+
+		SHRAM( 0xbd08 ) = ( SHRAM( 0xbd08 ) & 0x0000ffff ) | ( readinputportbytag( "STEERING" ) << 16 );
+		SHRAM( 0xbd0c ) = ( SHRAM( 0xbd0c ) & 0xffff0000 ) | ( readinputportbytag( "GAS" ) << 0 );
+	}
+}
+
+static void mcu_timer( int unused )
+{
+	SHRAM( 0xbd00 ) = ( SHRAM( 0xbd00 ) & 0xffffff00 ) | readinputportbytag( "SWITCH" );
 }
 
 static UINT32 m_n_bankoffset;
@@ -648,14 +715,11 @@ static WRITE32_HANDLER( lightgun_w )
 {
 	if( ACCESSING_LSW32 )
 	{
-		/* start 1 */
-		set_led_status(0, !(data & 0x08));
-		/* start 2 */
-		set_led_status(1, !(data & 0x04));
-		/* blowback 1 */
-		/* !(data & 0x02) */
-		/* blowback 2 */
-		/* !(data & 0x01) */
+		output_set_value( "led0", !( data & 0x08 ) );
+		output_set_value( "led1", !( data & 0x04 ) );
+		output_set_value( "recoil0", !( data & 0x02 ) );
+		output_set_value( "recoil1", !( data & 0x01 ) );
+
 		verboselog( 1, "lightgun_w: outputs (%08x %08x)\n", data, mem_mask );
 	}
 	if( ACCESSING_MSW32 )
@@ -670,16 +734,16 @@ static READ32_HANDLER( lightgun_r )
 	switch( offset )
 	{
 	case 0:
-		data = readinputport( 6 );
+		data = readinputportbytag( "GUN1X" );
 		break;
 	case 1:
-		data = ( readinputport( 7 ) ) | ( ( readinputport( 7 ) + 1 ) << 16 );
+		data = ( readinputportbytag( "GUN1Y" ) ) | ( ( readinputportbytag( "GUN1Y" ) + 1 ) << 16 );
 		break;
 	case 2:
-		data = readinputport( 8 );
+		data = readinputportbytag( "GUN2X" );
 		break;
 	case 3:
-		data = ( readinputport( 9 ) ) | ( ( readinputport( 9 ) + 1 ) << 16 );
+		data = ( readinputportbytag( "GUN2Y" ) ) | ( ( readinputportbytag( "GUN2Y" ) + 1 ) << 16 );
 		break;
 	}
 	verboselog( 2, "lightgun_r( %08x, %08x ) %08x\n", offset, mem_mask, data );
@@ -748,6 +812,7 @@ static struct
 	{ "xevi3dg",  keycus_c430_r, 32 },
 	{ "primglex", keycus_c411_r, 32 },
 	{ "danceyes", keycus_c431_r, 32 },
+	{ "pocketrc", keycus_c432_r, 32 },
 	{ "starswep", keycus_c442_r, 0 },
 	{ "myangel3", keycus_c443_r, 64 },
 	{ "ptblnk2a", keycus_c443_r, 64 },
@@ -757,6 +822,10 @@ static struct
 static DRIVER_INIT( namcos11 )
 {
 	int n_game;
+	void *timer;
+
+	timer = timer_alloc( mcu_timer );
+	timer_adjust( timer, TIME_IN_HZ( 600 ), 0, TIME_IN_HZ( 600 ) );
 
 	psx_driver_init();
 	namcoc7x_on_driver_init();
@@ -810,6 +879,8 @@ static DRIVER_INIT( namcos11 )
 		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f788000, 0x1f788003, 0, 0, lightgun_w );
 		memory_install_read32_handler (0, ADDRESS_SPACE_PROGRAM, 0x1f780000, 0x1f78000f, 0, 0, lightgun_r );
 	}
+
+	state_save_register_global( m_n_oldcoin );
 }
 
 MACHINE_RESET( namcos11 )
@@ -821,7 +892,7 @@ MACHINE_RESET( namcos11 )
 
 NAMCO_C7X_HARDWARE
 
-static MACHINE_DRIVER_START( coh100ns )
+static MACHINE_DRIVER_START( coh100 )
 	/* basic machine hardware */
 	MDRV_CPU_ADD( PSXCPU, 33868800 / 2 ) /* 33MHz ?? */
 	MDRV_CPU_PROGRAM_MAP( namcos11_map, 0 )
@@ -842,17 +913,9 @@ static MACHINE_DRIVER_START( coh100ns )
 	MDRV_PALETTE_INIT( psx )
 	MDRV_VIDEO_START( psx_type1 )
 	MDRV_VIDEO_UPDATE( psx )
-MACHINE_DRIVER_END
 
-static MACHINE_DRIVER_START( coh100 )
-	MDRV_IMPORT_FROM( coh100ns )
 	NAMCO_C7X_MCU_SHARED(16384000)
 	NAMCO_C7X_SOUND(16384000)
-MACHINE_DRIVER_END
-
-static MACHINE_DRIVER_START( coh110ns )
-	MDRV_IMPORT_FROM( coh100ns )
-	MDRV_VIDEO_START( psx_type2 )
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( coh110 )
@@ -860,21 +923,21 @@ static MACHINE_DRIVER_START( coh110 )
 	MDRV_VIDEO_START( psx_type2 )
 MACHINE_DRIVER_END
 
-static int lightgunx( int port )
+static int lightgunx( const char *tag )
 {
 	const int portmin = 0xd8;
 	const int portmax = 0x387;
-	int x = ( readinputport( port ) - portmin );
+	int x = ( readinputportbytag( tag ) - portmin );
 	x *= ( Machine->screen[0].visarea.max_x - Machine->screen[0].visarea.min_x );
 	x /= ( portmax - portmin );
 	return Machine->screen[0].visarea.min_x + x;
 }
 
-static int lightguny( int port )
+static int lightguny( const char *tag )
 {
 	const int portmin = 0x2c;
 	const int portmax = 0x11b;
-	int y = ( readinputport( port ) - portmin );
+	int y = ( readinputportbytag( tag ) - portmin );
 	y *= ( Machine->screen[0].visarea.max_y - Machine->screen[0].visarea.min_y );
 	y /= ( portmax - portmin );
 	return Machine->screen[0].visarea.min_y + y;
@@ -884,8 +947,8 @@ static VIDEO_UPDATE( lightgun )
 {
 	video_update_psx( machine, screen, bitmap, cliprect );
 
-	draw_crosshair( bitmap, lightgunx( 6 ), lightguny( 7 ), cliprect, 0 );
-	draw_crosshair( bitmap, lightgunx( 8 ), lightguny( 9 ), cliprect, 1 );
+	draw_crosshair( bitmap, lightgunx( "GUN1X" ), lightguny( "GUN1Y" ), cliprect, 0 );
+	draw_crosshair( bitmap, lightgunx( "GUN2X" ), lightguny( "GUN2Y" ), cliprect, 1 );
 	return 0;
 }
 
@@ -895,11 +958,13 @@ static MACHINE_DRIVER_START( coh110g )
 MACHINE_DRIVER_END
 
 INPUT_PORTS_START( namcos11 )
-	/* IN 0 */
-	PORT_START
-	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_START_TAG( "SWITCH" )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* read by pocket racer */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_SERVICE1 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_OTHER ) PORT_NAME("Test Switch") PORT_CODE(KEYCODE_F2)
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_OTHER ) PORT_NAME( "Test Switch" ) PORT_CODE( KEYCODE_F2 )
 	PORT_DIPNAME( 0x02, 0x00, "DIP1 (Test)" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
@@ -907,8 +972,7 @@ INPUT_PORTS_START( namcos11 )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
 
-	/* IN 1 */
-	PORT_START
+	PORT_START_TAG( "PLAYER1" )
 	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY
 	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY
 	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY
@@ -918,41 +982,37 @@ INPUT_PORTS_START( namcos11 )
 	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_BUTTON3 )
 	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_START1 )
 
-	/* IN 2 */
-	PORT_START
-	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(2)
-	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER(2)
-	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_START_TAG( "PLAYER2" )
+	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER( 2 )
+	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER( 2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER( 2 )
+	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER( 2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER( 2 )
+	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER( 2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_PLAYER( 2 )
 	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_START2 )
 
-	/* IN 3 */
-	PORT_START
-	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(3)
-	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(3)
-	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(3)
-	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(3)
-	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(3)
-	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER(3)
-	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_PLAYER(3)
+	PORT_START_TAG( "PLAYER3" )
+	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER( 3 )
+	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER( 3 )
+	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER( 3 )
+	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER( 3 )
+	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER( 3 )
+	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER( 3 )
+	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_PLAYER( 3 )
 	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_START3 )
 
-	/* IN 4 */
-	PORT_START
-	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(4)
-	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(4)
-	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(4)
-	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(4)
-	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(4)
-	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER(4)
-	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_PLAYER(4)
+	PORT_START_TAG( "PLAYER4" )
+	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER( 4 )
+	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER( 4 )
+	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER( 4 )
+	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER( 4 )
+	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER( 4 )
+	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER( 4 )
+	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_PLAYER( 4 )
 	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_START4 )
 
-	/* IN 5 */
-	PORT_START
+	PORT_START_TAG( "COIN" )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -961,42 +1021,15 @@ INPUT_PORTS_START( namcos11 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( tekken )
-	/* IN 0 */
-	PORT_START
-	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_SERVICE1 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_OTHER ) PORT_NAME("Test Switch") PORT_CODE(KEYCODE_F2)
-	PORT_DIPNAME( 0x02, 0x00, "DIP1 (Test)" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
-	PORT_DIPNAME( 0x01, 0x00, "DIP2 (Freeze)" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_INCLUDE( namcos11 )
 
-	/* IN 1 */
-	PORT_START
-	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY
-	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY
-	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY
-	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY
-	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_MODIFY( "PLAYER1" )
 	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_START1 )
 
-	/* IN 2 */
-	PORT_START
-	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(2)
-	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_MODIFY( "PLAYER2" )
 	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_START2 )
 
-	/* IN 3 */
-	PORT_START
+	PORT_MODIFY( "PLAYER3" )
 	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -1006,63 +1039,21 @@ INPUT_PORTS_START( tekken )
 	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-	/* IN 4 */
-	PORT_START
+	PORT_MODIFY( "PLAYER4" )
 	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_PLAYER(2)
-	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_BUTTON4 ) PORT_PLAYER(2)
+	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_PLAYER( 2 )
+	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_BUTTON4 ) PORT_PLAYER( 2 )
 	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_UNUSED )
-
-	/* IN 5 */
-	PORT_START
-	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN3 )
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN4 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( souledge )
-	/* IN 0 */
-	PORT_START
-	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_SERVICE1 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_OTHER ) PORT_NAME("Test Switch") PORT_CODE(KEYCODE_F2)
-	PORT_DIPNAME( 0x02, 0x00, "DIP1 (Test)" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
-	PORT_DIPNAME( 0x01, 0x00, "DIP2 (Freeze)" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_INCLUDE( namcos11 )
 
-	/* IN 1 */
-	PORT_START
-	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY
-	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY
-	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY
-	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY
-	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_BUTTON3 )
-	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_START1 )
-
-	/* IN 2 */
-	PORT_START
-	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(2)
-	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER(2)
-	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_PLAYER(2)
-	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_START2 )
-
-	/* IN 3 */
-	PORT_START
+	PORT_MODIFY( "PLAYER3" )
 	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -1072,42 +1063,21 @@ INPUT_PORTS_START( souledge )
 	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-	/* IN 4 */
-	PORT_START
+	PORT_MODIFY( "PLAYER4" )
 	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_BUTTON4 ) PORT_PLAYER(2)
+	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_BUTTON4 ) PORT_PLAYER( 2 )
 	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_UNUSED )
-
-	/* IN 5 */
-	PORT_START
-	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN3 )
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN4 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( myangel3 )
-	/* IN 0 */
-	PORT_START
-	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_SERVICE1 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_OTHER ) PORT_NAME("Test Switch") PORT_CODE(KEYCODE_F2)
-	PORT_DIPNAME( 0x02, 0x00, "DIP1 (Test)" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
-	PORT_DIPNAME( 0x01, 0x00, "DIP2 (Freeze)" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_INCLUDE( namcos11 )
 
-	/* IN 1 */
-	PORT_START
-	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_MODIFY( "PLAYER1" )
 	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -1116,19 +1086,16 @@ INPUT_PORTS_START( myangel3 )
 	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_BUTTON3 )
 	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_BUTTON4 )
 
-	/* IN 2 */
-	PORT_START
-	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_MODIFY( "PLAYER2" )
 	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(2)
-	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER(2)
-	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_PLAYER(2)
-	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_BUTTON4 ) PORT_PLAYER(2)
+	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER( 2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER( 2 )
+	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_PLAYER( 2 )
+	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_BUTTON4 ) PORT_PLAYER( 2 )
 
-	/* IN 3 */
-	PORT_START
+	PORT_MODIFY( "PLAYER3" )
 	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -1138,8 +1105,7 @@ INPUT_PORTS_START( myangel3 )
 	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-	/* IN 4 */
-	PORT_START
+	PORT_MODIFY( "PLAYER4" )
 	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -1148,53 +1114,28 @@ INPUT_PORTS_START( myangel3 )
 	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_UNUSED )
-
-	/* IN 5 */
-	PORT_START
-	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( ptblnk2a )
-	/* IN 0 */
-	PORT_START
-	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_SERVICE1 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_OTHER ) PORT_NAME("Test Switch") PORT_CODE(KEYCODE_F2)
-	PORT_DIPNAME( 0x02, 0x00, "DIP1 (Test)" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
-	PORT_DIPNAME( 0x01, 0x00, "DIP2 (Freeze)" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_INCLUDE( namcos11 )
 
-	/* IN 1 */
-	PORT_START
+	PORT_MODIFY( "PLAYER1" )
 	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_START1 )
 
-	/* IN 2 */
-	PORT_START
+	PORT_MODIFY( "PLAYER2" )
 	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(2)
 	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_START2 )
 
-	/* IN 3 */
-	PORT_START
+	PORT_MODIFY( "PLAYER3" )
 	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -1204,8 +1145,7 @@ INPUT_PORTS_START( ptblnk2a )
 	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-	/* IN 4 */
-	PORT_START
+	PORT_MODIFY( "PLAYER4" )
 	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -1215,31 +1155,73 @@ INPUT_PORTS_START( ptblnk2a )
 	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-	/* IN 5 */
-	PORT_START
-	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_START_TAG( "GUN1X" )
+	PORT_BIT( 0xffff, 0x022f, IPT_LIGHTGUN_X ) PORT_MINMAX( 0xd8, 0x387 ) PORT_SENSITIVITY( 100 ) PORT_KEYDELTA( 15 ) PORT_PLAYER( 1 )
 
-	/* IN 6 */
-	PORT_START
-	PORT_BIT( 0xffff, 0x022f, IPT_LIGHTGUN_X ) PORT_MINMAX(0xd8,0x387) PORT_SENSITIVITY(100) PORT_KEYDELTA(15) PORT_PLAYER(1)
+	PORT_START_TAG( "GUN1Y" )
+	PORT_BIT( 0xffff, 0x00a8, IPT_LIGHTGUN_Y ) PORT_MINMAX( 0x2c, 0x11b ) PORT_SENSITIVITY( 50 ) PORT_KEYDELTA( 15 ) PORT_PLAYER( 1 )
 
-	/* IN 7 */
-	PORT_START
-	PORT_BIT( 0xffff, 0x00a8, IPT_LIGHTGUN_Y ) PORT_MINMAX(0x2c,0x11b) PORT_SENSITIVITY(50) PORT_KEYDELTA(15) PORT_PLAYER(1)
+	PORT_START_TAG( "GUN2X" )
+	PORT_BIT( 0xffff, 0x022f, IPT_LIGHTGUN_X ) PORT_MINMAX( 0xd8, 0x387 ) PORT_SENSITIVITY( 100 ) PORT_KEYDELTA( 15 ) PORT_PLAYER( 2 )
 
-	/* IN 8 */
-	PORT_START
-	PORT_BIT( 0xffff, 0x022f, IPT_LIGHTGUN_X ) PORT_MINMAX(0xd8,0x387) PORT_SENSITIVITY(100) PORT_KEYDELTA(15) PORT_PLAYER(2)
-
-	/* IN 9 */
-	PORT_START
-	PORT_BIT( 0xffff, 0x00a8, IPT_LIGHTGUN_Y ) PORT_MINMAX(0x2c,0x11b) PORT_SENSITIVITY(50) PORT_KEYDELTA(15) PORT_PLAYER(2)
+	PORT_START_TAG( "GUN2Y" )
+	PORT_BIT( 0xffff, 0x00a8, IPT_LIGHTGUN_Y ) PORT_MINMAX( 0x2c, 0x11b ) PORT_SENSITIVITY( 50 ) PORT_KEYDELTA( 15 ) PORT_PLAYER( 2 )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( pocketrc )
+	PORT_INCLUDE( namcos11 )
+
+	PORT_MODIFY( "PLAYER1" )
+	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_MODIFY( "PLAYER2" )
+	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_MODIFY( "PLAYER3" )
+	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_MODIFY( "PLAYER4" )
+	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_CODE( KEYCODE_A )
+	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_MODIFY( "COIN" )
+	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START_TAG( "STEERING" )
+	PORT_BIT( 0xffff, 0x0000, IPT_PADDLE ) PORT_MINMAX( 0xff00, 0x00ff ) PORT_SENSITIVITY( 100 ) PORT_KEYDELTA( 3 ) PORT_CENTERDELTA( 128 ) PORT_PLAYER( 1 ) PORT_REVERSE
+
+	PORT_START_TAG( "GAS" )
+	PORT_BIT( 0x00ff, 0x0000, IPT_PEDAL ) PORT_MINMAX( 0x0000, 0x00ff ) PORT_SENSITIVITY( 100 ) PORT_KEYDELTA( 15 ) PORT_PLAYER( 1 ) PORT_REVERSE
+INPUT_PORTS_END
 
 ROM_START( danceyes )
 	ROM_REGION32_LE( 0x0400000, REGION_USER1, 0 ) /* main prg */
@@ -1335,6 +1317,24 @@ ROM_START( myangel3 )
 
 	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* samples */
 	ROM_LOAD( "kqt1wave.8k",  0x000000, 0x400000, CRC(92ca8e4f) SHA1(48d6bdfcc5de1c280afa36c3f0dd6d4177771355) )
+	ROM_RELOAD( 0x800000, 0x400000 )
+ROM_END
+
+ROM_START( pocketrc )
+	ROM_REGION32_LE( 0x0400000, REGION_USER1, 0 ) /* main prg */
+	ROM_LOAD16_BYTE( "pkr1verb.2l",  0x000000, 0x100000, CRC(300d906a) SHA1(f521858f78284d69e6a6ec2c35a468c87dd0628c) )
+	ROM_LOAD16_BYTE( "pkr1verb.2j",  0x000001, 0x100000, CRC(d5f47526) SHA1(b1d5b6f714510d0cfcc9b32708287755f9f27ead) )
+
+	ROM_REGION32_LE( 0x1000000, REGION_USER2, 0 ) /* main data */
+	ROM_LOAD16_BYTE( "pkr1rom0l.ic5", 0x000000, 0x200000, CRC(6c9b074c) SHA1(885f342bd178e4146e1f75259206f6625c0b3c18) )
+	ROM_LOAD16_BYTE( "pkr1rom0u.ic6", 0x000001, 0x200000, CRC(a55c0906) SHA1(3b6abfa877f88a4d96222d98af02498b0c777af6) )
+
+	ROM_REGION16_LE( 0x100000, REGION_USER4, 0 ) /* sound data and MCU BIOS */
+	ROM_LOAD( "pkr1verb.6d",  0x000000, 0x040000, CRC(9bf08992) SHA1(fca7943f7bcf0ee758fa63fbdef8f7456b9e46cb) )
+	NAMCO_C7X_BIOS
+
+	ROM_REGION( 0x1000000, REGION_SOUND1, 0 ) /* samples */
+	ROM_LOAD( "pkr1wave.8k",  0x000000, 0x400000, CRC(72517c46) SHA1(d0dcc750fe8eca9e965e7c366ac39a42ffd76557) )
 	ROM_RELOAD( 0x800000, 0x400000 )
 ROM_END
 
@@ -1708,6 +1708,7 @@ GAME( 1995, dunkmnic,  dunkmnia, coh110, namcos11, namcos11, ROT0, "Namco", "Dun
 GAME( 1995, xevi3dg,   0,        coh110, namcos11, namcos11, ROT0, "Namco", "Xevious 3D/G (XV31/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAME( 1996, primglex,  0,        coh110, tekken,   namcos11, ROT0, "Namco", "Prime Goal EX (PG1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAME( 1996, danceyes,  0,        coh110, namcos11, namcos11, ROT0, "Namco", "Dancing Eyes (DC1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAME( 1996, pocketrc,  0,        coh110, pocketrc, namcos11, ROT0, "Namco", "Pocket Racer (PKR1/VER.B)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAME( 1997, starswep,  0,        coh110, namcos11, namcos11, ROT0, "Axela/Namco", "Star Sweep (STP1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAME( 1998, myangel3,  0,        coh110, myangel3, namcos11, ROT0, "Namco", "Kosodate Quiz My Angel 3 (KQT1/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAME( 1999, ptblnk2a,  ptblank2, coh110g, ptblnk2a, namcos11, ROT0, "Namco", "Point Blank 2 (GNB3/VER.A)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )

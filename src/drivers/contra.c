@@ -377,7 +377,7 @@ ROM_END
 
 ROM_START( contrajb )
 	ROM_REGION( 0x28000, REGION_CPU1, 0 )	/* 64k for code + 96k for banked ROMs */
-	ROM_LOAD( "g-2.rom",      0x20000, 0x08000, CRC(bdb9196d) SHA1(fad170e8fda94c9c9d7b82433daa30b80af12efc) )
+	ROM_LOAD( "g-2.18a",      0x20000, 0x08000, CRC(bdb9196d) SHA1(fad170e8fda94c9c9d7b82433daa30b80af12efc) )
 	ROM_CONTINUE(             0x08000, 0x08000 )
 	ROM_LOAD( "633k02.17a",   0x10000, 0x10000, CRC(5d5f7438) SHA1(489fe56ca57ef4f6a7792fba07a9656009f3f285) )
 
@@ -401,9 +401,33 @@ ROM_END
 
 ROM_START( gryzor )
 	ROM_REGION( 0x28000, REGION_CPU1, 0 )	/* 64k for code + 96k for banked ROMs */
-	ROM_LOAD( "g2",           0x20000, 0x08000, CRC(92ca77bd) SHA1(3a56f51a617edff9f2a60df0141dff040881b82a) )
+	ROM_LOAD( "g2.18a",       0x20000, 0x08000, CRC(92ca77bd) SHA1(3a56f51a617edff9f2a60df0141dff040881b82a) )
 	ROM_CONTINUE(             0x08000, 0x08000 )
-	ROM_LOAD( "g3",           0x10000, 0x10000, CRC(bbd9e95e) SHA1(fd5de1bcc485de7b8fc2e321351c2e3ddd25d053) )
+	ROM_LOAD( "g3.17a",       0x10000, 0x10000, CRC(bbd9e95e) SHA1(fd5de1bcc485de7b8fc2e321351c2e3ddd25d053) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for SOUND code */
+	ROM_LOAD( "633e01.12a",   0x08000, 0x08000, CRC(d1549255) SHA1(d700c7de36746ba247e3a5d0410b7aa036aa4073) )
+
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "633e04.7d",    0x00000, 0x40000, CRC(14ddc542) SHA1(c7d8592672a6e50c2fe6b0670001c340022f16f9) )
+	ROM_LOAD16_BYTE( "633e05.7f",    0x00001, 0x40000, CRC(42185044) SHA1(a6e2598d766e6995c1a912e4a04987e6f4d547ff) )
+
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "633e06.16d",   0x00000, 0x40000, CRC(9cf6faae) SHA1(9ab79c06cb541ce6fdac322886b8a14a2f3f5cf7) )
+	ROM_LOAD16_BYTE( "633e07.16f",   0x00001, 0x40000, CRC(f2d06638) SHA1(0fa0fbfc53ab5c31b9de22f90153d9af37ff22ce) )
+
+	ROM_REGION( 0x0400, REGION_PROMS, 0 )
+	ROM_LOAD( "633e08.10g",   0x0000, 0x0100, CRC(9f0949fa) SHA1(7c8fefdcae4523d008a7d39062194c7a80aa3500) )	/* 007121 #0 sprite lookup table */
+	ROM_LOAD( "633e09.12g",   0x0100, 0x0100, CRC(14ca5e19) SHA1(eeee2f8b3d1e4acf47de1e74c4e507ff924591e7) )	/* 007121 #0 char lookup table */
+	ROM_LOAD( "633f10.18g",   0x0200, 0x0100, CRC(2b244d84) SHA1(c3bde7afb501bae58d07721c637dc06938c22150) )	/* 007121 #1 sprite lookup table */
+	ROM_LOAD( "633f11.20g",   0x0300, 0x0100, CRC(14ca5e19) SHA1(eeee2f8b3d1e4acf47de1e74c4e507ff924591e7) )	/* 007121 #1 char lookup table */
+ROM_END
+
+ROM_START( gryzora )
+	ROM_REGION( 0x28000, REGION_CPU1, 0 )	/* 64k for code + 96k for banked ROMs */
+	ROM_LOAD( "633j03.18a",   0x20000, 0x08000, CRC(20919162) SHA1(2f375166428ee03f6e8ac0372a373bb8ab35e64c) )
+	ROM_CONTINUE(             0x08000, 0x08000 )
+	ROM_LOAD( "633j02.17a",   0x10000, 0x10000, CRC(b5922f9a) SHA1(441a23dc99a908ec2c09c855e73070dbab8c5ae2) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for SOUND code */
 	ROM_LOAD( "633e01.12a",   0x08000, 0x08000, CRC(d1549255) SHA1(d700c7de36746ba247e3a5d0410b7aa036aa4073) )
@@ -429,4 +453,5 @@ GAME( 1987, contra,   0,      contra, contra, 0, ROT90, "Konami", "Contra (US)",
 GAME( 1987, contrab,  contra, contra, contra, 0, ROT90, "bootleg", "Contra (US bootleg)", 0 )
 GAME( 1987, contraj,  contra, contra, contra, 0, ROT90, "Konami", "Contra (Japan)", 0 )
 GAME( 1987, contrajb, contra, contra, contra, 0, ROT90, "bootleg", "Contra (Japan bootleg)", 0 )
-GAME( 1987, gryzor,   contra, contra, contra, 0, ROT90, "Konami", "Gryzor", 0 )
+GAME( 1987, gryzor,   contra, contra, contra, 0, ROT90, "Konami", "Gryzor (Set 1)", 0 )
+GAME( 1987, gryzora,  contra, contra, contra, 0, ROT90, "Konami", "Gryzor (Set 2)", 0 )

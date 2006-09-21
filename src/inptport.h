@@ -250,6 +250,7 @@ enum
 	IPT_UI_SAVE_CHEAT,
 	IPT_UI_WATCH_VALUE,
 	IPT_UI_EDIT_CHEAT,
+	IPT_UI_RELOAD_CHEAT,
 	IPT_UI_TOGGLE_CROSSHAIR,
 
 	/* additional OSD-specified UI port types (up to 16) */

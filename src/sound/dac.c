@@ -10,10 +10,10 @@
 
 struct dac_info
 {
-	sound_stream *channel;
-	int		output;
-	int		UnsignedVolTable[256];
-	int		SignedVolTable[256];
+	sound_stream	*channel;
+	INT16			output;
+	INT16			UnsignedVolTable[256];
+	INT16			SignedVolTable[256];
 };
 
 
@@ -22,7 +22,7 @@ static void DAC_update(void *param,stream_sample_t **inputs, stream_sample_t **_
 {
 	struct dac_info *info = param;
 	stream_sample_t *buffer = _buffer[0];
-	int out = info->output;
+	INT16 out = info->output;
 
 	while (length--) *(buffer++) = out;
 }
@@ -31,7 +31,7 @@ static void DAC_update(void *param,stream_sample_t **inputs, stream_sample_t **_
 void DAC_data_w(int num,UINT8 data)
 {
 	struct dac_info *info = sndti_token(SOUND_DAC, num);
-	int out = info->UnsignedVolTable[data];
+	INT16 out = info->UnsignedVolTable[data];
 
 	if (info->output != out)
 	{
@@ -45,7 +45,7 @@ void DAC_data_w(int num,UINT8 data)
 void DAC_signed_data_w(int num,UINT8 data)
 {
 	struct dac_info *info = sndti_token(SOUND_DAC, num);
-	int out = info->SignedVolTable[data];
+	INT16 out = info->SignedVolTable[data];
 
 	if (info->output != out)
 	{
@@ -59,7 +59,7 @@ void DAC_signed_data_w(int num,UINT8 data)
 void DAC_data_16_w(int num,UINT16 data)
 {
 	struct dac_info *info = sndti_token(SOUND_DAC, num);
-	int out = data >> 1;		/* range      0..32767 */
+	INT16 out = data >> 1;		/* range      0..32767 */
 
 	if (info->output != out)
 	{
@@ -73,7 +73,8 @@ void DAC_data_16_w(int num,UINT16 data)
 void DAC_signed_data_16_w(int num,UINT16 data)
 {
 	struct dac_info *info = sndti_token(SOUND_DAC, num);
-	int out = data - 0x8000;	/* range -32768..32767 */
+	INT16 out = (INT32)data - (INT32)0x08000;	/* range -32768..32767 */
+						/* casts avoid potential overflow on some ABIs */
 
 	if (info->output != out)
 	{
