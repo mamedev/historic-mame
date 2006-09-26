@@ -456,7 +456,7 @@ void cpuintrf_pop_context(void);
 char *cpuintrf_temp_str(void);
 
 /* set the dasm override handler */
-void cpuintrf_set_dasm_override(offs_t (*dasm_override)(int cpunum, char *buffer, offs_t pc));
+void cpuintrf_set_dasm_override(int cpunum, offs_t (*dasm_override)(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes));
 
 
 

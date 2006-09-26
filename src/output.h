@@ -39,6 +39,9 @@ void output_set_indexed_value(const char *basename, int index, int value);
 /* return the current value for a given output */
 INT32 output_get_value(const char *outname);
 
+/* return the current value for a given indexed output */
+INT32 output_get_indexed_value(const char *outname, int index);
+
 /* set a notifier on a particular output, or globally if NULL */
 void output_set_notifier(const char *outname, output_notifier callback, void *param);
 
@@ -62,16 +65,30 @@ INLINE void output_set_led_value(int index, int value)
 	output_set_indexed_value("led", index, value ? 1 : 0);
 }
 
-
 INLINE void output_set_lamp_value(int index, int value)
 {
 	output_set_indexed_value("lamp", index, value);
 }
 
-
 INLINE void output_set_digit_value(int index, int value)
 {
 	output_set_indexed_value("digit", index, value);
+}
+
+
+INLINE void output_get_led_value(int index, int value)
+{
+	output_get_indexed_value("led", index);
+}
+
+INLINE void output_get_lamp_value(int index, int value)
+{
+	output_get_indexed_value("lamp", index);
+}
+
+INLINE void output_get_digit_value(int index, int value)
+{
+	output_get_indexed_value("digit", index);
 }
 
 

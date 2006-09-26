@@ -80,6 +80,7 @@ static void modify_palette(void)
 VIDEO_START( astrof )
 {
 	colorram = auto_malloc(videoram_size);
+	memset(colorram, 0, videoram_size);
 	if (video_start_generic(machine))
 		return 1;
 

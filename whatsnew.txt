@@ -1,3 +1,69 @@
+0.109
+-----
+
+
+MAMETesters Bugs Fixed
+----------------------
+pitfight0106u3gra [Canim]
+turbofrc37b1gre [Canim]
+
+
+
+Source Changes
+--------------
+More merit, getrivia, and findout improvements: [wolf676]
+ - added external coin counters and coin lockouts
+ - fixed lamps in upright and cocktail modes
+ - getrivia.c: fixed sound in selection and clone
+ - located ticket out bit in trivia games and commented it in 
+    both drivers.
+ - fixed merge collision from u5
+
+Input port cleanup and additional comments in the CPS1 driver.
+[steph]
+
+Fixed ES5503 behavior for voice volumes > 127 (cures missing 
+sounds/music notes in several Apple IIgs demos and games).
+[R. Belmont]
+
+Made MSC1937 operation more accurately match datasheet and wiring
+diagram. Added indexed getters to the output system to match the
+newly introduced setters. [El Condor]
+
+Changed input port calculations to go in two passes, to catch
+out-of-order conditionals properly. [HobbesAtPlay]
+
+Fixed priorities in the m62 driver, mainly affecting Lode Runner
+sequels. [robiza]
+
+Fixed PNG code so that it doesn't NULL terminate tEXt chunks.
+[Mathis Rosenhauer]
+
+Changed disassembler override callbacks to match new disassembler
+syntax. [Nathan Woods]
+
+Changed artwork loading to be on-demand rather than all up-front.
+Also added a message during artwork resizing/loading so it's more
+clear what is going on. [Aaron Giles]
+
+Added new osd function osd_break_into_debugger() which can be hooked
+to cause a break into the OSD's debugger when an assertion or
+fatal error occurs. Hooked it up on Windows to do just that.
+[Aaron Giles]
+
+Normalized exit codes from mame.exe. The core-specific ones are
+defined in mame.h. The Windows build will also return code 100 on
+an unhandled exception now. [Aaron Giles]
+
+
+
+New clones added
+----------------
+Astro Combat (older, PZ) [f205v]
+Funky Bee (bootleg, harder) [f205v]
+
+
+
 0.108u5
 -------
 
@@ -98,7 +164,7 @@ New clones added
 World Class Bowling (v1.5) [Brian Troha]
 Gryzor (Set 2) [Stefan Lindberg]
 Power Drift (World) [Stefan Lindberg]
-Strikers 1945 (Korea) [Stefan Lindberg]
+Strikers 1945 (Korea) [Arzeno Fabrice]
 10-Yard Fight (World) [Brian Troha]
 Final Lap R (Japan Rev. C) [Arzeno Fabrice]
 
@@ -372,7 +438,7 @@ Further turbo driver cleanup. Still in WIP. [Aaron Giles]
 New games added or promoted from NOT_WORKING status
 ---------------------------------------------------
 Carrera (Version 6.7) [David Haywood]
-Swinging Singles [Tomasz Slanina]
+Swinging Singles [Pierpaolo Prazzoli]
 
 
 

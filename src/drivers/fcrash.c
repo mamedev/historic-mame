@@ -40,9 +40,11 @@ from 2.bin to 9.bin program eproms
 #include "cps1.h"
 
 /* in drivers/cps1.c */
-extern READ16_HANDLER( cps1_input_r );
-extern READ16_HANDLER( cps1_input2_r );
-extern READ16_HANDLER( cps1_input3_r );
+extern READ16_HANDLER( cps1_dsw_r );
+extern READ16_HANDLER( cps1_in0_r );
+extern READ16_HANDLER( cps1_in1_r );
+extern READ16_HANDLER( cps1_in2_r );
+extern READ16_HANDLER( cps1_in3_r );
 extern WRITE16_HANDLER( cps1_coinctrl_w );
 extern WRITE16_HANDLER( cps1_coinctrl2_w );
 extern gfx_decode cps1_gfxdecodeinfo[];
@@ -186,6 +188,28 @@ VIDEO_UPDATE( fcrash )
 	return 0;
 }
 
+
+static ADDRESS_MAP_START( fcrash_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x1fffff) AM_READ(MRA16_ROM)             /* 68000 ROM */
+	AM_RANGE(0x880000, 0x880001) AM_READ(cps1_in1_r)            /* Player input ports */
+	AM_RANGE(0x880008, 0x880009) AM_READ(cps1_in0_r)            /* System input ports */
+	AM_RANGE(0x88000a, 0x88000f) AM_READ(cps1_dsw_r)            /* Dip Switches */
+	AM_RANGE(0x800100, 0x8001ff) AM_READ(cps1_output_r)         /* Output ports */
+	AM_RANGE(0x900000, 0x92ffff) AM_READ(MRA16_RAM)	            /* SF2CE executes code from here */
+	AM_RANGE(0xf1c000, 0xf1c001) AM_READ(cps1_in2_r)
+	AM_RANGE(0xf1c002, 0xf1c003) AM_READ(cps1_in3_r)
+	AM_RANGE(0xff0000, 0xffffff) AM_READ(MRA16_RAM)             /* RAM */
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( fcrash_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x1fffff) AM_WRITE(MWA16_ROM)            /* ROM */
+	AM_RANGE(0x800030, 0x800031) AM_WRITE(cps1_coinctrl_w)
+	AM_RANGE(0x800100, 0x8001ff) AM_WRITE(cps1_output_w) AM_BASE(&cps1_output) AM_SIZE(&cps1_output_size)  /* Output ports */
+	AM_RANGE(0x900000, 0x92ffff) AM_WRITE(cps1_gfxram_w) AM_BASE(&cps1_gfxram) AM_SIZE(&cps1_gfxram_size)
+	AM_RANGE(0xff0000, 0xffffff) AM_WRITE(MWA16_RAM)            /* RAM */
+ADDRESS_MAP_END
+
+
 #define CPS1_COINAGE_1 \
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) ) \
 	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) ) \
@@ -230,16 +254,16 @@ INPUT_PORTS_START( fcrash )
 	PORT_DIPNAME( 0x07, 0x04, "Difficulty Level 1" )
 	PORT_DIPSETTING(    0x07, DEF_STR( Easiest ) )		// "01"
 	PORT_DIPSETTING(    0x06, DEF_STR( Easier ) )		// "02"
-	PORT_DIPSETTING(    0x05, DEF_STR( Easy ) )			// "03"
+	PORT_DIPSETTING(    0x05, DEF_STR( Easy ) )		// "03"
 	PORT_DIPSETTING(    0x04, DEF_STR( Normal ) )		// "04"
 	PORT_DIPSETTING(    0x03, DEF_STR( Medium ) )		// "05"
-	PORT_DIPSETTING(    0x02, DEF_STR( Hard ) )			// "06"
+	PORT_DIPSETTING(    0x02, DEF_STR( Hard ) )		// "06"
 	PORT_DIPSETTING(    0x01, DEF_STR( Harder ) )		// "07"
 	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )		// "08"
 	PORT_DIPNAME( 0x18, 0x10, "Difficulty Level 2" )
-	PORT_DIPSETTING(    0x18, DEF_STR( Easy ) )			// "01"
+	PORT_DIPSETTING(    0x18, DEF_STR( Easy ) )		// "01"
 	PORT_DIPSETTING(    0x10, DEF_STR( Normal ) )		// "02"
-	PORT_DIPSETTING(    0x08, DEF_STR( Hard ) )			// "03"
+	PORT_DIPSETTING(    0x08, DEF_STR( Hard ) )		// "03"
 	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )		// "04"
 	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x60, "100k" )
@@ -293,26 +317,6 @@ INPUT_PORTS_START( fcrash )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2) PORT_NAME ("P2 Button 3 (Cheat)")
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
-
-
-static ADDRESS_MAP_START( fcrash_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x1fffff) AM_READ(MRA16_ROM) /* 68000 ROM */
-	AM_RANGE(0x880000, 0x880001) AM_READ(input_port_4_word_r) /* Player input ports */
-	AM_RANGE(0x880008, 0x88000f) AM_READ(cps1_input_r) /* Input ports */
-	AM_RANGE(0x800100, 0x8001ff) AM_READ(cps1_output_r)   /* Output ports */
-	AM_RANGE(0x900000, 0x92ffff) AM_READ(MRA16_RAM)	/* SF2CE executes code from here */
-	AM_RANGE(0xf1c000, 0xf1c001) AM_READ(cps1_input2_r)   /* Player 3 controls (later games) */
-	AM_RANGE(0xf1c002, 0xf1c003) AM_READ(cps1_input3_r)   /* Player 4 controls (later games - muscle bombers) */
-	AM_RANGE(0xff0000, 0xffffff) AM_READ(MRA16_RAM)   /* RAM */
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( fcrash_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x1fffff) AM_WRITE(MWA16_ROM)      /* ROM */
-	AM_RANGE(0x800030, 0x800031) AM_WRITE(cps1_coinctrl_w)
-	AM_RANGE(0x800100, 0x8001ff) AM_WRITE(cps1_output_w) AM_BASE(&cps1_output) AM_SIZE(&cps1_output_size)  /* Output ports */
-	AM_RANGE(0x900000, 0x92ffff) AM_WRITE(cps1_gfxram_w) AM_BASE(&cps1_gfxram) AM_SIZE(&cps1_gfxram_size)
-	AM_RANGE(0xff0000, 0xffffff) AM_WRITE(MWA16_RAM)        /* RAM */
-ADDRESS_MAP_END
 
 
 static MACHINE_DRIVER_START( fcrash )

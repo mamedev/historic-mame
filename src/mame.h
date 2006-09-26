@@ -26,6 +26,13 @@
     CONSTANTS
 ***************************************************************************/
 
+/* return values from run_game */
+#define MAMERR_NONE				0		/* no error */
+#define MAMERR_FAILED_VALIDITY	1		/* failed validity checks */
+#define MAMERR_MISSING_FILES	2		/* missing files */
+#define MAMERR_FATALERROR		3		/* some other fatale error */
+
+
 /* program phases */
 #define MAME_PHASE_PREINIT		0
 #define MAME_PHASE_INIT			1
@@ -305,7 +312,7 @@ int mame_is_paused(running_machine *machine);
 /* ----- memory region management ----- */
 
 /* allocate a new memory region */
-int new_memory_region(running_machine *machine, int type, size_t length, UINT32 flags);
+UINT8 *new_memory_region(running_machine *machine, int type, size_t length, UINT32 flags);
 
 /* free an allocated memory region */
 void free_memory_region(running_machine *machine, int num);

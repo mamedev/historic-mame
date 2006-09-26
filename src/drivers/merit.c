@@ -143,9 +143,27 @@ static WRITE8_HANDLER( palette_w )
 	}
 }
 
-static WRITE8_HANDLER( unk_1_w )
+static WRITE8_HANDLER( led1_w )
 {
-	// every bit unknown
+	/* 5 button lamps player 1 */
+	set_led_status(0,~data & 0x01);
+	set_led_status(1,~data & 0x02);
+	set_led_status(2,~data & 0x04);
+	set_led_status(3,~data & 0x08);
+	set_led_status(4,~data & 0x10);
+}
+
+static WRITE8_HANDLER( led2_w )
+{
+	/* 5 button lamps player 2 */
+	set_led_status(5,~data & 0x01);
+	set_led_status(6,~data & 0x02);
+	set_led_status(7,~data & 0x04);
+	set_led_status(8,~data & 0x08);
+	set_led_status(9,~data & 0x10);
+
+	/* coin counter */
+	coin_counter_w(0,0x80-(data & 0x80));
 }
 
 static WRITE8_HANDLER( misc_w )
@@ -154,18 +172,6 @@ static WRITE8_HANDLER( misc_w )
 	extra_video_bank_bit = (data & 2) << 8;
 
 	// other bits unknown
-}
-
-static WRITE8_HANDLER( led_w )
-{
-	set_led_status(0,~data & 0x01);	// button 1
-	set_led_status(1,~data & 0x02);	// button 2
-	set_led_status(2,~data & 0x04);	// button 3
-	set_led_status(3,~data & 0x08);	// button 4
-	set_led_status(4,~data & 0x10);	// button 5
-	set_led_status(5,~data & 0x20);	// unknown/unused
-	set_led_status(6,~data & 0x40);	// unknown/unused
-	set_led_status(7,~data & 0x80);	// flashes on coin1 or coin2 insert
 }
 
 static ADDRESS_MAP_START( pitboss_map, ADDRESS_SPACE_PROGRAM, 8 )
@@ -657,19 +663,19 @@ gfx_decode merit_gfxdecodeinfo[] =
 
 static ppi8255_interface ppi8255_intf =
 {
-	2, 									/* 2 chips */
+	2, 						/* 2 chips */
 	{ input_port_0_r, input_port_3_r },	/* Port A read */
-	{ input_port_1_r, NULL },			/* Port B read */
-	{ input_port_2_r, NULL },			/* Port C read */
-	{ NULL,			  NULL },			/* Port A write */
-	{ NULL,			  unk_1_w },		/* Port B write */
-	{ NULL,			  misc_w },			/* Port C write */
+	{ input_port_1_r, NULL },		/* Port B read */
+	{ input_port_2_r, NULL },		/* Port C read */
+	{ NULL,		NULL },		/* Port A write */
+	{ NULL,		led1_w },		/* Port B write */
+	{ NULL,		misc_w },		/* Port C write */
 };
 
 struct AY8910interface merit_ay8912_interface =
 {
 	0,0,
-	led_w,0
+	led2_w,0
 };
 
 static MACHINE_RESET( merit )

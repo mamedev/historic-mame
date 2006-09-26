@@ -3763,6 +3763,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( abattle2 )	/* Sidam */
 	DRIVER( afire )		/* Rene Pierre */
 	DRIVER( acombat )	/* bootleg */
+	DRIVER( acombato )	/* bootleg */
 	DRIVER( sstarbtl )	/* bootleg */
 	DRIVER( tomahawk )	/* (c) [1980?] */
 	DRIVER( tomahaw5 )	/* (c) [1980?] */
@@ -6026,6 +6027,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( hopprobo )	/* (c) 1983 Sega */
 	DRIVER( wanted )	/* (c) 1984 Sigma Ent. Inc. */
 	DRIVER( funkybee )	/* (c) 1982 Orca */
+	DRIVER( funkbeeb )	/* (c) 1982 Orca */
 	DRIVER( skylancr )	/* (c) 1983 Orca */
 	DRIVER( skylance )	/* (c) 1983 Orca + Esco Trading Co license */
 	DRIVER( zodiack )	/* (c) 1983 Orca + Esco Trading Co license */

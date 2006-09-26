@@ -1,12 +1,15 @@
 /***************************************************************************
-MPU4 highly preliminary driver
+MPU4 highly preliminary driver by ElCondor, and Anonymous.
 
+  23-09-2006: Converted 7Segment code to cleaner version, but have yet to add new 16k EPROM, as
+              the original image was purported to come from a Barcrest BBS service, and is probably
+              more 'official'.
   07-09-2006: It appears that the video firmware is intended to be a 16k EPROM, not 64k as dumped.
               In fact, the current dump is just the code repeated 4 times, when nothing earlier than
               0xC000 is ever called. Presumably, the ROM is loaded into C000, and the remainder of the
               'ROM' space is in fact the extra 32k of RAM apparently needed to hold the video board data.
               For now, we'll continue to use the old dump, as I am unsure as to how to map this in MAME.
-              Changed Turn Over's name, it's either 12 Pound or 20 Pound Turn Over, depending on settings.
+              Changed Turn Over's name in AGEMAME, it's either 12 Pound or 20 Pound Turn Over, depending on settings.
 
               Not that I know how to hook this up, but the O3 pin from IC2 seems to be able to influence
               the audio filter in some way - see the circuit diagram on my site for the layout.
@@ -298,10 +301,7 @@ IRQ line connected to CPU
 
 void draw_MPU4_led(UINT8 id, UINT8 value)
 {
-	char buf[8];
-
-	sprintf(buf, "led%d",id);
-	output_set_value(buf,value);
+	output_set_digit_value(id,value);
 }
 
 // local vars /////////////////////////////////////////////////////////////

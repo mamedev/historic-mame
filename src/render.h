@@ -292,6 +292,7 @@ struct _render_primitive_list
 ***************************************************************************/
 
 void render_init(running_machine *machine);
+void render_set_rescale_notify(running_machine *machine, int (*notifier)(running_machine *, int, int));
 UINT32 render_get_live_screens_mask(void);
 float render_get_ui_aspect(void);
 void render_set_ui_target(render_target *target);

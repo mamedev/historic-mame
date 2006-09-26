@@ -124,6 +124,9 @@ struct _element_component
 	render_color		color;				/* color of the element */
 	const char *		string;				/* string for text components */
 	mame_bitmap *		bitmap;				/* source bitmap for images */
+	const char *		dirname;			/* directory name of image file (for lazy loading) */
+	const char *		imagefile;			/* name of the image file (for lazy loading) */
+	const char *		alphafile;			/* name of the alpha file (for lazy loading) */
 	int					hasalpha;			/* is there any alpha component present? */
 };
 
@@ -350,6 +353,8 @@ static void layout_element_scale(mame_bitmap *dest, const mame_bitmap *source, c
 			switch (component->type)
 			{
 				case COMPONENT_TYPE_IMAGE:
+					if (component->bitmap == NULL)
+						component->bitmap = load_component_bitmap(component->dirname, component->imagefile, component->alphafile, &component->hasalpha);
 					render_resample_argb_bitmap_hq(
 							(UINT32 *)dest->base + bounds.min_y * dest->rowpixels + bounds.min_x,
 							dest->rowpixels,
@@ -1049,14 +1054,9 @@ static element_component *load_element_component(xml_data_node *compnode, const 
 
 		/* load and allocate the bitmap */
 		component->type = COMPONENT_TYPE_IMAGE;
-		component->bitmap = load_component_bitmap(dirname, file, afile, &component->hasalpha);
-		if (component->bitmap == NULL)
-		{
-			if (afile == NULL)
-				fatalerror("Unable to load component bitmap '%s'", file);
-			else
-				fatalerror("Unable to load component bitmap '%s'/'%s'", file, afile);
-		}
+		component->dirname = (dirname == NULL) ? NULL : copy_string(dirname);
+		component->imagefile = (file == NULL) ? NULL : copy_string(file);
+		component->alphafile = (afile == NULL) ? NULL : copy_string(afile);
 	}
 
 	/* text nodes */
@@ -1237,6 +1237,25 @@ static mame_bitmap *load_component_bitmap(const char *dirname, const char *file,
 			bitmap_free(bitmap);
 			bitmap = NULL;
 		}
+
+	/* if we can't load the bitmap, allocate a dummy one and report an error */
+	if (bitmap == NULL)
+	{
+		int step, line;
+
+		/* draw some stripes in the bitmap */
+		bitmap = bitmap_alloc_depth(100, 100, 32);
+		fillbitmap(bitmap, 0, NULL);
+		for (step = 0; step < 100; step += 25)
+			for (line = 0; line < 100; line++)
+				*((UINT32 *)bitmap->base + ((step + line) % 100) * bitmap->rowbytes + line % 100) = MAKE_ARGB(0xff,0xff,0xff,0xff);
+
+		/* log an error */
+		if (alphafile == NULL)
+			logerror("Unable to load component bitmap '%s'", file);
+		else
+			logerror("Unable to load component bitmap '%s'/'%s'", file, alphafile);
+	}
 
 	return bitmap;
 }
@@ -1426,6 +1445,12 @@ static void layout_element_free(layout_element *element)
 		element->complist = temp->next;
 		if (temp->string != NULL)
 			free((void *)temp->string);
+		if (temp->dirname != NULL)
+			free((void *)temp->dirname);
+		if (temp->imagefile != NULL)
+			free((void *)temp->imagefile);
+		if (temp->alphafile != NULL)
+			free((void *)temp->alphafile);
 		if (temp->bitmap != NULL)
 			bitmap_free(temp->bitmap);
 		free(temp);

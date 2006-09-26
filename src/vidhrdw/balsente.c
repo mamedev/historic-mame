@@ -303,9 +303,6 @@ VIDEO_UPDATE( balsente )
 	screen_refresh_counter++;
 	update_palette();
 
-	/* make sure color 1024 is white for our crosshair */
-	palette_set_color(machine, 1024, 0xff, 0xff, 0xff);
-
 	/* draw any dirty scanlines from the VRAM directly */
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 		if (scanline_dirty[y] || update_all)

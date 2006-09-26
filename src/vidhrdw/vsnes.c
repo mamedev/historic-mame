@@ -13,7 +13,7 @@ PALETTE_INIT( vsnes )
 PALETTE_INIT( vsdual )
 {
 	ppu2c0x_init_palette( 0 );
-	ppu2c0x_init_palette( 64 );
+	ppu2c0x_init_palette( 8*4*16 );
 }
 
 static void ppu_irq( int num, int *ppu_regs )

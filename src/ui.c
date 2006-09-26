@@ -113,6 +113,9 @@ static slider_state slider_list[100];
 static int slider_count;
 static int slider_current;
 
+static int display_rescale_message;
+static int allow_rescale;
+
 
 
 /***************************************************************************
@@ -120,6 +123,7 @@ static int slider_current;
 ***************************************************************************/
 
 static void ui_exit(running_machine *machine);
+static int rescale_notifier(running_machine *machine, int width, int height);
 
 /* text generators */
 static int sprintf_disclaimer(char *buffer);
@@ -214,6 +218,11 @@ int ui_init(running_machine *machine)
 	/* reset globals */
 	single_step = FALSE;
 	ui_set_handler(handler_messagebox, 0);
+
+	/* request callbacks when the renderer does resizing */
+	render_set_rescale_notify(machine, rescale_notifier);
+	allow_rescale = 0;
+	display_rescale_message = FALSE;
 	return 0;
 }
 
@@ -228,6 +237,26 @@ static void ui_exit(running_machine *machine)
 	if (ui_font != NULL)
 		render_font_free(ui_font);
 	ui_font = NULL;
+}
+
+
+/*-------------------------------------------------
+    rescale_notifier - notifier to trigger a
+    rescale message during long operations
+-------------------------------------------------*/
+
+static int rescale_notifier(running_machine *machine, int width, int height)
+{
+	/* always allow "small" rescaling */
+	if (width < 500 || height < 500)
+		return TRUE;
+
+	/* if we've currently disallowed rescaling, turn on a message next frame */
+	if (allow_rescale == 0)
+		display_rescale_message = TRUE;
+
+	/* only allow rescaling once we're sure the message is visible */
+	return (allow_rescale == 1);
 }
 
 
@@ -368,6 +397,19 @@ void ui_update_and_render(void)
 		ui_draw_text_box(messagebox_text, JUSTIFY_CENTER, 0.5f, 0.9f, messagebox_backcolor);
 	else
 		popup_text_end = 0;
+
+	/* add a message if we are rescaling */
+	if (display_rescale_message)
+	{
+		display_rescale_message = FALSE;
+		if (allow_rescale == 0)
+			allow_rescale = 2;
+		ui_draw_text_box("Updating Artwork...", JUSTIFY_CENTER, 0.5f, 0.5f, messagebox_backcolor);
+	}
+
+	/* decrement the frame counter if it is non-zero */
+	else if (allow_rescale != 0)
+		allow_rescale--;
 
 #ifdef MESS
 	/* let MESS display its stuff */

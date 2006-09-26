@@ -613,6 +613,7 @@ INLINE int gregorian_days_in_month(int month, int year)
 
 /* Used by assert(), so definition here instead of mame.h */
 DECL_NORETURN void CLIB_DECL fatalerror(const char *text,...) ATTR_PRINTF(1,2) ATTR_NORETURN;
+DECL_NORETURN void CLIB_DECL fatalerror_exitcode(int exitcode, const char *text,...) ATTR_PRINTF(2,3) ATTR_NORETURN;
 
 
 #endif	/* __MAMECORE_H__ */

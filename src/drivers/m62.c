@@ -84,6 +84,8 @@ WRITE8_HANDLER( kungfum_tileram_w );
 VIDEO_START( ldrun );
 VIDEO_UPDATE( ldrun );
 
+VIDEO_START( ldrun2 );
+
 VIDEO_START( battroad );
 VIDEO_UPDATE( battroad );
 
@@ -1440,6 +1442,9 @@ static MACHINE_DRIVER_START( ldrun2 )
 	MDRV_CPU_PROGRAM_MAP(ldrun2_readmem,ldrun2_writemem)
 	MDRV_CPU_IO_MAP(ldrun2_readport,ldrun2_writeport)
 
+	MDRV_VIDEO_START(ldrun2)
+	MDRV_VIDEO_UPDATE(ldrun)
+
 	MDRV_VISIBLE_AREA((64*8-384)/2, 64*8-(64*8-384)/2-1, 0*8, 31*8-1)
 MACHINE_DRIVER_END
 
@@ -1455,7 +1460,7 @@ static MACHINE_DRIVER_START( ldrun3 )
 	/* video hardware */
 	MDRV_GFXDECODE(ldrun3_gfxdecodeinfo)
 
-	MDRV_VISIBLE_AREA((64*8-384)/2, 64*8-(64*8-384)/2-1-8, 0*8, 31*8-1)
+	MDRV_VISIBLE_AREA((64*8-384)/2, 64*8-(64*8-384)/2-1, 0*8, 31*8-1)
 MACHINE_DRIVER_END
 
 

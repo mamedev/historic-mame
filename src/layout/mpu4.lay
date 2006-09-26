@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <mamelayout version="2">
-	<element name="led">
+	<element name="digit">
 	<led7seg>
 			<color red="1.0" green="0.0" blue="0.0" />
 	</led7seg>
@@ -124,7 +124,6 @@
 			<color red="1.0" green="1.0" blue="1.0" />
 			<bounds x="0" y="0.1" width="1" height="1" />
 		</text>
-
 		<text string="26" state="26">
 			<color red="1.0" green="1.0" blue="1.0" />
 			<bounds x="0" y="0.1" width="1" height="1" />
@@ -813,28 +812,28 @@
 		<backdrop name="lamp127" element="matrixlamp" state="0">
 			<bounds x="120" y="56" width="7" height="7"/>
 		</backdrop>
-		<backdrop name="led0" element="led" state="0">
+		<backdrop name="digit0" element="digit" state="0">
 			<bounds x="300" y="200" width="8" height="10"/>
 		</backdrop>
-		<backdrop name="led1" element="led" state="0">
+		<backdrop name="digit1" element="digit" state="0">
 			<bounds x="308" y="200" width="8" height="10"/>
 		</backdrop>
-		<backdrop name="led2" element="led" state="0">
+		<backdrop name="digit2" element="digit" state="0">
 			<bounds x="316" y="200" width="8" height="10"/>
 		</backdrop>
-		<backdrop name="led3" element="led" state="0">
+		<backdrop name="digit3" element="digit" state="0">
 			<bounds x="324" y="200" width="8" height="10"/>
 		</backdrop>
-		<backdrop name="led4" element="led" state="0">
+		<backdrop name="digit4" element="digit" state="0">
 			<bounds x="332" y="200" width="8" height="10"/>
 		</backdrop>
-		<backdrop name="led5" element="led" state="0">
+		<backdrop name="digit5" element="digit" state="0">
 			<bounds x="340" y="200" width="8" height="10"/>
 		</backdrop>
-		<backdrop name="led6" element="led" state="0">
+		<backdrop name="digit6" element="digit" state="0">
 			<bounds x="348" y="200" width="8" height="10"/>
 		</backdrop>
-		<backdrop name="led7" element="led" state="0">
+		<backdrop name="digit7" element="digit" state="0">
 			<bounds x="356" y="200" width="8" height="10"/>
 		</backdrop>
 	</view>
@@ -844,7 +843,3 @@
 		</screen>
 	</view>
 </mamelayout>
-
-
-
-

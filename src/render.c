@@ -44,7 +44,6 @@
 #include "config.h"
 #include "output.h"
 #include "xmlfile.h"
-#include "png.h"
 #include <math.h>
 
 
@@ -206,6 +205,9 @@ struct _render_container
 static render_target *targetlist;
 static render_target *ui_target;
 
+/* notifier callbacks */
+static int (*rescale_notify)(running_machine *, int, int);
+
 /* free lists */
 static render_primitive *render_primitive_free_list;
 static container_item *container_item_free_list;
@@ -255,7 +257,7 @@ static void add_clear_and_optimize_primitive_list(render_target *target, render_
 static void invalidate_all_render_ref(void *refptr);
 
 /* render textures */
-static void render_texture_get_scaled(render_texture *texture, UINT32 dwidth, UINT32 dheight, render_texinfo *texinfo, render_ref **reflist);
+static int render_texture_get_scaled(render_texture *texture, UINT32 dwidth, UINT32 dheight, render_texinfo *texinfo, render_ref **reflist);
 
 /* render containers */
 static render_container *render_container_alloc(void);
@@ -820,6 +822,18 @@ static void render_save(int config_type, xml_data_node *parentnode)
 			}
 		}
 	}
+}
+
+
+/*-------------------------------------------------
+    render_set_rescale_notify - set a notifier
+    that we call before doing long scaling
+    operations
+-------------------------------------------------*/
+
+void render_set_rescale_notify(running_machine *machine, int (*notifier)(running_machine *, int, int))
+{
+	rescale_notify = notifier;
 }
 
 
@@ -1437,7 +1451,6 @@ const render_primitive_list *render_target_get_primitives(render_target *target)
 		append_render_primitive(&target->primlist[listnum], prim);
 	}
 
-
 	/* process the UI if we are the UI target */
 	if (target == render_get_ui_target())
 	{
@@ -1662,27 +1675,28 @@ static void add_container_primitives(render_target *target, render_primitive_lis
 					height = (finalorient & ORIENTATION_SWAP_XY) ? (prim->bounds.x1 - prim->bounds.x0) : (prim->bounds.y1 - prim->bounds.y0);
 					width = MIN(width, target->maxtexwidth);
 					height = MIN(height, target->maxtexheight);
-					render_texture_get_scaled(item->texture, width, height, &prim->texture, &list->reflist);
-
-					/* override the palette with our adjusted palette */
-					switch (item->texture->format)
+					if (render_texture_get_scaled(item->texture, width, height, &prim->texture, &list->reflist))
 					{
-						case TEXFORMAT_PALETTE16:	prim->texture.palette = &container->bcglookup[0];		break;
-						case TEXFORMAT_RGB15:		prim->texture.palette = &container->bcglookup32[0];		break;
-						case TEXFORMAT_RGB32:		prim->texture.palette = &container->bcglookup256[0];	break;
-						case TEXFORMAT_ARGB32:		prim->texture.palette = &container->bcglookup256[0];	break;
-						default:					assert(FALSE);
+						/* override the palette with our adjusted palette */
+						switch (item->texture->format)
+						{
+							case TEXFORMAT_PALETTE16:	prim->texture.palette = &container->bcglookup[0];		break;
+							case TEXFORMAT_RGB15:		prim->texture.palette = &container->bcglookup32[0];		break;
+							case TEXFORMAT_RGB32:		prim->texture.palette = &container->bcglookup256[0];	break;
+							case TEXFORMAT_ARGB32:		prim->texture.palette = &container->bcglookup256[0];	break;
+							default:					assert(FALSE);
+						}
+
+						/* determine UV coordinates and apply clipping */
+						prim->texcoords = oriented_texcoords[finalorient];
+						clipped = render_clip_quad(&prim->bounds, &cliprect, &prim->texcoords);
+
+						/* apply the final orientation from the quad flags and then build up the final flags */
+						prim->flags = (item->flags & ~(PRIMFLAG_TEXORIENT_MASK | PRIMFLAG_BLENDMODE_MASK | PRIMFLAG_TEXFORMAT_MASK)) |
+										PRIMFLAG_TEXORIENT(finalorient) |
+										PRIMFLAG_BLENDMODE(blendmode) |
+										PRIMFLAG_TEXFORMAT(item->texture->format);
 					}
-
-					/* determine UV coordinates and apply clipping */
-					prim->texcoords = oriented_texcoords[finalorient];
-					clipped = render_clip_quad(&prim->bounds, &cliprect, &prim->texcoords);
-
-					/* apply the final orientation from the quad flags and then build up the final flags */
-					prim->flags = (item->flags & ~(PRIMFLAG_TEXORIENT_MASK | PRIMFLAG_BLENDMODE_MASK | PRIMFLAG_TEXFORMAT_MASK)) |
-									PRIMFLAG_TEXORIENT(finalorient) |
-									PRIMFLAG_BLENDMODE(blendmode) |
-									PRIMFLAG_TEXFORMAT(item->texture->format);
 				}
 				else
 				{
@@ -1719,18 +1733,21 @@ static void add_container_primitives(render_target *target, render_primitive_lis
 		prim->color = container_xform.color;
 		width = render_round_nearest(prim->bounds.x1) - render_round_nearest(prim->bounds.x0);
 		height = render_round_nearest(prim->bounds.y1) - render_round_nearest(prim->bounds.y0);
-		render_texture_get_scaled(container->overlaytexture,
+		if (render_texture_get_scaled(container->overlaytexture,
 				(container_xform.orientation & ORIENTATION_SWAP_XY) ? height : width,
-				(container_xform.orientation & ORIENTATION_SWAP_XY) ? width : height, &prim->texture, &list->reflist);
+				(container_xform.orientation & ORIENTATION_SWAP_XY) ? width : height, &prim->texture, &list->reflist))
+		{
+			/* determine UV coordinates */
+			prim->texcoords = oriented_texcoords[container_xform.orientation];
 
-		/* determine UV coordinates */
-		prim->texcoords = oriented_texcoords[container_xform.orientation];
-
-		/* set the flags and add it to the list */
-		prim->flags = PRIMFLAG_TEXORIENT(container_xform.orientation) |
-						PRIMFLAG_BLENDMODE(BLENDMODE_RGB_MULTIPLY) |
-						PRIMFLAG_TEXFORMAT(container->overlaytexture->format);
-		append_render_primitive(list, prim);
+			/* set the flags and add it to the list */
+			prim->flags = PRIMFLAG_TEXORIENT(container_xform.orientation) |
+							PRIMFLAG_BLENDMODE(BLENDMODE_RGB_MULTIPLY) |
+							PRIMFLAG_TEXFORMAT(container->overlaytexture->format);
+			append_render_primitive(list, prim);
+		}
+		else
+			free_render_primitive(prim);
 	}
 }
 
@@ -1746,7 +1763,7 @@ static void add_element_primitives(render_target *target, render_primitive_list 
 	INT32 height = render_round_nearest(xform->yscale);
 	render_texture *texture;
 	render_bounds cliprect;
-	int clipped;
+	int clipped = TRUE;
 
 	/* if we're out of range, bail */
 	if (state > element->maxstate)
@@ -1772,18 +1789,19 @@ static void add_element_primitives(render_target *target, render_primitive_list 
 		height = MIN(height, target->maxtexheight);
 
 		/* get the scaled texture and append it */
-		render_texture_get_scaled(texture, width, height, &prim->texture, &list->reflist);
+		if (render_texture_get_scaled(texture, width, height, &prim->texture, &list->reflist))
+		{
+			/* compute the clip rect */
+			cliprect.x0 = render_round_nearest(xform->xoffs);
+			cliprect.y0 = render_round_nearest(xform->yoffs);
+			cliprect.x1 = render_round_nearest(xform->xoffs + xform->xscale);
+			cliprect.y1 = render_round_nearest(xform->yoffs + xform->yscale);
+			sect_render_bounds(&cliprect, &target->bounds);
 
-		/* compute the clip rect */
-		cliprect.x0 = render_round_nearest(xform->xoffs);
-		cliprect.y0 = render_round_nearest(xform->yoffs);
-		cliprect.x1 = render_round_nearest(xform->xoffs + xform->xscale);
-		cliprect.y1 = render_round_nearest(xform->yoffs + xform->yscale);
-		sect_render_bounds(&cliprect, &target->bounds);
-
-		/* determine UV coordinates and apply clipping */
-		prim->texcoords = oriented_texcoords[xform->orientation];
-		clipped = render_clip_quad(&prim->bounds, &cliprect, &prim->texcoords);
+			/* determine UV coordinates and apply clipping */
+			prim->texcoords = oriented_texcoords[xform->orientation];
+			clipped = render_clip_quad(&prim->bounds, &cliprect, &prim->texcoords);
+		}
 
 		/* add to the list or free if we're clipped out */
 		if (!clipped)
@@ -2187,7 +2205,7 @@ void render_texture_set_bitmap(render_texture *texture, mame_bitmap *bitmap, con
     bitmap (if we can)
 -------------------------------------------------*/
 
-static void render_texture_get_scaled(render_texture *texture, UINT32 dwidth, UINT32 dheight, render_texinfo *texinfo, render_ref **reflist)
+static int render_texture_get_scaled(render_texture *texture, UINT32 dwidth, UINT32 dheight, render_texinfo *texinfo, render_ref **reflist)
 {
 	UINT8 bpp = (texture->format == TEXFORMAT_PALETTE16 || texture->format == TEXFORMAT_RGB15) ? 16 : 32;
 	scaled_texture *scaled = NULL;
@@ -2212,7 +2230,7 @@ static void render_texture_get_scaled(render_texture *texture, UINT32 dwidth, UI
 		texinfo->height = sheight;
 		texinfo->palette = texture->palette;
 		texinfo->seqid = ++texture->curseq;
-		return;
+		return TRUE;
 	}
 
 	/* is it a size we already have? */
@@ -2228,8 +2246,13 @@ static void render_texture_get_scaled(render_texture *texture, UINT32 dwidth, UI
 	/* did we get one? */
 	if (scalenum == ARRAY_LENGTH(texture->scaled))
 	{
-		/* didn't find one -- take the entry with the lowest seqnum */
 		int lowest = -1;
+
+		/* ask our notifier if we can scale now */
+		if (rescale_notify != NULL && !(*rescale_notify)(Machine, dwidth, dheight))
+			return FALSE;
+
+		/* didn't find one -- take the entry with the lowest seqnum */
 		for (scalenum = 0; scalenum < ARRAY_LENGTH(texture->scaled); scalenum++)
 			if ((lowest == -1 || texture->scaled[scalenum].seqid < texture->scaled[lowest].seqid) && !has_render_ref(*reflist, texture->scaled[scalenum].bitmap))
 				lowest = scalenum;
@@ -2259,6 +2282,7 @@ static void render_texture_get_scaled(render_texture *texture, UINT32 dwidth, UI
 	texinfo->height = dheight;
 	texinfo->palette = texture->palette;
 	texinfo->seqid = scaled->seqid;
+	return TRUE;
 }
 
 

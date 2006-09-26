@@ -1331,7 +1331,7 @@ static MACHINE_DRIVER_START( moonwar )
 	MDRV_IMPORT_FROM(type1)
 
 	/* video hardware */
-	MDRV_PALETTE_LENGTH(32+64+2)	/* 32 for characters, 64 for stars, 2 for bullets */
+	MDRV_PALETTE_LENGTH(32+64+2+1)	/* 32 for characters, 64 for stars, 2 for bullets, 1 for bg */
 
 	MDRV_PALETTE_INIT(moonwar)
 MACHINE_DRIVER_END
@@ -1419,7 +1419,7 @@ static MACHINE_DRIVER_START( darkplnt )
 	MDRV_IMPORT_FROM(type2)
 
 	/* video hardware */
-	MDRV_PALETTE_LENGTH(32+2) /* 32 for characters, 2 for bullets */
+	MDRV_PALETTE_LENGTH(32+64+2) /* 32 for characters, 64 (buffer) for stars, 2 for bullets */
 
 	MDRV_PALETTE_INIT(darkplnt)
 	MDRV_VIDEO_START(darkplnt)

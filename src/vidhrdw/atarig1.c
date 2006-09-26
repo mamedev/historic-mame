@@ -159,7 +159,7 @@ void atarig1_scanline_update(int scanline)
 	UINT16 *base = &atarigen_alpha[(scanline / 8) * 64 + 48];
 	int i;
 
-	if (scanline == 0) logerror("-------\n");
+	//if (scanline == 0) logerror("-------\n");
 
 	/* keep in range */
 	if (base >= &atarigen_alpha[0x800])

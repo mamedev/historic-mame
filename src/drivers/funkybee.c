@@ -41,6 +41,39 @@ Known issues:
 
 * skylancr fires in the same spot regardless of player position when in cocktail mode.
 
+
+Stephh's notes (based on the games Z80 code and some tests) :
+
+1) 'funkybee' and clones
+
+1a) 'funkybee'
+
+  - Possible "Lives" settings : 3, 4, 5 or 6 (code at 0x0501)
+  - Bonus life routine at 0x2d03 (test on DSW bit 6)
+
+1b) 'funkbeeb'
+
+  - Removal of ORCA copyright on title screen (text at 0x0e9a).
+    However, high scores table remains unchanged.
+  - Bypass ROM check (code at 0x3ee3)
+  - Possible "Lives" settings : 1, 2, 3 or 4 (code at 0x0501)
+  - Bonus life routine at 0x2d03 (test on DSW bit 6)
+
+2) 'skylancr' and clones
+
+2a) 'skylancr'
+
+  - Possible "Lives" settings : 1, 2, 3 or 4 (code at 0x0601)
+  - Bonus life routine at 0x1ef6 (test on DSW bit 5 !)
+    I can't tell if it's an ingame bug or if this was done on purpose,
+    but "Bonus Life" settings depend on the starting number of lives.
+    DSW bit 6 has no effect because of this.
+
+2a) 'skylance'
+
+  - Possible "Lives" settings : 3, 4, 5 or 6 (code at 0x0601)
+  - Bonus life routine at 0x1f28 (test on DSW bit 6)
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -105,7 +138,7 @@ ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( funkybee )
-	PORT_START		/* IN0 */
+	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START1 )
@@ -114,7 +147,7 @@ INPUT_PORTS_START( funkybee )
 	PORT_DIPSETTING(	0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 
-	PORT_START		/* IN1 */
+	PORT_START_TAG("IN1")
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY
@@ -122,7 +155,7 @@ INPUT_PORTS_START( funkybee )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0xe0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START		/* IN2 */
+	PORT_START_TAG("IN2")
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_COCKTAIL
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_COCKTAIL
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY PORT_COCKTAIL
@@ -130,7 +163,7 @@ INPUT_PORTS_START( funkybee )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_COCKTAIL
 	PORT_BIT( 0xe0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START		/* DSW */
+	PORT_START_TAG("DSW")
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(	0x03, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(	0x02, DEF_STR( 1C_2C ) )
@@ -146,66 +179,27 @@ INPUT_PORTS_START( funkybee )
 	PORT_DIPSETTING(	0x20, "4" )
 	PORT_DIPSETTING(	0x10, "5" )
 	PORT_DIPSETTING(	0x00, "6" )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(	0x40, "20000" )
+	PORT_DIPSETTING(	0x00, DEF_STR( None ) )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(	0x80, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( skylancr )
-	PORT_START		/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_DIPNAME( 0x20, 0x20, "Freeze" )
-	PORT_DIPSETTING(	0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
+INPUT_PORTS_START( funkbeeb )
+	PORT_INCLUDE(funkybee)
 
-	PORT_START		/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0xe0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START		/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_COCKTAIL
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_COCKTAIL
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY PORT_COCKTAIL
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_COCKTAIL
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_COCKTAIL
-	PORT_BIT( 0xe0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START		/* DSW */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(	0x03, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(	0x02, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(	0x01, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( 1C_6C ) )
-	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(	0x08, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(	0x0c, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(	0x04, "1st 1C/1C - 2nd 1C/2C" )
-	PORT_DIPSETTING(	0x00, DEF_STR( 1C_6C ) )
-	PORT_DIPNAME( 0x30, 0x10, DEF_STR( Lives ) )
+	PORT_MODIFY("DSW")
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
 	PORT_DIPSETTING(	0x30, "1" )
 	PORT_DIPSETTING(	0x20, "2" )
 	PORT_DIPSETTING(	0x10, "3" )
 	PORT_DIPSETTING(	0x00, "4" )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(	0x40, "20000 50000" )
-	PORT_DIPSETTING(	0x00, "40000 70000" )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( skylance )
-	PORT_START		/* IN0 */
+INPUT_PORTS_START( skylancr )
+	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START1 )
@@ -214,7 +208,7 @@ INPUT_PORTS_START( skylance )
 	PORT_DIPSETTING(	0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 
-	PORT_START		/* IN1 */
+	PORT_START_TAG("IN1")
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY
@@ -222,7 +216,7 @@ INPUT_PORTS_START( skylance )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0xe0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START		/* IN2 */
+	PORT_START_TAG("IN2")
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_COCKTAIL
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_COCKTAIL
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY PORT_COCKTAIL
@@ -230,7 +224,7 @@ INPUT_PORTS_START( skylance )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_COCKTAIL
 	PORT_BIT( 0xe0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START		/* DSW */
+	PORT_START_TAG("DSW")
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(	0x03, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(	0x02, DEF_STR( 1C_2C ) )
@@ -241,6 +235,23 @@ INPUT_PORTS_START( skylance )
 	PORT_DIPSETTING(	0x0c, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(	0x04, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(	0x00, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )        /* Also affects bonus life */
+	PORT_DIPSETTING(	0x30, "1" )                     /* Bonus life at 20000 and 50000 */
+	PORT_DIPSETTING(	0x20, "2" )                     /* Bonus life at 20000 and 50000 */
+	PORT_DIPSETTING(	0x10, "3" )                     /* Bonus life at 40000 and 70000 */
+	PORT_DIPSETTING(	0x00, "4" )                     /* Bonus life at 40000 and 70000 */
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(	0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(	0x80, DEF_STR( Cocktail ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( skylance )
+	PORT_INCLUDE(skylancr)
+
+	PORT_MODIFY("DSW")
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
 	PORT_DIPSETTING(	0x30, "3" )
 	PORT_DIPSETTING(	0x20, "4" )
@@ -249,9 +260,6 @@ INPUT_PORTS_START( skylance )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(	0x40, "20000 50000" )
 	PORT_DIPSETTING(	0x00, "40000 70000" )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(	0x80, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
 
@@ -351,6 +359,26 @@ ROM_START( funkybee )
 	ROM_LOAD( "funkybee.clr",  0x0000, 0x0020, CRC(e2cf5fe2) SHA1(50b293f48f078cbcebccb045aa779ced2fb298c8) )
 ROM_END
 
+/* This is a bootleg of "Funky Bee", where ORCA copyright has been removed and difficulty is harder,
+   there are 2 lives less then in the original game
+   TODO: insert correct DIPSWITCH, where lives is "1,2,3,4" instead of "3,4,5,6" */
+ROM_START( funkbeeb )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "senza_orca.fb1", 0x0000, 0x1000, CRC(7f2e7f85) SHA1(d4b63add3a97fc80aeafcd72a261302ab52d60a7) )
+	ROM_LOAD( "funkybee.3",     0x1000, 0x1000, CRC(7bf7c62f) SHA1(f8e5514c17fddb8ed95e5e18aab81ad0ebcc41af) )
+	ROM_LOAD( "funkybee.2",     0x2000, 0x1000, CRC(8cc0fe8e) SHA1(416d97db0a2219ea46f2caa55787253e16a5ef32) )
+	ROM_LOAD( "senza_orca.fb4", 0x3000, 0x1000, CRC(53c2db3b) SHA1(0bda1eb87d7c41b67a5ff00b6675defdc8fe9274) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "funkybee.5",     0x0000, 0x2000, CRC(86126655) SHA1(d91682121d7f6a70f10a946ab81b248cc29bdf8c) )
+
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "funkybee.6",     0x0000, 0x2000, CRC(5fffd323) SHA1(9de9c869bd1e2daab3b94275444ecbe904bcd6aa) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "funkybee.clr",   0x0000, 0x0020, CRC(e2cf5fe2) SHA1(50b293f48f078cbcebccb045aa779ced2fb298c8) )
+ROM_END
+
 ROM_START( skylancr )
   	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
 	ROM_LOAD( "1sl.5a",        0x0000, 0x2000, CRC(e80b315e) SHA1(0c02aa9f0d4bdfc3482c400d0e4e38fd3912a512) )
@@ -383,8 +411,7 @@ ROM_START( skylance )
 	ROM_LOAD( "18s030.1a",     0x0000, 0x0020, CRC(e645bacb) SHA1(5f4c299c4cf165fd229731c0e5799a34892bf28e) )
 ROM_END
 
-
-
-GAME( 1982, funkybee, 0,        funkybee, funkybee, 0, ROT90, "Orca",                           "Funky Bee", 0 )
-GAME( 1983, skylancr, 0,        funkybee, skylancr, 0, ROT90, "Orca",                           "Sky Lancer", 0 )
+GAME( 1982, funkybee, 0,        funkybee, funkybee, 0, ROT90, "Orca",                           "Funky Bee",                            0 )
+GAME( 1982, funkbeeb, funkybee, funkybee, funkybee, 0, ROT90, "bootleg",                        "Funky Bee (bootleg, harder)",          0 )
+GAME( 1983, skylancr, 0,        funkybee, skylancr, 0, ROT90, "Orca",                           "Sky Lancer",                           0 )
 GAME( 1983, skylance, skylancr, funkybee, skylance, 0, ROT90, "Orca (Esco Trading Co license)", "Sky Lancer (Esco Trading Co license)", 0 )

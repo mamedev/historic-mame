@@ -386,7 +386,7 @@ static int display_loading_rom_message(const char *name, rom_load_data *romdata)
     results of ROM loading
 -------------------------------------------------*/
 
-static int display_rom_load_results(rom_load_data *romdata)
+static void display_rom_load_results(rom_load_data *romdata)
 {
 	int region;
 
@@ -394,10 +394,15 @@ static int display_rom_load_results(rom_load_data *romdata)
 	display_loading_rom_message(NULL, romdata);
 
 	/* if we had errors, they are fatal */
-	if (romdata->errors)
+	if (romdata->errors != 0)
 	{
+		/* clean up any regions */
+		for (region = 0; region < MAX_MEMORY_REGIONS; region++)
+			free_memory_region(Machine, region);
+
+		/* create the error message and exit fatally */
 		strcat(romdata->errorbuf, "ERROR: required files are missing, the game cannot be run.");
-		fatalerror("%s", romdata->errorbuf);
+		fatalerror_exitcode(MAMERR_MISSING_FILES, "%s", romdata->errorbuf);
 	}
 
 	/* if we had warnings, output them, but continue */
@@ -406,14 +411,6 @@ static int display_rom_load_results(rom_load_data *romdata)
 		strcat(romdata->errorbuf, "WARNING: the game might not run correctly.");
 		printf("%s\n", romdata->errorbuf);
 	}
-
-	/* clean up any regions */
-	if (romdata->errors)
-		for (region = 0; region < MAX_MEMORY_REGIONS; region++)
-			free_memory_region(Machine, region);
-
-	/* return true if we had any errors */
-	return (romdata->errors != 0);
 }
 
 
@@ -538,24 +535,15 @@ static int read_rom_data(rom_load_data *romdata, const rom_entry *romp)
 
 	/* make sure the length was an even multiple of the group size */
 	if (numbytes % groupsize != 0)
-	{
-		printf("Error in RomModule definition: %s length not an even multiple of group size\n", ROM_GETNAME(romp));
-		return -1;
-	}
+		fatalerror("Error in RomModule definition: %s length not an even multiple of group size\n", ROM_GETNAME(romp));
 
 	/* make sure we only fill within the region space */
 	if (ROM_GETOFFSET(romp) + numgroups * groupsize + (numgroups - 1) * skip > romdata->regionlength)
-	{
-		printf("Error in RomModule definition: %s out of memory region space\n", ROM_GETNAME(romp));
-		return -1;
-	}
+		fatalerror("Error in RomModule definition: %s out of memory region space\n", ROM_GETNAME(romp));
 
 	/* make sure the length was valid */
 	if (numbytes == 0)
-	{
-		printf("Error in RomModule definition: %s has an invalid length\n", ROM_GETNAME(romp));
-		return -1;
-	}
+		fatalerror("Error in RomModule definition: %s has an invalid length\n", ROM_GETNAME(romp));
 
 	/* special case for simple loads */
 	if (datamask == 0xff && (groupsize == 1 || !reversed) && skip == 0)
@@ -640,28 +628,21 @@ static int read_rom_data(rom_load_data *romdata, const rom_entry *romp)
     fill_rom_data - fill a region of ROM space
 -------------------------------------------------*/
 
-static int fill_rom_data(rom_load_data *romdata, const rom_entry *romp)
+static void fill_rom_data(rom_load_data *romdata, const rom_entry *romp)
 {
 	UINT32 numbytes = ROM_GETLENGTH(romp);
 	UINT8 *base = romdata->regionbase + ROM_GETOFFSET(romp);
 
 	/* make sure we fill within the region space */
 	if (ROM_GETOFFSET(romp) + numbytes > romdata->regionlength)
-	{
-		printf("Error in RomModule definition: FILL out of memory region space\n");
-		return 0;
-	}
+		fatalerror("Error in RomModule definition: FILL out of memory region space\n");
 
 	/* make sure the length was valid */
 	if (numbytes == 0)
-	{
-		printf("Error in RomModule definition: FILL has an invalid length\n");
-		return 0;
-	}
+		fatalerror("Error in RomModule definition: FILL has an invalid length\n");
 
 	/* fill the data (filling value is stored in place of the hashdata) */
 	memset(base, (UINT32)ROM_GETHASHDATA(romp) & 0xff, numbytes);
-	return 1;
 }
 
 
@@ -669,7 +650,7 @@ static int fill_rom_data(rom_load_data *romdata, const rom_entry *romp)
     copy_rom_data - copy a region of ROM space
 -------------------------------------------------*/
 
-static int copy_rom_data(rom_load_data *romdata, const rom_entry *romp)
+static void copy_rom_data(rom_load_data *romdata, const rom_entry *romp)
 {
 	UINT8 *base = romdata->regionbase + ROM_GETOFFSET(romp);
 	int srcregion = ROM_GETFLAGS(romp) >> 24;
@@ -679,36 +660,23 @@ static int copy_rom_data(rom_load_data *romdata, const rom_entry *romp)
 
 	/* make sure we copy within the region space */
 	if (ROM_GETOFFSET(romp) + numbytes > romdata->regionlength)
-	{
-		printf("Error in RomModule definition: COPY out of target memory region space\n");
-		return 0;
-	}
+		fatalerror("Error in RomModule definition: COPY out of target memory region space\n");
 
 	/* make sure the length was valid */
 	if (numbytes == 0)
-	{
-		printf("Error in RomModule definition: COPY has an invalid length\n");
-		return 0;
-	}
+		fatalerror("Error in RomModule definition: COPY has an invalid length\n");
 
 	/* make sure the source was valid */
 	srcbase = memory_region(srcregion);
 	if (!srcbase)
-	{
-		printf("Error in RomModule definition: COPY from an invalid region\n");
-		return 0;
-	}
+		fatalerror("Error in RomModule definition: COPY from an invalid region\n");
 
 	/* make sure we find within the region space */
 	if (srcoffs + numbytes > memory_region_length(srcregion))
-	{
-		printf("Error in RomModule definition: COPY out of source memory region space\n");
-		return 0;
-	}
+		fatalerror("Error in RomModule definition: COPY out of source memory region space\n");
 
 	/* fill the data */
 	memcpy(base, srcbase + srcoffs, numbytes);
-	return 1;
 }
 
 
@@ -717,7 +685,7 @@ static int copy_rom_data(rom_load_data *romdata, const rom_entry *romp)
     for a region
 -------------------------------------------------*/
 
-static int process_rom_entries(rom_load_data *romdata, const rom_entry *romp)
+static void process_rom_entries(rom_load_data *romdata, const rom_entry *romp)
 {
 	UINT32 lastflags = 0;
 
@@ -726,38 +694,23 @@ static int process_rom_entries(rom_load_data *romdata, const rom_entry *romp)
 	{
 		/* if this is a continue entry, it's invalid */
 		if (ROMENTRY_ISCONTINUE(romp))
-		{
-			printf("Error in RomModule definition: ROM_CONTINUE not preceded by ROM_LOAD\n");
-			goto fatalerror;
-		}
+			fatalerror("Error in RomModule definition: ROM_CONTINUE not preceded by ROM_LOAD\n");
 
 		/* if this is an ignore entry, it's invalid */
 		if (ROMENTRY_ISIGNORE(romp))
-		{
-			printf("Error in RomModule definition: ROM_IGNORE not preceded by ROM_LOAD\n");
-			goto fatalerror;
-		}
+			fatalerror("Error in RomModule definition: ROM_IGNORE not preceded by ROM_LOAD\n");
 
 		/* if this is a reload entry, it's invalid */
 		if (ROMENTRY_ISRELOAD(romp))
-		{
-			printf("Error in RomModule definition: ROM_RELOAD not preceded by ROM_LOAD\n");
-			goto fatalerror;
-		}
+			fatalerror("Error in RomModule definition: ROM_RELOAD not preceded by ROM_LOAD\n");
 
 		/* handle fills */
 		if (ROMENTRY_ISFILL(romp))
-		{
-			if (!fill_rom_data(romdata, romp++))
-				goto fatalerror;
-		}
+			fill_rom_data(romdata, romp++);
 
 		/* handle copies */
 		else if (ROMENTRY_ISCOPY(romp))
-		{
-			if (!copy_rom_data(romdata, romp++))
-				goto fatalerror;
-		}
+			copy_rom_data(romdata, romp++);
 
 		/* handle files */
 		else if (ROMENTRY_ISFILE(romp))
@@ -791,11 +744,7 @@ static int process_rom_entries(rom_load_data *romdata, const rom_entry *romp)
 
 						/* attempt to read using the modified entry */
 						if (!ROMENTRY_ISIGNORE(&modified_romp))
-						{
 							readresult = read_rom_data(romdata, &modified_romp);
-							if (readresult == -1)
-								goto fatalerror;
-						}
 					}
 					while (ROMENTRY_ISCONTINUE(romp) || ROMENTRY_ISIGNORE(romp));
 
@@ -833,14 +782,6 @@ static int process_rom_entries(rom_load_data *romdata, const rom_entry *romp)
 			romp++;	/* something else; skip */
 		}
 	}
-	return 1;
-
-	/* error case */
-fatalerror:
-	if (romdata->file)
-		mame_fclose(romdata->file);
-	romdata->file = NULL;
-	return 0;
 }
 
 
@@ -849,7 +790,7 @@ fatalerror:
     for a region
 -------------------------------------------------*/
 
-static int process_disk_entries(rom_load_data *romdata, const rom_entry *romp)
+static void process_disk_entries(rom_load_data *romdata, const rom_entry *romp)
 {
 	/* loop until we hit the end of this region */
 	while (!ROMENTRY_ISREGIONEND(romp))
@@ -941,7 +882,6 @@ static int process_disk_entries(rom_load_data *romdata, const rom_entry *romp)
 			romp++;
 		}
 	}
-	return 1;
 }
 
 
@@ -950,7 +890,7 @@ static int process_disk_entries(rom_load_data *romdata, const rom_entry *romp)
     loading system
 -------------------------------------------------*/
 
-int rom_init(running_machine *machine, const rom_entry *romp)
+void rom_init(running_machine *machine, const rom_entry *romp)
 {
 	const rom_entry *regionlist[REGION_MAX];
 	const rom_entry *region;
@@ -959,7 +899,10 @@ int rom_init(running_machine *machine, const rom_entry *romp)
 
 	/* if no roms, bail */
 	if (romp == NULL)
-		return 0;
+		return;
+
+	/* make sure we get called back on the way out */
+	add_exit_callback(machine, rom_exit);
 
 	/* reset the region list */
 	memset((void *)regionlist, 0, sizeof(regionlist));
@@ -982,22 +925,11 @@ int rom_init(running_machine *machine, const rom_entry *romp)
 		debugload("Processing region %02X (length=%X)\n", regiontype, ROMREGION_GETLENGTH(region));
 
 		/* the first entry must be a region */
-		if (!ROMENTRY_ISREGION(region))
-		{
-			printf("Error: missing ROM_REGION header\n");
-			return 1;
-		}
-
-		/* allocate memory for the region */
-		if (new_memory_region(machine, regiontype, ROMREGION_GETLENGTH(region), ROMREGION_GETFLAGS(region)) != 0)
-		{
-			printf("Error: unable to allocate memory for region %d\n", regiontype);
-			return 1;
-		}
+		assert(ROMENTRY_ISREGION(region));
 
 		/* remember the base and length */
-		romdata.regionlength = memory_region_length(regiontype);
-		romdata.regionbase = memory_region(regiontype);
+		romdata.regionbase = new_memory_region(machine, regiontype, ROMREGION_GETLENGTH(region), ROMREGION_GETFLAGS(region));
+		romdata.regionlength = ROMREGION_GETLENGTH(region);
 		debugload("Allocated %X bytes @ %08X\n", romdata.regionlength, (int)romdata.regionbase);
 
 		/* clear the region if it's requested */
@@ -1016,15 +948,9 @@ int rom_init(running_machine *machine, const rom_entry *romp)
 
 		/* now process the entries in the region */
 		if (ROMREGION_ISROMDATA(region))
-		{
-			if (!process_rom_entries(&romdata, region + 1))
-				return 1;
-		}
+			process_rom_entries(&romdata, region + 1);
 		else if (ROMREGION_ISDISKDATA(region))
-		{
-			if (!process_disk_entries(&romdata, region + 1))
-				return 1;
-		}
+			process_disk_entries(&romdata, region + 1);
 
 		/* add this region to the list */
 		if (regiontype < REGION_MAX)
@@ -1044,8 +970,7 @@ int rom_init(running_machine *machine, const rom_entry *romp)
 	/* display the results and exit */
 	total_rom_load_warnings = romdata.warnings;
 
-	add_exit_callback(machine, rom_exit);
-	return display_rom_load_results(&romdata);
+	display_rom_load_results(&romdata);
 }
 
 

@@ -1247,9 +1247,7 @@ static DRIVER_INIT( beatmania )
 {
 	UINT8 *region;
 
-	if (new_memory_region(machine, REGION_SOUND1, 0x80000 * 32, 0) != 0)
-		return;
-	region = memory_region(REGION_SOUND1);
+	region = new_memory_region(machine, REGION_SOUND1, 0x80000 * 32, 0);
 
 	/* spin up the hard disk */
 	ide_controller_init(0, &ide_intf);

@@ -297,7 +297,7 @@ struct _rom_load_data
 chd_file *get_disk_handle(int diskindex);
 
 /* ROM processing */
-int rom_init(running_machine *machine, const rom_entry *romp);
+void rom_init(running_machine *machine, const rom_entry *romp);
 void rom_exit(running_machine *machine);
 int rom_load_warnings(void);
 const rom_entry *rom_first_region(const game_driver *drv);

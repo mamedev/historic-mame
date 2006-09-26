@@ -250,6 +250,9 @@ int osd_display_loading_rom_message(const char *name,rom_load_data *romdata);
 /* checks to see if a pointer is bad */
 int osd_is_bad_read_ptr(const void *ptr, size_t size);
 
+/* breaks into OSD debugger if attached */
+void osd_break_into_debugger(const char *message);
+
 /* multithreading locks; only need to implement if you use threads */
 typedef struct _osd_lock osd_lock;
 osd_lock *osd_lock_alloc(void);

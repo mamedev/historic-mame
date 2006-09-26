@@ -1,9 +1,9 @@
 /*
 
-  ES5503 - Ensoniq ES5503 "DOC" emulator v0.1
+  ES5503 - Ensoniq ES5503 "DOC" emulator v0.2
   By R. Belmont.
 
-  Copyright (c) 2005 R. Belmont.
+  Copyright (c) 2005-2006 R. Belmont.
 
   This software is dual-licensed: it may be used in MAME and properly licensed
   MAME derivatives under the terms of the MAME license.  For use outside of
@@ -25,6 +25,9 @@
   cause audible clicks and a general degradation of audio quality if the correct sample
   data at that point isn't 0x80 or very near it.
 
+  Changes:
+  0.2 (RB) - improved behavior for volumes > 127, fixes missing notes in Nucleus & missing voices in Thexder
+
 */
 
 #include <math.h>
@@ -44,7 +47,7 @@ typedef struct
 	UINT16 freq;
 	UINT16 wtsize;
 	UINT8  control;
-	INT8  vol;
+	UINT8  vol;
 	UINT8  data;
 	UINT32 wavetblpointer;
 	UINT8  wavetblsize;
@@ -70,12 +73,22 @@ typedef struct
 	UINT8 irqpending;		// irq pending register
 	UINT8 lastirqosc;		// last oscillator that caused an IRQ
 	INT8  oscsenabled;		// # of oscillators enabled
+
+	UINT32 frames;			// frame #
 } ES5503Chip;
 
 static UINT16 wavesizes[8] = { 256, 512, 1024, 2048, 4096, 8192, 16384, 32768 };
 static UINT32 wavemasks[8] = { 0x1ff00, 0x1fe00, 0x1fc00, 0x1f800, 0x1f000, 0x1e000, 0x1c000, 0x18000 };
 static UINT32 accmasks[8]  = { 0xff, 0x1ff, 0x3ff, 0x7ff, 0xfff, 0x1fff, 0x3fff, 0x7fff };
 static int    resshifts[8] = { 9, 10, 11, 12, 13, 14, 15, 16 };
+
+enum
+{
+	MODE_FREE = 0,
+	MODE_ONESHOT = 1,
+	MODE_SYNCAM = 2,
+	MODE_SWAP = 3
+};
 
 // halt_osc: handle halting an oscillator
 // chip = chip #
@@ -92,13 +105,14 @@ static void halt_osc(ES5503Chip *chip, int onum, int type)
 	// if 0 found in sample data or mode is not free-run, halt this oscillator
 	if ((type) || (mode > 0))
 	{
+//      printf("stopping\n");
 		pOsc->control |= 1;
 	}
 
 	// if swap mode, start the partner
-	if (mode == 3)
+	if (mode == MODE_SWAP)
 	{
-//      printf("swap mode, starting partner\n");
+//          printf("swap mode, starting partner\n");
 		pPartner->control &= ~1;	// clear the halt bit
 		pPartner->accumulator = 0;	// make sure it's at the beginning
 	}
@@ -140,24 +154,23 @@ static void es5503_pcm_update(void *param, stream_sample_t **inputs, stream_samp
 			UINT16 wtsize = pOsc->wtsize-1;
 			UINT8 ctrl = pOsc->control;
 			UINT16 freq = pOsc->freq;
-			INT8 vol = pOsc->vol;
+			INT16 vol = pOsc->vol;
 			INT8 data = -128;
 			int resshift = resshifts[pOsc->resolution] - pOsc->wavetblsize;
-			UINT32 resmask = accmasks[pOsc->resolution];
+			UINT32 sizemask = accmasks[pOsc->wavetblsize];
 
-//          printf("Acc: %08x => %08x\n", acc, (acc>>resshift) & resmask);
-
-//          printf("Ch [%02d]: wtptr: %04x (wtsize %d, ptr %x)\n", osc, wtptr, pOsc->wavetblsize, pOsc->wavetblpointer);
+//              printf("Acc: %08x => %08x\n", acc, (acc>>resshift) & sizemask);
+//              printf("Ch [%02d]: wtptr: %04x (wtsize %d, ptr %x) acc %x shift %d\n", osc, wtptr, pOsc->wavetblsize, pOsc->wavetblpointer, acc, resshift);
 
 			for (snum = 0; snum < length; snum++)
 			{
-				ramptr = (acc >> resshift) & resmask;
+				ramptr = (acc >> resshift) & sizemask;
 
 				acc += freq;
 
-//              printf("[%02d] Acc: %08x  Frq: %04x  RAMptr: %08x WTsize: %04x (wtsize %d res %d)\n", osc, acc, freq, ramptr, wtsize, pOsc->wavetblsize, pOsc->resolution);
+//                  printf("[%02d] Acc: %08x  Frq: %04x  RAMptr: %08x WTsize: %04x (wtsize %d res %d)\n", osc, acc, freq, ramptr, wtsize, pOsc->wavetblsize, pOsc->resolution);
 
-				data = chip->docram[ramptr + wtptr] ^ 0x80;
+				data = (INT32)chip->docram[ramptr + wtptr] ^ 0x80;
 
 				if (pOsc->control & 0x10)
 				{
@@ -172,7 +185,7 @@ static void es5503_pcm_update(void *param, stream_sample_t **inputs, stream_samp
 
 				if (chip->docram[ramptr + wtptr] == 0x00)
 				{
-//                  printf("osc %d hit zero @ %x (mode %d pmode %d)\n", osc, ramptr + wtptr, (pOsc->control>>1)&3, (chip->oscillators[osc^1].control>>1)&3);
+//                          printf("[%d] osc %d hit zero @ %x (mode %d pmode %d)\n", chip->frames, osc, ramptr + wtptr, (pOsc->control>>1)&3, (chip->oscillators[osc^1].control>>1)&3);
 					halt_osc(chip, osc, 1);
 					acc = 0;
 				}
@@ -205,6 +218,8 @@ static void es5503_pcm_update(void *param, stream_sample_t **inputs, stream_samp
 		outputs[0][i] = (*mixp++)>>1;
 		outputs[1][i] = (*mixp++)>>1;
 	}
+
+	chip->frames++;
 }
 
 
@@ -369,10 +384,10 @@ WRITE8_HANDLER(ES5503_reg_0_w)
 				break;
 
 			case 0xa0:	// oscillator control
-//              printf("5503: %02x to control for voice %02d\n", data, osc);
-				// if a fresh key-on, reset the accumulator
+				// if a fresh key-on, reset the ccumulator
 				if ((chip->oscillators[osc].control & 1) && (!(data&1)))
 				{
+//                  printf("[%d] %02x to control for voice %02d (wtptr %x vol %x wts %d res %d)\n", chip->frames, data, osc, chip->oscillators[osc].wavetblpointer, chip->oscillators[osc].vol, chip->oscillators[osc].wavetblsize, chip->oscillators[osc].resolution);
 					chip->oscillators[osc].accumulator = 0;
 				}
 				chip->oscillators[osc].control = data;
@@ -453,9 +468,9 @@ void es5503_get_info(void *token, UINT32 state, sndinfo *info)
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case SNDINFO_STR_NAME:							info->s = "ES5503";						break;
 		case SNDINFO_STR_CORE_FAMILY:					info->s = "Ensoniq ES550x";					break;
-		case SNDINFO_STR_CORE_VERSION:					info->s = "0.1";						break;
+		case SNDINFO_STR_CORE_VERSION:					info->s = "0.2";						break;
 		case SNDINFO_STR_CORE_FILE:						info->s = __FILE__;						break;
-		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2005 R. Belmont"; break;
+		case SNDINFO_STR_CORE_CREDITS:					info->s = "Copyright (c) 2005-2006 R. Belmont"; break;
 	}
 }
 

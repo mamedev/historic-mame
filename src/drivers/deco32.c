@@ -2756,7 +2756,7 @@ ROM_START( lockload ) /* Board No. DE-0420-1 + Bottom board DE-0421-0 slightly d
 	ROM_REGION(0x100000, REGION_SOUND1, 0 )
 	ROM_LOAD( "mbm-06.n17",  0x00000, 0x100000,  CRC(f34d5999) SHA1(265b5f4e8598bcf9183bf9bd95db69b01536acb2) )
 
-	ROM_REGION(0x80000, REGION_SOUND2, 0 ) /* Sound data - unique PCB and this region is not used? */
+	ROM_REGION(0x80000, REGION_SOUND2, ROMREGION_ERASE00 ) /* Sound data - unique PCB and this region is not used? */
 
 	ROM_REGION(0x80000, REGION_SOUND3, 0 )
 	ROM_LOAD( "mbm-07.n19",  0x00000, 0x80000,  CRC(414f3793) SHA1(ed5f63e57390d503193fd1e9f7294ae1da6d3539) ) /* Does this go here or REGION_SOUND2 ?? */

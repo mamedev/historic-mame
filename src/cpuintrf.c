@@ -763,7 +763,7 @@ static int cpu_active_context[CPU_COUNT];
 static int cpu_context_stack[4];
 static int cpu_context_stack_ptr;
 
-static unsigned (*cpu_dasm_override)(int cpunum, char *buffer, unsigned pc);
+static offs_t (*cpu_dasm_override[CPU_COUNT])(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes);
 
 #define TEMP_STRING_POOL_ENTRIES 16
 static char temp_string_pool[TEMP_STRING_POOL_ENTRIES][256];
@@ -937,7 +937,7 @@ void cpuintrf_init(running_machine *machine)
 	/* zap the CPU data structure */
 	memset(cpu, 0, sizeof(cpu));
 	totalcpu = 0;
-	cpu_dasm_override = NULL;
+	memset(cpu_dasm_override, 0, sizeof(cpu_dasm_override));
 
 	/* reset the context stack */
 	memset(cpu_context_stack, -1, sizeof(cpu_context_stack));
@@ -986,9 +986,9 @@ void cpuintrf_init(running_machine *machine)
  *
  *************************************/
 
-void cpuintrf_set_dasm_override(unsigned (*dasm_override)(int cpunum, char *buffer, unsigned pc))
+void cpuintrf_set_dasm_override(int cpunum, offs_t (*dasm_override)(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes))
 {
-	cpu_dasm_override = dasm_override;
+	cpu_dasm_override[cpunum] = dasm_override;
 }
 
 
@@ -1200,14 +1200,6 @@ offs_t activecpu_dasm(char *buffer, offs_t pc)
 {
 	VERIFY_ACTIVECPU(activecpu_dasm);
 
-	/* allow overrides */
-	if (cpu_dasm_override)
-	{
-		offs_t result = cpu_dasm_override(activecpu, buffer, pc);
-		if (result)
-			return result;
-	}
-
 	/* if there's no old-style assembler, do some work to make this call work with the new one */
 	if (!cpu[activecpu].intf.disassemble)
 	{
@@ -1266,6 +1258,14 @@ unsigned activecpu_dasm_new(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram,
 	unsigned result;
 
 	VERIFY_ACTIVECPU(activecpu_dasm_new);
+
+	/* check for disassembler override */
+	if (cpu_dasm_override[activecpu])
+	{
+		result = (*cpu_dasm_override[activecpu])(buffer, pc, oprom, opram, bytes);
+		if (result != 0)
+			return result;
+	}
 
 	if (cpu[activecpu].intf.disassemble_new)
 	{

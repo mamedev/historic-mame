@@ -70,21 +70,26 @@ static READ8_HANDLER( portC_r )
 
 static WRITE8_HANDLER( lamps_w )
 {
-	set_led_status(0,data & 0x01);	// button 1
-	set_led_status(1,data & 0x02);	// button 2
-	set_led_status(2,data & 0x04);	// button 3
-	set_led_status(3,data & 0x08);	// button 4
-	set_led_status(4,data & 0x10);	// button 5
-	set_led_status(5,data & 0x20);	// lamp 6 in gt507 in attract mode
-	set_led_status(6,data & 0x40);	// lamp 7 in gt507 in attract mode
-	set_led_status(7,data & 0x80);	// lamp 8 in gt507 in attract mode
+	/* 5 button lamps */
+	set_led_status(0,data & 0x01);
+	set_led_status(1,data & 0x02);
+	set_led_status(2,data & 0x04);
+	set_led_status(3,data & 0x08);
+	set_led_status(4,data & 0x10);
+	/* lamps 6, 7, 8 in gt507, may be hopper slide 1, 2, 3 ? */
+	set_led_status(5,data & 0x20);
+	set_led_status(6,data & 0x40);
+	set_led_status(7,data & 0x80);
 }
 
 static WRITE8_HANDLER( sound_w )
 {
-	/* controls lamp6 in Trivia/Quiz Test Modes, set to lamp 10 as in getrivia.c
-    seems to be coin lockout, off while booting, in service mode and in game */
+	/* bit 3 enables coin lockout (lamp6 in test modes, set to lamp 10 as in getrivia.c) */
+	coin_lockout_global_w(~data & 0x08);
 	set_led_status(9,data & 0x08);
+
+	/* bit 5 enables ticket out in trivia games; remove this led if ticket dispenser is added */
+	set_led_status(8,data & 0x20);
 
 	/* bit 6 enables NMI */
 	interrupt_enable_w(0,data & 0x40);
@@ -226,16 +231,17 @@ ADDRESS_MAP_END
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 #define TRIVIA_STANDARD_INPUT \
-	PORT_START \
+	PORT_START_TAG("IN0") \
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(2) \
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 ) PORT_IMPULSE(2) \
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
 	PORT_SERVICE( 0x08, IP_ACTIVE_LOW ) \
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) \
- 	PORT_START \
+\
+	PORT_START	/* IN1 */\
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) \
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) \
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 ) \
@@ -336,7 +342,7 @@ INPUT_PORTS_START( gt103 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( gt103a )
-	PORT_START      /* DSW A */
+	PORT_START_TAG ("DSWA")
 	PORT_DIPNAME( 0x03, 0x01, "Questions" )
 	PORT_DIPSETTING(    0x00, "4" )
 	PORT_DIPSETTING(    0x01, "5" )
@@ -355,13 +361,33 @@ INPUT_PORTS_START( gt103a )
 	PORT_DIPSETTING(    0x20, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x40, 0x40, "No Coins" )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )	/* if on, coin inputs are replaced by a 6th button to start games. */
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )		/* this is a feature of the PCB for private use. */
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	TRIVIA_STANDARD_INPUT
+	PORT_START_TAG("IN0")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(2) PORT_CONDITION("DSWA", 0x40, PORTCOND_EQUALS, 0x40)
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON6 ) PORT_IMPULSE(2) PORT_CONDITION("DSWA", 0x40, PORTCOND_EQUALS, 0x00) PORT_NAME ("Start in no coins mode")
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 ) PORT_IMPULSE(2) PORT_CONDITION("DSWA", 0x40, PORTCOND_EQUALS, 0x40)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) PORT_CONDITION("DSWA", 0x40, PORTCOND_EQUALS, 0x00)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_SERVICE( 0x08, IP_ACTIVE_LOW )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON5 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( quiz )
@@ -397,7 +423,7 @@ INPUT_PORTS_START( gt507uk )
 	PORT_DIPSETTING( 0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
 
-	REELFUN_STANDARD_INPUT
+	TRIVIA_STANDARD_INPUT
 	PORT_MODIFY("IN0")
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN3 ) PORT_IMPULSE(2)
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 ) PORT_IMPULSE(2)	/* coin 3, 2, 4 order verified in test mode */
@@ -604,13 +630,8 @@ ROM_START( quiz211 )
 ROM_END
 
 /*
-
-When game is first run a RAM error will occur because the nvram needs initialising.
-
-gt507uk - Press F2 to get into test mode, then press control/fire1 to continue
-gt103   - When RAM Error appears press F3 to reset and the game will start
-gt103a  - When ERROR appears, press F2, then F3 to reset, then F2 again and the game will start
-
+When games are first run a RAM error will occur because the nvram needs initialising.
+When ERROR appears, press F2, then F3 to reset, then F2 again and the game will start
 */
 
 GAME( 1986, gt507uk,  0,      findout, gt507uk, 0, ROT0, "Grayhound Electronics", "Trivia (UK Version 5.07)",               GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
@@ -627,7 +648,7 @@ GAME( 1984, gt103asx, gt103a, findout, gt103a,  0, ROT0, "Greyhound Electronics"
 
 GAME( 1986, quiz,     0,      findout, quiz,    0, ROT0, "Italian bootleg",       "Quiz (Revision 2)",                      GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 
-GAME( 1986, reelfun,  0,      findout, reelfun, 0, ROT0, "Grayhound Electronics", "Real Fun (Version 7.01)",                GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1986, reelfun,  0,      findout, reelfun, 0, ROT0, "Grayhound Electronics", "Reel Fun (Version 7.01)",                GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 GAME( 1987, findout,  0,      findout, findout, 0, ROT0, "Elettronolo",           "Find Out (Version 4.04)",                GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 
 GAME( 1991, quiz211,  0,      findout, quiz,    0, ROT0, "Elettronolo",           "Quiz (Revision 2.11)",                   GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )

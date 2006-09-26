@@ -2120,21 +2120,27 @@ static void update_playback_record(int portnum, UINT32 portvalue)
 
 void input_port_update_defaults(void)
 {
-	int portnum;
+	int loopnum, portnum;
 
-	/* loop over all input ports */
-	for (portnum = 0; portnum < MAX_INPUT_PORTS; portnum++)
-	{
-		input_port_info *portinfo = &port_info[portnum];
-		input_bit_info *info;
-		int bitnum;
+	/* two passes to catch conditionals properly */
+	for (loopnum = 0; loopnum < 2; loopnum++)
 
-		/* first compute the default value for the entire port */
-		portinfo->defvalue = 0;
-		for (bitnum = 0, info = &portinfo->bit[0]; bitnum < MAX_BITS_PER_PORT && info->port; bitnum++, info++)
-			if (input_port_condition(info->port))
-				portinfo->defvalue = (portinfo->defvalue & ~info->port->mask) | (info->port->default_value & info->port->mask);
-	}
+		/* loop over all input ports */
+		for (portnum = 0; portnum < MAX_INPUT_PORTS; portnum++)
+		{
+			input_port_info *portinfo = &port_info[portnum];
+			input_bit_info *info;
+			int bitnum;
+
+			/* only clear on the first pass */
+			if (loopnum == 0)
+				portinfo->defvalue = 0;
+
+			/* first compute the default value for the entire port */
+			for (bitnum = 0, info = &portinfo->bit[0]; bitnum < MAX_BITS_PER_PORT && info->port; bitnum++, info++)
+				if (input_port_condition(info->port))
+					portinfo->defvalue = (portinfo->defvalue & ~info->port->mask) | (info->port->default_value & info->port->mask);
+		}
 }
 
 

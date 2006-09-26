@@ -255,9 +255,9 @@ static void logfile_callback(running_machine *machine, const char *buffer);
 int run_game(int game)
 {
 	running_machine *machine;
+	int error = MAMERR_NONE;
 	mame_private *mame;
 	callback_item *cb;
-	int error = 0;
 
 	/* create the machine structure and driver */
 	machine = create_machine(game);
@@ -271,7 +271,7 @@ int run_game(int game)
 
 	/* perform validity checks before anything else */
 	if (mame_validitychecks(game) != 0)
-		return 1;
+		return MAMERR_FAILED_VALIDITY;
 
 	/* loop across multiple hard resets */
 	mame->exit_pending = FALSE;
@@ -625,7 +625,7 @@ static int memory_region_to_index(mame_private *mame, int num)
     region
 -------------------------------------------------*/
 
-int new_memory_region(running_machine *machine, int type, size_t length, UINT32 flags)
+UINT8 *new_memory_region(running_machine *machine, int type, size_t length, UINT32 flags)
 {
 	mame_private *mame = machine->mame_data;
     int num;
@@ -637,14 +637,14 @@ int new_memory_region(running_machine *machine, int type, size_t length, UINT32 
 		if (mame->mem_region[num].base == NULL)
 			break;
 	if (num < 0)
-		return 1;
+		fatalerror("Out of memory regions!");
 
     /* allocate the region */
 	mame->mem_region[num].length = length;
 	mame->mem_region[num].type = type;
 	mame->mem_region[num].flags = flags;
-	mame->mem_region[num].base = malloc(length);
-	return (mame->mem_region[num].base == NULL) ? 1 : 0;
+	mame->mem_region[num].base = malloc_or_die(length);
+	return mame->mem_region[num].base;
 }
 
 
@@ -740,6 +740,22 @@ UINT32 memory_region_flags(running_machine *machine, int num)
     to the OSD layer
 -------------------------------------------------*/
 
+static void fatalerror_common(running_machine *machine, int exitcode, const char *buffer)
+{
+	/* output and return */
+	printf("%s\n", giant_string_buffer);
+
+	/* break into the debugger if attached */
+	osd_break_into_debugger(giant_string_buffer);
+
+	/* longjmp back if we can; otherwise, exit */
+	if (machine != NULL && machine->mame_data != NULL && machine->mame_data->fatal_error_jmpbuf_valid)
+  		longjmp(machine->mame_data->fatal_error_jmpbuf, exitcode);
+	else
+		exit(exitcode);
+}
+
+
 void CLIB_DECL fatalerror(const char *text, ...)
 {
 	running_machine *machine = Machine;
@@ -750,12 +766,21 @@ void CLIB_DECL fatalerror(const char *text, ...)
 	vsnprintf(giant_string_buffer, GIANT_STRING_BUFFER_SIZE, text, arg);
 	va_end(arg);
 
-	/* output and return */
-	printf("%s\n", giant_string_buffer);
-	if (machine != NULL && machine->mame_data != NULL && machine->mame_data->fatal_error_jmpbuf_valid)
-  		longjmp(machine->mame_data->fatal_error_jmpbuf, 1);
-	else
-		exit(-1);
+	fatalerror_common(machine, MAMERR_FATALERROR, giant_string_buffer);
+}
+
+
+void CLIB_DECL fatalerror_exitcode(int exitcode, const char *text, ...)
+{
+	running_machine *machine = Machine;
+	va_list arg;
+
+	/* dump to the buffer; assume no one writes >2k lines this way */
+	va_start(arg, text);
+	vsnprintf(giant_string_buffer, GIANT_STRING_BUFFER_SIZE, text, arg);
+	va_end(arg);
+
+	fatalerror_common(machine, exitcode, giant_string_buffer);
 }
 
 
@@ -786,26 +811,31 @@ void CLIB_DECL popmessage(const char *text, ...)
 void CLIB_DECL logerror(const char *text, ...)
 {
 	running_machine *machine = Machine;
-	mame_private *mame = machine->mame_data;
-	callback_item *cb;
 
-	/* process only if there is a target */
-	if (mame->logerror_callback_list != NULL)
+	/* currently, we need a machine to do this */
+	if (machine != NULL)
 	{
-		va_list arg;
+		mame_private *mame = machine->mame_data;
+		callback_item *cb;
 
-		profiler_mark(PROFILER_LOGERROR);
+		/* process only if there is a target */
+		if (mame->logerror_callback_list != NULL)
+		{
+			va_list arg;
 
-		/* dump to the buffer */
-		va_start(arg, text);
-		vsnprintf(giant_string_buffer, GIANT_STRING_BUFFER_SIZE, text, arg);
-		va_end(arg);
+			profiler_mark(PROFILER_LOGERROR);
 
-		/* log to all callbacks */
-		for (cb = mame->logerror_callback_list; cb; cb = cb->next)
-			(*cb->func.log)(machine, giant_string_buffer);
+			/* dump to the buffer */
+			va_start(arg, text);
+			vsnprintf(giant_string_buffer, GIANT_STRING_BUFFER_SIZE, text, arg);
+			va_end(arg);
 
-		profiler_mark(PROFILER_END);
+			/* log to all callbacks */
+			for (cb = mame->logerror_callback_list; cb; cb = cb->next)
+				(*cb->func.log)(machine, giant_string_buffer);
+
+			profiler_mark(PROFILER_END);
+		}
 	}
 }
 
@@ -1003,8 +1033,7 @@ static void init_machine(running_machine *machine)
 
 	/* load the ROMs if we have some */
 	/* this must be done before memory_init in order to allocate memory regions */
-	if (rom_init(machine, machine->gamedrv->rom) != 0)
-		fatalerror("rom_init failed");
+	rom_init(machine, machine->gamedrv->rom);
 
 	/* initialize the timers and allocate a soft_reset timer */
 	/* this must be done before cpu_init so that CPU's can allocate timers */

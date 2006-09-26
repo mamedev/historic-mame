@@ -7,19 +7,6 @@
     Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
     Visit http://mamedev.org for licensing and usage restrictions.
 
-    07/15/1998 Created by Mathis Rosenhauer
-    10/02/1998 Code clean up and abstraction by Mike Balfour
-            and Mathis Rosenhauer
-    10/15/1998 Image filtering. MLR
-    11/09/1998 Bit depths 1-8 MLR
-    11/10/1998 Some additional PNG chunks recognized MLR
-    05/14/1999 Color type 2 and PNG save functions added
-    05/15/1999 Handle RGB555 while saving, use mame_fxxx
-            functions for writing MSH
-    04/27/2001 Simple MNG support MLR
-
-    TODO : Fully comply with the "Recommendations for Decoders"
-        of the W3C
 
 *********************************************************************/
 
@@ -316,7 +303,7 @@ static int process_chunk(png_private *png, UINT8 *data, UINT32 type, UINT32 leng
 				return PNGERR_OUT_OF_MEMORY;
 
 			/* set the elements */
-			text->keyword = data;
+			text->keyword = (char *)data;
 			text->text = text->keyword + strlen(text->keyword) + 1;
 			text->next = NULL;
 
@@ -976,7 +963,7 @@ static int write_png_stream(void *fp, png_info *pnginfo, const mame_bitmap *bitm
 	/* write TEXT chunks */
 	for (text = pnginfo->textlist; text != NULL; text = text->next)
 	{
-		error = write_chunk(fp, text->keyword, PNG_CN_tEXt, strlen(text->keyword) + 1 + strlen(text->text) + 1);
+		error = write_chunk(fp, (UINT8 *)text->keyword, PNG_CN_tEXt, strlen(text->keyword) + 1 + strlen(text->text));
 		if (error != PNGERR_NONE)
 			goto handle_error;
 	}
