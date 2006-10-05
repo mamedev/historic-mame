@@ -46,39 +46,46 @@ void CLIB_DECL logerror(const char *text,...)
 {
 }
 
-osd_file *osd_fopen(int pathtype, int pathindex, const char *filename, const char *mode, osd_file_error *error)
+mame_file_error osd_open(const char *path, UINT32 openflags, osd_file **file, UINT64 *filesize)
 {
-	return (osd_file *)fopen(filename, mode);
+	const char *mode;
+	FILE *fp;
+
+	if (openflags & OPEN_FLAG_READ)
+		mode = "rb";
+	else
+		return FILERR_FAILURE;
+
+	fp = fopen(path, mode);
+	if (fp == NULL)
+		return FILERR_NOT_FOUND;
+
+	fseek(fp, 0, SEEK_END);
+	*filesize = ftell(fp);
+	fseek(fp, 0, SEEK_SET);
+
+	*file = (osd_file *)fp;
+	return FILERR_NONE;
 }
 
-int osd_fseek(osd_file *file, INT64 offset, int whence)
-{
-	return fseek((FILE *)file, (INT32)offset, whence);
-}
-
-UINT64 osd_ftell(osd_file *file)
-{
-	return ftell((FILE *)file);
-}
-
-int osd_feof(osd_file *file)
-{
-	return feof((FILE *)file);
-}
-
-UINT32 osd_fread(osd_file *file, void *buffer, UINT32 length)
-{
-	return fread(buffer, 1, length, (FILE *)file);
-}
-
-UINT32 osd_fwrite(osd_file *file, const void *buffer, UINT32 length)
-{
-	return fwrite(buffer, 1, length, (FILE *)file);
-}
-
-void osd_fclose(osd_file *file)
+mame_file_error osd_close(osd_file *file)
 {
 	fclose((FILE *)file);
+	return FILERR_NONE;
+}
+
+mame_file_error osd_read(osd_file *file, void *buffer, UINT64 offset, UINT32 length, UINT32 *actual)
+{
+	fseek((FILE *)file, offset, SEEK_SET);
+	*actual = fread(buffer, 1, length, (FILE *)file);
+	return FILERR_NONE;
+}
+
+mame_file_error osd_write(osd_file *file, const void *buffer, UINT64 offset, UINT32 length, UINT32 *actual)
+{
+	fseek((FILE *)file, offset, SEEK_SET);
+	*actual = fwrite(buffer, 1, length, (FILE *)file);
+	return FILERR_NONE;
 }
 
 
@@ -584,40 +591,42 @@ static int load_files(int i, int *found, const char *path)
 	else
 	{
 		zip_file *zip;
-		zip_entry* zipent;
+		const zip_file_header* zipent;
+		zip_error ziperr;
 
 		/* wasn't a directory, so try to open it as a zip file */
-		if ((zip = openzip(0, 0, path)) == 0)
+		ziperr = zip_file_open(path, &zip);
+		if (ziperr != ZIPERR_NONE)
 		{
 			printf("Error, cannot open zip file '%s' !\n", path);
 			return 1;
 		}
 
 		/* load all files in zip file */
-		while ((zipent = readzip(zip)) != 0)
+		for (zipent = zip_file_first_file(zip); zip != NULL; zipent = zip_file_next_file(zip))
 		{
 			int size;
 
-			size = zipent->uncompressed_size;
+			size = zipent->uncompressed_length;
 			while (size && (size & 1) == 0) size >>= 1;
-			if (zipent->uncompressed_size == 0 || (size & ~1))
+			if (zipent->uncompressed_length == 0 || (size & ~1))
 				printf("%-23s %-23s ignored (not a ROM)\n",
-					i ? "" : zipent->name, i ? zipent->name : "");
+					i ? "" : zipent->filename, i ? zipent->filename : "");
 			else
 			{
 				fileinfo *file = &files[i][found[i]];
-				const char *delim = strrchr(zipent->name,'/');
+				const char *delim = strrchr(zipent->filename,'/');
 
 				if (delim)
 					strcpy (file->name,delim+1);
 				else
-					strcpy(file->name,zipent->name);
-				file->size = zipent->uncompressed_size;
+					strcpy(file->name,zipent->filename);
+				file->size = zipent->uncompressed_length;
 				if ((file->buf = malloc(file->size)) == 0)
 					printf("%s: out of memory!\n",file->name);
 				else
 				{
-					if (readuncompresszip(zip, zipent, (char *)file->buf) != 0)
+					if (zip_file_decompress(zip, (char *)file->buf, file->size) != ZIPERR_NONE)
 					{
 						free(file->buf);
 						file->buf = 0;
@@ -633,7 +642,7 @@ static int load_files(int i, int *found, const char *path)
 				found[i]++;
 			}
 		}
-		closezip(zip);
+		zip_file_close(zip);
 	}
 	return 0;
 }

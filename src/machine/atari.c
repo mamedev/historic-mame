@@ -902,22 +902,26 @@ DEVICE_LOAD( a800xl_cart )
 	UINT8 *mem = memory_region(REGION_CPU1);
 	const char *filename;
 	mame_file *basic_fp;
+	mame_file_error filerr;
 	unsigned size;
 
-	filename = "basic.rom";
-	basic_fp = mame_fopen(Machine->gamedrv->name, filename, FILETYPE_ROM, 0);
-	if (basic_fp)
+	fname = assemble_2_strings(Machine->gamedrv->name, "/basic.rom");
+	filerr = mame_fopen(SEARCHPATH_ROM, fname, OPEN_FLAG_READ, &basic_fp);
+	free(fname);
+
+	if (filerr != FILERR_NONE)
 	{
 		size = mame_fread(basic_fp, &mem[0x14000], 0x2000);
 		if( size < 0x2000 )
 		{
 			logerror("%s image '%s' load failed (less than 8K)\n", Machine->gamedrv->name, filename);
+			mame_fclose(basic_fp);
 			return 2;
 		}
 	}
 
 	/* load an optional (dual) cartidge (e.g. basic.rom) */
-	if (file)
+	if (filerr != FILERR_NONE)
 	{
 		{
 			size = mame_fread(file, &mem[0x14000], 0x2000);
@@ -927,6 +931,7 @@ DEVICE_LOAD( a800xl_cart )
 			logerror("%s loaded cartridge '%s' size %s\n",
 					Machine->gamedrv->name, image_filename(image), (a800_cart_is_16k) ? "16K":"8K");
 		}
+		mame_fclose(basic_fp);
 	}
 
 	return INIT_PASS;

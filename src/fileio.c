@@ -9,31 +9,20 @@
 
 ***************************************************************************/
 
-#include <zlib.h>
-
 #include "osdepend.h"
 #include "driver.h"
 #include "chd.h"
 #include "hash.h"
 #include "unzip.h"
-
-#ifdef MESS
-#include "image.h"
-#endif
+#include "options.h"
 
 
 /***************************************************************************
-    DEBUGGING
+    VALIDATION
 ***************************************************************************/
 
-/* Verbose outputs to error.log ? */
-#define VERBOSE 				0
-
-/* enable lots of logging */
-#if VERBOSE
-#define VPRINTF(x)				logerror x
-#else
-#define VPRINTF(x)
+#if !defined(CRLF) || (CRLF < 1) || (CRLF > 3)
+#error CRLF undefined: must be 1 (CR), 2 (LF) or 3 (CR/LF)
 #endif
 
 
@@ -45,22 +34,10 @@
 #define PLAIN_FILE				0
 #define RAM_FILE				1
 #define ZIPPED_FILE				2
-#define UNLOADED_ZIPPED_FILE	3
 
-#define FILEFLAG_OPENREAD		0x0001
-#define FILEFLAG_OPENWRITE		0x0002
-#define FILEFLAG_HASH			0x0100
-#define FILEFLAG_REVERSE_SEARCH	0x0200
-#define FILEFLAG_VERIFY_ONLY	0x0400
-#define FILEFLAG_NOZIP			0x0800
-#define FILEFLAG_MUST_EXIST		0x1000
-#define FILEFLAG_CREATE_GAMEDIR	0x8000
+#define FILE_BUFFER_SIZE		512
 
-#ifdef MESS
-#define FILEFLAG_GHOST			0x0004
-#define FILEFLAG_ALLOW_ABSOLUTE	0x2000
-#define FILEFLAG_ZIP_PATHS		0x4000
-#endif
+#define OPEN_FLAG_HAS_CRC		0x10000
 
 #ifdef MAME_DEBUG
 #define DEBUG_COOKIE			0xbaadf00d
@@ -79,6 +56,7 @@ struct _mame_file
 	UINT32		debug_cookie;
 #endif
 	osd_file *	file;
+	zip_file *	zipfile;
 	UINT8 *		data;
 	UINT64		offset;
 	UINT64		length;
@@ -86,17 +64,19 @@ struct _mame_file
 	UINT8		type;
 	char		hash[HASH_BUF_SIZE];
 	int			back_char; /* Buffered char for unget. EOF for empty. */
+	UINT64		bufferbase;
+	UINT32		bufferbytes;
+	UINT8		buffer[FILE_BUFFER_SIZE];
 };
 
 
-
-/***************************************************************************
-    GLOBAL VARIABLES
-***************************************************************************/
-
-#ifdef MESS
-int mess_ghost_images;
-#endif
+typedef struct _path_iterator path_iterator;
+struct _path_iterator
+{
+	const char *base;
+	const char *cur;
+	int			index;
+};
 
 
 
@@ -104,14 +84,29 @@ int mess_ghost_images;
     FUNCTION PROTOTYPES
 ***************************************************************************/
 
-static mame_file *generic_fopen(int pathtype, const char *gamename, const char *filename, const char *hash, UINT32 flags, osd_file_error *error);
-static const char *get_extension_for_filetype(int filetype);
-static int checksum_file(int pathtype, int pathindex, const char *file, UINT8 **p, UINT64 *size, char* hash);
+/* core functions */
+static void fileio_exit(running_machine *machine);
+
+/* file open/close */
+static mame_file_error fopen_internal(const char *searchpath, const char *filename, UINT32, UINT32 flags, mame_file **file);
+static mame_file_error fopen_attempt_plain(char *fullname, UINT32 openflags, mame_file *file);
+static mame_file_error fopen_attempt_zipped(char *fullname, const char *filename, UINT32 crc, UINT32 openflags, mame_file *file);
+
+/* CHD callbacks */
 static chd_interface_file *chd_open_cb(const char *filename, const char *mode);
 static void chd_close_cb(chd_interface_file *file);
 static UINT32 chd_read_cb(chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer);
 static UINT32 chd_write_cb(chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer);
 static UINT64 chd_length_cb(chd_interface_file *file);
+
+/* path iteration */
+static int path_iterator_init(path_iterator *iterator, const char *searchpath);
+static int path_iterator_get_next(path_iterator *iterator, char *buffer, int buflen);
+
+/* misc helpers */
+static UINT32 safe_buffer_copy(const void *source, UINT32 sourceoffs, UINT32 sourcelen, void *dest, UINT32 destoffs, UINT32 destlen);
+static mame_file_error convert_plain_to_ram(mame_file *file);
+static mame_file_error convert_zipped_to_ram(mame_file *file);
 
 
 
@@ -128,6 +123,11 @@ static chd_interface mame_chd_interface =
 	chd_length_cb
 };
 
+
+
+/***************************************************************************
+    CORE FUNCTIONS
+***************************************************************************/
 
 /*-------------------------------------------------
     fileio_init - initialize the internal file
@@ -146,185 +146,222 @@ void fileio_init(running_machine *machine)
     fileio_exit - clean up behind ourselves
 -------------------------------------------------*/
 
-void fileio_exit(running_machine *machine)
+static void fileio_exit(running_machine *machine)
 {
-	unzip_cache_clear();
+	zip_file_cache_clear();
 }
 
 
+
+/***************************************************************************
+    FILE OPEN/CLOSE
+***************************************************************************/
+
 /*-------------------------------------------------
-    mame_fopen_error - open a file for access and
+    mame_fopen - open a file for access and
     return an error code
 -------------------------------------------------*/
 
-mame_file *mame_fopen_error(const char *gamename, const char *filename, int filetype, int openforwrite, osd_file_error *error)
+mame_file_error mame_fopen(const char *searchpath, const char *filename, UINT32 openflags, mame_file **file)
 {
-	/* first verify that we can handle this type of file */
-	switch (filetype)
-	{
-		/* read-only cases */
-#ifndef MESS
-		case FILETYPE_IMAGE:
-		case FILETYPE_INI:
-#endif
-		case FILETYPE_ROM:
-		case FILETYPE_SAMPLE:
-		case FILETYPE_HIGHSCORE_DB:
-		case FILETYPE_ARTWORK:
-		case FILETYPE_HISTORY:
-		case FILETYPE_LANGUAGE:
-		case FILETYPE_CTRLR:
-		case FILETYPE_FONT:
-			if (openforwrite)
-			{
-				logerror("mame_fopen: type %02x write not supported\n", filetype);
-				return NULL;
-			}
-			break;
-
-		/* write-only cases */
-		case FILETYPE_SCREENSHOT:
-		case FILETYPE_MOVIE:
-		case FILETYPE_DEBUGLOG:
-			if (!openforwrite)
-			{
-				logerror("mame_fopen: type %02x read not supported\n", filetype);
-				return NULL;
-			}
-			break;
-	}
-
-	/* now open the file appropriately */
-	switch (filetype)
-	{
-		/* generic files that live in a single directory */
-		case FILETYPE_DEBUGLOG:
-		case FILETYPE_CTRLR:
-		case FILETYPE_LANGUAGE:
-		case FILETYPE_HIGHSCORE_DB:
-		case FILETYPE_FONT:
-			return generic_fopen(filetype, NULL, filename, 0, openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD, error);
-
-		/* game-specific files that live in a single directory */
-		case FILETYPE_HIGHSCORE:
-		case FILETYPE_CONFIG:
-		case FILETYPE_INPUTLOG:
-		case FILETYPE_COMMENT:
-		case FILETYPE_INI:
-		case FILETYPE_HASH:		/* MESS-specific */
-			return generic_fopen(filetype, NULL, gamename, 0, openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD, error);
-
-		/* generic multi-directory files */
-		case FILETYPE_SAMPLE:
-		case FILETYPE_ARTWORK:
-			return generic_fopen(filetype, gamename, filename, 0, openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD, error);
-
-		/* ROM files */
-		case FILETYPE_ROM:
-			return generic_fopen(filetype, gamename, filename, 0, FILEFLAG_OPENREAD | FILEFLAG_HASH, error);
-
-		/* memory card files */
-		case FILETYPE_MEMCARD:
-			return generic_fopen(filetype, gamename, filename, 0, openforwrite ? FILEFLAG_OPENWRITE | FILEFLAG_CREATE_GAMEDIR : FILEFLAG_OPENREAD, error);
-
-		/* cheat file */
-		case FILETYPE_CHEAT:
-			return generic_fopen(filetype, NULL, filename, 0, FILEFLAG_OPENREAD | (openforwrite ? FILEFLAG_OPENWRITE : 0), error);
-
-		/* disk images */
-		case FILETYPE_IMAGE:
-#ifndef MESS
-			return generic_fopen(filetype, gamename, filename, 0, FILEFLAG_OPENREAD | FILEFLAG_NOZIP, error);
-#else
-			{
-				int flags = FILEFLAG_ALLOW_ABSOLUTE;
-				switch (openforwrite)
-				{
-					case OSD_FOPEN_READ:
-						flags |= FILEFLAG_OPENREAD | FILEFLAG_ZIP_PATHS;
-						break;
-					case OSD_FOPEN_WRITE:
-						flags |= FILEFLAG_OPENWRITE;
-						break;
-					case OSD_FOPEN_RW:
-						flags |= FILEFLAG_OPENREAD | FILEFLAG_OPENWRITE | FILEFLAG_MUST_EXIST;
-						break;
-					case OSD_FOPEN_RW_CREATE:
-						flags |= FILEFLAG_OPENREAD | FILEFLAG_OPENWRITE;
-						break;
-				}
-				if (mess_ghost_images)
-					flags |= FILEFLAG_GHOST;
-
-				return generic_fopen(filetype, gamename, filename, 0, flags, error);
-			}
-#endif
-
-		/* differencing disk images */
-		case FILETYPE_IMAGE_DIFF:
-			return generic_fopen(filetype, gamename, filename, 0, FILEFLAG_OPENREAD | FILEFLAG_OPENWRITE, error);
-
-		/* NVRAM files */
-		case FILETYPE_NVRAM:
-#ifdef MESS
-			if (filename)
-				return generic_fopen(filetype, gamename, filename, 0, openforwrite ? FILEFLAG_OPENWRITE | FILEFLAG_CREATE_GAMEDIR : FILEFLAG_OPENREAD, error);
-#endif
-			return generic_fopen(filetype, NULL, gamename, 0, openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD, error);
-
-		/* save state files */
-		case FILETYPE_STATE:
-#ifndef MESS
-			return generic_fopen(filetype, NULL, filename, 0, openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD, error);
-#else
-			return generic_fopen(filetype, NULL, filename, 0, FILEFLAG_ALLOW_ABSOLUTE | (openforwrite ? FILEFLAG_OPENWRITE : FILEFLAG_OPENREAD), error);
-#endif
-
-		/* screenshot files */
-		case FILETYPE_SCREENSHOT:
-		case FILETYPE_MOVIE:
-#ifndef MESS
-			return generic_fopen(filetype, NULL, filename, 0, FILEFLAG_OPENWRITE, error);
-#else
-			return generic_fopen(filetype, NULL, filename, 0, FILEFLAG_ALLOW_ABSOLUTE | FILEFLAG_OPENWRITE, error);
-#endif
-
-		/* history files */
-		case FILETYPE_HISTORY:
-#ifndef MESS
-			return generic_fopen(filetype, NULL, filename, 0, FILEFLAG_OPENREAD, error);
-#else
-			return generic_fopen(filetype, NULL, filename, 0, FILEFLAG_ALLOW_ABSOLUTE | FILEFLAG_OPENREAD, error);
-#endif
-
-		/* anything else */
-		default:
-			logerror("mame_fopen(): unknown filetype %02x\n", filetype);
-			return NULL;
-	}
-	return NULL;
+	return fopen_internal(searchpath, filename, 0, openflags, file);
 }
 
 
 /*-------------------------------------------------
-    mame_fopen - open a file without returning
-    any error codes
+    mame_fopen_crc - open a file by name or CRC
+    and return an error code
 -------------------------------------------------*/
 
-mame_file *mame_fopen(const char *gamename, const char *filename, int filetype, int openforwrite)
+mame_file_error mame_fopen_crc(const char *searchpath, const char *filename, UINT32 crc, UINT32 openflags, mame_file **file)
 {
-	return mame_fopen_error(gamename, filename, filetype, openforwrite, NULL);
+	return fopen_internal(searchpath, filename, crc, openflags | OPEN_FLAG_HAS_CRC, file);
 }
 
 
 /*-------------------------------------------------
-    mame_fopen_rom - similar to mame_fopen, but
-    lets you specify an expected checksum
+    fopen_internal - open a file
 -------------------------------------------------*/
 
-mame_file *mame_fopen_rom(const char *gamename, const char *filename, const char *exphash)
+static mame_file_error fopen_internal(const char *searchpath, const char *filename, UINT32 crc, UINT32 openflags, mame_file **file)
 {
-	return generic_fopen(FILETYPE_ROM, gamename, filename, exphash, FILEFLAG_OPENREAD | FILEFLAG_HASH, NULL);
+	mame_file_error filerr = FILERR_NOT_FOUND;
+	path_iterator iterator;
+	int maxlen, pathlen;
+	char *fullname;
+
+	/* can either have a hash or open for write, but not both */
+	assert(!(openflags & OPEN_FLAG_HAS_CRC) || !(openflags & OPEN_FLAG_WRITE));
+
+	/* allocate the file itself */
+	*file = malloc(sizeof(**file));
+	if (*file == NULL)
+		return FILERR_OUT_OF_MEMORY;
+
+	/* reset the file handle */
+	memset(*file, 0, sizeof(**file));
+	(*file)->back_char = EOF;
+#ifdef DEBUG_COOKIE
+	(*file)->debug_cookie = DEBUG_COOKIE;
+#endif
+
+	/* determine the maximum length of a composed filename, plus some extra space for .zip extensions */
+	maxlen = strlen(filename) + 5 + path_iterator_init(&iterator, searchpath) + 1;
+
+	/* allocate a temporary buffer to hold it */
+	fullname = malloc(maxlen);
+	if (fullname == NULL)
+	{
+		filerr = FILERR_OUT_OF_MEMORY;
+		goto error;
+	}
+
+	/* loop over paths */
+	while ((pathlen = path_iterator_get_next(&iterator, fullname, maxlen)) != -1)
+	{
+		char *dest;
+
+		/* compute the full pathname */
+		dest = &fullname[pathlen];
+		if (pathlen > 0)
+			*dest++ = '/';
+		strncpy(dest, filename, &fullname[maxlen] - dest);
+
+		/* attempt to open the file directly */
+		filerr = fopen_attempt_plain(fullname, openflags, *file);
+		if (filerr == FILERR_NONE)
+			break;
+
+		/* if we're opening for read-only we have other options */
+		if ((openflags & (OPEN_FLAG_READ | OPEN_FLAG_WRITE)) == OPEN_FLAG_READ)
+		{
+			filerr = fopen_attempt_zipped(fullname, dest, crc, openflags, *file);
+			if (filerr == FILERR_NONE)
+				break;
+		}
+	}
+	free(fullname);
+
+	/* handle errors and return */
+error:
+	if (filerr != FILERR_NONE)
+	{
+		mame_fclose(*file);
+		*file = NULL;
+	}
+	return filerr;
+}
+
+
+/*-------------------------------------------------
+    fopen_attempt_plain - attempt to open a
+    regular file, optionally creating a directory
+    if we get an error
+-------------------------------------------------*/
+
+static mame_file_error fopen_attempt_plain(char *fullname, UINT32 openflags, mame_file *file)
+{
+	mame_file_error filerr;
+
+	/* attempt to open with the input flags; stop if we succeed */
+	filerr = osd_open(fullname, openflags, &file->file, &file->length);
+	if (filerr == FILERR_NONE)
+	{
+		file->type = PLAIN_FILE;
+		return FILERR_NONE;
+	}
+
+	/* return the error */
+	return filerr;
+}
+
+
+/*-------------------------------------------------
+    fopen_attempt_zipped - attempt to open a
+    ZIPped file
+-------------------------------------------------*/
+
+static mame_file_error fopen_attempt_zipped(char *fullname, const char *filename, UINT32 crc, UINT32 openflags, mame_file *file)
+{
+	char *dirsep = fullname + strlen(fullname);
+	zip_error ziperr;
+	zip_file *zip;
+	char saved[5];
+
+	assert(filename >= fullname && filename < fullname + strlen(fullname));
+
+	/* loop over directory parts up to the start of filename */
+	while (1)
+	{
+		const zip_file_header *header;
+		int filenamelen;
+
+		/* find the previous path separator */
+		for (dirsep--; dirsep >= filename && *dirsep != '/'; dirsep--) ;
+
+		/* if none, we're done */
+		if (*dirsep != '/')
+			return FILERR_NOT_FOUND;
+
+		/* truncate here and replace with .zip */
+		dirsep[0] = '.';
+		saved[1] = dirsep[1]; dirsep[1] = 'z';
+		saved[2] = dirsep[2]; dirsep[2] = 'i';
+		saved[3] = dirsep[3]; dirsep[3] = 'p';
+		saved[4] = dirsep[4]; dirsep[4] = 0;
+
+		/* attempt to open the ZIP file */
+		ziperr = zip_file_open(fullname, &zip);
+
+		/* fix the original buffer */
+		dirsep[0] = '/';
+		dirsep[1] = saved[1];
+		dirsep[2] = saved[2];
+		dirsep[3] = saved[3];
+		dirsep[4] = saved[4];
+
+		/* if we didn't open this file, continue scanning */
+		if (ziperr != ZIPERR_NONE)
+			continue;
+
+		/* precompute the filename length */
+		filenamelen = strlen(dirsep + 1);
+
+		/* see if we can find the file */
+		for (header = zip_file_first_file(zip); header != NULL; header = zip_file_next_file(zip))
+		{
+			/* filename match first */
+			if (header->filename_length >= filenamelen &&
+				mame_stricmp(header->filename + header->filename_length - filenamelen, dirsep + 1) == 0)
+				break;
+
+			/* CRC match second */
+			if ((openflags & OPEN_FLAG_HAS_CRC) && header->crc == crc)
+				break;
+		}
+
+		/* if we got it, read the data */
+		if (header != NULL)
+		{
+			UINT8 crcs[4];
+
+			file->zipfile = zip;
+			file->type = ZIPPED_FILE;
+			file->length = header->uncompressed_length;
+
+			/* build a hash with just the CRC */
+			hash_data_clear(file->hash);
+			crcs[0] = header->crc >> 24;
+			crcs[1] = header->crc >> 16;
+			crcs[2] = header->crc >> 8;
+			crcs[3] = header->crc >> 0;
+			hash_data_insert_binary_checksum(file->hash, HASH_CRC, crcs);
+			return FILERR_NONE;
+		}
+
+		/* close up the ZIP file and try the next level */
+		zip_file_close(zip);
+	}
 }
 
 
@@ -339,138 +376,21 @@ void mame_fclose(mame_file *file)
 	file->debug_cookie = 0;
 #endif
 
-	/* switch off the file type */
-	switch (file->type)
-	{
-		case PLAIN_FILE:
-			osd_fclose(file->file);
-			break;
-
-		case ZIPPED_FILE:
-		case RAM_FILE:
-			if (file->data)
-				free(file->data);
-			break;
-	}
-
-	/* free the file data */
+	/* close files and free memory */
+	if (file->zipfile != NULL)
+		zip_file_close(file->zipfile);
+	if (file->file != NULL)
+		osd_close(file->file);
+	if (file->data != NULL)
+		free(file->data);
 	free(file);
 }
 
 
-/*-------------------------------------------------
-    mame_faccess - determine whether or not the
-    given file exists in our search paths
--------------------------------------------------*/
 
-int mame_faccess(const char *filename, int filetype)
-{
-	const char *extension = get_extension_for_filetype(filetype);
-	int pathcount = osd_get_path_count(filetype);
-	char modified_filename[256];
-	int pathindex;
-
-	/* copy the filename and add an extension */
-	strncpy(modified_filename, filename, sizeof(modified_filename) - 1);
-	modified_filename[sizeof(modified_filename) - 1] = 0;
-	if (extension)
-	{
-		char *p = strchr(modified_filename, '.');
-		if (p)
-		{
-			strncpy(p, extension, sizeof(modified_filename) - (p - modified_filename) - 1);
-			modified_filename[sizeof(modified_filename) - 1] = 0;
-		}
-		else
-		{
-			strncat(modified_filename, ".", sizeof(modified_filename) - strlen(modified_filename) - 1);
-			strncat(modified_filename, extension, sizeof(modified_filename) - strlen(modified_filename) - 1);
-		}
-	}
-
-	/* loop over all paths */
-	for (pathindex = 0; pathindex < pathcount; pathindex++)
-	{
-		char name[256];
-
-		/* first check the raw filename, in case we're looking for a directory */
-		snprintf(name, sizeof(name), "%s", filename);
-		VPRINTF(("mame_faccess: trying %s\n", name));
-		if (osd_get_path_info(filetype, pathindex, name) != PATH_NOT_FOUND)
-			return 1;
-
-		/* try again with a .zip extension */
-		snprintf(name, sizeof(name), "%s.zip", filename);
-		VPRINTF(("mame_faccess: trying %s\n", name));
-		if (osd_get_path_info(filetype, pathindex, name) != PATH_NOT_FOUND)
-			return 1;
-
-		/* does such a directory (or file) exist? */
-		snprintf(name, sizeof(name), "%s", modified_filename);
-		VPRINTF(("mame_faccess: trying %s\n", name));
-		if (osd_get_path_info(filetype, pathindex, name) != PATH_NOT_FOUND)
-			return 1;
-	}
-
-	/* no match */
-	return 0;
-}
-
-
-/*-------------------------------------------------
-    mame_fread - read from a file
--------------------------------------------------*/
-
-UINT32 mame_fread(mame_file *file, void *buffer, UINT32 length)
-{
-	/* flush any buffered char */
-	file->back_char = EOF;
-
-	/* switch off the file type */
-	switch (file->type)
-	{
-		case PLAIN_FILE:
-			return osd_fread(file->file, buffer, length);
-
-		case ZIPPED_FILE:
-		case RAM_FILE:
-			if (file->data)
-			{
-				if (file->offset + length > file->length)
-				{
-					length = file->length - file->offset;
-					file->eof = 1;
-				}
-				memcpy(buffer, file->data + file->offset, length);
-				file->offset += length;
-				return length;
-			}
-			break;
-	}
-
-	return 0;
-}
-
-
-/*-------------------------------------------------
-    mame_fwrite - write to a file
--------------------------------------------------*/
-
-UINT32 mame_fwrite(mame_file *file, const void *buffer, UINT32 length)
-{
-	/* flush any buffered char */
-	file->back_char = EOF;
-
-	/* switch off the file type */
-	switch (file->type)
-	{
-		case PLAIN_FILE:
-			return osd_fwrite(file->file, buffer, length);
-	}
-
-	return 0;
-}
-
+/***************************************************************************
+    FILE POSITIONING
+***************************************************************************/
 
 /*-------------------------------------------------
     mame_fseek - seek within a file
@@ -483,56 +403,49 @@ int mame_fseek(mame_file *file, INT64 offset, int whence)
 	/* flush any buffered char */
 	file->back_char = EOF;
 
-	/* switch off the file type */
-	switch (file->type)
+	/* switch off the relative location */
+	switch (whence)
 	{
-		case PLAIN_FILE:
-			return osd_fseek(file->file, offset, whence);
+		case SEEK_SET:
+			file->offset = offset;
+			break;
 
-		case ZIPPED_FILE:
-		case RAM_FILE:
-			switch (whence)
-			{
-				case SEEK_SET:
-					file->offset = offset;
-					break;
-				case SEEK_CUR:
-					file->offset += offset;
-					break;
-				case SEEK_END:
-					file->offset = file->length + offset;
-					break;
-			}
-			file->eof = 0;
+		case SEEK_CUR:
+			file->offset += offset;
+			break;
+
+		case SEEK_END:
+			file->offset = file->length + offset;
 			break;
 	}
-
 	return err;
 }
 
 
 /*-------------------------------------------------
-    mame_fchecksum - verify the existence and
-    length of a file given a hash checksum
+    mame_ftell - return the current file position
 -------------------------------------------------*/
 
-int mame_fchecksum(const char *gamename, const char *filename, unsigned int *length, char *hash)
+UINT64 mame_ftell(mame_file *file)
 {
-	mame_file *file;
+	/* return the current offset */
+	return file->offset;
+}
 
-	/* first open the file; we pass the source hash because it contains
-       the expected checksum for the file (used to load by checksum) */
-	file = generic_fopen(FILETYPE_ROM, gamename, filename, hash, FILEFLAG_OPENREAD | FILEFLAG_HASH | FILEFLAG_VERIFY_ONLY, NULL);
 
-	/* if we didn't succeed return -1 */
-	if (!file)
-		return -1;
+/*-------------------------------------------------
+    mame_feof - return 1 if we're at the end
+    of file
+-------------------------------------------------*/
 
-	/* close the file and save the length & checksum */
-	hash_data_copy(hash, file->hash);
-	*length = file->length;
-	mame_fclose(file);
-	return 0;
+int mame_feof(mame_file *file)
+{
+	/* check for buffered chars */
+	if (file->back_char != EOF)
+		return 0;
+
+	/* if the offset == length, we're at EOF */
+	return (file->offset >= file->length);
 }
 
 
@@ -542,35 +455,79 @@ int mame_fchecksum(const char *gamename, const char *filename, unsigned int *len
 
 UINT64 mame_fsize(mame_file *file)
 {
+	return file->length;
+}
+
+
+
+/***************************************************************************
+    FILE READ
+***************************************************************************/
+
+/*-------------------------------------------------
+    mame_fread - read from a file
+-------------------------------------------------*/
+
+UINT32 mame_fread(mame_file *file, void *buffer, UINT32 length)
+{
+	mame_file_error filerr;
+	UINT32 bytes_read = 0;
+
+	/* flush any buffered char */
+	file->back_char = EOF;
+
 	/* switch off the file type */
 	switch (file->type)
 	{
 		case PLAIN_FILE:
-		{
-			int size, offs;
-			offs = osd_ftell(file->file);
-			osd_fseek(file->file, 0, SEEK_END);
-			size = osd_ftell(file->file);
-			osd_fseek(file->file, offs, SEEK_SET);
-			return size;
-		}
+
+			/* if we're within the buffer, consume that first */
+			if (file->offset >= file->bufferbase && file->offset < file->bufferbase + file->bufferbytes)
+				bytes_read += safe_buffer_copy(file->buffer, file->offset - file->bufferbase, file->bufferbytes, buffer, bytes_read, length);
+
+			/* if we've got a small amount left, read it into the buffer first */
+			if (bytes_read < length)
+			{
+				if (length - bytes_read < sizeof(file->buffer) / 2)
+				{
+					/* read as much as makes sense into the buffer */
+					file->bufferbase = file->offset + bytes_read;
+					file->bufferbytes = 0;
+					filerr = osd_read(file->file, file->buffer, file->bufferbase, sizeof(file->buffer), &file->bufferbytes);
+
+					/* do a bounded copy from the buffer to the destination */
+					bytes_read += safe_buffer_copy(file->buffer, 0, file->bufferbytes, buffer, bytes_read, length);
+				}
+
+				/* read the remainder directly from the file */
+				else
+				{
+					UINT32 new_bytes_read;
+					filerr = osd_read(file->file, (UINT8 *)buffer + bytes_read, file->offset + bytes_read, length - bytes_read, &new_bytes_read);
+					bytes_read += new_bytes_read;
+				}
+			}
+			break;
+
+		case ZIPPED_FILE:
+
+			/* convert to a RAM-based file and fall through.... */
+			filerr = convert_zipped_to_ram(file);
+			if (filerr != FILERR_NONE)
+				return 0;
+			assert(file->type == RAM_FILE);
 
 		case RAM_FILE:
-		case ZIPPED_FILE:
-			return file->length;
+
+			/* only process if we have data */
+			if (file->data != NULL)
+				bytes_read += safe_buffer_copy(file->data, (UINT32)file->offset, file->length, buffer, bytes_read, length);
+			break;
 	}
 
-	return 0;
-}
-
-
-/*-------------------------------------------------
-    mame_fhash - returns the hash for a file
--------------------------------------------------*/
-
-const char *mame_fhash(mame_file *file)
-{
-	return file->hash;
+	/* return the number of bytes read */
+	file->offset += bytes_read;
+	return bytes_read;
 }
 
 
@@ -580,7 +537,7 @@ const char *mame_fhash(mame_file *file)
 
 int mame_fgetc(mame_file *file)
 {
-	unsigned char buffer;
+	UINT8 buffer;
 
 	/* handle ungetc */
 	if (file->back_char != EOF)
@@ -590,22 +547,9 @@ int mame_fgetc(mame_file *file)
 		return buffer;
 	}
 
-	/* switch off the file type */
-	switch (file->type)
-	{
-		case PLAIN_FILE:
-			if (osd_fread(file->file, &buffer, 1) == 1)
-				return buffer;
-			return EOF;
-
-		case RAM_FILE:
-		case ZIPPED_FILE:
-			if (file->offset < file->length)
-				return file->data[file->offset++];
-			else
-				file->eof = 1;
-			return EOF;
-	}
+	/* otherwise, fetch the next byte */
+	if (mame_fread(file, &buffer, 1) == 1)
+		return buffer;
 	return EOF;
 }
 
@@ -618,7 +562,6 @@ int mame_fgetc(mame_file *file)
 int mame_ungetc(int c, mame_file *file)
 {
 	file->back_char = c;
-
 	return c;
 }
 
@@ -673,122 +616,51 @@ char *mame_fgets(char *s, int n, mame_file *file)
 }
 
 
+
+/***************************************************************************
+    FILE WRITE
+***************************************************************************/
+
 /*-------------------------------------------------
-    mame_feof - return 1 if we're at the end
-    of file
+    mame_fwrite - write to a file
 -------------------------------------------------*/
 
-int mame_feof(mame_file *file)
+UINT32 mame_fwrite(mame_file *file, const void *buffer, UINT32 length)
 {
-	/* check for buffered chars */
-	if (file->back_char != EOF)
-		return 0;
+	UINT32 bytes_written = 0;
+	mame_file_error filerr;
+
+	/* flush any buffered char */
+	file->back_char = EOF;
+
+	/* invalidate any buffered data */
+	file->bufferbytes = 0;
 
 	/* switch off the file type */
 	switch (file->type)
 	{
 		case PLAIN_FILE:
-			return osd_feof(file->file);
 
-		case RAM_FILE:
+			/* write directly to the file */
+			filerr = osd_write(file->file, buffer, file->offset, length, &bytes_written);
+			break;
+
 		case ZIPPED_FILE:
-			return (file->eof);
-	}
-
-	return 1;
-}
-
-
-/*-------------------------------------------------
-    mame_ftell - return the current file position
--------------------------------------------------*/
-
-UINT64 mame_ftell(mame_file *file)
-{
-	/* switch off the file type */
-	switch (file->type)
-	{
-		case PLAIN_FILE:
-			return osd_ftell(file->file);
-
 		case RAM_FILE:
-		case ZIPPED_FILE:
-			return file->offset;
+			fatalerror("Cannot write to ZIPped or RAM-based files");
+			break;
 	}
 
-	return -1L;
-}
-
-
-/*-------------------------------------------------
-    mame_fread_swap - read from a data file,
-    swapping every other byte
--------------------------------------------------*/
-
-UINT32 mame_fread_swap(mame_file *file, void *buffer, UINT32 length)
-{
-	UINT8 *buf;
-	UINT8 temp;
-	int res, i;
-
-	/* standard read first */
-	res = mame_fread(file, buffer, length);
-
-	/* swap the result */
-	buf = buffer;
-	for (i = 0; i < res; i += 2)
-	{
-		temp = buf[i];
-		buf[i] = buf[i + 1];
-		buf[i + 1] = temp;
-	}
-
-	return res;
-}
-
-
-/*-------------------------------------------------
-    mame_fwrite_swap - write to a data file,
-    swapping every other byte
--------------------------------------------------*/
-
-UINT32 mame_fwrite_swap(mame_file *file, const void *buffer, UINT32 length)
-{
-	UINT8 *buf;
-	UINT8 temp;
-	int res, i;
-
-	/* swap the data first */
-	buf = (UINT8 *)buffer;
-	for (i = 0; i < length; i += 2)
-	{
-		temp = buf[i];
-		buf[i] = buf[i + 1];
-		buf[i + 1] = temp;
-	}
-
-	/* do the write */
-	res = mame_fwrite(file, buffer, length);
-
-	/* swap the data back */
-	for (i = 0; i < length; i += 2)
-	{
-		temp = buf[i];
-		buf[i] = buf[i + 1];
-		buf[i + 1] = temp;
-	}
-
-	return res;
+	/* return the number of bytes read */
+	file->offset += bytes_written;
+	file->length = MAX(file->length, file->offset);
+	return bytes_written;
 }
 
 
 /*-------------------------------------------------
     mame_fputs - write a line to a text file
 -------------------------------------------------*/
-
-#if !defined(CRLF) || (CRLF < 1) || (CRLF > 3)
-#error CRLF undefined: must be 1 (CR), 2 (LF) or 3 (CR/LF)
-#endif
 
 int mame_fputs(mame_file *f, const char *s)
 {
@@ -845,509 +717,46 @@ int CLIB_DECL mame_fprintf(mame_file *f, const char *fmt, ...)
 }
 
 
+
+/***************************************************************************
+    MISCELLANEOUS
+***************************************************************************/
+
 /*-------------------------------------------------
-    compose_path - form a pathname from standard
-    elements
+    mame_fhash - returns the hash for a file
 -------------------------------------------------*/
 
-INLINE void compose_path(char *output, size_t outputlen, const char *gamename, const char *filename, const char *extension)
+const char *mame_fhash(mame_file *file, UINT32 functions)
 {
-	char *filename_base = output;
-	*output = 0;
+	mame_file_error filerr = FILERR_NONE;
+	UINT32 wehave;
 
-#ifdef MESS
-	if (filename && osd_is_absolute_path(filename))
-	{
-		strncpy(output, filename, outputlen - 1);
-		output[outputlen - 1] = 0;
-		return;
-	}
-#endif
+	/* if we already have the functions we need, just return */
+	wehave = hash_data_used_functions(file->hash);
+	if ((wehave & functions) == functions)
+		return file->hash;
 
-	/* if there's a gamename, add that; only add a '/' if there is a filename as well */
-	if (gamename)
-	{
-		strncat(output, gamename, outputlen - strlen(output) - 1);
-		if (filename)
-		{
-			strncat(output, "/", outputlen - strlen(output) - 1);
-			filename_base = &output[strlen(output)];
-		}
-	}
+	/* if the file is plain or ZIPped, convert to RAM-based */
+	if (file->type == PLAIN_FILE)
+		filerr = convert_plain_to_ram(file);
+	else if (file->type == ZIPPED_FILE)
+		filerr = convert_zipped_to_ram(file);
+	if (filerr != FILERR_NONE)
+		return file->hash;
 
-	/* if there's a filename, add that */
-	if (filename)
-		strncat(output, filename, outputlen - strlen(output) - 1);
+	assert(file->type == RAM_FILE);
+	assert(file->data != NULL);
 
-	/* if there's no extension in the filename, add the extension */
-	if (extension && !strchr(filename_base, '.'))
-	{
-		strncat(output, ".", outputlen - strlen(output) - 1);
-		strncat(output, extension, outputlen - strlen(output) - 1);
-	}
+	/* compute the hash */
+	hash_compute(file->hash, file->data, file->length, wehave | functions);
+	return file->hash;
 }
 
 
-/*-------------------------------------------------
-    get_extension_for_filetype - return extension
-    for a given file type
--------------------------------------------------*/
 
-static const char *get_extension_for_filetype(int filetype)
-{
-	const char *extension;
-
-	/* now open the file appropriately */
-	switch (filetype)
-	{
-		case FILETYPE_RAW:			/* raw data files */
-		case FILETYPE_ROM:			/* ROM files */
-		case FILETYPE_HIGHSCORE_DB:	/* highscore database/history files */
-		case FILETYPE_HISTORY:		/* game history files */
-		case FILETYPE_CHEAT:		/* cheat file */
-		default:					/* anything else */
-			extension = NULL;
-			break;
-
-#ifndef MESS
-		case FILETYPE_IMAGE:		/* disk image files */
-			extension = "chd";
-			break;
-#endif
-
-		case FILETYPE_IMAGE_DIFF:	/* differencing drive images */
-			extension = "dif";
-			break;
-
-		case FILETYPE_SAMPLE:		/* samples */
-			extension = "wav";
-			break;
-
-		case FILETYPE_ARTWORK:		/* artwork files */
-			extension = "lay";
-			break;
-
-		case FILETYPE_SCREENSHOT:	/* screenshot files */
-			extension = "png";
-			break;
-
-		case FILETYPE_MOVIE:	    /* recorded movie files */
-			extension = "mng";
-			break;
-
-		case FILETYPE_NVRAM:		/* NVRAM files */
-			extension = "nv";
-			break;
-
-		case FILETYPE_HIGHSCORE:	/* high score files */
-			extension = "hi";
-			break;
-
-		case FILETYPE_LANGUAGE:		/* language files */
-			extension = "lng";
-			break;
-
-		case FILETYPE_CTRLR:		/* controller files */
-		case FILETYPE_CONFIG:		/* config files */
-			extension = "cfg";
-			break;
-
-		case FILETYPE_INPUTLOG:		/* input logs */
-			extension = "inp";
-			break;
-
-		case FILETYPE_STATE:		/* save state files */
-			extension = "sta";
-			break;
-
-		case FILETYPE_MEMCARD:		/* memory card files */
-			extension = "mem";
-			break;
-
-		case FILETYPE_INI:			/* game specific ini files */
-			extension = "ini";
-			break;
-
-		case FILETYPE_COMMENT:
-			extension = "cmt";
-			break;
-
-#ifdef MESS
-		case FILETYPE_HASH:
-			extension = "hsi";
-			break;
-#endif
-
-		case FILETYPE_FONT:
-			extension = "bdf";
-			break;
-	}
-	return extension;
-}
-
-
-/*-------------------------------------------------
-    generic_fopen - master logic for finding and
-    opening a file
--------------------------------------------------*/
-
-static mame_file *generic_fopen(int pathtype, const char *gamename, const char *filename, const char* hash, UINT32 flags, osd_file_error *error)
-{
-	static const char *access_modes[] = { "rb", "rb", "wb", "r+b", "rb", "rb", "wbg", "r+bg" };
-	const char *extension = get_extension_for_filetype(pathtype);
-	int pathcount = osd_get_path_count(pathtype);
-	int pathindex, pathstart, pathstop, pathinc;
-	mame_file file, *newfile;
-	char tempname[256];
-	osd_file_error dummy;
-
-#ifdef MESS
-	int is_absolute_path = FALSE;
-	if (filename)
-	{
-		is_absolute_path = osd_is_absolute_path(filename);
-		if (is_absolute_path)
-		{
-			if ((flags & FILEFLAG_ALLOW_ABSOLUTE) == 0)
-				return NULL;
-			pathcount = 1;
-		}
-	}
-#endif /* MESS */
-
-	if (!error)
-		error = &dummy;
-	*error = FILEERR_SUCCESS;
-
-	VPRINTF(("generic_fopen(%d, %s, %s, %s, %X)\n", pathcount, gamename, filename, extension, flags));
-
-	/* reset the file handle */
-	memset(&file, 0, sizeof(file));
-
-	file.back_char = EOF;
-
-	/* check for incompatible flags */
-	if ((flags & FILEFLAG_OPENWRITE) && (flags & FILEFLAG_HASH))
-		fprintf(stderr, "Can't use HASH option with WRITE option in generic_fopen!\n");
-
-	/* determine start/stop based on reverse search flag */
-	if (!(flags & FILEFLAG_REVERSE_SEARCH))
-	{
-		pathstart = 0;
-		pathstop = pathcount;
-		pathinc = 1;
-	}
-	else
-	{
-		pathstart = pathcount - 1;
-		pathstop = -1;
-		pathinc = -1;
-	}
-
-	/* loop over paths */
-	for (pathindex = pathstart; pathindex != pathstop; pathindex += pathinc)
-	{
-		char name[1024];
-
-		/* ----------------- STEP 1: OPEN THE FILE RAW -------------------- */
-
-		/* first look for path/gamename as a directory */
-		compose_path(name, sizeof(name), gamename, NULL, NULL);
-		VPRINTF(("Trying %s\n", name));
-
-#ifdef MESS
-		if (is_absolute_path)
-		{
-			*name = 0;
-		}
-#endif
-		if (flags & FILEFLAG_CREATE_GAMEDIR)
-		{
-			if (osd_get_path_info(pathtype, pathindex, name) == PATH_NOT_FOUND)
-				osd_create_directory(pathtype, pathindex, name);
-		}
-
-		/* if the directory exists, proceed */
-		if (*name == 0 || osd_get_path_info(pathtype, pathindex, name) == PATH_IS_DIRECTORY)
-		{
-			/* now look for path/gamename/filename.ext */
-			compose_path(name, sizeof(name), gamename, filename, extension);
-
-			/* if we need checksums, load it into RAM and compute it along the way */
-			if (flags & FILEFLAG_HASH)
-			{
-				if (checksum_file(pathtype, pathindex, name, &file.data, &file.length, file.hash) == 0)
-				{
-					file.type = RAM_FILE;
-					break;
-				}
-			}
-
-			/* otherwise, just open it straight */
-			else
-			{
-				file.type = PLAIN_FILE;
-				file.file = osd_fopen(pathtype, pathindex, name, access_modes[flags & 7], error);
-				if (file.file == NULL && (flags & (3 | FILEFLAG_MUST_EXIST)) == 3)
-					file.file = osd_fopen(pathtype, pathindex, name, "w+b", error);
-				if (file.file != NULL)
-					break;
-				if (*error != FILEERR_NOT_FOUND)
-				{
-					pathindex = pathstop;	/* acknowledges the error */
-					break;
-				}
-			}
-
-#ifdef MESS
-			if (flags & FILEFLAG_ZIP_PATHS)
-			{
-				int path_info = PATH_NOT_FOUND;
-				const char *oldname = name;
-				const char *zipentryname;
-				char *newname = NULL;
-				char *oldnewname = NULL;
-				char *s;
-				UINT32 ziplength;
-
-				while ((oldname[0]) && ((path_info = osd_get_path_info(pathtype, pathindex, oldname)) == PATH_NOT_FOUND))
-				{
-					/* get name of parent directory into newname & oldname */
-					newname = osd_dirname(oldname);
-
-					/* if we are at a "blocking point", break out now */
-					if (newname && !strcmp(oldname, newname))
-					{
-						free(newname);
-						newname = NULL;
-					}
-
-					if (oldnewname)
-						free(oldnewname);
-					oldname = oldnewname = newname;
-					if (!newname)
-						break;
-
-					/* remove any trailing path separator if needed */
-					for (s = newname + strlen(newname) - 1; s >= newname && osd_is_path_separator(*s); s--)
-						*s = '\0';
-				}
-
-				if (newname)
-				{
-					if ((oldname[0]) &&(path_info == PATH_IS_FILE))
-					{
-						zipentryname = name + strlen(newname);
-						while(osd_is_path_separator(*zipentryname))
-							zipentryname++;
-
-						if (load_zipped_file(pathtype, pathindex, newname, zipentryname, &file.data, &ziplength) == 0)
-						{
-							unsigned functions;
-							functions = hash_data_used_functions(hash);
-							VPRINTF(("Using (mame_fopen) zip file for %s\n", filename));
-							file.length = ziplength;
-							file.type = ZIPPED_FILE;
-							hash_compute(file.hash, file.data, file.length, functions);
-							free(newname);
-							break;
-						}
-					}
-					free(newname);
-				}
-			}
-			if (is_absolute_path)
-				continue;
-#endif
-		}
-
-		/* ----------------- STEP 2: OPEN THE FILE IN A ZIP -------------------- */
-
-		/* now look for it within a ZIP file */
-		if (!(flags & (FILEFLAG_OPENWRITE | FILEFLAG_NOZIP)))
-		{
-			/* first look for path/gamename.zip */
-			compose_path(name, sizeof(name), gamename, NULL, "zip");
-			VPRINTF(("Trying %s file\n", name));
-
-			/* if the ZIP file exists, proceed */
-			if (osd_get_path_info(pathtype, pathindex, name) == PATH_IS_FILE)
-			{
-				UINT32 ziplength;
-
-				/* if the file was able to be extracted from the ZIP, continue */
-				compose_path(tempname, sizeof(tempname), NULL, filename, extension);
-
-				/* verify-only case */
-				if (flags & FILEFLAG_VERIFY_ONLY)
-				{
-					UINT8 crcs[4];
-					UINT32 crc = 0;
-
-					/* Since this is a .ZIP file, we extract the CRC from the expected hash
-                       (if any), so that we can load by CRC if needed. We must check that
-                       the hash really contains a CRC, because it could be a NO_DUMP rom
-                       for which we do not know the CRC yet. */
-					if (hash && hash_data_extract_binary_checksum(hash, HASH_CRC, crcs) != 0)
-					{
-						/* Store the CRC in a single DWORD */
-						crc = ((unsigned long)crcs[0] << 24) |
-							  ((unsigned long)crcs[1] << 16) |
-							  ((unsigned long)crcs[2] <<  8) |
-							  ((unsigned long)crcs[3] <<  0);
-					}
-
-					hash_data_clear(file.hash);
-
-					if (checksum_zipped_file(pathtype, pathindex, name, tempname, &ziplength, &crc) == 0)
-					{
-						file.length = ziplength;
-						file.type = UNLOADED_ZIPPED_FILE;
-
-						crcs[0] = (UINT8)(crc >> 24);
-						crcs[1] = (UINT8)(crc >> 16);
-						crcs[2] = (UINT8)(crc >> 8);
-						crcs[3] = (UINT8)(crc >> 0);
-						hash_data_insert_binary_checksum(file.hash, HASH_CRC, crcs);
-						break;
-					}
-				}
-
-				/* full load case */
-				else
-				{
-					int err;
-
-					/* Try loading the file */
-					err = load_zipped_file(pathtype, pathindex, name, tempname, &file.data, &ziplength);
-
-					/* If it failed, since this is a ZIP file, we can try to load by CRC
-                       if an expected hash has been provided. unzip.c uses this ugly hack
-                       of specifying the CRC as filename. */
-					if (err && hash)
-					{
-						char crcn[9];
-
-						if (hash_data_extract_printable_checksum(hash, HASH_CRC, crcn) != 0)
-							err = load_zipped_file(pathtype, pathindex, name, crcn, &file.data, &ziplength);
-					}
-
-					if (err == 0)
-					{
-						unsigned functions;
-
-						VPRINTF(("Using (mame_fopen) zip file for %s\n", filename));
-						file.length = ziplength;
-						file.type = ZIPPED_FILE;
-
-						/* Since we already loaded the file, we can easily calculate the
-                           checksum of all the functions. In practice, we use only the
-                           functions for which we have an expected checksum to compare with. */
-						functions = hash_data_used_functions(hash);
-
-						hash_compute(file.hash, file.data, file.length, functions);
-						break;
-					}
-				}
-			}
-		}
-	}
-
-	/* if we didn't succeed, just return NULL */
-	if (pathindex == pathstop)
-	{
-		if (*error == FILEERR_SUCCESS)
-			*error = FILEERR_NOT_FOUND;
-		return NULL;
-	}
-
-	/* otherwise, duplicate the file */
-	newfile = malloc(sizeof(file));
-	if (newfile)
-	{
-		*newfile = file;
-#ifdef DEBUG_COOKIE
-		newfile->debug_cookie = DEBUG_COOKIE;
-#endif
-	}
-
-	return newfile;
-}
-
-
-/*-------------------------------------------------
-    checksum_file - load and checksum a file
--------------------------------------------------*/
-
-static int checksum_file(int pathtype, int pathindex, const char *file, UINT8 **p, UINT64 *size, char *hash)
-{
-	UINT64 length;
-	UINT8 *data;
-	osd_file *f;
-	unsigned int functions;
-	osd_file_error dummy;
-
-	/* open the file */
-	f = osd_fopen(pathtype, pathindex, file, "rb", &dummy);
-	if (!f)
-		return -1;
-
-	/* determine length of file */
-	if (osd_fseek(f, 0L, SEEK_END) != 0)
-	{
-		osd_fclose(f);
-		return -1;
-	}
-
-	length = osd_ftell(f);
-	if (length == -1L)
-	{
-		osd_fclose(f);
-		return -1;
-	}
-
-	/* allocate space for entire file */
-	data = malloc(length);
-	if (!data)
-	{
-		osd_fclose(f);
-		return -1;
-	}
-
-	/* read entire file into memory */
-	if (osd_fseek(f, 0L, SEEK_SET) != 0)
-	{
-		free(data);
-		osd_fclose(f);
-		return -1;
-	}
-
-	if (osd_fread(f, data, length) != length)
-	{
-		free(data);
-		osd_fclose(f);
-		return -1;
-	}
-
-	*size = length;
-
-	/* compute the checksums (only the functions for which we have an expected
-       checksum). Take also care of crconly: if the user asked, we will calculate
-       only the CRC, but only if there is an expected CRC for this file. */
-	functions = hash_data_used_functions(hash);
-	hash_compute(hash, data, length, functions);
-
-	/* if the caller wants the data, give it away, otherwise free it */
-	if (p)
-		*p = data;
-	else
-		free(data);
-
-	/* close the file */
-	osd_fclose(f);
-	return 0;
-}
-
+/***************************************************************************
+    CHD CALLBACKS
+***************************************************************************/
 
 /*-------------------------------------------------
     chd_open_cb - interface for opening
@@ -1356,23 +765,38 @@ static int checksum_file(int pathtype, int pathindex, const char *file, UINT8 **
 
 chd_interface_file *chd_open_cb(const char *filename, const char *mode)
 {
+	mame_file_error filerr;
+	mame_file *file;
+
 	/* look for read-only drives first in the ROM path */
 	if (mode[0] == 'r' && !strchr(mode, '+'))
 	{
 		const game_driver *drv;
+		char *path;
+
+		/* allocate a temporary buffer to hold the path */
+		path = malloc_or_die(strlen(filename) + 1 + MAX_DRIVER_NAME_CHARS + 1);
 
 		/* attempt reading up the chain through the parents */
 		for (drv = Machine->gamedrv; drv != NULL; drv = driver_get_clone(drv))
 		{
-			void *file = mame_fopen(drv->name, filename, FILETYPE_IMAGE, 0);
-			if (file != NULL)
-				return file;
+			sprintf(path, "%s/%s", drv->name, filename);
+			filerr = mame_fopen(SEARCHPATH_IMAGE, path, OPEN_FLAG_READ, &file);
+			if (filerr == FILERR_NONE)
+			{
+				free(path);
+				return (chd_interface_file *)file;
+			}
 		}
+		free(path);
 		return NULL;
 	}
 
 	/* look for read/write drives in the diff area */
-	return (chd_interface_file *)mame_fopen(NULL, filename, FILETYPE_IMAGE_DIFF, 1);
+	filerr = mame_fopen(SEARCHPATH_IMAGE_DIFF, filename, OPEN_FLAG_READ | OPEN_FLAG_WRITE, &file);
+	if (filerr != FILERR_NONE)
+		filerr = mame_fopen(SEARCHPATH_IMAGE_DIFF, filename, OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &file);
+	return (filerr == FILERR_NONE) ? (chd_interface_file *)file : NULL;
 }
 
 
@@ -1419,4 +843,167 @@ UINT32 chd_write_cb(chd_interface_file *file, UINT64 offset, UINT32 count, const
 UINT64 chd_length_cb(chd_interface_file *file)
 {
 	return mame_fsize((mame_file *)file);
+}
+
+
+
+/***************************************************************************
+    PATH ITERATION
+***************************************************************************/
+
+/*-------------------------------------------------
+    path_iterator_init - prepare to iterate over
+    a given path type
+-------------------------------------------------*/
+
+static int path_iterator_init(path_iterator *iterator, const char *searchpath)
+{
+	const char *cur, *base;
+	int maxlen = 0;
+
+	/* reset the structure */
+	memset(iterator, 0, sizeof(*iterator));
+	iterator->base = (searchpath != NULL) ? options_get_string(searchpath, FALSE) : "";
+	iterator->cur = iterator->base;
+
+	/* determine the maximum path embedded here */
+	base = iterator->base;
+	for (cur = iterator->base; *cur != 0; cur++)
+		if (*cur == ';')
+		{
+			maxlen = MAX(maxlen, cur - base);
+			base = cur + 1;
+		}
+
+	/* account for the last path */
+	maxlen = MAX(maxlen, cur - base);
+	return maxlen + 1;
+}
+
+
+/*-------------------------------------------------
+    path_iterator_get_next - get the next entry
+    in a multipath sequence
+-------------------------------------------------*/
+
+static int path_iterator_get_next(path_iterator *iterator, char *buffer, int buflen)
+{
+	char *dest = buffer;
+	const char *cur;
+
+	/* if none left, return -1 to indicate we are done */
+	if (iterator->index != 0 && *iterator->cur == 0)
+		return -1;
+
+	/* copy up to the next semicolon */
+	cur = iterator->cur;
+	while (*cur != 0 && *cur != ';' && buflen > 1)
+	{
+		*dest++ = *cur++;
+		buflen--;
+	}
+	*dest = 0;
+
+	/* if we ran out of buffer space, skip forward to the semicolon */
+	while (*cur != 0 && *cur != ';')
+		cur++;
+	iterator->cur = (*cur == ';') ? (cur + 1) : cur;
+
+	/* bump the index and return the length */
+	iterator->index++;
+	return dest - buffer;
+}
+
+
+
+/***************************************************************************
+    MISC HELPERS
+***************************************************************************/
+
+/*-------------------------------------------------
+    safe_buffer_copy - copy safely from one
+    bounded buffer to another
+-------------------------------------------------*/
+
+static UINT32 safe_buffer_copy(const void *source, UINT32 sourceoffs, UINT32 sourcelen, void *dest, UINT32 destoffs, UINT32 destlen)
+{
+	UINT32 sourceavail = sourcelen - sourceoffs;
+	UINT32 destavail = destlen - destoffs;
+	UINT32 bytes_to_copy = MIN(sourceavail, destavail);
+	if (bytes_to_copy > 0)
+		memcpy((UINT8 *)dest + destoffs, (const UINT8 *)source + sourceoffs, bytes_to_copy);
+	return bytes_to_copy;
+}
+
+
+/*-------------------------------------------------
+    convert_plain_to_ram - convert a plain file
+    to a RAM-based file
+-------------------------------------------------*/
+
+static mame_file_error convert_plain_to_ram(mame_file *file)
+{
+	mame_file_error filerr;
+	UINT32 read_length;
+
+	assert(file->type == PLAIN_FILE);
+	assert(file->data == NULL);
+	assert(file->file != NULL);
+
+	/* allocate some memory */
+	file->data = malloc(file->length);
+	if (file->data == NULL)
+		return FILERR_OUT_OF_MEMORY;
+
+	/* read the file */
+	filerr = osd_read(file->file, file->data, 0, file->length, &read_length);
+	if (filerr == FILERR_NONE && read_length != file->length)
+		filerr = FILERR_FAILURE;
+	if (filerr != FILERR_NONE)
+	{
+		free(file->data);
+		file->data = NULL;
+		return filerr;
+	}
+
+	/* convert to RAM file */
+	file->type = RAM_FILE;
+	osd_close(file->file);
+	file->file = NULL;
+	return FILERR_NONE;
+}
+
+
+/*-------------------------------------------------
+    convert_zipped_to_ram - convert a ZIPped file
+    to a RAM-based file
+-------------------------------------------------*/
+
+static mame_file_error convert_zipped_to_ram(mame_file *file)
+{
+	zip_error ziperr;
+
+	assert(file->type == ZIPPED_FILE);
+	assert(file->data == NULL);
+	assert(file->zipfile != NULL);
+
+	/* allocate some memory */
+	file->data = malloc(file->length);
+	if (file->data == NULL)
+		return FILERR_OUT_OF_MEMORY;
+
+	/* read the data into our buffer and return */
+	ziperr = zip_file_decompress(file->zipfile, file->data, file->length);
+	if (ziperr != ZIPERR_NONE)
+	{
+		free(file->data);
+		file->data = NULL;
+		return FILERR_FAILURE;
+	}
+
+	/* convert to RAM file */
+	file->type = RAM_FILE;
+	zip_file_close(file->zipfile);
+	file->zipfile = NULL;
+	return FILERR_NONE;
 }

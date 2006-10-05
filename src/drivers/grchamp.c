@@ -87,6 +87,25 @@ MACHINE_START( grchamp )
 
 /*************************************
  *
+ *  Interrupt generation
+ *
+ *************************************/
+
+static INTERRUPT_GEN( grchamp_interrupt )
+{
+	grchamp_state *state = Machine->driver_data;
+	int cpu = cpu_getactivecpu();
+
+	if (cpu == 0 && (state->cpu0_out[0] & 0x01))
+		cpunum_set_input_line(cpu, 0, ASSERT_LINE);
+	if (cpu == 1 && (state->cpu1_out[4] & 0x01))
+		cpunum_set_input_line(cpu, 0, ASSERT_LINE);
+}
+
+
+
+/*************************************
+ *
  *  Main CPU outputs
  *
  *************************************/
@@ -175,6 +194,8 @@ static WRITE8_HANDLER( cpu0_outputs_w )
 
 static WRITE8_HANDLER( led_board_w )
 {
+	static const UINT8 ls247_map[16] =
+		{ 0x3f,0x06,0x5b,0x4f,0x66,0x6d,0x7d,0x07,0x7f,0x6f,0x58,0x4c,0x62,0x69,0x78,0x00 };
 	grchamp_state *state = Machine->driver_data;
 
 	switch (offset)
@@ -193,7 +214,7 @@ static WRITE8_HANDLER( led_board_w )
 
 		case 0x0c:
 			state->ledram[state->ledaddr & 0x07] = state->ledlatch;
-			output_set_digit_value(state->ledaddr & 0x07, state->ledram[state->ledaddr & 0x07] & 0x0f);
+			output_set_digit_value(state->ledaddr & 0x07, ls247_map[state->ledram[state->ledaddr & 0x07] & 0x0f]);
 			/*
                 ledram[0] & 0x0f = score LSD
                 ledram[1] & 0x0f = score
@@ -538,18 +559,6 @@ static ADDRESS_MAP_START( writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 /***************************************************************************/
-
-static INTERRUPT_GEN( grchamp_interrupt )
-{
-	grchamp_state *state = Machine->driver_data;
-	int cpu = cpu_getactivecpu();
-
-	if (cpu == 0 && (state->cpu0_out[0] & 0x01))
-		cpunum_set_input_line(cpu, 0, ASSERT_LINE);
-	if (cpu == 1 && (state->cpu1_out[4] & 0x01))
-		cpunum_set_input_line(cpu, 0, ASSERT_LINE);
-}
-
 
 
 /*************************************

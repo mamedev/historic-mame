@@ -85,12 +85,14 @@ static int read_wav_sample(mame_file *f, struct loaded_sample *sample)
 	}
 
 	/* read the format -- make sure it is PCM */
-	offset += mame_fread_lsbfirst(f, &temp16, 2);
+	offset += mame_fread(f, &temp16, 2);
+	temp16 = LITTLE_ENDIANIZE_INT16(temp16);
 	if (temp16 != 1)
 		return 0;
 
 	/* number of channels -- only mono is supported */
-	offset += mame_fread_lsbfirst(f, &temp16, 2);
+	offset += mame_fread(f, &temp16, 2);
+	temp16 = LITTLE_ENDIANIZE_INT16(temp16);
 	if (temp16 != 1)
 		return 0;
 
@@ -102,7 +104,8 @@ static int read_wav_sample(mame_file *f, struct loaded_sample *sample)
 	offset += mame_fread(f, buf, 6);
 
 	/* bits/sample */
-	offset += mame_fread_lsbfirst(f, &bits, 2);
+	offset += mame_fread(f, &bits, 2);
+	bits = LITTLE_ENDIANIZE_INT16(bits);
 	if (bits != 8 && bits != 16)
 		return 0;
 
@@ -152,8 +155,12 @@ static int read_wav_sample(mame_file *f, struct loaded_sample *sample)
 	{
 		/* 16-bit data is fine as-is */
 		sample->data = auto_malloc(sizeof(*sample->data) * (length/2));
-		mame_fread_lsbfirst(f, sample->data, length);
+		mame_fread(f, sample->data, length);
 		sample->length /= 2;
+#ifndef LSB_FIRST
+		for (sindex = 0; sindex < sample->length; sindex++)
+			sample->data[sindex] = LITTLE_ENDIANIZE_INT16(sample->data[sindex]);
+#endif
 	}
 	return 1;
 }
@@ -191,21 +198,28 @@ struct loaded_samples *readsamples(const char **samplenames, const char *basenam
 
 	/* load the samples */
 	for (i = 0; i < samples->total; i++)
-	{
-		mame_file *f;
-
 		if (samplenames[i+skipfirst][0])
 		{
-			f = mame_fopen(basename, samplenames[i+skipfirst], FILETYPE_SAMPLE, 0);
-			if (f == NULL && skipfirst)
-				f = mame_fopen(samplenames[0] + 1, samplenames[i+skipfirst], FILETYPE_SAMPLE, 0);
-			if (f != NULL)
+			mame_file_error filerr;
+			mame_file *f;
+			char *fname;
+
+			fname = assemble_3_strings(basename, "/", samplenames[i+skipfirst]);
+			filerr = mame_fopen(SEARCHPATH_SAMPLE, fname, OPEN_FLAG_READ, &f);
+			free(fname);
+
+			if (filerr != FILERR_NONE && skipfirst)
+			{
+				fname = assemble_3_strings(samplenames[0] + 1, "/", samplenames[i+skipfirst]);
+				filerr = mame_fopen(SEARCHPATH_SAMPLE, fname, OPEN_FLAG_READ, &f);
+				free(fname);
+			}
+			if (filerr == FILERR_NONE)
 			{
 				read_wav_sample(f, &samples->sample[i]);
 				mame_fclose(f);
 			}
 		}
-	}
 
 	return samples;
 }

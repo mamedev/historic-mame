@@ -434,9 +434,19 @@ int debug_comment_save(void)
 	/* flush the file */
 	if (total_comments > 0)
 	{
- 		mame_file *fp = mame_fopen(Machine->gamedrv->name, 0, FILETYPE_COMMENT, 1);
- 		xml_file_write(root, fp);
-		mame_fclose(fp);
+		mame_file_error filerr;
+		char *fname;
+ 		mame_file *fp;
+
+ 		fname = assemble_2_strings(Machine->gamedrv->name, ".cmt");
+ 		filerr = mame_fopen(SEARCHPATH_COMMENT, fname, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &fp);
+ 		free(fname);
+
+ 		if (filerr == FILERR_NONE)
+ 		{
+	 		xml_file_write(root, fp);
+			mame_fclose(fp);
+		}
 	}
 
 	/* free and get out of here */
@@ -455,8 +465,15 @@ error:
 
 int debug_comment_load(void)
 {
-	mame_file *fp = mame_fopen(Machine->gamedrv->name, 0, FILETYPE_COMMENT, 0);
-	if (!fp) return 0;
+	mame_file_error filerr;
+	mame_file *fp;
+	char *fname;
+
+	fname = assemble_2_strings(Machine->gamedrv->name, ".cmt");
+	filerr = mame_fopen(SEARCHPATH_COMMENT, fname, OPEN_FLAG_READ, &fp);
+	free(fname);
+
+	if (filerr != FILERR_NONE) return 0;
 	debug_comment_load_xml(fp);
 	mame_fclose(fp);
 

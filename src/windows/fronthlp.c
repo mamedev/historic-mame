@@ -194,26 +194,28 @@ void identify_file(const char *name, FILE *output)
 		tolower(name[namelen - 1]) == 'p')
 	{
 		/* first attempt to examine it as a valid ZIP file */
-		zip_file *zip = openzip(FILETYPE_RAW, 0, name);
-		if (zip != NULL)
+		zip_file *zip;
+		zip_error ziperr = zip_file_open(name, &zip);
+		if (ziperr != ZIPERR_NONE)
 		{
-			zip_entry *entry;
+			const zip_file_header *entry;
 
 			/* loop over entries in the ZIP, skipping empty files and directories */
-			for (entry = readzip(zip); entry; entry = readzip(zip))
-				if (entry->uncompressed_size != 0)
+			for (entry = zip_file_first_file(zip); entry; entry = zip_file_next_file(zip))
+				if (entry->uncompressed_length != 0)
 				{
-					UINT8 *data = (UINT8 *)malloc(entry->uncompressed_size);
+					UINT8 *data = (UINT8 *)malloc(entry->uncompressed_length);
 					if (data != NULL)
 					{
-						readuncompresszip(zip, entry, data);
-						identify_data(entry->name, data, entry->uncompressed_size, output);
+						ziperr = zip_file_decompress(zip, data, entry->uncompressed_length);
+						if (ziperr == ZIPERR_NONE)
+							identify_data(entry->filename, data, entry->uncompressed_length, output);
 						free(data);
 					}
 				}
 
 			/* close up and exit early */
-			closezip(zip);
+			zip_file_close(zip);
 			return;
 		}
 	}
@@ -453,6 +455,10 @@ int frontend_listroms(FILE *output)
 	const rom_entry *region, *rom, *chunk;
 	const game_driver **gamedrv;
 
+	/* a NULL gamename == '*' */
+	if (gamename == NULL)
+		gamename = "*";
+
 	/* find the gamename */
 	for (gamedrv = (const game_driver **)&drivers[0]; *gamedrv != NULL; gamedrv++)
 		if (mame_stricmp(gamename, (*gamedrv)->name) == 0)
@@ -524,6 +530,10 @@ int frontend_listsamples(FILE *output)
 	machine_config drv;
 	int sndnum;
 #endif
+
+	/* a NULL gamename == '*' */
+	if (gamename == NULL)
+		gamename = "*";
 
 	/* find the gamename */
 	for (gamedrv = (const game_driver **)&drivers[0]; *gamedrv != NULL; gamedrv++)
@@ -600,6 +610,8 @@ int frontend_verifyroms(FILE *output)
 	/* now iterate over drivers */
 	for (drvindex = 0; drivers[drvindex]; drvindex++)
 	{
+		audit_record *audit;
+		int audit_records;
 		int res;
 
 		/* skip if we don't match */
@@ -607,10 +619,13 @@ int frontend_verifyroms(FILE *output)
 			continue;
 
 		/* audit the ROMs in this set */
-		res = audit_verify_roms(drvindex, verify_printf);
+		audit_records = audit_images(drvindex, AUDIT_VALIDATE_FAST, &audit);
+		res = audit_summary(drvindex, audit_records, audit, verify_printf);
+		if (audit_records > 0)
+			free(audit);
 
 		/* if not found, count that and leave it at that */
-		if (res == CLONE_NOTFOUND || res == NOTFOUND)
+		if (res == NOTFOUND)
 			notfound++;
 
 		/* else display information about what we discovered */
@@ -639,11 +654,6 @@ int frontend_verifyroms(FILE *output)
 
 				case BEST_AVAILABLE:
 					fprintf(output, "is best available\n");
-					correct++;
-					break;
-
-				case MISSING_OPTIONAL:
-					fprintf(output, "is missing optional files\n");
 					correct++;
 					break;
 			}
@@ -700,63 +710,48 @@ int frontend_verifysamples(FILE *output)
 	/* now iterate over drivers */
 	for (drvindex = 0; drivers[drvindex]; drvindex++)
 	{
-		const char **samplenames = NULL;
-		machine_config drv;
+		audit_record *audit;
+		int audit_records;
 		int res;
-
-#if (HAS_SAMPLES)
-		int sndnum;
-#endif
 
 		/* skip if we don't match */
 		if (mame_strwildcmp(gamename, drivers[drvindex]->name))
 			continue;
 
-		/* expand the machine driver and look for samples */
-		expand_machine_driver(drivers[drvindex]->drv, &drv);
-#if (HAS_SAMPLES)
-		for (sndnum = 0; drv.sound[sndnum].sound_type && sndnum < MAX_SOUND; sndnum++)
-			if (drv.sound[sndnum].sound_type == SOUND_SAMPLES)
-				samplenames = ((struct Samplesinterface *)drv.sound[sndnum].config)->samplenames;
-#endif
-		/* if we have samples, continue */
-		if (samplenames != NULL && samplenames[0] != NULL)
+		/* audit the samples in this set */
+		audit_records = audit_samples(drvindex, &audit);
+		res = audit_summary(drvindex, audit_records, audit, verify_printf);
+		if (audit_records > 0)
+			free(audit);
+		else
+			continue;
+
+		/* if not found, count that and leave it at that */
+		if (res == NOTFOUND)
+			notfound++;
+
+		/* else display information about what we discovered */
+		else
 		{
-			/* audit the samples in this set */
-			res = audit_verify_samples(drvindex, verify_printf);
+			fprintf(output, "sampleset %s ", drivers[drvindex]->name);
 
-			/* if not found, count that and leave it at that */
-			if (res == NOTFOUND)
-				notfound++;
-
-			/* else display information about what we discovered */
-			else
+			/* switch off of the result */
+			switch (res)
 			{
-				fprintf(output, "sampleset %s ", drivers[drvindex]->name);
+				case INCORRECT:
+					fprintf(output, "is bad\n");
+					incorrect++;
+					break;
 
-				/* switch off of the result */
-				switch (res)
-				{
-					case INCORRECT:
-						fprintf(output, "is bad\n");
-						incorrect++;
-						break;
+				case CORRECT:
+					fprintf(output, "is good\n");
+					correct++;
+					break;
 
-					case CORRECT:
-						fprintf(output, "is good\n");
-						correct++;
-						break;
-
-					case BEST_AVAILABLE:
-						fprintf(output, "is best available\n");
-						correct++;
-						break;
-
-					case MISSING_OPTIONAL:
-						fprintf(output, "is missing optional files\n");
-						correct++;
-						break;
-				}
+				case BEST_AVAILABLE:
+					fprintf(output, "is best available\n");
+					correct++;
+					break;
 			}
 		}
 
@@ -786,8 +781,14 @@ int frontend_verifysamples(FILE *output)
 
 int frontend_romident(FILE *output)
 {
+	const char *gamename = options_get_string("", FALSE);
+
+	/* a NULL gamename == '*' */
+	if (gamename == NULL)
+		return 3;
+
 	/* do the identification */
-	romident(options_get_string("", FALSE), output);
+	romident(gamename, output);
 
 	/* return the appropriate error code */
 	if (identmatches == identfiles)
@@ -804,6 +805,10 @@ int frontend_romident(FILE *output)
 int frontend_isknown(FILE *output)
 {
 	const char *gamename = options_get_string("", FALSE);
+
+	/* a NULL gamename == '*' */
+	if (gamename == NULL)
+		return 3;
 
 	/* do the identification */
 	romident(gamename, NULL);

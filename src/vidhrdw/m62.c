@@ -786,9 +786,9 @@ static void get_spelunk2_bg_tile_info( int offs )
 
 VIDEO_UPDATE( spelunk2 )
 {
-	tilemap_set_scrollx( m62_background, 0, m62_background_hscroll );
+	tilemap_set_scrollx( m62_background, 0, m62_background_hscroll - 1);
 	tilemap_set_scrolly( m62_background, 0, m62_background_vscroll + 128 );
-	tilemap_set_scrollx( m62_foreground, 0, -64 );
+	tilemap_set_scrollx( m62_foreground, 0, -65 );
 	tilemap_set_scrolly( m62_foreground, 0, 0 );
 	tilemap_set_transparent_pen( m62_foreground, 0 );
 

@@ -57,16 +57,20 @@
 #define PNG_PF_Paeth		4
 
 /* Error types */
-#define PNGERR_NONE				0
-#define PNGERR_OUT_OF_MEMORY	1
-#define PNGERR_UNKNOWN_FILTER	2
-#define PNGERR_FILE_ERROR		3
-#define PNGERR_BAD_SIGNATURE	4
-#define PNGERR_DECOMPRESS_ERROR	5
-#define PNGERR_FILE_TRUNCATED	6
-#define PNGERR_FILE_CORRUPT		7
-#define PNGERR_UNKNOWN_CHUNK	8
-#define PNGERR_COMPRESS_ERROR	9
+enum _png_error
+{
+	PNGERR_NONE,
+	PNGERR_OUT_OF_MEMORY,
+	PNGERR_UNKNOWN_FILTER,
+	PNGERR_FILE_ERROR,
+	PNGERR_BAD_SIGNATURE,
+	PNGERR_DECOMPRESS_ERROR,
+	PNGERR_FILE_TRUNCATED,
+	PNGERR_FILE_CORRUPT,
+	PNGERR_UNKNOWN_CHUNK,
+	PNGERR_COMPRESS_ERROR
+};
+typedef enum _png_error png_error;
 
 
 
@@ -116,15 +120,15 @@ struct _png_info
 
 void png_free(png_info *pnginfo);
 
-int png_read_file(mame_file *fp, png_info *pnginfo);
-int png_expand_buffer_8bit(png_info *p);
+png_error png_read_file(mame_file *fp, png_info *pnginfo);
+png_error png_expand_buffer_8bit(png_info *p);
 
-int png_add_text(const char *keyword, const char *text);
-int png_filter(png_info *p);
-int png_write_bitmap(mame_file *fp, mame_bitmap *bitmap);
+png_error png_add_text(const char *keyword, const char *text);
+png_error png_filter(png_info *p);
+png_error png_write_bitmap(mame_file *fp, mame_bitmap *bitmap);
 
-int mng_capture_start(mame_file *fp, mame_bitmap *bitmap);
-int mng_capture_frame(mame_file *fp, mame_bitmap *bitmap);
-int mng_capture_stop(mame_file *fp);
+png_error mng_capture_start(mame_file *fp, mame_bitmap *bitmap);
+png_error mng_capture_frame(mame_file *fp, mame_bitmap *bitmap);
+png_error mng_capture_stop(mame_file *fp);
 
 #endif	/* __PNG_H__ */

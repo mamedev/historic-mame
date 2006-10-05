@@ -242,9 +242,9 @@ void output_set_indexed_value(const char *basename, int index, int value)
 		*dest++ = *basename++;
 
 	/* append the index */
-	if (index > 1000) *dest++ = '0' + ((index / 1000) % 10);
-	if (index > 100) *dest++ = '0' + ((index / 100) % 10);
-	if (index > 10) *dest++ = '0' + ((index / 10) % 10);
+	if (index >= 1000) *dest++ = '0' + ((index / 1000) % 10);
+	if (index >= 100) *dest++ = '0' + ((index / 100) % 10);
+	if (index >= 10) *dest++ = '0' + ((index / 10) % 10);
 	*dest++ = '0' + (index % 10);
 	*dest++ = 0;
 
@@ -284,9 +284,9 @@ INT32 output_get_indexed_value(const char *basename, int index)
 		*dest++ = *basename++;
 
 	/* append the index */
-	if (index > 1000) *dest++ = '0' + ((index / 1000) % 10);
-	if (index > 100) *dest++ = '0' + ((index / 100) % 10);
-	if (index > 10) *dest++ = '0' + ((index / 10) % 10);
+	if (index >= 1000) *dest++ = '0' + ((index / 1000) % 10);
+	if (index >= 100) *dest++ = '0' + ((index / 100) % 10);
+	if (index >= 10) *dest++ = '0' + ((index / 10) % 10);
 	*dest++ = '0' + (index % 10);
 	*dest++ = 0;
 

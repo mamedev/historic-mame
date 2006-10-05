@@ -364,10 +364,10 @@ int cli_frontend_init(int argc, char **argv)
 		drvnum = driver_get_index(extract_base_name(gamename, basename, ARRAY_LENGTH(basename)));
 
 	// now parse the core set of INI files
-	parse_ini_file(CONFIGNAME ".ini");
+	parse_ini_file(CONFIGNAME);
 	parse_ini_file(extract_base_name(argv[0], buffer, ARRAY_LENGTH(buffer)));
 #ifdef MAME_DEBUG
-	parse_ini_file("debug.ini");
+	parse_ini_file("debug");
 #endif
 
 	// if we have a valid game driver, parse game-specific INI files
@@ -382,7 +382,7 @@ int cli_frontend_init(int argc, char **argv)
 
 		// parse vector.ini for vector games
 		if (drv.video_attributes & VIDEO_TYPE_VECTOR)
-			parse_ini_file("vector.ini");
+			parse_ini_file("vector");
 
 		// then parse sourcefile.ini
 		parse_ini_file(extract_base_name(driver->source_file, buffer, ARRAY_LENGTH(buffer)));
@@ -482,23 +482,24 @@ void cli_frontend_exit(void)
 
 static void parse_ini_file(const char *name)
 {
+	mame_file_error filerr;
 	mame_file *file;
+	char *fname;
 
 	// don't parse if it has been disabled
 	if (!options_get_bool("readconfig", FALSE))
 		return;
 
 	// open the file; if we fail, that's ok
-	file = mame_fopen(name, NULL, FILETYPE_INI, 0);
-	if (file == NULL)
+	fname = assemble_2_strings(name, ".ini");
+	filerr = mame_fopen(SEARCHPATH_INI, fname, OPEN_FLAG_READ, &file);
+	free(fname);
+	if (filerr != FILERR_NONE)
 		return;
 
 	// parse the file and close it
 	options_parse_ini_file(file);
 	mame_fclose(file);
-
-	// reset the INI path so it gets re-expanded next time
-	set_pathlist(FILETYPE_INI, NULL);
 }
 
 
@@ -706,8 +707,8 @@ static void extract_options(const game_driver *driver, machine_config *drv)
 	// debugging options
 	if (options_get_bool("log", TRUE))
 	{
-		options.logfile = mame_fopen(NULL, "error.log", FILETYPE_DEBUGLOG, TRUE);
-		assert_always(options.logfile != NULL, "unable to open log file");
+		mame_file_error filerr = mame_fopen(SEARCHPATH_DEBUGLOG, "error.log", OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &options.logfile);
+		assert_always(filerr == FILERR_NONE, "unable to open log file");
 	}
 	win_erroroslog = options_get_bool("oslog", TRUE);
 {
@@ -746,11 +747,12 @@ static void extract_options(const game_driver *driver, machine_config *drv)
 
 static void setup_playback(const char *filename, const game_driver *driver)
 {
+	mame_file_error filerr;
 	inp_header inp_header;
 
 	// open the playback file
-	options.playback = mame_fopen(filename, 0, FILETYPE_INPUTLOG, 0);
-	assert_always(options.playback != NULL, "Failed to open file for playback");
+	filerr = mame_fopen(SEARCHPATH_INPUTLOG, filename, OPEN_FLAG_READ, &options.playback);
+	assert_always(filerr == FILERR_NONE, "Failed to open file for playback");
 
 	// read playback header
 	mame_fread(options.playback, &inp_header, sizeof(inp_header));
@@ -776,11 +778,12 @@ static void setup_playback(const char *filename, const game_driver *driver)
 
 static void setup_record(const char *filename, const game_driver *driver)
 {
+	mame_file_error filerr;
 	inp_header inp_header;
 
 	// open the record file
-	options.record = mame_fopen(filename, 0, FILETYPE_INPUTLOG, 1);
-	assert_always(options.record != NULL, "Failed to open file for recording");
+	filerr = mame_fopen(SEARCHPATH_INPUTLOG, filename, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &options.record);
+	assert_always(filerr == FILERR_NONE, "Failed to open file for recording");
 
 	// create a header
 	memset(&inp_header, '\0', sizeof(inp_header));

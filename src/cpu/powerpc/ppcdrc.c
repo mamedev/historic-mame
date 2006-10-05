@@ -249,6 +249,8 @@ typedef struct {
 	UINT32 fit_int_enable;
 	UINT32 wdt_bit;
 	UINT32 wdt_int_enable;
+	UINT32 dac1, dac2;
+	UINT32 iac1, iac2;
 
 	SPU_REGS spu;
 	DMA_REGS dma[4];
@@ -258,7 +260,6 @@ typedef struct {
 	UINT32 reserved_address;
 
 	int exception_pending;
-	int external_int;
 
 	UINT64 tb;			/* 56-bit timebase register */
 
@@ -631,6 +632,12 @@ INLINE void ppc_set_spr(int spr, UINT32 value)
 			case SPR403_PBU1:		ppc.pbu1 = value; printf("PPC: PBU1 = %08X\n", ppc.pbu1); return;
 			case SPR403_PBL2:		ppc.pbl2 = value; printf("PPC: PBL2 = %08X\n", ppc.pbl2); return;
 			case SPR403_PBU2:		ppc.pbu2 = value; printf("PPC: PBU2 = %08X\n", ppc.pbu2); return;
+			case SPR403_SRR2:		ppc.srr2 = value; return;
+			case SPR403_SRR3:		ppc.srr3 = value; return;
+			case SPR403_DAC1:		ppc.dac1 = value; return;
+			case SPR403_DAC2:		ppc.dac2 = value; return;
+			case SPR403_IAC1:		ppc.iac1 = value; return;
+			case SPR403_IAC2:		ppc.iac2 = value; return;
 		}
 	}
 #endif
@@ -677,6 +684,12 @@ INLINE UINT32 ppc_get_spr(int spr)
 			case SPR403_PBU1:		return ppc.pbu1;
 			case SPR403_PBL2:		return ppc.pbl2;
 			case SPR403_PBU2:		return ppc.pbu2;
+			case SPR403_SRR2:		return ppc.srr2;
+			case SPR403_SRR3:		return ppc.srr3;
+			case SPR403_DAC1:		return ppc.dac1;
+			case SPR403_DAC2:		return ppc.dac2;
+			case SPR403_IAC1:		return ppc.iac1;
+			case SPR403_IAC2:		return ppc.iac2;
 		}
 	}
 #endif
@@ -975,8 +988,9 @@ static void ppcdrc403_set_irq_line(int irqline, int state)
 	{
 		UINT32 mask = (1 << (4 - irqline));
 		if( state == ASSERT_LINE) {
-			if( EXIER & mask ) {
-				ppc.external_int = mask;
+			if (EXIER & mask)
+			{
+				ppc.exisr |= mask;
 				ppc.exception_pending |= 0x1;
 
 				if (ppc.irq_callback)
@@ -996,7 +1010,7 @@ static void ppcdrc403_set_irq_line(int irqline, int state)
 		UINT32 mask = 0x08000000;
 		if (state) {
 			if( EXIER & mask ) {
-				ppc.external_int = mask;
+				ppc.exisr |= mask;
 				ppc.exception_pending |= 0x1;
 			}
 		}
@@ -1006,7 +1020,7 @@ static void ppcdrc403_set_irq_line(int irqline, int state)
 		UINT32 mask = 0x04000000;
 		if (state) {
 			if( EXIER & mask ) {
-				ppc.external_int = mask;
+				ppc.exisr |= mask;
 				ppc.exception_pending |= 0x1;
 			}
 		}

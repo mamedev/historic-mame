@@ -4,6 +4,7 @@ MPU4 highly preliminary driver by ElCondor, and Anonymous.
   23-09-2006: Converted 7Segment code to cleaner version, but have yet to add new 16k EPROM, as
               the original image was purported to come from a Barcrest BBS service, and is probably
               more 'official'.
+
   07-09-2006: It appears that the video firmware is intended to be a 16k EPROM, not 64k as dumped.
               In fact, the current dump is just the code repeated 4 times, when nothing earlier than
               0xC000 is ever called. Presumably, the ROM is loaded into C000, and the remainder of the
@@ -271,10 +272,10 @@ IRQ line connected to CPU
 #include "ui.h"
 #include "cpu/m6809/m6809.h"
 #include "sound/ay8910.h"
-//#include "vidhrdw/awpvid.h" //Fruit Machines Only
-#include "machine/lamps.h"
+//#include "vidhrdw/awpvid.h" //AGEMAME Only
+#include "machine/lamps.h"    // lamp matrix
 #include "machine/steppers.h" // stepper motor
-#include "machine/vacfdisp.h"  // vfd
+#include "machine/vacfdisp.h" // vfd
 #include "machine/mmtr.h"
 
 // Video
@@ -403,16 +404,16 @@ void update_lamps(void)
 		{
 			if (IC23GA)
 			{
-				Lamps[MPU4_strcnv[(16*input_strobe)+0]] = (lamp_strobe & 0x0001) != 0;
-				Lamps[MPU4_strcnv[(16*input_strobe)+1]] = (lamp_strobe & 0x0002) != 0;
-				Lamps[MPU4_strcnv[(16*input_strobe)+2]] = (lamp_strobe & 0x0004) != 0;
-				Lamps[MPU4_strcnv[(16*input_strobe)+3]] = (lamp_strobe & 0x0008) != 0;
-				Lamps[MPU4_strcnv[(16*input_strobe)+4]] = (lamp_strobe & 0x0010) != 0;
-				Lamps[MPU4_strcnv[(16*input_strobe)+5]] = (lamp_strobe & 0x0020) != 0;
-				Lamps[MPU4_strcnv[(16*input_strobe)+6]] = (lamp_strobe & 0x0040) != 0;
-				Lamps[MPU4_strcnv[(16*input_strobe)+7]] = (lamp_strobe & 0x0080) != 0;
-				Lamps[MPU4_strcnv[(16*input_strobe)+8]] = (lamp_strobe & 0x0100) != 0;
-				Lamps[MPU4_strcnv[(16*input_strobe)+9]] = (lamp_strobe & 0x0200) != 0;
+				Lamps[MPU4_strcnv[(16*input_strobe)+0]] =  (lamp_strobe & 0x0001) != 0;
+				Lamps[MPU4_strcnv[(16*input_strobe)+1]] =  (lamp_strobe & 0x0002) != 0;
+				Lamps[MPU4_strcnv[(16*input_strobe)+2]] =  (lamp_strobe & 0x0004) != 0;
+				Lamps[MPU4_strcnv[(16*input_strobe)+3]] =  (lamp_strobe & 0x0008) != 0;
+				Lamps[MPU4_strcnv[(16*input_strobe)+4]] =  (lamp_strobe & 0x0010) != 0;
+				Lamps[MPU4_strcnv[(16*input_strobe)+5]] =  (lamp_strobe & 0x0020) != 0;
+				Lamps[MPU4_strcnv[(16*input_strobe)+6]] =  (lamp_strobe & 0x0040) != 0;
+				Lamps[MPU4_strcnv[(16*input_strobe)+7]] =  (lamp_strobe & 0x0080) != 0;
+				Lamps[MPU4_strcnv[(16*input_strobe)+8]] =  (lamp_strobe & 0x0100) != 0;
+				Lamps[MPU4_strcnv[(16*input_strobe)+9]] =  (lamp_strobe & 0x0200) != 0;
 				Lamps[MPU4_strcnv[(16*input_strobe)+10]] = (lamp_strobe & 0x0400) != 0;
 				Lamps[MPU4_strcnv[(16*input_strobe)+11]] = (lamp_strobe & 0x0800) != 0;
 				Lamps[MPU4_strcnv[(16*input_strobe)+12]] = (lamp_strobe & 0x1000) != 0;
@@ -427,13 +428,11 @@ void update_lamps(void)
 void awp_lamp_draw(void)
 {
 	int i,nrlamps;
-	char lampno[7];
 
 	nrlamps = Lamps_GetNumberLamps();
 	for ( i = 0; i < (nrlamps+1); i++ )
 	{
-		sprintf(lampno, "lamp%d", i);
-		output_set_value(lampno,Lamps_GetBrightness(i));
+		output_set_lamp_value(i, Lamps_GetBrightness(i));
 	}
 }
 
@@ -555,15 +554,6 @@ static MACHINE_RESET( mpu4_vid )
 	IC23GA    = 0;
 	prot_col  = 0;
 
-// init rom bank ////////////////////////////////////////////////////////
-
-	{
-		UINT8 *rom = memory_region(REGION_CPU1);
-
-		memory_configure_bank(1, 0, 8, &rom[0x01000], 0x10000);
-
-		memory_set_bank(1,0);//?
-	}
 }
 
 ///////////////////////////////////////////////////////////////////////////
@@ -1048,72 +1038,19 @@ static WRITE8_HANDLER( pia_ic7_portb_w )
 	mmtr_latch = data;
 	if (drive)
 	{
-		if ( changed & 0x01 )
-		{
-			if ( Mechmtr_update(0, cycles, data & 0x01 ) )
-			{
-				LOG(("meter %d = %ld\n", 1, MechMtr_Getcount(0) ));
-			}
-		}
-
-		if ( changed & 0x02 )
-		{
-			if ( Mechmtr_update(1, cycles, data & 0x02 ) )
-			{
-				LOG(("meter %d = %ld\n", 2, MechMtr_Getcount(1) ));
-			}
-		}
-
-		if ( changed & 0x04 )
-		{
-			if ( Mechmtr_update(2, cycles, data & 0x04 ) )
-			{
-				LOG(("meter %d = %ld\n", 3, MechMtr_Getcount(2) ));
-			}
-		}
-
-		if ( changed & 0x08 )
-		{
-			if ( Mechmtr_update(3, cycles, data & 0x08 ) )
-			{
-				LOG(("meter %d = %ld\n", 4, MechMtr_Getcount(3) ));
-			}
-		}
-
-		if ( changed & 0x10 )
-		{
-			if ( Mechmtr_update(4, cycles, data & 0x10 ) )
-			{
-				LOG(("meter %d = %ld\n", 5, MechMtr_Getcount(4) ));
-			}
-		}
-
-		if ( changed & 0x20 )
-		{
-			if ( Mechmtr_update(5, cycles, data & 0x20 ) )
-			{
-				LOG(("meter %d = %ld\n", 6, MechMtr_Getcount(5) ));
-			}
-		}
-
-		if ( changed & 0x40 )
-		{
-			if ( Mechmtr_update(6, cycles, data & 0x40 ) )
-			{
-				LOG(("meter %d = %ld\n", 7, MechMtr_Getcount(6) ));
-			}
-		}
-		if ( changed & 0x80 )
-		{
-			if ( Mechmtr_update(7, cycles, data & 0x80 ) )
-			{
-				LOG(("meter %d = %ld\n", 8, MechMtr_Getcount(7) ));
-			}
-		}
+		if ( changed & 0x01 )	Mechmtr_update(0, cycles, data & 0x01 );
+		if ( changed & 0x02 )	Mechmtr_update(1, cycles, data & 0x02 );
+		if ( changed & 0x04 )	Mechmtr_update(2, cycles, data & 0x04 );
+		if ( changed & 0x08 )	Mechmtr_update(3, cycles, data & 0x08 );
+		if ( changed & 0x10 )	Mechmtr_update(4, cycles, data & 0x10 );
+		if ( changed & 0x20 )	Mechmtr_update(5, cycles, data & 0x20 );
+		if ( changed & 0x40 )	Mechmtr_update(6, cycles, data & 0x40 );
+		if ( changed & 0x80 )	Mechmtr_update(7, cycles, data & 0x80 );
 	}
+
 	LOG(("%04x IC7 PIA Port B Set to %2x (Meters, Reel E and F)\n", activecpu_get_previouspc(),data));
-	//  Stepper_update(4, (data >> 4) & 0x0F );
-	//  Stepper_update(5, data        & 0x0F );
+//  Stepper_update(4, (data >> 4) & 0x0F );
+//  Stepper_update(5, data        & 0x0F );
 }
 
 static WRITE8_HANDLER( pia_ic7_ca2_w )
@@ -1765,9 +1702,6 @@ void scn2674_write_command(UINT8 data)
 		if (data&0x04) scn2674_irq_mask&=0xfb;
 		if (data&0x08) scn2674_irq_mask&=0xf7;
 		if (data&0x10) scn2674_irq_mask&=0xef;
-
-
-
 	}
 
 	if ((data&0xe0)==0x60)
@@ -1879,7 +1813,7 @@ READ16_HANDLER( mpu4_vid_scn2674_r )
 
 		case 1:
 			LOGSTUFF(("Read Status Register %06x\n",activecpu_get_pc()));
-			return mame_rand(Machine);//scn2674_irq_register;
+			return scn2674_status_register;//mame_rand(Machine);scn2674_irq_register;
 
 		case 2: LOGSTUFF(("Read Screen1_l Register %06x\n",activecpu_get_pc()));return scn2674_screen1_l;
 		case 3: LOGSTUFF(("Read Screen1_h Register %06x\n",activecpu_get_pc()));return scn2674_screen1_h;
@@ -2182,8 +2116,8 @@ INPUT_PORTS_START( mpu4 )
 	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("19")
 	PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("20")
 	PORT_BIT(0x20, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("21")
-	PORT_BIT(0x40, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("22")
-	PORT_BIT(0x80, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("23")
+	PORT_BIT(0x40, IP_ACTIVE_HIGH, IPT_SERVICE) PORT_NAME("Refill Key") PORT_CODE(KEYCODE_R) PORT_TOGGLE
+	PORT_BIT(0x80, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("Software Reset")
 
 	PORT_START_TAG("IN2B")
 	PORT_BIT(0x01, IP_ACTIVE_HIGH, IPT_OTHER) PORT_NAME("24")
@@ -2227,8 +2161,6 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( mpu4_vid )
 PORT_INCLUDE(mpu4)
-	//PORT_BIT( 0x01, IP_ACTIVE_HIGH,IPT_OTHER) PORT_NAME("Refill Key") PORT_CODE(KEYCODE_R) PORT_TOGGLE
-	//PORT_BIT( 0x02, IP_ACTIVE_HIGH,IPT_OTHER) PORT_NAME("Bookkeeping") PORT_CODE(KEYCODE_F1) PORT_TOGGLE
 	//2X8 dips
 INPUT_PORTS_END
 
@@ -2503,7 +2435,6 @@ static INTERRUPT_GEN( gen_50hz )
 
 	LOGSTUFF(("50hz generate %x\n",signal_50hz));
 
-//  pia_set_input_ca1(1,signal_50hz);   // signal is connected to IC4 CA1
 	pia_set_input_ca1(1,0);	// signal is connected to IC4 CA1
 	pia_set_input_ca1(1,1);	// signal is connected to IC4 CA1
 }
@@ -2536,7 +2467,7 @@ static ADDRESS_MAP_START( mpu4_vid_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xff9000, 0xff900f) AM_WRITE( ptm6840_1_lsb_w)  // 6840PTM IC2
 
 	/* characterizer??? */
-	AM_RANGE(0xffd000, 0xffd00f) AM_READWRITE(characteriser16_r, characteriser16_w) // Word-based version of old CHR???
+	AM_RANGE(0xffd000, 0xffd00f) AM_READWRITE(characteriser16_r, characteriser16_w)
 
 ADDRESS_MAP_END
 
@@ -2544,17 +2475,15 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( mpu4_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x07ff) AM_RAM AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size)
 
-	AM_RANGE(0x0800, 0x0801) AM_READ( mpu4_uart_rx_r)		// video uart receive  reg
-	AM_RANGE(0x0800, 0x0801) AM_WRITE(mpu4_uart_tx_w)		// video uart transmit reg
-
-//  AM_RANGE(0x0850, 0x0850) AM_WRITE(bankswitch_w)   // write bank (rom page select)
+	AM_RANGE(0x0800, 0x0801) AM_READ( mpu4_uart_rx_r)	// video uart receive  reg
+	AM_RANGE(0x0800, 0x0801) AM_WRITE(mpu4_uart_tx_w)	// video uart transmit reg
 
 	//AM_RANGE(0x0880, 0x0880) AM_READ(uart1stat_r)     // Could be a UART datalogger is here.
 	//AM_RANGE(0x0880, 0x0880) AM_WRITE(uart1ctrl_w)    // Or a PIA?
 	//AM_RANGE(0x0881, 0x0881) AM_READ(uart1data_r)
 	//AM_RANGE(0x0881, 0x0881) AM_WRITE(uart1data_w)
 
-	AM_RANGE(0x0900, 0x0907) AM_READ( ptm6840_0_r)  	// 6840PTM IC2
+	AM_RANGE(0x0900, 0x0907) AM_READ( ptm6840_0_r)		// 6840PTM IC2
 	AM_RANGE(0x0900, 0x0907) AM_WRITE(ptm6840_0_w)
 
 	AM_RANGE(0x0A00, 0x0A03) AM_WRITE(pia_0_w)			// PIA6821 IC3
@@ -2575,13 +2504,8 @@ static ADDRESS_MAP_START( mpu4_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0F00, 0x0F03) AM_WRITE(pia_5_w)			// PIA6821 IC8
 	AM_RANGE(0x0F00, 0x0F03) AM_READ( pia_5_r)
 
-	//AM_RANGE(0x1000, 0x3FFF) AM_RAM
-	//AM_RANGE(0x4000, 0x40FF) AM_RAM   // it actually runs code from here...
-	//AM_RANGE(0x4100, 0xBFFF) AM_RAM
-
-	AM_RANGE(0x1000, 0xBFFF) AM_RAM
-	AM_RANGE(0xC000, 0xffff) AM_ROM				  // 64k ROM
-//  AM_RANGE(0x1000, 0xffff) AM_ROM//READ(MRA8_BANK1)         // 64k  paged ROM (4 pages)
+	AM_RANGE(0x1000, 0xBFFF) AM_RAM						// it actually runs code from here...
+	AM_RANGE(0xC000, 0xffff) AM_ROM						// 64k EPROM on board, only this region read
 
 ADDRESS_MAP_END
 
@@ -2592,9 +2516,9 @@ static ADDRESS_MAP_START( memmap, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0800, 0x0810) AM_WRITE(characteriser_w)
 	AM_RANGE(0x0800, 0x0810) AM_READ( characteriser_r)
 
-	AM_RANGE(0x0850, 0x0850) AM_WRITE(bankswitch_w)	  // write bank (rom page select)
+	AM_RANGE(0x0850, 0x0850) AM_WRITE(bankswitch_w)	// write bank (rom page select)
 
-	AM_RANGE(0x0880, 0x0883) AM_WRITE(pia_6_w)	  // PIA6821 on game board
+	AM_RANGE(0x0880, 0x0883) AM_WRITE(pia_6_w)	  	// PIA6821 on game board
 	AM_RANGE(0x0880, 0x0883) AM_READ( pia_6_r)
 
 //  AM_RANGE(0x08C0, 0x08C7) AM_READ( ptm6840_1_r)  // 6840PTM on game board
@@ -2606,26 +2530,25 @@ static ADDRESS_MAP_START( memmap, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0900, 0x0907) AM_READ( ptm6840_0_r)  // 6840PTM
 	AM_RANGE(0x0900, 0x0907) AM_WRITE(ptm6840_0_w)
 
-	AM_RANGE(0x0A00, 0x0A03) AM_WRITE(pia_0_w)	  // PIA6821 IC3
+	AM_RANGE(0x0A00, 0x0A03) AM_WRITE(pia_0_w)	  	// PIA6821 IC3
 	AM_RANGE(0x0A00, 0x0A03) AM_READ( pia_0_r)
 
-	AM_RANGE(0x0B00, 0x0B03) AM_WRITE(pia_1_w)	  // PIA6821 IC4
+	AM_RANGE(0x0B00, 0x0B03) AM_WRITE(pia_1_w)	  	// PIA6821 IC4
 	AM_RANGE(0x0B00, 0x0B03) AM_READ( pia_1_r)
 
-	AM_RANGE(0x0C00, 0x0C03) AM_WRITE(pia_2_w)	  // PIA6821 IC5
+	AM_RANGE(0x0C00, 0x0C03) AM_WRITE(pia_2_w)	  	// PIA6821 IC5
 	AM_RANGE(0x0C00, 0x0C03) AM_READ( pia_2_r)
 
-	AM_RANGE(0x0D00, 0x0D03) AM_WRITE(pia_3_w)	  // PIA6821 IC6
+	AM_RANGE(0x0D00, 0x0D03) AM_WRITE(pia_3_w)	  	// PIA6821 IC6
 	AM_RANGE(0x0D00, 0x0D03) AM_READ( pia_3_r)
 
-	AM_RANGE(0x0E00, 0x0E03) AM_WRITE(pia_4_w)	  // PIA6821 IC7
+	AM_RANGE(0x0E00, 0x0E03) AM_WRITE(pia_4_w)	  	// PIA6821 IC7
 	AM_RANGE(0x0E00, 0x0E03) AM_READ( pia_4_r)
 
-	AM_RANGE(0x0F00, 0x0F03) AM_WRITE(pia_5_w)	  // PIA6821 IC8
+	AM_RANGE(0x0F00, 0x0F03) AM_WRITE(pia_5_w)	  	// PIA6821 IC8
 	AM_RANGE(0x0F00, 0x0F03) AM_READ( pia_5_r)
 
-//  AM_RANGE(0x0000, 0x0fff) AM_ROM               // 64k ROM
-	AM_RANGE(0x1000, 0xffff) AM_READ(MRA8_BANK1)		  // 64k  paged ROM (4 pages)
+	AM_RANGE(0x1000, 0xffff) AM_READ(MRA8_BANK1)	// 64k  paged ROM (4 pages)
 
 ADDRESS_MAP_END
 
@@ -2633,13 +2556,13 @@ static MACHINE_DRIVER_START( mpu4_vid )
 
 	MDRV_CPU_ADD_TAG("main", M6809, 6880000/4 )
 	MDRV_CPU_PROGRAM_MAP(mpu4_map,0)
-	MDRV_CPU_PERIODIC_INT(gen_50hz, TIME_IN_HZ(50) )		  // generate 50 hz signal
+	MDRV_CPU_PERIODIC_INT(gen_50hz, TIME_IN_HZ(50) )// generate 50 hz signal
 
 	MDRV_CPU_ADD_TAG("video", M68000, 10000000 )
 	MDRV_CPU_PROGRAM_MAP(mpu4_vid_map,0)
 	MDRV_CPU_VBLANK_INT(mpu4_vid_irq,1)
 
-	MDRV_NVRAM_HANDLER(generic_0fill)					// confirm
+	MDRV_NVRAM_HANDLER(generic_0fill)				// confirm
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -2657,7 +2580,7 @@ static MACHINE_DRIVER_START( mpu4_vid )
 	MDRV_SOUND_ADD(AY8910, 1000000)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.00)
 
-	MDRV_SPEAKER_STANDARD_STEREO("left", "right")// Present on all video cards
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")	// Present on all video cards
 	MDRV_SOUND_ADD(SAA1099, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "left", 1.00)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "right", 1.00)
@@ -2720,13 +2643,13 @@ DRIVER_INIT (mating)
 }
 
 /*
-   Barcrest released two different games called The Crystal Maze.
+   Barcrest released two different games called "The Crystal Maze".
    One is a non-video AWP, and uses only the MPU4 card, and the other SWP is the one we're interested in running
    Some of the dumps available seem to confuse the two, due to an early database not distinguishing
-  between MPU4 and MPU4Video, as the latter had not been emulated at all at that stage. */
+   between MPU4 and MPU4Video, as the latter had not been emulated at all at that stage. */
 
 #define VID_BIOS \
-	ROM_LOAD("vid.p1",  0x0000, 0x10000,  CRC(e996bc18) SHA1(49798165640627eb31024319353da04380787b10))
+	ROM_LOAD("vid.p1",  0x00000, 0x10000,  CRC(e996bc18) SHA1(49798165640627eb31024319353da04380787b10))
 
 ROM_START( bctvidbs )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for BIOS */
@@ -2893,15 +2816,15 @@ ROM_START( connect4 )
 	ROM_LOAD( "connect4.p1",  0xC000, 0x4000,  CRC(b1af50c0) )
 ROM_END
 
-/*    YEAR   NAME    PARENT   MACHINE   INPUT     INIT   MONITOR COMPANY      FULLNAME                                                          FLAGS (0 if none)  */
+/*    YEAR   NAME    PARENT   MACHINE   INPUT     INIT   MONITOR COMPANY            FULLNAME                                                            FLAGS (0 if none)  */
 
-GAME( 198?, connect4,0,       mpu4,     connect4, 0,		0,   "Dolbeck Systems", "Connect 4", GAME_NOT_WORKING|GAME_IMPERFECT_SOUND )
-GAME( 199?, bctvidbs,0,       mpu4,		mpu4,	  0,     ROT0,   "Barcrest", "MPU4 Video Firmware",												NOT_A_DRIVER )
+GAME( 198?, connect4,0,       mpu4,     connect4, 0,		0,   "Dolbeck Systems", "Connect 4",														GAME_NOT_WORKING|GAME_IMPERFECT_SOUND )
+GAME( 199?, bctvidbs,0,       mpu4,		mpu4,	  0,     ROT0,   "Barcrest", 		"MPU4 Video Firmware",												NOT_A_DRIVER )
 
-GAME( 1994, crmaze,  bctvidbs,mpu4_vid, crmaze,   crmaze,ROT0,   "Barcrest", "The Crystal Maze: Team Challenge (SWP)",							GAME_NOT_WORKING|GAME_NO_SOUND )
-GAME( 1994, crmazea, crmaze,  mpu4_vid, crmaze,   crmaze,ROT0,   "Barcrest", "The Crystal Maze (AMLD version SWP)",								GAME_NOT_WORKING|GAME_NO_SOUND )
-GAME( 1994, crmazeb, crmaze,  mpu4_vid, crmaze,	  0,     ROT0,   "Barcrest", "The Crystal Maze - Now Featuring Ocean Zone (AMLD Version SWP)",	GAME_NOT_WORKING|GAME_NO_SOUND ) // unprotected?
-GAME( 1990, turnover,bctvidbs,mpu4_vid, mpu4_vid, 0,     ROT0,   "Barcrest", "Turnover",														GAME_NOT_WORKING|GAME_NO_SOUND ) // unprotected?
-GAME( 1992, skiltrek,bctvidbs,mpu4_vid, mpu4_vid, 0,     ROT0,   "Barcrest", "Skill Trek",														GAME_NOT_WORKING|GAME_NO_SOUND )
-GAME( 199?, mating,  bctvidbs,mpu4_vid, mpu4_vid, mating,ROT0,   "Barcrest", "The Mating Game (Datapak)",										GAME_NOT_WORKING|GAME_NO_SOUND )
-GAME( 199?, matinga, mating,  mpu4_vid, mpu4_vid, mating,ROT0,   "Barcrest", "The Mating Game (Standard)",										GAME_NOT_WORKING|GAME_NO_SOUND )
+GAME( 1994, crmaze,  bctvidbs,mpu4_vid, crmaze,   crmaze,ROT0,   "Barcrest", 		"The Crystal Maze: Team Challenge (SWP)",							GAME_NOT_WORKING|GAME_NO_SOUND )
+GAME( 1994, crmazea, crmaze,  mpu4_vid, crmaze,   crmaze,ROT0,   "Barcrest", 		"The Crystal Maze (AMLD version SWP)",								GAME_NOT_WORKING|GAME_NO_SOUND )
+GAME( 1994, crmazeb, crmaze,  mpu4_vid, crmaze,	  0,     ROT0,   "Barcrest", 		"The Crystal Maze - Now Featuring Ocean Zone (AMLD Version SWP)",	GAME_NOT_WORKING|GAME_NO_SOUND ) // unprotected?
+GAME( 1990, turnover,bctvidbs,mpu4_vid, mpu4_vid, 0,     ROT0,   "Barcrest", 		"Turnover",															GAME_NOT_WORKING|GAME_NO_SOUND ) // unprotected?
+GAME( 1992, skiltrek,bctvidbs,mpu4_vid, mpu4_vid, 0,     ROT0,   "Barcrest", 		"Skill Trek",														GAME_NOT_WORKING|GAME_NO_SOUND )
+GAME( 199?, mating,  bctvidbs,mpu4_vid, mpu4_vid, mating,ROT0,   "Barcrest", 		"The Mating Game (Datapak)",										GAME_NOT_WORKING|GAME_NO_SOUND )
+GAME( 199?, matinga, mating,  mpu4_vid, mpu4_vid, mating,ROT0,   "Barcrest", 		"The Mating Game (Standard)",										GAME_NOT_WORKING|GAME_NO_SOUND )

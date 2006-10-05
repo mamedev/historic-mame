@@ -258,6 +258,24 @@ INLINE void *nvram_select(void)
 
 
 /*-------------------------------------------------
+    nvram_fopen - open an NVRAM file directly
+-------------------------------------------------*/
+
+mame_file *nvram_fopen(running_machine *machine, UINT32 openflags)
+{
+	mame_file_error filerr;
+	mame_file *file;
+	char *fname;
+
+	fname = assemble_2_strings(machine->gamedrv->name, ".nv");
+	filerr = mame_fopen(SEARCHPATH_NVRAM, fname, openflags, &file);
+	free(fname);
+
+	return (filerr == FILERR_NONE) ? file : NULL;
+}
+
+
+/*-------------------------------------------------
     nvram_load - load a system's NVRAM
 -------------------------------------------------*/
 
@@ -265,7 +283,7 @@ void nvram_load(void)
 {
 	if (Machine->drv->nvram_handler != NULL)
 	{
-		mame_file *nvram_file = mame_fopen(Machine->gamedrv->name, 0, FILETYPE_NVRAM, 0);
+		mame_file *nvram_file = nvram_fopen(Machine, OPEN_FLAG_READ);
 		(*Machine->drv->nvram_handler)(Machine, nvram_file, 0);
 		if (nvram_file != NULL)
 			mame_fclose(nvram_file);
@@ -281,7 +299,7 @@ void nvram_save(void)
 {
 	if (Machine->drv->nvram_handler != NULL)
 	{
-		mame_file *nvram_file = mame_fopen(Machine->gamedrv->name, 0, FILETYPE_NVRAM, 1);
+		mame_file *nvram_file = nvram_fopen(Machine, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE);
 		if (nvram_file != NULL)
 		{
 			(*Machine->drv->nvram_handler)(Machine, nvram_file, 1);
@@ -368,26 +386,31 @@ INLINE void memcard_name(int index, char *buffer)
 
 int memcard_create(int index, int overwrite)
 {
+	mame_file_error filerr;
 	mame_file *file;
+	char *fname;
 	char name[16];
 
 	/* create a name */
 	memcard_name(index, name);
 
 	/* if we can't overwrite, fail if the file already exists */
+	fname = assemble_3_strings(Machine->gamedrv->name, "/", name);
 	if (!overwrite)
 	{
-		file = mame_fopen(Machine->gamedrv->name, name, FILETYPE_MEMCARD, FALSE);
-		if (file != NULL)
+		filerr = mame_fopen(SEARCHPATH_MEMCARD, fname, OPEN_FLAG_READ, &file);
+		if (filerr == FILERR_NONE)
 		{
 			mame_fclose(file);
+			free(fname);
 			return 1;
 		}
 	}
 
 	/* create a new file */
-	file = mame_fopen(Machine->gamedrv->name, name, FILETYPE_MEMCARD, TRUE);
-	if (file == NULL)
+	filerr = mame_fopen(SEARCHPATH_MEMCARD, fname, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &file);
+	free(fname);
+	if (filerr != FILERR_NONE)
 		return 1;
 
 	/* initialize and then save the card */
@@ -407,8 +430,10 @@ int memcard_create(int index, int overwrite)
 
 int memcard_insert(int index)
 {
+	mame_file_error filerr;
 	mame_file *file;
 	char name[16];
+	char *fname;
 
 	/* if a card is already inserted, eject it first */
 	if (memcard_inserted != -1)
@@ -417,10 +442,12 @@ int memcard_insert(int index)
 
 	/* create a name */
 	memcard_name(index, name);
+	fname = assemble_3_strings(Machine->gamedrv->name, "/", name);
 
 	/* open the file; if we can't, it's an error */
-	file = mame_fopen(Machine->gamedrv->name, name, FILETYPE_MEMCARD, FALSE);
-	if (file == NULL)
+	filerr = mame_fopen(SEARCHPATH_MEMCARD, fname, OPEN_FLAG_READ, &file);
+	free(fname);
+	if (filerr != FILERR_NONE)
 		return 1;
 
 	/* initialize and then load the card */
@@ -441,8 +468,10 @@ int memcard_insert(int index)
 
 void memcard_eject(running_machine *machine)
 {
+	mame_file_error filerr;
 	mame_file *file;
 	char name[16];
+	char *fname;
 
 	/* if no card is preset, just ignore */
 	if (memcard_inserted == -1)
@@ -450,10 +479,12 @@ void memcard_eject(running_machine *machine)
 
 	/* create a name */
 	memcard_name(memcard_inserted, name);
+	fname = assemble_3_strings(Machine->gamedrv->name, "/", name);
 
 	/* open the file; if we can't, it's an error */
-	file = mame_fopen(machine->gamedrv->name, name, FILETYPE_MEMCARD, TRUE);
-	if (file == NULL)
+	filerr = mame_fopen(SEARCHPATH_MEMCARD, fname, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &file);
+	free(fname);
+	if (filerr != FILERR_NONE)
 	{
 		mame_fclose(file);
 		return;

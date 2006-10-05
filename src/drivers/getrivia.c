@@ -27,10 +27,18 @@ Processor: Z80
 Support Chips:(2) 8255s
 RAM: 6117on ROM board and (24) MCM4517s on main board
 
+Trivia games "No Coins" mode: if DSW "No Coins" is on, coin inputs are
+replaced by a 6th button to start games. This is a feature of the PCB for private use.
+
+Selection/Poker payout button: if pressed, all coins/credits are gone and added to the
+payout bookkeeping, shown in the service mode under the coin in total. Last Winner shows
+the last payout. Payout hardware is unknown.
+
 */
 
 #include "driver.h"
 #include "machine/8255ppi.h"
+#include "machine/ticket.h"
 #include "sound/dac.h"
 
 static UINT8 *drawctrl;
@@ -69,6 +77,11 @@ static WRITE8_HANDLER( getrivia_bitmap_w )
 	if (mask & 0x01) plot_pixel(tmpbitmap,sx+7,sy,(bits & 0x01) ? fg : bg);
 }
 
+static READ8_HANDLER( port1_r )
+{
+	return input_port_1_r(0) | (ticket_dispenser_0_r(0) >> 5);
+}
+
 static WRITE8_HANDLER( lamps_w )
 {
 	/* 5 button lamps */
@@ -78,9 +91,8 @@ static WRITE8_HANDLER( lamps_w )
 	set_led_status(3,data & 0x08);
 	set_led_status(4,data & 0x10);
 
-	/* 3 additional button lamps for poker games;
-    lamp 8, 6, 7 order verified in poker/selection games self test;
-    selection has 13 lamps in test mode, where are 9-13 mapped ? */
+	/* 3 button lamps for deal, cancel, stand in poker games;
+    lamp order verified in poker and selection self tests */
 	set_led_status(7,data & 0x20);
 	set_led_status(5,data & 0x40);
 	set_led_status(6,data & 0x80);
@@ -88,12 +100,12 @@ static WRITE8_HANDLER( lamps_w )
 
 static WRITE8_HANDLER( sound_w )
 {
-	/* bit 3 enables coin lockout (lamp10 in poker / lamp6 in trivia test modes) */
+	/* bit 3 - coin lockout, lamp10 in poker / lamp6 in trivia test modes */
 	coin_lockout_global_w(~data & 0x08);
 	set_led_status(9,data & 0x08);
 
-	/* bit 5 enables ticket out in trivia games; remove this led if ticket dispenser is added */
-	set_led_status(8,data & 0x20);
+	/* bit 5 - ticket out in trivia games */
+	ticket_dispenser_w(0, (data & 0x20)<< 2);
 
 	/* bit 6 enables NMI */
 	interrupt_enable_w(0,data & 0x40);
@@ -104,16 +116,32 @@ static WRITE8_HANDLER( sound_w )
 
 static WRITE8_HANDLER( sound2_w )
 {
-	/* bit 3 enables coin lockout (lamp10 in selection test mode) */
-	coin_lockout_global_w(~data & 0x08);
+	/* bit 3,6 - coin lockout, lamp10+11 in selection test mode */
+	coin_lockout_w(0, ~data & 0x08);
+	coin_lockout_w(1, ~data & 0x40);
 	set_led_status(9,data & 0x08);
+	set_led_status(10,data & 0x40);
+
+	/* bit 4,5 - lamps 12, 13 in selection test mode;
+    12 lights up if dsw maximum bet = 30 an bet > 15 or if dsw maximum bet = 10 an bet = 10 */
+	set_led_status(11,data & 0x10);
+	set_led_status(12,data & 0x20);
 
 	/* bit 7 goes directly to the sound amplifier */
 	DAC_data_w(0,((data & 0x80) >> 7) * 255);
 }
 
+static WRITE8_HANDLER( lamps2_w )
+{
+	/* bit 4 - play/raise button lamp, lamp 9 in poker test mode  */
+	set_led_status(8,data & 0x10);
+}
+
 static WRITE8_HANDLER( nmi_w )
 {
+	/* bit 4 - play/raise button lamp, lamp 9 in selection test mode  */
+	set_led_status(8,data & 0x10);
+
 	/* bit 6 enables NMI */
 	interrupt_enable_w(0,data & 0x40);
 }
@@ -224,13 +252,13 @@ INPUT_PORTS_START( gselect )
 	PORT_DIPSETTING(    0x04, "Pair of Eights or better" )
 	PORT_DIPSETTING(    0x02, "Pair of Jacks or better" )
 	PORT_DIPSETTING(    0x00, "Pair of Aces only" )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, "Maximum Bet" )
+	PORT_DIPSETTING(    0x08, "30" )
+	PORT_DIPSETTING(    0x00, "10" )
 	PORT_DIPNAME( 0x10, 0x10, "Poker: Credits needed for 2 Jokers" )
 	PORT_DIPSETTING(    0x10, "8" )
 	PORT_DIPSETTING(    0x00, "4" )
-	PORT_DIPNAME( 0xe0, 0x80, "Payout in %" )
+	PORT_DIPNAME( 0xe0, 0x80, "Payout Percentage" )
 	PORT_DIPSETTING(    0xe0, "35" )
 	PORT_DIPSETTING(    0xc0, "40" )
 	PORT_DIPSETTING(    0xa0, "45" )
@@ -243,22 +271,22 @@ INPUT_PORTS_START( gselect )
 	PORT_START_TAG("IN0")
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(2)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 ) PORT_IMPULSE(2)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE2 ) PORT_IMPULSE(2) PORT_NAME("Button 12 ?")
 	PORT_SERVICE( 0x08, IP_ACTIVE_LOW )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE1 ) PORT_IMPULSE(2) PORT_NAME ("Payout")
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON9 ) PORT_IMPULSE(2) PORT_NAME ("Play / Raise")
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON5 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON8 ) PORT_NAME ("Deal")
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON6 ) PORT_NAME ("Cancel")
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON7 ) PORT_NAME ("Stand")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_IMPULSE(2)
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_IMPULSE(2)
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_IMPULSE(2)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_IMPULSE(2)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_IMPULSE(2)
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON8 ) PORT_IMPULSE(2) PORT_NAME ("Deal")
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON6 ) PORT_IMPULSE(2) PORT_NAME ("Cancel")
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON7 ) PORT_IMPULSE(2) PORT_NAME ("Stand")
 /*  Button 8, 6, 7 order verified in test mode switch test */
 
 	PORT_START
@@ -270,6 +298,7 @@ INPUT_PORTS_START( gepoker )
 
 	PORT_MODIFY("IN0")
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* no coin 2 */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* no button 12 */
 INPUT_PORTS_END
 
 INPUT_PORTS_START( getrivia )
@@ -288,12 +317,12 @@ INPUT_PORTS_START( getrivia )
 	PORT_DIPNAME( 0x10, 0x00, "Timeout" )
 	PORT_DIPSETTING(    0x10, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x20, 0x20, "Tickets" )
+	PORT_DIPNAME( 0x20, 0x00, "Tickets" )
 	PORT_DIPSETTING(    0x20, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x40, 0x40, "No Coins" )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )	/* if on, coin inputs are replaced by a 6th button to start games. */
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )		/* this is a feature of the PCB for private use. */
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -303,7 +332,7 @@ INPUT_PORTS_START( getrivia )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON6 ) PORT_IMPULSE(2) PORT_CONDITION("DSWA", 0x40, PORTCOND_EQUALS, 0x00) PORT_NAME ("Start in no coins mode")
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 ) PORT_IMPULSE(2) PORT_CONDITION("DSWA", 0x40, PORTCOND_EQUALS, 0x40)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) PORT_CONDITION("DSWA", 0x40, PORTCOND_EQUALS, 0x00)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_SPECIAL )		/* ticket status */
 	PORT_SERVICE( 0x08, IP_ACTIVE_LOW )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -335,11 +364,11 @@ static ppi8255_interface getrivia_ppi8255_intf =
 {
 	2, 						/* 2 chips */
 	{ input_port_0_r,	input_port_2_r },	/* Port A read */
-	{ input_port_1_r,	NULL },		/* Port B read */
+	{ port1_r,	NULL },		/* Port B read */
 	{ NULL,		NULL },		/* Port C read */
 	{ NULL,		NULL },		/* Port A write */
 	{ NULL,		lamps_w },		/* Port B write */
-	{ sound_w,		NULL },		/* Port C write */
+	{ sound_w,		lamps2_w },		/* Port C write */
 };
 
 static ppi8255_interface gselect_ppi8255_intf =
@@ -350,12 +379,14 @@ static ppi8255_interface gselect_ppi8255_intf =
 	{ NULL,		input_port_3_r },	/* Port C read */
 	{ NULL,		NULL },		/* Port A write */
 	{ NULL,		lamps_w },		/* Port B write */
-	{ sound2_w,	nmi_w },		/* Port C write */
+	{ sound2_w,		nmi_w },		/* Port C write */
 };
 
 static MACHINE_RESET( getrivia )
 {
 	ppi8255_init(&getrivia_ppi8255_intf);
+
+	ticket_dispenser_init(100, 1, 1);
 }
 
 static MACHINE_RESET( gselect )

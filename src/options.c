@@ -36,6 +36,7 @@ struct _options_data
 	options_data *			next;				/* link to the next data */
 	const char *			names[MAX_ENTRY_NAMES]; /* array of possible names */
 	UINT32					flags;				/* flags from the entry */
+	UINT32					seqid;				/* sequence ID; bumped on each change */
 	const char *			data;				/* data for this item */
 	const char *			defdata;			/* default data for this item */
 	const char *			description;		/* description for this item */
@@ -414,6 +415,18 @@ const char *options_get_string(const char *name, int report_error)
 
 
 /*-------------------------------------------------
+    options_get_seqid - return the seqid for an
+    entry
+-------------------------------------------------*/
+
+UINT32 options_get_seqid(const char *name)
+{
+	options_data *data = find_entry_data(name, FALSE);
+	return (data == NULL) ? 0 : data->seqid;
+}
+
+
+/*-------------------------------------------------
     options_get_bool - return data formatted as
     a boolean
 -------------------------------------------------*/
@@ -654,4 +667,7 @@ static void update_data(options_data *data, const char *newdata)
 	if (data->data)
 		free((void *)data->data);
 	data->data = copy_string(datastart, dataend + 1);
+
+	/* bump the seqid */
+	data->seqid++;
 }

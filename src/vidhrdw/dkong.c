@@ -347,6 +347,12 @@ VIDEO_UPDATE( dkong )
 {
 	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 	draw_sprites(bitmap, 0x40, 1);
+
+	if (!strcmp(Machine->gamedrv->name, "shootgal"))
+	{
+		draw_crosshair( bitmap, readinputport(0) + 8, readinputport(1) + 3, cliprect, 0 );
+	}
+
 	return 0;
 }
 

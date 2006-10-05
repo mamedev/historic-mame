@@ -835,7 +835,7 @@ const performance_info *mame_get_performance_info(void)
     given handler for screenshots and movies
 -------------------------------------------------*/
 
-static void save_frame_with(mame_file *fp, int scrnum, int (*write_handler)(mame_file *, mame_bitmap *))
+static void save_frame_with(mame_file *fp, int scrnum, png_error (*write_handler)(mame_file *, mame_bitmap *))
 {
 	const render_primitive_list *primlist;
 	INT32 width, height;
@@ -887,25 +887,27 @@ void video_screen_save_snapshot(mame_file *fp, int scrnum)
     numbering scheme
 -------------------------------------------------*/
 
-static mame_file *mame_fopen_next(int filetype)
+static mame_file_error mame_fopen_next(const char *pathoption, const char *extension, mame_file **file)
 {
-	char name[FILENAME_MAX];
+	mame_file_error filerr;
+	char name[13];
 	int seq;
 
 	/* avoid overwriting existing files */
 	/* first of all try with "gamename.xxx" */
-	sprintf(name,"%.8s", Machine->gamedrv->name);
-	if (mame_faccess(name, filetype))
+	sprintf(name, "%.8s.%s", Machine->gamedrv->name, extension);
+	filerr = mame_fopen(pathoption, name, OPEN_FLAG_READ, file);
+	seq = 0;
+	while (filerr == FILERR_NONE)
 	{
-		seq = 0;
-		do
-		{
-			/* otherwise use "nameNNNN.xxx" */
-			sprintf(name,"%.4s%04d",Machine->gamedrv->name, seq++);
-		} while (mame_faccess(name, filetype));
+		/* otherwise use "nameNNNN.xxx" */
+		mame_fclose(*file);
+		sprintf(name,"%.4s%04d.%s", Machine->gamedrv->name, seq++, extension);
+		filerr = mame_fopen(pathoption, name, OPEN_FLAG_READ, file);
 	}
 
-    return (mame_fopen(Machine->gamedrv->name, name, filetype, 1));
+    filerr = mame_fopen(pathoption, name, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, file);
+    return filerr;
 }
 
 
@@ -923,11 +925,14 @@ void video_save_active_screen_snapshots(void)
 	/* write one snapshot per visible screen */
 	for (scrnum = 0; scrnum < MAX_SCREENS; scrnum++)
 		if (screenmask & (1 << scrnum))
-			if ((fp = mame_fopen_next(FILETYPE_SCREENSHOT)) != NULL)
+		{
+			mame_file_error filerr = mame_fopen_next(SEARCHPATH_SCREENSHOT, "png", &fp);
+			if (filerr == FILERR_NONE)
 			{
 				video_screen_save_snapshot(fp, scrnum);
 				mame_fclose(fp);
 			}
+		}
 }
 
 
@@ -955,15 +960,17 @@ int video_is_movie_active(void)
 
 void video_movie_begin_recording(const char *name)
 {
+	mame_file_error filerr;
+
 	/* close any existing movie file */
 	if (movie_file != NULL)
 		mame_fclose(movie_file);
 
 	/* create a new movie file and start recording */
 	if (name != NULL)
-		movie_file = mame_fopen(Machine->gamedrv->name, name, FILETYPE_MOVIE, 1);
+		filerr = mame_fopen(SEARCHPATH_MOVIE, name, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &movie_file);
 	else
-		movie_file = mame_fopen_next(FILETYPE_MOVIE);
+		filerr = mame_fopen_next(SEARCHPATH_MOVIE, "mng", &movie_file);
 
 	movie_frame = 0;
 }

@@ -2430,6 +2430,7 @@ static int K051960_romoffset;
 static int K051960_spriteflip,K051960_readroms;
 static unsigned char K051960_spriterombank[3];
 static unsigned char *K051960_ram;
+static int K051960_dx, K051960_dy;
 static int K051960_irq_enabled, K051960_nmi_enabled;
 
 
@@ -2493,6 +2494,8 @@ int K051960_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int 
 	for (i = 1;i < 15;i++)
 		gfx_drawmode_table[i] = DRAWMODE_SOURCE;
 	gfx_drawmode_table[15] = DRAWMODE_SHADOW;
+
+	K051960_dx = K051960_dy = 0;
 
 	K051960_memory_region = gfx_memory_region;
 	K051960_gfx = Machine->gfx[gfx_index];
@@ -2727,6 +2730,8 @@ void K051960_sprites_draw(mame_bitmap *bitmap,const rectangle *cliprect,int min_
 
 		ox = (256 * K051960_ram[offs+6] + K051960_ram[offs+7]) & 0x01ff;
 		oy = 256 - ((256 * K051960_ram[offs+4] + K051960_ram[offs+5]) & 0x01ff);
+		ox += K051960_dx;
+		oy += K051960_dy;
 		flipx = K051960_ram[offs+6] & 0x02;
 		flipy = K051960_ram[offs+4] & 0x02;
 		zoomx = (K051960_ram[offs+6] & 0xfc) >> 2;
@@ -2841,6 +2846,12 @@ int K051960_is_IRQ_enabled(void)
 int K051960_is_NMI_enabled(void)
 {
 	return K051960_nmi_enabled;
+}
+
+void K051960_set_sprite_offsets(int dx, int dy)
+{
+	K051960_dx = dx;
+	K051960_dy = dy;
 }
 
 

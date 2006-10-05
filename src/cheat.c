@@ -8506,15 +8506,16 @@ static void HandleLocalCommandCheat(UINT32 type, UINT32 address, UINT32 data, UI
 
 static void LoadCheatFile(char * fileName)
 {
+	mame_file_error filerr;
 	mame_file	* theFile;
 	char		formatString[256];
 	char		oldFormatString[256];
 	char		buf[2048];
 	int			recordNames = 0;
 
-	theFile = mame_fopen(NULL, fileName, FILETYPE_CHEAT, 0);
+	filerr = mame_fopen(SEARCHPATH_CHEAT, fileName, OPEN_FLAG_READ, &theFile);
 
-	if(!theFile)
+	if(filerr != FILERR_NONE)
 		return;
 
 	foundCheatDatabase = 1;
@@ -8765,6 +8766,7 @@ static void ReloadCheatDatabase(void)
 
 static void SaveCheat(CheatEntry * entry)
 {
+	mame_file_error filerr;
 	mame_file * theFile;
 	UINT32	i;
 	char	buf[4096];
@@ -8772,9 +8774,9 @@ static void SaveCheat(CheatEntry * entry)
 	if(!entry || !entry->actionList)
 		return;
 
-	theFile = mame_fopen(NULL, mainDatabaseName, FILETYPE_CHEAT, 1);
+	filerr = mame_fopen(SEARCHPATH_CHEAT, mainDatabaseName, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &theFile);
 
-	if(!theFile)
+	if(filerr != FILERR_NONE)
 		return;
 
 	mame_fseek(theFile, 0, SEEK_END);

@@ -73,7 +73,7 @@ void config_init(running_machine *machine)
 	typelist = NULL;
 
 #ifdef MESS
-	mess_config_init();
+	mess_config_init(machine);
 #endif
 }
 
@@ -113,9 +113,11 @@ void config_register(const char *nodename, config_callback load, config_callback
 
 int config_load_settings(void)
 {
+	mame_file_error filerr;
 	config_type *type;
 	mame_file *file;
 	int loaded = 0;
+	char *fname;
 
 	/* loop over all registrants and call their init function */
 	for (type = typelist; type; type = type->next)
@@ -125,8 +127,11 @@ int config_load_settings(void)
 	if (options.controller != NULL)
 	{
 		/* open the config file */
-		file = mame_fopen(NULL, options.controller, FILETYPE_CTRLR, 0);
-		if (!file)
+		fname = assemble_2_strings(options.controller, ".cfg");
+		filerr = mame_fopen(SEARCHPATH_CTRLR, fname, OPEN_FLAG_READ, &file);
+		free(fname);
+
+		if (filerr != FILERR_NONE)
 			fatalerror("Could not load controller file %s.cfg", options.controller);
 
 		/* load the XML */
@@ -136,16 +141,19 @@ int config_load_settings(void)
 	}
 
 	/* next load the defaults file */
-	file = mame_fopen("default", 0, FILETYPE_CONFIG, 0);
-	if (file)
+	filerr = mame_fopen(SEARCHPATH_CONFIG, "default.cfg", OPEN_FLAG_READ, &file);
+	if (filerr == FILERR_NONE)
 	{
 		config_load_xml(file, CONFIG_TYPE_DEFAULT);
 		mame_fclose(file);
 	}
 
 	/* finally, load the game-specific file */
-	file = mame_fopen(Machine->gamedrv->name, 0, FILETYPE_CONFIG, 0);
-	if (file)
+	fname = assemble_2_strings(Machine->gamedrv->name, ".cfg");
+	filerr = mame_fopen(SEARCHPATH_CONFIG, fname, OPEN_FLAG_READ, &file);
+	free(fname);
+
+	if (filerr == FILERR_NONE)
 	{
 		loaded = config_load_xml(file, CONFIG_TYPE_GAME);
 		mame_fclose(file);
@@ -163,24 +171,29 @@ int config_load_settings(void)
 
 void config_save_settings(void)
 {
+	mame_file_error filerr;
 	config_type *type;
 	mame_file *file;
+	char *fname;
 
 	/* loop over all registrants and call their init function */
 	for (type = typelist; type; type = type->next)
 		(*type->save)(CONFIG_TYPE_INIT, NULL);
 
 	/* save the defaults file */
-	file = mame_fopen("default", 0, FILETYPE_CONFIG, 1);
-	if (file)
+	filerr = mame_fopen(SEARCHPATH_CONFIG, "default.cfg", OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &file);
+	if (filerr == FILERR_NONE)
 	{
 		config_save_xml(file, CONFIG_TYPE_DEFAULT);
 		mame_fclose(file);
 	}
 
 	/* finally, save the game-specific file */
-	file = mame_fopen(Machine->gamedrv->name, 0, FILETYPE_CONFIG, 1);
-	if (file)
+	fname = assemble_2_strings(Machine->gamedrv->name, ".cfg");
+	filerr = mame_fopen(SEARCHPATH_CONFIG, fname, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &file);
+	free(fname);
+
+	if (filerr == FILERR_NONE)
 	{
 		config_save_xml(file, CONFIG_TYPE_GAME);
 		mame_fclose(file);

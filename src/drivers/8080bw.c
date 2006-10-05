@@ -176,7 +176,7 @@ INPUT_PORTS_START( invaders )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* must be ACTIVE_HIGH Super Invaders */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START_TAG("DSW0")
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
@@ -276,6 +276,55 @@ INPUT_PORTS_START( sitv )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
+/*******************************************************/
+/*                                                     */
+/* Space Invaders Model Racing                         */
+/*                                                     */
+/*******************************************************/
+
+INPUT_PORTS_START( invadrmr )
+	PORT_START_TAG("IN0")
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START_TAG("IN1")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START_TAG("DSW0")
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_TILT )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "1500" )
+	PORT_DIPSETTING(    0x08, "3000" ) /* This is different to invaders */
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY PORT_PLAYER(2)
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY PORT_PLAYER(2)
+	PORT_DIPNAME( 0x80, 0x00, "Coin Info" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START_TAG("FAKE")		/* Dummy port for cocktail mode */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+INPUT_PORTS_END
 
 /*******************************************************/
 /*                                                     */
@@ -1032,57 +1081,6 @@ INPUT_PORTS_START( spcewarl )
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-/*******************************************************/
-/*                                                     */
-/* Space War Part 3                                    */
-/*                                                     */
-/*******************************************************/
-
-INPUT_PORTS_START( spacewr3 )
-	PORT_START_TAG("IN0")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START_TAG("IN1")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY
-	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-
-	PORT_START_TAG("DSW0")
-	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x00, "3" )
-	PORT_DIPSETTING(    0x01, "4" )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x08, "1000" )
-	PORT_DIPSETTING(    0x00, "1500" )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(2)
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY PORT_PLAYER(2)
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY PORT_PLAYER(2)
-	PORT_DIPNAME( 0x80, 0x00, "Coin Info" )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
-	PORT_START_TAG("FAKE")		/* Dummy port for cocktail mode */
-	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
-INPUT_PORTS_END
-
 
 /*******************************************************/
 /*                                                     */
@@ -1187,6 +1185,30 @@ INPUT_PORTS_START( lrescue )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
+static MACHINE_DRIVER_START( lrescue )
+
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(8080bw)
+	MDRV_CPU_MODIFY("main")
+	MDRV_MACHINE_RESET(lrescue)
+
+	/* video hardware */
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
+	MDRV_PALETTE_LENGTH(8)
+	MDRV_PALETTE_INIT(invadpt2)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(lrescue_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
+
+	/* extra audio channel */
+	MDRV_SOUND_ADD(SPEAKER, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+MACHINE_DRIVER_END
+
 
 /*******************************************************/
 /*                                                     */
@@ -1267,7 +1289,7 @@ INPUT_PORTS_START( invasion )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* must be ACTIVE_HIGH Super Invaders */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START_TAG("DSW0")
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
@@ -1292,6 +1314,54 @@ INPUT_PORTS_START( invasion )
 	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
+
+/*******************************************************/
+/*                                                     */
+/* bootleg "Super Invaders"                            */
+/*                                                     */
+/*******************************************************/
+
+INPUT_PORTS_START( superinv )
+	PORT_START_TAG("IN0")
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START_TAG("IN1")
+	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Must be high or game instantly crashes */
+
+	PORT_START_TAG("DSW0")
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x08, "1500" )
+	PORT_DIPSETTING(    0x00, "2500" )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY PORT_PLAYER(2)
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY PORT_PLAYER(2)
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START_TAG("FAKE")		/* Dummy port for cocktail mode */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
+INPUT_PORTS_END
 
 
 /*******************************************************/
@@ -3081,8 +3151,8 @@ INPUT_PORTS_START( sinvemag )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x08, "1000" )
-	PORT_DIPSETTING(    0x00, "1500" )
+	PORT_DIPSETTING(    0x08, "2000" )
+	PORT_DIPSETTING(    0x00, "3000" )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(2)
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY PORT_PLAYER(2)
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY PORT_PLAYER(2)
@@ -3293,58 +3363,6 @@ MACHINE_DRIVER_END
 
 /*******************************************************/
 /*                                                     */
-/* Leijac "Space King"                                 */
-/*                                                     */
-/*******************************************************/
-
-INPUT_PORTS_START( spceking )
-	PORT_START_TAG("IN0")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START_TAG("IN1")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW,  IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY
-	PORT_BIT( 0x80, IP_ACTIVE_LOW,  IPT_UNKNOWN )
-
-	PORT_START_TAG("DSW0")
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x00, "3" )
-	PORT_DIPSETTING(    0x01, "4" )
-	PORT_DIPSETTING(    0x02, "5" )
-	PORT_DIPSETTING(    0x03, "6" )
-	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x00, "High Score Preset Mode" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_PLAYER(2)
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_2WAY PORT_PLAYER(2)
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_2WAY PORT_PLAYER(2)
-	PORT_DIPNAME( 0x80, 0x00, "Coin Info" )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
-	PORT_START_TAG("FAKE")		/* Dummy port for cocktail mode */
-	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
-INPUT_PORTS_END
-
-/*******************************************************/
-/*                                                     */
 /* Taito  "Indian battle"                                 */
 /*                                                     */
 /*******************************************************/
@@ -3432,19 +3450,35 @@ ADDRESS_MAP_END
 
 static MACHINE_DRIVER_START( indianbt )
 	/* basic machine hardware */
-	MDRV_IMPORT_FROM(invaders)
+	MDRV_IMPORT_FROM(8080bw)
 	MDRV_CPU_MODIFY("main")
+	MDRV_MACHINE_RESET(spcewars)
 	MDRV_CPU_IO_MAP(indianbt_port,0)
 
 	/* video hardware */
 	MDRV_PALETTE_LENGTH(8)
 	MDRV_PALETTE_INIT(indianbt)
 
+	/* video hardware */
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 4*8, 32*8-1)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(invaders_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(SN76477, 0)
+	MDRV_SOUND_CONFIG(invaders_sn76477_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 	/* sound hardware */
 	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
 	MDRV_SOUND_CONFIG(indianbt_discrete_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-
+	/* extra audio channel */
+	MDRV_SOUND_ADD(SPEAKER, 0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 /*****************************************************
@@ -4445,10 +4479,10 @@ ROM_END
 	  GAMEL(1979, galxwar2, galxwars, invaders, galxwars, 8080bw,   ROT270, "Universal", "Galaxy Wars (Universal set 2)", 0, layout_invaders )
 	  GAMEL(1979, galxwart, galxwars, invaders, galxwars, 8080bw,   ROT270,	"Taito?", "Galaxy Wars (Taito?)" , 0, layout_invaders) /* Copyright Not Displayed */
 	  GAMEL(1979, starw,    galxwars, invaders, galxwars, 8080bw,   ROT270, "bootleg", "Star Wars", 0, layout_invaders )
-	  GAME( 1979, lrescue,  0,        invadpt2, lrescue,  invadpt2, ROT270, "Taito", "Lunar Rescue", 0 )
-	  GAME( 1978, lrescuem, lrescue,  invadpt2, lrescue,  invadpt2, ROT270, "Taito (Model Racing bootleg)", "Lunar Rescue (Model Racing bootleg)", 0 )
-	  GAME( 1979, grescue,  lrescue,  invadpt2, lrescue,  invadpt2, ROT270, "Taito (Universal license?)", "Galaxy Rescue", 0 )
-	  GAME( 1979, desterth, lrescue,  invadpt2, invrvnge, invadpt2, ROT270, "bootleg", "Destination Earth", 0 )
+	  GAME( 1979, lrescue,  0,        lrescue,  lrescue,  invadpt2, ROT270, "Taito", "Lunar Rescue", 0 )
+	  GAME( 1978, lrescuem, lrescue,  lrescue,  lrescue,  invadpt2, ROT270, "Taito (Model Racing bootleg)", "Lunar Rescue (Model Racing bootleg)", 0 )
+	  GAME( 1979, grescue,  lrescue,  lrescue,  lrescue,  invadpt2, ROT270, "Taito (Universal license?)", "Galaxy Rescue", 0 )
+	  GAME( 1979, desterth, lrescue,  lrescue,  invrvnge, invadpt2, ROT270, "bootleg", "Destination Earth", 0 )
 	  GAME( 1979, invadpt2, 0,        invadpt2, invadpt2, invadpt2, ROT270, "Taito", "Space Invaders Part II (Taito)", 0 )
 	  GAME( 1979, cosmo,    0,        cosmo,    cosmo,    cosmo,    ROT90,  "TDS & Mints", "Cosmo", GAME_NO_SOUND )
 	  GAME( 1979, schaser,  0,        schaser,  schaser,  schaser,  ROT270, "Taito", "Space Chaser", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_COLORS )
@@ -4464,25 +4498,25 @@ ROM_END
 
 	  GAMEL(1980, searthin, invaders, invaders, earthinv, 8080bw,   ROT270, "bootleg", "Super Earth Invasion (set 1)", 0, layout_invaders )
 	  GAMEL(1980, searthia, invaders, invaders, earthinv, 8080bw,   ROT270, "bootleg", "Super Earth Invasion (set 2)", 0, layout_invaders )
-	  GAMEL(1978, invadrmr, invaders, invaders, invaders, 8080bw,   ROT270, "Model Racing", "Space Invaders (Model Racing)", 0, layout_invaders )
+	  GAMEL(1978, invadrmr, invaders, invaders, invadrmr, 8080bw,   ROT270, "Model Racing", "Space Invaders (Model Racing)", 0, layout_invaders )
 	  GAMEL(1978, spaceatt, invaders, invaders, invaders, 8080bw,   ROT270, "Video Games GMBH", "Space Attack", 0, layout_invaders )
 	  GAMEL(1980, spaceat2, invaders, invaders, spaceatt, 8080bw,   ROT270, "Zenitone-Microsec Ltd", "Space Attack II", 0, layout_invaders )
 	  GAMEL(19??, sinvzen,  invaders, invaders, spaceatt, 8080bw,   ROT270, "Zenitone-Microsec Ltd", "Super Invaders (Zenitone-Microsec)", 0, layout_invaders )
 	  GAMEL(19??, sinvemag, invaders, invaders, sinvemag, 8080bw,   ROT270, "bootleg", "Super Invaders (EMAG)", 0, layout_invaders )
 	  GAMEL(19??, tst_invd, invaders, invaders, invaders, 8080bw,   ROT0,   "Test ROM", "Space Invaders Test ROM", 0, layout_invaders )
 	  GAMEL(19??, alieninv, invaders, invaders, earthinv, 8080bw,   ROT270, "bootleg", "Alien Invasion Part II", 0, layout_invaders )
-	  GAMEL(1978, spceking, invaders, invaders, spceking, 8080bw,   ROT270, "Leijac (Konami)","Space King", 0, layout_invaders )
+	  GAMEL(1978, spceking, invaders, invaders, invaders, 8080bw,   ROT270, "Leijac (Konami)","Space King", 0, layout_invaders )
 	  GAMEL(1978, spcewars, invaders, spcewars, spcewars, 8080bw,   ROT270, "Sanritsu", "Space War (Sanritsu)", 0, layout_invaders )
-	  GAMEL(1978, spacewr3, invaders, invaders, spacewr3, 8080bw,   ROT270, "bootleg", "Space War Part 3", 0, layout_invaders )
+	  GAMEL(1978, spacewr3, invaders, spcewars, spcewars, 8080bw,   ROT270, "bootleg", "Space War Part 3", 0, layout_invaders )
 	  GAMEL(1978, invaderl, invaders, invaders, invaders, 8080bw,   ROT270, "bootleg", "Space Invaders (Logitec)", 0, layout_invaders )
 	  GAMEL(1978, invader4, invaders, invaders, invaders, 8080bw,   ROT270, "bootleg", "Space Invaders Part Four", 0, layout_invaders )
 	  GAMEL(1979, jspecter, invaders, invaders, jspecter, 8080bw,   ROT270, "Jatre", "Jatre Specter (set 1)", 0, layout_invaders )
 	  GAMEL(1979, jspectr2, invaders, invaders, jspecter, 8080bw,   ROT270, "Jatre", "Jatre Specter (set 2)", 0, layout_invaders )
 	  GAMEL(1979, cosmicmo, invaders, invaders, cosmicmo, 8080bw,   ROT270, "Universal", "Cosmic Monsters", 0, layout_invaders )
-      GAMEL(1979, cosmicm2, invaders, invaders, cosmicmo, 8080bw,   ROT270, "Universal", "Cosmic Monsters 2", 0, layout_invaders )
-	  GAMEL(19??, superinv, invaders, invaders, invaders, 8080bw,   ROT270, "bootleg", "Super Invaders", 0, layout_invaders )
+	  GAMEL(1979, cosmicm2, invaders, invaders, cosmicmo, 8080bw,   ROT270, "Universal", "Cosmic Monsters 2", 0, layout_invaders )
+	  GAMEL(19??, superinv, invaders, invaders, superinv, 8080bw,   ROT270, "bootleg", "Super Invaders", 0, layout_invaders )
 	  GAMEL(19??, invasion, invaders, invaders, invasion, 8080bw,   ROT270, "Sidam", "Invasion", 0, layout_invaders )
-	  GAME( 1978, sstrangr, 0,		  sstrangr, sstrangr, 8080bw,   ROT270,	"Yachiyo Electronics, Ltd.", "Space Stranger", 0 )
+	  GAME( 1978, sstrangr, 0,	  sstrangr, sstrangr, 8080bw,   ROT270,	"Yachiyo Electronics, Ltd.", "Space Stranger", 0 )
 	  GAME( 1979, sstrngr2, 0,        sstrngr2, sstrngr2, sstrngr2, ROT270, "Yachiyo Electronics, Ltd.", "Space Stranger 2", 0 )
 	  GAME( 1979, moonbase, invadpt2, invadpt2, invadpt2, invadpt2, ROT270, "Nichibutsu", "Moon Base", 0 )
 	  GAMEL(19??, invrvnge, 0,        invrvnge, invrvnge, 8080bw,   ROT270, "Zenitone-Microsec Ltd.", "Invader's Revenge",  GAME_NO_SOUND, layout_invrvnge )

@@ -430,59 +430,39 @@ static READ8_HANDLER( lazercmd_hardware_r )
  *
  *************************************************************/
 
-static ADDRESS_MAP_START( lazercmd_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0bff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x1c00, 0x1c1f) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x1c20, 0x1eff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+static ADDRESS_MAP_START( lazercmd_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0bff) AM_ROM
+	AM_RANGE(0x1c00, 0x1c1f) AM_RAM
+	AM_RANGE(0x1c20, 0x1eff) AM_READWRITE(MRA8_RAM, videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
 	AM_RANGE(0x1f00, 0x1f03) AM_WRITE(lazercmd_hardware_w)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( lazercmd_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0bff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x1c00, 0x1c1f) AM_READ(MRA8_RAM)
-	AM_RANGE(0x1c20, 0x1eff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x1f00, 0x1f07) AM_READ(lazercmd_hardware_r)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( medlanes_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0bff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x1000, 0x1800) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x1c00, 0x1c1f) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x1c20, 0x1eff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+
+static ADDRESS_MAP_START( medlanes_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0bff) AM_ROM
+	AM_RANGE(0x1000, 0x17ff) AM_ROM
+	AM_RANGE(0x1c00, 0x1c1f) AM_RAM
+	AM_RANGE(0x1c20, 0x1eff) AM_READWRITE(MRA8_RAM, videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
 	AM_RANGE(0x1f00, 0x1f03) AM_WRITE(medlanes_hardware_w)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( medlanes_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0bff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x1000, 0x1800) AM_READ(MRA8_ROM)
-	AM_RANGE(0x1c00, 0x1c1f) AM_READ(MRA8_RAM)
-	AM_RANGE(0x1c20, 0x1eff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x1f00, 0x1f07) AM_READ(lazercmd_hardware_r)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( bbonk_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0bff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x1c00, 0x1c1f) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x1c20, 0x1eff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+
+static ADDRESS_MAP_START( bbonk_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0bff) AM_ROM
+	AM_RANGE(0x1c00, 0x1c1f) AM_RAM
+	AM_RANGE(0x1c20, 0x1eff) AM_READWRITE(MRA8_RAM, videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
 	AM_RANGE(0x1f00, 0x1f03) AM_WRITE(bbonk_hardware_w)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( bbonk_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0bff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x1c00, 0x1c1f) AM_READ(MRA8_RAM)
-	AM_RANGE(0x1c20, 0x1eff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x1f00, 0x1f07) AM_READ(lazercmd_hardware_r)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( lazercmd_writeport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(S2650_CTRL_PORT, S2650_CTRL_PORT) AM_WRITE(lazercmd_ctrl_port_w)
-	AM_RANGE(S2650_DATA_PORT, S2650_DATA_PORT) AM_WRITE(lazercmd_data_port_w)
+
+static ADDRESS_MAP_START( lazercmd_portmap, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(S2650_CTRL_PORT, S2650_CTRL_PORT) AM_READWRITE(lazercmd_ctrl_port_r, lazercmd_ctrl_port_w)
+	AM_RANGE(S2650_DATA_PORT, S2650_DATA_PORT) AM_READWRITE(lazercmd_data_port_r, lazercmd_data_port_w)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( lazercmd_readport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(S2650_CTRL_PORT, S2650_CTRL_PORT) AM_READ(lazercmd_ctrl_port_r)
-	AM_RANGE(S2650_DATA_PORT, S2650_DATA_PORT) AM_READ(lazercmd_data_port_r)
-ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( lazercmd )
@@ -658,8 +638,8 @@ static MACHINE_DRIVER_START( lazercmd )
             but memory and IO access is only possible
             within the line and frame blanking period
             thus requiring an extra loading of approx 3-5 */
-	MDRV_CPU_PROGRAM_MAP(lazercmd_readmem,lazercmd_writemem)
-	MDRV_CPU_IO_MAP(lazercmd_readport,lazercmd_writeport)
+	MDRV_CPU_PROGRAM_MAP(lazercmd_map,0)
+	MDRV_CPU_IO_MAP(lazercmd_portmap,0)
 	MDRV_CPU_VBLANK_INT(lazercmd_timer, 128) 	/* 7680 Hz */
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -694,8 +674,8 @@ static MACHINE_DRIVER_START( medlanes )
             but memory and IO access is only possible
             within the line and frame blanking period
             thus requiring an extra loading of approx 3-5 */
-	MDRV_CPU_PROGRAM_MAP(medlanes_readmem,medlanes_writemem)
-	MDRV_CPU_IO_MAP(lazercmd_readport,lazercmd_writeport)
+	MDRV_CPU_PROGRAM_MAP(medlanes_map,0)
+	MDRV_CPU_IO_MAP(lazercmd_portmap,0)
 	MDRV_CPU_VBLANK_INT(lazercmd_timer, 128) 	/* 7680 Hz */
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -730,8 +710,8 @@ static MACHINE_DRIVER_START( bbonk )
             but memory and IO access is only possible
             within the line and frame blanking period
             thus requiring an extra loading of approx 3-5 */
-	MDRV_CPU_PROGRAM_MAP(bbonk_readmem,bbonk_writemem)
-	MDRV_CPU_IO_MAP(lazercmd_readport,lazercmd_writeport)
+	MDRV_CPU_PROGRAM_MAP(bbonk_map,0)
+	MDRV_CPU_IO_MAP(lazercmd_portmap,0)
 	MDRV_CPU_VBLANK_INT(bbonk_timer, 128) 	/* 7680 Hz */
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -764,30 +744,30 @@ MACHINE_DRIVER_END
 ***************************************************************************/
 
 ROM_START( lazercmd )
-	ROM_REGION( 0x8000, REGION_CPU1, 0 )			   /* 32K cpu, 4K for ROM/RAM */
-	ROM_LOAD( "lc.e5",        0x0000, 0x0400, CRC(56dc7a40) SHA1(1324d5d6a44d7314723a0b5745d89f8e27f49d25) )
-	ROM_LOAD( "lc.e6",        0x0400, 0x0400, CRC(b1ef0aa2) SHA1(3edeaa4d4f4e18536066898284d430a1ac00512e) )
-	ROM_LOAD( "lc.e7",        0x0800, 0x0400, CRC(8e6ffc97) SHA1(d5243ce88585db91573b6586d3d47d13b5b473c8) )
-	ROM_LOAD( "lc.f5",        0x1000, 0x0400, CRC(fc5b38a4) SHA1(bff670d7b78c6b9324d2bf4b2d8a4f9dbfe82158) )
-	ROM_LOAD( "lc.f6",        0x1400, 0x0400, CRC(26eaee21) SHA1(9c0a4a22abb0b0466378f067ef52a45f86cc4369) )
-	ROM_LOAD( "lc.f7",        0x1800, 0x0400, CRC(9ec3534d) SHA1(98f15c5828ad2743bf205f71b8e69abd4db78a58) )
+	ROM_REGION( 0x0c00, REGION_CPU1, ROMREGION_INVERT )			   /* 32K cpu, 4K for ROM/RAM */
+	ROM_LOAD_NIB_HIGH( "lc.e5",        0x0000, 0x0400, CRC(56dc7a40) SHA1(1324d5d6a44d7314723a0b5745d89f8e27f49d25) )
+	ROM_LOAD_NIB_LOW(  "lc.f5",        0x0000, 0x0400, CRC(fc5b38a4) SHA1(bff670d7b78c6b9324d2bf4b2d8a4f9dbfe82158) )
+	ROM_LOAD_NIB_HIGH( "lc.e6",        0x0400, 0x0400, CRC(b1ef0aa2) SHA1(3edeaa4d4f4e18536066898284d430a1ac00512e) )
+	ROM_LOAD_NIB_LOW(  "lc.f6",        0x0400, 0x0400, CRC(26eaee21) SHA1(9c0a4a22abb0b0466378f067ef52a45f86cc4369) )
+	ROM_LOAD_NIB_HIGH( "lc.e7",        0x0800, 0x0400, CRC(8e6ffc97) SHA1(d5243ce88585db91573b6586d3d47d13b5b473c8) )
+	ROM_LOAD_NIB_LOW(  "lc.f7",        0x0800, 0x0400, CRC(9ec3534d) SHA1(98f15c5828ad2743bf205f71b8e69abd4db78a58) )
 
 	ROM_REGION( 0x0c00, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "lc.b8",        0x0a00, 0x0200, CRC(6d708edd) SHA1(85a45a292eb7bca288b06a118658bf754f828a92) )
 ROM_END
 
 ROM_START( medlanes )
-	ROM_REGION( 0x8000, REGION_CPU1, 0 )			   /* 32K cpu, 4K for ROM/RAM */
-	ROM_LOAD( "medlanes.2a", 0x0000, 0x0400, CRC(9c77566a) SHA1(60e1820012b47da8b86d54f00b6f60d2d0123745) )
-	ROM_LOAD( "medlanes.2b", 0x0400, 0x0400, CRC(7841b1a9) SHA1(80621d30995dad42ae44c62494922ca8b75415cf) )
-	ROM_LOAD( "medlanes.2c", 0x0800, 0x0400, CRC(a359b5b8) SHA1(dbc3c286951c50e3465132fc0d6054f06026425d) )
-	ROM_LOAD( "medlanes.1a", 0x1000, 0x0400, CRC(0d57c596) SHA1(f3ce4802fc777c57f75fe691c93b7062903bdf06) )
-	ROM_LOAD( "medlanes.1b", 0x1400, 0x0400, CRC(1d451630) SHA1(bf9de3096e98685355c906ab7e1dc2628dce79d6) )
-	ROM_LOAD( "medlanes.3a", 0x4000, 0x0400, CRC(22bc56a6) SHA1(7444170c19274d9d889df61796e6f61af2361f3e) )
-	ROM_LOAD( "medlanes.3b", 0x4400, 0x0400, CRC(6616dbef) SHA1(9506177315883b7d87a9bfada712ddeea12fd446) )
-	ROM_LOAD( "medlanes.3c", 0x4800, 0x0400, CRC(b3db0f3d) SHA1(57c28a54f7a1f17df3a24b61dd0cf37f9f6bc7d8) )
-	ROM_LOAD( "medlanes.4a", 0x5000, 0x0400, CRC(30d495e9) SHA1(4f2414bf60ef91093bedf5e9ae16833e9e135aa7) )
-	ROM_LOAD( "medlanes.4b", 0x5400, 0x0400, CRC(a4abb5db) SHA1(a20da872b0f7d6b16b9551233af4269db9d1b55f) )
+	ROM_REGION( 0x1800, REGION_CPU1, ROMREGION_INVERT )	   /* 32K cpu, 4K for ROM/RAM */
+	ROM_LOAD_NIB_HIGH( "medlanes.2a", 0x0000, 0x0400, CRC(9c77566a) SHA1(60e1820012b47da8b86d54f00b6f60d2d0123745) )
+	ROM_LOAD_NIB_LOW(  "medlanes.3a", 0x0000, 0x0400, CRC(22bc56a6) SHA1(7444170c19274d9d889df61796e6f61af2361f3e) )
+	ROM_LOAD_NIB_HIGH( "medlanes.2b", 0x0400, 0x0400, CRC(7841b1a9) SHA1(80621d30995dad42ae44c62494922ca8b75415cf) )
+	ROM_LOAD_NIB_LOW(  "medlanes.3b", 0x0400, 0x0400, CRC(6616dbef) SHA1(9506177315883b7d87a9bfada712ddeea12fd446) )
+	ROM_LOAD_NIB_HIGH( "medlanes.2c", 0x0800, 0x0400, CRC(a359b5b8) SHA1(dbc3c286951c50e3465132fc0d6054f06026425d) )
+	ROM_LOAD_NIB_LOW(  "medlanes.3c", 0x0800, 0x0400, CRC(b3db0f3d) SHA1(57c28a54f7a1f17df3a24b61dd0cf37f9f6bc7d8) )
+	ROM_LOAD_NIB_HIGH( "medlanes.1a", 0x1000, 0x0400, CRC(0d57c596) SHA1(f3ce4802fc777c57f75fe691c93b7062903bdf06) )
+	ROM_LOAD_NIB_LOW(  "medlanes.4a", 0x1000, 0x0400, CRC(30d495e9) SHA1(4f2414bf60ef91093bedf5e9ae16833e9e135aa7) )
+	ROM_LOAD_NIB_HIGH( "medlanes.1b", 0x1400, 0x0400, CRC(1d451630) SHA1(bf9de3096e98685355c906ab7e1dc2628dce79d6) )
+	ROM_LOAD_NIB_LOW(  "medlanes.4b", 0x1400, 0x0400, CRC(a4abb5db) SHA1(a20da872b0f7d6b16b9551233af4269db9d1b55f) )
 
 	ROM_REGION( 0x0c00, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "medlanes.8b", 0x0a00, 0x0200, CRC(44e5de8f) SHA1(fc797fa137f0c11a15caf9c0013aac668fd69a3c) )
@@ -795,11 +775,11 @@ ROM_END
 
 
 ROM_START( bbonk )
-	ROM_REGION( 0x8000, REGION_CPU1, 0 )			   /* 32K cpu, 4K for ROM/RAM */
-	ROM_LOAD( "bbonk.e5",     0x0000, 0x0400, CRC(d032baa0) SHA1(09cba16f6a2b7d8a8c501db639bd5eeefb63dc0f) )
-	ROM_LOAD( "bbonk.e6",     0x0400, 0x0400, CRC(71df0e25) SHA1(c2f78490816add1296923861a89df15be9822fed) )
-	ROM_LOAD( "bbonk.f5",     0x1000, 0x0400, CRC(748e8c7f) SHA1(99e4e182ee41c246e31f656411a9f09d7b617f92) )
-	ROM_LOAD( "bbonk.f6",     0x1400, 0x0400, CRC(5ce183ed) SHA1(7c78dfa463a37605e8423104426af2f5906fae24) )
+	ROM_REGION( 0x0c00, REGION_CPU1, ROMREGION_INVERT )			   /* 32K cpu, 4K for ROM/RAM */
+	ROM_LOAD_NIB_HIGH( "bbonk.e5",     0x0000, 0x0400, CRC(d032baa0) SHA1(09cba16f6a2b7d8a8c501db639bd5eeefb63dc0f) )
+	ROM_LOAD_NIB_LOW(  "bbonk.f5",     0x0000, 0x0400, CRC(748e8c7f) SHA1(99e4e182ee41c246e31f656411a9f09d7b617f92) )
+	ROM_LOAD_NIB_HIGH( "bbonk.e6",     0x0400, 0x0400, CRC(71df0e25) SHA1(c2f78490816add1296923861a89df15be9822fed) )
+	ROM_LOAD_NIB_LOW(  "bbonk.f6",     0x0400, 0x0400, CRC(5ce183ed) SHA1(7c78dfa463a37605e8423104426af2f5906fae24) )
 
 	ROM_REGION( 0x0c00, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "bbonk.b8",     0x0a00, 0x0200, CRC(5ac34260) SHA1(7c2b1e378d2b9fed27117f9adab1381507f5d554) )
@@ -811,16 +791,6 @@ DRIVER_INIT( lazercmd )
 int i, y;
 
 /******************************************************************
- * The ROMs are 1K x 4 bit, so we have to mix
- * them into 8 bit bytes. The data is also inverted.
- ******************************************************************/
-	for (i = 0; i < 0x0c00; i++)
-	{
-		memory_region(REGION_CPU1)[i + 0x0000] =
-			((memory_region(REGION_CPU1)[i + 0x0000] << 4) |
-			 (memory_region(REGION_CPU1)[i + 0x1000] & 15)) ^ 0xff;
-	}
-/******************************************************************
  * To show the maze bit #6 and #7 of the video ram are used.
  * Bit #7: add a vertical line to the right of the character
  * Bit #6: add a horizontal line below the character
@@ -830,8 +800,8 @@ int i, y;
  ******************************************************************/
 	for (i = 0; i < 0x40; i++)
 	{
-unsigned char *d = &memory_region(REGION_GFX1)[0 * 64 * 10 + i * VERT_CHR];
-unsigned char *s = &memory_region(REGION_GFX1)[4 * 64 * 10 + i * VERT_FNT];
+UINT8 *d = &memory_region(REGION_GFX1)[0 * 64 * 10 + i * VERT_CHR];
+UINT8 *s = &memory_region(REGION_GFX1)[4 * 64 * 10 + i * VERT_FNT];
 
 		for (y = 0; y < VERT_CHR; y++)
 		{
@@ -849,16 +819,6 @@ DRIVER_INIT( medlanes )
 int i, y;
 
 /******************************************************************
- * The ROMs are 1K x 4 bit, so we have to mix
- * them into 8 bit bytes. The data is also inverted.
- ******************************************************************/
-	for (i = 0; i < 0x4000; i++)
-	{
-		memory_region(REGION_CPU1)[i + 0x0000] =
-			~((memory_region(REGION_CPU1)[i + 0x0000] << 4) |
-			  (memory_region(REGION_CPU1)[i + 0x4000] & 15));
-	}
-/******************************************************************
  * To show the maze bit #6 and #7 of the video ram are used.
  * Bit #7: add a vertical line to the right of the character
  * Bit #6: add a horizontal line below the character
@@ -868,8 +828,8 @@ int i, y;
  ******************************************************************/
 	for (i = 0; i < 0x40; i++)
 	{
-unsigned char *d = &memory_region(REGION_GFX1)[0 * 64 * 10 + i * VERT_CHR];
-unsigned char *s = &memory_region(REGION_GFX1)[4 * 64 * 10 + i * VERT_FNT];
+UINT8 *d = &memory_region(REGION_GFX1)[0 * 64 * 10 + i * VERT_CHR];
+UINT8 *s = &memory_region(REGION_GFX1)[4 * 64 * 10 + i * VERT_FNT];
 
 		for (y = 0; y < VERT_CHR; y++)
 		{
@@ -887,16 +847,6 @@ DRIVER_INIT( bbonk )
 int i, y;
 
 /******************************************************************
- * The ROMs are 1K x 4 bit, so we have to mix
- * them into 8 bit bytes. The data is also inverted.
- ******************************************************************/
-	for (i = 0; i < 0x0c00; i++)
-	{
-		memory_region(REGION_CPU1)[i + 0x0000] =
-			((memory_region(REGION_CPU1)[i + 0x0000] << 4) |
-			 (memory_region(REGION_CPU1)[i + 0x1000] & 15)) ^ 0xff;
-	}
-/******************************************************************
  * To show the maze bit #6 and #7 of the video ram are used.
  * Bit #7: add a vertical line to the right of the character
  * Bit #6: add a horizontal line below the character
@@ -906,8 +856,8 @@ int i, y;
  ******************************************************************/
 	for (i = 0; i < 0x40; i++)
 	{
-unsigned char *d = &memory_region(REGION_GFX1)[0 * 64 * 10 + i * VERT_CHR];
-unsigned char *s = &memory_region(REGION_GFX1)[4 * 64 * 10 + i * VERT_FNT];
+UINT8 *d = &memory_region(REGION_GFX1)[0 * 64 * 10 + i * VERT_CHR];
+UINT8 *s = &memory_region(REGION_GFX1)[4 * 64 * 10 + i * VERT_FNT];
 
 		for (y = 0; y < VERT_CHR; y++)
 		{
@@ -924,4 +874,4 @@ unsigned char *s = &memory_region(REGION_GFX1)[4 * 64 * 10 + i * VERT_FNT];
 
 GAMEL( 1976, lazercmd, 0, lazercmd, lazercmd, lazercmd, ROT0, "Meadows Games, Inc.", "Lazer Command", 0, layout_lazercmd )
 GAMEL( 1977, medlanes, 0, medlanes, medlanes, medlanes, ROT0, "Meadows Games, Inc.", "Meadows Lanes", GAME_IMPERFECT_SOUND, layout_ho2eff2e )
-GAME ( 1976, bbonk,	  0, bbonk,    bbonk,	 bbonk,    ROT0, "Meadows Games, Inc.", "Bigfoot Bonkers", 0 )
+GAME ( 1976, bbonk,	   0, bbonk,    bbonk,	 bbonk,    ROT0, "Meadows Games, Inc.", "Bigfoot Bonkers", 0 )

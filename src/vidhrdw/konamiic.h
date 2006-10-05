@@ -105,6 +105,7 @@ WRITE16_HANDLER( K051937_word_w );
 void K051960_sprites_draw(mame_bitmap *bitmap,const rectangle *cliprect,int min_priority,int max_priority);
 int K051960_is_IRQ_enabled(void);
 int K051960_is_NMI_enabled(void);
+void K051960_set_sprite_offsets(int dx, int dy);
 
 /* special handling for the chips sharing address space */
 READ8_HANDLER( K052109_051960_r );

@@ -494,12 +494,15 @@ void main()
 
 void Load(char *name,byte *buffer,int from, int length)
 {
-	void *file = mame_fopen(Machine->gamedrv->name,0,FILETYPE_HIGHSCORE,0);
-	if (!file)
+	mame_file_error filerr;
+	mame_file *file;
+
+	filerr = mame_fopen(NULL, name, OPEN_FLAG_READ, &file);
+	if (filerr != FILERR_NONE)
 		return;
 	while (length--)
-		buffer[from++]=fgetc(file);
-	fclose(file);
+		buffer[from++]=mame_fgetc(file);
+	mame_fclose(file);
 }
 
 void CreateJrDecodeTable(byte *x, int length)

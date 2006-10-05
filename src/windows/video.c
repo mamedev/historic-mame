@@ -642,14 +642,16 @@ static void update_fps(mame_time emutime)
 		fps_frames_displayed++;
 		if (fps_frames_displayed == video_config.framestorun)
 		{
-			char name[20];
+			mame_file_error filerr;
 			mame_file *fp;
+			char name[10];
 
 			// make a filename with an underscore prefix
 			sprintf(name, "_%.8s", Machine->gamedrv->name);
 
 			// write out the screenshot
-			if ((fp = mame_fopen(Machine->gamedrv->name, name, FILETYPE_SCREENSHOT, 1)) != NULL)
+			filerr = mame_fopen(SEARCHPATH_SCREENSHOT, name, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &fp);
+			if (filerr == FILERR_NONE)
 			{
 				video_screen_save_snapshot(fp, 0);
 				mame_fclose(fp);

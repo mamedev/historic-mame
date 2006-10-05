@@ -15,77 +15,173 @@
 #define __FILEIO_H__
 
 #include "mamecore.h"
+#include "mame.h"
+#include "options.h"
 
 
-/* file types */
-enum
-{
-	FILETYPE_RAW = 0,
-	FILETYPE_ROM,
-	FILETYPE_IMAGE,
-	FILETYPE_IMAGE_DIFF,
-	FILETYPE_SAMPLE,
-	FILETYPE_ARTWORK,
-	FILETYPE_NVRAM,
-	FILETYPE_HIGHSCORE,
-	FILETYPE_HIGHSCORE_DB,
-	FILETYPE_CONFIG,
-	FILETYPE_INPUTLOG,
-	FILETYPE_STATE,
-	FILETYPE_MEMCARD,
-	FILETYPE_SCREENSHOT,
-	FILETYPE_MOVIE,
-	FILETYPE_HISTORY,
-	FILETYPE_CHEAT,
-	FILETYPE_LANGUAGE,
-	FILETYPE_CTRLR,
-	FILETYPE_INI,
-	FILETYPE_COMMENT,
-	FILETYPE_DEBUGLOG,
-	FILETYPE_HASH,	/* MESS-specific */
-	FILETYPE_FONT,
-	FILETYPE_end 	/* dummy last entry */
-};
+
+/***************************************************************************
+    CONSTANTS
+***************************************************************************/
+
+/* flags controlling file access */
+#define OPEN_FLAG_READ			0x0001		/* open for read */
+#define OPEN_FLAG_WRITE			0x0002		/* open for write */
+#define OPEN_FLAG_CREATE		0x0004		/* create & truncate file */
+
+/* search paths */
+#define SEARCHPATH_RAW			NULL
+#define SEARCHPATH_CHEAT		NULL
+#define SEARCHPATH_LANGUAGE		NULL
+#define SEARCHPATH_DEBUGLOG		NULL
+#define SEARCHPATH_HASH			NULL
+#define SEARCHPATH_FONT			NULL
+
+#define SEARCHPATH_ROM			OPTION_ROMPATH
+#define SEARCHPATH_IMAGE		OPTION_ROMPATH
+#define SEARCHPATH_IMAGE_DIFF	OPTION_DIFF_DIRECTORY
+#define SEARCHPATH_SAMPLE		OPTION_SAMPLEPATH
+#define SEARCHPATH_ARTWORK		OPTION_ARTPATH
+#define SEARCHPATH_NVRAM		OPTION_NVRAM_DIRECTORY
+#define SEARCHPATH_CONFIG		OPTION_CFG_DIRECTORY
+#define SEARCHPATH_INPUTLOG		OPTION_INPUT_DIRECTORY
+#define SEARCHPATH_STATE		OPTION_STATE_DIRECTORY
+#define SEARCHPATH_MEMCARD		OPTION_MEMCARD_DIRECTORY
+#define SEARCHPATH_SCREENSHOT	OPTION_SNAPSHOT_DIRECTORY
+#define SEARCHPATH_MOVIE		OPTION_SNAPSHOT_DIRECTORY
+#define SEARCHPATH_CTRLR		OPTION_CTRLRPATH
+#define SEARCHPATH_INI			OPTION_INIPATH
+#define SEARCHPATH_COMMENT		OPTION_COMMENT_DIRECTORY
 
 
-/* gamename holds the driver name, filename is only used for ROMs and    */
-/* samples. If 'write' is not 0, the file is opened for write. Otherwise */
-/* it is opened for read. */
 
+/***************************************************************************
+    FUNCTION PROTOTYPES
+***************************************************************************/
+
+
+/* ----- core initialization ----- */
+
+/* initialize the fileio system */
 void fileio_init(running_machine *machine);
-void fileio_exit(running_machine *machine);
 
-int mame_faccess(const char *filename, int filetype);
-mame_file *mame_fopen(const char *gamename, const char *filename, int filetype, int openforwrite);
-mame_file *mame_fopen_error(const char *gamename, const char *filename, int filetype, int openforwrite, osd_file_error *error);
-mame_file *mame_fopen_rom(const char *gamename, const char *filename, const char *exphash);
-UINT32 mame_fread(mame_file *file, void *buffer, UINT32 length);
-UINT32 mame_fwrite(mame_file *file, const void *buffer, UINT32 length);
-UINT32 mame_fread_swap(mame_file *file, void *buffer, UINT32 length);
-UINT32 mame_fwrite_swap(mame_file *file, const void *buffer, UINT32 length);
-#ifdef LSB_FIRST
-#define mame_fread_msbfirst mame_fread_swap
-#define mame_fwrite_msbfirst mame_fwrite_swap
-#define mame_fread_lsbfirst mame_fread
-#define mame_fwrite_lsbfirst mame_fwrite
-#else
-#define mame_fread_msbfirst mame_fread
-#define mame_fwrite_msbfirst mame_fwrite
-#define mame_fread_lsbfirst mame_fread_swap
-#define mame_fwrite_lsbfirst mame_fwrite_swap
-#endif
-int mame_fseek(mame_file *file, INT64 offset, int whence);
+
+
+/* ----- file open/close ----- */
+
+/* open a file in the given search path with the specified filename */
+mame_file_error mame_fopen(const char *searchpath, const char *filename, UINT32 openflags, mame_file **file);
+
+/* open a file in the given search path with the specified filename or a matching CRC */
+mame_file_error mame_fopen_crc(const char *searchpath, const char *filename, UINT32 crc, UINT32 openflags, mame_file **file);
+
+/* close an open file */
 void mame_fclose(mame_file *file);
-int mame_fchecksum(const char *gamename, const char *filename, unsigned int *length, char *hash);
-UINT64 mame_fsize(mame_file *file);
-const char *mame_fhash(mame_file *file);
-int mame_fgetc(mame_file *file);
-int mame_ungetc(int c, mame_file *file);
-char *mame_fgets(char *s, int n, mame_file *file);
-int mame_feof(mame_file *file);
+
+
+
+/* ----- file positioning ----- */
+
+/* adjust the file pointer within the file */
+int mame_fseek(mame_file *file, INT64 offset, int whence);
+
+/* return the current file pointer */
 UINT64 mame_ftell(mame_file *file);
 
+/* return true if we are at the EOF */
+int mame_feof(mame_file *file);
+
+/* return the total size of the file */
+UINT64 mame_fsize(mame_file *file);
+
+
+
+/* ----- file read ----- */
+
+/* standard binary read from a file */
+UINT32 mame_fread(mame_file *file, void *buffer, UINT32 length);
+
+/* read one character from the file */
+int mame_fgetc(mame_file *file);
+
+/* put back one character from the file */
+int mame_ungetc(int c, mame_file *file);
+
+/* read a full line of text from the file */
+char *mame_fgets(char *s, int n, mame_file *file);
+
+
+
+/* ----- file write ----- */
+
+/* standard binary write to a file */
+UINT32 mame_fwrite(mame_file *file, const void *buffer, UINT32 length);
+
+/* write a line of text to the file */
 int mame_fputs(mame_file *f, const char *s);
-int CLIB_DECL mame_fprintf(mame_file *f, const char *fmt, ...) ATTR_PRINTF(2,3);
+
+/* printf-style text write to a file */
+int CLIB_DECL mame_fprintf(mame_file *f, const char *fmt, ...);
+
+
+
+/* ----- file misc ----- */
+
+/* return a hash string for the file with the given functions */
+const char *mame_fhash(mame_file *file, UINT32 functions);
+
+
+
+/***************************************************************************
+    INLINE FUNCTIONS
+***************************************************************************/
+
+/*-------------------------------------------------
+    assemble_2_strings - allocate space for two
+    strings and concatenate them into the new
+    buffer
+-------------------------------------------------*/
+
+INLINE char *assemble_2_strings(const char *s1, const char *s2)
+{
+	char *tempbuf = malloc_or_die(strlen(s1) + strlen(s2) + 1);
+	strcpy(tempbuf, s1);
+	strcat(tempbuf, s2);
+	return tempbuf;
+}
+
+
+/*-------------------------------------------------
+    assemble_3_strings - allocate space for three
+    strings and concatenate them into the new
+    buffer
+-------------------------------------------------*/
+
+INLINE char *assemble_3_strings(const char *s1, const char *s2, const char *s3)
+{
+	char *tempbuf = malloc_or_die(strlen(s1) + strlen(s2) + strlen(s3) + 1);
+	strcpy(tempbuf, s1);
+	strcat(tempbuf, s2);
+	strcat(tempbuf, s3);
+	return tempbuf;
+}
+
+
+/*-------------------------------------------------
+    assemble_4_strings - allocate space for four
+    strings and concatenate them into the new
+    buffer
+-------------------------------------------------*/
+
+INLINE char *assemble_4_strings(const char *s1, const char *s2, const char *s3, const char *s4)
+{
+	char *tempbuf = malloc_or_die(strlen(s1) + strlen(s2) + strlen(s3) + strlen(s4) + 1);
+	strcpy(tempbuf, s1);
+	strcat(tempbuf, s2);
+	strcat(tempbuf, s3);
+	strcat(tempbuf, s4);
+	return tempbuf;
+}
+
 
 #endif	/* __FILEIO_H__ */

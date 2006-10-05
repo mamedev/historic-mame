@@ -1947,6 +1947,7 @@ MACHINE_RESET( czeroize )
      * This hack seems to be sufficient to get around
      * the missing dongle ROM contents and play the game.
      */
+    memset(mem,0x00,0x1000);
 	mem[0x08a0] = 0x18;
 }
 

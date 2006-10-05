@@ -1799,6 +1799,8 @@ static void render_spans_32(int start, int end, int tilenum, int shade, int text
 			if (x >= clipx1 && x < clipx2)
 			{
 				COLOR c1, c2;
+				c1.r = c1.g = c1.b = c1.a = 0;
+				c2.r = c2.g = c2.b = c2.a = 0;
 
 				if ((z & 0xffff) >= 0x8000) sz++;
 				if ((w & 0xffff) >= 0x8000) sw++;
@@ -2075,7 +2077,6 @@ static void render_spans_16(int start, int end, int tilenum, int shade, int text
 
 		for (j=0; j <= length; j++)
 		{
-			COLOR c1, c2;
 			int sr = r >> 16;
 			int sg = g >> 16;
 			int sb = b >> 16;
@@ -2086,6 +2087,9 @@ static void render_spans_16(int start, int end, int tilenum, int shade, int text
 			UINT16 sz = z >> 16;
 			int oz;
 			int sss = 0, sst = 0;
+			COLOR c1, c2;
+			c1.r = c1.g = c1.b = c1.a = 0;
+			c2.r = c2.g = c2.b = c2.a = 0;
 
 			if (x >= clipx1 && x < clipx2)
 			{

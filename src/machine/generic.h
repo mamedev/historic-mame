@@ -78,6 +78,9 @@ void coin_lockout_global_w(int on);
 
 /* ----- NVRAM management ----- */
 
+/* open an NVRAM file directly */
+mame_file *nvram_fopen(running_machine *machine, UINT32 openflags);
+
 /* load NVRAM from a file */
 void nvram_load(void);
 

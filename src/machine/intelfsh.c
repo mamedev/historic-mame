@@ -407,11 +407,11 @@ void nvram_handler_intelflash(running_machine *machine, int chip,mame_file *file
 	case 16:
 		if (read_or_write)
 		{
-			mame_fwrite_lsbfirst( file, c->flash_memory, c->size );
+			mame_fwrite( file, c->flash_memory, c->size );
 		}
 		else if (file)
 		{
-			mame_fread_lsbfirst( file, c->flash_memory, c->size );
+			mame_fread( file, c->flash_memory, c->size );
 		}
 		break;
 	}

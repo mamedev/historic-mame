@@ -220,13 +220,13 @@ NVRAM_HANDLER( neogeo )
 	if (read_or_write)
 	{
 		/* Save the SRAM settings */
-		mame_fwrite_msbfirst(file,neogeo_sram16,0x2000);
+		mame_fwrite(file,neogeo_sram16,0x2000);
 	}
 	else
 	{
 		/* Load the SRAM settings for this game */
 		if (file)
-			mame_fread_msbfirst(file,neogeo_sram16,0x2000);
+			mame_fread(file,neogeo_sram16,0x2000);
 		else
 			memset(neogeo_sram16,0,0x10000);
 	}

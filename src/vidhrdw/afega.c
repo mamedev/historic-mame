@@ -95,6 +95,11 @@ PALETTE_INIT( grdnstrm )
 #define PAGES_PER_TMAP_Y	(0x4)
 #define FIREHAWK_PAGES_PER_TMAP_X	(0x1)
 #define FIREHAWK_PAGES_PER_TMAP_Y	(0x1)
+#define TWINACTN_TILES_PER_PAGE_X	(0x100)
+#define TWINACTN_TILES_PER_PAGE_Y	(0x10)
+#define TWINACTN_PAGES_PER_TMAP_X	(0x1)
+#define TWINACTN_PAGES_PER_TMAP_Y	(0x1)
+
 
 UINT32 afega_tilemap_scan_pages(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
 {
@@ -103,6 +108,15 @@ UINT32 afega_tilemap_scan_pages(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num
 
 			(col / TILES_PER_PAGE_X) * TILES_PER_PAGE_X * TILES_PER_PAGE_Y +
 			(col % TILES_PER_PAGE_X) * TILES_PER_PAGE_Y;
+}
+
+UINT32 twinactn_tilemap_scan_pages(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
+{
+	return	(row / TWINACTN_TILES_PER_PAGE_Y) * TWINACTN_TILES_PER_PAGE_X * TWINACTN_TILES_PER_PAGE_Y * TWINACTN_PAGES_PER_TMAP_X +
+			(row % TWINACTN_TILES_PER_PAGE_Y) +
+
+			(col / TWINACTN_TILES_PER_PAGE_X) * TWINACTN_TILES_PER_PAGE_X * TWINACTN_TILES_PER_PAGE_Y +
+			(col % TWINACTN_TILES_PER_PAGE_X) * TWINACTN_TILES_PER_PAGE_Y;
 }
 
 UINT32 firehawk_tilemap_scan_pages(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
@@ -163,6 +177,26 @@ VIDEO_START( afega )
 								TILEMAP_OPAQUE,
 								16,16,
 								TILES_PER_PAGE_X*PAGES_PER_TMAP_X,TILES_PER_PAGE_Y*PAGES_PER_TMAP_Y);
+
+	tilemap_1 = tilemap_create(	get_tile_info_1, tilemap_scan_cols,
+								TILEMAP_TRANSPARENT,
+								8,8,
+								32,32);
+
+	if ( !tilemap_0 || !tilemap_1 )
+		return 1;
+
+	tilemap_set_transparent_pen(tilemap_0,0x0);
+	tilemap_set_transparent_pen(tilemap_1,0xf);
+	return 0;
+}
+
+VIDEO_START( twinactn )
+{
+	tilemap_0 = tilemap_create(	get_tile_info_0, afega_tilemap_scan_pages,
+								TILEMAP_OPAQUE,
+								16,16,
+								TWINACTN_TILES_PER_PAGE_X*TWINACTN_PAGES_PER_TMAP_X,TWINACTN_TILES_PER_PAGE_Y*TWINACTN_PAGES_PER_TMAP_Y);
 
 	tilemap_1 = tilemap_create(	get_tile_info_1, tilemap_scan_cols,
 								TILEMAP_TRANSPARENT,

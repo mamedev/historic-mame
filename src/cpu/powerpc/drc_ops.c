@@ -310,14 +310,6 @@ static void append_generate_exception(drc_core *drc, UINT8 exception)
 	if (exception == EXCEPTION_IRQ)
 	{
 		_and_m32abs_imm(&ppc.exception_pending, ~0x1);		// clear pending irq
-
-		/* set EXISR IRQ bit on PPC403 */
-		if (!ppc.is603 && !ppc.is602)
-		{
-			_mov_r32_m32abs(REG_EDX, &ppc.exisr);
-			_or_r32_m32abs(REG_EDX, &ppc.external_int);
-			_mov_m32abs_r32(&ppc.exisr, REG_EDX);
-		}
 	}
 	if (exception == EXCEPTION_DECREMENTER)
 	{
@@ -329,32 +321,65 @@ static void append_generate_exception(drc_core *drc, UINT8 exception)
 
 static void append_check_interrupts(drc_core *drc, int inline_generate)
 {
-	link_info link1, link2, link3, link4;
-	_test_m32abs_imm(&ppc.msr, MSR_EE);		/* no interrupt if external interrupts are not enabled */
-	_jcc_short_link(COND_Z, &link1);		/* ZF = 1 if bit == 0 */
+	if (ppc.is602 || ppc.is603)
+	{
+		link_info link1, link2, link3, link4;
+		_test_m32abs_imm(&ppc.msr, MSR_EE);		/* no interrupt if external interrupts are not enabled */
+		_jcc_short_link(COND_Z, &link1);		/* ZF = 1 if bit == 0 */
 
-	/* else check if any interrupt are pending */
-	_mov_r32_m32abs(REG_EAX, &ppc.exception_pending);
-	_cmp_r32_imm(REG_EAX, 0);
-	_jcc_short_link(COND_Z, &link2);		/* reg == 0, no exceptions are pending */
+		/* else check if any interrupt are pending */
+		_mov_r32_m32abs(REG_EAX, &ppc.exception_pending);
+		_cmp_r32_imm(REG_EAX, 0);
+		_jcc_short_link(COND_Z, &link2);		/* reg == 0, no exceptions are pending */
 
-	/* else handle the first pending exception */
-	_test_r32_imm(REG_EAX, 0x1);			/* is it a IRQ? */
-	_jcc_short_link(COND_Z, &link3);
-	_mov_m32abs_r32(&SRR0, REG_EDI);		/* save return address */
-	_mov_r32_m32abs(REG_EAX, &ppc.generate_interrupt_exception);
-	_jmp_r32(REG_EAX);
-	_resolve_link(&link3);
+		/* else handle the first pending exception */
+		_test_r32_imm(REG_EAX, 0x1);			/* is it a IRQ? */
+		_jcc_short_link(COND_Z, &link3);
 
-	_test_r32_imm(REG_EAX, 0x2);			/* is it a decrementer exception */
-	_jcc_short_link(COND_Z, &link4);
-	_mov_m32abs_r32(&SRR0, REG_EDI);		/* save return address */
-	_mov_r32_m32abs(REG_EAX, &ppc.generate_decrementer_exception);
-	_jmp_r32(REG_EAX);
-	_resolve_link(&link4);
+		_mov_m32abs_r32(&SRR0, REG_EDI);		/* save return address */
+		_mov_r32_m32abs(REG_EAX, &ppc.generate_interrupt_exception);
+		_jmp_r32(REG_EAX);
+		_resolve_link(&link3);
 
-	_resolve_link(&link1);
-	_resolve_link(&link2);
+		_test_r32_imm(REG_EAX, 0x2);			/* is it a decrementer exception */
+		_jcc_short_link(COND_Z, &link4);
+		_mov_m32abs_r32(&SRR0, REG_EDI);		/* save return address */
+		_mov_r32_m32abs(REG_EAX, &ppc.generate_decrementer_exception);
+		_jmp_r32(REG_EAX);
+		_resolve_link(&link4);
+
+		_resolve_link(&link1);
+		_resolve_link(&link2);
+	}
+	else
+	{
+		link_info link1, link2, link3, link4;
+		_test_m32abs_imm(&ppc.msr, MSR_EE);		/* no interrupt if external interrupts are not enabled */
+		_jcc_short_link(COND_Z, &link1);		/* ZF = 1 if bit == 0 */
+
+		/* else check if any interrupt are pending */
+		_mov_r32_m32abs(REG_EAX, &ppc.exception_pending);
+		_cmp_r32_imm(REG_EAX, 0);
+		_jcc_short_link(COND_Z, &link2);		/* reg == 0, no exceptions are pending */
+
+		/* else handle the first pending exception */
+		_test_r32_imm(REG_EAX, 0x1);			/* is it a IRQ? */
+		_jcc_short_link(COND_Z, &link3);
+
+		_mov_r32_m32abs(REG_EAX, &ppc.exisr);
+		_and_r32_m32abs(REG_EAX, &ppc.exier);
+		_cmp_r32_imm(REG_EAX, 0);
+		_jcc_short_link(COND_Z, &link4);
+
+		_mov_m32abs_r32(&SRR0, REG_EDI);		/* save return address */
+		_mov_r32_m32abs(REG_EAX, &ppc.generate_interrupt_exception);
+		_jmp_r32(REG_EAX);
+
+		_resolve_link(&link1);
+		_resolve_link(&link2);
+		_resolve_link(&link3);
+		_resolve_link(&link4);
+	}
 }
 
 static void append_branch_or_dispatch(drc_core *drc, UINT32 newpc, int cycles)

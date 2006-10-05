@@ -1954,10 +1954,12 @@ static void execute_snap(int ref, int params, const char *param[])
 	/* otherwise, we have to open the file ourselves */
 	else
 	{
+		mame_file_error filerr;
 		mame_file *fp;
 		const char *filename = param[0];
 		int scrnum = (params > 1) ? atoi(param[1]) : 0;
 		UINT32 mask = render_get_live_screens_mask();
+		char *fname;
 
 		if ((scrnum < 0) || (scrnum >= MAX_SCREENS)	|| !(mask & (1 << scrnum)))
 		{
@@ -1965,8 +1967,11 @@ static void execute_snap(int ref, int params, const char *param[])
 			return;
 		}
 
-		fp = mame_fopen(Machine->gamedrv->name, filename, FILETYPE_SCREENSHOT, 1);
-		if (!fp)
+		fname = assemble_2_strings(Machine->gamedrv->name, ".png");
+		filerr = mame_fopen(SEARCHPATH_SCREENSHOT, fname, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &fp);
+		free(fname);
+
+		if (filerr != FILERR_NONE)
 		{
 			debug_console_printf("Error creating file '%s'\n", filename);
 			return;

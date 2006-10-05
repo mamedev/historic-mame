@@ -207,7 +207,7 @@ void mc146818_load(void)
 {
 	mame_file *file;
 
-	file = mame_fopen(Machine->gamedrv->name, 0, FILETYPE_NVRAM, 0);
+	file = nvram_fopen(Machine, OPEN_FLAG_READ);
 	if (file)
 	{
 		mc146818_load_stream(file);
@@ -290,7 +290,7 @@ void mc146818_save(void)
 {
 	mame_file *file;
 
-	file = mame_fopen(Machine->gamedrv->name, 0, FILETYPE_NVRAM, 1);
+	file = nvram_fopen(Machine, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE);
 	if (file)
 	{
 		mame_fwrite(file, mc146818->data, sizeof(mc146818->data));

@@ -64,6 +64,7 @@ PALETTE_INIT( grdnstrm );
 
 VIDEO_START( afega );
 VIDEO_START( firehawk );
+VIDEO_START( twinactn );
 VIDEO_UPDATE( afega );
 VIDEO_UPDATE( redhawkb );
 VIDEO_UPDATE( bubl2000 );
@@ -1246,7 +1247,7 @@ static MACHINE_DRIVER_START( twinactn )
 	MDRV_GFXDECODE(stagger1_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(768)
 
-	MDRV_VIDEO_START(afega)
+	MDRV_VIDEO_START(twinactn)
 	MDRV_VIDEO_UPDATE(twinactn)
 
 	/* sound hardware */

@@ -2999,6 +2999,7 @@ V-V                           TP-027
 	/* Sega SG1000 based games */
 	DRIVER( chboxing )	/* (c) 1984 */
 	DRIVER( chwrestl )	/* (c) 1985 */
+	DRIVER( dokidoki )	/* (c) 1985 */
 
 	/* Sega System 1 / System 2 games */
 	DRIVER( starjack )	/* 834-5191 (c) 1983 (S1) */
@@ -3694,6 +3695,8 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( mp_mazin )	/* 11 */
 	DRIVER( mp_col3 )	/* ?? */
 
+	DRIVER( ssf2ghw )	/* MegaDrive-based hack */
+
 	DRIVER( hshavoc )	/* (c) 1993 Data East */
 
 	/* Data East "Burger Time hardware" games */
@@ -3896,6 +3899,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( gatedom1 )	/* MAC (c) 1990 Data East Corporation (US) */
 	DRIVER( edrandy )	/* MAD (c) 1990 Data East Corporation (World) */
 	DRIVER( edrandy1 )	/* MAD (c) 1990 Data East Corporation (World) */
+	DRIVER( edrandy0 )	/* MAD (c) 1990 Data East Corporation (World) */
 	DRIVER( edrandyj )	/* MAD (c) 1990 Data East Corporation (Japan) */
 	DRIVER( supbtime )	/* MAE (c) 1990 Data East Corporation (World) */
 	DRIVER( supbtimj )	/* MAE (c) 1990 Data East Corporation (Japan) */
@@ -4450,6 +4454,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( bm6thmix )	/* GXA21 (c) 2001 (Japan) */
 
 	/* PowerPC based Konami games */
+	DRIVER( fiveside )	/*   479 (c)1995 */
 	DRIVER( thunderh )	/* GX680 (c)1996 */
 	DRIVER( slrasslt )	/* GX792 (c)1996 */
 	DRIVER( gticlub )	/* GX688 (c)1996 */
@@ -5415,6 +5420,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( agress )	/* TA-0029 (c) 1991 Palco */
 	DRIVER( agressb )	/* TA-0029 (c) 1991 Palco */
 	DRIVER( ddragon3 )	/* TA-0030 (c) 1990 */
+	DRIVER( ddrago3j )	/* TA-0030 (c) 1990 (Japan) */
 	DRIVER( ddrago3b )	/* bootleg */
 	DRIVER( wwfwfest )	/* TA-0031 (c) 1991 (US) */
 	DRIVER( wwfwfsta )	/* TA-0031 (c) 1991 + Tecmo license (US) */
@@ -5854,6 +5860,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( skyfox )	/* (c) 1987 Jaleco + Nichibutsu USA license */
 	DRIVER( exerizrb )	/* bootleg */
 	DRIVER( homerun )	/* (c) 1988 Jaleco */
+	DRIVER( dynashot )	/* (c) 1988 Jaleco */
 	DRIVER( bigrun )	/* (c) 1989 Jaleco */
 	DRIVER( cischeat )	/* (c) 1990 Jaleco */
 	DRIVER( f1gpstar )	/* (c) 1991 Jaleco */
@@ -6795,6 +6802,7 @@ Other Sun games
 	DRIVER( borntofi )	/* (c) International Games? */
 	DRIVER( diverboy )	/* (c) 1992 Electronic Devices */
 	DRIVER( twinbrat )	/* (c) 1995 */
+	DRIVER( twinbrta )	/* (c) 1995 */
 	DRIVER( ppmast93 )	/* (c) 1993 Electronic Devices S.R.L. */
 	DRIVER( twins )		/* (c) 1994 */
 	DRIVER( mwarr )

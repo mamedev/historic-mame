@@ -182,10 +182,6 @@ ifdef DEBUG
 DEFS += -DMAME_DEBUG
 endif
 
-ifdef NEW_DEBUGGER
-DEFS += -DNEW_DEBUGGER
-endif
-
 ifdef X86_VOODOO_DRC
 DEFS += -DVOODOO_DRC
 endif
@@ -382,7 +378,7 @@ file2str$(EXE): $(OBJ)/file2str.o $(OSDBGOBJS)
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@
 
-romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o $(ZLIB) $(OSDBGOBJS)
+romcmp$(EXE): $(OBJ)/romcmp.o $(OBJ)/unzip.o $(OBJ)/mamecore.o $(ZLIB) $(OSDBGOBJS)
 	@echo Linking $@...
 	$(LD) $(LDFLAGS) $(OSDBGLDFLAGS) $^ $(LIBS) -o $@
 

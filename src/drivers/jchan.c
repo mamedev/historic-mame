@@ -358,7 +358,7 @@ are loaded in RAM then saved with cmd 0x42 (see code @ $5196 & $50d4)
 			mcu_ram[mcu_offset + 63] = 0x0062;
 #endif
 			mame_file *f;
-			if ((f = mame_fopen(Machine->gamedrv->name,0,FILETYPE_NVRAM,0)) != 0)
+			if ((f = nvram_fopen(Machine, OPEN_FLAG_READ)) != 0)
 			{
 				mame_fread(f,&mcu_ram[mcu_offset], 128);
 				mame_fclose(f);
@@ -370,7 +370,7 @@ are loaded in RAM then saved with cmd 0x42 (see code @ $5196 & $50d4)
 		case 0x42: /* save game settings to 93C46 EEPROM ($50d4) */
 		{
 			mame_file *f;
-			if ((f = mame_fopen(Machine->gamedrv->name,0,FILETYPE_NVRAM,1)) != 0)
+			if ((f = nvram_fopen(Machine, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE)) != 0)
 			{
 				mame_fwrite(f,&mcu_ram[mcu_offset], 128);
 				mame_fclose(f);

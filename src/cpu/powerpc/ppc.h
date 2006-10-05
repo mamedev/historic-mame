@@ -156,6 +156,8 @@ enum {
 	PPC_DEC,
 	PPC_SRR0,
 	PPC_SRR1,
+	PPC_EXIER,
+	PPC_EXISR,
 	PPC_R0,
 	PPC_R1,
 	PPC_R2,
@@ -318,6 +320,10 @@ void ppc403_install_dma_write_handler(int ch, PPC_DMA_HANDLER dma_handler, UINT8
 #define PPC403_SPU_TX		6
 #define PPC403_CRITICAL_IRQ		7
 
+#endif
+
+#if (HAS_PPC403)
+void ppc403_get_info(UINT32 state, union cpuinfo *info);
 #endif
 
 #if (HAS_PPC602)

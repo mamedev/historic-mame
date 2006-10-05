@@ -43,6 +43,8 @@ static WRITE8_HANDLER( invad2ct_sh_port1_w );
 static WRITE8_HANDLER( spcewars_sh_port3_w );
 static WRITE8_HANDLER( invaders_sh_port3_w );
 static WRITE8_HANDLER( invaders_sh_port5_w );
+static WRITE8_HANDLER( lrescue_sh_port3_w );
+static WRITE8_HANDLER( lrescue_sh_port5_w );
 static WRITE8_HANDLER( invad2ct_sh_port7_w );
 
 static WRITE8_HANDLER( ballbomb_sh_port3_w );
@@ -181,6 +183,27 @@ struct Samplesinterface invad2ct_samples_interface =
 	invad2ct_sample_names
 };
 
+static const char *lrescue_sample_names[] =
+{
+	"*lrescue",
+	"alienexplosion.wav",
+	"rescueshipexplosion.wav",
+	"beamgun.wav",
+	"thrust.wav",
+	"bonus2.wav",
+	"bonus3.wav",
+	"shootingstar.wav",
+	"stepl.wav",
+	"steph.wav",
+	0       /* end of array */
+};
+
+struct Samplesinterface lrescue_samples_interface =
+{
+	4,	/* 4 channels */
+	lrescue_sample_names
+};
+
 
 MACHINE_RESET( invaders )
 {
@@ -244,6 +267,12 @@ MACHINE_RESET( invad2ct )
 
 */
 
+MACHINE_RESET( lrescue )
+{
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x03, 0x03, 0, 0, lrescue_sh_port3_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x05, 0x05, 0, 0, lrescue_sh_port5_w);
+}
+
 static void invaders_sh_1_w(int board, int data, unsigned char *last)
 {
 	int base_channel, base_sample;
@@ -300,6 +329,56 @@ static void invaders_sh_2_w(int board, int data, unsigned char *last)
 	*last = data;
 }
 
+static void lrescue_sh_1_w(int board, int data, unsigned char *last)
+{
+	if (data & 0x01 && ~*last & 0x01)
+		sample_start (0, 3, 0);		/* Thrust */
+
+	if (data & 0x02 && ~*last & 0x02)
+		sample_start (1, 2, 0);		/* Shot Sound */
+
+	if (data & 0x04 && ~*last & 0x04)
+		sample_start (0, 1, 0);		/* Death */
+
+	if (data & 0x08 && ~*last & 0x08)
+		sample_start (1, 0, 0);		/* Alien Hit */
+
+	if (data & 0x10 && ~*last & 0x10)
+		sample_start (2, 5, 0);		/* Bonus Ship (not confirmed) */
+
+//  if (data & 0x20 && ~*last & 0x20)
+//      sample_start (2, 5, 0);     /* Game Start (no sound) */
+
+	c8080bw_screen_red_w(data & 0x04);
+
+	*last = data;
+}
+
+static void lrescue_sh_2_w(int board, int data, unsigned char *last)
+{
+
+	if (data & 0x01 && ~*last & 0x01)
+		sample_start (1, 8, 0);		/* Footstep high tone */
+
+	if (data & 0x02 && ~*last & 0x02)
+		sample_start (1, 7, 0);		/* Footstep low tone */
+
+	if (data & 0x04 && ~*last & 0x04)
+		sample_start (1, 4, 0);		/* Bonus when counting men saved */
+
+	speaker_level_w(0, (data & 0x08) ? 1 : 0);	/* Bitstream tunes - endlevel and bonus1 */
+
+	if (data & 0x10 && ~*last & 0x10)
+		sample_start (3, 6, 0);		/* Shooting Star and Rescue Ship sounds */
+
+	if (~data & 0x10 && *last & 0x10)	/* This makes the rescue ship sound beep on and off */
+		sample_stop (3);
+
+	c8080bw_flip_screen_w(data & 0x20);
+
+	*last = data;
+}
+
 static void spcewars_sh_1_w(int board, int data, unsigned char *last)
 {
 	int base_channel, base_sample;
@@ -342,6 +421,13 @@ static WRITE8_HANDLER( invaders_sh_port3_w )
 	invaders_sh_1_w(0, data, &last);
 }
 
+static WRITE8_HANDLER( invaders_sh_port5_w )
+{
+	static unsigned char last = 0;
+
+	invaders_sh_2_w(0, data, &last);
+}
+
 static WRITE8_HANDLER( spcewars_sh_port3_w )
 {
 	static unsigned char last = 0;
@@ -349,11 +435,18 @@ static WRITE8_HANDLER( spcewars_sh_port3_w )
 	spcewars_sh_1_w(0, data, &last);
 }
 
-static WRITE8_HANDLER( invaders_sh_port5_w )
+static WRITE8_HANDLER( lrescue_sh_port3_w )
 {
 	static unsigned char last = 0;
 
-	invaders_sh_2_w(0, data, &last);
+	lrescue_sh_1_w(0, data, &last);
+}
+
+static WRITE8_HANDLER( lrescue_sh_port5_w )
+{
+	static unsigned char last = 0;
+
+	lrescue_sh_2_w(0, data, &last);
 }
 
 static WRITE8_HANDLER( invad2ct_sh_port7_w )

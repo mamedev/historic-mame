@@ -42,12 +42,6 @@ DRIVER1 Based on the Amuse source
 DRIVER2 Miguel Angel Horna (mahorna@teleline.es)
 */
 #define QSOUND_DRIVER1	  1
-/*
-I don't know whether this system uses 8 bit or 16 bit samples.
-If it uses 16 bit samples then the sample ROM loading macros need
-to be modified to work with non-intel machines.
-*/
-#define QSOUND_8BIT_SAMPLES 1
 
 /*
 Debug defines
@@ -59,15 +53,10 @@ Debug defines
 
 #define QSOUND_DRIVER2 !QSOUND_DRIVER1
 
-#if QSOUND_8BIT_SAMPLES
 /* 8 bit source ROM samples */
 typedef signed char QSOUND_SRC_SAMPLE;
 #define LENGTH_DIV 1
-#else
-/* 8 bit source ROM samples */
-typedef signed short QSOUND_SRC_SAMPLE;
-#define LENGTH_DIV 2
-#endif
+
 
 #define QSOUND_CLOCKDIV 166			 /* Clock divider */
 #define QSOUND_CHANNELS 16
@@ -112,6 +101,7 @@ struct qsound_info
 	struct QSOUND_CHANNEL channel[QSOUND_CHANNELS];
 	int data;				  /* register latch data */
 	QSOUND_SRC_SAMPLE *sample_rom;	/* Q sound sample ROM */
+	UINT32 sample_rom_length;
 
 	#if QSOUND_DRIVER1
 	int pan_table[33];		 /* Pan volume table */
@@ -146,6 +136,7 @@ static void *qsound_start(int sndindex, int clock, const void *config)
 	chip->intf = config;
 
 	chip->sample_rom = (QSOUND_SRC_SAMPLE *)memory_region(chip->intf->region);
+	chip->sample_rom_length = memory_region_length(chip->intf->region);
 
 	memset(chip->channel, 0, sizeof(chip->channel));
 
@@ -395,7 +386,6 @@ void qsound_update( void *param, stream_sample_t **inputs, stream_sample_t **buf
 	int i,j;
 	int rvol, lvol, count;
 	struct QSOUND_CHANNEL *pC=&chip->channel[0];
-	QSOUND_SRC_SAMPLE * pST;
 	stream_sample_t  *datap[2];
 
 	datap[0] = buffer[0];
@@ -409,7 +399,6 @@ void qsound_update( void *param, stream_sample_t **inputs, stream_sample_t **buf
 		{
 			QSOUND_SAMPLE *pOutL=datap[0];
 			QSOUND_SAMPLE *pOutR=datap[1];
-			pST=chip->sample_rom+pC->bank;
 			rvol=(pC->rvol*pC->vol)>>(8*LENGTH_DIV);
 			lvol=(pC->lvol*pC->vol)>>(8*LENGTH_DIV);
 
@@ -431,7 +420,7 @@ void qsound_update( void *param, stream_sample_t **inputs, stream_sample_t **buf
 						/* Reached the end, restart the loop */
 						pC->address = (pC->end - pC->loop) & 0xffff;
 					}
-					pC->lastdt=pST[pC->address];
+					pC->lastdt=chip->sample_rom[(pC->bank+pC->address)%(chip->sample_rom_length)];
 				}
 
 				(*pOutL) += ((pC->lastdt * lvol) >> 6);
@@ -471,10 +460,8 @@ void calcula_mix(struct qsound_info *chip, int channel)
 	factl=255-factr;
 	pC->mixl=(pC->mixl * factl)>>8;
 	pC->mixr=(pC->mixr * factr)>>8;
-#if QSOUND_8BIT_SAMPLES
 	pC->mixl<<=8;
 	pC->mixr<<=8;
-#endif
 }
 
 void qsound_update(void *param,void **buffer,int length)

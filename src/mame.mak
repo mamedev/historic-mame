@@ -851,6 +851,7 @@ $(OBJ)/konami.a: \
 	$(OBJ)/drivers/trackfld.o $(OBJ)/machine/konami.o $(OBJ)/sndhrdw/trackfld.o $(OBJ)/vidhrdw/trackfld.o \
 	$(OBJ)/drivers/tutankhm.o $(OBJ)/vidhrdw/tutankhm.o \
 	$(OBJ)/drivers/twin16.o $(OBJ)/vidhrdw/twin16.o \
+	$(OBJ)/drivers/ultrsprt.o \
 	$(OBJ)/drivers/ultraman.o $(OBJ)/vidhrdw/ultraman.o \
 	$(OBJ)/drivers/vendetta.o $(OBJ)/vidhrdw/vendetta.o \
 	$(OBJ)/drivers/wecleman.o $(OBJ)/vidhrdw/wecleman.o \
@@ -1083,6 +1084,7 @@ $(OBJ)/sega.a: \
 	$(OBJ)/drivers/genesis.o $(OBJ)/vidhrdw/genesis.o \
 	$(OBJ)/drivers/hshavoc.o \
 	$(OBJ)/drivers/kopunch.o $(OBJ)/vidhrdw/kopunch.o \
+	$(OBJ)/drivers/megadriv.o \
 	$(OBJ)/drivers/megaplay.o \
 	$(OBJ)/drivers/megatech.o \
 	$(OBJ)/drivers/model1.o $(OBJ)/machine/model1.o $(OBJ)/vidhrdw/model1.o \
@@ -1102,6 +1104,7 @@ $(OBJ)/sega.a: \
 	$(OBJ)/drivers/segasyse.o $(OBJ)/vidhrdw/segasyse.o \
 	$(OBJ)/drivers/segaxbd.o $(OBJ)/vidhrdw/segaxbd.o \
 	$(OBJ)/drivers/segaybd.o $(OBJ)/vidhrdw/segaybd.o \
+	$(OBJ)/drivers/ssf2md.o \
 	$(OBJ)/drivers/sg1000a.o $(OBJ)/vidhrdw/tms9928a.o \
 	$(OBJ)/drivers/stactics.o $(OBJ)/machine/stactics.o $(OBJ)/vidhrdw/stactics.o \
 	$(OBJ)/drivers/stv.o $(OBJ)/drivers/stvhacks.o $(OBJ)/machine/stvcd.o \

@@ -619,14 +619,15 @@ static void font_scale(mame_bitmap *dest, const mame_bitmap *source, const recta
 
 static int render_font_load_bdf(render_font *font, const char *filename)
 {
+	mame_file_error filerr;
 	mame_file *file;
 	const char *ptr;
 	UINT64 bytes;
 	char *data;
 
 	/* attempt to open the file */
-	file = mame_fopen(NULL, filename, FILETYPE_FONT, FALSE);
-	if (file == NULL)
+	filerr = mame_fopen(SEARCHPATH_FONT, filename, OPEN_FLAG_READ, &file);
+	if (filerr != FILERR_NONE)
 		return 1;
 
 	/* determine the file size and allocate memory */

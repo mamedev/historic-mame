@@ -147,7 +147,7 @@ void png_free(png_info *pnginfo)
     header at the current file location
 -------------------------------------------------*/
 
-static int verify_header(mame_file *fp)
+static png_error verify_header(mame_file *fp)
 {
 	UINT8 signature[8];
 
@@ -167,7 +167,7 @@ static int verify_header(mame_file *fp)
     read_chunk - read the next PNG chunk
 -------------------------------------------------*/
 
-static int read_chunk(mame_file *fp, UINT8 **data, UINT32 *type, UINT32 *length)
+static png_error read_chunk(mame_file *fp, UINT8 **data, UINT32 *type, UINT32 *length)
 {
 	UINT32 crc, chunk_crc;
 	UINT8 tempbuff[4];
@@ -231,7 +231,7 @@ static int read_chunk(mame_file *fp, UINT8 **data, UINT32 *type, UINT32 *length)
     process_chunk - process a PNG chunk
 -------------------------------------------------*/
 
-static int process_chunk(png_private *png, UINT8 *data, UINT32 type, UINT32 length, int *keepmem)
+static png_error process_chunk(png_private *png, UINT8 *data, UINT32 type, UINT32 length, int *keepmem)
 {
 	/* default to not keeping memory */
 	*keepmem = FALSE;
@@ -332,7 +332,7 @@ static int process_chunk(png_private *png, UINT8 *data, UINT32 type, UINT32 leng
     unfilter_row - unfilter a single row of pixels
 -------------------------------------------------*/
 
-static int unfilter_row(int type, UINT8 *src, UINT8 *dst, UINT8 *dstprev, int bpp, int rowbytes)
+static png_error unfilter_row(int type, UINT8 *src, UINT8 *dst, UINT8 *dstprev, int bpp, int rowbytes)
 {
 	int x;
 
@@ -412,10 +412,10 @@ static int unfilter_row(int type, UINT8 *src, UINT8 *dst, UINT8 *dstprev, int bp
     process_image - post-process a loaded iamge
 -------------------------------------------------*/
 
-static int process_image(png_private *png)
+static png_error process_image(png_private *png)
 {
 	int rowbytes, bpp, imagesize;
-	int error = PNGERR_NONE;
+	png_error error = PNGERR_NONE;
 	image_data_chunk *idat;
 	UINT8 *src, *dst;
 	z_stream stream;
@@ -498,11 +498,11 @@ handle_error:
     png_read_file - read a PNG from a MAME stream
 -------------------------------------------------*/
 
-int png_read_file(mame_file *fp, png_info *pnginfo)
+png_error png_read_file(mame_file *fp, png_info *pnginfo)
 {
 	UINT8 *chunk_data = NULL;
 	png_private png;
-	int error;
+	png_error error;
 
 	/* initialize the data structures */
 	memset(&png, 0, sizeof(png));
@@ -575,7 +575,7 @@ handle_error:
     sub 8-bit to 8-bit
 -------------------------------------------------*/
 
-int png_expand_buffer_8bit(png_info *pnginfo)
+png_error png_expand_buffer_8bit(png_info *pnginfo)
 {
 	int i,j, k;
 	UINT8 *inp, *outp, *outbuf;
@@ -610,7 +610,7 @@ int png_expand_buffer_8bit(png_info *pnginfo)
 	free (pnginfo->image);
 	pnginfo->image = outbuf;
 
-	return 1;
+	return PNGERR_NONE;
 }
 
 
@@ -623,7 +623,7 @@ int png_expand_buffer_8bit(png_info *pnginfo)
     add_text - add a text entry to the png_info
 -------------------------------------------------*/
 
-static int add_text(png_info *pnginfo, const char *keyword, const char *text)
+static png_error add_text(png_info *pnginfo, const char *keyword, const char *text)
 {
 	png_text *newtext, *pt, *ct;
 	char *textdata;
@@ -668,7 +668,7 @@ static int add_text(png_info *pnginfo, const char *keyword, const char *text)
     the given file
 -------------------------------------------------*/
 
-static int write_chunk(mame_file *fp, const UINT8 *data, UINT32 type, UINT32 length)
+static png_error write_chunk(mame_file *fp, const UINT8 *data, UINT32 type, UINT32 length)
 {
 	UINT8 tempbuff[8];
 	UINT32 crc;
@@ -704,7 +704,7 @@ static int write_chunk(mame_file *fp, const UINT8 *data, UINT32 type, UINT32 len
     chunk to the given file by deflating it
 -------------------------------------------------*/
 
-static int write_deflated_chunk(mame_file *fp, UINT8 *data, UINT32 type, UINT32 length)
+static png_error write_deflated_chunk(mame_file *fp, UINT8 *data, UINT32 type, UINT32 length)
 {
 	UINT64 lengthpos = mame_ftell(fp);
 	UINT8 tempbuff[8192];
@@ -790,7 +790,7 @@ static int write_deflated_chunk(mame_file *fp, UINT8 *data, UINT32 type, UINT32 
     bitmap to a palettized image
 -------------------------------------------------*/
 
-static int convert_bitmap_to_image_palette(png_info *pnginfo, const mame_bitmap *bitmap, int palette_length, const rgb_t *palette)
+static png_error convert_bitmap_to_image_palette(png_info *pnginfo, const mame_bitmap *bitmap, int palette_length, const rgb_t *palette)
 {
 	int rowbytes;
 	int x, y;
@@ -847,7 +847,7 @@ static int convert_bitmap_to_image_palette(png_info *pnginfo, const mame_bitmap 
     bitmap to an RGB image
 -------------------------------------------------*/
 
-static int convert_bitmap_to_image_rgb(png_info *pnginfo, const mame_bitmap *bitmap, int palette_length, const rgb_t *palette)
+static png_error convert_bitmap_to_image_rgb(png_info *pnginfo, const mame_bitmap *bitmap, int palette_length, const rgb_t *palette)
 {
 	int rowbytes;
 	int x, y;
@@ -921,11 +921,11 @@ static int convert_bitmap_to_image_rgb(png_info *pnginfo, const mame_bitmap *bit
     chunks to the given file
 -------------------------------------------------*/
 
-static int write_png_stream(void *fp, png_info *pnginfo, const mame_bitmap *bitmap, int palette_length, const rgb_t *palette)
+static png_error write_png_stream(void *fp, png_info *pnginfo, const mame_bitmap *bitmap, int palette_length, const rgb_t *palette)
 {
 	UINT8 tempbuff[16];
 	png_text *text;
-	int error;
+	png_error error;
 
 	/* create an unfiltered image in either palette or RGB form */
 	if (bitmap->depth == 16 && palette_length <= 256)
@@ -977,11 +977,11 @@ handle_error:
 
 
 
-int png_write_bitmap(mame_file *fp, mame_bitmap *bitmap)
+png_error png_write_bitmap(mame_file *fp, mame_bitmap *bitmap)
 {
 	png_info pnginfo;
 	char text[1024];
-	int error;
+	png_error error;
 
 	/* reset all entries in the PNG info */
 	memset(&pnginfo, 0, sizeof(pnginfo));
@@ -1014,11 +1014,11 @@ int png_write_bitmap(mame_file *fp, mame_bitmap *bitmap)
 /* temporary hack for now */
 static png_info mnginfo;
 
-int mng_capture_start(mame_file *fp, mame_bitmap *bitmap)
+png_error mng_capture_start(mame_file *fp, mame_bitmap *bitmap)
 {
 	UINT8 mhdr[28];
 	char text[1024];
-	int error;
+	png_error error;
 
 	memset(&mnginfo, 0, sizeof(mnginfo));
 
@@ -1047,12 +1047,12 @@ int mng_capture_start(mame_file *fp, mame_bitmap *bitmap)
 	return PNGERR_NONE;
 }
 
-int mng_capture_frame(mame_file *fp, mame_bitmap *bitmap)
+png_error mng_capture_frame(mame_file *fp, mame_bitmap *bitmap)
 {
 	return write_png_stream(fp, &mnginfo, bitmap, Machine->drv->total_colors, palette_get_adjusted_colors(Machine));
 }
 
-int mng_capture_stop(mame_file *fp)
+png_error mng_capture_stop(mame_file *fp)
 {
 	return write_chunk(fp, NULL, MNG_CN_MEND, 0);
 }

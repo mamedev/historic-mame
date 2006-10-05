@@ -554,13 +554,18 @@ void render_line_to_quad(const render_bounds *bounds, float width, render_bounds
 mame_bitmap *render_load_png(const char *dirname, const char *filename, mame_bitmap *alphadest, int *hasalpha)
 {
 	mame_bitmap *bitmap = NULL;
+	mame_file_error filerr;
 	mame_file *file;
 	png_info png;
+	const char *fname;
 	int result;
 
 	/* open the file */
-	file = mame_fopen(dirname, filename, FILETYPE_ARTWORK, 0);
-	if (file == NULL)
+	fname = (dirname == NULL) ? filename : assemble_3_strings(dirname, "/", filename);
+	filerr = mame_fopen(SEARCHPATH_ARTWORK, fname, OPEN_FLAG_READ, &file);
+	if (fname != filename)
+		free((void *)fname);
+	if (filerr != FILERR_NONE)
 		return NULL;
 
 	/* read the PNG data */

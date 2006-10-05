@@ -89,9 +89,10 @@
 ***************************************************************************/
 
 /* maxima */
-#define MAX_CPU			8
-#define MAX_SOUND		32
-#define MAX_SPEAKER 	4
+#define MAX_DRIVER_NAME_CHARS	8
+#define MAX_CPU					8
+#define MAX_SOUND				32
+#define MAX_SPEAKER 			4
 
 /* watchdog constants */
 #define DEFAULT_60HZ_3S_VBLANK_WATCHDOG	180

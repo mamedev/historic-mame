@@ -243,21 +243,21 @@ static void handle_missing_file(rom_load_data *romdata, const rom_entry *romp)
 	/* optional files are okay */
 	if (ROM_ISOPTIONAL(romp))
 	{
-		sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "OPTIONAL %-12s NOT FOUND\n", ROM_GETNAME(romp));
+		sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "OPTIONAL %s NOT FOUND\n", ROM_GETNAME(romp));
 		romdata->warnings++;
 	}
 
 	/* no good dumps are okay */
 	else if (ROM_NOGOODDUMP(romp))
 	{
-		sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s NOT FOUND (NO GOOD DUMP KNOWN)\n", ROM_GETNAME(romp));
+		sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%s NOT FOUND (NO GOOD DUMP KNOWN)\n", ROM_GETNAME(romp));
 		romdata->warnings++;
 	}
 
 	/* anything else is bad */
 	else
 	{
-		sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s NOT FOUND\n", ROM_GETNAME(romp));
+		sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%s NOT FOUND\n", ROM_GETNAME(romp));
 		romdata->errors++;
 	}
 }
@@ -328,26 +328,26 @@ static void verify_length_and_hash(rom_load_data *romdata, const char *name, UIN
 
 	/* get the length and CRC from the file */
 	actlength = mame_fsize(romdata->file);
-	acthash = mame_fhash(romdata->file);
+	acthash = mame_fhash(romdata->file, hash_data_used_functions(hash));
 
 	/* verify length */
 	if (explength != actlength)
 	{
-		sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s WRONG LENGTH (expected: %08x found: %08x)\n", name, explength, actlength);
+		sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%s WRONG LENGTH (expected: %08x found: %08x)\n", name, explength, actlength);
 		romdata->warnings++;
 	}
 
 	/* If there is no good dump known, write it */
 	if (hash_data_has_info(hash, HASH_INFO_NO_DUMP))
 	{
-			sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s NO GOOD DUMP KNOWN\n", name);
+			sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%s NO GOOD DUMP KNOWN\n", name);
 		romdata->warnings++;
 	}
 	/* verify checksums */
 	else if (!hash_data_is_equal(hash, acthash, 0))
 	{
 		/* otherwise, it's just bad */
-		sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s WRONG CHECKSUMS:\n", name);
+		sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%s WRONG CHECKSUMS:\n", name);
 
 		dump_wrong_and_correct_checksums(romdata, hash, acthash);
 
@@ -356,7 +356,7 @@ static void verify_length_and_hash(rom_load_data *romdata, const char *name, UIN
 	/* If it matches, but it is actually a bad dump, write it */
 	else if (hash_data_has_info(hash, HASH_INFO_BAD_DUMP))
 	{
-		sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s ROM NEEDS REDUMP\n",name);
+		sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%s ROM NEEDS REDUMP\n",name);
 		romdata->warnings++;
 	}
 }
@@ -367,7 +367,7 @@ static void verify_length_and_hash(rom_load_data *romdata, const char *name, UIN
     messages about ROM loading to the user
 -------------------------------------------------*/
 
-static int display_loading_rom_message(const char *name, rom_load_data *romdata)
+static void display_loading_rom_message(const char *name, rom_load_data *romdata)
 {
 	char buffer[200];
 
@@ -377,7 +377,6 @@ static int display_loading_rom_message(const char *name, rom_load_data *romdata)
 		sprintf(buffer, "Loading Complete");
 
 	ui_set_startup_text(buffer, FALSE);
-	return osd_display_loading_rom_message(name, romdata);
 }
 
 
@@ -475,23 +474,36 @@ static void region_post_process(rom_load_data *romdata, const rom_entry *regiond
 
 static int open_rom_file(rom_load_data *romdata, const rom_entry *romp)
 {
+	mame_file_error filerr = FILERR_NOT_FOUND;
 	const game_driver *drv;
 
 	++romdata->romsloaded;
 
 	/* update status display */
-	if (display_loading_rom_message(ROM_GETNAME(romp), romdata))
-       return 0;
+	display_loading_rom_message(ROM_GETNAME(romp), romdata);
 
 	/* Attempt reading up the chain through the parents. It automatically also
        attempts any kind of load by checksum supported by the archives. */
 	romdata->file = NULL;
 	for (drv = Machine->gamedrv; !romdata->file && drv; drv = driver_get_clone(drv))
 		if (drv->name && *drv->name)
-			romdata->file = mame_fopen_rom(drv->name, ROM_GETNAME(romp), ROM_GETHASHDATA(romp));
+		{
+			UINT8 crcs[4];
+			char *fname;
+
+			fname = assemble_3_strings(drv->name, "/", ROM_GETNAME(romp));
+			if (hash_data_extract_binary_checksum(ROM_GETHASHDATA(romp), HASH_CRC, crcs))
+			{
+				UINT32 crc = (crcs[0] << 24) | (crcs[1] << 16) | (crcs[2] << 8) | crcs[3];
+				filerr = mame_fopen_crc(SEARCHPATH_ROM, fname, crc, OPEN_FLAG_READ, &romdata->file);
+			}
+			else
+				filerr = mame_fopen(SEARCHPATH_ROM, fname, OPEN_FLAG_READ, &romdata->file);
+			free(fname);
+		}
 
 	/* return the result */
-	return (romdata->file != NULL);
+	return (filerr == FILERR_NONE);
 }
 
 
@@ -813,9 +825,9 @@ static void process_disk_entries(rom_load_data *romdata, const rom_entry *romp)
 			if (!source)
 			{
 				if (chd_get_last_error() == CHDERR_UNSUPPORTED_VERSION)
-					sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s UNSUPPORTED CHD VERSION\n", filename);
+					sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%s UNSUPPORTED CHD VERSION\n", filename);
 				else
-					sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s NOT FOUND\n", filename);
+					sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%s NOT FOUND\n", filename);
 				romdata->errors++;
 				romp++;
 				continue;
@@ -830,8 +842,13 @@ static void process_disk_entries(rom_load_data *romdata, const rom_entry *romp)
 			/* verify the MD5 */
 			if (!hash_data_is_equal(ROM_GETHASHDATA(romp), acthash, 0))
 			{
-				sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s WRONG CHECKSUMS:\n", filename);
+				sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%s WRONG CHECKSUMS:\n", filename);
 				dump_wrong_and_correct_checksums(romdata, ROM_GETHASHDATA(romp), acthash);
+				romdata->warnings++;
+			}
+			else if (hash_data_has_info(ROM_GETHASHDATA(romp), HASH_INFO_BAD_DUMP))
+			{
+				sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%s CHD NEEDS REDUMP\n", filename);
 				romdata->warnings++;
 			}
 
@@ -852,9 +869,9 @@ static void process_disk_entries(rom_load_data *romdata, const rom_entry *romp)
 					if (err != CHDERR_NONE)
 					{
 						if (chd_get_last_error() == CHDERR_UNSUPPORTED_VERSION)
-							sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s UNSUPPORTED CHD VERSION\n", filename);
+							sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%s UNSUPPORTED CHD VERSION\n", filename);
 						else
-							sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s: CAN'T CREATE DIFF FILE\n", filename);
+							sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%s: CAN'T CREATE DIFF FILE\n", filename);
 						romdata->errors++;
 						romp++;
 						continue;
@@ -866,9 +883,9 @@ static void process_disk_entries(rom_load_data *romdata, const rom_entry *romp)
 					if (!diff)
 					{
 						if (chd_get_last_error() == CHDERR_UNSUPPORTED_VERSION)
-							sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s UNSUPPORTED CHD VERSION\n", filename);
+							sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%s UNSUPPORTED CHD VERSION\n", filename);
 						else
-							sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%-12s: CAN'T OPEN DIFF FILE\n", filename);
+							sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%s: CAN'T OPEN DIFF FILE\n", filename);
 						romdata->errors++;
 						romp++;
 						continue;

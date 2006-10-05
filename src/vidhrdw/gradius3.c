@@ -87,6 +87,7 @@ VIDEO_START( gradius3 )
 		return 1;
 
 	K052109_set_layer_offsets(2, -2, 0);
+	K051960_set_sprite_offsets(2, 0);
 
 	/* re-decode the sprites because the ROMs are connected to the custom IC differently
        from how they are connected to the CPU. */

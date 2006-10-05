@@ -2,6 +2,10 @@
 <mamelayout version="2">
 	<element name="overlay" defstate="1">
 		<rect state="1">
+			<bounds left="0" top="0" right="28" bottom="34" />
+			<color red="1" green="1" blue="1" />
+		</rect>
+		<rect state="1">
 			<bounds left="0" top="0" right="1" bottom="0" />
 			<color red="1" green="1" blue="1" />
 		</rect>

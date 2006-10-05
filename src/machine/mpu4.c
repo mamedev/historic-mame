@@ -11,8 +11,8 @@
 
 #include "driver.h"
 
-#define LOGM4(x)//  logerror x
-#define LOGMV(x)//  logerror x
+#define LOGM4(x)	logerror x
+#define LOGMV(x)	logerror x
 
 /* 68k 6850 states */
 static UINT8 m6850_status;
@@ -45,7 +45,7 @@ static void m6850_update_io(void)
 	UINT8 new_state;
 
 	/* mpu4 -> main CPU communications */
-	if (!(m6850_mpu4_status & 0x02))
+	if (m6850_mpu4_data_ready)
 	{
 		/* set the overrun bit if the data in the destination hasn't been read yet */
 		if (m6850_status & 0x01)
@@ -53,17 +53,18 @@ static void m6850_update_io(void)
 
 		/* copy the mpu4's output to our input */
 		m6850_input = m6850_mpu4_output;
-		LOGMV(("VID ACIA INPUT = %d \n",m6850_input));
+		LOGMV(("VID ACIA INPUT = %x \n",m6850_input));
 
 		/* set the receive register full bit */
 		m6850_status |= 0x01;
 
 		/* set the mpu4's transmitter register empty bit */
 		m6850_mpu4_status |= 0x02;
+		m6850_mpu4_data_ready = 0;
 	}
 
 	/* main -> mpu4 CPU communications */
-	if (!(m6850_status & 0x02))
+	if (m6850_data_ready)
 	{
 		/* set the overrun bit if the data in the destination hasn't been read yet */
 		if (m6850_mpu4_status & 0x01)
@@ -71,12 +72,13 @@ static void m6850_update_io(void)
 
 		/* copy the main CPU's output to our input */
 		m6850_mpu4_input = m6850_output;
-		LOGM4(("MPU4 ACIA INPUT = %d \n",m6850_mpu4_input));
+		LOGM4(("MPU4 ACIA INPUT = %x \n",m6850_mpu4_input));
 		/* set the receive register full bit */
 		m6850_mpu4_status |= 0x01;
 
 		/* set the main CPU's trasmitter register empty bit */
 		m6850_status |= 0x02;
+		m6850_data_ready = 0;
 	}
 
 	/* check for reset states */
@@ -133,13 +135,13 @@ static void m6850_update_io(void)
 READ16_HANDLER( vidcard_uart_rx_r )
 {
 	int result;
-	offset = (offset << 8 | 0x00ff);
+//  offset = (offset << 8 | 0x00ff);
 
 	/* status register is at offset 0 */
 	if (offset == 0)
 	{
 		result = m6850_status;
-		LOGMV(("MPU4 ACIA STAT = %d \n",m6850_status));
+		LOGMV(("MPU4 ACIA STAT = %x \n",m6850_status));
 	}
 
 	/* input register is at offset 1 */
@@ -196,11 +198,12 @@ static void m6850_mpu4_w_callback(int param)
 
 WRITE16_HANDLER( vidcard_uart_tx_w )
 {
+//  offset = (offset << 8 | 0x00ff);
 	/* control register is at offset 0 */
 	if (offset == 0)
 	{
 		m6850_control = (data & 0xff);
-		LOGMV(("VID ACIA CTRL = %d \n",m6850_control));
+		LOGMV(("VID ACIA CTRL = %x \n",m6850_control));
 
 		/* re-update since interrupt enables could have been modified */
 		m6850_update_io();
@@ -209,7 +212,7 @@ WRITE16_HANDLER( vidcard_uart_tx_w )
 	/* output register is at offset 1; set a timer to synchronize the CPUs */
 	else
 		timer_set(TIME_NOW, (data & 0xff), m6850_w_callback);
-		LOGMV(("VID ACIA SENDING = %d \n",data&0xff));
+		LOGMV(("VID ACIA SENDING = %x \n",data&0xff));
 }
 
 
@@ -228,7 +231,7 @@ READ8_HANDLER( mpu4_uart_rx_r )
 	if (offset == 0)
 	{
 		result = m6850_mpu4_status;
-		LOGM4(("MPU4 ACIA STAT = %d \n",m6850_mpu4_status));
+		LOGM4(("MPU4 ACIA STAT = %x \n",m6850_mpu4_status));
 	}
 
 	/* input register is at offset 1 */
@@ -251,7 +254,7 @@ WRITE8_HANDLER( mpu4_uart_tx_w )
 	if (offset == 0)
 	{
 		m6850_mpu4_control = data;
-		LOGM4(("MPU4 ACIA CTRL = %d \n",m6850_mpu4_control));
+		LOGM4(("MPU4 ACIA CTRL = %x \n",m6850_mpu4_control));
 	}
 	/* output register is at offset 1 */
 	else
@@ -259,7 +262,7 @@ WRITE8_HANDLER( mpu4_uart_tx_w )
 //      m6850_mpu4_output_temp = data;
 //      m6850_mpu4_status &= ~0x02;
 		timer_set(TIME_NOW, (data), m6850_mpu4_w_callback);
-		LOGM4(("MPU4 ACIA SENDING = %d \n",data));
+		LOGM4(("MPU4 ACIA SENDING = %x \n",data));
 	}
 
 	/* re-update since interrupt enables could have been modified */

@@ -75,12 +75,14 @@ static WRITE8_HANDLER( sspeedr_lamp_w )
 }
 
 
+/* uses a 7447A, which is equivalent to an LS47/48 */
+static const UINT8 ls48_map[16] =
+	{ 0x3f,0x06,0x5b,0x4f,0x66,0x6d,0x7c,0x07,0x7f,0x67,0x58,0x4c,0x62,0x69,0x78,0x00 };
+
 static WRITE8_HANDLER( sspeedr_time_w )
 {
-	char buf[10];
-	sprintf(buf, "LEDT%d", offset);
 	data = data & 15;
-	output_set_value(buf, (data >= 10) ? 10 : data);
+	output_set_digit_value(0x18 + offset, ls48_map[data]);
 	led_TIME[offset] = data;
 }
 
@@ -90,7 +92,7 @@ static WRITE8_HANDLER( sspeedr_score_w )
 	char buf[10];
 	sprintf(buf, "LED%02d", offset);
 	data = ~data & 15;
-	output_set_value(buf, (data >= 10) ? 10 : data);
+	output_set_digit_value(offset, ls48_map[data]);
 	led_SCORE[offset] = data;
 }
 

@@ -342,6 +342,39 @@ Notes:
 
 ROM_START( twinbrat )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_BYTE( "2.u105", 0x00000, 0x20000, CRC(33a9bb82) SHA1(0f54239397c93e264b9b211f67bf626acf1246a9) )
+	ROM_LOAD16_BYTE( "3.u104", 0x00001, 0x20000, CRC(b1186a67) SHA1(502074063101885874db76ae707db1082313efcf) )
+
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD16_BYTE( "6.bin", 0x000000, 0x80000, CRC(af10ddfd) SHA1(e5e83044f20d6cbbc1b4ef1812ac57b6dc958a8a) )
+	ROM_LOAD16_BYTE( "7.bin", 0x000001, 0x80000, CRC(3696345a) SHA1(ea38be3586757527b2a1aad2e22b83937f8602da) )
+	ROM_LOAD16_BYTE( "4.bin", 0x100000, 0x80000, CRC(1ae8a751) SHA1(5f30306580c6ab4af0ddbdc4519eb4e0ab9bd23a) )
+	ROM_LOAD16_BYTE( "5.bin", 0x100001, 0x80000, CRC(cf235eeb) SHA1(d067e2dd4f28a8986dd76ec0eba90e1adbf5787c) )
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "11.bin", 0x000000, 0x40000, CRC(00eecb03) SHA1(5913da4d2ad97c1ce5e8e601a22b499cd93af744) )
+	ROM_LOAD( "10.bin", 0x040000, 0x40000, CRC(7556bee9) SHA1(3fe99c7e9378791b79c43b04f5d0a36404448beb) )
+	ROM_LOAD( "9.bin",  0x080000, 0x40000, CRC(13194d89) SHA1(95c35b6012f98a64630abb40fd55b24ff8a5e031) )
+	ROM_LOAD( "8.bin",  0x0c0000, 0x40000, CRC(79f14528) SHA1(9c07d9a9e59f69a525bbaec05d74eb8d21bb9563) )
+
+	ROM_REGION( 0x080000, REGION_USER1, 0 ) /* Samples */
+	ROM_LOAD( "1.bin", 0x00000, 0x80000, CRC(76296578) SHA1(04eca78abe60b283269464c0d12815579126ac08) )
+
+	/* $00000-$20000 stays the same in all sound banks, */
+	/* the second half of the bank is what gets switched */
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_COPY( REGION_USER1, 0x000000, 0x000000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x000000, 0x020000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x000000, 0x040000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x020000, 0x060000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x000000, 0x080000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x040000, 0x0a0000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x000000, 0x0c0000, 0x020000)
+	ROM_COPY( REGION_USER1, 0x060000, 0x0e0000, 0x020000)
+ROM_END
+
+ROM_START( twinbrta )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 Code */
 	ROM_LOAD16_BYTE( "2.bin", 0x00000, 0x20000, CRC(5e75f568) SHA1(f42d2a73d737e6b01dd049eea2a10fc8c8096d8f) )
 	ROM_LOAD16_BYTE( "3.bin", 0x00001, 0x20000, CRC(0e3fa9b0) SHA1(0148cc616eac84dc16415e1557ec6040d14392d4) )
 
@@ -386,5 +419,6 @@ DRIVER_INIT(twinbrat)
 }
 
 
-GAME( 1994, stlforce, 0, stlforce, stlforce, stlforce, ROT0, "Electronic Devices Italy / Ecogames S.L. Spain", "Steel Force", 0 )
-GAME( 1995, twinbrat, 0, twinbrat, stlforce, twinbrat, ROT0, "Elettronica Video-Games S.R.L.", "Twin Brats", 0 )
+GAME( 1994, stlforce, 0,        stlforce, stlforce, stlforce, ROT0, "Electronic Devices Italy / Ecogames S.L. Spain", "Steel Force", 0 )
+GAME( 1995, twinbrat, 0,        twinbrat, stlforce, twinbrat, ROT0, "Elettronica Video-Games S.R.L.", "Twin Brats (set 1)", 0 )
+GAME( 1995, twinbrta, twinbrat, twinbrat, stlforce, twinbrat, ROT0, "Elettronica Video-Games S.R.L.", "Twin Brats (set 2)", 0 )

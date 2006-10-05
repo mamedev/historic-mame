@@ -15,6 +15,7 @@
 #define __OSDEPEND_H__
 
 #include "mamecore.h"
+#include "fileio.h"
 #include "timer.h"
 #include <stdarg.h>
 
@@ -169,45 +170,87 @@ struct _inp_header
 };
 
 
-/* These values are returned by osd_get_path_info */
-enum
-{
-	PATH_NOT_FOUND,
-	PATH_IS_FILE,
-	PATH_IS_DIRECTORY
-};
-
+/* osd_file is an opaque type which represents an open file */
 typedef struct _osd_file osd_file;
 
-/* Return the number of paths for a given type */
-int osd_get_path_count(int pathtype);
 
-/* Get information on the existence of a file */
-int osd_get_path_info(int pathtype, int pathindex, const char *filename);
+/*
+    osd_open: open a new file
 
-/* Create a directory if it doesn't already exist */
-int osd_create_directory(int pathtype, int pathindex, const char *dirname);
+        path - path to the file to open; the directory separator is assumed
+            to be a forward slash '/'
 
-/* Attempt to open a file with the given name and mode using the specified path type */
-osd_file *osd_fopen(int pathtype, int pathindex, const char *filename, const char *mode, osd_file_error *error);
+        openflags - some combination of:
 
-/* Seek within a file */
-int osd_fseek(osd_file *file, INT64 offset, int whence);
+            OPEN_FLAG_READ - open the file for read access
+            OPEN_FLAG_WRITE - open the file for write access
+            OPEN_FLAG_CREATE - create/truncate the file when opening; this
+                    flag also implies that an non-existant paths should be
+                    created if necessary
 
-/* Return current file position */
-UINT64 osd_ftell(osd_file *file);
+        file - pointer to an osd_file * to receive the newly-opened file
+            handle; this is only valid if the function returns FILERR_NONE
 
-/* Return 1 if we're at the end of file */
-int osd_feof(osd_file *file);
+        filesize - pointer to a UINT64 to receive the size of the opened
+            file; this is only valid if the function returns FILERR_NONE
 
-/* Read bytes from a file */
-UINT32 osd_fread(osd_file *file, void *buffer, UINT32 length);
+        return value - a mame_file_error describing any error that occurred
+            while opening the file, or FILERR_NONE if no error occurred
+*/
+mame_file_error osd_open(const char *path, UINT32 openflags, osd_file **file, UINT64 *filesize);
 
-/* Write bytes to a file */
-UINT32 osd_fwrite(osd_file *file, const void *buffer, UINT32 length);
 
-/* Close an open file */
-void osd_fclose(osd_file *file);
+/*
+    osd_close: close an open file
+
+        file - handle to a file previously opened via osd_open
+
+        return value - a mame_file_error describing any error that occurred
+            while opening the file, or FILERR_NONE if no error occurred
+*/
+mame_file_error osd_close(osd_file *file);
+
+
+/*
+    osd_read: read from an open file
+
+        file - handle to a file previously opened via osd_open
+
+        buffer - pointer to memory that will receive the data read
+
+        offset - offset within the file to read from
+
+        length - number of bytes to read from the file
+
+        actual - pointer to a UINT32 to receive the number of bytes actually
+            read during the operation; valid only if the function returns
+            FILERR_NONE
+
+        return value - a mame_file_error describing any error that occurred
+            while opening the file, or FILERR_NONE if no error occurred
+*/
+mame_file_error osd_read(osd_file *file, void *buffer, UINT64 offset, UINT32 length, UINT32 *actual);
+
+
+/*
+    osd_write: write to an open file
+
+        file - handle to a file previously opened via osd_open
+
+        buffer - pointer to memory that contains the data to write
+
+        offset - offset within the file to write to
+
+        length - number of bytes to write to the file
+
+        actual - pointer to a UINT32 to receive the number of bytes actually
+            written during the operation; valid only if the function returns
+            FILERR_NONE
+
+        return value - a mame_file_error describing any error that occurred
+            while opening the file, or FILERR_NONE if no error occurred
+*/
+mame_file_error osd_write(osd_file *file, const void *buffer, UINT64 offset, UINT32 length, UINT32 *actual);
 
 
 
@@ -241,11 +284,6 @@ cycles_t osd_profiling_ticks(void);
 /* called to allocate/free memory that can contain executable code */
 void *osd_alloc_executable(size_t size);
 void osd_free_executable(void *ptr, size_t size);
-
-/* called while loading ROMs. It is called a last time with name == 0 to signal */
-/* that the ROM loading process is finished. */
-/* return non-zero to abort loading */
-int osd_display_loading_rom_message(const char *name,rom_load_data *romdata);
 
 /* checks to see if a pointer is bad */
 int osd_is_bad_read_ptr(const void *ptr, size_t size);

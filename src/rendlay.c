@@ -861,8 +861,15 @@ layout_file *layout_file_load(const char *dirname, const char *filename)
 	/* otherwise, assume it is a file */
 	else
 	{
-		mame_file *layoutfile = mame_fopen(dirname, filename, FILETYPE_ARTWORK, 0);
-		if (layoutfile == NULL)
+		mame_file_error filerr;
+		mame_file *layoutfile;
+		char *fname;
+
+		fname = assemble_4_strings(dirname, "/", filename, ".lay");
+		filerr = mame_fopen(SEARCHPATH_ARTWORK, fname, OPEN_FLAG_READ, &layoutfile);
+		free(fname);
+
+		if (filerr != FILERR_NONE)
 			return NULL;
 		rootnode = xml_file_read(layoutfile, NULL);
 		mame_fclose(layoutfile);
