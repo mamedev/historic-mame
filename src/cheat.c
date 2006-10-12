@@ -862,7 +862,7 @@ typedef struct MenuItemInfoStruct	MenuItemInfoStruct;
 
 /**** Exported Globals *******************************************************/
 
-const char	* cheatfile = NULL;
+static const char			* cheatfile = NULL;
 
 /**** Local Globals **********************************************************/
 
@@ -8690,6 +8690,8 @@ static void LoadCheatDatabase(void)
 	int		first = 1;
 	char	data;
 
+	cheatfile = options_get_string(OPTION_CHEAT_FILE);
+
 	if(!cheatfile)
 		cheatfile = "cheat.dat";
 
@@ -8774,7 +8776,9 @@ static void SaveCheat(CheatEntry * entry)
 	if(!entry || !entry->actionList)
 		return;
 
-	filerr = mame_fopen(SEARCHPATH_CHEAT, mainDatabaseName, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &theFile);
+	filerr = mame_fopen(SEARCHPATH_CHEAT, mainDatabaseName, OPEN_FLAG_WRITE, &theFile);
+	if (filerr != FILERR_NONE)
+		filerr = mame_fopen(SEARCHPATH_CHEAT, mainDatabaseName, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &theFile);
 
 	if(filerr != FILERR_NONE)
 		return;

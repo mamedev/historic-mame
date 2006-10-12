@@ -2277,8 +2277,9 @@ ROM_START( dotrone )
 	ROM_LOAD( "loc-a.cp0",    0x0c000, 0x2000, CRC(b35f5374) SHA1(3f330ffde52ac57c02dfdf8e105aefcc10f87a0b) )
 	ROM_LOAD( "loc-b.cp9",    0x0e000, 0x2000, CRC(565a5c48) SHA1(9dfafd58bd552bfda4e1799a175735ecc1369ba3) )
 
-	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_REGION( 0x0040, REGION_PROMS, 0 )
 	ROM_LOAD( "82s123.12d",   0x0000, 0x0020, CRC(e1281ee9) SHA1(9ac9b01d24affc0ee9227a4364c4fd8f8290343a) )	/* from shollow, assuming it's the same */
+	ROM_LOAD( "edotlamp.u2",  0x0020, 0x0020, CRC(fb58b867) SHA1(45beb55f2c2e9197f091fc06e9a2f595e57e5c93) )	/* lamp sequencer PROM */
 ROM_END
 
 

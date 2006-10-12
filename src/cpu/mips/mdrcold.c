@@ -3493,7 +3493,7 @@ static UINT32 recompile_set_cop0_reg(drc_core *drc, UINT8 reg)
             _jcc_short_link(COND_Z, &link1);                                        // jz   skip
             _push_r32(REG_EAX);                                                     // push eax
             _push_imm("System set 64-bit addressing mode, SR=%08X");                // push <string>
-            _call(printf);                                                          // call printf
+            _call(printf);                                                     // call printf
             _add_r32_imm(REG_ESP, 8);                                               // add esp,8
             _call(mame_debug_break);                                                // call mame_debug_break
             _resolve_link(&link1);                                                  // skip:

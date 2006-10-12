@@ -939,7 +939,7 @@ ROM_END
 /* 23 */ GAME( 1989, mt_gng,   megatech, megatech, megatech, 0, ROT0, "Capcom / Sega",         "Ghouls'n Ghosts (Mega-Tech)", GAME_NOT_WORKING )
 /* 24 */ GAME( 1989, mt_shang, megatech, megatech, megatech, 0, ROT0, "Sega",                  "Super Hang-On (Mega-Tech)", GAME_NOT_WORKING )
 /* 25 */ GAME( 1989, mt_gaxe,  megatech, megatech, megatech, 0, ROT0, "Sega",                  "Golden Axe (Mega-Tech)", GAME_NOT_WORKING )
-/* 26 */ // unknown
+/* 26 */ // Forgotten Worlds - Not Dumped
 /* 27 */ GAME( 1989, mt_mystd, megatech, megatech, megatech, 0, ROT0, "Sega",                  "Mystic Defender (Mega-Tech)", GAME_NOT_WORKING )
 /* 28 */ GAME( 1989, mt_revsh, megatech, megatech, megatech, 0, ROT0, "Sega",                  "The Revenge of Shinobi (Mega-Tech)", GAME_NOT_WORKING )
 /* 29 */ GAME( 19??, mt_parlg, megatech, megatech, megatech, 0, ROT0, "Sega",                  "Parlour Games (Mega-Tech)", GAME_NOT_WORKING ) /* sms! */
@@ -957,7 +957,7 @@ ROM_END
 /* 41 */ GAME( 1990, mt_crack, megatech, megatech, megatech, 0, ROT0, "Sega",                  "Crack Down (Mega-Tech)", GAME_NOT_WORKING )
 /* 42 */ // unknown
 /* 43 */ // unknown
-/* 44 */ GAME( 1990, mt_arrow, megatech, megatech, megatech, 0, ROT0, "Sega",					 "Arrow Flash (Mega-Tech)", GAME_NOT_WORKING )
+/* 44 */ GAME( 1990, mt_arrow, megatech, megatech, megatech, 0, ROT0, "Sega",                  "Arrow Flash (Mega-Tech)", GAME_NOT_WORKING )
 /* 45 */ // unknown
 /* 46 */ // unknown
 /* 47 */ GAME( 1990, mt_astrm, megatech, megatech, megatech, 0, ROT0, "Sega",                  "Alien Storm (Mega-Tech", GAME_NOT_WORKING )
@@ -977,4 +977,9 @@ ROM_END
 /* 60 */ GAME( 1992, mt_kcham, megatech, megatech, megatech, 0, ROT0, "Sega",                  "Kid Chameleon (Mega-Tech)", GAME_NOT_WORKING )
 /* 61 */ // unknown
 /* 62 */ GAME( 1992, mt_soni2, megatech, megatech, megatech, 0, ROT0, "Sega",                  "Sonic The Hedgehog 2 (Mega-Tech)", GAME_NOT_WORKING )
+/*
+    Known to Exist, but nn number currently not known:
+    Outrun
+    Wrestle War
+*/
 /* more? */

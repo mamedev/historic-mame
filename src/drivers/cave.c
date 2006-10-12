@@ -3018,9 +3018,10 @@ ROM_END
 
 Known versions:
 
-USA      Version 1.12 1995/05/2x
-Korea    Version 1.12 1995/05/2x
-Japan    Version 1.01 1995/05/11
+USA        Version 1.12 1995/05/2x
+Korea      Version 1.12 1995/05/2x
+Hong Kong  Version 1.10 1995/05/17
+Japan      Version 1.01 1995/05/11
 
 BOARD #:      AT-C01DP-2
 CPU:          TMP68HC000-16
@@ -3077,7 +3078,7 @@ ROM_START( donpachi )
 	ROM_LOAD( "atdp.u33", 0x140000, 0x200000, CRC(d749de00) SHA1(64a0acc23eb2515e7d0459f0289919e083c63afc) )
 ROM_END
 
-ROM_START( donpachj )
+ROM_START( donpacjp )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )		/* 68000 code */
 	ROM_LOAD16_WORD_SWAP( "prg.u29",     0x00000, 0x80000, CRC(6be14af6) SHA1(5b1158071f160efeded816ae4c4edca1d00d6e05) )
 
@@ -3104,9 +3105,36 @@ ROM_START( donpachj )
 	ROM_LOAD( "atdp.u33", 0x140000, 0x200000, CRC(d749de00) SHA1(64a0acc23eb2515e7d0459f0289919e083c63afc) )
 ROM_END
 
-ROM_START( donpachk )
+ROM_START( donpackr )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )		/* 68000 code */
 	ROM_LOAD16_WORD_SWAP( "prgk.u26",    0x00000, 0x80000, CRC(bbaf4c8b) SHA1(0f9d42c8c4c5b69e3d39bf768bc4b663f66b4f36) )
+
+	ROM_REGION( 0x400000 * 2, REGION_GFX1, 0 )		/* Sprites (do not dispose) */
+	ROM_LOAD( "atdp.u44", 0x000000, 0x200000, CRC(7189e953) SHA1(53adbe6ea5e01ecb48575e9db82cc3d0dc8a3726) )
+	ROM_LOAD( "atdp.u45", 0x200000, 0x200000, CRC(6984173f) SHA1(625dd6674adeb206815855b8b6a1fba79ed5c4cd) )
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 0 */
+	ROM_LOAD( "atdp.u54", 0x000000, 0x100000, CRC(6bda6b66) SHA1(6472e6706505bac17484fb8bf4e8922ced4adf63) )
+
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_LOAD( "atdp.u57", 0x000000, 0x100000, CRC(0a0e72b9) SHA1(997e8253777e7acca5a1c0c4026e78eecc122d5d) )
+
+	ROM_REGION( 0x040000, REGION_GFX4, ROMREGION_DISPOSE )	/* Text / Character Layer */
+	ROM_LOAD( "u58.bin", 0x000000, 0x040000, CRC(285379ff) SHA1(b9552edcec29ddf4b552800b145c398b94117ab0) )
+
+	ROM_REGION( 0x240000, REGION_SOUND1, 0 )	/* OKIM6295 #1 Samples */
+	/* Leave the 0x40000 bytes addressable by the chip empty */
+	ROM_LOAD( "atdp.u33", 0x040000, 0x200000, CRC(d749de00) SHA1(64a0acc23eb2515e7d0459f0289919e083c63afc) )
+
+	ROM_REGION( 0x340000, REGION_SOUND2, 0 )	/* OKIM6295 #2 Samples */
+	/* Leave the 0x40000 bytes addressable by the chip empty */
+	ROM_LOAD( "atdp.u32", 0x040000, 0x100000, CRC(0d89fcca) SHA1(e16ed15fa5e72537822f7b37e83ccfed0fa87338) )
+	ROM_LOAD( "atdp.u33", 0x140000, 0x200000, CRC(d749de00) SHA1(64a0acc23eb2515e7d0459f0289919e083c63afc) )
+ROM_END
+
+ROM_START( donpachk )
+	ROM_REGION( 0x080000, REGION_CPU1, 0 )		/* 68000 code */
+	ROM_LOAD16_WORD_SWAP( "37.u29",    0x00000, 0x80000, CRC(71f39f30) SHA1(08a028208f21c073d450a29061604f27775786a8) )
 
 	ROM_REGION( 0x400000 * 2, REGION_GFX1, 0 )		/* Sprites (do not dispose) */
 	ROM_LOAD( "atdp.u44", 0x000000, 0x200000, CRC(7189e953) SHA1(53adbe6ea5e01ecb48575e9db82cc3d0dc8a3726) )
@@ -4341,8 +4369,9 @@ GAME( 1994, pwrinst2, 0,        pwrinst2, metmqstr, pwrinst2, ROT0,   "Atlus/Cav
 GAME( 1994, pwrins2j, pwrinst2, pwrinst2, metmqstr, pwrins2j, ROT0,   "Atlus/Cave",                           "Gouketsuji Ichizoku 2 (Japan)"           , 0 ) /* 94.04.08 */
 GAME( 1994, mazinger, 0,        mazinger, mazinger, mazinger, ROT90,  "Banpresto/Dynamic Pl. Toei Animation", "Mazinger Z"                              , 0 ) // region in eeprom
 GAME( 1995, donpachi, 0,        donpachi, cave,     donpachi, ROT270, "Atlus/Cave",                           "DonPachi (US)"                           , 0 )
-GAME( 1995, donpachj, donpachi, donpachi, cave,     donpachi, ROT270, "Atlus/Cave",                           "DonPachi (Japan)"                        , 0 )
-GAME( 1995, donpachk, donpachi, donpachi, cave,     donpachi, ROT270, "Atlus/Cave",                           "DonPachi (Korea)"                        , 0 )
+GAME( 1995, donpacjp, donpachi, donpachi, cave,     donpachi, ROT270, "Atlus/Cave",                           "DonPachi (Japan)"                        , 0 )
+GAME( 1995, donpackr, donpachi, donpachi, cave,     donpachi, ROT270, "Atlus/Cave",                           "DonPachi (Korea)"                        , 0 )
+GAME( 1995, donpachk, donpachi, donpachi, cave,     donpachi, ROT270, "Atlus/Cave",                           "DonPachi (Hong Kong)"                    , 0 )
 GAME( 1995, metmqstr, 0,        metmqstr, metmqstr, metmqstr, ROT0,   "Banpresto/Pandorabox",                 "Metamoqester"                            , 0 )
 GAME( 1995, nmaster,  metmqstr, metmqstr, metmqstr, metmqstr, ROT0,   "Banpresto/Pandorabox",                 "Oni - The Ninja Master (Japan)"          , 0 )
 GAME( 1995, plegends, 0,        pwrinst2, metmqstr, pwrins2j, ROT0,   "Atlus/Cave",                           "Power Instinct Legends (USA)"            , 0 ) /* 95.06.20 */

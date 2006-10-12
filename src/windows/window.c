@@ -196,7 +196,7 @@ int winwindow_init(running_machine *machine)
 	size_t temp;
 
 	// determine if we are using multithreading or not
-	multithreading_enabled = options_get_bool("multithreading", FALSE);
+	multithreading_enabled = options_get_bool("multithreading");
 
 	// get the main thread ID before anything else
 	main_threadid = GetCurrentThreadId();
@@ -577,7 +577,7 @@ int winwindow_video_window_create(int index, win_monitor_info *monitor, const wi
 
 	// set the specific view
 	sprintf(option, "view%d", index);
-	set_starting_view(index, window, options_get_string(option, TRUE));
+	set_starting_view(index, window, options_get_string(option));
 
 	// remember the current values in case they change
 	window->targetview = render_target_get_view(window->target);
@@ -591,7 +591,7 @@ int winwindow_video_window_create(int index, win_monitor_info *monitor, const wi
 		sprintf(window->title, APPNAME ": %s [%s] - Screen %d", Machine->gamedrv->description, Machine->gamedrv->name, index);
 
 	// set the initial maximized state
-	window->startmaximized = options_get_bool("maximize", TRUE);
+	window->startmaximized = options_get_bool("maximize");
 
 	// finish the window creation on the window thread
 	if (multithreading_enabled)
@@ -802,7 +802,7 @@ static int create_window_class(void)
 
 static void set_starting_view(int index, win_window_info *window, const char *view)
 {
-	const char *defview = options_get_string("view", FALSE);
+	const char *defview = options_get_string("view");
 	int viewindex = -1;
 
 	assert(GetCurrentThreadId() == main_threadid);

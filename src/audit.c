@@ -98,38 +98,41 @@ int audit_images(int game, UINT32 validation, audit_record **audit)
 			if (ROMREGION_ISROMDATA(region) || ROMREGION_ISDISKDATA(region))
 				records++;
 
-	/* allocate memory for the records */
-	*audit = malloc_or_die(sizeof(**audit) * records);
-	memset(*audit, 0, sizeof(**audit) * records);
-	record = *audit;
-
-	/* iterate over regions and ROMs */
-	for (region = rom_first_region(drivers[game]); region; region = rom_next_region(region))
-		for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
-		{
-			int shared = rom_used_by_parent(gamedrv, rom, NULL);
-
-			/* audit a file */
-			if (ROMREGION_ISROMDATA(region))
-			{
-				if (audit_one_rom(rom, gamedrv, validation, record++) && !shared)
-					foundany = TRUE;
-			}
-
-			/* audit a disk */
-			else if (ROMREGION_ISDISKDATA(region))
-			{
-				if (audit_one_disk(rom, gamedrv, validation, record++) && !shared)
-					foundany = TRUE;
-			}
-		}
-
-	/* if we found nothing, we don't have the set at all */
-	if (!foundany)
+	if (records > 0)
 	{
-		free(*audit);
-		*audit = NULL;
-		records = 0;
+		/* allocate memory for the records */
+		*audit = malloc_or_die(sizeof(**audit) * records);
+		memset(*audit, 0, sizeof(**audit) * records);
+		record = *audit;
+
+		/* iterate over regions and ROMs */
+		for (region = rom_first_region(drivers[game]); region; region = rom_next_region(region))
+			for (rom = rom_first_file(region); rom; rom = rom_next_file(rom))
+			{
+				int shared = rom_used_by_parent(gamedrv, rom, NULL);
+
+				/* audit a file */
+				if (ROMREGION_ISROMDATA(region))
+				{
+					if (audit_one_rom(rom, gamedrv, validation, record++) && !shared)
+						foundany = TRUE;
+				}
+
+				/* audit a disk */
+				else if (ROMREGION_ISDISKDATA(region))
+				{
+					if (audit_one_disk(rom, gamedrv, validation, record++) && !shared)
+						foundany = TRUE;
+				}
+			}
+
+		/* if we found nothing, we don't have the set at all */
+		if (!foundany)
+		{
+			free(*audit);
+			*audit = NULL;
+			records = 0;
+		}
 	}
 	return records;
 }
@@ -190,14 +193,14 @@ int audit_samples(int game, audit_record **audit)
 					char *fname;
 
 					/* attempt to access the file from the game driver name */
-					fname = assemble_4_strings(gamedrv->name, "/", intf->samplenames[sampnum], ".wav");
+					fname = assemble_4_strings(gamedrv->name, PATH_SEPARATOR, intf->samplenames[sampnum], ".wav");
 					filerr = mame_fopen(SEARCHPATH_SAMPLE, fname, OPEN_FLAG_READ, &file);
 					free(fname);
 
 					/* attempt to access the file from the shared driver name */
 					if (filerr != FILERR_NONE && sharedname != NULL)
 					{
-						fname = assemble_4_strings(sharedname, "/", intf->samplenames[sampnum], ".wav");
+						fname = assemble_4_strings(sharedname, PATH_SEPARATOR, intf->samplenames[sampnum], ".wav");
 						filerr = mame_fopen(SEARCHPATH_SAMPLE, fname, OPEN_FLAG_READ, &file);
 						free(fname);
 					}
@@ -224,7 +227,7 @@ int audit_samples(int game, audit_record **audit)
     list of audit records
 -------------------------------------------------*/
 
-int audit_summary(int game, int count, const audit_record *records, verify_printf_proc output)
+int audit_summary(int game, int count, const audit_record *records, int output)
 {
 	const game_driver *gamedrv = drivers[game];
 	int overall_status = CORRECT;
@@ -250,64 +253,64 @@ int audit_summary(int game, int count, const audit_record *records, verify_print
 			notfound++;
 
 		/* output the game name, file name, and length (if applicable) */
-		if (output != NULL)
+		if (output)
 		{
-			(*output)("%-8s: %s", gamedrv->name, record->name);
+			printf("%-8s: %s", gamedrv->name, record->name);
 			if (record->explength > 0)
-				(*output)(" (%d bytes)", record->explength);
-			(*output)(" - ");
+				printf(" (%d bytes)", record->explength);
+			printf(" - ");
 		}
 
 		/* use the substatus for finer details */
 		switch (record->substatus)
 		{
 			case SUBSTATUS_GOOD_NEEDS_REDUMP:
-				if (output != NULL) (*output)("NEEDS REDUMP\n");
+				if (output) printf("NEEDS REDUMP\n");
 				best_new_status = BEST_AVAILABLE;
 				break;
 
 			case SUBSTATUS_FOUND_NODUMP:
-				if (output != NULL) (*output)("NO GOOD DUMP KNOWN\n");
+				if (output) printf("NO GOOD DUMP KNOWN\n");
 				best_new_status = BEST_AVAILABLE;
 				break;
 
 			case SUBSTATUS_FOUND_BAD_CHECKSUM:
-				if (output != NULL)
+				if (output)
 				{
 					char hashbuf[512];
 
-					(*output)("INCORRECT CHECKSUM:\n");
+					printf("INCORRECT CHECKSUM:\n");
 					hash_data_print(record->exphash, 0, hashbuf);
-					(*output)("EXPECTED: %s\n", hashbuf);
+					printf("EXPECTED: %s\n", hashbuf);
 					hash_data_print(record->hash, 0, hashbuf);
-					(*output)("   FOUND: %s\n", hashbuf);
+					printf("   FOUND: %s\n", hashbuf);
 				}
 				break;
 
 			case SUBSTATUS_FOUND_WRONG_LENGTH:
-				if (output != NULL) (*output)("INCORRECT LENGTH: %d bytes\n", record->length);
+				if (output) printf("INCORRECT LENGTH: %d bytes\n", record->length);
 				break;
 
 			case SUBSTATUS_NOT_FOUND:
-				if (output != NULL) (*output)("NOT FOUND\n");
+				if (output) printf("NOT FOUND\n");
 				break;
 
 			case SUBSTATUS_NOT_FOUND_NODUMP:
-				if (output != NULL) (*output)("NOT FOUND - NO GOOD DUMP KNOWN\n");
+				if (output) printf("NOT FOUND - NO GOOD DUMP KNOWN\n");
 				best_new_status = BEST_AVAILABLE;
 				break;
 
 			case SUBSTATUS_NOT_FOUND_OPTIONAL:
-				if (output != NULL) (*output)("NOT FOUND BUT OPTIONAL\n");
+				if (output) printf("NOT FOUND BUT OPTIONAL\n");
 				best_new_status = BEST_AVAILABLE;
 				break;
 
 			case SUBSTATUS_NOT_FOUND_PARENT:
-				if (output != NULL) (*output)("NOT FOUND (shared with parent)\n");
+				if (output) printf("NOT FOUND (shared with parent)\n");
 				break;
 
 			case SUBSTATUS_NOT_FOUND_BIOS:
-				if (output != NULL) (*output)("NOT FOUND (BIOS)\n");
+				if (output) printf("NOT FOUND (BIOS)\n");
 				break;
 		}
 
@@ -358,7 +361,7 @@ static int audit_one_rom(const rom_entry *rom, const game_driver *gamedrv, UINT3
 		char *fname;
 
 		/* open the file if we can */
-		fname = assemble_3_strings(drv->name, "/", ROM_GETNAME(rom));
+		fname = assemble_3_strings(drv->name, PATH_SEPARATOR, ROM_GETNAME(rom));
 	    if (has_crc)
 			filerr = mame_fopen_crc(SEARCHPATH_ROM, fname, crc, OPEN_FLAG_READ, &file);
 		else
@@ -546,7 +549,7 @@ static chd_interface_file *audit_chd_open(const char *filename, const char *mode
 		mame_file *file;
 		char *fname;
 
-		fname = assemble_3_strings(drv->name, "/", filename);
+		fname = assemble_3_strings(drv->name, PATH_SEPARATOR, filename);
 		filerr = mame_fopen(SEARCHPATH_IMAGE, fname, OPEN_FLAG_READ, &file);
 		free(fname);
 

@@ -1011,19 +1011,19 @@ static void debug_view_update(debug_view *view)
 
 		// determine if we need to show the scrollbars
 		show_vscroll = show_hscroll = 0;
-		if (total_rows > visible_rows)
+		if (total_rows > visible_rows && bounds.right >= vscroll_width)
 		{
 			bounds.right -= vscroll_width;
 			visible_cols = (bounds.right - bounds.left) / debug_font_width;
 			show_vscroll = TRUE;
 		}
-		if (total_cols > visible_cols)
+		if (total_cols > visible_cols && bounds.bottom >= hscroll_height)
 		{
 			bounds.bottom -= hscroll_height;
 			visible_rows = (bounds.bottom - bounds.top) / debug_font_height;
 			show_hscroll = TRUE;
 		}
-		if (!show_vscroll && total_rows > visible_rows)
+		if (!show_vscroll && total_rows > visible_rows && bounds.right >= vscroll_width)
 		{
 			bounds.right -= vscroll_width;
 			visible_cols = (bounds.right - bounds.left) / debug_font_width;
@@ -2118,7 +2118,7 @@ static void disasm_create_window(void)
 	AppendMenu(optionsmenu, MF_DISABLED | MF_SEPARATOR, 0, "");
 	AppendMenu(optionsmenu, MF_ENABLED, ID_SHOW_RAW, "Raw opcodes\tCtrl+R");
 	AppendMenu(optionsmenu, MF_ENABLED, ID_SHOW_ENCRYPTED, "Encrypted opcodes\tCtrl+E");
-	AppendMenu(optionsmenu, MF_ENABLED, ID_SHOW_COMMENTS, "Comments\tCtrl+C");
+	AppendMenu(optionsmenu, MF_ENABLED, ID_SHOW_COMMENTS, "Comments\tCtrl+M");
 	AppendMenu(GetMenu(info->wnd), MF_ENABLED | MF_POPUP, (UINT_PTR)optionsmenu, "Options");
 	disasm_update_checkmarks(info);
 
@@ -2345,8 +2345,15 @@ static int disasm_handle_command(debugwin_info *info, WPARAM wparam, LPARAM lpar
 				case ID_RUN_TO_CURSOR:
 					if (debug_view_get_property_UINT32(info->view[0].view, DVP_CURSOR_VISIBLE))
 					{
+						UINT32 cpu_num = 0;
+						debug_cpu_info *cpuinfo ;
+
+						/* for BYTE2ADDR */
+						cpu_num = debug_view_get_property_UINT32(info->view[0].view, DVP_DASM_CPUNUM);
+						cpuinfo = (debug_cpu_info *)debug_get_cpu_info(cpu_num);
+
 						active_address = debug_view_get_property_UINT32(info->view[0].view, DVP_DASM_ACTIVE_ADDRESS);
-						sprintf(command, "go %X", active_address);
+						sprintf(command, "go %X", BYTE2ADDR(active_address, cpuinfo, ADDRESS_SPACE_PROGRAM));
 						debug_console_execute_command(command, 1);
 					}
 					return 1;
@@ -2410,7 +2417,7 @@ static int disasm_handle_key(debugwin_info *info, WPARAM wparam, LPARAM lparam)
 				SendMessage(info->wnd, WM_COMMAND, ID_SHOW_ENCRYPTED, 0);
 				return 1;
 
-			case 'C':
+			case 'N':
 				SendMessage(info->wnd, WM_COMMAND, ID_SHOW_COMMENTS, 0);
 				return 1;
 		}
@@ -2495,7 +2502,7 @@ void console_create_window(void)
 	AppendMenu(optionsmenu, MF_DISABLED | MF_SEPARATOR, 0, "");
 	AppendMenu(optionsmenu, MF_ENABLED, ID_SHOW_RAW, "Raw opcodes\tCtrl+R");
 	AppendMenu(optionsmenu, MF_ENABLED, ID_SHOW_ENCRYPTED, "Encrypted opcodes\tCtrl+E");
-	AppendMenu(optionsmenu, MF_ENABLED, ID_SHOW_COMMENTS, "Comments\tCtrl+C");
+	AppendMenu(optionsmenu, MF_ENABLED, ID_SHOW_COMMENTS, "Comments\tCtrl+N");
 	AppendMenu(GetMenu(info->wnd), MF_ENABLED | MF_POPUP, (UINT_PTR)optionsmenu, "Options");
 	disasm_update_checkmarks(info);
 

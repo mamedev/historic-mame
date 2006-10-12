@@ -4,10 +4,15 @@
 
     driver by Mike Appolo
 
+    Modified 10/08/2006 by Jess M. Askey to include support for Speech which was not stuffed on production
+    Major Havoc PCB's. However, the hardware if stuffed is functional. Speech is used in Major Havoc Return
+    to Vaxx.
+
     Games supported:
         * Alpha One
         * Major Havoc
-        * Major Havoc: Return to Vax
+        * Major Havoc: Return to Vax (including speech) - This version is a hack that includes 3 new levels
+                                                          near the end of the game. Level 19 is incomplete.
 
     Known bugs:
         * none at this time
@@ -110,6 +115,9 @@
                   |                           |      |
     5000          |  D  D  D  D  D  D  D  D   |  W   | Alpha Comm. Write Port
                   |                           |      |
+    5800          |  D  D  D  D  D  D  D  D   |  W   | Speech Data Write / Write Strobe Clear
+    5900          |                           |  W   | Speech Write Strobe Set
+                    |                           |      |
     6000-61FF     |  D  D  D  D  D  D  D  D   | R/W  | EEROM
     8000-BFFF     |  D  D  D  D  D  D  D  D   |  R   | Program ROM (16K)
     -----------------------------------------------------------------------------
@@ -180,10 +188,11 @@
 #include "machine/atari_vg.h"
 #include "vidhrdw/avgdvg.h"
 #include "vidhrdw/vector.h"
+#include "sound/5220intf.h"
 #include "sound/pokey.h"
 #include "mhavoc.h"
 
-
+static UINT8 speech_write_buffer;
 
 /*************************************
  *
@@ -236,7 +245,22 @@ static WRITE8_HANDLER( mhavoc_gammaram_w )
 	gammaram[offset & 0x7ff] = data;
 }
 
+/*************************************
+ *
+ *  Speech access
+ *
+ *************************************/
 
+static WRITE8_HANDLER( speech_data_w )
+{
+	speech_write_buffer = data;
+}
+
+
+static WRITE8_HANDLER( speech_strobe_w )
+{
+	tms5220_data_w(0, speech_write_buffer);
+}
 
 /*************************************
  *
@@ -287,6 +311,7 @@ static ADDRESS_MAP_START( gamma_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x6000, 0x61ff) AM_RAM AM_BASE(&generic_nvram) AM_SIZE(&generic_nvram_size) /* EEROM        */
 	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)                /* Program ROM (16K)    */
 ADDRESS_MAP_END
+
 
 
 
@@ -502,7 +527,6 @@ static struct POKEYinterface pokey_interface =
 };
 
 
-
 /*************************************
  *
  *  Machine drivers
@@ -546,6 +570,14 @@ static MACHINE_DRIVER_START( mhavoc )
 
 	MDRV_SOUND_ADD_TAG("pokey.4", POKEY, MHAVOC_CLOCK_1_25M)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( mhavocrv )
+	MDRV_IMPORT_FROM( mhavoc )
+
+	MDRV_SOUND_ADD(TMS5220, MHAVOC_CLOCK/2/9)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
 
@@ -766,13 +798,30 @@ ROM_END
 
 /*************************************
  *
+ *  Driver-specific init
+ *
+ *************************************/
+
+static DRIVER_INIT( mhavocrv )
+{
+	/* install the speech support that was only optionally stuffed for use */
+	/* in the Return to Vax hack */
+	memory_install_read8_handler(1, ADDRESS_SPACE_PROGRAM, 0x2800, 0x2800, 0, 0, mhavoc_port_1_sp_r);
+	memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, 0x5800, 0x5800, 0, 0, speech_data_w);
+	memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, 0x5900, 0x5900, 0, 0, speech_strobe_w);
+}
+
+
+
+/*************************************
+ *
  *  Game drivers
  *
  *************************************/
 
-GAME( 1983, mhavoc,   0,      mhavoc,   mhavoc,   0, ROT0, "Atari", "Major Havoc (rev 3)", 0 )
-GAME( 1983, mhavoc2,  mhavoc, mhavoc,   mhavoc,   0, ROT0, "Atari", "Major Havoc (rev 2)", 0 )
-GAME( 1983, mhavocrv, mhavoc, mhavoc,   mhavoc,   0, ROT0, "hack",  "Major Havoc (Return to Vax)", 0 )
-GAME( 1983, mhavocp,  mhavoc, mhavoc,   mhavocp,  0, ROT0, "Atari", "Major Havoc (prototype)", 0 )
-GAME( 1983, alphaone, mhavoc, alphaone, alphaone, 0, ROT0, "Atari", "Alpha One (prototype, 3 lives)", 0 )
-GAME( 1983, alphaona, mhavoc, alphaone, alphaone, 0, ROT0, "Atari", "Alpha One (prototype, 5 lives)", 0 )
+GAME( 1983, mhavoc,   0,      mhavoc,   mhavoc,   0,        ROT0, "Atari", "Major Havoc (rev 3)", 0 )
+GAME( 1983, mhavoc2,  mhavoc, mhavoc,   mhavoc,   0,        ROT0, "Atari", "Major Havoc (rev 2)", 0 )
+GAME( 1983, mhavocrv, mhavoc, mhavocrv, mhavoc,   mhavocrv, ROT0, "JMA",   "Major Havoc (Return to Vax)", 0 )
+GAME( 1983, mhavocp,  mhavoc, mhavoc,   mhavocp,  0,        ROT0, "Atari", "Major Havoc (prototype)", 0 )
+GAME( 1983, alphaone, mhavoc, alphaone, alphaone, 0,        ROT0, "Atari", "Alpha One (prototype, 3 lives)", 0 )
+GAME( 1983, alphaona, mhavoc, alphaone, alphaone, 0,        ROT0, "Atari", "Alpha One (prototype, 5 lives)", 0 )

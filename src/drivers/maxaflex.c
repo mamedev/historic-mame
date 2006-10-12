@@ -6,7 +6,6 @@
     Based on Atari 400/800 MESS Driver by Juergen Buchmueller
 
     TODO:
-    - add DAC on supervisor board (AUDIO port)
     - add AUDMUTE port - muting all sounds on system
     - fix LCD digits display controlling
     - change lamps and time counter display to use artwork
@@ -17,7 +16,7 @@
 #include "cpu/m6502/m6502.h"
 #include "includes/atari.h"
 #include "cpu/m6805/m6805.h"
-#include "sound/dac.h"
+#include "sound/speaker.h"
 #include "sound/pokey.h"
 #include "machine/6821pia.h"
 #include "vidhrdw/gtia.h"
@@ -54,6 +53,7 @@ READ8_HANDLER( mcu_portA_r )
 WRITE8_HANDLER( mcu_portA_w )
 {
 	portA_out = data;
+	speaker_level_w(0, data >> 7);
 }
 
 /* Port B:
@@ -77,10 +77,16 @@ WRITE8_HANDLER( mcu_portB_w )
 	UINT8 diff = data ^ portB_out;
 	portB_out = data;
 
-	if ( data & 0x4 )
-	{
+	/* clear coin interrupt */
+	if (data & 0x04)
 		cpunum_set_input_line( 1, M6805_IRQ_LINE, CLEAR_LINE );
-	}
+
+	/* AUDMUTE */
+	sound_global_enable((data >> 5) & 1);
+
+	/* RES600 */
+	if (diff & 0x10)
+		cpunum_set_input_line(0, INPUT_LINE_RESET, (data & 0x10) ? CLEAR_LINE : ASSERT_LINE);
 
 	/* latch for lamps */
 	if ((diff & 0x40) && !(data & 0x40))
@@ -90,10 +96,6 @@ WRITE8_HANDLER( mcu_portB_w )
 		output_set_lamp_value(2, (portC_out >> 2) & 1);
 		output_set_lamp_value(3, (portC_out >> 3) & 1);
 	}
-
-	/* RES600 */
-	if (diff & 0x10)
-		cpunum_set_input_line(0, INPUT_LINE_RESET, (data & 0x10) ? CLEAR_LINE : ASSERT_LINE);
 }
 
 /* Port C:
@@ -209,13 +211,13 @@ static MACHINE_RESET(supervisor_board)
 	tdr = tcr = 0;
 	mcu_timer = timer_alloc( mcu_timer_proc );
 
-	output_set_value("lamp0", 0);
-	output_set_value("lamp1", 0);
-	output_set_value("lamp2", 0);
-	output_set_value("lamp3", 0);
-	output_set_value("digit0", 10);
-	output_set_value("digit1", 10);
-	output_set_value("digit2", 10);
+	output_set_lamp_value(0, 0);
+	output_set_lamp_value(1, 0);
+	output_set_lamp_value(2, 0);
+	output_set_lamp_value(3, 0);
+	output_set_digit_value(0, 0x00);
+	output_set_digit_value(1, 0x00);
+	output_set_digit_value(2, 0x00);
 }
 
 void supervisor_board_check_coin_input(void)
@@ -482,7 +484,7 @@ static MACHINE_DRIVER_START( a600xl )
 	MDRV_SOUND_CONFIG(pokey_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 
-	MDRV_SOUND_ADD(DAC, 0)
+	MDRV_SOUND_ADD(SPEAKER, 0)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 
 	MDRV_MACHINE_START( maxaflex )

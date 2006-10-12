@@ -145,6 +145,21 @@ endif
 
 
 #-------------------------------------------------
+# RCA CDP1802
+#-------------------------------------------------
+
+CPUDEFS += -DHAS_CDP1802=$(if $(filter CDP1802,$(CPUS)),1,0)
+
+ifneq ($(filter CDP1802,$(CPUS)),)
+OBJDIRS += $(OBJ)/cpu/cdp1802
+CPUOBJS += $(OBJ)/cpu/cdp1802/cdp1802.o
+DBGOBJS += $(OBJ)/cpu/cdp1802/1802dasm.o
+$(OBJ)/cpu/cdp1802/cdp1802.o: cdp1802.c cdp1802.h 1802tbl.c
+endif
+
+
+
+#-------------------------------------------------
 # Cinematronics vector "CPU"
 #-------------------------------------------------
 

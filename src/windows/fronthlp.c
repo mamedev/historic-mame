@@ -23,6 +23,14 @@
 #include "sound/samples.h"
 #include "options.h"
 
+/*
+    Current Win32 dependencies:
+
+        GetFileAttributes() - to identify file vs. directory for romident
+        FindFirstFile() - to iterate over files in a directory for romident
+        FindNextFile() - to iterate over files in a directory for romident
+*/
+
 
 #define KNOWN_START 0
 #define KNOWN_ALL   1
@@ -35,25 +43,6 @@ static FILE *verify_file;
 
 static int knownstatus,identfiles,identmatches,identnonroms;
 
-
-
-static void namecopy(char *name_ref,const char *desc)
-{
-	char name[200];
-
-	strcpy(name,desc);
-
-	/* remove details in parenthesis */
-	if (strstr(name," (")) *strstr(name," (") = 0;
-
-	/* Move leading "The" to the end */
-	if (strncmp(name,"The ",4) == 0)
-	{
-		sprintf(name_ref,"%s, The",name+4);
-	}
-	else
-		sprintf(name_ref,"%s",name);
-}
 
 
 /*-------------------------------------------------
@@ -196,7 +185,7 @@ void identify_file(const char *name, FILE *output)
 		/* first attempt to examine it as a valid ZIP file */
 		zip_file *zip;
 		zip_error ziperr = zip_file_open(name, &zip);
-		if (ziperr != ZIPERR_NONE)
+		if (ziperr == ZIPERR_NONE)
 		{
 			const zip_file_header *entry;
 
@@ -326,16 +315,9 @@ void romident(const char *name, FILE *output)
 }
 
 
-INLINE int isclone(int drvindex)
-{
-	const game_driver *clone_of = driver_get_clone(drivers[drvindex]);
-	return (clone_of != NULL && (clone_of->flags & NOT_A_DRIVER) == 0);
-}
-
-
 int frontend_listxml(FILE *output)
 {
-	const char *gamename = options_get_string("", FALSE);
+	const char *gamename = options_get_string(OPTION_GAMENAME);
 
 	/* a NULL gamename == '*' */
 	if (gamename == NULL)
@@ -348,7 +330,7 @@ int frontend_listxml(FILE *output)
 
 int frontend_listfull(FILE *output)
 {
-	const char *gamename = options_get_string("", FALSE);
+	const char *gamename = options_get_string(OPTION_GAMENAME);
 	int drvindex, count = 0;
 
 	/* a NULL gamename == '*' */
@@ -373,7 +355,7 @@ int frontend_listfull(FILE *output)
 
 int frontend_listsource(FILE *output)
 {
-	const char *gamename = options_get_string("", FALSE);
+	const char *gamename = options_get_string(OPTION_GAMENAME);
 	int drvindex, count = 0;
 
 	/* a NULL gamename == '*' */
@@ -395,7 +377,7 @@ int frontend_listsource(FILE *output)
 
 int frontend_listclones(FILE *output)
 {
-	const char *gamename = options_get_string("", FALSE);
+	const char *gamename = options_get_string(OPTION_GAMENAME);
 	int drvindex, count = 0;
 
 	/* a NULL gamename == '*' */
@@ -451,7 +433,7 @@ int frontend_listcrc(FILE *output)
 
 int frontend_listroms(FILE *output)
 {
-	const char *gamename = options_get_string("", FALSE);
+	const char *gamename = options_get_string(OPTION_GAMENAME);
 	const rom_entry *region, *rom, *chunk;
 	const game_driver **gamedrv;
 
@@ -523,7 +505,7 @@ int frontend_listroms(FILE *output)
 
 int frontend_listsamples(FILE *output)
 {
-	const char *gamename = options_get_string("", FALSE);
+	const char *gamename = options_get_string(OPTION_GAMENAME);
 	const game_driver **gamedrv;
 
 #if (HAS_SAMPLES)
@@ -586,7 +568,7 @@ void CLIB_DECL verify_printf(const char *fmt, ...)
 
 int frontend_verifyroms(FILE *output)
 {
-	const char *gamename = options_get_string("", FALSE);
+	const char *gamename = options_get_string(OPTION_GAMENAME);
 	int correct = 0;
 	int incorrect = 0;
 	int checked = 0;
@@ -620,7 +602,7 @@ int frontend_verifyroms(FILE *output)
 
 		/* audit the ROMs in this set */
 		audit_records = audit_images(drvindex, AUDIT_VALIDATE_FAST, &audit);
-		res = audit_summary(drvindex, audit_records, audit, verify_printf);
+		res = audit_summary(drvindex, audit_records, audit, TRUE);
 		if (audit_records > 0)
 			free(audit);
 
@@ -686,7 +668,7 @@ int frontend_verifyroms(FILE *output)
 
 int frontend_verifysamples(FILE *output)
 {
-	const char *gamename = options_get_string("", FALSE);
+	const char *gamename = options_get_string(OPTION_GAMENAME);
 	int correct = 0;
 	int incorrect = 0;
 	int checked = 0;
@@ -720,7 +702,7 @@ int frontend_verifysamples(FILE *output)
 
 		/* audit the samples in this set */
 		audit_records = audit_samples(drvindex, &audit);
-		res = audit_summary(drvindex, audit_records, audit, verify_printf);
+		res = audit_summary(drvindex, audit_records, audit, TRUE);
 		if (audit_records > 0)
 			free(audit);
 		else
@@ -781,7 +763,7 @@ int frontend_verifysamples(FILE *output)
 
 int frontend_romident(FILE *output)
 {
-	const char *gamename = options_get_string("", FALSE);
+	const char *gamename = options_get_string(OPTION_GAMENAME);
 
 	/* a NULL gamename == '*' */
 	if (gamename == NULL)
@@ -804,7 +786,7 @@ int frontend_romident(FILE *output)
 
 int frontend_isknown(FILE *output)
 {
-	const char *gamename = options_get_string("", FALSE);
+	const char *gamename = options_get_string(OPTION_GAMENAME);
 
 	/* a NULL gamename == '*' */
 	if (gamename == NULL)

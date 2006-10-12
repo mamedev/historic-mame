@@ -22,21 +22,64 @@
 
 
 /***************************************************************************
+    COMPILER-SPECIFIC NASTINESS
+***************************************************************************/
+
+/* Suppress warnings about redefining the macro 'PPC' on LinuxPPC. */
+#ifdef PPC
+#undef PPC
+#endif
+
+
+/* Some optimizations/warnings cleanups for GCC */
+#if defined(__GNUC__) && (__GNUC__ >= 3)
+#define ATTR_UNUSED				__attribute__((__unused__))
+#define ATTR_NORETURN			__attribute__((noreturn))
+#define ATTR_PRINTF(x,y)		__attribute__((format(printf, x, y)))
+#define ATTR_MALLOC				__attribute__((malloc))
+#define ATTR_PURE				__attribute__((pure))
+#define ATTR_CONST				__attribute__((const))
+#define UNEXPECTED(exp)			__builtin_expect((exp), 0)
+#define TYPES_COMPATIBLE(a,b)	__builtin_types_compatible_p(a, b)
+#define RESTRICT				__restrict__
+#else
+#define ATTR_UNUSED
+#define ATTR_NORETURN
+#define ATTR_PRINTF(x,y)
+#define ATTR_MALLOC
+#define ATTR_PURE
+#define ATTR_CONST
+#define UNEXPECTED(exp)			(exp)
+#define TYPES_COMPATIBLE(a,b)	1
+#define RESTRICT
+#endif
+
+
+/* And some MSVC optimizations/warnings */
+#if defined(_MSC_VER) && (_MSC_VER >= 1200)
+#define DECL_NORETURN			__declspec(noreturn)
+#else
+#define DECL_NORETURN
+#endif
+
+
+
+/***************************************************************************
     COMMON TYPES
 ***************************************************************************/
 
+/* genf is a type that can be used for function pointer casting in a way
+   that doesn't confuse some compilers */
+typedef void genf(void);
+
+
 /* FPTR is a type that can be used to cast a pointer to a scalar */
-/* 64-bit platforms should define __LP64__ */
-#ifdef __LP64__
+/* 64-bit platforms should define PTR64 */
+#ifdef PTR64
 typedef UINT64 FPTR;
 #else
 typedef UINT32 FPTR;
 #endif
-
-
-/* ----- for generic function pointers ----- */
-typedef void genf(void);
-
 
 
 /* These are forward struct declarations that are used to break
@@ -54,6 +97,7 @@ typedef struct _input_port_entry input_port_entry;
 typedef struct _input_port_default_entry input_port_default_entry;
 typedef struct _mame_file mame_file;
 typedef struct _chd_file chd_file;
+
 
 /* These values are returned as error codes by osd_open() */
 enum _mame_file_error
@@ -160,6 +204,12 @@ typedef union
     COMMON CONSTANTS
 ***************************************************************************/
 
+/* Make sure we have a path separator (default to /) */
+#ifndef PATH_SEPARATOR
+#define PATH_SEPARATOR		"/"
+#endif
+
+
 /* Ensure that TRUE/FALSE are defined */
 #ifndef TRUE
 #define TRUE    1
@@ -188,6 +238,10 @@ typedef union
 #define	ROT270							(ORIENTATION_SWAP_XY | ORIENTATION_FLIP_Y)	/* rotate counter-clockwise 90 degrees */
 
 
+/* giant global string buffer */
+#define GIANT_STRING_BUFFER_SIZE		65536
+
+
 
 /***************************************************************************
     COMMON MACROS
@@ -204,7 +258,6 @@ typedef union
 #define assert(x)
 #define assert_always(x, msg) do { if (!(x)) fatalerror("Fatal error: %s (%s:%d)", msg, __FILE__, __LINE__); } while (0)
 #endif
-
 
 
 /* Standard MIN/MAX macros */
@@ -389,10 +442,6 @@ int mame_strnicmp(const char *s1, const char *s2, size_t n);
 #define strncasecmp !MUST_USE_MAME_STRNICMP_INSTEAD!
 
 
-/* additional string compare helper */
-int mame_strwildcmp(const char *sp1, const char *sp2);
-
-
 /* since strdup is not part of the standard, we use this instead */
 char *mame_strdup(const char *str);
 
@@ -400,6 +449,24 @@ char *mame_strdup(const char *str);
 #undef strdup
 #define strdup !MUST_USE_MAME_STRDUP_INSTEAD!
 
+
+
+/***************************************************************************
+    FUNCTION PROTOTYPES
+***************************************************************************/
+
+/* additional string compare helper */
+int mame_strwildcmp(const char *sp1, const char *sp2);
+
+/* Used by assert(), so definition here instead of mame.h */
+DECL_NORETURN void CLIB_DECL fatalerror(const char *text, ...) ATTR_PRINTF(1,2) ATTR_NORETURN;
+DECL_NORETURN void CLIB_DECL fatalerror_exitcode(int exitcode, const char *text, ...) ATTR_PRINTF(2,3) ATTR_NORETURN;
+
+
+
+/***************************************************************************
+    INLINE FUNCTIONS
+***************************************************************************/
 
 /* compute the intersection of two rectangles */
 INLINE void sect_rect(rectangle *dst, const rectangle *src)
@@ -467,9 +534,6 @@ INLINE UINT64 d2u(double d)
 	u.dd = d;
 	return u.vv;
 }
-
-
-#define GIANT_STRING_BUFFER_SIZE	65536
 
 
 
@@ -541,7 +605,7 @@ INLINE int bcd_2_dec(int a)
 
 
 /***************************************************************************
-    GROGARIAN CALENDAR HELPERS
+    GREGORIAN CALENDAR HELPERS
 ***************************************************************************/
 
 INLINE int gregorian_is_leap_year(int year)
@@ -560,61 +624,6 @@ INLINE int gregorian_days_in_month(int month, int year)
 	else
 		return 31;
 }
-
-
-
-/***************************************************************************
-    COMPILER-SPECIFIC NASTINESS
-***************************************************************************/
-
-/* Suppress warnings about redefining the macro 'PPC' on LinuxPPC. */
-#ifdef PPC
-#undef PPC
-#endif
-
-
-
-/* Some optimizations/warnings cleanups for GCC */
-#if defined(__GNUC__) && (__GNUC__ >= 3)
-#define ATTR_UNUSED				__attribute__((__unused__))
-#define ATTR_NORETURN			__attribute__((noreturn))
-#define ATTR_PRINTF(x,y)		__attribute__((format(printf, x, y)))
-#define ATTR_MALLOC				__attribute__((malloc))
-#define ATTR_PURE				__attribute__((pure))
-#define ATTR_CONST				__attribute__((const))
-#define UNEXPECTED(exp)			__builtin_expect((exp), 0)
-#define TYPES_COMPATIBLE(a,b)	__builtin_types_compatible_p(a, b)
-#define RESTRICT				__restrict__
-#else
-#define ATTR_UNUSED
-#define ATTR_NORETURN
-#define ATTR_PRINTF(x,y)
-#define ATTR_MALLOC
-#define ATTR_PURE
-#define ATTR_CONST
-#define UNEXPECTED(exp)			(exp)
-#define TYPES_COMPATIBLE(a,b)	1
-#define RESTRICT
-#endif
-
-
-
-/* And some MSVC optimizations/warnings */
-#if defined(_MSC_VER) && (_MSC_VER >= 1200)
-#define DECL_NORETURN			__declspec(noreturn)
-#else
-#define DECL_NORETURN
-#endif
-
-
-
-/***************************************************************************
-    FUNCTION PROTOTYPES
-***************************************************************************/
-
-/* Used by assert(), so definition here instead of mame.h */
-DECL_NORETURN void CLIB_DECL fatalerror(const char *text,...) ATTR_PRINTF(1,2) ATTR_NORETURN;
-DECL_NORETURN void CLIB_DECL fatalerror_exitcode(int exitcode, const char *text,...) ATTR_PRINTF(2,3) ATTR_NORETURN;
 
 
 #endif	/* __MAMECORE_H__ */

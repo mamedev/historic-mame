@@ -9,6 +9,44 @@ driver by Nicola Salmoria
 To Do:
 Sprite Priorities in Dommy
 
+
+Rock Duck
+---------
+
+Rock Duck support added based on preliminary findings by Roberto Fresca
+It looks like the game may be a ghastly hack of one of the 'eggs' titles
+(need to check code but gameplay appears to be the same)
+
+The dump was from a rom 'blister' (no PCB available) and is missing at
+least the colour PROM.
+
+
+Some notes by Roberto Fresca:
+----------------------------
+
+1 - The hack was made using "Scrambled Egg" program roms instead of "Eggs".
+
+2 - The code is almost identical to scregg except for a couple of changed
+    zero page registers, some data for gfx, strings, and two new subroutines.
+
+Strictly to the code, they re-routed two subroutines to the unused high
+program space where there are only zeroes:
+
+$5732: jmp $7f0e (when start to drawing the screen)
+This subroutine ($7f0e) is used to draw the game's frame with the holes and
+tunnel.
+
+$30ca: jsr $7f44 (called constantly)
+This one is amazing!... They made this subroutine ($7f44) only to protect
+the string "(R)DATEL SAS" placed at bottom-right of the screen. The code
+compare the string stored in rom ($62d8 - $62e1) against the one drawn in
+the videoram ($13cf - $13d8"). If something is different, just jump to a
+reset ($3003) and the game starts again.
+
+Obviously the string isn't easily visible. You need some arithmetic to show
+it as ASCII text.
+
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -314,7 +352,49 @@ ROM_START( eggs )
 	ROM_LOAD( "screggco.b4",  0x0020, 0x0020, CRC(7cc4824b) SHA1(2a283fc17fac32e63385948bfe180d05f1fb8727) )	/* unknown */
 ROM_END
 
+// rockduck - check gfx roms (planes) order
 
-GAME( 198?, dommy,  0,      dommy,  scregg, 0, ROT270, "Technos", "Dommy", 0 )
-GAME( 1983, scregg, 0,      scregg, scregg, 0, ROT270, "Technos", "Scrambled Egg", 0 )
-GAME( 1983, eggs,   scregg, scregg, scregg, 0, ROT270, "[Technos] Universal USA", "Eggs", 0 )
+ROM_START( rockduck )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "rde.bin",	0x4000, 0x2000, CRC(56e2a030) SHA1(f03cca53ac30f1c4ec45afbe58c231673739e425) )
+	ROM_COPY( REGION_CPU1,	0x5000, 0x3000, 0x1000 ) // rgn,srcoffset,offset,length.
+	ROM_LOAD( "rdc.bin",	0x6000, 0x2000, CRC(482d9a0c) SHA1(2838cbcd35edaf19848fcf1588ec3a35adf5b179) )
+	ROM_COPY( REGION_CPU1,	0x7000, 0x5000, 0x1000 ) // rgn,srcoffset,offset,length.
+	ROM_LOAD( "rdb.bin",	0x8000, 0x2000, CRC(974626f2) SHA1(cfd767947df9aa99b22afbc0a83afd3f92e7d903) )
+	ROM_RELOAD(				0xe000, 0x2000 )	// for vectors/pointers
+	ROM_COPY( REGION_CPU1,	0x9000, 0x7000, 0x1000 ) // rgn,srcoffset,offset,length.
+
+//  ROM_LOAD( "b.bin",  0x8000, 0x2000, CRC(637fbb50) SHA1(b31799f9cc6aefd9f4b39cc1afb1ca00d9200efb) ) // alternate rom, bad dump
+//  this rom is a bad dump of rdb.bin with only 1 bit different.
+//  (bit 5 is on at offset $1629).
+
+	ROM_REGION( 0x8000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "rd3.rdg",	0x0000, 0x2000, CRC(8a3f1e53) SHA1(398bbbab314e4ea87cc5f5978c7e806818398d02) ) // not scrambled
+	ROM_LOAD( "rd2.rdh",	0x2000, 0x2000, CRC(e94e673e) SHA1(0adf01d35879b9dd355d0c53a51b5f416f22d7b2) )
+	ROM_LOAD( "rd1.rdj",	0x4000, 0x2000, CRC(654afff2) SHA1(f1e21447f0a2ac23cd64cf1f6f315937787b6377) )
+
+	ROM_REGION( 0x0040, REGION_PROMS, 0 )
+	/* no proms were in the rock duck set and no PCB available, use eggs palette for now, although its probably wrong */
+	ROM_LOAD( "eggs.c6",      0x0000, 0x0020, BAD_DUMP CRC(e8408c81) SHA1(549b9948a4a73e7a704731b942565183cef05d52) )	/* palette */
+//  ROM_LOAD( "screggco.b4",  0x0020, 0x0020, BAD_DUMP CRC(7cc4824b) SHA1(2a283fc17fac32e63385948bfe180d05f1fb8727) )   /* unknown */
+ROM_END
+
+
+DRIVER_INIT( rockduck )
+{
+	// rd2.rdh and rd1.rdj are bitswapped, but not rd3.rdg .. are they really from the same board?
+	int x;
+	UINT8 *src = memory_region( REGION_GFX1 );
+
+	for (x=0x2000;x<0x6000;x++)
+	{
+		src[x] = BITSWAP8(src[x],2,0,3,6,1,4,7,5);
+
+	}
+}
+
+
+GAME( 198?, dommy,    0,        dommy,  scregg, 0, ROT270, "Technos", "Dommy", 0 )
+GAME( 1983, scregg,   0,        scregg, scregg, 0, ROT270, "Technos", "Scrambled Egg", 0 )
+GAME( 1983, eggs,     scregg,   scregg, scregg, 0, ROT270, "[Technos] Universal USA", "Eggs", 0 )
+GAME( 1983, rockduck, 0,        scregg, scregg, rockduck, ROT270, "Datel SAS", "Rock Duck (prototype?)", GAME_WRONG_COLORS )

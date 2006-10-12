@@ -96,64 +96,35 @@ static char *extract_path(const char *name, char *dest, int destsize);
 // struct definitions
 static const options_entry windows_opts[] =
 {
-	{ "",                         NULL,       0,                 NULL },
-
 	// core commands
-	{ "help;h;?",                 NULL,       OPTION_COMMAND,    "show help message" },
-	{ "validate;valid",           NULL,       OPTION_COMMAND,    "perform driver validation on all game drivers" },
+	{ "help;h;?",                 "0",        OPTION_COMMAND,    "show help message" },
+	{ "validate;valid",           "0",        OPTION_COMMAND,    "perform driver validation on all game drivers" },
 
 	// configuration commands
-	{ "createconfig;cc",          NULL,       OPTION_COMMAND,    "create the default configuration file" },
-	{ "showconfig;sc",            NULL,       OPTION_COMMAND,    "display running parameters" },
-	{ "showusage;su",             NULL,       OPTION_COMMAND,    "show this help" },
+	{ "createconfig;cc",          "0",        OPTION_COMMAND,    "create the default configuration file" },
+	{ "showconfig;sc",            "0",        OPTION_COMMAND,    "display running parameters" },
+	{ "showusage;su",             "0",        OPTION_COMMAND,    "show this help" },
 
 	// frontend commands
-	{ "listxml;lx",               NULL,       OPTION_COMMAND,    "all available info on driver in XML format" },
-	{ "listfull;ll",              NULL,       OPTION_COMMAND,    "short name, full name" },
-	{ "listsource;ls",            NULL,       OPTION_COMMAND,    "driver sourcefile" },
-	{ "listclones;lc",            NULL,       OPTION_COMMAND,    "show clones" },
-	{ "listcrc",                  NULL,       OPTION_COMMAND,    "CRC-32s" },
-	{ "listroms",                 NULL,       OPTION_COMMAND,    "list required roms for a driver" },
-	{ "listsamples",              NULL,       OPTION_COMMAND,    "list     OPTIONal samples for a driver" },
-	{ "verifyroms",               NULL,       OPTION_COMMAND,    "report romsets that have problems" },
-	{ "verifysamples",            NULL,       OPTION_COMMAND,    "report samplesets that have problems" },
-	{ "romident",                 NULL,       OPTION_COMMAND,    "compare files with known MAME roms" },
-	{ "isknown",                  NULL,       OPTION_COMMAND,    "compare files with known MAME roms (brief)" },
+	{ "listxml;lx",               "0",        OPTION_COMMAND,    "all available info on driver in XML format" },
+	{ "listfull;ll",              "0",        OPTION_COMMAND,    "short name, full name" },
+	{ "listsource;ls",            "0",        OPTION_COMMAND,    "driver sourcefile" },
+	{ "listclones;lc",            "0",        OPTION_COMMAND,    "show clones" },
+	{ "listcrc",                  "0",        OPTION_COMMAND,    "CRC-32s" },
+	{ "listroms",                 "0",        OPTION_COMMAND,    "list required roms for a driver" },
+	{ "listsamples",              "0",        OPTION_COMMAND,    "list     OPTIONal samples for a driver" },
+	{ "verifyroms",               "0",        OPTION_COMMAND,    "report romsets that have problems" },
+	{ "verifysamples",            "0",        OPTION_COMMAND,    "report samplesets that have problems" },
+	{ "romident",                 "0",        OPTION_COMMAND,    "compare files with known MAME roms" },
+	{ "isknown",                  "0",        OPTION_COMMAND,    "compare files with known MAME roms (brief)" },
 #ifdef MESS
-	{ "listdevices",              NULL,       OPTION_COMMAND,    "list available devices" },
+	{ "listdevices",              "0",        OPTION_COMMAND,    "list available devices" },
 #endif
 
 	// config options
 	{ NULL,                       NULL,       OPTION_HEADER,     "CONFIGURATION OPTIONS" },
 	{ "readconfig;rc",            "1",        OPTION_BOOLEAN,    "enable loading of configuration files" },
 	{ "skip_gameinfo",            "0",        OPTION_BOOLEAN,    "skip displaying the information screen at startup" },
-
-	// file and directory options
-	{ NULL,                       NULL,       OPTION_HEADER,     "PATH AND DIRECTORY OPTIONS" },
-#ifndef MESS
-	{ "rompath;rp",               "roms",     0,                 "path to ROMsets and hard disk images" },
-#else
-	{ "biospath;bp",              "bios",     0,                 "path to BIOS sets" },
-	{ "softwarepath;swp",         "software", 0,                 "path to software" },
-	{ "hash_directory;hash",      "hash",     0,                 "path to hash files" },
-#endif
-	{ "samplepath;sp",            "samples",  0,                 "path to samplesets" },
-#ifdef __WIN32__
-	{ "inipath",                  ".;ini",    0,                 "path to ini files" },
-#else
-	{ "inipath",                  "$HOME/.mame;.;ini", 0,        "path to ini files" },
-#endif
-	{ "cfg_directory",            "cfg",      0,                 "directory to save configurations" },
-	{ "nvram_directory",          "nvram",    0,                 "directory to save nvram contents" },
-	{ "memcard_directory",        "memcard",  0,                 "directory to save memory card contents" },
-	{ "input_directory",          "inp",      0,                 "directory to save input device logs" },
-	{ "state_directory",          "sta",      0,                 "directory to save states" },
-	{ "artpath;artwork_directory","artwork",  0,                 "path to artwork files" },
-	{ "snapshot_directory",       "snap",     0,                 "directory to save screenshots" },
-	{ "diff_directory",           "diff",     0,                 "directory to save hard drive image difference files" },
-	{ "ctrlrpath;ctrlr_directory","ctrlr",    0,                 "path to controller definitions" },
-	{ "comment_directory",        "comments", 0,                 "directory to save debugger comments" },
-	{ "cheat_file",               "cheat.dat",0,                 "cheat filename" },
 
 	// misc options
 	{ NULL,                       NULL,       OPTION_HEADER,     "MISC OPTIONS" },
@@ -344,8 +315,7 @@ int cli_frontend_init(int argc, char **argv)
 	int drvnum = -1;
 
 	// initialize the options manager
-	options_free_entries();
-	options_add_entries(windows_opts);
+	options_init(windows_opts);
 #ifdef MESS
 	options_add_entries(mess_opts);
 	options_set_option_callback("", win_mess_driver_name_callback);
@@ -359,7 +329,7 @@ int cli_frontend_init(int argc, char **argv)
 	execute_simple_commands();
 
 	// find out what game we might be referring to
-	gamename = options_get_string("", FALSE);
+	gamename = options_get_string(OPTION_GAMENAME);
 	if (gamename != NULL)
 		drvnum = driver_get_index(extract_base_name(gamename, basename, ARRAY_LENGTH(basename)));
 
@@ -398,7 +368,7 @@ int cli_frontend_init(int argc, char **argv)
 	// reparse the command line to ensure its options override all
 	// note that we re-fetch the gamename here as it will get overridden
 	options_parse_command_line(argc, argv);
-	gamename = options_get_string("", FALSE);
+	gamename = options_get_string(OPTION_GAMENAME);
 
 	// execute any commands specified
 	execute_commands(argv[0]);
@@ -428,7 +398,7 @@ int cli_frontend_init(int argc, char **argv)
 	if (buffer[0] != 0)
 	{
 		// okay, we got one; prepend it to the rompath
-		const char *rompath = options_get_string("rompath", FALSE);
+		const char *rompath = options_get_string("rompath");
 		if (rompath == NULL)
 			options_set_string("rompath", buffer);
 		else
@@ -487,7 +457,7 @@ static void parse_ini_file(const char *name)
 	char *fname;
 
 	// don't parse if it has been disabled
-	if (!options_get_bool("readconfig", FALSE))
+	if (!options_get_bool("readconfig"))
 		return;
 
 	// open the file; if we fail, that's ok
@@ -511,22 +481,22 @@ static void parse_ini_file(const char *name)
 static void execute_simple_commands(void)
 {
 	// help?
-	if (options_get_bool("help", FALSE))
+	if (options_get_bool("help"))
 	{
 		display_help();
 		exit(0);
 	}
 
 	// showusage?
-	if (options_get_bool("showusage", FALSE))
+	if (options_get_bool("showusage"))
 	{
 		printf("Usage: mame [game] [options]\n\nOptions:\n");
-		options_output_help(stdout);
+		options_output_help();
 		exit(0);
 	}
 
 	// validate?
-	if (options_get_bool("validate", FALSE))
+	if (options_get_bool("validate"))
 	{
 		extern int mame_validitychecks(int game);
 		exit(mame_validitychecks(-1));
@@ -566,7 +536,7 @@ static void execute_commands(const char *argv0)
 	int i;
 
 	// createconfig?
-	if (options_get_bool("createconfig", FALSE))
+	if (options_get_bool("createconfig"))
 	{
 		char basename[128];
 		FILE *file;
@@ -590,7 +560,7 @@ static void execute_commands(const char *argv0)
 	}
 
 	// showconfig?
-	if (options_get_bool("showconfig", FALSE))
+	if (options_get_bool("showconfig"))
 	{
 		options_output_ini_file(stdout);
 		exit(0);
@@ -598,7 +568,7 @@ static void execute_commands(const char *argv0)
 
 	// frontend options?
 	for (i = 0; i < ARRAY_LENGTH(frontend_options); i++)
-		if (options_get_bool(frontend_options[i].option, FALSE))
+		if (options_get_bool(frontend_options[i].option))
 		{
 			int result;
 
@@ -650,93 +620,81 @@ static void extract_options(const game_driver *driver, machine_config *drv)
 	video_orientation = ROT0;
 
 	// override if no rotation requested
-	if (!options_get_bool("rotate", TRUE))
+	if (!options_get_bool("rotate"))
 		video_orientation = orientation_reverse(driver->flags & ORIENTATION_MASK);
 
 	// rotate right
-	if (options_get_bool("ror", TRUE) || (options_get_bool("autoror", TRUE) && (driver->flags & ORIENTATION_SWAP_XY)))
+	if (options_get_bool("ror") || (options_get_bool("autoror") && (driver->flags & ORIENTATION_SWAP_XY)))
 		video_orientation = orientation_add(ROT90, video_orientation);
 
 	// rotate left
-	if (options_get_bool("rol", TRUE) || (options_get_bool("autorol", TRUE) && (driver->flags & ORIENTATION_SWAP_XY)))
+	if (options_get_bool("rol") || (options_get_bool("autorol") && (driver->flags & ORIENTATION_SWAP_XY)))
 		video_orientation = orientation_add(ROT270, video_orientation);
 
 	// flip X/Y
-	if (options_get_bool("flipx", TRUE))
+	if (options_get_bool("flipx"))
 		video_orientation ^= ORIENTATION_FLIP_X;
-	if (options_get_bool("flipy", TRUE))
+	if (options_get_bool("flipy"))
 		video_orientation ^= ORIENTATION_FLIP_Y;
 
 	// brightness
-	options.brightness = options_get_float_range("brightness", TRUE, 0.1f, 2.0f);
-	options.contrast = options_get_float_range("contrast", TRUE, 0.1f, 2.0f);
-	options.pause_bright = options_get_float_range("pause_brightness", TRUE, 0.0f, 1.0f);
-	options.gamma = options_get_float_range("gamma", TRUE, 0.1f, 3.0f);
+	options.brightness = options_get_float_range("brightness", 0.1f, 2.0f);
+	options.contrast = options_get_float_range("contrast", 0.1f, 2.0f);
+	options.pause_bright = options_get_float_range("pause_brightness", 0.0f, 1.0f);
+	options.gamma = options_get_float_range("gamma", 0.1f, 3.0f);
 
 	// vector options
-	options.antialias = options_get_bool("antialias", TRUE);
-	options.beam = (int)(options_get_float("beam", TRUE) * 65536.0f);
-	options.vector_flicker = options_get_float("flicker", TRUE);
+	options.antialias = options_get_bool("antialias");
+	options.beam = (int)(options_get_float("beam") * 65536.0f);
+	options.vector_flicker = options_get_float("flicker");
 
 	// sound options
-	options.samplerate = options_get_bool("sound", TRUE) ? options_get_int_range("samplerate", TRUE, 1000, 1000000) : 0;
-	options.use_samples = options_get_bool("samples", TRUE);
-	attenuation = options_get_int("volume", TRUE);
-	audio_latency = options_get_int("audio_latency", TRUE);
-	wavwrite = options_get_string("wavwrite", TRUE);
+	options.samplerate = options_get_bool("sound") ? options_get_int_range("samplerate", 1000, 1000000) : 0;
+	options.use_samples = options_get_bool("samples");
+	attenuation = options_get_int("volume");
+	audio_latency = options_get_int("audio_latency");
+	wavwrite = options_get_string("wavwrite");
 
 	// misc options
-	options.bios = (char *)options_get_string("bios", TRUE);
-	options.cheat = options_get_bool("cheat", TRUE);
-	options.skip_gameinfo = options_get_bool("skip_gameinfo", TRUE);
+	options.bios = (char *)options_get_string("bios");
+	options.cheat = options_get_bool("cheat");
+	options.skip_gameinfo = options_get_bool("skip_gameinfo");
 
 #ifdef MESS
 	win_mess_extract_options();
 #endif /* MESS */
 
 	// save states and input recording
-	stemp = options_get_string("playback", TRUE);
+	stemp = options_get_string("playback");
 	if (stemp != NULL)
 		setup_playback(stemp, driver);
-	stemp = options_get_string("record", TRUE);
+	stemp = options_get_string("record");
 	if (stemp != NULL)
 		setup_record(stemp, driver);
-	options.savegame = options_get_string("state", TRUE);
-	options.auto_save = options_get_bool("autosave", TRUE);
+	options.savegame = options_get_string("state");
+	options.auto_save = options_get_bool("autosave");
 
 	// debugging options
-	if (options_get_bool("log", TRUE))
+	if (options_get_bool("log"))
 	{
 		mame_file_error filerr = mame_fopen(SEARCHPATH_DEBUGLOG, "error.log", OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &options.logfile);
 		assert_always(filerr == FILERR_NONE, "unable to open log file");
 	}
-	win_erroroslog = options_get_bool("oslog", TRUE);
+	win_erroroslog = options_get_bool("oslog");
 {
 	extern int verbose;
-	verbose = options_get_bool("verbose", TRUE);
+	verbose = options_get_bool("verbose");
 }
 #ifdef MAME_DEBUG
-	options.mame_debug = options_get_bool("debug", TRUE);
-	stemp = options_get_string("debugscript", TRUE);
+	options.mame_debug = options_get_bool("debug");
+	stemp = options_get_string("debugscript");
 	if (stemp != NULL)
 		debug_source_script(stemp);
 #endif
 
-{
-	extern const char *cheatfile;
-	cheatfile = options_get_string("cheat_file", TRUE);
-}
-
-	// need a decent default for debug width/height
-	if (options.debug_width == 0)
-		options.debug_width = 640;
-	if (options.debug_height == 0)
-		options.debug_height = 480;
-	options.debug_depth = 8;
-
 	// thread priority
 	if (!options.mame_debug)
-		SetThreadPriority(GetCurrentThread(), options_get_int_range("priority", TRUE, -15, 1));
+		SetThreadPriority(GetCurrentThread(), options_get_int_range("priority", -15, 1));
 }
 
 

@@ -210,7 +210,7 @@ int winvideo_init(running_machine *machine)
 #endif
 
 	// start recording movie
-	stemp = options_get_string("mngwrite", TRUE);
+	stemp = options_get_string("mngwrite");
 	if (stemp != NULL)
 		video_movie_begin_recording(stemp);
 
@@ -496,9 +496,9 @@ static win_monitor_info *pick_monitor(int index)
 	float aspect;
 
 	// get the screen option
-	scrname = options_get_string("screen", TRUE);
+	scrname = options_get_string("screen");
 	sprintf(option, "screen%d", index);
-	scrname2 = options_get_string(option, TRUE);
+	scrname2 = options_get_string(option);
 
 	// decide which one we want to use
 	if (scrname2 != NULL && strcmp(scrname2, "auto") != 0)
@@ -812,34 +812,34 @@ static void extract_video_config(void)
 	const char *stemp;
 
 	// performance options: extract the data
-	video_config.autoframeskip = options_get_bool("autoframeskip", TRUE);
-	video_config.frameskip     = options_get_int_range("frameskip", TRUE, 0, FRAMESKIP_LEVELS);
-	video_config.throttle      = options_get_bool("throttle", TRUE);
-	video_config.sleep         = options_get_bool("sleep", TRUE);
+	video_config.autoframeskip = options_get_bool("autoframeskip");
+	video_config.frameskip     = options_get_int_range("frameskip", 0, FRAMESKIP_LEVELS);
+	video_config.throttle      = options_get_bool("throttle");
+	video_config.sleep         = options_get_bool("sleep");
 
 	// misc options: extract the data
-	video_config.framestorun   = options_get_int("frames_to_run", TRUE);
+	video_config.framestorun   = options_get_int("frames_to_run");
 
 	// global options: extract the data
-	video_config.windowed      = options_get_bool("window", TRUE);
-	video_config.prescale      = options_get_int("prescale", TRUE);
-	video_config.keepaspect    = options_get_bool("keepaspect", TRUE);
-	video_config.numscreens    = options_get_int_range("numscreens", TRUE, 1, MAX_WINDOWS);
+	video_config.windowed      = options_get_bool("window");
+	video_config.prescale      = options_get_int("prescale");
+	video_config.keepaspect    = options_get_bool("keepaspect");
+	video_config.numscreens    = options_get_int_range("numscreens", 1, MAX_WINDOWS);
 #ifdef MAME_DEBUG
 	// if we are in debug mode, never go full screen
 	if (options.mame_debug)
 		video_config.windowed = TRUE;
 #endif
-	stemp                      = options_get_string("effect", TRUE);
+	stemp                      = options_get_string("effect");
 	if (stemp != NULL && strcmp(stemp, "none") != 0)
 		load_effect_overlay(stemp);
 
 	// configure layers
 	video_config.layerconfig = LAYER_CONFIG_DEFAULT;
-	if (!options_get_bool("use_backdrops", TRUE)) video_config.layerconfig &= ~LAYER_CONFIG_ENABLE_BACKDROP;
-	if (!options_get_bool("use_overlays", TRUE)) video_config.layerconfig &= ~LAYER_CONFIG_ENABLE_OVERLAY;
-	if (!options_get_bool("use_bezels", TRUE)) video_config.layerconfig &= ~LAYER_CONFIG_ENABLE_BEZEL;
-	if (options_get_bool("artwork_crop", TRUE)) video_config.layerconfig |= LAYER_CONFIG_ZOOM_TO_SCREEN;
+	if (!options_get_bool("use_backdrops")) video_config.layerconfig &= ~LAYER_CONFIG_ENABLE_BACKDROP;
+	if (!options_get_bool("use_overlays")) video_config.layerconfig &= ~LAYER_CONFIG_ENABLE_OVERLAY;
+	if (!options_get_bool("use_bezels")) video_config.layerconfig &= ~LAYER_CONFIG_ENABLE_BEZEL;
+	if (options_get_bool("artwork_crop")) video_config.layerconfig |= LAYER_CONFIG_ZOOM_TO_SCREEN;
 
 	// per-window options: extract the data
 	get_resolution("resolution0", &video_config.window[0], TRUE);
@@ -848,7 +848,7 @@ static void extract_video_config(void)
 	get_resolution("resolution3", &video_config.window[3], TRUE);
 
 	// video options: extract the data
-	stemp = options_get_string("video", TRUE);
+	stemp = options_get_string("video");
 	if (strcmp(stemp, "d3d") == 0)
 		video_config.mode = VIDEO_MODE_D3D;
 	else if (strcmp(stemp, "ddraw") == 0)
@@ -866,16 +866,16 @@ static void extract_video_config(void)
 		fprintf(stderr, "Invalid video value %s; reverting to gdi\n", stemp);
 		video_config.mode = VIDEO_MODE_GDI;
 	}
-	video_config.waitvsync     = options_get_bool("waitvsync", TRUE);
-	video_config.syncrefresh   = options_get_bool("syncrefresh", TRUE);
-	video_config.triplebuf     = options_get_bool("triplebuffer", TRUE);
-	video_config.switchres     = options_get_bool("switchres", TRUE);
+	video_config.waitvsync     = options_get_bool("waitvsync");
+	video_config.syncrefresh   = options_get_bool("syncrefresh");
+	video_config.triplebuf     = options_get_bool("triplebuffer");
+	video_config.switchres     = options_get_bool("switchres");
 
 	// ddraw options: extract the data
-	video_config.hwstretch     = options_get_bool("hwstretch", TRUE);
+	video_config.hwstretch     = options_get_bool("hwstretch");
 
 	// d3d options: extract the data
-	video_config.filter        = options_get_bool("filter", TRUE);
+	video_config.filter        = options_get_bool("filter");
 	if (video_config.prescale == 0)
 		video_config.prescale = 1;
 
@@ -884,11 +884,11 @@ static void extract_video_config(void)
 	// per-window options: sanity check values
 
 	// d3d options: sanity check values
-	options_get_int_range("d3dversion", TRUE, 8, 9);
+	options_get_int_range("d3dversion", 8, 9);
 
-	options_get_float_range("full_screen_brightness", TRUE, 0.1f, 2.0f);
-	options_get_float_range("full_screen_contrast", TRUE, 0.1f, 2.0f);
-	options_get_float_range("full_screen_gamma", TRUE, 0.1f, 3.0f);
+	options_get_float_range("full_screen_brightness", 0.1f, 2.0f);
+	options_get_float_range("full_screen_contrast", 0.1f, 2.0f);
+	options_get_float_range("full_screen_gamma", 0.1f, 3.0f);
 }
 
 
@@ -935,8 +935,8 @@ static void load_effect_overlay(const char *filename)
 
 static float get_aspect(const char *name, int report_error)
 {
-	const char *defdata = options_get_string("aspect", FALSE);
-	const char *data = options_get_string(name, report_error);
+	const char *defdata = options_get_string("aspect");
+	const char *data = options_get_string(name);
 	int num = 0, den = 1;
 
 	if (strcmp(data, "auto") == 0)
@@ -958,8 +958,8 @@ static float get_aspect(const char *name, int report_error)
 
 static void get_resolution(const char *name, win_window_config *config, int report_error)
 {
-	const char *defdata = options_get_string("resolution", FALSE);
-	const char *data = options_get_string(name, report_error);
+	const char *defdata = options_get_string("resolution");
+	const char *data = options_get_string(name);
 
 	config->width = config->height = config->refresh = 0;
 	if (strcmp(data, "auto") == 0)

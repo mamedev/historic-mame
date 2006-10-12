@@ -160,6 +160,7 @@ CPUS += DSP56156
 CPUS += RSP
 CPUS += ALPHA8201
 CPUS += ALPHA8301
+CPUS += CDP1802
 
 
 #-------------------------------------------------
@@ -245,6 +246,7 @@ SOUNDS += VRENDER0
 SOUNDS += ES8712
 SOUNDS += RF5C400
 SOUNDS += SPEAKER
+SOUNDS += CDP1869
 
 
 
@@ -326,7 +328,6 @@ DRVLIBS = \
 	$(OBJ)/technos.a \
 	$(OBJ)/tehkan.a \
 	$(OBJ)/thepit.a \
-	$(OBJ)/tiamc1.a \
 	$(OBJ)/toaplan.a \
 	$(OBJ)/tong.a \
 	$(OBJ)/unico.a \
@@ -1342,9 +1343,6 @@ $(OBJ)/thepit.a: \
 	$(OBJ)/drivers/thepit.o $(OBJ)/vidhrdw/thepit.o \
 	$(OBJ)/drivers/timelimt.o $(OBJ)/vidhrdw/timelimt.o \
 
-$(OBJ)/tiamc1.a: \
-	$(OBJ)/drivers/tiamc1.o $(OBJ)/vidhrdw/tiamc1.o $(OBJ)/sndhrdw/tiamc1.o \
-
 $(OBJ)/toaplan.a: \
 	$(OBJ)/drivers/mjsister.o $(OBJ)/vidhrdw/mjsister.o \
 	$(OBJ)/drivers/slapfght.o $(OBJ)/machine/slapfght.o $(OBJ)/vidhrdw/slapfght.o \
@@ -1444,6 +1442,7 @@ $(OBJ)/misc.a: \
 	$(OBJ)/drivers/carrera.o \
 	$(OBJ)/drivers/cave.o $(OBJ)/vidhrdw/cave.o \
 	$(OBJ)/drivers/cherrym.o \
+	$(OBJ)/drivers/cidelsa.o $(OBJ)/vidhrdw/cdp1869.o \
 	$(OBJ)/drivers/coinmstr.o \
 	$(OBJ)/drivers/coolpool.o \
 	$(OBJ)/drivers/crystal.o $(OBJ)/machine/ds1302.o $(OBJ)/vidhrdw/vrender0.o \
@@ -1520,6 +1519,7 @@ $(OBJ)/misc.a: \
 	$(OBJ)/drivers/taxidrvr.o $(OBJ)/vidhrdw/taxidrvr.o \
 	$(OBJ)/drivers/tcl.o \
 	$(OBJ)/drivers/thedeep.o $(OBJ)/vidhrdw/thedeep.o \
+	$(OBJ)/drivers/tiamc1.o $(OBJ)/vidhrdw/tiamc1.o $(OBJ)/sndhrdw/tiamc1.o \
 	$(OBJ)/drivers/tickee.o $(OBJ)/vidhrdw/tickee.o \
 	$(OBJ)/drivers/truco.o $(OBJ)/vidhrdw/truco.o \
 	$(OBJ)/drivers/trucocl.o $(OBJ)/vidhrdw/trucocl.o \

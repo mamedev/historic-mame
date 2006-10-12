@@ -47,6 +47,9 @@ static int read_wav_sample(mame_file *f, struct loaded_sample *sample)
 	UINT32 length, rate, filesize;
 	UINT16 bits, temp16;
 	char buf[32];
+	#ifndef LSB_FIRST
+	UINT32 sindex;
+	#endif
 
 	/* read the core header and make sure it's a WAVE file */
 	offset += mame_fread(f, buf, 4);
@@ -204,13 +207,13 @@ struct loaded_samples *readsamples(const char **samplenames, const char *basenam
 			mame_file *f;
 			char *fname;
 
-			fname = assemble_3_strings(basename, "/", samplenames[i+skipfirst]);
+			fname = assemble_3_strings(basename, PATH_SEPARATOR, samplenames[i+skipfirst]);
 			filerr = mame_fopen(SEARCHPATH_SAMPLE, fname, OPEN_FLAG_READ, &f);
 			free(fname);
 
 			if (filerr != FILERR_NONE && skipfirst)
 			{
-				fname = assemble_3_strings(samplenames[0] + 1, "/", samplenames[i+skipfirst]);
+				fname = assemble_3_strings(samplenames[0] + 1, PATH_SEPARATOR, samplenames[i+skipfirst]);
 				filerr = mame_fopen(SEARCHPATH_SAMPLE, fname, OPEN_FLAG_READ, &f);
 				free(fname);
 			}

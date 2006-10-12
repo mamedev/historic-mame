@@ -19,6 +19,81 @@
 #include "timer.h"
 #include <stdarg.h>
 
+
+
+/******************************************************************************
+
+    The prototypes in this file describe the interfaces that the MAME core
+    relies upon to interact with the outside world. They are broken out into
+    several categories.
+
+    The general flow for an OSD port of MAME is as follows:
+
+        - parse the command line or display the frontend
+        - call run_game (mame.c) with the index in the driver list of
+            the game selected
+            - osd_init() is called shortly afterwards; at this time, you are
+                expected to set up the display system and create render_targets
+            - the input system will call osd_get_code_list()
+            - the input port system will call osd_customize_inputport_list()
+            - the sound system will call osd_start_audio_stream()
+            - while the game runs, osd_update() will be called periodically
+            - when the game exits, we return from run_game()
+        - the OSD layer is now in control again
+
+    This process is expected to be in flux over the next several versions
+    (this was written during 0.109u2 development) as some of the OSD
+    responsibilities are pushed into the core.
+
+******************************************************************************/
+
+
+
+
+/*-----------------------------------------------------------------------------
+    osd_init: initialize the OSD system.
+
+    Parameters:
+
+        machine - pointer to a structure that contains parameters for the
+            current "machine"
+
+    Return value:
+
+        0 if no errors occurred, or non-zero in case of an error.
+
+    Notes:
+
+        This function has several responsibilities.
+
+        The most important responsibility of this function is to create the
+        render_targets that will be used by the MAME core to provide graphics
+        data to the system. Although it is possible to do this later, the
+        assumption in the MAME core is that the user interface will be
+        visible starting at osd_init() time, so you will have some work to
+        do to avoid these assumptions.
+
+        A secondary responsibility of this function is to initialize any
+        other OSD systems that require information about the current
+        running_machine.
+
+        This callback is also the last opportunity to adjust the options
+        before they are consumed by the rest of the core.
+
+        Note that there is no corresponding osd_exit(). Rather, like most
+        systems in MAME, you can register an exit callback via the
+        add_exit_callback() function in mame.c.
+
+    Future work/changes:
+
+        The return value may be removed in the future. It is recommended that
+        if you encounter an error at this time, that you call the core
+        function fatalerror() with a message to the user rather than relying
+        on this return value.
+
+        Audio and input initialization may eventually move into here as well,
+        instead of relying on independent callbacks from each system.
+-----------------------------------------------------------------------------*/
 int osd_init(running_machine *machine);
 
 
@@ -99,7 +174,7 @@ typedef UINT32 os_code;
 typedef struct _os_code_info os_code_info;
 struct _os_code_info
 {
-	char *			name;			/* OS dependant name; 0 terminates the list */
+	char *		name;			/* OS dependant name; 0 terminates the list */
 	os_code		oscode;			/* OS dependant code */
 	input_code	inputcode;		/* CODE_xxx equivalent from input.h, or one of CODE_OTHER_* if n/a */
 };
@@ -115,17 +190,6 @@ const os_code_info *osd_get_code_list(void);
   code specified in the list returned by osd_get_code_list().
 */
 INT32 osd_get_code_value(os_code oscode);
-
-/*
-  Return the Unicode value of the most recently pressed key. This
-  function is used only by text-entry routines in the user interface and should
-  not be used by drivers. The value returned is in the range of the first 256
-  bytes of Unicode, e.g. ISO-8859-1. A return value of 0 indicates no key down.
-
-  Set flush to 1 to clear the buffer before entering text. This will avoid
-  having prior UI and game keys leak into the text entry.
-*/
-int osd_readkey_unicode(int flush);
 
 /*
   inptport.c defines some general purpose defaults for key and joystick bindings.
@@ -174,11 +238,12 @@ struct _inp_header
 typedef struct _osd_file osd_file;
 
 
-/*
-    osd_open: open a new file
+/*-----------------------------------------------------------------------------
+    osd_open: open a new file.
 
-        path - path to the file to open; the directory separator is assumed
-            to be a forward slash '/'
+    Parameters:
+
+        path - path to the file to open
 
         openflags - some combination of:
 
@@ -194,25 +259,45 @@ typedef struct _osd_file osd_file;
         filesize - pointer to a UINT64 to receive the size of the opened
             file; this is only valid if the function returns FILERR_NONE
 
-        return value - a mame_file_error describing any error that occurred
-            while opening the file, or FILERR_NONE if no error occurred
-*/
+    Return value:
+
+        a mame_file_error describing any error that occurred while opening
+        the file, or FILERR_NONE if no error occurred
+
+    Notes:
+
+        This function is called by mame_fopen and several other places in
+        the core to access files. These functions will construct paths by
+        concatenating various search paths held in the options.c options
+        database with partial paths specified by the core. The core assumes
+        that the path separator is a forward slash, but does not interpret
+        any path separators in the search paths, so if you use a different
+        path separator, you may get a mixture of forward slashes (from the
+        core) and native path separators (specified by users and placed into
+        the options database).
+-----------------------------------------------------------------------------*/
 mame_file_error osd_open(const char *path, UINT32 openflags, osd_file **file, UINT64 *filesize);
 
 
-/*
+/*-----------------------------------------------------------------------------
     osd_close: close an open file
+
+    Parameters:
 
         file - handle to a file previously opened via osd_open
 
-        return value - a mame_file_error describing any error that occurred
-            while opening the file, or FILERR_NONE if no error occurred
-*/
+    Return value:
+
+        a mame_file_error describing any error that occurred while closing
+        the file, or FILERR_NONE if no error occurred
+-----------------------------------------------------------------------------*/
 mame_file_error osd_close(osd_file *file);
 
 
-/*
+/*-----------------------------------------------------------------------------
     osd_read: read from an open file
+
+    Parameters:
 
         file - handle to a file previously opened via osd_open
 
@@ -226,14 +311,18 @@ mame_file_error osd_close(osd_file *file);
             read during the operation; valid only if the function returns
             FILERR_NONE
 
-        return value - a mame_file_error describing any error that occurred
-            while opening the file, or FILERR_NONE if no error occurred
-*/
+    Return value:
+
+        a mame_file_error describing any error that occurred while reading
+        from the file, or FILERR_NONE if no error occurred
+-----------------------------------------------------------------------------*/
 mame_file_error osd_read(osd_file *file, void *buffer, UINT64 offset, UINT32 length, UINT32 *actual);
 
 
-/*
+/*-----------------------------------------------------------------------------
     osd_write: write to an open file
+
+    Parameters:
 
         file - handle to a file previously opened via osd_open
 
@@ -247,9 +336,11 @@ mame_file_error osd_read(osd_file *file, void *buffer, UINT64 offset, UINT32 len
             written during the operation; valid only if the function returns
             FILERR_NONE
 
-        return value - a mame_file_error describing any error that occurred
-            while opening the file, or FILERR_NONE if no error occurred
-*/
+    Return value:
+
+        a mame_file_error describing any error that occurred while writing to
+        the file, or FILERR_NONE if no error occurred
+-----------------------------------------------------------------------------*/
 mame_file_error osd_write(osd_file *file, const void *buffer, UINT64 offset, UINT32 length, UINT32 *actual);
 
 

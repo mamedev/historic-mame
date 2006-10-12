@@ -66,7 +66,7 @@ static cycles_t init_cycle_counter(void)
 	suspend_adjustment = 0;
 	suspend_time = 0;
 
-	if (!options_get_bool("rdtsc", TRUE) && QueryPerformanceFrequency( &frequency ))
+	if (!options_get_bool("rdtsc") && QueryPerformanceFrequency( &frequency ))
 	{
 		// use performance counter if available as it is constant
 		cycle_counter = performance_cycle_counter;

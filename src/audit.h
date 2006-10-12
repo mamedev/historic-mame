@@ -77,9 +77,6 @@ struct _audit_record
 };
 
 
-typedef void (CLIB_DECL *verify_printf_proc)(const char *fmt,...);
-
-
 
 /***************************************************************************
     FUNCTION PROTOTYPES
@@ -87,7 +84,7 @@ typedef void (CLIB_DECL *verify_printf_proc)(const char *fmt,...);
 
 int audit_images(int game, UINT32 validation, audit_record **audit);
 int audit_samples(int game, audit_record **audit);
-int audit_summary(int game, int count, const audit_record *records, verify_printf_proc output);
+int audit_summary(int game, int count, const audit_record *records, int output);
 
 
 #endif	/* __AUDIT_H__ */

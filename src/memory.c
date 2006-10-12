@@ -3231,7 +3231,7 @@ static void dump_map(FILE *file, const addrspace_data *space, const table_data *
 				if (lastentry2 < SUBTABLE_BASE && lastentry2 != STATIC_UNMAP)
 					fprintf(file, "%08X-%08X    = %02X: %s [offset=%08X]\n",
 									((i << LEVEL2_BITS) | (j - entry2matches)),
-									((i << LEVEL2_BITS) | j) - 1,
+									((i << LEVEL2_BITS) | (j - 1)),
 									lastentry2,
 									handler_to_string(table, lastentry2),
 									table->handlers[lastentry2].offset);
@@ -3245,7 +3245,7 @@ static void dump_map(FILE *file, const addrspace_data *space, const table_data *
 			if (lastentry2 < SUBTABLE_BASE && lastentry2 != STATIC_UNMAP)
 				fprintf(file, "%08X-%08X    = %02X: %s [offset=%08X]\n",
 								((i << LEVEL2_BITS) | (j - entry2matches)),
-								((i << LEVEL2_BITS) | j) - 1,
+								((i << LEVEL2_BITS) | (j - 1)),
 								lastentry2,
 								handler_to_string(table, lastentry2),
 								table->handlers[lastentry2].offset);

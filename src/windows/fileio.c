@@ -89,7 +89,7 @@ mame_file_error osd_open(const char *path, UINT32 openflags, osd_file **file, UI
 	// convert the path into something Windows compatible
 	dst = (*file)->filename;
 	for (src = path; *src != 0; src++)
-		*dst++ = (*src == '/') ? '\\' : *src;
+		*dst++ = *src;//(*src == '/') ? '\\' : *src;
 	*dst++ = 0;
 
 	// select the file open modes
@@ -211,16 +211,6 @@ mame_file_error osd_close(osd_file *file)
 	CloseHandle(file->handle);
 	free(file);
 	return FILERR_NONE;
-}
-
-
-//============================================================
-//  is_pathsep
-//============================================================
-
-INLINE int is_pathsep(TCHAR c)
-{
-	return (c == '/' || c == '\\' || c == ':');
 }
 
 

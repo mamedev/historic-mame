@@ -586,9 +586,9 @@ static int ddraw_create_surfaces(win_window_info *window)
 	if (window->fullscreen)
 	{
 		// only set the gamma if it's not 1.0f
-		float brightness = options_get_float("full_screen_brightness", TRUE);
-		float contrast = options_get_float("full_screen_contrast", TRUE);
-		float gamma = options_get_float("full_screen_gamma", TRUE);
+		float brightness = options_get_float("full_screen_brightness");
+		float contrast = options_get_float("full_screen_contrast");
+		float gamma = options_get_float("full_screen_gamma");
 		if (brightness != 1.0f || contrast != 1.0f || gamma != 1.0f)
 		{
 			// see if we can get a GammaControl object

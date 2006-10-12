@@ -20,8 +20,8 @@
 ***************************************************************************/
 
 /* utilities */
-static void resample_argb_bitmap_average(UINT32 *dest, UINT32 drowpixels, UINT32 dwidth, UINT32 dheight, const UINT32 *source, UINT32 srowpixels, const render_color *color, UINT32 dx, UINT32 dy);
-static void resample_argb_bitmap_bilinear(UINT32 *dest, UINT32 drowpixels, UINT32 dwidth, UINT32 dheight, const UINT32 *source, UINT32 srowpixels, const render_color *color, UINT32 dx, UINT32 dy);
+static void resample_argb_bitmap_average(UINT32 *dest, UINT32 drowpixels, UINT32 dwidth, UINT32 dheight, const UINT32 *source, UINT32 srowpixels, UINT32 swidth, UINT32 sheight, const render_color *color, UINT32 dx, UINT32 dy);
+static void resample_argb_bitmap_bilinear(UINT32 *dest, UINT32 drowpixels, UINT32 dwidth, UINT32 dheight, const UINT32 *source, UINT32 srowpixels, UINT32 swidth, UINT32 sheight, const render_color *color, UINT32 dx, UINT32 dy);
 static void copy_png_to_bitmap(mame_bitmap *bitmap, const png_info *png, int *hasalpha);
 static void copy_png_alpha_to_bitmap(mame_bitmap *bitmap, const png_info *png, int *hasalpha);
 
@@ -54,6 +54,7 @@ INLINE UINT8 compute_brightness(rgb_t rgb)
 
 void render_resample_argb_bitmap_hq(void *dest, UINT32 drowpixels, UINT32 dwidth, UINT32 dheight, const mame_bitmap *source, const rectangle *orig_sbounds, const render_color *color)
 {
+	UINT32 swidth, sheight;
 	const UINT32 *sbase;
 	rectangle sbounds;
 	UINT32 dx, dy;
@@ -72,14 +73,16 @@ void render_resample_argb_bitmap_hq(void *dest, UINT32 drowpixels, UINT32 dwidth
 	sbase = (const UINT32 *)source->base + sbounds.min_y * source->rowpixels + sbounds.min_x;
 
 	/* determine the steppings */
-	dx = ((sbounds.max_x - sbounds.min_x) << 12) / dwidth;
-	dy = ((sbounds.max_y - sbounds.min_y) << 12) / dheight;
+	swidth = sbounds.max_x - sbounds.min_x;
+	sheight = sbounds.max_y - sbounds.min_y;
+	dx = (swidth << 12) / dwidth;
+	dy = (sheight << 12) / dheight;
 
 	/* if the source is higher res than the target, use full averaging */
 	if (dx > 0x1000 || dy > 0x1000)
-		resample_argb_bitmap_average(dest, drowpixels, dwidth, dheight, sbase, source->rowpixels, color, dx, dy);
+		resample_argb_bitmap_average(dest, drowpixels, dwidth, dheight, sbase, source->rowpixels, swidth, sheight, color, dx, dy);
 	else
-		resample_argb_bitmap_bilinear(dest, drowpixels, dwidth, dheight, sbase, source->rowpixels, color, dx, dy);
+		resample_argb_bitmap_bilinear(dest, drowpixels, dwidth, dheight, sbase, source->rowpixels, swidth, sheight, color, dx, dy);
 }
 
 
@@ -89,7 +92,7 @@ void render_resample_argb_bitmap_hq(void *dest, UINT32 drowpixels, UINT32 dwidth
     all contributing pixels
 -------------------------------------------------*/
 
-static void resample_argb_bitmap_average(UINT32 *dest, UINT32 drowpixels, UINT32 dwidth, UINT32 dheight, const UINT32 *source, UINT32 srowpixels, const render_color *color, UINT32 dx, UINT32 dy)
+static void resample_argb_bitmap_average(UINT32 *dest, UINT32 drowpixels, UINT32 dwidth, UINT32 dheight, const UINT32 *source, UINT32 srowpixels, UINT32 swidth, UINT32 sheight, const render_color *color, UINT32 dx, UINT32 dy)
 {
 	UINT64 sumscale = (UINT64)dx * (UINT64)dy;
 	UINT32 r, g, b, a;
@@ -181,8 +184,9 @@ static void resample_argb_bitmap_average(UINT32 *dest, UINT32 drowpixels, UINT32
     sampling via a bilinear filter
 -------------------------------------------------*/
 
-static void resample_argb_bitmap_bilinear(UINT32 *dest, UINT32 drowpixels, UINT32 dwidth, UINT32 dheight, const UINT32 *source, UINT32 srowpixels, const render_color *color, UINT32 dx, UINT32 dy)
+static void resample_argb_bitmap_bilinear(UINT32 *dest, UINT32 drowpixels, UINT32 dwidth, UINT32 dheight, const UINT32 *source, UINT32 srowpixels, UINT32 swidth, UINT32 sheight, const render_color *color, UINT32 dx, UINT32 dy)
 {
+	UINT32 maxx = swidth << 12, maxy = sheight << 12;
 	UINT32 r, g, b, a;
 	UINT32 x, y;
 
@@ -216,15 +220,16 @@ static void resample_argb_bitmap_bilinear(UINT32 *dest, UINT32 drowpixels, UINT3
 			nextx = curx + 0x1000;
 			nexty = cury + 0x1000;
 
-			/* clamp start */
-			if ((INT32)curx < 0) curx += 0x1000;
-			if ((INT32)cury < 0) cury += 0x1000;
-
 			/* fetch the four relevant pixels */
-			pix0 = source[(cury >> 12) * srowpixels + (curx >> 12)];
-			pix1 = source[(cury >> 12) * srowpixels + (nextx >> 12)];
-			pix2 = source[(nexty >> 12) * srowpixels + (curx >> 12)];
-			pix3 = source[(nexty >> 12) * srowpixels + (nextx >> 12)];
+			pix0 = pix1 = pix2 = pix3 = 0;
+			if ((INT32)cury >= 0 && cury < maxy && (INT32)curx >= 0 && curx < maxx)
+				pix0 = source[(cury >> 12) * srowpixels + (curx >> 12)];
+			if ((INT32)cury >= 0 && cury < maxy && (INT32)nextx >= 0 && nextx < maxx)
+				pix1 = source[(cury >> 12) * srowpixels + (nextx >> 12)];
+			if ((INT32)nexty >= 0 && nexty < maxy && (INT32)curx >= 0 && curx < maxx)
+				pix2 = source[(nexty >> 12) * srowpixels + (curx >> 12)];
+			if ((INT32)nexty >= 0 && nexty < maxy && (INT32)nextx >= 0 && nextx < maxx)
+				pix3 = source[(nexty >> 12) * srowpixels + (nextx >> 12)];
 
 			/* compute the x/y scaling factors */
 			curx &= 0xfff;
@@ -561,7 +566,7 @@ mame_bitmap *render_load_png(const char *dirname, const char *filename, mame_bit
 	int result;
 
 	/* open the file */
-	fname = (dirname == NULL) ? filename : assemble_3_strings(dirname, "/", filename);
+	fname = (dirname == NULL) ? filename : assemble_3_strings(dirname, PATH_SEPARATOR, filename);
 	filerr = mame_fopen(SEARCHPATH_ARTWORK, fname, OPEN_FLAG_READ, &file);
 	if (fname != filename)
 		free((void *)fname);

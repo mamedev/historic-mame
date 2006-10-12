@@ -900,12 +900,12 @@ MACHINE_START( a800xl )
 DEVICE_LOAD( a800xl_cart )
 {
 	UINT8 *mem = memory_region(REGION_CPU1);
-	const char *filename;
+	char *fname;
 	mame_file *basic_fp;
 	mame_file_error filerr;
 	unsigned size;
 
-	fname = assemble_2_strings(Machine->gamedrv->name, "/basic.rom");
+	fname = assemble_3_strings(Machine->gamedrv->name, PATH_SEPARATOR, "basic.rom");
 	filerr = mame_fopen(SEARCHPATH_ROM, fname, OPEN_FLAG_READ, &basic_fp);
 	free(fname);
 

@@ -180,7 +180,7 @@ VIDEO_UPDATE( capbowl )
 		/* first update the palette for this scanline */
 		for (x = 0; x < 16; x++)
 		{
-			palette_set_color(machine, ybase + x, pal4bit(src[0]), pal4bit(src[0] >> 4), pal4bit(src[1]));
+			palette_set_color(machine, ybase + x, pal4bit(src[0]), pal4bit(src[1] >> 4), pal4bit(src[1]));
 			src += 2;
 		}
 

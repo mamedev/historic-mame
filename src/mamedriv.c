@@ -2080,7 +2080,8 @@ V-V                           TP-027
 	DRIVER( plegendj )	/* (c) 1994 Atlus */
 	DRIVER( mazinger )	/* (c) 1994 Banpresto (country is in EEPROM) */
 	DRIVER( donpachi )	/* (c) 1995 Atlus/Cave */
-	DRIVER( donpachj )	/* (c) 1995 Atlus/Cave */
+	DRIVER( donpacjp )	/* (c) 1995 Atlus/Cave */
+	DRIVER( donpackr )	/* (c) 1995 Atlus/Cave */
 	DRIVER( donpachk )	/* (c) 1995 Atlus/Cave */
 	DRIVER( metmqstr )	/* (c) 1995 Banpresto / Pandorabox */
 	DRIVER( nmaster )	/* (c) 1995 Banpresto / Pandorabox */
@@ -7160,6 +7161,7 @@ Other Sun games
 	DRIVER( jackpool )	/* (c) 1997 Electronic Projects */
 	DRIVER( murogem )	/* ??? */
 	DRIVER( murogema )	/* ??? */
+	DRIVER( lasvegas )	/* hack */
 	DRIVER( quizmstr )	/* (c) 1985 Coinmaster */
 	DRIVER( trailblz )	/* (c) 1987 Coinmaster */
 	DRIVER( supnudg2 )	/* (c) 1989 Coinmaster */
@@ -7196,5 +7198,9 @@ Other Sun games
 	DRIVER( goldnpkr )	/* (c) 198? Bonanza? */
 	DRIVER( jokerpkr )	/* (c) 198? Coinmaster-Gaming */
 	DRIVER( pottnpkr )	/* (c) 198? ???? */
+	DRIVER( altair )	/* (c) 1981 Cidelsa */
+	DRIVER( destryer )	/* (c) 1981 Cidelsa */
+	DRIVER( draco )		/* (c) 1981 Cidelsa */
+	DRIVER( rockduck )	/* (c) 1983 Datel SAS */
 
 #endif	/* DRIVER_RECURSIVE */

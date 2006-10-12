@@ -3058,6 +3058,10 @@ ROM_START( photoy2k )
 
 	/* CPU2 = Z80, romless, code uploaded by 68k */
 
+	ROM_REGION( 0x4000, REGION_CPU3, 0 ) /* ARM protection ASIC - internal rom, supplies region code etc. */
+	/* not hooked up yet (simulation code used instead for now) */
+	ROM_LOAD( "photoy2k_v100_china.asic", 0x000000, 0x04000,  CRC(6dd7f257) SHA1(1984f98a282d8b3264674f231c3b7def1757cf72) )
+
 	ROM_REGION( 0x480000, REGION_GFX1, 0 ) /* 8x8 Text Tiles + 32x32 BG Tiles */
 	ROM_LOAD( "pgm_t01s.rom", 0x000000, 0x200000, CRC(1a7123a0) SHA1(cc567f577bfbf45427b54d6695b11b74f2578af3) ) // (BIOS)
 	ROM_LOAD( "t0700.rom",    0x400000, 0x080000, CRC(93943b4d) SHA1(3b439903853727d45d62c781af6073024eb3c5a3) )

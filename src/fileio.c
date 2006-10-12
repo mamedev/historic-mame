@@ -224,7 +224,7 @@ static mame_file_error fopen_internal(const char *searchpath, const char *filena
 		/* compute the full pathname */
 		dest = &fullname[pathlen];
 		if (pathlen > 0)
-			*dest++ = '/';
+			*dest++ = PATH_SEPARATOR[0];
 		strncpy(dest, filename, &fullname[maxlen] - dest);
 
 		/* attempt to open the file directly */
@@ -297,10 +297,10 @@ static mame_file_error fopen_attempt_zipped(char *fullname, const char *filename
 		int filenamelen;
 
 		/* find the previous path separator */
-		for (dirsep--; dirsep >= filename && *dirsep != '/'; dirsep--) ;
+		for (dirsep--; dirsep >= filename && *dirsep != PATH_SEPARATOR[0]; dirsep--) ;
 
 		/* if none, we're done */
-		if (*dirsep != '/')
+		if (*dirsep != PATH_SEPARATOR[0])
 			return FILERR_NOT_FOUND;
 
 		/* truncate here and replace with .zip */
@@ -314,7 +314,7 @@ static mame_file_error fopen_attempt_zipped(char *fullname, const char *filename
 		ziperr = zip_file_open(fullname, &zip);
 
 		/* fix the original buffer */
-		dirsep[0] = '/';
+		dirsep[0] = PATH_SEPARATOR[0];
 		dirsep[1] = saved[1];
 		dirsep[2] = saved[2];
 		dirsep[3] = saved[3];
@@ -330,9 +330,11 @@ static mame_file_error fopen_attempt_zipped(char *fullname, const char *filename
 		/* see if we can find the file */
 		for (header = zip_file_first_file(zip); header != NULL; header = zip_file_next_file(zip))
 		{
+			const char *zipfile = header->filename + header->filename_length - filenamelen;
+
 			/* filename match first */
-			if (header->filename_length >= filenamelen &&
-				mame_stricmp(header->filename + header->filename_length - filenamelen, dirsep + 1) == 0)
+			if (zipfile >= header->filename && mame_stricmp(zipfile, dirsep + 1) == 0 &&
+				(zipfile == header->filename || zipfile[-1] == PATH_SEPARATOR[0]))
 				break;
 
 			/* CRC match second */
@@ -780,7 +782,7 @@ chd_interface_file *chd_open_cb(const char *filename, const char *mode)
 		/* attempt reading up the chain through the parents */
 		for (drv = Machine->gamedrv; drv != NULL; drv = driver_get_clone(drv))
 		{
-			sprintf(path, "%s/%s", drv->name, filename);
+			sprintf(path, "%s" PATH_SEPARATOR "%s", drv->name, filename);
 			filerr = mame_fopen(SEARCHPATH_IMAGE, path, OPEN_FLAG_READ, &file);
 			if (filerr == FILERR_NONE)
 			{
@@ -863,7 +865,7 @@ static int path_iterator_init(path_iterator *iterator, const char *searchpath)
 
 	/* reset the structure */
 	memset(iterator, 0, sizeof(*iterator));
-	iterator->base = (searchpath != NULL) ? options_get_string(searchpath, FALSE) : "";
+	iterator->base = (searchpath != NULL) ? options_get_string(searchpath) : "";
 	iterator->cur = iterator->base;
 
 	/* determine the maximum path embedded here */

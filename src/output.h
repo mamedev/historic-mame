@@ -76,19 +76,19 @@ INLINE void output_set_digit_value(int index, int value)
 }
 
 
-INLINE void output_get_led_value(int index)
+INLINE INT32 output_get_led_value(int index)
 {
-	output_get_indexed_value("led", index);
+	return output_get_indexed_value("led", index);
 }
 
-INLINE void output_get_lamp_value(int index)
+INLINE INT32 output_get_lamp_value(int index)
 {
-	output_get_indexed_value("lamp", index);
+	return output_get_indexed_value("lamp", index);
 }
 
-INLINE void output_get_digit_value(int index)
+INLINE INT32 output_get_digit_value(int index)
 {
-	output_get_indexed_value("digit", index);
+	return output_get_indexed_value("digit", index);
 }
 
 

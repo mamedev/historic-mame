@@ -6,6 +6,7 @@
 
 #include "driver.h"
 #include "vidhrdw/avgdvg.h"
+#include "sound/5220intf.h"
 #include "cpu/m6502/m6502.h"
 #include "mhavoc.h"
 
@@ -273,6 +274,27 @@ READ8_HANDLER( mhavoc_port_1_r )
 
 	return res;
 }
+
+READ8_HANDLER( mhavoc_port_1_sp_r )
+{
+	/* Bits 7-3 = input switches */
+	UINT8 res = readinputport(1) & 0xf8;
+
+	/* Bit 2 = TMS5220 ready flag */
+	if (!tms5220_ready_r())
+			res |= 0x04;
+
+	/* Bit 1 = Alpha rcvd flag */
+	if (has_gamma_cpu && alpha_rcvd)
+		res |= 0x02;
+
+	/* Bit 0 = Alpha xmtd flag */
+	if (has_gamma_cpu && alpha_xmtd)
+		res |= 0x01;
+
+	return res;
+}
+
 
 
 

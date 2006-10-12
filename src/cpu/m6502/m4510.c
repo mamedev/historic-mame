@@ -554,8 +554,8 @@ void m4510_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_STR_REGISTER + M4510_Y:			sprintf(info->s = cpuintrf_temp_str(), "Y:%02X", m4510.y); break;
 		case CPUINFO_STR_REGISTER + M4510_Z:			sprintf(info->s = cpuintrf_temp_str(), "Z:%02X", m4510.z); break;
 		case CPUINFO_STR_REGISTER + M4510_B:			sprintf(info->s = cpuintrf_temp_str(), "B:%02X", m4510.zp.b.h); break;
-		case CPUINFO_STR_REGISTER + M4510_MEM_LOW:		sprintf(info->s = cpuintrf_temp_str(), "0:%01X", m4510.low); break;
-		case CPUINFO_STR_REGISTER + M4510_MEM_HIGH:		sprintf(info->s = cpuintrf_temp_str(), "1:%01X", m4510.high); break;
+		case CPUINFO_STR_REGISTER + M4510_MEM_LOW:		sprintf(info->s = cpuintrf_temp_str(), "M0:%01X", m4510.low); break;
+		case CPUINFO_STR_REGISTER + M4510_MEM_HIGH:		sprintf(info->s = cpuintrf_temp_str(), "M1:%01X", m4510.high); break;
 		case CPUINFO_STR_REGISTER + M4510_EA:			sprintf(info->s = cpuintrf_temp_str(), "EA:%04X", m4510.ea.w.l); break;
 		case CPUINFO_STR_REGISTER + M4510_ZP:			sprintf(info->s = cpuintrf_temp_str(), "ZP:%03X", m4510.zp.w.l); break;
 	}

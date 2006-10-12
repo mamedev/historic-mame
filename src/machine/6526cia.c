@@ -9,6 +9,7 @@
 
 #include "mame.h"
 #include "timer.h"
+#include "state.h"
 #include "6526cia.h"
 
 
@@ -54,7 +55,6 @@ struct _cia_timer
 	UINT16		latch;
 	UINT16		count;
 	UINT8		mode;
-	UINT8		started;
 	UINT8		irq;
 	mame_timer *timer;
 	cia_state *	cia;
@@ -120,6 +120,7 @@ static cia_state cia_array[2];
  *************************************/
 
 static void cia_timer_proc(void *param);
+static void cia_timer_underflow(cia_state *cia, int timer);
 
 
 
@@ -183,6 +184,38 @@ void cia_config(int which, const cia6526_interface *intf)
 	/* special case; for the first CIA, set up an exit handler to clear things out */
 	if (which == 0)
 		add_exit_callback(Machine, cia_exit);
+
+	/* state save support */
+	state_save_register_item("6526cia", which, cia->port[0].ddr);
+	state_save_register_item("6526cia", which, cia->port[0].latch);
+	state_save_register_item("6526cia", which, cia->port[0].in);
+	state_save_register_item("6526cia", which, cia->port[0].out);
+	state_save_register_item("6526cia", which, cia->port[1].ddr);
+	state_save_register_item("6526cia", which, cia->port[1].latch);
+	state_save_register_item("6526cia", which, cia->port[1].in);
+	state_save_register_item("6526cia", which, cia->port[1].out);
+	state_save_register_item("6526cia", which, cia->timer[0].latch);
+	state_save_register_item("6526cia", which, cia->timer[0].count);
+	state_save_register_item("6526cia", which, cia->timer[0].mode);
+	state_save_register_item("6526cia", which, cia->timer[0].irq);
+	state_save_register_item("6526cia", which, cia->timer[1].latch);
+	state_save_register_item("6526cia", which, cia->timer[1].count);
+	state_save_register_item("6526cia", which, cia->timer[1].mode);
+	state_save_register_item("6526cia", which, cia->timer[1].irq);
+	state_save_register_item("6526cia", which, cia->tod);
+	state_save_register_item("6526cia", which, cia->tod_latch);
+	state_save_register_item("6526cia", which, cia->tod_latched);
+	state_save_register_item("6526cia", which, cia->tod_running);
+	state_save_register_item("6526cia", which, cia->alarm);
+	state_save_register_item("6526cia", which, cia->icr);
+	state_save_register_item("6526cia", which, cia->ics);
+	state_save_register_item("6526cia", which, cia->irq);
+	state_save_register_item("6526cia", which, cia->loaded);
+	state_save_register_item("6526cia", which, cia->sdr);
+	state_save_register_item("6526cia", which, cia->sp);
+	state_save_register_item("6526cia", which, cia->cnt);
+	state_save_register_item("6526cia", which, cia->shift);
+	state_save_register_item("6526cia", which, cia->serial);
 }
 
 
@@ -227,7 +260,6 @@ void cia_reset(void)
 				timer->latch = 0xffff;
 				timer->count = 0x0000;
 				timer->mode = 0x00;
-				timer->started = 0x00;
 			}
 		}
 	}
@@ -261,30 +293,117 @@ static void cia_update_interrupts(cia_state *cia)
 }
 
 
-INLINE void cia_timer_start(cia_timer *timer)
+static int is_timer_active(mame_timer *timer)
 {
-	if (!timer->started)
+	mame_time t = mame_timer_firetime(timer);
+	return compare_mame_times(t, time_never) != 0;
+}
+
+
+/* updates the count and mame_timer for a given CIA timer */
+static void cia_timer_update(cia_timer *timer, UINT32 new_count)
+{
+	int which = timer - timer->cia->timer;
+	INT64 start_time, current_time, target_time;
+
+	/* sanity check arguments */
+	assert((new_count == ~0) || (new_count == (UINT16) new_count));
+
+	/* update the timer count, if necessary */
+	if ((new_count == ~0) && is_timer_active(timer->timer))
 	{
-		timer_adjust_ptr(timer->timer, (double)timer->count * timer->cia->clock, 0);
-		timer->started = TRUE;
+		start_time = (INT64) (timer_starttime(timer->timer) / timer->cia->clock);
+		current_time = (INT64) (timer_get_time() / timer->cia->clock);
+		timer->count -= MIN(timer->count, (UINT16) (current_time - start_time));
+	}
+
+	/* set the timer if we are instructed to */
+	if (new_count != ~0)
+		timer->count = new_count;
+
+	/* now update the MAME timer */
+	if ((timer->mode & 0x01) && ((timer->mode & (which ? 0x60 : 0x20)) == 0x00))
+	{
+		/* timer is on and is connected to clock */
+		current_time = (INT64) (timer_get_time() / timer->cia->clock);
+		target_time = current_time + (timer->count ? timer->count : 0x10000);
+		timer_adjust_ptr(timer->timer, ((double) target_time) * timer->cia->clock - timer_get_time(), 0.0);
+	}
+	else
+	{
+		/* timer is off or not connected to clock */
+		timer_adjust_ptr(timer->timer, TIME_NEVER, 0.0);
 	}
 }
 
 
-INLINE void cia_timer_stop(cia_timer *timer)
+static void cia_timer_bump(cia_state *cia, int timer)
 {
-	timer_reset(timer->timer, TIME_NEVER);
-	timer->started = FALSE;
+	cia_timer_update(&cia->timer[timer], ~0);
+	if (cia->timer[timer].count > 0x00)
+	{
+		if (cia->timer[timer].count == 0x00)
+			cia_timer_underflow(cia, timer);
+		else
+			cia_timer_update(&cia->timer[timer], cia->timer[timer].count - 1);
+	}
 }
 
 
-INLINE int cia_timer_count(cia_timer *timer)
+static void cia_timer_underflow(cia_state *cia, int timer)
 {
-	/* based on whether or not the timer is running, return the current count value */
-	if (timer->started)
-		return timer->count - (int)(timer_timeelapsed(timer->timer) / timer->cia->clock);
-	else
-		return timer->count;
+	assert((timer == 0) || (timer == 1));
+
+	/* set the status and update interrupts */
+	cia->ics |= cia->timer[timer].irq;
+	cia_update_interrupts(cia);
+
+	/* if one-shot mode, turn it off */
+	if (cia->timer[timer].mode & 0x08)
+		cia->timer[timer].mode &= 0xfe;
+
+	/* reload the timer */
+	cia_timer_update(&cia->timer[timer], cia->timer[timer].latch);
+
+	/* timer A has some interesting properties */
+	if (timer == 0)
+	{
+		/* such as cascading to timer B */
+		if ((cia->timer[1].mode & 0x41) == 0x41)
+		{
+			if (cia->cnt || !(cia->timer[1].mode & 0x20))
+				cia_timer_bump(cia, 1);
+		}
+
+		/* also the serial line */
+		if ((cia->timer[timer].irq == 0x01) && (cia->timer[timer].mode & 0x40))
+		{
+			if (cia->shift || cia->loaded)
+			{
+				if (cia->cnt)
+				{
+					if (cia->shift == 0)
+					{
+						cia->loaded = 0;
+						cia->serial = cia->sdr;
+					}
+					cia->sp = (cia->serial & 0x80) ? 1 : 0;
+					cia->shift++;
+					cia->serial <<= 1;
+					cia->cnt = 0;
+				}
+				else
+				{
+					cia->cnt = 1;
+					if (cia->shift == 8)
+					{
+						cia->ics |= 0x08;
+						cia_update_interrupts(cia);
+					}
+				}
+			}
+		}
+	}
 }
 
 
@@ -293,50 +412,7 @@ static void cia_timer_proc(void *param)
 	cia_timer *timer = param;
 	cia_state *cia = timer->cia;
 
-	/* clear the timer started flag */
-	timer->started = FALSE;
-
-	/* set the status and update interrupts */
-	timer->cia->ics |= timer->irq;
-	cia_update_interrupts(timer->cia);
-
-	/* reload the timer */
-	timer->count = timer->latch;
-
-	/* if one-shot mode, turn it off; otherwise, reprime the timer */
-	if (timer->mode & 0x08)
-		timer->mode &= 0xfe;
-	else
-		cia_timer_start(timer);
-
-	/* the first timer interracts with the serial line */
-	if ((timer->irq == 0x01) && (timer->mode & 0x40))
-	{
-		if (cia->shift || cia->loaded)
-		{
-			if (cia->cnt)
-			{
-				if (cia->shift == 0)
-				{
-					cia->loaded = 0;
-					cia->serial = cia->sdr;
-				}
-				cia->sp = (cia->serial & 0x80) ? 1 : 0;
-				cia->shift++;
-				cia->serial <<= 1;
-				cia->cnt = 0;
-			}
-			else
-			{
-				cia->cnt = 1;
-				if (cia->shift == 8)
-				{
-					cia->ics |= 0x08;
-					cia_update_interrupts(cia);
-				}
-			}
-		}
-	}
+	cia_timer_underflow(cia, timer - cia->timer);
 }
 
 
@@ -349,19 +425,20 @@ static UINT8 bcd_increment(UINT8 value)
 }
 
 
-static UINT32 cia6526_increment(UINT32 value)
+static void cia6526_increment(cia_state *cia)
 {
-	UINT8 subsecond	= (UINT8) (value >>  0);
-	UINT8 second	= (UINT8) (value >>  8);
-	UINT8 minute	= (UINT8) (value >> 16);
-	UINT8 hour		= (UINT8) (value >> 24);
+	/* break down TOD value into components */
+	UINT8 subsecond	= (UINT8) (cia->tod >>  0);
+	UINT8 second	= (UINT8) (cia->tod >>  8);
+	UINT8 minute	= (UINT8) (cia->tod >> 16);
+	UINT8 hour		= (UINT8) (cia->tod >> 24);
 
 	subsecond = bcd_increment(subsecond);
 	if (subsecond >= 0x10)
 	{
 		subsecond = 0x00;
 		second = bcd_increment(second);
-		if (second >= 0x60)
+		if (second >= ((cia->timer[0].mode & 0x80) ? 0x50 : 0x60))
 		{
 			second = 0x00;
 			minute = bcd_increment(minute);
@@ -381,10 +458,12 @@ static UINT32 cia6526_increment(UINT32 value)
 			}
 		}
 	}
-	return	(((UINT32) subsecond)	<<  0)
-		|	(((UINT32) second)		<<  8)
-		|	(((UINT32) minute)		<< 16)
-		|	(((UINT32) hour)		<< 24);
+
+	/* update the TOD with new value */
+	cia->tod = (((UINT32) subsecond)	<<  0)
+			 | (((UINT32) second)		<<  8)
+			 | (((UINT32) minute)		<< 16)
+			 | (((UINT32) hour)			<< 24);
 }
 
 
@@ -402,7 +481,7 @@ void cia_clock_tod(int which)
 			case CIA6526:
 				/* The 6526 split the value into hours, minutes, seconds and
                  * subseconds */
-				cia->tod = cia6526_increment(cia->tod);
+				cia6526_increment(cia);
 				break;
 
 			case CIA8520:
@@ -432,8 +511,19 @@ void cia_issue_index(int which)
 void cia_set_input_cnt(int which, int data)
 {
 	cia_state *cia = &cia_array[which];
+
+	/* is this a rising edge? */
 	if (!cia->cnt && data)
 	{
+		/* does timer #0 bump on CNT? */
+		if ((cia->timer[0].mode & 0x21) == 0x21)
+			cia_timer_bump(cia, 0);
+
+		/* does timer #1 bump on CNT? */
+		if ((cia->timer[1].mode & 0x61) == 0x21)
+			cia_timer_bump(cia, 1);
+
+		/* if the serial port is set to output, the CNT will shift the port */
 		if (!(cia->timer[0].mode & 0x40))
 		{
 			cia->serial >>= 1;
@@ -472,6 +562,29 @@ UINT8 cia_read(int which, offs_t offset)
 			data = port->read ? (*port->read)() : 0;
 			data = (data & ~port->ddr) | (port->latch & port->ddr);
 			port->in = data;
+
+			if (offset == CIA_PRB)
+			{
+				/* timer #0 can change PB6 */
+				if (cia->timer[0].mode & 0x02)
+				{
+					cia_timer_update(&cia->timer[0], ~0);
+					if (cia->timer[0].count != 0)
+						data |= 0x40;
+					else
+						data &= ~0x40;
+				}
+
+				/* timer #1 can change PB7 */
+				if (cia->timer[1].mode & 0x02)
+				{
+					cia_timer_update(&cia->timer[1], ~0);
+					if (cia->timer[1].count != 0)
+						data |= 0x80;
+					else
+						data &= ~0x80;
+				}
+			}
 			break;
 
 		/* port A/B direction */
@@ -485,14 +598,15 @@ UINT8 cia_read(int which, offs_t offset)
 		case CIA_TALO:
 		case CIA_TBLO:
 			timer = &cia->timer[(offset >> 1) & 1];
-			data = cia_timer_count(timer) >> 0;
+			cia_timer_update(timer, ~0);
+			data = timer->count >> 0;
 			break;
 
 		/* timer A/B high byte */
 		case CIA_TAHI:
 		case CIA_TBHI:
 			timer = &cia->timer[(offset >> 1) & 1];
-			data = cia_timer_count(timer) >> 8;
+			data = timer->count >> 8;
 			break;
 
 		/* TOD counter */
@@ -570,7 +684,7 @@ void cia_write(int which, offs_t offset, UINT8 data)
 		/* timer A/B latch low */
 		case CIA_TALO:
 		case CIA_TBLO:
-			timer = &cia->timer[offset & 1];
+			timer = &cia->timer[(offset >> 1) & 1];
 			timer->latch = (timer->latch & 0xff00) | (data << 0);
 			break;
 
@@ -580,13 +694,9 @@ void cia_write(int which, offs_t offset, UINT8 data)
 			timer = &cia->timer[(offset >> 1) & 1];
 			timer->latch = (timer->latch & 0x00ff) | (data << 8);
 
-			/* if it's one shot, start the timer */
-			if (timer->mode & 0x08)
-			{
-				timer->count = timer->latch;
-				timer->mode |= 0x01;
-				cia_timer_start(timer);
-			}
+			/* if the timer is off, update the count */
+			if (!(timer->mode & 0x01))
+				cia_timer_update(timer, timer->latch);
 			break;
 
 		/* time of day latches */
@@ -633,16 +743,9 @@ void cia_write(int which, offs_t offset, UINT8 data)
 
 			/* force load? */
 			if (data & 0x10)
-			{
-				timer->count = timer->latch;
-				cia_timer_stop(timer);
-			}
-
-			/* enable/disable? */
-			if (data & 0x01)
-				cia_timer_start(timer);
+				cia_timer_update(timer, timer->latch);
 			else
-				cia_timer_stop(timer);
+				cia_timer_update(timer, ~0);
 			break;
 	}
 }

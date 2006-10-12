@@ -491,7 +491,7 @@ static int open_rom_file(rom_load_data *romdata, const rom_entry *romp)
 			UINT8 crcs[4];
 			char *fname;
 
-			fname = assemble_3_strings(drv->name, "/", ROM_GETNAME(romp));
+			fname = assemble_3_strings(drv->name, PATH_SEPARATOR, ROM_GETNAME(romp));
 			if (hash_data_extract_binary_checksum(ROM_GETHASHDATA(romp), HASH_CRC, crcs))
 			{
 				UINT32 crc = (crcs[0] << 24) | (crcs[1] << 16) | (crcs[2] << 8) | crcs[3];

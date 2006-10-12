@@ -145,6 +145,7 @@ void votrax_get_info(void *token, UINT32 state, sndinfo *info);
 void es8712_get_info(void *token, UINT32 state, sndinfo *info);
 void rf5c400_get_info(void *token, UINT32 state, sndinfo *info);
 void speaker_get_info(void *token, UINT32 state, sndinfo *info);
+void cdp1869_get_info(void *token, UINT32 state, sndinfo *info);
 
 #ifdef MESS
 void beep_get_info(void *token, UINT32 state, sndinfo *info);
@@ -401,6 +402,9 @@ static const struct
 #endif
 #if (HAS_SPEAKER)
 	{ SOUND_SPEAKER, speaker_get_info },
+#endif
+#if (HAS_CDP1869)
+	{ SOUND_CDP1869, cdp1869_get_info },
 #endif
 
 #ifdef MESS
