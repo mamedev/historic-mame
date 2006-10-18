@@ -91,9 +91,9 @@ static void hng64_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect )
 	}
 
 //  for (int iii = 0; iii < 0x0f; iii++)
-//      printf("%.8x ", hng64_videoregs[iii]) ;
+//      mame_printf_debug("%.8x ", hng64_videoregs[iii]) ;
 
-//  printf("\n") ;
+//  mame_printf_debug("\n") ;
 
 	finish = hng64_spriteram;
 
@@ -124,7 +124,7 @@ static void hng64_drawsprites( mame_bitmap *bitmap, const rectangle *cliprect )
 
 
 //      if (!(source[4] == 0x00000000 || source[4] == 0x000000aa))
-//          printf("unknown : %.8x %.8x %.8x %.8x %.8x %.8x %.8x %.8x \n", source[0], source[1], source[2], source[3],
+//          mame_printf_debug("unknown : %.8x %.8x %.8x %.8x %.8x %.8x %.8x %.8x \n", source[0], source[1], source[2], source[3],
 //                                                                         source[4], source[5], source[6], source[7]) ;
 
 		/* Calculate the zoom */
@@ -402,7 +402,7 @@ static void hng64_draw3d( mame_bitmap *bitmap, const rectangle *cliprect )
 			float cullRay[4] ;
 
 			// Debug...
-//          printf("Element %.2d (%d) : %.8x %.8x %.8x %.8x %.8x %.8x %.8x %.8x\n", i/0x08, j,
+//          mame_printf_debug("Element %.2d (%d) : %.8x %.8x %.8x %.8x %.8x %.8x %.8x %.8x\n", i/0x08, j,
 //                                     (UINT32)hng64_dls[j][i+0], (UINT32)hng64_dls[j][i+1], (UINT32)hng64_dls[j][i+2], (UINT32)hng64_dls[j][i+3],
 //                                     (UINT32)hng64_dls[j][i+4], (UINT32)hng64_dls[j][i+5], (UINT32)hng64_dls[j][i+6], (UINT32)hng64_dls[j][i+7]) ;
 
@@ -458,11 +458,11 @@ static void hng64_draw3d( mame_bitmap *bitmap, const rectangle *cliprect )
 				/*
                 int xxx ;
                 for (xxx = 0; xxx < 16; xxx++)
-                    printf("%f ", projectionMatrix[xxx]) ;
-                printf("\n") ;
+                    mame_printf_debug("%f ", projectionMatrix[xxx]) ;
+                mame_printf_debug("\n") ;
 
-                printf("Vars   : %f %f %f %f %f %f\n", left, right, top, bottom, near, far) ;
-                printf("Camera : %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",
+                mame_printf_debug("Vars   : %f %f %f %f %f %f\n", left, right, top, bottom, near, far) ;
+                mame_printf_debug("Camera : %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",
                                  uToF((workingList[i+0] & 0xffff0000) >> 16)*128, uToF( workingList[i+0] & 0x0000ffff)*128,
                                  uToF((workingList[i+1] & 0xffff0000) >> 16)*128, uToF( workingList[i+1] & 0x0000ffff)*128,
 
@@ -582,7 +582,7 @@ static void hng64_draw3d( mame_bitmap *bitmap, const rectangle *cliprect )
 				address[3] = megaOffset | WORD_AT(threeDPointer, (4<<1)) ;
 
 				// DEBUG
-				// printf("%.5x %.3x %.5x %.3x %.5x %.3x %.5x %.3x\n", address[0], size[0], address[1], size[1], address[2], size[2], address[3], size[3]) ;
+				// mame_printf_debug("%.5x %.3x %.5x %.3x %.5x %.3x %.5x %.3x\n", address[0], size[0], address[1], size[1], address[2], size[2], address[3], size[3]) ;
 				// !! END DEBUG !!
 
 
@@ -787,7 +787,7 @@ static void hng64_draw3d( mame_bitmap *bitmap, const rectangle *cliprect )
 								break ;
 
 							default:
-								printf("UNKNOWN geometry CHUNK TYPE : %x\n", triangleType) ;
+								mame_printf_debug("UNKNOWN geometry CHUNK TYPE : %x\n", triangleType) ;
 								break ;
 							}
 						}
@@ -880,10 +880,10 @@ static void hng64_draw3d( mame_bitmap *bitmap, const rectangle *cliprect )
                         // DEBUG
                         if (chunkLength == (9 << 1))
                         {
-                            printf("Chunk : ") ;
+                            mame_printf_debug("Chunk : ") ;
                             for (int ajg = 0; ajg < chunkLength; ajg+=2)
-                                printf("%.2x%.2x ", threeDPointer[ajg], threeDPointer[ajg+1]) ;
-                            printf("\n") ;
+                                mame_printf_debug("%.2x%.2x ", threeDPointer[ajg], threeDPointer[ajg+1]) ;
+                            mame_printf_debug("\n") ;
                         }
                         // END DEBUG
 */
@@ -903,7 +903,7 @@ static void hng64_draw3d( mame_bitmap *bitmap, const rectangle *cliprect )
 		}
 
 		// Don't forget about this !!!
-		//printf("                 %.8x\n\n", (UINT32)hng64_dls[j][0x80]) ;
+		//mame_printf_debug("                 %.8x\n\n", (UINT32)hng64_dls[j][0x80]) ;
 
 	}
 
@@ -1057,7 +1057,7 @@ static void plotTilemap3Line(mame_bitmap *tilemapBitmap,
 
 	float pixStride, pixOffset ;
 
-//  printf("(%d,%d) (%d,%d)\n", startX, startY, endX, endY) ;
+//  mame_printf_debug("(%d,%d) (%d,%d)\n", startX, startY, endX, endY) ;
 
 	// CLAMP - BUT I'M PRETTY SURE THIS ISN'T QUITE RIGHT !!! ???
 	startX += 1024 ; if (startX < 0) startX = 0 ; else if (startX > 2048) startX = 2048 ;
@@ -1073,7 +1073,7 @@ static void plotTilemap3Line(mame_bitmap *tilemapBitmap,
 	if (numPix == 0)
 		penList[0] = ((UINT16*)tilemapBitmap->line[1024])[1024] ;
 
-//  printf("numpix %d ps %f po %f s(%d,%d) e(%d,%d)\n", numPix, pixStride, pixOffset, startX, startY, endX, endY) ;
+//  mame_printf_debug("numpix %d ps %f po %f s(%d,%d) e(%d,%d)\n", numPix, pixStride, pixOffset, startX, startY, endX, endY) ;
 
 	// Draw out the screen's line...
 	for (i = Machine->screen[0].visarea.min_x; i < Machine->screen[0].visarea.max_x; i++)
@@ -1102,7 +1102,7 @@ static void hng64_drawtilemap3( mame_bitmap *bitmap, const rectangle *cliprect )
 			UINT32 address = rowScrollOffset + 0xbf0 ;
 			address -= (i * 0x10) ;
 			address /= 4 ;
-			//printf("nums : %.4x %.4x %.4x %.4x\n", (INT16)((hng64_videoram[address+0x0]&0xffff0000) >> 16),
+			//mame_printf_debug("nums : %.4x %.4x %.4x %.4x\n", (INT16)((hng64_videoram[address+0x0]&0xffff0000) >> 16),
 			//                                     (INT16)((hng64_videoram[address+0x1]&0xffff0000) >> 16),
 			//                                     (INT16)((hng64_videoram[address+0x2]&0xffff0000) >> 16),
 			//                                     (INT16)((hng64_videoram[address+0x3]&0xffff0000) >> 16)) ;
@@ -1240,8 +1240,8 @@ VIDEO_UPDATE( hng64 )
 
 	// Debug
 //  for (int iii = 0; iii < 0x0f; iii++)
-//      printf("%.8x ", hng64_videoregs[iii]) ;
-//  printf("\n") ;
+//      mame_printf_debug("%.8x ", hng64_videoregs[iii]) ;
+//  mame_printf_debug("\n") ;
 //  usrintf_showmessage("%.8x %.8x %.8x %.8x", hng64_videoregs[0x1], hng64_videoregs[0x3], hng64_videoregs[0xb], hng64_videoregs[0xc]) ;
 
 	// I think there's something to this, but I'm not doing it right...
@@ -1286,7 +1286,7 @@ VIDEO_UPDATE( hng64 )
 
 	hng64_transition_control(bitmap) ;
 
-//  printf("FRAME DONE %d\n", frameCount) ;
+//  mame_printf_debug("FRAME DONE %d\n", frameCount) ;
 	frameCount++ ;
 
 	hackTilemap3 = rowScrollOffset = hackTm3Count = 0 ;
@@ -1633,8 +1633,8 @@ static void DrawWireframe(struct polygon *p, mame_bitmap *bitmap)
 	int j;
 	for (j = 0; j < p->n; j++)
 	{
-		// printf("now drawing : %f %f %f, %f %f %f\n", p->vert[j].clipCoords[0], p->vert[j].clipCoords[1], p->vert[j].clipCoords[2], p->vert[(j+1)%p->n].clipCoords[0], p->vert[(j+1)%p->n].clipCoords[1], p->vert[(j+1)%p->n].clipCoords[2]) ;
-		// printf("%f %f %f %f\n", p->vert[j].clipCoords[0], p->vert[j].clipCoords[1], p->vert[(j+1)%p->n].clipCoords[0], p->vert[(j+1)%p->n].clipCoords[1]) ;
+		// mame_printf_debug("now drawing : %f %f %f, %f %f %f\n", p->vert[j].clipCoords[0], p->vert[j].clipCoords[1], p->vert[j].clipCoords[2], p->vert[(j+1)%p->n].clipCoords[0], p->vert[(j+1)%p->n].clipCoords[1], p->vert[(j+1)%p->n].clipCoords[2]) ;
+		// mame_printf_debug("%f %f %f %f\n", p->vert[j].clipCoords[0], p->vert[j].clipCoords[1], p->vert[(j+1)%p->n].clipCoords[0], p->vert[(j+1)%p->n].clipCoords[1]) ;
 		drawline2d(p->vert[j].clipCoords[0], p->vert[j].clipCoords[1], p->vert[(j+1)%p->n].clipCoords[0], p->vert[(j+1)%p->n].clipCoords[1], 255, bitmap) ;
 	}
 

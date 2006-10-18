@@ -684,7 +684,7 @@ static void ymf271_update(void *param, stream_sample_t **inputs, stream_sample_t
 
 		if (slot_group->pfm && slot_group->sync != 3)
 		{
-			printf("Group %d: PFM, Sync = %d, Waveform Slot1 = %d, Slot2 = %d, Slot3 = %d, Slot4 = %d\n",
+			mame_printf_debug("Group %d: PFM, Sync = %d, Waveform Slot1 = %d, Slot2 = %d, Slot3 = %d, Slot4 = %d\n",
 				j, slot_group->sync, chip->slots[j+0].waveform, chip->slots[j+12].waveform, chip->slots[j+24].waveform, chip->slots[j+36].waveform);
 		}
 

@@ -144,7 +144,7 @@ static int render_poly(UINT32 *polydata)
 	if (LOG_POLYGONS && code_pressed(KEYCODE_LSHIFT))
 	{
 		int t;
-		printf("poly: %12.2f %12.2f %12.2f %12.2f %12.2f %12.2f %12.2f %12.2f %12.2f %12.2f %08X %08X (%4d,%4d) %08X",
+		mame_printf_debug("poly: %12.2f %12.2f %12.2f %12.2f %12.2f %12.2f %12.2f %12.2f %12.2f %12.2f %08X %08X (%4d,%4d) %08X",
 				(double)dsp_to_float(polydata[0]),
 				(double)dsp_to_float(polydata[1]),
 				(double)dsp_to_float(polydata[2]),
@@ -159,10 +159,10 @@ static int render_poly(UINT32 *polydata)
 				polydata[11],
 				(INT16)(polydata[12] >> 16), (INT16)(polydata[12] << 2) >> 2, polydata[12]);
 
-		printf(" (%4d,%4d) %08X %08X", (INT16)(polydata[13] >> 16), (INT16)(polydata[13] << 2) >> 2, polydata[13], polydata[14]);
+		mame_printf_debug(" (%4d,%4d) %08X %08X", (INT16)(polydata[13] >> 16), (INT16)(polydata[13] << 2) >> 2, polydata[13], polydata[14]);
 		for (t = 15; !IS_POLYEND(polydata[t - 2]); t += 2)
-			printf(" (%4d,%4d) %08X %08X", (INT16)(polydata[t] >> 16), (INT16)(polydata[t] << 2) >> 2, polydata[t], polydata[t+1]);
-		printf("\n");
+			mame_printf_debug(" (%4d,%4d) %08X %08X", (INT16)(polydata[t] >> 16), (INT16)(polydata[t] << 2) >> 2, polydata[t], polydata[t+1]);
+		mame_printf_debug("\n");
 	}
 
 	/* compute the adjusted clip */

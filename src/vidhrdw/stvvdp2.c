@@ -3842,14 +3842,14 @@ static void stv_vdp2_check_tilemap(mame_bitmap *bitmap, const rectangle *cliprec
 		if((stv2_current_tilemap.window_control & 6) != 0 && VDP2_ERR(1))
 		{
 			VDP2_CHK(1);
-			printf("Window control enabled on a tilemap plane = %02x\n",stv2_current_tilemap.window_control);
+			mame_printf_debug("Window control enabled on a tilemap plane = %02x\n",stv2_current_tilemap.window_control);
 		}
 	}
 
 	if((STV_VDP2_MZCTL & 0x1f) != 0 && VDP2_ERR(2))
 	{
 		VDP2_CHK(2);
-		printf("Mosaic control enabled = %04x\n",STV_VDP2_MZCTL);
+		mame_printf_debug("Mosaic control enabled = %04x\n",STV_VDP2_MZCTL);
 	}
 }
 
@@ -5916,12 +5916,12 @@ VIDEO_UPDATE( stv_vdp2 )
 	if(STV_VDP2_VRAMSZ && VDP2_ERR(0x80000000))
 	{
 		VDP2_CHK(0x80000000);
-		printf("Warning: VRAM Size = 8 MBit!\n");
+		mame_printf_debug("Warning: VRAM Size = 8 MBit!\n");
 	}
 	if(STV_VDP2_CRKTE && VDP2_ERR(0x40000000))
 	{
 		VDP2_CHK(0x40000000);
-		printf("Warning: Color RAM Coefficient Table Ctrl used\n");
+		mame_printf_debug("Warning: Color RAM Coefficient Table Ctrl used\n");
 	}
 
 	/*popmessage("N0 %02x %04x %02x %04x N1 %02x %04x %02x %04x"

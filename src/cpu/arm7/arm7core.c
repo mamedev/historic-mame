@@ -81,7 +81,7 @@
 #define ARM7_DEBUG_CORE 0
 
 #if 0
-#define LOG(x) printf x
+#define LOG(x) mame_printf_debug x
 #else
 #define LOG(x) logerror x
 #endif

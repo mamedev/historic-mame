@@ -847,7 +847,7 @@ static void segaic16_tilemap_16a_draw_layer(struct tilemap_info *info, mame_bitm
 	/* column AND row scroll */
 	if (info->colscroll && info->rowscroll)
 	{
-		if (PRINT_UNUSUAL_MODES) printf("Column AND row scroll\n");
+		if (PRINT_UNUSUAL_MODES) mame_printf_debug("Column AND row scroll\n");
 
 		/* loop over row chunks */
 		for (y = cliprect->min_y & ~7; y <= cliprect->max_y; y += 8)
@@ -885,7 +885,7 @@ static void segaic16_tilemap_16a_draw_layer(struct tilemap_info *info, mame_bitm
 	}
 	else if (info->colscroll)
 	{
-		if (PRINT_UNUSUAL_MODES) printf("Column scroll\n");
+		if (PRINT_UNUSUAL_MODES) mame_printf_debug("Column scroll\n");
 
 		/* loop over column chunks */
 		for (x = cliprect->min_x & ~15; x <= cliprect->max_x; x += 16)
@@ -913,7 +913,7 @@ static void segaic16_tilemap_16a_draw_layer(struct tilemap_info *info, mame_bitm
 	}
 	else if (info->rowscroll)
 	{
-		if (PRINT_UNUSUAL_MODES) printf("Row scroll\n");
+		if (PRINT_UNUSUAL_MODES) mame_printf_debug("Row scroll\n");
 
 		/* loop over row chunks */
 		for (y = cliprect->min_y & ~7; y <= cliprect->max_y; y += 8)
@@ -1084,7 +1084,7 @@ static void segaic16_tilemap_16b_draw_layer(struct tilemap_info *info, mame_bitm
 	/* column scroll? */
 	if (yscroll & 0x8000)
 	{
-		if (PRINT_UNUSUAL_MODES) printf("Column AND row scroll\n");
+		if (PRINT_UNUSUAL_MODES) mame_printf_debug("Column AND row scroll\n");
 
 		/* loop over row chunks */
 		for (y = cliprect->min_y & ~7; y <= cliprect->max_y; y += 8)
@@ -1128,7 +1128,7 @@ static void segaic16_tilemap_16b_draw_layer(struct tilemap_info *info, mame_bitm
 	}
 	else
 	{
-		if (PRINT_UNUSUAL_MODES) printf("Row scroll\n");
+		if (PRINT_UNUSUAL_MODES) mame_printf_debug("Row scroll\n");
 
 		/* loop over row chunks */
 		for (y = cliprect->min_y & ~7; y <= cliprect->max_y; y += 8)
@@ -3511,7 +3511,7 @@ WRITE16_HANDLER( segaic16_road_control_0_w )
 	{
 		road[0].control = data & ((road[0].type == SEGAIC16_ROAD_OUTRUN) ? 3 : 7);
 		if (DEBUG_ROAD)
-			printf("road_control = %02X\n", data & 7);
+			mame_printf_debug("road_control = %02X\n", data & 7);
 	}
 }
 

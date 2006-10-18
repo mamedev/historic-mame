@@ -115,14 +115,14 @@ static UINT8 mxtc_config_reg[256];
 
 static UINT8 mxtc_config_r(int function, int reg)
 {
-//  printf("MXTC: read %d, %02X\n", function, reg);
+//  mame_printf_debug("MXTC: read %d, %02X\n", function, reg);
 
 	return mxtc_config_reg[reg];
 }
 
 static void mxtc_config_w(int function, int reg, UINT8 data)
 {
-//  printf("MXTC: write %d, %02X, %02X at %08X\n", function, reg, data, activecpu_get_pc());
+//  mame_printf_debug("MXTC: write %d, %02X, %02X at %08X\n", function, reg, data, activecpu_get_pc());
 
 	switch(reg)
 	{
@@ -200,13 +200,13 @@ static UINT8 piix4_config_reg[4][256];
 
 static UINT8 piix4_config_r(int function, int reg)
 {
-//  printf("PIIX4: read %d, %02X\n", function, reg);
+//  mame_printf_debug("PIIX4: read %d, %02X\n", function, reg);
 	return piix4_config_reg[function][reg];
 }
 
 static void piix4_config_w(int function, int reg, UINT8 data)
 {
-//  printf("PIIX4: write %d, %02X, %02X at %08X\n", function, reg, data, activecpu_get_pc());
+//  mame_printf_debug("PIIX4: write %d, %02X, %02X at %08X\n", function, reg, data, activecpu_get_pc());
 	piix4_config_reg[function][reg] = data;
 }
 
@@ -257,7 +257,7 @@ static WRITE32_HANDLER( pnp_config_w )
 {
 	if (!(mem_mask & 0x0000ff00))
 	{
-//      printf("PNP Config: %02X\n", (data >> 8) & 0xff);
+//      mame_printf_debug("PNP Config: %02X\n", (data >> 8) & 0xff);
 	}
 }
 
@@ -265,7 +265,7 @@ static WRITE32_HANDLER( pnp_data_w )
 {
 	if (!(mem_mask & 0x0000ff00))
 	{
-//      printf("PNP Data: %02X\n", (data >> 8) & 0xff);
+//      mame_printf_debug("PNP Data: %02X\n", (data >> 8) & 0xff);
 	}
 }
 
@@ -288,7 +288,7 @@ static READ32_HANDLER( fdc_r )
 
 static WRITE32_HANDLER( fdc_w )
 {
-	//printf("FDC: write %08X, %08X, %08X\n", data, offset, mem_mask);
+	//mame_printf_debug("FDC: write %08X, %08X, %08X\n", data, offset, mem_mask);
 	ide_controller32_0_w(0x3f0/4 + offset, data, mem_mask);
 }
 

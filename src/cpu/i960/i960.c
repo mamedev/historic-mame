@@ -515,7 +515,7 @@ static void do_call(UINT32 adr, int type, UINT32 stack)
 
 	// set the new RIP
 	i960.r[I960_RIP] = i960.IP;
-//  printf("CALL (type %d): FP %x, %x => %x, stack %x, rcache_pos %d\n", type, i960.r[I960_FP], i960.r[I960_RIP], adr, stack, i960.rcache_pos);
+//  mame_printf_debug("CALL (type %d): FP %x, %x => %x, stack %x, rcache_pos %d\n", type, i960.r[I960_FP], i960.r[I960_RIP], adr, stack, i960.rcache_pos);
 
 	// are we out of cache entries?
 	if (i960.rcache_pos >= RCACHE_SIZE) {
@@ -575,7 +575,7 @@ static void do_ret_0(void)
 		memcpy(i960.r, i960.rcache[i960.rcache_pos], 0x10*sizeof(UINT32));
 	}
 
-//  printf("RET (type %d): FP %x, %x => %x, rcache_pos %d\n", type, i960.r[I960_FP], i960.IP, i960.r[I960_RIP], i960.rcache_pos);
+//  mame_printf_debug("RET (type %d): FP %x, %x => %x, rcache_pos %d\n", type, i960.r[I960_FP], i960.IP, i960.r[I960_RIP], i960.rcache_pos);
 	i960.IP = i960.r[I960_RIP];
 	change_pc(i960.IP);
 }

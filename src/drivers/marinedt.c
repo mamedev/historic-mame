@@ -262,14 +262,14 @@ static WRITE8_HANDLER( marinedt_pf_w )
 	//-------x ?? service mode (coin lockout??)
 
 	//if ((marinedt_pf & 0x07) != (data & 0x07))
-	//  printf("marinedt_pf_w: %02x\n", data & 0x07);
+	//  mame_printf_debug("marinedt_pf_w: %02x\n", data & 0x07);
 
 	if ((marinedt_pf & 0x02) != (data & 0x02))
 	{
 		if (data & 0x02)
-			printf("tile flip\n");
+			mame_printf_debug("tile flip\n");
 		else
-			printf("tile non-flip\n");
+			mame_printf_debug("tile non-flip\n");
 
 		if (data & 0x02)
 			tilemap_set_flip(tx_tilemap, TILEMAP_FLIPX | TILEMAP_FLIPY);

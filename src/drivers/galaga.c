@@ -1993,7 +1993,7 @@ static MACHINE_DRIVER_START( xevious )
 	MDRV_WATCHDOG_VBLANK_INIT(8)
 	MDRV_FRAMES_PER_SECOND(60.606060)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(100)	/* 100 CPU slices per frame - an high value to ensure proper */
+	MDRV_INTERLEAVE(1000)	/* 1000 CPU slices per frame - an high value to ensure proper */
 							/* synchronization of the CPUs */
 	MDRV_MACHINE_RESET(xevious)
 

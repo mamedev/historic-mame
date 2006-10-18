@@ -2950,7 +2950,7 @@ int K053245_vh_start(int chip, int gfx_memory_region,int plane0,int plane1,int p
 
 	if (chip>=MAX_K053245_CHIPS)
 	{
-		printf("K053245_vh_start chip >= MAX_K053245_CHIPS\n");
+		mame_printf_debug("K053245_vh_start chip >= MAX_K053245_CHIPS\n");
 		return 1;
 	}
 

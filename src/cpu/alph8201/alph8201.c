@@ -312,7 +312,7 @@ INLINE void M_UNDEFINED(void)
 {
 	logerror("ALPHA8201:  PC = %03x,  Unimplemented opcode = %02x\n", PC-1, M_RDMEM(PC-1));
 #if SHOW_MESSAGE_CONSOLE
-	printf("ALPHA8201:  PC = %03x,  Unimplemented opcode = %02x\n", PC-1, M_RDMEM(PC-1));
+	mame_printf_debug("ALPHA8201:  PC = %03x,  Unimplemented opcode = %02x\n", PC-1, M_RDMEM(PC-1));
 #endif
 }
 
@@ -322,7 +322,7 @@ INLINE void M_UNDEFINED2(void)
 	UINT8 imm = M_RDMEM_OPCODE();
 	logerror("ALPHA8201:  PC = %03x,  Unimplemented opcode = %02x,%02x\n", PC-2, op,imm);
 #if SHOW_MESSAGE_CONSOLE
-	printf("ALPHA8201:  PC = %03x,  Unimplemented opcode = %02x,%02x\n", PC-2, op,imm);
+	mame_printf_debug("ALPHA8201:  PC = %03x,  Unimplemented opcode = %02x,%02x\n", PC-2, op,imm);
 #endif
 }
 
@@ -334,7 +334,7 @@ static void need_verify(const char *s)
 	UINT8 op  = M_RDOP(PC-1);
 	logerror("ALPHA8201:  PC = %03x, unknown opcode = %02x is '%s' ??\n",PC-1, op,s);
 #if SHOW_MESSAGE_CONSOLE
-	printf("ALPHA8201:  PC = %03x, unknown opcode = %02x is '%s' ??\n",PC-1, op,s);
+	mame_printf_debug("ALPHA8201:  PC = %03x, unknown opcode = %02x is '%s' ??\n",PC-1, op,s);
 #endif
 }
 
@@ -786,7 +786,7 @@ static int alpha8xxx_execute(const s_opcode *op_map,int cycles)
 			{
 				/* EVEN , get PC low */
 				R.pc.b.l = M_RDMEM(pcptr);
-//printf("ALPHA8201 load PCL ENTRY=%02X PCL=%02X\n",pcptr, R.pc.b.l);
+//mame_printf_debug("ALPHA8201 load PCL ENTRY=%02X PCL=%02X\n",pcptr, R.pc.b.l);
 				ALPHA8201_ICount -= C1;
 				M_WRMEM(0x001,pcptr+1);
 				continue;
@@ -813,7 +813,7 @@ static int alpha8xxx_execute(const s_opcode *op_map,int cycles)
 
 #if SHOW_ENTRY_POINT
 logerror("ALPHA8201 START ENTRY=%02X PC=%03X\n",pcptr,PC);
-printf("ALPHA8201 START ENTRY=%02X PC=%03X\n",pcptr,PC);
+mame_printf_debug("ALPHA8201 START ENTRY=%02X PC=%03X\n",pcptr,PC);
 #endif
 		}
 
@@ -822,7 +822,7 @@ printf("ALPHA8201 START ENTRY=%02X PC=%03X\n",pcptr,PC);
 		CALL_MAME_DEBUG;
 		opcode =M_RDOP(PC);
 #if TRACE_PC
-printf("ALPHA8201:  PC = %03x,  opcode = %02x\n", PC, opcode);
+mame_printf_debug("ALPHA8201:  PC = %03x,  opcode = %02x\n", PC, opcode);
 #endif
 		PCL++;
 		inst_cycles = op_map[opcode].cycles;
@@ -878,7 +878,7 @@ static void set_irq_line(int irqline, int state)
 	if(irqline == INPUT_LINE_HALT)
 	{
 		R.halt = (state==ASSERT_LINE) ? 1 : 0;
-/* printf("ALPHA8201 HALT %d\n",R.halt); */
+/* mame_printf_debug("ALPHA8201 HALT %d\n",R.halt); */
 		change_pc(PC);
 	}
 #endif

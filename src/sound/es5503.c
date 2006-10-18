@@ -100,19 +100,19 @@ static void halt_osc(ES5503Chip *chip, int onum, int type)
 	ES5503Osc *pPartner = &chip->oscillators[onum^1];
 	int mode = (pOsc->control>>1) & 3;
 
-//  printf("halt_osc %d, control %02x, mode = %d, type = %d\n", onum, pOsc->control, mode, type);
+//  mame_printf_debug("halt_osc %d, control %02x, mode = %d, type = %d\n", onum, pOsc->control, mode, type);
 
 	// if 0 found in sample data or mode is not free-run, halt this oscillator
 	if ((type) || (mode > 0))
 	{
-//      printf("stopping\n");
+//      mame_printf_debug("stopping\n");
 		pOsc->control |= 1;
 	}
 
 	// if swap mode, start the partner
 	if (mode == MODE_SWAP)
 	{
-//          printf("swap mode, starting partner\n");
+//          mame_printf_debug("swap mode, starting partner\n");
 		pPartner->control &= ~1;	// clear the halt bit
 		pPartner->accumulator = 0;	// make sure it's at the beginning
 	}
@@ -137,7 +137,7 @@ static void es5503_pcm_update(void *param, stream_sample_t **inputs, stream_samp
 	UINT32 ramptr;
 	ES5503Chip *chip = param;
 
-//  printf("5503_pcm_update: %d oscs\n", ES5503[num].oscsenabled);
+//  mame_printf_debug("5503_pcm_update: %d oscs\n", ES5503[num].oscsenabled);
 
 	memset(mix, 0, sizeof(mix));
 
@@ -159,8 +159,8 @@ static void es5503_pcm_update(void *param, stream_sample_t **inputs, stream_samp
 			int resshift = resshifts[pOsc->resolution] - pOsc->wavetblsize;
 			UINT32 sizemask = accmasks[pOsc->wavetblsize];
 
-//              printf("Acc: %08x => %08x\n", acc, (acc>>resshift) & sizemask);
-//              printf("Ch [%02d]: wtptr: %04x (wtsize %d, ptr %x) acc %x shift %d\n", osc, wtptr, pOsc->wavetblsize, pOsc->wavetblpointer, acc, resshift);
+//              mame_printf_debug("Acc: %08x => %08x\n", acc, (acc>>resshift) & sizemask);
+//              mame_printf_debug("Ch [%02d]: wtptr: %04x (wtsize %d, ptr %x) acc %x shift %d\n", osc, wtptr, pOsc->wavetblsize, pOsc->wavetblpointer, acc, resshift);
 
 			for (snum = 0; snum < length; snum++)
 			{
@@ -168,7 +168,7 @@ static void es5503_pcm_update(void *param, stream_sample_t **inputs, stream_samp
 
 				acc += freq;
 
-//                  printf("[%02d] Acc: %08x  Frq: %04x  RAMptr: %08x WTsize: %04x (wtsize %d res %d)\n", osc, acc, freq, ramptr, wtsize, pOsc->wavetblsize, pOsc->resolution);
+//                  mame_printf_debug("[%02d] Acc: %08x  Frq: %04x  RAMptr: %08x WTsize: %04x (wtsize %d res %d)\n", osc, acc, freq, ramptr, wtsize, pOsc->wavetblsize, pOsc->resolution);
 
 				data = (INT32)chip->docram[ramptr + wtptr] ^ 0x80;
 
@@ -185,7 +185,7 @@ static void es5503_pcm_update(void *param, stream_sample_t **inputs, stream_samp
 
 				if (chip->docram[ramptr + wtptr] == 0x00)
 				{
-//                          printf("[%d] osc %d hit zero @ %x (mode %d pmode %d)\n", chip->frames, osc, ramptr + wtptr, (pOsc->control>>1)&3, (chip->oscillators[osc^1].control>>1)&3);
+//                          mame_printf_debug("[%d] osc %d hit zero @ %x (mode %d pmode %d)\n", chip->frames, osc, ramptr + wtptr, (pOsc->control>>1)&3, (chip->oscillators[osc^1].control>>1)&3);
 					halt_osc(chip, osc, 1);
 					acc = 0;
 				}
@@ -331,7 +331,7 @@ READ8_HANDLER(ES5503_reg_0_r)
 					}
 				}
 
-//              printf("Read e0 = %02x, PC = %x\n", retval, activecpu_get_pc());
+//              mame_printf_debug("Read e0 = %02x, PC = %x\n", retval, activecpu_get_pc());
 
 				return retval;
 				break;
@@ -387,7 +387,7 @@ WRITE8_HANDLER(ES5503_reg_0_w)
 				// if a fresh key-on, reset the ccumulator
 				if ((chip->oscillators[osc].control & 1) && (!(data&1)))
 				{
-//                  printf("[%d] %02x to control for voice %02d (wtptr %x vol %x wts %d res %d)\n", chip->frames, data, osc, chip->oscillators[osc].wavetblpointer, chip->oscillators[osc].vol, chip->oscillators[osc].wavetblsize, chip->oscillators[osc].resolution);
+//                  mame_printf_debug("[%d] %02x to control for voice %02d (wtptr %x vol %x wts %d res %d)\n", chip->frames, data, osc, chip->oscillators[osc].wavetblpointer, chip->oscillators[osc].vol, chip->oscillators[osc].wavetblsize, chip->oscillators[osc].resolution);
 					chip->oscillators[osc].accumulator = 0;
 				}
 				chip->oscillators[osc].control = data;

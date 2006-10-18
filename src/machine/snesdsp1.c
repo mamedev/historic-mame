@@ -950,18 +950,18 @@ static UINT8 dsp1_read(UINT16 address)
 				}
 			}
 			dsp1_waitcmd = 1;
-//          printf("dsp_r: %02x\n", temp);
+//          mame_printf_debug("dsp_r: %02x\n", temp);
 			return temp;
 		}
 		else
 		{
-//          printf("dsp_r: %02x\n", 0xff);
+//          mame_printf_debug("dsp_r: %02x\n", 0xff);
 			return 0xff;	// indicate "no data"
 		}
 	}
 
 	// status register
-//  printf("dsp_r: %02x\n", 0x80);
+//  mame_printf_debug("dsp_r: %02x\n", 0x80);
 	return 0x80;
 }
 
@@ -970,7 +970,7 @@ static void dsp1_write(UINT16 address, UINT8 data)
 	// check data vs. status
 	if (((address & 0xf000) == 0x6000) || ((address & 0x7fff) < 0x4000))
 	{
-//      printf("DSP_w: %02x cmd %02x wait %d dsp1_in_cnt %d\n", data, dsp1_cur_cmd, dsp1_waitcmd, dsp1_in_cnt);
+//      mame_printf_debug("DSP_w: %02x cmd %02x wait %d dsp1_in_cnt %d\n", data, dsp1_cur_cmd, dsp1_waitcmd, dsp1_in_cnt);
 
 		if (((dsp1_cur_cmd == 0x0a) || (dsp1_cur_cmd == 0x1a)) && (dsp1_out_cnt != 0))
 		{
@@ -1223,7 +1223,7 @@ static void dsp1_write(UINT16 address, UINT8 data)
 							break;
 
 						default:
-							printf("Unhandled DSP1 command: %02x\n", dsp1_cur_cmd);
+							mame_printf_debug("Unhandled DSP1 command: %02x\n", dsp1_cur_cmd);
 							break;
 
 					}

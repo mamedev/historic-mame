@@ -668,7 +668,7 @@ void chd_close(chd_file *chd)
 		}
 
 #if PRINTF_MAX_HUNK
-	printf("Max hunk = %d/%d\n", chd->maxhunk, chd->header.totalhunks);
+	mame_printf_debug("Max hunk = %d/%d\n", chd->maxhunk, chd->header.totalhunks);
 #endif
 
 	/* free our memory */

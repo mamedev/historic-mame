@@ -55,6 +55,7 @@
  *************************************/
 
 #define MASTER_CLOCK		(18432000)
+#define SOUND_CLOCK			(6000000)
 
 #define PIXEL_CLOCK			(MASTER_CLOCK/3)
 
@@ -91,14 +92,22 @@ MACHINE_START( grchamp )
  *
  *************************************/
 
-static INTERRUPT_GEN( grchamp_interrupt )
+static INTERRUPT_GEN( grchamp_cpu0_interrupt )
 {
 	grchamp_state *state = Machine->driver_data;
 	int cpu = cpu_getactivecpu();
 
-	if (cpu == 0 && (state->cpu0_out[0] & 0x01))
+	if (state->cpu0_out[0] & 0x01)
 		cpunum_set_input_line(cpu, 0, ASSERT_LINE);
-	if (cpu == 1 && (state->cpu1_out[4] & 0x01))
+}
+
+
+static INTERRUPT_GEN( grchamp_cpu1_interrupt )
+{
+	grchamp_state *state = Machine->driver_data;
+	int cpu = cpu_getactivecpu();
+
+	if (state->cpu1_out[4] & 0x01)
 		cpunum_set_input_line(cpu, 0, ASSERT_LINE);
 }
 
@@ -129,12 +138,12 @@ static WRITE8_HANDLER( cpu0_outputs_w )
 			if ((diff & 0x01) && !(data & 0x01))
 				cpunum_set_input_line(0, 0, CLEAR_LINE);
 			if ((diff & 0x02) && !(data & 0x02))
-				state->collide = 0;
+				state->collide = state->collmode = 0;
 			break;
 
 		case 0x01:	/* OUT1 */
 			/* connects to pc3259, pin 23 (read collision data?) */
-			printf("OUT1\n");
+			state->collmode++;
 			break;
 
 		case 0x02:	/* OUT2 */
@@ -160,9 +169,9 @@ static WRITE8_HANDLER( cpu0_outputs_w )
 
 		case 0x09:	/* OUT9 */
 			/* bit 0-3: n/c */
-			/* bit 4: coin lockout */
-			/* bit 5: Game Over lamp */
-			/* bit 6/7: n/c */
+			/* bit 4:   coin lockout */
+			/* bit 5:   Game Over lamp */
+			/* bit 6-7: n/c */
 			coin_lockout_global_w((data >> 4) & 1);
 			output_set_value("led0", (~data >> 5) & 1);
 			break;
@@ -176,7 +185,7 @@ static WRITE8_HANDLER( cpu0_outputs_w )
 			/* bit 5: n/c */
 			/* bit 6: G-Z */
 			if (diff)
-				printf("OUT10=%02X\n", data);
+				mame_printf_debug("OUT10=%02X\n", data);
 			break;
 
 		case 0x0d:	/* OUT13 */
@@ -245,39 +254,63 @@ WRITE8_HANDLER( cpu1_outputs_w )
 
 	switch (offset)
 	{
-	 	/* OUT0 - OUTF (Page 48) */
-		/* OUT0 - Page 43: writes to 'Left Synk Bus' */		/* bg0 yscroll lsb */
-		/* OUT1 - Page 43: writes to 'Left Synk Bus' */		/* bg0 yscroll msb */
-		/* OUT2 - Page 43: writes to 'Left Synk Bus' */		/* bg0 xscroll? */
-
-		case 0x03: /* OUT3 - Page 45 */
-			/*  bit0-bit3 = Analog Tachometer output
-                bit4 = Palette selector. (Goes to A4 on the color prom). I believe this
-                    select between colors 0-15 and colors 16-31.
-                bit5 = Center Layer 256H line enable. This bit enables/disables the
-                    256H line (The extra higher bit for scroll) on the center (road) layer.
-                bit 6 and 7 = unused.
-            */
+		case 0x00:	/* OUT0 */
+			/* bit 0-7: left/right synk bus xscroll LSBs */
 			break;
 
-		case 0x04: /* OUT4 - Page 46 */
-			/* trigger irq on cpu2 when vblank arrives */
+		case 0x01:	/* OUT1 */
+			/* bit 0: left/right synk bus xscroll MSB */
+			break;
+
+		case 0x02:	/* OUT2 */
+			/* bit 0-7: left synk bus yscroll */
+			break;
+
+		case 0x03:	/* OUT3 */
+			/* bit 0-3: analog tachometer output */
+			/* bit 4:   palette MSB */
+			/* bit 5:   disable the 256H line in the center tilemap */
+			break;
+
+		case 0x04:	/* OUT4 */
+			/* bit 0:   interrupt enable for CPU 1 */
 			if ((diff & 0x01) && !(data & 0x01))
 				cpunum_set_input_line(1, 0, CLEAR_LINE);
 			break;
 
-			/* OUT5 - unused */									/* bg1 yscroll lsb */
-			/* OUT6 - unused */									/* bg1 yscroll msb */
-			/* OUT7 - Page 44: writes to 'Right Synk Bus' */	/* bg1 xscroll? */
+		case 0x05:	/* OUT5 - unused */
+			break;
 
-		case 0x08: /* OUT8 - Page 47 */
+		case 0x06:	/* OUT6 - unused */
+			break;
+
+		case 0x07:	/* OUT7 */
+			/* bit 0-7: right synk bus yscroll */
+			break;
+
+		case 0x08:	/* OUT8 */
+			/* bit 0-7: latches data to main CPU input port 2 */
 			state->comm_latch = data;
 			break;
-			/* OUT9 - Page 47: writes to 'Center Synk Bus' */	/* bg2 yscroll lsb */
-			/* OUTA - Page 47: writes to 'Center Synk Bus' */	/* bg2 yscroll msb? */
-			/* OUTB - Page 47: writes to 'Center Synk Bus' */	/* bg2 xscroll? */
 
-		case 0x0C: /* OUTC - Page 48: goes to connector Q-23 */
+		case 0x09:	/* OUT9 */
+			/* bit 0-7: center synk bus xscroll LSBs */
+			break;
+
+		case 0x0a:	/* OUTA */
+			/* bit 0: center synk bus xscroll MSB */
+			break;
+
+		case 0x0b:	/* OUTB */
+			/* bit 0-7: center synk bus yscroll */
+			break;
+
+		case 0x0c: /* OUTC */
+			/* bit 0:   FOG */
+			/* bit 1:   IDLING */
+			/* bit 2-4: ATTACK UP 1-3 */
+			/* bit 5-6: SIFT 1-2 */
+			/* bit 7:   ENGINE CS */
 			discrete_sound_w(GRCHAMP_ENGINE_CS_EN, data & 0x80);
 			discrete_sound_w(GRCHAMP_SIFT_DATA, (data >> 5) & 0x03);
 			discrete_sound_w(GRCHAMP_ATTACK_UP_DATA, (data >> 2) & 0x07);
@@ -285,7 +318,9 @@ WRITE8_HANDLER( cpu1_outputs_w )
 			discrete_sound_w(GRCHAMP_FOG_EN, data & 0x01);
 			break;
 
-		case 0x0D: /* OUTD - Page 48: goes to connector Q-25 */
+		case 0x0d: /* OUTD */
+			/* bit 0-3: ATTACK SPEED 1-4 */
+			/* bit 4-7: PLAYER SPEED 1-4 */
 			discrete_sound_w(GRCHAMP_PLAYER_SPEED_DATA, (data >> 4) & 0x0f);
 			discrete_sound_w(GRCHAMP_ATTACK_SPEED_DATA,  data & 0x0f);
 			break;
@@ -384,40 +419,39 @@ READ8_HANDLER( main_to_sub_comm_r )
 
 
 
-/***************************************************************************
+/*************************************
+ *
+ *  Sound port handlers
+ *
+ *************************************/
 
-    CPU 3
-
-***************************************************************************/
-
-WRITE8_HANDLER( grchamp_portA_0_w ) // IC 3B
+WRITE8_HANDLER( grchamp_portA_0_w )
 {
 	discrete_sound_w(GRCHAMP_A_DATA, data);
 }
-WRITE8_HANDLER( grchamp_portB_0_w ) // IC 3B
+
+WRITE8_HANDLER( grchamp_portB_0_w )
 {
 	discrete_sound_w(GRCHAMP_B_DATA, 255-data);
 }
 
-WRITE8_HANDLER( grchamp_portA_1_w ) // IC 2B
+WRITE8_HANDLER( grchamp_portA_2_w )
 {
-
+	/* A0/A1 modify the output of AY8910 #2 */
+	/* A7 contributes to the discrete logic hanging off of AY8910 #0 */
+}
+WRITE8_HANDLER( grchamp_portB_2_w )
+{
+	/* B0 connects elsewhere */
 }
 
-WRITE8_HANDLER( grchamp_portB_1_w ) // IC 2B
-{
 
-}
 
-WRITE8_HANDLER( grchamp_portA_2_w ) // IC 1B
-{
-
-}
-WRITE8_HANDLER( grchamp_portB_2_w ) // IC 1B
-{
-
-}
-
+/*************************************
+ *
+ *  Sound interfaces
+ *
+ *************************************/
 
 static struct AY8910interface ay8910_interface_1 =
 {
@@ -425,14 +459,6 @@ static struct AY8910interface ay8910_interface_1 =
 	0,
 	grchamp_portA_0_w,
 	grchamp_portB_0_w
-};
-
-static struct AY8910interface ay8910_interface_2 =
-{
-	0,
-	0,
-	grchamp_portA_1_w,
-	grchamp_portB_1_w
 };
 
 static struct AY8910interface ay8910_interface_3 =
@@ -443,17 +469,13 @@ static struct AY8910interface ay8910_interface_3 =
 	grchamp_portB_2_w
 };
 
-/***************************************************************************/
-static const gfx_layout char_layout =
-{
-	8,8,
-	RGN_FRAC(1,2),
-	2,
-	{ 0,RGN_FRAC(1,2) },
-	{ STEP8(0,1) },
-	{ STEP8(0,8) },
-	8*8
-};
+
+
+/*************************************
+ *
+ *  Graphics Layouts
+ *
+ *************************************/
 
 static const gfx_layout sprite_layout =
 {
@@ -479,7 +501,7 @@ static const gfx_layout tile_layout =
 
 static const gfx_decode gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0x0000, &char_layout,		0, 8 },
+	{ REGION_GFX1, 0x0000, &gfx_8x8x2_planar,	0, 8 },
 	{ REGION_GFX2, 0x0000, &tile_layout,		0, 16 },
 	{ REGION_GFX3, 0x0000, &tile_layout,		0, 16 },
 	{ REGION_GFX4, 0x0000, &tile_layout,		0, 16 },
@@ -487,7 +509,13 @@ static const gfx_decode gfxdecodeinfo[] =
 	{ -1 }
 };
 
-/***************************************************************************/
+
+
+/*************************************
+ *
+ *  Address maps
+ *
+ *************************************/
 
 /* complete memory map derived from schematics */
 static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
@@ -516,7 +544,6 @@ static ADDRESS_MAP_START( main_portmap, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x20, 0x2f) AM_MIRROR(0x53) AM_WRITE(led_board_w)
 ADDRESS_MAP_END
 
-/***************************************************************************/
 
 /* complete memory map derived from schematics */
 static ADDRESS_MAP_START( sub_map, ADDRESS_SPACE_PROGRAM, 8 )
@@ -536,29 +563,19 @@ static ADDRESS_MAP_START( sub_portmap, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 
-/***************************************************************************/
-
-static ADDRESS_MAP_START( readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x4801, 0x4801) AM_READ(AY8910_read_port_0_r)
-	AM_RANGE(0x4803, 0x4803) AM_READ(AY8910_read_port_1_r)
-	AM_RANGE(0x4805, 0x4805) AM_READ(AY8910_read_port_2_r)
+/* complete memory map derived from schematics */
+static ADDRESS_MAP_START( sound_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_ROM
+	AM_RANGE(0x4000, 0x43ff) AM_RAM
+	AM_RANGE(0x4800, 0x4800) AM_MIRROR(0x07f8) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x4801, 0x4801) AM_MIRROR(0x07f8) AM_READWRITE(AY8910_read_port_0_r, AY8910_write_port_0_w)
+	AM_RANGE(0x4802, 0x4802) AM_MIRROR(0x07f8) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0x4803, 0x4803) AM_MIRROR(0x07f8) AM_READWRITE(AY8910_read_port_1_r, AY8910_write_port_1_w)
+	AM_RANGE(0x4804, 0x4804) AM_MIRROR(0x07fa) AM_WRITE(AY8910_control_port_2_w)
+	AM_RANGE(0x4805, 0x4805) AM_MIRROR(0x07fa) AM_READWRITE(AY8910_read_port_2_r, AY8910_write_port_2_w)
 	AM_RANGE(0x5000, 0x5000) AM_READ(soundlatch_r)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
- 	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x4000, 0x43ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x4800, 0x4800) AM_WRITE(AY8910_control_port_0_w)
-	AM_RANGE(0x4801, 0x4801) AM_WRITE(AY8910_write_port_0_w)
-	AM_RANGE(0x4802, 0x4802) AM_WRITE(AY8910_control_port_1_w)
-	AM_RANGE(0x4803, 0x4803) AM_WRITE(AY8910_write_port_1_w)
-	AM_RANGE(0x4804, 0x4804) AM_WRITE(AY8910_control_port_2_w)
-	AM_RANGE(0x4805, 0x4805) AM_WRITE(AY8910_write_port_2_w)
-ADDRESS_MAP_END
-
-/***************************************************************************/
 
 
 /*************************************
@@ -665,18 +682,18 @@ static MACHINE_DRIVER_START( grchamp )
 	MDRV_CPU_ADD(Z80, PIXEL_CLOCK/2)
 	MDRV_CPU_PROGRAM_MAP(main_map,0)
 	MDRV_CPU_IO_MAP(main_portmap,0)
-	MDRV_CPU_VBLANK_INT(grchamp_interrupt,1)
+	MDRV_CPU_VBLANK_INT(grchamp_cpu0_interrupt,1)
 
 	/* GAME BOARD */
 	MDRV_CPU_ADD(Z80, PIXEL_CLOCK/2)
 	MDRV_CPU_PROGRAM_MAP(sub_map,0)
 	MDRV_CPU_IO_MAP(sub_portmap,0)
-	MDRV_CPU_VBLANK_INT(grchamp_interrupt,1)
+	MDRV_CPU_VBLANK_INT(grchamp_cpu1_interrupt,1)
 
 	/* SOUND BOARD */
-	MDRV_CPU_ADD(Z80, 3000000)
-	MDRV_CPU_PROGRAM_MAP(readmem_sound,writemem_sound)
-	MDRV_CPU_PERIODIC_INT(irq0_line_hold,TIME_IN_HZ(75))		/* irq's are triggered every 75 Hz */
+	MDRV_CPU_ADD(Z80, SOUND_CLOCK/2)
+	MDRV_CPU_PROGRAM_MAP(sound_map,0)
+	MDRV_CPU_PERIODIC_INT(irq0_line_hold,TIME_IN_HZ(SOUND_CLOCK/4/16/16/10/16))
 
 	MDRV_MACHINE_START(grchamp)
 	MDRV_WATCHDOG_VBLANK_INIT(8)
@@ -696,15 +713,14 @@ static MACHINE_DRIVER_START( grchamp )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
-	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ADD(AY8910, SOUND_CLOCK/4)	/* 3B */
 	MDRV_SOUND_CONFIG(ay8910_interface_1)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.2)
 
-	MDRV_SOUND_ADD(AY8910, 1500000)
-	MDRV_SOUND_CONFIG(ay8910_interface_2)
+	MDRV_SOUND_ADD(AY8910, SOUND_CLOCK/4)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.2)
 
-	MDRV_SOUND_ADD(AY8910, 1500000)
+	MDRV_SOUND_ADD(AY8910, SOUND_CLOCK/4)	/* 1B */
 	MDRV_SOUND_CONFIG(ay8910_interface_3)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.2)
 

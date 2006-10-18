@@ -1204,7 +1204,7 @@ static READ32_HANDLER( mjgtaste_speedup_r )
 	if (activecpu_get_pc()==0x6031f04) {cpu_spinuntil_int();return psh_ram[0x006000C/4];} // title logos
 	if (activecpu_get_pc()==0x603214c) {cpu_spinuntil_int();return psh_ram[0x006000C/4];} // attract game
 
-//  printf("at %08x\n",activecpu_get_pc());
+//  mame_printf_debug("at %08x\n",activecpu_get_pc());
 
 	return psh_ram[0x006000C/4];
 }

@@ -1787,7 +1787,7 @@ static UINT32 opSHAB(void)
 		SetSZPF_Byte(appb);
 	}
 
-//  printf("SHAB: %x _CY: %d _Z: %d _OV: %d _S: %d\n", appb, _CY, _Z, _OV, _S);
+//  mame_printf_debug("SHAB: %x _CY: %d _Z: %d _OV: %d _S: %d\n", appb, _CY, _Z, _OV, _S);
 
 	F12STOREOP2BYTE();
 	F12END();
@@ -1841,7 +1841,7 @@ static UINT32 opSHAH(void)
 		SetSZPF_Word(apph);
 	}
 
-//  printf("SHAH: %x >> %d = %x _CY: %d _Z: %d _OV: %d _S: %d\n", oldval, count, apph, _CY, _Z, _OV, _S);
+//  mame_printf_debug("SHAH: %x >> %d = %x _CY: %d _Z: %d _OV: %d _S: %d\n", oldval, count, apph, _CY, _Z, _OV, _S);
 
 	F12STOREOP2HALF();
 	F12END();
@@ -1895,7 +1895,7 @@ static UINT32 opSHAW(void)
 		SetSZPF_Long(appw);
 	}
 
-//  printf("SHAW: %x >> %d = %x _CY: %d _Z: %d _OV: %d _S: %d\n", oldval, count, appw, _CY, _Z, _OV, _S);
+//  mame_printf_debug("SHAW: %x >> %d = %x _CY: %d _Z: %d _OV: %d _S: %d\n", oldval, count, appw, _CY, _Z, _OV, _S);
 
 	F12STOREOP2WORD();
 	F12END();
@@ -1955,7 +1955,7 @@ static UINT32 opSHLB(void) /* TRUSTED */
 		}
 	}
 
-//  printf("SHLB: %x _CY: %d _Z: %d _OV: %d _S: %d\n", appb, _CY, _Z, _OV, _S);
+//  mame_printf_debug("SHLB: %x _CY: %d _Z: %d _OV: %d _S: %d\n", appb, _CY, _Z, _OV, _S);
 
 	F12STOREOP2BYTE();
 	F12END();
@@ -1972,7 +1972,7 @@ static UINT32 opSHLH(void) /* TRUSTED */
 	F12LOADOP2HALF();
 
 	count=(INT8)(f12Op1&0xFF);
-//  printf("apph: %x count: %d  ", apph, count);
+//  mame_printf_debug("apph: %x count: %d  ", apph, count);
 	if (count>0)
 	{
 		// left shift flags:
@@ -2015,7 +2015,7 @@ static UINT32 opSHLH(void) /* TRUSTED */
 		}
 	}
 
-//  printf("SHLH: %x _CY: %d _Z: %d _OV: %d _S: %d\n", apph, _CY, _Z, _OV, _S);
+//  mame_printf_debug("SHLH: %x _CY: %d _Z: %d _OV: %d _S: %d\n", apph, _CY, _Z, _OV, _S);
 
 	F12STOREOP2HALF();
 	F12END();
@@ -2074,7 +2074,7 @@ static UINT32 opSHLW(void) /* TRUSTED */
 		}
 	}
 
-//  printf("SHLW: %x _CY: %d _Z: %d _OV: %d _S: %d\n", appw, _CY, _Z, _OV, _S);
+//  mame_printf_debug("SHLW: %x _CY: %d _Z: %d _OV: %d _S: %d\n", appw, _CY, _Z, _OV, _S);
 
 	F12STOREOP2WORD();
 	F12END();

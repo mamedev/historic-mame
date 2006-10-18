@@ -3028,7 +3028,7 @@ static void rdp_set_other_modes(UINT32 w1, UINT32 w2)
 	SET_BLENDER_INPUT(1, 1, &blender2a_r[1], &blender2a_g[1], &blender2a_b[1], &blender2b_a[1],
 					  other_modes.blend_m2a_1, other_modes.blend_m2b_1);
 
-//  printf("blend: m1a = %d, m1b = %d, m2a = %d, m2b = %d\n", other_modes.blend_m1a_0, other_modes.blend_m1b_0, other_modes.blend_m2a_0, other_modes.blend_m2b_0);
+//  mame_printf_debug("blend: m1a = %d, m1b = %d, m2a = %d, m2b = %d\n", other_modes.blend_m1a_0, other_modes.blend_m1b_0, other_modes.blend_m2a_0, other_modes.blend_m2b_0);
 
 	switch (other_modes.rgb_dither_sel)
 	{
@@ -3062,7 +3062,7 @@ static void rdp_load_tlut(UINT32 w1, UINT32 w2)
 					for (i=sl; i <= sh; i++)
 					{
 						tlut[i] = src[i];
-			//          printf("TLUT %d = %04X\n", i, tlut[i]);
+			//          mame_printf_debug("TLUT %d = %04X\n", i, tlut[i]);
 					}
 					break;
 				}

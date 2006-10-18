@@ -234,11 +234,11 @@ static WRITE64_HANDLER(unk4000010_w)
 {
 	if ((data & 0xff) == 0xd)
 	{
-		printf("\n");
+		mame_printf_debug("\n");
 	}
 	else
 	{
-		printf("%c", (UINT8)(data & 0xff));
+		mame_printf_debug("%c", (UINT8)(data & 0xff));
 	}
 }
 
@@ -312,7 +312,7 @@ static READ64_HANDLER(cde_r)
 
 		default:
 		{
-	//      printf("cde_r: %08X at %08X\n", reg*4, activecpu_get_pc());
+	//      mame_printf_debug("cde_r: %08X at %08X\n", reg*4, activecpu_get_pc());
 			break;
 		}
 	}
@@ -348,7 +348,7 @@ static WRITE64_HANDLER(cde_w)
 		{
 			if (d != 0x180 && d != 0)
 			{
-				//printf("CDE: command %08X\n", d);
+				//mame_printf_debug("CDE: command %08X\n", d);
 			}
 
 			switch (d)
@@ -367,7 +367,7 @@ static WRITE64_HANDLER(cde_w)
 		default:
 		{
 
-	//      printf("cde_w: %08X, %08X at %08X\n", d, reg*4, activecpu_get_pc());
+	//      mame_printf_debug("cde_w: %08X, %08X at %08X\n", d, reg*4, activecpu_get_pc());
 			break;
 		}
 	}

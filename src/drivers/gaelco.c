@@ -1039,7 +1039,7 @@ static UINT16 squash_encrypt(int offset, int data, int game)
 WRITE16_HANDLER( gaelco_vram_encrypted_w )
 {
 	int oldword = gaelco_videoram[offset];
-//  printf("gaelco_vram_encrypted_w!!\n");
+//  mame_printf_debug("gaelco_vram_encrypted_w!!\n");
 
 	data = squash_encrypt(offset,data,0);
 	COMBINE_DATA(&gaelco_videoram[offset]);
@@ -1051,7 +1051,7 @@ WRITE16_HANDLER( gaelco_vram_encrypted_w )
 
 WRITE16_HANDLER(gaelco_encrypted_w)
 {
-//  printf("gaelco_encrypted_w!!\n");
+//  mame_printf_debug("gaelco_encrypted_w!!\n");
 
 	 data = squash_encrypt(offset,data,0);
         COMBINE_DATA(&gaelco_screen[offset]);
@@ -1060,7 +1060,7 @@ WRITE16_HANDLER(gaelco_encrypted_w)
 WRITE16_HANDLER( thoop_vram_encrypted_w )
 {
 	int oldword = gaelco_videoram[offset];
-//  printf("gaelco_vram_encrypted_w!!\n");
+//  mame_printf_debug("gaelco_vram_encrypted_w!!\n");
 
 	data = squash_encrypt(offset,data,1);
 	COMBINE_DATA(&gaelco_videoram[offset]);
@@ -1071,7 +1071,7 @@ WRITE16_HANDLER( thoop_vram_encrypted_w )
 
 WRITE16_HANDLER(thoop_encrypted_w)
 {
-//  printf("gaelco_encrypted_w!!\n");
+//  mame_printf_debug("gaelco_encrypted_w!!\n");
 
 	 data = squash_encrypt(offset,data,1);
      COMBINE_DATA(&gaelco_screen[offset]);

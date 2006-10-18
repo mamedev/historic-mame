@@ -426,7 +426,7 @@ static WRITE8_HANDLER(ground_bank_w)
 /* Allow /CUDISP to interrupt main CPU */
 static WRITE8_HANDLER(sound_atten)
 {
-       printf("%x\n",data);
+       mame_printf_debug("%x\n",data);
 }
 
 /* Allow /CUDISP to interrupt main CPU */

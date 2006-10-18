@@ -227,35 +227,35 @@ ADDRESS_MAP_END
 
 static READ8_HANDLER(snd_porta_r)
 {
-	//printf("PA R @%x\n",activecpu_get_pc());
+	//mame_printf_debug("PA R @%x\n",activecpu_get_pc());
 	return rand();
 }
 
 static READ8_HANDLER(snd_portb_r)
 {
-	//printf("PB R @%x\n",activecpu_get_pc());
+	//mame_printf_debug("PB R @%x\n",activecpu_get_pc());
 	return rand();
 }
 
 static READ8_HANDLER(snd_portc_r)
 {
-	//printf("PC R @%x\n",activecpu_get_pc());
+	//mame_printf_debug("PC R @%x\n",activecpu_get_pc());
 	return rand();
 }
 
 static WRITE8_HANDLER(snd_porta_w)
 {
-	//printf("PA W %x @%x\n",data,activecpu_get_pc());
+	//mame_printf_debug("PA W %x @%x\n",data,activecpu_get_pc());
 }
 
 static WRITE8_HANDLER(snd_portb_w)
 {
-	//printf("PB W %x @%x\n",data,activecpu_get_pc());
+	//mame_printf_debug("PB W %x @%x\n",data,activecpu_get_pc());
 }
 
 static WRITE8_HANDLER(snd_portc_w)
 {
-	//printf("PC W %x @%x\n",data,activecpu_get_pc());
+	//mame_printf_debug("PC W %x @%x\n",data,activecpu_get_pc());
 }
 
 static ADDRESS_MAP_START( snd_io, ADDRESS_SPACE_IO, 8 )

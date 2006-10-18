@@ -171,7 +171,7 @@ static void sp_dma(int direction)
 		src = (UINT8*)&rdram[sp_dram_addr / 4];
 		dst = (sp_mem_addr & 0x1000) ? (UINT8*)&rsp_imem[(sp_mem_addr & 0xfff) / 4] : (UINT8*)&rsp_dmem[(sp_mem_addr & 0xfff) / 4];
 
-		//printf("sp_dma: %08X to %08X, length %08X\n", sp_dram_addr, sp_mem_addr, sp_dma_length);
+		//mame_printf_debug("sp_dma: %08X to %08X, length %08X\n", sp_dram_addr, sp_mem_addr, sp_dma_length);
 
 		for (i=0; i < sp_dma_length; i++)
 		{
@@ -192,7 +192,7 @@ static void sp_dma(int direction)
 		src = (sp_mem_addr & 0x1000) ? (UINT8*)&rsp_imem[(sp_mem_addr & 0xfff) / 4] : (UINT8*)&rsp_dmem[(sp_mem_addr & 0xfff) / 4];
 		dst = (UINT8*)&rdram[sp_dram_addr / 4];
 
-//      printf("sp_dma: %08X to %08X, length %08X\n", sp_mem_addr, sp_dram_addr, sp_dma_length);
+//      mame_printf_debug("sp_dma: %08X to %08X, length %08X\n", sp_mem_addr, sp_dram_addr, sp_dma_length);
 
 		for (i=0; i < sp_dma_length; i++)
 		{
@@ -349,7 +349,7 @@ WRITE32_HANDLER( n64_sp_reg_w )
 
 			case 0x1c/4:		// SP_SEMAPHORE_REG
 				sp_semaphore = data;
-		//      printf("sp_semaphore = %08X\n", sp_semaphore);
+		//      mame_printf_debug("sp_semaphore = %08X\n", sp_semaphore);
 				break;
 
 			default:
@@ -627,10 +627,10 @@ static void audio_fifo_push(UINT32 address, UINT32 length)
 
 	if (audio_fifo_num == AUDIO_DMA_DEPTH)
 	{
-		printf("audio_fifo_push: tried to push to full DMA FIFO!!!\n");
+		mame_printf_debug("audio_fifo_push: tried to push to full DMA FIFO!!!\n");
 	}
 
-//  printf("fifo_push: adr %08x len %08x\n", address, length);
+//  mame_printf_debug("fifo_push: adr %08x len %08x\n", address, length);
 
 	audio_fifo[audio_fifo_wpos].address = address;
 	audio_fifo[audio_fifo_wpos].length = length;
@@ -697,7 +697,7 @@ static void start_audio_dma(void)
 
 	ram = &ram[current->address/2];
 
-//  printf("DACDMA: %x for %x bytes\n", current->address, current->length);
+//  mame_printf_debug("DACDMA: %x for %x bytes\n", current->address, current->length);
 
 	dmadac_transfer(0, 2, 2, 2, current->length/4, ram);
 }
@@ -741,18 +741,18 @@ WRITE32_HANDLER( n64_ai_reg_w )
 	switch (offset)
 	{
 		case 0x00/4:		// AI_DRAM_ADDR_REG
-//          printf("ai_dram_addr = %08X at %08X\n", data, activecpu_get_pc());
+//          mame_printf_debug("ai_dram_addr = %08X at %08X\n", data, activecpu_get_pc());
 			ai_dram_addr = data & 0xffffff;
 			break;
 
 		case 0x04/4:		// AI_LEN_REG
-//          printf("ai_len = %08X at %08X\n", data, activecpu_get_pc());
+//          mame_printf_debug("ai_len = %08X at %08X\n", data, activecpu_get_pc());
 			ai_len = data & 0x3ffff;		// Hardware v2.0 has 18 bits, v1.0 has 15 bits
 			audio_fifo_push(ai_dram_addr, ai_len);
 			break;
 
 		case 0x08/4:		// AI_CONTROL_REG
-//          printf("ai_control = %08X at %08X\n", data, activecpu_get_pc());
+//          mame_printf_debug("ai_control = %08X at %08X\n", data, activecpu_get_pc());
 			ai_control = data;
 			break;
 
@@ -767,7 +767,7 @@ WRITE32_HANDLER( n64_ai_reg_w )
 			break;
 
 		case 0x14/4:		// AI_BITRATE_REG
-//          printf("ai_bitrate = %08X\n", data);
+//          mame_printf_debug("ai_bitrate = %08X\n", data);
 			ai_bitrate = data & 0xf;
 			break;
 
@@ -829,7 +829,7 @@ WRITE32_HANDLER( n64_pi_reg_w )
                 dma_length = (dma_length + 3) & ~3;
             }*/
 
-			//printf("PI DMA: %08X to %08X, length %08X\n", pi_dram_addr, pi_cart_addr, dma_length);
+			//mame_printf_debug("PI DMA: %08X to %08X, length %08X\n", pi_dram_addr, pi_cart_addr, dma_length);
 
 			if (pi_dram_addr != 0xffffffff)
 			{
@@ -856,7 +856,7 @@ WRITE32_HANDLER( n64_pi_reg_w )
                 dma_length = (dma_length + 3) & ~3;
             }*/
 
-			//printf("PI DMA: %08X to %08X, length %08X\n", pi_cart_addr, pi_dram_addr, dma_length);
+			//mame_printf_debug("PI DMA: %08X to %08X, length %08X\n", pi_cart_addr, pi_dram_addr, dma_length);
 
 			if (pi_dram_addr != 0xffffffff)
 			{
@@ -1017,7 +1017,7 @@ static int pif_channel_handle_command(int channel, int slength, UINT8 *sdata, in
 				}
 				case 5:
 				{
-					printf("EEPROM2? read status\n");
+					mame_printf_debug("EEPROM2? read status\n");
 					return 1;
 				}
 			}
@@ -1064,12 +1064,12 @@ static int pif_channel_handle_command(int channel, int slength, UINT8 *sdata, in
 		{
 			UINT32 address, checksum;
 
-			/*printf("Read from mempack, rlength = %d, slength = %d\n", rlength, slength);
+			/*mame_printf_debug("Read from mempack, rlength = %d, slength = %d\n", rlength, slength);
             for (i=0; i < slength; i++)
             {
-                printf("%02X ", sdata[i]);
+                mame_printf_debug("%02X ", sdata[i]);
             }
-            printf("\n");*/
+            mame_printf_debug("\n");*/
 
 			address = (sdata[1] << 8) | (sdata[2]);
 			checksum = address & 0x1f;
@@ -1083,7 +1083,7 @@ static int pif_channel_handle_command(int channel, int slength, UINT8 *sdata, in
 				}
 
 				rdata[rlength-1] = calc_mempack_crc(rdata, rlength-1);
-		//      printf("CRC = %02X\n", rdata[rlength-1]);
+		//      mame_printf_debug("CRC = %02X\n", rdata[rlength-1]);
 			}
 			else if (address < 0x7fe0)
 			{
@@ -1093,7 +1093,7 @@ static int pif_channel_handle_command(int channel, int slength, UINT8 *sdata, in
 				}
 
 				rdata[rlength-1] = calc_mempack_crc(rdata, rlength-1);
-		//      printf("CRC = %02X\n", rdata[rlength-1]);
+		//      mame_printf_debug("CRC = %02X\n", rdata[rlength-1]);
 			}
 			return 1;
 		}
@@ -1101,12 +1101,12 @@ static int pif_channel_handle_command(int channel, int slength, UINT8 *sdata, in
 		{
 			UINT32 address, checksum;
 			int i;
-			/*printf("Write to mempack, rlength = %d, slength = %d\n", rlength, slength);
+			/*mame_printf_debug("Write to mempack, rlength = %d, slength = %d\n", rlength, slength);
             for (i=0; i < slength; i++)
             {
-                printf("%02X ", sdata[i]);
+                mame_printf_debug("%02X ", sdata[i]);
             }
-            printf("\n");*/
+            mame_printf_debug("\n");*/
 
 			address = (sdata[1] << 8) | (sdata[2]);
 			checksum = address & 0x1f;
@@ -1170,13 +1170,13 @@ static int pif_channel_handle_command(int channel, int slength, UINT8 *sdata, in
 			}
 
 			block_offset = sdata[1] * 8;
-			//printf("Write EEPROM: offset %02X: ", block_offset);
+			//mame_printf_debug("Write EEPROM: offset %02X: ", block_offset);
 			for (i=0; i < 8; i++)
 			{
-				//printf("%02X ", sdata[2+i]);
+				//mame_printf_debug("%02X ", sdata[2+i]);
 				eeprom[block_offset+i] = sdata[2+i];
 			}
-			//printf("\n");
+			//mame_printf_debug("\n");
 
 			rdata[0] = 0;
 
@@ -1193,7 +1193,7 @@ static int pif_channel_handle_command(int channel, int slength, UINT8 *sdata, in
 
 		default:
 		{
-			printf("handle_pif: unknown/unimplemented command %02X\n", command);
+			mame_printf_debug("handle_pif: unknown/unimplemented command %02X\n", command);
 			return 1;
 		}
 	}
@@ -1211,9 +1211,9 @@ static void handle_pif(void)
         for (i=0; i < 8; i++)
         {
             int j = i * 8;
-            printf("PIFCMD%d: %02X %02X %02X %02X %02X %02X %02X %02X\n", i, pif_cmd[j], pif_cmd[j+1], pif_cmd[j+2], pif_cmd[j+3], pif_cmd[j+4], pif_cmd[j+5], pif_cmd[j+6], pif_cmd[j+7]);
+            mame_printf_debug("PIFCMD%d: %02X %02X %02X %02X %02X %02X %02X %02X\n", i, pif_cmd[j], pif_cmd[j+1], pif_cmd[j+2], pif_cmd[j+3], pif_cmd[j+4], pif_cmd[j+5], pif_cmd[j+6], pif_cmd[j+7]);
         }
-        printf("\n");
+        mame_printf_debug("\n");
     }
     */
 
@@ -1286,9 +1286,9 @@ static void handle_pif(void)
         for (i=0; i < 8; i++)
         {
             int j = i * 8;
-            printf("PIFRAM%d: %02X %02X %02X %02X %02X %02X %02X %02X\n", i, pif_ram[j], pif_ram[j+1], pif_ram[j+2], pif_ram[j+3], pif_ram[j+4], pif_ram[j+5], pif_ram[j+6], pif_ram[j+7]);
+            mame_printf_debug("PIFRAM%d: %02X %02X %02X %02X %02X %02X %02X %02X\n", i, pif_ram[j], pif_ram[j+1], pif_ram[j+2], pif_ram[j+3], pif_ram[j+4], pif_ram[j+5], pif_ram[j+6], pif_ram[j+7]);
         }
-        printf("\n");
+        mame_printf_debug("\n");
     }
     */
 }
@@ -1359,7 +1359,7 @@ WRITE32_HANDLER( n64_si_reg_w )
 	{
 		case 0x00/4:		// SI_DRAM_ADDR_REG
 			si_dram_addr = data;
-	//      printf("si_dram_addr = %08X\n", si_dram_addr);
+	//      mame_printf_debug("si_dram_addr = %08X\n", si_dram_addr);
 			break;
 
 		case 0x04/4:		// SI_PIF_ADDR_RD64B_REG
@@ -1392,7 +1392,7 @@ READ32_HANDLER( n64_pif_ram_r )
 
 WRITE32_HANDLER( n64_pif_ram_w )
 {
-//  printf("pif_ram_w: %08X, %08X, %08X\n", data, offset, mem_mask);
+//  mame_printf_debug("pif_ram_w: %08X, %08X, %08X\n", data, offset, mem_mask);
 	pif_ram[offset] = data;
 
 	signal_rcp_interrupt(SI_INTERRUPT);
@@ -1431,19 +1431,19 @@ void n64_machine_reset(void)
 	if (boot_checksum == U64(0x000000d057e84864))
 	{
 		// CIC-NUS-6101
-		printf("CIC-NUS-6101 detected\n");
+		mame_printf_debug("CIC-NUS-6101 detected\n");
 		crc_seed = 0x3f;
 	}
 	else if (boot_checksum == U64(0x000000d6499e376b))
 	{
 		// CIC-NUS-6103
-		printf("CIC-NUS-6103 detected\n");
+		mame_printf_debug("CIC-NUS-6103 detected\n");
 		crc_seed = 0x78;
 	}
 	else if (boot_checksum == U64(0x0000011a4a1604b6))
 	{
 		// CIC-NUS-6105
-		printf("CIC-NUS-6105 detected\n");
+		mame_printf_debug("CIC-NUS-6105 detected\n");
 		crc_seed = 0x91;
 
 		first_rsp = 0;
@@ -1451,12 +1451,12 @@ void n64_machine_reset(void)
 	else if (boot_checksum == U64(0x000000d6d5de4ba0))
 	{
 		// CIC-NUS-6106
-		printf("CIC-NUS-6106 detected\n");
+		mame_printf_debug("CIC-NUS-6106 detected\n");
 		crc_seed = 0x85;
 	}
 	else
 	{
-		printf("Unknown BootCode Checksum %08X%08X\n", (UINT32)(boot_checksum>>32),(UINT32)(boot_checksum));
+		mame_printf_debug("Unknown BootCode Checksum %08X%08X\n", (UINT32)(boot_checksum>>32),(UINT32)(boot_checksum));
 	}
 
 	// The PIF Boot ROM is not dumped, the following code simulates it

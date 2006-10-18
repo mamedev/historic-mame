@@ -1157,7 +1157,7 @@ static WRITE32_HANDLER( namcos22_system_controller_w )
 				int offs = offset*4+i;
 				if(offs<4 || offs>=8)
 				{
-					printf( "%08x: sys[0x%02x] := 0x%02x\n",
+					mame_printf_debug( "%08x: sys[0x%02x] := 0x%02x\n",
 						activecpu_get_previouspc(),
 						offs,
 						dat>>24 );

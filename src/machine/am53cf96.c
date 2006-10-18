@@ -75,7 +75,7 @@ READ32_HANDLER( am53cf96_r )
 
 	if (reg == REG_FIFO)
 	{
-//      printf("53cf96: read FIFO PC=%x\n", activecpu_get_pc());
+//      mame_printf_debug("53cf96: read FIFO PC=%x\n", activecpu_get_pc());
 		return 0;
 	}
 
@@ -128,7 +128,7 @@ WRITE32_HANDLER( am53cf96_w )
 	// FIFO
 	if (reg == REG_FIFO)
 	{
-//      printf("%02x to FIFO @ %02d\n", val, fptr);
+//      mame_printf_debug("%02x to FIFO @ %02d\n", val, fptr);
 		fifo[fptr++] = val;
 		if (fptr > 15)
 		{

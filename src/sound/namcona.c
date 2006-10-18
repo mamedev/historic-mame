@@ -734,7 +734,7 @@ UpdateSequence(struct namcona *chip, struct sequence *pSequence )
 					break;
 
 				default:
-					//printf( "? 0x%x\n", code&0x3f );
+					//mame_printf_debug( "? 0x%x\n", code&0x3f );
 					*pStatus &= 0xff7f; /* clear "sequence-is-playing" flag */
 					break;
 				}

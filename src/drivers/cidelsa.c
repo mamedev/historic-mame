@@ -1,5 +1,6 @@
 #include "driver.h"
 #include "cpu/cdp1802/cdp1802.h"
+#include "cpu/cop400/cop400.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/cdp1869.h"
 #include "sound/cdp1869.h"
@@ -43,20 +44,65 @@ WRITE8_HANDLER ( altair_out0_w )
 	set_led_status(2, data & 0x20); // FIRE
 }
 
+static int draco_sound;
+static int draco_g;
+
 WRITE8_HANDLER ( draco_out0_w )
 {
 	/*
           bit   description
 
-            0   3K9 to Green signal
-            1   820R to Blue signal
-            2   510R to Red signal
-            3   1K to N/C
+            0   3K9 -> Green signal
+            1   820R -> Blue signal
+            2   510R -> Red signal
+            3   1K -> N/C
             4   N/C
-            5   SONIDO A
-            6   SONIDO B
-            7   SONIDO C
+            5   SONIDO A -> COP402 IN0
+            6   SONIDO B -> COP402 IN1
+            7   SONIDO C -> COP402 IN2
     */
+
+    draco_sound = (data & 0xe0) >> 5;
+}
+
+WRITE8_HANDLER ( draco_sound_bankswitch_w )
+{
+	memory_set_bank(1, (data & 0x08) >> 3);
+}
+
+WRITE8_HANDLER ( draco_sound_g_w )
+{
+    draco_g = data;
+}
+
+READ8_HANDLER ( draco_sound_in_r )
+{
+	return draco_sound & 0x07;
+}
+
+WRITE8_HANDLER ( draco_sound_ay8910_w )
+{
+	/*
+
+     G1 G0  description
+
+      0  0  inactive
+      0  1  read from PSG
+      1  0  write to PSG
+      1  1  latch address
+
+    */
+
+	switch(draco_g)
+	{
+	case 0x02:
+		AY8910_write_port_0_w(0, data);
+		break;
+
+	case 0x03:
+		AY8910_control_port_0_w(0, data);
+		break;
+	}
 }
 
 /* Memory Maps */
@@ -112,12 +158,14 @@ static ADDRESS_MAP_START( draco_io_map, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( draco_sound_map, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x07ff) AM_ROM
+	AM_RANGE(0x000, 0x3ff) AM_ROMBANK(1)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( draco_sound_io_map, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x00) AM_WRITE(AY8910_control_port_0_w)
-	AM_RANGE(0x01, 0x01) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(COP400_PORT_D, COP400_PORT_D) AM_WRITE(draco_sound_bankswitch_w)
+	AM_RANGE(COP400_PORT_G, COP400_PORT_G) AM_WRITE(draco_sound_g_w)
+	AM_RANGE(COP400_PORT_L, COP400_PORT_L) AM_READWRITE(AY8910_read_port_0_r, draco_sound_ay8910_w)
+	AM_RANGE(COP400_PORT_IN, COP400_PORT_IN) AM_READ(draco_sound_in_r)
 ADDRESS_MAP_END
 
 /* Input Ports */
@@ -326,13 +374,53 @@ static CDP1802_CONFIG draco_cdp1802_config =
 	draco_in_ef
 };
 
+WRITE8_HANDLER ( draco_ay8910_port_a_w )
+{
+	/*
+          bit   description
+
+            0   N/C
+            1   N/C
+            2   N/C
+            3   N/C
+            4   N/C
+            5   N/C
+            6   N/C
+            7   N/C
+    */
+}
+
+WRITE8_HANDLER ( draco_ay8910_port_b_w )
+{
+	/*
+          bit   description
+
+            0   RELE0
+            1   RELE1
+            2   sound output -> * -> 22K capacitor -> GND
+            3   sound output -> * -> 220K capacitor -> GND
+            4   5V -> 1K resistor -> * -> 10uF capacitor -> GND (volume pot voltage adjustment)
+            5   N/C
+            6   N/C
+            7   N/C
+    */
+}
+
+static struct AY8910interface ay8910_interface =
+{
+	0,
+	0,
+	draco_ay8910_port_a_w,
+	draco_ay8910_port_b_w
+};
+
 /* Interrupt Generators */
 
 static INTERRUPT_GEN( cidelsa_frame_int )
 {
 }
 
-/* Machine Driver */
+/* Machine Drivers */
 
 static MACHINE_DRIVER_START( destryer )
 
@@ -410,9 +498,9 @@ static MACHINE_DRIVER_START( draco )
 	MDRV_CPU_VBLANK_INT(cidelsa_frame_int, 1)
 	MDRV_CPU_CONFIG(draco_cdp1802_config)
 
-//  MDRV_CPU_ADD(COP402, 2012160)
-//  MDRV_CPU_PROGRAM_MAP(draco_sound_map, 0)
-//  MDRV_CPU_IO_MAP(draco_sound_io_map, 0)
+	MDRV_CPU_ADD(COP420, 2012160) // COP402N
+	MDRV_CPU_PROGRAM_MAP(draco_sound_map, 0)
+	MDRV_CPU_IO_MAP(draco_sound_io_map, 0)
 
 	MDRV_FRAMES_PER_SECOND(CDP1870_FPS_PAL)	// 50.09 Hz
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -437,8 +525,17 @@ static MACHINE_DRIVER_START( draco )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 
 	MDRV_SOUND_ADD(AY8910, 2012160)
+	MDRV_SOUND_CONFIG(ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
+
+/* Driver Initialization */
+
+DRIVER_INIT( draco )
+{
+	UINT8 *ROM = memory_region(REGION_CPU2);
+	memory_configure_bank(1, 0, 2, &ROM[0x000], 0x400);
+}
 
 /* ROMs */
 
@@ -477,6 +574,6 @@ ROM_END
 
 /* Game Drivers */
 
-GAME( 1980, destryer, 0, destryer, destryer, 0, ROT0, "Cidelsa", "Destroyer (Cidelsa)", GAME_NOT_WORKING )
-GAME( 1981, altair,   0, altair,   altair,   0, ROT0, "Cidelsa", "Altair", GAME_NOT_WORKING )
-GAME( 1981, draco,    0, draco,    draco,    0, ROT0, "Cidelsa", "Draco", GAME_NOT_WORKING )
+GAME( 1980, destryer, 0, destryer, destryer, 0,     ROT0, "Cidelsa", "Destroyer (Cidelsa)", GAME_NOT_WORKING )
+GAME( 1981, altair,   0, altair,   altair,   0,     ROT0, "Cidelsa", "Altair", GAME_NOT_WORKING )
+GAME( 1981, draco,    0, draco,    draco,    draco, ROT0, "Cidelsa", "Draco", GAME_NOT_WORKING )

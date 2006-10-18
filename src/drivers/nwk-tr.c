@@ -342,7 +342,7 @@ WRITE32_HANDLER(K001604_reg_w)
 		case 0x8:
 		case 0x9:
 		case 0xa:
-			//printf("K001604_reg_w %02X, %08X, %08X\n", offset, data, mem_mask);
+			//mame_printf_debug("K001604_reg_w %02X, %08X, %08X\n", offset, data, mem_mask);
 			break;
 	}
 }

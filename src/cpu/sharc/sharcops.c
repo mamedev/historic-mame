@@ -38,35 +38,53 @@
 #define AIS		0x20		/* ALU floating-point invalid operation */
 
 // MODE1 flags
-#define BR8			0x1			/* Bit-reverse for I8 */
-#define BR0			0x2			/* Bit-reverse for I0 */
-#define SRCU		0x4			/* Alternate register select for computational units */
-#define SRD1H		0x8			/* DAG alternate register select (7-4) */
-#define SRD1L		0x10		/* DAG alternate register select (3-0) */
-#define SRD2H		0x20		/* DAG alternate register select (15-12) */
-#define SRD2L		0x40		/* DAG alternate register select (11-8) */
-#define SRRFH		0x80		/* Register file alternate select for R(15-8) */
-#define SRRFL		0x400		/* Register file alternate select for R(7-0) */
-#define NESTM		0x800		/* Interrupt nesting enable */
-#define IRPTEN		0x1000		/* Global interrupt enable */
-#define ALUSAT		0x2000		/* Enable ALU fixed-point saturation */
-#define SSE			0x4000		/* Enable short word sign extension */
-#define TRUNCATE	0x8000		/* (1) Floating-point truncation / (0) round to nearest */
-#define RND32		0x10000		/* (1) 32-bit floating-point rounding / (0) 40-bit rounding */
-#define CSEL		0x60000		/* CSelect */
+#define MODE1_BR8			0x1			/* Bit-reverse for I8 */
+#define MODE1_BR0			0x2			/* Bit-reverse for I0 */
+#define MODE1_SRCU			0x4			/* Alternate register select for computational units */
+#define MODE1_SRD1H			0x8			/* DAG alternate register select (7-4) */
+#define MODE1_SRD1L			0x10		/* DAG alternate register select (3-0) */
+#define MODE1_SRD2H			0x20		/* DAG alternate register select (15-12) */
+#define MODE1_SRD2L			0x40		/* DAG alternate register select (11-8) */
+#define MODE1_SRRFH			0x80		/* Register file alternate select for R(15-8) */
+#define MODE1_SRRFL			0x400		/* Register file alternate select for R(7-0) */
+#define MODE1_NESTM			0x800		/* Interrupt nesting enable */
+#define MODE1_IRPTEN		0x1000		/* Global interrupt enable */
+#define MODE1_ALUSAT		0x2000		/* Enable ALU fixed-point saturation */
+#define MODE1_SSE			0x4000		/* Enable short word sign extension */
+#define MODE1_TRUNCATE		0x8000		/* (1) Floating-point truncation / (0) round to nearest */
+#define MODE1_RND32			0x10000		/* (1) 32-bit floating-point rounding / (0) 40-bit rounding */
+#define MODE1_CSEL			0x60000		/* CSelect */
 
 // MODE2 flags
-#define IRQ0E		0x1			/* IRQ0 (1) Edge sens. / (0) Level sens. */
-#define IRQ1E		0x2			/* IRQ1 (1) Edge sens. / (0) Level sens. */
-#define IRQ2E		0x4			/* IRQ2 (1) Edge sens. / (0) Level sens. */
-#define CADIS		0x10		/* Cache disable */
-#define TIMEN		0x20		/* Timer enable */
-#define BUSLK		0x40		/* External bus lock */
-#define FLG0O		0x8000		/* FLAG0 (1) Output / (0) Input */
-#define FLG1O		0x10000		/* FLAG1 (1) Output / (0) Input */
-#define FLG2O		0x20000		/* FLAG2 (1) Output / (0) Input */
-#define FLG3O		0x40000		/* FLAG3 (1) Output / (0) Input */
-#define CAFRZ		0x80000		/* Cache freeze */
+#define MODE2_IRQ0E			0x1			/* IRQ0 (1) Edge sens. / (0) Level sens. */
+#define MODE2_IRQ1E			0x2			/* IRQ1 (1) Edge sens. / (0) Level sens. */
+#define MODE2_IRQ2E			0x4			/* IRQ2 (1) Edge sens. / (0) Level sens. */
+#define MODE2_CADIS			0x10		/* Cache disable */
+#define MODE2_TIMEN			0x20		/* Timer enable */
+#define MODE2_BUSLK			0x40		/* External bus lock */
+#define MODE2_FLG0O			0x8000		/* FLAG0 (1) Output / (0) Input */
+#define MODE2_FLG1O			0x10000		/* FLAG1 (1) Output / (0) Input */
+#define MODE2_FLG2O			0x20000		/* FLAG2 (1) Output / (0) Input */
+#define MODE2_FLG3O			0x40000		/* FLAG3 (1) Output / (0) Input */
+#define MODE2_CAFRZ			0x80000		/* Cache freeze */
+
+
+#define REG_PC				0x63
+#define REG_PCSTK			0x64
+#define REG_PCSTKP			0x65
+#define REG_LADDR			0x66
+#define REG_CURLCNTR		0x67
+#define REG_LCNTR			0x68
+#define REG_USTAT1			0x70
+#define REG_USTAT2			0x71
+#define REG_IRPTL			0x79
+#define REG_MODE2			0x7a
+#define REG_MODE1			0x7b
+#define REG_ASTAT			0x7c
+#define REG_IMASK			0x7d
+#define REG_STKY			0x7e
+#define REG_IMASKP			0x7f
+
 
 
 #define REG(x)		(sharc.r[x].r)
@@ -105,162 +123,165 @@
 
 /*****************************************************************************/
 
+static int systemreg_latency_cycles = 0;
 static int systemreg_latency_reg = -1;
 static UINT32 systemreg_latency_data = 0;
+static UINT32 systemreg_previous_data = 0;
 
-static void add_systemreg_write(int sysreg, UINT32 data)
+static void systemreg_write_latency_effect(void);
+
+static void add_systemreg_write_latency_effect(int sysreg, UINT32 data, UINT32 prev_data)
 {
+	if (systemreg_latency_cycles > 0)
+	{
+		//fatalerror("SHARC: add_systemreg_write_latency_effect: already scheduled! (reg: %02X, data: %08X, PC: %08X)\n", systemreg_latency_reg, systemreg_latency_data, sharc.pc);
+		systemreg_write_latency_effect();
+	}
+
+	systemreg_latency_cycles = 2;
 	systemreg_latency_reg = sysreg;
 	systemreg_latency_data = data;
+	systemreg_previous_data = prev_data;
 }
 
-INLINE void swap_sysreg(UINT32 *a, UINT32 *b)
+INLINE void swap_register(UINT32 *a, UINT32 *b)
 {
 	UINT32 temp = *a;
 	*a = *b;
 	*b = temp;
 }
 
-static void systemreg_latency_op(void)
+static void systemreg_write_latency_effect(void)
 {
-	if (systemreg_latency_reg != -1)
+	UINT32 data = systemreg_latency_data;
+	UINT32 old_data = systemreg_previous_data;
+
+	switch(systemreg_latency_reg)
 	{
-		UINT32 data = systemreg_latency_data;
-
-		switch(systemreg_latency_reg)
+		case 0xb:	/* MODE1 */
 		{
-			case 0x9:		/* IRPTL */
+			UINT32 oldreg = old_data;
+			sharc.mode1 = data;
+
+			if ((data & 0x1) != (oldreg & 0x1))
 			{
-				sharc.irptl = data;
-				break;
+				fatalerror("SHARC: systemreg_latency_op: enable I8 bit-reversing");
+			}
+			if ((data & 0x2) != (oldreg & 0x2))
+			{
+				fatalerror("SHARC: systemreg_latency_op: enable I0 bit-reversing");
+			}
+			if ((data & 0x4) != (oldreg & 0x4))
+			{
+				fatalerror("SHARC: systemreg_latency_op: enable MR alternate");
 			}
 
-			case 0xa:	sharc.mode2 = data; break;		/* MODE2 */
-
-			case 0xb:	/* MODE1 */
+			if ((data & 0x8) != (oldreg & 0x8))			/* Switch DAG1 7-4 */
 			{
-				UINT32 oldreg = sharc.mode1;
-				sharc.mode1 = data;
-
-				if (data & 0x1) {
-					fatalerror("SHARC: systemreg_latency_op: enable I8 bit-reversing");
-				}
-				if (data & 0x2) {
-					fatalerror("SHARC: systemreg_latency_op: enable I0 bit-reversing");
-				}
-				if (data & 0x4) {
-					fatalerror("SHARC: systemreg_latency_op: enable MR alternate");
-				}
-
-				if ((data & 0x8) != (oldreg & 0x8))			/* Switch DAG1 7-4 */
-				{
-					swap_sysreg(&sharc.dag1.i[4], &sharc.dag1_alt.i[4]);
-					swap_sysreg(&sharc.dag1.i[5], &sharc.dag1_alt.i[5]);
-					swap_sysreg(&sharc.dag1.i[6], &sharc.dag1_alt.i[6]);
-					swap_sysreg(&sharc.dag1.i[7], &sharc.dag1_alt.i[7]);
-					swap_sysreg(&sharc.dag1.m[4], &sharc.dag1_alt.m[4]);
-					swap_sysreg(&sharc.dag1.m[5], &sharc.dag1_alt.m[5]);
-					swap_sysreg(&sharc.dag1.m[6], &sharc.dag1_alt.m[6]);
-					swap_sysreg(&sharc.dag1.m[7], &sharc.dag1_alt.m[7]);
-					swap_sysreg(&sharc.dag1.l[4], &sharc.dag1_alt.l[4]);
-					swap_sysreg(&sharc.dag1.l[5], &sharc.dag1_alt.l[5]);
-					swap_sysreg(&sharc.dag1.l[6], &sharc.dag1_alt.l[6]);
-					swap_sysreg(&sharc.dag1.l[7], &sharc.dag1_alt.l[7]);
-					swap_sysreg(&sharc.dag1.b[4], &sharc.dag1_alt.b[4]);
-					swap_sysreg(&sharc.dag1.b[5], &sharc.dag1_alt.b[5]);
-					swap_sysreg(&sharc.dag1.b[6], &sharc.dag1_alt.b[6]);
-					swap_sysreg(&sharc.dag1.b[7], &sharc.dag1_alt.b[7]);
-				}
-
-				if ((data & 0x10) != (oldreg & 0x10))		/* Switch DAG1 3-0 */
-				{
-					swap_sysreg(&sharc.dag1.i[0], &sharc.dag1_alt.i[0]);
-					swap_sysreg(&sharc.dag1.i[1], &sharc.dag1_alt.i[1]);
-					swap_sysreg(&sharc.dag1.i[2], &sharc.dag1_alt.i[2]);
-					swap_sysreg(&sharc.dag1.i[3], &sharc.dag1_alt.i[3]);
-					swap_sysreg(&sharc.dag1.m[0], &sharc.dag1_alt.m[0]);
-					swap_sysreg(&sharc.dag1.m[1], &sharc.dag1_alt.m[1]);
-					swap_sysreg(&sharc.dag1.m[2], &sharc.dag1_alt.m[2]);
-					swap_sysreg(&sharc.dag1.m[3], &sharc.dag1_alt.m[3]);
-					swap_sysreg(&sharc.dag1.l[0], &sharc.dag1_alt.l[0]);
-					swap_sysreg(&sharc.dag1.l[1], &sharc.dag1_alt.l[1]);
-					swap_sysreg(&sharc.dag1.l[2], &sharc.dag1_alt.l[2]);
-					swap_sysreg(&sharc.dag1.l[3], &sharc.dag1_alt.l[3]);
-					swap_sysreg(&sharc.dag1.b[0], &sharc.dag1_alt.b[0]);
-					swap_sysreg(&sharc.dag1.b[1], &sharc.dag1_alt.b[1]);
-					swap_sysreg(&sharc.dag1.b[2], &sharc.dag1_alt.b[2]);
-					swap_sysreg(&sharc.dag1.b[3], &sharc.dag1_alt.b[3]);
-				}
-
-				if ((data & 0x20) != (oldreg & 0x20)) {		/* Switch DAG2 15-12 */
-					swap_sysreg(&sharc.dag2.i[4], &sharc.dag2_alt.i[4]);
-					swap_sysreg(&sharc.dag2.i[5], &sharc.dag2_alt.i[5]);
-					swap_sysreg(&sharc.dag2.i[6], &sharc.dag2_alt.i[6]);
-					swap_sysreg(&sharc.dag2.i[7], &sharc.dag2_alt.i[7]);
-					swap_sysreg(&sharc.dag2.m[4], &sharc.dag2_alt.m[4]);
-					swap_sysreg(&sharc.dag2.m[5], &sharc.dag2_alt.m[5]);
-					swap_sysreg(&sharc.dag2.m[6], &sharc.dag2_alt.m[6]);
-					swap_sysreg(&sharc.dag2.m[7], &sharc.dag2_alt.m[7]);
-					swap_sysreg(&sharc.dag2.l[4], &sharc.dag2_alt.l[4]);
-					swap_sysreg(&sharc.dag2.l[5], &sharc.dag2_alt.l[5]);
-					swap_sysreg(&sharc.dag2.l[6], &sharc.dag2_alt.l[6]);
-					swap_sysreg(&sharc.dag2.l[7], &sharc.dag2_alt.l[7]);
-					swap_sysreg(&sharc.dag2.b[4], &sharc.dag2_alt.b[4]);
-					swap_sysreg(&sharc.dag2.b[5], &sharc.dag2_alt.b[5]);
-					swap_sysreg(&sharc.dag2.b[6], &sharc.dag2_alt.b[6]);
-					swap_sysreg(&sharc.dag2.b[7], &sharc.dag2_alt.b[7]);
-				}
-
-				if ((data & 0x40) != (oldreg & 0x40)) {		/* Switch DAG2 11-8 */
-					swap_sysreg(&sharc.dag2.i[0], &sharc.dag2_alt.i[0]);
-					swap_sysreg(&sharc.dag2.i[1], &sharc.dag2_alt.i[1]);
-					swap_sysreg(&sharc.dag2.i[2], &sharc.dag2_alt.i[2]);
-					swap_sysreg(&sharc.dag2.i[3], &sharc.dag2_alt.i[3]);
-					swap_sysreg(&sharc.dag2.m[0], &sharc.dag2_alt.m[0]);
-					swap_sysreg(&sharc.dag2.m[1], &sharc.dag2_alt.m[1]);
-					swap_sysreg(&sharc.dag2.m[2], &sharc.dag2_alt.m[2]);
-					swap_sysreg(&sharc.dag2.m[3], &sharc.dag2_alt.m[3]);
-					swap_sysreg(&sharc.dag2.l[0], &sharc.dag2_alt.l[0]);
-					swap_sysreg(&sharc.dag2.l[1], &sharc.dag2_alt.l[1]);
-					swap_sysreg(&sharc.dag2.l[2], &sharc.dag2_alt.l[2]);
-					swap_sysreg(&sharc.dag2.l[3], &sharc.dag2_alt.l[3]);
-					swap_sysreg(&sharc.dag2.b[0], &sharc.dag2_alt.b[0]);
-					swap_sysreg(&sharc.dag2.b[1], &sharc.dag2_alt.b[1]);
-					swap_sysreg(&sharc.dag2.b[2], &sharc.dag2_alt.b[2]);
-					swap_sysreg(&sharc.dag2.b[3], &sharc.dag2_alt.b[3]);
-				}
-
-				if ((data & 0x80) != (oldreg & 0x80)) {
-					swap_sysreg(&sharc.r[8].r, &sharc.reg_alt[8].r);
-					swap_sysreg(&sharc.r[9].r, &sharc.reg_alt[9].r);
-					swap_sysreg(&sharc.r[10].r, &sharc.reg_alt[10].r);
-					swap_sysreg(&sharc.r[11].r, &sharc.reg_alt[11].r);
-					swap_sysreg(&sharc.r[12].r, &sharc.reg_alt[12].r);
-					swap_sysreg(&sharc.r[13].r, &sharc.reg_alt[13].r);
-					swap_sysreg(&sharc.r[14].r, &sharc.reg_alt[14].r);
-					swap_sysreg(&sharc.r[15].r, &sharc.reg_alt[15].r);
-				}
-				if ((data & 0x400) != (oldreg & 0x400)) {
-					swap_sysreg(&sharc.r[0].r, &sharc.reg_alt[0].r);
-					swap_sysreg(&sharc.r[1].r, &sharc.reg_alt[1].r);
-					swap_sysreg(&sharc.r[2].r, &sharc.reg_alt[2].r);
-					swap_sysreg(&sharc.r[3].r, &sharc.reg_alt[3].r);
-					swap_sysreg(&sharc.r[4].r, &sharc.reg_alt[4].r);
-					swap_sysreg(&sharc.r[5].r, &sharc.reg_alt[5].r);
-					swap_sysreg(&sharc.r[6].r, &sharc.reg_alt[6].r);
-					swap_sysreg(&sharc.r[7].r, &sharc.reg_alt[7].r);
-				}
-				break;
+				swap_register(&sharc.dag1.i[4], &sharc.dag1_alt.i[4]);
+				swap_register(&sharc.dag1.i[5], &sharc.dag1_alt.i[5]);
+				swap_register(&sharc.dag1.i[6], &sharc.dag1_alt.i[6]);
+				swap_register(&sharc.dag1.i[7], &sharc.dag1_alt.i[7]);
+				swap_register(&sharc.dag1.m[4], &sharc.dag1_alt.m[4]);
+				swap_register(&sharc.dag1.m[5], &sharc.dag1_alt.m[5]);
+				swap_register(&sharc.dag1.m[6], &sharc.dag1_alt.m[6]);
+				swap_register(&sharc.dag1.m[7], &sharc.dag1_alt.m[7]);
+				swap_register(&sharc.dag1.l[4], &sharc.dag1_alt.l[4]);
+				swap_register(&sharc.dag1.l[5], &sharc.dag1_alt.l[5]);
+				swap_register(&sharc.dag1.l[6], &sharc.dag1_alt.l[6]);
+				swap_register(&sharc.dag1.l[7], &sharc.dag1_alt.l[7]);
+				swap_register(&sharc.dag1.b[4], &sharc.dag1_alt.b[4]);
+				swap_register(&sharc.dag1.b[5], &sharc.dag1_alt.b[5]);
+				swap_register(&sharc.dag1.b[6], &sharc.dag1_alt.b[6]);
+				swap_register(&sharc.dag1.b[7], &sharc.dag1_alt.b[7]);
+			}
+			if ((data & 0x10) != (oldreg & 0x10))		/* Switch DAG1 3-0 */
+			{
+				swap_register(&sharc.dag1.i[0], &sharc.dag1_alt.i[0]);
+				swap_register(&sharc.dag1.i[1], &sharc.dag1_alt.i[1]);
+				swap_register(&sharc.dag1.i[2], &sharc.dag1_alt.i[2]);
+				swap_register(&sharc.dag1.i[3], &sharc.dag1_alt.i[3]);
+				swap_register(&sharc.dag1.m[0], &sharc.dag1_alt.m[0]);
+				swap_register(&sharc.dag1.m[1], &sharc.dag1_alt.m[1]);
+				swap_register(&sharc.dag1.m[2], &sharc.dag1_alt.m[2]);
+				swap_register(&sharc.dag1.m[3], &sharc.dag1_alt.m[3]);
+				swap_register(&sharc.dag1.l[0], &sharc.dag1_alt.l[0]);
+				swap_register(&sharc.dag1.l[1], &sharc.dag1_alt.l[1]);
+				swap_register(&sharc.dag1.l[2], &sharc.dag1_alt.l[2]);
+				swap_register(&sharc.dag1.l[3], &sharc.dag1_alt.l[3]);
+				swap_register(&sharc.dag1.b[0], &sharc.dag1_alt.b[0]);
+				swap_register(&sharc.dag1.b[1], &sharc.dag1_alt.b[1]);
+				swap_register(&sharc.dag1.b[2], &sharc.dag1_alt.b[2]);
+				swap_register(&sharc.dag1.b[3], &sharc.dag1_alt.b[3]);
+			}
+			if ((data & 0x20) != (oldreg & 0x20))		/* Switch DAG2 15-12 */
+			{
+				swap_register(&sharc.dag2.i[4], &sharc.dag2_alt.i[4]);
+				swap_register(&sharc.dag2.i[5], &sharc.dag2_alt.i[5]);
+				swap_register(&sharc.dag2.i[6], &sharc.dag2_alt.i[6]);
+				swap_register(&sharc.dag2.i[7], &sharc.dag2_alt.i[7]);
+				swap_register(&sharc.dag2.m[4], &sharc.dag2_alt.m[4]);
+				swap_register(&sharc.dag2.m[5], &sharc.dag2_alt.m[5]);
+				swap_register(&sharc.dag2.m[6], &sharc.dag2_alt.m[6]);
+				swap_register(&sharc.dag2.m[7], &sharc.dag2_alt.m[7]);
+				swap_register(&sharc.dag2.l[4], &sharc.dag2_alt.l[4]);
+				swap_register(&sharc.dag2.l[5], &sharc.dag2_alt.l[5]);
+				swap_register(&sharc.dag2.l[6], &sharc.dag2_alt.l[6]);
+				swap_register(&sharc.dag2.l[7], &sharc.dag2_alt.l[7]);
+				swap_register(&sharc.dag2.b[4], &sharc.dag2_alt.b[4]);
+				swap_register(&sharc.dag2.b[5], &sharc.dag2_alt.b[5]);
+				swap_register(&sharc.dag2.b[6], &sharc.dag2_alt.b[6]);
+				swap_register(&sharc.dag2.b[7], &sharc.dag2_alt.b[7]);
+			}
+			if ((data & 0x40) != (oldreg & 0x40))		/* Switch DAG2 11-8 */
+			{
+				swap_register(&sharc.dag2.i[0], &sharc.dag2_alt.i[0]);
+				swap_register(&sharc.dag2.i[1], &sharc.dag2_alt.i[1]);
+				swap_register(&sharc.dag2.i[2], &sharc.dag2_alt.i[2]);
+				swap_register(&sharc.dag2.i[3], &sharc.dag2_alt.i[3]);
+				swap_register(&sharc.dag2.m[0], &sharc.dag2_alt.m[0]);
+				swap_register(&sharc.dag2.m[1], &sharc.dag2_alt.m[1]);
+				swap_register(&sharc.dag2.m[2], &sharc.dag2_alt.m[2]);
+				swap_register(&sharc.dag2.m[3], &sharc.dag2_alt.m[3]);
+				swap_register(&sharc.dag2.l[0], &sharc.dag2_alt.l[0]);
+				swap_register(&sharc.dag2.l[1], &sharc.dag2_alt.l[1]);
+				swap_register(&sharc.dag2.l[2], &sharc.dag2_alt.l[2]);
+				swap_register(&sharc.dag2.l[3], &sharc.dag2_alt.l[3]);
+				swap_register(&sharc.dag2.b[0], &sharc.dag2_alt.b[0]);
+				swap_register(&sharc.dag2.b[1], &sharc.dag2_alt.b[1]);
+				swap_register(&sharc.dag2.b[2], &sharc.dag2_alt.b[2]);
+				swap_register(&sharc.dag2.b[3], &sharc.dag2_alt.b[3]);
+			}
+			if ((data & 0x80) != (oldreg & 0x80))
+			{
+				swap_register(&sharc.r[8].r, &sharc.reg_alt[8].r);
+				swap_register(&sharc.r[9].r, &sharc.reg_alt[9].r);
+				swap_register(&sharc.r[10].r, &sharc.reg_alt[10].r);
+				swap_register(&sharc.r[11].r, &sharc.reg_alt[11].r);
+				swap_register(&sharc.r[12].r, &sharc.reg_alt[12].r);
+				swap_register(&sharc.r[13].r, &sharc.reg_alt[13].r);
+				swap_register(&sharc.r[14].r, &sharc.reg_alt[14].r);
+				swap_register(&sharc.r[15].r, &sharc.reg_alt[15].r);
+			}
+			if ((data & 0x400) != (oldreg & 0x400))
+			{
+				swap_register(&sharc.r[0].r, &sharc.reg_alt[0].r);
+				swap_register(&sharc.r[1].r, &sharc.reg_alt[1].r);
+				swap_register(&sharc.r[2].r, &sharc.reg_alt[2].r);
+				swap_register(&sharc.r[3].r, &sharc.reg_alt[3].r);
+				swap_register(&sharc.r[4].r, &sharc.reg_alt[4].r);
+				swap_register(&sharc.r[5].r, &sharc.reg_alt[5].r);
+				swap_register(&sharc.r[6].r, &sharc.reg_alt[6].r);
+				swap_register(&sharc.r[7].r, &sharc.reg_alt[7].r);
 			}
 
-			case 0xc:	sharc.astat = data; break;		/* ASTAT */
-			case 0xd:	sharc.imask = data; break;		/* IMASK */
-			case 0xe:	sharc.stky = data; break;		/* STKY */
-			default:	fatalerror("SHARC: systemreg_latency_op: unknown register %02X at %08X", systemreg_latency_reg, sharc.pc);
+			check_interrupts();
+			break;
 		}
-
-		systemreg_latency_reg = -1;
+		default:	fatalerror("SHARC: systemreg_latency_op: unknown register %02X at %08X", systemreg_latency_reg, sharc.pc);
 	}
+
+	systemreg_latency_reg = -1;
 }
 
 static UINT32 GET_UREG(int ureg)
@@ -289,7 +310,10 @@ static UINT32 GET_UREG(int ureg)
 		{
 			if (reg & 0x8)		/* M8 - M15 */
 			{
-				return sharc.dag2.m[reg & 0x7];
+				INT32 r = sharc.dag2.m[reg & 0x7];
+				if (r & 0x800000)	r |= 0xff000000;
+
+				return r;
 			}
 			else				/* M0 - M7 */
 			{
@@ -333,51 +357,26 @@ static UINT32 GET_UREG(int ureg)
 
 		case 0x7:
 		{
-			// if we wrote a systemreg on the last cycle there's no read latency (except IMASKP)
-			// so in this case we need to get the value directly from latency data
-			if (systemreg_latency_reg == reg)
+			switch(reg)
 			{
-				switch(reg)
+				case 0x0:	return sharc.ustat1;		/* USTAT1 */
+				case 0x1:	return sharc.ustat2;		/* USTAT2 */
+				case 0x9:	return sharc.irptl;			/* IRPTL */
+				case 0xa:	return sharc.mode2;			/* MODE2 */
+				case 0xb:	return sharc.mode1;			/* MODE1 */
+				case 0xc:								/* ASTAT */
 				{
-					// these have no write latency, so return the normal value
-					case 0x0:	return sharc.ustat1;		/* USTAT1 */
-					case 0x1:	return sharc.ustat2;		/* USTAT2 */
-
-					// no read latency, get the latency data
-					case 0x9:	return systemreg_latency_data;		/* IRPTL */
-					case 0xa:	return systemreg_latency_data;		/* MODE2 */
-					case 0xb:	return systemreg_latency_data;		/* MODE1 */
-					case 0xc:	return systemreg_latency_data;		/* ASTAT */
-					case 0xd:	return systemreg_latency_data;		/* IMASK */
-					case 0xe:	return systemreg_latency_data;		/* STKY */
-
-					// TODO: IMASKP has a read latency of one cycle
-					default:	fatalerror("SHARC: GET_UREG: unknown register %08X at %08X", ureg, sharc.pc);
+					UINT32 r = sharc.astat;
+					r &= ~0x00780000;
+					r |= (sharc.flag[0] << 19);
+					r |= (sharc.flag[1] << 20);
+					r |= (sharc.flag[2] << 21);
+					r |= (sharc.flag[3] << 22);
+					return r;
 				}
-			}
-			else		// the register is not the same we wrote on the last cycle
-			{
-				switch(reg)
-				{
-					case 0x0:	return sharc.ustat1;		/* USTAT1 */
-					case 0x1:	return sharc.ustat2;		/* USTAT2 */
-					case 0x9:	return sharc.irptl;			/* IRPTL */
-					case 0xa:	return sharc.mode2;			/* MODE2 */
-					case 0xb:	return sharc.mode1;			/* MODE1 */
-					case 0xc:								/* ASTAT */
-					{
-						UINT32 r = sharc.astat;
-						r &= ~0x00780000;
-						r |= (sharc.flag[0] << 19);
-						r |= (sharc.flag[1] << 20);
-						r |= (sharc.flag[2] << 21);
-						r |= (sharc.flag[3] << 22);
-						return r;
-					}
-					case 0xd:	return sharc.imask;			/* IMASK */
-					case 0xe:	return sharc.stky;			/* STKY */
-					default:	fatalerror("SHARC: GET_UREG: unknown register %08X at %08X", ureg, sharc.pc);
-				}
+				case 0xd:	return sharc.imask;			/* IMASK */
+				case 0xe:	return sharc.stky;			/* STKY */
+				default:	fatalerror("SHARC: GET_UREG: unknown register %08X at %08X", ureg, sharc.pc);
 			}
 			break;
 		}
@@ -467,17 +466,22 @@ static void SET_UREG(int ureg, UINT32 data)
 		case 0x7:		/* system regs */
 			switch(reg)
 			{
-				// no write latency
 				case 0x0:	sharc.ustat1 = data; break;		/* USTAT1 */
 				case 0x1:	sharc.ustat2 = data; break;		/* USTAT2 */
 
-				// 1-cycle write latency
-				case 0x9:	add_systemreg_write(reg, data); break;		/* IRPTL */
-				case 0xa:	add_systemreg_write(reg, data); break;		/* MODE2 */
-				case 0xb:	add_systemreg_write(reg, data); break;		/* MODE1 */
-				case 0xc:	add_systemreg_write(reg, data); break;		/* ASTAT */
-				case 0xd:	add_systemreg_write(reg, data); break;		/* IMASK */
-				case 0xe:	add_systemreg_write(reg, data); break;		/* STKY */
+				case 0x9:	sharc.irptl = data; break;		/* IRPTL */
+				case 0xa:	sharc.mode2 = data; break;		/* MODE2 */
+
+				case 0xb:									/* MODE1 */
+				{
+					add_systemreg_write_latency_effect(reg, data, sharc.mode1);
+					sharc.mode1 = data;
+					break;
+				}
+
+				case 0xc:	sharc.astat = data; break;		/* ASTAT */
+				case 0xd:	sharc.imask = data; break;		/* IMASK */
+				case 0xe:	sharc.stky = data; break;		/* STKY */
 				default:	fatalerror("SHARC: SET_UREG: unknown register %08X at %08X", ureg, sharc.pc);
 			}
 			break;
@@ -719,7 +723,8 @@ static void COMPUTE(UINT32 opcode)
 	//int ra = rn;
 	//int rm = rs;
 
-	if(opcode & 0x400000) {		/* Multi-function opcode */
+	if(opcode & 0x400000)		/* Multi-function opcode */
+	{
 		int fm = (opcode >> 12) & 0xf;
 		int fa = (opcode >> 8) & 0xf;
 		int fxm = (opcode >> 6) & 0x3;			// registers 0 - 3
@@ -796,7 +801,8 @@ static void COMPUTE(UINT32 opcode)
 				break;
 		}
 	}
-	else {						/* Single-function opcode */
+	else						/* Single-function opcode */
+	{
 		switch(cu)
 		{
 			/* ALU operations */
@@ -1064,7 +1070,8 @@ static void COMPUTE(UINT32 opcode)
 INLINE void PUSH_PC(UINT32 pc)
 {
 	sharc.pcstkp++;
-	if(sharc.pcstkp >= 32) {
+	if(sharc.pcstkp >= 32)
+	{
 		fatalerror("SHARC: PC Stack overflow !");
 	}
 
@@ -1085,7 +1092,8 @@ INLINE UINT32 POP_PC(void)
 {
 	sharc.pcstk = sharc.pcstack[sharc.pcstkp];
 	sharc.pcstkp--;
-	if(sharc.pcstkp < 0) {
+	if(sharc.pcstkp < 0)
+	{
 		fatalerror("SHARC: PC Stack underflow !");
 	}
 
@@ -1109,7 +1117,8 @@ INLINE UINT32 TOP_PC(void)
 INLINE void PUSH_LOOP(UINT32 pc, UINT32 count)
 {
 	sharc.lstkp++;
-	if(sharc.lstkp >= 6) {
+	if(sharc.lstkp >= 6)
+	{
 		fatalerror("SHARC: Loop Stack overflow !");
 	}
 
@@ -1124,14 +1133,15 @@ INLINE void PUSH_LOOP(UINT32 pc, UINT32 count)
 
 	sharc.lcstack[sharc.lstkp] = count;
 	sharc.lastack[sharc.lstkp] = pc;
-	sharc.laddr = pc;
 	sharc.curlcntr = count;
+	sharc.laddr = pc;
 }
 
 INLINE void POP_LOOP(void)
 {
 	sharc.lstkp--;
-	if(sharc.lstkp < 0) {
+	if(sharc.lstkp < 0)
+	{
 		fatalerror("SHARC: Loop Stack underflow !");
 	}
 
@@ -1148,12 +1158,14 @@ INLINE void POP_LOOP(void)
 	sharc.laddr = sharc.lastack[sharc.lstkp];
 }
 
-INLINE void PUSH_STATUS_REG(UINT32 value)
+INLINE void PUSH_STATUS_STACK(void)
 {
 	sharc.status_stkp++;
-	if (sharc.status_stkp >= 8) {
+	if (sharc.status_stkp >= 5)
+	{
 		fatalerror("SHARC: Status stack overflow !");
 	}
+
 	if (sharc.status_stkp == 0)
 	{
 		sharc.stky |= 0x1000000;
@@ -1162,15 +1174,22 @@ INLINE void PUSH_STATUS_REG(UINT32 value)
 	{
 		sharc.stky &= ~0x1000000;
 	}
-	sharc.status_stack[sharc.status_stkp] = value;
+
+	sharc.status_stack[sharc.status_stkp].mode1 = GET_UREG(REG_MODE1);
+	sharc.status_stack[sharc.status_stkp].astat = GET_UREG(REG_ASTAT);
 }
 
-INLINE UINT32 POP_STATUS_REG(void)
+INLINE void POP_STATUS_STACK(void)
 {
+	SET_UREG(REG_MODE1, sharc.status_stack[sharc.status_stkp].mode1);
+	SET_UREG(REG_ASTAT, sharc.status_stack[sharc.status_stkp].astat);
+
 	sharc.status_stkp--;
-	if (sharc.status_stkp < 0) {
+	if (sharc.status_stkp < 0)
+	{
 		fatalerror("SHARC: Status stack underflow !");
 	}
+
 	if (sharc.status_stkp == 0)
 	{
 		sharc.stky |= 0x1000000;
@@ -1179,27 +1198,12 @@ INLINE UINT32 POP_STATUS_REG(void)
 	{
 		sharc.stky &= ~0x1000000;
 	}
-	return sharc.status_stack[sharc.status_stkp];
-}
-
-INLINE void DELAY_SLOT(void)
-{
-	sharc.pc++;
-	DECODE_AND_EXEC_OPCODE();
-	systemreg_latency_op();
-	IOP_LATENCY_OP();
-	sharc.pc++;
-	DECODE_AND_EXEC_OPCODE();
-	systemreg_latency_op();
-	IOP_LATENCY_OP();
-	sharc_icount-=2;
 }
 
 INLINE int IF_CONDITION_CODE(int cond)
 {
 	switch(cond)
 	{
-
 		case 0x00:	return sharc.astat & AZ;		/* EQ */
 		case 0x01:	return !(sharc.astat & AZ) && (sharc.astat & AN);	/* LT */
 		case 0x02:	return (sharc.astat & AZ) || (sharc.astat & AN);	/* LE */
@@ -1240,7 +1244,6 @@ INLINE int DO_CONDITION_CODE(int cond)
 {
 	switch(cond)
 	{
-
 		case 0x00:	return sharc.astat & AZ;		/* EQ */
 		case 0x01:	return !(sharc.astat & AZ) && (sharc.astat & AN);	/* LT */
 		case 0x02:	return (sharc.astat & AZ) || (sharc.astat & AN);	/* LE */
@@ -1278,123 +1281,7 @@ INLINE int DO_CONDITION_CODE(int cond)
 }
 
 /*****************************************************************************/
-
-/* system register bit manipulation */
-static void sharcop_sysreg_bitop(void)
-{
-	int bop = (sharc.opcode >> 37) & 0x7;
-	int sreg = (sharc.opcode >> 32) & 0xf;
-	UINT32 data = (UINT32)sharc.opcode;
-
-	UINT32 src = GET_UREG(0x70 | sreg);
-
-	switch(bop)
-	{
-		case 0:		/* SET */
-			src |= data;
-			break;
-		case 1:		/* CLEAR */
-			src &= ~data;
-			break;
-		case 2:		/* TOGGLE */
-			src ^= data;
-			break;
-		case 4:		/* TEST */
-			if ((src & data) == data)
-			{
-				sharc.astat |= BTF;
-			}
-			else
-			{
-				sharc.astat &= ~BTF;
-			}
-			break;
-		case 5:		/* XOR */
-			if (src == data)
-			{
-				sharc.astat |= BTF;
-			}
-			else
-			{
-				sharc.astat &= ~BTF;
-			}
-			break;
-		default:
-			fatalerror("SHARC: sysreg_bitop: invalid bitop %d", bop);
-			break;
-	}
-
-	SET_UREG(0x70 | sreg, src);
-}
-
-/* | 00010110 | */
-
-/* I register modify */
-static void sharcop_modify(void)
-{
-	int g = (sharc.opcode >> 38) & 0x1;
-	int i = (sharc.opcode >> 32) & 0x7;
-	INT32 data = (sharc.opcode);
-
-	if (g)		// PM
-	{
-		PM_REG_I(i) += data;
-		UPDATE_CIRCULAR_BUFFER_PM(i);
-	}
-	else		// DM
-	{
-		DM_REG_I(i) += data;
-		UPDATE_CIRCULAR_BUFFER_DM(i);
-	}
-}
-
-/*****************************************************************************/
-/* | 00000001 | */
-
-/* compute */
-static void sharcop_compute(void)
-{
-	int cond = (sharc.opcode >> 33) & 0x1f;
-	int compute = sharc.opcode & 0x7fffff;
-
-	if(IF_CONDITION_CODE(cond) && compute != 0) {
-		COMPUTE(compute);
-	}
-}
-
-/*****************************************************************************/
-/* | 00000100 | */
-
-/* compute / modify */
-static void sharcop_compute_modify(void)
-{
-	int cond = (sharc.opcode >> 33) & 0x1f;
-	int compute = sharc.opcode & 0x7fffff;
-	int g = (sharc.opcode >> 38) & 0x1;
-	int m = (sharc.opcode >> 27) & 0x7;
-	int i = (sharc.opcode >> 30) & 0x7;
-
-	if (IF_CONDITION_CODE(cond))
-	{
-		if (compute != 0) {
-			COMPUTE(compute);
-		}
-
-		if (g)		/* Modify PM */
-		{
-			PM_REG_I(i) += PM_REG_M(m);
-			UPDATE_CIRCULAR_BUFFER_PM(i);
-		}
-		else		/* Modify DM */
-		{
-			DM_REG_I(i) += DM_REG_M(m);
-			UPDATE_CIRCULAR_BUFFER_DM(i);
-		}
-	}
-}
-
-/*****************************************************************************/
-/* | 001 | */
+/* | 001xxxxxx | */
 
 /* compute / dreg <-> DM / dreg <-> PM */
 static void sharcop_compute_dreg_dm_dreg_pm(void)
@@ -1447,132 +1334,22 @@ static void sharcop_compute_dreg_dm_dreg_pm(void)
 }
 
 /*****************************************************************************/
-/* | 0111 | UREG | */
+/* | 00000001x | */
 
-/* compute / ureg <-> ureg */
-static void sharcop_compute_ureg_to_ureg(void)
-{
-	int src_ureg = (sharc.opcode >> 36) & 0xff;
-	int dst_ureg = (sharc.opcode >> 23) & 0xff;
-	int cond = (sharc.opcode >> 31) & 0x1f;
-	int compute = sharc.opcode & 0x7fffff;
-
-	/* due to parallelity issues, source UREG must be saved */
-	/* because the compute operation may change it */
-	UINT32 parallel_ureg = GET_UREG(src_ureg);
-
-	if(IF_CONDITION_CODE(cond) && compute != 0) {
-		COMPUTE(compute);
-	}
-
-	SET_UREG(dst_ureg, parallel_ureg);
-}
-
-/*****************************************************************************/
-/* | 0110 | III | G | D | */
-
-/* compute / dreg <- DM, immediate modify */
-static void sharcop_compute_dm_to_dreg_immmod(void)
+/* compute */
+static void sharcop_compute(void)
 {
 	int cond = (sharc.opcode >> 33) & 0x1f;
-	int u = (sharc.opcode >> 38) & 0x1;
-	int dreg = (sharc.opcode >> 23) & 0xf;
-	int i = (sharc.opcode >> 41) & 0x7;
-	int mod = SIGN_EXTEND6((sharc.opcode >> 27) & 0x3f);
 	int compute = sharc.opcode & 0x7fffff;
 
-	if(IF_CONDITION_CODE(cond) && compute != 0) {
+	if (IF_CONDITION_CODE(cond) && compute != 0)
+	{
 		COMPUTE(compute);
-	}
-
-	if(u) {		/* post-modify with update */
-		REG(dreg) = dm_read32(DM_REG_I(i));
-		DM_REG_I(i)+=mod;
-		UPDATE_CIRCULAR_BUFFER_DM(i);
-	} else {	/* pre-modify, no update */
-		REG(dreg) = dm_read32(DM_REG_I(i)+mod);
-	}
-}
-
-/* compute / dreg -> DM, immediate modify */
-static void sharcop_compute_dreg_to_dm_immmod(void)
-{
-	int cond = (sharc.opcode >> 33) & 0x1f;
-	int u = (sharc.opcode >> 38) & 0x1;
-	int dreg = (sharc.opcode >> 23) & 0xf;
-	int i = (sharc.opcode >> 41) & 0x7;
-	int mod = SIGN_EXTEND6((sharc.opcode >> 27) & 0x3f);
-	int compute = sharc.opcode & 0x7fffff;
-
-	/* due to parallelity issues, source REG must be saved */
-	/* because the shift operation may change it */
-	UINT32 parallel_dreg = REG(dreg);
-
-	if(IF_CONDITION_CODE(cond) && compute != 0) {
-		COMPUTE(compute);
-	}
-
-	if(u) {		/* post-modify with update */
-		dm_write32(DM_REG_I(i), parallel_dreg);
-		DM_REG_I(i)+=mod;
-		UPDATE_CIRCULAR_BUFFER_DM(i);
-	} else {	/* pre-modify, no update */
-		dm_write32(DM_REG_I(i)+mod, parallel_dreg);
-	}
-}
-
-/* compute / dreg <- PM, immediate modify */
-static void sharcop_compute_pm_to_dreg_immmod(void)
-{
-	int cond = (sharc.opcode >> 33) & 0x1f;
-	int u = (sharc.opcode >> 38) & 0x1;
-	int dreg = (sharc.opcode >> 23) & 0xf;
-	int i = (sharc.opcode >> 41) & 0x7;
-	int mod = SIGN_EXTEND6((sharc.opcode >> 27) & 0x3f);
-	int compute = sharc.opcode & 0x7fffff;
-
-	if(IF_CONDITION_CODE(cond) && compute != 0) {
-		COMPUTE(compute);
-	}
-
-	if(u) {		/* post-modify with update */
-		REG(dreg) = pm_read32(PM_REG_I(i));
-		PM_REG_I(i)+=mod;
-		UPDATE_CIRCULAR_BUFFER_PM(i);
-	} else {	/* pre-modify, no update */
-		REG(dreg) = pm_read32(PM_REG_I(i)+mod);
-	}
-}
-
-/* compute / dreg -> PM, immediate modify */
-static void sharcop_compute_dreg_to_pm_immmod(void)
-{
-	int cond = (sharc.opcode >> 33) & 0x1f;
-	int u = (sharc.opcode >> 38) & 0x1;
-	int dreg = (sharc.opcode >> 23) & 0xf;
-	int i = (sharc.opcode >> 41) & 0x7;
-	int mod = SIGN_EXTEND6((sharc.opcode >> 27) & 0x3f);
-	int compute = sharc.opcode & 0x7fffff;
-
-	/* due to parallelity issues, source REG must be saved */
-	/* because the compute operation may change it */
-	UINT32 parallel_dreg = REG(dreg);
-
-	if(IF_CONDITION_CODE(cond) && compute != 0) {
-		COMPUTE(compute);
-	}
-
-	if(u) {		/* post-modify with update */
-		pm_write32(PM_REG_I(i), parallel_dreg);
-		PM_REG_I(i)+=mod;
-		UPDATE_CIRCULAR_BUFFER_PM(i);
-	} else {	/* pre-modify, no update */
-		pm_write32(PM_REG_I(i)+mod, parallel_dreg);
 	}
 }
 
 /*****************************************************************************/
-/* | 010 | U | III | MMM | */
+/* | 010xxxxxx | */
 
 /* compute / ureg <-> DM|PM, pre-modify */
 static void sharcop_compute_ureg_dmpm_premod(void)
@@ -1585,16 +1362,21 @@ static void sharcop_compute_ureg_dmpm_premod(void)
 	int ureg = (sharc.opcode >> 23) & 0xff;
 	int compute = sharc.opcode & 0x7fffff;
 
-	if(IF_CONDITION_CODE(cond)) {
+	if (IF_CONDITION_CODE(cond))
+	{
 		/* due to parallelity issues, source UREG must be saved */
 		/* because the compute operation may change it */
 		UINT32 parallel_ureg = GET_UREG(ureg);
 
-		if(compute != 0)
+		if (compute)
+		{
 			COMPUTE(compute);
+		}
 
-		if(g) {		/* PM */
-			if(d) {		/* ureg -> PM */
+		if (g)		/* PM */
+		{
+			if (d)		/* ureg -> PM */
+			{
 				if (ureg == 0xdb)		/* PX register access is always 48-bit */
 				{
 					pm_write48(PM_REG_I(i)+PM_REG_M(m), sharc.px);
@@ -1603,7 +1385,9 @@ static void sharcop_compute_ureg_dmpm_premod(void)
 				{
 					pm_write32(PM_REG_I(i)+PM_REG_M(m), parallel_ureg);
 				}
-			} else {	/* PM <- ureg */
+			}
+			else		/* PM <- ureg */
+			{
 				if (ureg == 0xdb)		/* PX register access is always 48-bit */
 				{
 					sharc.px = pm_read48(PM_REG_I(i)+PM_REG_M(m));
@@ -1613,10 +1397,15 @@ static void sharcop_compute_ureg_dmpm_premod(void)
 					SET_UREG(ureg, pm_read32(PM_REG_I(i)+PM_REG_M(m)));
 				}
 			}
-		} else {	/* DM */
-			if(d) {		/* ureg -> DM */
+		}
+		else	/* DM */
+		{
+			if (d)		/* ureg -> DM */
+			{
 				dm_write32(DM_REG_I(i)+DM_REG_M(m), parallel_ureg);
-			} else {	/* DM <- ureg */
+			}
+			else		/* DM <- ureg */
+			{
 				SET_UREG(ureg, dm_read32(DM_REG_I(i)+DM_REG_M(m)));
 			}
 		}
@@ -1634,16 +1423,21 @@ static void sharcop_compute_ureg_dmpm_postmod(void)
 	int ureg = (sharc.opcode >> 23) & 0xff;
 	int compute = sharc.opcode & 0x7fffff;
 
-	if(IF_CONDITION_CODE(cond)) {
+	if(IF_CONDITION_CODE(cond))
+	{
 		/* due to parallelity issues, source UREG must be saved */
 		/* because the compute operation may change it */
 		UINT32 parallel_ureg = GET_UREG(ureg);
 
-		if(compute != 0)
+		if (compute)
+		{
 			COMPUTE(compute);
+		}
 
-		if(g) {		/* PM */
-			if(d) {		/* ureg -> PM */
+		if (g)		/* PM */
+		{
+			if (d)		/* ureg -> PM */
+			{
 				if (ureg == 0xdb)		/* PX register access is always 48-bit */
 				{
 					pm_write48(PM_REG_I(i), sharc.px);
@@ -1652,9 +1446,11 @@ static void sharcop_compute_ureg_dmpm_postmod(void)
 				{
 					pm_write32(PM_REG_I(i), parallel_ureg);
 				}
-				PM_REG_I(i)+=PM_REG_M(m);
+				PM_REG_I(i) += PM_REG_M(m);
 				UPDATE_CIRCULAR_BUFFER_PM(i);
-			} else {	/* PM <- ureg */
+			}
+			else		/* PM <- ureg */
+			{
 				if (ureg == 0xdb)		/* PX register access is always 48-bit */
 				{
 					sharc.px = pm_read48(PM_REG_I(i));
@@ -1663,21 +1459,963 @@ static void sharcop_compute_ureg_dmpm_postmod(void)
 				{
 					SET_UREG(ureg, pm_read32(PM_REG_I(i)));
 				}
-				PM_REG_I(i)+=PM_REG_M(m);
+				PM_REG_I(i) += PM_REG_M(m);
 				UPDATE_CIRCULAR_BUFFER_PM(i);
 			}
-		} else {	/* DM */
-			if(d) {		/* ureg -> DM */
+		}
+		else	/* DM */
+		{
+			if (d)		/* ureg -> DM */
+			{
 				dm_write32(DM_REG_I(i), parallel_ureg);
-				DM_REG_I(i)+=DM_REG_M(m);
+				DM_REG_I(i) += DM_REG_M(m);
 				UPDATE_CIRCULAR_BUFFER_DM(i);
-			} else {	/* DM <- ureg */
+			}
+			else		/* DM <- ureg */
+			{
 				SET_UREG(ureg, dm_read32(DM_REG_I(i)));
-				DM_REG_I(i)+=DM_REG_M(m);
+				DM_REG_I(i) += DM_REG_M(m);
 				UPDATE_CIRCULAR_BUFFER_DM(i);
 			}
 		}
 	}
+}
+
+/*****************************************************************************/
+/* | 0110xxxxx | */
+
+/* compute / dreg <- DM, immediate modify */
+static void sharcop_compute_dm_to_dreg_immmod(void)
+{
+	int cond = (sharc.opcode >> 33) & 0x1f;
+	int u = (sharc.opcode >> 38) & 0x1;
+	int dreg = (sharc.opcode >> 23) & 0xf;
+	int i = (sharc.opcode >> 41) & 0x7;
+	int mod = SIGN_EXTEND6((sharc.opcode >> 27) & 0x3f);
+	int compute = sharc.opcode & 0x7fffff;
+
+	if (IF_CONDITION_CODE(cond) && compute != 0)
+	{
+		COMPUTE(compute);
+	}
+
+	if (u)		/* post-modify with update */
+	{
+		REG(dreg) = dm_read32(DM_REG_I(i));
+		DM_REG_I(i) += mod;
+		UPDATE_CIRCULAR_BUFFER_DM(i);
+	}
+	else		/* pre-modify, no update */
+	{
+		REG(dreg) = dm_read32(DM_REG_I(i) + mod);
+	}
+}
+
+/* compute / dreg -> DM, immediate modify */
+static void sharcop_compute_dreg_to_dm_immmod(void)
+{
+	int cond = (sharc.opcode >> 33) & 0x1f;
+	int u = (sharc.opcode >> 38) & 0x1;
+	int dreg = (sharc.opcode >> 23) & 0xf;
+	int i = (sharc.opcode >> 41) & 0x7;
+	int mod = SIGN_EXTEND6((sharc.opcode >> 27) & 0x3f);
+	int compute = sharc.opcode & 0x7fffff;
+
+	/* due to parallelity issues, source REG must be saved */
+	/* because the shift operation may change it */
+	UINT32 parallel_dreg = REG(dreg);
+
+	if (IF_CONDITION_CODE(cond) && compute != 0)
+	{
+		COMPUTE(compute);
+	}
+
+	if (u)		/* post-modify with update */
+	{
+		dm_write32(DM_REG_I(i), parallel_dreg);
+		DM_REG_I(i) += mod;
+		UPDATE_CIRCULAR_BUFFER_DM(i);
+	}
+	else		/* pre-modify, no update */
+	{
+		dm_write32(DM_REG_I(i) + mod, parallel_dreg);
+	}
+}
+
+/* compute / dreg <- PM, immediate modify */
+static void sharcop_compute_pm_to_dreg_immmod(void)
+{
+	int cond = (sharc.opcode >> 33) & 0x1f;
+	int u = (sharc.opcode >> 38) & 0x1;
+	int dreg = (sharc.opcode >> 23) & 0xf;
+	int i = (sharc.opcode >> 41) & 0x7;
+	int mod = SIGN_EXTEND6((sharc.opcode >> 27) & 0x3f);
+	int compute = sharc.opcode & 0x7fffff;
+
+	if (IF_CONDITION_CODE(cond) && compute != 0)
+	{
+		COMPUTE(compute);
+	}
+
+	if (u)		/* post-modify with update */
+	{
+		REG(dreg) = pm_read32(PM_REG_I(i));
+		PM_REG_I(i) += mod;
+		UPDATE_CIRCULAR_BUFFER_PM(i);
+	}
+	else		/* pre-modify, no update */
+	{
+		REG(dreg) = pm_read32(PM_REG_I(i) + mod);
+	}
+}
+
+/* compute / dreg -> PM, immediate modify */
+static void sharcop_compute_dreg_to_pm_immmod(void)
+{
+	int cond = (sharc.opcode >> 33) & 0x1f;
+	int u = (sharc.opcode >> 38) & 0x1;
+	int dreg = (sharc.opcode >> 23) & 0xf;
+	int i = (sharc.opcode >> 41) & 0x7;
+	int mod = SIGN_EXTEND6((sharc.opcode >> 27) & 0x3f);
+	int compute = sharc.opcode & 0x7fffff;
+
+	/* due to parallelity issues, source REG must be saved */
+	/* because the compute operation may change it */
+	UINT32 parallel_dreg = REG(dreg);
+
+	if (IF_CONDITION_CODE(cond) && compute != 0)
+	{
+		COMPUTE(compute);
+	}
+
+	if (u)		/* post-modify with update */
+	{
+		pm_write32(PM_REG_I(i), parallel_dreg);
+		PM_REG_I(i) += mod;
+		UPDATE_CIRCULAR_BUFFER_PM(i);
+	}
+	else		/* pre-modify, no update */
+	{
+		pm_write32(PM_REG_I(i) + mod, parallel_dreg);
+	}
+}
+
+/*****************************************************************************/
+/* | 0111xxxxx | */
+
+/* compute / ureg <-> ureg */
+static void sharcop_compute_ureg_to_ureg(void)
+{
+	int src_ureg = (sharc.opcode >> 36) & 0xff;
+	int dst_ureg = (sharc.opcode >> 23) & 0xff;
+	int cond = (sharc.opcode >> 31) & 0x1f;
+	int compute = sharc.opcode & 0x7fffff;
+
+	/* due to parallelity issues, source UREG must be saved */
+	/* because the compute operation may change it */
+	UINT32 parallel_ureg = GET_UREG(src_ureg);
+
+	if (IF_CONDITION_CODE(cond) && compute != 0)
+	{
+		COMPUTE(compute);
+	}
+
+	SET_UREG(dst_ureg, parallel_ureg);
+}
+
+/*****************************************************************************/
+/* | 1000xxxxx | */
+
+/* immediate shift / dreg <-> DM|PM */
+static void sharcop_imm_shift_dreg_dmpm(void)
+{
+	int i = (sharc.opcode >> 41) & 0x7;
+	int m = (sharc.opcode >> 38) & 0x7;
+	int g = (sharc.opcode >> 32) & 0x1;
+	int d = (sharc.opcode >> 31) & 0x1;
+	int dreg = (sharc.opcode >> 23) & 0xf;
+	int cond = (sharc.opcode >> 33) & 0x1f;
+	int data = ((sharc.opcode >> 8) & 0xff) | ((sharc.opcode >> 19) & 0xf00);
+	int shiftop = (sharc.opcode >> 16) & 0x3f;
+	int rn = (sharc.opcode >> 4) & 0xf;
+	int rx = (sharc.opcode & 0xf);
+
+	if (IF_CONDITION_CODE(cond))
+	{
+		/* due to parallelity issues, source REG must be saved */
+		/* because the shift operation may change it */
+		UINT32 parallel_dreg = REG(dreg);
+
+		SHIFT_OPERATION_IMM(shiftop, data, rn, rx);
+
+		if (g)		/* PM */
+		{
+			if (d)		/* dreg -> PM */
+			{
+				pm_write32(PM_REG_I(i), parallel_dreg);
+				PM_REG_I(i) += PM_REG_M(m);
+				UPDATE_CIRCULAR_BUFFER_PM(i);
+			}
+			else		/* PM <- dreg */
+			{
+				REG(dreg) = pm_read32(PM_REG_I(i));
+				PM_REG_I(i) += PM_REG_M(m);
+				UPDATE_CIRCULAR_BUFFER_PM(i);
+			}
+		}
+		else		/* DM */
+		{
+			if (d)		/* dreg -> DM */
+			{
+				dm_write32(DM_REG_I(i), parallel_dreg);
+				DM_REG_I(i) += DM_REG_M(m);
+				UPDATE_CIRCULAR_BUFFER_DM(i);
+			}
+			else	/* DM <- dreg */
+			{
+				REG(dreg) = dm_read32(DM_REG_I(i));
+				DM_REG_I(i) += DM_REG_M(m);
+				UPDATE_CIRCULAR_BUFFER_DM(i);
+			}
+		}
+	}
+}
+
+/*****************************************************************************/
+/* | 00000010x | */
+
+/* immediate shift */
+static void sharcop_imm_shift(void)
+{
+	int cond = (sharc.opcode >> 33) & 0x1f;
+	int data = ((sharc.opcode >> 8) & 0xff) | ((sharc.opcode >> 19) & 0xf00);
+	int shiftop = (sharc.opcode >> 16) & 0x3f;
+	int rn = (sharc.opcode >> 4) & 0xf;
+	int rx = (sharc.opcode & 0xf);
+
+	if (IF_CONDITION_CODE(cond))
+	{
+		SHIFT_OPERATION_IMM(shiftop, data, rn, rx);
+	}
+}
+
+/*****************************************************************************/
+/* | 00000100x | */
+
+/* compute / modify */
+static void sharcop_compute_modify(void)
+{
+	int cond = (sharc.opcode >> 33) & 0x1f;
+	int compute = sharc.opcode & 0x7fffff;
+	int g = (sharc.opcode >> 38) & 0x1;
+	int m = (sharc.opcode >> 27) & 0x7;
+	int i = (sharc.opcode >> 30) & 0x7;
+
+	if (IF_CONDITION_CODE(cond))
+	{
+		if (compute != 0)
+		{
+			COMPUTE(compute);
+		}
+
+		if (g)		/* Modify PM */
+		{
+			PM_REG_I(i) += PM_REG_M(m);
+			UPDATE_CIRCULAR_BUFFER_PM(i);
+		}
+		else		/* Modify DM */
+		{
+			DM_REG_I(i) += DM_REG_M(m);
+			UPDATE_CIRCULAR_BUFFER_DM(i);
+		}
+	}
+}
+
+/*****************************************************************************/
+/* | 00000110x | */
+
+/* direct call to absolute address */
+static void sharcop_direct_call(void)
+{
+	int j = (sharc.opcode >> 26) & 0x1;
+	int cond = (sharc.opcode >> 33) & 0x1f;
+	UINT32 address = sharc.opcode & 0xffffff;
+
+	if (IF_CONDITION_CODE(cond))
+	{
+		if (j)
+		{
+			PUSH_PC(sharc.pc+3);	/* 1 instruction + 2 delayed instructions */
+			CHANGE_PC_DELAYED(address);
+		}
+		else
+		{
+			PUSH_PC(sharc.pc+1);
+			CHANGE_PC(address);
+		}
+	}
+}
+
+/* direct jump to absolute address */
+static void sharcop_direct_jump(void)
+{
+	int la = (sharc.opcode >> 38) & 0x1;
+	int ci = (sharc.opcode >> 24) & 0x1;
+	int j = (sharc.opcode >> 26) & 0x1;
+	int cond = (sharc.opcode >> 33) & 0x1f;
+	UINT32 address = sharc.opcode & 0xffffff;
+
+	if(IF_CONDITION_CODE(cond))
+	{
+		// Clear Interrupt
+		if (ci)
+		{
+			// TODO: anything else?
+			if (sharc.status_stkp > 0)
+			{
+				POP_STATUS_STACK();
+			}
+
+			sharc.irptl &= ~(1 << sharc.irq_active_num);
+		}
+
+		if (la)
+		{
+			POP_PC();
+			POP_LOOP();
+		}
+
+		if (j)
+		{
+			CHANGE_PC_DELAYED(address);
+		}
+		else
+		{
+			CHANGE_PC(address);
+		}
+	}
+}
+
+/*****************************************************************************/
+/* | 00000111x | */
+
+/* direct call to relative address */
+static void sharcop_relative_call(void)
+{
+	int j = (sharc.opcode >> 26) & 0x1;
+	int cond = (sharc.opcode >> 33) & 0x1f;
+	UINT32 address = sharc.opcode & 0xffffff;
+
+	if (IF_CONDITION_CODE(cond))
+	{
+		if (j)
+		{
+			PUSH_PC(sharc.pc+3);	/* 1 instruction + 2 delayed instructions */
+			CHANGE_PC_DELAYED(sharc.pc + SIGN_EXTEND24(address));
+		}
+		else
+		{
+			PUSH_PC(sharc.pc+1);
+			CHANGE_PC(sharc.pc + SIGN_EXTEND24(address));
+		}
+	}
+}
+
+/* direct jump to relative address */
+static void sharcop_relative_jump(void)
+{
+	int la = (sharc.opcode >> 38) & 0x1;
+	int ci = (sharc.opcode >> 24) & 0x1;
+	int j = (sharc.opcode >> 26) & 0x1;
+	int cond = (sharc.opcode >> 33) & 0x1f;
+	UINT32 address = sharc.opcode & 0xffffff;
+
+	if (IF_CONDITION_CODE(cond))
+	{
+		// Clear Interrupt
+		if (ci)
+		{
+			// TODO: anything else?
+			if (sharc.status_stkp > 0)
+			{
+				POP_STATUS_STACK();
+			}
+
+			sharc.irptl &= ~(1 << sharc.irq_active_num);
+		}
+
+		if (la)
+		{
+			POP_PC();
+			POP_LOOP();
+		}
+
+		if (j)
+		{
+			CHANGE_PC_DELAYED(sharc.pc + SIGN_EXTEND24(address));
+		}
+		else
+		{
+			CHANGE_PC(sharc.pc + SIGN_EXTEND24(address));
+		}
+	}
+}
+
+/*****************************************************************************/
+/* | 00001000x | */
+
+/* indirect jump */
+static void sharcop_indirect_jump(void)
+{
+	int la = (sharc.opcode >> 38) & 0x1;
+	int ci = (sharc.opcode >> 24) & 0x1;
+	int j = (sharc.opcode >> 26) & 0x1;
+	int e = (sharc.opcode >> 25) & 0x1;
+	int pmi = (sharc.opcode >> 30) & 0x7;
+	int pmm = (sharc.opcode >> 27) & 0x7;
+	int cond = (sharc.opcode >> 33) & 0x1f;
+	int compute = sharc.opcode & 0x7fffff;
+
+	// Clear Interrupt
+	if (ci)
+	{
+		// TODO: anything else?
+		if (sharc.status_stkp > 0)
+		{
+			POP_STATUS_STACK();
+		}
+
+		sharc.irptl &= ~(1 << sharc.irq_active_num);
+	}
+
+	if (e)		/* IF...ELSE */
+	{
+		if (IF_CONDITION_CODE(cond))
+		{
+			if (la)
+			{
+				POP_PC();
+				POP_LOOP();
+			}
+
+			if(j)
+			{
+				CHANGE_PC_DELAYED(PM_REG_I(pmi) + PM_REG_M(pmm));
+			}
+			else
+			{
+				CHANGE_PC(PM_REG_I(pmi) + PM_REG_M(pmm));
+			}
+		}
+		else
+		{
+			if (compute)
+			{
+				COMPUTE(compute);
+			}
+		}
+	}
+	else		/* IF */
+	{
+		if (IF_CONDITION_CODE(cond))
+		{
+			if (compute)
+			{
+				COMPUTE(compute);
+			}
+
+			if (la)
+			{
+				POP_PC();
+				POP_LOOP();
+			}
+
+			if(j)
+			{
+				CHANGE_PC_DELAYED(PM_REG_I(pmi) + PM_REG_M(pmm));
+			}
+			else
+			{
+				CHANGE_PC(PM_REG_I(pmi) + PM_REG_M(pmm));
+			}
+		}
+	}
+}
+
+/* indirect call */
+static void sharcop_indirect_call(void)
+{
+	int j = (sharc.opcode >> 26) & 0x1;
+	int e = (sharc.opcode >> 25) & 0x1;
+	int pmi = (sharc.opcode >> 30) & 0x7;
+	int pmm = (sharc.opcode >> 27) & 0x7;
+	int cond = (sharc.opcode >> 33) & 0x1f;
+	int compute = sharc.opcode & 0x7fffff;
+
+	if (e)		/* IF...ELSE */
+	{
+		if (IF_CONDITION_CODE(cond))
+		{
+			if (j)
+			{
+				PUSH_PC(sharc.pc+3);	/* 1 instruction + 2 delayed instructions */
+				CHANGE_PC_DELAYED(PM_REG_I(pmi) + PM_REG_M(pmm));
+			}
+			else
+			{
+				PUSH_PC(sharc.pc+1);
+				CHANGE_PC(PM_REG_I(pmi) + PM_REG_M(pmm));
+			}
+		}
+		else
+		{
+			if (compute)
+			{
+				COMPUTE(compute);
+			}
+		}
+	}
+	else		/* IF */
+	{
+		if (IF_CONDITION_CODE(cond))
+		{
+			if (compute)
+			{
+				COMPUTE(compute);
+			}
+
+			if (j)
+			{
+				PUSH_PC(sharc.pc+3);	/* 1 instruction + 2 delayed instructions */
+				CHANGE_PC_DELAYED(PM_REG_I(pmi) + PM_REG_M(pmm));
+			}
+			else
+			{
+				PUSH_PC(sharc.pc+1);
+				CHANGE_PC(PM_REG_I(pmi) + PM_REG_M(pmm));
+			}
+		}
+	}
+}
+
+/*****************************************************************************/
+/* | 00001001x | */
+
+/* indirect jump to relative address */
+static void sharcop_relative_jump_compute(void)
+{
+	int la = (sharc.opcode >> 38) & 0x1;
+	int ci = (sharc.opcode >> 24) & 0x1;
+	int j = (sharc.opcode >> 26) & 0x1;
+	int e = (sharc.opcode >> 25) & 0x1;
+	int cond = (sharc.opcode >> 33) & 0x1f;
+	int compute = sharc.opcode & 0x7fffff;
+
+	// Clear Interrupt
+	if (ci)
+	{
+		// TODO: anything else?
+		if (sharc.status_stkp > 0)
+		{
+			POP_STATUS_STACK();
+		}
+
+		sharc.irptl &= ~(1 << sharc.irq_active_num);
+	}
+
+	if (e)		/* IF...ELSE */
+	{
+		if (IF_CONDITION_CODE(cond))
+		{
+			if (la)
+			{
+				POP_PC();
+				POP_LOOP();
+			}
+
+			if (j)
+			{
+				CHANGE_PC_DELAYED(sharc.pc + SIGN_EXTEND6((sharc.opcode >> 27) & 0x3f));
+			}
+			else
+			{
+				CHANGE_PC(sharc.pc + SIGN_EXTEND6((sharc.opcode >> 27) & 0x3f));
+			}
+		}
+		else
+		{
+			if (compute)
+			{
+				COMPUTE(compute);
+			}
+		}
+	}
+	else		/* IF */
+	{
+		if (IF_CONDITION_CODE(cond))
+		{
+			if (compute)
+			{
+				COMPUTE(compute);
+			}
+
+			if (la)
+			{
+				POP_PC();
+				POP_LOOP();
+			}
+
+			if (j)
+			{
+				CHANGE_PC_DELAYED(sharc.pc + SIGN_EXTEND6((sharc.opcode >> 27) & 0x3f));
+			}
+			else
+			{
+				CHANGE_PC(sharc.pc + SIGN_EXTEND6((sharc.opcode >> 27) & 0x3f));
+			}
+		}
+	}
+}
+
+/* indirect call to relative address */
+static void sharcop_relative_call_compute(void)
+{
+	int j = (sharc.opcode >> 26) & 0x1;
+	int e = (sharc.opcode >> 25) & 0x1;
+	int cond = (sharc.opcode >> 33) & 0x1f;
+	int compute = sharc.opcode & 0x7fffff;
+
+	if (e)		/* IF...ELSE */
+	{
+		if (IF_CONDITION_CODE(cond))
+		{
+			if (j)
+			{
+				PUSH_PC(sharc.pc+3);	/* 1 instruction + 2 delayed instructions */
+				CHANGE_PC_DELAYED(sharc.pc + SIGN_EXTEND6((sharc.opcode >> 27) & 0x3f));
+			}
+			else
+			{
+				PUSH_PC(sharc.pc+1);
+				CHANGE_PC(sharc.pc + SIGN_EXTEND6((sharc.opcode >> 27) & 0x3f));
+			}
+		}
+		else
+		{
+			if (compute)
+			{
+				COMPUTE(compute);
+			}
+		}
+	}
+	else		/* IF */
+	{
+		if (IF_CONDITION_CODE(cond))
+		{
+			if (compute)
+			{
+				COMPUTE(compute);
+			}
+
+			if (j)
+			{
+				PUSH_PC(sharc.pc+3);	/* 1 instruction + 2 delayed instructions */
+				CHANGE_PC_DELAYED(sharc.pc + SIGN_EXTEND6((sharc.opcode >> 27) & 0x3f));
+			}
+			else
+			{
+				PUSH_PC(sharc.pc+1);
+				CHANGE_PC(sharc.pc + SIGN_EXTEND6((sharc.opcode >> 27) & 0x3f));
+			}
+		}
+	}
+}
+
+/*****************************************************************************/
+/* | 110xxxxxx | */
+
+/* indirect jump / compute / dreg <-> DM */
+static void sharcop_indirect_jump_compute_dreg_dm(void)
+{
+	int d = (sharc.opcode >> 44) & 0x1;
+	int dmi = (sharc.opcode >> 41) & 0x7;
+	int dmm = (sharc.opcode >> 38) & 0x7;
+	int pmi = (sharc.opcode >> 30) & 0x7;
+	int pmm = (sharc.opcode >> 27) & 0x7;
+	int cond = (sharc.opcode >> 33) & 0x1f;
+	int dreg = (sharc.opcode >> 23) & 0xf;
+
+	if (IF_CONDITION_CODE(cond))
+	{
+		CHANGE_PC(PM_REG_I(pmi) + PM_REG_M(pmm));
+	}
+	else
+	{
+		UINT32 compute = sharc.opcode & 0x7fffff;
+		/* due to parallelity issues, source REG must be saved */
+		/* because the compute operation may change it */
+		UINT32 parallel_dreg = REG(dreg);
+
+		if (compute)
+		{
+			COMPUTE(compute);
+		}
+
+		if (d)		/* dreg -> DM */
+		{
+			dm_write32(DM_REG_I(dmi), parallel_dreg);
+			DM_REG_I(dmi) += DM_REG_M(dmm);
+			UPDATE_CIRCULAR_BUFFER_DM(dmi);
+		}
+		else		/* DM <- dreg */
+		{
+			REG(dreg) = dm_read32(DM_REG_I(dmi));
+			DM_REG_I(dmi) += DM_REG_M(dmm);
+			UPDATE_CIRCULAR_BUFFER_DM(dmi);
+		}
+	}
+}
+
+/*****************************************************************************/
+/* | 111xxxxxx | */
+
+/* relative jump / compute / dreg <-> DM */
+static void sharcop_relative_jump_compute_dreg_dm(void)
+{
+	int d = (sharc.opcode >> 44) & 0x1;
+	int dmi = (sharc.opcode >> 41) & 0x7;
+	int dmm = (sharc.opcode >> 38) & 0x7;
+	int cond = (sharc.opcode >> 33) & 0x1f;
+	int dreg = (sharc.opcode >> 23) & 0xf;
+
+	if (IF_CONDITION_CODE(cond))
+	{
+		CHANGE_PC(sharc.pc + SIGN_EXTEND6((sharc.opcode >> 27) & 0x3f));
+	}
+	else
+	{
+		UINT32 compute = sharc.opcode & 0x7fffff;
+		/* due to parallelity issues, source REG must be saved */
+		/* because the compute operation may change it */
+		UINT32 parallel_dreg = REG(dreg);
+
+		if (compute)
+		{
+			COMPUTE(compute);
+		}
+
+		if (d)		/* dreg -> DM */
+		{
+			dm_write32(DM_REG_I(dmi), parallel_dreg);
+			DM_REG_I(dmi) += DM_REG_M(dmm);
+			UPDATE_CIRCULAR_BUFFER_DM(dmi);
+		}
+		else		/* DM <- dreg */
+		{
+			REG(dreg) = dm_read32(DM_REG_I(dmi));
+			DM_REG_I(dmi) += DM_REG_M(dmm);
+			UPDATE_CIRCULAR_BUFFER_DM(dmi);
+		}
+	}
+}
+
+/*****************************************************************************/
+/* | 00001010x | */
+
+/* return from subroutine / compute */
+static void sharcop_rts(void)
+{
+	int cond = (sharc.opcode >> 33) & 0x1f;
+	int j = (sharc.opcode >> 26) & 0x1;
+	int e = (sharc.opcode >> 25) & 0x1;
+	//int lr = (sharc.opcode >> 24) & 0x1;
+	int compute = sharc.opcode & 0x7fffff;
+
+	//if(lr)
+	//  fatalerror("SHARC: rts: loop reentry not implemented !");
+
+	if (e)		/* IF...ELSE */
+	{
+		if(IF_CONDITION_CODE(cond))
+		{
+			if (j)
+			{
+				CHANGE_PC_DELAYED(POP_PC());
+			}
+			else
+			{
+				CHANGE_PC(POP_PC());
+			}
+		}
+		else
+		{
+			if (compute)
+			{
+				COMPUTE(compute);
+			}
+		}
+	}
+	else		/* IF */
+	{
+		if (IF_CONDITION_CODE(cond))
+		{
+			if (compute)
+			{
+				COMPUTE(compute);
+			}
+
+			if (j)
+			{
+				CHANGE_PC_DELAYED(POP_PC());
+			}
+			else
+			{
+				CHANGE_PC(POP_PC());
+			}
+		}
+	}
+}
+
+/*****************************************************************************/
+/* | 00001011x | */
+
+/* return from interrupt / compute */
+static void sharcop_rti(void)
+{
+	int cond = (sharc.opcode >> 33) & 0x1f;
+	int j = (sharc.opcode >> 26) & 0x1;
+	int e = (sharc.opcode >> 25) & 0x1;
+	int compute = sharc.opcode & 0x7fffff;
+
+	sharc.irptl &= ~(1 << sharc.irq_active_num);
+
+	if(e)		/* IF...ELSE */
+	{
+		if (IF_CONDITION_CODE(cond))
+		{
+			if (j)
+			{
+				CHANGE_PC_DELAYED(POP_PC());
+			}
+			else
+			{
+				CHANGE_PC(POP_PC());
+			}
+		}
+		else
+		{
+			if (compute)
+			{
+				COMPUTE(compute);
+			}
+		}
+	}
+	else		/* IF */
+	{
+		if (IF_CONDITION_CODE(cond))
+		{
+			if (compute)
+			{
+				COMPUTE(compute);
+			}
+
+			if (j)
+			{
+				CHANGE_PC_DELAYED(POP_PC());
+			}
+			else
+			{
+				CHANGE_PC(POP_PC());
+			}
+		}
+	}
+
+	if (sharc.status_stkp > 0)
+	{
+		POP_STATUS_STACK();
+	}
+}
+
+/*****************************************************************************/
+/* | 00001100x | */
+
+/* do until counter expired, LCNTR immediate */
+static void sharcop_do_until_counter_imm(void)
+{
+	UINT16 data = (UINT16)(sharc.opcode >> 24);
+	int offset = SIGN_EXTEND24(sharc.opcode & 0xffffff);
+	UINT32 address = sharc.pc + offset;
+	int type;
+	int cond = 0xf;		/* until LCE (loop counter expired */
+	int distance = abs(offset);
+
+	if (distance == 1)
+	{
+		type = 1;
+	}
+	else if (distance == 2)
+	{
+		type = 2;
+	}
+	else
+	{
+		type = 3;
+	}
+
+	sharc.lcntr = data;
+	if (sharc.lcntr > 0)
+	{
+		PUSH_PC(sharc.pc+1);
+		PUSH_LOOP(address | (type << 30) | (cond << 24), sharc.lcntr);
+	}
+}
+
+/*****************************************************************************/
+/* | 00001101x | */
+
+/* do until counter expired, LCNTR from UREG */
+static void sharcop_do_until_counter_ureg(void)
+{
+	int ureg = (sharc.opcode >> 32) & 0xff;
+	int offset = SIGN_EXTEND24(sharc.opcode & 0xffffff);
+	UINT32 address = sharc.pc + offset;
+	int type;
+	int cond = 0xf;		/* until LCE (loop counter expired */
+	int distance = abs(offset);
+
+	if (distance == 1)
+	{
+		type = 1;
+	}
+	else if (distance == 2)
+	{
+		type = 2;
+	}
+	else
+	{
+		type = 3;
+	}
+
+	sharc.lcntr = GET_UREG(ureg);
+	if (sharc.lcntr > 0)
+	{
+		PUSH_PC(sharc.pc+1);
+		PUSH_LOOP(address | (type << 30) | (cond << 24), sharc.lcntr);
+	}
+}
+
+/*****************************************************************************/
+/* | 00001110x | */
+
+/* do until */
+static void sharcop_do_until(void)
+{
+	int cond = (sharc.opcode >> 33) & 0x1f;
+	int offset = SIGN_EXTEND24(sharc.opcode & 0xffffff);
+	UINT32 address = (sharc.pc + offset);
+
+	PUSH_PC(sharc.pc+1);
+	PUSH_LOOP(address | (cond << 24), 0);
 }
 
 /*****************************************************************************/
@@ -1743,7 +2481,7 @@ static void sharcop_dm_to_ureg_indirect(void)
 	UINT32 offset = (UINT32)sharc.opcode;
 	int i = (sharc.opcode >> 41) & 0x7;
 
-	SET_UREG(ureg, dm_read32(DM_REG_I(i)+offset));
+	SET_UREG(ureg, dm_read32(DM_REG_I(i) + offset));
 }
 
 /* ureg -> DM (indirect addressing) */
@@ -1753,7 +2491,7 @@ static void sharcop_ureg_to_dm_indirect(void)
 	UINT32 offset = (UINT32)sharc.opcode;
 	int i = (sharc.opcode >> 41) & 0x7;
 
-	dm_write32(DM_REG_I(i)+offset, GET_UREG(ureg));
+	dm_write32(DM_REG_I(i) + offset, GET_UREG(ureg));
 }
 
 /* ureg <- PM (indirect addressing) */
@@ -1765,11 +2503,11 @@ static void sharcop_pm_to_ureg_indirect(void)
 
 	if (ureg == 0xdb)		/* PX is 48-bit */
 	{
-		sharc.px = pm_read48(PM_REG_I(i)+offset);
+		sharc.px = pm_read48(PM_REG_I(i) + offset);
 	}
 	else
 	{
-		SET_UREG(ureg, pm_read32(PM_REG_I(i)+offset));
+		SET_UREG(ureg, pm_read32(PM_REG_I(i) + offset));
 	}
 }
 
@@ -1782,37 +2520,46 @@ static void sharcop_ureg_to_pm_indirect(void)
 
 	if (ureg == 0xdb)		/* PX is 48-bit */
 	{
-		pm_write48(PM_REG_I(i)+offset, sharc.px);
+		pm_write48(PM_REG_I(i) + offset, sharc.px);
 	}
 	else
 	{
-		pm_write32(PM_REG_I(i)+offset, GET_UREG(ureg));
+		pm_write32(PM_REG_I(i) + offset, GET_UREG(ureg));
 	}
 }
 
 /*****************************************************************************/
+/* | 1001xxxxx | */
 
 /* immediate data -> DM|PM */
-static void sharcop_immdata_to_dmpm(void)
+static void sharcop_imm_to_dmpm(void)
 {
 	int i = (sharc.opcode >> 41) & 0x7;
 	int m = (sharc.opcode >> 38) & 0x7;
+	int g = (sharc.opcode >> 37) & 0x1;
 	UINT32 data = (UINT32)sharc.opcode;
 
-	if(sharc.opcode & U64(0x2000000000)) {
+	if (g)
+	{
 		/* program memory (PM) */
 		pm_write32(PM_REG_I(i), data);
-		PM_REG_I(i)+=PM_REG_M(m);
+		PM_REG_I(i) += PM_REG_M(m);
 		UPDATE_CIRCULAR_BUFFER_PM(i);
-	} else {
+	}
+	else
+	{
 		/* data memory (DM) */
 		dm_write32(DM_REG_I(i), data);
-		DM_REG_I(i)+=DM_REG_M(m);
+		DM_REG_I(i) += DM_REG_M(m);
 		UPDATE_CIRCULAR_BUFFER_DM(i);
 	}
 }
 
-static void sharcop_immdata_to_ureg(void)
+/*****************************************************************************/
+/* | 00001111x | */
+
+/* immediate data -> ureg */
+static void sharcop_imm_to_ureg(void)
 {
 	int ureg = (sharc.opcode >> 32) & 0xff;
 	UINT32 data = (UINT32)sharc.opcode;
@@ -1821,611 +2568,100 @@ static void sharcop_immdata_to_ureg(void)
 }
 
 /*****************************************************************************/
-/* | 00000010 | */
+/* | 00010100x | */
 
-/* immediate shift */
-static void sharcop_imm_shift(void)
+/* system register bit manipulation */
+static void sharcop_sysreg_bitop(void)
 {
-	int cond = (sharc.opcode >> 33) & 0x1f;
-	int data = ((sharc.opcode >> 8) & 0xff) | ((sharc.opcode >> 19) & 0xf00);
-	int shiftop = (sharc.opcode >> 16) & 0x3f;
-	int rn = (sharc.opcode >> 4) & 0xf;
-	int rx = (sharc.opcode & 0xf);
+	int bop = (sharc.opcode >> 37) & 0x7;
+	int sreg = (sharc.opcode >> 32) & 0xf;
+	UINT32 data = (UINT32)sharc.opcode;
 
-	if(IF_CONDITION_CODE(cond)) {
-		SHIFT_OPERATION_IMM(shiftop, data, rn, rx);
-	}
-}
+	UINT32 src = GET_UREG(0x70 | sreg);
 
-/* | 1000 | III | MMM | */
-
-/* immediate shift / dreg <-> DM|PM */
-static void sharcop_imm_shift_dreg_dmpm(void)
-{
-	int i = (sharc.opcode >> 41) & 0x7;
-	int m = (sharc.opcode >> 38) & 0x7;
-	int g = (sharc.opcode >> 32) & 0x1;
-	int d = (sharc.opcode >> 31) & 0x1;
-	int dreg = (sharc.opcode >> 23) & 0xf;
-	int cond = (sharc.opcode >> 33) & 0x1f;
-	int data = ((sharc.opcode >> 8) & 0xff) | ((sharc.opcode >> 19) & 0xf00);
-	int shiftop = (sharc.opcode >> 16) & 0x3f;
-	int rn = (sharc.opcode >> 4) & 0xf;
-	int rx = (sharc.opcode & 0xf);
-
-	if(IF_CONDITION_CODE(cond)) {
-		/* due to parallelity issues, source REG must be saved */
-		/* because the shift operation may change it */
-		UINT32 parallel_dreg = REG(dreg);
-
-		SHIFT_OPERATION_IMM(shiftop, data, rn, rx);
-
-		if(g) {		/* PM */
-			if(d) {		/* dreg -> PM */
-				pm_write32(PM_REG_I(i), parallel_dreg);
-				PM_REG_I(i)+=PM_REG_M(m);
-				UPDATE_CIRCULAR_BUFFER_PM(i);
-			} else {	/* PM <- dreg */
-				REG(dreg) = pm_read32(PM_REG_I(i));
-				PM_REG_I(i)+=PM_REG_M(m);
-				UPDATE_CIRCULAR_BUFFER_PM(i);
-			}
-		} else {	/* DM */
-			if(d) {		/* dreg -> DM */
-				dm_write32(DM_REG_I(i), parallel_dreg);
-				DM_REG_I(i)+=DM_REG_M(m);
-				UPDATE_CIRCULAR_BUFFER_DM(i);
-			} else {	/* DM <- dreg */
-				REG(dreg) = dm_read32(DM_REG_I(i));
-				DM_REG_I(i)+=DM_REG_M(m);
-				UPDATE_CIRCULAR_BUFFER_DM(i);
-			}
-		}
-	}
-}
-
-/*****************************************************************************/
-
-/* direct call to absolute address */
-static void sharcop_call_direct_abs(void)
-{
-	int j = (sharc.opcode >> 26) & 0x1;
-	int cond = (sharc.opcode >> 33) & 0x1f;
-	UINT32 address = sharc.opcode & 0xffffff;
-
-	if(IF_CONDITION_CODE(cond)) {
-		if(j) {
-			PUSH_PC(sharc.npc+2);	/* 1 instruction + 2 delayed instructions */
-			DELAY_SLOT();
-		} else {
-			PUSH_PC(sharc.npc);
-		}
-		sharc.npc = address;
-	}
-}
-
-/* direct jump to absolute address */
-static void sharcop_jump_direct_abs(void)
-{
-	int la = (sharc.opcode >> 38) & 0x1;
-	int ci = (sharc.opcode >> 24) & 0x1;
-	int j = (sharc.opcode >> 26) & 0x1;
-	int cond = (sharc.opcode >> 33) & 0x1f;
-	UINT32 address = sharc.opcode & 0xffffff;
-
-	if(IF_CONDITION_CODE(cond))
+	switch(bop)
 	{
-		// Clear Interrupt
-		if(ci)
+		case 0:		/* SET */
 		{
-			// TODO: anything else?
-			if (sharc.status_stkp > 0)
+			src |= data;
+			break;
+		}
+		case 1:		/* CLEAR */
+		{
+			src &= ~data;
+			break;
+		}
+		case 2:		/* TOGGLE */
+		{
+			src ^= data;
+			break;
+		}
+		case 4:		/* TEST */
+		{
+			if ((src & data) == data)
 			{
-				SET_UREG(0x7b, POP_STATUS_REG());		/* MODE1 */
-				SET_UREG(0x7c, POP_STATUS_REG());		/* ASTAT */
+				sharc.astat |= BTF;
 			}
-
-			sharc.irptl &= ~(1 << sharc.irq_active_num);
-		}
-
-		if(j) {
-			DELAY_SLOT();
-		}
-		if(la) {
-			POP_PC();
-			POP_LOOP();
-		}
-		sharc.npc = address;
-	}
-}
-
-/* direct call to relative address */
-static void sharcop_call_direct_rel(void)
-{
-	int j = (sharc.opcode >> 26) & 0x1;
-	int cond = (sharc.opcode >> 33) & 0x1f;
-	UINT32 address = sharc.opcode & 0xffffff;
-
-	if(IF_CONDITION_CODE(cond))
-	{
-		UINT32 npc = sharc.npc;
-		sharc.npc = sharc.pc + SIGN_EXTEND24(address);
-
-		if(j) {
-			PUSH_PC(npc+2);	/* 1 instruction + 2 delayed instructions */
-			DELAY_SLOT();
-		} else {
-			PUSH_PC(npc);
-		}
-	}
-}
-
-/* direct jump to relative address */
-static void sharcop_jump_direct_rel(void)
-{
-	int la = (sharc.opcode >> 38) & 0x1;
-	int ci = (sharc.opcode >> 24) & 0x1;
-	int j = (sharc.opcode >> 26) & 0x1;
-	int cond = (sharc.opcode >> 33) & 0x1f;
-	UINT32 address = sharc.opcode & 0xffffff;
-
-	if(IF_CONDITION_CODE(cond))
-	{
-		sharc.npc = sharc.pc + SIGN_EXTEND24(address);
-
-		// Clear Interrupt
-		if(ci)
-		{
-			// TODO: anything else?
-			if (sharc.status_stkp > 0)
+			else
 			{
-				SET_UREG(0x7b, POP_STATUS_REG());		/* MODE1 */
-				SET_UREG(0x7c, POP_STATUS_REG());		/* ASTAT */
+				sharc.astat &= ~BTF;
 			}
-
-			sharc.irptl &= ~(1 << sharc.irq_active_num);
+			break;
 		}
-
-		if(j) {
-			DELAY_SLOT();
+		case 5:		/* XOR */
+		{
+			if (src == data)
+			{
+				sharc.astat |= BTF;
+			}
+			else
+			{
+				sharc.astat &= ~BTF;
+			}
+			break;
 		}
-		if(la) {
-			POP_PC();
-			POP_LOOP();
-		}
+		default:
+			fatalerror("SHARC: sysreg_bitop: invalid bitop %d", bop);
+			break;
 	}
+
+	SET_UREG(0x70 | sreg, src);
 }
 
-/* 00001000 | 0 */
-/* indirect jump */
-static void sharcop_jump_indirect(void)
-{
-	int la = (sharc.opcode >> 38) & 0x1;
-	int ci = (sharc.opcode >> 24) & 0x1;
-	int j = (sharc.opcode >> 26) & 0x1;
-	int e = (sharc.opcode >> 25) & 0x1;
-	int pmi = (sharc.opcode >> 30) & 0x7;
-	int pmm = (sharc.opcode >> 27) & 0x7;
-	int cond = (sharc.opcode >> 33) & 0x1f;
-	int compute = sharc.opcode & 0x7fffff;
+/*****************************************************************************/
+/* | 000101100 | */
 
-	// Clear Interrupt
-	if(ci)
+/* I register modify */
+static void sharcop_modify(void)
+{
+	int g = (sharc.opcode >> 38) & 0x1;
+	int i = (sharc.opcode >> 32) & 0x7;
+	INT32 data = (sharc.opcode);
+
+	if (g)		// PM
 	{
-		// TODO: anything else?
-		if (sharc.status_stkp > 0)
-		{
-			SET_UREG(0x7b, POP_STATUS_REG());		/* MODE1 */
-			SET_UREG(0x7c, POP_STATUS_REG());		/* ASTAT */
-		}
-
-		sharc.irptl &= ~(1 << sharc.irq_active_num);
+		PM_REG_I(i) += data;
+		UPDATE_CIRCULAR_BUFFER_PM(i);
 	}
-
-	if(e) {		/* IF...ELSE */
-		if(IF_CONDITION_CODE(cond)) {
-			sharc.npc = PM_REG_I(pmi) + PM_REG_M(pmm);
-
-			if(j)
-				DELAY_SLOT();
-			if(la) {
-				POP_PC();
-				POP_LOOP();
-			}
-		} else {
-			if(compute != 0)
-				COMPUTE(compute);
-		}
-	} else {	/* IF */
-		if(IF_CONDITION_CODE(cond)) {
-			sharc.npc = PM_REG_I(pmi) + PM_REG_M(pmm);
-
-			if(compute != 0)
-				COMPUTE(compute);
-			if(j)
-				DELAY_SLOT();
-			if(la) {
-				POP_PC();
-				POP_LOOP();
-			}
-		}
-	}
-}
-
-/* 00001000 | 1 */
-/* indirect call */
-static void sharcop_call_indirect(void)
-{
-	int j = (sharc.opcode >> 26) & 0x1;
-	int e = (sharc.opcode >> 25) & 0x1;
-	int pmi = (sharc.opcode >> 30) & 0x7;
-	int pmm = (sharc.opcode >> 27) & 0x7;
-	int cond = (sharc.opcode >> 33) & 0x1f;
-	int compute = sharc.opcode & 0x7fffff;
-
-	if(e) {		/* IF...ELSE */
-		if(IF_CONDITION_CODE(cond))
-		{
-			UINT32 npc = sharc.npc;
-			sharc.npc = PM_REG_I(pmi) + PM_REG_M(pmm);
-
-			if(j) {
-				PUSH_PC(npc+2);	/* 1 instruction + 2 delayed instructions */
-				DELAY_SLOT();
-			} else {
-				PUSH_PC(npc);
-			}
-		} else {
-			if(compute != 0)
-				COMPUTE(compute);
-		}
-	} else {	/* IF */
-		if(IF_CONDITION_CODE(cond))
-		{
-			UINT32 npc = sharc.npc;
-			sharc.npc = PM_REG_I(pmi) + PM_REG_M(pmm);
-
-			if(compute != 0)
-				COMPUTE(compute);
-			if(j) {
-				PUSH_PC(npc+2);	/* 1 instruction + 2 delayed instructions */
-				DELAY_SLOT();
-			} else {
-				PUSH_PC(npc);
-			}
-		}
-	}
-}
-
-
-/* 00001001 | 0 */
-/* indirect jump to relative address */
-static void sharcop_jump_indirect_rel(void)
-{
-	int la = (sharc.opcode >> 38) & 0x1;
-	int ci = (sharc.opcode >> 24) & 0x1;
-	int j = (sharc.opcode >> 26) & 0x1;
-	int e = (sharc.opcode >> 25) & 0x1;
-	int cond = (sharc.opcode >> 33) & 0x1f;
-	int compute = sharc.opcode & 0x7fffff;
-
-	// Clear Interrupt
-	if(ci)
+	else		// DM
 	{
-		// TODO: anything else?
-		if (sharc.status_stkp > 0)
-		{
-			SET_UREG(0x7b, POP_STATUS_REG());		/* MODE1 */
-			SET_UREG(0x7c, POP_STATUS_REG());		/* ASTAT */
-		}
-
-		sharc.irptl &= ~(1 << sharc.irq_active_num);
-	}
-
-	if(e) {		/* IF...ELSE */
-		if(IF_CONDITION_CODE(cond))
-		{
-			sharc.npc = sharc.pc + SIGN_EXTEND6((sharc.opcode >> 27) & 0x3f);
-
-			if(j)
-				DELAY_SLOT();
-			if(la) {
-				POP_PC();
-				POP_LOOP();
-			}
-		} else {
-			if(compute != 0)
-				COMPUTE(compute);
-		}
-	} else {	/* IF */
-		if(IF_CONDITION_CODE(cond))
-		{
-			sharc.npc = sharc.pc + SIGN_EXTEND6((sharc.opcode >> 27) & 0x3f);
-
-			if(compute != 0)
-				COMPUTE(compute);
-			if(j)
-				DELAY_SLOT();
-			if(la) {
-				POP_PC();
-				POP_LOOP();
-			}
-		}
-	}
-}
-
-/* 00001001 | 1 */
-/* indirect call to relative address */
-static void sharcop_call_indirect_rel(void)
-{
-	int j = (sharc.opcode >> 26) & 0x1;
-	int e = (sharc.opcode >> 25) & 0x1;
-	int cond = (sharc.opcode >> 33) & 0x1f;
-	int compute = sharc.opcode & 0x7fffff;
-
-	if(e) {		/* IF...ELSE */
-		if(IF_CONDITION_CODE(cond))
-		{
-			UINT32 npc = sharc.npc;
-			sharc.npc = sharc.pc + SIGN_EXTEND6((sharc.opcode >> 27) & 0x3f);
-
-			if(j) {
-				PUSH_PC(npc+2);	/* 1 instruction + 2 delayed instructions */
-				DELAY_SLOT();
-			} else {
-				PUSH_PC(npc);
-			}
-		} else {
-			if(compute != 0)
-				COMPUTE(compute);
-		}
-	} else {	/* IF */
-		if(IF_CONDITION_CODE(cond))
-		{
-			UINT32 npc = sharc.npc;
-			sharc.npc = sharc.pc + SIGN_EXTEND6((sharc.opcode >> 27) & 0x3f);
-
-			if(compute != 0)
-				COMPUTE(compute);
-			if(j) {
-				PUSH_PC(npc+2);	/* 1 instruction + 2 delayed instructions */
-				DELAY_SLOT();
-			} else {
-				PUSH_PC(npc);
-			}
-		}
-	}
-}
-
-/* | 110 | */
-static void sharcop_jump_indirect_dreg_dm(void)
-{
-	int d = (sharc.opcode >> 44) & 0x1;
-	int dmi = (sharc.opcode >> 41) & 0x7;
-	int dmm = (sharc.opcode >> 38) & 0x7;
-	int pmi = (sharc.opcode >> 30) & 0x7;
-	int pmm = (sharc.opcode >> 27) & 0x7;
-	int cond = (sharc.opcode >> 33) & 0x1f;
-	int dreg = (sharc.opcode >> 23) & 0xf;
-
-	if (IF_CONDITION_CODE(cond))
-	{
-		sharc.npc = PM_REG_I(pmi) + PM_REG_M(pmm);
-	}
-	else
-	{
-		UINT32 compute = sharc.opcode & 0x7fffff;
-		/* due to parallelity issues, source REG must be saved */
-		/* because the compute operation may change it */
-		UINT32 parallel_dreg = REG(dreg);
-
-		if (compute != 0)
-		{
-			COMPUTE(compute);
-		}
-
-		if (d) {	/* dreg -> DM */
-			dm_write32(DM_REG_I(dmi), parallel_dreg);
-			DM_REG_I(dmi) += DM_REG_M(dmm);
-			UPDATE_CIRCULAR_BUFFER_DM(dmi);
-		} else {	/* DM <- dreg */
-			REG(dreg) = dm_read32(DM_REG_I(dmi));
-			DM_REG_I(dmi) += DM_REG_M(dmm);
-			UPDATE_CIRCULAR_BUFFER_DM(dmi);
-		}
-	}
-}
-
-/* | 111 | */
-static void sharcop_jump_rel_dreg_dm(void)
-{
-	int d = (sharc.opcode >> 44) & 0x1;
-	int dmi = (sharc.opcode >> 41) & 0x7;
-	int dmm = (sharc.opcode >> 38) & 0x7;
-	int cond = (sharc.opcode >> 33) & 0x1f;
-	int dreg = (sharc.opcode >> 23) & 0xf;
-
-	if (IF_CONDITION_CODE(cond))
-	{
-		sharc.npc = sharc.pc + SIGN_EXTEND6((sharc.opcode >> 27) & 0x3f);
-	}
-	else
-	{
-		UINT32 compute = sharc.opcode & 0x7fffff;
-		/* due to parallelity issues, source REG must be saved */
-		/* because the compute operation may change it */
-		UINT32 parallel_dreg = REG(dreg);
-
-		if (compute != 0)
-		{
-			COMPUTE(compute);
-		}
-
-		if (d) {	/* dreg -> DM */
-			dm_write32(DM_REG_I(dmi), parallel_dreg);
-			DM_REG_I(dmi) += DM_REG_M(dmm);
-			UPDATE_CIRCULAR_BUFFER_DM(dmi);
-		} else {	/* DM <- dreg */
-			REG(dreg) = dm_read32(DM_REG_I(dmi));
-			DM_REG_I(dmi) += DM_REG_M(dmm);
-			UPDATE_CIRCULAR_BUFFER_DM(dmi);
-		}
-	}
-}
-
-
-/* | 00001010 | | */
-/* return from subroutine / compute */
-static void sharcop_rts(void)
-{
-	int cond = (sharc.opcode >> 33) & 0x1f;
-	int j = (sharc.opcode >> 26) & 0x1;
-	int e = (sharc.opcode >> 25) & 0x1;
-	//int lr = (sharc.opcode >> 24) & 0x1;
-	int compute = sharc.opcode & 0x7fffff;
-
-	//if(lr)
-	//  fatalerror("SHARC: rts: loop reentry not implemented !");
-
-	if(e) {		/* IF...ELSE */
-		if(IF_CONDITION_CODE(cond)) {
-			if(j)
-				DELAY_SLOT();
-
-			sharc.npc = POP_PC();
-		} else {
-			if(compute != 0)
-				COMPUTE(compute);
-		}
-	} else {	/* IF */
-		if(IF_CONDITION_CODE(cond)) {
-			if(compute != 0)
-				COMPUTE(compute);
-			if(j)
-				DELAY_SLOT();
-
-			sharc.npc = POP_PC();
-		}
-	}
-}
-
-/* | 00001011 | | */
-/* return from interrupt / compute */
-static void sharcop_rti(void)
-{
-	int cond = (sharc.opcode >> 33) & 0x1f;
-	int j = (sharc.opcode >> 26) & 0x1;
-	int e = (sharc.opcode >> 25) & 0x1;
-	int compute = sharc.opcode & 0x7fffff;
-
-	sharc.irptl &= ~(1 << sharc.irq_active_num);
-
-	if(e) {		/* IF...ELSE */
-		if(IF_CONDITION_CODE(cond)) {
-			if(j)
-				DELAY_SLOT();
-
-			sharc.npc = POP_PC();
-		} else {
-			if(compute != 0)
-				COMPUTE(compute);
-		}
-	} else {	/* IF */
-		if(IF_CONDITION_CODE(cond)) {
-			if(compute != 0)
-				COMPUTE(compute);
-			if(j)
-				DELAY_SLOT();
-
-			sharc.npc = POP_PC();
-		}
-	}
-
-	if (sharc.status_stkp > 0)
-	{
-		SET_UREG(0x7b, POP_STATUS_REG());		/* MODE1 */
-		SET_UREG(0x7c, POP_STATUS_REG());		/* ASTAT */
+		DM_REG_I(i) += data;
+		UPDATE_CIRCULAR_BUFFER_DM(i);
 	}
 }
 
 /*****************************************************************************/
+/* | 000101101 | */
 
-/* do until counter expired, LCNTR immediate */
-static void sharcop_do_until_counter_imm(void)
+/* I register bit-reverse */
+static void sharcop_bit_reverse(void)
 {
-	UINT16 data = (UINT16)(sharc.opcode >> 24);
-	int offset = SIGN_EXTEND24(sharc.opcode & 0xffffff);
-	UINT32 address = sharc.pc + offset;
-	int type;
-	int cond = 0xf;		/* until LCE (loop counter expired */
-	int distance = abs(offset);
-
-	if(distance == 1)
-	{
-		type = 1;
-	}
-	else if(distance == 2)
-	{
-		type = 2;
-	}
-	else
-	{
-		type = 3;
-	}
-
-	sharc.lcntr = data;
-	if (sharc.lcntr > 0)
-	{
-		PUSH_PC(sharc.pc+1);
-		PUSH_LOOP(address | (type << 30) | (cond << 24), sharc.lcntr);
-	}
-}
-
-/* do until counter expired, LCNTR from UREG */
-static void sharcop_do_until_counter_ureg(void)
-{
-	int ureg = (sharc.opcode >> 32) & 0xff;
-	int offset = SIGN_EXTEND24(sharc.opcode & 0xffffff);
-	UINT32 address = sharc.pc + offset;
-	int type;
-	int cond = 0xf;		/* until LCE (loop counter expired */
-	int distance = abs(offset);
-
-	if(distance == 1)
-	{
-		type = 1;
-	}
-	else if(distance == 2)
-	{
-		type = 2;
-	}
-	else
-	{
-		type = 3;
-	}
-
-	sharc.lcntr = GET_UREG(ureg);
-	if (sharc.lcntr > 0)
-	{
-		PUSH_PC(sharc.pc+1);
-		PUSH_LOOP(address | (type << 30) | (cond << 24), sharc.lcntr);
-	}
-}
-
-/* do until */
-static void sharcop_do_until(void)
-{
-	int cond = (sharc.opcode >> 33) & 0x1f;
-	int offset = SIGN_EXTEND24(sharc.opcode & 0xffffff);
-	UINT32 address = (sharc.pc + offset);
-
-	PUSH_PC(sharc.pc+1);
-	PUSH_LOOP(address | (cond << 24), 0);
+	fatalerror("SHARC: sharcop_bit_reverse unimplemented");
 }
 
 /*****************************************************************************/
+/* | 00010111x | */
 
-/* 00010111 */
 /* push/pop stacks / flush cache */
 static void sharcop_push_pop_stacks(void)
 {
@@ -2439,11 +2675,13 @@ static void sharcop_push_pop_stacks(void)
 	}
 	if (sharc.opcode & U64(0x002000000000))
 	{
-		fatalerror("sharcop_push_pop_stacks: push sts not implemented");
+		//fatalerror("sharcop_push_pop_stacks: push sts not implemented");
+		PUSH_STATUS_STACK();
 	}
 	if (sharc.opcode & U64(0x001000000000))
 	{
-		fatalerror("sharcop_push_pop_stacks: pop sts not implemented");
+		//fatalerror("sharcop_push_pop_stacks: pop sts not implemented");
+		POP_STATUS_STACK();
 	}
 	if (sharc.opcode & U64(0x000800000000))
 	{
@@ -2455,22 +2693,31 @@ static void sharcop_push_pop_stacks(void)
 	}
 }
 
+/*****************************************************************************/
+/* | 000000000 | */
+
 static void sharcop_nop(void)
 {
 
 }
 
+/*****************************************************************************/
+/* | 000000001 | */
+
 static void sharcop_idle(void)
 {
+	CHANGE_PC(sharc.pc);
 	sharc.idle = 1;
 }
+
+/*****************************************************************************/
 
 static void sharcop_unimplemented(void)
 {
 #ifdef MAME_DEBUG
 	char dasm[1000];
 	sharc_dasm(dasm, sharc.pc);
-	printf("SHARC: %08X: %s\n", sharc.pc, dasm);
+	mame_printf_debug("SHARC: %08X: %s\n", sharc.pc, dasm);
 	fatalerror("SHARC: Unimplemented opcode %04X%08X at %08X", (UINT16)(sharc.opcode >> 32), (UINT32)(sharc.opcode), sharc.pc);
 #else
 	fatalerror("SHARC: Unimplemented opcode %04X%08X at %08X", (UINT16)(sharc.opcode >> 32), (UINT32)(sharc.opcode), sharc.pc);

@@ -653,7 +653,7 @@ INLINE void logonetlbentry(int index, int which)
 
 	vaddr += pagesize * which;
 
-	printf("index=%08X  pagesize=%08X  vaddr=%08X%08X  paddr=%08X%08X  asid=%02X  r=%X  c=%X  dvg=%c%c%c\n",
+	mame_printf_debug("index=%08X  pagesize=%08X  vaddr=%08X%08X  paddr=%08X%08X  asid=%02X  r=%X  c=%X  dvg=%c%c%c\n",
 			index, pagesize, (UINT32)(vaddr >> 32), (UINT32)vaddr, (UINT32)(paddr >> 32), (UINT32)paddr,
 			asid, r, c, (lo & 4) ? 'd' : '.', (lo & 2) ? 'v' : '.', (lo & 1) ? 'g' : '.');
 #endif
@@ -726,7 +726,7 @@ static void tlbp(void)
 	{
 		UINT64 mask = ~(mips3.tlb[index].page_mask & U64(0x0000000001ffe000)) & ~U64(0x1fff);
 #if PRINTF_TLB
-printf("Mask = %08X%08X  TLB = %08X%08X  MATCH = %08X%08X\n",
+mame_printf_debug("Mask = %08X%08X  TLB = %08X%08X  MATCH = %08X%08X\n",
 	(UINT32)(mask >> 32), (UINT32)mask,
 	(UINT32)(mips3.tlb[index].entry_hi >> 32), (UINT32)mips3.tlb[index].entry_hi,
 	(UINT32)(mips3.cpr[0][COP0_EntryHi] >> 32), (UINT32)mips3.cpr[0][COP0_EntryHi]);
@@ -744,7 +744,7 @@ printf("Mask = %08X%08X  TLB = %08X%08X  MATCH = %08X%08X\n",
 		if (mips3.tlb_table[vpn & 0xfffff] == 0xffffffff)
 		{
 #if PRINTF_TLB
-			printf("TLBP: Should have not found an entry\n");
+			mame_printf_debug("TLBP: Should have not found an entry\n");
 //          DEBUGGER_BREAK;
 #endif
 		}
@@ -755,7 +755,7 @@ printf("Mask = %08X%08X  TLB = %08X%08X  MATCH = %08X%08X\n",
 		if (mips3.tlb_table[vpn & 0xfffff] != 0xffffffff)
 		{
 #if PRINTF_TLB
-			printf("TLBP: Should havefound an entry\n");
+			mame_printf_debug("TLBP: Should havefound an entry\n");
 //          DEBUGGER_BREAK;
 #endif
 		}

@@ -376,7 +376,7 @@ static WRITE16_HANDLER( K053247_scattered_word_w )
 {
 	if (offset & 0x0078)
 	{
-//      printf("spr write %x to %x (PC=%x)\n", data, offset, activecpu_get_pc());
+//      mame_printf_debug("spr write %x to %x (PC=%x)\n", data, offset, activecpu_get_pc());
 		COMBINE_DATA(spriteram16+offset);
 	}
 	else

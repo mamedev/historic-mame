@@ -2969,14 +2969,14 @@ READ16_HANDLER( pairlove_prot_r )
 {
 	int retdata;
 	retdata = pairslove_protram[offset];
-	//printf("pairs love protection? read %06x %04x %04x\n",activecpu_get_pc(), offset,retdata);
+	//mame_printf_debug("pairs love protection? read %06x %04x %04x\n",activecpu_get_pc(), offset,retdata);
 	pairslove_protram[offset]=pairslove_protram_old[offset];
 	return retdata;
 }
 
 WRITE16_HANDLER( pairlove_prot_w )
 {
-//  printf("pairs love protection? write %06x %04x %04x\n",activecpu_get_pc(), offset,data);
+//  mame_printf_debug("pairs love protection? write %06x %04x %04x\n",activecpu_get_pc(), offset,data);
 	pairslove_protram_old[offset]=pairslove_protram[offset];
 	pairslove_protram[offset]=data;
 }

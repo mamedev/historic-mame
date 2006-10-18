@@ -650,7 +650,7 @@ static UINT32 btc_trackball_data[ 4 ];
 
 static READ32_HANDLER( btc_trackball_r )
 {
-//  printf( "r %08x %08x %08x\n", activecpu_get_pc(), offset, mem_mask );
+//  mame_printf_debug( "r %08x %08x %08x\n", activecpu_get_pc(), offset, mem_mask );
 
 	if( offset == 1 && mem_mask == 0x0000ffff )
 	{
@@ -671,7 +671,7 @@ static READ32_HANDLER( btc_trackball_r )
 
 static WRITE32_HANDLER( btc_trackball_w )
 {
-//  printf( "w %08x %08x %08x %08x\n", activecpu_get_pc(), offset, data, mem_mask );
+//  mame_printf_debug( "w %08x %08x %08x %08x\n", activecpu_get_pc(), offset, data, mem_mask );
 }
 
 static NVRAM_HANDLER( btchamp )

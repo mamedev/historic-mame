@@ -454,7 +454,7 @@ static UINT32 recompile_addx(drc_core *drc, UINT32 op)
 	_mov_m32abs_r32(&REG(RT), REG_EDX);
 
 	if (OEBIT) {
-		printf("recompile_addx: OE bit set !\n");
+		mame_printf_debug("recompile_addx: OE bit set !\n");
 		return RECOMPILE_UNIMPLEMENTED;
 	}
 	if (RCBIT) {
@@ -479,7 +479,7 @@ static UINT32 recompile_addcx(drc_core *drc, UINT32 op)
 	_mov_m32abs_r32(&XER, REG_EBX);
 
 	if (OEBIT) {
-		printf("recompile_addcx: OE bit set !\n");
+		mame_printf_debug("recompile_addcx: OE bit set !\n");
 		return RECOMPILE_UNIMPLEMENTED;
 	}
 	if (RCBIT) {
@@ -1439,7 +1439,7 @@ static UINT32 recompile_lswi(drc_core *drc, UINT32 op)
 
 static UINT32 recompile_lswx(drc_core *drc, UINT32 op)
 {
-	printf("PPCDRC: recompile lswx\n");
+	mame_printf_debug("PPCDRC: recompile lswx\n");
 	return RECOMPILE_UNIMPLEMENTED;
 }
 
@@ -1550,7 +1550,7 @@ static UINT32 recompile_mcrf(drc_core *drc, UINT32 op)
 
 static UINT32 recompile_mcrxr(drc_core *drc, UINT32 op)
 {
-	printf("PPCDRC: recompile mcrxr\n");
+	mame_printf_debug("PPCDRC: recompile mcrxr\n");
 	return RECOMPILE_UNIMPLEMENTED;
 }
 
@@ -1697,7 +1697,7 @@ static UINT32 recompile_mullwx(drc_core *drc, UINT32 op)
 	_mov_m32abs_r32(&REG(RT), REG_EDX);
 
 	if (OEBIT) {
-		printf("recompile_mullwx: OEBIT set!\n");
+		mame_printf_debug("recompile_mullwx: OEBIT set!\n");
 		return RECOMPILE_UNIMPLEMENTED;
 	}
 
@@ -2146,7 +2146,7 @@ static UINT32 recompile_stswi(drc_core *drc, UINT32 op)
 
 static UINT32 recompile_stswx(drc_core *drc, UINT32 op)
 {
-	printf("PPCDRC: recompile stswx\n");
+	mame_printf_debug("PPCDRC: recompile stswx\n");
 	return RECOMPILE_UNIMPLEMENTED;
 }
 
@@ -2259,7 +2259,7 @@ static UINT32 recompile_subfx(drc_core *drc, UINT32 op)
 	_mov_m32abs_r32(&REG(RT), REG_EDX);
 
 	if (OEBIT) {
-		printf("recompile_subfx: OEBIT set !\n");
+		mame_printf_debug("recompile_subfx: OEBIT set !\n");
 		return RECOMPILE_UNIMPLEMENTED;
 	}
 	if (RCBIT) {
@@ -2293,7 +2293,7 @@ static UINT32 recompile_subfcx(drc_core *drc, UINT32 op)
 		_mov_m32abs_r32(&XER, REG_EBX);
 
 		//if (OEBIT) {
-		//  printf("recompile_subfcx: OEBIT set !\n");
+		//  mame_printf_debug("recompile_subfcx: OEBIT set !\n");
 		//  return RECOMPILE_UNIMPLEMENTED;
 		//}
 		if (RCBIT) {
@@ -2321,7 +2321,7 @@ static UINT32 recompile_subfex(drc_core *drc, UINT32 op)
 	_mov_m32abs_r32(&XER, REG_EBX);
 
 	if (OEBIT) {
-		printf("recompile_subfex: OEBIT set !\n");
+		mame_printf_debug("recompile_subfex: OEBIT set !\n");
 		return RECOMPILE_UNIMPLEMENTED;
 	}
 	if (RCBIT) {
@@ -2552,7 +2552,7 @@ static UINT32 recompile_icread(drc_core *drc, UINT32 op)
 
 static UINT32 recompile_rfci(drc_core *drc, UINT32 op)
 {
-	printf("PPCDRC: recompile rfci\n");
+	mame_printf_debug("PPCDRC: recompile rfci\n");
 	return RECOMPILE_UNIMPLEMENTED;
 }
 
@@ -2606,7 +2606,7 @@ static UINT32 recompile_wrteei(drc_core *drc, UINT32 op)
 
 static UINT32 recompile_invalid(drc_core *drc, UINT32 op)
 {
-	printf("PPCDRC: Invalid opcode %08X PC : %X\n", op, ppc.pc);
+	mame_printf_debug("PPCDRC: Invalid opcode %08X PC : %X\n", op, ppc.pc);
 	return RECOMPILE_UNIMPLEMENTED;
 }
 
@@ -3075,13 +3075,13 @@ static UINT32 recompile_tlbsync(drc_core *drc, UINT32 op)
 
 static UINT32 recompile_eciwx(drc_core *drc, UINT32 op)
 {
-	printf("PPCDRC: eciwx unimplemented\n");
+	mame_printf_debug("PPCDRC: eciwx unimplemented\n");
 	return RECOMPILE_UNIMPLEMENTED;
 }
 
 static UINT32 recompile_ecowx(drc_core *drc, UINT32 op)
 {
-	printf("PPCDRC: ecowx unimplemented\n");
+	mame_printf_debug("PPCDRC: ecowx unimplemented\n");
 	return RECOMPILE_UNIMPLEMENTED;
 }
 

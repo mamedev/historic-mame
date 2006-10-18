@@ -23,7 +23,7 @@ static READ8_HANDLER( dorachan_protection_r )
 		case 0x72a2 : return 0xd5;
 		case 0x72b5 : return 0xcb;
 	}
-	printf("unhandled $2400 read @ %x\n",activecpu_get_previouspc());
+	mame_printf_debug("unhandled $2400 read @ %x\n",activecpu_get_previouspc());
 	return 0xff;
 }
 

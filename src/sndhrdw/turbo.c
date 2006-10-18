@@ -49,10 +49,10 @@ static void update_sound_a(int data)
 	discrete_sound_w(5, !(data & 0x20));
 	discrete_sound_w(6, !(data & 0x40));
 
-if (!((data >> 1) & 1)) printf("/TRIG1\n");
-if (!((data >> 2) & 1)) printf("/TRIG2\n");
-if (!((data >> 3) & 1)) printf("/TRIG3\n");
-if (!((data >> 4) & 1)) printf("/TRIG4\n");
+if (!((data >> 1) & 1)) mame_printf_debug("/TRIG1\n");
+if (!((data >> 2) & 1)) mame_printf_debug("/TRIG2\n");
+if (!((data >> 3) & 1)) mame_printf_debug("/TRIG3\n");
+if (!((data >> 4) & 1)) mame_printf_debug("/TRIG4\n");
 
 //  osel = (osel & 6) | ((data >> 5) & 1);
 //  turbo_update_samples();

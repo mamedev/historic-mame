@@ -87,7 +87,7 @@ WRITE8_HANDLER( blockade_coin_latch_w )
     if (data & 0x80)
     {
     #ifdef BLOCKADE_LOG
-        printf("Reset Coin Latch\n");
+        mame_printf_debug("Reset Coin Latch\n");
     #endif
         if (just_been_reset)
         {
@@ -101,13 +101,13 @@ WRITE8_HANDLER( blockade_coin_latch_w )
     if (data & 0x20)
     {
     #ifdef BLOCKADE_LOG
-        printf("Pin 19 High\n");
+        mame_printf_debug("Pin 19 High\n");
     #endif
     }
     else
     {
     #ifdef BLOCKADE_LOG
-        printf("Pin 19 Low\n");
+        mame_printf_debug("Pin 19 Low\n");
     #endif
     }
 

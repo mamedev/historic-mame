@@ -731,7 +731,7 @@ static UINT32 *process_scaled_bitmap(UINT32 *objdata, int vc, int logit)
 			logerror("Unhandled pitch = %d\n", pitch);
 		if (flags & 2)
 		{
-			printf("Unhandled blend mode in scaled bitmap case\n");
+			mame_printf_debug("Unhandled blend mode in scaled bitmap case\n");
 			logerror("Unhandled blend mode in scaled bitmap case\n");
 		}
 

@@ -575,7 +575,7 @@ WRITE32_HANDLER( hng64_videoram_w )
 		tilemap_mark_tile_dirty(hng64_tilemap3,offset&0x3fff);
 	}
 
-//  if ((realoff>=0x40000)) printf("offsw %08x %08x\n",realoff,data);
+//  if ((realoff>=0x40000)) mame_printf_debug("offsw %08x %08x\n",realoff,data);
 
 
 	///////////////////////////////////
@@ -608,7 +608,7 @@ READ32_HANDLER( hng64_random_reader )
 
 READ32_HANDLER( hng64_comm_r )
 {
-	printf("commr %08x\n",offset);
+	mame_printf_debug("commr %08x\n",offset);
 
 	if(offset==0x1)
 		return 0xffffffff;
@@ -631,7 +631,7 @@ static WRITE32_HANDLER( hng64_pal_w )
 
 	// a sure ain't alpha ???
 	// alpha_set_level(mame_rand(Machine)) ;
-	// printf("Alpha : %d %d %d %d\n", a, b, g, r) ;
+	// mame_printf_debug("Alpha : %d %d %d %d\n", a, b, g, r) ;
 
 	// if (a != 0)
 	//  popmessage("Alpha is not zero!") ;
@@ -657,7 +657,7 @@ static READ32_HANDLER( hng64_port_read )
 int hng_dma_start,hng_dma_dst,hng_dma_len;
 void hng64_do_dma (void)
 {
-	printf("Performing DMA Start %08x Len %08x Dst %08x\n",hng_dma_start, hng_dma_len, hng_dma_dst);
+	mame_printf_debug("Performing DMA Start %08x Len %08x Dst %08x\n",hng_dma_start, hng_dma_len, hng_dma_dst);
 
 	while (hng_dma_len>0)
 	{
@@ -718,12 +718,12 @@ static READ32_HANDLER( no_machine_error )
 WRITE32_HANDLER( hng64_dualport_w )
 {
 	COMBINE_DATA (&hng64_dualport[offset]);
-//  printf("dualport W %08x %08x %08x\n", activecpu_get_pc(), offset, hng64_dualport[offset]);
+//  mame_printf_debug("dualport W %08x %08x %08x\n", activecpu_get_pc(), offset, hng64_dualport[offset]);
 }
 
 READ32_HANDLER( hng64_dualport_r )
 {
-//  printf("dualport R %08x %08x %08x\n", activecpu_get_pc(), offset, hng64_dualport[offset]);
+//  mame_printf_debug("dualport R %08x %08x %08x\n", activecpu_get_pc(), offset, hng64_dualport[offset]);
 
 	// !! These hacks make the boot-up sequence fail !!
 	switch (offset*4)
@@ -757,18 +757,18 @@ WRITE32_HANDLER( hng64_3d_2_w )
 {
 	COMBINE_DATA (&hng64_3d_1[offset]) ;
 	COMBINE_DATA (&hng64_3d_2[offset]) ;
-//  printf("2w : %08x %08x\n", offset, hng64_3d_2[offset]) ;
+//  mame_printf_debug("2w : %08x %08x\n", offset, hng64_3d_2[offset]) ;
 }
 
 READ32_HANDLER( hng64_3d_1_r )
 {
-//  printf("1r : %08x %08x\n", offset, hng64_3d_1[offset]) ;
+//  mame_printf_debug("1r : %08x %08x\n", offset, hng64_3d_1[offset]) ;
 	return hng64_3d_1[offset] ;
 }
 
 READ32_HANDLER( hng64_3d_2_r )
 {
-//  printf("2r : %08x %08x\n", offset, hng64_3d_2[offset]) ;
+//  mame_printf_debug("2r : %08x %08x\n", offset, hng64_3d_2[offset]) ;
 	return hng64_3d_2[offset] ;
 }
 
@@ -804,7 +804,7 @@ static WRITE32_HANDLER( dl_w )
 //  if (offset == 0x85 && hng64_dl[offset] == 0x1)      // Just before the second half of the writes
 //      hng64_dl[0x86] = 0x2 ;                          // set 0x86 to 2 (so it drops into the loop)
 
-//  printf("dl W (%08x) : %.8x %.8x\n", activecpu_get_pc(), offset, hng64_dl[offset]) ;
+//  mame_printf_debug("dl W (%08x) : %.8x %.8x\n", activecpu_get_pc(), offset, hng64_dl[offset]) ;
 }
 
 static READ32_HANDLER( dl_r )
@@ -812,7 +812,7 @@ static READ32_HANDLER( dl_r )
 	// A read of 0x86 ONLY happens if there are more display lists than what are readily available...
 	// See above for more compelling detail...  (PC = 8006fe1c)
 
-//  printf("dl R (%08x) : %x %x\n", activecpu_get_pc(), offset, hng64_dl[offset]) ;
+//  mame_printf_debug("dl R (%08x) : %x %x\n", activecpu_get_pc(), offset, hng64_dl[offset]) ;
 //  usrintf_showmessage("dl R (%08x) : %x %x", activecpu_get_pc(), offset, hng64_dl[offset]) ;
 	return hng64_dl[offset] ;
 }
@@ -821,7 +821,7 @@ static READ32_HANDLER( dl_r )
 WRITE32_HANDLER( activate_3d_buffer )
 {
     COMBINE_DATA (&active_3d_buffer[offset]) ;
-    printf("COMBINED %d\n", active_3d_buffer[offset]) ;
+    mame_printf_debug("COMBINED %d\n", active_3d_buffer[offset]) ;
 }
 */
 
@@ -829,7 +829,7 @@ WRITE32_HANDLER( activate_3d_buffer )
 WRITE32_HANDLER( tcram_w )
 {
 	COMBINE_DATA (&hng64_tcram[offset]) ;
-//  printf("Q1 W : %.8x %.8x\n", offset, hng64_tcram[offset]) ;
+//  mame_printf_debug("Q1 W : %.8x %.8x\n", offset, hng64_tcram[offset]) ;
 
 /*
     if (offset == 0x00000007)
@@ -852,14 +852,14 @@ WRITE32_HANDLER( tcram_w )
 
 READ32_HANDLER( tcram_r )
 {
-//  printf("Q1 R : %.8x %.8x\n", offset, hng64_tcram[offset]) ;
+//  mame_printf_debug("Q1 R : %.8x %.8x\n", offset, hng64_tcram[offset]) ;
 	return hng64_tcram[offset] ;
 }
 
 
 /* READ32_HANDLER( q1_r )
 {
-//  printf("Q1 (%08x) : %08x %08x\n", activecpu_get_pc(), offset, hng64_q1[offset]) ;
+//  mame_printf_debug("Q1 (%08x) : %08x %08x\n", activecpu_get_pc(), offset, hng64_q1[offset]) ;
 
     return hng64_q1[offset] ;
 }
@@ -871,7 +871,7 @@ WRITE32_HANDLER( q1_w )
 //  if (offset == 0x00)
 //      usrintf_showmessage("Q1 %08x", hng64_q1[offset]) ;
 
-//  printf("Q1 (%08x) : %08x %08x\n", activecpu_get_pc(), offset, hng64_q1[offset]) ;
+//  mame_printf_debug("Q1 (%08x) : %08x %08x\n", activecpu_get_pc(), offset, hng64_q1[offset]) ;
 }
 */
 
@@ -892,12 +892,12 @@ WRITE32_HANDLER( q1_w )
 WRITE32_HANDLER( q2_w )
 {
 	COMBINE_DATA (&hng64_q2[offset]) ;
-	// printf("Q2 W : %.8x %.8x\n", offset, hng64_q2[offset]) ;
+	// mame_printf_debug("Q2 W : %.8x %.8x\n", offset, hng64_q2[offset]) ;
 }
 
 READ32_HANDLER( q2_r )
 {
-	// printf("Q2 R : %.8x %.8x\n", offset, hng64_q2[offset]) ;
+	// mame_printf_debug("Q2 R : %.8x %.8x\n", offset, hng64_q2[offset]) ;
 	return hng64_q2[offset] ;
 }
 

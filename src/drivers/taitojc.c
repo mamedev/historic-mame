@@ -517,7 +517,7 @@ static void draw_object(mame_bitmap *bitmap, const rectangle *cliprect, UINT32 w
 		return;
 	}
 
-//  printf("draw_object: %08X %08X, X: %d, Y: %d, W: %d, H: %d\n", w1, w2, x, y, width, height);
+//  mame_printf_debug("draw_object: %08X %08X, X: %d, Y: %d, W: %d, H: %d\n", w1, w2, x, y, width, height);
 
 	ix = 0;
 	iy = 0;
@@ -602,7 +602,7 @@ static WRITE32_HANDLER( taitojc_palette_w )
 static READ32_HANDLER ( jc_control_r )
 {
 	UINT32 r = 0;
-//  printf("jc_control_r: %08X, %08X at %08X\n", offset, mem_mask, activecpu_get_pc());
+//  mame_printf_debug("jc_control_r: %08X, %08X at %08X\n", offset, mem_mask, activecpu_get_pc());
 	switch(offset)
 	{
 		case 0x0:
@@ -666,7 +666,7 @@ static READ32_HANDLER ( jc_control_r )
 
 static WRITE32_HANDLER ( jc_control_w )
 {
-	//printf("jc_control_w: %08X, %08X, %08X\n", data, offset, mem_mask);
+	//mame_printf_debug("jc_control_w: %08X, %08X, %08X\n", data, offset, mem_mask);
 	switch(offset)
 	{
 		case 0x3:
@@ -703,7 +703,7 @@ static UINT8 hc11_reg_r(int reg)
 	{
 		case 0x03:
 		{
-			//printf("hc11_reg_r: %02X at %08X\n", reg, activecpu_get_pc());
+			//mame_printf_debug("hc11_reg_r: %02X at %08X\n", reg, activecpu_get_pc());
 			if (hc11_cmd == 0x00)
 			{
 				r = 0;
@@ -725,7 +725,7 @@ static UINT8 hc11_reg_r(int reg)
 		}
 		default:
 		{
-			printf("hc11_reg_r: %02X at %08X\n", reg, activecpu_get_pc());
+			mame_printf_debug("hc11_reg_r: %02X at %08X\n", reg, activecpu_get_pc());
 			break;
 		}
 	}
@@ -748,7 +748,7 @@ static void hc11_reg_w(int reg, UINT8 data)
 		}
 		default:
 		{
-			printf("hc11_reg_w: %02X, %02X at %08X\n", reg, data, activecpu_get_pc());
+			mame_printf_debug("hc11_reg_w: %02X, %02X at %08X\n", reg, data, activecpu_get_pc());
 			break;
 		}
 	}
@@ -814,15 +814,15 @@ static READ32_HANDLER(dsp_shared_r)
 static int first_dsp_reset = 1;
 static WRITE32_HANDLER(dsp_shared_w)
 {
-	//printf("dsp_shared_ram: %08X, %04X at %08X\n", offset, data >> 16, activecpu_get_pc());
+	//mame_printf_debug("dsp_shared_ram: %08X, %04X at %08X\n", offset, data >> 16, activecpu_get_pc());
 	dsp_shared_ram[offset] = data >> 16;
 
 	if (offset >= 0x1fc0/4)
 	{
-		//printf("dsp_shared_ram: %08X, %04X at %08X\n", offset, data >> 16, activecpu_get_pc());
+		//mame_printf_debug("dsp_shared_ram: %08X, %04X at %08X\n", offset, data >> 16, activecpu_get_pc());
 		if (offset == 0x1fc0/4)
 		{
-			//printf("\n");
+			//mame_printf_debug("\n");
 		}
 	}
 
@@ -872,7 +872,7 @@ static WRITE32_HANDLER(f3_share_w)
 static WRITE32_HANDLER(jc_output_w)
 {
 	// acceleration and break meter outputs in Densya De Go!
-	//printf("jc_output_w: %d, %d\n", offset, (data >> 16) & 0xffff);
+	//mame_printf_debug("jc_output_w: %d, %d\n", offset, (data >> 16) & 0xffff);
 }
 
 static ADDRESS_MAP_START( taitojc_map, ADDRESS_SPACE_PROGRAM, 32 )
@@ -915,7 +915,7 @@ static READ16_HANDLER( dsp_rom_r )
 {
 	UINT16 *rom = (UINT16*)memory_region(REGION_GFX2);
 	UINT16 data = rom[dsp_rom_pos++];
-	//printf("dsp_rom_r:  %08X, %08X at %08X\n", offset, mem_mask, activecpu_get_pc());
+	//mame_printf_debug("dsp_rom_r:  %08X, %08X at %08X\n", offset, mem_mask, activecpu_get_pc());
 	return data;
 }
 
@@ -940,7 +940,7 @@ static WRITE16_HANDLER( dsp_texture_w )
 {
 	int index;
 	int x, y;
-	//printf("texture write %08X, %04X\n", dsp_addr1, data);
+	//mame_printf_debug("texture write %08X, %04X\n", dsp_addr1, data);
 
 	x = (dsp_addr1 >> 0) & 0x1f;
 	y = (dsp_addr1 >> 5) & 0x1f;
@@ -959,7 +959,7 @@ static READ16_HANDLER( dsp_texaddr_r )
 static WRITE16_HANDLER( dsp_texaddr_w )
 {
 	dsp_texaddr = data;
-//  printf("texaddr = %08X at %08X\n", data, activecpu_get_pc());
+//  mame_printf_debug("texaddr = %08X at %08X\n", data, activecpu_get_pc());
 
 	texture_x = (((data >> 0) & 0x1f) << 1) | ((data >> 12) & 0x1);
 	texture_y = (((data >> 5) & 0x1f) << 1) | ((data >> 13) & 0x1);
@@ -969,7 +969,7 @@ static WRITE16_HANDLER( dsp_texaddr_w )
 
 static WRITE16_HANDLER( dsp_unk_w )
 {
-//  printf("dsp_unk_w = %04X\n", data);
+//  mame_printf_debug("dsp_unk_w = %04X\n", data);
 }
 
 

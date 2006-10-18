@@ -563,7 +563,7 @@ mame_bitmap *render_load_png(const char *dirname, const char *filename, mame_bit
 	mame_file *file;
 	png_info png;
 	const char *fname;
-	int result;
+	png_error result;
 
 	/* open the file */
 	fname = (dirname == NULL) ? filename : assemble_3_strings(dirname, PATH_SEPARATOR, filename);

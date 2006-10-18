@@ -1870,7 +1870,7 @@ static int ptr;
 
 WRITE16_HANDLER( killbld_prot_w )
 {
-//  printf("killbrd prot r\n");
+//  mame_printf_debug("killbrd prot r\n");
 //  return 0;
 	offset&=0xf;
 
@@ -1887,7 +1887,7 @@ WRITE16_HANDLER( killbld_prot_w )
 			if(data==1)	//Execute cmd
 			{
 				unsigned short cmd=killbld_sharedprotram[0x200/2];
-				//printf("command %04x\n",cmd);
+				//mame_printf_debug("command %04x\n",cmd);
 				if(cmd==0x6d)	//Store values to asic ram
 				{
 					unsigned int p1=(killbld_sharedprotram[0x298/2] << 16) | killbld_sharedprotram[0x29a/2];
@@ -1942,9 +1942,9 @@ WRITE16_HANDLER( killbld_prot_w )
                     1,2,3 unk.
                     */
 
-					//printf("src %04x dst %04x size %04x mode %04x\n",src,dst,size,mode);
+					//mame_printf_debug("src %04x dst %04x size %04x mode %04x\n",src,dst,size,mode);
 
-					//if (src&1) printf("odd offset\n");
+					//if (src&1) mame_printf_debug("odd offset\n");
 
 					mode &=0xf;  // what are the other bits?
 
@@ -1974,7 +1974,7 @@ WRITE16_HANDLER( killbld_prot_w )
 							dat = PROTROM[src+x];
 
 							if (RAMDUMP[dst+x] != dat)
-								printf("Mismatch! %04x %04x\n", RAMDUMP[dst+x], dat);
+								mame_printf_debug("Mismatch! %04x %04x\n", RAMDUMP[dst+x], dat);
 
 							killbld_sharedprotram[dst+x] = dat;
 						}
@@ -1997,14 +1997,14 @@ WRITE16_HANDLER( killbld_prot_w )
 
 
 							if (RAMDUMP[dst+x] != dat)
-								printf("Mismatch! Mode 6 %04x %04x\n", RAMDUMP[dst+x], dat);
+								mame_printf_debug("Mismatch! Mode 6 %04x %04x\n", RAMDUMP[dst+x], dat);
 
 							killbld_sharedprotram[dst+x] = dat;
 						}
 					}
 					else
 					{
-						printf("unknown copy mode!\n");
+						mame_printf_debug("unknown copy mode!\n");
 					}
 					/* hack.. it jumps here but there isn't valid code even when we do
                        use what was in ram.. probably some more protection as the game
@@ -2031,7 +2031,7 @@ WRITE16_HANDLER( killbld_prot_w )
 
 READ16_HANDLER( killbld_prot_r )
 {
-//  printf("killbld prot w\n");
+//  mame_printf_debug("killbld prot w\n");
 	unsigned short res ;
 
 	offset&=0xf;

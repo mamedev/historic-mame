@@ -132,7 +132,7 @@ void timer8253_wr(struct timer8253struct *t, int reg, unsigned char val)
 				break;
 
 			default:
-				printf("unhandled val mode %i\n", t->channel[chn].valMode);
+				mame_printf_debug("unhandled val mode %i\n", t->channel[chn].valMode);
 			}
 
 			switch (t->channel[chn].cntMode) {
@@ -151,7 +151,7 @@ void timer8253_wr(struct timer8253struct *t, int reg, unsigned char val)
 				break;
 
 			default:
-				printf("unhandled cnt mode %i\n", t->channel[chn].cntMode);
+				mame_printf_debug("unhandled cnt mode %i\n", t->channel[chn].cntMode);
 			}
 		}
 		break;
@@ -170,7 +170,7 @@ void timer8253_wr(struct timer8253struct *t, int reg, unsigned char val)
 			t->channel[chn].cnval = (t->channel[chn].cnval >> 8) | (val << 8);
 			break;
 		default:
-			printf("unhandled val mode %i\n", t->channel[chn].valMode);
+			mame_printf_debug("unhandled val mode %i\n", t->channel[chn].valMode);
 		}
 
 		if (t->channel[chn].cntMode==0) {
@@ -191,7 +191,7 @@ void timer8253_wr(struct timer8253struct *t, int reg, unsigned char val)
 				break;
 
 			default:
-				printf("unhandled val mode %i\n", t->channel[chn].valMode);
+				mame_printf_debug("unhandled val mode %i\n", t->channel[chn].valMode);
 			}
 
 			switch (t->channel[chn].cntMode) {
@@ -207,7 +207,7 @@ void timer8253_wr(struct timer8253struct *t, int reg, unsigned char val)
 				break;
 
 			default:
-				printf("unhandled cnt mode %i\n", t->channel[chn].cntMode);
+				mame_printf_debug("unhandled cnt mode %i\n", t->channel[chn].cntMode);
 			}
 		}
 	}

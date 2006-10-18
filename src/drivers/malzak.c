@@ -441,7 +441,7 @@ static PALETTE_INIT( malzak )
 MACHINE_RESET(malzak)
 {
 //  val++;
-//  printf("val = %X\n",val);
+//  mame_printf_debug("val = %X\n",val);
 }
 
 static struct SN76477interface sn76477_intf =

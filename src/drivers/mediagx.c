@@ -377,7 +377,7 @@ static READ32_HANDLER( memory_ctrl_r )
 static int pal_index = 0;
 static WRITE32_HANDLER( memory_ctrl_w )
 {
-//  printf("memory_ctrl_w %08X, %08X, %08X\n", data, offset, mem_mask);
+//  mame_printf_debug("memory_ctrl_w %08X, %08X, %08X\n", data, offset, mem_mask);
 
 	if (offset == 7)
 	{
@@ -412,12 +412,12 @@ static READ32_HANDLER( biu_ctrl_r )
 
 static WRITE32_HANDLER( biu_ctrl_w )
 {
-//  printf("biu_ctrl_w %08X, %08X, %08X\n", data, offset, mem_mask);
+//  mame_printf_debug("biu_ctrl_w %08X, %08X, %08X\n", data, offset, mem_mask);
 	COMBINE_DATA(biu_ctrl_reg + offset);
 
 	if (offset == 3)		// BC_XMAP_3 register
 	{
-//      printf("BC_XMAP_3: %08X, %08X, %08X\n", data, offset, mem_mask);
+//      mame_printf_debug("BC_XMAP_3: %08X, %08X, %08X\n", data, offset, mem_mask);
 	}
 }
 
@@ -431,13 +431,13 @@ static UINT8 mediagx_config_regs[256];
 
 static UINT8 mediagx_config_reg_r(void)
 {
-//  printf("mediagx_config_reg_r %02X\n", mediagx_config_reg_sel);
+//  mame_printf_debug("mediagx_config_reg_r %02X\n", mediagx_config_reg_sel);
 	return mediagx_config_regs[mediagx_config_reg_sel];
 }
 
 static void mediagx_config_reg_w(UINT8 data)
 {
-//  printf("mediagx_config_reg_w %02X, %02X\n", mediagx_config_reg_sel, data);
+//  mame_printf_debug("mediagx_config_reg_w %02X, %02X\n", mediagx_config_reg_sel, data);
 	mediagx_config_regs[mediagx_config_reg_sel] = data;
 }
 
@@ -517,14 +517,14 @@ static WRITE32_HANDLER( parallel_port_w )
 	if (!(mem_mask & 0x000000ff))
 	{
 		controls_data = data;
-		//printf("parallel_port_w: %08X, %08X, %08X\n", data, offset, mem_mask);
+		//mame_printf_debug("parallel_port_w: %08X, %08X, %08X\n", data, offset, mem_mask);
 	}
 }
 
 static UINT32 cx5510_regs[256/4];
 static UINT32 cx5510_pci_r(int function, int reg, UINT32 mem_mask)
 {
-//  printf("CX5510: PCI read %d, %02X, %08X\n", function, reg, mem_mask);
+//  mame_printf_debug("CX5510: PCI read %d, %02X, %08X\n", function, reg, mem_mask);
 
 	switch (reg)
 	{
@@ -536,7 +536,7 @@ static UINT32 cx5510_pci_r(int function, int reg, UINT32 mem_mask)
 
 static void cx5510_pci_w(int function, int reg, UINT32 data, UINT32 mem_mask)
 {
-//  printf("CX5510: PCI write %d, %02X, %08X, %08X\n", function, reg, data, mem_mask);
+//  mame_printf_debug("CX5510: PCI write %d, %02X, %08X, %08X\n", function, reg, data, mem_mask);
 	COMBINE_DATA(cx5510_regs + (reg/4));
 }
 

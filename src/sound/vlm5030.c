@@ -332,7 +332,7 @@ static void vlm5030_update_callback(void *param,stream_sample_t **inputs, stream
 					/* is this a zero energy frame? */
 					if (chip->current_energy == 0)
 					{
-						/*printf("processing frame: zero energy\n");*/
+						/*mame_printf_debug("processing frame: zero energy\n");*/
 						chip->target_energy = 0;
 						chip->target_pitch = chip->current_pitch;
 						for(i=0;i<=9;i++)
@@ -340,9 +340,9 @@ static void vlm5030_update_callback(void *param,stream_sample_t **inputs, stream
 					}
 					else
 					{
-						/*printf("processing frame: Normal\n");*/
-						/*printf("*** Energy = %d\n",chip->current_energy);*/
-						/*printf("proc: %d %d\n",last_fbuf_head,fbuf_head);*/
+						/*mame_printf_debug("processing frame: Normal\n");*/
+						/*mame_printf_debug("*** Energy = %d\n",chip->current_energy);*/
+						/*mame_printf_debug("proc: %d %d\n",last_fbuf_head,fbuf_head);*/
 						chip->target_energy = chip->new_energy;
 						chip->target_pitch = chip->new_pitch;
 						for(i=0;i<=9;i++)

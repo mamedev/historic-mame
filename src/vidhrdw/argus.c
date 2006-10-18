@@ -954,7 +954,7 @@ READ8_HANDLER( bombsa_paletteram_r )
 	}
 	else
 	{
-		printf("unknown bombsa_paletteram_r %02x %04x\n",bombsa_ram_page,offset);
+		mame_printf_debug("unknown bombsa_paletteram_r %02x %04x\n",bombsa_ram_page,offset);
 		return 0x00;
 	}
 }
@@ -974,7 +974,7 @@ WRITE8_HANDLER( bombsa_paletteram_w )
 	}
 	else
 	{
-		printf("unknown bombsa_paletteram_w %02x %04x %02x\n",bombsa_ram_page,offset, data);
+		mame_printf_debug("unknown bombsa_paletteram_w %02x %04x %02x\n",bombsa_ram_page,offset, data);
 	}
 }
 

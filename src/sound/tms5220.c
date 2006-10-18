@@ -535,7 +535,7 @@ tryagain:
             /* is this a zero energy frame? */
             if (tms->current_energy == 0)
             {
-                /*printf("processing frame: zero energy\n");*/
+                /*mame_printf_debug("processing frame: zero energy\n");*/
                 tms->target_energy = 0;
                 tms->target_pitch = tms->current_pitch;
                 for (i = 0; i < 10; i++)
@@ -545,7 +545,7 @@ tryagain:
             /* is this a stop frame? */
             else if (tms->current_energy == (energytable[15] >> 6))
             {
-                /*printf("processing frame: stop frame\n");*/
+                /*mame_printf_debug("processing frame: stop frame\n");*/
                 tms->current_energy = energytable[0] >> 6;
                 tms->target_energy = tms->current_energy;
 				/*tms->interp_count = tms->sample_count =*/ tms->pitch_count = 0;
@@ -570,7 +570,7 @@ tryagain:
                 /* is this the ramp down frame? */
                 if (tms->new_energy == (energytable[15] >> 6))
                 {
-                    /*printf("processing frame: ramp down\n");*/
+                    /*mame_printf_debug("processing frame: ramp down\n");*/
                     tms->target_energy = 0;
                     tms->target_pitch = tms->current_pitch;
                     for (i = 0; i < 10; i++)
@@ -579,9 +579,9 @@ tryagain:
                 /* Reset the step size */
                 else
                 {
-                    /*printf("processing frame: Normal\n");*/
-                    /*printf("*** Energy = %d\n",tms->current_energy);*/
-                    /*printf("proc: %d %d\n",last_fbuf_head,fbuf_head);*/
+                    /*mame_printf_debug("processing frame: Normal\n");*/
+                    /*mame_printf_debug("*** Energy = %d\n",tms->current_energy);*/
+                    /*mame_printf_debug("proc: %d %d\n",last_fbuf_head,fbuf_head);*/
 
                     tms->target_energy = tms->new_energy;
                     tms->target_pitch = tms->new_pitch;
@@ -602,14 +602,14 @@ tryagain:
         else if (tms->interp_count == 0)
         {
             /* Update values based on step values */
-            /*printf("\n");*/
+            /*mame_printf_debug("\n");*/
 
             interp_period = tms->sample_count / 25;
             tms->current_energy += (tms->target_energy - tms->current_energy) / interp_coeff[interp_period];
             if (tms->old_pitch != 0)
                 tms->current_pitch += (tms->target_pitch - tms->current_pitch) / interp_coeff[interp_period];
 
-            /*printf("*** Energy = %d\n",tms->current_energy);*/
+            /*mame_printf_debug("*** Energy = %d\n",tms->current_energy);*/
 
             for (i = 0; i < 10; i++)
             {

@@ -1,17 +1,17 @@
-/*
-   Analog Devices ADSP-2106x SHARC emulator
+/* Analog Devices ADSP-2106x SHARC emulator v2.0
 
    Written by Ville Linde
-
-   Portions based on ElSemi's SHARC emulator
 */
 
 #include "sharc.h"
 #include "debugger.h"
 
+static offs_t sharc_dasm(char *buffer, offs_t pc);
 static void sharc_dma_exec(int channel);
+static void check_interrupts(void);
 
-enum {
+enum
+{
 	SHARC_PC=1,		SHARC_PCSTK,	SHARC_MODE1,	SHARC_MODE2,
 	SHARC_ASTAT,	SHARC_STKY,		SHARC_IRPTL,	SHARC_IMASK,
 	SHARC_IMASKP,	SHARC_USTAT1,	SHARC_USTAT2,	SHARC_LCNTR,
@@ -20,7 +20,8 @@ enum {
 	SHARC_R8,		SHARC_R9,		SHARC_R10,		SHARC_R11,
 	SHARC_R12,		SHARC_R13,		SHARC_R14,		SHARC_R15,
 	SHARC_SYSCON,	SHARC_SYSSTAT,	SHARC_MRF,		SHARC_MRB,
-	SHARC_STATUS_STKP,
+	SHARC_STSTKP,	SHARC_PCSTKP,	SHARC_LSTKP,
+	SHARC_FADDR,	SHARC_DADDR,
 	SHARC_I0,		SHARC_I1,		SHARC_I2,		SHARC_I3,
 	SHARC_I4,		SHARC_I5,		SHARC_I6,		SHARC_I7,
 	SHARC_I8,		SHARC_I9,		SHARC_I10,		SHARC_I11,
@@ -39,15 +40,17 @@ enum {
 	SHARC_B12,		SHARC_B13,		SHARC_B14,		SHARC_B15,
 };
 
-typedef struct {
+typedef struct
+{
 	UINT32 i[8];
 	UINT32 m[8];
 	UINT32 b[8];
 	UINT32 l[8];
 } SHARC_DAG;
 
-typedef union {
-	UINT32 r;
+typedef union
+{
+	INT32 r;
 	float f;
 } SHARC_REG;
 
@@ -64,9 +67,9 @@ typedef struct
 	UINT32 ext_count;
 } DMA_REGS;
 
-typedef struct {
+typedef struct
+{
 	UINT32 pc;
-	UINT32 npc;
 	SHARC_REG r[16];
 	SHARC_REG reg_alt[16];
 	UINT64 mrf;
@@ -109,7 +112,11 @@ typedef struct {
 	UINT32 syscon;
 	UINT32 sysstat;
 
-	UINT32 status_stack[8];
+	struct
+	{
+		UINT32 mode1;
+		UINT32 astat;
+	} status_stack[5];
 	int status_stkp;
 
 	UINT64 px;
@@ -119,8 +126,13 @@ typedef struct {
 	int internal_ram_size;
 
 	int (*irq_callback)(int irqline);
+	void (*opcode_handler)(void);
 	UINT64 opcode;
-	void (** opcode_table)(void);
+	UINT64 fetch_opcode;
+	UINT64 decode_opcode;
+
+	UINT32 nfaddr;
+
 	int idle;
 	int irq_active;
 	int irq_active_num;
@@ -128,20 +140,13 @@ typedef struct {
 	SHARC_BOOT_MODE boot_mode;
 } SHARC_REGS;
 
+
 static SHARC_REGS sharc;
 static int sharc_icount;
 
-#define ROPCODE(pc)		((UINT64)(sharc.internal_ram[((pc-0x20000) * 3) + 0]) << 32) | \
-						((UINT64)(sharc.internal_ram[((pc-0x20000) * 3) + 1]) << 16) | \
-						((UINT64)(sharc.internal_ram[((pc-0x20000) * 3) + 2]) << 0)
+static void (* sharc_op[512])(void);
 
-#define DECODE_AND_EXEC_OPCODE() \
-	sharc.opcode = ROPCODE(sharc.pc); \
-	sharc.opcode_table[(sharc.opcode >> 39) & 0x1ff]();
 
-void decode_and_exec_opcode(void);
-
-/*****************************************************************************/
 
 static UINT32 dmaop_src;
 static UINT32 dmaop_dst;
@@ -157,18 +162,45 @@ static int dmaop_chained_direction;
 
 
 
+#define ROPCODE(pc)		((UINT64)(sharc.internal_ram[((pc-0x20000) * 3) + 0]) << 32) | \
+						((UINT64)(sharc.internal_ram[((pc-0x20000) * 3) + 1]) << 16) | \
+						((UINT64)(sharc.internal_ram[((pc-0x20000) * 3) + 2]) << 0)
+
+INLINE void CHANGE_PC(UINT32 newpc)
+{
+	sharc.pc = newpc;
+	sharc.daddr = newpc;
+	sharc.faddr = newpc+1;
+	sharc.nfaddr = newpc+2;
+
+	// next instruction to be executed
+	sharc.decode_opcode = ROPCODE(sharc.daddr);
+	// next instruction to be decoded
+	sharc.fetch_opcode = ROPCODE(sharc.faddr);
+}
+
+INLINE void CHANGE_PC_DELAYED(UINT32 newpc)
+{
+	sharc.nfaddr = newpc;
+}
+
+
+
+
+
 static int iop_latency_cycles = 0;
 static int iop_latency_reg = 0;
 static UINT32 iop_latency_data = 0;
 
-static void add_iop_latency_op(int iop_reg, UINT32 data, int latency)
+
+static void add_iop_write_latency_effect(int iop_reg, UINT32 data, int latency)
 {
-	iop_latency_cycles = latency;
+	iop_latency_cycles = latency+1;
 	iop_latency_reg = iop_reg;
 	iop_latency_data = data;
 }
 
-static void iop_latency_op(void)
+static void iop_write_latency_effect(void)
 {
 	UINT32 data = iop_latency_data;
 
@@ -176,8 +208,8 @@ static void iop_latency_op(void)
 	{
 		case 0x1c:
 		{
-			sharc.dma[6].control = data;
-			if (data & 0x1) {
+			if (data & 0x1)
+			{
 				sharc_dma_exec(6);
 			}
 			break;
@@ -185,16 +217,17 @@ static void iop_latency_op(void)
 
 		case 0x1d:
 		{
-			sharc.dma[7].control = data;
-			if (data & 0x1) {
+			if (data & 0x1)
+			{
 				sharc_dma_exec(7);
 			}
 			break;
 		}
 
-		default:	fatalerror("SHARC: add_iop_latency_op: unknown IOP register %02X", iop_latency_reg);
+		default:	fatalerror("SHARC: iop_write_latency_effect: unknown IOP register %02X", iop_latency_reg);
 	}
 }
+
 
 
 /* IOP registers */
@@ -235,7 +268,12 @@ static void sharc_iop_w(UINT32 address, UINT32 data)
 		case 0x0f: break;		// Message Register 7
 
 		// DMA 6
-		case 0x1c: add_iop_latency_op(0x1c, data, 1); break;
+		case 0x1c:
+		{
+			sharc.dma[6].control = data;
+			add_iop_write_latency_effect(0x1c, data, 1);
+			break;
+		}
 
 		case 0x20: break;
 
@@ -249,7 +287,12 @@ static void sharc_iop_w(UINT32 address, UINT32 data)
 		case 0x47: sharc.dma[6].ext_count = data; return;
 
 		// DMA 7
-		case 0x1d: add_iop_latency_op(0x1d, data, 20); break;
+		case 0x1d:
+		{
+			sharc.dma[7].control = data;
+			add_iop_write_latency_effect(0x1d, data, 20);	// does this really need to be 20 cycles!!?
+			break;
+		}
 
 		case 0x48: sharc.dma[7].int_index = data; return;
 		case 0x49: sharc.dma[7].int_modifier = data; return;
@@ -265,454 +308,45 @@ static void sharc_iop_w(UINT32 address, UINT32 data)
 }
 
 
+#include "sharcmem.c"
+#include "sharcdma.c"
+#include "sharcops.c"
+#include "sharcops.h"
 
 
-static UINT32 pm_read32(UINT32 address)
+
+static void build_opcode_table(void)
 {
-	if (address >= 0x20000 && address < 0x28000)
-	{
-		return (UINT32)(sharc.internal_ram_block0[((address-0x20000) * 3) + 0] << 16) |
-					   (sharc.internal_ram_block0[((address-0x20000) * 3) + 1]);
-	}
-	else if (address >= 0x28000 && address < 0x30000)
-	{
-		return (UINT32)(sharc.internal_ram_block1[((address-0x28000) * 3) + 0] << 16) |
-					   (sharc.internal_ram_block1[((address-0x28000) * 3) + 1]);
-	}
-	else if (address >= 0x30000 && address < 0x38000)
-	{
-		return (UINT32)(sharc.internal_ram_block1[((address-0x30000) * 3) + 0] << 16) |
-					   (sharc.internal_ram_block1[((address-0x30000) * 3) + 1]);
-	}
-	else if (address >= 0x38000 && address < 0x40000)
-	{
-		return (UINT32)(sharc.internal_ram_block1[((address-0x38000) * 3) + 0] << 16) |
-					   (sharc.internal_ram_block1[((address-0x38000) * 3) + 1]);
-	}
-	else {
-		fatalerror("SHARC: PM Bus Read %08X at %08X", address, sharc.pc);
-	}
-}
+	int i, j;
+	int num_ops = sizeof(sharc_opcode_table) / sizeof(SHARC_OP);
 
-static void pm_write32(UINT32 address, UINT32 data)
-{
-	if (address >= 0x20000 && address < 0x28000)
+	for (i=0; i < 512; i++)
 	{
-		sharc.internal_ram_block0[((address-0x20000) * 3) + 0] = (UINT16)(data >> 16);
-		sharc.internal_ram_block0[((address-0x20000) * 3) + 1] = (UINT16)(data);
-		return;
-	}
-	else if (address >= 0x28000 && address < 0x30000)
-	{
-		sharc.internal_ram_block1[((address-0x28000) * 3) + 0] = (UINT16)(data >> 16);
-		sharc.internal_ram_block1[((address-0x28000) * 3) + 1] = (UINT16)(data);
-		return;
-	}
-	else if (address >= 0x30000 && address < 0x38000)
-	{
-		sharc.internal_ram_block1[((address-0x30000) * 3) + 0] = (UINT16)(data >> 16);
-		sharc.internal_ram_block1[((address-0x30000) * 3) + 1] = (UINT16)(data);
-		return;
-	}
-	else if (address >= 0x38000 && address < 0x40000)
-	{
-		sharc.internal_ram_block1[((address-0x38000) * 3) + 0] = (UINT16)(data >> 16);
-		sharc.internal_ram_block1[((address-0x38000) * 3) + 1] = (UINT16)(data);
-		return;
-	}
-	else {
-		fatalerror("SHARC: PM Bus Write %08X, %08X at %08X", address, data, sharc.pc);
-	}
-}
-
-static UINT64 pm_read48(UINT32 address)
-{
-	if (address >= 0x20000 && address < 0x28000)
-	{
-		return ((UINT64)(sharc.internal_ram_block0[((address-0x20000) * 3) + 0]) << 32) |
-			   ((UINT64)(sharc.internal_ram_block0[((address-0x20000) * 3) + 1]) << 16) |
-			   ((UINT64)(sharc.internal_ram_block0[((address-0x20000) * 3) + 2]) << 0);
-	}
-	else if (address >= 0x28000 && address < 0x30000)
-	{
-		return ((UINT64)(sharc.internal_ram_block1[((address-0x28000) * 3) + 0]) << 32) |
-			   ((UINT64)(sharc.internal_ram_block1[((address-0x28000) * 3) + 1]) << 16) |
-			   ((UINT64)(sharc.internal_ram_block1[((address-0x28000) * 3) + 2]) << 0);
-	}
-	else if (address >= 0x30000 && address < 0x38000)
-	{
-		return ((UINT64)(sharc.internal_ram_block1[((address-0x30000) * 3) + 0]) << 32) |
-			   ((UINT64)(sharc.internal_ram_block1[((address-0x30000) * 3) + 1]) << 16) |
-			   ((UINT64)(sharc.internal_ram_block1[((address-0x30000) * 3) + 2]) << 0);
-	}
-	else if (address >= 0x38000 && address < 0x40000)
-	{
-		return ((UINT64)(sharc.internal_ram_block1[((address-0x38000) * 3) + 0]) << 32) |
-			   ((UINT64)(sharc.internal_ram_block1[((address-0x38000) * 3) + 1]) << 16) |
-			   ((UINT64)(sharc.internal_ram_block1[((address-0x38000) * 3) + 2]) << 0);
-	}
-	else {
-		fatalerror("SHARC: PM Bus Read %08X at %08X", address, sharc.pc);
+		sharc_op[i] = sharcop_unimplemented;
 	}
 
-	return 0;
-}
+	for (i=0; i < 512; i++)
+	{
+		UINT16 op = i << 7;
 
-static void pm_write48(UINT32 address, UINT64 data)
-{
-	if (address >= 0x20000 && address < 0x28000)
-	{
-		sharc.internal_ram_block0[((address-0x20000) * 3) + 0] = (UINT16)(data >> 32);
-		sharc.internal_ram_block0[((address-0x20000) * 3) + 1] = (UINT16)(data >> 16);
-		sharc.internal_ram_block0[((address-0x20000) * 3) + 2] = (UINT16)(data);
-		return;
-	}
-	else if (address >= 0x28000 && address < 0x30000)
-	{
-		sharc.internal_ram_block1[((address-0x28000) * 3) + 0] = (UINT16)(data >> 32);
-		sharc.internal_ram_block1[((address-0x28000) * 3) + 1] = (UINT16)(data >> 16);
-		sharc.internal_ram_block1[((address-0x28000) * 3) + 2] = (UINT16)(data);
-		return;
-	}
-	else if (address >= 0x30000 && address < 0x38000)
-	{
-		sharc.internal_ram_block1[((address-0x30000) * 3) + 0] = (UINT16)(data >> 32);
-		sharc.internal_ram_block1[((address-0x30000) * 3) + 1] = (UINT16)(data >> 16);
-		sharc.internal_ram_block1[((address-0x30000) * 3) + 2] = (UINT16)(data);
-		return;
-	}
-	else if (address >= 0x38000 && address < 0x40000)
-	{
-		sharc.internal_ram_block1[((address-0x38000) * 3) + 0] = (UINT16)(data >> 32);
-		sharc.internal_ram_block1[((address-0x38000) * 3) + 1] = (UINT16)(data >> 16);
-		sharc.internal_ram_block1[((address-0x38000) * 3) + 2] = (UINT16)(data);
-		return;
-	}
-	else {
-		fatalerror("SHARC: PM Bus Write %08X, %04X%08X at %08X", address, (UINT16)(data >> 32),(UINT32)data, sharc.pc);
-	}
-}
-
-static UINT32 dm_read32(UINT32 address)
-{
-	if (address < 0x100)
-	{
-		return sharc_iop_r(address);
-	}
-	else if (address >= 0x20000 && address < 0x28000)
-	{
-		return (UINT32)(sharc.internal_ram_block0[((address-0x20000) * 2) + 0] << 16) |
-					   (sharc.internal_ram_block0[((address-0x20000) * 2) + 1]);
-	}
-	else if (address >= 0x28000 && address < 0x30000)
-	{
-		return (UINT32)(sharc.internal_ram_block1[((address-0x28000) * 2) + 0] << 16) |
-					   (sharc.internal_ram_block1[((address-0x28000) * 2) + 1]);
-	}
-	else if (address >= 0x30000 && address < 0x38000)
-	{
-		return (UINT32)(sharc.internal_ram_block1[((address-0x30000) * 2) + 0] << 16) |
-					   (sharc.internal_ram_block1[((address-0x30000) * 2) + 1]);
-	}
-	else if (address >= 0x38000 && address < 0x40000)
-	{
-		return (UINT32)(sharc.internal_ram_block1[((address-0x38000) * 2) + 0] << 16) |
-					   (sharc.internal_ram_block1[((address-0x38000) * 2) + 1]);
-	}
-
-	// short word addressing
-	else if (address >= 0x40000 && address < 0x50000)
-	{
-		UINT16 r = sharc.internal_ram_block0[(address-0x40000) ^ 1];
-		if (sharc.mode1 & 0x4000)
+		for (j=0; j < num_ops; j++)
 		{
-			// sign-extend
-			return (INT32)(INT16)(r);
-		}
-		else
-		{
-			return (UINT32)(r);
+			if ((sharc_opcode_table[j].op_mask & op) == sharc_opcode_table[j].op_bits)
+			{
+				if (sharc_op[i] != sharcop_unimplemented)
+				{
+					fatalerror("build_opcode_table: table already filled! (i=%04X, j=%d)\n", i, j);
+				}
+				else
+				{
+					sharc_op[i] = sharc_opcode_table[j].handler;
+				}
+			}
 		}
 	}
-	else if (address >= 0x50000 && address < 0x60000)
-	{
-		UINT16 r = sharc.internal_ram_block1[(address-0x50000) ^ 1];
-		if (sharc.mode1 & 0x4000)
-		{
-			// sign-extend
-			return (INT32)(INT16)(r);
-		}
-		else
-		{
-			return (UINT32)(r);
-		}
-	}
-	else if (address >= 0x60000 && address < 0x70000)
-	{
-		UINT16 r = sharc.internal_ram_block1[(address-0x60000) ^ 1];
-		if (sharc.mode1 & 0x4000)
-		{
-			// sign-extend
-			return (INT32)(INT16)(r);
-		}
-		else
-		{
-			return (UINT32)(r);
-		}
-	}
-	else if (address >= 0x70000 && address < 0x80000)
-	{
-		UINT16 r = sharc.internal_ram_block1[(address-0x70000) ^ 1];
-		if (sharc.mode1 & 0x4000)
-		{
-			// sign-extend
-			return (INT32)(INT16)(r);
-		}
-		else
-		{
-			return (UINT32)(r);
-		}
-	}
-
-	return data_read_dword_32le(address << 2);
-}
-
-static void dm_write32(UINT32 address, UINT32 data)
-{
-	if (address < 0x100)
-	{
-		sharc_iop_w(address, data);
-		return;
-	}
-	else if (address >= 0x20000 && address < 0x28000)
-	{
-		sharc.internal_ram_block0[((address-0x20000) * 2) + 0] = (UINT16)(data >> 16);
-		sharc.internal_ram_block0[((address-0x20000) * 2) + 1] = (UINT16)(data);
-		return;
-	}
-	else if (address >= 0x28000 && address < 0x30000)
-	{
-		sharc.internal_ram_block1[((address-0x28000) * 2) + 0] = (UINT16)(data >> 16);
-		sharc.internal_ram_block1[((address-0x28000) * 2) + 1] = (UINT16)(data);
-		return;
-	}
-	else if (address >= 0x30000 && address < 0x38000)
-	{
-		sharc.internal_ram_block1[((address-0x30000) * 2) + 0] = (UINT16)(data >> 16);
-		sharc.internal_ram_block1[((address-0x30000) * 2) + 1] = (UINT16)(data);
-		return;
-	}
-	else if (address >= 0x38000 && address < 0x40000)
-	{
-		sharc.internal_ram_block1[((address-0x38000) * 2) + 0] = (UINT16)(data >> 16);
-		sharc.internal_ram_block1[((address-0x38000) * 2) + 1] = (UINT16)(data);
-		return;
-	}
-
-	// short word addressing
-	else if (address >= 0x40000 && address < 0x50000)
-	{
-		sharc.internal_ram_block0[(address-0x40000) ^ 1] = data;
-		return;
-	}
-	else if (address >= 0x50000 && address < 0x60000)
-	{
-		sharc.internal_ram_block1[(address-0x50000) ^ 1] = data;
-		return;
-	}
-	else if (address >= 0x60000 && address < 0x70000)
-	{
-		sharc.internal_ram_block1[(address-0x60000) ^ 1] = data;
-		return;
-	}
-	else if (address >= 0x70000 && address < 0x80000)
-	{
-		sharc.internal_ram_block1[(address-0x70000) ^ 1] = data;
-		return;
-	}
-
-	data_write_dword_32le(address << 2, data);
 }
 
 /*****************************************************************************/
-
-static void schedule_chained_dma_op(int channel, UINT32 dma_chain_ptr, int chained_direction)
-{
-	UINT32 op_ptr = 0x20000 + dma_chain_ptr;
-
-	UINT32 int_index 		= dm_read32(op_ptr - 0);
-	UINT32 int_modifier		= dm_read32(op_ptr - 1);
-	UINT32 int_count		= dm_read32(op_ptr - 2);
-	UINT32 chain_ptr 		= dm_read32(op_ptr - 3);
-	//UINT32 gen_purpose        = dm_read32(op_ptr - 4);
-	UINT32 ext_index 		= dm_read32(op_ptr - 5);
-	UINT32 ext_modifier 	= dm_read32(op_ptr - 6);
-	UINT32 ext_count 		= dm_read32(op_ptr - 7);
-
-	if (dmaop_cycles > 0)
-	{
-		fatalerror("schedule_chained_dma_op: DMA operation already scheduled at %08X!", sharc.pc);
-	}
-
-	if (chained_direction)		// Transmit to external
-	{
-		dmaop_dst 			= ext_index;
-		dmaop_dst_modifier	= ext_modifier;
-		dmaop_dst_count		= ext_count;
-		dmaop_src			= int_index;
-		dmaop_src_modifier	= int_modifier;
-		dmaop_src_count		= int_count;
-	}
-	else			// Receive from external
-	{
-		dmaop_src 			= ext_index;
-		dmaop_src_modifier	= ext_modifier;
-		dmaop_src_count		= ext_count;
-		dmaop_dst			= int_index;
-		dmaop_dst_modifier	= int_modifier;
-		dmaop_dst_count		= int_count;
-	}
-
-	dmaop_pmode = 0;
-	dmaop_channel = channel;
-	dmaop_cycles = dmaop_src_count / 4;
-	dmaop_chain_ptr = chain_ptr;
-	dmaop_chained_direction = chained_direction;
-}
-
-static void schedule_dma_op(int channel, UINT32 src, UINT32 dst, int src_modifier, int dst_modifier, int src_count, int dst_count, int pmode)
-{
-	if (dmaop_cycles > 0)
-	{
-		fatalerror("schedule_dma_op: DMA operation already scheduled at %08X!", sharc.pc);
-	}
-
-	dmaop_channel = channel;
-	dmaop_src = src;
-	dmaop_dst = dst;
-	dmaop_src_modifier = src_modifier;
-	dmaop_dst_modifier = dst_modifier;
-	dmaop_src_count = src_count;
-	dmaop_dst_count = dst_count;
-	dmaop_pmode = pmode;
-	dmaop_chain_ptr = 0;
-	dmaop_cycles = src_count / 4;
-}
-
-static void dma_op(UINT32 src, UINT32 dst, int src_modifier, int dst_modifier, int src_count, int dst_count, int pmode)
-{
-	int i;
-	switch (pmode)
-	{
-		case 0:
-		{
-			if (src_count == dst_count)
-			{
-				for (i=0; i < src_count; i++)
-				{
-					UINT32 data = dm_read32(src);
-					dm_write32(dst, data);
-					src += src_modifier;
-					dst += dst_modifier;
-				}
-			}
-			else
-			{
-				for (i=0; i < src_count; i+=6)
-				{
-					UINT64 data = (UINT64)dm_read32(src+0) << 0 | (UINT64)dm_read32(src+1) << 8 | (UINT64)dm_read32(src+2) << 16 |
-								  (UINT64)dm_read32(src+3) << 24 | (UINT64)dm_read32(src+4) << 32 | (UINT64)dm_read32(src+5) << 40;
-					pm_write48(dst, data);
-					src += src_modifier*6;
-					dst += dst_modifier;
-				}
-			}
-			break;
-		}
-		case 1:
-		{
-			for (i=0; i < src_count/2; i++)
-			{
-				UINT32 data1 = dm_read32(src+0) & 0xffff;
-				UINT32 data2 = dm_read32(src+1) & 0xffff;
-				dm_write32(dst, (data1 << 16) | data2);
-				src += src_modifier*2;
-				dst += dst_modifier;
-			}
-			break;
-		}
-	}
-}
-
-static void sharc_dma_exec(int channel)
-{
-	UINT32 src, dst;
-	UINT32 src_count, dst_count;
-	UINT32 src_modifier, dst_modifier;
-	int chen, tran, dtype, pmode, mswf, master, ishake, intio, ext, flsh;
-
-	chen = (sharc.dma[channel].control >> 1) & 0x1;
-	tran = (sharc.dma[channel].control >> 2) & 0x1;
-	dtype = (sharc.dma[channel].control >> 5) & 0x1;
-	pmode = (sharc.dma[channel].control >> 6) & 0x3;
-	mswf = (sharc.dma[channel].control >> 8) & 0x1;
-	master = (sharc.dma[channel].control >> 9) & 0x1;
-	ishake = (sharc.dma[channel].control >> 10) & 0x1;
-	intio = (sharc.dma[channel].control >> 11) & 0x1;
-	ext = (sharc.dma[channel].control >> 12) & 0x1;
-	flsh = (sharc.dma[channel].control >> 13) & 0x1;
-
-	if (ishake)
-		fatalerror("SHARC: dma_exec: handshake not supported");
-	if (intio)
-		fatalerror("SHARC: dma_exec: single-word interrupt enable not supported");
-
-
-
-	if (chen)		// Chained DMA
-	{
-		UINT32 dma_chain_ptr = sharc.dma[channel].chain_ptr & 0x1ffff;
-
-		schedule_chained_dma_op(channel, dma_chain_ptr, tran);
-	}
-	else
-	{
-		if (tran)		// Transmit to external
-		{
-			dst 			= sharc.dma[channel].ext_index;
-			dst_modifier	= sharc.dma[channel].ext_modifier;
-			dst_count		= sharc.dma[channel].ext_count;
-			src				= sharc.dma[channel].int_index;
-			src_modifier	= sharc.dma[channel].int_modifier;
-			src_count		= sharc.dma[channel].int_count;
-		}
-		else			// Receive from external
-		{
-			src 			= sharc.dma[channel].ext_index;
-			src_modifier	= sharc.dma[channel].ext_modifier;
-			src_count		= sharc.dma[channel].ext_count;
-			dst				= sharc.dma[channel].int_index;
-			dst_modifier	= sharc.dma[channel].int_modifier;
-			dst_count		= sharc.dma[channel].int_count;
-		}
-
-		if (dst < 0x20000)
-		{
-			dst |= 0x20000;
-		}
-
-		schedule_dma_op(channel, src, dst, src_modifier, dst_modifier, src_count, dst_count, pmode);
-	}
-
-	sharc.irptl |= (1 << (channel+10));
-
-	/* DMA interrupt */
-	if (sharc.imask & (1 << (channel+10)))
-	{
-		sharc.irq_active = 1;
-		sharc.irq_active_num = channel+10;
-	}
-}
 
 void sharc_external_iop_write(UINT32 address, UINT32 data)
 {
@@ -725,7 +359,7 @@ void sharc_external_iop_write(UINT32 address, UINT32 data)
 	}
 	else
 	{
-		printf("SHARC IOP write %08X, %08X\n", address, data);
+		mame_printf_debug("SHARC IOP write %08X, %08X\n", address, data);
 		sharc_iop_w(address, data);
 	}
 }
@@ -758,131 +392,44 @@ void sharc_external_dma_write(UINT32 address, UINT64 data)
 	}
 }
 
-/*****************************************************************************/
-
-#define IOP_LATENCY_OP()					\
-		if (iop_latency_cycles > 0)			\
-		{									\
-			iop_latency_cycles--;			\
-			if (iop_latency_cycles == 0)	\
-			{								\
-				iop_latency_op();			\
-			}								\
-		}
-
 static offs_t sharc_dasm(char *buffer, offs_t pc)
 {
 	UINT64 op = 0;
+
 	if (pc >= 0x20000 && pc < 0x30000)
-	 	op = ROPCODE(pc);
+	{
+		op = ((UINT64)(sharc.internal_ram[((pc - 0x20000) * 3) + 0]) << 32) |
+			 ((UINT64)(sharc.internal_ram[((pc - 0x20000) * 3) + 1]) << 16) |
+			 ((UINT64)(sharc.internal_ram[((pc - 0x20000) * 3) + 2]) <<  0);
+	}
+
 #ifdef MAME_DEBUG
 	sharc_dasm_one(buffer, pc, op);
 #else
-	sprintf(buffer, "$%04X%08X", (UINT32)((op >> 32) & 0xffff), (UINT32)op);
+	sprintf(buffer, "$%04X%08X", (UINT32)((op >> 32) & 0xffff), (UINT32)(op));
 #endif
+
 	return 1;
 }
 
-static void check_interrupts(void);
 
-#include "sharcops.c"
-#include "sharcops.h"
-
-
-void sharc_set_flag_input(int flag_num, int state)
+static void sharc_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
-	if (flag_num >= 0 && flag_num < 4)
-	{
-		// Check if flag is set to input in MODE2 (bit == 0)
-		if ((sharc.mode2 & (1 << (flag_num+15))) == 0)
-		{
-			//printf("FLAG%d = %d at %08X\n", flag_num, state, activecpu_get_pc());
-			sharc.flag[flag_num] = state ? 1 : 0;
-		}
-		else
-		{
-			fatalerror("sharc_set_flag_input: flag %d is set output!", flag_num);
-		}
-	}
-}
-
-static void sharc_exit(void)
-{
-	/* TODO */
-}
-
-static void sharc_get_context(void *dst)
-{
-	/* copy the context */
-	if (dst)
-		*(SHARC_REGS *)dst = sharc;
-}
-
-static void sharc_set_context(void *src)
-{
-	/* copy the context */
-	if (src)
-		sharc = *(SHARC_REGS *)src;
-
-	change_pc(sharc.pc);
-}
-
-static void sharc_set_irq_line(int irqline, int state)
-{
-	/* TODO */
-	if (state)
-	{
-		if (sharc.imask & (1 << (8-irqline)))
-		{
-			sharc.irq_active = 1;
-			sharc.irq_active_num = 8-irqline;
-		}
-	}
-}
-
-static void check_interrupts(void)
-{
-	if ((sharc.imask & (1 << sharc.irq_active_num)) && (sharc.mode1 & 0x1000))
-	{
-		PUSH_PC(sharc.npc);
-
-		sharc.irptl |= 1 << sharc.irq_active_num;
-
-		if (sharc.irq_active_num >= 6 && sharc.irq_active_num <= 8)
-		{
-			PUSH_STATUS_REG(sharc.astat);
-			PUSH_STATUS_REG(sharc.mode1);
-		}
-
-		sharc.npc = 0x20000 + (sharc.irq_active_num * 0x4);
-		/* TODO: alter IMASKP */
-
-		sharc.irq_active = 0;
-	}
-}
-
-static void sharc_init(int index, int clock, const void *_config, int (*irqcallback)(int))
-{
-	const sharc_config *config = _config;
-	sharc.boot_mode = config->boot_mode;
+	const sharc_config *cfg = config;
+	sharc.boot_mode = cfg->boot_mode;
 
 	sharc.irq_callback = irqcallback;
 
-	sharc.opcode_table = sharc_op;
+	build_opcode_table();
 
-	sharc.internal_ram = auto_malloc(2 * 0x20000);
+	sharc.internal_ram = auto_malloc(2 * 0x10000 * sizeof(UINT16));		// 2x 128KB
 	sharc.internal_ram_block0 = &sharc.internal_ram[0];
 	sharc.internal_ram_block1 = &sharc.internal_ram[0x20000/2];
-
-
 }
 
 static void sharc_reset(void)
 {
-	sharc.pc = 0x20004;
-	sharc.npc = sharc.pc + 1;
-	sharc.idle = 0;
-	sharc.stky = 0x5400000;
+	memset(sharc.internal_ram, 0, 2 * 0x10000 * sizeof(UINT16));
 
 	switch(sharc.boot_mode)
 	{
@@ -894,9 +441,11 @@ static void sharc_reset(void)
 			sharc.dma[6].ext_index		= 0x400000;
 			sharc.dma[6].ext_modifier	= 1;
 			sharc.dma[6].ext_count		= 0x600;
+			sharc.dma[6].control		= 0x2a1;
 
 			sharc_dma_exec(6);
-			dma_op(dmaop_src, dmaop_dst, dmaop_src_modifier, dmaop_dst_modifier, dmaop_src_count, dmaop_dst_count, dmaop_pmode);
+			dma_op(dmaop_src, dmaop_dst, dmaop_src_modifier, dmaop_dst_modifier,
+				   dmaop_src_count, dmaop_dst_count, dmaop_pmode);
 			dmaop_cycles = 0;
 
 			break;
@@ -908,81 +457,222 @@ static void sharc_reset(void)
 		default:
 			fatalerror("SHARC: Unimplemented boot mode %d", sharc.boot_mode);
 	}
+
+	sharc.pc = 0x20004;
+	sharc.daddr = sharc.pc + 1;
+	sharc.faddr = sharc.daddr + 1;
+	sharc.nfaddr = sharc.faddr+1;
+
+	sharc.idle = 0;
+	sharc.stky = 0x5400000;
 }
 
-static int sharc_execute(int num_cycles)
+static void sharc_exit(void)
 {
-	sharc_icount = num_cycles;
+	/* TODO */
+}
 
-	if(sharc.idle && sharc.irq_active == 0) {
+static void sharc_get_context(void *dst)
+{
+	/* copy the context */
+	if (dst)
+	{
+		*(SHARC_REGS *)dst = sharc;
+	}
+}
+
+static void sharc_set_context(void *src)
+{
+	/* copy the context */
+	if (src)
+	{
+		sharc = *(SHARC_REGS *)src;
+	}
+
+	change_pc(sharc.pc);
+}
+
+static void sharc_set_irq_line(int irqline, int state)
+{
+	if (state)
+	{
+		sharc.irq_active = 1;
+		sharc.irq_active_num = 8-irqline;
+	}
+}
+
+void sharc_set_flag_input(int flag_num, int state)
+{
+	if (flag_num >= 0 && flag_num < 4)
+	{
+		// Check if flag is set to input in MODE2 (bit == 0)
+		if ((sharc.mode2 & (1 << (flag_num+15))) == 0)
+		{
+			sharc.flag[flag_num] = state ? 1 : 0;
+		}
+		else
+		{
+			fatalerror("sharc_set_flag_input: flag %d is set output!", flag_num);
+		}
+	}
+}
+
+static void check_interrupts(void)
+{
+	if ((sharc.imask & (1 << sharc.irq_active_num)) && (sharc.mode1 & MODE1_IRPTEN) && sharc.irq_active)
+	{
+		PUSH_PC(sharc.pc+1);
+
+		sharc.irptl |= 1 << sharc.irq_active_num;
+
+		if (sharc.irq_active_num >= 6 && sharc.irq_active_num <= 8)
+		{
+			PUSH_STATUS_STACK();
+		}
+
+		CHANGE_PC(0x20000 + (sharc.irq_active_num * 0x4));
+		/* TODO: alter IMASKP */
+
+		sharc.irq_active = 0;
+	}
+}
+
+static int sharc_execute(int cycles)
+{
+	sharc_icount = cycles;
+
+	if (sharc.idle && sharc.irq_active == 0)
+	{
+		// handle pending DMA transfers
+		if (dmaop_cycles > 0)
+		{
+			dmaop_cycles -= cycles;
+			if (dmaop_cycles <= 0)
+			{
+				dmaop_cycles = 0;
+				dma_op(dmaop_src, dmaop_dst, dmaop_src_modifier, dmaop_dst_modifier, dmaop_src_count, dmaop_dst_count, dmaop_pmode);
+				if (dmaop_chain_ptr != 0)
+				{
+					schedule_chained_dma_op(dmaop_channel, dmaop_chain_ptr, dmaop_chained_direction);
+				}
+			}
+		}
+
 		sharc_icount = 0;
 		CALL_MAME_DEBUG;
+
+		return cycles;
 	}
-	if(sharc.irq_active != 0)
+	if (sharc.irq_active != 0)
 	{
 		sharc.idle = 0;
 		check_interrupts();
 	}
 
-	while(sharc_icount > 0 && !sharc.idle)
+	// fill the initial pipeline
+
+	// next executed instruction
+	sharc.opcode = ROPCODE(sharc.daddr);
+	sharc.opcode_handler = sharc_op[(sharc.opcode >> 39) & 0x1ff];
+
+	// next decoded instruction
+	sharc.fetch_opcode = ROPCODE(sharc.faddr);
+
+	while (sharc_icount > 0 && !sharc.idle)
 	{
-		sharc.pc = sharc.npc;
-		sharc.npc++;
+		sharc.pc = sharc.daddr;
+		sharc.daddr = sharc.faddr;
+		sharc.faddr = sharc.nfaddr;
+		sharc.nfaddr++;
+
+		sharc.decode_opcode = sharc.fetch_opcode;
+
+		// fetch next instruction
+		sharc.fetch_opcode = ROPCODE(sharc.faddr);
 
 		CALL_MAME_DEBUG;
 
-		/* handle looping */
-		if(sharc.pc == (sharc.laddr & 0xffffff))
+		// handle looping
+		if (sharc.pc == (sharc.laddr & 0xffffff))
 		{
-			int cond = (sharc.laddr >> 24) & 0x1f;
-
-			/* loop type */
-			switch((sharc.laddr >> 30) & 0x3)
+			switch (sharc.laddr >> 30)
 			{
-				case 0:		/* arithmetic condition-based */
-					if(DO_CONDITION_CODE(cond))
+				case 0:		// arithmetic condition-based
+				{
+					int condition = (sharc.laddr >> 24) & 0x1f;
+
+					if (DO_CONDITION_CODE(condition))
 					{
 						POP_LOOP();
 						POP_PC();
-						DECODE_AND_EXEC_OPCODE();
-						//DELAY_SLOT();
 					}
 					else
 					{
-						sharc.npc = TOP_PC();
-						DECODE_AND_EXEC_OPCODE();
-						//DELAY_SLOT();
+						CHANGE_PC(TOP_PC());
 					}
 					break;
-				case 1:		/* counter-based, length 1 */
-				case 2:		/* counter-based, length 2 */
-				case 3:		/* counter-based, length >2 */
-					sharc.lcstack[sharc.lstkp]--;
-					sharc.curlcntr--;
-					if(sharc.curlcntr == 0)
+				}
+				case 1:		// counter-based, length 1
+				{
+					//fatalerror("SHARC: counter-based loop, length 1 at %08X", sharc.pc);
+					//break;
+				}
+				case 2:		// counter-based, length 2
+				{
+					//fatalerror("SHARC: counter-based loop, length 2 at %08X", sharc.pc);
+					//break;
+				}
+				case 3:		// counter-based, length >2
+				{
+					--sharc.lcstack[sharc.lstkp];
+					--sharc.curlcntr;
+					if (sharc.curlcntr == 0)
 					{
 						POP_LOOP();
 						POP_PC();
-						DECODE_AND_EXEC_OPCODE();
 					}
 					else
 					{
-						sharc.npc = TOP_PC();
-						DECODE_AND_EXEC_OPCODE();
+						CHANGE_PC(TOP_PC());
 					}
-					break;
+				}
 			}
 		}
-		else
+
+		// execute current instruction
+		sharc.opcode_handler();
+
+		// decode next instruction
+		sharc.opcode = sharc.decode_opcode;
+		sharc.opcode_handler = sharc_op[(sharc.opcode >> 39) & 0x1ff];
+
+
+
+
+		// System register latency effect
+		if (systemreg_latency_cycles > 0)
 		{
-			DECODE_AND_EXEC_OPCODE();
+			--systemreg_latency_cycles;
+			if (systemreg_latency_cycles <= 0)
+			{
+				systemreg_write_latency_effect();
+			}
 		}
 
-		systemreg_latency_op();
-		IOP_LATENCY_OP();
+		// IOP register latency effect
+		if (iop_latency_cycles > 0)
+		{
+			--iop_latency_cycles;
+			if (iop_latency_cycles <= 0)
+			{
+				iop_write_latency_effect();
+			}
+		}
+
+		// DMA transfer
 		if (dmaop_cycles > 0)
 		{
-			dmaop_cycles--;
+			--dmaop_cycles;
 			if (dmaop_cycles <= 0)
 			{
 				dma_op(dmaop_src, dmaop_dst, dmaop_src_modifier, dmaop_dst_modifier, dmaop_src_count, dmaop_dst_count, dmaop_pmode);
@@ -993,17 +683,12 @@ static int sharc_execute(int num_cycles)
 			}
 		}
 
-		sharc_icount--;
-	}
 
-	// handle pending DMA operation
-	if (dmaop_cycles > 0)
-	{
-		dma_op(dmaop_src, dmaop_dst, dmaop_src_modifier, dmaop_dst_modifier, dmaop_src_count, dmaop_dst_count, dmaop_pmode);
-		dmaop_cycles = 0;
-	}
 
-	return num_cycles - sharc_icount;
+		--sharc_icount;
+	};
+
+	return cycles - sharc_icount;
 }
 
 /*****************************************************************************/
@@ -1013,6 +698,7 @@ static int sharc_execute(int num_cycles)
 static UINT8 sharc_reg_layout[] =
 {
 	SHARC_PC,		SHARC_PCSTK,	-1,
+	SHARC_FADDR,	SHARC_DADDR,	-1,
 	SHARC_IMASK,	SHARC_ASTAT,	-1,
 	SHARC_LCNTR,	SHARC_SYSSTAT,	-1,
 	SHARC_R0,		SHARC_R8,		-1,
@@ -1044,6 +730,8 @@ static void sharc_set_info(UINT32 state, union cpuinfo *info)
 	{
 		case CPUINFO_INT_PC:
 		case CPUINFO_INT_REGISTER + SHARC_PC:			sharc.pc = info->i;						break;
+		case CPUINFO_INT_REGISTER + SHARC_FADDR:		sharc.faddr = info->i;					break;
+		case CPUINFO_INT_REGISTER + SHARC_DADDR:		sharc.daddr = info->i;					break;
 
 		case CPUINFO_INT_REGISTER + SHARC_R0:			sharc.r[0].r = info->i;					break;
 		case CPUINFO_INT_REGISTER + SHARC_R1:			sharc.r[1].r = info->i;					break;
@@ -1118,8 +806,11 @@ void adsp21062_set_info(UINT32 state, union cpuinfo *info)
 }
 #endif
 
+
 static int sharc_debug_read(int space, UINT32 offset, int size, UINT64 *value)
 {
+	offset >>= 2;
+
 	if (space == ADDRESS_SPACE_PROGRAM)
 	{
 		if (offset >= 0x20000 && offset < 0x30000)
@@ -1147,6 +838,8 @@ static int sharc_debug_read(int space, UINT32 offset, int size, UINT64 *value)
 
 static int sharc_debug_readop(UINT32 offset, int size, UINT64 *value)
 {
+	offset >>= 2;
+
 	if (offset >= 0x20000 && offset < 0x28000)
 	{
 		UINT64 op = ((UINT64)(sharc.internal_ram_block0[((offset-0x20000) * 3) + 0]) << 32) |
@@ -1165,13 +858,10 @@ static int sharc_debug_readop(UINT32 offset, int size, UINT64 *value)
 	return 1;
 }
 
-
 // This is just used to stop the debugger from complaining about executing from I/O space
 static ADDRESS_MAP_START( internal_pgm, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x20000, 0x7ffff) AM_RAM
 ADDRESS_MAP_END
-
-
 
 void sharc_get_info(UINT32 state, union cpuinfo *info)
 {
@@ -1189,8 +879,8 @@ void sharc_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 40;							break;
 
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
-		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32;					break;
-		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 24;					break;
+		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = -2;					break;
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 32;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 32;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = -2;					break;
@@ -1205,6 +895,10 @@ void sharc_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_PC:
 		case CPUINFO_INT_REGISTER + SHARC_PC:			info->i = sharc.pc;						break;
 		case CPUINFO_INT_REGISTER + SHARC_PCSTK:		info->i = sharc.pcstk;					break;
+		case CPUINFO_INT_REGISTER + SHARC_PCSTKP:		info->i = sharc.pcstkp;					break;
+		case CPUINFO_INT_REGISTER + SHARC_LSTKP:		info->i = sharc.lstkp;					break;
+		case CPUINFO_INT_REGISTER + SHARC_FADDR:		info->i = sharc.faddr;					break;
+		case CPUINFO_INT_REGISTER + SHARC_DADDR:		info->i = sharc.daddr;					break;
 		case CPUINFO_INT_REGISTER + SHARC_MODE1:		info->i = sharc.mode1;					break;
 		case CPUINFO_INT_REGISTER + SHARC_MODE2:		info->i = sharc.mode2;					break;
 		case CPUINFO_INT_REGISTER + SHARC_ASTAT:		info->i = sharc.astat;					break;
@@ -1212,7 +906,7 @@ void sharc_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + SHARC_IMASK:		info->i = sharc.imask;					break;
 		case CPUINFO_INT_REGISTER + SHARC_USTAT1:		info->i = sharc.ustat1;					break;
 		case CPUINFO_INT_REGISTER + SHARC_USTAT2:		info->i = sharc.ustat2;					break;
-		case CPUINFO_INT_REGISTER + SHARC_STATUS_STKP:	info->i = sharc.status_stkp;			break;
+		case CPUINFO_INT_REGISTER + SHARC_STSTKP:		info->i = sharc.status_stkp;			break;
 
 		case CPUINFO_INT_REGISTER + SHARC_R0:			info->i = sharc.r[0].r;					break;
 		case CPUINFO_INT_REGISTER + SHARC_R1:			info->i = sharc.r[1].r;					break;
@@ -1283,14 +977,18 @@ void sharc_get_info(UINT32 state, union cpuinfo *info)
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "SHARC"); break;
-		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0"); break;
+		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "2.0"); break;
 		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
-		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (C) 2004 Ville Linde"); break;
+		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (C) 2004-2006 Ville Linde"); break;
 
 		case CPUINFO_STR_FLAGS:							strcpy(info->s = cpuintrf_temp_str(), " "); break;
 
 		case CPUINFO_STR_REGISTER + SHARC_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC: %08X", sharc.pc); break;
 		case CPUINFO_STR_REGISTER + SHARC_PCSTK:		sprintf(info->s = cpuintrf_temp_str(), "PCSTK: %08X", sharc.pcstk); break;
+		case CPUINFO_STR_REGISTER + SHARC_PCSTKP:		sprintf(info->s = cpuintrf_temp_str(), "PCSTKP: %08X", sharc.pcstkp); break;
+		case CPUINFO_STR_REGISTER + SHARC_LSTKP:		sprintf(info->s = cpuintrf_temp_str(), "LSTKP: %08X", sharc.lstkp); break;
+		case CPUINFO_STR_REGISTER + SHARC_FADDR:		sprintf(info->s = cpuintrf_temp_str(), "FADDR: %08X", sharc.faddr); break;
+		case CPUINFO_STR_REGISTER + SHARC_DADDR:		sprintf(info->s = cpuintrf_temp_str(), "DADDR: %08X", sharc.daddr); break;
 		case CPUINFO_STR_REGISTER + SHARC_MODE1:		sprintf(info->s = cpuintrf_temp_str(), "MODE1: %08X", sharc.mode1); break;
 		case CPUINFO_STR_REGISTER + SHARC_MODE2:		sprintf(info->s = cpuintrf_temp_str(), "MODE2: %08X", sharc.mode2); break;
 		case CPUINFO_STR_REGISTER + SHARC_ASTAT:		sprintf(info->s = cpuintrf_temp_str(), "ASTAT: %08X", sharc.astat); break;
@@ -1298,7 +996,7 @@ void sharc_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_STR_REGISTER + SHARC_IMASK:		sprintf(info->s = cpuintrf_temp_str(), "IMASK: %08X", sharc.imask); break;
 		case CPUINFO_STR_REGISTER + SHARC_USTAT1:		sprintf(info->s = cpuintrf_temp_str(), "USTAT1: %08X", sharc.ustat1); break;
 		case CPUINFO_STR_REGISTER + SHARC_USTAT2:		sprintf(info->s = cpuintrf_temp_str(), "USTAT2: %08X", sharc.ustat2); break;
-		case CPUINFO_STR_REGISTER + SHARC_STATUS_STKP:	sprintf(info->s = cpuintrf_temp_str(), "STATUSSTKP: %08X", sharc.status_stkp); break;
+		case CPUINFO_STR_REGISTER + SHARC_STSTKP:		sprintf(info->s = cpuintrf_temp_str(), "STSTKP: %08X", sharc.status_stkp); break;
 
 		case CPUINFO_STR_REGISTER + SHARC_R0:			sprintf(info->s = cpuintrf_temp_str(), "R0: %08X", (UINT32)sharc.r[0].r); break;
 		case CPUINFO_STR_REGISTER + SHARC_R1:			sprintf(info->s = cpuintrf_temp_str(), "R1: %08X", (UINT32)sharc.r[1].r); break;

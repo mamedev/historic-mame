@@ -108,7 +108,7 @@ static WRITE8_HANDLER( trvmadns_banking_w )
 
 	if(data != old)
 	{
-//      printf("port80 = %02X\n",old=data);
+//      mame_printf_debug("port80 = %02X\n",old=data);
 //      logerror("port80 = %02X\n",old=data);
 	}
 
@@ -170,7 +170,7 @@ static WRITE8_HANDLER( w2 )
 {
 /*  static int old = -1;
     if(data!=old)
-        printf("w2 = %02X\n",old=data);
+        mame_printf_debug("w2 = %02X\n",old=data);
 */
 }
 
@@ -178,7 +178,7 @@ static WRITE8_HANDLER( w3 )
 {
 /*  static int old = -1;
     if(data!=old)
-        printf("w3 = %02X\n",old=data);
+        mame_printf_debug("w3 = %02X\n",old=data);
 */
 }
 
@@ -191,7 +191,7 @@ static WRITE8_HANDLER( trvmadns_tileram_w )
 			cpunum_set_input_line(0, 0, PULSE_LINE);
 		}
 //      else
-//          printf("%x \n", activecpu_get_previouspc());
+//          mame_printf_debug("%x \n", activecpu_get_previouspc());
 
 	}
 
@@ -270,7 +270,7 @@ VIDEO_UPDATE( trvmadns )
 			tileno = trvmadns_tileram[count + 1] + ((attr & 0x01) << 8);
 
 //          if(attr & ~0x3f)
-//              printf("attr = %02X\n",attr & ~0x3f);
+//              mame_printf_debug("attr = %02X\n",attr & ~0x3f);
 
 			drawgfx(bitmap,Machine->gfx[0],tileno,(attr & 0x38)>>3,attr & 0x04,attr & 0x02,x*8,y*8,cliprect,TRANSPARENCY_NONE,0);
 

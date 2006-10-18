@@ -857,17 +857,17 @@ static WRITE8_HANDLER( tshoot_lamp_w )
 #if 0
 	/* gun coil */
 	if (data & 0x10)
-		printf("[gun coil] ");
+		mame_printf_debug("[gun coil] ");
 	else
-		printf("           ");
+		mame_printf_debug("           ");
 
 	/* feather coil */
 	if (data & 0x20)
-		printf("[feather coil] ");
+		mame_printf_debug("[feather coil] ");
 	else
-		printf("               ");
+		mame_printf_debug("               ");
 
-	printf("\n");
+	mame_printf_debug("\n");
 #endif
 }
 

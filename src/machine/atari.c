@@ -850,15 +850,15 @@ DEVICE_LOAD( a800_cart )
 	/* load an optional (dual) cartridge (e.g. basic.rom) */
 	if( image_index_in_device(image) > 0 )
 	{
-		size = mame_fread(file, &mem[0x12000], 0x2000);
+		size = image_fread(image, &mem[0x12000], 0x2000);
 		a800_cart_is_16k = (size == 0x2000);
 		logerror("%s loaded right cartridge '%s' size 16K\n", Machine->gamedrv->name, image_filename(image) );
 	}
 	else
 	{
-		size = mame_fread(file, &mem[0x10000], 0x2000);
+		size = image_fread(image, &mem[0x10000], 0x2000);
 		a800_cart_loaded = size > 0x0000;
-		size = mame_fread(file, &mem[0x12000], 0x2000);
+		size = image_fread(image, &mem[0x12000], 0x2000);
 		a800_cart_is_16k = size > 0x2000;
 		logerror("%s loaded left cartridge '%s' size %s\n", Machine->gamedrv->name, image_filename(image) , (a800_cart_is_16k) ? "16K":"8K");
 	}
@@ -914,7 +914,7 @@ DEVICE_LOAD( a800xl_cart )
 		size = mame_fread(basic_fp, &mem[0x14000], 0x2000);
 		if( size < 0x2000 )
 		{
-			logerror("%s image '%s' load failed (less than 8K)\n", Machine->gamedrv->name, filename);
+			logerror("%s image '%s' load failed (less than 8K)\n", Machine->gamedrv->name, fname);
 			mame_fclose(basic_fp);
 			return 2;
 		}
@@ -924,9 +924,9 @@ DEVICE_LOAD( a800xl_cart )
 	if (filerr != FILERR_NONE)
 	{
 		{
-			size = mame_fread(file, &mem[0x14000], 0x2000);
+			size = image_fread(image, &mem[0x14000], 0x2000);
 			a800_cart_loaded = size / 0x2000;
-			size = mame_fread(file, &mem[0x16000], 0x2000);
+			size = image_fread(image, &mem[0x16000], 0x2000);
 			a800_cart_is_16k = size / 0x2000;
 			logerror("%s loaded cartridge '%s' size %s\n",
 					Machine->gamedrv->name, image_filename(image), (a800_cart_is_16k) ? "16K":"8K");
@@ -961,7 +961,7 @@ DEVICE_LOAD( a5200_cart )
 	int size;
 
 	/* load an optional (dual) cartidge */
-	size = mame_fread(file, &mem[0x4000], 0x8000);
+	size = image_fread(image, &mem[0x4000], 0x8000);
 	if (size<0x8000) memmove(mem+0x4000+0x8000-size, mem+0x4000, size);
 	// mirroring of smaller cartridges
 	if (size <= 0x1000) memcpy(mem+0xa000, mem+0xb000, 0x1000);

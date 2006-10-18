@@ -312,7 +312,7 @@ static const struct
 	{ 0xa0, 0x3c, "void putchar(char c)" },
 	{ 0xa0, 0x3d, "char *gets(char *s)" },
 	{ 0xa0, 0x3e, "void puts(const char *s)" },
-	{ 0xa0, 0x3f, "int printf(const char *fmt, ...)" },
+	{ 0xa0, 0x3f, "int mame_printf_debug(const char *fmt, ...)" },
 	{ 0xa0, 0x40, "sys_a0_40()" },
 	{ 0xa0, 0x41, "int LoadTest(const char *name, struct EXEC *header)" },
 	{ 0xa0, 0x42, "int Load(const char *name, struct EXEC *header)" },

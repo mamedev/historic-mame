@@ -943,7 +943,7 @@ WRITE32_HANDLER( midway_ioasic_w )
 				update_ioasic_irq();
 			}
 			else if (PRINTF_DEBUG)
-				printf("%c", data & 0xff);
+				mame_printf_debug("%c", data & 0xff);
 			break;
 
 		case IOASIC_SOUNDCTL:

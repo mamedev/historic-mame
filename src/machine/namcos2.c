@@ -447,7 +447,7 @@ ReadWriteC148( int cpu, offs_t offset, UINT16 data, int bWrite )
 	case 0x1d2000:
 		if( bWrite )
 		{
-		//  printf( "cpu(%d) RAM[0x%06x] = 0x%x\n", cpu, addr, data );
+		//  mame_printf_debug( "cpu(%d) RAM[0x%06x] = 0x%x\n", cpu, addr, data );
 		}
 		cpunum_set_input_line(cpu, pC148Reg[NAMCOS2_C148_1], CLEAR_LINE);
 		break;
@@ -463,7 +463,7 @@ ReadWriteC148( int cpu, offs_t offset, UINT16 data, int bWrite )
 	case 0x1d6000:
 		if( bWrite )
 		{
-		//  printf( "cpu(%d) RAM[0x%06x] = 0x%x\n", cpu, addr, data );
+		//  mame_printf_debug( "cpu(%d) RAM[0x%06x] = 0x%x\n", cpu, addr, data );
 		}
 		cpunum_set_input_line(cpu, pC148Reg[NAMCOS2_C148_CPUIRQ], CLEAR_LINE);
 		break;
@@ -471,7 +471,7 @@ ReadWriteC148( int cpu, offs_t offset, UINT16 data, int bWrite )
 	case 0x1d8000: /* ack EXIRQ */
 		if( bWrite )
 		{
-		//  printf( "cpu(%d) RAM[0x%06x] = 0x%x\n", cpu, addr, data );
+		//  mame_printf_debug( "cpu(%d) RAM[0x%06x] = 0x%x\n", cpu, addr, data );
 		}
 		cpunum_set_input_line(cpu, pC148Reg[NAMCOS2_C148_EXIRQ], CLEAR_LINE);
 		break;
@@ -479,7 +479,7 @@ ReadWriteC148( int cpu, offs_t offset, UINT16 data, int bWrite )
 	case 0x1da000: /* ack POSIRQ */
 		if( bWrite )
 		{
-		//  printf( "cpu(%d) RAM[0x%06x] = 0x%x\n", cpu, addr, data );
+		//  mame_printf_debug( "cpu(%d) RAM[0x%06x] = 0x%x\n", cpu, addr, data );
 		}
 		cpunum_set_input_line(cpu, pC148Reg[NAMCOS2_C148_POSIRQ], CLEAR_LINE);
 		break;
@@ -487,7 +487,7 @@ ReadWriteC148( int cpu, offs_t offset, UINT16 data, int bWrite )
 	case 0x1dc000: /* ack SCIRQ */
 		if( bWrite )
 		{
-		//  printf( "cpu(%d) RAM[0x%06x] = 0x%x\n", cpu, addr, data );
+		//  mame_printf_debug( "cpu(%d) RAM[0x%06x] = 0x%x\n", cpu, addr, data );
 		}
 		cpunum_set_input_line(cpu, pC148Reg[NAMCOS2_C148_SERIRQ], CLEAR_LINE);
 		break;

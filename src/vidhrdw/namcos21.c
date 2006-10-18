@@ -393,7 +393,7 @@ namcos21_DrawQuad( int sx[4], int sy[4], int zcode[4], int color )
 
 	default:
 		/* unused? */
-		printf ( "unk col=0x%04x\n", color );
+		mame_printf_debug ( "unk col=0x%04x\n", color );
 		break;
 	}
 

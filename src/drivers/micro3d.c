@@ -112,7 +112,7 @@ enum{   RX=0,TX,STATUS,SYN1,SYN2,DLE,MODE1,MODE2,COMMAND
 /* Probably wrong and a bit crap */
 int data_to_i8031(void)
 {
-     printf("68k sent data: %x\n",M68681.TBB);
+     mame_printf_debug("68k sent data: %x\n",M68681.TBB);
      return M68681.TBB;
 }
 
@@ -123,9 +123,9 @@ void data_from_i8031(int data)
      if(M68681.IMR & 0x1000)
      {
      	cpunum_set_input_line_and_vector(0,3, HOLD_LINE, M68681.IVR);    // Generate a receiver interrupt.
-     	printf("INTERRUPT!!!\n");
+     	mame_printf_debug("INTERRUPT!!!\n");
      }
-   printf("8031 sent data: %x\n",data);
+   mame_printf_debug("8031 sent data: %x\n",data);
 }
 
 
@@ -460,26 +460,26 @@ m68901_base[offset]=data;
 switch(offset)
 {
 
-        case 0x0c:    printf("Timer A Control: %x\n",value);
+        case 0x0c:    mame_printf_debug("Timer A Control: %x\n",value);
                       break;
-        case 0x0d:    printf("Timer B Control: %x\n",value);
+        case 0x0d:    mame_printf_debug("Timer B Control: %x\n",value);
                       break;
-        case 0x0e:    printf("Timer C/D Control: %x\n",value);
+        case 0x0e:    mame_printf_debug("Timer C/D Control: %x\n",value);
                       break;
 
-        case 0x0f:    printf("Timer A Data:%4x\n",value);                                                       // Timer A Data Register
+        case 0x0f:    mame_printf_debug("Timer A Data:%4x\n",value);                                                       // Timer A Data Register
                      timer_set(TIME_IN_USEC(1000),0,timera_int);
                       break;
 
-        case 0x10:    printf("Timer B Data:%4x\n",value);                                                           // Timer B Data Register
+        case 0x10:    mame_printf_debug("Timer B Data:%4x\n",value);                                                           // Timer B Data Register
 //                    timer_set(TIME_IN_SEC(value * 200/M68901_CLK),0,timerb_int);
                       break;
 
-        case 0x11:    printf("Timer C Data:%4x\n",value);                                                        // Timer C Data Register
+        case 0x11:    mame_printf_debug("Timer C Data:%4x\n",value);                                                        // Timer C Data Register
 //                      timer_set(TIME_IN_SEC(value * 200/M68901_CLK),0,timerc_int);
                       break;
 
-        case 0x12:    printf("Timer D Data:%4x\n",value);
+        case 0x12:    mame_printf_debug("Timer D Data:%4x\n",value);
                       timer_set(TIME_IN_USEC(500),0,timerd_int);                 // Timer D Data Register
                       break;
 
@@ -511,13 +511,13 @@ switch(offset)
                         if(M68681.IMR & 1)   cpunum_set_input_line_and_vector(0,3, HOLD_LINE, M68681.IVR);         // Generate an interrupt, if allowed.
 
 #if HOST_MONITOR_DISPLAY
-                        printf("%c",value);                    // Port A - Monitor
+                        mame_printf_debug("%c",value);                    // Port A - Monitor
 #endif
                         break;
 
       case 0x04:        break;
 
-      case 0x05:        //printf("IMR=%x\n",M68681.IMR);
+      case 0x05:        //mame_printf_debug("IMR=%x\n",M68681.IMR);
                         M68681.IMR = value;                    // Interrupt Mask Reg
                         break;
 
@@ -539,10 +539,10 @@ switch(offset)
                         	cpunum_set_input_line_and_vector(0,3, HOLD_LINE, M68681.IVR);         // Generate an interrupt, if allowed.
                         }
                         cpunum_set_input_line(2, I8051_RX_LINE, ASSERT_LINE);                      // Generate 8031 interrupt
-                        printf("Sound board TX: %4X at PC=%4X\n",value,activecpu_get_pc());
+                        mame_printf_debug("Sound board TX: %4X at PC=%4X\n",value,activecpu_get_pc());
                         break;
 
-      case 0x0c:        //printf("IVR: %d",value);
+      case 0x0c:        //mame_printf_debug("IVR: %d",value);
                         M68681.IVR = value;                   // Interrupt vector register.
                         break;
 
@@ -582,7 +582,7 @@ switch(offset)
 
         case 0x09:     return M68681.SRB;                              // Status Register B
 
-        case 0x0b:     printf("\nHost received: %x\n",M68681.RBB);
+        case 0x0b:     mame_printf_debug("\nHost received: %x\n",M68681.RBB);
                        M68681.SRB^=0x0100;                             // No longer have data.
                        return M68681.RBB;
                                                                        // RX B - Monitor Port
@@ -599,7 +599,7 @@ switch(offset)
 {
         case 0x0: ti_uart[TX] = data;                  // Pointless really - nothing happens to it.
 #if VGB_MONITOR_DISPLAY
-                  printf("%c",data);
+                  mame_printf_debug("%c",data);
 
 #endif
                   ti_uart[STATUS]|=1;                  // Transmit regiser empty.
@@ -673,7 +673,7 @@ switch(offset)
 
 static WRITE32_HANDLER( am_uart_w )
 {
-       printf("%c",data);
+       mame_printf_debug("%c",data);
 }
 
 static READ32_HANDLER( am_uart_r )

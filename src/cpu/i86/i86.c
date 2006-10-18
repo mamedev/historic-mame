@@ -299,7 +299,7 @@ static int i186_execute(int num_cycles)
 	while (i86_ICount > 0)
 	{
 #ifdef VERBOSE_DEBUG
-		printf("[%04x:%04x]=%02x\tAX=%04x\tBX=%04x\tCX=%04x\tDX=%04x\n", I.sregs[CS], I.pc, ReadByte(I.pc), I.regs.w[AX],
+		mame_printf_debug("[%04x:%04x]=%02x\tAX=%04x\tBX=%04x\tCX=%04x\tDX=%04x\n", I.sregs[CS], I.pc, ReadByte(I.pc), I.regs.w[AX],
 			   I.regs.w[BX], I.regs.w[CX], I.regs.w[DX]);
 #endif
 		CALL_MAME_DEBUG;
@@ -427,7 +427,7 @@ static int v30_execute(int num_cycles)
 	while (i86_ICount > 0)
 	{
 #ifdef VERBOSE_DEBUG
-		printf("[%04x:%04x]=%02x\tAX=%04x\tBX=%04x\tCX=%04x\tDX=%04x\n", I.sregs[CS], I.pc, ReadByte(I.pc), I.regs.w[AX],
+		mame_printf_debug("[%04x:%04x]=%02x\tAX=%04x\tBX=%04x\tCX=%04x\tDX=%04x\n", I.sregs[CS], I.pc, ReadByte(I.pc), I.regs.w[AX],
 			   I.regs.w[BX], I.regs.w[CX], I.regs.w[DX]);
 #endif
 		CALL_MAME_DEBUG;

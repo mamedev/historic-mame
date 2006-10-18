@@ -66,14 +66,14 @@ static READ8_HANDLER( hotblock_video_read )
 static READ8_HANDLER( hotblock_port4_r )
 {
 
-//  printf("port4_r\n");
+//  mame_printf_debug("port4_r\n");
 	return 0x00;//return rand(); // WHAT HERE?
 }
 
 
 static WRITE8_HANDLER( hotblock_port4_w )
 {
-//  printf("port4_w: pc = %06x : data %04x\n",activecpu_get_pc(),data);
+//  mame_printf_debug("port4_w: pc = %06x : data %04x\n",activecpu_get_pc(),data);
 //  popmessage("port4_w: pc = %06x : data %04x",activecpu_get_pc(),data);
 	hotblock_port4=data;
 }

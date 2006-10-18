@@ -317,11 +317,11 @@ void check_unfreed_mem(void)
 		if (entry->file != NULL)
 		{
 			if (total == 0)
-				printf("--- memory leak warning ---\n");
+				fprintf(stderr, "--- memory leak warning ---\n");
 			total += entry->size;
-			printf("allocation #%06d, %d bytes (%s:%d)\n", entry->id, entry->size, entry->file, entry->line);
+			fprintf(stderr, "allocation #%06d, %d bytes (%s:%d)\n", entry->id, entry->size, entry->file, entry->line);
 		}
 
 	if (total > 0)
-		printf("a total of %d bytes were not free()'d\n", total);
+		fprintf(stderr, "a total of %d bytes were not free()'d\n", total);
 }

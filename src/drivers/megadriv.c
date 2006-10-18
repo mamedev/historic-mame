@@ -354,7 +354,7 @@ void vdp_vram_write(UINT16 data)
        for some funky effects, as used by Castlevania Bloodlines Stage 6-3 */
 	if (megadrive_vdp_address>=lowlimit && megadrive_vdp_address<highlimit)
 	{
-//      printf("spritebase is %04x-%04x vram address is %04x, write %04x\n",lowlimit, highlimit-1, megadrive_vdp_address, data);
+//      mame_printf_debug("spritebase is %04x-%04x vram address is %04x, write %04x\n",lowlimit, highlimit-1, megadrive_vdp_address, data);
 		megadrive_vdp_internal_sprite_attribute_table[(megadrive_vdp_address&(spritetable_size-1))>>1] = data;
 	}
 
@@ -511,7 +511,7 @@ void megadrive_vdp_set_register(int regnum, UINT8 value)
 
 	if (regnum == 0x00)
 	{
-	//printf("setting reg 0, irq enable is now %d\n",MEGADRIVE_REG0_IRQ4_ENABLE);
+	//mame_printf_debug("setting reg 0, irq enable is now %d\n",MEGADRIVE_REG0_IRQ4_ENABLE);
 
 		if (megadrive_irq4_pending)
 		{
@@ -554,9 +554,9 @@ void megadrive_vdp_set_register(int regnum, UINT8 value)
 
 
 //  if (regnum == 0x0a)
-//      printf("Set HINT Reload Register to %d on scanline %d\n",value, genesis_scanline_counter);
+//      mame_printf_debug("Set HINT Reload Register to %d on scanline %d\n",value, genesis_scanline_counter);
 
-//  printf("%06x Setting VDP Register #%02x to %02x\n",activecpu_get_pc(), regnum,value);
+//  mame_printf_debug("%06x Setting VDP Register #%02x to %02x\n",activecpu_get_pc(), regnum,value);
 }
 
 void update_megadrive_vdp_code_and_address(void)
@@ -577,13 +577,13 @@ UINT16 get_word_from_68k_mem(UINT32 source)
 	}
 	else if (( source >= 0xe00000 ) && ( source <= 0xffffff ))
 	{
-//      printf("dma\n");
+//      mame_printf_debug("dma\n");
 	//  return ((megadrive_ram[(source&0xffff)>>1]&0xff00)>>8)|((megadrive_ram[(source&0xffff)>>1]&0x00ff)<<8);
 		return megadrive_ram[(source&0xffff)>>1];
 	}
 	else
 	{
-		printf("DMA Read unmapped %06x\n",source);
+		mame_printf_debug("DMA Read unmapped %06x\n",source);
 		return mame_rand(Machine);
 	}
 
@@ -623,7 +623,7 @@ void megadrive_do_insta_vram_copy(UINT32 source, UINT16 length)
 	{
 		UINT8 source_byte;
 
-		//printf("vram copy length %04x source %04x dest %04x\n",length, source, megadrive_vdp_address );
+		//mame_printf_debug("vram copy length %04x source %04x dest %04x\n",length, source, megadrive_vdp_address );
 		if (source&1) source_byte = MEGADRIV_VDP_VRAM((source&0xffff)>>1)&0x00ff;
 		else  source_byte = (MEGADRIV_VDP_VRAM((source&0xffff)>>1)&0xff00)>>8;
 
@@ -735,13 +735,13 @@ void handle_dma_bits(void)
 		UINT16 length;
 		source = (MEGADRIVE_REG15_DMASOURCE1 | (MEGADRIVE_REG16_DMASOURCE2<<8) | ((MEGADRIVE_REG17_DMASOURCE3&0xff)<<16))<<1;
 		length = (MEGADRIVE_REG13_DMALENGTH1 | (MEGADRIVE_REG14_DMALENGTH2<<8))<<1;
-	//  printf("%06x 68k DMAtran set source %06x length %04x dest %04x enabled %01x code %02x %02x\n", activecpu_get_pc(), source, length, megadrive_vdp_address,MEGADRIVE_REG01_DMA_ENABLE, megadrive_vdp_code,MEGADRIVE_REG0F_AUTO_INC);
+	//  mame_printf_debug("%06x 68k DMAtran set source %06x length %04x dest %04x enabled %01x code %02x %02x\n", activecpu_get_pc(), source, length, megadrive_vdp_address,MEGADRIVE_REG01_DMA_ENABLE, megadrive_vdp_code,MEGADRIVE_REG0F_AUTO_INC);
 
 	}
 
 	if (megadrive_vdp_code==0x20)
 	{
-		printf("DMA bit set 0x20 but invalid??\n");
+		mame_printf_debug("DMA bit set 0x20 but invalid??\n");
 	}
 	else if (megadrive_vdp_code==0x21 || megadrive_vdp_code==0x31) /* 0x31 used by tecmo cup */
 	{
@@ -753,13 +753,13 @@ void handle_dma_bits(void)
 			length = (MEGADRIVE_REG13_DMALENGTH1 | (MEGADRIVE_REG14_DMALENGTH2<<8))<<1;
 
 			/* The 68k is frozen during this transfer, it should be safe to throw a few cycles away and do 'instant' DMA because the 68k can't detect it being in progress (can the z80?) */
-			//printf("68k->VRAM DMA transfer source %06x length %04x dest %04x enabled %01x\n", source, length, megadrive_vdp_address,MEGADRIVE_REG01_DMA_ENABLE);
+			//mame_printf_debug("68k->VRAM DMA transfer source %06x length %04x dest %04x enabled %01x\n", source, length, megadrive_vdp_address,MEGADRIVE_REG01_DMA_ENABLE);
 			if (MEGADRIVE_REG01_DMA_ENABLE) megadrive_do_insta_68k_to_vram_dma(source,length);
 
 		}
 		else if (MEGADRIVE_REG17_DMATYPE==0x2)
 		{
-			//printf("vram fill length %02x %02x other regs! %02x %02x %02x(Mode Bits %02x) Enable %02x\n", MEGADRIVE_REG13_DMALENGTH1, MEGADRIVE_REG14_DMALENGTH2, MEGADRIVE_REG15_DMASOURCE1, MEGADRIVE_REG16_DMASOURCE2, MEGADRIVE_REG17_DMASOURCE3, MEGADRIVE_REG17_DMATYPE, MEGADRIVE_REG01_DMA_ENABLE);
+			//mame_printf_debug("vram fill length %02x %02x other regs! %02x %02x %02x(Mode Bits %02x) Enable %02x\n", MEGADRIVE_REG13_DMALENGTH1, MEGADRIVE_REG14_DMALENGTH2, MEGADRIVE_REG15_DMASOURCE1, MEGADRIVE_REG16_DMASOURCE2, MEGADRIVE_REG17_DMASOURCE3, MEGADRIVE_REG17_DMATYPE, MEGADRIVE_REG01_DMA_ENABLE);
 			if (MEGADRIVE_REG01_DMA_ENABLE)
 			{
 				megadrive_vram_fill_pending = 1;
@@ -772,7 +772,7 @@ void handle_dma_bits(void)
 			UINT16 length;
 			source = (MEGADRIVE_REG15_DMASOURCE1 | (MEGADRIVE_REG16_DMASOURCE2<<8)); // source (byte offset)
 			length = (MEGADRIVE_REG13_DMALENGTH1 | (MEGADRIVE_REG14_DMALENGTH2<<8)); // length in bytes
-			//printf("setting vram copy mode length registers are %02x %02x other regs! %02x %02x %02x(Mode Bits %02x) Enable %02x\n", MEGADRIVE_REG13_DMALENGTH1, MEGADRIVE_REG14_DMALENGTH2, MEGADRIVE_REG15_DMASOURCE1, MEGADRIVE_REG16_DMASOURCE2, MEGADRIVE_REG17_DMASOURCE3, MEGADRIVE_REG17_DMATYPE, MEGADRIVE_REG01_DMA_ENABLE);
+			//mame_printf_debug("setting vram copy mode length registers are %02x %02x other regs! %02x %02x %02x(Mode Bits %02x) Enable %02x\n", MEGADRIVE_REG13_DMALENGTH1, MEGADRIVE_REG14_DMALENGTH2, MEGADRIVE_REG15_DMASOURCE1, MEGADRIVE_REG16_DMASOURCE2, MEGADRIVE_REG17_DMASOURCE3, MEGADRIVE_REG17_DMATYPE, MEGADRIVE_REG01_DMA_ENABLE);
 
 			if (MEGADRIVE_REG01_DMA_ENABLE) megadrive_do_insta_vram_copy(source, length);
 		}
@@ -787,12 +787,12 @@ void handle_dma_bits(void)
 			length = (MEGADRIVE_REG13_DMALENGTH1 | (MEGADRIVE_REG14_DMALENGTH2<<8))<<1;
 
 			/* The 68k is frozen during this transfer, it should be safe to throw a few cycles away and do 'instant' DMA because the 68k can't detect it being in progress (can the z80?) */
-			//printf("68k->CRAM DMA transfer source %06x length %04x dest %04x enabled %01x\n", source, length, megadrive_vdp_address,MEGADRIVE_REG01_DMA_ENABLE);
+			//mame_printf_debug("68k->CRAM DMA transfer source %06x length %04x dest %04x enabled %01x\n", source, length, megadrive_vdp_address,MEGADRIVE_REG01_DMA_ENABLE);
 			if (MEGADRIVE_REG01_DMA_ENABLE) megadrive_do_insta_68k_to_cram_dma(source,length);
 		}
 		else if (MEGADRIVE_REG17_DMATYPE==0x2)
 		{
-			//printf("vram fill length %02x %02x other regs! %02x %02x %02x(Mode Bits %02x) Enable %02x\n", MEGADRIVE_REG13_DMALENGTH1, MEGADRIVE_REG14_DMALENGTH2, MEGADRIVE_REG15_DMASOURCE1, MEGADRIVE_REG16_DMASOURCE2, MEGADRIVE_REG17_DMASOURCE3, MEGADRIVE_REG17_DMATYPE, MEGADRIVE_REG01_DMA_ENABLE);
+			//mame_printf_debug("vram fill length %02x %02x other regs! %02x %02x %02x(Mode Bits %02x) Enable %02x\n", MEGADRIVE_REG13_DMALENGTH1, MEGADRIVE_REG14_DMALENGTH2, MEGADRIVE_REG15_DMASOURCE1, MEGADRIVE_REG16_DMASOURCE2, MEGADRIVE_REG17_DMASOURCE3, MEGADRIVE_REG17_DMATYPE, MEGADRIVE_REG01_DMA_ENABLE);
 			if (MEGADRIVE_REG01_DMA_ENABLE)
 			{
 				megadrive_vram_fill_pending = 1;
@@ -801,7 +801,7 @@ void handle_dma_bits(void)
 		}
 		else if (MEGADRIVE_REG17_DMATYPE==0x3)
 		{
-			printf("setting vram copy (INVALID?) mode length registers are %02x %02x other regs! %02x %02x %02x(Mode Bits %02x) Enable %02x\n", MEGADRIVE_REG13_DMALENGTH1, MEGADRIVE_REG14_DMALENGTH2, MEGADRIVE_REG15_DMASOURCE1, MEGADRIVE_REG16_DMASOURCE2, MEGADRIVE_REG17_DMASOURCE3, MEGADRIVE_REG17_DMATYPE, MEGADRIVE_REG01_DMA_ENABLE);
+			mame_printf_debug("setting vram copy (INVALID?) mode length registers are %02x %02x other regs! %02x %02x %02x(Mode Bits %02x) Enable %02x\n", MEGADRIVE_REG13_DMALENGTH1, MEGADRIVE_REG14_DMALENGTH2, MEGADRIVE_REG15_DMASOURCE1, MEGADRIVE_REG16_DMASOURCE2, MEGADRIVE_REG17_DMASOURCE3, MEGADRIVE_REG17_DMATYPE, MEGADRIVE_REG01_DMA_ENABLE);
 		}
 	}
 	else if (megadrive_vdp_code==0x25)
@@ -814,12 +814,12 @@ void handle_dma_bits(void)
 			length = (MEGADRIVE_REG13_DMALENGTH1 | (MEGADRIVE_REG14_DMALENGTH2<<8))<<1;
 
 			/* The 68k is frozen during this transfer, it should be safe to throw a few cycles away and do 'instant' DMA because the 68k can't detect it being in progress (can the z80?) */
-			//printf("68k->VSRAM DMA transfer source %06x length %04x dest %04x enabled %01x\n", source, length, megadrive_vdp_address,MEGADRIVE_REG01_DMA_ENABLE);
+			//mame_printf_debug("68k->VSRAM DMA transfer source %06x length %04x dest %04x enabled %01x\n", source, length, megadrive_vdp_address,MEGADRIVE_REG01_DMA_ENABLE);
 			if (MEGADRIVE_REG01_DMA_ENABLE) megadrive_do_insta_68k_to_vsram_dma(source,length);
 		}
 		else if (MEGADRIVE_REG17_DMATYPE==0x2)
 		{
-			//printf("vram fill length %02x %02x other regs! %02x %02x %02x(Mode Bits %02x) Enable %02x\n", MEGADRIVE_REG13_DMALENGTH1, MEGADRIVE_REG14_DMALENGTH2, MEGADRIVE_REG15_DMASOURCE1, MEGADRIVE_REG16_DMASOURCE2, MEGADRIVE_REG17_DMASOURCE3, MEGADRIVE_REG17_DMATYPE, MEGADRIVE_REG01_DMA_ENABLE);
+			//mame_printf_debug("vram fill length %02x %02x other regs! %02x %02x %02x(Mode Bits %02x) Enable %02x\n", MEGADRIVE_REG13_DMALENGTH1, MEGADRIVE_REG14_DMALENGTH2, MEGADRIVE_REG15_DMASOURCE1, MEGADRIVE_REG16_DMASOURCE2, MEGADRIVE_REG17_DMASOURCE3, MEGADRIVE_REG17_DMATYPE, MEGADRIVE_REG01_DMA_ENABLE);
 			if (MEGADRIVE_REG01_DMA_ENABLE)
 			{
 				megadrive_vram_fill_pending = 1;
@@ -828,22 +828,22 @@ void handle_dma_bits(void)
 		}
 		else if (MEGADRIVE_REG17_DMATYPE==0x3)
 		{
-			printf("setting vram copy (INVALID?) mode length registers are %02x %02x other regs! %02x %02x %02x(Mode Bits %02x) Enable %02x\n", MEGADRIVE_REG13_DMALENGTH1, MEGADRIVE_REG14_DMALENGTH2, MEGADRIVE_REG15_DMASOURCE1, MEGADRIVE_REG16_DMASOURCE2, MEGADRIVE_REG17_DMASOURCE3, MEGADRIVE_REG17_DMATYPE, MEGADRIVE_REG01_DMA_ENABLE);
+			mame_printf_debug("setting vram copy (INVALID?) mode length registers are %02x %02x other regs! %02x %02x %02x(Mode Bits %02x) Enable %02x\n", MEGADRIVE_REG13_DMALENGTH1, MEGADRIVE_REG14_DMALENGTH2, MEGADRIVE_REG15_DMASOURCE1, MEGADRIVE_REG16_DMASOURCE2, MEGADRIVE_REG17_DMASOURCE3, MEGADRIVE_REG17_DMATYPE, MEGADRIVE_REG01_DMA_ENABLE);
 		}
 	}
 	else if (megadrive_vdp_code==0x30)
 	{
 		if (MEGADRIVE_REG17_DMATYPE==0x0)
 		{
-			printf("setting vram 68k->vram (INVALID?) mode length registers are %02x %02x other regs! %02x %02x %02x(Mode Bits %02x) Enable %02x\n", MEGADRIVE_REG13_DMALENGTH1, MEGADRIVE_REG14_DMALENGTH2, MEGADRIVE_REG15_DMASOURCE1, MEGADRIVE_REG16_DMASOURCE2, MEGADRIVE_REG17_DMASOURCE3, MEGADRIVE_REG17_DMATYPE, MEGADRIVE_REG01_DMA_ENABLE);
+			mame_printf_debug("setting vram 68k->vram (INVALID?) mode length registers are %02x %02x other regs! %02x %02x %02x(Mode Bits %02x) Enable %02x\n", MEGADRIVE_REG13_DMALENGTH1, MEGADRIVE_REG14_DMALENGTH2, MEGADRIVE_REG15_DMASOURCE1, MEGADRIVE_REG16_DMASOURCE2, MEGADRIVE_REG17_DMASOURCE3, MEGADRIVE_REG17_DMATYPE, MEGADRIVE_REG01_DMA_ENABLE);
 		}
 		else if (MEGADRIVE_REG17_DMATYPE==0x1)
 		{
-			printf("setting vram 68k->vram (INVALID?) mode length registers are %02x %02x other regs! %02x %02x %02x(Mode Bits %02x) Enable %02x\n", MEGADRIVE_REG13_DMALENGTH1, MEGADRIVE_REG14_DMALENGTH2, MEGADRIVE_REG15_DMASOURCE1, MEGADRIVE_REG16_DMASOURCE2, MEGADRIVE_REG17_DMASOURCE3, MEGADRIVE_REG17_DMATYPE, MEGADRIVE_REG01_DMA_ENABLE);
+			mame_printf_debug("setting vram 68k->vram (INVALID?) mode length registers are %02x %02x other regs! %02x %02x %02x(Mode Bits %02x) Enable %02x\n", MEGADRIVE_REG13_DMALENGTH1, MEGADRIVE_REG14_DMALENGTH2, MEGADRIVE_REG15_DMASOURCE1, MEGADRIVE_REG16_DMASOURCE2, MEGADRIVE_REG17_DMASOURCE3, MEGADRIVE_REG17_DMATYPE, MEGADRIVE_REG01_DMA_ENABLE);
 		}
 		else if (MEGADRIVE_REG17_DMATYPE==0x2)
 		{
-			printf("setting vram fill (INVALID?) mode length registers are %02x %02x other regs! %02x %02x %02x(Mode Bits %02x) Enable %02x\n", MEGADRIVE_REG13_DMALENGTH1, MEGADRIVE_REG14_DMALENGTH2, MEGADRIVE_REG15_DMASOURCE1, MEGADRIVE_REG16_DMASOURCE2, MEGADRIVE_REG17_DMASOURCE3, MEGADRIVE_REG17_DMATYPE, MEGADRIVE_REG01_DMA_ENABLE);
+			mame_printf_debug("setting vram fill (INVALID?) mode length registers are %02x %02x other regs! %02x %02x %02x(Mode Bits %02x) Enable %02x\n", MEGADRIVE_REG13_DMALENGTH1, MEGADRIVE_REG14_DMALENGTH2, MEGADRIVE_REG15_DMASOURCE1, MEGADRIVE_REG16_DMASOURCE2, MEGADRIVE_REG17_DMASOURCE3, MEGADRIVE_REG17_DMATYPE, MEGADRIVE_REG01_DMA_ENABLE);
 		}
 		else if (MEGADRIVE_REG17_DMATYPE==0x3)
 		{
@@ -851,7 +851,7 @@ void handle_dma_bits(void)
 			UINT16 length;
 			source = (MEGADRIVE_REG15_DMASOURCE1 | (MEGADRIVE_REG16_DMASOURCE2<<8)); // source (byte offset)
 			length = (MEGADRIVE_REG13_DMALENGTH1 | (MEGADRIVE_REG14_DMALENGTH2<<8)); // length in bytes
-			//printf("setting vram copy mode length registers are %02x %02x other regs! %02x %02x %02x(Mode Bits %02x) Enable %02x\n", MEGADRIVE_REG13_DMALENGTH1, MEGADRIVE_REG14_DMALENGTH2, MEGADRIVE_REG15_DMASOURCE1, MEGADRIVE_REG16_DMASOURCE2, MEGADRIVE_REG17_DMASOURCE3, MEGADRIVE_REG17_DMATYPE, MEGADRIVE_REG01_DMA_ENABLE);
+			//mame_printf_debug("setting vram copy mode length registers are %02x %02x other regs! %02x %02x %02x(Mode Bits %02x) Enable %02x\n", MEGADRIVE_REG13_DMALENGTH1, MEGADRIVE_REG14_DMALENGTH2, MEGADRIVE_REG15_DMASOURCE1, MEGADRIVE_REG16_DMASOURCE2, MEGADRIVE_REG17_DMASOURCE3, MEGADRIVE_REG17_DMATYPE, MEGADRIVE_REG01_DMA_ENABLE);
 
 			if (MEGADRIVE_REG01_DMA_ENABLE) megadrive_do_insta_vram_copy(source, length);
 		}
@@ -882,7 +882,7 @@ void megadriv_vdp_ctrl_port_w(int data)
 			int regnum = (data & 0x3f00) >> 8;
 			int value  = (data & 0x00ff);
 
-			if (regnum &0x20) printf("reg error\n");
+			if (regnum &0x20) mame_printf_debug("reg error\n");
 
 			megadrive_vdp_set_register(regnum&0x1f,value);
 			megadrive_vdp_code = 0;
@@ -910,19 +910,19 @@ WRITE16_HANDLER( megadriv_vdp_w )
 			if (!ACCESSING_MSB)
 			{
 				data = (data&0x00ff) | data<<8;
-			//  printf("8-bit write VDP data port access, offset %04x data %04x mem_mask %04x\n",offset,data,mem_mask);
+			//  mame_printf_debug("8-bit write VDP data port access, offset %04x data %04x mem_mask %04x\n",offset,data,mem_mask);
 			}
 			else if (!ACCESSING_LSB)
 			{
 				data = (data&0xff00) | data>>8;
-			//  printf("8-bit write VDP data port access, offset %04x data %04x mem_mask %04x\n",offset,data,mem_mask);
+			//  mame_printf_debug("8-bit write VDP data port access, offset %04x data %04x mem_mask %04x\n",offset,data,mem_mask);
 			}
 			megadriv_vdp_data_port_w(data);
 			break;
 
 		case 0x04:
 		case 0x06:
-			if ((!ACCESSING_MSB) || (!ACCESSING_LSB)) printf("8-bit write VDP control port access, offset %04x data %04x mem_mask %04x\n",offset,data,mem_mask);
+			if ((!ACCESSING_MSB) || (!ACCESSING_LSB)) mame_printf_debug("8-bit write VDP control port access, offset %04x data %04x mem_mask %04x\n",offset,data,mem_mask);
 			megadriv_vdp_ctrl_port_w(data);
 			break;
 
@@ -942,7 +942,7 @@ WRITE16_HANDLER( megadriv_vdp_w )
 			break;
 
 		default:
-		printf("write to unmapped vdp port\n");
+		mame_printf_debug("write to unmapped vdp port\n");
 	}
 }
 
@@ -1010,7 +1010,7 @@ UINT16 megadriv_vdp_data_port_r(void)
 			break;
 	}
 
-//  printf("vdp_data_port_r %04x %04x %04x\n",megadrive_vdp_code, megadrive_vdp_address, retdata);
+//  mame_printf_debug("vdp_data_port_r %04x %04x %04x\n",megadrive_vdp_code, megadrive_vdp_address, retdata);
 
 //  logerror("Read VDP Data Port\n");
 	return retdata;
@@ -1261,7 +1261,7 @@ UINT16 megadriv_read_hv_counters(void)
 	if (vpos<0)
 	{
 		vpos = megadrive_total_scanlines;
-		printf("negative vpos?!\n");
+		mame_printf_debug("negative vpos?!\n");
 	}
 
 	if (MEGADRIVE_REG01_240_LINE)
@@ -1305,26 +1305,26 @@ READ16_HANDLER( megadriv_vdp_r )
 
 		case 0x00:
 		case 0x02:
-			if ((!ACCESSING_MSB) || (!ACCESSING_LSB)) printf("8-bit VDP read data port access, offset %04x mem_mask %04x\n",offset,mem_mask);
+			if ((!ACCESSING_MSB) || (!ACCESSING_LSB)) mame_printf_debug("8-bit VDP read data port access, offset %04x mem_mask %04x\n",offset,mem_mask);
 			retvalue = megadriv_vdp_data_port_r();
 			break;
 
 		case 0x04:
 		case 0x06:
-		//  if ((!ACCESSING_MSB) || (!ACCESSING_LSB)) printf("8-bit VDP read control port access, offset %04x mem_mask %04x\n",offset,mem_mask);
+		//  if ((!ACCESSING_MSB) || (!ACCESSING_LSB)) mame_printf_debug("8-bit VDP read control port access, offset %04x mem_mask %04x\n",offset,mem_mask);
 			retvalue = megadriv_vdp_ctrl_port_r();
 		//  retvalue = mame_rand(Machine);
-		//  printf("%06x: Read Control Port at scanline %d hpos %d (return %04x)\n",activecpu_get_pc(),genesis_scanline_counter, get_hposition(),retvalue);
+		//  mame_printf_debug("%06x: Read Control Port at scanline %d hpos %d (return %04x)\n",activecpu_get_pc(),genesis_scanline_counter, get_hposition(),retvalue);
 			break;
 
 		case 0x08:
 		case 0x0a:
 		case 0x0c:
 		case 0x0e:
-		//  if ((!ACCESSING_MSB) || (!ACCESSING_LSB)) printf("8-bit VDP read HV counter port access, offset %04x mem_mask %04x\n",offset,mem_mask);
+		//  if ((!ACCESSING_MSB) || (!ACCESSING_LSB)) mame_printf_debug("8-bit VDP read HV counter port access, offset %04x mem_mask %04x\n",offset,mem_mask);
 			retvalue = megadriv_read_hv_counters();
 		//  retvalue = mame_rand(Machine);
-		//  printf("%06x: Read HV counters at scanline %d hpos %d (return %04x)\n",activecpu_get_pc(),genesis_scanline_counter, get_hposition(),retvalue);
+		//  mame_printf_debug("%06x: Read HV counters at scanline %d hpos %d (return %04x)\n",activecpu_get_pc(),genesis_scanline_counter, get_hposition(),retvalue);
 			break;
 
 		case 0x10:
@@ -1340,7 +1340,7 @@ READ16_HANDLER( megadriv_vdp_r )
 
 READ16_HANDLER( megadriv_68k_YM2612_read)
 {
-	//printf("megadriv_68k_YM2612_read %02x %04x\n",offset,mem_mask);
+	//mame_printf_debug("megadriv_68k_YM2612_read %02x %04x\n",offset,mem_mask);
 	if ( (genz80.z80_has_bus==0) && (genz80.z80_is_reset==0) )
 	{
 		switch (offset)
@@ -1368,7 +1368,7 @@ READ16_HANDLER( megadriv_68k_YM2612_read)
 
 WRITE16_HANDLER( megadriv_68k_YM2612_write)
 {
-	//printf("megadriv_68k_YM2612_write %02x %04x %04x\n",offset,data,mem_mask);
+	//mame_printf_debug("megadriv_68k_YM2612_write %02x %04x %04x\n",offset,data,mem_mask);
 	if ( (genz80.z80_has_bus==0) && (genz80.z80_is_reset==0) )
 	{
 		switch (offset)
@@ -1405,7 +1405,7 @@ READ8_HANDLER( megadriv_z80_YM2612_read )
 
 WRITE8_HANDLER( megadriv_z80_YM2612_write )
 {
-	//printf("megadriv_z80_YM2612_write %02x %02x\n",offset,data);
+	//mame_printf_debug("megadriv_z80_YM2612_write %02x %02x\n",offset,data);
 	switch (offset)
 	{
 		case 0: YM2612_control_port_0_A_w(0, data); break;
@@ -1761,7 +1761,7 @@ UINT8 megadrive_io_read_data_port_6button(int portnum)
 		}
 	}
 
-//  printf("read io data port stage %d port %d %02x\n",io_stage[portnum],portnum,retdata);
+//  mame_printf_debug("read io data port stage %d port %d %02x\n",io_stage[portnum],portnum,retdata);
 
 
 	return retdata|(retdata<<8);
@@ -1805,7 +1805,7 @@ UINT8 megadrive_io_read_ctrl_port(int portnum)
 {
 	UINT8 retdata;
 	retdata = megadrive_io_ctrl_regs[portnum];
-	//printf("read io ctrl port %d %02x\n",portnum,retdata);
+	//mame_printf_debug("read io ctrl port %d %02x\n",portnum,retdata);
 
 	return retdata|(retdata<<8);
 }
@@ -1897,7 +1897,7 @@ READ16_HANDLER( megadriv_68k_io_read )
 void megadrive_io_write_data_port_3button(int portnum, UINT16 data)
 {
 	megadrive_io_data_regs[portnum] = data;
-	//printf("Writing IO Data Register #%d data %04x\n",portnum,data);
+	//mame_printf_debug("Writing IO Data Register #%d data %04x\n",portnum,data);
 
 }
 
@@ -1917,7 +1917,7 @@ void megadrive_io_write_data_port_6button(int portnum, UINT16 data)
 	}
 
 	megadrive_io_data_regs[portnum] = data;
-	//printf("Writing IO Data Register #%d data %04x\n",portnum,data);
+	//mame_printf_debug("Writing IO Data Register #%d data %04x\n",portnum,data);
 
 }
 
@@ -1926,7 +1926,7 @@ void megadrive_io_write_data_port_6button(int portnum, UINT16 data)
 void megadrive_io_write_ctrl_port(int portnum, UINT16 data)
 {
 	megadrive_io_ctrl_regs[portnum] = data;
-//  printf("Setting IO Control Register #%d data %04x\n",portnum,data);
+//  mame_printf_debug("Setting IO Control Register #%d data %04x\n",portnum,data);
 }
 
 void megadrive_io_write_tx_port(int portnum, UINT16 data)
@@ -1948,13 +1948,13 @@ void megadrive_io_write_sctrl_port(int portnum, UINT16 data)
 
 WRITE16_HANDLER( megadriv_68k_io_write )
 {
-//  printf("IO Write #%02x data %04x mem_mask %04x\n",offset,data,mem_mask);
+//  mame_printf_debug("IO Write #%02x data %04x mem_mask %04x\n",offset,data,mem_mask);
 
 
 	switch (offset)
 	{
 		case 0x0:
-			printf("Write to Version Register?!\n");
+			mame_printf_debug("Write to Version Register?!\n");
 			break;
 
 		/* Joypad Port Registers */
@@ -2046,7 +2046,7 @@ ADDRESS_MAP_END
 
 READ16_HANDLER( megadriv_68k_read_z80_ram )
 {
-	//printf("read z80 ram %04x\n",mem_mask);
+	//mame_printf_debug("read z80 ram %04x\n",mem_mask);
 
 	if ( (genz80.z80_has_bus==0) && (genz80.z80_is_reset==0) )
 	{
@@ -2124,7 +2124,7 @@ READ16_HANDLER( megadriv_68k_check_z80_bus )
 		if (genz80.z80_has_bus || genz80.z80_is_reset) retvalue = nextvalue | 0x0100;
 		else retvalue = (nextvalue & 0xfeff);
 
-	//  printf("%06x: 68000 check z80 Bus (word access) %04x %04x\n", activecpu_get_pc(),mem_mask, retvalue);
+	//  mame_printf_debug("%06x: 68000 check z80 Bus (word access) %04x %04x\n", activecpu_get_pc(),mem_mask, retvalue);
 		return retvalue;
 	}
 }
@@ -2249,7 +2249,7 @@ READ8_HANDLER( z80_read_68k_banked_data )
 	}
 	else
 	{
-		//printf("unhandled z80 bank read, gen.z80_bank_addr %08x\n",genz80.z80_bank_addr);
+		//mame_printf_debug("unhandled z80 bank read, gen.z80_bank_addr %08x\n",genz80.z80_bank_addr);
 		return 0x0000;
 	}
 
@@ -2270,7 +2270,7 @@ WRITE8_HANDLER( megadriv_z80_vdp_write )
 			break;
 
 		default:
-			printf("unhandled z80 vdp write %02x %02x\n",offset,data);
+			mame_printf_debug("unhandled z80 vdp write %02x %02x\n",offset,data);
 	}
 
 }
@@ -2281,11 +2281,11 @@ WRITE8_HANDLER( z80_write_68k_banked_data )
 	fulladdress = genz80.z80_bank_addr + offset;
 
 
-//  printf("z80_write_68k_banked_data %04x %02x\n",offset,data);
+//  mame_printf_debug("z80_write_68k_banked_data %04x %02x\n",offset,data);
 	if ((fulladdress >= 0x000000) && (fulladdress <= 0x3fffff)) // ROM Addresses
 	{
 
-		//printf("z80 write to 68k rom??\n");
+		//mame_printf_debug("z80 write to 68k rom??\n");
 	}
 	else if ((fulladdress >= 0xe00000) && (fulladdress <= 0xffffff)) // ROM Addresses
 	{
@@ -2302,14 +2302,14 @@ WRITE8_HANDLER( z80_write_68k_banked_data )
 	else
 	{
 
-		//printf("z80 write to 68k address %06x\n",fulladdress);
+		//mame_printf_debug("z80 write to 68k address %06x\n",fulladdress);
 	}
 
 }
 
 READ8_HANDLER( megadriv_z80_vdp_read )
 {
-	printf("megadriv_z80_vdp_read %02x\n",offset);
+	mame_printf_debug("megadriv_z80_vdp_read %02x\n",offset);
 	return mame_rand(Machine);
 }
 
@@ -2499,7 +2499,7 @@ VIDEO_UPDATE(megadriv)
 
 //  time_elapsed_since_crap = mame_timer_timeelapsed(frame_timer);
 //  xxx = MAME_TIME_TO_CYCLES(0,time_elapsed_since_crap);
-//  printf("update cycles %d, %08x %08x\n",xxx, (UINT32)(time_elapsed_since_crap.subseconds>>32),(UINT32)(time_elapsed_since_crap.subseconds&0xffffffff));
+//  mame_printf_debug("update cycles %d, %08x %08x\n",xxx, (UINT32)(time_elapsed_since_crap.subseconds>>32),(UINT32)(time_elapsed_since_crap.subseconds&0xffffffff));
 
 	return 0;
 }
@@ -2585,7 +2585,7 @@ void genesis_render_spriteline_to_spritebuffer(int scanline)
 		/* Get Sprite Attribs */
 		spritenum = 0;
 
-		//if (scanline==40) printf("spritelist start base %04x\n",base_address);
+		//if (scanline==40) mame_printf_debug("spritelist start base %04x\n",base_address);
 
 		do
 		{
@@ -2617,7 +2617,7 @@ void genesis_render_spriteline_to_spritebuffer(int scanline)
 
 
 
-			//if (scanline==40) printf("xpos %04x ypos %04x\n",xpos,ypos);
+			//if (scanline==40) mame_printf_debug("xpos %04x ypos %04x\n",xpos,ypos);
 
 			if ((drawypos<=scanline) && ((drawypos+drawheight)>scanline))
 			{
@@ -2784,7 +2784,7 @@ void genesis_render_videoline_to_videobuffer(int scanline)
 	/* is this line enabled? */
 	if (!MEGADRIVE_REG01_DISP_ENABLE)
 	{
-		//printf("line disabled %d\n",scanline);
+		//mame_printf_debug("line disabled %d\n",scanline);
 		return;
 	}
 
@@ -2815,7 +2815,7 @@ void genesis_render_videoline_to_videobuffer(int scanline)
 		case 3: numcolumns = 40; window_hsize = 64; window_vsize = 32; base_w = (MEGADRIVE_REG03_PATTERN_ADDR_W&0x1e) << 11; break; // talespin cares about base mask, used for status bar
 	}
 
-	//printf("screenwidth %d\n",screenwidth);
+	//mame_printf_debug("screenwidth %d\n",screenwidth);
 
 	//base_w = rand()&0xff;
 
@@ -2871,23 +2871,23 @@ void genesis_render_videoline_to_videobuffer(int scanline)
 	{
 		case 0x00: hsize = 32; vsize = 32; break;
 		case 0x01: hsize = 64; vsize = 32; break;
-		case 0x02: hsize = 64; vsize = 1; /* printf("Invalid HSize! %02x\n",size);*/ break;
+		case 0x02: hsize = 64; vsize = 1; /* mame_printf_debug("Invalid HSize! %02x\n",size);*/ break;
 		case 0x03: hsize = 128;vsize = 32; break;
 
 		case 0x10: hsize = 32; vsize = 64; break;
 		case 0x11: hsize = 64; vsize = 64; break;
-		case 0x12: hsize = 64; vsize = 1; /*printf("Invalid HSize! %02x\n",size);*/ break;
-		case 0x13: hsize = 128;vsize = 32;/*printf("Invalid Total Size! %02x\n",size);*/break;
+		case 0x12: hsize = 64; vsize = 1; /*mame_printf_debug("Invalid HSize! %02x\n",size);*/ break;
+		case 0x13: hsize = 128;vsize = 32;/*mame_printf_debug("Invalid Total Size! %02x\n",size);*/break;
 
-		case 0x20: hsize = 32; vsize = 64; printf("Invalid VSize!\n"); break;
-		case 0x21: hsize = 64; vsize = 64; printf("Invalid VSize!\n"); break;
-		case 0x22: hsize = 64; vsize = 1; /*printf("Invalid HSize & Invalid VSize!\n");*/ break;
-		case 0x23: hsize = 128;vsize = 64; printf("Invalid VSize!\n"); break;
+		case 0x20: hsize = 32; vsize = 64; mame_printf_debug("Invalid VSize!\n"); break;
+		case 0x21: hsize = 64; vsize = 64; mame_printf_debug("Invalid VSize!\n"); break;
+		case 0x22: hsize = 64; vsize = 1; /*mame_printf_debug("Invalid HSize & Invalid VSize!\n");*/ break;
+		case 0x23: hsize = 128;vsize = 64; mame_printf_debug("Invalid VSize!\n"); break;
 
 		case 0x30: hsize = 32; vsize = 128; break;
-		case 0x31: hsize = 64; vsize = 64; /*printf("Invalid Total Size! %02x\n",size);*/break; // super skidmarks attempts this..
-		case 0x32: hsize = 64; vsize = 1; /*printf("Invalid HSize & Invalid Total Size!\n");*/ break;
-		case 0x33: hsize = 128;vsize = 128; printf("Invalid Total Size! %02x\n",size);break;
+		case 0x31: hsize = 64; vsize = 64; /*mame_printf_debug("Invalid Total Size! %02x\n",size);*/break; // super skidmarks attempts this..
+		case 0x32: hsize = 64; vsize = 1; /*mame_printf_debug("Invalid HSize & Invalid Total Size!\n");*/ break;
+		case 0x33: hsize = 128;vsize = 128; mame_printf_debug("Invalid Total Size! %02x\n",size);break;
 	}
 
 	switch (MEGADRIVE_REG0B_HSCROLL_MODE)
@@ -3811,7 +3811,7 @@ void genesis_render_videobuffer_to_screenbuffer(int scanline)
 
 void genesis_render_scanline(int scanline)
 {
-	//if (MEGADRIVE_REG01_DMA_ENABLE==0) printf("off\n");
+	//if (MEGADRIVE_REG01_DMA_ENABLE==0) mame_printf_debug("off\n");
 	genesis_render_spriteline_to_spritebuffer(genesis_scanline_counter);
 	genesis_render_videoline_to_videobuffer(scanline);
 	genesis_render_videobuffer_to_screenbuffer(scanline);
@@ -3839,7 +3839,7 @@ INLINE UINT16 get_hposition(void)
 //  if (value4>highest) highest = value4;
 //  if (value4<lowest) lowest = value4;
 
-	//printf("%d low %d high %d scancounter %d\n", value4, lowest, highest,genesis_scanline_counter);
+	//mame_printf_debug("%d low %d high %d scancounter %d\n", value4, lowest, highest,genesis_scanline_counter);
 
 	return value4;
 }
@@ -4141,7 +4141,7 @@ static void scanline_timer_callback(int num)
 	if (genesis_scanline_counter!=(megadrive_total_scanlines-1))
 	{
 		genesis_scanline_counter++;
-//      printf("scanline %d\n",genesis_scanline_counter);
+//      mame_printf_debug("scanline %d\n",genesis_scanline_counter);
 		timer_adjust(scanline_timer,  SUBSECONDS_TO_DOUBLE(1000000000000000000LL/megadriv_framerate/megadrive_total_scanlines), 0, 0);
 
 		timer_adjust(render_timer,  TIME_IN_USEC(1), 0, 0);
@@ -4150,7 +4150,7 @@ static void scanline_timer_callback(int num)
 
 		if (genesis_scanline_counter==megadrive_irq6_scanline )
 		{
-		//  printf("x %d",genesis_scanline_counter);
+		//  mame_printf_debug("x %d",genesis_scanline_counter);
 			timer_adjust(irq6_on_timer,  TIME_IN_USEC(6), 0, 0);
 			megadrive_irq6_pending = 1;
 			megadrive_vblank_flag = 1;
@@ -4179,7 +4179,7 @@ static void scanline_timer_callback(int num)
 				if (MEGADRIVE_REG0_IRQ4_ENABLE)
 				{
 					timer_adjust(irq4_on_timer,  TIME_IN_USEC(1), 0, 0);
-					//printf("irq4 on scanline %d reload %d\n",genesis_scanline_counter,MEGADRIVE_REG0A_HINT_VALUE);
+					//mame_printf_debug("irq4 on scanline %d reload %d\n",genesis_scanline_counter,MEGADRIVE_REG0A_HINT_VALUE);
 				}
 			}
 		}
@@ -4215,7 +4215,7 @@ static void scanline_timer_callback(int num)
 
 static void irq6_on_callback(int num)
 {
-	//printf("irq6 active on %d\n",genesis_scanline_counter);
+	//mame_printf_debug("irq6 active on %d\n",genesis_scanline_counter);
 
 	{
 //      megadrive_irq6_pending = 1;
@@ -4225,7 +4225,7 @@ static void irq6_on_callback(int num)
 
 static void irq4_on_callback(int num)
 {
-	//printf("irq4 active on %d\n",genesis_scanline_counter);
+	//mame_printf_debug("irq4 active on %d\n",genesis_scanline_counter);
 	cpunum_set_input_line(0,4,HOLD_LINE);
 }
 
@@ -4238,7 +4238,7 @@ int hazemdchoice_megadriv_framerate;
 MACHINE_RESET( megadriv_reset )
 {
 	/* default state of z80 = reset, with bus */
-	printf("Resetting Megadrive / Genesis\n");
+	mame_printf_debug("Resetting Megadrive / Genesis\n");
 
 	switch (readinputportbytag_safe("REGION",0x00))
 	{
@@ -4247,28 +4247,28 @@ MACHINE_RESET( megadriv_reset )
 		megadrive_region_export = 1;
 		megadrive_region_pal = 0;
 		megadriv_framerate = 60;
-		printf("Using Region = US\n");
+		mame_printf_debug("Using Region = US\n");
 		break;
 
 		case 2: // JAPAN
 		megadrive_region_export = 0;
 		megadrive_region_pal = 0;
 		megadriv_framerate = 60;
-		printf("Using Region = JAPAN\n");
+		mame_printf_debug("Using Region = JAPAN\n");
 		break;
 
 		case 3: // EUROPE
 		megadrive_region_export = 1;
 		megadrive_region_pal = 1;
 		megadriv_framerate = 50;
-		printf("Using Region = EUROPE\n");
+		mame_printf_debug("Using Region = EUROPE\n");
 		break;
 
 		default: // as chosen by driver
 		megadrive_region_export = hazemdchoice_megadrive_region_export;
 		megadrive_region_pal = hazemdchoice_megadrive_region_pal;
 		megadriv_framerate = hazemdchoice_megadriv_framerate;
-		printf("Using Region = DEFAULT\n");
+		mame_printf_debug("Using Region = DEFAULT\n");
 		break;
 	}
 
@@ -4391,11 +4391,11 @@ int megadrive_z80irq_hpos = 320;
 	{
 		 /* note, add 240 mode + init new timings! */
 		case 0:scr_width = 256;break;// configure_screen(0, 256-1, megadrive_visible_scanlines-1,(double)megadriv_framerate); break;
-		case 1:scr_width = 256;break;// configure_screen(0, 256-1, megadrive_visible_scanlines-1,(double)megadriv_framerate); printf("invalid screenmode!\n"); break;
+		case 1:scr_width = 256;break;// configure_screen(0, 256-1, megadrive_visible_scanlines-1,(double)megadriv_framerate); mame_printf_debug("invalid screenmode!\n"); break;
 		case 2:scr_width = 320;break;// configure_screen(0, 320-1, megadrive_visible_scanlines-1,(double)megadriv_framerate); break; /* technically invalid, but used in rare cases */
 		case 3:scr_width = 320;break;// configure_screen(0, 320-1, megadrive_visible_scanlines-1,(double)megadriv_framerate); break;
 	}
-//  printf("my mode %02x", megadrive_vdp_register[0x0c]);
+//  mame_printf_debug("my mode %02x", megadrive_vdp_register[0x0c]);
 
 	visarea.min_x = 0;
 	visarea.max_x = scr_width-1;
@@ -4408,7 +4408,7 @@ int megadrive_z80irq_hpos = 320;
 {
 	UINT16 count = 0;
 	int y,x,yy,xx;
-//  printf("bb\n");
+//  mame_printf_debug("bb\n");
 
 	for (y=0;y<64;y++)
 	{
@@ -4455,8 +4455,8 @@ int megadrive_z80irq_hpos = 320;
 
 		time_elapsed_since_crap = mame_timer_timeelapsed(frame_timer);
 		xxx = MAME_TIME_TO_CYCLES(0,time_elapsed_since_crap);
-		//printf("---------- cycles %d, %08x %08x\n",xxx, (UINT32)(time_elapsed_since_crap.subseconds>>32),(UINT32)(time_elapsed_since_crap.subseconds&0xffffffff));
-		//printf("---------- framet %d, %08x %08x\n",xxx, (UINT32)(frametime>>32),(UINT32)(frametime&0xffffffff));
+		//mame_printf_debug("---------- cycles %d, %08x %08x\n",xxx, (UINT32)(time_elapsed_since_crap.subseconds>>32),(UINT32)(time_elapsed_since_crap.subseconds&0xffffffff));
+		//mame_printf_debug("---------- framet %d, %08x %08x\n",xxx, (UINT32)(frametime>>32),(UINT32)(frametime&0xffffffff));
 	}
 
 	timer_adjust(frame_timer,  TIME_NOW, 0, 0);
@@ -4574,7 +4574,7 @@ int genesis_int_callback (int irq)
 	if (irq==6)
 	{
 		megadrive_irq6_pending = 0;
-	//  printf("clear pending!\n");
+	//  mame_printf_debug("clear pending!\n");
 	}
 
 	return (0x60+irq*4)/4; // vector address
@@ -4601,13 +4601,13 @@ void megadriv_init_common(void)
 	{
 		megadrive_io_read_data_port_ptr	= megadrive_io_read_data_port_6button;
 		megadrive_io_write_data_port_ptr = megadrive_io_write_data_port_6button;
-		printf("6 button game\n");
+		mame_printf_debug("6 button game\n");
 	}
 	else
 	{
 		megadrive_io_read_data_port_ptr	= megadrive_io_read_data_port_3button;
 		megadrive_io_write_data_port_ptr = megadrive_io_write_data_port_3button;
-		printf("3 button game\n");
+		mame_printf_debug("3 button game\n");
 	}
 
 	{
@@ -4615,17 +4615,17 @@ void megadriv_init_common(void)
           some games specify a single address, (start 200001, end 200001)
           this usually means there is serial eeprom instead */
 		int i;
-		printf("DEBUG:: Header: Backup RAM string (ignore for games without)\n");
+		mame_printf_debug("DEBUG:: Header: Backup RAM string (ignore for games without)\n");
 		for (i=0;i<12;i++)
 		{
 			UINT16 *rom = (UINT16*)memory_region(REGION_CPU1);
-			if (i==2) printf("\nstart: ");
-			if (i==4) printf("\nend  : ");
-			if (i==6) printf("\n");
+			if (i==2) mame_printf_debug("\nstart: ");
+			if (i==4) mame_printf_debug("\nend  : ");
+			if (i==6) mame_printf_debug("\n");
 
-			printf("%04x ",rom[(0x1b0/2)+i]);
+			mame_printf_debug("%04x ",rom[(0x1b0/2)+i]);
 		}
-		printf("\n");
+		mame_printf_debug("\n");
 	}
 
 }

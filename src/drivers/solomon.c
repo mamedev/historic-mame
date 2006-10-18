@@ -43,7 +43,7 @@ static READ8_HANDLER( solomon_0xe603_r )
 	}
 	else
 	{
-		printf("unhandled solomon_0xe603_r %04x\n",activecpu_get_pc());
+		mame_printf_debug("unhandled solomon_0xe603_r %04x\n",activecpu_get_pc());
 		return 0;
 	}
 }

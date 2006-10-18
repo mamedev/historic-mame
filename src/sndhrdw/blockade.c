@@ -43,7 +43,7 @@ WRITE8_HANDLER( blockade_sound_freq_w )
 WRITE8_HANDLER( blockade_env_on_w )
 {
 //#ifdef BLOCKADE_LOG
-//    printf("Boom Start\n");
+//    mame_printf_debug("Boom Start\n");
 //#endif
     sample_start(0,0,0);
     return;
@@ -52,7 +52,7 @@ WRITE8_HANDLER( blockade_env_on_w )
 WRITE8_HANDLER( blockade_env_off_w )
 {
 //#ifdef BLOCKADE_LOG
-//    printf("Boom End\n");
+//    mame_printf_debug("Boom End\n");
 //#endif
     return;
 }

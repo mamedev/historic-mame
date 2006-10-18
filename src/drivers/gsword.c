@@ -195,7 +195,7 @@ static READ8_HANDLER( gsword_hack_r )
 {
 	UINT8 data = gsword_cpu2_ram[offset + 4];
 
-	/*if(offset==1)printf("CNT %02X%02X\n",gsword_cpu2_ram[5],gsword_cpu2_ram[4]); */
+	/*if(offset==1)mame_printf_debug("CNT %02X%02X\n",gsword_cpu2_ram[5],gsword_cpu2_ram[4]); */
 
 	/* speedup timeout cound down */
 	if(gsword_protect_hack)
@@ -290,7 +290,7 @@ static INTERRUPT_GEN( gsword_snd_interrupt )
 
 static WRITE8_HANDLER( gsword_nmi_set_w )
 {
-/*  printf("AY write %02X\n",data);*/
+/*  mame_printf_debug("AY write %02X\n",data);*/
 
 	gsword_protect_hack = (data&0x80) ? 0 : 1;
 #if 0

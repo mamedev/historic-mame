@@ -532,7 +532,7 @@ WRITE16_HANDLER(tumbleb2_soundmcu_w)
 	if (sound == 0x00)
 	{
 		/* pangpang has more commands than tumbleb2, extra sounds */
-		//printf("Command %04x\n",data);
+		//mame_printf_debug("Command %04x\n",data);
 	}
 	else if (sound == -2)
 	{
@@ -2870,7 +2870,7 @@ static DRIVER_INIT( fncywld )
 
 static READ16_HANDLER( bcstory_1a0_read )
 {
-//  printf("bcstory_io %06x\n",activecpu_get_pc());
+//  mame_printf_debug("bcstory_io %06x\n",activecpu_get_pc());
 	if (activecpu_get_pc()==0x0560) return 0x1a0;
 	else return readinputport(2);
 }

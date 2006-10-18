@@ -15,6 +15,7 @@
 #include "mamecore.h"
 #include "video.h"
 #include "restrack.h"
+#include <stdarg.h>
 
 #ifdef MESS
 #include "device.h"
@@ -30,7 +31,8 @@
 #define MAMERR_NONE				0		/* no error */
 #define MAMERR_FAILED_VALIDITY	1		/* failed validity checks */
 #define MAMERR_MISSING_FILES	2		/* missing files */
-#define MAMERR_FATALERROR		3		/* some other fatale error */
+#define MAMERR_FATALERROR		3		/* some other fatal error */
+#define MAMERR_DEVICE			4		/* device initialization error (MESS-specific) */
 
 
 /* program phases */
@@ -66,6 +68,19 @@
 #define GAMESNOUN				"systems"
 #define HISTORYNAME				"System Info"
 #endif
+
+
+/* output channels */
+enum _output_channel
+{
+    OUTPUT_CHANNEL_ERROR,
+    OUTPUT_CHANNEL_WARNING,
+    OUTPUT_CHANNEL_INFO,
+    OUTPUT_CHANNEL_DEBUG,
+    OUTPUT_CHANNEL_LOG,
+    OUTPUT_CHANNEL_COUNT
+};
+typedef enum _output_channel output_channel;
 
 
 /* memory region types */
@@ -113,22 +128,19 @@ enum
 extern const char *memory_region_names[REGION_MAX];
 
 
-/* artwork options */
-#define ARTWORK_USE_ALL			(~0)
-#define ARTWORK_USE_NONE		(0)
-#define ARTWORK_USE_BACKDROPS	0x01
-#define ARTWORK_USE_OVERLAYS	0x02
-#define ARTWORK_USE_BEZELS		0x04
-
-
 
 /***************************************************************************
     TYPE DEFINITIONS
 ***************************************************************************/
 
+/* output channel callback */
+typedef void (*output_callback)(void *param, const char *format, va_list argptr);
+
+
 /* forward type declarations */
 typedef struct _palette_private palette_private;
 typedef struct _mame_private mame_private;
+
 
 /* description of the currently-running machine */
 /* typedef struct _running_machine running_machine; -- in mamecore.h */
@@ -327,6 +339,29 @@ UINT32 memory_region_flags(running_machine *machine, int num);
 
 
 
+/* ----- output management ----- */
+
+/* set the output handler for a channel, returns the current one */
+void mame_set_output_channel(output_channel channel, output_callback callback, void *param, output_callback *prevcb, void **prevparam);
+
+/* built-in default callbacks */
+void mame_file_output_callback(void *param, const char *format, va_list argptr);
+void mame_null_output_callback(void *param, const char *format, va_list argptr);
+
+/* calls to be used by the code */
+void mame_printf_error(const char *format, ...) ATTR_PRINTF(1,2);
+void mame_printf_warning(const char *format, ...) ATTR_PRINTF(1,2);
+void mame_printf_info(const char *format, ...) ATTR_PRINTF(1,2);
+void mame_printf_debug(const char *format, ...) ATTR_PRINTF(1,2);
+
+/* discourage the use of printf directly */
+/* sadly, can't do this because of the ATTR_PRINTF under GCC */
+/*
+#undef printf
+#define printf !MUST_USE_MAME_PRINTF_*_CALLS_WITHIN_THE_CORE!
+*/
+
+
 /* ----- miscellaneous bits & pieces ----- */
 
 /* pop-up a user visible message */
@@ -343,6 +378,8 @@ UINT32 mame_rand(running_machine *machine);
 
 /* return the index of the given CPU, or -1 if not found */
 int mame_find_cpu_index(running_machine *machine, const char *tag);
+
+
 
 
 

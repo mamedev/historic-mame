@@ -571,7 +571,7 @@ WRITE32_HANDLER( psx_counter_w )
 //          ( ( data & 0x0100 ) != 0 && n_counter != 0 && n_counter != 1 ) ||
 //          ( ( data & 0x0200 ) != 0 && n_counter != 2 ) )
 //      {
-//          printf( "mode %d 0x%04x\n", n_counter, data & 0xfca6 );
+//          mame_printf_debug( "mode %d 0x%04x\n", n_counter, data & 0xfca6 );
 //      }
 		break;
 	case 2:
@@ -1365,7 +1365,7 @@ static void mdec1_read( UINT32 n_address, INT32 n_size )
 			{
 				if( (int)m_n_mdec0_size <= 0 )
 				{
-					printf( "ran out of data %08x\n", n_size );
+					mame_printf_debug( "ran out of data %08x\n", n_size );
 					m_n_mdec0_size = 0;
 					break;
 				}
@@ -1400,12 +1400,12 @@ static void mdec1_read( UINT32 n_address, INT32 n_size )
 
 		if( m_n_mdec0_size < 0 )
 		{
-			printf( "ran out of data %d\n", m_n_mdec0_size );
+			mame_printf_debug( "ran out of data %d\n", m_n_mdec0_size );
 		}
 	}
 	else
 	{
-		printf( "mdec1_read no conversion :%08x:%08x:\n", m_n_mdec0_command, m_n_mdec0_size );
+		mame_printf_debug( "mdec1_read no conversion :%08x:%08x:\n", m_n_mdec0_command, m_n_mdec0_size );
 	}
 	m_n_mdec1_status &= ~( 1L << 29 );
 }

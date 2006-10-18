@@ -825,23 +825,23 @@ static UINT32 get_global_register(UINT8 code)
         case 29:
         case 30:
         case 31:
-            printf("read _Reserved_ Global Register %d @ %08X\n",code,PC);
+            mame_printf_debug("read _Reserved_ Global Register %d @ %08X\n",code,PC);
             break;
 
         case BCR_REGISTER:
-            printf("read write-only BCR register @ %08X\n",PC);
+            mame_printf_debug("read write-only BCR register @ %08X\n",PC);
             return 0;
 
         case TPR_REGISTER:
-            printf("read write-only TPR register @ %08X\n",PC);
+            mame_printf_debug("read write-only TPR register @ %08X\n",PC);
             return 0;
 
         case FCR_REGISTER:
-            printf("read write-only FCR register @ %08X\n",PC);
+            mame_printf_debug("read write-only FCR register @ %08X\n",PC);
             return 0;
 
         case MCR_REGISTER:
-            printf("read write-only MCR register @ %08X\n",PC);
+            mame_printf_debug("read write-only MCR register @ %08X\n",PC);
             return 0;
         }
     }
@@ -885,19 +885,19 @@ static void set_global_register(UINT8 code, UINT32 val)
 				break;
 /*
             case ISR_REGISTER:
-                printf("written %08X to read-only ISR register\n",val);
+                mame_printf_debug("written %08X to read-only ISR register\n",val);
                 break;
 
             case 22:
-//              printf("written %08X to TCR register\n",val);
+//              mame_printf_debug("written %08X to TCR register\n",val);
                 break;
 
             case 23:
-//              printf("written %08X to TR register\n",val);
+//              mame_printf_debug("written %08X to TR register\n",val);
                 break;
 
             case 24:
-//              printf("written %08X to WCR register\n",val);
+//              mame_printf_debug("written %08X to WCR register\n",val);
                 break;
 
             case 16:
@@ -906,7 +906,7 @@ static void set_global_register(UINT8 code, UINT32 val)
             case 29:
             case 30:
             case 31:
-                printf("written %08X to _Reserved_ Global Register %d\n",val,code);
+                mame_printf_debug("written %08X to _Reserved_ Global Register %d\n",val,code);
                 break;
 
             case BCR_REGISTER:
@@ -933,13 +933,13 @@ static void set_global_register(UINT8 code, UINT32 val)
                 switch((val & 0x3000)>>12)
                 {
                 case 0:
-                    printf("IO3 interrupt mode\n");
+                    mame_printf_debug("IO3 interrupt mode\n");
                     break;
                 case 1:
-                    printf("IO3 timing mode\n");
+                    mame_printf_debug("IO3 timing mode\n");
                     break;
                 case 2:
-                    printf("watchdog mode\n");
+                    mame_printf_debug("watchdog mode\n");
                     break;
                 case 3:
                     // IO3 standard mode
@@ -1014,7 +1014,7 @@ static void decode_source(int local, int hflag)
 			SREG = 0; // write-only registers
 		}
 		else if( current_regs.src == ISR_REGISTER )
-			printf("read src ISR. PC = %08X\n",PPC);
+			mame_printf_debug("read src ISR. PC = %08X\n",PPC);
 	}
 }
 
@@ -1047,7 +1047,7 @@ static void decode_dest(int local, int hflag)
 		else if(current_regs.dst == SR_REGISTER)
 			DST_IS_SR = 1;
 		else if( current_regs.src == ISR_REGISTER )
-			printf("read dst ISR. PC = %08X\n",PPC);
+			mame_printf_debug("read dst ISR. PC = %08X\n",PPC);
 	}
 }
 
@@ -1659,7 +1659,7 @@ static void execute_exception(UINT32 addr)
 	PC = addr;
 	change_pc(PC);
 
-	printf("EXCEPTION! PPC = %08X PC = %08X\n",PPC-2,PC-2);
+	mame_printf_debug("EXCEPTION! PPC = %08X PC = %08X\n",PPC-2,PC-2);
 	hyperstone_ICount -= 2;
 }
 
@@ -1742,21 +1742,21 @@ static void set_irq_line(int irqline, int state)
 				break;
 		}
 /*
-        if( (FCR&(1<<6)) && (!(FCR&(1<<4))) ) printf("IO2 en\n"); // IO2
+        if( (FCR&(1<<6)) && (!(FCR&(1<<4))) ) mame_printf_debug("IO2 en\n"); // IO2
 
-        if( (FCR&(1<<2)) && (!(FCR&(1<<0))) ) printf("IO1 en\n"); // IO1
+        if( (FCR&(1<<2)) && (!(FCR&(1<<0))) ) mame_printf_debug("IO1 en\n"); // IO1
 
-        if( !(FCR&(1<<31)) ) printf("int4 en\n"); //  int 4
+        if( !(FCR&(1<<31)) ) mame_printf_debug("int4 en\n"); //  int 4
 
-        if( !(FCR&(1<<30)) ) printf("int3 en\n"); //  int 3
+        if( !(FCR&(1<<30)) ) mame_printf_debug("int3 en\n"); //  int 3
 
-        if( !(FCR&(1<<29)) ) printf("int2 en\n"); //  int 2
+        if( !(FCR&(1<<29)) ) mame_printf_debug("int2 en\n"); //  int 2
 
-        if( !(FCR&(1<<28)) ) printf("int1 en\n"); //  int 1
+        if( !(FCR&(1<<28)) ) mame_printf_debug("int1 en\n"); //  int 1
 
-        if( (FCR&(1<<10)) && (!(FCR&(1<<8))) ) printf("IO3 en\n"); // IO3
+        if( (FCR&(1<<10)) && (!(FCR&(1<<8))) ) mame_printf_debug("IO3 en\n"); // IO3
 
-      //  if( !(FCR&(1<<23)) ) printf("timer irq!\n"); //  timer
+      //  if( !(FCR&(1<<23)) ) mame_printf_debug("timer irq!\n"); //  timer
 */
 		if(execint)
 		{

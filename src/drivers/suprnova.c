@@ -713,7 +713,7 @@ static WRITE32_HANDLER( msm6242_w )
 
 	if(offset>=4)
 	{
-		printf("Timer 0 outbound\n");
+		mame_printf_debug("Timer 0 outbound\n");
 		return;
 	}
 }

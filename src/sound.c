@@ -26,7 +26,7 @@
 #define MAKE_WAVS		(0)
 
 #if VERBOSE
-#define VPRINTF(x) printf x
+#define VPRINTF(x) mame_printf_debug x
 #else
 #define VPRINTF(x)
 #endif
@@ -250,11 +250,7 @@ static void sound_exit(running_machine *machine)
 		if (speaker[spknum].max_sample > 0)
 		{
 			speaker_info *spk = &speaker[spknum];
-#ifdef WIN32
-			printf("Speaker \"%s\" - max = %d (gain *= %f) - %d%% samples clipped\n", spk->speaker->tag, spk->max_sample, 32767.0 / (spk->max_sample ? spk->max_sample : 1), (int)((double)spk->clipped_samples * 100.0 / spk->total_samples));
-#else
-			logerror("Speaker \"%s\" - max = %d (gain *= %f) - %d%% samples clipped\n", spk->speaker->tag, spk->max_sample, 32767.0 / (spk->max_sample ? spk->max_sample : 1), (int)((double)spk->clipped_samples * 100.0 / spk->total_samples));
-#endif
+			mame_printf_debug("Speaker \"%s\" - max = %d (gain *= %f) - %d%% samples clipped\n", spk->speaker->tag, spk->max_sample, 32767.0 / (spk->max_sample ? spk->max_sample : 1), (int)((double)spk->clipped_samples * 100.0 / spk->total_samples));
 		}
 }
 #endif /* MAME_DEBUG */
@@ -431,10 +427,7 @@ static int route_sound(void)
 
 			/* if neither found, it's fatal */
 			if (!speaker && !sound)
-			{
-				printf("Sound route \"%s\" not found!\n", mroute->target);
-				return 1;
-			}
+				fatalerror("Sound route \"%s\" not found!\n", mroute->target);
 
 			/* if we got a speaker, bump its input count */
 			if (speaker)

@@ -1958,7 +1958,7 @@ INLINE void do_add_flags(UINT8 a, UINT8 data, UINT8 c)
 	SET_OV(ov);
 
 #ifdef MAME_DEBUG
-//  printf("add: result=%x, c=%x, ac=%x, ov=%x\n",a+data+c,cy,ac,ov);
+//  mame_printf_debug("add: result=%x, c=%x, ac=%x, ov=%x\n",a+data+c,cy,ac,ov);
 #endif
 }
 
@@ -1976,7 +1976,7 @@ INLINE void do_sub_flags(UINT8 a, UINT8 data, UINT8 c)
 	SET_OV(ov);
 
 #ifdef MAME_DEBUG
-//  printf("sub: a=%x, d=%x, c=%x, result=%x, cy=%x, ac=%x, ov=%x\n",a,data,c,a-data-c,cy,ac,ov);
+//  mame_printf_debug("sub: a=%x, d=%x, c=%x, result=%x, cy=%x, ac=%x, ov=%x\n",a,data,c,a-data-c,cy,ac,ov);
 #endif
 }
 

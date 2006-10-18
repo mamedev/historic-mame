@@ -386,7 +386,7 @@ static void print_tokens(FILE *out, parsed_expression *expr)
 #if DEBUG_TOKENS
 	parse_token *token = expr->token;
 
-	printf("----\n");
+	mame_printf_debug("----\n");
 	while (token->type != TOK_END)
 	{
 		switch (token->type)
@@ -465,7 +465,7 @@ static void print_tokens(FILE *out, parsed_expression *expr)
 		}
 		token++;
 	}
-	printf("----\n");
+	mame_printf_debug("----\n");
 #endif
 }
 

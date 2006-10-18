@@ -50,7 +50,7 @@ void s24_fd1094_setstate_and_decrypt(int state)
 		}
 	}
 
-// printf("new state %04x\n",state);
+// mame_printf_debug("new state %04x\n",state);
 
 	/* mark it as cached (because it will be once we decrypt it) */
 	fd1094_cached_states[fd1094_current_cacheposition]=state;
@@ -71,7 +71,7 @@ void s24_fd1094_setstate_and_decrypt(int state)
 
 	if (fd1094_current_cacheposition>=S16_NUMCACHE)
 	{
-		printf("out of cache, performance may suffer, incrase S16_NUMCACHE!\n");
+		mame_printf_debug("out of cache, performance may suffer, incrase S16_NUMCACHE!\n");
 		fd1094_current_cacheposition=0;
 	}
 }

@@ -408,7 +408,7 @@ static void display_rom_load_results(rom_load_data *romdata)
 	if (romdata->warnings)
 	{
 		strcat(romdata->errorbuf, "WARNING: the game might not run correctly.");
-		printf("%s\n", romdata->errorbuf);
+		mame_printf_warning("%s\n", romdata->errorbuf);
 	}
 }
 

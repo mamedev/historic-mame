@@ -27,7 +27,7 @@
 #define VERBOSE			(0)
 
 #if VERBOSE
-#define VPRINTF(x) printf x
+#define VPRINTF(x) mame_printf_debug x
 #else
 #define VPRINTF(x)
 #endif

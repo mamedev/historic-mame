@@ -159,7 +159,7 @@ if(keyboard_pressed(KEYCODE_F1))
 	/* adjust for when DPYADR was written */
 //  if (cliprect->min_y > dpyadrscan)
 //      offset += (cliprect->min_y - dpyadrscan) * dudate;
-//printf("DPYADR = %04X DPYTAP = %04X (%d-%d)\n", dpyadr, dpytap, cliprect->min_y, cliprect->max_y);
+//mame_printf_debug("DPYADR = %04X DPYTAP = %04X (%d-%d)\n", dpyadr, dpytap, cliprect->min_y, cliprect->max_y);
 
 // 7-bits per pixel for the TI 2D, it would seem.
 // Bit 8 selects 2D or 3D.

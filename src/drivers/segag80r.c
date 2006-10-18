@@ -315,7 +315,7 @@ static WRITE8_HANDLER( sindbadm_soundport_w )
 static WRITE8_HANDLER( sindbadm_misc_w )
 {
 	coin_counter_w(0, data & 0x02);
-//  printf("Unknown = %02X\n", data);
+//  mame_printf_debug("Unknown = %02X\n", data);
 }
 
 

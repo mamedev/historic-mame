@@ -154,7 +154,7 @@ static void execute_one(void)
 
 	if (size == 666)
 	{
-		printf("unimplemented at %04x\n", PC) ;
+		mame_printf_debug("unimplemented at %04x\n", PC) ;
 		size = 1 ;						// Just to get the debugger past the bad opcode
 	}
 
@@ -831,7 +831,7 @@ static int BitfieldOperation(void)
 
 		// bfsth
 		case 0x10:
-			printf("BFSTH - not here yet") ;
+			mame_printf_debug("BFSTH - not here yet") ;
 			break ;
 
 		// bftstl
@@ -1119,7 +1119,7 @@ int MovePOperation(void)
 		}
 		else
 		{
-			printf("NOTHING HERE (yet)\n") ;
+			mame_printf_debug("NOTHING HERE (yet)\n") ;
 		}
 
 		// Postincrement
@@ -1309,23 +1309,23 @@ static int Dec24Operation(void **wd, UINT64 *pa)
     int fflag = 0 ;
     if (decMe == 0x00007fff) fflag = 1 ;
 
-    if (fflag) printf("%08x\n", decMe) ;
+    if (fflag) mame_printf_debug("%08x\n", decMe) ;
 
     decMe-- ;
 
-    if (fflag) printf("%08x\n", decMe) ;
+    if (fflag) mame_printf_debug("%08x\n", decMe) ;
 
     decMe &= 0x00ffffff ;
 
-    if (fflag) printf("%08x\n", decMe) ;
+    if (fflag) mame_printf_debug("%08x\n", decMe) ;
 
     UINT8 carryBit = ((*((PAIR64*)D)).b.h4 & 0x80) >> 7 ;
 
     (*((PAIR64*)D)).b.h4 = (decMe & 0x00ff0000) >> 16 ;
     (*((PAIR64*)D)).w.h  = (decMe & 0x0000ffff) ;
 
-    if (fflag) printf("%2x\n", (*((PAIR64*)D)).b.h4) ;
-    if (fflag) printf("%4x\n", (*((PAIR64*)D)).w.h) ;
+    if (fflag) mame_printf_debug("%2x\n", (*((PAIR64*)D)).b.h4) ;
+    if (fflag) mame_printf_debug("%4x\n", (*((PAIR64*)D)).w.h) ;
 
     // Carry flag (C)
     UINT8 postCarryBit = ((*((PAIR64*)D)).b.h4 & 0x80) >> 7 ;
@@ -2282,7 +2282,7 @@ static void XMDMSpecialOperation(UINT16 parameters, void *working)
         dest = &A1 ;
     else
     {
-        printf("WTF MF\n") ;
+        mame_printf_debug("WTF MF\n") ;
         return ;
     }
 
@@ -2393,7 +2393,7 @@ static void SetDestinationValue(void *sourcePointer, unsigned char sourceType,
 // !! redundant functions (data and memory) can be handled with function pointers !!
 static void SetDataMemoryValue(void *sourcePointer, unsigned char sourceType, UINT32 destinationAddr)
 {
-	// printf("%x\n", destinationAddr) ;
+	// mame_printf_debug("%x\n", destinationAddr) ;
 
 	// I wonder if this is how this should be done???
 	switch(sourceType)

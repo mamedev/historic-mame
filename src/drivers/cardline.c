@@ -20,11 +20,9 @@
 #include "cpu/i8051/i8051.h"
 #include "sound/okim6295.h"
 
-#define USE_LAMPS
-//fake lamps - remove above line to disable
+#include "cardline.lh"
 
 static int cardline_video;
-static int cardline_lamps;
 
 #define DRAW_TILE(offset, transparency) drawgfx(bitmap, Machine->gfx[0],\
 					(videoram[index+offset] | (colorram[index+offset]<<8))&0x3fff,\
@@ -56,30 +54,6 @@ VIDEO_UPDATE( cardline )
 			}
 		}
 	}
-#ifdef USE_LAMPS
-	{
-		//fake lamps (only 5 buttons - there are at least 8 lamps (5 buttons +start +bet +?)
-		int i,j,k;
-		j=cardline_lamps>>1;
-		for(i=0;i<5;i++)
-		{
-			if(j&1)
-			{
-				for(k=0;k<10;k++)
-				{
-					drawgfx(bitmap, Machine->gfx[0],
-						0x3fff,
-						0,
-						0,0,
-						104*i+(k+1)*8, 264,
-						&Machine->screen[0].visarea,
-						TRANSPARENCY_NONE,0);
-				}
-			}
-			j>>=1;
-		}
-	}
-#endif
 	return 0;
 }
 
@@ -109,8 +83,15 @@ static READ8_HANDLER(unk_r)
 
 static WRITE8_HANDLER(lamps_w)
 {
-	// lamps linked to buttons (check input port 0)
-	cardline_lamps=data;
+	/* button lamps 1-8 (collect, card 1-5, bet, start) */
+	output_set_lamp_value(5,data & 0x01);
+	output_set_lamp_value(0,data & 0x02);
+	output_set_lamp_value(1,data & 0x04);
+	output_set_lamp_value(2,data & 0x08);
+	output_set_lamp_value(3,data & 0x10);
+	output_set_lamp_value(4,data & 0x20);
+	output_set_lamp_value(6,data & 0x40);
+	output_set_lamp_value(7,data & 0x80);
 }
 
 static ADDRESS_MAP_START( mem_prg, ADDRESS_SPACE_PROGRAM, 8 )
@@ -140,26 +121,24 @@ ADDRESS_MAP_END
 
 INPUT_PORTS_START( cardline )
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
-
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_NAME("Button 1")
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON6 ) PORT_NAME("Button 2")
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON7 ) PORT_NAME("Button 3")
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON8 ) PORT_NAME("Button 4")
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON9 ) PORT_NAME("Button 5")
-
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_NAME("Bet")
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON6 ) PORT_NAME("Collect")
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_NAME("Card 1 / Double-Up")
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_NAME("Card 2")
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_NAME("Card 3")
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4 ) PORT_NAME("Card 4")
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON5 ) PORT_NAME("Card 5 / Winning Plan")
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON7 ) PORT_NAME("Bet")
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 ) PORT_NAME("Start")
 
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON4 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON8 ) PORT_NAME("?")
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Bookkeeping Info") PORT_CODE(KEYCODE_F1)
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_CODE(KEYCODE_L) PORT_NAME("Payout 2")
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-  PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_CODE(KEYCODE_ENTER) PORT_NAME("Payout")
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON10 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON9 ) PORT_NAME("?")
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_CODE(KEYCODE_ENTER) PORT_NAME("Payout")
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON10 ) PORT_NAME("?")
 
 	PORT_START
 	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
@@ -228,16 +207,14 @@ static MACHINE_DRIVER_START( cardline )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(64*8, 35*8)
-#ifdef USE_LAMPS
-	MDRV_VISIBLE_AREA(0*8, 64*8-1, 0*8, 35*8-1)
-#else
 	MDRV_VISIBLE_AREA(0*8, 64*8-1, 0*8, 32*8-1)
-#endif
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(512)
 	MDRV_PALETTE_INIT(cardline)
 
 	MDRV_VIDEO_UPDATE(cardline)
+
+	MDRV_DEFAULT_LAYOUT(layout_cardline)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_STEREO("left", "right")

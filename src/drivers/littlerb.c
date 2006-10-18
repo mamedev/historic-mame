@@ -122,7 +122,7 @@ void littlerb_data_write(UINT16 data)
 	}
 	else
 	{
-		printf("write data %04x to %08x\n",data,addr);
+		mame_printf_debug("write data %04x to %08x\n",data,addr);
 	}
 
 	littlerb_write_address+=0x10;

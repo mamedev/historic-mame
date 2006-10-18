@@ -1451,7 +1451,7 @@ int spc700_execute(int clocks)
 		REG_PC++;
 
 #if 0
-//      if ((!(REG_PPC & 0xf000)) && (dump_flag == 0)) { dump_flag = 1; printf("Dump started\n"); }
+//      if ((!(REG_PPC & 0xf000)) && (dump_flag == 0)) { dump_flag = 1; mame_printf_debug("Dump started\n"); }
 
 		if (dump_flag && 0)
 		{
@@ -1464,7 +1464,7 @@ int spc700_execute(int clocks)
 						((!spc700i_cpu.flag_z) << 1)		|
 						((spc700i_cpu.flag_c >> 8)&1));
 
-		printf("[%04x]: A%02x X%02x Y%02x P%02x SP%02x - %c%c%c%c%c%c%c%c\n", REG_PPC, REG_A, REG_X, REG_Y, p, REG_S,
+		mame_printf_debug("[%04x]: A%02x X%02x Y%02x P%02x SP%02x - %c%c%c%c%c%c%c%c\n", REG_PPC, REG_A, REG_X, REG_Y, p, REG_S,
 				p & 0x80 ? 'N':'.',
 				p & 0x40 ? 'V':'.',
 				p & 0x20 ? 'P':'.',

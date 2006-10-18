@@ -324,7 +324,7 @@ void K037122_tile_draw(mame_bitmap *bitmap, const rectangle *cliprect)
 static void update_palette_color(UINT32 palette_base, int color)
 {
 	UINT32 data = K037122_tile_ram[(palette_base/4) + color];
-	palette_set_color(Machine, color, pal5bit(data >> 6), pal5bit(data >> 0), pal5bit(data >> 11));
+	palette_set_color(Machine, color, pal5bit(data >> 6), pal6bit(data >> 0), pal5bit(data >> 11));
 }
 
 READ32_HANDLER(K037122_sram_r)
@@ -479,7 +479,7 @@ static READ32_HANDLER( sysreg_r )
 	{
 		if (!(mem_mask & 0xff000000))
 		{
-			//printf("read sysreg 0\n");
+			//mame_printf_debug("read sysreg 0\n");
 			r |= readinputport(0) << 24;
 		}
 		if (!(mem_mask & 0x00ff0000))
@@ -554,7 +554,7 @@ static READ32_HANDLER( ppc_sound_r )
 		r |= sndtoppc[1] << 16;
 	}
 
-//  printf("ppc_sound_r: %08X, %08X\n", offset, mem_mask);
+//  mame_printf_debug("ppc_sound_r: %08X, %08X\n", offset, mem_mask);
 	return r;
 }
 
@@ -572,7 +572,7 @@ static WRITE32_HANDLER( ppc_sound_w )
 {
 	int reg=0, val=0;
 
-	//printf("ppc_sound_w: %08X, %08X, %08X\n", data, offset, mem_mask);
+	//mame_printf_debug("ppc_sound_w: %08X, %08X, %08X\n", data, offset, mem_mask);
 
 	if (!(mem_mask & 0xff000000))
 	{
@@ -607,7 +607,7 @@ static int comm_rombank = 0;
 
 static WRITE32_HANDLER( comm1_w )
 {
-	printf("comm1_w: %08X, %08X, %08X\n", offset, data, mem_mask);
+	mame_printf_debug("comm1_w: %08X, %08X, %08X\n", offset, data, mem_mask);
 }
 
 static WRITE32_HANDLER( comm_rombank_w )
@@ -622,7 +622,7 @@ static WRITE32_HANDLER( comm_rombank_w )
 
 static READ32_HANDLER( comm0_unk_r )
 {
-	printf("comm0_unk_r: %08X, %08X\n", offset, mem_mask);
+	mame_printf_debug("comm0_unk_r: %08X, %08X\n", offset, mem_mask);
 	return 0xffffffff;
 }
 
@@ -712,16 +712,18 @@ static WRITE32_HANDLER( dsp_dataram1_w )
 
 /* Konami 033906 seems to be a PCI bridge chip between SHARC and 3dfx chips */
 
-static UINT32 pci_3dfx_reg[256];
+static UINT32 pci_3dfx_reg[2][256];
 
 READ32_HANDLER(pci_3dfx_r)
 {
+	int board = (cpu_getactivecpu() == 2) ? 0 : 1;
+
 	switch(offset)
 	{
-		case 0x00:		return 0x0001121a;				// PCI Vendor ID (0x121a = 3dfx), Device ID (0x0001 = Voodoo)
-		case 0x02:		return 0x04000000;				// Revision ID
-		case 0x04:		return pci_3dfx_reg[0x04];		// memBaseAddr
-		case 0x0f:		return pci_3dfx_reg[0x0f];		// interrupt_line, interrupt_pin, min_gnt, max_lat
+		case 0x00:		return 0x0001121a;						// PCI Vendor ID (0x121a = 3dfx), Device ID (0x0001 = Voodoo)
+		case 0x02:		return 0x04000000;						// Revision ID
+		case 0x04:		return pci_3dfx_reg[board][0x04];		// memBaseAddr
+		case 0x0f:		return pci_3dfx_reg[board][0x0f];		// interrupt_line, interrupt_pin, min_gnt, max_lat
 
 		default:
 			fatalerror("pci_3dfx_r: %08X at %08X", offset, activecpu_get_pc());
@@ -731,6 +733,8 @@ READ32_HANDLER(pci_3dfx_r)
 
 WRITE32_HANDLER(pci_3dfx_w)
 {
+	int board = (cpu_getactivecpu() == 2) ? 0 : 1;
+
 	switch(offset)
 	{
 		case 0x00:
@@ -743,24 +747,24 @@ WRITE32_HANDLER(pci_3dfx_w)
 		{
 			if (data == 0xffffffff)
 			{
-				pci_3dfx_reg[0x04] = 0xff000000;
+				pci_3dfx_reg[board][0x04] = 0xff000000;
 			}
 			else
 			{
-				pci_3dfx_reg[0x04] = data & 0xff000000;
+				pci_3dfx_reg[board][0x04] = data & 0xff000000;
 			}
 			break;
 		}
 
 		case 0x0f:		// interrupt_line, interrupt_pin, min_gnt, max_lat
 		{
-			pci_3dfx_reg[0x0f] = data;
+			pci_3dfx_reg[board][0x0f] = data;
 			break;
 		}
 
 		case 0x10:		// initEnable
 		{
-			voodoo_set_init_enable(0, data);
+			voodoo_set_init_enable(board, data);
 			break;
 		}
 
@@ -1200,9 +1204,10 @@ ROM_START(sscope)
     	ROM_LOAD32_WORD_SWAP( "ss1-3.u32",    0x000000, 0x400000, CRC(335793e1) SHA1(d582b53c3853abd59bc728f619a30c27cfc9497c) )
     	ROM_LOAD32_WORD_SWAP( "ss1-3.u24",    0x000002, 0x400000, CRC(d6e7877e) SHA1(b4d0e17ada7dd126ec564a20e7140775b4b3fdb7) )
 
+	// these should be 32MBit each
 	ROM_REGION(0x400000, REGION_SOUND1, 0)		/* PCM sample roms */
-        ROM_LOAD( "ss1-1.16p",    0x000000, 0x200000, CRC(4503ff1e) SHA1(2c208a1e9a5633c97e8a8387b7fcc7460013bc2c) )
-        ROM_LOAD( "ss1-1.14p",    0x200000, 0x200000, CRC(a5bd9a93) SHA1(c789a272b9f2b449b07fff1c04b6c9ef3ca6bfe0) )
+        ROM_LOAD( "ss1-1.16p",    0x000000, 0x200000, BAD_DUMP CRC(4503ff1e) SHA1(2c208a1e9a5633c97e8a8387b7fcc7460013bc2c) )
+        ROM_LOAD( "ss1-1.14p",    0x200000, 0x200000, BAD_DUMP CRC(a5bd9a93) SHA1(c789a272b9f2b449b07fff1c04b6c9ef3ca6bfe0) )
 ROM_END
 
 ROM_START(sscopea)
@@ -1218,9 +1223,10 @@ ROM_START(sscopea)
     	ROM_LOAD32_WORD_SWAP( "ss1-3.u32",    0x000000, 0x400000, CRC(335793e1) SHA1(d582b53c3853abd59bc728f619a30c27cfc9497c) )
     	ROM_LOAD32_WORD_SWAP( "ss1-3.u24",    0x000002, 0x400000, CRC(d6e7877e) SHA1(b4d0e17ada7dd126ec564a20e7140775b4b3fdb7) )
 
+	// these should be 32MBit each
 	ROM_REGION(0x400000, REGION_SOUND1, 0)		/* PCM sample roms */
-        ROM_LOAD( "ss1-1.16p",    0x000000, 0x200000, CRC(4503ff1e) SHA1(2c208a1e9a5633c97e8a8387b7fcc7460013bc2c) )
-        ROM_LOAD( "ss1-1.14p",    0x200000, 0x200000, CRC(a5bd9a93) SHA1(c789a272b9f2b449b07fff1c04b6c9ef3ca6bfe0) )
+        ROM_LOAD( "ss1-1.16p",    0x000000, 0x200000, BAD_DUMP CRC(4503ff1e) SHA1(2c208a1e9a5633c97e8a8387b7fcc7460013bc2c) )
+        ROM_LOAD( "ss1-1.14p",    0x200000, 0x200000, BAD_DUMP CRC(a5bd9a93) SHA1(c789a272b9f2b449b07fff1c04b6c9ef3ca6bfe0) )
 ROM_END
 
 ROM_START(sscope2)
@@ -1231,8 +1237,8 @@ ROM_START(sscope2)
 		ROM_LOAD32_WORD_SWAP("931a04.bin", 0x000000, 0x200000, CRC(4f5917e6) SHA1(a63a107f1d6d9756e4ab0965d72ea446f0692814))
 
 	ROM_REGION32_BE(0x800000, REGION_USER3, 0)	/* Comm board roms */
-	ROM_LOAD("931a19.bin", 0x000000, 0x400000, CRC(8e8bb6af) SHA1(1bb399f7897fbcbe6852fda3215052b2810437d8))
-	ROM_LOAD("931a20.bin", 0x400000, 0x400000, CRC(a14a7887) SHA1(daf0cbaf83e59680a0d3c4d66fcc48d02c9723d1))
+	ROM_LOAD("931a19.bin", 0x000000, 0x400000, BAD_DUMP CRC(8e8bb6af) SHA1(1bb399f7897fbcbe6852fda3215052b2810437d8))
+	ROM_LOAD("931a20.bin", 0x400000, 0x400000, BAD_DUMP CRC(a14a7887) SHA1(daf0cbaf83e59680a0d3c4d66fcc48d02c9723d1))
 
 	ROM_REGION(0x80000, REGION_CPU2, 0)		/* 68K Program */
 	ROM_LOAD16_WORD_SWAP("931a08.bin", 0x000000, 0x80000, CRC(1597d604) SHA1(a1eab4d25907930b59ea558b484c3b6ddcb9303c))

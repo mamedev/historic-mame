@@ -96,13 +96,13 @@ static void K001006_w(int chip, int offset, UINT32 data, UINT32 mem_mask)
 			}
 			case 0xf:	// Unknown RAM write
 			{
-			//  printf("Unknown RAM %08X = %04X\n", K001006_addr[chip], data & 0xffff);
+			//  mame_printf_debug("Unknown RAM %08X = %04X\n", K001006_addr[chip], data & 0xffff);
 				K001006_unknown_ram[chip][K001006_addr[chip]++] = data & 0xffff;
 				break;
 			}
 			default:
 			{
-				printf("K001006_w: chip %d, device %02X, write %04X to %08X\n", chip, K001006_device_sel[chip], data & 0xffff, K001006_addr[0]++);
+				mame_printf_debug("K001006_w: chip %d, device %02X, write %04X to %08X\n", chip, K001006_device_sel[chip], data & 0xffff, K001006_addr[0]++);
 			}
 		}
 	}
@@ -426,7 +426,7 @@ static READ32_HANDLER( ppc_sound_r )
 		rv |= w[3]<<0;
 	}
 
-	printf("ppc_sound_r: %08X, %08X at %08X\n", offset, mem_mask, activecpu_get_pc());
+	mame_printf_debug("ppc_sound_r: %08X, %08X at %08X\n", offset, mem_mask, activecpu_get_pc());
 
 	return(rv);
 }
@@ -560,14 +560,14 @@ READ32_HANDLER( K001005_r )
 		case 0x000:			// FIFO read, high 16 bits
 		{
 			UINT16 value = K001005_fifo[K001005_fifo_read_ptr] >> 16;
-		//  printf("FIFO_r0: %08X\n", K001005_fifo_ptr);
+		//  mame_printf_debug("FIFO_r0: %08X\n", K001005_fifo_ptr);
 			return value;
 		}
 
 		case 0x001:			// FIFO read, low 16 bits
 		{
 			UINT16 value = K001005_fifo[K001005_fifo_read_ptr] & 0xffff;
-		//  printf("FIFO_r1: %08X\n", K001005_fifo_ptr);
+		//  mame_printf_debug("FIFO_r1: %08X\n", K001005_fifo_ptr);
 
 			if (K001005_status != 1 && K001005_status != 2)
 			{
@@ -607,7 +607,7 @@ READ32_HANDLER( K001005_r )
 			}
 
 		default:
-			printf("K001005_r: %08X, %08X\n", offset, mem_mask);
+			mame_printf_debug("K001005_r: %08X, %08X\n", offset, mem_mask);
 			break;
 	}
 	return 0;
@@ -635,7 +635,7 @@ WRITE32_HANDLER( K001005_w )
 				cpunum_set_input_line(2, SHARC_INPUT_FLAG1, ASSERT_LINE);
 			}
 
-	//      printf("K001005 FIFO write: %08X at %08X\n", data, activecpu_get_pc());
+	//      mame_printf_debug("K001005 FIFO write: %08X at %08X\n", data, activecpu_get_pc());
 			K001005_fifo[K001005_fifo_write_ptr] = data;
 			K001005_fifo_write_ptr++;
 			K001005_fifo_write_ptr &= 0x7ff;
@@ -689,7 +689,7 @@ WRITE32_HANDLER( K001005_w )
 			break;
 
 		default:
-			printf("K001005_w: %08X, %08X, %08X\n", data, offset, mem_mask);
+			mame_printf_debug("K001005_w: %08X, %08X, %08X\n", data, offset, mem_mask);
 			break;
 	}
 
@@ -742,7 +742,7 @@ void K001005_draw(void)
 {
 	int i, j;
 
-//  printf("K001005_fifo_ptr = %08X\n", K001005_3d_fifo_ptr);
+//  mame_printf_debug("K001005_fifo_ptr = %08X\n", K001005_3d_fifo_ptr);
 
 	for (i=0; i < K001005_3d_fifo_ptr; i++)
 	{
@@ -1020,12 +1020,12 @@ void K001005_draw(void)
 		}
 		else if ((K001005_3d_fifo[i] & 0xffffff00) == 0x80000000)
 		{
-			/*printf("Unknown polygon type %08X:\n", K001005_3d_fifo[i]);
+			/*mame_printf_debug("Unknown polygon type %08X:\n", K001005_3d_fifo[i]);
             for (j=0; j < 0x20; j++)
             {
-                printf("  %02X: %08X\n", j, K001005_3d_fifo[i+1+j]);
+                mame_printf_debug("  %02X: %08X\n", j, K001005_3d_fifo[i+1+j]);
             }
-            printf("\n");
+            mame_printf_debug("\n");
             */
 		}
 	}

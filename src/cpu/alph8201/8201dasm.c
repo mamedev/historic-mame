@@ -165,13 +165,11 @@ static void InitDasm8201(void)
 				case '_':
 					continue;
 				default:
-					printf("Invalid instruction encoding '%s %s'\n", Formats[i*2],Formats[i*2+1]);
-					exit(1);
+					fatalerror("Invalid instruction encoding '%s %s'\n", Formats[i*2],Formats[i*2+1]);
 			}
 		}
 		if (bit != -1 ) {
-			printf("not enough bits in encoding '%s %s' %d\n", Formats[i*2],Formats[i*2+1],bit);
-			exit(1);
+			fatalerror("not enough bits in encoding '%s %s' %d\n", Formats[i*2],Formats[i*2+1],bit);
 		}
 
 		Op[i].mask  = mask;

@@ -166,7 +166,7 @@ static void c352_mix_one_channel(struct c352_info *info, unsigned long ch, long 
 			{
 				if (flag & C352_FLG_LONG)
 				{
-//                  printf("ch %02d: end chain part 1\n", ch);
+//                  mame_printf_debug("ch %02d: end chain part 1\n", ch);
 					info->c352_ch[ch].flag &= ~C352_FLG_ACTIVE;
 					info->c352_ch[ch].flag |= C352_FLG_LONGPHASE;
 					return;
@@ -191,7 +191,7 @@ static void c352_mix_one_channel(struct c352_info *info, unsigned long ch, long 
 			{
 				if ((pos+256) > info->c352_ch[ch].stop_addr)
 				{
-//                  printf("ch %02d: end chain part 1\n", ch);
+//                  mame_printf_debug("ch %02d: end chain part 1\n", ch);
 					info->c352_ch[ch].flag |= C352_FLG_LONGPHASE;
 				}
 				if (pos > info->c352_ch[ch].stop_addr)
@@ -456,9 +456,9 @@ static void c352_write_reg16(struct c352_info *info, unsigned long address, unsi
 					break;
 			}
 
-//  printf("ch %02d: start: %08x\n", chan, info->c352_ch[chan].current_addr);
+//  mame_printf_debug("ch %02d: start: %08x\n", chan, info->c352_ch[chan].current_addr);
 
-/*          printf("ch %02d: normal start: %06x -> (%06x -> %06x)\n", chan,
+/*          mame_printf_debug("ch %02d: normal start: %06x -> (%06x -> %06x)\n", chan,
                 info->c352_ch[chan].current_addr,
                 info->c352_ch[chan].loop_point,
                 info->c352_ch[chan].stop_addr);*/
@@ -475,7 +475,7 @@ static void c352_write_reg16(struct c352_info *info, unsigned long address, unsi
 
 			info->c352_ch[chan].stop_addr &= 0xffffff;
 
-//          printf("ch %02d: start chain part 1: %06x -> %06x\n", chan, info->c352_ch[chan].current_addr, info->c352_ch[chan].stop_addr);
+//          mame_printf_debug("ch %02d: start chain part 1: %06x -> %06x\n", chan, info->c352_ch[chan].current_addr, info->c352_ch[chan].stop_addr);
 
 		}
 		else if ((val & 0x8000) == 0x8000) // chain mode, phase 2
@@ -507,7 +507,7 @@ static void c352_write_reg16(struct c352_info *info, unsigned long address, unsi
 					break;
 			}
 
-//          printf("ch %02d: start chain part 2: %06x -> %06x\n", chan, info->c352_ch[chan].current_addr, info->c352_ch[chan].stop_addr);
+//          mame_printf_debug("ch %02d: start chain part 2: %06x -> %06x\n", chan, info->c352_ch[chan].current_addr, info->c352_ch[chan].stop_addr);
 		}
 
 		break;

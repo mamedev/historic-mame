@@ -8,6 +8,9 @@
 #include "sharcdsm.h"
 #include <stdarg.h>
 
+static void (* sharcdasm_table[256])(UINT32, UINT64);
+static int dasm_table_built = 0;
+
 #define GET_UREG(x)		(ureg_names[x])
 #define GET_SREG(x)		(GET_UREG(0x70 | (x & 0xf)))
 #define GET_DREG(x)		(GET_UREG(0x00 | (x & 0xf)))
@@ -47,7 +50,8 @@ static void compute(UINT32 opcode)
 	int ra = rn;
 	int rm = rs;
 
-	if( opcode & 0x400000 ) {	/* Multi-function opcode */
+	if (opcode & 0x400000)		/* Multi-function opcode */
+	{
 		int multiop = (opcode >> 16) & 0x3f;
 		int rxm = (opcode >> 6) & 0x3;
 		int rym = (opcode >> 4) & 0x3;
@@ -79,101 +83,128 @@ static void compute(UINT32 opcode)
 			case 0x1d:		print("F%d = F%d * F%d,  F%d = ABS F%d", rm, rxm, rym+4, ra, rxa+8); break;
 			case 0x1e:		print("F%d = F%d * F%d,  F%d = MAX(F%d, F%d)", rm, rxm, rym+4, ra, rxa+8, rya+12); break;
 			case 0x1f:		print("F%d = F%d * F%d,  F%d = MIN(F%d, F%d)", rm, rxm, rym+4, ra, rxa+8, rya+12); break;
-			default:
-				if( ((multiop >> 4) & 0x3) == 0x2 ) {
-					print("R%d = R%d * R%d (SSFR), R%d = R%d + R%d, R%d = R%d - R%d", rm, rxm, rym+4, ra, rxa+8, rya+12, rs, rxa+8, rya+12);
-				}
-				else if( ((multiop >> 4) & 0x3) == 0x3 ) {
-					print("F%d = F%d * F%d, F%d = F%d + F%d, F%d = F%d - F%d", rm, rxm, rym+4, ra, rxa+8, rya+12, rs, rxa+8, rya+12);
-				}
-				else if( ((multiop >> 1) & 0x1f) == 0 ) {		/* MR=Rn / Rn=MR */
-					int t = opcode & 0x10000;
-					int rk = (opcode >> 8) & 0xf;
-					int ai = (opcode >> 12) & 0xf;
-					if( t ) {
-						print("%s = R%d", mr_regnames[ai], rk);
-					} else {
-						print("R%d = %s", rk, mr_regnames[ai]);
-					}
-				}
-				else {
-					print("??? (COMPUTE, MULTIOP)");
-				}
-				break;
-		}
 
-	} else {					/* Single-function */
+			case 0x20: case 0x21: case 0x22: case 0x23: case 0x24: case 0x25: case 0x26: case 0x27:
+			case 0x28: case 0x29: case 0x2a: case 0x2b: case 0x2c: case 0x2d: case 0x2e: case 0x2f:
+			{
+				print("R%d = R%d * R%d (SSFR),   R%d = R%d + R%d,   R%d = R%d - R%d", rm, rxm, rym+4, ra, rxa+8, rya+12, rs, rxa+8, rya+12);
+				break;
+			}
+
+			case 0x30: case 0x31: case 0x32: case 0x33: case 0x34: case 0x35: case 0x36: case 0x37:
+			case 0x38: case 0x39: case 0x3a: case 0x3b: case 0x3c: case 0x3d: case 0x3e: case 0x3f:
+			{
+				print("F%d = F%d * F%d,   F%d = F%d + F%d,   F%d = F%d - F%d", rm, rxm, rym+4, ra, rxa+8, rya+12, rs, rxa+8, rya+12);
+				break;
+			}
+
+			case 0x00:
+			{
+				int rk = (opcode >> 8) & 0xf;
+				int ai = (opcode >> 12) & 0xf;
+				print("R%d = %s", rk, mr_regnames[ai]);
+				break;
+			}
+			case 0x01:
+			{
+				int rk = (opcode >> 8) & 0xf;
+				int ai = (opcode >> 12) & 0xf;
+				print("%s = R%d", mr_regnames[ai], rk);
+				break;
+			}
+
+			default:
+			{
+				print("??? (COMPUTE, MULTIOP)");
+				break;
+			}
+		}
+	}
+	else						/* Single-function */
+	{
 		switch(cu)
 		{
 			/******************/
 			/* ALU operations */
 			/******************/
 			case 0:
-			switch(op)
 			{
-				/* Fixed-point */
-				case 0x01:	print("R%d = R%d + R%d", rn, rx, ry); break;
-				case 0x02:	print("R%d = R%d - R%d", rn, rx, ry); break;
-				case 0x05:	print("R%d = R%d + R%d + CI", rn, rx, ry); break;
-				case 0x06:	print("R%d = R%d - R%d + CI - 1", rn, rx, ry); break;
-				case 0x09:	print("R%d = (R%d + R%d)/2", rn, rx, ry); break;
-				case 0x0a:	print("COMP(R%d, R%d)", rx, ry); break;
-				case 0x25:	print("R%d = R%d + CI", rn, rx); break;
-				case 0x26:	print("R%d = R%d + CI - 1", rn, rx); break;
-				case 0x29:	print("R%d = R%d + 1", rn, rx); break;
-				case 0x2a:	print("R%d = R%d - 1", rn, rx); break;
-				case 0x22:	print("R%d = -R%d", rn, rx); break;
-				case 0x30:	print("R%d = ABS R%d", rn, rx); break;
-				case 0x21:	print("R%d = PASS R%d", rn, rx); break;
-				case 0x40:	print("R%d = R%d AND R%d", rn, rx, ry); break;
-				case 0x41:	print("R%d = R%d OR R%d", rn, rx, ry); break;
-				case 0x42:	print("R%d = R%d XOR R%d", rn, rx, ry); break;
-				case 0x43:	print("R%d = NOT R%d", rn, rx); break;
-				case 0x61:	print("R%d = MIN(R%d, R%d)", rn, rx, ry); break;
-				case 0x62:	print("R%d = MAX(R%d, R%d)", rn, rx, ry); break;
-				case 0x63:	print("R%d = CLIP R%d BY R%d", rn, rx, ry); break;
-				/* Floating-point */
-				case 0x81:	print("F%d = F%d + F%d", rn, rx, ry); break;
-				case 0x82:	print("F%d = F%d - F%d", rn, rx, ry); break;
-				case 0x91:	print("F%d = ABS(F%d + F%d)", rn, rx, ry); break;
-				case 0x92:	print("F%d = ABS(F%d - F%d)", rn, rx, ry); break;
-				case 0x89:	print("F%d = (F%d + F%d)/2", rn, rx, ry); break;
-				case 0x8a:	print("COMP(F%d, F%d)", rx, ry); break;
-				case 0xa2:	print("F%d = -F%d", rn, rx); break;
-				case 0xb0:	print("F%d = ABS F%d", rn, rx); break;
-				case 0xa1:	print("F%d = PASS F%d", rn, rx); break;
-				case 0xa5:	print("F%d = RND R%d", rn, rx); break;
-				case 0xbd:	print("F%d = SCALB F%d BY R%d", rn, rx, ry); break;
-				case 0xad:	print("R%d = MANT F%d", rn, rx); break;
-				case 0xc1:	print("R%d = LOGB F%d", rn, rx); break;
-				case 0xd9:	print("R%d = FIX F%d BY R%d", rn, rx, ry); break;
-				case 0xc9:	print("R%d = FIX F%d", rn, rx); break;
-				case 0xdd:	print("R%d = TRUNC F%d BY R%d", rn, rx, ry); break;
-				case 0xcd:	print("R%d = TRUNC F%d", rn, rx); break;
-				case 0xda:	print("F%d = FLOAT R%d BY R%d", rn, rx, ry); break;
-				case 0xca:	print("F%d = FLOAT R%d", rn, rx); break;
-				case 0xc4:	print("F%d = RECIPS F%d", rn, rx); break;
-				case 0xc5:	print("F%d = RSQRTS F%d", rn, rx); break;
-				case 0xe0:	print("F%d = F%d COPYSIGN F%d", rn, rx, ry); break;
-				case 0xe1:	print("F%d = MIN(F%d, F%d)", rn, rx, ry); break;
-				case 0xe2:	print("F%d = MAX(F%d, F%d)", rn, rx, ry); break;
-				case 0xe3:	print("F%d = CLIP F%d BY F%d", rn, rx, ry); break;
-				default:
-					if( ((op >> 4) & 0xf) == 0x7 ) {
-						print("R%d = R%d + R%d,  R%d = R%d - R%d", ra, rx, ry, rs, rx, ry);
-					} else if( ((op >> 4) & 0xf) == 0xf ) {
-						print("F%d = F%d + F%d,  F%d = F%d - F%d", ra, rx, ry, rs, rx, ry);
-					} else {
-						print("??? (COMPUTE, ALU)");
+				switch(op)
+				{
+					/* Fixed-point */
+					case 0x01:	print("R%d = R%d + R%d", rn, rx, ry); break;
+					case 0x02:	print("R%d = R%d - R%d", rn, rx, ry); break;
+					case 0x05:	print("R%d = R%d + R%d + CI", rn, rx, ry); break;
+					case 0x06:	print("R%d = R%d - R%d + CI - 1", rn, rx, ry); break;
+					case 0x09:	print("R%d = (R%d + R%d)/2", rn, rx, ry); break;
+					case 0x0a:	print("COMP(R%d, R%d)", rx, ry); break;
+					case 0x25:	print("R%d = R%d + CI", rn, rx); break;
+					case 0x26:	print("R%d = R%d + CI - 1", rn, rx); break;
+					case 0x29:	print("R%d = R%d + 1", rn, rx); break;
+					case 0x2a:	print("R%d = R%d - 1", rn, rx); break;
+					case 0x22:	print("R%d = -R%d", rn, rx); break;
+					case 0x30:	print("R%d = ABS R%d", rn, rx); break;
+					case 0x21:	print("R%d = PASS R%d", rn, rx); break;
+					case 0x40:	print("R%d = R%d AND R%d", rn, rx, ry); break;
+					case 0x41:	print("R%d = R%d OR R%d", rn, rx, ry); break;
+					case 0x42:	print("R%d = R%d XOR R%d", rn, rx, ry); break;
+					case 0x43:	print("R%d = NOT R%d", rn, rx); break;
+					case 0x61:	print("R%d = MIN(R%d, R%d)", rn, rx, ry); break;
+					case 0x62:	print("R%d = MAX(R%d, R%d)", rn, rx, ry); break;
+					case 0x63:	print("R%d = CLIP R%d BY R%d", rn, rx, ry); break;
+					/* Floating-point */
+					case 0x81:	print("F%d = F%d + F%d", rn, rx, ry); break;
+					case 0x82:	print("F%d = F%d - F%d", rn, rx, ry); break;
+					case 0x91:	print("F%d = ABS(F%d + F%d)", rn, rx, ry); break;
+					case 0x92:	print("F%d = ABS(F%d - F%d)", rn, rx, ry); break;
+					case 0x89:	print("F%d = (F%d + F%d)/2", rn, rx, ry); break;
+					case 0x8a:	print("COMP(F%d, F%d)", rx, ry); break;
+					case 0xa2:	print("F%d = -F%d", rn, rx); break;
+					case 0xb0:	print("F%d = ABS F%d", rn, rx); break;
+					case 0xa1:	print("F%d = PASS F%d", rn, rx); break;
+					case 0xa5:	print("F%d = RND R%d", rn, rx); break;
+					case 0xbd:	print("F%d = SCALB F%d BY R%d", rn, rx, ry); break;
+					case 0xad:	print("R%d = MANT F%d", rn, rx); break;
+					case 0xc1:	print("R%d = LOGB F%d", rn, rx); break;
+					case 0xd9:	print("R%d = FIX F%d BY R%d", rn, rx, ry); break;
+					case 0xc9:	print("R%d = FIX F%d", rn, rx); break;
+					case 0xdd:	print("R%d = TRUNC F%d BY R%d", rn, rx, ry); break;
+					case 0xcd:	print("R%d = TRUNC F%d", rn, rx); break;
+					case 0xda:	print("F%d = FLOAT R%d BY R%d", rn, rx, ry); break;
+					case 0xca:	print("F%d = FLOAT R%d", rn, rx); break;
+					case 0xc4:	print("F%d = RECIPS F%d", rn, rx); break;
+					case 0xc5:	print("F%d = RSQRTS F%d", rn, rx); break;
+					case 0xe0:	print("F%d = F%d COPYSIGN F%d", rn, rx, ry); break;
+					case 0xe1:	print("F%d = MIN(F%d, F%d)", rn, rx, ry); break;
+					case 0xe2:	print("F%d = MAX(F%d, F%d)", rn, rx, ry); break;
+					case 0xe3:	print("F%d = CLIP F%d BY F%d", rn, rx, ry); break;
+
+					case 0x70: case 0x71: case 0x72: case 0x73: case 0x74: case 0x75: case 0x76: case 0x77:
+					case 0x78: case 0x79: case 0x7a: case 0x7b: case 0x7c: case 0x7d: case 0x7e: case 0x7f:
+					{
+						print("R%d = R%d + R%d,   R%d = R%d - R%d", ra, rx, ry, rs, rx, ry);
+						break;
 					}
-					break;
+					case 0xf0: case 0xf1: case 0xf2: case 0xf3: case 0xf4: case 0xf5: case 0xf6: case 0xf7:
+					case 0xf8: case 0xf9: case 0xfa: case 0xfb: case 0xfc: case 0xfd: case 0xfe: case 0xff:
+					{
+						print("F%d = F%d + F%d,   F%d = F%d - F%d", ra, rx, ry, rs, rx, ry);
+						break;
+					}
+					default:
+					{
+						print("??? (COMPUTE, ALU)");
+						break;
+					}
+				}
+				break;
 			}
-			break;
 
 			/*************************/
 			/* Multiplier operations */
 			/*************************/
 			case 1:
+			{
 				if( op == 0x30 ) {
 					print("F%d = F%d * F%d", rn, rx, ry);
 					return;
@@ -193,9 +224,12 @@ static void compute(UINT32 opcode)
 						{
 							case 0:		print("SAT %s", (op & 0x2) ? "MRB" : "MRF"); break;
 							case 1:
-								if( op & 0x8 ) {
+								if (op & 0x8)
+								{
 									print("RND %s", (op & 0x2) ? "MRB" : "MRF");
-								} else {
+								}
+								else
+								{
 									print("0");
 								}
 								break;
@@ -211,12 +245,14 @@ static void compute(UINT32 opcode)
 					case 3:
 						print("%s -(R%d * R%d)", (op & 0x2) ? "MRB" : "MRF", rx, ry); break;
 				}
-			break;
+				break;
+			}
 
 			/**********************/
 			/* Shifter operations */
 			/**********************/
 			case 2:
+			{
 				switch(op)
 				{
 					case 0x00:		print("R%d = LSHIFT R%d BY R%d", rn, rx, ry); break;
@@ -242,18 +278,22 @@ static void compute(UINT32 opcode)
 					case 0x94:		print("F%d = FUNPACK R%d", rn, rx); break;
 					default:		print("??? (COMPUTE, SHIFT)"); break;
 				}
-			break;
+				break;
+			}
 
 			default:
+			{
 				print("??? (COMPUTE)");
 				break;
+			}
 		}
 	}
 }
 
 static void get_if_condition(int cond)
 {
-	if( cond != 31 ) {
+	if (cond != 31)
+	{
 		print("IF %s, ", condition_codes_if[cond]);
 	}
 }
@@ -262,31 +302,53 @@ void pm_dm_ureg(int g, int d, int i, int m, int ureg, int update)
 {
 	if (update)		// post-modify
 	{
-		if( d ) {
-			if( g )
+		if (d)
+		{
+			if (g)
+			{
 				print("PM(%s, %s) = %s", GET_DAG2_I(i), GET_DAG2_M(m), GET_UREG(ureg));
+			}
 			else
+			{
 				print("DM(%s, %s) = %s", GET_DAG1_I(i), GET_DAG1_M(m), GET_UREG(ureg));
-		} else {
-			if( g )
+			}
+		}
+		else
+		{
+			if (g)
+			{
 				print("%s = PM(%s, %s)", GET_UREG(ureg), GET_DAG2_I(i), GET_DAG2_M(m));
+			}
 			else
+			{
 				print("%s = DM(%s, %s)", GET_UREG(ureg), GET_DAG1_I(i), GET_DAG1_M(m));
+			}
 		}
 
 	}
 	else			// pre-modify
 	{
-		if( d ) {
-			if( g )
+		if (d)
+		{
+			if (g)
+			{
 				print("PM(%s, %s) = %s", GET_DAG2_M(m), GET_DAG2_I(i), GET_UREG(ureg));
+			}
 			else
+			{
 				print("DM(%s, %s) = %s", GET_DAG1_M(m), GET_DAG1_I(i), GET_UREG(ureg));
-		} else {
-			if( g )
+			}
+		}
+		else
+		{
+			if (g)
+			{
 				print("%s = PM(%s, %s)", GET_UREG(ureg), GET_DAG2_M(m), GET_DAG2_I(i));
+			}
 			else
+			{
 				print("%s = DM(%s, %s)", GET_UREG(ureg), GET_DAG1_M(m), GET_DAG1_I(i));
+			}
 		}
 	}
 }
@@ -295,47 +357,79 @@ void pm_dm_imm_dreg(int g, int d, int i, int data, int dreg, int update)
 {
 	if (update)		// post-modify
 	{
-		if( d ) {
-			if( g )
+		if (d)
+		{
+			if (g)
+			{
 				print("PM(%s, 0x%02X) = %s", GET_DAG2_I(i), data, GET_DREG(dreg));
+			}
 			else
+			{
 				print("DM(%s, 0x%02X) = %s", GET_DAG1_I(i), data, GET_DREG(dreg));
-		} else {
-			if( g )
-				print("%s = PM(%s, 0x%02X)", GET_DREG(dreg), GET_DAG2_I(i), data);
-			else
-				print("%s = DM(%s, 0x%02X)", GET_DREG(dreg), GET_DAG1_I(i), data);
+			}
 		}
-
+		else
+		{
+			if (g)
+			{
+				print("%s = PM(%s, 0x%02X)", GET_DREG(dreg), GET_DAG2_I(i), data);
+			}
+			else
+			{
+				print("%s = DM(%s, 0x%02X)", GET_DREG(dreg), GET_DAG1_I(i), data);
+			}
+		}
 	}
 	else			// pre-modify
 	{
-		if( d ) {
-			if( g )
+		if (d)
+		{
+			if (g)
+			{
 				print("PM(0x%02X, %s) = %s", data, GET_DAG2_I(i), GET_DREG(dreg));
+			}
 			else
+			{
 				print("DM(0x%02X, %s) = %s", data, GET_DAG1_I(i), GET_DREG(dreg));
-		} else {
-			if( g )
+			}
+		}
+		else
+		{
+			if (g)
+			{
 				print("%s = PM(0x%02X, %s)", GET_DREG(dreg), data, GET_DAG2_I(i));
+			}
 			else
+			{
 				print("%s = DM(0x%02X, %s)", GET_DREG(dreg), data, GET_DAG1_I(i));
+			}
 		}
 	}
 }
 
 void pm_dm_dreg(int g, int d, int i, int m, int dreg)
 {
-	if( d ) {
-		if( g )
+	if (d)
+	{
+		if (g)
+		{
 			print("PM(%s, %s) = %s", GET_DAG2_I(i), GET_DAG2_M(m), GET_DREG(dreg));
+		}
 		else
+		{
 			print("DM(%s, %s) = %s", GET_DAG1_I(i), GET_DAG1_M(m), GET_DREG(dreg));
-	} else {
-		if( g )
+		}
+	}
+	else
+	{
+		if (g)
+		{
 			print("%s = PM(%s, %s)", GET_DREG(dreg), GET_DAG2_I(i), GET_DAG2_M(m));
+		}
 		else
+		{
 			print("%s = DM(%s, %s)", GET_DREG(dreg), GET_DAG1_I(i), GET_DAG1_M(m));
+		}
 	}
 }
 
@@ -386,7 +480,8 @@ static void dasm_compute_dreg_dmpm(UINT32 pc, UINT64 opcode)
 	int pmdreg = (opcode >> 23) & 0xf;
 	int comp = opcode & 0x7fffff;
 
-	if( comp ) {
+	if (comp)
+	{
 		compute(comp);
 		print(",  ");
 	}
@@ -399,7 +494,8 @@ static void dasm_compute(UINT32 pc, UINT64 opcode)
 	int cond = (opcode >> 33) & 0x1f;
 	int comp = opcode & 0x7fffff;
 
-	if( comp ) {
+	if (comp)
+	{
 		get_if_condition(cond);
 		compute(comp);
 	}
@@ -417,7 +513,8 @@ static void dasm_compute_uregdmpm_regmod(UINT32 pc, UINT64 opcode)
 	int comp = opcode & 0x7fffff;
 
 	get_if_condition(cond);
-	if( comp ) {
+	if (comp)
+	{
 		compute(comp);
 		print(",  ");
 	}
@@ -436,7 +533,8 @@ static void dasm_compute_dregdmpm_immmod(UINT32 pc, UINT64 opcode)
 	int comp = opcode & 0x7fffff;
 
 	get_if_condition(cond);
-	if( comp ) {
+	if (comp)
+	{
 		compute(comp);
 		print(",  ");
 	}
@@ -451,7 +549,8 @@ static void dasm_compute_ureg_ureg(UINT32 pc, UINT64 opcode)
 	int comp = opcode & 0x7fffff;
 
 	get_if_condition(cond);
-	if( comp ) {
+	if (comp)
+	{
 		compute(comp);
 		print(",  ");
 	}
@@ -498,7 +597,8 @@ static void dasm_compute_modify(UINT32 pc, UINT64 opcode)
 	int comp = opcode & 0x7fffff;
 
 	get_if_condition(cond);
-	if( comp ) {
+	if (comp)
+	{
 		compute(comp);
 		print(",  ");
 	}
@@ -513,20 +613,29 @@ static void dasm_direct_jump(UINT32 pc, UINT64 opcode)
 	UINT32 addr = opcode & 0xffffff;
 
 	get_if_condition(cond);
-	if( opcode & U64(0x8000000000) )
+	if (opcode & U64(0x8000000000))
+	{
 		print("CALL");
+	}
 	else
+	{
 		print("JUMP");
+	}
 
-	if( opcode & U64(0x10000000000) ) {		/* PC-relative branch */
+	if (opcode & U64(0x10000000000))	/* PC-relative branch */
+	{
 		print(" (0x%08X)", pc + SIGN_EXTEND24(addr));
-	} else {							/* Indirect branch */
+	}
+	else								/* Indirect branch */
+	{
 		print(" (0x%08X)", addr);
 	}
-	if( j ) {
+	if (j)
+	{
 		print(" (DB)");
 	}
-	if (ci) {
+	if (ci)
+	{
 		print(" (CI)");
 	}
 
@@ -545,27 +654,39 @@ static void dasm_indirect_jump_compute(UINT32 pc, UINT64 opcode)
 	int comp = opcode & 0x7fffff;
 
 	get_if_condition(cond);
-	if( b )
+	if (b)
+	{
 		print("CALL");
+	}
 	else
+	{
 		print("JUMP");
+	}
 
-	if( opcode & U64(0x10000000000) ) {	/* PC-relative branch */
+	if (opcode & U64(0x10000000000))	/* PC-relative branch */
+	{
 		print(" (0x%08X)", pc + SIGN_EXTEND6(reladdr));
-	} else {						/* Indirect branch */
+	}
+	else								/* Indirect branch */
+	{
 		print(" (%s, %s)", GET_DAG2_M(pmm), GET_DAG2_I(pmi));
 	}
-	if( j ) {
+	if (j)
+	{
 		print(" (DB)");
 	}
-	if (ci) {
+	if (ci)
+	{
 		print(" (CI)");
 	}
 
-	if( comp ) {
+	if (comp)
+	{
 		print(", ");
-		if( e )
+		if (e)
+		{
 			print("ELSE ");
+		}
 
 		compute(comp);
 	}
@@ -586,21 +707,29 @@ static void dasm_indirect_jump_compute_dregdm(UINT32 pc, UINT64 opcode)
 	get_if_condition(cond);
 	print("JUMP");
 
-	if( opcode & U64(0x200000000000) ) {	/* PC-relative branch */
+	if (opcode & U64(0x200000000000))	/* PC-relative branch */
+	{
 		print(" (0x%08X)", pc + SIGN_EXTEND6(reladdr));
-	} else {						/* Indirect branch */
+	}
+	else								/* Indirect branch */
+	{
 		print(" (%s, %s)", GET_DAG2_M(pmm), GET_DAG2_I(pmi));
 	}
 	print(", ELSE ");
 
-	if( comp ) {
+	if (comp)
+	{
 		compute(comp);
 		print(",  ");
 	}
-	if( d )
+	if (d)
+	{
 		print("%s = DM(%s, %s)", GET_DREG(dreg), GET_DAG1_I(dmi), GET_DAG1_M(dmm));
+	}
 	else
+	{
 		print("DM(%s, %s) = %s", GET_DAG1_I(dmi), GET_DAG1_M(dmm), GET_DREG(dreg));
+	}
 }
 
 static void dasm_rts_compute(UINT32 pc, UINT64 opcode)
@@ -613,20 +742,31 @@ static void dasm_rts_compute(UINT32 pc, UINT64 opcode)
 
 	get_if_condition(cond);
 
-	if( opcode & U64(0x10000000000) )
+	if (opcode & U64(0x10000000000))
+	{
 		print("RTI");
+	}
 	else
+	{
 		print("RTS");
+	}
 
-	if( j )
+	if (j)
+	{
 		print(" (DB)");
-	if( lr )
+	}
+	if (lr)
+	{
 		print(" (LR)");
+	}
 
-	if( comp ) {
+	if (comp)
+	{
 		print(", ");
-		if( e )
+		if (e)
+		{
 			print("ELSE ");
+		}
 
 		compute(comp);
 	}
@@ -638,10 +778,13 @@ static void dasm_do_until_counter(UINT32 pc, UINT64 opcode)
 	int ureg = (opcode >> 32) & 0xff;
 	UINT32 addr = opcode & 0xffffff;
 
-	if( opcode & U64(0x10000000000) ) {		/* Loop counter from universal register */
+	if (opcode & U64(0x10000000000)) 	/* Loop counter from universal register */
+	{
 		print("LCNTR = %s, ", GET_UREG(ureg));
 		print("DO (0x%08X)", pc + SIGN_EXTEND24(addr));
-	} else {							/* Loop counter from immediate */
+	}
+	else								/* Loop counter from immediate */
+	{
 		print("LCNTR = 0x%04X, ", data);
 		print("DO (0x%08X) UNTIL LCE", pc + SIGN_EXTEND24(addr));
 	}
@@ -662,17 +805,27 @@ static void dasm_immmove_uregdmpm(UINT32 pc, UINT64 opcode)
 	int ureg = (opcode >> 32) & 0xff;
 	UINT32 addr = opcode & 0xffffffff;
 
-	if( g ) {
-		if( d )
+	if (g)
+	{
+		if (d)
+		{
 			print("PM(0x%08X) = %s", addr, GET_UREG(ureg));
+		}
 		else
+		{
 			print("%s = PM(0x%08X)", GET_UREG(ureg), addr);
-
-	} else {
-		if( d )
+		}
+	}
+	else
+	{
+		if (d)
+		{
 			print("DM(0x%08X) = %s", addr, GET_UREG(ureg));
+		}
 		else
+		{
 			print("%s = DM(0x%08X)", GET_UREG(ureg), addr);
+		}
 	}
 }
 
@@ -684,16 +837,27 @@ static void dasm_immmove_uregdmpm_indirect(UINT32 pc, UINT64 opcode)
 	int ureg = (opcode >> 32) & 0xff;
 	UINT32 addr = opcode & 0xffffffff;
 
-	if( g ) {
-		if( d )
+	if (g)
+	{
+		if (d)
+		{
 			print("PM(0x%08X, %s) = %s", addr, GET_DAG2_I(i), GET_UREG(ureg));
+		}
 		else
+		{
 			print("%s = PM(0x%08X, %s)", GET_UREG(ureg), addr, GET_DAG2_I(i));
-	} else {
-		if( d )
+		}
+	}
+	else
+	{
+		if (d)
+		{
 			print("DM(0x%08X, %s) = %s", addr, GET_DAG1_I(i), GET_UREG(ureg));
+		}
 		else
+		{
 			print("%s = DM(0x%08X, %s)", GET_UREG(ureg), addr, GET_DAG1_I(i));
+		}
 	}
 }
 
@@ -704,9 +868,12 @@ static void dasm_immmove_immdata_dmpm(UINT32 pc, UINT64 opcode)
 	int m = (opcode >> 38) & 0x7;
 	UINT32 data = opcode & 0xffffffff;
 
-	if( g ) {
+	if (g)
+	{
 		print("PM(%s, %s) = 0x%08X", GET_DAG2_I(i), GET_DAG2_M(m), data);
-	} else {
+	}
+	else
+	{
 		print("DM(%s, %s) = 0x%08X", GET_DAG1_I(i), GET_DAG1_M(m), data);
 	}
 }
@@ -716,7 +883,7 @@ static void dasm_immmove_immdata_ureg(UINT32 pc, UINT64 opcode)
 	int ureg = (opcode >> 32) & 0xff;
 	UINT32 data = opcode & 0xffffffff;
 
-	print("%s = %08X", GET_UREG(ureg), data);
+	print("%s = 0x%08X", GET_UREG(ureg), data);
 }
 
 static void dasm_sysreg_bitop(UINT32 pc, UINT64 opcode)
@@ -737,16 +904,27 @@ static void dasm_ireg_modify(UINT32 pc, UINT64 opcode)
 	int i = (opcode >> 32) & 0x7;
 	UINT32 data = opcode & 0xffffffff;
 
-	if( opcode & U64(0x8000000000) ) {	/* with bit-reverse */
-		if( g )
-			print("BITREV (%s, %08X)", GET_DAG2_I(i), data);
+	if (opcode & U64(0x8000000000))		/* with bit-reverse */
+	{
+		if (g)
+		{
+			print("BITREV (%s, 0x%08X)", GET_DAG2_I(i), data);
+		}
 		else
-			print("BITREV (%s, %08X)", GET_DAG1_I(i), data);
-	} else {						/* without bit-reverse */
-		if( g )
-			print("MODIFY (%s, %08X)", GET_DAG2_I(i), data);
+		{
+			print("BITREV (%s, 0x%08X)", GET_DAG1_I(i), data);
+		}
+	}
+	else	 							/* without bit-reverse */
+	{
+		if (g)
+		{
+			print("MODIFY (%s, 0x%08X)", GET_DAG2_I(i), data);
+		}
 		else
-			print("MODIFY (%s, %08X)", GET_DAG1_I(i), data);
+		{
+			print("MODIFY (%s, 0x%08X)", GET_DAG1_I(i), data);
+		}
 	}
 }
 
@@ -761,55 +939,81 @@ static void dasm_misc(UINT32 pc, UINT64 opcode)
 	int ppo = (opcode >> 34) & 0x1;
 	int fc = (opcode >> 33) & 0x1;
 
-	if( lpu ) {
+	if (lpu)
+	{
 		print("PUSH LOOP");
-		if( bits & 0x3f )
+		if (bits & 0x3f)
+		{
 			print(", ");
+		}
 	}
-	if( lpo ) {
+	if (lpo)
+	{
 		print("POP LOOP");
-		if( bits & 0x1f )
+		if (bits & 0x1f)
+		{
 			print(", ");
+		}
 	}
-	if( spu ) {
+	if (spu)
+	{
 		print("PUSH STS");
-		if( bits & 0xf )
+		if (bits & 0xf)
+		{
 			print(", ");
+		}
 	}
-	if( spo ) {
+	if (spo)
+	{
 		print("POP STS");
-		if( bits & 0x7 )
+		if (bits & 0x7)
+		{
 			print(", ");
+		}
 	}
-	if( ppu ) {
+	if (ppu)
+	{
 		print("PUSH PCSTK");
-		if( bits & 0x3 )
+		if (bits & 0x3)
+		{
 			print(", ");
+		}
 	}
-	if( ppo ) {
+	if (ppo)
+	{
 		print("POP PCSTK");
-		if( bits & 0x1 )
+		if (bits & 0x1)
+		{
 			print(", ");
+		}
 	}
-	if( fc ) {
+	if (fc)
+	{
 		print("FLUSH CACHE");
 	}
 }
 
 static void dasm_idlenop(UINT32 pc, UINT64 opcode)
 {
-	if( opcode & U64(0x8000000000) )
+	if (opcode & U64(0x8000000000))
+	{
 		print("IDLE");
+	}
 	else
+	{
 		print("NOP");
+	}
 }
 
 static void dasm_cjump_rframe(UINT32 pc, UINT64 opcode)
 {
 	/* TODO */
-	if( opcode & U64(0x10000000000) ) {	/* RFRAME */
+	if (opcode & U64(0x10000000000))	/* RFRAME */
+	{
 		print("TODO: RFRAME");
-	} else {
+	}
+	else
+	{
 		print("TODO: CJUMP");
 	}
 }
@@ -819,16 +1023,130 @@ static void dasm_invalid(UINT32 pc, UINT64 opcode)
 	print("?");
 }
 
-#include "sharcdtb.c"
+static SHARC_DASM_OP sharc_dasm_ops[] =
+{
+	//  |0 0 1|
+	{	0xe000,		0x2000,		dasm_compute_dreg_dmpm								},
 
+	//  |0 0 0|0 0 0 0 1|
+	{	0xff00,		0x0100,		dasm_compute										},
+
+	//  |0 1 0|
+	{	0xe000,		0x4000,		dasm_compute_uregdmpm_regmod						},
+
+	//  |0 1 1|0|
+	{	0xf000,		0x6000,		dasm_compute_dregdmpm_immmod						},
+
+	//  |0 1 1|1|
+	{	0xf000,		0x7000,		dasm_compute_ureg_ureg								},
+
+	//  |1 0 0|0|
+	{	0xf000,		0x8000,		dasm_immshift_dregdmpm								},
+
+	//  |0 0 0|0 0 0 1 0|
+	{	0xff00,		0x0200,		dasm_immshift_dregdmpm_nodata						},
+
+	//  |0 0 0|0 0 1 0 0|
+	{	0xff00,		0x0400,		dasm_compute_modify									},
+
+	//  |0 0 0|0 0 1 1 x|
+	{	0xfe00,		0x0600,		dasm_direct_jump									},
+
+	//  |0 0 0|0 1 0 0 x|
+	{	0xfe00,		0x0800,		dasm_indirect_jump_compute							},
+
+	//  |1 1 x|
+	{	0xc000,		0xc000,		dasm_indirect_jump_compute_dregdm					},
+
+	//  |0 0 0|0 1 0 1 x|
+	{	0xfe00,		0x0a00,		dasm_rts_compute									},
+
+	//  |0 0 0|0 1 1 0 x|
+	{	0xfe00,		0x0c00,		dasm_do_until_counter								},
+
+	//  |0 0 0|0 1 1 1 0|
+	{	0xff00,		0x0e00,		dasm_do_until										},
+
+	//  |0 0 0|1 0 0|x|x|
+	{	0xfc00,		0x1000,		dasm_immmove_uregdmpm								},
+
+	//  |1 0 1|x|x x x|x|
+	{	0xe000,		0xa000,		dasm_immmove_uregdmpm_indirect						},
+
+	//  |1 0 0|1|
+	{	0xf000,		0x9000,		dasm_immmove_immdata_dmpm							},
+
+	//  |0 0 0|0 1 1 1 1|
+	{	0xff00,		0x0f00,		dasm_immmove_immdata_ureg							},
+
+	//  |0 0 0|1 0 1 0 0|
+	{	0xff00,		0x1400,		dasm_sysreg_bitop									},
+
+	//  |0 0 0|1 0 1 1 0|
+	{	0xff00,		0x1600,		dasm_ireg_modify									},
+
+	//  |0 0 0|1 0 1 1 1|
+	{	0xff00,		0x1700,		dasm_misc											},
+
+	//  |0 0 0|0 0 0 0 0|
+	{	0xff00,		0x0000,		dasm_idlenop										},
+};
+
+static void build_dasm_table(void)
+{
+	int i, j;
+	int num_ops = sizeof(sharc_dasm_ops) / sizeof(SHARC_DASM_OP);
+
+	for (i=0; i < 256; i++)
+	{
+		sharcdasm_table[i] = dasm_invalid;
+	}
+
+	for (i=0; i < 256; i++)
+	{
+		UINT16 op = i << 8;
+
+		for (j=0; j < num_ops; j++)
+		{
+			if ((sharc_dasm_ops[j].op_mask & op) == sharc_dasm_ops[j].op_bits)
+			{
+				if (sharcdasm_table[i] != dasm_invalid)
+				{
+					fatalerror("build_dasm_table: table already filled! (i=%04X, j=%d)\n", i, j);
+				}
+				else
+				{
+					sharcdasm_table[i] = sharc_dasm_ops[j].handler;
+				}
+			}
+		}
+	}
+}
 
 void sharc_dasm_one(char *buffer, offs_t pc, UINT64 opcode)
 {
+	#define DEFAULT_DASM_WIDTH	(64)
+
+	char dasm_buffer[2000];
+	int i;
 	int op = (opcode >> 40) & 0xff;
 
+	if (!dasm_table_built)
+	{
+		build_dasm_table();
+		dasm_table_built = 1;
+	}
+
+	memset(dasm_buffer, 0, sizeof(dasm_buffer));
+
 	/* set buffer for print */
-	output = buffer;
+	output = dasm_buffer;
 
 	sharcdasm_table[op](pc, opcode);
+
+	for (i=0; i < DEFAULT_DASM_WIDTH; i++)
+	{
+		buffer[i] = dasm_buffer[i];
+	}
 }
 

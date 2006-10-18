@@ -795,7 +795,7 @@ static WRITE16_HANDLER( sonic_custom_io_w )
 
 static WRITE16_HANDLER( random_number_16_w )
 {
-//  printf("%06X:random_seed_w(%04X) = %04X & %04X\n", activecpu_get_pc(), offset*2, data, mem_mask  ^ 0xffff);
+//  mame_printf_debug("%06X:random_seed_w(%04X) = %04X & %04X\n", activecpu_get_pc(), offset*2, data, mem_mask  ^ 0xffff);
 }
 
 static READ16_HANDLER( random_number_16_r )
@@ -805,7 +805,7 @@ static READ16_HANDLER( random_number_16_r )
 
 static WRITE32_HANDLER( random_number_32_w )
 {
-//  printf("%06X:random_seed_w(%04X) = %04X & %04X\n", activecpu_get_pc(), offset*2, data, mem_mask  ^ 0xffff);
+//  mame_printf_debug("%06X:random_seed_w(%04X) = %04X & %04X\n", activecpu_get_pc(), offset*2, data, mem_mask  ^ 0xffff);
 }
 
 static READ32_HANDLER( random_number_32_r )

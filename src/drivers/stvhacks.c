@@ -32,41 +32,41 @@ static void ic13_shifter(void)
 
 	for(i=(0);i<(0x100000-1);i+=8)
 	{
-		//printf("%08x\n",i);
+		//mame_printf_debug("%08x\n",i);
 		tmp[((i)/4)+0] = rom[(i/2)/4]; /*0.0 -> 2.1 -> 4.2*/
 		tmp[((i)/4)+1] = rom[(i/2)/4]; /*1.0 -> 3.1 -> 5.2*/
 	}
 
 	for(i=(0);i<(0x100000-1);i+=8)
 	{
-		//printf("%08x\n",i);
+		//mame_printf_debug("%08x\n",i);
 		tmp[(i/4)+0] = ((tmp[(i/4)+0] & 0xff000000) >> 8) | ((tmp[(i/4)+0] & 0x00ff0000) >> 16);
 		tmp[(i/4)+1] = ((tmp[(i/4)+1] & 0x0000ff00) << 8) | ((tmp[(i/4)+1] & 0x000000ff) >> 0);
 	}
 
 	for(i=(0);i<(0x100000-1);i+=4)
 	{
-		//printf("%08x\n",i);
+		//mame_printf_debug("%08x\n",i);
 		rom[i/4] = tmp[(i)/4];
 	}
 
 	for(i=(0x300000);i<(0x400000-1);i+=8)
 	{
-		//printf("%08x\n",i);
+		//mame_printf_debug("%08x\n",i);
 		tmp[((i-0x300000)/4)+0] = rom[(i/2)/4]; /*0.0 -> 2.1 -> 4.2*/
 		tmp[((i-0x300000)/4)+1] = rom[(i/2)/4]; /*1.0 -> 3.1 -> 5.2*/
 	}
 
 	for(i=(0);i<(0x100000-1);i+=8)
 	{
-		//printf("%08x\n",i);
+		//mame_printf_debug("%08x\n",i);
 		tmp[(i/4)+0] = ((tmp[(i/4)+0] & 0xff000000) >> 8) | ((tmp[(i/4)+0] & 0x00ff0000) >> 16);
 		tmp[(i/4)+1] = ((tmp[(i/4)+1] & 0x0000ff00) << 8) | ((tmp[(i/4)+1] & 0x000000ff) >> 0);
 	}
 
 	for(i=(0x100000);i<(0x200000-1);i+=4)
 	{
-		//printf("%08x\n",i);
+		//mame_printf_debug("%08x\n",i);
 		rom[i/4] = tmp[(i-0x100000)/4];
 	}
 	free(tmp);

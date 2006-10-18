@@ -94,7 +94,7 @@ ifneq ($(filter ADSP21062,$(CPUS)),)
 OBJDIRS += $(OBJ)/cpu/sharc
 CPUOBJS += $(OBJ)/cpu/sharc/sharc.o
 DBGOBJS += $(OBJ)/cpu/sharc/sharcdsm.o
-$(OBJ)/cpu/sharc/sharc.o: sharc.c sharc.h sharcops.c sharcops.h sharcdsm.c sharcdsm.h compute.c
+$(OBJ)/cpu/sharc/sharc.o: sharc.c sharc.h sharcops.c sharcops.h sharcdsm.c sharcdsm.h compute.c sharcdma.c sharcmem.c
 endif
 
 
@@ -155,6 +155,36 @@ OBJDIRS += $(OBJ)/cpu/cdp1802
 CPUOBJS += $(OBJ)/cpu/cdp1802/cdp1802.o
 DBGOBJS += $(OBJ)/cpu/cdp1802/1802dasm.o
 $(OBJ)/cpu/cdp1802/cdp1802.o: cdp1802.c cdp1802.h 1802tbl.c
+endif
+
+
+
+#-------------------------------------------------
+# National Semiconductor COP410
+#-------------------------------------------------
+
+CPUDEFS += -DHAS_COP410=$(if $(filter COP410,$(CPUS)),1,0)
+
+ifneq ($(filter COP410,$(CPUS)),)
+OBJDIRS += $(OBJ)/cpu/cop400
+CPUOBJS += $(OBJ)/cpu/cop400/cop410.o
+DBGOBJS += $(OBJ)/cpu/cop400/cop410ds.o
+$(OBJ)/cpu/cop400/cop410.o: cop410.c cop400.h 410ops.c
+endif
+
+
+
+#-------------------------------------------------
+# National Semiconductor COP420
+#-------------------------------------------------
+
+CPUDEFS += -DHAS_COP420=$(if $(filter COP420,$(CPUS)),1,0)
+
+ifneq ($(filter COP420,$(CPUS)),)
+OBJDIRS += $(OBJ)/cpu/cop400
+CPUOBJS += $(OBJ)/cpu/cop400/cop420.o
+DBGOBJS += $(OBJ)/cpu/cop400/cop420ds.o
+$(OBJ)/cpu/cop400/cop420.o: cop420.c cop400.h 410ops.c 420ops.c
 endif
 
 

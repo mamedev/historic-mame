@@ -11,6 +11,7 @@
 #define _WIN32_WINNT 0x0400
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <commctrl.h>
 #include <mmsystem.h>
 
 // standard includes
@@ -108,6 +109,9 @@ int main(int argc, char **argv)
 	char *ext;
 	int res = 0;
 	HMODULE library;
+
+	// initialize common controls
+	InitCommonControls();
 
 	// set up exception handling
 	pass_thru_filter = SetUnhandledExceptionFilter(exception_filter);
@@ -294,7 +298,7 @@ void osd_lock_acquire(osd_lock *lock)
 	EnterCriticalSection(&lock->critsect);
 #if DEBUG_SLOW_LOCKS
 	cycles = osd_cycles() - cycles;
-	if (cycles > 10000) printf("Blocked %d cycles on lock acquire\n", (int)cycles);
+	if (cycles > 10000) mame_printf_warning("Blocked %d cycles on lock acquire\n", (int)cycles);
 #endif
 }
 

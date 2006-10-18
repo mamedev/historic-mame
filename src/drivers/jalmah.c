@@ -535,7 +535,7 @@ WRITE16_HANDLER( jalmah_okirom_w )
 
 	/*No game can use this,and btw what "ZA" stands for?*/
 	if(data & 2)
-		printf("ZA = 2\n");
+		mame_printf_debug("ZA = 2\n");
 }
 
 static WRITE16_HANDLER( jalmah_okibank_w )

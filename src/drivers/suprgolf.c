@@ -43,14 +43,14 @@ static WRITE8_HANDLER( rom_bank_select_w )
 
 	suprgolf_rom_bank = data;
 
-	printf("ROM_BANK 0x8000 - %X @%X\n",data,activecpu_get_previouspc());
+	mame_printf_debug("ROM_BANK 0x8000 - %X @%X\n",data,activecpu_get_previouspc());
 	memory_set_bankptr(2, region_base + (data&0x3f ) * 0x4000);
 }
 
 static WRITE8_HANDLER( rom2_bank_select_w )
 {
 	UINT8 *region_base = memory_region(REGION_USER2);
-	printf("ROM_BANK 0x4000 - %X @%X\n",data,activecpu_get_previouspc());
+	mame_printf_debug("ROM_BANK 0x4000 - %X @%X\n",data,activecpu_get_previouspc());
 	memory_set_bankptr(1, region_base + (data&0x3f ) * 0x4000);
 }
 
@@ -249,12 +249,12 @@ INPUT_PORTS_END
 
 WRITE8_HANDLER( suprgolf_writeA )
 {
-	printf("ymwA\n");
+	mame_printf_debug("ymwA\n");
 }
 
 WRITE8_HANDLER( suprgolf_writeB )
 {
-	printf("ymwA\n");
+	mame_printf_debug("ymwA\n");
 }
 
 static void irqhandler(int irq)

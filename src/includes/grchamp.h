@@ -20,6 +20,7 @@ struct _grchamp_state
 	UINT16		ledram[8];
 
 	UINT16		collide;
+	UINT8		collmode;
 
 	UINT8 *		radarram;
 	UINT8 *		videoram;

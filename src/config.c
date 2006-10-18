@@ -283,7 +283,7 @@ static int config_load_xml(mame_file *file, int which_type)
 
 		/* log that we are processing this entry */
 		if (DEBUG_CONFIG)
-			printf("Entry: %s -- processing\n", name);
+			mame_printf_debug("Entry: %s -- processing\n", name);
 
 		/* loop over all registrants and call their load function */
 		for (type = typelist; type; type = type->next)

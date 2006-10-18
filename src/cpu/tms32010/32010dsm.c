@@ -258,7 +258,7 @@ unsigned Dasm32010(char *str, unsigned pc)
 		{
 			if (op != -1)
 			{
-				printf("Error: opcode %04Xh matches %d (%s) and %d (%s)\n",
+				mame_printf_debug("Error: opcode %04Xh matches %d (%s) and %d (%s)\n",
 					code,i,Op[i].fmt,op,Op[op].fmt);
 			}
 			op = i;
@@ -288,7 +288,7 @@ unsigned Dasm32010(char *str, unsigned pc)
 
 	while (bit >= 0)
 	{
-		/* printf("{%c/%d}",*cp,bit); */
+		/* mame_printf_debug("{%c/%d}",*cp,bit); */
 		switch(*cp)
 		{
 			case 'a': a <<=1; a |= ((code & (1<<bit)) ? 1 : 0); bit--; break;

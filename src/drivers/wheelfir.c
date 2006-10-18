@@ -152,7 +152,7 @@ static WRITE16_HANDLER(wheelfir_blit_w)
 	//wheelfir_blitdata[offset]=data;
 	COMBINE_DATA(&wheelfir_blitdata[offset]);
 
-	//printf("%x %x %x\n",activecpu_get_pc(),offset,data);
+	//mame_printf_debug("%x %x %x\n",activecpu_get_pc(),offset,data);
 
 	/* a bit of a hack really .. */
 	if(offset==0x6)
@@ -183,12 +183,12 @@ static WRITE16_HANDLER(wheelfir_blit_w)
 
 		wheelfir_six_pos = 0;
 
-		printf("XX %.4x - ",wheelfir_blitdata[0]-wheelfir_blitdata[1]);
-		printf("YY %.4x - ",wheelfir_blitdata[2]-wheelfir_blitdata[3]);
+		mame_printf_debug("XX %.4x - ",wheelfir_blitdata[0]-wheelfir_blitdata[1]);
+		mame_printf_debug("YY %.4x - ",wheelfir_blitdata[2]-wheelfir_blitdata[3]);
 		for(x=0;x<16;x++)
-			printf("%.4x - ",wheelfir_blitdata[x]);
+			mame_printf_debug("%.4x - ",wheelfir_blitdata[x]);
 
-		printf("\n");
+		mame_printf_debug("\n");
 
 		xsize = ((wheelfir_blitdata[1]&0xff)-(wheelfir_blitdata[0]&0xff))&0xff;
 		ysize = ((wheelfir_blitdata[3]&0xff)-(wheelfir_blitdata[2]&0xff))&0xff;

@@ -96,7 +96,7 @@ static WRITE8_HANDLER( sengokmj_out_w )
 		if((old & 4) == 0 && (data & 4) == 4)
 		{
 			coins_used++;
-			//printf("coins used = %d\n",coins_used);
+			//mame_printf_debug("coins used = %d\n",coins_used);
 		}
 
 		old = data;

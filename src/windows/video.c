@@ -254,7 +254,7 @@ static void video_exit(running_machine *machine)
 	if (fps_frames_displayed != 0)
 	{
 		cycles_t cps = osd_cycles_per_second();
-		printf("Average FPS: %f (%d frames)\n", (double)cps / (fps_end_time - fps_start_time) * fps_frames_displayed, fps_frames_displayed);
+		mame_printf_info("Average FPS: %f (%d frames)\n", (double)cps / (fps_end_time - fps_start_time) * fps_frames_displayed, fps_frames_displayed);
 	}
 }
 
@@ -647,7 +647,7 @@ static void update_fps(mame_time emutime)
 			char name[10];
 
 			// make a filename with an underscore prefix
-			sprintf(name, "_%.8s", Machine->gamedrv->name);
+			sprintf(name, "_%.8s.png", Machine->gamedrv->name);
 
 			// write out the screenshot
 			filerr = mame_fopen(SEARCHPATH_SCREENSHOT, name, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &fp);

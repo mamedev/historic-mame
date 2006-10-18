@@ -38,6 +38,8 @@
 /* core path and directory options */
 #ifdef MESS
 #define OPTION_ROMPATH				"biospath"
+#define OPTION_HASH_DIRECTORY		"hash_directory"
+#define OPTION_IMAGEPATH			"softwarepath"
 #else
 #define OPTION_ROMPATH				"rompath"
 #endif

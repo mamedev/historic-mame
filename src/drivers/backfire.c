@@ -36,7 +36,7 @@ UINT32 *backfire_left_priority, *backfire_right_priority;
 
 static int backfire_bank_callback(int bank)
 {
-//  printf("bank callback %04x\n",bank); // bit 1 gets set too?
+//  mame_printf_debug("bank callback %04x\n",bank); // bit 1 gets set too?
 
 	bank = bank >> 4;
 
@@ -675,7 +675,7 @@ static void descramble_sound( void )
 
 static READ32_HANDLER( backfire_speedup_r )
 {
-//  printf( "%08x\n",activecpu_get_pc());
+//  mame_printf_debug( "%08x\n",activecpu_get_pc());
 
 	if (activecpu_get_pc()==0xce44)  cpu_spinuntil_time(TIME_IN_USEC(400)); // backfire
 	if (activecpu_get_pc()==0xcee4)  cpu_spinuntil_time(TIME_IN_USEC(400)); // backfira

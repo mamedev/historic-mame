@@ -330,6 +330,12 @@ static void turbo_prepare_sprites(turbo_state *state, UINT8 y, sprite_info *info
 			info->plb[level] = 0;
 			info->offset[level] = offset;
 			info->frac[level] = 0;
+
+			/*
+                actual pots read from one board:
+                    VR1 = 310 Ohm
+                    VR2 = 910 Ohm
+            */
 			info->step[level] = sprite_xscale(xscale, 1.0e3 * readinputportbytag("VR1") / 100.0, 1.0e3 * readinputportbytag("VR2") / 100.0, 100e-12);
 		}
 	}

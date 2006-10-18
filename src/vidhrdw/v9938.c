@@ -1251,7 +1251,7 @@ static void v9938_interrupt_start_vblank (void)
 			popmessage("saved");
 			}
 
-		for (i=0;i<24;i++) printf ("R#%d = %02x\n", i, vdp.contReg[i]);
+		for (i=0;i<24;i++) mame_printf_debug ("R#%d = %02x\n", i, vdp.contReg[i]);
 		}
 #endif
 

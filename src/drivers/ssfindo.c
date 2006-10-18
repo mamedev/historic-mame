@@ -319,7 +319,7 @@ static READ32_HANDLER(PS7500_IO_r)
 
 		case IOLINES: //TODO: eeprom  24c01
 #if 0
-		printf("IOLINESR %i @%x\n",offset,activecpu_get_pc());
+		mame_printf_debug("IOLINESR %i @%x\n",offset,activecpu_get_pc());
 #endif
 
 		if(flashType==1)
@@ -351,7 +351,7 @@ static READ32_HANDLER(PS7500_IO_r)
 			return PS7500_IO[offset];
 
 		//default:
-			//printf("ior %i @%x\n",offset,activecpu_get_pc());
+			//mame_printf_debug("ior %i @%x\n",offset,activecpu_get_pc());
 	}
 	return mame_rand(Machine);//PS7500_IO[offset];
 }
@@ -469,7 +469,7 @@ static WRITE32_HANDLER(io_w)
 static WRITE32_HANDLER(debug_w)
 {
 #if 0
-	printf("%c",data&0xff); //debug texts - malloc (ie "64 KBytes allocated, elapsed : 378 KBytes, free : 2231 KBytes")
+	mame_printf_debug("%c",data&0xff); //debug texts - malloc (ie "64 KBytes allocated, elapsed : 378 KBytes, free : 2231 KBytes")
 #endif
 }
 

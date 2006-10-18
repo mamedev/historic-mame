@@ -201,8 +201,8 @@ static void draw_textured_triangle(mame_bitmap *bitmap, const rectangle *rect, T
 	UINT16 *sheet	= (tri->flags & TRI_FLAG_EVEN_BANK)
 					? ((UINT16*)model2_textureram1) : ((UINT16*)model2_textureram0);
 
-	//printf("Tex X: %d, Tex Y: %d, Tex Width: %d, Tex Height: %d\n", tex_x, tex_y, tex_width, tex_height);
-	//printf("U0: %d, V0: %d, U1: %d, V1: %d, U2: %d, V2: %d\n", tri->v[0].u, tri->v[0].v, tri->v[1].u, tri->v[1].v, tri->v[2].u, tri->v[2].v);
+	//mame_printf_debug("Tex X: %d, Tex Y: %d, Tex Width: %d, Tex Height: %d\n", tex_x, tex_y, tex_width, tex_height);
+	//mame_printf_debug("U0: %d, V0: %d, U1: %d, V1: %d, U2: %d, V2: %d\n", tri->v[0].u, tri->v[0].v, tri->v[1].u, tri->v[1].v, tri->v[2].u, tri->v[2].v);
 
 //  UINT16 *colortable_r = (UINT16*)&model2_colorxlat[0x0000/4];
 //  UINT16 *colortable_g = (UINT16*)&model2_colorxlat[0x4000/4];
@@ -750,7 +750,7 @@ static void parse_display_list(void)
 		{
 			if (cmd2 != cmd1 || cmd3 != cmd1)
 			{
-				//printf("parse_display_list: CMD bits not matching: %08X at %08X\n", op, dlptr);
+				//mame_printf_debug("parse_display_list: CMD bits not matching: %08X at %08X\n", op, dlptr);
 				//return;
 				/*{
                     int i;

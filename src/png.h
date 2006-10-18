@@ -124,7 +124,6 @@ png_error png_read_file(mame_file *fp, png_info *pnginfo);
 png_error png_expand_buffer_8bit(png_info *p);
 
 png_error png_add_text(const char *keyword, const char *text);
-png_error png_filter(png_info *p);
 png_error png_write_bitmap(mame_file *fp, mame_bitmap *bitmap);
 
 png_error mng_capture_start(mame_file *fp, mame_bitmap *bitmap);

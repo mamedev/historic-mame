@@ -90,7 +90,7 @@ void system18_set_grayscale(int enable)
 	{
 		video_screen_update_partial(0, cpu_getscanline());
 		grayscale_enable = enable;
-//      printf("Grayscale = %02X\n", enable);
+//      mame_printf_debug("Grayscale = %02X\n", enable);
 	}
 }
 
@@ -103,7 +103,7 @@ void system18_set_vdp_enable(int enable)
 		video_screen_update_partial(0, cpu_getscanline());
 		vdp_enable = enable;
 #if DEBUG_VDP
-		printf("VDP enable = %02X\n", enable);
+		mame_printf_debug("VDP enable = %02X\n", enable);
 #endif
 	}
 }
@@ -116,7 +116,7 @@ void system18_set_vdp_mixing(int mixing)
 		video_screen_update_partial(0, cpu_getscanline());
 		vdp_mixing = mixing;
 #if DEBUG_VDP
-		printf("VDP mixing = %02X\n", mixing);
+		mame_printf_debug("VDP mixing = %02X\n", mixing);
 #endif
 	}
 }

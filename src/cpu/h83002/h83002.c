@@ -478,7 +478,7 @@ static int h8_execute(int cycles)
 		CALL_MAME_DEBUG;
 #endif
 		opcode = cpu_readop16(h8.pc);
-//      printf("[%06x]: %04x => %x\n", h8.pc, opcode, (opcode>>12)&0xf);
+//      mame_printf_debug("[%06x]: %04x => %x\n", h8.pc, opcode, (opcode>>12)&0xf);
 		h8.pc += 2;
 
 		switch((opcode>>12) & 0xf)

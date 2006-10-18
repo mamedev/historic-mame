@@ -360,7 +360,7 @@ static READ8_HANDLER( gfx1_cram_r )
 
 static READ8_HANDLER(read_a00x)
 {
-	//printf("0xA00%X read at 0x%04X\n",offset,activecpu_get_pc());
+	//mame_printf_debug("0xA00%X read at 0x%04X\n",offset,activecpu_get_pc());
 
 	switch(offset)
 	{
@@ -419,7 +419,7 @@ static WRITE8_HANDLER(write_a00x)
 		    ROM = &ROM[0x8000 * newbank + UNBANKED_SIZE];
 		    memory_set_bankptr(1,ROM);
 
-		   // printf("Bank switched @ 0x%04X: bank #%d data=0x%02X\n",activecpu_get_pc(),newbank,data);
+		   // mame_printf_debug("Bank switched @ 0x%04X: bank #%d data=0x%02X\n",activecpu_get_pc(),newbank,data);
 	     }
 	     return;
 	     break;
@@ -427,12 +427,12 @@ static WRITE8_HANDLER(write_a00x)
 		case 0x06:
 /*
             if(data&0x02) {
-                printf("COIN LOCK\n");
+                mame_printf_debug("COIN LOCK\n");
             } else {
-                printf("COIN RELEASE\n");
+                mame_printf_debug("COIN RELEASE\n");
             }
 */
-			//printf("0xA006 Written@ 0x%04X: value=0x%02X\n",activecpu_get_pc(),data);
+			//mame_printf_debug("0xA006 Written@ 0x%04X: value=0x%02X\n",activecpu_get_pc(),data);
 			break;
 
     case 0x08: //A008
@@ -456,10 +456,10 @@ static WRITE8_HANDLER(write_a00x)
       break;
 
     default:
-//      printf("cpu #%d (PC=%08X): Write @ 0xa0%02x = 0x%02x\n",cpu_getactivecpu(), activecpu_get_pc(),offset,data);
+//      mame_printf_debug("cpu #%d (PC=%08X): Write @ 0xa0%02x = 0x%02x\n",cpu_getactivecpu(), activecpu_get_pc(),offset,data);
 			break;
   }
-  //printf("cpu #%d (PC=%08X): Write @ 0xa0%02x = 0x%02x\n",cpu_getactivecpu(), activecpu_get_pc(),offset,data);
+  //mame_printf_debug("cpu #%d (PC=%08X): Write @ 0xa0%02x = 0x%02x\n",cpu_getactivecpu(), activecpu_get_pc(),offset,data);
 }
 
 static READ8_HANDLER(read_700x)
@@ -482,7 +482,7 @@ static WRITE8_HANDLER(xscroll_w)
 {
 	if(scrollx!=data)
 	{
-		//printf("set scrollx to 0x%02X\n",data);
+		//mame_printf_debug("set scrollx to 0x%02X\n",data);
 	}
 	scrollx=data;
 }
@@ -490,7 +490,7 @@ static WRITE8_HANDLER(yscroll_w)
 {
 	if(scrolly!=data)
 	{
-		//printf("set scrolly to 0x%02X\n",data);
+		//mame_printf_debug("set scrolly to 0x%02X\n",data);
 	}
 	scrolly=data;
 }

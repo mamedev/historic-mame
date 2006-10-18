@@ -318,7 +318,7 @@ int cli_frontend_init(int argc, char **argv)
 	options_init(windows_opts);
 #ifdef MESS
 	options_add_entries(mess_opts);
-	options_set_option_callback("", win_mess_driver_name_callback);
+	options_set_option_callback(OPTION_UNADORNED(0), win_mess_driver_name_callback);
 #endif // MESS
 
 	// parse the command line first; if we fail here, we're screwed
@@ -490,7 +490,7 @@ static void execute_simple_commands(void)
 	// showusage?
 	if (options_get_bool("showusage"))
 	{
-		printf("Usage: mame [game] [options]\n\nOptions:\n");
+		mame_printf_info("Usage: mame [game] [options]\n\nOptions:\n");
 		options_output_help();
 		exit(0);
 	}
@@ -590,10 +590,10 @@ static void execute_commands(const char *argv0)
 static void display_help(void)
 {
 #ifndef MESS
-	printf("M.A.M.E. v%s - Multiple Arcade Machine Emulator\n"
+	mame_printf_info("M.A.M.E. v%s - Multiple Arcade Machine Emulator\n"
 		   "Copyright (C) 1997-2006 by Nicola Salmoria and the MAME Team\n\n",build_version);
-	printf("%s\n", mame_disclaimer);
-	printf("Usage:  MAME gamename [options]\n\n"
+	mame_printf_info("%s\n", mame_disclaimer);
+	mame_printf_info("Usage:  MAME gamename [options]\n\n"
 		   "        MAME -showusage    for a brief list of options\n"
 		   "        MAME -showconfig   for a list of configuration options\n"
 		   "        MAME -createconfig to create a mame.ini\n\n"
@@ -725,7 +725,7 @@ static void setup_playback(const char *filename, const game_driver *driver)
 
 	// otherwise, print a message indicating what's happening
 	else
-		printf("Playing back previously recorded " GAMENOUN " %s\n", driver->name);
+		mame_printf_info("Playing back previously recorded " GAMENOUN " %s\n", driver->name);
 }
 
 

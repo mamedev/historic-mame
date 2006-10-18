@@ -833,7 +833,7 @@ static void mapper4_set_chr (void)
 
 static void mapper4_irq ( int num, int scanline, int vblank, int blanked )
 {
-	printf("entra\n");
+	mame_printf_debug("entra\n");
 	if ((scanline < BOTTOM_VISIBLE_SCANLINE) || (scanline == NUM_SCANLINE-1))
 	{
 		if ((IRQ_enable) && !blanked)

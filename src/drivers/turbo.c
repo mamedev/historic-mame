@@ -826,11 +826,11 @@ INPUT_PORTS_START( turbo )
 
 	/* this is actually a variable resistor */
 	PORT_START_TAG("VR1")
-	PORT_ADJUSTER(50, "Sprite scale offset")
+	PORT_ADJUSTER(31, "Sprite scale offset")
 
 	/* this is actually a variable resistor */
 	PORT_START_TAG("VR2")
-	PORT_ADJUSTER(50, "Sprite scale gain")
+	PORT_ADJUSTER(91, "Sprite scale gain")
 INPUT_PORTS_END
 
 

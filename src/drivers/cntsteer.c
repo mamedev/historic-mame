@@ -164,7 +164,7 @@ static int scroll=0;
 	if (code_pressed_memory(KEYCODE_Q))
 	{
 		colo++;
-		printf("colo = %X\n",colo);
+		mame_printf_debug("colo = %X\n",colo);
 		tilemap_mark_all_tiles_dirty(bg_tilemap);
 		tilemap_mark_all_tiles_dirty(fg_tilemap);
 	}
@@ -172,7 +172,7 @@ static int scroll=0;
 	if (code_pressed_memory(KEYCODE_W))
 	{
 		colo--;
-		printf("colo = %X\n",colo);
+		mame_printf_debug("colo = %X\n",colo);
 		tilemap_mark_all_tiles_dirty(bg_tilemap);
 		tilemap_mark_all_tiles_dirty(fg_tilemap);
 	}
@@ -181,50 +181,50 @@ static int scroll=0;
 	if (code_pressed_memory(KEYCODE_E))
 	{
 		rot2++;
-		printf("rot2 = %X\n",rot2);
+		mame_printf_debug("rot2 = %X\n",rot2);
 	}
 
 	if (code_pressed_memory(KEYCODE_R))
 	{
 		rot2--;
-		printf("rot2 = %X\n",rot2);
+		mame_printf_debug("rot2 = %X\n",rot2);
 	}
 
 	if (code_pressed_memory(KEYCODE_T))
 	{
 		zoom+=0x100;
-		printf("zoom= %X\n",zoom);
+		mame_printf_debug("zoom= %X\n",zoom);
 	}
 
 	if (code_pressed_memory(KEYCODE_Y))
 	{
 		zoom-=0x100;
-		printf("zoom= %X\n",zoom);
+		mame_printf_debug("zoom= %X\n",zoom);
 	}
 
 	if (code_pressed_memory(KEYCODE_A))
 	{
 		scroll+=0x10;
-		printf("scroll = %d\n",scroll);
+		mame_printf_debug("scroll = %d\n",scroll);
 	}
 
 	if (code_pressed_memory(KEYCODE_S))
 	{
 		scroll-=0x10;
-		printf("scroll = %d\n",scroll);
+		mame_printf_debug("scroll = %d\n",scroll);
 	}
 
 
 	if (code_pressed_memory(KEYCODE_I))
 	{
 		scrollx+=0x10;
-		printf("scrollx = %d\n",scrollx);
+		mame_printf_debug("scrollx = %d\n",scrollx);
 	}
 
 	if (code_pressed_memory(KEYCODE_O))
 	{
 		scrollx-=0x10;
-		printf("scrollx = %d\n",scrollx);
+		mame_printf_debug("scrollx = %d\n",scrollx);
 	}
 
 //  if (code_pressed(KEYCODE_A)) cpu_cause_interrupt(0,M6809_INT_IRQ);
@@ -417,7 +417,7 @@ static WRITE8_HANDLER(scrivi)
 		if(data != newdata[offset])
 		{newdata[offset] = data;
 			if(data >0x55)
-				printf("off = %X data = %X\n",offset,data);
+				mame_printf_debug("off = %X data = %X\n",offset,data);
 		}
 		return;
 
@@ -427,11 +427,11 @@ static WRITE8_HANDLER(scrivi)
 	{
 		bg_bank = (data & 0x30) << 4;
 	//  scrollx = data & 0x0f;
-	//  printf("scrollx = %d %X\n",scrollx<<8,scrollx);
+	//  mame_printf_debug("scrollx = %d %X\n",scrollx<<8,scrollx);
 		if(data != newdata[offset])
 		{newdata[offset] = data;
 			if(data & ~0x30)
-				printf("off = %X data = %X\n",offset,data&~0x30);
+				mame_printf_debug("off = %X data = %X\n",offset,data&~0x30);
 		}
 		tilemap_mark_all_tiles_dirty(bg_tilemap);
 		return;
@@ -448,7 +448,7 @@ static WRITE8_HANDLER(scrivi)
 		if(data != newdata[offset])
 		{newdata[offset] = data;
 			if(data & ~0xf5)
-				printf("off = %X data = %X\n",offset,data&~0xf5);
+				mame_printf_debug("off = %X data = %X\n",offset,data&~0xf5);
 		}
 		return;
 
@@ -456,7 +456,7 @@ static WRITE8_HANDLER(scrivi)
 
 	if(data != newdata[offset] && offset !=1) {
 		newdata[offset] = data;
-		printf("off = %X data = %X\n",offset,data);
+		mame_printf_debug("off = %X data = %X\n",offset,data);
 	}
 }
 

@@ -89,7 +89,7 @@ static DRIVER_INIT( turbosub )
 static WRITE8_HANDLER( UART_W )
 {
 	if (offset==0)
-		printf("%c",data);
+		mame_printf_debug("%c",data);
 }
 
 static READ8_HANDLER( UART_R )

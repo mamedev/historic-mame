@@ -390,7 +390,7 @@ static WRITE8_HANDLER( unknown_w )
 	/* writing an 0x04 here enables interrupts */
 	/* some games write 0x00/0x01 here as well */
 	if (data != 0x00 && data != 0x01 && data != 0x04)
-		printf("%04X:unknown_w = %02X\n", activecpu_get_pc(), data);
+		mame_printf_debug("%04X:unknown_w = %02X\n", activecpu_get_pc(), data);
 }
 
 

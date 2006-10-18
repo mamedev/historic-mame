@@ -105,7 +105,7 @@
 
 
 #define DEBUG_STATES	(0)
-#define DEBUG_METHOD	printf
+#define DEBUG_METHOD	mame_printf_debug
 
 
 

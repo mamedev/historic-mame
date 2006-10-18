@@ -557,11 +557,7 @@ static void mame_timer_remove(mame_timer *which)
 {
 	/* error if this is an inactive timer */
 	if (which->tag == -1)
-	{
-		printf("timer_remove: removing an inactive timer! (%s from %s:%d)\n", which->func, which->file, which->line);
-		logerror("timer_remove: removed an inactive timer!\n");
-		return;
-	}
+		fatalerror("timer_remove: removing an inactive timer! (%s from %s:%d)\n", which->func, which->file, which->line);
 
 	/* if this is a callback timer, note that */
 	if (which == callback_timer)
@@ -600,11 +596,7 @@ INLINE void mame_timer_adjust_common(mame_timer *which, mame_time duration, INT3
 
 	/* error if this is an inactive timer */
 	if (which->tag == -1)
-	{
-		printf("mame_timer_adjust: adjusting an inactive timer!\n");
-		logerror("mame_timer_adjust: adjusting an inactive timer!\n");
-		return;
-	}
+		fatalerror("mame_timer_adjust: adjusting an inactive timer!\n");
 
 	/* if this is the callback timer, mark it modified */
 	if (which == callback_timer)
@@ -727,11 +719,7 @@ void mame_timer_reset(mame_timer *which, mame_time duration)
 {
 	/* error if this is an inactive timer */
 	if (which->tag == -1)
-	{
-		printf("mame_timer_reset: resetting an inactive timer!\n");
-		logerror("mame_timer_reset: resetting an inactive timer!\n");
-		return;
-	}
+		fatalerror("mame_timer_reset: resetting an inactive timer!\n");
 
 	/* adjust the timer */
 	if (!which->ptr)

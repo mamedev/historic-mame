@@ -161,6 +161,8 @@ CPUS += RSP
 CPUS += ALPHA8201
 CPUS += ALPHA8301
 CPUS += CDP1802
+CPUS += COP420
+CPUS += COP410
 
 
 #-------------------------------------------------
@@ -1556,6 +1558,8 @@ $(OBJ)/drivers/bzone.o:		$(OBJ)/layout/bzone.lh
 
 $(OBJ)/drivers/bfm_sc2.o:	$(OBJ)/layout/bfm_sc2.lh
 
+$(OBJ)/drivers/cardline.o:	$(OBJ)/layout/cardline.lh
+
 $(OBJ)/drivers/cinemat.o:	$(OBJ)/layout/solarq.lh \
 							$(OBJ)/layout/starcas.lh
 
@@ -1564,6 +1568,8 @@ $(OBJ)/drivers/circus.o:	$(OBJ)/layout/circus.lh
 $(OBJ)/drivers/copsnrob.o:	$(OBJ)/layout/copsnrob.lh
 
 $(OBJ)/drivers/darius.o:	$(OBJ)/layout/darius.lh
+
+$(OBJ)/drivers/funworld.o:	$(OBJ)/layout/funworld.lh
 
 $(OBJ)/drivers/lazercmd.o:	$(OBJ)/layout/lazercmd.lh
 

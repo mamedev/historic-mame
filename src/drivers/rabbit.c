@@ -523,7 +523,7 @@ WRITE32_HANDLER ( rabbit_rombank_w )
 {
 	UINT8 *dataroms = memory_region(REGION_USER1);
 	int bank;
-//  printf("rabbit rombank %08x\n",data&0x3ff);
+//  mame_printf_debug("rabbit rombank %08x\n",data&0x3ff);
 	bank = data & 0x3ff;
 
 //  memory_set_bankptr(1,&dataroms[0x40000*(bank&0x3ff)]);
@@ -624,7 +624,7 @@ void rabbit_do_blit(void)
 	int mask,shift;
 
 
-	if(BLITCMDLOG) printf("BLIT command %08x %08x %08x\n", rabbit_blitterregs[0], rabbit_blitterregs[1], rabbit_blitterregs[2]);
+	if(BLITCMDLOG) mame_printf_debug("BLIT command %08x %08x %08x\n", rabbit_blitterregs[0], rabbit_blitterregs[1], rabbit_blitterregs[2]);
 
 	if (blt_oddflg&1)
 	{
@@ -656,12 +656,12 @@ void rabbit_do_blit(void)
 			case 0x00: /* copy nn bytes */
 				if (!blt_amount)
 				{
-					if(BLITLOG) printf("end of blit list\n");
+					if(BLITLOG) mame_printf_debug("end of blit list\n");
 					timer_set(TIME_IN_USEC(500),0,rabbit_blit_done);
 					return;
 				}
 
-				if(BLITLOG) printf("blit copy %02x bytes\n", blt_amount);
+				if(BLITLOG) mame_printf_debug("blit copy %02x bytes\n", blt_amount);
 				for (loopcount=0;loopcount<blt_amount;loopcount++)
 				{
 					blt_value = ((blt_data[blt_source+1]<<8)|(blt_data[blt_source+0]))^0xffff;
@@ -677,7 +677,7 @@ void rabbit_do_blit(void)
 				break;
 
 			case 0x02: /* fill nn bytes */
-				if(BLITLOG) printf("blit fill %02x bytes\n", blt_amount);
+				if(BLITLOG) mame_printf_debug("blit fill %02x bytes\n", blt_amount);
 				blt_value = ((blt_data[blt_source+1]<<8)|(blt_data[blt_source+0]))^0xffff;
 				blt_source+=2;
 
@@ -693,13 +693,13 @@ void rabbit_do_blit(void)
 				break;
 
 			case 0x03: /* next line */
-				if(BLITLOG) printf("blit: move to next line\n");
+				if(BLITLOG) mame_printf_debug("blit: move to next line\n");
 				blt_column = (rabbit_blitterregs[1]&0x00ff0000)>>16; /* --CC---- */
 				blt_oddflg+=128;
 				break;
 
 			default: /* unknown / illegal */
-				if(BLITLOG) printf("uknown blit command %02x\n",blt_commnd);
+				if(BLITLOG) mame_printf_debug("uknown blit command %02x\n",blt_commnd);
 				break;
 		}
 	}

@@ -47,7 +47,7 @@ static UINT8 *main_ram;
 static int dipsw_bank;
 static WRITE8_HANDLER( dipsw_bank_w )
 {
-//  printf("bank = %x\n",data);
+//  mame_printf_debug("bank = %x\n",data);
 	dipsw_bank = data;
 }
 

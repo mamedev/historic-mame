@@ -84,7 +84,7 @@ static READ32_HANDLER( sysreg_r )
 			return 0;
 		}
 	}
-	printf("sysreg_r: %08X, %08X at %08X\n", offset, mem_mask, activecpu_get_pc());
+	mame_printf_debug("sysreg_r: %08X, %08X at %08X\n", offset, mem_mask, activecpu_get_pc());
 	return r;
 }
 
@@ -104,11 +104,11 @@ static WRITE32_HANDLER( sysreg_w )
 	else if( offset == 1 ) {
 		if (!(mem_mask & 0xff000000))
 		{
-			printf("sysreg_w: %08X, %08X, %08X\n", data, offset, mem_mask);
+			mame_printf_debug("sysreg_w: %08X, %08X, %08X\n", data, offset, mem_mask);
 		}
 		return;
 	}
-	printf("sysreg_w: %08X, %08X, %08X\n", offset, data, mem_mask);
+	mame_printf_debug("sysreg_w: %08X, %08X, %08X\n", offset, data, mem_mask);
 }
 
 static UINT8 sndto68k[16], sndtoppc[16];	/* read/write split mapping */

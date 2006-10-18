@@ -26,9 +26,9 @@
 #endif
 
 #if (VERBOSE && PRINTF_IDE_COMMANDS)
-#define LOGPRINT(x)	logerror x; printf x
+#define LOGPRINT(x)	logerror x; mame_printf_debug x
 #elif PRINTF_IDE_COMMANDS
-#define LOGPRINT(x)	printf x
+#define LOGPRINT(x)	mame_printf_debug x
 #else
 #define LOGPRINT(X)
 #endif
@@ -319,7 +319,7 @@ int ide_controller_init_custom(int which, struct ide_interface *intf, chd_file *
 			/* wrong sector len */
 			return 1;
 #if PRINTF_IDE_COMMANDS
-		printf("CHS: %d %d %d\n", ide->num_cylinders, ide->num_heads, ide->num_sectors);
+		mame_printf_debug("CHS: %d %d %d\n", ide->num_cylinders, ide->num_heads, ide->num_sectors);
 #endif
 	}
 
@@ -1476,12 +1476,12 @@ static void ide_controller_write(struct ide_state *ide, offs_t offset, int size,
 							for (i = 0; i < 34; i += 2)
 							{
 								if (i % 8 == 2)
-									printf("\n");
+									mame_printf_debug("\n");
 
-								printf("0x%02x, 0x%02x, ", ide->buffer[i], ide->buffer[i + 1]);
-								//printf("0x%02x%02x, ", ide->buffer[i], ide->buffer[i + 1]);
+								mame_printf_debug("0x%02x, 0x%02x, ", ide->buffer[i], ide->buffer[i + 1]);
+								//mame_printf_debug("0x%02x%02x, ", ide->buffer[i], ide->buffer[i + 1]);
 							}
-							printf("\n");
+							mame_printf_debug("\n");
 						}
 #endif
 

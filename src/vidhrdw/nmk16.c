@@ -304,7 +304,7 @@ static int mustang_bg_xscroll;
 
 WRITE16_HANDLER( mustang_scroll_w )
 {
-//  printf("mustang %04x %04x %04x\n",offset,data,mem_mask);
+//  mame_printf_debug("mustang %04x %04x %04x\n",offset,data,mem_mask);
 
 	switch (data & 0xff00)
 	{

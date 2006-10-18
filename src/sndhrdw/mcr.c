@@ -663,7 +663,7 @@ READ8_HANDLER( soundsgood_status_r )
 
 void soundsgood_reset_w(int state)
 {
-//if (state) printf("SG Reset\n");
+//if (state) mame_printf_debug("SG Reset\n");
 	cpunum_set_input_line(soundsgood_sound_cpu, INPUT_LINE_RESET, state ? ASSERT_LINE : CLEAR_LINE);
 }
 

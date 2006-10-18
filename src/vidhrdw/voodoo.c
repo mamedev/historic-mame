@@ -1135,7 +1135,7 @@ static void recompute_video_memory(voodoo_state *v)
 		v->fbi.auxmax = (UINT16 *)((UINT8 *)v->fbi.ram + v->fbi.mask + 1) - v->fbi.aux;
 	}
 
-/*  printf("rgb[0] = %08X   rgb[1] = %08X   rgb[2] = %08X   aux = %08X\n",
+/*  mame_printf_debug("rgb[0] = %08X   rgb[1] = %08X   rgb[2] = %08X   aux = %08X\n",
             (UINT8 *)v->fbi.rgb[0] - (UINT8 *)v->fbi.ram,
             (UINT8 *)v->fbi.rgb[1] - (UINT8 *)v->fbi.ram,
             v->fbi.rgb[2] ? ((UINT8 *)v->fbi.rgb[2] - (UINT8 *)v->fbi.ram) : 0,
@@ -1357,7 +1357,7 @@ static void recompute_texture_params(tmu_state *t)
 
 	/* start with the base of LOD 0 */
 	if (t->texaddr_shift == 0 && (t->reg[texBaseAddr].u & 1))
-		printf("Tiled texture\n");
+		mame_printf_debug("Tiled texture\n");
 	base = (t->reg[texBaseAddr].u & t->texaddr_mask) << t->texaddr_shift;
 	t->lodoffset[0] = base & t->mask;
 
@@ -1588,7 +1588,7 @@ static int cmdfifo_compute_expected_depth(voodoo_state *v, cmdfifo_info *f)
 			return 2 + ((command >> 3) & 0x7ffff);
 
 		default:
-			printf("UNKNOWN PACKET TYPE %d\n", command & 7);
+			mame_printf_debug("UNKNOWN PACKET TYPE %d\n", command & 7);
 			return 1;
 	}
 	return 1;
@@ -1640,7 +1640,7 @@ static UINT32 cmdfifo_execute(voodoo_state *v, cmdfifo_info *f)
 
 				case 1:		/* JSR */
 					if (LOG_CMDFIFO) logerror("  JSR $%06X\n", target);
-					printf("JSR in CMDFIFO!\n");
+					mame_printf_debug("JSR in CMDFIFO!\n");
 					src = &fifobase[target / 4];
 					break;
 
@@ -1661,7 +1661,7 @@ static UINT32 cmdfifo_execute(voodoo_state *v, cmdfifo_info *f)
 					break;
 
 				default:
-					printf("INVALID JUMP COMMAND!\n");
+					mame_printf_debug("INVALID JUMP COMMAND!\n");
 					fatalerror("  INVALID JUMP COMMAND");
 					break;
 			}
@@ -4783,7 +4783,7 @@ static raster_info *add_rasterizer(voodoo_state *v, const raster_info *cinfo)
 	v->raster_hash[hash] = info;
 
 	if (LOG_RASTERIZERS)
-		printf("Adding rasterizer @ %08X : %08X %08X %08X %08X %08X %08X (hash=%d)\n",
+		mame_printf_debug("Adding rasterizer @ %08X : %08X %08X %08X %08X %08X %08X (hash=%d)\n",
 				(UINT32)info->callback,
 				info->eff_color_path, info->eff_alpha_mode, info->eff_fog_mode, info->eff_fbz_mode,
 				info->eff_tex_mode_0, info->eff_tex_mode_1, hash);
@@ -4850,7 +4850,7 @@ static void dump_rasterizer_stats(voodoo_state *v)
 	raster_info *cur, *best;
 	int hash;
 
-	printf("----\n");
+	mame_printf_debug("----\n");
 
 	/* loop until we've displayed everything */
 	while (1)
@@ -4868,7 +4868,7 @@ static void dump_rasterizer_stats(voodoo_state *v)
 			break;
 
 		/* print it */
-		printf("%9d  %10d %c  ( 0x%08X,  0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X )\n",
+		mame_printf_debug("%9d  %10d %c  ( 0x%08X,  0x%08X, 0x%08X, 0x%08X, 0x%08X, 0x%08X )\n",
 			best->polys,
 			best->hits,
 			best->is_generic ? '*' : ' ',

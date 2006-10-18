@@ -210,7 +210,7 @@ static READ16_HANDLER( network_r )
 	switch(offset)
 	{
 		case 0x002/2:
-			//printf("read at %06x %01x\n",activecpu_get_pc(),cpu_getactivecpu());
+			//mame_printf_debug("read at %06x %01x\n",activecpu_get_pc(),cpu_getactivecpu());
 			if(MASTER_CPU)
 				return slave_tx;//master RX
 			else if(SLAVE_CPU)

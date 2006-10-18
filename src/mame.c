@@ -171,6 +171,10 @@ running_machine *Machine;
 /* various game options filled in by the OSD */
 global_options options;
 
+/* output channels */
+static output_callback output_cb[OUTPUT_CHANNEL_COUNT];
+static void *output_cb_param[OUTPUT_CHANNEL_COUNT];
+
 /* the "disclaimer" that should be printed when run with no parameters */
 const char *mame_disclaimer =
 	"MAME is an emulator: it reproduces, more or less faithfully, the behaviour of\n"
@@ -732,6 +736,174 @@ UINT32 memory_region_flags(running_machine *machine, int num)
 
 
 /***************************************************************************
+    OUTPUT MANAGEMENT
+***************************************************************************/
+
+/*-------------------------------------------------
+    mame_set_output_channel - configure an output
+    channel
+-------------------------------------------------*/
+
+void mame_set_output_channel(output_channel channel, output_callback callback, void *param, output_callback *prevcb, void **prevparam)
+{
+	assert(channel < OUTPUT_CHANNEL_COUNT);
+	assert(callback != NULL);
+
+	/* return the originals if requested */
+	if (prevcb != NULL)
+		*prevcb = output_cb[channel];
+	if (prevparam != NULL)
+		*prevparam = output_cb_param[channel];
+
+	/* set the new ones */
+	output_cb[channel] = callback;
+	output_cb_param[channel] = param;
+}
+
+
+/*-------------------------------------------------
+    mame_file_output_callback - default callback
+    for file output
+-------------------------------------------------*/
+
+void mame_file_output_callback(void *param, const char *format, va_list argptr)
+{
+	vfprintf((FILE *)param, format, argptr);
+}
+
+
+/*-------------------------------------------------
+    mame_null_output_callback - default callback
+    for no output
+-------------------------------------------------*/
+
+void mame_null_output_callback(void *param, const char *format, va_list argptr)
+{
+}
+
+
+/*-------------------------------------------------
+    mame_printf_error - output an error to the
+    appropriate callback
+-------------------------------------------------*/
+
+void mame_printf_error(const char *format, ...)
+{
+	va_list argptr;
+
+	/* by default, we go to stderr */
+	if (output_cb[OUTPUT_CHANNEL_ERROR] == NULL)
+	{
+		output_cb[OUTPUT_CHANNEL_ERROR] = mame_file_output_callback;
+		output_cb_param[OUTPUT_CHANNEL_ERROR] = stderr;
+	}
+
+	/* do the output */
+	va_start(argptr, format);
+	(*output_cb[OUTPUT_CHANNEL_ERROR])(output_cb_param[OUTPUT_CHANNEL_ERROR], format, argptr);
+	va_end(argptr);
+}
+
+
+/*-------------------------------------------------
+    mame_printf_warning - output a warning to the
+    appropriate callback
+-------------------------------------------------*/
+
+void mame_printf_warning(const char *format, ...)
+{
+	va_list argptr;
+
+	/* by default, we go to stderr */
+	if (output_cb[OUTPUT_CHANNEL_WARNING] == NULL)
+	{
+		output_cb[OUTPUT_CHANNEL_WARNING] = mame_file_output_callback;
+		output_cb_param[OUTPUT_CHANNEL_WARNING] = stderr;
+	}
+
+	/* do the output */
+	va_start(argptr, format);
+	(*output_cb[OUTPUT_CHANNEL_WARNING])(output_cb_param[OUTPUT_CHANNEL_WARNING], format, argptr);
+	va_end(argptr);
+}
+
+
+/*-------------------------------------------------
+    mame_printf_info - output info text to the
+    appropriate callback
+-------------------------------------------------*/
+
+void mame_printf_info(const char *format, ...)
+{
+	va_list argptr;
+
+	/* by default, we go to stdout */
+	if (output_cb[OUTPUT_CHANNEL_INFO] == NULL)
+	{
+		output_cb[OUTPUT_CHANNEL_INFO] = mame_file_output_callback;
+		output_cb_param[OUTPUT_CHANNEL_INFO] = stdout;
+	}
+
+	/* do the output */
+	va_start(argptr, format);
+	(*output_cb[OUTPUT_CHANNEL_INFO])(output_cb_param[OUTPUT_CHANNEL_INFO], format, argptr);
+	va_end(argptr);
+}
+
+
+/*-------------------------------------------------
+    mame_printf_debug - output debug text to the
+    appropriate callback
+-------------------------------------------------*/
+
+void mame_printf_debug(const char *format, ...)
+{
+	va_list argptr;
+
+	/* by default, we go to stderr */
+	if (output_cb[OUTPUT_CHANNEL_DEBUG] == NULL)
+	{
+#ifdef MAME_DEBUG
+		output_cb[OUTPUT_CHANNEL_DEBUG] = mame_file_output_callback;
+		output_cb_param[OUTPUT_CHANNEL_DEBUG] = stdout;
+#else
+		output_cb[OUTPUT_CHANNEL_DEBUG] = mame_null_output_callback;
+		output_cb_param[OUTPUT_CHANNEL_DEBUG] = NULL;
+#endif
+	}
+
+	/* do the output */
+	va_start(argptr, format);
+	(*output_cb[OUTPUT_CHANNEL_DEBUG])(output_cb_param[OUTPUT_CHANNEL_DEBUG], format, argptr);
+	va_end(argptr);
+}
+
+
+/*-------------------------------------------------
+    mame_printf_log - output log text to the
+    appropriate callback
+-------------------------------------------------*/
+
+void mame_printf_log(const char *format, ...)
+{
+	va_list argptr;
+
+	/* by default, we go to stderr */
+	if (output_cb[OUTPUT_CHANNEL_LOG] == NULL)
+	{
+		output_cb[OUTPUT_CHANNEL_LOG] = mame_file_output_callback;
+		output_cb_param[OUTPUT_CHANNEL_LOG] = stderr;
+	}
+
+	/* do the output */
+	va_start(argptr, format);
+	(*output_cb[OUTPUT_CHANNEL_LOG])(output_cb_param[OUTPUT_CHANNEL_LOG], format, argptr);
+	va_end(argptr);
+}
+
+
+
+/***************************************************************************
     MISCELLANEOUS
 ***************************************************************************/
 
@@ -743,7 +915,7 @@ UINT32 memory_region_flags(running_machine *machine, int num)
 static void fatalerror_common(running_machine *machine, int exitcode, const char *buffer)
 {
 	/* output and return */
-	printf("%s\n", giant_string_buffer);
+	mame_printf_error("%s\n", giant_string_buffer);
 
 	/* break into the debugger if attached */
 	osd_break_into_debugger(giant_string_buffer);
@@ -1053,8 +1225,7 @@ static void init_machine(running_machine *machine)
 
 #ifdef MESS
 	/* initialize the devices */
-	if (devices_init(machine))
-		fatalerror("devices_init failed");
+	devices_init(machine);
 #endif
 
 	/* start the save/load system */

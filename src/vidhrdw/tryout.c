@@ -170,7 +170,7 @@ static UINT32 get_bg_memory_offset( UINT32 col, UINT32 row, UINT32 num_cols, UIN
 //  else
 		a= (7 - (row & 7)) + ((0x8 - (row & 0x8)) << 4) + ((col & 0xf) << 3) + (( (  (col & 0x10) ) ) << 4) + ((( (col & 0x20))) << 4);
 
-//  printf("%d %d -> %d\n",col,row, a);
+//  mame_printf_debug("%d %d -> %d\n",col,row, a);
 	return a;
 }
 

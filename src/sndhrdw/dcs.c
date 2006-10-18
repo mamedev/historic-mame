@@ -1668,12 +1668,12 @@ static void timer_enable_callback(int enable)
 	dcs.timer_ignore = 0;
 	if (enable)
 	{
-//      printf("Timer enabled @ %d cycles/int, or %f Hz\n", dcs.timer_scale * (dcs.timer_period + 1), 1.0 / TIME_IN_CYCLES(dcs.timer_scale * (dcs.timer_period + 1), dcs.cpunum));
+//      mame_printf_debug("Timer enabled @ %d cycles/int, or %f Hz\n", dcs.timer_scale * (dcs.timer_period + 1), 1.0 / TIME_IN_CYCLES(dcs.timer_scale * (dcs.timer_period + 1), dcs.cpunum));
 		reset_timer();
 	}
 	else
 	{
-//      printf("Timer disabled\n");
+//      mame_printf_debug("Timer disabled\n");
 		timer_adjust(dcs.internal_timer, TIME_NEVER, 0, 0);
 	}
 }

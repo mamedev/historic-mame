@@ -432,7 +432,7 @@ DrawPoly( mame_bitmap *bitmap, const UINT32 *pSource, int n, int bNew )
 	int i;
 	if( bNew )
 	{
-		printf( "polydata: 0x%08x 0x%08x 0x%08x\n", flags, unk, intensity );
+		mame_printf_debug( "polydata: 0x%08x 0x%08x 0x%08x\n", flags, unk, intensity );
 	}
 	for( i=0; i<n; i++ )
 	{
@@ -442,7 +442,7 @@ DrawPoly( mame_bitmap *bitmap, const UINT32 *pSource, int n, int bNew )
 
 		if( bNew )
 		{
-			printf( "\t(%f,%f,%f)\n", x[i], y[i], z[i] );
+			mame_printf_debug( "\t(%f,%f,%f)\n", x[i], y[i], z[i] );
 		}
 	}
 	for( i=0; i<n; i++ )
@@ -460,7 +460,7 @@ DrawPoly( mame_bitmap *bitmap, const UINT32 *pSource, int n, int bNew )
 			int y1 = bitmap->width*y[j]/z1 + bitmap->height/2;
 			if( bNew )
 			{
-				printf( "[%d,%d]..[%d,%d]\n", x0,y0,x1,y1 );
+				mame_printf_debug( "[%d,%d]..[%d,%d]\n", x0,y0,x1,y1 );
 			}
 			DrawLine( bitmap, x0,y0,x1,y1 );
 		}
@@ -502,7 +502,7 @@ VIDEO_UPDATE( ss23 )
 			break;
 
 		default:
-			printf( "unk opcode: 0x%x\n", opcode );
+			mame_printf_debug( "unk opcode: 0x%x\n", opcode );
 			bDone = 1;
 			break;
 		}
@@ -606,7 +606,7 @@ static READ32_HANDLER(sysctl_stat_r)
 // as with System 22, we need to halt the MCU while checking shared RAM
 static WRITE32_HANDLER( s23_mcuen_w )
 {
-	printf("mcuen_w: mask %08x, data %08x\n", mem_mask, data);
+	mame_printf_debug("mcuen_w: mask %08x, data %08x\n", mem_mask, data);
 	if (mem_mask == 0xffff0000)
 	{
 		if (data)

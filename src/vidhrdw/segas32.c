@@ -2164,10 +2164,10 @@ static void mix_all_layers(int which, int xoffs, mame_bitmap *bitmap, const rect
     static const char *layname[] = { "TEXT", "NBG0", "NBG1", "NBG2", "NBG3", "BITM", "SPRI", "LINE" };
     for (groupnum = 0; groupnum <= sprgroup_mask; groupnum++)
     {
-        printf("%X: ", groupnum);
+        mame_printf_debug("%X: ", groupnum);
         for (i = 0; i <= numlayers; i++)
-            printf("%s(%02X) ", layname[layerorder[groupnum][i].index], layerorder[groupnum][i].effpri);
-        printf("\n");
+            mame_printf_debug("%s(%02X) ", layname[layerorder[groupnum][i].index], layerorder[groupnum][i].effpri);
+        mame_printf_debug("\n");
     }
 }*/
 
@@ -2369,9 +2369,9 @@ static void print_mixer_data(int which)
 	static int count = 0;
 	if (++count > 60 * 5)
 	{
-		printf("\n");
-		printf("OP: %04X\n", system32_videoram[0x1ff8e/2]);
-		printf("SC: %04X %04X %04X %04X - %04X %04X %04X %04X\n",
+		mame_printf_debug("\n");
+		mame_printf_debug("OP: %04X\n", system32_videoram[0x1ff8e/2]);
+		mame_printf_debug("SC: %04X %04X %04X %04X - %04X %04X %04X %04X\n",
 			sprite_control_latched[0x00],
 			sprite_control_latched[0x01],
 			sprite_control_latched[0x02],
@@ -2380,7 +2380,7 @@ static void print_mixer_data(int which)
 			sprite_control_latched[0x05],
 			sprite_control_latched[0x06],
 			sprite_control_latched[0x07]);
-		printf("00: %04X %04X %04X %04X - %04X %04X %04X %04X - %04X %04X %04X %04X - %04X %04X %04X %04X\n",
+		mame_printf_debug("00: %04X %04X %04X %04X - %04X %04X %04X %04X - %04X %04X %04X %04X - %04X %04X %04X %04X\n",
 			mixer_control[which][0x00],
 			mixer_control[which][0x01],
 			mixer_control[which][0x02],
@@ -2397,7 +2397,7 @@ static void print_mixer_data(int which)
 			mixer_control[which][0x0d],
 			mixer_control[which][0x0e],
 			mixer_control[which][0x0f]);
-		printf("20: %04X %04X %04X %04X - %04X %04X %04X %04X - %04X %04X %04X %04X - %04X %04X %04X %04X\n",
+		mame_printf_debug("20: %04X %04X %04X %04X - %04X %04X %04X %04X - %04X %04X %04X %04X - %04X %04X %04X %04X\n",
 			mixer_control[which][0x10],
 			mixer_control[which][0x11],
 			mixer_control[which][0x12],
@@ -2414,7 +2414,7 @@ static void print_mixer_data(int which)
 			mixer_control[which][0x1d],
 			mixer_control[which][0x1e],
 			mixer_control[which][0x1f]);
-		printf("40: %04X %04X %04X %04X - %04X %04X %04X %04X - %04X %04X %04X %04X - %04X %04X %04X %04X\n",
+		mame_printf_debug("40: %04X %04X %04X %04X - %04X %04X %04X %04X - %04X %04X %04X %04X - %04X %04X %04X %04X\n",
 			mixer_control[which][0x20],
 			mixer_control[which][0x21],
 			mixer_control[which][0x22],

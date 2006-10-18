@@ -13,7 +13,7 @@
 #define SAVE_DISASM						0
 #define SAVE_DMEM						0
 
-#define PRINT_VECREG(x)		printf("V%d: %04X|%04X|%04X|%04X|%04X|%04X|%04X|%04X\n", (x), \
+#define PRINT_VECREG(x)		mame_printf_debug("V%d: %04X|%04X|%04X|%04X|%04X|%04X|%04X|%04X\n", (x), \
 							(UINT16)VREG_S((x),0), (UINT16)VREG_S((x),1), \
 							(UINT16)VREG_S((x),2), (UINT16)VREG_S((x),3), \
 							(UINT16)VREG_S((x),4), (UINT16)VREG_S((x),5), \
@@ -279,7 +279,7 @@ static void unimplemented_opcode(UINT32 op)
 #ifdef MAME_DEBUG
 	char string[200];
 	rsp_dasm_one(string, rsp.ppc, op);
-	printf("%08X: %s\n", rsp.ppc, string);
+	mame_printf_debug("%08X: %s\n", rsp.ppc, string);
 #endif
 
 #if SAVE_DISASM
@@ -906,7 +906,7 @@ static void handle_swc2(UINT32 op)
 
 			// FIXME: only works for index 0 and index 8
 
-			if (index & 0x7)	printf("RSP: SFV: index = %d at %08X\n", index, rsp.ppc);
+			if (index & 0x7)	mame_printf_debug("RSP: SFV: index = %d at %08X\n", index, rsp.ppc);
 
 			ea = (base) ? rsp.r[base] + (offset * 16) : (offset * 16);
 

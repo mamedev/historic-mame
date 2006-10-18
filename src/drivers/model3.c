@@ -812,7 +812,7 @@ static READ64_HANDLER( real3d_dma_r )
 			}
 			break;
 	}
-	printf("real3d_dma_r: %08X, %08X%08X\n", offset, (UINT32)(mem_mask >> 32), (UINT32)(mem_mask));
+	mame_printf_debug("real3d_dma_r: %08X, %08X%08X\n", offset, (UINT32)(mem_mask >> 32), (UINT32)(mem_mask));
 	return 0;
 }
 
@@ -1167,7 +1167,7 @@ static WRITE64_HANDLER( model3_ctrl_w )
 						}
 						break;
 					default:
-						//printf("Lightgun: Unknown command %02X at %08X\n", (UINT32)(data >> 24), activecpu_get_pc());
+						//mame_printf_debug("Lightgun: Unknown command %02X at %08X\n", (UINT32)(data >> 24), activecpu_get_pc());
 						break;
 				}
 			}
@@ -1304,14 +1304,14 @@ static WRITE64_HANDLER(model3_sound_w)
 static UINT64 network_ram[0x10000];
 static READ64_HANDLER(network_r)
 {
-	printf("network_r: %02X at %08X\n", offset, activecpu_get_pc());
+	mame_printf_debug("network_r: %02X at %08X\n", offset, activecpu_get_pc());
 	return network_ram[offset];
 }
 
 static WRITE64_HANDLER(network_w)
 {
 	COMBINE_DATA(network_ram + offset);
-	printf("network_w: %02X, %08X%08X at %08X\n", offset, (UINT32)(data >> 32), (UINT32)(data), activecpu_get_pc());
+	mame_printf_debug("network_w: %02X, %08X%08X at %08X\n", offset, (UINT32)(data >> 32), (UINT32)(data), activecpu_get_pc());
 }
 
 static int prot_data_ptr = 0;

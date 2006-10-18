@@ -512,7 +512,7 @@ INLINE void sega005_update_sound_data(void)
 	UINT8 newval = memory_region(REGION_SOUND1)[sound_addr];
 	UINT8 diff = newval ^ sound_data;
 
-	//printf("  [%03X] = %02X\n", sound_addr, newval);
+	//mame_printf_debug("  [%03X] = %02X\n", sound_addr, newval);
 
 	/* latch the new value */
 	sound_data = newval;
@@ -520,14 +520,14 @@ INLINE void sega005_update_sound_data(void)
 	/* if bit 5 goes high, we reset the timer */
 	if ((diff & 0x20) && !(newval & 0x20))
 	{
-		//printf("Stopping timer\n");
+		//mame_printf_debug("Stopping timer\n");
 		timer_adjust(sega005_sound_timer, TIME_NEVER, 0, TIME_NEVER);
 	}
 
 	/* if bit 5 goes low, we start the timer again */
 	if ((diff & 0x20) && (newval & 0x20))
 	{
-		//printf("Starting timer\n");
+		//mame_printf_debug("Starting timer\n");
 		timer_adjust(sega005_sound_timer, TIME_IN_HZ(SEGA005_555_TIMER_FREQ), 0, TIME_IN_HZ(SEGA005_555_TIMER_FREQ));
 	}
 }
@@ -544,7 +544,7 @@ WRITE8_HANDLER( sega005_sound_b_w )
 	UINT8 diff = data ^ sound_state[1];
 	sound_state[1] = data;
 
-	//printf("sound[%d] = %02X\n", 1, data);
+	//mame_printf_debug("sound[%d] = %02X\n", 1, data);
 
 	/* force a stream update */
 	stream_update(sega005_stream, 0);

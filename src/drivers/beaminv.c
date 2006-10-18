@@ -5,10 +5,49 @@
     driver by Zsolt Vasvari
 
     Games supported:
-        * Beam Invader
+        * Beam Invader (2 sets)
 
     Known issues:
         * Port 0 might be a analog port select
+
+
+Stephh's notes (based on the games Z80 code and some tests) :
+
+  - The min/max values for the controllers might not be accurate, but I have no infos at all.
+    So I put the min/max values from what I see in the Z80 code (see below).
+  - Is the visible area correct ? The invaders and the ship don't reach the left part of the screen !
+
+1) 'beaminv'
+
+  - Routine to handle the analog inputs at 0x0521.
+    Contents from 0x3400 (IN2) is compared with contents from 0x1d25 (value in RAM).
+    Contents from 0x3400 is not limited but contents from 0x1d25 range is the following :
+      . player 1 : min = 0x1c - max = 0xd1
+      . player 2 : min = 0x2d - max = 0xe2
+    This is why sometimes the ship moves even if you don't do anything !
+  - Screen flipping is internally handled (no specific write to memory or out to a port).
+  - I can't tell if controller select is handled with a out to port 0 but I haven't found
+    any other write to memory or out to another port.
+  - Player's turn is handled by multiple reads from 0x1839 in RAM :
+      . 1 player  game : [0x1839] = 0x00
+      . 2 players game : [0x1839] = 0xaa (player 1) or 0x55 (player 2)
+  - Credits are stored at address 0x1837 (BCD coded, range 0x00-0x99)
+
+2) 'beaminva'
+
+  - Routine to handle the analog inputs at 0x04bd.
+    Contents from 0x3400 (IN2) is compared with contents from 0x1d05 (value in RAM).
+    Contents from 0x3400 is limited to range 0x35-0x95 but contents from 0x1d05 range is the following :
+      . player 1 : min = 0x1c - max = 0xd1
+      . player 2 : min = 0x2d - max = 0xe2
+    This is why sometimes the ship moves even if you don't do anything !
+  - Screen flipping is internally handled (no specific write to memory or out to a port).
+  - I can't tell if controller select is handled with a out to port 0 but I haven't found
+    any other write to memory or out to another port.
+  - Player's turn is handled by multiple reads from 0x1838 in RAM :
+      . 1 player  game : [0x1838] = 0x00
+      . 2 players game : [0x1838] = 0xaa (player 1) or 0x55 (player 2)
+  - Credits are stored at address 0x1836 (BCD coded, range 0x00-0x99)
 
 ***************************************************************************/
 
@@ -22,9 +61,23 @@
  *
  ****************************************************************/
 
+int beaminv_controller_select;
+
+static WRITE8_HANDLER( beaminv_controller_select_w )
+{
+	/* 1 player game : 0x01 - 2 players game : 0x01 (player 1) or 0x02 (player 2) */
+	beaminv_controller_select = data;
+}
+
+
+static READ8_HANDLER( beaminv_input_port_2_r )
+{
+	return (readinputport(2 + (beaminv_controller_select - 1)));
+}
+
 static READ8_HANDLER( beaminv_input_port_3_r )
 {
-	return (input_port_3_r(offset) & 0xfe) | ((cpu_getscanline() >> 7) & 0x01);
+	return (readinputportbytag("IN3") & 0xfe) | ((cpu_getscanline() >> 7) & 0x01);
 }
 
 
@@ -39,7 +92,7 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x1800, 0x1fff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x2400, 0x2400) AM_READ(input_port_0_r)
 	AM_RANGE(0x2800, 0x28ff) AM_READ(input_port_1_r)
-	AM_RANGE(0x3400, 0x3400) AM_READ(input_port_2_r)
+	AM_RANGE(0x3400, 0x3400) AM_READ(beaminv_input_port_2_r)
 	AM_RANGE(0x3800, 0x3800) AM_READ(beaminv_input_port_3_r)
 	AM_RANGE(0x4000, 0x5fff) AM_READ(MRA8_RAM)
 ADDRESS_MAP_END
@@ -59,6 +112,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE(0x00, 0x00) AM_WRITE(beaminv_controller_select_w) /* to be confirmed */
 ADDRESS_MAP_END
 
 
@@ -69,44 +123,88 @@ ADDRESS_MAP_END
  *************************************/
 
 INPUT_PORTS_START( beaminv )
-	PORT_START      /* IN0 */
+	PORT_START                /* IN0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
 	PORT_DIPSETTING(    0x01, "4" )
 	PORT_DIPSETTING(    0x02, "5" )
 	PORT_DIPSETTING(    0x03, "6" )
-	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Bonus_Life ) )
+	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Bonus_Life ) )       /* value at 0x183b in RAM - code at 0x01c8 */
 	PORT_DIPSETTING(    0x00, "1000" )
 	PORT_DIPSETTING(    0x04, "2000" )
 	PORT_DIPSETTING(    0x08, "3000" )
 	PORT_DIPSETTING(    0x0c, "4000" )
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )		/* probably unused */
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x60, 0x40, "Faster Bombs At" )
+	PORT_DIPNAME( 0x60, 0x00, "Faster Bombs At" )           /* table at 0x1777 in ROM - code at 0x16ac */
 	PORT_DIPSETTING(    0x00, "49 Enemies" )
 	PORT_DIPSETTING(    0x20, "39 Enemies" )
 	PORT_DIPSETTING(    0x40, "29 Enemies" )
 	PORT_DIPSETTING(    0x60, "Never" )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )		/* probably unused */
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-	PORT_START      /* IN1 */
+	PORT_START                /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_COCKTAIL
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
 	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	PORT_START      /* IN2 */
-	PORT_BIT( 0xff, 0x00, IPT_PADDLE ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(20) PORT_KEYDELTA(10) PORT_CENTERDELTA(0)
+	PORT_START                /* IN2 for player 1 */
+	PORT_BIT( 0xff, 0x80, IPT_PADDLE ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(20) PORT_KEYDELTA(10) PORT_CENTERDELTA(0) PORT_PLAYER(1)
+	PORT_START                /* FAKE IN2 for player 2 */
+	PORT_BIT( 0xff, 0x80, IPT_PADDLE ) PORT_MINMAX(0x00,0xff) PORT_SENSITIVITY(20) PORT_KEYDELTA(10) PORT_CENTERDELTA(0) PORT_PLAYER(2)
 
-	PORT_START      /* IN3 */
+	PORT_START_TAG("IN3")     /* IN3 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SPECIAL )  /* should be V128, using VBLANK slows game down */
 	PORT_BIT( 0xfe, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_END
 
+
+INPUT_PORTS_START( beaminva )
+	PORT_START                /* IN0 */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Bonus_Life ) )       /* value at 0x183a in RAM - code at 0x01bf */
+	PORT_DIPSETTING(    0x00, "1500" )
+	PORT_DIPSETTING(    0x04, "2000" )
+	PORT_DIPSETTING(    0x08, "2500" )
+	PORT_DIPSETTING(    0x0c, "3000" )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x60, 0x00, "Faster Bombs At" )           /* table at 0x1777 in ROM - code at 0x166d */
+	PORT_DIPSETTING(    0x00, "44 Enemies" )
+	PORT_DIPSETTING(    0x20, "39 Enemies" )
+	PORT_DIPSETTING(    0x40, "34 Enemies" )
+	PORT_DIPSETTING(    0x40, "29 Enemies" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START                /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START                /* IN2 for player 1 */
+	PORT_BIT( 0xff, 0x65, IPT_PADDLE ) PORT_MINMAX(0x35,0x95) PORT_SENSITIVITY(20) PORT_KEYDELTA(10) PORT_CENTERDELTA(0) PORT_PLAYER(1)
+	PORT_START                /* FAKE IN2 for player 2 */
+	PORT_BIT( 0xff, 0x65, IPT_PADDLE ) PORT_MINMAX(0x35,0x95) PORT_SENSITIVITY(20) PORT_KEYDELTA(10) PORT_CENTERDELTA(0) PORT_PLAYER(2)
+
+	PORT_START_TAG("IN3")     /* IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SPECIAL )  /* should be V128, using VBLANK slows game down */
+	PORT_BIT( 0xfe, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 
@@ -165,13 +263,11 @@ ROM_START( beaminva )
 ROM_END
 
 
-
-
 /*************************************
  *
  *  Game drivers
  *
  *************************************/
 
-GAME( 19??, beaminv,  0      , beaminv, beaminv, 0, ROT0, "Tekunon Kougyou", "Beam Invader", GAME_NO_SOUND)
-GAME( 1979, beaminva, beaminv, beaminv, beaminv, 0, ROT0, "Tekunon Kougyou", "Beam Invader (set 2)", GAME_NO_SOUND) // what's the real title?
+GAME( 19??, beaminv,  0      ,  beaminv,  beaminv,  0, ROT0, "Tekunon Kougyou", "Beam Invader (set 1)", GAME_NO_SOUND)
+GAME( 1979, beaminva, beaminv,  beaminv,  beaminva, 0, ROT0, "Tekunon Kougyou", "Beam Invader (set 2)", GAME_NO_SOUND) // what's the real title ?

@@ -22,6 +22,8 @@
 
 #include "cpuintrf.h"
 
+#define mame_printf_debug printf
+
 typedef unsigned char byte;
 
 #define FMT(a,b) a, b
@@ -166,12 +168,12 @@ static void InitDasm8039(void)
 				bit --;
 				break;
 			default:
-				printf("Invalid instruction encoding '%s %s'\n", ops[0],ops[1]);
+				mame_printf_debug("Invalid instruction encoding '%s %s'\n", ops[0],ops[1]);
 				exit(1);
 		}
 	}
 	if (bit != -1 ) {
-		printf("not enough bits in encoding '%s %s' %d\n", ops[0],ops[1],bit);
+		mame_printf_debug("not enough bits in encoding '%s %s' %d\n", ops[0],ops[1],bit);
 		exit(1);
 	}
 	while (isspace(*p)) p++;
@@ -250,7 +252,7 @@ unsigned Dasm8039(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes
 
 	while (bit >= 0)
 	{
-		/* printf("{%c/%d}",*cp,bit); */
+		/* mame_printf_debug("{%c/%d}",*cp,bit); */
 		switch(*cp)
 		{
 			case 'a': a <<=1; a |= ((code & (1<<bit)) ? 1 : 0); bit--; break;
@@ -260,7 +262,7 @@ unsigned Dasm8039(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes
 			case 'p': p <<=1; p |= ((code & (1<<bit)) ? 1 : 0); bit--; break;
 			case ' ': break;
 			case '1': case '0': bit--; break;
-			case '\0': printf("premature end of parse string, opcode %x, bit = %d\n",code,bit); exit(1);
+			case '\0': mame_printf_debug("premature end of parse string, opcode %x, bit = %d\n",code,bit); exit(1);
 		}
 		cp++;
 	}
@@ -283,7 +285,7 @@ unsigned Dasm8039(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes
 				case 'R': sprintf(num,"r%d",r); break;
 				case 'P': sprintf(num,"p%d",p); break;
 				default:
-					printf("illegal escape character in format '%s'\n",Op[op].fmt);
+					mame_printf_debug("illegal escape character in format '%s'\n",Op[op].fmt);
 					exit(1);
 			}
 			q = num; while (*q) *buffer++ = *q++;

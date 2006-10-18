@@ -534,7 +534,7 @@ static DRIVER_INIT( couple )
 			if(ROM[0x14000+i] == ROM[0x16000+i])
 				r++;
 		}
-		printf("%02x (in HEX) identical bytes (no offset done)\n",r);
+		mame_printf_debug("%02x (in HEX) identical bytes (no offset done)\n",r);
 	}
 	#endif
 

@@ -403,7 +403,7 @@ void tms32031_exit(void)
 	int i;
 	for (i = 0; i < 0x200*4; i++)
 		if (hits[i])
-			printf("%10d - %03X.%X\n", hits[i], i / 4, i % 4);
+			mame_printf_debug("%10d - %03X.%X\n", hits[i], i / 4, i % 4);
 #endif
 }
 

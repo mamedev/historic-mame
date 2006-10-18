@@ -127,16 +127,16 @@ static void hc11_regs_w(UINT32 address, UINT8 value)
 	switch(reg)
 	{
 		case 0x00:		/* PORTA */
-			//printf("HC11: porta = %02X\n", value);
+			//mame_printf_debug("HC11: porta = %02X\n", value);
 			return;
 		case 0x01:		/* DDRA */
-			//printf("HC11: ddra = %02X\n", value);
+			//mame_printf_debug("HC11: ddra = %02X\n", value);
 			return;
 		case 0x08:		/* PORTD */
-			//printf("HC11: portd = %02X\n", value);
+			//mame_printf_debug("HC11: portd = %02X\n", value);
 			return;
 		case 0x09:		/* DDRD */
-			//printf("HC11: ddrd = %02X\n", value);
+			//mame_printf_debug("HC11: ddrd = %02X\n", value);
 			return;
 		case 0x22:		/* TMSK1 */
 			return;
@@ -178,16 +178,16 @@ static void hc11_regs_w(UINT32 address, UINT8 value)
 		case 0x73:		/* SCCR2 */
 			return;
 		case 0x7c:		/* PORTH */
-			//printf("HC11: porth = %02X\n", value);
+			//mame_printf_debug("HC11: porth = %02X\n", value);
 			return;
 		case 0x7d:		/* DDRH */
-			//printf("HC11: ddrh = %02X\n", value);
+			//mame_printf_debug("HC11: ddrh = %02X\n", value);
 			return;
 		case 0x7e:		/* PORTG */
-			//printf("HC11: portg = %02X\n", value);
+			//mame_printf_debug("HC11: portg = %02X\n", value);
 			return;
 		case 0x7f:		/* DDRG */
-			//printf("HC11: ddrg = %02X\n", value);
+			//mame_printf_debug("HC11: ddrg = %02X\n", value);
 			return;
 
 		case 0x88:		/* SPCR2 */
@@ -196,7 +196,7 @@ static void hc11_regs_w(UINT32 address, UINT8 value)
 			return;
 		case 0x8a:		/* SPDR2 */
 			spi_data2 = value;
-			//printf("HC11: SPI data 2 = %02X\n", value);
+			//mame_printf_debug("HC11: SPI data 2 = %02X\n", value);
 			return;
 
 		case 0x8b:		/* OPT4 */

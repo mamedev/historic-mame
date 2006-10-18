@@ -454,7 +454,7 @@ static WRITE32_HANDLER( midvplus_misc_w )
 static void midvplus_xf1_w(UINT8 val)
 {
 	static int lastval;
-//  printf("xf1_w = %d\n", val);
+//  mame_printf_debug("xf1_w = %d\n", val);
 
 	if (lastval && !val)
 		memcpy(ram_base, fastram_base, 0x20000*4);

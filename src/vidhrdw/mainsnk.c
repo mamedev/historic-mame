@@ -13,7 +13,7 @@ WRITE8_HANDLER(me_c600_w)
 	bg_color = data&0xf;
 	me_gfx_ctrl=data;
 	tilemap_mark_all_tiles_dirty (me_bg_tilemap);
-	printf("canvas %04x\n",data&=0xf0);
+	mame_printf_debug("canvas %04x\n",data&=0xf0);
 }
 
 static void get_me_fg_tile_info(int tile_index)

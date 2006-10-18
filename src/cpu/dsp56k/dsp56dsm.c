@@ -404,7 +404,7 @@ static unsigned DecodeDataALUOpcode(char *buffer, UINT16 op, unsigned pc, int pa
     }
 */
 
-//  printf("op : %04x parallelType : %d\n", op, parallelType) ;
+//  mame_printf_debug("op : %04x parallelType : %d\n", op, parallelType) ;
 
 	switch (parallelType)
 	{

@@ -578,9 +578,9 @@ void ppc403_spu_w(UINT32 a, UINT8 d)
 			ppc.spu.brd &= 0xff00;
 			ppc.spu.brd |= d;
 			if (ppc.iocr & 0x2) {
-				printf("ppc: SPU Baud rate: %d\n", (3686400 / (ppc.spu.brd + 1)) / 16);
+				mame_printf_debug("ppc: SPU Baud rate: %d\n", (3686400 / (ppc.spu.brd + 1)) / 16);
 			} else {
-				printf("ppc: SPU Baud rate: %d\n", (33333333 / (ppc.spu.brd + 1)) / 16);
+				mame_printf_debug("ppc: SPU Baud rate: %d\n", (33333333 / (ppc.spu.brd + 1)) / 16);
 			}
 			break;
 
@@ -606,7 +606,7 @@ void ppc403_spu_w(UINT32 a, UINT8 d)
 				{
 					int i;
 					int ch = (ppc.spu.sprc >> 5) & 0x3;
-				//  printf("ppc: DMA from serial port on channel %d (DA: %08X)\n", ch, ppc.dma[ch].da);
+				//  mame_printf_debug("ppc: DMA from serial port on channel %d (DA: %08X)\n", ch, ppc.dma[ch].da);
 
 					if (spu_rx_dma_handler)
 					{
@@ -648,7 +648,7 @@ void ppc403_spu_w(UINT32 a, UINT8 d)
 			fatalerror("ppc: spu_w: %02X, %02X", a & 0xf, d);
 			break;
 	}
-	printf("spu_w: %02X, %02X at %08X\n", a & 0xf, d, ppc.pc);
+	mame_printf_debug("spu_w: %02X, %02X at %08X\n", a & 0xf, d, ppc.pc);
 }
 
 void ppc403_spu_rx(UINT8 data)
@@ -776,7 +776,7 @@ static void ppc403_dma_exec(int ch)
 					if( (ch == 2 && ((ppc.spu.sptc >> 5) & 0x3) == 2) ||
 						(ch == 3 && ((ppc.spu.sptc >> 5) & 0x3) == 3) )
 					{
-						printf("ppc: dma_exec: DMA to serial port on channel %d (DA: %08X)\n", ch, ppc.dma[ch].da);
+						mame_printf_debug("ppc: dma_exec: DMA to serial port on channel %d (DA: %08X)\n", ch, ppc.dma[ch].da);
 
 						if (spu_tx_dma_handler)
 						{
@@ -806,7 +806,7 @@ static void ppc403_dma_exec(int ch)
 				break;
 
 			case 2:		/* software initiated mem-to-mem DMA */
-				//printf("ppc: DMA (%d, SW mem-to-mem): SA = %08X, DA = %08X, CT = %08X\n", ch, ppc.dma[ch].sa, ppc.dma[ch].da, ppc.dma[ch].ct);
+				//mame_printf_debug("ppc: DMA (%d, SW mem-to-mem): SA = %08X, DA = %08X, CT = %08X\n", ch, ppc.dma[ch].sa, ppc.dma[ch].da, ppc.dma[ch].ct);
 
 				switch(width)
 				{

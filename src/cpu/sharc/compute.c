@@ -1,10 +1,6 @@
 /* compute operations */
 
 #include <math.h>
-#ifdef _WIN32
-#include <float.h>
-#define scalb _scalb
-#endif
 
 #define CLEAR_ALU_FLAGS()		(sharc.astat &= ~(AZ|AN|AV|AC|AS|AI))
 
@@ -29,6 +25,86 @@
 #define SET_FLAG_MU(r)			{ sharc.astat |= ((((UINT32)((r) >> 32) == 0) && ((UINT32)(r)) != 0) ? MU : 0); }
 
 
+#define FLOAT_SIGN			0x80000000
+#define FLOAT_INFINITY		0x7f800000
+#define FLOAT_MANTISSA		0x007fffff
+
+/*****************************************************************************/
+
+// Mantissa lookup-table for RECIPS opcode
+static const UINT32 recips_mantissa_lookup[128] =
+{
+	0x007F8000, 0x007E0000, 0x007C0000, 0x007A0000,
+	0x00780000, 0x00760000, 0x00740000, 0x00720000,
+	0x00700000, 0x006F0000, 0x006D0000, 0x006B0000,
+	0x006A0000, 0x00680000, 0x00660000, 0x00650000,
+	0x00630000, 0x00610000, 0x00600000, 0x005E0000,
+	0x005D0000, 0x005B0000, 0x005A0000, 0x00590000,
+	0x00570000, 0x00560000, 0x00540000, 0x00530000,
+	0x00520000, 0x00500000, 0x004F0000, 0x004E0000,
+	0x004C0000, 0x004B0000, 0x004A0000, 0x00490000,
+	0x00470000, 0x00460000, 0x00450000, 0x00440000,
+	0x00430000, 0x00410000, 0x00400000, 0x003F0000,
+	0x003E0000, 0x003D0000, 0x003C0000, 0x003B0000,
+	0x003A0000, 0x00390000, 0x00380000, 0x00370000,
+	0x00360000, 0x00350000, 0x00340000, 0x00330000,
+	0x00320000, 0x00310000, 0x00300000, 0x002F0000,
+	0x002E0000, 0x002D0000, 0x002C0000, 0x002B0000,
+	0x002A0000, 0x00290000, 0x00280000, 0x00280000,
+	0x00270000, 0x00260000, 0x00250000, 0x00240000,
+	0x00230000, 0x00230000, 0x00220000, 0x00210000,
+	0x00200000, 0x001F0000, 0x001F0000, 0x001E0000,
+	0x001D0000, 0x001C0000, 0x001C0000, 0x001B0000,
+	0x001A0000, 0x00190000, 0x00190000, 0x00180000,
+	0x00170000, 0x00170000, 0x00160000, 0x00150000,
+	0x00140000, 0x00140000, 0x00130000, 0x00120000,
+	0x00120000, 0x00110000, 0x00100000, 0x00100000,
+	0x000F0000, 0x000F0000, 0x000E0000, 0x000D0000,
+	0x000D0000, 0x000C0000, 0x000C0000, 0x000B0000,
+	0x000A0000, 0x000A0000, 0x00090000, 0x00090000,
+	0x00080000, 0x00070000, 0x00070000, 0x00060000,
+	0x00060000, 0x00050000, 0x00050000, 0x00040000,
+	0x00040000, 0x00030000, 0x00030000, 0x00020000,
+	0x00020000, 0x00010000, 0x00010000, 0x00000000,
+};
+
+// Mantissa lookup-table for RSQRTS opcode
+static const UINT32 rsqrts_mantissa_lookup[128] =
+{
+	0x00350000, 0x00330000, 0x00320000, 0x00300000,
+	0x002F0000, 0x002E0000, 0x002D0000, 0x002B0000,
+	0x002A0000, 0x00290000, 0x00280000, 0x00270000,
+	0x00260000, 0x00250000, 0x00230000, 0x00220000,
+	0x00210000, 0x00200000, 0x001F0000, 0x001E0000,
+	0x001E0000, 0x001D0000, 0x001C0000, 0x001B0000,
+	0x001A0000, 0x00190000, 0x00180000, 0x00170000,
+	0x00160000, 0x00160000, 0x00150000, 0x00140000,
+	0x00130000, 0x00130000, 0x00120000, 0x00110000,
+	0x00100000, 0x00100000, 0x000F0000, 0x000E0000,
+	0x000E0000, 0x000D0000, 0x000C0000, 0x000B0000,
+	0x000B0000, 0x000A0000, 0x000A0000, 0x00090000,
+	0x00080000, 0x00080000, 0x00070000, 0x00070000,
+	0x00060000, 0x00050000, 0x00050000, 0x00040000,
+	0x00040000, 0x00030000, 0x00030000, 0x00020000,
+	0x00020000, 0x00010000, 0x00010000, 0x00000000,
+	0x007F8000, 0x007E0000, 0x007C0000, 0x007A0000,
+	0x00780000, 0x00760000, 0x00740000, 0x00730000,
+	0x00710000, 0x006F0000, 0x006E0000, 0x006C0000,
+	0x006A0000, 0x00690000, 0x00670000, 0x00660000,
+	0x00640000, 0x00630000, 0x00620000, 0x00600000,
+	0x005F0000, 0x005E0000, 0x005C0000, 0x005B0000,
+	0x005A0000, 0x00590000, 0x00570000, 0x00560000,
+	0x00550000, 0x00540000, 0x00530000, 0x00520000,
+	0x00510000, 0x004F0000, 0x004E0000, 0x004D0000,
+	0x004C0000, 0x004B0000, 0x004A0000, 0x00490000,
+	0x00480000, 0x00470000, 0x00460000, 0x00450000,
+	0x00450000, 0x00440000, 0x00430000, 0x00420000,
+	0x00410000, 0x00400000, 0x003F0000, 0x003E0000,
+	0x003E0000, 0x003D0000, 0x003C0000, 0x003B0000,
+	0x003A0000, 0x003A0000, 0x00390000, 0x00380000,
+	0x00370000, 0x00370000, 0x00360000, 0x00350000,
+};
+
 /*****************************************************************************/
 /* Integer ALU operations */
 
@@ -37,7 +113,7 @@ INLINE void compute_add(int rn, int rx, int ry)
 {
 	UINT32 r = REG(rx) + REG(ry);
 
-	if(sharc.mode1 & ALUSAT)
+	if (sharc.mode1 & MODE1_ALUSAT)
 		fatalerror("SHARC: compute_add: ALU saturation not implemented !");
 
 	CLEAR_ALU_FLAGS();
@@ -55,7 +131,7 @@ INLINE void compute_sub(int rn, int rx, int ry)
 {
 	UINT32 r = REG(rx) - REG(ry);
 
-	if(sharc.mode1 & ALUSAT)
+	if (sharc.mode1 & MODE1_ALUSAT)
 		fatalerror("SHARC: compute_sub: ALU saturation not implemented !");
 
 	CLEAR_ALU_FLAGS();
@@ -74,7 +150,7 @@ INLINE void compute_add_ci(int rn, int rx, int ry)
 	int c = (sharc.astat & AC) ? 1 : 0;
 	UINT32 r = REG(rx) + REG(ry) + c;
 
-	if(sharc.mode1 & ALUSAT)
+	if (sharc.mode1 & MODE1_ALUSAT)
 		fatalerror("SHARC: compute_add_ci: ALU saturation not implemented !");
 
 	CLEAR_ALU_FLAGS();
@@ -93,7 +169,7 @@ INLINE void compute_sub_ci(int rn, int rx, int ry)
 	int c = (sharc.astat & AC) ? 1 : 0;
 	UINT32 r = REG(rx) - REG(ry) + c - 1;
 
-	if(sharc.mode1 & ALUSAT)
+	if (sharc.mode1 & MODE1_ALUSAT)
 		fatalerror("SHARC: compute_sub_ci: ALU saturation not implemented !");
 
 	CLEAR_ALU_FLAGS();
@@ -261,9 +337,36 @@ INLINE void compute_not(int rn, int rx)
 /*****************************************************************************/
 /* Floating-point ALU operations */
 
+INLINE UINT32 SCALB(SHARC_REG rx, int ry)
+{
+	UINT32 mantissa = rx.r & FLOAT_MANTISSA;
+	UINT32 sign = rx.r & FLOAT_SIGN;
+
+	int exponent = ((rx.r >> 23) & 0xff) - 127;
+	exponent += (INT32)(REG(ry));
+
+	if (exponent > 127)
+	{
+		// overflow
+		sharc.astat |= AV;
+		return sign | FLOAT_INFINITY;
+	}
+	else if (exponent < -126)
+	{
+		// denormal
+		sharc.astat |= AZ;
+		return sign;
+	}
+	else
+	{
+		return sign | (((exponent + 127) & 0xff) << 23) | mantissa;
+	}
+}
+
 /* Fn = FLOAT Rx */
 INLINE void compute_float(int rn, int rx)
 {
+	// verified
 	FREG(rn) = (float)(INT32)REG(rx);
 
 	CLEAR_ALU_FLAGS();
@@ -285,7 +388,7 @@ INLINE void compute_fix(int rn, int rx)
 	SHARC_REG r_alu;
 
 	r_alu.f = FREG(rx);
-	if (sharc.mode1 & TRUNCATE)
+	if (sharc.mode1 & MODE1_TRUNCATE)
 	{
 		alu_i = (INT32)(r_alu.f);
 	}
@@ -314,8 +417,8 @@ INLINE void compute_fix_scaled(int rn, int rx, int ry)
 	INT32 alu_i;
 	SHARC_REG r_alu;
 
-	r_alu.f = scalb(FREG(rx), (INT32)REG(ry));
-	if (sharc.mode1 & TRUNCATE)
+	r_alu.r = SCALB(sharc.r[rx], ry);
+	if (sharc.mode1 & MODE1_TRUNCATE)
 	{
 		alu_i = (INT32)(r_alu.f);
 	}
@@ -341,18 +444,20 @@ INLINE void compute_fix_scaled(int rn, int rx, int ry)
 /* Fn = FLOAT Rx BY Ry */
 INLINE void compute_float_scaled(int rn, int rx, int ry)
 {
-	float r = scalb((float)(INT32)REG(rx), (INT32)REG(ry));
+	SHARC_REG x;
+	x.f = (float)(INT32)(REG(rx));
 
-	FREG(rn) = r;
-
+	// verified
 	CLEAR_ALU_FLAGS();
+
+	REG(rn) = SCALB(x, ry);
+
 	// AN
 	SET_FLAG_AN(REG(rn));
 	// AZ
 	sharc.astat |= (IS_FLOAT_DENORMAL(REG(rn)) || IS_FLOAT_ZERO(REG(rn))) ? AZ : 0;
 	// AU
 	sharc.stky |= (IS_FLOAT_DENORMAL(REG(rn))) ? AUS : 0;
-	/* TODO: set AV if overflowed */
 
 	sharc.astat |= AF;
 }
@@ -360,50 +465,72 @@ INLINE void compute_float_scaled(int rn, int rx, int ry)
 /* Rn = LOGB Fx */
 INLINE void compute_logb(int rn, int rx)
 {
+	// verified
 	UINT32 r = REG(rx);
 
-	int exponent = (r >> 23) & 0xff;
-	exponent -= 127;
-
 	CLEAR_ALU_FLAGS();
-	// AN
-	SET_FLAG_AN(exponent);
-	// AZ
-	SET_FLAG_AZ(exponent);
-	// AV
-	sharc.astat |= (IS_FLOAT_INFINITY(REG(rx)) || IS_FLOAT_ZERO(REG(rx))) ? AV : 0;
-	// AI
-	sharc.astat |= (IS_FLOAT_NAN(REG(rx))) ? AI : 0;
 
-	// AIS
-	if (sharc.astat & AI)	sharc.stky |= AIS;
+	if (IS_FLOAT_INFINITY(REG(rx)))
+	{
+		REG(rn) = FLOAT_INFINITY;
 
-	REG(rn) = exponent;
+		sharc.astat |= AV;
+	}
+	else if (IS_FLOAT_ZERO(REG(rx)))
+	{
+		REG(rn) = FLOAT_SIGN | FLOAT_INFINITY;
+
+		sharc.astat |= AV;
+	}
+	else if (IS_FLOAT_NAN(REG(rx)))
+	{
+		REG(rn) = 0xffffffff;
+
+		sharc.astat |= AI;
+		sharc.stky |= AIS;
+	}
+	else
+	{
+		int exponent = (r >> 23) & 0xff;
+		exponent -= 127;
+
+		// AN
+		SET_FLAG_AN(exponent);
+		// AZ
+		SET_FLAG_AZ(exponent);
+
+		REG(rn) = exponent;
+	}
 	sharc.astat |= AF;
 }
 
 /* Fn = SCALB Fx BY Fy */
 INLINE void compute_scalb(int rn, int rx, int ry)
 {
+	// verified
 	SHARC_REG r;
-
-	r.f = scalb(FREG(rx), (INT32)REG(ry));
-
 	CLEAR_ALU_FLAGS();
-	// AN
-	sharc.astat |= (r.f < 0.0f) ? AN : 0;
-	// AZ
-	sharc.astat |= (IS_FLOAT_DENORMAL(r.r) || IS_FLOAT_ZERO(r.r)) ? AZ : 0;
-	// AUS
-	sharc.stky |= (IS_FLOAT_DENORMAL(r.r)) ? AUS : 0;
-	// AI
-	sharc.astat |= (IS_FLOAT_NAN(REG(rx))) ? AI : 0;
-	/* TODO: AV flag */
 
-	// AIS
-	if (sharc.astat & AI)	sharc.stky |= AIS;
+	if (IS_FLOAT_NAN(REG(rx)))
+	{
+		sharc.astat |= AI;
+		sharc.stky |= AIS;
 
-	FREG(rn) = r.f;
+		REG(rn) = 0xffffffff;
+	}
+	else
+	{
+		r.r = SCALB(sharc.r[rx], ry);
+
+		// AN
+		SET_FLAG_AN(r.r);
+		// AZ
+		sharc.astat |= IS_FLOAT_ZERO(r.r) ? AZ : 0;
+		// AUS
+		sharc.stky |= (IS_FLOAT_DENORMAL(r.r)) ? AUS : 0;
+
+		FREG(rn) = r.f;
+	}
 	sharc.astat |= AF;
 }
 
@@ -608,45 +735,111 @@ INLINE void compute_fclip(int rn, int rx, int ry)
 /* Fn = RECIPS Fx */
 INLINE void compute_recips(int rn, int rx)
 {
-	SHARC_REG r;
-	/* TODO: calculate reciprocal, this is too accurate! */
-	r.f = 1.0f / FREG(rx);
+	// verified
+	UINT32 r;
 
 	CLEAR_ALU_FLAGS();
-	// AN
-	SET_FLAG_AN(r.r);
-	// AZ & AV
-	sharc.astat |= (IS_FLOAT_ZERO(r.r)) ? (AZ | AV) : 0;
-	// AI
-	sharc.astat |= (IS_FLOAT_NAN(REG(rx))) ? AI : 0;
 
-	// AIS
-	if (sharc.astat & AI)	sharc.stky |= AIS;
+	if (IS_FLOAT_NAN(REG(rx)))
+	{
+		// NaN
+		r = 0xffffffff;
 
-	FREG(rn) = r.f;
+		// AI
+		sharc.astat |= AI;
+
+		// AIS
+		sharc.stky |= AIS;
+	}
+	else if (IS_FLOAT_ZERO(REG(rx)))
+	{
+		// +- Zero
+		r = (REG(rx) & FLOAT_SIGN) | FLOAT_INFINITY;
+
+		sharc.astat |= AZ;
+	}
+	else
+	{
+		UINT32 mantissa = REG(rx) & 0x7fffff;
+		UINT32 exponent = (REG(rx) >> 23) & 0xff;
+		UINT32 sign = REG(rx) & FLOAT_SIGN;
+
+		UINT32 res_mantissa = recips_mantissa_lookup[mantissa >> 16];
+
+		int res_exponent = -(exponent - 127) - 1;
+		if (res_exponent > 125 || res_exponent < -126)
+		{
+			res_exponent = 0;
+			res_mantissa = 0;
+		}
+		else
+		{
+			res_exponent = (res_exponent + 127) & 0xff;
+		}
+
+		r = sign | (res_exponent << 23) | res_mantissa;
+
+		SET_FLAG_AN(REG(rx));
+		// AZ & AV
+		sharc.astat |= (IS_FLOAT_ZERO(r)) ? AZ : 0;
+		sharc.astat |= (IS_FLOAT_ZERO(REG(rx))) ? AV : 0;
+		// AI
+		sharc.astat |= (IS_FLOAT_NAN(REG(rx))) ? AI : 0;
+
+		// AIS
+		if (sharc.astat & AI)	sharc.stky |= AIS;
+	}
+
+	// AF
 	sharc.astat |= AF;
+
+	REG(rn) = r;
 }
 
 /* Fn = RSQRTS Fx */
 INLINE void compute_rsqrts(int rn, int rx)
 {
-	SHARC_REG r;
-	/* TODO: calculate reciprocal, this is too accurate! */
-	r.f = 1.0f / sqrt(FREG(rx));
+	// verified
+	UINT32 r;
+
+	if ((UINT32)(REG(rx)) > 0x80000000)
+	{
+		// non-zero negative
+		r = 0xffffffff;
+	}
+	else if (IS_FLOAT_NAN(REG(rx)))
+	{
+		// NaN
+		r = 0xffffffff;
+	}
+	else
+	{
+		UINT32 mantissa = REG(rx) & 0xffffff;	// mantissa + LSB of biased exponent
+		UINT32 exponent = (REG(rx) >> 23) & 0xff;
+		UINT32 sign = REG(rx) & FLOAT_SIGN;
+
+		UINT32 res_mantissa = rsqrts_mantissa_lookup[mantissa >> 17];
+
+		int res_exponent = -((exponent - 127) / 2) - 1;
+		res_exponent = (res_exponent + 127) & 0xff;
+
+		r = sign | (res_exponent << 23) | res_mantissa;
+	}
 
 	CLEAR_ALU_FLAGS();
 	// AN
-	sharc.astat |= (r.r == 0x80000000) ? AN : 0;
+	sharc.astat |= (REG(rx) == 0x80000000) ? AN : 0;
 	// AZ & AV
-	sharc.astat |= (IS_FLOAT_ZERO(r.r)) ? (AZ | AV) : 0;
+	sharc.astat |= (IS_FLOAT_ZERO(r)) ? AZ : 0;
+	sharc.astat |= (IS_FLOAT_ZERO(REG(rx))) ? AV : 0;
 	// AI
 	sharc.astat |= (IS_FLOAT_NAN(REG(rx)) || (REG(rx) & 0x80000000)) ? AI : 0;
-
 	// AIS
 	if (sharc.astat & AI)	sharc.stky |= AIS;
-
-	FREG(rn) = r.f;
+	// AF
 	sharc.astat |= AF;
+
+	REG(rn) = r;
 }
 
 
@@ -967,10 +1160,13 @@ INLINE void compute_fmul_fsub(int fm, int fxm, int fym, int fa, int fxa, int fya
 /* Fm = Fxm * Fym,   Fa = FLOAT Fxa BY Fya */
 INLINE void compute_fmul_float_scaled(int fm, int fxm, int fym, int fa, int fxa, int fya)
 {
+	SHARC_REG x;
 	SHARC_REG r_mul, r_alu;
 	r_mul.f = FREG(fxm) * FREG(fym);
 
-	r_alu.f = scalb((float)(INT32)REG(fxa), (INT32)REG(fya));
+	x.f = (float)(INT32)REG(fxa);
+
+	r_alu.r = SCALB(x, fya);
 
 	CLEAR_MULTIPLIER_FLAGS();
 	SET_FLAG_MN(r_mul.r);
@@ -998,9 +1194,9 @@ INLINE void compute_fmul_fix_scaled(int fm, int fxm, int fym, int fa, int fxa, i
 	SHARC_REG r_mul, r_alu;
 	r_mul.f = FREG(fxm) * FREG(fym);
 
-	r_alu.f = scalb(FREG(fxa), (INT32)REG(fya));
+	r_alu.r = SCALB(sharc.r[fxa], fya);
 
-	if (sharc.mode1 & TRUNCATE)
+	if (sharc.mode1 & MODE1_TRUNCATE)
 	{
 		alu_i = (INT32)(r_alu.f);
 	}

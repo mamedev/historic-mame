@@ -174,7 +174,7 @@ static void dmaop_select(void)
 		lsi810.sstat1 &= ~0x07;	// clear current bus phase
 		if (lsi810.dcmd & 0x01000000)	// select with ATN
 		{
-			printf("53c810: want select with ATN, setting message phase\n");
+			mame_printf_debug("53c810: want select with ATN, setting message phase\n");
 			lsi810.sstat1 |= 0x7;	// ATN means we want message in phase
 		}
 	}

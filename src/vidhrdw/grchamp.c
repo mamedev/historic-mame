@@ -477,12 +477,12 @@ VIDEO_UPDATE( grchamp )
 					{
 						if (objpix & 0x08)
 						{
-printf("Collide car/object @ (%d,%d)\n", x, y);
+mame_printf_debug("Collide car/object @ (%d,%d)\n", x, y);
 							state->collide = 0x1000 | 0x2000/* guess */ | ((~y & 0x80) << 3) | ((~y & 0xf8) << 2) | ((~x & 0xf8) >> 3);
 }
 						else if ((mvid & 0x0f) != 0)
 						{
-printf("Collide car/bg @ (%d,%d)\n", x, y);
+mame_printf_debug("Collide car/bg @ (%d,%d)\n", x, y);
 							state->collide = 0x1000 | 0x4000/* guess */ | ((~y & 0x80) << 3) | ((~y & 0xf8) << 2) | ((~x & 0xf8) >> 3);
 }
 					}
@@ -510,7 +510,7 @@ printf("Collide car/bg @ (%d,%d)\n", x, y);
 			/* handle collision detection between MVID and OBJECT */
 			if (!(state->collide & 0x1000) && (objpix & 0x08) && (mvid & 0x0f) != 0)
 			{
-printf("Collide bg/object @ (%d,%d)\n", x, y);
+mame_printf_debug("Collide bg/object @ (%d,%d)\n", x, y);
 				state->collide = 0x1000 | 0x8000 | ((~y & 0x80) << 3) | ((~y & 0xf8) << 2) | ((~x & 0xf8) >> 3);
 			}
 

@@ -669,7 +669,7 @@ static WRITE8_HANDLER (colors_w)
 
 static READ8_HANDLER( mcu_r )
 {
-	//printf("Z80 MCU  R = %x\n",mcu_out);
+	//mame_printf_debug("Z80 MCU  R = %x\n",mcu_out);
 	return mcu_out;
 }
 
@@ -817,7 +817,7 @@ static READ8_HANDLER( changela_2d_r )
 static WRITE8_HANDLER( mcu_PC0_w )
 {
 	portC_in = (portC_in&0xfe) | (data&1);
-	//printf("PC0 W = %x\n",data&1);
+	//mame_printf_debug("PC0 W = %x\n",data&1);
 }
 
 static WRITE8_HANDLER( changela_collision_reset_0 )

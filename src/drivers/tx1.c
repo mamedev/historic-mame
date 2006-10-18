@@ -132,45 +132,45 @@ static WRITE8_HANDLER(crt_write)
        {
         switch (data)
         {
-        	case 0:printf("Horizontal Total");
+        	case 0:mame_printf_debug("Horizontal Total");
         	       break;
-        	case 1:printf("Horizontal displayed");
+        	case 1:mame_printf_debug("Horizontal displayed");
                	       break;
-        	case 2:printf("Horizontal sync position");
+        	case 2:mame_printf_debug("Horizontal sync position");
         	       break;
-        	case 3:printf("Horizontal sync width");
+        	case 3:mame_printf_debug("Horizontal sync width");
         	       break;
-        	case 4:printf("Vertical total");
+        	case 4:mame_printf_debug("Vertical total");
         	       break;
-        	case 5:printf("Vertical total adj");
+        	case 5:mame_printf_debug("Vertical total adj");
         	       break;
-        	case 6:printf("Vertical displayed");
+        	case 6:mame_printf_debug("Vertical displayed");
         	       break;
-        	case 7:printf("Vertical sync position");
+        	case 7:mame_printf_debug("Vertical sync position");
         	       break;
-        	case 8:printf("Interlace mode");
+        	case 8:mame_printf_debug("Interlace mode");
         	       break;
-        	case 9:printf("Max. scan line address");
+        	case 9:mame_printf_debug("Max. scan line address");
         	       break;
-        	case 0xa:printf("Cursror start");
+        	case 0xa:mame_printf_debug("Cursror start");
         	       break;
-        	case 0xb:printf("Cursor end");
+        	case 0xb:mame_printf_debug("Cursor end");
         	       break;
-        	case 0xc:printf("Start address (h)");
+        	case 0xc:mame_printf_debug("Start address (h)");
         	       break;
-        	case 0xd:printf("Start address (l)");
+        	case 0xd:mame_printf_debug("Start address (l)");
         	       break;
-        	case 0xe:printf("Cursor (h)");
+        	case 0xe:mame_printf_debug("Cursor (h)");
         	       break;
-        	case 0xf:printf("Cursor (l)");
+        	case 0xf:mame_printf_debug("Cursor (l)");
         	       break;
-        	case 0x10:printf("Light pen (h))");
+        	case 0x10:mame_printf_debug("Light pen (h))");
         	       break;
-        	case 0x11:printf("Light pen (l)");
+        	case 0x11:mame_printf_debug("Light pen (l)");
         	       break;
         }
        }
-        if(offset==2) printf("=         0x%x, %d\n",data,data);
+        if(offset==2) mame_printf_debug("=         0x%x, %d\n",data,data);
 #endif
 }
 

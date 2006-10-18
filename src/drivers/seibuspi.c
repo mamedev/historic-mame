@@ -1734,7 +1734,7 @@ READ32_HANDLER ( rdft_speedup_r )
 	/* rdftu */
 	if (activecpu_get_pc()==0x0203f3a) cpu_spinuntil_int(); // idle
 
-//  printf("%08x\n",activecpu_get_pc());
+//  mame_printf_debug("%08x\n",activecpu_get_pc());
 
 	return spimainram[(0x00298d0-0x800)/4];
 }
@@ -1750,7 +1750,7 @@ READ32_HANDLER ( viprp1_speedup_r )
 	/* viprp1ot */
 	if (activecpu_get_pc()==0x02026bd) cpu_spinuntil_int(); // idle
 
-//  printf("%08x\n",activecpu_get_pc());
+//  mame_printf_debug("%08x\n",activecpu_get_pc());
 
 	return spimainram[(0x001e2e0-0x800)/4];
 }
@@ -1759,7 +1759,7 @@ READ32_HANDLER ( viprp1o_speedup_r )
 {
 	/* viperp1o */
 	if (activecpu_get_pc()==0x0201f99) cpu_spinuntil_int(); // idle
-//  printf("%08x\n",activecpu_get_pc());
+//  mame_printf_debug("%08x\n",activecpu_get_pc());
 	return spimainram[(0x001d49c-0x800)/4];
 }
 
@@ -1767,7 +1767,7 @@ READ32_HANDLER ( viprp1o_speedup_r )
 // causes input problems?
 READ32_HANDLER ( ejanhs_speedup_r )
 {
-// printf("%08x\n",activecpu_get_pc());
+// mame_printf_debug("%08x\n",activecpu_get_pc());
  if (activecpu_get_pc()==0x03032c7) cpu_spinuntil_int(); // idle
  return spimainram[(0x002d224-0x800)/4];
 }
@@ -1788,7 +1788,7 @@ READ32_HANDLER ( rf2_speedup_r )
 	/* rdft2a */
 	if (activecpu_get_pc()==0x0204366) cpu_spinuntil_int(); // idle
 
-//  printf("%08x\n",activecpu_get_pc());
+//  mame_printf_debug("%08x\n",activecpu_get_pc());
 
 	return spimainram[(0x0282AC-0x800)/4];
 }
@@ -1804,7 +1804,7 @@ READ32_HANDLER ( rfjet_speedup_r )
 	/* rfjetj */
 	if (activecpu_get_pc()==0x0205f2e) cpu_spinuntil_int(); // idle
 
-//  printf("%08x\n",activecpu_get_pc());
+//  mame_printf_debug("%08x\n",activecpu_get_pc());
 
 
 	return spimainram[(0x002894c-0x800)/4];
