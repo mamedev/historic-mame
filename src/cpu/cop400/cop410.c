@@ -22,21 +22,6 @@ typedef struct {
 	void (*function) (void);
 }	s_opcode;
 
-/* Layout of the registers in the debugger */
-static UINT8 cop410_reg_layout[] = {
-	   COP400_PC, COP400_A, COP400_B, COP400_C, COP400_EN, COP400_G, COP400_Q,
-       COP400_SA, COP400_SB, COP400_SIO, COP400_SKL, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 cop410_win_layout[] = {
-	 0, 0,80, 2,	/* register window (top rows) */
-	 0, 3,24,19,	/* disassembler window (left colums) */
-	25, 3,55, 9,	/* memory #1 window (right, upper middle) */
-	25,13,55, 9,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
 #define UINT1	UINT8
 #define UINT4	UINT8
 #define UINT6	UINT8
@@ -57,6 +42,8 @@ typedef struct
 	UINT1	SKL;
 	UINT8   skip, skipLBI;
 	UINT4	RAM[64];
+	UINT8	G_mask;
+	UINT8	D_mask;
 } COP410_Regs;
 
 static COP410_Regs R;
@@ -161,6 +148,10 @@ static void cop410_init(int index, int clock, const void *config, int (*irqcallb
 {
 	int i;
 
+	memset(&R, 0, sizeof(R));
+	R.G_mask = 0x0F;
+	R.D_mask = 0x0F;
+
 	for (i=0; i<256; i++) InstLen[i]=1;
 
 	InstLen[0x60] = InstLen[0x61] = InstLen[0x68] = InstLen[0x69] = InstLen[0x33] = InstLen[0x23] = 2;
@@ -170,6 +161,15 @@ static void cop410_init(int index, int clock, const void *config, int (*irqcallb
 	for (i=0x18; i<0x20; i++) LBIops[i] = 1;
 	for (i=0x28; i<0x30; i++) LBIops[i] = 1;
 	for (i=0x38; i<0x40; i++) LBIops[i] = 1;
+}
+
+static void cop411_init(int index, int clock, const void *config, int (*irqcallback)(int))
+{
+	cop410_init(index, clock, config, irqcallback);
+
+	/* the COP411 is like the COP410, just with less output ports */
+	R.G_mask = 0x07;
+	R.D_mask = 0x03;
 }
 
 /****************************************************************************
@@ -336,12 +336,10 @@ void cop410_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = cop410_dasm;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &cop410_ICount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = cop410_reg_layout;			break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = cop410_win_layout;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "COP410"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "National Semiconductor COP400"); break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "National Semiconductor COP410"); break;
 		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0"); break;
 		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
 		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (C) 2006 MAME Team"); break;
@@ -361,5 +359,20 @@ void cop410_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_STR_REGISTER + COP400_SB:			sprintf(info->s = cpuintrf_temp_str(), "SB:%04X", SB); break;
 		case CPUINFO_STR_REGISTER + COP400_SIO:			sprintf(info->s = cpuintrf_temp_str(), "SIO:%01X", SIO); break;
 		case CPUINFO_STR_REGISTER + COP400_SKL:			sprintf(info->s = cpuintrf_temp_str(), "SKL:%01X", SKL); break;
+	}
+}
+
+void cop411_get_info(UINT32 state, union cpuinfo *info)
+{
+	switch (state)
+	{
+		/* --- the following bits of info are returned as pointers to data or functions --- */
+		case CPUINFO_PTR_INIT:							info->init = cop411_init;				break;
+
+		/* --- the following bits of info are returned as NULL-terminated strings --- */
+		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "COP411"); break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "National Semiconductor COP411"); break;
+
+		default: cop410_get_info(state, info); break;
 	}
 }

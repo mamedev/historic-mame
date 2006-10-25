@@ -782,40 +782,35 @@ static WRITE32_HANDLER( skns_io_w )
 
 static READ32_HANDLER( msm6242_r )
 {
-	struct tm *tm;
-	time_t tms;
+	mame_system_time systime;
 	long value;
 
-	if (Machine->record_file != NULL || Machine->playback_file != NULL)
-		return 0;
-
-	time(&tms);
-	tm = localtime(&tms);
+	mame_get_base_datetime(Machine, &systime);
 	// The clock is not y2k-compatible, wrap back 10 years, screw the leap years
 	//  tm->tm_year -= 10;
 
 	switch(offset) {
 	case 0:
-		value  = (tm->tm_sec % 10)<<24;
-		value |= (tm->tm_sec / 10)<<16;
-		value |= (tm->tm_min % 10)<<8;
-		value |= (tm->tm_min / 10);
+		value  = (systime.local_time.second % 10)<<24;
+		value |= (systime.local_time.second / 10)<<16;
+		value |= (systime.local_time.minute % 10)<<8;
+		value |= (systime.local_time.minute / 10);
 		break;
 	case 1:
-		value  = (tm->tm_hour % 10)<<24;
-		value |= ((tm->tm_hour / 10) /*| (tm->tm_hour >= 12 ? 4 : 0)*/)<<16;
-		value |= (tm->tm_mday % 10)<<8;
-		value |= (tm->tm_mday / 10);
+		value  = (systime.local_time.hour % 10)<<24;
+		value |= ((systime.local_time.hour / 10) /*| (tm->tm_hour >= 12 ? 4 : 0)*/)<<16;
+		value |= (systime.local_time.mday % 10)<<8;
+		value |= (systime.local_time.mday / 10);
 		break;
 	case 2:
-		value  = ((tm->tm_mon + 1) % 10)<<24;
-		value |= ((tm->tm_mon + 1) / 10)<<16;
-		value |= (tm->tm_year % 10)<<8;
-		value |= ((tm->tm_year / 10) % 10);
+		value  = ((systime.local_time.month + 1) % 10)<<24;
+		value |= ((systime.local_time.month + 1) / 10)<<16;
+		value |= (systime.local_time.year % 10)<<8;
+		value |= ((systime.local_time.year / 10) % 10);
 		break;
 	case 3:
 	default:
-		value  = (tm->tm_wday)<<24;
+		value  = (systime.local_time.weekday)<<24;
 		value |= (1)<<16;
 		value |= (6)<<8;
 		value |= (4);

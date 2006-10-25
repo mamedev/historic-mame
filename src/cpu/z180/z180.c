@@ -74,22 +74,6 @@
 /* check for delay loops counting down BC */
 #define TIME_LOOP_HACKS 	1
 
-static UINT8 z180_reg_layout[] = {
-	Z180_PC, Z180_SP, Z180_AF,	Z180_BC,	Z180_DE,   Z180_HL, -1,
-	Z180_IX, Z180_IY, Z180_AF2, Z180_BC2,	Z180_DE2,  Z180_HL2, -1,
-	Z180_R,  Z180_I,  Z180_IL,	Z180_IM,	Z180_IFF1, Z180_IFF2, -1,
-	Z180_DC0, Z180_DC1,Z180_DC2,Z180_DC3, -1,
-	Z180_CCR,Z180_ITC,Z180_CBR, Z180_BBR,	Z180_CBAR, Z180_OMCR, 0
-};
-
-static UINT8 z180_win_layout[] = {
-	27, 0,53, 6,	/* register window (top rows) */
-	 0, 0,26,22,	/* disassembler window (left colums) */
-	27, 7,53, 6,	/* memory #1 window (right, upper middle) */
-	27,14,53, 8,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
 /****************************************************************************/
 /* The Z180 registers. HALT is set to 1 when the CPU is halted, the refresh */
 /* register is calculated as follows: refresh=(Regs.R&127)|(Regs.R2&128)    */
@@ -2447,8 +2431,6 @@ void z180_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = z180_burn;					break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = z180_dasm;			break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &z180_icount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = z180_reg_layout;				break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = z180_win_layout;				break;
 		case CPUINFO_PTR_Z180_CYCLE_TABLE + Z180_TABLE_op: info->p = cc[Z180_TABLE_op];			break;
 		case CPUINFO_PTR_Z180_CYCLE_TABLE + Z180_TABLE_cb: info->p = cc[Z180_TABLE_cb];			break;
 		case CPUINFO_PTR_Z180_CYCLE_TABLE + Z180_TABLE_ed: info->p = cc[Z180_TABLE_ed];			break;

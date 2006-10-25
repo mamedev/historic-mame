@@ -156,21 +156,6 @@ static int m6800_ICount;
 /* point of next timer event */
 static UINT32 timer_next;
 
-/* Layout of the registers in the debugger */
-static UINT8 m6800_reg_layout[] = {
-	M6800_PC, M6800_S, M6800_CC, M6800_A, M6800_B, M6800_X, -1,
-	M6800_WAI_STATE, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 m6800_win_layout[] = {
-	27, 0,53, 4,	/* register window (top rows) */
-	 0, 0,26,22,	/* disassembler window (left colums) */
-	27, 5,53, 8,	/* memory #1 window (right, upper middle) */
-	27,14,53, 8,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
 /* DS -- THESE ARE RE-DEFINED IN m6800.h TO RAM, ROM or FUNCTIONS IN cpuintrf.c */
 #define RM				M6800_RDMEM
 #define WM				M6800_WRMEM
@@ -2354,8 +2339,6 @@ void m6800_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m6800_dasm;			break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m6800_ICount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m6800_reg_layout;				break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = m6800_win_layout;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M6800"); break;

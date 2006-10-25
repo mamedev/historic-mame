@@ -398,47 +398,6 @@ enum
 	E132XS_L60, E132XS_L61, E132XS_L62, E132XS_L63
 };
 
-static UINT8 hyperstone_reg_layout[] =
-{
-	E132XS_PC,  E132XS_SR,  E132XS_FER, E132XS_G3,  -1,
-	E132XS_G4,  E132XS_G5,  E132XS_G6,  E132XS_G7,  -1,
-	E132XS_G8,  E132XS_G9,  E132XS_G10, E132XS_G11, -1,
-	E132XS_G12, E132XS_G13, E132XS_G14,	E132XS_G15, -1,
-	E132XS_G16,	E132XS_G17,	E132XS_SP,	E132XS_UB,  -1,
-	E132XS_BCR,	E132XS_TPR,	E132XS_TCR,	E132XS_TR,  -1,
-	E132XS_WCR,	E132XS_ISR,	E132XS_FCR,	E132XS_MCR, -1,
-	E132XS_G28, E132XS_G29,	E132XS_G30,	E132XS_G31, -1,
-	E132XS_CL0, E132XS_CL1, E132XS_CL2, E132XS_CL3, -1,
-	E132XS_CL4, E132XS_CL5, E132XS_CL6, E132XS_CL7, -1,
-	E132XS_CL8, E132XS_CL9, E132XS_CL10,E132XS_CL11,-1,
-	E132XS_CL12,E132XS_CL13,E132XS_CL14,E132XS_CL15,-1,
-	E132XS_L0,  E132XS_L1,  E132XS_L2,  E132XS_L3,  -1,
-	E132XS_L4,  E132XS_L5,  E132XS_L6,  E132XS_L7,  -1,
-	E132XS_L8,  E132XS_L9,  E132XS_L10, E132XS_L11, -1,
-	E132XS_L12, E132XS_L13, E132XS_L14, E132XS_L15, -1,
-	E132XS_L16, E132XS_L17, E132XS_L18, E132XS_L19, -1,
-	E132XS_L20, E132XS_L21, E132XS_L22, E132XS_L23, -1,
-	E132XS_L24, E132XS_L25, E132XS_L26, E132XS_L27, -1,
-	E132XS_L28, E132XS_L29, E132XS_L30, E132XS_L31, -1,
-	E132XS_L32, E132XS_L33, E132XS_L34, E132XS_L35, -1,
-	E132XS_L36, E132XS_L37, E132XS_L38, E132XS_L39, -1,
-	E132XS_L40, E132XS_L41, E132XS_L42, E132XS_L43, -1,
-	E132XS_L44, E132XS_L45, E132XS_L46, E132XS_L47, -1,
-	E132XS_L48, E132XS_L49, E132XS_L50, E132XS_L51, -1,
-	E132XS_L52, E132XS_L53, E132XS_L54, E132XS_L55, -1,
-	E132XS_L56, E132XS_L57, E132XS_L58, E132XS_L59, -1,
-	E132XS_L60, E132XS_L61, E132XS_L62, E132XS_L63, 0
-};
-
-UINT8 hyperstone_win_layout[] =
-{
-	 0, 0,80, 8, /* register window (top rows) */
-	 0, 9,34,13, /* disassembler window (left, middle columns) */
-	35, 9,46, 6, /* memory #1 window (right, upper middle) */
-	35,16,46, 6, /* memory #2 window (right, lower middle) */
-	 0,23,80, 1  /* command line window (bottom row) */
-};
-
 
 /* Delay information */
 struct _delay
@@ -5208,8 +5167,6 @@ void hyperstone_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						    break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = hyperstone_dasm;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &hyperstone_ICount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = hyperstone_reg_layout;			break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = hyperstone_win_layout;			break;
 
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_DATA:    info->internal_map = 0; break;
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_IO:      info->internal_map = 0; break;

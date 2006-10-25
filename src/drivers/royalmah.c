@@ -94,32 +94,25 @@ static WRITE8_HANDLER( rtc_w )
 
 static READ8_HANDLER( rtc_r )
 {
-	struct tm *tm;
-	time_t tms;
+	mame_system_time systime;
 
-	if (Machine->record_file != NULL || Machine->playback_file != NULL)
-		return 0;
-
-	time(&tms);
-	tm = localtime(&tms);
-	// The clock is not y2k-compatible, wrap back 10 years, screw the leap years
-	//  tm->tm_year -= 10;
+	mame_get_base_datetime(Machine, &systime);
 
 	switch(offset)
 	{
-		case 0x0:	return tm->tm_sec % 10;
-		case 0x1:	return tm->tm_sec / 10;
-		case 0x2:	return tm->tm_min % 10;
-		case 0x3:	return tm->tm_min / 10;
-		case 0x4:	return tm->tm_hour % 10;
-		case 0x5:	return tm->tm_hour / 10;
-		case 0x6:	return tm->tm_mday % 10;
-		case 0x7:	return tm->tm_mday / 10;
-		case 0x8:	return (tm->tm_mon+1) % 10;
-		case 0x9:	return (tm->tm_mon+1) / 10;
-		case 0xa:	return tm->tm_year % 10;
-		case 0xb:	return (tm->tm_year % 100) / 10;
-		case 0xc:	return tm->tm_wday;
+		case 0x0:	return systime.local_time.second % 10;
+		case 0x1:	return systime.local_time.second / 10;
+		case 0x2:	return systime.local_time.minute % 10;
+		case 0x3:	return systime.local_time.minute / 10;
+		case 0x4:	return systime.local_time.hour % 10;
+		case 0x5:	return systime.local_time.hour / 10;
+		case 0x6:	return systime.local_time.mday % 10;
+		case 0x7:	return systime.local_time.mday / 10;
+		case 0x8:	return (systime.local_time.month+1) % 10;
+		case 0x9:	return (systime.local_time.month+1) / 10;
+		case 0xa:	return systime.local_time.year % 10;
+		case 0xb:	return (systime.local_time.year % 100) / 10;
+		case 0xc:	return systime.local_time.weekday;
 		case 0xd:	return 1;
 		case 0xe:	return 6;
 		case 0xf:	return 4;

@@ -455,26 +455,6 @@ static int dsp56k_execute(int cycles)
 
 
 /***************************************************************************
-    DEBUGGER DEFINITIONS
-***************************************************************************/
-
-static UINT8 dsp56k_reg_layout[] =
-{
-	0
-};
-
-static UINT8 dsp56k_win_layout[] =
-{
-	 0, 0,30,20,	/* register window (top rows) */
-	31, 0,48,14,	/* disassembler window (left colums) */
-	 0,21,30, 1,	/* memory #1 window (right, upper middle) */
-	31,15,48, 7,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
-
-
-/***************************************************************************
     DISASSEMBLY HOOK
 ***************************************************************************/
 
@@ -659,8 +639,6 @@ void dsp56k_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = dsp56k_dasm;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &dsp56k_icount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = dsp56k_reg_layout;			break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = dsp56k_win_layout;			break;
 
 
 		// --- the following bits of info are returned as NULL-terminated strings ---

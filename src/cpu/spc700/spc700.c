@@ -143,21 +143,6 @@ static uint spc700i_temp1, spc700i_temp2, spc700i_temp3;
 static short spc_int16;
 static int spc_int32;
 
-/* Layout of the registers in the MAME debugger */
-static unsigned char spc700_register_layout[] =
-{
-	SPC700_PC, SPC700_S, SPC700_P, SPC700_A, SPC700_X, SPC700_Y, 0,
-};
-
-/* Layout of the MAME debugger windows x,y,w,h */
-static unsigned char spc700_window_layout[] = {
-	25, 0,55, 2, /* register window (top, right rows) */
-	 0, 0,24,22, /* disassembler window (left colums) */
-	25, 3,55, 9, /* memory #1 window (right, upper middle) */
-	25,13,55, 9, /* memory #2 window (right, lower middle) */
-	 0,23,80, 1, /* command line window (bottom rows) */
-};
-
 /* ======================================================================== */
 /* ============================ GENERAL DEFINES =========================== */
 /* ======================================================================== */
@@ -1828,8 +1813,6 @@ void spc700_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = mame_spc700_dasm;	break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &spc700_ICount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = spc700_register_layout;		break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = spc700_window_layout;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "SPC700"); break;

@@ -657,32 +657,30 @@ static READ32_HANDLER( timekeeper_r )
 	if ((offset*4) >= 0x7ff0)
 	{
 		/* get the time */
-		struct tm *exptime;
-		time_t curtime;
-		time(&curtime);
-		exptime = localtime(&curtime);
+		mame_system_time systime;
+		mame_get_base_datetime(Machine, &systime);
 
 		/* return portions thereof */
 		switch (offset*4)
 		{
 			case 0x7ff0:
 				result &= 0x00ff0000;
-				result |= make_bcd((1900 + exptime->tm_year) / 100) << 8;
+				result |= (make_bcd(systime.local_time.year) / 100) << 8;
 				break;
 			case 0x7ff4:
 				break;
 			case 0x7ff8:
 				result &= 0x000000ff;
-				result |= make_bcd(exptime->tm_sec) << 8;
-				result |= make_bcd(exptime->tm_min) << 16;
-				result |= make_bcd(exptime->tm_hour) << 24;
+				result |= make_bcd(systime.local_time.second) << 8;
+				result |= make_bcd(systime.local_time.minute) << 16;
+				result |= make_bcd(systime.local_time.hour) << 24;
 				break;
 			case 0x7ffc:
-				result = exptime->tm_wday + 1;
+				result = systime.local_time.weekday + 1;
 				result |= 0x40;		/* frequency test */
-				result |= make_bcd(exptime->tm_mday) << 8;
-				result |= make_bcd(exptime->tm_mon + 1) << 16;
-				result |= make_bcd(exptime->tm_year % 100) << 24;
+				result |= make_bcd(systime.local_time.mday) << 8;
+				result |= make_bcd(systime.local_time.month + 1) << 16;
+				result |= make_bcd(systime.local_time.year % 100) << 24;
 				break;
 		}
 	}

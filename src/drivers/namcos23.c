@@ -702,35 +702,33 @@ INLINE UINT8 make_bcd(UINT8 data)
 static READ8_HANDLER( s23_mcu_rtc_r )
 {
 	UINT8 ret = 0;
-	time_t curtime;
-	struct tm *exptime;
+	mame_system_time systime;
 	static int weekday[7] = { 7, 1, 2, 3, 4, 5, 6 };
 
-	time(&curtime);
-	exptime = localtime(&curtime);
+	mame_get_current_datetime(Machine, &systime);
 
 	switch (s23_rtcstate)
 	{
 		case 0:
-			ret = make_bcd(exptime->tm_sec);	// seconds (BCD, 0-59) in bits 0-6, bit 7 = battery low
+			ret = make_bcd(systime.local_time.second);	// seconds (BCD, 0-59) in bits 0-6, bit 7 = battery low
 			break;
 		case 1:
-			ret = make_bcd(exptime->tm_min);	// minutes (BCD, 0-59)
+			ret = make_bcd(systime.local_time.minute);	// minutes (BCD, 0-59)
 			break;
 		case 2:
-			ret = make_bcd(exptime->tm_hour);	// hour (BCD, 0-23)
+			ret = make_bcd(systime.local_time.hour);	// hour (BCD, 0-23)
 			break;
 		case 3:
-			ret = make_bcd(weekday[exptime->tm_wday]); // day of the week (1 = Monday, 7 = Sunday)
+			ret = make_bcd(weekday[systime.local_time.weekday]); // day of the week (1 = Monday, 7 = Sunday)
 			break;
 		case 4:
-			ret = make_bcd(exptime->tm_mday);	// day (BCD, 1-31)
+			ret = make_bcd(systime.local_time.mday);	// day (BCD, 1-31)
 			break;
 		case 5:
-			ret = make_bcd(exptime->tm_mon + 1);	// month (BCD, 1-12)
+			ret = make_bcd(systime.local_time.month + 1);	// month (BCD, 1-12)
 			break;
 		case 6:
-			ret = make_bcd(exptime->tm_year % 100);	// year (BCD, 0-99)
+			ret = make_bcd(systime.local_time.year % 100);	// year (BCD, 0-99)
 			break;
 	}
 

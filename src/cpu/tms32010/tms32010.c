@@ -78,22 +78,6 @@
 #define BIO_IN			TMS32010_BIO_In
 
 
-static UINT8 tms32010_reg_layout[] = {
-	TMS32010_PC,  TMS32010_SP,  TMS32010_STR, TMS32010_ACC,-1,
-	TMS32010_PREG,TMS32010_TREG,TMS32010_AR0, TMS32010_AR1,-1,
-	TMS32010_STK0,TMS32010_STK1,TMS32010_STK2,TMS32010_STK3,0
-};
-
-static UINT8 tms32010_win_layout[] = {
-	28, 0,52, 4,	/* register window (top rows) */
-	 0, 0,27,22,	/* disassembler window (left colums) */
-	28, 5,52, 8,	/* memory #1 window (right, upper middle) */
-	28,14,52, 8,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
-
-
 
 typedef struct			/* Page 3-6 shows all registers */
 {
@@ -959,8 +943,6 @@ void tms32010_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = tms32010_dasm;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &tms32010_icount;		break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = tms32010_reg_layout;			break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = tms32010_win_layout;			break;
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_DATA:	info->internal_map = construct_map_tms32010_ram; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */

@@ -691,35 +691,6 @@ static int sharc_execute(int cycles)
 	return cycles - sharc_icount;
 }
 
-/*****************************************************************************/
-
-/* Debugger definitions */
-
-static UINT8 sharc_reg_layout[] =
-{
-	SHARC_PC,		SHARC_PCSTK,	-1,
-	SHARC_FADDR,	SHARC_DADDR,	-1,
-	SHARC_IMASK,	SHARC_ASTAT,	-1,
-	SHARC_LCNTR,	SHARC_SYSSTAT,	-1,
-	SHARC_R0,		SHARC_R8,		-1,
-	SHARC_R1,		SHARC_R9,		-1,
-	SHARC_R2,		SHARC_R10,		-1,
-	SHARC_R3,		SHARC_R11,		-1,
-	SHARC_R4,		SHARC_R12,		-1,
-	SHARC_R5,		SHARC_R13,		-1,
-	SHARC_R6,		SHARC_R14,		-1,
-	SHARC_R7,		SHARC_R15,		0
-};
-
-static UINT8 sharc_win_layout[] =
-{
-	 0,16,34,17,	/* register window (top rows) */
-	 0, 0,80,15,	/* disassembler window (left colums) */
-	35,16,45, 2,	/* memory #2 window (right, lower middle) */
-	35,19,45, 3,	/* memory #1 window (right, upper middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
 /**************************************************************************
  * Generic set_info
  **************************************************************************/
@@ -969,8 +940,6 @@ void sharc_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = sharc_dasm;			break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &sharc_icount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = sharc_reg_layout;				break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = sharc_win_layout;				break;
 		case CPUINFO_PTR_READ:							info->read = sharc_debug_read;			break;
 		case CPUINFO_PTR_READOP:						info->readop = sharc_debug_readop;		break;
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM: info->internal_map = construct_map_internal_pgm; break;

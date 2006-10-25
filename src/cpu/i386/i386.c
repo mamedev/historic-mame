@@ -662,36 +662,6 @@ int i386_execute(int num_cycles)
 
 /*************************************************************************/
 
-static UINT8 i386_reg_layout[] =
-{
-	I386_EIP,		I386_ESP,		-1,
-	I386_EAX,		I386_EBP,		-1,
-	I386_EBX,		I386_ESI,		-1,
-	I386_ECX,		I386_EDI,		-1,
-	I386_EDX,		-1,
-	I386_CS,		I386_CR0,		-1,
-	I386_SS,		I386_CR1,		-1,
-	I386_DS,		I386_CR2,		-1,
-	I386_ES,		I386_CR3,		-1,
-	I386_FS,		I386_TR6,		-1,
-	I386_GS,		I386_TR7,		-1,
-	I386_DR0,		I386_DR1,		-1,
-	I386_DR2,		I386_DR3,		-1,
-	I386_DR4,		I386_DR5,		-1,
-	I386_DR6,		I386_DR7,		0
-};
-
-static UINT8 i386_win_layout[] =
-{
-	 0, 0,32,12,	/* register window (top rows) */
-	33, 0,46,15,	/* disassembler window (left colums) */
-	33,10,46,12,	/* memory #2 window (right, lower middle) */
-	 0,19,32, 3,	/* memory #1 window (right, upper middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
-/*************************************************************************/
-
 static int translate_address_cb(int space, offs_t *addr)
 {
 	int result = 1;
@@ -874,8 +844,6 @@ void i386_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:		      				info->burn = NULL;			break;
 		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = i386_dasm;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER: 			info->icount = &I.cycles;		break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = i386_reg_layout;		break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = i386_win_layout;		break;
 		case CPUINFO_PTR_TRANSLATE:						info->translate = translate_address_cb;	break;
 #ifdef MAME_DEBUG
 		case CPUINFO_PTR_DEBUG_SETUP_COMMANDS:			info->setup_commands = i386_debug_setup; break;
@@ -946,39 +914,6 @@ void i386_get_info(UINT32 state, union cpuinfo *info)
 
 #if (HAS_I486)
 
-static UINT8 i486_reg_layout[] =
-{
-	I386_EIP,		I386_ESP,		-1,
-	I386_EAX,		I386_EBP,		-1,
-	I386_EBX,		I386_ESI,		-1,
-	I386_ECX,		I386_EDI,		-1,
-	I386_EDX,		-1,
-	I386_CS,		I386_CR0,		-1,
-	I386_SS,		I386_CR1,		-1,
-	I386_DS,		I386_CR2,		-1,
-	I386_ES,		I386_CR3,		-1,
-	I386_FS,		I386_TR6,		-1,
-	I386_GS,		I386_TR7,		-1,
-	I386_DR0,		I386_DR1,		-1,
-	I386_DR2,		I386_DR3,		-1,
-	I386_DR4,		I386_DR5,		-1,
-	I386_DR6,		I386_DR7,		-1,
-	X87_CTRL,		X87_STATUS,		-1,
-	X87_ST0,		X87_ST1,		-1,
-	X87_ST2,		X87_ST3,		-1,
-	X87_ST4,		X87_ST5,		-1,
-	X87_ST6,		X87_ST7,		0
-};
-
-static UINT8 i486_win_layout[] =
-{
-	 0, 0,32,12,	/* register window (top rows) */
-	33, 0,46,15,	/* disassembler window (left colums) */
-	33,10,46,12,	/* memory #2 window (right, lower middle) */
-	 0,19,32, 3,	/* memory #1 window (right, upper middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
 void i486_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
 	i386_init(index, clock, config, irqcallback);
@@ -1046,8 +981,6 @@ void i486_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INIT:		      				info->init = i486_init;				break;
 		case CPUINFO_PTR_RESET:		      				info->reset = i486_reset;			break;
 		case CPUINFO_PTR_EXIT:		      				info->exit = i486_exit;				break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = i486_reg_layout;			break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = i486_win_layout;			break;
 
 		case CPUINFO_INT_REGISTER + X87_CTRL:			info->i = I.fpu_control_word; break;
 		case CPUINFO_INT_REGISTER + X87_STATUS:			info->i = I.fpu_status_word; break;
@@ -1082,39 +1015,6 @@ void i486_get_info(UINT32 state, union cpuinfo *info)
 /* Pentium */
 
 #if (HAS_PENTIUM)
-
-static UINT8 pentium_reg_layout[] =
-{
-	I386_EIP,		I386_ESP,		-1,
-	I386_EAX,		I386_EBP,		-1,
-	I386_EBX,		I386_ESI,		-1,
-	I386_ECX,		I386_EDI,		-1,
-	I386_EDX,		-1,
-	I386_CS,		I386_CR0,		-1,
-	I386_SS,		I386_CR1,		-1,
-	I386_DS,		I386_CR2,		-1,
-	I386_ES,		I386_CR3,		-1,
-	I386_FS,		I386_TR6,		-1,
-	I386_GS,		I386_TR7,		-1,
-	I386_DR0,		I386_DR1,		-1,
-	I386_DR2,		I386_DR3,		-1,
-	I386_DR4,		I386_DR5,		-1,
-	I386_DR6,		I386_DR7,		-1,
-	X87_CTRL,		X87_STATUS,		-1,
-	X87_ST0,		X87_ST1,		-1,
-	X87_ST2,		X87_ST3,		-1,
-	X87_ST4,		X87_ST5,		-1,
-	X87_ST6,		X87_ST7,		0
-};
-
-static UINT8 pentium_win_layout[] =
-{
-	 0, 0,32,12,	/* register window (top rows) */
-	33, 0,46,15,	/* disassembler window (left colums) */
-	33,10,46,12,	/* memory #2 window (right, lower middle) */
-	 0,19,32, 3,	/* memory #1 window (right, upper middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
 
 void pentium_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
@@ -1203,8 +1103,6 @@ void pentium_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INIT:		      				info->init = pentium_init;				break;
 		case CPUINFO_PTR_RESET:		      				info->reset = pentium_reset;			break;
 		case CPUINFO_PTR_EXIT:		      				info->exit = pentium_exit;				break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = pentium_reg_layout;			break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = pentium_win_layout;			break;
 
 		case CPUINFO_INT_REGISTER + X87_CTRL:			info->i = I.fpu_control_word; break;
 		case CPUINFO_INT_REGISTER + X87_STATUS:			info->i = I.fpu_status_word; break;
@@ -1239,39 +1137,6 @@ void pentium_get_info(UINT32 state, union cpuinfo *info)
 /* Cyrix MediaGX */
 
 #if (HAS_MEDIAGX)
-
-static UINT8 mediagx_reg_layout[] =
-{
-	I386_EIP,		I386_ESP,		-1,
-	I386_EAX,		I386_EBP,		-1,
-	I386_EBX,		I386_ESI,		-1,
-	I386_ECX,		I386_EDI,		-1,
-	I386_EDX,		-1,
-	I386_CS,		I386_CR0,		-1,
-	I386_SS,		I386_CR1,		-1,
-	I386_DS,		I386_CR2,		-1,
-	I386_ES,		I386_CR3,		-1,
-	I386_FS,		I386_TR6,		-1,
-	I386_GS,		I386_TR7,		-1,
-	I386_DR0,		I386_DR1,		-1,
-	I386_DR2,		I386_DR3,		-1,
-	I386_DR4,		I386_DR5,		-1,
-	I386_DR6,		I386_DR7,		-1,
-	X87_CTRL,		X87_STATUS,		-1,
-	X87_ST0,		X87_ST1,		-1,
-	X87_ST2,		X87_ST3,		-1,
-	X87_ST4,		X87_ST5,		-1,
-	X87_ST6,		X87_ST7,		0
-};
-
-static UINT8 mediagx_win_layout[] =
-{
-	 0, 0,32,12,	/* register window (top rows) */
-	33, 0,46,15,	/* disassembler window (left colums) */
-	33,10,46,12,	/* memory #2 window (right, lower middle) */
-	 0,19,32, 3,	/* memory #1 window (right, upper middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
 
 void mediagx_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
@@ -1360,8 +1225,6 @@ void mediagx_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INIT:		      				info->init = mediagx_init;				break;
 		case CPUINFO_PTR_RESET:		      				info->reset = mediagx_reset;			break;
 		case CPUINFO_PTR_EXIT:		      				info->exit = mediagx_exit;				break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = mediagx_reg_layout;			break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = mediagx_win_layout;			break;
 
 		case CPUINFO_INT_REGISTER + X87_CTRL:			info->i = I.fpu_control_word; break;
 		case CPUINFO_INT_REGISTER + X87_STATUS:			info->i = I.fpu_status_word; break;

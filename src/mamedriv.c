@@ -1147,6 +1147,7 @@ const game_driver * const drivers[] =
 	DRIVER( lazercmd )	/* [1976?] */
 	DRIVER( bbonk )		/* [1976?] */
 	DRIVER( deadeye )	/* [1978?] */
+	DRIVER( bowl3d )	/* [1978?] */
 	DRIVER( gypsyjug )	/* [1978?] */
 	DRIVER( minferno )	/* [1978?] */
 	DRIVER( medlanes )	/* [1977?] */
@@ -2753,6 +2754,13 @@ V-V                           TP-027
 	DRIVER( weddingr )	/* GX624, JAA */
 	DRIVER( nagano98 )	/* GX720, EAA */
 	DRIVER( simpbowl )	/* GQ829, UAA */
+
+	/* Konami System 573 */
+	DRIVER( sys573 )
+	DRIVER( konam80s )	/* GC826, UAA */
+	DRIVER( konam80j )	/* GC826, JAA */
+	DRIVER( darkhleg )	/* Dark Horse Legend, JAA */
+	DRIVER( pbballex )	/* GX802, JAB */
 
 	/* Mitchell games */
 	DRIVER( mgakuen )	/* (c) 1988 Yuga */
@@ -4999,6 +5007,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( hal21j )	/*            (c) 1985 (Japan) */
 	DRIVER( aso )		/*            (c) 1985 */
 	DRIVER( alphamis )	/*            (c) 1985 */
+	DRIVER( arian )		/*            (c) 1985 */
 	DRIVER( tnk3 )		/* A5001      (c) 1985 */
 	DRIVER( tnk3j )		/* A5001      (c) 1985 */
 	DRIVER( athena )	/*       'UP' (c) 1986 */
@@ -6933,6 +6942,7 @@ Other Sun games
 	DRIVER( gt103a1 )	/* (c) 1984 Greyhound Electronics */
 	DRIVER( gt103a2 )	/* (c) 1984 Greyhound Electronics */
 	DRIVER( gt103a3 )	/* (c) 1984 Greyhound Electronics */
+	DRIVER( gt103a4 )	/* (c) 1984 Greyhound Electronics */
 	DRIVER( gt103asx )	/* (c) 1984 Greyhound Electronics */
 	DRIVER( gt103aa )	/* (c) 1984 Greyhound Electronics */
 	DRIVER( gt103ab )	/* (c) 1984 Greyhound Electronics */

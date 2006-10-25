@@ -528,10 +528,9 @@ static UINT8 stv_SMPC_r8 (int offset)
 
 static void stv_SMPC_w8 (int offset, UINT8 data)
 {
-	time_t ltime;
-	struct tm *today;
-	time(&ltime);
-	today = localtime(&ltime);
+	mame_system_time systime;
+
+	mame_get_base_datetime(Machine, &systime);
 
 //  if(LOG_SMPC) logerror ("8-bit SMPC Write to Offset %02x with Data %02x\n", offset, data);
 	smpc_ram[offset] = data;
@@ -666,13 +665,13 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 				if(LOG_SMPC) logerror ("SMPC: Status Acquire\n");
 				smpc_ram[0x5f]=0x10;
 				smpc_ram[0x21] = (0x80) | ((NMI_reset & 1) << 6);
-			  	smpc_ram[0x23] = DectoBCD((today->tm_year + 1900)/100);
-		    	smpc_ram[0x25] = DectoBCD((today->tm_year + 1900)%100);
-	    		smpc_ram[0x27] = (today->tm_wday << 4) | (today->tm_mon+1);
-		    	smpc_ram[0x29] = DectoBCD(today->tm_mday);
-		    	smpc_ram[0x2b] = DectoBCD(today->tm_hour);
-		    	smpc_ram[0x2d] = DectoBCD(today->tm_min);
-		    	smpc_ram[0x2f] = DectoBCD(today->tm_sec);
+  				smpc_ram[0x23] = DectoBCD(systime.local_time.year /100);
+				smpc_ram[0x25] = DectoBCD(systime.local_time.year %100);
+				smpc_ram[0x27] = (systime.local_time.weekday << 4) | (systime.local_time.month+1);
+				smpc_ram[0x29] = DectoBCD(systime.local_time.mday);
+				smpc_ram[0x2b] = DectoBCD(systime.local_time.hour);
+				smpc_ram[0x2d] = DectoBCD(systime.local_time.minute);
+				smpc_ram[0x2f] = DectoBCD(systime.local_time.second);
 
 				smpc_ram[0x31]=0x00;  //?
 
@@ -2734,10 +2733,9 @@ static void print_game_info(void);
 
 DRIVER_INIT ( stv )
 {
-	time_t ltime;
-	struct tm *today;
-	time(&ltime);
-	today = localtime(&ltime);
+	mame_system_time systime;
+
+	mame_get_base_datetime(Machine, &systime);
 
 	/* amount of time to boost interleave for on MINIT / SINIT, needed for communication to work */
 	minit_boost = 400;
@@ -2757,13 +2755,13 @@ DRIVER_INIT ( stv )
 	memory_install_write32_handler(1, ADDRESS_SPACE_PROGRAM, 0x60ffc44, 0x60ffc47, 0, 0, w60ffc44_write );
 	memory_install_write32_handler(1, ADDRESS_SPACE_PROGRAM, 0x60ffc48, 0x60ffc4b, 0, 0, w60ffc48_write );
 
-  	smpc_ram[0x23] = DectoBCD((today->tm_year + 1900)/100);
-    smpc_ram[0x25] = DectoBCD((today->tm_year + 1900)%100);
-    smpc_ram[0x27] = (today->tm_wday << 4) | (today->tm_mon+1);
-    smpc_ram[0x29] = DectoBCD(today->tm_mday);
-    smpc_ram[0x2b] = DectoBCD(today->tm_hour);
-    smpc_ram[0x2d] = DectoBCD(today->tm_min);
-    smpc_ram[0x2f] = DectoBCD(today->tm_sec);
+  	smpc_ram[0x23] = DectoBCD(systime.local_time.year /100);
+    smpc_ram[0x25] = DectoBCD(systime.local_time.year %100);
+    smpc_ram[0x27] = (systime.local_time.weekday << 4) | (systime.local_time.month+1);
+    smpc_ram[0x29] = DectoBCD(systime.local_time.mday);
+    smpc_ram[0x2b] = DectoBCD(systime.local_time.hour);
+    smpc_ram[0x2d] = DectoBCD(systime.local_time.minute);
+    smpc_ram[0x2f] = DectoBCD(systime.local_time.second);
     smpc_ram[0x31] = 0x00; //CTG1=0 CTG0=0 (correct??)
 //  smpc_ram[0x33] = readinputport(7);
  	smpc_ram[0x5f] = 0x10;

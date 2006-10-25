@@ -311,20 +311,20 @@ WRITE8_HANDLER(funworld_lamp_a_w)
 {
 	coin_counter_w(0, data & 0x01);		// credit in counter
 
-	output_set_lamp_value(0, 0x02-(data & 0x02));	// button hold1 and
-	output_set_lamp_value(2, 0x02-(data & 0x02));	// hold3 (see pinouts)
+	output_set_lamp_value(0, 1-((data >> 1) & 1));	// button hold1 and
+	output_set_lamp_value(2, 1-((data >> 1) & 1));	// hold3 (see pinouts)
 
 	coin_counter_w(7, data & 0x04);		// credit out counter, mapped as coin 8
 
-	output_set_lamp_value(1, 0x08-(data & 0x08));	// button hold2/low
-	output_set_lamp_value(5, 0x20-(data & 0x20));	// button 6 (collect/cancel)
-	output_set_lamp_value(3, data & 0x80);		// button hold4/high
+	output_set_lamp_value(1, 1-((data >> 3) & 1));	// button hold2/low
+	output_set_lamp_value(5, 1-((data >> 5) & 1));	// button 6 (collect/cancel)
+	output_set_lamp_value(3, (data >> 7) & 1);		// button hold4/high
 }
 
 WRITE8_HANDLER(funworld_lamp_b_w)
 {
-	output_set_lamp_value(4, data & 0x01);		// button hold5/bet
-	output_set_lamp_value(6, data & 0x02);		// button 7 (start/play)
+	output_set_lamp_value(4, (data >> 0) & 1);		// button hold5/bet
+	output_set_lamp_value(6, (data >> 1) & 1);		// button 7 (start/play)
 }
 
 /* Memory Maps */

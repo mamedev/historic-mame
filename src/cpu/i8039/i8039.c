@@ -58,22 +58,6 @@
 #define I8039_TIMCNT_INT	2	/* Execute a Timer/Counter interrupt    */
 
 
-/* Layout of the registers in the debugger */
-static UINT8 i8039_reg_layout[] = {
-	I8039_PC, I8039_SP, I8039_PSW, I8039_A, I8039_TC, I8039_P1, I8039_P2, -1,
-	I8039_R0, I8039_R1, I8039_R2, I8039_R3, I8039_R4, I8039_R5, I8039_R6, I8039_R7, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 i8039_win_layout[] = {
-	 0, 0,80, 2,	/* register window (top rows) */
-	 0, 3,24,19,	/* disassembler window (left colums) */
-	25, 3,55, 9,	/* memory #1 window (right, upper middle) */
-	25,13,55, 9,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
-
 static int Ext_IRQ(void);
 static int Timer_IRQ(void);
 
@@ -881,8 +865,6 @@ void i8039_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = i8039_dasm;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &i8039_ICount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = i8039_reg_layout;				break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = i8039_win_layout;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "I8039"); break;

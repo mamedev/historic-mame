@@ -25,43 +25,30 @@ typedef struct {
 	void (*function) (void);
 }	s_opcode;
 
-/* Layout of the registers in the debugger */
-static UINT8 cop420_reg_layout[] = {
-	   COP400_PC, COP400_A, COP400_B, COP400_C, COP400_EN, COP400_G, COP400_Q,
-       COP400_SA, COP400_SB, COP400_SC, COP400_SIO, COP400_SKL, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 cop420_win_layout[] = {
-	 0, 0,80, 2,	/* register window (top rows) */
-	 0, 3,24,19,	/* disassembler window (left colums) */
-	25, 3,55, 9,	/* memory #1 window (right, upper middle) */
-	25,13,55, 9,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
 #define UINT1	UINT8
 #define UINT4	UINT8
 #define UINT6	UINT8
-#define UINT9	UINT16
+#define UINT10	UINT16
 
 typedef struct
 {
-	UINT9 	PC;
-	UINT9	PREVPC;
+	UINT10 	PC;
+	UINT10	PREVPC;
 	UINT4	A;
 	UINT6	B;
 	UINT1	C;
 	UINT4	EN;
 	UINT4	G;
 	UINT8	Q;
-	UINT9	SA, SB, SC;
+	UINT10	SA, SB, SC;
 	UINT4	SIO;
 	UINT1	SKL;
 	UINT8   skip, skipLBI;
 	UINT1	timerlatch;
 	UINT16	counter;
 	UINT4	RAM[64];
+	UINT8	G_mask;
+	UINT8	D_mask;
 } COP420_Regs;
 
 static COP420_Regs R;
@@ -165,6 +152,10 @@ static offs_t cop420_dasm(char *buffer, offs_t pc)
 static void cop420_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
 	int i;
+
+	memset(&R, 0, sizeof(R));
+	R.G_mask = 0x0F;
+	R.D_mask = 0x0F;
 
 	for (i=0; i<256; i++) InstLen[i]=1;
 
@@ -308,9 +299,9 @@ void cop420_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 2;							break;
 
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
-		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 9;					break;
+		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 10;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
-		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 4;					break;
+		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_DATA:	info->i = 8;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_DATA: 	info->i = 6;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_DATA: 	info->i = 0;					break;
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 8;					break;
@@ -345,12 +336,10 @@ void cop420_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = cop420_dasm;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &cop420_ICount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = cop420_reg_layout;			break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = cop420_win_layout;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "COP420"); break;
-		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "National Semiconductor COP400"); break;
+		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "National Semiconductor COP420"); break;
 		case CPUINFO_STR_CORE_VERSION:					strcpy(info->s = cpuintrf_temp_str(), "1.0"); break;
 		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
 		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (C) 2006 MAME Team"); break;

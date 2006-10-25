@@ -98,22 +98,6 @@ static int g65816_readop(UINT32 offset, int size, UINT64 *value)
 	return 1;
 }
 
-/* Layout of the registers in the MAME debugger */
-static UINT8 g65816i_register_layout[] =
-{
-	G65816_PB, G65816_PC, G65816_S, G65816_DB, G65816_D, G65816_P, G65816_E, -1,
-	G65816_A, G65816_X, G65816_Y, G65816_NMI_STATE, G65816_IRQ_STATE, 0
-};
-
-/* Layout of the MAME debugger windows x,y,w,h */
-static UINT8 g65816i_window_layout[] = {
-	25, 0,55, 3, /* register window (top, right rows) */
-	 0, 0,24,22, /* disassembler window (left colums) */
-	25, 4,55, 9, /* memory #1 window (right, upper middle) */
-	25,13,55, 9, /* memory #2 window (right, lower middle) */
-	 0,23,80, 1, /* command line window (bottom rows) */
-};
-
 extern void (*g65816i_opcodes_M0X0[])(void);
 extern uint g65816i_get_reg_M0X0(int regnum);
 extern void g65816i_set_reg_M0X0(int regnum, uint val);
@@ -446,8 +430,6 @@ void g65816_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = g65816_dasm;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &g65816_ICount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = g65816i_register_layout;		break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = g65816i_window_layout;		break;
 		case CPUINFO_PTR_G65816_READVECTOR_CALLBACK:	info->f = (genf *) READ_VECTOR;			break;
 
 		case CPUINFO_PTR_READOP:						info->readop = g65816_readop;			break;

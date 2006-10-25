@@ -125,22 +125,6 @@ static int m37710_irq_vectors[M37710_LINE_MAX] =
 	0xfffe,	// RESET
 };
 
-/* Layout of the registers in the MAME debugger */
-static unsigned char m37710i_register_layout[] =
-{
-	M37710_PB, M37710_PC, M37710_S, M37710_DB, M37710_D, M37710_P, M37710_E, -1,
-	M37710_A, M37710_B, M37710_X, M37710_Y, 0
-};
-
-/* Layout of the MAME debugger windows x,y,w,h */
-static unsigned char m37710i_window_layout[] = {
-	 0, 0,80, 4,	/* register window (top rows) */
-	 0, 5,29,16,	/* disassembler window (left colums) */
-	30, 5,50, 7,	/* memory #1 window (right, upper middle) */
-	30,14,50, 8,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
 // M37710 internal peripherals
 
 #if M37710_DEBUG
@@ -1204,8 +1188,6 @@ void m37710_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m37710_dasm;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m37710_ICount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m37710i_register_layout;		break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = m37710i_window_layout;		break;
 
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM: info->internal_map = &construct_map_m37710_internal_map; break;
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_DATA:    info->internal_map = 0; break;

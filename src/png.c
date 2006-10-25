@@ -15,8 +15,6 @@
 #include "driver.h"
 #include "png.h"
 
-
-
 /***************************************************************************
     TYPE DEFINITIONS
 ***************************************************************************/
@@ -1049,7 +1047,10 @@ png_error mng_capture_start(mame_file *fp, mame_bitmap *bitmap)
 
 png_error mng_capture_frame(mame_file *fp, mame_bitmap *bitmap)
 {
-	return write_png_stream(fp, &mnginfo, bitmap, Machine->drv->total_colors, palette_get_adjusted_colors(Machine));
+        int retcode;
+        retcode=write_png_stream(fp, &mnginfo, bitmap, Machine->drv->total_colors, palette_get_adjusted_colors(Machine));
+        png_free(&mnginfo);
+        return retcode;
 }
 
 png_error mng_capture_stop(mame_file *fp)

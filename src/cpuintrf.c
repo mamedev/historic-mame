@@ -685,6 +685,9 @@ static const struct
 #if (HAS_COP410)
 	{ CPU_COP410, cop410_get_info },
 #endif
+#if (HAS_COP411)
+	{ CPU_COP411, cop411_get_info },
+#endif
 
 #ifdef MESS
 #if (HAS_APEXC)
@@ -1302,56 +1305,6 @@ unsigned activecpu_dasm_new(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram,
 
 
 
-/*--------------------------
-    State dumps
---------------------------*/
-
-const char *activecpu_dump_state(void)
-{
-	static char buffer[1024+1];
-	unsigned addr_width = (activecpu_addrbus_width(ADDRESS_SPACE_PROGRAM) + 3) / 4;
-	char *dst = buffer;
-	const char *src;
-	const INT8 *regs;
-	int width;
-
-	VERIFY_ACTIVECPU(activecpu_dump_state);
-
-	dst += sprintf(dst, "CPU #%d [%s]\n", activecpu, activecpu_name());
-	width = 0;
-	regs = (INT8 *)activecpu_register_layout();
-	while (*regs)
-	{
-		if (*regs == -1)
-		{
-			dst += sprintf(dst, "\n");
-			width = 0;
-		}
-		else
-		{
-			src = activecpu_reg_string(*regs);
-			if (*src)
-			{
-				if (width + strlen(src) + 1 >= 80)
-				{
-					dst += sprintf(dst, "\n");
-					width = 0;
-				}
-				dst += sprintf(dst, "%s ", src);
-				width += strlen(src) + 1;
-			}
-		}
-		regs++;
-	}
-	dst += sprintf(dst, "\n%0*X: ", addr_width, (offs_t)activecpu_get_pc());
-	activecpu_dasm(dst, activecpu_get_pc());
-	strcat(dst, "\n\n");
-
-	return buffer;
-}
-
-
-
 /*************************************
  *
  *  Interfaces to a specific CPU
@@ -1577,22 +1530,6 @@ offs_t cpunum_dasm_new(int cpunum, char *buffer, offs_t pc, UINT8 *oprom, UINT8 
 
 
 
-/*--------------------------
-    State dumps
---------------------------*/
-
-const char *cpunum_dump_state(int cpunum)
-{
-	static char buffer[1024+1];
-	VERIFY_CPUNUM(cpunum_dump_state);
-	cpuintrf_push_context(cpunum);
-	strcpy(buffer, activecpu_dump_state());
-	cpuintrf_pop_context();
-	return buffer;
-}
-
-
-
 /*************************************
  *
  *  Interfaces to a specific CPU type
@@ -1641,23 +1578,6 @@ const char *cputype_get_info_string(int cputype, UINT32 state)
 	info.s = NULL;
 	(*cpuintrf[cputype].get_info)(state, &info);
 	return info.s;
-}
-
-
-
-/*************************************
- *
- *  Dump states of all CPUs
- *
- *************************************/
-
-void cpu_dump_states(void)
-{
-	int cpunum;
-
-	for (cpunum = 0; cpunum < totalcpu; cpunum++)
-		puts(cpunum_dump_state(cpunum));
-	fflush(stdout);
 }
 
 
@@ -1735,8 +1655,6 @@ void dummy_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = dummy_dasm;			break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &dummy_icount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = NULL;							break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = default_win_layout;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), ""); break;

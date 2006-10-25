@@ -469,44 +469,6 @@ static int tms32031_execute(int cycles)
 
 
 /***************************************************************************
-    DEBUGGER DEFINITIONS
-***************************************************************************/
-
-static UINT8 tms32031_reg_layout[] =
-{
-	TMS32031_PC,		TMS32031_SP,		-1,
-	TMS32031_R0,		TMS32031_R0F,		-1,
-	TMS32031_R1,		TMS32031_R1F,		-1,
-	TMS32031_R2,		TMS32031_R2F,		-1,
-	TMS32031_R3,		TMS32031_R3F,		-1,
-	TMS32031_R4,		TMS32031_R4F,		-1,
-	TMS32031_R5,		TMS32031_R5F,		-1,
-	TMS32031_R6,		TMS32031_R6F,		-1,
-	TMS32031_R7,		TMS32031_R7F,		-1,
-	TMS32031_AR0,		TMS32031_IR0,		-1,
-	TMS32031_AR1,		TMS32031_IR1,		-1,
-	TMS32031_AR2,		TMS32031_RC,		-1,
-	TMS32031_AR3,		TMS32031_RS,		-1,
-	TMS32031_AR4,		TMS32031_RE,		-1,
-	TMS32031_AR5,		TMS32031_BK,		-1,
-	TMS32031_AR6,		TMS32031_ST,		-1,
-	TMS32031_AR7,		TMS32031_IE,		-1,
-	TMS32031_DP,		TMS32031_IF,		-1,
-	TMS32031_ST,		TMS32031_IOF, 		0
-};
-
-static UINT8 tms32031_win_layout[] =
-{
-	 0, 0,30,20,	/* register window (top rows) */
-	31, 0,48,14,	/* disassembler window (left colums) */
-	 0,21,30, 1,	/* memory #1 window (right, upper middle) */
-	31,15,48, 7,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
-
-
-/***************************************************************************
     DISASSEMBLY HOOK
 ***************************************************************************/
 
@@ -764,8 +726,6 @@ void tms32031_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = tms32031_dasm;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &tms32031_icount;		break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = tms32031_reg_layout;			break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = tms32031_win_layout;			break;
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM: info->internal_map = construct_map_internal; break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */

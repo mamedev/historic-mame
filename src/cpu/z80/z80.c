@@ -118,20 +118,6 @@
 #define BIG_FLAGS_ARRAY		0
 #endif
 
-static UINT8 z80_reg_layout[] = {
-	Z80_PC, Z80_SP, Z80_AF, Z80_BC, Z80_DE, Z80_HL, -1,
-	Z80_IX, Z80_IY, Z80_AF2,Z80_BC2,Z80_DE2,Z80_HL2,-1,
-	Z80_R,	Z80_I,	Z80_IM, Z80_IFF1,Z80_IFF2, 0
-};
-
-static UINT8 z80_win_layout[] = {
-	27, 0,53, 4,	/* register window (top rows) */
-	 0, 0,26,22,	/* disassembler window (left colums) */
-	27, 5,53, 8,	/* memory #1 window (right, upper middle) */
-	27,14,53, 8,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
 /****************************************************************************/
 /* The Z80 registers. HALT is set to 1 when the CPU is halted, the refresh  */
 /* register is calculated as follows: refresh=(Z80.r&127)|(Z80.r2&128)      */
@@ -4295,12 +4281,6 @@ void z80_get_info(UINT32 state, union cpuinfo *info)
 #endif
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:
 			info->icount = &z80_ICount;
-			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:
-			info->p = z80_reg_layout;
-			break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:
-			info->p = z80_win_layout;
 			break;
 		case CPUINFO_PTR_Z80_CYCLE_TABLE + Z80_TABLE_op:
 			info->p = (void *)cc[Z80_TABLE_op];

@@ -28,21 +28,6 @@
 /* define this to expand all EA calculations inline */
 #define INLINE_EA	1
 
-static UINT8 s2650_reg_layout[] = {
-	S2650_PC, S2650_PS, S2650_R0, S2650_R1, S2650_R2, S2650_R3, -1,
-	S2650_SI, S2650_FO, S2650_R1A, S2650_R2A, S2650_R3A, -1,
-	S2650_HALT, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 s2650_win_layout[] = {
-	32, 0,48, 4,	/* register window (top rows) */
-	 0, 0,31,22,	/* disassembler window (left colums) */
-	32, 5,48, 8,	/* memory #1 window (right, upper middle) */
-	32,14,48, 8,	/* memory #2 window (right, lower middle) */
-     0,23,80, 1,    /* command line window (bottom rows) */
-};
-
 int s2650_ICount = 0;
 
 typedef struct {
@@ -1684,12 +1669,6 @@ void s2650_get_info(UINT32 state, union cpuinfo *info)
 				break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:
 				info->icount = &s2650_ICount;
-				break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:
-				info->p = s2650_reg_layout;
-				break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:
-				info->p = s2650_win_layout;
 				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */

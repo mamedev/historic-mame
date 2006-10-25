@@ -112,21 +112,6 @@ static void CHECK_IRQ_LINES( void );
 static void IIError(void);
 static void DZError(void);
 
-static UINT8 hd6309_reg_layout[] = {
-	HD6309_A, HD6309_B, HD6309_E, HD6309_F, HD6309_MD, HD6309_CC, HD6309_DP,  -1,
-	HD6309_X, HD6309_Y, HD6309_S, HD6309_U, HD6309_V, -1,
-	HD6309_PC, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 hd6309_win_layout[] = {
-	27, 0,53, 4,	/* register window (top, right rows) */
-	 0, 0,26,22,	/* disassembler window (left colums) */
-	27, 5,53, 8,	/* memory #1 window (right, upper middle) */
-	27,14,53, 8,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
 INLINE void fetch_effective_address( void );
 
 /* 6309 Registers */
@@ -1293,8 +1278,6 @@ void hd6309_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = hd6309_dasm;		break;
 #endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &hd6309_ICount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = hd6309_reg_layout;			break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = hd6309_win_layout;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "HD6309"); break;

@@ -141,6 +141,7 @@ static void simpl156_drawsprites(mame_bitmap *bitmap,const rectangle *cliprect)
 VIDEO_UPDATE( wcvol95 )
 {
 	fillbitmap(priority_bitmap,0,NULL);
+	fillbitmap(bitmap,0,NULL);
 
 	deco16_pf12_update(deco16_pf1_rowscroll,deco16_pf2_rowscroll);
 

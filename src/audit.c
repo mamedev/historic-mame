@@ -159,6 +159,9 @@ int audit_samples(int game, audit_record **audit)
 		{
 			struct Samplesinterface *intf = (struct Samplesinterface *)config.sound[sndnum].config;
 
+			if (intf->samplenames == NULL)
+				continue;
+
 			/* iterate over samples in this entry */
 			for (sampnum = 0; intf->samplenames[sampnum] != NULL; sampnum++)
 				if (intf->samplenames[sampnum][0] != '*')
@@ -193,14 +196,14 @@ int audit_samples(int game, audit_record **audit)
 					char *fname;
 
 					/* attempt to access the file from the game driver name */
-					fname = assemble_4_strings(gamedrv->name, PATH_SEPARATOR, intf->samplenames[sampnum], ".wav");
+					fname = assemble_3_strings(gamedrv->name, PATH_SEPARATOR, intf->samplenames[sampnum]);
 					filerr = mame_fopen(SEARCHPATH_SAMPLE, fname, OPEN_FLAG_READ, &file);
 					free(fname);
 
 					/* attempt to access the file from the shared driver name */
 					if (filerr != FILERR_NONE && sharedname != NULL)
 					{
-						fname = assemble_4_strings(sharedname, PATH_SEPARATOR, intf->samplenames[sampnum], ".wav");
+						fname = assemble_3_strings(sharedname, PATH_SEPARATOR, intf->samplenames[sampnum]);
 						filerr = mame_fopen(SEARCHPATH_SAMPLE, fname, OPEN_FLAG_READ, &file);
 						free(fname);
 					}
@@ -549,7 +552,7 @@ static chd_interface_file *audit_chd_open(const char *filename, const char *mode
 		mame_file *file;
 		char *fname;
 
-		fname = assemble_3_strings(drv->name, PATH_SEPARATOR, filename);
+		fname = assemble_4_strings(drv->name, PATH_SEPARATOR, filename, ".chd");
 		filerr = mame_fopen(SEARCHPATH_IMAGE, fname, OPEN_FLAG_READ, &file);
 		free(fname);
 

@@ -127,21 +127,6 @@
 
 #define I8085_INTR      0xff
 
-/* Layout of the registers in the debugger */
-static UINT8 i8085_reg_layout[] = {
-	I8085_PC,I8085_SP,I8085_AF,I8085_BC,I8085_DE,I8085_HL, -1,
-	I8085_HALT,I8085_IM,I8085_IREQ,I8085_ISRV,I8085_VECTOR,	0 };
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 i8085_win_layout[] = {
-	25, 0,55, 3,	/* register window (top, right rows) */
-	 0, 0,24,22,	/* disassembler window (left colums) */
-	25, 4,55, 9,	/* memory #1 window (right, upper middle) */
-	25,14,55, 8,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
-
 typedef struct {
 	int 	cputype;	/* 0 8080, 1 8085A */
 	PAIR	PC,SP,AF,BC,DE,HL,XX;
@@ -1552,20 +1537,6 @@ offs_t i8085_dasm(char *buffer, offs_t pc)
  * 8080 section
  **************************************************************************/
 #if (HAS_8080)
-/* Layout of the registers in the debugger */
-static UINT8 i8080_reg_layout[] = {
-	I8080_AF, I8080_BC, I8080_DE, I8080_HL, I8080_SP, I8080_PC, -1,
-	I8080_HALT, I8080_IREQ, I8080_ISRV, I8080_VECTOR,
-	0 };
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 i8080_win_layout[] = {
-	25, 0,55, 2,	/* register window (top, right rows) */
-	 0, 0,24,22,	/* disassembler window (left colums) */
-	25, 3,55,10,	/* memory #1 window (right, upper middle) */
-	25,14,55, 8,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
 
 void i8080_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
@@ -1713,8 +1684,6 @@ void i8085_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = i8085_dasm;			break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &i8085_ICount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = i8085_reg_layout;				break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = i8085_win_layout;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "8085A"); break;
@@ -1783,8 +1752,6 @@ void i8080_get_info(UINT32 state, union cpuinfo *info)
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_SET_INFO:						info->setinfo = i8080_set_info;			break;
 		case CPUINFO_PTR_INIT:							info->init = i8080_init;				break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = i8080_reg_layout;				break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = i8080_win_layout;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "8080"); break;

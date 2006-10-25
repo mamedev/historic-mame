@@ -180,24 +180,6 @@ INLINE void M_WRTRAM(offs_t addr, UINT16 data)
 #define M_RDOP_ARG(A)	((tms32025_pgmmap[(A) >> 7]) ? (tms32025_pgmmap[(A) >> 7][(A) & 0x7f]) : cpu_readop16((A)<<1))
 
 
-static UINT8 tms32025_reg_layout[] = {
-	TMS32025_PC,  TMS32025_STR0,TMS32025_STR1,TMS32025_IFR, TMS32025_STK7,TMS32025_STK6,-1,
-	TMS32025_STK5,TMS32025_STK4,TMS32025_STK3,TMS32025_STK2,TMS32025_STK1,TMS32025_STK0,-1,
-	TMS32025_ACC, TMS32025_PREG,TMS32025_TREG,TMS32025_RPTC,TMS32025_AR0, TMS32025_AR1, -1,
-	TMS32025_AR2, TMS32025_AR3, TMS32025_AR4, TMS32025_AR5, TMS32025_AR6, TMS32025_AR7, -1,
-	TMS32025_DRR, TMS32025_DXR, TMS32025_TIM, TMS32025_PRD, TMS32025_IMR, TMS32025_GREG, 0
-};
-
-static UINT8 tms32025_win_layout[] = {
-	 0, 0,80, 5,	/* register window (top rows) */
-	 0, 6,29,16,	/* disassembler window (left colums) */
-	30, 6,50, 7,	/* memory #1 window (right, upper middle) */
-	30,14,50, 8,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
-
-
 
 typedef struct			/* Page 3-6 (45) shows all registers */
 {
@@ -2423,8 +2405,6 @@ void tms32025_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_WRITE:							info->write = tms32025_write;			break;
 		case CPUINFO_PTR_READOP:						info->readop = tms32025_readop;			break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &tms32025_icount;		break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = tms32025_reg_layout;			break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = tms32025_win_layout;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "TMS32025"); break;

@@ -60,22 +60,6 @@ addresses take place.
 #endif
 
 
-/* Layout of the registers in the debugger */
-static UINT8 m6509_reg_layout[] =
-{
-	M6509_A,M6509_X,M6509_Y,M6509_S,M6509_PC, M6509_P,-1,
-	M6509_PC_BANK, M6509_IND_BANK, M6509_EA, M6509_ZP, -1, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 m6509_win_layout[] = {
-	25, 0,55, 3,	/* register window (top, right rows) */
-	 0, 0,24,22,	/* disassembler window (left colums) */
-	25, 4,55, 8,	/* memory #1 window (right, upper middle) */
-	25,13,55, 9,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
 typedef struct {
 	UINT8	subtype;		/* currently selected cpu sub type */
 	void	(**insn)(void); /* pointer to the function pointer table */
@@ -391,8 +375,6 @@ void m6509_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = m6510_dasm;			break;
 #endif
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m6509_ICount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m6509_reg_layout;				break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = m6509_win_layout;				break;
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP:			info->internal_map = construct_map_m6509_mem;	break;
 		case CPUINFO_PTR_M6502_READINDEXED_CALLBACK:	info->f = (genf *) m6509.rdmem_id;		break;
 		case CPUINFO_PTR_M6502_WRITEINDEXED_CALLBACK:	info->f = (genf *) m6509.wrmem_id;		break;

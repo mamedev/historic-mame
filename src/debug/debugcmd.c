@@ -93,6 +93,7 @@ static void execute_find(int ref, int params, const char **param);
 static void execute_trace(int ref, int params, const char **param);
 static void execute_traceover(int ref, int params, const char **param);
 static void execute_traceflush(int ref, int params, const char **param);
+static void execute_history(int ref, int params, const char **param);
 static void execute_snap(int ref, int params, const char **param);
 static void execute_source(int ref, int params, const char **param);
 static void execute_map(int ref, int params, const char **param);
@@ -216,6 +217,8 @@ void debug_command_init(running_machine *machine)
 	debug_console_register_command("trace",     CMDFLAG_NONE, 0, 1, 3, execute_trace);
 	debug_console_register_command("traceover", CMDFLAG_NONE, 0, 1, 3, execute_traceover);
 	debug_console_register_command("traceflush",CMDFLAG_NONE, 0, 0, 0, execute_traceflush);
+
+	debug_console_register_command("history",   CMDFLAG_NONE, 0, 0, 2, execute_history);
 
 	debug_console_register_command("snap",      CMDFLAG_NONE, 0, 0, 1, execute_snap);
 
@@ -1935,6 +1938,69 @@ static void execute_traceover(int ref, int params, const char *param[])
 static void execute_traceflush(int ref, int params, const char *param[])
 {
 	debug_flush_traces();
+}
+
+
+/*-------------------------------------------------
+    execute_history - execute the history command
+-------------------------------------------------*/
+
+static void execute_history(int ref, int params, const char *param[])
+{
+	UINT64 count = DEBUG_HISTORY_SIZE;
+	const debug_cpu_info *info;
+	UINT64 cpunum;
+	int i;
+
+	cpunum = cpu_getactivecpu();
+
+	/* validate parameters */
+	if (params > 0 && !validate_parameter_number(param[0], &cpunum))
+		return;
+	if (params > 1 && !validate_parameter_number(param[1], &count))
+		return;
+
+	/* further validation */
+	if (cpunum >= cpu_gettotalcpu())
+	{
+		debug_console_printf("Invalid CPU number!\n");
+		return;
+	}
+	if (count > DEBUG_HISTORY_SIZE)
+		count = DEBUG_HISTORY_SIZE;
+
+	info = debug_get_cpu_info(cpunum);
+
+	/* loop over lines */
+	cpuintrf_push_context(cpunum);
+	for (i = 0; i < count; i++)
+	{
+		offs_t pc = info->pc_history[(info->pc_history_index + DEBUG_HISTORY_SIZE - count + i) % DEBUG_HISTORY_SIZE];
+		char buffer[200];
+
+		if (activecpu_get_info_fct(CPUINFO_PTR_DISASSEMBLE_NEW) != NULL)
+		{
+			int maxbytes = activecpu_max_instruction_bytes();
+			UINT8 opbuf[64], argbuf[64];
+			offs_t pcbyte;
+			int numbytes;
+
+			/* fetch the bytes up to the maximum */
+			pcbyte = ADDR2BYTE_MASKED(pc, info, ADDRESS_SPACE_PROGRAM);
+			for (numbytes = 0; numbytes < maxbytes; numbytes++)
+			{
+				opbuf[numbytes] = debug_read_opcode(pcbyte + numbytes, 1, FALSE);
+				argbuf[numbytes] = debug_read_opcode(pcbyte + numbytes, 1, TRUE);
+			}
+
+			activecpu_dasm_new(buffer, pc, opbuf, argbuf, maxbytes);
+		}
+		else
+			activecpu_dasm(buffer, pc);
+
+		debug_console_printf("%0*X: %s\n", info->space[ADDRESS_SPACE_PROGRAM].logchars, pc, buffer);
+	}
+	cpuintrf_pop_context();
 }
 
 

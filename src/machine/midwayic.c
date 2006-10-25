@@ -355,18 +355,16 @@ void midway_serial_pic2_w(UINT8 data)
 				/* if we haven't written a new time recently, use the real live time */
 				if (!pic.time_just_written)
 				{
-					struct tm *exptime;
-					time_t curtime;
-					time(&curtime);
-					exptime = localtime(&curtime);
+					mame_system_time systime;
+					mame_get_base_datetime(Machine, &systime);
 
-					pic.buffer[pic.total++] = make_bcd(exptime->tm_sec);
-					pic.buffer[pic.total++] = make_bcd(exptime->tm_min);
-					pic.buffer[pic.total++] = make_bcd(exptime->tm_hour);
-					pic.buffer[pic.total++] = make_bcd(exptime->tm_wday + 1);
-					pic.buffer[pic.total++] = make_bcd(exptime->tm_mday);
-					pic.buffer[pic.total++] = make_bcd(exptime->tm_mon + 1);
-					pic.buffer[pic.total++] = make_bcd(exptime->tm_year - pic.yearoffs);
+					pic.buffer[pic.total++] = make_bcd(systime.local_time.second);
+					pic.buffer[pic.total++] = make_bcd(systime.local_time.minute);
+					pic.buffer[pic.total++] = make_bcd(systime.local_time.hour);
+					pic.buffer[pic.total++] = make_bcd(systime.local_time.weekday + 1);
+					pic.buffer[pic.total++] = make_bcd(systime.local_time.mday);
+					pic.buffer[pic.total++] = make_bcd(systime.local_time.month + 1);
+					pic.buffer[pic.total++] = make_bcd(systime.local_time.year - 1900 - pic.yearoffs);
 				}
 
 				/* otherwise, just parrot back what was written to pass self tests */

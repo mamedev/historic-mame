@@ -337,6 +337,27 @@ Boards:
 
 /*************************************
  *
+ *  Constants
+ *
+ *************************************/
+
+#define MASTER_CLOCK		(18432000)
+
+#define PIXEL_CLOCK			(MASTER_CLOCK/3)
+
+/* H counts from 128->511, HBLANK starts at 144 and ends at 240 */
+#define HTOTAL				(384)
+#define HBEND				(0)		/*(96+16)*/
+#define HBSTART				(288)	/*(16)*/
+
+#define VTOTAL				(264)
+#define VBEND				(0)		/*(16)*/
+#define VBSTART				(224)	/*(224+16)*/
+
+
+
+/*************************************
+ *
  *  Machine init
  *
  *************************************/
@@ -2844,12 +2865,15 @@ static const gfx_decode s2650games_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+
 static const gfx_decode crush4_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &crush4_tilelayout,   0, 128 },
 	{ REGION_GFX1, 0x1000, &crush4_spritelayout, 0, 128 },
 	{ -1 } /* end of array */
 };
+
+
 
 /*************************************
  *
@@ -2874,19 +2898,15 @@ static struct namco_interface namco_interface =
 static MACHINE_DRIVER_START( pacman )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD_TAG("main", Z80, 18432000/6)
+	MDRV_CPU_ADD_TAG("main", Z80, MASTER_CLOCK/6)
 	MDRV_CPU_PROGRAM_MAP(pacman_map,0)
 	MDRV_CPU_IO_MAP(0,writeport)
 	MDRV_CPU_VBLANK_INT(pacman_interrupt,2)
 	MDRV_WATCHDOG_VBLANK_INIT(16)
 
-	MDRV_FRAMES_PER_SECOND(60.606060)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(36*8, 28*8)
-	MDRV_VISIBLE_AREA(0*8, 36*8-1, 0*8, 28*8-1)
+	MDRV_SCREEN_RAW_PARAMS(PIXEL_CLOCK, HTOTAL, HBEND, HBSTART, VTOTAL, VBEND, VBSTART)
 	MDRV_GFXDECODE(gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(32)
 	MDRV_COLORTABLE_LENGTH(128*4)
@@ -2898,7 +2918,7 @@ static MACHINE_DRIVER_START( pacman )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
-	MDRV_SOUND_ADD_TAG("namco", NAMCO, 3072000/32)
+	MDRV_SOUND_ADD_TAG("namco", NAMCO, MASTER_CLOCK/6/32)
 	MDRV_SOUND_CONFIG(namco_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
@@ -3041,7 +3061,7 @@ static MACHINE_DRIVER_START( s2650games )
 	MDRV_IMPORT_FROM(pacman)
 
 	MDRV_CPU_REMOVE("main")
-	MDRV_CPU_ADD_TAG("main", S2650, 18432000/6/2)	/* ??? */
+	MDRV_CPU_ADD_TAG("main", S2650, MASTER_CLOCK/6/2)	/* 2H */
 	MDRV_CPU_PROGRAM_MAP(s2650games_map,0)
 	MDRV_CPU_VBLANK_INT(s2650_interrupt,1)
 
@@ -3055,9 +3075,7 @@ static MACHINE_DRIVER_START( s2650games )
 	MDRV_VIDEO_UPDATE(s2650games)
 
 	/* sound hardware */
-	MDRV_SOUND_REPLACE("namco", SN76496, 18432000/6/2/3)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
-	MDRV_SOUND_ADD(SN76496, 18432000/6/2/3)
+	MDRV_SOUND_REPLACE("namco", SN76496, MASTER_CLOCK/6)	/* 1H */
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.75)
 MACHINE_DRIVER_END
 
@@ -3126,6 +3144,8 @@ static MACHINE_DRIVER_START( crush4 )
 
 	MDRV_GFXDECODE(crush4_gfxdecodeinfo)
 MACHINE_DRIVER_END
+
+
 
 /*************************************
  *
@@ -4788,6 +4808,8 @@ ROM_START( rocktrv2 )
 	ROM_LOAD( "17.aux",       0x38000, 0x4000, CRC(24d5c388) SHA1(f7039d84b3cbf00884e87ea7221f1b608a7d879e) )
 	ROM_LOAD( "18.aux",       0x3c000, 0x4000, CRC(feb195fd) SHA1(5677d31e526cc7752254e9af0d694f05bc6bc907) )
 ROM_END
+
+
 
 /*************************************
  *

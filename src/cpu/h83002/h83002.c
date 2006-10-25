@@ -3612,25 +3612,6 @@ static void h8_set_info(UINT32 state, union cpuinfo *info)
 	}
 }
 
-static UINT8 h8_reg_layout[] =
-{
-	H8_PC,  H8_CCR, -1,
-	H8_E0, 	H8_E1, -1,
-	H8_E2,  H8_E3, -1,
-	H8_E4,  H8_E5, -1,
-	H8_E6,  H8_E7, -1,
-	0
-};
-
-static UINT8 h8_win_layout[] =
-{
-	45, 0,35,19,	/* register window (top right) */
-	 0, 0,44,13,	/* disassembler window (left, upper) */
-	 0,14,44, 8,	/* memory #1 window (left, middle) */
-	45,20,35, 8,	/* memory #2 window (lower) */
-	 0,23,80, 1 	/* command line window (bottom rows) */
-};
-
 static READ16_HANDLER( h8_itu_r )
 {
 	if (mem_mask == 0)
@@ -3689,8 +3670,6 @@ void h8_3002_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_PTR_DISASSEMBLE:         info->disassemble = h8_disasm;        break;
 	case CPUINFO_PTR_INSTRUCTION_COUNTER: info->icount      = &h8_cyccnt;       break;
 	case CPUINFO_INT_CONTEXT_SIZE:        info->i           = sizeof(h83002_state); break;
-	case CPUINFO_PTR_REGISTER_LAYOUT:     info->p = h8_reg_layout;		    break;
-	case CPUINFO_PTR_WINDOW_LAYOUT:	      info->p = h8_win_layout;		    break;
 	case CPUINFO_INT_MIN_INSTRUCTION_BYTES: info->i = 2;					break;
 	case CPUINFO_INT_MAX_INSTRUCTION_BYTES: info->i = 4;					break;
 

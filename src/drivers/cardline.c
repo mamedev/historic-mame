@@ -84,14 +84,14 @@ static READ8_HANDLER(unk_r)
 static WRITE8_HANDLER(lamps_w)
 {
 	/* button lamps 1-8 (collect, card 1-5, bet, start) */
-	output_set_lamp_value(5,data & 0x01);
-	output_set_lamp_value(0,data & 0x02);
-	output_set_lamp_value(1,data & 0x04);
-	output_set_lamp_value(2,data & 0x08);
-	output_set_lamp_value(3,data & 0x10);
-	output_set_lamp_value(4,data & 0x20);
-	output_set_lamp_value(6,data & 0x40);
-	output_set_lamp_value(7,data & 0x80);
+	output_set_lamp_value(5,(data >> 0) & 1);
+	output_set_lamp_value(0,(data >> 1) & 1);
+	output_set_lamp_value(1,(data >> 2) & 1);
+	output_set_lamp_value(2,(data >> 3) & 1);
+	output_set_lamp_value(3,(data >> 4) & 1);
+	output_set_lamp_value(4,(data >> 5) & 1);
+	output_set_lamp_value(6,(data >> 6) & 1);
+	output_set_lamp_value(7,(data >> 7) & 1);
 }
 
 static ADDRESS_MAP_START( mem_prg, ADDRESS_SPACE_PROGRAM, 8 )

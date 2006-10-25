@@ -403,25 +403,6 @@ STOP            01001000  10111011          12  stop
 static UPD7810 upd7810;
 static int upd7810_icount;
 
-/* Layout of the registers in the debugger */
-static UINT8 upd7810_reg_layout[] = {
-	UPD7810_PC, UPD7810_PSW, UPD7810_A, UPD7810_V, UPD7810_EA, UPD7810_BC, UPD7810_DE, UPD7810_HL, -1,
-	UPD7810_SP, UPD7810_MM, UPD7810_A2, UPD7810_V2, UPD7810_EA2, UPD7810_BC2, UPD7810_DE2, UPD7810_HL2, -1,
-	UPD7810_TMM, UPD7810_CNT0, UPD7810_TM0, UPD7810_CNT1, UPD7810_TM1, -1,
-	UPD7810_ETMM, UPD7810_ECNT, UPD7810_ECPT, UPD7810_ETM0, UPD7810_ETM1, -1,
-	UPD7810_TXB, UPD7810_RXB, UPD7810_CR0, UPD7810_CR1, UPD7810_CR2, UPD7810_CR3, -1,
-    UPD7810_TXD, UPD7810_RXD, UPD7810_SCK, UPD7810_TI, UPD7810_TO, UPD7810_CI, UPD7810_CO0, UPD7810_CO1, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 upd7810_win_layout[] = {
-	 0, 0,80, 6,	/* register window (top rows) */
-	 0, 7,24,15,	/* disassembler window (left colums) */
-	25, 7,55, 7,	/* memory #1 window (right, upper middle) */
-	25,15,55, 7,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
 #define CY	0x01
 #define F1	0x02
 #define L0	0x04
@@ -1964,8 +1945,6 @@ void upd7810_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = upd7810_dasm;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &upd7810_icount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = upd7810_reg_layout;			break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = upd7810_win_layout;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "uPD7810"); break;

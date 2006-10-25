@@ -58,32 +58,31 @@ void DS1302_CLK(UINT8 val)
 			ICount++;
 			if(ICount==8)	//Command start
 			{
-				time_t tim;
-				struct tm *tm2;
-				time(&tim);
-				tm2=localtime(&tim);
+				mame_system_time systime;
+				mame_get_base_datetime(Machine, &systime);
+
 				switch(ShiftIn)
 				{
 					case 0x81:	//Sec
-						ShiftOut=bcd(tm2->tm_sec);
+						ShiftOut=bcd(systime.local_time.second);
 						break;
 					case 0x83:	//Min
-						ShiftOut=bcd(tm2->tm_min);
+						ShiftOut=bcd(systime.local_time.minute);
 						break;
 					case 0x85:	//Hour
-						ShiftOut=bcd(tm2->tm_hour);
+						ShiftOut=bcd(systime.local_time.hour);
 						break;
 					case 0x87:	//Day
-						ShiftOut=bcd(tm2->tm_mday);
+						ShiftOut=bcd(systime.local_time.mday);
 						break;
 					case 0x89:	//Month
-						ShiftOut=bcd(tm2->tm_mon+1);
+						ShiftOut=bcd(systime.local_time.month+1);
 						break;
 					case 0x8b:	//weekday
-						ShiftOut=bcd(tm2->tm_wday);
+						ShiftOut=bcd(systime.local_time.weekday);
 						break;
 					case 0x8d:	//Year
-						ShiftOut=bcd(tm2->tm_year%100);
+						ShiftOut=bcd(systime.local_time.year%100);
 						break;
 					default:
 						ShiftOut=0x0;

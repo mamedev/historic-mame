@@ -181,6 +181,7 @@ WRITE16_HANDLER( alpha68k_II_video_bank_w )
 			bank_base=buffer_28=buffer_60=buffer_68=0;
 			return;
 		case 0x14:
+			if (buffer_60) bank_base=1; else bank_base=0;
 			buffer_28=1;
 			return;
 		case 0x18:
@@ -188,10 +189,11 @@ WRITE16_HANDLER( alpha68k_II_video_bank_w )
 			if (buffer_28) {if (buffer_60) bank_base=1; else bank_base=0; }
 			return;
 		case 0x30:
-			bank_base=buffer_28=buffer_68=0;
+			buffer_28=buffer_68=0; bank_base=1;
 			buffer_60=1;
 			return;
 		case 0x34:
+			if (buffer_60) bank_base=3; else bank_base=2;
 			buffer_68=1;
 			return;
 		case 0x38:

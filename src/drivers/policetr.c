@@ -492,7 +492,7 @@ MACHINE_DRIVER_END
  *
  *************************************/
 
-ROM_START( policetr ) /* Rev 0.3 PCB , unknown program rom date */
+ROM_START( policetr ) /* Rev 0.3 PCB , with all chips dated 04/01/97 */
 	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_ERASE00 )
 	ROM_LOAD16_BYTE( "pt-u121.bin", 0x000000, 0x100000, CRC(56b0b00a) SHA1(4034fe373a61f756f4813f0c20b1cf05e4338059) )
 	ROM_LOAD16_BYTE( "pt-u120.bin", 0x000001, 0x100000, CRC(ca664142) SHA1(2727ecb9287b4ed30088e017bb6b8763dfb75b2f) )

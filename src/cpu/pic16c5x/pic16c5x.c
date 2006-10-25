@@ -925,29 +925,6 @@ static void pic16C5x_set_context (void *src)
  *  Debugger definitions
  ****************************************************************************/
 
-#if (HAS_PIC16C55 || HAS_PIC16C57)
-static UINT8 pic16C5x_3p_reg_layout[] = {
-	PIC16C5x_PC,  PIC16C5x_STK0, PIC16C5x_STK1, PIC16C5x_STR,  PIC16C5x_OPT,  -1,
-	PIC16C5x_W,   PIC16C5x_TMR0, PIC16C5x_PSCL, PIC16C5x_PRTA, PIC16C5x_PRTB, PIC16C5x_PRTC, -1,
-	PIC16C5x_ALU, PIC16C5x_WDT,  PIC16C5x_FSR,  PIC16C5x_TRSA, PIC16C5x_TRSB, PIC16C5x_TRSC, 0
-};
-#endif
-
-static UINT8 pic16C5x_2p_reg_layout[] = {
-	PIC16C5x_PC,  PIC16C5x_STK0, PIC16C5x_STK1, PIC16C5x_STR,  PIC16C5x_OPT, -1,
-	PIC16C5x_W,   PIC16C5x_TMR0, PIC16C5x_PSCL, PIC16C5x_PRTA, PIC16C5x_PRTB, -1,
-	PIC16C5x_ALU, PIC16C5x_WDT,  PIC16C5x_FSR,  PIC16C5x_TRSA, PIC16C5x_TRSB, 0
-};
-
-static UINT8 pic16C5x_win_layout[] = {
-	28, 0,53, 3,	/* register window (top rows) */
-	 0, 0,27,22,	/* disassembler window (left colums) */
-	28, 4,53, 8,	/* memory #1 window (right, upper middle) */
-	28,13,53, 9,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
-
 static offs_t pic16C5x_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
@@ -1053,8 +1030,6 @@ static void pic16C5x_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = pic16C5x_dasm;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &pic16C5x_icount;		break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = pic16C5x_2p_reg_layout;		break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = pic16C5x_win_layout;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "PIC16C5x"); break;
@@ -1140,7 +1115,6 @@ void pic16C54_get_info(UINT32 state, union cpuinfo *info)
 	{
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_RESET:							info->reset = pic16C54_reset;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = pic16C5x_2p_reg_layout;		break;
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM:		info->internal_map = construct_map_pic16c54_rom; break;
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_DATA:			info->internal_map = construct_map_pic16c54_ram; break;
 
@@ -1195,7 +1169,6 @@ void pic16C55_get_info(UINT32 state, union cpuinfo *info)
 	{
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_RESET:							info->reset = pic16C55_reset;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = pic16C5x_3p_reg_layout;		break;
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM:		info->internal_map = construct_map_pic16c55_rom; break;
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_DATA:			info->internal_map = construct_map_pic16c55_ram; break;
 
@@ -1250,7 +1223,6 @@ void pic16C56_get_info(UINT32 state, union cpuinfo *info)
 	{
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_RESET:							info->reset = pic16C56_reset;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = pic16C5x_2p_reg_layout;		break;
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM:		info->internal_map = construct_map_pic16c56_rom; break;
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_DATA:			info->internal_map = construct_map_pic16c56_ram; break;
 
@@ -1310,7 +1282,6 @@ void pic16C57_get_info(UINT32 state, union cpuinfo *info)
 	{
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_RESET:							info->reset = pic16C57_reset;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = pic16C5x_3p_reg_layout;		break;
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM:		info->internal_map = construct_map_pic16c57_rom; break;
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_DATA:			info->internal_map = construct_map_pic16c57_ram; break;
 
@@ -1371,7 +1342,6 @@ void pic16C58_get_info(UINT32 state, union cpuinfo *info)
 	{
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_RESET:							info->reset = pic16C58_reset;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = pic16C5x_2p_reg_layout;		break;
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM:		info->internal_map = construct_map_pic16c58_rom; break;
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_DATA:			info->internal_map = construct_map_pic16c58_ram; break;
 

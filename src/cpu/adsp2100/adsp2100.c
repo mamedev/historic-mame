@@ -1680,39 +1680,6 @@ static int adsp2100_execute(int cycles)
     DEBUGGER DEFINITIONS
 ***************************************************************************/
 
-static UINT8 adsp21xx_reg_layout[] =
-{
-	ADSP2100_PC,		ADSP2100_AX0,	ADSP2100_MX0,	-1,
-	ADSP2100_CNTR, 		ADSP2100_AX1,	ADSP2100_MX1,	-1,
-	ADSP2100_MSTAT, 	ADSP2100_AY0,	ADSP2100_MY0,	-1,
-	ADSP2100_SSTAT, 	ADSP2100_AY1,	ADSP2100_MY1,	-1,
-	ADSP2100_PX, 		ADSP2100_AR,	ADSP2100_MR0,	-1,
-	ADSP2100_PCSP, 		ADSP2100_AF,	ADSP2100_MR1,	-1,
-	ADSP2100_CNTRSP, 	ADSP2100_SI,	ADSP2100_MR2,	-1,
-	ADSP2100_STATSP, 	ADSP2100_SE,	ADSP2100_MF,	-1,
-	ADSP2100_LOOPSP, 	ADSP2100_SB,	100,			-1,
-	ADSP2100_IMASK,		ADSP2100_SR0,	100,			-1,
-	ADSP2100_ICNTL,		ADSP2100_SR1,	100,			-1,
-	ADSP2100_I0,		ADSP2100_L0,	ADSP2100_M0,	-1,
-	ADSP2100_I1,		ADSP2100_L1,	ADSP2100_M1,	-1,
-	ADSP2100_I2,		ADSP2100_L2,	ADSP2100_M2,	-1,
-	ADSP2100_I3,		ADSP2100_L3,	ADSP2100_M3,	-1,
-	ADSP2100_I4,		ADSP2100_L4,	ADSP2100_M4,	-1,
-	ADSP2100_I5,		ADSP2100_L5,	ADSP2100_M5,	-1,
-	ADSP2100_I6,		ADSP2100_L6,	ADSP2100_M6,	-1,
-	ADSP2100_I7,		ADSP2100_L7,	ADSP2100_M7,	0
-};
-
-static UINT8 adsp21xx_win_layout[] =
-{
-	 0, 0,30,20,	/* register window (top rows) */
-	31, 0,48,14,	/* disassembler window (left colums) */
-	 0,21,30, 1,	/* memory #1 window (right, upper middle) */
-	31,15,48, 7,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
-
 static offs_t adsp2100_dasm(char *buffer, offs_t pc)
 {
 #ifdef MAME_DEBUG
@@ -1977,8 +1944,6 @@ static void adsp21xx_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = adsp2100_dasm;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &adsp2100_icount;		break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = adsp21xx_reg_layout;			break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = adsp21xx_win_layout;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							/* set per CPU */						break;

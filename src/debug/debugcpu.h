@@ -22,6 +22,7 @@
 ***************************************************************************/
 
 #define TRACE_LOOPS				64
+#define DEBUG_HISTORY_SIZE		256
 
 #define WATCHPOINT_READ			1
 #define WATCHPOINT_WRITE		2
@@ -117,6 +118,8 @@ struct _debug_cpu_info
 	debug_cpu_breakpoint *first_bp;				/* first breakpoint */
 	debug_space_info space[ADDRESS_SPACES];		/* per-address space info */
 	debug_hotspot_entry *hotspots;				/* hotspot list */
+	offs_t			pc_history[DEBUG_HISTORY_SIZE]; /* history of recent PCs */
+	UINT32			pc_history_index;			/* current history index */
 	int				hotspot_count;				/* number of hotspots */
 	int				hotspot_threshhold;			/* threshhold for the number of hits to print */
 	int				(*translate)(int space, offs_t *address);/* address translation routine */

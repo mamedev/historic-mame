@@ -88,6 +88,7 @@
 
 #include <stdarg.h>
 #include <setjmp.h>
+#include <time.h>
 
 
 
@@ -157,6 +158,9 @@ struct _mame_private
 
 	/* random number seed */
 	UINT32			rand_seed;
+
+	/* base time */
+	time_t			base_time;
 };
 
 
@@ -1188,6 +1192,12 @@ static void init_machine(running_machine *machine)
 	generic_video_init(machine);
 	mame->rand_seed = 0x9d14abd7;
 
+	/* initialize the base time (if not doing record/playback) */
+	if (!Machine->record_file && !Machine->playback_file)
+		time(&mame->base_time);
+	else
+		mame->base_time = 0;
+
 	/* init the osd layer */
 	if (osd_init(machine) != 0)
 		fatalerror("osd_init failed");
@@ -1534,4 +1544,67 @@ cancel:
 	free(mame->saveload_pending_file);
 	mame->saveload_pending_file = NULL;
 	mame->saveload_schedule_callback = NULL;
+}
+
+
+
+/***************************************************************************
+    SYSTEM TIME
+***************************************************************************/
+
+/*-------------------------------------------------
+    get_tm_time - converts a MAME
+-------------------------------------------------*/
+
+static void get_tm_time(struct tm *t, mame_system_tm *systm)
+{
+	systm->second	= t->tm_sec;
+	systm->minute	= t->tm_min;
+	systm->hour		= t->tm_hour;
+	systm->mday		= t->tm_mday;
+	systm->year		= t->tm_year + 1900;
+	systm->weekday	= t->tm_wday;
+	systm->day		= t->tm_yday;
+	systm->is_dst	= t->tm_isdst;
+}
+
+
+
+/*-------------------------------------------------
+    fill_systime - fills out a mame_system_time
+    structure
+-------------------------------------------------*/
+
+static void fill_systime(mame_system_time *systime, time_t t)
+{
+	systime->time = t;
+	get_tm_time(localtime(&t), &systime->local_time);
+	get_tm_time(gmtime(&t), &systime->utc_time);
+}
+
+
+
+/*-------------------------------------------------
+    mame_get_base_datetime - retrieve the time of
+    the host system; useful for RTC implementations
+-------------------------------------------------*/
+
+void mame_get_base_datetime(running_machine *machine, mame_system_time *systime)
+{
+	mame_private *mame = machine->mame_data;
+	fill_systime(systime, mame->base_time);
+}
+
+
+
+/*-------------------------------------------------
+    mame_get_current_datetime - retrieve the current
+    time (offsetted by the baes); useful for RTC
+    implementations
+-------------------------------------------------*/
+
+void mame_get_current_datetime(running_machine *machine, mame_system_time *systime)
+{
+	mame_private *mame = machine->mame_data;
+	fill_systime(systime, mame->base_time + mame_timer_get_time().seconds);
 }

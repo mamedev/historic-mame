@@ -993,31 +993,6 @@ void v810_set_context(void *src)
 		v810 = *(v810info *)src;
 }
 
-static UINT8 v810_reg_layout[] = {
-	V810_PC,  -1,
-	-1,
-	V810_R0,  V810_R1, 	V810_R2,  V810_SP, 	V810_R4,  -1,
-	V810_R5, 	V810_R6,  V810_R7, 	V810_R8,  V810_R9,  -1,
-	V810_R10, V810_R11, V810_R12, V810_R13, V810_R14, -1,
-	V810_R15, V810_R16, V810_R17,	V810_R18, V810_R19, -1,
-	V810_R20, V810_R21,	V810_R22, V810_R23, V810_R24, -1,
-	V810_R25,	V810_R26, V810_R27, V810_R28, V810_R29, -1,
-	V810_R30, V810_R31, -1,
-	-1,
-	V810_PSW, V810_EIPC, 	V810_EIPSW, V810_FEPC, 	-1,
-	V810_FEPSW, V810_ECR, V810_TKCW, 	V810_CHCW, -1,
-	V810_ADTRE, 0
-
-};
-
-static UINT8 v810_win_layout[] = {
-	0, 0,80, 6,	/* register window (top rows) */
-	0, 7,39,15,	/* disassembler window  */
-	40, 7,39, 7,	/* memory #1 window (left) */
-	40,15,39, 7,	/* memory #2 window (right) */
-	0,23,80, 1,	/* command line window (bottom rows) */
-};
-
 unsigned v810_dasm(char *buffer, unsigned int pc)
 {
 #ifdef MAME_DEBUG
@@ -1220,8 +1195,6 @@ void v810_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = v810_dasm;			break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &v810_ICount;				break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = v810_reg_layout;				break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = v810_win_layout;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "V810"); break;

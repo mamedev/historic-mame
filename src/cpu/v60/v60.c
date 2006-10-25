@@ -443,40 +443,6 @@ static void v60_set_context(void *src)
 	}
 }
 
-static UINT8 v60_reg_layout[] = {
-	V60_PC, V60_TR, -1,
-	-1,
-	V60_R0, V60_R1, -1,
-	V60_R2, V60_R3, -1,
-	V60_R4, V60_R5, -1,
-	V60_R6, V60_R7, -1,
-	V60_R8, V60_R9, -1,
-	V60_R10, V60_R11, -1,
-	V60_R12, V60_R13, -1,
-	V60_R14, V60_R15, -1,
-	V60_R16, V60_R17, -1,
-	V60_R18, V60_R19, -1,
-	V60_R20, V60_R21, -1,
-	V60_R22, V60_R23, -1,
-	V60_R24, V60_R25, -1,
-	V60_R26, V60_R27, -1,
-	V60_R28, V60_AP, -1,
-	V60_FP, V60_SP, -1,
-	-1,
-	V60_SBR, V60_ISP, -1,
-	V60_L0SP, V60_L1SP, -1,
-	V60_L2SP, V60_L3SP, -1,
-	V60_PSW, 0
-};
-
-static UINT8 v60_win_layout[] = {
-	45, 0,35,13,	/* register window (top right) */
-	 0, 0,44,13,	/* disassembler window (left, upper) */
-	 0,14,44, 8,	/* memory #1 window (left, middle) */
-	45,14,35, 8,	/* memory #2 window (lower) */
-	 0,23,80, 1 	/* command line window (bottom rows) */
-};
-
 
 #ifndef MAME_DEBUG
 static offs_t v60_dasm(char *buffer,  offs_t pc)
@@ -681,8 +647,6 @@ void v60_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = v60_dasm;			break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &v60_ICount;				break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = v60_reg_layout;				break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = v60_win_layout;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "V60"); break;

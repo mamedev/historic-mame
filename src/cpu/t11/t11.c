@@ -17,30 +17,6 @@
 
 /*************************************
  *
- *  Debugger layouts
- *
- *************************************/
-
-static UINT8 t11_reg_layout[] =
-{
-	T11_PC, T11_SP, T11_PSW, -1,
-	T11_R0,T11_R1,T11_R2,T11_R3,T11_R4,T11_R5, 0
-};
-
-
-static UINT8 t11_win_layout[] =
-{
-	 0, 0,80, 4,	/* register window (top rows) */
-	 0, 5,31,17,	/* disassembler window (left colums) */
-	32, 5,48, 8,	/* memory #1 window (right, upper middle) */
-	32,14,48, 8,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
-
-
-/*************************************
- *
  *  Internal state representation
  *
  *************************************/
@@ -547,8 +523,6 @@ void t11_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = t11_dasm;			break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &t11_ICount;				break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = t11_reg_layout;				break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = t11_win_layout;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "T11"); break;

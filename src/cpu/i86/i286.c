@@ -17,55 +17,6 @@
 #include "i286intf.h"
 
 
-static UINT8 i286_reg_layout[] =
-{
-	I286_FLAGS,
-	I286_MSW,
-	I286_TR,
-	I286_TR_2,
-	I286_GDTR,
-	I286_GDTR_2,
-	-1,
-	I286_AX,
-	I286_BP,
-	I286_LDTR,
-	I286_LDTR_2,
-	I286_IDTR,
-	I286_IDTR_2,
-	-1,
-	I286_BX,
-	I286_SP,
-	I286_SS,
-	I286_SS_2,
-	I286_VECTOR,
-	-1,
-	I286_CX,
-	I286_IP,
-	I286_CS,
-	I286_CS_2,
-	-1,
-	I286_DX,
-	I286_SI,
-	I286_DS,
-	I286_DS_2,
-	-1,
-	I286_EMPTY,
-	I286_DI,
-	I286_ES,
-	I286_ES_2,
-	0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 i286_win_layout[] = {
-     0, 0,80, 6,    /* register window (top rows) */
-	 0, 7,40,15,	/* disassembler window (left colums) */
-	41, 7,39, 7,	/* memory #1 window (right, upper middle) */
-	41,15,39, 7,	/* memory #2 window (right, lower middle) */
-     0,23,80, 1,    /* command line window (bottom rows) */
-};
-
-
 #include "i86time.c"
 
 /***************************************************************************/
@@ -492,8 +443,6 @@ void i286_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = i286_dasm;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &i286_ICount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = i286_reg_layout;				break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = i286_win_layout;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "I80286"); break;

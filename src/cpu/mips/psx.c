@@ -61,90 +61,6 @@
 #define CAUSE_CE2 ( 2L << 28 )
 #define CAUSE_BD ( 1L << 31 )
 
-static UINT8 mips_reg_layout[] =
-{
-	MIPS_PC, -1,
-	MIPS_DELAYV, MIPS_DELAYR, -1,
-	MIPS_HI, MIPS_LO, -1,
-	-1,
-	MIPS_R0, MIPS_R1, -1,
-	MIPS_R2, MIPS_R3, -1,
-	MIPS_R4, MIPS_R5, -1,
-	MIPS_R6, MIPS_R7, -1,
-	MIPS_R8, MIPS_R9, -1,
-	MIPS_R10, MIPS_R11, -1,
-	MIPS_R12, MIPS_R13, -1,
-	MIPS_R14, MIPS_R15, -1,
-	MIPS_R16, MIPS_R17, -1,
-	MIPS_R18, MIPS_R19, -1,
-	MIPS_R20, MIPS_R21, -1,
-	MIPS_R22, MIPS_R23, -1,
-	MIPS_R24, MIPS_R25, -1,
-	MIPS_R26, MIPS_R27, -1,
-	MIPS_R28, MIPS_R29, -1,
-	MIPS_R30, MIPS_R31, -1,
-	-1,
-	MIPS_CP0R0, MIPS_CP0R1, -1,
-	MIPS_CP0R2, MIPS_CP0R3, -1,
-	MIPS_CP0R4, MIPS_CP0R5, -1,
-	MIPS_CP0R6, MIPS_CP0R7, -1,
-	MIPS_CP0R8, MIPS_CP0R9, -1,
-	MIPS_CP0R10, MIPS_CP0R11, -1,
-	MIPS_CP0R12, MIPS_CP0R13, -1,
-	MIPS_CP0R14, MIPS_CP0R15, -1,
-	MIPS_CP0R16, MIPS_CP0R17, -1,
-	MIPS_CP0R18, MIPS_CP0R19, -1,
-	MIPS_CP0R20, MIPS_CP0R21, -1,
-	MIPS_CP0R22, MIPS_CP0R23, -1,
-	MIPS_CP0R24, MIPS_CP0R25, -1,
-	MIPS_CP0R26, MIPS_CP0R27, -1,
-	MIPS_CP0R28, MIPS_CP0R29, -1,
-	MIPS_CP0R30, MIPS_CP0R31, -1,
-	-1,
-	MIPS_CP2DR0, MIPS_CP2DR1, -1,
-	MIPS_CP2DR2, MIPS_CP2DR3, -1,
-	MIPS_CP2DR4, MIPS_CP2DR5, -1,
-	MIPS_CP2DR6, MIPS_CP2DR7, -1,
-	MIPS_CP2DR8, MIPS_CP2DR9, -1,
-	MIPS_CP2DR10, MIPS_CP2DR11, -1,
-	MIPS_CP2DR12, MIPS_CP2DR13, -1,
-	MIPS_CP2DR14, MIPS_CP2DR15, -1,
-	MIPS_CP2DR16, MIPS_CP2DR17, -1,
-	MIPS_CP2DR18, MIPS_CP2DR19, -1,
-	MIPS_CP2DR20, MIPS_CP2DR21, -1,
-	MIPS_CP2DR22, MIPS_CP2DR23, -1,
-	MIPS_CP2DR24, MIPS_CP2DR25, -1,
-	MIPS_CP2DR26, MIPS_CP2DR27, -1,
-	MIPS_CP2DR28, MIPS_CP2DR29, -1,
-	MIPS_CP2DR30, MIPS_CP2DR31, -1,
-	-1,
-	MIPS_CP2CR0, MIPS_CP2CR1, -1,
-	MIPS_CP2CR2, MIPS_CP2CR3, -1,
-	MIPS_CP2CR4, MIPS_CP2CR5, -1,
-	MIPS_CP2CR6, MIPS_CP2CR7, -1,
-	MIPS_CP2CR8, MIPS_CP2CR9, -1,
-	MIPS_CP2CR10, MIPS_CP2CR11, -1,
-	MIPS_CP2CR12, MIPS_CP2CR13, -1,
-	MIPS_CP2CR14, MIPS_CP2CR15, -1,
-	MIPS_CP2CR16, MIPS_CP2CR17, -1,
-	MIPS_CP2CR18, MIPS_CP2CR19, -1,
-	MIPS_CP2CR20, MIPS_CP2CR21, -1,
-	MIPS_CP2CR22, MIPS_CP2CR23, -1,
-	MIPS_CP2CR24, MIPS_CP2CR25, -1,
-	MIPS_CP2CR26, MIPS_CP2CR27, -1,
-	MIPS_CP2CR28, MIPS_CP2CR29, -1,
-	MIPS_CP2CR30, MIPS_CP2CR31,
-	0
-};
-
-static UINT8 mips_win_layout[] = {
-	45, 0,35,13,	/* register window (top right) */
-	 0, 0,44,13,	/* disassembler window (left, upper) */
-	 0,14,44, 8,	/* memory #1 window (left, middle) */
-	45,14,35, 8,	/* memory #2 window (lower) */
-	 0,23,80, 1 	/* command line window (bottom rows) */
-};
-
 static const char *delayn[] =
 {
 	"pc", "at", "v0", "v1", "a0", "a1", "a2", "a3",
@@ -3564,8 +3480,6 @@ static void mips_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = mips_dasm;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &mips_ICount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = mips_reg_layout;				break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = mips_win_layout;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "PSX CPU"); break;

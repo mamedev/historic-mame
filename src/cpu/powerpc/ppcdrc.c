@@ -1437,67 +1437,6 @@ static void ppc_set_context(void *src)
 	change_pc(ppc.pc);
 }
 
-/*******************************************************************/
-
-/* Debugger definitions */
-
-static UINT8 ppc_reg_layout[] =
-{
-	PPC_PC,			PPC_MSR,		-1,
-	PPC_CR,			PPC_LR,			-1,
-	PPC_CTR,		PPC_XER,		-1,
-	PPC_SRR0,		PPC_SRR1,		-1,
-	PPC_R0,		 	PPC_R16,		-1,
-	PPC_R1, 		PPC_R17,		-1,
-	PPC_R2, 		PPC_R18,		-1,
-	PPC_R3, 		PPC_R19,		-1,
-	PPC_R4, 		PPC_R20,		-1,
-	PPC_R5, 		PPC_R21,		-1,
-	PPC_R6, 		PPC_R22,		-1,
-	PPC_R7, 		PPC_R23,		-1,
-	PPC_R8,			PPC_R24,		-1,
-	PPC_R9,			PPC_R25,		-1,
-	PPC_R10,		PPC_R26,		-1,
-	PPC_R11,		PPC_R27,		-1,
-	PPC_R12,		PPC_R28,		-1,
-	PPC_R13,		PPC_R29,		-1,
-	PPC_R14,		PPC_R30,		-1,
-	PPC_R15,		PPC_R31,		0
-};
-
-static UINT8 ppc_win_layout[] =
-{
-	 0, 0,34,33,	/* register window (top rows) */
-	35, 0,45,14,	/* disassembler window (left colums) */
-	35,15,45, 3,	/* memory #2 window (right, lower middle) */
-	35,19,45, 3,	/* memory #1 window (right, upper middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
-static UINT8 ppc603_reg_layout[] =
-{
-	PPC_PC,			PPC_MSR,		-1,
-	PPC_CR,			PPC_LR,			-1,
-	PPC_CTR,		PPC_XER,		-1,
-	PPC_SRR0,		PPC_SRR1,		-1,
-	PPC_DEC,						-1,
-	PPC_R0,		 	PPC_R16,		-1,
-	PPC_R1, 		PPC_R17,		-1,
-	PPC_R2, 		PPC_R18,		-1,
-	PPC_R3, 		PPC_R19,		-1,
-	PPC_R4, 		PPC_R20,		-1,
-	PPC_R5, 		PPC_R21,		-1,
-	PPC_R6, 		PPC_R22,		-1,
-	PPC_R7, 		PPC_R23,		-1,
-	PPC_R8,			PPC_R24,		-1,
-	PPC_R9,			PPC_R25,		-1,
-	PPC_R10,		PPC_R26,		-1,
-	PPC_R11,		PPC_R27,		-1,
-	PPC_R12,		PPC_R28,		-1,
-	PPC_R13,		PPC_R29,		-1,
-	PPC_R14,		PPC_R30,		-1,
-	PPC_R15,		PPC_R31,		0
-};
 
 /**************************************************************************
  * Generic set_info
@@ -1632,8 +1571,6 @@ void ppc_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = ppc_dasm;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &ppc_icount;				break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = ppc_reg_layout;				break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = ppc_win_layout;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "PPC403"); break;
@@ -1767,7 +1704,6 @@ void ppc603_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_READ:							info->read = ppc_read;					break;
 		case CPUINFO_PTR_WRITE:							info->write = ppc_write;				break;
 		case CPUINFO_PTR_READOP:						info->readop = ppc_readop;				break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = ppc603_reg_layout;				break;
 		case CPUINFO_PTR_TRANSLATE:						info->translate = ppc_translate_address_cb;	break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
@@ -1816,7 +1752,6 @@ void ppc602_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_READ:							info->read = ppc_read;					break;
 		case CPUINFO_PTR_WRITE:							info->write = ppc_write;				break;
 		case CPUINFO_PTR_READOP:						info->readop = ppc_readop;				break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = ppc603_reg_layout;				break;
 		case CPUINFO_PTR_TRANSLATE:						info->translate = ppc_translate_address_cb;	break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */

@@ -402,33 +402,6 @@ static int tms_execute(int num_cycles)
 
 /*****************************************************************************/
 
-/* Debugger definitions */
-
-static UINT8 tms_reg_layout[] =
-{
-	TMS32051_PC,		-1,
-	TMS32051_ACC,		TMS32051_ACCB, -1,
-	TMS32051_PREG,		TMS32051_BMAR, -1,
-	TMS32051_BRCR,		TMS32051_INDX, -1,
-	TMS32051_INDX,		TMS32051_DBMR, -1,
-	TMS32051_ARCR,		-1,
-	TMS32051_ARP,		TMS32051_ARB, -1,
-	TMS32051_AR0,		TMS32051_AR1, -1,
-	TMS32051_AR2,		TMS32051_AR3, -1,
-	TMS32051_AR4,		TMS32051_AR5, -1,
-	TMS32051_AR6,		TMS32051_AR7, 0
-};
-
-static UINT8 tms_win_layout[] =
-{
-	 0,16,34,17,	/* register window (top rows) */
-	 0, 0,80,15,	/* disassembler window (left colums) */
-	35,16,45, 2,	/* memory #2 window (right, lower middle) */
-	35,19,45, 3,	/* memory #1 window (right, upper middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
-
 static READ16_HANDLER( cpuregs_r )
 {
 	switch (offset)
@@ -624,8 +597,6 @@ void tms_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = tms_dasm;			break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &tms_icount;				break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = tms_reg_layout;				break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = tms_win_layout;				break;
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM: info->internal_map = construct_map_internal_pgm; break;
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_DATA: info->internal_map = construct_map_internal_data; break;
 

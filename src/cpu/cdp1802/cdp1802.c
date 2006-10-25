@@ -21,46 +21,6 @@
 #include "debugger.h"
 #include "cdp1802.h"
 
-/* Layout of the registers in the debugger */
-static UINT8 cdp1802_reg_layout[] = {
-	CDP1802_R0,
-	CDP1802_R1,
-	CDP1802_R2,
-	CDP1802_R3,
-	CDP1802_R4,
-	CDP1802_R5,
-	CDP1802_R6,
-	CDP1802_R7,
-	-1,
-
-	CDP1802_R8,
-	CDP1802_R9,
-	CDP1802_Ra,
-	CDP1802_Rb,
-	CDP1802_Rc,
-	CDP1802_Rd,
-	CDP1802_Re,
-	CDP1802_Rf,
-	-1,
-
-	CDP1802_P,
-	CDP1802_X,
-	CDP1802_D,
-	CDP1802_B,
-	CDP1802_T,
-	CDP1802_I,
-	CDP1802_N,
-	0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 cdp1802_win_layout[] = {
-	17, 0,63, 4,	/* register window (top, right rows) */
-	 0, 0,16,22,	/* disassembler window (left colums) */
-	17, 5,63, 8,	/* memory #1 window (right, upper middle) */
-	17,14,63, 8,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
 
 /****************************************************************************
  * The CDP1802 registers.
@@ -313,8 +273,6 @@ void cdp1802_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = cdp1802_dasm;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &cdp1802_ICount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = cdp1802_reg_layout;			break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = cdp1802_win_layout;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "CDP1802");	break;

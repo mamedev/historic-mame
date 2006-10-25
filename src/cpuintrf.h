@@ -180,6 +180,7 @@ enum
 	CPU_CDP1802,
 	CPU_COP420,
 	CPU_COP410,
+	CPU_COP411,
 #ifdef MESS
 	CPU_APEXC,
 	CPU_CP1610,
@@ -313,8 +314,6 @@ enum
 	CPUINFO_PTR_READOP,									/* R/O: int (*readop)(UINT32 offset, int size, UINT64 *value) */
 	CPUINFO_PTR_DEBUG_SETUP_COMMANDS,					/* R/O: void (*setup_commands)(void) */
 	CPUINFO_PTR_INSTRUCTION_COUNTER,					/* R/O: int *icount */
-	CPUINFO_PTR_REGISTER_LAYOUT,						/* R/O: struct debug_register_layout *layout */
-	CPUINFO_PTR_WINDOW_LAYOUT,							/* R/O: struct debug_window_layout *layout */
 	CPUINFO_PTR_INTERNAL_MEMORY_MAP,					/* R/O: construct_map_t map */
 	CPUINFO_PTR_INTERNAL_MEMORY_MAP_LAST = CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACES - 1,
 	CPUINFO_PTR_DEBUG_REGISTER_LIST,					/* R/O: int *list: list of registers for the debugger */
@@ -500,9 +499,6 @@ void activecpu_set_opbase(offs_t val);
 offs_t activecpu_dasm(char *buffer, offs_t pc);
 offs_t activecpu_dasm_new(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes);
 
-/* return a string containing the state of the active CPU */
-const char *activecpu_dump_state(void);
-
 #define activecpu_context_size()				activecpu_get_info_int(CPUINFO_INT_CONTEXT_SIZE)
 #define activecpu_input_lines()					activecpu_get_info_int(CPUINFO_INT_INPUT_LINES)
 #define activecpu_output_lines()				activecpu_get_info_int(CPUINFO_INT_OUTPUT_LINES)
@@ -519,8 +515,6 @@ const char *activecpu_dump_state(void);
 #define activecpu_logaddr_width(space)			activecpu_get_info_int(CPUINFO_INT_LOGADDR_WIDTH + (space))
 #define activecpu_page_shift(space)				activecpu_get_info_int(CPUINFO_INT_PAGE_SHIFT + (space))
 #define activecpu_get_reg(reg)					activecpu_get_info_int(CPUINFO_INT_REGISTER + (reg))
-#define activecpu_register_layout()				activecpu_get_info_ptr(CPUINFO_PTR_REGISTER_LAYOUT)
-#define activecpu_window_layout()				activecpu_get_info_ptr(CPUINFO_PTR_WINDOW_LAYOUT)
 #define activecpu_debug_register_list()			activecpu_get_info_ptr(CPUINFO_PTR_DEBUG_REGISTER_LIST)
 #define activecpu_name()						activecpu_get_info_string(CPUINFO_STR_NAME)
 #define activecpu_core_family()					activecpu_get_info_string(CPUINFO_STR_CORE_FAMILY)
@@ -578,9 +572,6 @@ void cpunum_set_opbase(int cpunum, offs_t val);
 offs_t cpunum_dasm(int cpunum, char *buffer, offs_t pc);
 offs_t cpunum_dasm_new(int cpunum, char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes);
 
-/* return a string containing the state of a given CPU */
-const char *cpunum_dump_state(int cpunum);
-
 #define cpunum_context_size(cpunum)				cpunum_get_info_int(cpunum, CPUINFO_INT_CONTEXT_SIZE)
 #define cpunum_input_lines(cpunum)				cpunum_get_info_int(cpunum, CPUINFO_INT_INPUT_LINES)
 #define cpunum_output_lines(cpunum)				cpunum_get_info_int(cpunum, CPUINFO_INT_OUTPUT_LINES)
@@ -597,8 +588,6 @@ const char *cpunum_dump_state(int cpunum);
 #define cpunum_logaddr_width(cpunum, space)		cpunum_get_info_int(cpunum, CPUINFO_INT_LOGADDR_WIDTH + (space))
 #define cpunum_page_shift(cpunum, space)		cpunum_get_info_int(cpunum, CPUINFO_INT_PAGE_SHIFT + (space))
 #define cpunum_get_reg(cpunum, reg)				cpunum_get_info_int(cpunum, CPUINFO_INT_REGISTER + (reg))
-#define cpunum_register_layout(cpunum)			cpunum_get_info_ptr(cpunum, CPUINFO_PTR_REGISTER_LAYOUT)
-#define cpunum_window_layout(cpunum)			cpunum_get_info_ptr(cpunum, CPUINFO_PTR_WINDOW_LAYOUT)
 #define cpunum_debug_register_list(cpunum)		cpunum_get_info_ptr(cpunum, CPUINFO_PTR_DEBUG_REGISTER_LIST)
 #define cpunum_name(cpunum)						cpunum_get_info_string(cpunum, CPUINFO_STR_NAME)
 #define cpunum_core_family(cpunum)				cpunum_get_info_string(cpunum, CPUINFO_STR_CORE_FAMILY)
@@ -639,25 +628,12 @@ const char *cputype_get_info_string(int cputype, UINT32 state);
 #define cputype_addrbus_width(cputype, space)	cputype_get_info_int(cputype, CPUINFO_INT_ADDRBUS_WIDTH + (space))
 #define cputype_addrbus_shift(cputype, space)	cputype_get_info_int(cputype, CPUINFO_INT_ADDRBUS_SHIFT + (space))
 #define cputype_page_shift(cputype, space)		cputype_get_info_int(cputype, CPUINFO_INT_PAGE_SHIFT + (space))
-#define cputype_register_layout(cputype)		cputype_get_info_ptr(cputype, CPUINFO_PTR_REGISTER_LAYOUT)
-#define cputype_window_layout(cputype)			cputype_get_info_ptr(cputype, CPUINFO_PTR_WINDOW_LAYOUT)
 #define cputype_debug_register_list(cputype)	cputype_get_info_ptr(cputype, CPUINFO_PTR_DEBUG_REGISTER_LIST)
 #define cputype_name(cputype)					cputype_get_info_string(cputype, CPUINFO_STR_NAME)
 #define cputype_core_family(cputype)			cputype_get_info_string(cputype, CPUINFO_STR_CORE_FAMILY)
 #define cputype_core_version(cputype)			cputype_get_info_string(cputype, CPUINFO_STR_CORE_VERSION)
 #define cputype_core_file(cputype)				cputype_get_info_string(cputype, CPUINFO_STR_CORE_FILE)
 #define cputype_core_credits(cputype)			cputype_get_info_string(cputype, CPUINFO_STR_CORE_CREDITS)
-
-
-
-/*************************************
- *
- *   Miscellaneous functions
- *
- *************************************/
-
-/* dump the states of all CPUs */
-void cpu_dump_states(void);
 
 
 

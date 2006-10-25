@@ -88,34 +88,6 @@ static const int sRegisterTable[kNumModes][16] =
 	}
 };
 
-static UINT8 arm_reg_layout[] =
-{
-	ARM32_R0, -2,    -1,
-	ARM32_R1, -2,    -1,
-	ARM32_R2, ARM32_IR13,    -1,
-	ARM32_R3, ARM32_IR14,    -1,
-	ARM32_R4, -2,  -1,
-	ARM32_R5, ARM32_SR13,  -1,
-	ARM32_R6, ARM32_SR14,  -1,
-	ARM32_R7, -2,  -1,
-	ARM32_R8, ARM32_FR8,   -1,
-	ARM32_R9, ARM32_FR9,   -1,
-	ARM32_R10,ARM32_FR10,  -1,
-	ARM32_R11,ARM32_FR11,  -1,
-	ARM32_R12,ARM32_FR12,  -1,
-	ARM32_R13,ARM32_FR13,  -1,
-	ARM32_R14,ARM32_FR14,  -1,
-	ARM32_R15,0
-};
-
-static UINT8 arm_win_layout[] = {
-	 0, 0,29,17,	/* register window (top rows) */
-	30, 0,50,17,	/* disassembler window (left colums) */
-	 0,18,48, 4,	/* memory #1 window (right, upper middle) */
-	49,18,31, 4,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
 #define N_BIT	31
 #define Z_BIT	30
 #define C_BIT	29
@@ -1512,8 +1484,6 @@ void arm_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = arm_dasm;			break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &arm_icount;				break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = arm_reg_layout;				break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = arm_win_layout;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "ARM"); break;

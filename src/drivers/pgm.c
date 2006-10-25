@@ -486,15 +486,13 @@ READ16_HANDLER( pgm_calendar_r )
 
 WRITE16_HANDLER( pgm_calendar_w )
 {
-	static time_t ltime;
-	static struct tm *today;
+	static mame_system_time systime;
+
+	mame_get_base_datetime(Machine, &systime);
 
 	// initialize the time, otherwise it crashes
-	if( !ltime )
-	{
-		time(&ltime);
-		today = localtime(&ltime);
-	}
+	if( !systime.time )
+		mame_get_base_datetime(Machine, &systime);
 
 	CalCom <<= 1;
 	CalCom |= data & 1;
@@ -511,19 +509,19 @@ WRITE16_HANDLER( pgm_calendar_w )
 				break;
 
 			case 0:
-				CalVal=bcd(today->tm_wday); //??
+				CalVal=bcd(systime.local_time.weekday); //??
 				break;
 
 			case 2:  //Hours
-				CalVal=bcd(today->tm_hour);
+				CalVal=bcd(systime.local_time.hour);
 				break;
 
 			case 4:  //Seconds
-				CalVal=bcd(today->tm_sec);
+				CalVal=bcd(systime.local_time.second);
 				break;
 
 			case 6:  //Month
-				CalVal=bcd(today->tm_mon + 1); //?? not bcd in MVS
+				CalVal=bcd(systime.local_time.month + 1); //?? not bcd in MVS
 				break;
 
 			case 8:
@@ -531,20 +529,19 @@ WRITE16_HANDLER( pgm_calendar_w )
 				break;
 
 			case 0xa: //Day
-				CalVal=bcd(today->tm_mday);
+				CalVal=bcd(systime.local_time.mday);
 				break;
 
 			case 0xc: //Minute
-				CalVal=bcd(today->tm_min);
+				CalVal=bcd(systime.local_time.minute);
 				break;
 
 			case 0xe:  //Year
-				CalVal=bcd(today->tm_year % 100);
+				CalVal=bcd(systime.local_time.year % 100);
 				break;
 
 			case 0xf:  //Load Date
-				time(&ltime);
-				today = localtime(&ltime);
+				mame_get_base_datetime(Machine, &systime);
 				break;
 		}
 	}

@@ -2106,36 +2106,6 @@ static void i960_reset(void)
 	i960.rcache_pos = 0;
 }
 
-static UINT8 i960_reg_layout[] =
-{
-	I960_IP, I960_G15, -1,
-	I960_R0, I960_R1, -1,
-	I960_R2, I960_R3, -1,
-	I960_R4, I960_R5, -1,
-	I960_R6, I960_R7, -1,
-	I960_R8, I960_R9, -1,
-	I960_R10, I960_R11, -1,
-	I960_R12, I960_R13, -1,
-	I960_R14, I960_R15, -1,
-	I960_G0, I960_G1, -1,
-	I960_G2, I960_G3, -1,
-	I960_G4, I960_G5, -1,
-	I960_G6, I960_G7, -1,
-	I960_G8, I960_G9, -1,
-	I960_G10, I960_G11, -1,
-	I960_G12, I960_G13, -1,
-	I960_G14, I960_AC, -1,
-	0
-};
-
-static UINT8 i960_win_layout[] = {
-	45, 0,35,19,	/* register window (top right) */
-	 0, 0,44,13,	/* disassembler window (left, upper) */
-	 0,14,44, 8,	/* memory #1 window (left, middle) */
-	45,20,35, 8,	/* memory #2 window (lower) */
-	 0,23,80, 1 	/* command line window (bottom rows) */
-};
-
 void i960_get_info(UINT32 state, union cpuinfo *info)
 {
 	if(state >= CPUINFO_INT_REGISTER+I960_R0 && state <= CPUINFO_INT_REGISTER + I960_G15) {
@@ -2157,8 +2127,6 @@ void i960_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_PTR_DISASSEMBLE_NEW:     info->disassemble_new = NULL;           break;
 	case CPUINFO_PTR_INSTRUCTION_COUNTER: info->icount      = &i960_icount;       break;
 	case CPUINFO_INT_CONTEXT_SIZE:        info->i           = sizeof(i960_state); break;
-	case CPUINFO_PTR_REGISTER_LAYOUT:     info->p = i960_reg_layout;			  break;
-	case CPUINFO_PTR_WINDOW_LAYOUT:	      info->p = i960_win_layout;			  break;
 	case CPUINFO_INT_MIN_INSTRUCTION_BYTES: info->i = 4;							break;
 	case CPUINFO_INT_MAX_INSTRUCTION_BYTES: info->i = 8;							break;
 

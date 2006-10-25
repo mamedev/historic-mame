@@ -2778,36 +2778,6 @@ static void rsp_set_context(void *src)
 
 /*****************************************************************************/
 
-static UINT8 rsp_reg_layout[] =
-{
-	RSP_PC,			-1,
-	RSP_R0,	 		RSP_R16,		-1,
-	RSP_R1, 		RSP_R17,		-1,
-	RSP_R2, 		RSP_R18,		-1,
-	RSP_R3, 		RSP_R19,		-1,
-	RSP_R4, 		RSP_R20,		-1,
-	RSP_R5, 		RSP_R21,		-1,
-	RSP_R6, 		RSP_R22,		-1,
-	RSP_R7, 		RSP_R23,		-1,
-	RSP_R8,			RSP_R24,		-1,
-	RSP_R9,			RSP_R25,		-1,
-	RSP_R10,		RSP_R26,		-1,
-	RSP_R11,		RSP_R27,		-1,
-	RSP_R12,		RSP_R28,		-1,
-	RSP_R13,		RSP_R29,		-1,
-	RSP_R14,		RSP_R30,		-1,
-	RSP_R15,		RSP_R31,		0
-};
-
-static UINT8 rsp_win_layout[] =
-{
-	 0, 0,45,20,	/* register window (top rows) */
-	46, 0,33,14,	/* disassembler window (left colums) */
-	 0,21,45, 1,	/* memory #1 window (right, upper middle) */
-	46,15,33, 7,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
 static offs_t rsp_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
 {
 #ifdef MAME_DEBUG
@@ -2942,8 +2912,6 @@ void rsp_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = rsp_dasm;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &rsp_icount;				break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = rsp_reg_layout;				break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = rsp_win_layout;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "RSP"); break;

@@ -4296,6 +4296,10 @@ ROM_START( aquajack )
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
 	ROM_LOAD( "b77-08.rom", 0x00000, 0x80000, CRC(119b9485) SHA1(2c9cd90be20df769e09016abccf59c8f119da286) )
 
+	ROM_REGION( 0x00200, REGION_USER2, 0 )	/* unused PROMs */
+	ROM_LOAD( "b77-17.bin", 0x00000, 0x0100,  CRC(fbf81f30) SHA1(c868452c334792345dcced075f6df69cff9e31ca) )	// road A/B internal priority
+	ROM_LOAD( "b77-18.bin", 0x00100, 0x0100,  CRC(7b7d8ff4) SHA1(18842ed8160739cd2e2ccc2db605153dbed6cc0a) )	// road/sprite priority and palette select
+
 /*  (no unused roms in my set, there should be an 0x10000 one like the rest) */
 ROM_END
 
@@ -4332,6 +4336,10 @@ ROM_START( aquajckj )
 
 	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
 	ROM_LOAD( "b77-08.rom", 0x00000, 0x80000, CRC(119b9485) SHA1(2c9cd90be20df769e09016abccf59c8f119da286) )
+
+	ROM_REGION( 0x00200, REGION_USER2, 0 )	/* unused PROMs */
+	ROM_LOAD( "b77-17.bin", 0x00000, 0x0100,  CRC(fbf81f30) SHA1(c868452c334792345dcced075f6df69cff9e31ca) )	// road A/B internal priority
+	ROM_LOAD( "b77-18.bin", 0x00100, 0x0100,  CRC(7b7d8ff4) SHA1(18842ed8160739cd2e2ccc2db605153dbed6cc0a) )	// road/sprite priority and palette select
 
 /*  (no unused roms in my set, there should be an 0x10000 one like the rest) */
 ROM_END

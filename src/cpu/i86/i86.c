@@ -17,23 +17,6 @@ extern int i386_dasm_one(char *buffer, UINT32 eip, UINT8 *oprom, int addr_size, 
 #define AMASK	0xfffff
 
 
-static UINT8 i86_reg_layout[] =
-{
-	I86_AX, I86_BX, I86_DS, I86_ES, I86_SS, I86_FLAGS, I86_CS, I86_VECTOR, -1,
-	I86_CX, I86_DX, I86_SI, I86_DI, I86_SP, I86_BP, I86_IP,
-	0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 i86_win_layout[] =
-{
-	0, 0, 80, 3,					   /* register window (top rows) */
-	0, 4, 34, 18,					   /* disassembler window (left colums) */
-	35, 4, 45, 9,					   /* memory #1 window (right, upper middle) */
-	35, 13, 45, 8,					   /* memory #2 window (right, lower middle) */
-	0, 23, 80, 1,					   /* command line window (bottom rows) */
-};
-
 /* I86 registers */
 typedef union
 {									   /* eight general registers */
@@ -578,8 +561,6 @@ void i86_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = i86_dasm;			break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &i86_ICount;				break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = i86_reg_layout;				break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = i86_win_layout;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "I8086"); break;

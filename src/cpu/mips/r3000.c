@@ -929,42 +929,6 @@ static int r3000_execute(int cycles)
 
 
 /***************************************************************************
-    DEBUGGER DEFINITIONS
-***************************************************************************/
-
-static UINT8 r3000_reg_layout[] =
-{
-	R3000_PC,		R3000_SR,		-1,
-	R3000_R0,	 	R3000_R16,		-1,
-	R3000_R1, 		R3000_R17,		-1,
-	R3000_R2, 		R3000_R18,		-1,
-	R3000_R3, 		R3000_R19,		-1,
-	R3000_R4, 		R3000_R20,		-1,
-	R3000_R5, 		R3000_R21,		-1,
-	R3000_R6, 		R3000_R22,		-1,
-	R3000_R7, 		R3000_R23,		-1,
-	R3000_R8,		R3000_R24,		-1,
-	R3000_R9,		R3000_R25,		-1,
-	R3000_R10,		R3000_R26,		-1,
-	R3000_R11,		R3000_R27,		-1,
-	R3000_R12,		R3000_R28,		-1,
-	R3000_R13,		R3000_R29,		-1,
-	R3000_R14,		R3000_R30,		-1,
-	R3000_R15,		R3000_R31,		0
-};
-
-static UINT8 r3000_win_layout[] =
-{
-	 0, 0,30,20,	/* register window (top rows) */
-	31, 0,48,14,	/* disassembler window (left colums) */
-	 0,21,30, 1,	/* memory #1 window (right, upper middle) */
-	31,15,48, 7,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
-
-
-/***************************************************************************
     DISASSEMBLY HOOK
 ***************************************************************************/
 
@@ -1326,8 +1290,6 @@ static void r3000_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = r3000_dasm;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &r3000_icount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = r3000_reg_layout;				break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = r3000_win_layout;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "R3000"); break;

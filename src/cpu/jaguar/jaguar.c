@@ -588,42 +588,6 @@ static int jaguardsp_execute(int cycles)
 
 
 /***************************************************************************
-    DEBUGGER DEFINITIONS
-***************************************************************************/
-
-static UINT8 jaguar_reg_layout[] =
-{
-	JAGUAR_PC,		JAGUAR_FLAGS,	-1,
-	JAGUAR_R0,	 	JAGUAR_R16,		-1,
-	JAGUAR_R1, 		JAGUAR_R17,		-1,
-	JAGUAR_R2, 		JAGUAR_R18,		-1,
-	JAGUAR_R3, 		JAGUAR_R19,		-1,
-	JAGUAR_R4, 		JAGUAR_R20,		-1,
-	JAGUAR_R5, 		JAGUAR_R21,		-1,
-	JAGUAR_R6, 		JAGUAR_R22,		-1,
-	JAGUAR_R7, 		JAGUAR_R23,		-1,
-	JAGUAR_R8,		JAGUAR_R24,		-1,
-	JAGUAR_R9,		JAGUAR_R25,		-1,
-	JAGUAR_R10,		JAGUAR_R26,		-1,
-	JAGUAR_R11,		JAGUAR_R27,		-1,
-	JAGUAR_R12,		JAGUAR_R28,		-1,
-	JAGUAR_R13,		JAGUAR_R29,		-1,
-	JAGUAR_R14,		JAGUAR_R30,		-1,
-	JAGUAR_R15,		JAGUAR_R31,		0
-};
-
-static UINT8 jaguar_win_layout[] =
-{
-	 0, 0,30,20,	/* register window (top rows) */
-	31, 0,48,14,	/* disassembler window (left colums) */
-	 0,21,30, 1,	/* memory #1 window (right, upper middle) */
-	31,15,48, 7,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
-
-
-/***************************************************************************
     DISASSEMBLY HOOK
 ***************************************************************************/
 
@@ -1700,8 +1664,6 @@ void jaguargpu_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = jaguargpu_dasm;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &jaguar_icount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = jaguar_reg_layout;			break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = jaguar_win_layout;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "Jaguar GPU"); break;

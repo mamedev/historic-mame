@@ -116,21 +116,6 @@ int i8x41_ICount;
 
 static I8X41 i8x41;
 
-/* Layout of the registers in the debugger */
-static UINT8 i8x41_reg_layout[] = {
-	I8X41_PC, I8X41_SP, I8X41_PSW, I8X41_T, I8X41_DATA_DASM, I8X41_CMND_DASM, I8X41_STAT, I8X41_P1, I8X41_P2, -1,
-	I8X41_A, I8X41_R0, I8X41_R1, I8X41_R2, I8X41_R3, I8X41_R4, I8X41_R5, I8X41_R6, I8X41_R7, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 i8x41_win_layout[] = {
-	 0, 0,80, 2,	/* register window (top rows) */
-	 0, 3,24,19,	/* disassembler window (left colums) */
-	25, 3,55, 9,	/* memory #1 window (right, upper middle) */
-	25,13,55, 9,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
 #define RM(a)	program_read_byte_8(a)
 #define WM(a,v) program_write_byte_8(a,v)
 #define RP(a)	io_read_byte_8(a)
@@ -2404,12 +2389,6 @@ void i8x41_get_info(UINT32 state, union cpuinfo *info)
 			break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:
 			info->icount = &i8x41_ICount;
-			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:
-			info->p = i8x41_reg_layout;
-			break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:
-			info->p = i8x41_win_layout;
 			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */

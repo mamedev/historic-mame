@@ -46,22 +46,6 @@ typedef struct
 static ccpuRegs ccpu;
 static int ccpu_icount;
 
-static UINT8 ccpu_reg_layout[] =
-{
-	CCPU_PC, CCPU_FLAGS, CCPU_A, CCPU_B, CCPU_I, -1,
-	CCPU_P, CCPU_J, CCPU_X, CCPU_Y, CCPU_T, 0,
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 ccpu_win_layout[] =
-{
-	25, 0,55, 3,	/* register window (top rows) */
-	 0, 0,24,22,	/* disassembler window (left colums) */
-    25, 4,55, 8,    /* memory #1 window (right, upper middle) */
-    25,13,55, 9,    /* memory #2 window (right, lower middle) */
-     0,23,80, 1,    /* command line window (bottom rows) */
-};
-
 
 
 /***************************************************************************
@@ -784,8 +768,6 @@ void ccpu_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = ccpu_dasm;			break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &ccpu_icount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = ccpu_reg_layout;				break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = ccpu_win_layout;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "CCPU"); break;

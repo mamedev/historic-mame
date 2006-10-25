@@ -561,42 +561,6 @@ static int asap_execute(int cycles)
 
 
 /***************************************************************************
-    DEBUGGER DEFINITIONS
-***************************************************************************/
-
-static UINT8 asap_reg_layout[] =
-{
-	ASAP_PC,		ASAP_PS,		-1,
-	ASAP_R0,	 	ASAP_R16,		-1,
-	ASAP_R1, 		ASAP_R17,		-1,
-	ASAP_R2, 		ASAP_R18,		-1,
-	ASAP_R3, 		ASAP_R19,		-1,
-	ASAP_R4, 		ASAP_R20,		-1,
-	ASAP_R5, 		ASAP_R21,		-1,
-	ASAP_R6, 		ASAP_R22,		-1,
-	ASAP_R7, 		ASAP_R23,		-1,
-	ASAP_R8,		ASAP_R24,		-1,
-	ASAP_R9,		ASAP_R25,		-1,
-	ASAP_R10,		ASAP_R26,		-1,
-	ASAP_R11,		ASAP_R27,		-1,
-	ASAP_R12,		ASAP_R28,		-1,
-	ASAP_R13,		ASAP_R29,		-1,
-	ASAP_R14,		ASAP_R30,		-1,
-	ASAP_R15,		ASAP_R31,		0
-};
-
-static UINT8 asap_win_layout[] =
-{
-	 0, 0,30,17,	/* register window (top rows) */
-	31, 0,48,14,	/* disassembler window (left colums) */
-	 0,18,30, 4,	/* memory #1 window (right, upper middle) */
-	31,15,48, 7,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
-
-
-/***************************************************************************
     DISASSEMBLY HOOK
 ***************************************************************************/
 
@@ -1850,8 +1814,6 @@ void asap_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = asap_dasm;			break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &asap_icount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = asap_reg_layout;				break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = asap_win_layout;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "ASAP"); break;

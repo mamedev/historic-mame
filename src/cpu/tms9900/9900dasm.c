@@ -311,7 +311,13 @@ static const enum opcodes ops_001c_002f_s0[20]=
 static int PC;
 
 
-static int print_arg (char *dest, int mode, int arg, UINT16 (*readop_arg)(offs_t address))
+INLINE UINT16 readop_arg(UINT8 *opram, unsigned pc)
+{
+	UINT16 result = opram[PC++ - pc] << 8;
+	return result | opram[PC++ - pc];
+}
+
+static int print_arg (char *dest, int mode, int arg, UINT8 *opram, unsigned pc)
 {
 	int	base;
 
@@ -324,7 +330,7 @@ static int print_arg (char *dest, int mode, int arg, UINT16 (*readop_arg)(offs_t
 			return sprintf (dest, "*R%d", arg);
 			break;
 		case 0x2:	/* symbolic|indexed */
-			base = readop_arg(PC); PC+=2;
+			base = readop_arg(opram, pc);
 			if (arg) 	/* indexed */
 				return sprintf (dest, "@>%04x(R%d)", base, arg);
 			else		/* symbolic (direct) */
@@ -342,13 +348,14 @@ static int print_arg (char *dest, int mode, int arg, UINT16 (*readop_arg)(offs_t
 /*****************************************************************************
  *  Disassemble a single command and return the number of bytes it uses.
  *****************************************************************************/
-unsigned Dasm9900 (char *buffer, unsigned pc, int model_id, UINT16 (*readop)(offs_t address), UINT16 (*readop_arg)(offs_t address))
+unsigned Dasm9900 (char *buffer, unsigned pc, int model_id, UINT8 *oprom, UINT8 *opram, int bytes)
 {
 	int	OP, OP2, opc;
 	int sarg, darg, smode, dmode;
 	signed char displacement;
 	int byte_count, checkpoint;
 	int bit_position, bit_width;
+	unsigned dasmflags = 0;
 
 	const char *mnemonic;
 	format_t format;
@@ -379,7 +386,8 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id, UINT16 (*readop)(off
         processor_mask |= ps_ti990_12;*/	/* ti990/12, tms99000, and later */
 
 	PC = pc;
- 	OP = (*readop)(PC); PC+=2;
+ 	OP = oprom[PC++ - pc] << 8;
+ 	OP |= oprom[PC++ - pc];
 
 	/* let's identify the opcode */
 	if (OP >= 0x4000)
@@ -476,6 +484,14 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id, UINT16 (*readop)(off
 	mnemonic = descriptions[opc].mnemonic;
 	format = descriptions[opc].format;
 
+	/* bl and blwp instructions are subroutines */
+	if (mnemonic != NULL && mnemonic[0] == 'b' && mnemonic[1] == 'l')
+		dasmflags = DASMFLAG_STEP_OVER;
+
+	/* b *r11 and rtwp are returns */
+	else if (opc == 0x045b || (mnemonic != NULL && strcmp(mnemonic, "rtwp") == 0))
+		dasmflags = DASMFLAG_STEP_OUT;
+
 	switch (format)
 	{
 	case format_1:		/* 2 address instructions */
@@ -485,9 +501,9 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id, UINT16 (*readop)(off
 		darg = BITS(OP,6,9);
 
 		buffer += sprintf (buffer, "%-4s ", mnemonic);
-		buffer += print_arg (buffer, smode, sarg, readop_arg);
+		buffer += print_arg (buffer, smode, sarg, opram, pc);
 		buffer += sprintf (buffer, ",");
-		buffer += print_arg (buffer, dmode, darg, readop_arg);
+		buffer += print_arg (buffer, dmode, darg, opram, pc);
 		break;
 
 	case format_2a:		/* jump instructions */
@@ -513,13 +529,13 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id, UINT16 (*readop)(off
 		if (format == format_3_9)
 	{
 			buffer += sprintf (buffer, "%-4s ", mnemonic);
-			buffer += print_arg (buffer, smode, sarg, readop_arg);
+			buffer += print_arg (buffer, smode, sarg, opram, pc);
 			buffer += sprintf (buffer, ",R%d", darg);
 		}
 		else
 		{
 			buffer += sprintf (buffer, "%-4s ", mnemonic);
-			buffer += print_arg (buffer, smode, sarg, readop_arg);
+			buffer += print_arg (buffer, smode, sarg, opram, pc);
 			buffer += sprintf (buffer, ",%d", darg);
 		}
 		break;
@@ -536,7 +552,7 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id, UINT16 (*readop)(off
 		sarg = BITS(OP,12,15);
 
 		buffer += sprintf (buffer, "%-4s ", mnemonic);
-		buffer += print_arg (buffer, smode, sarg, readop_arg);
+		buffer += print_arg (buffer, smode, sarg, opram, pc);
 		break;
 
 	case format_7:		/* instructions without operands */
@@ -545,13 +561,13 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id, UINT16 (*readop)(off
 
 	case format_8a:		/* immediate instructions (destination register) */
 		darg = BITS(OP,12,15);
-		sarg = readop_arg(PC); PC+=2;
+		sarg = readop_arg(opram, pc);
 
 		sprintf (buffer, "%-4s R%d,>%04x", mnemonic, darg, sarg);
 		break;
 
 	case format_8b:		/* immediate instructions (no destination register) */
-		sarg = readop_arg(PC); PC+=2;
+		sarg = readop_arg(opram, pc);
 
 		sprintf (buffer, "%-4s >%04x", mnemonic, sarg);
 		break;
@@ -564,7 +580,7 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id, UINT16 (*readop)(off
 		break;
 
 	case format_11:		/* multiple precision instructions */
-		OP2 = readop_arg(PC); PC+=2;
+		OP2 = readop_arg(opram, pc);
 
 		smode = BITS(OP2,10,11);
 		sarg = BITS(OP2,12,15);
@@ -573,14 +589,14 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id, UINT16 (*readop)(off
 		byte_count = BITS(OP2,0,3);
 
 		buffer += sprintf (buffer, "%-4s ", mnemonic);
-		buffer += print_arg (buffer, smode, sarg, readop_arg);
+		buffer += print_arg (buffer, smode, sarg, opram, pc);
 		buffer += sprintf (buffer, ",");
-		buffer += print_arg (buffer, dmode, darg, readop_arg);
+		buffer += print_arg (buffer, dmode, darg, opram, pc);
 		buffer += sprintf (buffer, byte_count ? ",%d" : ",R%d", byte_count);
 		break;
 
 	case format_12:		/* string instructions */
-		OP2 = readop_arg(PC); PC+=2;
+		OP2 = readop_arg(opram, pc);
 
 		smode = BITS(OP2,10,11);
 		sarg = BITS(OP2,12,15);
@@ -590,14 +606,14 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id, UINT16 (*readop)(off
 		checkpoint = BITS(OP,12,15);
 
 		buffer += sprintf (buffer, "%-4s ", mnemonic);
-		buffer += print_arg (buffer, smode, sarg, readop_arg);
+		buffer += print_arg (buffer, smode, sarg, opram, pc);
 		buffer += sprintf (buffer, ",");
-		buffer += print_arg (buffer, dmode, darg, readop_arg);
+		buffer += print_arg (buffer, dmode, darg, opram, pc);
 		buffer += sprintf (buffer, byte_count ? ",%d,R%d" : ",R%d,R%d", byte_count, checkpoint);
 		break;
 
 	case format_13:		/* multiple precision shift instructions */
-		OP2 = readop_arg(PC); PC+=2;
+		OP2 = readop_arg(opram, pc);
 
 		smode = BITS(OP2,10,11);
 		sarg = BITS(OP2,12,15);
@@ -605,20 +621,20 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id, UINT16 (*readop)(off
 		byte_count = BITS(OP2,0,3);
 
 		buffer += sprintf (buffer, "%-4s ", mnemonic);
-		buffer += print_arg (buffer, smode, sarg, readop_arg);
+		buffer += print_arg (buffer, smode, sarg, opram, pc);
 		buffer += sprintf (buffer, byte_count ? ",%d" : ",R%d", byte_count);
 		buffer += sprintf (buffer, darg ? ",%d" : ",R%d", darg);
 		break;
 
 	case format_14:		/* bit testing instructions */
-		OP2 = readop_arg(PC); PC+=2;
+		OP2 = readop_arg(opram, pc);
 
 		smode = BITS(OP2,10,11);
 		sarg = BITS(OP2,12,15);
 		darg = BITS(OP2,0,9);
 
 		buffer += sprintf (buffer, "%-4s ", mnemonic);
-		buffer += print_arg (buffer, smode, sarg, readop_arg);
+		buffer += print_arg (buffer, smode, sarg, opram, pc);
 		if (darg == 0x3ff)
 			buffer += sprintf (buffer, ",R0");
 		else
@@ -626,7 +642,7 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id, UINT16 (*readop)(off
 		break;
 
 	case format_15:		/* invert order of field instruction */
-		OP2 = readop_arg(PC); PC+=2;
+		OP2 = readop_arg(opram, pc);
 
 		smode = BITS(OP2,10,11);
 		sarg = BITS(OP2,12,15);
@@ -634,13 +650,13 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id, UINT16 (*readop)(off
 		bit_width = BITS(OP,12,15);
 
 		buffer += sprintf (buffer, "%-4s ", mnemonic);
-		buffer += print_arg (buffer, smode, sarg, readop_arg);
+		buffer += print_arg (buffer, smode, sarg, opram, pc);
 		buffer += sprintf (buffer, bit_position ? ",(%d," : ",(R%d,", bit_position);
 		buffer += sprintf (buffer, bit_width ? "%d)" : "R%d)", bit_width);
 		break;
 
 	case format_16:		/* field instructions */
-		OP2 = readop_arg(PC); PC+=2;
+		OP2 = readop_arg(opram, pc);
 
 		smode = BITS(OP2,10,11);
 		sarg = BITS(OP2,12,15);
@@ -650,15 +666,15 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id, UINT16 (*readop)(off
 		bit_width = BITS(OP,12,15);
 
 		buffer += sprintf (buffer, "%-4s ", mnemonic);
-		buffer += print_arg (buffer, smode, sarg, readop_arg);
+		buffer += print_arg (buffer, smode, sarg, opram, pc);
 		buffer += sprintf (buffer, ",");
-		buffer += print_arg (buffer, dmode, darg, readop_arg);
+		buffer += print_arg (buffer, dmode, darg, opram, pc);
 		buffer += sprintf (buffer, bit_position ? ",(%d," : ",(%d,", bit_position);
 		buffer += sprintf (buffer, bit_width ? "%d)" : "R%d)", bit_width);
 		break;
 
 	case format_17:		/* alter register and jump instructions */
-		OP2 = readop_arg(PC); PC+=2;
+		OP2 = readop_arg(opram, pc);
 
 		displacement = (signed char)BITS(OP2,8,15);
 		sarg = BITS(OP2,4,7);
@@ -681,7 +697,7 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id, UINT16 (*readop)(off
 		break;
 
 	case format_19:		/* move address instruction */
-		OP2 = readop_arg(PC); PC+=2;
+		OP2 = readop_arg(opram, pc);
 
 		smode = BITS(OP2,10,11);
 		sarg = BITS(OP2,12,15);
@@ -689,16 +705,16 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id, UINT16 (*readop)(off
 		darg = BITS(OP2,6,9);
 
 		buffer += sprintf (buffer, "%-4s ", mnemonic);
-		buffer += print_arg (buffer, smode, sarg, readop_arg);
+		buffer += print_arg (buffer, smode, sarg, opram, pc);
 		buffer += sprintf (buffer, ",");
-		buffer += print_arg (buffer, dmode, darg, readop_arg);
+		buffer += print_arg (buffer, dmode, darg, opram, pc);
 				break;
 
 	case format_20:		/* list search instructions */
 		{
 			const char *condition_code;
 
-			OP2 = readop_arg(PC); PC+=2;
+			OP2 = readop_arg(opram, pc);
 
 			smode = BITS(OP2,10,11);
 			sarg = BITS(OP2,12,15);
@@ -743,9 +759,9 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id, UINT16 (*readop)(off
 		}
 
 			buffer += sprintf (buffer, "%-4s %s,", mnemonic, condition_code);
-			buffer += print_arg (buffer, smode, sarg, readop_arg);
+			buffer += print_arg (buffer, smode, sarg, opram, pc);
 			buffer += sprintf (buffer, ",");
-			buffer += print_arg (buffer, dmode, darg, readop_arg);
+			buffer += print_arg (buffer, dmode, darg, opram, pc);
 			break;
 	}
 
@@ -753,7 +769,7 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id, UINT16 (*readop)(off
 	{
 		int dest_byte_count;
 
-		OP2 = readop_arg(PC); PC+=2;
+		OP2 = readop_arg(opram, pc);
 
 		smode = BITS(OP2,10,11);
 		sarg = BITS(OP2,12,15);
@@ -763,9 +779,9 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id, UINT16 (*readop)(off
 		dest_byte_count = BITS(OP,12,15);
 
 		buffer += sprintf (buffer, "%-4s ", mnemonic);
-		buffer += print_arg (buffer, smode, sarg, readop_arg);
+		buffer += print_arg (buffer, smode, sarg, opram, pc);
 		buffer += sprintf (buffer, ",");
-		buffer += print_arg (buffer, dmode, darg, readop_arg);
+		buffer += print_arg (buffer, dmode, darg, opram, pc);
 		buffer += sprintf (buffer, byte_count ? ",%d" : ",R%d", byte_count);
 		buffer += sprintf (buffer, dest_byte_count ? ",%d" : ",R%d", dest_byte_count);
 		break;
@@ -778,7 +794,7 @@ unsigned Dasm9900 (char *buffer, unsigned pc, int model_id, UINT16 (*readop)(off
 		break;
 	}
 
-	return PC - pc;
+	return (PC - pc) | DASMFLAG_SUPPORTED | dasmflags;
 }
 
 

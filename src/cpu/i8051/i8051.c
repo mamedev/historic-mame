@@ -178,21 +178,6 @@ int i8051_icount;
 static I8051 i8051;
 static I8051_UART uart;
 
-/* Layout of the registers in the debugger (-1 = end of a line, 0 = end of layout) */
-static UINT8 i8051_reg_layout[] = {
-	I8051_PC, I8051_SP, I8051_PSW, I8051_ACC, I8051_B, I8051_DPH, I8051_DPL, I8051_IE, -1,
-	I8051_R0, I8051_R1, I8051_R2, I8051_R3, I8051_R4, I8051_R5, I8051_R6, I8051_R7, I8051_RB, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 i8051_win_layout[] = {
-	 0, 0,80, 2,	/* register window (top rows) */
-	 0, 3,24,19,	/* disassembler window (left colums) */
-	25, 3,55,10,	/* memory #1 window (right, upper middle) */
-	25,14,55, 8,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
 //Hold callback functions so they can be set by caller (before the cpu reset)
 static void (*hold_serial_tx_callback)(int data);
 static int (*hold_serial_rx_callback)(void);
@@ -2481,8 +2466,6 @@ void i8051_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:						info->burn = NULL;			break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = i8051_dasm;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:				info->icount = &i8051_icount;		break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = i8051_reg_layout;		break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = i8051_win_layout;		break;
 
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM: info->internal_map = 0; break;
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_DATA:    info->internal_map = 0; break;

@@ -66,29 +66,26 @@ static WRITE16_HANDLER( calendar_w )
 
 static READ16_HANDLER( calendar_r )
 {
-	time_t ltime;
-	struct tm *today;
+	mame_system_time systime;
 
-
-	time(&ltime);
-	today = localtime(&ltime);
+	mame_get_base_datetime(Machine, &systime);
 
 	switch (offset)
 	{
 		case 0:
-			return ((today->tm_sec/10)<<4) + (today->tm_sec%10);
+			return ((systime.local_time.second/10)<<4) + (systime.local_time.second%10);
 		case 1:
-			return ((today->tm_min/10)<<4) + (today->tm_min%10);
+			return ((systime.local_time.minute/10)<<4) + (systime.local_time.minute%10);
 		case 2:
-			return ((today->tm_hour/10)<<4) + (today->tm_hour%10);
+			return ((systime.local_time.hour/10)<<4) + (systime.local_time.hour%10);
 		case 3:
-			return today->tm_wday;
+			return systime.local_time.weekday;
 		case 4:
-			return ((today->tm_mday/10)<<4) + (today->tm_mday%10);
+			return ((systime.local_time.mday/10)<<4) + (systime.local_time.mday%10);
 		case 5:
-			return (today->tm_mon + 1);
+			return (systime.local_time.month + 1);
 		case 6:
-			return (((today->tm_year%100)/10)<<4) + (today->tm_year%10);
+			return (((systime.local_time.year%100)/10)<<4) + (systime.local_time.year%10);
 		case 7:
 		default:
 			return 0;	/* status? the other registers are read only when bit 0 is clear */

@@ -36,23 +36,10 @@
 
 #define IRQ_LEVEL_DETECT 0
 
-static UINT8 m6805_reg_layout[] = {
-	M6805_PC, M6805_S, M6805_CC, M6805_A, M6805_X, 0
-};
-
 enum {
 	SUBTYPE_M6805,
 	SUBTYPE_M68705,
 	SUBTYPE_HD63705
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 m6805_win_layout[] = {
-	27, 0,53, 4,	/* register window (top, right rows) */
-	 0, 0,26,22,	/* disassembler window (left colums) */
-	27, 5,53, 8,	/* memory #1 window (right, upper middle) */
-	27,14,53, 8,	/* memory #2 window (right, lower middle) */
-     0,23,80, 1,    /* command line window (bottom rows) */
 };
 
 /* 6805 Registers */
@@ -961,8 +948,6 @@ void m6805_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m6805_dasm;			break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m6805_ICount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m6805_reg_layout;				break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = m6805_win_layout;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M6805"); break;

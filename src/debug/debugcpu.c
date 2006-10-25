@@ -694,7 +694,11 @@ static void set_cpu_reg(UINT32 ref, UINT64 value)
 void mame_debug_hook(void)
 {
 	int cpunum = cpu_getactivecpu();
+	offs_t curpc = activecpu_get_pc();
 	debug_cpu_info *info = &debug_cpuinfo[cpunum];
+
+	/* update the history */
+	info->pc_history[info->pc_history_index++ % DEBUG_HISTORY_SIZE] = curpc;
 
 	/* quick out if we are ignoring */
 	if (info->ignoring)
@@ -738,7 +742,7 @@ void mame_debug_hook(void)
 		}
 
 		/* check the temp running breakpoint and break if we hit it */
-		if (info->temp_breakpoint_pc != ~0 && execution_state == EXECUTION_STATE_RUNNING && activecpu_get_pc() == info->temp_breakpoint_pc)
+		if (info->temp_breakpoint_pc != ~0 && execution_state == EXECUTION_STATE_RUNNING && curpc == info->temp_breakpoint_pc)
 		{
 			execution_state = EXECUTION_STATE_STOPPED;
 			debug_console_printf("Stopped at temporary breakpoint %X on CPU %d\n", info->temp_breakpoint_pc, cpunum);
@@ -747,13 +751,13 @@ void mame_debug_hook(void)
 
 		/* check for execution breakpoints */
 		if (info->first_bp)
-			debug_check_breakpoints(cpunum, activecpu_get_pc());
+			debug_check_breakpoints(cpunum, curpc);
 
 		/* handle single stepping */
 		if (steps_until_stop > 0 && (execution_state >= EXECUTION_STATE_STEP_INTO && execution_state <= EXECUTION_STATE_STEP_OUT))
 		{
 			/* is this an actual step? */
-			if (step_overout_breakpoint == ~0 || (cpunum == step_overout_cpunum && activecpu_get_pc() == step_overout_breakpoint))
+			if (step_overout_breakpoint == ~0 || (cpunum == step_overout_cpunum && curpc == step_overout_breakpoint))
 			{
 				/* decrement the count and reset the breakpoint */
 				steps_until_stop--;
@@ -1934,6 +1938,19 @@ UINT64 debug_read_opcode(offs_t address, int size, int arg)
 		UINT64 result;
 		if ((*info->readop)(address, size, &result))
 			return result;
+	}
+
+	/* if we're bigger than the address bus, break into smaller pieces */
+	if (size > info->space[ADDRESS_SPACE_PROGRAM].databytes)
+	{
+		int halfsize = size / 2;
+		UINT64 r0 = debug_read_opcode(address + 0, halfsize, arg);
+		UINT64 r1 = debug_read_opcode(address + halfsize, halfsize, arg);
+
+		if (info->endianness == CPU_IS_LE)
+			return r0 | (r1 << (8 * halfsize));
+		else
+			return r1 | (r0 << (8 * halfsize));
 	}
 
 	/* translate to physical first */

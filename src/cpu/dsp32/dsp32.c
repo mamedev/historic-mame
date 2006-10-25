@@ -432,42 +432,6 @@ static int dsp32c_execute(int cycles)
 
 
 /***************************************************************************
-    DEBUGGER DEFINITIONS
-***************************************************************************/
-
-static UINT8 dsp32c_reg_layout[] =
-{
-	DSP32_PC,		DSP32_R11,		-1,
-	DSP32_R0,	 	DSP32_R12,		-1,
-	DSP32_R1, 		DSP32_R13,		-1,
-	DSP32_R2, 		DSP32_R14,		-1,
-	DSP32_R3, 		DSP32_R15,		-1,
-	DSP32_R4, 		DSP32_R16,		-1,
-	DSP32_R5, 		DSP32_R17,		-1,
-	DSP32_R6, 		DSP32_R18,		-1,
-	DSP32_R7, 		DSP32_R19,		-1,
-	DSP32_R8,		DSP32_R20,		-1,
-	DSP32_R9,		DSP32_R21,		-1,
-	DSP32_R10,		DSP32_R22,		-1,
-	DSP32_PCW,		DSP32_A0,		-1,
-	DSP32_PCR,		DSP32_A1,		-1,
-	DSP32_PIR,		DSP32_A2,		-1,
-	DSP32_EMR,		DSP32_A3,		-1,
-	DSP32_ESR,		DSP32_DAUC,		0
-};
-
-static UINT8 dsp32c_win_layout[] =
-{
-	 0, 0,30,20,	/* register window (top rows) */
-	31, 0,48,14,	/* disassembler window (left colums) */
-	 0,21,30, 1,	/* memory #1 window (right, upper middle) */
-	31,15,48, 7,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
-
-
-/***************************************************************************
     DISASSEMBLY HOOK
 ***************************************************************************/
 
@@ -913,8 +877,6 @@ void dsp32c_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = dsp32c_dasm;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &dsp32_icount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = dsp32c_reg_layout;			break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = dsp32c_win_layout;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "DSP32C"); break;

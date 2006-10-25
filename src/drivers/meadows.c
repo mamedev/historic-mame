@@ -696,6 +696,34 @@ ROM_START( deadeye )
 	ROM_LOAD( "de_snd",       0x0000, 0x0400, CRC(c10a1b1a) SHA1(779ea261d23360634081295a164cacbd819d8719) )
 ROM_END
 
+ROM_START( bowl3d )
+	ROM_REGION( 0x08000, REGION_CPU1, 0 ) 	/* 32K for code */
+	ROM_LOAD( "b3d.h8",       0x0000, 0x0400, CRC(be38feeb) SHA1(feab3c61ce1e351c02f6ffa7f7f2ac90e62e7719) )
+	ROM_LOAD( "b3d.h9",       0x0400, 0x0400, CRC(4e8acead) SHA1(3c00f0d05b9cb80a2245bc68a45732ab6ac87b7f) )
+	ROM_LOAD( "b3d.h10",      0x0800, 0x0400, CRC(16677267) SHA1(0131f68e87d6326870f95c1ff364a97436b6c4d8) )
+	ROM_LOAD( "b3d.h11",      0x1000, 0x0400, CRC(c0f9ac37) SHA1(c563155a28052eea150627a83cad9bd1b5ef9489) )
+	ROM_LOAD( "b3d.h12",      0x1400, 0x0400, CRC(80a149d6) SHA1(ab4ca76d9f5aa5e02b9d5bf909af9548fe62f475) )
+	// h13 empty
+
+	ROM_REGION( 0x0400, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "b3d.e15",      0x0000, 0x0400, CRC(4414e24f) SHA1(835c989143895848df7154c2d82a499dea79c1c5) )
+
+	ROM_REGION( 0x0400, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "b3d.a5",       0x0000, 0x0400, CRC(4b657f8a) SHA1(52eb90ff5048db30e9710e96793bad5e2c7ad6db) )
+
+	ROM_REGION( 0x0400, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "b3d.a13",      0x0000, 0x0400, CRC(ca7f33b9) SHA1(6c63a41be57e71d6a58112be13d77e695a0faa10) )
+
+	ROM_REGION( 0x0400, REGION_GFX4, ROMREGION_DISPOSE )
+	/* empty */
+	ROM_REGION( 0x0400, REGION_GFX5, ROMREGION_DISPOSE )
+	/* empty */
+
+	ROM_REGION( 0x08000, REGION_CPU2, 0 ) 	/* 32K for code for the sound cpu */
+	// not included in the romset
+	ROM_LOAD( "de_snd",       0x0000, 0x0400, BAD_DUMP CRC(c10a1b1a) SHA1(779ea261d23360634081295a164cacbd819d8719) )
+ROM_END
+
 
 ROM_START( gypsyjug )
 	ROM_REGION( 0x08000, REGION_CPU1, 0 ) 	/* 32K for code */
@@ -791,6 +819,7 @@ static DRIVER_INIT( minferno )
  *
  *************************************/
 
-GAMEL( 1978, deadeye,  0, meadows,  meadows,  0,        ROT0, "Meadows", "Dead Eye", 0, layout_deadeye )
-GAMEL( 1978, gypsyjug, 0, meadows,  meadows,  gypsyjug, ROT0, "Meadows", "Gypsy Juggler", 0, layout_gypsyjug )
-GAME ( 1978, minferno, 0, minferno, minferno, minferno, ROT0, "Meadows", "Inferno (S2650)", GAME_NO_SOUND )
+GAMEL( 1978, deadeye,  0, meadows,  meadows,  0,        ROT0,  "Meadows", "Dead Eye", 0, layout_deadeye )
+GAME(  1978, bowl3d,   0, meadows,  meadows,  0,        ROT90, "Meadows", "Bowling 3D", GAME_NOT_WORKING )
+GAMEL( 1978, gypsyjug, 0, meadows,  meadows,  gypsyjug, ROT0,  "Meadows", "Gypsy Juggler", 0, layout_gypsyjug )
+GAME ( 1978, minferno, 0, minferno, minferno, minferno, ROT0,  "Meadows", "Inferno (S2650)", GAME_NO_SOUND )

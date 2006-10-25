@@ -175,6 +175,21 @@ endif
 
 
 #-------------------------------------------------
+# National Semiconductor COP411
+#-------------------------------------------------
+
+CPUDEFS += -DHAS_COP411=$(if $(filter COP411,$(CPUS)),1,0)
+
+ifneq ($(filter COP411,$(CPUS)),)
+OBJDIRS += $(OBJ)/cpu/cop400
+CPUOBJS += $(OBJ)/cpu/cop400/cop410.o
+DBGOBJS += $(OBJ)/cpu/cop400/cop410ds.o
+$(OBJ)/cpu/cop400/cop410.o: cop410.c cop400.h 410ops.c
+endif
+
+
+
+#-------------------------------------------------
 # National Semiconductor COP420
 #-------------------------------------------------
 

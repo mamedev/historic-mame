@@ -48,21 +48,6 @@
 
 
 
-/* Layout of the registers in the debugger */
-static UINT8 m6502_reg_layout[] = {
-	M6502_PC, M6502_S, M6502_P, M6502_A, M6502_X, M6502_Y, -1,
-	M6502_EA, M6502_ZP, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 m6502_win_layout[] = {
-	25, 0,55, 2,	/* register window (top, right rows) */
-	 0, 0,24,22,	/* disassembler window (left colums) */
-	25, 3,55, 9,	/* memory #1 window (right, upper middle) */
-	25,13,55, 9,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
 /****************************************************************************
  * The 6502 registers.
  ****************************************************************************/
@@ -332,11 +317,6 @@ static void m6502_set_irq_line(int irqline, int state)
  * 2A03 section
  ****************************************************************************/
 #if (HAS_N2A03)
-/* Layout of the registers in the debugger */
-static UINT8 n2a03_reg_layout[] = {
-	N2A03_A,N2A03_X,N2A03_Y,N2A03_S,N2A03_PC,N2A03_P, -1,
-	N2A03_EA,N2A03_ZP, 0
-};
 
 static void n2a03_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
@@ -358,11 +338,6 @@ void n2a03_irq(void)
  * 6510 section
  ****************************************************************************/
 #if (HAS_M6510)
-/* Layout of the registers in the debugger */
-static UINT8 m6510_reg_layout[] = {
-	M6510_A,M6510_X,M6510_Y,M6510_S,M6510_PC,M6510_P, -1,
-	M6510_EA,M6510_ZP, 0
-};
 
 static void m6510_init (int index, int clock, const void *config, int (*irqcallback)(int))
 {
@@ -426,12 +401,6 @@ ADDRESS_MAP_END
  * 65C02 section
  ****************************************************************************/
 #if (HAS_M65C02)
-
-/* Layout of the registers in the debugger */
-static UINT8 m65c02_reg_layout[] = {
-	M65C02_A,M65C02_X,M65C02_Y,M65C02_S,M65C02_PC,M65C02_P, -1,
-	M65C02_EA,M65C02_ZP, 0
-};
 
 static void m65c02_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
@@ -549,11 +518,6 @@ static void m65sc02_init(int index, int clock, const void *config, int (*irqcall
  * DECO16 section
  ****************************************************************************/
 #if (HAS_DECO16)
-/* Layout of the registers in the debugger */
-static UINT8 deco16_reg_layout[] = {
-	DECO16_A,DECO16_X,DECO16_Y,DECO16_S,DECO16_PC,DECO16_P, -1,
-	DECO16_EA,DECO16_ZP, 0
-};
 
 static void deco16_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
@@ -781,8 +745,6 @@ void m6502_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = m6502_dasm;			break;
 #endif
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m6502_ICount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m6502_reg_layout;				break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = m6502_win_layout;				break;
 		case CPUINFO_PTR_M6502_READINDEXED_CALLBACK:	info->f = (genf *) m6502.rdmem_id;		break;
 		case CPUINFO_PTR_M6502_WRITEINDEXED_CALLBACK:	info->f = (genf *) m6502.wrmem_id;		break;
 
@@ -828,7 +790,6 @@ void n2a03_get_info(UINT32 state, union cpuinfo *info)
 	{
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_INIT:							info->init = n2a03_init;				break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = n2a03_reg_layout;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "N2A03"); break;
@@ -871,7 +832,6 @@ void m6510_get_info(UINT32 state, union cpuinfo *info)
 #ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = m6510_dasm;			break;
 #endif
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m6510_reg_layout;				break;
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP:			info->internal_map = construct_map_m6510_mem; break;
 		case CPUINFO_PTR_M6510_PORTREAD:				info->f = (genf *) m6502.port_read;		break;
 		case CPUINFO_PTR_M6510_PORTWRITE:				info->f = (genf *) m6502.port_write;		break;
@@ -979,7 +939,6 @@ void m65c02_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INIT:							info->init = m65c02_init;				break;
 		case CPUINFO_PTR_RESET:							info->reset = m65c02_reset;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = m65c02_execute;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m65c02_reg_layout;			break;
 #ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = m65c02_dasm;			break;
 #endif
@@ -1060,7 +1019,6 @@ void deco16_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INIT:							info->init = deco16_init;				break;
 		case CPUINFO_PTR_RESET:							info->reset = deco16_reset;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = deco16_execute;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = deco16_reg_layout;			break;
 #ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = deco16_dasm;			break;
 #endif

@@ -125,26 +125,6 @@ z:      xxxx address bits a19 .. a16 for memory accesses with a15 1 ?
 #endif
 
 
-/* Layout of the registers in the debugger */
-static UINT8 m4510_reg_layout[] = {
-	M4510_A,M4510_X,M4510_Y,M4510_Z,M4510_S,M4510_PC,
-	M4510_MEM_LOW,
-	-1,
-	M4510_EA,M4510_ZP, M4510_B,
-	M4510_P,
-	M4510_MEM_HIGH,
-	0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 m4510_win_layout[] = {
-	25, 0,55, 2,	/* register window (top, right rows) */
-	 0, 0,24,22,	/* disassembler window (left colums) */
-	25, 3,55, 9,	/* memory #1 window (right, upper middle) */
-	25,13,55, 9,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
 typedef struct {
 	void	(**insn)(void); /* pointer to the function pointer table */
 	PAIR	ppc;			/* previous program counter */
@@ -518,8 +498,6 @@ void m4510_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = m4510_dasm;			break;
 #endif
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m4510_ICount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m4510_reg_layout;				break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = m4510_win_layout;				break;
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP:			info->internal_map = construct_map_m4510_mem; break;
 		case CPUINFO_PTR_TRANSLATE:						info->translate = m4510_translate;	break;
 		case CPUINFO_PTR_M6502_READINDEXED_CALLBACK:	info->f = (genf *) m4510.rdmem_id;		break;

@@ -316,6 +316,22 @@ WRITE32_HANDLER( psx_dma_w )
 					m_p_fn_dma_write[ n_channel ]( n_address, n_size );
 					dma_finished( n_channel );
 				}
+				else if( m_p_n_dmachannelcontrol[ n_channel ] == 0x11050100 &&
+					m_p_fn_dma_write[ n_channel ] != NULL )
+				{
+					/* todo: check this is a write not a read... */
+					verboselog( 1, "dma %d write block %08x %08x\n", n_channel, n_address, n_size );
+					m_p_fn_dma_write[ n_channel ]( n_address, n_size );
+					dma_finished( n_channel );
+				}
+				else if( m_p_n_dmachannelcontrol[ n_channel ] == 0x11150100 &&
+					m_p_fn_dma_write[ n_channel ] != NULL )
+				{
+					/* todo: check this is a write not a read... */
+					verboselog( 1, "dma %d write block %08x %08x\n", n_channel, n_address, n_size );
+					m_p_fn_dma_write[ n_channel ]( n_address, n_size );
+					dma_finished( n_channel );
+				}
 				else if( m_p_n_dmachannelcontrol[ n_channel ] == 0x01000401 &&
 					n_channel == 2 &&
 					m_p_fn_dma_write[ n_channel ] != NULL )

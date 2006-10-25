@@ -147,41 +147,6 @@ Timming
 /* MAME is unnecessary */
 #define HANDLE_HALT_LINE 0
 
-/* Layout of the registers in the debugger */
-static UINT8 ALPHA8201_reg_layout[] =
-{
-	ALPHA8201_PC,
-	ALPHA8201_SP,
-	ALPHA8201_RB,
-	ALPHA8201_MB,
-#if 0
-	ALPHA8201_CF,
-	ALPHA8201_ZF,
-#endif
-	ALPHA8201_IX0,
-	ALPHA8201_IX1,
-	ALPHA8201_IX2,
-	ALPHA8201_LP0,
-	ALPHA8201_LP1,
-	ALPHA8201_LP2,
-	ALPHA8201_A,
-	ALPHA8201_B,
-//
-	ALPHA8201_R0,ALPHA8201_R1,ALPHA8201_R2,ALPHA8201_R3,
-	ALPHA8201_R4,ALPHA8201_R5,ALPHA8201_R6,ALPHA8201_R7,
-//
-	0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 ALPHA8201_win_layout[] = {
-	 0, 0,80, 2,	/* register window (top rows) */
-	 0, 3,24,19,	/* disassembler window (left colums) */
-	25, 3,55, 9,	/* memory #1 window (right, upper middle) */
-	25,13,55, 9,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
 #define M_RDMEM(A)		ALPHA8201_RDMEM(A)
 #define M_WRMEM(A,V)	ALPHA8201_WRMEM(A,V)
 #define M_RDOP(A)		ALPHA8201_RDOP(A)
@@ -995,8 +960,6 @@ static void alpha8xxx_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = ALPHA8201_dasm;			break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &ALPHA8201_ICount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = ALPHA8201_reg_layout;				break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = ALPHA8201_win_layout;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_CORE_FAMILY:					strcpy(info->s = cpuintrf_temp_str(), "AlphaDenshi MCU"); break;

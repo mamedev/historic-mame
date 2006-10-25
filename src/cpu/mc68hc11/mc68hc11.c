@@ -354,23 +354,6 @@ static int hc11_execute(int cycles)
 
 /*****************************************************************************/
 
-static UINT8 hc11_reg_layout[] =
-{
-	HC11_PC,		HC11_SP,
-	HC11_A,			HC11_B,
-	HC11_IX,		HC11_IY,
-	0
-};
-
-static UINT8 hc11_win_layout[] =
-{
-	 0, 0,80, 2,	/* register window (top rows) */
-	 0, 3,35,19,	/* disassembler window (left colums) */
-	36, 3,44, 8,	/* memory #1 window (right, upper middle) */
-	36,12,44,10,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
 offs_t hc11_disasm(char *buffer, UINT32 pc)
 {
 #ifdef MAME_DEBUG
@@ -446,8 +429,6 @@ void mc68hc11_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = hc11_disasm;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &hc11.icount;			break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = hc11_reg_layout;				break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = hc11_win_layout;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "MC68HC11"); break;

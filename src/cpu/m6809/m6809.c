@@ -91,20 +91,6 @@ extern offs_t m6809_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, in
 #endif
 
 
-static UINT8 m6809_reg_layout[] = {
-	M6809_PC, M6809_S, M6809_CC, M6809_A, M6809_B, M6809_X, -1,
-	M6809_Y, M6809_U, M6809_DP, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 m6809_win_layout[] = {
-	27, 0,53, 4,	/* register window (top, right rows) */
-	 0, 0,26,22,	/* disassembler window (left colums) */
-	27, 5,53, 8,	/* memory #1 window (right, upper middle) */
-	27,14,53, 8,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
 INLINE void fetch_effective_address( void );
 
 /* 6809 Registers */
@@ -1193,8 +1179,6 @@ void m6809_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = m6809_dasm;					break;
 #endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m6809_ICount;				break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = m6809_reg_layout;				break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = m6809_win_layout;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "M6809"); break;

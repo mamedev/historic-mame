@@ -28,36 +28,6 @@
 #define LOG(x)
 #endif
 
-static UINT8 tms34010_reg_layout[] =
-{
-	TMS34010_PC, TMS34010_SP, -1,
-	TMS34010_A0, TMS34010_B0, -1,
-	TMS34010_A1, TMS34010_B1, -1,
-	TMS34010_A2, TMS34010_B2, -1,
-	TMS34010_A3, TMS34010_B3, -1,
-	TMS34010_A4, TMS34010_B4, -1,
-	TMS34010_A5, TMS34010_B5, -1,
-	TMS34010_A6, TMS34010_B6, -1,
-	TMS34010_A7, TMS34010_B7, -1,
-	TMS34010_A8, TMS34010_B8, -1,
-	TMS34010_A9, TMS34010_B9, -1,
-	TMS34010_A10,TMS34010_B10,-1,
-	TMS34010_A11,TMS34010_B11,-1,
-	TMS34010_A12,TMS34010_B12,-1,
-	TMS34010_A13,TMS34010_B13,-1,
-	TMS34010_A14,TMS34010_B14, 0
-};
-
-static UINT8 tms34010_win_layout[] =
-{
-	40, 0,39,17,	/* register window (top right) */
-	 0, 0,39,17,	/* disassembler window (left, upper) */
-	 0,18,39, 4,	/* memory #1 window (left, middle) */
-	40,18,39, 4,	/* memory #2 window (lower) */
-	 0,23,80, 1 	/* command line window (bottom rows) */
-};
-
-
 
 /***************************************************************************
     CORE STATE
@@ -2017,8 +1987,6 @@ void tms34010_get_info(UINT32 _state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = tms34010_dasm;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &tms34010_ICount;		break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = tms34010_reg_layout;			break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = tms34010_win_layout;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "TMS34010"); break;

@@ -216,10 +216,9 @@ static void timekeeper_tick( int chip )
 
 void timekeeper_init( int chip, int type, UINT8 *data )
 {
-	time_t currenttime;
 	mame_timer *timer;
 	mame_time duration;
-	struct tm *mytime;
+	mame_system_time systime;
 	struct timekeeper_chip *c;
 
 	if( chip >= MAX_TIMEKEEPER_CHIPS )
@@ -281,18 +280,17 @@ void timekeeper_init( int chip, int type, UINT8 *data )
 	}
 	c->data = data;
 
-	time(&currenttime);
-	mytime = localtime(&currenttime);
+	mame_get_base_datetime(Machine, &systime);
 
 	c->control = 0;
-	c->seconds = make_bcd( mytime->tm_sec );
-	c->minutes = make_bcd( mytime->tm_min );
-	c->hours = make_bcd( mytime->tm_hour );
-	c->day = make_bcd( mytime->tm_wday + 1 );
-	c->date = make_bcd( mytime->tm_mday );
-	c->month = make_bcd( mytime->tm_mon + 1 );
-	c->year = make_bcd( ( 1900 + mytime->tm_year ) % 100 );
-	c->century = make_bcd( ( 1900 + mytime->tm_year ) / 100 );
+	c->seconds = make_bcd( systime.local_time.second );
+	c->minutes = make_bcd( systime.local_time.minute );
+	c->hours = make_bcd( systime.local_time.hour );
+	c->day = make_bcd( systime.local_time.weekday + 1 );
+	c->date = make_bcd( systime.local_time.mday );
+	c->month = make_bcd( systime.local_time.month + 1 );
+	c->year = make_bcd( systime.local_time.year % 100 );
+	c->century = make_bcd( systime.local_time.year / 100 );
 
 	state_save_register_item( "timekeeper", chip, c->control );
 	state_save_register_item( "timekeeper", chip, c->seconds );

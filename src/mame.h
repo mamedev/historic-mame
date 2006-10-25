@@ -187,6 +187,32 @@ struct _running_machine
 
 
 
+typedef struct _mame_system_tm mame_system_tm;
+struct _mame_system_tm
+{
+	UINT8 second;	/* seconds (0-59) */
+	UINT8 minute;	/* minutes (0-59) */
+	UINT8 hour;		/* hours (0-23) */
+	UINT8 mday;		/* day of month (1-31) */
+	UINT8 month;	/* month (0-11) */
+	INT32 year;		/* year (1=1 AD) */
+	UINT8 weekday;	/* day of week (0-6) */
+	UINT16 day;		/* day of year (0-365) */
+	UINT8 is_dst;	/* is this daylight savings? */
+};
+
+
+
+typedef struct _mame_system_time mame_system_time;
+struct _mame_system_time
+{
+	INT64 time;					/* number of seconds elapsed since midnight, January 1 1970 UTC */
+	mame_system_tm local_time;	/* local time */
+	mame_system_tm utc_time;	/* UTC coordinated time */
+};
+
+
+
 /***************************************************************************
     OPTIONS PASSED FROM THE FRONTEND
 ***************************************************************************/
@@ -379,6 +405,11 @@ UINT32 mame_rand(running_machine *machine);
 /* return the index of the given CPU, or -1 if not found */
 int mame_find_cpu_index(running_machine *machine, const char *tag);
 
+/* retrieve the base system time */
+void mame_get_base_datetime(running_machine *machine, mame_system_time *systime);
+
+/* retrieve the current system time */
+void mame_get_current_datetime(running_machine *machine, mame_system_time *systime);
 
 
 

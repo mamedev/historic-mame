@@ -369,25 +369,6 @@ do {											\
 		sh2_exception(message,irq); 			\
 } while(0)
 
-/* Layout of the registers in the debugger */
-static UINT8 sh2_reg_layout[] = {
-	SH2_PC, 	SH2_R15, 	SH2_SR, 	SH2_PR,  -1,
-	SH2_GBR,	SH2_VBR,	SH2_MACH,	SH2_MACL,-1,
-	SH2_R0, 	SH2_R1, 	SH2_R2, 	SH2_R3,  -1,
-	SH2_R4, 	SH2_R5, 	SH2_R6, 	SH2_R7,  -1,
-	SH2_R8, 	SH2_R9, 	SH2_R10,	SH2_R11, -1,
-	SH2_R12,	SH2_R13,	SH2_R14,	SH2_EA,   0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 sh2_win_layout[] = {
-	0, 0,80, 6,	/* register window (top rows) */
-	0, 7,39,15,	/* disassembler window  */
-	40, 7,39, 7,	/* memory #1 window (left) */
-	40,15,39, 7,	/* memory #2 window (right) */
-	0,23,80, 1,	/* command line window (bottom rows) */
-};
-
 /*  code                 cycles  t-bit
  *  0011 nnnn mmmm 1100  1       -
  *  ADD     Rm,Rn
@@ -3167,8 +3148,6 @@ void sh2_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = sh2_dasm;			break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &sh2_icount;				break;
-		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = sh2_reg_layout;				break;
-		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = sh2_win_layout;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "SH-2"); break;
