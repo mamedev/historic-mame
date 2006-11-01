@@ -91,6 +91,7 @@ static UINT64 get_beamx(UINT32 ref);
 static UINT64 get_beamy(UINT32 ref);
 static void set_tempvar(UINT32 ref, UINT64 value);
 static void set_logunmap(UINT32 ref, UINT64 value);
+static UINT64 get_current_pc(UINT32 ref);
 static UINT64 get_cpu_reg(UINT32 ref);
 static void set_cpu_reg(UINT32 ref, UINT64 value);
 static void check_watchpoints(int cpunum, int spacenum, int type, offs_t address, offs_t size, UINT64 value_to_write);
@@ -214,6 +215,9 @@ void debug_cpu_init(running_machine *machine)
 
 		/* allocate a symbol table */
 		debug_cpuinfo[cpunum].symtable = symtable_alloc(global_symtable);
+
+		/* add a global symbol for the current instruction pointer */
+		symtable_add_register(debug_cpuinfo[cpunum].symtable, "curpc", 0, get_current_pc, 0);
 
 		/* add all registers into it */
 		for (regnum = 0; regnum < MAX_REGS; regnum++)
@@ -660,6 +664,17 @@ static void set_logunmap(UINT32 ref, UINT64 value)
 
 
 /*-------------------------------------------------
+    get_current_pc - getter callback for a CPU's
+    current instruction pointer
+-------------------------------------------------*/
+
+static UINT64 get_current_pc(UINT32 ref)
+{
+	return activecpu_get_pc();
+}
+
+
+/*-------------------------------------------------
     get_cpu_reg - getter callback for a CPU's
     register symbols
 -------------------------------------------------*/
@@ -845,25 +860,21 @@ void mame_debug_hook(void)
 
 static UINT32 dasm_wrapped(char *buffer, offs_t pc)
 {
-	if (activecpu_get_info_fct(CPUINFO_PTR_DISASSEMBLE_NEW) != NULL)
+	const debug_cpu_info *cpuinfo = debug_get_cpu_info(cpu_getactivecpu());
+	int maxbytes = activecpu_max_instruction_bytes();
+	UINT8 opbuf[64], argbuf[64];
+	offs_t pcbyte;
+	int numbytes;
+
+	/* fetch the bytes up to the maximum */
+	pcbyte = ADDR2BYTE_MASKED(pc, cpuinfo, ADDRESS_SPACE_PROGRAM);
+	for (numbytes = 0; numbytes < maxbytes; numbytes++)
 	{
-		const debug_cpu_info *cpuinfo = debug_get_cpu_info(cpu_getactivecpu());
-		int maxbytes = activecpu_max_instruction_bytes();
-		UINT8 opbuf[64], argbuf[64];
-		offs_t pcbyte;
-		int numbytes;
-
-		/* fetch the bytes up to the maximum */
-		pcbyte = ADDR2BYTE_MASKED(pc, cpuinfo, ADDRESS_SPACE_PROGRAM);
-		for (numbytes = 0; numbytes < maxbytes; numbytes++)
-		{
-			opbuf[numbytes] = debug_read_opcode(pcbyte + numbytes, 1, FALSE);
-			argbuf[numbytes] = debug_read_opcode(pcbyte + numbytes, 1, TRUE);
-		}
-
-		return activecpu_dasm_new(buffer, pc, opbuf, argbuf, maxbytes);
+		opbuf[numbytes] = debug_read_opcode(pcbyte + numbytes, 1, FALSE);
+		argbuf[numbytes] = debug_read_opcode(pcbyte + numbytes, 1, TRUE);
 	}
-	return activecpu_dasm(buffer, pc);
+
+	return activecpu_dasm(buffer, pc, opbuf, argbuf);
 }
 
 
@@ -1930,7 +1941,11 @@ void debug_write_qword(int spacenum, offs_t address, UINT64 data)
 UINT64 debug_read_opcode(offs_t address, int size, int arg)
 {
 	const debug_cpu_info *info = &debug_cpuinfo[cpu_getactivecpu()];
+	offs_t lowbits_mask;
 	const void *ptr;
+
+	/* keep in logical range */
+	address &= info->space[ADDRESS_SPACE_PROGRAM].logbytemask;
 
 	/* shortcut if we have a custom routine */
 	if (info->readop)
@@ -1956,6 +1971,9 @@ UINT64 debug_read_opcode(offs_t address, int size, int arg)
 	/* translate to physical first */
 	if (info->translate && !(*info->translate)(ADDRESS_SPACE_PROGRAM, &address))
 		return ~(UINT64)0 & (~(UINT64)0 >> (64 - 8*size));
+
+	/* keep in physical range */
+	address &= info->space[ADDRESS_SPACE_PROGRAM].physbytemask;
 
 	/* adjust the address */
 	memory_set_opbase(address);
@@ -2014,9 +2032,12 @@ UINT64 debug_read_opcode(offs_t address, int size, int arg)
 	}
 
 	/* get pointer to data */
-	ptr = memory_get_op_ptr(cpu_getactivecpu(), address, arg);
+	/* note that we query aligned to the bus width, and then add back the low bits */
+	lowbits_mask = info->space[ADDRESS_SPACE_PROGRAM].databytes - 1;
+	ptr = memory_get_op_ptr(cpu_getactivecpu(), address & ~lowbits_mask, arg);
 	if (!ptr)
 		return ~(UINT64)0 & (~(UINT64)0 >> (64 - 8*size));
+	ptr = (UINT8 *)ptr + (address & lowbits_mask);
 
 	/* gross! */
 //  if (osd_is_bad_read_ptr(ptr, size))

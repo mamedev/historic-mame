@@ -674,7 +674,7 @@ static int translate_address_cb(int space, offs_t *addr)
 	return result;
 }
 
-static offs_t i386_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+static offs_t i386_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
 	return i386_dasm_one(buffer, pc, oprom, I.sreg[CS].d, I.sreg[CS].d);
@@ -842,7 +842,7 @@ void i386_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_RESET:		      				info->reset = i386_reset;		break;
 		case CPUINFO_PTR_EXECUTE:	      				info->execute = i386_execute;		break;
 		case CPUINFO_PTR_BURN:		      				info->burn = NULL;			break;
-		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = i386_dasm;		break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = i386_dasm;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER: 			info->icount = &I.cycles;		break;
 		case CPUINFO_PTR_TRANSLATE:						info->translate = translate_address_cb;	break;
 #ifdef MAME_DEBUG

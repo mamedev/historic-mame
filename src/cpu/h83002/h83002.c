@@ -172,12 +172,12 @@ static UINT32 h8_divxs16(INT16 src, INT32 dst);
 
 /* implementation */
 
-extern UINT8 h8disasm(UINT32 address, char *output);
+extern UINT32 h8disasm(UINT32 address, char *output, const UINT8 *oprom);
 
-static offs_t h8_disasm(char *buffer, offs_t pc)
+static offs_t h8_disasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-	return h8disasm((offs_t)pc, buffer);
+	return h8disasm((offs_t)pc, buffer, oprom);
 #else
 	return 0;
 #endif
@@ -3667,7 +3667,7 @@ void h8_3002_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_PTR_EXIT:                info->exit        = 0;                break;
 	case CPUINFO_PTR_EXECUTE:             info->execute     = h8_execute;       break;
 	case CPUINFO_PTR_BURN:                info->burn        = 0;                break;
-	case CPUINFO_PTR_DISASSEMBLE:         info->disassemble = h8_disasm;        break;
+	case CPUINFO_PTR_DISASSEMBLE:	      info->disassemble = h8_disasm;        break;
 	case CPUINFO_PTR_INSTRUCTION_COUNTER: info->icount      = &h8_cyccnt;       break;
 	case CPUINFO_INT_CONTEXT_SIZE:        info->i           = sizeof(h83002_state); break;
 	case CPUINFO_INT_MIN_INSTRUCTION_BYTES: info->i = 2;					break;

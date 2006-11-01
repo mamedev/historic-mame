@@ -44,7 +44,7 @@ extern void t11_get_info(UINT32 state, union cpuinfo *info);
 #define T11_WRMEM_WORD(A,V) (program_write_word_16le(A,V))
 
 #ifdef MAME_DEBUG
-extern unsigned DasmT11(char *buffer, unsigned pc);
+extern unsigned DasmT11(char *buffer, unsigned pc, const UINT8 *oprom, const UINT8 *opram);
 #endif
 
 #endif /* _T11_H */

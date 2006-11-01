@@ -301,6 +301,7 @@ UINT32 debug_comment_all_change_count(void)
 
 UINT32 debug_comment_get_opcode_crc32(offs_t address)
 {
+	const debug_cpu_info *info = debug_get_cpu_info(cpu_getactivecpu());
 	int i;
 	UINT32 crc;
 	UINT8 opbuf[64], argbuf[64];
@@ -308,8 +309,6 @@ UINT32 debug_comment_get_opcode_crc32(offs_t address)
 	offs_t numbytes;
 	int maxbytes = activecpu_max_instruction_bytes();
 	UINT32 addrmask = (debug_get_cpu_info(cpu_getactivecpu()))->space[ADDRESS_SPACE_PROGRAM].logaddrmask;
-
-	int use_new_dasm = (activecpu_get_info_fct(CPUINFO_PTR_DISASSEMBLE_NEW) != NULL);
 
 	memset(opbuf, 0x00, sizeof(opbuf));
 	memset(argbuf, 0x00, sizeof(argbuf));
@@ -321,14 +320,8 @@ UINT32 debug_comment_get_opcode_crc32(offs_t address)
 		argbuf[i] = debug_read_opcode(address + i, 1, TRUE);
 	}
 
-	if (use_new_dasm)
-	{
-		numbytes = cpunum_dasm_new(cpu_getactivecpu(), buff, address & addrmask, opbuf, argbuf, maxbytes) & DASMFLAG_LENGTHMASK;
-	}
-	else
-	{
-		numbytes = cpunum_dasm(cpu_getactivecpu(), buff, address & addrmask) & DASMFLAG_LENGTHMASK;
-	}
+	numbytes = activecpu_dasm(buff, address & addrmask, opbuf, argbuf) & DASMFLAG_LENGTHMASK;
+	numbytes = ADDR2BYTE(numbytes, info, ADDRESS_SPACE_PROGRAM);
 
 	crc = crc32(0, argbuf, numbytes);
 

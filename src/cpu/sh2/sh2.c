@@ -2930,12 +2930,12 @@ static void set_irq_line(int irqline, int state)
 	}
 }
 
-static offs_t sh2_dasm(char *buffer, offs_t pc)
+static offs_t sh2_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-	return DasmSH2( buffer, pc );
+	return DasmSH2( buffer, pc, (oprom[0] << 8) | oprom[1] );
 #else
-	sprintf( buffer, "$%02X", cpu_readop(pc) );
+	sprintf( buffer, "$%02X", (oprom[0] << 8) | oprom[1] );
 	return 1;
 #endif
 }

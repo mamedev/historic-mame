@@ -925,12 +925,12 @@ static void pic16C5x_set_context (void *src)
  *  Debugger definitions
  ****************************************************************************/
 
-static offs_t pic16C5x_dasm(char *buffer, offs_t pc)
+static offs_t pic16C5x_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-	return Dasm16C5x( buffer, pc );
+	return Dasm16C5x( buffer, pc, oprom, opram );
 #else
-	sprintf( buffer, "$%03X", M_RDOP(pc) );
+	sprintf( buffer, "$%03X", oprom[0] | (oprom[1] << 8) );
 	return 2;
 #endif
 }

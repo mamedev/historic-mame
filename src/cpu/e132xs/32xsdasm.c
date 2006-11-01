@@ -46,6 +46,11 @@ static const char *SETxx[] =
 
 static int size, global_fp;
 
+static offs_t base_pc;
+static const UINT8 *base_oprom;
+#define READ_OP_DASM(p)			((base_oprom[(p) - base_pc] << 8) | base_oprom[(p) + 1 - base_pc])
+
+
 static void LL_format(char *source, char *dest, UINT16 op)
 {
 	strcpy(source, L_REG[(SOURCECODE(op)+global_fp)%64]);
@@ -106,7 +111,7 @@ static UINT32 LRconst_format(char *source, char *dest, UINT16 op, unsigned *pc)
 	size = 4;
 
 	*pc += 2;
-	next_op = READ_OP(*pc);
+	next_op = READ_OP_DASM(*pc);
 
 	if( E_BIT(next_op) )
 	{
@@ -115,7 +120,7 @@ static UINT32 LRconst_format(char *source, char *dest, UINT16 op, unsigned *pc)
 		size = 6;
 
 		*pc += 2;
-		next_op2 = READ_OP(*pc);
+		next_op2 = READ_OP_DASM(*pc);
 		const_val = next_op2;
 		const_val |= ((next_op & 0x3fff) << 16 );
 
@@ -163,7 +168,7 @@ static UINT32 RRconst_format(char *source, char *dest, UINT16 op, unsigned *pc)
 	size = 4;
 
 	*pc += 2;
-	next_op = READ_OP(*pc);
+	next_op = READ_OP_DASM(*pc);
 
 	if( E_BIT(next_op) )
 	{
@@ -172,7 +177,7 @@ static UINT32 RRconst_format(char *source, char *dest, UINT16 op, unsigned *pc)
 		size = 6;
 
 		*pc += 2;
-		next_op2 = READ_OP(*pc);
+		next_op2 = READ_OP_DASM(*pc);
 		const_val = next_op2;
 		const_val |= ((next_op & 0x3fff) << 16 );
 
@@ -218,9 +223,9 @@ static INT32 Rimm_format(char *dest, UINT16 op, unsigned *pc, unsigned h_flag)
 
 		case 17:
 			*pc += 2;
-			imm1 = READ_OP(*pc);
+			imm1 = READ_OP_DASM(*pc);
 			*pc += 2;
-			imm2 = READ_OP(*pc);
+			imm2 = READ_OP_DASM(*pc);
 			ret = (imm1 << 16) | imm2;
 
 			size = 6;
@@ -229,14 +234,14 @@ static INT32 Rimm_format(char *dest, UINT16 op, unsigned *pc, unsigned h_flag)
 
 		case 18:
 			*pc += 2;
-			ret = READ_OP(*pc);
+			ret = READ_OP_DASM(*pc);
 
 			size = 4;
 			return ret;
 
 		case 19:
 			*pc += 2;
-			ret = (INT32) (0xffff0000 | READ_OP(*pc));
+			ret = (INT32) (0xffff0000 | READ_OP_DASM(*pc));
 
 			size = 4;
 			return ret;
@@ -315,7 +320,7 @@ static INT32 PCrel_format(UINT16 op, unsigned pc)
 
 		pc += 2;
 
-		next = READ_OP(pc);
+		next = READ_OP_DASM(pc);
 
 		ret = (op & 0x7f) << 16;
 
@@ -363,7 +368,7 @@ static UINT32 RRdis_format(char *source, char *dest, UINT16 op, UINT16 next_op, 
 
 		size = 6;
 
-		next = READ_OP(pc + 4);
+		next = READ_OP_DASM(pc + 4);
 
 		ret = next;
 		ret |= ( ( next_op & 0xfff ) << 16 );
@@ -385,7 +390,7 @@ static UINT32 RRdis_format(char *source, char *dest, UINT16 op, UINT16 next_op, 
 	return ret;
 }
 
-unsigned dasm_hyperstone(char *buffer, unsigned pc, unsigned h_flag, int private_fp)
+unsigned dasm_hyperstone(char *buffer, unsigned pc, const UINT8 *oprom, unsigned h_flag, int private_fp)
 {
 	UINT16 op = 0;
 	UINT8 op_num;
@@ -393,8 +398,12 @@ unsigned dasm_hyperstone(char *buffer, unsigned pc, unsigned h_flag, int private
 	UINT8 source_code, dest_code, source_bit, dest_bit;
 
 	char source[5] = "\0", dest[5] = "\0";
+	UINT32 flags = 0;
 
-	op = READ_OP(pc);
+	base_pc = pc;
+	base_oprom = oprom;
+
+	op = READ_OP_DASM(pc);
 
 	size = 2;
 
@@ -442,6 +451,7 @@ unsigned dasm_hyperstone(char *buffer, unsigned pc, unsigned h_flag, int private
 				global_fp = 0;
 				RR_format(source, dest, op, 0);
 				sprintf(buffer, "RET PC, %s", source);
+				flags = DASMFLAG_STEP_OUT;
 			}
 			else if( source_code == SR_REGISTER && !source_bit )
 			{
@@ -480,7 +490,7 @@ unsigned dasm_hyperstone(char *buffer, unsigned pc, unsigned h_flag, int private
 			size = 4;
 
 			pc += 2;
-			op = READ_OP(pc);
+			op = READ_OP_DASM(pc);
 
 			xcode = X_CODE(op);
 
@@ -495,7 +505,7 @@ unsigned dasm_hyperstone(char *buffer, unsigned pc, unsigned h_flag, int private
 					size = 6;
 
 					pc += 2;
-					next_op = READ_OP(pc);
+					next_op = READ_OP_DASM(pc);
 
 					lim = ((op & 0xfff) << 16) | next_op;
 				}
@@ -980,7 +990,7 @@ unsigned dasm_hyperstone(char *buffer, unsigned pc, unsigned h_flag, int private
 		// LDxx.D/A/IOD/IOA
 		case 0x90: case 0x91: case 0x92: case 0x93:
 		{
-			UINT16 next_op = READ_OP(pc + 2);
+			UINT16 next_op = READ_OP_DASM(pc + 2);
 			UINT32 dis = RRdis_format(source, dest, op, next_op, pc);
 
 			if( size == 2 )
@@ -1098,7 +1108,7 @@ unsigned dasm_hyperstone(char *buffer, unsigned pc, unsigned h_flag, int private
 		// LDxx.N/S
 		case 0x94: case 0x95: case 0x96: case 0x97:
 		{
-			UINT16 next_op = READ_OP(pc + 2);
+			UINT16 next_op = READ_OP_DASM(pc + 2);
 			UINT32 dis = RRdis_format(source, dest, op, next_op, pc);
 
 			if( size == 2 )
@@ -1167,7 +1177,7 @@ unsigned dasm_hyperstone(char *buffer, unsigned pc, unsigned h_flag, int private
 		// STxx.D/A/IOD/IOA
 		case 0x98: case 0x99: case 0x9a: case 0x9b:
 		{
-			UINT16 next_op = READ_OP(pc + 2);
+			UINT16 next_op = READ_OP_DASM(pc + 2);
 			UINT32 dis = RRdis_format(source, dest, op, next_op, pc);
 
 			if( size == 2 )
@@ -1288,7 +1298,7 @@ unsigned dasm_hyperstone(char *buffer, unsigned pc, unsigned h_flag, int private
 		// STxx.N/S
 		case 0x9c: case 0x9d: case 0x9e: case 0x9f:
 		{
-			UINT16 next_op = READ_OP(pc + 2);
+			UINT16 next_op = READ_OP_DASM(pc + 2);
 			UINT32 dis = RRdis_format(source, dest, op, next_op, pc);
 
 			if( size == 2 )
@@ -1569,7 +1579,7 @@ unsigned dasm_hyperstone(char *buffer, unsigned pc, unsigned h_flag, int private
 			LL_format(source, dest, op);
 
 			pc += 2;
-			extended_op = READ_OP(pc);
+			extended_op = READ_OP_DASM(pc);
 
 			size = 4;
 
@@ -1740,6 +1750,7 @@ unsigned dasm_hyperstone(char *buffer, unsigned pc, unsigned h_flag, int private
 			INT32 rel = PCrel_format(op, pc) + 2;
 
 			sprintf(buffer, "DBV $%x", rel);
+			flags = DASMFLAG_STEP_OVER | DASMFLAG_STEP_OVER_EXTRA(1);
 
 			break;
 		}
@@ -1750,6 +1761,7 @@ unsigned dasm_hyperstone(char *buffer, unsigned pc, unsigned h_flag, int private
 			INT32 rel = PCrel_format(op, pc) + 2;
 
 			sprintf(buffer, "DBNV $%x", rel);
+			flags = DASMFLAG_STEP_OVER | DASMFLAG_STEP_OVER_EXTRA(1);
 
 			break;
 		}
@@ -1760,6 +1772,7 @@ unsigned dasm_hyperstone(char *buffer, unsigned pc, unsigned h_flag, int private
 			INT32 rel = PCrel_format(op, pc) + 2;
 
 			sprintf(buffer, "DBE $%x", rel);
+			flags = DASMFLAG_STEP_OVER | DASMFLAG_STEP_OVER_EXTRA(1);
 
 			break;
 		}
@@ -1770,6 +1783,7 @@ unsigned dasm_hyperstone(char *buffer, unsigned pc, unsigned h_flag, int private
 			INT32 rel = PCrel_format(op, pc) + 2;
 
 			sprintf(buffer, "DBNE $%x", rel);
+			flags = DASMFLAG_STEP_OVER | DASMFLAG_STEP_OVER_EXTRA(1);
 
 			break;
 		}
@@ -1780,6 +1794,7 @@ unsigned dasm_hyperstone(char *buffer, unsigned pc, unsigned h_flag, int private
 			INT32 rel = PCrel_format(op, pc) + 2;
 
 			sprintf(buffer, "DBC $%x", rel);
+			flags = DASMFLAG_STEP_OVER | DASMFLAG_STEP_OVER_EXTRA(1);
 
 			break;
 		}
@@ -1790,6 +1805,7 @@ unsigned dasm_hyperstone(char *buffer, unsigned pc, unsigned h_flag, int private
 			INT32 rel = PCrel_format(op, pc) + 2;
 
 			sprintf(buffer, "DBNC $%x", rel);
+			flags = DASMFLAG_STEP_OVER | DASMFLAG_STEP_OVER_EXTRA(1);
 
 			break;
 		}
@@ -1800,6 +1816,7 @@ unsigned dasm_hyperstone(char *buffer, unsigned pc, unsigned h_flag, int private
 			INT32 rel = PCrel_format(op, pc) + 2;
 
 			sprintf(buffer, "DBSE $%x", rel);
+			flags = DASMFLAG_STEP_OVER | DASMFLAG_STEP_OVER_EXTRA(1);
 
 			break;
 		}
@@ -1810,6 +1827,7 @@ unsigned dasm_hyperstone(char *buffer, unsigned pc, unsigned h_flag, int private
 			INT32 rel = PCrel_format(op, pc) + 2;
 
 			sprintf(buffer, "DBHT $%x", rel);
+			flags = DASMFLAG_STEP_OVER | DASMFLAG_STEP_OVER_EXTRA(1);
 
 			break;
 		}
@@ -1820,6 +1838,7 @@ unsigned dasm_hyperstone(char *buffer, unsigned pc, unsigned h_flag, int private
 			INT32 rel = PCrel_format(op, pc) + 2;
 
 			sprintf(buffer, "DBN $%x", rel);
+			flags = DASMFLAG_STEP_OVER | DASMFLAG_STEP_OVER_EXTRA(1);
 
 			break;
 		}
@@ -1830,6 +1849,7 @@ unsigned dasm_hyperstone(char *buffer, unsigned pc, unsigned h_flag, int private
 			INT32 rel = PCrel_format(op, pc) + 2;
 
 			sprintf(buffer, "DBNN $%x", rel);
+			flags = DASMFLAG_STEP_OVER | DASMFLAG_STEP_OVER_EXTRA(1);
 
 			break;
 		}
@@ -1840,6 +1860,7 @@ unsigned dasm_hyperstone(char *buffer, unsigned pc, unsigned h_flag, int private
 			INT32 rel = PCrel_format(op, pc) + 2;
 
 			sprintf(buffer, "DBLE $%x", rel);
+			flags = DASMFLAG_STEP_OVER | DASMFLAG_STEP_OVER_EXTRA(1);
 
 			break;
 		}
@@ -1850,6 +1871,7 @@ unsigned dasm_hyperstone(char *buffer, unsigned pc, unsigned h_flag, int private
 			INT32 rel = PCrel_format(op, pc) + 2;
 
 			sprintf(buffer, "DBGT $%x", rel);
+			flags = DASMFLAG_STEP_OVER | DASMFLAG_STEP_OVER_EXTRA(1);
 
 			break;
 		}
@@ -1860,6 +1882,7 @@ unsigned dasm_hyperstone(char *buffer, unsigned pc, unsigned h_flag, int private
 			INT32 rel = PCrel_format(op, pc) + 2;
 
 			sprintf(buffer, "DBR $%x", rel);
+			flags = DASMFLAG_STEP_OVER | DASMFLAG_STEP_OVER_EXTRA(1);
 
 			break;
 		}
@@ -1882,10 +1905,12 @@ unsigned dasm_hyperstone(char *buffer, unsigned pc, unsigned h_flag, int private
 			if( source_code == SR_REGISTER && !source_bit )
 			{
 				sprintf(buffer, "CALL %s, 0, $%x", dest, const_val);
+				flags = DASMFLAG_STEP_OVER;
 			}
 			else
 			{
 				sprintf(buffer, "CALL %s, %s, $%x", dest, source, const_val);
+				flags = DASMFLAG_STEP_OVER;
 			}
 
 			break;
@@ -2031,61 +2056,73 @@ unsigned dasm_hyperstone(char *buffer, unsigned pc, unsigned h_flag, int private
 			{
 				case TRAPLE:
 					sprintf(buffer, "TRAPLE %d", trapno);
+					flags = DASMFLAG_STEP_OVER;
 
 					break;
 
 				case TRAPGT:
 					sprintf(buffer, "TRAPGT %d", trapno);
+					flags = DASMFLAG_STEP_OVER;
 
 					break;
 
 				case TRAPLT:
 					sprintf(buffer, "TRAPLT %d", trapno);
+					flags = DASMFLAG_STEP_OVER;
 
 					break;
 
 				case TRAPGE:
 					sprintf(buffer, "TRAPGE %d", trapno);
+					flags = DASMFLAG_STEP_OVER;
 
 					break;
 
 				case TRAPSE:
 					sprintf(buffer, "TRAPSE %d", trapno);
+					flags = DASMFLAG_STEP_OVER;
 
 					break;
 
 				case TRAPHT:
 					sprintf(buffer, "TRAPHT %d", trapno);
+					flags = DASMFLAG_STEP_OVER;
 
 					break;
 
 				case TRAPST:
 					sprintf(buffer, "TRAPST %d", trapno);
+					flags = DASMFLAG_STEP_OVER;
 
 					break;
 
 				case TRAPHE:
 					sprintf(buffer, "TRAPHE %d", trapno);
+					flags = DASMFLAG_STEP_OVER;
 
 					break;
 
 				case TRAPE:
 					sprintf(buffer, "TRAPE %d", trapno);
+					flags = DASMFLAG_STEP_OVER;
 
 					break;
 
 				case TRAPNE:
 					sprintf(buffer, "TRAPNE %d", trapno);
+					flags = DASMFLAG_STEP_OVER;
 
 					break;
 
 				case TRAPV:
 					sprintf(buffer, "TRAPV %d", trapno);
+					flags = DASMFLAG_STEP_OVER;
 
 					break;
 
 				case TRAP:
 					sprintf(buffer, "TRAP %d", trapno);
+					flags = DASMFLAG_STEP_OVER;
 
 					break;
 			}
@@ -2094,5 +2131,5 @@ unsigned dasm_hyperstone(char *buffer, unsigned pc, unsigned h_flag, int private
 		}
 	}
 
-	return size;
+	return size | flags | DASMFLAG_SUPPORTED;
 }

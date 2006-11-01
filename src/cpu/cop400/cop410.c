@@ -131,12 +131,12 @@ static s_opcode cop410_opcode_main[256]=
 	{1, jp			},{1, jp		},{1, jp		},{1, jp			},{1, jp		},{1, jp		},{1, jp		},{1, jid		}
 };
 
-static offs_t cop410_dasm(char *buffer, offs_t pc)
+static offs_t cop410_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-	return DasmCOP410(buffer,pc);
+	return DasmCOP410(buffer,pc,oprom);
 #else
-	sprintf( buffer, "$%02X", cpu_readop(pc) );
+	sprintf( buffer, "$%02X", oprom[0] );
 	return 1;
 #endif
 }
@@ -161,6 +161,24 @@ static void cop410_init(int index, int clock, const void *config, int (*irqcallb
 	for (i=0x18; i<0x20; i++) LBIops[i] = 1;
 	for (i=0x28; i<0x30; i++) LBIops[i] = 1;
 	for (i=0x38; i<0x40; i++) LBIops[i] = 1;
+
+	state_save_register_item("cop410", index, PC);
+	state_save_register_item("cop410", index, R.PREVPC);
+	state_save_register_item("cop410", index, A);
+	state_save_register_item("cop410", index, B);
+	state_save_register_item("cop410", index, C);
+	state_save_register_item("cop410", index, EN);
+	state_save_register_item("cop410", index, G);
+	state_save_register_item("cop410", index, Q);
+	state_save_register_item("cop410", index, SA);
+	state_save_register_item("cop410", index, SB);
+	state_save_register_item("cop410", index, SIO);
+	state_save_register_item("cop410", index, SKL);
+	state_save_register_item("cop410", index, skip);
+	state_save_register_item("cop410", index, skipLBI);
+	state_save_register_item_array("cop410", index, R.RAM);
+	state_save_register_item("cop410", index, R.G_mask);
+	state_save_register_item("cop410", index, R.D_mask);
 }
 
 static void cop411_init(int index, int clock, const void *config, int (*irqcallback)(int))

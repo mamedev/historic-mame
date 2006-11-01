@@ -103,7 +103,7 @@ void m37710_state_save(void *file);
 void m37710_state_load(void *file);
 
 /* Disassemble an instruction */
-unsigned m37710_dasm(char *buffer, unsigned pc);
+offs_t m37710_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
 
 #undef M37710_CALL_DEBUGGER
 

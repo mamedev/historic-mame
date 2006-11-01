@@ -28,8 +28,9 @@ const static char *dRegs[]={
 #define GET2s(opcode) dRegs[((opcode)>>5)&0x1f]
 #define GETRs(opcode) dRegs[32+((opcode)&0x1f)]
 
-unsigned v810_disasm( char *buffer, UINT32 oldpc )
+unsigned v810_disasm( char *buffer, UINT32 oldpc, const UINT8 *oprom )
 {
+	UINT32 flags = 0;
 	UINT32 opc,opc2;
 	UINT32 pc=oldpc;
 	unsigned size;
@@ -44,7 +45,7 @@ unsigned v810_disasm( char *buffer, UINT32 oldpc )
 		case 0x03: sprintf(buffer,"CMP %s,%s",GET1s(opc),GET2s(opc)); size=2; break;
 		case 0x04: sprintf(buffer,"SHL %s,%s",GET1s(opc),GET2s(opc)); size=2; break;
 		case 0x05: sprintf(buffer,"SHR %s,%s",GET1s(opc),GET2s(opc)); size=2; break;
-		case 0x06: sprintf(buffer,"JMP [%s]",GET1s(opc)); size=2; break;
+		case 0x06: sprintf(buffer,"JMP [%s]",GET1s(opc)); size=2; if ((opc&0x1f) == 31) flags = DASMFLAG_STEP_OUT; break;
 		case 0x07: sprintf(buffer,"SAR %s,%s",GET1s(opc),GET2s(opc)); size=2; break;
 		case 0x08: sprintf(buffer,"MUL %s,%s",GET1s(opc),GET2s(opc)); size=2; break;
 		case 0x09: sprintf(buffer,"DIV %s,%s",GET1s(opc),GET2s(opc)); size=2; break;
@@ -63,7 +64,7 @@ unsigned v810_disasm( char *buffer, UINT32 oldpc )
 		case 0x16: sprintf(buffer,"EI"); size=2; break;
 		case 0x17: sprintf(buffer,"SAR %X,%s",UI5(opc),GET2s(opc)); size=2; break;
 		case 0x18: sprintf(buffer,"TRAP %X",I5(opc)); size=2; break;
-		case 0x19: sprintf(buffer,"RETI"); size=2; break;
+		case 0x19: sprintf(buffer,"RETI"); size=2; flags = DASMFLAG_STEP_OUT; break;
 		case 0x1a: sprintf(buffer,"HALT"); size=2; break;
 		case 0x1b: sprintf(buffer,"Unk 0x1B"); size=2; break;
 		case 0x1c: sprintf(buffer,"LDSR %s,%s",GET2s(opc),GETRs(opc));size=2; break;
@@ -123,7 +124,7 @@ unsigned v810_disasm( char *buffer, UINT32 oldpc )
 		case 0x28:	sprintf(buffer,"MOVEA %X, %s, %s",I16(opc2),GET1s(opc),GET2s(opc));size=4; break;
 		case 0x29:	sprintf(buffer,"ADDI %X, %s, %s",I16(opc2),GET1s(opc),GET2s(opc));size=4; break;
 		case 0x2a:	sprintf(buffer,"JR %X",pc+D26(opc,opc2));size=4; break;
-		case 0x2b:	sprintf(buffer,"JAL %X",pc+D26(opc,opc2));size=4; break;
+		case 0x2b:	sprintf(buffer,"JAL %X",pc+D26(opc,opc2));size=4; flags = DASMFLAG_STEP_OVER; break;
 		case 0x2c:	sprintf(buffer,"ORI %X, %s, %s",UI16(opc2),GET1s(opc),GET2s(opc));size=4; break;
 		case 0x2d:	sprintf(buffer,"ANDI %X, %s, %s",UI16(opc2),GET1s(opc),GET2s(opc));size=4; break;
 		case 0x2e:	sprintf(buffer,"XORI %X, %s, %s",UI16(opc2),GET1s(opc),GET2s(opc));size=4; break;
@@ -162,6 +163,6 @@ unsigned v810_disasm( char *buffer, UINT32 oldpc )
 
 		default : size=2;
 	}
-	return size;
+	return size | flags | DASMFLAG_SUPPORTED;
 }
 

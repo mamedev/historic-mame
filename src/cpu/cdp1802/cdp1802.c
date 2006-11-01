@@ -123,12 +123,12 @@ static int cdp1802_execute(int cycles)
 	return cycles - cdp1802_ICount;
 }
 
-static unsigned cdp1802_dasm(char *buffer, unsigned pc)
+static offs_t cdp1802_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-	return DasmCdp1802(buffer, pc);
+	return DasmCdp1802(buffer, pc, oprom);
 #else
-	sprintf( buffer, "$%X", cpu_readop(pc) );
+	sprintf( buffer, "$%X", oprom[0] );
 	return 1;
 #endif
 }
@@ -199,6 +199,8 @@ static void cdp1802_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + CDP1802_Q: cdp1802_q(info->i); break;
 		case CPUINFO_INT_REGISTER + CDP1802_N: cdp1802.n = info->i; break;
 		case CPUINFO_INT_REGISTER + CDP1802_I: cdp1802.i = info->i; break;
+		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + CDP1802_PC: PC = info->i; break;
 	}
 }
 
@@ -234,7 +236,6 @@ void cdp1802_get_info(UINT32 state, union cpuinfo *info)
 
 		case CPUINFO_INT_PREVIOUSPC:						info->i = cdp1802.oldpc;			break;
 
-		case CPUINFO_INT_PC:								info->i = PC;						break;
 		case CPUINFO_INT_SP:								info->i = 0;						break;
 		case CPUINFO_INT_REGISTER + CDP1802_P:				info->i = cdp1802.p;				break;
 		case CPUINFO_INT_REGISTER + CDP1802_X:				info->i = cdp1802.x;				break;
@@ -262,6 +263,8 @@ void cdp1802_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + CDP1802_Q:				info->i = cdp1802.q;				break;
 		case CPUINFO_INT_REGISTER + CDP1802_N:				info->i = cdp1802.n;				break;
 		case CPUINFO_INT_REGISTER + CDP1802_I:				info->i = cdp1802.i;				break;
+		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + CDP1802_PC:				info->i = PC;						break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_SET_INFO:						info->setinfo = cdp1802_set_info;		break;
@@ -281,6 +284,7 @@ void cdp1802_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_STR_CORE_FILE:						strcpy(info->s = cpuintrf_temp_str(), __FILE__);	break;
 		case CPUINFO_STR_CORE_CREDITS:					strcpy(info->s = cpuintrf_temp_str(), "Copyright (c) 2000 Peter Trauner, all rights reserved."); break;
 
+		case CPUINFO_STR_REGISTER + CDP1802_PC:	sprintf(info->s = cpuintrf_temp_str(), "PC:%.4x", PC);	break;
 		case CPUINFO_STR_REGISTER + CDP1802_R0:	sprintf(info->s = cpuintrf_temp_str(), "R0:%.4x", cdp1802.reg[0].w.l);	break;
 		case CPUINFO_STR_REGISTER + CDP1802_R1:	sprintf(info->s = cpuintrf_temp_str(), "R1:%.4x", cdp1802.reg[1].w.l);	break;
 		case CPUINFO_STR_REGISTER + CDP1802_R2:	sprintf(info->s = cpuintrf_temp_str(), "R2:%.4x", cdp1802.reg[2].w.l);	break;

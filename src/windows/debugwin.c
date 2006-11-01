@@ -2128,8 +2128,8 @@ static void disasm_create_window(void)
 
 	// set up the view to track the initial expression
 	debug_view_begin_update(info->view[0].view);
-	debug_view_set_property_string(info->view[0].view, DVP_DASM_EXPRESSION, "pc");
-	strcpy(info->edit_defstr, "pc");
+	debug_view_set_property_string(info->view[0].view, DVP_DASM_EXPRESSION, "curpc");
+	strcpy(info->edit_defstr, "curpc");
 	debug_view_set_property_UINT32(info->view[0].view, DVP_DASM_TRACK_LIVE, 1);
 	debug_view_end_update(info->view[0].view);
 
@@ -2140,7 +2140,7 @@ static void disasm_create_window(void)
 	SetWindowLongPtr(info->editwnd, GWLP_USERDATA, (UINT32)info);
 	SetWindowLongPtr(info->editwnd, GWLP_WNDPROC, (UINT32)debug_edit_proc);
 	SendMessage(info->editwnd, WM_SETFONT, (WPARAM)debug_font, (LPARAM)FALSE);
-	SendMessage(info->editwnd, WM_SETTEXT, (WPARAM)0, (LPARAM)"pc");
+	SendMessage(info->editwnd, WM_SETTEXT, (WPARAM)0, (LPARAM)"curpc");
 	SendMessage(info->editwnd, EM_LIMITTEXT, (WPARAM)MAX_EDIT_STRING, (LPARAM)0);
 	SendMessage(info->editwnd, EM_SETSEL, (WPARAM)0, (LPARAM)-1);
 
@@ -2515,7 +2515,7 @@ void console_create_window(void)
 
 	// set up the disassembly view to track the current pc
 	debug_view_begin_update(info->view[0].view);
-	debug_view_set_property_string(info->view[0].view, DVP_DASM_EXPRESSION, "pc");
+	debug_view_set_property_string(info->view[0].view, DVP_DASM_EXPRESSION, "curpc");
 	debug_view_set_property_UINT32(info->view[0].view, DVP_DASM_TRACK_LIVE, 1);
 	debug_view_end_update(info->view[0].view);
 

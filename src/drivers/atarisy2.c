@@ -219,7 +219,10 @@ static offs_t atarisy2_opbase_handler(offs_t pc)
 {
 	/* make sure slapstic area looks like ROM */
 	if (pc >= 0x8000 && pc < 0x8200)
-		return 0x8200;
+	{
+		opcode_base = opcode_arg_base = (UINT8 *)atarisy2_slapstic - 0x8000;
+		return ~0;
+	}
 	return pc;
 }
 

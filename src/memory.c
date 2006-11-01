@@ -21,10 +21,8 @@
     - Add the ability to start with another memory map and modify it
     - Add fourth memory space for encrypted opcodes
     - Automatically mirror program space into data space if no data space
-    - Get rid of association between memory_regions and RAM
     - Get rid of opcode/data separation by using address spaces?
     - Add support for internal addressing (maybe just accessors - see TMS3202x)
-    - Fix debugger issues
     - Evaluate min/max opcode ranges and do we include a check in cpu_readop?
 
 ****************************************************************************
@@ -737,7 +735,7 @@ void *memory_get_op_ptr(int cpunum, offs_t offset, int arg)
 	UINT8 entry;
 
 	/* if there is a custom mapper, use that */
-	if (cpudata[cpunum].opbase)
+	if (cpudata[cpunum].opbase != NULL)
 	{
 		/* need to save opcode info */
 		UINT8 *saved_opcode_base = opcode_base;
@@ -767,7 +765,7 @@ void *memory_get_op_ptr(int cpunum, offs_t offset, int arg)
 		opcode_entry = saved_opcode_entry;
 
 		/* if we got our pointer, we're done */
-		if (ptr)
+		if (ptr != NULL)
 			return ptr;
 	}
 
@@ -1956,6 +1954,13 @@ static UINT8 *open_subtable(table_data *tabledata, offs_t l1index)
 	else if (tabledata->subtable[subentry - SUBTABLE_BASE].usecount > 1)
 	{
 		UINT8 newentry = allocate_subtable(tabledata);
+
+		/* allocate may cause some additional merging -- look up the subentry again */
+		/* when we're done; it should still require a split */
+		subentry = tabledata->table[l1index];
+		assert(subentry >= SUBTABLE_BASE);
+		assert(tabledata->subtable[subentry - SUBTABLE_BASE].usecount > 1);
+
 		memcpy(SUBTABLE_PTR(tabledata, newentry), SUBTABLE_PTR(tabledata, subentry), 1 << LEVEL2_BITS);
 		release_subtable(tabledata, subentry);
 		tabledata->table[l1index] = newentry;

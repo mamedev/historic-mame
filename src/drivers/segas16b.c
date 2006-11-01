@@ -6021,7 +6021,7 @@ GAME( 1986, dunkshot, 0,        timescan,       dunkshot, dunkshot_5358, ROT0,  
 GAME( 1989, eswat,    0,        system16b,      eswat,    generic_5797,  ROT0,   "Sega",           "E-Swat - Cyber Police (set 3, World, FD1094 317-0130)", 0 )
 GAME( 1989, eswatu,   eswat,    system16b,      eswat,    generic_5797,  ROT0,   "Sega",           "E-Swat - Cyber Police (set 2, US, FD1094 317-0129)", 0 )
 GAME( 1989, eswatj,   eswat,    system16b,      eswat,    generic_5797,  ROT0,   "Sega",           "E-Swat - Cyber Police (set 1, Japan, FD1094 317-0128)", 0 )
-GAME( 19??, exctleag, 0,        system16b,      generic,  generic_5358,  ROT0,   "Sega",           "Excite League (FD1094 317-0079?)", GAME_NOT_WORKING )
+GAME( 1989, exctleag, 0,        system16b,      generic,  generic_5358,  ROT0,   "Sega",           "Excite League (FD1094 317-0079?)", GAME_NOT_WORKING )
 GAME( 1989, fpoint,   0,        system16b,      fpoint,   generic_5358,  ROT0,   "Sega",           "Flash Point (set 2, Japan, FD1094 317-0127A)", 0 )
 GAME( 1989, fpoint1,  fpoint,   system16b,      fpoint,   generic_5704,  ROT0,   "Sega",           "Flash Point (set 1, Japan, FD1094 317-0127A)", 0 )
 GAME( 1989, goldnaxe, 0,        system16b_8751, goldnaxe, goldnaxe_5797, ROT0,   "Sega",           "Golden Axe (set 6, US, 8751 317-123A)", 0 )

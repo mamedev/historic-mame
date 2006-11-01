@@ -379,8 +379,8 @@ extern void (*arm7_coproc_dt_r_callback)(UINT32 insn, UINT32* prn, UINT32 (*read
 extern void (*arm7_coproc_dt_w_callback)(UINT32 insn, UINT32* prn, void (*write32)(int addr, UINT32 data));
 
 #ifdef MAME_DEBUG
-extern void arm7_disasm( char *pBuf, UINT32 pc, UINT32 opcode );
-extern void thumb_disasm( char *pBuf, UINT32 pc, UINT16 opcode );
+extern UINT32 arm7_disasm( char *pBuf, UINT32 pc, UINT32 opcode );
+extern UINT32 thumb_disasm( char *pBuf, UINT32 pc, UINT16 opcode );
 
 extern char *(*arm7_dasm_cop_dt_callback)( char *pBuf, UINT32 opcode, char *pConditionCode, char *pBuf0 );
 extern char *(*arm7_dasm_cop_rt_callback)( char *pBuf, UINT32 opcode, char *pConditionCode, char *pBuf0 );

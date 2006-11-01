@@ -236,14 +236,14 @@ static int i286_execute(int num_cycles)
 	return num_cycles - i286_ICount;
 }
 
-extern int i386_dasm_one(char *buffer, UINT32 eip, UINT8 *oprom, int addr_size, int op_size);
+extern int i386_dasm_one(char *buffer, UINT32 eip, const UINT8 *oprom, int addr_size, int op_size);
 
-static offs_t i286_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+static offs_t i286_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
 	return i386_dasm_one(buffer, pc, oprom, 0, 0);
 #else
-	sprintf( buffer, "$%02X", cpu_readop(pc) );
+	sprintf( buffer, "$%02X", oprom[0] );
 	return 1;
 #endif
 }
@@ -441,7 +441,7 @@ void i286_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = NULL;						break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = i286_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
-		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = i286_dasm;		break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = i286_dasm;			break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &i286_ICount;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */

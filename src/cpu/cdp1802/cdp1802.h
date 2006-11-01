@@ -39,7 +39,8 @@ enum {
 // CDP1802 Registers
 
 enum {
-	CDP1802_P = 1,	// Designates which register is Program Counter
+	CDP1802_PC = 1,
+	CDP1802_P,		// Designates which register is Program Counter
 	CDP1802_X,		// Designates which register is Data Pointer
 	CDP1802_D,		// Data Register (Accumulator)
 	CDP1802_B,		// Auxiliary Holding Register
@@ -67,7 +68,7 @@ enum {
 	CDP1802_Q,		// Output Flip-Flop
 	CDP1802_N,		// Holds Low-Order Instruction Digit
 	CDP1802_I,		// Holds High-Order Instruction Digit
-	CDP1802_IRQ_STATE
+	CDP1802_IRQ_STATE,
 };
 
 // CDP1802 Configuration
@@ -88,6 +89,6 @@ extern int cdp1802_icount;				// cycle count
 
 void cdp1802_get_info(UINT32 state, union cpuinfo *info);
 
-unsigned DasmCdp1802(char *dst, unsigned oldpc);
+unsigned DasmCdp1802(char *dst, unsigned oldpc, const UINT8 *oprom);
 
 #endif

@@ -17,11 +17,11 @@ author (Karl Stenerud) at karl@higashiyama-unet.ocn.ne.jp.
 
 */
 
-int spc700_disassemble(char* buff, unsigned int pc);
+#include "cpuintrf.h"
+
+int spc700_disassemble(char* buff, unsigned int pc, const UINT8 *oprom);
 
 unsigned int spc700_read_8_disassembler(unsigned int address);
-
-#include "cpuintrf.h"
 
 #define spc700_read_8_disassembler(addr)				program_read_byte_8(addr)
 

@@ -911,6 +911,39 @@ ROM_START( mt_arrow ) /* Arrow Flash */
 	ROM_LOAD( "epr12664.20", 0x000000, 0x8000, CRC(f71e9526) SHA1(1c7887541d02c41426992d17f8e3db9e03975953) )
 ROM_END
 
+ROM_START( mt_orun ) /* Outrun */
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "mpr-11078.ic1", 0x000000, 0x040000, CRC(5589d8d2) SHA1(4f9b61b24f0d9fee0448cdbbe8fc05411dbb1102) )
+
+	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
+	ROM_LOAD( "epr-12368-06.ic2", 0x000000, 0x08000, CRC(c7c74429) SHA1(22ee261a653e10d66e0d6703c988bb7f236a7571) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Bios */
+	ROM_LOAD( "epr12664.20", 0x000000, 0x8000, CRC(f71e9526) SHA1(1c7887541d02c41426992d17f8e3db9e03975953) )
+ROM_END
+
+ROM_START( mt_srbb ) /* Outrun */
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "mpr-12904f.ic1", 0x000000, 0x080000, CRC(4346e11a) SHA1(c86725780027ef9783cb7884c8770cc030b0cd0d) )
+
+	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
+	ROM_LOAD( "epr-12368-32.ic2", 0x000000, 0x08000, CRC(f70adcbe) SHA1(d4412a7cd59fe282a1c6619aa1051a2a2e00e1aa) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Bios */
+	ROM_LOAD( "epr12664.20", 0x000000, 0x8000, CRC(f71e9526) SHA1(1c7887541d02c41426992d17f8e3db9e03975953) )
+ROM_END
+
+ROM_START( mt_fwrld ) /* Outrun */
+	ROM_REGION( 0x400000, REGION_CPU1, 0 )
+	ROM_LOAD16_WORD_SWAP( "mpr-12672-h.ic1", 0x000000, 0x080000, CRC(d0ee6434) SHA1(8b9a37c206c332ef23dc71f09ec40e1a92b1f83a) )
+
+	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
+	ROM_LOAD( "epr-12368-26.ic2", 0x000000, 0x08000, CRC(4623b573) SHA1(29df4a5c5de66cd9cb7519e4f30000f7dddc2138) )
+
+	ROM_REGION( 0x10000, REGION_CPU3, 0 ) /* Bios */
+	ROM_LOAD( "epr12664.20", 0x000000, 0x8000, CRC(f71e9526) SHA1(1c7887541d02c41426992d17f8e3db9e03975953) )
+ROM_END
+
 
 /* nn */ /* nn is part of the instruction rom name, should there be a game for each number? */
 /* -- */ GAME( 1989, megatech, 0,        megatech, megatech, 0, ROT0, "Sega",                  "Mega-Tech BIOS", NOT_A_DRIVER )
@@ -919,7 +952,7 @@ ROM_END
 /* 03 */ GAME( 1988, mt_stbld, megatech, megatech, megatech, 0, ROT0, "Sega",                  "Super Thunder Blade (Mega-Tech)", GAME_NOT_WORKING )
 /* 04 */ GAME( 19??, mt_ggolf, megatech, megatech, megatech, 0, ROT0, "Sega",                  "Great Golf (Mega-Tech)", GAME_NOT_WORKING ) /* sms! also bad */
 /* 05 */ GAME( 19??, mt_gsocr, megatech, megatech, megatech, 0, ROT0, "Sega",                  "Great Soccer (Mega-Tech)", GAME_NOT_WORKING ) /* sms! also bad */
-/* 06 */ // unknown
+/* 06 */ GAME( 1989, mt_orun,  megatech, megatech, megatech, 0, ROT0, "Sega",                  "Out Run (Mega-Tech)", GAME_NOT_WORKING ) /* sms! */
 /* 07 */ GAME( 19??, mt_asyn,  megatech, megatech, megatech, 0, ROT0, "Sega",                  "Alien Syndrome (Mega-Tech)", GAME_NOT_WORKING ) /* sms! also bad */
 /* 08 */ GAME( 19??, mt_shnbi, megatech, megatech, megatech, 0, ROT0, "Sega",                  "Shinobi (Mega-Tech)", GAME_NOT_WORKING) /* sms */
 /* 09 */ // unknown
@@ -939,13 +972,13 @@ ROM_END
 /* 23 */ GAME( 1989, mt_gng,   megatech, megatech, megatech, 0, ROT0, "Capcom / Sega",         "Ghouls'n Ghosts (Mega-Tech)", GAME_NOT_WORKING )
 /* 24 */ GAME( 1989, mt_shang, megatech, megatech, megatech, 0, ROT0, "Sega",                  "Super Hang-On (Mega-Tech)", GAME_NOT_WORKING )
 /* 25 */ GAME( 1989, mt_gaxe,  megatech, megatech, megatech, 0, ROT0, "Sega",                  "Golden Axe (Mega-Tech)", GAME_NOT_WORKING )
-/* 26 */ // Forgotten Worlds - Not Dumped
+/* 26 */ GAME( 1989, mt_fwrld, megatech, megatech, megatech, 0, ROT0, "Sega",                  "Forgotten Worlds (Mega-Tech)", GAME_NOT_WORKING )
 /* 27 */ GAME( 1989, mt_mystd, megatech, megatech, megatech, 0, ROT0, "Sega",                  "Mystic Defender (Mega-Tech)", GAME_NOT_WORKING )
 /* 28 */ GAME( 1989, mt_revsh, megatech, megatech, megatech, 0, ROT0, "Sega",                  "The Revenge of Shinobi (Mega-Tech)", GAME_NOT_WORKING )
 /* 29 */ GAME( 19??, mt_parlg, megatech, megatech, megatech, 0, ROT0, "Sega",                  "Parlour Games (Mega-Tech)", GAME_NOT_WORKING ) /* sms! */
 /* 30 */ // unknown
 /* 31 */ GAME( 1989, mt_tgolf, megatech, megatech, megatech, 0, ROT0, "Sega",                  "Arnold Palmer Tournament Golf (Mega-Tech)", GAME_NOT_WORKING )
-/* 32 */ // Super Real Basketball - Not Dumped
+/* 32 */ GAME( 1989, mt_srbb,  megatech, megatech, megatech, 0, ROT0, "Sega",                  "Super Real Basketball (Mega-Tech)", GAME_NOT_WORKING )
 /* 33 */ // unknown
 /* 34 */ // unknown
 /* 35 */ GAME( 1989, mt_tlbba, megatech, megatech, megatech, 0, ROT0, "Sega",                  "Tommy Lasorda Baseball (Mega-Tech)", GAME_NOT_WORKING )
@@ -979,7 +1012,6 @@ ROM_END
 /* 62 */ GAME( 1992, mt_soni2, megatech, megatech, megatech, 0, ROT0, "Sega",                  "Sonic The Hedgehog 2 (Mega-Tech)", GAME_NOT_WORKING )
 /*
     Known to Exist, but nn number currently not known:
-    Outrun
     Wrestle War
 */
 /* more? */

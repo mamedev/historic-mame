@@ -7,7 +7,12 @@
  *
  **************************************************************************/
 
-#include "memory.h"
+#include "cpuintrf.h"
+
+static const UINT8 *rambase;
+static offs_t pcbase;
+
+#define readarg(A)	(rambase[(A) - pcbase])
 
 /* Set this to 1 to disassemble using Z80 style mnemonics */
 #define HJB     0
@@ -55,7 +60,7 @@ static char *IMM(int pc)
 {
 	static char buff[32];
 
-    sprintf(buff, "$%02x", cpu_readop_arg(pc));
+    sprintf(buff, "$%02x", readarg(pc));
 	return buff;
 }
 
@@ -67,7 +72,7 @@ static char *IMM_PSL(int pc)
 {
 	static char buff[32];
 	char *p = buff;
-	int v = cpu_readop_arg(pc);
+	int v = readarg(pc);
 
     if (v == 0xff) {
         p += sprintf(p, "all");
@@ -101,7 +106,7 @@ static char *IMM_PSU(int pc)
 {
 	static char buff[32];
 	char *p = buff;
-	int v = cpu_readop_arg(pc);
+	int v = readarg(pc);
 
 	if (v == 0xff) {
 
@@ -140,7 +145,7 @@ static	char cc[4] = { '0', '1', '2', '3' };
 static char *REL(int pc)
 {
 static char buff[32];
-int o = cpu_readop_arg(pc);
+int o = readarg(pc);
 	sprintf(buff, "%s%s", (o&0x80)?"*":"", SYM((pc&0x6000)+((pc+1+rel[o])&0x1fff)));
 	return buff;
 }
@@ -149,7 +154,7 @@ int o = cpu_readop_arg(pc);
 static char *REL0(int pc)
 {
 static char buff[32];
-int o = cpu_readop_arg(pc);
+int o = readarg(pc);
 	sprintf(buff, "%s%s", (o&0x80)?"*":"", SYM((rel[o]) & 0x1fff));
 	return buff;
 }
@@ -158,8 +163,8 @@ int o = cpu_readop_arg(pc);
 static char *ABS(int load, int r, int pc)
 {
 	static char buff[32];
-	int h = cpu_readop_arg(pc);
-	int l = cpu_readop_arg((pc&0x6000)+((pc+1)&0x1fff));
+	int h = readarg(pc);
+	int l = readarg((pc&0x6000)+((pc+1)&0x1fff));
 	int a = (pc & 0x6000) + ((h & 0x1f) << 8) + l;
 
 #if HJB
@@ -205,8 +210,8 @@ static char *ABS(int load, int r, int pc)
 static char *ADR(int pc)
 {
 	static char buff[32];
-	int h = cpu_readop_arg(pc);
-	int l = cpu_readop_arg((pc&0x6000)+((pc+1)&0x1fff));
+	int h = readarg(pc);
+	int l = readarg((pc&0x6000)+((pc+1)&0x1fff));
 	int a = ((h & 0x7f) << 8) + l;
 	if (h & 0x80)
 		sprintf(buff, "*%s", SYM(a));
@@ -216,11 +221,15 @@ static char *ADR(int pc)
 }
 
 /* disassemble one instruction at PC into buff. return byte size of instr */
-int Dasm2650(char * buff, int PC)
+int Dasm2650(char * buff, int PC, const UINT8 *oprom, const UINT8 *opram)
 {
+	UINT32 flags = 0;
 	int pc = PC;
-	int op = cpu_readop(pc);
+	int op = oprom[0];
 	int rv = op & 3;
+
+	rambase = opram;
+	pcbase = PC;
 
     pc += 1;
 	switch (op)
@@ -282,6 +291,7 @@ int Dasm2650(char * buff, int PC)
 #else
             sprintf(buff, "retc   %c", cc[rv]);
 #endif
+            flags = DASMFLAG_STEP_OUT;
             break;
 		case 0x18: case 0x19: case 0x1a: case 0x1b:
 #if HJB
@@ -352,6 +362,7 @@ int Dasm2650(char * buff, int PC)
 #else
             sprintf(buff, "rete   %c", cc[rv]);
 #endif
+            flags = DASMFLAG_STEP_OUT;
             break;
 		case 0x38: case 0x39: case 0x3a: case 0x3b:
 #if HJB
@@ -363,6 +374,7 @@ int Dasm2650(char * buff, int PC)
             sprintf(buff, "bstr,%c %s", cc[rv], REL(pc));
 #endif
             pc+=1;
+            flags = DASMFLAG_STEP_OVER;
 			break;
 		case 0x3c: case 0x3d: case 0x3e: case 0x3f:
 #if HJB
@@ -374,6 +386,7 @@ int Dasm2650(char * buff, int PC)
             sprintf(buff, "bsta,%c %s", cc[rv], ADR(pc));
 #endif
             pc+=2;
+            flags = DASMFLAG_STEP_OVER;
 			break;
 		case 0x40:
 			sprintf(buff, "halt");
@@ -517,6 +530,7 @@ int Dasm2650(char * buff, int PC)
             sprintf(buff, "bsnr,%d %s", rv, REL(pc));
 #endif
             pc+=1;
+            flags = DASMFLAG_STEP_OVER;
 			break;
 		case 0x7c: case 0x7d: case 0x7e: case 0x7f:
 #if HJB
@@ -525,6 +539,7 @@ int Dasm2650(char * buff, int PC)
             sprintf(buff, "bsna,%d %s", rv, ADR(pc));
 #endif
             pc+=2;
+            flags = DASMFLAG_STEP_OVER;
 			break;
 		case 0x80: case 0x81: case 0x82: case 0x83:
 #if HJB
@@ -677,6 +692,7 @@ int Dasm2650(char * buff, int PC)
             sprintf(buff, "bsfr,%c %s", cc[rv], REL(pc));
 #endif
             pc+=1;
+            flags = DASMFLAG_STEP_OVER;
 			break;
 		case 0xbb:
 #if HJB
@@ -685,6 +701,7 @@ int Dasm2650(char * buff, int PC)
             sprintf(buff, "zbsr   %s", REL0(pc));
 #endif
             pc+=1;
+            flags = DASMFLAG_STEP_OVER;
 			break;
 		case 0xbc: case 0xbd: case 0xbe:
 #if HJB
@@ -693,6 +710,7 @@ int Dasm2650(char * buff, int PC)
             sprintf(buff, "bsfa,%c %s", cc[rv], ADR(pc));
 #endif
             pc+=2;
+            flags = DASMFLAG_STEP_OVER;
 			break;
 		case 0xbf:
 #if HJB
@@ -701,6 +719,7 @@ int Dasm2650(char * buff, int PC)
             sprintf(buff, "bsxa   %s", ADR(pc));
 #endif
             pc+=2;
+            flags = DASMFLAG_STEP_OVER;
 			break;
 		case 0xc0:
 			sprintf(buff, "nop");
@@ -753,6 +772,7 @@ int Dasm2650(char * buff, int PC)
             sprintf(buff, "birr,%d %s", rv, REL(pc));
 #endif
             pc+=1;
+            flags = DASMFLAG_STEP_OVER;
 			break;
 		case 0xdc: case 0xdd: case 0xde: case 0xdf:
 #if HJB
@@ -761,6 +781,7 @@ int Dasm2650(char * buff, int PC)
             sprintf(buff, "bira,%d %s", rv, ADR(pc));
 #endif
             pc+=2;
+            flags = DASMFLAG_STEP_OVER;
 			break;
 		case 0xe0: case 0xe1: case 0xe2: case 0xe3:
 #if HJB
@@ -815,6 +836,7 @@ int Dasm2650(char * buff, int PC)
             sprintf(buff, "bdrr,%d %s", rv, REL(pc));
 #endif
             pc+=1;
+            flags = DASMFLAG_STEP_OVER;
 			break;
 		case 0xfc: case 0xfd: case 0xfe: case 0xff:
 #if HJB
@@ -823,7 +845,8 @@ int Dasm2650(char * buff, int PC)
             sprintf(buff, "bdra,%d %s", rv, ADR(pc));
 #endif
             pc+=2;
+            flags = DASMFLAG_STEP_OVER;
 			break;
 	}
-	return pc - PC;
+	return (pc - PC) | flags | DASMFLAG_SUPPORTED;
 }

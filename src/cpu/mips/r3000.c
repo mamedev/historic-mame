@@ -932,19 +932,20 @@ static int r3000_execute(int cycles)
     DISASSEMBLY HOOK
 ***************************************************************************/
 
-static offs_t r3000_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+static offs_t r3000_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
-#ifdef MAME_DEBUG
 	extern unsigned dasmr3k(char *, unsigned, UINT32);
-	UINT32 op = *(UINT32 *)opram;
+	UINT32 op = *(UINT32 *)oprom;
 	if (r3000.bigendian)
 		op = BIG_ENDIANIZE_INT32(op);
 	else
 		op = LITTLE_ENDIANIZE_INT32(op);
+
+#ifdef MAME_DEBUG
 	return dasmr3k(buffer, pc, op);
 #else
-	sprintf(buffer, "$%04X", ROPCODE(pc));
-	return 2;
+	sprintf(buffer, "$%08X", op);
+	return 4;
 #endif
 }
 
@@ -1288,7 +1289,7 @@ static void r3000_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = r3000_exit;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = r3000_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
-		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = r3000_dasm;		break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = r3000_dasm;			break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &r3000_icount;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */

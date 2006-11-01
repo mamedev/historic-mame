@@ -46,15 +46,15 @@
 
 #include "z8000.h"
 #include "z8000cpu.h"
-#include "memory.h"
+#include "cpuintrf.h"
 
 static int n[12];	/* opcode nibbles */
 static int b[6];	/* opcode bytes */
 static int w[3];	/* opcode words */
 
-static void GET_OP(int i, unsigned pc)
+static void GET_OP(const UINT8 *oprom, int i, unsigned offset)
 {
-	UINT16 opcode = cpu_readop16(pc);
+	UINT16 opcode = (oprom[offset] << 8) | oprom[offset + 1];
 	w[i] = opcode;
 	b[i*2+0] = opcode >> 8;
 	b[i*2+1] = opcode & 0xff;
@@ -78,14 +78,15 @@ static const char *ints[4] = {
 	"",    "vi",  "nvi",   "vi,nvi"
 };
 
-int DasmZ8000(char *buff, int pc)
+int DasmZ8000(char *buff, int pc, const UINT8 *oprom)
 {
 	int new_pc = pc, i, tmp;
 	char *dst = buff;
 	const char *src;
 	Z8000_exec *o;
+	UINT32 flags = 0;
 
-    GET_OP(0, new_pc);
+    GET_OP(oprom, 0, new_pc - pc);
 	new_pc += 2;
 	switch (pc)
 	{
@@ -100,9 +101,10 @@ int DasmZ8000(char *buff, int pc)
             break;
 		default:
 			o = &z8000_exec[w[0]];
-			if (o->size > 1) { GET_OP(1, new_pc); new_pc += 2; }
-			if (o->size > 2) { GET_OP(2, new_pc); new_pc += 2; }
+			if (o->size > 1) { GET_OP(oprom, 1, new_pc - pc); new_pc += 2; }
+			if (o->size > 2) { GET_OP(oprom, 2, new_pc - pc); new_pc += 2; }
 			src = o->dasm;
+			flags = o->dasmflags;
 
 			while (*src)
 			{
@@ -162,14 +164,14 @@ int DasmZ8000(char *buff, int pc)
 						tmp = ((n[1] & 0x01) << 16) + (n[3] << 8) + (n[7] & 0x08);
 						switch (tmp)
 						{
-							case 0x000: dst += sprintf(dst, "inirb "); break;
+							case 0x000: dst += sprintf(dst, "inirb "); flags = DASMFLAG_STEP_OVER; break;
 							case 0x008: dst += sprintf(dst, "inib  "); break;
-							case 0x010: dst += sprintf(dst, "sinirb"); break;
+							case 0x010: dst += sprintf(dst, "sinirb"); flags = DASMFLAG_STEP_OVER; break;
 							case 0x018: dst += sprintf(dst, "sinib "); break;
-							case 0x020: dst += sprintf(dst, "otirb "); break;
+							case 0x020: dst += sprintf(dst, "otirb "); flags = DASMFLAG_STEP_OVER; break;
 							case 0x028: dst += sprintf(dst, "outib "); break;
 							case 0x030: dst += sprintf(dst, "soutib"); break;
-							case 0x038: dst += sprintf(dst, "sotirb"); break;
+							case 0x038: dst += sprintf(dst, "sotirb"); flags = DASMFLAG_STEP_OVER; break;
 							case 0x040: dst += sprintf(dst, "inb   "); break;
 							case 0x048: dst += sprintf(dst, "inb   "); break;
 							case 0x050: dst += sprintf(dst, "sinb  "); break;
@@ -178,22 +180,22 @@ int DasmZ8000(char *buff, int pc)
 							case 0x068: dst += sprintf(dst, "outb  "); break;
 							case 0x070: dst += sprintf(dst, "soutb "); break;
 							case 0x078: dst += sprintf(dst, "soutb "); break;
-							case 0x080: dst += sprintf(dst, "indrb "); break;
+							case 0x080: dst += sprintf(dst, "indrb "); flags = DASMFLAG_STEP_OVER; break;
 							case 0x088: dst += sprintf(dst, "indb  "); break;
-							case 0x090: dst += sprintf(dst, "sindrb"); break;
+							case 0x090: dst += sprintf(dst, "sindrb"); flags = DASMFLAG_STEP_OVER; break;
 							case 0x098: dst += sprintf(dst, "sindb "); break;
-							case 0x0a0: dst += sprintf(dst, "otdrb "); break;
+							case 0x0a0: dst += sprintf(dst, "otdrb "); flags = DASMFLAG_STEP_OVER; break;
 							case 0x0a8: dst += sprintf(dst, "outdb "); break;
 							case 0x0b0: dst += sprintf(dst, "soutdb"); break;
-							case 0x0b8: dst += sprintf(dst, "sotdrb"); break;
-							case 0x100: dst += sprintf(dst, "inir  "); break;
+							case 0x0b8: dst += sprintf(dst, "sotdrb"); flags = DASMFLAG_STEP_OVER; break;
+							case 0x100: dst += sprintf(dst, "inir  "); flags = DASMFLAG_STEP_OVER; break;
 							case 0x108: dst += sprintf(dst, "ini   "); break;
-							case 0x110: dst += sprintf(dst, "sinir "); break;
+							case 0x110: dst += sprintf(dst, "sinir "); flags = DASMFLAG_STEP_OVER; break;
 							case 0x118: dst += sprintf(dst, "sini  "); break;
-							case 0x120: dst += sprintf(dst, "otir  "); break;
+							case 0x120: dst += sprintf(dst, "otir  "); flags = DASMFLAG_STEP_OVER; break;
 							case 0x128: dst += sprintf(dst, "outi  "); break;
 							case 0x130: dst += sprintf(dst, "souti "); break;
-							case 0x138: dst += sprintf(dst, "sotir "); break;
+							case 0x138: dst += sprintf(dst, "sotir "); flags = DASMFLAG_STEP_OVER; break;
 							case 0x140: dst += sprintf(dst, "in    "); break;
 							case 0x148: dst += sprintf(dst, "in    "); break;
 							case 0x150: dst += sprintf(dst, "sin   "); break;
@@ -202,14 +204,14 @@ int DasmZ8000(char *buff, int pc)
 							case 0x168: dst += sprintf(dst, "out   "); break;
 							case 0x170: dst += sprintf(dst, "sout  "); break;
 							case 0x178: dst += sprintf(dst, "sout  "); break;
-							case 0x180: dst += sprintf(dst, "indr  "); break;
+							case 0x180: dst += sprintf(dst, "indr  "); flags = DASMFLAG_STEP_OVER; break;
 							case 0x188: dst += sprintf(dst, "ind   "); break;
-							case 0x190: dst += sprintf(dst, "sindr "); break;
+							case 0x190: dst += sprintf(dst, "sindr "); flags = DASMFLAG_STEP_OVER; break;
 							case 0x198: dst += sprintf(dst, "sind  "); break;
-							case 0x1a0: dst += sprintf(dst, "otdr  "); break;
+							case 0x1a0: dst += sprintf(dst, "otdr  "); flags = DASMFLAG_STEP_OVER; break;
 							case 0x1a8: dst += sprintf(dst, "outd  "); break;
 							case 0x1b0: dst += sprintf(dst, "soutd "); break;
-							case 0x1b8: dst += sprintf(dst, "sotdr "); break;
+							case 0x1b8: dst += sprintf(dst, "sotdr "); flags = DASMFLAG_STEP_OVER; break;
                             default:
 								dst += sprintf(dst, "??????");
 						}
@@ -311,6 +313,6 @@ int DasmZ8000(char *buff, int pc)
 			*dst = '\0';
 			break;
 	}
-	return new_pc - pc;
+	return (new_pc - pc) | flags | DASMFLAG_SUPPORTED;
 }
 

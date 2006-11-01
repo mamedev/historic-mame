@@ -27,11 +27,13 @@
 #include <ctype.h>
 
 #ifdef MAME_DEBUG					/* Compile interface to MAME */
-#include "memory.h"
-#include "pic16c5x.h"
-#include "debugger.h"
-#define READOP16(A)  (cpu_readop16(A))
-#define READARG16(A) (cpu_readop_arg16(A))
+#include "cpuintrf.h"
+#include "mame.h"
+static const UINT8 *rombase;
+static const UINT8 *rambase;
+static offs_t pcbase;
+#define READOP16(A)  (rombase[(A) - pcbase] | (rombase[(A) + 1 - pcbase] << 8))
+#define READARG16(A) (rambase[(A) - pcbase] | (rambase[(A) + 1 - pcbase] << 8))
 #else                               /* Compile interface for standalone */
 extern unsigned char *Buffer;
 #ifdef MSB_FIRST
@@ -159,7 +161,7 @@ static void InitDasm16C5x(void)
 	OpInizialized = 1;
 }
 
-unsigned Dasm16C5x(char *str, unsigned pc)
+unsigned Dasm16C5x(char *str, unsigned pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	int a, b, d, f, k;	/* these can all be filled in by parsing an instruction */
 	int i;
@@ -169,6 +171,11 @@ unsigned Dasm16C5x(char *str, unsigned pc)
 	int bit;
 	char *strtmp;
 	const char *cp;				/* character pointer in OpFormats */
+	UINT32 flags = 0;
+
+	rombase = oprom;
+	rambase = opram;
+	pcbase = 2*pc;
 
 	if (!OpInizialized) InitDasm16C5x();
 
@@ -227,6 +234,11 @@ unsigned Dasm16C5x(char *str, unsigned pc)
 
 	/* now traverse format string */
 	cp = Op[op].fmt;
+	if (!strncmp(cp, "call", 4))
+		flags = DASMFLAG_STEP_OVER;
+	else if (!strncmp(cp, "ret", 3))
+		flags = DASMFLAG_STEP_OUT;
+
 	while (*cp)
 	{
 		if (*cp == '%')
@@ -252,5 +264,5 @@ unsigned Dasm16C5x(char *str, unsigned pc)
 			*str = '\0';
 		}
 	}
-	return cnt;
+	return cnt | flags | DASMFLAG_SUPPORTED;
 }

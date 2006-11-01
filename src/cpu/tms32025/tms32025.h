@@ -72,7 +72,7 @@ extern void tms32026_get_info(UINT32 state, union cpuinfo *info);
 
 
 #ifdef	MAME_DEBUG
-extern unsigned Dasm32025(char *buffer, unsigned pc);
+extern unsigned Dasm32025(char *buffer, unsigned pc, const UINT8 *oprom, const UINT8 *opram);
 #endif
 
 #endif	/* _TMS32025_H */

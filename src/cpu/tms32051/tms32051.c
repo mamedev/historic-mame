@@ -203,10 +203,10 @@ static void delay_slot(UINT16 startpc)
 
 /*****************************************************************************/
 
-static offs_t tms_dasm(char *buffer, offs_t pc)
+static offs_t tms_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-	return tms32051_dasm_one(buffer, pc);
+	return tms32051_dasm_one(buffer, pc, oprom);
 #else
 	UINT16 op = ROPCODE();
 	sprintf(buffer, "$%04X", op);

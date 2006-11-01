@@ -148,6 +148,8 @@ static char *dis_decode_reg(unsigned long iCode, char* tmpStr,unsigned char cnt)
 	return tmpStr;
 }
 
+#define READ32(dis,offs) ((dis)->oprom[(offs) + 0] | ((dis)->oprom[(offs) + 1] << 8) | ((dis)->oprom[(offs) + 2] << 16) | ((dis)->oprom[(offs) + 3] << 24))
+
 char *i960_disassemble(disassemble_t *diss)
 {
 	unsigned char op,op2;
@@ -158,7 +160,7 @@ char *i960_disassemble(disassemble_t *diss)
 	char tmpStr[256];
 	long i;
 
-	iCode = cpu_readop32(diss->IP);
+	iCode = READ32(diss,0);
 	op = (unsigned char) (iCode >> 24);
 	op2 = (unsigned char) (iCode >> 7)&0xf;
 
@@ -171,6 +173,13 @@ char *i960_disassemble(disassemble_t *diss)
 
 	sprintf(diss->buffer,"???");
 	diss->IPinc = 4;
+	diss->disflags = 0;
+
+	if (op == 0x09 || op == 0x0b || op == 0x66 || op == 0x85 || op == 0x86)
+		diss->disflags = DASMFLAG_STEP_OVER;
+	else if (op == 0x0a)
+		diss->disflags = DASMFLAG_STEP_OUT;
+
 	switch(mnemonic[op].type)
 	{
 	case 0: // not yet implemented
@@ -203,19 +212,19 @@ char *i960_disassemble(disassemble_t *diss)
 			switch (model)
 			{
 			case 0:
-				DIS "%s\t%s,0x%x",NEM,REG_DST, cpu_readop32(diss->IP + 4));
+				DIS "%s\t%s,0x%x",NEM,REG_DST, READ32(diss,4));
 				diss->IPinc = 8;
 				break;
 			case 1:
-				DIS "%s\t%s,0x%x(%s)",NEM,REG_DST, cpu_readop32(diss->IP + 4),REG_ABASE);
+				DIS "%s\t%s,0x%x(%s)",NEM,REG_DST, READ32(diss,4),REG_ABASE);
 				diss->IPinc = 8;
 				break;
 			case 2:
-				DIS "%s\t%s,0x%x[%s*%ld]",NEM,REG_DST, cpu_readop32(diss->IP + 4),REG_REG2,(iCode>>7)&0x7);
+				DIS "%s\t%s,0x%x[%s*%ld]",NEM,REG_DST, READ32(diss,4),REG_REG2,(iCode>>7)&0x7);
 				diss->IPinc = 8;
 				break;
 			case 3:
-				DIS "%s\t%s,0x%x(%s)[%s*%ld]",NEM,REG_DST, cpu_readop32(diss->IP + 4),REG_ABASE,REG_REG2,(iCode>>7)&0x7);
+				DIS "%s\t%s,0x%x(%s)[%s*%ld]",NEM,REG_DST, READ32(diss,4),REG_ABASE,REG_REG2,(iCode>>7)&0x7);
 				diss->IPinc = 8;
 				break;
 			default:

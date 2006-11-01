@@ -12,12 +12,12 @@
 #include "debug/eainfo.h"
 
 static const char *regs[8] = { "R0", "R1", "R2", "R3", "R4", "R5", "SP", "PC" };
-static UINT8 ridx[8] = { T11_R0,T11_R1,T11_R2,T11_R3,T11_R4,T11_R5,T11_SP,T11_PC };
 
-#define PARAM_WORD(v) ((v) = program_read_word (pc), pc += 2)
-#define RWORD(a)	program_read_word(a)
+static const UINT8 *rombase;
+static const UINT8 *rambase;
+static offs_t pcbase;
 
-static unsigned t11_get_reg(int reg) { union cpuinfo info; t11_get_info(CPUINFO_INT_REGISTER + (reg), &info); return info.i; }
+#define PARAM_WORD(v)	((v) = rombase[pc - pcbase] | (rombase[pc + 1 - pcbase] << 8), pc += 2)
 
 unsigned MakeEA (char **ea, int is_src, int lo, unsigned pc, int size, int amode)
 {
@@ -39,7 +39,6 @@ unsigned MakeEA (char **ea, int is_src, int lo, unsigned pc, int size, int amode
 			break;
 		case 1:
 			sprintf (dst, "(%s)", regs[reg]);
-			set_ea_info( is_src, t11_get_reg(ridx[reg]), size, amode );
 			break;
 		case 2:
 			if (reg == 7)
@@ -50,7 +49,6 @@ unsigned MakeEA (char **ea, int is_src, int lo, unsigned pc, int size, int amode
             }
 			else
             {
-                set_ea_info( is_src, t11_get_reg(ridx[reg]), size, amode );
                 sprintf (dst, "(%s)+", regs[reg]);
             }
             break;
@@ -63,39 +61,28 @@ unsigned MakeEA (char **ea, int is_src, int lo, unsigned pc, int size, int amode
 			}
 			else
 			{
-                symbol = set_ea_info( is_src, RWORD(t11_get_reg(ridx[reg])), size, amode );
                 sprintf (dst, "@(%s)+", regs[reg]);
 			}
             break;
 		case 4:
-			set_ea_info( is_src, t11_get_reg(ridx[reg]), size, amode );
             sprintf (dst, "-(%s)", regs[reg]);
 			break;
 		case 5:
-			set_ea_info( is_src, RWORD(t11_get_reg(ridx[reg])), size, amode );
 			sprintf (dst, "@-(%s)", regs[reg]);
 			break;
 		case 6:
 			PARAM_WORD (pm);
-			symbol = set_ea_info( is_src, (t11_get_reg(ridx[reg])+pm) & 0xffff, size, amode );
-            if (reg == 7)
-				sprintf(dst, "%s", symbol);
-			else
-				sprintf(dst, "%s$%X(%s)",
-					(pm&0x8000)?"-":"",
-					(pm&0x8000)?-(signed short)pm:pm,
-					regs[reg]);
+			sprintf(dst, "%s$%X(%s)",
+				(pm&0x8000)?"-":"",
+				(pm&0x8000)?-(signed short)pm:pm,
+				regs[reg]);
 			break;
 		case 7:
 			PARAM_WORD (pm);
-			symbol = set_ea_info( is_src, RWORD((t11_get_reg(ridx[reg])+pm) & 0xffff), size, amode );
-            if (reg == 7)
-				sprintf(dst, "@%s", symbol);
-			else
-				sprintf(dst, "@%s$%X(%s)",
-					(pm&0x8000)?"-":"",
-					(pm&0x8000)?-(signed short)pm:pm,
-					regs[reg]);
+			sprintf(dst, "@%s$%X(%s)",
+				(pm&0x8000)?"-":"",
+				(pm&0x8000)?-(signed short)pm:pm,
+				regs[reg]);
 			break;
 	}
 
@@ -104,13 +91,18 @@ unsigned MakeEA (char **ea, int is_src, int lo, unsigned pc, int size, int amode
 }
 
 
-unsigned DasmT11 (char *buffer, unsigned pc)
+unsigned DasmT11 (char *buffer, unsigned pc, const UINT8 *oprom, const UINT8 *opram)
 {
     const char *symbol;
 	char *dst = buffer, *ea1, *ea2;
 	unsigned PC = pc;
 	UINT16 op, lo, hi, addr;
     INT16 offset;
+    UINT32 flags = 0;
+
+	rombase = oprom;
+	rambase = opram;
+	pcbase = pc;
 
 	PARAM_WORD(op);
     lo = op & 077;
@@ -123,7 +115,7 @@ unsigned DasmT11 (char *buffer, unsigned pc)
 			{
 				case 0x00:	sprintf (dst, "HALT"); break;
 				case 0x01:	sprintf (dst, "WAIT"); break;
-				case 0x02:	sprintf (dst, "RTI"); break;
+				case 0x02:	sprintf (dst, "RTI"); flags = DASMFLAG_STEP_OUT; break;
 				case 0x03:	sprintf (dst, "BPT"); break;
 				case 0x04:	sprintf (dst, "IOT"); break;
 				case 0x05:	sprintf (dst, "RESET"); break;
@@ -143,6 +135,7 @@ unsigned DasmT11 (char *buffer, unsigned pc)
 						sprintf (dst, "RTS");
 					else
 						sprintf (dst, "RTS   %s", regs[lo & 7]);
+					flags = DASMFLAG_STEP_OUT;
 					break;
 				case 040:
 				case 050:
@@ -218,6 +211,7 @@ unsigned DasmT11 (char *buffer, unsigned pc)
 				sprintf (dst, "JSR   %s", ea1);
 			else
 				sprintf (dst, "JSR   %s,%s", regs[hi & 7], ea1);
+			flags = DASMFLAG_STEP_OVER;
 			break;
 		case 0x0a00:
 			pc = MakeEA (&ea1, 0, lo, pc, EA_UINT16, EA_MEM_WR);
@@ -547,5 +541,5 @@ unsigned DasmT11 (char *buffer, unsigned pc)
 			break;
 	}
 
-    return pc - PC;
+    return (pc - PC) | flags | DASMFLAG_SUPPORTED;
 }

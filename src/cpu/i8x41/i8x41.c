@@ -2085,12 +2085,12 @@ static void set_irq_line(int irqline, int state)
 }
 
 
-static offs_t i8x41_dasm(char *buffer, offs_t pc)
+static offs_t i8x41_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-	return Dasm8x41( buffer, pc );
+	return Dasm8x41( buffer, pc, oprom, opram );
 #else
-	sprintf( buffer, "$%02X", cpu_readop(pc) );
+	sprintf( buffer, "$%02X", oprom[0] );
 	return 1;
 #endif
 }

@@ -23,7 +23,7 @@ enum {
 extern void z8000_get_info(UINT32 state, union cpuinfo *info);
 
 #ifdef MAME_DEBUG
-extern int DasmZ8000(char *buff, int pc);
+extern int DasmZ8000(char *buff, int pc, const UINT8 *oprom);
 #endif
 
 #endif /* Z8K_H */

@@ -423,12 +423,10 @@ static int offs(INT8 offset)
 	return offset;
 }
 
-static unsigned z80_get_reg(int reg) { union cpuinfo info; z80_get_info(CPUINFO_INT_REGISTER + (reg), &info); return info.i; }
-
 /****************************************************************************
  * Disassemble opcode at PC and return number of bytes it takes
  ****************************************************************************/
-unsigned z80_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+unsigned z80_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
     const z80dasm *d;
 	const char *symbol, *src;
@@ -436,7 +434,7 @@ unsigned z80_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes
 	char *dst;
 	INT8 offset = 0;
 	UINT8 op, op1;
-	UINT16 ea = 0, xy = 0;
+	UINT16 ea = 0;
 	int pos = 0;
 
 	ixy = "oops!!";
@@ -463,8 +461,6 @@ unsigned z80_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes
 		{
 			offset = (INT8) opram[pos++];
 			op1 = opram[pos++]; /* fourth byte from opcode_arg_base! */
-			xy = z80_get_reg( Z80_IX );
-			ea = (xy + offset) & 0xffff;
 			d = &mnemonic_xx_cb[op1];
 		}
 		else d = &mnemonic_xx[op1];
@@ -476,8 +472,6 @@ unsigned z80_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes
 		{
 			offset = (INT8) opram[pos++];
 			op1 = opram[pos++]; /* fourth byte from opcode_arg_base! */
-			xy = z80_get_reg( Z80_IY );
-			ea = (ea + offset) & 0xffff;
 			d = &mnemonic_xx_cb[op1];
 		}
 		else d = &mnemonic_xx[op1];
@@ -511,50 +505,6 @@ unsigned z80_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes
 				break;
 			case '(':   /* Memory byte at (HL) */
                 *dst++ = *src;
-				if( !strncmp( src, "(bc)", 4) )
-				{
-					ea = z80_get_reg( Z80_BC );
-					set_ea_info(0, ea, EA_UINT8, d->access);
-				}
-                else
-				if( !strncmp( src, "(de)", 4) )
-				{
-					ea = z80_get_reg( Z80_DE );
-					set_ea_info(0, ea, EA_UINT8, d->access);
-                }
-                else
-                if( !strncmp( src, "(hl)", 4) )
-				{
-					ea = z80_get_reg( Z80_HL );
-					if( d->access == EA_ABS_PC )
-						set_ea_info(0, ea, EA_DEFAULT, EA_ABS_PC);
-					else
-						set_ea_info(0, ea, EA_UINT8, d->access);
-                }
-				else
-				if( !strncmp( src, "(sp)", 4) )
-				{
-					ea = z80_get_reg( Z80_SP );
-					set_ea_info(0, ea, EA_UINT16, d->access);
-                }
-				else
-				if( !strncmp( src, "(P)", 3) )
-				{
-					ea = (z80_get_reg( Z80_AF ) & 0xff00) | opram[pos];
-                    set_ea_info(0, ea, EA_UINT16, d->access);
-                }
-                else
-                if( !strncmp( src, "(c)", 3) )
-				{
-					ea = z80_get_reg( Z80_BC );
-					set_ea_info(0, ea, EA_UINT16, d->access);
-                }
-                else
-				if( !strncmp( src, "(I)", 3) )
-				{
-					ea = xy;
-					set_ea_info(0, ea, EA_DEFAULT, d->access);
-                }
                 break;
 			case 'N':   /* Immediate 16 bit */
 				ea = opram[pos+0] + ( opram[pos+1] << 8 );
@@ -584,9 +534,7 @@ unsigned z80_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes
 				break;
 			case 'X':
 				offset = (INT8) opram[pos++];
-                ea = (xy + offset) & 0xffff;
             case 'Y':
-				symbol = set_ea_info(0, ea, EA_UINT8, d->access);
 				dst += sprintf( dst,"(%s%c$%02x)", ixy, sign(offset), offs(offset) );
 				break;
 			case 'I':

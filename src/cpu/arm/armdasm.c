@@ -99,7 +99,7 @@ static char *WritePadding( char *pBuf, const char *pBuf0 )
 	return pBuf;
 }
 
-void arm_disasm( char *pBuf, UINT32 pc, UINT32 opcode )
+UINT32 arm_disasm( char *pBuf, UINT32 pc, UINT32 opcode )
 {
 	const char *pBuf0;
 
@@ -118,6 +118,7 @@ void arm_disasm( char *pBuf, UINT32 pc, UINT32 opcode )
 		"ORR","MOV","BIC","MVN"
 	};
 	const char *pConditionCode;
+	UINT32 dasmflags = 0;
 
 	pConditionCode= pConditionCodeTable[opcode>>28];
 	pBuf0 = pBuf;
@@ -192,6 +193,9 @@ void arm_disasm( char *pBuf, UINT32 pc, UINT32 opcode )
 			WriteDataProcessingOperand(pBuf, opcode, 0, 1, 1);
 			break;
 		case 0x0d:
+			/* look for mov pc,lr */
+			if (((opcode >> 12) & 0x0f) == 15 && ((opcode >> 0) & 0x0f) == 14 && (opcode & 0x02000000) == 0)
+				dasmflags = DASMFLAG_STEP_OUT;
 		case 0x0f:
 			WriteDataProcessingOperand(pBuf, opcode, 1, 0, 1);
 			break;
@@ -323,6 +327,7 @@ void arm_disasm( char *pBuf, UINT32 pc, UINT32 opcode )
 		if( opcode&0x01000000 )
 		{
 			pBuf += sprintf( pBuf, "BL" );
+			dasmflags = DASMFLAG_STEP_OVER;
 		}
 		else
 		{
@@ -377,9 +382,12 @@ void arm_disasm( char *pBuf, UINT32 pc, UINT32 opcode )
 		pBuf += sprintf( pBuf, "SWI%s $%x",
 			pConditionCode,
 			opcode&0x00ffffff );
+		dasmflags = DASMFLAG_STEP_OVER;
 	}
 	else
 	{
 		pBuf += sprintf( pBuf, "Undefined" );
 	}
+
+	return dasmflags | DASMFLAG_SUPPORTED;
 }

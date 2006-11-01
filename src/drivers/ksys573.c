@@ -26,46 +26,46 @@
   There is a slot for a security cart (cart is installed in CN14) and also a PCMCIA card slot,
   which is unused. The main board and CDROM drive are housed in a black metal box.
   The games can be swapped by exchanging the CDROM disc and the security cart, whereby the main-board
-  FlashROMs are re-programmed after a small wait. On subsequent power-ups, if the contents of the FlashROMs
-  matches the CDROM, the game will boot up immediately.
+  FlashROMs are re-programmed after a small wait. On subsequent power-ups, there is a check to test if the
+  contents of the FlashROMs matches the CDROM, then the game boots up immediately.
 
   The games that run on this system include...
+
   Game                                  Year    Hardware Code     CD Code
   --------------------------------------------------------------------------
   *Anime Champ                          2000
-  Bass Angler                           1998
+  Bass Angler                           1998    GE765 JA          765 JA A02
   *Bass Angler 2                        1999
-  Dark Horse Legend                     1998
+  Dark Horse Legend                     1998    GX706 JA          706 JA A02
   *Dark Horse 2                         ?
   *Fighting Mania                       2000
-  Fisherman's Bait                      1998    GE765 UAB
-  Fisherman's Bait 2 Marine Challenge   1999    GE865 UAB
+  Fisherman's Bait                      1998    GE765 UA          765 UA B02
+  Fisherman's Bait 2                    1998    GC865 UA          865 UA B02
+  Fisherman's Bait Marlin Challenge     1999
   *Gun Mania                            2001
   *Gun Mania Zone Plus                  2001
   *Gachaga Champ                        1999
   *Hyper Bishi Bashi                    1999
   *Hyper Bishi Bashi Champ              2000
-  Jikkyo Pawafuru Pro Yakyu             1998    GX802 JAB         802 JA B02
+  Jikkyo Pawafuru Pro Yakyu             1998    GX802 JA          802 JA B02
   *Kick & Kick                          2001
-  Konami 80's Arcade Gallery            1998    GC826 JAA
-                                                GC826 UAA
-  Punch Mania : Hokuto No Ken           2000    GX918 JAB         918 JA B02 (install disc)
-  Punch Mania : Hokuto No Ken         2000    G?A09 JAA         A09 JA A02 (play disc)
-  *Salary Man Champ                     2001
+  Konami 80's Arcade Gallery            1998    GC826 JA          826 JA A01
+  Konami 80's AC Special                1998    GC826 UA          826 UA A01
+  Salary Man Champ                      2001
   *Step Champ                           1999
 
+  Note:
+       Not all games listed above are confirmed to run on System 573.
+       * - denotes not dumped yet. If you can help with the remaining undumped System 573 games,
+       please contact http://www.mameworld.net/gurudumps/comments.html
 
-  Note not all games listed above are confirmed to run on System 573.
-  * - denotes not dumped yet. If you can help with the remaining undumped System 573 games,
-      please contact http://unemulated.emuunlim.com/comments.html
 
-
-  PCB Layout
-  ----------
-
-  GX700-PWB(A)B
-  (C)1997 KONAMI CO. LTD.
-  |--------------------------------------------------------------------------|
+  Main PCB Layout
+  ---------------
+                                                     External controls port
+  GX700-PWB(A)B                                               ||
+  (C)1997 KONAMI CO. LTD.                                     \/
+  |-----------------------------------------------------==============-------|
   |   CN15            CNA                     CN10                           |
   |        CN16                                                              |
   |                                                 |------------------------|
@@ -113,13 +113,14 @@
               labelled 'RGB'. Use of this connector is optional because the video is output via the
               standard JAMMA connector
   CN9       - 4-pin connector for amplified stereo sound output to 2 speakers
-  CN10      - Custom 80-pin connector (purpose unknown, but probably for mounting an additional
-              plug-in board with CN21 also)
+  CN10      - Custom 80-pin connector (for mounting an additional plug-in board for extra controls,
+              possibly with CN21 also)
   CN12      - 4-pin CD-DA input connector (for Red-Book audio from CDROM drive to main board)
   CN14      - 44-pin security cartridge connector. The cartridge only contains a small PCB labelled
-              'GX700-PWB(D) (C)1997 KONAMI' and location for 2 ICs
-              IC1 - Small SOIC8 chip (possibly a PIC) stamped '0038323 E9750'
-              IC2 - Solder pads for mounting PLCC68 or QFP68 (not populated)
+              'GX700-PWB(D) (C)1997 KONAMI' and has locations for 2 ICs only
+              IC1 - Small SOIC8 chip, identified as a XICOR X76F041 security supervisor containing 4X
+              128 x8 secureFLASH arrays, stamped '0038323 E9750'
+              IC2 - Solder pads for mounting of a PLCC68 or QFP68 packaged IC (not populated)
   CN15      - 4-pin CDROM power connector
   CN16      - 2-pin fan connector
   CN17      - 6-pin power connector, connected to an 8-pin power plug mounted in the front face
@@ -137,8 +138,8 @@
   CXD2925Q  - Sony CXD2925Q SPU (QFP100, @ 15Q)
   CXD8561Q  - Sony CXD8561Q GTE (QFP208, @ 10M)
   CXD8530CQ - Sony CXD8530CQ R3000-based CPU (QFP208, @ 17M)
-  9536      - Xilinx XC9536 in-system programmable CPLD (PLCC44, @ 22J)
-  3644      - Hitachi H8/3644 HD6473644H microcontroller with 32K ROM & 1K RAM (QFP64, @ 18E,
+  9536      - Xilinx XC9536 in-system-programmable CPLD (PLCC44, @ 22J)
+  3644      - Hitachi H8/3644 HD6473644H microcontroller with 32k ROM & 1k RAM (QFP64, @ 18E,
               labelled '700 02 38920')
   056879    - Konami 056879 custom IC (QFP120, @ 13E)
   MC44200FT - Motorola MC44200FT Triple 8-bit Video DAC (QFP44)
@@ -147,15 +148,55 @@
   ADM485    - Analog Devices ADM485 low power EIA RS-485 transceiver (SOIC8, @ 20C)
   ADC0834   - National Semiconductor ADC0834 8-Bit Serial I/O A/D Converter with Multiplexer
               Option (SOIC14, @ 24D)
-  M48T58Y-70- STMicroelectronics M48T58Y-70PC1 Timekeeper RAM (DIP32, @ 22H)
-  29F016      Fujitsu 29F016A-90PFTN 2M x8bit FlashROM (TSOP48, @ 27H/J/L/M & 31H/J/L/M)
-  KM416V256 - Samsung Electronics KM416V256BT-7 256K x 16bit DRAM (TSOP44/40, @ 11Q)
-  KM48V514  - Samsung Electronics KM48V514BJ-6 512K x 8bit EDO DRAM (SOJ28, @ 16G/H, 14G/H, 12G/H, 9G/H)
-  32M       - NEC D481850GF-A12 128K x 32Bit x 2 Banks SGRAM (QFP100, @ 4P & 4L)
+  M48T58Y-70- STMicroelectronics M48T58Y-70PC1 8k x8 Timekeeper RAM (DIP32, @ 22H)
+              Note that this is not used for protection. If you put in a new blank Timekeeper RAM
+              it will be programmed with some data on power-up. If you swap games, the Timekeeper
+              is updated with the new game data
+  29F016      Fujitsu 29F016A-90PFTN 2M x8 FlashROM (TSOP48, @ 27H/J/L/M & 31H/J/L/M)
+              Also found Sharp LH28F016S (2M x8 TSOP40) in some units
+  KM416V256 - Samsung Electronics KM416V256BT-7 256k x 16 DRAM (TSOP44/40, @ 11Q)
+  KM48V514  - Samsung Electronics KM48V514BJ-6 512k x 8 EDO DRAM (SOJ28, @ 16G/H, 14G/H, 12G/H, 9G/H)
+  32M       - NEC D481850GF-A12 128k x 32Bit x 2 Banks SGRAM (QFP100, @ 4P & 4L)
 
   Software  -
               - 700A01.22G 4M MaskROM (DIP32, @ 22G)
               - SONY ATAPI CDROM drive, with CDROM disc containing program + graphics + sound
+                Some System 573 units contain a CR-583 drive dated October 1997, some contain a
+                CR-587 drive dated March 1998. Note that the CR-587 will not read CDR discs ;-)
+
+
+  Auxillary Controls PCB
+  ----------------------
+
+  GE765-PWB(B)A (C)1998 KONAMI CO. LTD.
+  |-----------------------------|
+  |          CN33     C2242     |
+  |                   C2242     |
+  |       NRPS11-G1A            |
+  |                         CN35|
+  |  D4701                      |
+  |        74LS14     PC817     |-----------------|
+  |                                               |
+  |  PAL         PAL                              |
+  | (E765B1)    (E765B2)         LCX245           |
+  |                                               |
+  |  74LS174     PAL                              |
+  |             (E765B1)                          |
+  |                                               |
+  |              74LS174       CN31               |
+  |-----------------------------------------------|
+  Notes: (all IC's shown)
+        This PCB is known to be used for the fishing reel controls on all of the fishing games (at least).
+
+        CN31       - Connector joining this PCB to the MAIN PCB
+        CN33       - Connector used to join the external controls connector mounted on the outside of the
+                     metal case to this PCB.
+        CN35       - Power connector
+        NRPS11-G1A - Relay?
+        D4701      - NEC uPD4701 Encoder (SOP24)
+        C2242      - 2SC2242 Transistor
+        PC817      - Sharp PC817 Photo-coupler IC (DIP4)
+        PAL        - AMD PALCE16V8Q, stamped 'E765Bx' (DIP20)
 */
 
 #include "driver.h"
@@ -532,10 +573,13 @@ static WRITE32_HANDLER( atapi_w )
 				// perform special ATAPI processing of certain commands
 				switch (atapi_data[0]&0xff)
 				{
+					case 0x42:	// READ SUB-CHANNEL
+						atapi_regs[ATAPI_REG_CMDSTATUS] |= ATAPI_STAT_CHECK | ATAPI_STAT_SERVDSC;
+						break;
+
 					case 0x55:	// MODE SELECT
 						atapi_cdata_wait = atapi_data[4]/2;
 						atapi_data_ptr = 0;
-//                      mame_printf_debug("ATAPI: Waiting for %x bytes of MODE SELECT data\n", atapi_cdata_wait);
 						break;
 
 					case 0xa8:	// READ (12)
@@ -550,6 +594,13 @@ static WRITE32_HANDLER( atapi_w )
 					case 0x00:	// BUS RESET / TEST UNIT READY
 						atapi_regs[ATAPI_REG_CMDSTATUS] = 0;
 						break;
+				}
+
+				// if no data to return, set the registers properly
+				if (atapi_xferlen == 0)
+				{
+					atapi_regs[ATAPI_REG_CMDSTATUS] = ATAPI_STAT_DRDY;
+					atapi_regs[ATAPI_REG_INTREASON] = ATAPI_INTREASON_IO|ATAPI_INTREASON_COMMAND;
 				}
 			}
 			else
@@ -993,9 +1044,7 @@ static void flash_init( void )
 	}
 	flash_init[] =
 	{
-		//FLASH_FUJITSU_29F016A
-		//FLASH_INTEL_28F016S5
-		{ &onboard_flash_start, REGION_USER3,  8, FLASH_INTEL_28F016S5,  0x200000 },
+		{ &onboard_flash_start, REGION_USER3,  8, FLASH_FUJITSU_29F016A, 0x200000 },
 		{ &pccard1_flash_start, REGION_USER4, 16, FLASH_FUJITSU_29F016A, 0x200000 },
 		{ &pccard2_flash_start, REGION_USER5, 16, FLASH_FUJITSU_29F016A, 0x200000 },
 		{ &pccard3_flash_start, REGION_USER6, 16, FLASH_FUJITSU_29F016A, 0x200000 },
@@ -1191,7 +1240,7 @@ ROM_START( sys573 )
 	ROM_FILL( 0x0000000, 0x0000224, 0x00 )
 
 	ROM_REGION( 0x1000000, REGION_USER3, 0 ) /* onboard flash */
-	ROM_FILL( 0x0000000, 0x1000000, 0x00 )
+	ROM_FILL( 0x0000000, 0x1000000, 0xff )
 ROM_END
 
 // Games
@@ -1203,7 +1252,7 @@ ROM_START( konam80s )
 	ROM_LOAD( "gc826uaa.u1",  0x000000, 0x000224, BAD_DUMP CRC(7d0a3374) SHA1(b23b1cac4fd5368cac866cbd9161717ce7c4b55a) )
 
 	ROM_REGION( 0x1000000, REGION_USER3, 0 ) /* onboard flash */
-	ROM_FILL( 0x0000000, 0x1000000, 0x00 )
+	ROM_FILL( 0x0000000, 0x1000000, 0xff )
 
 	DISK_REGION( REGION_DISKS )
 	DISK_IMAGE_READONLY( "gc826uaa", 0, MD5(456f683c5d47dd73cfb73ce80b8a7351) SHA1(452c94088ffefe42e61c978b48d425e7094a5af6) )
@@ -1217,10 +1266,10 @@ ROM_START( konam80j )
 	ROM_LOAD( "gc826jaa.u1",  0x000000, 0x000224, BAD_DUMP CRC(91956507) SHA1(ac8769c7d2f6b9dd46fc0b0094d383adea959ff2) )
 
 	ROM_REGION( 0x1000000, REGION_USER3, 0 ) /* onboard flash */
-	ROM_FILL( 0x0000000, 0x1000000, 0x00 )
+	ROM_FILL( 0x0000000, 0x1000000, 0xff )
 
 	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE_READONLY( "gc826jaa", 0, MD5(df608c5ad79138ac1ce3d2b31fa9a7f4) SHA1(07afbae1c34de0fddd2eb536e73d8a6bc5cfc14c) )
+	DISK_IMAGE_READONLY( "gc826jaa", 0, MD5(456f683c5d47dd73cfb73ce80b8a7351) SHA1(452c94088ffefe42e61c978b48d425e7094a5af6) )
 ROM_END
 
 ROM_START( darkhleg )
@@ -1228,13 +1277,13 @@ ROM_START( darkhleg )
 	SYS573_BIOS_A
 
 	ROM_REGION( 0x0000224, REGION_USER2, 0 ) /* security cart */
-	ROM_LOAD( "darkhleg.u1",  0x000000, 0x000224, BAD_DUMP CRC(72b42574) SHA1(79dc959f0ce95ccb9ac0dbf0a72aec973e91bc56) )
+	ROM_LOAD( "gx706jaa.u1",  0x000000, 0x000224, BAD_DUMP CRC(72b42574) SHA1(79dc959f0ce95ccb9ac0dbf0a72aec973e91bc56) )
 
 	ROM_REGION( 0x1000000, REGION_USER3, 0 ) /* onboard flash */
-	ROM_FILL( 0x0000000, 0x1000000, 0x00 )
+	ROM_FILL( 0x0000000, 0x1000000, 0xff )
 
 	DISK_REGION( REGION_DISKS )
-	DISK_IMAGE_READONLY( "darkhleg", 0, MD5(4f096051df039b0d104d4c0fff5dadb8) SHA1(4c8d976096c2da6d01804a44957daf9b50103c90) )
+	DISK_IMAGE_READONLY( "gx706jaa", 0, MD5(4f096051df039b0d104d4c0fff5dadb8) SHA1(4c8d976096c2da6d01804a44957daf9b50103c90) )
 ROM_END
 
 ROM_START( pbballex )
@@ -1245,7 +1294,7 @@ ROM_START( pbballex )
 	ROM_LOAD( "gx802jab.u1",  0x000000, 0x000224, BAD_DUMP CRC(ea8bdda3) SHA1(780034ab08871631ef0e3e9b779ca89e016c26a8) )
 
 	ROM_REGION( 0x1000000, REGION_USER3, 0 ) /* onboard flash */
-	ROM_FILL( 0x0000000, 0x1000000, 0x00 )
+	ROM_FILL( 0x0000000, 0x1000000, 0xff )
 
 	DISK_REGION( REGION_DISKS )
 	DISK_IMAGE_READONLY( "gx802jab", 0, MD5(52bb53327ba48f87dcb030d5e50fe94f) SHA1(67ddce1ad7e436c18e08d5a8c77f3259dbf30572) )
@@ -1255,7 +1304,7 @@ ROM_END
 GAME( 1998, sys573, 0, konami573, konami573, konami573, ROT0, "Konami", "System 573 BIOS", NOT_A_DRIVER )
 
 // Standard System 573 games
-GAME( 1998, konam80s, sys573, konami573, konami573, konami573, ROT90, "Konami", "Konami 80s Gallery (US ver UAA)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAME( 1998, konam80s, sys573, konami573, konami573, konami573, ROT90, "Konami", "Konami 80s AC Special (US ver UAA)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAME( 1998, konam80j, konam80s, konami573, konami573, konami573, ROT90, "Konami", "Konami 80s Gallery (Japan ver JAA)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAME( 1998, darkhleg, sys573, konami573, konami573, konami573, ROT0, "Konami", "Dark Horse Legend (Japan ver JAA)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAME( 1998, pbballex, sys573, konami573, konami573, konami573, ROT0, "Konami", "Powerful Pro Baseball EX (Japan ver JAB)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )

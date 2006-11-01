@@ -83,7 +83,7 @@ typedef struct {
 	const I386_OPCODE *opcode;
 } GROUP_OP;
 
-static UINT8 *opcode_ptr;
+static const UINT8 *opcode_ptr;
 static const I386_OPCODE *opcode_table1 = 0;
 static const I386_OPCODE *opcode_table2 = 0;
 
@@ -2069,7 +2069,7 @@ handle_unknown:
 	sprintf(s, "???");
 }
 
-int i386_dasm_one(char *buffer, UINT32 eip, UINT8 *oprom, int addr_size, int op_size)
+int i386_dasm_one(char *buffer, UINT32 eip, const UINT8 *oprom, int addr_size, int op_size)
 {
 	UINT8 op;
 
@@ -2088,7 +2088,7 @@ int i386_dasm_one(char *buffer, UINT32 eip, UINT8 *oprom, int addr_size, int op_
 	return (pc-eip) | dasm_flags | DASMFLAG_SUPPORTED;
 }
 
-int necv_dasm_one(char *buffer, UINT32 eip, UINT8 *oprom, int addr_size, int op_size)
+int necv_dasm_one(char *buffer, UINT32 eip, const UINT8 *oprom, int addr_size, int op_size)
 {
 	UINT8 op;
 

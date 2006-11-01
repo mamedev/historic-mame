@@ -24,7 +24,7 @@ enum {
 extern void s2650_get_info(UINT32 state, union cpuinfo *info);
 
 #ifdef  MAME_DEBUG
-extern int Dasm2650(char *buff, int PC);
+extern int Dasm2650(char *buff, int PC, const UINT8 *oprom, const UINT8 *opram);
 #endif
 
 #endif

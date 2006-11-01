@@ -1693,7 +1693,6 @@ static void execute_dasm(int ref, int params, const char *param[])
 	UINT64 offset, length, bytes = 1, cpunum = cpu_getactivecpu();
 	const debug_cpu_info *info;
 	int minbytes, maxbytes, byteswidth;
-	int use_new_dasm;
 	FILE *f = NULL;
 	int i, j;
 
@@ -1735,13 +1734,11 @@ static void execute_dasm(int ref, int params, const char *param[])
 
 	/* now write the data out */
 	cpuintrf_push_context(cpunum);
-	use_new_dasm = (activecpu_get_info_fct(CPUINFO_PTR_DISASSEMBLE_NEW) != NULL);
 	for (i = 0; i < length; )
 	{
 		int pcbyte = ADDR2BYTE_MASKED(offset + i, info, ADDRESS_SPACE_PROGRAM);
 		char output[200+DEBUG_COMMENT_MAX_LINE_LENGTH], disasm[200];
 		const char *comment;
-		UINT64 dummyreadop;
 		offs_t tempaddr;
 		int outdex = 0;
 		int numbytes = 0;
@@ -1753,37 +1750,17 @@ static void execute_dasm(int ref, int params, const char *param[])
 		tempaddr = pcbyte;
 		if (!info->translate || (*info->translate)(ADDRESS_SPACE_PROGRAM, &tempaddr))
 		{
-			/* if we can use new disassembly, do it */
-			if (use_new_dasm)
+			UINT8 opbuf[64], argbuf[64];
+
+			/* fetch the bytes up to the maximum */
+			for (numbytes = 0; numbytes < maxbytes; numbytes++)
 			{
-				UINT8 opbuf[64], argbuf[64];
-
-				/* fetch the bytes up to the maximum */
-				for (numbytes = 0; numbytes < maxbytes; numbytes++)
-				{
-					opbuf[numbytes] = debug_read_opcode(pcbyte + numbytes, 1, FALSE);
-					argbuf[numbytes] = debug_read_opcode(pcbyte + numbytes, 1, TRUE);
-				}
-
-				/* disassemble the result */
-				i += numbytes = activecpu_dasm_new(disasm, offset + i, opbuf, argbuf, maxbytes) & DASMFLAG_LENGTHMASK;
+				opbuf[numbytes] = debug_read_opcode(pcbyte + numbytes, 1, FALSE);
+				argbuf[numbytes] = debug_read_opcode(pcbyte + numbytes, 1, TRUE);
 			}
 
-			/* otherwise, we need to use the old, risky way */
-			else
-			{
-				/* get the disassembly up front, but only if mapped */
-				if (memory_get_op_ptr(cpunum, pcbyte, 0) != NULL || (info->readop && (*info->readop)(pcbyte, 1, &dummyreadop)))
-				{
-					memory_set_opbase(pcbyte);
-					i += numbytes = activecpu_dasm(disasm, offset + i) & DASMFLAG_LENGTHMASK;
-				}
-				else
-				{
-					sprintf(disasm, "<unmapped>");
-					i += numbytes = 1;
-				}
-			}
+			/* disassemble the result */
+			i += numbytes = activecpu_dasm(disasm, offset + i, opbuf, argbuf) & DASMFLAG_LENGTHMASK;
 		}
 
 		/* print the bytes */
@@ -1976,27 +1953,21 @@ static void execute_history(int ref, int params, const char *param[])
 	for (i = 0; i < count; i++)
 	{
 		offs_t pc = info->pc_history[(info->pc_history_index + DEBUG_HISTORY_SIZE - count + i) % DEBUG_HISTORY_SIZE];
+		int maxbytes = activecpu_max_instruction_bytes();
+		UINT8 opbuf[64], argbuf[64];
 		char buffer[200];
+		offs_t pcbyte;
+		int numbytes;
 
-		if (activecpu_get_info_fct(CPUINFO_PTR_DISASSEMBLE_NEW) != NULL)
+		/* fetch the bytes up to the maximum */
+		pcbyte = ADDR2BYTE_MASKED(pc, info, ADDRESS_SPACE_PROGRAM);
+		for (numbytes = 0; numbytes < maxbytes; numbytes++)
 		{
-			int maxbytes = activecpu_max_instruction_bytes();
-			UINT8 opbuf[64], argbuf[64];
-			offs_t pcbyte;
-			int numbytes;
-
-			/* fetch the bytes up to the maximum */
-			pcbyte = ADDR2BYTE_MASKED(pc, info, ADDRESS_SPACE_PROGRAM);
-			for (numbytes = 0; numbytes < maxbytes; numbytes++)
-			{
-				opbuf[numbytes] = debug_read_opcode(pcbyte + numbytes, 1, FALSE);
-				argbuf[numbytes] = debug_read_opcode(pcbyte + numbytes, 1, TRUE);
-			}
-
-			activecpu_dasm_new(buffer, pc, opbuf, argbuf, maxbytes);
+			opbuf[numbytes] = debug_read_opcode(pcbyte + numbytes, 1, FALSE);
+			argbuf[numbytes] = debug_read_opcode(pcbyte + numbytes, 1, TRUE);
 		}
-		else
-			activecpu_dasm(buffer, pc);
+
+		activecpu_dasm(buffer, pc, opbuf, argbuf);
 
 		debug_console_printf("%0*X: %s\n", info->space[ADDRESS_SPACE_PROGRAM].logchars, pc, buffer);
 	}

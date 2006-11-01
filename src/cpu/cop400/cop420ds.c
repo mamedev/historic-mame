@@ -4,16 +4,17 @@
  *                   Copyright (C) 2006 MAME Team                         *
  **************************************************************************/
 
-#include "memory.h"
+#include "cpuintrf.h"
 
-int DasmCOP420(char *buffer, unsigned pc)
+int DasmCOP420(char *buffer, unsigned pc, const UINT8 *oprom)
 {
 	int op;
 	int cnt = 1;
 	UINT16 addr;
 	UINT8 op2;
+	UINT32 flags = 0;
 
-	op = cpu_readop(pc);
+	op = oprom[0];
 
 	if ((op >= 0x80 && op <= 0xBE) || (op >= 0xC0 && op <= 0xFE))
 	{
@@ -33,6 +34,7 @@ int DasmCOP420(char *buffer, unsigned pc)
 			{
 				addr = (UINT16)(0x80 | (op & 0x3F));
 				sprintf(buffer,"JSRP %x",addr);
+				flags = DASMFLAG_STEP_OVER;
 			}
 		}
 	}
@@ -58,14 +60,15 @@ int DasmCOP420(char *buffer, unsigned pc)
 	}
 	else if (op >= 0x60 && op <= 0x63)
 	{
-		addr = ((op & 0x02) << 8) | cpu_readop(pc + 1);
+		addr = ((op & 0x02) << 8) | oprom[1];
 		sprintf(buffer,"JMP %x",addr);
 		cnt = 2;
 	}
 	else if (op >= 0x68 && op <= 0x6B)
 	{
-		addr = ((op & 0x02) << 8) | cpu_readop(pc + 1);
+		addr = ((op & 0x02) << 8) | oprom[1];
 		sprintf(buffer,"JSR %x",addr);
+		flags = DASMFLAG_STEP_OVER;
 		cnt = 2;
 	}
 	else if (op >= 0x70 && op <= 0x7F)
@@ -153,7 +156,7 @@ int DasmCOP420(char *buffer, unsigned pc)
 			break;
 
 		case 0x23:
-			addr = (UINT16)(cpu_readop(pc++) & 0x3F);
+			addr = (UINT16)(oprom[1] & 0x3F);
 			sprintf(buffer,"XAD %x,%x",((addr & 0x30) >> 4),addr & 0x0F);
 			cnt = 2;
 			break;
@@ -187,7 +190,7 @@ int DasmCOP420(char *buffer, unsigned pc)
 			break;
 
 		case 0x33:
-			op2 = cpu_readop(pc + 1);
+			op2 = oprom[1];
 			cnt = 2;
 
 			if (op2 >= 0x50 && op2 <= 0x5F)
@@ -327,10 +330,12 @@ int DasmCOP420(char *buffer, unsigned pc)
 
 		case 0x48:
 			sprintf(buffer,"RET");
+			flags = DASMFLAG_STEP_OUT;
 			break;
 
 		case 0x49:
 			sprintf(buffer,"RETSK");
+			flags = DASMFLAG_STEP_OUT;
 			break;
 
 		case 0x4A:
@@ -375,5 +380,5 @@ int DasmCOP420(char *buffer, unsigned pc)
 		}
 	}
 
-	return cnt;
+	return cnt | flags | DASMFLAG_SUPPORTED;
 }

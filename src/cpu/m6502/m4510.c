@@ -495,7 +495,7 @@ void m4510_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = m4510_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 #ifdef MAME_DEBUG
-		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = m4510_dasm;			break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m4510_dasm;			break;
 #endif
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m4510_ICount;			break;
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP:			info->internal_map = construct_map_m4510_mem; break;

@@ -951,22 +951,22 @@ static int tms34010_execute(int cycles)
     Disassemble
 *#################################################################################################*/
 
-static offs_t tms34010_dasm(char *buffer, offs_t pc)
+static offs_t tms34010_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-	return Dasm34010(buffer,pc);
+	return Dasm34010(buffer,pc,oprom,opram);
 #else
-	sprintf( buffer, "$%04X", cpu_readop16(pc>>3) );
+	sprintf( buffer, "$%04X", oprom[0] | (oprom[1] << 8) );
 	return 2;
 #endif
 }
 
-static offs_t tms34020_dasm(char *buffer, offs_t pc)
+static offs_t tms34020_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-	return Dasm34020(buffer,pc);
+	return Dasm34020(buffer,pc,oprom,opram);
 #else
-	sprintf( buffer, "$%04X", cpu_readop16(pc>>3) );
+	sprintf( buffer, "$%04X", oprom[0] | (oprom[1] << 8) );
 	return 2;
 #endif
 }

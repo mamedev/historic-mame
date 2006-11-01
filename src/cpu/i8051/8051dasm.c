@@ -237,15 +237,16 @@ static const char *get_bit_address( UINT8 arg )
 #endif
 
 
-unsigned Dasm8051(char *dst, unsigned pc)
+unsigned Dasm8051(char *dst, unsigned pc, const UINT8 *oprom, const UINT8 *opram)
 {
+	UINT32 flags = 0;
 	unsigned PC = pc;
 	const char *sym, *sym2;
-    UINT8 op;
+    UINT8 op, temp;
 	UINT16 addr;
 	INT8 rel;
 
-	op = cpu_readop(PC++);
+	op = oprom[PC++ - pc];
 	switch( op )
 	{
 
@@ -264,7 +265,8 @@ unsigned Dasm8051(char *dst, unsigned pc)
 		case 0xa1:
 		case 0xc1:
 		case 0xe1:
-			sym = set_ea_info(EA_DST, (PC & 0xf800) | ((op & 0xe0) << 3) | cpu_readop_arg(PC), EA_UINT16, EA_ABS_PC);
+			temp = opram[PC++ - pc];
+			sym = set_ea_info(EA_DST, (PC & 0xf800) | ((op & 0xe0) << 3) | temp, EA_UINT16, EA_ABS_PC);
 			PC++;
 			sprintf(dst, "ajmp  %s", sym);
 			break;
@@ -272,8 +274,8 @@ unsigned Dasm8051(char *dst, unsigned pc)
 
 		//LJMP code addr
 		case 0x02:				/* 1: 0000 0010 */
-			addr = (cpu_readop_arg(PC++)<<8) & 0xff00;
-			addr|= cpu_readop_arg(PC++);
+			addr = (opram[PC++ - pc]<<8) & 0xff00;
+			addr|= opram[PC++ - pc];
 			sym = set_ea_info(EA_DST, addr , EA_UINT16, EA_ABS_PC);
 			sprintf(dst, "ljmp  %s", sym);
 			break;
@@ -293,7 +295,7 @@ unsigned Dasm8051(char *dst, unsigned pc)
 
 		//INC data addr
 		case 0x05:				/* 1: 0000 0101 */
-			sym = get_data_address(cpu_readop_arg(PC++));
+			sym = get_data_address(opram[PC++ - pc]);
 			sprintf(dst, "inc   %s", sym);
 			break;
 
@@ -320,8 +322,8 @@ unsigned Dasm8051(char *dst, unsigned pc)
 
 		//JBC bit addr, code addr
 		case 0x10:				/* 1: 0001 0000 */
-			sym = get_bit_address(cpu_readop_arg(PC++));
-			rel  = cpu_readop_arg(PC++);
+			sym = get_bit_address(opram[PC++ - pc]);
+			rel  = opram[PC++ - pc];
 			sym2 = set_ea_info(EA_DST, (PC + rel), EA_UINT16, EA_ABS_PC);
 			sprintf(dst, "jbc   %s,%s", sym, sym2);
 			break;
@@ -336,18 +338,20 @@ unsigned Dasm8051(char *dst, unsigned pc)
 		case 0xb1:
 		case 0xd1:
 		case 0xf1:
-			sym = set_ea_info(EA_DST, (PC & 0xf800) | ((op & 0xe0) << 3) | cpu_readop_arg(PC), EA_UINT16, EA_ABS_PC);
+			sym = set_ea_info(EA_DST, (PC & 0xf800) | ((op & 0xe0) << 3) | opram[PC - pc], EA_UINT16, EA_ABS_PC);
 			PC++;
 			sprintf(dst, "acall %s", sym);
+			flags = DASMFLAG_STEP_OVER;
 			break;
 
 
 		//LCALL code addr
 		case 0x12:				/* 1: 0001 0010 */
-			addr = (cpu_readop_arg(PC++)<<8) & 0xff00;
-			addr|= cpu_readop_arg(PC++);
+			addr = (opram[PC++ - pc]<<8) & 0xff00;
+			addr|= opram[PC++ - pc];
 			sym = set_ea_info(EA_DST, addr , EA_UINT16, EA_ABS_PC);
 			sprintf(dst, "lcall %s", sym);
+			flags = DASMFLAG_STEP_OVER;
 			break;
 
 
@@ -365,7 +369,7 @@ unsigned Dasm8051(char *dst, unsigned pc)
 
 		//DEC data addr
 		case 0x15:				/* 1: 0001 0101 */
-			sym = get_data_address(cpu_readop_arg(PC++));
+			sym = get_data_address(opram[PC++ - pc]);
 			sprintf(dst, "dec   %s", sym);
 			break;
 
@@ -391,8 +395,8 @@ unsigned Dasm8051(char *dst, unsigned pc)
 
 		//JB  bit addr, code addr
 		case 0x20:				/* 1: 0010 0000 */
-			sym = get_bit_address(cpu_readop_arg(PC++));
-			rel  = cpu_readop_arg(PC++);
+			sym = get_bit_address(opram[PC++ - pc]);
+			rel  = opram[PC++ - pc];
 			sym2 = set_ea_info(EA_DST, (PC + rel), EA_UINT16, EA_ABS_PC);
 			sprintf(dst, "jb    %s,%s", sym, sym2);
 			break;
@@ -401,6 +405,7 @@ unsigned Dasm8051(char *dst, unsigned pc)
 		//RET
 		case 0x22:				/* 1: 0010 0010 */
 			sprintf(dst, "ret");
+			flags = DASMFLAG_STEP_OUT;
 			break;
 
 
@@ -412,13 +417,13 @@ unsigned Dasm8051(char *dst, unsigned pc)
 
 		//ADD A, #data
 		case 0x24:				/* 1: 0010 0100 */
-			sym = set_ea_info(EA_SRC, cpu_readop_arg(PC++), EA_UINT8, EA_VALUE);
+			sym = set_ea_info(EA_SRC, opram[PC++ - pc], EA_UINT8, EA_VALUE);
 			sprintf(dst, "add   a,#%s", sym);
 			break;
 
 		//ADD A, data addr
 		case 0x25:				/* 1: 0010 0101 */
-			sym = get_data_address(cpu_readop_arg(PC++));
+			sym = get_data_address(opram[PC++ - pc]);
 			sprintf(dst, "add   a,%s", sym);
 			break;
 
@@ -444,8 +449,8 @@ unsigned Dasm8051(char *dst, unsigned pc)
 
 		//JNB bit addr, code addr
 		case 0x30:				/* 1: 0011 0000 */
-		sym = get_bit_address(cpu_readop_arg(PC++));
-			rel  = cpu_readop_arg(PC++);
+		sym = get_bit_address(opram[PC++ - pc]);
+			rel  = opram[PC++ - pc];
 			sym2 = set_ea_info(EA_DST, (PC + rel), EA_UINT16, EA_ABS_PC);
 			sprintf(dst, "jnb   %s,%s", sym, sym2);
 			break;
@@ -453,6 +458,7 @@ unsigned Dasm8051(char *dst, unsigned pc)
 		//RETI
 		case 0x32:				/* 1: 0011 0010 */
 			sprintf(dst, "reti");
+			flags = DASMFLAG_STEP_OUT;
 			break;
 
 
@@ -464,13 +470,13 @@ unsigned Dasm8051(char *dst, unsigned pc)
 
 		//ADDC A, #data
 		case 0x34:				/* 1: 0011 0100 */
-			sym = set_ea_info(EA_SRC, cpu_readop_arg(PC++), EA_UINT8, EA_VALUE);
+			sym = set_ea_info(EA_SRC, opram[PC++ - pc], EA_UINT8, EA_VALUE);
 			sprintf(dst, "addc  a,#%s", sym);
 			break;
 
 		//ADDC A, data addr
 		case 0x35:				/* 1: 0011 0101 */
-			sym = get_data_address(cpu_readop_arg(PC++));
+			sym = get_data_address(opram[PC++ - pc]);
 			sprintf(dst, "addc  a,%s", sym);
 			break;
 
@@ -497,35 +503,35 @@ unsigned Dasm8051(char *dst, unsigned pc)
 
 		//JC code addr
 		case 0x40:				/* 1: 0100 0000 */
-			rel = cpu_readop_arg(PC++);
+			rel = opram[PC++ - pc];
 			sym = set_ea_info(EA_DST, (PC + rel), EA_UINT16, EA_ABS_PC);
 			sprintf(dst, "jc    %s", sym);
 			break;
 
 		//ORL data addr, A
 		case 0x42:				/* 1: 0100 0010 */
-			sym = get_data_address(cpu_readop_arg(PC++));
+			sym = get_data_address(opram[PC++ - pc]);
 			sprintf(dst, "orl   %s,a", sym);
 			break;
 
 		//ORL data addr, #data
 		case 0x43:				/* 1: 0100 0011 */
-			sym = get_data_address(cpu_readop_arg(PC++));
-			sym2 = set_ea_info(EA_SRC, cpu_readop_arg(PC++), EA_UINT8, EA_VALUE);
+			sym = get_data_address(opram[PC++ - pc]);
+			sym2 = set_ea_info(EA_SRC, opram[PC++ - pc], EA_UINT8, EA_VALUE);
 			sprintf(dst, "orl   %s,#%s", sym,sym2);
 			break;
 
 		//Unable to Test
 		//ORL A, #data
 		case 0x44:				/* 1: 0100 0100 */
-			sym = set_ea_info(EA_SRC, cpu_readop_arg(PC++), EA_UINT8, EA_VALUE);
+			sym = set_ea_info(EA_SRC, opram[PC++ - pc], EA_UINT8, EA_VALUE);
 			sprintf(dst, "orl   a,#%s", sym);
 			break;
 
 
 		//ORL A, data addr
 		case 0x45:				/* 1: 0100 0101 */
-			sym = get_data_address(cpu_readop_arg(PC++));
+			sym = get_data_address(opram[PC++ - pc]);
 			sprintf(dst, "orl   a,%s", sym);
 			break;
 
@@ -552,7 +558,7 @@ unsigned Dasm8051(char *dst, unsigned pc)
 
 		//JNC code addr
 		case 0x50:				/* 1: 0101 0000 */
-			rel = cpu_readop_arg(PC++);
+			rel = opram[PC++ - pc];
 			sym = set_ea_info(EA_DST, (PC + rel), EA_UINT16, EA_ABS_PC);
 			sprintf(dst, "jnc   %s", sym);
 			break;
@@ -560,29 +566,29 @@ unsigned Dasm8051(char *dst, unsigned pc)
 		//Unable to test
 		//ANL data addr, A
 		case 0x52:				/* 1: 0101 0010 */
-			sym = get_data_address(cpu_readop_arg(PC++));
+			sym = get_data_address(opram[PC++ - pc]);
 			sprintf(dst, "anl   %s,a", sym);
 			break;
 
 		//Unable to test
 		//ANL data addr, #data
 		case 0x53:				/* 1: 0101 0011 */
-			sym = get_data_address(cpu_readop_arg(PC++));
-			sym2 = set_ea_info(EA_SRC, cpu_readop_arg(PC++), EA_UINT8, EA_VALUE);
+			sym = get_data_address(opram[PC++ - pc]);
+			sym2 = set_ea_info(EA_SRC, opram[PC++ - pc], EA_UINT8, EA_VALUE);
 			sprintf(dst, "anl   %s,#%s", sym,sym2);
 			break;
 
 
 		//ANL A, #data
 		case 0x54:				/* 1: 0101 0100 */
-			sym = set_ea_info(EA_SRC, cpu_readop_arg(PC++), EA_UINT8, EA_VALUE);
+			sym = set_ea_info(EA_SRC, opram[PC++ - pc], EA_UINT8, EA_VALUE);
 			sprintf(dst, "anl   a,#%s", sym);
 			break;
 
 
 		//ANL A, data addr
 		case 0x55:				/* 1: 0101 0101 */
-			sym = get_data_address(cpu_readop_arg(PC++));
+			sym = get_data_address(opram[PC++ - pc]);
 			sprintf(dst, "anl   a,%s", sym);
 			break;
 
@@ -609,7 +615,7 @@ unsigned Dasm8051(char *dst, unsigned pc)
 
 		//JZ code addr
 		case 0x60:				/* 1: 0110 0000 */
-			rel = cpu_readop_arg(PC++);
+			rel = opram[PC++ - pc];
 			sym = set_ea_info(EA_DST, (PC + rel), EA_UINT16, EA_ABS_PC);
 			sprintf(dst, "jz    %s", sym);
 			break;
@@ -617,28 +623,28 @@ unsigned Dasm8051(char *dst, unsigned pc)
 		//Unable to test
 		//XRL data addr, A
 		case 0x62:				/* 1: 0110 0010 */
-			sym = get_data_address(cpu_readop_arg(PC++));
+			sym = get_data_address(opram[PC++ - pc]);
 			sprintf(dst, "xrl   %s,a", sym);
 			break;
 
 
 		//XRL data addr, #data
 		case 0x63:				/* 1: 0110 0011 */
-			sym = get_data_address(cpu_readop_arg(PC++));
-			sym2 = set_ea_info(EA_SRC, cpu_readop_arg(PC++), EA_UINT8, EA_VALUE);
+			sym = get_data_address(opram[PC++ - pc]);
+			sym2 = set_ea_info(EA_SRC, opram[PC++ - pc], EA_UINT8, EA_VALUE);
 			sprintf(dst, "xrl   %s,#%s", sym, sym2);
 			break;
 
 
 		//XRL A, #data
 		case 0x64:				/* 1: 0110 0100 */
-			sym = set_ea_info(EA_SRC, cpu_readop_arg(PC++), EA_UINT8, EA_VALUE);
+			sym = set_ea_info(EA_SRC, opram[PC++ - pc], EA_UINT8, EA_VALUE);
 			sprintf(dst, "xrl   a,#%s", sym);
 			break;
 
 		//XRL A, data addr
 		case 0x65:				/* 1: 0110 0101 */
-			sym = get_data_address(cpu_readop_arg(PC++));
+			sym = get_data_address(opram[PC++ - pc]);
 			sprintf(dst, "xrl   a,%s", sym);
 			break;
 
@@ -665,7 +671,7 @@ unsigned Dasm8051(char *dst, unsigned pc)
 
 		//JNZ code addr
 		case 0x70:				/* 1: 0111 0000 */
-			rel = cpu_readop_arg(PC++);
+			rel = opram[PC++ - pc];
 			sym = set_ea_info(EA_DST, (PC + rel), EA_UINT16, EA_ABS_PC);
 			sprintf(dst, "jnz   %s", sym);
 			break;
@@ -673,7 +679,7 @@ unsigned Dasm8051(char *dst, unsigned pc)
 		//Unable to test
 		//ORL C, bit addr
 		case 0x72:				/* 1: 0111 0010 */
-			sym = get_bit_address(cpu_readop_arg(PC++));
+			sym = get_bit_address(opram[PC++ - pc]);
 			sprintf(dst, "orl   c,%s", sym);
 			break;
 
@@ -686,15 +692,15 @@ unsigned Dasm8051(char *dst, unsigned pc)
 
 		//MOV A, #data
 		case 0x74:				/* 1: 0111 0100 */
-			sym = set_ea_info(EA_SRC, cpu_readop_arg(PC++), EA_UINT8, EA_VALUE);
+			sym = set_ea_info(EA_SRC, opram[PC++ - pc], EA_UINT8, EA_VALUE);
 			sprintf(dst, "mov   a,#%s", sym);
 			break;
 
 
 		//MOV data addr, #data
 		case 0x75:				/* 1: 0111 0101 */
-			sym = get_data_address(cpu_readop_arg(PC++));
-			sym2= set_ea_info(EA_SRC, cpu_readop_arg(PC++), EA_UINT8, EA_VALUE);
+			sym = get_data_address(opram[PC++ - pc]);
+			sym2= set_ea_info(EA_SRC, opram[PC++ - pc], EA_UINT8, EA_VALUE);
 			sprintf(dst, "mov   %s,#%s", sym, sym2);
 			break;
 
@@ -702,7 +708,7 @@ unsigned Dasm8051(char *dst, unsigned pc)
 		//MOV @R0/@R1, #data    /* 1: 0111 011i */
 		case 0x76:
 		case 0x77:
-			sym = set_ea_info(EA_SRC, cpu_readop_arg(PC++), EA_UINT8, EA_VALUE);
+			sym = set_ea_info(EA_SRC, opram[PC++ - pc], EA_UINT8, EA_VALUE);
 			sprintf(dst, "mov   @r%d,#%s", op&1, sym);
 			break;
 
@@ -716,21 +722,21 @@ unsigned Dasm8051(char *dst, unsigned pc)
 		case 0x7d:
 		case 0x7e:
 		case 0x7f:
-			sym = set_ea_info(EA_SRC, cpu_readop_arg(PC++), EA_UINT8, EA_VALUE);
+			sym = set_ea_info(EA_SRC, opram[PC++ - pc], EA_UINT8, EA_VALUE);
 			sprintf(dst, "mov   r%d,#%s", (op & 7), sym);
 			break;
 
 
 		//SJMP code addr
 		case 0x80:				/* 1: 1000 0000 */
-			rel = cpu_readop_arg(PC++);
+			rel = opram[PC++ - pc];
 			sym = set_ea_info(EA_DST, (PC + rel), EA_UINT16, EA_ABS_PC);
 			sprintf(dst, "sjmp  %s", sym);
 			break;
 
 		//ANL C, bit addr
 		case 0x82:				/* 1: 1000 0010 */
-			sym = get_bit_address(cpu_readop_arg(PC++));
+			sym = get_bit_address(opram[PC++ - pc]);
 			sprintf(dst, "anl   c,%s", sym);
 			break;
 
@@ -746,8 +752,8 @@ unsigned Dasm8051(char *dst, unsigned pc)
 
 		//MOV data addr, data addr  (Note: 1st address is src, 2nd is dst, but the mov command works as mov dst,src)
 		case 0x85:				/* 1: 1000 0101 */
-			sym = get_data_address(cpu_readop_arg(PC++));
-			sym2 = get_data_address(cpu_readop_arg(PC++));
+			sym = get_data_address(opram[PC++ - pc]);
+			sym2 = get_data_address(opram[PC++ - pc]);
 			sprintf(dst, "mov   %s,%s", sym2,sym);
 			break;
 
@@ -755,7 +761,7 @@ unsigned Dasm8051(char *dst, unsigned pc)
 		//MOV data addr, @R0/@R1/* 1: 1000 011i */
 		case 0x86:
 		case 0x87:
-			sym = get_data_address(cpu_readop_arg(PC++));
+			sym = get_data_address(opram[PC++ - pc]);
 			sprintf(dst, "mov   %s,@r%d", sym, op&1);
 			break;
 
@@ -769,22 +775,22 @@ unsigned Dasm8051(char *dst, unsigned pc)
 		case 0x8d:
 		case 0x8e:
 		case 0x8f:
-			sym = get_data_address(cpu_readop_arg(PC++));
+			sym = get_data_address(opram[PC++ - pc]);
 			sprintf(dst, "mov   %s,r%d", sym, op&7);
 			break;
 
 
 		//MOV DPTR, #data16
 		case 0x90:				/* 1: 1001 0000 */
-			addr = (cpu_readop_arg(PC++)<<8) & 0xff00;
-			addr|= cpu_readop_arg(PC++);
+			addr = (opram[PC++ - pc]<<8) & 0xff00;
+			addr|= opram[PC++ - pc];
 			sym = set_ea_info(EA_SRC, addr , EA_UINT16, EA_VALUE);
 			sprintf(dst, "mov   dptr,#%s", sym);
 			break;
 
 		//MOV bit addr, C
 		case 0x92:				/* 1: 1001 0010 */
-			sym = get_bit_address(cpu_readop_arg(PC++));
+			sym = get_bit_address(opram[PC++ - pc]);
 			sprintf(dst, "mov   %s,c", sym);
 			break;
 
@@ -797,14 +803,14 @@ unsigned Dasm8051(char *dst, unsigned pc)
 
 		//SUBB A, #data
 		case 0x94:				/* 1: 1001 0100 */
-			sym = set_ea_info(EA_SRC, cpu_readop_arg(PC++), EA_UINT8, EA_VALUE);
+			sym = set_ea_info(EA_SRC, opram[PC++ - pc], EA_UINT8, EA_VALUE);
 			sprintf(dst, "subb  a,#%s", sym);
 			break;
 
 
 		//SUBB A, data addr
 		case 0x95:				/* 1: 1001 0101 */
-			sym = get_data_address(cpu_readop_arg(PC++));
+			sym = get_data_address(opram[PC++ - pc]);
 			sprintf(dst, "subb  a,%s", sym);
 			break;
 
@@ -831,14 +837,14 @@ unsigned Dasm8051(char *dst, unsigned pc)
 		//Unable to test
 		//ORL C, /bit addr
 		case 0xa0:				  /* 1: 1010 0000 */
-			sym = get_bit_address(cpu_readop_arg(PC++));
+			sym = get_bit_address(opram[PC++ - pc]);
 			sprintf(dst, "orl   c,/%s", sym);
 			break;
 
 
 		//MOV C, bit addr
 		case 0xa2:				  /* 1: 1010 0010 */
-			sym = get_bit_address(cpu_readop_arg(PC++));
+			sym = get_bit_address(opram[PC++ - pc]);
 			sprintf(dst, "mov   c,%s", sym);
 			break;
 
@@ -863,7 +869,7 @@ unsigned Dasm8051(char *dst, unsigned pc)
 		//MOV @R0/@R1, data addr  /* 1: 1010 011i */
 		case 0xa6:
 		case 0xa7:
-			sym = get_data_address(cpu_readop_arg(PC++));
+			sym = get_data_address(opram[PC++ - pc]);
 			sprintf(dst, "mov   @r%d,%s", op&1, sym);
 			break;
 
@@ -876,19 +882,19 @@ unsigned Dasm8051(char *dst, unsigned pc)
 		case 0xad:
 		case 0xae:
 		case 0xaf:
-			sym = get_data_address(cpu_readop_arg(PC++));
+			sym = get_data_address(opram[PC++ - pc]);
 			sprintf(dst, "mov   r%d,%s", op&7, sym);
 			break;
 
 		//ANL C,/bit addr
 		case 0xb0:						 /* 1: 1011 0000 */
-			sym = get_bit_address(cpu_readop_arg(PC++));
+			sym = get_bit_address(opram[PC++ - pc]);
 			sprintf(dst, "anl   c,/%s", sym);
 			break;
 
 		//CPL bit addr
 		case 0xb2:						 /* 1: 1011 0010 */
-			sym = get_bit_address(cpu_readop_arg(PC++));
+			sym = get_bit_address(opram[PC++ - pc]);
 			sprintf(dst, "cpl   %s", sym);
 			break;
 
@@ -901,16 +907,16 @@ unsigned Dasm8051(char *dst, unsigned pc)
 
 		//CJNE A, #data, code addr
 		case 0xb4:						 /* 1: 1011 0100 */
-			sym = set_ea_info(EA_SRC, cpu_readop_arg(PC++), EA_UINT8, EA_VALUE);
-			rel  = cpu_readop_arg(PC++);
+			sym = set_ea_info(EA_SRC, opram[PC++ - pc], EA_UINT8, EA_VALUE);
+			rel  = opram[PC++ - pc];
 			sym2 = set_ea_info(EA_DST, (PC + rel), EA_UINT16, EA_ABS_PC);
 			sprintf(dst, "cjne  a,#%s,%s", sym, sym2);
 			break;
 
 		//CJNE A, data addr, code addr
 		case 0xb5:						 /* 1: 1011 0101 */
-			sym = get_data_address(cpu_readop_arg(PC++));
-			rel  = cpu_readop_arg(PC++);
+			sym = get_data_address(opram[PC++ - pc]);
+			rel  = opram[PC++ - pc];
 			sym2 = set_ea_info(EA_DST, (PC + rel), EA_UINT16, EA_ABS_PC);
 			sprintf(dst, "cjne  a,%s,%s", sym, sym2);
 			break;
@@ -919,8 +925,8 @@ unsigned Dasm8051(char *dst, unsigned pc)
 		//CJNE @R0/@R1, #data, code addr /* 1: 1011 011i */
 		case 0xb6:
 		case 0xb7:
-			sym = set_ea_info(EA_SRC, cpu_readop_arg(PC++), EA_UINT8, EA_VALUE);
-			rel  = cpu_readop_arg(PC++);
+			sym = set_ea_info(EA_SRC, opram[PC++ - pc], EA_UINT8, EA_VALUE);
+			rel  = opram[PC++ - pc];
 			sym2 = set_ea_info(EA_DST, (PC + rel), EA_UINT16, EA_ABS_PC);
 			sprintf(dst, "cjne  @r%d,#%s,%s", op&1,sym, sym2);
 			break;
@@ -935,8 +941,8 @@ unsigned Dasm8051(char *dst, unsigned pc)
 		case 0xbd:
 		case 0xbe:
 		case 0xbf:
-			sym = set_ea_info(EA_SRC, cpu_readop_arg(PC++), EA_UINT8, EA_VALUE);
-			rel  = cpu_readop_arg(PC++);
+			sym = set_ea_info(EA_SRC, opram[PC++ - pc], EA_UINT8, EA_VALUE);
+			rel  = opram[PC++ - pc];
 			sym2 = set_ea_info(EA_DST, (PC + rel), EA_UINT16, EA_ABS_PC);
 			sprintf(dst, "cjne  r%d,#%s,%s", op&7,sym, sym2);
 			break;
@@ -944,14 +950,14 @@ unsigned Dasm8051(char *dst, unsigned pc)
 
 		//PUSH data addr
 		case 0xc0:						/* 1: 1100 0000 */
-			sym = get_data_address(cpu_readop_arg(PC++));
+			sym = get_data_address(opram[PC++ - pc]);
 			sprintf(dst, "push  %s", sym);
 			break;
 
 
 		//CLR bit addr
 		case 0xc2:						/* 1: 1100 0010 */
-			sym = get_bit_address(cpu_readop_arg(PC++));
+			sym = get_bit_address(opram[PC++ - pc]);
 			sprintf(dst, "clr   %s", sym);
 			break;
 
@@ -970,7 +976,7 @@ unsigned Dasm8051(char *dst, unsigned pc)
 
 		//XCH A, data addr
 		case 0xc5:						/* 1: 1100 0101 */
-			sym = get_data_address(cpu_readop_arg(PC++));
+			sym = get_data_address(opram[PC++ - pc]);
 			sprintf(dst, "xch   a,%s",sym);
 			break;
 
@@ -997,14 +1003,14 @@ unsigned Dasm8051(char *dst, unsigned pc)
 
 		//POP data addr
 		case 0xd0:						/* 1: 1101 0000 */
-			sym = get_data_address(cpu_readop_arg(PC++));
+			sym = get_data_address(opram[PC++ - pc]);
 			sprintf(dst, "pop   %s", sym);
 			break;
 
 
 		//SETB bit addr
 		case 0xd2:						/* 1: 1101 0010 */
-			sym = get_bit_address(cpu_readop_arg(PC++));
+			sym = get_bit_address(opram[PC++ - pc]);
 			sprintf(dst, "setb  %s", sym);
 			break;
 
@@ -1023,10 +1029,11 @@ unsigned Dasm8051(char *dst, unsigned pc)
 
 		//DJNZ data addr, code addr
 		case 0xd5:						/* 1: 1101 0101 */
-			sym = get_data_address(cpu_readop_arg(PC++));
-			rel  = cpu_readop_arg(PC++);
+			sym = get_data_address(opram[PC++ - pc]);
+			rel  = opram[PC++ - pc];
 			sym2 = set_ea_info(EA_DST, (PC + rel), EA_UINT16, EA_ABS_PC);
 			sprintf(dst, "djnz  %s,%s", sym, sym2);
+			flags = DASMFLAG_STEP_OVER;
 			break;
 
 
@@ -1046,9 +1053,10 @@ unsigned Dasm8051(char *dst, unsigned pc)
 		case 0xdd:
 		case 0xde:
 		case 0xdf:
-			rel = cpu_readop_arg(PC++);
+			rel = opram[PC++ - pc];
 			sym = set_ea_info(EA_DST, (PC + rel), EA_UINT16, EA_ABS_PC);
 			sprintf(dst, "djnz  r%d,%s",op&7,sym);
+			flags = DASMFLAG_STEP_OVER;
 			break;
 
 
@@ -1073,7 +1081,7 @@ unsigned Dasm8051(char *dst, unsigned pc)
 
 		//MOV A, data addr
 		case 0xe5:						/* 1: 1110 0101 */
-			sym = get_data_address(cpu_readop_arg(PC++));
+			sym = get_data_address(opram[PC++ - pc]);
 			sprintf(dst, "mov   a,%s", sym);
 			break;
 
@@ -1119,7 +1127,7 @@ unsigned Dasm8051(char *dst, unsigned pc)
 
 		//MOV data addr, A
 		case 0xf5:						/* 1: 1111 0101 */
-			sym = get_data_address(cpu_readop_arg(PC++));
+			sym = get_data_address(opram[PC++ - pc]);
 			sprintf(dst, "mov   %s,a", sym);
 			break;
 
@@ -1146,5 +1154,5 @@ unsigned Dasm8051(char *dst, unsigned pc)
 		default:
 			sprintf(dst, "illegal");
     }
-	return PC - pc;
+	return (PC - pc) | flags | DASMFLAG_SUPPORTED;
 }

@@ -134,7 +134,7 @@ void tms32010_get_info(UINT32 state, union cpuinfo *info);
 
 
 #ifdef	MAME_DEBUG
-extern unsigned Dasm32010(char *buffer, unsigned pc);
+extern unsigned Dasm32010(char *buffer, unsigned pc, const UINT8 *oprom, const UINT8 *opram);
 #endif
 
 #endif	/* _TMS32010_H */

@@ -13,9 +13,6 @@
     MEMORY ACCESSORS
 ***************************************************************************/
 
-#define ROPCODE(pc)		cpu_readop32((pc) * 4)
-
-
 #define INTEGER			0
 #define FLOAT			1
 #define NODEST			2
@@ -376,9 +373,9 @@ static void disasm_parallel_storestore(const char *opstring1, const char *opstri
 
 
 
-unsigned dasm_tms32031(char *buffer, unsigned pc)
+unsigned dasm_tms32031(char *buffer, unsigned pc, UINT32 op)
 {
-	UINT32 op = ROPCODE(pc);
+	UINT32 flags = 0;
 
 	switch (op >> 23)
 	{
@@ -497,6 +494,7 @@ unsigned dasm_tms32031(char *buffer, unsigned pc)
 
 		case 0x0c4: case 0x0c5:
 			sprintf(buffer, "CALL  $%06X", op & 0xffffff);
+			flags = DASMFLAG_STEP_OVER;
 			break;
 
 
@@ -548,6 +546,7 @@ unsigned dasm_tms32031(char *buffer, unsigned pc)
 			char temp[10];
 			sprintf(temp, "CALL%s", condition[(op >> 16) & 31]);
 			sprintf(buffer, "%-6s%s", temp, regname[op & 31]);
+			flags = DASMFLAG_STEP_OVER;
 			break;
 		}
 
@@ -556,6 +555,7 @@ unsigned dasm_tms32031(char *buffer, unsigned pc)
 			char temp[10];
 			sprintf(temp, "CALL%s", condition[(op >> 16) & 31]);
 			sprintf(buffer, "%-6s$%06X", temp, (pc + 1 + (INT16)op) & 0xffffff);
+			flags = DASMFLAG_STEP_OVER;
 			break;
 		}
 
@@ -565,16 +565,19 @@ unsigned dasm_tms32031(char *buffer, unsigned pc)
 			char temp[10];
 			sprintf(temp, "TRAP%s", condition[(op >> 16) & 31]);
 			sprintf(buffer, "%-6s$%02X", temp, op & 31);
+			flags = DASMFLAG_STEP_OVER;
 			break;
 		}
 
 
 		case 0x0f0:
 			sprintf(buffer, "RETI%s", condition[(op >> 16) & 31]);
+			flags = DASMFLAG_STEP_OUT;
 			break;
 
 		case 0x0f1:
 			sprintf(buffer, "RETS%s", condition[(op >> 16) & 31]);
+			flags = DASMFLAG_STEP_OUT;
 			break;
 
 
@@ -726,5 +729,5 @@ unsigned dasm_tms32031(char *buffer, unsigned pc)
 			break;
 	}
 
-	return 1;
+	return 1 | flags | DASMFLAG_SUPPORTED;
 }

@@ -2167,7 +2167,7 @@ INPUT_PORTS_END
 GAME( 1992, aircombj, 0,       poly_c140_typeB,   aircombt,     aircombt, ROT0,    "Namco", "Air Combat (Japan)", GAME_NOT_WORKING ) /* mostly working */
 GAME( 1992, aircombu, aircombj,poly_c140_typeB,   aircombt,     aircombt, ROT0,    "Namco", "Air Combat (US)",	  GAME_NOT_WORKING ) /* mostly working */
 GAME( 1993, cybsled,  0,       poly_c140_typeA,   cybsled,      cybsled,  ROT0,    "Namco", "Cyber Sled",         GAME_NOT_WORKING ) /* mostly working */
-GAME( 1999, driveyes, 0,       poly_c140_typeA,   s21default,   driveyes, ROT0,    "Namco", "Driver's Eyes",      GAME_NOT_WORKING )
+GAME( 1987, driveyes, 0,       poly_c140_typeA,   s21default,   driveyes, ROT0,    "Namco", "Driver's Eyes",      GAME_NOT_WORKING )
 /* 1992, ShimDrive */
 GAME( 1991, solvalou, 0,       poly_c140_typeA,   s21default,   solvalou, ROT0,    "Namco", "Solvalou (Japan)",   GAME_NOT_WORKING|GAME_IMPERFECT_GRAPHICS ) /* working and playable */
 GAME( 1991, starblad, 0,       poly_c140_typeA,   s21default,   starblad, ROT0,    "Namco", "Starblade",		  GAME_IMPERFECT_GRAPHICS ) /* working and playable */

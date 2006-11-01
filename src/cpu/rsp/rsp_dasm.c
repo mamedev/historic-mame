@@ -236,6 +236,7 @@ offs_t rsp_dasm_one(char *buffer, offs_t pc, UINT32 op)
 	int rt = (op >> 16) & 31;
 	int rd = (op >> 11) & 31;
 	int shift = (op >> 6) & 31;
+	UINT32 flags = 0;
 
 	output = buffer;
 
@@ -262,7 +263,7 @@ offs_t rsp_dasm_one(char *buffer, offs_t pc, UINT32 op)
 				case 0x04:	print("sllv   %s, %s, %s", reg[rd], reg[rt], reg[rs]); break;
 				case 0x06:	print("srlv   %s, %s, %s", reg[rd], reg[rt], reg[rs]); break;
 				case 0x07:	print("srav   %s, %s, %s", reg[rd], reg[rt], reg[rs]); break;
-				case 0x08:	print("jr     %s", reg[rs]); break;
+				case 0x08:	print("jr     %s", reg[rs]); if (rs == 31) flags = DASMFLAG_STEP_OUT; break;
 				case 0x09:
 				{
 					if (rd == 31)
@@ -273,9 +274,10 @@ offs_t rsp_dasm_one(char *buffer, offs_t pc, UINT32 op)
 					{
 						print("jalr   %s, %s", reg[rs], reg[rd]);
 					}
-					break;
+					flags = DASMFLAG_STEP_OVER | DASMFLAG_STEP_OVER_EXTRA(1);
+ 					break;
 				}
-				case 0x0d:	print("break"); break;
+				case 0x0d:	print("break"); flags = DASMFLAG_STEP_OVER;	break;
 				case 0x20:	print("add    %s, %s, %s", reg[rd], reg[rs], reg[rt]); break;
 				case 0x21:	print("addu   %s, %s, %s", reg[rd], reg[rs], reg[rt]); break;
 				case 0x22:	print("sub    %s, %s, %s", reg[rd], reg[rs], reg[rt]); break;
@@ -339,5 +341,5 @@ offs_t rsp_dasm_one(char *buffer, offs_t pc, UINT32 op)
 		default:	print("???"); break;
 	}
 
-	return 4;
+	return 4 | flags | DASMFLAG_SUPPORTED;
 }

@@ -76,7 +76,7 @@ WRITE32_HANDLER( sh2_internal_w );
 READ32_HANDLER( sh2_internal_r );
 
 #ifdef MAME_DEBUG
-extern unsigned DasmSH2( char *dst, unsigned pc );
+extern unsigned DasmSH2( char *dst, unsigned pc, UINT16 opcode );
 #endif
 
 #endif /* _SH2_H */

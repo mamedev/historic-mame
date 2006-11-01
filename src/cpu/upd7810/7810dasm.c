@@ -3962,13 +3962,15 @@ static const char *regname[32] =
 
 static unsigned upd7810_get_reg(int reg) { union cpuinfo info; upd7810_get_info(CPUINFO_INT_REGISTER + (reg), &info); return info.i; }
 
-static unsigned Dasm( char *buffer, unsigned pc, struct dasm_s *dasmXX )
+static unsigned Dasm( char *buffer, unsigned pc, struct dasm_s *dasmXX, const UINT8 *oprom, const UINT8 *opram )
 {
-	UINT8 op = cpu_readop(pc++), op2, t;
+	unsigned opc = pc;
+	UINT8 op = oprom[pc++ - opc], op2, t;
 	int offset;
 	unsigned l, ea;
 	const char *symbol;
 	const char *a;
+	UINT32 flags = 0;
 
 	t = dasmXX[op].token;
 	a = dasmXX[op].args;
@@ -3979,13 +3981,18 @@ static unsigned Dasm( char *buffer, unsigned pc, struct dasm_s *dasmXX )
 	{
 		struct dasm_s *p_dasm = (struct dasm_s *)a;
 
-		op2 = cpu_readop(pc++);
+		op2 = oprom[pc++ - opc];
 		t = p_dasm[op2].token;
 		a = p_dasm[op2].args;
 		l = p_dasm[op2].oplen;
 	}
 
 	buffer += sprintf(buffer, "%-8.8s", token[t]);
+
+	if (t == CALB || t == CALF || t == CALL || t == CALT)
+		flags = DASMFLAG_STEP_OVER;
+	else if (t == RET || t == RETI)
+		flags = DASMFLAG_STEP_OUT;
 
 	while (a && *a)
 	{
@@ -3995,24 +4002,24 @@ static unsigned Dasm( char *buffer, unsigned pc, struct dasm_s *dasmXX )
 			switch (*a)
 			{
 			case 'a':   /* address V * 256 + offset */
-				op2 = cpu_readop_arg(pc++);
+				op2 = opram[pc++ - opc];
 				ea = upd7810_get_reg(UPD7810_V) * 256 + op2;
 				symbol = set_ea_info(0, ea, EA_UINT8, EA_MEM_RD);
 				buffer += sprintf(buffer, "%s", symbol);
 				break;
 			case 'b':   /* immediate byte */
-				ea = cpu_readop_arg(pc++);
+				ea = opram[pc++ - opc];
 				symbol = set_ea_info(1, ea, EA_UINT8, EA_VALUE);
 				buffer += sprintf(buffer, "%s", symbol);
 				break;
 			case 'w':   /* immediate word */
-				ea = cpu_readop_arg(pc++);
-				ea += cpu_readop_arg(pc++) << 8;
+				ea = opram[pc++ - opc];
+				ea += opram[pc++ - opc] << 8;
 				symbol = set_ea_info(1, ea, EA_UINT16, EA_VALUE);
 				buffer += sprintf(buffer, "%s", symbol);
 				break;
 			case 'd':   /* JRE address */
-				op2 = cpu_readop(pc++);
+				op2 = oprom[pc++ - opc];
 				offset = (op & 1) ? -(256 - op2): + op2;
 				symbol = set_ea_info(0, pc - 2, offset + 2, EA_REL_PC);
 				buffer += sprintf(buffer, "%s", symbol);
@@ -4023,19 +4030,19 @@ static unsigned Dasm( char *buffer, unsigned pc, struct dasm_s *dasmXX )
 				buffer += sprintf(buffer, "(%s)", symbol);
 				break;
 			case 'f':   /* CALF address */
-				op2 = cpu_readop(pc++);
+				op2 = oprom[pc++ - opc];
 				ea = 0x800 + 0x100 * (op & 0x07) + op2;
 				symbol = set_ea_info(0, ea, EA_DEFAULT, EA_ABS_PC);
 				buffer += sprintf(buffer, "%s", symbol);
 				break;
 			case 'o':   /* JR offset */
-				op2 = cpu_readop(pc++);
+				op2 = oprom[pc++ - opc];
 				offset = (INT8)(op << 2) >> 2;
 				symbol = set_ea_info(0, pc - 2, offset + 1, EA_REL_PC);
 				buffer += sprintf(buffer, "%s", symbol);
 				break;
 			case 'i':   /* bit manipulation */
-				op2 = cpu_readop(pc++);
+				op2 = oprom[pc++ - opc];
 				buffer += sprintf(buffer, "%s,%d", regname[op2 & 0x1f], op2 >> 5);
 				break;
 			default:
@@ -4048,15 +4055,15 @@ static unsigned Dasm( char *buffer, unsigned pc, struct dasm_s *dasmXX )
 	}
 	*buffer = '\0';
 
-	return l;
+	return l | flags | DASMFLAG_SUPPORTED;
 }
 
-unsigned Dasm7810( char *buffer, unsigned pc )
+unsigned Dasm7810( char *buffer, unsigned pc, const UINT8 *oprom, const UINT8 *opram )
 {
-	return Dasm( buffer, pc, dasmXX_7810 );
+	return Dasm( buffer, pc, dasmXX_7810, oprom, opram );
 }
 
-unsigned Dasm7807( char *buffer, unsigned pc )
+unsigned Dasm7807( char *buffer, unsigned pc, const UINT8 *oprom, const UINT8 *opram )
 {
-	return Dasm( buffer, pc, dasmXX_7807 );
+	return Dasm( buffer, pc, dasmXX_7807, oprom, opram );
 }

@@ -449,12 +449,15 @@ UINT32 ui_menu_stack_pop(void)
 
 UINT32 ui_menu_ui_handler(UINT32 state)
 {
+	UINT32 newstate;
+
 	/* if we have no menus stacked up, start with the main menu */
 	if (menu_stack[menu_stack_index].handler == NULL)
 		ui_menu_stack_push(menu_main, 0);
 
 	/* update the menu state */
-	menu_stack[menu_stack_index].state = (*menu_stack[menu_stack_index].handler)(menu_stack[menu_stack_index].state);
+	newstate = (*menu_stack[menu_stack_index].handler)(menu_stack[menu_stack_index].state);
+	menu_stack[menu_stack_index].state = newstate;
 
 	/* if the menus are to be hidden, return a cancel here */
 	if (input_ui_pressed(IPT_UI_CONFIGURE) || menu_stack[menu_stack_index].handler == NULL)

@@ -9,13 +9,14 @@
 
 #ifdef STANDALONE
 #define PC __pc + (offset << 3)
+#define OP_WORD(v) { v = filebuf[_pc>>3]; _pc += 8; v = v | (filebuf[_pc>>3] << 8); _pc += 8;}
 #define PARAM_WORD(v) { v = filebuf[_pc>>3]; _pc += 8; v = v | (filebuf[_pc>>3] << 8); _pc += 8;}
 #define PARAM_LONG(v) { int v1, v2; PARAM_WORD(v1); PARAM_WORD(v2); v = v1 | (v2 << 16); }
 #else
-#include "memory.h"
 #define PC __pc
-#define PARAM_WORD(v) { v = program_read_word_16le(_pc>>3); _pc += 16; }
-#define PARAM_LONG(v) { v = (program_read_word_16le((_pc>>3)+2)<<16)|program_read_word_16le(_pc>>3); _pc += 32; }
+#define OP_WORD(v) { v = rombase[(__pc - pcbase) >> 3] | (rombase[(__pc + 8 - pcbase) >> 3] << 8); _pc += 16; }
+#define PARAM_WORD(v) { v = rambase[(__pc - pcbase) >> 3] | (rambase[(__pc + 8 - pcbase) >> 3] << 8); _pc += 16; }
+#define PARAM_LONG(v) { v = rambase[(__pc - pcbase) >> 3] | (rambase[(__pc + 8 - pcbase) >> 3] << 8) | (rambase[(__pc + 16 - pcbase) >> 3] << 16) | (rambase[(__pc + 24 - pcbase) >> 3] << 24); _pc += 32; }
 #endif
 
 static UINT8 rf;
@@ -24,6 +25,10 @@ static UINT16 op,rs,rd;
 
 static char *buffer;
 static char temp[20];
+
+static const UINT8 *rombase;
+static const UINT8 *rambase;
+static offs_t pcbase;
 
 
 static void print_reg(UINT8 reg)
@@ -250,7 +255,7 @@ unsigned Dasm340x0(char *buff, UINT32 pc, int is_34020)
 	__pc = _pc = pc;
 	buffer = buff;
 
-	PARAM_WORD(op);
+	OP_WORD(op);
 
 	subop = (op & 0x01e0);
 	rs = (op >> 5) & 0x0f;		    /* Source register */
@@ -1737,13 +1742,19 @@ unsigned Dasm340x0(char *buff, UINT32 pc, int is_34020)
 	return (_pc - __pc) | flags | DASMFLAG_SUPPORTED;
 }
 
-unsigned Dasm34010(char *buff, UINT32 pc)
+unsigned Dasm34010(char *buff, UINT32 pc, const UINT8 *oprom, const UINT8 *opram)
 {
+	rombase = oprom;
+	rambase = opram;
+	pcbase = pc;
 	return Dasm340x0(buff, pc, 0);
 }
 
-unsigned Dasm34020(char *buff, UINT32 pc)
+unsigned Dasm34020(char *buff, UINT32 pc, const UINT8 *oprom, const UINT8 *opram)
 {
+	rombase = oprom;
+	rambase = opram;
+	pcbase = pc;
 	return Dasm340x0(buff, pc, 1);
 }
 

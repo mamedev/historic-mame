@@ -196,7 +196,7 @@ enum
 #define CF_RFE ( 16 )
 
 #ifdef MAME_DEBUG
-extern unsigned DasmMIPS( char *buffer, UINT32 pc, UINT8 *opram );
+extern unsigned DasmMIPS( char *buffer, UINT32 pc, const UINT8 *opram );
 #endif
 
 #if (HAS_PSXCPU)

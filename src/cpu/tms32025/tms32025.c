@@ -2134,12 +2134,12 @@ static void set_irq_line(int irqline, int state)
 /****************************************************************************
  *  Return a formatted string for a register
  ****************************************************************************/
-static offs_t tms32025_dasm(char *buffer, offs_t pc)
+static offs_t tms32025_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-	return Dasm32025( buffer, pc );
+	return Dasm32025( buffer, pc, oprom, opram );
 #else
-	sprintf( buffer, "$%04X", M_RDOP(pc) );
+	sprintf( buffer, "$%04X", (oprom[0] << 8) | oprom[1] );
 	return 2;
 #endif
 }

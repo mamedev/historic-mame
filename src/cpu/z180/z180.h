@@ -128,7 +128,7 @@ extern void z180_setOPbase(int pc);
 extern void z180_get_info(UINT32 state, union cpuinfo *info);
 
 #ifdef MAME_DEBUG
-extern unsigned DasmZ180(char *buffer, unsigned pc);
+extern unsigned DasmZ180(char *buffer, unsigned pc, const UINT8 *oprom, const UINT8 *opram);
 #endif
 
 #endif

@@ -198,9 +198,9 @@ static const char *dasm_PI(UINT16 bits, char *buffer)
 }
 
 
-unsigned dasm_dsp32(char *buffer, unsigned pc)
+unsigned dasm_dsp32(char *buffer, unsigned pc, UINT32 op)
 {
-	UINT32 op = ROPCODE(pc);
+	UINT32 flags = 0;
 
 	switch (op >> 25)
 	{
@@ -341,7 +341,11 @@ unsigned dasm_dsp32(char *buffer, unsigned pc)
 				else if (N)
 					sprintf(buffer, "goto $%x", ((INT32)N & 0xffffff));
 				else
+				{
+					if (((op >> 16) & 0x1f) == 20)
+						flags = DASMFLAG_STEP_OUT;
 					sprintf(buffer, "goto %s", rH);
+				}
 			}
 			else
 			{
@@ -352,7 +356,11 @@ unsigned dasm_dsp32(char *buffer, unsigned pc)
 				else if (N)
 					sprintf(buffer, "if (%s) goto $%x", condtable[C], ((INT32)N & 0xffffff));
 				else
+				{
+					if (((op >> 16) & 0x1f) == 20)
+						flags = DASMFLAG_STEP_OUT;
 					sprintf(buffer, "if (%s) goto %s", condtable[C], rH);
+				}
 			}
 			break;
 		}
@@ -365,13 +373,25 @@ unsigned dasm_dsp32(char *buffer, unsigned pc)
 			INT16 N = (INT16)op;
 
 			if (((op >> 16) & 0x1f) == 15)
+			{
 				sprintf(buffer, "if (%s-- >= 0) goto %s%s [%x]", rM, rH, signed_16bit_sep_nospace(N), (pc + 8 + N) & 0xffffff);
+				if (((pc + 8 + N) & 0xffffff) < pc)
+					flags = DASMFLAG_STEP_OVER;
+			}
 			else if (N && rH[0] != '0')
 				sprintf(buffer, "if (%s-- >= 0) goto %s%s", rM, rH, signed_16bit_sep_nospace(N));
 			else if (N)
+			{
 				sprintf(buffer, "if (%s-- >= 0) goto $%x", rM, ((INT32)N & 0xffffff));
+				if (((INT32)N & 0xffffff) < pc)
+					flags = DASMFLAG_STEP_OVER;
+			}
 			else
+			{
 				sprintf(buffer, "if (%s-- >= 0) goto %s", rM, rH);
+				if (((op >> 16) & 0x1f) == 20)
+					flags = DASMFLAG_STEP_OUT;
+			}
 			break;
 		}
 
@@ -398,6 +418,7 @@ unsigned dasm_dsp32(char *buffer, unsigned pc)
 				sprintf(buffer, "call $%x (%s)", ((INT32)N & 0xffffff), rM);
 			else
 				sprintf(buffer, "call %s (%s)", rH, rM);
+			flags = DASMFLAG_STEP_OVER | DASMFLAG_STEP_OVER_EXTRA(1);
 			break;
 		}
 
@@ -635,7 +656,11 @@ unsigned dasm_dsp32(char *buffer, unsigned pc)
 			else if (N)
 				sprintf(buffer, "goto $%x", ((INT32)N & 0xffffff));
 			else
+			{
+				if (((op >> 16) & 0x1f) == 20)
+					flags = DASMFLAG_STEP_OUT;
 				sprintf(buffer, "goto %s", rH);
+			}
 			break;
 		}
 
@@ -659,9 +684,10 @@ unsigned dasm_dsp32(char *buffer, unsigned pc)
 			INT32 N = (op & 0xffff) | ((INT32)((op & 0x1fe00000) << 3) >> 8);
 			const char *rM = regname[(op >> 16) & 0x1f];
 			sprintf(buffer, "call $%x (%s)", N & 0xffffff, rM);
+			flags = DASMFLAG_STEP_OVER | DASMFLAG_STEP_OVER_EXTRA(1);
 			break;
 		}
 	}
 
-	return 4;
+	return 4 | flags | DASMFLAG_SUPPORTED;
 }

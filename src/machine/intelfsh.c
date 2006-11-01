@@ -53,7 +53,17 @@ static void erase_finished( int chip )
 	struct flash_chip *c;
 
 	c = &chips[ chip ];
-	c->flash_mode = FM_NORMAL;
+
+	switch( c->flash_mode )
+	{
+	case FM_READSTATUS:
+		c->status = 0x80;
+		break;
+
+	case FM_ERASEAMD4:
+		c->flash_mode = FM_NORMAL;
+		break;
+	}
 }
 
 void intelflash_init(int chip, int type, void *data)
@@ -70,6 +80,7 @@ void intelflash_init(int chip, int type, void *data)
 	switch( c->type )
 	{
 	case FLASH_INTEL_28F016S5:
+	case FLASH_SHARP_LH28F016S:
 		c->bits = 8;
 		c->size = 0x200000;
 		c->maker_id = 0x89;
@@ -106,12 +117,13 @@ void intelflash_init(int chip, int type, void *data)
 		memset( data, 0xff, c->size );
 	}
 
+	c->status = 0x80;
 	c->flash_mode = FM_NORMAL;
 	c->flash_master_lock = 0;
-	c->status = 0;
 	c->timer = timer_alloc( erase_finished );
 	c->flash_memory = data;
 
+	state_save_register_item( "intelfsh", chip, c->status );
 	state_save_register_item( "intelfsh", chip, c->flash_mode );
 	state_save_register_item( "intelfsh", chip, c->flash_master_lock );
 	state_save_register_memory( "intelfsh", chip, "flash_memory", c->flash_memory, c->bits/8, c->size / (c->bits/8) );
@@ -236,7 +248,6 @@ void intelflash_write(int chip, UINT32 address, UINT32 data)
 			c->flash_mode = FM_SETMASTER;
 			break;
 		case 0x70:	// read status
-			c->status = 0x80;
 			c->flash_mode = FM_READSTATUS;
 			break;
 		case 0xaa:	// AMD ID select part 1
@@ -404,8 +415,10 @@ void intelflash_write(int chip, UINT32 address, UINT32 data)
 				logerror( "FM_CLEARPART1 not supported when c->bits == %d\n", c->bits );
 				break;
 			}
-			c->status = 0x80;
+			c->status = 0x00;
 			c->flash_mode = FM_READSTATUS;
+
+			timer_adjust( c->timer, TIME_IN_SEC( 1 ), chip, 0 );
 			break;
 		}
 		else

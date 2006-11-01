@@ -1680,11 +1680,11 @@ static int adsp2100_execute(int cycles)
     DEBUGGER DEFINITIONS
 ***************************************************************************/
 
-static offs_t adsp2100_dasm(char *buffer, offs_t pc)
+static offs_t adsp2100_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-	extern unsigned dasm2100(char *, unsigned);
-    return dasm2100(buffer, pc);
+	extern offs_t dasm2100(char *buffer, offs_t pc, const UINT8 *oprom);
+    return dasm2100(buffer, pc, oprom);
 #else
 	sprintf(buffer, "$%06X", RWORD_PGM(pc));
 	return 1;

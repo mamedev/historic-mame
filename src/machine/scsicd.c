@@ -13,8 +13,8 @@
 
 typedef struct
 {
-	UINT32 lba, blocks, last_lba, bytes_per_sector, num_subblocks, cur_subblock;
-	int last_command;
+	UINT32 lba, blocks, last_lba, bytes_per_sector, num_subblocks, cur_subblock, play_err_flag;
+	int last_command, last_retval;
  	cdrom_file *cdrom;
 	UINT8 last_packet[16];
 } SCSICd;
@@ -27,7 +27,7 @@ typedef struct
 int scsicd_exec_command(SCSICd *our_this, UINT8 *pCmdBuf)
 {
 	cdrom_file *cdrom = our_this->cdrom;
-	int retval = 12, trk;
+	int retval = 12, trk, temp;
 
 	// remember the last command for the data transfer phase
 	our_this->last_command = pCmdBuf[0];
@@ -41,7 +41,17 @@ int scsicd_exec_command(SCSICd *our_this, UINT8 *pCmdBuf)
 			retval = 12;
 			break;
 		case 3: 	// REQUEST SENSE
-			retval = 16;
+			logerror("SCSICD: REQUEST SENSE\n");
+
+			temp = pCmdBuf[5]<<8 | pCmdBuf[4];
+			if (temp < 18)
+			{
+				retval = temp;
+			}
+			else
+			{
+				retval = 18;
+			}
 			break;
 		case 0x12:	// INQUIRY
 			break;
@@ -56,6 +66,7 @@ int scsicd_exec_command(SCSICd *our_this, UINT8 *pCmdBuf)
 			retval = 8;
 			break;
 		case 0x28: 	// READ (10 byte)
+			cdrom_stop_audio(cdrom);
 			our_this->lba = pCmdBuf[2]<<24 | pCmdBuf[3]<<16 | pCmdBuf[4]<<8 | pCmdBuf[5];
 			our_this->blocks = pCmdBuf[7]<<8 | pCmdBuf[8];
 
@@ -85,16 +96,21 @@ int scsicd_exec_command(SCSICd *our_this, UINT8 *pCmdBuf)
 			retval = 16;
 			break;
 		case 0x43:	// READ TOC
-			// note: this is necessary for Firebeat, but it breaks GV and 573.  need to
-			// investigate further...
-/*          {
-                int trks = cdrom_get_last_track(cdrom);
-                retval = (trks * 8) + 4;
-            }*/
+			cdrom_stop_audio(cdrom);
 			break;
 		case 0x45:	// PLAY AUDIO  (10 byte)
 			our_this->lba = pCmdBuf[2]<<24 | pCmdBuf[3]<<16 | pCmdBuf[4]<<8 | pCmdBuf[5];
 			our_this->blocks = pCmdBuf[7]<<8 | pCmdBuf[8];
+
+			// special cases: lba of 0 means MSF of 00:02:00
+			if (our_this->lba == 0)
+			{
+				our_this->lba = 150;
+			}
+			else if (our_this->lba == 0xffffffff)
+			{
+				logerror("SCSICD: play audio from current not implemented!\n");
+			}
 
 			logerror("SCSICD: PLAY AUDIO (10) at LBA %x for %x blocks\n", our_this->lba, our_this->blocks);
 
@@ -102,13 +118,15 @@ int scsicd_exec_command(SCSICd *our_this, UINT8 *pCmdBuf)
 
 			if (cdrom_get_track_type(cdrom, trk))
 			{
-				logerror("SCSICD: track is audio\n");
+				our_this->play_err_flag = 0;
+				cdrom_start_audio(cdrom, our_this->lba, our_this->blocks);
 			}
 			else
 			{
 				logerror("SCSICD: track is NOT audio!\n");
-				retval = -1;
+				our_this->play_err_flag = 1;
 			}
+			retval = 0;
 			break;
 		case 0x48:	// PLAY AUDIO TRACK/INDEX
 			// be careful: tracks here are zero-based, but the SCSI command
@@ -131,6 +149,7 @@ int scsicd_exec_command(SCSICd *our_this, UINT8 *pCmdBuf)
 			}
 
 			logerror("SCSICD: PLAY AUDIO T/I: strk %d idx %d etrk %d idx %d frames %d\n", pCmdBuf[4], pCmdBuf[5], pCmdBuf[7], pCmdBuf[8], our_this->blocks);
+			retval = 0;
 			break;
 		case 0x4b:	// PAUSE/RESUME
 			if (cdrom)
@@ -148,6 +167,7 @@ int scsicd_exec_command(SCSICd *our_this, UINT8 *pCmdBuf)
 			retval = 0x18;
 			break;
 		case 0xa8: 	// READ (12 byte)
+			cdrom_stop_audio(cdrom);
 			our_this->lba = pCmdBuf[2]<<24 | pCmdBuf[3]<<16 | pCmdBuf[4]<<8 | pCmdBuf[5];
 			our_this->blocks = pCmdBuf[7]<<16 | pCmdBuf[8]<<8 | pCmdBuf[9];
 
@@ -180,6 +200,7 @@ int scsicd_exec_command(SCSICd *our_this, UINT8 *pCmdBuf)
 			break;
 	}
 
+	our_this->last_retval = retval;
 	return retval;
 }
 
@@ -199,11 +220,32 @@ void scsicd_read_data(SCSICd *our_this, int bytes, UINT8 *pData)
 	switch (our_this->last_command)
 	{
 		case 0x03:	// REQUEST SENSE
-			pData[0] = 0x80;	// valid sense
-			for (i = 1; i < 12; i++)
+			logerror("SCSICD: Reading REQUEST SENSE data\n");
+
+			pData[0] = 0x71;	// deferred error
+
+			if (our_this->last_retval == -1)
+			{
+				our_this->last_retval = 16;
+			}
+
+			for (i = 1; i < our_this->last_retval; i++)
 			{
 				pData[i] = 0;
 			}
+
+			if (cdrom_audio_active(cdrom))
+			{
+				pData[12] = 0x00;
+				pData[13] = 0x11;	// AUDIO PLAY OPERATION IN PROGRESS
+			}
+			else if (our_this->play_err_flag)
+			{
+				our_this->play_err_flag = 0;
+				pData[12] = 0x64;	// ILLEGAL MODE FOR THIS TRACK
+				pData[13] = 0x00;
+			}
+			// (else 00/00 means no error to report)
 			break;
 
 		case 0x12:	// INQUIRY
@@ -324,6 +366,12 @@ void scsicd_read_data(SCSICd *our_this, int bytes, UINT8 *pData)
 			break;
 
 		case 0x43:	// READ TOC
+			/*
+                Track numbers are problematic here: 0 = lead-in, 0xaa = lead-out.
+                That makes sense in terms of how real-world CDs are referred to, but
+                our internal routines for tracks use "0" as track 1.  That probably
+                should be fixed...
+            */
 			logerror("SCSICD: READ TOC, format = %d\n", fifo[2]&0xf);
 			switch (fifo[2] & 0x0f)
 			{
@@ -343,31 +391,49 @@ void scsicd_read_data(SCSICd *our_this, int bytes, UINT8 *pData)
 							len = 8 + 2;
 						}
 
+						// the returned TOC DATA LENGTH must be the full amount,
+						// regardless of how much we're able to pass back due to in_len
+						pData[0] = (len>>8) & 0xff;
+						pData[1] = (len & 0xff);
+						pData[2] = 0;
+						pData[3] = trks;
+
 						if (len > in_len)
 						{
 							len = in_len;
 						}
 
-						pData[0] = (len>>8) & 0xff;
-						pData[1] = (len & 0xff);
-						pData[2] = start_trk+1;
-						pData[3] = trks;
-
-						dptr = (start_trk * 8) + 4;
-						if (start_trk == 0xaa)
+						dptr = 4;
+						// track "0" is the lead-in, track 0xaa is the lead-out
+						if ((start_trk == 0) || (start_trk == 0xaa))
 						{
-							dptr = 4;
 							trks = 1;
 						}
 
+						trks = ((in_len-4) / 8);
 						for (i = start_trk; i < start_trk + trks; i++)
 						{
 							pData[dptr++] = 0;
-							pData[dptr++] = cdrom_get_adr_control(cdrom, i);
+							if (i == 0)
+							{
+								pData[dptr++] = 0;
+								tstart = 0;
+							}
+							else
+							{
+								if (i == 0xaa)
+								{
+									pData[dptr++] = cdrom_get_adr_control(cdrom, i);
+									tstart = cdrom_get_track_start(cdrom, i, (fifo[1]&2)>>1);
+								}
+								else
+								{
+									pData[dptr++] = cdrom_get_adr_control(cdrom, i-1);
+									tstart = cdrom_get_track_start(cdrom, i-1, (fifo[1]&2)>>1);
+								}
+							}
 							pData[dptr++] = i;
 							pData[dptr++] = 0;
-
-							tstart = cdrom_get_track_start(cdrom, i, (fifo[1]&2)>>1);
 
 							pData[dptr++] = (tstart>>24) & 0xff;
 							pData[dptr++] = (tstart>>16) & 0xff;
@@ -481,6 +547,7 @@ int scsicd_dispatch(int operation, void *file, INT64 intparm, UINT8 *ptrparm)
 			instance->bytes_per_sector = 2048;
 			instance->num_subblocks = 1;
  			instance->cur_subblock = 0;
+			instance->play_err_flag = 0;
 
 			#ifdef MESS
 			instance->cdrom = mess_cd_get_cdrom_file_by_number(intparm);

@@ -2,9 +2,6 @@
 #include "se3208.h"
 
 
-//Decode the ER value thorugh the last opcodes, set to 0 to disable
-#define ER_TRACEBACK	4
-
 static struct _DisSE3208
 {
 	UINT32 PC;
@@ -25,13 +22,14 @@ static struct _DisSE3208
 #define ZEX16(val)	((val)&0xFFFF)
 #define SEX(bits,val)	((val)&(1<<(bits-1))?((val)|(~((1<<bits)-1))):(val&((1<<bits)-1)))
 
-typedef void (*_OP)(UINT16 Opcode,char *dst);
-#define INST(a) static void a(UINT16 Opcode,char *dst)
+typedef UINT32 (*_OP)(UINT16 Opcode,char *dst);
+#define INST(a) static UINT32 a(UINT16 Opcode,char *dst)
 
 
 INST(INVALIDOP)
 {
 	sprintf(dst,"INVALID");
+	return 0;
 }
 
 INST(LDB)
@@ -49,6 +47,7 @@ INST(LDB)
 		sprintf(dst,"LDB   (0x%x),%%R%d",Index+Offset,SrcDst);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(STB)
@@ -66,6 +65,7 @@ INST(STB)
 		sprintf(dst,"STB   %%R%d,(0x%x)",SrcDst,Index+Offset);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(LDS)
@@ -85,6 +85,7 @@ INST(LDS)
 		sprintf(dst,"LDS   (0x%x),%%R%d",Index+Offset,SrcDst);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(STS)
@@ -104,6 +105,7 @@ INST(STS)
 		sprintf(dst,"STS   %%R%d,(0x%x)",SrcDst,Index+Offset);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(LD)
@@ -123,6 +125,7 @@ INST(LD)
 		sprintf(dst,"LD    (0x%x),%%R%d",Index+Offset,SrcDst);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(ST)
@@ -142,6 +145,7 @@ INST(ST)
 		sprintf(dst,"ST    %%R%d,(0x%x)",SrcDst,Index+Offset);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(LDBU)
@@ -159,6 +163,7 @@ INST(LDBU)
 		sprintf(dst,"LDBU  (0x%x),%%R%d",Index+Offset,SrcDst);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(LDSU)
@@ -178,6 +183,7 @@ INST(LDSU)
 		sprintf(dst,"LDSU  (0x%x),%%R%d",Index+Offset,SrcDst);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 
@@ -194,6 +200,7 @@ INST(LERI)
 	sprintf(dst,"LERI  0x%x",Imm/*,Context.ER*/);
 
 	SETFLAG(FLAG_E);
+	return 0;
 }
 
 INST(LDSP)
@@ -209,6 +216,7 @@ INST(LDSP)
 	sprintf(dst,"LD    (%%SP,0x%x),%%R%d",Offset,SrcDst);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(STSP)
@@ -224,6 +232,7 @@ INST(STSP)
 	sprintf(dst,"ST    %%R%d,(%%SP,0x%x)",SrcDst,Offset);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(PUSH)
@@ -255,6 +264,7 @@ INST(PUSH)
 		strcat(str,"%R0-");
 	str[strlen(str)-1]=0;
 	strcpy(dst,str);
+	return 0;
 }
 
 INST(POP)
@@ -293,6 +303,7 @@ INST(POP)
 	if(Ret)
 		strcat(str,"\n");
 	strcpy(dst,str);
+	return Ret ? DASMFLAG_STEP_OUT : 0;
 }
 
 INST(LEATOSP)
@@ -311,6 +322,7 @@ INST(LEATOSP)
 		sprintf(dst,"LEA   (0x%x),%%SP",Index+Offset);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(LEAFROMSP)
@@ -326,6 +338,7 @@ INST(LEAFROMSP)
 	sprintf(dst,"LEA   (%%SP,0x%x),%%R%d",Offset,Index);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(LEASPTOSP)
@@ -343,6 +356,7 @@ INST(LEASPTOSP)
 	sprintf(dst,"LEA   (%%SP,0x%x),%%SP",Offset);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(MOV)
@@ -354,6 +368,7 @@ INST(MOV)
 		sprintf(dst,"NOP");
 	else
 		sprintf(dst,"MOV   %%SR%d,%%DR%d",Src,Dst);
+	return 0;
 }
 
 INST(LDI)
@@ -369,6 +384,7 @@ INST(LDI)
 	sprintf(dst,"LDI   0x%x,%%R%d",Imm,Dst);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(LDBSP)
@@ -382,6 +398,7 @@ INST(LDBSP)
 	sprintf(dst,"LDB   (%%SP,0x%x),%%R%d",Offset,SrcDst);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(STBSP)
@@ -395,6 +412,7 @@ INST(STBSP)
 	sprintf(dst,"STB   %%R%d,(%%SP,0x%x)",SrcDst,Offset);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(LDSSP)
@@ -410,6 +428,7 @@ INST(LDSSP)
 	sprintf(dst,"LDS   (%%SP,0x%x),%%R%d",Offset,SrcDst);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(STSSP)
@@ -425,6 +444,7 @@ INST(STSSP)
 	sprintf(dst,"STS   %%R%d,(%%SP,0x%x)",SrcDst,Offset);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(LDBUSP)
@@ -438,6 +458,7 @@ INST(LDBUSP)
 	sprintf(dst,"LDBU  (%%SP,0x%x),%%R%d",Offset,SrcDst);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(LDSUSP)
@@ -453,6 +474,7 @@ INST(LDSUSP)
 	sprintf(dst,"LDSU  (%%SP,0x%x),%%R%d",Offset,SrcDst);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(ADDI)
@@ -470,6 +492,7 @@ INST(ADDI)
 	sprintf(dst,"ADD   %%SR%d,0x%x,%%DR%d",Src,Imm2,Dst/*,Imm2*/);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(SUBI)
@@ -488,6 +511,7 @@ INST(SUBI)
 
 	CLRFLAG(FLAG_E);
 
+	return 0;
 }
 
 INST(ADCI)
@@ -505,6 +529,7 @@ INST(ADCI)
 	sprintf(dst,"ADC   %%SR%d,0x%x,%%DR%d",Src,Imm2,Dst/*,Imm2*/);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(SBCI)
@@ -522,6 +547,7 @@ INST(SBCI)
 	sprintf(dst,"SBC   %%SR%d,0x%x,%%DR%d",Src,Imm2,Dst/*,Imm2*/);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(ANDI)
@@ -539,6 +565,7 @@ INST(ANDI)
 	sprintf(dst,"AND   %%SR%d,0x%x,%%DR%d",Src,Imm2,Dst/*,Imm2*/);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(ORI)
@@ -556,6 +583,7 @@ INST(ORI)
 	sprintf(dst,"OR    %%SR%d,0x%x,%%DR%d",Src,Imm2,Dst/*,Imm2*/);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(XORI)
@@ -573,6 +601,7 @@ INST(XORI)
 	sprintf(dst,"XOR   %%SR%d,0x%x,%%DR%d",Src,Imm2,Dst/*,Imm2*/);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(CMPI)
@@ -589,6 +618,7 @@ INST(CMPI)
 	sprintf(dst,"CMP   %%SR%d,0x%x",Src,Imm2/*,Imm2*/);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(TSTI)
@@ -605,6 +635,7 @@ INST(TSTI)
 	sprintf(dst,"TST   %%SR%d,0x%x",Src,Imm2/*,Imm2*/);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(ADD)
@@ -614,6 +645,7 @@ INST(ADD)
 	UINT32 Dst=EXTRACT(Opcode,0,2);
 
 	sprintf(dst,"ADD   %%SR%d,%%SR%d,%%DR%d",Src1,Src2,Dst);
+	return 0;
 }
 
 INST(SUB)
@@ -623,6 +655,7 @@ INST(SUB)
 	UINT32 Dst=EXTRACT(Opcode,0,2);
 
 	sprintf(dst,"SUB   %%SR%d,%%SR%d,%%DR%d",Src1,Src2,Dst);
+	return 0;
 }
 
 INST(ADC)
@@ -632,6 +665,7 @@ INST(ADC)
 	UINT32 Dst=EXTRACT(Opcode,0,2);
 
 	sprintf(dst,"ADC   %%SR%d,%%SR%d,%%DR%d",Src1,Src2,Dst);
+	return 0;
 }
 
 INST(SBC)
@@ -641,6 +675,7 @@ INST(SBC)
 	UINT32 Dst=EXTRACT(Opcode,0,2);
 
 	sprintf(dst,"SBC   %%SR%d,%%SR%d,%%DR%d",Src1,Src2,Dst);
+	return 0;
 }
 
 INST(AND)
@@ -650,6 +685,7 @@ INST(AND)
 	UINT32 Dst=EXTRACT(Opcode,0,2);
 
 	sprintf(dst,"AND   %%SR%d,%%SR%d,%%DR%d",Src1,Src2,Dst);
+	return 0;
 }
 
 INST(OR)
@@ -659,6 +695,7 @@ INST(OR)
 	UINT32 Dst=EXTRACT(Opcode,0,2);
 
 	sprintf(dst,"OR    %%SR%d,%%SR%d,%%DR%d",Src1,Src2,Dst);
+	return 0;
 }
 
 INST(XOR)
@@ -668,6 +705,7 @@ INST(XOR)
 	UINT32 Dst=EXTRACT(Opcode,0,2);
 
 	sprintf(dst,"XOR   %%SR%d,%%SR%d,%%DR%d",Src1,Src2,Dst);
+	return 0;
 }
 
 INST(CMP)
@@ -676,6 +714,7 @@ INST(CMP)
 	UINT32 Src1=EXTRACT(Opcode,3,5);
 
 	sprintf(dst,"CMP   %%SR%d,%%SR%d",Src1,Src2);
+	return 0;
 }
 
 INST(TST)
@@ -684,6 +723,7 @@ INST(TST)
 	UINT32 Src1=EXTRACT(Opcode,3,5);
 
 	sprintf(dst,"TST   %%SR%d,%%SR%d",Src1,Src2);
+	return 0;
 }
 
 INST(MULS)
@@ -695,6 +735,7 @@ INST(MULS)
 	sprintf(dst,"MUL   %%SR%d,%%SR%d,%%DR%d",Src1,Src2,Dst);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(NEG)
@@ -703,6 +744,7 @@ INST(NEG)
 	UINT32 Src=EXTRACT(Opcode,3,5);
 
 	sprintf(dst,"NEG   %%SR%d,%%DR%d",Src,Dst);
+	return 0;
 }
 
 INST(CALL)
@@ -718,6 +760,7 @@ INST(CALL)
 	sprintf(dst,"CALL  0x%x",Context.PC+2+Offset2);
 
 	CLRFLAG(FLAG_E);
+	return DASMFLAG_STEP_OVER;
 }
 
 INST(JV)
@@ -733,6 +776,7 @@ INST(JV)
 	sprintf(dst,"JV    0x%x",Context.PC+2+Offset2);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(JNV)
@@ -748,6 +792,7 @@ INST(JNV)
 	sprintf(dst,"JNV   0x%x",Context.PC+2+Offset2);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(JC)
@@ -763,6 +808,7 @@ INST(JC)
 	sprintf(dst,"JC    0x%x",Context.PC+2+Offset2);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(JNC)
@@ -778,6 +824,7 @@ INST(JNC)
 	sprintf(dst,"JNC   0x%x",Context.PC+2+Offset2);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(JP)
@@ -793,6 +840,7 @@ INST(JP)
 	sprintf(dst,"JP    0x%x",Context.PC+2+Offset2);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(JM)
@@ -808,6 +856,7 @@ INST(JM)
 	sprintf(dst,"JM    0x%x",Context.PC+2+Offset2);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(JNZ)
@@ -823,6 +872,7 @@ INST(JNZ)
 	sprintf(dst,"JNZ   0x%x",Context.PC+2+Offset2);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(JZ)
@@ -838,6 +888,7 @@ INST(JZ)
 	sprintf(dst,"JZ    0x%x",Context.PC+2+Offset2);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(JGE)
@@ -853,6 +904,7 @@ INST(JGE)
 	sprintf(dst,"JGE   0x%x",Context.PC+2+Offset2);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(JLE)
@@ -868,6 +920,7 @@ INST(JLE)
 	sprintf(dst,"JLE   0x%x",Context.PC+2+Offset2);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(JHI)
@@ -883,6 +936,7 @@ INST(JHI)
 	sprintf(dst,"JHI   0x%x",Context.PC+2+Offset2);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(JLS)
@@ -898,6 +952,7 @@ INST(JLS)
 	sprintf(dst,"JLS   0x%x",Context.PC+2+Offset2);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(JGT)
@@ -913,6 +968,7 @@ INST(JGT)
 	sprintf(dst,"JGT   0x%x",Context.PC+2+Offset2);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(JLT)
@@ -928,6 +984,7 @@ INST(JLT)
 	sprintf(dst,"JLT   0x%x",Context.PC+2+Offset2);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 
@@ -945,6 +1002,7 @@ INST(JMP)
 	sprintf(dst,"JMP   0x%x",Context.PC+2+Offset2);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(JR)
@@ -954,6 +1012,7 @@ INST(JR)
 	sprintf(dst,"JR    %%R%d",Src);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(CALLR)
@@ -963,6 +1022,7 @@ INST(CALLR)
 	sprintf(dst,"CALLR %%R%d",Src);
 
 	CLRFLAG(FLAG_E);
+	return DASMFLAG_STEP_OVER;
 }
 
 INST(ASR)
@@ -978,6 +1038,7 @@ INST(ASR)
 		sprintf(dst,"ASR   %x,%%R%d",Imm,Dst);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(LSR)
@@ -993,6 +1054,7 @@ INST(LSR)
 		sprintf(dst,"LSR   %x,%%R%d",Imm,Dst);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(ASL)
@@ -1008,6 +1070,7 @@ INST(ASL)
 		sprintf(dst,"ASL   %x,%%R%d",Imm,Dst);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(EXTB)
@@ -1017,6 +1080,7 @@ INST(EXTB)
 	sprintf(dst,"EXTB  %%R%d",Dst);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(EXTS)
@@ -1026,6 +1090,7 @@ INST(EXTS)
 	sprintf(dst,"EXTS  %%R%d",Dst);
 
 	CLRFLAG(FLAG_E);
+	return 0;
 }
 
 INST(SET)
@@ -1033,6 +1098,7 @@ INST(SET)
 	UINT32 Imm=EXTRACT(Opcode,0,3);
 
 	sprintf(dst,"SET   0x%x",Imm);
+	return 0;
 }
 
 INST(CLR)
@@ -1040,6 +1106,7 @@ INST(CLR)
 	UINT32 Imm=EXTRACT(Opcode,0,3);
 
 	sprintf(dst,"CLR   0x%x",Imm);
+	return 0;
 }
 
 INST(SWI)
@@ -1047,6 +1114,7 @@ INST(SWI)
 	UINT32 Imm=EXTRACT(Opcode,0,3);
 
 	sprintf(dst,"SWI   0x%x",Imm);
+	return 0;
 }
 
 INST(HALT)
@@ -1054,6 +1122,7 @@ INST(HALT)
 	UINT32 Imm=EXTRACT(Opcode,0,3);
 
 	sprintf(dst,"HALT  0x%x",Imm);
+	return 0;
 }
 
 INST(MVTC)
@@ -1061,6 +1130,7 @@ INST(MVTC)
 	UINT32 Imm=EXTRACT(Opcode,0,3);
 
 	sprintf(dst,"MVTC  %%R0,%%CR%d",Imm);
+	return 0;
 }
 
 INST(MVFC)
@@ -1068,6 +1138,7 @@ INST(MVFC)
 	UINT32 Imm=EXTRACT(Opcode,0,3);
 
 	sprintf(dst,"MVFC  %%CR0%d,%%R0",Imm);
+	return 0;
 }
 
 static _OP DecodeOp(UINT16 Opcode)
@@ -1329,28 +1400,14 @@ static _OP DecodeOp(UINT16 Opcode)
 }
 
 
-int SE3208Dasm(UINT32 PC,char *Buffer)
+int SE3208Dasm(UINT32 PC,char *Buffer,const UINT8 *oprom)
 {
 	UINT16 Opcode;
-	UINT32 InitialPC=PC;
-	int i;
 
 	CLRFLAG(FLAG_E);
 	Context.ER=0;
 
-	PC-=ER_TRACEBACK*2;
-	for(i=0;i<ER_TRACEBACK+1;++i)
-	{
-		if(PC>InitialPC)	//OVerflow on traceback
-		{
-			PC+=2;
-			continue;
-		}
-		Context.PC=PC;
-		Opcode=cpu_readop16(WORD_XOR_LE(PC));
-		DecodeOp(Opcode)(Opcode,Buffer);
-		PC+=2;
-	}
-
-	return 2;
+	Context.PC=PC;
+	Opcode=oprom[0] | (oprom[1] << 8);
+	return 2 | ((*DecodeOp(Opcode))(Opcode,Buffer)) | DASMFLAG_SUPPORTED;
 }

@@ -445,20 +445,20 @@ static void v60_set_context(void *src)
 
 
 #ifndef MAME_DEBUG
-static offs_t v60_dasm(char *buffer,  offs_t pc)
+static offs_t v60_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	sprintf(buffer, "$%02X", program_read_byte_16le(pc));
 	return 1;
 }
 
-static offs_t v70_dasm(char *buffer,  offs_t pc)
+static offs_t v70_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	sprintf(buffer, "$%02X", program_read_byte_32le(pc));
 	return 1;
 }
 #else
-offs_t v60_dasm(char *buffer,  offs_t pc);
-offs_t v70_dasm(char *buffer,  offs_t pc);
+offs_t v60_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
+offs_t v70_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
 #endif
 
 

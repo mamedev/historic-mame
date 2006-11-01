@@ -422,12 +422,12 @@ getout:
  *
  *************************************/
 
-static offs_t t11_dasm(char *buffer, offs_t pc)
+static offs_t t11_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-    return DasmT11(buffer,pc);
+    return DasmT11(buffer,pc,oprom,opram);
 #else
-	sprintf( buffer, "$%04X", program_read_word_16le(pc) );
+	sprintf( buffer, "$%04X", oprom[0] | (oprom[1] << 8) );
 	return 2;
 #endif
 }

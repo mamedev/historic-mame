@@ -309,10 +309,10 @@ static void g65816_set_irq_callback(int (*callback)(int))
 #ifdef MAME_DEBUG
 #include "g65816ds.h"
 #endif
-static unsigned g65816_dasm(char *buffer, unsigned pc)
+static offs_t g65816_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-	return g65816_disassemble(buffer, (pc & 0x00ffff), (pc & 0xff0000) >> 16, FLAG_M, FLAG_X);
+	return g65816_disassemble(buffer, (pc & 0x00ffff), (pc & 0xff0000) >> 16, oprom, FLAG_M, FLAG_X);
 #else
 	sprintf(buffer, "$%02X", g65816_read_8_immediate((pc & 0xff0000) | (pc & 0x00ffff)));
 	return 1;
@@ -380,7 +380,7 @@ void g65816_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;					break;
 		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
 		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 1;							break;
-		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 3;							break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 20; /* rough guess */			break;
 

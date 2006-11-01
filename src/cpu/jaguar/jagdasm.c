@@ -13,7 +13,7 @@
     MEMORY ACCESSORS
 ***************************************************************************/
 
-#define ROPCODE(pc)		(cpu_readop16(WORD_XOR_BE((UINT32)(pc))))
+#define ROPCODE(offs)	((oprom[offs] << 8) | oprom[(offs) + 1])
 
 
 /***************************************************************************
@@ -76,9 +76,10 @@ INLINE char *signed_16bit(INT16 val)
 	return temp;
 }
 
-unsigned dasmjag(int variant, char *buffer, unsigned pc)
+unsigned dasmjag(int variant, char *buffer, unsigned pc, const UINT8 *oprom)
 {
-	int op = ROPCODE(pc);
+	UINT32 flags = 0;
+	int op = ROPCODE(0);
 	int reg1 = (op >> 5) & 31;
 	int reg2 = op & 31;
 	int size = 2;
@@ -132,7 +133,7 @@ unsigned dasmjag(int variant, char *buffer, unsigned pc)
 		case 35:	sprintf(buffer, "moveq   %d,r%d", reg1, reg2);					break;
 		case 36:	sprintf(buffer, "moveta  r%d,r%d", reg1, reg2);					break;
 		case 37:	sprintf(buffer, "movefa  r%d,r%d", reg1, reg2);					break;
-		case 38:	sprintf(buffer, "movei   $%x,r%d", ROPCODE(pc) | (ROPCODE(pc+2)<<16), reg2); size = 6; break;
+		case 38:	sprintf(buffer, "movei   $%x,r%d", ROPCODE(2) | (ROPCODE(4)<<16), reg2); size = 6; break;
 		case 39:	sprintf(buffer, "loadb   (r%d),r%d", reg1, reg2);					break;
 		case 40:	sprintf(buffer, "loadw   (r%d),r%d", reg1, reg2);					break;
 		case 41:	sprintf(buffer, "load    (r%d),r%d", reg1, reg2);					break;
@@ -177,5 +178,5 @@ unsigned dasmjag(int variant, char *buffer, unsigned pc)
 					sprintf(buffer, "addqmod $%x,r%d", convert_zero[reg1], reg2);
 					break;
 	}
-	return size;
+	return size | flags | DASMFLAG_SUPPORTED;
 }

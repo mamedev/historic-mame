@@ -103,7 +103,7 @@
 #endif
 
 #ifdef MAME_DEBUG
-extern offs_t hd6309_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes);
+extern offs_t hd6309_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
 #endif
 
 /*#define BIG_SWITCH*/
@@ -1275,7 +1275,7 @@ void hd6309_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = hd6309_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 #ifdef MAME_DEBUG
-		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = hd6309_dasm;		break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = hd6309_dasm;		break;
 #endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &hd6309_ICount;			break;
 

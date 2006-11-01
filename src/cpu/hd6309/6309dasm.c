@@ -608,7 +608,7 @@ static const char *tfmregs[16] = {
 
 static const char *tfm_s[] = { "%s+,%s+", "%s-,%s-", "%s+,%s", "%s,%s+" };
 
-offs_t hd6309_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+offs_t hd6309_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	int i, k, page = 0, opcode, numoperands, mode, size, access;
 	const UINT8 *operandarray;

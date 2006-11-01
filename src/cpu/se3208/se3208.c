@@ -1824,12 +1824,12 @@ static void set_irq_line(int line,int state)
 		Context.IRQ=state;
 }
 
-static offs_t SE3208_Dasm(char *buffer, offs_t pc)
+static offs_t SE3208_Dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-	return SE3208Dasm(pc,buffer);
+	return SE3208Dasm(pc,buffer,oprom);
 #else
-	sprintf( buffer, "$%02X", cpu_readop16(pc) );
+	sprintf( buffer, "$%02X", oprom[0] | (oprom[1] << 8) );
 	return 2;
 #endif
 }
@@ -1915,7 +1915,7 @@ void SE3208_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = SE3208_Exit;					break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = SE3208_Run;				break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
-		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = SE3208_Dasm;			break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = SE3208_Dasm;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &SE3208_ICount;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */

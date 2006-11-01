@@ -30,11 +30,9 @@
 #include <ctype.h>
 
 #ifdef MAME_DEBUG					/* Compile interface to MAME */
-#include "memory.h"
+#include "cpuintrf.h"
 #include "tms32010.h"
 #include "debugger.h"
-#define READOP16(A)  (cpu_readop16(A))
-#define READARG16(A) (cpu_readop_arg16(A))
 #else								/* Compile interface for standalone */
 extern unsigned char *Buffer;
 #ifdef MSB_FIRST
@@ -237,8 +235,9 @@ static void InitDasm32010(void)
 	OpInizialized = 1;
 }
 
-unsigned Dasm32010(char *str, unsigned pc)
+unsigned Dasm32010(char *str, unsigned pc, const UINT8 *oprom, const UINT8 *opram)
 {
+	UINT32 flags = 0;
 	int a, b, d, k, m, n, p, r, s, w;	/* these can all be filled in by parsing an instruction */
 	int i;
 	int op;
@@ -251,7 +250,7 @@ unsigned Dasm32010(char *str, unsigned pc)
 	if (!OpInizialized) InitDasm32010();
 
 	op = -1;				/* no matching opcode */
-	code = READOP16(2*pc);
+	code = (oprom[0] << 8) | oprom[1];
 	for ( i = 0; i < MAX_OPS; i++)
 	{
 		if ((code & Op[i].mask) == Op[i].bits)
@@ -274,7 +273,7 @@ unsigned Dasm32010(char *str, unsigned pc)
 	{
 		bit = 31;
 		code <<= 16;
-		code |= READARG16(2*(pc+cnt));
+		code |= (opram[2] << 8) | opram[3];
 		cnt++;
 	}
 	else
@@ -310,6 +309,12 @@ unsigned Dasm32010(char *str, unsigned pc)
 
 	/* now traverse format string */
 	cp = Op[op].fmt;
+
+	if (!strncmp(cp, "cal", 3))
+		flags = DASMFLAG_STEP_OVER;
+	else if (!strncmp(cp, "ret", 3))
+		flags = DASMFLAG_STEP_OUT;
+
 	while (*cp)
 	{
 		if (*cp == '%')
@@ -340,5 +345,5 @@ unsigned Dasm32010(char *str, unsigned pc)
 			*str = '\0';
 		}
 	}
-	return cnt;
+	return cnt | flags | DASMFLAG_SUPPORTED;
 }

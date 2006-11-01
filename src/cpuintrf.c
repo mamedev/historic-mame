@@ -770,7 +770,7 @@ static int cpu_active_context[CPU_COUNT];
 static int cpu_context_stack[4];
 static int cpu_context_stack_ptr;
 
-static offs_t (*cpu_dasm_override[CPU_COUNT])(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes);
+static offs_t (*cpu_dasm_override[CPU_COUNT])(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
 
 #define TEMP_STRING_POOL_ENTRIES 16
 static char temp_string_pool[TEMP_STRING_POOL_ENTRIES][256];
@@ -917,10 +917,6 @@ void cpuintrf_init(running_machine *machine)
 		(*intf->get_info)(CPUINFO_PTR_DISASSEMBLE, &info);
 		intf->disassemble = info.disassemble;
 
-		info.disassemble_new = NULL;
-		(*intf->get_info)(CPUINFO_PTR_DISASSEMBLE_NEW, &info);
-		intf->disassemble_new = info.disassemble_new;
-
 		info.translate = NULL;
 		(*intf->get_info)(CPUINFO_PTR_TRANSLATE, &info);
 		intf->translate = info.translate;
@@ -993,7 +989,7 @@ void cpuintrf_init(running_machine *machine)
  *
  *************************************/
 
-void cpuintrf_set_dasm_override(int cpunum, offs_t (*dasm_override)(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes))
+void cpuintrf_set_dasm_override(int cpunum, offs_t (*dasm_override)(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram))
 {
 	cpu_dasm_override[cpunum] = dasm_override;
 }
@@ -1203,85 +1199,28 @@ void activecpu_set_opbase(unsigned val)
     Disassembly
 --------------------------*/
 
-offs_t activecpu_dasm(char *buffer, offs_t pc)
-{
-	VERIFY_ACTIVECPU(activecpu_dasm);
-
-	/* if there's no old-style assembler, do some work to make this call work with the new one */
-	if (!cpu[activecpu].intf.disassemble)
-	{
-		int dbwidth = activecpu_databus_width(ADDRESS_SPACE_PROGRAM);
-		int maxbytes = activecpu_max_instruction_bytes();
-		int endianness = activecpu_endianness();
-		UINT8 opbuf[64], argbuf[64];
-		int xorval = 0;
-		int numbytes;
-
-		/* determine the XOR to get the bytes in order */
-		switch (dbwidth)
-		{
-			case 8:		xorval = 0;																break;
-			case 16:	xorval = (endianness == CPU_IS_LE) ? BYTE_XOR_LE(0) : BYTE_XOR_BE(0);	break;
-			case 32:	xorval = (endianness == CPU_IS_LE) ? BYTE4_XOR_LE(0) : BYTE4_XOR_BE(0);	break;
-			case 64:	xorval = (endianness == CPU_IS_LE) ? BYTE8_XOR_LE(0) : BYTE8_XOR_BE(0);	break;
-		}
-
-		/* fetch the bytes up to the maximum */
-		memset(opbuf, 0xff, sizeof(opbuf));
-		memset(argbuf, 0xff, sizeof(argbuf));
-		for (numbytes = 0; numbytes < maxbytes; numbytes++)
-		{
-			offs_t physpc = pc + numbytes;
-			const UINT8 *ptr;
-
-			/* translate the address, set the opcode base, and apply the byte xor */
-			if (!cpu[activecpu].intf.translate || (*cpu[activecpu].intf.translate)(ADDRESS_SPACE_PROGRAM, &physpc))
-			{
-				memory_set_opbase(physpc);
-				physpc ^= xorval;
-
-				/* get pointer to data */
-				ptr = memory_get_op_ptr(cpu_getactivecpu(), physpc, 0);
-				if (ptr)
-				{
-					opbuf[numbytes] = *ptr;
-					ptr = memory_get_op_ptr(cpu_getactivecpu(), physpc, 1);
-					if (ptr)
-						argbuf[numbytes] = *ptr;
-					else
-						argbuf[numbytes] = opbuf[numbytes];
-				}
-			}
-		}
-
-		return activecpu_dasm_new(buffer, pc, opbuf, argbuf, maxbytes);
-	}
-	return (*cpu[activecpu].intf.disassemble)(buffer, pc);
-}
-
-
-unsigned activecpu_dasm_new(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+offs_t activecpu_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	unsigned result;
 
-	VERIFY_ACTIVECPU(activecpu_dasm_new);
+	VERIFY_ACTIVECPU(activecpu_dasm);
 
 	/* check for disassembler override */
 	if (cpu_dasm_override[activecpu])
 	{
-		result = (*cpu_dasm_override[activecpu])(buffer, pc, oprom, opram, bytes);
+		result = (*cpu_dasm_override[activecpu])(buffer, pc, oprom, opram);
 		if (result != 0)
 			return result;
 	}
 
-	if (cpu[activecpu].intf.disassemble_new)
+	if (cpu[activecpu].intf.disassemble != NULL)
 	{
-		result = (*cpu[activecpu].intf.disassemble_new)(buffer, pc, oprom, opram, bytes);
+		result = (*cpu[activecpu].intf.disassemble)(buffer, pc, oprom, opram);
 	}
 	else
 	{
 		/* if no disassembler present, dump vanilla bytes */
-		switch(activecpu_min_instruction_bytes())
+		switch (activecpu_min_instruction_bytes())
 		{
 			case 1:
 			default:
@@ -1300,6 +1239,21 @@ unsigned activecpu_dasm_new(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram,
 				break;
 		}
 	}
+
+	/* make sure we get good results */
+	assert((result & DASMFLAG_LENGTHMASK) != 0);
+#ifdef MAME_DEBUG
+{
+	int shift = activecpu_addrbus_shift(ADDRESS_SPACE_PROGRAM);
+	int bytes = (shift < 0) ? ((result & DASMFLAG_LENGTHMASK) << -shift) : ((result & DASMFLAG_LENGTHMASK) >> shift);
+	assert(bytes >= activecpu_min_instruction_bytes());
+	assert(bytes <= activecpu_max_instruction_bytes());
+}
+#endif
+
+	/* as of 0.109u5, all disassemblers must support flags */
+	assert((result & DASMFLAG_SUPPORTED) != 0);
+
 	return result;
 }
 
@@ -1507,23 +1461,12 @@ void cpunum_set_opbase(int cpunum, unsigned val)
     Disassembly
 --------------------------*/
 
-offs_t cpunum_dasm(int cpunum, char *buffer, unsigned pc)
+offs_t cpunum_dasm(int cpunum, char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	unsigned result;
 	VERIFY_CPUNUM(cpunum_dasm);
 	cpuintrf_push_context(cpunum);
-	result = activecpu_dasm(buffer, pc);
-	cpuintrf_pop_context();
-	return result;
-}
-
-
-offs_t cpunum_dasm_new(int cpunum, char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
-{
-	unsigned result;
-	VERIFY_CPUNUM(cpunum_dasm_new);
-	cpuintrf_push_context(cpunum);
-	result = activecpu_dasm_new(buffer, pc, oprom, opram, bytes);
+	result = activecpu_dasm(buffer, pc, oprom, opram);
 	cpuintrf_pop_context();
 	return result;
 }
@@ -1603,7 +1546,7 @@ static int dummy_execute(int cycles) { return cycles; }
 static void dummy_get_context(void *regs) { }
 static void dummy_set_context(void *regs) { }
 
-static offs_t dummy_dasm(char *buffer, offs_t pc)
+static offs_t dummy_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	strcpy(buffer, "???");
 	return 1;

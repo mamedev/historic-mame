@@ -8,8 +8,6 @@
 
 #include "dsp56k.h"
 
-#define ROPCODE(pc)   cpu_readop16(pc)
-
 /* todo: fix the syntax for many opcodes to be true DSP56k assembly
  *
  *
@@ -19,9 +17,9 @@
 // Main opcode categories
 static unsigned DecodeDataALUOpcode(char *buffer, UINT16 op, unsigned pc, int parallelType) ;
 static unsigned DecodeDXMDROpcode(char *buffer, UINT16 op, unsigned pc) ;
-static unsigned DecodeNPMOpcode(char *buffer, UINT16 op, unsigned pc) ;
-static unsigned DecodeMisfitOpcode(char *buffer, UINT16 op, unsigned pc) ;
-static unsigned DecodeSpecialOpcode(char *buffer, UINT16 op, unsigned pc) ;
+static unsigned DecodeNPMOpcode(char *buffer, UINT16 op, unsigned pc, const UINT8 *oprom) ;
+static unsigned DecodeMisfitOpcode(char *buffer, UINT16 op, unsigned pc, const UINT8 *oprom) ;
+static unsigned DecodeSpecialOpcode(char *buffer, UINT16 op, unsigned pc, const UINT8 *oprom) ;
 
 
 // Parallel memory operation decoding
@@ -84,9 +82,9 @@ static void AssembleAddressFromIOShortAddress(UINT16 pp, char *ea) ;
 static void AssembleAddressFrom6BitSignedRelativeShortAddress(UINT16 srs, char *ea) ;
 
 // Main disassembly function
-unsigned dasm_dsp56k(char *buffer, unsigned pc)
+unsigned dasm_dsp56k(char *buffer, unsigned pc, const UINT8 *oprom)
 {
-	UINT16 op = ROPCODE(pc<<1);
+	UINT16 op = oprom[0] | (oprom[1] << 8);
 	unsigned size = 0 ;
 
 	pc <<= 1 ;
@@ -120,15 +118,15 @@ unsigned dasm_dsp56k(char *buffer, unsigned pc)
 	}
 	else if (BITS(op,0xf000) == 0x1)
 	{
-		size = DecodeNPMOpcode(buffer, op, pc) ;
+		size = DecodeNPMOpcode(buffer, op, pc, oprom) ;
 	}
 	else if (BITS(op,0x2000))
 	{
-		size = DecodeMisfitOpcode(buffer, op, pc) ;
+		size = DecodeMisfitOpcode(buffer, op, pc, oprom) ;
 	}
 	else if (BITS(op,0xf000) == 0x0)
 	{
-		size = DecodeSpecialOpcode(buffer, op, pc) ;
+		size = DecodeSpecialOpcode(buffer, op, pc, oprom) ;
 	}
 
 	if (size == 0)
@@ -137,7 +135,7 @@ unsigned dasm_dsp56k(char *buffer, unsigned pc)
 		size = 1 ;						// Just to get the debugger past the bad opcode
 	}
 
-	return size ;
+	return size | DASMFLAG_SUPPORTED;
 }
 
 
@@ -505,7 +503,7 @@ static unsigned DecodeDXMDROpcode(char *buffer, UINT16 op, unsigned pc)
 }
 
 
-static unsigned DecodeNPMOpcode(char *buffer, UINT16 op, unsigned pc)
+static unsigned DecodeNPMOpcode(char *buffer, UINT16 op, unsigned pc, const UINT8 *oprom)
 {
 	unsigned retSize = 0 ;
 
@@ -527,7 +525,7 @@ static unsigned DecodeNPMOpcode(char *buffer, UINT16 op, unsigned pc)
         UINT16 rVal = 0x0000 ;
 		char D[32] ;
 
-		UINT32 op2 = ROPCODE(pc+2) ;
+		UINT32 op2 = oprom[2] | (oprom[3] << 8);
 
 		// Decode the common parts
 		upperMiddleLower = DecodeBBBTable(BITS(op2,0xe000)) ;
@@ -809,7 +807,7 @@ static unsigned DecodeNPMOpcode(char *buffer, UINT16 op, unsigned pc)
 }
 
 
-unsigned DecodeMisfitOpcode(char *buffer, UINT16 op, unsigned pc)
+unsigned DecodeMisfitOpcode(char *buffer, UINT16 op, unsigned pc, const UINT8 *oprom)
 {
 	unsigned retSize = 0 ;
 
@@ -891,7 +889,7 @@ unsigned DecodeMisfitOpcode(char *buffer, UINT16 op, unsigned pc)
 					// MOVE(C) - 0011 1WDD DDD1 t10- xxxx xxxx xxxx xxxx
 					case 0x2:
 						DecodeDDDDDTable(BITS(op,0x03e0), SD) ;
-						AssembleeaFromtTable(BITS(op,0x0008), ROPCODE(pc+2), ea) ;
+						AssembleeaFromtTable(BITS(op,0x0008), oprom[2] | (oprom[3] << 8), ea) ;
 						// !!! I'm pretty sure this is  in the right order - same issue as the WTables !!!
 						if (BITS(op,0x0400))												// fixed - 02/03/05
 							sprintf(args, "%s,%s", ea, SD) ;
@@ -918,7 +916,7 @@ unsigned DecodeMisfitOpcode(char *buffer, UINT16 op, unsigned pc)
 }
 
 
-static unsigned DecodeSpecialOpcode(char *buffer, UINT16 op, unsigned pc)
+static unsigned DecodeSpecialOpcode(char *buffer, UINT16 op, unsigned pc, const UINT8 *oprom)
 {
 	unsigned retSize = 0 ;
 
@@ -947,7 +945,7 @@ static unsigned DecodeSpecialOpcode(char *buffer, UINT16 op, unsigned pc)
 
 			// DO FOREVER - 0000 0000 0000 0010 xxxx xxxx xxxx xxxx
 			case 0x2:
-/*              sprintf(buffer, "doForever %04x", ROPCODE(pc+2)) ;
+/*              sprintf(buffer, "doForever %04x", oprom[2] | (oprom[3] << 8)) ;
                 retSize = 2 ;
 */				break ;
 
@@ -966,13 +964,13 @@ static unsigned DecodeSpecialOpcode(char *buffer, UINT16 op, unsigned pc)
 			// RTS - 0000 0000 0000 0110
 			case 0x6:
 				sprintf(buffer, "rts") ;
-				retSize = 1 ;
+				retSize = 1 | DASMFLAG_STEP_OUT;
 				break ;
 
 			// RTI - 0000 0000 0000 0111
 			case 0x7:
 /*              sprintf(buffer, "rti") ;
-                retSize = 1 ;
+                retSize = 1 | DASMFLAG_STEP_OUT;
 */				break ;
 
 			// RESET - 0000 0000 0000 1000
@@ -1021,7 +1019,7 @@ static unsigned DecodeSpecialOpcode(char *buffer, UINT16 op, unsigned pc)
 			case 0x6:
 				// DO - 0000 0000 110- --RR xxxx xxxx xxxx xxxx
 /*              Rnum = DecodeRRTable(BITS(op,0x0003)) ;
-                sprintf(buffer, "do        X:(R%d),%02x", Rnum, ROPCODE(pc+2)) ;
+                sprintf(buffer, "do        X:(R%d),%02x", Rnum, oprom[2] | (oprom[3] << 8)) ;
                 retSize = 2 ;
 */				break ;
 
@@ -1050,7 +1048,7 @@ static unsigned DecodeSpecialOpcode(char *buffer, UINT16 op, unsigned pc)
 				case 0x0:
 /*                  Rnum = DecodeRRTable(BITS(op,0x0003)) ;
                     sprintf(buffer, "jsr       R%d", Rnum) ;
-                    retSize = 1 ;
+                    retSize = 1 | DASMFLAG_STEP_OVER;
 */					break ;
 
 				// JMP - 0000 0001 0010 01RR
@@ -1064,7 +1062,7 @@ static unsigned DecodeSpecialOpcode(char *buffer, UINT16 op, unsigned pc)
 				case 0x2:
 /*                  Rnum = DecodeRRTable(BITS(op,0x0003)) ;
                     sprintf(buffer, "bsr       R%d", Rnum) ;
-                    retSize = 1 ;
+                    retSize = 1 | DASMFLAG_STEP_OVER;
 */					break ;
 
 				// BRA - 0000 0001 0010 11RR
@@ -1081,25 +1079,25 @@ static unsigned DecodeSpecialOpcode(char *buffer, UINT16 op, unsigned pc)
 			{
 				// JSR - 0000 0001 0011 00-- xxxx xxxx xxxx xxxx
 				case 0x0:
-/*                  sprintf(buffer, "jsr       %04x", ROPCODE(pc+2)) ;
-                    retSize = 2 ;
+/*                  sprintf(buffer, "jsr       %04x", oprom[2] | (oprom[3] << 8)) ;
+                    retSize = 2 | DASMFLAG_STEP_OVER;
 */					break ;
 
 				// JMP - 0000 0001 0011 01-- xxxx xxxx xxxx xxxx
 				case 0x1:
-					sprintf(buffer, "jmp       %04x", ROPCODE(pc+2)) ;
+					sprintf(buffer, "jmp       %04x", oprom[2] | (oprom[3] << 8)) ;
 					retSize = 2 ;
 					break ;
 
 				// BSR - 0000 0001 0011 10-- xxxx xxxx xxxx xxxx
 				case 0x2:
-					sprintf(buffer, "bsr       %d (0x%04x)", ROPCODE(pc+2), ROPCODE(pc+2)) ;
-					retSize = 2 ;
+					sprintf(buffer, "bsr       %d (0x%04x)", oprom[2] | (oprom[3] << 8), oprom[2] | (oprom[3] << 8)) ;
+					retSize = 2 | DASMFLAG_STEP_OVER;
 					break ;
 
 				// BRA - 0000 0001 0011 11-- xxxx xxxx xxxx xxxx
 				case 0x3:
-/*                  sprintf(buffer, "bra       %d (%04x)", ROPCODE(pc+2), ROPCODE(pc+2)) ;
+/*                  sprintf(buffer, "bra       %d (%04x)", oprom[2] | (oprom[3] << 8), oprom[2] | (oprom[3] << 8)) ;
                     retSize = 2 ;
 */					break ;
 			}
@@ -1155,7 +1153,7 @@ static unsigned DecodeSpecialOpcode(char *buffer, UINT16 op, unsigned pc)
 		{
 			// DO - 0000 0100 000D DDDD xxxx xxxx xxxx xxxx
 			DecodeDDDDDTable(BITS(op,0x001f), S1) ;
-			sprintf(buffer, "do        %s,%04x", S1, ROPCODE(pc+2)) ;
+			sprintf(buffer, "do        %s,%04x", S1, oprom[2] | (oprom[3] << 8)) ;
 			retSize = 2 ;
 		}
 		else
@@ -1169,7 +1167,7 @@ static unsigned DecodeSpecialOpcode(char *buffer, UINT16 op, unsigned pc)
 	else if (BITS(op,0x0f00) == 0x5)
 	{
 		UINT8 B ;
-		UINT16 op2 = ROPCODE(pc+2) ;
+		UINT16 op2 = oprom[2] | (oprom[3] << 8) ;
 
 		if (BITS(op2,0xfe20) == 0x02)
 		{
@@ -1215,7 +1213,7 @@ static unsigned DecodeSpecialOpcode(char *buffer, UINT16 op, unsigned pc)
 			case 0x1:
 				// JS.cc - 0000 0110 --01 cccc xxxx xxxx xxxx xxxx
 /*              DecodeccccTable(BITS(op,0x000f), M) ;
-                sprintf(buffer, "js.%s  %04x", M, ROPCODE(pc+2)) ;
+                sprintf(buffer, "js.%s  %04x", M, oprom[2] | (oprom[3] << 8)) ;
                 retSize = 2 ;
 */				break ;
 
@@ -1230,7 +1228,7 @@ static unsigned DecodeSpecialOpcode(char *buffer, UINT16 op, unsigned pc)
 			case 0x3:
 				// J.cc - 0000 0110 --11 cccc xxxx xxxx xxxx xxxx
 /*              DecodeccccTable(BITS(op,0x000f), M) ;
-                sprintf(buffer, "j.%s  %04x", M, ROPCODE(pc+2)) ;
+                sprintf(buffer, "j.%s  %04x", M, oprom[2] | (oprom[3] << 8)) ;
                 retSize = 2 ;
 */				break ;
 		}
@@ -1250,7 +1248,7 @@ static unsigned DecodeSpecialOpcode(char *buffer, UINT16 op, unsigned pc)
 			case 0x1:
 				// BS.cc - 0000 0111 --01 cccc xxxx xxxx xxxx xxxx
 				DecodeccccTable(BITS(op,0x000f), M) ;
-				sprintf(buffer, "bs.%s %d (0x%04x)", M, (INT16)ROPCODE(pc+2), ROPCODE(pc+2)) ;
+				sprintf(buffer, "bs.%s %d (0x%04x)", M, (INT16)(oprom[2] | (oprom[3] << 8)), oprom[2] | (oprom[3] << 8)) ;
 				retSize = 2 ;
 				break ;
 
@@ -1265,7 +1263,7 @@ static unsigned DecodeSpecialOpcode(char *buffer, UINT16 op, unsigned pc)
 			case 0x3:
 				// B.cc - 0000 0111 --11 cccc xxxx xxxx xxxx xxxx
 				DecodeccccTable(BITS(op,0x000f), M) ;
-				sprintf(buffer, "b.%s  %04x (%d)", M, ROPCODE(pc+2), ROPCODE(pc+2)) ;
+				sprintf(buffer, "b.%s  %04x (%d)", M, oprom[2] | (oprom[3] << 8), oprom[2] | (oprom[3] << 8)) ;
 				retSize = 2 ;
 				break ;
 		}
@@ -1306,7 +1304,7 @@ static unsigned DecodeSpecialOpcode(char *buffer, UINT16 op, unsigned pc)
 
 			// DO - 0000 1110 iiii iiii xxxx xxxx xxxx xxxx
 			case 0x6:
-				sprintf(buffer, "do        #%02x,%04x", BITS(op,0x00ff), ROPCODE(pc+2)) ;
+				sprintf(buffer, "do        #%02x,%04x", BITS(op,0x00ff), oprom[2] | (oprom[3] << 8)) ;
 				retSize = 2 ;
 				break ;
 

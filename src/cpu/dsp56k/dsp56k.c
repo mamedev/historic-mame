@@ -458,11 +458,11 @@ static int dsp56k_execute(int cycles)
     DISASSEMBLY HOOK
 ***************************************************************************/
 
-static offs_t dsp56k_dasm(char *buffer, offs_t pc)
+static offs_t dsp56k_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-	extern unsigned dasm_dsp56k(char *, unsigned);
-	return dasm_dsp56k(buffer, pc);
+	extern unsigned dasm_dsp56k(char *, unsigned, const UINT8 *);
+	return dasm_dsp56k(buffer, pc, oprom);
 #else
 	strcpy(buffer, "???");
 	return 2;

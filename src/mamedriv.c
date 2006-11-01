@@ -157,6 +157,7 @@ const game_driver * const drivers[] =
 	DRIVER( gteikokb )	/* bootleg */
 	DRIVER( gteikob2 )	/* bootleg */
 	DRIVER( spacbatt )	/* bootleg */
+	DRIVER( spacbat2 )	/* bootleg */
 	DRIVER( skyraidr )	/* bootleg */
 	DRIVER( batman2 )	/* bootleg */
 	DRIVER( warofbug )	/* (c) 1981 Armenia */
@@ -3630,7 +3631,7 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( mt_stbld )	/* 03 */
 	DRIVER( mt_ggolf )	/* 04 */
 	DRIVER( mt_gsocr )	/* 05 */
-						/* 06 */
+	DRIVER( mt_orun )	/* 06 */
 	DRIVER( mt_asyn )	/* 07 */
 	DRIVER( mt_shnbi )	/* 08 */
 						/* 09 */
@@ -3650,13 +3651,13 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( mt_gng )	/* 23 */
 	DRIVER( mt_shang )	/* 24 */
 	DRIVER( mt_gaxe )	/* 25 */
-						/* 26 */
+	DRIVER( mt_fwrld )	/* 26 */
 	DRIVER( mt_mystd )	/* 27 */
 	DRIVER( mt_revsh )	/* 28 */
 	DRIVER( mt_parlg )	/* 29 */
 						/* 30 */
 	DRIVER( mt_tgolf )	/* 31 */
-						/* 32 */
+	DRIVER( mt_srbb )	/* 32 */
 						/* 33 */
 						/* 34 */
 	DRIVER( mt_tlbba )	/* 35 */
@@ -6958,6 +6959,7 @@ Other Sun games
 	DRIVER( gepoker3 )	/* (c) 1984 Greyhound Electronics */
 	DRIVER( gt102c )	/* (c) 1984 Greyhound Electronics */
 	DRIVER( gt102b )	/* (c) 1984 Greyhound Electronics */
+	DRIVER( gt101c )	/* (c) 1984 Greyhound Electronics */
 	DRIVER( gt102c1 )	/* (c) 1985 Greyhound Electronics */
 	DRIVER( gt102c2 )	/* (c) 1985 Greyhound Electronics */
 	DRIVER( gt102c3 )	/* (c) 1985 Greyhound Electronics */
@@ -7212,5 +7214,6 @@ Other Sun games
 	DRIVER( destryer )	/* (c) 1981 Cidelsa */
 	DRIVER( draco )		/* (c) 1981 Cidelsa */
 	DRIVER( rockduck )	/* (c) 1983 Datel SAS */
+	DRIVER( tetriunk )
 
 #endif	/* DRIVER_RECURSIVE */

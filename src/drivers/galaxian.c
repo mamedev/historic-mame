@@ -4686,20 +4686,41 @@ ROM_END
 
 ROM_START( spacbatt )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "f07_1a.bin",   0x0000, 0x0800, CRC(d975af10) SHA1(a2e2a36a75db8fd09441308b08b6ae073c68b8cf) )
-	ROM_LOAD( "h07_2a.bin",   0x0800, 0x0800, CRC(b2ed14c3) SHA1(7668df11f64b8e296eedfee53437777dc53a56d5) )
-	ROM_LOAD( "sb.3",         0x1000, 0x0800, CRC(c25ce4c1) SHA1(d7a5d435df7868155523d2fb90f331d4b6d9eaa1) )
-	ROM_LOAD( "sb.4",         0x1800, 0x0800, CRC(8229835c) SHA1(8cfd8f6cab6f80ca69645a184f7e841fc69f47f6) )
-	ROM_LOAD( "sb.5",         0x2000, 0x0800, CRC(f51ef930) SHA1(213e68571a0c7d5ba33a7170d5fa4aea898ea0b9) )
-	ROM_LOAD( "e08p_6a.bin",  0x2800, 0x0800, CRC(d915a389) SHA1(0e2ff6eec9453856a1276889946b463cfae58eba) )
-	ROM_LOAD( "m08p_7a.bin",  0x3000, 0x0800, CRC(c9245346) SHA1(239bad3fe64eaab2dfc3febd06d1124103a10504) )
-	ROM_LOAD( "sb.8",         0x3800, 0x0800, CRC(e59ff1ae) SHA1(fef22885cbd3273882f8c7755dd04c28e843b9ea) )
+	ROM_LOAD( "sb1",    0x0000, 0x0800, CRC(d975af10) SHA1(a2e2a36a75db8fd09441308b08b6ae073c68b8cf) ) /* Same as f07_1a.bin above */
+	ROM_LOAD( "sb2",    0x0800, 0x0800, CRC(b2ed14c3) SHA1(7668df11f64b8e296eedfee53437777dc53a56d5) ) /* Same as h07_2a.bin above */
+	ROM_LOAD( "sb3",    0x1000, 0x0800, CRC(945f4160) SHA1(5fbe879f51e14c4c7ae551e5b3089f8e148770a4) ) /* Same as k07_3a.bin above */
+	ROM_LOAD( "sb4",    0x1800, 0x0800, CRC(8229835c) SHA1(8cfd8f6cab6f80ca69645a184f7e841fc69f47f6) )
+	ROM_LOAD( "sb5",    0x2000, 0x0800, CRC(f51ef930) SHA1(213e68571a0c7d5ba33a7170d5fa4aea898ea0b9) )
+	ROM_LOAD( "sb6",    0x2800, 0x0800, CRC(d915a389) SHA1(0e2ff6eec9453856a1276889946b463cfae58eba) ) /* Same as e08p_6a.bin above */
+	ROM_LOAD( "sb7",    0x3000, 0x0800, CRC(c9245346) SHA1(239bad3fe64eaab2dfc3febd06d1124103a10504) ) /* Same as m08p_7a.bin above */
+	ROM_LOAD( "sb8",    0x3800, 0x0800, CRC(e59ff1ae) SHA1(fef22885cbd3273882f8c7755dd04c28e843b9ea) )
 
 	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "h01_1.bin",    0x0000, 0x0800, CRC(8313c959) SHA1(b09157c6f824d6e94647728cbb329877fcb4e502) )
-	ROM_LOAD( "h01_2.bin",    0x0800, 0x0800, CRC(c26132af) SHA1(7ae125a911dfd47aeca4f129f580762ce4d8d91a) )
-	ROM_LOAD( "k01_1.bin",    0x1000, 0x0800, CRC(c9d4537e) SHA1(65d27066ffec04b755d2f5d3f36f5ec6792e8d6c) )
-	ROM_LOAD( "k01_2.bin",    0x1800, 0x0800, CRC(dcc2b33b) SHA1(c3a5ac935c519400dfabb28909f7e460769d1837) )
+	ROM_LOAD( "sb12",   0x0000, 0x0800, CRC(8313c959) SHA1(b09157c6f824d6e94647728cbb329877fcb4e502) ) /* Same as h01_1.bin above */
+	ROM_LOAD( "sb14",   0x0800, 0x0800, CRC(c26132af) SHA1(7ae125a911dfd47aeca4f129f580762ce4d8d91a) ) /* Same as h01_2.bin above */
+	ROM_LOAD( "sb11",   0x1000, 0x0800, CRC(c9d4537e) SHA1(65d27066ffec04b755d2f5d3f36f5ec6792e8d6c) ) /* Same as k01_1.bin above */
+	ROM_LOAD( "sb13",   0x1800, 0x0800, CRC(92454380) SHA1(f0cd67b39c760c2b5ac549b27b0a5f83fbb3a86b) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "6l.bpr", 0x0000, 0x0020, CRC(c3ac9467) SHA1(f382ad5a34d282056c78a5ec00c30ec43772bae2) ) /* MMI 6331 bp-prom, compatible with 82s123 */
+ROM_END
+
+ROM_START( spacbat2 )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "sb1",    0x0000, 0x0800, CRC(d975af10) SHA1(a2e2a36a75db8fd09441308b08b6ae073c68b8cf) ) /* Same as f07_1a.bin above */
+	ROM_LOAD( "sb2",    0x0800, 0x0800, CRC(b2ed14c3) SHA1(7668df11f64b8e296eedfee53437777dc53a56d5) ) /* Same as h07_2a.bin above */
+	ROM_LOAD( "sb.3",   0x1000, 0x0800, CRC(c25ce4c1) SHA1(d7a5d435df7868155523d2fb90f331d4b6d9eaa1) )
+	ROM_LOAD( "sb4",    0x1800, 0x0800, CRC(8229835c) SHA1(8cfd8f6cab6f80ca69645a184f7e841fc69f47f6) )
+	ROM_LOAD( "sb5",    0x2000, 0x0800, CRC(f51ef930) SHA1(213e68571a0c7d5ba33a7170d5fa4aea898ea0b9) )
+	ROM_LOAD( "sb6",    0x2800, 0x0800, CRC(d915a389) SHA1(0e2ff6eec9453856a1276889946b463cfae58eba) ) /* Same as e08p_6a.bin above */
+	ROM_LOAD( "sb7",    0x3000, 0x0800, CRC(c9245346) SHA1(239bad3fe64eaab2dfc3febd06d1124103a10504) ) /* Same as m08p_7a.bin above */
+	ROM_LOAD( "sb8",    0x3800, 0x0800, CRC(e59ff1ae) SHA1(fef22885cbd3273882f8c7755dd04c28e843b9ea) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "sb12",      0x0000, 0x0800, CRC(8313c959) SHA1(b09157c6f824d6e94647728cbb329877fcb4e502) ) /* Same as h01_1.bin above */
+	ROM_LOAD( "sb14",      0x0800, 0x0800, CRC(c26132af) SHA1(7ae125a911dfd47aeca4f129f580762ce4d8d91a) ) /* Same as h01_2.bin above */
+	ROM_LOAD( "sb11",      0x1000, 0x0800, CRC(c9d4537e) SHA1(65d27066ffec04b755d2f5d3f36f5ec6792e8d6c) ) /* Same as k01_1.bin above */
+	ROM_LOAD( "k01_2.bin", 0x1800, 0x0800, CRC(dcc2b33b) SHA1(c3a5ac935c519400dfabb28909f7e460769d1837) )
 
 	ROM_REGION( 0x0020, REGION_PROMS, 0 )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, CRC(6a0c7d87) SHA1(140335d85c67c75b65689d4e76d29863c209cf32) )
@@ -6162,7 +6183,8 @@ GAME( 1980, uniwars,  0,        pisces,   superg,   pisces,   ROT90,  "Irem", "U
 GAME( 1980, gteikoku, uniwars,  pisces,   superg,   pisces,   ROT90,  "Irem", "Gingateikoku No Gyakushu", GAME_SUPPORTS_SAVE )
 GAME( 1980, gteikokb, uniwars,  pisces,   gteikokb, pisces,   ROT270, "bootleg", "Gingateikoku No Gyakushu (bootleg set 1)", GAME_SUPPORTS_SAVE )
 GAME( 1980, gteikob2, uniwars,  gteikob2, gteikob2, gteikob2, ROT270, "bootleg", "Gingateikoku No Gyakushu (bootleg set 2)", GAME_SUPPORTS_SAVE )
-GAME( 1980, spacbatt, uniwars,  pisces,   spacbatt, pisces,   ROT90,  "bootleg", "Space Battle", GAME_SUPPORTS_SAVE )
+GAME( 1980, spacbatt, uniwars,  pisces,   spacbatt, pisces,   ROT90,  "bootleg", "Space Battle (bootleg set 1)", GAME_SUPPORTS_SAVE )
+GAME( 1980, spacbat2, uniwars,  pisces,   spacbatt, pisces,   ROT90,  "bootleg", "Space Battle (bootleg set 2)", GAME_SUPPORTS_SAVE )
 GAME( 1980, skyraidr, uniwars,  pisces,   superg,   pisces,   ROT90,  "bootleg", "Sky Raiders", GAME_SUPPORTS_SAVE )
 GAME( 1981, batman2,  phoenix,  batman2,  batman2,  pisces,   ROT270, "bootleg", "Batman Part 2", GAME_SUPPORTS_SAVE )
 GAME( 1981, warofbug, 0,        galaxian, warofbug, pisces,   ROT90,  "Armenia", "War of the Bugs or Monsterous Manouvers in a Mushroom Maze", GAME_SUPPORTS_SAVE )

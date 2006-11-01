@@ -230,12 +230,13 @@ static int aluconst(char *buffer, int dest, int op)
 
 
 /* execute instructions on this CPU until icount expires */
-unsigned dasm2100(char *buffer, unsigned pc)
+offs_t dasm2100(char *buffer, offs_t pc, const UINT8 *oprom)
 {
-	unsigned int op = cpu_readop32(pc << 2);
+	unsigned int op = oprom[0] | (oprom[1] << 8) | (oprom[2] << 16);
+	unsigned dasmflags = 0;
 	int temp;
 
-	switch ( ( op >> 16 ) & 0xff )
+	switch ((op >> 16) & 0xff)
 	{
 		case 0x00:
 			/* 00000000 00000000 00000000  NOP */
@@ -275,7 +276,10 @@ unsigned dasm2100(char *buffer, unsigned pc)
 			else
 				buffer += sprintf(buffer, "%s", "IF NOT FLAG_IN ");
 			if (op & 1)
+			{
 				buffer += sprintf(buffer, "%s", "CALL ");
+				dasmflags = DASMFLAG_STEP_OVER;
+			}
 			else
 				buffer += sprintf(buffer, "%s", "JUMP ");
 			temp = ((op >> 4) & 0x0fff) | ((op << 10) & 0x3000);
@@ -285,7 +289,11 @@ unsigned dasm2100(char *buffer, unsigned pc)
 			/* 00000100 00000000 000xxxxx  stack control */
 			if ((op & 0x00ffe0) == 0x000000)
 			{
-				if (op & 0x000010) buffer += sprintf(buffer, "%s", "POP PC ");
+				if (op & 0x000010)
+				{
+					buffer += sprintf(buffer, "%s", "POP PC ");
+					dasmflags = DASMFLAG_STEP_OUT;
+				}
 				if (op & 0x000008) buffer += sprintf(buffer, "%s", "POP LOOP ");
 				if (op & 0x000004) buffer += sprintf(buffer, "%s", "POP CNTR ");
 				if ((op & 0x000003) == 0x000002) buffer += sprintf(buffer, "%s", "PUSH STAT ");
@@ -338,6 +346,7 @@ unsigned dasm2100(char *buffer, unsigned pc)
 					buffer += sprintf(buffer, "%s", "RTI");
 				else
 					buffer += sprintf(buffer, "%s", "RTS");
+				dasmflags = DASMFLAG_STEP_OUT;
 			}
 			else
 				buffer += sprintf(buffer, "??? (%06X)", op);
@@ -348,7 +357,10 @@ unsigned dasm2100(char *buffer, unsigned pc)
 			{
 				buffer += sprintf(buffer, "%s", condition[op & 15]);
 				if (op & 0x000010)
+				{
 					buffer += sprintf(buffer, "CALL (I%d)", 4 + ((op >> 6) & 3));
+					dasmflags = DASMFLAG_STEP_OVER;
+				}
 				else
 					buffer += sprintf(buffer, "JUMP (I%d)", 4 + ((op >> 6) & 3));
 			}
@@ -423,7 +435,10 @@ unsigned dasm2100(char *buffer, unsigned pc)
 		case 0x18: case 0x19: case 0x1a: case 0x1b: case 0x1c: case 0x1d: case 0x1e: case 0x1f:
 			/* 00011xxx xxxxxxxx xxxxxxxx  conditional jump (immediate addr) */
 			if (op & 0x040000)
+			{
 				buffer += sprintf(buffer, "%sCALL $%04X", condition[op & 15], (op >> 4) & 0x3fff);
+				dasmflags = DASMFLAG_STEP_OVER;
+			}
 			else
 				buffer += sprintf(buffer, "%sJUMP $%04X", condition[op & 15], (op >> 4) & 0x3fff);
 			break;
@@ -531,5 +546,5 @@ unsigned dasm2100(char *buffer, unsigned pc)
 			break;
 	}
 
-	return 1;
+	return 1 | dasmflags | DASMFLAG_SUPPORTED;
 }

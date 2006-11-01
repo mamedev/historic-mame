@@ -62,7 +62,7 @@ void gms30c2232_get_info(UINT32 state, union cpuinfo *info);
 #endif
 
 #ifdef MAME_DEBUG
-extern unsigned dasm_hyperstone(char *buffer, unsigned pc, unsigned h_flag, int private_fp);
+extern unsigned dasm_hyperstone(char *buffer, unsigned pc, const UINT8 *oprom, unsigned h_flag, int private_fp);
 #endif
 
 extern int hyp_type_16bit;

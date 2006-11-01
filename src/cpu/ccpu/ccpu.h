@@ -47,10 +47,10 @@ struct CCPUConfig
     PUBLIC FUNCTIONS
 ***************************************************************************/
 
-extern void ccpu_get_info(UINT32 state, union cpuinfo *info);
+void ccpu_get_info(UINT32 state, union cpuinfo *info);
 
 #ifdef MAME_DEBUG
-extern unsigned DasmCCPU(char *buffer, unsigned pc);
+offs_t DasmCCPU(char *buffer, offs_t pc, const UINT8 *oprom);
 #endif
 
 #endif

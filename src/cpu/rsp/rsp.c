@@ -2778,13 +2778,13 @@ static void rsp_set_context(void *src)
 
 /*****************************************************************************/
 
-static offs_t rsp_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+static offs_t rsp_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-	UINT32 op = *(UINT32 *)opram;
+	UINT32 op = LITTLE_ENDIANIZE_INT32(*(UINT32 *)opram);
 	return rsp_dasm_one(buffer, pc, op);
 #else
-	sprintf(buffer, "$%08X", *(UINT32 *)opram);
+	sprintf(buffer, "$%08X", LITTLE_ENDIANIZE_INT32(*(UINT32 *)opram));
 	return 4;
 #endif
 }
@@ -2910,7 +2910,7 @@ void rsp_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = rsp_exit;					break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = rsp_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
-		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = rsp_dasm;		break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = rsp_dasm;			break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &rsp_icount;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */

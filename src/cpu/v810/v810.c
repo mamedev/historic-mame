@@ -993,12 +993,12 @@ void v810_set_context(void *src)
 		v810 = *(v810info *)src;
 }
 
-unsigned v810_dasm(char *buffer, unsigned int pc)
+static offs_t v810_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-	return v810_disasm( buffer, pc );
+	return v810_disasm( buffer, pc, oprom );
 #else
-	sprintf(buffer, "$%08x", R_OP(pc));
+	sprintf(buffer, "$%08x", oprom[0]);
 	return 1;
 #endif
 }

@@ -198,7 +198,7 @@ static char *WriteBranchAddress( char *pBuf, UINT32 pc, UINT32 opcode )
 	return pBuf;
 } /* WriteBranchAddress */
 
-void arm7_disasm( char *pBuf, UINT32 pc, UINT32 opcode )
+UINT32 arm7_disasm( char *pBuf, UINT32 pc, UINT32 opcode )
 {
 	const char *pBuf0;
 
@@ -217,6 +217,7 @@ void arm7_disasm( char *pBuf, UINT32 pc, UINT32 opcode )
 		"ORR","MOV","BIC","MVN"
 	};
 	const char *pConditionCode;
+	UINT32 dasmflags = 0;
 
 	pConditionCode= pConditionCodeTable[opcode>>28];
 	pBuf0 = pBuf;
@@ -227,6 +228,8 @@ void arm7_disasm( char *pBuf, UINT32 pc, UINT32 opcode )
 		pBuf += sprintf( pBuf, "%sX", pConditionCode );
 		pBuf = WritePadding( pBuf, pBuf0 );
 		pBuf += sprintf( pBuf, "R%d",(opcode&0xf));
+		if ((opcode & 0x0f) == 14)
+			dasmflags = DASMFLAG_STEP_OUT;
 	}
 	else if( (opcode&0x0e000000)==0 && (opcode&0x80) && (opcode&0x10) )	//bits 27-25 == 000, bit 7=1, bit 4=1
 	{
@@ -415,6 +418,9 @@ void arm7_disasm( char *pBuf, UINT32 pc, UINT32 opcode )
 				WriteDataProcessingOperand(pBuf, opcode, 0, 1, 1);
 				break;
 			case 0x0d:
+				/* look for mov pc,lr */
+				if (((opcode >> 12) & 0x0f) == 15 && ((opcode >> 0) & 0x0f) == 14 && (opcode & 0x02000000) == 0)
+					dasmflags = DASMFLAG_STEP_OUT;
 			case 0x0f:
 				WriteDataProcessingOperand(pBuf, opcode, 1, 0, 1);
 				break;
@@ -563,6 +569,7 @@ void arm7_disasm( char *pBuf, UINT32 pc, UINT32 opcode )
 		if( opcode&0x01000000 )
 		{
 			pBuf += sprintf( pBuf, "BL" );
+			dasmflags = DASMFLAG_STEP_OVER;
 		}
 		else
 		{
@@ -610,16 +617,19 @@ void arm7_disasm( char *pBuf, UINT32 pc, UINT32 opcode )
 		pBuf += sprintf( pBuf, "SWI%s $%x",
 			pConditionCode,
 			opcode&0x00ffffff );
+		dasmflags = DASMFLAG_STEP_OVER;
 	}
 	else
 	{
 		pBuf += sprintf( pBuf, "Undefined" );
 	}
+	return dasmflags | DASMFLAG_SUPPORTED;
 }
 
-void thumb_disasm( char *pBuf, UINT32 pc, UINT16 opcode )
+UINT32 thumb_disasm( char *pBuf, UINT32 pc, UINT16 opcode )
 {
 	const char *pBuf0;
+	UINT32 dasmflags = 0;
 
 //      UINT32 readword;
 		UINT32 addr;
@@ -821,6 +831,8 @@ void thumb_disasm( char *pBuf, UINT32 pc, UINT16 opcode )
 									case 0x1:
 										rd = ( ( opcode & THUMB_HIREG_RS ) >> THUMB_HIREG_RS_SHIFT ) + 8;
 										pBuf += sprintf( pBuf, "BX R%d", rd );
+										if (rd == 14)
+											dasmflags = DASMFLAG_STEP_OUT;
 										break;
 									default:
 										sprintf( pBuf, "INVALID %04x", opcode);
@@ -1126,6 +1138,7 @@ void thumb_disasm( char *pBuf, UINT32 pc, UINT16 opcode )
 				if( opcode & THUMB_BLOP_LO )
 				{
 					pBuf += sprintf( pBuf, "BL (LO) %04x", ( opcode & THUMB_BLOP_OFFS ) << 1 );
+					dasmflags = DASMFLAG_STEP_OVER;
 				}
 				else
 				{
@@ -1135,10 +1148,13 @@ void thumb_disasm( char *pBuf, UINT32 pc, UINT16 opcode )
 						addr |= 0xff800000;
 					}
 					pBuf += sprintf( pBuf, "BL (HI) %04x", ( opcode & THUMB_BLOP_OFFS ) << 12 );
+					dasmflags = DASMFLAG_STEP_OVER;
 				}
 				break;
 			default:
 				sprintf( pBuf, "INVALID %04x", opcode);
 				break;
 		}
+
+	return dasmflags | DASMFLAG_SUPPORTED;
 }

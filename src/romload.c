@@ -798,6 +798,51 @@ static void process_rom_entries(rom_load_data *romdata, const rom_entry *romp)
 
 
 /*-------------------------------------------------
+    open_disk_image - open a DISK image, searching
+    up the parent and loading by checksum
+-------------------------------------------------*/
+
+chd_file *open_disk_image(const game_driver *gamedrv, const rom_entry *romp)
+{
+	chd_file *disk_image;
+	const game_driver *drv;
+	const rom_entry *region, *rom;
+	const char *fname;
+
+	/* attempt to open the properly named file */
+	fname = assemble_2_strings(ROM_GETNAME(romp), ".chd");
+	disk_image = chd_open(fname, 0, NULL);
+	free((void *)fname);
+
+	/* if that worked, we're done */
+	if (disk_image != NULL)
+		return disk_image;
+
+	/* otherwise, look at our parents for a CHD with an identical checksum */
+	/* and try to open that */
+	for (drv = gamedrv; drv != NULL; drv = driver_get_clone(drv))
+		for (region = rom_first_region(drv); region != NULL; region = rom_next_region(region))
+			if (ROMREGION_ISDISKDATA(region))
+				for (rom = rom_first_file(region); rom != NULL; rom = rom_next_file(rom))
+
+					/* look for a differing name but with the same hash data */
+					if (strcmp(ROM_GETNAME(romp), ROM_GETNAME(rom)) != 0 &&
+						hash_data_is_equal(ROM_GETHASHDATA(romp), ROM_GETHASHDATA(rom), 0))
+					{
+						fname = assemble_2_strings(ROM_GETNAME(rom), ".chd");
+						disk_image = chd_open(fname, 0, NULL);
+						free((void *)fname);
+
+						/* if that worked, we're done */
+						if (disk_image != NULL)
+							return disk_image;
+					}
+
+	return NULL;
+}
+
+
+/*-------------------------------------------------
     process_disk_entries - process all disk entries
     for a region
 -------------------------------------------------*/
@@ -821,7 +866,7 @@ static void process_disk_entries(rom_load_data *romdata, const rom_entry *romp)
 
 			/* first open the source drive */
 			debugload("Opening disk image: %s\n", filename);
-			source = chd_open(filename, 0, NULL);
+			source = open_disk_image(Machine->gamedrv,romp);
 			if (!source)
 			{
 				if (chd_get_last_error() == CHDERR_UNSUPPORTED_VERSION)

@@ -20,8 +20,6 @@ Based on G65C816 CPU Emulator by Karl Stenerud
 #define INLINE static
 #endif
 
-#define m7700_read_8_disassembler(A) program_read_byte_16le(A)
-
 typedef struct
 {
 	unsigned char name;
@@ -325,23 +323,22 @@ static opcode_struct g_opcodes_prefix89[256] =
 	{JSR, I, AXI }, {SBC, M, AX  }, {INC, M, AX  }, {SBC, M, ALX }
 };
 
-INLINE unsigned int read_8(unsigned int address)
+INLINE unsigned int read_8(const UINT8 *oprom, unsigned int offset)
 {
-	address = ADDRESS_24BIT(address);
-	return m7700_read_8_disassembler(address);
+	return oprom[offset];
 }
 
-INLINE unsigned int read_16(unsigned int address)
+INLINE unsigned int read_16(const UINT8 *oprom, unsigned int offset)
 {
-	unsigned int val = read_8(address);
-	return val | (read_8(address+1)<<8);
+	unsigned int val = read_8(oprom, offset);
+	return val | (read_8(oprom, offset+1)<<8);
 }
 
-INLINE unsigned int read_24(unsigned int address)
+INLINE unsigned int read_24(const UINT8 *oprom, unsigned int offset)
 {
-	unsigned int val = read_8(address);
-	val |= (read_8(address+1)<<8);
-	return val | (read_8(address+2)<<16);
+	unsigned int val = read_8(oprom, offset);
+	val |= (read_8(oprom, offset+1)<<8);
+	return val | (read_8(oprom, offset+2)<<16);
 }
 
 INLINE char* int_8_str(unsigned int val)
@@ -373,7 +370,7 @@ INLINE char* int_16_str(unsigned int val)
 }
 
 
-int m7700_disassemble(char* buff, unsigned int pc, unsigned int pb, int m_flag, int x_flag)
+int m7700_disassemble(char* buff, unsigned int pc, unsigned int pb, const UINT8 *oprom, int m_flag, int x_flag)
 {
 	unsigned int instruction;
 	opcode_struct *opcode;
@@ -382,11 +379,14 @@ int m7700_disassemble(char* buff, unsigned int pc, unsigned int pb, int m_flag, 
 	signed char varS;
 	int length = 1;
 	unsigned int address;
+	unsigned int start;
+	UINT32 flags = 0;
 
 	pb <<= 16;
 	address = pc | pb;
+	start = address;
 
-	instruction = read_8(address);
+	instruction = read_8(oprom,0);
 
 	// check for prefixes
 	switch (instruction)
@@ -394,14 +394,16 @@ int m7700_disassemble(char* buff, unsigned int pc, unsigned int pb, int m_flag, 
 		case 0x42:
 			address++;
 			length++;
-			instruction = read_8(address);
+			oprom++;
+			instruction = read_8(oprom,0);
 			opcode = g_opcodes_prefix42 + instruction;
 			break;
 
 		case 0x89:
 			address++;
 			length++;
-			instruction = read_8(address);
+			oprom++;
+			instruction = read_8(oprom,0);
 			opcode = g_opcodes_prefix89 + instruction;
 			break;
 
@@ -409,6 +411,11 @@ int m7700_disassemble(char* buff, unsigned int pc, unsigned int pb, int m_flag, 
 			opcode = g_opcodes + instruction;
 			break;
 	}
+
+	if (opcode->name == JSR)
+		flags = DASMFLAG_STEP_OVER;
+	else if (opcode->name == RTS || opcode->name == RTI)
+		flags = DASMFLAG_STEP_OUT;
 
 	sprintf(buff, "%s", g_opnames[opcode->name]);
 	ptr = buff + strlen(buff);
@@ -424,184 +431,184 @@ int m7700_disassemble(char* buff, unsigned int pc, unsigned int pb, int m_flag, 
 			sprintf(ptr, " B");
 			break;
 		case RELB:
-			varS = read_8(address+1);
+			varS = read_8(oprom,1);
 			length++;
 			sprintf(ptr, " %06x (%s)", pb | ((pc + length + varS)&0xffff), int_8_str(varS));
 			break;
 		case RELW:
 		case PER :
-			var = read_16(address+1);
+			var = read_16(oprom,1);
 			sprintf(ptr, " %06x (%s)", pb | ((pc + 1 + var)&0xffff), int_16_str(var));
 			length += 2;
 			break;
 		case IMM :
 			if((opcode->flag == M && !m_flag) || (opcode->flag == X && !x_flag))
 			{
-				sprintf(ptr, " #$%04x", read_16(address+1));
+				sprintf(ptr, " #$%04x", read_16(oprom,1));
 				length += 2;
 			}
 			else
 			{
-				sprintf(ptr, " #$%02x", read_8(address+1));
+				sprintf(ptr, " #$%02x", read_8(oprom,1));
 				length++;
 			}
 			break;
 		case BBCD:
 			if((opcode->flag == M && !m_flag) || (opcode->flag == X && !x_flag))
 			{
-				varS = read_8(address+4);
+				varS = read_8(oprom,4);
 				length += 4;
-				sprintf(ptr, " #$%04x, $%02x, %06x (%s)", read_16(address+2), read_8(address+1), pb | ((pc + length + varS)&0xffff), int_8_str(varS));
+				sprintf(ptr, " #$%04x, $%02x, %06x (%s)", read_16(oprom,2), read_8(oprom,1), pb | ((pc + length + varS)&0xffff), int_8_str(varS));
 			}
 			else
 			{
-				varS = read_8(address+3);
+				varS = read_8(oprom,3);
 				length += 3;
-				sprintf(ptr, " #$%02x, $%02x, %06x (%s)", read_8(address+2), read_8(address+1), pb | ((pc + length + varS)&0xffff), int_8_str(varS));
+				sprintf(ptr, " #$%02x, $%02x, %06x (%s)", read_8(oprom,2), read_8(oprom,1), pb | ((pc + length + varS)&0xffff), int_8_str(varS));
 			}
 			break;
 		case BBCA:
 			if((opcode->flag == M && !m_flag) || (opcode->flag == X && !x_flag))
 			{
 				length += 5;
-				varS = read_8(address+5);
-				sprintf(ptr, " #$%04x, $%04x, %06x (%s)", read_16(address+3), read_16(address+1), pb | ((pc + length + varS)&0xffff), int_8_str(varS));
+				varS = read_8(oprom,5);
+				sprintf(ptr, " #$%04x, $%04x, %06x (%s)", read_16(oprom,3), read_16(oprom,1), pb | ((pc + length + varS)&0xffff), int_8_str(varS));
 			}
 			else
 			{
 				length += 4;
-				varS = read_8(address+4);
-				sprintf(ptr, " #$%02x, $%04x, %06x (%s)", read_8(address+3), read_16(address+1), pb | ((pc + length + varS)&0xffff), int_8_str(varS));
+				varS = read_8(oprom,4);
+				sprintf(ptr, " #$%02x, $%04x, %06x (%s)", read_8(oprom,3), read_16(oprom,1), pb | ((pc + length + varS)&0xffff), int_8_str(varS));
 			}
 			break;
 		case LDM4:
 			if((opcode->flag == M && !m_flag) || (opcode->flag == X && !x_flag))
 			{
-				sprintf(ptr, " #$%04x, $%02x", read_16(address+2), read_8(address+1));
+				sprintf(ptr, " #$%04x, $%02x", read_16(oprom,2), read_8(oprom,1));
 				length += 3;
 			}
 			else
 			{
-				sprintf(ptr, " #$%02x, $%02x", read_8(address+2), read_8(address+1));
+				sprintf(ptr, " #$%02x, $%02x", read_8(oprom,2), read_8(oprom,1));
 				length += 2;
 			}
 			break;
 		case LDM5:
 			if((opcode->flag == M && !m_flag) || (opcode->flag == X && !x_flag))
 			{
-				sprintf(ptr, " #$%04x, $%04x", read_16(address+3), read_16(address+1));
+				sprintf(ptr, " #$%04x, $%04x", read_16(oprom,3), read_16(oprom,1));
 				length += 4;
 			}
 			else
 			{
-				sprintf(ptr, " #$%02x, $%04x", read_8(address+3), read_16(address+1));
+				sprintf(ptr, " #$%02x, $%04x", read_8(oprom,3), read_16(oprom,1));
 				length += 3;
 			}
 			break;
 		case LDM4X:
 			if((opcode->flag == M && !m_flag) || (opcode->flag == X && !x_flag))
 			{
-				sprintf(ptr, " #$%04x, $%02x, X", read_16(address+2), read_8(address+1));
+				sprintf(ptr, " #$%04x, $%02x, X", read_16(oprom,2), read_8(oprom,1));
 				length += 3;
 			}
 			else
 			{
-				sprintf(ptr, " #$%02x, $%02x, X", read_8(address+2), read_8(address+1));
+				sprintf(ptr, " #$%02x, $%02x, X", read_8(oprom,2), read_8(oprom,1));
 				length += 2;
 			}
 			break;
 		case LDM5X:
 			if((opcode->flag == M && !m_flag) || (opcode->flag == X && !x_flag))
 			{
-				sprintf(ptr, " #$%04x, $%04x, X", read_16(address+3), read_16(address+1));
+				sprintf(ptr, " #$%04x, $%04x, X", read_16(oprom,3), read_16(oprom,1));
 				length += 4;
 			}
 			else
 			{
-				sprintf(ptr, " #$%02x, $%04x, X", read_8(address+3), read_16(address+1));
+				sprintf(ptr, " #$%02x, $%04x, X", read_8(oprom,3), read_16(oprom,1));
 				length += 3;
 			}
 			break;
 		case A   :
 		case PEA :
-			sprintf(ptr, " $%04x", read_16(address+1));
+			sprintf(ptr, " $%04x", read_16(oprom,1));
 			length += 2;
 			break;
 		case AI  :
-			sprintf(ptr, " ($%04x)", read_16(address+1));
+			sprintf(ptr, " ($%04x)", read_16(oprom,1));
 			length += 2;
 			break;
 		case AL  :
-			sprintf(ptr, " $%06x", read_24(address+1));
+			sprintf(ptr, " $%06x", read_24(oprom,1));
 			length += 3;
 			break;
 		case ALX :
-			sprintf(ptr, " $%06x,X", read_24(address+1));
+			sprintf(ptr, " $%06x,X", read_24(oprom,1));
 			length += 3;
 			break;
 		case AX  :
-			sprintf(ptr, " $%04x,X", read_16(address+1));
+			sprintf(ptr, " $%04x,X", read_16(oprom,1));
 			length += 2;
 			break;
 		case AXI :
-			sprintf(ptr, " ($%04x,X)", read_16(address+1));
+			sprintf(ptr, " ($%04x,X)", read_16(oprom,1));
 			length += 2;
 			break;
 		case AY  :
-			sprintf(ptr, " $%04x,Y", read_16(address+1));
+			sprintf(ptr, " $%04x,Y", read_16(oprom,1));
 			length += 2;
 			break;
 		case D   :
-			sprintf(ptr, " $%02x", read_8(address+1));
+			sprintf(ptr, " $%02x", read_8(oprom,1));
 			length++;
 			break;
 		case DI  :
 		case PEI :
-			sprintf(ptr, " ($%02x)", read_8(address+1));
+			sprintf(ptr, " ($%02x)", read_8(oprom,1));
 			length++;
 			break;
 		case DIY :
-			sprintf(ptr, " ($%02x),Y", read_8(address+1));
+			sprintf(ptr, " ($%02x),Y", read_8(oprom,1));
 			length++;
 			break;
 		case DLI :
-			sprintf(ptr, " [$%02x]", read_8(address+1));
+			sprintf(ptr, " [$%02x]", read_8(oprom,1));
 			length++;
 			break;
 		case DLIY:
-			sprintf(ptr, " [$%02x],Y", read_8(address+1));
+			sprintf(ptr, " [$%02x],Y", read_8(oprom,1));
 			length++;
 			break;
 		case DX  :
-			sprintf(ptr, " $%02x,X", read_8(address+1));
+			sprintf(ptr, " $%02x,X", read_8(oprom,1));
 			length++;
 			break;
 		case DXI :
-			sprintf(ptr, " ($%02x,X)", read_8(address+1));
+			sprintf(ptr, " ($%02x,X)", read_8(oprom,1));
 			length++;
 			break;
 		case DY  :
-			sprintf(ptr, " $%02x,Y", read_8(address+1));
+			sprintf(ptr, " $%02x,Y", read_8(oprom,1));
 			length++;
 			break;
 		case S   :
-			sprintf(ptr, " %s,S", int_8_str(read_8(address+1)));
+			sprintf(ptr, " %s,S", int_8_str(read_8(oprom,1)));
 			length++;
 			break;
 		case SIY :
-			sprintf(ptr, " (%s,S),Y", int_8_str(read_8(address+1)));
+			sprintf(ptr, " (%s,S),Y", int_8_str(read_8(oprom,1)));
 			length++;
 			break;
 		case SIG :
-			sprintf(ptr, " #$%02x", read_8(address+1));
+			sprintf(ptr, " #$%02x", read_8(oprom,1));
 			length++;
 			break;
 		case MVN :
 		case MVP :
-			sprintf(ptr, " $%02x, $%02x", read_8(address+2), read_8(address+1));
+			sprintf(ptr, " $%02x, $%02x", read_8(oprom,2), read_8(oprom,1));
 			length += 2;
 			break;
 	}
 
-	return length;
+	return length | flags | DASMFLAG_SUPPORTED;
 }

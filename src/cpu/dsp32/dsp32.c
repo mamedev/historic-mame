@@ -435,11 +435,11 @@ static int dsp32c_execute(int cycles)
     DISASSEMBLY HOOK
 ***************************************************************************/
 
-static offs_t dsp32c_dasm(char *buffer, offs_t pc)
+static offs_t dsp32c_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-	extern unsigned dasm_dsp32(char *, unsigned);
-	return dasm_dsp32(buffer, pc);
+	extern unsigned dasm_dsp32(char *, unsigned, UINT32);
+	return dasm_dsp32(buffer, pc, oprom[0] | (oprom[1] << 8) | (oprom[2] << 16) | (oprom[3] << 24));
 #else
 	strcpy(buffer, "???");
 	return 4;

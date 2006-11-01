@@ -661,12 +661,12 @@ static int ccpu_execute(int cycles)
     DISASSEMBLER INTERFACE
 ***************************************************************************/
 
-static offs_t ccpu_dasm(char *buffer, offs_t pc)
+static offs_t ccpu_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-	return DasmCCPU(buffer,pc);
+	return DasmCCPU(buffer, pc, oprom);
 #else
-    sprintf( buffer, "$%02X", cpu_readop(pc) );
+    sprintf( buffer, "$%02X", (oprom[0] << 8) | oprom[1]);
 	return 1;
 #endif
 }

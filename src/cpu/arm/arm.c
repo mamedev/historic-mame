@@ -496,13 +496,13 @@ static void set_irq_line(int irqline, int state)
 	arm_check_irq_state();
 }
 
-static offs_t arm_dasm(char *buffer, offs_t pc)
+static offs_t arm_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
+	UINT32 opcode = oprom[0] | (oprom[1] << 8) | (oprom[2] << 16) | (oprom[3] << 24);
 #ifdef MAME_DEBUG
-	arm_disasm( buffer, pc, cpu_read32(pc&ADDRESS_MASK) );
-	return 4;
+	return 4 | arm_disasm(buffer, pc, opcode);
 #else
-	sprintf(buffer, "$%08x", READ32(pc));
+	sprintf(buffer, "$%08x", opcode);
 	return 4;
 #endif
 }

@@ -87,7 +87,7 @@
 #endif
 
 #ifdef MAME_DEBUG
-extern offs_t m6809_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes);
+extern offs_t m6809_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
 #endif
 
 
@@ -1176,7 +1176,7 @@ void m6809_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXECUTE:						info->execute = m6809_execute;				break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 #ifdef MAME_DEBUG
-		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = m6809_dasm;					break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m6809_dasm;					break;
 #endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m6809_ICount;				break;
 

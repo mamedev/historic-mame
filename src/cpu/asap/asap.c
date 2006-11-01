@@ -564,14 +564,14 @@ static int asap_execute(int cycles)
     DISASSEMBLY HOOK
 ***************************************************************************/
 
-static offs_t asap_dasm(char *buffer, offs_t pc)
+static offs_t asap_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-	extern unsigned dasmasap(char *, unsigned);
-    return dasmasap(buffer, pc);
+	extern unsigned dasmasap(char *, unsigned, const UINT8 *);
+	return dasmasap(buffer, pc, oprom);
 #else
-	sprintf(buffer, "$%04X", ROPCODE(pc));
-	return 2;
+	sprintf(buffer, "$%08X", LITTLE_ENDIANIZE_INT32(*(UINT32 *)opram));
+	return 4;
 #endif
 }
 
@@ -1748,7 +1748,7 @@ void asap_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
 		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
 		case CPUINFO_INT_MIN_INSTRUCTION_BYTES:			info->i = 4;							break;
-		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
+		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 12;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 2;							break;
 

@@ -328,32 +328,41 @@ static opcode_struct g_opcodes[256] =
 };
 
 static unsigned int g_pc;
+static const UINT8 *rombase;
 
 INLINE unsigned int read_8_immediate(void)
 {
 	g_pc++;
-	return spc700_read_8_disassembler(g_pc-1);
+	return *rombase++;
 }
 
 INLINE unsigned int read_16_immediate(void)
 {
+	unsigned int result;
 	g_pc += 2;
-	return	spc700_read_8_disassembler(g_pc-2) |
-			(spc700_read_8_disassembler(g_pc-1)<<8);
+	result = *rombase++;
+	return result | (*rombase++ << 8);
 }
 
-int spc700_disassemble(char* buff, unsigned int pc)
+int spc700_disassemble(char* buff, unsigned int pc, const UINT8 *oprom)
 {
 	opcode_struct* opcode;
+	UINT32 flags = 0;
 	char* ptr;
 	int var;
 	int i;
 
 	g_pc = pc;
+	rombase = oprom;
 	opcode = g_opcodes + read_8_immediate();
 
 	sprintf(buff, "%s ", g_opnames[opcode->name]);
 	ptr = buff + strlen(buff);
+
+	if (opcode->name == CALL)
+		flags = DASMFLAG_STEP_OVER;
+	else if (opcode->name == RET || opcode->name == RETI)
+		flags = DASMFLAG_STEP_OUT;
 
 	for(i=0;i<2;i++)
 	{
@@ -424,5 +433,5 @@ int spc700_disassemble(char* buff, unsigned int pc)
 		}
 		ptr += strlen(ptr);
 	}
-	return g_pc - pc;
+	return (g_pc - pc) | flags | DASMFLAG_SUPPORTED;
 }

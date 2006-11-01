@@ -168,17 +168,21 @@ static char *opcode_strings[0x0100] =
 };
 #endif
 
-static unsigned m6805_get_reg(int reg) { union cpuinfo info; m6805_get_info(CPUINFO_INT_REGISTER + (reg), &info); return info.i; }
-
-unsigned Dasm6805 (char *buf, unsigned pc)
+unsigned Dasm6805 (char *buf, unsigned pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	const char *sym1, *sym2;
     int code, bit;
 	unsigned addr, ea, size, access;
+	UINT32 flags = 0;
 
-	code = cpu_readop(pc);
+	code = oprom[0];
 	size = disasm[code][2];
 	access = disasm[code][3];
+
+	if (disasm[code][0] == bsr || disasm[code][0] == jsr)
+		flags = DASMFLAG_STEP_OVER;
+	else if (disasm[code][0] == rts || disasm[code][0] == rti)
+		flags = DASMFLAG_STEP_OUT;
 
 	buf += sprintf(buf, "%-6s", op_name_str[disasm[code][0]]);
 
@@ -186,57 +190,51 @@ unsigned Dasm6805 (char *buf, unsigned pc)
 	{
 	case _btr:	/* bit test and relative branch */
 		bit = (code >> 1) & 7;
-		ea = cpu_readop_arg(pc+1);
+		ea = opram[1];
 		sym1 = set_ea_info(1, ea, EA_UINT8, EA_ZPG_RD);
-		sym2 = set_ea_info(0, pc + 3, (INT8)cpu_readop_arg(pc+2), EA_REL_PC);
+		sym2 = set_ea_info(0, pc + 3, (INT8)opram[2], EA_REL_PC);
 		sprintf (buf, "%d,%s,%s", bit, sym1, sym2);
-		return 3;
+		return 3 | flags | DASMFLAG_SUPPORTED;
 	case _bit:	/* bit test */
 		bit = (code >> 1) & 7;
-		ea = cpu_readop_arg(pc+1);
+		ea = opram[1];
 		sym1 = set_ea_info(1, ea, EA_UINT8, EA_MEM_RD);
 		sprintf (buf, "%d,%s", bit, sym1);
-		return 2;
+		return 2 | flags | DASMFLAG_SUPPORTED;
 	case _rel:	/* relative */
-		sym1 = set_ea_info(0, pc + 2, (INT8)cpu_readop_arg(pc+1), access);
+		sym1 = set_ea_info(0, pc + 2, (INT8)opram[1], access);
 		sprintf (buf, "%s", sym1);
-		return 2;
+		return 2 | flags | DASMFLAG_SUPPORTED;
 	case _imm:	/* immediate */
-		sym1 = set_ea_info(0, cpu_readop_arg(pc+1), EA_UINT8, EA_VALUE);
+		sym1 = set_ea_info(0, opram[1], EA_UINT8, EA_VALUE);
 		sprintf (buf, "#%s", sym1);
-		return 2;
+		return 2 | flags | DASMFLAG_SUPPORTED;
 	case _dir:	/* direct (zero page address) */
-		addr = cpu_readop_arg(pc+1);
+		addr = opram[1];
 		ea = addr;
 		sym1 = set_ea_info(1, ea, size, access);
         sprintf (buf, "%s", sym1);
-		return 2;
+		return 2 | flags | DASMFLAG_SUPPORTED;
 	case _ext:	/* extended (16 bit address) */
-		addr = (cpu_readop_arg(pc+1) << 8) + cpu_readop_arg(pc+2);
+		addr = (opram[1] << 8) + opram[2];
 		ea = addr;
 		sym1 = set_ea_info(1, ea, size, access);
 		sprintf (buf, "%s", sym1);
-		return 3;
+		return 3 | flags | DASMFLAG_SUPPORTED;
 	case _idx:	/* indexed */
-		ea = m6805_get_reg(M6805_X);
-		set_ea_info(0, ea, size, access);
 		sprintf (buf, "(x)");
-		return 1;
+		return 1 | flags | DASMFLAG_SUPPORTED;
 	case _ix1:	/* indexed + byte (zero page) */
-		addr = cpu_readop_arg(pc+1);
-		ea = (addr + activecpu_get_reg(M6805_X)) & 0xff;
+		addr = opram[1];
 		sym1 = set_ea_info(0, addr, EA_UINT8, EA_VALUE);
-		sym2 = set_ea_info(0, ea, size, access);
 		sprintf (buf, "(x+%s)", sym1);
-		return 2;
+		return 2 | flags | DASMFLAG_SUPPORTED;
 	case _ix2:	/* indexed + word (16 bit address) */
-		addr = (cpu_readop_arg(pc+1) << 8) + cpu_readop_arg(pc+2);
-		ea = (addr + activecpu_get_reg(M6805_X)) & 0xffff;
+		addr = (opram[1] << 8) + opram[2];
 		sym1 = set_ea_info(0, addr, EA_UINT16, EA_VALUE);
-		sym2 = set_ea_info(0, ea, size, access);
 		sprintf (buf, "(x+%s)", sym1);
-		return 3;
+		return 3 | flags | DASMFLAG_SUPPORTED;
     default:    /* implicit */
-		return 1;
+		return 1 | flags | DASMFLAG_SUPPORTED;
     }
 }

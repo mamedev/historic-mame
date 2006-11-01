@@ -1151,7 +1151,7 @@ static M68HC11_OPCODE opcode_table_page4[256] =
 /*****************************************************************************/
 
 static char *output;
-static int mem_offset;
+static const UINT8 *rombase;
 
 static void print(const char *fmt, ...)
 {
@@ -1164,23 +1164,29 @@ static void print(const char *fmt, ...)
 
 static UINT8 fetch(void)
 {
-	return cpu_readop(mem_offset++);
+	return *rombase++;
 }
 
 static UINT16 fetch16(void)
 {
 	UINT16 w;
-	w = (cpu_readop(mem_offset) << 8) | (cpu_readop(mem_offset+1));
-	mem_offset+=2;
+	w = (rombase[0] << 8) | rombase[1];
+	rombase+=2;
 	return w;
 }
 
-static void decode_opcode(UINT32 pc, M68HC11_OPCODE *op_table)
+static UINT32 decode_opcode(UINT32 pc, M68HC11_OPCODE *op_table)
 {
 	UINT8 imm8, mask;
 	INT8 rel8;
 	UINT16 imm16;
 	UINT8 op2;
+	UINT32 flags = 0;
+
+	if (!strcmp(op_table->mnemonic, "jsr") || !strcmp(op_table->mnemonic, "bsr"))
+		flags = DASMFLAG_STEP_OVER;
+	else if (!strcmp(op_table->mnemonic, "rts") || !strcmp(op_table->mnemonic, "rti"))
+		flags = DASMFLAG_STEP_OUT;
 
 	switch(op_table->address_mode)
 	{
@@ -1260,33 +1266,32 @@ static void decode_opcode(UINT32 pc, M68HC11_OPCODE *op_table)
 
 		case PAGE2:
 			op2 = fetch();
-			decode_opcode(pc, &opcode_table_page2[op2]);
-			break;
+			return decode_opcode(pc, &opcode_table_page2[op2]);
 
 		case PAGE3:
 			op2 = fetch();
-			decode_opcode(pc, &opcode_table_page3[op2]);
-			break;
+			return decode_opcode(pc, &opcode_table_page3[op2]);
 
 		case PAGE4:
 			op2 = fetch();
-			decode_opcode(pc, &opcode_table_page4[op2]);
-			break;
+			return decode_opcode(pc, &opcode_table_page4[op2]);
 
 		default:
 			print("%s", op_table->mnemonic);
 	}
+	return flags;
 }
 
-offs_t mc68hc11_dasm_one(char *buffer, UINT32 pc)
+offs_t mc68hc11_dasm_one(char *buffer, UINT32 pc, const UINT8 *oprom)
 {
+	UINT32 flags = 0;
 	UINT8 opcode;
 
 	output = buffer;
-	mem_offset = pc;
+	rombase = oprom;
 
 	opcode = fetch();
-	decode_opcode(pc, &opcode_table[opcode]);
+	flags = decode_opcode(pc, &opcode_table[opcode]);
 
-	return mem_offset-pc;
+	return (rombase-oprom) | flags | DASMFLAG_SUPPORTED;
 }

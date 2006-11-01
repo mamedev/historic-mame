@@ -1748,25 +1748,23 @@ static void set_irq_line(int irqline, int state)
 }
 
 
-static offs_t upd7810_dasm(char *buffer, offs_t pc)
+static offs_t upd7810_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-	return Dasm7810( buffer, pc );
+	return Dasm7810( buffer, pc, oprom, opram );
 #else
-	UINT8 op = cpu_readop(pc);
-	sprintf( buffer, "$%02X", op );
+	sprintf( buffer, "$%02X", oprom[0] );
 	return 1;
 #endif
 }
 
 
-static offs_t upd7807_dasm(char *buffer, offs_t pc)
+static offs_t upd7807_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-	return Dasm7807( buffer, pc );
+	return Dasm7807( buffer, pc, oprom, opram );
 #else
-	UINT8 op = cpu_readop(pc);
-	sprintf( buffer, "$%02X", op );
+	sprintf( buffer, "$%02X", oprom[0] );
 	return 1;
 #endif
 }

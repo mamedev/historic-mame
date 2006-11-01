@@ -574,14 +574,10 @@ static int offs(INT8 offset)
 	return offset;
 }
 
-#define cpu_readmemz180 z180_readmem
-
-static unsigned z180_get_reg(int reg) { union cpuinfo info; z180_get_info(CPUINFO_INT_REGISTER + (reg), &info); return info.i; }
-
 /****************************************************************************
  * Disassemble opcode at PC and return number of bytes it takes
  ****************************************************************************/
-unsigned DasmZ180( char *buffer, unsigned pc )
+unsigned DasmZ180( char *buffer, unsigned pc, const UINT8 *oprom, const UINT8 *opram )
 {
 	z80dasm *d;
 	const char *symbol, *src;
@@ -590,47 +586,45 @@ unsigned DasmZ180( char *buffer, unsigned pc )
 	unsigned PC = pc;
 	INT8 offset = 0;
 	UINT8 op, op1;
-	UINT16 ea = 0, xy = 0;
+	UINT16 ea = 0;
+	int pos = 0;
+	UINT32 flags = 0;
 
 	ixy = "oops!!";
 	dst = buffer;
 	symbol = NULL;
 
-	op = cpu_readmemz180( pc++ );
+	op = oprom[pos++];
 	op1 = 0; /* keep GCC happy */
 
 	switch (op)
 	{
 	case 0xcb:
-		op = cpu_readmemz180(pc++);
+		op = oprom[pos++];
 		d = &mnemonic_cb[op];
 		break;
 	case 0xed:
-		op1 = cpu_readmemz180(pc++);
+		op1 = oprom[pos++];
 		d = &mnemonic_ed[op1];
 		break;
 	case 0xdd:
 		ixy = "ix";
-		op1 = cpu_readmemz180(pc++);
+		op1 = oprom[pos++];
 		if( op1 == 0xcb )
 		{
-			offset = (INT8) cpu_readmemz180(pc++);
-			op1 = cpu_readmemz180(pc++); /* fourth byte from opcode_arg_base! */
-			xy = z180_get_reg( Z180_IX );
-			ea = (xy + offset) & 0xffff;
+			offset = (INT8) opram[pos++];
+			op1 = opram[pos++]; /* fourth byte from opcode_arg_base! */
 			d = &mnemonic_xx_cb[op1];
 		}
 		else d = &mnemonic_xx[op1];
 		break;
 	case 0xfd:
 		ixy = "iy";
-		op1 = cpu_readop(pc++);
+		op1 = oprom[pos++];
 		if( op1 == 0xcb )
 		{
-			offset = (INT8) cpu_readmemz180(pc++);
-			op1 = cpu_readmemz180(pc++); /* fourth byte from opcode_arg_base! */
-			xy = z180_get_reg( Z180_IY );
-			ea = (ea + offset) & 0xffff;
+			offset = (INT8) opram[pos++];
+			op1 = opram[pos++]; /* fourth byte from opcode_arg_base! */
 			d = &mnemonic_xx_cb[op1];
 		}
 		else d = &mnemonic_xx[op1];
@@ -652,76 +646,32 @@ unsigned DasmZ180( char *buffer, unsigned pc )
 				dst += sprintf( dst, "$%02x,$%02x", op, op1);
 				break;
 			case 'A':
-				ea = cpu_readmemz180(pc) + ( cpu_readmemz180((pc+1)&0xffff) << 8);
-				pc += 2;
+				ea = opram[pos] + ( opram[pos+1] << 8);
+				pos += 2;
 				symbol = set_ea_info(0, ea, EA_UINT16, d->access);
 				dst += sprintf( dst, "%s", symbol );
 				break;
 			case 'B':   /* Byte op arg */
-				ea = cpu_readmemz180( pc++ );
+				ea = opram[pos++];
 				symbol = set_ea_info(1, ea, EA_UINT8, EA_VALUE);
 				dst += sprintf( dst, "%s", symbol );
 				break;
 			case '(':   /* Memory byte at (HL) */
 				*dst++ = *src;
-				if( !strncmp( src, "(bc)", 4) )
-				{
-					ea = z180_get_reg( Z180_BC );
-					set_ea_info(0, ea, EA_UINT8, d->access);
-				}
-				else
-				if( !strncmp( src, "(de)", 4) )
-				{
-					ea = z180_get_reg( Z180_DE );
-					set_ea_info(0, ea, EA_UINT8, d->access);
-				}
-				else
-				if( !strncmp( src, "(hl)", 4) )
-				{
-					ea = z180_get_reg( Z180_HL );
-					if( d->access == EA_ABS_PC )
-						set_ea_info(0, ea, EA_DEFAULT, EA_ABS_PC);
-					else
-						set_ea_info(0, ea, EA_UINT8, d->access);
-				}
-				else
-				if( !strncmp( src, "(sp)", 4) )
-				{
-					ea = z180_get_reg( Z180_SP );
-					set_ea_info(0, ea, EA_UINT16, d->access);
-				}
-				else
-				if( !strncmp( src, "(P)", 3) )
-				{
-					ea = (z180_get_reg( Z180_AF ) & 0xff00) | cpu_readmemz180( pc );
-					set_ea_info(0, ea, EA_UINT16, d->access);
-				}
-				else
-				if( !strncmp( src, "(c)", 3) )
-				{
-					ea = z180_get_reg( Z180_BC );
-					set_ea_info(0, ea, EA_UINT16, d->access);
-				}
-				else
-				if( !strncmp( src, "(I)", 3) )
-				{
-					ea = xy;
-					set_ea_info(0, ea, EA_DEFAULT, d->access);
-				}
 				break;
 			case 'N':   /* Immediate 16 bit */
-				ea = cpu_readmemz180(pc) + ( cpu_readmemz180((pc+1)&0xffff) << 8 );
-				pc += 2;
+				ea = opram[pos] + ( opram[pos+1] << 8 );
+				pos += 2;
 				symbol = set_ea_info(1, ea, EA_UINT16, EA_VALUE );
 				dst += sprintf( dst, "%s", symbol );
 				break;
 			case 'O':   /* Offset relative to PC */
-				offset = (INT8) cpu_readmemz180(pc++);
+				offset = (INT8) opram[pos++];
 				symbol = set_ea_info(0, PC, offset + 2, d->access);
 				dst += sprintf( dst, "%s", symbol );
 				break;
 			case 'P':   /* Port number */
-				ea = cpu_readmemz180( pc++ );
+				ea = opram[pos++];
 				dst += sprintf( dst, "$%02X", ea );
 				break;
 			case 'V':   /* Restart vector */
@@ -730,16 +680,14 @@ unsigned DasmZ180( char *buffer, unsigned pc )
 				dst += sprintf( dst, "%s", symbol );
 				break;
 			case 'W':   /* Memory address word */
-				ea = cpu_readmemz180(pc) + ( cpu_readmemz180((pc+1)&0xffff) << 8);
-				pc += 2;
+				ea = opram[pos] + ( opram[pos+1] << 8);
+				pos += 2;
 				symbol = set_ea_info(0, ea, EA_UINT16, d->access);
 				dst += sprintf( dst, "%s", symbol );
 				break;
 			case 'X':
-				offset = (INT8) cpu_readmemz180(pc++);
-				ea = (xy + offset) & 0xffff;
+				offset = (INT8) opram[pos++];
 			case 'Y':
-				symbol = set_ea_info(0, ea, EA_UINT8, d->access);
 				dst += sprintf( dst,"(%s%c$%02x)", ixy, sign(offset), offs(offset) );
 				break;
 			case 'I':
@@ -757,5 +705,12 @@ unsigned DasmZ180( char *buffer, unsigned pc )
 		dst += sprintf(dst, "%s", s_mnemonic[d->mnemonic]);
 	}
 
-	return pc - PC;
+	if (d->mnemonic == zCALL || d->mnemonic == zCPDR || d->mnemonic == zCPIR || d->mnemonic == zDJNZ ||
+		d->mnemonic == zHLT  || d->mnemonic == zINDR || d->mnemonic == zINIR || d->mnemonic == zLDDR ||
+		d->mnemonic == zLDIR || d->mnemonic == zOTDR || d->mnemonic == zOTIR || d->mnemonic == zRST)
+		flags = DASMFLAG_STEP_OVER;
+	else if (d->mnemonic == zRETN || d->mnemonic == zRET || d->mnemonic == zRETI)
+		flags = DASMFLAG_STEP_OUT;
+
+	return pos | flags | DASMFLAG_SUPPORTED;
 }

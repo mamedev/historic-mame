@@ -2071,17 +2071,18 @@ static void i960_init(int index, int clock, const void *config, int (*irqcallbac
 	state_save_register_item_array("i960", index, i960.rcache_frame_addr);
 }
 
-static offs_t i960_disasm(char *buffer, offs_t pc)
+static offs_t i960_disasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
 	disassemble_t dis;
 
 	dis.IP = pc;
 	dis.buffer = buffer;
+	dis.oprom = oprom;
 
 	i960_disassemble(&dis);
 
-	return dis.IPinc;
+	return dis.IPinc | dis.disflags | DASMFLAG_SUPPORTED;
 #else
 	return 0;
 #endif
@@ -2124,7 +2125,6 @@ void i960_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_PTR_EXECUTE:             info->execute     = i960_execute;       break;
 	case CPUINFO_PTR_BURN:                info->burn        = 0;                  break;
 	case CPUINFO_PTR_DISASSEMBLE:         info->disassemble = i960_disasm;        break;
-	case CPUINFO_PTR_DISASSEMBLE_NEW:     info->disassemble_new = NULL;           break;
 	case CPUINFO_PTR_INSTRUCTION_COUNTER: info->icount      = &i960_icount;       break;
 	case CPUINFO_INT_CONTEXT_SIZE:        info->i           = sizeof(i960_state); break;
 	case CPUINFO_INT_MIN_INSTRUCTION_BYTES: info->i = 4;							break;

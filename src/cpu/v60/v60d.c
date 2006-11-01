@@ -2,7 +2,10 @@
 #include "debugger.h"
 #include "v60.h"
 
-static UINT8 (*readop)(offs_t adr);
+static const UINT8 *rombase;
+static offs_t pcbase;
+
+#define readop(a)	rombase[(a) - pcbase]
 
 static signed char read8(unsigned pc)
 {
@@ -1458,15 +1461,17 @@ static int (*const dasm_optable[256])(unsigned ipc, unsigned pc, char *out) =
 };
 
 #ifdef MAME_DEBUG
-offs_t v60_dasm(char *buffer, offs_t pc)
+offs_t v60_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
-	readop = program_read_byte_16le;
-	return dasm_optable[readop(pc)](pc, pc+1, buffer) | DASMFLAG_SUPPORTED;
+	rombase = oprom;
+	pcbase = pc;
+	return dasm_optable[oprom[0]](pc, pc+1, buffer) | DASMFLAG_SUPPORTED;
 }
 
-offs_t v70_dasm(char *buffer, offs_t pc)
+offs_t v70_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
-	readop = program_read_byte_32le;
-	return dasm_optable[readop(pc)](pc, pc+1, buffer) | DASMFLAG_SUPPORTED;
+	rombase = oprom;
+	pcbase = pc;
+	return dasm_optable[oprom[0]](pc, pc+1, buffer) | DASMFLAG_SUPPORTED;
 }
 #endif

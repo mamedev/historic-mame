@@ -8,7 +8,7 @@
 #include "sharcdsm.h"
 #include <stdarg.h>
 
-static void (* sharcdasm_table[256])(UINT32, UINT64);
+static UINT32 (* sharcdasm_table[256])(UINT32, UINT64);
 static int dasm_table_built = 0;
 
 #define GET_UREG(x)		(ureg_names[x])
@@ -470,7 +470,7 @@ void shiftop(int shift, int data, int rn, int rx)
 
 
 
-static void dasm_compute_dreg_dmpm(UINT32 pc, UINT64 opcode)
+static UINT32 dasm_compute_dreg_dmpm(UINT32 pc, UINT64 opcode)
 {
 	int dmi = (opcode >> 41) & 0x7;
 	int dmm = (opcode >> 38) & 0x7;
@@ -487,9 +487,10 @@ static void dasm_compute_dreg_dmpm(UINT32 pc, UINT64 opcode)
 	}
 	print("DM(%s, %s) = R%d, ", GET_DAG1_I(dmi), GET_DAG1_M(dmm), dmdreg);
 	print("PM(%s, %s) = R%d", GET_DAG2_I(pmi), GET_DAG2_M(pmm), pmdreg);
+	return 0;
 }
 
-static void dasm_compute(UINT32 pc, UINT64 opcode)
+static UINT32 dasm_compute(UINT32 pc, UINT64 opcode)
 {
 	int cond = (opcode >> 33) & 0x1f;
 	int comp = opcode & 0x7fffff;
@@ -499,9 +500,10 @@ static void dasm_compute(UINT32 pc, UINT64 opcode)
 		get_if_condition(cond);
 		compute(comp);
 	}
+	return 0;
 }
 
-static void dasm_compute_uregdmpm_regmod(UINT32 pc, UINT64 opcode)
+static UINT32 dasm_compute_uregdmpm_regmod(UINT32 pc, UINT64 opcode)
 {
 	int cond = (opcode >> 33) & 0x1f;
 	int g = (opcode >> 32) & 0x1;
@@ -519,9 +521,10 @@ static void dasm_compute_uregdmpm_regmod(UINT32 pc, UINT64 opcode)
 		print(",  ");
 	}
 	pm_dm_ureg(g,d,i,m, ureg, u);
+	return 0;
 }
 
-static void dasm_compute_dregdmpm_immmod(UINT32 pc, UINT64 opcode)
+static UINT32 dasm_compute_dregdmpm_immmod(UINT32 pc, UINT64 opcode)
 {
 	int cond = (opcode >> 33) & 0x1f;
 	int g = (opcode >> 40) & 0x1;
@@ -539,9 +542,10 @@ static void dasm_compute_dregdmpm_immmod(UINT32 pc, UINT64 opcode)
 		print(",  ");
 	}
 	pm_dm_imm_dreg(g,d,i, data, dreg, u);
+	return 0;
 }
 
-static void dasm_compute_ureg_ureg(UINT32 pc, UINT64 opcode)
+static UINT32 dasm_compute_ureg_ureg(UINT32 pc, UINT64 opcode)
 {
 	int cond = (opcode >> 31) & 0x1f;
 	int uregs = (opcode >> 36) & 0xff;
@@ -555,9 +559,10 @@ static void dasm_compute_ureg_ureg(UINT32 pc, UINT64 opcode)
 		print(",  ");
 	}
 	print("%s = %s", GET_UREG(uregd), GET_UREG(uregs));
+	return 0;
 }
 
-static void dasm_immshift_dregdmpm(UINT32 pc, UINT64 opcode)
+static UINT32 dasm_immshift_dregdmpm(UINT32 pc, UINT64 opcode)
 {
 	int cond = (opcode >> 33) & 0x1f;
 	int g = (opcode >> 32) & 0x1;
@@ -574,9 +579,10 @@ static void dasm_immshift_dregdmpm(UINT32 pc, UINT64 opcode)
 	shiftop(shift, data, rn, rx);
 	print(",  ");
 	pm_dm_dreg(g,d,i,m, dreg);
+	return 0;
 }
 
-static void dasm_immshift_dregdmpm_nodata(UINT32 pc, UINT64 opcode)
+static UINT32 dasm_immshift_dregdmpm_nodata(UINT32 pc, UINT64 opcode)
 {
 	int cond = (opcode >> 33) & 0x1f;
 	int rn = (opcode >> 4) & 0xf;
@@ -586,9 +592,10 @@ static void dasm_immshift_dregdmpm_nodata(UINT32 pc, UINT64 opcode)
 
 	get_if_condition(cond);
 	shiftop(shift, data, rn, rx);
+	return 0;
 }
 
-static void dasm_compute_modify(UINT32 pc, UINT64 opcode)
+static UINT32 dasm_compute_modify(UINT32 pc, UINT64 opcode)
 {
 	int cond = (opcode >> 33) & 0x1f;
 	int g = (opcode >> 38) & 0x7;
@@ -603,19 +610,22 @@ static void dasm_compute_modify(UINT32 pc, UINT64 opcode)
 		print(",  ");
 	}
 	print("MODIFY(I%d, M%d)", (g ? 8+i : i), (g ? 8+m : m));
+	return 0;
 }
 
-static void dasm_direct_jump(UINT32 pc, UINT64 opcode)
+static UINT32 dasm_direct_jump(UINT32 pc, UINT64 opcode)
 {
 	int j = (opcode >> 26) & 0x1;
 	int cond = (opcode >> 33) & 0x1f;
 	int ci = (opcode >> 24) & 0x1;
 	UINT32 addr = opcode & 0xffffff;
+	UINT32 flags = 0;
 
 	get_if_condition(cond);
 	if (opcode & U64(0x8000000000))
 	{
 		print("CALL");
+		flags = DASMFLAG_STEP_OVER;
 	}
 	else
 	{
@@ -638,10 +648,10 @@ static void dasm_direct_jump(UINT32 pc, UINT64 opcode)
 	{
 		print(" (CI)");
 	}
-
+	return flags;
 }
 
-static void dasm_indirect_jump_compute(UINT32 pc, UINT64 opcode)
+static UINT32 dasm_indirect_jump_compute(UINT32 pc, UINT64 opcode)
 {
 	int b = (opcode >> 39) & 0x1;
 	int j = (opcode >> 26) & 0x1;
@@ -652,11 +662,13 @@ static void dasm_indirect_jump_compute(UINT32 pc, UINT64 opcode)
 	int pmm = (opcode >> 27) & 0x7;
 	int reladdr = (opcode >> 27) & 0x3f;
 	int comp = opcode & 0x7fffff;
+	UINT32 flags = 0;
 
 	get_if_condition(cond);
 	if (b)
 	{
 		print("CALL");
+		flags = DASMFLAG_STEP_OVER;
 	}
 	else
 	{
@@ -690,9 +702,10 @@ static void dasm_indirect_jump_compute(UINT32 pc, UINT64 opcode)
 
 		compute(comp);
 	}
+	return flags;
 }
 
-static void dasm_indirect_jump_compute_dregdm(UINT32 pc, UINT64 opcode)
+static UINT32 dasm_indirect_jump_compute_dregdm(UINT32 pc, UINT64 opcode)
 {
 	int d = (opcode >> 44) & 0x1;
 	int cond = (opcode >> 33) & 0x1f;
@@ -730,9 +743,10 @@ static void dasm_indirect_jump_compute_dregdm(UINT32 pc, UINT64 opcode)
 	{
 		print("DM(%s, %s) = %s", GET_DAG1_I(dmi), GET_DAG1_M(dmm), GET_DREG(dreg));
 	}
+	return 0;
 }
 
-static void dasm_rts_compute(UINT32 pc, UINT64 opcode)
+static UINT32 dasm_rts_compute(UINT32 pc, UINT64 opcode)
 {
 	int j = (opcode >> 26) & 0x1;
 	int e = (opcode >> 25) & 0x1;
@@ -770,9 +784,10 @@ static void dasm_rts_compute(UINT32 pc, UINT64 opcode)
 
 		compute(comp);
 	}
+	return DASMFLAG_STEP_OUT;
 }
 
-static void dasm_do_until_counter(UINT32 pc, UINT64 opcode)
+static UINT32 dasm_do_until_counter(UINT32 pc, UINT64 opcode)
 {
 	int data = (opcode >> 24) & 0xffff;
 	int ureg = (opcode >> 32) & 0xff;
@@ -788,17 +803,19 @@ static void dasm_do_until_counter(UINT32 pc, UINT64 opcode)
 		print("LCNTR = 0x%04X, ", data);
 		print("DO (0x%08X) UNTIL LCE", pc + SIGN_EXTEND24(addr));
 	}
+	return 0;
 }
 
-static void dasm_do_until(UINT32 pc, UINT64 opcode)
+static UINT32 dasm_do_until(UINT32 pc, UINT64 opcode)
 {
 	int term = (opcode >> 33) & 0x1f;
 	UINT32 addr = opcode & 0xffffff;
 
 	print("DO (0x%08X) UNTIL %s", pc + SIGN_EXTEND24(addr), condition_codes_do[term]);
+	return 0;
 }
 
-static void dasm_immmove_uregdmpm(UINT32 pc, UINT64 opcode)
+static UINT32 dasm_immmove_uregdmpm(UINT32 pc, UINT64 opcode)
 {
 	int d = (opcode >> 40) & 0x1;
 	int g = (opcode >> 41) & 0x1;
@@ -827,9 +844,10 @@ static void dasm_immmove_uregdmpm(UINT32 pc, UINT64 opcode)
 			print("%s = DM(0x%08X)", GET_UREG(ureg), addr);
 		}
 	}
+	return 0;
 }
 
-static void dasm_immmove_uregdmpm_indirect(UINT32 pc, UINT64 opcode)
+static UINT32 dasm_immmove_uregdmpm_indirect(UINT32 pc, UINT64 opcode)
 {
 	int d = (opcode >> 40) & 0x1;
 	int g = (opcode >> 44) & 0x1;
@@ -859,9 +877,10 @@ static void dasm_immmove_uregdmpm_indirect(UINT32 pc, UINT64 opcode)
 			print("%s = DM(0x%08X, %s)", GET_UREG(ureg), addr, GET_DAG1_I(i));
 		}
 	}
+	return 0;
 }
 
-static void dasm_immmove_immdata_dmpm(UINT32 pc, UINT64 opcode)
+static UINT32 dasm_immmove_immdata_dmpm(UINT32 pc, UINT64 opcode)
 {
 	int g = (opcode >> 37) & 0x1;
 	int i = (opcode >> 41) & 0x7;
@@ -876,17 +895,19 @@ static void dasm_immmove_immdata_dmpm(UINT32 pc, UINT64 opcode)
 	{
 		print("DM(%s, %s) = 0x%08X", GET_DAG1_I(i), GET_DAG1_M(m), data);
 	}
+	return 0;
 }
 
-static void dasm_immmove_immdata_ureg(UINT32 pc, UINT64 opcode)
+static UINT32 dasm_immmove_immdata_ureg(UINT32 pc, UINT64 opcode)
 {
 	int ureg = (opcode >> 32) & 0xff;
 	UINT32 data = opcode & 0xffffffff;
 
 	print("%s = 0x%08X", GET_UREG(ureg), data);
+	return 0;
 }
 
-static void dasm_sysreg_bitop(UINT32 pc, UINT64 opcode)
+static UINT32 dasm_sysreg_bitop(UINT32 pc, UINT64 opcode)
 {
 	int bop = (opcode >> 37) & 0x7;
 	int sreg = (opcode >> 32) & 0xf;
@@ -896,9 +917,10 @@ static void dasm_sysreg_bitop(UINT32 pc, UINT64 opcode)
 	print("%s ", bopnames[bop]);
 	print("%s ", GET_SREG(sreg));
 	print("0x%08X", data);
+	return 0;
 }
 
-static void dasm_ireg_modify(UINT32 pc, UINT64 opcode)
+static UINT32 dasm_ireg_modify(UINT32 pc, UINT64 opcode)
 {
 	int g = (opcode >> 38) & 0x1;
 	int i = (opcode >> 32) & 0x7;
@@ -926,9 +948,10 @@ static void dasm_ireg_modify(UINT32 pc, UINT64 opcode)
 			print("MODIFY (%s, 0x%08X)", GET_DAG1_I(i), data);
 		}
 	}
+	return 0;
 }
 
-static void dasm_misc(UINT32 pc, UINT64 opcode)
+static UINT32 dasm_misc(UINT32 pc, UINT64 opcode)
 {
 	int bits = (opcode >> 33) & 0x7f;
 	int lpu = (opcode >> 39) & 0x1;
@@ -991,9 +1014,10 @@ static void dasm_misc(UINT32 pc, UINT64 opcode)
 	{
 		print("FLUSH CACHE");
 	}
+	return 0;
 }
 
-static void dasm_idlenop(UINT32 pc, UINT64 opcode)
+static UINT32 dasm_idlenop(UINT32 pc, UINT64 opcode)
 {
 	if (opcode & U64(0x8000000000))
 	{
@@ -1003,9 +1027,10 @@ static void dasm_idlenop(UINT32 pc, UINT64 opcode)
 	{
 		print("NOP");
 	}
+	return 0;
 }
 
-static void dasm_cjump_rframe(UINT32 pc, UINT64 opcode)
+static UINT32 dasm_cjump_rframe(UINT32 pc, UINT64 opcode)
 {
 	/* TODO */
 	if (opcode & U64(0x10000000000))	/* RFRAME */
@@ -1016,11 +1041,13 @@ static void dasm_cjump_rframe(UINT32 pc, UINT64 opcode)
 	{
 		print("TODO: CJUMP");
 	}
+	return 0;
 }
 
-static void dasm_invalid(UINT32 pc, UINT64 opcode)
+static UINT32 dasm_invalid(UINT32 pc, UINT64 opcode)
 {
 	print("?");
+	return 0;
 }
 
 static SHARC_DASM_OP sharc_dasm_ops[] =
@@ -1123,13 +1150,14 @@ static void build_dasm_table(void)
 	}
 }
 
-void sharc_dasm_one(char *buffer, offs_t pc, UINT64 opcode)
+UINT32 sharc_dasm_one(char *buffer, offs_t pc, UINT64 opcode)
 {
 	#define DEFAULT_DASM_WIDTH	(64)
 
 	char dasm_buffer[2000];
 	int i;
 	int op = (opcode >> 40) & 0xff;
+	UINT32 flags;
 
 	if (!dasm_table_built)
 	{
@@ -1142,11 +1170,12 @@ void sharc_dasm_one(char *buffer, offs_t pc, UINT64 opcode)
 	/* set buffer for print */
 	output = dasm_buffer;
 
-	sharcdasm_table[op](pc, opcode);
+	flags = (*sharcdasm_table[op])(pc, opcode);
 
 	for (i=0; i < DEFAULT_DASM_WIDTH; i++)
 	{
 		buffer[i] = dasm_buffer[i];
 	}
+	return flags;
 }
 

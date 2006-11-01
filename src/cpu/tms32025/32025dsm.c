@@ -403,8 +403,9 @@ static void InitDasm32025(void)
 	OpInizialized = 1;
 }
 
-unsigned Dasm32025(char *str, unsigned pc)
+unsigned Dasm32025(char *str, unsigned pc, const UINT8 *oprom, const UINT8 *opram)
 {
+	UINT32 flags = 0;
 	int a, b, c, d, k, m, n, p, r, s, t, w, x;	/* these can all be filled in by parsing an instruction */
 	int i;
 	int op;
@@ -417,7 +418,7 @@ unsigned Dasm32025(char *str, unsigned pc)
 	if (!OpInizialized) InitDasm32025();
 
 	op = -1;				/* no matching opcode */
-	code = READOP16(pc);
+	code = (oprom[0] << 8) | oprom[1];
 	for ( i = 0; i < MAX_OPS; i++)
 	{
 		if ((code & Op[i].mask) == Op[i].bits)
@@ -440,7 +441,7 @@ unsigned Dasm32025(char *str, unsigned pc)
 	{
 		bit = 31;
 		code <<= 16;
-		code |= READARG16(pc+cnt);
+		code |= (opram[2] << 8) | opram[3];
 		cnt++;
 	}
 	else
@@ -479,6 +480,12 @@ unsigned Dasm32025(char *str, unsigned pc)
 
 	/* now traverse format string */
 	cp = Op[op].fmt;
+
+	if (!strncmp(cp, "cal", 3))
+		flags = DASMFLAG_STEP_OVER;
+	else if (!strncmp(cp, "ret", 3))
+		flags = DASMFLAG_STEP_OUT;
+
 	while (*cp)
 	{
 		if (*cp == '%')
@@ -512,5 +519,5 @@ unsigned Dasm32025(char *str, unsigned pc)
 			*str = '\0';
 		}
 	}
-	return cnt;
+	return cnt | flags | DASMFLAG_SUPPORTED;
 }

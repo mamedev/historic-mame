@@ -4275,8 +4275,8 @@ void z80_get_info(UINT32 state, union cpuinfo *info)
 			info->burn = NULL;
 			break;
 #ifdef MAME_DEBUG
-		case CPUINFO_PTR_DISASSEMBLE_NEW:
-			info->disassemble_new = z80_dasm;
+		case CPUINFO_PTR_DISASSEMBLE:
+			info->disassemble = z80_dasm;
 			break;
 #endif
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:

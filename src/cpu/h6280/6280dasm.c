@@ -16,14 +16,13 @@
 
 ******************************************************************************/
 
-#include "memory.h"
+#include "cpuintrf.h"
 
 extern UINT8 H6280_debug_mmr[8];
 
-#define RDOP(addr)   program_read_byte_8( (H6280_debug_mmr[(addr)>>13] << 13) | ((addr)&0x1fff))
-#define RDBYTE(addr) program_read_byte_8( (H6280_debug_mmr[(addr)>>13] << 13) | ((addr)&0x1fff))
-#define RDWORD(addr) program_read_byte_8( (H6280_debug_mmr[(addr)>>13] << 13) | ((addr)&0x1fff)) \
-                 | ( program_read_byte_8( (H6280_debug_mmr[(addr+1)>>13] << 13) | ((addr+1)&0x1fff)) << 8 )
+#define RDOP(addr)   (oprom[addr - pc])
+#define RDBYTE(addr) (opram[addr - pc])
+#define RDWORD(addr) (opram[addr - pc] | oprom[(addr) + 1 - pc])
 
 enum addr_mode {
 	_non=0, 	 /* no additional arguments */
@@ -141,8 +140,9 @@ static const unsigned char op6280[512]=
 /*****************************************************************************
  *  Disassemble a single command and return the number of bytes it uses.
  *****************************************************************************/
-int Dasm6280(char *buffer, int pc)
+int Dasm6280(char *buffer, int pc, const UINT8 *oprom, const UINT8 *opram)
 {
+	UINT32 flags = 0;
 	int PC, OP, opc, arg;
 
 	PC = pc;
@@ -152,6 +152,11 @@ int Dasm6280(char *buffer, int pc)
 
 	opc = op6280[OP];
     arg = op6280[OP+1];
+
+    if (opc == _jsr || opc == _bsr)
+    	flags = DASMFLAG_STEP_OVER;
+    else if (opc == _rts)
+    	flags = DASMFLAG_STEP_OUT;
 
 	switch(arg)
 	{
@@ -241,5 +246,5 @@ int Dasm6280(char *buffer, int pc)
 		default:
 			sprintf(buffer,"%-5s$%02X", token[opc], OP >> 1);
 	}
-	return PC - pc;
+	return (PC - pc) | flags | DASMFLAG_SUPPORTED;
 }

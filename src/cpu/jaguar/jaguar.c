@@ -591,24 +591,24 @@ static int jaguardsp_execute(int cycles)
     DISASSEMBLY HOOK
 ***************************************************************************/
 
-static offs_t jaguargpu_dasm(char *buffer, offs_t pc)
+static offs_t jaguargpu_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-	extern unsigned dasmjag(int, char *, unsigned);
-    return dasmjag(JAGUAR_VARIANT_GPU, buffer, pc);
+	extern unsigned dasmjag(int, char *, unsigned, const UINT8 *);
+    return dasmjag(JAGUAR_VARIANT_GPU, buffer, pc, oprom);
 #else
-	sprintf(buffer, "$%04X", ROPCODE(pc));
+	sprintf(buffer, "$%04X", (oprom[0] << 8) | oprom[1]);
 	return 2;
 #endif
 }
 
-static offs_t jaguardsp_dasm(char *buffer, offs_t pc)
+static offs_t jaguardsp_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-	extern unsigned dasmjag(int, char *, unsigned);
-    return dasmjag(JAGUAR_VARIANT_DSP, buffer, pc);
+	extern unsigned dasmjag(int, char *, unsigned, const UINT8 *);
+    return dasmjag(JAGUAR_VARIANT_DSP, buffer, pc, oprom);
 #else
-	sprintf(buffer, "$%04X", ROPCODE(pc));
+	sprintf(buffer, "$%04X", (oprom[0] << 8) | oprom[1]);
 	return 2;
 #endif
 }

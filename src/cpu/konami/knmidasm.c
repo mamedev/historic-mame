@@ -289,7 +289,7 @@ static unsigned byte_count;
 static unsigned local_pc;
 static unsigned flags;
 
-static unsigned char *opram_ptr;
+static const unsigned char *opram_ptr;
 
 static unsigned char get_next_byte( void ) {
 	return opram_ptr[byte_count++];
@@ -1859,7 +1859,7 @@ static konami_opcode_def op_table[256] = {
 	/* ff */	{ illegal, 0 }
 };
 
-offs_t Dasmknmi(char *buffer, UINT32 pc, UINT8 *oprom, UINT8 *opram, int bytes)
+offs_t Dasmknmi(char *buffer, UINT32 pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	buffer[0] = '\0';
 

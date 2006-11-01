@@ -11,10 +11,10 @@
 #include "ccpu.h"
 
 
-unsigned DasmCCPU(char *buffer, unsigned pc)
+offs_t DasmCCPU(char *buffer, offs_t pc, const UINT8 *oprom)
 {
 	unsigned startpc = pc;
-	UINT8 opcode = cpu_readop(pc++);
+	UINT8 opcode = oprom[pc++ - startpc];
 	UINT8 tempval;
 
 	switch (opcode)
@@ -37,7 +37,7 @@ unsigned DasmCCPU(char *buffer, unsigned pc)
 
 		/* A8I */
 		case 0x20:
-			sprintf(buffer, "A8I  $%X", cpu_readop(pc++));
+			sprintf(buffer, "A8I  $%X", oprom[pc++ - startpc]);
 			break;
 
 		/* A4I */
@@ -50,7 +50,7 @@ unsigned DasmCCPU(char *buffer, unsigned pc)
 
 		/* S8I */
 		case 0x30:
-			sprintf(buffer, "S8I  $%X", cpu_readop(pc++));
+			sprintf(buffer, "S8I  $%X", oprom[pc++ - startpc]);
 			break;
 
 		/* S4I */
@@ -66,7 +66,7 @@ unsigned DasmCCPU(char *buffer, unsigned pc)
 		case 0x44:	case 0x45:	case 0x46:	case 0x47:
 		case 0x48:	case 0x49:	case 0x4a:	case 0x4b:
 		case 0x4c:	case 0x4d:	case 0x4e:	case 0x4f:
-			tempval = cpu_readop(pc++);
+			tempval = oprom[pc++ - startpc];
 			sprintf(buffer, "LPAI $%03X", (opcode & 0x0f) + (tempval & 0xf0) + ((tempval & 0x0f) << 8));
 			break;
 

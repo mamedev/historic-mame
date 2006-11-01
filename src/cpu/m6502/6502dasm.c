@@ -634,28 +634,10 @@ static const struct op6502_info opdeco16[256] =
  };
 #endif
 
-static unsigned m6502_get_reg(const struct op6502_info *opinfo, int reg)
-{
-	union cpuinfo info;
-	void (*get_info)(UINT32 state, union cpuinfo *info) = m6502_get_info;
-
-#if HAS_M65CE02
-	if (opinfo == op65CE02)
-		get_info = m65ce02_get_info;
-#endif
-#if HAS_M4510
-	if (opinfo == op4510)
-		get_info = m4510_get_info;
-#endif
-
-	get_info(CPUINFO_INT_REGISTER + (reg), &info);
-	return info.i;
-}
-
 /*****************************************************************************
  * Disassemble a single opcode starting at pc
  *****************************************************************************/
-static unsigned internal_m6502_dasm(const struct op6502_info *opinfo, char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+static unsigned internal_m6502_dasm(const struct op6502_info *opinfo, char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	char *dst = buffer;
 	const char *symbol;
@@ -841,7 +823,7 @@ static unsigned internal_m6502_dasm(const struct op6502_info *opinfo, char *buff
 	case isy:
 		op = opram[pos++];
 		pc++;
-		addr = op + m6502_get_reg(opinfo, M6502_S);
+		addr = op;
 		pos += 2;
 		pc += 2;
 		dst += sprintf(dst,"(s,$%02X),y", addr);
@@ -855,50 +837,50 @@ static unsigned internal_m6502_dasm(const struct op6502_info *opinfo, char *buff
 }
 
 #if (HAS_M6502)
-unsigned m6502_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+unsigned m6502_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
-	return internal_m6502_dasm(op6502, buffer, pc, oprom, opram, bytes);
+	return internal_m6502_dasm(op6502, buffer, pc, oprom, opram);
 }
 #endif
 
 #if (HAS_M65SC02)
-unsigned m65sc02_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+unsigned m65sc02_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
-	return internal_m6502_dasm(op65sc02, buffer, pc, oprom, opram, bytes);
+	return internal_m6502_dasm(op65sc02, buffer, pc, oprom, opram);
 }
 #endif
 
 #if (HAS_M65C02)
-unsigned m65c02_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+unsigned m65c02_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
-	return internal_m6502_dasm(op65c02, buffer, pc, oprom, opram, bytes);
+	return internal_m6502_dasm(op65c02, buffer, pc, oprom, opram);
 }
 #endif
 
 #if (HAS_M65CE02)
-unsigned m65ce02_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+unsigned m65ce02_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
-	return internal_m6502_dasm(op65ce02, buffer, pc, oprom, opram, bytes);
+	return internal_m6502_dasm(op65ce02, buffer, pc, oprom, opram);
 }
 #endif
 
 #if (HAS_M6510)
-unsigned m6510_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+unsigned m6510_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
-	return internal_m6502_dasm(op6510, buffer, pc, oprom, opram, bytes);
+	return internal_m6502_dasm(op6510, buffer, pc, oprom, opram);
 }
 #endif
 
 #if (HAS_DECO16)
-unsigned deco16_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+unsigned deco16_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
-	return internal_m6502_dasm(opdeco16, buffer, pc, oprom, opram, bytes);
+	return internal_m6502_dasm(opdeco16, buffer, pc, oprom, opram);
 }
 #endif
 
 #if (HAS_M4510)
-unsigned m4510_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+unsigned m4510_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
-	return internal_m6502_dasm(op4510, buffer, pc, oprom, opram, bytes);
+	return internal_m6502_dasm(op4510, buffer, pc, oprom, opram);
 }
 #endif

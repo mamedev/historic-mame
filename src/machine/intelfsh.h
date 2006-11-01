@@ -12,6 +12,7 @@
 #define FLASH_FUJITSU_29F016A ( 2 )
 #define FLASH_INTEL_E28F008SA ( 3 )
 #define FLASH_INTEL_TE28F160 ( 4 )
+#define FLASH_SHARP_LH28F016S ( 5 )
 
 extern void intelflash_init( int chip, int type, void *data );
 extern UINT32 intelflash_read( int chip, UINT32 address );

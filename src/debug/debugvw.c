@@ -1318,7 +1318,6 @@ static offs_t disasm_back_up(int cpunum, const debug_cpu_info *cpuinfo, offs_t s
 {
 	int minlen = BYTE2ADDR(activecpu_min_instruction_bytes(), cpuinfo, ADDRESS_SPACE_PROGRAM);
 	int maxlen = BYTE2ADDR(activecpu_max_instruction_bytes(), cpuinfo, ADDRESS_SPACE_PROGRAM);
-	int use_new_dasm = (activecpu_get_info_fct(CPUINFO_PTR_DISASSEMBLE_NEW) != NULL);
 	UINT32 addrmask = cpuinfo->space[ADDRESS_SPACE_PROGRAM].logaddrmask;
 	offs_t curpc, lastgoodpc = startpc, temppc;
 	UINT8 opbuf[1024], argbuf[1024];
@@ -1333,13 +1332,12 @@ static offs_t disasm_back_up(int cpunum, const debug_cpu_info *cpuinfo, offs_t s
 	if (curpc > startpc)
 		curpc = 0;
 
-	/* if using the new disassembler, prefetch the opcode bytes */
-	if (use_new_dasm)
-		for (temppc = curpc; temppc < startpc; temppc++)
-		{
-			opbuf[1000 + temppc - startpc] = debug_read_opcode(temppc, 1, FALSE);
-			argbuf[1000 + temppc - startpc] = debug_read_opcode(temppc, 1, TRUE);
-		}
+	/* prefetch the opcode bytes */
+	for (temppc = curpc; temppc < startpc; temppc++)
+	{
+		opbuf[1000 + temppc - startpc] = debug_read_opcode(temppc, 1, FALSE);
+		argbuf[1000 + temppc - startpc] = debug_read_opcode(temppc, 1, TRUE);
+	}
 
 	/* loop until we hit it */
 	while (1)
@@ -1355,14 +1353,7 @@ static offs_t disasm_back_up(int cpunum, const debug_cpu_info *cpuinfo, offs_t s
 			/* get the disassembly, but only if mapped */
 			instlen = 1;
 			if (!cpuinfo->translate || (*cpuinfo->translate)(ADDRESS_SPACE_PROGRAM, &pcbyte))
-				if (memory_get_read_ptr(cpunum, ADDRESS_SPACE_PROGRAM, pcbyte) != NULL)
-				{
-					memory_set_opbase(pcbyte);
-					if (use_new_dasm)
-						instlen = activecpu_dasm_new(dasmbuffer, testpc & addrmask, &opbuf[1000 + testpc - startpc], &argbuf[1000 + testpc - startpc], startpc - testpc) & DASMFLAG_LENGTHMASK;
-					else
-						instlen = activecpu_dasm(dasmbuffer, testpc & addrmask) & DASMFLAG_LENGTHMASK;
-				}
+				instlen = activecpu_dasm(dasmbuffer, testpc & addrmask, &opbuf[1000 + testpc - startpc], &argbuf[1000 + testpc - startpc]) & DASMFLAG_LENGTHMASK;
 
 			/* count this one */
 			instcount++;
@@ -1385,13 +1376,12 @@ static offs_t disasm_back_up(int cpunum, const debug_cpu_info *cpuinfo, offs_t s
 		if (nextcurpc > startpc)
 			nextcurpc = 0;
 
-		/* if using the new disassembler, prefetch the opcode bytes */
-		if (use_new_dasm)
-			for (temppc = nextcurpc; temppc < curpc; temppc++)
-			{
-				opbuf[1000 + temppc - startpc] = debug_read_opcode(temppc, 1, FALSE);
-				argbuf[1000 + temppc - startpc] = debug_read_opcode(temppc, 1, TRUE);
-			}
+		/* prefetch the opcode bytes */
+		for (temppc = nextcurpc; temppc < curpc; temppc++)
+		{
+			opbuf[1000 + temppc - startpc] = debug_read_opcode(temppc, 1, FALSE);
+			argbuf[1000 + temppc - startpc] = debug_read_opcode(temppc, 1, TRUE);
+		}
 
 		/* update curpc once we're done fetching */
 		curpc = nextcurpc;
@@ -1462,18 +1452,17 @@ static void disasm_generate_bytes(offs_t pcbyte, int numbytes, const debug_cpu_i
     for the disassembly view
 -------------------------------------------------*/
 
-static void disasm_recompute(debug_view *view, offs_t pc, int startline, int lines, int original_cpunum)
+static int disasm_recompute(debug_view *view, offs_t pc, int startline, int lines, int original_cpunum)
 {
 	debug_view_disasm *dasmdata = view->extra_data;
 	const debug_cpu_info *cpuinfo = debug_get_cpu_info(dasmdata->cpunum);
 	int chunksize, minbytes, maxbytes, maxbytes_clamped;
-	int use_new_dasm;
+	int changed = FALSE;
 	UINT32 addrmask;
 	int line;
 
 	/* switch to the context of the CPU in question */
 	addrmask = cpuinfo->space[ADDRESS_SPACE_PROGRAM].logaddrmask;
-	use_new_dasm = (activecpu_get_info_fct(CPUINFO_PTR_DISASSEMBLE_NEW) != NULL);
 
 	/* determine how many characters we need for an address and set the divider */
 	dasmdata->divider1 = 1 + cpuinfo->space[ADDRESS_SPACE_PROGRAM].logchars + 1;
@@ -1521,14 +1510,18 @@ static void disasm_recompute(debug_view *view, offs_t pc, int startline, int lin
 	for (line = 0; line < lines; line++)
 	{
 		offs_t pcbyte, tempaddr;
-		UINT64 dummyreadop;
 		char buffer[100];
 		int numbytes = 0;
 		int instr = startline + line;
+		char oldbuf[100];
 		char *destbuf = &dasmdata->dasm[instr * dasmdata->allocated_cols];
 
 		/* convert PC to a byte offset */
 		pcbyte = ADDR2BYTE_MASKED(pc, cpuinfo, ADDRESS_SPACE_PROGRAM);
+
+		/* save a copy of the previous line as a backup if we're only doing one line */
+		if (lines == 1)
+			strncpy(oldbuf, destbuf, MIN(sizeof(oldbuf), dasmdata->allocated_cols));
 
 		/* convert back and set the address of this instruction */
 		dasmdata->address[instr] = pcbyte; // ! This might make more sense as the following : BYTE2ADDR(pcbyte, cpuinfo, ADDRESS_SPACE_PROGRAM); !
@@ -1538,41 +1531,21 @@ static void disasm_recompute(debug_view *view, offs_t pc, int startline, int lin
 		tempaddr = pcbyte;
 		if (!cpuinfo->translate || (*cpuinfo->translate)(ADDRESS_SPACE_PROGRAM, &tempaddr))
 		{
-			/* if we can use new disassembly, do it */
-			if (use_new_dasm)
+			UINT8 opbuf[64], argbuf[64];
+
+			/* fetch the bytes up to the maximum */
+			for (numbytes = 0; numbytes < maxbytes; numbytes++)
 			{
-				UINT8 opbuf[64], argbuf[64];
-
-				/* fetch the bytes up to the maximum */
-				for (numbytes = 0; numbytes < maxbytes; numbytes++)
-				{
-					opbuf[numbytes] = debug_read_opcode(pcbyte + numbytes, 1, FALSE);
-					argbuf[numbytes] = debug_read_opcode(pcbyte + numbytes, 1, TRUE);
-				}
-
-				/* disassemble the result */
-				pc += numbytes = activecpu_dasm_new(buffer, pc & addrmask, opbuf, argbuf, maxbytes) & DASMFLAG_LENGTHMASK;
+				opbuf[numbytes] = debug_read_opcode(pcbyte + numbytes, 1, FALSE);
+				argbuf[numbytes] = debug_read_opcode(pcbyte + numbytes, 1, TRUE);
 			}
 
-			/* otherwise, we need to use the old, risky way */
-			else
-			{
-				/* get the disassembly, but only if mapped */
-				if (memory_get_op_ptr(dasmdata->cpunum, pcbyte, 0) != NULL || (cpuinfo->readop && (*cpuinfo->readop)(pcbyte, 1, &dummyreadop)))
-				{
-					memory_set_opbase(pcbyte);
-					pc += numbytes = activecpu_dasm(buffer, pc & addrmask) & DASMFLAG_LENGTHMASK;
-				}
-				else
-				{
-					sprintf(buffer, "<unmapped>");
-					numbytes = minbytes;
-					pc += BYTE2ADDR(minbytes, cpuinfo, ADDRESS_SPACE_PROGRAM);
-				}
-			}
+			/* disassemble the result */
+			pc += numbytes = activecpu_dasm(buffer, pc & addrmask, opbuf, argbuf) & DASMFLAG_LENGTHMASK;
 		}
 		else
 			sprintf(buffer, "<unmapped>");
+
 		sprintf(&destbuf[dasmdata->divider1 + 1], "%-*s  ", dasmdata->dasm_width, buffer);
 
 		if (dasmdata->right_column == DVP_DASM_RIGHTCOL_RAW || dasmdata->right_column == DVP_DASM_RIGHTCOL_ENCRYPTED)
@@ -1605,6 +1578,10 @@ static void disasm_recompute(debug_view *view, offs_t pc, int startline, int lin
 			else
 				sprintf(&destbuf[dasmdata->divider2], " ");
 		}
+
+		/* see if the line changed at all */
+		if (lines == 1 && strncmp(oldbuf, destbuf, MIN(sizeof(oldbuf), dasmdata->allocated_cols)) != 0)
+			changed = TRUE;
 	}
 
 	/* reset the opcode base */
@@ -1618,6 +1595,7 @@ static void disasm_recompute(debug_view *view, offs_t pc, int startline, int lin
 
 	/* now longer need to recompute */
 	dasmdata->recompute = FALSE;
+	return changed;
 }
 
 
@@ -1634,6 +1612,7 @@ static void disasm_update(debug_view *view)
 	offs_t pcbyte = ADDR2BYTE_MASKED(pc, cpuinfo, ADDRESS_SPACE_PROGRAM);
 	debug_view_char *dest = view->viewdata;
 	int original_cpunum = cpu_getactivecpu();
+	int recomputed_this_time = FALSE;
 	EXPRERR exprerr;
 	UINT32 row;
 
@@ -1698,6 +1677,7 @@ static void disasm_update(debug_view *view)
 		dasmdata->recompute = TRUE;
 
 	/* if we need to recompute, do it */
+recompute:
 	if (dasmdata->recompute)
 	{
 		/* determine the addresses of what we will display */
@@ -1720,9 +1700,10 @@ static void disasm_update(debug_view *view)
 
 			disasm_recompute(view, backpc, 0, view->total_rows, original_cpunum);
 		}
+		recomputed_this_time = TRUE;
 	}
 
-	/* if the PC is different from last time, reset the cursor to match */
+	/* figure out the row where the PC is and recompute the disassembly */
 	if (pcbyte != dasmdata->last_pcbyte)
 	{
 		/* find the row with the PC on it */
@@ -1733,6 +1714,15 @@ static void disasm_update(debug_view *view)
 				break;
 			if (pcbyte == dasmdata->address[effrow])
 			{
+				/* see if we changed */
+				int changed = disasm_recompute(view, pc, effrow, 1, original_cpunum);
+				if (changed && !recomputed_this_time)
+				{
+					dasmdata->recompute = TRUE;
+					goto recompute;
+				}
+
+				/* set the effective row and PC */
 				view->cursor_row = effrow;
 				dasmdata->active_address = pcbyte;
 			}
@@ -1757,17 +1747,7 @@ static void disasm_update(debug_view *view)
 
 			/* if we're on the line with the PC, recompute and hilight it */
 			if (pcbyte == dasmdata->address[effrow])
-			{
 				attrib = DCA_CURRENT;
-				disasm_recompute(view, pc, effrow, 1, original_cpunum);
-
-				/* if the PC is different from last time, reset the cursor to match */
-				if (pcbyte != dasmdata->last_pcbyte)
-				{
-					view->cursor_row =
-					dasmdata->active_address = pcbyte;
-				}
-			}
 
 			/* if we're on a line with a breakpoint, tag it changed */
 			else

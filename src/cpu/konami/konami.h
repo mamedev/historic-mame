@@ -52,7 +52,7 @@ void konami_get_info(UINT32 state, union cpuinfo *info);
 #endif
 
 #ifdef MAME_DEBUG
-offs_t Dasmknmi(char *buffer, UINT32 pc, UINT8 *oprom, UINT8 *opram, int bytes);
+offs_t Dasmknmi(char *buffer, UINT32 pc, const UINT8 *oprom, const UINT8 *opram);
 #endif
 
 #endif /* _KONAMI_H */

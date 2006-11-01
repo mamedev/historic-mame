@@ -66,7 +66,7 @@ extern void ALPHA8301_get_info(UINT32 state, union cpuinfo *info);
 #define ALPHA8201_RDOP_ARG(A) ((unsigned)cpu_readop_arg(A))
 
 #ifdef  MAME_DEBUG
-int 	Dasm8201(char *dst, unsigned pc);
+offs_t Dasm8201(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
 #endif
 
 #endif  /* _ALPHA8201_H */

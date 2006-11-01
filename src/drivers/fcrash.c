@@ -57,7 +57,6 @@ extern UINT16 *cps1_output;
 extern int cps1_port(int offset);
 extern void cps1_get_video_base(void);
 extern void cps1_build_palette(void);
-extern void cps1_update_transmasks(void);
 extern int cps1_scroll1x, cps1_scroll1y;
 extern int cps1_scroll2x, cps1_scroll2y;
 extern int cps1_scroll3x, cps1_scroll3y;
@@ -66,13 +65,37 @@ extern UINT16 *cps1_other;
 /* not verified */
 #define CPS1_ROWSCROLL_OFFS     0x20    /* base of row scroll offsets in other RAM */
 
+void fcrash_update_transmasks(void)
+{
+	int i;
+	int priority[4];
+
+	priority[0]=0x66;
+	priority[1]=0x70;
+	priority[2]=0x68;
+	priority[3]=0x72;
+
+	for (i = 0;i < 4;i++)
+	{
+		int mask;
+
+		/* Get transparency registers */
+		if (priority[i])
+			mask = cps1_port(priority[i]) ^ 0xffff;
+		else mask = 0xffff;	/* completely transparent if priority masks not defined (mercs, qad) */
+
+		tilemap_set_transmask(cps1_bg_tilemap[0],i,mask,0x8000);
+		tilemap_set_transmask(cps1_bg_tilemap[1],i,mask,0x8000);
+		tilemap_set_transmask(cps1_bg_tilemap[2],i,mask,0x8000);
+	}
+}
 
 void fcrash_render_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 {
 	int pos;
-	int base=0x50c8/2; /* and 10c8/2 for the buffer? */
+	int base=0x50c8/2; // and 10c8/2 for the buffer?
 
-	for (pos=0;pos<0x2000;pos+=4)
+	for (pos=0x1f9c;pos>=0x0000;pos-=4)
 	{
 		int tileno;
 		int xpos;
@@ -88,7 +111,7 @@ void fcrash_render_sprites(mame_bitmap *bitmap,const rectangle *cliprect)
 		colour = cps1_gfxram[base+pos+1]&0x1f;
 		ypos = 256-ypos;
 
-		drawgfx(bitmap,Machine->gfx[2],tileno,colour,flipx,flipy,xpos+48,ypos-16,cliprect,TRANSPARENCY_PEN,15);
+		pdrawgfx(bitmap,Machine->gfx[2],tileno,colour,flipx,flipy,xpos+48,ypos-16,cliprect,TRANSPARENCY_PEN,15,0x02);
 
 	}
 
@@ -126,13 +149,13 @@ void fcrash_render_high_layer(mame_bitmap *bitmap, const rectangle *cliprect, in
 
 VIDEO_UPDATE( fcrash )
 {
- //   int layercontrol,l0,l1,l2,l3;
+   	int layercontrol,l0,l1,l2,l3;
 	int videocontrol=cps1_port(0x22);
 
 
 	flip_screen_set(videocontrol & 0x8000);
 
-//  layercontrol = cps1_output[cps1_game_config->layer_control/2];
+ 	layercontrol = cps1_output[0x60/2];
 
 	/* Get video memory base registers */
 	cps1_get_video_base();
@@ -140,7 +163,7 @@ VIDEO_UPDATE( fcrash )
 	/* Build palette */
 	cps1_build_palette();
 
-	cps1_update_transmasks();
+	fcrash_update_transmasks();
 
 	tilemap_set_scrollx(cps1_bg_tilemap[0],0,cps1_scroll1x-60);
 	tilemap_set_scrolly(cps1_bg_tilemap[0],0,cps1_scroll1y);
@@ -163,12 +186,12 @@ VIDEO_UPDATE( fcrash )
 		tilemap_set_scrollx(cps1_bg_tilemap[1],0,cps1_scroll2x-60);
 	}
 	tilemap_set_scrolly(cps1_bg_tilemap[1],0,cps1_scroll2y);
-	tilemap_set_scrollx(cps1_bg_tilemap[2],0,cps1_scroll3x-60);
+	tilemap_set_scrollx(cps1_bg_tilemap[2],0,cps1_scroll3x-64);
 	tilemap_set_scrolly(cps1_bg_tilemap[2],0,cps1_scroll3y);
 
 
 	/* turn all tilemaps on regardless of settings in get_video_base() */
-	/* (write a custom get_video_base for this bootleg hardware? */
+	/* write a custom get_video_base for this bootleg hardware? */
 	tilemap_set_enable(cps1_bg_tilemap[0],1);
 	tilemap_set_enable(cps1_bg_tilemap[1],1);
 	tilemap_set_enable(cps1_bg_tilemap[2],1);
@@ -177,14 +200,20 @@ VIDEO_UPDATE( fcrash )
 	fillbitmap(bitmap,Machine->pens[4095],cliprect);
 
 	fillbitmap(priority_bitmap,0,cliprect);
+	l0 = (layercontrol >> 0x06) & 03;
+	l1 = (layercontrol >> 0x08) & 03;
+	l2 = (layercontrol >> 0x0a) & 03;
+	l3 = (layercontrol >> 0x0c) & 03;
 
-	fcrash_render_layer(bitmap,cliprect,3,0);
-	fcrash_render_high_layer(bitmap,cliprect,3); /* prepare mask for sprites */
-	fcrash_render_layer(bitmap,cliprect,2,0);
-	fcrash_render_high_layer(bitmap,cliprect,2); /* prepare mask for sprites */
-	fcrash_render_layer(bitmap,cliprect,1,0);
-	fcrash_render_high_layer(bitmap,cliprect,1); /* prepare mask for sprites */
-	fcrash_render_layer(bitmap,cliprect,0,0);
+	fcrash_render_layer(bitmap,cliprect,l0,0);
+	if (l1 == 0) fcrash_render_high_layer(bitmap,cliprect,l0);
+	fcrash_render_layer(bitmap,cliprect,l1,0);
+	if (l2 == 0) fcrash_render_high_layer(bitmap,cliprect,l1);
+	fcrash_render_layer(bitmap,cliprect,l2,0);
+	if (l3 == 0) fcrash_render_high_layer(bitmap,cliprect,l2);
+	fcrash_render_layer(bitmap,cliprect,l3,0);
+
+
 	return 0;
 }
 

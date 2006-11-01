@@ -66,7 +66,7 @@
 #include "debugger.h"
 #include "i8051.h"
 
-#define VERBOSE 1
+#define VERBOSE 0
 
 #if VERBOSE
 #define LOG(x)	logerror x
@@ -1591,12 +1591,12 @@ void i8051_state_load(void *file)
 {
 }
 
-unsigned i8051_dasm(char *buffer, unsigned pc)
+offs_t i8051_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-	return Dasm8051( buffer, pc );
+	return Dasm8051( buffer, pc, oprom, opram );
 #else
-	sprintf( buffer, "$%02X", cpu_readop(pc) );
+	sprintf( buffer, "$%02X", oprom[0] );
 	return 1;
 #endif
 }
@@ -2300,12 +2300,12 @@ const char *i8752_info(void *context, int regnum)
 	return i8051_info(context,regnum);
 }
 #endif
-unsigned i8752_dasm(char *buffer, unsigned pc)
+offs_t i8752_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-	return Dasm8051(buffer,pc);
+	return Dasm8051(buffer,pc,oprom,opram);
 #else
-	sprintf( buffer, "$%02X", cpu_readop(pc) );
+	sprintf( buffer, "$%02X", oprom[0] );
 	return 1;
 #endif
 }
@@ -2464,7 +2464,7 @@ void i8051_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:						info->exit = i8051_exit;		break;
 		case CPUINFO_PTR_EXECUTE:					info->execute = i8051_execute;		break;
 		case CPUINFO_PTR_BURN:						info->burn = NULL;			break;
-		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = i8051_dasm;		break;
+		case CPUINFO_PTR_DISASSEMBLE:						info->disassemble = i8051_dasm;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:				info->icount = &i8051_icount;		break;
 
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM: info->internal_map = 0; break;

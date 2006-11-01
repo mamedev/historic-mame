@@ -306,8 +306,7 @@ enum
 	CPUINFO_PTR_EXIT,									/* R/O: void (*exit)(void) */
 	CPUINFO_PTR_EXECUTE,								/* R/O: int (*execute)(int cycles) */
 	CPUINFO_PTR_BURN,									/* R/O: void (*burn)(int cycles) */
-	CPUINFO_PTR_DISASSEMBLE,							/* R/O: offs_t (*disassemble)(char *buffer, offs_t pc) */
-	CPUINFO_PTR_DISASSEMBLE_NEW,						/* R/O: offs_t (*disassemble_new)(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes) */
+	CPUINFO_PTR_DISASSEMBLE,							/* R/O: offs_t (*disassemble)(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram) */
 	CPUINFO_PTR_TRANSLATE,								/* R/O: int (*translate)(int space, offs_t *address) */
 	CPUINFO_PTR_READ,									/* R/O: int (*read)(int space, UINT32 offset, int size, UINT64 *value) */
 	CPUINFO_PTR_WRITE,									/* R/O: int (*write)(int space, UINT32 offset, int size, UINT64 value) */
@@ -351,8 +350,7 @@ union cpuinfo
 	void	(*exit)(void);								/* CPUINFO_PTR_EXIT */
 	int		(*execute)(int cycles);						/* CPUINFO_PTR_EXECUTE */
 	void	(*burn)(int cycles);						/* CPUINFO_PTR_BURN */
-	offs_t	(*disassemble)(char *buffer, offs_t pc);	/* CPUINFO_PTR_DISASSEMBLE */
-	offs_t	(*disassemble_new)(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes);/* CPUINFO_PTR_DISASSEMBLE_NEW */
+	offs_t	(*disassemble)(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);/* CPUINFO_PTR_DISASSEMBLE */
 	int 	(*translate)(int space, offs_t *address);	/* CPUINFO_PTR_TRANSLATE */
 	int		(*read)(int space, UINT32 offset, int size, UINT64 *value);/* CPUINFO_PTR_READ */
 	int		(*write)(int space, UINT32 offset, int size, UINT64 value);/* CPUINFO_PTR_WRITE */
@@ -418,8 +416,7 @@ struct _cpu_interface
 	void		(*exit)(void);
 	int			(*execute)(int cycles);
 	void		(*burn)(int cycles);
-	offs_t		(*disassemble)(char *buffer, offs_t pc);
-	offs_t		(*disassemble_new)(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes);
+	offs_t		(*disassemble)(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
 	int			(*translate)(int space, offs_t *address);
 
 	/* other info */
@@ -456,7 +453,7 @@ void cpuintrf_pop_context(void);
 char *cpuintrf_temp_str(void);
 
 /* set the dasm override handler */
-void cpuintrf_set_dasm_override(int cpunum, offs_t (*dasm_override)(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes));
+void cpuintrf_set_dasm_override(int cpunum, offs_t (*dasm_override)(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram));
 
 
 
@@ -496,8 +493,7 @@ offs_t activecpu_get_physical_pc_byte(void);
 void activecpu_set_opbase(offs_t val);
 
 /* disassemble a line at a given PC on the active CPU */
-offs_t activecpu_dasm(char *buffer, offs_t pc);
-offs_t activecpu_dasm_new(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes);
+offs_t activecpu_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
 
 #define activecpu_context_size()				activecpu_get_info_int(CPUINFO_INT_CONTEXT_SIZE)
 #define activecpu_input_lines()					activecpu_get_info_int(CPUINFO_INT_INPUT_LINES)
@@ -569,8 +565,7 @@ offs_t cpunum_get_physical_pc_byte(int cpunum);
 void cpunum_set_opbase(int cpunum, offs_t val);
 
 /* disassemble a line at a given PC on a given CPU */
-offs_t cpunum_dasm(int cpunum, char *buffer, offs_t pc);
-offs_t cpunum_dasm_new(int cpunum, char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes);
+offs_t cpunum_dasm(int cpunum, char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
 
 #define cpunum_context_size(cpunum)				cpunum_get_info_int(cpunum, CPUINFO_INT_CONTEXT_SIZE)
 #define cpunum_input_lines(cpunum)				cpunum_get_info_int(cpunum, CPUINFO_INT_INPUT_LINES)

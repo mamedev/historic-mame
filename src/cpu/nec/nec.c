@@ -50,7 +50,7 @@ typedef UINT32 DWORD;
 #include "nec.h"
 #include "necintrf.h"
 
-extern int necv_dasm_one(char *buffer, UINT32 eip, UINT8 *oprom, int addr_size, int op_size);
+extern int necv_dasm_one(char *buffer, UINT32 eip, const UINT8 *oprom, int addr_size, int op_size);
 
 /* NEC registers */
 typedef union
@@ -914,7 +914,7 @@ static void set_irq_line(int irqline, int state)
 	}
 }
 
-static offs_t nec_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes)
+static offs_t nec_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
 	return necv_dasm_one(buffer, pc, oprom, 0, 0);
@@ -1157,7 +1157,7 @@ void nec_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = nec_exit;					break;
 		case CPUINFO_PTR_EXECUTE:						/* set per-CPU */						break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
-		case CPUINFO_PTR_DISASSEMBLE_NEW:				info->disassemble_new = nec_dasm;			break;
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = nec_dasm;			break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &nec_ICount;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */

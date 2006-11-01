@@ -448,7 +448,7 @@ static int audit_one_disk(const rom_entry *rom, const game_driver *gamedrv, UINT
 	/* open the disk */
 	chd_gamedrv = gamedrv;
 	chd_set_interface(&audit_chd_interface);
-	source = chd_open(record->name, 0, NULL);
+	source = open_disk_image(gamedrv,rom);
 
 	/* if we failed, report the error */
 	if (source == NULL)
@@ -552,7 +552,7 @@ static chd_interface_file *audit_chd_open(const char *filename, const char *mode
 		mame_file *file;
 		char *fname;
 
-		fname = assemble_4_strings(drv->name, PATH_SEPARATOR, filename, ".chd");
+		fname = assemble_3_strings(drv->name, PATH_SEPARATOR, filename);
 		filerr = mame_fopen(SEARCHPATH_IMAGE, fname, OPEN_FLAG_READ, &file);
 		free(fname);
 

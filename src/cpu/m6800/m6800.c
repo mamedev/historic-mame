@@ -975,12 +975,12 @@ static int m6800_execute(int cycles)
 	return cycles - m6800_ICount;
 }
 
-static offs_t m6800_dasm(char *buffer, offs_t pc)
+static offs_t m6800_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-	return Dasm680x(6800,buffer,pc);
+	return Dasm680x(6800,buffer,pc,oprom,opram);
 #else
-	sprintf( buffer, "$%02X", cpu_readop(pc) );
+	sprintf( buffer, "$%02X", oprom[0] );
 	return 1;
 #endif
 }
@@ -998,12 +998,12 @@ static void m6801_init(int index, int clock, const void *config, int (*irqcallba
 	state_register("m6801", index);
 }
 
-static offs_t m6801_dasm(char *buffer, offs_t pc)
+static offs_t m6801_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-	return Dasm680x(6801,buffer,pc);
+	return Dasm680x(6801,buffer,pc,oprom,opram);
 #else
-	sprintf( buffer, "$%02X", program_read_byte_8(pc) );
+	sprintf( buffer, "$%02X", oprom[0] );
 	return 1;
 #endif
 }
@@ -1023,12 +1023,12 @@ static void m6802_init(int index, int clock, const void *config, int (*irqcallba
 	state_register("m6802", index);
 }
 
-static offs_t m6802_dasm(char *buffer, offs_t pc)
+static offs_t m6802_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-	return Dasm680x(6802,buffer,pc);
+	return Dasm680x(6802,buffer,pc,oprom,opram);
 #else
-	sprintf( buffer, "$%02X", program_read_byte_8(pc) );
+	sprintf( buffer, "$%02X", oprom[0] );
 	return 1;
 #endif
 }
@@ -1346,12 +1346,12 @@ static int m6803_execute(int cycles)
 #endif
 
 #if (HAS_M6803)
-static offs_t m6803_dasm(char *buffer, offs_t pc)
+static offs_t m6803_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-	return Dasm680x(6803,buffer,pc);
+	return Dasm680x(6803,buffer,pc,oprom,opram);
 #else
-	sprintf( buffer, "$%02X", program_read_byte_8(pc) );
+	sprintf( buffer, "$%02X", oprom[0] );
 	return 1;
 #endif
 }
@@ -1383,12 +1383,12 @@ static void m6808_init(int index, int clock, const void *config, int (*irqcallba
 	state_register("m6808", index);
 }
 
-static offs_t m6808_dasm(char *buffer, offs_t pc)
+static offs_t m6808_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-	return Dasm680x(6808,buffer,pc);
+	return Dasm680x(6808,buffer,pc,oprom,opram);
 #else
-	sprintf( buffer, "$%02X", program_read_byte_8(pc) );
+	sprintf( buffer, "$%02X", oprom[0] );
 	return 1;
 #endif
 }
@@ -1722,12 +1722,12 @@ WRITE8_HANDLER( hd63701_internal_registers_w )
 	m6803_internal_registers_w(offset,data);
 }
 
-static offs_t hd63701_dasm(char *buffer, offs_t pc)
+static offs_t hd63701_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-	return Dasm680x(63701,buffer,pc);
+	return Dasm680x(63701,buffer,pc,oprom,opram);
 #else
-	sprintf( buffer, "$%02X", program_read_byte_8(pc) );
+	sprintf( buffer, "$%02X", oprom[0] );
 	return 1;
 #endif
 }
@@ -2039,12 +2039,12 @@ static int nsc8105_execute(int cycles)
 	return cycles - m6800_ICount;
 }
 
-static offs_t nsc8105_dasm(char *buffer, offs_t pc)
+static offs_t nsc8105_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-	return Dasm680x(8105,buffer,pc);
+	return Dasm680x(8105,buffer,pc,oprom,opram);
 #else
-	sprintf( buffer, "$%02X", program_read_byte_8(pc) );
+	sprintf( buffer, "$%02X", oprom[0] );
 	return 1;
 #endif
 }

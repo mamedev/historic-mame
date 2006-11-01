@@ -1474,12 +1474,12 @@ static int s2650_execute(int cycles)
 }
 
 
-static offs_t s2650_dasm(char *buffer, offs_t pc)
+static offs_t s2650_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-    return Dasm2650(buffer,pc);
+    return Dasm2650(buffer,pc,oprom,opram);
 #else
-	sprintf( buffer, "$%02X", cpu_readop(pc) );
+	sprintf(buffer, "$%02X", oprom[0]);
 	return 1;
 #endif
 }

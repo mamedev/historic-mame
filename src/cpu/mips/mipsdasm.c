@@ -109,10 +109,10 @@ static char *make_address( UINT32 pc, UINT32 op )
 	return s_address;
 }
 
-unsigned DasmMIPS( char *buffer, UINT32 pc, UINT8 *opram )
+unsigned DasmMIPS( char *buffer, UINT32 pc, const UINT8 *opram )
 {
 	UINT32 op;
-	UINT8 *oldopram;
+	const UINT8 *oldopram;
 
 	oldopram = opram;
 	op = ( opram[ 3 ] << 24 ) | ( opram[ 2 ] << 16 ) | ( opram[ 1 ] << 8 ) | ( opram[ 0 ] << 0 );

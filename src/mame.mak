@@ -1521,6 +1521,7 @@ $(OBJ)/misc.a: \
 	$(OBJ)/drivers/tattack.o \
 	$(OBJ)/drivers/taxidrvr.o $(OBJ)/vidhrdw/taxidrvr.o \
 	$(OBJ)/drivers/tcl.o \
+	$(OBJ)/drivers/tetriunk.o \
 	$(OBJ)/drivers/thedeep.o $(OBJ)/vidhrdw/thedeep.o \
 	$(OBJ)/drivers/tiamc1.o $(OBJ)/vidhrdw/tiamc1.o $(OBJ)/sndhrdw/tiamc1.o \
 	$(OBJ)/drivers/tickee.o $(OBJ)/vidhrdw/tickee.o \

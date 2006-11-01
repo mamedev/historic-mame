@@ -176,6 +176,7 @@ typedef struct {
 	int 	size, cycles;
 	void	(*opcode)(void);
 	const char	*dasm;
+    UINT32 dasmflags;
 }	Z8000_init;
 
 /* structure for the opcode execution table / disassembler */
@@ -184,6 +185,7 @@ typedef struct {
     int     cycles;
 	int 	size;
     const char    *dasm;
+    UINT32 dasmflags;
 }	Z8000_exec;
 
 /* opcode execution table */

@@ -54,6 +54,8 @@ static const char *tp_condition_codes[4] =
 
 
 static offs_t npc;
+static const UINT8 *rombase;
+static offs_t pcbase;
 
 static char *output;
 
@@ -68,7 +70,9 @@ static void print(const char *fmt, ...)
 
 static UINT16 FETCH(void)
 {
-	return program_read_word_16be((npc++) << 1);
+	UINT16 result = rombase[(npc - pcbase) * 2 + 0] | (rombase[(npc - pcbase) * 2 + 1] << 8);
+	npc++;
+	return result;
 }
 
 static char *GET_ADDRESS(int addr_mode, int address)
@@ -253,12 +257,15 @@ static void dasm_group_bf(UINT16 opcode)
 	}
 }
 
-int tms32051_dasm_one(char *buffer, offs_t pc)
+int tms32051_dasm_one(char *buffer, offs_t pc, const UINT8 *oprom)
 {
+	UINT32 flags = 0;
 	UINT16 opcode;
 	int baseop;
 	int address, addr_mode;
 
+	pcbase = pc;
+	rombase = oprom;
 	npc = pc;
 	output = buffer;
 
@@ -364,11 +371,11 @@ int tms32051_dasm_one(char *buffer, offs_t pc)
 		case 0x77:	print("dmov    %s", GET_ADDRESS(addr_mode, address)); break;
 		case 0x78:	print("adrk    #%02X", opcode & 0xff); break;
 		case 0x79:	print("b       %04X, %s", FETCH(), GET_ADDRESS(1, address)); break;
-		case 0x7a:	print("call    %04X, %s", FETCH(), GET_ADDRESS(1, address)); break;
+		case 0x7a:	print("call    %04X, %s", FETCH(), GET_ADDRESS(1, address)); flags = DASMFLAG_STEP_OVER; break;
 		case 0x7b:	print("banz    %04X, %s", FETCH(), GET_ADDRESS(1, address)); break;
 		case 0x7c:	print("sbrk    #%02X", opcode & 0xff); break;
 		case 0x7d:	print("bd      %04X, %s", FETCH(), GET_ADDRESS(1, address)); break;
-		case 0x7e:	print("calld   %04X, %s", FETCH(), GET_ADDRESS(1, address)); break;
+		case 0x7e:	print("calld   %04X, %s", FETCH(), GET_ADDRESS(1, address)); flags = DASMFLAG_STEP_OVER; break;
 		case 0x7f:	print("banzd   %04X, %s", FETCH(), GET_ADDRESS(1, address)); break;
 
 		case 0x80: case 0x81: case 0x82: case 0x83:
@@ -545,10 +552,11 @@ int tms32051_dasm_one(char *buffer, offs_t pc)
 			{
 				print(", %s", tp_condition_codes[tp]);
 			}
+			flags = DASMFLAG_STEP_OUT;
 			break;
 		}
 
-		case 0xef:	print("ret"); break;
+		case 0xef:	print("ret"); flags = DASMFLAG_STEP_OUT; break;
 
 		case 0xf0: case 0xf1: case 0xf2: case 0xf3:
 		{
@@ -622,13 +630,14 @@ int tms32051_dasm_one(char *buffer, offs_t pc)
 			{
 				print(", %s", tp_condition_codes[tp]);
 			}
+			flags = DASMFLAG_STEP_OUT;
 			break;
 		}
 
-		case 0xff:	print("retd"); break;
+		case 0xff:	print("retd"); flags = DASMFLAG_STEP_OUT; break;
 
 		default:	print("???     ($%04X)", opcode); break;
 	}
 
-	return npc-pc;
+	return (npc-pc) | flags | DASMFLAG_SUPPORTED;
 }

@@ -172,17 +172,16 @@ static UINT8 table[0x102][5] = {
 };
 
 /* some macros to keep things short */
-#define OP      cpu_readop(pc)
-#define ARG1    cpu_readop_arg(pc+1)
-#define ARG2    cpu_readop_arg(pc+2)
-#define ARGW	(cpu_readop_arg(pc+1)<<8) + cpu_readop_arg(pc+2)
+#define OP      oprom[0]
+#define ARG1    opram[1]
+#define ARG2    opram[2]
+#define ARGW	(opram[1]<<8) + opram[2]
 
-static unsigned m6800_get_reg(int reg) { union cpuinfo info; m6800_get_info(CPUINFO_INT_REGISTER + (reg), &info); return info.i; }
-
-unsigned Dasm680x (int subtype, char *buf, unsigned pc)
+unsigned Dasm680x (int subtype, char *buf, unsigned pc, const UINT8 *oprom, const UINT8 *opram)
 {
+	UINT32 flags = 0;
 	int invalid_mask;
-	int code = cpu_readop(pc);
+	int code = OP;
 	const char *symbol, *symbol2;
 	UINT8 opcode, args, access, size, invalid;
 
@@ -215,10 +214,15 @@ unsigned Dasm680x (int subtype, char *buf, unsigned pc)
 	size = table[code][3];
 	invalid = table[code][4];
 
+	if (opcode == bsr || opcode == jsr)
+		flags = DASMFLAG_STEP_OVER;
+	else if (opcode == rti || opcode == rts)
+		flags = DASMFLAG_STEP_OUT;
+
 	if ( invalid & invalid_mask )	/* invalid for this cpu type ? */
 	{
 		strcpy(buf, "illegal");
-		return 1;
+		return 1 | flags | DASMFLAG_SUPPORTED;
 	}
 
 	buf += sprintf(buf, "%-5s", op_name_str[opcode]);
@@ -228,45 +232,42 @@ unsigned Dasm680x (int subtype, char *buf, unsigned pc)
 		case rel:  /* relative */
 			symbol = set_ea_info( 0, pc, (INT8)ARG1 + 2, access );
 			sprintf (buf, "%s", symbol);
-			return 2;
+			return 2 | flags | DASMFLAG_SUPPORTED;
 		case imm:  /* immediate (byte or word) */
 			if( size == B )
 			{
 				symbol = set_ea_info( 0, ARG1, EA_UINT8, EA_VALUE );
 				sprintf (buf, "#%s", symbol);
-                return 2;
+                return 2 | flags | DASMFLAG_SUPPORTED;
 			}
 			symbol = set_ea_info( 0, ARGW, EA_UINT16, EA_VALUE );
 			sprintf (buf, "#%s", symbol);
-			return 3;
+			return 3 | flags | DASMFLAG_SUPPORTED;
 		case idx:  /* indexed + byte offset */
 			symbol = set_ea_info( 1, ARG1, EA_UINT8, EA_VALUE );
-			symbol2 = set_ea_info( 0, (m6800_get_reg(M6800_X) + ARG1), size, access);
 			sprintf (buf, "(x+%s)", symbol );
-            return 2;
+            return 2 | flags | DASMFLAG_SUPPORTED;
 		case imx:  /* immediate, indexed + byte offset */
 			symbol = set_ea_info( 1, ARG1, EA_UINT8, EA_VALUE);
-			symbol2 = set_ea_info( 0, (m6800_get_reg(M6800_X) + ARG2), size, access);
 			sprintf (buf, "#%s,(x+$%02x)", symbol, ARG2 );
-			return 3;
+			return 3 | flags | DASMFLAG_SUPPORTED;
 		case dir:  /* direct address */
 			symbol = set_ea_info( 1, ARG1, size, access);
 			sprintf (buf, "%s", symbol );
-			return 2;
+			return 2 | flags | DASMFLAG_SUPPORTED;
 		case imd:  /* immediate, direct address */
             symbol = set_ea_info( 1, ARG1, EA_UINT8, EA_VALUE );
 			symbol2 = set_ea_info( 0, ARG2, size, access);
 			sprintf (buf, "#%s,%s", symbol, symbol2);
-            return 3;
+            return 3 | flags | DASMFLAG_SUPPORTED;
 		case ext:  /* extended address */
 			symbol = set_ea_info( 0, ARGW, size, access);
 			sprintf (buf, "%s", symbol);
-			return 3;
+			return 3 | flags | DASMFLAG_SUPPORTED;
 		case sx1:  /* byte from address (s + 1) */
-			symbol = set_ea_info( 0, m6800_get_reg(M6800_S) + 1, EA_UINT8, access);
             sprintf (buf, "(s+1)");
-            return 1;
+            return 1 | flags | DASMFLAG_SUPPORTED;
         default:
-			return 1;
+			return 1 | flags | DASMFLAG_SUPPORTED;
 	}
 }

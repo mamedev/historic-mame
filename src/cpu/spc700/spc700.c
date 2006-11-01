@@ -1404,7 +1404,7 @@ void spc700_state_load(void *file)
 unsigned spc700_dasm(char *buffer, unsigned pc)
 {
 #ifdef MAME_DEBUG
-	return spc700_disassemble(buffer, pc);
+	return spc700_disassemble(buffer, pc, NULL);
 #else
 //  sprintf(buffer, "$%02X", read_8_instruction(pc));
 	return 1;
@@ -1413,10 +1413,10 @@ unsigned spc700_dasm(char *buffer, unsigned pc)
 
 
 /* Disassemble an instruction */
-static offs_t mame_spc700_dasm(char *buffer, offs_t pc)
+static offs_t mame_spc700_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-	return spc700_disassemble(buffer, pc);
+	return spc700_disassemble(buffer, pc, oprom);
 #else
 //  sprintf(buffer, "$%02X", read_8_instruction(pc));
 	return 1;

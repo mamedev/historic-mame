@@ -73,5 +73,5 @@ typedef struct
 {
 	UINT32 op_mask;
 	UINT32 op_bits;
-	void (* handler)(UINT32, UINT64);
+	UINT32 (* handler)(UINT32, UINT64);
 } SHARC_DASM_OP;

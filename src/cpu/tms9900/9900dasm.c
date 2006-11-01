@@ -311,13 +311,13 @@ static const enum opcodes ops_001c_002f_s0[20]=
 static int PC;
 
 
-INLINE UINT16 readop_arg(UINT8 *opram, unsigned pc)
+INLINE UINT16 readop_arg(const UINT8 *opram, unsigned pc)
 {
 	UINT16 result = opram[PC++ - pc] << 8;
 	return result | opram[PC++ - pc];
 }
 
-static int print_arg (char *dest, int mode, int arg, UINT8 *opram, unsigned pc)
+static int print_arg (char *dest, int mode, int arg, const UINT8 *opram, unsigned pc)
 {
 	int	base;
 
@@ -348,7 +348,7 @@ static int print_arg (char *dest, int mode, int arg, UINT8 *opram, unsigned pc)
 /*****************************************************************************
  *  Disassemble a single command and return the number of bytes it uses.
  *****************************************************************************/
-unsigned Dasm9900 (char *buffer, unsigned pc, int model_id, UINT8 *oprom, UINT8 *opram, int bytes)
+unsigned Dasm9900 (char *buffer, unsigned pc, int model_id, const UINT8 *oprom, const UINT8 *opram)
 {
 	int	OP, OP2, opc;
 	int sarg, darg, smode, dmode;

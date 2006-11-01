@@ -1902,12 +1902,12 @@ static void hyperstone_set_context(void *regs)
 		hyperstone = *(hyperstone_regs *)regs;
 }
 
-static offs_t hyperstone_dasm(char *buffer, offs_t pc)
+static offs_t hyperstone_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-	return dasm_hyperstone( buffer, pc, GET_H, GET_FP );
+	return dasm_hyperstone( buffer, pc, oprom, GET_H, GET_FP );
 #else
-	sprintf(buffer, "$%08x", READ_OP(pc));
+	sprintf(buffer, "$%08x", oprom[0]);
 	return 1;
 #endif
 }

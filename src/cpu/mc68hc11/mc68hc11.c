@@ -354,10 +354,10 @@ static int hc11_execute(int cycles)
 
 /*****************************************************************************/
 
-offs_t hc11_disasm(char *buffer, UINT32 pc)
+static offs_t hc11_disasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-	return mc68hc11_dasm_one(buffer, pc);
+	return mc68hc11_dasm_one(buffer, pc, oprom);
 #else
 	sprintf(buffer, "$%02X", FETCH());
 	return 1;

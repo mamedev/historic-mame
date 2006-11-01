@@ -294,6 +294,7 @@ struct _rom_load_data
 ***************************************************************************/
 
 /* disk handling */
+chd_file *open_disk_image(const game_driver *gamedrv, const rom_entry *romp);
 chd_file *get_disk_handle(int diskindex);
 
 /* ROM processing */

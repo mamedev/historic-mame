@@ -39,8 +39,8 @@ extern void cop410_get_info(UINT32 state, union cpuinfo *info);
 extern void cop420_get_info(UINT32 state, union cpuinfo *info);
 
 #ifdef MAME_DEBUG
-int 	DasmCOP410(char *dst, unsigned pc);
-int 	DasmCOP420(char *dst, unsigned pc);
+int 	DasmCOP410(char *dst, unsigned pc, const UINT8 *oprom);
+int 	DasmCOP420(char *dst, unsigned pc, const UINT8 *oprom);
 #endif
 
 #endif  /* _COP400_H */

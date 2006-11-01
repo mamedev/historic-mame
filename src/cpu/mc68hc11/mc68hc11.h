@@ -4,7 +4,7 @@
 #include "cpuintrf.h"
 
 #ifdef MAME_DEBUG
-extern int mc68hc11_dasm_one(char *buffer, offs_t pc);
+extern int mc68hc11_dasm_one(char *buffer, offs_t pc, const UINT8 *oprom);
 #endif
 
 void mc68hc11_get_info(UINT32 state, union cpuinfo *info);

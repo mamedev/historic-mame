@@ -1009,12 +1009,12 @@ void m37710_set_irq_callback(int (*callback)(int))
 #ifdef MAME_DEBUG
 #include "m7700ds.h"
 #endif
-unsigned m37710_dasm(char *buffer, unsigned pc)
+offs_t m37710_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 #ifdef MAME_DEBUG
-	return m7700_disassemble(buffer, (pc&0xffff), pc>>16, FLAG_M, FLAG_X);
+	return m7700_disassemble(buffer, (pc&0xffff), pc>>16, oprom, FLAG_M, FLAG_X);
 #else
-	sprintf(buffer, "$%02X", m37710_read_8_immediate(pc));
+	sprintf(buffer, "$%02X", oprom[0]);
 	return 1;
 #endif
 }

@@ -42,19 +42,20 @@
  *
  *****************************************************************************/
 
-#include "memory.h"
+#include "cpuintrf.h"
 
 /* 8080/8085A mnemonics were more irritation than information
    What would you guess "CP $3456" to mean? It's not compare,
    but call if plus ... therefore: */
-#define Z80_MNEMONICS
+//#define Z80_MNEMONICS
 
-#define OP(A)   cpu_readop(A)
-#define ARG(A)  cpu_readop_arg(A)
-#define ARGW(A) cpu_readop_arg(A) + (cpu_readop_arg((A+1)&0xffff) << 8)
+#define OP(A)   oprom[(A) - PC]
+#define ARG(A)  opram[(A) - PC]
+#define ARGW(A) (opram[(A) - PC] | (opram[(A) + 1 - PC] << 8))
 
-unsigned Dasm8085(char *buff, unsigned pc)
+unsigned Dasm8085(char *buff, unsigned pc, const UINT8 *oprom, const UINT8 *opram)
 {
+	UINT32 flags = 0;
 	UINT8 op;
 	unsigned PC = pc;
 	switch (op = OP(pc++))
@@ -252,54 +253,54 @@ unsigned Dasm8085(char *buff, unsigned pc)
 		case 0xbd: sprintf (buff,"cp   l");                          break;
 		case 0xbe: sprintf (buff,"cp   (hl)");                       break;
 		case 0xbf: sprintf (buff,"cp   a");                          break;
-		case 0xc0: sprintf (buff,"ret  nz");                         break;
+		case 0xc0: sprintf (buff,"ret  nz"); flags = DASMFLAG_STEP_OUT; break;
 		case 0xc1: sprintf (buff,"pop  bc");                         break;
 		case 0xc2: sprintf (buff,"jp   nz,$%04x", ARGW(pc)); pc+=2;  break;
 		case 0xc3: sprintf (buff,"jp   $%04x", ARGW(pc)); pc+=2;     break;
-		case 0xc4: sprintf (buff,"call nz,$%04x", ARGW(pc)); pc+=2;  break;
+		case 0xc4: sprintf (buff,"call nz,$%04x", ARGW(pc)); pc+=2; flags = DASMFLAG_STEP_OVER; break;
 		case 0xc5: sprintf (buff,"push bc");                         break;
 		case 0xc6: sprintf (buff,"add  a,$%02x", ARG(pc)); pc++;     break;
-		case 0xc7: sprintf (buff,"rst  $00");                        break;
-		case 0xc8: sprintf (buff,"ret  z");                          break;
-		case 0xc9: sprintf (buff,"ret");                             break;
+		case 0xc7: sprintf (buff,"rst  $00"); flags = DASMFLAG_STEP_OVER; break;
+		case 0xc8: sprintf (buff,"ret  z"); flags = DASMFLAG_STEP_OUT; break;
+		case 0xc9: sprintf (buff,"ret"); flags = DASMFLAG_STEP_OUT;  break;
 		case 0xca: sprintf (buff,"jp   z,$%04x", ARGW(pc)); pc+=2;   break;
-		case 0xcb: sprintf (buff,"rst  v,$40 (*)");                  break;
-		case 0xcc: sprintf (buff,"call z,$%04x", ARGW(pc)); pc+=2;   break;
-		case 0xcd: sprintf (buff,"call $%04x", ARGW(pc)); pc+=2;     break;
+		case 0xcb: sprintf (buff,"rst  v,$40 (*)"); flags = DASMFLAG_STEP_OVER; break;
+		case 0xcc: sprintf (buff,"call z,$%04x", ARGW(pc)); pc+=2; flags = DASMFLAG_STEP_OVER; break;
+		case 0xcd: sprintf (buff,"call $%04x", ARGW(pc)); pc+=2; flags = DASMFLAG_STEP_OVER; break;
 		case 0xce: sprintf (buff,"adc  a,$%02x", ARG(pc)); pc++;     break;
-		case 0xcf: sprintf (buff,"rst  $08");                        break;
-		case 0xd0: sprintf (buff,"ret  nc");                         break;
+		case 0xcf: sprintf (buff,"rst  $08"); flags = DASMFLAG_STEP_OVER; break;
+		case 0xd0: sprintf (buff,"ret  nc"); flags = DASMFLAG_STEP_OUT; break;
 		case 0xd1: sprintf (buff,"pop  de");                         break;
 		case 0xd2: sprintf (buff,"jp   nc,$%04x", ARGW(pc)); pc+=2;  break;
 		case 0xd3: sprintf (buff,"out  ($%02x),a", ARG(pc)); pc++;   break;
-		case 0xd4: sprintf (buff,"call nc,$%04x", ARGW(pc)); pc+=2;  break;
+		case 0xd4: sprintf (buff,"call nc,$%04x", ARGW(pc)); pc+=2; flags = DASMFLAG_STEP_OVER; break;
 		case 0xd5: sprintf (buff,"push de");                         break;
 		case 0xd6: sprintf (buff,"sub  $%02x", ARG(pc)); pc++;       break;
-		case 0xd7: sprintf (buff,"rst  $10");                        break;
+		case 0xd7: sprintf (buff,"rst  $10"); flags = DASMFLAG_STEP_OVER; break;
 		case 0xd8: sprintf (buff,"ret  c");                          break;
 		case 0xd9: sprintf (buff,"ld   (de),hl (*)");                break;
 		case 0xda: sprintf (buff,"jp   c,$%04x", ARGW(pc)); pc+=2;   break;
 		case 0xdb: sprintf (buff,"in   a,($%02x)", ARG(pc)); pc++;   break;
-		case 0xdc: sprintf (buff,"call c,$%04x", ARGW(pc)); pc+=2;   break;
+		case 0xdc: sprintf (buff,"call c,$%04x", ARGW(pc)); pc+=2; flags = DASMFLAG_STEP_OVER; break;
 		case 0xdd: sprintf (buff,"jp   nx,$%04x (*)",ARGW(pc));pc+=2;break;
 		case 0xde: sprintf (buff,"sub  $%02x", ARG(pc)); pc++;       break;
-		case 0xdf: sprintf (buff,"rst  $18");                        break;
+		case 0xdf: sprintf (buff,"rst  $18"); flags = DASMFLAG_STEP_OVER; break;
 		case 0xe0: sprintf (buff,"ret  pe");                         break;
 		case 0xe1: sprintf (buff,"pop  hl");                         break;
 		case 0xe2: sprintf (buff,"jp   pe,$%04x", ARGW(pc)); pc+=2;  break;
 		case 0xe3: sprintf (buff,"ex   (sp),hl");                    break;
-		case 0xe4: sprintf (buff,"call pe,$%04x", ARGW(pc)); pc+=2;  break;
+		case 0xe4: sprintf (buff,"call pe,$%04x", ARGW(pc)); pc+=2; flags = DASMFLAG_STEP_OVER; break;
 		case 0xe5: sprintf (buff,"push hl");                         break;
 		case 0xe6: sprintf (buff,"and  $%02x", ARG(pc)); pc++;       break;
-		case 0xe7: sprintf (buff,"rst  $20");                        break;
+		case 0xe7: sprintf (buff,"rst  $20"); flags = DASMFLAG_STEP_OVER; break;
 		case 0xe8: sprintf (buff,"ret  po");                         break;
 		case 0xe9: sprintf (buff,"jp   (hl)");                       break;
 		case 0xea: sprintf (buff,"jp   po,$%04x", ARGW(pc)); pc+=2;  break;
 		case 0xeb: sprintf (buff,"ex   de,hl");                      break;
-		case 0xec: sprintf (buff,"call po,$%04x", ARGW(pc)); pc+=2;  break;
+		case 0xec: sprintf (buff,"call po,$%04x", ARGW(pc)); pc+=2; flags = DASMFLAG_STEP_OVER; break;
 		case 0xed: sprintf (buff,"ld   hl,(de) (*)");                break;
 		case 0xee: sprintf (buff,"xor  $%02x", ARG(pc)); pc++;       break;
-		case 0xef: sprintf (buff,"rst  $28");                        break;
+		case 0xef: sprintf (buff,"rst  $28"); flags = DASMFLAG_STEP_OVER; break;
 		case 0xf0: sprintf (buff,"ret  p");                          break;
 		case 0xf1: sprintf (buff,"pop  af");                         break;
 		case 0xf2: sprintf (buff,"jp   p,$%04x", ARGW(pc)); pc+=2;   break;
@@ -307,15 +308,15 @@ unsigned Dasm8085(char *buff, unsigned pc)
 		case 0xf4: sprintf (buff,"cp   $%04x", ARGW(pc)); pc+=2;     break;
 		case 0xf5: sprintf (buff,"push af");                         break;
 		case 0xf6: sprintf (buff,"or   $%02x", ARG(pc)); pc++;       break;
-		case 0xf7: sprintf (buff,"rst  $30");                        break;
+		case 0xf7: sprintf (buff,"rst  $30"); flags = DASMFLAG_STEP_OVER; break;
 		case 0xf8: sprintf (buff,"ret  m");                          break;
 		case 0xf9: sprintf (buff,"ld   sp,hl");                      break;
 		case 0xfa: sprintf (buff,"jp   m,$%04x", ARGW(pc)); pc+=2;   break;
 		case 0xfb: sprintf (buff,"ei");                              break;
-		case 0xfc: sprintf (buff,"call m,$%04x", ARGW(pc)); pc+=2;   break;
+		case 0xfc: sprintf (buff,"call m,$%04x", ARGW(pc)); pc+=2; flags = DASMFLAG_STEP_OVER; break;
 		case 0xfd: sprintf (buff,"jp   x,$%04x (*)",ARGW(pc));pc+=2; break;
 		case 0xfe: sprintf (buff,"cp   $%02x", ARG(pc)); pc++;       break;
-		case 0xff: sprintf (buff,"rst  $38");                        break;
+		case 0xff: sprintf (buff,"rst  $38"); flags = DASMFLAG_STEP_OVER; break;
 #else
 		case 0x00: sprintf (buff,"nop");                             break;
 		case 0x01: sprintf (buff,"lxi  b,$%04x", ARGW(pc)); pc+=2;   break;
@@ -373,7 +374,7 @@ unsigned Dasm8085(char *buff, unsigned pc)
 		case 0x35: sprintf (buff,"dcr  m");                          break;
 		case 0x36: sprintf (buff,"mvi  m,$%02x", ARG(pc)); pc++;     break;
 		case 0x37: sprintf (buff,"stc");                             break;
-		case 0x28: sprintf (buff,"ldes $%02x", ARG(pc)); pc++;       break;
+		case 0x38: sprintf (buff,"ldes $%02x", ARG(pc)); pc++;       break;
 		case 0x39: sprintf (buff,"dad sp");                          break;
 		case 0x3a: sprintf (buff,"ldax $%04x", ARGW(pc)); pc+=2;     break;
 		case 0x3b: sprintf (buff,"dcx  sp");                         break;
@@ -509,72 +510,72 @@ unsigned Dasm8085(char *buff, unsigned pc)
 		case 0xbd: sprintf (buff,"cmp  l");                          break;
 		case 0xbe: sprintf (buff,"cmp  m");                          break;
 		case 0xbf: sprintf (buff,"cmp  a");                          break;
-		case 0xc0: sprintf (buff,"rnz");                             break;
+		case 0xc0: sprintf (buff,"rnz"); flags = DASMFLAG_STEP_OUT;  break;
 		case 0xc1: sprintf (buff,"pop  b");                          break;
 		case 0xc2: sprintf (buff,"jnz  $%04x", ARGW(pc)); pc+=2;     break;
 		case 0xc3: sprintf (buff,"jmp  $%04x", ARGW(pc)); pc+=2;     break;
-		case 0xc4: sprintf (buff,"cnz  $%04x", ARGW(pc)); pc+=2;     break;
+		case 0xc4: sprintf (buff,"cnz  $%04x", ARGW(pc)); pc+=2; flags = DASMFLAG_STEP_OVER; break;
 		case 0xc5: sprintf (buff,"push b");                          break;
 		case 0xc6: sprintf (buff,"adi  $%02x", ARG(pc)); pc++;       break;
-		case 0xc7: sprintf (buff,"rst  0");                          break;
-		case 0xc8: sprintf (buff,"rz");                              break;
-		case 0xc9: sprintf (buff,"ret");                             break;
+		case 0xc7: sprintf (buff,"rst  0"); flags = DASMFLAG_STEP_OVER; break;
+		case 0xc8: sprintf (buff,"rz"); flags = DASMFLAG_STEP_OUT;   break;
+		case 0xc9: sprintf (buff,"ret"); flags = DASMFLAG_STEP_OUT;  break;
 		case 0xca: sprintf (buff,"jz   $%04x", ARGW(pc)); pc+=2;     break;
-		case 0xcb: sprintf (buff,"rstv 8 (*)");                      break;
-		case 0xcc: sprintf (buff,"cz   $%04x", ARGW(pc)); pc+=2;     break;
-		case 0xcd: sprintf (buff,"call $%04x", ARGW(pc)); pc+=2;     break;
+		case 0xcb: sprintf (buff,"rstv 8 (*)"); flags = DASMFLAG_STEP_OVER; break;
+		case 0xcc: sprintf (buff,"cz   $%04x", ARGW(pc)); pc+=2; flags = DASMFLAG_STEP_OVER; break;
+		case 0xcd: sprintf (buff,"call $%04x", ARGW(pc)); pc+=2; flags = DASMFLAG_STEP_OVER; break;
 		case 0xce: sprintf (buff,"aci  $%02x", ARG(pc)); pc++;       break;
-		case 0xcf: sprintf (buff,"rst  1");                          break;
-		case 0xd0: sprintf (buff,"rnc");                             break;
+		case 0xcf: sprintf (buff,"rst  1"); flags = DASMFLAG_STEP_OVER; break;
+		case 0xd0: sprintf (buff,"rnc"); flags = DASMFLAG_STEP_OUT;  break;
 		case 0xd1: sprintf (buff,"pop  d");                          break;
 		case 0xd2: sprintf (buff,"jnc  $%04x", ARGW(pc)); pc+=2;     break;
 		case 0xd3: sprintf (buff,"out  $%02x", ARG(pc)); pc++;       break;
-		case 0xd4: sprintf (buff,"cnc  $%04x", ARGW(pc)); pc+=2;     break;
+		case 0xd4: sprintf (buff,"cnc  $%04x", ARGW(pc)); pc+=2; flags = DASMFLAG_STEP_OVER; break;
 		case 0xd5: sprintf (buff,"push d");                          break;
 		case 0xd6: sprintf (buff,"sui  $%02x", ARG(pc)); pc++;       break;
-		case 0xd7: sprintf (buff,"rst  2");                          break;
-		case 0xd8: sprintf (buff,"rc");                              break;
+		case 0xd7: sprintf (buff,"rst  2"); flags = DASMFLAG_STEP_OVER; break;
+		case 0xd8: sprintf (buff,"rc"); flags = DASMFLAG_STEP_OUT;   break;
 		case 0xd9: sprintf (buff,"shlx d (*)");                      break;
 		case 0xda: sprintf (buff,"jc   $%04x", ARGW(pc)); pc+=2;     break;
 		case 0xdb: sprintf (buff,"in   $%02x", ARG(pc)); pc++;       break;
-		case 0xdc: sprintf (buff,"cc   $%04x", ARGW(pc)); pc+=2;     break;
+		case 0xdc: sprintf (buff,"cc   $%04x", ARGW(pc)); pc+=2; flags = DASMFLAG_STEP_OVER; break;
 		case 0xdd: sprintf (buff,"jnx  $%04x (*)", ARGW(pc)); pc+=2; break;
 		case 0xde: sprintf (buff,"sbi  $%02x", ARG(pc)); pc++;       break;
-		case 0xdf: sprintf (buff,"rst  3");                          break;
-		case 0xe0: sprintf (buff,"rpo");                             break;
+		case 0xdf: sprintf (buff,"rst  3"); flags = DASMFLAG_STEP_OVER; break;
+		case 0xe0: sprintf (buff,"rpo"); flags = DASMFLAG_STEP_OUT;  break;
 		case 0xe1: sprintf (buff,"pop  h");                          break;
 		case 0xe2: sprintf (buff,"jpo  $%04x", ARGW(pc)); pc+=2;     break;
 		case 0xe3: sprintf (buff,"xthl");                            break;
-		case 0xe4: sprintf (buff,"cpo  $%04x", ARGW(pc)); pc+=2;     break;
+		case 0xe4: sprintf (buff,"cpo  $%04x", ARGW(pc)); pc+=2; flags = DASMFLAG_STEP_OVER; break;
 		case 0xe5: sprintf (buff,"push h");                          break;
 		case 0xe6: sprintf (buff,"ani  $%02x", ARG(pc)); pc++;       break;
-		case 0xe7: sprintf (buff,"rst  4");                          break;
-		case 0xe8: sprintf (buff,"rpe");                             break;
+		case 0xe7: sprintf (buff,"rst  4"); flags = DASMFLAG_STEP_OVER; break;
+		case 0xe8: sprintf (buff,"rpe"); flags = DASMFLAG_STEP_OUT;  break;
 		case 0xe9: sprintf (buff,"pchl");                            break;
 		case 0xea: sprintf (buff,"jpe  $%04x", ARGW(pc)); pc+=2;     break;
 		case 0xeb: sprintf (buff,"xchg");                            break;
-		case 0xec: sprintf (buff,"cpe  $%04x", ARGW(pc)); pc+=2;     break;
+		case 0xec: sprintf (buff,"cpe  $%04x", ARGW(pc)); pc+=2; flags = DASMFLAG_STEP_OVER; break;
 		case 0xed: sprintf (buff,"lhlx d (*)");                      break;
 		case 0xee: sprintf (buff,"xri  $%02x", ARG(pc)); pc++;       break;
-		case 0xef: sprintf (buff,"rst  5");                          break;
-		case 0xf0: sprintf (buff,"rp");                              break;
+		case 0xef: sprintf (buff,"rst  5"); flags = DASMFLAG_STEP_OVER; break;
+		case 0xf0: sprintf (buff,"rp"); flags = DASMFLAG_STEP_OUT;   break;
 		case 0xf1: sprintf (buff,"pop  a");                          break;
 		case 0xf2: sprintf (buff,"jp   $%04x", ARGW(pc)); pc+=2;     break;
 		case 0xf3: sprintf (buff,"di");                              break;
 		case 0xf4: sprintf (buff,"cp   $%04x", ARGW(pc)); pc+=2;     break;
 		case 0xf5: sprintf (buff,"push a");                          break;
 		case 0xf6: sprintf (buff,"ori  $%02x", ARG(pc)); pc++;       break;
-		case 0xf7: sprintf (buff,"rst  6");                          break;
-		case 0xf8: sprintf (buff,"rm");                              break;
+		case 0xf7: sprintf (buff,"rst  6"); flags = DASMFLAG_STEP_OVER; break;
+		case 0xf8: sprintf (buff,"rm"); flags = DASMFLAG_STEP_OUT;   break;
 		case 0xf9: sprintf (buff,"sphl");                            break;
 		case 0xfa: sprintf (buff,"jm   $%04x", ARGW(pc)); pc+=2;     break;
 		case 0xfb: sprintf (buff,"ei");                              break;
-		case 0xfc: sprintf (buff,"cm   $%04x", ARGW(pc)); pc+=2;     break;
+		case 0xfc: sprintf (buff,"cm   $%04x", ARGW(pc)); pc+=2; flags = DASMFLAG_STEP_OVER; break;
 		case 0xfd: sprintf (buff,"jx   $%04x (*)", ARGW(pc)); pc+=2; break;
 		case 0xfe: sprintf (buff,"cpi  $%02x", ARG(pc)); pc++;       break;
-		case 0xff: sprintf (buff,"rst  7");                          break;
+		case 0xff: sprintf (buff,"rst  7"); flags = DASMFLAG_STEP_OVER; break;
 #endif
 	}
-	return pc - PC;
+	return (pc - PC) | flags | DASMFLAG_SUPPORTED;
 }
 

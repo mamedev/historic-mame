@@ -97,14 +97,14 @@ static const struct { const char *mnemonic; Adr adr; } table[]={
 
 };
 
-unsigned DasmCdp1802(char *dst, unsigned oldpc)
+unsigned DasmCdp1802(char *dst, unsigned oldpc, const UINT8 *oprom)
 {
 	int pc;
 	int oper;
 	UINT16 absolut;
 	oldpc&=0xffff;
 	pc=oldpc;
-	oper=program_read_byte(pc++);
+	oper=oprom[pc++ - oldpc];
 
 	switch(oper&0xf0) {
 	case 0:
@@ -144,16 +144,16 @@ unsigned DasmCdp1802(char *dst, unsigned oldpc)
 				sprintf(dst,"%-5s",table[oper].mnemonic);
 				break;
 			case Imm:
-				sprintf(dst,"%-5s#%.2x",table[oper].mnemonic,program_read_byte(pc++));
+				sprintf(dst,"%-5s#%.2x",table[oper].mnemonic,oprom[pc++ - oldpc]);
 				break;
 			case Low:
-				absolut=program_read_byte(pc++);
+				absolut=oprom[pc++ - oldpc];
 				absolut|=pc&0xff00;
 				sprintf(dst,"%-5s%.4x",table[oper].mnemonic,absolut);
 				break;
 			case Abs:
-				absolut=program_read_byte(pc++)<<8;
-				absolut|=program_read_byte(pc++);
+				absolut=oprom[pc++ - oldpc]<<8;
+				absolut|=oprom[pc++ - oldpc];
 				sprintf(dst,"%-5s%.4x",table[oper].mnemonic,absolut);
 				break;
 			default:
