@@ -429,7 +429,7 @@ offs_t m6809_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opra
 			 else
 			 {	/* not found in alternate page */
 				strcpy (buffer, "Illegal Opcode");
-				return 2;
+				return 2 | DASMFLAG_SUPPORTED;
 			 }
 		}
 		else
@@ -447,7 +447,7 @@ offs_t m6809_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opra
 	else
 	{
 		strcpy (buffer, "Illegal Opcode");
-		return 1;
+		return 1 | DASMFLAG_SUPPORTED;
 	}
 
 		if( mode == IMM )

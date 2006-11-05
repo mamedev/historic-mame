@@ -40,18 +40,21 @@ PCB 171-5834 has locations for 3 ROMs and is dated 1989.
 PCB 171-5783 has locations for 2 ROMs and is dated 1989.
 PCB 171-5784 has locations for 2 ROMs and is dated 1989. It also contains a custom Sega IC 315-5235
 
-                                                                      |------------------------------- ROMs -----------------------------|
-                                                                      |                                                                  |
-Game                PCB #       Sticker on PCB    Sticker on cart      IC1                    IC2                    IC3
------------------------------------------------------------------------------------------------------------------------------------------
-Space Harrier II    171-5782    837-6963-02       610-0239-02          MPR-11934    (834200)  EPR-12368-02 (27256)   n/a
-Alien Syndrome      171-5783    837-6963-07       610-0239-07          MPR-11194    (232011)  EPR-12368-07 (27256)   n/a
-Afterburner         171-5784    837-6963-10       610-0239-10          315-5235     (custom)  MPR-11271-T  (834000)  EPR-12368-10 (27256)
-Tetris              171-5834    837-6963-22       610-0239-22          MPR-12356F   (831000)  MPR-12357F   (831000)  EPR-12368-22 (27256)
-Ghouls & Ghosts     171-5869A   -                 610-0239-23          MPR-12605    (40 pins) MPR-12606    (40 pins) EPR-12368-23 (27256)
-Super Hang On       171-5782    837-6963-24       610-0239-24          MPR-12640    (234000)  EPR-12368-24 (27256)   n/a
-Sonic Hedgehog 2    171-6215A   837-6963-62       610-0239-62          MPR-15000A-F (838200)  EPR-12368-62 (27256)   n/a
-Mario Lemeux Hockey 171-5782    837-6963-59       610-0239-59          MPR-14376-H  (234000)  EPR-12368-59 (27256)   n/a
+                                                                         |------------------------------- ROMs -----------------------------|
+                                                                         |                                                                  |
+Game                    PCB #       Sticker on PCB    Sticker on cart      IC1                    IC2                    IC3
+---------------------------------------------------------------------------------------------------------------------------------------------
+Space Harrier II        171-5782    837-6963-02       610-0239-02          MPR-11934    (834200)  EPR-12368-02 (27256)   n/a
+Out Run                 171-5783    837-6963-06       610-0239-06          MPR-11078    (Mask)    EPR-12368-06 (27256)   n/a
+Alien Syndrome          171-5783    837-6963-07       610-0239-07          MPR-11194    (232011)  EPR-12368-07 (27256)   n/a
+Afterburner             171-5784    837-6963-10       610-0239-10          315-5235     (custom)  MPR-11271-T  (834000)  EPR-12368-10 (27256)
+Tetris                  171-5834    837-6963-22       610-0239-22          MPR-12356F   (831000)  MPR-12357F   (831000)  EPR-12368-22 (27256)
+Ghouls & Ghosts         171-5869A   -                 610-0239-23          MPR-12605    (40 pins) MPR-12606    (40 pins) EPR-12368-23 (27256)
+Super Hang On           171-5782    837-6963-24       610-0239-24          MPR-12640    (234000)  EPR-12368-24 (27256)   n/a
+Forgotten Worlds        171-5782    837-6963-26       610-0239-26          MPR-12672-H  (Mask)    EPR-12368-26 (27256)   n/a
+Super Real Basket Ball  171-5782    837-6963-32       610-0239-32          MPR-12904F   (838200A) EPR-12368-32 (27256)   n/a
+Sonic Hedgehog 2        171-6215A   837-6963-62       610-0239-62          MPR-15000A-F (838200)  EPR-12368-62 (27256)   n/a
+Mario Lemeux Hockey     171-5782    837-6963-59       610-0239-59          MPR-14376-H  (234000)  EPR-12368-59 (27256)   n/a
 
 
 */
@@ -823,9 +826,9 @@ ROM_START( mt_gsocr ) /* Great Soccer (SMS based) (Bad Dump) */
 	ROM_LOAD( "epr12664.20", 0x000000, 0x8000, CRC(f71e9526) SHA1(1c7887541d02c41426992d17f8e3db9e03975953) )
 ROM_END
 
-ROM_START( mt_asyn ) /* Alien Syndrome (SMS based) (Bad Dump) */
+ROM_START( mt_asyn ) /* Alien Syndrome (SMS based) */
 	ROM_REGION( 0x400000, REGION_CPU1, 0 )
-	ROM_LOAD16_WORD_SWAP( "mpr-11194.ic1", 0x000000, 0x040000, NO_DUMP )
+	ROM_LOAD16_WORD_SWAP( "mpr-11194.ic1", 0x000000, 0x040000, CRC(4cc11df9) SHA1(5d786476b275de34efb95f576dd556cf4b335a83) )
 
 	ROM_REGION( 0x8000, REGION_USER1, 0 ) /* Game Instructions */
 	ROM_LOAD( "epr-12368-07.ic2", 0x000000, 0x08000, CRC(14f4a17b) SHA1(0fc010ac95762534892f1ae16986dbf1c25399d3) )
@@ -922,7 +925,7 @@ ROM_START( mt_orun ) /* Outrun */
 	ROM_LOAD( "epr12664.20", 0x000000, 0x8000, CRC(f71e9526) SHA1(1c7887541d02c41426992d17f8e3db9e03975953) )
 ROM_END
 
-ROM_START( mt_srbb ) /* Outrun */
+ROM_START( mt_srbb ) /* Super Real Basketball */
 	ROM_REGION( 0x400000, REGION_CPU1, 0 )
 	ROM_LOAD16_WORD_SWAP( "mpr-12904f.ic1", 0x000000, 0x080000, CRC(4346e11a) SHA1(c86725780027ef9783cb7884c8770cc030b0cd0d) )
 
@@ -933,7 +936,7 @@ ROM_START( mt_srbb ) /* Outrun */
 	ROM_LOAD( "epr12664.20", 0x000000, 0x8000, CRC(f71e9526) SHA1(1c7887541d02c41426992d17f8e3db9e03975953) )
 ROM_END
 
-ROM_START( mt_fwrld ) /* Outrun */
+ROM_START( mt_fwrld ) /* Forgotten Worlds */
 	ROM_REGION( 0x400000, REGION_CPU1, 0 )
 	ROM_LOAD16_WORD_SWAP( "mpr-12672-h.ic1", 0x000000, 0x080000, CRC(d0ee6434) SHA1(8b9a37c206c332ef23dc71f09ec40e1a92b1f83a) )
 
@@ -953,7 +956,7 @@ ROM_END
 /* 04 */ GAME( 19??, mt_ggolf, megatech, megatech, megatech, 0, ROT0, "Sega",                  "Great Golf (Mega-Tech)", GAME_NOT_WORKING ) /* sms! also bad */
 /* 05 */ GAME( 19??, mt_gsocr, megatech, megatech, megatech, 0, ROT0, "Sega",                  "Great Soccer (Mega-Tech)", GAME_NOT_WORKING ) /* sms! also bad */
 /* 06 */ GAME( 1989, mt_orun,  megatech, megatech, megatech, 0, ROT0, "Sega",                  "Out Run (Mega-Tech)", GAME_NOT_WORKING ) /* sms! */
-/* 07 */ GAME( 19??, mt_asyn,  megatech, megatech, megatech, 0, ROT0, "Sega",                  "Alien Syndrome (Mega-Tech)", GAME_NOT_WORKING ) /* sms! also bad */
+/* 07 */ GAME( 19??, mt_asyn,  megatech, megatech, megatech, 0, ROT0, "Sega",                  "Alien Syndrome (Mega-Tech)", GAME_NOT_WORKING ) /* sms! */
 /* 08 */ GAME( 19??, mt_shnbi, megatech, megatech, megatech, 0, ROT0, "Sega",                  "Shinobi (Mega-Tech)", GAME_NOT_WORKING) /* sms */
 /* 09 */ // unknown
 /* 10 */ GAME( 19??, mt_aftrb, megatech, megatech, megatech, 0, ROT0, "Sega",                  "After Burner (Mega-Tech)", GAME_NOT_WORKING) /* sms */

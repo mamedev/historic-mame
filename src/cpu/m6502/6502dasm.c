@@ -795,8 +795,6 @@ static unsigned internal_m6502_dasm(const struct op6502_info *opinfo, char *buff
 		addr = (opram[pos] | (opram[pos+1] << 8));
 		pos += 2;
 		pc += 2;
-		pos += 2;
-		pc += 2;
 		dst += sprintf(dst,"($%04X),X", addr);
 		break;
 

@@ -161,7 +161,6 @@ static mame_timer *watchdog_timer;
 
 static void cpuexec_exit(running_machine *machine);
 static void cpuexec_reset(running_machine *machine);
-static void init_refresh_timer(void);
 static void cpu_inittimers(void);
 static void cpu_vblankreset(void);
 static void cpu_vblankcallback(int param);
@@ -200,8 +199,10 @@ int cpuexec_init(running_machine *machine)
 {
 	int cpunum;
 
-	/* initialize the refresh timer */
-	init_refresh_timer();
+	/* allocate vblank and refresh timers, and compute the initial timing */
+	vblank_timer = mame_timer_alloc(cpu_vblankcallback);
+	refresh_timer = mame_timer_alloc(NULL);
+	cpu_compute_scanline_timing();
 
 	/* loop over all our CPUs */
 	for (cpunum = 0; cpunum < MAX_CPU; cpunum++)
@@ -938,26 +939,6 @@ int cpu_scalebyfcount(int value)
 
 /*************************************
  *
- *  Creates the refresh timer
- *
- *************************************/
-
-static void init_refresh_timer(void)
-{
-	/* we rely on this being NULL for the time being */
-	vblank_timer = NULL;
-
-	/* allocate an infinite timer to track elapsed time since the last refresh */
-	refresh_timer = mame_timer_alloc(NULL);
-
-	/* while we're at it, compute the scanline times */
-	cpu_compute_scanline_timing();
-}
-
-
-
-/*************************************
- *
  *  Computes the scanline timing
  *
  *************************************/
@@ -1629,7 +1610,6 @@ static void cpu_inittimers(void)
 
 	/* allocate a vblank timer at the frame rate * the LCD number of interrupts per frame */
 	vblank_period = double_to_mame_time(1.0 / (Machine->screen[0].refresh * vblank_multiplier));
-	vblank_timer = mame_timer_alloc(cpu_vblankcallback);
 	vblank_countdown = vblank_multiplier;
 
 	/* allocate an update timer that will be used to time the actual screen updates */

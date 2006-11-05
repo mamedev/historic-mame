@@ -89,6 +89,7 @@ int audit_images(int game, UINT32 validation, audit_record **audit)
 	const rom_entry *region, *rom;
 	audit_record *record;
 	int foundany = FALSE;
+	int allshared = TRUE;
 	int records;
 
 	/* determine the number of records we will generate */
@@ -96,7 +97,11 @@ int audit_images(int game, UINT32 validation, audit_record **audit)
 	for (region = rom_first_region(gamedrv); region != NULL; region = rom_next_region(region))
 		for (rom = rom_first_file(region); rom != NULL; rom = rom_next_file(rom))
 			if (ROMREGION_ISROMDATA(region) || ROMREGION_ISDISKDATA(region))
+			{
+				if (allshared && !rom_used_by_parent(gamedrv, rom, NULL))
+					allshared = FALSE;
 				records++;
+			}
 
 	if (records > 0)
 	{
@@ -114,14 +119,14 @@ int audit_images(int game, UINT32 validation, audit_record **audit)
 				/* audit a file */
 				if (ROMREGION_ISROMDATA(region))
 				{
-					if (audit_one_rom(rom, gamedrv, validation, record++) && !shared)
+					if (audit_one_rom(rom, gamedrv, validation, record++) && (!shared || allshared))
 						foundany = TRUE;
 				}
 
 				/* audit a disk */
 				else if (ROMREGION_ISDISKDATA(region))
 				{
-					if (audit_one_disk(rom, gamedrv, validation, record++) && !shared)
+					if (audit_one_disk(rom, gamedrv, validation, record++) && (!shared || allshared))
 						foundany = TRUE;
 				}
 			}

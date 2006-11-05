@@ -241,7 +241,6 @@ static ADDRESS_MAP_START( gepoker_map, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 
-
 INPUT_PORTS_START( gselect )
 	PORT_START      /* DSW A */
 	PORT_DIPNAME( 0x01, 0x01, "Poker: Discard Cards" )
@@ -363,23 +362,23 @@ INPUT_PORTS_END
 static ppi8255_interface getrivia_ppi8255_intf =
 {
 	2, 						/* 2 chips */
-	{ input_port_0_r,	input_port_2_r },	/* Port A read */
-	{ port1_r,	NULL },		/* Port B read */
-	{ NULL,		NULL },		/* Port C read */
-	{ NULL,		NULL },		/* Port A write */
-	{ NULL,		lamps_w },		/* Port B write */
-	{ sound_w,		lamps2_w },		/* Port C write */
+	{ input_port_0_r, input_port_2_r },  /* Port A read */
+	{ port1_r,        NULL },            /* Port B read */
+	{ NULL,           NULL },            /* Port C read */
+	{ NULL,           NULL },            /* Port A write */
+	{ NULL,           lamps_w },         /* Port B write */
+	{ sound_w,        lamps2_w },        /* Port C write */
 };
 
 static ppi8255_interface gselect_ppi8255_intf =
 {
 	2, 						/* 2 chips */
-	{ input_port_0_r,	input_port_2_r },	/* Port A read */
-	{ input_port_1_r,	NULL },		/* Port B read */
-	{ NULL,		input_port_3_r },	/* Port C read */
-	{ NULL,		NULL },		/* Port A write */
-	{ NULL,		lamps_w },		/* Port B write */
-	{ sound2_w,		nmi_w },		/* Port C write */
+	{ input_port_0_r, input_port_2_r },  /* Port A read */
+	{ input_port_1_r, NULL },            /* Port B read */
+	{ NULL,           input_port_3_r },  /* Port C read */
+	{ NULL,           NULL },            /* Port A write */
+	{ NULL,           lamps_w },         /* Port B write */
+	{ sound2_w,       nmi_w },           /* Port C write */
 };
 
 static MACHINE_RESET( getrivia )
@@ -442,6 +441,41 @@ static MACHINE_DRIVER_START( gepoker )
 MACHINE_DRIVER_END
 
 /***************************************************
+Rom board is UVM-1A
+
+Contains:
+ 3 2732  eproms (Program Code, 1 empty socket)
+ 2 X2212P (Ram chips, no battery backup)
+ DM7408N
+
+****************************************************/
+
+ROM_START( m075 )
+	ROM_REGION( 0x24000, REGION_CPU1, 0 )
+	ROM_LOAD( "m075.1", 0x00000, 0x1000, CRC(ad42465b) SHA1(3f06847a9aecb0592f99419dba9be5f18005d57b) ) /* rom board UMV-1A */
+	ROM_LOAD( "m075.2", 0x01000, 0x1000, CRC(bd129fc2) SHA1(2e05ba34922c16d127be32941447013efea05bcd) )
+	ROM_LOAD( "m075.3", 0x02000, 0x1000, CRC(45725bc9) SHA1(9e6dcbec955ef8190f2307ddb367b24b7f34338d) ) /* Rom loads _ALL_WRONG_ */
+ROM_END
+
+/***************************************************
+Rom board is UVM-1B
+
+Contains:
+ 4 2732  eproms (Program Code)
+ Battery (3.5V litium battery) backed up NEC 8444XF301
+ DM7408N
+
+****************************************************/
+
+ROM_START( superbwl )
+	ROM_REGION( 0x24000, REGION_CPU1, 0 )
+	ROM_LOAD( "super_bowl.1", 0x00000, 0x1000, CRC(82edf064) SHA1(8a26377590282f51fb39d013452ba11252e7dd05) ) /* rom board UMV-1B */
+	ROM_LOAD( "super_bowl.2", 0x01000, 0x1000, CRC(2438dd1f) SHA1(26bbd1cb3d0d5b93f61b92ff95948ac9de060715) )
+	ROM_LOAD( "super_bowl.3", 0x02000, 0x1000, CRC(9b111430) SHA1(9aaa755f3e4b369477c1a0525c994a19fe0f6107) )
+	ROM_LOAD( "super_bowl.4", 0x03000, 0x1000, CRC(037cad42) SHA1(d4037a28bb49b31358b5d560e5e028d958ae2bc9) ) /* Rom loads _ALL_WRONG_ */
+ROM_END
+
+/***************************************************
 Rom board is UVM 10 B
 
 Contains:
@@ -466,11 +500,25 @@ ROM_START( gt101c ) /* From 2 sets, using only unique question roms */
 	ROM_LOAD( "james_bond",    0x18000, 0x4000, CRC(fe9fadfd) SHA1(44b3fee1f14148f47b0b40600aabd5bff9b65e85) ) /* Dated 5/9 */
 	ROM_LOAD( "television_#1", 0x1c000, 0x4000, CRC(0f646389) SHA1(23fefe2e6cc26767d52604e7ab15bb4db99a6e94) ) /* Dated 4/9 */
 	/* Question roms that matched gt102 sets:
-    Star_trek      (dated 4/9)
+    star_trek      (dated 4/9)
     tv_soaps       (dated 3/9)
     sports_3       (dated 3/9)
     general_3      (dated 3/9)
     beatlemania_#1 (dated 3/9)
+    */
+ROM_END
+
+ROM_START( gt101c1 )
+	ROM_REGION( 0x24000, REGION_CPU1, 0 )
+	ROM_LOAD( "prog101c_right", 0x00000, 0x2000, CRC(767f0e46) SHA1(5de7b54876fcbfb2328174ffe6b656ffea886fcb) ) /* rom board UMV 10 B */
+	ROM_LOAD( "prog101c_left",  0x0a000, 0x2000, CRC(24c0a097) SHA1(b8de58baecb92775e0882cd6eca3b9e07cf7c5a5) )
+	/* Question roms */
+	ROM_LOAD( "sex_triv",             0x10000, 0x4000, CRC(cd0ce4e2) SHA1(2046ee3da94f00bf4a8b3fc62b1190d58e83cc89) ) /* Dated 7/9 */
+	ROM_LOAD( "sports_3_#3",          0x14000, 0x4000, CRC(b22cec38) SHA1(a416c3de9749fda3ab5ae5841304da0cef900cbf) ) /* Dated 3/9 */
+	ROM_LOAD( "entertainment_#1_old", 0x18000, 0x4000, CRC(2bffb3b4) SHA1(5947ebd708df35cefa86608392909c16b25d0710) ) /* Spells "Acapella" as "Cappella" */
+	/* Question roms that matched gt102 sets:
+    sports_2_#2    (dated 2/9)
+    general_#1     (not dated)
     */
 ROM_END
 
@@ -503,7 +551,7 @@ ROM_START( gt102c1 )
 	ROM_LOAD( "prog2_right", 0x00000, 0x2000, CRC(76fdc3a3) SHA1(212e09644b9cab334aad22ec5860e8638c6ba3fa) )
 	ROM_LOAD( "prog2_left",  0x0a000, 0x2000, CRC(901fb2f9) SHA1(98e49c74d89c4911a1f4d5ccf3e6cf3226c6a178) )
 	/* Question roms */
-	ROM_LOAD( "entertainment_#1", 0x10000, 0x4000, CRC(cd3ce4c7) SHA1(4bd121fa5899a96b015605f84179ed82be0a25f3) )
+	ROM_LOAD( "entertainment_#1", 0x10000, 0x4000, CRC(cd3ce4c7) SHA1(4bd121fa5899a96b015605f84179ed82be0a25f3) ) /* Correct spelling of "Acapella" */
 	ROM_LOAD( "facts_of_life",    0x14000, 0x4000, CRC(1668c7bf) SHA1(6bf43de26f8a626560579ab75fd0890fe00f99dd) )
 	ROM_LOAD( "sports_#1",        0x18000, 0x4000, CRC(cb1744f5) SHA1(ea3f7bfcecf5c58c26aa0f34908ba5d54f7279ec) )
 	ROM_LOAD( "sports_2",         0x1c000, 0x4000, CRC(e8f8e168) SHA1(d2bc57dc0799dd8817b15857f17c4d7ee4d9f932) )
@@ -530,7 +578,7 @@ ROM_START( gt102c3 )
 	ROM_LOAD( "general_#1",    0x10000, 0x4000, CRC(25a0ef9d) SHA1(793abd779cc237e14933933747bbf27bbcbfcd32) )
 	ROM_LOAD( "general_2",     0x14000, 0x4000, CRC(5798f2b3) SHA1(0636017969d9b1eac5d33cfb18cb36f7cf4cba88) )
 	ROM_LOAD( "general_3",     0x18000, 0x4000, CRC(a60f17a4) SHA1(0d79be9e2e49b9817e94d410e25bb6dcda10aa9e) ) /* Dated 3/9 */
-	ROM_LOAD( "sports_2_#2",   0x1c000, 0x4000, CRC(fb632622) SHA1(c14d8178f5cfc5994e2ab4f829e353fa75b57304) )
+	ROM_LOAD( "sports_2_#2",   0x1c000, 0x4000, CRC(fb632622) SHA1(c14d8178f5cfc5994e2ab4f829e353fa75b57304) ) /* Dated 2/9 */
 ROM_END
 
 ROM_START( sextriv1 )
@@ -677,6 +725,8 @@ ROM_START( gepoker3 ) /* v50.02 with control dated 9-30-84 */
 	ROM_LOAD( "jokerpoker_cb_10-19-88",    0x10000, 0x2000, CRC(a590af75) SHA1(63bc64fbc9ac0c489b1f4894d77a4be13d7251e7) )
 ROM_END
 
+GAME( 1982, m075,     0,        gselect,  gselect,  0, ROT0, "Greyhound Electronics", "M075 Poker (Version 16.03B)",            GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAME( 1982, superbwl, 0,        gselect,  gselect,  0, ROT0, "Greyhound Electronics", "Super Bowl (Version 16.03B)",            GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 
 GAME( 1982, gs4002,   0,        gselect,  gselect,  0, ROT0, "Greyhound Electronics", "Selection (Version 40.02TMB) set 1",     GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 GAME( 1982, gs4002a,  gs4002,   gselect,  gselect,  0, ROT0, "Greyhound Electronics", "Selection (Version 40.02TMB) set 2",     GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
@@ -689,9 +739,10 @@ GAME( 1984, gepoker3, gepoker,  gepoker,  gepoker,  0, ROT0, "Greyhound Electron
 GAME( 1984, gt102c,   0,        getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02C)",                 GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 GAME( 1984, gt102b,   gt102c,   getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02B)",                 GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 GAME( 1984, gt101c,   gt102c,   getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.01C)",                 GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
-GAME( 1985, gt102c1,  gt102c,   getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02C Alt questions 1)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
-GAME( 1985, gt102c2,  gt102c,   getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02C Alt questions 2)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
-GAME( 1985, gt102c3,  gt102c,   getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02C Alt questions 3)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1984, gt101c1,  gt102c,   getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.01C Alt questions 1)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1984, gt102c1,  gt102c,   getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02C Alt questions 1)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1984, gt102c2,  gt102c,   getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02C Alt questions 2)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAME( 1984, gt102c3,  gt102c,   getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02C Alt questions 3)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 
 GAME( 1985, sextriv1, 0,        getrivia, sextriv1, 0, ROT0, "Kinky Kit and Game Co.", "Sexual Trivia (Version 1.02SB set 1)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
 GAME( 1985, sextriv2, sextriv1, getrivia, sextriv1, 0, ROT0, "Kinky Kit and Game Co.", "Sexual Trivia (Version 1.02SB set 2)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
