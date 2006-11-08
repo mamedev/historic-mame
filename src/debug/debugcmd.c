@@ -1996,17 +1996,18 @@ static void execute_snap(int ref, int params, const char *param[])
 		const char *filename = param[0];
 		int scrnum = (params > 1) ? atoi(param[1]) : 0;
 		UINT32 mask = render_get_live_screens_mask();
-		char *fname;
+		const char *fname;
 
-		if ((scrnum < 0) || (scrnum >= MAX_SCREENS)	|| !(mask & (1 << scrnum)))
+		if (scrnum < 0 || scrnum >= MAX_SCREENS || !(mask & (1 << scrnum)))
 		{
 			debug_console_printf("Invalid screen number '%d'\n", scrnum);
 			return;
 		}
 
-		fname = assemble_2_strings(Machine->gamedrv->name, ".png");
+		fname = (strstr(filename, ".png") != NULL) ? filename : assemble_2_strings(filename, ".png");
 		filerr = mame_fopen(SEARCHPATH_SCREENSHOT, fname, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &fp);
-		free(fname);
+		if (fname != filename)
+			free((void *)fname);
 
 		if (filerr != FILERR_NONE)
 		{

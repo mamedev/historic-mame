@@ -76,9 +76,6 @@
 #define TEMP	dsp56k.aguTempReg
 #define STATUS	dsp56k.aguStatusReg
 
-#define IPR     dsp56k.interruptPriorityRegister
-#define BCR     dsp56k.busControlRegister
-
 // The CPU Stack
 #define ST0		dsp56k.pcuSystemStack[0].d
 #define ST1		dsp56k.pcuSystemStack[1].d
@@ -102,91 +99,393 @@
 #define OP		dsp56k.op
 
 
+// Peripheral RAM id's and addresses
+#define PBCa   (0xffc0-0xffc0)
+#define PCCa   (0xffc1-0xffc0)
+#define PBDDRa (0xffc2-0xffc0)
+#define PCDDRa (0xffc3-0xffc0)
+#define PBC    (dsp56k_peripheral_ram[PBCa])
+#define PCC    (dsp56k_peripheral_ram[PCCa])
+#define PBDDR  (dsp56k_peripheral_ram[PBDDRa])
+#define PCDDR  (dsp56k_peripheral_ram[PCDDRa])
 
-// Status Register Flags
-#define lfFLAG ((SR & 0x8000) != 0)
-#define fvFLAG ((SR & 0x4000) != 0)
-#define s1FLAG ((SR & 0x0800) != 0)
-#define s0FLAG ((SR & 0x0400) != 0)
-#define i1FLAG ((SR & 0x0200) != 0)
-#define i0FLAG ((SR & 0x0100) != 0)
-#define sFLAG  ((SR & 0x0080) != 0)
-#define lFLAG  ((SR & 0x0040) != 0)
-#define eFLAG  ((SR & 0x0020) != 0)
-#define uFLAG  ((SR & 0x0010) != 0)
-#define nFLAG  ((SR & 0x0008) != 0)
-#define zFLAG  ((SR & 0x0004) != 0)
-#define vFLAG  ((SR & 0x0002) != 0)
-#define cFLAG  ((SR & 0x0001) != 0)
+#define HCRa (0xffc4-0xffc0)
+#define HCR  (dsp56k_peripheral_ram[HCRa])
 
-#define CLEAR_lfFLAG() (SR &= (~0x8000))
-#define CLEAR_fvFLAG() (SR &= (~0x4000))
-#define CLEAR_s1FLAG() (SR &= (~0x0800))
-#define CLEAR_s0FLAG() (SR &= (~0x0400))
-#define CLEAR_i1FLAG() (SR &= (~0x0200))
-#define CLEAR_i0FLAG() (SR &= (~0x0100))
-#define CLEAR_sFLAG()  (SR &= (~0x0080))
-#define CLEAR_lFLAG()  (SR &= (~0x0040))
-#define CLEAR_eFLAG()  (SR &= (~0x0020))
-#define CLEAR_uFLAG()  (SR &= (~0x0010))
-#define CLEAR_nFLAG()  (SR &= (~0x0008))
-#define CLEAR_zFLAG()  (SR &= (~0x0004))
-#define CLEAR_vFLAG()  (SR &= (~0x0002))
-#define CLEAR_cFLAG()  (SR &= (~0x0001))
+#define COCRa (0xffc8-0xffc0)
+#define COCR  (dsp56k_peripheral_ram[COCR])
 
-#define SET_lfFLAG() (SR |= 0x8000)
-#define SET_fvFLAG() (SR |= 0x4000)
-#define SET_s1FLAG() (SR |= 0x0800)
-#define SET_s0FLAG() (SR |= 0x0400)
-#define SET_i1FLAG() (SR |= 0x0200)
-#define SET_i0FLAG() (SR |= 0x0100)
-#define SET_sFLAG()  (SR |= 0x0080)
-#define SET_lFLAG()  (SR |= 0x0040)
-#define SET_eFLAG()  (SR |= 0x0020)
-#define SET_uFLAG()  (SR |= 0x0010)
-#define SET_nFLAG()  (SR |= 0x0008)
-#define SET_zFLAG()  (SR |= 0x0004)
-#define SET_vFLAG()  (SR |= 0x0002)
-#define SET_cFLAG()  (SR |= 0x0001)
+#define CRASSI0a (0xffd0-0xffc0)
+#define CRBSSI0a (0xffd1-0xffc0)
+#define CRASSI0  (dsp56k_peripheral_ram[CRASSI0a])
+#define CRBSSI0  (dsp56k_peripheral_ram[CRBSSI0a])
+
+#define CRASSI1a (0xffd8-0xffc0)
+#define CRBSSI1a (0xffd9-0xffc0)
+#define CRASSI1  (dsp56k_peripheral_ram[CRASSI1a])
+#define CRBSSI1  (dsp56k_peripheral_ram[CRBSSI1a])
+
+#define PLCRa (0xffdc-0xffc0)
+#define PLCR  (dsp56k_peripheral_ram[PLCRa])
+
+#define BCRa (0xffde-0xffc0)
+#define IPRa (0xffdf-0xffc0)
+#define BCR  (dsp56k_peripheral_ram[BCRa])
+#define IPR  (dsp56k_peripheral_ram[IPRa])
+
+#define PBDa (0xffe2-0xffc0)
+#define PCDa (0xffe3-0xffc0)
+#define HSRa (0xffe4-0xffc0)
+#define PBD  (dsp56k_peripheral_ram[PBDa])
+#define PCD  (dsp56k_peripheral_ram[PCDa])
+#define HSR  (dsp56k_peripheral_ram[HSRa])
+
+#define HTXHRXa (0xffe5-0xffc0)
+#define HTXHRX  (dsp56k_peripheral_ram[HTXHRXa])
+
+#define COSRa   (0xffe8-0xffc0)
+#define CRXCTXa (0xffe9-0xffc0)
+#define COSR    (dsp56k_peripheral_ram[COSRa])
+#define CRXCTX  (dsp56k_peripheral_ram[CRXCTXa])
+
+#define TCRa  (0xffec-0xffc0)
+#define TCTRa (0xffed-0xffc0)
+#define TCPRa (0xffee-0xffc0)
+#define TPRa  (0xffef-0xffc0)
+#define TCR   (dsp56k_peripheral_ram[TCRa])
+#define TCTR  (dsp56k_peripheral_ram[TCTRa])
+#define TCPR  (dsp56k_peripheral_ram[TCPRa])
+#define TPR   (dsp56k_peripheral_ram[TPRa])
+
+#define TSRSSI0a (0xfff0-0xffc0)
+#define TRXSSI0a (0xfff1-0xffc0)
+#define RSMA0a   (0xfff2-0xffc0)
+#define RSMB0a   (0xfff3-0xffc0)
+#define TSMA0a   (0xfff4-0xffc0)
+#define TSMB0a   (0xfff5-0xffc0)
+#define TSRSSI0  (dsp56k_peripheral_ram[TSRSSI0a])
+#define TRXSSI0  (dsp56k_peripheral_ram[TRXSSI0a])
+#define RSMA0    (dsp56k_peripheral_ram[RSMA0a])
+#define RSMB0    (dsp56k_peripheral_ram[RSMB0a])
+#define TSMA0    (dsp56k_peripheral_ram[TSMA0a])
+#define TSMB0    (dsp56k_peripheral_ram[TSMB0a])
+
+#define TSRSSI1a (0xfff8-0xffc0)
+#define TRXSSI1a (0xfff9-0xffc0)
+#define RSMA1a   (0xfffa-0xffc0)
+#define RSMB1a   (0xfffb-0xffc0)
+#define TSMA1a   (0xfffc-0xffc0)
+#define TSMB1a   (0xfffd-0xffc0)
+#define TSRSSI1  (dsp56k_peripheral_ram[TSRSSI1a])
+#define TRXSSI1  (dsp56k_peripheral_ram[TRXSSI1a])
+#define RSMA1    (dsp56k_peripheral_ram[RSMA1a])
+#define RSMB1    (dsp56k_peripheral_ram[RSMB1a])
+#define TSMA1    (dsp56k_peripheral_ram[TSMA1a])
+#define TSMB1    (dsp56k_peripheral_ram[TSMB1a])
 
 
 
-// Stack Pointer Flags
-#define ufFLAG  ((SP & 0x20) != 0)
-#define seFLAG  ((SP & 0x10) != 0)
+// Status Register Bits
+#define lfBIT ((SR & 0x8000) != 0)
+#define fvBIT ((SR & 0x4000) != 0)
+#define s1BIT ((SR & 0x0800) != 0)
+#define s0BIT ((SR & 0x0400) != 0)
+#define i1BIT ((SR & 0x0200) != 0)
+#define i0BIT ((SR & 0x0100) != 0)
+#define sBIT  ((SR & 0x0080) != 0)
+#define lBIT  ((SR & 0x0040) != 0)
+#define eBIT  ((SR & 0x0020) != 0)
+#define uBIT  ((SR & 0x0010) != 0)
+#define nBIT  ((SR & 0x0008) != 0)
+#define zBIT  ((SR & 0x0004) != 0)
+#define vBIT  ((SR & 0x0002) != 0)
+#define cBIT  ((SR & 0x0001) != 0)
 
-#define CLEAR_ufFLAG() (SP &= (~0x20))
-#define CLEAR_seFLAG() (SP &= (~0x10))
+#define CLEAR_lfBIT() (SR &= (~0x8000))
+#define CLEAR_fvBIT() (SR &= (~0x4000))
+#define CLEAR_s1BIT() (SR &= (~0x0800))
+#define CLEAR_s0BIT() (SR &= (~0x0400))
+#define CLEAR_i1BIT() (SR &= (~0x0200))
+#define CLEAR_i0BIT() (SR &= (~0x0100))
+#define CLEAR_sBIT()  (SR &= (~0x0080))
+#define CLEAR_lBIT()  (SR &= (~0x0040))
+#define CLEAR_eBIT()  (SR &= (~0x0020))
+#define CLEAR_uBIT()  (SR &= (~0x0010))
+#define CLEAR_nBIT()  (SR &= (~0x0008))
+#define CLEAR_zBIT()  (SR &= (~0x0004))
+#define CLEAR_vBIT()  (SR &= (~0x0002))
+#define CLEAR_cBIT()  (SR &= (~0x0001))
 
-#define SET_ufFLAG() (SP |= 0x20)
-#define SET_seFLAG() (SP |= 0x10)
+#define SET_lfBIT() (SR |= 0x8000)
+#define SET_fvBIT() (SR |= 0x4000)
+#define SET_s1BIT() (SR |= 0x0800)
+#define SET_s0BIT() (SR |= 0x0400)
+#define SET_i1BIT() (SR |= 0x0200)
+#define SET_i0BIT() (SR |= 0x0100)
+#define SET_sBIT()  (SR |= 0x0080)
+#define SET_lBIT()  (SR |= 0x0040)
+#define SET_eBIT()  (SR |= 0x0020)
+#define SET_uBIT()  (SR |= 0x0010)
+#define SET_nBIT()  (SR |= 0x0008)
+#define SET_zBIT()  (SR |= 0x0004)
+#define SET_vBIT()  (SR |= 0x0002)
+#define SET_cBIT()  (SR |= 0x0001)
 
 
 
-// Operating Mode Register Flags
-#define cdFLAG	((OMR & 0x80) != 0)
-#define sdFLAG	((OMR & 0x40) != 0)
-#define  rFLAG	((OMR & 0x20) != 0)
-#define saFLAG	((OMR & 0x10) != 0)
-#define mcFLAG	((OMR & 0x04) != 0)
-#define mbFLAG	((OMR & 0x02) != 0)
-#define maFLAG	((OMR & 0x01) != 0)
+// Stack Pointer Bits
+#define ufBIT  ((SP & 0x20) != 0)
+#define seBIT  ((SP & 0x10) != 0)
 
-#define CLEAR_cdFLAG() (OMR &= (~0x80))
-#define CLEAR_sdFLAG() (OMR &= (~0x40))
-#define CLEAR_rFLAG()  (OMR &= (~0x20))
-#define CLEAR_saFLAG() (OMR &= (~0x10))
-#define CLEAR_mcFLAG() (OMR &= (~0x04))
-#define CLEAR_mbFLAG() (OMR &= (~0x02))
-#define CLEAR_maFLAG() (OMR &= (~0x01))
+#define CLEAR_ufBIT() (SP &= (~0x20))
+#define CLEAR_seBIT() (SP &= (~0x10))
 
-#define SET_cdFLAG() (OMR |= 0x80)
-#define SET_sdFLAG() (OMR |= 0x40)
-#define SET_rFLAG()  (OMR |= 0x20)
-#define SET_saFLAG() (OMR |= 0x10)
-#define SET_mcFLAG() (OMR |= 0x04)
-#define SET_mbFLAG() (OMR |= 0x02)
-#define SET_maFLAG() (OMR |= 0x01)
+#define SET_ufBIT() (SP |= 0x20)
+#define SET_seBIT() (SP |= 0x10)
+
+
+
+// Operating Mode Register Bits
+#define cdBIT	((OMR & 0x80) != 0)
+#define sdBIT	((OMR & 0x40) != 0)
+#define  rBIT	((OMR & 0x20) != 0)
+#define saBIT	((OMR & 0x10) != 0)
+#define mcBIT	((OMR & 0x04) != 0)
+#define mbBIT	((OMR & 0x02) != 0)
+#define maBIT	((OMR & 0x01) != 0)
+
+#define CLEAR_cdBIT() (OMR &= (~0x80))
+#define CLEAR_sdBIT() (OMR &= (~0x40))
+#define CLEAR_rBIT()  (OMR &= (~0x20))
+#define CLEAR_saBIT() (OMR &= (~0x10))
+#define CLEAR_mcBIT() (OMR &= (~0x04))
+#define CLEAR_mbBIT() (OMR &= (~0x02))
+#define CLEAR_maBIT() (OMR &= (~0x01))
+
+#define SET_cdBIT() (OMR |= 0x80)
+#define SET_sdBIT() (OMR |= 0x40)
+#define SET_rBIT()  (OMR |= 0x20)
+#define SET_saBIT() (OMR |= 0x10)
+#define SET_mcBIT() (OMR |= 0x04)
+#define SET_mbBIT() (OMR |= 0x02)
+#define SET_maBIT() (OMR |= 0x01)
+
+
+// Interrupt Priority Register Bits
+#define tl1BIT   ((IPR & 0x8000) != 0)
+#define tl0BIT   ((IPR & 0x4000) != 0)
+#define s1l1BIT  ((IPR & 0x2000) != 0)
+#define s1l0BIT  ((IPR & 0x1000) != 0)
+#define s0l1BIT  ((IPR & 0x0800) != 0)
+#define s0l0BIT  ((IPR & 0x0400) != 0)
+#define hl1BIT   ((IPR & 0x0200) != 0)
+#define hl0BIT   ((IPR & 0x0100) != 0)
+#define cl1BIT   ((IPR & 0x0080) != 0)
+#define cl0BIT   ((IPR & 0x0040) != 0)
+#define ibl2BIT  ((IPR & 0x0020) != 0)
+#define ibl1BIT  ((IPR & 0x0010) != 0)
+#define ibl0BIT  ((IPR & 0x0008) != 0)
+#define ial2BIT  ((IPR & 0x0004) != 0)
+#define ial1BIT  ((IPR & 0x0002) != 0)
+#define ial0BIT  ((IPR & 0x0001) != 0)
+
+#define CLEAR_tl1BIT()   (IPR &= (~0x8000))
+#define CLEAR_tl0BIT()   (IPR &= (~0x4000))
+#define CLEAR_s1l1BIT()  (IPR &= (~0x2000))
+#define CLEAR_s1l0BIT()  (IPR &= (~0x1000))
+#define CLEAR_s0l1BIT()  (IPR &= (~0x0800))
+#define CLEAR_s0l0BIT()  (IPR &= (~0x0400))
+#define CLEAR_hl1BIT()   (IPR &= (~0x0200))
+#define CLEAR_hl0BIT()   (IPR &= (~0x0100))
+#define CLEAR_cl1BIT()   (IPR &= (~0x0080))
+#define CLEAR_cl0BIT()   (IPR &= (~0x0040))
+#define CLEAR_ibl2BIT()  (IPR &= (~0x0020))
+#define CLEAR_ibl1BIT()  (IPR &= (~0x0010))
+#define CLEAR_ibl0BIT()  (IPR &= (~0x0008))
+#define CLEAR_ial2BIT()  (IPR &= (~0x0004))
+#define CLEAR_ial1BIT()  (IPR &= (~0x0002))
+#define CLEAR_ial0BIT()  (IPR &= (~0x0001))
+
+#define SET_tl1BIT()   (IPR |= 0x8000)
+#define SET_tl0BIT()   (IPR |= 0x4000)
+#define SET_s1l1BIT()  (IPR |= 0x2000)
+#define SET_s1l0BIT()  (IPR |= 0x1000)
+#define SET_s0l1BIT()  (IPR |= 0x0800)
+#define SET_s0l0BIT()  (IPR |= 0x0400)
+#define SET_hl1BIT()   (IPR |= 0x0200)
+#define SET_hl0BIT()   (IPR |= 0x0100)
+#define SET_cl1BIT()   (IPR |= 0x0080)
+#define SET_cl0BIT()   (IPR |= 0x0040)
+#define SET_ibl2BIT()  (IPR |= 0x0020)
+#define SET_ibl1BIT()  (IPR |= 0x0010)
+#define SET_ibl0BIT()  (IPR |= 0x0008)
+#define SET_ial2BIT()  (IPR |= 0x0004)
+#define SET_ial1BIT()  (IPR |= 0x0002)
+#define SET_ial0BIT()  (IPR |= 0x0001)
+
+
+
+// Bus Control Register Bits
+#define rhBIT ((BCR & 0x8000) != 0)
+#define bsBIT ((BCR & 0x4000) != 0)
+
+#define CLEAR_rhBIT() (BCR &= (~0x8000))
+#define CLEAR_bsBIT() (BCR &= (~0x4000))
+
+#define SET_rhBIT() (BCR |= 0x8000)
+#define SET_bsBIT() (BCR |= 0x4000)
+
+
+
+// Port B Control Register Bits
+#define bcBIT ((PBC & 0x0001) != 0)
+
+#define CLEAR_bcBIT() (PBC &= (~0x0001))
+
+#define SET_bcBIT() (PBC |= 0x0001)
+
+
+
+// HOST INTERFACE (dsp56k side)
+// Read/Write Host Control Register Bits
+#define hf3BIT  ((HCR & 0x0010) != 0)
+#define hf2BIT  ((HCR & 0x0008) != 0)
+#define hcieBIT ((HCR & 0x0004) != 0)
+#define htieBIT ((HCR & 0x0002) != 0)
+#define hrieBIT ((HCR & 0x0001) != 0)
+
+#define CLEAR_hf3BIT()  (HCR &= (~0x0010))
+#define CLEAR_hf2BIT()  (HCR &= (~0x0008))
+#define CLEAR_hcieBIT() (HCR &= (~0x0004))
+#define CLEAR_htieBIT() (HCR &= (~0x0002))
+#define CLEAR_hrieBIT() (HCR &= (~0x0001))
+
+#define SET_hf3BIT()  (HCR |= 0x0010)
+#define SET_hf2BIT()  (HCR |= 0x0008)
+#define SET_hcieBIT() (HCR |= 0x0004)
+#define SET_htieBIT() (HCR |= 0x0002)
+#define SET_hrieBIT() (HCR |= 0x0001)
+
+
+
+// Read-only Host Status Register Bits
+#define dmaBIT  ((HSR & 0x0080) != 0)
+#define hf1BIT  ((HSR & 0x0010) != 0)
+#define hf0BIT  ((HSR & 0x0008) != 0)
+#define hcpBIT  ((HSR & 0x0004) != 0)
+#define htdeBIT ((HSR & 0x0002) != 0)
+#define hrdfBIT ((HSR & 0x0001) != 0)
+
+#define CLEAR_dmaBIT()  (HSR &= (~0x0080))
+#define CLEAR_hf1BIT()  (HSR &= (~0x0010))
+#define CLEAR_hf0BIT()  (HSR &= (~0x0008))
+#define CLEAR_hcpBIT()  (HSR &= (~0x0004))
+#define CLEAR_htdeBIT() (HSR &= (~0x0002))
+#define CLEAR_hrdfBIT() (HSR &= (~0x0001))
+
+#define SET_dmaBIT()  (HSR |= 0x0080)
+#define SET_hf1BIT()  (HSR |= 0x0010)
+#define SET_hf0BIT()  (HSR |= 0x0008)
+#define SET_hcpBIT()  (HSR |= 0x0004)
+#define SET_htdeBIT() (HSR |= 0x0002)
+#define SET_hrdfBIT() (HSR |= 0x0001)
+
+
+
+// HOST INTERFACE (host side)
+// Interrupt Control Register Bits
+#define x_initBIT ((dsp56k.HI.ICR & 0x0080) != 0)
+#define x_hm1BIT  ((dsp56k.HI.ICR & 0x0040) != 0)
+#define x_hm0BIT  ((dsp56k.HI.ICR & 0x0020) != 0)
+#define x_hf1BIT  ((dsp56k.HI.ICR & 0x0010) != 0)
+#define x_hf0BIT  ((dsp56k.HI.ICR & 0x0008) != 0)
+#define x_treqBIT ((dsp56k.HI.ICR & 0x0002) != 0)
+#define x_rreqBIT ((dsp56k.HI.ICR & 0x0001) != 0)
+
+#define CLEAR_x_initBIT() (dsp56k.HI.ICR &= (~0x0080))
+#define CLEAR_x_hm1BIT()  (dsp56k.HI.ICR &= (~0x0040))
+#define CLEAR_x_hm0BIT()  (dsp56k.HI.ICR &= (~0x0020))
+#define CLEAR_x_hf1BIT()  (dsp56k.HI.ICR &= (~0x0010))
+#define CLEAR_x_hf0BIT()  (dsp56k.HI.ICR &= (~0x0008))
+#define CLEAR_x_treqBIT() (dsp56k.HI.ICR &= (~0x0002))
+#define CLEAR_x_rreqBIT() (dsp56k.HI.ICR &= (~0x0001))
+
+#define SET_x_initBIT() (dsp56k.HI.ICR |= 0x0080)
+#define SET_x_hm1BIT()  (dsp56k.HI.ICR |= 0x0040)
+#define SET_x_hm0BIT()  (dsp56k.HI.ICR |= 0x0020)
+#define SET_x_hf1BIT()  (dsp56k.HI.ICR |= 0x0010)
+#define SET_x_hf0BIT()  (dsp56k.HI.ICR |= 0x0008)
+#define SET_x_treqBIT() (dsp56k.HI.ICR |= 0x0002)
+#define SET_x_rreqBIT() (dsp56k.HI.ICR |= 0x0001)
+
+
+
+// Command Vector Register Bit
+#define x_hcBIT ((dsp56k.HI.CVR & 0x0080) != 0)
+
+#define CLEAR_x_hcBIT() (dsp56k.HI.CVR &= (~0x0080))
+
+#define SET_x_hcBIT() (dsp56k.HI.CVR |= 0x0080)
+
+
+
+// Interrupt Status Register Bits
+#define x_hreqBIT ((dsp56k.HI.ISR & 0x0080) != 0)
+#define x_dmaBIT  ((dsp56k.HI.ISR & 0x0040) != 0)
+#define x_hf3BIT  ((dsp56k.HI.ISR & 0x0010) != 0)
+#define x_hf2BIT  ((dsp56k.HI.ISR & 0x0008) != 0)
+#define x_trdyBIT ((dsp56k.HI.ISR & 0x0004) != 0)
+#define x_txdeBIT ((dsp56k.HI.ISR & 0x0002) != 0)
+#define x_rxdfBIT ((dsp56k.HI.ISR & 0x0001) != 0)
+
+#define CLEAR_x_hreqBIT() (dsp56k.HI.ISR &= (~0x0080))
+#define CLEAR_x_dmaBIT()  (dsp56k.HI.ISR &= (~0x0040))
+#define CLEAR_x_hf3BIT()  (dsp56k.HI.ISR &= (~0x0010))
+#define CLEAR_x_hf2BIT()  (dsp56k.HI.ISR &= (~0x0008))
+#define CLEAR_x_trdyBIT() (dsp56k.HI.ISR &= (~0x0004))
+#define CLEAR_x_txdeBIT() (dsp56k.HI.ISR &= (~0x0002))
+#define CLEAR_x_rxdfBIT() (dsp56k.HI.ISR &= (~0x0001))
+
+#define SET_x_hreqBIT() (dsp56k.HI.ISR |= 0x0080)
+#define SET_x_dmaBIT()  (dsp56k.HI.ISR |= 0x0040)
+#define SET_x_hf3BIT()  (dsp56k.HI.ISR |= 0x0010)
+#define SET_x_hf2BIT()  (dsp56k.HI.ISR |= 0x0008)
+#define SET_x_trdyBIT() (dsp56k.HI.ISR |= 0x0004)
+#define SET_x_txdeBIT() (dsp56k.HI.ISR |= 0x0002)
+#define SET_x_rxdfBIT() (dsp56k.HI.ISR |= 0x0001)
+
+
+
+// Interrupt Vector Register Bits
+#define x_iv7BIT ((dsp56k.HI.IVR & 0x0080) != 0)
+#define x_iv6BIT ((dsp56k.HI.IVR & 0x0040) != 0)
+#define x_iv5BIT ((dsp56k.HI.IVR & 0x0020) != 0)
+#define x_iv4BIT ((dsp56k.HI.IVR & 0x0010) != 0)
+#define x_iv3BIT ((dsp56k.HI.IVR & 0x0008) != 0)
+#define x_iv2BIT ((dsp56k.HI.IVR & 0x0004) != 0)
+#define x_iv1BIT ((dsp56k.HI.IVR & 0x0002) != 0)
+#define x_iv0BIT ((dsp56k.HI.IVR & 0x0001) != 0)
+
+#define CLEAR_x_iv7BIT() (dsp56k.HI.IVR &= (~0x0080))
+#define CLEAR_x_iv6BIT() (dsp56k.HI.IVR &= (~0x0040))
+#define CLEAR_x_iv5BIT() (dsp56k.HI.IVR &= (~0x0020))
+#define CLEAR_x_iv4BIT() (dsp56k.HI.IVR &= (~0x0010))
+#define CLEAR_x_iv3BIT() (dsp56k.HI.IVR &= (~0x0008))
+#define CLEAR_x_iv2BIT() (dsp56k.HI.IVR &= (~0x0004))
+#define CLEAR_x_iv1BIT() (dsp56k.HI.IVR &= (~0x0002))
+#define CLEAR_x_iv0BIT() (dsp56k.HI.IVR &= (~0x0001))
+
+#define SET_x_iv7BIT() (dsp56k.HI.IVR | 0x0080)
+#define SET_x_iv6BIT() (dsp56k.HI.IVR | 0x0040)
+#define SET_x_iv5BIT() (dsp56k.HI.IVR | 0x0020)
+#define SET_x_iv4BIT() (dsp56k.HI.IVR | 0x0010)
+#define SET_x_iv3BIT() (dsp56k.HI.IVR | 0x0008)
+#define SET_x_iv2BIT() (dsp56k.HI.IVR | 0x0004)
+#define SET_x_iv1BIT() (dsp56k.HI.IVR | 0x0002)
+#define SET_x_iv0BIT() (dsp56k.HI.IVR | 0x0001)
+
+
+
 
 
 // IRQ Interfaces
@@ -197,9 +496,40 @@
 
 
 
+
+
 /***************************************************************************
     STRUCTURES & TYPEDEFS
 ***************************************************************************/
+
+// DSP56156 Host Interface - page 94 of DSP56156UM
+typedef struct
+{
+	// DSP56156 SIDE
+	// Three words in the DSP processor?s address space
+	// UINT8  HCR $FFC4
+	// UINT8  HSR $FFE4
+	// UINT16 HTX $FFE5 - same as below
+	// UINT16 HRX $FFE5 - same as above
+
+	// HOST SIDE
+	// The HI appears as a memory mapped peripheral, occupying 8 bytes in the host processor?s address space
+	UINT8 TXHRXH, TXLRXL;
+
+	UINT8 ICR;
+	UINT8 CVR;
+	UINT8 ISR;
+	UINT8 IVR;
+
+	// control lines available to the host
+	UINT8 HA0, HA1, HA2;
+	UINT8 hatHRW;
+	UINT8 hatHEN;
+	UINT8 hatHREQ;
+	UINT8 hatHACK;
+
+} dsp56k_host_interface;
+
 
 // DSP56156 Registers - sizes specific to chip
 typedef struct
@@ -226,9 +556,6 @@ typedef struct
 	UINT16          aguTempReg ;				//  TEMP
 	UINT8           aguStatusReg ;				//  Status
 
-	// Other Registers
-	UINT16          interruptPriorityRegister ; //
-	UINT16          busControlRegister ;		//  Oddly poorly-documented - has RH and RS bits though...
 
 	// IRQ lines
 	UINT8           irq_modA ;					//  aka IRQA - can be defined edge or level sensitive (though i'm not sure how)
@@ -238,9 +565,6 @@ typedef struct
 
 	int		(*irq_callback)(int irqline) ;
 
-	// Host Interface (HI) port - page 94 of DSP56156UM
-
-
 	// Internal Stuff
 	UINT32			ppc;						// Previous PC - for debugger
 	UINT16			op;							// Current opcode
@@ -249,12 +573,11 @@ typedef struct
 	int				repFlag ;					// Knowing if we're in a 'repeat' state (dunno how the processor does this)
 	UINT32			repAddr ;					// The address of the instruction to repeat...
 
-	// DSP56156RAM-type processor
-	UINT16 programRAM[2048] ;					// 2048 x 16-bit on-chip program RAM
-	UINT16 dataRAM[2048] ;						// 2048 x 16-bit on-chip data RAM
-	UINT16 bootstrapROM[64] ;					// 64   x 16-bit bootstrap ROM
+	// Interfaces - ports B and C *can* be these if everything's setup right.
+	dsp56k_host_interface HI;
 
 	const void *	config;
+
 } dsp56k_regs;
 
 /***************************************************************************
@@ -264,7 +587,6 @@ typedef struct
 static void dsp56k_reset(void);
 
 
-
 /***************************************************************************
     PRIVATE GLOBAL VARIABLES
 ***************************************************************************/
@@ -272,6 +594,9 @@ static void dsp56k_reset(void);
 static dsp56k_regs dsp56k;
 static int dsp56k_icount;
 
+static UINT16 hack_memory_offset = 0;
+static UINT16 *dsp56k_peripheral_ram;
+static UINT16 *dsp56k_program_ram;
 
 /***************************************************************************
     IRQ HANDLING
@@ -337,6 +662,12 @@ static void dsp56k_init(int index, int clock, const void *_config, int (*irqcall
 	dsp56k.irq_callback = irqcallback;
 }
 
+
+static void dsp56k_reset_HI(void)
+{
+	dsp56k.HI.CVR = 0x16;		// clears HC and sets HL
+}
+
 // Page 101 (7-25) in the Family Manual
 static void dsp56k_reset(void)
 {
@@ -353,15 +684,21 @@ static void dsp56k_reset(void)
 		// Modifier registers are set
 		M0 = M1 = M2 = M3 = 0xffff ;
 
-		// BCR is set
-		BCR = 0x43ff ;
+		// BCR is set - the really slow bootup mode & the Bus State status bit high (0x4xxx)
+		//BCR = 0x43ff ;
 
 		// Stack pointer is cleared
-		SP = 0x00 ;					// The docs say nothing about ufFLAG & seFLAG, but this should be right
+		SP = 0x00 ;					// The docs say nothing about ufBIT & seBIT, but this should be right
 
 		// Documentation says 'MR' is setup, but it really means 'SR' is setup
 		SR = 0x0300 ;				// Only the Interrupt mask bits of the Status Register are set upon reset
 
+
+		// !!! GO THROUGH AND GET ALL THESE RIGHT SOMEDAY !!!
+		HSR = 0x0000;
+		SET_htdeBIT();
+
+		dsp56k_reset_HI();
 
 		OMR = 0x00 ;				// All is cleared, except for the IRQ lines below
 		IPR = 0x00 ;
@@ -370,8 +707,6 @@ static void dsp56k_reset(void)
 		dsp56k.repAddr = 0x0000 ;	// Reset the address too...
 
 		// Manipulate everything you need to for the ports (!! maybe these will be callbacks someday !!)...
-		data_write_word_16le(0xffde, 0x43ff) ;	// Sets Port A Bus Control Register (BCR) to the really slow bootup mode...
-												// Also sets the Bus State status bit high (0x4xxx)
 		data_write_word_16le(0xffc0, 0x0000) ;	// Sets Port B Control Register to general I/O
 		data_write_word_16le(0xffc2, 0x0000) ;	// Sets Port B Data Direction Register as input
 		data_write_word_16le(0xffc1, 0x0000) ;	// Sets Port C Control Register to general I/O
@@ -379,11 +714,11 @@ static void dsp56k_reset(void)
 
 		// Now that we're leaving, set ma, mb, and mc from MODA, MODB, and MODC lines
 		// I believe polygonet sets everyone to mode 0...  The following reflects this...
-		CLEAR_maFLAG() ;
-		CLEAR_mbFLAG() ;
+		CLEAR_maBIT() ;
+		CLEAR_mbBIT() ;
 
 		// switch bootup sequence based on chip operating mode
-		switch((mbFLAG << 1) | maFLAG)
+		switch((mbBIT << 1) | maBIT)
 		{
 			// [Special Bootstrap 1] Bootstrap from an external byte-wide memory located at P:$c000
 			case 0x0:
@@ -469,9 +804,276 @@ static offs_t dsp56k_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UIN
 #endif
 }
 
+/****************************************************************************
+ *  Internal Memory Handlers
+ ****************************************************************************/
+
+static READ16_HANDLER( peripheral_register_r )
+{
+//  logerror("peripheral_register_r 0x%x\n", offset+0xffc0);
+
+	switch (offset)
+	{
+		case HCRa: //ffc4
+			return HCR;
+			break;
+
+		case HSRa: //ffe4
+			return HSR;
+			break;
+
+		case HTXHRXa: //ffe5
+			// The HRX register contains valid data when the HRDF bit is set.
+//          if (hrdfBIT)
+			return HTXHRX;
+
+			// Reading HRX clears HRDF.
+			CLEAR_hrdfBIT();
+
+			// The DSP may program the HRIE bit to cause a Host Receive Data interrupt when HRDF is set.
+
+			return 0x0000;
+			break;
+	}
+
+	return dsp56k_peripheral_ram[offset];
+}
+
+static WRITE16_HANDLER( peripheral_register_w )
+{
+	COMBINE_DATA(&dsp56k_peripheral_ram[offset]);
+
+	logerror("peripheral_register_w 0x%x 0x%x (@%x)\n", offset+0xffc0, data, PC);
+
+	switch (offset)
+	{
+		case HCRa: //ffc4
+			// The HCR register occupies the low order byte of the internal data bus -
+			//   the high order portion is zero-filled.
+
+			// Changing HF2 will change the Host Flag 2 (HF2) bit of the Interrupt Status
+			//   Register ISR on the host processor side of the host interface.
+			if (hf2BIT)
+				SET_x_hf2BIT();
+			else
+				CLEAR_x_hf2BIT();
+
+			// Changing HF3 will change the Host Flag 3 (HF3) bit of the Interrupt Status
+			//   Register ISR on the host processor side of the host interface.
+			if (hf3BIT)
+			{
+				SET_x_hf3BIT();
+			}
+			else
+				CLEAR_x_hf3BIT();
+
+			break;
+
+		case HSRa: //ffe4
+			/* READ ONLY */
+			break;
+
+		case HTXHRXa: //ffe5
+
+			// ??? Can you write here even if you don't have the requirements?
+
+			// Writing the HTX register clears HTDE (HSR bit 1)
+			CLEAR_htdeBIT();
+
+			// The DSP may program the HTIE (HCR bit 1) bit to cause a Host Transmit Data
+			//   interrupt when HTDE is set
+
+			// The HTX register is transferred as 16-bit data to the Receive Byte Registers
+			//   RXH:RXL if both the HTDE (HSR bit 1) bit and the Receive Data Full,
+			//   RXDF (ISR bit 0), status bit are cleared
+//          printf("%d %d %x\n", htdeBIT, x_rxdfBIT, dsp56k_peripheral_ram[offset]);
+			if ( !htdeBIT && !x_rxdfBIT )
+			{
+				dsp56k.HI.TXHRXH = (HTXHRX & 0xff00) >> 8;
+				dsp56k.HI.TXLRXL = (HTXHRX & 0x00ff);
+
+				// This transfer operation sets RXDF (ISR bit 0) and HTDE (HSR bit 1).
+				SET_x_rxdfBIT();
+			}
+			break;
+	}
+}
+
+UINT16 dsp56k_get_peripheral_memory(UINT16 addr)
+{
+	if (addr >= 0xffc0)		// && addr <= 0xffff
+	{
+		return dsp56k_peripheral_ram[addr-0xffc0] ;
+	}
+	else
+	{
+		logerror("DSP56k - Peripheral memory requested does not exist\n");
+		return 0x00;
+	}
+}
+
+/****************************************************************************
+ *  Internal Memory Maps
+ ****************************************************************************/
+
+static ADDRESS_MAP_START( dsp56156_program_memory, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x0000, 0x07ff) AM_RAM AM_BASE(&dsp56k_program_ram)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( dsp56156_x_data_memory, ADDRESS_SPACE_DATA, 16 )
+	AM_RANGE(0x0000, 0x07ff) AM_RAM
+	AM_RANGE(0xffc0, 0xffff) AM_READWRITE(peripheral_register_r, peripheral_register_w) AM_BASE(&dsp56k_peripheral_ram)
+ADDRESS_MAP_END
 
 
+/**************************************************************************
+ * Host Interface (HI) functionality.
+ **************************************************************************/
 
+void dsp56k_host_interface_write(UINT8 addr, UINT8 data)
+{
+	switch (addr)
+	{
+		case 0x0:			// ICR
+			dsp56k.HI.ICR = data;
+
+			// Changing HF0 also changes the Host Flag bit 0 (HF0) of the Host Status register HSR on the DSP side of the HI.
+			if (x_hf0BIT) SET_hf0BIT();
+			if (x_hf1BIT) SET_hf1BIT();
+
+			break;
+
+		case 0x1:			// CVR
+			dsp56k.HI.CVR = data;
+
+			// Normally the host processor sets HC=1 to request the host command
+			//   exception from the DSP.
+			if (dsp56k.HI.CVR & 0x80)
+			{
+				// Setting HC (bit 0x80) causes HCP (Host Command Pending) to be set in the HSR register. The host
+				//   can write HC and HV in the same write cycle if desired. HC is cleared by DSP reset.
+				SET_hcpBIT();
+
+				// reset the pc to the proper address
+				logerror("RESET (%04x) sent\n", (dsp56k.HI.CVR & 0x1f) << 1);
+				PC = (dsp56k.HI.CVR & 0x1f) << 1;
+
+				// When the host command exception is taken by the DSP, the HC
+				//   bit is cleared by the HI hardware.
+				CLEAR_x_hcBIT();
+			}
+			break;
+
+		case 0x2: break;	// ISR - read only
+
+		case 0x3:			// IVR
+			// 68000 series communication
+			break;
+
+		case 0x4: break;	// Unused
+		case 0x5: break;	// Unused
+
+		case 0x6:			// TXH/RXH
+
+			// Data may be written into the Transmit Byte Registers when the
+			// Transmit Data Register Empty TXDE bit is set.
+			if (!x_txdeBIT)
+			{
+				dsp56k.HI.TXHRXH = data;
+			}
+
+			break;
+
+		case 0x7:			// TXL/RXL
+
+			// Data may be written into the Transmit Byte Registers when the
+			// Transmit Data Register Empty TXDE bit is set.
+			if (!x_txdeBIT)
+				dsp56k.HI.TXLRXL = data;
+
+			// writing the Transmit Low register TXL clears the TXDE bit
+			CLEAR_x_txdeBIT();
+
+
+			// The Transmit Byte Registers TXH:TXL are transferred as 16-bit data to the Host Receive
+			//   Data Register HRX when both TXDE bit and the Host Receive Data Full, HRDF, bit are
+			//   cleared.
+			if (!x_txdeBIT && !hrdfBIT)
+			{
+				HTXHRX = ( ((UINT16)dsp56k.HI.TXHRXH) << 8 ) | (UINT16)dsp56k.HI.TXLRXL ;
+
+				// !!! Hack !!! Move it straight to program memory...
+				dsp56k_program_ram[hack_memory_offset] = HTXHRX;
+				logerror("Wrote memoryOffset[%d] : %04x\n", hack_memory_offset, dsp56k_program_ram[hack_memory_offset]) ;
+				hack_memory_offset++;
+
+				// This transfer operation sets TXDE and HRDF.
+//              SET_x_txdeBIT();
+//              SET_hrdfBIT();
+			}
+			break;
+	}
+}
+
+static int memtest3_hack=0;
+
+UINT8 dsp56k_host_interface_read(UINT8 addr)
+{
+	UINT8 retVal = 0x00;
+
+	switch(addr)
+	{
+		case 0x00:			// ICR
+			retVal = dsp56k.HI.ICR;
+			break;
+
+		case 0x01:			// CVR
+			retVal = dsp56k.HI.CVR;
+			break;
+
+		case 0x02:			// ISR
+			retVal = dsp56k.HI.ISR;
+
+			/* We may need some *VERY* tight synchro at the end of the 3rd memory test in order to get this going right */
+			if ( (PC <= 0x125) && (PC >= 0x123) )
+			{
+				/* Maybe this isn't needed? */
+				if (!memtest3_hack)
+				{
+					cpu_boost_interleave(0, TIME_IN_USEC(100));
+					memtest3_hack++;
+				}
+			}
+			break;
+
+		case 0x03:			// IVR
+			retVal = dsp56k.HI.IVR;
+			break;
+
+		case 0x04: break;	// Unused
+		case 0x05: break;	// Unused
+
+		case 0x06:			// RXH/TXH
+			retVal = dsp56k.HI.TXHRXH;
+			break;
+
+		case 0x07:			// RXL/TXL
+			retVal = dsp56k.HI.TXLRXL;
+
+			// RXDF is cleared when the Receive Data Low (RXL) register is read by the host processor.
+			CLEAR_x_rxdfBIT();
+			SET_htdeBIT();			// !!! seems right ???
+			break;
+	}
+
+	return retVal;
+}
+
+/* HACK ! (maybe ;) */
+void dsp56k_reset_dma_offset(void)
+{
+	hack_memory_offset = 0;
+}
 
 /**************************************************************************
  * Generic set_info/get_info
@@ -639,6 +1241,12 @@ void dsp56k_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = dsp56k_dasm;		break;
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &dsp56k_icount;			break;
+ 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_DATA:
+ 			info->internal_map = construct_map_dsp56156_x_data_memory;							break;
+ 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM:
+ 			info->internal_map = construct_map_dsp56156_program_memory;							break;
+ 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_IO:
+ 			info->internal_map = 0;																break;
 
 
 		// --- the following bits of info are returned as NULL-terminated strings ---
@@ -651,29 +1259,29 @@ void dsp56k_get_info(UINT32 state, union cpuinfo *info)
 
 		case CPUINFO_STR_FLAGS:
 			sprintf(info->s = cpuintrf_temp_str(), "%s%s%s%s%s%s%s%s%s%s%s%s%s%s %s%s %s%s%s%s%s%s%s",
-				lfFLAG ? "L":".",
-				fvFLAG ? "F":".",
-				s1FLAG ? "S":".",
-				s0FLAG ? "S":".",
-				i1FLAG ? "I":".",
-				i0FLAG ? "I":".",
-				sFLAG ?  "S":".",
-				lFLAG ?  "L":".",
-				eFLAG ?  "E":".",
-				uFLAG ?  "U":".",
-				nFLAG ?  "N":".",
-				zFLAG ?  "Z":".",
-				vFLAG ?  "V":".",
-				cFLAG ?  "C":".",
-				ufFLAG ? "U":".",
-				seFLAG ? "S":".",
-				cdFLAG ? "C":".",
-				sdFLAG ? "S":".",
-				rFLAG ?  "R":".",
-				saFLAG ? "S":".",
-				mcFLAG ? "M":".",
-				mbFLAG ? "M":".",
-				maFLAG ? "M":".");
+				lfBIT ? "L":".",
+				fvBIT ? "F":".",
+				s1BIT ? "S":".",
+				s0BIT ? "S":".",
+				i1BIT ? "I":".",
+				i0BIT ? "I":".",
+				sBIT ?  "S":".",
+				lBIT ?  "L":".",
+				eBIT ?  "E":".",
+				uBIT ?  "U":".",
+				nBIT ?  "N":".",
+				zBIT ?  "Z":".",
+				vBIT ?  "V":".",
+				cBIT ?  "C":".",
+				ufBIT ? "U":".",
+				seBIT ? "S":".",
+				cdBIT ? "C":".",
+				sdBIT ? "S":".",
+				rBIT ?  "R":".",
+				saBIT ? "S":".",
+				mcBIT ? "M":".",
+				mbBIT ? "M":".",
+				maBIT ? "M":".");
 
             break;
 

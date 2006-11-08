@@ -67,6 +67,13 @@ enum
 
 extern void dsp56k_get_info(UINT32 state, union cpuinfo *info) ;
 
+void  dsp56k_host_interface_write(UINT8 addr, UINT8 data);
+UINT8 dsp56k_host_interface_read(UINT8 addr);
+
+void dsp56k_reset_dma_offset(void);
+
+UINT16 dsp56k_get_peripheral_memory(UINT16 addr);
+
 
 // For Debugger and opcodes
 enum parallelMoveType { PARALLEL_TYPE_XMDM, PARALLEL_TYPE_XMDM_SPECIAL, PARALLEL_TYPE_NODM, PARALLEL_TYPE_ARU, PARALLEL_TYPE_RRDM } ;

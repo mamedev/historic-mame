@@ -78,6 +78,12 @@ static void ppcdrc_reset(drc_core *drc)
 
 	ppc.generate_isi_exception = drc->cache_top;
 	append_generate_exception(drc, EXCEPTION_ISI);
+
+	if (!ppc.is603 && !ppc.is602)
+	{
+		ppc.generate_fit_exception = drc->cache_top;
+		append_generate_exception(drc, EXCEPTION_FIXED_INTERVAL_TIMER);
+	}
 }
 
 static UINT32 *ppcdrc_getopptr(UINT32 address)
@@ -159,6 +165,19 @@ static void update_counters(drc_core *drc)
 		_jcc_short_link(COND_NZ, &link1);
 		_or_m32abs_imm(&ppc.exception_pending, 0x2);
 		_resolve_link(&link1);
+	}
+
+	/* FIT */
+	if (!ppc.is603 && !ppc.is602)
+	{
+		link_info link2;
+		_cmp_r32_m32abs(REG_EBP, &ppc_fit_trigger_cycle);
+		_jcc_short_link(COND_NZ, &link1);
+		_cmp_r32_m32abs(REG_EBP, &ppc.fit_int_enable);
+		_jcc_short_link(COND_Z, &link2);
+		_or_m32abs_imm(&ppc.exception_pending, 0x4);
+		_resolve_link(&link1);
+		_resolve_link(&link2);
 	}
 }
 
@@ -250,7 +269,9 @@ static UINT32 recompile_instruction(drc_core *drc, UINT32 pc, UINT32 *opptr)
 
 static const UINT32 exception_vector[32] =
 {
-	0x0000, 0x0500, 0x0900, 0x0700, 0x0c00, 0x1400, 0x0300, 0x0400
+	0x0000, 0x0500, 0x0900, 0x0700, 0x0c00, 0x1400, 0x0300, 0x0400,
+	0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0000,
+	0x0000, 0x0000, 0x0000, 0x0000, 0x1000, 0x1010, 0x1020
 };
 
 static void append_generate_exception(drc_core *drc, UINT8 exception)
@@ -315,6 +336,10 @@ static void append_generate_exception(drc_core *drc, UINT8 exception)
 	{
 		_and_m32abs_imm(&ppc.exception_pending, ~0x2);		// clear pending decrementer exception
 	}
+	if (exception == EXCEPTION_FIXED_INTERVAL_TIMER)
+	{
+		_and_m32abs_imm(&ppc.exception_pending, ~0x4);		// clear pending fit exception
+	}
 
 	drc_append_dispatcher(drc);
 }
@@ -353,7 +378,7 @@ static void append_check_interrupts(drc_core *drc, int inline_generate)
 	}
 	else
 	{
-		link_info link1, link2, link3, link4;
+		link_info link1, link2, link3, link4, link5, link6;
 		_test_m32abs_imm(&ppc.msr, MSR_EE);		/* no interrupt if external interrupts are not enabled */
 		_jcc_short_link(COND_Z, &link1);		/* ZF = 1 if bit == 0 */
 
@@ -375,10 +400,29 @@ static void append_check_interrupts(drc_core *drc, int inline_generate)
 		_mov_r32_m32abs(REG_EAX, &ppc.generate_interrupt_exception);
 		_jmp_r32(REG_EAX);
 
+		/* check if it's FIT exception */
+		_resolve_link(&link3);
+		_test_r32_imm(REG_EAX, 0x4);
+		_jcc_short_link(COND_Z, &link5);
+
+		// check if FIT interrupts are enabled
+		_test_m32abs_imm(&ppc.fit_int_enable, 0x1);
+		_jcc_short_link(COND_Z, &link6);
+
+		// calculate the next trigger cycle for FIT
+		_mov_r32_m32abs(REG_EAX, &ppc_fit_trigger_cycle);
+		_sub_r32_m32abs(REG_EAX, &ppc.fit_bit);
+		_mov_m32abs_r32(&ppc_fit_trigger_cycle, REG_EAX);
+
+		_mov_m32abs_r32(&SRR0, REG_EDI);		/* save return address */
+		_mov_r32_m32abs(REG_EAX, &ppc.generate_fit_exception);
+		_jmp_r32(REG_EAX);
+
 		_resolve_link(&link1);
 		_resolve_link(&link2);
-		_resolve_link(&link3);
 		_resolve_link(&link4);
+		_resolve_link(&link5);
+		_resolve_link(&link6);
 	}
 }
 

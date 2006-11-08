@@ -9,8 +9,6 @@
         * Maximum Force (2 Sets)
         * Area 51/Maximum Force Duo (2 Sets)
         * Vicious Circle
-
-    In the future:
         * Fishin' Frenzy
         * Freeze
 
@@ -105,6 +103,8 @@
     ------------------------------------------------------------
     000000-3FFFFF   R/W   xxxxxxxx xxxxxxxx   DRAM 0
     400000-7FFFFF   R/W   xxxxxxxx xxxxxxxx   DRAM 1
+    800000-BFFFFF   R     xxxxxxxx xxxxxxxx   Graphic ROM bank
+    C00000-DFFFFF   R     xxxxxxxx xxxxxxxx   Sound ROM bank
     F00000-F000FF   R/W   xxxxxxxx xxxxxxxx   Tom Internal Registers
     F00400-F005FF   R/W   xxxxxxxx xxxxxxxx   CLUT - color lookup table A
     F00600-F007FF   R/W   xxxxxxxx xxxxxxxx   CLUT - color lookup table B
@@ -182,6 +182,25 @@ static MACHINE_RESET( cojag )
 	if (!cojag_is_r3000)
 		memcpy(jaguar_shared_ram, rom_base, 0x10);
 
+	/* configure banks for gfx/sound ROMs */
+	if (memory_region(REGION_USER2))
+	{
+		/* graphics banks */
+		if (cojag_is_r3000)
+		{
+			memory_configure_bank(1, 0, 2, memory_region(REGION_USER2) + 0x800000, 0x400000);
+			memory_set_bank(1, 0);
+		}
+		memory_configure_bank(8, 0, 2, memory_region(REGION_USER2) + 0x800000, 0x400000);
+		memory_set_bank(8, 0);
+
+		/* sound banks */
+		memory_configure_bank(2, 0, 8, memory_region(REGION_USER2) + 0x000000, 0x200000);
+		memory_configure_bank(9, 0, 8, memory_region(REGION_USER2) + 0x000000, 0x200000);
+		memory_set_bank(2, 0);
+		memory_set_bank(9, 0);
+	}
+
 	/* clear any spinuntil stuff */
 	jaguar_gpu_resume();
 	jaguar_dsp_resume();
@@ -211,6 +230,7 @@ static READ32_HANDLER( misc_control_r )
         D6    = audio must & reset (high)
         D5    = volume control data (invert on write)
         D4    = volume control clock
+        D3-D1 = audio bank 2-0
         D0    = shared memory select (0=XBUS) */
 
 	return misc_control_data ^ 0x20;
@@ -225,6 +245,7 @@ static WRITE32_HANDLER( misc_control_w )
         D6    = audio must & reset (high)
         D5    = volume control data (invert on write)
         D4    = volume control clock
+        D3-D1 = audio bank 2-0
         D0    = shared memory select (0=XBUS) */
 
 	/* handle resetting the DSPs */
@@ -237,6 +258,13 @@ static WRITE32_HANDLER( misc_control_w )
 		/* halt the CPUs */
 		jaguargpu_ctrl_w(1, G_CTRL, 0, 0);
 		jaguardsp_ctrl_w(2, D_CTRL, 0, 0);
+	}
+
+	/* adjust banking */
+	if (memory_region(REGION_USER2))
+	{
+		memory_set_bank(2, (data >> 1) & 7);
+		memory_set_bank(9, (data >> 1) & 7);
 	}
 
 	COMBINE_DATA(&misc_control_data);
@@ -317,6 +345,14 @@ static READ32_HANDLER( status_r )
 static WRITE32_HANDLER( latch_w )
 {
 	logerror("%08X:latch_w(%X)\n", activecpu_get_previouspc(), data);
+
+	/* adjust banking */
+	if (memory_region(REGION_USER2))
+	{
+		if (cojag_is_r3000)
+			memory_set_bank(1, data & 1);
+		memory_set_bank(8, data & 1);
+	}
 }
 
 
@@ -489,6 +525,36 @@ static READ32_HANDLER( cojagr3k_main_speedup_r )
 
 /*************************************
  *
+ *  Additional main CPU speedup
+ *  (Freeze only)
+ *
+ *************************************/
+
+/*
+    Explanation:
+
+    The main CPU hands data off to the GPU to process. But rather than running
+    in parallel, the main CPU just sits and waits for the result. This speedup
+    makes sure we don't waste time emulating that spin loop.
+*/
+
+#if ENABLE_SPEEDUP_HACKS
+
+static UINT32 *main_gpu_wait;
+
+static READ32_HANDLER( main_gpu_wait_r )
+{
+	if (gpu_command_pending)
+		cpu_spinuntil_int();
+	return *main_gpu_wait;
+}
+
+#endif
+
+
+
+/*************************************
+ *
  *  Main CPU speedup (Area 51)
  *
  *************************************/
@@ -574,6 +640,8 @@ static WRITE32_HANDLER( area51mx_main_speedup_w )
 
 static ADDRESS_MAP_START( r3000_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x04000000, 0x047fffff) AM_RAM AM_BASE(&jaguar_shared_ram) AM_SHARE(1)
+	AM_RANGE(0x04800000, 0x04bfffff) AM_ROMBANK(1)
+	AM_RANGE(0x04c00000, 0x04dfffff) AM_ROMBANK(2)
 	AM_RANGE(0x04e00000, 0x04e003ff) AM_READWRITE(ide_controller32_0_r, ide_controller32_0_w)
 	AM_RANGE(0x04f00000, 0x04f003ff) AM_READWRITE(jaguar_tom_regs32_r, jaguar_tom_regs32_w)
 	AM_RANGE(0x04f00400, 0x04f007ff) AM_RAM AM_BASE(&jaguar_gpu_clut) AM_SHARE(2)
@@ -607,7 +675,7 @@ static ADDRESS_MAP_START( m68020_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0xa30000, 0xa30003) AM_WRITE(watchdog_reset32_w)
 	AM_RANGE(0xa40000, 0xa40003) AM_WRITE(eeprom_enable_w)
 	AM_RANGE(0xb70000, 0xb70003) AM_READWRITE(misc_control_r, misc_control_w)
-	AM_RANGE(0xc00000, 0xdfffff) AM_READ(MRA32_BANK2)
+	AM_RANGE(0xc00000, 0xdfffff) AM_ROMBANK(2)
 	AM_RANGE(0xe00000, 0xe003ff) AM_READWRITE(ide_controller32_0_r, ide_controller32_0_w)
 	AM_RANGE(0xf00000, 0xf003ff) AM_READWRITE(jaguar_tom_regs32_r, jaguar_tom_regs32_w)
 	AM_RANGE(0xf00400, 0xf007ff) AM_RAM AM_BASE(&jaguar_gpu_clut) AM_SHARE(2)
@@ -634,6 +702,8 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( gpu_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x000000, 0x7fffff) AM_RAM AM_SHARE(1)
+	AM_RANGE(0x800000, 0xbfffff) AM_ROMBANK(8)
+	AM_RANGE(0xc00000, 0xdfffff) AM_ROMBANK(9)
 	AM_RANGE(0xe00000, 0xe003ff) AM_READWRITE(ide_controller32_0_r, ide_controller32_0_w)
 	AM_RANGE(0xf00000, 0xf003ff) AM_READWRITE(jaguar_tom_regs32_r, jaguar_tom_regs32_w)
 	AM_RANGE(0xf00400, 0xf007ff) AM_RAM AM_SHARE(2)
@@ -653,6 +723,8 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( dsp_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x000000, 0x7fffff) AM_RAM AM_SHARE(1)
+	AM_RANGE(0x800000, 0xbfffff) AM_ROMBANK(8)
+	AM_RANGE(0xc00000, 0xdfffff) AM_ROMBANK(9)
 	AM_RANGE(0xf10000, 0xf103ff) AM_READWRITE(jaguar_jerry_regs32_r, jaguar_jerry_regs32_w)
 	AM_RANGE(0xf1a100, 0xf1a13f) AM_READWRITE(dspctrl_r, dspctrl_w)
 	AM_RANGE(0xf1a140, 0xf1a17f) AM_READWRITE(jaguar_serial_r, jaguar_serial_w)
@@ -708,6 +780,88 @@ INPUT_PORTS_START( area51 )
 	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
 	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
 	PORT_BIT( 0xfff0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( freezeat )
+	PORT_START
+	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2)
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(2)
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_PLAYER(2)
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_PLAYER(2)
+
+	PORT_START
+	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(1)
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(1)
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_PLAYER(1)
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_PLAYER(1)
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_COIN4 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_SPECIAL )	// volume down
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_SPECIAL )	// volume up
+	PORT_SERVICE( 0x0040, IP_ACTIVE_LOW )			// s-test
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_SPECIAL )	// vsyncneq
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START
+	PORT_BIT( 0x000f, IP_ACTIVE_HIGH, IPT_SPECIAL )	// coin returns
+	PORT_BIT( 0x00f0, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( fishfren )
+	PORT_START
+	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(2)
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(2)
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_PLAYER(2)
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_PLAYER(2)
+
+	PORT_START
+	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_PLAYER(1)
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_PLAYER(1)
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_PLAYER(1)
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_PLAYER(1)
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_COIN4 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_SPECIAL )	// volume down
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_SPECIAL )	// volume up
+	PORT_SERVICE( 0x0040, IP_ACTIVE_LOW )			// s-test
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_SPECIAL )	// vsyncneq
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START
+	PORT_BIT( 0x000f, IP_ACTIVE_HIGH, IPT_SPECIAL )	// coin returns
+	PORT_BIT( 0x00f0, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
 
@@ -942,6 +1096,88 @@ ROM_START( maxf_102 ) /* R3000 based, labeled as "Maximum Force 2-27-97 v1.02" *
 ROM_END
 
 
+ROM_START( fishfren )
+	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 )	/* 2MB for R3000 code */
+	ROM_LOAD32_BYTE( "hh", 0x00000, 0x80000, CRC(2ef79767) SHA1(abcea584f2cbd71b05f9d7e61f40ca9da6799215) )
+	ROM_LOAD32_BYTE( "hl", 0x00001, 0x80000, CRC(7eefd4a2) SHA1(181be04836704098082fd78cacc68ffa70e77892) )
+	ROM_LOAD32_BYTE( "lh", 0x00002, 0x80000, CRC(bbe9ed15) SHA1(889af29afe6d984b39105aa238400392a5dfb2c5) )
+	ROM_LOAD32_BYTE( "ll", 0x00003, 0x80000, CRC(d70d0f2c) SHA1(2689cbe56ae3d491348b241528b0fe345fa8484c) )
+
+	ROM_REGION32_BE( 0x1000000, REGION_USER2, 0 )	/* 16MB for 64-bit ROM data */
+    ROMX_LOAD( "l63-56", 0x000000, 0x100000, CRC(42764ea5) SHA1(805245f01006bd974fbac56f688cfcf137ddc914), ROM_SKIP(7) )
+	ROMX_LOAD( "l55-48", 0x000001, 0x100000, CRC(0c7592bb) SHA1(d5bd6b872abad58947842205f9eac46fd065e88f), ROM_SKIP(7) )
+	ROMX_LOAD( "l47-40", 0x000002, 0x100000, CRC(6d7dcdb1) SHA1(914dae3b9df5c861f794b683571c5fb0c2c3c3fd), ROM_SKIP(7) )
+	ROMX_LOAD( "l39-32", 0x000003, 0x100000, CRC(ef3b8d98) SHA1(858c3342e9693bfe887b91dde1116a1656a1a105), ROM_SKIP(7) )
+	ROMX_LOAD( "l31-24", 0x000004, 0x100000, CRC(132d628e) SHA1(3ff9fa86092eb01f21ca3ccf1ee1e3a583cbdecb), ROM_SKIP(7) )
+	ROMX_LOAD( "l23-16", 0x000005, 0x100000, CRC(b841f039) SHA1(79f661aee009aef2f5ad4122ae3e0ac94097a427), ROM_SKIP(7) )
+	ROMX_LOAD( "l15-08", 0x000006, 0x100000, CRC(0800214e) SHA1(5372f2c3470619a4967958c76055486f76b5f150), ROM_SKIP(7) )
+	ROMX_LOAD( "l07-00", 0x000007, 0x100000, CRC(f83b2e78) SHA1(83ee9d2bfba83e04fb794270926bd3e558c9aaa4), ROM_SKIP(7) )
+	ROMX_LOAD( "h63-56", 0x800000, 0x080000, CRC(67740765) SHA1(8b22413d25e0dbfe2227d1a8a023961a4c13cb76), ROM_SKIP(7) )
+	ROMX_LOAD( "h55-48", 0x800001, 0x080000, CRC(ffed0091) SHA1(6c8104acd7e6d95a111f9c7a4d3b6984293d72c4), ROM_SKIP(7) )
+	ROMX_LOAD( "h47-40", 0x800002, 0x080000, CRC(6f448f72) SHA1(3a298b9851e4ba7aa611aa6c2b0dcf06f4301463), ROM_SKIP(7) )
+	ROMX_LOAD( "h39-32", 0x800003, 0x080000, CRC(25a5bd67) SHA1(79f29bd36afb4574b9c923eee293964284713540), ROM_SKIP(7) )
+	ROMX_LOAD( "h31-24", 0x800004, 0x080000, CRC(e7088cc0) SHA1(4cb184de748c5633e669a4675e6db9920d34811e), ROM_SKIP(7) )
+	ROMX_LOAD( "h23-16", 0x800005, 0x080000, CRC(ab477a76) SHA1(ae9aa97dbc758cd741710fe08c6ea94a0a318451), ROM_SKIP(7) )
+	ROMX_LOAD( "h15-08", 0x800006, 0x080000, CRC(25a423f1) SHA1(7530cf2e28e0755bfcbd70789ef5cbbfb3d94f9f), ROM_SKIP(7) )
+	ROMX_LOAD( "h07-00", 0x800007, 0x080000, CRC(0f5f4cc6) SHA1(caa2b514fb1f2a815e63f7b8c6b79ce2dfa308c4), ROM_SKIP(7) )
+	ROM_COPY( REGION_USER2, 0x800000, 0xc00000, 0x400000 )
+ROM_END
+
+
+ROM_START( freezeat )
+	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 )	/* 2MB for R3000 code */
+	ROM_LOAD32_BYTE( "hh", 0x00000, 0x80000, CRC(82c6e97c) SHA1(9991b0f71218b1486cf52ebcc39ed2fa7fee3524) )
+	ROM_LOAD32_BYTE( "hl", 0x00001, 0x80000, CRC(5fb3b6b4) SHA1(4521bab411f701b0f6762063d63130ed7348da4a) )
+	ROM_LOAD32_BYTE( "lh", 0x00002, 0x80000, CRC(982a1708) SHA1(4e2b18a033d4b3915509c1052ee4ef5737d21e14) )
+	ROM_LOAD32_BYTE( "ll", 0x00003, 0x80000, CRC(80b96765) SHA1(e326eeee398d7f54af9eb7d065f39584c9563e56) )
+
+	ROM_REGION32_BE( 0x1000000, REGION_USER2, 0 )	/* 16MB for 64-bit ROM data */
+	ROMX_LOAD( "l63-56", 0x000000, 0x100000, CRC(b61061c5) SHA1(aeb409aa5073232d80ed81b27946e753290234f4), ROM_SKIP(7) )
+	ROMX_LOAD( "l55-48", 0x000001, 0x100000, CRC(c85acf42) SHA1(c3365caeb126a83a7e7afcda25f05849ceb5c98b), ROM_SKIP(7) )
+	ROMX_LOAD( "l47-40", 0x000002, 0x100000, CRC(67f78f59) SHA1(40b256a8939fad365c7e896cff4a959fcc70a477), ROM_SKIP(7) )
+	ROMX_LOAD( "l39-32", 0x000003, 0x100000, CRC(6be0508a) SHA1(20f617278ce1666348822d80686cecd8d9b1bc78), ROM_SKIP(7) )
+	ROMX_LOAD( "l31-24", 0x000004, 0x100000, CRC(905606e0) SHA1(866cd98ea2399fed96f76b16dce751e2c7cfdc98), ROM_SKIP(7) )
+	ROMX_LOAD( "l23-16", 0x000005, 0x100000, CRC(cdeef6fa) SHA1(1b4d58951b662040540e7d51f88c1b6f282562ee), ROM_SKIP(7) )
+	ROMX_LOAD( "l15-08", 0x000006, 0x100000, CRC(ad81f204) SHA1(58584a6c8c6cfb6366eaa10aba8a226e419f5ce9), ROM_SKIP(7) )
+	ROMX_LOAD( "l07-00", 0x000007, 0x100000, CRC(10ce7254) SHA1(2a88d45dbe78ea8358ecd8522b38d775a2fdb34a), ROM_SKIP(7) )
+	ROMX_LOAD( "h63-56", 0x800000, 0x100000, CRC(4a03f971) SHA1(1ae5ad9a6cd2d612c6519193134dcd5a3f6a5049), ROM_SKIP(7) )
+	ROMX_LOAD( "h55-48", 0x800001, 0x100000, CRC(6bc00de0) SHA1(b1b180c33906826703452875ce250b28352e2797), ROM_SKIP(7) )
+	ROMX_LOAD( "h47-40", 0x800002, 0x100000, CRC(41ccc677) SHA1(76ee042632cfdcc99a9bfb75f2a4ef04e08f101b), ROM_SKIP(7) )
+	ROMX_LOAD( "h39-32", 0x800003, 0x100000, CRC(59a8fa03) SHA1(19e91a4791e0d2dbd8578cee0fa07c491204b0dc), ROM_SKIP(7) )
+	ROMX_LOAD( "h31-24", 0x800004, 0x100000, CRC(c3bb50a1) SHA1(b868ac0812d1c13feae82d293bb323a93a72e1d3), ROM_SKIP(7) )
+	ROMX_LOAD( "h23-16", 0x800005, 0x100000, CRC(237cfc93) SHA1(15f61dc621c5328cc7752c76b2b1dae265a5e886), ROM_SKIP(7) )
+	ROMX_LOAD( "h15-08", 0x800006, 0x100000, CRC(65bec279) SHA1(5e99972279ee9ad32e67866fc63799579a10f2dd), ROM_SKIP(7) )
+	ROMX_LOAD( "h07-00", 0x800007, 0x100000, CRC(13fa20ad) SHA1(0a04fdea025109c0e604ef2a6d58cfb3adce9bd1), ROM_SKIP(7) )
+ROM_END
+
+
+ROM_START( freezea2 )
+    ROM_REGION32_BE( 0x200000, REGION_USER1, 0 )	/* 2MB for R3000 code */
+	ROM_LOAD32_BYTE( "prog0.rom", 0x00000, 0x80000, CRC(62096e57) SHA1(0f00e25ff6d589dd1e2fc8fbc250a0506b7d9c87) )
+	ROM_LOAD32_BYTE( "prog1.rom", 0x00001, 0x80000, CRC(59808ef7) SHA1(b49e60c08378e65eb59ab8339aca848e4d087256) )
+	ROM_LOAD32_BYTE( "prog2.rom", 0x00002, 0x80000, CRC(7dfb353f) SHA1(f94f9d209ea540aedb3b049c4797daf76cd08773) )
+	ROM_LOAD32_BYTE( "prog3.rom", 0x00003, 0x80000, CRC(4a39075a) SHA1(f84563dfccf80d6da162de99301fc31a48de6f71) )
+
+	ROM_REGION32_BE( 0x1000000, REGION_USER2, 0 )	/* 16MB for 64-bit ROM data */
+	ROMX_LOAD( "graphic0.rom", 0x000000, 0x100000, CRC(404a10c3) SHA1(8e353ac7608bd54f0fea610c85166ad14f2faadb), ROM_SKIP(7) )
+	ROMX_LOAD( "graphic1.rom", 0x000001, 0x100000, CRC(79c53738) SHA1(a077150b52f55a7518cfa68a7119f5a7832a1d79), ROM_SKIP(7) )
+	ROMX_LOAD( "graphic2.rom", 0x000002, 0x100000, CRC(43f86d26) SHA1(b31d36b11052514b5bcd5bf8e400457ca572c306), ROM_SKIP(7) )
+	ROMX_LOAD( "graphic3.rom", 0x000003, 0x100000, CRC(2ad2dd4d) SHA1(7df4026e18e189e1ad582946742ac5abefcc9b81), ROM_SKIP(7) )
+	ROMX_LOAD( "graphic4.rom", 0x000004, 0x100000, CRC(7a24ff98) SHA1(db9e0e8bb417f187267a6e4fc1e66ff060ee4096), ROM_SKIP(7) )
+	ROMX_LOAD( "graphic5.rom", 0x000005, 0x100000, CRC(ea163c93) SHA1(d07ed26191d36497c56b15774625a49ecb958386), ROM_SKIP(7) )
+	ROMX_LOAD( "graphic6.rom", 0x000006, 0x100000, CRC(d364534f) SHA1(153908bb8929a898945f768f8bc3d853c6aeaceb), ROM_SKIP(7) )
+	ROMX_LOAD( "graphic7.rom", 0x000007, 0x100000, CRC(56d87371) SHA1(ade4d6699bcdda1f25979b03c7f27d9c61f31e0d), ROM_SKIP(7) )
+	ROMX_LOAD( "audio0.rom", 0x800000, 0x100000, BAD_DUMP CRC(5bd84344) SHA1(fdc984d6aab719649876663591f64d397022667e), ROM_SKIP(7) )
+	ROMX_LOAD( "audio1.rom", 0x800001, 0x100000, CRC(14b559a1) SHA1(4e03a77ab9c63991309de1420cc9a84b957631f7), ROM_SKIP(7) )
+	ROMX_LOAD( "audio2.rom", 0x800002, 0x100000, CRC(e78d9302) SHA1(f8b5ed992c433d63677edbeafd3e465b1d42b455), ROM_SKIP(7) )
+	ROMX_LOAD( "audio3.rom", 0x800003, 0x100000, CRC(9b50374c) SHA1(d8af3c9d8e0459e24b974cdf2e75c7c39582912f), ROM_SKIP(7) )
+	ROMX_LOAD( "audio4.rom", 0x800004, 0x100000, CRC(ab095d45) SHA1(8eaf1d8f80e206fbd5179cab27eb8335d93bfe9f), ROM_SKIP(7) )
+	ROMX_LOAD( "audio5.rom", 0x800005, 0x100000, CRC(df526e4d) SHA1(85dca8f54e72f3bf92d87b80e7d569519dec07c4), ROM_SKIP(7) )
+	ROMX_LOAD( "audio6.rom", 0x800006, 0x100000, CRC(e82a86b0) SHA1(fbc65737b52d19e7dc1de9426c372ac3de86e6b4), ROM_SKIP(7) )
+	ROMX_LOAD( "audio7.rom", 0x800007, 0x100000, CRC(8e586be3) SHA1(1b0615bd2fe180611225797b5be5898365ab166e), ROM_SKIP(7) )
+ROM_END
+
+
 ROM_START( area51mx )	/* 68020 based, Labeled as "68020 MAX/A51 KIT 2.0" Date: Apr 22, 1998 */
 	ROM_REGION32_BE( 0x200000, REGION_USER1, 0 ) /* 2MB for 68020 code */
 	ROM_LOAD32_BYTE( "area51mx.3h", 0x00000, 0x80000, CRC(47cbf30b) SHA1(23377bcc65c0fc330d5bc7e76e233bae043ac364) )
@@ -1074,6 +1310,31 @@ static DRIVER_INIT( a51mxr3k )
 }
 
 
+static DRIVER_INIT( fishfren )
+{
+	cojag_common_init(0, 0x578, 0x554);
+
+#if ENABLE_SPEEDUP_HACKS
+	/* install speedup for main CPU */
+	main_speedup_max_cycles = 200;
+	main_speedup = memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x10021b60, 0x10021b63, 0, 0, cojagr3k_main_speedup_r);
+#endif
+}
+
+
+static DRIVER_INIT( freezeat )
+{
+	cojag_common_init(0, 0x0bc, 0x09c);
+
+#if ENABLE_SPEEDUP_HACKS
+	/* install speedup for main CPU */
+	main_speedup_max_cycles = 200;
+	main_speedup = memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1001a9f4, 0x1001a9f7, 0, 0, cojagr3k_main_speedup_r);
+	main_gpu_wait = memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0400d900, 0x0400d903, 0, 0, main_gpu_wait_r);
+#endif
+}
+
+
 static DRIVER_INIT( vcircle )
 {
 	cojag_common_init(0, 0x5c0, 0x5a0);
@@ -1096,6 +1357,9 @@ static DRIVER_INIT( vcircle )
 GAME( 1996, area51,   0,        r3knarrow, area51,   area51,   ROT0, "Atari Games", "Area 51 (R3000)", 0 )
 GAME( 1995, area51t,  area51,   cojag68k,  area51,   area51a,  ROT0, "Time Warner", "Area 51 (Time Warner License)", 0 )
 GAME( 1995, area51a,  area51,   cojag68k,  area51,   area51a,  ROT0, "Atari Games", "Area 51 (Atari Games License)", 0 )
+GAME( 1995, fishfren, 0,        cojagr3k,  fishfren, fishfren, ROT0, "Time Warner Interactive", "Fishin' Frenzy (prototype)", 0 )
+GAME( 1996, freezeat, 0,        cojagr3k,  freezeat, freezeat, ROT0, "Atari Games", "Freeze (Atari) (prototype)", 0 )
+GAME( 1996, freezea2, freezeat, cojagr3k,  freezeat, freezeat, ROT0, "Atari Games", "Freeze (Atari) (prototype, set 2)", 0 )
 GAME( 1996, maxforce, 0,        r3knarrow, area51,   maxforce, ROT0, "Atari Games", "Maximum Force v1.05", 0 )
 GAME( 1996, maxf_102, maxforce, r3knarrow, area51,   maxforce, ROT0, "Atari Games", "Maximum Force v1.02", 0 )
 GAME( 1998, area51mx, 0,        cojag68k,  area51,   area51mx, ROT0, "Atari Games", "Area 51 / Maximum Force Duo v2.0", 0 )

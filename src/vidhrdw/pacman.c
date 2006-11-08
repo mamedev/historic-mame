@@ -184,6 +184,9 @@ VIDEO_START( pacman )
 	if( !bg_tilemap )
 		return 1;
 
+	tilemap_set_scrolldx( bg_tilemap, 0, 384 - 288 );
+	tilemap_set_scrolldy( bg_tilemap, 0, 264 - 224 );
+
 	return 0;
 }
 

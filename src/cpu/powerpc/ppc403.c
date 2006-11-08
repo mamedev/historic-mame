@@ -150,13 +150,31 @@ static void ppc403_reset(void)
 
 static int ppc403_execute(int cycles)
 {
+	UINT32 fit_trigger_cycle;
 	ppc_icount = cycles;
 	ppc_tb_base_icount = cycles;
 	change_pc(ppc.npc);
 
+	fit_trigger_cycle = 0x7fffffff;
+
+	if (ppc.fit_int_enable)
+	{
+		UINT32 tb = (UINT32)ppc.tb;
+		UINT32 fit_cycles = 0;
+
+		if (ppc.tb & ppc.fit_bit)
+		{
+			fit_cycles += ppc.fit_bit;
+			tb += fit_cycles;
+		}
+
+		fit_cycles += ppc.fit_bit - (tb & (ppc.fit_bit-1));
+
+		fit_trigger_cycle = ppc_icount - fit_cycles;
+	}
+
 	while( ppc_icount > 0 )
 	{
-//      UINT32 tblo = (UINT32)(ppc.tb);
 		UINT32 opcode;
 
 		CALL_MAME_DEBUG;
@@ -191,13 +209,20 @@ static int ppc403_execute(int cycles)
 			}
 		}
 
-#if 0
 		/* Fixed Interval Timer */
-		if (((UINT32)(ppc.tb) & ppc.fit_bit) && (tblo & ppc.fit_bit) == 0) {
-			if (ppc.fit_int_enable) {
-				ppc.interrupt_pending |= 0x4;
+		if (fit_trigger_cycle != 0x7fffffff)
+		{
+			if (ppc_icount == fit_trigger_cycle)
+			{
+				if (ppc.fit_int_enable)
+				{
+					fit_trigger_cycle -= ppc.fit_bit;
+					ppc.interrupt_pending |= 0x4;
+				}
 			}
 		}
+
+#if 0
 		/* Watchdog Timer */
 		if (((UINT32)(ppc.tb) & ppc.wdt_bit) && (tblo & ppc.wdt_bit) == 0) {
 			switch((ppc.tsr >> 28) & 0x3)
@@ -315,6 +340,7 @@ void ppc403_exception(int exception)
 				change_pc(ppc.npc);
 
 				ppc.tsr |= 0x08000000;		// PIT interrupt
+				ppc.interrupt_pending &= ~0x2;
 			}
 			break;
 		}
@@ -336,6 +362,7 @@ void ppc403_exception(int exception)
 
 				ppc.npc = EVPR | 0x1010;
 				change_pc(ppc.npc);
+				ppc.interrupt_pending &= ~0x4;
 			}
 			break;
 		}
@@ -616,8 +643,16 @@ void ppc403_spu_w(UINT32 a, UINT8 d)
 
 						for (i=0; i < length; i++)
 						{
-							//program_write_byte_32be(ppc.dma[ch].da++, spu_rx_dma_ptr[i]);
+							program_write_byte_32be(ppc.dma[ch].da++, spu_rx_dma_ptr[i]);
 						}
+					}
+
+					ppc.dmasr |= (1 << (27 - ch));
+
+					/* generate interrupts */
+					if( ppc.dma[ch].cr & DMA_CIE )
+					{
+						ppc403_dma_set_irq_line( ch, PULSE_LINE );
 					}
 
 					/* set receive buffer full */
@@ -648,7 +683,7 @@ void ppc403_spu_w(UINT32 a, UINT8 d)
 			fatalerror("ppc: spu_w: %02X, %02X", a & 0xf, d);
 			break;
 	}
-	mame_printf_debug("spu_w: %02X, %02X at %08X\n", a & 0xf, d, ppc.pc);
+	//mame_printf_debug("spu_w: %02X, %02X at %08X\n", a & 0xf, d, ppc.pc);
 }
 
 void ppc403_spu_rx(UINT8 data)

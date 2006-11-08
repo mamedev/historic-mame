@@ -149,6 +149,7 @@ struct _running_machine
 	/* game-related information */
 	const game_driver *		gamedrv;			/* points to the definition of the game machine */
 	const machine_config *	drv;				/* points to the constructed machine_config */
+	const char *			basename;			/* basename used for game-related paths */
 
 	/* video-related information */
 	gfx_element *			gfx[MAX_GFX_ELEMENTS];/* array of pointers to graphic sets (chars, sprites) */

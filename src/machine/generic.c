@@ -267,7 +267,7 @@ mame_file *nvram_fopen(running_machine *machine, UINT32 openflags)
 	mame_file *file;
 	char *fname;
 
-	fname = assemble_2_strings(machine->gamedrv->name, ".nv");
+	fname = assemble_2_strings(machine->basename, ".nv");
 	filerr = mame_fopen(SEARCHPATH_NVRAM, fname, openflags, &file);
 	free(fname);
 
@@ -395,7 +395,7 @@ int memcard_create(int index, int overwrite)
 	memcard_name(index, name);
 
 	/* if we can't overwrite, fail if the file already exists */
-	fname = assemble_3_strings(Machine->gamedrv->name, PATH_SEPARATOR, name);
+	fname = assemble_3_strings(Machine->basename, PATH_SEPARATOR, name);
 	if (!overwrite)
 	{
 		filerr = mame_fopen(SEARCHPATH_MEMCARD, fname, OPEN_FLAG_READ, &file);
@@ -442,7 +442,7 @@ int memcard_insert(int index)
 
 	/* create a name */
 	memcard_name(index, name);
-	fname = assemble_3_strings(Machine->gamedrv->name, PATH_SEPARATOR, name);
+	fname = assemble_3_strings(Machine->basename, PATH_SEPARATOR, name);
 
 	/* open the file; if we can't, it's an error */
 	filerr = mame_fopen(SEARCHPATH_MEMCARD, fname, OPEN_FLAG_READ, &file);
@@ -479,7 +479,7 @@ void memcard_eject(running_machine *machine)
 
 	/* create a name */
 	memcard_name(memcard_inserted, name);
-	fname = assemble_3_strings(Machine->gamedrv->name, PATH_SEPARATOR, name);
+	fname = assemble_3_strings(Machine->basename, PATH_SEPARATOR, name);
 
 	/* open the file; if we can't, it's an error */
 	filerr = mame_fopen(SEARCHPATH_MEMCARD, fname, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &file);

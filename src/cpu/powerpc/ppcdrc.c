@@ -274,6 +274,7 @@ typedef struct {
 	void *		generate_trap_exception;
 	void *		generate_dsi_exception;
 	void *		generate_isi_exception;
+	void *		generate_fit_exception;
 
 	// PowerPC 60x specific registers */
 	UINT32 dec, dec_frac;
@@ -328,6 +329,7 @@ static int ppc_tb_base_icount;
 static int ppc_dec_base_icount;
 static int ppc_dec_trigger_cycle;
 static int bus_freq_multiplier = 1;
+static int ppc_fit_trigger_cycle;
 static PPC_REGS ppc;
 static UINT32 ppc_rotate_mask[32][32];
 
@@ -617,6 +619,11 @@ INLINE void ppc_set_spr(int spr, UINT32 value)
 				ppc.fit_int_enable = (value >> 23) & 0x1;
 				ppc.wdt_int_enable = (value >> 27) & 0x1;
 				ppc.tcr = value;
+
+				if (!ppc.fit_int_enable)
+				{
+					ppc.exception_pending &= ~0x4;
+				}
 				return;
 
 			case SPR403_ESR:		ppc.esr = value; return;
@@ -628,10 +635,10 @@ INLINE void ppc_set_spr(int spr, UINT32 value)
 			case SPR403_DBSR:		ppc.dbsr = value; return;
 			case SPR403_DCWR:		return;
 			case SPR403_PID:		ppc.pid = value; return;
-			case SPR403_PBL1:		ppc.pbl1 = value; mame_printf_debug("PPC: PBL1 = %08X\n", ppc.pbl1); return;
-			case SPR403_PBU1:		ppc.pbu1 = value; mame_printf_debug("PPC: PBU1 = %08X\n", ppc.pbu1); return;
-			case SPR403_PBL2:		ppc.pbl2 = value; mame_printf_debug("PPC: PBL2 = %08X\n", ppc.pbl2); return;
-			case SPR403_PBU2:		ppc.pbu2 = value; mame_printf_debug("PPC: PBU2 = %08X\n", ppc.pbu2); return;
+			case SPR403_PBL1:		ppc.pbl1 = value; return;
+			case SPR403_PBU1:		ppc.pbu1 = value; return;
+			case SPR403_PBL2:		ppc.pbl2 = value; return;
+			case SPR403_PBU2:		ppc.pbu2 = value; return;
 			case SPR403_SRR2:		ppc.srr2 = value; return;
 			case SPR403_SRR3:		ppc.srr3 = value; return;
 			case SPR403_DAC1:		ppc.dac1 = value; return;
@@ -973,6 +980,24 @@ static int ppcdrc403_execute(int cycles)
 	/* count cycles and interrupt cycles */
 	ppc_icount = cycles;
 	ppc_tb_base_icount = cycles;
+
+	ppc_fit_trigger_cycle = 0x7fffffff;
+
+	if (ppc.fit_int_enable)
+	{
+		UINT32 tb = (UINT32)ppc.tb;
+		UINT32 fit_cycles = 0;
+
+		if (ppc.tb & ppc.fit_bit)
+		{
+			fit_cycles += ppc.fit_bit;
+			tb += fit_cycles;
+		}
+
+		fit_cycles += ppc.fit_bit - (tb & (ppc.fit_bit-1));
+
+		ppc_fit_trigger_cycle = ppc_icount - fit_cycles;
+	}
 
 	drc_execute(ppc.drc);
 

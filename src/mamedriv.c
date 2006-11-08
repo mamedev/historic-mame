@@ -4963,6 +4963,9 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( area51 )	/* 136105           (c) 1995 */
 	DRIVER( area51t )	/* 136105           (c) 1995 */
 	DRIVER( area51a )	/* 136105           (c) 1995 */
+	DRIVER( fishfren )	/* (proto)          (c) 1995 */
+	DRIVER( freezeat )	/* (proto)          (c) 1996 */
+	DRIVER( freezea2 )	/* (proto)          (c) 1996 */
 	DRIVER( area51mx )	/* 136105           (c) 1998 */
 	DRIVER( a51mxr3k )	/*     ??           (c) 1998 */
 	DRIVER( maxforce )	/*     ??           (c) 1996 */

@@ -1486,7 +1486,7 @@ static int load_layout_files(render_target *target, const char *layoutfile, int 
 	/* if there's an explicit file, load that first */
 	if (layoutfile != NULL)
 	{
-		*nextfile = layout_file_load(Machine->gamedrv->name, layoutfile);
+		*nextfile = layout_file_load(Machine->basename, layoutfile);
 		if (*nextfile != NULL)
 			nextfile = &(*nextfile)->next;
 	}
@@ -1496,7 +1496,9 @@ static int load_layout_files(render_target *target, const char *layoutfile, int 
 		return (nextfile == &target->filelist) ? 1 : 0;
 
 	/* try to load a file based on the driver name */
-	*nextfile = layout_file_load(Machine->gamedrv->name, Machine->gamedrv->name);
+	*nextfile = layout_file_load(Machine->basename, Machine->gamedrv->name);
+	if (*nextfile == NULL)
+		*nextfile = layout_file_load(Machine->basename, "default");
 	if (*nextfile != NULL)
 		nextfile = &(*nextfile)->next;
 
@@ -1519,6 +1521,8 @@ static int load_layout_files(render_target *target, const char *layoutfile, int 
 	if (cloneof != NULL)
 	{
 		*nextfile = layout_file_load(cloneof->name, cloneof->name);
+		if (*nextfile == NULL)
+			*nextfile = layout_file_load(cloneof->name, "default");
 		if (*nextfile != NULL)
 			nextfile = &(*nextfile)->next;
 	}

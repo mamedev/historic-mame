@@ -163,7 +163,7 @@ static void execute_one(void)
 	change_pc(PC) ;
 
 	// Loop processing
-	if (lfFLAG)
+	if (lfBIT)
 	{
 		if (PC == LA)
 		{
@@ -813,8 +813,8 @@ static int BitfieldOperation(void)
 	{
 		// bfchg
 		case 0x12:
-			if ((iVal & opVal) == iVal)   SET_cFLAG() ;		// test
-			else					    CLEAR_cFLAG() ;
+			if ((iVal & opVal) == iVal)   SET_cBIT() ;		// test
+			else					    CLEAR_cBIT() ;
 
 			opVal ^= iVal ;									// and change
 			break ;
@@ -836,8 +836,9 @@ static int BitfieldOperation(void)
 
 		// bftstl
 		case 0x00:
-			if ((iVal & opVal) == 0)   SET_cFLAG() ;
-			else				     CLEAR_cFLAG() ;
+			if ((iVal & opVal) == 0)   SET_cBIT() ;
+			else				     CLEAR_cBIT() ;
+			retSize = 2; return retSize;				/* It's just a test - no need to go on */
 			break ;
 	}
 
@@ -1115,7 +1116,8 @@ int MovePOperation(void)
 		// A little different than most W if's - opposite read and write thingies...
 		if (W)
 		{
-			SetDataMemoryValue(sdrReg, sdrt, pp<<1) ;
+			UINT16 data = data_read_word_16le( (*((UINT16*)sdrReg))<<1 ) ;		// read the word out
+			SetDataMemoryValue(&data, DT_WORD, pp<<1) ;
 		}
 		else
 		{
@@ -1254,7 +1256,7 @@ static int DoOperation(void)
 
 
 	// Third instruction cycle
-	SET_lfFLAG() ;
+	SET_lfBIT() ;
 
 	return retSize ;
 }
@@ -1292,14 +1294,14 @@ static int Dec24Operation(void **wd, UINT64 *pa)
 
 	// Carry flag (C) - HACK
 //  if (decMe == 0x0000000000ff7fff)
-//      SET_cFLAG() ;
+//      SET_cBIT() ;
 //  else
-//      CLEAR_cFLAG() ;
+//      CLEAR_cBIT() ;
 
 	// Carry flag (C)
 //  UINT8 postCarryBit = (*((UINT64*)D) & 0x0000008000000000) >> 39 ;
-//  if (postCarryBit != carryBit)   SET_cFLAG() ;
-//  else                          CLEAR_cFLAG() ;
+//  if (postCarryBit != carryBit)   SET_cBIT() ;
+//  else                          CLEAR_cBIT() ;
 
     *wd = D ;
 
@@ -1329,8 +1331,8 @@ static int Dec24Operation(void **wd, UINT64 *pa)
 
     // Carry flag (C)
     UINT8 postCarryBit = ((*((PAIR64*)D)).b.h4 & 0x80) >> 7 ;
-    if (postCarryBit != carryBit)   SET_cFLAG() ;
-    else                          CLEAR_cFLAG() ;
+    if (postCarryBit != carryBit)   SET_cBIT() ;
+    else                          CLEAR_cBIT() ;
 
     *wd = D ;
 */
@@ -1619,9 +1621,9 @@ int CmpOperation(void **wd, UINT64 *pa)
 	result = *((UINT64*)D) - cmpVal ;
 
 	if (result == 0)
-		SET_zFLAG() ;
+		SET_zBIT() ;
 	else
-		CLEAR_zFLAG() ;
+		CLEAR_zBIT() ;
 
     *wd = D ;
 	return retSize ;
@@ -1750,12 +1752,12 @@ int Tst2Operation(void)
 
 	// zero
 	if ( (*((UINT16*)destinationReg)) == 0)
-		SET_zFLAG() ;
+		SET_zBIT() ;
 	else
-		CLEAR_zFLAG() ;
+		CLEAR_zBIT() ;
 
 	// always clear C flag
-	CLEAR_cFLAG() ;
+	CLEAR_cBIT() ;
 
 	return retSize ;
 }
@@ -2056,22 +2058,22 @@ static int DecodeccccTable(UINT16 cccc)
 	switch (cccc)
 	{
 		// Arranged according to mnemonic table - not decoding table...
-		case 0x0: if( cFLAG == 0)                          retVal = 1 ; break ; // cc(hs)
-		case 0x8: if( cFLAG == 1)                          retVal = 1 ; break ; // cs(lo)
-		case 0x5: if( eFLAG == 0)                          retVal = 1 ; break ; // ec
-		case 0xa: if( zFLAG == 1)                          retVal = 1 ; break ; // eq
-		case 0xd: if( eFLAG == 1)                          retVal = 1 ; break ; // es
-		case 0x1: if((nFLAG ^ vFLAG) == 0)                 retVal = 1 ; break ; // ge
-		case 0x7: if((zFLAG + (nFLAG ^ vFLAG)) == 0)       retVal = 1 ; break ; // gt
-		case 0x6: if( lFLAG == 0)                          retVal = 1 ; break ; // lc
-		case 0xf: if((zFLAG + (nFLAG ^ vFLAG)) == 1)       retVal = 1 ; break ; // le
-		case 0xe: if( lFLAG == 1)                          retVal = 1 ; break ; // ls
-		case 0x9: if((nFLAG ^ vFLAG) == 1)                 retVal = 1 ; break ; // lt
-		case 0xb: if( nFLAG == 1)                          retVal = 1 ; break ; // mi
-		case 0x2: if( zFLAG == 0)                          retVal = 1 ; break ; // ne
-		case 0xc: if((zFLAG + ((!uFLAG) & (!eFLAG))) == 1) retVal = 1 ; break ; // nr
-		case 0x3: if( nFLAG == 0)                          retVal = 1 ; break ; // pl
-		case 0x4: if((zFLAG + ((!uFLAG) & (!eFLAG))) == 0) retVal = 1 ; break ; // nn
+		case 0x0: if( cBIT == 0)                        retVal = 1 ; break ; // cc(hs)
+		case 0x8: if( cBIT == 1)                        retVal = 1 ; break ; // cs(lo)
+		case 0x5: if( eBIT == 0)                        retVal = 1 ; break ; // ec
+		case 0xa: if( zBIT == 1)                        retVal = 1 ; break ; // eq
+		case 0xd: if( eBIT == 1)                        retVal = 1 ; break ; // es
+		case 0x1: if((nBIT ^ vBIT) == 0)                retVal = 1 ; break ; // ge
+		case 0x7: if((zBIT + (nBIT ^ vBIT)) == 0)       retVal = 1 ; break ; // gt
+		case 0x6: if( lBIT == 0)                        retVal = 1 ; break ; // lc
+		case 0xf: if((zBIT + (nBIT ^ vBIT)) == 1)       retVal = 1 ; break ; // le
+		case 0xe: if( lBIT == 1)                        retVal = 1 ; break ; // ls
+		case 0x9: if((nBIT ^ vBIT) == 1)                retVal = 1 ; break ; // lt
+		case 0xb: if( nBIT == 1)                        retVal = 1 ; break ; // mi
+		case 0x2: if( zBIT == 0)                        retVal = 1 ; break ; // ne
+		case 0xc: if((zBIT + ((!uBIT) & (!eBIT))) == 1) retVal = 1 ; break ; // nr
+		case 0x3: if( nBIT == 0)                        retVal = 1 ; break ; // pl
+		case 0x4: if((zBIT + ((!uBIT) & (!eBIT))) == 0) retVal = 1 ; break ; // nn
 	}
 
 	return retVal ;

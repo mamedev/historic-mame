@@ -149,7 +149,7 @@ int config_load_settings(void)
 	}
 
 	/* finally, load the game-specific file */
-	fname = assemble_2_strings(Machine->gamedrv->name, ".cfg");
+	fname = assemble_2_strings(Machine->basename, ".cfg");
 	filerr = mame_fopen(SEARCHPATH_CONFIG, fname, OPEN_FLAG_READ, &file);
 	free(fname);
 
@@ -189,7 +189,7 @@ void config_save_settings(void)
 	}
 
 	/* finally, save the game-specific file */
-	fname = assemble_2_strings(Machine->gamedrv->name, ".cfg");
+	fname = assemble_2_strings(Machine->basename, ".cfg");
 	filerr = mame_fopen(SEARCHPATH_CONFIG, fname, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &file);
 	free(fname);
 

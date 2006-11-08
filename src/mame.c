@@ -1110,6 +1110,7 @@ static running_machine *create_machine(int game)
 	machine->drv = malloc(sizeof(*machine->drv));
 	if (machine->drv == NULL)
 		goto error;
+	machine->basename = mame_strdup(machine->gamedrv->name);
 	expand_machine_driver(machine->gamedrv->drv, (machine_config *)machine->drv);
 
 	/* allocate the driver data */
@@ -1162,6 +1163,8 @@ static void destroy_machine(running_machine *machine)
 		free((machine_config *)machine->drv);
 	if (machine->mame_data != NULL)
 		free(machine->mame_data);
+	if (machine->basename != NULL)
+		free((void *)machine->basename);
 	free(machine);
 	Machine = NULL;
 }

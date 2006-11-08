@@ -431,7 +431,7 @@ int debug_comment_save(void)
 		char *fname;
  		mame_file *fp;
 
- 		fname = assemble_2_strings(Machine->gamedrv->name, ".cmt");
+ 		fname = assemble_2_strings(Machine->basename, ".cmt");
  		filerr = mame_fopen(SEARCHPATH_COMMENT, fname, OPEN_FLAG_WRITE | OPEN_FLAG_CREATE, &fp);
  		free(fname);
 
@@ -462,7 +462,7 @@ int debug_comment_load(void)
 	mame_file *fp;
 	char *fname;
 
-	fname = assemble_2_strings(Machine->gamedrv->name, ".cmt");
+	fname = assemble_2_strings(Machine->basename, ".cmt");
 	filerr = mame_fopen(SEARCHPATH_COMMENT, fname, OPEN_FLAG_READ, &fp);
 	free(fname);
 

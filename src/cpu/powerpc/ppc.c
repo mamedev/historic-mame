@@ -592,6 +592,11 @@ INLINE void ppc_set_spr(int spr, UINT32 value)
 				ppc.fit_int_enable = (value >> 23) & 0x1;
 				ppc.wdt_int_enable = (value >> 27) & 0x1;
 				ppc.tcr = value;
+
+				if (!ppc.fit_int_enable)
+				{
+					ppc.interrupt_pending &= ~0x4;
+				}
 				return;
 
 			case SPR403_ESR:		ppc.esr = value; return;
@@ -603,10 +608,10 @@ INLINE void ppc_set_spr(int spr, UINT32 value)
 			case SPR403_DBSR:		ppc.dbsr = value; return;
 			case SPR403_DCWR:		return;
 			case SPR403_PID:		ppc.pid = value; return;
-			case SPR403_PBL1:		ppc.pbl1 = value; mame_printf_debug("PPC: PBL1 = %08X\n", ppc.pbl1); return;
-			case SPR403_PBU1:		ppc.pbu1 = value; mame_printf_debug("PPC: PBU1 = %08X\n", ppc.pbu1); return;
-			case SPR403_PBL2:		ppc.pbl2 = value; mame_printf_debug("PPC: PBL2 = %08X\n", ppc.pbl2); return;
-			case SPR403_PBU2:		ppc.pbu2 = value; mame_printf_debug("PPC: PBU2 = %08X\n", ppc.pbu2); return;
+			case SPR403_PBL1:		ppc.pbl1 = value; return;
+			case SPR403_PBU1:		ppc.pbu1 = value; return;
+			case SPR403_PBL2:		ppc.pbl2 = value; return;
+			case SPR403_PBU2:		ppc.pbu2 = value; return;
 			case SPR403_SRR2:		ppc.srr2 = value; return;
 			case SPR403_SRR3:		ppc.srr3 = value; return;
 			case SPR403_DAC1:		ppc.dac1 = value; return;
