@@ -354,18 +354,6 @@ static int hc11_execute(int cycles)
 
 /*****************************************************************************/
 
-static offs_t hc11_disasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
-{
-#ifdef MAME_DEBUG
-	return mc68hc11_dasm_one(buffer, pc, oprom);
-#else
-	sprintf(buffer, "$%02X", FETCH());
-	return 1;
-#endif
-}
-
-/*****************************************************************************/
-
 static void mc68hc11_set_info(UINT32 state, union cpuinfo *info)
 {
 	switch (state)
@@ -427,7 +415,9 @@ void mc68hc11_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = hc11_exit;					break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = hc11_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+#ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = hc11_disasm;		break;
+#endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &hc11.icount;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */

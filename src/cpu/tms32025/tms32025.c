@@ -2132,20 +2132,6 @@ static void set_irq_line(int irqline, int state)
 
 
 /****************************************************************************
- *  Return a formatted string for a register
- ****************************************************************************/
-static offs_t tms32025_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
-{
-#ifdef MAME_DEBUG
-	return Dasm32025( buffer, pc, oprom, opram );
-#else
-	sprintf( buffer, "$%04X", (oprom[0] << 8) | oprom[1] );
-	return 2;
-#endif
-}
-
-
-/****************************************************************************
  *  Opcode fetcher
  ****************************************************************************/
 static int tms32025_readop(UINT32 offset, int size, UINT64 *value)
@@ -2400,7 +2386,9 @@ void tms32025_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = tms32025_exit;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = tms32025_execute;		break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+#ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = tms32025_dasm;		break;
+#endif /* MAME_DEBUG */
 		case CPUINFO_PTR_READ:							info->read = tms32025_read;				break;
 		case CPUINFO_PTR_WRITE:							info->write = tms32025_write;			break;
 		case CPUINFO_PTR_READOP:						info->readop = tms32025_readop;			break;

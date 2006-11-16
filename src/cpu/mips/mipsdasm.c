@@ -616,5 +616,5 @@ unsigned DasmMIPS( char *buffer, UINT32 pc, const UINT8 *opram )
 		sprintf( buffer, "swc2    %s,%s", s_cp2genreg[ INS_RT( op ) ], make_address( pc, op ) );
 		break;
 	}
-	return opram - oldopram;
+	return ( opram - oldopram ) | DASMFLAG_SUPPORTED;
 }

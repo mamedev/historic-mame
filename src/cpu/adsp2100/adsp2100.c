@@ -1680,16 +1680,10 @@ static int adsp2100_execute(int cycles)
     DEBUGGER DEFINITIONS
 ***************************************************************************/
 
-static offs_t adsp2100_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
-{
 #ifdef MAME_DEBUG
-	extern offs_t dasm2100(char *buffer, offs_t pc, const UINT8 *oprom);
-    return dasm2100(buffer, pc, oprom);
-#else
-	sprintf(buffer, "$%06X", RWORD_PGM(pc));
-	return 1;
-#endif
-}
+extern offs_t adsp2100_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
+#endif /* MAME_DEBUG */
+
 
 
 /**************************************************************************
@@ -1942,7 +1936,9 @@ static void adsp21xx_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = adsp2100_exit;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = adsp2100_execute;		break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+#ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = adsp2100_dasm;		break;
+#endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &adsp2100_icount;		break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */

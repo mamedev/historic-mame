@@ -89,6 +89,8 @@ extern int cdp1802_icount;				// cycle count
 
 void cdp1802_get_info(UINT32 state, union cpuinfo *info);
 
-unsigned DasmCdp1802(char *dst, unsigned oldpc, const UINT8 *oprom);
+#ifdef MAME_DEBUG
+offs_t cdp1802_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
+#endif /* MAME_DEBUG */
 
 #endif

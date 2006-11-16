@@ -793,16 +793,6 @@ static int m6805_execute(int cycles)
 	return cycles - m6805_ICount;
 }
 
-static offs_t m6805_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
-{
-#ifdef MAME_DEBUG
-    return Dasm6805(buffer,pc,oprom,opram);
-#else
-	sprintf( buffer, "$%02X", oprom[0] );
-	return 1;
-#endif
-}
-
 /****************************************************************************
  * M68705 section
  ****************************************************************************/
@@ -946,7 +936,9 @@ void m6805_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = m6805_exit;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = m6805_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+#ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m6805_dasm;			break;
+#endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m6805_ICount;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */

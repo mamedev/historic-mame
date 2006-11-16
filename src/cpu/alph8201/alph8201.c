@@ -824,16 +824,6 @@ static void ALPHA8201_set_context (void *src)
 		R = *(ALPHA8201_Regs*)src;
 }
 
-static offs_t ALPHA8201_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
-{
-#ifdef	MAME_DEBUG
-	return Dasm8201(buffer, pc, oprom, opram);
-#else
-	sprintf( buffer, "$%02X", oprom[0]);
-	return 1;
-#endif
-}
-
 /****************************************************************************
  * Set IRQ line state
  ****************************************************************************/
@@ -958,7 +948,9 @@ static void alpha8xxx_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = ALPHA8201_exit;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = ALPHA8201_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;							break;
+#ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = ALPHA8201_dasm;			break;
+#endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &ALPHA8201_ICount;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */

@@ -106,6 +106,8 @@ static struct mc146818_chip *mc146818;
 
 
 
+static void mc146818_set_base_datetime(void);
+
 static void mc146818_timer(int param)
 {
 	int year, month;
@@ -199,6 +201,7 @@ void mc146818_init(MC146818_TYPE type)
 	mc146818->type = type;
 	mc146818->last_refresh = timer_get_time();
     timer_pulse(TIME_IN_HZ(1.0), 0, mc146818_timer);
+	mc146818_set_base_datetime();
 }
 
 
@@ -224,64 +227,38 @@ void mc146818_load_stream(mame_file *file)
 
 
 
-void mc146818_set_gmtime(struct tm *tmtime)
+static int dec_2_local(int a)
 {
-	int second, minute, day, month, year;
-
-	if (BCD_MODE)
-	{
-		if (HOURS_24||(tmtime->tm_hour<12))
-			mc146818->data[4]=dec_2_bcd(tmtime->tm_hour);
-		else
-			mc146818->data[4]=dec_2_bcd(tmtime->tm_hour-12)|0x80;
-
-		if (mc146818->type!=MC146818_IGNORE_CENTURY)
-			CENTURY=dec_2_bcd((tmtime->tm_year+1900)/100);
-	}
-	else
-	{
-		if (HOURS_24||(tmtime->tm_hour<12))
-			mc146818->data[4]=tmtime->tm_hour;
-		else
-			mc146818->data[4]=(tmtime->tm_hour-12)|0x80;
-
-		if (mc146818->type!=MC146818_IGNORE_CENTURY)
-			CENTURY=(tmtime->tm_year+1900)/100;
-	}
-
-	second	= tmtime->tm_sec;
-	minute	= tmtime->tm_min;
-	day		= tmtime->tm_mday;
-	month	= tmtime->tm_mon + 1;
-	year	= tmtime->tm_year % 100;
-
-	mc146818->data[0]	= BCD_MODE ? dec_2_bcd(second)	: second;
-	mc146818->data[2]	= BCD_MODE ? dec_2_bcd(minute)	: minute;
-	DAY					= BCD_MODE ? dec_2_bcd(day)		: day;
-	MONTH				= BCD_MODE ? dec_2_bcd(month)	: month;
-	YEAR				= BCD_MODE ? dec_2_bcd(year)	: year;
-
-	WEEK_DAY = tmtime->tm_wday;
-	if (tmtime->tm_isdst)
-		mc146818->data[0xb] |= 1;
-	else
-		mc146818->data[0xb] &= ~1;
+	return BCD_MODE ? dec_2_bcd(a) : a;
 }
 
 
 
-void mc146818_set_time(void)
+static void mc146818_set_base_datetime(void)
 {
-	time_t t;
-	struct tm *tmtime;
+	mame_system_time systime;
 
-	t=time(NULL);
-	if (t==-1) return;
+	mame_get_base_datetime(Machine, &systime);
 
-	tmtime=gmtime(&t);
+	if (HOURS_24 || (systime.local_time.hour < 12))
+		mc146818->data[4] = dec_2_local(systime.local_time.hour);
+	else
+		mc146818->data[4] = dec_2_local(systime.local_time.hour - 12) | 0x80;
 
-	mc146818_set_gmtime(tmtime);
-	// freeing of gmtime??
+	if (mc146818->type != MC146818_IGNORE_CENTURY)
+		CENTURY = dec_2_local(systime.local_time.year /100);
+
+	mc146818->data[0]	= dec_2_local(systime.local_time.second);
+	mc146818->data[2]	= dec_2_local(systime.local_time.minute);
+	DAY					= dec_2_local(systime.local_time.day);
+	MONTH				= dec_2_local(systime.local_time.month + 1);
+	YEAR				= dec_2_local(systime.local_time.year % 100);
+
+	WEEK_DAY = systime.local_time.weekday;
+	if (systime.local_time.is_dst)
+		mc146818->data[0xb] |= 1;
+	else
+		mc146818->data[0xb] &= ~1;
 }
 
 
@@ -309,12 +286,17 @@ void mc146818_save_stream(mame_file *file)
 
 NVRAM_HANDLER( mc146818 )
 {
-	if (file==NULL) {
-		mc146818_set_time();
+	if (file == NULL)
+	{
+		mc146818_set_base_datetime();
 		// init only
-	} else if (read_or_write) {
+	}
+	else if (read_or_write)
+	{
 		mc146818_save_stream(file);
-	} else {
+	}
+	else
+	{
 		mc146818_load_stream(file);
 	}
 }

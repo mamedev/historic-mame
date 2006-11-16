@@ -48,7 +48,7 @@ UINT8 h6280io_get_buffer(void);
 void h6280io_set_buffer(UINT8);
 
 #ifdef MAME_DEBUG
-extern int Dasm6280(char *buffer, int pc, const UINT8 *oprom, const UINT8 *opram);
+offs_t h6280_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
 #endif
 
 #endif /* _H6280_H */

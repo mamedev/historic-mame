@@ -5,9 +5,6 @@ Atari Triple Hunt Driver
   Calibrate controls in service mode the first time you run this game.
 
 To Do:
- The two 8-Tracks need to be found and recorded.  And then tape emulation
- needs to be added.  1 tape is for Witch Hunt.  The other is used for
- both Bear and Racoon Hunt.
  The 3 different overlays need to be found, scanned and added as artwork
  to really make the game complete.
 
@@ -15,7 +12,6 @@ To Do:
 
 #include "driver.h"
 #include "triplhnt.h"
-#include "sound/discrete.h"
 
 static UINT8 triplhnt_cmos[16];
 static UINT8 triplhnt_da_latch;
@@ -41,6 +37,7 @@ void triplhnt_hit_callback(int code)
 
 static void triplhnt_update_misc(int offset)
 {
+	UINT8 is_witch_hunt;
 	UINT8 bit = offset >> 1;
 
 	/* BIT0 => UNUSED      */
@@ -77,6 +74,19 @@ static void triplhnt_update_misc(int offset)
 	discrete_sound_w(TRIPLHNT_SCREECH_EN, triplhnt_misc_flags & 0x04);	// screech
 	discrete_sound_w(TRIPLHNT_LAMP_EN, triplhnt_misc_flags & 0x02);	// Lamp is used to reset noise
 	discrete_sound_w(TRIPLHNT_BEAR_EN, triplhnt_misc_flags & 0x80);	// bear
+
+	is_witch_hunt = readinputport(2) == 0x40;
+	bit = ~triplhnt_misc_flags & 0x40;
+
+	/* if we're not playing the sample yet, start it */
+	if (!sample_playing(0))
+		sample_start(0, 0, 1);
+	if (!sample_playing(1))
+		sample_start(1, 1, 1);
+
+	/* bit 6 turns cassette on/off */
+	sample_set_pause(0,  is_witch_hunt || bit);
+	sample_set_pause(1, !is_witch_hunt || bit);
 }
 
 
@@ -332,9 +342,13 @@ static MACHINE_DRIVER_START( triplhnt )
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
 
+	MDRV_SOUND_ADD(SAMPLES, 0)
+	MDRV_SOUND_CONFIG(triplhnt_samples_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.20)
+
 	MDRV_SOUND_ADD_TAG("discrete", DISCRETE, 0)
 	MDRV_SOUND_CONFIG(triplhnt_discrete_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.90)
 MACHINE_DRIVER_END
 
 
@@ -361,4 +375,4 @@ ROM_START( triplhnt )
 ROM_END
 
 
-GAME( 1977, triplhnt, 0, triplhnt, triplhnt, triplhnt, 0, "Atari", "Triple Hunt", GAME_IMPERFECT_SOUND )
+GAME( 1977, triplhnt, 0, triplhnt, triplhnt, triplhnt, 0, "Atari", "Triple Hunt", 0 )

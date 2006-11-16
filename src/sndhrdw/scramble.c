@@ -15,7 +15,6 @@
 #include "driver.h"
 #include "cpu/z80/z80.h"
 #include "machine/7474.h"
-#include "sound/ay8910.h"
 #include "sound/flt_rc.h"
 #include "includes/galaxian.h"
 
@@ -253,19 +252,3 @@ void sfx_sh_init(void)
 }
 
 
-static int latch;
-
-WRITE8_HANDLER( zigzag_8910_latch_w )
-{
-	latch = offset;
-}
-
-WRITE8_HANDLER( zigzag_8910_data_trigger_w )
-{
-	AY8910_write_port_0_w(0,latch);
-}
-
-WRITE8_HANDLER( zigzag_8910_control_trigger_w )
-{
-	AY8910_control_port_0_w(0,latch);
-}

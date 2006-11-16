@@ -443,7 +443,8 @@ static int audit_one_rom(const rom_entry *rom, const game_driver *gamedrv, UINT3
 
 static int audit_one_disk(const rom_entry *rom, const game_driver *gamedrv, UINT32 validation, audit_record *record)
 {
-	void *source;
+	chd_file *source;
+	chd_error err;
 
 	/* fill in the record basics */
 	record->type = AUDIT_FILE_DISK;
@@ -453,13 +454,11 @@ static int audit_one_disk(const rom_entry *rom, const game_driver *gamedrv, UINT
 	/* open the disk */
 	chd_gamedrv = gamedrv;
 	chd_set_interface(&audit_chd_interface);
-	source = open_disk_image(gamedrv,rom);
+	err = open_disk_image(gamedrv, rom, &source);
 
 	/* if we failed, report the error */
-	if (source == NULL)
+	if (err != CHDERR_NONE)
 	{
-		int err = chd_get_last_error();
-
 		/* out of memory */
 		if (err == CHDERR_OUT_OF_MEMORY)
 			set_status(record, AUDIT_STATUS_ERROR, SUBSTATUS_ERROR);

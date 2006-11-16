@@ -591,27 +591,19 @@ static int jaguardsp_execute(int cycles)
     DISASSEMBLY HOOK
 ***************************************************************************/
 
+#ifdef MAME_DEBUG
 static offs_t jaguargpu_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
-#ifdef MAME_DEBUG
 	extern unsigned dasmjag(int, char *, unsigned, const UINT8 *);
     return dasmjag(JAGUAR_VARIANT_GPU, buffer, pc, oprom);
-#else
-	sprintf(buffer, "$%04X", (oprom[0] << 8) | oprom[1]);
-	return 2;
-#endif
 }
 
 static offs_t jaguardsp_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
-#ifdef MAME_DEBUG
 	extern unsigned dasmjag(int, char *, unsigned, const UINT8 *);
     return dasmjag(JAGUAR_VARIANT_DSP, buffer, pc, oprom);
-#else
-	sprintf(buffer, "$%04X", (oprom[0] << 8) | oprom[1]);
-	return 2;
-#endif
 }
+#endif /* MAME_DEBUG */
 
 
 
@@ -1662,7 +1654,9 @@ void jaguargpu_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = jaguar_exit;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = jaguargpu_execute;		break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+#ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = jaguargpu_dasm;		break;
+#endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &jaguar_icount;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
@@ -1755,7 +1749,9 @@ void jaguardsp_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INIT:							info->init = jaguardsp_init;			break;
 		case CPUINFO_PTR_RESET:							info->reset = jaguardsp_reset;			break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = jaguardsp_execute;		break;
+#ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = jaguardsp_dasm;		break;
+#endif /* MAME_DEBUG */
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "Jaguar DSP"); break;

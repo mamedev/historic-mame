@@ -218,6 +218,27 @@ static ADDRESS_MAP_START( ckongs_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 
+static READ8_HANDLER(mars_ppi8255_0_r)
+{
+	return ppi8255_0_r(((offset >> 2) & 0x02) | ((offset >> 1) & 0x01));
+}
+
+static READ8_HANDLER(mars_ppi8255_1_r)
+{
+	return ppi8255_1_r(((offset >> 2) & 0x02) | ((offset >> 1) & 0x01));
+}
+
+static WRITE8_HANDLER(mars_ppi8255_0_w)
+{
+	ppi8255_0_w(((offset >> 2) & 0x02) | ((offset >> 1) & 0x01), data);
+}
+
+static WRITE8_HANDLER(mars_ppi8255_1_w)
+{
+	ppi8255_1_w(((offset >> 2) & 0x02) | ((offset >> 1) & 0x01), data);
+}
+
+
 static ADDRESS_MAP_START( mars_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0x4000, 0x4bff) AM_READ(MRA8_RAM)
@@ -451,6 +472,27 @@ static ADDRESS_MAP_START( mimonscr_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xc000, 0xffff) AM_WRITE(MWA8_ROM)
 ADDRESS_MAP_END
 
+
+static READ8_HANDLER(frogf_ppi8255_0_r)
+{
+	return ppi8255_0_r(offset >> 3);
+}
+
+static READ8_HANDLER(frogf_ppi8255_1_r)
+{
+	return ppi8255_1_r(offset >> 3);
+}
+
+static WRITE8_HANDLER(frogf_ppi8255_0_w)
+{
+	ppi8255_0_w(offset >> 3, data);
+}
+
+static WRITE8_HANDLER(frogf_ppi8255_1_w)
+{
+	ppi8255_1_w(offset >> 3, data);
+}
+
 static ADDRESS_MAP_START( frogf_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x2fff) AM_ROM
 	AM_RANGE(0x8000, 0x87ff) AM_RAM
@@ -464,8 +506,8 @@ static ADDRESS_MAP_START( frogf_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xa808, 0xa808) AM_WRITE(galaxian_coin_counter_1_w)
 	AM_RANGE(0xa80e, 0xa80e) AM_WRITE(galaxian_coin_counter_0_w)
 	AM_RANGE(0xb800, 0xb800) AM_READ(watchdog_reset_r)
-	AM_RANGE(0xd000, 0xd018) AM_READWRITE(hustler_ppi8255_0_r, hustler_ppi8255_0_w)
-	AM_RANGE(0xe000, 0xe018) AM_READWRITE(hustler_ppi8255_1_r, hustler_ppi8255_1_w)
+	AM_RANGE(0xd000, 0xd018) AM_READWRITE(frogf_ppi8255_0_r, frogf_ppi8255_0_w)
+	AM_RANGE(0xe000, 0xe018) AM_READWRITE(frogf_ppi8255_1_r, frogf_ppi8255_1_w)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( ad2083_map, ADDRESS_SPACE_PROGRAM, 8 )
@@ -1735,6 +1777,12 @@ gfx_decode ad2083_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+static struct AY8910interface scramble_ay8910_interface_2 =
+{
+	soundlatch_r,
+	scramble_portB_r
+};
+
 static struct AY8910interface sfx_ay8910_interface_1 =
 {
 	0,
@@ -1778,32 +1826,110 @@ static struct TMS5110interface tms5110_interface =
 	ad2083_speech_rom_read_bit	/* M0 callback function. Called whenever chip requests a single bit of data */
 };
 
+static const gfx_layout scramble_charlayout =
+{
+	8,8,
+	RGN_FRAC(1,2),
+	2,
+	{ RGN_FRAC(0,2), RGN_FRAC(1,2) },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8
+};
+static const gfx_layout scramble_spritelayout =
+{
+	16,16,
+	RGN_FRAC(1,2),
+	2,
+	{ RGN_FRAC(0,2), RGN_FRAC(1,2) },
+	{ 0, 1, 2, 3, 4, 5, 6, 7,
+			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
+	32*8
+};
+
+static gfx_decode scramble_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0x0000, &scramble_charlayout,   0, 8 },
+	{ REGION_GFX1, 0x0000, &scramble_spritelayout, 0, 8 },
+	{ -1 } /* end of array */
+};
+
+
+static UINT8 *scramble_soundram;
+
+static READ8_HANDLER(scramble_soundram_r)
+{
+	return scramble_soundram[offset & 0x03ff];
+}
+
+static WRITE8_HANDLER(scramble_soundram_w)
+{
+	scramble_soundram[offset & 0x03ff] = data;
+}
+
+static ADDRESS_MAP_START( scramble_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x2fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_READ(scramble_soundram_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( scramble_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x2fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_WRITE(scramble_soundram_w)
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(MWA8_NOP) AM_BASE(&scramble_soundram)  /* only here to initialize pointer */
+	AM_RANGE(0x9000, 0x9fff) AM_WRITE(scramble_filter_w)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( scramble_sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE(0x20, 0x20) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0x80, 0x80) AM_READ(AY8910_read_port_1_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( scramble_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE(0x10, 0x10) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x20, 0x20) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x40, 0x40) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0x80, 0x80) AM_WRITE(AY8910_write_port_1_w)
+ADDRESS_MAP_END
+
+
 static MACHINE_DRIVER_START( scramble )
 
 	/* basic machine hardware */
-	MDRV_IMPORT_FROM(galaxian_base)
-	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_ADD_TAG("main", Z80, 18432000/6)	/* 3.072 MHz */
 	MDRV_CPU_PROGRAM_MAP(scramble_readmem,scramble_writemem)
+
+	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
 
 	MDRV_CPU_ADD_TAG("audio", Z80, 14318000/8)	/* 1.78975 MHz */
 	/* audio CPU */
-	MDRV_CPU_PROGRAM_MAP(scobra_sound_readmem,scobra_sound_writemem)
-	MDRV_CPU_IO_MAP(scobra_sound_readport,scobra_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(scramble_sound_readmem,scramble_sound_writemem)
+	MDRV_CPU_IO_MAP(scramble_sound_readport,scramble_sound_writeport)
 
 	MDRV_MACHINE_RESET(scramble)
 
 	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(scramble_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(32+64+2+1)	/* 32 for characters, 64 for stars, 2 for bullets, 0/1 for background */
+	MDRV_COLORTABLE_LENGTH(8*4)
 
 	MDRV_PALETTE_INIT(scramble)
 	MDRV_VIDEO_START(scramble)
+	MDRV_VIDEO_UPDATE(galaxian)
 
 	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
 	MDRV_SOUND_ADD_TAG("8910.1", AY8910, 14318000/8)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.16)
 
 	MDRV_SOUND_ADD_TAG("8910.2", AY8910, 14318000/8)
-	MDRV_SOUND_CONFIG(scobra_ay8910_interface_2)
+	MDRV_SOUND_CONFIG(scramble_ay8910_interface_2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.16)
 MACHINE_DRIVER_END
 
@@ -1866,6 +1992,37 @@ static MACHINE_DRIVER_START( theend )
 	MDRV_PALETTE_INIT(galaxian)
 	MDRV_VIDEO_START(theend)
 MACHINE_DRIVER_END
+
+
+static ADDRESS_MAP_START( frogger_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( frogger_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(MWA8_RAM)
+    AM_RANGE(0x6000, 0x6fff) AM_WRITE(frogger_filter_w)
+ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( frogger_sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE(0x40, 0x40) AM_READ(AY8910_read_port_0_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( frogger_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE(0x40, 0x40) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x80, 0x80) AM_WRITE(AY8910_control_port_0_w)
+ADDRESS_MAP_END
+
+static struct AY8910interface frogger_ay8910_interface =
+{
+	soundlatch_r,
+	frogger_portB_r
+};
+
 
 static MACHINE_DRIVER_START( froggers )
 
@@ -2052,7 +2209,7 @@ static MACHINE_DRIVER_START( sfx )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.16)
 
 	MDRV_SOUND_MODIFY("8910.2")
-	MDRV_SOUND_CONFIG(scobra_ay8910_interface_2)
+	MDRV_SOUND_CONFIG(scramble_ay8910_interface_2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.16)
 
 	MDRV_SOUND_ADD(DAC, 0)
@@ -2152,7 +2309,7 @@ static MACHINE_DRIVER_START( scorpion )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.16)
 
 	MDRV_SOUND_ADD(AY8910, 14318000/8)
-	MDRV_SOUND_CONFIG(scobra_ay8910_interface_2)
+	MDRV_SOUND_CONFIG(scramble_ay8910_interface_2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.16)
 MACHINE_DRIVER_END
 

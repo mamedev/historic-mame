@@ -35,12 +35,6 @@ void mc146818_load(void);
 /* loads data from file stream */
 void mc146818_load_stream(mame_file *file);
 
-/* set mc146818 to actual time */
-void mc146818_set_time(void);
-
-/* sets realtime clock to given time */
-void mc146818_set_gmtime(struct tm *tmtime);
-
 /* saves data into standard nvram file */
 void mc146818_save(void);
 

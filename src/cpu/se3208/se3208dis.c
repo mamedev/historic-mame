@@ -1400,7 +1400,7 @@ static _OP DecodeOp(UINT16 Opcode)
 }
 
 
-int SE3208Dasm(UINT32 PC,char *Buffer,const UINT8 *oprom)
+offs_t SE3208_Dasm(char *Buffer, offs_t PC, const UINT8 *oprom, const UINT8 *opram)
 {
 	UINT16 Opcode;
 

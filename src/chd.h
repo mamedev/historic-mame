@@ -77,40 +77,50 @@
 
 ***************************************************************************/
 
-/*************************************
- *
- *  Constants
- *
- *************************************/
 
+/***************************************************************************
+    CONSTANTS
+***************************************************************************/
+
+/* header information */
 #define CHD_HEADER_VERSION			3
 #define CHD_V1_HEADER_SIZE			76
 #define CHD_V2_HEADER_SIZE			80
 #define CHD_V3_HEADER_SIZE			120
 #define CHD_MAX_HEADER_SIZE			CHD_V3_HEADER_SIZE
 
+/* checksumming information */
 #define CHD_MD5_BYTES				16
 #define CHD_SHA1_BYTES				20
 
+/* CHD global flags */
 #define CHDFLAGS_HAS_PARENT			0x00000001
 #define CHDFLAGS_IS_WRITEABLE		0x00000002
 #define CHDFLAGS_UNDEFINED			0xfffffffc
 
+/* compression types */
 #define CHDCOMPRESSION_NONE			0
 #define CHDCOMPRESSION_ZLIB			1
 #define CHDCOMPRESSION_ZLIB_PLUS	2
-#define CHDCOMPRESSION_MAX			3
 
-#define CHD_MAX_METADATA_SIZE		4096
+/* metadata parameters */
 #define CHDMETATAG_WILDCARD			0
 #define CHD_METAINDEX_APPEND		((UINT32)-1)
 
-#define HARD_DISK_STANDARD_METADATA	0x47444444
+/* standard hard disk metadata */
+#define HARD_DISK_STANDARD_METADATA	0x47444444	/* 'GDDD' */
 #define HARD_DISK_METADATA_FORMAT	"CYLS:%d,HEADS:%d,SECS:%d,BPS:%d"
 
+/* standard CD-ROM metadata */
 #define CDROM_STANDARD_METADATA		0x43484344	/* 'CHCD' */
 
-enum
+/* CHD open values */
+#define CHD_OPEN_READ				1
+#define CHD_OPEN_READWRITE			2
+
+/* error types */
+typedef enum _chd_error chd_error;
+enum _chd_error
 {
 	CHDERR_NONE,
 	CHDERR_NO_INTERFACE,
@@ -133,17 +143,28 @@ enum
 	CHDERR_NOT_SUPPORTED,
 	CHDERR_METADATA_NOT_FOUND,
 	CHDERR_INVALID_METADATA_SIZE,
-	CHDERR_UNSUPPORTED_VERSION
+	CHDERR_UNSUPPORTED_VERSION,
+	CHDERR_VERIFY_INCOMPLETE,
+	CHDERR_INVALID_METADATA
 };
 
 
 
-/*************************************
- *
- *  Type definitions
- *
- *************************************/
+/***************************************************************************
+    TYPE DEFINITIONS
+***************************************************************************/
 
+/* opaque types */
+typedef struct _chd_exfile chd_exfile;
+typedef struct _chd_interface_file chd_interface_file;
+
+
+/* progress callback function */
+typedef void (*chd_progress_printf)(const char *format, ...);
+
+
+/* extract header structure (NOT the on-disk header structure) */
+typedef struct _chd_header chd_header;
 struct _chd_header
 {
 	UINT32	length;						/* length of header data */
@@ -164,13 +185,10 @@ struct _chd_header
 	UINT32	obsolete_heads;				/* obsolete field -- do not use! */
 	UINT32	obsolete_hunksize;			/* obsolete field -- do not use! */
 };
-typedef struct _chd_header chd_header;
 
 
-typedef struct _chd_exfile chd_exfile;
-typedef struct _chd_interface_file chd_interface_file;
-
-
+/* file I/O interface */
+typedef struct _chd_interface chd_interface;
 struct _chd_interface
 {
 	chd_interface_file *(*open)(const char *filename, const char *mode);
@@ -179,39 +197,36 @@ struct _chd_interface
 	UINT32 (*write)(chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer);
 	UINT64 (*length)(chd_interface_file *file);
 };
-typedef struct _chd_interface chd_interface;
 
 
 
-/*************************************
- *
- *  Prototypes
- *
- *************************************/
+/***************************************************************************
+    FUNCTION PROTOTYPES
+***************************************************************************/
 
 void chd_set_interface(chd_interface *new_interface);
-void chd_save_interface(chd_interface *interface_save);
 
-int chd_create(const char *filename, UINT64 logicalbytes, UINT32 hunkbytes, UINT32 compression, chd_file *parent);
-chd_file *chd_open(const char *filename, int writeable, chd_file *parent);
+chd_error chd_create(const char *filename, UINT64 logicalbytes, UINT32 hunkbytes, UINT32 compression, chd_file *parent);
+chd_error chd_open(const char *filename, int mode, chd_file *parent, chd_file **chd);
 void chd_close(chd_file *chd);
 void chd_close_all(void);
 
-UINT32 chd_get_metadata(chd_file *chd, UINT32 *metatag, UINT32 metaindex, void *outputbuf, UINT32 outputlen);
-int chd_set_metadata(chd_file *chd, UINT32 metatag, UINT32 metaindex, const void *inputbuf, UINT32 inputlen);
+chd_error chd_get_metadata(chd_file *chd, UINT32 searchtag, UINT32 searchindex, void *output, UINT32 outputlen, UINT32 *resultlen, UINT32 *resulttag);
+chd_error chd_set_metadata(chd_file *chd, UINT32 metatag, UINT32 metaindex, const void *inputbuf, UINT32 inputlen);
+chd_error chd_clone_metadata(chd_file *source, chd_file *dest);
 
-UINT32 chd_read(chd_file *chd, UINT32 hunknum, UINT32 hunkcount, void *buffer);
-UINT32 chd_write(chd_file *chd, UINT32 hunknum, UINT32 hunkcount, const void *buffer);
+chd_error chd_read(chd_file *chd, UINT32 hunknum, void *buffer);
+chd_error chd_write(chd_file *chd, UINT32 hunknum, const void *buffer);
 
-int chd_get_last_error(void);
 const chd_header *chd_get_header(chd_file *chd);
-int chd_set_header(const char *filename, const chd_header *header);
+chd_error chd_set_header(const char *filename, const chd_header *header);
 
-int chd_compress(chd_file *chd, const char *rawfile, UINT32 offset, void (*progress)(const char *, ...));
-int chd_verify(chd_file *chd, void (*progress)(const char *, ...), UINT8 actualmd5[CHD_MD5_BYTES], UINT8 actualsha1[CHD_SHA1_BYTES]);
+chd_error chd_compress_begin(chd_file *chd);
+chd_error chd_compress_hunk(chd_file *chd, const void *data, double *curratio);
+chd_error chd_compress_finish(chd_file *chd);
 
-chd_exfile *chd_start_compress_ex(chd_file *chd);
-int chd_compress_ex(chd_exfile *chdex, const char *rawfile, UINT64 offset, UINT32 inpsecsize, UINT32 srcperhunk, UINT32 hunks_to_read, UINT32 hunksecsize, void (*progress)(const char *, ...));
-int chd_end_compress_ex(chd_exfile *chdex, void (*progress)(const char *, ...));
+chd_error chd_verify_begin(chd_file *chd);
+chd_error chd_verify_hunk(chd_file *chd);
+chd_error chd_verify_finish(chd_file *chd, UINT8 *finalmd5, UINT8 *finalsha1);
 
 #endif /* __CHD_H__ */

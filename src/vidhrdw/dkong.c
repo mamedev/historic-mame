@@ -371,7 +371,7 @@ VIDEO_UPDATE( pestplce )
 					spriteram[offs + 2],
 					(spriteram[offs + 1] & 0x0f) + 16 * palette_bank,
 					spriteram[offs + 1] & 0x80,spriteram[offs + 1] & 0x40,
-					spriteram[offs + 3] - 8,240 - spriteram[offs] + 8,
+					spriteram[offs + 3] - 8,239 - spriteram[offs] + 8,
 					cliprect,TRANSPARENCY_PEN,0);
 		}
 	}

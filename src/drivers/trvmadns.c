@@ -64,6 +64,7 @@ Technology = NMOS
 #include "vidhrdw/generic.h"
 #include "sound/ay8910.h"
 
+static tilemap *bg_tilemap;
 static UINT8 *trvmadns_gfxram;
 static UINT8 *trvmadns_tileram;
 
@@ -74,74 +75,68 @@ static WRITE8_HANDLER( trvmadns_banking_w )
 	UINT8 *rom;
 	int address = 0;
 
-	if(data & 0x80)
+	if((data & 0xf0) == 0xa0)
+	{
+	}
+	else if((data & 0xf0) == 0x80 || (data & 0xf0) == 0x90)
 	{
 		rom = memory_region(REGION_USER2);
 
-		//it works, but it's not generic...
-		if(data == 0x87)
+		switch(data & 0xf)
 		{
-			address = 0;
+			case 0x00: address = 0x6000; break;
+			case 0x04: address = 0x4000; break;
+			case 0x06: address = 0x2000; break;
+			case 0x07: address = 0x0000; break;
+			case 0x08: address = 0xe000; break;
+			case 0x0c: address = 0xc000; break;
+			case 0x0e: address = 0xa000; break;
+			case 0x0f: address = 0x8000; break;
 		}
-		else if(data == 0x88)
-		{
-			address = 0x2000;
-		}
-		else
-		{
-			address = 0x4000;
-		}
+
+		address |= (data & 0x10) ? 0x10000 : 0;
 
 		memory_set_bankptr(1, &rom[address]);
 		memory_set_bankptr(2, &rom[address + 0x1000]);
 	}
 	else
 	{
+			if(data != old)
+			{
+				printf("port80 = %02X\n",old=data);
+		//      logerror("port80 = %02X\n",old=data);
+			}
+
 		rom = memory_region(REGION_USER1);
 
+		/*
+        7
+        6
+        4
+        0
+        */
+
+		//switch(data & 0xf)
+		switch(data & 7)
+		{
+			case 0x00: address = 0x6000; break;
+			case 0x04: address = 0x0000; break;
+			case 0x06: address = 0x2000; break;
+			case 0x07: address = 0x4000; break;
+
+		}
+//24: 1st rom star trek
+		address |= ((data & 0x60) >> 5) * 0x10000;
+
 		//not sure about (((data & 7) ^ 7) * 0x2000)
-		address = (((data & 0x60) >> 5) * 0x10000) | (((data & 0x07) ^ 7) * 0x1000);
+		//address = (((data & 0x60) >> 5) * 0x10000) | (((data & 0x0f) ^ 7) * 0x2000);
+
+		//address |= (data & 0x08) ? 0x8000 : 0;
+
+//      printf("add = %X\n",address);
 
 		memory_set_bankptr(1, &rom[address]);
-		memory_set_bankptr(2, &rom[address + 0x1000]); //this bank isn't used here?
 	}
-
-	if(data != old)
-	{
-//      mame_printf_debug("port80 = %02X\n",old=data);
-//      logerror("port80 = %02X\n",old=data);
-	}
-
-/*
-banks tested in this order:
-
-port80 = 87
-port80 = 8F
-port80 = 97
-port80 = 9F
-
-port80 = 87 (0)
-port80 = 86 (1)
-port80 = 84 (3)
-port80 = 80 (7)
-
-port80 = 8F
-port80 = 8E
-port80 = 8C
-port80 = 88
-
-port80 = 97
-port80 = 96
-port80 = 94
-port80 = 90
-
-port80 = 9F
-port80 = 9E
-port80 = 9C
-port80 = 98
-
-*/
-
 }
 
 static WRITE8_HANDLER( trvmadns_gfxram_w )
@@ -149,7 +144,7 @@ static WRITE8_HANDLER( trvmadns_gfxram_w )
 	trvmadns_gfxram[offset] = data;
 	decodechar(Machine->gfx[0], offset/16, trvmadns_gfxram, Machine->drv->gfxdecodeinfo[0].gfxlayout);
 
-//  tilemap_mark_all_tiles_dirty(tilemap);
+	tilemap_mark_all_tiles_dirty(bg_tilemap);
 }
 
 //WRONG!
@@ -170,7 +165,7 @@ static WRITE8_HANDLER( w2 )
 {
 /*  static int old = -1;
     if(data!=old)
-        mame_printf_debug("w2 = %02X\n",old=data);
+        printf("w2 = %02X\n",old=data);
 */
 }
 
@@ -178,7 +173,7 @@ static WRITE8_HANDLER( w3 )
 {
 /*  static int old = -1;
     if(data!=old)
-        mame_printf_debug("w3 = %02X\n",old=data);
+        printf("w3 = %02X\n",old=data);
 */
 }
 
@@ -191,17 +186,14 @@ static WRITE8_HANDLER( trvmadns_tileram_w )
 			cpunum_set_input_line(0, 0, PULSE_LINE);
 		}
 //      else
-//          mame_printf_debug("%x \n", activecpu_get_previouspc());
+//          printf("%x \n", activecpu_get_previouspc());
 
 	}
 
 	trvmadns_tileram[offset] = data;
+	tilemap_mark_tile_dirty(bg_tilemap,offset >> 1);
 }
 
-static READ8_HANDLER( trvmadns_tileram_r )
-{
-	return trvmadns_tileram[offset];
-}
 
 static ADDRESS_MAP_START( cpu_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x5fff) AM_ROM
@@ -209,8 +201,8 @@ static ADDRESS_MAP_START( cpu_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x7000, 0x7fff) AM_READ(MRA8_BANK2)
 	AM_RANGE(0x6000, 0x7fff) AM_WRITE(trvmadns_gfxram_w) AM_BASE(&trvmadns_gfxram)
 	AM_RANGE(0x8000, 0x87ff) AM_RAM
-	AM_RANGE(0xc000, 0xc01f) AM_RAM AM_WRITE(trvmadns_palette_w) AM_BASE(&paletteram)
-	AM_RANGE(0xa000, 0xbfff) AM_READWRITE(trvmadns_tileram_r, trvmadns_tileram_w) AM_BASE(&trvmadns_tileram)
+	AM_RANGE(0xc000, 0xc01f) AM_RAM AM_WRITE(paletteram_xxxxBBBBRRRRGGGG_le_w) AM_BASE(&paletteram)
+	AM_RANGE(0xa000, 0xbfff) AM_RAM AM_WRITE(trvmadns_tileram_w) AM_BASE(&trvmadns_tileram)
 	AM_RANGE(0xe000, 0xe000) AM_WRITE(w2)//NOP
 	AM_RANGE(0xe004, 0xe004) AM_WRITE(w3)//NOP
 ADDRESS_MAP_END
@@ -248,35 +240,43 @@ static const gfx_layout charlayout =
 
 static const gfx_decode gfxdecodeinfo[] =
 {
-	{ REGION_CPU1, 0x6000, &charlayout, 0, 256 }, // doesn't matter where we point this, all the tiles are decoded while the game runs
+	{ REGION_CPU1, 0x6000, &charlayout, 0, 4 }, // doesn't matter where we point this, all the tiles are decoded while the game runs
 	{ -1 } /* end of array */
 };
 
+static void get_bg_tile_info(int tile_index)
+{
+	int tile,attr,color,flag;
+
+	attr = trvmadns_tileram[tile_index*2 + 0];
+	tile = trvmadns_tileram[tile_index*2 + 1] + ((attr & 0x01) << 8);
+	color = (attr & 0x18) >> 3;
+	flag = TILE_FLIPXY((attr & 0x06) >> 1);
+
+	if((~attr & 0x20) || (~attr & 0x40))
+		flag |= TILE_IGNORE_TRANSPARENCY;
+
+	//0x20? tile transparent pen 1?
+	//0x40? tile transparent pen 1?
+
+	SET_TILE_INFO(0,tile,color,flag)
+}
+
 VIDEO_START( trvmadns )
 {
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 32, 32);
+
+	tilemap_set_transparent_pen(bg_tilemap,1);
+
 	return 0;
 }
 
 VIDEO_UPDATE( trvmadns )
 {
-	int x,y,tileno,count,attr;
+	fillbitmap(bitmap,Machine->pens[0xd],cliprect);
 
-	count = 0;
-	for (y=0;y<32;y++)
-	{
-		for (x=0;x<32;x++)
-		{
-			attr   = trvmadns_tileram[count + 0];
-			tileno = trvmadns_tileram[count + 1] + ((attr & 0x01) << 8);
+	tilemap_draw(bitmap,cliprect,bg_tilemap,0,0);
 
-//          if(attr & ~0x3f)
-//              mame_printf_debug("attr = %02X\n",attr & ~0x3f);
-
-			drawgfx(bitmap,Machine->gfx[0],tileno,(attr & 0x38)>>3,attr & 0x04,attr & 0x02,x*8,y*8,cliprect,TRANSPARENCY_NONE,0);
-
-			count += 2;
-		}
-	}
 	return 0;
 }
 
@@ -292,9 +292,9 @@ static MACHINE_DRIVER_START( trvmadns )
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(256, 256)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 0*8, 32*8-1)
+	MDRV_VISIBLE_AREA(0*8, 31*8-1, 0*8, 30*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(256)
+	MDRV_PALETTE_LENGTH(16)
 
 	MDRV_VIDEO_START(trvmadns)
 	MDRV_VIDEO_UPDATE(trvmadns)
@@ -327,9 +327,10 @@ ROM_START( trvmadns )
 	ROM_LOAD( "row b-c sex a3.bin",       0x38000, 0x4000, CRC(3fea2c2a) SHA1(fa403e14b057f0e6d607871adcaba85a6c77f1f9) )
 	ROM_LOAD( "row a sex a4.bin",         0x3c000, 0x4000, CRC(2d179c7b) SHA1(153240f1fcc4f53b6840eafdd9ce0fb3e52ec1aa) )
 
-	ROM_REGION( 0x10000, REGION_USER2, ROMREGION_ERASEFF ) /* Question roms 2nd set */
-	ROM_LOAD( "trivia madness.bin",       0x00000, 0x4000, CRC(5aec7cfa) SHA1(09e4eac78d975aef3af224b42b60499d759e7749) )
-	// empty space, for 3 0x4000 bytes long roms
+	ROM_REGION( 0x20000, REGION_USER2, ROMREGION_ERASEFF ) /* Question roms 2nd set */
+	ROM_LOAD( "trivia madness.bin",       0x00000, 0x2000, CRC(5aec7cfa) SHA1(09e4eac78d975aef3af224b42b60499d759e7749) )
+	ROM_CONTINUE(                         0x0e000, 0x2000 )
+	// empty space, for 3 roms (each one max 0x8000 bytes long)
 ROM_END
 
 GAME( 1985, trvmadns, 0, trvmadns, trvmadns, 0, ROT0, "Thunderhead Inc.", "Trivia Madness", GAME_WRONG_COLORS | GAME_NOT_WORKING )

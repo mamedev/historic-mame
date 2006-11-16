@@ -993,16 +993,6 @@ void v810_set_context(void *src)
 		v810 = *(v810info *)src;
 }
 
-static offs_t v810_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
-{
-#ifdef MAME_DEBUG
-	return v810_disasm( buffer, pc, oprom );
-#else
-	sprintf(buffer, "$%08x", oprom[0]);
-	return 1;
-#endif
-}
-
 static void set_irq_line(int irqline, int state)
 {
 }
@@ -1193,7 +1183,9 @@ void v810_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = NULL;					break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = v810_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+#ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = v810_dasm;			break;
+#endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &v810_ICount;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */

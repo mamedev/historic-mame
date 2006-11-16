@@ -2436,9 +2436,9 @@ int mips3_execute(int cycles)
     DISASSEMBLY HOOK
 ***************************************************************************/
 
+#ifdef MAME_DEBUG
 static offs_t mips3_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
-#ifdef MAME_DEBUG
 	extern unsigned dasmmips3(char *, unsigned, UINT32);
 	UINT32 op = *(UINT32 *)oprom;
 	if (mips3.bigendian)
@@ -2446,11 +2446,8 @@ static offs_t mips3_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT
 	else
 		op = LITTLE_ENDIANIZE_INT32(op);
 	return dasmmips3(buffer, pc, op);
-#else
-	sprintf(buffer, "$%08X", *(UINT32 *)opram);
-	return 4;
-#endif
 }
+#endif /* MAME_DEBUG */
 
 
 
@@ -2894,7 +2891,9 @@ void mips3_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = mips3_exit;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = mips3_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+#ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = mips3_dasm;			break;
+#endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &mips3_icount;			break;
 		case CPUINFO_PTR_TRANSLATE:						info->translate = translate_address;	break;
 

@@ -484,16 +484,6 @@ static void state_save(void *file, const char *module)
 }
 #endif
 
-static offs_t konami_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
-{
-#ifdef MAME_DEBUG
-    return Dasmknmi(buffer, pc, oprom, opram);
-#else
-	sprintf( buffer, "$%02X", *oprom );
-	return 1;
-#endif
-}
-
 /* includes the static function prototypes and the master opcode table */
 #include "konamtbl.c"
 
@@ -623,7 +613,9 @@ void konami_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = konami_exit;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = konami_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+#ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = konami_dasm;		break;
+#endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &konami_ICount;			break;
 		case CPUINFO_PTR_KONAMI_SETLINES_CALLBACK:		info->f = (genf *)konami.setlines_callback;	break;
 

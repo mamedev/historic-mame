@@ -8,6 +8,21 @@
 #include "sound/discrete.h"
 
 
+static const char *triplhnt_sample_names[] =
+{
+	"*triplhnt",
+	"bear_rac.wav",
+	"witch.wav",
+	0       /* end of array */
+};
+
+struct Samplesinterface triplhnt_samples_interface =
+{
+	2,	/* 2 channels */
+	triplhnt_sample_names
+};
+
+
 /************************************************************************/
 /* triplhnt Sound System Analog emulation                               */
 /* Feb 2004, Derrick Renaud                                             */
@@ -86,7 +101,7 @@ static const discrete_mixer_desc triplhnt_mixer =
 	1e-7,			// C72
 	1e-7,			// C44
 	0,				// vBias not used for resistor network
-	150000
+	245000
 };
 
 /* Nodes - Sounds */

@@ -53,7 +53,7 @@
 #define ARG(A)  opram[(A) - PC]
 #define ARGW(A) (opram[(A) - PC] | (opram[(A) + 1 - PC] << 8))
 
-unsigned Dasm8085(char *buff, unsigned pc, const UINT8 *oprom, const UINT8 *opram)
+offs_t i8085_dasm(char *buff, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	UINT32 flags = 0;
 	UINT8 op;

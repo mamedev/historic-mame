@@ -564,16 +564,9 @@ static int asap_execute(int cycles)
     DISASSEMBLY HOOK
 ***************************************************************************/
 
-static offs_t asap_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
-{
 #ifdef MAME_DEBUG
-	extern unsigned dasmasap(char *, unsigned, const UINT8 *);
-	return dasmasap(buffer, pc, oprom);
-#else
-	sprintf(buffer, "$%08X", LITTLE_ENDIANIZE_INT32(*(UINT32 *)opram));
-	return 4;
-#endif
-}
+extern offs_t asap_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
+#endif /* MAME_DEBUG */
 
 
 
@@ -1812,7 +1805,9 @@ void asap_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = asap_exit;					break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = asap_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+#ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = asap_dasm;			break;
+#endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &asap_icount;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */

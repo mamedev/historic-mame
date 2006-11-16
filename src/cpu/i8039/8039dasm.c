@@ -202,7 +202,7 @@ static void InitDasm8039(void)
 	OpInizialized = 1;
 }
 
-unsigned Dasm8039(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
+offs_t i8039_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	int b, a, d, r, p;	/* these can all be filled in by parsing an instruction */
 	int i;

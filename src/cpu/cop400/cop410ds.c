@@ -6,7 +6,7 @@
 
 #include "cpuintrf.h"
 
-int DasmCOP410(char *buffer, unsigned pc, const UINT8 *oprom)
+offs_t cop410_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	int op;
 	int cnt = 1;

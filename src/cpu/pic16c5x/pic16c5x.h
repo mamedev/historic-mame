@@ -129,7 +129,7 @@ void pic16C58_get_info(UINT32 state, union cpuinfo *info);
 
 #if (HAS_PIC16C54) || (HAS_PIC16C55) || (HAS_PIC16C56) || (HAS_PIC16C57) || (HAS_PIC16C58)
 #ifdef MAME_DEBUG
-extern unsigned Dasm16C5x(char *buffer, unsigned pc, const UINT8 *oprom, const UINT8 *opram);
+offs_t pic16C5x_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
 #endif
 #endif
 

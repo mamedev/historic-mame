@@ -802,21 +802,21 @@ static void process_rom_entries(rom_load_data *romdata, const rom_entry *romp)
     up the parent and loading by checksum
 -------------------------------------------------*/
 
-chd_file *open_disk_image(const game_driver *gamedrv, const rom_entry *romp)
+chd_error open_disk_image(const game_driver *gamedrv, const rom_entry *romp, chd_file **image)
 {
-	chd_file *disk_image;
 	const game_driver *drv;
 	const rom_entry *region, *rom;
 	const char *fname;
+	chd_error err;
 
 	/* attempt to open the properly named file */
 	fname = assemble_2_strings(ROM_GETNAME(romp), ".chd");
-	disk_image = chd_open(fname, 0, NULL);
+	err = chd_open(fname, CHD_OPEN_READ, NULL, image);
 	free((void *)fname);
 
 	/* if that worked, we're done */
-	if (disk_image != NULL)
-		return disk_image;
+	if (err == CHDERR_NONE)
+		return err;
 
 	/* otherwise, look at our parents for a CHD with an identical checksum */
 	/* and try to open that */
@@ -830,15 +830,15 @@ chd_file *open_disk_image(const game_driver *gamedrv, const rom_entry *romp)
 						hash_data_is_equal(ROM_GETHASHDATA(romp), ROM_GETHASHDATA(rom), 0))
 					{
 						fname = assemble_2_strings(ROM_GETNAME(rom), ".chd");
-						disk_image = chd_open(fname, 0, NULL);
+						err = chd_open(fname, CHD_OPEN_READ, NULL, image);
 						free((void *)fname);
 
 						/* if that worked, we're done */
-						if (disk_image != NULL)
-							return disk_image;
+						if (err == CHDERR_NONE)
+							return err;
 					}
 
-	return NULL;
+	return err;
 }
 
 
@@ -859,17 +859,17 @@ static void process_disk_entries(rom_load_data *romdata, const rom_entry *romp)
 			chd_header header;
 			char filename[1024];
 			char acthash[HASH_BUF_SIZE];
-			int err;
+			chd_error err;
 
 			/* make the filename of the source */
 			sprintf(filename, "%s.chd", ROM_GETNAME(romp));
 
 			/* first open the source drive */
 			debugload("Opening disk image: %s\n", filename);
-			source = open_disk_image(Machine->gamedrv,romp);
-			if (!source)
+			err = open_disk_image(Machine->gamedrv, romp, &source);
+			if (err != CHDERR_NONE)
 			{
-				if (chd_get_last_error() == CHDERR_UNSUPPORTED_VERSION)
+				if (err == CHDERR_UNSUPPORTED_VERSION)
 					sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%s UNSUPPORTED CHD VERSION\n", filename);
 				else
 					sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%s NOT FOUND\n", filename);
@@ -905,15 +905,15 @@ static void process_disk_entries(rom_load_data *romdata, const rom_entry *romp)
 
 				/* try to open the diff */
 				debugload("Opening differencing image: %s\n", filename);
-				diff = chd_open(filename, 1, source);
-				if (!diff)
+				err = chd_open(filename, CHD_OPEN_READWRITE, source, &diff);
+				if (err != CHDERR_NONE)
 				{
 					/* didn't work; try creating it instead */
 					debugload("Creating differencing image: %s\n", filename);
 					err = chd_create(filename, 0, 0, CHDCOMPRESSION_NONE, source);
 					if (err != CHDERR_NONE)
 					{
-						if (chd_get_last_error() == CHDERR_UNSUPPORTED_VERSION)
+						if (err == CHDERR_UNSUPPORTED_VERSION)
 							sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%s UNSUPPORTED CHD VERSION\n", filename);
 						else
 							sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%s: CAN'T CREATE DIFF FILE\n", filename);
@@ -924,10 +924,10 @@ static void process_disk_entries(rom_load_data *romdata, const rom_entry *romp)
 
 					/* open the newly-created diff file */
 					debugload("Opening differencing image: %s\n", filename);
-					diff = chd_open(filename, 1, source);
-					if (!diff)
+					err = chd_open(filename, CHD_OPEN_READWRITE, source, &diff);
+					if (err != CHDERR_NONE)
 					{
-						if (chd_get_last_error() == CHDERR_UNSUPPORTED_VERSION)
+						if (err == CHDERR_UNSUPPORTED_VERSION)
 							sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%s UNSUPPORTED CHD VERSION\n", filename);
 						else
 							sprintf(&romdata->errorbuf[strlen(romdata->errorbuf)], "%s: CAN'T OPEN DIFF FILE\n", filename);

@@ -496,16 +496,13 @@ static void set_irq_line(int irqline, int state)
 	arm_check_irq_state();
 }
 
+#ifdef MAME_DEBUG
 static offs_t arm_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	UINT32 opcode = oprom[0] | (oprom[1] << 8) | (oprom[2] << 16) | (oprom[3] << 24);
-#ifdef MAME_DEBUG
 	return 4 | arm_disasm(buffer, pc, opcode);
-#else
-	sprintf(buffer, "$%08x", opcode);
-	return 4;
-#endif
 }
+#endif /* MAME_DEBUG */
 
 static void arm_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
@@ -1482,7 +1479,9 @@ void arm_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = arm_exit;					break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = arm_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+#ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = arm_dasm;			break;
+#endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &arm_icount;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */

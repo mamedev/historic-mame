@@ -228,7 +228,7 @@ static const struct
 	{ 0xa0, 0x3c, "void putchar(char c)" },
 	{ 0xa0, 0x3d, "char *gets(char *s)" },
 	{ 0xa0, 0x3e, "void puts(const char *s)" },
-	{ 0xa0, 0x3f, "int mame_printf_debug(const char *fmt, ...)" },
+	{ 0xa0, 0x3f, "int printf(const char *fmt, ...)" },
 	{ 0xa0, 0x40, "sys_a0_40()" },
 	{ 0xa0, 0x41, "int LoadTest(const char *name, struct EXEC *header)" },
 	{ 0xa0, 0x42, "int Load(const char *name, struct EXEC *header)" },
@@ -2262,15 +2262,12 @@ static void set_irq_line( int irqline, int state )
  * Return a formatted string for a register
  ****************************************************************************/
 
+#ifdef MAME_DEBUG
 static offs_t mips_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
-#ifdef MAME_DEBUG
 	return DasmMIPS( buffer, pc, opram );
-#else
-	sprintf( buffer, "$%02X%02X%02X%02X", opram[ 3 ], opram[ 2 ], opram[ 1 ], opram[ 0 ] );
-	return 4;
-#endif
 }
+#endif /* MAME_DEBUG */
 
 /* preliminary gte code */
 
@@ -3478,7 +3475,9 @@ static void mips_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = mips_exit;					break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = mips_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+#ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = mips_dasm;			break;
+#endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &mips_ICount;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */

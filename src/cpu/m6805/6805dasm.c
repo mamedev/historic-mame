@@ -168,7 +168,7 @@ static char *opcode_strings[0x0100] =
 };
 #endif
 
-unsigned Dasm6805 (char *buf, unsigned pc, const UINT8 *oprom, const UINT8 *opram)
+offs_t m6805_dasm(char *buf, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	const char *sym1, *sym2;
     int code, bit;

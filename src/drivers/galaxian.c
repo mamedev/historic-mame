@@ -579,21 +579,22 @@ static ADDRESS_MAP_START( bagmanmc_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xb800, 0xb800) AM_WRITE(galaxian_pitch_w)
 ADDRESS_MAP_END
 
+static int latch;
 
-static ADDRESS_MAP_START( froggrmc_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x9000, 0x93ff) AM_WRITE(galaxian_videoram_w) AM_BASE(&galaxian_videoram)
-	AM_RANGE(0x9800, 0x983f) AM_WRITE(galaxian_attributesram_w) AM_BASE(&galaxian_attributesram)
-	AM_RANGE(0x9840, 0x985f) AM_WRITE(MWA8_RAM) AM_BASE(&galaxian_spriteram) AM_SIZE(&galaxian_spriteram_size)
-	AM_RANGE(0x9860, 0x98ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xa800, 0xa800) AM_WRITE(soundlatch_w)
-	AM_RANGE(0xb000, 0xb000) AM_WRITE(galaxian_nmi_enable_w)
-	AM_RANGE(0xb001, 0xb001) AM_WRITE(froggrmc_sh_irqtrigger_w)
-	AM_RANGE(0xb006, 0xb006) AM_WRITE(galaxian_flip_screen_x_w)
-	AM_RANGE(0xb007, 0xb007) AM_WRITE(galaxian_flip_screen_y_w)
-ADDRESS_MAP_END
+static WRITE8_HANDLER( zigzag_8910_latch_w )
+{
+	latch = offset;
+}
 
+static WRITE8_HANDLER( zigzag_8910_data_trigger_w )
+{
+	AY8910_write_port_0_w(0,latch);
+}
+
+static WRITE8_HANDLER( zigzag_8910_control_trigger_w )
+{
+	AY8910_control_port_0_w(0,latch);
+}
 
 static ADDRESS_MAP_START( zigzag_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
@@ -2739,46 +2740,6 @@ INPUT_PORTS_START( dkongjrm )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( froggrmc )
-	PORT_START_TAG("IN0")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_4WAY
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_4WAY
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_4WAY
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_4WAY
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SERVICE1 )
-
-	PORT_START_TAG("IN1")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_4WAY PORT_COCKTAIL
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_4WAY PORT_COCKTAIL
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_4WAY PORT_COCKTAIL
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_4WAY PORT_COCKTAIL
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Lives ) )
-	PORT_DIPSETTING(	0xc0, "3" )
-	PORT_DIPSETTING(	0x80, "5" )
-	PORT_DIPSETTING(	0x40, "7" )
-	PORT_DIPSETTING(	0x00, "256 (Cheat)")
-
-	PORT_START_TAG("IN2")
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(	0x01, DEF_STR( Upright ) )
-	PORT_DIPSETTING(	0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Coinage ) )
-	PORT_DIPSETTING(	0x02, "A 2/1 B 2/1 C 2/1" )
-	PORT_DIPSETTING(	0x04, "A 2/1 B 1/3 C 2/1" )
-	PORT_DIPSETTING(	0x06, "A 1/1 B 1/1 C 1/1" )
-	PORT_DIPSETTING(	0x00, "A 1/1 B 1/6 C 1/1" )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-INPUT_PORTS_END
-
 INPUT_PORTS_START( rockclim )
 
 	PORT_START_TAG("IN0")
@@ -3676,7 +3637,7 @@ static struct AY8910interface bongo_ay8910_interface =
 };
 
 
-MACHINE_DRIVER_START( galaxian_base )
+static MACHINE_DRIVER_START( galaxian_base )
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD_TAG("main", Z80, 18432000/6)	/* 3.072 MHz */
@@ -4075,34 +4036,6 @@ static MACHINE_DRIVER_START( dkongjrm )
 
 	/* video hardware */
 	MDRV_VIDEO_START(dkongjrm)
-MACHINE_DRIVER_END
-
-
-static MACHINE_DRIVER_START( froggrmc )
-
-	/* basic machine hardware */
-
-	MDRV_IMPORT_FROM(galaxian_base)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(mooncrst_readmem,froggrmc_writemem)
-
-	MDRV_CPU_ADD(Z80,14318000/8)
-	/* audio CPU */ /* 1.78975 MHz */
-	MDRV_CPU_PROGRAM_MAP(frogger_sound_readmem,frogger_sound_writemem)
-	MDRV_CPU_IO_MAP(frogger_sound_readport,frogger_sound_writeport)
-
-	MDRV_MACHINE_RESET(scramble)
-
-	/* video hardware */
-	MDRV_PALETTE_LENGTH(32+64+2+1)  /* 32 for characters, 64 for stars, 2 for bullets, 1 for background */
-
-	MDRV_PALETTE_INIT(frogger)
-	MDRV_VIDEO_START(froggers)
-
-	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, 14318000/8)
-	MDRV_SOUND_CONFIG(frogger_ay8910_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.33)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( rockclim )
@@ -5829,25 +5762,6 @@ ROM_START( dkongjrm )
 	ROM_LOAD( "hustler.clr",  0x0000, 0x0020, CRC(aa1f7f5e) SHA1(311dd17aa11490a1173c76223e4ccccf8ea29850) )
 ROM_END
 
-ROM_START( froggrmc )
-	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
-	ROM_LOAD( "epr-1031.15",  0x0000, 0x1000, CRC(4b7c8d11) SHA1(9200b33cac0ef5a6647c95ebd25237fa62fcdf30) )
-	ROM_LOAD( "epr-1032.16",  0x1000, 0x1000, CRC(ac00b9d9) SHA1(6414d2aa2c0ccb8cb567ffde3acdb693cfd28dbb) )
-	ROM_LOAD( "epr-1033.33",  0x2000, 0x1000, CRC(bc1d6fbc) SHA1(c9c040418f0bf7b7fce599592f806e7aaf448c3d) )
-	ROM_LOAD( "epr-1034.34",  0x3000, 0x1000, CRC(9efe7399) SHA1(77355160169db256f45286e60ebf6a406527d346) )
-
-	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
-	ROM_LOAD( "epr-1082.42",  0x0000, 0x1000, CRC(802843c2) SHA1(059b26ddf1cdc8076d160b872f9d50b97af7f316) )
-	ROM_LOAD( "epr-1035.43",  0x1000, 0x0800, CRC(14e74148) SHA1(0023394e971f191c41ff20b47835f1dafb924d15) )
-
-	ROM_REGION( 0x1000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "frogger.607",  0x0000, 0x0800, CRC(05f7d883) SHA1(78831fd287da18928651a8adb7e578d291493eff) )
-	ROM_LOAD( "epr-1036.1k",  0x0800, 0x0800, CRC(658745f8) SHA1(e4e5c3e011c8a7233a36d29e10e08905873500aa) )
-
-	ROM_REGION( 0x0020, REGION_PROMS, 0 )
-	ROM_LOAD( "pr-91.6l",     0x0000, 0x0020, CRC(413703bf) SHA1(66648b2b28d3dcbda5bdb2605d1977428939dd3c) )
-ROM_END
-
 ROM_START( rockclim )
 
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
@@ -6236,7 +6150,6 @@ GAME( 1981, frogg,    frogger,  frogg,    frogg,    0,        ROT90,  "bootleg",
 GAME( 1981, 4in1,     0,        4in1,     4in1,     4in1,     ROT90,  "Armenia / Food and Fun", "4 Fun in 1", GAME_IMPERFECT_SOUND | GAME_SUPPORTS_SAVE )
 GAME( 1982, bagmanmc, bagman,   bagmanmc, bagmanmc, 0,        ROT90,  "bootleg", "Bagman (Moon Cresta hardware)", GAME_WRONG_COLORS | GAME_SUPPORTS_SAVE )
 GAME( 1982, dkongjrm, dkongjr,  dkongjrm, dkongjrm, 0,        ROT90,  "bootleg", "Donkey Kong Jr. (Moon Cresta hardware)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND | GAME_SUPPORTS_SAVE )
-GAME( 1981, froggrmc, frogger,  froggrmc, froggrmc, froggers, ROT90,  "bootleg?", "Frogger (Moon Cresta hardware)", GAME_SUPPORTS_SAVE )
 GAME( 1981, rockclim, 0,        rockclim, rockclim, 0,	      ROT180, "Taito", "Rock Climber", GAME_SUPPORTS_SAVE )
 GAME( 1983, ozon1,    0,        ozon1,    ozon1,    0,	      ROT90,  "Proma", "Ozon I", GAME_SUPPORTS_SAVE )
 GAME( 1983, ladybugg, ladybug,  batman2,  ladybugg, ladybugg, ROT270, "bootleg", "Ladybug (bootleg on Galaxian hardware)", GAME_SUPPORTS_SAVE )

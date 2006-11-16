@@ -240,15 +240,12 @@ static int i86_execute(int num_cycles)
 }
 
 
+#ifdef MAME_DEBUG
 static offs_t i86_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
-#ifdef MAME_DEBUG
 	return i386_dasm_one(buffer, pc, oprom, 0, 0);
-#else
-	sprintf(buffer, "$%02X", oprom[0]);
-	return 1;
-#endif
 }
+#endif /* MAME_DEBUG */
 
 
 #if (HAS_I186 || HAS_I188)
@@ -297,16 +294,6 @@ static int i186_execute(int num_cycles)
 	I.extra_cycles = 0;
 
 	return num_cycles - i86_ICount;
-}
-
-static offs_t i186_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
-{
-#ifdef MAME_DEBUG
-	return i386_dasm_one(buffer, pc, oprom, 0, 0);
-#else
-	sprintf(buffer, "$%02X", oprom[0]);
-	return 1;
-#endif
 }
 
 #endif
@@ -425,16 +412,6 @@ static int v30_execute(int num_cycles)
 	I.extra_cycles = 0;
 
 	return num_cycles - i86_ICount;
-}
-
-static offs_t v30_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
-{
-#ifdef MAME_DEBUG
-	return i386_dasm_one(buffer, pc, oprom, 0, 0);
-#else
-	sprintf(buffer, "$%02X", oprom[0]);
-	return 1;
-#endif
 }
 
 #endif
@@ -559,7 +536,9 @@ void i86_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = i86_exit;					break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = i86_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+#ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = i86_dasm;			break;
+#endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &i86_ICount;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
@@ -641,7 +620,6 @@ void i186_get_info(UINT32 state, union cpuinfo *info)
 	{
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_EXECUTE:						info->execute = i186_execute;			break;
-		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = i186_dasm;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "I80186"); break;
@@ -665,7 +643,6 @@ void i188_get_info(UINT32 state, union cpuinfo *info)
 	{
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_EXECUTE:						info->execute = i186_execute;			break;
-		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = i186_dasm;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "I80188"); break;
@@ -737,7 +714,6 @@ void v30_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INIT:							info->init = v30_init;					break;
 		case CPUINFO_PTR_RESET:							info->reset = v30_reset;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = v30_execute;			break;
-		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = v30_dasm;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "V30"); break;
@@ -783,7 +759,6 @@ void v33_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INIT:							info->init = v33_init;					break;
 		case CPUINFO_PTR_RESET:							info->reset = v33_reset;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = v33_execute;			break;
-		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = v33_dasm;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "V33"); break;

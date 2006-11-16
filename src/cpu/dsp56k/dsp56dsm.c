@@ -82,7 +82,7 @@ static void AssembleAddressFromIOShortAddress(UINT16 pp, char *ea) ;
 static void AssembleAddressFrom6BitSignedRelativeShortAddress(UINT16 srs, char *ea) ;
 
 // Main disassembly function
-unsigned dasm_dsp56k(char *buffer, unsigned pc, const UINT8 *oprom)
+offs_t dsp56k_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	UINT16 op = oprom[0] | (oprom[1] << 8);
 	unsigned size = 0 ;

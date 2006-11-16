@@ -443,7 +443,7 @@ struct _input_port_entry
 								/* the key. This is useful e.g. for some coin inputs. */
 								/* The number of frames the signal should stay active */
 								/* is specified in the "arg" field. */
-	UINT8		four_way;		/* Joystick modes of operation. 8WAY is the default, */
+	UINT8		way;			/* Joystick modes of operation. 8WAY is the default, */
 								/* it prevents left/right or up/down to be pressed at */
 								/* the same time. 4WAY prevents diagonal directions. */
 								/* 2WAY should be used for joysticks wich move only */
@@ -571,13 +571,16 @@ struct _input_port_entry
 #define PORT_CODE_INC(code)	PORT_CODE_SEQ(code,analog.incseq,2)
 
 #define PORT_2WAY													\
-	port->four_way = FALSE;											\
+	port->way = 2;													\
 
 #define PORT_4WAY													\
-	port->four_way = TRUE;											\
+	port->way = 4;													\
 
 #define PORT_8WAY													\
-	port->four_way = FALSE;											\
+	port->way = 8;													\
+
+#define PORT_16WAY													\
+	port->way = 16;													\
 
 #define PORT_PLAYER(player_)										\
 	port->player = (player_) - 1;									\

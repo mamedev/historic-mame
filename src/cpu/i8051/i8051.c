@@ -1591,16 +1591,6 @@ void i8051_state_load(void *file)
 {
 }
 
-offs_t i8051_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
-{
-#ifdef MAME_DEBUG
-	return Dasm8051( buffer, pc, oprom, opram );
-#else
-	sprintf( buffer, "$%02X", oprom[0] );
-	return 1;
-#endif
-}
-
 /* HELPER FUNCTIONS */
 
 /*All writes to SFR are handled here*/
@@ -2300,15 +2290,6 @@ const char *i8752_info(void *context, int regnum)
 	return i8051_info(context,regnum);
 }
 #endif
-offs_t i8752_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
-{
-#ifdef MAME_DEBUG
-	return Dasm8051(buffer,pc,oprom,opram);
-#else
-	sprintf( buffer, "$%02X", oprom[0] );
-	return 1;
-#endif
-}
 
 /* The following two handlers are used by the MAME Debugger Memory Window...
    By keeping these functions separate from the internally used IRAM_W/IRAM_R functions,
@@ -2464,7 +2445,9 @@ void i8051_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:						info->exit = i8051_exit;		break;
 		case CPUINFO_PTR_EXECUTE:					info->execute = i8051_execute;		break;
 		case CPUINFO_PTR_BURN:						info->burn = NULL;			break;
+#ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:						info->disassemble = i8051_dasm;		break;
+#endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:				info->icount = &i8051_icount;		break;
 
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM: info->internal_map = 0; break;

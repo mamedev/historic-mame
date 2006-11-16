@@ -344,7 +344,7 @@ INLINE unsigned int read_16_immediate(void)
 	return result | (*rombase++ << 8);
 }
 
-int spc700_disassemble(char* buff, unsigned int pc, const UINT8 *oprom)
+offs_t spc700_dasm(char *buff, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	opcode_struct* opcode;
 	UINT32 flags = 0;

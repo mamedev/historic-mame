@@ -603,7 +603,7 @@ static int load_files(int i, int *found, const char *path)
 		}
 
 		/* load all files in zip file */
-		for (zipent = zip_file_first_file(zip); zip != NULL; zipent = zip_file_next_file(zip))
+		for (zipent = zip_file_first_file(zip); zipent != NULL; zipent = zip_file_next_file(zip))
 		{
 			int size;
 

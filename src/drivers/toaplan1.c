@@ -15,8 +15,9 @@ Supported games:
     --------------------------------------------------
     rallybik    TP-012      Rally Bike/Dash Yarou
     truxton     TP-013B     Truxton/Tatsujin
-    hellfire    TP-???      HellFire (2 Player version)
-    hellfir1    TP-???      HellFire (1 Player version)
+    hellfire    B90         HellFire (2 Player version) Uses Taito rom ID number
+    hellfir1    B90         HellFire (1 Player version) Uses Taito rom ID number
+    hellfir2    B90         HellFire (2 Player, ealier version) Uses Taito rom ID number
     zerowing    TP-015      Zero Wing
     demonwld    TP-016      Demon's World/Horror Story [1990]
     demonwl1    TP-016      Demon's World/Horror Story [1989] (Taito license)
@@ -1988,6 +1989,31 @@ ROM_START( hellfir1 )
 	ROM_LOAD( "6b.bpr",     0x20, 0x20, CRC(a1e17492) SHA1(9ddec4c97f2d541f69f3c32c47aaa21fd9699ae2) )	/* ??? */
 ROM_END
 
+ROM_START( hellfir2 )/* Original version, by rom numbers (IE: 01 & 02) */
+	ROM_REGION( 0x040000, REGION_CPU1, 0 )	/* Main 68K code */
+	ROM_LOAD16_BYTE( "b90_01.0",   0x000000, 0x20000, CRC(c94acf53) SHA1(5710861dbe976fe53b93d3428147d1ce7aaae18a) ) /* Territory block seems to have no effect and it's licensed */
+	ROM_LOAD16_BYTE( "b90_02.1",   0x000001, 0x20000, CRC(d17f03c3) SHA1(ac41e6c29aa507872caeeaec6a3bc24c705a3702) ) /* to "Taito Corp." the later set shows "Taito Corporation" */
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* Sound Z80 code */
+	ROM_LOAD( "b90_03x.2",  0x0000, 0x8000, CRC(f58c368f) SHA1(2ee5396a4b70a3374f3a3bbd791b1d962f6a8a52) )
+
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "b90_04.3",   0x00000, 0x20000, CRC(ea6150fc) SHA1(1116947d10ce14fbc6a3b86368fc2024c6f51803) )
+	ROM_LOAD( "b90_05.4",   0x20000, 0x20000, CRC(bb52c507) SHA1(b0b1821476647f10c7023f92a66a7f54b92f50c3) )
+	ROM_LOAD( "b90_06.5",   0x40000, 0x20000, CRC(cf5b0252) SHA1(e2102967af61afb11d2290a40d13d2faf9ef1e12) )
+	ROM_LOAD( "b90_07.6",   0x60000, 0x20000, CRC(b98af263) SHA1(54d636a50a41dbb58b54c22dfab3eabfdb452575) )
+
+	ROM_REGION( 0x80000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "b90_11.10",  0x00000, 0x20000, CRC(c33e543c) SHA1(b85cba30cc651f820aeedd41e04584df92078ed9) )
+	ROM_LOAD( "b90_10.9",   0x20000, 0x20000, CRC(35fd1092) SHA1(5e136a35eea45034ccd4aea52cc0ffeec944e27e) )
+	ROM_LOAD( "b90_09.8",   0x40000, 0x20000, CRC(cf01009e) SHA1(e260c479fa97f23a65c220e5071aaf2dc2baf46d) )
+	ROM_LOAD( "b90_08.7",   0x60000, 0x20000, CRC(3404a5e3) SHA1(f717b9e31c2a093dbb060b8ea54a8c3f52688d7a) )
+
+	ROM_REGION( 0x40, REGION_PROMS, 0 )		/* nibble bproms, lo/hi order to be determined */
+	ROM_LOAD( "3w.bpr",     0x00, 0x20, CRC(bc88cced) SHA1(5055362710c0f58823c05fb4c0e0eec638b91e3d) )	/* sprite attribute (flip/position) ?? */
+	ROM_LOAD( "6b.bpr",     0x20, 0x20, CRC(a1e17492) SHA1(9ddec4c97f2d541f69f3c32c47aaa21fd9699ae2) )	/* ??? */
+ROM_END
+
 ROM_START( zerowing )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )	/* Main 68K code */
 	ROM_LOAD16_BYTE( "o15-11.rom",  0x000000, 0x08000, CRC(6ff2b9a0) SHA1(c9f2a631f185689dfc42a451d85fac23c2f4b64b) )
@@ -2402,8 +2428,9 @@ DRIVER_INIT( vimana )
 
 GAME( 1988, rallybik, 0,        rallybik, rallybik, toaplan1, ROT270, "[Toaplan] Taito Corporation", "Rally Bike / Dash Yarou", 0 )
 GAME( 1988, truxton,  0,        truxton,  truxton,  toaplan1, ROT270, "[Toaplan] Taito Corporation", "Truxton / Tatsujin", 0 )
-GAME( 1989, hellfire, 0,        hellfire, hellfire, toaplan1, ROT0,   "Toaplan (Taito license)", "Hellfire", 0 )
+GAME( 1989, hellfire, 0,        hellfire, hellfire, toaplan1, ROT0,   "Toaplan (Taito license)", "Hellfire (2P Ver.)", 0 )
 GAME( 1989, hellfir1, hellfire, hellfire, hellfir1, toaplan1, ROT0,   "Toaplan (Taito license)", "Hellfire (1P Ver.)", 0 )
+GAME( 1989, hellfir2, hellfire, hellfire, hellfire, toaplan1, ROT0,   "Toaplan (Taito license)", "Hellfire (2P Ver., first edition)", 0 )
 GAME( 1989, zerowing, 0,        zerowing, zerowing, toaplan1, ROT0,   "Toaplan", "Zero Wing", 0 )
 GAME( 1990, demonwld, 0,        demonwld, demonwld, demonwld, ROT0,   "Toaplan", "Demon's World / Horror Story", 0 )
 GAME( 1989, demonwl1, demonwld, demonwld, demonwl1, demonwld, ROT0,   "Toaplan (Taito license)", "Demon's World / Horror Story (Taito license)", 0 )

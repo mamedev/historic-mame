@@ -1400,28 +1400,6 @@ void spc700_state_load(void *file)
 #ifdef MAME_DEBUG
 #include "spc700ds.h"
 #endif
-/* Disassemble an instruction */
-unsigned spc700_dasm(char *buffer, unsigned pc)
-{
-#ifdef MAME_DEBUG
-	return spc700_disassemble(buffer, pc, NULL);
-#else
-//  sprintf(buffer, "$%02X", read_8_instruction(pc));
-	return 1;
-#endif
-}
-
-
-/* Disassemble an instruction */
-static offs_t mame_spc700_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
-{
-#ifdef MAME_DEBUG
-	return spc700_disassemble(buffer, pc, oprom);
-#else
-//  sprintf(buffer, "$%02X", read_8_instruction(pc));
-	return 1;
-#endif
-}
 
 //int dump_flag = 0;
 
@@ -1811,7 +1789,9 @@ void spc700_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = spc700_exit;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = spc700_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
-		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = mame_spc700_dasm;	break;
+#ifdef MAME_DEBUG
+		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = spc700_dasm;		break;
+#endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &spc700_ICount;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */

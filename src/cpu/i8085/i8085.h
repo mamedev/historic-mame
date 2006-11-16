@@ -51,7 +51,7 @@ void i8080_get_info(UINT32 state, union cpuinfo *info);
 #endif
 
 #ifdef	MAME_DEBUG
-extern unsigned Dasm8085(char *buffer, unsigned pc, const UINT8 *oprom, const UINT8 *opram);
+offs_t i8085_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
 #endif
 
 #endif

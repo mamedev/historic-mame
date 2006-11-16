@@ -6,7 +6,10 @@
 #include "sharc.h"
 #include "debugger.h"
 
+#ifdef MAME_DEBUG
 static offs_t sharc_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
+#endif /* MAME_DEBUG */
+
 static void sharc_dma_exec(int channel);
 static void check_interrupts(void);
 
@@ -392,6 +395,7 @@ void sharc_external_dma_write(UINT32 address, UINT64 data)
 	}
 }
 
+#ifdef MAME_DEBUG
 static offs_t sharc_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	UINT64 op = 0;
@@ -401,14 +405,10 @@ static offs_t sharc_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT
 		 ((UINT64)oprom[2] << 16) | ((UINT64)oprom[3] << 24) |
 		 ((UINT64)oprom[4] << 32) | ((UINT64)oprom[5] << 40);
 
-#ifdef MAME_DEBUG
 	flags = sharc_dasm_one(buffer, pc, op);
-#else
-	sprintf(buffer, "$%04X%08X", (UINT32)((op >> 32) & 0xffff), (UINT32)(op));
-#endif
-
 	return 1 | flags | DASMFLAG_SUPPORTED;
 }
+#endif /* MAME_DEBUG */
 
 
 static void sharc_init(int index, int clock, const void *config, int (*irqcallback)(int))
@@ -940,7 +940,9 @@ void sharc_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = sharc_exit;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = sharc_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+#ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = sharc_dasm;			break;
+#endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &sharc_icount;			break;
 		case CPUINFO_PTR_READ:							info->read = sharc_debug_read;			break;
 		case CPUINFO_PTR_READOP:						info->readop = sharc_debug_readop;		break;

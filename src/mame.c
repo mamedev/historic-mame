@@ -1565,6 +1565,7 @@ static void get_tm_time(struct tm *t, mame_system_tm *systm)
 	systm->minute	= t->tm_min;
 	systm->hour		= t->tm_hour;
 	systm->mday		= t->tm_mday;
+	systm->month	= t->tm_mon;
 	systm->year		= t->tm_year + 1900;
 	systm->weekday	= t->tm_wday;
 	systm->day		= t->tm_yday;

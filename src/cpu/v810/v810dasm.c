@@ -28,7 +28,7 @@ const static char *dRegs[]={
 #define GET2s(opcode) dRegs[((opcode)>>5)&0x1f]
 #define GETRs(opcode) dRegs[32+((opcode)&0x1f)]
 
-unsigned v810_disasm( char *buffer, UINT32 oldpc, const UINT8 *oprom )
+offs_t v810_dasm(char *buffer, offs_t oldpc, const UINT8 *oprom, const UINT8 *opram)
 {
 	UINT32 flags = 0;
 	UINT32 opc,opc2;

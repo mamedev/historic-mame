@@ -201,18 +201,18 @@ shadow bit?
 
  */
 
-static void draw_sprites( mame_bitmap *bitmap)
+static void draw_sprites( mame_bitmap *bitmap )
 {
 	int count = 0;
 
-	const UINT16 *source = 0x1800+buffered_spriteram16 + 0x800 -4;
+	const UINT16 *source = 0x1800+buffered_spriteram16 + 0x800 - 4;
 	const UINT16 *finish = 0x1800+buffered_spriteram16;
 
-	while( source>=finish ){
+	for (; source >= finish; source -= 4) {
 		UINT16 attributes = source[3];
 		UINT16 code = source[0];
 
-		if( code!=0xffff && (attributes&0x8000)){
+		if((code!=0xffff) && (attributes&0x8000)) {
 			int xpos = source[1];
 			int ypos = source[2];
 
@@ -223,7 +223,7 @@ static void draw_sprites( mame_bitmap *bitmap)
 			int flipy = attributes&0x0200;
 			int flipx = attributes&0x0100;
 
-			if( twin16_custom_vidhrdw == 1 ){
+			if( twin16_custom_vidhrdw == 1 ) {
 				pen_data = twin16_gfx_rom + 0x80000;
 			}
 			else {
@@ -284,7 +284,6 @@ static void draw_sprites( mame_bitmap *bitmap)
 		}
 
 		count++;
-		source -= 4;
 	}
 }
 
@@ -549,6 +548,16 @@ VIDEO_UPDATE( twin16 )
 	draw_layer( bitmap,1 );
 	draw_layer( bitmap,0 );
 	draw_sprites( bitmap );
+	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
+	return 0;
+}
+
+VIDEO_UPDATE( vulcan )
+{
+	fillbitmap(priority_bitmap,0,cliprect);
+	draw_layer( bitmap,1 );
+	draw_sprites( bitmap );
+	draw_layer( bitmap,0 );
 	tilemap_draw(bitmap, cliprect, fg_tilemap, 0, 0);
 	return 0;
 }

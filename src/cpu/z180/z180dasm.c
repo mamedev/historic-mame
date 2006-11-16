@@ -577,7 +577,7 @@ static int offs(INT8 offset)
 /****************************************************************************
  * Disassemble opcode at PC and return number of bytes it takes
  ****************************************************************************/
-unsigned DasmZ180( char *buffer, unsigned pc, const UINT8 *oprom, const UINT8 *opram )
+offs_t z180_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	z80dasm *d;
 	const char *symbol, *src;

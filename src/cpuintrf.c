@@ -169,6 +169,7 @@ void alpha8301_get_info(UINT32 state, union cpuinfo *info);
 void cdp1802_get_info(UINT32 state, union cpuinfo *info);
 void cop420_get_info(UINT32 state, union cpuinfo *info);
 void cop410_get_info(UINT32 state, union cpuinfo *info);
+void cop411_get_info(UINT32 state, union cpuinfo *info);
 
 #ifdef MESS
 void apexc_get_info(UINT32 state, union cpuinfo *info);
@@ -1248,6 +1249,7 @@ offs_t activecpu_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *
 	int bytes = (shift < 0) ? ((result & DASMFLAG_LENGTHMASK) << -shift) : ((result & DASMFLAG_LENGTHMASK) >> shift);
 	assert(bytes >= activecpu_min_instruction_bytes());
 	assert(bytes <= activecpu_max_instruction_bytes());
+	(void) bytes; /* appease compiler */
 }
 #endif
 

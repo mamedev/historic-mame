@@ -23,7 +23,8 @@
 #include "debug/eainfo.h"
 #include "z80.h"
 
-enum e_mnemonics {
+enum e_mnemonics
+{
 	zADC  ,zADD  ,zAND	,zBIT  ,zCALL ,zCCF  ,zCP	,zCPD  ,
 	zCPDR ,zCPI  ,zCPIR ,zCPL  ,zDAA  ,zDB	 ,zDEC	,zDI   ,
 	zDJNZ ,zEI	 ,zEX	,zEXX  ,zHLT  ,zIM	 ,zIN	,zINC  ,
@@ -35,7 +36,8 @@ enum e_mnemonics {
 	zSLL  ,zSRA  ,zSRL	,zSUB  ,zXOR
 };
 
-static const char *s_mnemonic[] = {
+static const char *s_mnemonic[] =
+{
 	"adc", "add", "and", "bit", "call","ccf", "cp",  "cpd",
 	"cpdr","cpi", "cpir","cpl", "daa", "db",  "dec", "di",
 	"djnz","ei",  "ex",  "exx", "halt","im",  "in",  "inc",
@@ -50,7 +52,8 @@ static const char *s_mnemonic[] = {
 #define _OVER DASMFLAG_STEP_OVER
 #define _OUT  DASMFLAG_STEP_OUT
 
-static const UINT32 s_flags[] = {
+static const UINT32 s_flags[] =
+{
 	0    ,0    ,0    ,0    ,_OVER,0    ,0    ,0    ,
 	_OVER,0    ,_OVER,0    ,0    ,0    ,0    ,0    ,
 	_OVER,0    ,0    ,0    ,_OVER,0    ,0    ,0    ,
@@ -62,7 +65,8 @@ static const UINT32 s_flags[] = {
 	0    ,0    ,0    ,0    ,0
 };
 
-typedef struct {
+typedef struct
+{
 	UINT8	access;
 	UINT8	mnemonic;
 	const char *arguments;
@@ -77,7 +81,8 @@ typedef struct {
 #define _RP EA_PORT_RD
 #define _WP EA_PORT_WR
 
-static const z80dasm mnemonic_xx_cb[256]= {
+static const z80dasm mnemonic_xx_cb[256] =
+{
 	{_RW,zRLC,"b=Y"},   {_RW,zRLC,"c=Y"},   {_RW,zRLC,"d=Y"},   {_RW,zRLC,"e=Y"},
 	{_RW,zRLC,"h=Y"},   {_RW,zRLC,"l=Y"},   {_RW,zRLC,"Y"},     {_RW,zRLC,"a=Y"},
 	{_RW,zRRC,"b=Y"},   {_RW,zRRC,"c=Y"},   {_RW,zRRC,"d=Y"},   {_RW,zRRC,"e=Y"},
@@ -211,7 +216,8 @@ static const z80dasm mnemonic_cb[256] = {
 	{_0, zSET,"7,h"},   {_0, zSET,"7,l"},   {_WM,zSET,"7,(hl)"},{_0, zSET,"7,a"}
 };
 
-static const z80dasm mnemonic_ed[256]= {
+static const z80dasm mnemonic_ed[256] =
+{
 	{_0, zDB,"?"},      {_0, zDB,"?"},      {_0, zDB,"?"},      {_0, zDB,"?"},
 	{_0, zDB,"?"},      {_0, zDB,"?"},      {_0, zDB,"?"},      {_0, zDB,"?"},
 	{_0, zDB,"?"},      {_0, zDB,"?"},      {_0, zDB,"?"},      {_0, zDB,"?"},
@@ -278,7 +284,8 @@ static const z80dasm mnemonic_ed[256]= {
 	{_0, zDB,"?"},      {_0, zDB,"?"},      {_0, zDB,"?"},      {_0, zDB,"?"}
 };
 
-static const z80dasm mnemonic_xx[256]= {
+static const z80dasm mnemonic_xx[256] =
+{
 	{_0, zDB,"?"},      {_0, zDB,"?"},      {_0, zDB,"?"},      {_0, zDB,"?"},
 	{_0, zDB,"?"},      {_0, zDB,"?"},      {_0, zDB,"?"},      {_0, zDB,"?"},
 	{_0, zDB,"?"},      {_0, zADD,"I,bc"},  {_0, zDB,"?"},      {_0, zDB,"?"},
@@ -345,7 +352,8 @@ static const z80dasm mnemonic_xx[256]= {
 	{_0, zDB,"?"},      {_0, zDB,"?"},      {_0, zDB,"?"},      {_0, zDB,"?"}
 };
 
-static const z80dasm mnemonic_main[256]= {
+static const z80dasm mnemonic_main[256] =
+{
 	{_0, zNOP,0},		{_0, zLD,"bc,N"},   {_WM,zLD,"(bc),a"}, {_0, zINC,"bc"},
 	{_0, zINC,"b"},     {_0, zDEC,"b"},     {_0, zLD,"b,B"},    {_0, zRLCA,0},
 	{_0, zEX,"af,af'"}, {_0, zADD,"hl,bc"}, {_RM,zLD,"a,(bc)"}, {_0, zDEC,"bc"},
@@ -414,7 +422,7 @@ static const z80dasm mnemonic_main[256]= {
 
 static char sign(INT8 offset)
 {
- return (offset < 0)? '-':'+';
+	return (offset < 0)? '-':'+';
 }
 
 static int offs(INT8 offset)
@@ -428,7 +436,7 @@ static int offs(INT8 offset)
  ****************************************************************************/
 unsigned z80_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
-    const z80dasm *d;
+	const z80dasm *d;
 	const char *symbol, *src;
 	const char *ixy;
 	char *dst;
@@ -442,17 +450,17 @@ unsigned z80_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opra
 	symbol = NULL;
 
 	op = oprom[pos++];
-    op1 = 0; /* keep GCC happy */
+	op1 = 0; /* keep GCC happy */
 
-    switch (op)
+	switch (op)
 	{
 	case 0xcb:
 		op = oprom[pos++];
-        d = &mnemonic_cb[op];
+		d = &mnemonic_cb[op];
 		break;
 	case 0xed:
 		op1 = oprom[pos++];
-        d = &mnemonic_ed[op1];
+ 		d = &mnemonic_ed[op1];
 		break;
 	case 0xdd:
 		ixy = "ix";
@@ -464,7 +472,7 @@ unsigned z80_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opra
 			d = &mnemonic_xx_cb[op1];
 		}
 		else d = &mnemonic_xx[op1];
-        break;
+		break;
 	case 0xfd:
 		ixy = "iy";
 		op1 = oprom[pos++];
@@ -475,13 +483,13 @@ unsigned z80_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opra
 			d = &mnemonic_xx_cb[op1];
 		}
 		else d = &mnemonic_xx[op1];
-        break;
+		break;
 	default:
 		d = &mnemonic_main[op];
 		break;
 	}
 
-    if( d->arguments )
+	if( d->arguments )
 	{
 		dst += sprintf(dst, "%-4s ", s_mnemonic[d->mnemonic]);
 		src = d->arguments;
@@ -497,21 +505,21 @@ unsigned z80_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opra
 				pos += 2;
 				symbol = set_ea_info(0, ea, EA_UINT16, d->access);
 				dst += sprintf( dst, "%s", symbol );
-                break;
-            case 'B':   /* Byte op arg */
+				break;
+			case 'B':   /* Byte op arg */
 				ea = opram[pos++];
 				symbol = set_ea_info(1, ea, EA_UINT8, EA_VALUE);
 				dst += sprintf( dst, "%s", symbol );
 				break;
 			case '(':   /* Memory byte at (HL) */
-                *dst++ = *src;
-                break;
+				*dst++ = *src;
+				break;
 			case 'N':   /* Immediate 16 bit */
 				ea = opram[pos+0] + ( opram[pos+1] << 8 );
 				pos += 2;
 				symbol = set_ea_info(1, ea, EA_UINT16, EA_VALUE );
 				dst += sprintf( dst, "%s", symbol );
-                break;
+				break;
 			case 'O':   /* Offset relative to PC */
 				offset = (INT8) opram[pos++];
 				symbol = set_ea_info(0, pc, offset + 2, d->access);
@@ -520,8 +528,8 @@ unsigned z80_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opra
 			case 'P':   /* Port number */
 				ea = opram[pos++];
 				dst += sprintf( dst, "$%02X", ea );
-                break;
-            case 'V':   /* Restart vector */
+				break;
+			case 'V':   /* Restart vector */
 				ea = op & 0x38;
 				symbol = set_ea_info(0, ea, EA_UINT8, d->access);
 				dst += sprintf( dst, "%s", symbol );
@@ -534,7 +542,8 @@ unsigned z80_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opra
 				break;
 			case 'X':
 				offset = (INT8) opram[pos++];
-            case 'Y':
+				/* fall through */
+			case 'Y':
 				dst += sprintf( dst,"(%s%c$%02x)", ixy, sign(offset), offs(offset) );
 				break;
 			case 'I':
@@ -550,7 +559,7 @@ unsigned z80_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opra
 	else
 	{
 		dst += sprintf(dst, "%s", s_mnemonic[d->mnemonic]);
-    }
+	}
 
-    return pos | s_flags[d->mnemonic] | DASMFLAG_SUPPORTED;
+	return pos | s_flags[d->mnemonic] | DASMFLAG_SUPPORTED;
 }

@@ -914,15 +914,12 @@ static void set_irq_line(int irqline, int state)
 	}
 }
 
+#ifdef MAME_DEBUG
 static offs_t nec_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
-#ifdef MAME_DEBUG
 	return necv_dasm_one(buffer, pc, oprom, 0, 0);
-#else
-	sprintf( buffer, "$%02X", *oprom );
-	return 1;
-#endif
 }
+#endif /* MAME_DEBUG */
 
 static void nec_init(int index, int clock, const void *config, int (*irqcallback)(int), int type)
 {
@@ -1157,7 +1154,9 @@ void nec_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = nec_exit;					break;
 		case CPUINFO_PTR_EXECUTE:						/* set per-CPU */						break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+#ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = nec_dasm;			break;
+#endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &nec_ICount;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */

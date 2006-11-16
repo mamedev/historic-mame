@@ -11,7 +11,7 @@
 #include "ccpu.h"
 
 
-offs_t DasmCCPU(char *buffer, offs_t pc, const UINT8 *oprom)
+offs_t ccpu_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	unsigned startpc = pc;
 	UINT8 opcode = oprom[pc++ - startpc];

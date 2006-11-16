@@ -140,7 +140,7 @@ static const unsigned char op6280[512]=
 /*****************************************************************************
  *  Disassemble a single command and return the number of bytes it uses.
  *****************************************************************************/
-int Dasm6280(char *buffer, int pc, const UINT8 *oprom, const UINT8 *opram)
+offs_t h6280_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	UINT32 flags = 0;
 	int PC, OP, opc, arg;

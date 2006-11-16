@@ -49,7 +49,7 @@ void v810_get_info(UINT32, union cpuinfo*);
 #define SUB(dst, src)		{ UINT64 res=(UINT64)(dst)-(INT64)(src); SetCF(res); SetOF_Sub(res,src,dst); SetSZPF(res); dst=(UINT32)res; }
 
 #ifdef MAME_DEBUG
-extern unsigned 			v810_disasm( char *pBuf, UINT32 pc, const UINT8 *oprom );
+offs_t v810_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
 #endif
 
 enum

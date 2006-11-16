@@ -257,7 +257,7 @@ static void dasm_group_bf(UINT16 opcode)
 	}
 }
 
-int tms32051_dasm_one(char *buffer, offs_t pc, const UINT8 *oprom)
+offs_t tms32051_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	UINT32 flags = 0;
 	UINT16 opcode;

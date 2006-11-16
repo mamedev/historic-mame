@@ -31,6 +31,9 @@
     FUNCTION PROTOTYPES
 ***************************************************************************/
 
+static chd_error chdman_compress_file(chd_file *chd, const char *rawfile, UINT32 offset);
+static chd_error chdman_compress_chd(chd_file *chd, chd_file *source, UINT32 totalhunks);
+
 static chd_interface_file *chdman_open(const char *filename, const char *mode);
 static void chdman_close(chd_interface_file *file);
 static UINT32 chdman_read(chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer);
@@ -52,16 +55,6 @@ static chd_interface chdman_interface =
 	chdman_length
 };
 
-static chd_file *special_chd;
-static UINT64 special_logicalbytes;
-static UINT64 special_original_logicalbytes;
-static UINT64 special_bytes_checksummed;
-static UINT32 special_error_count;
-static struct MD5Context special_md5;
-static struct sha1_ctx special_sha1;
-
-#define SPECIAL_CHD_NAME "??SPECIALCHD??"
-
 static const char *error_strings[] =
 {
 	"no error",
@@ -81,12 +74,15 @@ static const char *error_strings[] =
 	"decompression error",
 	"compression error",
 	"can't create file",
-	"can't verify file"
+	"can't verify file",
 	"operation not supported",
 	"can't find metadata",
 	"invalid metadata size",
-	"unsupported CHD version"
+	"unsupported CHD version",
+	"incomplete verify"
 };
+
+static clock_t lastprogress = 0;
 
 
 
@@ -117,7 +113,7 @@ void print_big_int(UINT64 intvalue, char *output)
 
 	chunk = intvalue % 1000;
 	intvalue /= 1000;
-	if (intvalue)
+	if (intvalue != 0)
 	{
 		print_big_int(intvalue, output);
 		strcat(output, ",");
@@ -145,9 +141,15 @@ char *big_int_string(UINT64 intvalue)
     progress - generic progress callback
 -------------------------------------------------*/
 
-static void progress(const char *fmt, ...)
+static void progress(int forceit, const char *fmt, ...)
 {
+	clock_t curtime = clock();
 	va_list arg;
+
+	/* skip if it hasn't been long enough */
+	if (!forceit && curtime - lastprogress < CLOCKS_PER_SEC / 2)
+		return;
+	lastprogress = curtime;
 
 	/* standard vfprintf stuff here */
 	va_start(arg, fmt);
@@ -174,12 +176,13 @@ static const char *error_string(int err)
 
 
 /*-------------------------------------------------
-    error - generic usage error display
+    usage - generic usage error display
 -------------------------------------------------*/
 
-static void error(void)
+static void usage(void)
 {
 	printf("usage: chdman -info input.chd\n");
+	printf("   or: chdman -createraw inputhd.raw output.chd [inputoffs [hunksize]]\n");
 	printf("   or: chdman -createhd inputhd.raw output.chd [inputoffs [cylinders heads sectors [sectorsize [hunksize]]]]\n");
 	printf("   or: chdman -createblankhd output.chd cylinders heads sectors [sectorsize [hunksize]]\n");
 	printf("   or: chdman -createcd input.toc output.chd\n");
@@ -210,101 +213,8 @@ void CLIB_DECL fatalerror(const char *text,...)
 	vfprintf(stderr, text, arg);
 	va_end(arg);
 
-	exit(-1);
+	exit(1);
 }
-
-
-/*-------------------------------------------------
-    special_chd_init - set up a CHD file as a
-    "fake" raw file for input
--------------------------------------------------*/
-
-static void special_chd_init(chd_file *chd, UINT64 logicalbytes)
-{
-	/* set the input chd and logical bytes */
-	special_chd = chd;
-	special_original_logicalbytes = chd_get_header(chd)->logicalbytes;
-	special_logicalbytes = logicalbytes ? logicalbytes : special_original_logicalbytes;
-
-	/* init the checksums */
-	special_error_count = 0;
-	special_bytes_checksummed = 0;
-	MD5Init(&special_md5);
-	sha1_init(&special_sha1);
-}
-
-
-/*-------------------------------------------------
-    special_chd_finished - finish using a CHD
-    file as a "fake" raw file for input
--------------------------------------------------*/
-
-static void special_chd_finished(void)
-{
-	static const UINT8 empty_checksum[CHD_SHA1_BYTES] = { 0 };
-	const chd_header *header = chd_get_header(special_chd);
-	UINT8 final_sha1[CHD_SHA1_BYTES];
-	UINT8 final_md5[CHD_MD5_BYTES];
-
-	/* finish the checksums */
-	MD5Final(final_md5, &special_md5);
-	sha1_final(&special_sha1);
-	sha1_digest(&special_sha1, SHA1_DIGEST_SIZE, final_sha1);
-
-	/* we can only compare if we've checksummed all the logical bytes */
-	if (special_bytes_checksummed == special_original_logicalbytes)
-	{
-		/* check the MD5 */
-		if (memcmp(header->md5, empty_checksum, CHD_MD5_BYTES))
-		{
-			if (memcmp(header->md5, final_md5, CHD_MD5_BYTES))
-			{
-				printf("WARNING: expected input MD5 = %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x\n",
-						header->md5[0], header->md5[1], header->md5[2], header->md5[3],
-						header->md5[4], header->md5[5], header->md5[6], header->md5[7],
-						header->md5[8], header->md5[9], header->md5[10], header->md5[11],
-						header->md5[12], header->md5[13], header->md5[14], header->md5[15]);
-				printf("                 actual MD5 = %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x\n",
-						final_md5[0], final_md5[1], final_md5[2], final_md5[3],
-						final_md5[4], final_md5[5], final_md5[6], final_md5[7],
-						final_md5[8], final_md5[9], final_md5[10], final_md5[11],
-						final_md5[12], final_md5[13], final_md5[14], final_md5[15]);
-			}
-			else
-				printf("Input MD5 verified\n");
-		}
-
-		/* check the SHA1 */
-		if (memcmp(header->sha1, empty_checksum, CHD_SHA1_BYTES))
-		{
-			if (memcmp(header->sha1, final_sha1, CHD_SHA1_BYTES))
-			{
-				printf("WARNING: expected input SHA1 = %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x\n",
-						header->sha1[0], header->sha1[1], header->sha1[2], header->sha1[3],
-						header->sha1[4], header->sha1[5], header->sha1[6], header->sha1[7],
-						header->sha1[8], header->sha1[9], header->sha1[10], header->sha1[11],
-						header->sha1[12], header->sha1[13], header->sha1[14], header->sha1[15],
-						header->sha1[16], header->sha1[17], header->sha1[18], header->sha1[19]);
-				printf("                 actual SHA1 = %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x\n",
-						final_sha1[0], final_sha1[1], final_sha1[2], final_sha1[3],
-						final_sha1[4], final_sha1[5], final_sha1[6], final_sha1[7],
-						final_sha1[8], final_sha1[9], final_sha1[10], final_sha1[11],
-						final_sha1[12], final_sha1[13], final_sha1[14], final_sha1[15],
-						final_sha1[16], final_sha1[17], final_sha1[18], final_sha1[19]);
-			}
-			else
-				printf("Input SHA1 verified\n");
-		}
-	}
-	else if (special_error_count)
-		printf("WARNING: found %d errors in the input file, checksums not verified\n", special_error_count);
-	else
-		printf("WARNING: entire input file not read, checksums not verified\n");
-
-	/* reset everything */
-	special_chd = NULL;
-}
-
 
 
 /*-------------------------------------------------
@@ -314,97 +224,78 @@ static void special_chd_finished(void)
 
 static void guess_chs(const char *filename, int offset, int sectorsize, UINT32 *cylinders, UINT32 *heads, UINT32 *sectors, UINT32 *bps)
 {
+	UINT32 totalsecs, hds, secs;
+	UINT64 filesize;
+
 	/* if this is a direct physical drive read, handle it specially */
-	if (!osd_get_physical_drive_geometry(filename, cylinders, heads, sectors, bps))
-		  	{
-		UINT64 filesize = osd_get_file_size(filename) - offset;
-		UINT32 totalsecs, hds, secs;
+	if (osd_get_physical_drive_geometry(filename, cylinders, heads, sectors, bps))
+		return;
 
-		/* validate the file */
-		if (filesize == 0)
+	/* compute the filesize */
+	filesize = osd_get_file_size(filename);
+	if (filesize <= offset)
+		fatalerror("Invalid file '%s'\n", filename);
+	filesize -= offset;
+
+	/* validate the size */
+	if (filesize % sectorsize != 0)
+		fatalerror("Can't guess CHS values because data size is not divisible by the sector size\n");
+	totalsecs = filesize / sectorsize;
+
+	/* now find a valid value */
+	for (secs = 63; secs > 1; secs--)
+		if (totalsecs % secs == 0)
 		{
-			fprintf(stderr, "Invalid file '%s'\n", filename);
-			exit(1);
+			size_t totalhds = totalsecs / secs;
+			for (hds = 16; hds > 1; hds--)
+				if (totalhds % hds == 0)
+				{
+					*cylinders = totalhds / hds;
+					*heads = hds;
+					*sectors = secs;
+					*bps = sectorsize;
+					return;
+				}
 		}
 
-		/* validate the size */
-		if (filesize % sectorsize != 0)
-		{
-			fprintf(stderr, "Can't guess CHS values because data size is not divisible by the sector size\n");
-			exit(1);
-		}
-		totalsecs = filesize / sectorsize;
-
-		/* now find a valid value */
-		for (secs = 63; secs > 1; secs--)
-			if (totalsecs % secs == 0)
-			{
-				size_t totalhds = totalsecs / secs;
-				for (hds = 16; hds > 1; hds--)
-					if (totalhds % hds == 0)
-					{
-						*cylinders = totalhds / hds;
-						*heads = hds;
-						*sectors = secs;
-						*bps = IDE_SECTOR_SIZE;
-						return;
-					}
-			}
-
-		/* ack, it didn't work! */
-		fprintf(stderr, "Can't guess CHS values because no logical combination works!\n");
-		exit(1);
-	}
+	/* ack, it didn't work! */
+	fatalerror("Can't guess CHS values because no logical combination works!\n");
 }
 
 
-
 /*-------------------------------------------------
-    do_create - create a new compressed hard disk
-    image from a raw file
+    do_createhd - create a new compressed hard
+    disk image from a raw file
 -------------------------------------------------*/
 
 static void do_createhd(int argc, char *argv[])
 {
+	UINT32 cylinders, heads, sectors, sectorsize, hunksize, totalsectors, offset;
+	UINT32 guess_cylinders, guess_heads, guess_sectors, guess_sectorsize;
 	const char *inputfile, *outputfile;
-	UINT32 sectorsize, hunksize;
-	UINT32 cylinders, heads, sectors, totalsectors;
-	chd_file *chd;
+	chd_file *chd = NULL;
 	char metadata[256];
-	int offset, err;
+	chd_error err;
 
 	/* require 4-5, or 8-10 args total */
 	if (argc != 4 && argc != 5 && argc != 8 && argc != 9 && argc != 10)
-		error();
+		usage();
 
-	/* extract the data */
+	/* extract the first few parameters */
 	inputfile = argv[2];
 	outputfile = argv[3];
-	if (argc >= 5)
-		offset = atoi(argv[4]);
-	else
-		offset = osd_get_file_size(inputfile) % 512;
-	if (argc >= 8)
-	{
-		cylinders = atoi(argv[5]);
-		heads = atoi(argv[6]);
-		sectors = atoi(argv[7]);
-		if (argc >= 9)
-			sectorsize = atoi(argv[8]);
-		else
-			sectorsize = IDE_SECTOR_SIZE;
-		if (argc >= 10)
-			hunksize = atoi(argv[9]);
-		else
-			hunksize = (sectorsize > 4096) ? sectorsize : ((4096 / sectorsize) * sectorsize);
-	}
-	else
-	{
-		sectorsize = IDE_SECTOR_SIZE;
-		guess_chs(inputfile, offset, sectorsize, &cylinders, &heads, &sectors, &sectorsize);
-		hunksize = (sectorsize > 4096) ? sectorsize : ((4096 / sectorsize) * sectorsize);
-	}
+	offset = (argc >= 5) ? atoi(argv[4]) : (osd_get_file_size(inputfile) % IDE_SECTOR_SIZE);
 
+	/* if less than 8 parameters, we need to guess the CHS values */
+	if (argc < 8)
+		guess_chs(inputfile, offset, IDE_SECTOR_SIZE, &guess_cylinders, &guess_heads, &guess_sectors, &guess_sectorsize);
+
+	/* parse the remaining parameters */
+	cylinders = (argc >= 6) ? atoi(argv[5]) : guess_cylinders;
+	heads = (argc >= 7) ? atoi(argv[6]) : guess_heads;
+	sectors = (argc >= 8) ? atoi(argv[7]) : guess_sectors;
+	sectorsize = (argc >= 9) ? atoi(argv[8]) : guess_sectorsize;
+	hunksize = (argc >= 10) ? atoi(argv[9]) : (sectorsize > 4096) ? sectorsize : ((4096 / sectorsize) * sectorsize);
 	totalsectors = cylinders * heads * sectors;
 
 	/* print some info */
@@ -423,16 +314,15 @@ static void do_createhd(int argc, char *argv[])
 	if (err != CHDERR_NONE)
 	{
 		printf("Error creating CHD file: %s\n", error_string(err));
-		return;
+		goto cleanup;
 	}
 
 	/* open the new hard drive */
-	chd = chd_open(outputfile, 1, NULL);
-	if (!chd)
+	err = chd_open(outputfile, CHD_OPEN_READWRITE, NULL, &chd);
+	if (err != CHDERR_NONE)
 	{
-		printf("Error opening new CHD file: %s\n", error_string(chd_get_last_error()));
-		remove(outputfile);
-		return;
+		printf("Error opening new CHD file: %s\n", error_string(err));
+		goto cleanup;
 	}
 
 	/* write the metadata */
@@ -440,25 +330,94 @@ static void do_createhd(int argc, char *argv[])
 	err = chd_set_metadata(chd, HARD_DISK_STANDARD_METADATA, 0, metadata, strlen(metadata) + 1);
 	if (err != CHDERR_NONE)
 	{
-		printf("Error adding hard disk metadata: %s\n", error_string(chd_get_last_error()));
-		chd_close(chd);
-		remove(outputfile);
-		return;
+		printf("Error adding hard disk metadata: %s\n", error_string(err));
+		goto cleanup;
 	}
 
 	/* compress the hard drive */
-	err = chd_compress(chd, inputfile, offset, progress);
+	err = chdman_compress_file(chd, inputfile, offset);
 	if (err != CHDERR_NONE)
 	{
 		printf("Error during compression: %s\n", error_string(err));
-		chd_close(chd);
-		remove(outputfile);
-		return;
+		goto cleanup;
 	}
 
 	/* success */
 	chd_close(chd);
+	return;
+
+cleanup:
+	if (chd != NULL)
+		chd_close(chd);
+	remove(outputfile);
 }
+
+
+/*-------------------------------------------------
+    do_createraw - create a new compressed raw
+    image from a raw file
+-------------------------------------------------*/
+
+static void do_createraw(int argc, char *argv[])
+{
+	const char *inputfile, *outputfile;
+	UINT32 hunksize, offset;
+	UINT64 logicalbytes;
+	chd_file *chd = NULL;
+	chd_error err;
+
+	/* require 4, 5, or 6 args total */
+	if (argc != 4 && argc != 5 && argc != 6)
+		usage();
+
+	/* extract the first few parameters */
+	inputfile = argv[2];
+	outputfile = argv[3];
+	offset = (argc >= 5) ? atoi(argv[4]) : 0;
+	hunksize = (argc >= 6) ? atoi(argv[5]) : 4096;
+	logicalbytes = osd_get_file_size(inputfile) - offset;
+
+	/* print some info */
+	printf("Input file:   %s\n", inputfile);
+	printf("Output file:  %s\n", outputfile);
+	printf("Input offset: %d\n", offset);
+	printf("Bytes/hunk:   %d\n", hunksize);
+	printf("Logical size: %s\n", big_int_string(logicalbytes));
+
+	/* create the new CHD */
+	err = chd_create(outputfile, logicalbytes, hunksize, CHDCOMPRESSION_ZLIB_PLUS, NULL);
+	if (err != CHDERR_NONE)
+	{
+		printf("Error creating CHD file: %s\n", error_string(err));
+		goto cleanup;
+	}
+
+	/* open the new CHD */
+	err = chd_open(outputfile, CHD_OPEN_READWRITE, NULL, &chd);
+	if (err != CHDERR_NONE)
+	{
+		printf("Error opening new CHD file: %s\n", error_string(err));
+		goto cleanup;
+	}
+
+	/* compress the CHD */
+	err = chdman_compress_file(chd, inputfile, offset);
+	if (err != CHDERR_NONE)
+	{
+		printf("Error during compression: %s\n", error_string(err));
+		goto cleanup;
+	}
+
+	/* success */
+	chd_close(chd);
+	return;
+
+cleanup:
+	if (chd != NULL)
+		chd_close(chd);
+	remove(outputfile);
+}
+
 
 /*-------------------------------------------------
     do_createcd - create a new compressed CD
@@ -469,8 +428,7 @@ static void do_createcd(int argc, char *argv[])
 {
 	char *inputfile, *outputfile;
 	chd_file *chd;
-	chd_exfile *chdex;
-	int err;
+	chd_error err;
 	UINT32 totalsectors = 0;
 	UINT32 sectorsize = CD_FRAME_SIZE;
 	UINT32 hunksize = ((CD_FRAME_SIZE * CD_FRAMES_PER_HUNK) / sectorsize) * sectorsize;
@@ -478,10 +436,19 @@ static void do_createcd(int argc, char *argv[])
 	static cdrom_track_input_info track_info;
 	int i;
 	static UINT32 metadata[CD_METADATA_WORDS], *mwp;
+	const chd_header *header;
+	UINT32 totalhunks = 0;
+	UINT8 *cache;
+	double ratio = 1.0;
+
+	/* allocate a cache */
+	cache = malloc(hunksize);
+	if (cache == NULL)
+		return;
 
 	/* require 4 args total */
 	if (argc != 4)
-		error();
+		usage();
 
 	/* extract the data */
 	inputfile = argv[2];
@@ -543,10 +510,10 @@ static void do_createcd(int argc, char *argv[])
 	}
 
 	/* open the new CHD file */
-	chd = chd_open(outputfile, 1, NULL);
-	if (!chd)
+	err = chd_open(outputfile, CHD_OPEN_READWRITE, NULL, &chd);
+	if (err != CHDERR_NONE)
 	{
-		printf("Error opening new CHD file: %s\n", error_string(chd_get_last_error()));
+		printf("Error opening new CHD file: %s\n", error_string(err));
 		remove(outputfile);
 		return;
 	}
@@ -575,37 +542,85 @@ static void do_createcd(int argc, char *argv[])
 	err = chd_set_metadata(chd, CDROM_STANDARD_METADATA, 0, metadata, sizeof(metadata));
 	if (err != CHDERR_NONE)
 	{
-		printf("Error adding CD-ROM metadata: %s\n", error_string(chd_get_last_error()));
+		printf("Error adding CD-ROM metadata: %s\n", error_string(err));
 		chd_close(chd);
 		remove(outputfile);
 		return;
 	}
 
 	/* begin state for writing */
-	chdex = chd_start_compress_ex(chd);
+	err = chd_compress_begin(chd);
+	if (err != CHDERR_NONE)
+	{
+		printf("Error compressing: %s\n", error_string(err));
+		chd_close(chd);
+		remove(outputfile);
+		return;
+	}
+
+	header = chd_get_header(chd);
 
 	/* write each track */
 	for (i = 0; i < toc.numtrks; i++)
 	{
 		int trkbytespersec = toc.tracks[i].datasize + toc.tracks[i].subsize;
 		int hunks = (toc.tracks[i].frames + toc.tracks[i].extraframes) / CD_FRAMES_PER_HUNK;
+		UINT64 sourcefileoffset = track_info.offset[i];
+		chd_interface_file *srcfile;
+		int curhunk;
 
-		printf("Compressing track %d / %d (file %s:%d, %d frames, %d hunks)\n", i+1, toc.numtrks, track_info.fname[i], track_info.offset[i], toc.tracks[i].frames, hunks);
-
- 		err = chd_compress_ex(chdex, track_info.fname[i], track_info.offset[i],
-				trkbytespersec, CD_FRAMES_PER_HUNK, hunks,
-				CD_FRAME_SIZE, progress);
-		if (err != CHDERR_NONE)
+		/* open the input file */
+		srcfile = chdman_open(track_info.fname[i], "rb");
+		if (srcfile == NULL)
 		{
-			printf("Error during compression: %s\n", error_string(err));
+			printf("Unable to open file: %s\n", track_info.fname[i]);
 			chd_close(chd);
 			remove(outputfile);
 			return;
 		}
+
+		printf("Compressing track %d / %d (file %s:%d, %d frames, %d hunks)\n", i+1, toc.numtrks, track_info.fname[i], track_info.offset[i], toc.tracks[i].frames, hunks);
+
+		/* loop over hunks */
+		for (curhunk = 0; curhunk < hunks; curhunk++, totalhunks++)
+		{
+			int i;
+
+			progress(FALSE, "Compressing hunk %d/%d... (ratio=%d%%)  \r", totalhunks, header->totalhunks, (int)(ratio * 100));
+
+			/* read the data.  first, zero the whole hunk */
+			memset(cache, 0, hunksize);
+
+			/* read each frame to a maximum framesize boundry, automatically padding them out */
+			for (i = 0; i < CD_FRAMES_PER_HUNK; i++)
+			{
+				chdman_read(srcfile, sourcefileoffset, trkbytespersec, &cache[i*CD_FRAME_SIZE]);
+				/*
+                   NOTE: because we pad CD tracks to a hunk boundry, there is a possibility
+                   that we will run off the end of the sourcefile and bytesread will be zero.
+                   because we already zero out the hunk beforehand above, no special processing
+                   need take place here.
+                */
+
+				sourcefileoffset += trkbytespersec;
+			}
+
+			err = chd_compress_hunk(chd, cache, &ratio);
+			if (err != CHDERR_NONE)
+			{
+				printf("Error during compression: %s\n", error_string(err));
+				chd_close(chd);
+				remove(outputfile);
+				return;
+			}
+		}
+
+		/* close the file */
+		chdman_close(srcfile);
 	}
 
 	/* cleanup */
-	err = chd_end_compress_ex(chdex, progress);
+	err = chd_compress_finish(chd);
 	if (err != CHDERR_NONE)
 	{
 		printf("Error during compression finalization: %s\n", error_string(err));
@@ -632,15 +647,14 @@ static void do_createblankhd(int argc, char *argv[])
 	UINT32 cylinders, heads, sectors, totalsectors;
 	chd_file *chd;
 	char metadata[256];
-	int err;
+	chd_error err;
 	int hunknum;
 	int totalhunks;
 	UINT8 *cache;
-	clock_t lastupdate;
 
 	/* require 6, 7, or 8 args total */
 	if (argc != 6 && argc != 7 && argc != 8)
-		error();
+		usage();
 
 	/* extract the data */
 	outputfile = argv[2];
@@ -675,10 +689,10 @@ static void do_createblankhd(int argc, char *argv[])
 	}
 
 	/* open the new hard drive */
-	chd = chd_open(outputfile, 1, NULL);
-	if (!chd)
+	err = chd_open(outputfile, CHD_OPEN_READWRITE, NULL, &chd);
+	if (err != CHDERR_NONE)
 	{
-		printf("Error opening new CHD file: %s\n", error_string(chd_get_last_error()));
+		printf("Error opening new CHD file: %s\n", error_string(err));
 		remove(outputfile);
 		return;
 	}
@@ -688,7 +702,7 @@ static void do_createblankhd(int argc, char *argv[])
 	err = chd_set_metadata(chd, HARD_DISK_STANDARD_METADATA, 0, metadata, strlen(metadata) + 1);
 	if (err != CHDERR_NONE)
 	{
-		printf("Error adding hard disk metadata: %s\n", error_string(chd_get_last_error()));
+		printf("Error adding hard disk metadata: %s\n", error_string(err));
 		chd_close(chd);
 		remove(outputfile);
 		return;
@@ -707,30 +721,22 @@ static void do_createblankhd(int argc, char *argv[])
 
 	/* Zero every hunk */
 	totalhunks = (((UINT64)totalsectors * (UINT64)sectorsize) + hunksize - 1) / hunksize;
-	lastupdate = 0;
 	for (hunknum = 0; hunknum < totalhunks; hunknum++)
 	{
-		clock_t curtime = clock();
-
 		/* progress */
-		if (curtime - lastupdate > CLOCKS_PER_SEC / 2)
-		{
-			UINT64 sourcepos = (UINT64)hunknum * hunksize;
-			if (sourcepos)
-				progress("Zeroing hunk %d/%d...  \r", hunknum, totalhunks);
-			lastupdate = curtime;
-		}
+		progress(FALSE, "Zeroing hunk %d/%d...  \r", hunknum, totalhunks);
 
 		/* write out the data */
-		if (chd_write(chd, hunknum, 1, cache) != 1)
+		err = chd_write(chd, hunknum, cache);
+		if (err != CHDERR_NONE)
 		{
-			printf("Error writing CHD file: %s\n", error_string(chd_get_last_error()));
+			printf("Error writing CHD file: %s\n", error_string(err));
 			chd_close(chd);
 			remove(outputfile);
 			return;
 		}
 	}
-	progress("Creation complete!                    \n");
+	progress(TRUE, "Creation complete!                    \n");
 
 	/* free buffer */
 	free(cache);
@@ -774,11 +780,11 @@ static void do_copydata(int argc, char *argv[])
 	UINT32 in_hunknum, out_hunknum;
 	UINT8 *cache;
 	UINT32 cache_data_len;
-	clock_t lastupdate;
+	chd_error err;
 
 	/* require 4 args total */
 	if (argc != 4)
-		error();
+		usage();
 
 	/* extract the data */
 	inputfile = argv[2];
@@ -789,20 +795,20 @@ static void do_copydata(int argc, char *argv[])
 	printf("Output file:  %s\n", outputfile);
 
 	/* open the src hard drive */
-	in_chd = chd_open(inputfile, 0, NULL);
-	if (!in_chd)
+	err = chd_open(inputfile, CHD_OPEN_READ, NULL, &in_chd);
+	if (err != CHDERR_NONE)
 	{
-		printf("Error opening src CHD file: %s\n", error_string(chd_get_last_error()));
+		printf("Error opening src CHD file: %s\n", error_string(err));
 		return;
 	}
 	in_hunksize = chd_get_header(in_chd)->hunkbytes;
 	in_totalhunks = chd_get_header(in_chd)->totalhunks;
 
 	/* open the dest hard drive */
-	out_chd = chd_open(outputfile, 1, NULL);
-	if (!out_chd)
+	err = chd_open(outputfile, CHD_OPEN_READWRITE, NULL, &out_chd);
+	if (err != CHDERR_NONE)
 	{
-		printf("Error opening dest CHD file: %s\n", error_string(chd_get_last_error()));
+		printf("Error opening dest CHD file: %s\n", error_string(err));
 		return;
 	}
 	out_hunksize = chd_get_header(out_chd)->hunkbytes;
@@ -821,27 +827,21 @@ static void do_copydata(int argc, char *argv[])
 	/* copy data */
 	cache_data_len = 0;
 	in_hunknum = 0;
-	lastupdate = 0;
 	for (out_hunknum = 0; out_hunknum < out_totalhunks;)
 	{
-		clock_t curtime = clock();
-
 		/* progress */
-		if (curtime - lastupdate > CLOCKS_PER_SEC / 2)
-		{
-			if (out_hunknum)
-				progress("Copying hunk %d/%d...  \r", out_hunknum, out_totalhunks);
-			lastupdate = curtime;
-		}
+		if (out_hunknum)
+			progress(FALSE, "Copying hunk %d/%d...  \r", out_hunknum, out_totalhunks);
 
 		/* read in the data */
 		while (cache_data_len < out_hunksize)
 		{
 			if (in_hunknum < in_totalhunks)
 			{	/* read data if available */
-				if (chd_read(in_chd, in_hunknum, 1, cache+cache_data_len) != 1)
+				err = chd_read(in_chd, in_hunknum, cache+cache_data_len);
+				if (err != CHDERR_NONE)
 				{
-					printf("Error reading CHD file: %s\n", error_string(chd_get_last_error()));
+					printf("Error reading CHD file: %s\n", error_string(err));
 					chd_close(out_chd);
 					chd_close(in_chd);
 					return;
@@ -859,9 +859,10 @@ static void do_copydata(int argc, char *argv[])
 		/* write out the data */
 		while (cache_data_len >= out_hunksize)
 		{
-			if (chd_write(out_chd, out_hunknum, 1, cache) != 1)
+			err = chd_write(out_chd, out_hunknum, cache);
+			if (err != CHDERR_NONE)
 			{
-				printf("Error writing CHD file: %s\n", error_string(chd_get_last_error()));
+				printf("Error writing CHD file: %s\n", error_string(err));
 				chd_close(out_chd);
 				chd_close(in_chd);
 				return;
@@ -872,7 +873,7 @@ static void do_copydata(int argc, char *argv[])
 				memmove(cache, cache+out_hunksize, cache_data_len);
 		}
 	}
-	progress("Copy complete!                    \n");
+	progress(TRUE, "Copy complete!                    \n");
 
 	/* free buffer */
 	free(cache);
@@ -894,12 +895,12 @@ static void do_extract(int argc, char *argv[])
 	chd_file *infile = NULL;
 	chd_header header;
 	void *hunk = NULL;
-	clock_t lastupdate;
+	chd_error err;
 	int hunknum;
 
 	/* require 4 args total */
 	if (argc != 4)
-		error();
+		usage();
 
 	/* extract the data */
 	inputfile = argv[2];
@@ -910,11 +911,11 @@ static void do_extract(int argc, char *argv[])
 	printf("Output file:  %s\n", outputfile);
 
 	/* get the header */
-	infile = chd_open(inputfile, 0, NULL);
-	if (!infile)
+	err = chd_open(inputfile, CHD_OPEN_READ, NULL, &infile);
+	if (err != CHDERR_NONE)
 	{
-		printf("Error opening CHD file '%s': %s\n", inputfile, error_string(chd_get_last_error()));
-		goto error;
+		printf("Error opening CHD file '%s': %s\n", inputfile, error_string(err));
+		goto cleanup;
 	}
 	header = *chd_get_header(infile);
 
@@ -923,7 +924,7 @@ static void do_extract(int argc, char *argv[])
 	if (!hunk)
 	{
 		printf("Out of memory allocating hunk buffer!\n");
-		goto error;
+		goto cleanup;
 	}
 
 	/* create the output file */
@@ -931,28 +932,23 @@ static void do_extract(int argc, char *argv[])
 	if (!outfile)
 	{
 		printf("Error opening output file '%s'\n", outputfile);
-		goto error;
+		goto cleanup;
 	}
 
 	/* loop over hunks, reading and writing */
-	lastupdate = 0;
 	for (hunknum = 0; hunknum < header.totalhunks; hunknum++)
 	{
-		clock_t curtime = clock();
 		UINT32 byteswritten;
 
 		/* progress */
-		if (curtime - lastupdate > CLOCKS_PER_SEC / 2)
-		{
-			progress("Extracting hunk %d/%d...  \r", hunknum, header.totalhunks);
-			lastupdate = curtime;
-		}
+		progress(FALSE, "Extracting hunk %d/%d...  \r", hunknum, header.totalhunks);
 
 		/* read the hunk into a buffer */
-		if (!chd_read(infile, hunknum, 1, hunk))
+		err = chd_read(infile, hunknum, hunk);
+		if (err != CHDERR_NONE)
 		{
-			printf("Error reading hunk %d from CHD file: %s\n", hunknum, error_string(chd_get_last_error()));
-			goto error;
+			printf("Error reading hunk %d from CHD file: %s\n", hunknum, error_string(err));
+			goto cleanup;
 		}
 
 		if ( (((UINT64)hunknum+1) * (UINT64)header.hunkbytes) < header.logicalbytes )
@@ -961,8 +957,8 @@ static void do_extract(int argc, char *argv[])
 			byteswritten = (*chdman_interface.write)(outfile, (UINT64)hunknum * (UINT64)header.hunkbytes, header.hunkbytes, hunk);
 			if (byteswritten != header.hunkbytes)
 			{
-				printf("Error writing hunk %d to output file: %s\n", hunknum, error_string(chd_get_last_error()));
-				goto error;
+				printf("Error writing hunk %d to output file: %s\n", hunknum, error_string(CHDERR_WRITE_ERROR));
+				goto cleanup;
 			}
 		}
 		else
@@ -971,12 +967,12 @@ static void do_extract(int argc, char *argv[])
 			byteswritten = (*chdman_interface.write)(outfile, (UINT64)hunknum * (UINT64)header.hunkbytes,  header.logicalbytes - ((UINT64)hunknum * (UINT64)header.hunkbytes), hunk);
 			if (byteswritten != (header.logicalbytes - ((UINT64)hunknum * (UINT64)header.hunkbytes)) )
 			{
-				printf("Error writing hunk %d to output file: %s\n", hunknum, error_string(chd_get_last_error()));
-				goto error;
+				printf("Error writing hunk %d to output file: %s\n", hunknum, error_string(CHDERR_WRITE_ERROR));
+				goto cleanup;
 			}
 		}
 	}
-	progress("Extraction complete!                    \n");
+	progress(TRUE, "Extraction complete!                    \n");
 
 	/* close everything down */
 	(*chdman_interface.close)(outfile);
@@ -984,7 +980,7 @@ static void do_extract(int argc, char *argv[])
 	chd_close(infile);
 	return;
 
-error:
+cleanup:
 	/* clean up our mess */
 	if (outfile)
 		(*chdman_interface.close)(outfile);
@@ -993,6 +989,7 @@ error:
 	if (infile)
 		chd_close(infile);
 }
+
 
 /*-------------------------------------------------
     do_extractcd - extract a CDRDAO .toc/.bin
@@ -1012,10 +1009,11 @@ static void do_extractcd(int argc, char *argv[])
 	static const char *typenames[8] = { "MODE1", "MODE1_RAW", "MODE2", "MODE2_FORM1", "MODE2_FORM2", "MODE2_FORM_MIX", "MODE2_RAW", "AUDIO" };
 	static const char *subnames[2] = { "RW", "RW_RAW" };
 	UINT8 sector[CD_MAX_SECTOR_DATA + CD_MAX_SUBCODE_DATA];
+	chd_error err;
 
 	/* require 5 args total */
 	if (argc != 5)
-		error();
+		usage();
 
 	/* extract the data */
 	inputfile = argv[2];
@@ -1027,11 +1025,11 @@ static void do_extractcd(int argc, char *argv[])
 	printf("Output files:  %s (toc) and %s (bin)\n", outputfile, outputfile2);
 
 	/* get the header */
-	infile = chd_open(inputfile, 0, NULL);
-	if (!infile)
+	err = chd_open(inputfile, CHD_OPEN_READ, NULL, &infile);
+	if (err != CHDERR_NONE)
 	{
-		printf("Error opening CHD file '%s': %s\n", inputfile, error_string(chd_get_last_error()));
-		goto error;
+		printf("Error opening CHD file '%s': %s\n", inputfile, error_string(err));
+		goto cleanup;
 	}
 
 	/* open the CD */
@@ -1039,7 +1037,7 @@ static void do_extractcd(int argc, char *argv[])
 	if (!cdrom)
 	{
 		printf("Error opening CHD-CD '%s'\n", inputfile);
-		goto error;
+		goto cleanup;
 	}
 
 	/* get the TOC data */
@@ -1050,14 +1048,14 @@ static void do_extractcd(int argc, char *argv[])
 	if (!outfile)
 	{
 		printf("Error opening output file '%s'\n", outputfile);
-		goto error;
+		goto cleanup;
 	}
 
 	outfile2 = fopen(outputfile2, "wb");
 	if (!outfile2)
 	{
 		printf("Error opening output file '%s'\n", outputfile2);
-		goto error;
+		goto cleanup;
 	}
 
 	/* process away */
@@ -1148,7 +1146,7 @@ static void do_extractcd(int argc, char *argv[])
 	chd_close(infile);
 	return;
 
-error:
+cleanup:
 	/* clean up our mess */
 	if (outfile)
 		fclose(outfile);
@@ -1159,6 +1157,7 @@ error:
 	if (infile)
 		chd_close(infile);
 }
+
 
 /*-------------------------------------------------
     do_verify - validate the MD5/SHA1 on a drive
@@ -1171,11 +1170,12 @@ static void do_verify(int argc, char *argv[], int fix)
 	chd_header header;
 	const char *inputfile;
 	chd_file *chd;
-	int err, fixed = 0;
+	int fixed = 0, i;
+	chd_error err;
 
 	/* require 3 args total */
 	if (argc != 3)
-		error();
+		usage();
 
 	/* extract the data */
 	inputfile = argv[2];
@@ -1184,16 +1184,35 @@ static void do_verify(int argc, char *argv[], int fix)
 	printf("Input file:   %s\n", inputfile);
 
 	/* open the new hard drive */
-	chd = chd_open(inputfile, 0, NULL);
-	if (!chd)
+	err = chd_open(inputfile, CHD_OPEN_READ, NULL, &chd);
+	if (err != CHDERR_NONE)
 	{
-		printf("Error opening CHD file: %s\n", error_string(chd_get_last_error()));
+		printf("Error opening CHD file: %s\n", error_string(err));
 		return;
 	}
 	header = *chd_get_header(chd);
 
 	/* verify the CHD data */
-	err = chd_verify(chd, progress, actualmd5, actualsha1);
+	err = chd_verify_begin(chd);
+	if (err == CHDERR_NONE)
+	{
+		UINT32 hunknum;
+		for (hunknum = 0; hunknum < header.totalhunks; hunknum++)
+		{
+			/* progress */
+			progress(FALSE, "Verifying hunk %d/%d... \r", hunknum, header.totalhunks);
+
+			/* verify the data */
+			err = chd_verify_hunk(chd);
+			if (err != CHDERR_NONE)
+				break;
+		}
+
+		/* finish it */
+		if (err == CHDERR_NONE)
+			err = chd_verify_finish(chd, actualmd5, actualsha1);
+	}
+
 	if (err != CHDERR_NONE)
 	{
 		if (err == CHDERR_CANT_VERIFY)
@@ -1209,16 +1228,14 @@ static void do_verify(int argc, char *argv[], int fix)
 		printf("MD5 verification successful!\n");
 	else
 	{
-		printf("Error: MD5 in header = %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x\n",
-				header.md5[0], header.md5[1], header.md5[2], header.md5[3],
-				header.md5[4], header.md5[5], header.md5[6], header.md5[7],
-				header.md5[8], header.md5[9], header.md5[10], header.md5[11],
-				header.md5[12], header.md5[13], header.md5[14], header.md5[15]);
-		printf("          actual MD5 = %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x\n",
-				actualmd5[0], actualmd5[1], actualmd5[2], actualmd5[3],
-				actualmd5[4], actualmd5[5], actualmd5[6], actualmd5[7],
-				actualmd5[8], actualmd5[9], actualmd5[10], actualmd5[11],
-				actualmd5[12], actualmd5[13], actualmd5[14], actualmd5[15]);
+		printf("Error: MD5 in header = ");
+		for (i = 0; i < CHD_MD5_BYTES; i++)
+			printf("%02x", header.md5[i]);
+		printf("\n");
+		printf("          actual MD5 = ");
+		for (i = 0; i < CHD_MD5_BYTES; i++)
+			printf("%02x", actualmd5[i]);
+		printf("\n");
 
 		/* fix it */
 		if (fix)
@@ -1235,18 +1252,14 @@ static void do_verify(int argc, char *argv[], int fix)
 			printf("SHA1 verification successful!\n");
 		else
 		{
-			printf("Error: SHA1 in header = %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x\n",
-					header.sha1[0], header.sha1[1], header.sha1[2], header.sha1[3],
-					header.sha1[4], header.sha1[5], header.sha1[6], header.sha1[7],
-					header.sha1[8], header.sha1[9], header.sha1[10], header.sha1[11],
-					header.sha1[12], header.sha1[13], header.sha1[14], header.sha1[15],
-					header.sha1[16], header.sha1[17], header.sha1[18], header.sha1[19]);
-			printf("          actual SHA1 = %02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x\n",
-					actualsha1[0], actualsha1[1], actualsha1[2], actualsha1[3],
-					actualsha1[4], actualsha1[5], actualsha1[6], actualsha1[7],
-					actualsha1[8], actualsha1[9], actualsha1[10], actualsha1[11],
-					actualsha1[12], actualsha1[13], actualsha1[14], actualsha1[15],
-					actualsha1[16], actualsha1[17], actualsha1[18], actualsha1[19]);
+			printf("Error: SHA1 in header = ");
+			for (i = 0; i < CHD_SHA1_BYTES; i++)
+				printf("%02x", header.sha1[i]);
+			printf("\n");
+			printf("          actual SHA1 = ");
+			for (i = 0; i < CHD_SHA1_BYTES; i++)
+				printf("%02x", actualsha1[i]);
+			printf("\n");
 
 			/* fix it */
 			if (fix)
@@ -1272,7 +1285,6 @@ static void do_verify(int argc, char *argv[], int fix)
 }
 
 
-
 /*-------------------------------------------------
     do_info - dump the header information from
     a drive image
@@ -1289,10 +1301,11 @@ static void do_info(int argc, char *argv[])
 	chd_header header;
 	const char *inputfile;
 	chd_file *chd;
+	chd_error err;
 
 	/* require 3 args total */
 	if (argc != 3)
-		error();
+		usage();
 
 	/* extract the data */
 	inputfile = argv[2];
@@ -1301,10 +1314,10 @@ static void do_info(int argc, char *argv[])
 	printf("Input file:   %s\n", inputfile);
 
 	/* get the header */
-	chd = chd_open(inputfile, 0, NULL);
-	if (!chd)
+	err = chd_open(inputfile, CHD_OPEN_READ, NULL, &chd);
+	if (err != CHDERR_NONE)
 	{
-		printf("Error opening CHD file '%s': %s\n", inputfile, error_string(chd_get_last_error()));
+		printf("Error opening CHD file '%s': %s\n", inputfile, error_string(err));
 		return;
 	}
 	header = *chd_get_header(chd);
@@ -1356,19 +1369,23 @@ static void do_info(int argc, char *argv[])
 		UINT8 metadata[256];
 		int i, j;
 
-		for (i = 0; i < 1000; i++)
+		for (i = 0; ; i++)
 		{
-			UINT32 metatag = CHDMETATAG_WILDCARD;
-			UINT32 count = chd_get_metadata(chd, &metatag, i, metadata, sizeof(metadata));
-			if (count == 0 || chd_get_last_error() == CHDERR_METADATA_NOT_FOUND)
+			UINT32 metatag, metasize;
+
+			err = chd_get_metadata(chd, CHDMETATAG_WILDCARD, i, metadata, sizeof(metadata), &metasize, &metatag);
+			if (err != CHDERR_NONE)
 				break;
 
-			printf("Metadata:     Tag=%08x  Length=%d\n", metatag, count);
+			if (isprint((metatag >> 24) & 0xff) && isprint((metatag >> 16) & 0xff) && isprint((metatag >> 8) & 0xff) && isprint(metatag & 0xff))
+				printf("Metadata:     Tag='%c%c%c%c'    Length=%d\n", (metatag >> 24) & 0xff, (metatag >> 16) & 0xff, (metatag >> 8) & 0xff, metatag & 0xff, metasize);
+			else
+				printf("Metadata:     Tag=%08x  Length=%d\n", metatag, metasize);
 			printf("              ");
 
-			if (count > 60)
-				count = 60;
-			for (j = 0; j < count; j++)
+			if (metasize > 60)
+				metasize = 60;
+			for (j = 0; j < metasize; j++)
 				printf("%c", isprint(metadata[j]) ? metadata[j] : '.');
 			printf("\n");
 		}
@@ -1376,7 +1393,6 @@ static void do_info(int argc, char *argv[])
 
 	chd_close(chd);
 }
-
 
 
 /*-------------------------------------------------
@@ -1397,12 +1413,14 @@ static int handle_custom_chomp(const char *name, chd_file *chd, UINT32 *maxhunk)
 	{
 		UINT32 maxsector = 0;
 		UINT32 numparts;
+		chd_error err;
 		int i;
 
-		if (!chd_read(chd, 0, 1, temp))
-			goto error;
+		err = chd_read(chd, 0, temp);
+		if (err != CHDERR_NONE)
+			goto cleanup;
 		if (temp[0] != 0x54 || temp[1] != 0x52 || temp[2] != 0x41 || temp[3] != 0x50)
-			goto error;
+			goto cleanup;
 		numparts = temp[4] | (temp[5] << 8) | (temp[6] << 16) | (temp[7] << 24);
 		printf("%d partitions\n", numparts);
 		for (i = 0; i < numparts; i++)
@@ -1429,20 +1447,22 @@ static int handle_custom_chomp(const char *name, chd_file *chd, UINT32 *maxhunk)
 		UINT32 sectors[4];
 		UINT8 *data;
 		int i, maxdiff;
+		chd_error err;
 
-		if (!chd_read(chd, 0x200 / header->hunkbytes, 1, temp))
-			goto error;
+		err = chd_read(chd, 0x200 / header->hunkbytes, temp);
+		if (err != CHDERR_NONE)
+			goto cleanup;
 		data = &temp[0x200 % header->hunkbytes];
 
 		if (data[0] != 0x0d || data[1] != 0xf0 || data[2] != 0xed || data[3] != 0xfe)
-			goto error;
+			goto cleanup;
 		for (i = 0; i < 4; i++)
 			sectors[i] = data[i*4+0x40] | (data[i*4+0x41] << 8) | (data[i*4+0x42] << 16) | (data[i*4+0x43] << 24);
 		maxdiff = sectors[2] - sectors[1];
 		if (sectors[3] - sectors[2] > maxdiff)
 			maxdiff = sectors[3] - sectors[2];
 		if (sectors[0] != 8)
-			goto error;
+			goto cleanup;
 		*maxhunk = (sectors[3] + maxdiff + sectors_per_hunk - 1) / sectors_per_hunk;
 		printf("Maximum hunk: %d\n", *maxhunk);
 		if (*maxhunk >= header->totalhunks)
@@ -1455,13 +1475,12 @@ static int handle_custom_chomp(const char *name, chd_file *chd, UINT32 *maxhunk)
 	free(temp);
 	return CHDERR_NONE;
 
-error:
+cleanup:
 	printf("Error: unable to identify file or compute chomping size.\n");
 	free(temp);
 	return CHDERR_INVALID_DATA;
 }
 #endif
-
 
 
 /*-------------------------------------------------
@@ -1480,16 +1499,14 @@ static void do_merge_update_chomp(int argc, char *argv[], int operation)
 	chd_file *inputchd = NULL;
 	chd_file *outputchd = NULL;
 	const chd_header *inputheader;
-	UINT8 metadata[CHD_MAX_METADATA_SIZE];
-	UINT32 metatag, metasize, metaindex;
 	UINT32 maxhunk = ~0;
-	int err;
+	chd_error err;
 
 	/* require 4-5 args total */
 	if (operation == OPERATION_UPDATE && argc != 4)
-		error();
+		usage();
 	if ((operation == OPERATION_MERGE || operation == OPERATION_CHOMP) && argc != 5)
-		error();
+		usage();
 
 	/* extract the data */
 	if (operation == OPERATION_MERGE)
@@ -1522,20 +1539,20 @@ static void do_merge_update_chomp(int argc, char *argv[], int operation)
 	/* open the parent CHD */
 	if (parentfile)
 	{
-		parentchd = chd_open(parentfile, 0, NULL);
-		if (!parentchd)
+		err = chd_open(parentfile, CHD_OPEN_READ, NULL, &parentchd);
+		if (err != CHDERR_NONE)
 		{
-			printf("Error opening CHD file '%s': %s\n", parentfile, error_string(err = chd_get_last_error()));
-			goto error;
+			printf("Error opening CHD file '%s': %s\n", parentfile, error_string(err));
+			goto cleanup;
 		}
 	}
 
 	/* open the diff CHD */
-	inputchd = chd_open(inputfile, 0, parentchd);
-	if (!inputchd)
+	err = chd_open(inputfile, CHD_OPEN_READ, parentchd, &inputchd);
+	if (err !=  CHDERR_NONE)
 	{
-		printf("Error opening CHD file '%s': %s\n", inputfile, error_string(err = chd_get_last_error()));
-		goto error;
+		printf("Error opening CHD file '%s': %s\n", inputfile, error_string(err));
+		goto cleanup;
 	}
 	inputheader = chd_get_header(inputchd);
 
@@ -1551,41 +1568,31 @@ static void do_merge_update_chomp(int argc, char *argv[], int operation)
 	if (err != CHDERR_NONE)
 	{
 		printf("Error creating CHD file: %s\n", error_string(err));
-		goto error;
+		goto cleanup;
 	}
 
 	/* open the new CHD */
-	outputchd = chd_open(outputfile, 1, NULL);
-	if (!outputchd)
+	err = chd_open(outputfile, CHD_OPEN_READWRITE, NULL, &outputchd);
+	if (err != CHDERR_NONE)
 	{
-		printf("Error opening new CHD file: %s\n", error_string(chd_get_last_error()));
-		goto error;
+		printf("Error opening new CHD file: %s\n", error_string(err));
+		goto cleanup;
 	}
 
 	/* clone the metadata from the input file (which should have inherited from the parent) */
-	for (metaindex = 0; ; metaindex++)
+	err = chd_clone_metadata(inputchd, outputchd);
+	if (err != CHDERR_NONE)
 	{
-		metatag = CHDMETATAG_WILDCARD;
-		metasize = chd_get_metadata(inputchd, &metatag, metaindex, metadata, sizeof(metadata));
-		if (metasize == 0 || chd_get_last_error() == CHDERR_METADATA_NOT_FOUND)
-			break;
-
-		err = chd_set_metadata(outputchd, metatag, CHD_METAINDEX_APPEND, metadata, metasize);
-		if (err != CHDERR_NONE)
-		{
-			printf("Error cloning metadata: %s\n", error_string(err));
-			goto error;
-		}
+		printf("Error cloning metadata: %s\n", error_string(err));
+		goto cleanup;
 	}
 
 	/* do the compression; our interface will route reads for us */
-	special_chd_init(inputchd, (operation == OPERATION_CHOMP) ? ((UINT64)(maxhunk + 1) * (UINT64)inputheader->hunkbytes) : inputheader->logicalbytes);
-	err = chd_compress(outputchd, SPECIAL_CHD_NAME, 0, progress);
+	err = chdman_compress_chd(outputchd, inputchd, (operation == OPERATION_CHOMP) ? (maxhunk + 1) : 0);
 	if (err != CHDERR_NONE)
 		printf("Error during compression: %s\n", error_string(err));
-	special_chd_finished();
 
-error:
+cleanup:
 	/* close everything down */
 	if (outputchd)
 		chd_close(outputchd);
@@ -1596,7 +1603,6 @@ error:
 	if (err != CHDERR_NONE)
 		remove(outputfile);
 }
-
 
 
 /*-------------------------------------------------
@@ -1610,11 +1616,11 @@ static void do_diff(int argc, char *argv[])
 	chd_file *parentchd = NULL;
 	chd_file *inputchd = NULL;
 	chd_file *outputchd = NULL;
-	int err;
+	chd_error err;
 
 	/* require 5 args total */
 	if (argc != 5)
-		error();
+		usage();
 
 	/* extract the data */
 	if (argc == 5)
@@ -1630,19 +1636,19 @@ static void do_diff(int argc, char *argv[])
 	printf("Diff file:    %s\n", outputfile);
 
 	/* open the soon-to-be-parent CHD */
-	parentchd = chd_open(parentfile, 0, NULL);
-	if (!parentchd)
+	err = chd_open(parentfile, CHD_OPEN_READ, NULL, &parentchd);
+	if (err != CHDERR_NONE)
 	{
-		printf("Error opening CHD file '%s': %s\n", parentfile, error_string(err = chd_get_last_error()));
-		goto error;
+		printf("Error opening CHD file '%s': %s\n", parentfile, error_string(err));
+		goto cleanup;
 	}
 
 	/* open the input CHD */
-	inputchd = chd_open(inputfile, 0, NULL);
-	if (!inputchd)
+	err = chd_open(inputfile, CHD_OPEN_READ, NULL, &inputchd);
+	if (err != CHDERR_NONE)
 	{
-		printf("Error opening CHD file '%s': %s\n", inputfile, error_string(err = chd_get_last_error()));
-		goto error;
+		printf("Error opening CHD file '%s': %s\n", inputfile, error_string(err));
+		goto cleanup;
 	}
 
 	/* create the new CHD as a diff against the parent */
@@ -1650,25 +1656,23 @@ static void do_diff(int argc, char *argv[])
 	if (err != CHDERR_NONE)
 	{
 		printf("Error creating CHD file: %s\n", error_string(err));
-		goto error;
+		goto cleanup;
 	}
 
 	/* open the new CHD */
-	outputchd = chd_open(outputfile, 1, parentchd);
-	if (!outputchd)
+	err = chd_open(outputfile, CHD_OPEN_READWRITE, parentchd, &outputchd);
+	if (err != CHDERR_NONE)
 	{
-		printf("Error opening new CHD file: %s\n", error_string(chd_get_last_error()));
-		goto error;
+		printf("Error opening new CHD file: %s\n", error_string(err));
+		goto cleanup;
 	}
 
 	/* do the compression; our interface will route reads for us */
-	special_chd_init(inputchd, 0);
-	err = chd_compress(outputchd, SPECIAL_CHD_NAME, 0, progress);
+	err = chdman_compress_chd(outputchd, inputchd, 0);
 	if (err != CHDERR_NONE)
 		printf("Error during compression: %s\n", error_string(err));
-	special_chd_finished();
 
-error:
+cleanup:
 	/* close everything down */
 	if (outputchd)
 		chd_close(outputchd);
@@ -1681,7 +1685,6 @@ error:
 }
 
 
-
 /*-------------------------------------------------
     do_setchs - change the CHS values on a hard
     disk image
@@ -1690,19 +1693,18 @@ error:
 static void do_setchs(int argc, char *argv[])
 {
 	int oldcyls, oldhds, oldsecs, oldsecsize;
-	int cyls, hds, secs, err;
+	int cyls, hds, secs;
+	chd_error err;
 	const char *inoutfile;
 	chd_header header;
 	chd_file *chd = NULL;
 	char metadata[256];
 	UINT64 old_logicalbytes;
-	UINT32 metasize;
-	UINT32 metatag;
 	UINT8 was_readonly = 0;
 
 	/* require 6 args total */
 	if (argc != 6)
-		error();
+		usage();
 
 	/* extract the data */
 	inoutfile = argv[2];
@@ -1717,10 +1719,10 @@ static void do_setchs(int argc, char *argv[])
 	printf("Sectors:      %d\n", secs);
 
 	/* open the file read-only and get the header */
-	chd = chd_open(inoutfile, 0, NULL);
-	if (!chd)
+	err = chd_open(inoutfile, CHD_OPEN_READ, NULL, &chd);
+	if (err != CHDERR_NONE)
 	{
-		printf("Error opening CHD file '%s' read-only: %s\n", inoutfile, error_string(chd_get_last_error()));
+		printf("Error opening CHD file '%s' read-only: %s\n", inoutfile, error_string(err));
 		return;
 	}
 	header = *chd_get_header(chd);
@@ -1742,17 +1744,16 @@ static void do_setchs(int argc, char *argv[])
 	}
 
 	/* open the file read/write */
-	chd = chd_open(inoutfile, 1, NULL);
-	if (!chd)
+	err = chd_open(inoutfile, CHD_OPEN_READWRITE, NULL, &chd);
+	if (err != CHDERR_NONE)
 	{
-		printf("Error opening CHD file '%s' read/write: %s\n", inoutfile, error_string(chd_get_last_error()));
+		printf("Error opening CHD file '%s' read/write: %s\n", inoutfile, error_string(err));
 		return;
 	}
 
 	/* get the hard disk metadata */
-	metatag = HARD_DISK_STANDARD_METADATA;
-	metasize = chd_get_metadata(chd, &metatag, 0, metadata, sizeof(metadata));
-	if (metasize == 0 || sscanf(metadata, HARD_DISK_METADATA_FORMAT, &oldcyls, &oldhds, &oldsecs, &oldsecsize) != 4)
+	err = chd_get_metadata(chd, HARD_DISK_STANDARD_METADATA, 0, metadata, sizeof(metadata), NULL, NULL);
+	if (err != CHDERR_NONE || sscanf(metadata, HARD_DISK_METADATA_FORMAT, &oldcyls, &oldhds, &oldsecs, &oldsecsize) != 4)
 	{
 		printf("CHD file '%s' is not a hard disk!\n", inoutfile);
 		goto cleanup;
@@ -1805,6 +1806,239 @@ cleanup:
 }
 
 
+/*-------------------------------------------------
+    chdman_compress_file - compress a regular
+    file via the compression interfaces
+-------------------------------------------------*/
+
+static chd_error chdman_compress_file(chd_file *chd, const char *rawfile, UINT32 offset)
+{
+	chd_interface_file *sourcefile;
+	const chd_header *header;
+	UINT64 sourceoffset = 0;
+	UINT8 *cache = NULL;
+	double ratio = 1.0;
+	chd_error err;
+	int hunknum;
+
+	/* open the raw file */
+	sourcefile = chdman_open(rawfile, "rb");
+	if (sourcefile == NULL)
+	{
+		err = CHDERR_FILE_NOT_FOUND;
+		goto cleanup;
+	}
+
+	/* get the header */
+	header = chd_get_header(chd);
+	cache = malloc(header->hunkbytes);
+	if (cache == NULL)
+	{
+		err = CHDERR_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
+	/* begin compressing */
+	err = chd_compress_begin(chd);
+	if (err != CHDERR_NONE)
+		goto cleanup;
+
+	/* loop over source hunks until we run out */
+	for (hunknum = 0; hunknum < header->totalhunks; hunknum++)
+	{
+		UINT32 bytesread;
+
+		/* progress */
+		progress(FALSE, "Compressing hunk %d/%d... (ratio=%d%%)  \r", hunknum, header->totalhunks, (int)(100.0 * ratio));
+
+		/* read the data */
+		bytesread = chdman_read(sourcefile, sourceoffset + offset, header->hunkbytes, cache);
+		if (bytesread < header->hunkbytes)
+			memset(&cache[bytesread], 0, header->hunkbytes - bytesread);
+
+		/* append the data */
+		err = chd_compress_hunk(chd, cache, &ratio);
+		if (err != CHDERR_NONE)
+			goto cleanup;
+
+		/* prepare for the next hunk */
+		sourceoffset += header->hunkbytes;
+	}
+
+	/* finish compression */
+	err = chd_compress_finish(chd);
+	if (err != CHDERR_NONE)
+		goto cleanup;
+
+	/* final progress update */
+	progress(TRUE, "Compression complete ... final ratio = %d%%            \n", (int)(100.0 * ratio));
+
+cleanup:
+	if (sourcefile != NULL)
+		chdman_close(sourcefile);
+	if (cache != NULL)
+		free(cache);
+	return err;
+}
+
+
+/*-------------------------------------------------
+    chdman_compress_chd - (re)compress a CHD file
+    via the compression interfaces
+-------------------------------------------------*/
+
+static chd_error chdman_compress_chd(chd_file *chd, chd_file *source, UINT32 totalhunks)
+{
+	const chd_header *source_header;
+	const chd_header *header;
+	UINT8 *source_cache = NULL;
+	UINT64 source_offset = 0;
+	UINT32 source_bytes = 0;
+	UINT8 *cache = NULL;
+	double ratio = 1.0;
+	chd_error err, verifyerr;
+	int hunknum;
+
+	/* get the header */
+	header = chd_get_header(chd);
+	cache = malloc(header->hunkbytes);
+	if (cache == NULL)
+	{
+		err = CHDERR_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
+	/* get the source CHD header */
+	source_header = chd_get_header(source);
+	source_cache = malloc(source_header->hunkbytes);
+	if (source_cache == NULL)
+	{
+		err = CHDERR_OUT_OF_MEMORY;
+		goto cleanup;
+	}
+
+	/* begin compressing */
+	err = chd_compress_begin(chd);
+	if (err != CHDERR_NONE)
+		goto cleanup;
+
+	/* also begin verifying the source driver */
+	verifyerr = chd_verify_begin(source);
+
+	/* a zero count means the natural number */
+	if (totalhunks == 0)
+		totalhunks = source_header->totalhunks;
+
+	/* loop over source hunks until we run out */
+	for (hunknum = 0; hunknum < totalhunks; hunknum++)
+	{
+		UINT32 bytesremaining = header->hunkbytes;
+		UINT8 *dest = cache;
+
+		/* progress */
+		progress(FALSE, "Compressing hunk %d/%d... (ratio=%d%%)  \r", hunknum, totalhunks, (int)(100.0 * ratio));
+
+		/* read the data */
+		while (bytesremaining > 0)
+		{
+			/* if we have data in the buffer, copy it */
+			if (source_bytes > 0)
+			{
+				UINT32 bytestocopy = MIN(bytesremaining, source_bytes);
+				memcpy(dest, &source_cache[source_header->hunkbytes - source_bytes], bytestocopy);
+				dest += bytestocopy;
+				source_bytes -= bytestocopy;
+				bytesremaining -= bytestocopy;
+			}
+
+			/* otherwise, read in another hunk of the source */
+			else
+			{
+				/* verify the next hunk */
+				if (verifyerr == CHDERR_NONE)
+					err = chd_verify_hunk(source);
+
+				/* then read it (should be the same) */
+				err = chd_read(source, source_offset / source_header->hunkbytes, source_cache);
+				if (err != CHDERR_NONE)
+					memset(source_cache, 0, source_header->hunkbytes);
+				source_bytes = source_header->hunkbytes;
+				source_offset += source_bytes;
+			}
+		}
+
+		/* append the data */
+		err = chd_compress_hunk(chd, cache, &ratio);
+		if (err != CHDERR_NONE)
+			goto cleanup;
+	}
+
+	/* if we read all the source data, verify the checksums */
+	if (verifyerr == CHDERR_NONE && source_offset >= source_header->logicalbytes)
+	{
+		static const UINT8 empty_checksum[CHD_SHA1_BYTES] = { 0 };
+		UINT8 md5[CHD_MD5_BYTES];
+		UINT8 sha1[CHD_SHA1_BYTES];
+		int i;
+
+		/* get the final values */
+		err = chd_verify_finish(source, md5, sha1);
+
+		/* check the MD5 */
+		if (memcmp(source_header->md5, empty_checksum, CHD_MD5_BYTES) != 0)
+		{
+			if (memcmp(source_header->md5, md5, CHD_MD5_BYTES) != 0)
+			{
+				progress(TRUE, "WARNING: expected input MD5 = ");
+				for (i = 0; i < CHD_MD5_BYTES; i++)
+					progress(TRUE, "%02x", source_header->md5[i]);
+				progress(TRUE, "\n");
+
+				progress(TRUE, "                 actual MD5 = ");
+				for (i = 0; i < CHD_MD5_BYTES; i++)
+					progress(TRUE, "%02x", md5[i]);
+				progress(TRUE, "\n");
+			}
+			else
+				progress(TRUE, "Input MD5 verified                            \n");
+		}
+
+		/* check the SHA1 */
+		if (memcmp(source_header->sha1, empty_checksum, CHD_SHA1_BYTES) != 0)
+		{
+			if (memcmp(source_header->sha1, sha1, CHD_SHA1_BYTES) != 0)
+			{
+				progress(TRUE, "WARNING: expected input SHA1 = ");
+				for (i = 0; i < CHD_SHA1_BYTES; i++)
+					progress(TRUE, "%02x", source_header->sha1[i]);
+				progress(TRUE, "\n");
+
+				progress(TRUE, "                 actual SHA1 = ");
+				for (i = 0; i < CHD_SHA1_BYTES; i++)
+					progress(TRUE, "%02x", sha1[i]);
+				progress(TRUE, "\n");
+			}
+			else
+				progress(TRUE, "Input SHA1 verified                            \n");
+		}
+	}
+
+	/* finish compression */
+	err = chd_compress_finish(chd);
+	if (err != CHDERR_NONE)
+		goto cleanup;
+
+	/* final progress update */
+	progress(TRUE, "Compression complete ... final ratio = %d%%            \n", (int)(100.0 * ratio));
+
+cleanup:
+	if (source_cache != NULL)
+		free(source_cache);
+	if (cache != NULL)
+		free(cache);
+	return err;
+}
+
 
 /*-------------------------------------------------
     chdman_open - open file
@@ -1812,15 +2046,8 @@ cleanup:
 
 static chd_interface_file *chdman_open(const char *filename, const char *mode)
 {
-	/* if it's the special CHD filename, just hand back our handle */
-	if (!strcmp(filename, SPECIAL_CHD_NAME))
-		return (chd_interface_file *)special_chd;
-
-	/* otherwise, open normally */
-	else
-		return (chd_interface_file *) osd_tool_fopen(filename, mode);
+	return (chd_interface_file *)osd_tool_fopen(filename, mode);
 }
-
 
 
 /*-------------------------------------------------
@@ -1829,13 +2056,8 @@ static chd_interface_file *chdman_open(const char *filename, const char *mode)
 
 static void chdman_close(chd_interface_file *file)
 {
-	/* if it's the special chd handle, do nothing */
-	if (file == (chd_interface_file *)special_chd)
-		return;
-
-	osd_tool_fclose((osd_tool_file *) file);
+	osd_tool_fclose((osd_tool_file *)file);
 }
-
 
 
 /*-------------------------------------------------
@@ -1844,66 +2066,8 @@ static void chdman_close(chd_interface_file *file)
 
 static UINT32 chdman_read(chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer)
 {
-	/* if it's the special chd handle, read from it */
-	if (file == (chd_interface_file *)special_chd)
-	{
-		const chd_header *header = chd_get_header(special_chd);
-		UINT32 result;
-
-		/* validate the read: we can only handle block-aligned reads here */
-		if (offset % header->hunkbytes != 0)
-		{
-			printf("Error: chdman read from non-aligned offset %08X%08X\n", (UINT32)(offset >> 32), (UINT32)offset);
-			return 0;
-		}
-		if (count % header->hunkbytes != 0)
-		{
-			printf("Error: chdman read non-aligned amount %08X\n", count);
-			return 0;
-		}
-
-		/* if we're reading past the logical end, indicate we didn't read a thing */
-		if (offset >= special_logicalbytes)
-			return 0;
-
-		/* read the block(s) */
-		result = header->hunkbytes * chd_read(special_chd, offset / header->hunkbytes, count / header->hunkbytes, buffer);
-
-		/* count errors */
-		if (result != count && chd_get_last_error() != CHDERR_NONE)
-			special_error_count++;
-
-		/* update the checksums */
-		if (offset == special_bytes_checksummed && offset < special_original_logicalbytes)
-		{
-			UINT32 bytestochecksum = result;
-
-			/* clamp to the original number of logical bytes */
-			if (special_bytes_checksummed + bytestochecksum > special_original_logicalbytes)
-				bytestochecksum = special_original_logicalbytes - special_bytes_checksummed;
-
-			/* update the two checksums */
-			if (bytestochecksum)
-			{
-				MD5Update(&special_md5, buffer, bytestochecksum);
-				sha1_update(&special_sha1, bytestochecksum, buffer);
-				special_bytes_checksummed += bytestochecksum;
-			}
-		}
-
-		/* if we were supposed to read past the end, indicate the poper number of bytes */
-		if (offset + result > special_logicalbytes)
-			result = special_logicalbytes - offset;
-		return result;
-	}
-
-	/* otherwise, do it normally */
-	else
-	{
-		return osd_tool_fread((osd_tool_file *) file, offset, count, buffer);
-	}
+	return osd_tool_fread((osd_tool_file *)file, offset, count, buffer);
 }
-
 
 
 /*-------------------------------------------------
@@ -1912,20 +2076,8 @@ static UINT32 chdman_read(chd_interface_file *file, UINT64 offset, UINT32 count,
 
 static UINT32 chdman_write(chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer)
 {
-	/* if it's the special chd handle, this is bad */
-	if (file == (chd_interface_file *)special_chd)
-	{
-		printf("Error: chdman write to CHD image = bad!\n");
-		return 0;
-	}
-
-	/* otherwise, do it normally */
-	else
-	{
-		return osd_tool_fwrite((osd_tool_file *) file, offset, count, buffer);
-	}
+	return osd_tool_fwrite((osd_tool_file *)file, offset, count, buffer);
 }
-
 
 
 /*-------------------------------------------------
@@ -1934,17 +2086,8 @@ static UINT32 chdman_write(chd_interface_file *file, UINT64 offset, UINT32 count
 
 static UINT64 chdman_length(chd_interface_file *file)
 {
-	/* if it's the special chd handle, this is bad */
-	if (file == (chd_interface_file *)special_chd)
-		return special_logicalbytes;
-
-	/* otherwise, do it normally */
-	else
-	{
-		return osd_tool_flength((osd_tool_file *) file);
-	}
+	return osd_tool_flength((osd_tool_file *)file);
 }
-
 
 
 /*-------------------------------------------------
@@ -1958,7 +2101,7 @@ int main(int argc, char **argv)
 
 	/* require at least 1 argument */
 	if (argc < 2)
-		error();
+		usage();
 
 	/* set the interface for everyone */
 	chd_set_interface(&chdman_interface);
@@ -1966,6 +2109,8 @@ int main(int argc, char **argv)
 	/* handle the appropriate command */
 	if (!strcmp(argv[1], "-createhd"))
 		do_createhd(argc, argv);
+	else if (!strcmp(argv[1], "-createraw"))
+		do_createraw(argc, argv);
 	else if (!strcmp(argv[1], "-createblankhd"))
 		do_createblankhd(argc, argv);
 	else if (!strcmp(argv[1], "-copydata"))
@@ -1993,7 +2138,7 @@ int main(int argc, char **argv)
 	else if (!strcmp(argv[1], "-setchs"))
 		do_setchs(argc, argv);
 	else
-		error();
+		usage();
 
 	return 0;
 }

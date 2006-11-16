@@ -6,7 +6,7 @@ void tms32051_get_info(UINT32 state, union cpuinfo *info);
 #endif
 
 #ifdef MAME_DEBUG
-extern int tms32051_dasm_one(char *buffer, offs_t pc, const UINT8 *oprom);
+offs_t tms32051_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
 #endif
 
 #endif /* _TMS32051_H */

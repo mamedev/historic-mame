@@ -68,6 +68,7 @@ extern VIDEO_START( twin16 );
 extern VIDEO_START( fround );
 extern VIDEO_UPDATE( twin16 );
 extern VIDEO_EOF( twin16 );
+extern VIDEO_UPDATE( vulcan );
 
 extern void twin16_spriteram_process( void );
 
@@ -1062,6 +1063,11 @@ static MACHINE_DRIVER_START( mia )
 	MDRV_VIDEO_START(fround)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( vulcan )
+	MDRV_IMPORT_FROM(twin16)
+	MDRV_VIDEO_UPDATE(vulcan )
+MACHINE_DRIVER_END
+
 static MACHINE_DRIVER_START( cuebrick )
 	MDRV_IMPORT_FROM(twin16)
 	MDRV_VISIBLE_AREA(1*8, 39*8-1, 2*8, 30*8-1)
@@ -1512,10 +1518,10 @@ static DRIVER_INIT( cuebrick )
 GAME( 1987, devilw,   0,      heavysync, devilw,   twin16,   ROT0, "Konami", "Devil World", 0 )
 GAME( 1987, majuu,    devilw, heavysync, devilw,   twin16,   ROT0, "Konami", "Majuu no Ohkoku", 0 )
 GAME( 1987, darkadv,  devilw, heavysync, darkadv,  twin16,   ROT0, "Konami", "Dark Adventure", 0 )
-GAME( 1988, vulcan,   0,      twin16,    vulcan,   twin16,   ROT0, "Konami", "Vulcan Venture", 0 )
-GAME( 1988, gradius2, vulcan, twin16,    gradius2, twin16,   ROT0, "Konami", "Gradius II - GOFER no Yabou (Japan New Ver.)", 0 )
-GAME( 1988, grdius2a, vulcan, twin16,    vulcan,   twin16,   ROT0, "Konami", "Gradius II - GOFER no Yabou (Japan Old Ver.)", 0 )
-GAME( 1988, grdius2b, vulcan, twin16,    vulcan,   twin16,   ROT0, "Konami", "Gradius II - GOFER no Yabou (Japan Older Ver.)", 0 )
+GAME( 1988, vulcan,   0,      vulcan,    vulcan,   twin16,   ROT0, "Konami", "Vulcan Venture", 0 )
+GAME( 1988, gradius2, vulcan, vulcan,    gradius2, twin16,   ROT0, "Konami", "Gradius II - GOFER no Yabou (Japan New Ver.)", 0 )
+GAME( 1988, grdius2a, vulcan, vulcan,    vulcan,   twin16,   ROT0, "Konami", "Gradius II - GOFER no Yabou (Japan Old Ver.)", 0 )
+GAME( 1988, grdius2b, vulcan, vulcan,    vulcan,   twin16,   ROT0, "Konami", "Gradius II - GOFER no Yabou (Japan Older Ver.)", 0 )
 
 GAME( 1988, fround,   0,      fround,    fround,   fround,   ROT0, "Konami", "The Final Round (version M)", 0 )
 GAME( 1988, froundl,  fround, fround,    fround,   fround,   ROT0, "Konami", "The Final Round (version L)", 0 )

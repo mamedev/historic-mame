@@ -41,17 +41,15 @@ hard_disk_file *hard_disk_open(chd_file *chd)
 	int cylinders, heads, sectors, sectorbytes;
 	hard_disk_file *file;
 	char metadata[256];
-	UINT32 metatag;
-	UINT32 count;
+	chd_error err;
 
 	/* punt if no CHD */
 	if (!chd)
 		return NULL;
 
 	/* read the hard disk metadata */
-	metatag = HARD_DISK_STANDARD_METADATA;
-	count = chd_get_metadata(chd, &metatag, 0, metadata, sizeof(metadata));
-	if (count == 0)
+	err = chd_get_metadata(chd, HARD_DISK_STANDARD_METADATA, 0, metadata, sizeof(metadata), NULL, NULL);
+	if (err != CHDERR_NONE)
 		return NULL;
 
 	/* parse the metadata */
@@ -155,7 +153,8 @@ UINT32 hard_disk_read(hard_disk_file *file, UINT32 lbasector, UINT32 numsectors,
 	/* if we haven't cached this hunk, read it now */
 	if (file->cachehunk != hunknum)
 	{
-		if (!chd_read(file->chd, hunknum, 1, file->cache))
+		chd_error err = chd_read(file->chd, hunknum, file->cache);
+		if (err != CHDERR_NONE)
 			return 0;
 		file->cachehunk = hunknum;
 	}
@@ -177,6 +176,7 @@ UINT32 hard_disk_write(hard_disk_file *file, UINT32 lbasector, UINT32 numsectors
 {
 	UINT32 hunknum = lbasector / file->hunksectors;
 	UINT32 sectoroffs = lbasector % file->hunksectors;
+	chd_error err;
 
 	/* for now, just break down multisector writes into single sectors */
 	if (numsectors > 1)
@@ -195,7 +195,8 @@ UINT32 hard_disk_write(hard_disk_file *file, UINT32 lbasector, UINT32 numsectors
 	/* if we haven't cached this hunk, read it now */
 	if (file->cachehunk != hunknum)
 	{
-		if (!chd_read(file->chd, hunknum, 1, file->cache))
+		err = chd_read(file->chd, hunknum, file->cache);
+		if (err != CHDERR_NONE)
 			return 0;
 		file->cachehunk = hunknum;
 	}
@@ -204,7 +205,6 @@ UINT32 hard_disk_write(hard_disk_file *file, UINT32 lbasector, UINT32 numsectors
 	memcpy(&file->cache[sectoroffs * file->info.sectorbytes], buffer, file->info.sectorbytes);
 
 	/* write it back out */
-	if (chd_write(file->chd, hunknum, 1, file->cache))
-		return 1;
-	return 0;
+	err = chd_write(file->chd, hunknum, file->cache);
+	return (err == CHDERR_NONE) ? 1 : 0;
 }

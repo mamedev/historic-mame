@@ -149,8 +149,8 @@ typedef struct {
 }	UPD7810;
 
 #ifdef MAME_DEBUG
-extern unsigned Dasm7810( char *dst, unsigned pc, const UINT8 *oprom, const UINT8 *opram );
-extern unsigned Dasm7807( char *dst, unsigned pc, const UINT8 *oprom, const UINT8 *opram );
+offs_t upd7810_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
+offs_t upd7807_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
 #endif
 
 #endif

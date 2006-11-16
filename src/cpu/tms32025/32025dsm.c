@@ -403,7 +403,7 @@ static void InitDasm32025(void)
 	OpInizialized = 1;
 }
 
-unsigned Dasm32025(char *str, unsigned pc, const UINT8 *oprom, const UINT8 *opram)
+offs_t tms32025_dasm(char *str, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	UINT32 flags = 0;
 	int a, b, c, d, k, m, n, p, r, s, t, w, x;	/* these can all be filled in by parsing an instruction */

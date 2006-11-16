@@ -37,9 +37,63 @@ int		 stv_vdp1_fbcr_accessed;
 int		 stv_vdp1_current_display_framebuffer;
 int		 stv_vdp1_current_draw_framebuffer;
 int		 stv_vdp1_clear_framebuffer_on_next_frame;
+rectangle stv_vdp1_system_cliprect;
+rectangle stv_vdp1_user_cliprect;
 
 int stvvdp1_local_x;
 int stvvdp1_local_y;
+
+struct stv_vdp1_poly_scanline
+{
+	INT32	x[2];
+	INT32	b[2];
+	INT32	g[2];
+	INT32	r[2];
+	INT32	db;
+	INT32	dg;
+	INT32	dr;
+};
+
+struct stv_vdp1_poly_scanline_data
+{
+	INT32	sy, ey;
+	struct	stv_vdp1_poly_scanline scanline[512];
+};
+
+static struct stv_vdp1_poly_scanline_data* stv_vdp1_shading_data;
+
+enum { FRAC_SHIFT = 16 };
+
+struct spoint {
+	INT32 x, y;
+	INT32 u, v;
+};
+
+struct shaded_point
+{
+	INT32 x,y;
+	INT32 r,g,b;
+};
+
+#define RGB_R(_color)	(_color & 0x1f)
+#define RGB_G(_color)	((_color >> 5) & 0x1f)
+#define RGB_B(_color)	((_color >> 10) & 0x1f)
+
+#define SWAP_INT32(_a,_b) \
+	{ \
+		INT32 t; \
+		t = _a; \
+		_a = _b; \
+		_b = t; \
+	}
+
+#define SWAP_INT32PTR(_p1, _p2) \
+	{ \
+		INT32 *p; \
+		p = _p1; \
+		_p1 = _p2; \
+		_p2 = p; \
+	}
 
 /*TV Mode Selection Register */
 /*
@@ -130,7 +184,7 @@ int stvvdp1_local_y;
 
 
 
-void stv_vdp1_process_list(mame_bitmap *bitmap, const rectangle *cliprect);
+void stv_vdp1_process_list(void);
 
 READ32_HANDLER( stv_vdp1_regs_r )
 {
@@ -150,31 +204,6 @@ static void stv_clear_framebuffer( int which_framebuffer )
 	memset( stv_framebuffer[ which_framebuffer ], 0, 1024 * 256 * sizeof(UINT16) * 2 );
 }
 
-int stv_vdp1_start ( void )
-{
-	stv_vdp1_regs = auto_malloc ( 0x040000 );
-	stv_vdp1_vram = auto_malloc ( 0x100000 );
-	stv_vdp1_gfx_decode = auto_malloc ( 0x100000 );
-
-	memset(stv_vdp1_regs, 0, 0x040000);
-	memset(stv_vdp1_vram, 0, 0x100000);
-
-	stv_framebuffer[0] = auto_malloc( 1024 * 256 * sizeof(UINT16) * 2 ); /* *2 is for double interlace */
-	stv_framebuffer[1] = auto_malloc( 1024 * 256 * sizeof(UINT16) * 2 );
-
-	stv_framebuffer_display_lines = auto_malloc( 512 * sizeof(UINT16*) );
-	stv_framebuffer_draw_lines = auto_malloc( 512 * sizeof(UINT16*) );
-
-	stv_framebuffer_width = stv_framebuffer_height = 0;
-	stv_framebuffer_mode = -1;
-	stv_framebuffer_double_interlace = -1;
-	stv_vdp1_fbcr_accessed = 0;
-	stv_vdp1_current_display_framebuffer = 0;
-	stv_vdp1_current_draw_framebuffer = 1;
-	stv_clear_framebuffer(stv_vdp1_current_draw_framebuffer);
-	stv_vdp1_clear_framebuffer_on_next_frame = 0;
-	return 0;
-}
 
 static void stv_prepare_framebuffers( void )
 {
@@ -283,7 +312,7 @@ WRITE32_HANDLER( stv_vdp1_regs_w )
 			if ( STV_VDP1_PTMR == 1 )
 			{
 				if ( vdp1_sprite_log ) logerror( "VDP1: Access to register PTMR = %1X\n", STV_VDP1_PTMR );
-				stv_vdp1_process_list( NULL, &Machine->screen[0].visarea );
+				stv_vdp1_process_list( );
 
 				if(!(stv_scu[40] & 0x2000)) /*Sprite draw end irq*/
 				{
@@ -469,7 +498,6 @@ static struct stv_vdp2_sprite_list
 	int CMDXD, CMDYD;
 
 	int ispoly;
-	int isalpha;
 
 } stv2_current_sprite;
 
@@ -482,14 +510,6 @@ static struct _stv_gouraud_shading
 	UINT16	GB;
 	UINT16	GC;
 	UINT16	GD;
-	/* Gouraud shading data at drawn pixel */
-	UINT32	g_r;
-	UINT32	g_g;
-	UINT32	g_b;
-	/* Gouraud shading delta */
-	UINT32	gdelta_r;
-	UINT32	gdelta_g;
-	UINT32	gdelta_b;
 } stv_gouraud_shading;
 
 static void stv_clear_gouraud_shading(void)
@@ -516,89 +536,317 @@ static UINT8 stv_read_gouraud_table(void)
 	}
 }
 
-static UINT16 stv_compute_shading_at_pixel(int size, int pt, UINT16 g1, UINT16 g2 )
+INLINE INT32 _shading( INT32 color, INT32 correction )
 {
-	int r,g,b;
-	b = ((g2 & 0x7c00) >> 10) - ((g1 & 0x7c00) >> 10);
-	g = ((g2 & 0x03e0) >> 5)  - ((g1 & 0x03e0) >> 5);
-	r = (g2 & 0x001f) - (g1 & 0x001f);
+	correction = (correction >> 16) & 0x1f;
+	color += (correction - 16);
 
-	b = (((b << 16) / size) * pt) >> 16;
-	g = (((g << 16) / size) * pt) >> 16;
-	r = (((r << 16) / size) * pt) >> 16;
+	if ( color < 0 ) color = 0;
+	if ( color > 0x1f ) color = 0x1f;
 
-	b += ((g1 & 0x7c00) >> 10);
-	g += ((g1 & 0x03e0) >> 5);
-	r += (g1 & 0x001f);
+	return color;
+};
 
-	if ( b < 0 ) b = 0;
-	if ( b > 0x1f ) b = 0x1f;
-	if ( g < 0 ) g = 0;
-	if ( g > 0x1f ) g = 0x1f;
-	if ( r < 0 ) r = 0;
-	if ( r > 0x1f ) r = 0x1f;
+static UINT16 stv_vdp1_apply_gouraud_shading( int x, int y, UINT16 pix )
+{
+	INT32 r,g,b, msb;
 
-	return ((b & 0x1f) << 10) | ((g & 0x1f) << 5) | (b & 0x1f) | 0x8000;
+	msb = pix & 0x8000;
+
+#ifdef MAME_DEBUG
+	if ( (stv_vdp1_shading_data->scanline[y].x[0] >> 16) != x )
+	{
+		logerror( "ERROR in computing x coordinates (line %d, x = %x, %d, xc = %x, %d)\n", y, x, x, stv_vdp1_shading_data->scanline[y].x[0], stv_vdp1_shading_data->scanline[y].x[0] >> 16 );
+	};
+#endif
+
+	b = RGB_B(pix);
+	g = RGB_G(pix);
+	r = RGB_R(pix);
+
+	b = _shading( b, stv_vdp1_shading_data->scanline[y].b[0] );
+	g = _shading( g, stv_vdp1_shading_data->scanline[y].g[0] );
+	r = _shading( r, stv_vdp1_shading_data->scanline[y].r[0] );
+
+	stv_vdp1_shading_data->scanline[y].b[0] += stv_vdp1_shading_data->scanline[y].db;
+	stv_vdp1_shading_data->scanline[y].g[0] += stv_vdp1_shading_data->scanline[y].dg;
+	stv_vdp1_shading_data->scanline[y].r[0] += stv_vdp1_shading_data->scanline[y].dr;
+
+	stv_vdp1_shading_data->scanline[y].x[0] += 1 << FRAC_SHIFT;
+
+	return msb | b << 10 | g << 5 | r;
 }
 
-static void stv_setup_shading_for_line(int size, UINT16 g1, UINT16 g2 )
+static void stv_vdp1_setup_shading_for_line(INT32 y, INT32 x1, INT32 x2,
+											INT32 r1, INT32 g1, INT32 b1,
+											INT32 r2, INT32 g2, INT32 b2)
 {
-	int r,g,b;
-	b = ((g2 & 0x7c00) >> 10) - ((g1 & 0x7c00) >> 10);
-	g = ((g2 & 0x03e0) >> 5)  - ((g1 & 0x03e0) >> 5);
-	r = (g2 & 0x001f) - (g1 & 0x001f);
+	int xx1 = x1>>FRAC_SHIFT;
+	int xx2 = x2>>FRAC_SHIFT;
 
-	stv_gouraud_shading.gdelta_b = (b << 16) / size;
-	stv_gouraud_shading.gdelta_g = (g << 16) / size;
-	stv_gouraud_shading.gdelta_r = (r << 16) / size;
 
-	stv_gouraud_shading.g_b = ((g1 & 0x7c00) >> 10) << 16;
-	stv_gouraud_shading.g_g = ((g1 & 0x03e0) >> 5) << 16;
-	stv_gouraud_shading.g_r = (g1 & 0x001f) << 16;
+	if ( xx1 > xx2 )
+	{
+		SWAP_INT32(xx1, xx2);
+		SWAP_INT32(r1, r2);
+		SWAP_INT32(g1, g2);
+		SWAP_INT32(b1, b2);
+	}
+
+	if ( (y >= 0) && (y < 512) )
+	{
+	    INT32  dx;
+		INT32	gbd, ggd, grd;
+
+		dx = xx2 - xx1;
+
+		if ( dx == 0 )
+		{
+			gbd = ggd = grd = 0;
+		}
+		else
+		{
+			gbd = abs(b2 - b1) / dx;
+			if (b2 < b1) gbd = -gbd;
+			ggd = abs(g2 - g1) / dx;
+			if (g2 < g1) ggd = -ggd;
+			grd = abs(r2 - r1) / dx;
+			if (r2 < r1) grd = -grd;
+		}
+
+		stv_vdp1_shading_data->scanline[y].x[0] = x1;
+		stv_vdp1_shading_data->scanline[y].x[1] = x2;
+
+		stv_vdp1_shading_data->scanline[y].b[0] = b1;
+		stv_vdp1_shading_data->scanline[y].g[0] = g1;
+		stv_vdp1_shading_data->scanline[y].r[0] = r1;
+		stv_vdp1_shading_data->scanline[y].b[1] = b2;
+		stv_vdp1_shading_data->scanline[y].g[1] = g2;
+		stv_vdp1_shading_data->scanline[y].r[1] = r2;
+
+		stv_vdp1_shading_data->scanline[y].db = gbd;
+		stv_vdp1_shading_data->scanline[y].dg = ggd;
+		stv_vdp1_shading_data->scanline[y].dr = grd;
+
+	}
 }
 
-static void stv_compute_shading_for_next_point(void)
+static void stv_vdp1_setup_shading_for_slope(
+							INT32 x1, INT32 x2, INT32 sl1, INT32 sl2, INT32 *nx1, INT32 *nx2,
+							INT32 r1, INT32 r2, INT32 slr1, INT32 slr2, INT32 *nr1, INT32 *nr2,
+							INT32 g1, INT32 g2, INT32 slg1, INT32 slg2, INT32 *ng1, INT32 *ng2,
+							INT32 b1, INT32 b2, INT32 slb1, INT32 slb2, INT32 *nb1, INT32 *nb2,
+							INT32 _y1, INT32 y2)
 {
-	stv_gouraud_shading.g_b += stv_gouraud_shading.gdelta_b;
-	stv_gouraud_shading.g_g += stv_gouraud_shading.gdelta_g;
-	stv_gouraud_shading.g_r += stv_gouraud_shading.gdelta_r;
+	if(x1 > x2 || (x1==x2 && sl1 > sl2)) {
+		SWAP_INT32(x1,x2);
+		SWAP_INT32(sl1,sl2);
+		SWAP_INT32PTR(nx1, nx2);
+		SWAP_INT32(r1,r2);
+		SWAP_INT32(slr1, slr2);
+		SWAP_INT32PTR(nr1, nr2);
+		SWAP_INT32(g1, g2);
+		SWAP_INT32(slg1, slg2);
+		SWAP_INT32PTR(ng1, ng2);
+		SWAP_INT32(b1, b2);
+		SWAP_INT32(slb1, slb2);
+		SWAP_INT32PTR(nb1, nb2);
+	}
+
+	while(_y1 < y2)
+	{
+		stv_vdp1_setup_shading_for_line(_y1, x1, x2, r1, g1, b1, r2, g2, b2);
+		x1 += sl1;
+		r1 += slr1;
+		g1 += slg1;
+		b1 += slb1;
+
+		x2 += sl2;
+		r2 += slr2;
+		g2 += slg2;
+		b2 += slb2;
+		_y1++;
+	}
+	*nx1 = x1;
+	*nr1 = r1;
+	*ng1 = g1;
+	*nb1 = b1;
+
+	*nx2 = x2;
+	*nr2 = r2;
+	*nb2 = b2;
+	*ng2 = g2;
 }
 
-static UINT16 stv_apply_gouraud_shading( UINT16 pix )
+static void stv_vdp1_setup_shading(const struct spoint* q, const rectangle *cliprect)
 {
-	int r,g,b,sr,sg,sb;
-	b = (pix & 0x7c00) >> 10;
-	g = (pix & 0x03e0) >> 5;
-	r = (pix & 0x001f);
-	sb = (stv_gouraud_shading.g_b >> 16) & 0x1f;
-	sg = (stv_gouraud_shading.g_g >> 16) & 0x1f;
-	sr = (stv_gouraud_shading.g_r >> 16) & 0x1f;
+	INT32 x1, x2, delta, cury, limy;
+	INT32 r1, g1, b1, r2, g2, b2;
+	INT32 sl1, slg1, slb1, slr1;
+	INT32 sl2, slg2, slb2, slr2;
+	int pmin, pmax, i, ps1, ps2;
+	struct shaded_point p[8];
+	UINT16 gd[4];
 
-	if ( sb < 0x10 )
-		b -= (0x10 - sb);
-	else
-		b += sb - 0x10;
+	if ( stv_read_gouraud_table() == 0 ) return;
 
-	if ( b < 0 )    b = 0;
-	if ( b > 0x1f ) b = 0x1f;
+	gd[0] = stv_gouraud_shading.GA;
+	gd[1] = stv_gouraud_shading.GB;
+	gd[2] = stv_gouraud_shading.GC;
+	gd[3] = stv_gouraud_shading.GD;
 
-	if ( sg < 0x10 )
-		g -= (0x10 - sg);
-	else
-		g += sg - 0x10;
+	for(i=0; i<4; i++) {
+		p[i].x = p[i+4].x = q[i].x << FRAC_SHIFT;
+		p[i].y = p[i+4].y = q[i].y;
+		p[i].r = p[i+4].r = RGB_R(gd[i]) << FRAC_SHIFT;
+		p[i].g = p[i+4].g = RGB_G(gd[i]) << FRAC_SHIFT;
+		p[i].b = p[i+4].b = RGB_B(gd[i]) << FRAC_SHIFT;
+	}
 
-	if ( g < 0 )	g = 0;
-	if ( g > 0x1f ) g = 0x1f;
+	pmin = pmax = 0;
+	for(i=1; i<4; i++) {
+		if(p[i].y < p[pmin].y)
+			pmin = i;
+		if(p[i].y > p[pmax].y)
+			pmax = i;
+	}
 
-	if ( sr < 0x10 )
-		r -= (0x10 - sr);
-	else
-		r += sr - 0x10;
+	cury = p[pmin].y;
+	limy = p[pmax].y;
 
-	if ( r < 0 )	r = 0;
-	if ( r > 0x1f ) r = 0x1f;
+	stv_vdp1_shading_data->sy = cury;
+	stv_vdp1_shading_data->ey = limy;
 
-	return 0x8000 | b << 10 | g << 5 | r;
+	if(cury == limy) {
+		x1 = x2 = p[0].x;
+		ps1 = ps2 = 0;
+		for(i=1; i<4; i++) {
+			if(p[i].x < x1) {
+				x1 = p[i].x;
+				ps1 = i;
+			}
+			if(p[i].x > x2) {
+				x2 = p[i].x;
+				ps2 = i;
+			}
+		}
+		stv_vdp1_setup_shading_for_line(cury, x1, x2, p[ps1].r, p[ps1].g, p[ps1].b, p[ps2].r, p[ps2].g, p[ps2].b);
+		goto finish;
+	}
+
+	ps1 = pmin+4;
+	ps2 = pmin;
+
+	goto startup;
+
+	for(;;) {
+		if(p[ps1-1].y == p[ps2+1].y) {
+			stv_vdp1_setup_shading_for_slope(
+							x1, x2, sl1, sl2, &x1, &x2,
+							r1, r2, slr1, slr2, &r1, &r2,
+							g1, g2, slg1, slg2, &g1, &g2,
+							b1, b2, slb1, slb2, &b1, &b2,
+							cury, p[ps1-1].y);
+			cury = p[ps1-1].y;
+			if(cury >= limy)
+				break;
+			ps1--;
+			ps2++;
+
+		startup:
+			while(p[ps1-1].y == cury)
+				ps1--;
+			while(p[ps2+1].y == cury)
+				ps2++;
+			x1 = p[ps1].x;
+			r1 = p[ps1].r;
+			g1 = p[ps1].g;
+			b1 = p[ps1].b;
+			x2 = p[ps2].x;
+			r2 = p[ps2].r;
+			g2 = p[ps2].g;
+			b2 = p[ps2].b;
+
+			delta = cury-p[ps1-1].y;
+			sl1 = (x1-p[ps1-1].x)/delta;
+			slr1 = (r1-p[ps1-1].r)/delta;
+			slg1 = (g1-p[ps1-1].g)/delta;
+			slb1 = (b1-p[ps1-1].b)/delta;
+
+			delta = cury-p[ps2+1].y;
+			sl2 = (x2-p[ps2+1].x)/delta;
+			slr2 = (r2-p[ps2+1].r)/delta;
+			slg2 = (g2-p[ps2+1].g)/delta;
+			slb2 = (b2-p[ps2+1].b)/delta;
+		} else if(p[ps1-1].y < p[ps2+1].y) {
+			stv_vdp1_setup_shading_for_slope(
+							x1, x2, sl1, sl2, &x1, &x2,
+							r1, r2, slr1, slr2, &r1, &r2,
+							g1, g2, slg1, slg2, &g1, &g2,
+							b1, b2, slb1, slb2, &b1, &b2,
+							cury, p[ps1-1].y);
+			cury = p[ps1-1].y;
+			if(cury >= limy)
+				break;
+			ps1--;
+			while(p[ps1-1].y == cury)
+				ps1--;
+			x1 = p[ps1].x;
+			r1 = p[ps1].r;
+			g1 = p[ps1].g;
+			b1 = p[ps1].b;
+
+			delta = cury-p[ps1-1].y;
+			sl1 = (x1-p[ps1-1].x)/delta;
+			slr1 = (r1-p[ps1-1].r)/delta;
+			slg1 = (g1-p[ps1-1].g)/delta;
+			slb1 = (b1-p[ps1-1].b)/delta;
+		} else {
+			stv_vdp1_setup_shading_for_slope(
+							x1, x2, sl1, sl2, &x1, &x2,
+							r1, r2, slr1, slr2, &r1, &r2,
+							g1, g2, slg1, slg2, &g1, &g2,
+							b1, b2, slb1, slb2, &b1, &b2,
+							cury, p[ps2+1].y);
+			cury = p[ps2+1].y;
+			if(cury >= limy)
+				break;
+			ps2++;
+			while(p[ps2+1].y == cury)
+				ps2++;
+			x2 = p[ps2].x;
+			r2 = p[ps2].r;
+			g2 = p[ps2].g;
+			b2 = p[ps2].b;
+
+			delta = cury-p[ps2+1].y;
+			sl2 = (x2-p[ps2+1].x)/delta;
+			slr2 = (r2-p[ps2+1].r)/delta;
+			slg2 = (g2-p[ps2+1].g)/delta;
+			slb2 = (b2-p[ps2+1].b)/delta;
+		}
+	}
+	if(cury == limy)
+		stv_vdp1_setup_shading_for_line(cury, x1, x2, r1, g1, b1, r2, g2, b2 );
+
+finish:
+
+	if ( stv_vdp1_shading_data->sy < 0 ) stv_vdp1_shading_data->sy = 0;
+	if ( stv_vdp1_shading_data->sy >= 512 ) return;
+	if ( stv_vdp1_shading_data->ey < 0 ) return;
+	if ( stv_vdp1_shading_data->ey >= 512 ) stv_vdp1_shading_data->ey = 511;
+
+	for ( cury = stv_vdp1_shading_data->sy; cury <= stv_vdp1_shading_data->ey; cury++ )
+	{
+		while( (stv_vdp1_shading_data->scanline[cury].x[0] >> 16) < cliprect->min_x )
+		{
+			stv_vdp1_shading_data->scanline[cury].x[0] += (1 << FRAC_SHIFT);
+			stv_vdp1_shading_data->scanline[cury].b[0] += stv_vdp1_shading_data->scanline[cury].db;
+			stv_vdp1_shading_data->scanline[cury].g[0] += stv_vdp1_shading_data->scanline[cury].dg;
+			stv_vdp1_shading_data->scanline[cury].r[0] += stv_vdp1_shading_data->scanline[cury].dr;
+		}
+	}
+
 }
 
 /* note that if we're drawing
@@ -619,7 +867,7 @@ void drawpixel_poly(int x, int y, int patterndata, int offsetcnt)
 	stv_framebuffer_draw_lines[y][x] = stv2_current_sprite.CMDCOLR;
 }
 
-void drawpixel_8bpp(int x, int y, int patterndata, int offsetcnt)
+void drawpixel_8bpp_trans(int x, int y, int patterndata, int offsetcnt)
 {
 	UINT16 pix;
 
@@ -694,20 +942,19 @@ void drawpixel_generic(int x, int y, int patterndata, int offsetcnt)
 				((((stv_vdp1_vram[(((stv2_current_sprite.CMDCOLR&0xffff)*8)>>2)+((pix2&0xfffe)/2)])) & 0x0000ffff) >> 0):
 				((((stv_vdp1_vram[(((stv2_current_sprite.CMDCOLR&0xffff)*8)>>2)+((pix2&0xfffe)/2)])) & 0xffff0000) >> 16);
 
-				mode = 1;
-				transmask = 0xf;
+				mode = 5;
+				transmask = 0xffff;
 
-				if (pix2 & 0xf)
+				if ( !spd )
 				{
-					if (pix & 0x8000)
+					if ( (pix2 & 0xf) == 0 )
 					{
-						mode = 5;
-						transmask = 0x8000;
+						return;
 					}
-				}
-				else
-				{
-					pix=pix2; // this is messy .. but just ensures that pen 0 isn't drawn
+					else
+					{
+						spd = 1;
+					}
 				}
 				break;
 			case 0x0010: // mode 2 64 colour bank mode (8bits) (character select portraits on hanagumi)
@@ -732,8 +979,7 @@ void drawpixel_generic(int x, int y, int patterndata, int offsetcnt)
 			case 0x0028: // mode 5 32,768 colour RGB mode (16bits)
 				pix = gfxdata[patterndata+offsetcnt*2+1] | (gfxdata[patterndata+offsetcnt*2]<<8) ;
 				mode = 5;
-				//transmask = 0x7fff;
-				transmask = 0x8000;
+				transmask = 0xffff;
 				break;
 			default: // other settings illegal
 				pix = rand();
@@ -788,7 +1034,7 @@ void drawpixel_generic(int x, int y, int patterndata, int offsetcnt)
 					}
 					break;
 				case 4: /* Gouraud shading */
-					stv_framebuffer_draw_lines[y][x] = stv_apply_gouraud_shading( pix );
+					stv_framebuffer_draw_lines[y][x] = stv_vdp1_apply_gouraud_shading( x, y, pix );
 					break;
 				default:
 					stv_framebuffer_draw_lines[y][x] = pix;
@@ -814,20 +1060,16 @@ static void stv_vdp1_set_drawpixel(void)
 		return;
 	}
 
-	if (sprite_type == 4 )
+	if (sprite_type == 4 && ((stv2_current_sprite.CMDPMOD & 0x7) == 0))
 	{
 		drawpixel = drawpixel_poly;
 	}
-	else if ((sprite_type == 2) &&
-		     (sprite_mode == 0x20) )
+	else if ( (sprite_mode == 0x20) && !spd )
 	{
-		/* distorted sprite, 8bpp */
 		sprite_colorbank = (stv2_current_sprite.CMDCOLR&0xff00);
-		drawpixel = drawpixel_8bpp;
+		drawpixel = drawpixel_8bpp_trans;
 	}
-	else if ((sprite_type == 1) &&
-			 (sprite_mode == 0x00) &&
-			 spd)
+	else if ((sprite_mode == 0x00) && spd)
 	{
 		sprite_colorbank = (stv2_current_sprite.CMDCOLR&0xfff0);
 		drawpixel = drawpixel_4bpp_notrans;
@@ -844,14 +1086,7 @@ static void stv_vdp1_set_drawpixel(void)
 }
 
 
-enum { FRAC_SHIFT = 16 };
-
-struct spoint {
-	INT32 x, y;
-	INT32 u, v;
-};
-
-static void vdp1_fill_slope(mame_bitmap *bitmap, const rectangle *cliprect, int patterndata, int xsize,
+static void vdp1_fill_slope(const rectangle *cliprect, int patterndata, int xsize,
 							INT32 x1, INT32 x2, INT32 sl1, INT32 sl2, INT32 *nx1, INT32 *nx2,
 							INT32 u1, INT32 u2, INT32 slu1, INT32 slu2, INT32 *nu1, INT32 *nu2,
 							INT32 v1, INT32 v2, INT32 slv1, INT32 slv2, INT32 *nv1, INT32 *nv2,
@@ -967,7 +1202,7 @@ static void vdp1_fill_slope(mame_bitmap *bitmap, const rectangle *cliprect, int 
 	*nv2 = v2;
 }
 
-static void vdp1_fill_line(mame_bitmap *bitmap, const rectangle *cliprect, int patterndata, int xsize, INT32 y,
+static void vdp1_fill_line(const rectangle *cliprect, int patterndata, int xsize, INT32 y,
 						   INT32 x1, INT32 x2, INT32 u1, INT32 u2, INT32 v1, INT32 v2)
 {
 	int xx1 = x1>>FRAC_SHIFT;
@@ -1005,7 +1240,7 @@ static void vdp1_fill_line(mame_bitmap *bitmap, const rectangle *cliprect, int p
 	}
 }
 
-static void vdp1_fill_quad(mame_bitmap *bitmap, const rectangle *cliprect, int patterndata, int xsize, const struct spoint *q)
+static void vdp1_fill_quad(const rectangle *cliprect, int patterndata, int xsize, const struct spoint *q)
 {
 	INT32 sl1, sl2, slu1, slu2, slv1, slv2, cury, limy, x1, x2, u1, u2, v1, v2, delta;
 	int pmin, pmax, i, ps1, ps2;
@@ -1045,7 +1280,7 @@ static void vdp1_fill_quad(mame_bitmap *bitmap, const rectangle *cliprect, int p
 				v2 = p[i].v;
 			}
 		}
-		vdp1_fill_line(bitmap, cliprect, patterndata, xsize, cury, x1, x2, u1, u2, v1, v2);
+		vdp1_fill_line(cliprect, patterndata, xsize, cury, x1, x2, u1, u2, v1, v2);
 		return;
 	}
 
@@ -1064,7 +1299,7 @@ static void vdp1_fill_quad(mame_bitmap *bitmap, const rectangle *cliprect, int p
 
 	for(;;) {
 		if(p[ps1-1].y == p[ps2+1].y) {
-			vdp1_fill_slope(bitmap, cliprect, patterndata, xsize,
+			vdp1_fill_slope(cliprect, patterndata, xsize,
 							x1, x2, sl1, sl2, &x1, &x2,
 							u1, u2, slu1, slu2, &u1, &u2,
 							v1, v2, slv1, slv2, &v1, &v2,
@@ -1097,7 +1332,7 @@ static void vdp1_fill_quad(mame_bitmap *bitmap, const rectangle *cliprect, int p
 			slu2 = (u2-p[ps2+1].u)/delta;
 			slv2 = (v2-p[ps2+1].v)/delta;
 		} else if(p[ps1-1].y < p[ps2+1].y) {
-			vdp1_fill_slope(bitmap, cliprect, patterndata, xsize,
+			vdp1_fill_slope(cliprect, patterndata, xsize,
 							x1, x2, sl1, sl2, &x1, &x2,
 							u1, u2, slu1, slu2, &u1, &u2,
 							v1, v2, slv1, slv2, &v1, &v2,
@@ -1117,7 +1352,7 @@ static void vdp1_fill_quad(mame_bitmap *bitmap, const rectangle *cliprect, int p
 			slu1 = (u1-p[ps1-1].u)/delta;
 			slv1 = (v1-p[ps1-1].v)/delta;
 		} else {
-			vdp1_fill_slope(bitmap, cliprect, patterndata, xsize,
+			vdp1_fill_slope(cliprect, patterndata, xsize,
 							x1, x2, sl1, sl2, &x1, &x2,
 							u1, u2, slu1, slu2, &u1, &u2,
 							v1, v2, slv1, slv2, &v1, &v2,
@@ -1139,28 +1374,20 @@ static void vdp1_fill_quad(mame_bitmap *bitmap, const rectangle *cliprect, int p
 		}
 	}
 	if(cury == limy)
-		vdp1_fill_line(bitmap, cliprect, patterndata, xsize, cury, x1, x2, u1, u2, v1, v2);
+		vdp1_fill_line(cliprect, patterndata, xsize, cury, x1, x2, u1, u2, v1, v2);
 }
 
 static int x2s(int v)
 {
-	/*int r = v & 0x7ff;
-    if (r & 0x400)
-        r -= 0x800;
-    return r + stvvdp1_local_x;*/
 	return (INT32)(INT16)v + stvvdp1_local_x;
 }
 
 static int y2s(int v)
 {
-	/*int r = v & 0x7ff;
-    if (r & 0x400)
-        r -= 0x800;
-    return r + stvvdp1_local_y;*/
 	return (INT32)(INT16)v + stvvdp1_local_y;
 }
 
-void stv_vdp1_draw_line( mame_bitmap *bitmap, const rectangle *cliprect)
+void stv_vdp1_draw_line( const rectangle *cliprect)
 {
 	struct spoint q[4];
 
@@ -1176,10 +1403,10 @@ void stv_vdp1_draw_line( mame_bitmap *bitmap, const rectangle *cliprect)
 	q[0].u = q[3].u = q[1].u = q[2].u = 0;
 	q[0].v = q[1].v = q[2].v = q[3].v = 0;
 
-	vdp1_fill_quad(bitmap, cliprect, 0, 1, q);
+	vdp1_fill_quad(cliprect, 0, 1, q);
 }
 
-void stv_vdp1_draw_poly_line( mame_bitmap *bitmap, const rectangle *cliprect)
+void stv_vdp1_draw_poly_line( const rectangle *cliprect)
 {
 	struct spoint q[4];
 
@@ -1195,7 +1422,7 @@ void stv_vdp1_draw_poly_line( mame_bitmap *bitmap, const rectangle *cliprect)
 	q[0].u = q[3].u = q[1].u = q[2].u = 0;
 	q[0].v = q[1].v = q[2].v = q[3].v = 0;
 
-	vdp1_fill_quad(bitmap, cliprect, 0, 1, q);
+	vdp1_fill_quad(cliprect, 0, 1, q);
 
 	q[0].x = x2s(stv2_current_sprite.CMDXB);
 	q[0].y = y2s(stv2_current_sprite.CMDYB);
@@ -1209,7 +1436,7 @@ void stv_vdp1_draw_poly_line( mame_bitmap *bitmap, const rectangle *cliprect)
 	q[0].u = q[3].u = q[1].u = q[2].u = 0;
 	q[0].v = q[1].v = q[2].v = q[3].v = 0;
 
-	vdp1_fill_quad(bitmap, cliprect, 0, 1, q);
+	vdp1_fill_quad(cliprect, 0, 1, q);
 
 	q[0].x = x2s(stv2_current_sprite.CMDXC);
 	q[0].y = y2s(stv2_current_sprite.CMDYC);
@@ -1223,7 +1450,7 @@ void stv_vdp1_draw_poly_line( mame_bitmap *bitmap, const rectangle *cliprect)
 	q[0].u = q[3].u = q[1].u = q[2].u = 0;
 	q[0].v = q[1].v = q[2].v = q[3].v = 0;
 
-	vdp1_fill_quad(bitmap, cliprect, 0, 1, q);
+	vdp1_fill_quad(cliprect, 0, 1, q);
 
 	q[0].x = x2s(stv2_current_sprite.CMDXD);
 	q[0].y = y2s(stv2_current_sprite.CMDYD);
@@ -1237,11 +1464,12 @@ void stv_vdp1_draw_poly_line( mame_bitmap *bitmap, const rectangle *cliprect)
 	q[0].u = q[3].u = q[1].u = q[2].u = 0;
 	q[0].v = q[1].v = q[2].v = q[3].v = 0;
 
-	vdp1_fill_quad(bitmap, cliprect, 0, 1, q);
+	stv_vdp1_setup_shading(q, cliprect);
+	vdp1_fill_quad(cliprect, 0, 1, q);
 
 }
 
-void stv_vpd1_draw_distorted_sprite(mame_bitmap *bitmap, const rectangle *cliprect)
+void stv_vpd1_draw_distorted_sprite(const rectangle *cliprect)
 {
 	struct spoint q[4];
 
@@ -1295,10 +1523,11 @@ void stv_vpd1_draw_distorted_sprite(mame_bitmap *bitmap, const rectangle *clipre
 		q[2].v = q[3].v = ysize-1;
 	}
 
-	vdp1_fill_quad(bitmap, cliprect, patterndata, xsize, q);
+	stv_vdp1_setup_shading(q, cliprect);
+	vdp1_fill_quad(cliprect, patterndata, xsize, q);
 }
 
-void stv_vpd1_draw_scaled_sprite(mame_bitmap *bitmap, const rectangle *cliprect)
+void stv_vpd1_draw_scaled_sprite(const rectangle *cliprect)
 {
 	struct spoint q[4];
 
@@ -1441,19 +1670,24 @@ void stv_vpd1_draw_scaled_sprite(mame_bitmap *bitmap, const rectangle *cliprect)
 		q[2].v = q[3].v = ysize-1;
 	}
 
-	vdp1_fill_quad(bitmap, cliprect, patterndata, xsize, q);
+	stv_vdp1_setup_shading(q, cliprect);
+	vdp1_fill_quad(cliprect, patterndata, xsize, q);
 }
 
 
-void stv_vpd1_draw_normal_sprite(mame_bitmap *bitmap, const rectangle *cliprect, int sprite_type)
+void stv_vpd1_draw_normal_sprite(const rectangle *cliprect, int sprite_type)
 {
 	UINT16 *destline;
 
-	int y, ysize, ycnt, drawypos;
-	int x, xsize, xcnt, drawxpos;
+	int y, ysize, drawypos;
+	int x, xsize, drawxpos;
 	int direction;
 	int patterndata;
 	UINT8 shading;
+	int su, u, dux, duy;
+	int maxdrawypos, maxdrawxpos;
+
+
 
 	shading = stv_read_gouraud_table();
 
@@ -1467,118 +1701,72 @@ void stv_vpd1_draw_normal_sprite(mame_bitmap *bitmap, const rectangle *cliprect,
 
 	ysize = (stv2_current_sprite.CMDSIZE & 0x00ff);
 
-
 	patterndata = (stv2_current_sprite.CMDSRCA) & 0xffff;
 	patterndata = patterndata * 0x8;
-
-
-
 
 	if (vdp1_sprite_log) logerror ("Drawing Normal Sprite x %04x y %04x xsize %04x ysize %04x patterndata %06x\n",x,y,xsize,ysize,patterndata);
 
 	if ( x > cliprect->max_x ) return;
 	if ( y > cliprect->max_y ) return;
 
-	if ( shading == 0 )
+	shading = stv_read_gouraud_table();
+	if ( shading )
 	{
-		int su, u, dux, duy;
-		int maxdrawypos, maxdrawxpos;
+		struct spoint q[4];
+		q[0].x = x; q[0].y = y;
+		q[1].x = x + xsize; q[1].y = y;
+		q[2].x = x + xsize; q[2].y = y + ysize;
+		q[3].x = x; q[3].y = y + ysize;
 
-		u = 0;
-		dux = 1;
-		duy = xsize;
-		if ( direction & 0x1 ) //xflip
-		{
-			dux = -1;
-			u = xsize - 1;
-		}
-		if ( direction & 0x2 ) //yflip
-		{
-			duy = -xsize;
-			u += xsize*(ysize-1);
-		}
-		if ( y < cliprect->min_y ) //clip y
-		{
-			u += xsize*(cliprect->min_y - y);
-			ysize -= (cliprect->min_y - y);
-			y = cliprect->min_y;
-		}
-		if ( x < cliprect->min_x ) //clip x
-		{
-			u += dux*(cliprect->min_x - x);
-			xsize -= (cliprect->min_x - x);
-			x = cliprect->min_x;
-		}
-		maxdrawypos = MIN(y+ysize-1,cliprect->max_y);
-		maxdrawxpos = MIN(x+xsize-1,cliprect->max_x);
-		for (drawypos = y; drawypos <= maxdrawypos; drawypos++ )
-		{
-			destline = stv_framebuffer_draw_lines[drawypos];
-			su = u;
-			for (drawxpos = x; drawxpos <= maxdrawxpos; drawxpos++ )
-			{
-				drawpixel( drawxpos, drawypos, patterndata, u );
-				u += dux;
-			}
-			u = su + duy;
-		}
+		stv_vdp1_setup_shading( q, cliprect );
 	}
-	else
+
+	u = 0;
+	dux = 1;
+	duy = xsize;
+	if ( direction & 0x1 ) //xflip
 	{
-		for (ycnt = 0; ycnt != ysize; ycnt++) {
-
-			stv_setup_shading_for_line( xsize,
-					stv_compute_shading_at_pixel( ysize, ycnt, stv_gouraud_shading.GA, stv_gouraud_shading.GD ),
-					stv_compute_shading_at_pixel( ysize, ycnt, stv_gouraud_shading.GB, stv_gouraud_shading.GC ));
-
-			if (direction & 0x2) // 'yflip' (reverse direction)
-			{
-				drawypos = y+((ysize-1)-ycnt);
-			}
-			else
-			{
-				drawypos = y+ycnt;
-			}
-
-			if ((drawypos >= cliprect->min_y) && (drawypos <= cliprect->max_y))
-			{
-				destline = stv_framebuffer_draw_lines[drawypos];
-
-				for (xcnt = 0; xcnt != xsize; xcnt ++)
-				{
-					if (direction & 0x1) // 'xflip' (reverse direction)
-					{
-						drawxpos = x+((xsize-1)-xcnt);
-					}
-					else
-					{
-						drawxpos = x+xcnt;
-					}
-					if ((drawxpos >= cliprect->min_x) && (drawxpos <= cliprect->max_x))
-					{
-						int offsetcnt;
-
-						offsetcnt = ycnt*xsize+xcnt;
-
-						drawpixel(drawxpos, drawypos, patterndata, offsetcnt);
-					} // drawxpos
-					stv_compute_shading_for_next_point();
-
-				} // xcnt
-
-			} // if drawypos
-
-		} // ycny
-
-		stv_clear_gouraud_shading();
+		dux = -1;
+		u = xsize - 1;
+	}
+	if ( direction & 0x2 ) //yflip
+	{
+		duy = -xsize;
+		u += xsize*(ysize-1);
+	}
+	if ( y < cliprect->min_y ) //clip y
+	{
+		u += xsize*(cliprect->min_y - y);
+		ysize -= (cliprect->min_y - y);
+		y = cliprect->min_y;
+	}
+	if ( x < cliprect->min_x ) //clip x
+	{
+		u += dux*(cliprect->min_x - x);
+		xsize -= (cliprect->min_x - x);
+		x = cliprect->min_x;
+	}
+	maxdrawypos = MIN(y+ysize-1,cliprect->max_y);
+	maxdrawxpos = MIN(x+xsize-1,cliprect->max_x);
+	for (drawypos = y; drawypos <= maxdrawypos; drawypos++ )
+	{
+		destline = stv_framebuffer_draw_lines[drawypos];
+		su = u;
+		for (drawxpos = x; drawxpos <= maxdrawxpos; drawxpos++ )
+		{
+			drawpixel( drawxpos, drawypos, patterndata, u );
+			u += dux;
+		}
+		u = su + duy;
 	}
 }
 
-void stv_vdp1_process_list(mame_bitmap *bitmap, const rectangle *cliprect)
+void stv_vdp1_process_list()
 {
 	int position;
 	int spritecount;
 	int vdp1_nest;
+	rectangle *cliprect;
 
 	spritecount = 0;
 	position = 0;
@@ -1712,6 +1900,15 @@ void stv_vdp1_process_list(mame_bitmap *bitmap, const rectangle *cliprect)
 		/* continue to draw this sprite only if the command wasn't to skip it */
 		if (draw_this_sprite ==1)
 		{
+			if ( stv2_current_sprite.CMDPMOD & 0x0400 )
+			{
+				cliprect = &stv_vdp1_user_cliprect;
+			}
+			else
+			{
+				cliprect = &stv_vdp1_system_cliprect;
+			}
+
 			stv_vdp1_set_drawpixel();
 
 			switch (stv2_current_sprite.CMDCTRL & 0x000f)
@@ -1719,55 +1916,53 @@ void stv_vdp1_process_list(mame_bitmap *bitmap, const rectangle *cliprect)
 				case 0x0000:
 					if (vdp1_sprite_log) logerror ("Sprite List Normal Sprite\n");
 					stv2_current_sprite.ispoly = 0;
-					stv_vpd1_draw_normal_sprite(bitmap,cliprect, 0);
+					stv_vpd1_draw_normal_sprite(cliprect, 0);
 					break;
 
 				case 0x0001:
 					if (vdp1_sprite_log) logerror ("Sprite List Scaled Sprite\n");
 					stv2_current_sprite.ispoly = 0;
-					stv_vpd1_draw_scaled_sprite(bitmap,cliprect);
+					stv_vpd1_draw_scaled_sprite(cliprect);
 					break;
 
 				case 0x0002:
-					if ( (stv2_current_sprite.CMDPMOD & 0x7) == 4 )
-					{
-						//turn off Gouraud shading atm
-						stv2_current_sprite.CMDPMOD &= 0xfff8;
-					}
 					if (vdp1_sprite_log) logerror ("Sprite List Distorted Sprite\n");
 					stv2_current_sprite.ispoly = 0;
-					stv_vpd1_draw_distorted_sprite(bitmap,cliprect);
+					stv_vpd1_draw_distorted_sprite(cliprect);
 					break;
 
 				case 0x0004:
-					if ( (stv2_current_sprite.CMDPMOD & 0x7) == 4 )
-					{
-						//turn off Gouraud shading atm
-						stv2_current_sprite.CMDPMOD &= 0xfff8;
-					}
 					if (vdp1_sprite_log) logerror ("Sprite List Polygon\n");
 					stv2_current_sprite.ispoly = 1;
-					stv_vpd1_draw_distorted_sprite(bitmap,cliprect);
+					stv_vpd1_draw_distorted_sprite(cliprect);
 					break;
 
 				case 0x0005:
 					if (vdp1_sprite_log) logerror ("Sprite List Polyline\n");
 					stv2_current_sprite.ispoly = 1;
-					stv_vdp1_draw_poly_line(bitmap,cliprect);
+					stv_vdp1_draw_poly_line(cliprect);
 					break;
 
 				case 0x0006:
 					if (vdp1_sprite_log) logerror ("Sprite List Line\n");
 					stv2_current_sprite.ispoly = 1;
-					stv_vdp1_draw_line(bitmap,cliprect);
+					stv_vdp1_draw_line(cliprect);
 					break;
 
 				case 0x0008:
-					if (vdp1_sprite_log) logerror ("Sprite List Set Command for User Clipping\n");
+					if (vdp1_sprite_log) logerror ("Sprite List Set Command for User Clipping (%d,%d),(%d,%d)\n", stv2_current_sprite.CMDXA, stv2_current_sprite.CMDYA, stv2_current_sprite.CMDXC, stv2_current_sprite.CMDYC);
+					stv_vdp1_user_cliprect.min_x = stv2_current_sprite.CMDXA;
+					stv_vdp1_user_cliprect.min_y = stv2_current_sprite.CMDYA;
+					stv_vdp1_user_cliprect.max_x = stv2_current_sprite.CMDXC;
+					stv_vdp1_user_cliprect.max_y = stv2_current_sprite.CMDYC;
 					break;
 
 				case 0x0009:
-					if (vdp1_sprite_log) logerror ("Sprite List Set Command for System Clipping\n");
+					if (vdp1_sprite_log) logerror ("Sprite List Set Command for System Clipping (0,0),(%d,%d)\n", stv2_current_sprite.CMDXC, stv2_current_sprite.CMDYC);
+					stv_vdp1_system_cliprect.min_x = 0;
+					stv_vdp1_system_cliprect.min_y = 0;
+					stv_vdp1_system_cliprect.max_x = stv2_current_sprite.CMDXC;
+					stv_vdp1_system_cliprect.max_y = stv2_current_sprite.CMDYC;
 					break;
 
 				case 0x000a:
@@ -1802,7 +1997,7 @@ void stv_vdp1_process_list(mame_bitmap *bitmap, const rectangle *cliprect)
 	if (vdp1_sprite_log) logerror ("End of list processing!\n");
 }
 
-void video_update_vdp1(running_machine *machine, mame_bitmap *bitmap, const rectangle *cliprect)
+void video_update_vdp1(running_machine *machine)
 {
 	int framebufer_changed = 0;
 
@@ -1872,11 +2067,77 @@ void video_update_vdp1(running_machine *machine, mame_bitmap *bitmap, const rect
 			break;
 		case 2:/*Automatic Draw*/
 			if ( framebufer_changed )
-				stv_vdp1_process_list(bitmap,cliprect);
+				stv_vdp1_process_list();
 			break;
 		case 3:	/*<invalid>*/
 			logerror("Warning: Invalid PTM mode set for VDP1!\n");
 			break;
 	}
 	//popmessage("%04x %04x",STV_VDP1_EWRR_X3,STV_VDP1_EWRR_Y3);
+}
+
+static void stv_vdp1_state_save_postload(void)
+{
+	UINT8 *vdp1 = stv_vdp1_gfx_decode;
+	int offset;
+	UINT32 data;
+
+	stv_framebuffer_mode = -1;
+	stv_framebuffer_double_interlace = -1;
+
+	stv_set_framebuffer_config();
+
+	for (offset = 0; offset < 0x80000/4; offset++ )
+	{
+		data = stv_vdp1_vram[offset];
+		/* put in gfx region for easy decoding */
+		vdp1[offset*4+0] = (data & 0xff000000) >> 24;
+		vdp1[offset*4+1] = (data & 0x00ff0000) >> 16;
+		vdp1[offset*4+2] = (data & 0x0000ff00) >> 8;
+		vdp1[offset*4+3] = (data & 0x000000ff) >> 0;
+	}
+}
+
+int stv_vdp1_start ( void )
+{
+	stv_vdp1_regs = auto_malloc ( 0x040000 );
+	stv_vdp1_vram = auto_malloc ( 0x100000 );
+	stv_vdp1_gfx_decode = auto_malloc( 0x100000 );
+
+	stv_vdp1_shading_data = auto_malloc( sizeof(struct stv_vdp1_poly_scanline_data) );
+
+	memset(stv_vdp1_regs, 0, 0x040000);
+	memset(stv_vdp1_vram, 0, 0x100000);
+
+	stv_framebuffer[0] = auto_malloc( 1024 * 256 * sizeof(UINT16) * 2 ); /* *2 is for double interlace */
+	stv_framebuffer[1] = auto_malloc( 1024 * 256 * sizeof(UINT16) * 2 );
+
+	stv_framebuffer_display_lines = auto_malloc( 512 * sizeof(UINT16*) );
+	stv_framebuffer_draw_lines = auto_malloc( 512 * sizeof(UINT16*) );
+
+	stv_framebuffer_width = stv_framebuffer_height = 0;
+	stv_framebuffer_mode = -1;
+	stv_framebuffer_double_interlace = -1;
+	stv_vdp1_fbcr_accessed = 0;
+	stv_vdp1_current_display_framebuffer = 0;
+	stv_vdp1_current_draw_framebuffer = 1;
+	stv_clear_framebuffer(stv_vdp1_current_draw_framebuffer);
+	stv_vdp1_clear_framebuffer_on_next_frame = 0;
+
+	stv_vdp1_system_cliprect.min_x = stv_vdp1_system_cliprect.max_x = 0;
+	stv_vdp1_system_cliprect.min_y = stv_vdp1_system_cliprect.max_y = 0;
+	stv_vdp1_user_cliprect.min_x = stv_vdp1_user_cliprect.max_x = 0;
+	stv_vdp1_user_cliprect.min_y = stv_vdp1_user_cliprect.max_y = 0;
+
+	// save state
+	state_save_register_global_pointer(stv_vdp1_regs, 0x040000/4);
+	state_save_register_global_pointer(stv_vdp1_vram, 0x100000/4);
+	state_save_register_global(stv_vdp1_fbcr_accessed);
+	state_save_register_global(stv_vdp1_current_display_framebuffer);
+	state_save_register_global(stv_vdp1_current_draw_framebuffer);
+	state_save_register_global(stv_vdp1_clear_framebuffer_on_next_frame);
+	state_save_register_global(stvvdp1_local_x);
+	state_save_register_global(stvvdp1_local_y);
+	state_save_register_func_postload(stv_vdp1_state_save_postload);
+	return 0;
 }

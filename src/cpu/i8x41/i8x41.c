@@ -2085,17 +2085,6 @@ static void set_irq_line(int irqline, int state)
 }
 
 
-static offs_t i8x41_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
-{
-#ifdef MAME_DEBUG
-	return Dasm8x41( buffer, pc, oprom, opram );
-#else
-	sprintf( buffer, "$%02X", oprom[0] );
-	return 1;
-#endif
-}
-
-
 /**************************************************************************
  * Register accesses catching uninitialized i8x41.ram pointer
  **************************************************************************/
@@ -2384,9 +2373,11 @@ void i8x41_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:
 			info->burn = NULL;
 			break;
+#ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:
 			info->disassemble = i8x41_dasm;
 			break;
+#endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:
 			info->icount = &i8x41_ICount;
 			break;

@@ -50,6 +50,86 @@ Notes/Tidbits:
 #include "galaxian.h"
 #include "sound/ay8910.h"
 
+static const gfx_layout scobra_charlayout =
+{
+	8,8,
+	RGN_FRAC(1,2),
+	2,
+	{ RGN_FRAC(0,2), RGN_FRAC(1,2) },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8
+};
+
+static const gfx_layout scobra_spritelayout =
+{
+	16,16,
+	RGN_FRAC(1,2),
+	2,
+	{ RGN_FRAC(0,2), RGN_FRAC(1,2) },
+	{ 0, 1, 2, 3, 4, 5, 6, 7,
+			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
+	32*8
+};
+
+
+static gfx_decode scobra_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0x0000, &scobra_charlayout,   0, 8 },
+	{ REGION_GFX1, 0x0000, &scobra_spritelayout, 0, 8 },
+	{ -1 } /* end of array */
+};
+
+
+
+static struct AY8910interface hustler_ay8910_interface =
+{
+	soundlatch_r,
+	frogger_portB_r
+};
+
+static READ8_HANDLER(scobra_type2_ppi8255_0_r)
+{
+	return ppi8255_0_r(offset >> 2);
+}
+
+static READ8_HANDLER(scobra_type2_ppi8255_1_r)
+{
+	return ppi8255_1_r(offset >> 2);
+}
+
+static WRITE8_HANDLER(scobra_type2_ppi8255_0_w)
+{
+	ppi8255_0_w(offset >> 2, data);
+}
+
+static WRITE8_HANDLER(scobra_type2_ppi8255_1_w)
+{
+	ppi8255_1_w(offset >> 2, data);
+}
+
+static READ8_HANDLER(hustler_ppi8255_0_r)
+{
+	return ppi8255_0_r(offset >> 3);
+}
+
+static READ8_HANDLER(hustler_ppi8255_1_r)
+{
+	return ppi8255_1_r(offset >> 3);
+}
+
+static WRITE8_HANDLER(hustler_ppi8255_0_w)
+{
+	ppi8255_0_w(offset >> 3, data);
+}
+
+static WRITE8_HANDLER(hustler_ppi8255_1_w)
+{
+	ppi8255_1_w(offset >> 3, data);
+}
+
 static ADDRESS_MAP_START( type1_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0x8000, 0x8bff) AM_READ(MRA8_RAM)
@@ -333,12 +413,12 @@ static WRITE8_HANDLER(scobra_soundram_w)
 	scobra_soundram[offset & 0x03ff] = data;
 }
 
-ADDRESS_MAP_START( scobra_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+static ADDRESS_MAP_START( scobra_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x2fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0x8000, 0x8fff) AM_READ(scobra_soundram_r)
 ADDRESS_MAP_END
 
-ADDRESS_MAP_START( scobra_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+static ADDRESS_MAP_START( scobra_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x2fff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0x8000, 0x8fff) AM_WRITE(scobra_soundram_w)
 	AM_RANGE(0x8000, 0x83ff) AM_WRITE(MWA8_NOP) AM_BASE(&scobra_soundram)  /* only here to initialize pointer */
@@ -354,13 +434,13 @@ static ADDRESS_MAP_START( hustlerb_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 
-ADDRESS_MAP_START( scobra_sound_readport, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( scobra_sound_readport, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x20, 0x20) AM_READ(AY8910_read_port_0_r)
 	AM_RANGE(0x80, 0x80) AM_READ(AY8910_read_port_1_r)
 ADDRESS_MAP_END
 
-ADDRESS_MAP_START( scobra_sound_writeport, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( scobra_sound_writeport, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
 	AM_RANGE(0x10, 0x10) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x20, 0x20) AM_WRITE(AY8910_write_port_0_w)
@@ -368,6 +448,28 @@ ADDRESS_MAP_START( scobra_sound_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x80, 0x80) AM_WRITE(AY8910_write_port_1_w)
 ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( hustler_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( hustler_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x1fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x4000, 0x43ff) AM_WRITE(MWA8_RAM)
+    AM_RANGE(0x6000, 0x6fff) AM_WRITE(frogger_filter_w)
+ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( hustler_sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE(0x40, 0x40) AM_READ(AY8910_read_port_0_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( hustler_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE(0x40, 0x40) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x80, 0x80) AM_WRITE(AY8910_control_port_0_w)
+ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( hustlerb_sound_readport, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
@@ -1283,9 +1385,10 @@ struct AY8910interface scobra_ay8910_interface_2 =
 static MACHINE_DRIVER_START( type1 )
 
 	/* basic machine hardware */
-	MDRV_IMPORT_FROM(galaxian_base)
-	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_ADD_TAG("main", Z80, 18432000/6)	/* 3.072 MHz */
 	MDRV_CPU_PROGRAM_MAP(type1_readmem,type1_writemem)
+
+	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
 
 	MDRV_CPU_ADD(Z80,14318000/8)
 	/* audio CPU */	/* 1.78975 MHz */
@@ -1295,12 +1398,19 @@ static MACHINE_DRIVER_START( type1 )
 	MDRV_MACHINE_RESET(scramble)
 
 	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(scobra_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(32+64+2+1)	/* 32 for characters, 64 for stars, 2 for bullets, 1 for background */
+	MDRV_COLORTABLE_LENGTH(8*4)
 
 	MDRV_PALETTE_INIT(scramble)
 	MDRV_VIDEO_START(scramble)
+	MDRV_VIDEO_UPDATE(galaxian)
 
 	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
 	MDRV_SOUND_ADD(AY8910, 14318000/8)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.16)
 
@@ -1429,25 +1539,34 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( hustler )
 
 	/* basic machine hardware */
-	MDRV_IMPORT_FROM(galaxian_base)
-	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_ADD_TAG("main", Z80, 18432000/6)	/* 3.072 MHz */
 	MDRV_CPU_PROGRAM_MAP(hustler_readmem,hustler_writemem)
 
-	MDRV_CPU_ADD(Z80,14318000/8)
+	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
+
+	MDRV_CPU_ADD_TAG("sound",Z80,14318000/8)
 	/* audio CPU */	/* 1.78975 MHz */
-	MDRV_CPU_PROGRAM_MAP(frogger_sound_readmem,frogger_sound_writemem)
-	MDRV_CPU_IO_MAP(frogger_sound_readport,frogger_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(hustler_sound_readmem,hustler_sound_writemem)
+	MDRV_CPU_IO_MAP(hustler_sound_readport,hustler_sound_writeport)
 
 	MDRV_MACHINE_RESET(scramble)
 
 	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(scobra_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(32+64+2)	/* 32 for characters, 64 for stars, 2 for bullets */
+	MDRV_COLORTABLE_LENGTH(8*4)
 
+	MDRV_PALETTE_INIT(scramble)
 	MDRV_VIDEO_START(scramble)
+	MDRV_VIDEO_UPDATE(galaxian)
 
 	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
 	MDRV_SOUND_ADD(AY8910, 14318000/8)
-	MDRV_SOUND_CONFIG(frogger_ay8910_interface)
+	MDRV_SOUND_CONFIG(hustler_ay8910_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.33)
 MACHINE_DRIVER_END
 
@@ -1455,26 +1574,13 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( hustlerb )
 
 	/* basic machine hardware */
-	MDRV_IMPORT_FROM(galaxian_base)
+	MDRV_IMPORT_FROM(hustler)
 	MDRV_CPU_MODIFY("main")
 	MDRV_CPU_PROGRAM_MAP(hustlerb_readmem,hustlerb_writemem)
 
-	MDRV_CPU_ADD(Z80,14318000/8)
-	/* audio CPU */	/* 1.78975 MHz */
+	MDRV_CPU_MODIFY("sound")
 	MDRV_CPU_PROGRAM_MAP(scobra_sound_readmem,hustlerb_sound_writemem)
 	MDRV_CPU_IO_MAP(hustlerb_sound_readport,hustlerb_sound_writeport)
-
-	MDRV_MACHINE_RESET(scramble)
-
-	/* video hardware */
-	MDRV_PALETTE_LENGTH(32+64+2)	/* 32 for characters, 64 for stars, 2 for bullets */
-
-	MDRV_VIDEO_START(scramble)
-
-	/* sound hardware */
-	MDRV_SOUND_ADD(AY8910, 14318000/8)
-	MDRV_SOUND_CONFIG(frogger_ay8910_interface)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.33)
 MACHINE_DRIVER_END
 
 

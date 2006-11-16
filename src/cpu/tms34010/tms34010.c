@@ -948,32 +948,6 @@ static int tms34010_execute(int cycles)
 
 
 /***************************************************************************
-    Disassemble
-*#################################################################################################*/
-
-static offs_t tms34010_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
-{
-#ifdef MAME_DEBUG
-	return Dasm34010(buffer,pc,oprom,opram);
-#else
-	sprintf( buffer, "$%04X", oprom[0] | (oprom[1] << 8) );
-	return 2;
-#endif
-}
-
-static offs_t tms34020_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
-{
-#ifdef MAME_DEBUG
-	return Dasm34020(buffer,pc,oprom,opram);
-#else
-	sprintf( buffer, "$%04X", oprom[0] | (oprom[1] << 8) );
-	return 2;
-#endif
-}
-
-
-
-/***************************************************************************
     PIXEL OPS
 ***************************************************************************/
 
@@ -1985,7 +1959,9 @@ void tms34010_get_info(UINT32 _state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = tms34010_exit;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = tms34010_execute;		break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+#ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = tms34010_dasm;		break;
+#endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &tms34010_ICount;		break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
@@ -2085,7 +2061,9 @@ void tms34020_get_info(UINT32 _state, union cpuinfo *info)
 		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = tms34020_get_context; break;
 		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = tms34020_set_context; break;
 		case CPUINFO_PTR_RESET:							info->reset = tms34020_reset;			break;
+#ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = tms34020_dasm;		break;
+#endif /* MAME_DEBUG */
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "TMS34020"); break;

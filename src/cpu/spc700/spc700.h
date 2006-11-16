@@ -92,9 +92,6 @@ void spc700_state_load(void *file);
 /* Get a formatted string representing a register and its contents */
 const char *spc700_info(void *context, int regnum);
 
-/* Disassemble an instruction */
-unsigned spc700_dasm(char *buffer, unsigned pc);
-
 
 /* Pulse the SO (Set Overflow) pin on the CPU */
 void spc700_pulse_so(void);

@@ -91,7 +91,7 @@ unsigned MakeEA (char **ea, int is_src, int lo, unsigned pc, int size, int amode
 }
 
 
-unsigned DasmT11 (char *buffer, unsigned pc, const UINT8 *oprom, const UINT8 *opram)
+offs_t t11_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
     const char *symbol;
 	char *dst = buffer, *ea1, *ea2;

@@ -842,7 +842,8 @@ WRITE32_HANDLER( psx_sio_w )
 			if( ( m_p_n_sio_control[ n_port ] & SIO_CONTROL_RESET ) != 0 )
 			{
 				verboselog( 1, "psx_sio_w reset\n" );
-				m_p_n_sio_status[ n_port ] = SIO_STATUS_TX_EMPTY | SIO_STATUS_TX_RDY;
+				m_p_n_sio_status[ n_port ] |= SIO_STATUS_TX_EMPTY | SIO_STATUS_TX_RDY;
+				m_p_n_sio_status[ n_port ] &= ~( SIO_STATUS_RX_RDY | SIO_STATUS_OVERRUN | SIO_STATUS_IRQ );
 			}
 			if( ( m_p_n_sio_control[ n_port ] & SIO_CONTROL_IACK ) != 0 )
 			{

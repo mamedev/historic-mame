@@ -147,9 +147,9 @@ cdrom_file *cdrom_open(chd_file *chd)
 {
 	int i;
 	cdrom_file *file;
-	UINT32 metatag;
-	UINT32 count, physofs, chdofs;
+	UINT32 physofs, chdofs;
 	static UINT32 metadata[CD_METADATA_WORDS], *mrp;
+	chd_error err;
 
 	/* punt if no CHD */
 	if (!chd)
@@ -167,9 +167,8 @@ cdrom_file *cdrom_open(chd_file *chd)
 	file->audio_samples = 0;
 
 	/* read the CD-ROM metadata */
-	metatag = CDROM_STANDARD_METADATA;
-	count = chd_get_metadata(chd, &metatag, 0, metadata, sizeof(metadata));
-	if (count == 0)
+	err = chd_get_metadata(chd, CDROM_STANDARD_METADATA, 0, metadata, sizeof(metadata), NULL, NULL);
+	if (err != CHDERR_NONE)
 		return NULL;
 
 	/* reconstruct the TOC from it */
@@ -303,6 +302,7 @@ UINT32 cdrom_read_data(cdrom_file *file, UINT32 lbasector, UINT32 numsectors, vo
 	UINT32 sectoroffs = lbasector % file->hunksectors;
 	UINT32 track = cdrom_get_track_chd(file, lbasector);
 	UINT32 tracktype;
+	chd_error err;
 
 	tracktype = file->cdtoc.tracks[track].trktype;
 
@@ -323,7 +323,8 @@ UINT32 cdrom_read_data(cdrom_file *file, UINT32 lbasector, UINT32 numsectors, vo
 	/* if we haven't cached this hunk, read it now */
 	if (file->cachehunk != hunknum)
 	{
-		if (!chd_read(file->chd, hunknum, 1, file->cache))
+		err = chd_read(file->chd, hunknum, file->cache);
+		if (err != CHDERR_NONE)
 			return 0;
 		file->cachehunk = hunknum;
 	}
@@ -376,13 +377,15 @@ UINT32 cdrom_read_subcode(cdrom_file *file, UINT32 lbasector, void *buffer)
 	UINT32 sectoroffs = lbasector % file->hunksectors;
 	UINT32 track = cdrom_get_track_chd(file, lbasector);
 	UINT32 tracktype;
+	chd_error err;
 
 	tracktype = file->cdtoc.tracks[track].trktype;
 
 	/* if we haven't cached this hunk, read it now */
 	if (file->cachehunk != hunknum)
 	{
-		if (!chd_read(file->chd, hunknum, 1, file->cache))
+		err = chd_read(file->chd, hunknum, file->cache);
+		if (err != CHDERR_NONE)
 			return 0;
 		file->cachehunk = hunknum;
 	}
@@ -418,6 +421,7 @@ void cdrom_start_audio(cdrom_file *file, UINT32 start_chd_lba, UINT32 blocks)
 void cdrom_stop_audio(cdrom_file *file)
 {
 	file->audio_playing = 0;
+	file->audio_ended_normally = 1;
 }
 
 /*
@@ -478,6 +482,11 @@ void cdrom_get_audio_data(cdrom_file *file, stream_sample_t *bufL, stream_sample
        just zero fill */
 	if (!file || !file->audio_playing || file->audio_pause || (!file->audio_length && !file->audio_samples))
 	{
+		if( file && file->audio_playing && !file->audio_pause && !file->audio_length )
+		{
+			cdrom_stop_audio(file);
+		}
+
 		memset(bufL, 0, sizeof(stream_sample_t)*samples_wanted);
 		memset(bufR, 0, sizeof(stream_sample_t)*samples_wanted);
 		return;

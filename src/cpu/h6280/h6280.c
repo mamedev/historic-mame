@@ -311,15 +311,6 @@ static void set_irq_line(int irqline, int state)
 }
 
 
-static offs_t h6280_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
-{
-#ifdef MAME_DEBUG
-    return Dasm6280(buffer,pc,oprom,opram);
-#else
-	sprintf( buffer, "$%02X", oprom[0] );
-	return 1;
-#endif
-}
 
 /*****************************************************************************/
 
@@ -516,7 +507,9 @@ void h6280_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = h6280_exit;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = h6280_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+#ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = h6280_dasm;			break;
+#endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &h6280_ICount;			break;
 		case CPUINFO_PTR_TRANSLATE:						info->translate = h6280_translate;		break;
 

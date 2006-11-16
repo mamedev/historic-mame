@@ -2,7 +2,7 @@
 #include "debug/eainfo.h"
 #include "i8x41.h"
 
-unsigned Dasm8x41(char *dst, unsigned pc, const UINT8 *oprom, const UINT8 *opram)
+offs_t i8x41_dasm(char *dst, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	UINT32 flags = 0;
 	unsigned PC = pc;

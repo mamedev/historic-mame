@@ -28,13 +28,10 @@ static UINT32 h8disasm_7(UINT32 address, UINT32 opcode, char *output, const UINT
 #define h8_mem_read16(x) ((oprom[x] << 8) | oprom[(x) + 1])
 #define h8_mem_read32(x) ((oprom[x] << 24) | (oprom[(x) + 1] << 16) | (oprom[(x) + 2] << 8) | oprom[(x) + 3])
 
-UINT32 h8disasm(UINT32 address, char *output, const UINT8 *oprom)
+offs_t h8_disasm(char *output, offs_t address, const UINT8 *oprom, const UINT8 *opram)
 {
 	UINT32 size = 0;
 	UINT16 opcode;
-
-	if(output == NULL)
-		return 0;
 
 	opcode = h8_mem_read16(0);
 

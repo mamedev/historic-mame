@@ -793,16 +793,9 @@ static int dsp56k_execute(int cycles)
     DISASSEMBLY HOOK
 ***************************************************************************/
 
-static offs_t dsp56k_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
-{
-#ifdef MAME_DEBUG
-	extern unsigned dasm_dsp56k(char *, unsigned, const UINT8 *);
-	return dasm_dsp56k(buffer, pc, oprom);
-#else
-	strcpy(buffer, "???");
-	return 2;
-#endif
-}
+extern offs_t dsp56k_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
+
+
 
 /****************************************************************************
  *  Internal Memory Handlers
@@ -1239,7 +1232,9 @@ void dsp56k_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = dsp56k_exit;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = dsp56k_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+#ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = dsp56k_dasm;		break;
+#endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &dsp56k_icount;			break;
  		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_DATA:
  			info->internal_map = construct_map_dsp56156_x_data_memory;							break;

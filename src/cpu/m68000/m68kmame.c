@@ -239,16 +239,13 @@ static void m68000_set_context(void *src)
 	m68k_set_context(src);
 }
 
+#ifdef MAME_DEBUG
 static offs_t m68000_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	M68K_SET_PC_CALLBACK(pc);
-#ifdef MAME_DEBUG
 	return m68k_disassemble_raw(buffer, pc, oprom, opram, M68K_CPU_TYPE_68000);
-#else
-	sprintf( buffer, "$%04X", (oprom[0] << 8) | oprom[1] );
-	return 2;
-#endif
 }
+#endif /* MAME_DEBUG */
 
 /****************************************************************************
  * M68008 section
@@ -291,16 +288,13 @@ static void m68008_set_context(void *src)
 	m68k_set_context(src);
 }
 
+#ifdef MAME_DEBUG
 static offs_t m68008_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	M68K_SET_PC_CALLBACK(pc);
-#ifdef MAME_DEBUG
 	return m68k_disassemble_raw(buffer, pc, oprom, opram, M68K_CPU_TYPE_68008);
-#else
-	sprintf( buffer, "$%04X", (oprom[0] << 8) | oprom[1] );
-	return 2;
-#endif
 }
+#endif /* MAME_DEBUG */
 
 #endif
 
@@ -377,16 +371,13 @@ static void m68020_set_context(void *src)
 	m68k_set_context(src);
 }
 
+#ifdef MAME_DEBUG
 static offs_t m68020_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	M68K_SET_PC_CALLBACK(pc);
-#ifdef MAME_DEBUG
 	return m68k_disassemble_raw(buffer, pc, oprom, opram, M68K_CPU_TYPE_68020);
-#else
-	sprintf( buffer, "$%04X", (oprom[0] << 8) | oprom[1]);
-	return 2;
-#endif
 }
+#endif /* MAME_DEBUG */
 
 
 /****************************************************************************
@@ -404,16 +395,13 @@ static void m68ec020_init(int index, int clock, const void *config, int (*irqcal
 	m68k_set_int_ack_callback(irqcallback);
 }
 
+#ifdef MAME_DEBUG
 static offs_t m68ec020_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	M68K_SET_PC_CALLBACK(pc);
-#ifdef MAME_DEBUG
 	return m68k_disassemble_raw(buffer, pc, oprom, opram, M68K_CPU_TYPE_68EC020);
-#else
-	sprintf( buffer, "$%04X", (oprom[0] << 8) | oprom[1]);
-	return 2;
-#endif
 }
+#endif /* MAME_DEBUG */
 #endif /* HAS_M68EC020 */
 
 #endif // A68K2
@@ -460,16 +448,13 @@ static void m68040_set_context(void *src)
 	m68k_set_context(src);
 }
 
+#ifdef MAME_DEBUG
 static offs_t m68040_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	M68K_SET_PC_CALLBACK(pc);
-#ifdef MAME_DEBUG
 	return m68k_disassemble_raw(buffer, pc, oprom, opram, M68K_CPU_TYPE_68040);
-#else
-	sprintf( buffer, "$%04X", (oprom[0] << 8) | oprom[1]);
-	return 2;
-#endif
 }
+#endif /* MAME_DEBUG */
 
 #endif
 
@@ -605,7 +590,9 @@ void m68000_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = m68000_exit;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = m68000_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+#ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m68000_dasm;		break;
+#endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m68k_ICount;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
@@ -782,7 +769,9 @@ void m68008_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = m68008_exit;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = m68008_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+#ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m68008_dasm;		break;
+#endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m68k_ICount;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
@@ -1030,7 +1019,9 @@ void m68020_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = m68020_exit;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = m68020_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+#ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m68020_dasm;		break;
+#endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m68k_ICount;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
@@ -1125,7 +1116,9 @@ void m68ec020_get_info(UINT32 state, union cpuinfo *info)
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_SET_INFO:						info->setinfo = m68ec020_set_info;		break;
 		case CPUINFO_PTR_INIT:							info->init = m68ec020_init;				break;
+#ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m68ec020_dasm;		break;
+#endif /* MAME_DEBUG */
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "68EC020"); break;
@@ -1274,7 +1267,9 @@ void m68040_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = m68040_exit;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = m68040_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+#ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = m68040_dasm;		break;
+#endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &m68k_ICount;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */

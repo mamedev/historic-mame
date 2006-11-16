@@ -1474,17 +1474,6 @@ static int s2650_execute(int cycles)
 }
 
 
-static offs_t s2650_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
-{
-#ifdef MAME_DEBUG
-    return Dasm2650(buffer,pc,oprom,opram);
-#else
-	sprintf(buffer, "$%02X", oprom[0]);
-	return 1;
-#endif
-}
-
-
 /**************************************************************************
  * Generic set_info
  **************************************************************************/
@@ -1664,9 +1653,11 @@ void s2650_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_BURN:
 				info->burn = NULL;
 				break;
+#ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:
 				info->disassemble = s2650_dasm;
 				break;
+#endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:
 				info->icount = &s2650_ICount;
 				break;

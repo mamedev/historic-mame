@@ -574,17 +574,6 @@ static void set_irq_line(int irqline, int state)
 }
 
 
-static offs_t z8000_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
-{
-#ifdef MAME_DEBUG
-    return DasmZ8000(buffer,pc,oprom);
-#else
-	sprintf( buffer, "$%04X", (oprom[0] << 8) | oprom[1] );
-	return 2;
-#endif
-}
-
-
 
 /**************************************************************************
  * Generic set_info
@@ -701,7 +690,9 @@ void z8000_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = z8000_exit;					break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = z8000_execute;				break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+#ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = z8000_dasm;			break;
+#endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &z8000_ICount;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */

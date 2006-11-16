@@ -11,29 +11,6 @@
 
 ***************************************************************************/
 
-/*----------- defined in drivers/galaxian.c -----------*/
-
-MACHINE_DRIVER_EXTERN(galaxian_base);
-
-
-/*----------- defined in drivers/scobra.c -----------*/
-
-extern struct AY8910interface scobra_ay8910_interface_2;
-ADDRESS_MAP_EXTERN(scobra_sound_readmem);
-ADDRESS_MAP_EXTERN(scobra_sound_writemem);
-ADDRESS_MAP_EXTERN(scobra_sound_readport);
-ADDRESS_MAP_EXTERN(scobra_sound_writeport);
-
-
-/*----------- defined in drivers/frogger.c -----------*/
-
-extern struct AY8910interface frogger_ay8910_interface;
-ADDRESS_MAP_EXTERN(frogger_sound_readmem);
-ADDRESS_MAP_EXTERN(frogger_sound_writemem);
-ADDRESS_MAP_EXTERN(frogger_sound_readport);
-ADDRESS_MAP_EXTERN(frogger_sound_writeport);
-
-
 /*----------- defined in vidhrdw/galaxian.c -----------*/
 
 extern UINT8 *galaxian_videoram;
@@ -123,8 +100,9 @@ WRITE8_HANDLER( gteikob2_flip_screen_x_w );
 WRITE8_HANDLER( gteikob2_flip_screen_y_w );
 
 
-/*----------- defined in machine/scramble.c -----------*/
+/*----------- defined in machine/galaxian.c -----------*/
 
+DRIVER_INIT( zigzag );
 DRIVER_INIT( pisces );
 DRIVER_INIT( checkmaj );
 DRIVER_INIT( dingo );
@@ -138,7 +116,45 @@ DRIVER_INIT( checkman );
 DRIVER_INIT( gteikob2 );
 DRIVER_INIT( azurian );
 DRIVER_INIT( 4in1 );
-DRIVER_INIT( mshuttle );
+DRIVER_INIT( gmgalax );
+
+WRITE8_HANDLER( galaxian_nmi_enable_w );
+
+MACHINE_RESET( galaxian );
+MACHINE_RESET( devilfsg );
+
+WRITE8_HANDLER( galaxian_coin_lockout_w );
+WRITE8_HANDLER( galaxian_coin_counter_w );
+#define galaxian_coin_counter_0_w galaxian_coin_counter_w
+WRITE8_HANDLER( galaxian_coin_counter_1_w );
+WRITE8_HANDLER( galaxian_coin_counter_2_w );
+WRITE8_HANDLER( galaxian_leds_w );
+
+READ8_HANDLER( scramblb_protection_1_r );
+READ8_HANDLER( scramblb_protection_2_r );
+
+READ8_HANDLER( jumpbug_protection_r );
+
+WRITE8_HANDLER( kingball_speech_dip_w );
+WRITE8_HANDLER( kingball_sound1_w );
+WRITE8_HANDLER( kingball_sound2_w );
+
+WRITE8_HANDLER( _4in1_bank_w );
+READ8_HANDLER( _4in1_input_port_1_r );
+READ8_HANDLER( _4in1_input_port_2_r );
+
+WRITE8_HANDLER( zigzag_sillyprotection_w );
+
+INTERRUPT_GEN( hunchbks_vh_interrupt );
+INTERRUPT_GEN( gmgalax_vh_interrupt );
+
+READ8_HANDLER( gmgalax_input_port_0_r );
+READ8_HANDLER( gmgalax_input_port_1_r );
+READ8_HANDLER( gmgalax_input_port_2_r );
+
+
+/*----------- defined in machine/scramble.c -----------*/
+
 DRIVER_INIT( scramble_ppi );
 DRIVER_INIT( amidar );
 DRIVER_INIT( frogger );
@@ -171,78 +187,20 @@ DRIVER_INIT( mrkougar );
 DRIVER_INIT( mrkougb );
 DRIVER_INIT( mimonscr );
 DRIVER_INIT( sfx );
-DRIVER_INIT( gmgalax );
 DRIVER_INIT( ladybugg );
 DRIVER_INIT( scorpion );
 DRIVER_INIT( ad2083 );
-DRIVER_INIT( zigzag );
 
 MACHINE_RESET( scramble );
 MACHINE_RESET( sfx );
 MACHINE_RESET( explorer );
-MACHINE_RESET( galaxian );
-MACHINE_RESET( devilfsg );
-
-READ8_HANDLER(scobra_type2_ppi8255_0_r);
-READ8_HANDLER(scobra_type2_ppi8255_1_r);
-WRITE8_HANDLER(scobra_type2_ppi8255_0_w);
-WRITE8_HANDLER(scobra_type2_ppi8255_1_w);
-
-READ8_HANDLER(hustler_ppi8255_0_r);
-READ8_HANDLER(hustler_ppi8255_1_r);
-WRITE8_HANDLER(hustler_ppi8255_0_w);
-WRITE8_HANDLER(hustler_ppi8255_1_w);
-
-READ8_HANDLER(amidar_ppi8255_0_r);
-READ8_HANDLER(amidar_ppi8255_1_r);
-WRITE8_HANDLER(amidar_ppi8255_0_w);
-WRITE8_HANDLER(amidar_ppi8255_1_w);
-
-READ8_HANDLER(frogger_ppi8255_0_r);
-READ8_HANDLER(frogger_ppi8255_1_r);
-WRITE8_HANDLER(frogger_ppi8255_0_w);
-WRITE8_HANDLER(frogger_ppi8255_1_w);
-
-READ8_HANDLER(mars_ppi8255_0_r);
-READ8_HANDLER(mars_ppi8255_1_r);
-WRITE8_HANDLER(mars_ppi8255_0_w);
-WRITE8_HANDLER(mars_ppi8255_1_w);
 
 READ8_HANDLER( triplep_pip_r );
 READ8_HANDLER( triplep_pap_r );
 
-WRITE8_HANDLER( galaxian_coin_lockout_w );
-WRITE8_HANDLER( galaxian_coin_counter_w );
-#define galaxian_coin_counter_0_w galaxian_coin_counter_w
-WRITE8_HANDLER( galaxian_coin_counter_1_w );
-WRITE8_HANDLER( galaxian_coin_counter_2_w );
-WRITE8_HANDLER( galaxian_leds_w );
-WRITE8_HANDLER( galaxian_nmi_enable_w );
-
-READ8_HANDLER( scramblb_protection_1_r );
-READ8_HANDLER( scramblb_protection_2_r );
-
-READ8_HANDLER( jumpbug_protection_r );
-
-WRITE8_HANDLER( kingball_speech_dip_w );
-WRITE8_HANDLER( kingball_sound1_w );
-WRITE8_HANDLER( kingball_sound2_w );
-
-WRITE8_HANDLER( _4in1_bank_w );
-READ8_HANDLER( _4in1_input_port_1_r );
-READ8_HANDLER( _4in1_input_port_2_r );
-
 READ8_HANDLER( hunchbks_mirror_r );
 WRITE8_HANDLER( hunchbks_mirror_w );
 
-WRITE8_HANDLER( zigzag_sillyprotection_w );
-
-INTERRUPT_GEN( hunchbks_vh_interrupt );
-INTERRUPT_GEN( gmgalax_vh_interrupt );
-
-READ8_HANDLER( gmgalax_input_port_0_r );
-READ8_HANDLER( gmgalax_input_port_1_r );
-READ8_HANDLER( gmgalax_input_port_2_r );
 
 
 /*----------- defined in sndhrdw/galaxian.c -----------*/
@@ -275,6 +233,4 @@ WRITE8_HANDLER( mrkougar_sh_irqtrigger_w );
 WRITE8_HANDLER( froggrmc_sh_irqtrigger_w );
 WRITE8_HANDLER( hotshock_sh_irqtrigger_w );
 
-WRITE8_HANDLER( zigzag_8910_latch_w );
-WRITE8_HANDLER( zigzag_8910_data_trigger_w );
-WRITE8_HANDLER( zigzag_8910_control_trigger_w );
+

@@ -818,7 +818,7 @@ $(OBJ)/konami.a: \
 	$(OBJ)/drivers/konamigv.o \
 	$(OBJ)/drivers/konamigx.o $(OBJ)/machine/konamigx.o $(OBJ)/vidhrdw/konamigx.o \
 	$(OBJ)/drivers/konamim2.o \
-	$(OBJ)/drivers/ksys573.o $(OBJ)/machine/x76f041.o \
+	$(OBJ)/drivers/ksys573.o $(OBJ)/machine/x76f041.o $(OBJ)/machine/upd4701.o \
 	$(OBJ)/drivers/labyrunr.o $(OBJ)/vidhrdw/labyrunr.o \
 	$(OBJ)/drivers/lethal.o $(OBJ)/vidhrdw/lethal.o \
 	$(OBJ)/drivers/mainevt.o $(OBJ)/vidhrdw/mainevt.o \
@@ -917,7 +917,7 @@ $(OBJ)/msx.a: \
 $(OBJ)/namco.a: \
 	$(OBJ)/drivers/baraduke.o $(OBJ)/vidhrdw/baraduke.o \
 	$(OBJ)/drivers/galaga.o $(OBJ)/vidhrdw/galaga.o \
-	$(OBJ)/drivers/galaxian.o $(OBJ)/sndhrdw/galaxian.o $(OBJ)/vidhrdw/galaxian.o \
+	$(OBJ)/drivers/galaxian.o $(OBJ)/machine/galaxian.o $(OBJ)/sndhrdw/galaxian.o $(OBJ)/vidhrdw/galaxian.o \
 	$(OBJ)/drivers/gaplus.o $(OBJ)/machine/gaplus.o $(OBJ)/vidhrdw/gaplus.o \
 	$(OBJ)/drivers/mappy.o $(OBJ)/vidhrdw/mappy.o \
 	$(OBJ)/drivers/namcofl.o $(OBJ)/vidhrdw/namcofl.o \
@@ -963,7 +963,7 @@ $(OBJ)/neogeo.a: \
 $(OBJ)/nichibut.a: \
 	$(OBJ)/drivers/armedf.o $(OBJ)/vidhrdw/armedf.o \
 	$(OBJ)/drivers/bigfghtr.o \
-	$(OBJ)/drivers/cclimber.o $(OBJ)/sndhrdw/cclimber.o $(OBJ)/vidhrdw/cclimber.o \
+	$(OBJ)/drivers/cclimber.o $(OBJ)/machine/cclimber.o $(OBJ)/sndhrdw/cclimber.o $(OBJ)/vidhrdw/cclimber.o \
 	$(OBJ)/drivers/clshroad.o $(OBJ)/vidhrdw/clshroad.o \
 	$(OBJ)/drivers/cop01.o $(OBJ)/vidhrdw/cop01.o \
 	$(OBJ)/drivers/dacholer.o \

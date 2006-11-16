@@ -98,6 +98,73 @@ struct _palette_private
         - by default, tables 0 and 2 point to shadows, tables 1 and 3 point to hilights
         - shadows go from Machine->drv->total_colors to 2*Machine->drv->total_colors
         - hilights go from 2*Machine->drv->total_colors to 3*Machine->drv->total_colors
+
+
+
+    palette_alloc strategy:
+
+        palette->total_colors = machine->drv->total_colors;
+        if (shadows && !rgb_direct) palette->total_colors += machine->drv->total_colors;
+        if (hilights && !rgb_direct) palette->total_colors += machine->drv->total_colors;
+        palette->total_colors_with_ui = palette->total_colors;
+
+        max_total_colors = palette->total_colors + 2;
+
+        Allocate palette->raw_color[max_total_colors]
+            - initialize to RGB defaults
+
+        Allocate palette->adjusted_color[max_total_colors]
+            - initialize equal to palette->raw_color
+
+        if (!rgb_direct) Notify_pen_changed for max_total_colors
+
+        if (palette->total_colors > 0)
+
+            Allocate machine->pens[palette->total_colors]
+                - initialize 1:1
+
+            Allocate palette_pen_brightness[machine->drv->total_colors]
+                - initialize to 1.0
+
+        if (machine->drv->color_table_len > 0)
+
+            Allocate machine->game_colortable[machine->drv->color_table_len]
+                - initialize to i % palette->total_colors
+
+            Allocate machine->remapped_colortable[machine->drv->color_table_len]
+                - not initialized
+
+        if (shadows)
+
+            Allocate shadow_table[0]/[2]
+
+            if (!rgb_direct)
+                table[i] = (i < machine->drv->total_colors) ? (i + machine->drv->total_colors) : i
+
+            else
+                table[i] = shadow(RGB555(i))
+
+        if (hilights)
+
+            Allocate shadow_table[1]/[3]
+
+            if (!rgb_direct)
+                table[i] = (i < machine->drv->total_colors) ? (i + 2 * machine->drv->total_colors) : i
+
+            else
+                table[i] = shadow(RGB555(i))
+
+        machine->shadow_table = shadow_table[0]
+
+
+
+    palette_config strategy:
+
+        recompute_adjusted_colors
+            - for all pens, internal_modify_pen with current palette->raw_color and palette->pen_brightness
+            - updates palette->raw_color and palette->adjusted_color
+            - if (!rgb_direct) updates machine->pens
+
 */
 
 

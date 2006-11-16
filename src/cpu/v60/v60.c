@@ -444,23 +444,10 @@ static void v60_set_context(void *src)
 }
 
 
-#ifndef MAME_DEBUG
-static offs_t v60_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
-{
-	sprintf(buffer, "$%02X", program_read_byte_16le(pc));
-	return 1;
-}
-
-static offs_t v70_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
-{
-	sprintf(buffer, "$%02X", program_read_byte_32le(pc));
-	return 1;
-}
-#else
+#ifdef MAME_DEBUG
 offs_t v60_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
 offs_t v70_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
-#endif
-
+#endif /* MAME_DEBUG */
 
 
 /**************************************************************************
@@ -645,7 +632,9 @@ void v60_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = v60_exit;					break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = v60_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+#ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = v60_dasm;			break;
+#endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &v60_ICount;				break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
@@ -734,7 +723,9 @@ void v70_get_info(UINT32 state, union cpuinfo *info)
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_INIT:							info->init = v70_init;					break;
+#ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = v70_dasm;			break;
+#endif /* MAME_DEBUG */
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "V70"); break;

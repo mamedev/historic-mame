@@ -108,7 +108,6 @@ extern void i8051_set_irq_callback(int (*callback)(int irqline));
 extern void i8051_state_save(void *file);
 extern void i8051_state_load(void *file);
 extern const char *i8051_info(void *context, int regnum);
-extern offs_t i8051_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
 
 WRITE8_HANDLER( i8051_internal_w );
 READ8_HANDLER( i8051_internal_r );
@@ -118,8 +117,8 @@ extern void i8051_set_serial_rx_callback(int (*callback)(void));
 extern void i8051_set_eram_iaddr_callback(READ32_HANDLER((*callback)));
 
 #ifdef MAME_DEBUG
-extern unsigned Dasm8051( char *dst, unsigned pc, const UINT8 *oprom, const UINT8 *opram );
-#endif
+extern offs_t i8051_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
+#endif /* MAME_DEBUG */
 
 /****************************************************************************
  * 8752 Section
@@ -140,7 +139,6 @@ extern void i8752_set_irq_callback(int (*callback)(int irqline));
 extern void i8752_state_save(void *file);
 extern void i8752_state_load(void *file);
 extern const char *i8752_info(void *context, int regnum);
-extern offs_t i8752_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
 extern void i8752_set_serial_tx_callback(void (*callback)(int data));
 extern void i8752_set_serial_rx_callback(int (*callback)(void));
 WRITE8_HANDLER( i8752_internal_w );

@@ -238,15 +238,12 @@ static int i286_execute(int num_cycles)
 
 extern int i386_dasm_one(char *buffer, UINT32 eip, const UINT8 *oprom, int addr_size, int op_size);
 
+#ifdef MAME_DEBUG
 static offs_t i286_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
-#ifdef MAME_DEBUG
 	return i386_dasm_one(buffer, pc, oprom, 0, 0);
-#else
-	sprintf( buffer, "$%02X", oprom[0] );
-	return 1;
-#endif
 }
+#endif /* MAME_DEBUG */
 
 static void i286_init(int index, int clock, const void *config, int (*irqcallback)(int))
 {
@@ -409,7 +406,7 @@ void i286_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + I286_IP:			info->i = I.pc - I.base[CS];			break;
 		case CPUINFO_INT_SP:							info->i = I.base[SS] + I.regs.w[SP];	break;
 		case CPUINFO_INT_REGISTER + I286_SP:			info->i = I.regs.w[SP];					break;
-		case CPUINFO_INT_REGISTER + I286_FLAGS: 		CompressFlags(); info->i = I.flags;		break;
+		case CPUINFO_INT_REGISTER + I286_FLAGS: 		I.flags = CompressFlags(); info->i = I.flags;		break;
 		case CPUINFO_INT_REGISTER + I286_AX:			info->i = I.regs.w[AX];					break;
 		case CPUINFO_INT_REGISTER + I286_CX:			info->i = I.regs.w[CX];					break;
 		case CPUINFO_INT_REGISTER + I286_DX:			info->i = I.regs.w[DX];					break;
@@ -441,7 +438,9 @@ void i286_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = NULL;						break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = i286_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+#ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = i286_dasm;			break;
+#endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &i286_ICount;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */

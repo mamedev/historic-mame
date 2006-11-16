@@ -5,6 +5,7 @@
 *************************************************************************/
 
 #include "sound/discrete.h"
+#include "sound/samples.h"
 
 /* Discrete Sound Input Nodes */
 #define TRIPLHNT_BEAR_ROAR_DATA	NODE_01
@@ -17,6 +18,7 @@
 /*----------- defined in sndhrdw/triplhnt.c -----------*/
 
 extern discrete_sound_block triplhnt_discrete_interface[];
+extern struct Samplesinterface triplhnt_samples_interface;
 
 
 /*----------- defined in vidhrdw/triplhnt.c -----------*/

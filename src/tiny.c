@@ -11,7 +11,7 @@
 
 #include "driver.h"
 
-extern game_driver TINY_NAME;
+extern const game_driver TINY_NAME;
 
 const game_driver * const drivers[] =
 {

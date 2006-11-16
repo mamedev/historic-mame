@@ -121,7 +121,7 @@ ToDo / Notes:
 -colmns97/puyosun/mausuke/cotton2/cottonbm: interrupt issues? we can't check the SCU mask
  on SMPC or controls fail
 -mausuke/bakubaku/grdforce: need to sort out transparency on the colour mapped sprites
--bakubaku/colmns97/vfkids: no sound? Caused by missing irq?
+-bakubaku: no sound? Caused by missing irq?
 -myfairld: Doesn't work with -sound enabled because of a sound ram check at relative
  addresses of $700/$710/$720/$730,so I'm not removing the NOT_WORKING flag due of that.Also
  Micronet programmers had the "great" idea to *not* use the ST-V input standards,infact
@@ -145,12 +145,16 @@ ToDo / Notes:
 -elandore: Polygons structures/textures aren't right in gameplay,known as protection
  for the humans structures,imperfect VDP1 emulation for the dragons.
 -hanagumi: ending screens have corrupt graphics. (*untested*)
--znpwfv: missing Gouraud shading on distorted sprites and polygons
 -batmanfr: Missing sound,caused by an extra ADSP chip which is on the cart.The CPU is a
  ADSP-2181,and it's the same used by NBA Jam Extreme (ZN game).
 -twcup98: missing Tecmo logo
--vfremix: hangs after second match
+-vfremix: when you play Akira, there is a problem with third match: game doesn't upload all textures
+ and tiles and doesn't enable display, although gameplay is normal - wait a while to get back
+ to title screen after loosing a match
 -sokyugrt: gameplay seems to be not smooth, timing?
+-kiwames: hangs on title screen
+-seabass: crashes in stvcd.c - there is no CD and we report than we have one, and game tries
+ to read something, however it doesn't do it after nvram is deleted?
 -Here's the list of unmapped read/writes:
 *<all games>
 cpu #0 (PC=0000365C): unmapped program memory dword write to 057FFFFC = 000D0000 & FFFF0000
@@ -2809,32 +2813,6 @@ static void print_game_info(void)
 	print_file = NULL;
 }
 
-MACHINE_START( stv )
-{
-	SCSP_set_ram_base(0, sound_ram);
-	return 0;
-}
-
-MACHINE_RESET( stv )
-{
-	// don't let the slave cpu and the 68k go anywhere
-	cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
-	stv_enable_slave_sh2 = 0;
-	cpunum_set_input_line(2, INPUT_LINE_RESET, ASSERT_LINE);
-
-	timer_0 = 0;
-	timer_1 = 0;
-	en_68k = 0;
-	NMI_reset = 1;
-	smpc_ram[0x21] = (0x80) | ((NMI_reset & 1) << 6);
-
-	cpunum_set_clock(0, MASTER_CLOCK_320/2);
-	cpunum_set_clock(1, MASTER_CLOCK_320/2);
-	cpunum_set_clock(2, MASTER_CLOCK_320/5);
-
-	stvcd_reset();
-}
-
 static const gfx_layout tiles8x8x4_layout =
 {
 	8,8,
@@ -2959,6 +2937,60 @@ static VIDEO_UPDATE(critcrsh)
 	return 0;
 }
 
+MACHINE_START( stv )
+{
+	SCSP_set_ram_base(0, sound_ram);
+
+	// save states
+	state_save_register_global_pointer(smpc_ram, 0x80);
+	state_save_register_global_pointer(stv_scu, 0x100/4);
+	state_save_register_global_pointer(scsp_regs, 0x1000/2);
+	state_save_register_global(stv_vblank);
+	state_save_register_global(stv_hblank);
+	state_save_register_global(stv_enable_slave_sh2);
+	state_save_register_global(NMI_reset);
+	state_save_register_global(en_68k);
+	state_save_register_global(timer_0);
+	state_save_register_global(timer_1);
+	state_save_register_global(scanline);
+	state_save_register_global(IOSEL1);
+	state_save_register_global(IOSEL2);
+	state_save_register_global(EXLE1);
+	state_save_register_global(EXLE2);
+	state_save_register_global(PDR1);
+	state_save_register_global(PDR2);
+	state_save_register_global(port_sel);
+	state_save_register_global(mux_data);
+	state_save_register_global_array(a_bus);
+	state_save_register_global(ctrl_index);
+	state_save_register_global(internal_counter);
+	state_save_register_global(char_offset);
+	state_save_register_global(scsp_last_line);
+
+	return 0;
+}
+
+MACHINE_RESET( stv )
+{
+	// don't let the slave cpu and the 68k go anywhere
+	cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
+	stv_enable_slave_sh2 = 0;
+	cpunum_set_input_line(2, INPUT_LINE_RESET, ASSERT_LINE);
+
+	timer_0 = 0;
+	timer_1 = 0;
+	en_68k = 0;
+	NMI_reset = 1;
+	smpc_ram[0x21] = (0x80) | ((NMI_reset & 1) << 6);
+
+	cpunum_set_clock(0, MASTER_CLOCK_320/2);
+	cpunum_set_clock(1, MASTER_CLOCK_320/2);
+	cpunum_set_clock(2, MASTER_CLOCK_320/5);
+
+	stvcd_reset();
+}
+
+
 static MACHINE_DRIVER_START( stv )
 
 	/* basic machine hardware */
@@ -3043,14 +3075,6 @@ SYSTEM_BIOS_START( stvbios )
 	/*Latin America*/
 SYSTEM_BIOS_END
 
-/* the roms marked as bad almost certainly aren't bad, theres some very weird
-   mirroring going on, or maybe its meant to transfer the rom data to the region it
-   tests from rearranging it a bit (dma?)
-
-   comments merely indicate the status the rom gets in the rom check at the moment
-
-*/
-
 /*
 
 there appears to only be one main cartridge layout, just some having different positions populated if you use the ic named in
@@ -3060,7 +3084,7 @@ some of the rom names were using something else and have been renamed to match t
 
 ( add 0x2000000 for real memory map location )
 
-0x0000000 - 0x01fffff IC13 Header can be read from here .. *IC13 ALWAYS fails on the games if they have one, something weird going on
+0x0000000 - 0x01fffff IC13 Header can be read from here ..
 0x0200000 - 0x03fffff IC7  .. or here (some games have both ic7 and ic13 but the header is in ic13 in these cases)
 0x0400000 - 0x07fffff IC2
 0x0800000 - 0x0bfffff IC3
@@ -3961,17 +3985,17 @@ GAMEB( 1996, stvbios,   0,       stvbios, stv, stv,  stv,       ROT0,   "Sega", 
 //GBX   YEAR, NAME,      PARENT,  BIOS,    MACH,INP,  INIT,      MONITOR
 /* Playable */
 GAMEB( 1996, bakubaku,  stvbios, stvbios, stv, stv,  bakubaku,  ROT0,   "Sega",     				  "Baku Baku Animal (J 950407 V1.000)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEB( 1996, batmanfr,  stvbios, stvbios, stv, stv,  batmanfr,  ROT0,   "Acclaim",    				  "Batman Forever (JUE 960507 V1.000)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEB( 1996, batmanfr,  stvbios, stvbios, stv, stv,  batmanfr,  ROT0,   "Acclaim",    				  "Batman Forever (JUE 960507 V1.000)", GAME_NO_SOUND )
 GAMEB( 1996, colmns97,  stvbios, stvbios, stv, stv,  colmns97,  ROT0,   "Sega", 	 				  "Columns '97 (JET 961209 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1997, cotton2,   stvbios, stvbios, stv, stv,  cotton2,   ROT0,   "Success",  				  "Cotton 2 (JUET 970902 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1998, cottonbm,  stvbios, stvbios, stv, stv,  cottonbm,  ROT0,   "Success",  				  "Cotton Boomerang (JUET 980709 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1995, critcrsh,  stvbios, stvbios, critcrsh, critcrsh, ic13, ROT0, "Sega", 	     			  "Critter Crusher (EA 951204 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1999, danchih,   stvbios, stvbios, stv, stvmp,danchih,   ROT0,   "Altron (Tecmo license)", 	  "Danchi de Hanafuda (J 990607 V1.400)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEB( 1996, diehard,   stvbios, stvbios, stv, stv,  diehard,   ROT0,   "Sega", 	 				  "Die Hard Arcade (UET 960515 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS  )
-GAMEB( 1996, dnmtdeka,  diehard, stvbios, stv, stv,  dnmtdeka,  ROT0,   "Sega", 	 				  "Dynamite Deka (J 960515 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS  )
+GAMEB( 1996, diehard,   stvbios, stvbios, stv, stv,  diehard,   ROT0,   "Sega", 	 				  "Die Hard Arcade (UET 960515 V1.000)", GAME_IMPERFECT_SOUND  )
+GAMEB( 1996, dnmtdeka,  diehard, stvbios, stv, stv,  dnmtdeka,  ROT0,   "Sega", 	 				  "Dynamite Deka (J 960515 V1.000)", GAME_IMPERFECT_SOUND  )
 GAMEB( 1995, ejihon,    stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 				  "Ejihon Tantei Jimusyo (J 950613 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1995, fhboxers,  stvbios, stvbios, stv, stv,  fhboxers,  ROT0,   "Sega", 	 				  "Funky Head Boxers (JUETBKAL 951218 V1.000)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEB( 1994, gaxeduel,  stvbios, stvbios, stv, stv,  gaxeduel,	ROT0,   "Sega", 	     			  "Golden Axe - The Duel (JUETL 950117 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEB( 1994, gaxeduel,  stvbios, stvbios, stv, stv,  gaxeduel,	ROT0,   "Sega", 	     			  "Golden Axe - The Duel (JUETL 950117 V1.000)", GAME_IMPERFECT_SOUND )
 GAMEB( 1998, grdforce,  stvbios, stvbios, stv, stv,  grdforce,  ROT0,   "Success",  				  "Guardian Force (JUET 980318 V0.105)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1996, groovef,   stvbios, stvbios, stv, stv,  groovef,   ROT0,   "Atlus",    				  "Power Instinct 3 - Groove On Fight (J 970416 V1.001)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1998, hanagumi,  stvbios, stvbios, stv, stv,  hanagumi,  ROT0,   "Sega",     				  "Hanagumi Taisen Columns - Sakura Wars (J 971007 V1.010)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
@@ -3995,15 +4019,15 @@ GAMEB( 1995, sandor,    stvbios, stvbios, stv, stv,  sandor,    ROT0,   "Sega", 
 GAMEB( 1996, sokyugrt,  stvbios, stvbios, stv, stv,  sokyugrt,  ROT0,   "Raizing / 8ing",    		  "Soukyugurentai / Terra Diver (JUET 960821 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1995, suikoenb,  stvbios, stvbios, stv, stv,  suikoenb,  ROT0,   "Data East",  				  "Suikoenbu / Outlaws of the Lost Dynasty (JUETL 950314 V2.001)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1995, thunt,     sandor,  stvbios, stv, stv,  thunt,     ROT0,   "Sega (Deniam license?)",	  "Treasure Hunt (JUET 970901 V2.00E)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEB( 1996, vfkids,    stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 				  "Virtua Fighter Kids (JUET 960319 V0.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEB( 1996, vfkids,    stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Sega", 	 				  "Virtua Fighter Kids (JUET 960319 V0.000)", GAME_IMPERFECT_SOUND )
 GAMEB( 1997, winterht,  stvbios, stvbios, stv, stv,  winterht,  ROT0,   "Sega", 	 				  "Winter Heat (JUET 971012 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEB( 1997, znpwfv,    stvbios, stvbios, stv, stv,  znpwfv,    ROT0,   "Sega", 	     			  "Zen Nippon Pro-Wrestling Featuring Virtua (J 971123 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 
 /* Almost */
 GAMEB( 1997, vmahjong,  stvbios, stvbios, stv, stvmp,stv,       ROT0,   "Micronet",   				  "Virtual Mahjong (J 961214 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1998, myfairld,  stvbios, stvbios, stv, stvmp,stv,       ROT0,   "Micronet",   				  "Virtual Mahjong 2 - My Fair Lady (J 980608 V1.000)", GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
 GAMEB( 1998, astrass,   stvbios, stvbios, stv, stv,  astrass,   ROT0,   "Sunsoft",    				  "Astra SuperStars (J 980514 V1.002)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEB( 1998, twcup98,   stvbios, stvbios, stv, stv,  twcup98,   ROT0,   "Tecmo",      				  "Tecmo World Cup '98 (JUET 980410 V1.000)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS|GAME_NOT_WORKING ) // player movement
-GAMEB( 1997, znpwfv,    stvbios, stvbios, stv, stv,  znpwfv,    ROT0,   "Sega", 	     			  "Zen Nippon Pro-Wrestling Featuring Virtua (J 971123 V1.000)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 
 /* Doing Something.. but not enough yet */
 GAMEB( 1998, elandore,  stvbios, stvbios, stv, stv,  elandore,  ROT0,   "Sai-Mate",   				  "Elan Doree - Legend of Dragon (JUET 980922 V1.006)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )//japanese name?
@@ -4020,7 +4044,6 @@ GAMEB( 1995, sfish2j,   sfish2,  stvbios, stv, stv,  sfish2j,   ROT0,   "Sega",	
 /*
 This is the known list of undumped ST-V games:
     Kiss Off (US version of mausuke)
-    Outlaws of the Lost Dynasty (US version of suikoenb)
     Baku Baku (US version of Baku Baku Animal,dunno if it exists for the ST-V)
     Sport Fishing
     Aroma Club

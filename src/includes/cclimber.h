@@ -1,7 +1,8 @@
-/*----------- defined in drivers/cclimber.c -----------*/
+/*----------- defined in machine/cclimber.c -----------*/
 
+DRIVER_INIT( cclimber );
 DRIVER_INIT( cclimbrj );
-void cclimber_decode(const unsigned char xortable[8][16]);
+DRIVER_INIT( mshuttle );
 
 /*----------- defined in vidhrdw/cclimber.c -----------*/
 
@@ -22,6 +23,12 @@ VIDEO_UPDATE( cclimber );
 VIDEO_UPDATE( yamato );
 VIDEO_START( toprollr );
 VIDEO_UPDATE( toprollr );
+
+WRITE8_HANDLER( swimmer_bgcolor_w );
+WRITE8_HANDLER( swimmer_palettebank_w );
+PALETTE_INIT( swimmer );
+VIDEO_UPDATE( swimmer );
+WRITE8_HANDLER( swimmer_sidepanel_enable_w );
 
 
 /*----------- defined in sndhrdw/cclimber.c -----------*/

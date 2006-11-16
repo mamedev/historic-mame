@@ -221,7 +221,7 @@ static char *ADR(int pc)
 }
 
 /* disassemble one instruction at PC into buff. return byte size of instr */
-int Dasm2650(char * buff, int PC, const UINT8 *oprom, const UINT8 *opram)
+offs_t s2650_dasm(char *buff, offs_t PC, const UINT8 *oprom, const UINT8 *opram)
 {
 	UINT32 flags = 0;
 	int pc = PC;

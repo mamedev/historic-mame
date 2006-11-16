@@ -2009,7 +2009,7 @@ static void PREFIX86(_pushf)(void)    /* Opcode 0x9c */
 
 	tmp = CompressFlags();
 #ifdef I286
-    PUSH( tmp | 0xc000 );
+    PUSH( tmp &= ~0xf000 );
 #elif defined V20
     PUSH( tmp | 0xe000 );
 #else

@@ -161,7 +161,7 @@ static void InitDasm16C5x(void)
 	OpInizialized = 1;
 }
 
-unsigned Dasm16C5x(char *str, unsigned pc, const UINT8 *oprom, const UINT8 *opram)
+offs_t pic16C5x_dasm(char *str, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	int a, b, d, f, k;	/* these can all be filled in by parsing an instruction */
 	int i;

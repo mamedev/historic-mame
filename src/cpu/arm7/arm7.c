@@ -152,9 +152,9 @@ static void arm7_set_context(void *src)
     }
 }
 
+#ifdef MAME_DEBUG
 static offs_t arm7_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
-#ifdef MAME_DEBUG
 	if( T_IS_SET(GET_CPSR) )
 	{
 		thumb_disasm( buffer, pc, oprom[0] | (oprom[1] << 8));
@@ -165,11 +165,8 @@ static offs_t arm7_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8
     	arm7_disasm( buffer, pc, oprom[0] | (oprom[1] << 8) | (oprom[2] << 16) | (oprom[3] << 24));
 	}
     return 4;
-#else
-    sprintf(buffer, "$%08x", oprom[0] | (oprom[1] << 8) | (oprom[2] << 16) | (oprom[3] << 24));
-    return 4;
-#endif
 }
+#endif /* MAME_DEBUG */
 
 
 /**************************************************************************
@@ -346,7 +343,9 @@ void arm7_get_info(UINT32 state, union cpuinfo *info)
         case CPUINFO_PTR_EXIT:                          info->exit = arm7_exit;                 break;
         case CPUINFO_PTR_EXECUTE:                       info->execute = arm7_execute;           break;
         case CPUINFO_PTR_BURN:                          info->burn = NULL;                      break;
+#ifdef MAME_DEBUG
         case CPUINFO_PTR_DISASSEMBLE:	                info->disassemble = arm7_dasm;	        break;
+#endif /* MAME_DEBUG */
         case CPUINFO_PTR_INSTRUCTION_COUNTER:           info->icount = &ARM7_ICOUNT;            break;
 
         /* --- the following bits of info are returned as NULL-terminated strings --- */

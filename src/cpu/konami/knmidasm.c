@@ -1859,7 +1859,7 @@ static konami_opcode_def op_table[256] = {
 	/* ff */	{ illegal, 0 }
 };
 
-offs_t Dasmknmi(char *buffer, UINT32 pc, const UINT8 *oprom, const UINT8 *opram)
+offs_t konami_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	buffer[0] = '\0';
 

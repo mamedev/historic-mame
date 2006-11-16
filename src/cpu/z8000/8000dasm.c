@@ -78,7 +78,7 @@ static const char *ints[4] = {
 	"",    "vi",  "nvi",   "vi,nvi"
 };
 
-int DasmZ8000(char *buff, int pc, const UINT8 *oprom)
+offs_t z8000_dasm(char *buff, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	int new_pc = pc, i, tmp;
 	char *dst = buff;

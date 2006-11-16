@@ -658,22 +658,6 @@ static int ccpu_execute(int cycles)
 
 
 /***************************************************************************
-    DISASSEMBLER INTERFACE
-***************************************************************************/
-
-static offs_t ccpu_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
-{
-#ifdef MAME_DEBUG
-	return DasmCCPU(buffer, pc, oprom);
-#else
-    sprintf( buffer, "$%02X", (oprom[0] << 8) | oprom[1]);
-	return 1;
-#endif
-}
-
-
-
-/***************************************************************************
     INFORMATION SETTERS
 ***************************************************************************/
 
@@ -766,7 +750,9 @@ void ccpu_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = NULL;						break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = ccpu_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+#ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = ccpu_dasm;			break;
+#endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &ccpu_icount;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */

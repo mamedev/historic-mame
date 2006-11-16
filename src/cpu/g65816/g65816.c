@@ -308,16 +308,13 @@ static void g65816_set_irq_callback(int (*callback)(int))
 /* Disassemble an instruction */
 #ifdef MAME_DEBUG
 #include "g65816ds.h"
-#endif
+
 static offs_t g65816_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
-#ifdef MAME_DEBUG
 	return g65816_disassemble(buffer, (pc & 0x00ffff), (pc & 0xff0000) >> 16, oprom, FLAG_M, FLAG_X);
-#else
-	sprintf(buffer, "$%02X", g65816_read_8_immediate((pc & 0xff0000) | (pc & 0x00ffff)));
-	return 1;
-#endif
 }
+#endif /* MAME_DEBUG */
+
 
 
 static void g65816_init(int index, int clock, const void *config, int (*irqcallback)(int))
@@ -428,7 +425,9 @@ void g65816_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = g65816_exit;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = g65816_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+#ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = g65816_dasm;		break;
+#endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &g65816_ICount;			break;
 		case CPUINFO_PTR_G65816_READVECTOR_CALLBACK:	info->f = (genf *) READ_VECTOR;			break;
 

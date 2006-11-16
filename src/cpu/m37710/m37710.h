@@ -102,9 +102,6 @@ void m37710_state_save(void *file);
 /* Load a CPU state from disk */
 void m37710_state_load(void *file);
 
-/* Disassemble an instruction */
-offs_t m37710_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
-
 #undef M37710_CALL_DEBUGGER
 
 #define M37710_CALL_DEBUGGER CALL_MAME_DEBUG

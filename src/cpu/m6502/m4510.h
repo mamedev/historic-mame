@@ -40,8 +40,8 @@ void m4510_get_info(UINT32 state, union cpuinfo *info);
 
 
 #ifdef MAME_DEBUG
-extern unsigned m4510_dasm(char *buffer, offs_t pc, UINT8 *oprom, UINT8 *opram, int bytes);
-#endif
+extern unsigned m4510_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
+#endif /* MAME_DEBUG */
 
 #endif
 

@@ -1282,7 +1282,7 @@ static UINT32 decode_opcode(UINT32 pc, M68HC11_OPCODE *op_table)
 	return flags;
 }
 
-offs_t mc68hc11_dasm_one(char *buffer, UINT32 pc, const UINT8 *oprom)
+offs_t hc11_disasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	UINT32 flags = 0;
 	UINT8 opcode;

@@ -1968,15 +1968,12 @@ static void field_interrupt(void)
 
 #endif
 
+#ifdef MAME_DEBUG
 static unsigned tms99xx_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
-#ifdef MAME_DEBUG
 	return Dasm9900(buffer, pc, TMS99XX_MODEL, oprom, opram);
-#else
-	sprintf( buffer, "$%04X", readword(pc) );
-	return 2;
-#endif
 }
+#endif /* MAME_DEBUG */
 
 
 /*****************************************************************************/
@@ -4815,7 +4812,9 @@ void TMS99XX_GET_INFO(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = tms99xx_exit;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = tms99xx_execute;		break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+#ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = tms99xx_dasm;		break;
+#endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &TMS99XX_ICOUNT;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */

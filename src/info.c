@@ -134,7 +134,7 @@ enum {cjoy, cdoublejoy, cAD_stick, cdial, ctrackball, cpaddle, clightgun, cpedal
 				/* if already defined as vertical, make it 4 or 8 way */
 				else if (strcmp(control[cjoy].Xway,"vjoy2way") == 0)
 				{
-					if (input->four_way)
+					if (input->way == 4)
 						control[cjoy].Xway = "joy4way";
 					else
 						control[cjoy].Xway = "joy8way";
@@ -153,7 +153,7 @@ enum {cjoy, cdoublejoy, cAD_stick, cdial, ctrackball, cpaddle, clightgun, cpedal
 				/* if already defined as horiz, make it 4 or 8way */
 				else if (strcmp(control[cjoy].Xway,"joy2way")==0)
 				{
-					if (input->four_way)
+					if (input->way == 4)
 						control[cjoy].Xway = "joy4way";
 					else
 						control[cjoy].Xway = "joy8way";
@@ -174,7 +174,7 @@ enum {cjoy, cdoublejoy, cAD_stick, cdial, ctrackball, cpaddle, clightgun, cpedal
 				/* if already defined as horiz, make it 4 or 8 way */
 				else if (strcmp(control[cdoublejoy].Xway,"doublejoy2way") == 0)
 				{
-					if (input->four_way)
+					if (input->way == 4)
 						control[cdoublejoy].Xway = "doublejoy4way";
 					else
 						control[cdoublejoy].Xway = "doublejoy8way";
@@ -195,7 +195,7 @@ enum {cjoy, cdoublejoy, cAD_stick, cdial, ctrackball, cpaddle, clightgun, cpedal
 				/* if already defined as vertical, make it 4 or 8 way */
 				else if (strcmp(control[cdoublejoy].Xway,"vdoublejoy2way") == 0)
 				{
-					if (input->four_way)
+					if (input->way == 4)
 						control[cdoublejoy].Xway = "doublejoy4way";
 					else
 						control[cdoublejoy].Xway = "doublejoy8way";

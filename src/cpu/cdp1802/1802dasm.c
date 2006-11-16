@@ -97,7 +97,7 @@ static const struct { const char *mnemonic; Adr adr; } table[]={
 
 };
 
-unsigned DasmCdp1802(char *dst, unsigned oldpc, const UINT8 *oprom)
+offs_t cdp1802_dasm(char *dst, offs_t oldpc, const UINT8 *oprom, const UINT8 *opram)
 {
 	int pc;
 	int oper;

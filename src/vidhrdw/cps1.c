@@ -755,6 +755,17 @@ DRIVER_INIT( cps1 )
 	cps1_gfx_decode();
 }
 
+
+
+DRIVER_INIT( cps2_nodecrypt )
+{
+	cps2_gfx_decode();
+
+	scanline1 = 262;
+	scanline2 = 262;
+	scancalls = 0;
+}
+
 DRIVER_INIT( cps2 )
 {
 	UINT16 *rom = (UINT16 *)memory_region(REGION_CPU1);
@@ -769,11 +780,8 @@ DRIVER_INIT( cps2 )
 	memory_set_decrypted_region(0, 0x000000, length - 1, xor);
 	m68k_set_encrypted_opcode_range(0,0,length);
 
-	cps2_gfx_decode();
+	init_cps2_nodecrypt(machine);
 
-	scanline1 = 262;
-	scanline2 = 262;
-	scancalls = 0;
 }
 
 

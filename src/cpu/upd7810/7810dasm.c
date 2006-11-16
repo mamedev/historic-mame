@@ -4058,12 +4058,12 @@ static unsigned Dasm( char *buffer, unsigned pc, struct dasm_s *dasmXX, const UI
 	return l | flags | DASMFLAG_SUPPORTED;
 }
 
-unsigned Dasm7810( char *buffer, unsigned pc, const UINT8 *oprom, const UINT8 *opram )
+unsigned upd7810_dasm( char *buffer, unsigned pc, const UINT8 *oprom, const UINT8 *opram )
 {
 	return Dasm( buffer, pc, dasmXX_7810, oprom, opram );
 }
 
-unsigned Dasm7807( char *buffer, unsigned pc, const UINT8 *oprom, const UINT8 *opram )
+unsigned upd7807_dasm( char *buffer, unsigned pc, const UINT8 *oprom, const UINT8 *opram )
 {
 	return Dasm( buffer, pc, dasmXX_7807, oprom, opram );
 }

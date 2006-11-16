@@ -108,8 +108,8 @@ READ16_HANDLER( tms34020_io_register_r );
 
 
 #ifdef MAME_DEBUG
-unsigned Dasm34010(char *buff, unsigned _pc, const UINT8 *oprom, const UINT8 *opram);
-unsigned Dasm34020(char *buff, unsigned _pc, const UINT8 *oprom, const UINT8 *opram);
+offs_t tms34010_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
+offs_t tms34020_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram);
 #endif
 
 #endif /* _TMS34010_H */

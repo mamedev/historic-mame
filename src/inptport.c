@@ -2225,7 +2225,19 @@ profiler_mark(PROFILER_INPUT);
 						else if (IS_DIGITAL_JOYSTICK(port))
 						{
 							digital_joystick_info *joyinfo = JOYSTICK_INFO_FOR_PORT(port);
-							UINT8 mask = port->four_way ? joyinfo->current4way : joyinfo->current;
+							UINT8 mask;
+							switch( port->way )
+							{
+							case 4:
+								mask = joyinfo->current4way;
+								break;
+							case 16:
+								mask = 0xff;
+								break;
+							default:
+								mask = joyinfo->current;
+								break;
+							}
 							if ((mask >> JOYSTICK_DIR_FOR_PORT(port)) & 1)
 								portinfo->digital ^= port->mask;
 						}

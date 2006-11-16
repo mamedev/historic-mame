@@ -2171,16 +2171,6 @@ static void set_irq_line(int irqline, int state)
 	}
 }
 
-static offs_t z180_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
-{
-#ifdef MAME_DEBUG
-	return DasmZ180( buffer, pc, oprom, opram );
-#else
-	sprintf( buffer, "$%02X", oprom[0] );
-	return 1;
-#endif
-}
-
 
 
 /**************************************************************************
@@ -2429,7 +2419,9 @@ void z180_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = z180_exit;					break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = z180_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = z180_burn;					break;
+#ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = z180_dasm;			break;
+#endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &z180_icount;			break;
 		case CPUINFO_PTR_Z180_CYCLE_TABLE + Z180_TABLE_op: info->p = cc[Z180_TABLE_op];			break;
 		case CPUINFO_PTR_Z180_CYCLE_TABLE + Z180_TABLE_cb: info->p = cc[Z180_TABLE_cb];			break;

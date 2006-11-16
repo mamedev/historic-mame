@@ -136,16 +136,6 @@ static s_opcode cop420_opcode_main[256]=
 	{1, jp			},{1, jp		},{1, jp		},{1, jp			},{1, jp		},{1, jp		},{1, jp		},{1, jid		}
 };
 
-static offs_t cop420_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
-{
-#ifdef MAME_DEBUG
-	return DasmCOP420(buffer,pc,oprom);
-#else
-	sprintf( buffer, "$%02X", oprom[0] );
-	return 1;
-#endif
-}
-
 /****************************************************************************
  * Initialize emulation
  ****************************************************************************/
@@ -355,7 +345,9 @@ void cop420_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_RESET:							info->reset = cop420_reset;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = cop420_execute;			break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+#ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = cop420_dasm;		break;
+#endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &cop420_ICount;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */

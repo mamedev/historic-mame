@@ -6,7 +6,80 @@
 
 #include "driver.h"
 #include "galaxian.h"
+#include "sound/ay8910.h"
+#include "machine/8255ppi.h"
 
+
+static const gfx_layout amidar_charlayout =
+{
+	8,8,
+	RGN_FRAC(1,2),
+	2,
+	{ RGN_FRAC(0,2), RGN_FRAC(1,2) },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8
+};
+
+static const gfx_layout amidar_spritelayout =
+{
+	16,16,
+	RGN_FRAC(1,2),
+	2,
+	{ RGN_FRAC(0,2), RGN_FRAC(1,2) },
+	{ 0, 1, 2, 3, 4, 5, 6, 7,
+			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
+	32*8
+};
+
+
+static gfx_decode amidar_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0x0000, &amidar_charlayout,   0, 8 },
+	{ REGION_GFX1, 0x0000, &amidar_spritelayout, 0, 8 },
+	{ -1 } /* end of array */
+};
+
+
+static UINT8 *amidar_soundram;
+
+static READ8_HANDLER(amidar_soundram_r)
+{
+	return amidar_soundram[offset & 0x03ff];
+}
+
+static WRITE8_HANDLER(amidar_soundram_w)
+{
+	amidar_soundram[offset & 0x03ff] = data;
+}
+
+static struct AY8910interface amidar_ay8910_interface_2 =
+{
+	soundlatch_r,
+	scramble_portB_r
+};
+
+static READ8_HANDLER(amidar_ppi8255_0_r)
+{
+	return ppi8255_0_r(offset >> 4);
+}
+
+static READ8_HANDLER(amidar_ppi8255_1_r)
+{
+	return ppi8255_1_r(offset >> 4);
+}
+
+static WRITE8_HANDLER(amidar_ppi8255_0_w)
+{
+	ppi8255_0_w(offset >> 4, data);
+}
+
+static WRITE8_HANDLER(amidar_ppi8255_1_w)
+{
+	ppi8255_1_w(offset >> 4, data);
+}
 
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -36,6 +109,33 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xa038, 0xa038) AM_WRITE(galaxian_coin_counter_1_w)
 	AM_RANGE(0xb000, 0xb03f) AM_WRITE(amidar_ppi8255_0_w)
 	AM_RANGE(0xb800, 0xb83f) AM_WRITE(amidar_ppi8255_1_w)
+ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( amidar_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x2fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_READ(amidar_soundram_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( amidar_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x2fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x8fff) AM_WRITE(amidar_soundram_w)
+	AM_RANGE(0x8000, 0x83ff) AM_WRITE(MWA8_NOP) AM_BASE(&amidar_soundram)  /* only here to initialize pointer */
+	AM_RANGE(0x9000, 0x9fff) AM_WRITE(scramble_filter_w)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( amidar_sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE(0x20, 0x20) AM_READ(AY8910_read_port_0_r)
+	AM_RANGE(0x80, 0x80) AM_READ(AY8910_read_port_1_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( amidar_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE(0x10, 0x10) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x20, 0x20) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x40, 0x40) AM_WRITE(AY8910_control_port_1_w)
+	AM_RANGE(0x80, 0x80) AM_WRITE(AY8910_write_port_1_w)
 ADDRESS_MAP_END
 
 #define AMIDAR_IN0 \
@@ -294,32 +394,41 @@ INPUT_PORTS_START( turpin )
 INPUT_PORTS_END
 
 
+
 static MACHINE_DRIVER_START( amidar )
 
 	/* basic machine hardware */
-	MDRV_IMPORT_FROM(galaxian_base)
-	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_ADD_TAG("main", Z80, 18432000/6)	/* 3.072 MHz */
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+
+	MDRV_FRAMES_PER_SECOND(16000.0/132/2)
 
 	MDRV_CPU_ADD(Z80,14318000/8)
 	/* audio CPU */	/* 1.78975 MHz */
-	MDRV_CPU_PROGRAM_MAP(scobra_sound_readmem,scobra_sound_writemem)
-	MDRV_CPU_IO_MAP(scobra_sound_readport,scobra_sound_writeport)
+	MDRV_CPU_PROGRAM_MAP(amidar_sound_readmem,amidar_sound_writemem)
+	MDRV_CPU_IO_MAP(amidar_sound_readport,amidar_sound_writeport)
 
 	MDRV_MACHINE_RESET(scramble)
 
 	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(amidar_gfxdecodeinfo)
 	MDRV_PALETTE_LENGTH(32+64+2+8)
+	MDRV_COLORTABLE_LENGTH(8*4)
 
 	MDRV_PALETTE_INIT(turtles)
 	MDRV_VIDEO_START(turtles)
+	MDRV_VIDEO_UPDATE(galaxian)
 
 	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
 	MDRV_SOUND_ADD(AY8910, 14318000/8)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.16)
 
 	MDRV_SOUND_ADD(AY8910, 14318000/8)
-	MDRV_SOUND_CONFIG(scobra_ay8910_interface_2)
+	MDRV_SOUND_CONFIG(amidar_ay8910_interface_2)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.16)
 MACHINE_DRIVER_END
 

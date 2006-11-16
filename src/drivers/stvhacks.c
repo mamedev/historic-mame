@@ -487,8 +487,8 @@ DRIVER_INIT(dnmtdeka)
 	dnmtdeka_pending_commands = 0;
 
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60985a0, 0x60985a3, 0, 0, dnmtdeka_speedup_r ); // idle loop of main cpu
-	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x060e0ad4, 0x060e0bab, 0, 0, dnmtdeka_cmd_write );
-	memory_install_read32_handler(1, ADDRESS_SPACE_PROGRAM, 0x060e0ad4, 0x060e0bab, 0, 0, dnmtdeka_cmd_read );
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x060e0ad4, 0x060e0bc3, 0, 0, dnmtdeka_cmd_write );
+	memory_install_read32_handler(1, ADDRESS_SPACE_PROGRAM, 0x060e0ad4, 0x060e0bc3, 0, 0, dnmtdeka_cmd_read );
 
 	init_ic13(machine);
 }
@@ -560,8 +560,8 @@ DRIVER_INIT(diehard)
 	diehard_pending_commands = 0;
 
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x060986ac, 0x060986af, 0, 0, diehard_speedup_r );
-	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x060e0bd0, 0x060e0ca7, 0, 0, diehard_cmd_write );
-	memory_install_read32_handler(1, ADDRESS_SPACE_PROGRAM, 0x060e0bd0, 0x060e0ca7, 0, 0, diehard_cmd_read );
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x060e0bd0, 0x060e0dcf, 0, 0, diehard_cmd_write );
+	memory_install_read32_handler(1, ADDRESS_SPACE_PROGRAM, 0x060e0bd0, 0x060e0dcf, 0, 0, diehard_cmd_read );
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x060e0dd8, 0x060e0dd8, 0, 0, diehard_cmd_ack_read );
 	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x060e0dd8, 0x060e0dd8, 0, 0, diehard_cmd_ack_write_cpu0 );
 	memory_install_write32_handler(1, ADDRESS_SPACE_PROGRAM, 0x060e0dd8, 0x060e0dd8, 0, 0, diehard_cmd_ack_write );
@@ -1172,7 +1172,8 @@ static void znpwfv_slave_speedup( UINT32 data )
 		{
 			if (
 			(stv_workram_h[0x0ffc44/4] != 0x260f359c) &&
-			(stv_workram_h[0x0ffc48/4] != 0x260f359c)
+			(stv_workram_h[0x0ffc48/4] != 0x260f359c) &&
+			(stv_workram_h[0x0ffc48/4] != 0x260f3598)
 			)
 			{
 				logerror("cpu1 skip %08x %08x\n",stv_workram_h[0x0ffc44/4],stv_workram_h[0x0ffc48/4]);
@@ -1188,7 +1189,7 @@ DRIVER_INIT(znpwfv)
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60ffc10, 0x60ffc13, 0, 0, znpwfv_speedup_r );
 
 	init_ic13(machine);
-	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(2);
+	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(1) / 2;
 }
 
 static READ32_HANDLER( twcup98_speedup_r )

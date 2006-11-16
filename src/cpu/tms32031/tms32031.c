@@ -472,17 +472,14 @@ static int tms32031_execute(int cycles)
     DISASSEMBLY HOOK
 ***************************************************************************/
 
+#ifdef MAME_DEBUG
 static offs_t tms32031_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	UINT32 op = oprom[0] | (oprom[1] << 8) | (oprom[2] << 16) | (oprom[3] << 24);
-#ifdef MAME_DEBUG
 	extern unsigned dasm_tms32031(char *, unsigned, UINT32);
     return dasm_tms32031(buffer, pc, op);
-#else
-	sprintf(buffer, "$%04X", op);
-	return 1;
-#endif
 }
+#endif /* MAME_DEBUG */
 
 
 
@@ -725,7 +722,9 @@ void tms32031_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_EXIT:							info->exit = tms32031_exit;				break;
 		case CPUINFO_PTR_EXECUTE:						info->execute = tms32031_execute;		break;
 		case CPUINFO_PTR_BURN:							info->burn = NULL;						break;
+#ifdef MAME_DEBUG
 		case CPUINFO_PTR_DISASSEMBLE:					info->disassemble = tms32031_dasm;		break;
+#endif /* MAME_DEBUG */
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &tms32031_icount;		break;
 		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM: info->internal_map = construct_map_internal; break;
 

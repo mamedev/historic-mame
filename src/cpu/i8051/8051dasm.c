@@ -237,7 +237,7 @@ static const char *get_bit_address( UINT8 arg )
 #endif
 
 
-unsigned Dasm8051(char *dst, unsigned pc, const UINT8 *oprom, const UINT8 *opram)
+unsigned i8051_dasm(char *dst, unsigned pc, const UINT8 *oprom, const UINT8 *opram)
 {
 	UINT32 flags = 0;
 	unsigned PC = pc;

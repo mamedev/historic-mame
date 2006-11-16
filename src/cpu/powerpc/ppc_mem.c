@@ -351,17 +351,14 @@ static UINT32 ppc_readop_translated(offs_t address)
 /***********************************************************************/
 
 
+#ifdef MAME_DEBUG
 static offs_t ppc_dasm(char *buffer, offs_t pc, const UINT8 *oprom, const UINT8 *opram)
 {
-#ifdef MAME_DEBUG
 	UINT32 op;
 	op = BIG_ENDIANIZE_INT32(*((UINT32 *) oprom));
 	return ppc_dasm_one(buffer, pc, op);
-#else
-	sprintf(buffer, "$%08X", (oprom[0] << 24) | (oprom[1] << 16) | (oprom[2] << 8) | oprom[3]);
-	return 4;
-#endif
 }
+#endif /* MAME_DEBUG */
 
 /***********************************************************************/
 

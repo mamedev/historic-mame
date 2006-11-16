@@ -5,7 +5,7 @@
     Some parts of this code are based on the original version by Eric
     Smith, Brad Oliver, Bernd Wiebelt, Aaron Giles, Andrew Caldwell
 
-    The Schematics and Jed Margolin's article on Vector Generators were
+    The schematics and Jed Margolin's article on Vector Generators were
     very helpful in understanding the hardware.
 
 
@@ -52,8 +52,6 @@ extern int vector_updates;
 
 #define ST3 (vg->state_latch & 8)
 
-#define TWOSC(num,bits) ((INT32)((num) << (32 - (bits))) >> (32 - (bits)))
-
 
 /*************************************
  *
@@ -97,6 +95,9 @@ typedef struct _vgdata
 	UINT8 op;
 	UINT8 halt;
 	UINT8 sync_halt;
+
+	UINT16 xdac_xor;
+	UINT16 ydac_xor;
 
 	INT32 xpos;
 	INT32 ypos;
@@ -265,8 +266,8 @@ static int dvg_dmald(vgdata *vg)
 static void dvg_draw_to(int x, int y, int intensity)
 {
 	if (((x | y) & 0x400) == 0)
-		vg_add_point_buf(xcenter - ((0x200 - x) << 16),
-						 ycenter + ((0x200 - y) << 16),
+		vg_add_point_buf(xcenter + ((x - 0x200) << 16),
+						 ycenter - ((y - 0x200) << 16),
 						 VECTOR_COLOR111(7), intensity << 4);
 }
 
@@ -290,11 +291,7 @@ static int dvg_gostrobe(vgdata *vg)
 		scale = (vg->scale + vg->op) & 0xf;
 	}
 
-	if (scale > 9)
-		fin = 1;
-	else
-		fin = 0x1000 - ((2 << scale) ^ 0xfff);
-
+	fin = 0xfff - (((2 << scale) & 0x7ff) ^ 0xfff);
 
 	/* Count up or down */
 	dx = (vg->dvx & 0x400)? -1: +1;
@@ -306,6 +303,7 @@ static int dvg_gostrobe(vgdata *vg)
 
 	cycles = 8 * fin;
 	c=0;
+
 	while (fin--)
 	{
 
@@ -327,7 +325,7 @@ static int dvg_gostrobe(vgdata *vg)
 
 		for (bit = 0; bit < 12; bit++)
 		{
-			if ((c & ((1 << (bit+1)) - 1)) == (1 << bit))
+			if ((c & ((1 << (bit+1)) - 1)) == ((1 << bit) - 1))
 			{
 				if (mx & (1 << (11 - bit)))
 					countx = 1;
@@ -802,8 +800,13 @@ static int mhavoc_strobe2(vgdata *vg)
 
 			vg->intensity = (vg->dvy >> 4) & 0xf;
 			vg->map = (vg->dvy >> 8) & 0x3;
-
 			vg->enspkl = (vg->dvy & 0x800) >> 11;
+
+			/* Major Havoc can do X-flipping by inverting the DAC input */
+			if (vg->dvy & 0x400)
+				vg->xdac_xor = 0x1ff;
+			else
+				vg->xdac_xor = 0x200;
 		}
 	}
 
@@ -885,8 +888,8 @@ static int avg_common_strobe3(vgdata *vg)
 		}
 		vg->timer = 0;
 
-		vg->xpos += (TWOSC(vg->dvx>>3, 10) * cycles * (vg->scale ^ 0xff)) >> 4;
-		vg->ypos -= (TWOSC(vg->dvy>>3, 10) * cycles * (vg->scale ^ 0xff)) >> 4;
+		vg->xpos += ((((vg->dvx >> 3) ^ vg->xdac_xor) - 0x200) * cycles * (vg->scale ^ 0xff)) >> 4;
+		vg->ypos -= ((((vg->dvy >> 3) ^ vg->ydac_xor) - 0x200) * cycles * (vg->scale ^ 0xff)) >> 4;
 	}
 	if (OP2)
 	{
@@ -898,7 +901,6 @@ static int avg_common_strobe3(vgdata *vg)
 	}
 
 	return cycles;
-	return 0;
 }
 
 static int avg_strobe3(vgdata *vg)
@@ -1032,8 +1034,8 @@ static int quantum_strobe3(vgdata *vg)
 		cycles = 0x4000 - vg->timer;
 		vg->timer = 0;
 
-		vg->xpos += (TWOSC((vg->dvx & 0xfff)>>2, 10) * cycles * (vg->scale ^ 0xff)) >> 4;
-		vg->ypos -= (TWOSC((vg->dvy & 0xfff)>>2, 10) * cycles * (vg->scale ^ 0xff)) >> 4;
+		vg->xpos += (((((vg->dvx & 0xfff) >> 2) ^ vg->xdac_xor) - 0x200) * cycles * (vg->scale ^ 0xff)) >> 4;
+		vg->ypos -= (((((vg->dvy & 0xfff) >> 2) ^ vg->ydac_xor) - 0x200) * cycles * (vg->scale ^ 0xff)) >> 4;
 
 		x = vg->xpos;
 		y = vg->ypos;
@@ -1074,6 +1076,12 @@ static void avg_vgrst(vgdata *vg)
 	vg->bin_scale = 0;
 	vg->scale = 0;
 	vg->color = 0;
+}
+
+static void mhavoc_vgrst(vgdata *vg)
+{
+	avg_vgrst(vg);
+	vg->enspkl = 0;
 }
 
 static void dvg_vgrst(vgdata *vg)
@@ -1214,6 +1222,14 @@ static int avgdvg_init(void)
 	vg_halt_timer = timer_alloc(vg_set_halt);
 	vg_run_timer = timer_alloc(run_state_machine);
 
+	/*
+     * The x and y DACs use 10 bit of the counter values which are in
+     * two's complement representation. The DAC input is xored with
+     * 0x200 to convert the value to unsigned.
+     */
+	vg->xdac_xor = 0x200;
+	vg->ydac_xor = 0x200;
+
 	return video_start_vector(Machine);
 }
 
@@ -1275,7 +1291,7 @@ static vgconf avg_mhavoc =
 	avg_state_addr,
 	mhavoc_data,
 	avg_vggo,
-	avg_vgrst
+	mhavoc_vgrst
 };
 
 static vgconf avg_starwars =
