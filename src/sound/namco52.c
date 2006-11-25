@@ -175,7 +175,7 @@ void namcoio_52XX_write(int data)
 
 	if (data != 0)
 	{
-		stream_update(chip->stream, 0);
+		stream_update(chip->stream);
 
 		chip->n52_start = chip->rom[data-1] + (chip->rom[data-1+0x10] << 8);
 		chip->n52_end = chip->rom[data] + (chip->rom[data+0x10] << 8);

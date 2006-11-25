@@ -579,7 +579,7 @@ void namcoio_54XX_write(int data)
 	struct namco_54xx *chip = sndti_token(SOUND_NAMCO_54XX, 0);
 logerror("%04x: custom 54XX write %02x\n",activecpu_get_pc(),data);
 
-	stream_update(chip->stream, 0);
+	stream_update(chip->stream);
 
 	if (chip->fetch)
 	{

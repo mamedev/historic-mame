@@ -377,7 +377,7 @@ WRITE8_HANDLER( exidy440_sound_volume_w )
 		fprintf(debuglog, "Volume %02X=%02X\n", offset, data);
 
 	/* update the stream */
-	stream_update(stream, 0);
+	stream_update(stream);
 
 	/* set the new volume */
 	exidy440_sound_volume[offset] = ~data;
@@ -407,7 +407,7 @@ WRITE8_HANDLER( exidy440_sound_interrupt_clear_w )
 void exidy440_m6844_update(void)
 {
 	/* update the stream */
-	stream_update(stream, 0);
+	stream_update(stream);
 }
 
 
@@ -726,7 +726,7 @@ void stop_cvsd(int ch)
 {
 	/* the DMA channel is marked inactive; that will kill the audio */
 	sound_channel[ch].remaining = 0;
-	stream_update(stream, 0);
+	stream_update(stream);
 
 	if (SOUND_LOG && debuglog)
 		fprintf(debuglog, "Channel %d stop\n", ch);

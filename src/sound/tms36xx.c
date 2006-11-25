@@ -417,7 +417,7 @@ void mm6221aa_tune_w(int chip, int tune)
 	LOG(("%s tune:%X\n", tms->subtype, tune));
 
     /* update the stream before changing the tune */
-    stream_update(tms->channel,0);
+    stream_update(tms->channel);
 
     tms->tune_num = tune;
     tms->tune_ofs = 0;
@@ -437,7 +437,7 @@ void tms36xx_note_w(int chip, int octave, int note)
 	LOG(("%s octave:%X note:%X\n", tms->subtype, octave, note));
 
 	/* update the stream before changing the tune */
-    stream_update(tms->channel,0);
+    stream_update(tms->channel);
 
 	/* play a single note from 'tune 4', a list of the 13 tones */
 	tms36xx_reset_counters(tms);
@@ -457,7 +457,7 @@ void tms3617_enable(struct TMS36XX *tms, int enable)
 		return;
 
     /* update the stream before changing the tune */
-    stream_update(tms->channel,0);
+    stream_update(tms->channel);
 
 	LOG(("%s enable voices", tms->subtype));
     for (i = 0; i < 6; i++)

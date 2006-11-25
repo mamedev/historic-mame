@@ -931,6 +931,15 @@ DRIVER_INIT(grdforce)
 	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(50);
 }
 
+static READ32_HANDLER( batmanfr_speedup_r )
+{
+	//logerror( "batmanfr speedup: pc = %08x, mem = %08x\n", activecpu_get_pc(), stv_workram_h[0x0002acf0/4] );
+	if ( activecpu_get_pc() != 0x060121c2 )
+		cpu_spinuntil_int();
+
+	return stv_workram_h[0x0002acf0/4];
+}
+
 static void batmanfr_slave_speedup( UINT32 data )
 {
 	if (activecpu_get_pc() == 0x060125be )
@@ -941,6 +950,7 @@ static void batmanfr_slave_speedup( UINT32 data )
 
 DRIVER_INIT(batmanfr)
 {
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0602acf0, 0x0602acf3, 0, 0, batmanfr_speedup_r );
 	cpunum_set_info_fct(1, CPUINFO_PTR_SH2_FTCSR_READ_CALLBACK, (genf*)batmanfr_slave_speedup );
 
 	init_stv(machine);

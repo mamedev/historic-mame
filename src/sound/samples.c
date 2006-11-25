@@ -253,7 +253,7 @@ void sample_start(int channel,int samplenum,int loop)
 	}
 
 	/* force an update before we start */
-	stream_update(chan->stream, 0);
+	stream_update(chan->stream);
 
 	/* update the parameters */
 	sample = &info->samples->sample[samplenum];
@@ -279,7 +279,7 @@ void sample_start_raw(int channel,INT16 *sampledata,int samples,int frequency,in
 	}
 
 	/* force an update before we start */
-	stream_update(chan->stream, 0);
+	stream_update(chan->stream);
 
 	/* update the parameters */
 	chan->source = sampledata;
@@ -304,7 +304,7 @@ void sample_set_freq(int channel,int freq)
 	}
 
 	/* force an update before we start */
-	stream_update(chan->stream, 0);
+	stream_update(chan->stream);
 
 	chan->step = ((INT64)freq << FRAC_BITS) / Machine->sample_rate;
 }
@@ -335,7 +335,7 @@ void sample_set_pause(int channel,int pause)
 	}
 
 	/* force an update before we start */
-	stream_update(chan->stream, 0);
+	stream_update(chan->stream);
 
 	chan->paused = pause;
 }
@@ -352,7 +352,7 @@ void sample_stop(int channel)
 	}
 
 	/* force an update before we start */
-	stream_update(chan->stream, 0);
+	stream_update(chan->stream);
 	chan->source = NULL;
 	chan->source_num = -1;
 }
@@ -369,7 +369,7 @@ int sample_get_base_freq(int channel)
 	}
 
 	/* force an update before we start */
-	stream_update(chan->stream, 0);
+	stream_update(chan->stream);
 	return chan->basefreq;
 }
 
@@ -385,7 +385,7 @@ int sample_playing(int channel)
 	}
 
 	/* force an update before we start */
-	stream_update(chan->stream, 0);
+	stream_update(chan->stream);
 	return (chan->source != NULL);
 }
 

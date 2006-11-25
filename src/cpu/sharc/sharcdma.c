@@ -129,8 +129,7 @@ static void dma_op(UINT32 src, UINT32 dst, int src_modifier, int dst_modifier, i
 	/* DMA interrupt */
 	if (sharc.imask & (1 << (dmaop_channel+10)))
 	{
-		sharc.irq_active = 1;
-		sharc.irq_active_num = dmaop_channel+10;
+		sharc.irq_active |= 1 << (dmaop_channel+10);
 	}
 }
 

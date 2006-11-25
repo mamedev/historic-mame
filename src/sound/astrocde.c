@@ -246,7 +246,7 @@ void astrocade_sound_w(UINT8 num, offs_t offset, UINT8 data)
 	int temp_vib;
 
 	/* update */
-	stream_update(chip->stream,0);
+	stream_update(chip->stream);
 
 	switch(offset)
 	{

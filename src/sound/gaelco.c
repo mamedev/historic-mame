@@ -212,7 +212,7 @@ WRITE16_HANDLER( gaelcosnd_w )
 #endif
 
 	/* first update the stream to this point in time */
-	stream_update(info->stream, 0);
+	stream_update(info->stream);
 
 	COMBINE_DATA(&gaelco_sndregs[offset]);
 

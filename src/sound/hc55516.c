@@ -155,7 +155,7 @@ void hc55516_clock_w(int num, int state)
 			chip->next_value = (int)(temp / (temp * (1.0 / 32768.0) + 1.0));
 
 		/* update the output buffer before changing the registers */
-		stream_update(chip->channel, 0);
+		stream_update(chip->channel);
 	}
 }
 

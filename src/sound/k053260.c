@@ -262,7 +262,7 @@ void K053260_write( int chip, offs_t offset, UINT8 data )
 		return;
 	}
 
-	stream_update( ic->channel, 0 );
+	stream_update( ic->channel);
 
 	/* before we update the regs, we need to check for a latched reg */
 	if ( r == 0x28 ) {

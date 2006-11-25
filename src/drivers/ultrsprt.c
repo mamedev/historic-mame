@@ -8,10 +8,10 @@
 #include "cpu/powerpc/ppc.h"
 #include "sound/k054539.h"
 #include "machine/eeprom.h"
+#include "machine/konppc.h"
+#include "machine/konamiic.h"
 
 static UINT32 *vram;
-
-static UINT8 sndto68k[8], sndtoppc[8];
 
 static VIDEO_START( ultrsprt )
 {
@@ -96,58 +96,6 @@ static WRITE32_HANDLER(eeprom_w)
 	}
 }
 
-static READ32_HANDLER(sndcommppc_r)
-{
-	UINT32 r = 0;
-	int reg = offset * 4;
-
-	if (!(mem_mask & 0xff000000))
-	{
-		r |= sndtoppc[reg+0] << 24;
-	}
-	if (!(mem_mask & 0x00ff0000))
-	{
-		r |= sndtoppc[reg+1] << 16;
-	}
-	if (!(mem_mask & 0x0000ff00))
-	{
-		r |= sndtoppc[reg+2] << 8;
-	}
-	if (!(mem_mask & 0x000000ff))
-	{
-		r |= sndtoppc[reg+3] << 0;
-	}
-
-	return r;
-}
-
-static WRITE32_HANDLER(sndcommppc_w)
-{
-	int reg = offset*4;
-
-	if (!(mem_mask & 0xff000000))
-	{
-		sndto68k[reg+0] = (data >> 24) & 0xff;
-	}
-	if (!(mem_mask & 0x00ff0000))
-	{
-		sndto68k[reg+1] = (data >> 16) & 0xff;
-	}
-	if (!(mem_mask & 0x0000ff00))
-	{
-		sndto68k[reg+2] = (data >> 8) & 0xff;
-	}
-	if (!(mem_mask & 0x000000ff))
-	{
-		sndto68k[reg+3] = (data >> 0) & 0xff;
-	}
-
-	if ((reg+3) == 7)
-	{
-		cpunum_set_input_line(1, 6, HOLD_LINE);
-	}
-}
-
 static READ32_HANDLER(control1_r)
 {
 	return (readinputport(0) << 28) | ((readinputport(1) & 0xfff) << 16) | (readinputport(2) & 0xfff);
@@ -158,13 +106,19 @@ static READ32_HANDLER(control2_r)
 	return (readinputport(3) << 28) | ((readinputport(4) & 0xfff) << 16) | (readinputport(5) & 0xfff);
 }
 
+static WRITE32_HANDLER(int_ack_w)
+{
+	cpunum_set_input_line(0, INPUT_LINE_IRQ1, CLEAR_LINE);
+}
+
 static ADDRESS_MAP_START( ultrsprt_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x00000000, 0x0007ffff) AM_MIRROR(0x80000000) AM_RAM AM_BASE(&vram)
 	AM_RANGE(0x70000000, 0x70000003) AM_MIRROR(0x80000000) AM_READWRITE(eeprom_r, eeprom_w)
 	AM_RANGE(0x70000020, 0x70000023) AM_MIRROR(0x80000000) AM_READ(control1_r)
 	AM_RANGE(0x70000040, 0x70000043) AM_MIRROR(0x80000000) AM_READ(control2_r)
-	AM_RANGE(0x70000080, 0x70000087) AM_MIRROR(0x80000000) AM_WRITE(sndcommppc_w)
-	AM_RANGE(0x70000088, 0x7000008f) AM_MIRROR(0x80000000) AM_READ(sndcommppc_r)
+	AM_RANGE(0x70000080, 0x70000087) AM_MIRROR(0x80000000) AM_WRITE(K056800_host_w)
+	AM_RANGE(0x70000088, 0x7000008f) AM_MIRROR(0x80000000) AM_READ(K056800_host_r)
+	AM_RANGE(0x700000e0, 0x700000e3) AM_MIRROR(0x80000000) AM_WRITE(int_ack_w)
 	AM_RANGE(0x7f000000, 0x7f01ffff) AM_MIRROR(0x80000000) AM_RAM
 	AM_RANGE(0x7f700000, 0x7f703fff) AM_MIRROR(0x80000000) AM_READWRITE(MRA32_RAM, palette_w) AM_BASE(&paletteram32)
 	AM_RANGE(0x7fa00000, 0x7fbfffff) AM_MIRROR(0x80000000) AM_ROM AM_SHARE(1)
@@ -207,40 +161,39 @@ static WRITE16_HANDLER(sound_w)
 	}
 }
 
-static READ16_HANDLER(sndcomm68k_r)
+static READ16_HANDLER(K056800_68k_r)
 {
 	UINT16 r = 0;
 
 	if (!(mem_mask & 0xff00))
 	{
-		r |= sndto68k[(offset*2)+0] << 8;
+		r |= K056800_sound_r((offset*2)+0, 0xffff) << 8;
 	}
 	if (!(mem_mask & 0x00ff))
 	{
-		r |= sndto68k[(offset*2)+1] << 0;
+		r |= K056800_sound_r((offset*2)+1, 0xffff) << 0;
 	}
 
 	return r;
 }
 
-static WRITE16_HANDLER(sndcomm68k_w)
+static WRITE16_HANDLER(K056800_68k_w)
 {
 	if (!(mem_mask & 0xff00))
 	{
-		sndtoppc[(offset*2)+0] = data >> 8;
+		K056800_sound_w((offset*2)+0, (data >> 8) & 0xff, 0xffff);
 	}
 	if (!(mem_mask & 0x00ff))
 	{
-		sndtoppc[(offset*2)+1] = data >> 0;
+		K056800_sound_w((offset*2)+1, (data >> 0) & 0xff, 0xffff);
 	}
 }
-
 
 static ADDRESS_MAP_START( sound_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x00000000, 0x0001ffff) AM_READ(MRA16_ROM)
 	AM_RANGE(0x00100000, 0x00101fff) AM_RAM
-	AM_RANGE(0x00200000, 0x00200007) AM_WRITE(sndcomm68k_w)
-	AM_RANGE(0x00200008, 0x0020000f) AM_READ(sndcomm68k_r)
+	AM_RANGE(0x00200000, 0x00200007) AM_WRITE(K056800_68k_w)
+	AM_RANGE(0x00200008, 0x0020000f) AM_READ(K056800_68k_r)
 	AM_RANGE(0x00400000, 0x004002ff) AM_READWRITE(sound_r, sound_w)
 ADDRESS_MAP_END
 
@@ -352,9 +305,23 @@ static MACHINE_DRIVER_START( ultrsprt )
 	MDRV_SOUND_ROUTE(1, "right", 1.0)
 MACHINE_DRIVER_END
 
+static void sound_irq_callback(int irq)
+{
+	if (irq == 0)
+	{
+		//cpunum_set_input_line(1, INPUT_LINE_IRQ5, PULSE_LINE);
+	}
+	else
+	{
+		cpunum_set_input_line(1, INPUT_LINE_IRQ6, PULSE_LINE);
+	}
+}
+
 static DRIVER_INIT( ultrsprt )
 {
 	cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
+
+	K056800_init(sound_irq_callback);
 }
 
 /*****************************************************************************/

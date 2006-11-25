@@ -120,7 +120,7 @@ static void sp0250_load_values(struct sp0250 *sp)
 static void sp0250_timer_tick(void *param)
 {
 	struct sp0250 *sp = param;
-	stream_update(sp->stream, 0);
+	stream_update(sp->stream);
 }
 
 static void sp0250_update(void *param, stream_sample_t **inputs, stream_sample_t **buffer, int length)

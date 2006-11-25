@@ -275,6 +275,13 @@ ROM_START( wrally )
 	/* 0x00000-0x2ffff is fixed, 0x30000-0x3ffff is bank switched from all the ROMs */
 	ROM_RELOAD(		0x040000, 0x080000 )
 	ROM_LOAD( "worldr15.c03",	0x0c0000, 0x080000, CRC(11f0fe2c) SHA1(96c2a04874fa036576b7cfc5559bb0e33582ffd2) )
+
+	ROM_REGION( 0x0514, REGION_PLDS, 0 ) /* PAL's and GAL's */
+	ROM_LOAD( "tibpal20l8-25cnt.b23", 0x0000, 0x0104, NO_DUMP )
+	ROM_LOAD( "gal16v8-25lnc.h21",    0x0000, 0x0104, NO_DUMP )
+	ROM_LOAD( "tibpal20l8-25cnt.h15", 0x0000, 0x0104, NO_DUMP )
+	ROM_LOAD( "pal16r4-e2.bin",       0x0000, 0x0104, CRC(15fee75c) SHA1(b9ee5121dd41f2535d9abd78ff5fcfeaa1ac6b62) )
+	ROM_LOAD( "pal16r8-b15.bin",      0x0000, 0x0104, CRC(b50337a6) SHA1(1f922753cb9982cad9a3c9246894ecd38273236e) )
 ROM_END
 
 ROM_START( wrallya )
@@ -296,9 +303,36 @@ ROM_START( wrallya )
 	/* 0x00000-0x2ffff is fixed, 0x30000-0x3ffff is bank switched from all the ROMs */
 	ROM_RELOAD(		0x040000, 0x080000 )
 	ROM_LOAD( "worldr15.c03",	0x0c0000, 0x080000, CRC(11f0fe2c) SHA1(96c2a04874fa036576b7cfc5559bb0e33582ffd2) )
+
+	ROM_REGION( 0x0514, REGION_PLDS, 0 ) /* PAL's and GAL's */
+	ROM_LOAD( "tibpal20l8-25cnt.b23", 0x0000, 0x0104, NO_DUMP )
+	ROM_LOAD( "gal16v8-25lnc.h21",    0x0000, 0x0104, NO_DUMP )
+	ROM_LOAD( "tibpal20l8-25cnt.h15", 0x0000, 0x0104, NO_DUMP )
+	ROM_LOAD( "pal16r4-e2.bin",       0x0000, 0x0104, CRC(15fee75c) SHA1(b9ee5121dd41f2535d9abd78ff5fcfeaa1ac6b62) )
+	ROM_LOAD( "pal16r8-b15.bin",      0x0000, 0x0104, CRC(b50337a6) SHA1(1f922753cb9982cad9a3c9246894ecd38273236e) )
+ROM_END
+
+ROM_START( wrallyb ) /* Board Marked 930217 */
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )	/* 68000 code */
+	ROM_LOAD16_BYTE( "rally.c23", 0x000000, 0x080000, CRC(366595ad) SHA1(e16341ed9eacf9b729c28184268150ea9b62f185) )
+	ROM_LOAD16_BYTE( "rally.c22", 0x000001, 0x080000, CRC(0ad4ec6f) SHA1(991557cf25fe960b1c586e990e6019befe5a11d0) )
+
+	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "rally h-12.h12", 0x000000, 0x200000, CRC(38a44370) SHA1(cb427aa337232ae3a8effab3804d3d1d85d1f40b) )
+	ROM_LOAD( "rally h-8.h8",   0x000000, 0x200000, CRC(c36d1b1e) SHA1(598f72f11100742eda1eda795ded69a0a2d62225) )
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* ADPCM samples - sound chip is OKIM6295 */
+	ROM_LOAD( "sound c-1.c1", 0x000000, 0x100000, CRC(2d69c9b8) SHA1(328cb3c928dc6921c0c3f0277f59bca6c747c504) )
+
+	ROM_REGION( 0x0514, REGION_PLDS, 0 ) /* PAL's and GAL's */
+	ROM_LOAD( "tibpal20l8-25cnt.b23", 0x0000, 0x0104, NO_DUMP )
+	ROM_LOAD( "gal16v8-25lnc.h21",    0x0000, 0x0104, NO_DUMP )
+	ROM_LOAD( "tibpal20l8-25cnt.h15", 0x0000, 0x0104, NO_DUMP )
+	ROM_LOAD( "pal16r4-e2.bin",       0x0000, 0x0104, CRC(15fee75c) SHA1(b9ee5121dd41f2535d9abd78ff5fcfeaa1ac6b62) )
+	ROM_LOAD( "pal16r8-b15.bin",      0x0000, 0x0104, CRC(b50337a6) SHA1(1f922753cb9982cad9a3c9246894ecd38273236e) )
 ROM_END
 
 
-
-GAME( 1993, wrally,  0, 	  wrally, wrally, wrally, ROT0, "Gaelco", "World Rally (set 1)", GAME_NOT_WORKING )
+GAME( 1993, wrally,  0, 	 wrally, wrally, wrally, ROT0, "Gaelco", "World Rally (set 1)", GAME_NOT_WORKING )
 GAME( 1993, wrallya, wrally, wrally, wrally, wrally, ROT0, "Gaelco", "World Rally (set 2)", GAME_NOT_WORKING )
+GAME( 1993, wrallyb, wrally, wrally, wrally, wrally, ROT0, "Gaelco", "World Rally (set 3 - 930217)", GAME_NOT_WORKING )

@@ -312,86 +312,24 @@ trycolonagain:
 				EATWHITESPACE
 				TOKENIZE
 
-				if (!strcmp(token, "MODE1"))
-				{
-					show_raw_message();
-					outtoc->tracks[trknum].trktype = CD_TRACK_MODE1;
-					outtoc->tracks[trknum].datasize = 2048;
-					outtoc->tracks[trknum].subtype = CD_SUB_NONE;
-					outtoc->tracks[trknum].subsize = 0;
-				}
-				else if (!strcmp(token, "MODE1_RAW"))
-				{
-					outtoc->tracks[trknum].trktype = CD_TRACK_MODE1_RAW;
-					outtoc->tracks[trknum].datasize = 2352;
-					outtoc->tracks[trknum].subtype = CD_SUB_NONE;
-					outtoc->tracks[trknum].subsize = 0;
-				}
-				else if (!strcmp(token, "MODE2"))
-				{
-					show_raw_message();
-					outtoc->tracks[trknum].trktype = CD_TRACK_MODE2;
-					outtoc->tracks[trknum].datasize = 2336;
-					outtoc->tracks[trknum].subtype = CD_SUB_NONE;
-					outtoc->tracks[trknum].subsize = 0;
-				}
-				else if (!strcmp(token, "MODE2_FORM1"))
-				{
-					show_raw_message();
-					outtoc->tracks[trknum].trktype = CD_TRACK_MODE2_FORM1;
-					outtoc->tracks[trknum].datasize = 2048;
-					outtoc->tracks[trknum].subtype = CD_SUB_NONE;
-					outtoc->tracks[trknum].subsize = 0;
-				}
-				else if (!strcmp(token, "MODE2_FORM2"))
-				{
-					show_raw_message();
-					outtoc->tracks[trknum].trktype = CD_TRACK_MODE2_FORM2;
-					outtoc->tracks[trknum].datasize = 2324;
-					outtoc->tracks[trknum].subtype = CD_SUB_NONE;
-					outtoc->tracks[trknum].subsize = 0;
-				}
-				else if (!strcmp(token, "MODE2_FORM_MIX"))
-				{
-					show_raw_message();
-					outtoc->tracks[trknum].trktype = CD_TRACK_MODE2_FORM_MIX;
-					outtoc->tracks[trknum].datasize = 2336;
-					outtoc->tracks[trknum].subtype = CD_SUB_NONE;
-					outtoc->tracks[trknum].subsize = 0;
-				}
-				else if (!strcmp(token, "MODE2_RAW"))
-				{
-					outtoc->tracks[trknum].trktype = CD_TRACK_MODE2_RAW;
-					outtoc->tracks[trknum].datasize = 2352;
-					outtoc->tracks[trknum].subtype = CD_SUB_NONE;
-					outtoc->tracks[trknum].subsize = 0;
-				}
-				else if (!strcmp(token, "AUDIO"))
-				{
-					outtoc->tracks[trknum].trktype = CD_TRACK_AUDIO;
-					outtoc->tracks[trknum].datasize = 2352;
-					outtoc->tracks[trknum].subtype = CD_SUB_NONE;
-					outtoc->tracks[trknum].subsize = 0;
-				}
-				else
-				{
+				outtoc->tracks[trknum].trktype = CD_TRACK_MODE1;
+				outtoc->tracks[trknum].datasize = 0;
+				outtoc->tracks[trknum].subtype = CD_SUB_NONE;
+				outtoc->tracks[trknum].subsize = 0;
+
+				cdrom_convert_type_string_to_track_info(token, &outtoc->tracks[trknum]);
+				if (outtoc->tracks[trknum].datasize == 0)
 					printf("ERROR: Unknown track type [%s].  Contact MAMEDEV.\n", token);
-				}
+				else if (outtoc->tracks[trknum].trktype != CD_TRACK_MODE1_RAW &&
+						 outtoc->tracks[trknum].trktype != CD_TRACK_MODE2_RAW &&
+						 outtoc->tracks[trknum].trktype != CD_TRACK_AUDIO)
+					show_raw_message();
 
 				/* next (optional) token on the line is the subcode type */
 				EATWHITESPACE
 				TOKENIZE
 
-				if (!strcmp(token, "RW"))
-				{
-					outtoc->tracks[trknum].subtype = CD_SUB_NORMAL;
-					outtoc->tracks[trknum].subsize = 96;
-				}
-				else if (!strcmp(token, "RW_RAW"))
-				{
-					outtoc->tracks[trknum].subtype = CD_SUB_RAW;
-					outtoc->tracks[trknum].subsize = 96;
-				}
+				cdrom_convert_subtype_string_to_track_info(token, &outtoc->tracks[trknum]);
 			}
 		}
 	}

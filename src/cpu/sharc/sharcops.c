@@ -274,8 +274,6 @@ static void systemreg_write_latency_effect(void)
 				swap_register(&sharc.r[6].r, &sharc.reg_alt[6].r);
 				swap_register(&sharc.r[7].r, &sharc.reg_alt[7].r);
 			}
-
-			check_interrupts();
 			break;
 		}
 		default:	fatalerror("SHARC: systemreg_latency_op: unknown register %02X at %08X", systemreg_latency_reg, sharc.pc);
@@ -480,7 +478,14 @@ static void SET_UREG(int ureg, UINT32 data)
 				}
 
 				case 0xc:	sharc.astat = data; break;		/* ASTAT */
-				case 0xd:	sharc.imask = data; break;		/* IMASK */
+
+				case 0xd:									/* IMASK */
+				{
+					check_interrupts();
+					sharc.imask = data;
+					break;
+				}
+
 				case 0xe:	sharc.stky = data; break;		/* STKY */
 				default:	fatalerror("SHARC: SET_UREG: unknown register %08X at %08X", ureg, sharc.pc);
 			}
@@ -823,6 +828,7 @@ static void COMPUTE(UINT32 opcode)
 					case 0x41:		compute_or(rn, rx, ry); break;
 					case 0x42:		compute_xor(rn, rx, ry); break;
 					case 0x43:		compute_not(rn, rx); break;
+					case 0x61:		compute_min(rn, rx, ry); break;
 					case 0x62:		compute_max(rn, rx, ry); break;
 					case 0x81:		compute_fadd(rn, rx, ry); break;
 					case 0x82:		compute_fsub(rn, rx, ry); break;
@@ -1745,12 +1751,14 @@ static void sharcop_direct_call(void)
 	{
 		if (j)
 		{
-			PUSH_PC(sharc.pc+3);	/* 1 instruction + 2 delayed instructions */
+			//PUSH_PC(sharc.pc+3);  /* 1 instruction + 2 delayed instructions */
+			PUSH_PC(sharc.nfaddr);	/* 1 instruction + 2 delayed instructions */
 			CHANGE_PC_DELAYED(address);
 		}
 		else
 		{
-			PUSH_PC(sharc.pc+1);
+			//PUSH_PC(sharc.pc+1);
+			PUSH_PC(sharc.daddr);
 			CHANGE_PC(address);
 		}
 	}
@@ -1776,7 +1784,8 @@ static void sharcop_direct_jump(void)
 				POP_STATUS_STACK();
 			}
 
-			sharc.irptl &= ~(1 << sharc.irq_active_num);
+			interrupt_active = 0;
+			sharc.irptl &= ~(1 << sharc.active_irq_num);
 		}
 
 		if (la)
@@ -1841,7 +1850,8 @@ static void sharcop_relative_jump(void)
 				POP_STATUS_STACK();
 			}
 
-			sharc.irptl &= ~(1 << sharc.irq_active_num);
+			interrupt_active = 0;
+			sharc.irptl &= ~(1 << sharc.active_irq_num);
 		}
 
 		if (la)
@@ -1885,7 +1895,8 @@ static void sharcop_indirect_jump(void)
 			POP_STATUS_STACK();
 		}
 
-		sharc.irptl &= ~(1 << sharc.irq_active_num);
+		interrupt_active = 0;
+		sharc.irptl &= ~(1 << sharc.active_irq_num);
 	}
 
 	if (e)		/* IF...ELSE */
@@ -1958,12 +1969,14 @@ static void sharcop_indirect_call(void)
 		{
 			if (j)
 			{
-				PUSH_PC(sharc.pc+3);	/* 1 instruction + 2 delayed instructions */
+				//PUSH_PC(sharc.pc+3);  /* 1 instruction + 2 delayed instructions */
+				PUSH_PC(sharc.nfaddr);	/* 1 instruction + 2 delayed instructions */
 				CHANGE_PC_DELAYED(PM_REG_I(pmi) + PM_REG_M(pmm));
 			}
 			else
 			{
-				PUSH_PC(sharc.pc+1);
+				//PUSH_PC(sharc.pc+1);
+				PUSH_PC(sharc.daddr);
 				CHANGE_PC(PM_REG_I(pmi) + PM_REG_M(pmm));
 			}
 		}
@@ -1986,12 +1999,14 @@ static void sharcop_indirect_call(void)
 
 			if (j)
 			{
-				PUSH_PC(sharc.pc+3);	/* 1 instruction + 2 delayed instructions */
+				//PUSH_PC(sharc.pc+3);  /* 1 instruction + 2 delayed instructions */
+				PUSH_PC(sharc.nfaddr);	/* 1 instruction + 2 delayed instructions */
 				CHANGE_PC_DELAYED(PM_REG_I(pmi) + PM_REG_M(pmm));
 			}
 			else
 			{
-				PUSH_PC(sharc.pc+1);
+				//PUSH_PC(sharc.pc+1);
+				PUSH_PC(sharc.daddr);
 				CHANGE_PC(PM_REG_I(pmi) + PM_REG_M(pmm));
 			}
 		}
@@ -2020,7 +2035,8 @@ static void sharcop_relative_jump_compute(void)
 			POP_STATUS_STACK();
 		}
 
-		sharc.irptl &= ~(1 << sharc.irq_active_num);
+		interrupt_active = 0;
+		sharc.irptl &= ~(1 << sharc.active_irq_num);
 	}
 
 	if (e)		/* IF...ELSE */
@@ -2091,12 +2107,14 @@ static void sharcop_relative_call_compute(void)
 		{
 			if (j)
 			{
-				PUSH_PC(sharc.pc+3);	/* 1 instruction + 2 delayed instructions */
+				//PUSH_PC(sharc.pc+3);  /* 1 instruction + 2 delayed instructions */
+				PUSH_PC(sharc.nfaddr);	/* 1 instruction + 2 delayed instructions */
 				CHANGE_PC_DELAYED(sharc.pc + SIGN_EXTEND6((sharc.opcode >> 27) & 0x3f));
 			}
 			else
 			{
-				PUSH_PC(sharc.pc+1);
+				//PUSH_PC(sharc.pc+1);
+				PUSH_PC(sharc.daddr);
 				CHANGE_PC(sharc.pc + SIGN_EXTEND6((sharc.opcode >> 27) & 0x3f));
 			}
 		}
@@ -2119,12 +2137,14 @@ static void sharcop_relative_call_compute(void)
 
 			if (j)
 			{
-				PUSH_PC(sharc.pc+3);	/* 1 instruction + 2 delayed instructions */
+				//PUSH_PC(sharc.pc+3);  /* 1 instruction + 2 delayed instructions */
+				PUSH_PC(sharc.nfaddr);	/* 1 instruction + 2 delayed instructions */
 				CHANGE_PC_DELAYED(sharc.pc + SIGN_EXTEND6((sharc.opcode >> 27) & 0x3f));
 			}
 			else
 			{
-				PUSH_PC(sharc.pc+1);
+				//PUSH_PC(sharc.pc+1);
+				PUSH_PC(sharc.daddr);
 				CHANGE_PC(sharc.pc + SIGN_EXTEND6((sharc.opcode >> 27) & 0x3f));
 			}
 		}
@@ -2287,7 +2307,7 @@ static void sharcop_rti(void)
 	int e = (sharc.opcode >> 25) & 0x1;
 	int compute = sharc.opcode & 0x7fffff;
 
-	sharc.irptl &= ~(1 << sharc.irq_active_num);
+	sharc.irptl &= ~(1 << sharc.active_irq_num);
 
 	if(e)		/* IF...ELSE */
 	{
@@ -2334,6 +2354,9 @@ static void sharcop_rti(void)
 	{
 		POP_STATUS_STACK();
 	}
+
+	interrupt_active = 0;
+	check_interrupts();
 }
 
 /*****************************************************************************/
@@ -2706,7 +2729,15 @@ static void sharcop_nop(void)
 
 static void sharcop_idle(void)
 {
-	CHANGE_PC(sharc.pc);
+	//CHANGE_PC(sharc.pc);
+
+	sharc.daddr = sharc.pc;
+	sharc.faddr = sharc.pc+1;
+	sharc.nfaddr = sharc.pc+2;
+
+	sharc.decode_opcode = ROPCODE(sharc.daddr);
+	sharc.fetch_opcode = ROPCODE(sharc.faddr);
+
 	sharc.idle = 1;
 }
 

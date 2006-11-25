@@ -101,16 +101,21 @@ static zip_file *zip_cache[ZIP_CACHE_SIZE];
     FUNCTION PROTOTYPES
 ***************************************************************************/
 
-static zip_error read_ecd(zip_file *zip);
+/* cache management */
 static void free_zip_file(zip_file *zip);
+
+/* ZIP file parsing */
+static zip_error read_ecd(zip_file *zip);
 static zip_error get_compressed_data_offset(zip_file *zip, UINT64 *offset);
+
+/* decompression interfaces */
 static zip_error decompress_data_type_0(zip_file *zip, UINT64 offset, void *buffer, UINT32 length);
 static zip_error decompress_data_type_8(zip_file *zip, UINT64 offset, void *buffer, UINT32 length);
 
 
 
 /***************************************************************************
-    GENERAL FUNCTIONS
+    ZIP FILE ACCESS
 ***************************************************************************/
 
 /*-------------------------------------------------
@@ -252,6 +257,11 @@ void zip_file_cache_clear(void)
 }
 
 
+
+/***************************************************************************
+    CONTAINED FILE ACCESS
+***************************************************************************/
+
 /*-------------------------------------------------
     zip_file_first_entry - return the first entry
     in the ZIP
@@ -364,6 +374,38 @@ zip_error zip_file_decompress(zip_file *zip, void *buffer, UINT32 length)
 }
 
 
+
+/***************************************************************************
+    CACHE MANAGEMENT
+***************************************************************************/
+
+/*-------------------------------------------------
+    free_zip_file - free all the data for a
+    zip_file
+-------------------------------------------------*/
+
+static void free_zip_file(zip_file *zip)
+{
+	if (zip != NULL)
+	{
+		if (zip->file != NULL)
+			osd_close(zip->file);
+		if (zip->filename != NULL)
+			free((void *)zip->filename);
+		if (zip->ecd.raw != NULL)
+			free(zip->ecd.raw);
+		if (zip->cd != NULL)
+			free(zip->cd);
+		free(zip);
+	}
+}
+
+
+
+/***************************************************************************
+    ZIP FILE PARSING
+***************************************************************************/
+
 /*-------------------------------------------------
     read_ecd - read the ECD data
 -------------------------------------------------*/
@@ -438,26 +480,6 @@ static zip_error read_ecd(zip_file *zip)
 
 
 /*-------------------------------------------------
-    free_zip_file - free all the data for a
-    zip_file
--------------------------------------------------*/
-
-static void free_zip_file(zip_file *zip)
-{
-	if (zip->file != NULL)
-		osd_close(zip->file);
-	if (zip->filename != NULL)
-		free((void *)zip->filename);
-	if (zip->ecd.raw != NULL)
-		free(zip->ecd.raw);
-	if (zip->cd != NULL)
-		free(zip->cd);
-	if (zip != NULL)
-		free(zip);
-}
-
-
-/*-------------------------------------------------
     get_compressed_data_offset - return the
     offset of the compressed data
 -------------------------------------------------*/
@@ -488,6 +510,11 @@ static zip_error get_compressed_data_offset(zip_file *zip, UINT64 *offset)
 	return ZIPERR_NONE;
 }
 
+
+
+/***************************************************************************
+    DECOMPRESSION INTERFACES
+***************************************************************************/
 
 /*-------------------------------------------------
     decompress_data_type_0 - "decompress"

@@ -24,6 +24,7 @@
 
 typedef struct _hard_disk_file hard_disk_file;
 
+typedef struct _hard_disk_info hard_disk_info;
 struct _hard_disk_info
 {
 	UINT32			cylinders;
@@ -31,7 +32,6 @@ struct _hard_disk_info
 	UINT32			sectors;
 	UINT32			sectorbytes;
 };
-typedef struct _hard_disk_info hard_disk_info;
 
 
 

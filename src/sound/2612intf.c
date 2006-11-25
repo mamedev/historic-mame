@@ -78,7 +78,7 @@ static void TimerHandler(void *param,int c,int count,double stepTime)
 void YM2612UpdateRequest(void *param)
 {
 	struct ym2612_info *info = param;
-	stream_update(info->stream,100);
+	stream_update(info->stream);
 }
 
 /***********************************************************/

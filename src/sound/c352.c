@@ -345,7 +345,7 @@ static unsigned short c352_read_reg16(struct c352_info *info, unsigned long addr
 	unsigned long	chan;
 	unsigned short	val;
 
-	stream_update(info->stream, 0);
+	stream_update(info->stream);
 
 	chan = (address >> 4) & 0xfff;
 	if (chan > 31)
@@ -374,7 +374,7 @@ static void c352_write_reg16(struct c352_info *info, unsigned long address, unsi
 	unsigned long	temp;
 	chan = (address >> 4) & 0xfff;
 
-	stream_update(info->stream, 0);
+	stream_update(info->stream);
 
 	if (chan > 31)
 	{

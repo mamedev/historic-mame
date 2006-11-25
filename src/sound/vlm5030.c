@@ -445,7 +445,7 @@ phase_stop:
 /* realtime update */
 static void VLM5030_update(struct vlm5030_info *chip)
 {
-	stream_update(chip->channel,0);
+	stream_update(chip->channel);
 }
 
 /* setup parameteroption when RST=H */

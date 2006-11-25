@@ -118,21 +118,21 @@ WRITE8_HANDLER( YM2151_register_port_2_w )
 WRITE8_HANDLER( YM2151_data_port_0_w )
 {
 	struct ym2151_info *token = sndti_token(SOUND_YM2151, 0);
-	stream_update(token->stream, 0);
+	stream_update(token->stream);
 	YM2151WriteReg(token->chip,lastreg0,data);
 }
 
 WRITE8_HANDLER( YM2151_data_port_1_w )
 {
 	struct ym2151_info *token = sndti_token(SOUND_YM2151, 1);
-	stream_update(token->stream, 0);
+	stream_update(token->stream);
 	YM2151WriteReg(token->chip,lastreg1,data);
 }
 
 WRITE8_HANDLER( YM2151_data_port_2_w )
 {
 	struct ym2151_info *token = sndti_token(SOUND_YM2151, 2);
-	stream_update(token->stream, 0);
+	stream_update(token->stream);
 	YM2151WriteReg(token->chip,lastreg2,data);
 }
 

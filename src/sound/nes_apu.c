@@ -644,7 +644,7 @@ INLINE void apu_write(int chip,int address, uint8 value)
 {
   struct nesapu_info *info = sndti_token(SOUND_NES, chip);
    info->APU.regs[address]=value;
-   stream_update(info->stream,0);
+   stream_update(info->stream);
    apu_regwrite(info,address,value);
 }
 

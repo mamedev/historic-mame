@@ -113,14 +113,14 @@ static void tone_update(void *param, stream_sample_t **input, stream_sample_t **
 
 WRITE8_HANDLER( galaxian_pitch_w )
 {
-	stream_update(tone_stream,0);
+	stream_update(tone_stream);
 
 	pitch = data;
 }
 
 WRITE8_HANDLER( galaxian_vol_w )
 {
-	stream_update(tone_stream,0);
+	stream_update(tone_stream);
 
 	/* offset 0 = bit 0, offset 1 = bit 1 */
 	vol = (vol & ~(1 << offset)) | ((data & 1) << offset);

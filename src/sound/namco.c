@@ -463,7 +463,7 @@ WRITE8_HANDLER( pacman_sound_w )
 		return;
 
 	/* update the streams */
-	stream_update(chip->stream, 0);
+	stream_update(chip->stream);
 
 	/* set the register */
 	namco_soundregs[offset] = data;
@@ -559,7 +559,7 @@ WRITE8_HANDLER( polepos_sound_w )
 		return;
 
 	/* update the streams */
-	stream_update(chip->stream, 0);
+	stream_update(chip->stream);
 
 	/* set the register */
 	namco_soundregs[offset] = data;
@@ -637,7 +637,7 @@ WRITE8_HANDLER( namco_15xx_w )
 		return;
 
 	/* update the streams */
-	stream_update(chip->stream, 0);
+	stream_update(chip->stream);
 
 	/* set the register */
 	namco_soundregs[offset] = data;
@@ -714,7 +714,7 @@ static WRITE8_HANDLER( namcos1_sound_w )
 		return;
 
 	/* update the streams */
-	stream_update(chip->stream,0);
+	stream_update(chip->stream);
 
 	/* set the register */
 	namco_soundregs[offset] = data;
@@ -760,7 +760,7 @@ WRITE8_HANDLER( namcos1_cus30_w )
 		{
 			struct namco_sound *chip = sndti_token(SOUND_NAMCO_CUS30, 0);
 			/* update the streams */
-			stream_update(chip->stream,0);
+			stream_update(chip->stream);
 
 			namco_wavedata[offset] = data;
 
@@ -790,7 +790,7 @@ WRITE8_HANDLER( snkwave_w )
 	if( offset==0 ) freq0 = data;
 	if( offset==1 )
 	{
-		stream_update(chip->stream, 0);
+		stream_update(chip->stream);
 		if( data==0xff || freq0==0 )
 		{
 			voice->volume[0] = 0x0;

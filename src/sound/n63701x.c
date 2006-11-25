@@ -137,7 +137,7 @@ void namco_63701x_write(int offset, int data)
 			int rom_offs;
 
 			/* update the streams */
-			stream_update(chip->stream,0);
+			stream_update(chip->stream);
 
 			chip->voices[ch].playing = 1;
 			chip->voices[ch].base_addr = 0x10000 * ((chip->voices[ch].select & 0xe0) >> 5);

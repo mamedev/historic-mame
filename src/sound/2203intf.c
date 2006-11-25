@@ -71,7 +71,7 @@ static void timer_callback_2203_1(void *param)
 void YM2203UpdateRequest(void *param)
 {
 	struct ym2203_info *info = param;
-	stream_update(info->stream,0);
+	stream_update(info->stream);
 }
 
 

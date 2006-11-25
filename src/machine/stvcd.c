@@ -1087,7 +1087,7 @@ static void cd_readTOC(void)
 
 		if (cdrom)
 		{
-			fad = cdrom_get_track_start(cdrom, i, 0) + 150;
+			fad = cdrom_get_track_start(cdrom, i) + 150;
 		}
 		else
 		{
@@ -1143,7 +1143,7 @@ static void cd_playdata(void)
 
 			if (cdrom)
 			{
-				cdrom_read_data(cdrom, cd_curfad-150, 1, &databuf[in_buffer], CD_TRACK_MODE1);
+				cdrom_read_data(cdrom, cd_curfad-150, &databuf[in_buffer], CD_TRACK_MODE1);
 			}
 			in_buffer += 2048;
 			cd_curfad ++;
@@ -1165,7 +1165,7 @@ static void cd_readblock(unsigned long fad, unsigned char *dat)
 {
 	if (cdrom)
 	{
-		cdrom_read_data(cdrom, fad-150, 1, dat, CD_TRACK_MODE1);
+		cdrom_read_data(cdrom, fad-150, dat, CD_TRACK_MODE1);
 	}
 }
 

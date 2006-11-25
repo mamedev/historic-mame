@@ -64,7 +64,7 @@ static void ymf262_stream_update(void *param, stream_sample_t **inputs, stream_s
 static void _stream_update(void *param, int interval)
 {
 	struct ymf262_info *info = param;
-	stream_update(info->stream, interval);
+	stream_update(info->stream);
 }
 
 

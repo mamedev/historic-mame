@@ -1086,7 +1086,7 @@ READ16_HANDLER( SCSP_0_r )
 {
 	struct _SCSP *SCSP = sndti_token(SOUND_SCSP, 0);
 
-	stream_update(SCSP->stream, 0);
+	stream_update(SCSP->stream);
 
 	return SCSP_r16(SCSP, offset*2);
 }
@@ -1098,7 +1098,7 @@ WRITE16_HANDLER( SCSP_0_w )
 	struct _SCSP *SCSP = sndti_token(SOUND_SCSP, 0);
 	UINT16 tmp, *scsp_regs;
 
-	stream_update(SCSP->stream, 0);
+	stream_update(SCSP->stream);
 
 	tmp = SCSP_r16(SCSP, offset*2);
 	COMBINE_DATA(&tmp);

@@ -1192,7 +1192,7 @@ static void es5506_reg_write(struct ES5506Chip *chip, offs_t offset, UINT8 data)
 		return;
 
 	/* force an update */
-	stream_update(chip->stream, 0);
+	stream_update(chip->stream);
 
 	/* switch off the page and register */
 	if (chip->current_page < 0x20)
@@ -1400,7 +1400,7 @@ static UINT8 es5506_reg_read(struct ES5506Chip *chip, offs_t offset)
 		fprintf(eslog, "read from %02x/%02x -> ", chip->current_page, offset / 4 * 8);
 
 	/* force an update */
-	stream_update(chip->stream, 0);
+	stream_update(chip->stream);
 
 	/* switch off the page and register */
 	if (chip->current_page < 0x20)
@@ -1848,7 +1848,7 @@ static void es5505_reg_write(struct ES5506Chip *chip, offs_t offset, UINT16 data
 //  logerror("%04x:ES5505 write %02x/%02x = %04x & %04x\n", activecpu_get_previouspc(), chip->current_page, offset, data, mem_mask ^ 0xffff);
 
 	/* force an update */
-	stream_update(chip->stream, 0);
+	stream_update(chip->stream);
 
 	/* switch off the page and register */
 	if (chip->current_page < 0x20)
@@ -2060,7 +2060,7 @@ static UINT16 es5505_reg_read(struct ES5506Chip *chip, offs_t offset)
 		fprintf(eslog, "read from %02x/%02x -> ", chip->current_page, offset);
 
 	/* force an update */
-	stream_update(chip->stream, 0);
+	stream_update(chip->stream);
 
 	/* switch off the page and register */
 	if (chip->current_page < 0x20)

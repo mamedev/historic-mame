@@ -107,7 +107,7 @@ WRITE8_HANDLER( tms5110_CTL_w )
 	struct tms5110_info *info = sndti_token(SOUND_TMS5110, 0);
 
     /* bring up to date first */
-    stream_update(info->stream, 0);
+    stream_update(info->stream);
     tms5110_CTL_set(info->chip, data);
 }
 
@@ -122,7 +122,7 @@ WRITE8_HANDLER( tms5110_PDC_w )
 	struct tms5110_info *info = sndti_token(SOUND_TMS5110, 0);
 
     /* bring up to date first */
-    stream_update(info->stream, 0);
+    stream_update(info->stream);
     tms5110_PDC_set(info->chip, data);
 }
 
@@ -139,7 +139,7 @@ READ8_HANDLER( tms5110_status_r )
 	struct tms5110_info *info = sndti_token(SOUND_TMS5110, 0);
 
     /* bring up to date first */
-    stream_update(info->stream, 0);
+    stream_update(info->stream);
     return tms5110_status_read(info->chip);
 }
 
@@ -156,7 +156,7 @@ int tms5110_ready_r(void)
 	struct tms5110_info *info = sndti_token(SOUND_TMS5110, 0);
 
     /* bring up to date first */
-    stream_update(info->stream, 0);
+    stream_update(info->stream);
     return tms5110_ready_read(info->chip);
 }
 

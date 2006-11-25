@@ -143,7 +143,7 @@ static WRITE8_HANDLER( ctc_timer_1_w )
     {
         output[0] ^= 0x7f;
         channel_active[0] = 1;
-        stream_update(channel[0], 0);
+        stream_update(channel[0]);
     }
 }
 
@@ -154,7 +154,7 @@ static WRITE8_HANDLER( ctc_timer_2_w )
     {
         output[1] ^= 0x7f;
         channel_active[1] = 1;
-        stream_update(channel[1], 0);
+        stream_update(channel[1]);
     }
 }
 

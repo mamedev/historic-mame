@@ -1188,7 +1188,7 @@ void snes_sh_update( void *param, stream_sample_t **inputs, stream_sample_t **ou
 
 READ8_HANDLER( snes_dsp_io_r )
 {
-	stream_update(channel, 0);
+	stream_update(channel);
 
 #ifdef NO_ENVX
 	if( 8 == ( SPCRAM[ 0xF2 ] & 0xF ) )
@@ -1202,7 +1202,7 @@ READ8_HANDLER( snes_dsp_io_r )
 
 WRITE8_HANDLER( snes_dsp_io_w )
 {
-	stream_update(channel, 0);
+	stream_update(channel);
 
 	if( 0x7C == offset )
 	{

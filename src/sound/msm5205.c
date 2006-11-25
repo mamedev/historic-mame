@@ -140,7 +140,7 @@ static void MSM5205_vclk_callback(void *param)
 	/* update when signal changed */
 	if( voice->signal != new_signal)
 	{
-		stream_update(voice->stream,0);
+		stream_update(voice->stream);
 		voice->signal = new_signal;
 	}
 }
@@ -262,7 +262,7 @@ void MSM5205_playmode_w(int num,int select)
 
 	if( voice->prescaler != prescaler )
 	{
-		stream_update(voice->stream,0);
+		stream_update(voice->stream);
 
 		voice->prescaler = prescaler;
 		/* timer set */
@@ -277,7 +277,7 @@ void MSM5205_playmode_w(int num,int select)
 
 	if( voice->bitwidth != bitwidth )
 	{
-		stream_update(voice->stream,0);
+		stream_update(voice->stream);
 
 		voice->bitwidth = bitwidth;
 	}

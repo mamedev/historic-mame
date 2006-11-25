@@ -140,7 +140,7 @@ static void cabalbl_play_adpcm( int channel, int which ){
 			start+=2;
 
 			if (cabalbl_adpcm[channel].stream)
-				stream_update(cabalbl_adpcm[channel].stream, 0);
+				stream_update(cabalbl_adpcm[channel].stream);
 			cabalbl_adpcm[channel].current = start + offset;
 			cabalbl_adpcm[channel].end = start + offset + len/2;
 			cabalbl_adpcm[channel].nibble = 4;

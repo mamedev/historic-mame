@@ -79,7 +79,7 @@ WRITE8_HANDLER( gridlee_sound_w )
 {
 static UINT8 sound_data[24];
 
-	stream_update(gridlee_stream, 0);
+	stream_update(gridlee_stream);
 
 	switch (offset)
 	{

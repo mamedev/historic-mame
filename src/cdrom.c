@@ -1,158 +1,108 @@
 /***************************************************************************
 
-  Generic MAME CD-ROM utilties - build IDE and SCSI CD-ROMs on top of this
+    Generic MAME CD-ROM utilties - build IDE and SCSI CD-ROMs on top of this
 
     Copyright (c) 1996-2006, Nicola Salmoria and the MAME Team.
     Visit http://mamedev.org for licensing and usage restrictions.
 
-  IMPORTANT:
-  "physical" block addresses are the actual addresses on the emulated CD.
-  "chd" block addresses are the block addresses in the CHD file.
-  Because we pad each track to a hunk boundry, these addressing
-  schemes will differ after track 1!
+****************************************************************************
+
+    IMPORTANT:
+    "physical" block addresses are the actual addresses on the emulated CD.
+    "chd" block addresses are the block addresses in the CHD file.
+    Because we pad each track to a hunk boundry, these addressing
+    schemes will differ after track 1!
 
 ***************************************************************************/
 
 #include "cdrom.h"
 
+
+
+/***************************************************************************
+    DEBUGGING
+***************************************************************************/
+
 #define VERBOSE	(0)
 
-/*************************************
- *
- *  Type definitions
- *
- *************************************/
+
+
+/***************************************************************************
+    TYPE DEFINITIONS
+***************************************************************************/
 
 struct _cdrom_file
 {
-	chd_file *chd;				/* CHD file */
-	cdrom_toc 		cdtoc;		/* TOC for the CD */
-	UINT32				hunksectors;	/* sectors per hunk */
-	UINT32				cachehunk;	/* which hunk is cached */
-	UINT8 *				cache;		/* cache of the current hunk */
-
-	INT8				audio_playing, audio_pause, audio_ended_normally;
-	UINT32				audio_lba, audio_length;
-
-	UINT8 *				audio_cache;
-	UINT32				audio_samples;
-	INT16 *				audio_bptr;
+	chd_file *			chd;				/* CHD file */
+	cdrom_toc			cdtoc;				/* TOC for the CD */
+	UINT32				hunksectors;		/* sectors per hunk */
+	UINT32				cachehunk;			/* which hunk is cached */
+	UINT8 *				cache;				/* cache of the current hunk */
 };
 
 
 
-/*************************************
- *
- *  Utility functions
- *
- *************************************/
+/***************************************************************************
+    FUNCTION PROTOTYPES
+***************************************************************************/
 
-/* get the track number for a physical frame number */
-UINT32 cdrom_get_track_phys(cdrom_file *file, UINT32 frame)
+static chd_error read_sector_into_cache(cdrom_file *file, UINT32 lbasector, UINT32 *sectoroffs, UINT32 *tracknum);
+static chd_error parse_metadata(chd_file *chd, cdrom_toc *toc);
+
+
+
+/***************************************************************************
+    INLINE FUNCTIONS
+***************************************************************************/
+
+/*-------------------------------------------------
+    physical_to_chd_lba - find the CHD LBA
+    and the track number
+-------------------------------------------------*/
+
+INLINE UINT32 physical_to_chd_lba(cdrom_file *file, UINT32 physlba, int *tracknum)
 {
-	int i;
+	UINT32 chdlba;
+	int track;
 
-	for (i = 1; i < file->cdtoc.numtrks+1; i++)
-	{
-		if (frame < file->cdtoc.tracks[i].physframeofs)
+	/* loop until our current LBA is less than the start LBA of the next track */
+	for (track = 0; track < file->cdtoc.numtrks; track++)
+		if (physlba < file->cdtoc.tracks[track + 1].physframeofs)
 		{
-			return i-1;
+			chdlba = physlba - file->cdtoc.tracks[track].physframeofs + file->cdtoc.tracks[track].chdframeofs;
+			if (tracknum != NULL)
+				*tracknum = track;
+			return chdlba;
 		}
-	}
 
-	#if VERBOSE
-	logerror("CDROM: could not find track for frame %d\n", frame);
-	#endif
-	return 0;
+	return physlba;
 }
 
-/* get the track number for a CHD frame number */
-UINT32 cdrom_get_track_chd(cdrom_file *file, UINT32 frame)
-{
-	int i;
 
-	for (i = 1; i < file->cdtoc.numtrks+1; i++)
-	{
-		if (frame < file->cdtoc.tracks[i].chdframeofs)
-		{
-			return i-1;
-		}
-	}
 
-	#if VERBOSE
-	logerror("CDROM: could not find track for frame %d\n", frame);
-	#endif
-	return 0;
-}
+/***************************************************************************
+    BASE FUNCTIONALITY
+***************************************************************************/
 
-/* get physical frame number that a track starts at */
-UINT32 cdrom_get_phys_start_of_track(cdrom_file *file, UINT32 track)
-{
-	return file->cdtoc.tracks[track].physframeofs;
-}
-
-/* get CHD frame number that a track starts at */
-UINT32 cdrom_get_chd_start_of_track(cdrom_file *file, UINT32 track)
-{
-	// handle lead-out specially
-	if (track == 0xaa)
-	{
-		return file->cdtoc.tracks[file->cdtoc.numtrks-1].chdframeofs + file->cdtoc.tracks[file->cdtoc.numtrks-1].frames;
-	}
-
-	return file->cdtoc.tracks[track].chdframeofs;
-}
-
-/* convert a physical frame number to a CHD one */
-UINT32 cdrom_phys_frame_to_chd(cdrom_file *file, UINT32 frame)
-{
-	UINT32 trk = cdrom_get_track_phys(file, frame);
-
-	frame -= cdrom_get_phys_start_of_track(file, trk);
-	frame += cdrom_get_chd_start_of_track(file, trk);
-
-	return frame;
-}
-
-/* convert a CHD frame number to a physical one */
-UINT32 cdrom_chd_frame_to_phys(cdrom_file *file, UINT32 frame)
-{
-	UINT32 trk = cdrom_get_track_chd(file, frame);
-
-	frame -= cdrom_get_chd_start_of_track(file, trk);
-	frame += cdrom_get_phys_start_of_track(file, trk);
-
-	return frame;
-}
-
-/* internal utility functions */
-
-static int endian_mode = 0;
-
-INLINE UINT32 get_bigendian_uint32(const UINT8 *base)
-{
-	if (!endian_mode)
-		return (base[3] << 24) | (base[2] << 16) | (base[1] << 8) | base[0];
-	else
-		return (base[0] << 24) | (base[1] << 16) | (base[2] << 8) | base[3];
-}
-
-/*************************************
- *
- *  Open a CD-ROM
- *
- *************************************/
+/*-------------------------------------------------
+    cdrom_open - "open" a CD-ROM file from an
+    already-opened CHD file
+-------------------------------------------------*/
 
 cdrom_file *cdrom_open(chd_file *chd)
 {
+	const chd_header *header = chd_get_header(chd);
 	int i;
 	cdrom_file *file;
 	UINT32 physofs, chdofs;
-	static UINT32 metadata[CD_METADATA_WORDS], *mrp;
 	chd_error err;
 
 	/* punt if no CHD */
 	if (!chd)
+		return NULL;
+
+	/* validate the CHD information */
+	if (header->hunkbytes % CD_FRAME_SIZE != 0)
 		return NULL;
 
 	/* allocate memory for the CD-ROM file */
@@ -160,45 +110,13 @@ cdrom_file *cdrom_open(chd_file *chd)
 	if (!file)
 		return NULL;
 
-	/* initialize the audio info */
-	file->audio_playing = 0;
-	file->audio_pause = 0;
-	file->audio_length = 0;
-	file->audio_samples = 0;
+	/* fill in the data */
+	file->chd = chd;
+	file->hunksectors = header->hunkbytes / CD_FRAME_SIZE;
+	file->cachehunk = -1;
 
 	/* read the CD-ROM metadata */
-	err = chd_get_metadata(chd, CDROM_STANDARD_METADATA, 0, metadata, sizeof(metadata), NULL, NULL);
-	if (err != CHDERR_NONE)
-		return NULL;
-
-	/* reconstruct the TOC from it */
-	/* TODO: I don't know why sometimes the data is one endian and sometimes another */
-	mrp = &metadata[0];
-	endian_mode = 0;
-	file->cdtoc.numtrks = get_bigendian_uint32((UINT8 *)mrp);
-
-	if ((file->cdtoc.numtrks < 0) || (file->cdtoc.numtrks > CD_MAX_TRACKS))
-	{
-		endian_mode = 1;
-		file->cdtoc.numtrks = get_bigendian_uint32((UINT8 *)mrp);
-	}
-
-	mrp++;
-	for (i = 0; i < CD_MAX_TRACKS; i++)
-	{
-		file->cdtoc.tracks[i].trktype = get_bigendian_uint32((UINT8 *)mrp);
-                mrp++;
-		file->cdtoc.tracks[i].subtype = get_bigendian_uint32((UINT8 *)mrp);
-                mrp++;
-		file->cdtoc.tracks[i].datasize = get_bigendian_uint32((UINT8 *)mrp);
-                mrp++;
-		file->cdtoc.tracks[i].subsize = get_bigendian_uint32((UINT8 *)mrp);
-                mrp++;
-		file->cdtoc.tracks[i].frames = get_bigendian_uint32((UINT8 *)mrp);
-                mrp++;
-		file->cdtoc.tracks[i].extraframes = get_bigendian_uint32((UINT8 *)mrp);
-		mrp++;
-	}
+	err = parse_metadata(chd, &file->cdtoc);
 
 	#if VERBOSE
 	logerror("CD has %d tracks\n", file->cdtoc.numtrks);
@@ -234,22 +152,9 @@ cdrom_file *cdrom_open(chd_file *chd)
 	file->cdtoc.tracks[i].physframeofs = physofs;
 	file->cdtoc.tracks[i].chdframeofs = chdofs;
 
-	/* fill in the data */
-	file->chd = chd;
-	file->hunksectors = CD_FRAMES_PER_HUNK;
-	file->cachehunk = -1;
-
 	/* allocate a cache */
 	file->cache = malloc(chd_get_header(chd)->hunkbytes);
 	if (!file->cache)
-	{
-		free(file);
-		return NULL;
-	}
-
-	/* allocate an audio cache */
-	file->audio_cache = malloc(CD_MAX_SECTOR_DATA*4);
-	if (!file->audio_cache)
 	{
 		free(file);
 		return NULL;
@@ -259,80 +164,44 @@ cdrom_file *cdrom_open(chd_file *chd)
 }
 
 
-
-/*************************************
- *
- *  Close a CD-ROM
- *
- *************************************/
+/*-------------------------------------------------
+    cdrom_close - "close" a CD-ROM file
+-------------------------------------------------*/
 
 void cdrom_close(cdrom_file *file)
 {
 	/* free the cache */
 	if (file->cache)
 		free(file->cache);
-	if (file->audio_cache)
-		free(file->audio_cache);
 	free(file);
 }
 
 
 
-/*************************************
- *
- *  Return the handle to the CHD
- *
- *************************************/
+/***************************************************************************
+    CORE READ ACCESS
+***************************************************************************/
 
-chd_file *cdrom_get_chd(cdrom_file *file)
+/*-------------------------------------------------
+    cdrom_read_data - read one or more sectors
+    from a CD-ROM
+-------------------------------------------------*/
+
+UINT32 cdrom_read_data(cdrom_file *file, UINT32 lbasector, void *buffer, UINT32 datatype)
 {
-	return file->chd;
-}
-
-
-/*************************************
- *
- *  Read a data sector from a CD-ROM
- *
- *************************************/
-
-UINT32 cdrom_read_data(cdrom_file *file, UINT32 lbasector, UINT32 numsectors, void *buffer, UINT32 datatype)
-{
-	UINT32 hunknum = lbasector / file->hunksectors;
-	UINT32 sectoroffs = lbasector % file->hunksectors;
-	UINT32 track = cdrom_get_track_chd(file, lbasector);
-	UINT32 tracktype;
+	UINT32 tracktype, tracknum, sectoroffs;
 	chd_error err;
 
-	tracktype = file->cdtoc.tracks[track].trktype;
-
-	/* for now, just break down multisector reads into single sectors */
-	if (numsectors > 1)
-	{
-		UINT32 total = 0;
-		while (numsectors--)
-		{
-			if (cdrom_read_data(file, lbasector++, 1, (UINT8 *)buffer + (total * file->cdtoc.tracks[track].datasize), datatype))
-				total++;
-			else
-				break;
-		}
-		return total;
-	}
-
-	/* if we haven't cached this hunk, read it now */
-	if (file->cachehunk != hunknum)
-	{
-		err = chd_read(file->chd, hunknum, file->cache);
-		if (err != CHDERR_NONE)
-			return 0;
-		file->cachehunk = hunknum;
-	}
+	/* cache in the sector */
+	err = read_sector_into_cache(file, lbasector, &sectoroffs, &tracknum);
+	if (err != CHDERR_NONE)
+		return 0;
 
 	/* copy out the requested sector */
+	tracktype = file->cdtoc.tracks[tracknum].trktype;
 	if (datatype == tracktype)
 	{
-		memcpy(buffer, &file->cache[sectoroffs * CD_FRAME_SIZE], file->cdtoc.tracks[track].datasize);
+		memcpy(buffer, &file->cache[sectoroffs * CD_FRAME_SIZE], file->cdtoc.tracks[tracknum].datasize);
 	}
 	else
 	{
@@ -365,275 +234,352 @@ UINT32 cdrom_read_data(cdrom_file *file, UINT32 lbasector, UINT32 numsectors, vo
 	return 1;
 }
 
-/*************************************
- *
- *  Read subcode data from a CD-ROM
- *
- *************************************/
+
+/*-------------------------------------------------
+    cdrom_read_subcode - read subcode data for
+    a sector
+-------------------------------------------------*/
 
 UINT32 cdrom_read_subcode(cdrom_file *file, UINT32 lbasector, void *buffer)
 {
-	UINT32 hunknum = lbasector / file->hunksectors;
-	UINT32 sectoroffs = lbasector % file->hunksectors;
-	UINT32 track = cdrom_get_track_chd(file, lbasector);
-	UINT32 tracktype;
+	UINT32 sectoroffs, tracknum;
 	chd_error err;
 
-	tracktype = file->cdtoc.tracks[track].trktype;
+	/* cache in the sector */
+	err = read_sector_into_cache(file, lbasector, &sectoroffs, &tracknum);
+	if (err != CHDERR_NONE)
+		return 0;
+
+	/* copy out the requested data */
+	memcpy(buffer, &file->cache[(sectoroffs * CD_FRAME_SIZE) + file->cdtoc.tracks[tracknum].datasize], file->cdtoc.tracks[tracknum].subsize);
+	return 1;
+}
+
+
+
+/***************************************************************************
+    HANDY UTILITIES
+***************************************************************************/
+
+/*-------------------------------------------------
+    cdrom_get_track - get the track number
+    for a physical frame number
+-------------------------------------------------*/
+
+UINT32 cdrom_get_track(cdrom_file *file, UINT32 frame)
+{
+	UINT32 track = 0;
+
+	/* convert to a CHD sector offset and get track information */
+	physical_to_chd_lba(file, frame, &track);
+	return track;
+}
+
+
+/*-------------------------------------------------
+    cdrom_get_track_start - get the frame number
+    that a track starts at
+-------------------------------------------------*/
+
+UINT32 cdrom_get_track_start(cdrom_file *file, UINT32 track)
+{
+	/* handle lead-out specially */
+	if (track == 0xaa)
+		track = file->cdtoc.numtrks;
+
+	return file->cdtoc.tracks[track].physframeofs;
+}
+
+
+
+/***************************************************************************
+    TOC UTILITIES
+***************************************************************************/
+
+/*-------------------------------------------------
+    cdrom_get_last_track - returns the last track
+    number
+-------------------------------------------------*/
+
+int cdrom_get_last_track(cdrom_file *file)
+{
+	return file->cdtoc.numtrks;
+}
+
+
+/*-------------------------------------------------
+    cdrom_get_adr_control - get the ADR | CONTROL
+    for a track
+-------------------------------------------------*/
+
+int cdrom_get_adr_control(cdrom_file *file, int track)
+{
+	if (track == 0xaa || file->cdtoc.tracks[track].trktype == CD_TRACK_AUDIO)
+	{
+		return 0x10;	// audio track, subchannel is position
+	}
+
+	return 0x14;	// data track, subchannel is position
+}
+
+
+/*-------------------------------------------------
+    cdrom_get_track_type - return the track type
+-------------------------------------------------*/
+
+int cdrom_get_track_type(cdrom_file *file, int track)
+{
+	return file->cdtoc.tracks[track].trktype;
+}
+
+
+/*-------------------------------------------------
+    cdrom_get_toc - return the TOC data for a
+    CD-ROM
+-------------------------------------------------*/
+
+const cdrom_toc *cdrom_get_toc(cdrom_file *file)
+{
+	return &file->cdtoc;
+}
+
+
+
+/***************************************************************************
+    EXTRA UTILITIES
+***************************************************************************/
+
+/*-------------------------------------------------
+    cdrom_convert_type_string_to_track_info -
+    take a string and convert it into track type
+    and track data size
+-------------------------------------------------*/
+
+void cdrom_convert_type_string_to_track_info(const char *typestring, cdrom_track_info *info)
+{
+	if (!strcmp(typestring, "MODE1"))
+	{
+		info->trktype = CD_TRACK_MODE1;
+		info->datasize = 2048;
+	}
+	else if (!strcmp(typestring, "MODE1_RAW"))
+	{
+		info->trktype = CD_TRACK_MODE1_RAW;
+		info->datasize = 2352;
+	}
+	else if (!strcmp(typestring, "MODE2"))
+	{
+		info->trktype = CD_TRACK_MODE2;
+		info->datasize = 2336;
+	}
+	else if (!strcmp(typestring, "MODE2_FORM1"))
+	{
+		info->trktype = CD_TRACK_MODE2_FORM1;
+		info->datasize = 2048;
+	}
+	else if (!strcmp(typestring, "MODE2_FORM2"))
+	{
+		info->trktype = CD_TRACK_MODE2_FORM2;
+		info->datasize = 2324;
+	}
+	else if (!strcmp(typestring, "MODE2_FORM_MIX"))
+	{
+		info->trktype = CD_TRACK_MODE2_FORM_MIX;
+		info->datasize = 2336;
+	}
+	else if (!strcmp(typestring, "MODE2_RAW"))
+	{
+		info->trktype = CD_TRACK_MODE2_RAW;
+		info->datasize = 2352;
+	}
+	else if (!strcmp(typestring, "AUDIO"))
+	{
+		info->trktype = CD_TRACK_AUDIO;
+		info->datasize = 2352;
+	}
+}
+
+
+/*-------------------------------------------------
+    cdrom_convert_subtype_string_to_track_info -
+    take a string and convert it into track subtype
+    and track subcode data size
+-------------------------------------------------*/
+
+void cdrom_convert_subtype_string_to_track_info(const char *typestring, cdrom_track_info *info)
+{
+	if (!strcmp(typestring, "RW"))
+	{
+		info->subtype = CD_SUB_NORMAL;
+		info->subsize = 96;
+	}
+	else if (!strcmp(typestring, "RW_RAW"))
+	{
+		info->subtype = CD_SUB_RAW;
+		info->subsize = 96;
+	}
+}
+
+
+/*-------------------------------------------------
+    cdrom_get_type_string - get the string
+    associated with the given type
+-------------------------------------------------*/
+
+const char *cdrom_get_type_string(const cdrom_track_info *info)
+{
+	switch (info->trktype)
+	{
+		case CD_TRACK_MODE1:			return "MODE1";
+		case CD_TRACK_MODE1_RAW:		return "MODE1_RAW";
+		case CD_TRACK_MODE2:			return "MODE2";
+		case CD_TRACK_MODE2_FORM1:		return "MODE2_FORM1";
+		case CD_TRACK_MODE2_FORM2:		return "MODE2_FORM2";
+		case CD_TRACK_MODE2_FORM_MIX:	return "MODE2_FORM_MIX";
+		case CD_TRACK_MODE2_RAW:		return "MODE2_RAW";
+		case CD_TRACK_AUDIO:			return "AUDIO";
+		default:						return "UNKNOWN";
+	}
+}
+
+
+/*-------------------------------------------------
+    cdrom_get_subtype_string - get the string
+    associated with the given subcode type
+-------------------------------------------------*/
+
+const char *cdrom_get_subtype_string(const cdrom_track_info *info)
+{
+	switch (info->subtype)
+	{
+		case CD_SUB_NORMAL:				return "RW";
+		case CD_SUB_RAW:				return "RW_RAW";
+		default:						return "NONE";
+	}
+}
+
+
+
+/***************************************************************************
+    INTERNAL UTILITIES
+***************************************************************************/
+
+/*-------------------------------------------------
+    read_sector_into_cache - cache a sector at
+    the given physical LBA
+-------------------------------------------------*/
+
+static chd_error read_sector_into_cache(cdrom_file *file, UINT32 lbasector, UINT32 *sectoroffs, UINT32 *tracknum)
+{
+	UINT32 chdsector, hunknum;
+	chd_error err;
+
+	/* convert to a CHD sector offset and get track information */
+	*tracknum = 0;
+	chdsector = physical_to_chd_lba(file, lbasector, tracknum);
+	hunknum = chdsector / file->hunksectors;
+	*sectoroffs = chdsector % file->hunksectors;
 
 	/* if we haven't cached this hunk, read it now */
 	if (file->cachehunk != hunknum)
 	{
 		err = chd_read(file->chd, hunknum, file->cache);
 		if (err != CHDERR_NONE)
-			return 0;
+			return err;
 		file->cachehunk = hunknum;
 	}
-
-	/* copy out the requested data */
-	memcpy(buffer, &file->cache[(sectoroffs * CD_FRAME_SIZE) + file->cdtoc.tracks[track].datasize], file->cdtoc.tracks[track].subsize);
-	return 1;
+	return CHDERR_NONE;
 }
 
-/*************************************
- *
- *  Red Book audio track utilities
- *
- *************************************/
 
-/*
- * cdrom_start_audio: begin playback of a Red Book audio track
- */
+/*-------------------------------------------------
+    parse_metadata - parse metadata into the TOC
+    structure
+-------------------------------------------------*/
 
-void cdrom_start_audio(cdrom_file *file, UINT32 start_chd_lba, UINT32 blocks)
+static chd_error parse_metadata(chd_file *chd, cdrom_toc *toc)
 {
-	file->audio_playing = 1;
-	file->audio_pause = 0;
-	file->audio_ended_normally = 0;
-	file->audio_lba = start_chd_lba;
-	file->audio_length = blocks;
-}
+	static UINT32 oldmetadata[CD_METADATA_WORDS], *mrp;
+	const chd_header *header = chd_get_header(chd);
+	UINT32 hunksectors = header->hunkbytes / CD_FRAME_SIZE;
+	char metadata[256];
+	chd_error err;
+	int i;
 
-/*
- * cdrom_stop_audio: stop playback of a Red Book audio track
- */
-
-void cdrom_stop_audio(cdrom_file *file)
-{
-	file->audio_playing = 0;
-	file->audio_ended_normally = 1;
-}
-
-/*
- * cdrom_pause_audio: pause/unpause playback of a Red Book audio track
- */
-
-void cdrom_pause_audio(cdrom_file *file, int pause)
-{
-	file->audio_pause = pause;
-}
-
-/*
- * cdrom_audio_active: returns Red Book audio playback status
- */
-
-int cdrom_audio_active(cdrom_file *file)
-{
-	return (file->audio_playing);
-}
-
-/*
- * cdrom_get_audio_lba: returns the current LBA (physical sector) during Red Book playback
- */
-
-UINT32 cdrom_get_audio_lba(cdrom_file *file)
-{
-	return file->audio_lba;
-}
-
-/*
- * cdrom_audio_paused: returns if Red Book playback is paused
- */
-
-int cdrom_audio_paused(cdrom_file *file)
-{
-	return (file->audio_pause);
-}
-
-/*
- * cdrom_audio_ended: returns if a Red Book track reached it's natural end
- */
-
-int cdrom_audio_ended(cdrom_file *file)
-{
-	return (file->audio_ended_normally);
-}
-
-/*
- * cdrom_get_audio_data: reads Red Book data off the disc if playback is in progress and
- *                       converts it to 2 16-bit 44.1 kHz streams.
- */
-
-void cdrom_get_audio_data(cdrom_file *file, stream_sample_t *bufL, stream_sample_t *bufR, UINT32 samples_wanted)
-{
-	int i, sectoread, remaining;
-
-	/* if no file, audio not playing, audio paused, or out of disc data,
-       just zero fill */
-	if (!file || !file->audio_playing || file->audio_pause || (!file->audio_length && !file->audio_samples))
+	/* start with no tracks */
+	for (toc->numtrks = 0; toc->numtrks < CD_MAX_TRACKS; toc->numtrks++)
 	{
-		if( file && file->audio_playing && !file->audio_pause && !file->audio_length )
+		cdrom_track_info *track = &toc->tracks[toc->numtrks];
+		int tracknum = -1, frames = 0, hunks;
+		char type[11], subtype[11];
+
+		/* fetch the metadata for this track */
+		err = chd_get_metadata(chd, CDROM_TRACK_METADATA_TAG, toc->numtrks, metadata, sizeof(metadata), NULL, NULL);
+		if (err != CHDERR_NONE)
+			break;
+
+		/* parse the metadata */
+		type[0] = subtype[0] = 0;
+		if (sscanf(metadata, CDROM_TRACK_METADATA_FORMAT, &tracknum, type, subtype, &frames) != 4)
+			return CHDERR_INVALID_DATA;
+		if (tracknum != toc->numtrks + 1)
+			return CHDERR_INVALID_DATA;
+
+		/* extract the track type and determine the data size */
+		track->trktype = CD_TRACK_MODE1;
+		track->datasize = 0;
+		cdrom_convert_type_string_to_track_info(type, track);
+		if (track->datasize == 0)
+			return CHDERR_INVALID_DATA;
+
+		/* extract the subtype and determine the subcode data size */
+		track->subtype = CD_SUB_NONE;
+		track->subsize = 0;
+		cdrom_convert_subtype_string_to_track_info(subtype, track);
+
+		/* set the frames and extra frames data */
+		track->frames = frames;
+		hunks = (frames + hunksectors - 1) / hunksectors;
+		track->extraframes = hunks * hunksectors - frames;
+	}
+
+	/* if we got any tracks this way, we're done */
+	if (toc->numtrks > 0)
+		return CHDERR_NONE;
+
+	/* look for old-style metadata */
+	err = chd_get_metadata(chd, CDROM_OLD_METADATA_TAG, 0, oldmetadata, sizeof(oldmetadata), NULL, NULL);
+	if (err != CHDERR_NONE)
+		return err;
+
+	/* reconstruct the TOC from it */
+	mrp = &oldmetadata[0];
+	toc->numtrks = *mrp++;
+
+	for (i = 0; i < CD_MAX_TRACKS; i++)
+	{
+		toc->tracks[i].trktype = *mrp++;
+		toc->tracks[i].subtype = *mrp++;
+		toc->tracks[i].datasize = *mrp++;
+		toc->tracks[i].subsize = *mrp++;
+		toc->tracks[i].frames = *mrp++;
+		toc->tracks[i].extraframes = *mrp++;
+	}
+
+	/* TODO: I don't know why sometimes the data is one endian and sometimes another */
+	if ((toc->numtrks < 0) || (toc->numtrks > CD_MAX_TRACKS))
+	{
+		toc->numtrks = FLIPENDIAN_INT32(toc->numtrks);
+		for (i = 0; i < CD_MAX_TRACKS; i++)
 		{
-			cdrom_stop_audio(file);
+			toc->tracks[i].trktype = FLIPENDIAN_INT32(toc->tracks[i].trktype);
+			toc->tracks[i].subtype = FLIPENDIAN_INT32(toc->tracks[i].subtype);
+			toc->tracks[i].datasize = FLIPENDIAN_INT32(toc->tracks[i].datasize);
+			toc->tracks[i].subsize = FLIPENDIAN_INT32(toc->tracks[i].subsize);
+			toc->tracks[i].frames = FLIPENDIAN_INT32(toc->tracks[i].frames);
+			toc->tracks[i].extraframes = FLIPENDIAN_INT32(toc->tracks[i].extraframes);
 		}
-
-		memset(bufL, 0, sizeof(stream_sample_t)*samples_wanted);
-		memset(bufR, 0, sizeof(stream_sample_t)*samples_wanted);
-		return;
 	}
 
-	/* if we've got enough samples, just feed 'em out */
-	if (samples_wanted <= file->audio_samples)
-	{
-		for (i = 0; i < samples_wanted; i++)
-		{
-			*bufL++ = *file->audio_bptr++;
-			*bufR++ = *file->audio_bptr++;
-		}
-
-		file->audio_samples -= samples_wanted;
-		return;
-	}
-
-	/* we don't have enough, so first feed what we've got */
-	for (i = 0; i < file->audio_samples; i++)
-	{
-		*bufL++ = *file->audio_bptr++;
-		*bufR++ = *file->audio_bptr++;
-	}
-
-	/* remember how much left for later */
-	remaining = samples_wanted - file->audio_samples;
-
-	/* reset the buffer and get what we can from the disc */
-	file->audio_samples = 0;
-	if (file->audio_length >= 4)
-	{
-		sectoread = 4;
-	}
-	else
-	{
-		sectoread = file->audio_length;
-	}
-
-	for (i = 0; i < sectoread; i++)
-	{
-		cdrom_read_data(file, file->audio_lba, 1, &file->audio_cache[CD_MAX_SECTOR_DATA*i], CD_TRACK_AUDIO);
-
-		file->audio_lba++;
-	}
-
-	file->audio_samples = (CD_MAX_SECTOR_DATA*sectoread)/4;
-	file->audio_length -= sectoread;
-
-	/* CD-DA data on the disc is big-endian, flip if we're not */
-	#ifdef LSB_FIRST
-	for (i = 0; i < file->audio_samples*4; i += 2)
-	{
-		UINT8 tmp;
-
-		tmp = file->audio_cache[i+1];
-		file->audio_cache[i+1] = file->audio_cache[i];
-		file->audio_cache[i] = tmp;
-	}
-	#endif
-
-	/* reset feedout ptr */
-	file->audio_bptr = (INT16 *)file->audio_cache;
-
-	/* we've got data, feed it out by calling ourselves recursively */
-	cdrom_get_audio_data(file, bufL, bufR, remaining);
+	return CHDERR_NONE;
 }
-
-// returns the last track number
-int cdrom_get_last_track(cdrom_file *file)
-{
-	return file->cdtoc.numtrks;
-}
-
-// get the ADR | CONTROL for a track
-int cdrom_get_adr_control(cdrom_file *file, int track)
-{
-	if (track == 0xaa)
-	{
-		return 0x10;	// audio track, subchannel is position
-	}
-
-	if (file->cdtoc.tracks[track].trktype == CD_TRACK_AUDIO)
-	{
-	 	return 0x10;	// audio track, subchannel is position
-	}
-
-	return 0x14;	// data track, subchannel is position
-}
-
-// is a track audio?
-int cdrom_get_track_type(cdrom_file *file, int track)
-{
-	if (file->cdtoc.tracks[track].trktype == CD_TRACK_AUDIO)
-	{
-		return 1;
-	}
-
-	return 0;
-}
-
-UINT32 cdrom_get_track_length(cdrom_file *file, int track)
-{
-	return (file->cdtoc.tracks[track].frames * file->cdtoc.tracks[track].datasize);
-}
-
-INLINE UINT8 make_bcd(UINT8 data)
-{
-	return ((data / 10) << 4) | (data % 10);
-}
-
-// get the start of a track
-// *file = cdrom
-// track = track #
-// msf = 0 for LBA, 1 for BCD M:S:F
-UINT32 cdrom_get_track_start(cdrom_file *file, int track, int msf)
-{
-	int tstart = cdrom_get_chd_start_of_track(file, track);
-
-	if (msf)
-	{
-		UINT8 m, s, f;
-
-		m = tstart / (60*75);
-		tstart -= (m * 60 * 75);
-		s = tstart / 75;
-		f = tstart % 75;
-		#if VERBOSE
-		logerror("CDROM: %d blocks => %d M %d S %d F\n",  cdrom_get_chd_start_of_track(file, track), m, s, f);
-		#endif
-
-		tstart = make_bcd(m)<<16 | make_bcd(s)<<8 | make_bcd(f);
-
-		#if VERBOSE
-		logerror("CDROM: %08x in BCD\n", tstart);
-		#endif
-
-		return tstart;
-	}
-	else
-	{
-		return tstart;
-	}
-}
-
-cdrom_toc *cdrom_get_toc(cdrom_file *file)
-{
-	return &file->cdtoc;
-}
-

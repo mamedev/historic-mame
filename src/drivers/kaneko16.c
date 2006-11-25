@@ -222,8 +222,6 @@ static MACHINE_RESET( sandscrp )
 	machine_reset_kaneko16(machine);
 
 	kaneko16_sprite_type = 3;	// "different" sprites layout
-
-	watchdog_reset16_r(0,0);	// start with an armed watchdog
 }
 
 static MACHINE_RESET( shogwarr )
@@ -2408,6 +2406,7 @@ static MACHINE_DRIVER_START( sandscrp )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)	// eof callback
+	MDRV_WATCHDOG_VBLANK_INIT(DEFAULT_60HZ_3S_VBLANK_WATCHDOG)
 
 	MDRV_MACHINE_RESET(sandscrp)
 

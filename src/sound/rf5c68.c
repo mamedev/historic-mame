@@ -145,7 +145,7 @@ WRITE8_HANDLER( RF5C68_reg_w )
 	int i;
 
 	/* force the stream to update first */
-	stream_update(chip->stream, 0);
+	stream_update(chip->stream);
 
 	/* switch off the address */
 	switch (offset)

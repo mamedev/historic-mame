@@ -360,7 +360,7 @@ static void okim6295_reset(void *chip)
 	struct okim6295 *info = chip;
 	int i;
 
-	stream_update(info->stream, 0);
+	stream_update(info->stream);
 	for (i = 0; i < OKIM6295_VOICES; i++)
 		info->voice[i].playing = 0;
 }
@@ -376,7 +376,7 @@ static void okim6295_reset(void *chip)
 void OKIM6295_set_bank_base(int which, int base)
 {
 	struct okim6295 *info = sndti_token(SOUND_OKIM6295, which);
-	stream_update(info->stream, 0);
+	stream_update(info->stream);
 	info->bank_offset = base;
 }
 
@@ -409,7 +409,7 @@ static int OKIM6295_status_r(int num)
 	result = 0xf0;	/* naname expects bits 4-7 to be 1 */
 
 	/* set the bit to 1 if something is playing on a given channel */
-	stream_update(info->stream, 0);
+	stream_update(info->stream);
 	for (i = 0; i < OKIM6295_VOICES; i++)
 	{
 		struct ADPCMVoice *voice = &info->voice[i];
@@ -441,7 +441,7 @@ static void OKIM6295_data_w(int num, int data)
 		unsigned char *base;
 
 		/* update the stream */
-		stream_update(info->stream, 0);
+		stream_update(info->stream);
 
 		/* determine which voice(s) (voice is set by a 1 bit in the upper 4 bits of the second byte) */
 		for (i = 0; i < OKIM6295_VOICES; i++, temp >>= 1)
@@ -499,7 +499,7 @@ static void OKIM6295_data_w(int num, int data)
 		int temp = data >> 3, i;
 
 		/* update the stream, then turn it off */
-		stream_update(info->stream, 0);
+		stream_update(info->stream);
 
 		/* determine which voice(s) (voice is set by a 1 bit in bits 3-6 of the command */
 		for (i = 0; i < 4; i++, temp >>= 1)

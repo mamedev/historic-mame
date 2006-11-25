@@ -108,11 +108,13 @@
 #define CHD_METAINDEX_APPEND		((UINT32)-1)
 
 /* standard hard disk metadata */
-#define HARD_DISK_STANDARD_METADATA	0x47444444	/* 'GDDD' */
+#define HARD_DISK_METADATA_TAG		0x47444444	/* 'GDDD' */
 #define HARD_DISK_METADATA_FORMAT	"CYLS:%d,HEADS:%d,SECS:%d,BPS:%d"
 
 /* standard CD-ROM metadata */
-#define CDROM_STANDARD_METADATA		0x43484344	/* 'CHCD' */
+#define CDROM_OLD_METADATA_TAG		0x43484344	/* 'CHCD' */
+#define CDROM_TRACK_METADATA_TAG	0x43485452	/* 'CHTR' */
+#define CDROM_TRACK_METADATA_FORMAT	"TRACK:%d TYPE:%s SUBTYPE:%s FRAMES:%d"
 
 /* CHD open values */
 #define CHD_OPEN_READ				1
@@ -145,7 +147,8 @@ enum _chd_error
 	CHDERR_INVALID_METADATA_SIZE,
 	CHDERR_UNSUPPORTED_VERSION,
 	CHDERR_VERIFY_INCOMPLETE,
-	CHDERR_INVALID_METADATA
+	CHDERR_INVALID_METADATA,
+	CHDERR_INVALID_STATE
 };
 
 
@@ -204,29 +207,93 @@ struct _chd_interface
     FUNCTION PROTOTYPES
 ***************************************************************************/
 
+
+/* ----- external interfacing ----- */
+
+/* set the interface callbacks used for file I/O */
 void chd_set_interface(chd_interface *new_interface);
 
+
+
+/* ----- CHD file management ----- */
+
+/* create a new CHD file fitting the given description */
 chd_error chd_create(const char *filename, UINT64 logicalbytes, UINT32 hunkbytes, UINT32 compression, chd_file *parent);
+
+/* open an existing CHD file */
 chd_error chd_open(const char *filename, int mode, chd_file *parent, chd_file **chd);
+
+/* close a CHD file */
 void chd_close(chd_file *chd);
+
+/* close all open CHD files */
 void chd_close_all(void);
 
-chd_error chd_get_metadata(chd_file *chd, UINT32 searchtag, UINT32 searchindex, void *output, UINT32 outputlen, UINT32 *resultlen, UINT32 *resulttag);
-chd_error chd_set_metadata(chd_file *chd, UINT32 metatag, UINT32 metaindex, const void *inputbuf, UINT32 inputlen);
-chd_error chd_clone_metadata(chd_file *source, chd_file *dest);
+/* compute the indexed filename for multi-CHD use */
+void chd_multi_filename(const char *origname, char *finalname, int index);
 
-chd_error chd_read(chd_file *chd, UINT32 hunknum, void *buffer);
-chd_error chd_write(chd_file *chd, UINT32 hunknum, const void *buffer);
 
+
+/* ----- CHD header management ----- */
+
+/* return a pointer to the extracted CHD header data */
 const chd_header *chd_get_header(chd_file *chd);
+
+/* set a modified header */
 chd_error chd_set_header(const char *filename, const chd_header *header);
 
+
+
+/* ----- core data read/write ----- */
+
+/* read one hunk from the CHD file */
+chd_error chd_read(chd_file *chd, UINT32 hunknum, void *buffer);
+
+/* write one hunk to a CHD file */
+chd_error chd_write(chd_file *chd, UINT32 hunknum, const void *buffer);
+
+
+
+/* ----- metadata management ----- */
+
+/* get indexed metadata of a particular sort */
+chd_error chd_get_metadata(chd_file *chd, UINT32 searchtag, UINT32 searchindex, void *output, UINT32 outputlen, UINT32 *resultlen, UINT32 *resulttag);
+
+/* set indexed metadata of a particular sort */
+chd_error chd_set_metadata(chd_file *chd, UINT32 metatag, UINT32 metaindex, const void *inputbuf, UINT32 inputlen);
+
+/* clone all of the metadata from one CHD to another */
+chd_error chd_clone_metadata(chd_file *source, chd_file *dest);
+
+
+
+/* ----- compression management ----- */
+
+/* begin compressing data to a CHD */
 chd_error chd_compress_begin(chd_file *chd);
+
+/* set internal codec parameters */
+chd_error chd_compress_config(chd_file *chd, int param, void *config);
+
+/* compress the next hunk of data */
 chd_error chd_compress_hunk(chd_file *chd, const void *data, double *curratio);
+
+/* finish compressing data to a CHD */
 chd_error chd_compress_finish(chd_file *chd);
 
+
+
+/* ----- verification management ----- */
+
+/* begin verifying a CHD */
 chd_error chd_verify_begin(chd_file *chd);
+
+/* verify a single hunk of data */
 chd_error chd_verify_hunk(chd_file *chd);
+
+/* finish verifying a CHD, returning the computed MD5 and SHA1 */
 chd_error chd_verify_finish(chd_file *chd, UINT8 *finalmd5, UINT8 *finalsha1);
+
+
 
 #endif /* __CHD_H__ */

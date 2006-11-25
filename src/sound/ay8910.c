@@ -742,7 +742,7 @@ void ay8910_write_ym(void *chip, int addr, int data)
 			if (r == AY_ESHAPE || PSG->Regs[r] != data)
 			{
 				/* update the output buffer before changing the register */
-				stream_update(PSG->Channel,0);
+				stream_update(PSG->Channel);
 			}
 		}
 

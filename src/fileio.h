@@ -34,19 +34,22 @@
 #define SEARCHPATH_CHEAT		NULL
 #define SEARCHPATH_LANGUAGE		NULL
 #define SEARCHPATH_DEBUGLOG		NULL
-#define SEARCHPATH_FONT			NULL
 
 #define SEARCHPATH_ROM			OPTION_ROMPATH
 #ifdef MESS
 #define SEARCHPATH_IMAGE		OPTION_IMAGEPATH
-#define SEARCHPATH_HASH			OPTION_HASH_DIRECTORY
+#define SEARCHPATH_HASH			OPTION_HASHPATH
 #else
 #define SEARCHPATH_IMAGE		OPTION_ROMPATH
 #define SEARCHPATH_HASH			NULL
 #endif
-#define SEARCHPATH_IMAGE_DIFF	OPTION_DIFF_DIRECTORY
 #define SEARCHPATH_SAMPLE		OPTION_SAMPLEPATH
 #define SEARCHPATH_ARTWORK		OPTION_ARTPATH
+#define SEARCHPATH_CTRLR		OPTION_CTRLRPATH
+#define SEARCHPATH_INI			OPTION_INIPATH
+#define SEARCHPATH_FONT			OPTION_FONTPATH
+
+#define SEARCHPATH_IMAGE_DIFF	OPTION_DIFF_DIRECTORY
 #define SEARCHPATH_NVRAM		OPTION_NVRAM_DIRECTORY
 #define SEARCHPATH_CONFIG		OPTION_CFG_DIRECTORY
 #define SEARCHPATH_INPUTLOG		OPTION_INPUT_DIRECTORY
@@ -54,8 +57,6 @@
 #define SEARCHPATH_MEMCARD		OPTION_MEMCARD_DIRECTORY
 #define SEARCHPATH_SCREENSHOT	OPTION_SNAPSHOT_DIRECTORY
 #define SEARCHPATH_MOVIE		OPTION_SNAPSHOT_DIRECTORY
-#define SEARCHPATH_CTRLR		OPTION_CTRLRPATH
-#define SEARCHPATH_INI			OPTION_INIPATH
 #define SEARCHPATH_COMMENT		OPTION_COMMENT_DIRECTORY
 
 
@@ -149,7 +150,7 @@ const char *mame_fhash(mame_file *file, UINT32 functions);
 
 INLINE char *assemble_2_strings(const char *s1, const char *s2)
 {
-	char *tempbuf = malloc_or_die(strlen(s1) + strlen(s2) + 1);
+	char *tempbuf = (char *) malloc_or_die(strlen(s1) + strlen(s2) + 1);
 	strcpy(tempbuf, s1);
 	strcat(tempbuf, s2);
 	return tempbuf;
@@ -164,7 +165,7 @@ INLINE char *assemble_2_strings(const char *s1, const char *s2)
 
 INLINE char *assemble_3_strings(const char *s1, const char *s2, const char *s3)
 {
-	char *tempbuf = malloc_or_die(strlen(s1) + strlen(s2) + strlen(s3) + 1);
+	char *tempbuf = (char *) malloc_or_die(strlen(s1) + strlen(s2) + strlen(s3) + 1);
 	strcpy(tempbuf, s1);
 	strcat(tempbuf, s2);
 	strcat(tempbuf, s3);
@@ -180,7 +181,7 @@ INLINE char *assemble_3_strings(const char *s1, const char *s2, const char *s3)
 
 INLINE char *assemble_4_strings(const char *s1, const char *s2, const char *s3, const char *s4)
 {
-	char *tempbuf = malloc_or_die(strlen(s1) + strlen(s2) + strlen(s3) + strlen(s4) + 1);
+	char *tempbuf = (char *) malloc_or_die(strlen(s1) + strlen(s2) + strlen(s3) + strlen(s4) + 1);
 	strcpy(tempbuf, s1);
 	strcat(tempbuf, s2);
 	strcat(tempbuf, s3);
@@ -197,7 +198,7 @@ INLINE char *assemble_4_strings(const char *s1, const char *s2, const char *s3, 
 
 INLINE char *assemble_5_strings(const char *s1, const char *s2, const char *s3, const char *s4, const char *s5)
 {
-	char *tempbuf = malloc_or_die(strlen(s1) + strlen(s2) + strlen(s3) + strlen(s4) + strlen(s5) + 1);
+	char *tempbuf = (char *) malloc_or_die(strlen(s1) + strlen(s2) + strlen(s3) + strlen(s4) + strlen(s5) + 1);
 	strcpy(tempbuf, s1);
 	strcat(tempbuf, s2);
 	strcat(tempbuf, s3);

@@ -175,7 +175,7 @@ void SN76477_mixer_w(int chip, int data)
 
 	if( data == sn->mixer )
 		return;
-	stream_update(sn->channel, 0);
+	stream_update(sn->channel);
 	sn->mixer = data;
 	LOG(1,("SN76477 #%d: MIXER mode %d [%s]\n", chip, sn->mixer, mixer_mode[sn->mixer]));
 }
@@ -189,7 +189,7 @@ void SN76477_mixer_a_w(int chip, int data)
 	data = data ? 1 : 0;
     if( data == (sn->mixer & 1) )
 		return;
-	stream_update(sn->channel, 0);
+	stream_update(sn->channel);
 	sn->mixer = (sn->mixer & ~1) | data;
 	LOG(1,("SN76477 #%d: MIXER mode %d [%s]\n", chip, sn->mixer, mixer_mode[sn->mixer]));
 }
@@ -203,7 +203,7 @@ void SN76477_mixer_b_w(int chip, int data)
 	data = data ? 2 : 0;
     if( data == (sn->mixer & 2) )
 		return;
-	stream_update(sn->channel, 0);
+	stream_update(sn->channel);
 	sn->mixer = (sn->mixer & ~2) | data;
 	LOG(1,("SN76477 #%d: MIXER mode %d [%s]\n", chip, sn->mixer, mixer_mode[sn->mixer]));
 }
@@ -217,7 +217,7 @@ void SN76477_mixer_c_w(int chip, int data)
 	data = data ? 4 : 0;
     if( data == (sn->mixer & 4) )
 		return;
-	stream_update(sn->channel, 0);
+	stream_update(sn->channel);
 	sn->mixer = (sn->mixer & ~4) | data;
 	LOG(1,("SN76477 #%d: MIXER mode %d [%s]\n", chip, sn->mixer, mixer_mode[sn->mixer]));
 }
@@ -242,7 +242,7 @@ void SN76477_envelope_w(int chip, int data)
 
 	if( data == sn->envelope )
 		return;
-	stream_update(sn->channel, 0);
+	stream_update(sn->channel);
 	sn->envelope = data;
 	LOG(1,("SN76477 #%d: ENVELOPE mode %d [%s]\n", chip, sn->envelope, envelope_mode[sn->envelope]));
 }
@@ -255,7 +255,7 @@ void SN76477_envelope_1_w(int chip, int data)
 
 	if( data == (sn->envelope & 1) )
 		return;
-	stream_update(sn->channel, 0);
+	stream_update(sn->channel);
 	sn->envelope = (sn->envelope & ~1) | data;
 	LOG(1,("SN76477 #%d: ENVELOPE mode %d [%s]\n", chip, sn->envelope, envelope_mode[sn->envelope]));
 }
@@ -270,7 +270,7 @@ void SN76477_envelope_2_w(int chip, int data)
 
 	if( data == (sn->envelope & 2) )
 		return;
-	stream_update(sn->channel, 0);
+	stream_update(sn->channel);
 	sn->envelope = (sn->envelope & ~2) | data;
 	LOG(1,("SN76477 #%d: ENVELOPE mode %d [%s]\n", chip, sn->envelope, envelope_mode[sn->envelope]));
 }
@@ -286,7 +286,7 @@ void SN76477_vco_w(int chip, int data)
 
 	if( data == sn->vco_select )
 		return;
-	stream_update(sn->channel, 0);
+	stream_update(sn->channel);
 	sn->vco_select = data;
 	LOG(1,("SN76477 #%d: VCO select %d [%s]\n", chip, sn->vco_select, sn->vco_select ? "Internal (SLF)" : "External (Pin 16)"));
 }
@@ -302,7 +302,7 @@ void SN76477_enable_w(int chip, int data)
 
 	if( data == sn->enable )
 		return;
-	stream_update(sn->channel, 0);
+	stream_update(sn->channel);
 	sn->enable = data;
 	sn->envelope_state = data;
 
@@ -376,7 +376,7 @@ void SN76477_noise_clock_w(int chip, int data)
 
 	if( data == sn->noise_clock )
 		return;
-	stream_update(sn->channel, 0);
+	stream_update(sn->channel);
 	sn->noise_clock = data;
 	/* on the rising edge shift the polynome */
 	if( sn->noise_clock )
@@ -392,7 +392,7 @@ void SN76477_set_noise_res(int chip, double res)
 
 	CHECK_CHIP_NUM;
 
-	stream_update(sn->channel, 0);
+	stream_update(sn->channel);
 	sn->noise_res = res;
 }
 
@@ -407,7 +407,7 @@ void SN76477_set_filter_res(int chip, double res)
 
 	if( res == sn->filter_res )
 		return;
-	stream_update(sn->channel, 0);
+	stream_update(sn->channel);
 	sn->filter_res = res;
 	if( sn->filter_res > 0 && sn->filter_cap > 0 )
 	{
@@ -429,7 +429,7 @@ void SN76477_set_filter_cap(int chip, double cap)
 
 	if( cap == sn->filter_cap )
 		return;
-	stream_update(sn->channel, 0);
+	stream_update(sn->channel);
 	sn->filter_cap = cap;
 	if( sn->filter_res > 0 && sn->filter_cap > 0 )
 	{
@@ -451,7 +451,7 @@ void SN76477_set_decay_res(int chip, double res)
 
 	if( res == sn->decay_res )
 		return;
-	stream_update(sn->channel, 0);
+	stream_update(sn->channel);
 	sn->decay_res = res;
 	sn->decay_time = sn->decay_res * sn->attack_decay_cap;
 	LOG(1,("SN76477 #%d: DECAY time is %fs\n", chip, sn->decay_time));
@@ -468,7 +468,7 @@ void SN76477_set_attack_decay_cap(int chip, double cap)
 
 	if( cap == sn->attack_decay_cap )
 		return;
-	stream_update(sn->channel, 0);
+	stream_update(sn->channel);
 	sn->attack_decay_cap = cap;
 	sn->decay_time = sn->decay_res * sn->attack_decay_cap;
 	sn->attack_time = sn->attack_res * sn->attack_decay_cap;
@@ -487,7 +487,7 @@ void SN76477_set_attack_res(int chip, double res)
 
 	if( res == sn->attack_res )
 		return;
-	stream_update(sn->channel, 0);
+	stream_update(sn->channel);
 	sn->attack_res = res;
 	sn->attack_time = sn->attack_res * sn->attack_decay_cap;
 	LOG(1,("SN76477 #%d: ATTACK time is %fs\n", chip, sn->attack_time));
@@ -505,7 +505,7 @@ void SN76477_set_amplitude_res(int chip, double res)
 
 	if( res == sn->amplitude_res )
 		return;
-	stream_update(sn->channel, 0);
+	stream_update(sn->channel);
 	sn->amplitude_res = res;
 	if( sn->amplitude_res > 0 )
 	{
@@ -543,7 +543,7 @@ void SN76477_set_feedback_res(int chip, double res)
 
 	if( res == sn->feedback_res )
 		return;
-	stream_update(sn->channel, 0);
+	stream_update(sn->channel);
 	sn->feedback_res = res;
 	if( sn->amplitude_res > 0 )
 	{
@@ -579,7 +579,7 @@ void SN76477_set_pitch_voltage(int chip, double voltage)
 
 	if( voltage == sn->pitch_voltage )
 		return;
-	stream_update(sn->channel, 0);
+	stream_update(sn->channel);
 	sn->pitch_voltage = voltage;
 	LOG(1,("SN76477 #%d: VCO pitch voltage %f (%d%% duty cycle)\n", chip, sn->pitch_voltage, 0));
 }
@@ -595,7 +595,7 @@ void SN76477_set_vco_res(int chip, double res)
 
 	if( res == sn->vco_res )
 		return;
-	stream_update(sn->channel, 0);
+	stream_update(sn->channel);
 	sn->vco_res = res;
 	if( sn->vco_res > 0 && sn->vco_cap > 0 )
 	{
@@ -617,7 +617,7 @@ void SN76477_set_vco_cap(int chip, double cap)
 
 	if( cap == sn->vco_cap )
 		return;
-	stream_update(sn->channel, 0);
+	stream_update(sn->channel);
 	sn->vco_cap = cap;
 	if( sn->vco_res > 0 && sn->vco_cap > 0 )
 	{
@@ -639,7 +639,7 @@ void SN76477_set_vco_voltage(int chip, double voltage)
 
 	if( voltage == sn->vco_voltage )
 		return;
-	stream_update(sn->channel, 0);
+	stream_update(sn->channel);
 	sn->vco_voltage = voltage;
 	LOG(1,("SN76477 #%d: VCO ext. voltage %f (%f * %f = %f Hz)\n", chip,
 		sn->vco_voltage,
@@ -659,7 +659,7 @@ void SN76477_set_slf_res(int chip, double res)
 
 	if( res == sn->slf_res )
 		return;
-	stream_update(sn->channel, 0);
+	stream_update(sn->channel);
 	sn->slf_res = res;
 	if( sn->slf_res > 0 && sn->slf_cap > 0 )
 	{
@@ -681,7 +681,7 @@ void SN76477_set_slf_cap(int chip, double cap)
 
 	if( cap == sn->slf_cap )
 		return;
-	stream_update(sn->channel, 0);
+	stream_update(sn->channel);
 	sn->slf_cap = cap;
 	if( sn->slf_res > 0 && sn->slf_cap > 0 )
 	{

@@ -129,7 +129,7 @@ void polepos_sh_reset(void *token)
 WRITE8_HANDLER( polepos_engine_sound_lsb_w )
 {
 	/* Update stream first so all samples at old frequency are updated. */
-	stream_update(stream, 0);
+	stream_update(stream);
 	sample_lsb = data & 62;
     sample_enable = data & 1;
 }
@@ -139,6 +139,6 @@ WRITE8_HANDLER( polepos_engine_sound_lsb_w )
 /************************************/
 WRITE8_HANDLER( polepos_engine_sound_msb_w )
 {
-	stream_update(stream, 0);
+	stream_update(stream);
 	sample_msb = data & 63;
 }

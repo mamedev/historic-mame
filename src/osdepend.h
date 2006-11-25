@@ -270,11 +270,12 @@ typedef struct _osd_file osd_file;
         the core to access files. These functions will construct paths by
         concatenating various search paths held in the options.c options
         database with partial paths specified by the core. The core assumes
-        that the path separator is a forward slash, but does not interpret
-        any path separators in the search paths, so if you use a different
-        path separator, you may get a mixture of forward slashes (from the
-        core) and native path separators (specified by users and placed into
-        the options database).
+        that the path separator is the first character of the string
+        PATH_SEPARATOR, but does not interpret any path separators in the
+        search paths, so if you use a different path separator in a search
+        path, you may get a mixture of PATH_SEPARATORs (from the core) and
+        alternate path separators (specified by users and placed into the
+        options database).
 -----------------------------------------------------------------------------*/
 mame_file_error osd_open(const char *path, UINT32 openflags, osd_file **file, UINT64 *filesize);
 

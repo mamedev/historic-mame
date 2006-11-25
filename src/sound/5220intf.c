@@ -106,7 +106,7 @@ WRITE8_HANDLER( tms5220_data_w )
 {
 	struct tms5220_info *info = sndti_token(SOUND_TMS5220, 0);
     /* bring up to date first */
-    stream_update(info->stream, 0);
+    stream_update(info->stream);
     tms5220_data_write(info->chip, data);
 }
 
@@ -122,7 +122,7 @@ READ8_HANDLER( tms5220_status_r )
 {
 	struct tms5220_info *info = sndti_token(SOUND_TMS5220, 0);
     /* bring up to date first */
-    stream_update(info->stream, -1);
+    stream_update(info->stream);
     return tms5220_status_read(info->chip);
 }
 
@@ -138,7 +138,7 @@ int tms5220_ready_r(void)
 {
 	struct tms5220_info *info = sndti_token(SOUND_TMS5220, 0);
     /* bring up to date first */
-    stream_update(info->stream, -1);
+    stream_update(info->stream);
     return tms5220_ready_read(info->chip);
 }
 
@@ -156,7 +156,7 @@ double tms5220_time_to_ready(void)
 	double cycles;
 
 	/* bring up to date first */
-	stream_update(info->stream, -1);
+	stream_update(info->stream);
 	cycles = tms5220_cycles_to_ready(info->chip);
 	return cycles * 80.0 / info->clock;
 }
@@ -173,7 +173,7 @@ int tms5220_int_r(void)
 {
 	struct tms5220_info *info = sndti_token(SOUND_TMS5220, 0);
     /* bring up to date first */
-    stream_update(info->stream, -1);
+    stream_update(info->stream);
     return tms5220_int_read(info->chip);
 }
 

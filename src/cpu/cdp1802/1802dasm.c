@@ -99,6 +99,7 @@ static const struct { const char *mnemonic; Adr adr; } table[]={
 
 offs_t cdp1802_dasm(char *dst, offs_t oldpc, const UINT8 *oprom, const UINT8 *opram)
 {
+	UINT32 flags = 0;
 	int pc;
 	int oper;
 	UINT16 absolut;
@@ -114,6 +115,9 @@ offs_t cdp1802_dasm(char *dst, offs_t oldpc, const UINT8 *oprom, const UINT8 *op
 			sprintf(dst,"%-5sR%.1x",table[(oper&0xf0)|1].mnemonic, oper&0x0f);
 		}
 		break;
+	case 0xd0:
+		flags = DASMFLAG_STEP_OVER;
+		/* fall through */
 	case 0x10:
 	case 0x20:
 	case 0x40:
@@ -122,7 +126,6 @@ offs_t cdp1802_dasm(char *dst, offs_t oldpc, const UINT8 *oprom, const UINT8 *op
 	case 0x90:
 	case 0xa0:
 	case 0xb0:
-	case 0xd0:
 	case 0xe0:
 		sprintf(dst,"%-5sR%.1x",table[oper&0xf0].mnemonic, oper&0x0f);
 		break;
@@ -142,6 +145,8 @@ offs_t cdp1802_dasm(char *dst, offs_t oldpc, const UINT8 *oprom, const UINT8 *op
 			switch (table[oper].adr) {
 			case Imp:
 				sprintf(dst,"%-5s",table[oper].mnemonic);
+				if (oper == 0x70 || oper == 0x71)
+					flags = DASMFLAG_STEP_OUT;
 				break;
 			case Imm:
 				sprintf(dst,"%-5s#%.2x",table[oper].mnemonic,oprom[pc++ - oldpc]);
@@ -164,7 +169,8 @@ offs_t cdp1802_dasm(char *dst, offs_t oldpc, const UINT8 *oprom, const UINT8 *op
 		}
 		break;
 	}
-	return pc-oldpc;
+
+	return (pc-oldpc) | flags | DASMFLAG_SUPPORTED;
 }
 #endif	/* MAME_DEBUG */
 

@@ -73,7 +73,7 @@ static void SN76496Write(int chip,int data)
 
 
 	/* update the output buffer before changing the registers */
-	stream_update(R->Channel,0);
+	stream_update(R->Channel);
 
 	if (data & 0x80)
 	{

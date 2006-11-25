@@ -138,7 +138,7 @@ typedef struct
 
 	int idle;
 	int irq_active;
-	int irq_active_num;
+	int active_irq_num;
 
 	SHARC_BOOT_MODE boot_mode;
 } SHARC_REGS;
@@ -163,7 +163,7 @@ static int dmaop_cycles = 0;
 static int dmaop_channel;
 static int dmaop_chained_direction;
 
-
+int interrupt_active = 0;
 
 #define ROPCODE(pc)		((UINT64)(sharc.internal_ram[((pc-0x20000) * 3) + 0]) << 32) | \
 						((UINT64)(sharc.internal_ram[((pc-0x20000) * 3) + 1]) << 16) | \
@@ -249,7 +249,7 @@ static UINT32 sharc_iop_r(UINT32 address)
 			}
 			return r;
 		}
-		default:		fatalerror("sharc_iop_r: Unimplemented IOP reg %02X", address);
+		default:		fatalerror("sharc_iop_r: Unimplemented IOP reg %02X at %08X", address, sharc.pc);
 	}
 	return 0;
 }
@@ -306,7 +306,7 @@ static void sharc_iop_w(UINT32 address, UINT32 data)
 		case 0x4e: sharc.dma[7].ext_modifier = data; return;
 		case 0x4f: sharc.dma[7].ext_count = data; return;
 
-		default:		fatalerror("sharc_iop_w: Unimplemented IOP reg %02X, %08X", address, data);
+		default:		fatalerror("sharc_iop_w: Unimplemented IOP reg %02X, %08X at %08X", address, data, sharc.pc);
 	}
 }
 
@@ -463,6 +463,8 @@ static void sharc_reset(void)
 
 	sharc.idle = 0;
 	sharc.stky = 0x5400000;
+
+	interrupt_active = 0;
 }
 
 static void sharc_exit(void)
@@ -494,8 +496,7 @@ static void sharc_set_irq_line(int irqline, int state)
 {
 	if (state)
 	{
-		sharc.irq_active = 1;
-		sharc.irq_active_num = 8-irqline;
+		sharc.irq_active |= 1 << (8-irqline);
 	}
 }
 
@@ -517,21 +518,42 @@ void sharc_set_flag_input(int flag_num, int state)
 
 static void check_interrupts(void)
 {
-	if ((sharc.imask & (1 << sharc.irq_active_num)) && (sharc.mode1 & MODE1_IRPTEN) && sharc.irq_active)
+	int i;
+	if ((sharc.imask & sharc.irq_active) && (sharc.mode1 & MODE1_IRPTEN) && !interrupt_active)
 	{
-		PUSH_PC(sharc.pc+1);
+		int which = 0;
+		for (i=0; i < 32; i++)
+		{
+			if (sharc.irq_active & (1 << i))
+			{
+				break;
+			}
+			which++;
+		}
 
-		sharc.irptl |= 1 << sharc.irq_active_num;
+		if (sharc.idle)
+		{
+			PUSH_PC(sharc.pc+1);
+		}
+		else
+		{
+			PUSH_PC(sharc.daddr);
+		}
 
-		if (sharc.irq_active_num >= 6 && sharc.irq_active_num <= 8)
+		sharc.irptl |= 1 << which;
+
+		if (which >= 6 && which <= 8)
 		{
 			PUSH_STATUS_STACK();
 		}
 
-		CHANGE_PC(0x20000 + (sharc.irq_active_num * 0x4));
+		CHANGE_PC(0x20000 + (which * 0x4));
 		/* TODO: alter IMASKP */
 
-		sharc.irq_active = 0;
+		sharc.active_irq_num = which;
+		sharc.irq_active &= ~(1 << which);
+
+		interrupt_active = 1;
 	}
 }
 
@@ -563,8 +585,8 @@ static int sharc_execute(int cycles)
 	}
 	if (sharc.irq_active != 0)
 	{
-		sharc.idle = 0;
 		check_interrupts();
+		sharc.idle = 0;
 	}
 
 	// fill the initial pipeline
@@ -752,6 +774,40 @@ static void sharc_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + SHARC_M13:			sharc.dag2.m[5] = info->i;					break;
 		case CPUINFO_INT_REGISTER + SHARC_M14:			sharc.dag2.m[6] = info->i;					break;
 		case CPUINFO_INT_REGISTER + SHARC_M15:			sharc.dag2.m[7] = info->i;					break;
+
+		case CPUINFO_INT_REGISTER + SHARC_L0:			sharc.dag1.l[0] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SHARC_L1:			sharc.dag1.l[1] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SHARC_L2:			sharc.dag1.l[2] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SHARC_L3:			sharc.dag1.l[3] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SHARC_L4:			sharc.dag1.l[4] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SHARC_L5:			sharc.dag1.l[5] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SHARC_L6:			sharc.dag1.l[6] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SHARC_L7:			sharc.dag1.l[7] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SHARC_L8:			sharc.dag2.l[0] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SHARC_L9:			sharc.dag2.l[1] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SHARC_L10:			sharc.dag2.l[2] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SHARC_L11:			sharc.dag2.l[3] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SHARC_L12:			sharc.dag2.l[4] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SHARC_L13:			sharc.dag2.l[5] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SHARC_L14:			sharc.dag2.l[6] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SHARC_L15:			sharc.dag2.m[7] = info->i;					break;
+
+		case CPUINFO_INT_REGISTER + SHARC_B0:			sharc.dag1.b[0] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SHARC_B1:			sharc.dag1.b[1] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SHARC_B2:			sharc.dag1.b[2] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SHARC_B3:			sharc.dag1.b[3] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SHARC_B4:			sharc.dag1.b[4] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SHARC_B5:			sharc.dag1.b[5] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SHARC_B6:			sharc.dag1.b[6] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SHARC_B7:			sharc.dag1.b[7] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SHARC_B8:			sharc.dag2.b[0] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SHARC_B9:			sharc.dag2.b[1] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SHARC_B10:			sharc.dag2.b[2] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SHARC_B11:			sharc.dag2.b[3] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SHARC_B12:			sharc.dag2.b[4] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SHARC_B13:			sharc.dag2.b[5] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SHARC_B14:			sharc.dag2.b[6] = info->i;					break;
+		case CPUINFO_INT_REGISTER + SHARC_B15:			sharc.dag2.b[7] = info->i;					break;
 	}
 }
 
@@ -932,6 +988,40 @@ void sharc_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + SHARC_M14:			info->i = sharc.dag2.m[6];					break;
 		case CPUINFO_INT_REGISTER + SHARC_M15:			info->i = sharc.dag2.m[7];					break;
 
+		case CPUINFO_INT_REGISTER + SHARC_L0:			info->i = sharc.dag1.l[0];					break;
+		case CPUINFO_INT_REGISTER + SHARC_L1:			info->i = sharc.dag1.l[1];					break;
+		case CPUINFO_INT_REGISTER + SHARC_L2:			info->i = sharc.dag1.l[2];					break;
+		case CPUINFO_INT_REGISTER + SHARC_L3:			info->i = sharc.dag1.l[3];					break;
+		case CPUINFO_INT_REGISTER + SHARC_L4:			info->i = sharc.dag1.l[4];					break;
+		case CPUINFO_INT_REGISTER + SHARC_L5:			info->i = sharc.dag1.l[5];					break;
+		case CPUINFO_INT_REGISTER + SHARC_L6:			info->i = sharc.dag1.l[6];					break;
+		case CPUINFO_INT_REGISTER + SHARC_L7:			info->i = sharc.dag1.l[7];					break;
+		case CPUINFO_INT_REGISTER + SHARC_L8:			info->i = sharc.dag2.l[0];					break;
+		case CPUINFO_INT_REGISTER + SHARC_L9:			info->i = sharc.dag2.l[1];					break;
+		case CPUINFO_INT_REGISTER + SHARC_L10:			info->i = sharc.dag2.l[2];					break;
+		case CPUINFO_INT_REGISTER + SHARC_L11:			info->i = sharc.dag2.l[3];					break;
+		case CPUINFO_INT_REGISTER + SHARC_L12:			info->i = sharc.dag2.l[4];					break;
+		case CPUINFO_INT_REGISTER + SHARC_L13:			info->i = sharc.dag2.l[5];					break;
+		case CPUINFO_INT_REGISTER + SHARC_L14:			info->i = sharc.dag2.l[6];					break;
+		case CPUINFO_INT_REGISTER + SHARC_L15:			info->i = sharc.dag2.l[7];					break;
+
+		case CPUINFO_INT_REGISTER + SHARC_B0:			info->i = sharc.dag1.b[0];					break;
+		case CPUINFO_INT_REGISTER + SHARC_B1:			info->i = sharc.dag1.b[1];					break;
+		case CPUINFO_INT_REGISTER + SHARC_B2:			info->i = sharc.dag1.b[2];					break;
+		case CPUINFO_INT_REGISTER + SHARC_B3:			info->i = sharc.dag1.b[3];					break;
+		case CPUINFO_INT_REGISTER + SHARC_B4:			info->i = sharc.dag1.b[4];					break;
+		case CPUINFO_INT_REGISTER + SHARC_B5:			info->i = sharc.dag1.b[5];					break;
+		case CPUINFO_INT_REGISTER + SHARC_B6:			info->i = sharc.dag1.b[6];					break;
+		case CPUINFO_INT_REGISTER + SHARC_B7:			info->i = sharc.dag1.b[7];					break;
+		case CPUINFO_INT_REGISTER + SHARC_B8:			info->i = sharc.dag2.b[0];					break;
+		case CPUINFO_INT_REGISTER + SHARC_B9:			info->i = sharc.dag2.b[1];					break;
+		case CPUINFO_INT_REGISTER + SHARC_B10:			info->i = sharc.dag2.b[2];					break;
+		case CPUINFO_INT_REGISTER + SHARC_B11:			info->i = sharc.dag2.b[3];					break;
+		case CPUINFO_INT_REGISTER + SHARC_B12:			info->i = sharc.dag2.b[4];					break;
+		case CPUINFO_INT_REGISTER + SHARC_B13:			info->i = sharc.dag2.b[5];					break;
+		case CPUINFO_INT_REGISTER + SHARC_B14:			info->i = sharc.dag2.b[6];					break;
+		case CPUINFO_INT_REGISTER + SHARC_B15:			info->i = sharc.dag2.b[7];					break;
+
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_GET_CONTEXT:					info->getcontext = sharc_get_context;	break;
 		case CPUINFO_PTR_SET_CONTEXT:					info->setcontext = sharc_set_context;	break;
@@ -1021,6 +1111,40 @@ void sharc_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_STR_REGISTER + SHARC_M13:			sprintf(info->s = cpuintrf_temp_str(), "M13: %08X", (UINT32)sharc.dag2.m[5]); break;
 		case CPUINFO_STR_REGISTER + SHARC_M14:			sprintf(info->s = cpuintrf_temp_str(), "M14: %08X", (UINT32)sharc.dag2.m[6]); break;
 		case CPUINFO_STR_REGISTER + SHARC_M15:			sprintf(info->s = cpuintrf_temp_str(), "M15: %08X", (UINT32)sharc.dag2.m[7]); break;
+
+		case CPUINFO_STR_REGISTER + SHARC_L0:			sprintf(info->s = cpuintrf_temp_str(), "L0: %08X", (UINT32)sharc.dag1.l[0]); break;
+		case CPUINFO_STR_REGISTER + SHARC_L1:			sprintf(info->s = cpuintrf_temp_str(), "L1: %08X", (UINT32)sharc.dag1.l[1]); break;
+		case CPUINFO_STR_REGISTER + SHARC_L2:			sprintf(info->s = cpuintrf_temp_str(), "L2: %08X", (UINT32)sharc.dag1.l[2]); break;
+		case CPUINFO_STR_REGISTER + SHARC_L3:			sprintf(info->s = cpuintrf_temp_str(), "L3: %08X", (UINT32)sharc.dag1.l[3]); break;
+		case CPUINFO_STR_REGISTER + SHARC_L4:			sprintf(info->s = cpuintrf_temp_str(), "L4: %08X", (UINT32)sharc.dag1.l[4]); break;
+		case CPUINFO_STR_REGISTER + SHARC_L5:			sprintf(info->s = cpuintrf_temp_str(), "L5: %08X", (UINT32)sharc.dag1.l[5]); break;
+		case CPUINFO_STR_REGISTER + SHARC_L6:			sprintf(info->s = cpuintrf_temp_str(), "L6: %08X", (UINT32)sharc.dag1.l[6]); break;
+		case CPUINFO_STR_REGISTER + SHARC_L7:			sprintf(info->s = cpuintrf_temp_str(), "L7: %08X", (UINT32)sharc.dag1.l[7]); break;
+		case CPUINFO_STR_REGISTER + SHARC_L8:			sprintf(info->s = cpuintrf_temp_str(), "L8: %08X", (UINT32)sharc.dag2.l[0]); break;
+		case CPUINFO_STR_REGISTER + SHARC_L9:			sprintf(info->s = cpuintrf_temp_str(), "L9: %08X", (UINT32)sharc.dag2.l[1]); break;
+		case CPUINFO_STR_REGISTER + SHARC_L10:			sprintf(info->s = cpuintrf_temp_str(), "L10: %08X", (UINT32)sharc.dag2.l[2]); break;
+		case CPUINFO_STR_REGISTER + SHARC_L11:			sprintf(info->s = cpuintrf_temp_str(), "L11: %08X", (UINT32)sharc.dag2.l[3]); break;
+		case CPUINFO_STR_REGISTER + SHARC_L12:			sprintf(info->s = cpuintrf_temp_str(), "L12: %08X", (UINT32)sharc.dag2.l[4]); break;
+		case CPUINFO_STR_REGISTER + SHARC_L13:			sprintf(info->s = cpuintrf_temp_str(), "L13: %08X", (UINT32)sharc.dag2.l[5]); break;
+		case CPUINFO_STR_REGISTER + SHARC_L14:			sprintf(info->s = cpuintrf_temp_str(), "L14: %08X", (UINT32)sharc.dag2.l[6]); break;
+		case CPUINFO_STR_REGISTER + SHARC_L15:			sprintf(info->s = cpuintrf_temp_str(), "L15: %08X", (UINT32)sharc.dag2.l[7]); break;
+
+		case CPUINFO_STR_REGISTER + SHARC_B0:			sprintf(info->s = cpuintrf_temp_str(), "B0: %08X", (UINT32)sharc.dag1.b[0]); break;
+		case CPUINFO_STR_REGISTER + SHARC_B1:			sprintf(info->s = cpuintrf_temp_str(), "B1: %08X", (UINT32)sharc.dag1.b[1]); break;
+		case CPUINFO_STR_REGISTER + SHARC_B2:			sprintf(info->s = cpuintrf_temp_str(), "B2: %08X", (UINT32)sharc.dag1.b[2]); break;
+		case CPUINFO_STR_REGISTER + SHARC_B3:			sprintf(info->s = cpuintrf_temp_str(), "B3: %08X", (UINT32)sharc.dag1.b[3]); break;
+		case CPUINFO_STR_REGISTER + SHARC_B4:			sprintf(info->s = cpuintrf_temp_str(), "B4: %08X", (UINT32)sharc.dag1.b[4]); break;
+		case CPUINFO_STR_REGISTER + SHARC_B5:			sprintf(info->s = cpuintrf_temp_str(), "B5: %08X", (UINT32)sharc.dag1.b[5]); break;
+		case CPUINFO_STR_REGISTER + SHARC_B6:			sprintf(info->s = cpuintrf_temp_str(), "B6: %08X", (UINT32)sharc.dag1.b[6]); break;
+		case CPUINFO_STR_REGISTER + SHARC_B7:			sprintf(info->s = cpuintrf_temp_str(), "B7: %08X", (UINT32)sharc.dag1.b[7]); break;
+		case CPUINFO_STR_REGISTER + SHARC_B8:			sprintf(info->s = cpuintrf_temp_str(), "B8: %08X", (UINT32)sharc.dag2.b[0]); break;
+		case CPUINFO_STR_REGISTER + SHARC_B9:			sprintf(info->s = cpuintrf_temp_str(), "B9: %08X", (UINT32)sharc.dag2.b[1]); break;
+		case CPUINFO_STR_REGISTER + SHARC_B10:			sprintf(info->s = cpuintrf_temp_str(), "B10: %08X", (UINT32)sharc.dag2.b[2]); break;
+		case CPUINFO_STR_REGISTER + SHARC_B11:			sprintf(info->s = cpuintrf_temp_str(), "B11: %08X", (UINT32)sharc.dag2.b[3]); break;
+		case CPUINFO_STR_REGISTER + SHARC_B12:			sprintf(info->s = cpuintrf_temp_str(), "B12: %08X", (UINT32)sharc.dag2.b[4]); break;
+		case CPUINFO_STR_REGISTER + SHARC_B13:			sprintf(info->s = cpuintrf_temp_str(), "B13: %08X", (UINT32)sharc.dag2.b[5]); break;
+		case CPUINFO_STR_REGISTER + SHARC_B14:			sprintf(info->s = cpuintrf_temp_str(), "B14: %08X", (UINT32)sharc.dag2.b[6]); break;
+		case CPUINFO_STR_REGISTER + SHARC_B15:			sprintf(info->s = cpuintrf_temp_str(), "B15: %08X", (UINT32)sharc.dag2.b[7]); break;
 	}
 }
 

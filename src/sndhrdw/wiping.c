@@ -211,7 +211,7 @@ WRITE8_HANDLER( wiping_sound_w )
 	int base;
 
 	/* update the streams */
-	stream_update(stream, 0);
+	stream_update(stream);
 
 	/* set the register */
 	wiping_soundregs[offset] = data;

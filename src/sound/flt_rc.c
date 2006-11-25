@@ -51,7 +51,7 @@ void filter_rc_set_RC(int num, int R1, int R2, int R3, int C)
 	if(!info)
 		return;
 
-	stream_update(info->stream, 0);
+	stream_update(info->stream);
 
 	if (C == 0)
 	{

@@ -201,7 +201,7 @@ WRITE8_HANDLER( flower_sound1_w )
 	int base;
 
 	/* update the streams */
-	stream_update(stream, 0);
+	stream_update(stream);
 
 	/* set the register */
 	flower_soundregs1[offset] = data;
@@ -250,7 +250,7 @@ popmessage("%02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%02x %02x%
 */
 
 	/* update the streams */
-	stream_update(stream, 0);
+	stream_update(stream);
 
 	/* set the register */
 	flower_soundregs2[offset] = data;

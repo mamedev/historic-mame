@@ -415,7 +415,7 @@ WRITE8_HANDLER( pleiads_sound_control_a_w )
 
 	logerror("pleiads_sound_control_b_w $%02x\n", data);
 
-	stream_update(channel,0);
+	stream_update(channel);
 	sound_latch_a = data;
 }
 
@@ -439,7 +439,7 @@ WRITE8_HANDLER( pleiads_sound_control_b_w )
 
 	tms36xx_note_w(0, pitch, note);
 
-	stream_update(channel,0);
+	stream_update(channel);
 	sound_latch_b = data;
 }
 
@@ -450,7 +450,7 @@ WRITE8_HANDLER( pleiads_sound_control_c_w )
 		return;
 
 	logerror("pleiads_sound_control_c_w $%02x\n", data);
-	stream_update(channel,0);
+	stream_update(channel);
 	sound_latch_c = data;
 }
 

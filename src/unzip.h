@@ -18,9 +18,8 @@
 #include "osdepend.h"
 
 
-
 /***************************************************************************
-    TYPE DEFINITIONS
+    CONSTANTS
 ***************************************************************************/
 
 #define ZIP_DECOMPRESS_BUFSIZE	16384
@@ -46,6 +45,7 @@ typedef enum _zip_error zip_error;
     TYPE DEFINITIONS
 ***************************************************************************/
 
+/* contains extracted file header information */
 typedef struct _zip_file_header zip_file_header;
 struct _zip_file_header
 {
@@ -74,6 +74,7 @@ struct _zip_file_header
 };
 
 
+/* contains extracted end of central directory information */
 typedef struct _zip_ecd zip_ecd;
 struct _zip_ecd
 {
@@ -92,6 +93,7 @@ struct _zip_ecd
 };
 
 
+/* describes an open ZIP file */
 typedef struct _zip_file zip_file;
 struct _zip_file
 {
@@ -114,12 +116,28 @@ struct _zip_file
     FUNCTION PROTOTYPES
 ***************************************************************************/
 
+
+/* ----- ZIP file access ----- */
+
+/* open a ZIP file and parse its central directory */
 zip_error zip_file_open(const char *filename, zip_file **zip);
+
+/* close a ZIP file (may actually be left open due to caching) */
 void zip_file_close(zip_file *zip);
+
+/* clear out all open ZIP files from the cache */
 void zip_file_cache_clear(void);
 
+
+/* ----- contained file access ----- */
+
+/* find the first file in the ZIP */
 const zip_file_header *zip_file_first_file(zip_file *zip);
+
+/* find the next file in the ZIP */
 const zip_file_header *zip_file_next_file(zip_file *zip);
+
+/* decompress the most recently found file in the ZIP */
 zip_error zip_file_decompress(zip_file *zip, void *buffer, UINT32 length);
 
 

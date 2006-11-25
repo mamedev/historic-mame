@@ -79,30 +79,33 @@ const char *option_unadorned[MAX_UNADORNED_OPTIONS] =
 static const options_entry core_options[] =
 {
 	// unadorned options - only a single one supported at the moment
-	{ "<UNADORNED0>",              NULL,        0,                 NULL },
+	{ "<UNADORNED0>",                NULL,        0,                 NULL },
 
 	// file and directory options
-	{ NULL,                        NULL,        OPTION_HEADER,     "CORE PATH AND DIRECTORY OPTIONS" },
-#ifndef MESS
-	{ "rompath;rp",                "roms",      0,                 "path to ROMsets and hard disk images" },
-#else
-	{ "biospath;bp",               "bios",      0,                 "path to BIOS sets" },
-	{ "softwarepath;swp",          "software",  0,                 "path to software" },
-	{ "hash_directory;hash",       "hash",      0,                 "path to hash files" },
+	{ NULL,                          NULL,        OPTION_HEADER,     "CORE SEARCH PATH OPTIONS" },
+	{ "rompath;rp;biospath;bp",      "roms",      0,                 "path to ROMsets and hard disk images" },
+#ifdef MESS
+	{ "hashpath;hash_directory;hash","hash",      0,                 "path to hash files" },
+	{ "softwarepath;swp",            "software",  0,                 "path to software" },
 #endif
-	{ "samplepath;sp",             "samples",   0,                 "path to samplesets" },
-	{ "inipath",                   ".;ini",     0,                 "path to ini files" },
-	{ "cfg_directory",             "cfg",       0,                 "directory to save configurations" },
-	{ "nvram_directory",           "nvram",     0,                 "directory to save nvram contents" },
-	{ "memcard_directory",         "memcard",   0,                 "directory to save memory card contents" },
-	{ "input_directory",           "inp",       0,                 "directory to save input device logs" },
-	{ "state_directory",           "sta",       0,                 "directory to save states" },
-	{ "artpath;artwork_directory", "artwork",   0,                 "path to artwork files" },
-	{ "snapshot_directory",        "snap",      0,                 "directory to save screenshots" },
-	{ "diff_directory",            "diff",      0,                 "directory to save hard drive image difference files" },
-	{ "ctrlrpath;ctrlr_directory", "ctrlr",     0,                 "path to controller definitions" },
-	{ "comment_directory",         "comments",  0,                 "directory to save debugger comments" },
-	{ "cheat_file",                "cheat.dat", 0,                 "cheat filename" },
+	{ "samplepath;sp",               "samples",   0,                 "path to samplesets" },
+	{ "artpath;artwork_directory",   "artwork",   0,                 "path to artwork files" },
+	{ "ctrlrpath;ctrlr_directory",   "ctrlr",     0,                 "path to controller definitions" },
+	{ "inipath",                     ".;ini",     0,                 "path to ini files" },
+	{ "fontpath",                    ".",         0,                 "path to font files" },
+
+	{ NULL,                          NULL,        OPTION_HEADER,     "CORE OUTPUT DIRECTORY OPTIONS" },
+	{ "cfg_directory",               "cfg",       0,                 "directory to save configurations" },
+	{ "nvram_directory",             "nvram",     0,                 "directory to save nvram contents" },
+	{ "memcard_directory",           "memcard",   0,                 "directory to save memory card contents" },
+	{ "input_directory",             "inp",       0,                 "directory to save input device logs" },
+	{ "state_directory",             "sta",       0,                 "directory to save states" },
+	{ "snapshot_directory",          "snap",      0,                 "directory to save screenshots" },
+	{ "diff_directory",              "diff",      0,                 "directory to save hard drive image difference files" },
+	{ "comment_directory",           "comments",  0,                 "directory to save debugger comments" },
+
+	{ NULL,                          NULL,        OPTION_HEADER,     "CORE FILENAME OPTIONS" },
+	{ "cheat_file",                  "cheat.dat", 0,                 "cheat filename" },
 
 	{ NULL }
 };
@@ -207,28 +210,59 @@ void options_init(const options_entry *entrylist)
 
 void options_add_entries(const options_entry *entrylist)
 {
-	options_data *data;
-
 	assert_always(datalist_nextptr != NULL, "Missing call to options_init()!");
 
 	/* loop over entries until we hit a NULL name */
 	for ( ; entrylist->name != NULL || (entrylist->flags & OPTION_HEADER); entrylist++)
 	{
+		options_data *match = NULL;
+		int i;
+
 		/* allocate a new item */
-		data = malloc_or_die(sizeof(*data));
+		options_data *data = malloc_or_die(sizeof(*data));
 		memset(data, 0, sizeof(*data));
 
-		/* separate the names, copy the flags, and set the value equal to the default */
+		/* separate the names */
 		if (entrylist->name != NULL)
 			separate_names(entrylist->name, data->names, ARRAY_LENGTH(data->names));
-		data->flags = entrylist->flags;
-		data->data = copy_string(entrylist->defvalue, NULL);
-		data->defdata = copy_string(entrylist->defvalue, NULL);
-		data->description = entrylist->description;
 
-		/* fill it in and add to the end of the list */
-		*datalist_nextptr = data;
-		datalist_nextptr = &data->next;
+		/* do we match an existing entry? */
+		for (i = 0; i < ARRAY_LENGTH(data->names) && match == NULL; i++)
+			if (data->names[i] != NULL)
+				match = find_entry_data(data->names[i], FALSE);
+
+		/* if so, throw away this entry and replace the data */
+		if (match != NULL)
+		{
+			/* free what we've allocated so far */
+			for (i = 0; i < ARRAY_LENGTH(data->names); i++)
+				if (data->names[i] != NULL)
+					free((void *)data->names[i]);
+			free(data);
+
+			/* update the data and default data */
+			data = match;
+			if (data->data != NULL)
+				free((void *)data->data);
+			if (data->defdata != NULL)
+				free((void *)data->defdata);
+			data->data = copy_string(entrylist->defvalue, NULL);
+			data->defdata = copy_string(entrylist->defvalue, NULL);
+		}
+
+		/* otherwise, finish making the new entry */
+		else
+		{
+			/* copy the flags, and set the value equal to the default */
+			data->flags = entrylist->flags;
+			data->data = copy_string(entrylist->defvalue, NULL);
+			data->defdata = copy_string(entrylist->defvalue, NULL);
+			data->description = entrylist->description;
+
+			/* fill it in and add to the end of the list */
+			*datalist_nextptr = data;
+			datalist_nextptr = &data->next;
+		}
 	}
 }
 

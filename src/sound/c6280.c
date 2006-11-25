@@ -134,7 +134,7 @@ void c6280_write(c6280_t *p, int offset, int data)
     t_channel *q = &p->channel[p->select];
 
     /* Update stream */
-    stream_update(p->stream, 0);
+    stream_update(p->stream);
 
     switch(offset & 0x0F)
     {

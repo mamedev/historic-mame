@@ -74,7 +74,7 @@ static void ym3812_stream_update(void *param, stream_sample_t **inputs, stream_s
 static void _stream_update_3812(void * param, int interval)
 {
 	struct ym3812_info *info = param;
-	stream_update(info->stream, interval);
+	stream_update(info->stream);
 }
 
 
@@ -245,7 +245,7 @@ static void ym3526_stream_update(void *param, stream_sample_t **inputs, stream_s
 static void _stream_update_3526(void *param, int interval)
 {
 	struct ym3526_info *info = param;
-	stream_update(info->stream, interval);
+	stream_update(info->stream);
 }
 
 
@@ -442,7 +442,7 @@ static void y8950_stream_update(void *param, stream_sample_t **inputs, stream_sa
 static void _stream_update_8950(void *param, int interval)
 {
 	struct y8950_info *info = param;
-	stream_update(info->stream, interval);
+	stream_update(info->stream);
 }
 
 

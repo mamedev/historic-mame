@@ -752,14 +752,14 @@ static void msm5232_stop (void *chip)
 WRITE8_HANDLER ( MSM5232_0_w )
 {
 	MSM5232 *chip = sndti_token(SOUND_MSM5232, 0);
-	stream_update (chip->stream, 0);
+	stream_update (chip->stream);
 	msm5232_write(chip, offset, data);
 }
 
 WRITE8_HANDLER ( MSM5232_1_w )
 {
 	MSM5232 *chip = sndti_token(SOUND_MSM5232, 1);
-	stream_update (chip->stream, 0);
+	stream_update (chip->stream);
 	msm5232_write(chip, offset, data);
 }
 

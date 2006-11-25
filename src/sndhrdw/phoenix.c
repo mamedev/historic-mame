@@ -382,7 +382,7 @@ WRITE8_HANDLER( phoenix_sound_control_a_w )
 //  discrete_sound_w(PHOENIX_EFFECT_3_EN  , data & 0x40);
 //  discrete_sound_w(PHOENIX_EFFECT_4_EN  , data & 0x80);
 
-	stream_update(channel,0);
+	stream_update(channel);
 	sound_latch_a = data;
 }
 

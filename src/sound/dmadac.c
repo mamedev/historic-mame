@@ -309,7 +309,7 @@ void dmadac_transfer(UINT8 first_channel, UINT8 num_channels, offs_t channel_spa
 	for (i = 0; i < num_channels; i++)
 	{
 		struct dmadac_channel_data *info = sndti_token(SOUND_DMADAC, first_channel + i);
-		stream_update(info->channel, 0);
+		stream_update(info->channel);
 	}
 
 	/* loop over all channels and accumulate the data */
@@ -363,7 +363,7 @@ void dmadac_enable(UINT8 first_channel, UINT8 num_channels, UINT8 enable)
 	for (i = 0; i < num_channels; i++)
 	{
 		struct dmadac_channel_data *info = sndti_token(SOUND_DMADAC, first_channel + i);
-		stream_update(info->channel, 0);
+		stream_update(info->channel);
 		info->enabled = enable;
 		if (!enable)
 			info->curinpos = info->curoutpos = info->curoutfrac = 0;
@@ -386,7 +386,7 @@ void dmadac_set_frequency(UINT8 first_channel, UINT8 num_channels, double freque
 	for (i = 0; i < num_channels; i++)
 	{
 		struct dmadac_channel_data *info = sndti_token(SOUND_DMADAC, first_channel + i);
-		stream_update(info->channel, 0);
+		stream_update(info->channel);
 		info->frequency = frequency;
 		compute_step(info);
 	}
@@ -408,7 +408,7 @@ void dmadac_set_volume(UINT8 first_channel, UINT8 num_channels, UINT16 volume)
 	for (i = 0; i < num_channels; i++)
 	{
 		struct dmadac_channel_data *info = sndti_token(SOUND_DMADAC, first_channel + i);
-		stream_update(info->channel, 0);
+		stream_update(info->channel);
 		info->volume = volume;
 	}
 }

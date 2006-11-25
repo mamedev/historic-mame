@@ -742,7 +742,7 @@ static void timer_w(int which, UINT8 offset, UINT8 data)
 	timer8253_channel *ch;
 	int was_holding;
 
-	stream_update(usb.stream, 0);
+	stream_update(usb.stream);
 
 	/* switch off the offset */
 	switch (offset)
@@ -809,7 +809,7 @@ static void env_w(int which, UINT8 offset, UINT8 data)
 {
 	timer8253 *g = &usb.timer_group[which];
 
-	stream_update(usb.stream, 0);
+	stream_update(usb.stream);
 
 	if (offset < 3)
 		g->env[offset] = (double)data;

@@ -59,7 +59,7 @@ WRITE8_HANDLER( bzone_sounds_w )
 	if( data == latch )
 		return;
 
-	stream_update(channel, 0);
+	stream_update(channel);
     latch = data;
 
     sound_global_enable(latch & 0x20);

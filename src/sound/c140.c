@@ -187,7 +187,7 @@ static long find_sample(struct c140_info *info, long adrs, long bank, int voice)
 WRITE8_HANDLER( C140_w )
 {
 	struct c140_info *info = sndti_token(SOUND_C140, 0);
-	stream_update(info->stream, 0);
+	stream_update(info->stream);
 
 	offset&=0x1ff;
 

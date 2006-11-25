@@ -35,26 +35,29 @@
 /* core options */
 #define OPTION_GAMENAME				OPTION_UNADORNED(0)
 
-/* core path and directory options */
-#ifdef MESS
-#define OPTION_ROMPATH				"biospath"
-#define OPTION_HASH_DIRECTORY		"hash_directory"
-#define OPTION_IMAGEPATH			"softwarepath"
-#else
+/* core search path options */
 #define OPTION_ROMPATH				"rompath"
+#ifdef MESS
+#define OPTION_HASHPATH				"hashpath"
+#define OPTION_IMAGEPATH			"softwarepath"
 #endif
 #define OPTION_SAMPLEPATH			"samplepath"
+#define OPTION_ARTPATH				"artpath"
+#define OPTION_CTRLRPATH			"ctrlrpath"
 #define OPTION_INIPATH				"inipath"
+#define OPTION_FONTPATH				"fontpath"
+
+/* core directory options */
 #define OPTION_CFG_DIRECTORY		"cfg_directory"
 #define OPTION_NVRAM_DIRECTORY		"nvram_directory"
 #define OPTION_MEMCARD_DIRECTORY	"memcard_directory"
 #define OPTION_INPUT_DIRECTORY		"input_directory"
 #define OPTION_STATE_DIRECTORY		"state_directory"
-#define OPTION_ARTPATH				"artpath"
 #define OPTION_SNAPSHOT_DIRECTORY	"snapshot_directory"
 #define OPTION_DIFF_DIRECTORY		"diff_directory"
-#define OPTION_CTRLRPATH			"ctrlrpath"
 #define OPTION_COMMENT_DIRECTORY	"comment_directory"
+
+/* core filename options */
 #define OPTION_CHEAT_FILE			"cheat_file"
 
 

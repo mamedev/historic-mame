@@ -361,7 +361,7 @@ static void bsmt2000_reg_write(bsmt2000_chip *chip, offs_t offset, UINT16 data, 
 		COMBINE_DATA(&voice->reg[regindex]);
 
 	/* force an update */
-	stream_update(chip->stream, 0);
+	stream_update(chip->stream);
 
 	/* update parameters for standard voices */
 	switch (regindex)

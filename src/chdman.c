@@ -196,6 +196,7 @@ static void usage(void)
 	printf("   or: chdman -merge parent.chd diff.chd output.chd\n");
 	printf("   or: chdman -diff parent.chd compare.chd diff.chd\n");
 	printf("   or: chdman -setchs inout.chd cylinders heads sectors\n");
+	printf("   or: chdman -split input.chd output.chd length\n");
 	exit(1);
 }
 
@@ -270,8 +271,8 @@ static void guess_chs(const char *filename, int offset, int sectorsize, UINT32 *
 
 static void do_createhd(int argc, char *argv[])
 {
+	UINT32 guess_cylinders = 0, guess_heads = 0, guess_sectors = 0, guess_sectorsize = 0;
 	UINT32 cylinders, heads, sectors, sectorsize, hunksize, totalsectors, offset;
-	UINT32 guess_cylinders, guess_heads, guess_sectors, guess_sectorsize;
 	const char *inputfile, *outputfile;
 	chd_file *chd = NULL;
 	char metadata[256];
@@ -327,7 +328,7 @@ static void do_createhd(int argc, char *argv[])
 
 	/* write the metadata */
 	sprintf(metadata, HARD_DISK_METADATA_FORMAT, cylinders, heads, sectors, sectorsize);
-	err = chd_set_metadata(chd, HARD_DISK_STANDARD_METADATA, 0, metadata, strlen(metadata) + 1);
+	err = chd_set_metadata(chd, HARD_DISK_METADATA_TAG, 0, metadata, strlen(metadata) + 1);
 	if (err != CHDERR_NONE)
 	{
 		printf("Error adding hard disk metadata: %s\n", error_string(err));
@@ -435,7 +436,6 @@ static void do_createcd(int argc, char *argv[])
 	static cdrom_toc toc;
 	static cdrom_track_input_info track_info;
 	int i;
-	static UINT32 metadata[CD_METADATA_WORDS], *mwp;
 	const chd_header *header;
 	UINT32 totalhunks = 0;
 	UINT8 *cache;
@@ -518,34 +518,21 @@ static void do_createcd(int argc, char *argv[])
 		return;
 	}
 
-	/* convert the metadata to a "portable" format */
-	mwp = &metadata[0];
-	put_bigendian_uint32((UINT8 *)mwp, toc.numtrks);
-	mwp++;
-	for (i = 0; i < CD_MAX_TRACKS; i++)
-	{
-		put_bigendian_uint32((UINT8 *)mwp, toc.tracks[i].trktype);
-		mwp++;
-		put_bigendian_uint32((UINT8 *)mwp, toc.tracks[i].subtype);
-		mwp++;
-		put_bigendian_uint32((UINT8 *)mwp, toc.tracks[i].datasize);
-		mwp++;
-		put_bigendian_uint32((UINT8 *)mwp, toc.tracks[i].subsize);
-		mwp++;
-		put_bigendian_uint32((UINT8 *)mwp, toc.tracks[i].frames);
-		mwp++;
-		put_bigendian_uint32((UINT8 *)mwp, toc.tracks[i].extraframes);
-		mwp++;
-	}
-
 	/* write the metadata */
-	err = chd_set_metadata(chd, CDROM_STANDARD_METADATA, 0, metadata, sizeof(metadata));
-	if (err != CHDERR_NONE)
+	for (i = 0; i < toc.numtrks; i++)
 	{
-		printf("Error adding CD-ROM metadata: %s\n", error_string(err));
-		chd_close(chd);
-		remove(outputfile);
-		return;
+		char metadata[256];
+		sprintf(metadata, CDROM_TRACK_METADATA_FORMAT, i + 1, cdrom_get_type_string(&toc.tracks[i]),
+				cdrom_get_subtype_string(&toc.tracks[i]), toc.tracks[i].frames);
+
+		err = chd_set_metadata(chd, CDROM_TRACK_METADATA_TAG, i, metadata, strlen(metadata) + 1);
+		if (err != CHDERR_NONE)
+		{
+			printf("Error adding CD-ROM metadata: %s\n", error_string(err));
+			chd_close(chd);
+			remove(outputfile);
+			return;
+		}
 	}
 
 	/* begin state for writing */
@@ -699,7 +686,7 @@ static void do_createblankhd(int argc, char *argv[])
 
 	/* write the metadata */
 	sprintf(metadata, HARD_DISK_METADATA_FORMAT, cylinders, heads, sectors, sectorsize);
-	err = chd_set_metadata(chd, HARD_DISK_STANDARD_METADATA, 0, metadata, strlen(metadata) + 1);
+	err = chd_set_metadata(chd, HARD_DISK_METADATA_TAG, 0, metadata, strlen(metadata) + 1);
 	if (err != CHDERR_NONE)
 	{
 		printf("Error adding hard disk metadata: %s\n", error_string(err));
@@ -1002,7 +989,7 @@ static void do_extractcd(int argc, char *argv[])
 	chd_file *infile = NULL;
 	void *hunk = NULL;
 	cdrom_file *cdrom = NULL;
-	cdrom_toc *toc = NULL;
+	const cdrom_toc *toc = NULL;
 	FILE *outfile = NULL, *outfile2 = NULL;
 	int track, m, s, f, frame;
 	long trkoffs, trklen;
@@ -1126,10 +1113,10 @@ static void do_extractcd(int argc, char *argv[])
 		// now handle the actual writeout
 		for (frame = 0; frame < trklen; frame++)
 		{
-			cdrom_read_data(cdrom, cdrom_get_chd_start_of_track(cdrom, track)+frame, 1, sector, toc->tracks[track].trktype);
+			cdrom_read_data(cdrom, cdrom_get_track_start(cdrom, track)+frame, sector, toc->tracks[track].trktype);
 			fwrite(sector, toc->tracks[track].datasize, 1, outfile2);
 			trkoffs += toc->tracks[track].datasize;
-			cdrom_read_subcode(cdrom, cdrom_get_chd_start_of_track(cdrom, track)+frame, sector);
+			cdrom_read_subcode(cdrom, cdrom_get_track_start(cdrom, track)+frame, sector);
 			fwrite(sector, toc->tracks[track].subsize, 1, outfile2);
 			trkoffs += toc->tracks[track].subsize;
 		}
@@ -1752,7 +1739,7 @@ static void do_setchs(int argc, char *argv[])
 	}
 
 	/* get the hard disk metadata */
-	err = chd_get_metadata(chd, HARD_DISK_STANDARD_METADATA, 0, metadata, sizeof(metadata), NULL, NULL);
+	err = chd_get_metadata(chd, HARD_DISK_METADATA_TAG, 0, metadata, sizeof(metadata), NULL, NULL);
 	if (err != CHDERR_NONE || sscanf(metadata, HARD_DISK_METADATA_FORMAT, &oldcyls, &oldhds, &oldsecs, &oldsecsize) != 4)
 	{
 		printf("CHD file '%s' is not a hard disk!\n", inoutfile);
@@ -1761,7 +1748,7 @@ static void do_setchs(int argc, char *argv[])
 
 	/* write our own */
 	sprintf(metadata, HARD_DISK_METADATA_FORMAT, cyls, hds, secs, oldsecsize);
-	err = chd_set_metadata(chd, HARD_DISK_STANDARD_METADATA, 0, metadata, strlen(metadata) + 1);
+	err = chd_set_metadata(chd, HARD_DISK_METADATA_TAG, 0, metadata, strlen(metadata) + 1);
 	if (err != CHDERR_NONE)
 	{
 		printf("Error writing new metadata to CHD file: %s\n", error_string(err));
@@ -1802,6 +1789,143 @@ cleanup:
 	{
 		header.flags &= ~CHDFLAGS_IS_WRITEABLE;
 		chd_set_header(inoutfile, &header);
+	}
+}
+
+
+/*-------------------------------------------------
+    do_split - split a CHD file into multiple
+    parts
+-------------------------------------------------*/
+
+static void do_split(int argc, char *argv[])
+{
+	const char *infilename, *outfilename;
+	UINT64 size, srcsize, curoffs = 0;
+	chd_interface_file *outfile = NULL;
+	chd_interface_file *infile = NULL;
+	char *curfilename = NULL;
+
+	/* require 5 args total */
+	if (argc != 5)
+		usage();
+
+	/* extract the data */
+	infilename = argv[2];
+	outfilename = argv[3];
+	size = (UINT64)atoi(argv[4]) * 1024 * 1024;
+
+	/* print some info */
+	printf("Input file:   %s\n", infilename);
+	printf("Output file:  %s\n", outfilename);
+	printf("Split size:   %d MB\n", (UINT32)(size / (1024 * 1024)));
+
+	/* open the input file read-only */
+	infile = chdman_open(infilename, "rb");
+	if (infile == NULL)
+	{
+		printf("Error opening input file '%s' read-only\n", infilename);
+		return;
+	}
+	srcsize = chdman_length(infile);
+	curfilename = malloc(strlen(outfilename) + 1 + 4);
+	if (curfilename == NULL)
+		goto cleanup;
+
+	/* loop until we copy all of the source */
+	while (curoffs < srcsize)
+	{
+		UINT64 targetsize = MIN(size, srcsize - curoffs);
+		UINT64 remaining = targetsize;
+		UINT64 outoffs = 0;
+		UINT64 index;
+
+		/* open the appropriate output file */
+		index = curoffs / size;
+		if (index == 0)
+			outfile = chdman_open(outfilename, "wb");
+		else
+		{
+			chd_multi_filename(outfilename, curfilename, index - 1);
+			outfile = chdman_open(curfilename, "wb");
+		}
+
+		/* if we fail, bail */
+		if (outfile == NULL)
+		{
+			printf("Error opening output file '%s'\n", (index == 0) ? outfilename : curfilename);
+			goto cleanup;
+		}
+
+		/* loop until we've copied everything */
+		while (remaining > 0)
+		{
+			UINT8 buffer[16384];
+			UINT32 bytes_to_copy = MIN(sizeof(buffer), remaining);
+			UINT32 bytes_read, bytes_written;
+
+			/* progress */
+			progress(FALSE, "Writing file %d/%d ... %d%%    \r",
+					 (UINT32)index + 1, (UINT32)((srcsize + size - 1) / size),
+					 100 - (UINT32)(remaining * 100 / targetsize));
+
+			/* read a chunk */
+			bytes_read = chdman_read(infile, curoffs, bytes_to_copy, buffer);
+			if (bytes_read != bytes_to_copy)
+			{
+				printf("Error reading %d bytes from offset %08X%08X\n", bytes_to_copy, (UINT32)(curoffs >> 32), (UINT32)curoffs);
+				goto cleanup;
+			}
+
+			/* write a chunk */
+			bytes_written = chdman_write(outfile, outoffs, bytes_to_copy, buffer);
+			if (bytes_written != bytes_to_copy)
+			{
+				printf("Error writing %d bytes to offset %08X%08X\n", bytes_to_copy, (UINT32)(outoffs >> 32), (UINT32)outoffs);
+				goto cleanup;
+			}
+
+			/* advance our counters */
+			curoffs += bytes_read;
+			outoffs += bytes_written;
+			remaining -= bytes_read;
+		}
+
+		/* all done; close the file */
+		chdman_close(outfile);
+	}
+
+	progress(TRUE, "File successfully split              \n");
+
+	/* close the input */
+	chdman_close(infile);
+	free(curfilename);
+	return;
+
+cleanup:
+	if (infile != NULL)
+		chdman_close(infile);
+	if (outfile != NULL)
+		chdman_close(outfile);
+	if (curfilename != NULL)
+		free(curfilename);
+
+	if (curfilename != NULL)
+	{
+		srcsize = curoffs;
+		curoffs = 0;
+		while (curoffs < srcsize)
+		{
+			UINT64 index = curoffs / size;
+			if (index == 0)
+				remove(outfilename);
+			else
+			{
+				chd_multi_filename(outfilename, curfilename, index - 1);
+				remove(curfilename);
+			}
+			curoffs += size;
+		}
 	}
 }
 
@@ -2137,6 +2261,8 @@ int main(int argc, char **argv)
 		do_diff(argc, argv);
 	else if (!strcmp(argv[1], "-setchs"))
 		do_setchs(argc, argv);
+	else if (!strcmp(argv[1], "-split"))
+		do_split(argc, argv);
 	else
 		usage();
 

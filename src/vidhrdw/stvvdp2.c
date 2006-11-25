@@ -2342,34 +2342,6 @@ static UINT8 stv_vdp2_check_vram_cycle_pattern_registers(
 	return access_command_ok == 3 ? 1 : 0;
 }
 
-static INT32 stv_vdp2_get_linescroll_value_for_line( int line )
-{
-	INT32 val;
-	if ( stv2_current_tilemap.vertical_linescroll_enable )
-	{
-		val = stv_vdp2_vram[ stv2_current_tilemap.linescroll_table_address/4 + 2*line/stv2_current_tilemap.linescroll_interval ] & 0x07ffff00;
-	}
-	else
-	{
-		val = stv_vdp2_vram[ stv2_current_tilemap.linescroll_table_address/4 + line/stv2_current_tilemap.linescroll_interval ] & 0x07ffff00;
-	}
-	if ( val & 0x04000000 ) val |= 0xf8000000;
-	return val;
-}
-
-static int stv_vdp2_count_lines_with_equal_linescroll( int startline, int endline )
-{
-	int count = 0;
-	INT32 linescroll = stv_vdp2_get_linescroll_value_for_line( startline );
-	while( (startline < endline) &&
-		   (stv_vdp2_get_linescroll_value_for_line( startline ) == linescroll) )
-	{
-		startline++;
-		count++;
-	}
-	return count;
-}
-
 INLINE UINT16 stv_add_blend(UINT16 a, UINT16 b)
 {
 	UINT16 _r = (a & 0x7c00) + (b & 0x7c00);
@@ -3073,6 +3045,7 @@ static void stv_vdp2_draw_basic_bitmap(mame_bitmap *bitmap, const rectangle *cli
 					}
 
 					gfxdata += xlinesize;
+					if ( gfxdata >= gfxdatahigh ) gfxdata = gfxdatalow + (gfxdata - gfxdatahigh);
 				}
 
 			}
@@ -3110,9 +3083,10 @@ static void stv_vdp2_draw_basic_bitmap(mame_bitmap *bitmap, const rectangle *cli
 							}
 						}
 
-						//gfxdata+=2;
 						if ( (gfxdata + 2*xs) >= gfxdatahigh ) gfxdata = gfxdatalow;
 					}
+					gfxdata += xlinesize;
+					if ( gfxdata >= gfxdatahigh ) gfxdata = gfxdatalow + (gfxdata - gfxdatahigh);
 				}
 			}
 			break;
@@ -3352,9 +3326,6 @@ static void stv_vdp2_draw_basic_tilemap(mame_bitmap *bitmap, const rectangle *cl
 	int tilesizex, tilesizey;
 	int drawypos, drawxpos;
 
-	int linescroll_per_tile, linescroll_enabled;
-	rectangle linescroll_cliprect;
-
 	int tilecodemin = 0x10000000, tilecodemax = 0;
 
 	if ( stv2_current_tilemap.incx == 0 || stv2_current_tilemap.incy == 0 ) return;
@@ -3376,20 +3347,6 @@ static void stv_vdp2_draw_basic_tilemap(mame_bitmap *bitmap, const rectangle *cl
 	tilesizex = scalex * 8;
 	tilesizey = scaley * 8;
 	drawypos = drawxpos = 0;
-
-	linescroll_per_tile = stv2_current_tilemap.linescroll_enable &&
-						  stv2_current_tilemap.linescroll_interval == 8 &&
-						  stv2_current_tilemap.tile_size == 0;
-
-	linescroll_enabled = !linescroll_per_tile &&
-						 stv2_current_tilemap.linescroll_enable &&
-						 !stv2_current_tilemap.vertical_linescroll_enable;
-
-	if ( linescroll_enabled )
-	{
-		linescroll_cliprect.min_x = cliprect->min_x;
-		linescroll_cliprect.max_x = cliprect->max_x;
-	}
 
 	/* Calculate the Number of tiles for x / y directions of each page (actually these will be the same */
 	/* (2-stv2_current_tilemap.tile_size) << 5) */
@@ -3588,33 +3545,25 @@ static void stv_vdp2_draw_basic_tilemap(mame_bitmap *bitmap, const rectangle *cl
 
 		ypageoffs = y & (pgtiles_y-1);
 
-		if ( linescroll_per_tile )
-		{
-			stv2_current_tilemap.scrollx = stv_vdp2_get_linescroll_value_for_line(y * (stv2_current_tilemap.tile_size ? 16 : 8)) >> 16;
-		}
-
 		for (x = 0; x<mptiles_x; x++) {
 			int xpageoffs;
 
-			if ( !linescroll_enabled )
+			if ( x == 0 )
 			{
-				if ( x == 0 )
+				int drawxposinc = tilesizex*(stv2_current_tilemap.tile_size ? 2 : 1);
+				drawxpos = -(stv2_current_tilemap.scrollx*scalex);
+				while( ((drawxpos + drawxposinc) >> 16) < cliprect->min_x )
 				{
-					int drawxposinc = tilesizex*(stv2_current_tilemap.tile_size ? 2 : 1);
-					drawxpos = -(stv2_current_tilemap.scrollx*scalex);
-					while( ((drawxpos + drawxposinc) >> 16) < cliprect->min_x )
-					{
-						drawxpos += drawxposinc;
-						x++;
-					}
-					mptiles_x += x;
+					drawxpos += drawxposinc;
+					x++;
 				}
-				else
-				{
-					drawxpos+=tilesizex*(stv2_current_tilemap.tile_size ? 2 : 1);
-				}
-				if ( (drawxpos >> 16) > cliprect->max_x ) break;
+				mptiles_x += x;
 			}
+			else
+			{
+				drawxpos+=tilesizex*(stv2_current_tilemap.tile_size ? 2 : 1);
+			}
+			if ( (drawxpos >> 16) > cliprect->max_x ) break;
 
 			xpageoffs = x & (pgtiles_x-1);
 
@@ -3886,7 +3835,7 @@ static void stv_vdp2_check_tilemap_with_linescroll(mame_bitmap *bitmap, const re
 		if ( i == vertical_linescroll_index )
 		{
 			STV_VDP2_READ_VERTICAL_LINESCROLL( prev_scroll_values[i], (address / 4) + i );
-			prev_scroll_values[i] -= (cur_line << 16);
+			prev_scroll_values[i] -= (cur_line * stv2_current_tilemap.incy);
 		}
 		else
 		{
@@ -3911,7 +3860,7 @@ static void stv_vdp2_check_tilemap_with_linescroll(mame_bitmap *bitmap, const re
 				if ( i == vertical_linescroll_index )
 				{
 					STV_VDP2_READ_VERTICAL_LINESCROLL( scroll_values[i], (address/4) + i );
-					scroll_values[i] -= ((cur_line + lines) << 16);
+					scroll_values[i] -= (cur_line + lines) * stv2_current_tilemap.incy;
 				}
 				else
 				{

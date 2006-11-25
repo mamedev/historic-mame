@@ -61,7 +61,7 @@ void speaker_level_w(int which, int new_level)
 		return;
 
     /* force streams.c to update sound until this point in time now */
-	stream_update(sp->channel, 0);
+	stream_update(sp->channel);
 
 	sp->level = new_level;
 }

@@ -274,8 +274,8 @@ Configuration options
 
 
 
-Path and directory options
---------------------------
+Core search path options
+------------------------
 
 IMPORTANT: Please use the path, directory and file options ONLY in mame.ini.
 Otherwise, the outcome may be unpredictable and not consistent across 
@@ -295,12 +295,37 @@ releases.
 	is 'samples' (that is, a directory "samples" in the same directory as
 	the MAME executable).
 
+-artpath / -artwork_directory
+
+	Specifies a list of paths within which to find artwork files. Multiple 
+	paths can be specified by separating them with semicolons. The default 
+	is 'artwork' (that is, a directory "artwork" in the same directory as
+	the MAME executable).
+
+-ctrlrpath / -ctrlr_directory
+
+	Specifies a list of paths within which to find controller-specific
+	configuration files. Multiple paths can be specified by separating 
+	them with semicolons. The default is 'ctrlr' (that is, a directory 
+	"ctrlr" in the same directory as the MAME executable).
+
 -inipath
 
 	Specifies a list of paths within which to find .INI files. Multiple 
 	paths can be specified by separating them with semicolons. The default 
 	is '.;ini' (that is, search in the current directory first, and then
 	in the directory "ini" in the same directory as the MAME executable).
+
+-fontpath
+
+	Specifies a list of paths within which to find .BDF font files. Multiple 
+	paths can be specified by separating them with semicolons. The default 
+	is '.' (that is, search in the same directory as the MAME executable).
+
+
+
+Core Output Directory Options
+-----------------------------
 
 -cfg_directory
 
@@ -337,16 +362,6 @@ releases.
 	"inp" in the same directory as the MAME executable). If this directory 
 	does not exist, it will be automatically created.
 
--hiscore_directory
-
-	Specifies a single directory where high score files are stored. High
-	score files are managed by the soon-to-be-obsolete high score system,
-	which is activated when it finds a hiscore.dat file. The high score data
-	is read at startup and written when MAME exits. The default is 'hi' 
-	(that is, a directory "hi" in the same directory as the MAME 
-	executable). If this directory does not exist, it will be automatically 
-	created.
-
 -state_directory
 
 	Specifies a single directory where save state files are stored. Save
@@ -354,13 +369,6 @@ releases.
 	the -autosave option. The default is 'sta' (that is, a directory "sta" 
 	in the same directory as the MAME executable). If this directory does 
 	not exist, it will be automatically created.
-
--artpath / -artwork_directory
-
-	Specifies a list of paths within which to find artwork files. Multiple 
-	paths can be specified by separating them with semicolons. The default 
-	is 'artwork' (that is, a directory "artwork" in the same directory as
-	the MAME executable).
 
 -snapshot_directory
 
@@ -379,13 +387,6 @@ releases.
 	directory as the MAME executable). If this directory does not exist, 
 	it will be automatically created.
 
--ctrlrpath / -ctrlr_directory
-
-	Specifies a list of paths within which to find controller-specific
-	configuration files. Multiple paths can be specified by separating 
-	them with semicolons. The default is 'ctrlr' (that is, a directory 
-	"ctrlr" in the same directory as the MAME executable).
-
 -comment_directory
 
 	Specifies a single directory where debugger comment files are stored. 
@@ -393,6 +394,11 @@ releases.
 	added to the disassembly for a game. The default is 'comments' (that is, 
 	a directory "comments" in the same directory as the MAME executable). 
 	If this directory does not exist, it will be automatically created.
+
+
+
+Core Filename Options
+---------------------
 
 -cheat_file
 

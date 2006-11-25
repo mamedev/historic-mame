@@ -334,7 +334,7 @@ static void es8712_reset(void *chip_src)
 	if (chip->playing)
 	{
 		/* update the stream, then turn it off */
-		stream_update(chip->stream, 0);
+		stream_update(chip->stream);
 		chip->playing = 0;
 		chip->repeat = 0;
 	}
@@ -350,7 +350,7 @@ static void es8712_reset(void *chip_src)
 void ES8712_set_bank_base(int which, int base)
 {
 	struct es8712 *chip = sndti_token(SOUND_ES8712, which);
-	stream_update(chip->stream, 0);
+	stream_update(chip->stream);
 	chip->bank_offset = base;
 }
 
@@ -366,7 +366,7 @@ void ES8712_set_frequency(int which, int frequency)
 	struct es8712 *chip = sndti_token(SOUND_ES8712, which);
 
 	/* update the stream and set the new base */
-	stream_update(chip->stream, 0);
+	stream_update(chip->stream);
 
 	chip->source_step = (UINT32)((double)frequency * (double)FRAC_ONE / (double)Machine->sample_rate);
 }
@@ -407,7 +407,7 @@ void ES8712_play(int which)
 		if (chip->playing)
 		{
 			/* update the stream */
-			stream_update(chip->stream, 0);
+			stream_update(chip->stream);
 			chip->playing = 0;
 		}
 	}

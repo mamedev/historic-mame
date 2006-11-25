@@ -209,7 +209,7 @@ void seibu_adpcm_decrypt(int region)
 WRITE8_HANDLER( seibu_adpcm_adr_1_w )
 {
 	if (seibu_adpcm[0].stream)
-		stream_update(seibu_adpcm[0].stream, 0);
+		stream_update(seibu_adpcm[0].stream);
 	if (offset)
 	{
 		seibu_adpcm[0].end = data<<8;
@@ -225,7 +225,7 @@ WRITE8_HANDLER( seibu_adpcm_ctl_1_w )
 {
 	// sequence is 00 02 01 each time.
 	if (seibu_adpcm[0].stream)
-		stream_update(seibu_adpcm[0].stream, 0);
+		stream_update(seibu_adpcm[0].stream);
 	switch (data)
 	{
 		case 0:
@@ -243,7 +243,7 @@ WRITE8_HANDLER( seibu_adpcm_ctl_1_w )
 WRITE8_HANDLER( seibu_adpcm_adr_2_w )
 {
 	if (seibu_adpcm[1].stream)
-		stream_update(seibu_adpcm[1].stream, 0);
+		stream_update(seibu_adpcm[1].stream);
 	if (offset)
 	{
 		seibu_adpcm[1].end = (data<<8) + 0x10000;
@@ -259,7 +259,7 @@ WRITE8_HANDLER( seibu_adpcm_ctl_2_w )
 {
 	// sequence is 00 02 01 each time.
 	if (seibu_adpcm[1].stream)
-		stream_update(seibu_adpcm[1].stream, 0);
+		stream_update(seibu_adpcm[1].stream);
 	switch (data)
 	{
 		case 0:

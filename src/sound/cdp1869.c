@@ -105,7 +105,7 @@ static void cdp1869_set_volume(int which, int stream, int value)
 {
 	struct CDP1869 *info = sndti_token(SOUND_CDP1869, which);
 
-	stream_update( info->stream, stream );
+	stream_update( info->stream);
 
 	value = 100 * value / 7;
 

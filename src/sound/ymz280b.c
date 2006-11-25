@@ -736,7 +736,7 @@ static void write_to_register(struct YMZ280BChip *chip, int data)
 	int i;
 
 	/* force an update */
-	stream_update(chip->stream, 0);
+	stream_update(chip->stream);
 
 	/* lower registers follow a pattern */
 	if (chip->current_register < 0x80)
@@ -923,7 +923,7 @@ static int compute_status(struct YMZ280BChip *chip)
 	}
 
 	/* force an update */
-	stream_update(chip->stream, 0);
+	stream_update(chip->stream);
 
 	result = chip->status_register;
 

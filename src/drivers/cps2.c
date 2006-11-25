@@ -567,6 +567,9 @@ basically a 68000 opcode/s instruction. Below is a list of those known;
         cmpi.l  #$19720301,D0       X-Men, Children of the Atom
         cmpi.l  #$19720327,D1       X-Men Vs. Street Fighter
 
+        for a dead PCB the encryption watchdog sequence becomes
+        0xffff 0xffff 0xffff
+
 Encryption
 
 Currently the algorhythm is unknown so instead we use ready decrypted
@@ -618,7 +621,7 @@ Known problems with this driver.
 
 #include "cps1.h"       /* External CPS1 definitions */
 
-#define USE_DECRYPTION_CHD_IF_PRESENT 0
+#define USE_DECRYPTION_CHD_IF_PRESENT 1
 
 /*
 Export this function so that the vidhrdw routine can drive the
@@ -2141,7 +2144,12 @@ ROM_START( choko )
 	ROM_LOAD16_WORD_SWAP( "tkoj.04", 0x080000, 0x80000, CRC(68655378) SHA1(a2d82996394cc28622e93f6c338f9b78aa798775) )
 
 	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
-    ROM_LOAD16_WORD_SWAP( "tkojx.bin", 0x000000, 0x400000, CRC(4e4efee1) SHA1(52340439ef1be7ddd4582fbaf72e3c3dd968d0b1) )
+	ROM_LOAD16_WORD_SWAP( "tkojx.bin", 0x000000, 0x400000, CRC(4e4efee1) SHA1(52340439ef1be7ddd4582fbaf72e3c3dd968d0b1) )
+
+#if USE_DECRYPTION_CHD_IF_PRESENT
+	DISK_REGION( REGION_DISKS )	/* Decryption Table for Choko (Japan) */
+	DISK_IMAGE( "choko", 0, SHA1(4111565be6b9c73acce8875158d481e8a82607cf) MD5(3397f958562e9cd7370e005315c52b66) )
+#endif
 
 	ROM_REGION( 0x1000000, REGION_GFX1, 0 )
 	ROMX_LOAD( "tko-simm.01c",   0x0000000, 0x200000, NO_DUMP, ROM_GROUPBYTE | ROM_SKIP(7) ) // ROM on a simm
@@ -7218,7 +7226,7 @@ ROM_START( xmcota )
 	ROM_LOAD16_WORD_SWAP( "xmnex.04e", 0x080000, 0x80000, CRC(f0e24605) SHA1(c72105491d9c1d97286eea09c9ac506fa234a776) )
 
 #if USE_DECRYPTION_CHD_IF_PRESENT
-	DISK_REGION( REGION_DISKS )	/* Decryption Table for X-Men Childrean of the Atom (Euro) */
+	DISK_REGION( REGION_DISKS )	/* Decryption Table for X-Men Children of the Atom (Euro) */
 	DISK_IMAGE( "xmcota", 0, SHA1(155cb5ec132d9cd81ff3cbb5e78a33bf53b4ab1f) MD5(e1946c96adcc4a5e7d189c677e5bfeb0) )
 #endif
 
@@ -7839,15 +7847,18 @@ extern DRIVER_INIT( cps2_nodecrypt );
 
    Add functions to dump full tables for further study and reduction
    Add functions to allow bytes to be encrypted using these tables
-   Real Ecryption does _not_ cover the entire address space, it differs per game, incorporate this information
 
    Notes:
    Due to the level of HD activity involved here try and make sure that the HD with the CHD file on has been defragmented
-*/
+   Real Encryption does _not_ cover the entire address space, it differs per game,
+
+   */
+
+void dump_tables(void);
 
 int decrypt_cps2_with_chd(int encryption_length) // encrypted areas actually differ per game..
 {
-	/* chdman -createhd sfzj.raw sfzj.chd 0 1 1 1048608 4096 */
+	/* chdman -createraw ChokoTable.table choko.chd 0 4096 */
 	UINT16 CPS2_HUNKS_PER_BLOCK;
 
 	UINT16 lookupTable[0x10000];
@@ -7881,6 +7892,10 @@ int decrypt_cps2_with_chd(int encryption_length) // encrypted areas actually dif
 	CPS2_HUNKS_PER_BLOCK = 0x20000/ hunkbytes;
 
 	needToLoad = auto_malloc(CPS2_HUNKS_PER_BLOCK);
+
+	/* dump the 4gig tables to disk, non-compressed, put in decrypt folder */
+//  dump_tables();
+//  exit(1);
 
 	mame_printf_info("Loading Decryption Lookup table from end of CHD (hunk 1048608)\n");
 	for (i = 0; i < CPS2_HUNKS_PER_BLOCK; i++)
@@ -7987,6 +8002,195 @@ int decrypt_cps2_with_chd(int encryption_length) // encrypted areas actually dif
 	m68k_set_encrypted_opcode_range(0,0,length);
 
 	return 1;
+}
+
+
+void cps2test_do_address_swap(UINT16* tableRam)
+{
+	UINT16* tempRam;
+	int x;
+
+	tempRam = malloc(0x20000);
+
+	for (x=0;x<0x10000;x++)
+	{
+		tempRam[x] = tableRam[ BITSWAP16(x,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15)];
+//      tempRam[x] = tableRam[ BITSWAP16(x,13,1,2,3,4,5,6,7,8,9,10,0,12,11,14,15)];
+
+	}
+
+	for (x=0;x<0x10000l;x++)
+	{
+		tableRam[x] = tempRam[x];
+	}
+
+	free(tempRam);
+
+}
+
+/* doing the above reveals interesting patterns in the bitcounts.. see below
+
+ -- maybe there are bitswaps which give better counts.. either way it proves that
+    the data in the tables tables isn't in a 100% random order, there is some
+    structure to it, it just isn't clear what..
+
+(blocksize 0x8000)
+
+400a 3fb8 409c 3fc1 4000 4000 4000 4000 3fc0 4000 4000 408c 4000 404c 40a0 4000
+3ff6 4048 3f64 403f 4000 4000 4000 4000 4040 4000 4000 3f74 4000 3fb4 3f60 4000
+
+3fd7 4012 40fe 4000 4000 4000 4000 4000 4040 4000 4000 3f4a 4000 4006 40a0 4000
+4029 3fee 3f02 4000 4000 4000 4000 4000 3fc0 4000 4000 40b6 4000 3ffa 3f60 4000
+
+4044 3ffa 3f4e 3fad 4000 4000 4000 4000 4040 4000 4000 404e 4000 3ffa 40a0 4000
+3fbc 4006 40b2 4053 4000 4000 4000 4000 3fc0 4000 4000 3fb2 4000 4006 3f60 4000
+
+3ff7 3ffa 3fa0 403b 4000 4000 4000 4000 4040 4000 4000 403c 4000 3f96 4280 4000
+4009 4006 4060 3fc5 4000 4000 4000 4000 3fc0 4000 4000 3fc4 4000 406a 3d80 4000
+
+3fe9 4062 4038 3fc2 4000 4000 4000 4000 3fc0 4000 4000 4022 4000 404c 40a0 4000
+4017 3f9e 3fc8 403e 4000 4000 4000 4000 4040 4000 4000 3fde 4000 3fb4 3f60 4000
+
+
+
+
+(blocksize 0x4000)
+                    ****           ****      ****                                 * = no longer splits even at this level
+206e 200b 2043 204a 1fc9 2000 2000 1ffc 1fe0 2020 2000 2035 2000 201d 2050 2000
+1f9c 1fad 2059 1f77 2037 2000 2000 2004 1fe0 1fe0 2000 2057 2000 202f 2050 2000
+204a 2047 1fbd 206e 2003 2000 2000 1fe0 2020 2020 2000 1fcb 2000 202b 1fb0 2000
+1fac 2001 1fa7 1fd1 1ffd 2000 2000 2020 2020 1fe0 2000 1fa9 2000 1f89 1fb0 2000
+
+1fc2 203f 2098 2018 2060 2000 2000 2029 2020 2020 2000 1fc4 2000 1fc6 2050 2000
+2015 1fd3 2066 1fe8 1fa0 2000 2000 1fd7 2020 1fe0 2000 1f86 2000 2040 2050 2000
+200a 2013 1f68 202c 2034 2000 2000 1fdd 1fe0 2020 2000 203c 2000 1ff2 1fb0 2000
+201f 1fdb 1f9a 1fd4 1fcc 2000 2000 2023 1fe0 1fe0 2000 207a 2000 2008 1fb0 2000
+
+2058 1fd6 1fc9 2009 1fb6 2000 2000 2006 2020 2040 2000 2034 2000 1fdf 2050 2000
+1fec 2024 1f85 1fa4 204a 2000 2000 1ffa 2020 1fc0 2000 201a 2000 201b 2050 2000
+1fcc 2024 2037 1fff 1ff6 2000 2000 2022 1fe0 2040 2000 1fcc 2000 1ffd 1fb0 2000
+1ff0 1fe2 207b 2054 200a 2000 2000 1fde 1fe0 1fc0 2000 1fe6 2000 2009 1fb0 2000
+
+2026 2016 1fee 204b 201a 2000 2000 1ff6 2020 2060 2000 2019 2000 1fca 2140 2000
+1fd1 1fe4 1fb2 1ff0 1fe6 2000 2000 200a 2020 1fa0 2000 2023 2000 1fcc 2140 2000
+2026 2042 2012 2009 1ff0 2000 2000 1ff0 1fe0 2060 2000 1fe7 2000 201e 1ec0 2000
+1fe3 1fc4 204e 1fbc 2010 2000 2000 2010 1fe0 1fa0 2000 1fdd 2000 204c 1ec0 2000
+
+the columns which split perfectly into quarters (0x2000 in every column) split
+perfectly like this on ALL games, the more random columns are more random on
+ALL games.  it's something every encryption table has in common.
+
+if you look at a smaller block size / divide (0x2000) then *one* bit still splits evenly
+                         **** ****                          ****           ****    * = no longer splits even at this level
+0f48 0fdc 0ffe 1014 1002 1038 0ff8 0fdb 1018 101a 1000 1028 0f48 1020 0fd8 1050
+0f57 103c 1015 0ff3 1016 0fc8 1008 101d 0fc8 0fc6 1000 1017 10b8 0feb 0fd8 0fb0
+10c3 1033 101a 100b 0fd4 1028 0ff8 1000 1018 0fe6 1000 102c 0fd8 0ff4 0fd8 1050
+1099 0ff9 1031 1007 1014 0fd8 1008 1008 0fc8 103a 1000 101f 1028 100d 0fd8 0fb0
+0f57 0f8a 0fd5 0fce 0fe7 1038 1018 0fef 1038 101a 1000 0ffd 0f48 0fdb 1028 1050
+0f72 1040 1018 102f 0ffb 0fc8 0fe8 0fff 0fe8 0fc6 1000 0fc4 10b8 1028 1028 0fb0
+10ae 0fe0 0fb7 0fdb 0ff7 1028 1018 0ffe 1038 0fe6 1000 0fcb 0fd8 0fe7 1028 1050
+108e 1012 0ffe 100f 1027 0fd8 0fe8 1014 0fe8 103a 1000 0fea 1028 100a 1028 0fb0
+
+0ffb 0ffc 0fc0 1008 0fdd 0fc0 0fec 0feb 102c 0fa8 1000 100d 1000 1007 1028 0fb0
+0ff6 1005 0fd8 0ff8 1079 1040 1014 102c 0ff4 1018 1000 0ffd 1000 104a 1028 1050
+102d 0ff9 0ff1 102f 0fcc 1000 0fec 1012 102c 1058 1000 1041 1000 1001 1028 0fb0
+0ff4 0fe8 0fcb 0ff9 0fde 1000 1014 0fd7 0ff4 0fe8 1000 0ff3 1000 101e 1028 1050
+1032 103b 1021 100b 0fbf 0fc0 1004 0fd0 1024 0fa8 1000 0ffc 1000 0ffb 0fd8 0fb0
+1015 0ffc 1047 0fe9 1065 1040 0ffc 1027 0fbc 1018 1000 0ffa 1000 0fe4 0fd8 1050
+0fc9 0fd3 103e 0fc4 1008 1000 1004 1009 1024 1058 1000 0fdc 1000 0ff1 0fd8 0fb0
+0fde 1014 1006 1020 0fd4 1000 0ffc 1000 0fbc 0fe8 1000 0ff0 1000 0fc0 0fd8 1050
+
+
+going further (0x1000) everything seems rather random again
+
+
+*/
+
+void do_bitcounts(UINT16* tableRam)
+{
+	int BLOCK_SIZE = 0x4000;
+
+	UINT32 bitcounts[16];
+	int x,y,i;
+
+	for (x=0;x<16;x++)
+		bitcounts[x] = 0;
+
+	for (i=0;i<0x10000;i+=BLOCK_SIZE)
+	{
+
+		for (x=0;x<16;x++)
+			bitcounts[x] = 0;
+
+		for (x=i;x<i+BLOCK_SIZE;x++)
+		{
+			UINT16 data = tableRam[x];
+
+			for (y=0;y<16;y++)
+			{
+				UINT8 bit = (data >> y)&1;
+				bitcounts[y] += bit;
+
+			}
+		}
+
+
+		for (y=0;y<16;y++)
+		{
+			printf("%04x ",bitcounts[y]);
+			logerror("%04x ",bitcounts[y]);
+		}
+
+		printf("\n");
+		logerror("\n");
+	}
+
+	printf("\n");
+	logerror("\n");
+
+}
+
+/* This dumps the 4gb + lookup table version of the tables from the CHD,
+   todo: add a function to dump the full 8gig version
+
+   make sure you have a folder called decrypt */
+
+void dump_tables(void)
+{
+	/* chdman -createhd sfzj.raw sfzj.chd 0 1 1 1048608 4096 */
+	UINT16 CPS2_HUNKS_PER_BLOCK;
+	int x;
+
+	UINT16* tableRam;
+
+	tableRam = malloc(0x20000);
+	CPS2_HUNKS_PER_BLOCK = 0x20000/ chd_get_header(get_disk_handle(0))->hunkbytes;
+
+	for (x=0;x<0x8001; x++)
+	{
+		unsigned char filename[256];
+		FILE* outFile;
+
+		int i;
+
+		for (i=0; i<CPS2_HUNKS_PER_BLOCK;i++)
+			chd_read(get_disk_handle(0), (x*CPS2_HUNKS_PER_BLOCK)+i, tableRam+i*(0x10000/CPS2_HUNKS_PER_BLOCK) );
+
+		if (x<0x8000)
+		{
+			sprintf(filename, "decrypt/%04x.tbl",x);
+
+			/* the bit-count patterns you get from this seem interesting */
+//          cps2test_do_address_swap(tableRam);
+//          do_bitcounts(tableRam);
+		}
+		else  sprintf(filename, "decrypt/lookup.tbl");
+
+		outFile = fopen(filename,"wb");
+		fwrite(tableRam, 2, 65536, outFile);
+		fclose(outFile);
+
+	}
 }
 
 DRIVER_INIT( cps2_chd_512 )
@@ -8207,7 +8411,7 @@ GAME( 2000, mmatrixj, mmatrix, cps2, 19xx,    cps2, ROT0,   "Capcom, supported b
 
 GAME( 2000, mpangj,   0,       cps2, ssf2,    cps2, ROT0,   "Mitchell, distributed by Capcom", "Mighty! Pang (Japan 001011)", 0 )
 GAME( 2001, pzloop2j, 0,       cps2, puzloop2, puzloop2, ROT0,   "Mitchell, distributed by Capcom", "Puzz Loop 2 (Japan 010205)", 0 )
-GAME( 2001, choko,    0,       cps2, cps2,    cps2, ROT0,   "Mitchell, distributed by Capcom", "Choko (Japan 010820)", GAME_IMPERFECT_GRAPHICS )
+GAME( 2001, choko,    0,       cps2, cps2,    cps2_chd_1024, ROT0,   "Mitchell, distributed by Capcom", "Choko (Japan 010820)", GAME_IMPERFECT_GRAPHICS )
 
 /* Games released on CPS-2 hardware by Eighting/Raizing */
 

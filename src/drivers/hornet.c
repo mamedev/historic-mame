@@ -3,13 +3,41 @@
     Driver by Ville Linde
 
 
+
+    Hardware overview:
+
+    GN715 CPU Board:
+    ----------------
+        IBM PowerPC 403GA at 32MHz (main CPU)
+        Motorola MC68EC000 at 16MHz (sound CPU)
+        Konami K056800 (MIRAC), sound system interface
+        Ricoh RF5c400 sound chip
+
+    GN715 GFX Board:
+    ----------------
+        Analog Devices ADSP-21062 SHARC DSP at 36MHz
+        Konami 0000037122 (2D Tilemap)
+        Konami 0000033906 (PCI bridge)
+        3DFX 500-0003-03 (Voodoo) FBI with 2MB RAM
+        3DFX 500-0004-02 (Voodoo) TMU with 2MB RAM
+
+    GQ871 GFX Board:
+    ----------------
+        Analog Devices ADSP-21062 SHARC DSP at 36MHz
+        Konami 0000037122 (2D Tilemap)
+        Konami 0000033906 (PCI bridge)
+        3DFX 500-0009-01 (Voodoo 2) FBI with 2MB RAM
+        3DFX 500-0010-01 (Voodoo 2) TMU with 4MB RAM
+
+
     Hardware configurations:
 
-    Game            | ID        | CPU PCB      | CG Board(s)   | LAN PCB
+    Game             | ID        | CPU PCB      | CG Board(s)   | LAN PCB
     ---------------------------------------------------------------------------
-    Gradius 4       | GX837     | GN715(A)     | GN715(B)      |
-    Silent Scope    | GQ830     | GN715(A)     | 2x GN715(B)   |
-    Silent Scope 2  | GQ931     | GN715(A)     | 2x GQ871(B)   | GQ931(H)
+    Gradius 4        | GX837     | GN715(A)     | GN715(B)      |
+    NBA Play by Play | GX778     | GN715(A)     | GN715(B)      |
+    Silent Scope     | GQ830     | GN715(A)     | 2x GN715(B)   |
+    Silent Scope 2   | GQ931     | GN715(A)     | 2x GQ871(B)   | GQ931(H)
 
 
 
@@ -187,20 +215,24 @@
 #include "cpu/powerpc/ppc.h"
 #include "cpu/sharc/sharc.h"
 #include "machine/konppc.h"
+#include "machine/konamiic.h"
 #include "vidhrdw/voodoo.h"
 #include "machine/timekpr.h"
 #include "sound/rf5c400.h"
+#include "rendlay.h"
 
 static UINT8 led_reg0 = 0x7f, led_reg1 = 0x7f;
 
 /* K037122 Tilemap chip (move to konamiic.c ?) */
 
-static UINT32 *K037122_tile_ram;
-static UINT32 *K037122_char_ram;
-static UINT8 *K037122_dirty_map;
-static int K037122_gfx_index, K037122_char_dirty;
-static tilemap *K037122_layer[2];
-static UINT32 K037122_reg[256];
+#define MAX_K037122_CHIPS	2
+
+static UINT32 *K037122_tile_ram[MAX_K037122_CHIPS];
+static UINT32 *K037122_char_ram[MAX_K037122_CHIPS];
+static UINT8 *K037122_dirty_map[MAX_K037122_CHIPS];
+static int K037122_gfx_index[MAX_K037122_CHIPS], K037122_char_dirty[MAX_K037122_CHIPS];
+static tilemap *K037122_layer[MAX_K037122_CHIPS][2];
+static UINT32 K037122_reg[MAX_K037122_CHIPS][256];
 
 #define K037122_NUM_TILES		16384
 
@@ -215,9 +247,9 @@ static const gfx_layout K037122_char_layout =
 	8*128
 };
 
-static void K037122_tile_info_layer0(int tile_index)
+static void K037122_0_tile_info_layer0(int tile_index)
 {
-	UINT32 val = K037122_tile_ram[tile_index + (0x8000/4)];
+	UINT32 val = K037122_tile_ram[0][tile_index + (0x8000/4)];
 	int color = (val >> 17) & 0x1f;
 	int tile = val & 0x3fff;
 	int flags = 0;
@@ -227,12 +259,12 @@ static void K037122_tile_info_layer0(int tile_index)
 	if (val & 0x800000)
 		flags |= TILE_FLIPY;
 
-	SET_TILE_INFO(K037122_gfx_index, tile, color, flags);
+	SET_TILE_INFO(K037122_gfx_index[0], tile, color, flags);
 }
 
-static void K037122_tile_info_layer1(int tile_index)
+static void K037122_0_tile_info_layer1(int tile_index)
 {
-	UINT32 val = K037122_tile_ram[tile_index];
+	UINT32 val = K037122_tile_ram[0][tile_index];
 	int color = (val >> 17) & 0x1f;
 	int tile = val & 0x3fff;
 	int flags = 0;
@@ -242,128 +274,173 @@ static void K037122_tile_info_layer1(int tile_index)
 	if (val & 0x800000)
 		flags |= TILE_FLIPY;
 
-	SET_TILE_INFO(K037122_gfx_index, tile, color, flags);
+	SET_TILE_INFO(K037122_gfx_index[0], tile, color, flags);
 }
 
-int K037122_vh_start(void)
+static void K037122_1_tile_info_layer0(int tile_index)
 {
-	for(K037122_gfx_index = 0; K037122_gfx_index < MAX_GFX_ELEMENTS; K037122_gfx_index++)
-		if (Machine->gfx[K037122_gfx_index] == 0)
+	UINT32 val = K037122_tile_ram[1][tile_index + (0x8000/4)];
+	int color = (val >> 17) & 0x1f;
+	int tile = val & 0x3fff;
+	int flags = 0;
+
+	if (val & 0x400000)
+		flags |= TILE_FLIPX;
+	if (val & 0x800000)
+		flags |= TILE_FLIPY;
+
+	SET_TILE_INFO(K037122_gfx_index[1], tile, color, flags);
+}
+
+static void K037122_1_tile_info_layer1(int tile_index)
+{
+	UINT32 val = K037122_tile_ram[1][tile_index];
+	int color = (val >> 17) & 0x1f;
+	int tile = val & 0x3fff;
+	int flags = 0;
+
+	if (val & 0x400000)
+		flags |= TILE_FLIPX;
+	if (val & 0x800000)
+		flags |= TILE_FLIPY;
+
+	SET_TILE_INFO(K037122_gfx_index[1], tile, color, flags);
+}
+
+int K037122_vh_start(int chip)
+{
+	for(K037122_gfx_index[chip] = 0; K037122_gfx_index[chip] < MAX_GFX_ELEMENTS; K037122_gfx_index[chip]++)
+		if (Machine->gfx[K037122_gfx_index[chip]] == 0)
 			break;
-	if(K037122_gfx_index == MAX_GFX_ELEMENTS)
+	if(K037122_gfx_index[chip] == MAX_GFX_ELEMENTS)
 		return 1;
 
-	K037122_char_ram = auto_malloc(0x200000);
+	K037122_char_ram[chip] = auto_malloc(0x200000);
 
-	K037122_tile_ram = auto_malloc(0x20000);
+	K037122_tile_ram[chip] = auto_malloc(0x20000);
 
-	K037122_dirty_map = auto_malloc(K037122_NUM_TILES);
+	K037122_dirty_map[chip] = auto_malloc(K037122_NUM_TILES);
 
-	K037122_layer[0] = tilemap_create(K037122_tile_info_layer0, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 256, 64);
-	K037122_layer[1] = tilemap_create(K037122_tile_info_layer1, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 128, 64);
+	if (chip == 0)
+	{
+		K037122_layer[chip][0] = tilemap_create(K037122_0_tile_info_layer0, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 256, 64);
+		K037122_layer[chip][1] = tilemap_create(K037122_0_tile_info_layer1, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 128, 64);
+	}
+	else
+	{
+		K037122_layer[chip][0] = tilemap_create(K037122_1_tile_info_layer0, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 256, 64);
+		K037122_layer[chip][1] = tilemap_create(K037122_1_tile_info_layer1, tilemap_scan_rows, TILEMAP_TRANSPARENT, 8, 8, 128, 64);
+	}
 
-	if( !K037122_layer[0] || !K037122_layer[1] ) {
+	if( !K037122_layer[chip][0] || !K037122_layer[chip][1] ) {
 		return 1;
 	}
 
-	tilemap_set_transparent_pen(K037122_layer[0], 0);
-	tilemap_set_transparent_pen(K037122_layer[1], 0);
+	tilemap_set_transparent_pen(K037122_layer[chip][0], 0);
+	tilemap_set_transparent_pen(K037122_layer[chip][1], 0);
 
-	memset(K037122_char_ram, 0, 0x200000);
-	memset(K037122_tile_ram, 0, 0x20000);
-	memset(K037122_dirty_map, 0, K037122_NUM_TILES);
+	memset(K037122_char_ram[chip], 0, 0x200000);
+	memset(K037122_tile_ram[chip], 0, 0x20000);
+	memset(K037122_dirty_map[chip], 0, K037122_NUM_TILES);
 
-	Machine->gfx[K037122_gfx_index] = allocgfx(&K037122_char_layout);
-	decodegfx(Machine->gfx[K037122_gfx_index], (UINT8*)K037122_char_ram, 0, Machine->gfx[K037122_gfx_index]->total_elements);
-	if( !Machine->gfx[K037122_gfx_index] ) {
+	Machine->gfx[K037122_gfx_index[chip]] = allocgfx(&K037122_char_layout);
+	decodegfx(Machine->gfx[K037122_gfx_index[chip]], (UINT8*)K037122_char_ram[chip], 0, Machine->gfx[K037122_gfx_index[chip]]->total_elements);
+	if( !Machine->gfx[K037122_gfx_index[chip]] ) {
 		return 1;
 	}
 
 	if (Machine->drv->color_table_len)
 	{
-		Machine->gfx[K037122_gfx_index]->colortable = Machine->remapped_colortable;
-		Machine->gfx[K037122_gfx_index]->total_colors = Machine->drv->color_table_len / 16;
+		Machine->gfx[K037122_gfx_index[chip]]->colortable = Machine->remapped_colortable;
+		Machine->gfx[K037122_gfx_index[chip]]->total_colors = Machine->drv->color_table_len / 16;
 	}
 	else
 	{
-		Machine->gfx[K037122_gfx_index]->colortable = Machine->pens;
-		Machine->gfx[K037122_gfx_index]->total_colors = Machine->drv->total_colors / 16;
+		Machine->gfx[K037122_gfx_index[chip]]->colortable = Machine->pens;
+		Machine->gfx[K037122_gfx_index[chip]]->total_colors = Machine->drv->total_colors / 16;
 	}
 
 	return 0;
 }
 
-void K037122_tile_update(void)
+void K037122_tile_update(int chip)
 {
-	if(K037122_char_dirty) {
+	if (K037122_char_dirty[chip])
+	{
 		int i;
-		for(i=0; i<K037122_NUM_TILES; i++) {
-			if(K037122_dirty_map[i]) {
-				K037122_dirty_map[i] = 0;
-				decodechar(Machine->gfx[K037122_gfx_index], i, (UINT8 *)K037122_char_ram, &K037122_char_layout);
+		for (i=0; i < K037122_NUM_TILES; i++)
+		{
+			if (K037122_dirty_map[chip][i])
+			{
+				K037122_dirty_map[chip][i] = 0;
+				decodechar(Machine->gfx[K037122_gfx_index[chip]], i, (UINT8 *)K037122_char_ram[chip], &K037122_char_layout);
 			}
 		}
-		tilemap_mark_all_tiles_dirty(K037122_layer[0]);
-		tilemap_mark_all_tiles_dirty(K037122_layer[1]);
-		K037122_char_dirty = 0;
+		tilemap_mark_all_tiles_dirty(K037122_layer[chip][0]);
+		tilemap_mark_all_tiles_dirty(K037122_layer[chip][1]);
+		K037122_char_dirty[chip] = 0;
 	}
 }
 
-void K037122_tile_draw(mame_bitmap *bitmap, const rectangle *cliprect)
+void K037122_tile_draw(int chip, mame_bitmap *bitmap, const rectangle *cliprect)
 {
-	if (K037122_reg[0xc] & 0x10000)
+	if (K037122_reg[chip][0xc] & 0x10000)
 	{
-		tilemap_draw(bitmap, cliprect, K037122_layer[1], 0,0);
+		tilemap_draw(bitmap, cliprect, K037122_layer[chip][1], 0,0);
 	}
 	else
 	{
-		tilemap_draw(bitmap, cliprect, K037122_layer[0], 0,0);
+		tilemap_draw(bitmap, cliprect, K037122_layer[chip][0], 0,0);
 	}
 }
 
-static void update_palette_color(UINT32 palette_base, int color)
+static void update_palette_color(int chip, UINT32 palette_base, int color)
 {
-	UINT32 data = K037122_tile_ram[(palette_base/4) + color];
+	UINT32 data = K037122_tile_ram[chip][(palette_base/4) + color];
 	palette_set_color(Machine, color, pal5bit(data >> 6), pal6bit(data >> 0), pal5bit(data >> 11));
 }
 
 READ32_HANDLER(K037122_sram_r)
 {
-	return K037122_tile_ram[offset];
+	int chip = get_cgboard_id();
+
+	return K037122_tile_ram[chip][offset];
 }
 
 WRITE32_HANDLER(K037122_sram_w)
 {
-	COMBINE_DATA(K037122_tile_ram + offset);
+	int chip = get_cgboard_id();
 
-	if (K037122_reg[0xc] & 0x10000)
+	COMBINE_DATA(K037122_tile_ram[chip] + offset);
+
+	if (K037122_reg[chip][0xc] & 0x10000)
 	{
 		if (offset < 0x8000/4)
 		{
-			tilemap_mark_tile_dirty(K037122_layer[1], offset);
+			tilemap_mark_tile_dirty(K037122_layer[chip][1], offset);
 		}
 		else if (offset >= 0x8000/4 && offset < 0x18000/4)
 		{
-			tilemap_mark_tile_dirty(K037122_layer[0], offset - (0x8000/4));
+			tilemap_mark_tile_dirty(K037122_layer[chip][0], offset - (0x8000/4));
 		}
 		else if (offset >= 0x18000/4)
 		{
-			update_palette_color(0x18000, offset - (0x18000/4));
+			update_palette_color(chip, 0x18000, offset - (0x18000/4));
 		}
 	}
 	else
 	{
 		if (offset < 0x8000/4)
 		{
-			update_palette_color(0, offset);
+			update_palette_color(chip, 0, offset);
 		}
 		else if (offset >= 0x8000/4 && offset < 0x18000/4)
 		{
-			tilemap_mark_tile_dirty(K037122_layer[0], offset - (0x8000/4));
+			tilemap_mark_tile_dirty(K037122_layer[chip][0], offset - (0x8000/4));
 		}
 		else if (offset >= 0x18000/4)
 		{
-			tilemap_mark_tile_dirty(K037122_layer[1], offset - (0x18000/4));
+			tilemap_mark_tile_dirty(K037122_layer[chip][1], offset - (0x18000/4));
 		}
 	}
 }
@@ -371,28 +448,34 @@ WRITE32_HANDLER(K037122_sram_w)
 
 READ32_HANDLER(K037122_char_r)
 {
+	int chip = get_cgboard_id();
+
 	UINT32 addr;
-	int bank = K037122_reg[0x30/4] & 0x7;
+	int bank = K037122_reg[chip][0x30/4] & 0x7;
 
 	addr = offset + (bank * (0x40000/4));
 
-	return K037122_char_ram[addr];
+	return K037122_char_ram[chip][addr];
 }
 
 WRITE32_HANDLER(K037122_char_w)
 {
+	int chip = get_cgboard_id();
+
 	UINT32 addr;
-	int bank = K037122_reg[0x30/4] & 0x7;
+	int bank = K037122_reg[chip][0x30/4] & 0x7;
 
 	addr = offset + (bank * (0x40000/4));
 
-	COMBINE_DATA(K037122_char_ram + addr);
-	K037122_dirty_map[addr / 32] = 1;
-	K037122_char_dirty = 1;
+	COMBINE_DATA(K037122_char_ram[chip] + addr);
+	K037122_dirty_map[chip][addr / 32] = 1;
+	K037122_char_dirty[chip] = 1;
 }
 
 READ32_HANDLER(K037122_reg_r)
 {
+	int chip = get_cgboard_id();
+
 	switch (offset)
 	{
 		case 0x14/4:
@@ -400,12 +483,14 @@ READ32_HANDLER(K037122_reg_r)
 			return 0x000003fa;
 		}
 	}
-	return K037122_reg[offset];
+	return K037122_reg[chip][offset];
 }
 
 WRITE32_HANDLER(K037122_reg_w)
 {
-	COMBINE_DATA( K037122_reg + offset );
+	int chip = get_cgboard_id();
+
+	COMBINE_DATA( K037122_reg[chip] + offset );
 }
 
 static int voodoo_version = 0;
@@ -423,7 +508,7 @@ VIDEO_START( hornet )
 			return 1;
 	}
 
-	return K037122_vh_start();
+	return K037122_vh_start(0);
 }
 
 VIDEO_START( hornet_2board )
@@ -441,7 +526,7 @@ VIDEO_START( hornet_2board )
 			return 1;
 	}
 
-	return K037122_vh_start();
+	return K037122_vh_start(0) | K037122_vh_start(1);
 }
 
 
@@ -449,8 +534,8 @@ VIDEO_UPDATE( hornet )
 {
 	voodoo_update(0, bitmap, cliprect);
 
-	K037122_tile_update();
-	K037122_tile_draw(bitmap, cliprect);
+	K037122_tile_update(0);
+	K037122_tile_draw(0, bitmap, cliprect);
 
 	draw_7segment_led(bitmap, 3, 3, led_reg0);
 	draw_7segment_led(bitmap, 9, 3, led_reg1);
@@ -459,11 +544,11 @@ VIDEO_UPDATE( hornet )
 
 VIDEO_UPDATE( hornet_2board )
 {
-	voodoo_update(0, bitmap, cliprect);
-	voodoo_update(1, bitmap, cliprect);
+	voodoo_update(screen, bitmap, cliprect);
 
-	K037122_tile_update();
-	K037122_tile_draw(bitmap, cliprect);
+	/* TODO: tilemaps per screen */
+	K037122_tile_update(screen);
+	K037122_tile_draw(screen, bitmap, cliprect);
 
 	draw_7segment_led(bitmap, 3, 3, led_reg0);
 	draw_7segment_led(bitmap, 9, 3, led_reg1);
@@ -479,7 +564,7 @@ static READ32_HANDLER( sysreg_r )
 	{
 		if (!(mem_mask & 0xff000000))
 		{
-			//mame_printf_debug("read sysreg 0\n");
+			//printf("read sysreg 0\n");
 			r |= readinputport(0) << 24;
 		}
 		if (!(mem_mask & 0x00ff0000))
@@ -539,75 +624,11 @@ static WRITE32_HANDLER( sysreg_w )
 	}
 }
 
-static UINT8 sndto68k[16], sndtoppc[2];	/* read/write split mapping */
-
-static READ32_HANDLER( ppc_sound_r )
-{
-	UINT32 r = 0;
-
-	if (!(mem_mask & 0xff000000))
-	{
-		r |= sndtoppc[0] << 24;
-	}
-	if (!(mem_mask & 0x00ff0000))
-	{
-		r |= sndtoppc[1] << 16;
-	}
-
-//  mame_printf_debug("ppc_sound_r: %08X, %08X\n", offset, mem_mask);
-	return r;
-}
-
-INLINE void write_snd_ppc(int reg, int val)
-{
-	sndto68k[reg] = val;
-
-	if (reg == 7)
-	{
-		cpunum_set_input_line(1, INPUT_LINE_IRQ2, PULSE_LINE);
-	}
-}
-
-static WRITE32_HANDLER( ppc_sound_w )
-{
-	int reg=0, val=0;
-
-	//mame_printf_debug("ppc_sound_w: %08X, %08X, %08X\n", data, offset, mem_mask);
-
-	if (!(mem_mask & 0xff000000))
-	{
-		reg = offset * 4;
-		val = data >> 24;
-		write_snd_ppc(reg, val);
-	}
-
-	if (!(mem_mask & 0x00ff0000))
-	{
-		reg = (offset * 4) + 1;
-		val = (data >> 16) & 0xff;
-		write_snd_ppc(reg, val);
-	}
-
-	if (!(mem_mask & 0x0000ff00))
-	{
-		reg = (offset * 4) + 2;
-		val = (data >> 8) & 0xff;
-		write_snd_ppc(reg, val);
-	}
-
-	if (!(mem_mask & 0x000000ff))
-	{
-		reg = (offset * 4) + 3;
-		val = (data >> 0) & 0xff;
-		write_snd_ppc(reg, val);
-	}
-}
-
 static int comm_rombank = 0;
 
 static WRITE32_HANDLER( comm1_w )
 {
-	mame_printf_debug("comm1_w: %08X, %08X, %08X\n", offset, data, mem_mask);
+	printf("comm1_w: %08X, %08X, %08X\n", offset, data, mem_mask);
 }
 
 static WRITE32_HANDLER( comm_rombank_w )
@@ -615,6 +636,7 @@ static WRITE32_HANDLER( comm_rombank_w )
 	int bank = data >> 24;
 	if (memory_region(REGION_USER3))
 		if( bank != comm_rombank ) {
+			printf("rombank %02X\n", bank);
 			comm_rombank = bank & 0x7f;
 			memory_set_bankptr(1, memory_region(REGION_USER3) + (comm_rombank * 0x10000));
 		}
@@ -622,7 +644,7 @@ static WRITE32_HANDLER( comm_rombank_w )
 
 static READ32_HANDLER( comm0_unk_r )
 {
-	mame_printf_debug("comm0_unk_r: %08X, %08X\n", offset, mem_mask);
+//  printf("comm0_unk_r: %08X, %08X\n", offset, mem_mask);
 	return 0xffffffff;
 }
 
@@ -638,7 +660,7 @@ static ADDRESS_MAP_START( hornet_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x7d000000, 0x7d00ffff) AM_MIRROR(0x80000000) AM_READ(sysreg_r)
 	AM_RANGE(0x7d010000, 0x7d01ffff) AM_MIRROR(0x80000000) AM_WRITE(sysreg_w)
 	AM_RANGE(0x7d020000, 0x7d021fff) AM_MIRROR(0x80000000) AM_READWRITE(timekeeper_0_32be_r, timekeeper_0_32be_w)	/* M48T58Y RTC/NVRAM */
-	AM_RANGE(0x7d030000, 0x7d030007) AM_MIRROR(0x80000000) AM_READWRITE(ppc_sound_r, ppc_sound_w)
+	AM_RANGE(0x7d030000, 0x7d030007) AM_MIRROR(0x80000000) AM_READWRITE(K056800_host_r, K056800_host_w)
 	AM_RANGE(0x7d042000, 0x7d043fff) AM_MIRROR(0x80000000) AM_RAM				/* COMM BOARD 0 */
 	AM_RANGE(0x7d044000, 0x7d044007) AM_MIRROR(0x80000000) AM_READ(comm0_unk_r)
 	AM_RANGE(0x7d048000, 0x7d048003) AM_MIRROR(0x80000000) AM_WRITE(comm1_w)
@@ -651,39 +673,12 @@ ADDRESS_MAP_END
 
 /*****************************************************************************/
 
-static void *m68k_timer;
-static int m68k_irq1_enable;
-
-static void m68k_timer_tick(int param)
-{
-	if (m68k_irq1_enable)
-	{
-		cpunum_set_input_line(1, INPUT_LINE_IRQ1, PULSE_LINE);
-	}
-}
-
-static READ16_HANDLER( sndcomm68k_r )
-{
-	return sndto68k[offset];
-}
-
-static WRITE16_HANDLER( sndcomm68k_w )
-{
-	if (offset == 4)
-    {
-    	m68k_irq1_enable = data & 0x1;
-    }
-
-	logerror("sndcomm68k_w: %08X, %08X, %08X at %08X\n", data, offset, mem_mask, activecpu_get_pc());
-	sndtoppc[offset] = data;
-}
-
 static ADDRESS_MAP_START( sound_memmap, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_ROM
 	AM_RANGE(0x100000, 0x10ffff) AM_RAM		/* Work RAM */
 	AM_RANGE(0x200000, 0x200fff) AM_READWRITE(RF5C400_0_r, RF5C400_0_w)		/* Ricoh RF5C400 */
-	AM_RANGE(0x300000, 0x30000f) AM_READ(sndcomm68k_r)
-	AM_RANGE(0x300000, 0x30000f) AM_WRITE(sndcomm68k_w)
+	AM_RANGE(0x300000, 0x30000f) AM_READWRITE(K056800_sound_r, K056800_sound_w)
+	AM_RANGE(0x600000, 0x600001) AM_NOP
 ADDRESS_MAP_END
 
 /*****************************************************************************/
@@ -710,94 +705,24 @@ static WRITE32_HANDLER( dsp_dataram1_w )
 	sharc_dataram[1][offset] = data;
 }
 
-/* Konami 033906 seems to be a PCI bridge chip between SHARC and 3dfx chips */
-
-static UINT32 pci_3dfx_reg[2][256];
-
-READ32_HANDLER(pci_3dfx_r)
-{
-	int board = (cpu_getactivecpu() == 2) ? 0 : 1;
-
-	switch(offset)
-	{
-		case 0x00:		return 0x0001121a;						// PCI Vendor ID (0x121a = 3dfx), Device ID (0x0001 = Voodoo)
-		case 0x02:		return 0x04000000;						// Revision ID
-		case 0x04:		return pci_3dfx_reg[board][0x04];		// memBaseAddr
-		case 0x0f:		return pci_3dfx_reg[board][0x0f];		// interrupt_line, interrupt_pin, min_gnt, max_lat
-
-		default:
-			fatalerror("pci_3dfx_r: %08X at %08X", offset, activecpu_get_pc());
-	}
-	return 0;
-}
-
-WRITE32_HANDLER(pci_3dfx_w)
-{
-	int board = (cpu_getactivecpu() == 2) ? 0 : 1;
-
-	switch(offset)
-	{
-		case 0x00:
-			break;
-
-		case 0x01:		// command register
-			break;
-
-		case 0x04:		// memBaseAddr
-		{
-			if (data == 0xffffffff)
-			{
-				pci_3dfx_reg[board][0x04] = 0xff000000;
-			}
-			else
-			{
-				pci_3dfx_reg[board][0x04] = data & 0xff000000;
-			}
-			break;
-		}
-
-		case 0x0f:		// interrupt_line, interrupt_pin, min_gnt, max_lat
-		{
-			pci_3dfx_reg[board][0x0f] = data;
-			break;
-		}
-
-		case 0x10:		// initEnable
-		{
-			voodoo_set_init_enable(board, data);
-			break;
-		}
-
-		case 0x11:		// busSnoop0
-		case 0x12:		// busSnoop1
-			break;
-
-		case 0x38:		// ???
-			break;
-
-		default:
-			fatalerror("pci_3dfx_w: %08X, %08X at %08X", data, offset, activecpu_get_pc());
-	}
-}
-
 static ADDRESS_MAP_START( sharc0_map, ADDRESS_SPACE_DATA, 32 )
-	AM_RANGE(0x0400000, 0x041ffff) AM_READWRITE(cgboard_dsp_shared_r_sharc, cgboard_dsp_shared_w_sharc)
+	AM_RANGE(0x0400000, 0x041ffff) AM_READWRITE(cgboard_0_shared_sharc_r, cgboard_0_shared_sharc_w)
 	AM_RANGE(0x0500000, 0x05fffff) AM_READWRITE(dsp_dataram0_r, dsp_dataram0_w)
 	AM_RANGE(0x1400000, 0x14fffff) AM_RAM
 	AM_RANGE(0x2400000, 0x27fffff) AM_READWRITE(voodoo_0_r, voodoo_0_w)
-	AM_RANGE(0x3400000, 0x34000ff) AM_READWRITE(cgboard_dsp_comm_r_sharc, cgboard_dsp_comm_w_sharc)
-	AM_RANGE(0x3500000, 0x35000ff) AM_READWRITE(pci_3dfx_r, pci_3dfx_w)
+	AM_RANGE(0x3400000, 0x34000ff) AM_READWRITE(cgboard_0_comm_sharc_r, cgboard_0_comm_sharc_w)
+	AM_RANGE(0x3500000, 0x35000ff) AM_READWRITE(K033906_0_r, K033906_0_w)
 	AM_RANGE(0x3600000, 0x37fffff) AM_ROMBANK(5)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sharc1_map, ADDRESS_SPACE_DATA, 32 )
-	AM_RANGE(0x0400000, 0x041ffff) AM_READWRITE(cgboard_dsp_shared_r_sharc, cgboard_dsp_shared_w_sharc)
+	AM_RANGE(0x0400000, 0x041ffff) AM_READWRITE(cgboard_1_shared_sharc_r, cgboard_1_shared_sharc_w)
 	AM_RANGE(0x0500000, 0x05fffff) AM_READWRITE(dsp_dataram1_r, dsp_dataram1_w)
 	AM_RANGE(0x1400000, 0x14fffff) AM_RAM
 	AM_RANGE(0x2400000, 0x27fffff) AM_READWRITE(voodoo_1_r, voodoo_1_w)
-	AM_RANGE(0x3400000, 0x34000ff) AM_READWRITE(cgboard_dsp_comm_r_sharc, cgboard_dsp_comm_w_sharc)
-	AM_RANGE(0x3500000, 0x35000ff) AM_READWRITE(pci_3dfx_r, pci_3dfx_w)
-	AM_RANGE(0x3600000, 0x37fffff) AM_ROMBANK(5)
+	AM_RANGE(0x3400000, 0x34000ff) AM_READWRITE(cgboard_1_comm_sharc_r, cgboard_1_comm_sharc_w)
+	AM_RANGE(0x3500000, 0x35000ff) AM_READWRITE(K033906_1_r, K033906_1_w)
+	AM_RANGE(0x3600000, 0x37fffff) AM_ROMBANK(6)
 ADDRESS_MAP_END
 
 /*****************************************************************************/
@@ -828,7 +753,7 @@ INPUT_PORTS_START( hornet )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Service Button") PORT_CODE(KEYCODE_7)
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
-	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0f, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START
 	PORT_DIPNAME( 0x80, 0x00, "Test Mode" )
@@ -980,36 +905,224 @@ static MACHINE_DRIVER_START( hornet_2board )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_RGB_DIRECT)
-	MDRV_SCREEN_SIZE(128*8, 48*8)
-	MDRV_VISIBLE_AREA(0*8, 128*8-1, 0*8, 48*8-1)
 	MDRV_PALETTE_LENGTH(65536)
+
+	MDRV_SCREEN_ADD("left", 0x000)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(DEFAULT_REAL_60HZ_VBLANK_DURATION))
+	MDRV_SCREEN_MAXSIZE(512, 384)
+	MDRV_VISIBLE_AREA(0, 511, 0, 383)
+
+	MDRV_SCREEN_ADD("right", 0x000)
+	MDRV_SCREEN_REFRESH_RATE(60)
+	MDRV_SCREEN_VBLANK_TIME(TIME_IN_USEC(DEFAULT_REAL_60HZ_VBLANK_DURATION))
+	MDRV_SCREEN_MAXSIZE(512, 384)
+	MDRV_VISIBLE_AREA(0, 511, 0, 383)
 MACHINE_DRIVER_END
+
+
+/*****************************************************************************/
+
+static UINT8 jvs_rdata[1024];
+static UINT8 jvs_sdata[1024];
+
+static int jvs_rdata_ptr = 0;
+static int jvs_sdata_ptr = 0;
+
+UINT8 jamma_jvs_r(void)
+{
+	UINT8 r;
+	r = jvs_rdata[jvs_rdata_ptr];
+	jvs_rdata_ptr++;
+
+	return r;
+}
+
+void jamma_jvs_w(UINT8 data)
+{
+	jvs_sdata[jvs_sdata_ptr] = data;
+	jvs_sdata_ptr++;
+}
+
+static int jvs_encode_data(UINT8 *in, UINT8 *out, int length)
+{
+	int outptr = 0;
+	int inptr = 0;
+
+	while (inptr < length)
+	{
+		UINT8 b = in[inptr++];
+		if (b == 0xe0)
+		{
+			out[outptr++] = 0xd0;
+			out[outptr++] = 0xdf;
+		}
+		else if (b == 0xd0)
+		{
+			out[outptr++] = 0xd0;
+			out[outptr++] = 0xcf;
+		}
+		else
+		{
+			out[outptr++] = b;
+		}
+	};
+
+	return outptr;
+}
+
+static int jvs_decode_data(UINT8 *in, UINT8 *out, int length)
+{
+	int outptr = 0;
+	int inptr = 0;
+
+	while (inptr < length)
+	{
+		UINT8 b = in[inptr++];
+		if (b == 0xd0)
+		{
+			UINT8 b2 = in[inptr++];
+			out[outptr++] = b2 + 1;
+		}
+		else
+		{
+			out[outptr++] = b;
+		}
+	};
+
+	return outptr;
+}
+
+void jamma_jvs_cmd_exec(void)
+{
+	UINT8 sync, node, byte_num;
+	UINT8 data[1024], rdata[1024];
+	int i, length;
+	int rdata_ptr;
+	int sum;
+
+	sync = jvs_sdata[0];
+	node = jvs_sdata[1];
+	byte_num = jvs_sdata[2];
+
+	if (sync != 0xe0)
+	{
+		printf("jamma_jvs_cmd_exec: SYNC byte not found! (%02X)\n", sync);
+		return;
+	}
+
+	length = jvs_decode_data(&jvs_sdata[3], data, byte_num-1);
+
+	/*
+    printf("jvs input data:\n");
+    for (i=0; i < byte_num; i++)
+    {
+        printf("%02X ", jvs_sdata[3+i]);
+    }
+    printf("\n");
+
+    printf("jvs data decoded to:\n");
+    for (i=0; i < length; i++)
+    {
+        printf("%02X ", data[i]);
+    }
+    printf("\n\n");
+    */
+
+	// clear return data
+	memset(rdata, 0, sizeof(rdata));
+	rdata_ptr = 0;
+
+	// status
+	rdata[rdata_ptr++] = 0x01;		// normal
+
+	// handle the command
+	switch (data[0])
+	{
+		case 0xf0:		// Reset
+		{
+			break;
+		}
+		case 0xf1:		// Address setting
+		{
+			rdata[rdata_ptr++] = 0x01;		// report data (normal)
+			break;
+		}
+		default:
+		{
+			fatalerror("jamma_jvs_cmd_exec: unknown command %02X\n", data[0]);
+		}
+	}
+
+	// write jvs return data
+	jvs_rdata[0] = 0xe0;			// sync
+	jvs_rdata[1] = 0x00;			// node
+	jvs_rdata[2] = rdata_ptr+1;		// num of bytes
+
+	length = jvs_encode_data(rdata, &jvs_rdata[3], rdata_ptr);
+
+	// calculate sum
+	sum = 0;
+	for (i=0; i < length+2; i++)
+	{
+		sum += jvs_rdata[1+i];
+	}
+
+	// write sum
+	jvs_rdata[3+length] = (UINT8)(sum-1);
+
+	jvs_rdata_ptr = 0;
+	jvs_sdata_ptr = 0;
+}
+
+/*****************************************************************************/
 
 
 static UINT8 jamma_rdata[1024];
 static void jamma_r(int length)
 {
 	int i;
+//  printf("jamma_r %d\n", length);
 	for (i=0; i < length; i++)
 	{
-		jamma_rdata[i] = 0;
+		jamma_rdata[i] = jamma_jvs_r();
 	}
 }
 
 static UINT8 jamma_wdata[1024];
 static void jamma_w(int length)
 {
+	int i;
+//  printf("jamma_w %d\n", length);
+	for (i=0; i < length; i++)
+	{
+		jamma_jvs_w(jamma_wdata[i]);
+	}
+
+	jamma_jvs_cmd_exec();
+}
+
+static void sound_irq_callback(int irq)
+{
+	if (irq == 0)
+	{
+		cpunum_set_input_line(1, INPUT_LINE_IRQ1, PULSE_LINE);
+	}
+	else
+	{
+		cpunum_set_input_line(1, INPUT_LINE_IRQ2, PULSE_LINE);
+	}
 }
 
 static UINT8 backup_ram[0x2000];
 static DRIVER_INIT( hornet )
 {
-	init_konami_cgboard(0, CGBOARD_TYPE_HORNET);
-	set_cgboard_texture_bank(5);
+	init_konami_cgboard(1, CGBOARD_TYPE_HORNET);
+	set_cgboard_texture_bank(0, 5, memory_region(REGION_USER5));
+
 	sharc_dataram[0] = auto_malloc(0x100000);
 
-	m68k_timer = timer_alloc(m68k_timer_tick);
-	timer_adjust(m68k_timer, TIME_IN_MSEC(1000.0/(44100.0/128.0)), 0, TIME_IN_MSEC(1000.0/(44100.0/128.0)));
+	K056800_init(sound_irq_callback);
 
 	timekeeper_init(0, TIMEKEEPER_M48T58, backup_ram);
 
@@ -1019,15 +1132,14 @@ static DRIVER_INIT( hornet )
 
 static DRIVER_INIT( hornet_2board )
 {
-	init_konami_cgboard(0, CGBOARD_TYPE_HORNET);
-	init_konami_cgboard(1, CGBOARD_TYPE_HORNET);
+	init_konami_cgboard(2, CGBOARD_TYPE_HORNET);
+	set_cgboard_texture_bank(0, 5, memory_region(REGION_USER5));
+	set_cgboard_texture_bank(1, 6, memory_region(REGION_USER5));
 
-	set_cgboard_texture_bank(5);
 	sharc_dataram[0] = auto_malloc(0x100000);
 	sharc_dataram[1] = auto_malloc(0x100000);
 
-	m68k_timer = timer_alloc(m68k_timer_tick);
-	timer_adjust(m68k_timer, TIME_IN_MSEC(1000.0/(44100.0/128.0)), 0, TIME_IN_MSEC(1000.0/(44100.0/128.0)));
+	K056800_init(sound_irq_callback);
 
 	timekeeper_init(0, TIMEKEEPER_M48T58, backup_ram);
 
@@ -1240,6 +1352,8 @@ ROM_START(sscope2)
 	ROM_LOAD("931a19.bin", 0x000000, 0x400000, BAD_DUMP CRC(8e8bb6af) SHA1(1bb399f7897fbcbe6852fda3215052b2810437d8))
 	ROM_LOAD("931a20.bin", 0x400000, 0x400000, BAD_DUMP CRC(a14a7887) SHA1(daf0cbaf83e59680a0d3c4d66fcc48d02c9723d1))
 
+	ROM_REGION(0x800000, REGION_USER5, ROMREGION_ERASE00)	/* CG Board texture roms */
+
 	ROM_REGION(0x80000, REGION_CPU2, 0)		/* 68K Program */
 	ROM_LOAD16_WORD_SWAP("931a08.bin", 0x000000, 0x80000, CRC(1597d604) SHA1(a1eab4d25907930b59ea558b484c3b6ddcb9303c))
 
@@ -1299,6 +1413,6 @@ ROM_END
 
 GAME( 1998, gradius4,	0,		hornet,			hornet,	gradius4,	ROT0,	"Konami",	"Gradius 4: Fukkatsu", GAME_IMPERFECT_SOUND )
 GAME( 1998, nbapbp,		0,		hornet,			hornet,	nbapbp,		ROT0,	"Konami",	"NBA Play By Play", GAME_IMPERFECT_SOUND )
-GAME( 2000, sscope,		0,		hornet_2board,	hornet,	sscope,		ROT0,	"Konami",	"Silent Scope (ver UAB)", GAME_IMPERFECT_SOUND|GAME_NOT_WORKING )
-GAME( 2000, sscopea,	sscope, hornet_2board,	hornet,	sscope,		ROT0,	"Konami",	"Silent Scope (ver UAA)", GAME_IMPERFECT_SOUND|GAME_NOT_WORKING )
-GAME( 2000, sscope2,	0,		hornet_2board,	hornet,	sscope2,	ROT0,	"Konami",	"Silent Scope 2", GAME_IMPERFECT_SOUND|GAME_NOT_WORKING )
+GAMEL( 2000, sscope,	0,		hornet_2board,	hornet,	sscope,		ROT0,	"Konami",	"Silent Scope (ver UAB)", GAME_IMPERFECT_SOUND|GAME_NOT_WORKING, layout_dualhsxs )
+GAMEL( 2000, sscopea,	sscope, hornet_2board,	hornet,	sscope,		ROT0,	"Konami",	"Silent Scope (ver UAA)", GAME_IMPERFECT_SOUND|GAME_NOT_WORKING, layout_dualhsxs )
+GAMEL( 2000, sscope2,	0,		hornet_2board,	hornet,	sscope2,	ROT0,	"Konami",	"Silent Scope 2", GAME_IMPERFECT_SOUND|GAME_NOT_WORKING, layout_dualhsxs )

@@ -81,7 +81,7 @@ WRITE8_HANDLER(discrete_sound_w)
 
 		/* Bring the system up to now */
 		if (last_data != *node_data)
-			stream_update(info->discrete_stream, 0);
+			stream_update(info->discrete_stream);
 	}
 	else
 	{

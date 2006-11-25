@@ -37,7 +37,7 @@ static void *tia_start(int sndindex, int clock, const void *config)
 WRITE8_HANDLER( tia_sound_w )
 {
 	struct tia_info *info = sndti_token(SOUND_TIA, 0);
-	stream_update(info->channel, 0);
+	stream_update(info->channel);
 	tia_write(info->chip, offset, data);
 }
 

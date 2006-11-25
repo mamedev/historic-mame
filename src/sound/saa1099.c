@@ -355,7 +355,7 @@ static void saa1099_write_port_w( int chip, int offset, int data )
 	int ch;
 
 	/* first update the stream to this point in time */
-	stream_update(saa->stream, 0);
+	stream_update(saa->stream);
 
 	switch (reg)
 	{

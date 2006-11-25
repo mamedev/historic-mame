@@ -336,7 +336,7 @@ static void MultiPCM_reg_w(int chip, int offset, UINT8 data)
 	MultiPCMT *cptr = sndti_token(SOUND_MULTIPCM, chip);
 	VoiceT *vptr;
 
-	stream_update(cptr->stream, 0);
+	stream_update(cptr->stream);
 
 	switch (offset)
 	{

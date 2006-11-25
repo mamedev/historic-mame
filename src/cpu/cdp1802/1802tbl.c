@@ -254,6 +254,7 @@ INLINE void cdp1802_read_px(void)
 
 	P = i & 0xf;
 	X = i >> 4;
+	change_pc(PC);
 }
 
 INLINE void cdp1802_out_n(int n)

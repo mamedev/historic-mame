@@ -528,7 +528,7 @@ static void upd7759_slave_update(void *param)
 	UINT8 olddrq = chip->drq;
 
 	/* update the stream */
-	stream_update(chip->channel, 0);
+	stream_update(chip->channel);
 
 	/* advance the state */
 	advance_state(chip);
@@ -677,7 +677,7 @@ void upd7759_reset_w(int which, UINT8 data)
 	chip->reset = (data != 0);
 
 	/* update the stream first */
-	stream_update(chip->channel, 0);
+	stream_update(chip->channel);
 
 	/* on the falling edge, reset everything */
 	if (oldreset && !chip->reset)
@@ -694,7 +694,7 @@ void upd7759_start_w(int which, UINT8 data)
 	logerror("upd7759_start_w: %d->%d\n", oldstart, chip->start);
 
 	/* update the stream first */
-	stream_update(chip->channel, 0);
+	stream_update(chip->channel);
 
 	/* on the rising edge, if we're idle, start going, but not if we're held in reset */
 	if (chip->state == STATE_IDLE && !oldstart && chip->start && chip->reset)

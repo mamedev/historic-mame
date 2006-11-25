@@ -9,28 +9,49 @@
 #include "cdrom.h"
 #include "cdda.h"
 
-struct cdda_info
+typedef struct _cdda_info cdda_info;
+struct _cdda_info
 {
 	sound_stream *		stream;
-	cdrom_file *	disc;
+	cdrom_file *		disc;
+
+	INT8				audio_playing, audio_pause, audio_ended_normally;
+	UINT32				audio_lba, audio_length;
+
+	UINT8 *				audio_cache;
+	UINT32				audio_samples;
+	INT16 *				audio_bptr;
 };
+
+
+static void get_audio_data(cdda_info *info, stream_sample_t *bufL, stream_sample_t *bufR, UINT32 samples_wanted);
+
+
+/*-------------------------------------------------
+    cdda_update - stream update callback
+-------------------------------------------------*/
 
 static void cdda_update(void *param, stream_sample_t **inputs, stream_sample_t **outputs, int length)
 {
-	struct cdda_info *info = param;
-	if (info->disc != (cdrom_file *)NULL)
-	{
-		cdrom_get_audio_data(info->disc, &outputs[0][0], &outputs[1][0], length);
-	}
+	cdda_info *info = param;
+	get_audio_data(info, &outputs[0][0], &outputs[1][0], length);
 }
+
+
+/*-------------------------------------------------
+    cdda_start - audio start callback
+-------------------------------------------------*/
 
 static void *cdda_start(int sndindex, int clock, const void *config)
 {
 	const struct CDDAinterface *intf;
-	struct cdda_info *info;
+	cdda_info *info;
 
 	info = auto_malloc(sizeof(*info));
 	memset(info, 0, sizeof(*info));
+
+	/* allocate an audio cache */
+	info->audio_cache = auto_malloc(CD_MAX_SECTOR_DATA*4);
 
 	intf = config;
 
@@ -39,10 +60,225 @@ static void *cdda_start(int sndindex, int clock, const void *config)
 	return info;
 }
 
-void CDDA_set_cdrom(int num, void *file)
+
+/*-------------------------------------------------
+    cdda_set_cdrom - set the CD-ROM file for the
+    given CDDA stream
+-------------------------------------------------*/
+
+void cdda_set_cdrom(int num, void *file)
 {
-	struct cdda_info *info = sndti_token(SOUND_CDDA, num);
+	cdda_info *info = sndti_token(SOUND_CDDA, num);
 	info->disc = (cdrom_file *)file;
+}
+
+
+/*-------------------------------------------------
+    cdda_num_from_cdrom - find the CDDA stream
+    that references the given CD-ROM file
+-------------------------------------------------*/
+
+int cdda_num_from_cdrom(void *file)
+{
+	int index;
+
+	for (index = 0; ; index++)
+	{
+		cdda_info *info = sndti_token(SOUND_CDDA, index);
+		if (info == NULL)
+			return -1;
+		if (info->disc == file)
+			return index;
+	}
+	return 0;
+}
+
+
+/*-------------------------------------------------
+    cdda_start_audio - begin playback of a Red
+    Book audio track
+-------------------------------------------------*/
+
+void cdda_start_audio(int num, UINT32 startlba, UINT32 numblocks)
+{
+	cdda_info *info = sndti_token(SOUND_CDDA, num);
+
+	stream_update(info->stream);
+	info->audio_playing = TRUE;
+	info->audio_pause = FALSE;
+	info->audio_ended_normally = FALSE;
+	info->audio_lba = startlba;
+	info->audio_length = numblocks;
+}
+
+
+/*-------------------------------------------------
+    cdda_stop_audio - stop playback of a Red Book
+    audio track
+-------------------------------------------------*/
+
+void cdda_stop_audio(int num)
+{
+	cdda_info *info = sndti_token(SOUND_CDDA, num);
+
+	stream_update(info->stream);
+	info->audio_playing = FALSE;
+	info->audio_ended_normally = TRUE;
+}
+
+
+/*-------------------------------------------------
+    cdda_pause_audio - pause/unpause playback of
+    a Red Book audio track
+-------------------------------------------------*/
+
+void cdda_pause_audio(int num, int pause)
+{
+	cdda_info *info = sndti_token(SOUND_CDDA, num);
+
+	stream_update(info->stream);
+	info->audio_pause = pause;
+}
+
+
+/*-------------------------------------------------
+    cdda_get_audio_lba - returns the current LBA
+    (physical sector) during Red Book playback
+-------------------------------------------------*/
+
+UINT32 cdda_get_audio_lba(int num)
+{
+	cdda_info *info = sndti_token(SOUND_CDDA, num);
+
+	stream_update(info->stream);
+	return info->audio_lba;
+}
+
+
+/*-------------------------------------------------
+    cdda_audio_active - returns Red Book audio
+    playback status
+-------------------------------------------------*/
+
+int cdda_audio_active(int num)
+{
+	cdda_info *info = sndti_token(SOUND_CDDA, num);
+
+	stream_update(info->stream);
+	return info->audio_playing;
+}
+
+
+/*-------------------------------------------------
+    cdda_audio_paused - returns if Red Book
+    playback is paused
+-------------------------------------------------*/
+
+int cdda_audio_paused(int num)
+{
+	cdda_info *info = sndti_token(SOUND_CDDA, num);
+	return info->audio_pause;
+}
+
+
+/*-------------------------------------------------
+    cdda_audio_ended - returns if a Red Book
+    track reached it's natural end
+-------------------------------------------------*/
+
+int cdda_audio_ended(int num)
+{
+	cdda_info *info = sndti_token(SOUND_CDDA, num);
+	return info->audio_ended_normally;
+}
+
+
+/*-------------------------------------------------
+    get_audio_data - reads Red Book data off
+    the disc if playback is in progress and
+    converts it to 2 16-bit 44.1 kHz streams
+-------------------------------------------------*/
+
+static void get_audio_data(cdda_info *info, stream_sample_t *bufL, stream_sample_t *bufR, UINT32 samples_wanted)
+{
+	int i, sectoread, remaining;
+
+	/* if no file, audio not playing, audio paused, or out of disc data,
+       just zero fill */
+	if (!info->disc || !info->audio_playing || info->audio_pause || (!info->audio_length && !info->audio_samples))
+	{
+		if( info->disc && info->audio_playing && !info->audio_pause && !info->audio_length )
+		{
+			info->audio_playing = FALSE;
+			info->audio_ended_normally = TRUE;
+		}
+
+		memset(bufL, 0, sizeof(stream_sample_t)*samples_wanted);
+		memset(bufR, 0, sizeof(stream_sample_t)*samples_wanted);
+		return;
+	}
+
+	/* if we've got enough samples, just feed 'em out */
+	if (samples_wanted <= info->audio_samples)
+	{
+		for (i = 0; i < samples_wanted; i++)
+		{
+			*bufL++ = *info->audio_bptr++;
+			*bufR++ = *info->audio_bptr++;
+		}
+
+		info->audio_samples -= samples_wanted;
+		return;
+	}
+
+	/* we don't have enough, so first feed what we've got */
+	for (i = 0; i < info->audio_samples; i++)
+	{
+		*bufL++ = *info->audio_bptr++;
+		*bufR++ = *info->audio_bptr++;
+	}
+
+	/* remember how much left for later */
+	remaining = samples_wanted - info->audio_samples;
+
+	/* reset the buffer and get what we can from the disc */
+	info->audio_samples = 0;
+	if (info->audio_length >= 4)
+	{
+		sectoread = 4;
+	}
+	else
+	{
+		sectoread = info->audio_length;
+	}
+
+	for (i = 0; i < sectoread; i++)
+	{
+		cdrom_read_data(info->disc, info->audio_lba, &info->audio_cache[CD_MAX_SECTOR_DATA*i], CD_TRACK_AUDIO);
+
+		info->audio_lba++;
+	}
+
+	info->audio_samples = (CD_MAX_SECTOR_DATA*sectoread)/4;
+	info->audio_length -= sectoread;
+
+	/* CD-DA data on the disc is big-endian, flip if we're not */
+	#ifdef LSB_FIRST
+	for (i = 0; i < info->audio_samples*4; i += 2)
+	{
+		UINT8 tmp;
+
+		tmp = info->audio_cache[i+1];
+		info->audio_cache[i+1] = info->audio_cache[i];
+		info->audio_cache[i] = tmp;
+	}
+	#endif
+
+	/* reset feedout ptr */
+	info->audio_bptr = (INT16 *)info->audio_cache;
+
+	/* we've got data, feed it out by calling ourselves recursively */
+	get_audio_data(info, bufL, bufR, remaining);
 }
 
 

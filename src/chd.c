@@ -33,15 +33,15 @@
 #define METADATA_HEADER_SIZE		16			/* metadata header size */
 #define CRCMAP_HASH_SIZE			4095		/* number of CRC hashtable entries */
 
-#define MAP_ENTRY_FLAG_TYPE_MASK	0x000f		/* what type of hunk */
-#define MAP_ENTRY_FLAG_NO_CRC		0x0010		/* no CRC is present */
+#define MAP_ENTRY_FLAG_TYPE_MASK	0x0f		/* what type of hunk */
+#define MAP_ENTRY_FLAG_NO_CRC		0x10		/* no CRC is present */
 
-#define MAP_ENTRY_TYPE_INVALID		0x0000		/* invalid type */
-#define MAP_ENTRY_TYPE_COMPRESSED	0x0001		/* standard compression */
-#define MAP_ENTRY_TYPE_UNCOMPRESSED	0x0002		/* uncompressed data */
-#define MAP_ENTRY_TYPE_MINI			0x0003		/* mini: use offset as raw data */
-#define MAP_ENTRY_TYPE_SELF_HUNK	0x0004		/* same as another hunk in this file */
-#define MAP_ENTRY_TYPE_PARENT_HUNK	0x0005		/* same as a hunk in the parent file */
+#define MAP_ENTRY_TYPE_INVALID		0x00		/* invalid type */
+#define MAP_ENTRY_TYPE_COMPRESSED	0x01		/* standard compression */
+#define MAP_ENTRY_TYPE_UNCOMPRESSED	0x02		/* uncompressed data */
+#define MAP_ENTRY_TYPE_MINI			0x03		/* mini: use offset as raw data */
+#define MAP_ENTRY_TYPE_SELF_HUNK	0x04		/* same as another hunk in this file */
+#define MAP_ENTRY_TYPE_PARENT_HUNK	0x05		/* same as a hunk in the parent file */
 
 #define CHD_V1_SECTOR_SIZE			512			/* size of a "sector" in the V1 header */
 
@@ -76,6 +76,7 @@ struct _codec_interface
 	void 		(*free)(chd_file *chd);		/* codec free */
 	chd_error	(*compress)(chd_file *chd, const void *src, UINT32 *complen); /* compress data */
 	chd_error	(*decompress)(chd_file *chd, UINT32 complen, void *dst); /* decompress data */
+	chd_error	(*config)(chd_file *chd, int param, void *config); /* configure */
 };
 
 
@@ -85,8 +86,8 @@ struct _map_entry
 {
 	UINT64					offset;			/* offset within the file of the data */
 	UINT32					crc;			/* 32-bit CRC of the data */
-	UINT16					length;			/* length of the data */
-	UINT16					flags;			/* misc flags */
+	UINT32					length;			/* length of the data */
+	UINT8					flags;			/* misc flags */
 };
 
 
@@ -111,13 +112,23 @@ struct _metadata_entry
 };
 
 
+/* multifile object */
+typedef struct _multi_file multi_file;
+struct _multi_file
+{
+	UINT32					numfiles;		/* number of files */
+	chd_interface_file **	files;			/* array of open file handles */
+	UINT64 *				length;			/* array of file lengths */
+};
+
+
 /* internal representation of an open CHD file */
 struct _chd_file
 {
 	UINT32					cookie;			/* cookie, should equal COOKIE_VALUE */
 	chd_file *				next;			/* pointer to next file in the global list */
 
-	chd_interface_file *	file;			/* handle to the open file */
+	multi_file *			file;			/* handle to the open multi file */
 	chd_header 				header;			/* header, extracted from file */
 
 	chd_file *				parent;			/* pointer to parent file, or NULL */
@@ -140,10 +151,12 @@ struct _chd_file
 
 	UINT32					maxhunk;		/* maximum hunk accessed */
 
+	UINT8					compressing;	/* are we compressing? */
 	struct MD5Context		compmd5; 		/* running MD5 during compression */
 	struct sha1_ctx			compsha1; 		/* running SHA1 during compression */
 	UINT32					comphunk;		/* next hunk we will compress */
 
+	UINT8					verifying;		/* are we verifying? */
 	struct MD5Context		vermd5; 		/* running MD5 during verification */
 	struct sha1_ctx			versha1; 		/* running SHA1 during verification */
 	UINT32					verhunk;		/* next hunk we will verify */
@@ -177,35 +190,44 @@ static const UINT8 nullsha1[CHD_SHA1_BYTES] = { 0 };
     PROTOTYPES
 ***************************************************************************/
 
+/* internal header operations */
 static chd_error header_validate(const chd_header *header);
-static chd_error header_read(chd_interface_file *file, chd_header *header);
-static chd_error header_write(chd_interface_file *file, const chd_header *header);
+static chd_error header_read(multi_file *file, chd_header *header);
+static chd_error header_write(multi_file *file, const chd_header *header);
 
-static chd_error hunk_read_into_memory(chd_file *chd, UINT32 hunknum, UINT8 *dest);
+/* internal hunk read/write */
 static chd_error hunk_read_into_cache(chd_file *chd, UINT32 hunknum);
+static chd_error hunk_read_into_memory(chd_file *chd, UINT32 hunknum, UINT8 *dest);
 static chd_error hunk_write_from_memory(chd_file *chd, UINT32 hunknum, const UINT8 *src);
 
-static chd_error map_write_initial(chd_interface_file *file, chd_file *parent, const chd_header *header);
+/* internal map access */
+static chd_error map_write_initial(multi_file *file, chd_file *parent, const chd_header *header);
 static chd_error map_read(chd_file *chd);
 
+/* internal CRC map access */
 static void crcmap_init(chd_file *chd, int prepopulate);
 static void crcmap_add_entry(chd_file *chd, UINT32 hunknum);
 static UINT32 crcmap_find_hunk(chd_file *chd, UINT32 hunknum, UINT32 crc, const UINT8 *rawdata);
 
+/* metadata management */
 static chd_error metadata_find_entry(chd_file *chd, UINT32 metatag, UINT32 metaindex, metadata_entry *metaentry);
 static chd_error metadata_set_previous_next(chd_file *chd, UINT64 prevoffset, UINT64 nextoffset);
 static chd_error metadata_set_length(chd_file *chd, UINT64 offset, UINT32 length);
 
+/* zlib compression codec */
 static chd_error zlib_codec_init(chd_file *chd);
 static void zlib_codec_free(chd_file *chd);
 static chd_error zlib_codec_compress(chd_file *chd, const void *src, UINT32 *length);
 static chd_error zlib_codec_decompress(chd_file *chd, UINT32 srclength, void *dest);
+static voidpf zlib_fast_alloc(voidpf opaque, uInt items, uInt size);
+static void zlib_fast_free(voidpf opaque, voidpf address);
 
-static chd_interface_file *multi_open(const char *filename, const char *mode);
-static void multi_close(chd_interface_file *file);
-static UINT32 multi_read(chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer);
-static UINT32 multi_write(chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer);
-static UINT64 multi_length(chd_interface_file *file);
+/* multifile routines */
+static multi_file *multi_open(const char *filename, const char *mode);
+static void multi_close(multi_file *file);
+static UINT32 multi_read(multi_file *file, UINT64 offset, UINT32 count, void *buffer);
+static UINT32 multi_write(multi_file *file, UINT64 offset, UINT32 count, const void *buffer);
+static UINT64 multi_length(multi_file *file);
 
 
 
@@ -222,6 +244,7 @@ static const codec_interface codec_interfaces[] =
 		NULL,
 		NULL,
 		NULL,
+		NULL,
 		NULL
 	},
 
@@ -232,7 +255,8 @@ static const codec_interface codec_interfaces[] =
 		zlib_codec_init,
 		zlib_codec_free,
 		zlib_codec_compress,
-		zlib_codec_decompress
+		zlib_codec_decompress,
+		NULL
 	},
 
 	/* zlib+ compression */
@@ -242,7 +266,8 @@ static const codec_interface codec_interfaces[] =
 		zlib_codec_init,
 		zlib_codec_free,
 		zlib_codec_compress,
-		zlib_codec_decompress
+		zlib_codec_decompress,
+		NULL
 	}
 };
 
@@ -339,8 +364,8 @@ INLINE void map_extract(const UINT8 *base, map_entry *entry)
 {
 	entry->offset = get_bigendian_uint64(&base[0]);
 	entry->crc = get_bigendian_uint32(&base[8]);
-	entry->length = get_bigendian_uint16(&base[12]);
-	entry->flags = get_bigendian_uint16(&base[14]);
+	entry->length = get_bigendian_uint16(&base[12]) | (base[14] << 16);
+	entry->flags = base[15];
 }
 
 
@@ -354,7 +379,8 @@ INLINE void map_assemble(UINT8 *base, map_entry *entry)
 	put_bigendian_uint64(&base[0], entry->offset);
 	put_bigendian_uint32(&base[8], entry->crc);
 	put_bigendian_uint16(&base[12], entry->length);
-	put_bigendian_uint16(&base[14], entry->flags);
+	base[14] = entry->length >> 16;
+	base[15] = entry->flags;
 }
 
 
@@ -407,7 +433,7 @@ void chd_set_interface(chd_interface *new_interface)
 
 chd_error chd_create(const char *filename, UINT64 logicalbytes, UINT32 hunkbytes, UINT32 compression, chd_file *parent)
 {
-	chd_interface_file *file = NULL;
+	multi_file *file = NULL;
 	chd_file *newchd = NULL;
 	chd_header header;
 	chd_error err;
@@ -481,6 +507,7 @@ chd_error chd_create(const char *filename, UINT64 logicalbytes, UINT32 hunkbytes
 
 	/* all done */
 	multi_close(file);
+	file = NULL;
 
 	/* if we have a parent, clone the metadata */
 	if (parent != NULL)
@@ -697,6 +724,34 @@ void chd_close_all(void)
 }
 
 
+/*-------------------------------------------------
+    chd_multi_filename - compute the indexed CHD
+    filename
+-------------------------------------------------*/
+
+void chd_multi_filename(const char *origname, char *finalname, int index)
+{
+	char *extension;
+	char findex[5];
+
+	/* copy the original name */
+	strcpy(finalname, origname);
+
+	/* determine the offset of the extension period */
+	extension = strchr(finalname, '.');
+	if (extension == NULL)
+		extension = finalname + strlen(finalname);
+
+	/* compute our extension */
+	sprintf(findex, ".%3d", index);
+	if (findex[1] == ' ')
+		findex[1] = 'c';
+	if (findex[2] == ' ')
+		findex[2] = 'h';
+	strcpy(extension, findex);
+}
+
+
 
 /***************************************************************************
     CHD HEADER MANAGEMENT
@@ -724,7 +779,7 @@ const chd_header *chd_get_header(chd_file *chd)
 
 chd_error chd_set_header(const char *filename, const chd_header *header)
 {
-	chd_interface_file *file = NULL;
+	multi_file *file = NULL;
 	chd_header oldheader;
 	chd_error err;
 
@@ -868,7 +923,7 @@ chd_error chd_get_metadata(chd_file *chd, UINT32 searchtag, UINT32 searchindex, 
 	if (err != CHDERR_NONE)
 	{
 		/* unless we're an old version and they are requesting hard disk metadata */
-		if (chd->header.version < 3 && (searchtag == HARD_DISK_STANDARD_METADATA || searchtag == CHDMETATAG_WILDCARD) && searchindex == 0)
+		if (chd->header.version < 3 && (searchtag == HARD_DISK_METADATA_TAG || searchtag == CHDMETATAG_WILDCARD) && searchindex == 0)
 		{
 			char faux_metadata[256];
 			UINT32 faux_length;
@@ -884,7 +939,7 @@ chd_error chd_get_metadata(chd_file *chd, UINT32 searchtag, UINT32 searchindex, 
 			if (resultlen != NULL)
 				*resultlen = faux_length;
 			if (resulttag != NULL)
-				*resulttag = HARD_DISK_STANDARD_METADATA;
+				*resulttag = HARD_DISK_METADATA_TAG;
 			return CHDERR_NONE;
 		}
 		return err;
@@ -962,7 +1017,7 @@ chd_error chd_set_metadata(chd_file *chd, UINT32 metatag, UINT32 metaindex, cons
 	/* now build us a new entry */
 	put_bigendian_uint32(&raw_meta_header[0], metatag);
 	put_bigendian_uint32(&raw_meta_header[4], inputlen);
-	put_bigendian_uint64(&raw_meta_header[8], (err == CHDERR_NONE) ? metaentry.next : metaentry.prev);
+	put_bigendian_uint64(&raw_meta_header[8], (err == CHDERR_NONE) ? metaentry.next : 0);
 
 	/* write out the new header */
 	offset = multi_length(chd->file);
@@ -1081,9 +1136,29 @@ chd_error chd_compress_begin(chd_file *chd)
 	/* init the MD5/SHA1 computations */
 	MD5Init(&chd->compmd5);
 	sha1_init(&chd->compsha1);
+	chd->compressing = TRUE;
 	chd->comphunk = 0;
 
 	return CHDERR_NONE;
+}
+
+
+/*-------------------------------------------------
+    chd_compress_config - set internal codec
+    parameters
+-------------------------------------------------*/
+
+chd_error chd_compress_config(chd_file *chd, int param, void *config)
+{
+	/* error if in the wrong state */
+	if (!chd->compressing)
+		return CHDERR_INVALID_STATE;
+
+	/* if the codec has a configuration callback, call through to it */
+	if (chd->codecintf->config != NULL)
+		return (*chd->codecintf->config)(chd, param, config);
+
+	return CHDERR_INVALID_PARAMETER;
 }
 
 
@@ -1098,6 +1173,10 @@ chd_error chd_compress_hunk(chd_file *chd, const void *data, double *curratio)
 	UINT64 sourceoffset = (UINT64)thishunk * (UINT64)chd->header.hunkbytes;
 	UINT32 bytestochecksum;
 	chd_error err;
+
+	/* error if in the wrong state */
+	if (!chd->compressing)
+		return CHDERR_INVALID_STATE;
 
 	/* update the MD5/SHA1 */
 	bytestochecksum = chd->header.hunkbytes;
@@ -1142,6 +1221,10 @@ chd_error chd_compress_hunk(chd_file *chd, const void *data, double *curratio)
 
 chd_error chd_compress_finish(chd_file *chd)
 {
+	/* error if in the wrong state */
+	if (!chd->compressing)
+		return CHDERR_INVALID_STATE;
+
 	/* compute the final MD5/SHA1 values */
 	MD5Final(chd->header.md5, &chd->compmd5);
 	sha1_final(&chd->compsha1);
@@ -1149,6 +1232,7 @@ chd_error chd_compress_finish(chd_file *chd)
 
 	/* turn off the writeable flag and re-write the header */
 	chd->header.flags &= ~CHDFLAGS_IS_WRITEABLE;
+	chd->compressing = FALSE;
 	return header_write(chd->file, &chd->header);
 }
 
@@ -1180,6 +1264,7 @@ chd_error chd_verify_begin(chd_file *chd)
 	/* init the MD5/SHA1 computations */
 	MD5Init(&chd->vermd5);
 	sha1_init(&chd->versha1);
+	chd->verifying = TRUE;
 	chd->verhunk = 0;
 
 	return CHDERR_NONE;
@@ -1196,6 +1281,10 @@ chd_error chd_verify_hunk(chd_file *chd)
 	UINT32 thishunk = chd->verhunk++;
 	UINT64 hunkoffset = (UINT64)thishunk * (UINT64)chd->header.hunkbytes;
 	chd_error err;
+
+	/* error if in the wrong state */
+	if (!chd->verifying)
+		return CHDERR_INVALID_STATE;
 
 	/* read the hunk into the cache */
 	err = hunk_read_into_cache(chd, thishunk);
@@ -1223,6 +1312,10 @@ chd_error chd_verify_hunk(chd_file *chd)
 
 chd_error chd_verify_finish(chd_file *chd, UINT8 *finalmd5, UINT8 *finalsha1)
 {
+	/* error if in the wrong state */
+	if (!chd->verifying)
+		return CHDERR_INVALID_STATE;
+
 	/* compute the final MD5 */
 	if (finalmd5 != NULL)
 		MD5Final(finalmd5, &chd->vermd5);
@@ -1235,6 +1328,7 @@ chd_error chd_verify_finish(chd_file *chd, UINT8 *finalmd5, UINT8 *finalsha1)
 	}
 
 	/* return an error */
+	chd->verifying = FALSE;
 	return (chd->verhunk < chd->header.totalhunks) ? CHDERR_VERIFY_INCOMPLETE : CHDERR_NONE;
 }
 
@@ -1275,7 +1369,7 @@ static chd_error header_validate(const chd_header *header)
 		return CHDERR_INVALID_PARAMETER;
 
 	/* require a valid hunksize */
-	if (header->hunkbytes == 0 || header->hunkbytes >= 65536)
+	if (header->hunkbytes == 0 || header->hunkbytes >= 65536 * 256)
 		return CHDERR_INVALID_PARAMETER;
 
 	/* require a valid hunk count */
@@ -1307,7 +1401,7 @@ static chd_error header_validate(const chd_header *header)
     internal data structure
 -------------------------------------------------*/
 
-static chd_error header_read(chd_interface_file *file, chd_header *header)
+static chd_error header_read(multi_file *file, chd_header *header)
 {
 	UINT8 rawheader[CHD_MAX_HEADER_SIZE];
 	UINT32 count;
@@ -1389,7 +1483,7 @@ static chd_error header_read(chd_interface_file *file, chd_header *header)
     internal data structure
 -------------------------------------------------*/
 
-static chd_error header_write(chd_interface_file *file, const chd_header *header)
+static chd_error header_write(multi_file *file, const chd_header *header)
 {
 	UINT8 rawheader[CHD_MAX_HEADER_SIZE];
 	UINT32 count;
@@ -1643,7 +1737,7 @@ write_entry:
     a new CHD file
 -------------------------------------------------*/
 
-static chd_error map_write_initial(chd_interface_file *file, chd_file *parent, const chd_header *header)
+static chd_error map_write_initial(multi_file *file, chd_file *parent, const chd_header *header)
 {
 	UINT8 blank_map_entries[MAP_STACK_ENTRIES * MAP_ENTRY_SIZE];
 	int fullchunks, remainder, count, i, j;
@@ -1721,8 +1815,8 @@ static chd_error map_read(chd_file *chd)
 {
 	UINT32 entrysize = (chd->header.version < 3) ? OLD_MAP_ENTRY_SIZE : MAP_ENTRY_SIZE;
 	UINT8 raw_map_entries[MAP_STACK_ENTRIES * MAP_ENTRY_SIZE];
+	UINT64 fileoffset, maxoffset = 0;
 	UINT8 cookie[MAP_ENTRY_SIZE];
-	UINT64 fileoffset;
 	UINT32 count;
 	int i, err;
 
@@ -1760,11 +1854,24 @@ static chd_error map_read(chd_file *chd)
 			for (j = 0; j < entries; j++)
 				map_extract_old(&raw_map_entries[j * OLD_MAP_ENTRY_SIZE], &chd->map[i + j], chd->header.hunkbytes);
 		}
+
+		/* track the maximum offset */
+		for (j = 0; j < entries; j++)
+			if ((chd->map[i + j].flags & MAP_ENTRY_FLAG_TYPE_MASK) == MAP_ENTRY_TYPE_COMPRESSED ||
+				(chd->map[i + j].flags & MAP_ENTRY_FLAG_TYPE_MASK) == MAP_ENTRY_TYPE_UNCOMPRESSED)
+				maxoffset = MAX(maxoffset, chd->map[i + j].offset + chd->map[i + j].length);
 	}
 
 	/* verify the cookie */
 	count = multi_read(chd->file, fileoffset, entrysize, &cookie);
 	if (count != entrysize || memcmp(&cookie, END_OF_LIST_COOKIE, entrysize))
+	{
+		err = CHDERR_INVALID_FILE;
+		goto cleanup;
+	}
+
+	/* verify the length */
+	if (maxoffset > multi_length(chd->file))
 	{
 		err = CHDERR_INVALID_FILE;
 		goto cleanup;
@@ -2025,75 +2132,8 @@ static chd_error metadata_set_length(chd_file *chd, UINT64 offset, UINT32 length
 
 
 /***************************************************************************
-    FAST ZLIB MEMORY HOOKS
+    ZLIB COMPRESSION CODEC
 ***************************************************************************/
-
-/*-------------------------------------------------
-    zlib_fast_alloc - fast malloc for ZLIB, which
-    allocates and frees memory frequently
--------------------------------------------------*/
-
-static voidpf zlib_fast_alloc(voidpf opaque, uInt items, uInt size)
-{
-	zlib_codec_data *data = opaque;
-	UINT32 *ptr;
-	int i;
-
-	/* compute the size, rounding to the nearest 1k */
-	size = (size * items + 0x3ff) & ~0x3ff;
-
-	/* reuse a hunk if we can */
-	for (i = 0; i < MAX_ZLIB_ALLOCS; i++)
-	{
-		ptr = data->allocptr[i];
-		if (ptr && size == *ptr)
-		{
-			/* set the low bit of the size so we don't match next time */
-			*ptr |= 1;
-			return ptr + 1;
-		}
-	}
-
-	/* alloc a new one */
-	ptr = malloc(size + sizeof(UINT32));
-	if (!ptr)
-		return NULL;
-
-	/* put it into the list */
-	for (i = 0; i < MAX_ZLIB_ALLOCS; i++)
-		if (!data->allocptr[i])
-		{
-			data->allocptr[i] = ptr;
-			break;
-		}
-
-	/* set the low bit of the size so we don't match next time */
-	*ptr = size | 1;
-	return ptr + 1;
-}
-
-
-/*-------------------------------------------------
-    zlib_fast_free - fast free for ZLIB, which
-    allocates and frees memory frequently
--------------------------------------------------*/
-
-static void zlib_fast_free(voidpf opaque, voidpf address)
-{
-	zlib_codec_data *data = opaque;
-	UINT32 *ptr = (UINT32 *)address - 1;
-	int i;
-
-	/* find the hunk */
-	for (i = 0; i < MAX_ZLIB_ALLOCS; i++)
-		if (ptr == data->allocptr[i])
-		{
-			/* clear the low bit of the size to allow matches */
-			*ptr &= ~1;
-			return;
-		}
-}
-
 
 /*-------------------------------------------------
     zlib_codec_init - initialize the ZLIB codec
@@ -2240,32 +2280,271 @@ static chd_error zlib_codec_decompress(chd_file *chd, UINT32 srclength, void *de
 }
 
 
+/*-------------------------------------------------
+    zlib_fast_alloc - fast malloc for ZLIB, which
+    allocates and frees memory frequently
+-------------------------------------------------*/
+
+static voidpf zlib_fast_alloc(voidpf opaque, uInt items, uInt size)
+{
+	zlib_codec_data *data = opaque;
+	UINT32 *ptr;
+	int i;
+
+	/* compute the size, rounding to the nearest 1k */
+	size = (size * items + 0x3ff) & ~0x3ff;
+
+	/* reuse a hunk if we can */
+	for (i = 0; i < MAX_ZLIB_ALLOCS; i++)
+	{
+		ptr = data->allocptr[i];
+		if (ptr && size == *ptr)
+		{
+			/* set the low bit of the size so we don't match next time */
+			*ptr |= 1;
+			return ptr + 1;
+		}
+	}
+
+	/* alloc a new one */
+	ptr = malloc(size + sizeof(UINT32));
+	if (!ptr)
+		return NULL;
+
+	/* put it into the list */
+	for (i = 0; i < MAX_ZLIB_ALLOCS; i++)
+		if (!data->allocptr[i])
+		{
+			data->allocptr[i] = ptr;
+			break;
+		}
+
+	/* set the low bit of the size so we don't match next time */
+	*ptr = size | 1;
+	return ptr + 1;
+}
+
+
+/*-------------------------------------------------
+    zlib_fast_free - fast free for ZLIB, which
+    allocates and frees memory frequently
+-------------------------------------------------*/
+
+static void zlib_fast_free(voidpf opaque, voidpf address)
+{
+	zlib_codec_data *data = opaque;
+	UINT32 *ptr = (UINT32 *)address - 1;
+	int i;
+
+	/* find the hunk */
+	for (i = 0; i < MAX_ZLIB_ALLOCS; i++)
+		if (ptr == data->allocptr[i])
+		{
+			/* clear the low bit of the size to allow matches */
+			*ptr &= ~1;
+			return;
+		}
+}
+
+
 
 /***************************************************************************
     MULTIFILE ROUTINES
 ***************************************************************************/
 
-static chd_interface_file *multi_open(const char *filename, const char *mode)
+/*-------------------------------------------------
+    multi_open - open one or more files that
+    make up a CHD
+-------------------------------------------------*/
+
+static multi_file *multi_open(const char *filename, const char *mode)
 {
-	return (*cur_interface.open)(filename, mode);
+	chd_interface_file *chdfile = NULL;
+	multi_file *file = NULL;
+	char *curname = NULL;
+	int numfiles = 1;
+	int i;
+
+	/* open the first file */
+	chdfile = (*cur_interface.open)(filename, mode);
+	if (chdfile == NULL)
+		return NULL;
+
+	/* allocate a new multi_file object */
+	file = malloc(sizeof(*file));
+	if (file == NULL)
+		goto error;
+	memset(file, 0, sizeof(*file));
+
+	/* if we're not writing, look for additional files */
+	if (strchr(mode, 'w') == NULL && strchr(mode, '+') == NULL)
+	{
+		/* allocate a copy of the filename */
+		curname = malloc(strlen(filename) + 1 + 4);
+		if (curname == NULL)
+			goto error;
+
+		/* count how many files are available */
+		for ( ; ; numfiles++)
+		{
+			chd_interface_file *tempfile;
+
+			chd_multi_filename(filename, curname, numfiles - 1);
+			tempfile = (*cur_interface.open)(curname, mode);
+			if (tempfile == NULL)
+				break;
+			(*cur_interface.close)(tempfile);
+		}
+	}
+
+	/* allocate memory for the file and length arrays */
+	file->files = malloc(numfiles * sizeof(file->files[0]));
+	file->length = malloc(numfiles * sizeof(file->length[0]));
+	if (file->files == NULL || file->length == NULL)
+		goto error;
+
+	/* fill in the first entry */
+	file->files[0] = chdfile;
+	file->length[0] = (*cur_interface.length)(chdfile);
+	file->numfiles = numfiles;
+
+	/* now open the remaining files for real */
+	for (i = 1; i < file->numfiles; i++)
+	{
+		chd_multi_filename(filename, curname, i - 1);
+		file->files[i] = (*cur_interface.open)(curname, mode);
+		if (file->files[i] == NULL)
+			goto error;
+		file->length[i] = (*cur_interface.length)(file->files[i]);
+	}
+
+	/* free memory */
+	if (curname != NULL)
+		free(curname);
+
+	return file;
+
+error:
+	if (file != NULL)
+	{
+		if (file->files != NULL)
+			free(file->files);
+		if (file->length != NULL)
+			free(file->length);
+		free(file);
+	}
+	if (curname != NULL)
+		free(curname);
+	if (chdfile != NULL)
+		(*cur_interface.close)(chdfile);
+	return NULL;
 }
 
-static void multi_close(chd_interface_file *file)
+
+/*-------------------------------------------------
+    multi_close - close all open files associated
+    with a CHD
+-------------------------------------------------*/
+
+static void multi_close(multi_file *file)
 {
-	(*cur_interface.close)(file);
+	int i;
+
+	/* close all files */
+	for (i = 0; i < file->numfiles; i++)
+		(*cur_interface.close)(file->files[i]);
+
+	/* free memory */
+	free(file->files);
+	free(file->length);
+	free(file);
 }
 
-static UINT32 multi_read(chd_interface_file *file, UINT64 offset, UINT32 count, void *buffer)
+
+/*-------------------------------------------------
+    multi_read - read from potentially multiple
+    files that make up a CHD
+-------------------------------------------------*/
+
+static UINT32 multi_read(multi_file *file, UINT64 offset, UINT32 count, void *buffer)
 {
-	return (*cur_interface.read)(file, offset, count, buffer);
+	UINT64 baseoffset = 0;
+	UINT32 firstcount;
+	int i;
+
+	/* find the file where the starting offset lives */
+	for (i = 0; i < file->numfiles; i++)
+	{
+		if (offset >= baseoffset && offset < baseoffset + file->length[i])
+			break;
+		baseoffset += file->length[i];
+	}
+
+	/* if past the total end, return nothing */
+	if (i == file->numfiles)
+		return 0;
+
+	/* if we don't cross the end of the file, just do the read */
+	if (offset + count <= baseoffset + file->length[i])
+		return (*cur_interface.read)(file->files[i], offset - baseoffset, count, buffer);
+
+	/* otherwise, break it into two reads */
+	firstcount = baseoffset + file->length[i] - offset;
+	return multi_read(file, offset, firstcount, buffer) +
+		   multi_read(file, offset + firstcount, count - firstcount, (UINT8 *)buffer + firstcount);
 }
 
-static UINT32 multi_write(chd_interface_file *file, UINT64 offset, UINT32 count, const void *buffer)
+
+/*-------------------------------------------------
+    multi_write - write to a CHD file; writes
+    past the end always go to the last file, no
+    matter how large it grows
+-------------------------------------------------*/
+
+static UINT32 multi_write(multi_file *file, UINT64 offset, UINT32 count, const void *buffer)
 {
-	return (*cur_interface.write)(file, offset, count, buffer);
+	UINT64 baseoffset = 0;
+	UINT32 firstcount;
+	int i;
+
+	/* find the file where the starting offset lives */
+	for (i = 0; i < file->numfiles; i++)
+	{
+		if (offset >= baseoffset && offset < baseoffset + file->length[i])
+			break;
+		baseoffset += file->length[i];
+	}
+
+	/* if past the total end, append to the last file */
+	if (i == file->numfiles)
+	{
+		baseoffset -= file->length[--i];
+		file->length[i] = (offset + count) - baseoffset;
+	}
+
+	/* if we don't cross the end of the file, just do the write */
+	if (offset + count <= baseoffset + file->length[i])
+		return (*cur_interface.write)(file->files[i], offset - baseoffset, count, buffer);
+
+	/* otherwise, break it into two writes */
+	firstcount = baseoffset + file->length[i] - offset;
+	return multi_write(file, offset, firstcount, buffer) +
+		   multi_write(file, offset + firstcount, count - firstcount, (UINT8 *)buffer + firstcount);
 }
 
-static UINT64 multi_length(chd_interface_file *file)
+
+/*-------------------------------------------------
+    multi_length - return the total length of a
+    CHD file
+-------------------------------------------------*/
+
+static UINT64 multi_length(multi_file *file)
 {
-	return (*cur_interface.length)(file);
+	UINT64 totalsize = 0;
+	int i;
+
+	/* sum the sizes of all the files */
+	for (i = 0; i < file->numfiles; i++)
+		totalsize += file->length[i];
+	return totalsize;
 }

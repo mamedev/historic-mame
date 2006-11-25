@@ -210,7 +210,7 @@ WRITE8_HANDLER( gomoku_sound1_w )
 	int ch;
 
 	/* update the streams */
-	stream_update(stream, 0);
+	stream_update(stream);
 
 	/* set the register */
 	gomoku_soundregs1[offset] = data;
@@ -233,7 +233,7 @@ WRITE8_HANDLER( gomoku_sound2_w )
 	int ch;
 
 	/* update the streams */
-	stream_update(stream, 0);
+	stream_update(stream);
 
 	/* set the register */
 	gomoku_soundregs2[offset] = data;

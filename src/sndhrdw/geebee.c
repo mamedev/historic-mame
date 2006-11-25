@@ -28,7 +28,7 @@ static void volume_decay(int param)
 
 WRITE8_HANDLER( geebee_sound_w )
 {
-	stream_update(channel,0);
+	stream_update(channel);
 	sound_latch = data;
 	volume = 0x7fff; /* set volume */
 	noise = 0x0000;  /* reset noise shifter */

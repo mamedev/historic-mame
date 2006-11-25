@@ -1053,7 +1053,7 @@ void pokey_register_w(int chip, int offs, int data)
 		return;
 	}
 #endif
-	stream_update(p->channel, 0);
+	stream_update(p->channel);
 
     /* determine which address was changed */
 	switch (offs & 15)

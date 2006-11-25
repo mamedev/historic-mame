@@ -45,7 +45,7 @@ static void ym2413_stream_update(void *param, stream_sample_t **inputs, stream_s
 static void _stream_update(void *param, int interval)
 {
 	struct ym2413_info *info = param;
-	stream_update(info->stream, interval);
+	stream_update(info->stream);
 }
 
 static void *ym2413_start(int sndindex, int clock, const void *config)

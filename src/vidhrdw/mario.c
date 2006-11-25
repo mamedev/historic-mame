@@ -114,7 +114,7 @@ WRITE8_HANDLER( mario_palettebank_w )
 
 WRITE8_HANDLER( mario_scroll_w )
 {
-	tilemap_set_scrolly(bg_tilemap, 0, data + 16);
+	tilemap_set_scrolly(bg_tilemap, 0, data + 17);
 }
 
 static void get_bg_tile_info(int tile_index)

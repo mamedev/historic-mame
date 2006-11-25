@@ -125,7 +125,7 @@ void votrax_w(int data)
 	struct votrax_info *info = sndti_token(SOUND_VOTRAX, 0);
 	int Phoneme,Intonation;
 
-	stream_update(info->channel, 0);
+	stream_update(info->channel);
 
     Phoneme = data & 0x3F;
     Intonation = data >> 6;
@@ -148,7 +148,7 @@ void votrax_w(int data)
 int votrax_status_r(void)
 {
 	struct votrax_info *info = sndti_token(SOUND_VOTRAX, 0);
-	stream_update(info->channel, 0);
+	stream_update(info->channel);
     return (info->sample != NULL);
 }
 

@@ -290,6 +290,20 @@ INLINE void compute_dec(int rn, int rx)
 	sharc.astat &= ~AF;
 }
 
+/* Rn = MIN(Rx, Ry) */
+INLINE void compute_min(int rn, int rx, int ry)
+{
+	UINT32 r = MIN((INT32)REG(rx), (INT32)REG(ry));
+
+	CLEAR_ALU_FLAGS();
+	SET_FLAG_AN(r);
+	SET_FLAG_AZ(r);
+
+	REG(rn) = r;
+
+	sharc.astat &= ~AF;
+}
+
 /* Rn = MAX(Rx, Ry) */
 INLINE void compute_max(int rn, int rx, int ry)
 {

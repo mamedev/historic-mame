@@ -628,7 +628,7 @@ WRITE8_HANDLER( exidy_sh8253_w )
 {
 	int chan;
 
-	stream_update(exidy_stream, 0);
+	stream_update(exidy_stream);
 
 	offset &= 3;
 	switch (offset)
@@ -685,7 +685,7 @@ READ8_HANDLER( exidy_sh6840_r )
 WRITE8_HANDLER( exidy_sh6840_w )
 {
 	/* force an update of the stream */
-	stream_update(exidy_stream, 0);
+	stream_update(exidy_stream);
 
 	/* only look at the low 3 bits */
 	offset &= 7;
@@ -734,7 +734,7 @@ WRITE8_HANDLER( exidy_sh6840_w )
 
 WRITE8_HANDLER( exidy_sfxctrl_w )
 {
-	stream_update(exidy_stream, 0);
+	stream_update(exidy_stream);
 
 	offset &= 3;
 	switch (offset)

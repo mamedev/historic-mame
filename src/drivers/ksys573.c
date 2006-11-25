@@ -1296,7 +1296,7 @@ static MACHINE_RESET( konami573 )
 	/* security cart */
 	psx_sio_input( 1, PSX_SIO_IN_DSR, PSX_SIO_IN_DSR );
 
-	CDDA_set_cdrom(0, atapi_get_device());
+	cdda_set_cdrom(0, atapi_get_device());
 
 	flash_bank = -1;
 }

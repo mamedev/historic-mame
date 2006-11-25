@@ -89,7 +89,6 @@ typedef struct _mame_display mame_display;
 typedef struct _game_driver game_driver;
 typedef struct _machine_config machine_config;
 typedef struct _rom_load_data rom_load_data;
-typedef struct _xml_data_node xml_data_node;
 typedef struct _performance_info performance_info;
 typedef struct _osd_create_params osd_create_params;
 typedef struct _gfx_element gfx_element;

@@ -547,7 +547,7 @@ WRITE8_HANDLER( sega005_sound_b_w )
 	//mame_printf_debug("sound[%d] = %02X\n", 1, data);
 
 	/* force a stream update */
-	stream_update(sega005_stream, 0);
+	stream_update(sega005_stream);
 
 	/* ROM address */
 	sound_addr = ((data & 0x0f) << 7) | (sound_addr & 0x7f);
@@ -616,7 +616,7 @@ static void sega005_stream_update(void *param, stream_sample_t **inputs, stream_
 static void sega005_auto_timer(int param)
 {
 	/* force an update then clock the sound address if not held in reset */
-	stream_update(sega005_stream, 0);
+	stream_update(sega005_stream);
 	if ((sound_state[1] & 0x20) && !(sound_state[1] & 0x10))
 	{
 		sound_addr = (sound_addr & 0x780) | ((sound_addr + 1) & 0x07f);

@@ -804,7 +804,7 @@ $(OBJ)/konami.a: \
 	$(OBJ)/drivers/gbusters.o $(OBJ)/vidhrdw/gbusters.o \
 	$(OBJ)/drivers/gijoe.o $(OBJ)/vidhrdw/gijoe.o \
 	$(OBJ)/drivers/gradius3.o $(OBJ)/vidhrdw/gradius3.o \
-	$(OBJ)/drivers/gticlub.o \
+	$(OBJ)/drivers/gticlub.o $(OBJ)/vidhrdw/gticlub.o \
 	$(OBJ)/drivers/gyruss.o $(OBJ)/sndhrdw/gyruss.o $(OBJ)/vidhrdw/gyruss.o \
 	$(OBJ)/drivers/hcastle.o $(OBJ)/vidhrdw/hcastle.o \
 	$(OBJ)/drivers/hexion.o $(OBJ)/vidhrdw/hexion.o \
@@ -863,7 +863,7 @@ $(OBJ)/konami.a: \
 	$(OBJ)/drivers/xmen.o $(OBJ)/vidhrdw/xmen.o \
 	$(OBJ)/drivers/yiear.o $(OBJ)/vidhrdw/yiear.o \
 	$(OBJ)/drivers/zr107.o \
-	$(OBJ)/vidhrdw/konamiic.o \
+	$(OBJ)/machine/konamiic.o $(OBJ)/vidhrdw/konamiic.o \
 
 $(OBJ)/meadows.a: \
 	$(OBJ)/drivers/lazercmd.o $(OBJ)/vidhrdw/lazercmd.o \

@@ -191,7 +191,7 @@ static void dm_write32(UINT32 address, UINT32 data)
 	}
 	else if (address >= 0x50000 && address < 0x80000)
 	{
-		// block 1 is mirrored in 0x50000...5ffff, 0x60000...0x60fff and 0x70000...7ffff
+		// block 1 is mirrored in 0x50000...5ffff, 0x60000...0x6ffff and 0x70000...7ffff
 		UINT32 addr = address & 0xffff;
 
 		sharc.internal_ram_block1[addr ^ 1] = data;

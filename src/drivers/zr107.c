@@ -6,12 +6,21 @@
 #include "driver.h"
 #include "cpu/powerpc/ppc.h"
 #include "cpu/sharc/sharc.h"
-#include "vidhrdw/konamiic.h"
 #include "sound/k054539.h"
 #include "machine/konppc.h"
+#include "machine/konamiic.h"
+#include "vidhrdw/konamiic.h"
+#include "vidhrdw/gticlub.h"
 
-extern READ32_HANDLER(K001005_r);
-extern WRITE32_HANDLER(K001005_w);
+
+
+// defined in drivers/gticlub.c
+extern READ32_HANDLER(lanc_r);
+extern WRITE32_HANDLER(lanc_w);
+extern READ32_HANDLER(lanc_ram_r);
+extern WRITE32_HANDLER(lanc_ram_w);
+
+
 
 static UINT8 led_reg0 = 0x7f, led_reg1 = 0x7f;
 
@@ -39,6 +48,9 @@ VIDEO_START( zr107 )
 	if (K056832_vh_start(REGION_GFX1, K056832_BPP_4dj, 1, scrolld, game_tile_callback, 0))
 		return 1;
 
+	if (K001005_init() != 0)
+		return 1;
+
 	return 0;
 }
 
@@ -46,10 +58,17 @@ VIDEO_UPDATE( zr107 )
 {
 	fillbitmap(bitmap, Machine->remapped_colortable[0], cliprect);
 
+	K001005_draw(bitmap, cliprect);
+	K001005_swap_buffers();
+
 	K056832_tilemap_draw_dj(bitmap, cliprect, 0, 0, 1);
 
 	draw_7segment_led(bitmap, 3, 3, led_reg0);
 	draw_7segment_led(bitmap, 9, 3, led_reg1);
+
+	cpuintrf_push_context(2);
+	sharc_set_flag_input(1, ASSERT_LINE);
+	cpuintrf_pop_context();
 	return 0;
 }
 
@@ -90,7 +109,8 @@ static READ32_HANDLER( sysreg_r )
 
 static WRITE32_HANDLER( sysreg_w )
 {
-	if( offset == 0 ) {
+	if( offset == 0 )
+	{
 		if (!(mem_mask & 0xff000000))
 		{
 			led_reg0 = (data >> 24) & 0xff;
@@ -101,7 +121,8 @@ static WRITE32_HANDLER( sysreg_w )
 		}
 		return;
 	}
-	else if( offset == 1 ) {
+	else if( offset == 1 )
+	{
 		if (!(mem_mask & 0xff000000))
 		{
 			mame_printf_debug("sysreg_w: %08X, %08X, %08X\n", data, offset, mem_mask);
@@ -109,95 +130,6 @@ static WRITE32_HANDLER( sysreg_w )
 		return;
 	}
 	mame_printf_debug("sysreg_w: %08X, %08X, %08X\n", offset, data, mem_mask);
-}
-
-static UINT8 sndto68k[16], sndtoppc[16];	/* read/write split mapping */
-
-static READ32_HANDLER( ppc_sound_r )
-{
-	UINT32 reg, w[4], rv = 0;
-
-	reg = offset * 4;
-
-	if (!(mem_mask & 0xff000000))
-	{
-		w[0] = sndtoppc[reg];
-		if (reg == 2) w[0] &= ~3; // supress VOLWR busy flags
-		rv |= w[0]<<24;
-	}
-
-	if (!(mem_mask & 0x00ff0000))
-	{
-		w[1] = sndtoppc[reg+1];
-		rv |= w[1]<<16;
-	}
-
-	if (!(mem_mask & 0x0000ff00))
-	{
-		w[2] = sndtoppc[reg+2];
-		rv |= w[2]<<8;
-	}
-
-	if (!(mem_mask & 0x000000ff))
-	{
-		w[3] = sndtoppc[reg+3];
-		rv |= w[3]<<0;
-	}
-
-	return(rv);
-}
-
-INLINE void write_snd_ppc(int reg, int val)
-{
-	sndto68k[reg] = val;
-
-	if (reg == 7)
-	{
-		cpunum_set_input_line(1, 1, HOLD_LINE);
-	}
-}
-
-static WRITE32_HANDLER( ppc_sound_w )
-{
-	int reg=0, val=0;
-
-	if (!(mem_mask & 0xff000000))
-	{
-		reg = offset * 4;
-		val = data >> 24;
-		write_snd_ppc(reg, val);
-	}
-
-	if (!(mem_mask & 0x00ff0000))
-	{
-		reg = (offset * 4) + 1;
-		val = (data >> 16) & 0xff;
-		write_snd_ppc(reg, val);
-	}
-
-	if (!(mem_mask & 0x0000ff00))
-	{
-		reg = (offset * 4) + 2;
-		val = (data >> 8) & 0xff;
-		write_snd_ppc(reg, val);
-	}
-
-	if (!(mem_mask & 0x000000ff))
-	{
-		reg = (offset * 4) + 3;
-		val = (data >> 0) & 0xff;
-		write_snd_ppc(reg, val);
-	}
-}
-
-static READ32_HANDLER( lanc_r )
-{
-	return 0;
-}
-
-static WRITE32_HANDLER( lanc_w )
-{
-
 }
 
 /******************************************************************/
@@ -208,12 +140,13 @@ static ADDRESS_MAP_START( zr107_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x74020000, 0x7402003f) AM_MIRROR(0x80000000) AM_READWRITE(K056832_long_r, K056832_long_w)
 	AM_RANGE(0x74080000, 0x74081fff) AM_MIRROR(0x80000000) AM_READWRITE(paletteram32_r, paletteram32_w) AM_BASE(&paletteram32)
 	AM_RANGE(0x78000000, 0x7800ffff) AM_MIRROR(0x80000000) AM_READWRITE(cgboard_dsp_shared_r_ppc, cgboard_dsp_shared_w_ppc)		/* 21N 21K 23N 23K */
+	AM_RANGE(0x78040000, 0x7804000f) AM_MIRROR(0x80000000) AM_READWRITE(K001006_0_r, K001006_0_w)
 	AM_RANGE(0x780c0000, 0x780c0007) AM_MIRROR(0x80000000) AM_READWRITE(cgboard_dsp_comm_r_ppc, cgboard_dsp_comm_w_ppc)
 	AM_RANGE(0x7e000000, 0x7e003fff) AM_MIRROR(0x80000000) AM_READWRITE(sysreg_r, sysreg_w)
-	AM_RANGE(0x7e008000, 0x7e009fff) AM_MIRROR(0x80000000) AM_READWRITE(lanc_r, lanc_w)	/* LANC registers */
-	AM_RANGE(0x7e00a000, 0x7e00bfff) AM_MIRROR(0x80000000) AM_RAM							/* LANC Buffer RAM (27E) */
-	AM_RANGE(0x7e00c000, 0x7e00c007) AM_MIRROR(0x80000000) AM_WRITE(ppc_sound_w)
-	AM_RANGE(0x7e00c008, 0x7e00c00f) AM_MIRROR(0x80000000) AM_READ(ppc_sound_r)
+	AM_RANGE(0x7e008000, 0x7e009fff) AM_MIRROR(0x80000000) AM_READWRITE(lanc_r, lanc_w)				/* LANC registers */
+	AM_RANGE(0x7e00a000, 0x7e00bfff) AM_MIRROR(0x80000000) AM_READWRITE(lanc_ram_r, lanc_ram_w)		/* LANC Buffer RAM (27E) */
+	AM_RANGE(0x7e00c000, 0x7e00c007) AM_MIRROR(0x80000000) AM_WRITE(K056800_host_w)
+	AM_RANGE(0x7e00c008, 0x7e00c00f) AM_MIRROR(0x80000000) AM_READ(K056800_host_r)
 	AM_RANGE(0x7f800000, 0x7f9fffff) AM_MIRROR(0x80000000) AM_ROM AM_SHARE(2)
 	AM_RANGE(0x7fe00000, 0x7fffffff) AM_MIRROR(0x80000000) AM_ROM AM_REGION(REGION_USER1, 0) AM_SHARE(2)	/* Program ROM */
 ADDRESS_MAP_END
@@ -242,23 +175,12 @@ static WRITE16_HANDLER( dual539_w )
 		K054539_0_w(offset, data>>8);
 }
 
-static READ16_HANDLER( sndcomm68k_r )
-{
-	return sndto68k[offset];
-}
-
-static WRITE16_HANDLER( sndcomm68k_w )
-{
-//  logerror("68K: write %x to %x\n", data, offset);
-	sndtoppc[offset] = data;
-}
-
 static ADDRESS_MAP_START( sound_memmap, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x01ffff) AM_ROM
 	AM_RANGE(0x100000, 0x103fff) AM_RAM		/* Work RAM */
 	AM_RANGE(0x200000, 0x2004ff) AM_READWRITE(dual539_r, dual539_w)
-	AM_RANGE(0x400000, 0x40000f) AM_WRITE(sndcomm68k_w)
-	AM_RANGE(0x400010, 0x40001f) AM_READ(sndcomm68k_r)
+	AM_RANGE(0x400000, 0x40000f) AM_WRITE(K056800_sound_w)
+	AM_RANGE(0x400010, 0x40001f) AM_READ(K056800_sound_r)
 	AM_RANGE(0x580000, 0x580001) AM_WRITENOP
 ADDRESS_MAP_END
 
@@ -282,10 +204,10 @@ static WRITE32_HANDLER( dsp_dataram_w )
 }
 
 static ADDRESS_MAP_START( sharc_map, ADDRESS_SPACE_DATA, 32 )
-	AM_RANGE(0x400000, 0x41ffff) AM_READWRITE(cgboard_dsp_shared_r_sharc, cgboard_dsp_shared_w_sharc)
+	AM_RANGE(0x400000, 0x41ffff) AM_READWRITE(cgboard_0_shared_sharc_r, cgboard_0_shared_sharc_w)
 	AM_RANGE(0x500000, 0x5fffff) AM_READWRITE(dsp_dataram_r, dsp_dataram_w)
 	AM_RANGE(0x600000, 0x6fffff) AM_READWRITE(K001005_r, K001005_w)
-	AM_RANGE(0x700000, 0x7000ff) AM_READWRITE(cgboard_dsp_comm_r_sharc, cgboard_dsp_comm_w_sharc)
+	AM_RANGE(0x700000, 0x7000ff) AM_READWRITE(cgboard_0_comm_sharc_r, cgboard_0_comm_sharc_w)
 ADDRESS_MAP_END
 
 /*****************************************************************************/
@@ -316,8 +238,8 @@ INPUT_PORTS_START( zr107 )
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Test Button") PORT_CODE(KEYCODE_7)
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME("Service Button") PORT_CODE(KEYCODE_8)
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_SERVICE ) PORT_NAME( DEF_STR( Service_Mode )) PORT_CODE(KEYCODE_F2)
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SERVICE1 ) PORT_NAME("Service Button") PORT_CODE(KEYCODE_8)
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_DIPNAME( 0x08, 0x08, "DIP3" )
@@ -406,10 +328,26 @@ MACHINE_DRIVER_END
 
 /*****************************************************************************/
 
+static void sound_irq_callback(int irq)
+{
+	if (irq == 0)
+	{
+		cpunum_set_input_line(1, INPUT_LINE_IRQ1, PULSE_LINE);
+	}
+	else
+	{
+		cpunum_set_input_line(1, INPUT_LINE_IRQ2, PULSE_LINE);
+	}
+}
+
 static DRIVER_INIT(zr107)
 {
-	init_konami_cgboard(0, CGBOARD_TYPE_ZR107);
+	init_konami_cgboard(1, CGBOARD_TYPE_ZR107);
 	sharc_dataram = auto_malloc(0x100000);
+
+	K001005_preprocess_texture_data(memory_region(REGION_GFX2), memory_region_length(REGION_GFX2));
+
+	K056800_init(sound_irq_callback);
 }
 
 static DRIVER_INIT(midnrun)

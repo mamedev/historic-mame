@@ -1,20 +1,46 @@
 /*  Konami NWK-TR System
 
     Driver by Ville Linde
+
+
+
+    Hardware overview:
+
+    GN676 CPU Board:
+    ----------------
+        IBM PowerPC 403GA at 32MHz (main CPU)
+        Motorola MC68EC000 at 16MHz (sound CPU)
+        Konami K056800 (MIRAC), sound system interface
+        Ricoh RF5c400 sound chip
+        National Semiconductor ADC12138
+
+    GN676 GFX Board:
+    ----------------
+        Analog Devices ADSP-21062 SHARC DSP at 36MHz
+        Konami K001604 (2D tilemaps + 2x ROZ)
+        Konami 0000033906 (PCI bridge)
+        3DFX 500-0003-03 (Voodoo) FBI with 2MB RAM
+        2x 3DFX 500-0004-02 (Voodoo) TMU with 2MB RAM
+
+    GN676 LAN Board:
+    ----------------
+        Xilinx XC5210 FPGA
+        Xilinx XC5204 FPGA
+
 */
 
 #include "driver.h"
 #include "cpu/powerpc/ppc.h"
 #include "cpu/sharc/sharc.h"
 #include "machine/konppc.h"
+#include "machine/konamiic.h"
+#include "sound/rf5c400.h"
 #include "vidhrdw/voodoo.h"
 #include "machine/timekpr.h"
 
 static UINT8 led_reg0 = 0x7f, led_reg1 = 0x7f;
 
-/* defined in hornet.c */
-READ32_HANDLER(pci_3dfx_r);
-WRITE32_HANDLER(pci_3dfx_w);
+
 
 static WRITE32_HANDLER( paletteram32_w )
 {
@@ -27,14 +53,16 @@ static WRITE32_HANDLER( paletteram32_w )
 
 /* K001604 Tilemap chip (move to konamiic.c ?) */
 
-static UINT32 *K001604_tile_ram;
-static UINT32 *K001604_char_ram;
-static UINT8 *K001604_dirty_map[2];
-static int K001604_gfx_index[2], K001604_char_dirty[2];
-static tilemap *K001604_layer_8x8[2];
-static tilemap *K001604_layer_16x16[2];
+#define MAX_K001604_CHIPS	2
 
-static UINT32 K001604_reg[256];
+static UINT32 *K001604_tile_ram[MAX_K001604_CHIPS];
+static UINT32 *K001604_char_ram[MAX_K001604_CHIPS];
+static UINT8 *K001604_dirty_map[MAX_K001604_CHIPS][2];
+static int K001604_gfx_index[MAX_K001604_CHIPS][2], K001604_char_dirty[MAX_K001604_CHIPS][2];
+static tilemap *K001604_layer_8x8[MAX_K001604_CHIPS][4];
+static tilemap *K001604_layer_16x16[MAX_K001604_CHIPS][2];
+
+static UINT32 K001604_reg[MAX_K001604_CHIPS][256];
 
 static int K001604_layer_size;
 
@@ -81,14 +109,14 @@ static UINT32 K001604_scan_layer_8x8_2( UINT32 col, UINT32 row, UINT32 num_cols,
 {
 	/* logical (col,row) -> memory offset */
 	int width = K001604_layer_size ? 256 : 128;
-	return 16384 + (row*width) + col;
+	return 16384 + (row * width) + col;
 }
 
 static UINT32 K001604_scan_layer_8x8_3( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
 {
 	/* logical (col,row) -> memory offset */
 	int width = K001604_layer_size ? 256 : 128;
-	return 16384 + (row*width) + col + 64;
+	return 16384 + (row * width) + col + 64;
 }
 
 static UINT32 K001604_scan_layer_16x16_0( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_rows )
@@ -103,23 +131,39 @@ static UINT32 K001604_scan_layer_16x16_1( UINT32 col, UINT32 row, UINT32 num_col
 	return (row*256) + col + 192;
 }
 
-static void K001604_tile_info_layer_8x8(int tile_index)
+static void K001604_0_tile_info_layer_8x8(int tile_index)
 {
-	UINT32 val = K001604_tile_ram[tile_index];
-	int color = val >> 17;
+	UINT32 val = K001604_tile_ram[0][tile_index];
+	int color = (val >> 17) & 0x1f;
 	int tile = (val & 0x3fff);
-	SET_TILE_INFO(K001604_gfx_index[0], tile, color, 0);
+	SET_TILE_INFO(K001604_gfx_index[0][0], tile, color, 0);
 }
 
-static void K001604_tile_info_layer_16x16(int tile_index)
+static void K001604_0_tile_info_layer_16x16(int tile_index)
 {
-	UINT32 val = K001604_tile_ram[tile_index];
-	int color = val >> 17;
+	UINT32 val = K001604_tile_ram[0][tile_index];
+	int color = (val >> 17) & 0x1f;
 	int tile = (val & 0x7ff);
-	SET_TILE_INFO(K001604_gfx_index[1], tile, color, 0);
+	SET_TILE_INFO(K001604_gfx_index[0][1], tile, color, 0);
 }
 
-int K001604_vh_start(void)
+static void K001604_1_tile_info_layer_8x8(int tile_index)
+{
+	UINT32 val = K001604_tile_ram[0][tile_index];
+	int color = (val >> 17) & 0x1f;
+	int tile = (val & 0x3fff);
+	SET_TILE_INFO(K001604_gfx_index[0][0], tile, color, 0);
+}
+
+static void K001604_1_tile_info_layer_16x16(int tile_index)
+{
+	UINT32 val = K001604_tile_ram[0][tile_index];
+	int color = (val >> 17) & 0x1f;
+	int tile = (val & 0x7ff);
+	SET_TILE_INFO(K001604_gfx_index[0][1], tile, color, 0);
+}
+
+int K001604_vh_start(int chip)
 {
 	const char *gamename = Machine->gamedrv->name;
 
@@ -134,144 +178,217 @@ int K001604_vh_start(void)
 		K001604_layer_size = 1;		// width = 256 tiles
 	}
 
-	for(K001604_gfx_index[0] = 0; K001604_gfx_index[0] < MAX_GFX_ELEMENTS; K001604_gfx_index[0]++)
-		if (Machine->gfx[K001604_gfx_index[0]] == 0)
+	for (K001604_gfx_index[chip][0] = 0; K001604_gfx_index[chip][0] < MAX_GFX_ELEMENTS; K001604_gfx_index[chip][0]++)
+		if (Machine->gfx[K001604_gfx_index[chip][0]] == 0)
 			break;
-	if(K001604_gfx_index[0] == MAX_GFX_ELEMENTS)
-		return 1;
-
-	for(K001604_gfx_index[1] = K001604_gfx_index[0] + 1; K001604_gfx_index[1] < MAX_GFX_ELEMENTS; K001604_gfx_index[1]++)
-		if (Machine->gfx[K001604_gfx_index[1]] == 0)
-			break;
-	if(K001604_gfx_index[1] == MAX_GFX_ELEMENTS)
-		return 1;
-
-	K001604_char_ram = auto_malloc(0x400000);
-
-	K001604_tile_ram = auto_malloc(0x20000);
-
-	K001604_dirty_map[0] = auto_malloc(K001604_NUM_TILES_LAYER0);
-	K001604_dirty_map[1] = auto_malloc(K001604_NUM_TILES_LAYER1);
-
-	if (mame_stricmp(gamename, "slrasslt") == 0)
+	if (K001604_gfx_index[chip][0] == MAX_GFX_ELEMENTS)
 	{
-		// this is a hack, there's probably a bit to select the tilemap location
-		K001604_layer_8x8[0] = tilemap_create(K001604_tile_info_layer_8x8, K001604_scan_layer_8x8_2, TILEMAP_TRANSPARENT, 8, 8, 64, 64);
-		K001604_layer_8x8[1] = tilemap_create(K001604_tile_info_layer_8x8, K001604_scan_layer_8x8_3, TILEMAP_TRANSPARENT, 8, 8, 64, 64);
+		return 1;
+	}
+
+	for (K001604_gfx_index[chip][1] = K001604_gfx_index[chip][0] + 1; K001604_gfx_index[chip][1] < MAX_GFX_ELEMENTS; K001604_gfx_index[chip][1]++)
+		if (Machine->gfx[K001604_gfx_index[chip][1]] == 0)
+			break;
+	if (K001604_gfx_index[chip][1] == MAX_GFX_ELEMENTS)
+	{
+		return 1;
+	}
+
+	K001604_char_ram[chip] = auto_malloc(0x400000);
+
+	K001604_tile_ram[chip] = auto_malloc(0x20000);
+
+	K001604_dirty_map[chip][0] = auto_malloc(K001604_NUM_TILES_LAYER0);
+	K001604_dirty_map[chip][1] = auto_malloc(K001604_NUM_TILES_LAYER1);
+
+
+	if (chip == 0)
+	{
+		K001604_layer_8x8[chip][0] = tilemap_create(K001604_0_tile_info_layer_8x8, K001604_scan_layer_8x8_0, TILEMAP_TRANSPARENT, 8, 8, 64, 64);
+		K001604_layer_8x8[chip][1] = tilemap_create(K001604_0_tile_info_layer_8x8, K001604_scan_layer_8x8_1, TILEMAP_TRANSPARENT, 8, 8, 64, 64);
+		K001604_layer_8x8[chip][2] = tilemap_create(K001604_0_tile_info_layer_8x8, K001604_scan_layer_8x8_2, TILEMAP_TRANSPARENT, 8, 8, 64, 64);
+		K001604_layer_8x8[chip][3] = tilemap_create(K001604_0_tile_info_layer_8x8, K001604_scan_layer_8x8_3, TILEMAP_TRANSPARENT, 8, 8, 64, 64);
 	}
 	else
 	{
-		K001604_layer_8x8[0] = tilemap_create(K001604_tile_info_layer_8x8, K001604_scan_layer_8x8_0, TILEMAP_TRANSPARENT, 8, 8, 64, 64);
-		K001604_layer_8x8[1] = tilemap_create(K001604_tile_info_layer_8x8, K001604_scan_layer_8x8_1, TILEMAP_TRANSPARENT, 8, 8, 64, 64);
+		K001604_layer_8x8[chip][0] = tilemap_create(K001604_1_tile_info_layer_8x8, K001604_scan_layer_8x8_0, TILEMAP_TRANSPARENT, 8, 8, 64, 64);
+		K001604_layer_8x8[chip][1] = tilemap_create(K001604_1_tile_info_layer_8x8, K001604_scan_layer_8x8_1, TILEMAP_TRANSPARENT, 8, 8, 64, 64);
+		K001604_layer_8x8[chip][2] = tilemap_create(K001604_1_tile_info_layer_8x8, K001604_scan_layer_8x8_2, TILEMAP_TRANSPARENT, 8, 8, 64, 64);
+		K001604_layer_8x8[chip][3] = tilemap_create(K001604_1_tile_info_layer_8x8, K001604_scan_layer_8x8_3, TILEMAP_TRANSPARENT, 8, 8, 64, 64);
 	}
-	K001604_layer_16x16[0] = tilemap_create(K001604_tile_info_layer_16x16, K001604_scan_layer_16x16_0, TILEMAP_OPAQUE, 16, 16, 64, 64);
-	K001604_layer_16x16[1] = tilemap_create(K001604_tile_info_layer_16x16, K001604_scan_layer_16x16_1, TILEMAP_OPAQUE, 16, 16, 64, 64);
 
-	if( !K001604_layer_8x8[0] || !K001604_layer_8x8[1] || !K001604_layer_16x16[0] || !K001604_layer_16x16[1]) {
+	if (chip == 0)
+	{
+		K001604_layer_16x16[chip][0] = tilemap_create(K001604_0_tile_info_layer_16x16, K001604_scan_layer_16x16_0, TILEMAP_OPAQUE, 16, 16, 64, 64);
+		K001604_layer_16x16[chip][1] = tilemap_create(K001604_0_tile_info_layer_16x16, K001604_scan_layer_16x16_1, TILEMAP_OPAQUE, 16, 16, 64, 64);
+	}
+	else
+	{
+		K001604_layer_16x16[chip][0] = tilemap_create(K001604_1_tile_info_layer_16x16, K001604_scan_layer_16x16_0, TILEMAP_OPAQUE, 16, 16, 64, 64);
+		K001604_layer_16x16[chip][1] = tilemap_create(K001604_1_tile_info_layer_16x16, K001604_scan_layer_16x16_1, TILEMAP_OPAQUE, 16, 16, 64, 64);
+	}
+
+	if (!K001604_layer_8x8[chip][0] ||
+		!K001604_layer_8x8[chip][1] ||
+		!K001604_layer_8x8[chip][2] ||
+		!K001604_layer_8x8[chip][3] ||
+		!K001604_layer_16x16[chip][0] ||
+		!K001604_layer_16x16[chip][1])
+	{
 		return 1;
 	}
 
-	tilemap_set_transparent_pen(K001604_layer_8x8[0], 0);
-	tilemap_set_transparent_pen(K001604_layer_8x8[1], 0);
+	tilemap_set_transparent_pen(K001604_layer_8x8[chip][0], 0);
+	tilemap_set_transparent_pen(K001604_layer_8x8[chip][1], 0);
+	tilemap_set_transparent_pen(K001604_layer_8x8[chip][2], 0);
+	tilemap_set_transparent_pen(K001604_layer_8x8[chip][3], 0);
 
-	memset(K001604_char_ram, 0, 0x400000);
-	memset(K001604_tile_ram, 0, 0x10000);
-	memset(K001604_dirty_map[0], 0, K001604_NUM_TILES_LAYER0);
-	memset(K001604_dirty_map[1], 0, K001604_NUM_TILES_LAYER1);
+	memset(K001604_char_ram[chip], 0, 0x400000);
+	memset(K001604_tile_ram[chip], 0, 0x10000);
+	memset(K001604_dirty_map[chip][0], 0, K001604_NUM_TILES_LAYER0);
+	memset(K001604_dirty_map[chip][1], 0, K001604_NUM_TILES_LAYER1);
 
 
-	Machine->gfx[K001604_gfx_index[0]] = allocgfx(&K001604_char_layout_layer_8x8);
-	decodegfx(Machine->gfx[K001604_gfx_index[0]], (UINT8*)&K001604_char_ram[0], 0, Machine->gfx[K001604_gfx_index[0]]->total_elements);
-	Machine->gfx[K001604_gfx_index[1]] = allocgfx(&K001604_char_layout_layer_16x16);
-	decodegfx(Machine->gfx[K001604_gfx_index[1]], (UINT8*)&K001604_char_ram[0x100000/4], 0, Machine->gfx[K001604_gfx_index[1]]->total_elements);
+	Machine->gfx[K001604_gfx_index[chip][0]] = allocgfx(&K001604_char_layout_layer_8x8);
+	decodegfx(Machine->gfx[K001604_gfx_index[chip][0]], (UINT8*)&K001604_char_ram[chip][0], 0, Machine->gfx[K001604_gfx_index[chip][0]]->total_elements);
+	Machine->gfx[K001604_gfx_index[chip][1]] = allocgfx(&K001604_char_layout_layer_16x16);
+	decodegfx(Machine->gfx[K001604_gfx_index[chip][1]], (UINT8*)&K001604_char_ram[chip][0x100000/4], 0, Machine->gfx[K001604_gfx_index[chip][1]]->total_elements);
 
-	if( !Machine->gfx[K001604_gfx_index[0]] ||!Machine->gfx[K001604_gfx_index[1]] ) {
+	if (!Machine->gfx[K001604_gfx_index[chip][0]] || !Machine->gfx[K001604_gfx_index[chip][1]])
+	{
 		return 1;
 	}
 
 	if (Machine->drv->color_table_len)
 	{
-		Machine->gfx[K001604_gfx_index[0]]->colortable = Machine->remapped_colortable;
-		Machine->gfx[K001604_gfx_index[0]]->total_colors = Machine->drv->color_table_len / 16;
-		Machine->gfx[K001604_gfx_index[1]]->colortable = Machine->remapped_colortable;
-		Machine->gfx[K001604_gfx_index[1]]->total_colors = Machine->drv->color_table_len / 16;
+		Machine->gfx[K001604_gfx_index[chip][0]]->colortable = Machine->remapped_colortable;
+		Machine->gfx[K001604_gfx_index[chip][0]]->total_colors = Machine->drv->color_table_len / 16;
+		Machine->gfx[K001604_gfx_index[chip][1]]->colortable = Machine->remapped_colortable;
+		Machine->gfx[K001604_gfx_index[chip][1]]->total_colors = Machine->drv->color_table_len / 16;
 	}
 	else
 	{
-		Machine->gfx[K001604_gfx_index[0]]->colortable = Machine->pens;
-		Machine->gfx[K001604_gfx_index[0]]->total_colors = Machine->drv->total_colors / 16;
-		Machine->gfx[K001604_gfx_index[1]]->colortable = Machine->pens;
-		Machine->gfx[K001604_gfx_index[1]]->total_colors = Machine->drv->total_colors / 16;
+		Machine->gfx[K001604_gfx_index[chip][0]]->colortable = Machine->pens;
+		Machine->gfx[K001604_gfx_index[chip][0]]->total_colors = Machine->drv->total_colors / 16;
+		Machine->gfx[K001604_gfx_index[chip][1]]->colortable = Machine->pens;
+		Machine->gfx[K001604_gfx_index[chip][1]]->total_colors = Machine->drv->total_colors / 16;
 	}
 
 	return 0;
 }
 
-void K001604_tile_update(void)
+void K001604_tile_update(int chip)
 {
-	if(K001604_char_dirty[0])
+	if(K001604_char_dirty[chip][0])
 	{
 		int i;
-		for(i=0; i<K001604_NUM_TILES_LAYER0; i++) {
-			if(K001604_dirty_map[0][i]) {
-				K001604_dirty_map[0][i] = 0;
-				decodechar(Machine->gfx[K001604_gfx_index[0]], i, (UINT8*)&K001604_char_ram[0], &K001604_char_layout_layer_8x8);
+		for (i=0; i < K001604_NUM_TILES_LAYER0; i++)
+		{
+			if(K001604_dirty_map[chip][0][i])
+			{
+				K001604_dirty_map[chip][0][i] = 0;
+				decodechar(Machine->gfx[K001604_gfx_index[chip][0]], i,
+						  (UINT8*)&K001604_char_ram[chip][0], &K001604_char_layout_layer_8x8);
 			}
 		}
-		tilemap_mark_all_tiles_dirty(K001604_layer_8x8[0]);
-		tilemap_mark_all_tiles_dirty(K001604_layer_8x8[1]);
-		K001604_char_dirty[0] = 0;
+		tilemap_mark_all_tiles_dirty(K001604_layer_8x8[chip][0]);
+		tilemap_mark_all_tiles_dirty(K001604_layer_8x8[chip][1]);
+		tilemap_mark_all_tiles_dirty(K001604_layer_8x8[chip][2]);
+		tilemap_mark_all_tiles_dirty(K001604_layer_8x8[chip][3]);
+		K001604_char_dirty[chip][0] = 0;
 	}
-	if(K001604_char_dirty[1])
+	if(K001604_char_dirty[chip][1])
 	{
 		int i;
-		for(i=0; i<K001604_NUM_TILES_LAYER1; i++) {
-			if(K001604_dirty_map[1][i]) {
-				K001604_dirty_map[1][i] = 0;
-				decodechar(Machine->gfx[K001604_gfx_index[1]], i, (UINT8*)&K001604_char_ram[0x100000/4], &K001604_char_layout_layer_16x16);
+		for (i=0; i < K001604_NUM_TILES_LAYER1; i++)
+		{
+			if(K001604_dirty_map[chip][1][i])
+			{
+				K001604_dirty_map[chip][1][i] = 0;
+				decodechar(Machine->gfx[K001604_gfx_index[chip][1]], i,
+						  (UINT8*)&K001604_char_ram[chip][0x100000/4], &K001604_char_layout_layer_16x16);
 			}
 		}
-		tilemap_mark_all_tiles_dirty(K001604_layer_16x16[0]);
-		tilemap_mark_all_tiles_dirty(K001604_layer_16x16[1]);
-		K001604_char_dirty[1] = 0;
+		tilemap_mark_all_tiles_dirty(K001604_layer_16x16[chip][0]);
+		tilemap_mark_all_tiles_dirty(K001604_layer_16x16[chip][1]);
+		K001604_char_dirty[chip][1] = 0;
 	}
 }
 
-void K001604_tile_draw(mame_bitmap *bitmap, const rectangle *cliprect)
+void K001604_draw_back_layer(int chip, mame_bitmap *bitmap, const rectangle *cliprect)
 {
-//  tilemap_draw(bitmap, cliprect, K001604_layer_16x16[1], 0,0);
-//  tilemap_draw(bitmap, cliprect, K001604_layer_16x16[0], 0,0);
-	tilemap_draw(bitmap, cliprect, K001604_layer_8x8[1], 0,0);
-	tilemap_draw(bitmap, cliprect, K001604_layer_8x8[0], 0,0);
+	INT32 x  = (INT16)((K001604_reg[chip][0x20/4] >> 16) & 0xffff);
+	INT32 y  = (INT16)((K001604_reg[chip][0x20/4] >>  0) & 0xffff);
+	INT32 xx = (INT16)((K001604_reg[chip][0x24/4] >>  0) & 0xffff);
+	INT32 xy = (INT16)((K001604_reg[chip][0x24/4] >> 16) & 0xffff);
+	INT32 yx = (INT16)((K001604_reg[chip][0x28/4] >>  0) & 0xffff);
+	INT32 yy = (INT16)((K001604_reg[chip][0x28/4] >> 16) & 0xffff);
+
+	x  = -(x) << 13;
+	y  = (y) << 13;
+	xx = (xx) << 5;
+	xy = (xy) << 5;
+	yx = (yx) << 5;
+	yy = (yy) << 5;
+
+	if ((K001604_reg[chip][0x6c/4] & 0x01) == 0)
+	{
+		//tilemap_draw(bitmap, cliprect, K001604_layer_16x16[1], 0,0);
+
+		tilemap_draw_roz(bitmap, cliprect, K001604_layer_16x16[chip][1], x, y, xx, xy, yx, yy, 1, 0, 0);
+	}
+	if ((K001604_reg[chip][0x6c/4] & 0x02) == 0)
+	{
+		//tilemap_draw(bitmap, cliprect, K001604_layer_16x16[0], 0,0);
+
+		tilemap_draw_roz(bitmap, cliprect, K001604_layer_16x16[chip][0], x, y, xx, xy, yx, yy, 0, 0, 0);
+	}
+}
+
+void K001604_draw_front_layer(int chip, mame_bitmap *bitmap, const rectangle *cliprect)
+{
+	//tilemap_draw(bitmap, cliprect, K001604_layer_8x8[chip][1], 0,0);
+	tilemap_draw(bitmap, cliprect, K001604_layer_8x8[chip][2], 0,0);
+	//tilemap_draw(bitmap, cliprect, K001604_layer_8x8[chip][1], 0,0);
+	tilemap_draw(bitmap, cliprect, K001604_layer_8x8[chip][0], 0,0);
 }
 
 READ32_HANDLER(K001604_tile_r)
 {
-	return K001604_tile_ram[offset];
+	int chip = get_cgboard_id();
+
+	return K001604_tile_ram[chip][offset];
 }
 
 READ32_HANDLER(K001604_char_r)
 {
+	int chip = get_cgboard_id();
+
 	int set, bank;
 	UINT32 addr;
 
-	set = (K001604_reg[0x60/4] & 0x1000000) ? 0x100000 : 0;
+	set = (K001604_reg[chip][0x60/4] & 0x1000000) ? 0x100000 : 0;
 
-	if( set ) {
-		bank = (K001604_reg[0x60/4] >> 8) & 0x3;
-	} else {
-		bank = (K001604_reg[0x60/4] & 0x3);
+	if (set)
+	{
+		bank = (K001604_reg[chip][0x60/4] >> 8) & 0x3;
+	}
+	else
+	{
+		bank = (K001604_reg[chip][0x60/4] & 0x3);
 	}
 
 	addr = offset + ((set + (bank * 0x40000)) / 4);
 
-	return K001604_char_ram[addr];
+	return K001604_char_ram[chip][addr];
 }
 
 WRITE32_HANDLER(K001604_tile_w)
 {
+	int chip = get_cgboard_id();
+
 	int x, y;
-	COMBINE_DATA(K001604_tile_ram + offset);
+	COMBINE_DATA(K001604_tile_ram[chip] + offset);
 
 	if (K001604_layer_size)
 	{
@@ -286,48 +403,55 @@ WRITE32_HANDLER(K001604_tile_w)
 
 	if (x < 64)
 	{
-		tilemap_mark_tile_dirty(K001604_layer_8x8[0], offset);
+		tilemap_mark_tile_dirty(K001604_layer_8x8[chip][0], offset);
+		tilemap_mark_tile_dirty(K001604_layer_8x8[chip][2], offset);
 	}
 	else if (x < 128)
 	{
-		tilemap_mark_tile_dirty(K001604_layer_8x8[1], offset);
+		tilemap_mark_tile_dirty(K001604_layer_8x8[chip][1], offset);
+		tilemap_mark_tile_dirty(K001604_layer_8x8[chip][3], offset);
 	}
 	else if (x < 192)
 	{
-		tilemap_mark_tile_dirty(K001604_layer_16x16[0], offset);
+		tilemap_mark_tile_dirty(K001604_layer_16x16[chip][0], offset);
 	}
 	else
 	{
-		tilemap_mark_tile_dirty(K001604_layer_16x16[1], offset);
+		tilemap_mark_tile_dirty(K001604_layer_16x16[chip][1], offset);
 	}
 }
 
 WRITE32_HANDLER(K001604_char_w)
 {
+	int chip = get_cgboard_id();
+
 	int set, bank;
 	UINT32 addr;
 
-	set = (K001604_reg[0x60/4] & 0x1000000) ? 0x100000 : 0;
+	set = (K001604_reg[chip][0x60/4] & 0x1000000) ? 0x100000 : 0;
 
-	if( set ) {
-		bank = (K001604_reg[0x60/4] >> 8) & 0x3;
-	} else {
-		bank = (K001604_reg[0x60/4] & 0x3);
+	if (set)
+	{
+		bank = (K001604_reg[chip][0x60/4] >> 8) & 0x3;
+	}
+	else
+	{
+		bank = (K001604_reg[chip][0x60/4] & 0x3);
 	}
 
 	addr = offset + ((set + (bank * 0x40000)) / 4);
 
-	COMBINE_DATA(K001604_char_ram + addr);
+	COMBINE_DATA(K001604_char_ram[chip] + addr);
 
 	if (addr < 0x40000)
 	{
-		K001604_dirty_map[0][addr / 32] = 1;
-		K001604_char_dirty[0] = 1;
+		K001604_dirty_map[chip][0][addr / 32] = 1;
+		K001604_char_dirty[chip][0] = 1;
 	}
 	else
 	{
-		K001604_dirty_map[1][(addr - 0x40000) / 128] = 1;
-		K001604_char_dirty[1] = 1;
+		K001604_dirty_map[chip][1][(addr - 0x40000) / 128] = 1;
+		K001604_char_dirty[chip][1] = 1;
 	}
 }
 
@@ -335,21 +459,36 @@ WRITE32_HANDLER(K001604_char_w)
 
 WRITE32_HANDLER(K001604_reg_w)
 {
-	COMBINE_DATA(K001604_reg + offset);
+	int chip = get_cgboard_id();
+
+	COMBINE_DATA(K001604_reg[chip] + offset);
 
 	switch (offset)
 	{
 		case 0x8:
 		case 0x9:
 		case 0xa:
-			//mame_printf_debug("K001604_reg_w %02X, %08X, %08X\n", offset, data, mem_mask);
+			//printf("K001604_reg_w %02X, %08X, %08X\n", offset, data, mem_mask);
 			break;
+	}
+
+	if (offset != 0x08 && offset != 0x09 && offset != 0x0a /*&& offset != 0x17 && offset != 0x18*/)
+	{
+		//printf("K001604_reg_w (%d), %02X, %08X, %08X at %08X\n", chip, offset, data, mem_mask, activecpu_get_pc());
 	}
 }
 
 READ32_HANDLER(K001604_reg_r)
 {
-	return K001604_reg[offset];
+	int chip = get_cgboard_id();
+
+	switch (offset)
+	{
+		case 0x54/4:	return rand() << 16; break;
+		case 0x5c/4:	return rand() << 16 | rand(); break;
+	}
+
+	return K001604_reg[chip][offset];
 }
 
 
@@ -362,7 +501,7 @@ VIDEO_START( nwktr )
 	if (voodoo_start(0, VOODOO_1, 2, 4, 0))
 		return 1;
 
-	return K001604_vh_start();
+	return K001604_vh_start(0);
 }
 
 
@@ -372,8 +511,8 @@ VIDEO_UPDATE( nwktr )
 
 	voodoo_update(0, bitmap, cliprect);
 
-	K001604_tile_update();
-	K001604_tile_draw(bitmap, cliprect);
+	K001604_tile_update(0);
+	K001604_draw_front_layer(0, bitmap, cliprect);
 
 	draw_7segment_led(bitmap, 3, 3, led_reg0);
 	draw_7segment_led(bitmap, 9, 3, led_reg1);
@@ -444,13 +583,6 @@ static WRITE32_HANDLER( sysreg_w )
 	}
 }
 
-static UINT8 sndto68k[16], sndtoppc[16];	/* read/write split mapping */
-
-static READ32_HANDLER( sound_r )
-{
-	return 0x005f0000;
-}
-
 static READ32_HANDLER( lanc1_r )
 {
 	return 0xffffffff;
@@ -458,7 +590,7 @@ static READ32_HANDLER( lanc1_r )
 
 static WRITE32_HANDLER( lanc1_w )
 {
-
+	printf("lanc1_w: %08X, %08X, %08X at %08X\n", data, offset, mem_mask, activecpu_get_pc());
 }
 
 static READ32_HANDLER( lanc2_r )
@@ -468,7 +600,25 @@ static READ32_HANDLER( lanc2_r )
 
 static WRITE32_HANDLER( lanc2_w )
 {
+	if (!(mem_mask & 0xff000000))
+	{
+		UINT8 value = data >> 24;
 
+		value = ((value >> 7) & 0x01) |
+				((value >> 5) & 0x02) |
+				((value >> 3) & 0x04) |
+				((value >> 1) & 0x08) |
+				((value << 1) & 0x10) |
+				((value << 3) & 0x20) |
+				((value << 5) & 0x40) |
+				((value << 7) & 0x80);
+
+	//  printf("lanc2_fpga_w: %02X at %08X\n", value, activecpu_get_pc());
+	}
+	else
+	{
+		printf("lanc2_w: %08X, %08X, %08X at %08X\n", data, offset, mem_mask, activecpu_get_pc());
+	}
 }
 
 /*****************************************************************************/
@@ -484,7 +634,8 @@ static ADDRESS_MAP_START( nwktr_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x7d000000, 0x7d00ffff) AM_MIRROR(0x80000000) AM_READ(sysreg_r)
 	AM_RANGE(0x7d010000, 0x7d01ffff) AM_MIRROR(0x80000000) AM_WRITE(sysreg_w)
 	AM_RANGE(0x7d020000, 0x7d021fff) AM_MIRROR(0x80000000) AM_READWRITE(timekeeper_0_32be_r, timekeeper_0_32be_w)	/* M48T58Y RTC/NVRAM */
-	AM_RANGE(0x7d030000, 0x7d030003) AM_MIRROR(0x80000000) AM_READ(sound_r)
+	AM_RANGE(0x7d030000, 0x7d030007) AM_MIRROR(0x80000000) AM_READ(K056800_host_r)
+	AM_RANGE(0x7d030008, 0x7d03000f) AM_MIRROR(0x80000000) AM_WRITE(K056800_host_w)
 	AM_RANGE(0x7d040000, 0x7d04ffff) AM_MIRROR(0x80000000) AM_READWRITE(lanc1_r, lanc1_w)
 	AM_RANGE(0x7d050000, 0x7d05ffff) AM_MIRROR(0x80000000) AM_READWRITE(lanc2_r, lanc2_w)
 	AM_RANGE(0x7e000000, 0x7e7fffff) AM_MIRROR(0x80000000) AM_ROM AM_REGION(REGION_USER2, 0)	/* Data ROM */
@@ -494,25 +645,12 @@ ADDRESS_MAP_END
 
 /*****************************************************************************/
 
-static READ16_HANDLER( sndcomm68k_r )
-{
-	return sndto68k[offset];
-}
-
-static WRITE16_HANDLER( sndcomm68k_w )
-{
-//  logerror("68K: write %x to %x\n", data, offset);
-	sndtoppc[offset] = data;
-}
-
 static ADDRESS_MAP_START( sound_memmap, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_ROM
 	AM_RANGE(0x100000, 0x10ffff) AM_RAM		/* Work RAM */
-	AM_RANGE(0x200000, 0x20ffff) AM_RAM
-	AM_RANGE(0x400000, 0x40000f) AM_WRITE(sndcomm68k_w)
-	AM_RANGE(0x400010, 0x40001f) AM_READ(sndcomm68k_r)
-	AM_RANGE(0x400020, 0x4fffff) AM_RAM
-	AM_RANGE(0x580000, 0x580001) AM_WRITENOP
+	AM_RANGE(0x200000, 0x200fff) AM_READWRITE(RF5C400_0_r, RF5C400_0_w)		/* Ricoh RF5C400 */
+	AM_RANGE(0x300000, 0x30000f) AM_READWRITE(K056800_sound_r, K056800_sound_w)
+	AM_RANGE(0x600000, 0x600001) AM_NOP
 ADDRESS_MAP_END
 
 /*****************************************************************************/
@@ -530,12 +668,12 @@ static WRITE32_HANDLER( dsp_dataram_w )
 }
 
 static ADDRESS_MAP_START( sharc_map, ADDRESS_SPACE_DATA, 32 )
-	AM_RANGE(0x0400000, 0x041ffff) AM_READWRITE(cgboard_dsp_shared_r_sharc, cgboard_dsp_shared_w_sharc)
+	AM_RANGE(0x0400000, 0x041ffff) AM_READWRITE(cgboard_0_shared_sharc_r, cgboard_0_shared_sharc_w)
 	AM_RANGE(0x0500000, 0x05fffff) AM_READWRITE(dsp_dataram_r, dsp_dataram_w)
 	AM_RANGE(0x1400000, 0x14fffff) AM_RAM
 	AM_RANGE(0x2400000, 0x27fffff) AM_READWRITE(voodoo_0_r, voodoo_0_w)
-	AM_RANGE(0x3400000, 0x34000ff) AM_READWRITE(cgboard_dsp_comm_r_sharc, cgboard_dsp_comm_w_sharc)
-	AM_RANGE(0x3500000, 0x35000ff) AM_READWRITE(pci_3dfx_r, pci_3dfx_w)
+	AM_RANGE(0x3400000, 0x34000ff) AM_READWRITE(cgboard_0_comm_sharc_r, cgboard_0_comm_sharc_w)
+	AM_RANGE(0x3500000, 0x35000ff) AM_READWRITE(K033906_0_r, K033906_0_w)
 ADDRESS_MAP_END
 
 /*****************************************************************************/
@@ -596,6 +734,11 @@ INPUT_PORTS_START( nwktr )
 
 INPUT_PORTS_END
 
+static struct RF5C400interface rf5c400_interface =
+{
+	REGION_SOUND1
+};
+
 static ppc_config nwktr_ppc_cfg =
 {
 	PPC_MODEL_403GA
@@ -609,16 +752,18 @@ static sharc_config sharc_cfg =
 static int vblank = 0;
 static INTERRUPT_GEN( nwktr_vblank )
 {
-	if (vblank == 0)
-	{
-		cpunum_set_input_line(0, INPUT_LINE_IRQ0, ASSERT_LINE);
-	}
-	else
-	{
-		cpunum_set_input_line(0, INPUT_LINE_IRQ1, ASSERT_LINE);
-	}
+	/*if (vblank == 0)
+    {
+        cpunum_set_input_line(0, INPUT_LINE_IRQ0, ASSERT_LINE);
+    }
+    else
+    {
+        cpunum_set_input_line(0, INPUT_LINE_IRQ1, ASSERT_LINE);
+    }*/
 	vblank++;
 	vblank &= 1;
+
+	cpunum_set_input_line(0, INPUT_LINE_IRQ0, ASSERT_LINE);
 }
 
 static MACHINE_RESET( nwktr )
@@ -648,13 +793,20 @@ static MACHINE_DRIVER_START( nwktr )
 	MDRV_NVRAM_HANDLER( timekeeper_0 )
 
  	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_RGB_DIRECT | VIDEO_NEEDS_6BITS_PER_GUN)
 	MDRV_SCREEN_SIZE(64*8, 48*8)
 	MDRV_VISIBLE_AREA(0*8, 64*8-1, 0*8, 48*8-1)
 	MDRV_PALETTE_LENGTH(65536)
 
 	MDRV_VIDEO_START(nwktr)
 	MDRV_VIDEO_UPDATE(nwktr)
+
+	MDRV_SPEAKER_STANDARD_STEREO("left", "right")
+
+	MDRV_SOUND_ADD(RF5C400, 0)
+	MDRV_SOUND_CONFIG(rf5c400_interface)
+	MDRV_SOUND_ROUTE(0, "left", 1.0)
+	MDRV_SOUND_ROUTE(1, "right", 1.0)
 
 MACHINE_DRIVER_END
 
@@ -664,24 +816,46 @@ static UINT8 jamma_rdata[1024];
 static void jamma_r(int length)
 {
 	int i;
+	//printf("jamma_r %d\n", length);
 	for (i=0; i < length; i++)
 	{
-		jamma_rdata[i] = rand();
+		jamma_rdata[i] = 0;
 	}
 }
 
 static UINT8 jamma_wdata[1024];
 static void jamma_w(int length)
 {
+	int i;
+	//printf("jamma_w %d\n", length);
+	for (i=0; i < length; i++)
+	{
+		//jamma_jvs_w(jamma_wdata[i]);
+	}
 
+	//jamma_jvs_cmd_exec();
+}
+
+static void sound_irq_callback(int irq)
+{
+	if (irq == 0)
+	{
+		cpunum_set_input_line(1, INPUT_LINE_IRQ1, PULSE_LINE);
+	}
+	else
+	{
+		cpunum_set_input_line(1, INPUT_LINE_IRQ2, PULSE_LINE);
+	}
 }
 
 static UINT8 backup_ram[0x2000];
 static DRIVER_INIT( nwktr )
 {
-	init_konami_cgboard(0, CGBOARD_TYPE_NWKTR);
+	init_konami_cgboard(1, CGBOARD_TYPE_NWKTR);
 	sharc_dataram = auto_malloc(0x100000);
 	timekeeper_init(0, TIMEKEEPER_M48T58, backup_ram);
+
+	K056800_init(sound_irq_callback);
 
 	ppc403_install_spu_tx_dma_handler(jamma_w, jamma_wdata);
 	ppc403_install_spu_rx_dma_handler(jamma_r, jamma_rdata);

@@ -194,7 +194,7 @@ static void k005289_recompute(struct k005289_info *info)
 {
 	k005289_sound_channel *voice = info->channel_list;
 
-	stream_update(info->stream,0); 	/* update the streams */
+	stream_update(info->stream); 	/* update the streams */
 
 	voice[0].frequency = info->k005289_A_frequency;
 	voice[1].frequency = info->k005289_B_frequency;

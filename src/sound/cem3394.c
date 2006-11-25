@@ -422,7 +422,7 @@ void cem3394_set_voltage(int chipnum, int input, double voltage)
 	chip->values[input] = voltage;
 
 	/* update the stream first */
-	stream_update(chip->stream, 0);
+	stream_update(chip->stream);
 
 	/* switch off the input */
 	switch (input)

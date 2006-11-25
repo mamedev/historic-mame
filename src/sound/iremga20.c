@@ -126,7 +126,7 @@ WRITE8_HANDLER( IremGA20_w )
 
 	//logerror("GA20:  Offset %02x, data %04x\n",offset,data);
 
-	stream_update(chip->stream, 0);
+	stream_update(chip->stream);
 
 	channel = offset >> 4;
 
@@ -170,7 +170,7 @@ READ8_HANDLER( IremGA20_r )
 	struct IremGA20_chip_def *chip = sndti_token(SOUND_IREMGA20, 0);
 	int channel;
 
-	stream_update(chip->stream, 0);
+	stream_update(chip->stream);
 
 	channel = offset >> 4;
 

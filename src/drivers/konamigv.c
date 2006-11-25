@@ -319,7 +319,7 @@ static MACHINE_RESET( konamigv )
 	psx_machine_init();
 
 	/* also hook up CDDA audio to the CD-ROM drive */
-	CDDA_set_cdrom(0, am53cf96_get_device(SCSI_ID_4));
+	cdda_set_cdrom(0, am53cf96_get_device(SCSI_ID_4));
 }
 
 static struct PSXSPUinterface konamigv_psxspu_interface =

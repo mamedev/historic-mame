@@ -36,7 +36,7 @@ void DAC_data_w(int num,UINT8 data)
 	if (info->output != out)
 	{
 		/* update the output buffer before changing the registers */
-		stream_update(info->channel,0);
+		stream_update(info->channel);
 		info->output = out;
 	}
 }
@@ -50,7 +50,7 @@ void DAC_signed_data_w(int num,UINT8 data)
 	if (info->output != out)
 	{
 		/* update the output buffer before changing the registers */
-		stream_update(info->channel,0);
+		stream_update(info->channel);
 		info->output = out;
 	}
 }
@@ -64,7 +64,7 @@ void DAC_data_16_w(int num,UINT16 data)
 	if (info->output != out)
 	{
 		/* update the output buffer before changing the registers */
-		stream_update(info->channel,0);
+		stream_update(info->channel);
 		info->output = out;
 	}
 }
@@ -79,7 +79,7 @@ void DAC_signed_data_16_w(int num,UINT16 data)
 	if (info->output != out)
 	{
 		/* update the output buffer before changing the registers */
-		stream_update(info->channel,0);
+		stream_update(info->channel);
 		info->output = out;
 	}
 }

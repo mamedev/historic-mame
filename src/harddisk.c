@@ -30,11 +30,10 @@ struct _hard_disk_file
     CORE IMPLEMENTATION
 ***************************************************************************/
 
-/*************************************
- *
- *  Open a hard disk
- *
- *************************************/
+/*-------------------------------------------------
+    hard_disk_open - open a hard disk handle,
+    given a chd_file
+-------------------------------------------------*/
 
 hard_disk_file *hard_disk_open(chd_file *chd)
 {
@@ -44,11 +43,11 @@ hard_disk_file *hard_disk_open(chd_file *chd)
 	chd_error err;
 
 	/* punt if no CHD */
-	if (!chd)
+	if (chd == NULL)
 		return NULL;
 
 	/* read the hard disk metadata */
-	err = chd_get_metadata(chd, HARD_DISK_STANDARD_METADATA, 0, metadata, sizeof(metadata), NULL, NULL);
+	err = chd_get_metadata(chd, HARD_DISK_METADATA_TAG, 0, metadata, sizeof(metadata), NULL, NULL);
 	if (err != CHDERR_NONE)
 		return NULL;
 
@@ -58,7 +57,7 @@ hard_disk_file *hard_disk_open(chd_file *chd)
 
 	/* allocate memory for the hard disk file */
 	file = malloc(sizeof(hard_disk_file));
-	if (!file)
+	if (file == NULL)
 		return NULL;
 
 	/* fill in the data */
@@ -72,7 +71,7 @@ hard_disk_file *hard_disk_open(chd_file *chd)
 
 	/* allocate a cache */
 	file->cache = malloc(chd_get_header(chd)->hunkbytes);
-	if (!file->cache)
+	if (file->cache == NULL)
 	{
 		free(file);
 		return NULL;
@@ -82,28 +81,23 @@ hard_disk_file *hard_disk_open(chd_file *chd)
 }
 
 
-
-/*************************************
- *
- *  Close a hard disk
- *
- *************************************/
+/*-------------------------------------------------
+    hard_disk_close - close a hard disk handle
+-------------------------------------------------*/
 
 void hard_disk_close(hard_disk_file *file)
 {
 	/* free the cache */
-	if (file->cache)
+	if (file->cache != NULL)
 		free(file->cache);
 	free(file);
 }
 
 
-
-/*************************************
- *
- *  Return the handle to the CHD
- *
- *************************************/
+/*-------------------------------------------------
+    hard_disk_get_chd - get a handle to a CHD
+    from a hard disk
+-------------------------------------------------*/
 
 chd_file *hard_disk_get_chd(hard_disk_file *file)
 {
@@ -111,12 +105,10 @@ chd_file *hard_disk_get_chd(hard_disk_file *file)
 }
 
 
-
-/*************************************
- *
- *  Return hard disk specific info
- *
- *************************************/
+/*-------------------------------------------------
+    hard_disk_get_info - return information about
+    a hard disk
+-------------------------------------------------*/
 
 hard_disk_info *hard_disk_get_info(hard_disk_file *file)
 {
@@ -124,12 +116,10 @@ hard_disk_info *hard_disk_get_info(hard_disk_file *file)
 }
 
 
-
-/*************************************
- *
- *  Read from a hard disk
- *
- *************************************/
+/*-------------------------------------------------
+    hard_disk_read - read sectors from a hard
+    disk
+-------------------------------------------------*/
 
 UINT32 hard_disk_read(hard_disk_file *file, UINT32 lbasector, UINT32 numsectors, void *buffer)
 {
@@ -165,12 +155,10 @@ UINT32 hard_disk_read(hard_disk_file *file, UINT32 lbasector, UINT32 numsectors,
 }
 
 
-
-/*************************************
- *
- *  Write to a hard disk
- *
- *************************************/
+/*-------------------------------------------------
+    hard_disk_write - write  sectors to a hard
+    disk
+-------------------------------------------------*/
 
 UINT32 hard_disk_write(hard_disk_file *file, UINT32 lbasector, UINT32 numsectors, const void *buffer)
 {

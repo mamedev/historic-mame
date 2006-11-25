@@ -118,7 +118,7 @@ void amiga_audio_data_w(int which, UINT16 data)
 
 void amiga_audio_update(void)
 {
-	stream_update(audio_state->stream, 0);
+	stream_update(audio_state->stream);
 }
 
 

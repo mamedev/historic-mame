@@ -52,7 +52,7 @@ WRITE8_HANDLER( redbaron_sounds_w )
 	if( data == latch )
 		return;
 
-	stream_update(channel, 0);
+	stream_update(channel);
     latch = data;
     rb_input_select = data & 1;
 }
