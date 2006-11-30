@@ -128,7 +128,7 @@ struct _raw_mouse
 	HANDLE			device_handle;
 
 	// Current mouse axis and button info
-	DIMOUSESTATE	mouse_state;
+	DIMOUSESTATE2	mouse_state;
 
 	// Used to determine if the HID is using absolute mode or relative mode
 	USHORT			flags;
@@ -184,12 +184,14 @@ static INT8					currkey[MAX_KEYS];
 // mouse states
 static int					mouse_active;
 static int					mouse_count;
+static int					mouse_num_of_buttons;
 static LPDIRECTINPUTDEVICE	mouse_device[MAX_MICE+1];
 static LPDIRECTINPUTDEVICE2	mouse_device2[MAX_MICE+1];
 static raw_mouse			raw_mouse_device[MAX_MICE];
 static osd_lock *			raw_mouse_lock;
 static DIDEVCAPS			mouse_caps[MAX_MICE+1];
-static DIMOUSESTATE			mouse_state[MAX_MICE];
+static DIMOUSESTATE2		mouse_state[MAX_MICE];
+static DWORD				mouse_state_size;
 static char					mouse_name[MAX_MICE+1][MAX_PATH];
 static int					lightgun_count;
 static POINT				lightgun_dual_player_pos[4];
@@ -639,11 +641,83 @@ static int joy_trans_table[][2] =
 	{ JOYCODE(1, CODETYPE_MOUSEAXIS, 1),	MOUSECODE_2_ANALOG_Y },
 	{ JOYCODE(1, CODETYPE_MOUSEAXIS, 2),	MOUSECODE_2_ANALOG_Z },
 
+	{ JOYCODE(2, CODETYPE_MOUSEBUTTON, 0), 	MOUSECODE_3_BUTTON1 },
+	{ JOYCODE(2, CODETYPE_MOUSEBUTTON, 1), 	MOUSECODE_3_BUTTON2 },
+	{ JOYCODE(2, CODETYPE_MOUSEBUTTON, 2), 	MOUSECODE_3_BUTTON3 },
+	{ JOYCODE(2, CODETYPE_MOUSEBUTTON, 3), 	MOUSECODE_3_BUTTON4 },
+	{ JOYCODE(2, CODETYPE_MOUSEBUTTON, 4), 	MOUSECODE_3_BUTTON5 },
+	{ JOYCODE(2, CODETYPE_MOUSEAXIS, 0),	MOUSECODE_3_ANALOG_X },
+	{ JOYCODE(2, CODETYPE_MOUSEAXIS, 1),	MOUSECODE_3_ANALOG_Y },
+	{ JOYCODE(2, CODETYPE_MOUSEAXIS, 2),	MOUSECODE_3_ANALOG_Z },
+
+	{ JOYCODE(3, CODETYPE_MOUSEBUTTON, 0), 	MOUSECODE_4_BUTTON1 },
+	{ JOYCODE(3, CODETYPE_MOUSEBUTTON, 1), 	MOUSECODE_4_BUTTON2 },
+	{ JOYCODE(3, CODETYPE_MOUSEBUTTON, 2), 	MOUSECODE_4_BUTTON3 },
+	{ JOYCODE(3, CODETYPE_MOUSEBUTTON, 3), 	MOUSECODE_4_BUTTON4 },
+	{ JOYCODE(3, CODETYPE_MOUSEBUTTON, 4), 	MOUSECODE_4_BUTTON5 },
+	{ JOYCODE(3, CODETYPE_MOUSEAXIS, 0),	MOUSECODE_4_ANALOG_X },
+	{ JOYCODE(3, CODETYPE_MOUSEAXIS, 1),	MOUSECODE_4_ANALOG_Y },
+	{ JOYCODE(3, CODETYPE_MOUSEAXIS, 2),	MOUSECODE_4_ANALOG_Z },
+
+	{ JOYCODE(4, CODETYPE_MOUSEBUTTON, 0), 	MOUSECODE_5_BUTTON1 },
+	{ JOYCODE(4, CODETYPE_MOUSEBUTTON, 1), 	MOUSECODE_5_BUTTON2 },
+	{ JOYCODE(4, CODETYPE_MOUSEBUTTON, 2), 	MOUSECODE_5_BUTTON3 },
+	{ JOYCODE(4, CODETYPE_MOUSEBUTTON, 3), 	MOUSECODE_5_BUTTON4 },
+	{ JOYCODE(4, CODETYPE_MOUSEBUTTON, 4), 	MOUSECODE_5_BUTTON5 },
+	{ JOYCODE(4, CODETYPE_MOUSEAXIS, 0),	MOUSECODE_5_ANALOG_X },
+	{ JOYCODE(4, CODETYPE_MOUSEAXIS, 1),	MOUSECODE_5_ANALOG_Y },
+	{ JOYCODE(4, CODETYPE_MOUSEAXIS, 2),	MOUSECODE_5_ANALOG_Z },
+
+	{ JOYCODE(5, CODETYPE_MOUSEBUTTON, 0), 	MOUSECODE_6_BUTTON1 },
+	{ JOYCODE(5, CODETYPE_MOUSEBUTTON, 1), 	MOUSECODE_6_BUTTON2 },
+	{ JOYCODE(5, CODETYPE_MOUSEBUTTON, 2), 	MOUSECODE_6_BUTTON3 },
+	{ JOYCODE(5, CODETYPE_MOUSEBUTTON, 3), 	MOUSECODE_6_BUTTON4 },
+	{ JOYCODE(5, CODETYPE_MOUSEBUTTON, 4), 	MOUSECODE_6_BUTTON5 },
+	{ JOYCODE(5, CODETYPE_MOUSEAXIS, 0),	MOUSECODE_6_ANALOG_X },
+	{ JOYCODE(5, CODETYPE_MOUSEAXIS, 1),	MOUSECODE_6_ANALOG_Y },
+	{ JOYCODE(5, CODETYPE_MOUSEAXIS, 2),	MOUSECODE_6_ANALOG_Z },
+
+	{ JOYCODE(6, CODETYPE_MOUSEBUTTON, 0), 	MOUSECODE_7_BUTTON1 },
+	{ JOYCODE(6, CODETYPE_MOUSEBUTTON, 1), 	MOUSECODE_7_BUTTON2 },
+	{ JOYCODE(6, CODETYPE_MOUSEBUTTON, 2), 	MOUSECODE_7_BUTTON3 },
+	{ JOYCODE(6, CODETYPE_MOUSEBUTTON, 3), 	MOUSECODE_7_BUTTON4 },
+	{ JOYCODE(6, CODETYPE_MOUSEBUTTON, 4), 	MOUSECODE_7_BUTTON5 },
+	{ JOYCODE(6, CODETYPE_MOUSEAXIS, 0),	MOUSECODE_7_ANALOG_X },
+	{ JOYCODE(6, CODETYPE_MOUSEAXIS, 1),	MOUSECODE_7_ANALOG_Y },
+	{ JOYCODE(6, CODETYPE_MOUSEAXIS, 2),	MOUSECODE_7_ANALOG_Z },
+
+	{ JOYCODE(7, CODETYPE_MOUSEBUTTON, 0), 	MOUSECODE_8_BUTTON1 },
+	{ JOYCODE(7, CODETYPE_MOUSEBUTTON, 1), 	MOUSECODE_8_BUTTON2 },
+	{ JOYCODE(7, CODETYPE_MOUSEBUTTON, 2), 	MOUSECODE_8_BUTTON3 },
+	{ JOYCODE(7, CODETYPE_MOUSEBUTTON, 3), 	MOUSECODE_8_BUTTON4 },
+	{ JOYCODE(7, CODETYPE_MOUSEBUTTON, 4), 	MOUSECODE_8_BUTTON5 },
+	{ JOYCODE(7, CODETYPE_MOUSEAXIS, 0),	MOUSECODE_8_ANALOG_X },
+	{ JOYCODE(7, CODETYPE_MOUSEAXIS, 1),	MOUSECODE_8_ANALOG_Y },
+	{ JOYCODE(7, CODETYPE_MOUSEAXIS, 2),	MOUSECODE_8_ANALOG_Z },
+
 	{ JOYCODE(0, CODETYPE_GUNAXIS, 0),		GUNCODE_1_ANALOG_X },
 	{ JOYCODE(0, CODETYPE_GUNAXIS, 1),		GUNCODE_1_ANALOG_Y },
 
 	{ JOYCODE(1, CODETYPE_GUNAXIS, 0),		GUNCODE_2_ANALOG_X },
 	{ JOYCODE(1, CODETYPE_GUNAXIS, 1),		GUNCODE_2_ANALOG_Y },
+
+	{ JOYCODE(2, CODETYPE_GUNAXIS, 0),		GUNCODE_3_ANALOG_X },
+	{ JOYCODE(2, CODETYPE_GUNAXIS, 1),		GUNCODE_3_ANALOG_Y },
+
+	{ JOYCODE(3, CODETYPE_GUNAXIS, 0),		GUNCODE_4_ANALOG_X },
+	{ JOYCODE(3, CODETYPE_GUNAXIS, 1),		GUNCODE_4_ANALOG_Y },
+
+	{ JOYCODE(4, CODETYPE_GUNAXIS, 0),		GUNCODE_5_ANALOG_X },
+	{ JOYCODE(4, CODETYPE_GUNAXIS, 1),		GUNCODE_5_ANALOG_Y },
+
+	{ JOYCODE(5, CODETYPE_GUNAXIS, 0),		GUNCODE_6_ANALOG_X },
+	{ JOYCODE(5, CODETYPE_GUNAXIS, 1),		GUNCODE_6_ANALOG_Y },
+
+	{ JOYCODE(6, CODETYPE_GUNAXIS, 0),		GUNCODE_7_ANALOG_X },
+	{ JOYCODE(6, CODETYPE_GUNAXIS, 1),		GUNCODE_7_ANALOG_Y },
+
+	{ JOYCODE(7, CODETYPE_GUNAXIS, 0),		GUNCODE_8_ANALOG_X },
+	{ JOYCODE(7, CODETYPE_GUNAXIS, 1),		GUNCODE_8_ANALOG_Y },
 };
 
 
@@ -789,9 +863,15 @@ static BOOL CALLBACK enum_mouse_callback(LPCDIDEVICEINSTANCE instance, LPVOID re
 		goto cant_set_axis_mode;
 
 	// attempt to set the data format
-	result = IDirectInputDevice_SetDataFormat(mouse_device[mouse_count], &c_dfDIMouse);
+	result = IDirectInputDevice_SetDataFormat(mouse_device[mouse_count], &c_dfDIMouse2);
 	if (result != DI_OK)
-		goto cant_set_format;
+	{
+		result = IDirectInputDevice_SetDataFormat(mouse_device[mouse_count], &c_dfDIMouse);
+		if (result != DI_OK)
+			goto cant_set_format;
+		mouse_num_of_buttons = 4;
+		mouse_state_size = sizeof(DIMOUSESTATE);
+	}
 
 	// set the cooperative level
 	if (use_lightgun)
@@ -1004,6 +1084,8 @@ int wininput_init(running_machine *machine)
 	// initialize mouse devices
 	lightgun_count = 0;
 	mouse_count = 0;
+	mouse_num_of_buttons = 8;
+	mouse_state_size = sizeof(DIMOUSESTATE2);
 	if (win_use_mouse || use_lightgun)
 	{
 		lightgun_dual_player_state[0] = lightgun_dual_player_state[1] = 0;
@@ -1283,14 +1365,14 @@ void wininput_poll(void)
 					IDirectInputDevice2_Poll(mouse_device2[i]);
 
 				// get the state
-				result = IDirectInputDevice_GetDeviceState(mouse_device[i], sizeof(mouse_state[i]), &mouse_state[i]);
+				result = IDirectInputDevice_GetDeviceState(mouse_device[i], mouse_state_size, &mouse_state[i]);
 
 				// handle lost inputs here
 				if ((result == DIERR_INPUTLOST || result == DIERR_NOTACQUIRED) && !input_paused)
 				{
 					result = IDirectInputDevice_Acquire(mouse_device[i]);
 					if (result == DI_OK)
-						result = IDirectInputDevice_GetDeviceState(mouse_device[i], sizeof(mouse_state[i]), &mouse_state[i]);
+						result = IDirectInputDevice_GetDeviceState(mouse_device[i], mouse_state_size, &mouse_state[i]);
 				}
 			}
 
@@ -1710,11 +1792,11 @@ static void init_joycodes(void)
 		add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEAXIS, 2), CODE_OTHER_ANALOG_RELATIVE);
 
 		// add mouse buttons
-		for (button = 0; button < 4; button++)
+		for (button = 0; button < mouse_num_of_buttons; button++)
 		{
 			if (win_use_raw_mouse)
 			{
-				sprintf(tempname, "%sButton %d", mousename, button + 1);
+				sprintf(tempname, "%sButton %d", mousename, button);
 				add_joylist_entry(tempname, JOYCODE(mouse, CODETYPE_MOUSEBUTTON, button), CODE_OTHER_DIGITAL);
 			}
 			else
@@ -2561,6 +2643,7 @@ static BOOL init_raw_mouse(void)
 		goto cant_init_raw_input;
 
 	verbose_printf("Input: Using RAWMOUSE for Mouse input\n");
+	mouse_num_of_buttons = 5;
 
 	// override lightgun settings.  Not needed with RAWinput.
 	use_lightgun = 0;
@@ -2634,6 +2717,8 @@ static void process_raw_input(PRAWINPUT raw)
 			if (button_flags & RI_MOUSE_BUTTON_3_UP)   buttons[2] = 0;
 			if (button_flags & RI_MOUSE_BUTTON_4_DOWN) buttons[3] = 0x80;
 			if (button_flags & RI_MOUSE_BUTTON_4_UP)   buttons[3] = 0;
+			if (button_flags & RI_MOUSE_BUTTON_5_DOWN) buttons[4] = 0x80;
+			if (button_flags & RI_MOUSE_BUTTON_5_UP)   buttons[4] = 0;
 
 			raw_mouse_device[i].flags = raw->data.mouse.usFlags;
 		}

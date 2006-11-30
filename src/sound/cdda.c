@@ -84,7 +84,13 @@ int cdda_num_from_cdrom(void *file)
 
 	for (index = 0; ; index++)
 	{
-		cdda_info *info = sndti_token(SOUND_CDDA, index);
+		cdda_info *info;
+
+		if (!sndti_exists(SOUND_CDDA, index))
+			return -1;
+
+		info = sndti_token(SOUND_CDDA, index);
+
 		if (info == NULL)
 			return -1;
 		if (info->disc == file)

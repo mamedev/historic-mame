@@ -137,6 +137,30 @@ ifdef PTR64
 LIBS += -lbufferoverflowu
 endif
 
+# hack for Vista building: set the environment variable VISTA_MINGW_ROOT
+# to the base of your standard mingw install
+ifdef VISTA_MINGW_ROOT
+
+ifndef MSVC_BUILD
+CFLAGS += -I$(subst \,/,$(VISTA_MINGW_ROOT))/include -I$(subst \,/,$(VISTA_MINGW_ROOT))/lib/gcc/mingw32/3.4.2/include
+LDFLAGS += -Wl,-L,$(subst \,/,$(VISTA_MINGW_ROOT))/lib,-L,$(subst \,/,$(VISTA_MINGW_ROOT))/lib/gcc/mingw32/3.4.2
+
+OSPREBUILD = vistahack
+
+vistahack: crt2.o crtbegin.o crtend.o
+
+crt2.o: $(VISTA_MINGW_ROOT)\lib\crt2.o
+	cmd /c copy $< $@
+
+crtbegin.o: $(VISTA_MINGW_ROOT)\lib\gcc\mingw32\3.4.2\crtbegin.o
+	cmd /c copy $< $@
+
+crtend.o: $(VISTA_MINGW_ROOT)\lib\gcc\mingw32\3.4.2\crtend.o
+	cmd /c copy $< $@
+endif
+
+endif
+
 
 
 #-------------------------------------------------

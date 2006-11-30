@@ -8,6 +8,8 @@
   Code from http://users.tpg.com.au/trauma/dsp/dsp1.html
   By The Dumper (Electrical Engineering), Neviksti (Physics), Overload (Computer Science), Andreas Naive (Mathematics)
 
+  This is up to date with the source version that was posted May 29, 2006.
+
 ***************************************************************************/
 
 static INT16 dsp1_waitcmd, dsp1_in_cnt, dsp1_out_cnt, dsp1_in_idx, dsp1_out_idx, dsp1_first_parm, dsp1_cur_cmd;
@@ -134,22 +136,20 @@ void InitDSP1(void)
 	}
 }
 
-static INT16 CentreX;
-static INT16 CentreY;
+static INT16 Gx, Nx, CentreX;
+static INT16 Gy, Ny, CentreY;
+static INT16 Gz, Nz, CentreZ;
+static INT16 Les_C, Les_E, Les_G;
+
 static INT16 VOffset;
 
-static INT16 VPlane_C;
-static INT16 VPlane_E;
+static INT16 VPlane_C, VPlane_E;
 
 // Azimuth and Zenith angles
-static INT16 SinAas;
-static INT16 CosAas;
-static INT16 SinAzs;
-static INT16 CosAzs;
+static INT16 SinAas, CosAas, SinAzs, CosAzs;
 
 // Clipped Zenith angle
-static INT16 SinAZS;
-static INT16 CosAZS;
+static INT16 SinAzsB, CosAzsB;
 static INT16 SecAZS_C1;
 static INT16 SecAZS_E1;
 static INT16 SecAZS_C2;
@@ -457,10 +457,10 @@ static INT16 FxParm, FyParm, FzParm, AasParm, AzsParm, LfeParm, LesParm;
 
 void DSP1_Parameter(INT16 Fx, INT16 Fy, INT16 Fz, INT16 Lfe, INT16 Les, INT16 Aas, INT16 Azs, INT16 *Vof, INT16 *Vva, INT16 *Cx, INT16 *Cy)
 {
-	INT16 CSec, C, E, Aux;
+	INT16 CSec, C, E;
 
 	// Copy Zenith angle for clipping
-	INT16 AZS = Azs;
+	INT16 AzsB = Azs;
 
 	INT16 MaxAZS;
 
@@ -479,12 +479,25 @@ void DSP1_Parameter(INT16 Fx, INT16 Fy, INT16 Fz, INT16 Lfe, INT16 Les, INT16 Aa
 	SinAzs = DSP1_Sin(Azs);
 	CosAzs = DSP1_Cos(Azs);
 
+	Nx = SinAzs * -SinAas >> 15;
+	Ny = SinAzs * CosAas >> 15;
+	Nz = CosAzs * 0x7fff >> 15;
+
 	// Center of Projection
-	CentreX = Fx + (Lfe * (SinAzs * -SinAas >> 15) >> 15);
-	CentreY = Fy + (Lfe * (SinAzs * CosAas >> 15) >> 15);
+	CentreX = Fx + (Lfe * Nx >> 15);
+	CentreY = Fy + (Lfe * Ny >> 15);
+	CentreZ = Fz + (Lfe * Nz >> 15);
+
+	Gx = CentreX - (Les * Nx >> 15);
+	Gy = CentreY - (Les * Ny >> 15);
+	Gz = CentreZ - (Les * Nz >> 15);
+
+	Les_E = 0;
+	DSP1_Normalize(Les, &Les_C, &Les_E);
+	Les_G = Les;
 
 	E = 0;
-	DSP1_Normalize(Fz + (Lfe * (CosAzs * 0x7fff >> 15) >> 15), &C, &E);
+	DSP1_Normalize(CentreZ, &C, &E);
 
 	VPlane_C = C;
 	VPlane_E = E;
@@ -492,22 +505,22 @@ void DSP1_Parameter(INT16 Fx, INT16 Fy, INT16 Fz, INT16 Lfe, INT16 Les, INT16 Aa
 	// Determine clip boundary and clip Zenith angle if necessary
 	MaxAZS = MaxAZS_Exp[-E];
 
-	if (AZS < 0) {
+	if (AzsB < 0) {
 		MaxAZS = -MaxAZS;
-		if (AZS < MaxAZS + 1) AZS = MaxAZS + 1;
+		if (AzsB < MaxAZS + 1) AzsB = MaxAZS + 1;
 	} else {
-		if (AZS > MaxAZS) AZS = MaxAZS;
+		if (AzsB > MaxAZS) AzsB = MaxAZS;
 	}
 
 	// Store Sine and Cosine of clipped Zenith angle
-	SinAZS = DSP1_Sin(AZS);
-	CosAZS = DSP1_Cos(AZS);
+	SinAzsB = DSP1_Sin(AzsB);
+	CosAzsB = DSP1_Cos(AzsB);
 
-	DSP1_Inverse(CosAZS, 0, &SecAZS_C1, &SecAZS_E1);
+	DSP1_Inverse(CosAzsB, 0, &SecAZS_C1, &SecAZS_E1);
 	DSP1_Normalize(C * SecAZS_C1 >> 15, &C, &E);
 	E += SecAZS_E1;
 
-	C = DSP1_Truncate(C, E) * SinAZS >> 15;
+	C = DSP1_Truncate(C, E) * SinAzsB >> 15;
 
 	CentreX += C * SinAas >> 15;
 	CentreY -= C * CosAas >> 15;
@@ -518,8 +531,10 @@ void DSP1_Parameter(INT16 Fx, INT16 Fy, INT16 Fz, INT16 Lfe, INT16 Les, INT16 Aa
 	// Raster number of imaginary center and horizontal line
 	*Vof = 0;
 
-	if ((Azs != AZS) || (Azs == MaxAZS))
+	if ((Azs != AzsB) || (Azs == MaxAZS))
 	{
+		INT16 Aux;
+
 		if (Azs == -32768) Azs = -32767;
 
 		C = Azs - MaxAZS;
@@ -532,12 +547,12 @@ void DSP1_Parameter(INT16 Fx, INT16 Fy, INT16 Fz, INT16 Lfe, INT16 Les, INT16 Aa
 
 		C = Aux * Aux >> 15;
 		Aux = (C * DSP1ROM[0x0324] >> 15) + DSP1ROM[0x0325];
-		CosAZS += (C * Aux >> 15) * CosAZS >> 15;
+		CosAzsB += (C * Aux >> 15) * CosAzsB >> 15;
 	}
 
-	VOffset = Les * CosAZS >> 15;
+	VOffset = Les * CosAzsB >> 15;
 
-	DSP1_Inverse(SinAZS, 0, &CSec, &E);
+	DSP1_Inverse(SinAzsB, 0, &CSec, &E);
 	DSP1_Normalize(VOffset, &C, &E);
 	DSP1_Normalize(C * CSec >> 15, &C, &E);
 
@@ -546,7 +561,7 @@ void DSP1_Parameter(INT16 Fx, INT16 Fy, INT16 Fz, INT16 Lfe, INT16 Les, INT16 Aa
 	*Vva = DSP1_Truncate(-C, E);
 
 	// Store Secant of clipped Zenith angle
-	DSP1_Inverse(CosAZS, 0, &SecAZS_C2, &SecAZS_E2);
+	DSP1_Inverse(CosAzsB, 0, &SecAZS_C2, &SecAZS_E2);
 }
 
 // 06H - Object Projection Calculation
@@ -950,18 +965,18 @@ static UINT8 dsp1_read(UINT16 address)
 				}
 			}
 			dsp1_waitcmd = 1;
-//          mame_printf_debug("dsp_r: %02x\n", temp);
+//          printf("dsp_r: %02x\n", temp);
 			return temp;
 		}
 		else
 		{
-//          mame_printf_debug("dsp_r: %02x\n", 0xff);
+//          printf("dsp_r: %02x\n", 0xff);
 			return 0xff;	// indicate "no data"
 		}
 	}
 
 	// status register
-//  mame_printf_debug("dsp_r: %02x\n", 0x80);
+//  printf("dsp_r: %02x\n", 0x80);
 	return 0x80;
 }
 
@@ -970,7 +985,7 @@ static void dsp1_write(UINT16 address, UINT8 data)
 	// check data vs. status
 	if (((address & 0xf000) == 0x6000) || ((address & 0x7fff) < 0x4000))
 	{
-//      mame_printf_debug("DSP_w: %02x cmd %02x wait %d dsp1_in_cnt %d\n", data, dsp1_cur_cmd, dsp1_waitcmd, dsp1_in_cnt);
+//      printf("DSP_w: %02x cmd %02x wait %d dsp1_in_cnt %d\n", data, dsp1_cur_cmd, dsp1_waitcmd, dsp1_in_cnt);
 
 		if (((dsp1_cur_cmd == 0x0a) || (dsp1_cur_cmd == 0x1a)) && (dsp1_out_cnt != 0))
 		{
@@ -1223,7 +1238,7 @@ static void dsp1_write(UINT16 address, UINT8 data)
 							break;
 
 						default:
-							mame_printf_debug("Unhandled DSP1 command: %02x\n", dsp1_cur_cmd);
+							printf("Unhandled DSP1 command: %02x\n", dsp1_cur_cmd);
 							break;
 
 					}

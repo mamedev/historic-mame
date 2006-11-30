@@ -136,7 +136,7 @@ VIDEO_UPDATE( playch10 )
 				if ( pc10_gun_controller )
 				{
 					int x_center = readinputport( 5 );
-					int y_center = readinputport( 6 ) + 30*8;
+					int y_center = readinputport( 6 );
 
 					draw_crosshair(bitmap, x_center, y_center, cliprect, 0);
 				}

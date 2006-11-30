@@ -21,6 +21,15 @@ typedef struct
 } SCSICd;
 
 
+static void phys_frame_to_msf(int phys_frame, int *m, int *s, int *f)
+{
+	*m = phys_frame / (60*75);
+	phys_frame -= (*m * 60 * 75);
+	*s = phys_frame / 75;
+	*f = phys_frame % 75;
+}
+
+
 // scsicd_exec_command
 //
 // Execute a SCSI command passed in via pCmdBuf.
@@ -65,6 +74,9 @@ int scsicd_exec_command(SCSICd *our_this, UINT8 *pCmdBuf)
 			retval = 8;
 			break;
 		case 0x1b:	// START/STOP UNIT
+			cddanum = cdda_num_from_cdrom(cdrom);
+			if (cddanum != -1)
+				cdda_stop_audio(cddanum);
 			retval = 0;
 			break;
 		case 0x25:	// READ CD-ROM CAPACITY
@@ -206,6 +218,38 @@ int scsicd_exec_command(SCSICd *our_this, UINT8 *pCmdBuf)
 			break;
 		case 0x5a:	// MODE SENSE
 			retval = 0x18;
+			break;
+		case 0xa5:	// PLAY AUDIO  (12 byte)
+			our_this->lba = pCmdBuf[2]<<24 | pCmdBuf[3]<<16 | pCmdBuf[4]<<8 | pCmdBuf[5];
+			our_this->blocks = pCmdBuf[6]<<24 | pCmdBuf[7]<<16 | pCmdBuf[8]<<8 | pCmdBuf[9];
+
+			// special cases: lba of 0 means MSF of 00:02:00
+			if (our_this->lba == 0)
+			{
+				our_this->lba = 150;
+			}
+			else if (our_this->lba == 0xffffffff)
+			{
+				logerror("SCSICD: play audio from current not implemented!\n");
+			}
+
+			logerror("SCSICD: PLAY AUDIO (12) at LBA %x for %x blocks\n", our_this->lba, our_this->blocks);
+
+			trk = cdrom_get_track(cdrom, our_this->lba);
+
+			if (cdrom_get_track_type(cdrom, trk) == CD_TRACK_AUDIO)
+			{
+				our_this->play_err_flag = 0;
+				cddanum = cdda_num_from_cdrom(cdrom);
+				if (cddanum != -1)
+					cdda_start_audio(cddanum, our_this->lba, our_this->blocks);
+			}
+			else
+			{
+				logerror("SCSICD: track is NOT audio!\n");
+				our_this->play_err_flag = 1;
+			}
+			retval = 0;
 			break;
 		case 0xa8: 	// READ (12 byte)
 			cddanum = cdda_num_from_cdrom(cdrom);
@@ -357,6 +401,7 @@ void scsicd_read_data(SCSICd *our_this, int bytes, UINT8 *pData)
 				case 1:	// return current position
 				{
 					int audio_active;
+					int msf;
 
 					if (!cdrom)
 					{
@@ -364,6 +409,8 @@ void scsicd_read_data(SCSICd *our_this, int bytes, UINT8 *pData)
 					}
 
 					logerror("SCSICD: READ SUB-CHANNEL Time = %x, SUBQ = %x\n", fifo[1], fifo[2]);
+
+					msf = fifo[1] & 0x2;
 
 					cddanum = cdda_num_from_cdrom(cdrom);
 					audio_active = cddanum != -1 && cdda_audio_active(cddanum);
@@ -390,6 +437,17 @@ void scsicd_read_data(SCSICd *our_this, int bytes, UINT8 *pData)
 							pData[1] = 0x15;	// No current audio status to return
 						}
 					}
+
+					// if audio is playing, get the latest LBA from the CDROM layer
+					if (audio_active)
+					{
+						our_this->last_lba = cdda_get_audio_lba(cddanum);
+					}
+					else
+					{
+						our_this->last_lba = 0;
+					}
+
 					pData[2] = 0;
 					pData[3] = 12;		// data length
 					pData[4] = 0x01;	// sub-channel format code
@@ -397,25 +455,43 @@ void scsicd_read_data(SCSICd *our_this, int bytes, UINT8 *pData)
 					pData[6] = cdrom_get_track(cdrom, our_this->last_lba) + 1;	// track
 					pData[7] = 0;	// index
 
-					// if audio is playing, get the latest LBA from the CDROM layer
-					if (audio_active)
-					{
-						our_this->last_lba = cdda_get_audio_lba(cddanum);
-					}
-
 					last_phys_frame = our_this->last_lba;
 
-					pData[8] = last_phys_frame>>24;
-					pData[9] = (last_phys_frame>>16)&0xff;
-					pData[10] = (last_phys_frame>>8)&0xff;
-					pData[11] = last_phys_frame&0xff;
+					if (msf)
+					{
+						int m,s,f;
+						phys_frame_to_msf(last_phys_frame, &m, &s, &f);
+						pData[8] = 0;
+						pData[9] = m;
+						pData[10] = s;
+						pData[11] = f;
+					}
+					else
+					{
+						pData[8] = last_phys_frame>>24;
+						pData[9] = (last_phys_frame>>16)&0xff;
+						pData[10] = (last_phys_frame>>8)&0xff;
+						pData[11] = last_phys_frame&0xff;
+					}
 
 					last_phys_frame -= cdrom_get_track_start(cdrom, pData[6] - 1);
 
-					pData[12] = last_phys_frame>>24;
-					pData[13] = (last_phys_frame>>16)&0xff;
-					pData[14] = (last_phys_frame>>8)&0xff;
-					pData[15] = last_phys_frame&0xff;
+					if (msf)
+					{
+						int m,s,f;
+						phys_frame_to_msf(last_phys_frame, &m, &s, &f);
+						pData[12] = 0;
+						pData[13] = m;
+						pData[14] = s;
+						pData[15] = f;
+					}
+					else
+					{
+						pData[12] = last_phys_frame>>24;
+						pData[13] = (last_phys_frame>>16)&0xff;
+						pData[14] = (last_phys_frame>>8)&0xff;
+						pData[15] = last_phys_frame&0xff;
+					}
 					break;
 				}
 				default:

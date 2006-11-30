@@ -2385,7 +2385,7 @@ static multi_file *multi_open(const char *filename, const char *mode)
 			goto error;
 
 		/* count how many files are available */
-		for ( ; ; numfiles++)
+		for ( ; numfiles <= 1000; numfiles++)
 		{
 			chd_interface_file *tempfile;
 

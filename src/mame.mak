@@ -371,6 +371,7 @@ $(OBJ)/shared.a: \
 	$(OBJ)/machine/ds2404.o \
  	$(OBJ)/machine/idectrl.o \
  	$(OBJ)/machine/intelfsh.o \
+	$(OBJ)/machine/laserdsc.o \
 	$(OBJ)/machine/mc146818.o \
 	$(OBJ)/machine/nmk112.o \
 	$(OBJ)/machine/pci.o \
@@ -1571,6 +1572,8 @@ $(OBJ)/drivers/circus.o:	$(OBJ)/layout/circus.lh
 $(OBJ)/drivers/copsnrob.o:	$(OBJ)/layout/copsnrob.lh
 
 $(OBJ)/drivers/darius.o:	$(OBJ)/layout/darius.lh
+
+$(OBJ)/drivers/dlair.o:		$(OBJ)/layout/dlair.lh
 
 $(OBJ)/drivers/funworld.o:	$(OBJ)/layout/funworld.lh
 

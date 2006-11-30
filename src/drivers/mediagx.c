@@ -88,6 +88,9 @@ static UINT32 *main_ram;
 
 static UINT32 disp_ctrl_reg[256/4];
 
+static int vblank = 0;
+
+
 // Display controller registers
 #define DC_UNLOCK				0x00/4
 #define DC_GENERAL_CFG			0x04/4
@@ -302,10 +305,11 @@ static READ32_HANDLER( disp_ctrl_r )
 	switch (offset)
 	{
 		case DC_TIMING_CFG:
-			r &= ~0x40000000;
-			if (cpu_getscanline() > frame_height)	// set vblank bit
-			{
-				r |= 0x40000000;
+			r |= 0x40000000;
+
+			if (cpu_getscanline() >= frame_height)
+ 			{
+				r &= ~0x40000000;
 			}
 
 #if SPEEDUP_HACKS
@@ -717,15 +721,21 @@ static MACHINE_RESET(mediagx)
 	timer_adjust(sound_timer, TIME_IN_MSEC(1), 0, 0);
 }
 
+static INTERRUPT_GEN(mediagx_vblank)
+{
+	vblank ^= 1;
+}
+
 static MACHINE_DRIVER_START(mediagx)
 
 	/* basic machine hardware */
 	MDRV_CPU_ADD(MEDIAGX, 166000000)
 	MDRV_CPU_PROGRAM_MAP(mediagx_map, 0)
 	MDRV_CPU_IO_MAP(mediagx_io, 0)
+	MDRV_CPU_VBLANK_INT(mediagx_vblank, 1)
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(0)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
 
 	MDRV_MACHINE_RESET(mediagx)
 

@@ -622,6 +622,7 @@ Known problems with this driver.
 #include "cps1.h"       /* External CPS1 definitions */
 
 #define USE_DECRYPTION_CHD_IF_PRESENT 1
+#define GENERATE_XOR_FROM_CHD 0
 
 /*
 Export this function so that the vidhrdw routine can drive the
@@ -2139,16 +2140,16 @@ ROM_START( batcira )
 ROM_END
 
 ROM_START( choko )
-	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
+	ROM_REGION( CODE_SIZE, REGION_CPU1, ROMREGION_ERASEFF )      /* 68000 code */
 	ROM_LOAD16_WORD_SWAP( "tkoj.03", 0x000000, 0x80000, CRC(11f5452f) SHA1(1575729cdbb857a3a780df6e3e0efd6968926fb8) )
 	ROM_LOAD16_WORD_SWAP( "tkoj.04", 0x080000, 0x80000, CRC(68655378) SHA1(a2d82996394cc28622e93f6c338f9b78aa798775) )
-
-	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
-	ROM_LOAD16_WORD_SWAP( "tkojx.bin", 0x000000, 0x400000, CRC(4e4efee1) SHA1(52340439ef1be7ddd4582fbaf72e3c3dd968d0b1) )
 
 #if USE_DECRYPTION_CHD_IF_PRESENT
 	DISK_REGION( REGION_DISKS )	/* Decryption Table for Choko (Japan) */
 	DISK_IMAGE( "choko", 0, SHA1(4111565be6b9c73acce8875158d481e8a82607cf) MD5(3397f958562e9cd7370e005315c52b66) )
+#else
+	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
+	ROM_LOAD16_WORD_SWAP( "choko.xor", 0x000000, 0x100000, CRC(cf1d846a) SHA1(330adfcca810acd7c7ea5c83a73b492744f0b67c) )
 #endif
 
 	ROM_REGION( 0x1000000, REGION_GFX1, 0 )
@@ -2188,15 +2189,13 @@ ROM_START( csclubj )
 	ROM_LOAD16_WORD_SWAP( "cscj.06", 0x180000, 0x80000, CRC(169e4d40) SHA1(6540d89df5e76189d32b696be7626087fe26e33b) )
 	ROM_LOAD16_WORD_SWAP( "csc.07",  0x200000, 0x80000, CRC(01b05caa) SHA1(5b84487da68e6b6f2889c76bf9e070e25941988c) )
 
-	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, ROMREGION_ERASE00 )
-	ROM_LOAD16_WORD_SWAP( "cscjx.03", 0x000000, 0x80000, CRC(2de1d45d) SHA1(204574607d2dc45e233ed2f88fadc1d5a3790ba6) )
-	ROM_LOAD16_WORD_SWAP( "cscjx.04", 0x080000, 0x80000, CRC(81b25d76) SHA1(e81a5768c053cea10d340c6624e270dd5604c855) )
-	ROM_LOAD16_WORD_SWAP( "cscjx.05", 0x100000, 0x80000, CRC(5adb1c93) SHA1(734aff59e3819ca2250d1fe3e945bd0f0410deef) )
-	ROM_LOAD16_WORD_SWAP( "cscjx.06", 0x180000, 0x80000, CRC(f5558f79) SHA1(0cb75f19db9c83dffb998f6fc6dcf35a58d35dd9) )
 
 #if USE_DECRYPTION_CHD_IF_PRESENT
 	DISK_REGION( REGION_DISKS )	/* Decryption Table for Capcom Sports Club (Japan) */
 	DISK_IMAGE( "csclubj", 0, SHA1(95bfc863a8c1a99d250edc8bee98a953207078ea) MD5(096b479d494ddf5a939d8a1154c452a5 ) )
+#else
+	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
+	ROM_LOAD16_WORD_SWAP( "csclubj.xor", 0x000000, 0x200000, CRC(d85a6ed0) SHA1(af0503d9d8f374ddb69d5a73272d0ace6ed3fa7b) )
 #endif
 
 	ROM_REGION( 0x1000000, REGION_GFX1, 0 )
@@ -3520,17 +3519,31 @@ ROM_START( jyangoku )
 	ROM_REGION(CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
 	ROM_LOAD16_WORD_SWAP( "maj_j03.6a", 0x000000, 0x80000, CRC(4614a3b2) SHA1(f7226006feafaf561046ae7fce18bf62289d41df) )
 
-	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, ROMREGION_ERASEFF )
+#if USE_DECRYPTION_CHD_IF_PRESENT
+	DISK_REGION( REGION_DISKS )	/* Decryption Table for Jyangokushi: Haoh no Saihai (Japan) */
+	DISK_IMAGE( "jyangoku", 0, SHA1(d632f2bf1bf37fc6b9ed40440f75877c8cc95fe9) MD5(41a772700bc83d5fb9f5c5a2e8e69cf6) )
+#else
+	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
+	ROM_LOAD16_WORD_SWAP( "jyangoku.xor", 0x000000, 0x40000, CRC(2c98cf43) SHA1(9bb5eef10df235430260c890133eda7578ea2a8d) )
+#endif
 
 	ROM_REGION( 0x1000000, REGION_GFX1, 0 )
-	ROM_LOAD( "gfx_simms",   0x000000, 0x200000, NO_DUMP )
+	ROMX_LOAD( "maj-simm.01c",   0x0000000, 0x200000, NO_DUMP /*CRC(ba0fe27b) SHA1(1)*/ , ROM_GROUPBYTE | ROM_SKIP(7) ) // ROM on a simm
+	ROMX_LOAD( "maj-simm.01d",   0x0000001, 0x200000, NO_DUMP /*CRC(2cd141bf) SHA1(1)*/ , ROM_GROUPBYTE | ROM_SKIP(7) ) // ROM on a simm
+	ROMX_LOAD( "maj-simm.01a",   0x0000002, 0x200000, NO_DUMP /*CRC(e29e4c26) SHA1(1)*/ , ROM_GROUPBYTE | ROM_SKIP(7) ) // ROM on a simm
+	ROMX_LOAD( "maj-simm.01b",   0x0000003, 0x200000, NO_DUMP /*CRC(7f68b88a) SHA1(1)*/ , ROM_GROUPBYTE | ROM_SKIP(7) ) // ROM on a simm
+	ROMX_LOAD( "maj-simm.03c",   0x0000004, 0x200000, NO_DUMP /*CRC(3aaeb90b) SHA1(1)*/ , ROM_GROUPBYTE | ROM_SKIP(7) ) // ROM on a simm
+	ROMX_LOAD( "maj-simm.03d",   0x0000005, 0x200000, NO_DUMP /*CRC(97894cea) SHA1(1)*/ , ROM_GROUPBYTE | ROM_SKIP(7) ) // ROM on a simm
+	ROMX_LOAD( "maj-simm.03a",   0x0000006, 0x200000, NO_DUMP /*CRC(ec737d9d) SHA1(1)*/ , ROM_GROUPBYTE | ROM_SKIP(7) ) // ROM on a simm
+	ROMX_LOAD( "maj-simm.03b",   0x0000007, 0x200000, NO_DUMP /*CRC(c23b6f22) SHA1(1)*/ , ROM_GROUPBYTE | ROM_SKIP(7) ) // ROM on a simm
 
 	ROM_REGION(QSOUND_SIZE, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
-	ROM_LOAD( "maj_03.1a",  0x00000, 0x08000, CRC(1fe8c213) SHA1(e0045566337851d8261ed65d5bea483f09ae96b4) )
+	ROM_LOAD( "maj_01.1a",  0x00000, 0x08000, CRC(1fe8c213) SHA1(e0045566337851d8261ed65d5bea483f09ae96b4) )
 	ROM_CONTINUE(         0x10000, 0x18000 )
 
 	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* QSound samples */
-	ROM_LOAD( "sound_simms",   0x000000, 0x200000, NO_DUMP )
+	ROM_LOAD16_WORD_SWAP( "maj-simm.05a",   0x000000, 0x200000, NO_DUMP /*BAD_DUMP CRC(4cb79672) SHA1(1)*/ ) // ROM on a simm
+	ROM_LOAD16_WORD_SWAP( "maj-simm.05b",   0x200000, 0x200000, NO_DUMP /*         CRC(e5f2e14a) SHA1(1)*/ ) // ROM on a simm
 ROM_END
 
 ROM_START( megaman2 )
@@ -4925,15 +4938,13 @@ ROM_START( pzloop2j )
 	ROM_LOAD16_WORD_SWAP( "pl2j.05a", 0x100000, 0x80000, CRC(6ea9dbfc) SHA1(c3065e02516755e8b94a741dd2ab960c96d0ff8c) )
 	ROM_LOAD16_WORD_SWAP( "pl2j.06a", 0x180000, 0x80000, CRC(0f14848d) SHA1(94a3ee00d65cd9a310b3a330e2c37467b5863c64) )
 
-	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, ROMREGION_ERASE00 )
-	ROM_LOAD16_WORD_SWAP( "pl2jx.03a", 0x000000, 0x80000, CRC(3c9bdc30) SHA1(c66823c8a18d4bf29ec166e98848362738de2eef) )
-	ROM_LOAD16_WORD_SWAP( "pl2jx.04a", 0x080000, 0x80000, CRC(aa1b28f4) SHA1(ff048d4a2b1de12b6648c26cfc9b10979be1b2fa) )
-	ROM_LOAD16_WORD_SWAP( "pl2jx.05a", 0x100000, 0x80000, CRC(cd27c17d) SHA1(b837d209a1485d3af224cdb1fb7abbb9bea89f2b) )
-	ROM_LOAD16_WORD_SWAP( "pl2jx.06a", 0x180000, 0x80000, CRC(48f3ac5f) SHA1(f05bb8790a92a6964850f8f22e2bc3cd4301a466) )
 
 #if USE_DECRYPTION_CHD_IF_PRESENT
 	DISK_REGION( REGION_DISKS )	/* Decryption Table for Puzzloop 2 (Japan) */
 	DISK_IMAGE( "pzloop2j", 0, SHA1(f7322042a4ce36568fa457dd564fbe84baa8c9fb) MD5(531fced60d35a5b3ddcc24c4695ebf76) )
+#else
+	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
+	ROM_LOAD16_WORD_SWAP( "pzloop2j.xor", 0x000000, 0x200000, CRC(6bd75f6d) SHA1(15678f57dd95727188fd26383300d89421bbd360) )
 #endif
 
 	ROM_REGION( 0x1000000, REGION_GFX1, 0 )
@@ -5308,12 +5319,13 @@ ROM_START( sfzj )
 	ROM_LOAD16_WORD_SWAP( "sfz.05a",  0x100000, 0x80000, CRC(0810544d) SHA1(5f39bda3e7b16508eb58e5a2e0cc58c09cf428ce) )
 	ROM_LOAD16_WORD_SWAP( "sfz.06",   0x180000, 0x80000, CRC(806e8f38) SHA1(b6d6912aa8f2f590335d7ff9a8214648e7131ebb) )
 
-	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, ROMREGION_ERASE00 )
-	ROM_LOAD16_WORD_SWAP( "sfzjx.03c", 0x000000, 0x80000, CRC(d6b17a9b) SHA1(f6d3726427c6bee7e02505a9332759fc959b7d43) )
 
 #if USE_DECRYPTION_CHD_IF_PRESENT
 	DISK_REGION( REGION_DISKS )	/* Decryption Table for Street Fighter Zero (Japan) */
 	DISK_IMAGE( "sfzj", 0, SHA1(8532c3d42ceae7210c6a04b688ed8402246da65a) MD5(52662d0264bf265cefd3d5d7282f6794) )
+#else
+	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
+	ROM_LOAD16_WORD_SWAP( "sfzj.xor", 0x000000, 0x080000, CRC(aa9fcf0a) SHA1(7d9830969a02eb1d8b56832a876db4443eb15007) )
 #endif
 
 	ROM_REGION( 0x1000000, REGION_GFX1, 0 )
@@ -5340,12 +5352,13 @@ ROM_START( sfzjr1 )
 	ROM_LOAD16_WORD_SWAP( "sfz.05a",  0x100000, 0x80000, CRC(0810544d) SHA1(5f39bda3e7b16508eb58e5a2e0cc58c09cf428ce) )
 	ROM_LOAD16_WORD_SWAP( "sfz.06",   0x180000, 0x80000, CRC(806e8f38) SHA1(b6d6912aa8f2f590335d7ff9a8214648e7131ebb) )
 
-	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, ROMREGION_ERASE00 )
-	ROM_LOAD16_WORD_SWAP( "sfzjx.03b", 0x000000, 0x80000, CRC(b501f03c) SHA1(9f73a6177acae9174f06811642f7675e51a5809d) )
 
 #if USE_DECRYPTION_CHD_IF_PRESENT
 	DISK_REGION( REGION_DISKS )	/* Decryption Table for Street Fighter Zero (Japan) */
 	DISK_IMAGE( "sfzj", 0, SHA1(8532c3d42ceae7210c6a04b688ed8402246da65a) MD5(52662d0264bf265cefd3d5d7282f6794) )
+#else
+	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
+	ROM_LOAD16_WORD_SWAP( "sfzjr1.xor", 0x000000, 0x080000, CRC(c92f45ad) SHA1(9bd6861ed6cb2c6e5f02f9cfd99d7bf04ec01164) )
 #endif
 
 	ROM_REGION( 0x1000000, REGION_GFX1, 0 )
@@ -5372,12 +5385,12 @@ ROM_START( sfzjr2 )
 	ROM_LOAD16_WORD_SWAP( "sfz.05",   0x100000, 0x80000, CRC(1f363612) SHA1(87203b5db2d3887762da431d6fc2f2b76d4feedb) )
 	ROM_LOAD16_WORD_SWAP( "sfz.06",   0x180000, 0x80000, CRC(806e8f38) SHA1(b6d6912aa8f2f590335d7ff9a8214648e7131ebb) )
 
-	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, ROMREGION_ERASE00 )
-	ROM_LOAD16_WORD_SWAP( "sfzjx.03a", 0x000000, 0x80000, CRC(3cc138b5) SHA1(9192989793c4388744d89df93781bb73e99315a0) )
-
 #if USE_DECRYPTION_CHD_IF_PRESENT
 	DISK_REGION( REGION_DISKS )	/* Decryption Table for Street Fighter Zero (Japan) */
 	DISK_IMAGE( "sfzj", 0, SHA1(8532c3d42ceae7210c6a04b688ed8402246da65a) MD5(52662d0264bf265cefd3d5d7282f6794) )
+#else
+	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
+	ROM_LOAD16_WORD_SWAP( "sfzjr2.xor", 0x000000, 0x080000, CRC(40ef8d24) SHA1(1d20ed6d114d7ce92349b0ad0a6838d831f4bcb6) )
 #endif
 
 	ROM_REGION( 0x1000000, REGION_GFX1, 0 )
@@ -7221,13 +7234,13 @@ ROM_START( xmcota )
 	ROM_LOAD16_WORD_SWAP( "xmn.09a",  0x300000, 0x80000, CRC(9241cae8) SHA1(bb6980abf25aaf3eb14e230ca6942f3e2ab2c660) )
 	ROM_LOAD16_WORD_SWAP( "xmn.10a",  0x380000, 0x80000, CRC(53c0eab9) SHA1(e3b1ec1fd517735f7801cfebb257c43185c6d3fb) )
 
-	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, ROMREGION_ERASEFF )
-	ROM_LOAD16_WORD_SWAP( "xmnex.03e", 0x000000, 0x80000, CRC(2f5daa9f) SHA1(16a25c45ab2a267b402539c5b9b6dbaf8bcc56ba) )
-	ROM_LOAD16_WORD_SWAP( "xmnex.04e", 0x080000, 0x80000, CRC(f0e24605) SHA1(c72105491d9c1d97286eea09c9ac506fa234a776) )
 
 #if USE_DECRYPTION_CHD_IF_PRESENT
 	DISK_REGION( REGION_DISKS )	/* Decryption Table for X-Men Children of the Atom (Euro) */
 	DISK_IMAGE( "xmcota", 0, SHA1(155cb5ec132d9cd81ff3cbb5e78a33bf53b4ab1f) MD5(e1946c96adcc4a5e7d189c677e5bfeb0) )
+#else
+	ROM_REGION16_BE( CODE_SIZE, REGION_USER1, 0 )
+	ROM_LOAD16_WORD_SWAP( "xmcota.xor", 0x000000, 0x100000, CRC(1b04be6d) SHA1(694d198ee3b2b8777ac0b6fd0b5a9049a1d860d6) )
 #endif
 
 	ROM_REGION( 0x2000000, REGION_GFX1, 0 )
@@ -8001,6 +8014,42 @@ int decrypt_cps2_with_chd(int encryption_length) // encrypted areas actually dif
 	memory_set_decrypted_region(0, 0x000000, length - 1, decrypted);
 	m68k_set_encrypted_opcode_range(0,0,length);
 
+
+#if GENERATE_XOR_FROM_CHD
+	/*
+        This will save out a xor for a set with a CHD..
+        just for debug / testing, the XORs have no long-term future in
+        MAME and will eventually be removed.
+
+        This will create a xor for the specified decrypt region size,
+        no artifical gaps etc.  They are however still practically
+        useless for studying the encryption.
+
+        Any set with a supported CHD uses XORs created with this function
+        for consistency.  If the actual decrypted regions listed are
+        incorrect they can be corrected later.
+    */
+	{
+		UINT16* xor;
+		FILE* xordump;
+		unsigned char filename[256];
+		int l;
+		xor = auto_malloc(encryption_length);
+		for (l=0; l<encryption_length/2;l++)
+		{
+			xor[l] = decrypted[l] ^ rom[l];
+		}
+
+		sprintf(filename,"%s.xor",Machine->gamedrv->name);
+
+		xordump = fopen(filename,"wb");
+
+		fwrite(xor, encryption_length/2, 2, xordump);
+
+		fclose(xordump);
+	}
+#endif
+
 	return 1;
 }
 
@@ -8191,6 +8240,14 @@ void dump_tables(void)
 		fclose(outFile);
 
 	}
+}
+
+DRIVER_INIT( cps2_chd_256 )
+{
+	if(!decrypt_cps2_with_chd(0x40000))
+		init_cps2(machine);
+	else
+		init_cps2_nodecrypt(machine);
 }
 
 DRIVER_INIT( cps2_chd_512 )
@@ -8397,7 +8454,7 @@ GAME( 1998, sfz3jr1,  sfa3,    cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fi
 GAME( 1998, sfz3jr2,  sfa3,    cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fighter Zero 3 (Japan 980629)", 0 )
 GAME( 1998, sfz3a,    sfa3,    cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fighter Zero 3 (Asia 980904)", GAME_NOT_WORKING )
 GAME( 1998, sfz3ar1,  sfa3,    cps2, ssf2,    cps2, ROT0,   "Capcom", "Street Fighter Zero 3 (Asia 980701)", 0 )
-GAME( 1999, jyangoku, 0,       cps2, ssf2,    cps2, ROT0,   "Capcom", "Jyangokushi: Haoh no Saihai (Japan)", GAME_NOT_WORKING )
+GAME( 1999, jyangoku, 0,       cps2, ssf2,    cps2_chd_256, ROT0,   "Capcom", "Jyangokushi: Haoh no Saihai (Japan)", GAME_NOT_WORKING )
 
 /* Games released on CPS-2 hardware by Takumi */
 

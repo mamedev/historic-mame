@@ -6930,6 +6930,12 @@ Other Sun games
 	DRIVER( ambushv )	/* (c) 1983 Volt Elec co-ltd */
 	DRIVER( homo )		/* bootleg */
 	DRIVER( dlair )
+	DRIVER( dlairf )
+	DRIVER( dlaire )
+	DRIVER( dlaird )
+	DRIVER( dlairc )
+	DRIVER( dlairb )
+	DRIVER( dlaira )
 	DRIVER( aztarac )	/* (c) 1983 Centuri (vector game) */
 	DRIVER( mole )		/* (c) 1982 Yachiyo Electronics, Ltd. */
 	DRIVER( thehand )	/* (c) 1981 T.I.C. */
