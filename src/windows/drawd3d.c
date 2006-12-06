@@ -18,6 +18,7 @@
 // standard windows headers
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <tchar.h>
 #include <mmsystem.h>
 #include <d3d9.h>
 #include "d3dintf.h"
@@ -146,6 +147,7 @@ struct _d3d_info
 	int						mod2x_supported;			// is D3DTOP_MODULATE2X supported?
 	int						mod4x_supported;			// is D3DTOP_MODULATE4X supported?
 	D3DFORMAT				screen_format;				// format to use for screen textures
+	D3DFORMAT				yuv_format;					// format to use for YUV textures
 
 	DWORD					texture_caps;				// textureCaps field
 	DWORD					texture_max_aspect;			// texture maximum aspect ratio
@@ -202,6 +204,48 @@ static const line_aa_step line_aa_4step[] =
 //============================================================
 //  INLINES
 //============================================================
+
+INLINE UINT32 ycc_to_rgb(UINT8 y, UINT8 cb, UINT8 cr)
+{
+	/* original equations:
+
+        C = Y - 16
+        D = Cb - 128
+        E = Cr - 128
+
+        R = clip(( 298 * C           + 409 * E + 128) >> 8)
+        G = clip(( 298 * C - 100 * D - 208 * E + 128) >> 8)
+        B = clip(( 298 * C + 516 * D           + 128) >> 8)
+
+        R = clip(( 298 * (Y - 16)                    + 409 * (Cr - 128) + 128) >> 8)
+        G = clip(( 298 * (Y - 16) - 100 * (Cb - 128) - 208 * (Cr - 128) + 128) >> 8)
+        B = clip(( 298 * (Y - 16) + 516 * (Cb - 128)                    + 128) >> 8)
+
+        R = clip(( 298 * Y - 298 * 16                        + 409 * Cr - 409 * 128 + 128) >> 8)
+        G = clip(( 298 * Y - 298 * 16 - 100 * Cb + 100 * 128 - 208 * Cr + 208 * 128 + 128) >> 8)
+        B = clip(( 298 * Y - 298 * 16 + 516 * Cb - 516 * 128                        + 128) >> 8)
+
+        R = clip(( 298 * Y - 298 * 16                        + 409 * Cr - 409 * 128 + 128) >> 8)
+        G = clip(( 298 * Y - 298 * 16 - 100 * Cb + 100 * 128 - 208 * Cr + 208 * 128 + 128) >> 8)
+        B = clip(( 298 * Y - 298 * 16 + 516 * Cb - 516 * 128                        + 128) >> 8)
+    */
+	int r, g, b, common;
+
+	common = 298 * y - 298 * 16;
+	r = (common +                        409 * cr - 409 * 128 + 128) >> 8;
+	g = (common - 100 * cb + 100 * 128 - 208 * cr + 208 * 128 + 128) >> 8;
+	b = (common + 516 * cb - 516 * 128                        + 128) >> 8;
+
+	if (r < 0) r = 0;
+	else if (r > 255) r = 255;
+	if (g < 0) g = 0;
+	else if (g > 255) g = 255;
+	if (b < 0) b = 0;
+	else if (b > 255) b = 255;
+
+	return MAKE_ARGB(0xff, r, g, b);
+}
+
 
 INLINE UINT32 texture_compute_hash(const render_texinfo *texture, UINT32 flags)
 {
@@ -612,6 +656,18 @@ static int device_create(win_window_info *window)
 		fprintf(stderr, "Error: A8R8G8B8 format textures not supported\n");
 		return 1;
 	}
+
+	// pick a YUV texture format
+	d3d->yuv_format = D3DFMT_UYVY;
+	result = (*d3dintf->d3d.check_device_format)(d3dintf, d3d->adapter, D3DDEVTYPE_HAL, d3d->pixformat, 0, D3DRTYPE_TEXTURE, D3DFMT_UYVY);
+	if (result != D3D_OK)
+	{
+		d3d->yuv_format = D3DFMT_YUY2;
+		result = (*d3dintf->d3d.check_device_format)(d3dintf, d3d->adapter, D3DDEVTYPE_HAL, d3d->pixformat, 0, D3DRTYPE_TEXTURE, D3DFMT_YUY2);
+		if (result != D3D_OK)
+			d3d->yuv_format = D3DFMT_A8R8G8B8;
+	}
+	verbose_printf("Direct3D: YUV format = %s\n", (d3d->yuv_format == D3DFMT_YUY2) ? "YUY2" : (d3d->yuv_format == D3DFMT_UYVY) ? "UYVY" : "RGB");
 
 try_again:
 	// try for XRGB first
@@ -1060,7 +1116,7 @@ static int config_adapter_mode(win_window_info *window)
 		// make sure it's a pixel format we can get behind
 		if (d3d->pixformat != D3DFMT_X1R5G5B5 && d3d->pixformat != D3DFMT_R5G6B5 && d3d->pixformat != D3DFMT_X8R8G8B8)
 		{
-			fprintf(stderr, "Device %s currently in an unsupported mode\n", window->monitor->info.szDevice);
+			_ftprintf(stderr, TEXT("Device %s currently in an unsupported mode\n"), window->monitor->info.szDevice);
 			return 1;
 		}
 	}
@@ -1083,7 +1139,7 @@ static int config_adapter_mode(win_window_info *window)
 	result = (*d3dintf->d3d.check_device_type)(d3dintf, d3d->adapter, D3DDEVTYPE_HAL, d3d->pixformat, d3d->pixformat, !window->fullscreen);
 	if (result != D3D_OK)
 	{
-		fprintf(stderr, "Proposed video mode not supported on device %s\n", window->monitor->info.szDevice);
+		_ftprintf(stderr, TEXT("Proposed video mode not supported on device %s\n"), window->monitor->info.szDevice);
 		return 1;
 	}
 	return 0;
@@ -1549,6 +1605,7 @@ static texture_info *texture_create(d3d_info *d3d, const render_texinfo *texsour
 	// non-screen textures are easy
 	if (!PRIMFLAG_GET_SCREENTEX(flags))
 	{
+		assert(PRIMFLAG_TEXFORMAT(flags) != TEXFORMAT_YUY16);
 		result = (*d3dintf->device.create_texture)(d3d->device, texture->rawwidth, texture->rawheight, 1, 0, D3DFMT_A8R8G8B8, D3DPOOL_MANAGED, &texture->d3dtex);
 		if (result != D3D_OK)
 			goto error;
@@ -1559,9 +1616,18 @@ static texture_info *texture_create(d3d_info *d3d, const render_texinfo *texsour
 	// screen textures are allocated differently
 	else
 	{
+		D3DFORMAT format;
 		DWORD usage = d3d->dynamic_supported ? D3DUSAGE_DYNAMIC : 0;
 		DWORD pool = d3d->dynamic_supported ? D3DPOOL_DEFAULT : D3DPOOL_MANAGED;
 		int maxdim = MAX(d3d->presentation.BackBufferWidth, d3d->presentation.BackBufferHeight);
+
+		// pick the format
+		if (PRIMFLAG_GET_TEXFORMAT(flags) == TEXFORMAT_YUY16)
+			format = d3d->yuv_format;
+		else if (PRIMFLAG_GET_TEXFORMAT(flags) == TEXFORMAT_ARGB32 || PRIMFLAG_GET_TEXFORMAT(flags) == TEXFORMAT_PALETTEA16)
+			format = D3DFMT_A8R8G8B8;
+		else
+			format = d3d->screen_format;
 
 		// don't prescale above screen size
 		while (texture->xprescale > 1 && texture->rawwidth * texture->xprescale >= 2 * maxdim)
@@ -1578,7 +1644,7 @@ static texture_info *texture_create(d3d_info *d3d, const render_texinfo *texsour
 		// screen textures with no prescaling are pretty easy
 		if (texture->xprescale == 1 && texture->yprescale == 1)
 		{
-			result = (*d3dintf->device.create_texture)(d3d->device, texture->rawwidth, texture->rawheight, 1, usage, d3d->screen_format, pool, &texture->d3dtex);
+			result = (*d3dintf->device.create_texture)(d3d->device, texture->rawwidth, texture->rawheight, 1, usage, format, pool, &texture->d3dtex);
 			if (result != D3D_OK)
 				goto error;
 			texture->d3dfinaltex = texture->d3dtex;
@@ -1593,7 +1659,7 @@ static texture_info *texture_create(d3d_info *d3d, const render_texinfo *texsour
 			// use an offscreen plain surface for stretching if supported
 			if (d3d->stretch_supported)
 			{
-				result = (*d3dintf->device.create_offscreen_plain_surface)(d3d->device, texture->rawwidth, texture->rawheight, d3d->screen_format, D3DPOOL_DEFAULT, &texture->d3dsurface);
+				result = (*d3dintf->device.create_offscreen_plain_surface)(d3d->device, texture->rawwidth, texture->rawheight, format, D3DPOOL_DEFAULT, &texture->d3dsurface);
 				if (result != D3D_OK)
 					goto error;
 				texture->type = TEXTURE_TYPE_SURFACE;
@@ -1602,7 +1668,7 @@ static texture_info *texture_create(d3d_info *d3d, const render_texinfo *texsour
 			// otherwise, we allocate a dynamic texture for the source
 			else
 			{
-				result = (*d3dintf->device.create_texture)(d3d->device, texture->rawwidth, texture->rawheight, 1, usage, d3d->screen_format, pool, &texture->d3dtex);
+				result = (*d3dintf->device.create_texture)(d3d->device, texture->rawwidth, texture->rawheight, 1, usage, format, pool, &texture->d3dtex);
 				if (result != D3D_OK)
 					goto error;
 				texture->type = d3d->dynamic_supported ? TEXTURE_TYPE_DYNAMIC : TEXTURE_TYPE_PLAIN;
@@ -1611,7 +1677,7 @@ static texture_info *texture_create(d3d_info *d3d, const render_texinfo *texsour
 			// for the target surface, we allocate a render target texture
 			scwidth = texture->rawwidth * texture->xprescale;
 			scheight = texture->rawheight * texture->yprescale;
-			result = (*d3dintf->device.create_texture)(d3d->device, scwidth, scheight, 1, D3DUSAGE_RENDERTARGET, d3d->screen_format, D3DPOOL_DEFAULT, &texture->d3dfinaltex);
+			result = (*d3dintf->device.create_texture)(d3d->device, scwidth, scheight, 1, D3DUSAGE_RENDERTARGET, format, D3DPOOL_DEFAULT, &texture->d3dfinaltex);
 			if (result != D3D_OK)
 				goto error;
 		}
@@ -1772,6 +1838,7 @@ static void texture_set_data(d3d_info *d3d, texture_info *texture, const render_
 	{
 		UINT32 *src32;
 		UINT16 *src16;
+		UINT16 *dst16;
 
 		// always fill non-wrapping textures with an extra pixel on the left
 		if (texture->borderpix)
@@ -1795,6 +1862,12 @@ static void texture_set_data(d3d_info *d3d, texture_info *texture, const render_
 				src16 = (UINT16 *)texsource->base + y * texsource->rowpixels;
 				for (x = 0; x < texsource->width; x++)
 					*dst32++ = 0xff000000 | texsource->palette[*src16++];
+				break;
+
+			case TEXFORMAT_PALETTEA16:
+				src16 = (UINT16 *)texsource->base + y * texsource->rowpixels;
+				for (x = 0; x < texsource->width; x++)
+					*dst32++ = texsource->palette[*src16++];
 				break;
 
 			case TEXFORMAT_RGB15:
@@ -1832,6 +1905,74 @@ static void texture_set_data(d3d_info *d3d, texture_info *texture, const render_
 				{
 					for (x = 0; x < texsource->width; x++)
 						*dst32++ = 0xff000000 | *src32++;
+				}
+				break;
+
+			case TEXFORMAT_YUY16:
+				src16 = (UINT16 *)texsource->base + y * texsource->rowpixels;
+				dst16 = (UINT16 *)dst32;
+				if (texsource->palette != NULL)
+				{
+					switch (d3d->yuv_format)
+					{
+						case D3DFMT_YUY2:
+							for (x = 0; x < texsource->width; x++)
+							{
+								UINT16 srcpix = *src16++;
+								*dst16++ = texsource->palette[0x000 + (srcpix >> 8)] | (srcpix << 8);
+							}
+							break;
+
+						case D3DFMT_UYVY:
+							for (x = 0; x < texsource->width; x++)
+							{
+								UINT16 srcpix = *src16++;
+								*dst16++ = texsource->palette[0x100 + (srcpix >> 8)] | (srcpix & 0xff);
+							}
+							break;
+
+						case D3DFMT_A8R8G8B8:
+							for (x = 0; x < texsource->width / 2; x++)
+							{
+								UINT16 srcpix0 = *src16++;
+								UINT16 srcpix1 = *src16++;
+								UINT8 cb = srcpix0 & 0xff;
+								UINT8 cr = srcpix1 & 0xff;
+								*dst32++ = ycc_to_rgb(texsource->palette[0x000 + (srcpix0 >> 8)], cb, cr);
+								*dst32++ = ycc_to_rgb(texsource->palette[0x000 + (srcpix1 >> 8)], cb, cr);
+							}
+							break;
+					}
+				}
+				else
+				{
+					switch (d3d->yuv_format)
+					{
+						case D3DFMT_YUY2:
+							for (x = 0; x < texsource->width; x++)
+							{
+								UINT16 srcpix = *src16++;
+								*dst16++ = (srcpix >> 8) | (srcpix << 8);
+							}
+							break;
+
+						case D3DFMT_UYVY:
+							for (x = 0; x < texsource->width; x++)
+								*dst16++ = *src16++;
+							break;
+
+						case D3DFMT_A8R8G8B8:
+							for (x = 0; x < texsource->width / 2; x++)
+							{
+								UINT16 srcpix0 = *src16++;
+								UINT16 srcpix1 = *src16++;
+								UINT8 cb = srcpix0 & 0xff;
+								UINT8 cr = srcpix1 & 0xff;
+								*dst32++ = ycc_to_rgb(srcpix0 >> 8, cb, cr);
+								*dst32++ = ycc_to_rgb(srcpix1 >> 8, cb, cr);
+							}
+							break;
+					}
 				}
 				break;
 

@@ -59,6 +59,9 @@ static UINT16 copper_waitmask;
 static UINT16 copper_pending_offset;
 static UINT16 copper_pending_data;
 
+/* misc states */
+static UINT16 genlock_color;
+
 #if GUESS_COPPER_OFFSET
 static int wait_offset = 3;
 #endif
@@ -150,6 +153,9 @@ VIDEO_START( amiga )
 		separate_bitplanes[1][j] = pf2pix ? (pf2pix + 8) : pf1pix;
 	}
 
+	/* reset the genlock color */
+	genlock_color = 0xffff;
+
 	return video_start_generic_bitmapped(machine);
 }
 
@@ -163,7 +169,29 @@ VIDEO_START( amiga )
 
 UINT32 amiga_gethvpos(void)
 {
-	return (last_scanline << 8) | (cpu_gethorzbeampos() >> 1);
+	UINT32 hvpos = (last_scanline << 8) | (cpu_gethorzbeampos() >> 2);
+	UINT32 latchedpos = readinputportbytag_safe("HVPOS", 0);
+
+	/* if there's no latched position, or if we are in the active display area */
+	/* but before the latching point, return the live HV position */
+	if ((CUSTOM_REG(REG_BPLCON0) & 0x0008) == 0 || latchedpos == 0 || (last_scanline >= 20 && hvpos < latchedpos))
+		return hvpos;
+
+	/* otherwise, return the latched position */
+	return latchedpos;
+}
+
+
+
+/*************************************
+ *
+ *  Genlock interaction
+ *
+ *************************************/
+
+void amiga_set_genlock_color(UINT16 color)
+{
+	genlock_color = color;
 }
 
 
@@ -579,6 +607,7 @@ INLINE int update_ham(int newpix)
 
 void amiga_render_scanline(int scanline)
 {
+	UINT16 save_color0 = CUSTOM_REG(REG_COLOR00);
 	int ddf_start_pixel = 0, ddf_stop_pixel = 0;
 	int hires = 0, dualpf = 0, lace = 0, ham = 0;
 	int hstart = 0, hstop = 0;
@@ -612,6 +641,10 @@ void amiga_render_scanline(int scanline)
 	/* all sprites off at the start of the line */
 	memset(sprite_remain, 0, sizeof(sprite_remain));
 
+	/* temporary set color 0 to the genlock color */
+	if (genlock_color != 0xffff)
+		CUSTOM_REG(REG_COLOR00) = genlock_color;
+
 	/* loop over the line */
 	next_copper_x = 0;
 	for (x = 0; x < 0xe4*2; x++)
@@ -621,7 +654,12 @@ void amiga_render_scanline(int scanline)
 		/* time to execute the copper? */
 		if (x == next_copper_x)
 		{
+			/* execute the next batch, restoring and re-saving color 0 around it */
+			CUSTOM_REG(REG_COLOR00) = save_color0;
 			next_copper_x = copper_execute_next(x);
+			save_color0 = CUSTOM_REG(REG_COLOR00);
+			if (genlock_color != 0xffff)
+				CUSTOM_REG(REG_COLOR00) = genlock_color;
 
 			/* compute update-related register values */
 			planes = (CUSTOM_REG(REG_BPLCON0) & (BPLCON0_BPU0 | BPLCON0_BPU1 | BPLCON0_BPU2)) >> 12;
@@ -848,6 +886,9 @@ void amiga_render_scanline(int scanline)
 		for (p = 1; p < planes; p += 2)
 			CUSTOM_REG_LONG(REG_BPL1PTH + p * 2) += CUSTOM_REG_SIGNED(REG_BPL2MOD);
 	}
+
+	/* restore color00 */
+	CUSTOM_REG(REG_COLOR00) = save_color0;
 
 #if GUESS_COPPER_OFFSET
 	if (cpu_getcurrentframe() % 64 == 0 && scanline == 0)

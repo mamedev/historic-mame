@@ -5,12 +5,9 @@
 #define GAME_IS_CRASH		(circus_game == 3)
 #define GAME_IS_RIPCORD		(circus_game == 4)
 
-/*----------- defined in drivers/circus.c -----------*/
-
-extern int circus_game;
-
 /*----------- defined in sndhrdw/circus.c -----------*/
 
+extern int circus_game;
 extern WRITE8_HANDLER( circus_clown_z_w );
 
 extern discrete_sound_block circus_discrete_interface[];

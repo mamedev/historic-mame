@@ -189,7 +189,7 @@ static void drawdd_rgb555_nr_draw_primitives(const render_primitive *primlist, v
 int drawdd_init(win_draw_callbacks *callbacks)
 {
 	// dynamically grab the create function from ddraw.dll
-	dllhandle = LoadLibrary("ddraw.dll");
+	dllhandle = LoadLibrary(TEXT("ddraw.dll"));
 	if (dllhandle == NULL)
 	{
 		verbose_printf("DirectDraw: Unable to access ddraw.dll\n");

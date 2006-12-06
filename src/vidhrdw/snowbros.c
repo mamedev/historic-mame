@@ -98,6 +98,9 @@ VIDEO_UPDATE( snowbros )
 VIDEO_UPDATE( honeydol )
 {
 	int sx=0, sy=0, x=0, y=0, offs;
+	/* sprites clip on left / right edges when scrolling, but it seems correct,
+       no extra sprite attribute bits are set during this time, the sprite co-ordinates
+       are simply set to 0 */
 
 	/* not standard snowbros video */
 
@@ -105,19 +108,19 @@ VIDEO_UPDATE( honeydol )
 
 	for (offs = 0x0000/2;offs < 0x2000/2;offs += 8)
 	{
-		int dx = (spriteram16[offs+4]>>8) & 0xff;
-		int dy = (spriteram16[offs+5]>>8) & 0xff;
-		int tilecolour = (spriteram16[offs+3]>>8)&3;
-		int attr = spriteram16[offs+7]>>8;
-		int flipx =   attr & 0x80;
-		int flipy =  (attr & 0x40) << 1;
-		int tile  = ((attr & 0x3f)<<8) + ((spriteram16[offs+6]>>8) & 0xff);
+		int dx,dy,tilecolour,attr,flipx,flipy,tile;
+
+		/* 8bpp gfx */
+		dx = (spriteram16[offs+4]>>8) & 0xff;
+		dy = (spriteram16[offs+5]>>8) & 0xff;
+		tilecolour = (spriteram16[offs+3]>>8)&3;
+		attr = spriteram16[offs+7]>>8;
+		flipx =   attr & 0x80;
+		flipy =  (attr & 0x40) << 1;
+		tile  = ((attr & 0x3f)<<8) + ((spriteram16[offs+6]>>8) & 0xff);
 
 		x = dx;
 		y = dy;
-
-		if (x > 511) x &= 0x1ff;
-		if (y > 511) y &= 0x1ff;
 
 		if (flip_screen)
 		{
@@ -139,7 +142,7 @@ VIDEO_UPDATE( honeydol )
 				sx,sy,
 				&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 
-		/* second list interleaved with first ??? */
+		/* second list interleaved with first (4bpp) ??? */
 		dx = spriteram16[offs+4] & 0xff;
 		dy = spriteram16[offs+5] & 0xff;
 		tilecolour = spriteram16[offs+3];
@@ -150,9 +153,6 @@ VIDEO_UPDATE( honeydol )
 
 		x = dx;
 		y = dy;
-
-		if (x > 511) x &= 0x1ff;
-		if (y > 511) y &= 0x1ff;
 
 		if (flip_screen)
 		{
@@ -167,13 +167,70 @@ VIDEO_UPDATE( honeydol )
 			sy = y;
 		}
 
+		tilecolour = (tilecolour&0x03f0) >> 4;
+		tilecolour ^=0x3f; // unusual, but correct..
+
 		drawgfx(bitmap,Machine->gfx[0],
 				tile,
-				(tilecolour & 0xf0) >> 4,
+				tilecolour,
 				flipx, flipy,
 				sx,sy,
 				&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
+	}
+	return 0;
+}
 
+
+VIDEO_UPDATE( twinadv )
+{
+	int sx=0, sy=0, x=0, y=0, offs;
+	/* sprites clip on left / right edges when scrolling, but it seems correct,
+       no extra sprite attribute bits are set during this time, the sprite co-ordinates
+       are simply set to 0 */
+
+	/* not standard snowbros video */
+
+	fillbitmap(bitmap,0xf0,&Machine->screen[0].visarea);
+
+	for (offs = 0x0000/2;offs < 0x2000/2;offs += 8)
+	{
+		int dx,dy,tilecolour,attr,flipx,flipy,tile;
+
+		/* Similar to Honey Doll, but no 8bpp list / gfx */
+
+		dx = spriteram16[offs+4] & 0xff;
+		dy = spriteram16[offs+5] & 0xff;
+		tilecolour = spriteram16[offs+3];
+		attr = spriteram16[offs+7];
+		flipx =   attr & 0x80;
+		flipy =  (attr & 0x40) << 1;
+		tile  = ((attr & 0x3f) << 8) + (spriteram16[offs+6] & 0xff);
+
+		x = dx;
+		y = dy;
+
+		if (flip_screen)
+		{
+			sx = 240 - x;
+			sy = 240 - y;
+			flipx = !flipx;
+			flipy = !flipy;
+		}
+		else
+		{
+			sx = x;
+			sy = y;
+		}
+
+		tilecolour = (tilecolour&0x00f0) >> 4;
+		tilecolour ^=0xf; // unusual, but correct..
+
+		drawgfx(bitmap,Machine->gfx[0],
+				tile,
+				tilecolour,
+				flipx, flipy,
+				sx,sy,
+				&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
 	}
 	return 0;
 }

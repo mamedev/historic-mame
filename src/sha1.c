@@ -373,7 +373,7 @@ sha1_digest(const struct sha1_ctx *ctx,
       switch (leftover)
 	{
 	default:
-	  abort();
+	  fatalerror("sha1_digest failed");
 	case 3:
 	  digest[--j] = (word >> 8) & 0xff;
 	  /* Fall through */

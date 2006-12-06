@@ -700,7 +700,7 @@ static void gfxset_update_bitmap(ui_gfx_state *state, int xcells, int ycells, gf
 
 		/* allocate new stuff */
 		state->bitmap = bitmap_alloc_depth(cellxpix * xcells, cellypix * ycells, 32);
-		state->texture = render_texture_alloc(state->bitmap, NULL, NULL, TEXFORMAT_ARGB32, NULL, NULL);
+		state->texture = render_texture_alloc(state->bitmap, NULL, 0, TEXFORMAT_ARGB32, NULL, NULL);
 
 		/* force a redraw */
 		state->bitmap_dirty = TRUE;
@@ -748,7 +748,7 @@ static void gfxset_update_bitmap(ui_gfx_state *state, int xcells, int ycells, gf
 		}
 
 		/* reset the texture to force an update */
-		render_texture_set_bitmap(state->texture, state->bitmap, NULL, NULL, TEXFORMAT_ARGB32);
+		render_texture_set_bitmap(state->texture, state->bitmap, NULL, 0, TEXFORMAT_ARGB32);
 		state->bitmap_dirty = FALSE;
 	}
 }
@@ -1062,7 +1062,7 @@ static void tilemap_update_bitmap(ui_gfx_state *state, int width, int height)
 
 		/* allocate new stuff */
 		state->bitmap = bitmap_alloc_depth(width, height, Machine->color_depth);
-		state->texture = render_texture_alloc(state->bitmap, NULL, palette_get_adjusted_colors(Machine), format, NULL, NULL);
+		state->texture = render_texture_alloc(state->bitmap, NULL, 0, format, NULL, NULL);
 
 		/* force a redraw */
 		state->bitmap_dirty = TRUE;
@@ -1074,7 +1074,7 @@ static void tilemap_update_bitmap(ui_gfx_state *state, int width, int height)
 		tilemap_nb_draw(state->bitmap, state->tilemap.which, state->tilemap.xoffs, state->tilemap.yoffs);
 
 		/* reset the texture to force an update */
-		render_texture_set_bitmap(state->texture, state->bitmap, NULL, palette_get_adjusted_colors(Machine), format);
+		render_texture_set_bitmap(state->texture, state->bitmap, NULL, 0, format);
 		state->bitmap_dirty = FALSE;
 	}
 }

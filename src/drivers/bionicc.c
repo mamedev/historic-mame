@@ -17,7 +17,7 @@ Sound Chip: YM2151 & YM3012
 
 
 Note: Euro rom labels (IE: "TSE") had a blue stripe, while those labeled
-      as USA (TSU) had an orange stripe on the sticker.  The intermixing
+      as USA (TSU) had an red stripe on the sticker.  The intermixing
       of TSE and TSU roms in the parent set is correct and verified.
 Note: Euro set simply states the game cannot be operated in Japan....
 

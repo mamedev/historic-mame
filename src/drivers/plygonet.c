@@ -63,7 +63,7 @@ static int dsp_alive=0;
 static UINT32 *dsp_shared_ram;
 static UINT16 *dsp56k_shared_ram_16;
 
-//static UINT16 *dsp56k_p_mirror;
+static UINT16 *dsp56k_p_mirror;
 static UINT16 *dsp56k_bank00_ram ;
 static UINT16 *dsp56k_bank01_ram ;
 static UINT16 *dsp56k_bank02_ram ;
@@ -131,7 +131,6 @@ static WRITE32_HANDLER( polygonet_eeprom_w )
 static READ32_HANDLER( ttl_rom_r )
 {
 	UINT32 *ROM;
-
 	ROM = (UINT32 *)memory_region(REGION_GFX1);
 
 	return ROM[offset];
@@ -141,7 +140,6 @@ static READ32_HANDLER( ttl_rom_r )
 static READ32_HANDLER( psac_rom_r )
 {
 	UINT32 *ROM;
-
 	ROM = (UINT32 *)memory_region(REGION_GFX2);
 
 	return ROM[offset];
@@ -200,9 +198,36 @@ static WRITE32_HANDLER( dsp_shared_ram_write )
 {
 	COMBINE_DATA(&dsp_shared_ram[offset]) ;
 
-	/* write the data to the dsp56k as well */
-	dsp56k_shared_ram_16[(offset<<1)]   = (dsp_shared_ram[offset] & 0xffff0000) >> 16 ;
-	dsp56k_shared_ram_16[(offset<<1)+1] = (dsp_shared_ram[offset] & 0x0000ffff) ;
+	logerror("68k WRITING %04x & %04x to shared ram %x & %x [%08x] (@%x)\n", (dsp_shared_ram[offset] & 0xffff0000) >> 16,
+																             (dsp_shared_ram[offset] & 0x0000ffff),
+																              0xc000 + (offset<<1),
+																              0xc000 +((offset<<1)+1),
+																		      mem_mask,
+																		      activecpu_get_pc());
+
+	// PC increments before it gets here
+	if (activecpu_get_pc() == 0x46204 || activecpu_get_pc() == 0x46208 || activecpu_get_pc() == 0x4620c)
+	{
+		logerror("SKIPPY HACK\n");
+		return;
+	}
+
+	if (mem_mask == (0x00000000))
+	{
+		/* write the data to the dsp56k as well */
+		dsp56k_shared_ram_16[(offset<<1)]   = (dsp_shared_ram[offset] & 0xffff0000) >> 16 ;
+		dsp56k_shared_ram_16[(offset<<1)+1] = (dsp_shared_ram[offset] & 0x0000ffff) ;
+	}
+	else if (mem_mask == (0x0000ffff))
+	{
+		/* write to the 'current' dsp56k byte */
+		dsp56k_shared_ram_16[(offset<<1)]   = (dsp_shared_ram[offset] & 0xffff0000) >> 16 ;
+	}
+	else if (mem_mask == (0xffff0000))
+	{
+		/* write to the 'next' dsp56k byte */
+		dsp56k_shared_ram_16[(offset<<1)+1] = (dsp_shared_ram[offset] & 0x0000ffff) ;
+	}
 }
 
 
@@ -241,7 +266,7 @@ static READ32_HANDLER( dsp_host_interface_r )
 	if (mem_mask == (~0x0000ff00))
 		hi_addr++;
 
-	logerror("CALLING dsp_host_interface_read %x = %x (@%x)\n", hi_addr, dsp56k_host_interface_read(hi_addr), activecpu_get_pc());
+	logerror("CALLING dsp_host_interface_read %x = %x [%x] (@%x)\n", hi_addr, dsp56k_host_interface_read(hi_addr), mem_mask, activecpu_get_pc());
 
 	if (mem_mask == (~0x0000ff00))
 		return dsp56k_host_interface_read(hi_addr) << 8;
@@ -400,7 +425,7 @@ static WRITE16_HANDLER( dsp56k_ram_bank01_write )
 	}
 
 	/* For now, *always* combine P:0x7000-0x7fff with bank01 */
-//  dsp56k_p_mirror[offset] = data;
+	dsp56k_p_mirror[offset] = data;
 }
 
 static READ16_HANDLER( dsp56k_ram_bank02_read )
@@ -582,7 +607,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( dsp56156_p_map, ADDRESS_SPACE_PROGRAM, 16 )
 //  ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
-//  AM_RANGE(0x7000, 0x7fff) AM_RAM AM_BASE(&dsp56k_p_mirror)   // is it 0x1000 words?
+	AM_RANGE(0x7000, 0x7fff) AM_RAM AM_BASE(&dsp56k_p_mirror)   // is it 0x1000 words?
 	AM_RANGE(0x8000, 0x87ff) AM_RAM								// the processor memtests here
 ADDRESS_MAP_END
 

@@ -193,10 +193,10 @@ static unsigned DecodeDataALUOpcode(char *buffer, UINT16 op, unsigned pc, int pa
 			else if (BITS(op,0x0007) == 0x1)
 			{
 				// TST - 1mRR HHHW 0010 F001
-/*              DecodeFTable(BITS(op,0x0008), D) ;
+	            DecodeFTable(BITS(op,0x0008), D) ;
                 sprintf(buffer, "tst       %s", D) ;
                 retSize = 1 ;
-*/			}
+			}
 			else if (BITS(op,0x0007) == 0x2)
 			{
 				// INC - 1mRR HHHW 0010 F010
@@ -875,13 +875,13 @@ unsigned DecodeMisfitOpcode(char *buffer, UINT16 op, unsigned pc, const UINT8 *o
 			if (BITS(op,0x0004) == 0x0)
 			{
 				// MOVE(C) - 0011 1WDD DDD1 q0RR
-/*              DecodeDDDDDTable(BITS(op,0x03e0), SD) ;
+	            DecodeDDDDDTable(BITS(op,0x03e0), SD) ;
                 Rnum = DecodeRRTable(BITS(op,0x0003)) ;
                 AssembleeaFromqTable(BITS(op,0x0008), Rnum, ea) ;
                 AssembleArgumentsFromWTable(BITS(op,0x0400), args, 'X', SD, ea) ;
                 sprintf(buffer, "move(c)   %s", args) ;
                 retSize = 1 ;
-*/			}
+			}
 			else
 			{
 				switch(BITS(op,0x0006))
@@ -901,12 +901,12 @@ unsigned DecodeMisfitOpcode(char *buffer, UINT16 op, unsigned pc, const UINT8 *o
 
 					// MOVE(C) - 0011 1WDD DDD1 Z11-
 					case 0x3:
-/*                      DecodeDDDDDTable(BITS(op,0x03e0), SD) ;
-                        DecodeZTable(BITS(op,0x0080), ea) ;
+                        DecodeDDDDDTable(BITS(op,0x03e0), SD) ;
+                        DecodeZTable(BITS(op,0x0008), ea) ;				// Fixed - 11/26/06
                         AssembleArgumentsFromWTable(BITS(op,0x0400), args, 'X', SD, ea) ;
                         sprintf(buffer, "move(c)   %s", args) ;
                         retSize = 1 ;
-*/						break ;
+						break ;
 				}
 			}
 		}
@@ -945,9 +945,9 @@ static unsigned DecodeSpecialOpcode(char *buffer, UINT16 op, unsigned pc, const 
 
 			// DO FOREVER - 0000 0000 0000 0010 xxxx xxxx xxxx xxxx
 			case 0x2:
-/*              sprintf(buffer, "doForever %04x", oprom[2] | (oprom[3] << 8)) ;
-                retSize = 2 ;
-*/				break ;
+				sprintf(buffer, "doForever %04x", oprom[2] | (oprom[3] << 8)) ;
+				retSize = 2 ;
+				break ;
 
 			// chkaau - 0000 0000 0000 0100
 			case 0x4:
@@ -969,9 +969,9 @@ static unsigned DecodeSpecialOpcode(char *buffer, UINT16 op, unsigned pc, const 
 
 			// RTI - 0000 0000 0000 0111
 			case 0x7:
-/*              sprintf(buffer, "rti") ;
+	            sprintf(buffer, "rti") ;
                 retSize = 1 | DASMFLAG_STEP_OUT;
-*/				break ;
+				break ;
 
 			// RESET - 0000 0000 0000 1000
 			case 0x8:
@@ -1048,15 +1048,15 @@ static unsigned DecodeSpecialOpcode(char *buffer, UINT16 op, unsigned pc, const 
 				case 0x0:
 /*                  Rnum = DecodeRRTable(BITS(op,0x0003)) ;
                     sprintf(buffer, "jsr       R%d", Rnum) ;
-                    retSize = 1 | DASMFLAG_STEP_OVER;
+                    retSize = 1 ; // I think aaron guessed incorrectly? | DASMFLAG_STEP_OVER;
 */					break ;
 
 				// JMP - 0000 0001 0010 01RR
 				case 0x1:
-/*                  Rnum = DecodeRRTable(BITS(op,0x0003)) ;
+					Rnum = DecodeRRTable(BITS(op,0x0003)) ;
                     sprintf(buffer, "jmp       R%d", Rnum) ;
                     retSize = 1 ;
-*/					break ;
+					break ;
 
 				// BSR - 0000 0001 0010 10RR
 				case 0x2:
@@ -1079,9 +1079,9 @@ static unsigned DecodeSpecialOpcode(char *buffer, UINT16 op, unsigned pc, const 
 			{
 				// JSR - 0000 0001 0011 00-- xxxx xxxx xxxx xxxx
 				case 0x0:
-/*                  sprintf(buffer, "jsr       %04x", oprom[2] | (oprom[3] << 8)) ;
+	                sprintf(buffer, "jsr       %04x", oprom[2] | (oprom[3] << 8)) ;
                     retSize = 2 | DASMFLAG_STEP_OVER;
-*/					break ;
+					break ;
 
 				// JMP - 0000 0001 0011 01-- xxxx xxxx xxxx xxxx
 				case 0x1:
@@ -1159,10 +1159,10 @@ static unsigned DecodeSpecialOpcode(char *buffer, UINT16 op, unsigned pc, const 
 		else
 		{
 			// REP - 0000 0100 001D DDDD
-/*          DecodeDDDDDTable(BITS(op,0x001f), S1) ;
+            DecodeDDDDDTable(BITS(op,0x001f), S1) ;
             sprintf(buffer, "rep       %s", S1) ;
             retSize = 1 ;
-*/		}
+		}
 	}
 	else if (BITS(op,0x0f00) == 0x5)
 	{

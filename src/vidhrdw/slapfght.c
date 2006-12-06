@@ -208,8 +208,7 @@ VIDEO_UPDATE( perfrman )
 		tilemap_set_scrollx( pf1_tilemap ,0 , -16 );
 	}
 
-	fillbitmap(bitmap,Machine->pens[0],cliprect);
-
+	tilemap_draw(bitmap,cliprect,pf1_tilemap,TILEMAP_IGNORE_TRANSPARENCY,0);
 	perfrman_draw_sprites(bitmap,cliprect,0);
 	tilemap_draw(bitmap,cliprect,pf1_tilemap,0,0);
 	perfrman_draw_sprites(bitmap,cliprect,0x80);

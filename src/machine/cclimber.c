@@ -81,3 +81,37 @@ DRIVER_INIT( mshuttle )
 
 	cclimber_decode(convtable);
 }
+
+DRIVER_INIT( cannonb )
+{
+	int A;
+	unsigned char *rom = memory_region(REGION_CPU1);
+
+
+	for (A = 0x0000;A < 0x1000;A++) /* only first ROM is encrypted */
+	{
+		unsigned char src;
+		int i;
+		static const unsigned char xor_tab[4] ={0x92, 0x82, 0x12, 0x10};
+
+		src = rom[A+0x10000];
+
+		i = ((A&0x200)>>8) | ((A&0x80)>>7);
+
+		src ^= xor_tab[i];
+
+		rom[A] = src;
+	}
+}
+
+DRIVER_INIT( ckongb )
+{
+	int A;
+	unsigned char *rom = memory_region(REGION_CPU1);
+
+
+	for (A = 0x0000;A < 0x6000;A++) /* all the program ROMs are encrypted */
+	{
+		rom[A] = rom[A] ^ 0xf0;
+	}
+}

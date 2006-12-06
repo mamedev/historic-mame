@@ -2045,8 +2045,11 @@ static INT32 get_joycode_value(os_code joycode)
 				return mouse_state[joynum].lX * 512;
 			if (joyindex == 1)
 				return mouse_state[joynum].lY * 512;
+			// Z axis on most mice is incremeted 120 for each change.
+			// But some are only 30 so we will scale for  +/- 1 increments on those
+			// 25% scaling will give  +/- 1 increments for most mice.
 			if (joyindex == 2)
-				return mouse_state[joynum].lZ * 512;
+				return (mouse_state[joynum].lZ / 30) * 512;
 			return 0;
 
 		// analog gun axis
@@ -2403,12 +2406,12 @@ static void set_rawmouse_device_name(const char *raw_string, unsigned int mouse_
 		// first check for the name in LocationInformation (slim chance)
 		// if it is not found then default to the name in DeviceDesc
 		instance_result = RegQueryValueEx(reg_key,
-								"LocationInformation",
+								TEXT("LocationInformation"),
 								NULL, NULL,
 								mouse_name[mouse_num],
 								&name_length)
 				&& RegQueryValueEx(reg_key,
-								"DeviceDesc",
+								TEXT("DeviceDesc"),
 								NULL, NULL,
 								mouse_name[mouse_num],
 								&name_length);
@@ -2475,11 +2478,11 @@ static void set_rawmouse_device_name(const char *raw_string, unsigned int mouse_
 						if (instance_result == ERROR_SUCCESS)
 						{
 							// get the ParentIdPrefix of this instance of the hardware
-							name_length = MAX_PATH;
+							name_length = sizeof(test_parent_id_prefix);
 							if (RegQueryValueEx(sub_key,
-													"ParentIdPrefix",
+													TEXT("ParentIdPrefix"),
 													NULL, NULL,
-													test_parent_id_prefix,
+													(LPBYTE) test_parent_id_prefix,
 													&name_length) == ERROR_SUCCESS)
 							{
 								// is this the ParentIdPrefix that we are looking for?
@@ -2503,7 +2506,7 @@ static void set_rawmouse_device_name(const char *raw_string, unsigned int mouse_
 		// We should now be at the USB parent device.  Get the real mouse name.
 		name_length = MAX_PATH;
 		instance_result = RegQueryValueEx(sub_key,
-								"LocationInformation",
+								TEXT("LocationInformation"),
 								NULL, NULL,
 								mouse_name[mouse_num],
 								&name_length);
@@ -2572,7 +2575,7 @@ static BOOL init_raw_mouse(void)
 	int input_devices, size, i;
 
 	/* Check to see if OS is raw input capable */
-	user32 = LoadLibrary("user32.dll");
+	user32 = LoadLibrary(TEXT("user32.dll"));
 	if (!user32) goto cant_use_raw_input;
 	_RegisterRawInputDevices = (pRegisterRawInputDevices)GetProcAddress(user32,"RegisterRawInputDevices");
 	if (!_RegisterRawInputDevices) goto cant_use_raw_input;
@@ -2676,7 +2679,6 @@ cant_init_raw_input:
 static void process_raw_input(PRAWINPUT raw)
 {
 	int i;
-	LONG z;
 	USHORT button_flags;
 	BYTE *buttons;
 
@@ -2685,23 +2687,20 @@ static void process_raw_input(PRAWINPUT raw)
 	{
 		if (raw_mouse_device[i].device_handle == raw->header.hDevice)
 		{
-			// Z axis on a mouse is incremeted 120 for each change.
-			// It uses a signed SHORT value stored in a unsigned USHORT.
-			// We will convert it to reflect +/- 1 increments.
-			z = (LONG)((SHORT)raw->data.mouse.usButtonData / 120);
-
 			// Update the axis values for the specified mouse
 			if (raw_mouse_device[i].flags == MOUSE_MOVE_RELATIVE)
 			{
 				raw_mouse_device[i].mouse_state.lX += raw->data.mouse.lLastX;
 				raw_mouse_device[i].mouse_state.lY += raw->data.mouse.lLastY;
-				raw_mouse_device[i].mouse_state.lZ += z;
+				// The Z axis uses a signed SHORT value stored in a unsigned USHORT.
+				raw_mouse_device[i].mouse_state.lZ += (LONG)((SHORT)raw->data.mouse.usButtonData);
 			}
 			else
 			{
 				raw_mouse_device[i].mouse_state.lX = raw->data.mouse.lLastX;
 				raw_mouse_device[i].mouse_state.lY = raw->data.mouse.lLastY;
-				raw_mouse_device[i].mouse_state.lZ = z;
+				// We will assume the Z axis is also absolute but it might be relative
+				raw_mouse_device[i].mouse_state.lZ = (LONG)((SHORT)raw->data.mouse.usButtonData);
 			}
 
 			// The following 2 lines are just to avoid a lot of pointer re-direction

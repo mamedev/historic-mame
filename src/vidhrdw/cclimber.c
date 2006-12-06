@@ -468,6 +468,126 @@ VIDEO_UPDATE( cclimber )
 }
 
 
+VIDEO_UPDATE( cannonb )
+{
+	int offs;
+
+
+	if (get_vh_global_attribute_changed())
+	{
+		memset(dirtybuffer,1,videoram_size);
+	}
+
+	/* for every character in the Video RAM, check if it has been modified */
+	/* since last time and update it accordingly. */
+	for (offs = videoram_size - 1;offs >= 0;offs--)
+	{
+		if (dirtybuffer[offs])
+		{
+			int attr,code,color,sx,sy,flipx,flipy;
+
+			dirtybuffer[offs] = 0;
+
+			code = videoram[offs];
+			attr = colorram[offs] & 0x20;
+			color = colorram[offs] & 0x0f;
+			sx = offs % 32;
+			sy = offs / 32;
+			flipx = colorram[offs] & 0x40;
+			flipy = colorram[offs] & 0x80;
+			/* vertical flipping flips two adjacent characters */
+			if (flipy) sy ^= 1;
+
+			if (flip_screen_x)
+			{
+				sx = 31 - sx;
+				flipx = !flipx;
+			}
+			if (flip_screen_y)
+			{
+				sy = 31 - sy;
+				flipy = !flipy;
+			}
+
+			drawgfx(tmpbitmap,Machine->gfx[0],
+					code + 8 * attr,
+					color,
+					flipx,flipy,
+					8*sx,8*sy,
+					0,TRANSPARENCY_NONE,0);
+		}
+	}
+
+
+	/* copy the temporary bitmap to the screen */
+	{
+		int scroll[32];
+
+
+		if (flip_screen_x)
+		{
+			for (offs = 0;offs < 32;offs++)
+			{
+				scroll[offs] = -cclimber_column_scroll[31 - offs];
+				if (flip_screen_y) scroll[offs] = -scroll[offs];
+			}
+		}
+		else
+		{
+			for (offs = 0;offs < 32;offs++)
+			{
+				scroll[offs] = -cclimber_column_scroll[offs];
+				if (flip_screen_y) scroll[offs] = -scroll[offs];
+			}
+		}
+
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->screen[0].visarea,TRANSPARENCY_NONE,0);
+	}
+
+
+	if (cclimber_bigspriteram[0] & 1)
+		/* draw the "big sprite" below sprites */
+		drawbigsprite(bitmap);
+
+
+	/* Draw the sprites. Note that it is important to draw them exactly in this */
+	/* order, to have the correct priorities. */
+	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
+	{
+		int code,color,sx,sy,flipx,flipy;
+
+		code = spriteram[offs] & 0x3f;
+		color = spriteram[offs + 1] & 0x0f;
+		sx = spriteram[offs + 3];
+		sy = 240 - spriteram[offs + 2];
+		flipx = spriteram[offs] & 0x40;
+		flipy = spriteram[offs] & 0x80;
+		if (flip_screen_x)
+		{
+			sx = 240 - sx;
+			flipx = !flipx;
+		}
+		if (flip_screen_y)
+		{
+			sy = 240 - sy;
+			flipy = !flipy;
+		}
+
+		drawgfx(bitmap,Machine->gfx[3],
+				code + 0x40,
+				color,
+				flipx,flipy,
+				sx,sy,
+				&Machine->screen[0].visarea,TRANSPARENCY_PEN,0);
+	}
+
+	if ((cclimber_bigspriteram[0] & 1) == 0)
+		/* draw the "big sprite" over sprites */
+		drawbigsprite(bitmap);
+	return 0;
+}
+
+
 VIDEO_UPDATE( swimmer )
 {
 	int offs;

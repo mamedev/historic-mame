@@ -75,7 +75,7 @@ d3d *drawd3d9_init(void)
 	d3d *d3dptr;
 
 	// dynamically grab the create function from d3d9.dll
-	dllhandle = LoadLibrary("d3d9.dll");
+	dllhandle = LoadLibrary(TEXT("d3d9.dll"));
 	if (dllhandle == NULL)
 	{
 		verbose_printf("Direct3D: Unable to access d3d9.dll\n");

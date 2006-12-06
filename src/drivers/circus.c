@@ -45,8 +45,6 @@ static READ8_HANDLER( ripcord_IN2_r )
 #endif
 
 
-int circus_game;
-
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x01ff) AM_READ(MRA8_RAM)

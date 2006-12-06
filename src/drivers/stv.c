@@ -171,6 +171,7 @@ cpu #0 (PC=0601023A): unmapped program memory dword write to 02000000 = 00000000
 #include "machine/stvcd.h"
 #include "machine/scudsp.h"
 #include "sound/scsp.h"
+#include "machine/stvprot.h"
 #include <time.h>
 
 extern UINT32* stv_vdp2_regs;
@@ -199,7 +200,7 @@ extern UINT32* stv_vdp1_vram;
 #define MASTER_CLOCK_352 57272800
 #define MASTER_CLOCK_320 53748200
 
-/* stvhacks.c */
+/* stvinit.c */
 DRIVER_INIT( ic13 );
 NVRAM_HANDLER( stv );
 void install_stvbios_speedups(void);
@@ -240,6 +241,8 @@ DRIVER_INIT(shanhigw);
 DRIVER_INIT(finlarch);
 DRIVER_INIT(elandore);
 DRIVER_INIT(rsgun);
+DRIVER_INIT(ffreveng);
+DRIVER_INIT(decathlt);
 
 /**************************************************************************************/
 /*to be added into a stv Header file,remember to remove all the static...*/
@@ -2059,256 +2062,6 @@ static WRITE32_HANDLER( sinit_w )
 	cpunum_set_info_int(0, CPUINFO_INT_SH2_FRT_INPUT, PULSE_LINE);
 }
 
-/****************************************************************************************
-
-Protection & cartridge handling
-
-*****************************************************************************************
-
-These are the known ST-V games that uses this area as a valid protection,I have written
-the data used by the games in the various circumstances for reference:
--Astra Super Stars [astrass]
- [0]        [1]        [2]        [3]
- 0x000y0000 0x00000000 0x06130027 0x01230000 test mode,char transfer (3)
- 0x???????? 0x???????? 0x???????? 0x???????? attract mode
- 0x000y0000 0x00000000 0x06130027 0x01230000 gameplay,char transfer (3)
-
--Elan Doree : Legend of Dragon [elandore]
- [0]        [1]        [2]        [3]
- No protection                               test mode
- No protection                               attract mode
- 0x000y0000 0x00000000 0xe69000f9 0xff7f0000 gameplay,VDP-1 write (textures on humans)
-
--Final Fight Revenge [ffreveng]
- [0]        [1]        [2]        [3]
- 0x000y0000 0x00000000 0x4bcc0013 0x10da0000 test mode,boot vectors at $06080000
- 0x000y0000 0x00000000 0x0b780013 0x10d70000 attract mode,boot vectors at $06080000
- 0x???????? 0x???????? 0x???????? 0x???????? gameplay
-
--Radiant Silvergun [rsgun]
- [0]        [1]        [2]        [3]
- No protection                               test mode
- 0x000y0000 0x00000000 0x08000010 0x77770000 attract mode,work ram-h $60ff1ec and so on (1)
- 0x???????? 0x???????? 0x???????? 0x???????? gameplay
-
--Steep Slope Sliders [sss]
- [0]        [1]        [2]        [3]
- No protection                               test mode
-*0x000y0000 0x00000000 0x000000a6 0x2c5b0000 attract mode,VDP-1 write
-*0x000y0000 0x00000000 0x000000a6 0x2c5b0000 gameplay,VDP-1 write character 1 (2)
-*0x000y0000 0x00000000 0x0f9800a6 0x47f10000 gameplay,VDP-1 write character 2
-*0x000y0000 0x00000000 0x1d4800a6 0xfcda0000 gameplay,VDP-1 write character 3
-*0x000y0000 0x00000000 0x29e300a6 0xb5e60000 gameplay,VDP-1 write character 4
-*0x000y0000 0x00000000 0x38e900a6 0x392c0000 gameplay,VDP-1 write character 5
-*0x000y0000 0x00000000 0x462500a6 0x77c30000 gameplay,VDP-1 write character 6
-*0x000y0000 0x00000000 0x555c00a6 0x8a620000 gameplay,VDP-1 write character 7
-
-=========================================================================================
-y = setted as a 0,then after the ctrl data is moved is toggled to 1 then again toggled
-    to 0 after the reading,this bit is likely to be a "calculate protection values"
-    if 1,use normal ram if 0.
-* = working checks
-[3,low word]AFAIK this is the cartridge area and it's read-only.
-(1)That area is usually (but not always) used as system registers.
-(2)Same as P.O.S.T. check,it was really simple to look-up because of that.
-(3)Wrong offset,or it requires something else like a bitswap?
-=========================================================================================
-Protection works as a sort of data transfer,it could also be that it uses
-encryption on the data used...
-
-For now I'm writing this function with a command basis so I can work better with it.
-****************************************************************************************/
-
-static UINT32 a_bus[4];
-static UINT32 ctrl_index;
-static UINT32 internal_counter;
-static UINT8 char_offset; //helper to jump the decoding of the NULL chars.
-/*
-ffreveng protection notes
-Global:
-R2 is the vector read (where to jump to)
-R3 is the vector pointer
-
-Notes:
--0x234 is a dummy vector to get safe in the debugger without doing
-anything and to read the registers.
-
-Right vectors:
-0x0603B158 (but not as first,will garbage the registers)
-
-Wrong vectors (at least not where I tested it):
-0x060016fc (1st)
-0x0603AFE0 (1st) (attempts to read to the sh2 internal register fffffe11)
-0x060427FC (1st) (resets the sh2)
-0x0603B1B2 (1st) (crashes the sh2)
-*/
-static UINT32 vector_prot[] = { 0x0603B1B2,0x234 };
-
-static READ32_HANDLER( a_bus_ctrl_r )
-{
-	UINT32 *ROM = (UINT32 *)memory_region(REGION_USER1);
-
-	if(a_bus[0] & 0x00010000)//protection calculation is activated
-	{
-		if(offset == 3)
-		{
-			logerror("A-Bus control protection read at %06x with data = %08x\n",activecpu_get_pc(),a_bus[3]);
-			#ifdef MAME_DEBUG
-			popmessage("Prot read at %06x with data = %08x",activecpu_get_pc(),a_bus[3]);
-			#endif
-			switch(a_bus[3])
-			{
-				case 0x01230000://astrass,char data in test mode PC=60118f2
-				/*
-                TODO: the chars that are used are 8x8x4,but we need to convert them to
-                16x16x4 format.
-                [01] NULL
-                [02] NULL
-                [03] NULL
-                [04] NULL
-                [05] NULL
-                [06] NULL
-                [07] NULL
-                [08] NULL
-                [09] data 1
-                [10] data 2
-                [11] data 3
-                [12] data 4
-                [13] data 5
-                [14] data 6
-                [15] data 7
-                [16] data 8
-
-                2b5 = A (up-left)
-                2b6 = A (up-right)
-                2d1 = A (down-left)
-                2d0 = A (down-right)
-                2f2 = S (up-left)
-                2f3 = S (up-right)
-                311 = S (down-left)
-                310 = S (down-right)
-                2f4 = T (up-left)
-                2f5 = T (up-right)
-                2b7 = E (up-left) (not 2bc,maybe because the up-left corner of E is equal of B?)
-                2bd = E (up-right)
-                */
-					internal_counter++;
-					if(char_offset == 0)
-					{
-						if(internal_counter > ((8*0x234)-1))
-						{
-							internal_counter = 0;
-							char_offset = 1;
-						}
-
-						return 0;
-					}
-					else
-					{
-						if(internal_counter > 8)
-						{
-							if(internal_counter > 15)
-							{
-								ctrl_index-=8;
-								internal_counter = 0;
-							}
-
-							ctrl_index++;
-							return ROM[ctrl_index];
-						}
-						else
-						{
-							ctrl_index++;
-							return ROM[ctrl_index];
-						}
-					}
-				case 0x10da0000://ffreveng, boot vectors at $6080000,test mode
-					ctrl_index++;
-					if(ctrl_index > 2)
-						return 0x234;
-					else
-						return vector_prot[ctrl_index-1];
-				case 0x10d70000://ffreveng, boot vectors at $6080000,attract mode
-					ctrl_index++;
-					return ROM[ctrl_index];
-				case 0x2c5b0000://sss
-				case 0x47f10000:
-				case 0xfcda0000:
-				case 0xb5e60000:
-				case 0x392c0000:
-				case 0x77c30000:
-				case 0x8a620000:
-					ctrl_index++;
-					return ROM[ctrl_index];
-				case 0x77770000: {//rsgun
-					UINT32 val =
-						((ctrl_index & 0xff)<<24) |
-						(((ctrl_index+1) & 0xff)<<16) |
-						(((ctrl_index+2) & 0xff)<<8) |
-						((ctrl_index+3) & 0xff);
-					if(ctrl_index & 0x100)
-						val &= 0x0f0f0f0f;
-					else
-						val &= 0xf0f0f0f0;
-
-					ctrl_index += 4;
-					return val;
-				}
-				case 0xff7f0000://elandore
-					if(a_bus[2] == 0xe69000f9)
-					{
-						ctrl_index++;
-						return ROM[ctrl_index];
-					}
-					else return 0x12345678;
-				case 0xffbf0000:
-					ctrl_index++;
-					return ROM[ctrl_index];
-			}
-		}
-		return a_bus[offset];
-	}
-	else
-	{
-		if(a_bus[offset] != 0) return a_bus[offset];
-		else return ROM[(0x02fffff0/4)+offset];
-	}
-}
-
-static WRITE32_HANDLER ( a_bus_ctrl_w )
-{
-	COMBINE_DATA(&a_bus[offset]);
-	logerror("A-Bus control protection write at %06x: [%02x] <- %08x\n",activecpu_get_pc(),offset,data);
-	if(offset == 3)
-	{
-		switch(a_bus[3])
-		{
-			/*astrass,I need an original test mode screen to compare...*/
-			case 0x01230000:
-			char_offset = 0;
-			internal_counter = 0;
-			ctrl_index = ((0x400000)/4)-1; break;
-			/*ffreveng*/
-			case 0x10d70000: ctrl_index = 0; break;
-			case 0x10da0000: ctrl_index = 0; break;
-			/*sss,TRUSTED*/
-			case 0x2c5b0000: ctrl_index = (0x145ffac/4)-1; break;
-			/*sss,might be offset...*/
-			case 0x47f10000: ctrl_index = ((0x145ffac+0xbaf0)/4)-1; break;
-			case 0xfcda0000: ctrl_index = ((0x145ffac+0x12fd0)/4)-1; break;
-			case 0xb5e60000: ctrl_index = ((0x145ffac+0x1a4c4)/4)-1; break;
-			case 0x392c0000: ctrl_index = ((0x145ffac+0x219b0)/4)-1; break;
-			case 0x77c30000: ctrl_index = ((0x145ffac+0x28ea0)/4)-1; break;
-			case 0x8a620000: ctrl_index = ((0x145ffac+0x30380)/4)-1; break;
-			/*rsgun*/
-			case 0x77770000: ctrl_index = 0; break;
-			/*elandore*/
-			case 0xff7f0000: ctrl_index = ((0x400000)/4)-1; break;
-			case 0xffbf0000: ctrl_index = (0x1c40000/4)-1; break;
-		}
-	}
-	//popmessage("%04x %04x",data,offset/4);
-}
 
 extern WRITE32_HANDLER ( stv_vdp2_vram_w );
 extern READ32_HANDLER ( stv_vdp2_vram_r );
@@ -2348,8 +2101,7 @@ static ADDRESS_MAP_START( stv_mem, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x01406f40, 0x01406f43) AM_WRITE(minit_w) // prikura seems to write here ..
 //  AM_RANGE(0x01000000, 0x01000003) AM_WRITE(minit_w) AM_MIRROR(0x00080000)
 	AM_RANGE(0x01800000, 0x01800003) AM_WRITE(sinit_w)
-	AM_RANGE(0x02000000, 0x04ffffef) AM_ROM AM_ROMBANK(1) AM_REGION(REGION_USER1, 0) // cartridge
-	AM_RANGE(0x04fffff0, 0x04ffffff) AM_READWRITE(a_bus_ctrl_r,a_bus_ctrl_w)
+	AM_RANGE(0x02000000, 0x04ffffff) AM_ROM AM_ROMBANK(1) AM_REGION(REGION_USER1, 0) // cartridge
 	AM_RANGE(0x05800000, 0x0589ffff) AM_READWRITE(stvcd_r, stvcd_w)
 	/* Sound */
 	AM_RANGE(0x05a00000, 0x05a7ffff) AM_READWRITE(stv_sh2_soundram_r, stv_sh2_soundram_w)
@@ -2961,11 +2713,9 @@ MACHINE_START( stv )
 	state_save_register_global(PDR2);
 	state_save_register_global(port_sel);
 	state_save_register_global(mux_data);
-	state_save_register_global_array(a_bus);
-	state_save_register_global(ctrl_index);
-	state_save_register_global(internal_counter);
-	state_save_register_global(char_offset);
 	state_save_register_global(scsp_last_line);
+
+	stv_register_protection_savestates(); // machine/stvprot.c
 
 	return 0;
 }
@@ -3937,28 +3687,6 @@ ROM_START( sfish2j )
 ROM_END
 
 
-
-DRIVER_INIT( sfish2 )
-{
-	/* this is WRONG but works for some games */
-	UINT32 *rom = (UINT32 *)memory_region(REGION_USER1);
-	rom[0xf10/4] = (rom[0xf10/4] & 0xff000000)|((rom[0xf10/4]/2)&0x00ffffff);
-	rom[0xf20/4] = (rom[0xf20/4] & 0xff000000)|((rom[0xf20/4]/2)&0x00ffffff);
-	rom[0xf30/4] = (rom[0xf30/4] & 0xff000000)|((rom[0xf30/4]/2)&0x00ffffff);
-	init_stv(machine);
-}
-
-DRIVER_INIT( sfish2j )
-{
-	/* this is WRONG but works for some games */
-	UINT32 *rom = (UINT32 *)memory_region(REGION_USER1);
-	rom[0xf10/4] = (rom[0xf10/4] & 0xff000000)|((rom[0xf10/4]/2)&0x00ffffff);
-	rom[0xf20/4] = (rom[0xf20/4] & 0xff000000)|((rom[0xf20/4]/2)&0x00ffffff);
-	rom[0xf30/4] = (rom[0xf30/4] & 0xff000000)|((rom[0xf30/4]/2)&0x00ffffff);
-	init_stv(machine);
-}
-
-
 /*
 country codes:
 J = Japan
@@ -4033,13 +3761,13 @@ GAMEB( 1998, twcup98,   stvbios, stvbios, stv, stv,  twcup98,   ROT0,   "Tecmo",
 GAMEB( 1998, elandore,  stvbios, stvbios, stv, stv,  elandore,  ROT0,   "Sai-Mate",   				  "Elan Doree - Legend of Dragon (JUET 980922 V1.006)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )//japanese name?
 GAMEB( 1995, vfremix,   stvbios, stvbios, stv, stv,  vfremix,   ROT0,   "Sega", 	     			  "Virtua Fighter Remix (JUETBKAL 950428 V1.000)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEB( 1996, findlove,  stvbios, stvbios, stv, stv,  ic13,      ROT0,   "Daiki / FCF",    			  "Find Love (J 971212 V1.000)", GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
-GAMEB( 1995, decathlt,  stvbios, stvbios, stv, stv,  ic13,  	 ROT0,   "Sega", 	     			  "Decathlete (JUET 960424 V1.000)", GAME_NO_SOUND | GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
+GAMEB( 1995, decathlt,  stvbios, stvbios, stv, stv,  decathlt,  ROT0,   "Sega", 	     			  "Decathlete (JUET 960424 V1.000)", GAME_NO_SOUND | GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
 
 /* not working,black screen */
-GAMEB( 1999, ffreveng,  stvbios, stvbios, stv, stv,  stv,       ROT0,   "Capcom",     				  "Final Fight Revenge (JUET 990714 V1.000)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEB( 1999, ffreveng,  stvbios, stvbios, stv, stv,  ffreveng,  ROT0,   "Capcom",     				  "Final Fight Revenge (JUET 990714 V1.000)", GAME_UNEMULATED_PROTECTION | GAME_NO_SOUND | GAME_NOT_WORKING )
 /* CD games */
-GAMEB( 1995, sfish2,    0,       stvbios, stv, stv,  sfish2,    ROT0,   "Sega",	     			  "Sport Fishing 2 (UET 951106 V1.10e)", GAME_NO_SOUND | GAME_NOT_WORKING )
-GAMEB( 1995, sfish2j,   sfish2,  stvbios, stv, stv,  sfish2j,   ROT0,   "Sega",	     			  "Sport Fishing 2 (J 951201 V1.100)", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEB( 1995, sfish2,    0,       stvbios, stv, stv,  ic13,    ROT0,   "Sega",	     			  "Sport Fishing 2 (UET 951106 V1.10e)", GAME_NO_SOUND | GAME_NOT_WORKING )
+GAMEB( 1995, sfish2j,   sfish2,  stvbios, stv, stv,  ic13,    ROT0,   "Sega",	     			  "Sport Fishing 2 (J 951201 V1.100)", GAME_NO_SOUND | GAME_NOT_WORKING )
 
 /*
 This is the known list of undumped ST-V games:
@@ -4054,3 +3782,4 @@ This is the known list of undumped ST-V games:
 
 Others may exist as well...
 */
+

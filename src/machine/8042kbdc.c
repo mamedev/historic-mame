@@ -481,8 +481,10 @@ WRITE8_HANDLER(kbdc8042_8_w)
 		break;
 
 	case 1:
-		kbdc8042.speaker=data;
-	//  pc_sh_speaker(data&3);
+		kbdc8042.speaker = data;
+#ifdef MESS
+		pc_sh_speaker(data&3);
+#endif /* MESS */
 		break;
 
 	case 4:

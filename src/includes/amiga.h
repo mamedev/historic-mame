@@ -306,12 +306,16 @@ struct _amiga_machine_interface
 	void (*cia_1_portA_w)(UINT8 data);
 	void (*cia_1_portB_w)(UINT8 data);
 
-	UINT16 (*read_joy0dat)(void);
-	UINT16 (*read_joy1dat)(void);
-	UINT16 (*read_dskbytr)(void);
-	void (*write_dsklen)(UINT16 data);
+	UINT16 (*joy0dat_r)(void);
+	UINT16 (*joy1dat_r)(void);
+	void (*potgo_w)(UINT16 data);
 
-	void (*scanline_callback)(void);
+	UINT16 (*dskbytr_r)(void);
+	void (*dsklen_w)(UINT16 data);
+
+	void (*serdat_w)(UINT16 data);
+
+	void (*scanline0_callback)(void);
 	void (*reset_callback)(void);
 };
 
@@ -353,12 +357,16 @@ MACHINE_RESET( amiga );
 INTERRUPT_GEN( amiga_scanline_callback );
 
 UINT32 amiga_joystick_convert(void *param);
+void amiga_latch_hvpos(void);
 
 READ16_HANDLER( amiga_cia_r );
 WRITE16_HANDLER( amiga_cia_w );
 
 READ16_HANDLER( amiga_custom_r );
 WRITE16_HANDLER( amiga_custom_w );
+
+void amiga_serial_in_w(UINT16 data);
+double amiga_get_serial_char_period(void);
 
 void amiga_add_autoconfig(amiga_autoconfig_device *device);
 READ16_HANDLER( amiga_autoconfig_r );
@@ -379,6 +387,7 @@ VIDEO_START( amiga );
 
 UINT32 amiga_gethvpos(void);
 void copper_setpc(UINT32 pc);
+void amiga_set_genlock_color(UINT16 color);
 void amiga_render_scanline(int scanline);
 void amiga_sprite_dma_reset(int which);
 void amiga_sprite_enable_comparitor(int which, int enable);

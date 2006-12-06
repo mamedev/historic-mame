@@ -142,6 +142,13 @@ static WRITE8_HANDLER( flip_screen_y_w )
 }
 
 
+static WRITE8_HANDLER( swimmer_sh_soundlatch_w )
+{
+	soundlatch_w(offset,data);
+	cpunum_set_input_line_and_vector(1,0,HOLD_LINE,0xff);
+}
+
+
 static void disable_interrupts(int param)
 {
 	cpu_interrupt_enable(0,0);
@@ -157,18 +164,6 @@ static MACHINE_RESET( cclimber )
 	timer_set(TIME_NOW, 0, disable_interrupts);
 }
 
-static WRITE8_HANDLER( cannonb_spritewrite )
-{
-
-	unsigned char *ram = memory_region(REGION_CPU1);
-	/*Need to force it to use the sprite rom instead of tile rom for sprites*/
-	ram[0x9880+offset]=data;
-	if ((offset & 0x03)==1)
-		{
-		ram[0x9880+offset]=data  | 0x20;
-		};
-
-}
 
 
 /* Note that River Patrol reads/writes to a000-a4f0. This is a bug in the code.
@@ -216,16 +211,12 @@ static ADDRESS_MAP_START( cannonb_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0x6000, 0x6bff) AM_READ(MRA8_RAM)	/* Crazy Kong only, Cannon Ball also*/
 	AM_RANGE(0x8000, 0x83ff) AM_READ(MRA8_RAM)
-
-	AM_RANGE(0x8800, 0x8800) AM_READ(MRA8_NOP) /* must not return what's written (game will reset after coin insert if it returns 0xff)*/
-
+	AM_RANGE(0x8800, 0x8800) AM_READ(MRA8_NOP) 	/* must not return what's written (game will reset after coin insert if it returns 0xff)*/
 //AM_RANGE(0x8800, 0x8bff) AM_READ(MRA8_RAM)
-
 	AM_RANGE(0x9000, 0x93ff) AM_READ(MRA8_RAM)	/* video RAM */
 	AM_RANGE(0x9800, 0x981f) AM_READ(MRA8_RAM)	/* column scroll registers */
 	AM_RANGE(0x9820, 0x9bff) AM_READ(MRA8_RAM)	/* */
 	AM_RANGE(0x9c00, 0x9fff) AM_READ(MRA8_RAM)	/* color RAM */
-
 	AM_RANGE(0xa000, 0xa000) AM_READ(input_port_0_r)     /* IN0 */
 	AM_RANGE(0xa800, 0xa800) AM_READ(input_port_1_r)     /* IN1 */
 	AM_RANGE(0xb000, 0xb000) AM_READ(input_port_2_r)     /* DSW */
@@ -235,12 +226,9 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( cannonb_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 
 	AM_RANGE(0x5045, 0x505f) AM_WRITE(MWA8_NOP)	/* do not errorlog this */
-
 	AM_RANGE(0x0000, 0x5fff) AM_WRITE(MWA8_ROM)
-
-	AM_RANGE(0x6000, 0x6bff) AM_WRITE(MWA8_RAM)    /* Crazy Kong only, Cannon Ball also */
+	AM_RANGE(0x6000, 0x6bff) AM_WRITE(MWA8_RAM)    	/* Crazy Kong only, Cannon Ball also */
 	AM_RANGE(0x8000, 0x83ff) AM_WRITE(MWA8_RAM)
-
 	AM_RANGE(0x8800, 0x88ff) AM_WRITE(cclimber_bigsprite_videoram_w) AM_BASE(&cclimber_bsvideoram) AM_SIZE(&cclimber_bsvideoram_size)
 //AM_RANGE(0x8900, 0x8bff) AM_WRITE(MWA8_RAM)  /* not used, but initialized */
 	AM_RANGE(0x9000, 0x93ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
@@ -248,7 +236,7 @@ static ADDRESS_MAP_START( cannonb_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	/* 9800-9bff and 9c00-9fff share the same RAM, interleaved */
 	/* (9800-981f for scroll, 9c20-9c3f for color RAM, and so on) */
 	AM_RANGE(0x9800, 0x981f) AM_WRITE(MWA8_RAM) AM_BASE(&cclimber_column_scroll)
-	AM_RANGE(0x9880, 0x989f) AM_WRITE(cannonb_spritewrite) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x9880, 0x989f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
 	AM_RANGE(0x98dc, 0x98df) AM_WRITE(MWA8_RAM) AM_BASE(&cclimber_bigspriteram)
 	AM_RANGE(0x9800, 0x9bff) AM_WRITE(MWA8_RAM)  /* not used, but initialized */
 	AM_RANGE(0x9c00, 0x9fff) AM_WRITE(cclimber_colorram_w) AM_BASE(&colorram)
@@ -260,6 +248,42 @@ static ADDRESS_MAP_START( cannonb_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xb000, 0xb000) AM_WRITE(cclimber_sample_volume_w)
 ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( swimmer_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9000, 0x93ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x9400, 0x97ff) AM_READ(videoram_r) /* mirror address (used by Swimmer) */
+	AM_RANGE(0x9c00, 0x9fff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xa000, 0xa000) AM_READ(input_port_0_r)
+	AM_RANGE(0xa800, 0xa800) AM_READ(input_port_1_r)
+	AM_RANGE(0xb000, 0xb000) AM_READ(input_port_2_r)
+	AM_RANGE(0xb800, 0xb800) AM_READ(input_port_3_r)
+	AM_RANGE(0xb880, 0xb880) AM_READ(input_port_4_r)
+	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)    /* ??? used by Guzzler */
+	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_ROM)    /* Guzzler only */
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( swimmer_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x8800, 0x88ff) AM_WRITE(cclimber_bigsprite_videoram_w) AM_BASE(&cclimber_bsvideoram) AM_SIZE(&cclimber_bsvideoram_size)
+	AM_RANGE(0x8900, 0x89ff) AM_WRITE(cclimber_bigsprite_videoram_w)      /* mirror for the above (Guzzler writes to both) */
+	AM_RANGE(0x9000, 0x93ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
+	AM_RANGE(0x9400, 0x97ff) AM_WRITE(videoram_w) /* mirror address (used by Guzzler) */
+	AM_RANGE(0x9800, 0x981f) AM_WRITE(MWA8_RAM) AM_BASE(&cclimber_column_scroll)
+	AM_RANGE(0x9880, 0x989f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x98fc, 0x98ff) AM_WRITE(MWA8_RAM) AM_BASE(&cclimber_bigspriteram)
+	AM_RANGE(0x9c00, 0x9fff) AM_WRITE(cclimber_colorram_w) AM_BASE(&colorram)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(interrupt_enable_w)
+	AM_RANGE(0xa001, 0xa001) AM_WRITE(flip_screen_x_w)
+	AM_RANGE(0xa002, 0xa002) AM_WRITE(flip_screen_y_w)
+	AM_RANGE(0xa003, 0xa003) AM_WRITE(swimmer_sidepanel_enable_w)
+	AM_RANGE(0xa004, 0xa004) AM_WRITE(swimmer_palettebank_w)
+	AM_RANGE(0xa800, 0xa800) AM_WRITE(swimmer_sh_soundlatch_w)
+	AM_RANGE(0xb800, 0xb800) AM_WRITE(swimmer_bgcolor_w)  /* river color in Swimmer */
+	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)    /* ??? used by Guzzler */
+	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_ROM)    /* Guzzler only */
+ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
@@ -271,6 +295,28 @@ static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x08, 0x08) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0x09, 0x09) AM_WRITE(AY8910_write_port_0_w)
 ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( swimmer_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x2000, 0x23ff) AM_READ(MRA8_RAM)
+	AM_RANGE(0x3000, 0x3000) AM_READ(soundlatch_r)
+	AM_RANGE(0x4000, 0x4001) AM_READ(MRA8_RAM)    /* ??? */
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( swimmer_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x2000, 0x23ff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0x4000, 0x4000) AM_WRITE(MWA8_RAM)    /* ??? */
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( swimmer_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE(0x00, 0x00) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x80, 0x80) AM_WRITE(AY8910_write_port_1_w)
+	AM_RANGE(0x81, 0x81) AM_WRITE(AY8910_control_port_1_w)
+ADDRESS_MAP_END
+
 
 
 #define CCIN0\
@@ -307,8 +353,8 @@ ADDRESS_MAP_END
 	PORT_BIT( 0xe0, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 INPUT_PORTS_START( cclimber )
-CCIN0
-CCIN1
+	CCIN0
+	CCIN1
 
 	PORT_START_TAG("DSW")
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
@@ -333,13 +379,13 @@ CCIN1
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )		// Bonus life : 30000 points
 	PORT_DIPSETTING(    0xc0, DEF_STR( Free_Play ) )	// Bonus life : 50000 points
 
-CCIN2
+	CCIN2
 INPUT_PORTS_END
 
 /* Same as 'cclimber' but correct "Bonus Life" Dip Switch */
 INPUT_PORTS_START( cclimbrj )
-CCIN0
-CCIN1
+	CCIN0
+	CCIN1
 
 	PORT_START_TAG("DSW")
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
@@ -364,7 +410,7 @@ CCIN1
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0xc0, DEF_STR( Free_Play ) )
 
-CCIN2
+	CCIN2
 INPUT_PORTS_END
 
 #define CKONGIN0\
@@ -435,13 +481,12 @@ INPUT_PORTS_START( cannonb )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 
-CKONGIN2
+	CKONGIN2
 INPUT_PORTS_END
 
-
 INPUT_PORTS_START( ckong )
-CKONGIN0
-CKONGIN1
+	CKONGIN0
+	CKONGIN1
 
 	PORT_START_TAG("DSW")
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
@@ -467,14 +512,13 @@ CKONGIN1
 	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 
-CKONGIN2
-
+	CKONGIN2
 INPUT_PORTS_END
 
 /* Similar to normal Crazy Kong except for the lives per game */
 INPUT_PORTS_START( ckongb )
-CKONGIN0
-CKONGIN1
+	CKONGIN0
+	CKONGIN1
 
 	PORT_START_TAG("DSW")
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
@@ -500,9 +544,8 @@ CKONGIN1
 	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 
-CKONGIN2
+	CKONGIN2
 INPUT_PORTS_END
-
 
 INPUT_PORTS_START( rpatrolb )
 	PORT_START_TAG("IN0")
@@ -549,6 +592,162 @@ INPUT_PORTS_START( rpatrolb )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
+#define SWIMIN0\
+	PORT_START_TAG("IN0")\
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_COCKTAIL\
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_COCKTAIL\
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY PORT_COCKTAIL\
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_COCKTAIL\
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_COCKTAIL\
+  	PORT_BIT( 0xe0, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+#define SWIMIN1\
+	PORT_START_TAG("IN1")\
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY\
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY\
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY\
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY\
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )\
+  	PORT_BIT( 0xe0, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+#define SWIMDSW1\
+	PORT_START_TAG("DSW1")\
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )\
+	PORT_DIPSETTING(    0x00, "3" )\
+	PORT_DIPSETTING(    0x01, "4" )\
+	PORT_DIPSETTING(    0x02, "5" )\
+	PORT_DIPSETTING(    0x03, "Infinite (Cheat)")\
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )\
+	PORT_DIPSETTING(    0x00, "10000" )\
+	PORT_DIPSETTING(    0x04, "20000" )\
+	PORT_DIPSETTING(    0x08, "30000" )\
+	PORT_DIPSETTING(    0x0c, DEF_STR( None ) )\
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_A ) )\
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )\
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )\
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )\
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_3C ) )\
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )\
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )\
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_2C ) )\
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )\
+  	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_6C ) )
+
+#define SWIMIN4\
+	PORT_START_TAG("IN4")\
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )\
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )\
+	PORT_BIT( 0xfc, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+INPUT_PORTS_START( swimmer )
+	SWIMIN0
+	SWIMIN1
+	SWIMDSW1
+
+	PORT_START_TAG("IN3")      /* DSW2 */
+	PORT_BIT( 0x03, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )		// labeled this way for similarities with 'swimmerb'
+	PORT_DIPSETTING(    0x40, DEF_STR( Hard ) )		// labeled this way for similarities with 'swimmerb'
+	PORT_DIPSETTING(    0x80, DEF_STR( Harder ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( Hardest ) )
+
+	SWIMIN4
+INPUT_PORTS_END
+
+/* Same as 'swimmer' but different "Difficulty" Dip Switch */
+INPUT_PORTS_START( swimmerb )
+	SWIMIN0
+	SWIMIN1
+	SWIMDSW1
+
+	PORT_START_TAG("IN3")      /* DSW2 */
+	PORT_BIT( 0x03, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Hard ) )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	SWIMIN4
+INPUT_PORTS_END
+
+INPUT_PORTS_START( guzzler )
+	PORT_START_TAG("IN0")
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_4WAY PORT_COCKTAIL
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_4WAY PORT_COCKTAIL
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_4WAY PORT_COCKTAIL
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_4WAY PORT_COCKTAIL
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_COCKTAIL
+	PORT_BIT( 0xe0, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START_TAG("IN1")
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_4WAY
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_4WAY
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_4WAY
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_4WAY
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0xe0, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START_TAG("DSW0")
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "Infinite (Cheat)")
+	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x04, "20K, every 50K" )
+	PORT_DIPSETTING(    0x00, "30K, every 100K" )
+	PORT_DIPSETTING(    0x08, "30K only" )
+	PORT_DIPSETTING(    0x0c, DEF_STR( None ) )
+	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_6C ) )
+
+	PORT_START_TAG("DSW1")
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x20, 0x00, "High Score Names" )
+	PORT_DIPSETTING(    0x20, "3 Letters" )
+	PORT_DIPSETTING(    0x00, "10 Letters" )
+	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Hard ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( Hardest ) )
+
+	PORT_START_TAG("IN2")
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 ) PORT_IMPULSE(2)
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 ) PORT_IMPULSE(2)
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+INPUT_PORTS_END
+
 
 
 static const gfx_layout charlayout =
@@ -584,6 +783,30 @@ static const gfx_layout spritelayout =
 	32*8    /* every sprite takes 32 consecutive bytes */
 };
 
+static const gfx_layout swimmer_charlayout =
+{
+	8,8,    /* 8*8 characters */
+	512,    /* 512 characters */
+	3,      /* 3 bits per pixel */
+	{ 0, 512*8*8, 512*2*8*8 },      /* the bitplanes are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },	     /* characters are upside down */
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8     /* every char takes 8 consecutive bytes */
+};
+
+static const gfx_layout swimmer_spritelayout =
+{
+	16,16,  /* 16*16 sprites */
+	128,    /* 128 sprites */
+	3,	      /* 3 bits per pixel */
+	{ 0, 128*16*16, 128*2*16*16 },  /* the bitplanes are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7,       /* pretty straightforward layout */
+			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
+	32*8    /* every sprite takes 32 consecutive bytes */
+};
+
 static const gfx_decode gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0x0000, &charlayout,      0, 16 }, /* char set #1 */
@@ -591,6 +814,14 @@ static const gfx_decode gfxdecodeinfo[] =
 	{ REGION_GFX2, 0x0000, &bscharlayout, 16*4,  8 }, /* big sprite char set */
 	{ REGION_GFX1, 0x0000, &spritelayout,    0, 16 }, /* sprite set #1 */
 	{ REGION_GFX1, 0x2000, &spritelayout,    0, 16 }, /* sprite set #2 */
+	{ -1 } /* end of array */
+};
+
+static const gfx_decode swimmer_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &swimmer_charlayout,      0, 64 }, /* characters */
+	{ REGION_GFX1, 0, &swimmer_spritelayout,    0, 32 }, /* sprite set #1 */
+	{ REGION_GFX2, 0, &swimmer_charlayout,   64*8, 4 },  /* big sprite set */
 	{ -1 } /* end of array */
 };
 
@@ -632,8 +863,7 @@ static MACHINE_DRIVER_START( cclimber )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
 MACHINE_DRIVER_END
 
-
-/* copy of cclimber except for readmem and writemem */
+/* copy of cclimber except for readmem, writemem and video update */
 static MACHINE_DRIVER_START( cannonb )
 
 	/* basic machine hardware */
@@ -656,7 +886,7 @@ static MACHINE_DRIVER_START( cannonb )
 
 	MDRV_PALETTE_INIT(cclimber)
 	MDRV_VIDEO_START(generic)
-	MDRV_VIDEO_UPDATE(cclimber)
+	MDRV_VIDEO_UPDATE(cannonb)
 
 	/* sound hardware */
 	MDRV_SPEAKER_STANDARD_MONO("mono")
@@ -668,6 +898,43 @@ static MACHINE_DRIVER_START( cannonb )
 	MDRV_SOUND_ADD(SAMPLES, 0)
 	MDRV_SOUND_CONFIG(cclimber_custom_interface)
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.50)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( swimmer )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz */
+	MDRV_CPU_PROGRAM_MAP(swimmer_readmem,swimmer_writemem)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_CPU_ADD(Z80,4000000/2)
+	/* audio CPU */	/* 2 MHz */
+	MDRV_CPU_PROGRAM_MAP(swimmer_sound_readmem,swimmer_sound_writemem)
+	MDRV_CPU_IO_MAP(0,swimmer_sound_writeport)
+	MDRV_CPU_PERIODIC_INT(nmi_line_pulse,TIME_IN_HZ(4000000/16384)) /* IRQs are triggered by the main CPU */
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(swimmer_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(256+32+2)
+	MDRV_COLORTABLE_LENGTH(64*8+4*8)
+
+	MDRV_PALETTE_INIT(swimmer)
+	MDRV_VIDEO_START(generic)
+	MDRV_VIDEO_UPDATE(swimmer)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+	MDRV_SOUND_ADD(AY8910, 4000000/2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
+
+	MDRV_SOUND_ADD(AY8910, 4000000/2)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
 MACHINE_DRIVER_END
 
 
@@ -1134,7 +1401,6 @@ ROM_START( rpatrolo )
 	/* no samples */
 ROM_END
 
-
 /*This dump is a mess.  11n and 11k seem to be bad dumps, the second half should probably be sprite data
   Comparing to set 2 11l and 11h are unnecessary, and are actually from Le Bagnard(set1), as is 5m.
   5n ID'd as unknown, but it also is from bagnard with some patches.*/
@@ -1178,7 +1444,6 @@ ROM_START( cannonb2 )
 	ROM_LOAD( "cb10.bin",   0x0000, 0x1000, CRC(602a6c2d) SHA1(788f83bcb0667d8a42c209f3d51708d496be58df) )
 	ROM_LOAD( "cb9.bin",   0x1000, 0x1000, CRC(2d036026) SHA1(b6eada3e67edd7db59d9ca823b798cd20f0afca9) )
 
-
 	ROM_REGION( 0x1000, REGION_GFX2, ROMREGION_DISPOSE )
 	ROM_LOAD( "cb7.bin",   0x0000, 0x0800, CRC(80eb517d) SHA1(fef4111f656c58b28e7eac5aa5b5cc7e07ccb2fd) )
 	ROM_LOAD( "cb8.bin",   0x0800, 0x0800, CRC(f67c80f1) SHA1(d1fbcce1b6242f810e106ff50812636e3168ebc1) )
@@ -1192,28 +1457,6 @@ ROM_START( cannonb2 )
 	ROM_LOAD( "cb6.bin",    0x0000, 0x1000, CRC(5f0bcdfb) SHA1(7f79bf6de117348f606696ed7ea1937bbf926612) )
 	ROM_LOAD( "cb5.bin",    0x1000, 0x1000, CRC(9003ffbd) SHA1(fd016056aabc23957643f37230f03842294f795e) )
 ROM_END
-
-static DRIVER_INIT( cannonb )
-{
-	int A;
-	unsigned char *rom = memory_region(REGION_CPU1);
-
-
-	for (A = 0x0000;A < 0x1000;A++) /* only first ROM is encrypted */
-	{
-		unsigned char src;
-		int i;
-		static const unsigned char xor_tab[4] ={0x92, 0x82, 0x12, 0x10};
-
-		src = rom[A+0x10000];
-
-		i = ((A&0x200)>>8) | ((A&0x80)>>7);
-
-		src ^= xor_tab[i];
-
-		rom[A] = src;
-	}
-}
 
 ROM_START( ckongb )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
@@ -1243,331 +1486,6 @@ ROM_START( ckongb )
 	ROM_LOAD( "s05-14.bin",   0x0000, 0x1000, CRC(5f0bcdfb) SHA1(7f79bf6de117348f606696ed7ea1937bbf926612) )
 	ROM_LOAD( "r05-13.bin",   0x1000, 0x1000, CRC(9003ffbd) SHA1(fd016056aabc23957643f37230f03842294f795e) )
 ROM_END
-
-
-
-static DRIVER_INIT( ckongb )
-{
-	int A;
-	unsigned char *rom = memory_region(REGION_CPU1);
-
-
-	for (A = 0x0000;A < 0x6000;A++) /* all the program ROMs are encrypted */
-	{
-		rom[A] = rom[A] ^ 0xf0;
-	}
-}
-
-
-/***************************************************************************
-
-  Swimmer driver
-
-***************************************************************************/
-
-
-
-static WRITE8_HANDLER( swimmer_sh_soundlatch_w )
-{
-	soundlatch_w(offset,data);
-	cpunum_set_input_line_and_vector(1,0,HOLD_LINE,0xff);
-}
-
-
-
-static ADDRESS_MAP_START( swimmer_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x9000, 0x93ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x9400, 0x97ff) AM_READ(videoram_r) /* mirror address (used by Swimmer) */
-	AM_RANGE(0x9c00, 0x9fff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xa000, 0xa000) AM_READ(input_port_0_r)
-	AM_RANGE(0xa800, 0xa800) AM_READ(input_port_1_r)
-	AM_RANGE(0xb000, 0xb000) AM_READ(input_port_2_r)
-	AM_RANGE(0xb800, 0xb800) AM_READ(input_port_3_r)
-	AM_RANGE(0xb880, 0xb880) AM_READ(input_port_4_r)
-	AM_RANGE(0xc000, 0xc7ff) AM_READ(MRA8_RAM)    /* ??? used by Guzzler */
-	AM_RANGE(0xe000, 0xffff) AM_READ(MRA8_ROM)    /* Guzzler only */
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( swimmer_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x8800, 0x88ff) AM_WRITE(cclimber_bigsprite_videoram_w) AM_BASE(&cclimber_bsvideoram) AM_SIZE(&cclimber_bsvideoram_size)
-	AM_RANGE(0x8900, 0x89ff) AM_WRITE(cclimber_bigsprite_videoram_w)      /* mirror for the above (Guzzler writes to both) */
-	AM_RANGE(0x9000, 0x93ff) AM_WRITE(videoram_w) AM_BASE(&videoram) AM_SIZE(&videoram_size)
-	AM_RANGE(0x9400, 0x97ff) AM_WRITE(videoram_w) /* mirror address (used by Guzzler) */
-	AM_RANGE(0x9800, 0x981f) AM_WRITE(MWA8_RAM) AM_BASE(&cclimber_column_scroll)
-	AM_RANGE(0x9880, 0x989f) AM_WRITE(MWA8_RAM) AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
-	AM_RANGE(0x98fc, 0x98ff) AM_WRITE(MWA8_RAM) AM_BASE(&cclimber_bigspriteram)
-	AM_RANGE(0x9c00, 0x9fff) AM_WRITE(cclimber_colorram_w) AM_BASE(&colorram)
-	AM_RANGE(0xa000, 0xa000) AM_WRITE(interrupt_enable_w)
-	AM_RANGE(0xa001, 0xa001) AM_WRITE(flip_screen_x_w)
-	AM_RANGE(0xa002, 0xa002) AM_WRITE(flip_screen_y_w)
-	AM_RANGE(0xa003, 0xa003) AM_WRITE(swimmer_sidepanel_enable_w)
-	AM_RANGE(0xa004, 0xa004) AM_WRITE(swimmer_palettebank_w)
-	AM_RANGE(0xa800, 0xa800) AM_WRITE(swimmer_sh_soundlatch_w)
-	AM_RANGE(0xb800, 0xb800) AM_WRITE(swimmer_bgcolor_w)  /* river color in Swimmer */
-	AM_RANGE(0xc000, 0xc7ff) AM_WRITE(MWA8_RAM)    /* ??? used by Guzzler */
-	AM_RANGE(0xe000, 0xffff) AM_WRITE(MWA8_ROM)    /* Guzzler only */
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x2000, 0x23ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x3000, 0x3000) AM_READ(soundlatch_r)
-	AM_RANGE(0x4000, 0x4001) AM_READ(MRA8_RAM)    /* ??? */
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x0fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x2000, 0x23ff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0x4000, 0x4000) AM_WRITE(MWA8_RAM)    /* ??? */
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
-	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
-	AM_RANGE(0x00, 0x00) AM_WRITE(AY8910_write_port_0_w)
-	AM_RANGE(0x01, 0x01) AM_WRITE(AY8910_control_port_0_w)
-	AM_RANGE(0x80, 0x80) AM_WRITE(AY8910_write_port_1_w)
-	AM_RANGE(0x81, 0x81) AM_WRITE(AY8910_control_port_1_w)
-ADDRESS_MAP_END
-
-
-
-#define SWIMIN0\
-	PORT_START_TAG("IN0")\
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_COCKTAIL\
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_COCKTAIL\
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY PORT_COCKTAIL\
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_COCKTAIL\
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_COCKTAIL\
-  	PORT_BIT( 0xe0, IP_ACTIVE_HIGH, IPT_UNUSED )
-
-#define SWIMIN1\
-	PORT_START_TAG("IN1")\
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY\
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY\
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY\
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY\
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )\
-  	PORT_BIT( 0xe0, IP_ACTIVE_HIGH, IPT_UNUSED )
-
-#define SWIMDSW1\
-	PORT_START_TAG("DSW1")\
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )\
-	PORT_DIPSETTING(    0x00, "3" )\
-	PORT_DIPSETTING(    0x01, "4" )\
-	PORT_DIPSETTING(    0x02, "5" )\
-	PORT_DIPSETTING(    0x03, "Infinite (Cheat)")\
-	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )\
-	PORT_DIPSETTING(    0x00, "10000" )\
-	PORT_DIPSETTING(    0x04, "20000" )\
-	PORT_DIPSETTING(    0x08, "30000" )\
-	PORT_DIPSETTING(    0x0c, DEF_STR( None ) )\
-	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_A ) )\
-	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )\
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )\
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )\
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_3C ) )\
-	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )\
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )\
-	PORT_DIPSETTING(    0x40, DEF_STR( 1C_2C ) )\
-	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )\
-  	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_6C ) )
-
-#define SWIMIN4\
-	PORT_START_TAG("IN4")\
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )\
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )\
-	PORT_BIT( 0xfc, IP_ACTIVE_HIGH, IPT_UNUSED )
-
-
-INPUT_PORTS_START( swimmer )
-SWIMIN0
-SWIMIN1
-SWIMDSW1
-
-	PORT_START_TAG("IN3")      /* DSW2 */
-	PORT_BIT( 0x03, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )		// labeled this way for similarities with 'swimmerb'
-	PORT_DIPSETTING(    0x40, DEF_STR( Hard ) )		// labeled this way for similarities with 'swimmerb'
-	PORT_DIPSETTING(    0x80, DEF_STR( Harder ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( Hardest ) )
-
-SWIMIN4
-INPUT_PORTS_END
-
-/* Same as 'swimmer' but different "Difficulty" Dip Switch */
-INPUT_PORTS_START( swimmerb )
-SWIMIN0
-SWIMIN1
-SWIMDSW1
-
-	PORT_START_TAG("IN3")      /* DSW2 */
-	PORT_BIT( 0x03, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Hard ) )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
-
-SWIMIN4
-INPUT_PORTS_END
-
-INPUT_PORTS_START( guzzler )
-	PORT_START_TAG("IN0")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_4WAY PORT_COCKTAIL
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_4WAY PORT_COCKTAIL
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_4WAY PORT_COCKTAIL
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_4WAY PORT_COCKTAIL
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 ) PORT_COCKTAIL
-	PORT_BIT( 0xe0, IP_ACTIVE_HIGH, IPT_UNUSED )
-
-	PORT_START_TAG("IN1")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_4WAY
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_4WAY
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_4WAY
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_4WAY
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0xe0, IP_ACTIVE_HIGH, IPT_UNUSED )
-
-	PORT_START_TAG("DSW0")
-	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x00, "3" )
-	PORT_DIPSETTING(    0x01, "4" )
-	PORT_DIPSETTING(    0x02, "5" )
-	PORT_DIPSETTING(    0x03, "Infinite (Cheat)")
-	PORT_DIPNAME( 0x0c, 0x00, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x04, "20K, every 50K" )
-	PORT_DIPSETTING(    0x00, "30K, every 100K" )
-	PORT_DIPSETTING(    0x08, "30K only" )
-	PORT_DIPSETTING(    0x0c, DEF_STR( None ) )
-	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( 1C_3C ) )
-	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_6C ) )
-
-	PORT_START_TAG("DSW1")
-	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x20, 0x00, "High Score Names" )
-	PORT_DIPSETTING(    0x20, "3 Letters" )
-	PORT_DIPSETTING(    0x00, "10 Letters" )
-	PORT_DIPNAME( 0xc0, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Easy ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Medium ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Hard ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( Hardest ) )
-
-	PORT_START_TAG("IN2")
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 ) PORT_IMPULSE(2)
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 ) PORT_IMPULSE(2)
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
-INPUT_PORTS_END
-
-
-
-static const gfx_layout swimmer_charlayout =
-{
-	8,8,    /* 8*8 characters */
-	512,    /* 512 characters */
-	3,      /* 3 bits per pixel */
-	{ 0, 512*8*8, 512*2*8*8 },      /* the bitplanes are separated */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },	     /* characters are upside down */
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8     /* every char takes 8 consecutive bytes */
-};
-
-static const gfx_layout swimmer_spritelayout =
-{
-	16,16,  /* 16*16 sprites */
-	128,    /* 128 sprites */
-	3,	      /* 3 bits per pixel */
-	{ 0, 128*16*16, 128*2*16*16 },  /* the bitplanes are separated */
-	{ 0, 1, 2, 3, 4, 5, 6, 7,       /* pretty straightforward layout */
-			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
-			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
-	32*8    /* every sprite takes 32 consecutive bytes */
-};
-
-static const gfx_decode swimmer_gfxdecodeinfo[] =
-{
-	{ REGION_GFX1, 0, &swimmer_charlayout,      0, 64 }, /* characters */
-	{ REGION_GFX1, 0, &swimmer_spritelayout,    0, 32 }, /* sprite set #1 */
-	{ REGION_GFX2, 0, &swimmer_charlayout,   64*8, 4 },  /* big sprite set */
-	{ -1 } /* end of array */
-};
-
-
-
-
-static MACHINE_DRIVER_START( swimmer )
-
-	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 3072000)	/* 3.072 MHz */
-	MDRV_CPU_PROGRAM_MAP(swimmer_readmem,swimmer_writemem)
-	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
-
-	MDRV_CPU_ADD(Z80,4000000/2)
-	/* audio CPU */	/* 2 MHz */
-	MDRV_CPU_PROGRAM_MAP(sound_readmem,sound_writemem)
-	MDRV_CPU_IO_MAP(0,sound_writeport)
-	MDRV_CPU_PERIODIC_INT(nmi_line_pulse,TIME_IN_HZ(4000000/16384)) /* IRQs are triggered by the main CPU */
-
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
-	MDRV_GFXDECODE(swimmer_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(256+32+2)
-	MDRV_COLORTABLE_LENGTH(64*8+4*8)
-
-	MDRV_PALETTE_INIT(swimmer)
-	MDRV_VIDEO_START(generic)
-	MDRV_VIDEO_UPDATE(swimmer)
-
-	/* sound hardware */
-	MDRV_SPEAKER_STANDARD_MONO("mono")
-	MDRV_SOUND_ADD(AY8910, 4000000/2)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-
-	MDRV_SOUND_ADD(AY8910, 4000000/2)
-	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 0.25)
-MACHINE_DRIVER_END
-
-
 
 ROM_START( swimmer )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
@@ -1697,7 +1615,6 @@ ROM_END
 
 
 
-
 GAME( 1980, cclimber, 0,        cclimber, cclimber, cclimber, ROT0,   "Nichibutsu", "Crazy Climber (US)", 0 )
 GAME( 1980, cclimbrj, cclimber, cclimber, cclimbrj, cclimbrj, ROT0,   "Nichibutsu", "Crazy Climber (Japan)", 0 )
 GAME( 1980, ccboot,   cclimber, cclimber, cclimber, cclimbrj, ROT0,   "bootleg", "Crazy Climber (bootleg set 1)", 0 )
@@ -1710,13 +1627,13 @@ GAME( 1981, ckongalc, ckong,    cclimber, ckong,    0,        ROT270, "bootleg",
 GAME( 198?, bigkong,  ckong,    cclimber, ckong,    0,        ROT270, "bootleg", "Big Kong", 0 )
 GAME( 1981, monkeyd,  ckong,    cclimber, ckong,    0,        ROT270, "bootleg", "Monkey Donkey", 0 )
 
-GAME( 1981,rpatrolb, 0,        cclimber, rpatrolb, 0,         ROT0,   "bootleg", "River Patrol (bootleg)", 0 )
-GAME( 1981,rpatrolo, rpatrolb, cclimber, rpatrolb, 0,         ROT0,   "Orca",  "River Patrol (Orca)", 0 )
-GAME( 1981,silvland, rpatrolb, cclimber, rpatrolb, 0,         ROT0,   "Falcon", "Silver Land", 0 )
+GAME( 1981, rpatrolb, 0,        cclimber, rpatrolb, 0,        ROT0,   "bootleg", "River Patrol (bootleg)", 0 )
+GAME( 1981, rpatrolo, rpatrolb, cclimber, rpatrolb, 0,        ROT0,   "Orca",  "River Patrol (Orca)", 0 )
+GAME( 1981, silvland, rpatrolb, cclimber, rpatrolb, 0,        ROT0,   "Falcon", "Silver Land", 0 )
 
 GAME( 1985, cannonb,  0,        cannonb,  cannonb,  cannonb,  ROT90,  "Soft", "Cannon Ball (Crazy Climber hardware)" , GAME_IMPERFECT_GRAPHICS )
-GAME( 1985, cannonb2,  cannonb, cannonb,  cannonb,  0,        ROT90, "TV Game Gruenberg", "Cannonball (set 2)", 0 )
-GAME( 198?, ckongb  , ckong,    cclimber, ckongb,    ckongb,   ROT270, "bootleg", "Crazy Kong (Alternative levels)", 0 )
+GAME( 1985, cannonb2, cannonb,  cannonb,  cannonb,  0, 	  ROT90,  "TV Game Gruenberg", "Cannonball (set 2)", 0 )
+GAME( 198?, ckongb,   ckong,    cclimber, ckongb,   ckongb,   ROT270, "bootleg", "Crazy Kong (Alternative levels)", 0 )
 
 GAME( 1982, swimmer,  0,        swimmer,  swimmer,  0,        ROT0,   "Tehkan", "Swimmer (set 1)", 0 )
 GAME( 1982, swimmera, swimmer,  swimmer,  swimmer,  0,        ROT0,   "Tehkan", "Swimmer (set 2)", 0 )

@@ -1024,7 +1024,7 @@ static layout_element *load_layout_element(xml_data_node *elemnode, const char *
 
 		/* allocate a texture only if we have some visible components in this state */
 		if (component != NULL)
-			element->elemtex[state].texture = render_texture_alloc(NULL, NULL, NULL, TEXFORMAT_ARGB32, layout_element_scale, &element->elemtex[state]);
+			element->elemtex[state].texture = render_texture_alloc(NULL, NULL, 0, TEXFORMAT_ARGB32, layout_element_scale, &element->elemtex[state]);
 		else
 			element->elemtex[state].texture = NULL;
 	}

@@ -2497,13 +2497,13 @@ void console_create_window(void)
 
 	// create the options menu
 	optionsmenu = CreatePopupMenu();
-	AppendMenu(optionsmenu, MF_ENABLED, ID_TOGGLE_BREAKPOINT, "Set breakpoint at cursor\tF9");
-	AppendMenu(optionsmenu, MF_ENABLED, ID_RUN_TO_CURSOR, "Run to cursor\tF4");
-	AppendMenu(optionsmenu, MF_DISABLED | MF_SEPARATOR, 0, "");
-	AppendMenu(optionsmenu, MF_ENABLED, ID_SHOW_RAW, "Raw opcodes\tCtrl+R");
-	AppendMenu(optionsmenu, MF_ENABLED, ID_SHOW_ENCRYPTED, "Encrypted opcodes\tCtrl+E");
-	AppendMenu(optionsmenu, MF_ENABLED, ID_SHOW_COMMENTS, "Comments\tCtrl+N");
-	AppendMenu(GetMenu(info->wnd), MF_ENABLED | MF_POPUP, (UINT_PTR)optionsmenu, "Options");
+	AppendMenu(optionsmenu, MF_ENABLED, ID_TOGGLE_BREAKPOINT, TEXT("Set breakpoint at cursor\tF9"));
+	AppendMenu(optionsmenu, MF_ENABLED, ID_RUN_TO_CURSOR, TEXT("Run to cursor\tF4"));
+	AppendMenu(optionsmenu, MF_DISABLED | MF_SEPARATOR, 0, TEXT(""));
+	AppendMenu(optionsmenu, MF_ENABLED, ID_SHOW_RAW, TEXT("Raw opcodes\tCtrl+R"));
+	AppendMenu(optionsmenu, MF_ENABLED, ID_SHOW_ENCRYPTED, TEXT("Encrypted opcodes\tCtrl+E"));
+	AppendMenu(optionsmenu, MF_ENABLED, ID_SHOW_COMMENTS, TEXT("Comments\tCtrl+N"));
+	AppendMenu(GetMenu(info->wnd), MF_ENABLED | MF_POPUP, (UINT_PTR)optionsmenu, TEXT("Options"));
 	disasm_update_checkmarks(info);
 
 	// set the handlers
@@ -2706,23 +2706,23 @@ static HMENU create_standard_menubar(void)
 	debugmenu = CreatePopupMenu();
 	if (!debugmenu)
 		return NULL;
-	AppendMenu(debugmenu, MF_ENABLED, ID_NEW_MEMORY_WND, "New Memory Window\tCtrl+M");
-	AppendMenu(debugmenu, MF_ENABLED, ID_NEW_DISASM_WND, "New Disassembly Window\tCtrl+D");
-	AppendMenu(debugmenu, MF_ENABLED, ID_NEW_LOG_WND, "New Error Log Window\tCtrl+L");
-	AppendMenu(debugmenu, MF_DISABLED | MF_SEPARATOR, 0, "");
-	AppendMenu(debugmenu, MF_ENABLED, ID_RUN, "Run\tF5");
-	AppendMenu(debugmenu, MF_ENABLED, ID_RUN_AND_HIDE, "Run and Hide Debugger\tF12");
-	AppendMenu(debugmenu, MF_ENABLED, ID_NEXT_CPU, "Run to Next CPU\tF6");
-	AppendMenu(debugmenu, MF_ENABLED, ID_RUN_IRQ, "Run until Next Interrupt on This CPU\tF7");
-	AppendMenu(debugmenu, MF_ENABLED, ID_RUN_VBLANK, "Run until Next VBLANK\tF8");
-	AppendMenu(debugmenu, MF_DISABLED | MF_SEPARATOR, 0, "");
-	AppendMenu(debugmenu, MF_ENABLED, ID_STEP, "Step Into\tF11");
-	AppendMenu(debugmenu, MF_ENABLED, ID_STEP_OVER, "Step Over\tF10");
-	AppendMenu(debugmenu, MF_ENABLED, ID_STEP_OUT, "Step Out\tShift+F11");
-	AppendMenu(debugmenu, MF_DISABLED | MF_SEPARATOR, 0, "");
-	AppendMenu(debugmenu, MF_ENABLED, ID_SOFT_RESET, "Soft Reset\tF3");
-	AppendMenu(debugmenu, MF_ENABLED, ID_HARD_RESET, "Hard Reset\tShift+F3");
-	AppendMenu(debugmenu, MF_ENABLED, ID_EXIT, "Exit");
+	AppendMenu(debugmenu, MF_ENABLED, ID_NEW_MEMORY_WND, TEXT("New Memory Window\tCtrl+M"));
+	AppendMenu(debugmenu, MF_ENABLED, ID_NEW_DISASM_WND, TEXT("New Disassembly Window\tCtrl+D"));
+	AppendMenu(debugmenu, MF_ENABLED, ID_NEW_LOG_WND, TEXT("New Error Log Window\tCtrl+L"));
+	AppendMenu(debugmenu, MF_DISABLED | MF_SEPARATOR, 0, TEXT(""));
+	AppendMenu(debugmenu, MF_ENABLED, ID_RUN, TEXT("Run\tF5"));
+	AppendMenu(debugmenu, MF_ENABLED, ID_RUN_AND_HIDE, TEXT("Run and Hide Debugger\tF12"));
+	AppendMenu(debugmenu, MF_ENABLED, ID_NEXT_CPU, TEXT("Run to Next CPU\tF6"));
+	AppendMenu(debugmenu, MF_ENABLED, ID_RUN_IRQ, TEXT("Run until Next Interrupt on This CPU\tF7"));
+	AppendMenu(debugmenu, MF_ENABLED, ID_RUN_VBLANK, TEXT("Run until Next VBLANK\tF8"));
+	AppendMenu(debugmenu, MF_DISABLED | MF_SEPARATOR, 0, TEXT(""));
+	AppendMenu(debugmenu, MF_ENABLED, ID_STEP, TEXT("Step Into\tF11"));
+	AppendMenu(debugmenu, MF_ENABLED, ID_STEP_OVER, TEXT("Step Over\tF10"));
+	AppendMenu(debugmenu, MF_ENABLED, ID_STEP_OUT, TEXT("Step Out\tShift+F11"));
+	AppendMenu(debugmenu, MF_DISABLED | MF_SEPARATOR, 0, TEXT(""));
+	AppendMenu(debugmenu, MF_ENABLED, ID_SOFT_RESET, TEXT("Soft Reset\tF3"));
+	AppendMenu(debugmenu, MF_ENABLED, ID_HARD_RESET, TEXT("Hard Reset\tShift+F3"));
+	AppendMenu(debugmenu, MF_ENABLED, ID_EXIT, TEXT("Exit"));
 
 	// create the menu bar
 	menubar = CreateMenu();
@@ -2731,7 +2731,7 @@ static HMENU create_standard_menubar(void)
 		DestroyMenu(debugmenu);
 		return NULL;
 	}
-	AppendMenu(menubar, MF_ENABLED | MF_POPUP, (UINT_PTR)debugmenu, "Debug");
+	AppendMenu(menubar, MF_ENABLED | MF_POPUP, (UINT_PTR)debugmenu, TEXT("Debug"));
 
 	return menubar;
 }

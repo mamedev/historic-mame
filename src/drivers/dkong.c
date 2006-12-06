@@ -225,8 +225,15 @@ WRITE8_HANDLER( dkongjr_sh_test5_w )      { p[2] = ACTIVELOW_PORT_BIT(p[2],5,dat
 WRITE8_HANDLER( dkongjr_sh_test4_w )      { p[2] = ACTIVELOW_PORT_BIT(p[2],4,data); }
 WRITE8_HANDLER( dkongjr_sh_tuneselect_w ) { soundlatch_w(offset,data); }
 
-READ8_HANDLER( hunchbks_mirror_r );
-WRITE8_HANDLER( hunchbks_mirror_w );
+static READ8_HANDLER( hunchbkd_mirror_r )
+{
+	return program_read_byte(0x1000+offset);
+}
+
+static WRITE8_HANDLER( hunchbkd_mirror_w )
+{
+	program_write_byte(0x1000+offset,data);
+}
 
 static READ8_HANDLER( dkong_sh_p1_r )   { return p[1]; }
 static READ8_HANDLER( dkong_sh_p2_r )   { return p[2]; }
@@ -439,11 +446,11 @@ static ADDRESS_MAP_START( hunchbkd_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x1600, 0x1bff) AM_READ(MRA8_RAM)			/* video RAM */
 	AM_RANGE(0x1c00, 0x1fff) AM_READ(MRA8_RAM)
 	AM_RANGE(0x2000, 0x2fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x3000, 0x3fff) AM_READ(hunchbks_mirror_r)
+	AM_RANGE(0x3000, 0x3fff) AM_READ(hunchbkd_mirror_r)
 	AM_RANGE(0x4000, 0x4fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x5000, 0x5fff) AM_READ(hunchbks_mirror_r)
+	AM_RANGE(0x5000, 0x5fff) AM_READ(hunchbkd_mirror_r)
 	AM_RANGE(0x6000, 0x6fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x7000, 0x7fff) AM_READ(hunchbks_mirror_r)
+	AM_RANGE(0x7000, 0x7fff) AM_READ(hunchbkd_mirror_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( hunchbkd_writemem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -459,11 +466,11 @@ static ADDRESS_MAP_START( hunchbkd_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x1800, 0x1bff) AM_WRITE(dkong_videoram_w) AM_BASE(&videoram)
 	AM_RANGE(0x1C00, 0x1fff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0x2000, 0x2fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x3000, 0x3fff) AM_WRITE(hunchbks_mirror_w)
+	AM_RANGE(0x3000, 0x3fff) AM_WRITE(hunchbkd_mirror_w)
 	AM_RANGE(0x4000, 0x4fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x5000, 0x5fff) AM_WRITE(hunchbks_mirror_w)
+	AM_RANGE(0x5000, 0x5fff) AM_WRITE(hunchbkd_mirror_w)
 	AM_RANGE(0x6000, 0x6fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0x7000, 0x7fff) AM_WRITE(hunchbks_mirror_w)
+	AM_RANGE(0x7000, 0x7fff) AM_WRITE(hunchbkd_mirror_w)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( epos_readmem, ADDRESS_SPACE_PROGRAM, 8 )

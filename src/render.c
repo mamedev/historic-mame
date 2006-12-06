@@ -130,7 +130,7 @@ struct _render_texture
 {
 	mame_bitmap *		bitmap;				/* pointer to the original bitmap */
 	rectangle			sbounds;			/* source bounds within the bitmap */
-	rgb_t *				palette;			/* pointer to the palette (if present) */
+	UINT32				palettebase;		/* palette base within the system palette */
 	int					format;				/* format of the texture data */
 	texture_scaler		scaler;				/* scaling callback */
 	void *				param;				/* scaling callback parameter */
@@ -1388,7 +1388,9 @@ const render_primitive_list *render_target_get_primitives(render_target *target)
 				view_item *item;
 
 				/* pick a blendmode */
-				if (layer == ITEM_LAYER_SCREEN || (layer == ITEM_LAYER_BACKDROP && layer_order == standard_order))
+				if (layer == ITEM_LAYER_SCREEN && layer_order == standard_order)
+					blendmode = -1;
+				else if (layer == ITEM_LAYER_SCREEN || (layer == ITEM_LAYER_BACKDROP && layer_order == standard_order))
 					blendmode = BLENDMODE_ADD;
 				else if (layer == ITEM_LAYER_OVERLAY)
 					blendmode = BLENDMODE_RGB_MULTIPLY;
@@ -1684,10 +1686,12 @@ static void add_container_primitives(render_target *target, render_primitive_lis
 						/* override the palette with our adjusted palette */
 						switch (item->texture->format)
 						{
-							case TEXFORMAT_PALETTE16:	prim->texture.palette = &container->bcglookup[0];		break;
+							case TEXFORMAT_PALETTE16:	prim->texture.palette = &container->bcglookup[prim->texture.palette - palette_get_adjusted_colors(Machine)]; break;
+							case TEXFORMAT_PALETTEA16:	prim->texture.palette = &container->bcglookup[prim->texture.palette - palette_get_adjusted_colors(Machine)]; break;
 							case TEXFORMAT_RGB15:		prim->texture.palette = &container->bcglookup32[0];		break;
 							case TEXFORMAT_RGB32:		prim->texture.palette = &container->bcglookup256[0];	break;
 							case TEXFORMAT_ARGB32:		prim->texture.palette = &container->bcglookup256[0];	break;
+							case TEXFORMAT_YUY16:		prim->texture.palette = &container->bcglookup256[0];	break;
 							default:					assert(FALSE);
 						}
 
@@ -1698,8 +1702,11 @@ static void add_container_primitives(render_target *target, render_primitive_lis
 						/* apply the final orientation from the quad flags and then build up the final flags */
 						prim->flags = (item->flags & ~(PRIMFLAG_TEXORIENT_MASK | PRIMFLAG_BLENDMODE_MASK | PRIMFLAG_TEXFORMAT_MASK)) |
 										PRIMFLAG_TEXORIENT(finalorient) |
-										PRIMFLAG_BLENDMODE(blendmode) |
 										PRIMFLAG_TEXFORMAT(item->texture->format);
+						if (blendmode != -1)
+							prim->flags |= PRIMFLAG_BLENDMODE(blendmode);
+						else
+							prim->flags |= PRIMFLAG_BLENDMODE(PRIMFLAG_GET_BLENDMODE(item->flags));
 					}
 				}
 				else
@@ -2047,7 +2054,7 @@ static void add_clear_and_optimize_primitive_list(render_target *target, render_
 			case RENDER_PRIMITIVE_QUAD:
 			{
 				/* stop when we hit an alpha texture */
-				if (PRIMFLAG_GET_TEXFORMAT(prim->flags) == TEXFORMAT_ARGB32)
+				if (PRIMFLAG_GET_TEXFORMAT(prim->flags) == TEXFORMAT_ARGB32 || PRIMFLAG_GET_TEXFORMAT(prim->flags) == TEXFORMAT_PALETTEA16)
 					goto done;
 
 				/* if this quad can't be cleanly removed from the extents list, we're done */
@@ -2121,7 +2128,7 @@ static void invalidate_all_render_ref(void *refptr)
     render_texture_alloc - allocate a new texture
 -------------------------------------------------*/
 
-render_texture *render_texture_alloc(mame_bitmap *bitmap, const rectangle *sbounds, rgb_t *palette, int format, texture_scaler scaler, void *param)
+render_texture *render_texture_alloc(mame_bitmap *bitmap, const rectangle *sbounds, UINT32 palettebase, int format, texture_scaler scaler, void *param)
 {
 	render_texture *texture;
 
@@ -2135,7 +2142,7 @@ render_texture *render_texture_alloc(mame_bitmap *bitmap, const rectangle *sboun
 	texture->sbounds.min_y = (sbounds != NULL) ? sbounds->min_y : 0;
 	texture->sbounds.max_x = (sbounds != NULL) ? sbounds->max_x : (bitmap != NULL) ? bitmap->width : 1000;
 	texture->sbounds.max_y = (sbounds != NULL) ? sbounds->max_y : (bitmap != NULL) ? bitmap->height : 1000;
-	texture->palette = palette;
+	texture->palettebase = palettebase;
 	texture->format = format;
 	texture->scaler = scaler;
 	texture->param = param;
@@ -2173,7 +2180,7 @@ void render_texture_free(render_texture *texture)
     bitmap
 -------------------------------------------------*/
 
-void render_texture_set_bitmap(render_texture *texture, mame_bitmap *bitmap, const rectangle *sbounds, rgb_t *palette, int format)
+void render_texture_set_bitmap(render_texture *texture, mame_bitmap *bitmap, const rectangle *sbounds, UINT32 palettebase, int format)
 {
 	int scalenum;
 
@@ -2187,7 +2194,7 @@ void render_texture_set_bitmap(render_texture *texture, mame_bitmap *bitmap, con
 	texture->sbounds.min_y = (sbounds != NULL) ? sbounds->min_y : 0;
 	texture->sbounds.max_x = (sbounds != NULL) ? sbounds->max_x : (bitmap != NULL) ? bitmap->width : 1000;
 	texture->sbounds.max_y = (sbounds != NULL) ? sbounds->max_y : (bitmap != NULL) ? bitmap->height : 1000;
-	texture->palette = palette;
+	texture->palettebase = palettebase;
 	texture->format = format;
 
 	/* invalidate all scaled versions */
@@ -2211,7 +2218,7 @@ void render_texture_set_bitmap(render_texture *texture, mame_bitmap *bitmap, con
 
 static int render_texture_get_scaled(render_texture *texture, UINT32 dwidth, UINT32 dheight, render_texinfo *texinfo, render_ref **reflist)
 {
-	UINT8 bpp = (texture->format == TEXFORMAT_PALETTE16 || texture->format == TEXFORMAT_RGB15) ? 16 : 32;
+	UINT8 bpp = (texture->format == TEXFORMAT_PALETTE16 || texture->format == TEXFORMAT_PALETTEA16 || texture->format == TEXFORMAT_RGB15 || texture->format == TEXFORMAT_YUY16) ? 16 : 32;
 	scaled_texture *scaled = NULL;
 	int swidth, sheight;
 	int scalenum;
@@ -2232,7 +2239,7 @@ static int render_texture_get_scaled(render_texture *texture, UINT32 dwidth, UIN
 		texinfo->rowpixels = texture->bitmap->rowpixels;
 		texinfo->width = swidth;
 		texinfo->height = sheight;
-		texinfo->palette = texture->palette;
+		texinfo->palette = palette_get_adjusted_colors(Machine) + texture->palettebase;
 		texinfo->seqid = ++texture->curseq;
 		return TRUE;
 	}
@@ -2284,7 +2291,7 @@ static int render_texture_get_scaled(render_texture *texture, UINT32 dwidth, UIN
 	texinfo->rowpixels = scaled->bitmap->rowpixels;
 	texinfo->width = dwidth;
 	texinfo->height = dheight;
-	texinfo->palette = texture->palette;
+	texinfo->palette = palette_get_adjusted_colors(Machine) + texture->palettebase;
 	texinfo->seqid = scaled->seqid;
 	return TRUE;
 }
@@ -2315,6 +2322,7 @@ void render_texture_hq_scale(mame_bitmap *dest, const mame_bitmap *source, const
 static render_container *render_container_alloc(void)
 {
 	render_container *container;
+	int color;
 
 	/* allocate and clear memory */
 	container = malloc_or_die(sizeof(*container));
@@ -2326,6 +2334,10 @@ static render_container *render_container_alloc(void)
 	container->gamma = 1.0f;
 	container->xscale = 1.0f;
 	container->yscale = 1.0f;
+
+	/* all palette entries are opaque by default */
+	for (color = 0; color < ARRAY_LENGTH(container->bcglookup); color++)
+		container->bcglookup[color] = MAKE_ARGB(0xff,0x00,0x00,0x00);
 
 	/* make sure it is empty */
 	render_container_empty(container);
@@ -2580,7 +2592,7 @@ void render_container_set_overlay(render_container *container, mame_bitmap *bitm
 	/* set the new data and allocate the texture */
 	container->overlaybitmap = bitmap;
 	if (container->overlaybitmap != NULL)
-		container->overlaytexture = render_texture_alloc(bitmap, NULL, NULL, TEXFORMAT_ARGB32, render_container_overlay_scale, NULL);
+		container->overlaytexture = render_texture_alloc(bitmap, NULL, 0, TEXFORMAT_ARGB32, render_container_overlay_scale, NULL);
 }
 
 
@@ -2603,6 +2615,18 @@ render_container *render_container_get_ui(void)
 render_container *render_container_get_screen(int screen)
 {
 	return screen_container[screen];
+}
+
+
+/*-------------------------------------------------
+    render_container_set_palette_alpha - set the
+    opacity of a given palette entry
+-------------------------------------------------*/
+
+void render_container_set_palette_alpha(render_container *container, UINT32 entry, UINT8 alpha)
+{
+	assert(entry < ARRAY_LENGTH(container->bcglookup));
+	container->bcglookup[entry] = (alpha << 24) | (container->bcglookup[entry] & 0x00ffffff);
 }
 
 
@@ -2748,7 +2772,8 @@ static void render_container_recompute_lookups(render_container *container)
 	for (i = 0; i < colors; i++)
 	{
 		pen_t newval = adjusted_palette[i];
-		container->bcglookup[i] = container->bcglookup256[0x200 + RGB_RED(newval)] |
+		container->bcglookup[i] = (container->bcglookup[i] & 0xff000000) |
+								  container->bcglookup256[0x200 + RGB_RED(newval)] |
 								  container->bcglookup256[0x100 + RGB_GREEN(newval)] |
 								  container->bcglookup256[0x000 + RGB_BLUE(newval)];
 	}
@@ -2764,7 +2789,8 @@ static void render_container_update_palette(void *param, int entry, rgb_t newval
 {
 	render_container *container = param;
 	assert(entry < ARRAY_LENGTH(container->bcglookup));
-	container->bcglookup[entry] = container->bcglookup256[0x200 + RGB_RED(newval)] |
+	container->bcglookup[entry] = (container->bcglookup[entry] & 0xff000000) |
+								  container->bcglookup256[0x200 + RGB_RED(newval)] |
 								  container->bcglookup256[0x100 + RGB_GREEN(newval)] |
 								  container->bcglookup256[0x000 + RGB_BLUE(newval)];
 }

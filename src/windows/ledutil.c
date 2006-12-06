@@ -524,14 +524,14 @@ static void output_mame_start(void)
 	switch (ledmethod)
 	{
 		case LED_METHOD_PS2:
-			if (!DefineDosDevice(DDD_RAW_TARGET_PATH, "Kbd", "\\Device\\KeyboardClass0"))
+			if (!DefineDosDevice(DDD_RAW_TARGET_PATH, TEXT("Kbd"), TEXT("\\Device\\KeyboardClass0")))
 			{
 				error_number = GetLastError();
 				fprintf(stderr, "Unable to open the keyboard device. (error %d)\n", (UINT32)error_number);
 				return;
 			}
 
-			hKbdDev = CreateFile("\\\\.\\Kbd", GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
+			hKbdDev = CreateFile(TEXT("\\\\.\\Kbd"), GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, NULL);
 			if (hKbdDev == INVALID_HANDLE_VALUE)
 			{
 				error_number = GetLastError();
@@ -560,7 +560,7 @@ static void output_mame_stop(void)
 	switch (ledmethod)
 	{
 		case LED_METHOD_PS2:
-			if (!DefineDosDevice(DDD_REMOVE_DEFINITION, "Kbd", NULL))
+			if (!DefineDosDevice(DDD_REMOVE_DEFINITION, TEXT("Kbd"), NULL))
 			{
 				error_number = GetLastError();
 				fprintf(stderr, "Unable to close the keyboard device. (error %d)\n", error_number);

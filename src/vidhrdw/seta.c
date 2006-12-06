@@ -220,6 +220,45 @@ static struct x_offset game_offsets[] =
 static struct x_offset *global_offsets;
 
 
+/*  ---- 3---       Coin #1 Lock Out
+    ---- -2--       Coin #0 Lock Out
+    ---- --1-       Coin #1 Counter
+    ---- ---0       Coin #0 Counter     */
+
+void seta_coin_lockout_w(int data)
+{
+	static int seta_coin_lockout = 1;
+	static const game_driver *seta_driver = NULL;
+	static const char *seta_nolockout[8] = { "blandia", "gundhara", "kamenrid", "zingzip", "eightfrc", "extdwnhl", "sokonuke", "zombraid"};
+
+	/* Only compute seta_coin_lockout when confronted with a new gamedrv */
+	if (seta_driver != Machine->gamedrv)
+	{
+		int i;
+		seta_driver = Machine->gamedrv;
+
+		seta_coin_lockout = 1;
+		for (i=0; i<ARRAY_LENGTH(seta_nolockout); i++)
+		{
+			if (strcmp(seta_driver->name, seta_nolockout[i]) == 0 ||
+				strcmp(seta_driver->parent, seta_nolockout[i]) == 0)
+			{
+				seta_coin_lockout = 0;
+				break;
+			}
+		}
+	}
+
+	coin_counter_w		(0, (( data) >> 0) & 1 );
+	coin_counter_w		(1, (( data) >> 1) & 1 );
+
+	/* blandia, gundhara, kamenrid & zingzip haven't the coin lockout device */
+	if (	!seta_coin_lockout )
+		return;
+	coin_lockout_w		(0, ((~data) >> 2) & 1 );
+	coin_lockout_w		(1, ((~data) >> 3) & 1 );
+}
+
 
 WRITE16_HANDLER( seta_vregs_w )
 {

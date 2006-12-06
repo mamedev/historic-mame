@@ -1,4 +1,5 @@
-/* ST-V SpeedUp Hacks */
+/* ST-V Inits and SpeedUp Hacks */
+/* stvinit.c */
 
 /*
 to be honest i think some of these cause more problems than they're worth ...
@@ -7,6 +8,7 @@ to be honest i think some of these cause more problems than they're worth ...
 #include "driver.h"
 #include "machine/eeprom.h"
 #include "cpu/sh2/sh2.h"
+#include "machine/stvprot.h"
 
 extern UINT32 *stv_workram_h;
 extern UINT32 *stv_workram_l;
@@ -794,6 +796,8 @@ DRIVER_INIT( astrass )
 
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0608e4d8, 0x0608e4db, 0, 0, astrass_speedup_r );
 
+	install_standard_protection();
+
 	init_ic13(machine);
 }
 
@@ -1069,6 +1073,7 @@ static void sss_slave_speedup( UINT32 data )
 
 DRIVER_INIT(sss)
 {
+	install_standard_protection();
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x060ffc10, 0x060ffc13, 0, 0, sss_speedup_r );
 	cpunum_set_info_fct(1, CPUINFO_PTR_SH2_FTCSR_READ_CALLBACK, (genf*)sss_slave_speedup );
 
@@ -1221,6 +1226,7 @@ DRIVER_INIT(twcup98)
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60ffc10, 0x60ffc13, 0, 0, twcup98_speedup_r );
 
 	init_ic13(machine);
+	install_standard_protection();
 
 	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(5);
 }
@@ -1345,6 +1351,7 @@ static void elandore_slave_speedup(UINT32 data)
 
 DRIVER_INIT(elandore)
 {
+	install_standard_protection();
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60ffc10, 0x60ffc13, 0, 0, elandore_speedup_r );
 	cpunum_set_info_fct(1, CPUINFO_PTR_SH2_FTCSR_READ_CALLBACK, (genf *)elandore_slave_speedup);
 	init_stv(machine);
@@ -1372,6 +1379,7 @@ static void rsgun_slave_speedup(UINT32 data)
 
 DRIVER_INIT(rsgun)
 {
+	install_standard_protection();
 	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60ffc10, 0x60ffc13, 0, 0, rsgun_speedup_r );
 	cpunum_set_info_fct(1, CPUINFO_PTR_SH2_FTCSR_READ_CALLBACK, (genf *)rsgun_slave_speedup);
 
@@ -1379,4 +1387,16 @@ DRIVER_INIT(rsgun)
 
 	minit_boost_timeslice = sinit_boost_timeslice = TIME_IN_USEC(20);
 
+}
+
+DRIVER_INIT(ffreveng)
+{
+	install_standard_protection();
+	init_stv(machine);
+}
+
+DRIVER_INIT(decathlt)
+{
+	install_decathlt_protection();
+	init_ic13(machine);
 }

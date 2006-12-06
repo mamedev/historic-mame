@@ -334,7 +334,7 @@ static mame_file_error fopen_attempt_zipped(char *fullname, const char *filename
 
 			/* filename match first */
 			if (zipfile >= header->filename && mame_stricmp(zipfile, dirsep + 1) == 0 &&
-				(zipfile == header->filename || zipfile[-1] == PATH_SEPARATOR[0]))
+				(zipfile == header->filename || zipfile[-1] == '/'))
 				break;
 
 			/* CRC match second */

@@ -367,8 +367,8 @@ DRIVER_INIT( upscope )
 		upscope_cia_0_porta_w, upscope_cia_0_portb_w,
 		upscope_cia_1_porta_r, NULL,
 		upscope_cia_1_porta_w, NULL,
-		NULL, NULL,
-		NULL, NULL,
+		NULL, NULL, NULL,
+		NULL, NULL, NULL,
 		NULL, upscope_reset
 	};
 	amiga_machine_config(&upscope_intf);

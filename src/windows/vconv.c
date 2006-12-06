@@ -54,8 +54,8 @@ static const translation_info gcc_translate[] =
 	{ 0,		"-o*",					"~*" },
 	{ 0,		"-include*",			"/FI*" },
 	{ 0,		"-c",					"/c~/Fo" },
-	{ 0,		"-E",					"/E" },
-	{ 0,		"-S",					"/FA~/Fa" },
+	{ 0,		"-E",					"/c~/E >" },
+	{ 0,		"-S",					"/c~/Fa" },
 	{ VS7,		"-O0",					"/Od /GS" },
 	{ 0,		"-O0",					"/Od" },
 	{ 0,		"-O3",					"/O2" },
@@ -396,9 +396,27 @@ int main(int argc, char *argv[])
 	PROCESS_INFORMATION pi;
 	STARTUPINFO si;
 	DWORD exitcode;
+	int uses_redirection, in_quotes, i;
+	static const char cmd_prefix[] = "cmd.exe /c ";
 
 	// build the new command line
 	build_command_line(argc, argv);
+
+	// do we use redirection?  if so, use cmd.exe
+	uses_redirection = FALSE;
+	in_quotes = FALSE;
+	for (i = 0; command_line[i]; i++)
+	{
+		if (command_line[i] == '\"')
+			in_quotes = !in_quotes;
+		if (!in_quotes && strchr("|<>", command_line[i]))
+			uses_redirection = TRUE;
+	}
+	if (uses_redirection)
+	{
+		memmove(command_line + strlen(cmd_prefix), command_line, strlen(command_line) + 1);
+		memcpy(command_line, cmd_prefix, strlen(cmd_prefix));
+	}
 
 	if (PRINT_COMMAND_LINE)
 		printf("%s\n", command_line);

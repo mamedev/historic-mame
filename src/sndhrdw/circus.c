@@ -2,6 +2,8 @@
 #include "sound/samples.h"
 #include "circus.h"
 
+int circus_game;
+
 static const char *circus_sample_names[] =
 {
 	"*circus",

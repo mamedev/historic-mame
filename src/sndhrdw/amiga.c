@@ -44,7 +44,7 @@
 typedef struct _audio_channel audio_channel;
 struct _audio_channel
 {
-	mame_timer *	end_timer;
+	mame_timer *	irq_timer;
 	UINT32			curlocation;
 	UINT16			curlength;
 	UINT16			curticks;
@@ -91,7 +91,7 @@ static void dma_reload(audio_channel *chan)
 {
 	chan->curlocation = CUSTOM_REG_LONG(REG_AUD0LCH + chan->index * 8);
 	chan->curlength = CUSTOM_REG(REG_AUD0LEN + chan->index * 8);
-	timer_set(TIME_IN_HZ(15750), chan->index, signal_irq);
+	timer_adjust(chan->irq_timer, TIME_IN_HZ(15750), chan->index, 0);
 	LOG(("dma_reload(%d): offs=%05X len=%04X\n", chan->index, chan->curlocation, chan->curlength));
 }
 
@@ -128,8 +128,6 @@ static void amiga_stream_update(void *param, stream_sample_t **inputs, stream_sa
 	amiga_audio *audio = param;
 	int channum, sampoffs = 0;
 
-	length *= CLOCK_DIVIDER;
-
 	/* if all DMA off, disable all channels */
 	if (!(CUSTOM_REG(REG_DMACON) & 0x0200))
 	{
@@ -137,8 +135,14 @@ static void amiga_stream_update(void *param, stream_sample_t **inputs, stream_sa
 		audio->channel[1].dmaenabled =
 		audio->channel[2].dmaenabled =
 		audio->channel[3].dmaenabled = FALSE;
+
+		/* clear the sample data to 0 */
+		for (channum = 0; channum < 4; channum++)
+			memset(outputs[channum], 0, sizeof(stream_sample_t) * length);
 		return;
 	}
+
+	length *= CLOCK_DIVIDER;
 
 	/* update the DMA states on each channel and reload if fresh */
 	for (channum = 0; channum < 4; channum++)
@@ -266,7 +270,10 @@ void *amiga_sh_start(int clock, const struct CustomSound_interface *config)
 	audio_state = auto_malloc(sizeof(*audio_state));
 	memset(audio_state, 0, sizeof(*audio_state));
 	for (i = 0; i < 4; i++)
+	{
 		audio_state->channel[i].index = i;
+		audio_state->channel[i].irq_timer = timer_alloc(signal_irq);
+	}
 
 	/* compute the sample period */
 	audio_state->sample_period = TIME_IN_HZ(clock);

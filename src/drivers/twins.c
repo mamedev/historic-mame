@@ -205,10 +205,124 @@ static MACHINE_DRIVER_START( twins )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
+/* The second set has different palette hardware and a different port map */
+
+
+VIDEO_START(twinsa)
+{
+	twins_pal = auto_malloc(0x1000*2);
+	return 0;
+}
+
+VIDEO_UPDATE(twinsa)
+{
+	int y,x,count;
+	int i;
+	static int xxx=320,yyy=204;
+
+	fillbitmap(bitmap, get_black_pen(machine), 0);
+
+	for (i=0;i<0x1000-3;i+=3)
+	{
+		int r,g,b;
+		r = twins_pal[i];
+		g = twins_pal[i+1];
+		b = twins_pal[i+2];
+
+		palette_set_color(machine,i/3, r<<2, g<<2, b<<2);
+	}
+
+	count=0;
+	for (y=0;y<yyy;y++)
+	{
+		for(x=0;x<xxx;x++)
+		{
+			plot_pixel(bitmap, x,y, twins_videoram[count]);
+			count++;
+		}
+	}
+	return 0;
+}
+
+WRITE8_HANDLER( twinsa_port4_w )
+{
+	twins_pal[paloff&0xfff] = data;
+	paloff++;
+//  printf("paloff %04x\n",paloff);
+}
+
+READ8_HANDLER( twinsa_unk_r )
+{
+	return 0xff;
+}
+
+static ADDRESS_MAP_START( twinsa_io, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x0000, 0x0000) AM_READ(twinsa_unk_r) AM_WRITE(porte_paloff0_w)
+	AM_RANGE(0x0002, 0x0002) AM_WRITE(portf_paloff1_w)
+	AM_RANGE(0x0008, 0x0008) AM_WRITE(AY8910_control_port_0_w)
+	AM_RANGE(0x0010, 0x0010) AM_READ(AY8910_read_port_0_r) AM_WRITE(AY8910_write_port_0_w)
+	AM_RANGE(0x0018, 0x0018) AM_READ(twins_port4_r) AM_WRITE(twins_port4_w)
+	AM_RANGE(0x0004, 0x0004) AM_WRITE(twinsa_port4_w) // palette on this set
+ADDRESS_MAP_END
+
+
+static MACHINE_DRIVER_START( twinsa )
+	/* basic machine hardware */
+	MDRV_CPU_ADD(V30, 8000000)
+	MDRV_CPU_PROGRAM_MAP(twins_map, 0)
+	MDRV_CPU_IO_MAP(twinsa_io,0)
+	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
+
+	MDRV_FRAMES_PER_SECOND(50)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(320,256)
+	MDRV_VISIBLE_AREA(0, 320-1, 0, 200-1)
+	MDRV_PALETTE_LENGTH(0x1000)
+
+	MDRV_VIDEO_START(twinsa)
+	MDRV_VIDEO_UPDATE(twinsa)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	MDRV_SOUND_ADD(AY8910, 2000000)
+	MDRV_SOUND_CONFIG(ay8910_interface)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+MACHINE_DRIVER_END
+
+
 ROM_START( twins )
 	ROM_REGION( 0x100000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "1.bin", 0x000000, 0x080000, CRC(d5ef7b0d) SHA1(7261dca5bb0aef755b4f2b85a159b356e7ac8219) )
 	ROM_LOAD16_BYTE( "2.bin", 0x000001, 0x080000, CRC(8a5392f4) SHA1(e6a2ecdb775138a87d27aa4ad267bdec33c26baa) )
 ROM_END
 
-GAME( 1994, twins, 0, twins, twins, 0, ROT0, "Electronic Devices", "Twins", 0 )
+/*
+Shang Hay Twins
+Electronic Devices
+
+1x nec9328n8-v30-d70116c-8 (main)
+2x ay-3-8910a (sound)
+1x blank (z80?)
+1x oscillator 8.000
+
+2x M27c4001
+
+1x jamma edge connector
+1x trimmer (volume)
+
+hmm, we're only emulating 1x ay-3-8910, is the other at port 0 on this?
+
+*/
+
+ROM_START( twinsa )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "lp.bin", 0x000000, 0x080000, CRC(4f07862e) SHA1(fbda1973f79c6938c7f026a4db706e78781c2df8) )
+	ROM_LOAD16_BYTE( "hp.bin", 0x000001, 0x080000, CRC(aaf74b83) SHA1(09bd76b9fc5cb7ba6ffe1a2581ffd5633fe440b3) )
+ROM_END
+
+GAME( 1994, twins,  0,     twins,  twins, 0, ROT0, "Electronic Devices", "Twins (set 1)", 0 )
+GAME( 1994, twinsa, twins, twinsa, twins, 0, ROT0, "Electronic Devices", "Twins (set 2)", 0 )

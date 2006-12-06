@@ -518,6 +518,7 @@ const game_driver * const drivers[] =
 	DRIVER( safarir )	/* Shin Nihon Kikaku (SNK) */
 	DRIVER( phoenix )	/* (c) 1980 Amstar */
 	DRIVER( phoenixa )	/* (c) 1980 Amstar + Centuri license */
+	DRIVER( phoenixb )	/* (c) 1980 Amstar + Centuri license */
 	DRIVER( phoenixt )	/* (c) 1980 Taito */
 	DRIVER( phoenix3 )	/* bootleg */
 	DRIVER( phoenixc )	/* bootleg */
@@ -1984,6 +1985,7 @@ const game_driver * const drivers[] =
 	DRIVER( snowbroj )	/* MIN16-02 (c) 1990 Toaplan */
 	DRIVER( wintbob )	/* bootleg */
 	DRIVER( honeydol )	/* (c) 1995 Barko Corp */
+	DRIVER( twinadv )	/* (c) 1995 Barko Corp */
 		/* SemiCom games on snowbros like hardware */
 	DRIVER( hyperpac )	/* (c) 1995 SemiCom */
 	DRIVER( hyperpcb )	/* bootleg */
@@ -4488,6 +4490,10 @@ BOMULEUL CHAJARA SEGA ST-V  1997/04/11
 	DRIVER( hmcompm2 )	/* GX988 (c) 2000 */
 	DRIVER( bm6thmix )	/* GXA21 (c) 2001 (Japan) */
 
+	/* Firebeat games */
+	DRIVER( ppp )		/* GQ977 (c) 2000 */
+	DRIVER( kbm3rd )	/* GCA12 (c) 2001 */
+
 	/* PowerPC based Konami games */
 	DRIVER( fiveside )	/*   479 (c)1995 */
 	DRIVER( thunderh )	/* GX680 (c)1996 */
@@ -6846,6 +6852,7 @@ Other Sun games
 	DRIVER( twinbrta )	/* (c) 1995 */
 	DRIVER( ppmast93 )	/* (c) 1993 Electronic Devices S.R.L. */
 	DRIVER( twins )		/* (c) 1994 */
+	DRIVER( twinsa )	/* (c) 1994 */
 	DRIVER( mwarr )
 
 	/* Arcadia System */
@@ -6869,6 +6876,25 @@ Other Sun games
 
 	/* Other Amiga-based games */
 	DRIVER( upscope )
+
+	/* American Laser Games */
+	DRIVER( alg_bios )
+	DRIVER( maddoga )	/* (c) 1990 */
+	DRIVER( wsjr )		/* (c) 1991 */
+	DRIVER( wsjr15 )	/* (c) 1991 */
+	DRIVER( maddog )	/* (c) 1990 */
+	DRIVER( maddog23 )	/* (c) 1990 */
+	DRIVER( maddog2 )  	/* (c) 1992 */
+	DRIVER( maddog21 )
+	DRIVER( spacepir )
+	DRIVER( gallgall )
+	DRIVER( crimepat )
+	DRIVER( crime211 )
+	DRIVER( crimep2 )
+	DRIVER( lastbh )
+	DRIVER( fastdraw )
+	DRIVER( aplatoon )
+	DRIVER( zortonbr )
 
 	/* Crystal System */
 	DRIVER( crysbios )
@@ -7184,17 +7210,21 @@ Other Sun games
 	DRIVER( cybertnk )	/* (c) 1990 Coreland */
 	DRIVER( pkscram )	/* (c) 1993 Cosmo Electronics Corporation */
 	DRIVER( jollycrd )	/* (c) 1985 TAB-Austria */
+	DRIVER( jolycdae )	/* (c) 1985 TAB-Austria */
 	DRIVER( jolycdcr )	/* (c) 1993 Soft Design */
-	DRIVER( jolycdit )	/* 199? bootleg? */
+	DRIVER( jolycdit )	/* 199? bootleg */
 	DRIVER( jolycdat )	/* (c) 1986 Fun World */
 	DRIVER( jolycdab )	/* (c) 1990 Inter Games */
 	DRIVER( bigdeal )	/* (c) 1986 Fun World */
 	DRIVER( bigdealb )	/* (c) 1986 Fun World */
-	DRIVER( cuoreuno )	/* (c) 1997 bootleg? */
-	DRIVER( elephfam )	/* (c) 1997 bootleg? */
+	DRIVER( cuoreuno )	/* (c) 1996 C.M.C. */
+	DRIVER( elephfam )	/* (c) 1996 C.M.C. */
+	DRIVER( elephfmb )	/* (c) 1996 C.M.C. */
 	DRIVER( royalcrd )	/* (c) 1991 TAB-Austria */
 	DRIVER( royalcdb )	/* (c) 1991 TAB-Austria */
+	DRIVER( royalcdc )	/* (c) 199? Evona Electronic */
 	DRIVER( magiccrd )	/* (c) 1996 Impera */
+	DRIVER( jokercrd )	/* (c) 1993 Vesely Svet */
 	DRIVER( vroulet )	/* (c) 1989 World Game */
 	DRIVER( rcasino )	/* (c) 1984 Dyna Electronics */
 	DRIVER( cmv801 )	/* (c) 198? Corsica */

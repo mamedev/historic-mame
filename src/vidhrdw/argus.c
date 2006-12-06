@@ -108,7 +108,6 @@ BG0 palette intensity ( $C47F, $C4FF )
 
 (*) Things which are not emulated.
  - Color $000 - 00f, $01e, $02e ... are half transparent color.
- - Maybe, BG0 scroll value of Valtric is used for mosaic effect.
  - Sprite priority bit may be present in Butasan. But I don't know
    what is happened when it is set.
 
@@ -157,6 +156,10 @@ static int prvscrollx = 0;
 
 UINT8 bombsa_ram_page;
 UINT8* bomba_otherram;
+
+static int valtric_mosaic=0;
+static mame_bitmap *mosaicbitmap;
+
 
 /***************************************************************************
   Callbacks for the tilemap code
@@ -337,7 +340,7 @@ VIDEO_START( valtric )
 
 	tilemap_set_transparent_pen( bg1_tilemap, 15 );
 	tilemap_set_transparent_pen( tx_tilemap,  15 );
-
+	mosaicbitmap=auto_bitmap_alloc(Machine->screen[0].width,Machine->screen[0].height);
 	jal_blend_table = auto_malloc(0xc00);
 	memset(jal_blend_table,0,0xc00) ;
 
@@ -513,6 +516,25 @@ static void argus_change_bg_palette(int color, int data)
 /***************************************************************************
   Memory handler
 ***************************************************************************/
+
+WRITE8_HANDLER(valtric_mosaic_w)
+{
+	if(data!=0x80)
+	{
+		valtric_mosaic=0x0f-(data&0x0f);
+
+		if(valtric_mosaic!=0)
+		{
+			valtric_mosaic++;
+		}
+
+		if(data&0x80)
+		{
+			valtric_mosaic*=-1;
+		}
+	}
+}
+
 
 WRITE8_HANDLER( bombsa_pageselect_w )
 {
@@ -1558,7 +1580,48 @@ VIDEO_UPDATE( valtric )
 {
 	fillbitmap(bitmap, Machine->pens[0], cliprect);
 
-	tilemap_draw(bitmap, cliprect, bg1_tilemap, 0, 0);
+	if(valtric_mosaic==0)
+	{
+		tilemap_draw(bitmap, cliprect, bg1_tilemap, 0, 0);
+	}
+	else
+	{
+		tilemap_draw(mosaicbitmap, cliprect, bg1_tilemap, 0, 0);
+		{
+			int step=valtric_mosaic;
+			UINT32 *dest;
+			int x,y,xx,yy;
+			if(valtric_mosaic<0)step*=-1;
+			for(y=0;y<Machine->screen[0].width+step;y+=step)
+				for(x=0;x<Machine->screen[0].height+step;x+=step)
+				{
+					static int c=0;
+
+					if(y<Machine->screen[0].height && x< Machine->screen[0].width)
+					{
+						c=((UINT32 *)mosaicbitmap->line[y])[x];
+					}
+
+					if(valtric_mosaic<0)
+					{
+						if(y+step-1<Machine->screen[0].height && x+step-1< Machine->screen[0].width)
+						{
+							c = ((UINT32 *)mosaicbitmap->line[y+step-1])[x+step-1];
+						}
+					}
+					for(yy=0;yy<step;yy++)
+					 for(xx=0;xx<step;xx++)
+					 {
+							if(xx+x < Machine->screen[0].width && yy+y<Machine->screen[0].height)
+							{
+					 			dest=((UINT32 *)bitmap->line[y+yy]) +x+xx;
+								*dest=c;
+							}
+					 }
+				}
+		 }
+	}
+
 	valtric_draw_sprites(bitmap, cliprect);
 	tilemap_draw(bitmap, cliprect, tx_tilemap,  0, 0);
 	return 0;

@@ -665,8 +665,8 @@ static void arcadia_init(void)
 		arcadia_cia_0_porta_w, arcadia_cia_0_portb_w,
 		NULL, NULL,
 		NULL, NULL,
-		NULL, NULL,
-		NULL, NULL,
+		NULL, NULL, NULL,
+		NULL, NULL, NULL,
 		NULL,  arcadia_reset_coins
 	};
 	UINT16 *biosrom;

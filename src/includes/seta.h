@@ -4,12 +4,7 @@
 
 ***************************************************************************/
 
-/*----------- defined in drivers/seta.c -----------*/
-
 #define	__uPD71054_TIMER	1
-
-void seta_coin_lockout_w(int data);
-
 
 /*----------- defined in vidhrdw/seta.c -----------*/
 
@@ -20,6 +15,8 @@ extern UINT16 *seta_vregs;
 extern UINT16 *seta_workram; // Needed for zombraid Crosshair hack
 
 extern int seta_tiles_offset;
+
+void seta_coin_lockout_w(int data);
 
 WRITE16_HANDLER( twineagl_tilebank_w );
 

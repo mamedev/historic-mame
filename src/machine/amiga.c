@@ -245,7 +245,7 @@ MACHINE_RESET( amiga )
 
 INTERRUPT_GEN( amiga_scanline_callback )
 {
-	int scanline = 261 - cpu_getiloops();
+	int scanline = Machine->screen[0].height - 1 - cpu_getiloops();
 
 	/* on the first scanline, we do some extra bookkeeping */
 	if (scanline == 0)
@@ -257,8 +257,8 @@ INTERRUPT_GEN( amiga_scanline_callback )
 		cia_clock_tod(0);
 
 		/* call the system-specific callback */
-		if (amiga_intf->scanline_callback)
-			(*amiga_intf->scanline_callback)();
+		if (amiga_intf->scanline0_callback != NULL)
+			(*amiga_intf->scanline0_callback)();
 	}
 
 	/* on every scanline, clock the second CIA TOD */
@@ -1026,16 +1026,17 @@ static void custom_reset(void)
 	CUSTOM_REG(REG_DDFSTRT) = 0x18;
 	CUSTOM_REG(REG_DDFSTOP) = 0xd8;
 
-	switch (amiga_intf->chip_ram_mask) {
+	switch (amiga_intf->chip_ram_mask)
+	{
 		case ANGUS_CHIP_RAM_MASK:
 		case FAT_ANGUS_CHIP_RAM_MASK:
 			CUSTOM_REG(REG_VPOSR) = 0x10 << 8;
 			break;
+
 		case ECS_CHIP_RAM_MASK:
 			CUSTOM_REG(REG_VPOSR) = 0x30 << 8;
 			break;
 	}
-
 }
 
 
@@ -1063,14 +1064,19 @@ READ16_HANDLER( amiga_custom_r )
 		case REG_VHPOSR:
 			return amiga_gethvpos() & 0xffff;
 
+		case REG_SERDATR:
+			CUSTOM_REG(REG_SERDATR) &= ~0x4000;
+			CUSTOM_REG(REG_SERDATR) |= (CUSTOM_REG(REG_INTREQ) & INTENA_RBF) ? 0x4000 : 0x0000;
+			return CUSTOM_REG(REG_SERDATR);
+
 		case REG_JOY0DAT:
-			if (amiga_intf->read_joy0dat)
-				return (*amiga_intf->read_joy0dat)();
+			if (amiga_intf->joy0dat_r != NULL)
+				return (*amiga_intf->joy0dat_r)();
 			return readinputportbytag_safe("JOY0DAT", 0xffff);
 
 		case REG_JOY1DAT:
-			if (amiga_intf->read_joy1dat)
-				return (*amiga_intf->read_joy1dat)();
+			if (amiga_intf->joy1dat_r != NULL)
+				return (*amiga_intf->joy1dat_r)();
 			return readinputportbytag_safe("JOY1DAT", 0xffff);
 
 		case REG_ADKCONR:
@@ -1086,7 +1092,9 @@ READ16_HANDLER( amiga_custom_r )
 			return readinputportbytag_safe("POT1DAT", 0x0000);
 
 		case REG_DSKBYTR:
-			return amiga_intf->read_dskbytr ? amiga_intf->read_dskbytr() : 0x00;
+			if (amiga_intf->dskbytr_r != NULL)
+				return (*amiga_intf->dskbytr_r)();
+			return 0x0000;
 
 		case REG_INTENAR:
 			return CUSTOM_REG(REG_INTENA);
@@ -1123,6 +1131,16 @@ READ16_HANDLER( amiga_custom_r )
  *
  *************************************/
 
+static void finish_serial_write(int param)
+{
+	/* mark the transfer buffer empty */
+	CUSTOM_REG(REG_SERDATR) |= 0x3000;
+
+	/* signal an interrupt */
+	amiga_custom_w(REG_INTREQ, 0x8000 | INTENA_TBE, 0);
+}
+
+
 WRITE16_HANDLER( amiga_custom_w )
 {
 	offset &= 0xff;
@@ -1141,8 +1159,20 @@ WRITE16_HANDLER( amiga_custom_w )
 			break;
 
 		case REG_DSKLEN:
-			if (amiga_intf->write_dsklen)
-				amiga_intf->write_dsklen(data);
+			if (amiga_intf->dsklen_w != NULL)
+				(*amiga_intf->dsklen_w)(data);
+			break;
+
+		case REG_POTGO:
+			if (amiga_intf->potgo_w != NULL)
+				(*amiga_intf->potgo_w)(data);
+			break;
+
+		case REG_SERDAT:
+			if (amiga_intf->serdat_w != NULL)
+				(*amiga_intf->serdat_w)(data);
+			CUSTOM_REG(REG_SERDATR) &= ~0x3000;
+			timer_set(amiga_get_serial_char_period(), 0, finish_serial_write);
 			break;
 
 		case REG_BLTSIZE:
@@ -1206,6 +1236,8 @@ WRITE16_HANDLER( amiga_custom_w )
 		case REG_INTREQ:
 			data = (data & 0x8000) ? (CUSTOM_REG(offset) | (data & 0x7fff)) : (CUSTOM_REG(offset) & ~(data & 0x7fff));
 			CUSTOM_REG(offset) = data;
+			if (!(data & 0x8000) && (data & INTENA_RBF))
+				CUSTOM_REG(REG_SERDATR) &= ~0x8000;
 			update_irqs();
 			break;
 
@@ -1252,6 +1284,42 @@ WRITE16_HANDLER( amiga_custom_w )
 
 	if (offset <= REG_COLOR31)
 		CUSTOM_REG(offset) = data;
+}
+
+
+
+/*************************************
+ *
+ *  Serial writes
+ *
+ *************************************/
+
+void amiga_serial_in_w(UINT16 data)
+{
+	int mask = (CUSTOM_REG(REG_SERPER) & 0x8000) ? 0x1ff : 0xff;
+
+	/* copy the data to the low 8 bits of SERDATR and set RBF */
+	CUSTOM_REG(REG_SERDATR) &= ~0x3ff;
+	CUSTOM_REG(REG_SERDATR) |= (data & mask) | (mask + 1) | 0x4000;
+
+	/* set overrun if we weren't cleared */
+	if (CUSTOM_REG(REG_INTREQ) & INTENA_RBF)
+	{
+		mame_printf_debug("Serial data overflow\n");
+		CUSTOM_REG(REG_SERDATR) |= 0x8000;
+	}
+
+	/* signal an interrupt */
+	amiga_custom_w(REG_INTREQ, 0x8000 | INTENA_RBF, 0);
+}
+
+
+double amiga_get_serial_char_period(void)
+{
+	UINT32 divisor = (CUSTOM_REG(REG_SERPER) & 0x7fff) + 1;
+	UINT32 baud = Machine->drv->cpu[0].cpu_clock / 2 / divisor;
+	UINT32 numbits = 2 + ((CUSTOM_REG(REG_SERPER) & 0x8000) ? 9 : 8);
+	return TIME_IN_HZ(baud) * (double)numbits;
 }
 
 

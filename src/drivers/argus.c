@@ -46,7 +46,7 @@ System specs :
              Text   : 256 colors
    Others : Brightness controller  (Emulated)
             Half transparent color (Not emulated)
-            Mosaic effect          (Not emulated)
+            Mosaic effect          (Emulated)
 
  Butasan
  ---------------------------------------------------------------
@@ -69,7 +69,6 @@ Note :
 
 Known issues :
 ===============
- - Mosaic effect in Valtric is not implemented.
  - Half transparent color (50% alpha blending) is not emulated.
  - Sprite priority switch of Butasan is shown in test mode. What will be
    happened when set it ? JFF is not implemented this mistery switch too.
@@ -150,6 +149,7 @@ WRITE8_HANDLER( butasan_txbackram_w );
 WRITE8_HANDLER( butasan_bg0backram_w );
 WRITE8_HANDLER( butasan_bg1_status_w );
 WRITE8_HANDLER( bombsa_pageselect_w );
+WRITE8_HANDLER( valtric_mosaic_w);
 
 /***************************************************************************
 
@@ -331,6 +331,7 @@ static ADDRESS_MAP_START( valtric_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xc308, 0xc309) AM_WRITE(argus_bg1_scrollx_w) AM_BASE(&argus_bg1_scrollx)
 	AM_RANGE(0xc30a, 0xc30b) AM_WRITE(argus_bg1_scrolly_w) AM_BASE(&argus_bg1_scrolly)
 	AM_RANGE(0xc30c, 0xc30c) AM_WRITE(valtric_bg_status_w)
+	AM_RANGE(0xc30d, 0xc30d) AM_WRITE(valtric_mosaic_w)
 	AM_RANGE(0xc400, 0xcfff) AM_WRITE(valtric_paletteram_w) AM_BASE(&argus_paletteram)
 	AM_RANGE(0xd000, 0xd7ff) AM_WRITE(argus_txram_w) AM_BASE(&argus_txram)
 	AM_RANGE(0xd800, 0xdfff) AM_WRITE(argus_bg1ram_w) AM_BASE(&argus_bg1ram)

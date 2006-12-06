@@ -88,10 +88,12 @@ enum
 
 /* texture formats */
 #define TEXFORMAT_UNDEFINED			0				/* require a format to be specified */
-#define TEXFORMAT_PALETTE16			1				/* 16bpp palettized */
-#define TEXFORMAT_RGB15				2				/* 5-5-5 RGB */
-#define TEXFORMAT_RGB32				3				/* 8-8-8 RGB */
-#define TEXFORMAT_ARGB32			4				/* 8-8-8-8 ARGB */
+#define TEXFORMAT_PALETTE16			1				/* 16bpp palettized, alpha ignored */
+#define TEXFORMAT_PALETTEA16		2				/* 16bpp palettized, alpha respected */
+#define TEXFORMAT_RGB15				3				/* 16bpp 5-5-5 RGB */
+#define TEXFORMAT_RGB32				4				/* 32bpp 8-8-8 RGB */
+#define TEXFORMAT_ARGB32			5				/* 32bpp 8-8-8-8 ARGB */
+#define TEXFORMAT_YUY16				6				/* 16bpp 8-8 Y/Cb, Y/Cr in sequence */
 
 /* blending modes */
 #define	BLENDMODE_NONE				0				/* no blending */
@@ -102,17 +104,17 @@ enum
 
 /* flags for primitives */
 #define PRIMFLAG_TEXORIENT_SHIFT	0
-#define PRIMFLAG_TEXORIENT_MASK		(7 << PRIMFLAG_TEXORIENT_SHIFT)
+#define PRIMFLAG_TEXORIENT_MASK		(15 << PRIMFLAG_TEXORIENT_SHIFT)
 #define PRIMFLAG_TEXORIENT(x)		((x) << PRIMFLAG_TEXORIENT_SHIFT)
 #define PRIMFLAG_GET_TEXORIENT(x)	(((x) & PRIMFLAG_TEXORIENT_MASK) >> PRIMFLAG_TEXORIENT_SHIFT)
 
 #define PRIMFLAG_TEXFORMAT_SHIFT	4
-#define PRIMFLAG_TEXFORMAT_MASK		(7 << PRIMFLAG_TEXFORMAT_SHIFT)
+#define PRIMFLAG_TEXFORMAT_MASK		(15 << PRIMFLAG_TEXFORMAT_SHIFT)
 #define PRIMFLAG_TEXFORMAT(x)		((x) << PRIMFLAG_TEXFORMAT_SHIFT)
 #define PRIMFLAG_GET_TEXFORMAT(x)	(((x) & PRIMFLAG_TEXFORMAT_MASK) >> PRIMFLAG_TEXFORMAT_SHIFT)
 
 #define PRIMFLAG_BLENDMODE_SHIFT	8
-#define PRIMFLAG_BLENDMODE_MASK		(7 << PRIMFLAG_BLENDMODE_SHIFT)
+#define PRIMFLAG_BLENDMODE_MASK		(15 << PRIMFLAG_BLENDMODE_SHIFT)
 #define PRIMFLAG_BLENDMODE(x)		((x) << PRIMFLAG_BLENDMODE_SHIFT)
 #define PRIMFLAG_GET_BLENDMODE(x)	(((x) & PRIMFLAG_BLENDMODE_MASK) >> PRIMFLAG_BLENDMODE_SHIFT)
 
@@ -322,9 +324,9 @@ const render_primitive_list *render_target_get_primitives(render_target *target)
 
 /* ----- render texture management ----- */
 
-render_texture *render_texture_alloc(mame_bitmap *bitmap, const rectangle *sbounds, rgb_t *palette, int format, texture_scaler scaler, void *param);
+render_texture *render_texture_alloc(mame_bitmap *bitmap, const rectangle *sbounds, UINT32 palettebase, int format, texture_scaler scaler, void *param);
 void render_texture_free(render_texture *texture);
-void render_texture_set_bitmap(render_texture *texture, mame_bitmap *bitmap, const rectangle *sbounds, rgb_t *palette, int format);
+void render_texture_set_bitmap(render_texture *texture, mame_bitmap *bitmap, const rectangle *sbounds, UINT32 palettebase, int format);
 void render_texture_hq_scale(mame_bitmap *dest, const mame_bitmap *source, const rectangle *sbounds, void *param);
 
 
@@ -351,6 +353,7 @@ void render_container_set_yoffset(render_container *container, float yoffset);
 void render_container_set_overlay(render_container *container, mame_bitmap *bitmap);
 render_container *render_container_get_ui(void);
 render_container *render_container_get_screen(int screen);
+void render_container_set_palette_alpha(render_container *container, UINT32 entry, UINT8 alpha);
 void render_container_add_line(render_container *container, float x0, float y0, float x1, float y1, float width, rgb_t argb, UINT32 flags);
 void render_container_add_quad(render_container *container, float x0, float y0, float x1, float y1, rgb_t argb, render_texture *texture, UINT32 flags);
 void render_container_add_char(render_container *container, float x0, float y0, float height, float aspect, rgb_t argb, render_font *font, UINT16 ch);

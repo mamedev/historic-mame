@@ -46,13 +46,6 @@ Stephh's notes (hyperpac):
       I believe SemiCom to be a Korean Company)
   - There is no "cocktail mode", nor way to flip the screen.
 
-todo:
-
-Finish off Honey Doll
- -- palette problems (sprite attributes)
- -- sprite list is strange, 2 sprite lists interleaved?
- -- sound not hooked up
-
 Notes:
 
 Cookie & Bibi 3
@@ -61,6 +54,11 @@ on the 'Dipswitch settings' screens, and during some of the attract mode
 scenes the credit counter is not updated when you insert coins until the next
 scene.  Both these bugs are verified as occuring on the original hardware.
 
+Honey Doll / Twin Adventure
+
+These appear to have clipping problems on the left / right edges, but this
+may be correct, the sprites which should be drawn there are simply blanked
+out of the sprite list at that point.. (verify on real hw)
 
 ***************************************************************************/
 
@@ -76,6 +74,7 @@ WRITE16_HANDLER( snowbros_flipscreen_w );
 VIDEO_UPDATE( snowbros );
 VIDEO_UPDATE( wintbob );
 VIDEO_UPDATE( honeydol );
+VIDEO_UPDATE( twinadv );
 VIDEO_UPDATE( snowbro3 );
 
 static UINT16 *hyperpac_ram;
@@ -187,15 +186,12 @@ ADDRESS_MAP_END
 
 /* Honey Dolls */
 
-
 static ADDRESS_MAP_START( honeydol_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
 	AM_RANGE(0x100000, 0x10ffff) AM_READ(MRA16_RAM)
-
 	AM_RANGE(0x900000, 0x900001) AM_READ(input_port_0_word_r)
 	AM_RANGE(0x900002, 0x900003) AM_READ(input_port_1_word_r)
 	AM_RANGE(0x900004, 0x900005) AM_READ(input_port_2_word_r)
-
 	AM_RANGE(0xa00000, 0xa007ff) AM_READ(MRA16_RAM)
 	AM_RANGE(0xb00000, 0xb01fff) AM_READ(MRA16_RAM)
 ADDRESS_MAP_END
@@ -203,21 +199,14 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( honeydol_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
 	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(MWA16_RAM) AM_BASE(&hyperpac_ram)
-
 	AM_RANGE(0x200000, 0x200001) AM_WRITE(MWA16_NOP)	/* ?*/
 	AM_RANGE(0x300000, 0x300001) AM_WRITE(snowbros_68000_sound_w)	/* ?*/
-
 	AM_RANGE(0xa00000, 0xa007ff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
 	AM_RANGE(0xb00000, 0xb01fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
-
-
-
 	AM_RANGE(0x400000, 0x400001) AM_WRITE(MWA16_NOP)	/* IRQ 4 acknowledge? */
 	AM_RANGE(0x500000, 0x500001) AM_WRITE(MWA16_NOP)	/* IRQ 3 acknowledge? */
 	AM_RANGE(0x600000, 0x600001) AM_WRITE(MWA16_NOP)	/* IRQ 2 acknowledge? */
-
 	AM_RANGE(0x800000, 0x800001) AM_WRITE(MWA16_NOP)	/* ?*/
-
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( honeydol_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -243,6 +232,76 @@ static ADDRESS_MAP_START( honeydol_sound_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x02, 0x02) AM_WRITE(YM3812_control_port_0_w) // not connected?
 	AM_RANGE(0x03, 0x03) AM_WRITE(YM3812_write_port_0_w) // not connected?
 	AM_RANGE(0x04, 0x04) AM_WRITE(soundlatch_w)	/* goes back to the main CPU, checked during boot */
+ADDRESS_MAP_END
+
+/* Twin Adventure */
+
+static WRITE16_HANDLER( twinadv_68000_sound_w )
+{
+	if (ACCESSING_LSB)
+	{
+		soundlatch_w(offset,data & 0xff);
+		cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
+	}
+}
+
+static ADDRESS_MAP_START( twinadv_readmem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
+	AM_RANGE(0x100000, 0x10ffff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x300000, 0x300001) AM_READ(snowbros_68000_sound_r)
+	AM_RANGE(0x500000, 0x500001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x500002, 0x500003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x500004, 0x500005) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x600000, 0x6001ff) AM_READ(MRA16_RAM)
+	AM_RANGE(0x700000, 0x701fff) AM_READ(MRA16_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( twinadv_writemem, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
+	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(MWA16_RAM)
+	AM_RANGE(0x200000, 0x200001) AM_WRITE(watchdog_reset16_w)
+	AM_RANGE(0x300000, 0x300001) AM_WRITE(twinadv_68000_sound_w)
+	AM_RANGE(0x400000, 0x400001) AM_WRITE(snowbros_flipscreen_w)
+	AM_RANGE(0x600000, 0x6001ff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x700000, 0x701fff) AM_WRITE(MWA16_RAM) AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x800000, 0x800001) AM_WRITE(MWA16_NOP)	/* IRQ 4 acknowledge? */
+	AM_RANGE(0x900000, 0x900001) AM_WRITE(MWA16_NOP)	/* IRQ 3 acknowledge? */
+	AM_RANGE(0xa00000, 0xa00001) AM_WRITE(MWA16_NOP)	/* IRQ 2 acknowledge? */
+ADDRESS_MAP_END
+
+
+static ADDRESS_MAP_START( twinadv_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)
+//  AM_RANGE(0xe010, 0xe010) AM_READ(OKIM6295_status_0_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( twinadv_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)
+//  AM_RANGE(0xe010, 0xe010) AM_WRITE(OKIM6295_data_0_w)
+ADDRESS_MAP_END
+
+WRITE8_HANDLER( twinadv_oki_bank_w )
+{
+	int bank = (data &0x02)>>1;
+
+	if (data&0xfd) logerror ("Unused bank bits! %02x\n",data);
+
+	OKIM6295_set_bank_base(0, bank * 0x40000);
+}
+
+static ADDRESS_MAP_START( twinadv_sound_readport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE(0x02, 0x02) AM_READ(soundlatch_r)
+	AM_RANGE(0x06, 0x06) AM_READ(OKIM6295_status_0_r)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( twinadv_sound_writeport, ADDRESS_SPACE_IO, 8 )
+	ADDRESS_MAP_FLAGS( AMEF_ABITS(8) )
+	AM_RANGE(0x02, 0x02) AM_WRITE(soundlatch_w) // back to 68k?
+	AM_RANGE(0x04, 0x04) AM_WRITE(twinadv_oki_bank_w) // oki bank?
+	AM_RANGE(0x06, 0x06) AM_WRITE(OKIM6295_data_0_w)
 ADDRESS_MAP_END
 
 
@@ -649,12 +708,11 @@ INPUT_PORTS_START( honeydol )
 	PORT_DIPSETTING(      0x0002, DEF_STR( Hard ) )
 	PORT_DIPSETTING(      0x0001, DEF_STR( Harder ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
-	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x000c, 0x000c, "Timer Speed" )     /* Based on Normal Difficulty, Stage 1-1 first try */
+	PORT_DIPSETTING(      0x000c, DEF_STR( Normal ) ) /* About 40 Seconds */
+	PORT_DIPSETTING(      0x0008, "Fast" )            /* About 35 Seconds */
+	PORT_DIPSETTING(      0x0004, "Faster" )          /* About 30 Seconds */
+	PORT_DIPSETTING(      0x0000, "Fastest" )         /* About 20 Seconds */
 	PORT_DIPNAME( 0x0030, 0x0020, DEF_STR( Lives ) )
 	PORT_DIPSETTING(      0x0000, "1" )
 	PORT_DIPSETTING(      0x0010, "2" )
@@ -666,6 +724,84 @@ INPUT_PORTS_START( honeydol )
 	PORT_DIPNAME( 0x0080, 0x0080, "Max Vs Round" )
 	PORT_DIPSETTING(      0x0080, "3" ) /* 44 Seconds each */
 	PORT_DIPSETTING(      0x0000, "1" ) /* 89 Seconds */
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( twinadv )
+	PORT_START_TAG("DSW")
+	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( 1C_2C ) )
+    PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Level_Select ) ) /* P1 Button 2 to advance, P1 Button 1 to start, starts game with 10 credits */
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_VBLANK )	/* Must be low or game stops! */
+
+	PORT_START
+	PORT_DIPNAME( 0x0003, 0x0003, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( Normal ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Hard ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Harder ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Hardest ) )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0004, "3" )
+	PORT_DIPSETTING(      0x0000, "5" )
+	PORT_DIPNAME( 0x0008, 0x0008, "Ticket Mode #1" ) /* Shows on title screen "EVERY 4 GAMES = 1 TICKET" same as 0x0040 below? */
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+    PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unknown ) )
+    PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+    PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, "Ticket Mode #2" ) /* Shows on title screen "EVERY 4 GAMES = 1 TICKET" same as 0x0008 above? */
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Free_Play ) ) /* Always shows 24 credits */
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
 	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
@@ -1267,12 +1403,17 @@ static const gfx_layout honeydol_tilelayout8bpp =
 
 static const gfx_decode honeydol_gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &tilelayout,  16, 32 }, // how does it use 0-15
+	{ REGION_GFX1, 0, &tilelayout,  0, 64 }, // how does it use 0-15
 	{ REGION_GFX2, 0, &honeydol_tilelayout8bpp,  0, 4 },
 
 	{ -1 } /* end of array */
 };
 
+static const gfx_decode twinadv_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &tilelayout,  0, 64 },
+	{ -1 } /* end of array */
+};
 
 /* Winter Bobble */
 
@@ -1507,6 +1648,41 @@ static MACHINE_DRIVER_START( honeydol )
 	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( twinadv )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD_TAG("main", M68000, 16000000) // or 12
+	MDRV_CPU_PROGRAM_MAP(twinadv_readmem,twinadv_writemem)
+	MDRV_CPU_VBLANK_INT(snowbros_interrupt,3)
+
+	MDRV_CPU_ADD_TAG("sound", Z80, 4000000)
+	/* audio CPU */
+	MDRV_CPU_PROGRAM_MAP(twinadv_sound_readmem,twinadv_sound_writemem)
+	MDRV_CPU_IO_MAP(twinadv_sound_readport,twinadv_sound_writeport)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(57.5)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(twinadv_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x100)
+
+	MDRV_VIDEO_UPDATE(twinadv)
+
+	/* sound hardware */
+	MDRV_SPEAKER_STANDARD_MONO("mono")
+
+	/* sound hardware */
+	MDRV_SOUND_ADD_TAG("oki", OKIM6295, 12000000/12/132) /* freq? */
+	MDRV_SOUND_CONFIG(okim6295_interface_region_1)
+	MDRV_SOUND_ROUTE(ALL_OUTPUTS, "mono", 1.0)
+MACHINE_DRIVER_END
+
+
 /*
 
 Final Tetris
@@ -1694,8 +1870,53 @@ ROM_START( honeydol )
 
 	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
 	ROM_LOAD( "d-11.u14", 0x00000, 0x40000, CRC(f3ee4861) SHA1(f24f1f855ae6c96a6d84a4b5e5c196df8f922d0a) )
-
 ROM_END
+
+/*
+Produttore: Barko
+N.revisione: S16K951102
+CPU
+1x 68000 (main)
+1x Z8400B (sound)
+1x OKI M6295 (sound)
+1x GL324 (sound)
+1x CY7C384A
+1x oscillator 12.000MHz
+1x oscillator 16.000MHz
+
+ROMs
+
+1x 27256 (uh15)
+2x M27C2001 (sra,srb)
+1x AM27C010 (12)
+1x D27C010 (13)
+1x M27C4001 (14)
+1x AT27C040 (15)
+1x TMS27C040 (16)
+
+6x HY18CV8S (read protected)
+
+*/
+
+ROM_START( twinadv )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* 6*64k for 68000 code */
+	ROM_LOAD16_BYTE( "13.uh12",  0x00001, 0x20000, CRC(9f70a39b) SHA1(d49823be58b00c4c5a4f6cc4e4371531492aff1e) )
+	ROM_LOAD16_BYTE( "12.ui12",  0x00000, 0x20000, CRC(d8776495) SHA1(15b93ded80bf9f240faef2d89b6076f33f1f4ece) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for z80 sound code */
+	ROM_LOAD( "uh15.bin",   0x0000, 0x8000, CRC(3d5acd08) SHA1(c19f686862dfc12d2fa91c2dd3d3b75d9cb410c3) )
+
+	ROM_REGION( 0x180000, REGION_GFX1, ROMREGION_DISPOSE ) /* 4bpp gfx */
+	ROM_LOAD( "16.ua4",          0x000000, 0x80000, CRC(f491e171) SHA1(f31b945b0c4b30d1b3dc6c5928b77aad4e956bc7) )
+	ROM_LOAD( "15.ua5",          0x080000, 0x80000, CRC(79a08b8d) SHA1(034c0a3b9e27ac174092d265b32fb82d6ee45d47) )
+	ROM_LOAD( "14.ua6",          0x100000, 0x80000, CRC(79faee0b) SHA1(7421a5fa038d01658ba5ac1f65ea87b97ac25c36) )
+
+	ROM_REGION( 0x080000, REGION_SOUND1, 0 ) /* Samples - both banks are almost the same */
+	/* todo, check bank ordering .. */
+	ROM_LOAD( "sra.bin", 0x00000, 0x40000, CRC(82f452c4) SHA1(95ad6ede87ceafb045ed7df40496baf96190b97f) ) // bank 1
+	ROM_LOAD( "srb.bin", 0x40000, 0x40000, CRC(109e51e6) SHA1(3344c68d63bbad4a02b47143b2d2f72ce9bcb4bb) ) // bank 2
+ROM_END
+
 
 /* SemiCom Games */
 
@@ -2450,7 +2671,8 @@ GAME( 1990, snowbroc, snowbros, snowbros, snowbros, 0, ROT0, "Toaplan", "Snow Br
 GAME( 1990, snowbroj, snowbros, snowbros, snowbroj, 0, ROT0, "Toaplan", "Snow Bros. - Nick & Tom (Japan)", 0 )
 GAME( 1990, wintbob,  snowbros, wintbob,  snowbros, 0, ROT0, "bootleg", "The Winter Bobble", 0 )
 
-GAME( 1995, honeydol, 0,        honeydol, honeydol, 0, ROT0, "Barko Corp.", "Honey Dolls", GAME_IMPERFECT_GRAPHICS ) // based on snowbros code..
+GAME( 1995, honeydol, 0,        honeydol, honeydol, 0, ROT0, "Barko Corp.", "Honey Dolls", 0 ) // based on snowbros code..
+GAME( 1995, twinadv,  0,        twinadv,  twinadv,  0, ROT0, "Barko Corp.", "Twin Adventure", 0 )
 GAME( 1995, hyperpac, 0,        semicom,  hyperpac, hyperpac, ROT0, "SemiCom", "Hyper Pacman", 0 )
 GAME( 1995, hyperpcb, hyperpac, semicom,  hyperpac, 0,        ROT0, "bootleg", "Hyper Pacman (bootleg)", 0 )
 GAME( 1996, cookbib2, 0,        semiprot, cookbib2, cookbib2, ROT0, "SemiCom", "Cookie & Bibi 2", 0 )
@@ -2460,6 +2682,6 @@ GAME( 1997, 3in1semi, 0,        semiprot, moremore, 3in1semi, ROT0, "SemiCom", "
 GAME( 1997, twinkle,  0,        semiprot, moremore, 0,        ROT0, "SemiCom", "Twinkle", 0 )
 GAME( 1999, moremore, 0,        semiprot, moremore, moremorp, ROT0, "SemiCom / Exit", "More More", 0 )
 GAME( 1999, moremorp, 0,        semiprot, moremore, moremorp, ROT0, "SemiCom / Exit", "More More Plus", 0 )
-GAME( 1999, 4in1boot, 0,        _4in1,    4in1boot, 4in1boot, ROT0, "bootleg", "Puzzle King (bootleg)" , 0) // original is 1999, bootleg 2002?
-GAME( 2002, snowbro3, snowbros, snowbro3, snowbroj, snowbro3, ROT0, "bootleg", "Snow Brothers 3 - Magical Adventure", GAME_IMPERFECT_SOUND ) // its basically snowbros code?...
+GAME( 2002, 4in1boot, 0,        _4in1,    4in1boot, 4in1boot, ROT0, "K1 Soft", "Puzzle King (includes bootleg of Snow Bros.)" , 0)
+GAME( 2002, snowbro3, snowbros, snowbro3, snowbroj, snowbro3, ROT0, "Syrmex (bootleg/hack)", "Snow Brothers 3 - Magical Adventure", GAME_IMPERFECT_SOUND ) // its basically snowbros code?...
 GAME( 1993, finalttr, 0,        finalttr, finalttr, 0,        ROT0, "Jeil Computer System", "Final Tetris", 0 )

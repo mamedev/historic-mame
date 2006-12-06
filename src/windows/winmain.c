@@ -124,7 +124,7 @@ int main(int argc, char **argv)
 
 	// see if we can use TryEnterCriticalSection
 	try_enter_critical_section = NULL;
-	library = LoadLibrary("kernel32.dll");
+	library = LoadLibrary(TEXT("kernel32.dll"));
 	if (library != NULL)
 		try_enter_critical_section = (try_enter_critical_section_ptr)GetProcAddress(library, "TryEnterCriticalSection");
 
@@ -429,7 +429,7 @@ static int check_for_double_click_start(int argc)
 			else
 			{
 				// if not, inform the user
-				MessageBox(NULL, "Couldn't find the documentation.", "Error...", MB_OK | MB_ICONERROR);
+				MessageBox(NULL, TEXT("Couldn't find the documentation."), TEXT("Error..."), MB_OK | MB_ICONERROR);
 			}
 		}
 		return 1;

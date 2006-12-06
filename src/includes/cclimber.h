@@ -3,6 +3,8 @@
 DRIVER_INIT( cclimber );
 DRIVER_INIT( cclimbrj );
 DRIVER_INIT( mshuttle );
+DRIVER_INIT( cannonb );
+DRIVER_INIT( ckongb );
 
 /*----------- defined in vidhrdw/cclimber.c -----------*/
 
@@ -19,6 +21,8 @@ WRITE8_HANDLER( cclimber_colorram_w );
 WRITE8_HANDLER( cclimber_bigsprite_videoram_w );
 PALETTE_INIT( cclimber );
 VIDEO_UPDATE( cclimber );
+
+VIDEO_UPDATE( cannonb );
 
 VIDEO_UPDATE( yamato );
 VIDEO_START( toprollr );

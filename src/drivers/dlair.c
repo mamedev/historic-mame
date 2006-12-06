@@ -37,6 +37,7 @@
 
 
 #include "driver.h"
+#include "render.h"
 #include "machine/laserdsc.h"
 #include "sound/ay8910.h"
 #include "dlair.lh"
@@ -44,22 +45,49 @@
 #define LASERDISC_TYPE_MASK			0x7f
 #define LASERDISC_TYPE_VARIABLE		0x80
 
-static laserdisc_state *discstate;
+static laserdisc_info *discinfo;
 static UINT8 last_misc;
 
 static UINT8 laserdisc_type;
 static UINT8 laserdisc_data;
 
+static render_texture *video_texture;
+static render_texture *overlay_texture;
+
+static void video_cleanup(running_machine *machine)
+{
+	if (video_texture != NULL)
+		render_texture_free(video_texture);
+	if (overlay_texture != NULL)
+		render_texture_free(overlay_texture);
+}
 
 VIDEO_START( dlair )
 {
+	video_texture = NULL;
+	overlay_texture = NULL;
+
+	add_exit_callback(machine, video_cleanup);
+
 	return 0;
 }
 
 VIDEO_UPDATE( dlair )
 {
-	if (discstate != NULL)
-		popmessage("%s", laserdisc_describe_state(discstate));
+	if (!video_skip_this_frame())
+	{
+		mame_bitmap *bitmap = laserdisc_get_video(discinfo);
+
+		if (video_texture == NULL)
+			video_texture = render_texture_alloc(bitmap, NULL, 0, TEXFORMAT_YUY16, NULL, NULL);
+		else
+			render_texture_set_bitmap(video_texture, bitmap, NULL, 0, TEXFORMAT_YUY16);
+
+		render_screen_add_quad(0, 0.0f, 0.0f, 1.0f, 1.0f, MAKE_ARGB(0xff,0xff,0xff,0xff), video_texture, PRIMFLAG_BLENDMODE(BLENDMODE_NONE) | PRIMFLAG_SCREENTEX(1));
+	}
+
+	if (discinfo != NULL)
+		popmessage("%s", laserdisc_describe_state(discinfo));
 
 	return 0;
 }
@@ -102,7 +130,7 @@ VIDEO_UPDATE( dlair )
 
 static MACHINE_START( dlair )
 {
-	discstate = NULL;
+	discinfo = NULL;
 	return 0;
 }
 
@@ -115,7 +143,7 @@ static MACHINE_RESET( dlair )
 		laserdisc_type &= ~LASERDISC_TYPE_MASK;
 		laserdisc_type |= (readinputportbytag("DSW2") & 0x08) ? LASERDISC_TYPE_LDV1000 : LASERDISC_TYPE_PR7820;
 	}
-	discstate = laserdisc_init(laserdisc_type & LASERDISC_TYPE_MASK);
+	discinfo = laserdisc_init(laserdisc_type & LASERDISC_TYPE_MASK);
 }
 
 
@@ -123,7 +151,7 @@ static MACHINE_RESET( dlair )
 void vblank_callback(void)
 {
 	if (cpu_getcurrentframe() % 2 == 1)
-		laserdisc_vsync(discstate);
+		laserdisc_vsync(discinfo);
 }
 
 
@@ -143,10 +171,10 @@ static WRITE8_HANDLER( misc_w )
 
 	/* on bit 5 going low, push the data out to the laserdisc player */
 	if ((diff & 0x20) && !(data & 0x20))
-		laserdisc_data_w(discstate, laserdisc_data);
+		laserdisc_data_w(discinfo, laserdisc_data);
 
 	/* on bit 6 going low, we need to signal enter */
-	laserdisc_line_w(discstate, LASERDISC_LINE_ENTER, (data & 0x40) ? CLEAR_LINE : ASSERT_LINE);
+	laserdisc_line_w(discinfo, LASERDISC_LINE_ENTER, (data & 0x40) ? CLEAR_LINE : ASSERT_LINE);
 
 //  mame_printf_debug("%04X:misc_w=%02X\n", safe_activecpu_get_pc());
 }
@@ -170,7 +198,7 @@ static WRITE8_HANDLER( led_den1_w )
 
 static UINT32 laserdisc_status_r(void *param)
 {
-	if (discstate == NULL)
+	if (discinfo == NULL)
 		return 0;
 
 	switch (laserdisc_type & LASERDISC_TYPE_MASK)
@@ -179,7 +207,7 @@ static UINT32 laserdisc_status_r(void *param)
 			return 0;
 
 		case LASERDISC_TYPE_LDV1000:
-			return (laserdisc_line_r(discstate, LASERDISC_LINE_STATUS) == ASSERT_LINE) ? 0 : 1;
+			return (laserdisc_line_r(discinfo, LASERDISC_LINE_STATUS) == ASSERT_LINE) ? 0 : 1;
 
 		case LASERDISC_TYPE_22VP932:
 			return 0;
@@ -190,16 +218,16 @@ static UINT32 laserdisc_status_r(void *param)
 
 static UINT32 laserdisc_command_r(void *param)
 {
-	if (discstate == NULL)
+	if (discinfo == NULL)
 		return 0;
 
 	switch (laserdisc_type & LASERDISC_TYPE_MASK)
 	{
 		case LASERDISC_TYPE_PR7820:
-			return (laserdisc_line_r(discstate, LASERDISC_LINE_READY) == ASSERT_LINE) ? 0 : 1;
+			return (laserdisc_line_r(discinfo, LASERDISC_LINE_READY) == ASSERT_LINE) ? 0 : 1;
 
 		case LASERDISC_TYPE_LDV1000:
-			return (laserdisc_line_r(discstate, LASERDISC_LINE_COMMAND) == ASSERT_LINE) ? 0 : 1;
+			return (laserdisc_line_r(discinfo, LASERDISC_LINE_COMMAND) == ASSERT_LINE) ? 0 : 1;
 
 		case LASERDISC_TYPE_22VP932:
 			return 0;
@@ -210,7 +238,7 @@ static UINT32 laserdisc_command_r(void *param)
 
 static READ8_HANDLER( laserdisc_r )
 {
-	UINT8 result = laserdisc_data_r(discstate);
+	UINT8 result = laserdisc_data_r(discinfo);
 	mame_printf_debug("laserdisc_r = %02X\n", result);
 	return result;
 }
@@ -526,4 +554,3 @@ GAMEL( 1983, dlaird, dlair, dlair, dlair,  ldv1000,  ROT0, "Cinematronics", "Dra
 GAMEL( 1983, dlairc, dlair, dlair, dlair,  pr7820,   ROT0, "Cinematronics", "Dragon's Lair (US Rev. C, Pioneer PR-7820)",  GAME_NOT_WORKING | GAME_NO_SOUND, layout_dlair )
 GAMEL( 1983, dlairb, dlair, dlair, dlair,  pr7820,   ROT0, "Cinematronics", "Dragon's Lair (US Rev. B, Pioneer PR-7820)",  GAME_NOT_WORKING | GAME_NO_SOUND, layout_dlair )
 GAMEL( 1983, dlaira, dlair, dlair, dlair,  pr7820,   ROT0, "Cinematronics", "Dragon's Lair (US Rev. A, Pioneer PR-7820)",  GAME_NOT_WORKING | GAME_NO_SOUND, layout_dlair )
-

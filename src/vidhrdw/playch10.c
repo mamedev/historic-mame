@@ -4,7 +4,7 @@
 /* from machine */
 extern int pc10_sdcs;			/* ShareD Chip Select */
 extern int pc10_dispmask;		/* Display Mask */
-extern int pc10_gun_controller;	/* wether we need to draw a crosshair or not */
+extern int pc10_gun_controller;	/* whether we need to draw a crosshair or not */
 extern int pc10_int_detect;
 extern int pc10_game_mode;
 extern int pc10_dispmask_old;
@@ -71,8 +71,8 @@ static void ppu_irq( int num, int *ppu_regs )
 	pc10_int_detect = 1;
 }
 
-/* our ppu interface                                            */
-/* things like mirroring and wether to use vrom or vram         */
+/* our ppu interface                                           */
+/* things like mirroring and whether to use vrom or vram       */
 /* can be set by calling 'ppu2c0x_override_hardware_options'   */
 
 static const ppu2c0x_interface ppu_interface =

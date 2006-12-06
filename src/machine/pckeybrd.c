@@ -19,6 +19,10 @@
 #include "driver.h"
 #include "machine/pckeybrd.h"
 
+#ifdef MESS
+#include "inputx.h"
+#endif /* MESS */
+
 /* AT keyboard documentation comes from www.beyondlogic.org and HelpPC documentation */
 
 /* to enable logging of keyboard read/writes */
@@ -305,6 +309,12 @@ static extended_keyboard_code at_keyboard_extended_codes_set_2_3[]=
 static void at_keyboard_queue_insert(UINT8 data);
 static int at_keyboard_queue_size(void);
 
+#ifdef MESS
+static int at_keyboard_queue_chars(const unicode_char_t *text, size_t text_len);
+static int at_keyboard_accept_char(unicode_char_t ch);
+static int at_keyboard_charqueue_empty(void);
+#endif
+
 
 
 void at_keyboard_init(AT_KEYBOARD_TYPE type)
@@ -334,6 +344,12 @@ void at_keyboard_init(AT_KEYBOARD_TYPE type)
 		sprintf(buf, "pc_keyboard_%d", i);
 		keyboard.ports[i] = port_tag_to_index(buf);
 	}
+
+#ifdef MESS
+	inputx_setup_natural_keyboard(at_keyboard_queue_chars,
+		at_keyboard_accept_char,
+		at_keyboard_charqueue_empty);
+#endif
 }
 
 
@@ -815,3 +831,440 @@ void at_keyboard_write(UINT8 data)
 			break;
 	}
 }
+
+#ifdef MESS
+/***************************************************************************
+  unicode_char_to_at_keycode
+***************************************************************************/
+
+static UINT8 unicode_char_to_at_keycode(unicode_char_t ch)
+{
+	UINT8 b;
+	switch(ch)
+	{
+		case '\033':					b = 1;		break;
+		case '1':						b = 2;		break;
+		case '2':						b = 3;		break;
+		case '3':						b = 4;		break;
+		case '4':						b = 5;		break;
+		case '5':						b = 6;		break;
+		case '6':						b = 7;		break;
+		case '7':						b = 8;		break;
+		case '8':						b = 9;		break;
+		case '9':						b = 10;		break;
+		case '0':						b = 11;		break;
+		case '-':						b = 12;		break;
+		case '=':						b = 13;		break;
+		case '\010':					b = 14;		break;
+		case '\t':						b = 15;		break;
+		case 'q':						b = 16;		break;
+		case 'w':						b = 17;		break;
+		case 'e':						b = 18;		break;
+		case 'r':						b = 19;		break;
+		case 't':						b = 20;		break;
+		case 'y':						b = 21;		break;
+		case 'u':						b = 22;		break;
+		case 'i':						b = 23;		break;
+		case 'o':						b = 24;		break;
+		case 'p':						b = 25;		break;
+		case '[':						b = 26;		break;
+		case ']':						b = 27;		break;
+		case '\r':						b = 28;		break;
+		case UCHAR_MAMEKEY(CAPSLOCK):	b = 29;		break;
+		case 'a':						b = 30;		break;
+		case 's':						b = 31;		break;
+		case 'd':						b = 32;		break;
+		case 'f':						b = 33;		break;
+		case 'g':						b = 34;		break;
+		case 'h':						b = 35;		break;
+		case 'j':						b = 36;		break;
+		case 'k':						b = 37;		break;
+		case 'l':						b = 38;		break;
+		case ';':						b = 39;		break;
+		case '\'':						b = 40;		break;
+		case '`':						b = 41;		break;
+		case '\\':						b = 43;		break;
+		case 'z':						b = 44;		break;
+		case 'x':						b = 45;		break;
+		case 'c':						b = 46;		break;
+		case 'v':						b = 47;		break;
+		case 'b':						b = 48;		break;
+		case 'n':						b = 49;		break;
+		case 'm':						b = 50;		break;
+		case ',':						b = 51;		break;
+		case '.':						b = 52;		break;
+		case '/':						b = 53;		break;
+		case ' ':						b = 0x39;	break;
+		case UCHAR_MAMEKEY(F1):			b = 0x3b;	break;
+		case UCHAR_MAMEKEY(F2):			b = 0x3c;	break;
+		case UCHAR_MAMEKEY(F3):			b = 0x3d;	break;
+		case UCHAR_MAMEKEY(F4):			b = 0x3e;	break;
+		case UCHAR_MAMEKEY(F5):			b = 0x3f;	break;
+		case UCHAR_MAMEKEY(F6):			b = 0x40;	break;
+		case UCHAR_MAMEKEY(F7):			b = 0x41;	break;
+		case UCHAR_MAMEKEY(F8):			b = 0x42;	break;
+		case UCHAR_MAMEKEY(F9):			b = 0x43;	break;
+		case UCHAR_MAMEKEY(F10):		b = 0x44;	break;
+		case UCHAR_MAMEKEY(NUMLOCK):	b = 0x45;	break;
+		case UCHAR_MAMEKEY(SCRLOCK):	b = 0x46;	break;
+		case UCHAR_MAMEKEY(7_PAD):		b = 0x47;	break;
+		case UCHAR_MAMEKEY(8_PAD):		b = 0x48;	break;
+		case UCHAR_MAMEKEY(9_PAD):		b = 0x49;	break;
+		case UCHAR_MAMEKEY(MINUS_PAD):	b = 0x4a;	break;
+		case UCHAR_MAMEKEY(4_PAD):		b = 0x4b;	break;
+		case UCHAR_MAMEKEY(5_PAD):		b = 0x4c;	break;
+		case UCHAR_MAMEKEY(6_PAD):		b = 0x4d;	break;
+		case UCHAR_MAMEKEY(PLUS_PAD):	b = 0x4e;	break;
+		case UCHAR_MAMEKEY(1_PAD):		b = 0x4f;	break;
+		case UCHAR_MAMEKEY(2_PAD):		b = 0x50;	break;
+		case UCHAR_MAMEKEY(3_PAD):		b = 0x51;	break;
+		case UCHAR_MAMEKEY(0_PAD):		b = 0x52;	break;
+		case UCHAR_MAMEKEY(DEL_PAD):	b = 0x53;	break;
+		case UCHAR_MAMEKEY(F11):		b = 0x57;	break;
+		case UCHAR_MAMEKEY(F12):		b = 0x58;	break;
+		case '~':						b = 0x81;	break;
+		case '!':						b = 0x82;	break;
+		case '@':						b = 0x83;	break;
+		case '#':						b = 0x84;	break;
+		case '$':						b = 0x85;	break;
+		case '%':						b = 0x86;	break;
+		case '^':						b = 0x87;	break;
+		case '&':						b = 0x88;	break;
+		case '*':						b = 0x89;	break;
+		case '(':						b = 0x8a;	break;
+		case ')':						b = 0x8b;	break;
+		case '_':						b = 0x8c;	break;
+		case '+':						b = 0x8d;	break;
+		case 'Q':						b = 0x90;	break;
+		case 'W':						b = 0x91;	break;
+		case 'E':						b = 0x92;	break;
+		case 'R':						b = 0x93;	break;
+		case 'T':						b = 0x94;	break;
+		case 'Y':						b = 0x95;	break;
+		case 'U':						b = 0x96;	break;
+		case 'I':						b = 0x97;	break;
+		case 'O':						b = 0x98;	break;
+		case 'P':						b = 0x99;	break;
+		case '{':						b = 0x9a;	break;
+		case '}':						b = 0x9b;	break;
+		case 'A':						b = 0x9e;	break;
+		case 'S':						b = 0x9f;	break;
+		case 'D':						b = 0xa0;	break;
+		case 'F':						b = 0xa1;	break;
+		case 'G':						b = 0xa2;	break;
+		case 'H':						b = 0xa3;	break;
+		case 'J':						b = 0xa4;	break;
+		case 'K':						b = 0xa5;	break;
+		case 'L':						b = 0xa6;	break;
+		case ':':						b = 0xa7;	break;
+		case '\"':						b = 0xa8;	break;
+		case '|':						b = 0xab;	break;
+		case 'Z':						b = 0xac;	break;
+		case 'X':						b = 0xad;	break;
+		case 'C':						b = 0xae;	break;
+		case 'V':						b = 0xaf;	break;
+		case 'B':						b = 0xb0;	break;
+		case 'N':						b = 0xb1;	break;
+		case 'M':						b = 0xb2;	break;
+		case '<':						b = 0xb3;	break;
+		case '>':						b = 0xb4;	break;
+		case '?':						b = 0xb5;	break;
+		default:						b = 0;		break;
+	}
+	return b;
+}
+
+/***************************************************************************
+  at_keyboard_queue_chars
+***************************************************************************/
+
+static int at_keyboard_queue_chars(const unicode_char_t *text, size_t text_len)
+{
+	int i;
+	UINT8 b;
+
+	for (i = 0; (i < text_len) && ((at_keyboard_queue_size()) + 4 < AT_KEYBOARD_QUEUE_MAXSIZE); i++)
+	{
+		b = unicode_char_to_at_keycode(text[i]);
+		if (b)
+		{
+			if (b & 0x80)
+				at_keyboard_standard_scancode_insert(0x36, 1);
+
+			at_keyboard_standard_scancode_insert(b & 0x7f, 1);
+			at_keyboard_standard_scancode_insert(b & 0x7f, 0);
+
+			if (b & 0x80)
+				at_keyboard_standard_scancode_insert(0x36, 0);
+		}
+	}
+	return i;
+}
+
+
+
+/***************************************************************************
+  Keyboard declaration
+***************************************************************************/
+
+#define PC_KEYB_HELPER(bit,text,key1,key2) \
+	PORT_BIT( bit, 0x0000, IPT_KEYBOARD) PORT_NAME(text) PORT_CODE(key1) PORT_CODE(key2)
+
+INPUT_PORTS_START( pc_keyboard )
+	PORT_START_TAG("pc_keyboard_0")
+	PORT_BIT ( 0x0001, 0x0000, IPT_UNUSED ) 	/* unused scancode 0 */
+	PORT_BIT( 0x0002, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_ESC) PORT_CHAR(27)			/* Esc                         01  81 */
+	PORT_BIT( 0x0004, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_1) PORT_CHAR('1') PORT_CHAR('!')	/* 1                           02  82 */
+	PORT_BIT( 0x0008, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_2) PORT_CHAR('2') PORT_CHAR('@')	/* 2                           03  83 */
+	PORT_BIT( 0x0010, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_3) PORT_CHAR('3') PORT_CHAR('#')	/* 3                           04  84 */
+	PORT_BIT( 0x0020, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_4) PORT_CHAR('4') PORT_CHAR('$')	/* 4                           05  85 */
+	PORT_BIT( 0x0040, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_5) PORT_CHAR('5') PORT_CHAR('%')	/* 5                           06  86 */
+	PORT_BIT( 0x0080, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_6) PORT_CHAR('6') PORT_CHAR('^')	/* 6                           07  87 */
+	PORT_BIT( 0x0100, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_7) PORT_CHAR('7') PORT_CHAR('&')	/* 7                           08  88 */
+	PORT_BIT( 0x0200, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_8) PORT_CHAR('8') PORT_CHAR('*')	/* 8                           09  89 */
+	PORT_BIT( 0x0400, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_9) PORT_CHAR('9') PORT_CHAR('(')	/* 9                           0A  8A */
+	PORT_BIT( 0x0800, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_0) PORT_CHAR('0') PORT_CHAR(')')	/* 0                           0B  8B */
+	PORT_BIT( 0x1000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_MINUS) PORT_CHAR('-') PORT_CHAR('_')	/* -                           0C  8C */
+	PORT_BIT( 0x2000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_EQUALS) PORT_CHAR('=') PORT_CHAR('+')	/* =                           0D  8D */
+	PORT_BIT( 0x4000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_BACKSPACE) PORT_CHAR(8)			/* Backspace                   0E  8E */
+	PORT_BIT( 0x8000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_TAB) PORT_CHAR(9)			/* Tab                         0F  8F */
+
+	PORT_START_TAG("pc_keyboard_1")
+	PORT_BIT( 0x0001, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_Q) PORT_CHAR('Q') /* Q                           10  90 */
+	PORT_BIT( 0x0002, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_W) PORT_CHAR('W') /* W                           11  91 */
+	PORT_BIT( 0x0004, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_E) PORT_CHAR('E') /* E                           12  92 */
+	PORT_BIT( 0x0008, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_R) PORT_CHAR('R') /* R                           13  93 */
+	PORT_BIT( 0x0010, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_T) PORT_CHAR('T') /* T                           14  94 */
+	PORT_BIT( 0x0020, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_Y) PORT_CHAR('Y') /* Y                           15  95 */
+	PORT_BIT( 0x0040, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_U) PORT_CHAR('U') /* U                           16  96 */
+	PORT_BIT( 0x0080, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_I) PORT_CHAR('I') /* I                           17  97 */
+	PORT_BIT( 0x0100, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_O) PORT_CHAR('O') /* O                           18  98 */
+	PORT_BIT( 0x0200, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_P) PORT_CHAR('P') /* P                           19  99 */
+	PORT_BIT( 0x0400, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_OPENBRACE) PORT_CHAR('[') PORT_CHAR('{') /* [                           1A  9A */
+	PORT_BIT( 0x0800, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_CLOSEBRACE) PORT_CHAR(']') PORT_CHAR('}') /* ]                           1B  9B */
+	PORT_BIT( 0x1000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_ENTER) PORT_CHAR(13) /* Enter                       1C  9C */
+	PORT_BIT( 0x2000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_LCONTROL) PORT_CHAR(UCHAR_MAMEKEY(LCONTROL))      /* Left Ctrl                   1D  9D */
+	PORT_BIT( 0x4000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_A) PORT_CHAR('A') /* A                           1E  9E */
+	PORT_BIT( 0x8000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_S) PORT_CHAR('S') /* S                           1F  9F */
+
+	PORT_START_TAG("pc_keyboard_2")
+	PORT_BIT( 0x0001, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_D) PORT_CHAR('D') /* D                           20  A0 */
+	PORT_BIT( 0x0002, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_F) PORT_CHAR('F') /* F                           21  A1 */
+	PORT_BIT( 0x0004, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_G) PORT_CHAR('G') /* G                           22  A2 */
+	PORT_BIT( 0x0008, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_H) PORT_CHAR('H') /* H                           23  A3 */
+	PORT_BIT( 0x0010, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_J) PORT_CHAR('J') /* J                           24  A4 */
+	PORT_BIT( 0x0020, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_K) PORT_CHAR('K') /* K                           25  A5 */
+	PORT_BIT( 0x0040, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_L) PORT_CHAR('L') /* L                           26  A6 */
+	PORT_BIT( 0x0080, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_COLON) PORT_CHAR(';') PORT_CHAR(':') /* ;                           27  A7 */
+	PORT_BIT( 0x0100, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_QUOTE) PORT_CHAR('\'') PORT_CHAR('\"') /* '                           28  A8 */
+	PORT_BIT( 0x0200, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_TILDE) PORT_CHAR('`') PORT_CHAR('~') /* `                           29  A9 */
+	PORT_BIT( 0x0400, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_LSHIFT) PORT_CHAR(UCHAR_MAMEKEY(LSHIFT)) /* Left Shift                  2A  AA */
+	PORT_BIT( 0x0800, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_BACKSLASH) PORT_CHAR('\\') PORT_CHAR('|') /* \                           2B  AB */
+	PORT_BIT( 0x1000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_Z) PORT_CHAR('Z') /* Z                           2C  AC */
+	PORT_BIT( 0x2000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_X) PORT_CHAR('X') /* X                           2D  AD */
+	PORT_BIT( 0x4000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_C) PORT_CHAR('C') /* C                           2E  AE */
+	PORT_BIT( 0x8000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_V) PORT_CHAR('V') /* V                           2F  AF */
+
+	PORT_START_TAG("pc_keyboard_3")
+	PORT_BIT( 0x0001, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_B) PORT_CHAR('B') /* B                           30  B0 */
+	PORT_BIT( 0x0002, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_N) PORT_CHAR('N') /* N                           31  B1 */
+	PORT_BIT( 0x0004, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_M) PORT_CHAR('M') /* M                           32  B2 */
+	PORT_BIT( 0x0008, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_COMMA) PORT_CHAR(',') PORT_CHAR('<') /* ,                           33  B3 */
+	PORT_BIT( 0x0010, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_STOP) PORT_CHAR('.') PORT_CHAR('>') /* .                           34  B4 */
+	PORT_BIT( 0x0020, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_SLASH) PORT_CHAR('/') PORT_CHAR('?') /* /                           35  B5 */
+	PORT_BIT( 0x0040, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_RSHIFT) PORT_CHAR(UCHAR_MAMEKEY(RSHIFT)) /* Right Shift                 36  B6 */
+	PORT_BIT( 0x0080, 0x0000, IPT_KEYBOARD) PORT_NAME("KP * (PrtScr)") PORT_CODE(KEYCODE_ASTERISK)		/* Keypad *  (PrtSc)           37  B7 */
+	PORT_BIT( 0x0100, 0x0000, IPT_KEYBOARD) PORT_NAME("Alt") PORT_CODE(KEYCODE_LALT)					/* Left Alt                    38  B8 */
+	PORT_BIT( 0x0200, 0x0000, IPT_KEYBOARD) PORT_NAME("Space") PORT_CODE(KEYCODE_SPACE) PORT_CHAR(' ')	/* Space                       39  B9 */
+	PORT_BIT( 0x0400, 0x0000, IPT_KEYBOARD) PORT_NAME("Caps") PORT_CODE(KEYCODE_CAPSLOCK) PORT_TOGGLE	/* Caps Lock                   3A  BA */
+	PORT_BIT( 0x0800, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_F1) PORT_CHAR(UCHAR_MAMEKEY(F1))			/* F1                          3B  BB */
+	PORT_BIT( 0x1000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_F2) PORT_CHAR(UCHAR_MAMEKEY(F2))			/* F2                          3C  BC */
+	PORT_BIT( 0x2000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_F3) PORT_CHAR(UCHAR_MAMEKEY(F3))			/* F3                          3D  BD */
+	PORT_BIT( 0x4000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_F4) PORT_CHAR(UCHAR_MAMEKEY(F4))			/* F4                          3E  BE */
+	PORT_BIT( 0x8000, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_F5) PORT_CHAR(UCHAR_MAMEKEY(F5))			/* F5                          3F  BF */
+
+	PORT_START_TAG("pc_keyboard_4")
+	PORT_BIT( 0x0001, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_F6) PORT_CHAR(UCHAR_MAMEKEY(F6))			 /* F6                          40  C0 */
+	PORT_BIT( 0x0002, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_F7) PORT_CHAR(UCHAR_MAMEKEY(F7))			 /* F7                          41  C1 */
+	PORT_BIT( 0x0004, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_F8) PORT_CHAR(UCHAR_MAMEKEY(F8))			 /* F8                          42  C2 */
+	PORT_BIT( 0x0008, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_F9) PORT_CHAR(UCHAR_MAMEKEY(F9))		     /* F9                          43  C3 */
+	PORT_BIT( 0x0010, 0x0000, IPT_KEYBOARD) PORT_CODE(KEYCODE_F10) PORT_CHAR(UCHAR_MAMEKEY(F10))	     /* F10                         44  C4 */
+	PC_KEYB_HELPER( 0x0020, "NumLock",      KEYCODE_NUMLOCK,    CODE_NONE )     /* Num Lock                    45  C5 */
+	PC_KEYB_HELPER( 0x0040, "ScrLock",      KEYCODE_SCRLOCK,    CODE_NONE )     /* Scroll Lock                 46  C6 */
+	PC_KEYB_HELPER( 0x0080, "KP 7 (Home)",  KEYCODE_7_PAD,      KEYCODE_HOME )  /* Keypad 7  (Home)            47  C7 */
+	PC_KEYB_HELPER( 0x0100, "KP 8 (Up)",    KEYCODE_8_PAD,      KEYCODE_UP )    /* Keypad 8  (Up arrow)        48  C8 */
+	PC_KEYB_HELPER( 0x0200, "KP 9 (PgUp)",  KEYCODE_9_PAD,      KEYCODE_PGUP)   /* Keypad 9  (PgUp)            49  C9 */
+	PC_KEYB_HELPER( 0x0400, "KP -",         KEYCODE_MINUS_PAD,  CODE_NONE )     /* Keypad -                    4A  CA */
+	PC_KEYB_HELPER( 0x0800, "KP 4 (Left)",  KEYCODE_4_PAD,      KEYCODE_LEFT )  /* Keypad 4  (Left arrow)      4B  CB */
+	PC_KEYB_HELPER( 0x1000, "KP 5",         KEYCODE_5_PAD,      CODE_NONE )     /* Keypad 5                    4C  CC */
+	PC_KEYB_HELPER( 0x2000, "KP 6 (Right)", KEYCODE_6_PAD,      KEYCODE_RIGHT ) /* Keypad 6  (Right arrow)     4D  CD */
+	PC_KEYB_HELPER( 0x4000, "KP +",         KEYCODE_PLUS_PAD,   CODE_NONE )     /* Keypad +                    4E  CE */
+	PC_KEYB_HELPER( 0x8000, "KP 1 (End)",   KEYCODE_1_PAD,      KEYCODE_END )   /* Keypad 1  (End)             4F  CF */
+
+	PORT_START_TAG("pc_keyboard_5")
+	PC_KEYB_HELPER( 0x0001, "KP 2 (Down)",  KEYCODE_2_PAD,      KEYCODE_DOWN )   /* Keypad 2  (Down arrow)      50  D0 */
+	PC_KEYB_HELPER( 0x0002, "KP 3 (PgDn)",  KEYCODE_3_PAD,      KEYCODE_PGDN )   /* Keypad 3  (PgDn)            51  D1 */
+	PC_KEYB_HELPER( 0x0004, "KP 0 (Ins)",   KEYCODE_0_PAD,      KEYCODE_INSERT ) /* Keypad 0  (Ins)             52  D2 */
+	PC_KEYB_HELPER( 0x0008, "KP . (Del)",   KEYCODE_DEL_PAD,    KEYCODE_DEL )    /* Keypad .  (Del)             53  D3 */
+	PORT_BIT ( 0x0030, 0x0000, IPT_UNUSED )
+	PC_KEYB_HELPER( 0x0040, "(84/102)\\",   KEYCODE_BACKSLASH2, CODE_NONE )      /* Backslash 2                 56  D6 */
+	PORT_BIT ( 0xff80, 0x0000, IPT_UNUSED )
+
+	PORT_START_TAG("pc_keyboard_6")
+	PORT_BIT ( 0xffff, 0x0000, IPT_UNUSED )
+
+	PORT_START_TAG("pc_keyboard_7")
+	PORT_BIT ( 0xffff, 0x0000, IPT_UNUSED )
+INPUT_PORTS_END
+
+
+
+#define AT_KEYB_HELPER(bit, text, key1) \
+	PORT_BIT( bit, IP_ACTIVE_HIGH, IPT_KEYBOARD) PORT_NAME(text) PORT_CODE(key1)
+
+INPUT_PORTS_START( at_keyboard )
+	PORT_START_TAG("pc_keyboard_0")
+	PORT_BIT ( 0x0001, 0x0000, IPT_UNUSED ) 	/* unused scancode 0 */
+	AT_KEYB_HELPER( 0x0002, "Esc",          KEYCODE_ESC         ) /* Esc                         01  81 */
+	AT_KEYB_HELPER( 0x0004, "1 !",          KEYCODE_1           ) /* 1                           02  82 */
+	AT_KEYB_HELPER( 0x0008, "2 @",          KEYCODE_2           ) /* 2                           03  83 */
+	AT_KEYB_HELPER( 0x0010, "3 #",          KEYCODE_3           ) /* 3                           04  84 */
+	AT_KEYB_HELPER( 0x0020, "4 $",          KEYCODE_4           ) /* 4                           05  85 */
+	AT_KEYB_HELPER( 0x0040, "5 %",          KEYCODE_5           ) /* 5                           06  86 */
+	AT_KEYB_HELPER( 0x0080, "6 ^",          KEYCODE_6           ) /* 6                           07  87 */
+	AT_KEYB_HELPER( 0x0100, "7 &",          KEYCODE_7           ) /* 7                           08  88 */
+	AT_KEYB_HELPER( 0x0200, "8 *",          KEYCODE_8           ) /* 8                           09  89 */
+	AT_KEYB_HELPER( 0x0400, "9 (",          KEYCODE_9           ) /* 9                           0A  8A */
+	AT_KEYB_HELPER( 0x0800, "0 )",          KEYCODE_0           ) /* 0                           0B  8B */
+	AT_KEYB_HELPER( 0x1000, "- _",          KEYCODE_MINUS       ) /* -                           0C  8C */
+	AT_KEYB_HELPER( 0x2000, "= +",          KEYCODE_EQUALS      ) /* =                           0D  8D */
+	AT_KEYB_HELPER( 0x4000, "<--",          KEYCODE_BACKSPACE   ) /* Backspace                   0E  8E */
+	AT_KEYB_HELPER( 0x8000, "Tab",          KEYCODE_TAB         ) /* Tab                         0F  8F */
+
+	PORT_START_TAG("pc_keyboard_1")
+	AT_KEYB_HELPER( 0x0001, "Q",            KEYCODE_Q           ) /* Q                           10  90 */
+	AT_KEYB_HELPER( 0x0002, "W",            KEYCODE_W           ) /* W                           11  91 */
+	AT_KEYB_HELPER( 0x0004, "E",            KEYCODE_E           ) /* E                           12  92 */
+	AT_KEYB_HELPER( 0x0008, "R",            KEYCODE_R           ) /* R                           13  93 */
+	AT_KEYB_HELPER( 0x0010, "T",            KEYCODE_T           ) /* T                           14  94 */
+	AT_KEYB_HELPER( 0x0020, "Y",            KEYCODE_Y           ) /* Y                           15  95 */
+	AT_KEYB_HELPER( 0x0040, "U",            KEYCODE_U           ) /* U                           16  96 */
+	AT_KEYB_HELPER( 0x0080, "I",            KEYCODE_I           ) /* I                           17  97 */
+	AT_KEYB_HELPER( 0x0100, "O",            KEYCODE_O           ) /* O                           18  98 */
+	AT_KEYB_HELPER( 0x0200, "P",            KEYCODE_P           ) /* P                           19  99 */
+	AT_KEYB_HELPER( 0x0400, "[ {",          KEYCODE_OPENBRACE   ) /* [                           1A  9A */
+	AT_KEYB_HELPER( 0x0800, "] }",          KEYCODE_CLOSEBRACE  ) /* ]                           1B  9B */
+	AT_KEYB_HELPER( 0x1000, "Enter",        KEYCODE_ENTER       ) /* Enter                       1C  9C */
+	AT_KEYB_HELPER( 0x2000, "L-Ctrl",       KEYCODE_LCONTROL    ) /* Left Ctrl                   1D  9D */
+	AT_KEYB_HELPER( 0x4000, "A",            KEYCODE_A           ) /* A                           1E  9E */
+	AT_KEYB_HELPER( 0x8000, "S",            KEYCODE_S           ) /* S                           1F  9F */
+
+	PORT_START_TAG("pc_keyboard_2")
+	AT_KEYB_HELPER( 0x0001, "D",            KEYCODE_D           ) /* D                           20  A0 */
+	AT_KEYB_HELPER( 0x0002, "F",            KEYCODE_F           ) /* F                           21  A1 */
+	AT_KEYB_HELPER( 0x0004, "G",            KEYCODE_G           ) /* G                           22  A2 */
+	AT_KEYB_HELPER( 0x0008, "H",            KEYCODE_H           ) /* H                           23  A3 */
+	AT_KEYB_HELPER( 0x0010, "J",            KEYCODE_J           ) /* J                           24  A4 */
+	AT_KEYB_HELPER( 0x0020, "K",            KEYCODE_K           ) /* K                           25  A5 */
+	AT_KEYB_HELPER( 0x0040, "L",            KEYCODE_L           ) /* L                           26  A6 */
+	AT_KEYB_HELPER( 0x0080, "; :",          KEYCODE_COLON       ) /* ;                           27  A7 */
+	AT_KEYB_HELPER( 0x0100, "' \"",         KEYCODE_QUOTE       ) /* '                           28  A8 */
+	AT_KEYB_HELPER( 0x0200, "` ~",          KEYCODE_TILDE       ) /* `                           29  A9 */
+	AT_KEYB_HELPER( 0x0400, "L-Shift",      KEYCODE_LSHIFT      ) /* Left Shift                  2A  AA */
+	AT_KEYB_HELPER( 0x0800, "\\ |",         KEYCODE_BACKSLASH   ) /* \                           2B  AB */
+	AT_KEYB_HELPER( 0x1000, "Z",            KEYCODE_Z           ) /* Z                           2C  AC */
+	AT_KEYB_HELPER( 0x2000, "X",            KEYCODE_X           ) /* X                           2D  AD */
+	AT_KEYB_HELPER( 0x4000, "C",            KEYCODE_C           ) /* C                           2E  AE */
+	AT_KEYB_HELPER( 0x8000, "V",            KEYCODE_V           ) /* V                           2F  AF */
+
+	PORT_START_TAG("pc_keyboard_3")
+	AT_KEYB_HELPER( 0x0001, "B",            KEYCODE_B           ) /* B                           30  B0 */
+	AT_KEYB_HELPER( 0x0002, "N",            KEYCODE_N           ) /* N                           31  B1 */
+	AT_KEYB_HELPER( 0x0004, "M",            KEYCODE_M           ) /* M                           32  B2 */
+	AT_KEYB_HELPER( 0x0008, ", <",          KEYCODE_COMMA       ) /* ,                           33  B3 */
+	AT_KEYB_HELPER( 0x0010, ". >",          KEYCODE_STOP        ) /* .                           34  B4 */
+	AT_KEYB_HELPER( 0x0020, "/ ?",          KEYCODE_SLASH       ) /* /                           35  B5 */
+	AT_KEYB_HELPER( 0x0040, "R-Shift",      KEYCODE_RSHIFT      ) /* Right Shift                 36  B6 */
+	AT_KEYB_HELPER( 0x0080, "KP * (PrtScr)",KEYCODE_ASTERISK    ) /* Keypad *  (PrtSc)           37  B7 */
+	AT_KEYB_HELPER( 0x0100, "Alt",          KEYCODE_LALT        ) /* Left Alt                    38  B8 */
+	AT_KEYB_HELPER( 0x0200, "Space",        KEYCODE_SPACE       ) /* Space                       39  B9 */
+	AT_KEYB_HELPER( 0x0400, "Caps",         KEYCODE_CAPSLOCK    ) /* Caps Lock                   3A  BA */
+	AT_KEYB_HELPER( 0x0800, "F1",           KEYCODE_F1          ) /* F1                          3B  BB */
+	AT_KEYB_HELPER( 0x1000, "F2",           KEYCODE_F2          ) /* F2                          3C  BC */
+	AT_KEYB_HELPER( 0x2000, "F3",           KEYCODE_F3          ) /* F3                          3D  BD */
+	AT_KEYB_HELPER( 0x4000, "F4",           KEYCODE_F4          ) /* F4                          3E  BE */
+	AT_KEYB_HELPER( 0x8000, "F5",           KEYCODE_F5          ) /* F5                          3F  BF */
+
+	PORT_START_TAG("pc_keyboard_4")
+	AT_KEYB_HELPER( 0x0001, "F6",           KEYCODE_F6          ) /* F6                          40  C0 */
+	AT_KEYB_HELPER( 0x0002, "F7",           KEYCODE_F7          ) /* F7                          41  C1 */
+	AT_KEYB_HELPER( 0x0004, "F8",           KEYCODE_F8          ) /* F8                          42  C2 */
+	AT_KEYB_HELPER( 0x0008, "F9",           KEYCODE_F9          ) /* F9                          43  C3 */
+	AT_KEYB_HELPER( 0x0010, "F10",          KEYCODE_F10         ) /* F10                         44  C4 */
+	AT_KEYB_HELPER( 0x0020, "NumLock",      KEYCODE_NUMLOCK     ) /* Num Lock                    45  C5 */
+	AT_KEYB_HELPER( 0x0040, "ScrLock",      KEYCODE_SCRLOCK     ) /* Scroll Lock                 46  C6 */
+	AT_KEYB_HELPER( 0x0080, "KP 7 (Home)",  KEYCODE_7_PAD       ) /* Keypad 7  (Home)            47  C7 */
+	AT_KEYB_HELPER( 0x0100, "KP 8 (Up)",    KEYCODE_8_PAD       ) /* Keypad 8  (Up arrow)        48  C8 */
+	AT_KEYB_HELPER( 0x0200, "KP 9 (PgUp)",  KEYCODE_9_PAD       ) /* Keypad 9  (PgUp)            49  C9 */
+	AT_KEYB_HELPER( 0x0400, "KP -",         KEYCODE_MINUS_PAD   ) /* Keypad -                    4A  CA */
+	AT_KEYB_HELPER( 0x0800, "KP 4 (Left)",  KEYCODE_4_PAD       ) /* Keypad 4  (Left arrow)      4B  CB */
+	AT_KEYB_HELPER( 0x1000, "KP 5",         KEYCODE_5_PAD       ) /* Keypad 5                    4C  CC */
+	AT_KEYB_HELPER( 0x2000, "KP 6 (Right)", KEYCODE_6_PAD       ) /* Keypad 6  (Right arrow)     4D  CD */
+	AT_KEYB_HELPER( 0x4000, "KP +",         KEYCODE_PLUS_PAD    ) /* Keypad +                    4E  CE */
+	AT_KEYB_HELPER( 0x8000, "KP 1 (End)",   KEYCODE_1_PAD       ) /* Keypad 1  (End)             4F  CF */
+
+	PORT_START_TAG("pc_keyboard_5")
+	AT_KEYB_HELPER( 0x0001, "KP 2 (Down)",  KEYCODE_2_PAD       ) /* Keypad 2  (Down arrow)      50  D0 */
+	AT_KEYB_HELPER( 0x0002, "KP 3 (PgDn)",  KEYCODE_3_PAD       ) /* Keypad 3  (PgDn)            51  D1 */
+	AT_KEYB_HELPER( 0x0004, "KP 0 (Ins)",   KEYCODE_0_PAD       ) /* Keypad 0  (Ins)             52  D2 */
+	AT_KEYB_HELPER( 0x0008, "KP . (Del)",   KEYCODE_DEL_PAD     ) /* Keypad .  (Del)             53  D3 */
+	PORT_BIT ( 0x0030, 0x0000, IPT_UNUSED )
+	AT_KEYB_HELPER( 0x0040, "(84/102)\\",   KEYCODE_BACKSLASH2  ) /* Backslash 2                 56  D6 */
+	AT_KEYB_HELPER( 0x0080, "(MF2)F11",		KEYCODE_F11         ) /* F11                         57  D7 */
+	AT_KEYB_HELPER( 0x0100, "(MF2)F12",		KEYCODE_F12         ) /* F12                         58  D8 */
+	PORT_BIT ( 0xfe00, 0x0000, IPT_UNUSED )
+
+	PORT_START_TAG("pc_keyboard_6")
+	AT_KEYB_HELPER( 0x0001, "(MF2)KP Enter",		KEYCODE_ENTER_PAD   ) /* PAD Enter                   60  e0 */
+	AT_KEYB_HELPER( 0x0002, "(MF2)Right Control",	KEYCODE_RCONTROL    ) /* Right Control               61  e1 */
+	AT_KEYB_HELPER( 0x0004, "(MF2)KP /",			KEYCODE_SLASH_PAD   ) /* PAD Slash                   62  e2 */
+	AT_KEYB_HELPER( 0x0008, "(MF2)PRTSCR",			KEYCODE_PRTSCR      ) /* Print Screen                63  e3 */
+	AT_KEYB_HELPER( 0x0010, "(MF2)ALTGR",			KEYCODE_RALT        ) /* ALTGR                       64  e4 */
+	AT_KEYB_HELPER( 0x0020, "(MF2)Home",			KEYCODE_HOME        ) /* Home                        66  e6 */
+	AT_KEYB_HELPER( 0x0040, "(MF2)Cursor Up",		KEYCODE_UP          ) /* Up                          67  e7 */
+	AT_KEYB_HELPER( 0x0080, "(MF2)Page Up",			KEYCODE_PGUP        ) /* Page Up                     68  e8 */
+	AT_KEYB_HELPER( 0x0100, "(MF2)Cursor Left",		KEYCODE_LEFT        ) /* Left                        69  e9 */
+	AT_KEYB_HELPER( 0x0200, "(MF2)Cursor Right",	KEYCODE_RIGHT       ) /* Right                       6a  ea */
+	AT_KEYB_HELPER( 0x0400, "(MF2)End",				KEYCODE_END         ) /* End                         6b  eb */
+	AT_KEYB_HELPER( 0x0800, "(MF2)Cursor Down",		KEYCODE_DOWN        ) /* Down                        6c  ec */
+	AT_KEYB_HELPER( 0x1000, "(MF2)Page Down",		KEYCODE_PGDN        ) /* Page Down                   6d  ed */
+	AT_KEYB_HELPER( 0x2000, "(MF2)Insert",			KEYCODE_INSERT      ) /* Insert                      6e  ee */
+	AT_KEYB_HELPER( 0x4000, "(MF2)Delete",			KEYCODE_DEL         ) /* Delete                      6f  ef */
+	AT_KEYB_HELPER( 0x8000, "(MF2)Pause",			KEYCODE_PAUSE       ) /* Pause                       65  e5 */
+
+	PORT_START_TAG("pc_keyboard_7")
+	AT_KEYB_HELPER( 0x0001, "Print Screen", KEYCODE_PRTSCR           ) /* Print Screen alternate      77  f7 */
+	PORT_BIT ( 0xfffe, 0x0000, IPT_UNUSED )
+INPUT_PORTS_END
+
+
+
+/***************************************************************************
+  Inputx stuff
+***************************************************************************/
+
+static int at_keyboard_accept_char(unicode_char_t ch)
+{
+	return unicode_char_to_at_keycode(ch) != 0;
+}
+
+
+
+static int at_keyboard_charqueue_empty(void)
+{
+	return at_keyboard_queue_size() == 0;
+}
+#endif /* MESS */
+
+
+

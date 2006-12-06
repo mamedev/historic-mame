@@ -121,7 +121,7 @@ typedef struct
 static const int fm_tab[] = { 0, 1, 2, -1, 3, 4, 5, -1, 6, 7, 8, -1, 9, 10, 11, -1 };
 static const int pcm_tab[] = { 0, 4, 8, -1, 12, 16, 20, -1, 24, 28, 32, -1, 36, 40, 44, -1 };
 
-static INT16 *wavetable[7];
+static INT16 *wavetable[8];
 static double plfo_table[4][8][LFO_LENGTH];
 static int alfo_table[4][LFO_LENGTH];
 static INT32 *mix;
@@ -1557,7 +1557,7 @@ static void init_tables(void)
 {
 	int i,j;
 
-	for (i=0; i < 7; i++)
+	for (i=0; i < ARRAY_LENGTH(wavetable); i++)
 	{
 		wavetable[i] = auto_malloc(SIN_LEN * sizeof(INT16));
 	}
@@ -1587,6 +1587,8 @@ static void init_tables(void)
 
 		// Waveform 6:     1      (0 <= wt <= 2PI)
 		wavetable[6][i] = (INT16)(1 * MAXOUT);
+
+		wavetable[7][i] = 0;
 	}
 
 	for (i=0; i < LFO_LENGTH; i++)

@@ -820,7 +820,20 @@ static UINT32 menu_analog(UINT32 state)
 
 			/* add four items for each one */
 			analog_menu_add_item(&item_list[menu_items++], in, UI_keyjoyspeed, ANALOG_ITEM_KEYSPEED);
-			analog_menu_add_item(&item_list[menu_items++], in, UI_centerspeed, ANALOG_ITEM_CENTERSPEED);
+			switch (in->type)
+			{
+				/* Autocenter Speed is only used for these devices */
+				case IPT_PEDAL:
+				case IPT_PEDAL2:
+				case IPT_PEDAL3:
+				case IPT_PADDLE:
+				case IPT_PADDLE_V:
+				case IPT_AD_STICK_X:
+				case IPT_AD_STICK_Y:
+				case IPT_AD_STICK_Z:
+					analog_menu_add_item(&item_list[menu_items++], in, UI_centerspeed, ANALOG_ITEM_CENTERSPEED);
+					break;
+			}
 			analog_menu_add_item(&item_list[menu_items++], in, UI_reverse, ANALOG_ITEM_REVERSE);
 			analog_menu_add_item(&item_list[menu_items++], in, UI_sensitivity, ANALOG_ITEM_SENSITIVITY);
 		}
@@ -1621,7 +1634,7 @@ static void analog_menu_add_item(ui_menu_item *item, const input_port_entry *in,
 		default:
 		case ANALOG_ITEM_KEYSPEED:
 			value = in->analog.delta;
-			minval = 1;
+			minval = 0;
 			maxval = 255;
 			item->subtext = menu_string_pool_add("%d", value);
 			break;
