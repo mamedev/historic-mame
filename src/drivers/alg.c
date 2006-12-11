@@ -563,21 +563,20 @@ ROM_START( maddog )
 	ALG_BIOS
 
 	ROM_REGION( 0x40000, REGION_USER2, 0 )
-	ROM_LOAD16_BYTE( "md2_01_v.2.04.bin", 0x000000, 0x20000, CRC(0e1227f4) SHA1(bfd9081bb7d2bcbb77357839f292ce6136e9b228) )
-	ROM_LOAD16_BYTE( "md2_02_v.2.04.bin", 0x000001, 0x20000, CRC(361bd99c) SHA1(5de6ef38e334e19f509227de7880306ac984ec23) )
-ROM_END
-
-
-ROM_START( maddog23 )
-	ALG_BIOS
-
-	ROM_REGION( 0x40000, REGION_USER2, 0 )
 	ROM_LOAD16_BYTE( "md_2.03_1.bin", 0x000000, 0x20000, CRC(6f5b8f2d) SHA1(bbf32bb27a998d53744411d75efdbdb730855809) )
 	ROM_LOAD16_BYTE( "md_2.03_2.bin", 0x000001, 0x20000, CRC(a50d3c04) SHA1(4cf100fdb5b2f2236539fd0ec33b3db19c64a6b8) )
 ROM_END
 
 
 ROM_START( maddog2 )
+	ALG_BIOS
+
+	ROM_REGION( 0x40000, REGION_USER2, 0 )
+	ROM_LOAD16_BYTE( "md2_01_v.2.04.bin", 0x000000, 0x20000, CRC(0e1227f4) SHA1(bfd9081bb7d2bcbb77357839f292ce6136e9b228) )
+	ROM_LOAD16_BYTE( "md2_02_v.2.04.bin", 0x000001, 0x20000, CRC(361bd99c) SHA1(5de6ef38e334e19f509227de7880306ac984ec23) )
+ROM_END
+
+ROM_START( maddog22 )
 	ALG_BIOS
 
 	ROM_REGION( 0x40000, REGION_USER2, 0 )
@@ -821,10 +820,10 @@ GAMEB( 1991, wsjr15,   wsjr,     alg_bios, alg_r1,   alg,    palr3,    ROT0,  "A
 
 /* Rev. B board */
 /* PAL R6 */
-GAMEB( 1990, maddog,   alg_bios, alg_bios, alg_r2,   alg_2p, palr6,    ROT0,  "American Laser Games", "Mad Dog McCree v2.04 board rev.B", GAME_NOT_WORKING | GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEB( 1990, maddog23, alg_bios, alg_bios, alg_r2,   alg_2p, palr6,    ROT0,  "American Laser Games", "Mad Dog McCree v2.03 board rev.B", GAME_NOT_WORKING | GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEB( 1990, maddog,   alg_bios, alg_bios, alg_r2,   alg_2p, palr6,    ROT0,  "American Laser Games", "Mad Dog McCree v2.03 board rev.B", GAME_NOT_WORKING | GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
   /* works ok but uses right player (2) controls only for trigger and holster */
-GAMEB( 1992, maddog2,  alg_bios, alg_bios, alg_r2,   alg_2p, palr6,    ROT0,  "American Laser Games", "Mad Dog II: The Lost Gold v2.02", GAME_NOT_WORKING | GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEB( 1992, maddog2,  alg_bios, alg_bios, alg_r2,   alg_2p, palr6,    ROT0,  "American Laser Games", "Mad Dog II: The Lost Gold v2.04", GAME_NOT_WORKING | GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
+GAMEB( 1992, maddog22, alg_bios, alg_bios, alg_r2,   alg_2p, palr6,    ROT0,  "American Laser Games", "Mad Dog II: The Lost Gold v2.02", GAME_NOT_WORKING | GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEB( 1992, maddog21, maddog2,  alg_bios, alg_r2,   alg_2p, palr6,    ROT0,  "American Laser Games", "Mad Dog II: The Lost Gold v1.0", GAME_NOT_WORKING | GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )
   /* works ok but uses right player (2) controls only for trigger and holster */
 GAMEB( 1992, spacepir, alg_bios, alg_bios, alg_r2,   alg_2p, palr6,    ROT0,  "American Laser Games", "Space Pirates v2.2", GAME_NOT_WORKING | GAME_NO_SOUND | GAME_IMPERFECT_GRAPHICS )

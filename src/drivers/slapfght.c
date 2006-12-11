@@ -88,7 +88,8 @@ $08     LOW Bank select for SF_SH               X axis character scroll reg
 $09     HIGH Bank select for SF_SH              X axis pixel scroll reg
 $0a
 $0b
-$0c
+$0c     Select 1st set of sprites colors
+$0d     Select 2nd set of sprites colors
 $0e
 $0f
 
@@ -201,6 +202,7 @@ WRITE8_HANDLER( slapfight_fixram_w );
 WRITE8_HANDLER( slapfight_fixcol_w );
 WRITE8_HANDLER( slapfight_videoram_w );
 WRITE8_HANDLER( slapfight_colorram_w );
+WRITE8_HANDLER( slapfight_palette_bank_w );
 
 /* MACHINE */
 MACHINE_RESET( slapfight );
@@ -385,6 +387,7 @@ static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x07, 0x07) AM_WRITE(slapfight_port_07_w)
 	AM_RANGE(0x08, 0x08) AM_WRITE(slapfight_port_08_w)	/* select bank 0 */
 	AM_RANGE(0x09, 0x09) AM_WRITE(slapfight_port_09_w)	/* select bank 1 */
+	AM_RANGE(0x0c, 0x0d) AM_WRITE(slapfight_palette_bank_w)
 ADDRESS_MAP_END
 
 

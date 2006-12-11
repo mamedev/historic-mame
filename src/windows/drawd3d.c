@@ -1931,6 +1931,7 @@ static void texture_set_data(d3d_info *d3d, texture_info *texture, const render_
 							}
 							break;
 
+						default:
 						case D3DFMT_A8R8G8B8:
 							for (x = 0; x < texsource->width / 2; x++)
 							{
@@ -1961,6 +1962,7 @@ static void texture_set_data(d3d_info *d3d, texture_info *texture, const render_
 								*dst16++ = *src16++;
 							break;
 
+						default:
 						case D3DFMT_A8R8G8B8:
 							for (x = 0; x < texsource->width / 2; x++)
 							{

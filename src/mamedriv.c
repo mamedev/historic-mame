@@ -6883,8 +6883,8 @@ Other Sun games
 	DRIVER( wsjr )		/* (c) 1991 */
 	DRIVER( wsjr15 )	/* (c) 1991 */
 	DRIVER( maddog )	/* (c) 1990 */
-	DRIVER( maddog23 )	/* (c) 1990 */
-	DRIVER( maddog2 )  	/* (c) 1992 */
+	DRIVER( maddog2 )	/* (c) 1992 */
+	DRIVER( maddog22 ) 	/* (c) 1992 */
 	DRIVER( maddog21 )
 	DRIVER( spacepir )
 	DRIVER( gallgall )

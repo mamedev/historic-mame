@@ -1,3 +1,24 @@
+0.111
+-----
+
+
+MAMETesters Bugs Fixed
+----------------------
+perfrman0110u5gre [Pierpaolo Prazzoli]
+
+
+
+Source Changes
+--------------
+Properly removes the "Autocenter Speed" from the UI when not used.
+[Derrick Renaud]
+
+Fixed decryption of some NeoGeo bootleg sets (specifically, kf2k2mp 
+and kf2k3upl) on platforms/compilers that don't implement memcpy as
+memmove. [Alex Jackson]
+
+
+
 0.110u5
 -------
 

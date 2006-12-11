@@ -12,7 +12,7 @@ unsigned char *slapfight_videoram;
 unsigned char *slapfight_colorram;
 size_t slapfight_videoram_size;
 unsigned char *slapfight_scrollx_lo,*slapfight_scrollx_hi,*slapfight_scrolly;
-static int flipscreen;
+static int flipscreen, slapfight_palette_bank = 0;
 
 static tilemap *pf1_tilemap,*fix_tilemap;
 
@@ -136,6 +136,11 @@ WRITE8_HANDLER( slapfight_flipscreen_w )
 	else flipscreen=0; /* Port 0x3 is normal */
 }
 
+WRITE8_HANDLER( slapfight_palette_bank_w )
+{
+	slapfight_palette_bank = offset;
+}
+
 #ifdef MAME_DEBUG
 void slapfght_log_vram(void)
 {
@@ -178,10 +183,8 @@ static void perfrman_draw_sprites( mame_bitmap *bitmap, const rectangle *cliprec
 			}
 			drawgfx(bitmap,Machine->gfx[1],
 				buffered_spriteram[offs],
-				((buffered_spriteram[offs+2] >> 1) & 3)
-					+ ((buffered_spriteram[offs+2] << 2) & 4)
-//                  + ((buffered_spriteram[offs+2] >> 2) & 8)
-				,
+				((buffered_spriteram[offs+2] >> 1) & 3)	|
+					((buffered_spriteram[offs+2] << 2) & 4) | (slapfight_palette_bank << 3),
 				flipscreen, flipscreen,
 				sx, sy,
 				cliprect,TRANSPARENCY_PEN,0);
